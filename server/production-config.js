@@ -17,7 +17,8 @@ function validateProductionEnv(env=process.env){
   if(!/^price_[A-Za-z0-9]+$/.test(String(env.STRIPE_PRICE_MONTHLY||'')))errors.push('STRIPE_PRICE_MONTHLY är ogiltigt');
   check(()=>secret(env.RESEND_API_KEY,'RESEND_API_KEY'));if(!/^re_/.test(String(env.RESEND_API_KEY||'')))errors.push('RESEND_API_KEY är ogiltig');
   if(!/@(?!example\.com)[A-Za-z0-9.-]+\.[A-Za-z]{2,}>?$/.test(String(env.EMAIL_FROM||'')))errors.push('EMAIL_FROM måste använda en verifierad domän');
-  check(()=>httpsUrl(env.ALERT_WEBHOOK_URL,'ALERT_WEBHOOK_URL'));
+  if(env.ALERT_WEBHOOK_URL)check(()=>httpsUrl(env.ALERT_WEBHOOK_URL,'ALERT_WEBHOOK_URL'));
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(env.ALERT_EMAIL_TO||'')))errors.push('ALERT_EMAIL_TO är ogiltig');
   check(()=>httpsUrl(env.DESKTOP_DOWNLOAD_URL,'DESKTOP_DOWNLOAD_URL'));
   if(!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(String(env.DESKTOP_VERSION||'')))errors.push('DESKTOP_VERSION är ogiltig');
   if(!/^[a-f0-9]{64}$/.test(String(env.DESKTOP_SHA256||'')))errors.push('DESKTOP_SHA256 är ogiltig');
