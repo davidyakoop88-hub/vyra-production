@@ -9,7 +9,7 @@ function validateProductionEnv(env=process.env){
   check(()=>{let url;try{url=new URL(String(env.REDIS_URL||''))}catch{}const privateRailway=url&&url.protocol==='redis:'&&/\.railway\.internal$/i.test(url.hostname);if(!url||(!privateRailway&&url.protocol!=='rediss:')||PLACEHOLDER.test(url.hostname))throw new Error('REDIS_URL måste vara rediss:// eller privat Railway redis://')});
   ['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].forEach(name=>check(()=>secret(env[name],name)));
   check(()=>{const values=['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].map(name=>env[name]);if(new Set(values).size!==values.length)throw new Error('Produktionshemligheter måste vara unika')});
-  check(()=>httpsUrl(env.OBJECT_ENDPOINT,'OBJECT_ENDPOINT'));check(()=>httpsUrl(env.CDN_ORIGIN,'CDN_ORIGIN'));
+  check(()=>httpsUrl(env.OBJECT_ENDPOINT,'OBJECT_ENDPOINT'));if(env.CDN_ORIGIN)check(()=>httpsUrl(env.CDN_ORIGIN,'CDN_ORIGIN'));
   check(()=>secret(env.OBJECT_ACCESS_KEY,'OBJECT_ACCESS_KEY',16));check(()=>secret(env.OBJECT_SECRET_KEY,'OBJECT_SECRET_KEY'));
   if(env.MEDIA_SCAN_REQUIRED!=='true')errors.push('MEDIA_SCAN_REQUIRED måste vara true');
   check(()=>secret(env.STRIPE_SECRET_KEY,'STRIPE_SECRET_KEY'));if(!String(env.STRIPE_SECRET_KEY||'').startsWith('sk_live_'))errors.push('STRIPE_SECRET_KEY måste vara en live-nyckel');
