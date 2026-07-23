@@ -69,7 +69,8 @@ jobs:
           $file = Get-Item 'dist2/VYRA-Setup.exe'
           $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  VYRA-Setup.exe" | Set-Content 'dist2/VYRA-Setup.exe.sha256' -Encoding ascii
-          @{ version = '${{ github.ref_name }}'.TrimStart('v'); sizeBytes = $file.Length; sha256 = $hash; platform = 'windows-x64' } | ConvertTo-Json | Set-Content 'dist2/latest.json' -Encoding utf8
+                   $appVersion = (Get-Content 'package.json' -Raw | ConvertFrom-Json).version
+          @{ version = $appVersion; sizeBytes = $file.Length; sha256 = $hash; platform = 'windows-x64' } | ConvertTo-Json | Set-Content 'dist2/latest.json' -Encoding utf8
       - uses: actions/upload-artifact@v4
         with:
           name: VYRA-Windows-Installer
