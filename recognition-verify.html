@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recognition Engine — Steg 3 verifiering</title>
+<style>
+  body { background:#0a0611; color:#e9e4f2; font:14px/1.5 'Inter', system-ui, sans-serif; margin:0; padding:24px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  p.sub { color:#a99dc4; margin:0 0 20px; }
+  .case { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:8px; margin-bottom:6px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); }
+  .case.pass { border-color: rgba(80,220,140,.35); }
+  .case.fail { border-color: rgba(255,90,110,.5); background: rgba(255,90,110,.08); }
+  .badge { font-weight:700; min-width:52px; }
+  .case.pass .badge { color:#4ee08a; }
+  .case.fail .badge { color:#ff5a6e; }
+  .name { flex:0 0 360px; }
+  .details { color:#a99dc4; font:12px/1.4 ui-monospace, Consolas, monospace; word-break:break-all; }
+  #summary { margin-top:16px; font-weight:700; }
+</style>
+<link rel="stylesheet" href="recognition-card.css">
+</head>
+<body>
+  <h1>Recognition Engine — Steg 3-9 + Roadmap Fas 3: types, normalizer, rules, merge, queue, controller, card mapper, card, runtime, adapter</h1>
+  <p class="sub">Fristaende verifieringssida (dev-only). Laddar recognition-types.js, recognition-rules.js, recognition-normalizer.js, recognition-merge.js, recognition-queue.js, recognition-controller.js, recognition-card-mapper.js, recognition-card.js, recognition-runtime.js, recognition-adapter-types.js, recognition-adapter.js och recognition-verify.js i godkand beroendeordning — ingen koppling till studio.html/media.js.</p>
+  <div id="results"></div>
+  <div id="summary"></div>
+
+  <script src="recognition-types.js"></script>
+  <script src="recognition-rules.js"></script>
+  <script src="recognition-normalizer.js"></script>
+  <script src="recognition-merge.js"></script>
+  <script src="recognition-queue.js"></script>
+  <script src="recognition-controller.js"></script>
+  <script src="recognition-card-mapper.js"></script>
+  <script src="recognition-card.js"></script>
+  <script src="recognition-runtime.js"></script>
+  <script src="recognition-adapter-types.js"></script>
+  <script src="recognition-adapter.js"></script>
+  <script src="recognition-verify.js"></script>
+  <script>
+    (function () {
+      document.getElementById('summary').textContent = 'Korr...';
+      // run() returns a Promise<Array<...>> since Steg 8 (Card) needs real setTimeout-driven
+      // waits to observe post-animation state — every earlier stage's cases still resolve
+      // effectively immediately, so this only adds a brief, real delay for the Card section.
+      window.VyraRecognitionVerify.run().then(function (results) {
+        var container = document.getElementById('results');
+        container.innerHTML = results.map(function (r) {
+          return '<div class="case ' + (r.pass ? 'pass' : 'fail') + '">'
+            + '<div class="badge">' + (r.pass ? 'PASS' : 'FAIL') + '</div>'
+            + '<div class="name">' + r.name + '</div>'
+            + '<div class="details">' + r.details.replace(/</g, '&lt;') + '</div>'
+            + '</div>';
+        }).join('');
+        var passCount = results.filter(function (r) { return r.pass; }).length;
+        document.getElementById('summary').textContent = passCount + ' / ' + results.length + ' fall godkanda';
+        console.log('[recognition-verify]', passCount + '/' + results.length, results);
+      });
+    })();
+  </script>
+</body>
+</html>

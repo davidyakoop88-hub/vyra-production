@@ -1,0 +1,859 @@
+/* premium-widget-tokens.css — Premium Widget Design System shared tokens (Roadmap Phase 4).
+   See docs/PREMIUM_WIDGET_SPEC.md for the rationale behind every value here — this file is
+   the single source of truth those values are read from; nothing in premium-widget-core.js
+   or the per-family CSS below hardcodes a value that belongs here.
+   Scoped under .vyra-pw-root (never :root/body/html/img/button) so nothing here can leak into
+   the rest of the app — same discipline as recognition-card.css. A SEPARATE system from
+   recognition-card.css: different root class, different z-index band (999998 vs 999999), no
+   shared selectors, so both can coexist on one overlay page without any collision. */
+
+.vyra-pw-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  padding: 6vh 16px var(--pw-safe-bottom, 18vh);
+  pointer-events: none;
+  z-index: 999998;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+
+  /* ---- spacing / safe zone ---- */
+  --pw-safe-bottom: 18vh;
+  --pw-safe-side: 16px;
+
+  /* ---- typography scale (mirrors recognition-card.css's proven scale) ---- */
+  --pw-font-eyebrow: 11px;
+  --pw-font-title: 17px;
+  --pw-font-title-minimal: 15px;
+  --pw-font-subtitle: 13px;
+  --pw-font-badge: 12px;
+
+  /* ---- motion timings (ms), per tier — see spec's Animation timings table ---- */
+  --pw-enter-small: 650ms;
+  --pw-enter-medium: 850ms;
+  --pw-enter-legendary: 1150ms;
+  --pw-hold-small: 3200ms;
+  --pw-hold-medium: 4200ms;
+  --pw-hold-legendary: 6000ms;
+  --pw-exit-small: 260ms;
+  --pw-exit-medium: 320ms;
+  --pw-exit-legendary: 420ms;
+
+  /* ---- depth layers (documented, applied via z-index on each layer class) ---- */
+  --pw-z-glow: 0;
+  --pw-z-back-geometry: 1;
+  --pw-z-gift: 2;
+  --pw-z-avatar: 3;
+  --pw-z-text: 4;
+  --pw-z-badge: 5;
+  --pw-z-particles: 6;
+}
+
+/* ---- shared widget shell (every family extends this) ---- */
+
+.vyra-pw-widget {
+  position: relative;
+  box-sizing: border-box;
+  color: #f3edff;
+  pointer-events: auto;
+  opacity: 0;
+}
+
+.vyra-pw-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.vyra-pw-avatar-frame {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  width: var(--pw-avatar-size, 60px);
+  height: var(--pw-avatar-size, 60px);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .14), rgba(255, 255, 255, .02));
+  border: 2px solid rgba(255, 255, 255, .22);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 16px var(--pw-glow-color, rgba(177, 60, 255, .4));
+}
+
+.vyra-pw-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
+}
+
+.vyra-pw-avatar-initials {
+  font-size: calc(var(--pw-avatar-size, 60px) * .34);
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: #fff;
+  user-select: none;
+}
+
+.vyra-pw-avatar-frame:not(.vyra-pw-avatar-fallback) .vyra-pw-avatar-initials {
+  opacity: 0;
+}
+
+.vyra-pw-gift-frame {
+  width: var(--pw-gift-size, 44px);
+  height: var(--pw-gift-size, 44px);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--pw-accent-2, #d9b8ff);
+}
+
+.vyra-pw-gift-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.vyra-pw-gift-fallback-glyph {
+  width: 60%;
+  height: 60%;
+  opacity: 0;
+  color: currentColor;
+}
+
+.vyra-pw-gift-frame.vyra-pw-gift-fallback .vyra-pw-gift-fallback-glyph {
+  opacity: .85;
+}
+
+.vyra-pw-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: var(--pw-z-text);
+  position: relative;
+}
+
+.vyra-pw-eyebrow {
+  font-size: var(--pw-font-eyebrow);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vyra-pw-title {
+  font-size: var(--pw-font-title);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.vyra-pw-subtitle {
+  font-size: var(--pw-font-subtitle);
+  font-weight: 500;
+  color: rgba(240, 235, 255, .78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.vyra-pw-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--pw-font-badge);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: #ffd66b;
+  white-space: nowrap;
+  z-index: var(--pw-z-badge);
+  width: fit-content;
+}
+
+.vyra-pw-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: var(--pw-z-particles);
+  border-radius: inherit;
+}
+
+.vyra-pw-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+/* low-performance mode: no particles, no glow blur, motion stays opacity/transform only */
+.vyra-pw-perf-low .vyra-pw-particles { display: none; }
+.vyra-pw-perf-low .vyra-pw-glow { display: none; }
+
+/* ---- enter / hold / exit phase classes (JS toggles these; timings read from the vars above) */
+
+.vyra-pw-phase-anticipation {
+  opacity: 0;
+  transform: scale(.92) translateY(10px);
+  filter: blur(4px);
+}
+
+.vyra-pw-phase-reveal {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+  transition: opacity 340ms cubic-bezier(.22, .82, .27, 1), transform 340ms cubic-bezier(.22, .82, .27, 1), filter 220ms ease-out;
+}
+
+.vyra-pw-phase-settled {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.vyra-pw-phase-exit {
+  opacity: 0;
+  transform: translateY(-12px) scale(.96);
+  transition: opacity 280ms cubic-bezier(.4, 0, .2, 1), transform 280ms cubic-bezier(.4, 0, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vyra-pw-widget, .vyra-pw-widget * {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .vyra-pw-phase-anticipation { transform: none; filter: none; }
+}
+
+/* demo/QA-only manual override — mirrors the media query above exactly, for environments
+   where toggling the real OS/browser reduced-motion setting isn't convenient (e.g. capturing
+   a specific screenshot). Applied via a class on .vyra-pw-root, never used in production. */
+.vyra-pw-force-reduced-motion .vyra-pw-widget,
+.vyra-pw-force-reduced-motion .vyra-pw-widget * {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
+.vyra-pw-force-reduced-motion .vyra-pw-phase-anticipation { transform: none; filter: none; }
+
+@media (max-width: 360px) {
+  .vyra-pw-widget { transform-origin: bottom center; }
+}
+
+/* =====================================================================================
+   Family 1: Crystal Halo — translucent faceted panel, gift orb overlapping the avatar edge.
+   Suitable for small/medium gifts. ===================================================== */
+
+.vyra-pw-family-crystal-halo {
+  --pw-accent: #7dc8ff;
+  --pw-accent-2: #d9b8ff;
+  --pw-glow-color: rgba(125, 200, 255, .4);
+  --pw-avatar-size: 66px;
+  --pw-gift-size: 38px;
+  width: min(320px, 90vw);
+}
+
+.vyra-pw-family-crystal-halo .vyra-pw-glow {
+  position: absolute;
+  inset: -35% -25%;
+  background: radial-gradient(closest-side, var(--pw-glow-color), transparent 70%);
+  filter: blur(8px);
+  opacity: .8;
+  pointer-events: none;
+  z-index: var(--pw-z-glow);
+}
+
+.vyra-pw-crystal-panel {
+  position: relative;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(155deg, rgba(20, 26, 38, .82), rgba(10, 14, 22, .88));
+  border: 1px solid rgba(255, 255, 255, .10);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .07) inset, 0 18px 40px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  clip-path: polygon(16px 0, calc(100% - 10px) 0, 100% 16px, 100% calc(100% - 10px), calc(100% - 16px) 100%, 10px 100%, 0 calc(100% - 16px), 0 10px);
+}
+
+.vyra-pw-crystal-facets {
+  position: absolute;
+  inset: 0;
+  z-index: var(--pw-z-back-geometry);
+  color: var(--pw-accent);
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.vyra-pw-family-crystal-halo .vyra-pw-shell {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vyra-pw-family-crystal-halo .vyra-pw-eyebrow,
+.vyra-pw-family-crystal-halo .vyra-pw-badge {
+  color: var(--pw-accent-2);
+}
+
+/* documented exception to the global depth order — see PREMIUM_WIDGET_SPEC.md "Exception" —
+   the gift orb overlaps the avatar's bottom-right edge on purpose, so within .vyra-pw-media's
+   own local stacking context it sits above the avatar (z-index 2 > avatar's 1). */
+.vyra-pw-family-crystal-halo .vyra-pw-gift-frame {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  border-radius: 50%;
+  z-index: 2;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .03));
+  border: 2px solid rgba(255, 255, 255, .28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .4), 0 0 10px var(--pw-glow-color);
+}
+
+/* ---- Crystal Halo animation language: "glass materialize" — scales in from slightly
+   larger + heavily blurred (like condensing out of mist), with a single diagonal light
+   shimmer sweeping across the glass panel once on reveal. Exit reverses into a soft
+   blur-dissolve rather than a plain fade/slide. Distinct from every other family's motion. */
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-anticipation {
+  opacity: 0;
+  transform: scale(1.08);
+  filter: blur(10px);
+}
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  transition: opacity 420ms cubic-bezier(.16, .84, .24, 1), transform 420ms cubic-bezier(.16, .84, .24, 1), filter 420ms cubic-bezier(.16, .84, .24, 1);
+}
+
+.vyra-pw-crystal-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .35) 48%, transparent 62%);
+  background-size: 250% 250%;
+  background-position: -60% -60%;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-crystal-panel::after {
+  animation: vyra-pw-crystal-shimmer 700ms ease-out both;
+}
+
+@keyframes vyra-pw-crystal-shimmer {
+  0% { background-position: -60% -60%; opacity: 0; }
+  35% { opacity: .9; }
+  100% { background-position: 60% 60%; opacity: 0; }
+}
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-exit {
+  opacity: 0;
+  transform: scale(1.05);
+  filter: blur(8px);
+  transition: opacity 320ms ease-in, transform 320ms ease-in, filter 320ms ease-in;
+}
+
+/* particles double as "crystal segments" that assemble in around the avatar on reveal and
+   disperse into light fragments on exit — reuses the existing particle DOM (no new elements
+   or core.js changes), each with its own origin direction so they visibly converge/scatter
+   rather than just fading in place. */
+.vyra-pw-family-crystal-halo .vyra-pw-particle {
+  width: 3px;
+  height: 3px;
+  background: var(--pw-accent-2);
+  box-shadow: 0 0 6px var(--pw-accent-2);
+}
+
+.vyra-pw-family-crystal-halo .vyra-pw-particle-0 { --pw-seg-x: -1; --pw-seg-y: -1; }
+.vyra-pw-family-crystal-halo .vyra-pw-particle-1 { --pw-seg-x: 1; --pw-seg-y: -1; }
+.vyra-pw-family-crystal-halo .vyra-pw-particle-2 { --pw-seg-x: 1; --pw-seg-y: 1; }
+.vyra-pw-family-crystal-halo .vyra-pw-particle-3 { --pw-seg-x: -1; --pw-seg-y: 1; }
+.vyra-pw-family-crystal-halo .vyra-pw-particle-4 { --pw-seg-x: -1.4; --pw-seg-y: 0; }
+.vyra-pw-family-crystal-halo .vyra-pw-particle-5 { --pw-seg-x: 1.4; --pw-seg-y: 0; }
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle {
+  animation: vyra-pw-crystal-segment-in 620ms cubic-bezier(.16, .84, .24, 1) both;
+}
+
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-0 { animation-delay: 0ms; }
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-1 { animation-delay: 40ms; }
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-2 { animation-delay: 80ms; }
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-3 { animation-delay: 30ms; }
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-4 { animation-delay: 70ms; }
+.vyra-pw-family-crystal-halo.vyra-pw-phase-reveal .vyra-pw-particle-5 { animation-delay: 110ms; }
+
+@keyframes vyra-pw-crystal-segment-in {
+  0% { transform: translate(calc(var(--pw-seg-x, 1) * 26px), calc(var(--pw-seg-y, -1) * 22px)) scale(.2); opacity: 0; }
+  70% { opacity: .9; }
+  100% { transform: translate(0, 0) scale(1); opacity: .85; }
+}
+
+/* hold: gentle breathing glow — slow opacity+scale pulse. Distinct period/curve from every
+   other family's hold animation (Royal Crown's one-shot sweep, Legendary Portal's energy
+   pulse, Elite Minimal's deliberate stillness). */
+.vyra-pw-family-crystal-halo.vyra-pw-phase-settled .vyra-pw-glow {
+  animation: vyra-pw-crystal-breathe 4400ms ease-in-out infinite;
+}
+
+@keyframes vyra-pw-crystal-breathe {
+  0%, 100% { opacity: .7; transform: scale(1); }
+  50% { opacity: .95; transform: scale(1.06); }
+}
+
+/* exit: dissolve into light fragments — the same particles that assembled inward now scatter
+   back out along their own origin direction while the panel blurs/fades (see phase-exit above). */
+.vyra-pw-family-crystal-halo.vyra-pw-phase-exit .vyra-pw-particle {
+  animation: vyra-pw-crystal-segment-out 300ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes vyra-pw-crystal-segment-out {
+  0% { transform: translate(0, 0) scale(1); opacity: .85; }
+  100% { transform: translate(calc(var(--pw-seg-x, 1) * 20px), calc(var(--pw-seg-y, -1) * 18px)) scale(.3); opacity: 0; }
+}
+
+/* =====================================================================================
+   Family 2: Royal Crown — asymmetric premium frame with a crown crest and a corner gift
+   emblem (not overlapping the avatar). Suitable for medium/high-value gifts. ============ */
+
+.vyra-pw-family-royal-crown {
+  --pw-accent: #ffb703;
+  --pw-accent-2: #ffe08a;
+  --pw-glow-color: rgba(255, 183, 3, .4);
+  --pw-avatar-size: 70px;
+  --pw-gift-size: 34px;
+  width: min(360px, 92vw);
+  padding-top: 22px;
+}
+
+.vyra-pw-family-royal-crown .vyra-pw-glow {
+  position: absolute;
+  inset: -30% -30% -20%;
+  background: radial-gradient(closest-side, var(--pw-glow-color), transparent 65%);
+  filter: blur(10px);
+  opacity: .75;
+  pointer-events: none;
+  z-index: var(--pw-z-glow);
+}
+
+.vyra-pw-crown-frame {
+  position: relative;
+  padding: 20px 22px 16px;
+  background: linear-gradient(155deg, rgba(38, 28, 10, .85), rgba(14, 10, 6, .9));
+  border: 1px solid rgba(255, 183, 3, .3);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 20px 46px rgba(0, 0, 0, .55), 0 0 40px rgba(255, 183, 3, .12);
+  clip-path: polygon(0 6%, 94% 0, 100% 82%, 62% 100%, 0 90%);
+}
+
+.vyra-pw-crown-glyph {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58px;
+  height: 34px;
+  color: var(--pw-accent);
+  z-index: var(--pw-z-back-geometry);
+  filter: drop-shadow(0 0 6px var(--pw-glow-color));
+}
+
+.vyra-pw-family-royal-crown .vyra-pw-shell {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vyra-pw-family-royal-crown .vyra-pw-avatar-frame {
+  border-color: rgba(255, 183, 3, .45);
+}
+
+.vyra-pw-family-royal-crown .vyra-pw-eyebrow {
+  color: var(--pw-accent);
+}
+
+.vyra-pw-family-royal-crown .vyra-pw-gift-frame {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  border-radius: 10px;
+  z-index: 2;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .02));
+  border: 1px solid rgba(255, 183, 3, .4);
+}
+
+/* ---- Royal Crown animation language: "rise and lock" — the frame rises up from below with
+   a firm mechanical deceleration (no bounce, unlike Legendary Portal's springy pop), the crown
+   glyph drops from above with visible weight (a brief compress-on-landing "thud", distinct
+   from Crystal Halo's weightless assembly), a single slow gold light sweep plays once across
+   the frame border during hold, and the frame retracts (collapses vertically toward its own
+   base) cleanly on exit — no blur, no dissolve, no dispersal. */
+
+.vyra-pw-family-royal-crown.vyra-pw-phase-anticipation {
+  opacity: 0;
+  transform: translateY(46px);
+  filter: none;
+}
+
+.vyra-pw-family-royal-crown.vyra-pw-phase-reveal {
+  opacity: 1;
+  transform: translateY(0);
+  filter: none;
+  transition: opacity 320ms cubic-bezier(.16, .8, .24, 1), transform 460ms cubic-bezier(.16, .8, .24, 1);
+}
+
+.vyra-pw-family-royal-crown.vyra-pw-phase-reveal .vyra-pw-crown-glyph {
+  animation: vyra-pw-crown-land 480ms cubic-bezier(.3, .9, .3, 1) 160ms both;
+}
+
+@keyframes vyra-pw-crown-land {
+  0% { transform: translateX(-50%) translateY(-36px); opacity: 0; }
+  75% { transform: translateX(-50%) translateY(2px) scaleY(.88); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(0) scaleY(1); opacity: 1; }
+}
+
+.vyra-pw-crown-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 224, 138, .5) 50%, transparent 60%);
+  background-size: 300% 300%;
+  background-position: -100% 0%;
+  opacity: 0;
+  pointer-events: none;
+  clip-path: polygon(0 6%, 94% 0, 100% 82%, 62% 100%, 0 90%);
+}
+
+.vyra-pw-family-royal-crown.vyra-pw-phase-settled .vyra-pw-crown-frame::after {
+  animation: vyra-pw-crown-sweep 2600ms ease-in-out 400ms 1;
+}
+
+@keyframes vyra-pw-crown-sweep {
+  0% { background-position: -100% 0%; opacity: 0; }
+  15% { opacity: .8; }
+  55% { opacity: .8; }
+  75% { background-position: 100% 0%; opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.vyra-pw-family-royal-crown.vyra-pw-phase-exit {
+  opacity: 0;
+  transform: scaleY(.7) translateY(8px);
+  transform-origin: bottom center;
+  filter: none;
+  transition: opacity 260ms cubic-bezier(.4, 0, .2, 1), transform 260ms cubic-bezier(.4, 0, .2, 1);
+}
+
+/* =====================================================================================
+   Family 3: Legendary Portal — concentric portal rings behind a centered avatar, gift art
+   resting on a small glowing pedestal beneath it. Layered, staged entry. Suitable for
+   high-value gifts / special events. ===================================================== */
+
+.vyra-pw-family-legendary-portal {
+  --pw-accent: #ffb703;
+  --pw-accent-2: #ff5cc9;
+  --pw-glow-color: rgba(255, 183, 3, .45);
+  --pw-avatar-size: 78px;
+  --pw-gift-size: 40px;
+  width: min(300px, 88vw);
+}
+
+.vyra-pw-portal-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px 16px;
+  text-align: center;
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-glow {
+  position: absolute;
+  inset: -20% -30%;
+  background:
+    radial-gradient(closest-side, rgba(255, 183, 3, .45), transparent 60%),
+    radial-gradient(closest-side, rgba(255, 92, 201, .3), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: var(--pw-z-glow);
+}
+
+.vyra-pw-portal-rings {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  width: calc(var(--pw-avatar-size) * 1.9);
+  height: calc(var(--pw-avatar-size) * 1.9);
+  transform: translateX(-50%);
+  color: var(--pw-accent);
+  z-index: var(--pw-z-back-geometry);
+  pointer-events: none;
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-media {
+  z-index: 2;
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-avatar-frame {
+  border-color: rgba(255, 183, 3, .5);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, .3), 0 0 26px var(--pw-glow-color);
+}
+
+/* pedestal touches/slightly overlaps the avatar's bottom edge intentionally — same documented
+   exception as Crystal Halo's orb, see PREMIUM_WIDGET_SPEC.md */
+.vyra-pw-family-legendary-portal .vyra-pw-gift-frame {
+  margin-top: -10px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02));
+  border: 1px solid rgba(255, 183, 3, .4);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .4);
+  z-index: 1;
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-text {
+  align-items: center;
+  text-align: center;
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-eyebrow {
+  color: var(--pw-accent);
+}
+
+.vyra-pw-family-legendary-portal .vyra-pw-badge {
+  margin: 0 auto;
+}
+
+/* ---- Legendary Portal animation language: cinematic, staged, layered — three sub-elements
+   animate in sequence (rings, then avatar, then text), each with its own timing, giving more
+   layered depth than any other family. During hold, the rings pulse+rotate very subtly and
+   the (otherwise-unused-by-other-families) particle layer becomes slow drifting "energy
+   motes" — a continuous, contained motion distinct from Crystal Halo's single breathing pulse
+   and Royal Crown's one-shot sweep. On exit the composition (avatar+text) collapses first,
+   then the portal rings close in around where it was — the portal visibly closing over the
+   departed composition, not just everything fading together. */
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-reveal .vyra-pw-portal-rings {
+  animation: vyra-pw-portal-ring-in 480ms cubic-bezier(.22, .82, .27, 1) both;
+}
+
+@keyframes vyra-pw-portal-ring-in {
+  0% { transform: translateX(-50%) scale(.5); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-reveal .vyra-pw-media {
+  animation: vyra-pw-portal-avatar-pop 420ms cubic-bezier(.22, 1.4, .36, 1) 160ms both;
+}
+
+@keyframes vyra-pw-portal-avatar-pop {
+  0% { transform: scale(.4); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-reveal .vyra-pw-text {
+  animation: vyra-pw-portal-text-rise 380ms cubic-bezier(.22, .82, .27, 1) 420ms both;
+}
+
+@keyframes vyra-pw-portal-text-rise {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* hold: "controlled energy" — rings pulse+rotate subtly, particles drift as slow energy motes */
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-portal-rings {
+  animation: vyra-pw-portal-ring-pulse 3600ms ease-in-out infinite;
+}
+
+@keyframes vyra-pw-portal-ring-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: .55; }
+  50% { transform: translateX(-50%) scale(1.04) rotate(4deg); opacity: .85; }
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle {
+  animation: vyra-pw-portal-energy-drift 3000ms ease-in-out infinite;
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-0 { animation-delay: 0ms; }
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-1 { animation-delay: 500ms; }
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-2 { animation-delay: 1000ms; }
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-3 { animation-delay: 1500ms; }
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-4 { animation-delay: 2000ms; }
+.vyra-pw-family-legendary-portal.vyra-pw-phase-settled .vyra-pw-particle-5 { animation-delay: 2500ms; }
+
+@keyframes vyra-pw-portal-energy-drift {
+  0%, 100% { opacity: .2; transform: translateY(0); }
+  50% { opacity: .65; transform: translateY(-5px); }
+}
+
+/* exit: composition collapses first, portal rings close in around it slightly after */
+.vyra-pw-family-legendary-portal.vyra-pw-phase-exit .vyra-pw-media,
+.vyra-pw-family-legendary-portal.vyra-pw-phase-exit .vyra-pw-text {
+  animation: vyra-pw-portal-content-fade 160ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes vyra-pw-portal-content-fade {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(.8); opacity: 0; }
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-exit .vyra-pw-portal-rings {
+  animation: vyra-pw-portal-ring-close 180ms cubic-bezier(.4, 0, .2, 1) 60ms both;
+}
+
+@keyframes vyra-pw-portal-ring-close {
+  0% { transform: translateX(-50%) scale(1); opacity: .7; }
+  100% { transform: translateX(-50%) scale(.15); opacity: 0; }
+}
+
+.vyra-pw-family-legendary-portal.vyra-pw-phase-exit {
+  transform: none;
+  filter: none;
+  transition: opacity 240ms linear;
+}
+
+/* =====================================================================================
+   Family 4: Elite Minimal — slim horizontal bar, gift art as a small inline accent, no
+   glow/particles/decoration. For streamers who want minimal screen obstruction. ========= */
+
+.vyra-pw-family-elite-minimal {
+  --pw-accent: #b8aac8;
+  --pw-accent-2: #f3edff;
+  --pw-avatar-size: 40px;
+  --pw-gift-size: 22px;
+  width: min(260px, 82vw);
+}
+
+.vyra-pw-minimal-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 999px;
+  background: rgba(16, 10, 22, .74);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.vyra-pw-family-elite-minimal .vyra-pw-title {
+  font-size: var(--pw-font-title-minimal);
+}
+
+.vyra-pw-family-elite-minimal .vyra-pw-text {
+  gap: 0;
+}
+
+.vyra-pw-family-elite-minimal .vyra-pw-gift-frame {
+  margin-left: auto;
+  border-radius: 6px;
+}
+
+/* ---- Elite Minimal animation language: a clip-path WIPE reveal — a fundamentally different
+   mechanism from every other family (no scale, no blur, no bounce, no keyframes at all for
+   entrance). Nearly static during hold: deliberately no idle animation whatsoever, matching
+   the "minimal footprint, dislikes large overlays" brief — contrast with the other three
+   families' idle motion. Exit is a quick, compact slide+fade (no wipe), intentionally simpler
+   than the entrance. */
+
+.vyra-pw-family-elite-minimal.vyra-pw-phase-anticipation {
+  opacity: 0;
+  transform: none;
+  filter: none;
+  clip-path: inset(0 100% 0 0 round 999px);
+}
+
+.vyra-pw-family-elite-minimal.vyra-pw-phase-reveal {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  clip-path: inset(0 0 0 0 round 999px);
+  transition: clip-path 200ms cubic-bezier(.3, .9, .3, 1), opacity 120ms linear;
+}
+
+.vyra-pw-family-elite-minimal.vyra-pw-phase-exit {
+  opacity: 0;
+  transform: translateX(16px);
+  filter: none;
+  clip-path: inset(0 0 0 0 round 999px);
+  transition: opacity 180ms ease-in, transform 180ms ease-in;
+}
+
+/* =====================================================================================
+   Tier modifiers — small / medium (default) / legendary. Applied alongside a family class,
+   e.g. class="vyra-pw-widget vyra-pw-family-crystal-halo vyra-pw-tier-small". ============ */
+
+.vyra-pw-tier-small.vyra-pw-family-crystal-halo { --pw-avatar-size: 56px; --pw-gift-size: 32px; width: min(280px, 88vw); }
+.vyra-pw-tier-legendary.vyra-pw-family-crystal-halo { --pw-avatar-size: 76px; --pw-gift-size: 46px; width: min(340px, 92vw); }
+
+.vyra-pw-tier-small.vyra-pw-family-royal-crown { --pw-avatar-size: 58px; --pw-gift-size: 28px; width: min(320px, 90vw); }
+.vyra-pw-tier-legendary.vyra-pw-family-royal-crown { --pw-avatar-size: 80px; --pw-gift-size: 40px; width: min(390px, 94vw); }
+
+.vyra-pw-tier-small.vyra-pw-family-legendary-portal { --pw-avatar-size: 64px; --pw-gift-size: 32px; width: min(260px, 84vw); }
+.vyra-pw-tier-legendary.vyra-pw-family-legendary-portal { --pw-avatar-size: 92px; --pw-gift-size: 48px; width: min(340px, 92vw); }
+
+.vyra-pw-tier-small.vyra-pw-family-elite-minimal { --pw-avatar-size: 34px; --pw-gift-size: 18px; width: min(230px, 78vw); }
+.vyra-pw-tier-legendary.vyra-pw-family-elite-minimal { --pw-avatar-size: 46px; --pw-gift-size: 26px; width: min(300px, 86vw); }
+
+/* =====================================================================================
+   Reduced-motion overrides for the per-family entrance states added above. The generic
+   `.vyra-pw-phase-anticipation { transform:none; filter:none; }` reset (near the top of this
+   file) has LOWER specificity than these family-scoped anticipation rules
+   (.vyra-pw-family-X.vyra-pw-phase-anticipation), so it never actually overrides them —
+   these equal-specificity rules must come textually last in the file to win the cascade.
+   Every animation-duration/iteration-count is already forced by the earlier wildcard rule
+   (`.vyra-pw-widget *`); this block only resets the STARTING transform/filter/clip-path of
+   each family's anticipation phase so nothing renders in an off-screen/blurred/clipped state
+   even for the ~1ms the transition still technically runs. ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .vyra-pw-family-crystal-halo.vyra-pw-phase-anticipation,
+  .vyra-pw-family-royal-crown.vyra-pw-phase-anticipation,
+  .vyra-pw-family-elite-minimal.vyra-pw-phase-anticipation {
+    transform: none;
+    filter: none;
+    clip-path: none;
+  }
+}
+
+.vyra-pw-force-reduced-motion .vyra-pw-family-crystal-halo.vyra-pw-phase-anticipation,
+.vyra-pw-force-reduced-motion .vyra-pw-family-royal-crown.vyra-pw-phase-anticipation,
+.vyra-pw-force-reduced-motion .vyra-pw-family-elite-minimal.vyra-pw-phase-anticipation {
+  transform: none;
+  filter: none;
+  clip-path: none;
+}

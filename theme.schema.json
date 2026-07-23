@@ -1,0 +1,10 @@
+{
+  "requiredLayers": [
+    "x2-main.png", "x3-main.png", "tap-main.png", "glove-main.png",
+    "platform.png", "smoke.png", "diamonds.png", "hearts.png",
+    "lightning.png", "particles.png"
+  ],
+  "minimumSize": 2048,
+  "format": "RGBA PNG",
+  "durationMs": 6000
+}

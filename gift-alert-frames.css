@@ -1,0 +1,44 @@
+/* Gift & Alert avatar-frame sizing — mirrors Top Like's .pro-avatar-frame/.pro-frame-art pattern:
+   the wrapper matches the widget's existing photo-container size, the photo shrinks slightly inside
+   it, and the frame art fills the full wrapper so a decorative ring shows around the smaller photo —
+   same idea as Top Like's medal rings (46px wrapper around a 31px photo), re-sized per widget instead
+   of reusing Top Like's hardcoded pixel values. The frame-picker grid itself (.ws-frame-*) reuses
+   toplike-studio.css as-is since gift-alert-frames.js renders the exact same markup. */
+
+.vyra-profile-face .pro-avatar-frame,
+.streak-profile-face .pro-avatar-frame,
+.follow-avatar .pro-avatar-frame {
+  position: absolute; inset: 0; display: grid; place-items: center;
+}
+
+.fan-profile { position: relative; }
+.fan-profile .pro-avatar-frame {
+  position: absolute; inset: 0; display: grid; place-items: center;
+}
+
+.gifter-orbit .pro-avatar-frame {
+  position: relative; width: 86px; height: 86px; z-index: 3; display: grid; place-items: center;
+}
+
+/* !important + these longer, widget-scoped selectors are required to beat an existing UNSCOPED rule in
+   studio.css (`.pro-avatar-frame>img:first-child{width:29px!important...}`, meant only for Top Like's
+   list-row layout but written without a `.toplike-row`/`.vyra-toplike` prefix, so it leaks onto any
+   `.pro-avatar-frame` anywhere on the page, including these 5 widgets). Higher specificity here wins
+   the !important-vs-!important tie-break. */
+.vyra-profile-face .pro-avatar-frame > img:first-child,
+.streak-profile-face .pro-avatar-frame > img:first-child,
+.follow-avatar .pro-avatar-frame > img:first-child,
+.fan-profile .pro-avatar-frame > img:first-child,
+.gifter-orbit .pro-avatar-frame > img:first-child {
+  position: relative !important; width: 80% !important; height: 80% !important; border-radius: 50% !important; object-fit: cover !important; z-index: 1 !important;
+}
+
+.vyra-profile-face .pro-avatar-frame > .pro-frame-art,
+.streak-profile-face .pro-avatar-frame > .pro-frame-art,
+.follow-avatar .pro-avatar-frame > .pro-frame-art,
+.fan-profile .pro-avatar-frame > .pro-frame-art,
+.gifter-orbit .pro-avatar-frame > .pro-frame-art {
+  position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: contain !important; z-index: 2 !important; pointer-events: none !important;
+}
+
+.gaf-frame-group .pro-frame-picker { margin-top: 4px; }

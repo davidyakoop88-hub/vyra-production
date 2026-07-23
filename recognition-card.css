@@ -1,0 +1,617 @@
+/* recognition-card.css — Recognition Engine, Recognition Card UI (Steg 8).
+   Every selector is scoped under .vyra-recognition-root / .vyra-recognition-card / a
+   vyra-recognition-* class — nothing here ever touches body, html, button, img, or any other
+   bare/generic selector. No canvas, no WebGL, no external font. System font stack only. */
+
+.vyra-recognition-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 5vh 16px;
+  pointer-events: none;
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---- base card shell + tokens ------------------------------------------------------- */
+
+.vyra-recognition-card {
+  --vyra-rec-accent: #b13cff;
+  --vyra-rec-accent-2: #ff70b8;
+  --vyra-rec-glow: rgba(177, 60, 255, .45);
+  --vyra-rec-w: 340px;
+  --vyra-rec-avatar-size: 64px;
+  --vyra-rec-gift-size: 56px;
+
+  position: relative;
+  width: min(var(--vyra-rec-w), 92vw);
+  max-width: 400px;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border-radius: 20px;
+  color: #f3edff;
+  background: linear-gradient(155deg, rgba(20, 12, 32, .82), rgba(10, 6, 18, .88));
+  border: 1px solid rgba(255, 255, 255, .09);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .06) inset,
+    0 18px 40px rgba(0, 0, 0, .55),
+    0 4px 14px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  overflow: hidden;
+  perspective: 900px;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+  opacity: 0;
+}
+
+.vyra-recognition-layer {
+  position: relative;
+}
+
+/* layer 1: ambient glow */
+.vyra-recognition-glow {
+  position: absolute;
+  inset: -40% -30%;
+  background: radial-gradient(closest-side, var(--vyra-rec-glow), transparent 70%);
+  filter: blur(6px);
+  opacity: .8;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* layer 2: main glass shell */
+.vyra-recognition-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  row-gap: 6px;
+  align-items: center;
+}
+
+/* layer 3: accent rail */
+.vyra-recognition-rail {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--vyra-rec-accent), var(--vyra-rec-accent-2));
+  box-shadow: 0 0 12px var(--vyra-rec-glow);
+}
+
+/* layers 4 + 5: media row (avatar + optional gift frame) */
+.vyra-recognition-media {
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vyra-recognition-avatar-frame {
+  position: relative;
+  width: var(--vyra-rec-avatar-size);
+  height: var(--vyra-rec-avatar-size);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02));
+  border: 2px solid rgba(255, 255, 255, .22);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 16px var(--vyra-rec-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vyra-recognition-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
+}
+
+.vyra-recognition-avatar-initials {
+  font-size: calc(var(--vyra-rec-avatar-size) * .34);
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: #fff;
+  user-select: none;
+}
+
+/* the image sits visually above the initials; fallback (no src, or onerror) simply never adds
+   an <img>, so the initials underneath are shown with zero layout shift either way */
+.vyra-recognition-avatar-frame:not(.vyra-recognition-avatar-fallback) .vyra-recognition-avatar-initials {
+  opacity: 0;
+}
+
+.vyra-recognition-gift-frame {
+  position: relative;
+  width: var(--vyra-rec-gift-size);
+  height: var(--vyra-rec-gift-size);
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .02));
+  border: 1px solid rgba(255, 255, 255, .18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vyra-recognition-gift-img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  display: block;
+}
+
+.vyra-recognition-gift-fallback-symbol {
+  font-size: calc(var(--vyra-rec-gift-size) * .42);
+  color: var(--vyra-rec-accent-2);
+  opacity: 0;
+}
+
+.vyra-recognition-gift-frame.vyra-recognition-gift-fallback .vyra-recognition-gift-fallback-symbol {
+  opacity: 1;
+}
+
+/* layer 6: text content — ellipsis-safe, never spills the shell */
+.vyra-recognition-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vyra-recognition-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--vyra-rec-accent-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vyra-recognition-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.vyra-recognition-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(240, 235, 255, .78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* layer 7: count/coin badge */
+.vyra-recognition-badge {
+  grid-column: 2;
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.vyra-recognition-count-label,
+.vyra-recognition-coin-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.vyra-recognition-coin-label {
+  color: #ffd66b;
+  border-color: rgba(255, 214, 107, .35);
+  background: rgba(255, 214, 107, .10);
+}
+
+/* layer 8: decorative particles — fixed count, positions driven by --i via nth-of-type-style
+   per-index classes, never randomized per render */
+.vyra-recognition-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.vyra-recognition-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vyra-rec-accent-2);
+  opacity: 0;
+}
+
+.vyra-recognition-particle-0 { left: 12%; top: 20%; }
+.vyra-recognition-particle-1 { left: 82%; top: 15%; }
+.vyra-recognition-particle-2 { left: 92%; top: 55%; }
+.vyra-recognition-particle-3 { left: 70%; top: 85%; }
+.vyra-recognition-particle-4 { left: 20%; top: 80%; }
+.vyra-recognition-particle-5 { left: 6%; top: 55%; }
+
+/* ---- enter / exit phase animation (JS toggles these classes; timing lives in JS via
+   recognition-rules.js's cardTimingMs, kept in sync with the ranges here) ---------------- */
+
+.vyra-recognition-phase-anticipation {
+  opacity: 0;
+  transform: scale(.94) translateY(6px);
+  filter: blur(3px);
+}
+
+.vyra-recognition-phase-reveal {
+  opacity: 1;
+  transform: scale(1) translateY(0) rotateX(0deg);
+  filter: blur(0);
+  transition:
+    opacity 360ms cubic-bezier(.22, .82, .27, 1),
+    transform 360ms cubic-bezier(.22, .82, .27, 1),
+    filter 220ms ease-out;
+}
+
+.vyra-recognition-phase-anticipation.vyra-recognition-phase-reveal {
+  /* never both at once in practice (JS removes anticipation before adding reveal), but keep
+     the reveal starting point explicit in case a stray frame renders mid-swap */
+  transform: scale(.97) translateY(10px) rotateX(6deg);
+}
+
+.vyra-recognition-phase-settle {
+  animation: vyra-recognition-settle-overshoot 220ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+.vyra-recognition-phase-settled {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.vyra-recognition-phase-exit {
+  opacity: 0;
+  transform: translateY(-10px) scale(.97);
+  transition:
+    opacity 260ms cubic-bezier(.4, 0, .2, 1),
+    transform 260ms cubic-bezier(.4, 0, .2, 1);
+}
+
+@keyframes vyra-recognition-settle-overshoot {
+  0% { transform: scale(1) translateY(0); }
+  55% { transform: scale(1.015) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* subtle idle motion once fully settled — small amplitude, finite/gentle, not a flashing loop */
+.vyra-recognition-phase-settled .vyra-recognition-glow {
+  animation: vyra-recognition-idle-glow 5200ms ease-in-out infinite;
+}
+
+@keyframes vyra-recognition-idle-glow {
+  0%, 100% { opacity: .72; transform: scale(1); }
+  50% { opacity: .92; transform: scale(1.04); }
+}
+
+/* ---- variants: join-soft --------------------------------------------------------------- */
+
+.vyra-recognition-variant-join-soft {
+  --vyra-rec-accent: #8fd7ff;
+  --vyra-rec-accent-2: #cfeaff;
+  --vyra-rec-glow: rgba(143, 215, 255, .35);
+  --vyra-rec-w: 300px;
+  --vyra-rec-avatar-size: 68px;
+}
+
+.vyra-recognition-variant-join-soft .vyra-recognition-badge { display: none; }
+
+/* ---- variants: like-pulse / like-wave / like-storm ---------------------------------------- */
+
+.vyra-recognition-variant-like-pulse {
+  --vyra-rec-accent: #ff4d7d;
+  --vyra-rec-accent-2: #ff9ab8;
+  --vyra-rec-glow: rgba(255, 77, 125, .35);
+  --vyra-rec-w: 260px;
+  --vyra-rec-avatar-size: 52px;
+  padding: 14px 16px;
+}
+
+.vyra-recognition-variant-like-pulse .vyra-recognition-avatar-frame {
+  animation: vyra-recognition-heartbeat 1400ms ease-in-out infinite;
+}
+
+@keyframes vyra-recognition-heartbeat {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 10px var(--vyra-rec-glow); }
+  35% { box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), 0 0 20px var(--vyra-rec-glow); }
+}
+
+.vyra-recognition-variant-like-wave {
+  --vyra-rec-accent: #ff5c8a;
+  --vyra-rec-accent-2: #ffd3de;
+  --vyra-rec-glow: rgba(255, 92, 138, .38);
+  --vyra-rec-w: 320px;
+}
+
+.vyra-recognition-variant-like-wave .vyra-recognition-particle {
+  border: 1px solid var(--vyra-rec-accent);
+  background: transparent;
+  width: 10px;
+  height: 10px;
+  opacity: .5;
+  animation: vyra-recognition-wave-ring 2600ms ease-out infinite;
+}
+
+.vyra-recognition-variant-like-wave .vyra-recognition-particle-1 { animation-delay: .5s; }
+.vyra-recognition-variant-like-wave .vyra-recognition-particle-3 { animation-delay: 1s; }
+.vyra-recognition-variant-like-wave .vyra-recognition-particle-5 { animation-delay: 1.5s; }
+
+@keyframes vyra-recognition-wave-ring {
+  0% { transform: scale(.4); opacity: .55; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.vyra-recognition-variant-like-wave .vyra-recognition-count-label {
+  font-size: 14px;
+  padding: 3px 10px;
+}
+
+.vyra-recognition-variant-like-storm {
+  --vyra-rec-accent: #ff2e63;
+  --vyra-rec-accent-2: #ffb703;
+  --vyra-rec-glow: rgba(255, 46, 99, .42);
+  --vyra-rec-w: 340px;
+}
+
+.vyra-recognition-variant-like-storm .vyra-recognition-particle {
+  opacity: .8;
+  animation: vyra-recognition-storm-drift 3400ms ease-in-out infinite;
+}
+
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-0 { animation-delay: 0s; }
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-1 { animation-delay: .4s; }
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-2 { animation-delay: .8s; }
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-3 { animation-delay: 1.2s; }
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-4 { animation-delay: 1.6s; }
+.vyra-recognition-variant-like-storm .vyra-recognition-particle-5 { animation-delay: 2s; }
+
+/* gentle drift, never a hard on/off flash — deliberately avoids opacity 0<->1 flicker */
+@keyframes vyra-recognition-storm-drift {
+  0%, 100% { transform: translateY(0) scale(1); opacity: .55; }
+  50% { transform: translateY(-6px) scale(1.3); opacity: .9; }
+}
+
+/* ---- variant: share-signal --------------------------------------------------------------- */
+
+.vyra-recognition-variant-share-signal {
+  --vyra-rec-accent: #4dd8ff;
+  --vyra-rec-accent-2: #b6f3ff;
+  --vyra-rec-glow: rgba(77, 216, 255, .38);
+  --vyra-rec-w: 320px;
+}
+
+.vyra-recognition-variant-share-signal .vyra-recognition-rail {
+  width: 6px;
+  border-radius: 6px;
+}
+
+.vyra-recognition-variant-share-signal .vyra-recognition-particle-0,
+.vyra-recognition-variant-share-signal .vyra-recognition-particle-2,
+.vyra-recognition-variant-share-signal .vyra-recognition-particle-4 {
+  display: none;
+}
+
+.vyra-recognition-variant-share-signal .vyra-recognition-particle {
+  border: 1px solid var(--vyra-rec-accent);
+  background: transparent;
+  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  left: -6px !important;
+  top: 50% !important;
+  animation: vyra-recognition-signal-ripple 900ms cubic-bezier(.22, .82, .27, 1) both;
+}
+
+.vyra-recognition-variant-share-signal .vyra-recognition-particle-3 { animation-delay: 120ms; }
+.vyra-recognition-variant-share-signal .vyra-recognition-particle-5 { animation-delay: 240ms; }
+
+@keyframes vyra-recognition-signal-ripple {
+  0% { transform: translate(0, -50%) scale(.3); opacity: .8; }
+  100% { transform: translate(340%, -50%) scale(1.6); opacity: 0; }
+}
+
+/* ---- variant: follow-spotlight ------------------------------------------------------------ */
+
+.vyra-recognition-variant-follow-spotlight {
+  --vyra-rec-accent: #ffcf5c;
+  --vyra-rec-accent-2: #fff1c2;
+  --vyra-rec-glow: rgba(255, 207, 92, .4);
+  --vyra-rec-w: 320px;
+  --vyra-rec-avatar-size: 66px;
+}
+
+.vyra-recognition-variant-follow-spotlight .vyra-recognition-glow {
+  background: conic-gradient(from 200deg at 20% 40%, var(--vyra-rec-glow), transparent 55%);
+}
+
+.vyra-recognition-variant-follow-spotlight .vyra-recognition-avatar-frame::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 207, 92, .55);
+  pointer-events: none;
+}
+
+/* ---- variant: gift-crystal ---------------------------------------------------------------- */
+
+.vyra-recognition-variant-gift-crystal {
+  --vyra-rec-accent: #7dc8ff;
+  --vyra-rec-accent-2: #d9b8ff;
+  --vyra-rec-glow: rgba(125, 200, 255, .4);
+  --vyra-rec-w: 300px;
+  --vyra-rec-avatar-size: 52px;
+  --vyra-rec-gift-size: 44px;
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+
+.vyra-recognition-variant-gift-crystal .vyra-recognition-gift-frame {
+  border-radius: 6px;
+  transform: rotate(4deg);
+}
+
+.vyra-recognition-variant-gift-crystal .vyra-recognition-avatar-frame {
+  transform: rotate(-4deg);
+}
+
+/* ---- variant: gift-crown ------------------------------------------------------------------ */
+
+.vyra-recognition-variant-gift-crown {
+  --vyra-rec-accent: #ffb703;
+  --vyra-rec-accent-2: #ffe08a;
+  --vyra-rec-glow: rgba(255, 183, 3, .4);
+  --vyra-rec-w: 360px;
+  --vyra-rec-avatar-size: 58px;
+  --vyra-rec-gift-size: 74px;
+  padding-top: 24px;
+}
+
+.vyra-recognition-variant-gift-crown .vyra-recognition-media {
+  flex-direction: row-reverse;
+}
+
+.vyra-recognition-variant-gift-crown .vyra-recognition-gift-frame {
+  border-radius: 12px;
+  border-color: rgba(255, 183, 3, .4);
+}
+
+.vyra-recognition-variant-gift-crown .vyra-recognition-shell::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 12px solid var(--vyra-rec-accent);
+  filter: drop-shadow(0 0 6px var(--vyra-rec-glow));
+}
+
+.vyra-recognition-variant-gift-crown .vyra-recognition-coin-label {
+  font-size: 13px;
+  padding: 3px 10px;
+}
+
+/* ---- variant: gift-legendary --------------------------------------------------------------- */
+
+.vyra-recognition-variant-gift-legendary {
+  --vyra-rec-accent: #ffb703;
+  --vyra-rec-accent-2: #ff5cc9;
+  --vyra-rec-glow: rgba(255, 183, 3, .45);
+  --vyra-rec-w: 380px;
+  --vyra-rec-avatar-size: 60px;
+  --vyra-rec-gift-size: 78px;
+  border-image: linear-gradient(135deg, var(--vyra-rec-accent), var(--vyra-rec-accent-2)) 1;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .08) inset,
+    0 0 0 1px rgba(255, 183, 3, .25),
+    0 24px 60px rgba(0, 0, 0, .6),
+    0 0 50px rgba(255, 92, 201, .18);
+  padding-top: 26px;
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-glow {
+  inset: -55% -40%;
+  background:
+    radial-gradient(closest-side, rgba(255, 183, 3, .5), transparent 65%),
+    radial-gradient(closest-side, rgba(255, 92, 201, .35), transparent 70%);
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-shell::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 14px solid var(--vyra-rec-accent);
+  filter: drop-shadow(0 0 8px var(--vyra-rec-glow));
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-media {
+  flex-direction: row-reverse;
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-gift-frame {
+  border-radius: 14px;
+  border-color: rgba(255, 183, 3, .45);
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle {
+  width: 5px;
+  height: 5px;
+  animation: vyra-recognition-storm-drift 4200ms ease-in-out infinite;
+}
+
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-0 { animation-delay: 0s; }
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-1 { animation-delay: .6s; }
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-2 { animation-delay: 1.2s; }
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-3 { animation-delay: 1.8s; }
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-4 { animation-delay: 2.4s; }
+.vyra-recognition-variant-gift-legendary .vyra-recognition-particle-5 { animation-delay: 3s; }
+
+/* ---- reduced motion --------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .vyra-recognition-card,
+  .vyra-recognition-card * {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .vyra-recognition-phase-anticipation {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ---- responsiveness (from ~320px, 9:16 overlay, never full-viewport) ----------------------- */
+
+@media (max-width: 360px) {
+  .vyra-recognition-card {
+    --vyra-rec-w: 88vw;
+    padding: 14px 16px;
+  }
+  .vyra-recognition-title {
+    font-size: 15px;
+  }
+}

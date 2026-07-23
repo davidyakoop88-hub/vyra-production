@@ -1,0 +1,384 @@
+/* ==========================================================================
+   VYRA Design System — shared component classes.
+   Loaded after studio.css (wins the cascade on equal specificity; !important
+   used only where studio.css's own existing rules are already !important) and
+   before sidebar-premium.css (the nav stays the final, most-specific layer).
+
+   Two ways this gets used:
+   1. New/migrated markup uses these classes directly: .btn.btn-primary,
+      .card, .badge.badge-pro, .modal, .tabs, .tooltip, .empty-state,
+      .widget-card, .page-header, .section-header.
+   2. Existing selectors already emitted by studio.js/extras.js/media.js/etc.
+      (.primary, .card, .quick button, dialog, .pill, plain inputs...) are
+      retrofitted onto the same visual language via compound selectors, so
+      pages render consistently without every template string being rewritten.
+   ========================================================================== */
+
+/* ---------- Base app surface ---------- */
+body {
+  background: radial-gradient(circle at 15% -10%, #2a123f33, transparent 45%), var(--bg-app);
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+/* Shared motion/shape language across every existing + new button, without
+   touching each one's own padding/height (many are icon-only circles/squares
+   that must not be forced into a horizontal-pill layout). */
+.btn, .primary, .head-actions button, .quick button, .editor-toolbar button,
+.command button, .action-item button, .flow-row > button, .property-actions button,
+.spotify-connect button, .use-media, .media-play,
+.owg-configure, .owg-preview, .owg-copylink, .owg-add, .owg-star,
+.owg-configure-close, .owg-configure-done, .live-layer-add,
+.ws-frame-gender-tabs button, .ws-tabs button, .pro-frame-picker button,
+.like-count-choice button, .overlay-link-bar button, .gift-picker-modal button,
+.ae-modal button, .ae-steps button, .pack-actions button, .delete, .x,
+.editor-video-list article > button, .sidebar-feedback-cta {
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast), background var(--transition-fast),
+    border-color var(--transition-fast), box-shadow var(--transition-fast),
+    color var(--transition-fast), filter var(--transition-fast);
+  cursor: pointer;
+}
+.btn:focus-visible, .primary:focus-visible, button:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 2px;
+}
+
+/* --- .btn base (for new/migrated markup) --- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-glass);
+  color: var(--text-secondary);
+  font: 600 12.5px Inter, sans-serif;
+  white-space: nowrap;
+}
+.btn svg { width: 17px; height: 17px; flex: 0 0 auto; }
+.btn-sm { height: 36px; padding: 0 13px; font-size: 11.5px; border-radius: var(--radius-sm); }
+.btn-lg { height: 44px; padding: 0 20px; }
+
+/* --- Primary: important/confirm actions (Skapa overlay, Lägg till i Layout, Spara) --- */
+.btn-primary, .primary, .owg-add, .live-layer-add, .connect, #connectNow,
+.spotify-connect button {
+  background: linear-gradient(135deg, var(--accent-violet), #b43dff) !important;
+  border: 1px solid rgba(255, 255, 255, .16) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), var(--shadow-glow) !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .primary:hover, .owg-add:hover, .live-layer-add:hover,
+.connect:hover, #connectNow:hover, .spotify-connect button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .24), 0 10px 34px rgba(151, 61, 255, .42) !important;
+  border-color: rgba(255, 255, 255, .28) !important;
+}
+.btn-primary:active, .primary:active, .owg-add:active, .live-layer-add:active,
+.connect:active, .spotify-connect button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 4px 14px rgba(151, 61, 255, .24) !important;
+}
+
+/* --- Secondary: default action (Configure, Preview, Länk, Testa gåva) --- */
+.btn-secondary, .head-actions button, .editor-toolbar button, .command button,
+.action-item button, .flow-row > button, .property-actions button, .use-media,
+.owg-configure, .owg-preview, .owg-copylink, .ws-frame-gender-tabs button,
+.ws-tabs button, .like-count-choice button, .overlay-link-bar button,
+.gift-picker-modal button, .ae-modal button, .ae-steps button, #testGift, #testEvent {
+  background: linear-gradient(145deg, var(--surface-1), #0d0814) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04) !important;
+}
+.btn-secondary:hover, .head-actions button:hover, .editor-toolbar button:hover,
+.command button:hover, .action-item button:hover, .flow-row > button:hover,
+.property-actions button:hover, .use-media:hover, .owg-configure:hover,
+.owg-preview:hover, .owg-copylink:hover, .ws-frame-gender-tabs button:hover,
+.ws-tabs button:hover, .like-count-choice button:hover, .overlay-link-bar button:hover,
+#testGift:hover, #testEvent:hover {
+  border-color: var(--border-active) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 0 1px rgba(177, 60, 255, .12) !important;
+}
+.ws-frame-gender-tabs button.active, .ws-tabs button.active,
+.like-count-choice button.active {
+  background: linear-gradient(135deg, var(--accent-violet), #b43dff) !important;
+  border-color: rgba(255, 255, 255, .2) !important;
+  color: #fff !important;
+}
+
+/* --- Ghost: low-priority icon/close actions --- */
+.btn-ghost, .owg-star, .owg-configure-close, .x, .editor-video-list article > button {
+  background: rgba(255, 255, 255, .04) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+.btn-ghost:hover, .owg-star:hover, .owg-configure-close:hover, .x:hover {
+  background: rgba(177, 60, 255, .14) !important;
+  color: #fff !important;
+}
+
+/* --- Danger: destructive only --- */
+.btn-danger, .delete {
+  background: linear-gradient(135deg, #7a1f2c, #4a1119) !important;
+  border: 1px solid rgba(255, 77, 106, .35) !important;
+  color: #ff9fae !important;
+}
+.btn-danger:hover, .delete:hover {
+  border-color: var(--status-danger) !important;
+  box-shadow: 0 6px 18px rgba(255, 77, 106, .3) !important;
+  color: #fff !important;
+}
+
+/* --- Icon-only square/circle buttons (fixed dimensions, no pill padding) --- */
+.btn-icon, .media-play, .owg-configure-close, .x {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; padding: 0; width: 40px; height: 40px; border-radius: 50%;
+}
+.btn-icon svg { width: 17px; height: 17px; }
+/* Compact tier: small in-card affordances (favorite star, etc.) — the global
+   36/40/44 height system is for standalone toolbar-style icon buttons; a 40px
+   circle would dwarf a 104-148px catalog card thumbnail. */
+.owg-star {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; padding: 0; width: 26px; height: 26px; border-radius: 50%;
+  font-size: 13px;
+}
+
+/* Universal hover-lift + press for every button retrofitted above */
+.btn:hover, .primary:hover, .head-actions button:hover, .quick button:hover,
+.owg-configure:hover, .owg-preview:hover, .owg-copylink:hover, .owg-add:hover,
+.use-media:hover, .live-layer-add:hover {
+  transform: translateY(-2px);
+}
+.btn:active, .primary:active, .owg-configure:active, .owg-preview:active,
+.owg-copylink:active, .owg-add:active {
+  transform: translateY(0);
+}
+
+/* Aktiv/Pausad-style toggle buttons — the only real on/off pattern in the app,
+   never had a color/shape distinction before (text label only). */
+.status-toggle[data-on="true"], .command button.is-on, .action-item button.is-on {
+  background: linear-gradient(135deg, #1c3a2c, #0f2419) !important;
+  border-color: rgba(101, 240, 181, .35) !important;
+  color: var(--status-success) !important;
+}
+
+/* ==========================================================================
+   CARDS
+   ========================================================================== */
+.card, .table-card, .spotify-card, .media-card, .recent-card, .premium-pack-card,
+.quick button, .pro-frame-picker button {
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(145deg, var(--surface-1), #0d0814) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.card:hover, .media-card:hover, .recent-card:hover, .quick button:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-active) !important;
+}
+
+.glass-card {
+  border-radius: var(--radius-lg);
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+/* Widget catalog / preview cards — Overlay page's large gallery cards only.
+   The Editor sidebar's compact .widget-catalog list (same button/i/b/small
+   markup, tiny 22px-icon rows) is intentionally left to studio.css's own
+   rules — these two contexts share HTML shape but not visual scale. */
+.widget-card, .overlay-widget-gallery .widget-catalog button {
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(145deg, var(--surface-1), #0d0814) !important;
+  border: 1px solid var(--border-subtle) !important;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.widget-card:hover, .overlay-widget-gallery .widget-catalog button:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-active) !important;
+  box-shadow: var(--shadow-glow) !important;
+}
+.widget-card.selected, .overlay-widget-gallery .widget-catalog button.selected {
+  border-color: var(--border-active) !important;
+  background: linear-gradient(145deg, rgba(177, 60, 255, .16), var(--surface-1)) !important;
+  box-shadow: var(--shadow-glow) !important;
+}
+
+/* ==========================================================================
+   INPUTS
+   ========================================================================== */
+input, select, textarea,
+.properties input, .settings-page input, dialog input, .form-row input,
+.form-row select, .media-tools > input, .overlay-link-bar input,
+.gift-picker-modal input, .properties select, .ae-modal input, .ae-modal select,
+.sa-condition, .sa-trigger-row select, .widget-search {
+  background: var(--surface-glass) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  min-height: 40px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--border-active) !important;
+  box-shadow: 0 0 0 3px rgba(177, 60, 255, .18) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+.search-input { position: relative; }
+.search-input svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;
+}
+.search-input input { padding-left: 36px; }
+
+/* ==========================================================================
+   BADGES
+   ========================================================================== */
+.badge, .pill, .template-badge, .frame-collection-note {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  font: 700 9px Manrope, sans-serif; letter-spacing: .03em;
+  background: rgba(177, 60, 255, .16) !important;
+  color: #dcbaff !important;
+  border: 1px solid var(--border-subtle);
+}
+.status-badge-success, .pill.success { background: rgba(101, 240, 181, .16) !important; color: var(--status-success) !important; border-color: rgba(101, 240, 181, .3); }
+.status-badge-warning { background: rgba(227, 174, 75, .16) !important; color: var(--status-warning) !important; border-color: rgba(227, 174, 75, .3); }
+.status-badge-danger { background: rgba(255, 77, 106, .16) !important; color: var(--status-danger) !important; border-color: rgba(255, 77, 106, .3); }
+
+.connection i { width: 6px; height: 6px; border-radius: 50%; background: var(--status-warning); display: inline-block; margin-right: 5px; }
+.connection.connected i { background: var(--status-success); }
+
+/* ==========================================================================
+   SECTION HEADER / PAGE HEADER
+   ========================================================================== */
+.page-header, .section-head, .card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 18px;
+}
+.page-header h1, .section-head h2, .card-head h2 {
+  font: 700 20px Manrope, sans-serif; color: var(--text-primary); margin: 0;
+}
+.page-header p, .section-head p {
+  font-size: 13px; color: var(--text-secondary); margin: 5px 0 0;
+}
+.section-header-eyebrow {
+  display: block; font: 700 10px Manrope, sans-serif; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+}
+
+/* ==========================================================================
+   TABS
+   ========================================================================== */
+.tabs, .ws-tabs {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface-glass) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  margin-bottom: 14px;
+}
+.tabs button, .ws-tabs button {
+  flex: 1; background: transparent !important; border: 0 !important;
+  color: var(--text-muted) !important; padding: 8px 10px; font-size: 11px;
+  border-radius: var(--radius-sm) !important;
+}
+.tabs button.active, .ws-tabs button.active {
+  background: linear-gradient(135deg, var(--accent-violet), #b43dff) !important;
+  color: #fff !important;
+}
+
+/* ==========================================================================
+   MODALS (unifies <dialog> and the custom position:fixed .owg-configure-modal
+   pattern under one visual language)
+   ========================================================================== */
+dialog, .owg-configure-modal .owg-configure-panel, .modal {
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(160deg, #150c20, #0a0612) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: var(--shadow-card), var(--shadow-glow);
+}
+dialog::backdrop, .owg-configure-modal, .modal-backdrop {
+  background: rgba(5, 3, 8, .78) !important;
+  backdrop-filter: blur(6px);
+}
+dialog {
+  animation: modalIn var(--transition-normal) ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog { animation: none; }
+}
+
+/* ==========================================================================
+   DROPDOWN (button-driven swatch pickers already used for frame/skin choice)
+   ========================================================================== */
+.dropdown-panel, .ws-frame-grid, .toplike-skin-grid {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* ==========================================================================
+   TOOLTIP — new: none existed before, only native title= attributes.
+   Usage: <span class="tooltip" data-tooltip="Text">...</span>
+   ========================================================================== */
+.tooltip { position: relative; }
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 10px; border-radius: var(--radius-sm);
+  font-size: 10px; white-space: nowrap;
+  opacity: 0; pointer-events: none; z-index: 50;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-card);
+}
+.tooltip:hover::after {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 12px; padding: 48px 24px;
+  background: var(--surface-glass);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.empty-state svg {
+  width: 40px; height: 40px; color: var(--accent-purple);
+  filter: drop-shadow(0 0 10px rgba(177, 60, 255, .5));
+}
+.empty-state h3 { margin: 0; font: 600 15px Manrope, sans-serif; color: var(--text-primary); }
+.empty-state p { margin: 0; font-size: 12px; color: var(--text-secondary); max-width: 320px; }
+
+/* ==========================================================================
+   PAGE LAYOUT
+   ========================================================================== */
+#view { max-width: 1450px; }
+
+@media (max-width: 1100px) {
+  #view { padding: 18px; }
+}
+@media (max-width: 800px) {
+  #view { padding: 14px; }
+}

@@ -1,0 +1,125 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: vyra
+      POSTGRES_USER: vyra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - vyra_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vyra -d vyra"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: ./server
+    command: ["node","migrate.js"]
+    environment:
+      DATABASE_URL: postgresql://vyra:${POSTGRES_PASSWORD}@db:5432/vyra
+      DATABASE_SSL: disable
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server","--appendonly","yes","--maxmemory-policy","noeviction"]
+    volumes:
+      - vyra_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  minio:
+    image: minio/minio:latest
+    command: ["server","/data","--console-address",":9001"]
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_ACCESS_KEY:?Set OBJECT_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${OBJECT_SECRET_KEY:?Set OBJECT_SECRET_KEY}
+    volumes:
+      - vyra_objectdata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  create-bucket:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh","-c"]
+    command: ["mc alias set vyra http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD && mc mb --ignore-existing vyra/vyra-media"]
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${OBJECT_SECRET_KEY}
+    restart: "no"
+  api:
+    build: ./server
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgresql://vyra:${POSTGRES_PASSWORD}@db:5432/vyra
+      DATABASE_SSL: disable
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8088}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?Set APP_ENCRYPTION_KEY}
+      DESKTOP_DOWNLOAD_URL: ${DESKTOP_DOWNLOAD_URL:-}
+      DESKTOP_VERSION: ${DESKTOP_VERSION:-}
+      DESKTOP_SHA256: ${DESKTOP_SHA256:-}
+      DESKTOP_SIZE_BYTES: ${DESKTOP_SIZE_BYTES:-}
+      SESSION_DAYS: 14
+      DB_POOL_SIZE: 20
+      REDIS_URL: redis://redis:6379
+      REDIS_REQUIRED: "true"
+      TIKTOK_INGEST_TOKEN: ${TIKTOK_INGEST_TOKEN:?Set TIKTOK_INGEST_TOKEN}
+      METRICS_TOKEN: ${METRICS_TOKEN:?Set METRICS_TOKEN}
+      MEMORY_WARN_MB: 400
+      EVENT_LOOP_WARN_MS: 250
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      OBJECT_BUCKET: vyra-media
+      OBJECT_REGION: eu-north-1
+      OBJECT_ENDPOINT: http://minio:9000
+      OBJECT_ACCESS_KEY: ${OBJECT_ACCESS_KEY}
+      OBJECT_SECRET_KEY: ${OBJECT_SECRET_KEY}
+      CDN_ORIGIN: ${CDN_ORIGIN:-}
+      MEDIA_MAX_MB: 100
+      MEDIA_SCAN_REQUIRED: "false"
+      MEDIA_SCAN_TOKEN: ${MEDIA_SCAN_TOKEN:?Set MEDIA_SCAN_TOKEN}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_MONTHLY: ${STRIPE_PRICE_MONTHLY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-VYRA <billing@example.com>}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      create-bucket:
+        condition: service_completed_successfully
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+  web:
+    image: caddy:2-alpine
+    ports:
+      - "8088:80"
+    volumes:
+      - ./:/srv:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+volumes:
+  vyra_pgdata:
+  vyra_redisdata:
+  vyra_objectdata:

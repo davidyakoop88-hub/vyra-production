@@ -1,0 +1,4 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),Support=require('../support');
+test('support tickets are categorized, sanitized and bounded',()=>{const out=Support.ticket({category:'technical',subject:'Overlay <bug>',message:'A detailed problem description\nwith steps'});assert.equal(out.category,'technical');assert.doesNotMatch(out.subject,/[<>]/);assert.match(out.message,/\n/);assert.throws(()=>Support.ticket({subject:'x',message:'short'}))});
+test('client errors remove URLs and have stable fingerprints',()=>{const a=Support.errorReport({message:'TypeError',source:'studio',stack:'at https://vyra.app/studio.js?token=secret'}),b=Support.errorReport({message:'TypeError',source:'studio',stack:'at https://other.example/file.js'});assert.doesNotMatch(a.stack,/secret|https/);assert.equal(a.fingerprint,b.fingerprint)});

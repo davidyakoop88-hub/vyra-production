@@ -1,0 +1,14 @@
+{
+  "name": "vyra-tiktok-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Connects to a real TikTok LIVE stream and forwards gift/follow/member/like/share/chat events into VYRA's local server (server.ps1) so Action & Event rules and widgets react to real activity instead of the demo feed.",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^2"
+  }
+}

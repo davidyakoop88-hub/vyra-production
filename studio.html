@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VYRA Studio</title>
+  <link rel="stylesheet" href="design-tokens.css?v=1">
+  <link rel="stylesheet" href="studio.css?v=20260714-5">
+  <link rel="stylesheet" href="design-system.css?v=1">
+  <link rel="stylesheet" href="sidebar-premium.css?v=1">
+  <link rel="stylesheet" href="auth-client.css?v=1">
+  <link rel="stylesheet" href="auth-security.css?v=1">
+  <link rel="stylesheet" href="support-client.css?v=1">
+  <link rel="stylesheet" href="cloud-sync.css?v=1">
+  <link rel="stylesheet" href="overlay-access.css?v=1">
+  <link rel="stylesheet" href="billing-client.css?v=1">
+  <script>if(new URLSearchParams(location.search).has('overlay'))document.documentElement.classList.add('overlay-output')</script>
+</head>
+<body>
+  <aside>
+    <div class="sidebar-head">
+      <a href="index.html" class="brand"><i>V</i><b>VYRA</b></a>
+      <button class="sidebar-collapse-toggle" type="button" title="Fäll ihop/ut menyn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </div>
+    <nav>
+      <div class="nav-section">
+        <span class="nav-section-label">Core</span>
+        <button class="active" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Översikt</span></button>
+        <button data-view="overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v4"/><path d="M8 21h8"/><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3Z"/></svg><span>Overlay</span></button>
+        <button data-view="editor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Layout</span></button>
+      </div>
+      <div class="nav-section">
+        <span class="nav-section-label">Automation</span>
+        <button data-view="packages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg><span>Vip-paket</span><b class="nav-badge nav-badge-pro">PRO</b></button>
+        <button data-extra="actions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg><span>Action &amp; Event</span><b class="nav-badge nav-badge-live">LIVE</b></button>
+        <button data-extra="liveControl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 12h4l2-5 4 10 2-5h4"/></svg><span>LIVE-kontroll</span><b class="nav-badge nav-badge-live">BETA</b></button>
+        <button data-extra="soundAlerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>Sound Alerts</span></button>
+        <button data-extra="chatbot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg><span>Chatbot</span><b class="nav-badge nav-badge-ai">AI</b></button>
+        <button data-view="flows"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M7 11v3a2 2 0 0 0 2 2h4"/><path d="M17 13v-3a2 2 0 0 0-2-2h-4"/></svg><span>Automationer</span></button>
+      </div>
+      <div class="nav-section">
+        <span class="nav-section-label">Media</span>
+        <button data-extra="spotify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="18" r="4"/><path d="M12 18V2l7 4"/></svg><span>Spotify</span></button>
+        <button data-view="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/></svg><span>Events</span></button>
+      </div>
+      <div class="nav-section">
+        <span class="nav-section-label">Insights</span>
+        <button data-view="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Analytics</span></button>
+      </div>
+    </nav>
+    <div class="aside-bottom">
+      <button class="sidebar-feedback-cta" data-extra="wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg><span>Önskemål</span></button>
+      <button data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Inställningar</span></button>
+      <div class="user"><i>AV</i><span><b id="userName">Streamer</b><small>Pro trial · 7 dagar</small></span></div>
+    </div>
+  </aside>
+  <main>
+    <header>
+      <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title">God kväll, Streamer</h1></div>
+      <div class="head-actions">
+        <div class="connection"><i></i><span>Demoläge</span></div>
+        <button id="openOverlay">Overlay ↗</button>
+        <button class="connect">Anslut TikTok</button>
+      </div>
+    </header>
+    <section id="view"></section>
+  </main>
+  <dialog id="connectModal">
+    <button class="x">×</button><i class="tiktok">♪</i>
+    <h2>Anslut TikTok LIVE</h2>
+    <p>Skriv användarnamnet som du använder när du går live.</p>
+    <label>Användarnamn<input id="tikUser" placeholder="@dittnamn"></label>
+    <button class="primary" id="connectNow">Anslut konto</button>
+    <small>Anslutningen körs i demoläge lokalt.</small>
+  </dialog>
+  <div class="toast"></div>
+  <script src="studio.js?v=20260714-3"></script>
+  <script src="auth-client.js?v=1"></script>
+  <script src="auth-security.js?v=1"></script>
+  <script src="cloud-sync.js?v=1"></script>
+  <script src="cloud-media.js?v=1"></script>
+  <script src="overlay-access.js?v=1"></script>
+  <script src="billing-client.js?v=1"></script>
+  <script src="extras.js?v=20260714-3"></script>
+  <script src="support-client.js?v=1"></script>
+  <script src="gifts-manifest.js?v=1"></script>
+  <script src="media.js?v=20260714-11"></script>
+  <script>
+    (function () {
+      var KEY = 'vyra-sidebar-collapsed';
+      function applyState(collapsed) {
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        var aside = document.querySelector('aside');
+        if (aside) aside.classList.toggle('collapsed', collapsed);
+      }
+      applyState(localStorage.getItem(KEY) === '1');
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.sidebar-collapse-toggle');
+        if (!btn) return;
+        var collapsed = !document.body.classList.contains('sidebar-collapsed');
+        localStorage.setItem(KEY, collapsed ? '1' : '0');
+        applyState(collapsed);
+      });
+    })();
+  </script>
+</body>
+</html>

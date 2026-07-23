@@ -1,0 +1,3 @@
+'use strict';
+function describe(userAgent=''){const ua=String(userAgent).slice(0,300);let browser='Okänd webbläsare',os='Okänd enhet';if(/Edg\//.test(ua))browser='Microsoft Edge';else if(/OPR\//.test(ua))browser='Opera';else if(/Chrome\//.test(ua))browser='Chrome';else if(/Firefox\//.test(ua))browser='Firefox';else if(/Safari\//.test(ua))browser='Safari';if(/Windows NT/.test(ua))os='Windows';else if(/Android/.test(ua))os='Android';else if(/iPhone|iPad/.test(ua))os='iPhone/iPad';else if(/Mac OS X/.test(ua))os='Mac';else if(/Linux/.test(ua))os='Linux';return{browser,os,label:`${browser} på ${os}`}}
+module.exports={describe};

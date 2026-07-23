@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recognition Adapter — dev demo</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0a0611;
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    color: #e9e4f2;
+  }
+  .demo-layout { display: flex; height: 100%; }
+  .demo-controls {
+    flex: 0 0 340px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-right: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-controls h1 { font-size: 15px; margin: 0 0 4px; }
+  .demo-controls p.sub { color: #a99dc4; margin: 0 0 12px; font-size: 11px; }
+  .demo-controls h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  button {
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .04);
+    color: #f3edff;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(255, 255, 255, .09); }
+  button.danger { border-color: rgba(255, 90, 110, .4); color: #ffb3bd; }
+  button.primary { border-color: rgba(177, 60, 255, .5); color: #e3c2ff; }
+  .demo-stage {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    background-image:
+      linear-gradient(45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2530 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2530 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-color: #17131f;
+  }
+  .demo-panels {
+    flex: 0 0 380px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-left: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-panels h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .demo-panels h2:first-child { margin-top: 0; }
+  pre {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    margin: 0;
+  }
+  #eventLog { max-height: 200px; }
+</style>
+</head>
+<body>
+  <div class="demo-layout">
+    <div class="demo-controls">
+      <h1>Recognition Adapter — dev demo</h1>
+      <p class="sub">Dev-only. Visar Roadmap Fas 3: en generisk, TikTok-fri "fake provider" som
+      ansluter/kopplar fran/skickar rå provider-events genom recognition-adapter.js, och denna
+      sidas EGEN oversattningskod (inte adapterns) som normaliserar envelopes och matar in dem i
+      Recognition Runtime — sa som en riktig plattformsadapter (t.ex. en framtida
+      tiktok-live-adapter.js) forvantas gora.</p>
+
+      <h2>Adapter</h2>
+      <div class="btn-row">
+        <button type="button" data-action="connect" class="primary">Connect</button>
+        <button type="button" data-action="disconnect">Disconnect</button>
+        <button type="button" data-action="unexpectedDisconnect" class="danger">Simulera oplanerad disconnect</button>
+        <button type="button" data-action="providerError" class="danger">Simulera provider-fel</button>
+      </div>
+
+      <h2>Fake provider — rå events</h2>
+      <div class="btn-row">
+        <button type="button" data-action="emitJoin">Join</button>
+        <button type="button" data-action="emitLike">Like</button>
+        <button type="button" data-action="emitFollow">Follow</button>
+        <button type="button" data-action="emitShare">Share</button>
+        <button type="button" data-action="emitGift">Gift</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="emitMalformed" class="danger">Skicka felformat event</button>
+      </div>
+
+      <h2>Runtime</h2>
+      <div class="btn-row">
+        <button type="button" data-action="runtimeTick">Tick +1s</button>
+        <button type="button" data-action="runtimeTickToEnd">Tick till presentationens slut</button>
+        <button type="button" data-action="runtimeClear" class="danger">Runtime Clear</button>
+      </div>
+    </div>
+
+    <div class="demo-stage" id="stage"></div>
+
+    <div class="demo-panels">
+      <h2>Adapter state</h2>
+      <pre id="panelAdapterState">-</pre>
+      <h2>Adapter stats</h2>
+      <pre id="panelAdapterStats">-</pre>
+      <h2>Runtime state</h2>
+      <pre id="panelRuntimeState">-</pre>
+      <h2>Senaste events</h2>
+      <pre id="eventLog">-</pre>
+    </div>
+  </div>
+
+  <script src="recognition-types.js"></script>
+  <script src="recognition-rules.js"></script>
+  <script src="recognition-normalizer.js"></script>
+  <script src="recognition-merge.js"></script>
+  <script src="recognition-queue.js"></script>
+  <script src="recognition-controller.js"></script>
+  <script src="recognition-card-mapper.js"></script>
+  <script src="recognition-card.js"></script>
+  <script src="recognition-runtime.js"></script>
+  <script src="recognition-adapter-types.js"></script>
+  <script src="recognition-adapter.js"></script>
+  <link rel="stylesheet" href="recognition-card.css">
+
+  <script>
+    (function () {
+      var simNow = 1000;
+      var recentEvents = [];
+
+      // ---- a purely generic, TikTok-free fake provider ---------------------------------
+      // This is the ONLY provider-specific code on this page, and it lives here (the demo),
+      // never inside recognition-adapter.js. A real platform adapter (e.g. a future
+      // tiktok-live-adapter.js) would replace this factory with real connection logic, but
+      // would still speak the exact same AdapterProviderImpl contract.
+      var providerContext = null;
+      window.VyraRecognitionAdapter.registerProvider('demo-fake-provider', function () {
+        return {
+          connect: function (context) { providerContext = context; },
+          disconnect: function () { providerContext = null; }
+        };
+      });
+
+      var adapter = window.VyraRecognitionAdapter.create('demo-fake-provider', {
+        reconnect: { enabled: false }
+      });
+
+      // ---- demo-only envelope -> NormalizedEvent translation ----------------------------
+      // This mapping is intentionally NOT part of recognition-adapter.js (which never
+      // interprets payload shape) — it demonstrates the integration pattern a real
+      // provider-specific normalizer (Phase 4) will implement.
+      function envelopeToNormalizedEvent(envelope) {
+        var payload = envelope.payload || {};
+        var actorId = payload.username || 'demo-actor';
+        var base = {
+          id: envelope.provider + '-' + envelope.connectionId + '-' + envelope.receivedAt + '-' + Math.random().toString(36).slice(2, 6),
+          actor: { id: actorId, username: actorId, displayName: payload.name || actorId, avatarUrl: null },
+          count: payload.count || 1,
+          coins: payload.coins || 0,
+          timestamp: envelope.receivedAt
+        };
+        switch (envelope.providerEvent) {
+          case 'join': return Object.assign({ kind: 'join', gift: null, mergeKey: 'join:' + actorId }, base);
+          case 'follow': return Object.assign({ kind: 'follow', gift: null, mergeKey: 'follow:' + actorId }, base);
+          case 'share': return Object.assign({ kind: 'share', gift: null, mergeKey: 'share:' + actorId }, base);
+          case 'like': return Object.assign({ kind: 'like', gift: null, mergeKey: 'like:' + actorId }, base);
+          case 'gift':
+            var gift = { id: payload.giftId || 'rose', name: payload.giftName || 'Rose', imageUrl: null };
+            return Object.assign({ kind: 'gift', gift: gift, mergeKey: 'gift:' + actorId + ':' + gift.id }, base);
+          default: return null; // unknown provider event types are simply not translated
+        }
+      }
+
+      function render() {
+        document.getElementById('panelAdapterState').textContent = JSON.stringify(adapter.getState(), null, 1);
+        document.getElementById('panelAdapterStats').textContent = JSON.stringify(adapter.getStats(), null, 1);
+        document.getElementById('panelRuntimeState').textContent = JSON.stringify(window.VyraRecognitionRuntime.getState(), null, 1);
+        document.getElementById('eventLog').textContent = recentEvents.slice(0, 14).join('\n');
+      }
+
+      function log(line) {
+        recentEvents.unshift(line);
+        if (recentEvents.length > 40) recentEvents.length = 40;
+      }
+
+      adapter.subscribe(function (n) {
+        log('[adapter] ' + n.timestamp + '  ' + n.type + (n.reason ? ' (' + n.reason + ')' : ''));
+        if (n.type === 'event' && n.envelope) {
+          var normalized = envelopeToNormalizedEvent(n.envelope);
+          if (normalized) {
+            var pushResult = window.VyraRecognitionRuntime.push(normalized, simNow);
+            log('  -> normaliserad, runtime.push() = ' + pushResult.status);
+          } else {
+            log('  -> okant providerEvent, ignoreras (translateras inte)');
+          }
+        }
+        render();
+      });
+
+      window.VyraRecognitionRuntime.subscribe(function (n) {
+        log('[runtime] ' + n.timestamp + '  ' + n.type + (n.reason ? ' (' + n.reason + ')' : ''));
+        render();
+      });
+
+      window.VyraRecognitionRuntime.mount('#stage');
+      window.VyraRecognitionRuntime.start();
+
+      function emit(kind, payload) {
+        if (!providerContext) { log('(inte ansluten — klicka Connect forst)'); render(); return; }
+        providerContext.emit(kind, payload, simNow);
+      }
+
+      var actions = {
+        connect: function () { adapter.connect(); },
+        disconnect: function () { adapter.disconnect(); },
+        unexpectedDisconnect: function () {
+          if (!providerContext) { log('(inte ansluten)'); render(); return; }
+          providerContext.reportUnexpectedDisconnect();
+        },
+        providerError: function () {
+          if (!providerContext) { log('(inte ansluten)'); render(); return; }
+          providerContext.reportError('simulerat providerfel');
+        },
+        emitJoin: function () { emit('join', { username: 'davidyakoop', name: 'David Yakoop' }); },
+        emitLike: function () { emit('like', { username: 'davidyakoop', name: 'David Yakoop', count: 5 }); },
+        emitFollow: function () { emit('follow', { username: 'davidyakoop', name: 'David Yakoop' }); },
+        emitShare: function () { emit('share', { username: 'davidyakoop', name: 'David Yakoop' }); },
+        emitGift: function () { emit('gift', { username: 'davidyakoop', name: 'David Yakoop', giftId: 'galaxy', giftName: 'Galaxy', coins: 500 }); },
+        emitMalformed: function () {
+          if (!providerContext) { log('(inte ansluten)'); render(); return; }
+          providerContext.emit('', { broken: true }); // deliberately malformed providerEvent
+        },
+        runtimeTick: function () { simNow += 1000; window.VyraRecognitionRuntime.tick(simNow); render(); },
+        runtimeTickToEnd: function () {
+          var state = window.VyraRecognitionRuntime.getState();
+          var current = state.controller && state.controller.current;
+          simNow = (current && typeof current.endsAt === 'number') ? current.endsAt : simNow + 50;
+          window.VyraRecognitionRuntime.tick(simNow);
+          render();
+        },
+        runtimeClear: function () { window.VyraRecognitionRuntime.clear(); render(); }
+      };
+
+      document.querySelectorAll('[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var action = actions[btn.dataset.action];
+          if (action) action();
+        });
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

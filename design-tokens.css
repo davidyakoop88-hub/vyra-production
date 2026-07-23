@@ -1,0 +1,61 @@
+/* VYRA Design Tokens — single source of truth for color/spacing/motion values.
+   Replaces the two conflicting :root blocks that used to live in studio.css (an old
+   pre-rebrand palette that was silently dead, plus the "violet rebrand" that won the
+   cascade) — now there is exactly one :root, and everything else derives from it.
+   Back-compat aliases at the bottom keep every existing var(--purple)/var(--panel)/etc.
+   reference across the whole codebase resolving correctly without editing every file. */
+
+:root {
+  /* Backgrounds */
+  --bg-app: #08050d;
+  --bg-app-2: #0d0715;
+  --bg-sidebar: #09040f;
+  --surface-1: #130b1c;
+  --surface-2: #1c1028;
+  --surface-glass: rgba(24, 12, 35, .70);
+
+  /* Borders */
+  --border-subtle: rgba(173, 91, 255, .20);
+  --border-active: rgba(190, 95, 255, .70);
+
+  /* Text */
+  --text-primary: #f7f2ff;
+  --text-secondary: #b8aac8;
+  --text-muted: #746982;
+
+  /* Accents */
+  --accent-purple: #b13cff;
+  --accent-violet: #8b3dff;
+  --accent-pink: #ff4da6;
+
+  /* Status */
+  --status-success: #65f0b5;
+  --status-warning: #e3ae4b;
+  --status-danger: #ff4d6a;
+
+  /* Elevation */
+  --shadow-card: 0 10px 30px rgba(3, 1, 4, .4);
+  --shadow-glow: 0 8px 28px rgba(151, 61, 255, .30);
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* Motion */
+  --transition-fast: 180ms ease;
+  --transition-normal: 240ms ease;
+
+  /* --- Back-compat aliases: every pre-existing var(--x) reference across
+     studio.css/toplike-studio.css/sidebar-premium.css/etc. keeps resolving. --- */
+  --bg: var(--bg-app);
+  --panel: var(--surface-1);
+  --line: var(--border-subtle);
+  --muted: var(--text-muted);
+  --purple: var(--accent-purple);
+  --green: var(--status-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --transition-fast: 0ms; --transition-normal: 0ms; }
+}

@@ -1,0 +1,7 @@
+#vyraChatbotHost{position:fixed;left:24px;bottom:7%;z-index:99998;display:flex;flex-direction:column;gap:8px;max-width:min(420px,80vw);pointer-events:none}
+.vyra-chatbot-bubble{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:14px 14px 14px 4px;background:#16091dee;border:1px solid #6a3aa0;box-shadow:0 10px 30px #0008;opacity:0;transform:translateY(14px) scale(.95);transition:.28s ease}
+.vyra-chatbot-bubble.show{opacity:1;transform:translateY(0) scale(1)}
+.vyra-chatbot-bubble .vcb-icon{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#b13cff,#ff3eaa);font-size:17px}
+.vyra-chatbot-bubble .vcb-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vyra-chatbot-bubble .vcb-body small{color:#d3a6ff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.vyra-chatbot-bubble .vcb-body span{color:#fff;font:600 15px/1.4 Inter,Arial,sans-serif;word-break:break-word}

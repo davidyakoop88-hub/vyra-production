@@ -1,0 +1,31 @@
+.frame-collection-note{display:block;margin:5px 0 12px;color:#9f8ba9;font-size:9px;line-height:1.45}.pro-frame-picker>div{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.pro-frame-picker button{min-height:96px;padding:7px 4px 8px;border-radius:11px;background:linear-gradient(145deg,rgba(31,17,38,.96),rgba(12,8,18,.96));transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.pro-frame-picker button:hover{transform:translateY(-2px);border-color:#ce63dc;box-shadow:0 10px 24px rgba(170,50,190,.18)}.pro-frame-picker button.active{border-color:#f0a8ff;box-shadow:0 0 0 1px rgba(240,168,255,.25),0 8px 24px rgba(204,74,220,.22)}.pro-frame-picker button img{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}.pro-frame-picker button b{font-size:8px;line-height:1.2;color:#eee6f2}
+
+/* Compact ranking rows: the rank belongs to the portrait, not the empty margin. */
+.vyra-toplike:not(.like-center) .toplike-row,
+.vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame){
+  grid-template-columns:23px 60px minmax(72px,1fr)!important;
+  column-gap:4px!important;
+  padding-left:4px!important;
+}
+.vyra-toplike:not(.like-center) .toplike-row>b{justify-self:end!important;margin-right:0!important;position:relative!important;z-index:5!important}
+.vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame,
+.vyra-toplike:not(.like-center) .toplike-row>img{justify-self:start!important;transform:none!important}
+.vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame{transform:none!important}
+.vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame>img:first-child{width:29px!important;height:29px!important;clip-path:circle(50% at 50% 50%)!important}
+.vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>span:not(.pro-avatar-frame),
+.vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>em{transform:none!important}
+
+/* Dense leaderboard rhythm, matching compact live ranking widgets. */
+.vyra-toplike:not(.like-center)>.toplike-list{gap:6px!important}
+.vyra-toplike:not(.like-center) .toplike-row{height:68px!important;padding-top:2px!important;padding-bottom:2px!important}
+.vyra-toplike:not(.like-center)>h3{margin-bottom:4px!important}
+
+/* Design 1 — Clean / left. Compact, transparent and OBS-friendly. */
+.vyra-toplike.like-clean{width:220px!important;max-width:220px!important;padding:4px 2px!important}
+.vyra-toplike.like-clean>h3{text-align:left!important;margin:0 0 4px 30px!important;font-size:10px!important;letter-spacing:2.4px!important}
+.vyra-toplike.like-clean>.toplike-list{gap:6px!important}
+.vyra-toplike.like-clean .toplike-row{width:max-content!important;min-width:168px!important;max-width:230px!important;height:68px!important;padding:1px 4px!important;background:transparent!important;border:0!important}
+.vyra-toplike.like-clean .toplike-row>b{width:20px!important;height:20px!important;border-radius:6px!important;font-size:9px!important}
+.vyra-toplike.like-clean .toplike-row>img{width:58px!important;height:58px!important}
+.vyra-toplike.like-clean .toplike-row strong{font-size:9px!important}
+.vyra-toplike.like-clean .toplike-row em{font-size:8px!important}

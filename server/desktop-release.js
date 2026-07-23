@@ -1,0 +1,4 @@
+'use strict';
+function safeVersion(value){return String(value||'').replace(/[^0-9A-Za-z.+-]/g,'').slice(0,40)}
+function release(env=process.env){const raw=String(env.DESKTOP_DOWNLOAD_URL||''),version=safeVersion(env.DESKTOP_VERSION),sha256=String(env.DESKTOP_SHA256||'').toLowerCase(),size=Number(env.DESKTOP_SIZE_BYTES||0);let url;try{url=new URL(raw);if(url.protocol!=='https:'||url.username||url.password)throw Error()}catch{throw Object.assign(new Error('Desktopversionen är inte publicerad ännu'),{status:503})}if(!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)||!/^[a-f0-9]{64}$/.test(sha256)||!Number.isSafeInteger(size)||size<1024)throw Object.assign(new Error('Desktopversionens metadata är ofullständig'),{status:503});return{url:url.toString(),version,sha256,sizeBytes:size,platform:'Windows 10/11',format:'EXE installer'}}
+module.exports={release,safeVersion};

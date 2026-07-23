@@ -1,0 +1,69 @@
+name: VYRA CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: vyra
+          POSTGRES_USER: vyra
+          POSTGRES_PASSWORD: ci-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U vyra -d vyra"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: server
+    env:
+      DATABASE_URL: postgresql://vyra:ci-password@127.0.0.1:5432/vyra
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: vyra
+      PGPASSWORD: ci-password
+      REDIS_URL: redis://127.0.0.1:6379
+      REDIS_REQUIRED: "true"
+      APP_ORIGIN: http://127.0.0.1:8080
+      TIKTOK_INGEST_TOKEN: ci-ingest-token-with-at-least-32-characters
+      METRICS_TOKEN: ci-metrics-token-with-at-least-32-characters
+      MEDIA_SCAN_TOKEN: ci-scanner-token-with-at-least-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Validate JavaScript syntax
+        run: find .. -maxdepth 2 -name '*.js' -not -path '*/node_modules/*' -print0 | xargs -0 -n1 node --check
+      - name: Apply database schema twice
+        run: npm run migrate && npm run migrate
+      - name: API readiness smoke test
+        run: |
+          node index.js > /tmp/vyra-ci.log 2>&1 &
+          pid=$!
+          trap 'kill -TERM "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/health/ready && break; sleep 1; done
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/health/live)" = 200
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/health/ready)" = 200
+          kill -TERM "$pid"
+          wait "$pid"
+      - name: Prove database backup and restore
+        working-directory: .
+        run: bash scripts/verify-backup-restore.sh

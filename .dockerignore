@@ -1,0 +1,12 @@
+.git
+.vyra-backups
+**/node_modules
+electron-app/dist
+*.zip
+*.exe
+*.rar
+.env
+.env.*
+!.env.production.example
+.deploy
+backups

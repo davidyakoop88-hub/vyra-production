@@ -1,0 +1,9 @@
+(function(root){
+  'use strict';
+  let input=null,busy=false;
+  function hex(buffer){return[...new Uint8Array(buffer)].map(byte=>byte.toString(16).padStart(2,'0')).join('')}
+  async function upload(file){const current=root.VyraCloudSync?.current?.(),workspace=current?.workspace;if(!workspace)throw Error('Cloud-synken måste vara ansluten');const sha256=hex(await crypto.subtle.digest('SHA-256',await file.arrayBuffer())),base=`/api/workspaces/${workspace.id}/media`,created=await root.VyraAuth.api(base,{method:'POST',body:JSON.stringify({originalName:file.name,contentType:file.type,size:file.size,sha256})});const response=await fetch(created.uploadUrl,{method:'PUT',headers:created.requiredHeaders,body:file});if(!response.ok)throw Error(`Objektlagringen svarade ${response.status}`);const complete=await root.VyraAuth.api(`${base}/${created.asset.id}/complete`,{method:'POST',body:'{}'});return complete.asset}
+  function picker(){if(input)return input;input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp,image/gif,audio/mpeg,audio/wav,audio/ogg,video/mp4,video/webm';input.hidden=true;document.body.append(input);input.onchange=async()=>{const file=input.files?.[0];input.value='';if(!file||busy)return;busy=true;root.toast?.('Kontrollerar och laddar upp '+file.name+'…');try{const asset=await upload(file);root.toast?.(asset.status==='ready'?'Media uppladdad säkert':'Media väntar på säkerhetsskanning');dispatchEvent(new CustomEvent('vyra-cloud-media-ready',{detail:{asset,file}}))}catch(error){root.toast?.(error.message)}finally{busy=false}};return input}
+  addEventListener('click',event=>{const button=event.target.closest?.('#uploadMedia');if(!button||!root.VyraCloudSync?.current?.()?.workspace)return;event.preventDefault();event.stopImmediatePropagation();picker().click()},true);
+  root.VyraCloudMedia={upload};
+})(typeof window!=='undefined'?window:globalThis);

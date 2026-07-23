@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Premium Widget — dev demo</title>
+<link rel="stylesheet" href="premium-widget-tokens.css">
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0a0611;
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    color: #e9e4f2;
+  }
+  .demo-layout { display: flex; height: 100%; }
+  .demo-controls {
+    flex: 0 0 360px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-right: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-controls h1 { font-size: 15px; margin: 0 0 4px; }
+  .demo-controls p.sub { color: #a99dc4; margin: 0 0 12px; font-size: 11px; }
+  .demo-controls h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  label { display: block; font-size: 11px; color: #cabfdb; margin: 8px 0 3px; }
+  select, input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .04);
+    color: #f3edff;
+    font-size: 12px;
+  }
+  .check-row { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
+  .check-row label { margin: 0; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  button {
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .04);
+    color: #f3edff;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(255, 255, 255, .09); }
+  button.primary { border-color: rgba(177, 60, 255, .5); color: #e3c2ff; }
+  button.danger { border-color: rgba(255, 90, 110, .4); color: #ffb3bd; }
+  .demo-stage {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    background-image:
+      linear-gradient(45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2530 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2530 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-color: #17131f;
+  }
+  .demo-panels {
+    flex: 0 0 360px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-left: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-panels h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .demo-panels h2:first-child { margin-top: 0; }
+  pre {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
+  }
+  #eventLog { max-height: 220px; }
+</style>
+</head>
+<body>
+  <div class="demo-layout">
+    <div class="demo-controls">
+      <h1>Premium Widget — dev demo</h1>
+      <p class="sub">Dev-only. Roadmap Fas 4: Crystal Halo / Royal Crown / Legendary Portal / Elite Minimal. Anvand webblasarens fonster-storlek (eller resize_window) for att verifiera 1080x1920 / 1920x1080 / 1080x1080 — safe-zone-varden i premium-widget-tokens.css ar vh/vw-baserade och maste testas mot en riktig viewport-storlek, inte en liten inre ram.</p>
+
+      <h2>Runtime</h2>
+      <div class="btn-row">
+        <button type="button" data-action="mount" class="primary">Mount</button>
+        <button type="button" data-action="destroy" class="danger">Destroy</button>
+      </div>
+
+      <h2>Modell</h2>
+      <label>Family</label>
+      <select id="fFamily">
+        <option value="crystal-halo">Crystal Halo</option>
+        <option value="royal-crown">Royal Crown</option>
+        <option value="legendary-portal">Legendary Portal</option>
+        <option value="elite-minimal">Elite Minimal</option>
+      </select>
+
+      <label>Tier</label>
+      <select id="fTier">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="legendary">Legendary</option>
+      </select>
+
+      <label>Profilbild</label>
+      <select id="fAvatar">
+        <option value="sample">Exempelbild</option>
+        <option value="missing">Saknas (fallback-initialer)</option>
+      </select>
+
+      <label>Gavobild</label>
+      <select id="fGift">
+        <option value="sample">Exempelbild</option>
+        <option value="missing">Saknas (fallback-glyf)</option>
+      </select>
+
+      <label>Namn</label>
+      <select id="fName">
+        <option value="short">Kort ("Ali")</option>
+        <option value="normal" selected>Normal ("David Yakoop")</option>
+        <option value="long">Langt ("Alexandria Christensen-Fitzgerald III")</option>
+        <option value="emoji">Emoji ("🔥VYRA_KING🔥")</option>
+        <option value="nonlatin">Icke-latinskt ("田中太郎 / محمد")</option>
+      </select>
+
+      <div class="check-row">
+        <input type="checkbox" id="fShowName" checked>
+        <label for="fShowName">Visa visningsnamn</label>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="fLowPerf">
+        <label for="fLowPerf">Low-performance mode</label>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="fReducedMotion">
+        <label for="fReducedMotion">Forced reduced-motion</label>
+      </div>
+
+      <h2>Presentation</h2>
+      <div class="btn-row">
+        <button type="button" data-action="show" class="primary">Show</button>
+        <button type="button" data-action="hide">Hide</button>
+        <button type="button" data-action="replay">Replay</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="stress">Stress: 100x snabb repeat</button>
+      </div>
+    </div>
+
+    <div class="demo-stage" id="stage"></div>
+
+    <div class="demo-panels">
+      <h2>State</h2>
+      <pre id="panelState">-</pre>
+      <h2>Senaste events</h2>
+      <pre id="eventLog">-</pre>
+    </div>
+  </div>
+
+  <script src="premium-widget-assets.js"></script>
+  <script src="premium-widget-core.js"></script>
+
+  <script>
+    (function () {
+      var recentEvents = [];
+      var activeId = 'demo-slot';
+
+      function svgDataUri(svg) { return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg); }
+      var SAMPLE_AVATAR = svgDataUri('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#7a4fff"/><circle cx="100" cy="78" r="46" fill="#fff"/><rect x="35" y="132" width="130" height="90" rx="45" fill="#fff"/></svg>');
+      var SAMPLE_GIFT = svgDataUri('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect x="20" y="90" width="160" height="100" rx="8" fill="#ffb703"/><rect x="10" y="60" width="180" height="35" rx="6" fill="#ffd166"/><rect x="95" y="60" width="10" height="130" fill="#ff8fa3"/><path d="M100 60 C80 20 40 30 45 55 C55 65 85 62 100 60Z" fill="#ff8fa3"/><path d="M100 60 C120 20 160 30 155 55 C145 65 115 62 100 60Z" fill="#ff8fa3"/></svg>');
+
+      var NAMES = {
+        short: 'Ali',
+        normal: 'David Yakoop',
+        long: 'Alexandria Christensen-Fitzgerald III',
+        emoji: '🔥VYRA_KING🔥',
+        nonlatin: '田中太郎 / محمد'
+      };
+
+      function $(id) { return document.getElementById(id); }
+
+      function log(line) {
+        recentEvents.unshift(line);
+        if (recentEvents.length > 40) recentEvents.length = 40;
+        $('eventLog').textContent = recentEvents.slice(0, 16).join('\n');
+      }
+
+      function renderState() {
+        $('panelState').textContent = JSON.stringify(window.VyraPremiumWidget.getState(), null, 1);
+      }
+
+      window.VyraPremiumWidget.subscribe(function (n) {
+        log(n.timestamp + '  ' + n.type + (n.id ? ' (' + n.id + ')' : '') + (n.reason ? ' [' + n.reason + ']' : ''));
+        renderState();
+      });
+
+      function buildModelFromControls(idOverride) {
+        var family = $('fFamily').value;
+        var tier = $('fTier').value;
+        var avatarUrl = $('fAvatar').value === 'sample' ? SAMPLE_AVATAR : null;
+        var giftImageUrl = $('fGift').value === 'sample' ? SAMPLE_GIFT : null;
+        var displayName = NAMES[$('fName').value] || NAMES.normal;
+        var showDisplayName = $('fShowName').checked;
+        return {
+          id: idOverride || activeId,
+          family: family,
+          tier: tier,
+          user: { id: 'demo-user', displayName: displayName, avatarUrl: avatarUrl },
+          gift: { imageUrl: giftImageUrl, amount: tier === 'legendary' ? 1 : (tier === 'small' ? 3 : 5), coins: tier === 'legendary' ? 5000 : (tier === 'small' ? 10 : 500) },
+          text: { title: '', subtitle: '', showDisplayName: showDisplayName, showGiftName: false }
+        };
+      }
+
+      function applyPerformanceMode() {
+        window.VyraPremiumWidget.setPerformanceMode($('fLowPerf').checked ? 'low' : 'high');
+      }
+
+      function applyReducedMotion() {
+        var root = document.querySelector('.vyra-pw-root');
+        if (root) root.classList.toggle('vyra-pw-force-reduced-motion', $('fReducedMotion').checked);
+      }
+
+      var actions = {
+        mount: function () {
+          var r = window.VyraPremiumWidget.mount('#stage');
+          log('mount() -> ' + JSON.stringify(r));
+          applyPerformanceMode();
+          applyReducedMotion();
+          renderState();
+        },
+        destroy: function () {
+          window.VyraPremiumWidget.destroy();
+          renderState();
+        },
+        show: function () {
+          var r = window.VyraPremiumWidget.show(buildModelFromControls());
+          activeId = r.id || activeId;
+          applyReducedMotion();
+          log('show() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        hide: function () {
+          var r = window.VyraPremiumWidget.hide(activeId, 'manual');
+          log('hide() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        replay: function () {
+          var r = window.VyraPremiumWidget.show(buildModelFromControls());
+          activeId = r.id || activeId;
+          applyReducedMotion();
+          log('replay show() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        stress: function () {
+          log('stress: 100x snabb show()-repeat pa samma id...');
+          var families = ['crystal-halo', 'royal-crown', 'legendary-portal', 'elite-minimal'];
+          for (var i = 0; i < 100; i++) {
+            var model = buildModelFromControls('stress-slot');
+            model.family = families[i % families.length];
+            model.timing = { enterMs: 20, holdMs: 20, exitMs: 20 };
+            window.VyraPremiumWidget.show(model);
+          }
+          var domCount = document.querySelectorAll('.vyra-pw-widget').length;
+          log('stress klar — .vyra-pw-widget DOM-noder just nu: ' + domCount);
+          renderState();
+        }
+      };
+
+      document.querySelectorAll('[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var action = actions[btn.dataset.action];
+          if (action) action();
+        });
+      });
+
+      $('fLowPerf').addEventListener('change', applyPerformanceMode);
+      $('fReducedMotion').addEventListener('change', applyReducedMotion);
+
+      actions.mount();
+    })();
+  </script>
+</body>
+</html>

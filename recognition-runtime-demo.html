@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recognition Runtime — dev demo</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0a0611;
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    color: #e9e4f2;
+  }
+  .demo-layout { display: flex; height: 100%; }
+  .demo-controls {
+    flex: 0 0 340px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-right: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-controls h1 { font-size: 15px; margin: 0 0 4px; }
+  .demo-controls p.sub { color: #a99dc4; margin: 0 0 12px; font-size: 11px; }
+  .demo-controls h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  button {
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .04);
+    color: #f3edff;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(255, 255, 255, .09); }
+  button.danger { border-color: rgba(255, 90, 110, .4); color: #ffb3bd; }
+  button.primary { border-color: rgba(177, 60, 255, .5); color: #e3c2ff; }
+  #simClock {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffd66b;
+    margin: 6px 0;
+  }
+  .demo-stage {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    background-image:
+      linear-gradient(45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2530 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2530 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-color: #17131f;
+  }
+  .demo-panels {
+    flex: 0 0 380px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-left: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-panels h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .demo-panels h2:first-child { margin-top: 0; }
+  pre {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    margin: 0;
+  }
+  #eventLog { max-height: 220px; }
+</style>
+</head>
+<body>
+  <div class="demo-layout">
+    <div class="demo-controls">
+      <h1>Recognition Runtime — dev demo</h1>
+      <p class="sub">Dev-only. Fristaende pipeline: Merge -> Queue -> Controller -> Card Mapper -> Card. Ingen TikTok, ingen vaggklocka — all tid styrs av knapparna nedan.</p>
+
+      <div id="simClock">t = 1000 ms</div>
+
+      <h2>Runtime</h2>
+      <div class="btn-row">
+        <button type="button" data-action="mount" class="primary">Mount</button>
+        <button type="button" data-action="start" class="primary">Start</button>
+        <button type="button" data-action="stop">Stop</button>
+        <button type="button" data-action="pause">Pause</button>
+        <button type="button" data-action="resume">Resume</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="tick100">Tick +100 ms</button>
+        <button type="button" data-action="tick1000">Tick +1 sekund</button>
+        <button type="button" data-action="tickToEnd">Tick till presentationens slut</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="flush">Flush Merge</button>
+        <button type="button" data-action="clear" class="danger">Clear</button>
+        <button type="button" data-action="destroy" class="danger">Destroy</button>
+      </div>
+
+      <h2>Events</h2>
+      <div class="btn-row">
+        <button type="button" data-action="join">Join</button>
+        <button type="button" data-action="like1">Like 1</button>
+        <button type="button" data-action="likeBurst10">Like burst 10</button>
+        <button type="button" data-action="likeBurst250">Like burst 250</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="share">Share</button>
+        <button type="button" data-action="follow">Follow</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="giftSmall">Small Gift</button>
+        <button type="button" data-action="giftMedium">Medium Gift</button>
+        <button type="button" data-action="giftLarge">Large Gift</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="mixed10">10 Mixed Events</button>
+        <button type="button" data-action="stress50">50 Stress Events</button>
+      </div>
+    </div>
+
+    <div class="demo-stage" id="stage"></div>
+
+    <div class="demo-panels">
+      <h2>Runtime state</h2>
+      <pre id="panelState">-</pre>
+      <h2>Merge stats</h2>
+      <pre id="panelMerge">-</pre>
+      <h2>Queue items</h2>
+      <pre id="panelQueue">-</pre>
+      <h2>Controller current</h2>
+      <pre id="panelController">-</pre>
+      <h2>Runtime stats</h2>
+      <pre id="panelStats">-</pre>
+      <h2>Senaste Runtime-events</h2>
+      <pre id="eventLog">-</pre>
+    </div>
+  </div>
+
+  <script src="recognition-types.js"></script>
+  <script src="recognition-rules.js"></script>
+  <script src="recognition-normalizer.js"></script>
+  <script src="recognition-merge.js"></script>
+  <script src="recognition-queue.js"></script>
+  <script src="recognition-controller.js"></script>
+  <script src="recognition-card-mapper.js"></script>
+  <script src="recognition-card.js"></script>
+  <script src="recognition-runtime.js"></script>
+  <link rel="stylesheet" href="recognition-card.css">
+
+  <script>
+    (function () {
+      var simNow = 1000;
+      var eventCounter = 0;
+      var recentEvents = [];
+
+      function nextId(prefix) {
+        eventCounter += 1;
+        return prefix + '-' + eventCounter;
+      }
+
+      function buildEvent(kind, overrides) {
+        overrides = overrides || {};
+        var actor = Object.assign({ id: 'demo-actor', username: 'davidyakoop', displayName: 'David Yakoop', avatarUrl: null }, overrides.actor || {});
+        var gift = overrides.gift === undefined ? null : overrides.gift;
+        var mergeKey = kind === 'gift' ? ('gift:' + actor.id + ':' + (gift ? gift.id : 'unknown')) : (kind + ':' + actor.id);
+        return {
+          id: overrides.id || nextId(kind),
+          kind: kind,
+          actor: actor,
+          gift: gift,
+          count: overrides.count !== undefined ? overrides.count : 1,
+          coins: overrides.coins !== undefined ? overrides.coins : 0,
+          timestamp: overrides.timestamp !== undefined ? overrides.timestamp : simNow,
+          mergeKey: mergeKey
+        };
+      }
+
+      function render() {
+        document.getElementById('simClock').textContent = 't = ' + simNow + ' ms';
+        var state = window.VyraRecognitionRuntime.getState();
+        document.getElementById('panelState').textContent = JSON.stringify({ status: state.status, mounted: state.mounted, running: state.running, paused: state.paused, destroyed: state.destroyed }, null, 1);
+        document.getElementById('panelMerge').textContent = JSON.stringify(state.merge, null, 1);
+        try {
+          document.getElementById('panelQueue').textContent = JSON.stringify(window.VyraRecognitionQueue.getItems().map(function (item) { return { kind: item.event.kind, priority: item.priority, sequence: item.sequence }; }), null, 1);
+        } catch (err) { document.getElementById('panelQueue').textContent = 'n/a'; }
+        document.getElementById('panelController').textContent = JSON.stringify(state.controller.current, null, 1);
+        document.getElementById('panelStats').textContent = JSON.stringify(window.VyraRecognitionRuntime.getStats(), null, 1);
+        document.getElementById('eventLog').textContent = recentEvents.slice(0, 12).join('\n');
+      }
+
+      window.VyraRecognitionRuntime.subscribe(function (event) {
+        var line = event.timestamp + '  ' + event.type + (event.reason ? ' (' + event.reason + ')' : '');
+        recentEvents.unshift(line);
+        if (recentEvents.length > 40) recentEvents.length = 40;
+      });
+
+      function pushEvent(kind, overrides) {
+        var event = buildEvent(kind, overrides);
+        var result = window.VyraRecognitionRuntime.push(event, simNow);
+        recentEvents.unshift(simNow + '  push(' + kind + ') -> ' + result.status);
+        render();
+      }
+
+      var actions = {
+        mount: function () {
+          var r = window.VyraRecognitionRuntime.mount('#stage');
+          recentEvents.unshift(simNow + '  mount() -> ' + JSON.stringify(r));
+          render();
+        },
+        start: function () {
+          window.VyraRecognitionRuntime.start();
+          render();
+        },
+        stop: function () {
+          window.VyraRecognitionRuntime.stop();
+          render();
+        },
+        pause: function () {
+          window.VyraRecognitionRuntime.pause();
+          render();
+        },
+        resume: function () {
+          window.VyraRecognitionRuntime.resume();
+          render();
+        },
+        tick100: function () {
+          simNow += 100;
+          window.VyraRecognitionRuntime.tick(simNow);
+          render();
+        },
+        tick1000: function () {
+          simNow += 1000;
+          window.VyraRecognitionRuntime.tick(simNow);
+          render();
+        },
+        tickToEnd: function () {
+          var state = window.VyraRecognitionRuntime.getState();
+          var current = state.controller && state.controller.current;
+          if (current && typeof current.endsAt === 'number') {
+            simNow = current.endsAt;
+          } else {
+            simNow += 50;
+            recentEvents.unshift(simNow + '  (ingen aktiv presentation — tickar +50ms istallet)');
+          }
+          window.VyraRecognitionRuntime.tick(simNow);
+          render();
+        },
+        flush: function () {
+          var result = window.VyraRecognitionRuntime.flush(simNow);
+          recentEvents.unshift(simNow + '  flush() -> ' + JSON.stringify(result));
+          render();
+        },
+        clear: function () {
+          window.VyraRecognitionRuntime.clear();
+          render();
+        },
+        destroy: function () {
+          window.VyraRecognitionRuntime.destroy();
+          render();
+        },
+        join: function () { pushEvent('join'); },
+        like1: function () { pushEvent('like', { count: 1 }); },
+        likeBurst10: function () {
+          var startNow = simNow;
+          for (var i = 0; i < 10; i++) {
+            pushEvent('like', { actor: { id: 'burst-actor-10' }, count: 1, timestamp: startNow + i });
+          }
+          simNow = startNow + 9;
+          recentEvents.unshift(simNow + '  like burst (10) pushed — avancera tid > 1500ms och Flush/Tick for att se aggregatet');
+          render();
+        },
+        likeBurst250: function () {
+          var startNow = simNow;
+          for (var i = 0; i < 250; i++) {
+            pushEvent('like', { actor: { id: 'burst-actor-250' }, count: 1, timestamp: startNow + i });
+          }
+          simNow = startNow + 249;
+          recentEvents.unshift(simNow + '  like burst (250) pushed — avancera tid > 1500ms och Flush/Tick for att se aggregatet');
+          render();
+        },
+        share: function () { pushEvent('share', { count: 3 }); },
+        follow: function () { pushEvent('follow'); },
+        giftSmall: function () { pushEvent('gift', { actor: { id: 'gifter-small' }, gift: { id: 'rose', name: 'Rose', imageUrl: null }, coins: 10, count: 1 }); },
+        giftMedium: function () { pushEvent('gift', { actor: { id: 'gifter-medium' }, gift: { id: 'galaxy', name: 'Galaxy', imageUrl: null }, coins: 500, count: 2 }); },
+        giftLarge: function () { pushEvent('gift', { actor: { id: 'gifter-large' }, gift: { id: 'universe', name: 'Universe', imageUrl: null }, coins: 5000, count: 1 }); },
+        mixed10: function () {
+          pushEvent('join', { actor: { id: 'mixed-join' } });
+          pushEvent('like', { actor: { id: 'mixed-like-1' }, count: 4 });
+          pushEvent('follow', { actor: { id: 'mixed-follow' } });
+          pushEvent('share', { actor: { id: 'mixed-share-1' }, count: 2 });
+          pushEvent('gift', { actor: { id: 'mixed-gift-small' }, gift: { id: 'rose', name: 'Rose', imageUrl: null }, coins: 10 });
+          pushEvent('gift', { actor: { id: 'mixed-gift-medium' }, gift: { id: 'galaxy', name: 'Galaxy', imageUrl: null }, coins: 500 });
+          pushEvent('gift', { actor: { id: 'mixed-gift-large' }, gift: { id: 'universe', name: 'Universe', imageUrl: null }, coins: 5000 });
+          pushEvent('like', { actor: { id: 'mixed-like-2' }, count: 120 });
+          pushEvent('share', { actor: { id: 'mixed-share-2' } });
+          pushEvent('follow', { actor: { id: 'mixed-follow-2' } });
+          recentEvents.unshift(simNow + '  10 mixed events pushed — Large Gift bor ligga forst i kon (hogst prioritet)');
+          render();
+        },
+        stress50: function () {
+          var kinds = ['join', 'like', 'follow', 'share', 'gift'];
+          for (var i = 0; i < 50; i++) {
+            var kind = kinds[i % kinds.length];
+            var overrides = { actor: { id: 'stress-actor-' + i } };
+            if (kind === 'like') overrides.count = 1 + (i % 20);
+            if (kind === 'gift') { overrides.gift = { id: 'g' + i, name: 'Gift ' + i, imageUrl: null }; overrides.coins = (i * 37) % 6000; }
+            pushEvent(kind, overrides);
+          }
+          recentEvents.unshift(simNow + '  50 stress events pushed');
+          render();
+        }
+      };
+
+      document.querySelectorAll('[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var action = actions[btn.dataset.action];
+          if (action) action();
+        });
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

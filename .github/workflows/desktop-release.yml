@@ -1,0 +1,86 @@
+name: VYRA Windows release
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: electron-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: electron-app/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - name: Match app version to release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          npm version $version --no-git-tag-version
+      - name: Configure production update API
+        shell: pwsh
+        env:
+          VYRA_UPDATE_API_ORIGIN: ${{ vars.VYRA_UPDATE_API_ORIGIN }}
+        run: |
+          if (-not $env:VYRA_UPDATE_API_ORIGIN -or -not $env:VYRA_UPDATE_API_ORIGIN.StartsWith('https://')) {
+            throw 'Repository variable VYRA_UPDATE_API_ORIGIN must be a production HTTPS origin.'
+          }
+          @{ apiOrigin = $env:VYRA_UPDATE_API_ORIGIN.TrimEnd('/'); channel = 'stable' } |
+            ConvertTo-Json | Set-Content 'update-config.json' -Encoding utf8
+      - run: npm test
+      - name: Build NSIS installer
+        run: npm run build -- --win nsis --x64
+      - name: Optional Authenticode signing
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if ($env:WINDOWS_CERTIFICATE_BASE64) {
+            $certPath = Join-Path $env:RUNNER_TEMP 'vyra-signing.pfx'
+            [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64))
+            $secure = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+            $cert = Get-PfxCertificate -FilePath $certPath -Password $secure
+            Set-AuthenticodeSignature -FilePath 'dist2/VYRA-Setup.exe' -Certificate $cert -TimestampServer 'http://timestamp.digicert.com' -HashAlgorithm SHA256
+            Remove-Item $certPath -Force
+          } elseif ('${{ github.ref }}'.StartsWith('refs/tags/v')) {
+            throw 'Public releases require WINDOWS_CERTIFICATE_BASE64 and WINDOWS_CERTIFICATE_PASSWORD.'
+          } else {
+            Write-Warning 'Unsigned development artifact; it cannot be published as a tagged release.'
+          }
+      - name: Verify Authenticode signature
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $signature = Get-AuthenticodeSignature 'dist2/VYRA-Setup.exe'
+          if ($signature.Status -ne 'Valid') { throw "Invalid Authenticode signature: $($signature.Status)" }
+      - name: Create checksum and release metadata
+        shell: pwsh
+        run: |
+          $file = Get-Item 'dist2/VYRA-Setup.exe'
+          $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  VYRA-Setup.exe" | Set-Content 'dist2/VYRA-Setup.exe.sha256' -Encoding ascii
+          @{ version = '${{ github.ref_name }}'.TrimStart('v'); sizeBytes = $file.Length; sha256 = $hash; platform = 'windows-x64' } | ConvertTo-Json | Set-Content 'dist2/latest.json' -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VYRA-Windows-Installer
+          path: |
+            electron-app/dist2/VYRA-Setup.exe
+            electron-app/dist2/VYRA-Setup.exe.sha256
+            electron-app/dist2/latest.json
+          if-no-files-found: error
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist2/VYRA-Setup.exe dist2/VYRA-Setup.exe.sha256 dist2/latest.json --title "VYRA ${{ github.ref_name }}" --generate-notes --verify-tag

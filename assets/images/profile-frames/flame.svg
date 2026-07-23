@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff7a1a"/>
+      <stop offset="1" stop-color="#ffdd55"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="78" fill="none" stroke="url(#g)" stroke-width="6" stroke-opacity="0.5"/>
+  <g fill="url(#g)">
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(30 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(60 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(90 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(120 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(150 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(180 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(210 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(240 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(270 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(300 100 100)"/>
+    <path d="M100 6 Q108 20 103 32 Q100 38 97 32 Q92 20 100 6Z" transform="rotate(330 100 100)"/>
+  </g>
+</svg>

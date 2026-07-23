@@ -1,0 +1,18 @@
+:80 {
+  encode zstd gzip
+  @api path /api/* /health/*
+  reverse_proxy @api api:8080 {
+    lb_policy least_conn
+    health_uri /health/ready
+    health_interval 10s
+  }
+  root * /srv
+  try_files {path} /index.html
+  file_server
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy no-referrer
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    -Server
+  }
+}

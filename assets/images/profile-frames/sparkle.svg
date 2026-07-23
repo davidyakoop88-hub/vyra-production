@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5f5f5"/>
+      <stop offset="1" stop-color="#c0c0d0"/>
+    </linearGradient>
+    <path id="star2" d="M0,-7 L1.6,-1.6 L7,0 L1.6,1.6 L0,7 L-1.6,1.6 L-7,0 L-1.6,-1.6 Z"/>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="none" stroke="url(#g)" stroke-width="2" stroke-opacity="0.4"/>
+  <use href="#star2" x="100" y="16" fill="url(#g)"/>
+  <use href="#star2" x="160" y="40" fill="url(#g)"/>
+  <use href="#star2" x="184" y="100" fill="url(#g)"/>
+  <use href="#star2" x="160" y="160" fill="url(#g)"/>
+  <use href="#star2" x="100" y="184" fill="url(#g)"/>
+  <use href="#star2" x="40" y="160" fill="url(#g)"/>
+  <use href="#star2" x="16" y="100" fill="url(#g)"/>
+  <use href="#star2" x="40" y="40" fill="url(#g)"/>
+</svg>

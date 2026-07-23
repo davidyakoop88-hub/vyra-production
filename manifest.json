@@ -1,0 +1,24 @@
+{
+  "id": "royal-blue",
+  "name": "Royal Blue",
+  "version": 1,
+  "placeholder": true,
+  "durationMs": 6000,
+  "layers": {
+    "x2-main": "x2-main.png",
+    "x3-main": "x3-main.png",
+    "tap-main": "tap-main.png",
+    "glove-main": "glove-main.png",
+    "platform": "platform.png",
+    "smoke": "smoke.png",
+    "diamonds": "diamonds.png",
+    "hearts": "hearts.png",
+    "lightning": "lightning.png",
+    "particles": "particles.png"
+  },
+  "layout": {
+    "mainWidth": 0.62,
+    "platformWidth": 0.7,
+    "bottom": 0.03
+  }
+}

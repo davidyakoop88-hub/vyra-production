@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1a4d"/>
+      <stop offset="1" stop-color="#ffd76a"/>
+    </linearGradient>
+    <path id="star1" d="M0,-8 L2,-2 L8,0 L2,2 L0,8 L-2,2 L-8,0 L-2,-2 Z"/>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#1a1a4d" stroke-width="7"/>
+  <use href="#star1" x="100" y="20" fill="url(#g)"/>
+  <use href="#star1" x="176" y="75" fill="url(#g)"/>
+  <use href="#star1" x="147" y="165" fill="url(#g)"/>
+  <use href="#star1" x="53" y="165" fill="url(#g)"/>
+  <use href="#star1" x="24" y="75" fill="url(#g)"/>
+</svg>

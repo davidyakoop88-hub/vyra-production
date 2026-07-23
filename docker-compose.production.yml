@@ -1,0 +1,53 @@
+services:
+  migrate:
+    image: ${VYRA_API_IMAGE:?Set immutable VYRA_API_IMAGE}
+    command: ["node","migrate.js"]
+    env_file: .env.production
+    restart: "no"
+  api:
+    image: ${VYRA_API_IMAGE:?Set immutable VYRA_API_IMAGE}
+    env_file: .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD","wget","-qO-","http://127.0.0.1:8080/health/ready"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+  web:
+    image: ${VYRA_WEB_IMAGE:?Set immutable VYRA_WEB_IMAGE}
+    environment:
+      VYRA_DOMAIN: ${VYRA_DOMAIN:?Set VYRA_DOMAIN}
+      VYRA_API_UPSTREAM: api:8080
+    ports: ["80:80","443:443","443:443/udp"]
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+volumes:
+  caddy_data:
+  caddy_config:

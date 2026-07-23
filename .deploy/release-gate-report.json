@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-23T11:49:13.447Z",
+  "releaseReady": false,
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "blocked": 5
+  },
+  "checks": [
+    {
+      "id": "javascript-syntax",
+      "status": "pass",
+      "detail": "All JavaScript files parse."
+    },
+    {
+      "id": "web-assets-tests",
+      "status": "pass",
+      "detail": "Browser entry points and local assets passed.",
+      "command": "cd . && /opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --test scripts/test/*.test.js"
+    },
+    {
+      "id": "server-tests",
+      "status": "pass",
+      "detail": "Server test suite passed.",
+      "command": "cd server && npm test"
+    },
+    {
+      "id": "desktop-tests",
+      "status": "pass",
+      "detail": "Desktop updater tests passed.",
+      "command": "cd electron-app && npm test"
+    },
+    {
+      "id": "tiktok-normalizer-tests",
+      "status": "pass",
+      "detail": "TikTok event normalization tests passed.",
+      "command": "cd tiktok-bridge && /opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --test test/normalizer.test.js"
+    },
+    {
+      "id": "server-dependency-audit",
+      "status": "pass",
+      "detail": "No high or critical production dependency vulnerability.",
+      "command": "cd server && npm audit --omit=dev --audit-level=high"
+    },
+    {
+      "id": "public-artifact",
+      "status": "pass",
+      "detail": "Required browser assets exist and internal trees are excluded."
+    },
+    {
+      "id": "production-secrets",
+      "status": "blocked",
+      "detail": "APP_ORIGIN, DATABASE_URL and REDIS_URL are supplied by the production secret manager."
+    },
+    {
+      "id": "staging-readiness-and-load",
+      "status": "blocked",
+      "detail": "Requires VYRA_BASE_URL for the staging deployment."
+    },
+    {
+      "id": "stripe-lifecycle",
+      "status": "blocked",
+      "detail": "Requires Stripe staging Test Clock: trial, renewal, failed payment, cancellation and resume."
+    },
+    {
+      "id": "obs-tiktok-live",
+      "status": "blocked",
+      "detail": "Requires a real OBS/TikTok LIVE Studio session for transparency, media and live events."
+    },
+    {
+      "id": "signed-windows-installer",
+      "status": "blocked",
+      "detail": "Requires the Windows signing certificate and a tagged CI release."
+    }
+  ]
+}

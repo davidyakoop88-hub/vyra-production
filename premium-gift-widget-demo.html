@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Premium Gift Widget — dev demo</title>
+<link rel="stylesheet" href="premium-widget-tokens.css">
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #0a0611;
+    font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    color: #e9e4f2;
+  }
+  .demo-layout { display: flex; height: 100%; }
+  .demo-controls {
+    flex: 0 0 340px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-right: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-controls h1 { font-size: 15px; margin: 0 0 4px; }
+  .demo-controls p.sub { color: #a99dc4; margin: 0 0 12px; font-size: 11px; }
+  .demo-controls h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  button {
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .04);
+    color: #f3edff;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(255, 255, 255, .09); }
+  button.primary { border-color: rgba(177, 60, 255, .5); color: #e3c2ff; }
+  button.danger { border-color: rgba(255, 90, 110, .4); color: #ffb3bd; }
+  select { padding: 5px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color: #f3edff; font-size: 12px; }
+  .demo-stage {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    background-image:
+      linear-gradient(45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2530 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2530 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2530 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-color: #17131f;
+  }
+  .demo-panels {
+    flex: 0 0 380px;
+    padding: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-left: 1px solid rgba(255, 255, 255, .08);
+  }
+  .demo-panels h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #a99dc4; margin: 14px 0 6px; }
+  .demo-panels h2:first-child { margin-top: 0; }
+  pre {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 180px;
+    overflow-y: auto;
+    margin: 0;
+  }
+  #eventLog { max-height: 220px; }
+</style>
+</head>
+<body>
+  <div class="demo-layout">
+    <div class="demo-controls">
+      <h1>Premium Gift Widget — dev demo</h1>
+      <p class="sub">Dev-only. Roadmap Fas 5. Bygger pa Fas 4:s window.VyraPremiumWidget — denna sida ager BARA prioritering/kö/streak-logik, ingen egen rendering.</p>
+
+      <h2>Runtime</h2>
+      <div class="btn-row">
+        <button type="button" data-action="mount" class="primary">Mount</button>
+        <button type="button" data-action="destroy" class="danger">Destroy</button>
+      </div>
+
+      <h2>Gavor per tier</h2>
+      <div class="btn-row">
+        <button type="button" data-action="giftSmall">Small Gift</button>
+        <button type="button" data-action="giftMedium">Medium Gift</button>
+        <button type="button" data-action="giftLarge">Large Gift</button>
+        <button type="button" data-action="giftLegendary">Legendary Gift</button>
+      </div>
+
+      <h2>Streak / repeat</h2>
+      <div class="btn-row">
+        <button type="button" data-action="repeatGift">Repeat Gift (samma streakId)</button>
+        <button type="button" data-action="streakUpdate">Streak Update x5</button>
+      </div>
+
+      <h2>Overrides / edge cases</h2>
+      <div class="btn-row">
+        <label style="font-size:11px;color:#a99dc4;">Family override:
+          <select id="familyOverride">
+            <option value="">(standard)</option>
+            <option value="crystal-halo">Crystal Halo</option>
+            <option value="royal-crown">Royal Crown</option>
+            <option value="legendary-portal">Legendary Portal</option>
+            <option value="elite-minimal">Elite Minimal</option>
+          </select>
+        </label>
+      </div>
+      <div class="btn-row">
+        <button type="button" data-action="missingAvatar">Saknad profilbild</button>
+        <button type="button" data-action="missingGiftImage">Saknad gavobild</button>
+        <button type="button" data-action="longName">Langt namn</button>
+        <button type="button" data-action="malformed">Felformad modell</button>
+      </div>
+
+      <h2>Stresstest</h2>
+      <div class="btn-row">
+        <button type="button" data-action="stress500">500 blandade gavor</button>
+      </div>
+
+      <h2>Lifecycle</h2>
+      <div class="btn-row">
+        <button type="button" data-action="completeActive">Complete</button>
+        <button type="button" data-action="skipActive">Skip</button>
+        <button type="button" data-action="clearAll" class="danger">Clear</button>
+      </div>
+    </div>
+
+    <div class="demo-stage" id="stage"></div>
+
+    <div class="demo-panels">
+      <h2>State</h2>
+      <pre id="panelState">-</pre>
+      <h2>Stats</h2>
+      <pre id="panelStats">-</pre>
+      <h2>Senaste events</h2>
+      <pre id="eventLog">-</pre>
+    </div>
+  </div>
+
+  <script src="premium-widget-assets.js"></script>
+  <script src="premium-widget-core.js"></script>
+  <script src="premium-gift-widget.js"></script>
+
+  <script>
+    (function () {
+      var recentEvents = [];
+      var eventCounter = 0;
+      var currentActiveId = null;
+
+      function svgDataUri(svg) { return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg); }
+      var SAMPLE_AVATAR = svgDataUri('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#7a4fff"/><circle cx="100" cy="78" r="46" fill="#fff"/><rect x="35" y="132" width="130" height="90" rx="45" fill="#fff"/></svg>');
+      var SAMPLE_GIFT = svgDataUri('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect x="20" y="90" width="160" height="100" rx="8" fill="#ffb703"/><rect x="10" y="60" width="180" height="35" rx="6" fill="#ffd166"/></svg>');
+
+      function $(id) { return document.getElementById(id); }
+
+      function log(line) {
+        recentEvents.unshift(line);
+        if (recentEvents.length > 40) recentEvents.length = 40;
+        $('eventLog').textContent = recentEvents.slice(0, 16).join('\n');
+      }
+
+      function renderState() {
+        $('panelState').textContent = JSON.stringify(window.VyraPremiumGiftWidget.getState(), null, 1);
+        $('panelStats').textContent = JSON.stringify(window.VyraPremiumGiftWidget.getStats(), null, 1);
+      }
+
+      window.VyraPremiumGiftWidget.subscribe(function (n) {
+        log(n.timestamp + '  ' + n.type + (n.id ? ' (' + n.id + ')' : '') + (n.reason ? ' [' + n.reason + ']' : ''));
+        if (n.type === 'show' || n.type === 'preempt') currentActiveId = n.id;
+        renderState();
+      });
+
+      function nextId(prefix) { eventCounter += 1; return prefix + '-' + eventCounter; }
+
+      function buildGiftModel(tier, overrides) {
+        overrides = overrides || {};
+        var familyOverride = $('familyOverride').value || undefined;
+        return Object.assign({
+          id: nextId('gift'),
+          eventId: nextId('evt'),
+          timestamp: Date.now(),
+          user: Object.assign({ id: 'u1', displayName: 'David Yakoop', avatarUrl: SAMPLE_AVATAR }, overrides.user || {}),
+          gift: Object.assign({ id: 'g1', imageUrl: SAMPLE_GIFT, amount: 1, coins: { small: 10, medium: 500, large: 2000, legendary: 8000 }[tier], repeatCount: 1, streakId: null }, overrides.gift || {}),
+          presentation: Object.assign({ tier: tier, family: familyOverride, showDisplayName: true, showGiftName: false, title: '', subtitle: '', durationMs: null, intensity: 'normal' }, overrides.presentation || {}),
+          accessibility: {}
+        }, overrides.top || {});
+      }
+
+      var actions = {
+        mount: function () {
+          window.VyraPremiumWidget.mount('#stage');
+          var r = window.VyraPremiumGiftWidget.mount('#stage');
+          log('mount() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        destroy: function () {
+          window.VyraPremiumGiftWidget.destroy();
+          renderState();
+        },
+        giftSmall: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('small')); log('show(small) -> ' + JSON.stringify(r)); renderState(); },
+        giftMedium: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('medium')); log('show(medium) -> ' + JSON.stringify(r)); renderState(); },
+        giftLarge: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('large')); log('show(large) -> ' + JSON.stringify(r)); renderState(); },
+        giftLegendary: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('legendary')); log('show(legendary) -> ' + JSON.stringify(r)); renderState(); },
+        repeatGift: function () {
+          var r = window.VyraPremiumGiftWidget.show(buildGiftModel('medium', { gift: { streakId: 'streak-demo', repeatCount: 1 } }));
+          log('repeatGift show() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        streakUpdate: function () {
+          var r = window.VyraPremiumGiftWidget.show(buildGiftModel('medium', { gift: { streakId: 'streak-demo', repeatCount: 5, coins: 2500 } }));
+          log('streakUpdate x5 -> ' + JSON.stringify(r));
+          renderState();
+        },
+        missingAvatar: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('medium', { user: { avatarUrl: null } })); log('missingAvatar -> ' + JSON.stringify(r)); renderState(); },
+        missingGiftImage: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('medium', { gift: { imageUrl: null } })); log('missingGiftImage -> ' + JSON.stringify(r)); renderState(); },
+        longName: function () { var r = window.VyraPremiumGiftWidget.show(buildGiftModel('large', { user: { displayName: 'Alexandria Christensen-Fitzgerald III 🔥VYRA🔥' } })); log('longName -> ' + JSON.stringify(r)); renderState(); },
+        malformed: function () {
+          var r = window.VyraPremiumGiftWidget.show({ presentation: { tier: 'not-a-real-tier' } });
+          log('malformed -> ' + JSON.stringify(r));
+          renderState();
+        },
+        stress500: function () {
+          log('stress: 500 blandade gavor...');
+          var tiers = ['small', 'medium', 'large', 'legendary'];
+          for (var i = 0; i < 500; i++) {
+            window.VyraPremiumGiftWidget.show(buildGiftModel(tiers[i % 4], { presentation: { durationMs: 15 } }));
+          }
+          log('stress klar — state: ' + JSON.stringify(window.VyraPremiumGiftWidget.getState()));
+          renderState();
+        },
+        completeActive: function () {
+          var state = window.VyraPremiumGiftWidget.getState();
+          if (!state.active) { log('(ingen aktiv presentation)'); return; }
+          var r = window.VyraPremiumGiftWidget.complete(state.active.id);
+          log('complete() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        skipActive: function () {
+          var state = window.VyraPremiumGiftWidget.getState();
+          if (!state.active) { log('(ingen aktiv presentation)'); return; }
+          var r = window.VyraPremiumGiftWidget.skip(state.active.id, 'manual');
+          log('skip() -> ' + JSON.stringify(r));
+          renderState();
+        },
+        clearAll: function () {
+          window.VyraPremiumGiftWidget.clear();
+          renderState();
+        }
+      };
+
+      document.querySelectorAll('[data-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var action = actions[btn.dataset.action];
+          if (action) action();
+        });
+      });
+
+      actions.mount();
+    })();
+  </script>
+</body>
+</html>

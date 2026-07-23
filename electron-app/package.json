@@ -1,0 +1,76 @@
+{
+  "name": "vyra-desktop",
+  "version": "1.0.0",
+  "description": "VYRA — TikTok LIVE overlay studio, desktop app",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.vyra.desktop",
+    "productName": "VYRA",
+    "asar": true,
+    "directories": { "output": "dist2" },
+    "files": ["main.js", "local-server.js", "updater.js", "update-config.json", "splash.html", "icon.ico"],
+    "win": { "target": "nsis", "icon": "icon.ico" },
+    "nsis": {
+      "artifactName": "VYRA-Setup.exe",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VYRA",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "..",
+        "to": "app",
+        "filter": [
+          "**/*",
+          "!electron-app",
+          "!electron-app/**",
+          "!.git",
+          "!.git/**",
+          "!.tools",
+          "!.tools/**",
+          "!.claude",
+          "!.claude/**",
+          "!node_modules",
+          "!node_modules/**",
+          "!tiktok-bridge/node_modules",
+          "!tiktok-bridge/node_modules/**",
+          "!VYRA-Setup.exe",
+          "!VYRA-Download.zip",
+          "!vyra-payload.zip",
+          "!vyra-state-backup.json",
+          "!.download-staging",
+          "!.download-staging/**",
+          "!CLAUDE-HANDOFF.md",
+          "!CLAUDE.md",
+          "!.gitignore"
+          ,"!server"
+          ,"!server/**"
+          ,"!.github"
+          ,"!.github/**"
+          ,"!scripts"
+          ,"!scripts/**"
+          ,"!docs"
+          ,"!docs/**"
+          ,"!docker-compose.yml"
+          ,"!Caddyfile"
+          ,"!.dockerignore"
+        ]
+      }
+    ]
+  }
+}
