@@ -5,7 +5,30 @@ function secret(value,name,min=32){const raw=String(value||'');if(raw.length<min
 function validateProductionEnv(env=process.env){
   const errors=[],check=fn=>{try{fn()}catch(error){errors.push(error.message)}};
   check(()=>httpsUrl(env.APP_ORIGIN,'APP_ORIGIN'));
-  check(()=>{let url;try{url=new URL(String(env.DATABASE_URL||''))}catch{}if(!url||!/^postgres(ql)?:$/.test(url.protocol)||PLACEHOLDER.test(url.hostname)||env.DATABASE_SSL!=='require')throw new Error('DATABASE_URL måste vara extern och DATABASE_SSL=require')});
+  check(() => {
+  let url;
+
+  try {
+    url = new URL(String(env.DATABASE_URL || ''));
+  } catch {}
+
+  if (
+    !url ||
+    !/^postgres(ql)?:$/.test(url.protocol) ||
+    PLACEHOLDER.test(url.hostname)
+  ) {
+    throw new Error('DATABASE_URL är ogiltig');
+  }
+
+  const privateRailway =
+    /\.railway\.internal$/i.test(url.hostname);
+
+  if (!privateRailway && env.DATABASE_SSL !== 'require') {
+    throw new Error(
+      'Extern DATABASE_URL kräver DATABASE_SSL=require'
+    );
+  }
+});
   check(()=>{let url;try{url=new URL(String(env.REDIS_URL||''))}catch{}const privateRailway=url&&url.protocol==='redis:'&&/\.railway\.internal$/i.test(url.hostname);if(!url||(!privateRailway&&url.protocol!=='rediss:')||PLACEHOLDER.test(url.hostname))throw new Error('REDIS_URL måste vara rediss:// eller privat Railway redis://')});
   ['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].forEach(name=>check(()=>secret(env[name],name)));
   check(()=>{const values=['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].map(name=>env[name]);if(new Set(values).size!==values.length)throw new Error('Produktionshemligheter måste vara unika')});
