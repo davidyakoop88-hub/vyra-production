@@ -2,68 +2,19 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
   <title>VYRA Layout</title>
-  <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20260724-widget-links">
-  <link rel="stylesheet" href="design-system.css?v=1">
-  <link rel="stylesheet" href="sidebar-premium.css?v=1">
-  <link rel="stylesheet" href="layout-standalone.css?v=20260724-1">
-  <link rel="stylesheet" href="auth-client.css?v=20260724-1">
-  <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
 </head>
-<body class="layout-page">
-  <aside>
-    <div class="sidebar-head">
-      <a href="index.html" class="brand"><i>V</i><b>VYRA</b></a>
-      <button class="sidebar-collapse-toggle" type="button" title="Fäll ihop/ut menyn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-    </div>
-    <nav>
-      <div class="nav-section">
-        <span class="nav-section-label">Core</span>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Översikt</span></a>
-        <a href="studio.html?open=overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3ZM8 21h8M12 17v4"/></svg><span>Overlay</span></a>
-        <a class="active" href="layout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Layout</span></a>
-      </div>
-    </nav>
-    <div class="aside-bottom">
-      <div class="user"><i>AV</i><span><b id="userName">Konto</b><small id="accountPlan">Premium</small></span></div>
-    </div>
-  </aside>
-  <main>
-    <header>
-      <div><small id="crumb">VYRA / LAYOUT</small><h1 id="title">Layout</h1></div>
-      <div class="head-actions">
-        <a class="connect" href="studio.html"><span>Till Studio</span></a>
-        <button id="openOverlay" hidden aria-hidden="true"></button>
-      </div>
-    </header>
-    <section id="view"></section>
-  </main>
-  <dialog id="connectModal">
-    <button class="x">×</button>
-    <label>Användarnamn<input id="tikUser"></label>
-    <button id="connectNow">Anslut</button>
-  </dialog>
-  <div class="toast"></div>
-  <script src="auth-client.js?v=20260724-1"></script>
-  <script src="entitlement-gate.js?v=20260724-1"></script>
-  <script src="account-profile.js?v=20260724-rc1"></script>
-  <script src="layout-standalone.js?v=20260724-2"></script>
+<body>
+  <p>Öppnar VYRA Layout…</p>
   <script>
     (function () {
-      var key = 'vyra-sidebar-collapsed';
-      function apply(collapsed) {
-        document.body.classList.toggle('sidebar-collapsed', collapsed);
-        document.querySelector('aside').classList.toggle('collapsed', collapsed);
-      }
-      apply(localStorage.getItem(key) === '1');
-      document.querySelector('.sidebar-collapse-toggle').onclick = function () {
-        var collapsed = !document.body.classList.contains('sidebar-collapsed');
-        localStorage.setItem(key, collapsed ? '1' : '0');
-        apply(collapsed);
-      };
+      var target = new URL('studio.html', location.href);
+      target.searchParams.set('open', 'layout');
+      location.replace(target.href);
     })();
   </script>
 </body>
 </html>
+
