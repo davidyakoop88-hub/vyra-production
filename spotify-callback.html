@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Spotify ansluts till VYRA</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#08090d;color:#fff}
+    main{width:min(420px,calc(100% - 40px));padding:32px;border:1px solid #30243d;border-radius:20px;background:#110d18;text-align:center}
+    .mark{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 18px;border-radius:50%;background:#1ed760;color:#06150b;font-size:28px;font-weight:900}
+    h1{font-size:22px;margin:0 0 10px}p{color:#b9aec5;line-height:1.5;margin:0}
+    .error{color:#ff8ea0}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark">♫</div>
+    <h1 id="title">Ansluter Spotify…</h1>
+    <p id="message">Vänta medan VYRA slutför den säkra inloggningen.</p>
+  </main>
+  <script src="spotify-client.js?v=20260724-1"></script>
+  <script>
+    (async function () {
+      try {
+        await window.VyraSpotify.handleCallback();
+        document.querySelector('#title').textContent = 'Spotify är anslutet';
+        document.querySelector('#message').textContent = 'Du kan stänga fönstret och fortsätta i VYRA.';
+        setTimeout(() => window.close(), 900);
+      } catch (error) {
+        document.querySelector('#title').textContent = 'Anslutningen misslyckades';
+        const message = document.querySelector('#message');
+        message.className = 'error';
+        message.textContent = error.message || 'Försök igen från VYRA.';
+      }
+    })();
+  </script>
+</body>
+</html>
