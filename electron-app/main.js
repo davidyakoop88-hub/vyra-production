@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, session, dialog, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const { startLocalServer } = require('./local-server');
+const { createTikTokService } = require('./tiktok-service');
 const Updater = require('./updater');
 
 const PORT = 4173;
@@ -61,11 +62,22 @@ async function createMainWindow() {
   const isTrustedAppUrl=url=>{
     try{return [localOrigin,CLOUD_ORIGIN].includes(new URL(url).origin)}catch{return false}
   };
+  const isSpotifyAuthUrl=url=>{
+    try{return new URL(url).origin==='https://accounts.spotify.com'}catch{return false}
+  };
   main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`);
   main.webContents.setWindowOpenHandler(({url})=>{
     if(isTrustedAppUrl(url))return{action:'allow',overrideBrowserWindowOptions:{webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}};
+    if(isSpotifyAuthUrl(url))return{action:'allow',overrideBrowserWindowOptions:{width:520,height:760,autoHideMenuBar:true,webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}};
     if(/^https:\/\//i.test(url))shell.openExternal(url);
     return{action:'deny'};
+  });
+  main.webContents.on('did-create-window',(child)=>{
+    child.setMenu(null);
+    child.webContents.on('will-navigate',(event,url)=>{
+      if(!isSpotifyAuthUrl(url)&&!isTrustedAppUrl(url))event.preventDefault();
+    });
+    child.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   });
   main.webContents.on('will-navigate',(event,url)=>{if(!isTrustedAppUrl(url))event.preventDefault()});
   main.webContents.on('did-finish-load',()=>{
@@ -134,7 +146,9 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionCheckHandler(()=>false);
   createSplash();
   try {
-    httpServer = await startLocalServer(appRoot(), PORT);
+    httpServer = await startLocalServer(appRoot(), PORT, {
+      createLiveConnector: callbacks => createTikTokService({ ...callbacks, log })
+    });
     log('local server listening on', PORT, 'root =', appRoot());
   } catch (err) {
     log('local server failed to start:', err.message);

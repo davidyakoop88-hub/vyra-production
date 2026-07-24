@@ -1,6 +1,6 @@
 {
   "name": "vyra-desktop",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "VYRA — TikTok LIVE overlay studio, desktop app",
   "main": "main.js",
   "private": true,
@@ -8,6 +8,9 @@
     "start": "electron .",
     "build": "electron-builder",
     "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^2.1.0"
   },
   "devDependencies": {
     "electron": "^43.2.0",
@@ -18,7 +21,7 @@
     "productName": "VYRA",
     "asar": true,
     "directories": { "output": "dist2" },
-    "files": ["main.js", "local-server.js", "updater.js", "update-config.json", "splash.html", "icon.ico"],
+    "files": ["main.js", "local-server.js", "tiktok-service.js", "updater.js", "update-config.json", "splash.html", "icon.ico"],
     "win": { "target": "nsis", "icon": "icon.ico" },
     "nsis": {
       "artifactName": "VYRA-Setup.exe",

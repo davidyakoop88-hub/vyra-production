@@ -33,9 +33,9 @@ function readBody(req, maxBytes = 65536) {
   });
 }
 
-function startLocalServer(root, port = 4173) {
+function startLocalServer(root, port = 4173, options = {}) {
   const events = [];
-  const connection = { connected: false, username: '', mode: 'demo', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
+  const connection = { connected: false, username: '', mode: 'live', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
   const seenEvents = new Map();
   const requestBuckets = new Map();
   const backupDir = path.join(root, '.vyra-backups');
@@ -53,6 +53,25 @@ function startLocalServer(root, port = 4173) {
   function imageUrl(v) { const value = text(v, 2048); return /^(https?:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(value) ? value : ''; }
   function number(v, min = 0, max = Number.MAX_SAFE_INTEGER) { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : 0; }
   function cleanEvent(d) { return { type: text(d.type, 64).replace(/[^a-z0-9_:-]/gi, ''), username: text(d.username, 100), name: text(d.name, 500), profileImage: imageUrl(d.profileImage), giftName: text(d.giftName, 160), giftImage: imageUrl(d.giftImage), coins: number(d.coins, 0, 1e9), count: number(d.count, 0, 1e7), multiplier: number(d.multiplier, 0, 100), points: number(d.points, 0, 1e12), level: number(d.level, 0, 10000), score: number(d.score, 0, 1e12), scoreUs: number(d.scoreUs, 0, 1e12), scoreThem: number(d.scoreThem, 0, 1e12), ourScore: number(d.ourScore, 0, 1e12), opponentScore: number(d.opponentScore, 0, 1e12), eventKey: text(d.eventKey, 200), source: text(d.source, 64) }; }
+  function setConnection(next) {
+    Object.assign(connection, next, { updated: Date.now() });
+    if (connection.connected) connection.heartbeat = Date.now();
+  }
+  function ingestEvent(raw) {
+    const d = cleanEvent(raw || {});
+    if (!d.type) return { ok: false, error: 'Eventtyp saknas' };
+    const now = Date.now(), key = d.eventKey;
+    for (const [oldKey, at] of seenEvents) if (now - at > 120000) seenEvents.delete(oldKey);
+    if (key && seenEvents.has(key)) return { ok: true, duplicate: true, eventKey: key };
+    if (key) seenEvents.set(key, now);
+    let id = Date.now();
+    while (events.length && events[events.length - 1].id >= id) id++;
+    const event = { id, ...d, timestamp: id };
+    events.push(event);
+    while (events.length > 5000) events.shift();
+    return { ok: true, event };
+  }
+  const liveConnector = options.createLiveConnector?.({ onStatus: setConnection, onEvent: ingestEvent });
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -70,15 +89,17 @@ function startLocalServer(root, port = 4173) {
       }
       if (p === '/api/connect' && req.method === 'POST') {
         const d = JSON.parse((await readBody(req)) || '{}');
-        connection.connected = true;
-        connection.username = String(d.username || '');
-        connection.mode = 'connector-ready'; connection.state = 'live';
-        connection.roomId = String(d.roomId || ''); connection.heartbeat = Date.now(); connection.reconnectAttempt = 0;
-        connection.updated = Date.now();
-        return sendJson(res, { ok: true, connection, message: 'Redo for LIVE-events' });
+        if (!liveConnector) return sendJson(res, { ok: false, error: 'TikTok LIVE-anslutningen finns endast i VYRA Desktop' }, 503);
+        try {
+          await liveConnector.connect(d.username);
+          return sendJson(res, { ok: true, connection, message: 'TikTok LIVE är anslutet' });
+        } catch (error) {
+          return sendJson(res, { ok: false, error: error.message }, 409);
+        }
       }
       if (p === '/api/disconnect' && req.method === 'POST') {
         const d = JSON.parse((await readBody(req)) || '{}');
+        if (liveConnector) await liveConnector.disconnect(d.reason || 'Frånkopplad av användaren');
         connection.connected = false;
         connection.state = d.retryInMs ? 'reconnecting' : 'disconnected';
         connection.reconnectAttempt = Number(d.reconnectAttempt || 0); connection.retryInMs = Number(d.retryInMs || 0); connection.reason = String(d.reason || '');
@@ -96,23 +117,8 @@ function startLocalServer(root, port = 4173) {
         return sendJson(res, { ok: true, events: events.filter(e => e.id > after) });
       }
       if (p === '/api/events' && req.method === 'POST') {
-        const d = cleanEvent(JSON.parse((await readBody(req, 65536)) || '{}')); if (!d.type) return sendJson(res, { ok: false, error: 'Eventtyp saknas' }, 400);
-        const now = Date.now(), key = d.eventKey;
-        for (const [oldKey, at] of seenEvents) if (now - at > 120000) seenEvents.delete(oldKey);
-        if (key && seenEvents.has(key)) return sendJson(res, { ok: true, duplicate: true, eventKey: key });
-        if (key) seenEvents.set(key, now);
-        let id = Date.now();
-        while (events.length && events[events.length - 1].id >= id) id++;
-        const e = {
-          id, type: d.type, username: d.username, name: d.name,
-          profileImage: d.profileImage, giftName: d.giftName, giftImage: d.giftImage,
-          coins: d.coins, count: d.count, multiplier: d.multiplier, points: d.points, level: d.level,
-          score: d.score, scoreUs: d.scoreUs, scoreThem: d.scoreThem, ourScore: d.ourScore, opponentScore: d.opponentScore,
-          eventKey: key, source: d.source, timestamp: id
-        };
-        events.push(e);
-        while (events.length > 5000) events.shift();
-        return sendJson(res, { ok: true, event: e });
+        const result = ingestEvent(JSON.parse((await readBody(req, 65536)) || '{}'));
+        return sendJson(res, result, result.ok ? 200 : 400);
       }
       if (p === '/api/state' && req.method === 'GET') {
         const backupFile = path.join(root, 'vyra-state-backup.json');
