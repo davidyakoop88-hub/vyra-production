@@ -66,21 +66,36 @@ function createMainWindow() {
   main.webContents.on('did-finish-load',()=>{
     clearInterval(desktopAuthTimer);
     if(!main||main.isDestroyed()||!main.webContents.getURL().startsWith(CLOUD_ORIGIN))return;
-    const openLocalStudioWhenAuthenticated=async()=>{
+    const openLocalStudioWhenEntitled=async()=>{
       if(!main||main.isDestroyed()||!main.webContents.getURL().startsWith(CLOUD_ORIGIN))return clearInterval(desktopAuthTimer);
       try{
-        const authenticated=await main.webContents.executeJavaScript(
-          "fetch('/api/auth/me',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}}).then(response=>response.ok).catch(()=>false)"
+        const account=await main.webContents.executeJavaScript(
+          `(async()=>{
+            try {
+              const meResponse=await fetch('/api/auth/me',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}});
+              if(!meResponse.ok)return null;
+              const me=await meResponse.json();
+              const workspace=me.workspaces?.[0];
+              if(!workspace)return null;
+              if(me.user?.isPlatformAdmin)return {user:me.user,workspace,plan:'admin',status:'active'};
+              const billingResponse=await fetch('/api/workspaces/'+encodeURIComponent(workspace.id)+'/billing',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}});
+              if(!billingResponse.ok)return null;
+              const billing=await billingResponse.json();
+              if(billing.plan!=='premium'||!['active','trialing','past_due'].includes(billing.subscription?.status))return null;
+              return {user:me.user,workspace,plan:billing.plan,status:billing.subscription.status};
+            } catch { return null; }
+          })()`
         );
-        if(authenticated){
+        if(account){
           clearInterval(desktopAuthTimer);
-          await main.loadURL(`${localOrigin}/studio.html?desktop=1`);
+          const profile=encodeURIComponent(Buffer.from(JSON.stringify(account),'utf8').toString('base64'));
+          await main.loadURL(`${localOrigin}/studio.html?desktop=1&profile=${profile}`);
         }
       }catch(error){log('desktop auth check failed:',error.message)}
     };
-    desktopAuthTimer=setInterval(openLocalStudioWhenAuthenticated,1000);
+    desktopAuthTimer=setInterval(openLocalStudioWhenEntitled,1000);
     desktopAuthTimer.unref?.();
-    openLocalStudioWhenAuthenticated();
+    openLocalStudioWhenEntitled();
   });
   main.webContents.on('did-fail-load', (e, code, desc) => log('main did-fail-load', code, desc));
   main.webContents.on('render-process-gone', (e, details) => log('main render-process-gone', JSON.stringify(details)));
