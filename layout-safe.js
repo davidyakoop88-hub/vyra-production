@@ -1,6 +1,14 @@
 (function () {
   'use strict';
 
+  document.addEventListener('click', function (event) {
+    var createOverlay = event.target.closest('[data-go="editor"]');
+    if (!createOverlay) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    location.href = 'layout.html';
+  }, true);
+
   if (typeof go !== 'function' || typeof editor !== 'function') return;
 
   var fullGo = go;
