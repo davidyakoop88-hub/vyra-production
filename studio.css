@@ -196,6 +196,9 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-widget-list{display:grid;gap:6px}
 .overlay-widget-list article{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #2b2438;border-radius:7px;background:#170c20;font-size:10px;color:#e8dcf2}
 .overlay-widget-list article i{font-style:normal;color:#b490ff}
+.overlay-widget-list article span{flex:1}
+.overlay-widget-list article button{padding:6px 9px;border:1px solid #70408a;border-radius:6px;background:#281134;color:#f4dfff;font-size:9px;font-weight:700;cursor:pointer}
+.overlay-widget-list article button:hover{background:#3b174d;border-color:#a85bd0}
 .overlay-widget-list p{color:#9d87ac;font-size:10px;padding:10px 0}
 .overlay-live-preview{margin-top:22px;background:#110a18;border:1px solid var(--line,#2b2438);border-radius:12px;padding:18px}
 .overlay-live-preview h4{margin:0 0 14px;font-size:11px;letter-spacing:.4px;color:#b490ff}

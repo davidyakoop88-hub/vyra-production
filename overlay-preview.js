@@ -18,6 +18,46 @@ function owgOverlayUrl() {
   return location.protocol === 'file:' ? 'http://127.0.0.1:4173/overlay.html' : new URL('overlay.html', location.href).href;
 }
 
+function owgWidgetUrl(widgetId) {
+  if (typeof overlayShareUrl === 'function') return overlayShareUrl(widgetId);
+  const url = new URL(owgOverlayUrl(), location.href);
+  if (widgetId) url.searchParams.set('widget', widgetId);
+  return url.href;
+}
+
+async function owgCopyText(value) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {}
+  const input = document.createElement('textarea');
+  input.value = value;
+  input.readOnly = true;
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  document.body.append(input);
+  input.select();
+  input.setSelectionRange(0, input.value.length);
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch {}
+  input.remove();
+  return copied;
+}
+
+async function owgCopyWidgetLink(widgetId, label = 'Widgetlänken') {
+  const url = owgWidgetUrl(widgetId);
+  if (location.protocol !== 'file:' && !new URL(url).searchParams.has('access')) {
+    document.querySelector('.oa-open')?.click();
+    toast('Skapa en säker OBS-länk först');
+    return false;
+  }
+  const copied = await owgCopyText(url);
+  toast(copied ? label + ' kopierad' : 'Kunde inte kopiera länken');
+  return copied;
+}
+
 function overlayPreviewHtml() {
   const visibleWidgets = state.widgets.filter(w => !w.hidden);
   const previewWidget = state.widgets.find(w => w.id === overlayPreviewWidgetId);
@@ -27,7 +67,7 @@ function overlayPreviewHtml() {
   return `<div class="page-header section-head"><div><h2>Overlay</h2><p>Widgets du lägger till här dyker upp direkt i din layout.</p></div></div>
   <div class="overlay-preview-sidebar">
     <span class="section-header-eyebrow">Vad som visas nu · ${visibleWidgets.length}</span>
-    <div class="overlay-widget-list">${visibleWidgets.length ? visibleWidgets.map(w => `<article><i>◇</i><span>${liveLayerName(w)}</span></article>`).join('') : `<div class="empty-state">${emptyStateIcon}<h3>Inga widgets ännu</h3><p>Lägg till en widget från katalogen nedan så visas den här direkt.</p></div>`}</div>
+    <div class="overlay-widget-list">${visibleWidgets.length ? visibleWidgets.map(w => `<article><i>◇</i><span>${liveLayerName(w)}</span><button type="button" data-copy-widget-link="${w.id}" title="Kopiera endast denna widget">Kopiera länk</button></article>`).join('') : `<div class="empty-state">${emptyStateIcon}<h3>Inga widgets ännu</h3><p>Lägg till en widget från katalogen nedan så visas den här direkt.</p></div>`}</div>
   </div>
   ${stageHtml ? `<div class="overlay-live-preview">
     <span class="section-header-eyebrow">Så här ser den ut · ${stageName}</span>
@@ -158,12 +198,18 @@ function styleOverlayCatalogCards() {
     const linkBtn = document.createElement('span');
     linkBtn.className = 'btn btn-icon btn-ghost owg-copylink';
     linkBtn.textContent = '🔗';
-    linkBtn.title = 'Kopierar länken till hela overlayn (widgets har ingen egen enskild länk — alla visas i samma overlay)';
+    linkBtn.title = 'Lägg till widgeten och kopiera dess egen länk';
     linkBtn.onclick = async e => {
       e.stopPropagation();
-      const url = owgOverlayUrl();
-      try { await navigator.clipboard.writeText(url); toast('Overlaylänk kopierad'); }
-      catch { toast('Kunde inte kopiera länken'); }
+      originalClick.call(btn, e);
+      const widgetId = selected;
+      if (!widgetId) return toast('Widgeten kunde inte skapas');
+      overlayPreviewWidgetId = widgetId;
+      overlayDraftPreviewHtml = null;
+      overlayDraftPreviewName = null;
+      save();
+      await owgCopyWidgetLink(widgetId);
+      render();
     };
 
     const row = document.createElement('div');
@@ -190,6 +236,12 @@ function styleOverlayCatalogCards() {
 
 function bindOverlayPreview() {
   styleOverlayCatalogCards();
+  document.querySelectorAll('[data-copy-widget-link]').forEach(button => {
+    button.onclick = async event => {
+      event.stopPropagation();
+      await owgCopyWidgetLink(button.dataset.copyWidgetLink);
+    };
+  });
 }
 
 // The Configure modal: the widget is already added (selected === owgConfigureWidgetId) by the
