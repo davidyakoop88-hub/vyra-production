@@ -4,16 +4,8 @@
   var MAX_ITEMS = 30;
   var selected = null;
   var format = 'mobile';
-  var state;
-
-  try {
-    state = JSON.parse(localStorage.getItem('vyra-state') || '{}');
-  } catch (_) {
-    state = {};
-  }
-  state.user = state.user || 'Streamer';
-  state.widgets = Array.isArray(state.widgets) ? state.widgets : [];
-  format = state.layoutFormat === 'widescreen' ? 'widescreen' : 'mobile';
+  var state = { user: 'Streamer', widgets: [] };
+  var totalItems = 0;
 
   function escapeHtml(value) {
     return String(value == null ? '' : value)
@@ -26,7 +18,7 @@
 
   function save() {
     state.layoutFormat = format;
-    localStorage.setItem('vyra-state', JSON.stringify(state));
+    localStorage.setItem('vyra-layout-state', JSON.stringify(state));
   }
 
   function label(widget) {
@@ -50,7 +42,9 @@
     document.getElementById('view').innerHTML =
       '<div class="editor-shell">' +
         '<div class="elements">' +
-          '<div class="panel-title">LIVE-LAGER</div>' +
+          '<div class="panel-title">LIVE-LAGER' +
+            (totalItems > items.length ? ' · VISAR ' + items.length + ' AV ' + totalItems : '') +
+          '</div>' +
           '<div class="live-layer-list">' +
             (items.length ? items.map(function (widget) {
               return '<article class="' + (selected === widget.id ? 'active' : '') +
@@ -140,5 +134,60 @@
     };
   }
 
-  render();
+  function loadState() {
+    var savedLayout;
+    try {
+      savedLayout = JSON.parse(localStorage.getItem('vyra-layout-state') || 'null');
+    } catch (_) {
+      savedLayout = null;
+    }
+    if (savedLayout && Array.isArray(savedLayout.widgets)) {
+      state = savedLayout;
+      state.user = state.user || 'Streamer';
+      totalItems = state.widgets.length;
+      format = state.layoutFormat === 'widescreen' ? 'widescreen' : 'mobile';
+      render();
+      return;
+    }
+
+    var raw;
+    try {
+      raw = localStorage.getItem('vyra-state') || '{}';
+    } catch (_) {
+      render();
+      return;
+    }
+
+    var workerSource =
+      'self.onmessage=function(event){try{' +
+      'var source=JSON.parse(event.data||"{}");' +
+      'var all=Array.isArray(source.widgets)?source.widgets:[];' +
+      'var widgets=all.slice(0,' + MAX_ITEMS + ').map(function(item,index){return{' +
+      'id:String(item.id||("widget-"+index)),' +
+      'type:String(item.type||""),title:String(item.title||""),' +
+      'templateTitle:String(item.templateTitle||""),group:String(item.group||""),' +
+      'value:String(item.value||""),x:Number(item.x)||0,y:Number(item.y)||0,' +
+      'hidden:!!item.hidden};});' +
+      'self.postMessage({ok:true,total:all.length,state:{user:String(source.user||"Streamer"),' +
+      'layoutFormat:source.layoutFormat==="widescreen"?"widescreen":"mobile",widgets:widgets}});' +
+      '}catch(error){self.postMessage({ok:false});}}';
+    var worker = new Worker(URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' })));
+    worker.onmessage = function (event) {
+      worker.terminate();
+      if (event.data && event.data.ok) {
+        state = event.data.state;
+        totalItems = event.data.total;
+        format = state.layoutFormat;
+      }
+      render();
+    };
+    worker.onerror = function () {
+      worker.terminate();
+      render();
+    };
+    worker.postMessage(raw);
+  }
+
+  document.getElementById('view').innerHTML = '<p class="layout-loading">Laddar layout…</p>';
+  loadState();
 })();
