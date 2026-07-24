@@ -423,3 +423,4 @@ body:has(.editor-shell) .overlay-link-bar{left:64px!important;height:68px!import
 @keyframes lfMiniCompanion{0%,100%{transform:translate(0,3px) scale(.8);opacity:.35}50%{transform:translate(-5px,-7px) scale(1.15);opacity:1}}
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
 @keyframes lfCrystalFacet{50%{opacity:.22;transform:scale(.72) rotate(28deg)}}
+.head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
