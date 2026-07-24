@@ -5,8 +5,10 @@ const { startLocalServer } = require('./local-server');
 const Updater = require('./updater');
 
 const PORT = 4173;
+const CLOUD_ORIGIN = 'https://vyralive.app';
 let splash, main, httpServer;
 let updateCheckRunning=false;
+let desktopAuthTimer;
 
 // Diagnostics: this process runs detached (no visible console), so log to a file we can inspect —
 // console.log alone is invisible once packaged.
@@ -50,9 +52,36 @@ function createMainWindow() {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true }
   });
   Menu.setApplicationMenu(null);
-  main.loadURL(`http://127.0.0.1:${PORT}/studio.html`);
-  main.webContents.setWindowOpenHandler(({url})=>url.startsWith(`http://127.0.0.1:${PORT}/`)?{action:'allow',overrideBrowserWindowOptions:{webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}}:{action:'deny'});
-  main.webContents.on('will-navigate',(event,url)=>{if(!url.startsWith(`http://127.0.0.1:${PORT}/`))event.preventDefault()});
+  const localOrigin=`http://127.0.0.1:${PORT}`;
+  const isTrustedAppUrl=url=>{
+    try{return [localOrigin,CLOUD_ORIGIN].includes(new URL(url).origin)}catch{return false}
+  };
+  main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`);
+  main.webContents.setWindowOpenHandler(({url})=>{
+    if(isTrustedAppUrl(url))return{action:'allow',overrideBrowserWindowOptions:{webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}};
+    if(/^https:\/\//i.test(url))shell.openExternal(url);
+    return{action:'deny'};
+  });
+  main.webContents.on('will-navigate',(event,url)=>{if(!isTrustedAppUrl(url))event.preventDefault()});
+  main.webContents.on('did-finish-load',()=>{
+    clearInterval(desktopAuthTimer);
+    if(!main||main.isDestroyed()||!main.webContents.getURL().startsWith(CLOUD_ORIGIN))return;
+    const openLocalStudioWhenAuthenticated=async()=>{
+      if(!main||main.isDestroyed()||!main.webContents.getURL().startsWith(CLOUD_ORIGIN))return clearInterval(desktopAuthTimer);
+      try{
+        const authenticated=await main.webContents.executeJavaScript(
+          "fetch('/api/auth/me',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}}).then(response=>response.ok).catch(()=>false)"
+        );
+        if(authenticated){
+          clearInterval(desktopAuthTimer);
+          await main.loadURL(`${localOrigin}/studio.html?desktop=1`);
+        }
+      }catch(error){log('desktop auth check failed:',error.message)}
+    };
+    desktopAuthTimer=setInterval(openLocalStudioWhenAuthenticated,1000);
+    desktopAuthTimer.unref?.();
+    openLocalStudioWhenAuthenticated();
+  });
   main.webContents.on('did-fail-load', (e, code, desc) => log('main did-fail-load', code, desc));
   main.webContents.on('render-process-gone', (e, details) => log('main render-process-gone', JSON.stringify(details)));
   main.once('ready-to-show', () => {
@@ -60,7 +89,7 @@ function createMainWindow() {
     main.show();
     if (splash && !splash.isDestroyed()) splash.destroy();
   });
-  main.on('closed', () => { log('main closed'); main = null; app.quit(); });
+  main.on('closed', () => { clearInterval(desktopAuthTimer); log('main closed'); main = null; app.quit(); });
 }
 
 async function checkForUpdates(){
