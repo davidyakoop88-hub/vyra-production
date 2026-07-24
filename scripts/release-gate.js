@@ -14,11 +14,14 @@ function result(id, status, detail, command) {
 }
 
 function run(command, args, cwd = ROOT) {
-  const completed = spawnSync(command, args, {
+  const windowsNpm = process.platform === 'win32' && command === 'npm';
+  const executable = windowsNpm ? (process.env.ComSpec || 'cmd.exe') : command;
+  const commandArgs = windowsNpm ? ['/d', '/s', '/c', 'npm.cmd', ...args] : args;
+  const completed = spawnSync(executable, commandArgs, {
     cwd,
     env: process.env,
     encoding: 'utf8',
-    shell: process.platform === 'win32'
+    shell: false
   });
   return {
     ok: completed.status === 0,
