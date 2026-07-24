@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="studio.css?v=20260724-widget-links">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=1">
+  <link rel="stylesheet" href="layout-standalone.css?v=20260724-1">
 </head>
-<body>
+<body class="layout-page">
   <aside>
     <div class="sidebar-head">
       <a href="index.html" class="brand"><i>V</i><b>VYRA</b></a>
@@ -22,27 +23,8 @@
         <a href="studio.html?open=overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3ZM8 21h8M12 17v4"/></svg><span>Overlay</span></a>
         <a class="active" href="layout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Layout</span></a>
       </div>
-      <div class="nav-section">
-        <span class="nav-section-label">Automation</span>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12l4 6-10 12L2 9ZM2 9h20"/></svg><span>Vip-paket</span><b class="nav-badge nav-badge-pro">PRO</b></a>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg><span>Action &amp; Event</span><b class="nav-badge nav-badge-live">LIVE</b></a>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><span>Sound Alerts</span></a>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4H8M9 13v2M15 13v2"/></svg><span>Chatbot</span><b class="nav-badge nav-badge-ai">AI</b></a>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M7 11v3a2 2 0 0 0 2 2h4"/></svg><span>Automationer</span></a>
-      </div>
-      <div class="nav-section">
-        <span class="nav-section-label">Media</span>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="18" r="4"/><path d="M12 18V2l7 4"/></svg><span>Spotify</span></a>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg><span>Events</span></a>
-      </div>
-      <div class="nav-section">
-        <span class="nav-section-label">Insights</span>
-        <a href="studio.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></svg><span>Analytics</span></a>
-      </div>
     </nav>
     <div class="aside-bottom">
-      <a class="sidebar-feedback-cta" href="studio.html"><span>Önskemål</span></a>
-      <a href="studio.html"><span>Inställningar</span></a>
       <div class="user"><i>AV</i><span><b id="userName">Konto</b><small id="accountPlan">Premium</small></span></div>
     </div>
   </aside>
@@ -50,7 +32,7 @@
     <header>
       <div><small id="crumb">VYRA / LAYOUT</small><h1 id="title">Layout</h1></div>
       <div class="head-actions">
-        <a class="connect connection" href="studio.html"><i></i><span>Anslut TikTok</span></a>
+        <a class="connect" href="studio.html"><span>Till Studio</span></a>
         <button id="openOverlay" hidden aria-hidden="true"></button>
       </div>
     </header>
@@ -62,7 +44,7 @@
     <button id="connectNow">Anslut</button>
   </dialog>
   <div class="toast"></div>
-  <script src="layout-standalone.js?v=20260724-1"></script>
+  <script src="layout-standalone.js?v=20260724-2"></script>
   <script>
     (function () {
       var key = 'vyra-sidebar-collapsed';

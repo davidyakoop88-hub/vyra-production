@@ -1,0 +1,18 @@
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell){grid-template-columns:230px minmax(0,1fr)!important}
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell)>aside{width:230px!important;padding:18px 12px!important;overflow-y:auto!important}
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell)>aside .brand b,
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell)>aside .nav-section-label,
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell)>aside nav a span,
+body.layout-page:not(.sidebar-collapsed):has(.editor-shell)>aside .user span{display:flex!important}
+body.layout-page aside nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:11px 13px;border-radius:8px;color:#aaa0b2;font-size:12px;font-weight:650;text-decoration:none}
+body.layout-page aside nav a svg{width:19px;height:19px;flex:0 0 19px}
+body.layout-page aside nav a:hover,body.layout-page aside nav a.active{color:#fff;background:linear-gradient(90deg,#371449,#1c0d28)}
+body.layout-page aside nav a.active{box-shadow:inset 2px 0 #d35cff,0 0 22px #a928ff20}
+body.layout-page aside.collapsed nav a{justify-content:center;padding:11px}
+body.layout-page aside.collapsed nav a span{display:none}
+body.layout-page .nav-section-label{font-size:9px!important}
+body.layout-page .properties h3{margin:0 0 12px;color:#f3dcfb;font-size:13px}
+body.layout-page .properties .property-grid{margin-bottom:8px}
+body.layout-page .properties .visibility-setting{display:flex;align-items:center;justify-content:space-between}
+body.layout-page .properties .visibility-setting input{width:auto;accent-color:#bd3cff}
+body.layout-page .properties .property-actions{grid-template-columns:1fr}
