@@ -31,7 +31,16 @@ const advancedPropertyBind=bind;bind=function(){advancedPropertyBind();if(view!=
 // Remove the old visual demo widgets. The studio now exposes only real video assets
 // until each live-data widget has a proper event connection.
 if(!localStorage.getItem('vyra-video-only-migration')){state.widgets=state.widgets.filter(w=>w.type==='video');selected=null;save();localStorage.setItem('vyra-video-only-migration','1')}
-enhanceWidgetCatalog=function(){let panel=document.querySelector('.elements');if(!panel||panel.dataset.expanded)return;panel.dataset.expanded='1';panel.innerHTML=`<div class="panel-title">VIDEO-WIDGETS · ${mediaFiles.length}</div><div class="catalog-notice"><b>Riktiga designer</b><span>Välj en video nedan. Textdemonstrationerna är borttagna.</span></div><input class="widget-search" placeholder="Sök video eller widgettyp..."><div class="widget-catalog"></div>`};
+enhanceWidgetCatalog=function(){
+  let panel=document.querySelector('.elements');
+  if(!panel||panel.dataset.expanded)return;
+  panel.dataset.expanded='1';
+  // Layout is only for arranging active layers. Rendering the complete widget
+  // catalog here duplicates the Overlay view and can overwhelm the browser.
+  // mountLiveLayers() adds the active layer list and its "Lägg till widget"
+  // button routes users to the full, paged catalog in Overlay.
+  panel.innerHTML='';
+};
 
 const sendGiftEvent=send;send=function(){sendGiftEvent();let giftVideos=state.widgets.filter(w=>w.type==='video'&&['Gift Alerts','Gift Campaigns','Gift Counter','Gift Gallery','Top Gifters'].includes(w.group));giftVideos.forEach(w=>{let box=document.querySelector(`[data-id="${w.id}"]`),video=box?.querySelector('video');if(video){box.classList.remove('gift-details','gift-profile','gift-triggered');video.currentTime=0;video.play().catch(()=>{});void box.offsetWidth;box.classList.add('gift-triggered')}});if(giftVideos.length)toast('Video → namn och coins → profilbild');else toast('Lägg en Gift Alert-video på canvasen först')};
 
