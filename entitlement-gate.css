@@ -1,0 +1,13 @@
+.entitlement-gate{position:fixed;inset:0;z-index:10001;display:grid;place-items:center;padding:24px;background:rgba(6,2,9,.94);backdrop-filter:blur(18px)}
+.entitlement-gate section{width:min(460px,100%);padding:34px;border:1px solid rgba(216,93,255,.28);border-radius:22px;background:#120919;box-shadow:0 24px 90px rgba(0,0,0,.55);text-align:center;color:#fff}
+.entitlement-gate .auth-brand{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:24px}
+.entitlement-gate .auth-brand i{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#8e39e8,#ff5da2);font-style:normal;font-weight:900}
+.entitlement-gate small{color:#d784ff;font-weight:800;letter-spacing:.14em}
+.entitlement-gate h1{margin:10px 0;font-size:30px}
+.entitlement-gate p{color:#c8b9cf;line-height:1.55}
+.entitlement-gate strong{display:block;margin:20px 0;color:#fff}
+.entitlement-gate button{width:100%;margin-top:10px;padding:13px;border:0;border-radius:11px;cursor:pointer;font-weight:800}
+.entitlement-gate .primary{background:linear-gradient(135deg,#963be7,#e64f9e);color:#fff}
+.entitlement-gate .entitlement-logout{background:#24142c;color:#d8cadf}
+.entitlement-gate button:disabled{cursor:wait;opacity:.7}
+.entitlement-gate .entitlement-state{min-height:24px;margin-bottom:0;color:#f0a9d0;font-size:13px}
