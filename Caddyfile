@@ -1,6 +1,9 @@
 :80 {
   encode zstd gzip
 
+  @html path / *.html
+  header @html Cache-Control "no-cache, no-store, must-revalidate"
+
   @backend path /api/* /health/*
   handle @backend {
     reverse_proxy api:8080 {
