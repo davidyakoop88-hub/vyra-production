@@ -52,7 +52,18 @@ test('Overlay catalog does not render every premium thumbnail on page load', () 
 
 test('direct Layout access uses the same account and Premium gate as Studio', () => {
   const layout = read('layout.html');
-  assert.match(layout, /auth-client\.js/);
-  assert.match(layout, /entitlement-gate\.js/);
-  assert.match(layout, /account-profile\.js/);
+  const studio = read('studio.html');
+  assert.match(layout, /new URL\('studio\.html'/);
+  assert.match(layout, /searchParams\.set\('open', 'layout'\)/);
+  assert.match(studio, /auth-client\.js/);
+  assert.match(studio, /entitlement-gate\.js/);
+  assert.match(studio, /account-profile\.js/);
 });
+
+test('Layout uses the full Studio widget renderer instead of the standalone prototype', () => {
+  const safeLayout = read('layout-safe.js');
+  assert.match(safeLayout, /get\('open'\) === 'layout'/);
+  assert.match(safeLayout, /items\.map\(wh\)/);
+  assert.match(safeLayout, /aria-current/);
+});
+
