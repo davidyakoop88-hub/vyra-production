@@ -13,26 +13,16 @@
   // see README.md). Placeholder ids are exactly the ones with ext:'svg'.
   const FRAMES = {
     boys: [
-      ['classic-gold', 'Classic Gold', 'golden-king', 'png'], ['silver-steel', 'Silver Steel', 'silver', 'svg'],
-      ['bronze', 'Bronze', 'bronze', 'svg'], ['diamond', 'Diamond', 'aurora-diamond', 'png'],
-      ['royal-crown', 'Royal Crown', 'champagne-crown', 'png'], ['heroic', 'Heroic', 'heroic', 'svg'],
-      ['flame', 'Flame', 'flame', 'svg'], ['ice', 'Ice', 'ice-crystal', 'png'],
-      ['neon-blue', 'Neon Blue', 'neon-blue', 'svg'], ['neon-purple', 'Neon Purple', 'neon-purple', 'png'],
-      ['neon-green', 'Neon Green', 'neon-green', 'svg'], ['cyber', 'Cyber', 'cyber-blue', 'png'],
-      ['galaxy', 'Galaxy', 'galaxy', 'png'], ['lightning', 'Lightning', 'lightning', 'svg'],
-      ['dragon', 'Dragon', 'emerald', 'png'], ['samurai', 'Samurai', 'samurai', 'png'],
-      ['wings', 'Wings', 'wings', 'svg'], ['infinity', 'Infinity', 'infinity', 'svg'],
-      ['viking', 'Viking', 'viking', 'svg'], ['predator', 'Predator', 'predator', 'svg']
+      ['ocean-oracle','Ocean Oracle','ocean-oracle','png'],['neon-valkyrie','Neon Valkyrie','neon-valkyrie','png'],
+      ['moonlit-sakura','Moonlit Sakura','moonlit-sakura','png'],['celestial-serpent','Celestial Serpent','celestial-serpent','png'],
+      ['stellar-emperor','Stellar Emperor','stellar-emperor','png'],['opal-dream','Opal Dream','opal-dream','png'],
+      ['thunder-warden','Thunder Warden','thunder-warden','png'],['velvet-nocturne','Velvet Nocturne','velvet-nocturne','png']
     ],
     girls: [
-      ['pink-heart', 'Pink Heart', 'pink-angel', 'png'], ['rose-gold', 'Rose Gold', 'rose-atelier', 'png'],
-      ['butterfly', 'Butterfly', 'butterfly', 'svg'], ['flower', 'Flower', 'flower', 'svg'],
-      ['crystal', 'Crystal', 'sapphire-nocturne', 'png'], ['pearl', 'Pearl', 'pearl-lumiere', 'png'],
-      ['fairy', 'Fairy', 'fairy', 'svg'], ['unicorn', 'Unicorn', 'unicorn', 'svg'],
-      ['starry', 'Starry', 'starry', 'svg'], ['magic', 'Magic', 'midnight-amethyst', 'png'],
-      ['love', 'Love', 'ruby-velvet', 'png'], ['princess', 'Princess', 'princess', 'svg'],
-      ['neon-pink', 'Neon Pink', 'neon-pink', 'svg'], ['neon-purple', 'Neon Purple', 'neon-purple', 'png'],
-      ['neon-blue', 'Neon Blue', 'neon-blue', 'svg'], ['sparkle', 'Sparkle', 'sparkle', 'svg']
+      ['gilded-lion','Gilded Lion','gilded-lion','png'],['amethyst-oracle','Amethyst Oracle','amethyst-oracle','png'],
+      ['frostfire-crown','Frostfire Crown','frostfire-crown','png'],['quantum-lotus','Quantum Lotus','quantum-lotus','png'],
+      ['crimson-dynasty','Crimson Dynasty','crimson-dynasty','png'],['pearl-tempest','Pearl Tempest','pearl-tempest','png'],
+      ['cosmic-tiger','Cosmic Tiger','cosmic-tiger','png'],['enchanted-ivy','Enchanted Ivy','enchanted-ivy','png']
     ]
   };
   const FRAME_FILES = {}; // id -> "file.ext", built once from FRAMES so wh() can look up the real filename
@@ -44,6 +34,16 @@
   // injected files isn't guaranteed (see the overlay re-render guard at the end of this file).
   window.VYRA_FRAMES = FRAMES;
   window.VYRA_FRAME_FILES = FRAME_FILES;
+
+  // One-time replacement of the retired frame collection on all ranking widgets.
+  const signatureIds = new Set(Object.keys(FRAME_FILES));
+  if (!localStorage.getItem('vyra-signature-ranking-frames-v1')) {
+    state.widgets.filter(w => RANKING_TYPES.includes(w.type)).forEach(w => {
+      if (!signatureIds.has(w.profileFrame)) w.profileFrame = 'ocean-oracle';
+    });
+    save();
+    localStorage.setItem('vyra-signature-ranking-frames-v1', '1');
+  }
 
   // ---- Render: skin class, entrance-animation class, opacity, crown on #1 ----
   const wsRenderWh = wh;
@@ -95,7 +95,7 @@
     const liveMetric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
     out = out.replace(
       '<div class="property-group"><h4>DESIGN',
-      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData ? 'checked' : ''}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData ? '' : 'disabled'}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option></select></label></div><div class="property-group"><h4>DESIGN`
+      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option></select></label></div><div class="property-group"><h4>DESIGN`
     );
 
     const skin = w.skin || 'royal-gold';
@@ -184,8 +184,8 @@
     return `
       <span>AVATAR-RAMAR · VÄLJ RAM</span>
       <div class="ws-frame-gender-tabs">
-        <button type="button" data-ws-gender="boys" class="${gender === 'boys' ? 'active' : ''}">Killar</button>
-        <button type="button" data-ws-gender="girls" class="${gender === 'girls' ? 'active' : ''}">Tjejer</button>
+        <button type="button" data-ws-gender="boys" class="${gender === 'boys' ? 'active' : ''}">KOLLEKTION 1</button>
+        <button type="button" data-ws-gender="girls" class="${gender === 'girls' ? 'active' : ''}">KOLLEKTION 2</button>
       </div>
       <div class="ws-frame-grid">
         <button type="button" data-ws-frame="none" class="ws-frame-swatch${current === 'none' ? ' active' : ''}"><i>×</i><b>Ingen</b></button>

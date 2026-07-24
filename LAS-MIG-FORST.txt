@@ -1,0 +1,37 @@
+VYRA PREMIUM-WIDGETUPPDATERING
+================================
+
+Detta paket innehaller endast frontend-, widget- och designfiler.
+Produktionsbackend, Railway, Stripe, GitHub Actions och Electron-installern
+har inte skrivits over.
+
+INSTALLERA VIA GITHUB DESKTOP
+1. Oppna repositoryt "vyra-production" i GitHub Desktop.
+2. Klicka Repository > Show in Explorer.
+3. Packa upp detta ZIP-paket.
+4. Kopiera allt INUTI mappen "VYRA-widget-update" till repositoryts rot.
+5. Valj "Ersatt filer" nar Windows fragar.
+6. Ga tillbaka till GitHub Desktop och kontrollera andringarna.
+7. Commit-meddelande:
+   Lagg till premium-widgetar och senaste sidebar-fix
+8. Klicka Commit to main och sedan Push origin.
+
+INNEHALL
+- Senaste premiumversionerna av Studio, media och overlay preview.
+- Premium-widgetarnas CSS och JavaScript.
+- Like Fountain, kristallhjartan och rorelseeffekter.
+- Gift Fireworks och Last-X-alertdesigner.
+- Top Like, Top Gifter, Top Streak, MVP, goal- och level-up-designer.
+- 16 premiumprofilramar.
+- 195 giftresurser och 34 bildresurser.
+- Senaste sidebar-fixen.
+
+KONTROLLER
+- Alla JavaScript-filer i paketet klarar Node-syntaxkontroll.
+- Studio-filens lokala CSS- och JavaScriptreferenser finns.
+- server/, .github/, electron-app/ och produktionsmiljofiler ar oforandrade.
+- Inga produktionsnycklar eller hemligheter finns i paketet.
+
+VIKTIGT
+Kopiera inte mappen som en extra undermapp i repositoryt. Kopiera dess
+INNEHALL direkt till repositoryts rot, dar studio.html redan finns.

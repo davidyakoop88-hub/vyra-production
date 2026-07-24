@@ -140,7 +140,7 @@ function styleOverlayCatalogCards() {
       e.stopPropagation();
       originalClick.call(btn, e);
       overlayPreviewWidgetId = selected;
-      openConfigureModal(selected);
+      openConfigureModal(selected, true);
     };
 
     const previewBtn = document.createElement('span');
@@ -202,21 +202,37 @@ function bindOverlayPreview() {
 // (#propX, #dataColor, etc.), then flips it back — the modal's own DOM is untouched by that,
 // since render() only ever rewrites #view's contents and this modal lives outside of it.
 let owgConfigureWidgetId = null;
+let owgConfigureIsNew = false;
 
-function openConfigureModal(widgetId) {
+function openConfigureModal(widgetId, isNew = false) {
   owgConfigureWidgetId = widgetId;
+  owgConfigureIsNew = isNew;
   renderConfigureModal();
 }
 
-function closeConfigureModal() {
+function closeConfigureModal(commit = false) {
+  const widgetId = owgConfigureWidgetId;
+  if (!commit && owgConfigureIsNew && widgetId) {
+    state.widgets = state.widgets.filter(x => x.id !== widgetId);
+    if (selected === widgetId) selected = null;
+  }
+  if (commit) save();
   owgConfigureWidgetId = null;
+  owgConfigureIsNew = false;
   document.querySelector('.owg-configure-modal')?.remove();
-  render();
+  if (commit && widgetId) {
+    selected = widgetId;
+    go('editor');
+    toast('Widgeten är sparad och tillagd i Layout');
+  } else {
+    save();
+    render();
+  }
 }
 
 function renderConfigureModal() {
   const w = state.widgets.find(x => x.id === owgConfigureWidgetId);
-  if (!w) { closeConfigureModal(); return; }
+  if (!w) { closeConfigureModal(false); return; }
   let modal = document.querySelector('.owg-configure-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -231,10 +247,10 @@ function renderConfigureModal() {
     <span class="section-header-eyebrow">Preview</span>
     <div class="owg-configure-preview-stage">${wh(w)}</div>
   </div>
-  <button class="btn btn-primary owg-configure-done" type="button">Close</button>
+  <button class="btn btn-primary owg-configure-done" type="button">Klar · lägg till i Layout</button>
   <button id="testEvent" hidden></button><button id="saveProject" hidden></button>`;
-  modal.querySelector('.owg-configure-close').onclick = closeConfigureModal;
-  modal.querySelector('.owg-configure-done').onclick = closeConfigureModal;
+  modal.querySelector('.owg-configure-close').onclick = () => closeConfigureModal(false);
+  modal.querySelector('.owg-configure-done').onclick = () => closeConfigureModal(true);
   bindConfigureModal();
 }
 
