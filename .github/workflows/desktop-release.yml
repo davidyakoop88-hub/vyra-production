@@ -1,6 +1,8 @@
 name: VYRA Windows release
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
     tags: ['v*']
 permissions:
