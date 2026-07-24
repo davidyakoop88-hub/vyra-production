@@ -110,7 +110,13 @@
   function renderSafeLayout() {
     view = 'editor';
     document.querySelectorAll('[data-view]').forEach(function (button) {
-      button.classList.toggle('active', button.dataset.view === 'editor');
+      button.classList.remove('active');
+    });
+    document.querySelectorAll('aside nav a').forEach(function (link) {
+      var isLayout = /(?:^|\/)layout\.html(?:$|[?#])/.test(link.getAttribute('href') || '');
+      link.classList.toggle('active', isLayout);
+      if (isLayout) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
     });
     var items = layoutItems();
     document.querySelector('#view').innerHTML =
@@ -145,4 +151,9 @@
     }
     fullGo(nextView);
   };
+
+  if (new URLSearchParams(location.search).get('open') === 'layout') {
+    setTimeout(function () { go('editor'); }, 0);
+  }
 })();
+
