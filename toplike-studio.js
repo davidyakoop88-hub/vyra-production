@@ -213,36 +213,6 @@
     });
   };
 
-  // ---- Bottom toolbar: Resolution selector + Export Overlay button, appended to the existing overlay-link-bar ----
-  const wsToolbarBind = bind;
-  bind = function () {
-    wsToolbarBind();
-    if (view !== 'editor') return;
-    const bar = document.querySelector('.overlay-link-bar');
-    if (!bar || bar.querySelector('.ws-resolution')) return;
-
-    const resolution = document.createElement('select');
-    resolution.className = 'ws-resolution';
-    resolution.innerHTML = '<option value="1080x1920">1080×1920 (9:16)</option><option value="1920x1080">1920×1080 (16:9)</option><option value="1080x1080">1080×1080 (1:1)</option>';
-    resolution.value = localStorage.getItem('vyra-overlay-resolution') || '1080x1920';
-    resolution.onchange = () => { localStorage.setItem('vyra-overlay-resolution', resolution.value); toast('Upplösning: ' + resolution.value); };
-
-    const exportButton = document.createElement('button');
-    exportButton.type = 'button';
-    exportButton.className = 'ws-export';
-    exportButton.textContent = 'Exportera overlay ↓';
-    exportButton.onclick = () => {
-      const blob = new Blob([JSON.stringify({ widgets: state.widgets, resolution: resolution.value }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'vyra-overlay-export.json'; a.click();
-      URL.revokeObjectURL(url);
-      toast('Overlay exporterad');
-    };
-
-    bar.append(resolution, exportButton);
-  };
-
   // Overlay pages auto-render on a setTimeout(0) right after page load (see media.js), which can race
   // ahead of this dynamically-loaded script. Force one re-render so skin/crown/opacity/animation are
   // reflected in OBS even when this file lost that race.
