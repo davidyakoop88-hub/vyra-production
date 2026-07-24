@@ -3,7 +3,7 @@
 
   var FORMATS = {
     mobile: { label: 'Mobil', ratio: '9:16', width: 432, height: 768 },
-    widescreen: { label: '16:9', ratio: '1920 × 1080', width: 768, height: 432 }
+    widescreen: { label: 'Dator', ratio: '16:9 · 1920 × 1080', width: 768, height: 432 }
   };
 
   function currentState() {
@@ -61,7 +61,7 @@
     picker.innerHTML =
       '<span>Format</span>' +
       '<button type="button" data-format="mobile">Mobil <small>9:16</small></button>' +
-      '<button type="button" data-format="widescreen">16:9 <small>1920 × 1080</small></button>' +
+      '<button type="button" data-format="widescreen">Dator <small>16:9 · 1920 × 1080</small></button>' +
       '<output class="layout-format-status" aria-live="polite"></output>';
 
     toolbar.prepend(picker);
