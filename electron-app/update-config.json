@@ -1,4 +1,4 @@
 {
-  "apiOrigin": "https://app.example.com",
+  "apiOrigin": "https://api-production-4f7d.up.railway.app",
   "channel": "stable"
 }
