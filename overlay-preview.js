@@ -144,8 +144,11 @@ function styleOverlayCatalogCards() {
     const originalClick = btn.onclick;
     if (!originalClick) return;
 
-    const { html: thumbHtml, name: widgetName } = overlayCatalogPreviewHtml(originalClick);
-    generatedAny = true;
+    // Rendering every real widget thumbnail here used to create and undo every
+    // catalog widget during page load. With premium packs installed that can
+    // lock the renderer. Keep cards lightweight and render one preview only
+    // when the user explicitly presses Preview.
+    const thumbHtml = null;
     if (thumbHtml) {
       const icon = btn.querySelector('i');
       const thumb = document.createElement('div');
@@ -274,8 +277,7 @@ function closeConfigureModal(commit = false) {
   document.querySelector('.owg-configure-modal')?.remove();
   if (commit && widgetId) {
     selected = widgetId;
-    go('editor');
-    toast('Widgeten är sparad och tillagd i Layout');
+    location.href = 'layout.html';
   } else {
     save();
     render();
@@ -345,3 +347,6 @@ props = function () {
   if (h === '<p>Välj ett element på canvas.</p>') return '<div class="properties-empty">Klicka på en widget i LIVE-LAGER eller på canvasen för att redigera den.</div>';
   return h;
 };
+
+window.VyraOverlayPreviewReady = true;
+if (new URLSearchParams(location.search).get('open') === 'overlay') go('overlay');

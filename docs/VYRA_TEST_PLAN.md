@@ -8,11 +8,12 @@ surfaces are added — do not let it drift from what actually exists.
 - **Harness**: `recognition-verify.js` + `recognition-verify.html` — a from-scratch, dev-only
   harness (no Jest/Mocha/Vitest anywhere in the repo, confirmed by search). Runs identically
   under Node (`require(...).run().then(...)`) and in-browser (auto-run on page load).
-- **Coverage today**: 242 cases across Normalizer (13), Merge (22 + 6 pending-stats),
-  Queue (25), Controller (37), Card Mapper (49), Card (41), Runtime (49).
+- **Coverage today**: 262 verification cases across the recognition pipeline and provider
+  adapter. The suite is also included in `node --test scripts/test/*.test.js`, so it cannot
+  be skipped by the release gate.
 - **Run it**:
   ```
-  node -e "require('./recognition-types.js');require('./recognition-rules.js');require('./recognition-normalizer.js');require('./recognition-merge.js');require('./recognition-queue.js');require('./recognition-controller.js');require('./recognition-card-mapper.js');require('./recognition-card.js');require('./recognition-runtime.js');require('./recognition-verify.js').run().then(r=>console.log(r.filter(x=>x.pass).length+'/'+r.length))"
+  node --test scripts/test/recognition-runtime.test.js
   ```
   or open `recognition-verify.html` via the local server and read `#summary`.
 - **Gaps**: no unit tests exist yet for the legacy widget layer (`media.js` and ~30 sibling

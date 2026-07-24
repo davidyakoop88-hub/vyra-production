@@ -9,6 +9,7 @@ const ROOT = path.resolve(__dirname, '../..');
 const ENTRY_POINTS = [
   'index.html',
   'studio.html',
+  'layout.html',
   'overlay.html',
   'operations.html',
   'status.html',

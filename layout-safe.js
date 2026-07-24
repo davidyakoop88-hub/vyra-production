@@ -138,6 +138,11 @@
       renderSafeLayout();
       return;
     }
+    if (nextView === 'overlay') {
+      if (window.VyraOverlayPreviewReady) fullGo('overlay');
+      else toast('Widgetkatalogen laddas…');
+      return;
+    }
     fullGo(nextView);
   };
 })();
