@@ -10,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17-alpine
+        # ubuntu-latest currently ships the PostgreSQL 16 client used by the
+        # backup/restore proof below. Keep the CI server on the matching major
+        # so pg_dump can create a portable verified backup.
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: vyra
           POSTGRES_USER: vyra
