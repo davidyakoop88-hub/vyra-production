@@ -4,6 +4,11 @@
   if (typeof go !== 'function' || typeof editor !== 'function') return;
 
   var fullGo = go;
+  var MAX_LAYOUT_ITEMS = 30;
+
+  function layoutItems() {
+    return state.widgets.slice(0, MAX_LAYOUT_ITEMS);
+  }
 
   function labelFor(widget) {
     return widget.templateTitle || widget.title || widget.group || widget.type || 'Widget';
@@ -12,10 +17,10 @@
   function renderLayerList(host) {
     host.innerHTML =
       '<section class="live-layer-panel">' +
-        '<header><div><b>LIVE-LAGER</b><span>' + state.widgets.length + ' saker sparade i din live</span></div></header>' +
+        '<header><div><b>LIVE-LAGER</b><span>Visar ' + Math.min(state.widgets.length, MAX_LAYOUT_ITEMS) + ' av ' + state.widgets.length + ' sparade lager</span></div></header>' +
         '<div class="live-layer-list">' +
           (state.widgets.length
-            ? state.widgets.map(function (widget) {
+            ? layoutItems().map(function (widget) {
                 return '<article class="' + (selected === widget.id ? 'active ' : '') + (widget.hidden ? 'is-hidden' : '') + '" data-safe-layer="' + widget.id + '">' +
                   '<button class="layer-select" type="button"><i>◇</i><span><b>' + labelFor(widget) + '</b><small>' +
                   (widget.hidden ? 'Dold för publiken' : 'Synlig för publiken') +
@@ -99,7 +104,16 @@
     document.querySelectorAll('[data-view]').forEach(function (button) {
       button.classList.toggle('active', button.dataset.view === 'editor');
     });
-    document.querySelector('#view').innerHTML = editor();
+    var items = layoutItems();
+    document.querySelector('#view').innerHTML =
+      '<div class="editor-shell">' +
+        '<div class="elements"></div>' +
+        '<div class="workarea">' +
+          '<div class="editor-toolbar"><button id="testEvent">▶ Testevent</button><button id="saveProject">Spara</button></div>' +
+          '<div class="canvas">' + items.map(wh).join('') + '</div>' +
+        '</div>' +
+        '<div class="properties"><div class="panel-title">EGENSKAPER</div>' + props() + '</div>' +
+      '</div>';
     document.querySelector('#title').textContent = 'Layout';
     var elements = document.querySelector('.editor-shell .elements');
     if (elements) renderLayerList(elements);
