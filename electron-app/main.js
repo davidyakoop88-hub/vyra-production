@@ -44,8 +44,13 @@ function createSplash() {
   splash.on('closed', () => log('splash closed'));
 }
 
-function createMainWindow() {
+async function createMainWindow() {
   log('createMainWindow()');
+  // A reinstall or update must never revive cached frontend files from an older VYRA build.
+  // Keep cookies/localStorage (account and layouts), but remove HTTP, service-worker and Cache API
+  // content before either the cloud Studio or the bundled local Studio is opened.
+  await session.defaultSession.clearCache();
+  await session.defaultSession.clearStorageData({ storages: ['serviceworkers', 'cachestorage'] });
   main = new BrowserWindow({
     width: 1360, height: 860, minWidth: 1000, minHeight: 680,
     show: false, backgroundColor: '#08090d', autoHideMenuBar: true, icon: iconPath,
@@ -134,7 +139,7 @@ app.whenReady().then(async () => {
   } catch (err) {
     log('local server failed to start:', err.message);
   }
-  createMainWindow();
+  await createMainWindow();
   setTimeout(checkForUpdates,15000).unref();
 }).catch(err => log('app.whenReady chain threw:', err.stack || err.message));
 
