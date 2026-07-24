@@ -424,3 +424,21 @@ body:has(.editor-shell) .overlay-link-bar{left:64px!important;height:68px!import
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
 @keyframes lfCrystalFacet{50%{opacity:.22;transform:scale(.72) rotate(28deg)}}
 .head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
+
+/* Layout format preview: portrait mobile or standard 16:9 broadcast canvas. */
+.editor-shell .editor-toolbar{align-items:center;gap:10px}
+.layout-format-picker{display:flex;align-items:center;gap:5px;min-width:0}
+.layout-format-picker>span{margin-right:3px;color:#8c8197;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.layout-format-picker button{display:flex;align-items:center;gap:5px;min-height:26px;padding:5px 9px!important;border:1px solid #382945!important;background:#130d19!important;color:#a79daf!important}
+.layout-format-picker button small{color:#746a7c;font-size:7px}
+.layout-format-picker button.active{border-color:#bb5cf2!important;background:linear-gradient(110deg,#7023a7,#a83cdd)!important;color:#fff!important;box-shadow:0 0 14px #a43bdd42}
+.layout-format-picker button.active small{color:#f0d9ff}
+.layout-format-status{margin-left:4px;color:#9a8fa2;font-size:8px;white-space:nowrap}
+.editor-shell .canvas{width:var(--layout-width,432px);height:var(--layout-height,768px);transition:width .22s ease,height .22s ease}
+.editor-shell .canvas[data-layout-format="mobile"]::after,
+.editor-shell .canvas[data-layout-format="widescreen"]::after{position:absolute;right:10px;bottom:8px;z-index:1;padding:4px 7px;border:1px solid #ffffff1f;border-radius:5px;background:#08050ecc;color:#a597ad;font-size:7px;letter-spacing:.08em;pointer-events:none}
+.editor-shell .canvas[data-layout-format="mobile"]::after{content:"MOBIL · 9:16"}
+.editor-shell .canvas[data-layout-format="widescreen"]::after{content:"16:9 · 1920 × 1080"}
+html.overlay-output .layout-format-picker,
+html.overlay-output .canvas::after{display:none!important}
+@media(max-width:1100px){.layout-format-status{display:none}.layout-format-picker button{padding:5px 7px!important}}
