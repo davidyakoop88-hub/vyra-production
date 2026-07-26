@@ -381,10 +381,12 @@ body:has(.editor-shell)>aside{width:64px;padding:10px 7px;overflow-y:auto;overfl
 body:has(.editor-shell)>aside .brand b,
 body:has(.editor-shell)>aside .nav-section-label,
 body:has(.editor-shell)>aside nav button span,
+body:has(.editor-shell)>aside nav a span,
 body:has(.editor-shell)>aside .nav-badge,
 body:has(.editor-shell)>aside .user span,
 body:has(.editor-shell)>aside .sidebar-feedback-cta span{display:none!important}
 body:has(.editor-shell)>aside nav button,
+body:has(.editor-shell)>aside nav a,
 body:has(.editor-shell)>aside .aside-bottom>button{justify-content:center;padding:10px!important}
 body:has(.editor-shell)>main{height:100vh;min-height:0;overflow:hidden;padding-bottom:0!important}
 body:has(.editor-shell) main>header{height:58px;padding:0 16px}
