@@ -45,8 +45,8 @@ test('Overlay routing opens the real editor instead of an undefined view', () =>
 
 test('Overlay catalog does not render every premium thumbnail on page load', () => {
   const preview = read('overlay-preview.js');
-  assert.match(preview, /const thumbHtml = null/);
-  assert.match(preview, /explicitly presses Preview/);
+  assert.match(preview, /new IntersectionObserver/);
+  assert.match(preview, /owgThumbObserver\.observe\(btn\)/);
   assert.match(preview, /location\.href = 'layout\.html'/);
 });
 

@@ -115,6 +115,31 @@ function scaleThumbnailToFit(thumb) {
   inner.style.transform = `translate(-50%,-50%) scale(${scale})`;
 }
 
+// Renders a real thumbnail for one card, on demand — used by the lazy observer below so only
+// cards that actually scroll near the viewport ever run overlayCatalogPreviewHtml()'s dry-run,
+// instead of all ~50+ catalog widgets at once (which is what used to lock the renderer).
+function owgRenderCardThumb(btn) {
+  const originalClick = btn._owgOriginalClick;
+  if (!originalClick) return;
+  const { html: thumbHtml } = overlayCatalogPreviewHtml(originalClick);
+  if (!thumbHtml) return;
+  const icon = btn.querySelector('i');
+  const thumb = document.createElement('div');
+  thumb.className = 'owg-thumb';
+  thumb.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
+  btn.prepend(thumb);
+  if (icon) icon.remove();
+  scaleThumbnailToFit(thumb);
+}
+
+const owgThumbObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    owgThumbObserver.unobserve(entry.target);
+    owgRenderCardThumb(entry.target);
+  });
+}, { rootMargin: '200px', threshold: 0.01 });
+
 // A stable per-card key for favorites — derived from the rendered name + its section heading,
 // since the underlying catalog buttons don't share one consistent dataset attribute across the
 // ~14 files that inject them (data-mvp-style, data-theme-template, data-ranking, etc.).
@@ -144,20 +169,12 @@ function styleOverlayCatalogCards() {
     const originalClick = btn.onclick;
     if (!originalClick) return;
 
-    // Rendering every real widget thumbnail here used to create and undo every
-    // catalog widget during page load. With premium packs installed that can
-    // lock the renderer. Keep cards lightweight and render one preview only
-    // when the user explicitly presses Preview.
-    const thumbHtml = null;
-    if (thumbHtml) {
-      const icon = btn.querySelector('i');
-      const thumb = document.createElement('div');
-      thumb.className = 'owg-thumb';
-      thumb.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
-      btn.prepend(thumb);
-      if (icon) icon.remove();
-      scaleThumbnailToFit(thumb);
-    }
+    // Rendering every real widget thumbnail during page load used to create and undo every
+    // catalog widget at once, which could lock the renderer with premium packs installed.
+    // Instead, only render a card's thumbnail once it actually scrolls near the viewport —
+    // owgThumbObserver below fires owgRenderCardThumb() lazily, one card at a time.
+    btn._owgOriginalClick = originalClick;
+    owgThumbObserver.observe(btn);
 
     const key = owgCardKey(btn);
     const star = document.createElement('span');
