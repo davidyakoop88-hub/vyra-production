@@ -43,7 +43,12 @@
 
     var status = document.querySelector('.layout-format-status');
     if (status) {
-      status.textContent = FORMATS[format].label + ' · ' + FORMATS[format].ratio;
+      var statusText = FORMATS[format].label + ' · ' + FORMATS[format].ratio;
+      // Assigning textContent always replaces child text nodes, even when the value is
+      // unchanged — that childList mutation re-triggers the MutationObserver below, which
+      // calls applyFormat() again, which writes textContent again, forever. Skipping the
+      // write when nothing actually changed breaks the loop.
+      if (status.textContent !== statusText) status.textContent = statusText;
     }
   }
 
