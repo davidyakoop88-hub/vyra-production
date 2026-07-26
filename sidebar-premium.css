@@ -36,7 +36,7 @@ aside nav { display: flex; flex-direction: column; gap: 22px; }
   margin-bottom: 3px;
 }
 
-aside nav button, .sidebar-feedback-cta {
+aside nav button, aside nav a, .sidebar-feedback-cta {
   position: relative;
   display: flex;
   align-items: center;
@@ -48,28 +48,29 @@ aside nav button, .sidebar-feedback-cta {
   color: #9992ac;
   font: 500 12.5px Inter, sans-serif;
   text-align: left;
+  text-decoration: none;
   transition: transform .3s ease, background .3s ease, border-color .3s ease, box-shadow .3s ease, color .3s ease;
 }
-aside nav button span, .sidebar-feedback-cta span {
+aside nav button span, aside nav a span, .sidebar-feedback-cta span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
 }
-aside button svg {
+aside button svg, aside nav a svg {
   width: 22px; height: 22px; flex: 0 0 auto;
   transition: transform .3s ease, filter .3s ease;
 }
-aside nav button:hover {
+aside nav button:hover, aside nav a:hover {
   transform: translateY(-2px);
   background: linear-gradient(145deg, rgba(177, 60, 255, .12), rgba(177, 60, 255, .02));
   border-color: rgba(177, 60, 255, .24);
   color: #fff;
   box-shadow: 0 8px 20px rgba(120, 40, 200, .18);
 }
-aside nav button:hover svg { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(177, 60, 255, .6)); }
+aside nav button:hover svg, aside nav a:hover svg { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(177, 60, 255, .6)); }
 
-aside nav button.active {
+aside nav button.active, aside nav a.active {
   background: linear-gradient(145deg, rgba(177, 60, 255, .24), rgba(120, 40, 200, .08));
   border: 1px solid rgba(200, 120, 255, .4);
   color: #fff;
@@ -79,10 +80,10 @@ aside nav button.active {
     0 0 0 1px rgba(177, 60, 255, .12),
     0 10px 28px rgba(150, 50, 220, .26);
 }
-aside nav button.active svg { filter: drop-shadow(0 0 8px rgba(200, 140, 255, .9)); }
-aside nav button.active:hover { transform: translateY(-2px); }
+aside nav button.active svg, aside nav a.active svg { filter: drop-shadow(0 0 8px rgba(200, 140, 255, .9)); }
+aside nav button.active:hover, aside nav a.active:hover { transform: translateY(-2px); }
 
-aside nav button:active, .sidebar-feedback-cta:active { animation: navPulse .3s ease; }
+aside nav button:active, aside nav a:active, .sidebar-feedback-cta:active { animation: navPulse .3s ease; }
 @keyframes navPulse {
   0% { box-shadow: 0 0 0 0 rgba(177, 60, 255, .45); }
   100% { box-shadow: 0 0 0 14px rgba(177, 60, 255, 0); }
@@ -121,9 +122,10 @@ body.sidebar-collapsed { grid-template-columns: 76px 1fr; }
 aside.collapsed { width: 76px; padding-left: 12px; padding-right: 12px; }
 aside.collapsed .nav-section-label,
 aside.collapsed nav button span,
+aside.collapsed nav a span,
 aside.collapsed .nav-badge,
 aside.collapsed .sidebar-feedback-cta span,
 aside.collapsed .brand b,
 aside.collapsed .user span { display: none; }
-aside.collapsed nav button, aside.collapsed .sidebar-feedback-cta { justify-content: center; padding: 12px; }
+aside.collapsed nav button, aside.collapsed nav a, aside.collapsed .sidebar-feedback-cta { justify-content: center; padding: 12px; }
 aside.collapsed .sidebar-collapse-toggle svg { transform: rotate(180deg); }
