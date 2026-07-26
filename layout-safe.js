@@ -131,12 +131,13 @@
     document.querySelector('#title').textContent = 'Layout';
     var elements = document.querySelector('.editor-shell .elements');
     if (elements) renderLayerList(elements);
-    bindCanvas();
-    bindProperties();
-    var test = document.querySelector('#testEvent');
-    var saveButton = document.querySelector('#saveProject');
-    if (test) test.onclick = send;
-    if (saveButton) saveButton.onclick = function () { save(); toast('Layout sparad'); };
+    // Call the real bind() chain (studio.js + every file that wraps it: media.js's
+    // OBS/TikTok overlay-link-bar, gift-fireworks.js's widget-specific property fields,
+    // etc.) instead of the bindCanvas()/bindProperties() reimplementation below, which only
+    // ever covered drag + title/value/delete and left every other bind()-wired feature dark
+    // on this page (missing OBS/TikTok copy buttons + link being the reported symptom).
+    if (typeof bind === 'function') bind();
+    else { bindCanvas(); bindProperties(); }
   }
 
   go = function (nextView) {
@@ -150,6 +151,20 @@
       return;
     }
     fullGo(nextView);
+  };
+
+  // bind()'s own #pt/#pv/#del handlers (and every widget-specific bind() wrapper's own
+  // save-then-render() calls) call the plain global render(), not renderSafeLayout() — without
+  // this wrap, editing a title/value or deleting a widget on this page would silently replace
+  // it with studio.js's original editor() screen the instant render() ran, since render() has
+  // no idea this page exists. Mirrors the go() wrap above for the same reason.
+  var fullRender = render;
+  render = function () {
+    if (view === 'editor') {
+      renderSafeLayout();
+      return;
+    }
+    fullRender();
   };
 
   if (new URLSearchParams(location.search).get('open') === 'layout') {
