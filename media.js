@@ -417,3 +417,32 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 if(new URLSearchParams(location.search).get('vfxdemo')==='2'){Promise.resolve().then(()=>{let files=['pixi.min.js','gsap.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-fountain-types.js','vfx-rng.js','vfx-crystal-heart-particle.js','vfx-sparkle-particle.js','vfx-trail-pool.js','vfx-fountain-source.js','vfx-fountain-emitter.js','vfx-fountain-debug.js','vfx-fountain-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
+
+/* VYRA_PREMIUM_WIDGET_BUNDLE_20260727
+   Activates the premium widget files that are already versioned in this repository.
+   Keep the scripts sequential: premium-final and runtime-controls both extend bind(). */
+Promise.resolve().then(()=>{
+  const version='20260727-premium-widget-sync';
+  ['premium-final.css','runtime-controls.css'].forEach(href=>{
+    if(document.querySelector('link[href^="'+href+'"]'))return;
+    const css=document.createElement('link');
+    css.rel='stylesheet';
+    css.href=href+'?v='+version;
+    css.dataset.vyraWidgetBundle='premium';
+    document.head.append(css);
+  });
+  const scripts=['premium-final.js','runtime-controls.js','chatbot-controls.js'];
+  const loadNext=index=>{
+    if(index>=scripts.length)return;
+    const src=scripts[index];
+    if(document.querySelector('script[src^="'+src+'"]')){loadNext(index+1);return}
+    const js=document.createElement('script');
+    js.src=src+'?v='+version;
+    js.async=false;
+    js.dataset.vyraWidgetBundle='premium';
+    js.onload=()=>loadNext(index+1);
+    js.onerror=()=>console.error('[VYRA] failed to load premium widget module',src);
+    (document.body||document.head).append(js);
+  };
+  loadNext(0);
+});
