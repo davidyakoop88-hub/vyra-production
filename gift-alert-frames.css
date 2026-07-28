@@ -30,7 +30,7 @@
 .follow-avatar .pro-avatar-frame > img:first-child,
 .fan-profile .pro-avatar-frame > img:first-child,
 .gifter-orbit .pro-avatar-frame > img:first-child {
-  position: relative !important; width: 80% !important; height: 80% !important; border-radius: 50% !important; object-fit: cover !important; z-index: 1 !important;
+  position: relative !important; width: 100% !important; height: 100% !important; border-radius: 50% !important; object-fit: cover !important; z-index: 1 !important;
 }
 
 .vyra-profile-face .pro-avatar-frame > .pro-frame-art,
