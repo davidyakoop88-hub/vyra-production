@@ -30,11 +30,19 @@ document.querySelectorAll('.colors i').forEach(c=>c.onclick=()=>{
   c.classList.add('on');
   notify('Accentfärgen uppdaterades');
 });
-document.querySelector('.menu').onclick=()=>{
-  const nav=document.querySelector('nav');
-  nav.style.display=nav.style.display==='flex'?'none':'flex';
-  Object.assign(nav.style,{position:'absolute',top:'65px',left:'15px',right:'15px',flexDirection:'column',padding:'20px',background:'#11131a',border:'1px solid #292d38',borderRadius:'10px'});
-};
+document.querySelector('.menu')?.addEventListener('click',()=>{
+  const menuBtn=document.querySelector('.menu');
+  const mobileNav=document.querySelector('.mobile-nav');
+  if(!mobileNav)return;
+  const open=mobileNav.classList.toggle('open');
+  menuBtn.setAttribute('aria-expanded',open?'true':'false');
+  menuBtn.textContent=open?'✕':'☰';
+});
+document.querySelectorAll('.mobile-nav a').forEach(a=>a.addEventListener('click',()=>{
+  document.querySelector('.mobile-nav')?.classList.remove('open');
+  const menuBtn=document.querySelector('.menu');
+  if(menuBtn){menuBtn.setAttribute('aria-expanded','false');menuBtn.textContent='☰'}
+}));
 
 /* ---- Ambient hero demo: the product mockup stays visibly "live" on page load,
    instead of sitting static until someone clicks the demo/test buttons. ---- */

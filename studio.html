@@ -72,23 +72,32 @@
     <small>VYRA ansluter direkt till din riktiga TikTok LIVE-sändning.</small>
   </dialog>
   <div class="toast"></div>
-  <script src="auth-client.js?v=20260724-1"></script>
+  <script src="auth-client.js?v=20260728-1"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <script src="auth-security.js?v=20260724-1"></script>
-  <script src="entitlement-gate.js?v=20260724-1"></script>
+  <script src="entitlement-gate.js?v=20260728-1"></script>
   <script src="desktop-profile.js?v=20260724-1"></script>
-  <script src="studio.js?v=20260724-4"></script>
+  <script src="studio.js?v=20260728-1"></script>
   <script src="layout-format.js?v=20260726-freeze-fix"></script>
   <script src="spotify-client.js?v=20260724-1"></script>
   <script src="extras.js?v=20260724-spotify"></script>
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
   <script src="gift-event-images.js?v=20260724-1"></script>
-  <script src="media.js?v=20260726-lazy-thumbs"></script>
+  <script src="media.js?v=20260728-backup-merge"></script>
   <script src="layout-safe.js?v=20260726-obs-bar-fix"></script>
   <script src="cloud-sync.js?v=20260724-4"></script>
   <script src="cloud-media.js?v=20260724-1"></script>
   <script src="billing-client.js?v=20260724-4"></script>
   <script src="overlay-access.js?v=20260724-4"></script>
+  <script>
+    (function () {
+      if (new URLSearchParams(location.search).get('intent') !== 'download') return;
+      addEventListener('vyra-entitlement-ok', function () {
+        window.toast && window.toast('Nedladdningen startar — öppna VYRA-Setup.exe när den är klar.');
+        location.href = '/api/downloads/windows';
+      }, { once: true });
+    })();
+  </script>
   <script>
     (function () {
       var KEY = 'vyra-sidebar-collapsed';
