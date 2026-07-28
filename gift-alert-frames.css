@@ -7,11 +7,19 @@
 
 .vyra-profile-face .pro-avatar-frame,
 .streak-profile-face .pro-avatar-frame,
-.follow-avatar .pro-avatar-frame {
+.follow-avatar .pro-avatar-frame,
+.last-x-avatar .pro-avatar-frame {
   position: absolute; inset: 0; display: grid; place-items: center;
 }
 
 .fan-profile { position: relative; }
+
+/* .last-x-card (last-x-alerts.js) has no dedicated stylesheet anywhere in the repo — the avatar
+   <img> has no intrinsic size of its own, so without an explicit box here the frame's
+   position:absolute;inset:0 expands to fill whatever ambient size it inherits (observed: covering
+   most of the widget). 72px matches the compact-alert sizing used by comparable widgets
+   (Gifter Level's 86px, Fan Level's 52px) until last-x-card gets its own real stylesheet. */
+.last-x-avatar { position: relative; width: 72px; height: 72px; }
 .fan-profile .pro-avatar-frame {
   position: absolute; inset: 0; display: grid; place-items: center;
 }
@@ -29,7 +37,8 @@
 .streak-profile-face .pro-avatar-frame > img:first-child,
 .follow-avatar .pro-avatar-frame > img:first-child,
 .fan-profile .pro-avatar-frame > img:first-child,
-.gifter-orbit .pro-avatar-frame > img:first-child {
+.gifter-orbit .pro-avatar-frame > img:first-child,
+.last-x-avatar .pro-avatar-frame > img:first-child {
   position: relative !important; width: 100% !important; height: 100% !important; border-radius: 50% !important; object-fit: cover !important; z-index: 1 !important;
 }
 
@@ -37,7 +46,8 @@
 .streak-profile-face .pro-avatar-frame > .pro-frame-art,
 .follow-avatar .pro-avatar-frame > .pro-frame-art,
 .fan-profile .pro-avatar-frame > .pro-frame-art,
-.gifter-orbit .pro-avatar-frame > .pro-frame-art {
+.gifter-orbit .pro-avatar-frame > .pro-frame-art,
+.last-x-avatar .pro-avatar-frame > .pro-frame-art {
   position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: contain !important; z-index: 2 !important; pointer-events: none !important;
 }
 

@@ -19,10 +19,10 @@
     templateFollowerAlert: 'follow-avatar',
     templateFanLevel: 'fan-profile',
     templateGifterLevel: 'gifter-orbit',
-    templateLastGifter: 'follow-avatar',
-    templateLastLiker: 'follow-avatar',
-    templateLastSharer: 'follow-avatar',
-    templateLastSubscriber: 'follow-avatar',
+    templateLastGifter: 'last-x-avatar',
+    templateLastLiker: 'last-x-avatar',
+    templateLastSharer: 'last-x-avatar',
+    templateLastSubscriber: 'last-x-avatar',
   };
 
   // ---- Render: composite the chosen avatar frame onto the profile photo + apply entrance animation ----
