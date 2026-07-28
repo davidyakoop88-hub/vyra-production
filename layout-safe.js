@@ -11,6 +11,21 @@
 
   if (typeof go !== 'function' || typeof editor !== 'function') return;
 
+  // The sidebar's "Layout" link used to be a plain <a href="layout.html">, which is a stub
+  // page that immediately redirects to studio.html?open=layout — so every click did TWO full
+  // page reloads (tear down + rebuild the whole app shell twice) instead of the instant
+  // client-side switch every other sidebar item does. That's what caused the visible gap/flash
+  // in the sidebar on click, and very likely a major contributor to the reported freeze (each
+  // reload re-runs auth-client.js + entitlement-gate.js + cloud-sync.js's full initialization).
+  // Intercept it here and switch views the same way the rest of the sidebar does; layout.html
+  // itself is left untouched as a working fallback for anyone linking directly to it.
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest('a[href="layout.html"]');
+    if (!link) return;
+    event.preventDefault();
+    go('editor');
+  }, true);
+
   var fullGo = go;
   var MAX_LAYOUT_ITEMS = 30;
 
@@ -109,7 +124,7 @@
 
   function renderSafeLayout() {
     view = 'editor';
-    document.querySelectorAll('[data-view]').forEach(function (button) {
+    document.querySelectorAll('[data-view], [data-extra]').forEach(function (button) {
       button.classList.remove('active');
     });
     document.querySelectorAll('aside nav a').forEach(function (link) {
