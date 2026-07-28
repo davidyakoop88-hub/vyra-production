@@ -414,7 +414,7 @@ nav a:hover{color:#fff}
 @media(max-width:800px){
   nav,.actions{display:none}
   .menu{display:block}
-  .mobile-nav{display:flex;flex-direction:column;gap:2px;max-height:0;overflow:hidden;background:#0e0916f5;border-top:0 solid var(--line-soft);transition:max-height .28s ease}
+  .mobile-nav{position:absolute;top:100%;left:0;right:0;display:flex;flex-direction:column;gap:2px;max-height:0;overflow:hidden;background:#0e0916f5;border-top:0 solid var(--line-soft);transition:max-height .28s ease}
   .mobile-nav.open{max-height:420px;border-top-width:1px;padding:10px 24px 18px}
   .mobile-nav a{padding:12px 4px;color:var(--muted);text-decoration:none;font-size:14px;border-bottom:1px solid var(--line-soft)}
   .mobile-nav a:last-child{border-bottom:0}
