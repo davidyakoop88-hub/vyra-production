@@ -11,7 +11,7 @@
 .vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame,
 .vyra-toplike:not(.like-center) .toplike-row>img{justify-self:start!important;transform:none!important}
 .vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame{transform:none!important}
-.vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame>img:first-child{width:45px!important;height:45px!important;clip-path:circle(50% at 50% 50%)!important}
+.vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame>img:first-child{width:100%!important;height:100%!important;clip-path:circle(50% at 50% 50%)!important}
 .vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>span:not(.pro-avatar-frame),
 .vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>em{transform:none!important}
 
