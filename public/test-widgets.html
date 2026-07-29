@@ -164,6 +164,14 @@
         {label:'🦁 +1 Lion (→ Golden Lotus)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',count:1})},
         {label:'↺ Nollställ',reset:true}
       ]
+    },
+    {
+      key:'battle-mvp',title:'Battle MVP (9s hyllningssekvens)',file:'widgets/battle-mvp.html',hook:'VyraBattleMvpWidget',height:'520px',
+      noVariant:true,
+      buttons:[
+        {label:'🏆 Kör hyllning (StreamFan92 · 15 000p)',event:()=>({username:'StreamFan92',score:15000})},
+        {label:'🏆 Kör hyllning (anpassad text)',event:()=>({username:'MiraDances',thanks:'TACK SÅ MYCKET',subtitle:'FÖR ATT DU STÖTTAR STREAMEN',label:'TOP SUPPORTER',score:8420})}
+      ]
     }
   ];
 
