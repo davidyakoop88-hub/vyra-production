@@ -17,10 +17,16 @@
 //   VYRA_INGEST_TOKEN           bearer token for the cloud ingest endpoint (TIKTOK_INGEST_TOKEN server-side)
 //   DISCORD_ALERT_WEBHOOK_URL   Discord webhook URL — critical alert after 50 failed reconnect attempts
 //                                in a row, info alert as soon as a genuine reconnect succeeds again
+//   PROXY_LIST                  comma-separated http(s) proxy URLs, e.g.
+//                                "http://user:pass@ip:port,http://user:pass@ip2:port2" — rotated
+//                                one-per-connection-attempt via proxy-manager.js; unset/empty runs
+//                                with no proxy (dev mode)
 'use strict';
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const N = require('./normalizer');
+const { createProxyManager } = require('./proxy-manager');
 
 const SERVER = process.env.VYRA_SERVER_URL || 'http://127.0.0.1:4173';
 const CLOUD = process.env.VYRA_CLOUD_URL || '';
@@ -132,6 +138,8 @@ if (require.main === module) {
   let stopping = false;
   let criticalAlertSent = false;
   const recentEventKeys = new Map();
+  const proxyManager = createProxyManager();
+  let currentProxy = null;
 
   async function postJson(path, body) {
     try {
@@ -187,7 +195,13 @@ if (require.main === module) {
 
   function connect() {
     if (stopping) return;
-    const connection = new TikTokLiveConnection(username, {});
+    // Rotate to a fresh proxy for every connection attempt (including reconnects) — null when
+    // PROXY_LIST is empty (dev mode) or every proxy is currently marked failed.
+    currentProxy = proxyManager.next();
+    const options = currentProxy
+      ? { webClientOptions: { agent: { http: new HttpsProxyAgent(currentProxy), https: new HttpsProxyAgent(currentProxy) } } }
+      : {};
+    const connection = new TikTokLiveConnection(username, options);
     activeConnection = connection;
 
     connection.on(WebcastEvent.CHAT, data => {
@@ -236,7 +250,7 @@ if (require.main === module) {
         const attemptsBeforeSuccess = reconnectAttempt;
         reconnectAttempt = 0;
         criticalAlertSent = false;
-        console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}). Vidarebefordrar events till ${SERVER}`);
+        console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}) via ${currentProxy || 'ingen proxy'}. Vidarebefordrar events till ${SERVER}. Proxy-status: ${JSON.stringify(proxyManager.stats())}`);
         postJson('/api/connect', { username, roomId: state.roomId, source: 'tiktok-bridge' });
         if (shouldSendSuccessAlert(attemptsBeforeSuccess)) {
           postDiscordAlert(reconnectSuccessAlertPayload(username, state.roomId, attemptsBeforeSuccess));
@@ -245,7 +259,12 @@ if (require.main === module) {
       })
       .catch(err => {
         if (activeConnection === connection) activeConnection = null;
-        console.error(`[bridge] Kunde inte ansluta till @${username}:`, err?.message || err);
+        // The connection attempt itself failed — through this proxy (if any) — so mark it as
+        // broken rather than blaming the next attempt's fresh proxy for the same problem. A
+        // normal stream-end/disconnect (handled above) is NOT a proxy failure and never reaches
+        // here, so only genuine connect failures affect proxy health.
+        if (currentProxy) proxyManager.markFailed(currentProxy);
+        console.error(`[bridge] Kunde inte ansluta till @${username}${currentProxy ? ` via ${currentProxy}` : ''}:`, err?.message || err);
         scheduleReconnect(`@${username} är kanske inte live`);
       });
   }
