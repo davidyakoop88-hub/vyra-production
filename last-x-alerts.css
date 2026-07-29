@@ -1,0 +1,99 @@
+/* last-x-alerts.js (Last Gifter/Liker/Sharer/Subscriber) had no dedicated stylesheet at all —
+   the card rendered as an unstyled row of raw elements. Follows the same auto-hide toast pattern
+   as follower-spotlight (gift-fireworks.css/studio.css): hidden by default, animates in on
+   .last-x-active, animates back out when that class is removed. */
+
+.last-x-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px 14px 14px;
+  border-radius: var(--radius-lg, 18px);
+  background: linear-gradient(145deg, var(--surface-2, #1c1028), var(--surface-1, #130b1c));
+  border: 1px solid var(--border-subtle, rgba(173, 91, 255, .2));
+  box-shadow: var(--shadow-card, 0 10px 30px rgba(3, 1, 4, .4)), 0 0 24px -8px color-mix(in srgb, var(--last-x, #b13cff), transparent 30%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-24px);
+  transition: opacity .32s ease, transform .32s cubic-bezier(.22, 1, .36, 1), visibility 0s linear .32s;
+  cursor: grab;
+  user-select: none;
+}
+.last-x-card img { user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.last-x-card.is-dragging { cursor: grabbing; }
+
+.last-x-card.selected {
+  outline: 1px dashed color-mix(in srgb, var(--last-x, #b13cff), white 25%);
+  outline-offset: 8px;
+}
+
+/* ---- entrance variants: each sets its own resting transform, .last-x-active overrides to the settled position ---- */
+.last-x-slide-left { transform: translateX(-24px); }
+.last-x-slide-right { transform: translateX(24px); }
+.last-x-pop { transform: scale(.85); }
+.last-x-fade { transform: none; }
+
+.last-x-active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateX(0) scale(1) !important;
+  transition: opacity .32s ease, transform .38s cubic-bezier(.22, 1, .36, 1), visibility 0s linear;
+}
+.last-x-active.last-x-leaving {
+  opacity: 0 !important;
+  transition: opacity .38s ease, transform .38s cubic-bezier(.4, 0, .68, 0), visibility 0s linear .38s;
+}
+.last-x-slide-left.last-x-leaving { transform: translateX(-24px) !important; }
+.last-x-slide-right.last-x-leaving { transform: translateX(24px) !important; }
+.last-x-pop.last-x-leaving { transform: scale(.85) !important; }
+
+.last-x-avatar {
+  flex: none;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--last-x, #b13cff), transparent 15%), 0 0 16px -4px var(--last-x, #b13cff);
+}
+.last-x-avatar img { border-radius: 50%; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.last-x-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.last-x-copy small {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-muted, #746982);
+}
+.last-x-name {
+  font: 700 var(--last-x-name-size, 24px)/1.15 Manrope, sans-serif;
+  color: var(--text-primary, #f7f2ff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.last-x-message {
+  font: 600 var(--last-x-action-size, 12px)/1.3 Inter, sans-serif;
+  font-style: normal;
+  color: var(--last-x, #b13cff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.last-x-emblem {
+  flex: none;
+  font-size: 20px;
+  color: var(--last-x, #b13cff);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--last-x, #b13cff), transparent 30%));
+  opacity: .85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .last-x-card, .last-x-active, .last-x-active.last-x-leaving { transition-duration: .01ms !important; }
+}
