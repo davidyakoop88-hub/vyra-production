@@ -18,10 +18,29 @@ class CircuitBreaker{
 }
 function routeName(path){return path.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/ig,':id').replace(/(\/api\/overlay-access\/)[^/]+/,'$1:token')}
 function startRuntimeMonitor({alert}={}){const delay=monitorEventLoopDelay({resolution:20});delay.enable();let lastAlert=0;const timer=setInterval(()=>{const memoryMb=process.memoryUsage().rss/1048576,loopMs=delay.mean/1e6,reasons=[];if(memoryMb>Number(process.env.MEMORY_WARN_MB||400))reasons.push(`memory ${memoryMb.toFixed(0)} MB`);if(loopMs>Number(process.env.EVENT_LOOP_WARN_MS||250))reasons.push(`event loop ${loopMs.toFixed(0)} ms`);if(reasons.length&&Date.now()-lastAlert>60000){lastAlert=Date.now();alert?.('runtime_pressure',{reasons,memoryMb,loopMs})}delay.reset()},10000);timer.unref();return()=>{clearInterval(timer);delay.disable()}}
+function discordFieldValue(v){
+  if(Array.isArray(v))return v.map(String).join(', ');
+  if(v&&typeof v==='object')return JSON.stringify(v);
+  return v==null?'':String(v);
+}
+// Same embed style/color as tiktok-bridge's Discord alert (0xe33e3e), so bridge and server
+// alerts read as one unified stream in the channel rather than two differently-shaped messages.
+function discordAlertPayload(event,details,at){
+  const title=String(event).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const fields=Object.entries(details||{}).slice(0,25).map(([name,value])=>({
+    name:(name.slice(0,256)||'value'),
+    value:(discordFieldValue(value).slice(0,1024)||'—'),
+    inline:true
+  }));
+  return{
+    content:`🚨 **VYRA API-larm**: ${title}`,
+    embeds:[{title:title.slice(0,256),color:0xe33e3e,fields,footer:{text:'vyra-api'},timestamp:at}]
+  };
+}
 async function webhookAlert(event,details){
   const at=new Date().toISOString(),url=process.env.ALERT_WEBHOOK_URL,email=process.env.ALERT_EMAIL_TO;
   try{
-    if(url)await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({service:'vyra-api',event,details,at}),signal:AbortSignal.timeout(5000)});
+    if(url)await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(discordAlertPayload(event,details,at)),signal:AbortSignal.timeout(5000)});
     if(email)await fetch('https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${process.env.RESEND_API_KEY}`,'content-type':'application/json'},body:JSON.stringify({from:process.env.EMAIL_FROM,to:[email],subject:`VYRA driftlarm: ${event}`,text:`Tjänst: vyra-api\nHändelse: ${event}\nTid: ${at}\n\n${JSON.stringify(details,null,2)}`}),signal:AbortSignal.timeout(5000)});
   }catch(error){
     console.error(JSON.stringify({level:'error',event:'alert_delivery_failed',message:error.message,at:new Date().toISOString()}));
@@ -45,4 +64,4 @@ function startCapacityMonitor({pool,eventBus,metrics,alert=webhookAlert,interval
   const timer=setInterval(sample,intervalMs);timer.unref();sample();
   return()=>clearInterval(timer);
 }
-module.exports={Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor};
+module.exports={Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,discordAlertPayload,capacitySnapshot,startCapacityMonitor};

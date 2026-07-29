@@ -70,3 +70,19 @@ jobs:
       - name: Prove database backup and restore
         working-directory: .
         run: bash scripts/verify-backup-restore.sh
+
+  test-tiktok-bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tiktok-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tiktok-bridge/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
