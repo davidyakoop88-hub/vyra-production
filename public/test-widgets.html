@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Widget-testsida</title>
+<style>
+  html,body{margin:0;background:#0b0614;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100%}
+  header{padding:24px 28px 8px}
+  h1{margin:0 0 4px;font-size:22px}
+  p{margin:0;color:#b9a6dd;font-size:14px}
+  #controls{display:flex;flex-wrap:wrap;gap:10px;padding:18px 28px}
+  button{
+    appearance:none;border:1px solid #8d3cff;background:rgba(141,60,255,.12);color:#fff;
+    padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  button:hover{background:rgba(141,60,255,.28)}
+  button:active{transform:translateY(1px)}
+  #stage{
+    display:grid;grid-template-columns:1fr 1fr;gap:0;
+    height:70vh;min-height:420px;border-top:1px solid #241a38;
+  }
+  .pane{position:relative;display:flex;flex-direction:column;min-width:0}
+  .pane+.pane{border-left:1px solid #241a38}
+  .pane header{
+    padding:10px 16px;font-size:13px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;color:#d9c9ff;background:#140b22;
+  }
+  .pane iframe{
+    flex:1;border:0;width:100%;
+    /* Checkerboard so the widget's real transparent background is visible, same trick OBS's
+       own preview uses to show through an alpha channel. */
+    background-image:
+      linear-gradient(45deg,#1c1330 25%,transparent 25%),
+      linear-gradient(-45deg,#1c1330 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#1c1330 75%),
+      linear-gradient(-45deg,transparent 75%,#1c1330 75%);
+    background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;
+    background-color:#241a38;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>VYRA Widget-testsida</h1>
+  <p>Triggar test-events lokalt i båda widgets samtidigt — ingen backend eller inloggning krävs.</p>
+</header>
+
+<div id="controls">
+  <button data-preset="rose">🌹 Rose — 50 diamonds</button>
+  <button data-preset="lion">🦁 Lion — 5 000 diamonds</button>
+  <button data-preset="galaxy">🌌 Galaxy — 25 000 diamonds</button>
+  <button data-preset="random">🎲 Slumpad gåva</button>
+</div>
+
+<div id="stage">
+  <div class="pane">
+    <header>variant=cyber</header>
+    <iframe id="frame-cyber" src="widgets/gift-alert.html?variant=cyber" title="Gift alert — cyber"></iframe>
+  </div>
+  <div class="pane">
+    <header>variant=celestial</header>
+    <iframe id="frame-celestial" src="widgets/gift-alert.html?variant=celestial" title="Gift alert — celestial"></iframe>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const PRESETS={
+    rose:{giftName:'Rose',value:50},
+    lion:{giftName:'Lion',value:5000},
+    galaxy:{giftName:'Galaxy',value:25000}
+  };
+  const NAMES=['StreamFan92','LunaLive','KingOfChat','Sparkle_TT','NightOwl','MiraDances'];
+
+  function randomPreset(){
+    const names=Object.keys(PRESETS),giftName=names[Math.floor(Math.random()*names.length)];
+    const base=PRESETS[giftName];
+    return{giftName:base.giftName,value:Math.round(base.value*(0.5+Math.random()))};
+  }
+
+  function buildEvent(presetKey){
+    const preset=presetKey==='random'?randomPreset():PRESETS[presetKey];
+    return{
+      id:`test-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      type:'gift',
+      username:NAMES[Math.floor(Math.random()*NAMES.length)],
+      giftName:preset.giftName,
+      value:preset.value,
+      at:Date.now()
+    };
+  }
+
+  function frames(){
+    return[document.getElementById('frame-cyber'),document.getElementById('frame-celestial')]
+      .filter(f=>f&&f.contentWindow);
+  }
+
+  function fire(presetKey){
+    const event=buildEvent(presetKey);
+    for(const frame of frames()){
+      const widget=frame.contentWindow.VyraGiftAlertWidget;
+      if(widget?.render)widget.render(event);
+      else console.warn('[VyraWidgetTest] widget-hooken är inte redo än i',frame.id);
+    }
+  }
+
+  document.getElementById('controls').addEventListener('click',event=>{
+    const button=event.target.closest('button[data-preset]');
+    if(button)fire(button.dataset.preset);
+  });
+})();
+</script>
+</body>
+</html>
