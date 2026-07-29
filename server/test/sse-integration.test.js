@@ -35,27 +35,37 @@ test('SSE flow: a published test event reaches a live subscriber and is replayab
   const workspaceId='11111111-1111-1111-1111-111111111111';
   const testEvent=buildTestEvent('gift',{username:'IntegrationTester',giftName:'Rose'});
 
+  // eventBus is the shared singleton exported by server/index.js — connecting it here (via
+  // subscribe/publish below) opens a real socket that keeps the process alive until closed.
+  // Everything from here down runs inside try/finally so that socket — and the subscribe's own
+  // duplicated connection — always gets closed, even if an assertion throws, otherwise `node
+  // --test` never exits and the CI step hangs instead of failing/passing cleanly.
   let unsubscribe;
-  const received=await new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>reject(new Error('Timed out waiting for the published event on the live subscription')),4000);
-    eventBus.subscribe(workspaceId,message=>{
-      if(message.event.id!==testEvent.id)return; // ignore unrelated events from other test runs sharing this workspace id
-      clearTimeout(timer);
-      resolve(message);
-    }).then(unsub=>{unsubscribe=unsub;return eventBus.publish(workspaceId,testEvent)})
-      .catch(err=>{clearTimeout(timer);reject(err)});
-  });
-  if(unsubscribe)await unsubscribe();
+  try{
+    const received=await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('Timed out waiting for the published event on the live subscription')),4000);
+      eventBus.subscribe(workspaceId,message=>{
+        if(message.event.id!==testEvent.id)return; // ignore unrelated events from other test runs sharing this workspace id
+        clearTimeout(timer);
+        resolve(message);
+      }).then(unsub=>{unsubscribe=unsub;return eventBus.publish(workspaceId,testEvent)})
+        .catch(err=>{clearTimeout(timer);reject(err)});
+    });
 
-  assert.equal(received.event.type,'gift');
-  assert.equal(received.event.username,'IntegrationTester');
-  assert.equal(received.event.giftName,'Rose');
-  assert.ok(received.streamId,'a published event must carry a Redis Stream id — this is exactly what backs the SSE "id:" field and Last-Event-ID replay');
+    assert.equal(received.event.type,'gift');
+    assert.equal(received.event.username,'IntegrationTester');
+    assert.equal(received.event.giftName,'Rose');
+    assert.ok(received.streamId,'a published event must carry a Redis Stream id — this is exactly what backs the SSE "id:" field and Last-Event-ID replay');
 
-  // Simulates an overlay reconnecting after a drop: the browser's EventSource automatically sends
-  // the last "id:" it saw as the Last-Event-ID header, and openEventStream() replays from there.
-  const replayed=await eventBus.replay(workspaceId,'0-0',50);
-  const found=replayed.find(row=>row.event.id===testEvent.id);
-  assert.ok(found,'replay(workspaceId, "0-0") must find the just-published event, proving reconnect-replay works');
-  assert.equal(found.streamId,received.streamId);
+    // Simulates an overlay reconnecting after a drop: the browser's EventSource automatically
+    // sends the last "id:" it saw as the Last-Event-ID header, and openEventStream() replays
+    // from there.
+    const replayed=await eventBus.replay(workspaceId,'0-0',50);
+    const found=replayed.find(row=>row.event.id===testEvent.id);
+    assert.ok(found,'replay(workspaceId, "0-0") must find the just-published event, proving reconnect-replay works');
+    assert.equal(found.streamId,received.streamId);
+  }finally{
+    if(unsubscribe)await unsubscribe().catch(()=>{});
+    await eventBus.close().catch(()=>{});
+  }
 });
