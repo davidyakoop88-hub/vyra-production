@@ -11,18 +11,39 @@
   // (reused across names/genders where thematically close), plain SVG placeholder rings elsewhere
   // (same "swap file-for-file, no code change" idea as this project's own DEV PLACEHOLDER themes —
   // see README.md). Placeholder ids are exactly the ones with ext:'svg'.
+  // Full catalog: every file in assets/images/profile-frames/ (53 total — was 16, the other 37
+  // existed on disk but were never registered here, so they were unreachable from any picker).
   const FRAMES = {
     boys: [
       ['ocean-oracle','Ocean Oracle','ocean-oracle','png'],['neon-valkyrie','Neon Valkyrie','neon-valkyrie','png'],
       ['moonlit-sakura','Moonlit Sakura','moonlit-sakura','png'],['celestial-serpent','Celestial Serpent','celestial-serpent','png'],
       ['stellar-emperor','Stellar Emperor','stellar-emperor','png'],['opal-dream','Opal Dream','opal-dream','png'],
-      ['thunder-warden','Thunder Warden','thunder-warden','png'],['velvet-nocturne','Velvet Nocturne','velvet-nocturne','png']
+      ['thunder-warden','Thunder Warden','thunder-warden','png'],['velvet-nocturne','Velvet Nocturne','velvet-nocturne','png'],
+      ['bronze','Bronze','bronze','svg'],['cyber-blue','Cyber Blue','cyber-blue','png'],
+      ['emerald','Emerald','emerald','png'],['flame','Flame','flame','svg'],
+      ['galaxy','Galaxy','galaxy','png'],['golden-king','Golden King','golden-king','png'],
+      ['heroic','Heroic','heroic','svg'],['ice-crystal','Ice Crystal','ice-crystal','png'],
+      ['infinity','Infinity','infinity','svg'],['lightning','Lightning','lightning','svg'],
+      ['minimal-glow','Minimal Glow','minimal-glow','png'],['neon-blue','Neon Blue','neon-blue','svg'],
+      ['neon-green','Neon Green','neon-green','svg'],['neon-purple','Neon Purple','neon-purple','png'],
+      ['predator','Predator','predator','svg'],['samurai','Samurai','samurai','png'],
+      ['sapphire-nocturne','Sapphire Nocturne','sapphire-nocturne','png'],['viking','Viking','viking','svg']
     ],
     girls: [
       ['gilded-lion','Gilded Lion','gilded-lion','png'],['amethyst-oracle','Amethyst Oracle','amethyst-oracle','png'],
       ['frostfire-crown','Frostfire Crown','frostfire-crown','png'],['quantum-lotus','Quantum Lotus','quantum-lotus','png'],
       ['crimson-dynasty','Crimson Dynasty','crimson-dynasty','png'],['pearl-tempest','Pearl Tempest','pearl-tempest','png'],
-      ['cosmic-tiger','Cosmic Tiger','cosmic-tiger','png'],['enchanted-ivy','Enchanted Ivy','enchanted-ivy','png']
+      ['cosmic-tiger','Cosmic Tiger','cosmic-tiger','png'],['enchanted-ivy','Enchanted Ivy','enchanted-ivy','png'],
+      ['arctic-couture','Arctic Couture','arctic-couture','png'],['aurora-diamond','Aurora Diamond','aurora-diamond','png'],
+      ['butterfly','Butterfly','butterfly','svg'],['champagne-crown','Champagne Crown','champagne-crown','png'],
+      ['emerald-elan','Emerald Élan','emerald-elan','png'],['fairy','Fairy','fairy','svg'],
+      ['flower','Flower','flower','svg'],['midnight-amethyst','Midnight Amethyst','midnight-amethyst','png'],
+      ['neon-pink','Neon Pink','neon-pink','svg'],['pearl-lumiere','Pearl Lumière','pearl-lumiere','png'],
+      ['pink-angel','Pink Angel','pink-angel','png'],['princess','Princess','princess','svg'],
+      ['rose-atelier','Rose Atelier','rose-atelier','png'],['ruby-velvet','Ruby Velvet','ruby-velvet','png'],
+      ['silver','Silver','silver','svg'],['sparkle','Sparkle','sparkle','svg'],
+      ['starry','Starry','starry','svg'],['unicorn','Unicorn','unicorn','svg'],
+      ['wings','Wings','wings','svg']
     ]
   };
   const FRAME_FILES = {}; // id -> "file.ext", built once from FRAMES so wh() can look up the real filename
