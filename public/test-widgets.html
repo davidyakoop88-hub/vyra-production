@@ -23,6 +23,7 @@
   button:active{transform:translateY(1px)}
 
   .stage{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #241a38}
+  .stage.stage-single{grid-template-columns:1fr}
   .pane{position:relative;display:flex;flex-direction:column;min-width:0}
   .pane+.pane{border-left:1px solid #241a38}
   .pane .pane-label{
@@ -152,6 +153,17 @@
         {label:'🌌 Ultra mega — 10 000 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',value:10000})},
         {label:'🌹 Vanlig gåva — 50 diamonds (ska INTE trigga)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:50})}
       ]
+    },
+    {
+      key:'crystal-garden',title:'Crystal Garden (Gift Campaign)',file:'widgets/crystal-garden.html',hook:'VyraCrystalGardenWidget',height:'440px',
+      noVariant:true,
+      buttons:[
+        {label:'🌹 +5 Rose (→ Rose Quartz)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:5})},
+        {label:'💜 +3 Perfume (→ Amethyst)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Perfume',count:3})},
+        {label:'💎 +2 Galaxy (→ Sapphire)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:2})},
+        {label:'🦁 +1 Lion (→ Golden Lotus)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',count:1})},
+        {label:'↺ Nollställ',reset:true}
+      ]
     }
   ];
 
@@ -162,26 +174,42 @@
     const extraQuery=widget.query?`&${widget.query}`:'';
     const section=document.createElement('section');
     section.className='widget-block';
-    section.innerHTML=`
-      <h2>${widget.title}</h2>
-      <p class="file-path">public/${widget.file}${widget.query?' ?'+widget.query:''}</p>
-      <div class="controls"></div>
-      <div class="stage" style="height:${widget.height}">
-        <div class="pane">
-          <div class="pane-label">variant=cyber</div>
-          <iframe data-variant="cyber" src="${widget.file}?variant=cyber${extraQuery}" title="${widget.title} — cyber"></iframe>
-        </div>
-        <div class="pane">
-          <div class="pane-label">variant=celestial</div>
-          <iframe data-variant="celestial" src="${widget.file}?variant=celestial${extraQuery}" title="${widget.title} — celestial"></iframe>
-        </div>
-      </div>`;
-    container.append(section);
-
-    frameRefs[widget.key]={
-      cyber:section.querySelector('iframe[data-variant="cyber"]'),
-      celestial:section.querySelector('iframe[data-variant="celestial"]')
-    };
+    if(widget.noVariant){
+      // Widgets with their own fixed design (no cyber/celestial toggle) get a single full-width
+      // preview pane instead of the usual side-by-side variant comparison.
+      section.innerHTML=`
+        <h2>${widget.title}</h2>
+        <p class="file-path">public/${widget.file}${widget.query?' ?'+widget.query:''}</p>
+        <div class="controls"></div>
+        <div class="stage stage-single" style="height:${widget.height}">
+          <div class="pane">
+            <div class="pane-label">förhandsgranskning</div>
+            <iframe data-slot="single" src="${widget.file}${widget.query?'?'+widget.query:''}" title="${widget.title}"></iframe>
+          </div>
+        </div>`;
+      container.append(section);
+      frameRefs[widget.key]={single:section.querySelector('iframe[data-slot="single"]')};
+    }else{
+      section.innerHTML=`
+        <h2>${widget.title}</h2>
+        <p class="file-path">public/${widget.file}${widget.query?' ?'+widget.query:''}</p>
+        <div class="controls"></div>
+        <div class="stage" style="height:${widget.height}">
+          <div class="pane">
+            <div class="pane-label">variant=cyber</div>
+            <iframe data-variant="cyber" src="${widget.file}?variant=cyber${extraQuery}" title="${widget.title} — cyber"></iframe>
+          </div>
+          <div class="pane">
+            <div class="pane-label">variant=celestial</div>
+            <iframe data-variant="celestial" src="${widget.file}?variant=celestial${extraQuery}" title="${widget.title} — celestial"></iframe>
+          </div>
+        </div>`;
+      container.append(section);
+      frameRefs[widget.key]={
+        cyber:section.querySelector('iframe[data-variant="cyber"]'),
+        celestial:section.querySelector('iframe[data-variant="celestial"]')
+      };
+    }
 
     const controlsEl=section.querySelector('.controls');
     for(const buttonDef of widget.buttons){
@@ -192,13 +220,12 @@
     }
   }
 
-  function bothFrames(key){
-    const refs=frameRefs[key];
-    return[refs.cyber,refs.celestial].filter(f=>f?.contentWindow);
+  function framesFor(key){
+    return Object.values(frameRefs[key]).filter(f=>f?.contentWindow);
   }
 
   function fireWidget(widget,buttonDef){
-    const frames=bothFrames(widget.key);
+    const frames=framesFor(widget.key);
     if(buttonDef.reset){
       for(const frame of frames)frame.contentWindow[widget.hook]?.reset?.();
       return;

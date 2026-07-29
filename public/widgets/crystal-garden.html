@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Crystal Garden</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%;width:100%}
+  body{
+    display:flex;align-items:center;justify-content:center;height:100vh;
+    font-family:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif;
+    color:#f3e9d2;
+  }
+
+  /* Root font-size is set in JS (rem-scaling) so every measurement below, written in rem, scales
+     proportionally with whatever pixel size the OBS Browser Source actually is — this is what
+     makes the whole widget "ändringsbar storlek" instead of clipping or staying a fixed size. */
+  #canvas{
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:1.6rem;
+    padding:1.4rem 2rem;border-radius:1.4rem;
+  }
+  /* The "frame" pulse — a soft ambient glow around the whole widget, animating opacity only
+     (compositor-friendly) rather than the box-shadow value itself, so it's cheap to run
+     indefinitely even though the pulse itself is slow and subtle. */
+  #canvas::before{
+    content:'';position:absolute;inset:-.8rem;border-radius:1.8rem;pointer-events:none;
+    border:1px solid rgba(246,199,107,.35);
+    box-shadow:0 0 var(--glow-px,14px) rgba(246,199,107,.55);
+    opacity:.55;animation:frame-pulse 5.5s ease-in-out infinite;
+  }
+  @keyframes frame-pulse{0%,100%{opacity:.35}50%{opacity:.85}}
+
+  #title-block{text-align:center;position:relative;z-index:1}
+  #eyebrow{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.3rem;opacity:.85}
+  #eyebrow svg{width:1.1rem;height:1.1rem;fill:#f6c76b}
+  #eyebrow .line{width:2.4rem;height:1px;background:linear-gradient(90deg,transparent,#f6c76b,transparent)}
+  #title{
+    margin:0;font-size:var(--title-size,2.1rem);letter-spacing:.14em;font-weight:400;
+    color:#f6dfae;text-shadow:0 0 18px rgba(246,199,107,.45);
+  }
+  #subtitle{margin:.35rem 0 0;font-size:.72rem;letter-spacing:.28em;color:#c9b892;text-transform:uppercase}
+
+  #goals{display:flex;gap:1.8rem;position:relative;z-index:1}
+  html[data-layout="list"] #goals{flex-direction:column;align-items:center}
+  html[data-layout="row"] #goals{flex-direction:row;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+
+  .goal{display:flex;flex-direction:column;align-items:center;gap:.55rem;min-width:0}
+  .ring-wrap{position:relative;width:var(--ring-size,7.5rem);height:var(--ring-size,7.5rem)}
+  .ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring-track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:6}
+  .ring-fill{
+    fill:none;stroke-width:6;stroke-linecap:round;
+    filter:drop-shadow(0 0 var(--glow-px,14px) var(--goal-color));
+    transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .goal-icon{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--ring-size,7.5rem) * .34);
+  }
+  .goal-icon img{width:60%;height:60%;object-fit:contain;filter:drop-shadow(0 0 8px var(--goal-color))}
+  .goal-icon svg{width:58%;height:58%;filter:drop-shadow(0 0 8px var(--goal-color))}
+
+  .goal-name{font-size:var(--name-size,.95rem);color:var(--goal-color);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:12rem}
+  .goal-count{font-size:1.15rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;font-family:Georgia,serif}
+  .goal-count small{font-size:.75rem;font-weight:400;color:#a89a80;margin-left:.15rem}
+  .goal-pct{
+    font-size:.72rem;font-weight:700;padding:.15rem .55rem;border-radius:999px;
+    border:1px solid var(--goal-color);color:var(--goal-color);background:color-mix(in srgb,var(--goal-color) 14%,transparent);
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <div id="title-block">
+      <div id="eyebrow"><span class="line"></span><svg viewBox="0 0 24 24"><path d="M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5z"/></svg><span class="line"></span></div>
+      <h1 id="title">GIFT CAMPAIGN</h1>
+      <p id="subtitle">GROW THE CRYSTAL GARDEN</p>
+    </div>
+    <div id="goals"></div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  const DEFAULT_GOALS = [
+    { name: 'Rose Quartz', gift: 'Rose',    target: 250, color: '#ff8fc2' },
+    { name: 'Amethyst',    gift: 'Perfume', target: 100, color: '#b478ff' },
+    { name: 'Sapphire',    gift: 'Galaxy',  target: 50,  color: '#5ec8ff' },
+    { name: 'Golden Lotus',gift: 'Lion',    target: 20,  color: '#f6c76b' },
+    { name: 'Emerald',     gift: 'Universe',target: 10,  color: '#6bf6a8' },
+    { name: 'Ruby',        gift: 'Drama Queen', target: 5, color: '#ff6b6b' }
+  ];
+
+  // Number(null) and Number('') are both 0 — a valid, finite number — so a naive Number(value)
+  // check can't tell "param absent, use fallback" apart from "param explicitly set to 0". Missing
+  // URLSearchParams values are null, so that's checked first.
+  function num(value, fallback) { if (value === null || value === '') return fallback; const n = Number(value); return Number.isFinite(n) ? n : fallback }
+  function clamp(n, min, max) { return Math.max(min, Math.min(max, n)) }
+
+  const params = new URLSearchParams(location.search);
+  const count = clamp(Math.round(num(params.get('count'), 4)), 1, 6);
+  const layout = params.get('layout') === 'list' ? 'list' : 'row';
+  const ringSize = clamp(num(params.get('ringSize'), 120), 60, 260);
+  const glowPx = clamp(num(params.get('glow'), 14), 0, 30);
+  const titleSize = clamp(num(params.get('titleSize'), 34), 16, 72);
+  const nameSize = clamp(num(params.get('nameSize'), 15), 8, 32);
+
+  document.documentElement.dataset.layout = layout;
+  const root = document.documentElement.style;
+  root.setProperty('--ring-size', ringSize / 16 + 'rem');
+  root.setProperty('--glow-px', glowPx + 'px');
+  root.setProperty('--title-size', titleSize / 16 + 'rem');
+  root.setProperty('--name-size', nameSize / 16 + 'rem');
+
+  document.getElementById('title').textContent = params.get('title') || 'GIFT CAMPAIGN';
+  document.getElementById('subtitle').textContent = params.get('subtitle') || 'GROW THE CRYSTAL GARDEN';
+
+  const goals = [];
+  for (let i = 1; i <= count; i++) {
+    const fallback = DEFAULT_GOALS[i - 1] || DEFAULT_GOALS[DEFAULT_GOALS.length - 1];
+    goals.push({
+      name: params.get(`g${i}_name`) || fallback.name,
+      gift: (params.get(`g${i}_gift`) || fallback.gift).toLowerCase(),
+      target: Math.max(1, num(params.get(`g${i}_target`), fallback.target)),
+      value: Math.max(0, num(params.get(`g${i}_value`), 0)),
+      color: params.get(`g${i}_color`) || fallback.color,
+      image: params.get(`g${i}_image`) || ''
+    });
+  }
+
+  // A generic faceted-gem glyph, tinted per goal — used whenever a goal has no custom g{i}_image.
+  // Drawn inline so the widget stays a single self-contained file with zero external assets.
+  function gemSvg(color) {
+    return `<svg viewBox="0 0 24 24" fill="${color}"><path d="M12 2 3 9l9 13 9-13z" opacity=".9"/><path d="M12 2 6 9h12z" opacity=".55"/><path d="M3 9h18l-9 13z" opacity=".75"/></svg>`;
+  }
+
+  const RADIUS = 46, CIRC = 2 * Math.PI * RADIUS;
+  const goalsRoot = document.getElementById('goals');
+
+  const els = goals.map(goal => {
+    const article = document.createElement('div');
+    article.className = 'goal';
+    article.style.setProperty('--goal-color', goal.color);
+    article.innerHTML = `
+      <div class="ring-wrap">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-track" cx="50" cy="50" r="${RADIUS}"/>
+          <circle class="ring-fill" cx="50" cy="50" r="${RADIUS}" stroke="${goal.color}"
+            stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}"/>
+        </svg>
+        <div class="goal-icon">${goal.image ? `<img src="${goal.image}" alt="">` : gemSvg(goal.color)}</div>
+      </div>
+      <div class="goal-name">${goal.name}</div>
+      <div class="goal-count"><span class="current">0</span><small>/ ${goal.target.toLocaleString('sv-SE')}</small></div>
+      <div class="goal-pct">0%</div>`;
+    goalsRoot.append(article);
+    return {
+      goal,
+      ringFill: article.querySelector('.ring-fill'),
+      currentEl: article.querySelector('.current'),
+      pctEl: article.querySelector('.goal-pct')
+    };
+  });
+
+  function redraw(entry) {
+    const pct = Math.min(1, entry.goal.value / entry.goal.target);
+    entry.ringFill.style.strokeDashoffset = CIRC * (1 - pct);
+    entry.currentEl.textContent = Math.round(entry.goal.value).toLocaleString('sv-SE');
+    entry.pctEl.textContent = Math.round(pct * 100) + '%';
+  }
+  els.forEach(redraw);
+
+  // Rem-scaling: every size in this widget is written in rem, so setting the root font-size
+  // relative to the OBS source's actual rendered width scales the whole widget proportionally
+  // instead of clipping or leaving dead space when a streamer resizes the Browser Source.
+  const BASE_WIDTH = 900, BASE_FONT = 16;
+  function rescale() {
+    const width = document.documentElement.clientWidth || BASE_WIDTH;
+    const factor = clamp(width / BASE_WIDTH, 0.45, 2.2);
+    document.documentElement.style.fontSize = (BASE_FONT * factor) + 'px';
+  }
+  rescale();
+  new ResizeObserver(rescale).observe(document.documentElement);
+
+  // Public hook — accepts a TikTok-shaped "gift" event and adds its count to every goal whose
+  // configured gift name matches (case-insensitive), or a {index, value} object to set one goal
+  // directly for testing.
+  function render(eventOrPatch) {
+    if (eventOrPatch && typeof eventOrPatch.index === 'number') {
+      const entry = els[eventOrPatch.index];
+      if (!entry) return;
+      entry.goal.value = Math.max(0, Number(eventOrPatch.value) || 0);
+      redraw(entry);
+      return;
+    }
+    const event = eventOrPatch;
+    if (!event || event.type !== 'gift') return;
+    const giftName = String(event.giftName || '').toLowerCase();
+    if (!giftName) return;
+    for (const entry of els) {
+      if (entry.goal.gift !== giftName) continue;
+      entry.goal.value += Number(event.count) || 1;
+      redraw(entry);
+    }
+  }
+  window.VyraCrystalGardenWidget = {
+    render,
+    reset() { els.forEach(entry => { entry.goal.value = 0; redraw(entry) }) }
+  };
+
+  const uid = params.get('uid');
+  if (uid) {
+    VyraWidget.connect({ uid, onEvent: render });
+  } else {
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>
