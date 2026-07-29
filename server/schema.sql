@@ -139,3 +139,12 @@ CREATE TABLE IF NOT EXISTS platform_incidents (
   message text NOT NULL, started_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz,
   created_by uuid REFERENCES users(id) ON DELETE SET NULL, updated_at timestamptz NOT NULL DEFAULT now()
 );
+-- One row per workspace that should have a live tiktok-bridge running against a TikTok account.
+-- connection-manager.js's startAll() reads WHERE active=true on startup/restart to know which
+-- bridges to spawn.
+CREATE TABLE IF NOT EXISTS tiktok_connections (
+  workspace_id uuid PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username text NOT NULL, active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS tiktok_connections_active_idx ON tiktok_connections(workspace_id) WHERE active;

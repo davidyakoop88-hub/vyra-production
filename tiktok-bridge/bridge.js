@@ -141,6 +141,13 @@ if (require.main === module) {
   const proxyManager = createProxyManager();
   let currentProxy = null;
 
+  // No-op unless this process was started via child_process.fork() (as connection-manager.js
+  // does) — process.send only exists in that case. Standalone `node bridge.js <user>` CLI usage
+  // is completely unaffected.
+  function reportToParent(type, extra = {}) {
+    if (typeof process.send === 'function') process.send({ type, ...extra });
+  }
+
   async function postJson(path, body) {
     try {
       const res = await fetch(SERVER + path, {
@@ -166,6 +173,7 @@ if (require.main === module) {
     for (const [oldKey, at] of recentEventKeys) if (now - at > 120_000) recentEventKeys.delete(oldKey);
     if (recentEventKeys.has(key)) return Promise.resolve({ ok: true, duplicate: true });
     recentEventKeys.set(key, now);
+    reportToParent('event', { eventType: type, at: now });
     const local = { type, eventKey: key, source: 'tiktok-bridge', ...fields };
     const jobs = [postJson('/api/events', local)];
     if (CLOUD && WORKSPACE && INGEST_TOKEN) jobs.push(fetch(`${CLOUD}/api/events/tiktok/${WORKSPACE}`, { method: 'POST', headers: { 'content-type': 'application/json', 'authorization': `Bearer ${INGEST_TOKEN}` }, body: JSON.stringify(N.cloudEvent(key, type, fields)) }).then(r => { if (!r.ok) throw new Error(`Cloud HTTP ${r.status}`) }).catch(err => console.error('[bridge] Cloud-event misslyckades:', err.message)));
@@ -185,6 +193,7 @@ if (require.main === module) {
     const delay = jitteredDelayMs(base);
     reconnectAttempt++;
     postJson('/api/disconnect', { reason, reconnectAttempt, retryInMs: delay });
+    reportToParent('reconnecting', { attempt: reconnectAttempt, reason });
     console.log(`[bridge] ${reason}. Nytt försök om ${Math.ceil(delay / 1000)}s (försök ${reconnectAttempt})...`);
     if (shouldSendCriticalAlert(reconnectAttempt, criticalAlertSent)) {
       criticalAlertSent = true;
@@ -251,6 +260,7 @@ if (require.main === module) {
         reconnectAttempt = 0;
         criticalAlertSent = false;
         console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}) via ${currentProxy || 'ingen proxy'}. Vidarebefordrar events till ${SERVER}. Proxy-status: ${JSON.stringify(proxyManager.stats())}`);
+        reportToParent('connected', { roomId: state.roomId });
         postJson('/api/connect', { username, roomId: state.roomId, source: 'tiktok-bridge' });
         if (shouldSendSuccessAlert(attemptsBeforeSuccess)) {
           postDiscordAlert(reconnectSuccessAlertPayload(username, state.roomId, attemptsBeforeSuccess));
