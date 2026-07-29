@@ -48,8 +48,13 @@ class EventBus{
     await c.publish(this.channel(workspaceId),JSON.stringify({streamId,event}));
     return{duplicate:false,streamId,event};
   }
-  async replay(workspaceId,lastId='0-0',count=250){
-    if(!/^\d+-\d+$/.test(lastId))lastId='0-0';
+  // No lastId (a client's very first connection has nothing to resume from) or a malformed one
+  // (garbage/corrupted Last-Event-ID) both mean "nothing to replay" — return [] without even
+  // touching Redis, rather than silently guessing '0-0' (which would dump the whole stream
+  // history on every fresh connection). '0-0' is still honored as a legitimate explicit request
+  // to replay everything from the start of the stream.
+  async replay(workspaceId,lastId,count=250){
+    if(!lastId||!/^\d+-\d+$/.test(lastId))return[];
     const c=await this.connect(),rows=await c.xRange(this.stream(workspaceId),lastId==='0-0'?'-':`(${lastId}`,'+',{COUNT:count});
     return rows.map(row=>({streamId:row.id,event:JSON.parse(row.message.event)}));
   }

@@ -79,14 +79,15 @@ Configure the bridge with `VYRA_CLOUD_URL`, `VYRA_WORKSPACE_ID` and
 `VYRA_INGEST_TOKEN`. Each event is deduplicated, appended to a bounded Redis
 stream and published to connected overlays. The authenticated browser endpoint
 `/api/workspaces/:workspaceId/events/stream` uses Server-Sent Events, replays
-missed events from `Last-Event-ID`, and sends a heartbeat every 15 seconds.
+missed events from `Last-Event-ID` (only when the client actually sends one — a fresh connection
+starts live-only, it isn't handed the whole event history), and sends a heartbeat every 30 seconds.
 
 ## OBS overlay links
 
 Create a dedicated link with **Säker OBS-länk** in Studio. Only a SHA-256 hash
 of its 256-bit token is stored. Owners and administrators can assign an expiry,
 inspect last use, and revoke a link. Revocation blocks new requests immediately
-and closes an already connected event stream at the next 15-second heartbeat.
+and closes an already connected event stream at the next 30-second heartbeat.
 Tokens are redacted from structured HTTP logs and are shown only once when
 created. Use a separate link for every streaming computer.
 
