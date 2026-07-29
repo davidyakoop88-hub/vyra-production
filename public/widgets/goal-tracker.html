@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Goal Tracker</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  body{display:flex;align-items:center;justify-content:center;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+
+  :root{
+    --accent-a:#8d3cff;--accent-b:#25e2ff;--text:#fff;--sub:#d9c9ff;
+    --panel-bg:linear-gradient(135deg,rgba(30,10,50,.92),rgba(10,6,30,.92));
+    --glow:0 0 30px rgba(141,60,255,.4);--track:rgba(255,255,255,.08);
+  }
+  html[data-variant="celestial"]{
+    --accent-a:#f6c76b;--accent-b:#ffe9c2;--text:#fff8ec;--sub:#f0d9a8;
+    --panel-bg:linear-gradient(135deg,rgba(70,42,10,.92),rgba(40,20,4,.92));
+    --glow:0 0 30px rgba(246,199,107,.4);--track:rgba(255,255,255,.1);
+  }
+
+  #panel{
+    position:relative;width:420px;max-width:88vw;padding:16px 22px;border-radius:18px;
+    background:var(--panel-bg);border:1px solid color-mix(in srgb,var(--accent-a) 55%,transparent);
+    box-shadow:var(--glow);overflow:hidden;
+  }
+  #label-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  #title{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+  #amounts{font-size:15px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  #amounts small{color:var(--sub);font-weight:600}
+
+  #track{position:relative;height:16px;border-radius:999px;background:var(--track);overflow:hidden}
+  #fill{
+    position:absolute;inset:0;border-radius:999px;transform-origin:left center;
+    background:linear-gradient(90deg,var(--accent-a),var(--accent-b));
+    transform:scaleX(0);
+    will-change:transform;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1);
+  }
+
+  #celebrate{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;font-size:22px;font-weight:900;color:var(--text);
+    background:color-mix(in srgb,var(--accent-a) 35%,transparent);
+    text-shadow:0 2px 8px rgba(0,0,0,.5);
+  }
+  #celebrate.show{animation:celebrate-pop 1.6s ease forwards}
+  @keyframes celebrate-pop{
+    0%{opacity:0;transform:scale(.8)}
+    15%{opacity:1;transform:scale(1)}
+    85%{opacity:1;transform:scale(1)}
+    100%{opacity:0;transform:scale(1.05)}
+  }
+
+  .spark{position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:var(--accent-b);
+    will-change:transform,opacity;animation:spark-fly .9s ease-out forwards}
+  @keyframes spark-fly{
+    0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.4)}
+  }
+</style>
+</head>
+<body>
+  <div id="panel">
+    <div id="label-row">
+      <div id="title">Mål</div>
+      <div id="amounts"><span id="current">0</span> <small>/ <span id="target">500</span></small></div>
+    </div>
+    <div id="track"><div id="fill"></div></div>
+    <div id="celebrate">🎉 MÅLET NÅTT! 🎉</div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant==='celestial'?'celestial':'cyber';
+
+  const goal=Math.max(1,Number(VyraWidget.get('goal',500))||500);
+  const goalType=VyraWidget.get('type','diamonds').toLowerCase();
+
+  document.getElementById('target').textContent=goal.toLocaleString('sv-SE');
+
+  const panel=document.getElementById('panel');
+  const fillEl=document.getElementById('fill');
+  const currentEl=document.getElementById('current');
+  const celebrateEl=document.getElementById('celebrate');
+
+  // What counts toward the goal, and by how much, depending on ?type=. Each handler decides
+  // whether an incoming event applies at all, and the amount it contributes.
+  const TYPE_HANDLERS={
+    diamonds:{matches:e=>e.type==='gift',amount:e=>Number(e.value)||0},
+    gifts:{matches:e=>e.type==='gift',amount:()=>1},
+    follows:{matches:e=>e.type==='follow',amount:()=>1},
+    shares:{matches:e=>e.type==='share',amount:()=>1},
+    likes:{matches:e=>e.type==='like',amount:e=>Number(e.count)||1}
+  };
+  const handler=TYPE_HANDLERS[goalType]||TYPE_HANDLERS.diamonds;
+
+  let total=0,reached=false;
+
+  function updateBar(){
+    const pct=Math.min(1,total/goal);
+    fillEl.style.transform=`scaleX(${pct})`;
+    currentEl.textContent=Math.round(total).toLocaleString('sv-SE');
+  }
+
+  function spawnSparks(){
+    for(let i=0;i<14;i++){
+      const spark=document.createElement('div');
+      spark.className='spark';
+      const angle=Math.random()*Math.PI*2,dist=40+Math.random()*60;
+      spark.style.setProperty('--dx',`${Math.cos(angle)*dist}px`);
+      spark.style.setProperty('--dy',`${Math.sin(angle)*dist}px`);
+      spark.style.animationDelay=`${Math.random()*0.15}s`;
+      panel.append(spark);
+      spark.addEventListener('animationend',()=>spark.remove());
+    }
+  }
+
+  function celebrate(){
+    celebrateEl.classList.remove('show');
+    void celebrateEl.offsetWidth;
+    celebrateEl.classList.add('show');
+    spawnSparks();
+  }
+
+  function add(amount){
+    if(amount<=0)return;
+    total+=amount;
+    updateBar();
+    if(!reached&&total>=goal){
+      reached=true;
+      celebrate();
+    }
+  }
+
+  // Public hook — accepts a TikTok-shaped event (filtered/weighted per ?type=) or a plain number
+  // to add directly, for simple testing.
+  function render(eventOrNumber){
+    if(typeof eventOrNumber==='number'){add(eventOrNumber);return}
+    const event=eventOrNumber;
+    if(!event||!handler.matches(event))return;
+    add(handler.amount(event));
+  }
+  window.VyraGoalTrackerWidget={
+    render,
+    reset(){total=0;reached=false;updateBar();celebrateEl.classList.remove('show')}
+  };
+  updateBar();
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent:render});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>

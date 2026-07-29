@@ -107,6 +107,51 @@
         {label:'20x LEGENDARY',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:20,value:1000})},
         {label:'35x LEGENDARY+',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:35,value:1750})}
       ]
+    },
+    {
+      key:'goal-tracker',title:'Goal Tracker',file:'widgets/goal-tracker.html',hook:'VyraGoalTrackerWidget',height:'140px',
+      query:'goal=500&type=diamonds',
+      buttons:[
+        {label:'+50 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:50})},
+        {label:'+200 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',value:200})},
+        {label:'🎯 Hoppa till målet',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',value:500})},
+        {label:'↺ Nollställ',reset:true}
+      ]
+    },
+    {
+      key:'diamond-counter',title:'Diamond Counter',file:'widgets/diamond-counter.html',hook:'VyraDiamondCounterWidget',height:'140px',
+      buttons:[
+        {label:'+50 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:50})},
+        {label:'+450 (korsar 100 & når 500)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',value:450})},
+        {label:'+4 500 (korsar 1000 & 5000)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',value:4500})},
+        {label:'↺ Nollställ',reset:true}
+      ]
+    },
+    {
+      key:'vip-zone',title:'VIP Zone',file:'widgets/vip-zone.html',hook:'VyraVipZoneWidget',height:'380px',
+      buttons:[
+        {label:'💎 Gåva (30 diamonds) till slumpad',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:30})},
+        {label:'💎 Stor gåva (1 200) till "StreamFan92"',event:()=>baseEvent('gift',{username:'StreamFan92',giftName:'Diamond',value:1200})},
+        {label:'👤 Follow (+50p) till "LunaLive"',event:()=>baseEvent('follow',{username:'LunaLive'})},
+        {label:'🔁 Share (+20p) till "KingOfChat"',event:()=>baseEvent('share',{username:'KingOfChat'})},
+        {label:'❤️ 500 likes (+50p) till "NightOwl"',event:()=>baseEvent('like',{username:'NightOwl',count:500})},
+        {label:'↺ Nollställ',reset:true}
+      ]
+    },
+    {
+      key:'welcome-viewer',title:'Welcome Viewer',file:'widgets/welcome-viewer.html',hook:'VyraWelcomeViewerWidget',height:'150px',
+      buttons:[
+        {label:'👋 Ny tittare ansluter',event:()=>baseEvent('viewer',{username:randomName()})},
+        {label:'📊 Rumsuppdatering (ska INTE visas)',event:()=>baseEvent('viewer',{count:1234})}
+      ]
+    },
+    {
+      key:'screen-takeover',title:'Screen Takeover',file:'widgets/screen-takeover.html',hook:'VyraScreenTakeoverWidget',height:'320px',
+      buttons:[
+        {label:'✨ Mega gift — 150 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',value:150})},
+        {label:'🌌 Ultra mega — 10 000 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',value:10000})},
+        {label:'🌹 Vanlig gåva — 50 diamonds (ska INTE trigga)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:50})}
+      ]
     }
   ];
 
@@ -114,20 +159,21 @@
   const frameRefs={}; // key -> {cyber, celestial}
 
   for(const widget of WIDGETS){
+    const extraQuery=widget.query?`&${widget.query}`:'';
     const section=document.createElement('section');
     section.className='widget-block';
     section.innerHTML=`
       <h2>${widget.title}</h2>
-      <p class="file-path">public/${widget.file}</p>
+      <p class="file-path">public/${widget.file}${widget.query?' ?'+widget.query:''}</p>
       <div class="controls"></div>
       <div class="stage" style="height:${widget.height}">
         <div class="pane">
           <div class="pane-label">variant=cyber</div>
-          <iframe data-variant="cyber" src="${widget.file}?variant=cyber" title="${widget.title} — cyber"></iframe>
+          <iframe data-variant="cyber" src="${widget.file}?variant=cyber${extraQuery}" title="${widget.title} — cyber"></iframe>
         </div>
         <div class="pane">
           <div class="pane-label">variant=celestial</div>
-          <iframe data-variant="celestial" src="${widget.file}?variant=celestial" title="${widget.title} — celestial"></iframe>
+          <iframe data-variant="celestial" src="${widget.file}?variant=celestial${extraQuery}" title="${widget.title} — celestial"></iframe>
         </div>
       </div>`;
     container.append(section);

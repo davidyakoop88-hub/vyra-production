@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Diamond Counter</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  body{display:flex;align-items:flex-start;justify-content:flex-end;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+
+  :root{
+    --accent-a:#8d3cff;--accent-b:#25e2ff;--text:#fff;--sub:#d9c9ff;
+    --card-bg:linear-gradient(135deg,rgba(30,10,50,.92),rgba(10,6,30,.92));
+    --glow:0 0 30px rgba(141,60,255,.45);--diamond:#25e2ff;
+  }
+  html[data-variant="celestial"]{
+    --accent-a:#f6c76b;--accent-b:#ffe9c2;--text:#fff8ec;--sub:#f0d9a8;
+    --card-bg:linear-gradient(135deg,rgba(70,42,10,.92),rgba(40,20,4,.92));
+    --glow:0 0 30px rgba(246,199,107,.45);--diamond:#ffd98a;
+  }
+
+  #badge{
+    position:relative;margin:5vh 4vw 0 0;padding:12px 22px;border-radius:16px;
+    background:var(--card-bg);border:1px solid color-mix(in srgb,var(--accent-a) 55%,transparent);
+    box-shadow:var(--glow);display:flex;align-items:center;gap:12px;overflow:visible;
+  }
+  #gem{font-size:28px;flex:none;color:var(--diamond);will-change:transform}
+  #gem.pulse{animation:gem-pulse .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes gem-pulse{0%{transform:scale(1) rotate(0)}50%{transform:scale(1.3) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+
+  #col{display:flex;flex-direction:column;line-height:1.1}
+  #count{font-size:30px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  #label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+
+  #milestone{
+    position:absolute;left:50%;top:-6px;transform:translate(-50%,0);
+    font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;
+    opacity:0;pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.6);
+    will-change:transform,opacity;
+  }
+  #milestone.show{animation:milestone-float 1.6s ease forwards}
+  @keyframes milestone-float{
+    0%{opacity:0;transform:translate(-50%,10px) scale(.8)}
+    20%{opacity:1;transform:translate(-50%,-6px) scale(1.1)}
+    75%{opacity:1;transform:translate(-50%,-30px) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-46px) scale(1)}
+  }
+</style>
+</head>
+<body>
+  <div id="badge">
+    <div id="gem">💎</div>
+    <div id="col">
+      <div id="count">0</div>
+      <div id="label">diamonds</div>
+    </div>
+    <div id="milestone">🎉 100!</div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant==='celestial'?'celestial':'cyber';
+
+  const countEl=document.getElementById('count');
+  const gemEl=document.getElementById('gem');
+  const milestoneEl=document.getElementById('milestone');
+
+  const MILESTONES=[100,500,1000,5000];
+  let total=0,displayed=0,tweenFrame=null;
+  const hitMilestones=new Set();
+
+  function formatCount(n){return Math.round(n).toLocaleString('sv-SE')}
+
+  function tween(){
+    const diff=total-displayed;
+    if(Math.abs(diff)<1){displayed=total;countEl.textContent=formatCount(displayed);tweenFrame=null;return}
+    displayed+=diff*0.18;
+    countEl.textContent=formatCount(displayed);
+    tweenFrame=requestAnimationFrame(tween);
+  }
+
+  function celebrateMilestone(value){
+    milestoneEl.textContent=`🎉 ${value.toLocaleString('sv-SE')}!`;
+    milestoneEl.classList.remove('show');
+    void milestoneEl.offsetWidth;
+    milestoneEl.classList.add('show');
+  }
+
+  // Diamonds have no TikTok-provided running total (unlike likes' totalLikeCount), so this widget
+  // accumulates client-side from each "gift" event's value — the same approach top-gifters.html
+  // already uses per-user, just summed across everyone.
+  function add(amount){
+    if(amount<=0)return;
+    const previous=total;
+    total+=amount;
+    gemEl.classList.remove('pulse');void gemEl.offsetWidth;gemEl.classList.add('pulse');
+    if(!tweenFrame)tweenFrame=requestAnimationFrame(tween);
+    for(const milestone of MILESTONES){
+      if(previous<milestone&&total>=milestone&&!hitMilestones.has(milestone)){
+        hitMilestones.add(milestone);
+        celebrateMilestone(milestone);
+      }
+    }
+  }
+
+  // Public hook — accepts a TikTok-shaped "gift" event or a plain number for direct testing.
+  function render(eventOrNumber){
+    if(typeof eventOrNumber==='number'){add(eventOrNumber);return}
+    const event=eventOrNumber;
+    if(!event||event.type!=='gift')return;
+    add(Number(event.value)||0);
+  }
+  window.VyraDiamondCounterWidget={
+    render,
+    reset(){total=0;displayed=0;hitMilestones.clear();countEl.textContent='0';milestoneEl.classList.remove('show')}
+  };
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent(event){if(event?.type==='gift')render(event)}});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>

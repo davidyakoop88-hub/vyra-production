@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Screen Takeover</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%;width:100%}
+  body{display:flex;align-items:center;justify-content:center;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+
+  :root{
+    --accent-a:#8d3cff;--accent-b:#25e2ff;--text:#fff;--sub:#d9c9ff;
+    --wash:radial-gradient(circle at 50% 45%,rgba(141,60,255,.45),rgba(8,4,20,.85) 70%);
+    --glow:0 0 60px rgba(141,60,255,.8);--diamond:#25e2ff;
+  }
+  html[data-variant="celestial"]{
+    --accent-a:#f6c76b;--accent-b:#ffe9c2;--text:#fff8ec;--sub:#f0d9a8;
+    --wash:radial-gradient(circle at 50% 45%,rgba(246,199,107,.45),rgba(20,12,4,.85) 70%);
+    --glow:0 0 60px rgba(246,199,107,.8);--diamond:#ffd98a;
+  }
+
+  #wash{
+    position:fixed;inset:0;background:var(--wash);
+    opacity:0;will-change:opacity;transition:opacity .35s ease;
+  }
+  #wash.show{opacity:1}
+
+  #stage{
+    position:relative;text-align:center;
+    opacity:0;transform:scale(.6);
+    will-change:transform,opacity;
+    transition:opacity .4s cubic-bezier(.2,.9,.2,1),transform .5s cubic-bezier(.2,1.4,.3,1);
+  }
+  #stage.show{opacity:1;transform:scale(1)}
+  #stage.hide{opacity:0;transform:scale(1.08);transition-duration:.4s}
+
+  #tag{
+    font-size:24px;font-weight:900;letter-spacing:.12em;color:var(--accent-b);
+    text-shadow:0 0 20px var(--accent-b);margin-bottom:6px;
+  }
+  #username{
+    font-size:80px;font-weight:900;line-height:1;color:var(--text);
+    text-shadow:0 0 40px color-mix(in srgb,var(--accent-a) 80%,transparent),0 4px 14px rgba(0,0,0,.6);
+    max-width:92vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #meta{margin-top:10px;font-size:26px;font-weight:700;color:var(--sub)}
+  #meta b{color:var(--diamond)}
+
+  #stage.show #username{animation:mega-shake .6s ease-in-out}
+  @keyframes mega-shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-6px) rotate(-.5deg)}
+    40%{transform:translateX(6px) rotate(.5deg)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(4px)}
+  }
+</style>
+</head>
+<body>
+  <div id="wash"></div>
+  <div id="stage" aria-hidden="true">
+    <div id="tag">✨ MEGA GIFT ✨</div>
+    <div id="username">—</div>
+    <div id="meta">skickade <b id="gift-name">—</b> · <b id="diamond-count">0</b> diamonds</div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant==='celestial'?'celestial':'cyber';
+
+  const MEGA_THRESHOLD=100,HOLD_MS=5000,FADE_OUT_MS=400;
+  const wash=document.getElementById('wash');
+  const stage=document.getElementById('stage');
+  const usernameEl=document.getElementById('username');
+  const giftNameEl=document.getElementById('gift-name');
+  const diamondsEl=document.getElementById('diamond-count');
+
+  const queue=[];
+  let showing=false;
+
+  // A short synthesized "sting" via Web Audio — no external audio file, so the widget stays a
+  // single self-contained page with zero network dependencies. Autoplay-with-sound is normally
+  // allowed for OBS browser sources, but browsers can still block an AudioContext that never got
+  // a real user gesture (e.g. while previewing on public/test-widgets.html); failures are just
+  // swallowed so the visual takeover always still plays even if the chime doesn't.
+  let audioCtx=null;
+  function playSting(){
+    try{
+      audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+      const now=audioCtx.currentTime;
+      const notes=[523.25,659.25,783.99,1046.5]; // C5-E5-G5-C6 ascending arpeggio
+      notes.forEach((freq,i)=>{
+        const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+        osc.type='triangle';osc.frequency.value=freq;
+        const start=now+i*0.09;
+        gain.gain.setValueAtTime(0,start);
+        gain.gain.linearRampToValueAtTime(0.22,start+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001,start+0.35);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(start);osc.stop(start+0.4);
+      });
+    }catch(err){VyraWidget.warn('kunde inte spela ljud',err)}
+  }
+
+  function playNext(){
+    if(showing||!queue.length)return;
+    showing=true;
+    const gift=queue.shift();
+    usernameEl.textContent=gift.username||'Anonym';
+    giftNameEl.textContent=gift.giftName||'en gåva';
+    diamondsEl.textContent=Math.round(gift.diamonds).toLocaleString('sv-SE');
+
+    wash.classList.add('show');
+    stage.classList.remove('hide');
+    void stage.offsetWidth;
+    stage.classList.add('show');
+    playSting();
+
+    setTimeout(()=>{
+      stage.classList.remove('show');
+      stage.classList.add('hide');
+      wash.classList.remove('show');
+      setTimeout(()=>{showing=false;playNext()},FADE_OUT_MS);
+    },HOLD_MS);
+  }
+
+  // Public hook — enforces the mega-gift threshold itself (not just in the live-event filter
+  // below) so it can't accidentally be triggered for an ordinary gift by a future caller that
+  // forgets to pre-filter, same defense-in-depth pattern as combo-counter.html's render().
+  function render(event){
+    if(!event||event.type!=='gift'||Number(event.value)<=MEGA_THRESHOLD)return;
+    queue.push({
+      username:String(event.username||event.userId||'Anonym').slice(0,60),
+      giftName:String(event.giftName||'en gåva').slice(0,60),
+      diamonds:Number(event.value)||0
+    });
+    playNext();
+  }
+  window.VyraScreenTakeoverWidget={render};
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent:render});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>
