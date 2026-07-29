@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Like Counter</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  body{display:flex;align-items:flex-end;justify-content:flex-start;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+
+  :root{
+    --accent-a:#8d3cff;--accent-b:#25e2ff;--text:#fff;--sub:#d9c9ff;
+    --card-bg:linear-gradient(135deg,rgba(30,10,50,.92),rgba(10,6,30,.92));
+    --glow:0 0 30px rgba(141,60,255,.45);--heart:#ff4d8d;
+  }
+  html[data-variant="celestial"]{
+    --accent-a:#f6c76b;--accent-b:#ffe9c2;--text:#fff8ec;--sub:#f0d9a8;
+    --card-bg:linear-gradient(135deg,rgba(70,42,10,.92),rgba(40,20,4,.92));
+    --glow:0 0 30px rgba(246,199,107,.45);--heart:#ffb56b;
+  }
+
+  /* Always visible, anchored to a corner — sized to hug its content so an OBS source cropped
+     tightly around this widget shows just the badge, not empty transparent space. */
+  #badge{
+    margin:5vh 0 5vh 4vw;padding:12px 20px;border-radius:16px;
+    background:var(--card-bg);
+    border:1px solid color-mix(in srgb,var(--accent-a) 55%,transparent);
+    box-shadow:var(--glow);
+    display:flex;align-items:center;gap:12px;
+  }
+  #heart{
+    font-size:26px;flex:none;color:var(--heart);
+    will-change:transform;
+  }
+  #heart.pulse{animation:heartbeat .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes heartbeat{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+  #col{display:flex;flex-direction:column;line-height:1.1}
+  #count{
+    font-size:30px;font-weight:800;color:var(--text);
+    font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  #label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+</style>
+</head>
+<body>
+  <div id="badge">
+    <div id="heart">❤️</div>
+    <div id="col">
+      <div id="count">0</div>
+      <div id="label">likes</div>
+    </div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant==='celestial'?'celestial':'cyber';
+
+  const countEl=document.getElementById('count');
+  const heartEl=document.getElementById('heart');
+
+  let displayed=0,target=0,tweenFrame=null;
+
+  function formatCount(n){return Math.round(n).toLocaleString('sv-SE')}
+
+  // Tweens the visible number from its current value up to `target` — a plain
+  // requestAnimationFrame loop driving a text node is cheap enough to stay at 60 FPS (no layout
+  // thrash, textContent is the only DOM write per frame).
+  function tween(){
+    const diff=target-displayed;
+    if(Math.abs(diff)<1){displayed=target;countEl.textContent=formatCount(displayed);tweenFrame=null;return}
+    displayed+=diff*0.18;
+    countEl.textContent=formatCount(displayed);
+    tweenFrame=requestAnimationFrame(tween);
+  }
+  function animateTo(newTotal){
+    target=Math.max(0,Math.round(newTotal));
+    heartEl.classList.remove('pulse');void heartEl.offsetWidth;heartEl.classList.add('pulse');
+    if(!tweenFrame)tweenFrame=requestAnimationFrame(tween);
+  }
+
+  // Public hook — accepts either a TikTok-shaped live/test event ({value: cumulative total} or
+  // {count: increment}) or a plain number for direct testing.
+  function render(eventOrNumber){
+    if(typeof eventOrNumber==='number'){animateTo(target+eventOrNumber);return}
+    const event=eventOrNumber;
+    if(!event)return;
+    // TikTok's own totalLikeCount (mapped to event.value by the bridge) is the authoritative,
+    // idempotent total for the room this session — preferring it over accumulating event.count
+    // client-side avoids double-counting if an SSE reconnect replays already-seen like events.
+    if(Number(event.value)>0)animateTo(event.value);
+    else animateTo(target+(Number(event.count)||1));
+  }
+  window.VyraLikeCounterWidget={render,reset(){displayed=0;target=0;countEl.textContent='0'}};
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent(event){if(event?.type==='like')render(event)}});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>

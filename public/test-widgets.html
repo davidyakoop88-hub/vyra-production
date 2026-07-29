@@ -6,29 +6,32 @@
 <title>VYRA · Widget-testsida</title>
 <style>
   html,body{margin:0;background:#0b0614;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100%}
-  header{padding:24px 28px 8px}
+  header{padding:24px 28px 4px}
   h1{margin:0 0 4px;font-size:22px}
-  p{margin:0;color:#b9a6dd;font-size:14px}
-  #controls{display:flex;flex-wrap:wrap;gap:10px;padding:18px 28px}
+  header>p{margin:0;color:#b9a6dd;font-size:14px}
+
+  section.widget-block{border-top:1px solid #241a38;padding-bottom:6px}
+  section.widget-block h2{margin:0;padding:16px 28px 4px;font-size:16px}
+  section.widget-block .file-path{padding:0 28px;margin:0 0 10px;font-size:12px;color:#7a6a9e;font-family:ui-monospace,monospace}
+
+  #controls,.controls{display:flex;flex-wrap:wrap;gap:10px;padding:0 28px 16px}
   button{
     appearance:none;border:1px solid #8d3cff;background:rgba(141,60,255,.12);color:#fff;
-    padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+    padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
   }
   button:hover{background:rgba(141,60,255,.28)}
   button:active{transform:translateY(1px)}
-  #stage{
-    display:grid;grid-template-columns:1fr 1fr;gap:0;
-    height:70vh;min-height:420px;border-top:1px solid #241a38;
-  }
+
+  .stage{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #241a38}
   .pane{position:relative;display:flex;flex-direction:column;min-width:0}
   .pane+.pane{border-left:1px solid #241a38}
-  .pane header{
-    padding:10px 16px;font-size:13px;font-weight:700;letter-spacing:.04em;
+  .pane .pane-label{
+    padding:8px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;
     text-transform:uppercase;color:#d9c9ff;background:#140b22;
   }
   .pane iframe{
     flex:1;border:0;width:100%;
-    /* Checkerboard so the widget's real transparent background is visible, same trick OBS's
+    /* Checkerboard so each widget's real transparent background is visible, same trick OBS's
        own preview uses to show through an alpha channel. */
     background-image:
       linear-gradient(45deg,#1c1330 25%,transparent 25%),
@@ -43,74 +46,127 @@
 <body>
 <header>
   <h1>VYRA Widget-testsida</h1>
-  <p>Triggar test-events lokalt i båda widgets samtidigt — ingen backend eller inloggning krävs.</p>
+  <p>Triggar test-events lokalt i varje widgets båda varianter samtidigt — ingen backend eller inloggning krävs.</p>
 </header>
 
-<div id="controls">
-  <button data-preset="rose">🌹 Rose — 50 diamonds</button>
-  <button data-preset="lion">🦁 Lion — 5 000 diamonds</button>
-  <button data-preset="galaxy">🌌 Galaxy — 25 000 diamonds</button>
-  <button data-preset="random">🎲 Slumpad gåva</button>
-</div>
-
-<div id="stage">
-  <div class="pane">
-    <header>variant=cyber</header>
-    <iframe id="frame-cyber" src="widgets/gift-alert.html?variant=cyber" title="Gift alert — cyber"></iframe>
-  </div>
-  <div class="pane">
-    <header>variant=celestial</header>
-    <iframe id="frame-celestial" src="widgets/gift-alert.html?variant=celestial" title="Gift alert — celestial"></iframe>
-  </div>
-</div>
+<main id="widget-blocks"></main>
 
 <script>
 (function(){
   'use strict';
 
-  const PRESETS={
-    rose:{giftName:'Rose',value:50},
-    lion:{giftName:'Lion',value:5000},
-    galaxy:{giftName:'Galaxy',value:25000}
-  };
   const NAMES=['StreamFan92','LunaLive','KingOfChat','Sparkle_TT','NightOwl','MiraDances'];
+  const GIFTS=[{giftName:'Rose',value:50},{giftName:'Lion',value:5000},{giftName:'Galaxy',value:25000}];
 
-  function randomPreset(){
-    const names=Object.keys(PRESETS),giftName=names[Math.floor(Math.random()*names.length)];
-    const base=PRESETS[giftName];
-    return{giftName:base.giftName,value:Math.round(base.value*(0.5+Math.random()))};
+  function randomName(){return NAMES[Math.floor(Math.random()*NAMES.length)]}
+  function baseEvent(type,overrides={}){
+    return{id:`test-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,type,at:Date.now(),...overrides};
   }
 
-  function buildEvent(presetKey){
-    const preset=presetKey==='random'?randomPreset():PRESETS[presetKey];
-    return{
-      id:`test-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
-      type:'gift',
-      username:NAMES[Math.floor(Math.random()*NAMES.length)],
-      giftName:preset.giftName,
-      value:preset.value,
-      at:Date.now()
+  // One config entry per widget — the section markup, buttons, and both variant iframes are all
+  // generated from this list instead of hand-duplicating near-identical HTML five times.
+  const WIDGETS=[
+    {
+      key:'gift-alert',title:'Gift Alert',file:'widgets/gift-alert.html',hook:'VyraGiftAlertWidget',height:'230px',
+      buttons:[
+        {label:'🌹 Rose — 50 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',value:50,count:1})},
+        {label:'🦁 Lion — 5 000 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',value:5000,count:1})},
+        {label:'🌌 Galaxy — 25 000 diamonds',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',value:25000,count:1})},
+        {label:'🎲 Slumpad gåva',event:()=>{const g=GIFTS[Math.floor(Math.random()*GIFTS.length)];return baseEvent('gift',{username:randomName(),giftName:g.giftName,value:Math.round(g.value*(0.5+Math.random())),count:1})}}
+      ]
+    },
+    {
+      key:'follow-alert',title:'Follow Alert',file:'widgets/follow-alert.html',hook:'VyraFollowAlertWidget',height:'150px',
+      buttons:[
+        {label:'👤 Ny följare',event:()=>baseEvent('follow',{username:randomName()})},
+        {label:'👥 3 följare i rad',events:()=>[0,1,2].map(()=>baseEvent('follow',{username:randomName()}))}
+      ]
+    },
+    {
+      key:'like-counter',title:'Like Counter',file:'widgets/like-counter.html',hook:'VyraLikeCounterWidget',height:'120px',
+      state:{total:0},
+      buttons:[
+        {label:'+100 likes',event:(state)=>{state.total+=100;return baseEvent('like',{value:state.total,count:100})}},
+        {label:'+1 000 likes',event:(state)=>{state.total+=1000;return baseEvent('like',{value:state.total,count:1000})}},
+        {label:'↺ Nollställ',reset:true}
+      ]
+    },
+    {
+      key:'top-gifters',title:'Top Gifters',file:'widgets/top-gifters.html',hook:'VyraTopGiftersWidget',height:'320px',
+      buttons:[
+        {label:'🎲 Slumpad gåva till topplistan',event:()=>{const g=GIFTS[Math.floor(Math.random()*GIFTS.length)];return baseEvent('gift',{username:randomName(),giftName:g.giftName,value:Math.round(g.value*(0.3+Math.random()))})}},
+        {label:'💎 Stor gåva till "StreamFan92"',event:()=>baseEvent('gift',{username:'StreamFan92',giftName:'Galaxy',value:40000})},
+        {label:'↺ Nollställ topplistan',reset:true}
+      ]
+    },
+    {
+      key:'combo-counter',title:'Combo Counter',file:'widgets/combo-counter.html',hook:'VyraComboCounterWidget',height:'220px',
+      buttons:[
+        {label:'5x COMBO',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:5,value:250})},
+        {label:'10x MEGA COMBO',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:10,value:500})},
+        {label:'20x LEGENDARY',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:20,value:1000})},
+        {label:'35x LEGENDARY+',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:35,value:1750})}
+      ]
+    }
+  ];
+
+  const container=document.getElementById('widget-blocks');
+  const frameRefs={}; // key -> {cyber, celestial}
+
+  for(const widget of WIDGETS){
+    const section=document.createElement('section');
+    section.className='widget-block';
+    section.innerHTML=`
+      <h2>${widget.title}</h2>
+      <p class="file-path">public/${widget.file}</p>
+      <div class="controls"></div>
+      <div class="stage" style="height:${widget.height}">
+        <div class="pane">
+          <div class="pane-label">variant=cyber</div>
+          <iframe data-variant="cyber" src="${widget.file}?variant=cyber" title="${widget.title} — cyber"></iframe>
+        </div>
+        <div class="pane">
+          <div class="pane-label">variant=celestial</div>
+          <iframe data-variant="celestial" src="${widget.file}?variant=celestial" title="${widget.title} — celestial"></iframe>
+        </div>
+      </div>`;
+    container.append(section);
+
+    frameRefs[widget.key]={
+      cyber:section.querySelector('iframe[data-variant="cyber"]'),
+      celestial:section.querySelector('iframe[data-variant="celestial"]')
     };
-  }
 
-  function frames(){
-    return[document.getElementById('frame-cyber'),document.getElementById('frame-celestial')]
-      .filter(f=>f&&f.contentWindow);
-  }
-
-  function fire(presetKey){
-    const event=buildEvent(presetKey);
-    for(const frame of frames()){
-      const widget=frame.contentWindow.VyraGiftAlertWidget;
-      if(widget?.render)widget.render(event);
-      else console.warn('[VyraWidgetTest] widget-hooken är inte redo än i',frame.id);
+    const controlsEl=section.querySelector('.controls');
+    for(const buttonDef of widget.buttons){
+      const button=document.createElement('button');
+      button.textContent=buttonDef.label;
+      button.addEventListener('click',()=>fireWidget(widget,buttonDef));
+      controlsEl.append(button);
     }
   }
 
-  document.getElementById('controls').addEventListener('click',event=>{
-    const button=event.target.closest('button[data-preset]');
-    if(button)fire(button.dataset.preset);
-  });
+  function bothFrames(key){
+    const refs=frameRefs[key];
+    return[refs.cyber,refs.celestial].filter(f=>f?.contentWindow);
+  }
+
+  function fireWidget(widget,buttonDef){
+    const frames=bothFrames(widget.key);
+    if(buttonDef.reset){
+      for(const frame of frames)frame.contentWindow[widget.hook]?.reset?.();
+      return;
+    }
+    // Build the event(s) exactly ONCE, then replay the identical object(s) into every frame —
+    // calling buttonDef.event() separately per frame would double-apply any stateful side effect
+    // (e.g. like-counter's running total) and make the two variants drift apart from each other.
+    const events=buttonDef.events?buttonDef.events():[buttonDef.event(widget.state)];
+    for(const frame of frames){
+      const hook=frame.contentWindow[widget.hook];
+      if(!hook){console.warn('[VyraWidgetTest] hooken är inte redo än:',widget.hook);continue}
+      events.forEach(event=>hook.render(event));
+    }
+  }
 })();
 </script>
 </body>

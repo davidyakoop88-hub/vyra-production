@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Top Gifters</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  body{display:flex;align-items:flex-start;justify-content:flex-end;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
+
+  :root{
+    --accent-a:#8d3cff;--accent-b:#25e2ff;--text:#fff;--sub:#d9c9ff;
+    --panel-bg:linear-gradient(180deg,rgba(30,10,50,.92),rgba(10,6,30,.92));
+    --glow:0 0 30px rgba(141,60,255,.4);--diamond:#25e2ff;--row-hi:rgba(141,60,255,.35);
+  }
+  html[data-variant="celestial"]{
+    --accent-a:#f6c76b;--accent-b:#ffe9c2;--text:#fff8ec;--sub:#f0d9a8;
+    --panel-bg:linear-gradient(180deg,rgba(70,42,10,.92),rgba(40,20,4,.92));
+    --glow:0 0 30px rgba(246,199,107,.4);--diamond:#ffd98a;--row-hi:rgba(246,199,107,.35);
+  }
+
+  #panel{
+    margin:5vh 4vw 0 0;width:300px;border-radius:18px;overflow:hidden;
+    background:var(--panel-bg);
+    border:1px solid color-mix(in srgb,var(--accent-a) 55%,transparent);
+    box-shadow:var(--glow);
+  }
+  #panel-title{
+    padding:12px 18px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--text);background:linear-gradient(90deg,var(--accent-a),var(--accent-b));
+  }
+  #rows{display:flex;flex-direction:column}
+  .row{
+    display:flex;align-items:center;gap:10px;padding:9px 18px;
+    border-top:1px solid color-mix(in srgb,var(--accent-a) 22%,transparent);
+    background:transparent;
+    transition:background .5s ease;
+  }
+  .row.flash{background:var(--row-hi);transition:background 0s}
+  .row .rank{
+    width:20px;flex:none;text-align:center;font-weight:800;font-size:14px;color:var(--sub);
+  }
+  .row .name{
+    flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .row .diamonds{
+    display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--diamond);
+    font-variant-numeric:tabular-nums;flex:none;
+  }
+  .row .diamonds svg{width:12px;height:12px}
+  .row.empty .name{color:var(--sub);font-weight:400;font-style:italic}
+</style>
+</head>
+<body>
+  <div id="panel">
+    <div id="panel-title">Topp gåvogivare</div>
+    <div id="rows"></div>
+  </div>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant==='celestial'?'celestial':'cyber';
+
+  const rowsEl=document.getElementById('rows');
+  const RANK_COUNT=5;
+  const totals=new Map(); // key -> {username, diamonds}
+  let rowEls=[];
+
+  function ensureRows(){
+    if(rowEls.length)return;
+    for(let i=0;i<RANK_COUNT;i++){
+      const row=document.createElement('div');
+      row.className='row empty';
+      row.innerHTML=`<span class="rank">${i+1}</span><span class="name">—</span><span class="diamonds"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l4 5-4 11L4 5z"/></svg><span class="value">0</span></span>`;
+      rowsEl.append(row);
+      rowEls.push(row);
+    }
+  }
+
+  function topFive(){
+    return[...totals.values()].sort((a,b)=>b.diamonds-a.diamonds).slice(0,RANK_COUNT);
+  }
+
+  // Re-renders all 5 rank slots in place (rank 1's DOM element always shows whoever is #1, no
+  // element reordering) — a simple, cheap textContent update per row is enough for "real time"
+  // feedback without FLIP-style reorder animation, and briefly flashes any row whose diamond
+  // total actually changed this update.
+  function redraw(changedKey){
+    ensureRows();
+    const top=topFive();
+    for(let i=0;i<RANK_COUNT;i++){
+      const entry=top[i],row=rowEls[i];
+      const nameEl=row.querySelector('.name'),valueEl=row.querySelector('.value');
+      if(!entry){
+        row.classList.add('empty');
+        nameEl.textContent='—';
+        valueEl.textContent='0';
+        continue;
+      }
+      row.classList.remove('empty');
+      nameEl.textContent=entry.username;
+      valueEl.textContent=Math.round(entry.diamonds).toLocaleString('sv-SE');
+      if(changedKey&&entry.key===changedKey){
+        row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash');
+      }
+    }
+  }
+
+  function addGift(key,username,diamonds){
+    const existing=totals.get(key)||{key,username,diamonds:0};
+    existing.username=username;
+    existing.diamonds+=Math.max(0,diamonds);
+    totals.set(key,existing);
+    redraw(key);
+  }
+
+  // Public hook — accepts a TikTok-shaped "gift" event.
+  function render(event){
+    if(!event||event.type!=='gift')return;
+    const key=String(event.userId||event.username||'').toLowerCase();
+    if(!key)return;
+    addGift(key,String(event.username||event.userId||'Anonym').slice(0,60),Number(event.value)||0);
+  }
+  window.VyraTopGiftersWidget={render,reset(){totals.clear();redraw()}};
+  redraw();
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent:render});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>
