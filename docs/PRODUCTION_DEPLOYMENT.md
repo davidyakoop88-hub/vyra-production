@@ -82,6 +82,17 @@ stream and published to connected overlays. The authenticated browser endpoint
 missed events from `Last-Event-ID` (only when the client actually sends one — a fresh connection
 starts live-only, it isn't handed the whole event history), and sends a heartbeat every 30 seconds.
 
+The `tiktok-connection-manager` service (`tiktok-bridge/connection-manager.js`, built from
+`tiktok-bridge/Dockerfile`) runs one bridge child process per row in the `tiktok_connections`
+table (`workspace_id`, `tiktok_username`, `active`) instead of someone manually starting
+`bridge.js` per account. It reads `DATABASE_URL` to list active connections on startup, and
+forwards `VYRA_CLOUD_URL`/`VYRA_INGEST_TOKEN`/`DISCORD_ALERT_WEBHOOK_URL`/`PROXY_LIST` from its own
+environment to every bridge it forks. Deploys as its own image (`VYRA_TIKTOK_BRIDGE_IMAGE`,
+required by `scripts/deploy-production.sh` alongside the API/web images) so a crash or restart of
+the fleet manager re-establishes every active workspace's bridge from Postgres with no manual
+step. It depends on `migrate` (for the `tiktok_connections` table) and a healthy `api` (bridges
+forward events to it) before starting.
+
 ## OBS overlay links
 
 Create a dedicated link with **Säker OBS-länk** in Studio. Only a SHA-256 hash

@@ -31,6 +31,26 @@ services:
           cpus: "1.0"
           memory: 512M
     restart: unless-stopped
+  tiktok-connection-manager:
+    image: ${VYRA_TIKTOK_BRIDGE_IMAGE:?Set immutable VYRA_TIKTOK_BRIDGE_IMAGE}
+    env_file: .env.production
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
   web:
     image: ${VYRA_WEB_IMAGE:?Set immutable VYRA_WEB_IMAGE}
     environment:
