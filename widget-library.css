@@ -1,0 +1,67 @@
+/* "Mina Widgets" — Studio's widget management section. Uses the same design tokens as the rest
+   of Studio (design-tokens.css) so it matches without duplicating studio.css's own palette. */
+
+.wl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.wl-head h2{font:600 16px Manrope,sans-serif;margin:0 0 4px}
+.wl-head p{margin:0;color:var(--text-secondary);font-size:11px;max-width:60ch}
+.wl-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px 16px;text-align:right;flex:none}
+.wl-stat b{display:block;font:700 20px Manrope,sans-serif;color:var(--text-primary)}
+.wl-stat small{color:var(--text-muted);font-size:8px;letter-spacing:.04em;text-transform:uppercase}
+
+.wl-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:linear-gradient(145deg,#2a1608,#1c0f06);border:1px solid var(--status-warning);
+  border-radius:var(--radius-md);padding:14px 18px;margin-bottom:18px;
+}
+.wl-banner.wl-banner-ok{background:linear-gradient(145deg,#0c2418,#081a10);border-color:var(--status-success)}
+.wl-banner strong{display:block;font-size:12px;color:var(--text-primary)}
+.wl-banner span{display:block;color:var(--text-secondary);font-size:10px;margin-top:2px}
+
+.wl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.wl-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column}
+
+.wl-thumb{
+  height:64px;display:flex;align-items:center;justify-content:center;position:relative;
+  font:700 13px Manrope,sans-serif;color:#fff;letter-spacing:.02em;text-align:center;padding:0 12px;
+}
+.wl-thumb::before{content:'';position:absolute;inset:0;opacity:.85;background:var(--wl-color,var(--accent-purple))}
+.wl-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.35))}
+.wl-thumb span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+.wl-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.wl-desc{margin:0;color:var(--text-secondary);font-size:10.5px;line-height:1.5}
+
+.wl-controls{display:flex;flex-wrap:wrap;gap:8px}
+.wl-controls label{display:flex;flex-direction:column;gap:3px;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);flex:1;min-width:110px}
+.wl-controls select,.wl-controls input{
+  background:#151024;border:1px solid var(--border-subtle);color:var(--text-primary);
+  border-radius:7px;padding:7px 8px;font-size:11px;font-family:inherit;
+}
+
+.wl-preview-wrap{
+  border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-subtle);
+  background-image:linear-gradient(45deg,#1c1330 25%,transparent 25%),linear-gradient(-45deg,#1c1330 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1c1330 75%),linear-gradient(-45deg,transparent 75%,#1c1330 75%);
+  background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;background-color:#241a38;
+}
+.wl-preview-wrap iframe{display:block;width:100%;border:0}
+
+.wl-actions{display:flex;gap:8px;margin-top:auto}
+.wl-actions button{
+  flex:1;border:1px solid var(--border-subtle);background:#151024;color:var(--text-primary);
+  border-radius:7px;padding:9px 10px;font-size:10px;font-weight:600;cursor:pointer;
+}
+.wl-actions button:hover{border-color:var(--border-active)}
+.wl-actions button.primary{background:var(--purple);border-color:transparent;color:#fff}
+.wl-actions button:disabled{opacity:.45;cursor:not-allowed}
+
+.wl-quickstart{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+  padding:14px 18px;margin-top:18px;
+}
+.wl-quickstart strong{display:block;font-size:12px;color:var(--text-primary)}
+.wl-quickstart span{display:block;color:var(--text-secondary);font-size:10px;margin-top:2px}
+
+@media(max-width:800px){
+  .wl-grid{grid-template-columns:1fr}
+}

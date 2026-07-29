@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="billing-client.css?v=20260724-1">
   <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
   <link rel="stylesheet" href="overlay-access.css?v=20260724-1">
+  <link rel="stylesheet" href="widget-library.css?v=20260730-1">
   <script>if(new URLSearchParams(location.search).has('overlay'))document.documentElement.classList.add('overlay-output')</script>
 </head>
 <body>
@@ -27,6 +28,7 @@
         <span class="nav-section-label">Core</span>
         <button class="active" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Översikt</span></button>
         <button data-view="overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v4"/><path d="M8 21h8"/><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m10 8 5 3-5 3Z"/></svg><span>Overlay</span></button>
+        <button data-view="widgets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span>Mina Widgets</span></button>
         <a href="layout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Layout</span></a>
       </div>
       <div class="nav-section">
@@ -89,6 +91,7 @@
   <script src="cloud-media.js?v=20260724-1"></script>
   <script src="billing-client.js?v=20260724-4"></script>
   <script src="overlay-access.js?v=20260724-4"></script>
+  <script src="widget-library.js?v=20260730-1"></script>
   <script>
     (function () {
       if (new URLSearchParams(location.search).get('intent') !== 'download') return;
