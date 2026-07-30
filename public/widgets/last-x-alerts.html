@@ -24,7 +24,6 @@
     padding:14px 22px 14px 14px;border-radius:18px;
     display:flex;align-items:center;gap:14px;
     background:var(--card-bg);
-    border:1px solid color-mix(in srgb,var(--last-x) 45%,transparent);
     box-shadow:0 10px 30px rgba(3,1,4,.4),0 0 28px -8px color-mix(in srgb,var(--last-x),transparent 30%);
     overflow:hidden;
     /* transform+opacity only — compositor-only, stays smooth at 60 FPS in OBS. */
@@ -103,28 +102,34 @@
     50%{transform:rotate(180deg) scale(1.12)}
   }
 
-  /* ---- designs (?design=card|pill|banner|neon) — same DOM and phase machine for all four; a
-     design only restyles the shared elements, so every accent theme, entrance and type mix works
-     with every design. "card" is the baseline above. */
+  /* ---- designs (?design=card|stack|banner|glow) — same DOM and phase machine for all four; a
+     design restyles AND rearranges the shared elements so each has its own silhouette, not just
+     its own colours. None of them draws a frame — VYRA widgets float, they don't sit in boxes.
+     "card" is the borderless baseline above. */
 
-  /* pill — compact capsule, sits tight in a corner */
-  html[data-design="pill"] #card{border-radius:999px;padding:8px 20px 8px 8px;gap:12px;min-width:300px}
-  html[data-design="pill"] #avatar{width:44px;height:44px}
-  html[data-design="pill"] #initial{font-size:18px}
-  html[data-design="pill"] #label{font-size:8.5px;letter-spacing:.16em}
-  html[data-design="pill"] #name{font-size:18px}
-  html[data-design="pill"] #message{font-size:11px}
-  html[data-design="pill"] #emblem{font-size:15px}
-
-  /* banner — broadcast lower-third: accent spine, label as a chip, big faint emblem watermark */
-  html[data-design="banner"] #card{
-    min-width:520px;max-width:80vw;border-radius:12px;padding:16px 60px 16px 16px;gap:16px;
-    border-left:4px solid var(--last-x);
-    background:linear-gradient(100deg,rgba(24,13,36,.95) 0%,rgba(19,11,28,.88) 70%,rgba(19,11,28,.72) 100%);
+  /* stack — centred column: big avatar on top, name under it, no backing panel at all */
+  html[data-design="stack"] #card{
+    flex-direction:column;text-align:center;gap:10px;min-width:240px;padding:10px;
+    background:none;box-shadow:none;overflow:visible;
   }
-  html[data-design="banner"] #avatar{width:64px;height:64px;border-radius:16px}
-  html[data-design="banner"] #avatar img{border-radius:16px}
-  html[data-design="banner"] #initial{font-size:28px}
+  html[data-design="stack"] #sheen{display:none}
+  html[data-design="stack"] #avatar{width:80px;height:80px}
+  html[data-design="stack"] #initial{font-size:34px}
+  html[data-design="stack"] #copy{align-items:center;gap:3px}
+  html[data-design="stack"] #label{text-shadow:0 1px 6px rgba(0,0,0,.8)}
+  html[data-design="stack"] #name{font-size:26px;text-shadow:0 2px 12px rgba(0,0,0,.85),0 1px 2px rgba(0,0,0,.6)}
+  html[data-design="stack"] #message{text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  html[data-design="stack"] #emblem{font-size:16px}
+
+  /* banner — broadcast lower-third: a full-width strip that fades out to the right, no corners */
+  html[data-design="banner"] #card{
+    width:100%;min-width:0;max-width:none;margin-left:0;border-radius:0;
+    padding:14px 70px 14px 26px;gap:16px;box-shadow:none;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--last-x),#140b22 78%) 0%,rgba(19,11,28,.88) 40%,rgba(19,11,28,0) 96%);
+  }
+  html[data-design="banner"] #avatar{width:60px;height:60px;border-radius:14px}
+  html[data-design="banner"] #avatar img{border-radius:14px}
+  html[data-design="banner"] #initial{font-size:26px}
   html[data-design="banner"] #label{
     align-self:flex-start;padding:2px 8px;border-radius:6px;
     background:var(--last-x);color:#140b22;font-size:9px;letter-spacing:.1em;
@@ -132,27 +137,28 @@
   html[data-design="banner"] #name{font-size:27px}
   html[data-design="banner"] #message{font-size:13.5px}
   html[data-design="banner"] #emblem{
-    position:absolute;right:10px;top:50%;font-size:52px;opacity:.14;transform:translateY(-50%);
+    position:absolute;left:calc(5vw + 440px);top:50%;font-size:52px;opacity:.14;transform:translateY(-50%);
   }
   /* the watermark emblem sits on a translate — the twirl animation would override it */
   html[data-design="banner"] #card.show #emblem{animation:none}
 
-  /* neon — sharp arcade frame: hard corners, glowing border, mono message, thin scan sheen */
-  html[data-design="neon"] #card{
-    border-radius:8px;padding:12px 20px 12px 12px;
-    background:rgba(8,6,14,.92);
-    border:1.5px solid var(--last-x);
-    box-shadow:0 0 18px -2px color-mix(in srgb,var(--last-x),transparent 30%),inset 0 0 22px -12px var(--last-x);
+  /* glow — pure light: no panel, the name itself is the alert, neon-glowing straight on stream */
+  html[data-design="glow"] #card{
+    background:none;box-shadow:none;overflow:visible;padding:6px;gap:14px;min-width:0;
   }
-  html[data-design="neon"] #avatar{border-radius:10px}
-  html[data-design="neon"] #avatar img{border-radius:10px}
-  html[data-design="neon"] #label{color:var(--last-x);letter-spacing:.22em}
-  html[data-design="neon"] #name{text-transform:uppercase;letter-spacing:.05em;font-size:21px}
-  html[data-design="neon"] #message{font-family:ui-monospace,'Cascadia Mono',Consolas,monospace;font-size:11.5px;letter-spacing:.06em}
-  html[data-design="neon"] #emblem{font-size:18px}
-  html[data-design="neon"] #sheen{
-    background:linear-gradient(115deg,transparent 48%,color-mix(in srgb,var(--last-x),transparent 55%) 50%,transparent 52%);
+  html[data-design="glow"] #sheen{display:none}
+  html[data-design="glow"] #avatar{width:46px;height:46px}
+  html[data-design="glow"] #initial{font-size:19px}
+  html[data-design="glow"] #label{color:var(--last-x);letter-spacing:.26em;text-shadow:0 0 10px color-mix(in srgb,var(--last-x),transparent 40%)}
+  html[data-design="glow"] #name{
+    font-size:32px;text-transform:uppercase;letter-spacing:.04em;
+    text-shadow:0 0 18px var(--last-x),0 0 42px color-mix(in srgb,var(--last-x),transparent 40%),0 2px 4px rgba(0,0,0,.6);
   }
+  html[data-design="glow"] #message{
+    font-family:ui-monospace,'Cascadia Mono',Consolas,monospace;font-size:12px;letter-spacing:.12em;
+    text-shadow:0 0 12px color-mix(in srgb,var(--last-x),transparent 30%);
+  }
+  html[data-design="glow"] #emblem{font-size:22px}
 
   @media (prefers-reduced-motion:reduce){
     #card{transition-duration:.01ms}
@@ -242,7 +248,7 @@
 
   // ?design= picks the visual skin (value maps to the design's emblem glyph). Same DOM and phase
   // machine underneath, so designs combine freely with type, theme, accent and entrance.
-  const DESIGNS={card:'✦',pill:'✦',banner:'✦',neon:'◆'};
+  const DESIGNS={card:'✦',stack:'✦',banner:'✦',glow:'◆'};
   const designParam=VyraWidget.get('design','card').toLowerCase();
   const design=DESIGNS[designParam]?designParam:'card';
   document.documentElement.dataset.design=design;
