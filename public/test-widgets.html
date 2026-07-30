@@ -215,6 +215,20 @@
       ['subscriber','Last Subscriber','fade',[
         {label:'⭐ Ny subscriber',event:()=>baseEvent('subscribe',{username:randomName()})},
         {label:'👋 Member/room join (ska INTE visas)',event:()=>baseEvent('member',{username:randomName()})}
+      ]],
+      // type=all: one shared stage — different types play one after another (arrival order, own
+      // label + accent per type), same type swaps in place. hold=4 keeps the full tour short.
+      ['all&hold=4','Alla fyra tillsammans','slide-left',[
+        {label:'🎁 Gåva',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:1})},
+        {label:'❤️ Likes',event:()=>baseEvent('likes',{username:randomName(),count:500})},
+        {label:'🔁 Share',event:()=>baseEvent('share',{username:randomName()})},
+        {label:'⭐ Subscriber',event:()=>baseEvent('subscribe',{username:randomName()})},
+        {label:'🎬 Alla fyra i rad (spelas efter varandra)',events:()=>[
+          baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:5}),
+          baseEvent('likes',{username:randomName(),count:1000}),
+          baseEvent('share',{username:randomName()}),
+          baseEvent('subscribe',{username:randomName()})
+        ]}
       ]]
     ].map(([slug,title,entrance,buttons])=>({
       key:'last-x-'+slug,title:'Last-X · '+title+' — entrance='+entrance,

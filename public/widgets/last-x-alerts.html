@@ -10,8 +10,9 @@
   html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
   body{display:flex;align-items:center;justify-content:flex-start;height:100vh;font-family:'Segoe UI',system-ui,sans-serif}
 
-  /* --last-x is set from JS (per-type theme via ?variant=, overridable via ?accent=) — every
-     colour below derives from it, so all four types and all themes share this one stylesheet. */
+  /* --last-x is set from JS (per-type theme via ?variant=, overridable via ?accent=; in multi-type
+     mode it switches per alert) — every colour below derives from it, so all four types and all
+     themes share this one stylesheet. */
   :root{
     --last-x:#ff58d6;
     --text:#f7f2ff;--sub:#b9a6dd;
@@ -126,41 +127,62 @@
   'use strict';
 
   // Same four templates as Studio's last-x-alerts.js (labels, themes, message formats) so the
-  // OBS widget and the Studio overlay speak the same visual language.
+  // OBS widget and the Studio overlay speak the same visual language. multiAccent is each type's
+  // signature colour in multi-type mode — all four solo defaults are the same neon pink, which
+  // would make a shared stage unreadable, so multi mode picks a distinct colour per type from
+  // that type's own theme palette instead.
   // Note: Studio also routes "member" (room join) to Last Subscriber; that fires on every viewer
   // entering the room, so this widget deliberately listens to real "subscribe" events only.
   const TYPES={
     gifter:{
-      label:'LAST GIFTER',events:['gift'],
+      label:'LAST GIFTER',events:['gift'],multiAccent:'#ffd35d',
       themes:{neon:'#ff58d6',gold:'#ffd35d',emerald:'#3ddc84'},
       message:e=>`SENT ${String(e.giftName||e.gift||'A GIFT').toUpperCase().slice(0,40)} ×${Math.max(1,Math.round(Number(e.count??e.repeatCount)||1))}`
     },
     liker:{
-      label:'LAST LIKER',events:['like','likes'],
+      label:'LAST LIKER',events:['like','likes'],multiAccent:'#ff58d6',
       themes:{neon:'#ff58d6',blue:'#4fc3ff',lime:'#a3e635'},
       message:e=>`SENT ${Math.max(1,Math.round(Number(e.count??e.value)||1)).toLocaleString('sv-SE')} LIKES`
     },
     sharer:{
-      label:'LAST SHARER',events:['share'],
+      label:'LAST SHARER',events:['share'],multiAccent:'#2dd4bf',
       themes:{neon:'#ff58d6',teal:'#2dd4bf',orange:'#ff9d16'},
       message:()=>'SHARED THE LIVE'
     },
     subscriber:{
-      label:'LAST SUBSCRIBER',events:['subscribe'],
+      label:'LAST SUBSCRIBER',events:['subscribe'],multiAccent:'#4fc3ff',
       themes:{neon:'#ff58d6',ocean:'#4fc3ff',gold:'#ffd35d'},
       message:()=>'JOINED THE CLUB'
     }
   };
 
   const params=VyraWidget.getParams();
-  const type=TYPES[VyraWidget.get('type','gifter')]?VyraWidget.get('type','gifter'):'gifter';
-  const cfg=TYPES[type];
 
-  const themeKeys=Object.keys(cfg.themes);
-  const theme=themeKeys.includes(params.variant)?params.variant:themeKeys[0];
+  // ?type= accepts one type, a comma list ("gifter,liker"), or "all". With a single type this is
+  // the classic dedicated alert. With several, the card becomes a shared stage: alerts play one
+  // after another, each type keeping its own latest-event slot so nothing ever backlogs.
+  const rawType=VyraWidget.get('type','gifter').toLowerCase();
+  const active=rawType==='all'
+    ?Object.keys(TYPES)
+    :rawType.split(',').map(s=>s.trim()).filter(k=>TYPES[k]);
+  if(!active.length)active.push('gifter');
+  const multi=active.length>1;
+
   const accentParam=VyraWidget.get('accent','');
-  const accent=/^[0-9a-f]{6}$/i.test(accentParam)?'#'+accentParam:cfg.themes[theme];
-  document.documentElement.style.setProperty('--last-x',accent);
+  const forcedAccent=/^[0-9a-f]{6}$/i.test(accentParam)?'#'+accentParam:'';
+  function accentFor(typeKey){
+    if(forcedAccent)return forcedAccent;
+    const cfg=TYPES[typeKey];
+    if(multi)return cfg.multiAccent;
+    const themeKeys=Object.keys(cfg.themes);
+    const theme=themeKeys.includes(params.variant)?params.variant:themeKeys[0];
+    return cfg.themes[theme];
+  }
+  // ?label= only makes sense for a dedicated card — on a shared stage each alert brings its own.
+  function labelFor(typeKey){
+    return (multi?TYPES[typeKey].label:VyraWidget.get('label',TYPES[typeKey].label)).slice(0,40);
+  }
+  document.documentElement.style.setProperty('--last-x',accentFor(active[0]));
 
   const ENTRANCES=['slide-left','slide-right','pop','fade'];
   const entranceParam=VyraWidget.get('entrance','slide-left');
@@ -176,20 +198,26 @@
     name:document.getElementById('name'),
     message:document.getElementById('message')
   };
-  els.label.textContent=VyraWidget.get('label',cfg.label).slice(0,40);
+  els.label.textContent=labelFor(active[0]);
   els.img.onerror=()=>delete els.avatar.dataset.hasImage;
 
   // Studio clamps visningstiden to 4–6 s — keep the exact same envelope here.
   const HOLD_MS=Math.max(4,Math.min(6,Number(VyraWidget.get('hold','5'))||5))*1000;
   const ENTER_MS=400,EXIT_MS=360;
 
-  // ---- enter → hold → exit phase machine with a latest-event slot. "Last X" means exactly one
-  // thing is ever worth showing: the newest event. So instead of queueing (a like-spam would
-  // backlog minutes of alerts), a new event replaces any pending one — mid-hold it swaps the
-  // card content in place and restarts the hold; mid-exit it waits and re-enters with the newest.
-  let phase='idle',pending=null,phaseTimer=null,holdTimer=null;
+  // ---- enter → hold → exit phase machine over per-type latest-event slots. "Last X" means
+  // exactly one thing per type is ever worth showing: the newest event. A new event for the type
+  // on stage swaps the card content in place and restarts the hold; a new event for another type
+  // waits its turn in arrival order and gets a full enter→hold→exit of its own (with its own
+  // label and accent) once the current hold runs out. Within a type, newer always replaces older
+  // — so a like-spam can never backlog the stage.
+  let phase='idle',showingType=null,phaseTimer=null,holdTimer=null;
+  const slots=Object.create(null); // typeKey -> newest normalized event waiting to play
+  const order=[];                  // typeKeys with a waiting slot, in arrival order
 
-  function apply(data,swap){
+  function apply(typeKey,data,swap){
+    document.documentElement.style.setProperty('--last-x',accentFor(typeKey));
+    els.label.textContent=labelFor(typeKey);
     els.name.textContent=data.username;
     els.message.textContent=data.message;
     els.initial.textContent=(data.username[0]||'✦').toUpperCase();
@@ -225,39 +253,55 @@
     phaseTimer=setTimeout(()=>{
       card.classList.remove('hide'); // back to the resting entrance transform for the next enter
       phase='idle';
+      showingType=null;
       advance();
     },EXIT_MS);
   }
 
   function advance(){
-    if(!pending)return;
+    if(!order.length)return;
     if(phase==='idle'){
-      apply(pending,false);pending=null;
+      const typeKey=order.shift();
+      const data=slots[typeKey];slots[typeKey]=null;
+      showingType=typeKey;
+      apply(typeKey,data,false);
       enter();
-    }else if(phase==='enter'){
-      apply(pending,true);pending=null; // hold starts when the entrance lands
-    }else if(phase==='hold'){
-      apply(pending,true);pending=null;
-      startHold(); // newest event owns a full hold window
+    }else if(phase==='enter'||phase==='hold'){
+      // Only the type already on stage may jump the queue — it swaps in place. Other types stay
+      // queued until the current hold runs out, then exit's own timer re-enters with the next.
+      const i=order.indexOf(showingType);
+      if(i===-1)return;
+      order.splice(i,1);
+      const data=slots[showingType];slots[showingType]=null;
+      apply(showingType,data,true);
+      if(phase==='hold')startHold(); // newest event owns a full hold window
     }
-    // phase 'exit': leave pending in place — exit's own timer re-enters with it.
+    // phase 'exit': leave everything queued — exit's completion calls advance().
   }
 
-  function normalize(event){
+  function normalize(typeKey,event){
     return{
       username:String(event.username||event.name||event.userId||'Anonym').slice(0,60),
       avatar:String(event.profileImage||event.avatar||'').slice(0,1200),
-      message:cfg.message(event)
+      message:TYPES[typeKey].message(event)
     };
   }
 
+  function routeType(event){
+    const t=String(event?.type||'').toLowerCase();
+    if(!t)return multi?null:active[0]; // typeless events are only routable on a dedicated card
+    return active.find(k=>TYPES[k].events.includes(t))||null;
+  }
+
   // Public rendering hook — same convention as the other widgets, used by public/test-widgets.html
-  // to preview without a live connection. The type filter lives here (not only in the SSE
+  // to preview without a live connection. The type routing lives here (not only in the SSE
   // listener) so the preview page proves the filtering too, same as welcome-viewer.
   function render(event){
     if(!event)return;
-    if(event.type&&!cfg.events.includes(String(event.type).toLowerCase()))return;
-    pending=normalize(event);
+    const typeKey=routeType(event);
+    if(!typeKey)return;
+    slots[typeKey]=normalize(typeKey,event);
+    if(!order.includes(typeKey))order.push(typeKey);
     advance();
   }
   window.VyraLastXWidget={render};
