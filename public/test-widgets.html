@@ -194,35 +194,14 @@
         query:'type=likes&goal=50000&orientation=vertical',buttons:GOAL_BUTTONS
       }
     ]),
-
-    // The seven Battle MVP designs each ship as their own standalone widget file, so each gets its
-    // own preview + trigger buttons here rather than one shared section with a theme switch.
-    ...[
-      ['crystal-tribute','1 · Crystal Tribute'],
-      ['royal-ascension','2 · Royal Ascension'],
-      ['diamond-throne','3 · Diamond Throne'],
-      ['celestial-honor','4 · Celestial Honor'],
-      ['emerald-legacy','5 · Emerald Legacy'],
-      ['dragon-crest','6 · Dragon Crest'],
-      ['velvet-spotlight','7 · Velvet Spotlight']
-    ].map(([slug,title])=>({
-      key:'battle-mvp-'+slug,title:'Battle MVP '+title,file:'widgets/battle-mvp-'+slug+'.html',
-      hook:'VyraBattleMvpWidget',height:'470px',noVariant:true,
+    {
+      key:'battle-mvp',title:'Battle MVP (9s hyllningssekvens)',file:'widgets/battle-mvp.html',hook:'VyraBattleMvpWidget',height:'520px',
+      noVariant:true,
       buttons:[
-        {label:'🏆 Kör hyllning',event:()=>({username:randomName(),score:15000})},
-        {label:'✏️ Egen text',event:()=>({username:'MiraDances',thanks:'TACK',subtitle:'FÖR ATT DU STÖTTAR STREAMEN',label:'TOP SUPPORTER',score:8420,scoreUnit:'DIAMONDS'})},
-        {label:'⚔️ Riktig MVP (från gåvor)',custom:(frame)=>{
-          const hook=frame.contentWindow.VyraBattleMvpWidget;
-          // Feed a few gifts through the same accumulator the live stream uses, then crown the
-          // leader — exercises the real trigger path, not just the manual one.
-          hook.resetContributions();
-          hook.recordGift({userId:'u1',username:'StreamFan92',value:4200});
-          hook.recordGift({userId:'u2',username:'LunaLive',value:9100});
-          hook.recordGift({userId:'u3',username:'NightOwl',value:2600});
-          hook.triggerTopContributor();
-        }}
+        {label:'🏆 Kör hyllning (StreamFan92 · 15 000p)',event:()=>({username:'StreamFan92',score:15000})},
+        {label:'🏆 Kör hyllning (anpassad text)',event:()=>({username:'MiraDances',thanks:'TACK SÅ MYCKET',subtitle:'FÖR ATT DU STÖTTAR STREAMEN',label:'TOP SUPPORTER',score:8420})}
       ]
-    }))
+    }
   ];
 
   const container=document.getElementById('widget-blocks');
@@ -286,12 +265,6 @@
     const frames=framesFor(widget.key);
     if(buttonDef.reset){
       for(const frame of frames)frame.contentWindow[widget.hook]?.reset?.();
-      return;
-    }
-    // Escape hatch for buttons that need to drive a widget's own API directly (e.g. feeding gifts
-    // through the real MVP accumulator) rather than just rendering one synthetic event.
-    if(buttonDef.custom){
-      for(const frame of frames)buttonDef.custom(frame);
       return;
     }
     // Build the event(s) exactly ONCE, then replay the identical object(s) into every frame —
