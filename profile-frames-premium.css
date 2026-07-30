@@ -12,6 +12,28 @@
 .vyra-toplike:not(.like-center) .toplike-row>img{justify-self:start!important;transform:none!important}
 .vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame{transform:none!important}
 .vyra-toplike:not(.like-center) .toplike-row>.pro-avatar-frame>img:first-child{width:100%!important;height:100%!important;clip-path:circle(50% at 50% 50%)!important}
+
+/* Fit the photo INTO the frame's opening, so the ring reads as sitting outside the photo.
+   These frames are large ornaments rather than thin rings: the transparent opening is 33-79% of the
+   frame image's own width, and 32 of the 53 have it OFF CENTRE because an ornament on top (crown,
+   moon, antlers) pushes the usable hole downwards. Measured per asset as the largest inscribed circle
+   in that opening — see FRAME_GEOM in toplike-studio.js. With the photo at a flat 100% it always
+   spilled over the ring, and unequally, which read as the frame being too small and the photo
+   sitting crooked.
+   --frame-fit scales the photo down to the opening; --frame-dx/dy move it onto the opening's centre.
+   Done with transform rather than width/height on purpose: the ring and the photo both keep filling
+   the box the surrounding layout already reserves, so neither can overflow its cell and collide with
+   the rank number or the username — in any of the nine widget layouts, at any size, and in designs
+   added later. Sizing via width/height would instead need a hand-written pixel value per layout,
+   which is the same hardcoding that broke these frames to begin with.
+   translate percentages resolve against the element's own box, which equals the frame box, so the
+   offsets are used as-is — and must come before scale in the list. */
+.pro-avatar-frame>img:first-child{
+  transform:
+    translate(calc(var(--frame-dx,0) * 100%),calc(var(--frame-dy,0) * 100%))
+    scale(var(--frame-fit,.62))!important;
+  transform-origin:50% 50%!important;
+}
 .vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>span:not(.pro-avatar-frame),
 .vyra-toplike:not(.like-center) .toplike-row:has(>.pro-avatar-frame)>em{transform:none!important}
 

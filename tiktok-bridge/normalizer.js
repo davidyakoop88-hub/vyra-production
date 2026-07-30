@@ -3,9 +3,21 @@
 function text(value,max=160){return String(value??'').trim().slice(0,max)}
 function number(value,max=1e12){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(max,n)):0}
 function userOf(data){return data?.user||data?.userInfo||data}
+// Prefer the largest avatar TikTok offers. avatarLarger is 1080x1080 and avatarMedium 720x720,
+// while avatarThumb is only 100x100 — and thumb used to be picked ahead of medium here, so every
+// widget was rendering a 100px source. That is fine at the old 54px avatar box but visibly soft as
+// soon as a widget draws the photo larger (e.g. inside a decorative frame). The urlList entries are
+// CDN mirrors of the same size, so index 0 is fine; the resolution comes from which field is used.
+// profilePicture.urls stays in the chain but after the explicitly-sized fields, since its variant
+// is unspecified.
 function profileImageOf(data){
   const user=userOf(data);
-  return text(user?.profilePicture?.urls?.[0]||user?.avatarThumb?.urlList?.[0]||user?.avatarThumb?.urlListList?.[0]||user?.avatarMedium?.urlList?.[0]||'',1200);
+  return text(
+    user?.avatarLarger?.urlList?.[0]||user?.avatarLarger?.urlListList?.[0]
+    ||user?.avatarMedium?.urlList?.[0]||user?.avatarMedium?.urlListList?.[0]
+    ||user?.profilePicture?.urls?.[0]
+    ||user?.avatarThumb?.urlList?.[0]||user?.avatarThumb?.urlListList?.[0]
+    ||'',1200);
 }
 function baseUser(data){
   const user=userOf(data);

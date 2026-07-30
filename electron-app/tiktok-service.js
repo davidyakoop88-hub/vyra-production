@@ -11,11 +11,25 @@ function number(value, max = Number.MAX_SAFE_INTEGER) {
   return Number.isFinite(parsed) ? Math.max(0, Math.min(max, parsed)) : 0;
 }
 
+// Mirrors tiktok-bridge/normalizer.js's profileImageOf: take the largest avatar TikTok offers
+// (avatarLarger 1080, avatarMedium 720) before falling back to profilePictureUrl, whose variant is
+// unspecified, and to avatarThumb, which is only 100x100. Keeping web and desktop identical here
+// matters because both feed the same widgets.
+function avatarOf(data) {
+  const user = data?.user || data;
+  return text(
+    user?.avatarLarger?.urlList?.[0] || user?.avatarLarger?.urlListList?.[0]
+    || user?.avatarMedium?.urlList?.[0] || user?.avatarMedium?.urlListList?.[0]
+    || data?.profilePictureUrl || user?.profilePictureUrl
+    || user?.avatarThumb?.urlList?.[0] || user?.avatarThumb?.urlListList?.[0]
+    || '', 2048);
+}
+
 function baseUser(data) {
   return {
     username: text(data?.uniqueId || data?.user?.uniqueId, 100),
     name: text(data?.nickname || data?.user?.nickname || data?.uniqueId, 500),
-    profileImage: text(data?.profilePictureUrl || data?.user?.profilePictureUrl, 2048)
+    profileImage: avatarOf(data)
   };
 }
 

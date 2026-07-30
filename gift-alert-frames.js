@@ -50,8 +50,14 @@
       // Non-greedy so it tolerates sibling markup inside the anchor div (e.g. gifter-orbit's three
       // decoy <i> rings before the actual photo <img>) without matching too far.
       const re = new RegExp(`(<div class="${anchor}[^"]*"[^>]*>[\\s\\S]*?)(<img[^>]*src="[^"]*"[^>]*>)`);
+      // Geometry of the frame's transparent opening (measured per asset in toplike-studio.js):
+      // --frame-fit is its diameter as a fraction of the frame's width, --frame-dx/dy its centre
+      // offset. CSS scales the art by 1/fit and shifts it so the opening lands on the photo, putting
+      // the ring OUTSIDE the photo instead of over it.
+      // Read through window at render time — load order between injected files isn't guaranteed.
+      const g = window.vyraFrameGeom ? window.vyraFrameGeom(w.profileFrame) : { fit: 0.62, dx: 0, dy: 0 };
       html = html.replace(re, (match, prefix, img) =>
-        `${prefix}<span class="pro-avatar-frame">${img}<img class="pro-frame-art" src="assets/images/profile-frames/${file}" alt=""></span>`
+        `${prefix}<span class="pro-avatar-frame" style="--frame-fit:${g.fit};--frame-dx:${g.dx};--frame-dy:${g.dy}">${img}<img class="pro-frame-art" src="assets/images/profile-frames/${file}" alt=""></span>`
       );
     }
     return html;

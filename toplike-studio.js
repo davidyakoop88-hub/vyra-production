@@ -53,6 +53,74 @@
   // picker markup instead of duplicating the 36-entry table. Only read inside function bodies in
   // consumers, never at their own top-level IIFE scope — script load order between dynamically
   // injected files isn't guaranteed (see the overlay re-render guard at the end of this file).
+  // How wide each frame's transparent opening is, as a fraction of the frame image's own width.
+  // Measured from the actual assets (alpha channel, 72 rays out from the centre, median ray) — not
+  // estimated. Needed because these frames are large ornaments, not thin rings: the opening ranges
+  // from 45% (moonlit-sakura) to 80% (minimal-glow), so a single shared photo size cannot fit them
+  // all. The photo keeps its size and the frame art scales to 1/fit around it, which is what puts
+  // the ring OUTSIDE the photo at any widget size.
+  // Median rather than the narrowest ray on purpose: thin decorations (butterfly wingtips reach 19%,
+  // lightning 26%) would otherwise demand 4-5x scaling and blow the layout apart. A stray decoration
+  // grazing the photo edge is how these frames are drawn.
+  // [fit, dx, dy] per frame, measured from each asset's alpha channel as the LARGEST INSCRIBED
+  // CIRCLE in the frame's transparent opening:
+  //   fit = the circle's diameter as a fraction of the frame image's width
+  //   dx/dy = the circle's centre offset from the image centre, as a fraction of the image size
+  // The offsets matter: 32 of these 53 frames have an off-centre opening, because an ornament on top
+  // (crown, moon, antlers) pushes the usable hole downwards. Measuring rays from the image centre
+  // cannot detect that and leaves the photo visibly off inside the ring.
+  const FRAME_GEOM = {
+    'ocean-oracle': [.4706, .0039, -.0078], 'neon-valkyrie': [.4270, -.0547, .0195],
+    'moonlit-sakura': [.4449, -.0273, -.0078], 'celestial-serpent': [.5110, -.0313, .0156],
+    'stellar-emperor': [.5423, .0352, .0508], 'opal-dream': [.5156, .0078, .0078],
+    'thunder-warden': [.4830, -.0508, .0391], 'velvet-nocturne': [.5533, -.0195, .0391],
+    'gilded-lion': [.4680, -.0273, .0898], 'amethyst-oracle': [.4844, -.0273, .0703],
+    'frostfire-crown': [.4453, -.0664, .0586], 'quantum-lotus': [.4882, -.0742, .0742],
+    'crimson-dynasty': [.5050, -.0078, .0391], 'pearl-tempest': [.4861, -.0273, 0],
+    'cosmic-tiger': [.5299, -.0469, .0273], 'enchanted-ivy': [.5221, -.0195, .0742],
+    'arctic-couture': [.4674, .0117, .0430], 'aurora-diamond': [.6094, -.0039, -.0039],
+    'champagne-crown': [.6484, -.0078, .0664], 'emerald-elan': [.6519, -.0039, .0039],
+    'midnight-amethyst': [.5551, -.0195, -.0039], 'pearl-lumiere': [.5896, .0078, .0117],
+    'pink-angel': [.6862, -.0078, .0430], 'rose-atelier': [.5823, 0, .0156],
+    'ruby-velvet': [.5414, -.0508, -.0117], 'sapphire-nocturne': [.5781, .0039, .0195],
+    'ice-crystal': [.6191, -.0156, .0313], 'samurai': [.6035, .0039, .0273],
+    'golden-king': [.6282, -.0039, .0664], 'galaxy': [.6033, .0117, .0156],
+    'emerald': [.6439, -.0039, .0039], 'cyber-blue': [.7294, .0039, 0],
+    'neon-purple': [.7327, -.0039, -.0078], 'minimal-glow': [.7890, 0, 0],
+    // svg placeholders
+    'bronze': [.6850, -.0039, -.0039], 'silver': [.6850, -.0039, -.0039],
+    'flame': [.6484, -.0039, -.0039], 'heroic': [.6040, -.0352, .0703],
+    'infinity': [.6641, -.0078, -.0586], 'lightning': [.3314, -.2148, -.0859],
+    'neon-blue': [.7669, -.0039, 0], 'neon-green': [.7669, -.0039, 0],
+    'neon-pink': [.7669, -.0039, 0], 'predator': [.6272, .0234, .0625],
+    'viking': [.7422, -.0078, 0], 'butterfly': [.4939, -.1094, .0938],
+    'fairy': [.7813, -.0078, .0039], 'flower': [.6563, -.0039, -.0039],
+    'princess': [.7734, -.0039, 0], 'sparkle': [.7734, -.0039, -.0039],
+    'starry': [.7488, -.0039, .0078], 'unicorn': [.7188, -.0117, .0273],
+    'wings': [.7780, -.0039, -.0039]
+  };
+
+  // Raw measurements are stored above and clamped here, so the data stays honest and the policy is
+  // visible. Two svg PLACEHOLDER assets are not really rings — lightning's bolt and butterfly's
+  // wings cross the photo area itself, so their true inscribed circle is tiny and far off centre.
+  // Honouring those literally would scale the ring 3x and shove it sideways, wrecking the row for
+  // everyone. They are clamped instead: their decoration overlaps the photo, which is how the art
+  // is drawn.
+  const FIT_FLOOR = .45, OFFSET_CAP = .07;
+  const FRAME_GEOM_DEFAULT = [.62, 0, 0]; // catalog median, for an asset added without measuring
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  function frameGeom(id) {
+    const g = (id && FRAME_GEOM[id]) || FRAME_GEOM_DEFAULT;
+    return {
+      fit: Math.max(FIT_FLOOR, g[0]),
+      dx: clamp(g[1], -OFFSET_CAP, OFFSET_CAP),
+      dy: clamp(g[2], -OFFSET_CAP, OFFSET_CAP)
+    };
+  }
+  window.VYRA_FRAME_GEOM = FRAME_GEOM;
+  window.vyraFrameGeom = frameGeom;
+  window.vyraFrameFit = id => frameGeom(id).fit;
+
   window.VYRA_FRAMES = FRAMES;
   window.VYRA_FRAME_FILES = FRAME_FILES;
 

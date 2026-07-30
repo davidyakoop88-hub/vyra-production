@@ -10,6 +10,20 @@ test('cloud event preserves canonical identity and bounded values',()=>{
   const out=N.cloudEvent('evt-1','GIFT',{userId:'u1',username:'alex',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',coins:5,count:5},123);
   assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',at:123});
 });
+test('avatar picks the largest variant TikTok offers, not the 100x100 thumb',()=>{
+  const all=N.giftFields({user:{userId:'u1',uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']},avatarMedium:{urlList:['https://img/medium.jpg']},avatarLarger:{urlList:['https://img/larger.jpg']}}});
+  assert.equal(all.profileImage,'https://img/larger.jpg');
+
+  const noLarger=N.giftFields({user:{uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']},avatarMedium:{urlList:['https://img/medium.jpg']}}});
+  assert.equal(noLarger.profileImage,'https://img/medium.jpg');
+
+  // thumb is still the last resort rather than dropped
+  const thumbOnly=N.giftFields({user:{uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']}}});
+  assert.equal(thumbOnly.profileImage,'https://img/thumb.jpg');
+
+  const none=N.giftFields({user:{uniqueId:'alex'}});
+  assert.equal(none.profileImage,'');
+});
 test('battle fields support common score shapes',()=>{
   const out=N.battleFields({battleInfo:{hostScore:1200,guestScore:900,multiplier:3}});
   assert.equal(out.scoreUs,1200);assert.equal(out.scoreThem,900);assert.equal(out.multiplier,3);
