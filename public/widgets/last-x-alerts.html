@@ -158,10 +158,11 @@
 
   const params=VyraWidget.getParams();
 
-  // ?type= accepts one type, a comma list ("gifter,liker"), or "all". With a single type this is
-  // the classic dedicated alert. With several, the card becomes a shared stage: alerts play one
-  // after another, each type keeping its own latest-event slot so nothing ever backlogs.
-  const rawType=VyraWidget.get('type','gifter').toLowerCase();
+  // ?type= accepts one type, a comma list ("gifter,liker"), or "all" — and "all" is the default:
+  // dropped into OBS without parameters, the card is a shared stage where every alert type plays
+  // in the same spot, one after another, each type keeping its own latest-event slot so nothing
+  // ever backlogs. A single ?type= narrows it to one dedicated alert instead.
+  const rawType=VyraWidget.get('type','all').toLowerCase();
   const active=rawType==='all'
     ?Object.keys(TYPES)
     :rawType.split(',').map(s=>s.trim()).filter(k=>TYPES[k]);
