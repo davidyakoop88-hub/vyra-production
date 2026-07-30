@@ -308,8 +308,10 @@
     background:url('assets/last-x/royal-coronation.png') top center/100% auto no-repeat;
   }
   html[data-design="royal"] #sheen,html[data-design="royal"] #gleam{display:none}
+  /* the keyed hole is slightly elliptical (40.8% wide, 38.3% tall) — the circular avatar is
+     sized past the widest axis so its edge always sits hidden behind the ring, no gaps. */
   html[data-design="royal"] #avatar{
-    position:absolute;z-index:1;left:49.9%;top:46.5%;width:39%;height:auto;aspect-ratio:1/1;
+    position:absolute;z-index:1;left:49.94%;top:46.5%;width:42.5%;height:auto;aspect-ratio:1/1;
     transform:translate(-50%,-50%);box-shadow:none;
   }
   html[data-design="royal"] #copy{
