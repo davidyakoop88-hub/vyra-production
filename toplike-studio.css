@@ -352,3 +352,9 @@
      the name and likes stack underneath it. This lands the badge just under the portrait's centre. */
   transform:translateY(-50%)!important;margin-top:-5px!important;
 }
+
+/* No border or glow on the podium cards. The only frame inside this widget is the ornament around
+   the portrait — same distinction as the widget root itself: a box drawn over live video reads as a
+   panel, a ring around a portrait reads as design. The rank colour stays where it is not a frame:
+   the badge and the likes figure. Appended last so it wins on source order. */
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3){border:0!important;box-shadow:none!important}
