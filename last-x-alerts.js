@@ -98,7 +98,7 @@
     const label = labelFor(w, typeKey);
     const hasImage = w.profileImage ? ` data-has-image="1"` : '';
     return `<div class="widget last-x-widget design-${design} entrance-${entrance}${selected === w.id ? ' selected' : ''}" data-id="${w.id}"
-        style="left:${w.x}px;top:${w.y}px;--last-x:${accent};zoom:${w.widgetScale || 1}">
+        style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent};zoom:${w.widgetScale || 1}">
       <div class="last-x-tilt">
         <div class="last-x-glass"><div class="last-x-sheen"></div><div class="last-x-gleam"></div></div>
         <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${w.profileImage || ''}" alt=""></div>

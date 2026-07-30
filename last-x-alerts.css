@@ -9,9 +9,12 @@
 
 /* the generic .widget base rule in studio.css draws a 1px border + solid fill on every widget by
    default — reset both here so Last-X keeps the OBS widget's "floats, no box" look in every one
-   of its five designs, not just the ones that already happen to override background. */
+   of its five designs, not just the ones that already happen to override background. Position
+   MUST stay absolute (the base .widget rule's value, needed for left/top canvas placement) — a
+   relatively-positioned widget instead flows in normal layout and stretches to its container's
+   full width, which is what produced an oversized selection box far past the visible artwork. */
 .last-x-widget{
-  position:relative;display:flex;align-items:center;gap:14px;
+  position:absolute!important;display:flex;align-items:center;gap:14px;
   min-width:340px;padding:0;border:0!important;background:none!important;border-radius:18px;
   cursor:grab;user-select:none;
   perspective:900px;
