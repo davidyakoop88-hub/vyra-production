@@ -61,6 +61,14 @@
   }
   function isLastX(w) { return w.type === 'templateLastX' || !!LEGACY_TYPE[w.type]; }
 
+  // Toggling checkboxes builds this comma list back up (falling back to the clean 'all' string
+  // when every box ends up checked, so a fresh widget still reads as "all" rather than a
+  // four-item list) — activeKeysFor() above already parses both forms identically either way.
+  function setActiveKeys(w, keys) {
+    if (!keys.length) return; // never allow "nothing selected" — the caller re-checks the box instead
+    w.lastXType = keys.length === TYPE_KEYS.length ? 'all' : keys.join(',');
+  }
+
   function accentFor(w, typeKey) {
     if (w.followColor) return w.followColor;
     const active = activeKeysFor(w), multi = active.length > 1;
@@ -124,11 +132,13 @@
     const active = activeKeysFor(w), typeKey = active[0], multi = active.length > 1;
     const themeKeys = Object.keys(TYPES[typeKey].themes);
     return `<h3>LAST-X ALERTS</h3><div class="template-badge">PREMIUM · AUTO HIDE</div>
-      <div class="property-group"><h4>TYP & DESIGN</h4>
-        <label>Typ<select id="lastXType">
-          <option value="all">Alla fyra (delad scen)</option>
-          ${TYPE_KEYS.map(k => `<option value="${k}">${TYPES[k].catalogLabel}</option>`).join('')}
-        </select></label>
+      <div class="property-group"><h4>VILKA SKA VISAS</h4>
+        <p class="last-x-type-hint">Kryssa av dem du inte vill ha med — widgeten cyklar bara mellan de kvarvarande, i en delad scen om fler än en är kvar.</p>
+        <div class="last-x-type-checks">
+          ${TYPE_KEYS.map(k => `<label class="last-x-type-check"><input type="checkbox" id="lastXType_${k}" data-key="${k}"${active.includes(k) ? ' checked' : ''}><span>${TYPES[k].catalogLabel}</span></label>`).join('')}
+        </div>
+      </div>
+      <div class="property-group"><h4>DESIGN & RÖRELSE</h4>
         <label>Design<select id="lastXDesign">${Object.entries(DESIGNS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
         <label>Rörelse<select id="lastXEntrance">
           <option value="slide-left">Slider in från vänster</option>
@@ -285,7 +295,6 @@
         const el = document.querySelector(id); if (!el) return;
         el.onchange = e => { w[key] = opts.num ? +e.target.value : e.target.value; save(); render() };
       };
-      set('#lastXType', 'lastXType');
       set('#lastXDesign', 'lastXDesign');
       set('#lastXEntrance', 'lastXEntrance');
       set('#followTheme', 'followTheme');
@@ -296,7 +305,20 @@
       set('#followProfile', 'profileImage');
       set('#followDuration', 'followDuration', { num: true });
 
-      const typeSel = document.querySelector('#lastXType'); if (typeSel) typeSel.value = lastXTypeOf(w);
+      // Each checkbox toggles its own type in/out of the active set. Unchecking the very last
+      // one is rejected (re-checked right back) instead of leaving the widget with nothing to
+      // ever show — same guard as setActiveKeys()'s empty-array no-op.
+      TYPE_KEYS.forEach(k => {
+        const box = document.querySelector(`#lastXType_${k}`);
+        if (!box) return;
+        box.onchange = () => {
+          const checked = TYPE_KEYS.filter(key => document.querySelector(`#lastXType_${key}`)?.checked);
+          if (!checked.length) { box.checked = true; toast('Minst en typ måste vara ikryssad'); return }
+          setActiveKeys(w, checked);
+          save(); render();
+        };
+      });
+
       const designSel = document.querySelector('#lastXDesign'); if (designSel) designSel.value = designOf(w);
       const entranceSel = document.querySelector('#lastXEntrance'); if (entranceSel) entranceSel.value = entranceOf(w);
       const themeSel = document.querySelector('#followTheme');
