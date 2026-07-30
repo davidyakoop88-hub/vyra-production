@@ -94,7 +94,7 @@
     gifts:{matches:e=>e.type==='gift',amount:()=>1},
     follows:{matches:e=>e.type==='follow',amount:()=>1},
     shares:{matches:e=>e.type==='share',amount:()=>1},
-    likes:{matches:e=>e.type==='like',amount:e=>Number(e.count)||1}
+    likes:{matches:e=>e.type==='like'||e.type==='likes',amount:e=>Number(e.count)||1}
   };
   const handler=TYPE_HANDLERS[goalType]||TYPE_HANDLERS.diamonds;
 

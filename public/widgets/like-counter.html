@@ -97,7 +97,9 @@
   window.VyraLikeCounterWidget={render,reset(){displayed=0;target=0;countEl.textContent='0'}};
 
   if(params.uid){
-    VyraWidget.connect({uid:params.uid,onEvent(event){if(event?.type==='like')render(event)}});
+    // Både 'like' och 'likes': servern aliaserar bryggans 'likes' till 'like' vid publish, men
+    // test-events och äldre vägar kan fortfarande leverera rå 'likes' — samma mönster som last-x-alerts.
+    VyraWidget.connect({uid:params.uid,onEvent(event){if(event?.type==='like'||event?.type==='likes')render(event)}});
   }else{
     VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
   }

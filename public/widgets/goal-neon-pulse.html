@@ -209,7 +209,7 @@
   // Same event vocabulary the ingest endpoint validates: gift/like/chat/follow/share/member.
   const TYPES={
     follows:{matches:e=>e.type==='follow',amount:()=>1,                 label:'FOLLOWER GOAL'},
-    likes:  {matches:e=>e.type==='like',  amount:e=>Number(e.count)||1, label:'LIKE GOAL'},
+    likes:  {matches:e=>e.type==='like'||e.type==='likes',  amount:e=>Number(e.count)||1, label:'LIKE GOAL'},
     shares: {matches:e=>e.type==='share', amount:()=>1,                 label:'SHARE GOAL'},
     gifts:  {matches:e=>e.type==='gift',  amount:()=>1,                 label:'GIFT GOAL'},
     diamonds:{matches:e=>e.type==='gift', amount:e=>Number(e.value)||0, label:'DIAMOND GOAL'}

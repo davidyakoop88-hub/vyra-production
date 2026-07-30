@@ -16,8 +16,14 @@ function redisReachable(url){
   });
 }
 
-test('TIKTOK_INGEST_TYPES is exactly gift/like/chat/follow/share/member',()=>{
-  assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),['chat','follow','gift','like','member','share']);
+test('TIKTOK_INGEST_TYPES is exactly gift/like/likes/chat/follow/share/member',()=>{
+  assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),['chat','follow','gift','like','likes','member','share']);
+});
+
+// Regression: bryggan skickar LIKE-events som 'likes' — de måste passera valideringen (som körs
+// före event-bussens TYPE_ALIASES) i stället för att 400:as bort innan aliaseringen kan ske.
+test('validateTikTokIngestPayload accepts the bridge\'s raw \'likes\' type',()=>{
+  assert.doesNotThrow(()=>validateTikTokIngestPayload({type:'likes',username:'Alice'}));
 });
 
 test('validateTikTokIngestPayload accepts every allowed type, case-insensitively',()=>{
@@ -61,6 +67,22 @@ test('ingestTikTokEvent publishes a valid event through the same path real TikTo
     assert.equal(out.duplicate,false);
     assert.equal(out.event.type,'gift');
     assert.equal(out.event.username,'IngestTester');
+    assert.ok(out.streamId);
+  }finally{
+    await eventBus.close().catch(()=>{});
+  }
+});
+
+test('ingestTikTokEvent normalizes the bridge\'s \'likes\' to \'like\' via the event-bus alias',async t=>{
+  const url=process.env.REDIS_URL||'redis://127.0.0.1:6379';
+  if(!await redisReachable(url)){t.skip(`No Redis reachable at ${url}`);return}
+
+  const workspaceId='66666666-6666-6666-6666-666666666666';
+  try{
+    const out=await ingestTikTokEvent(workspaceId,{id:`likes-${Date.now()}`,type:'likes',username:'LikeTester',count:250,value:1000});
+    assert.equal(out.duplicate,false);
+    assert.equal(out.event.type,'like');
+    assert.equal(out.event.count,250);
     assert.ok(out.streamId);
   }finally{
     await eventBus.close().catch(()=>{});

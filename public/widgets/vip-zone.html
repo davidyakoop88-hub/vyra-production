@@ -75,6 +75,7 @@
     follow:()=>50,
     share:()=>20
   };
+  SCORERS.likes=SCORERS.like; // rå bryggtyp 'likes' — samma mönster som last-x-alerts
 
   const totals=new Map(); // key -> {username, score}
   let rowEls=[];

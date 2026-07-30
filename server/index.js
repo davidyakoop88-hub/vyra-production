@@ -60,7 +60,9 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
   }
   return event;
 }
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','chat','follow','share','member']);
+// 'likes' ingår eftersom bryggan skickar LIKE-events med type 'likes' (bridge.js) — event-bussens
+// TYPE_ALIASES normaliserar till 'like' vid publish, men valideringen här körs före aliaseringen.
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
 // Pure — validates the ingest payload's shape before it ever reaches eventBus.publish/cleanEvent,
 // so a request from a leaked/misused ingest token (or a bug in the bridge) gets a specific,
