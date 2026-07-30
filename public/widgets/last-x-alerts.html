@@ -294,45 +294,33 @@
     72%{transform:rotate(-2.6deg) rotateY(-9deg)}
   }
 
-  /* royal — full artwork skin: the generated coronation frame (assets/last-x/royal-coronation.png,
-     chroma-keyed) is the whole widget. The avatar sits BEHIND the art at z1 and shows through the
-     keyed medallion hole (measured: centre 49.9%/35.8%, diameter 36.9% of width); the live text
-     renders at z3 in the empty scroll-framed band (68%–92%). Fixed gold/purple palette from the
-     artwork itself — the type accent does not recolour this skin. */
+  /* royal — full artwork skin: the compact coronation frame (assets/last-x/royal-coronation.png,
+     chroma-keyed + trimmed to end just under the gem, 836x811) is the whole widget. The avatar
+     sits BEHIND the art at z1 and shows through the keyed medallion hole (centre 49.9%/51.9% of
+     the art, diameter 39.5% of width); the only text is the type label in gold on a slim band
+     under the gem. Fixed gold/purple palette from the artwork itself. */
   html[data-design="royal"] #tilt{
-    display:block;min-width:0;width:min(430px,70vw);aspect-ratio:896/1200;
+    display:block;min-width:0;width:min(400px,70vw);aspect-ratio:836/905;
     padding:0;background:none;box-shadow:none;
   }
   html[data-design="royal"] #glass{
     z-index:2;border-radius:0;
-    background:url('assets/last-x/royal-coronation.png') center/contain no-repeat;
+    background:url('assets/last-x/royal-coronation.png') top center/100% auto no-repeat;
   }
   html[data-design="royal"] #sheen,html[data-design="royal"] #gleam{display:none}
   html[data-design="royal"] #avatar{
-    position:absolute;z-index:1;left:49.9%;top:35.8%;width:36%;height:auto;aspect-ratio:1/1;
+    position:absolute;z-index:1;left:49.9%;top:46.5%;width:39%;height:auto;aspect-ratio:1/1;
     transform:translate(-50%,-50%);box-shadow:none;
   }
   html[data-design="royal"] #copy{
-    position:absolute;z-index:3;left:18%;right:18%;top:67.5%;bottom:7%;
-    flex:none;align-items:center;justify-content:center;gap:4px;text-align:center;
+    position:absolute;z-index:3;left:15%;right:15%;top:90.5%;bottom:0;
+    flex:none;align-items:center;justify-content:center;text-align:center;
   }
-  html[data-design="royal"] #label{color:#ffd35d;letter-spacing:.24em;font-size:11px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-  html[data-design="royal"] #name{
-    font-size:19px;color:#fff;-webkit-text-fill-color:currentColor;
-    background:rgba(10,6,16,.55);-webkit-background-clip:padding-box;background-clip:padding-box;
-    padding:2px 14px;border-radius:9px;max-width:100%;
+  html[data-design="royal"] #label{
+    color:#ffd35d;letter-spacing:.3em;font-size:15px;
+    text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 14px rgba(255,211,93,.45);
   }
-  html[data-design="royal"] #value{
-    display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.1;
-    background:linear-gradient(180deg,#fff3c4 12%,#ffd35d 45%,#b07800 85%);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;
-  }
-  html[data-design="royal"] #detail{
-    display:block;font-size:15px;font-weight:700;letter-spacing:.06em;color:#c77dff;
-    text-shadow:0 0 12px rgba(177,60,255,.5);
-  }
-  html[data-design="royal"] #value:empty,html[data-design="royal"] #detail:empty{display:none}
+  html[data-design="royal"] #name,html[data-design="royal"] #value,html[data-design="royal"] #detail,
   html[data-design="royal"] #message,html[data-design="royal"] #emblem{display:none}
   html[data-design="royal"] #card.show #tilt{animation:royalholo 9s ease-in-out infinite}
   @keyframes royalholo{
