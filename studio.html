@@ -91,10 +91,17 @@
   <script src="overlay-access.js?v=20260724-4"></script>
   <script>
     (function () {
-      if (new URLSearchParams(location.search).get('intent') !== 'download') return;
+      const params = new URLSearchParams(location.search);
+      if (params.get('intent') !== 'download') return;
       addEventListener('vyra-entitlement-ok', function () {
         window.toast && window.toast('Nedladdningen startar — öppna VYRA-Setup.exe när den är klar.');
         location.href = '/api/downloads/windows';
+        // Drop ?intent=download from the address bar right after firing it once — otherwise a
+        // plain page refresh keeps the same URL, re-runs this script, and silently re-triggers
+        // the download every single reload (a reload must never resubmit a one-time side effect).
+        params.delete('intent');
+        const query = params.toString();
+        history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
       }, { once: true });
     })();
   </script>
