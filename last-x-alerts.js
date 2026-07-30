@@ -85,6 +85,23 @@
   function entranceOf(w) { return ENTRANCES.includes(w.lastXEntrance) ? w.lastXEntrance : 'slide-left'; }
   function holdMsOf(w) { return Math.max(4, Math.min(6, w.followDuration || 5)) * 1000; }
 
+  // card/stack/skew/badge hug their own content (last-x-alerts.css's width:fit-content) so the
+  // resize handle sits exactly at the plate's edge — but that means dragging it changes w.width
+  // with nothing visible to show for it. These are each design's natural size in last-x-alerts.css
+  // (its min-width floor) at zoom 1; dragging now maps the resulting width onto a zoom factor
+  // instead, so the WHOLE plate (avatar, text, emblem, everything together) scales down or up,
+  // and the fit-content shell keeps hugging the now-different rendered size either way. Royal is
+  // excluded — its plate already scales with width directly (width:100% + aspect-ratio in CSS),
+  // so it doesn't need a second, competing scale mechanism.
+  const DESIGN_BASE_WIDTH = { card: 340, stack: 240, skew: 380, badge: 250 };
+  function zoomFor(w) {
+    const design = designOf(w), base = DESIGN_BASE_WIDTH[design];
+    const widgetScale = w.widgetScale || 1;
+    if (!base) return widgetScale; // royal: width already IS the scale mechanism
+    const dragScale = Math.max(0.4, Math.min(2.5, (w.width || base) / base));
+    return dragScale * widgetScale;
+  }
+
   // ---- render: shows the widget's PRIMARY type at rest (its own accent/label/test copy) — the
   // phase machine below swaps content in place for whichever type is actually showing. ----
   const lastXWh = wh;
@@ -98,7 +115,7 @@
     const label = labelFor(w, typeKey);
     const hasImage = w.profileImage ? ` data-has-image="1"` : '';
     return `<div class="widget last-x-widget design-${design} entrance-${entrance}${selected === w.id ? ' selected' : ''}" data-id="${w.id}"
-        style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent};zoom:${w.widgetScale || 1}">
+        style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent};zoom:${zoomFor(w)}">
       <div class="last-x-tilt">
         <div class="last-x-glass"><div class="last-x-sheen"></div><div class="last-x-gleam"></div></div>
         <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${w.profileImage || ''}" alt=""></div>
