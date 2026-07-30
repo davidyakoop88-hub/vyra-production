@@ -7,9 +7,12 @@
    "last-x-" prefix throughout to avoid colliding with other widgets' generic class names
    (.name, .message, .label etc. are common across this codebase). */
 
+/* the generic .widget base rule in studio.css draws a 1px border + solid fill on every widget by
+   default — reset both here so Last-X keeps the OBS widget's "floats, no box" look in every one
+   of its five designs, not just the ones that already happen to override background. */
 .last-x-widget{
   position:relative;display:flex;align-items:center;gap:14px;
-  min-width:340px;padding:0;border-radius:18px;
+  min-width:340px;padding:0;border:0!important;background:none!important;border-radius:18px;
   cursor:grab;user-select:none;
   perspective:900px;
   opacity:0;visibility:hidden;pointer-events:none;
