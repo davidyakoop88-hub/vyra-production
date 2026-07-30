@@ -358,3 +358,12 @@
    panel, a ring around a portrait reads as design. The rank colour stays where it is not a frame:
    the badge and the likes figure. Appended last so it wins on source order. */
 .vyra-toplike.like-center .toplike-row:nth-child(-n+3){border:0!important;box-shadow:none!important}
+
+/* Fully transparent ranking widgets — no panel behind Top Like, Top Coins or Top Points.
+   backdrop-filter has to go with the background: on its own it keeps blurring the video inside the
+   widget rectangle, which reads as a panel even with nothing painted. The row divider line is a
+   border, not a background, so it stays. Doubled class to match the !important base rule; last in the
+   file wins the tie. */
+.vyra-toplike.vyra-toplike{background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.vyra-toplike .toplike-row{background:none!important}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3){background:none!important}
