@@ -64,6 +64,17 @@
     return{id:`test-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,type,at:Date.now(),...overrides};
   }
 
+  // Shared by every goal theme. The events a theme's ?type= does not match are deliberately
+  // included so the buttons also prove the filtering holds instead of only moving the bar.
+  const GOAL_BUTTONS=[
+    {label:'👤 +1 följare',event:()=>baseEvent('follow',{username:randomName()})},
+    {label:'👥 +10 följare',events:()=>Array.from({length:10},()=>baseEvent('follow',{username:randomName()}))},
+    {label:'❤️ +250 likes',event:()=>baseEvent('like',{username:randomName(),count:250})},
+    {label:'🔁 +1 share',event:()=>baseEvent('share',{username:randomName()})},
+    {label:'💎 Gåva 900 (räknas bara vid type=gifts/diamonds)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',value:900})},
+    {label:'↺ Nollställ',reset:true}
+  ];
+
   // One config entry per widget — the section markup, buttons, and both variant iframes are all
   // generated from this list instead of hand-duplicating near-identical HTML five times.
   const WIDGETS=[
@@ -165,6 +176,24 @@
         {label:'↺ Nollställ',reset:true}
       ]
     },
+    // Goal themes: one file per design, with the goal type as a URL parameter — so the same file
+    // serves follower/like/share/gift/diamond goals, in either orientation. Each theme therefore
+    // gets two sections here rather than a cyber/celestial variant pair.
+    ...[
+      ['crystal-path','1 · Crystal Path'],
+      ['neon-pulse','4 · Neon Pulse']
+    ].flatMap(([slug,title])=>[
+      {
+        key:'goal-'+slug,title:'Goal '+title+' — liggande',file:'widgets/goal-'+slug+'.html',
+        hook:'VyraGoalWidget',height:'320px',noVariant:true,
+        query:'type=follows&goal=1000',buttons:GOAL_BUTTONS
+      },
+      {
+        key:'goal-'+slug+'-vertical',title:'Goal '+title+' — stående',file:'widgets/goal-'+slug+'.html',
+        hook:'VyraGoalWidget',height:'820px',noVariant:true,
+        query:'type=likes&goal=50000&orientation=vertical',buttons:GOAL_BUTTONS
+      }
+    ]),
     {
       key:'battle-mvp',title:'Battle MVP (9s hyllningssekvens)',file:'widgets/battle-mvp.html',hook:'VyraBattleMvpWidget',height:'520px',
       noVariant:true,

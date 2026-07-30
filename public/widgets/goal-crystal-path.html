@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Goal — Crystal Path</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+
+  *{box-sizing:border-box}
+
+  body{
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:Georgia,"Times New Roman",Times,serif;
+  }
+
+  .widget{
+    position:relative;
+    width:min(100vw,1000px);height:min(100vh,320px);min-height:210px;
+    isolation:isolate;user-select:none;
+  }
+
+  .goal-header{
+    position:absolute;top:26px;left:4%;right:4%;
+    display:grid;grid-template-columns:auto 1fr;align-items:center;
+    column-gap:24px;z-index:2;
+  }
+
+  .goal-copy{min-width:0;text-shadow:0 2px 5px rgba(0,0,0,.95)}
+
+  .goal-label{
+    margin-bottom:2px;color:#ffe6a4;
+    font-size:clamp(17px,2.6vw,27px);line-height:1;letter-spacing:.055em;white-space:nowrap;
+  }
+
+  .goal-numbers{
+    display:flex;align-items:baseline;gap:.22em;color:#fff;
+    font-size:clamp(32px,5.2vw,56px);line-height:1.05;letter-spacing:.015em;white-space:nowrap;
+  }
+
+  .separator{color:#ded9e2}
+
+  .percentage{
+    justify-self:start;align-self:end;padding:0 0 6px 6px;color:#ffd57f;
+    font-size:clamp(20px,3.2vw,32px);line-height:1;
+    text-shadow:
+      0 0 12px rgba(255,174,58,.55),
+      0 2px 5px rgba(0,0,0,.95);
+    white-space:nowrap;
+  }
+
+  .path{
+    position:absolute;left:8%;right:8%;bottom:34px;height:104px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+
+  .energy-line{
+    position:absolute;left:-3%;right:-3%;top:50%;height:2px;z-index:-1;
+    background:linear-gradient(90deg,
+      transparent,
+      rgba(157,42,255,.75) 8%,
+      rgba(231,76,245,.95) 50%,
+      rgba(255,182,74,.72) 82%,
+      transparent);
+    box-shadow:0 0 5px rgba(187,45,255,.95),0 0 13px rgba(224,65,245,.7);
+    transform:translateY(-50%);
+  }
+
+  .crystal-step{position:relative;flex:0 0 auto;height:96px;display:grid;place-items:center}
+
+  /* Each step's colour comes from a pre-tinted copy of the artwork, picked in JS.
+     No hue-rotate() — the CSS filter is a matrix approximation that drags violet
+     through crimson instead of reaching gold. */
+  .crystal{
+    display:block;width:auto;height:74px;max-width:100%;object-fit:contain;
+    transform:scale(1);transform-origin:center;opacity:.62;
+    filter:grayscale(.15);
+    transition:transform 420ms cubic-bezier(.2,.9,.2,1),filter 420ms ease,opacity 300ms ease;
+  }
+
+  .crystal-step.is-lit .crystal{
+    opacity:1;
+    filter:
+      drop-shadow(0 0 5px var(--glow,rgba(191,57,255,.9)))
+      drop-shadow(0 0 13px var(--glow-far,rgba(222,89,255,.55)));
+  }
+
+  .crystal-step.is-leading .crystal{
+    transform:scale(1.16);
+    filter:
+      brightness(1.14) saturate(1.08)
+      drop-shadow(0 0 7px rgba(255,213,125,.95))
+      drop-shadow(0 0 18px var(--glow,rgba(207,73,255,.85)));
+  }
+
+  .crystal-step.just-lit .crystal{animation:crystal-light-up 650ms cubic-bezier(.16,1,.3,1)}
+
+  @keyframes crystal-light-up{
+    0%{transform:scale(.82);filter:brightness(.65)}
+    55%{transform:scale(1.24);
+        filter:brightness(1.45)
+               drop-shadow(0 0 12px rgba(255,255,255,.95))
+               drop-shadow(0 0 25px rgba(197,54,255,.95))}
+    100%{transform:scale(1)}
+  }
+
+  .chevrons{
+    position:absolute;right:2.5%;top:34px;
+    color:#ffcf7a;font-size:clamp(16px,2.4vw,24px);letter-spacing:.14em;line-height:1;
+    text-shadow:0 0 10px rgba(255,180,74,.7),0 2px 4px rgba(0,0,0,.9);
+    opacity:.92;
+  }
+
+  /* ---- stående läge: ?orientation=vertical ---------------------------------
+     Same markup, same assets. The track becomes a column that fills bottom-up
+     like a thermometer, and the header stacks centred above it. */
+  html[data-orientation="vertical"] .widget{
+    width:min(100vw,420px);height:min(100vh,900px);min-height:520px;
+  }
+
+  html[data-orientation="vertical"] .goal-header{
+    top:24px;left:6%;right:6%;
+    grid-template-columns:1fr;justify-items:center;row-gap:4px;text-align:center;
+  }
+  html[data-orientation="vertical"] .goal-numbers{justify-content:center}
+  html[data-orientation="vertical"] .percentage{
+    justify-self:center;align-self:auto;padding:2px 0 0;
+  }
+
+  html[data-orientation="vertical"] .path{
+    left:0;right:0;top:268px;bottom:34px;height:auto;
+    flex-direction:column-reverse;align-items:center;justify-content:space-between;
+  }
+
+  html[data-orientation="vertical"] .energy-line{
+    left:50%;right:auto;top:-2%;bottom:-2%;width:2px;height:auto;
+    background:linear-gradient(0deg,
+      transparent,
+      rgba(157,42,255,.75) 8%,
+      rgba(231,76,245,.95) 50%,
+      rgba(255,182,74,.72) 82%,
+      transparent);
+    transform:translateX(-50%);
+  }
+
+  html[data-orientation="vertical"] .chevrons{
+    right:auto;left:50%;top:238px;
+    transform:translateX(-50%) rotate(-90deg);transform-origin:center;
+  }
+
+  @media (max-width:680px){
+    .goal-header{column-gap:14px}
+    .path{height:86px;bottom:26px}
+    .crystal-step{height:78px}
+    .crystal{height:60px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+  <main class="widget">
+    <section class="goal-header">
+      <div class="goal-copy">
+        <div class="goal-label" id="goal-label">FOLLOWER GOAL</div>
+        <div class="goal-numbers">
+          <span id="current-value">0</span>
+          <span class="separator">/</span>
+          <span id="goal-value">1000</span>
+        </div>
+      </div>
+
+      <div class="percentage" id="percentage-value">0.0%</div>
+    </section>
+
+    <section class="path" aria-label="Progress">
+      <div class="energy-line" aria-hidden="true"></div>
+    </section>
+    <div class="chevrons" aria-hidden="true">&gt;&gt;&gt;&gt;</div>
+  </main>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // Fixed violet -> gold ramp along the track, independent of progress, matching
+  // the reference artwork. Each stop is a pre-tinted copy of the same crystal.
+  const RAMP=[
+    'assets/goal-crystal-path/crystal-lit-violet.png',
+    'assets/goal-crystal-path/crystal-lit-pink.png',
+    'assets/goal-crystal-path/crystal-lit-amber.png',
+    'assets/goal-crystal-path/crystal-lit-gold.png'
+  ];
+  const DIM='assets/goal-crystal-path/crystal-dim.png';
+
+  // What counts toward the goal, by how much, and what the widget calls itself.
+  // Same event vocabulary the ingest endpoint validates: gift/like/chat/follow/share/member.
+  const TYPES={
+    follows:{matches:e=>e.type==='follow',amount:()=>1,             label:'FOLLOWER GOAL'},
+    likes:  {matches:e=>e.type==='like',  amount:e=>Number(e.count)||1,label:'LIKE GOAL'},
+    shares: {matches:e=>e.type==='share', amount:()=>1,             label:'SHARE GOAL'},
+    gifts:  {matches:e=>e.type==='gift',  amount:()=>1,             label:'GIFT GOAL'},
+    diamonds:{matches:e=>e.type==='gift', amount:e=>Number(e.value)||0,label:'DIAMOND GOAL'}
+  };
+
+  const typeName=VyraWidget.get('type','follows').toLowerCase();
+  const handler=TYPES[typeName]||TYPES.follows;
+  if(!TYPES[typeName])VyraWidget.warn(`okänd ?type=${typeName} — faller tillbaka på "follows"`);
+
+  const stepCount=Math.max(1,Number(VyraWidget.get('steps',8))||8);
+  const goal=Math.max(1,Number(VyraWidget.get('goal',1000))||1000);
+
+  const params=VyraWidget.getParams();
+  document.documentElement.dataset.variant=params.variant;
+
+  // liggande (default) eller stående
+  const orientationRaw=VyraWidget.get('orientation','horizontal').toLowerCase();
+  const vertical=orientationRaw==='vertical'||orientationRaw==='v'||orientationRaw==='stående';
+  document.documentElement.dataset.orientation=vertical?'vertical':'horizontal';
+
+  const pathEl=document.querySelector('.path');
+  const labelEl=document.getElementById('goal-label');
+  const currentEl=document.getElementById('current-value');
+  const goalEl=document.getElementById('goal-value');
+  const pctEl=document.getElementById('percentage-value');
+
+  labelEl.textContent=VyraWidget.get('label',handler.label);
+
+  const steps=[];
+  for(let i=0;i<stepCount;i++){
+    const t=stepCount>1?i/(stepCount-1):0;
+    const step=document.createElement('div');
+    step.className='crystal-step';
+    step.style.setProperty('--glow',t<.55
+      ?`rgba(${Math.round(191+t*80)},${Math.round(57+t*90)},255,.9)`
+      :`rgba(255,${Math.round(150+t*70)},${Math.round(120-t*60)},.9)`);
+    step.style.setProperty('--glow-far',t<.55
+      ?'rgba(222,89,255,.55)'
+      :'rgba(255,186,90,.55)');
+
+    const img=document.createElement('img');
+    img.className='crystal';
+    img.alt='';
+    img.src=DIM;
+    step.append(img);
+    pathEl.append(step);
+    steps.push({step,img,lit:RAMP[Math.min(RAMP.length-1,Math.floor(t*RAMP.length))]});
+  }
+
+  const fmt=n=>Math.round(n).toLocaleString('en-US').replace(/,/g,'');
+
+  goalEl.textContent=fmt(goal);
+
+  let total=0,litCount=0;
+
+  function paint(){
+    const ratio=Math.min(1,Math.max(0,total/goal));
+    const lit=Math.round(ratio*stepCount);
+
+    currentEl.textContent=fmt(total);
+    pctEl.textContent=(ratio*100).toFixed(1)+'%';
+
+    steps.forEach(({step,img,lit:litSrc},index)=>{
+      const isLit=index<lit;
+      const wasLit=index<litCount;
+      const src=isLit?litSrc:DIM;
+      if(img.getAttribute('src')!==src)img.setAttribute('src',src);
+      step.classList.toggle('is-lit',isLit);
+      step.classList.toggle('is-leading',isLit&&index===lit-1);
+      // replay the light-up animation only on steps that just crossed over
+      if(isLit&&!wasLit){
+        step.classList.remove('just-lit');
+        void step.offsetWidth;
+        step.classList.add('just-lit');
+      }
+    });
+
+    litCount=lit;
+  }
+
+  function add(amount){
+    if(!(amount>0))return;
+    total+=amount;
+    paint();
+  }
+
+  // Accepts a TikTok-shaped event (filtered/weighted per ?type=) or a plain number
+  // to add directly, for simple testing.
+  function render(eventOrNumber){
+    if(typeof eventOrNumber==='number'){add(eventOrNumber);return}
+    const event=eventOrNumber;
+    if(!event||!handler.matches(event))return;
+    add(handler.amount(event));
+  }
+
+  window.VyraGoalWidget={
+    render,
+    reset(){total=0;litCount=0;steps.forEach(({step})=>step.classList.remove('just-lit'));paint()},
+    getState:()=>({type:typeName,goal,total,steps:stepCount})
+  };
+
+  // ?current= seeds a starting value so the widget can be previewed without a stream
+  const seed=Number(VyraWidget.get('current',0))||0;
+  if(seed>0)total=seed;
+  paint();
+
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent:render});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>
