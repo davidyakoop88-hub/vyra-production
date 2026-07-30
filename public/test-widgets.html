@@ -194,6 +194,33 @@
         query:'type=likes&goal=50000&orientation=vertical',buttons:GOAL_BUTTONS
       }
     ]),
+    // Last-X alerts: one file serves all four types via ?type= — each section pins a different
+    // entrance so all four motion variants are visible at once. The "3 snabba" buttons prove the
+    // coalescing: mid-hold events swap the card content in place instead of queueing a backlog.
+    ...[
+      ['gifter','Last Gifter','slide-left',[
+        {label:'🌹 Rose ×1',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:1})},
+        {label:'🌌 Galaxy ×5',event:()=>baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:5})},
+        {label:'⚡ 3 snabba gåvor (coalescing)',events:()=>GIFTS.map(g=>baseEvent('gift',{username:randomName(),giftName:g.giftName,count:1}))}
+      ]],
+      ['liker','Last Liker','slide-right',[
+        {label:'❤️ 250 likes',event:()=>baseEvent('likes',{username:randomName(),count:250})},
+        {label:'❤️ 1 000 likes',event:()=>baseEvent('likes',{username:randomName(),count:1000})},
+        {label:'⚡ 3 snabba likes (coalescing)',events:()=>[50,120,400].map(count=>baseEvent('likes',{username:randomName(),count}))}
+      ]],
+      ['sharer','Last Sharer','pop',[
+        {label:'🔁 Delar liven',event:()=>baseEvent('share',{username:randomName()})},
+        {label:'⚡ 3 snabba shares (coalescing)',events:()=>[0,1,2].map(()=>baseEvent('share',{username:randomName()}))}
+      ]],
+      ['subscriber','Last Subscriber','fade',[
+        {label:'⭐ Ny subscriber',event:()=>baseEvent('subscribe',{username:randomName()})},
+        {label:'👋 Member/room join (ska INTE visas)',event:()=>baseEvent('member',{username:randomName()})}
+      ]]
+    ].map(([slug,title,entrance,buttons])=>({
+      key:'last-x-'+slug,title:'Last-X · '+title+' — entrance='+entrance,
+      file:'widgets/last-x-alerts.html',hook:'VyraLastXWidget',height:'180px',
+      noVariant:true,query:'type='+slug+'&entrance='+entrance,buttons
+    })),
     {
       key:'battle-mvp',title:'Battle MVP (9s hyllningssekvens)',file:'widgets/battle-mvp.html',hook:'VyraBattleMvpWidget',height:'520px',
       noVariant:true,
