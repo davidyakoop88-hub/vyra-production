@@ -1,0 +1,178 @@
+/* Shared styling for every Battle MVP tribute theme.
+   Each theme lives in its own thin HTML file (battle-mvp-<theme>.html) that sets
+   <body data-theme="..."> and loads battle-mvp-engine.js — this stylesheet and that engine are
+   the single shared implementation behind all of them. */
+
+html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%;width:100%}
+body{
+  display:flex;align-items:center;justify-content:center;height:100vh;
+  font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;
+}
+
+#stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column}
+
+/* ============ Phase 1 (light) — beams converging on centre ============ */
+#beams{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .5s ease}
+#stage.p-light #beams,#stage.p-entrance #beams,#stage.p-tribute #beams{opacity:1}
+#stage.p-end #beams{opacity:0;transition:opacity .9s ease}
+.beam{
+  position:absolute;left:50%;top:50%;width:2px;height:48vh;transform-origin:50% 100%;
+  background:linear-gradient(0deg,var(--beam-a) 0%,var(--beam-b) 45%,transparent 92%);
+  transform:translate(-50%,-100%) rotate(var(--a)) scaleY(0);opacity:0;
+  animation:beam-grow 1s cubic-bezier(.2,.8,.2,1) forwards var(--d,0s);
+}
+@keyframes beam-grow{0%{opacity:0;transform:translate(-50%,-100%) rotate(var(--a)) scaleY(0)}60%{opacity:1}100%{opacity:.7;transform:translate(-50%,-100%) rotate(var(--a)) scaleY(1)}}
+#core-spark{
+  position:absolute;width:16px;height:16px;border-radius:50%;background:#fff8e6;
+  box-shadow:0 0 44px 16px var(--beam-a),0 0 100px 34px var(--beam-b);
+  opacity:0;transform:scale(0);animation:spark 1s cubic-bezier(.2,.8,.2,1) forwards;
+}
+@keyframes spark{0%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1.4)}100%{opacity:.85;transform:scale(1)}}
+
+/* ============ Phase 2 (entrance) — emblem: ornament + portrait ============ */
+#emblem{
+  position:relative;width:var(--emblem-w,34rem);aspect-ratio:400/300;
+  opacity:0;transform:scale(.45) translateY(14px);
+}
+#stage.p-entrance #emblem,#stage.p-tribute #emblem{
+  opacity:1;transform:scale(1) translateY(0);
+  transition:opacity .85s cubic-bezier(.2,.9,.2,1),transform .95s cubic-bezier(.2,1.35,.3,1);
+}
+#stage.p-end #emblem{opacity:0;transform:scale(1.12) translateY(-18px);transition:opacity .9s ease,transform .9s ease}
+
+#ornament{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+
+/* Shared ornament-part vocabulary — each theme animates these differently at the bottom of this
+   file, so one set of class names supports every distinct motion signature without per-theme
+   markup plumbing. */
+.orn-left,.orn-right,.orn-top,.orn-back,.orn-orbit,.orn-gem,.orn-beam{will-change:transform,opacity}
+
+#portrait-wrap{
+  position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);
+  width:var(--portrait,34%);aspect-ratio:1;
+}
+#portrait{
+  position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  background:#1a1226;border:.28rem solid var(--frame);
+  box-shadow:0 0 0 .45rem rgba(8,4,18,.75),0 0 2.2rem var(--glow-1),0 0 4rem var(--glow-2);
+}
+#portrait img{width:100%;height:100%;object-fit:cover;display:block}
+#portrait>svg{width:100%;height:100%;padding:15%;box-sizing:border-box;fill:#4b4363}
+
+/* ============ Phase 3 (tribute) — text, person-first hierarchy ============ */
+#tribute-text{position:relative;margin-top:-6%;text-align:center;width:max-content;max-width:92vw;z-index:3}
+#tribute-text>*{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s cubic-bezier(.2,.8,.2,1)}
+#stage.p-tribute #thanks{opacity:1;transform:none;transition-delay:.02s}
+#stage.p-tribute #label-wrap{opacity:1;transform:none;transition-delay:.14s}
+#stage.p-tribute #username{opacity:1;transform:none;transition-delay:.34s}
+#stage.p-tribute #subtitle{opacity:1;transform:none;transition-delay:.62s}
+#stage.p-tribute #score-wrap{opacity:1;transform:none;transition-delay:.86s}
+#stage.p-end #tribute-text>*{opacity:0;transform:translateY(-12px);transition:opacity .7s ease,transform .7s ease}
+
+#thanks{font-size:1.15rem;letter-spacing:.52em;color:var(--soft);text-transform:uppercase;margin-bottom:.35rem}
+#thanks:empty{display:none}
+
+/* "BATTLE MVP" ribbon — the banner every one of the seven designs carries.
+   The banner is painted by #label-wrap, NOT by a ::before on #label: #label needs a `filter` for
+   its drop-shadow, and `filter` makes an element a stacking context — which would flip a
+   negative-z-index ::before to paint *above* #label's background-clip:text gradient and hide the
+   lettering entirely. Keeping the two on separate elements avoids that trap. */
+#label-wrap{
+  display:flex;justify-content:center;margin-bottom:.1rem;align-self:center;
+  padding:.18rem 2rem;border-radius:.3rem;
+  background:linear-gradient(180deg,var(--banner-hi),var(--banner-lo));
+  border-top:1px solid rgba(246,214,146,.75);border-bottom:1px solid rgba(246,214,146,.75);
+  box-shadow:0 .3rem 1.2rem rgba(0,0,0,.55);
+}
+#label{
+  font-size:var(--label-size,1.7rem);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff6dc,#f7d692 42%,#c9973f 62%,#f4d99b 84%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.8));
+}
+
+/* The person owns the scene: largest, brightest element in the widget. */
+#username{
+  font-size:var(--name-size,3.6rem);font-weight:700;line-height:1.02;margin:.15rem 0 .1rem;
+  background:linear-gradient(180deg,#fffdf6,#ffe9b0 40%,#d9a54e 66%,#fff2cf 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 1.4rem var(--glow-1)) drop-shadow(0 3px 4px rgba(0,0,0,.85));
+}
+#subtitle{
+  font-size:var(--sub-size,1.05rem);letter-spacing:.16em;color:#f2eaff;text-transform:uppercase;
+  text-shadow:0 2px 5px rgba(0,0,0,.85);margin-bottom:.5rem;
+}
+
+/* Score is deliberately the smallest, quietest element — the thank-you outranks the number. */
+#score-wrap{display:flex;justify-content:center}
+#score-plaque{
+  padding:.22rem 1.5rem;border-radius:.25rem;font-size:var(--score-size,.95rem);
+  letter-spacing:.14em;font-weight:700;text-transform:uppercase;color:#ffeec4;
+  background:linear-gradient(180deg,rgba(12,6,20,.92),rgba(30,16,45,.92));
+  border:1px solid rgba(214,172,98,.85);box-shadow:0 .2rem .8rem rgba(0,0,0,.5);
+}
+
+/* ============ Phase 4 (end) — rising particles ============ */
+#particles{position:absolute;inset:0;pointer-events:none}
+.mote{
+  position:absolute;bottom:40%;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,#fff8e6,var(--beam-a) 55%,transparent 72%);
+  animation:mote-rise var(--md,1.5s) ease-out forwards var(--mdl,0s);
+}
+@keyframes mote-rise{0%{opacity:0;transform:translate(0,0) scale(.35)}14%{opacity:1}100%{opacity:0;transform:translate(var(--mx,0),-24rem) scale(1)}}
+
+/* ================= Per-theme motion signatures ================= */
+/* 1 Crystal Tribute — the wreath fans open from behind the portrait and shimmers. */
+[data-theme="crystal-tribute"] .orn-gem{transform-box:fill-box;transform-origin:50% 100%;opacity:0;animation:fan-open .7s cubic-bezier(.2,1.5,.35,1) forwards var(--gd,0s)}
+@keyframes fan-open{from{opacity:0;transform:scale(.2) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+
+/* 2 Royal Ascension — crown descends, light pillars rise. */
+[data-theme="royal-ascension"] .orn-top{transform-box:fill-box;transform-origin:50% 100%;animation:crown-drop .85s cubic-bezier(.2,1.4,.3,1) forwards}
+@keyframes crown-drop{from{opacity:0;transform:translateY(-40px) scale(.7)}to{opacity:1;transform:none}}
+[data-theme="royal-ascension"] .orn-beam{transform-box:fill-box;transform-origin:50% 100%;animation:pillar-rise 1.1s cubic-bezier(.2,.9,.2,1) forwards var(--gd,0s)}
+@keyframes pillar-rise{from{opacity:0;transform:scaleY(0)}to{opacity:.85;transform:scaleY(1)}}
+
+/* 3 Diamond Throne — shards fly inward and lock into the frame. */
+[data-theme="diamond-throne"] .orn-gem{transform-box:fill-box;transform-origin:50% 100%;animation:shard-in .8s cubic-bezier(.2,1.3,.3,1) forwards var(--gd,0s)}
+@keyframes shard-in{from{opacity:0;transform:translateY(-26px) scale(.55)}to{opacity:1;transform:none}}
+
+/* 4 Celestial Honor — orbital rings turn continuously; the moon breathes. */
+[data-theme="celestial-honor"] .orn-orbit{transform-box:fill-box;transform-origin:50% 50%;animation:orbit 26s linear infinite}
+[data-theme="celestial-honor"] .orn-orbit.rev{animation-duration:34s;animation-direction:reverse}
+@keyframes orbit{to{transform:rotate(360deg)}}
+[data-theme="celestial-honor"] .orn-back{animation:moon-breathe 7s ease-in-out infinite}
+@keyframes moon-breathe{0%,100%{opacity:.72}50%{opacity:1}}
+/* transform-box/origin are required here: without them an SVG transform scales toward the viewBox
+   origin, so a twinkling star would slide across the emblem instead of pulsing in place. */
+[data-theme="celestial-honor"] .orn-gem{transform-box:fill-box;transform-origin:50% 50%;animation:star-twinkle 3.4s ease-in-out infinite var(--gd,0s)}
+@keyframes star-twinkle{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+
+/* 5 Emerald Legacy — laurels grow upward from the base, gems drift. */
+[data-theme="emerald-legacy"] .orn-left,[data-theme="emerald-legacy"] .orn-right{
+  transform-box:fill-box;transform-origin:50% 100%;animation:laurel-grow 1s cubic-bezier(.2,1.1,.3,1) forwards;
+}
+@keyframes laurel-grow{from{opacity:0;transform:scale(.4) translateY(18px)}to{opacity:1;transform:none}}
+[data-theme="emerald-legacy"] .orn-gem{animation:gem-float 5s ease-in-out infinite var(--gd,0s)}
+@keyframes gem-float{0%,100%{transform:translateY(0);opacity:.85}50%{transform:translateY(-7px);opacity:1}}
+
+/* 6 Dragon Crest — the two dragons sweep in from the sides. */
+[data-theme="dragon-crest"] .orn-left{animation:sweep-l .95s cubic-bezier(.2,1.2,.3,1) forwards}
+[data-theme="dragon-crest"] .orn-right{animation:sweep-r .95s cubic-bezier(.2,1.2,.3,1) forwards}
+@keyframes sweep-l{from{opacity:0;transform:translateX(-70px) rotate(-10deg)}to{opacity:1;transform:none}}
+@keyframes sweep-r{from{opacity:0;transform:translateX(70px) rotate(10deg)}to{opacity:1;transform:none}}
+[data-theme="dragon-crest"] .orn-top{transform-box:fill-box;transform-origin:50% 100%;animation:crown-drop .9s cubic-bezier(.2,1.4,.3,1) forwards .25s;opacity:0}
+
+/* 7 Velvet Spotlight — spotlights sweep on, drapes part outward. */
+[data-theme="velvet-spotlight"] .orn-beam{transform-box:fill-box;transform-origin:50% 0;opacity:0;animation:spot-on 1.2s ease-out forwards var(--gd,0s)}
+@keyframes spot-on{from{opacity:0;transform:scaleY(.2)}to{opacity:.75;transform:scaleY(1)}}
+[data-theme="velvet-spotlight"] .orn-left{transform-box:fill-box;transform-origin:100% 20%;animation:drape-l 1s cubic-bezier(.2,1.1,.3,1) forwards}
+[data-theme="velvet-spotlight"] .orn-right{transform-box:fill-box;transform-origin:0 20%;animation:drape-r 1s cubic-bezier(.2,1.1,.3,1) forwards}
+@keyframes drape-l{from{opacity:0;transform:rotate(14deg) scale(.8)}to{opacity:1;transform:none}}
+@keyframes drape-r{from{opacity:0;transform:rotate(-14deg) scale(.8)}to{opacity:1;transform:none}}
+[data-theme="velvet-spotlight"] .orn-top{transform-box:fill-box;transform-origin:50% 100%;animation:crown-drop .85s cubic-bezier(.2,1.4,.3,1) forwards .3s;opacity:0}
+
+/* Bonus theme kept available via ?theme=liquid-chrome (not one of the seven files). */
+[data-theme="liquid-chrome"] .orn-back{transform-box:fill-box;transform-origin:50% 50%;animation:chrome-turn 22s linear infinite}
+@keyframes chrome-turn{to{transform:rotate(360deg)}}
+[data-theme="liquid-chrome"] .orn-left,[data-theme="liquid-chrome"] .orn-right{animation:chrome-flow 6s ease-in-out infinite alternate}
+@keyframes chrome-flow{from{transform:translateY(0) scale(1)}to{transform:translateY(-8px) scale(1.04)}}

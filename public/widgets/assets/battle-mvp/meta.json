@@ -1,0 +1,72 @@
+[
+ {
+  "name": "crystal-tribute",
+  "w": 367,
+  "h": 235,
+  "portrait": {
+   "cx": 0.4864,
+   "cy": 0.6915,
+   "r": 0.2262
+  }
+ },
+ {
+  "name": "royal-ascension",
+  "w": 387,
+  "h": 238,
+  "portrait": {
+   "cx": 0.4987,
+   "cy": 0.6954,
+   "r": 0.2158
+  }
+ },
+ {
+  "name": "diamond-throne",
+  "w": 370,
+  "h": 223,
+  "portrait": {
+   "cx": 0.5014,
+   "cy": 0.6171,
+   "r": 0.2233
+  }
+ },
+ {
+  "name": "celestial-honor",
+  "w": 367,
+  "h": 209,
+  "portrait": {
+   "cx": 0.5068,
+   "cy": 0.6111,
+   "r": 0.2125
+  }
+ },
+ {
+  "name": "dragon-crest",
+  "w": 416,
+  "h": 227,
+  "portrait": {
+   "cx": 0.5,
+   "cy": 0.6101,
+   "r": 0.2019
+  }
+ },
+ {
+  "name": "emerald-legacy",
+  "w": 373,
+  "h": 273,
+  "portrait": {
+   "cx": 0.4973,
+   "cy": 0.7106,
+   "r": 0.1957
+  }
+ },
+ {
+  "name": "velvet-spotlight",
+  "w": 389,
+  "h": 223,
+  "portrait": {
+   "cx": 0.5026,
+   "cy": 0.6188,
+   "r": 0.2159
+  }
+ }
+]
