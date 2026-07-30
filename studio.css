@@ -565,3 +565,19 @@ html.overlay-output .canvas::after{display:none!important}
 @media (prefers-reduced-motion:reduce){
   [class*=gifter-layout-].gifter-active *,[class*=gifter-layout-].gifter-exit *{animation:none!important}
 }
+
+/* Cancel leftover entrance animations during the exit phase.
+   media.js keeps .gifter-active on while .gifter-exit plays, so every
+   .gifter-layout-X.gifter-active .part rule above still matches during the exit. Where an exit rule
+   targets the same part it wins on source order, but these six parts have no exit of their own and so
+   kept animating their entrance while the rest of the widget left. Same specificity as the rules being
+   cancelled, placed last, and scoped to exactly the affected parts rather than a blanket reset that
+   would also strip the exits. */
+.gifter-layout-stack.gifter-exit .gifter-orbit,
+.gifter-layout-sidebadge.gifter-exit .gifter-streak,
+.gifter-layout-reveal.gifter-exit .gifter-arrow-up,
+.gifter-layout-risingtier.gifter-exit .gifter-arrow-up,
+.gifter-layout-flip.gifter-exit .gifter-diamond-stack,
+.gifter-layout-flip.gifter-exit .gifter-orbit,
+.gifter-layout-duo.gifter-exit .gifter-orbit,
+.gifter-layout-duo.gifter-exit .gifter-diamond-stack{animation:gl-sink var(--ged,500ms) ease-in both}
