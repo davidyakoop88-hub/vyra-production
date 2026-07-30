@@ -24,6 +24,15 @@
 }
 .last-x-widget.is-dragging{cursor:grabbing}
 
+/* card/stack/skew/badge each hug their own plate's natural size (see .last-x-tilt below) — the
+   shell must match that exactly, or its own width (driven by the widget's resizable "Bredd",
+   meaningful only for royal below) leaves the corner resize handle stranded past the visible
+   plate, same bug as royal's before it was fixed. royal is deliberately excluded: its plate scales
+   WITH the shell's width, so there the shell keeping its resizable width is the whole point. */
+.last-x-widget.design-card,.last-x-widget.design-stack,.last-x-widget.design-skew,.last-x-widget.design-badge{
+  width:fit-content!important;min-width:0!important;
+}
+
 /* ---- entrance variants — each sets its own resting transform; .selected/.last-x-active settle
    to identity (so positioning it in the editor or firing a test alert both show it upright). */
 .last-x-widget.entrance-slide-left{transform:translateX(-48px)}
