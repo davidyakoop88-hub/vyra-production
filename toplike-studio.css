@@ -216,3 +216,76 @@
    badge, likes colour, decorations) untouched. The doubled class raises specificity to match the
    .vyra-toplike.skin-* rules above; being later in the same file then wins the tie. */
 .vyra-toplike.vyra-toplike{border:0!important;box-shadow:none!important}
+
+/* ---- Centre position IS a podium (David's 3x3 reference) ----------------------------------------
+   Places 2-1-3 as cards side by side with 1 raised and crowned, then places 4+ as ordinary wide rows
+   beneath. Appended at the END of the file on purpose: the older .like-center block above and the
+   signature-frame row rule both carry the same three-class specificity, so in a stylesheet this
+   soaked in !important it is source order that decides, not specificity. Placing this earlier in the
+   file would leave it silently overridden by the very code it replaces — which is the same trap that
+   produced the half-mirrored höger layout.
+   Card internals are flex, so the grid-column assignments those older rules set are inert here.
+   Profile frames need nothing extra: the photo is sized from whatever box the card gives it. */
+.vyra-toplike.like-center{width:302px!important;min-width:302px!important;max-width:302px!important}
+.vyra-toplike.like-center>.toplike-list{
+  display:grid!important;grid-template-columns:1fr 1.1fr 1fr!important;
+  align-items:end!important;column-gap:6px!important;row-gap:5px!important;
+  /* clearance for the raised #1 card (-15px) plus its crown and rank badge above it, so neither
+     pokes out of the widget and over the heading */
+  width:100%!important;padding:38px 4px 0!important;margin:0!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3){
+  position:relative!important;display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:flex-end!important;gap:1px!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  height:auto!important;min-height:0!important;grid-row:1!important;
+  padding:9px 4px 8px!important;
+  border:1px solid color-mix(in srgb,var(--like),transparent 55%)!important;
+  border-radius:11px!important;
+  background:linear-gradient(180deg,#ffffff0d,#00000038)!important;
+  text-align:center!important;transform:none!important;overflow:visible!important;
+}
+.vyra-toplike.like-center .toplike-row.rank-2{grid-column:1!important}
+.vyra-toplike.like-center .toplike-row.rank-1{grid-column:2!important;transform:translateY(-15px)!important}
+.vyra-toplike.like-center .toplike-row.rank-3{grid-column:3!important}
+.vyra-toplike.like-center .toplike-row.rank-1::before{
+  content:"\2654";position:absolute!important;left:50%!important;top:-20px!important;
+  transform:translateX(-50%)!important;color:#ffc93f!important;font-size:19px!important;
+  line-height:1!important;text-shadow:0 0 10px #ffc93faa!important;pointer-events:none!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>b{
+  position:absolute!important;left:50%!important;top:-9px!important;
+  transform:translateX(-50%)!important;
+  width:19px!important;height:19px!important;min-width:19px!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;
+  grid-column:auto!important;grid-row:auto!important;
+  align-self:auto!important;justify-self:auto!important;margin:0!important;
+  font-size:9px!important;z-index:4!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>.pro-avatar-frame{
+  grid-column:auto!important;grid-row:auto!important;
+  align-self:auto!important;justify-self:auto!important;order:1!important;margin:0 0 3px!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>span:not(.pro-avatar-frame){
+  order:2!important;grid-column:auto!important;grid-row:auto!important;
+  align-self:auto!important;justify-self:auto!important;
+  width:100%!important;text-align:center!important;margin:0!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>span:not(.pro-avatar-frame)>strong{
+  display:block!important;width:100%!important;text-align:center!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>em{
+  order:3!important;grid-column:auto!important;grid-row:auto!important;
+  align-self:auto!important;justify-self:auto!important;
+  width:100%!important;text-align:center!important;margin:0!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4){
+  grid-column:1/4!important;display:grid!important;
+  grid-template-columns:24px 54px minmax(92px,1fr)!important;
+  grid-template-rows:1fr 1fr!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  height:54px!important;min-height:54px!important;
+  padding:3px 7px!important;text-align:left!important;
+  border:0!important;background:transparent!important;transform:none!important;
+}
