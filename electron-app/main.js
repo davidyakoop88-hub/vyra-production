@@ -147,7 +147,8 @@ app.whenReady().then(async () => {
   createSplash();
   try {
     httpServer = await startLocalServer(appRoot(), PORT, {
-      createLiveConnector: callbacks => createTikTokService({ ...callbacks, log })
+      createLiveConnector: callbacks => createTikTokService({ ...callbacks, log }),
+      cloudOrigin: CLOUD_ORIGIN
     });
     log('local server listening on', PORT, 'root =', appRoot());
   } catch (err) {

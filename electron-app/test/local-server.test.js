@@ -102,6 +102,78 @@ test('marks TikTok connected only after the real connector succeeds', async () =
   }
 });
 
+test('proxies static content live from cloudOrigin, falling back locally when the cloud 404s', async (t) => {
+  const cloudOrigin = 'https://vyra-cloud.invalid';
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  global.fetch = async (url, init) => {
+    const target = new URL(String(url));
+    if (target.origin !== cloudOrigin) return realFetch(url, init); // the test's own calls to our local server
+    if (target.pathname === '/studio.html') {
+      return new Response('<html>from-the-cloud</html>', { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+    }
+    return new Response(null, { status: 404 }); // simulates a path the live site doesn't have
+  };
+
+  const proxied = await startLocalServer(ROOT, 4199, { cloudOrigin });
+  try {
+    const proxiedOrigin = 'http://127.0.0.1:4199';
+    const live = await fetch(proxiedOrigin + '/studio.html');
+    assert.equal(await live.text(), '<html>from-the-cloud</html>', 'serves the live cloud copy, not the local bundle');
+
+    // A cloud 404 (not a network failure) must still fall back to the local bundle.
+    const fallback = await fetch(proxiedOrigin + '/spotify-client.js');
+    assert.equal(fallback.status, 200);
+    assert.match(await fallback.text(), /code_challenge_method/);
+
+    // The TikTok-connector API must stay local-only even with a cloudOrigin configured —
+    // it's matched and answered before the proxy code ever runs.
+    const status = await (await fetch(proxiedOrigin + '/api/status')).json();
+    assert.equal(status.ok, true);
+  } finally {
+    await new Promise((resolve) => proxied.close(resolve));
+  }
+});
+
+test('falls back to the local bundle when the cloud is unreachable', async (t) => {
+  const cloudOrigin = 'https://vyra-cloud.invalid';
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  global.fetch = async (url, init) => {
+    if (new URL(String(url)).origin === cloudOrigin) throw new Error('network down');
+    return realFetch(url, init); // the test's own calls to our local server
+  };
+
+  const offline = await startLocalServer(ROOT, 4200, { cloudOrigin });
+  try {
+    const response = await fetch('http://127.0.0.1:4200/studio.html');
+    assert.equal(response.status, 200);
+    assert.ok(Number(response.headers.get('content-length')) > 0);
+  } finally {
+    await new Promise((resolve) => offline.close(resolve));
+  }
+});
+
+test('rejects a non-HTTPS cloudOrigin outright (falls back to local, like no cloudOrigin at all)', async (t) => {
+  const insecureCloudOrigin = 'http://vyra-cloud.invalid';
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  let called = false;
+  global.fetch = async (url, init) => {
+    if (new URL(String(url)).origin === insecureCloudOrigin) { called = true; throw new Error('should never be called'); }
+    return realFetch(url, init); // the test's own calls to our local server
+  };
+
+  const insecure = await startLocalServer(ROOT, 4201, { cloudOrigin: insecureCloudOrigin });
+  try {
+    const response = await fetch('http://127.0.0.1:4201/studio.html');
+    assert.equal(response.status, 200);
+    assert.equal(called, false, 'an insecure cloudOrigin must never be fetched');
+  } finally {
+    await new Promise((resolve) => insecure.close(resolve));
+  }
+});
+
 test('Spotify uses real PKCE authentication without a client secret or demo mode', async () => {
   const client = await (await fetch(origin + '/spotify-client.js')).text();
   const extras = await (await fetch(origin + '/extras.js')).text();

@@ -33,7 +33,21 @@ function readBody(req, maxBytes = 65536) {
   });
 }
 
+// Studio's HTML/CSS/JS is fetched live from cloudOrigin on every request when set, so a website
+// deploy shows up in the desktop app on the next page load — no new installer needed. Only the
+// TikTok-connector API routes above (matched before this is ever reached) stay local-only, since
+// only this process holds a real TikTok LIVE connection; the proxy exists purely for static
+// content. Falls back to the bundled local snapshot on any network failure so the app still opens
+// without internet, using whatever was baked into the installer.
+function validateCloudOrigin(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' && !url.username && !url.password ? url.origin : null;
+  } catch { return null; }
+}
+
 function startLocalServer(root, port = 4173, options = {}) {
+  const cloudOrigin = validateCloudOrigin(options.cloudOrigin);
   const events = [];
   const connection = { connected: false, username: '', mode: 'live', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
   const seenEvents = new Map();
@@ -153,18 +167,36 @@ function startLocalServer(root, port = 4173, options = {}) {
         return sendJson(res, { ok: false, error: 'Method not allowed' }, 405);
       }
 
-      let rel = decodeURIComponent(p).replace(/^\/+/, '');
-      if (!rel) rel = 'index.html';
-      const rootResolved = path.resolve(root);
-      const filePath = path.resolve(path.join(rootResolved, rel));
-      if (!filePath.toLowerCase().startsWith(rootResolved.toLowerCase()) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-        return sendJson(res, { ok: false, error: 'Hittades inte' }, 404);
+      function serveLocalFile() {
+        let rel = decodeURIComponent(p).replace(/^\/+/, '');
+        if (!rel) rel = 'index.html';
+        const rootResolved = path.resolve(root);
+        const filePath = path.resolve(path.join(rootResolved, rel));
+        if (!filePath.toLowerCase().startsWith(rootResolved.toLowerCase()) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+          return sendJson(res, { ok: false, error: 'Hittades inte' }, 404);
+        }
+        const body = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        const type = TYPES[ext] || 'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Content-Length': body.length });
+        res.end(body);
       }
-      const body = fs.readFileSync(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      const type = TYPES[ext] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Content-Length': body.length });
-      res.end(body);
+
+      if (!cloudOrigin) return serveLocalFile();
+      try {
+        const upstream = await fetch(cloudOrigin + p + (parsed.search || ''), {
+          redirect: 'follow', signal: AbortSignal.timeout(5000)
+        });
+        if (!upstream.ok || !upstream.body) throw new Error('upstream ' + upstream.status);
+        const body = Buffer.from(await upstream.arrayBuffer());
+        res.writeHead(200, {
+          'Content-Type': upstream.headers.get('content-type') || 'application/octet-stream',
+          'Cache-Control': 'no-store', 'Content-Length': body.length
+        });
+        res.end(body);
+      } catch {
+        serveLocalFile();
+      }
     } catch (err) {
       try { sendJson(res, { ok: false, error: err.message }, err.statusCode || (err instanceof SyntaxError ? 400 : 500)); } catch { /* response already sent */ }
     }
