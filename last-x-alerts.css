@@ -47,8 +47,15 @@
 .last-x-widget.entrance-pop.last-x-leaving{transform:scale(.85)!important}
 
 /* ---- the plate ---- */
+/* No width here — the plate hugs its own content (avatar+text+emblem), exactly like the source
+   OBS widget's #tilt (which only ever had a min-width floor, never a forced 100%). Studio's shell
+   still exposes a resizable "Bredd" field for positioning purposes, but forcing the plate to fill
+   it left dead space to the right of the actual content whenever the two didn't match — most
+   visible on the royal design, where the empty box stretched the drag-resize handle far past the
+   artwork. royal opts back into matching the shell's width explicitly below, since it's the one
+   design where "wider" should mean "the whole graphic scales up", not "more empty margin". */
 .last-x-tilt{
-  position:relative;display:flex;align-items:center;gap:14px;width:100%;
+  position:relative;display:flex;align-items:center;gap:14px;
   min-width:340px;padding:14px 22px 14px 14px;border-radius:18px;
   background:linear-gradient(145deg,rgba(28,16,40,.92),rgba(19,11,28,.92));
   box-shadow:0 10px 30px rgba(3,1,4,.4),0 0 28px -8px color-mix(in srgb,var(--last-x,#ff58d6),transparent 30%);
@@ -278,8 +285,10 @@
    chroma-keyed + trimmed to end just under the gem, 836x811) is the whole widget. The avatar
    sits BEHIND the art and shows through the keyed medallion hole (centre 49.9%/51.9%, diameter
    39.5% of width); the only text is the type label in gold under the gem. */
+/* width:100% so dragging the widget's own resize handle scales the whole coronation graphic —
+   aspect-ratio keeps height following proportionally, so it can never look stretched/squished. */
 .last-x-widget.design-royal .last-x-tilt{
-  display:block;min-width:0;width:min(400px,70vw);aspect-ratio:836/905;
+  display:block;min-width:0;width:100%;aspect-ratio:836/905;
   padding:0;background:none;box-shadow:none;
 }
 .last-x-widget.design-royal .last-x-glass{
