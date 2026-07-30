@@ -240,16 +240,17 @@
     ...[
       ['stack','Stack — centrerad kolumn utan platta','260px'],
       ['skew','Skew — vinklad esports-platta','200px'],
-      ['badge','Badge — avatar med överlappande namnkapsel','300px']
+      ['badge','Badge — avatar med överlappande namnkapsel','300px'],
+      ['royal','Royal Coronation — artwork-skin','620px']
     ].map(([design,title,height])=>({
       key:'last-x-design-'+design,title:'Last-X design · '+title,
       file:'widgets/last-x-alerts.html',hook:'VyraLastXWidget',height,
       noVariant:true,query:'type=all&hold=4&design='+design,
       buttons:[
-        {label:'🎁 Gåva',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',count:3})},
+        {label:'🎁 Gåva — Rose ×250 (12 500 diamonds)',event:()=>baseEvent('gift',{username:randomName(),giftName:'Rose',count:250,value:12500})},
         {label:'⭐ Subscriber',event:()=>baseEvent('subscribe',{username:randomName()})},
         {label:'🎬 Alla fyra i rad',events:()=>[
-          baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:5}),
+          baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:5,value:25000}),
           baseEvent('likes',{username:randomName(),count:1000}),
           baseEvent('share',{username:randomName()}),
           baseEvent('subscribe',{username:randomName()})

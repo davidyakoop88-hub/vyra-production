@@ -117,6 +117,9 @@
     font-size:12.5px;font-weight:600;line-height:1.3;color:var(--last-x);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
+  /* the hero value line ("12 500 DIAMONDS") and its detail ("ROSE ×250") only exist in artwork
+     skins — the compact designs keep the single message line. */
+  #value,#detail{display:none}
 
   /* --ez lifts the emblem off the plate in 3D; the twirl keyframes carry it so the two never
      fight over transform. */
@@ -291,6 +294,52 @@
     72%{transform:rotate(-2.6deg) rotateY(-9deg)}
   }
 
+  /* royal — full artwork skin: the generated coronation frame (assets/last-x/royal-coronation.png,
+     chroma-keyed) is the whole widget. The avatar sits BEHIND the art at z1 and shows through the
+     keyed medallion hole (measured: centre 49.9%/35.8%, diameter 36.9% of width); the live text
+     renders at z3 in the empty scroll-framed band (68%–92%). Fixed gold/purple palette from the
+     artwork itself — the type accent does not recolour this skin. */
+  html[data-design="royal"] #tilt{
+    display:block;min-width:0;width:min(430px,70vw);aspect-ratio:896/1200;
+    padding:0;background:none;box-shadow:none;
+  }
+  html[data-design="royal"] #glass{
+    z-index:2;border-radius:0;
+    background:url('assets/last-x/royal-coronation.png') center/contain no-repeat;
+  }
+  html[data-design="royal"] #sheen,html[data-design="royal"] #gleam{display:none}
+  html[data-design="royal"] #avatar{
+    position:absolute;z-index:1;left:49.9%;top:35.8%;width:36%;height:auto;aspect-ratio:1/1;
+    transform:translate(-50%,-50%);box-shadow:none;
+  }
+  html[data-design="royal"] #copy{
+    position:absolute;z-index:3;left:18%;right:18%;top:67.5%;bottom:7%;
+    flex:none;align-items:center;justify-content:center;gap:4px;text-align:center;
+  }
+  html[data-design="royal"] #label{color:#ffd35d;letter-spacing:.24em;font-size:11px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  html[data-design="royal"] #name{
+    font-size:19px;color:#fff;-webkit-text-fill-color:currentColor;
+    background:rgba(10,6,16,.55);-webkit-background-clip:padding-box;background-clip:padding-box;
+    padding:2px 14px;border-radius:9px;max-width:100%;
+  }
+  html[data-design="royal"] #value{
+    display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.1;
+    background:linear-gradient(180deg,#fff3c4 12%,#ffd35d 45%,#b07800 85%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  }
+  html[data-design="royal"] #detail{
+    display:block;font-size:15px;font-weight:700;letter-spacing:.06em;color:#c77dff;
+    text-shadow:0 0 12px rgba(177,60,255,.5);
+  }
+  html[data-design="royal"] #value:empty,html[data-design="royal"] #detail:empty{display:none}
+  html[data-design="royal"] #message,html[data-design="royal"] #emblem{display:none}
+  html[data-design="royal"] #card.show #tilt{animation:royalholo 9s ease-in-out infinite}
+  @keyframes royalholo{
+    0%,100%{transform:rotateY(-3.5deg)}
+    50%{transform:rotateY(3.5deg)}
+  }
+
   @media (prefers-reduced-motion:reduce){
     #card{transition-duration:.01ms}
     #card.show #sheen,#card.show #emblem,#copy.swap,
@@ -307,6 +356,8 @@
       <div id="copy">
         <div id="label">LAST GIFTER</div>
         <div id="name">—</div>
+        <div id="value"></div>
+        <div id="detail"></div>
         <div id="message">—</div>
       </div>
       <div id="emblem">✦</div>
@@ -325,26 +376,35 @@
   // that type's own theme palette instead.
   // Note: Studio also routes "member" (room join) to Last Subscriber; that fires on every viewer
   // entering the room, so this widget deliberately listens to real "subscribe" events only.
+  const giftLine=e=>`${String(e.giftName||e.gift||'GIFT').toUpperCase().slice(0,40)} ×${Math.max(1,Math.round(Number(e.count??e.repeatCount)||1))}`;
+  const nOf=(...vals)=>{for(const v of vals){const n=Math.round(Number(v));if(Number.isFinite(n)&&n>0)return n}return 0};
+
+  // Each type carries a compact `message` (single-line designs) and a `lines` pair for artwork
+  // skins: `value` is the hero line ("12 500 DIAMONDS"), `detail` the small line ("ROSE ×250").
   const TYPES={
     gifter:{
       label:'LAST GIFTER',events:['gift'],multiAccent:'#ffd35d',
       themes:{neon:'#ff58d6',gold:'#ffd35d',emerald:'#3ddc84'},
-      message:e=>`SENT ${String(e.giftName||e.gift||'A GIFT').toUpperCase().slice(0,40)} ×${Math.max(1,Math.round(Number(e.count??e.repeatCount)||1))}`
+      message:e=>`SENT ${giftLine(e)}`,
+      lines:e=>{const d=nOf(e.coins,e.value,e.diamonds);return d?{value:`${d.toLocaleString('sv-SE')} DIAMONDS`,detail:giftLine(e)}:{value:giftLine(e),detail:''}}
     },
     liker:{
       label:'LAST LIKER',events:['like','likes'],multiAccent:'#ff58d6',
       themes:{neon:'#ff58d6',blue:'#4fc3ff',lime:'#a3e635'},
-      message:e=>`SENT ${Math.max(1,Math.round(Number(e.count??e.value)||1)).toLocaleString('sv-SE')} LIKES`
+      message:e=>`SENT ${(nOf(e.count,e.value)||1).toLocaleString('sv-SE')} LIKES`,
+      lines:e=>({value:`${(nOf(e.count,e.value)||1).toLocaleString('sv-SE')} LIKES`,detail:''})
     },
     sharer:{
       label:'LAST SHARER',events:['share'],multiAccent:'#2dd4bf',
       themes:{neon:'#ff58d6',teal:'#2dd4bf',orange:'#ff9d16'},
-      message:()=>'SHARED THE LIVE'
+      message:()=>'SHARED THE LIVE',
+      lines:()=>({value:'SHARED THE LIVE',detail:''})
     },
     subscriber:{
       label:'LAST SUBSCRIBER',events:['subscribe'],multiAccent:'#4fc3ff',
       themes:{neon:'#ff58d6',ocean:'#4fc3ff',gold:'#ffd35d'},
-      message:()=>'JOINED THE CLUB'
+      message:()=>'JOINED THE CLUB',
+      lines:()=>({value:'JOINED THE CLUB',detail:''})
     }
   };
 
@@ -384,7 +444,7 @@
   // ?design= picks the visual skin (value maps to the design's emblem glyph). Same DOM and phase
   // machine underneath, so designs combine freely with type, theme, accent and entrance — each
   // design owns its own 3D signature motion on the #tilt plate.
-  const DESIGNS={card:'✦',stack:'✦',skew:'✦',badge:'◆'};
+  const DESIGNS={card:'✦',stack:'✦',skew:'✦',badge:'◆',royal:'✦'};
   const designParam=VyraWidget.get('design','card').toLowerCase();
   const design=DESIGNS[designParam]?designParam:'card';
   document.documentElement.dataset.design=design;
@@ -398,6 +458,8 @@
     copy:document.getElementById('copy'),
     label:document.getElementById('label'),
     name:document.getElementById('name'),
+    value:document.getElementById('value'),
+    detail:document.getElementById('detail'),
     message:document.getElementById('message')
   };
   els.label.textContent=labelFor(active[0]);
@@ -421,6 +483,8 @@
     document.documentElement.style.setProperty('--last-x',accentFor(typeKey));
     els.label.textContent=labelFor(typeKey);
     els.name.textContent=data.username;
+    els.value.textContent=data.value;
+    els.detail.textContent=data.detail;
     els.message.textContent=data.message;
     els.initial.textContent=(data.username[0]||'✦').toUpperCase();
     if(data.avatar){els.img.src=data.avatar;els.avatar.dataset.hasImage='1'}
@@ -482,10 +546,12 @@
   }
 
   function normalize(typeKey,event){
+    const lines=TYPES[typeKey].lines(event);
     return{
       username:String(event.username||event.name||event.userId||'Anonym').slice(0,60),
       avatar:String(event.profileImage||event.avatar||'').slice(0,1200),
-      message:TYPES[typeKey].message(event)
+      message:TYPES[typeKey].message(event),
+      value:lines.value,detail:lines.detail
     };
   }
 
