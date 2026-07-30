@@ -235,6 +235,27 @@
       file:'widgets/last-x-alerts.html',hook:'VyraLastXWidget',height:'180px',
       noVariant:true,query:'type='+slug+'&entrance='+entrance,buttons
     })),
+    // Last-X designs: same widget and phase machine, ?design= only swaps the skin — the gallery
+    // runs each design in all-mode so the per-type accents are visible in every skin.
+    ...[
+      ['pill','Pill — kompakt kapsel','170px'],
+      ['banner','Banner — broadcast lower-third','200px'],
+      ['neon','Neon — arkadram','180px']
+    ].map(([design,title,height])=>({
+      key:'last-x-design-'+design,title:'Last-X design · '+title,
+      file:'widgets/last-x-alerts.html',hook:'VyraLastXWidget',height,
+      noVariant:true,query:'type=all&hold=4&design='+design,
+      buttons:[
+        {label:'🎁 Gåva',event:()=>baseEvent('gift',{username:randomName(),giftName:'Lion',count:3})},
+        {label:'⭐ Subscriber',event:()=>baseEvent('subscribe',{username:randomName()})},
+        {label:'🎬 Alla fyra i rad',events:()=>[
+          baseEvent('gift',{username:randomName(),giftName:'Galaxy',count:5}),
+          baseEvent('likes',{username:randomName(),count:1000}),
+          baseEvent('share',{username:randomName()}),
+          baseEvent('subscribe',{username:randomName()})
+        ]}
+      ]
+    })),
     {
       key:'battle-mvp',title:'Battle MVP (9s hyllningssekvens)',file:'widgets/battle-mvp.html',hook:'VyraBattleMvpWidget',height:'520px',
       noVariant:true,
