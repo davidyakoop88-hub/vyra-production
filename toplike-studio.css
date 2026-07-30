@@ -348,5 +348,7 @@
 .vyra-toplike.like-center .toplike-row:nth-child(-n+3){padding-left:24px!important}
 .vyra-toplike.like-center .toplike-row:nth-child(-n+3)>b{
   left:3px!important;top:50%!important;
-  transform:translateY(-50%)!important;margin-top:-13px!important;
+  /* -5px rather than centring on the card: the card's midpoint sits below the portrait's, since
+     the name and likes stack underneath it. This lands the badge just under the portrait's centre. */
+  transform:translateY(-50%)!important;margin-top:-5px!important;
 }
