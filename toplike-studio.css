@@ -289,3 +289,64 @@
   padding:3px 7px!important;text-align:left!important;
   border:0!important;background:transparent!important;transform:none!important;
 }
+
+/* ---- Podium detail: per-rank card colours, and a simpler single-line style for places 4+ --------
+   From the same reference: gold #1, blue #2, orange #3 rather than all three borrowing the skin's
+   accent, and places 4+ on ONE line as badge | avatar | name | likes-at-the-far-end instead of the
+   stacked two-row shape the top three use. Appended at the end for the same source-order reason as
+   the podium block above. */
+.vyra-toplike.like-center .toplike-row.rank-1{--rk:#ffc93f}
+.vyra-toplike.like-center .toplike-row.rank-2{--rk:#5aa9ff}
+.vyra-toplike.like-center .toplike-row.rank-3{--rk:#ff8a3d}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3){
+  border-color:color-mix(in srgb,var(--rk),transparent 42%)!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--rk),transparent 82%)!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>b{
+  background:var(--rk)!important;color:#160f02!important;
+  box-shadow:0 0 8px color-mix(in srgb,var(--rk),transparent 55%)!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>em{color:var(--rk)!important}
+
+/* places 4+ : one compact line, likes pushed to the far edge */
+.vyra-toplike.like-center .toplike-row:nth-child(n+4){
+  grid-template-columns:20px 34px minmax(0,1fr) auto!important;
+  grid-template-rows:1fr!important;
+  column-gap:8px!important;row-gap:0!important;
+  height:42px!important;min-height:42px!important;align-items:center!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4)>b{
+  grid-column:1!important;grid-row:1!important;
+  width:20px!important;height:20px!important;min-width:20px!important;
+  border-radius:6px!important;font-size:9px!important;
+  align-self:center!important;justify-self:center!important;position:static!important;
+  transform:none!important;left:auto!important;top:auto!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4)>.pro-avatar-frame{
+  grid-column:2!important;grid-row:1!important;order:0!important;margin:0!important;
+  width:34px!important;height:34px!important;min-width:34px!important;
+  align-self:center!important;justify-self:center!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4) .pro-frame-art{
+  width:34px!important;height:34px!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4)>span:not(.pro-avatar-frame){
+  grid-column:3!important;grid-row:1!important;order:0!important;
+  width:auto!important;text-align:left!important;justify-self:start!important;align-self:center!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4)>span:not(.pro-avatar-frame)>strong{
+  text-align:left!important;
+}
+.vyra-toplike.like-center .toplike-row:nth-child(n+4)>em{
+  grid-column:4!important;grid-row:1!important;order:0!important;
+  width:auto!important;text-align:right!important;justify-self:end!important;align-self:center!important;
+}
+
+/* Rank badge to the LEFT of the portrait on the podium cards, not floating above it.
+   The card is narrower than badge + 54px avatar side by side, so the left padding makes room and the
+   avatar still centres in what is left — otherwise a badge at left:0 would sit on the portrait's edge. */
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3){padding-left:24px!important}
+.vyra-toplike.like-center .toplike-row:nth-child(-n+3)>b{
+  left:3px!important;top:50%!important;
+  transform:translateY(-50%)!important;margin-top:-13px!important;
+}
