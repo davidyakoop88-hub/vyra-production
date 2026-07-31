@@ -67,3 +67,16 @@ test('Layout uses the full Studio widget renderer instead of the standalone prot
   assert.match(safeLayout, /aria-current/);
 });
 
+test('the desktop installer redirect requires login, a verified email, and an active Premium plan', () => {
+  const src = read('server/index.js');
+  const route = src.match(/if\(p==='\/api\/downloads\/windows'&&req\.method==='GET'\)\{[\s\S]*?return res\.end\(\)\}/);
+  assert.ok(route, 'download route not found in server/index.js');
+  const body = route[0];
+  // meta=1 (landing-page version/size blurb) stays public — only the real .exe handoff is gated
+  assert.match(body, /if\(u\.searchParams\.get\('meta'\)==='1'\)return send\(res,200,/);
+  assert.match(body, /const dls=await session\(req\);if\(!dls\)return send\(res,401,/);
+  assert.match(body, /if\(!dls\.email_verified_at\)return send\(res,403,/);
+  assert.match(body, /Billing\.entitlement\(pool,dlWorkspaceId\)/);
+  assert.match(body, /if\(dlEnt\.plan!=='premium'\)return send\(res,402,/);
+});
+
