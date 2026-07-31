@@ -215,7 +215,10 @@
     const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
     const textFxGroup = `<div class="property-group"><h4>TEXTEFFEKTER</h4><label class="range-label">Skugga · blur <b>${w.textShadowBlur || 0}px</b><input id="wsShadowBlur" type="range" min="0" max="20" value="${w.textShadowBlur || 0}"></label><div class="property-grid"><label>Skugga X<input id="wsShadowX" type="number" min="-20" max="20" value="${w.textShadowX || 0}"></label><label>Skugga Y<input id="wsShadowY" type="number" min="-20" max="20" value="${w.textShadowY || 0}"></label></div><label>Skuggfärg<input id="wsShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label><label class="range-label">Konturbredd <b>${w.textOutlineWidth || 0}px</b><input id="wsOutlineWidth" type="range" min="0" max="4" step="0.5" value="${w.textOutlineWidth || 0}"></label><label>Konturfärg<input id="wsOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
-    out = out.replace('<div class="property-group"><h4>POSITION', skinGroup + animGroup + textFxGroup + '<div class="property-group"><h4>POSITION');
+    const nudge = (label, xId, yId, xVal, yVal) => `<div class="property-grid"><label>${label} X<input id="${xId}" type="number" min="-200" max="200" value="${xVal}"></label><label>${label} Y<input id="${yId}" type="number" min="-200" max="200" value="${yVal}"></label></div>`;
+    const positionOffsetGroup = `<div class="property-group"><h4>POSITION · TEXTELEMENT</h4><small>Flytta rubrik, namn och värde oberoende av varandra, utan att ändra själva layouten.</small>${nudge('Rubrik', 'wsTitleOffX', 'wsTitleOffY', w.titleOffsetX || 0, w.titleOffsetY || 0)}${nudge('Namn', 'wsNameOffX', 'wsNameOffY', w.nameOffsetX || 0, w.nameOffsetY || 0)}${nudge('Värde', 'wsValueOffX', 'wsValueOffY', w.valueOffsetX || 0, w.valueOffsetY || 0)}</div>`;
+
+    out = out.replace('<div class="property-group"><h4>POSITION', skinGroup + animGroup + textFxGroup + positionOffsetGroup + '<div class="property-group"><h4>POSITION');
     return out;
   };
 
@@ -283,6 +286,12 @@
     const removeFont = document.querySelector('#wsRemoveFont');
     if (removeFont) removeFont.onclick = () => { delete w.customFontId; delete w.customFontFamily; save(); render(); };
     ensureCustomFont(w);
+
+    const nudgeIds = [['wsTitleOffX', 'titleOffsetX'], ['wsTitleOffY', 'titleOffsetY'], ['wsNameOffX', 'nameOffsetX'], ['wsNameOffY', 'nameOffsetY'], ['wsValueOffX', 'valueOffsetX'], ['wsValueOffY', 'valueOffsetY']];
+    nudgeIds.forEach(([elId, prop]) => {
+      const el = document.querySelector('#' + elId);
+      if (el) el.onchange = e => { w[prop] = +e.target.value; save(); render(); };
+    });
 
     // Content / Design / Animation tabs, built once per render cycle from the property-group headings.
     const panel = document.querySelector('.properties');
