@@ -59,7 +59,14 @@
       html = html.replace('<div class="fan-burst">', `<div class="fan-burst">${fanBurst}`);
     }
 
-    if (w.type === 'templateGifterLevel') {
+    // Only 'profile' (default) and 'number' actually want this decorative ring behind the avatar —
+    // every other layout (stack/sidebadge/reveal/orbitlevel/risingtier/flip/duo) hides the original
+    // <i> ring dots via studio.css's .gifter-layout-<name> rules, or (orbitlevel specifically)
+    // depends on animating .gifter-orbit>i:nth-child(1) directly for its rotating-ring motion.
+    // Replacing those <i> elements with this fixed SVG unconditionally silently broke both: the
+    // hide-rules stopped matching anything (SVG isn't an <i>), so the ring showed on every layout,
+    // and orbitlevel's own ring animation had no element left to target.
+    if (w.type === 'templateGifterLevel' && ['profile', 'number', undefined].includes(w.gifterLayout)) {
       html = html.replace('<i></i><i></i><i></i>', orbitRing);
     }
 
