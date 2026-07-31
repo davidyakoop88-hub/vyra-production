@@ -551,7 +551,7 @@
     return active.find(k=>TYPES[k].events.includes(t))||null;
   }
 
-  // Public rendering hook — same convention as the other widgets, used by public/test-widgets.html
+  // Public rendering hook — same convention as the other widgets
   // to preview without a live connection. The type routing lives here (not only in the SSE
   // listener) so the preview page proves the filtering too, same as welcome-viewer.
   function render(event){

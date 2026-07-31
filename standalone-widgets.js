@@ -1,29 +1,19 @@
-// Embeds the 15 standalone OBS-widget pages (public/widgets/*.html, built on base-widget.js's own
+// Embeds standalone OBS-widget pages (public/widgets/*.html, built on base-widget.js's own
 // SSE engine) as real, draggable items inside Studio's existing Overlay/Layout canvas — so a
 // streamer never has to juggle a separate widget URL per source. Each embed is a same-origin
 // iframe; Caddyfile.production's frame-ancestors was loosened from 'none' to 'self' specifically to
-// allow this (still refuses every other origin). "last-x-alerts" is deliberately excluded from the
-// catalog below — VYRA's native Last-X Alerts (last-x-alerts.js) already covers that with 5 designs
-// and is what everything else in Studio talks to; listing this older standalone build alongside it
-// would just be a confusing near-duplicate.
+// allow this (still refuses every other origin). 2026-08-01: the 14 first-generation standalone
+// widgets (gift-alert, follow-alert, goal-crystal-path m.fl.) were retired on David's request —
+// their pages are deleted and only Goal · Image Frame remains; RETIRED below keeps already-placed
+// copies of the old ones from crashing saved layouts (they render a friendly "utgått" card, same
+// compatibility approach as the old Last-X Alerts shim).
 (function () {
   const CATALOG = [
-    ['gift-alert', 'Gift Alert', 'Visar senaste gåvan'],
-    ['follow-alert', 'Follow Alert', 'Visar ny följare'],
-    ['like-counter', 'Like Counter', 'Räknar likes live'],
-    ['top-gifters', 'Top Gifters', 'Rankad gåvolista'],
-    ['combo-counter', 'Combo Counter', 'Gåvo-combo räknare'],
-    ['goal-tracker', 'Goal Tracker', 'Mål med progressbar'],
-    ['diamond-counter', 'Diamond Counter', 'Totala diamanter'],
-    ['vip-zone', 'VIP Zone', 'Toppgivare/prenumeranter'],
-    ['welcome-viewer', 'Welcome Viewer', 'Hälsar nya tittare'],
-    ['screen-takeover', 'Screen Takeover', 'Helskärms-alert'],
-    ['crystal-garden', 'Crystal Garden', 'Gift Campaign · 1-6 mål'],
-    ['battle-mvp', 'Battle MVP', '9s hyllningsanimation'],
-    ['goal-crystal-path', 'Goal · Crystal Path', 'Målmätare, kristalltema'],
-    ['goal-neon-pulse', 'Goal · Neon Pulse', 'Målmätare, neontema'],
     ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner']
   ];
+  const RETIRED = new Set(['gift-alert','follow-alert','like-counter','top-gifters','combo-counter',
+    'goal-tracker','diamond-counter','vip-zone','welcome-viewer','screen-takeover','crystal-garden',
+    'battle-mvp','goal-crystal-path','goal-neon-pulse']);
   const TYPE = 'standaloneWidget';
 
   // The same "Säker OBS-länk" token Studio already issues/revokes via overlay-access.js's manager
@@ -50,6 +40,12 @@
     const entry = CATALOG.find(c => c[0] === w.widgetSlug);
     const token = currentAccessToken();
     const box = `left:${w.x}px;top:${w.y}px;width:${w.width || 320}px;height:${w.height || 220}px`;
+    if (RETIRED.has(w.widgetSlug)) {
+      return `<div class="widget standalone-widget-frame no-token${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="${box}">
+        <div class="sw-missing-token"><b>${w.title || 'VYRA-widget'}</b><small>Den här widgeten har utgått — ta bort den och använd Goal · Image Frame istället.</small></div>
+        ${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}
+      </div>`;
+    }
     if (!token) {
       return `<div class="widget standalone-widget-frame no-token${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="${box}">
         <div class="sw-missing-token"><b>${entry ? entry[1] : 'VYRA-widget'}</b><small>Skapa en Säker OBS-länk (Overlay → Länk & åtkomst) för att aktivera förhandsvisning.</small></div>
