@@ -182,9 +182,11 @@
     );
 
     const liveMetric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
+    const dateRange = w.dateRange || 'stream';
+    const DATE_RANGES = [['stream', 'Denna stream'], ['today', 'Idag'], ['week', 'Denna vecka'], ['month', 'Denna månad'], ['year', 'Detta år'], ['all', 'Alltid']];
     out = out.replace(
       '<div class="property-group"><h4>DESIGN',
-      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option></select></label></div><div class="property-group"><h4>DESIGN`
+      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
     );
 
     const skin = w.skin || 'royal-gold';
@@ -214,6 +216,9 @@
 
     const liveMetric = document.querySelector('#wsLiveMetric');
     if (liveMetric) liveMetric.onchange = e => { w.liveMetric = e.target.value; save(); render(); };
+
+    const dateRange = document.querySelector('#wsDateRange');
+    if (dateRange) dateRange.onchange = e => { w.dateRange = e.target.value; save(); render(); };
 
     document.querySelectorAll('[data-ws-skin]').forEach(btn => {
       btn.onclick = () => { w.skin = btn.dataset.wsSkin; save(); render(); };
