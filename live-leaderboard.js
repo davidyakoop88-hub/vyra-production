@@ -138,7 +138,13 @@
     if (typeof state === 'undefined' || !state?.widgets) return;
     document.querySelectorAll('.vyra-toplike[data-id]').forEach(el => {
       const w = state.widgets.find(x => x.id === el.dataset.id);
-      if (!w || w.useLiveData === false) return;
+      // A cycling widget (media.js's "CYKEL · ALLA TRE I SAMMA WIDGET") owns its own rows —
+      // it rotates through likes/coins/points itself and pulls real data per metric via
+      // window.VyraLeaderboard directly. If this loop also repainted the same rows on its own
+      // 1s tick using the widget's single fixed w.liveMetric, it would fight the cycle: e.g. a
+      // coins-ranked repaint landing on top of a "TOP POINTS" cycle step, showing a real coins
+      // leader's name next to demo values or vice versa.
+      if (!w || w.useLiveData === false || w.rankingCycle) return;
       const rows = el.querySelectorAll('.toplike-row');
       const metric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
       const range = w.dateRange || 'stream';
