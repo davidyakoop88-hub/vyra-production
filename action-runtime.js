@@ -29,6 +29,10 @@
   // transition buffer instead) so the queue doesn't back up — trades "always play the full
   // duration" for "keep the queue moving" when actions are firing faster than they can display.
   function next(){if(busy||!queue.length)return;busy=true;const detail=queue.shift();executeNow(detail).finally(()=>{const skip=detail.action.skipOnNext&&queue.length>0;setTimeout(()=>{busy=false;next()},skip?150:Math.max(1,Number(detail.action.duration)||6)*1000)})}
-  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
+  // Per-scene max queue length (set in action-scenes.js's scene table) — reads THIS overlay
+  // page's own scene number, since each scene runs its own independent copy of this whole file
+  // (its own queue/busy state), not a shared one across scenes.
+  function sceneMaxQueue(){try{const settings=JSON.parse(localStorage.getItem('vyra-scene-settings-v1')||'{}');return Math.max(0,Number(settings[window.VYRA_OVERLAY_SCENE]?.maxQueue)||0)}catch{return 0}}
+  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över`);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
   document.addEventListener('vyra:action',e=>execute(e.detail));addEventListener('storage',e=>{if(e.key==='vyra-action-run'&&e.newValue)try{execute(JSON.parse(e.newValue))}catch{}});window.VyraActionRuntime={execute,queueSize:()=>queue.length+(busy?1:0),clearQueue:()=>queue.splice(0)};
 })();

@@ -516,6 +516,8 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='stream-time-analytics.js?v=1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-timers.js?v=1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='state-backup.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});

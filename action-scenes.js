@@ -2,6 +2,12 @@
   const KEY = 'vyra-action-event-v2';
   const getState = () => JSON.parse(localStorage.getItem(KEY) || '{"actions":[],"events":[]}');
   const sceneUrl = number => `${location.origin}${location.pathname}?overlay=1&scene=${number}`;
+  // Per-scene max queue length — read by action-runtime.js's execute() to drop new actions once
+  // a scene's queue is already full, instead of letting e.g. a gift storm queue up dozens of
+  // alerts that keep playing long after the storm ends. 0/empty = unlimited (today's behavior).
+  const SETTINGS_KEY = 'vyra-scene-settings-v1';
+  const getSceneSettings = () => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') } catch { return {} } };
+  const setSceneMaxQueue = (number, value) => { const s = getSceneSettings(); s[number] = { ...(s[number] || {}), maxQueue: Math.max(0, Number(value) || 0) }; localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) };
 
   function addSceneSettings() {
     const modal = document.querySelector('.ae-modal');
@@ -30,9 +36,11 @@
     const state = getState();
     const section = document.createElement('section');
     section.className = 'ae-scenes-overview';
-    section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,url=sceneUrl(n);return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><input readonly value="${url}"><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button></article>`}).join('')}</div>`;
+    const sceneSettings = getSceneSettings();
+    section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,url=sceneUrl(n),maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><input readonly value="${url}"><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button></article>`}).join('')}</div>`;
     steps.after(section);
     updateSceneStatuses();
+    section.querySelectorAll('[data-scene-max-queue]').forEach(input => input.onchange = () => setSceneMaxQueue(input.dataset.sceneMaxQueue, input.value));
   }
 
   function updateSceneStatuses() {
