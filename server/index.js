@@ -65,8 +65,9 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // TYPE_ALIASES normaliserar till 'like' vid publish, men valideringen här körs före aliaseringen.
 const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
-// Bounds real Google Cloud TTS cost — a runaway TTS Chat spam burst (or a client-side bug) hits
-// this cap long before it hits Google's bill in any meaningful way.
+// The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
+// runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
+// and so it's already in place if a paid provider is ever swapped in behind server/tts.js later.
 const TTS_SYNTH_RATE_LIMIT=20,TTS_SYNTH_RATE_WINDOW_SECONDS=30;
 // Pure — validates the ingest payload's shape before it ever reaches eventBus.publish/cleanEvent,
 // so a request from a leaked/misused ingest token (or a bug in the bridge) gets a specific,

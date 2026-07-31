@@ -27,7 +27,7 @@
   const FAQ = [
     { q: 'Fungerar VYRA i både webbläsaren (vyralive.app) och skrivbordsappen?', a: 'Ja, alla funktioner är byggda för att fungera identiskt på båda — dina inställningar och overlay synkas via molnet mellan dem. Ett fåtal saker (som riktig OBS-scenkontroll) kräver skrivbordsappen specifikt eftersom de behöver köra lokalt på din dator.' },
     { q: 'Var sparas mina inställningar?', a: 'Lokalt i webbläsaren direkt, och synkas sedan automatiskt till molnet så du kan logga in på en annan dator och få tillbaka samma overlay och inställningar.' },
-    { q: 'Måste jag vara riktigt live för att testa något?', a: 'Nej. De flesta sidor (Action & Event, TTS Chat m.fl.) har en "Testa"- eller "Simulera"-knapp som skickar ett låtsas-event genom hela systemet, så du kan se och höra att allt fungerar innan du går live på riktigt.' },
+    { q: 'Måste jag vara riktigt live för att testa något?', a: 'Nej. Action & Event och Event Simulator har "Testa"/"Simulera"-knappar som skickar ett låtsas-event genom hela systemet (målgrupp, villkor, allt) så du kan se att en hel automation fungerar. TTS Chats "Röstprovare" är enklare — den testar bara själva rösten/uppspelningen, inte målgrupp eller filter.' },
     { q: 'Kostar VYRA något?', a: 'Grundfunktionerna är gratis. Vissa märkta funktioner (t.ex. Vip-paket) är PRO och kräver en betald plan.' },
     { q: 'TTS Chat visar bara en röst / ingen kvinnlig röst — vad gör jag?', a: 'Molnrösterna (märkta ☁ i röstlistan) fungerar alltid oavsett dator, inklusive en kvinnlig och en manlig svensk röst, helt gratis och utan installation. De lokala rösterna i listan ovanför beror på vad som är installerat i Windows — det går att lägga till fler under Windows-inställningar → Tillgänglighet → Berättarröst.' }
   ];

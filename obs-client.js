@@ -38,7 +38,7 @@
         <label>Port<input id="aoiPort" type="number" value="${s.port || 4455}"></label>
         <label>Lösenord<input id="aoiPassword" type="password" value="${s.password || ''}"></label>
       </div>
-      <button id="aoiConnect" class="primary">Anslut</button> <button id="aoiTest" type="button">Testa (byt till aktuell scen)</button>`;
+      <button id="aoiConnect" class="primary">Anslut</button> <button id="aoiTest" type="button">Testa anslutning</button>`;
     anchor.after(section);
     section.querySelector('#aoiConnect').onclick = async () => {
       const ip = section.querySelector('#aoiIp').value.trim(), port = +section.querySelector('#aoiPort').value, password = section.querySelector('#aoiPassword').value;
@@ -67,6 +67,9 @@
     } catch { status.textContent = 'Okänd status' }
   }
   setInterval(updateStatus, 5000);
+
+  // See action-scenes.js for why this registration exists.
+  (window.VyraActionsExtras = window.VyraActionsExtras || []).push(render);
 
   document.addEventListener('click', e => { if (e.target.closest('[data-extra="actions"]')) setTimeout(render, 190); }, true);
 

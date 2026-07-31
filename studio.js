@@ -29,7 +29,7 @@ function analytics(){return `<div class="analytics-grid"><article class="card bi
 function settings(){return `<article class="card settings-page"><h2>Kontoinställningar</h2><label>Visningsnamn<input id="dn" value="${state.user}"></label><label>TikTok<input value="${state.tiktok||'Inte anslutet'}" disabled></label><button class="primary" id="ss">Spara</button></article>`}
 function render(){let m={home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:view[0].toUpperCase()+view.slice(1);bind()}
 function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
-function send(){localStorage.setItem('vyra-event',JSON.stringify({user:'test',gift:'Testgåva',count:1,time:Date.now()}));toast('Testgåva skickad')}
+function send(){window.VyraLive?.ingest?.({type:'gift',username:'TestGifter',name:'TestGifter',giftName:'Testgåva',coins:1,count:1});toast('Testgåva skickad')}
 function bind(){
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
   $('#testGift')&&($('#testGift').onclick=send);

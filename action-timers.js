@@ -83,6 +83,11 @@
     });
   }
 
+  // See action-scenes.js for why this registration exists — action-event.js's persist()/
+  // renderPage() rebuilds #view.innerHTML on every save/delete/toggle, not just on nav-tab click,
+  // which would otherwise silently drop this panel until the user navigates away and back.
+  (window.VyraActionsExtras = window.VyraActionsExtras || []).push(renderTimers);
+
   document.addEventListener('click', event => {
     if (event.target.closest('[data-extra="actions"]')) setTimeout(renderTimers, 150);
   }, true);

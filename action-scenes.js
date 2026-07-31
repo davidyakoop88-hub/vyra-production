@@ -52,6 +52,12 @@
     });
   }
 
+  // Actions & Events' own renderPage() fully rebuilds #view.innerHTML on every save/delete/toggle
+  // (not just on nav-tab click), which would otherwise wipe this panel since it's appended as a
+  // sibling via anchor.after() rather than being part of the core shell() template — registering
+  // here lets renderPage() rebuild it too instead of only the nav-click listener below.
+  (window.VyraActionsExtras = window.VyraActionsExtras || []).push(renderScenes);
+
   document.addEventListener('click', async event => {
     if (event.target.closest('#newAeAction')) setTimeout(addSceneSettings,70);
     if (event.target.closest('[data-extra=actions]')) setTimeout(renderScenes,120);

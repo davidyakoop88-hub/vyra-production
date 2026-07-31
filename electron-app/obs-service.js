@@ -58,6 +58,7 @@ function createObsService({ log } = {}) {
       }, 8000);
 
       socket.on('message', raw => {
+        if (socket !== ws) return; // a connect() call superseded this socket — ignore its stray events
         let msg; try { msg = JSON.parse(raw.toString()); } catch { return; }
         if (msg.op === 0) { // Hello
           const auth = msg.d?.authentication;
@@ -80,11 +81,13 @@ function createObsService({ log } = {}) {
         }
       });
       socket.on('error', err => {
+        if (socket !== ws) return; // a connect() call superseded this socket — ignore its stray events
         log?.('OBS WS error:', err.message);
         status = { connected: false, error: err.message };
         if (!settled) { settled = true; clearTimeout(timeout); reject(err); }
       });
       socket.on('close', (code, reasonBuf) => {
+        if (socket !== ws) return; // a connect() call superseded this socket — ignore its stray events
         const wasIdentified = identified;
         identified = false;
         status = { connected: false, error: status.error };

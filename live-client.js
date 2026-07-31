@@ -48,7 +48,25 @@ function recordSeenUser(e){
     localStorage.setItem(KEY,JSON.stringify(list.slice(0,60)));
   }catch{}
 }
+// Normalize the same follower/subscriber/moderator/top-gifter booleans onto the raw event that
+// liveEventTriggers() below already computes into its own throwaway `payload` for Actions & Events
+// — that normalized shape never made it onto `e` itself, so anything listening directly to
+// 'vyra-live-event' (points-system.js's subscriber bonus, tts-chat.js's audience gating) was
+// always reading undefined fields off the raw event and silently never matching. Moderator/top
+// gifter/team-level still have no real data source anywhere in the app (tiktok-bridge/normalizer.js
+// never extracts them) — that's a pre-existing gap, not something this fixes.
+function normalizeUserFlags(e){
+  const t=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
+  e.isFollower=!!e.isFollower||t==='follow';
+  e.isSubscriber=!!(e.isSubscriber||e.isMember)||t==='member'||t==='subscribe'||t==='subscription';
+  e.isModerator=!!e.isModerator;
+  e.isTopGifter=!!e.isTopGifter;
+  e.isAnonymous=!!e.isAnonymous;
+  e.teamLevel=Number(e.teamLevel||e.fanClubLevel||0);
+  return e;
+}
 function ingest(e){
+  normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
   recordSeenEmote(e);

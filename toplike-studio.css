@@ -163,7 +163,7 @@
 .vyra-toplike.skin-brandkit{border-color:var(--vyra-brand-highlight,#7c5cff)!important;box-shadow:0 0 22px color-mix(in srgb,var(--vyra-brand-highlight,#7c5cff),transparent 70%)!important}
 .vyra-toplike.skin-brandkit>h3{color:var(--vyra-brand-highlight,#7c5cff)!important;text-shadow:0 0 10px color-mix(in srgb,var(--vyra-brand-highlight,#7c5cff),transparent 50%)!important;font-family:var(--vyra-brand-font,inherit)!important}
 .vyra-toplike.skin-brandkit .toplike-row>b{background:var(--vyra-brand-highlight,#7c5cff)!important;color:#fff!important;text-shadow:0 0 6px rgba(0,0,0,.6)!important}
-.vyra-toplike.skin-brandkit .toplike-row strong{font-family:var(--vyra-brand-font,inherit)!important}
+.vyra-toplike.skin-brandkit .toplike-row strong{color:var(--vyra-brand-text,#fff)!important;font-family:var(--vyra-brand-font,inherit)!important}
 .vyra-toplike.skin-brandkit .toplike-row em{color:var(--vyra-brand-sub,#c9c9d6)!important;font-family:var(--vyra-brand-font,inherit)!important}
 
 /* ---- Royal Gold badge accent: small laurel-leaf flourishes flanking the rank number, giving the

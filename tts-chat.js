@@ -62,24 +62,35 @@
     } catch { return [] }
   }
 
+  // Treats only null/undefined/'' as "unset" — unlike `||`, this correctly keeps an explicit 0
+  // (e.g. a special user's pitch deliberately set to the lowest allowed value).
+  function numOrFallback(v, fallback) { return (v === '' || v === null || v === undefined) ? fallback : v; }
+
   // --- Speech queue: the browser can only speak one utterance cleanly at a time, so a burst of
   // matching chat messages has to queue rather than overlap. maxQueueLength mirrors the same
   // "drop new arrivals once full" pattern action-runtime.js already uses for overlay scene queues.
   const queue = [];
   let speaking = false;
+  function hasQueueRoom(maxQueueLength) { return queue.length < Math.max(1, Number(maxQueueLength) || 5); }
   function playNext() {
     if (speaking || !queue.length) return;
     const { text, opts } = queue.shift();
     speaking = true;
-    const done = () => { speaking = false; playNext() };
-    if (isCloudVoice(opts.voice)) speakCloud(text, opts).then(done).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err); done() });
-    else speakLocal(text, opts, done);
+    let finished = false;
+    const done = () => { if (finished) return; finished = true; speaking = false; playNext() };
+    // Real browser flakiness (documented, e.g. around tab backgrounding): SpeechSynthesis
+    // sometimes never fires onend/onerror at all. Without a fallback, `speaking` stays true
+    // forever and the whole queue jams permanently until the page is reloaded.
+    const safety = setTimeout(done, Math.max(8000, text.length * 120));
+    const wrappedDone = () => { clearTimeout(safety); done() };
+    if (isCloudVoice(opts.voice)) speakCloud(text, opts).then(wrappedDone).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err); wrappedDone() });
+    else speakLocal(text, opts, wrappedDone);
   }
   function speakLocal(text, opts, done) {
     const u = new SpeechSynthesisUtterance(text);
     if (opts.language) u.lang = opts.language;
     u.rate = Number(opts.speed) || 1;
-    u.pitch = Number(opts.pitch) || 1;
+    u.pitch = Number(opts.pitch) ?? 1;
     u.volume = (Number(opts.volume) ?? 80) / 100;
     const voices = speechSynthesis.getVoices();
     if (voices.length) {
@@ -87,7 +98,7 @@
       else if (opts.voice && !isCloudVoice(opts.voice)) u.voice = voices.find(v => v.name === opts.voice) || null;
     }
     u.onend = u.onerror = done;
-    speechSynthesis.speak(u);
+    try { speechSynthesis.speak(u) } catch { done() }
   }
   async function speakCloud(text, opts) {
     const workspaceId = currentWorkspaceId();
@@ -107,7 +118,7 @@
   function enqueueSpeech(text, opts, maxQueueLength) {
     if (!text) return false;
     if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
-    if (queue.length >= Math.max(1, Number(maxQueueLength) || 5)) return false;
+    if (!hasQueueRoom(maxQueueLength)) return false;
     queue.push({ text, opts });
     playNext();
     return true;
@@ -141,7 +152,11 @@
     if (settings.commentType === 'slash') return t.startsWith('/') ? t.slice(1).trim() : null;
     if (settings.commentType === 'command') {
       const cmd = String(settings.command || '!tts').trim();
-      if (!cmd || t.toLowerCase().indexOf(cmd.toLowerCase()) !== 0) return null;
+      if (!cmd) return null;
+      // Require a word boundary after the command — a plain prefix match would let "!ttsyeah"
+      // match the "!tts" command and get read as "yeah", which isn't the command at all.
+      const lower = t.toLowerCase(), cmdLower = cmd.toLowerCase();
+      if (lower !== cmdLower && !lower.startsWith(cmdLower + ' ')) return null;
       return t.slice(cmd.length).trim();
     }
     return t;
@@ -172,6 +187,10 @@
     const key = String(username).toLowerCase();
     const now = Date.now();
     if (cooldowns[key] && now - cooldowns[key] < settings.cooldownSeconds * 1000) return;
+    // Check queue capacity BEFORE charging points or setting the cooldown — charging a viewer (or
+    // burning their cooldown) for a message that then gets silently dropped because the queue was
+    // full would be an unfair, invisible charge.
+    if (!hasQueueRoom(settings.maxQueueLength)) return;
     if (settings.chargePoints) {
       if (!window.VyraPoints || !window.VyraPoints.spend(username, settings.costPerMessage)) return;
     }
@@ -181,7 +200,9 @@
       .replace(/\{nickname\}/g, nickname)
       .replace(/\{username\}/g, username)
       .replace(/\{comment\}/g, content);
-    const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: special?.speed || settings.speed, pitch: special?.pitch || settings.pitch, volume: settings.volume };
+    // `??`, not `||` — a special user explicitly set to speed/pitch 0 must not fall back to the
+    // global default just because 0 is falsy.
+    const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: numOrFallback(special?.speed, settings.speed), pitch: numOrFallback(special?.pitch, settings.pitch), volume: settings.volume };
     if (enqueueSpeech(spoken, opts, settings.maxQueueLength)) pushLog({ time: now, username, nickname, text: spoken });
   }
   addEventListener('vyra-live-event', e => {
@@ -322,7 +343,7 @@
     function wireSpecialRows() {
       root.querySelectorAll('.tts-special-row').forEach(row => {
         row.querySelector('.tts-su-remove').onclick = () => {
-          const s = getSettings();
+          const s = readFormSettings();
           s.specialUsers.splice(+row.dataset.i, 1);
           setSettings(s);
           rerender();
@@ -331,8 +352,7 @@
     }
     wireSpecialRows();
     root.querySelector('#ttsAddSpecial').onclick = () => {
-      const s = getSettings();
-      s.specialUsers = s.specialUsers || [];
+      const s = readFormSettings();
       s.specialUsers.push({ username: '', allowed: true, voice: '', speed: '', pitch: '' });
       setSettings(s);
       rerender();
@@ -351,28 +371,34 @@
         finally { btn.disabled = false; btn.textContent = '▶ Spela upp' }
         return;
       }
-      speechSynthesis.cancel();
+      // Don't blindly cancel() — the live chat queue shares this same SpeechSynthesis engine, so
+      // testing while a real message is being read would cut it off mid-sentence.
+      if (speaking) return window.toast?.('TTS-kön läser upp något just nu — vänta en stund och testa igen');
       speakLocal(text, opts, () => {});
     };
 
-    root.querySelector('#ttsClearLog').onclick = () => { clearLog(); rerender() };
-
-    root.querySelector('#ttsSaveSettings').onclick = () => {
+    // Captures every currently-typed field from the DOM (not localStorage) — used both by the
+    // explicit Save button and by the add/remove-special-user and clear-log actions, so those
+    // don't silently discard whatever the user was mid-editing just because they trigger a
+    // rerender() (which always rebuilds the form from last-*saved* state).
+    function readFormSettings() {
       const specialRows = [...root.querySelectorAll('.tts-special-row')].map(row => ({
         username: row.querySelector('.ttsSuUser').value.trim().replace(/^@/, ''),
         allowed: row.querySelector('.ttsSuAllowed').checked,
         voice: row.querySelector('.ttsSuVoice').value,
-        speed: row.querySelector('.ttsSuSpeed').value ? +row.querySelector('.ttsSuSpeed').value : '',
-        pitch: row.querySelector('.ttsSuPitch').value ? +row.querySelector('.ttsSuPitch').value : ''
+        speed: row.querySelector('.ttsSuSpeed').value !== '' ? +row.querySelector('.ttsSuSpeed').value : '',
+        pitch: row.querySelector('.ttsSuPitch').value !== '' ? +row.querySelector('.ttsSuPitch').value : ''
       })).filter(u => u.username);
-      const next = {
+      return {
         enabled: root.querySelector('#ttsEnabled').checked,
         language: root.querySelector('#ttsLanguage').value.trim(),
         voice: root.querySelector('#ttsVoice').value,
         randomVoice: root.querySelector('#ttsRandomVoice').checked,
-        speed: +root.querySelector('#ttsSpeed').value || 1,
-        pitch: +root.querySelector('#ttsPitch').value || 1,
-        volume: +root.querySelector('#ttsVolume').value || 80,
+        // Check the raw string BEFORE converting to a number — `+'' ` is already `0`, which would
+        // be indistinguishable from a deliberately-entered 0 if checked after conversion.
+        speed: root.querySelector('#ttsSpeed').value === '' ? 1 : +root.querySelector('#ttsSpeed').value,
+        pitch: root.querySelector('#ttsPitch').value === '' ? 1 : +root.querySelector('#ttsPitch').value,
+        volume: root.querySelector('#ttsVolume').value === '' ? 80 : +root.querySelector('#ttsVolume').value,
         audience: {
           all: root.querySelector('#ttsAudAll').checked,
           follower: root.querySelector('#ttsAudFollower').checked,
@@ -398,7 +424,12 @@
         filterCommands: root.querySelector('#ttsFilterCommands').checked,
         messageTemplate: root.querySelector('#ttsTemplate').value.trim() || '{comment}'
       };
-      setSettings(next);
+    }
+
+    root.querySelector('#ttsClearLog').onclick = () => { setSettings(readFormSettings()); clearLog(); rerender() };
+
+    root.querySelector('#ttsSaveSettings').onclick = () => {
+      setSettings(readFormSettings());
       window.toast?.('TTS-inställningar sparade');
     };
   }

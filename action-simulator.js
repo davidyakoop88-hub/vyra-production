@@ -25,5 +25,8 @@
       window.toast?.(label + ' skickat');
     });
   }
+  // See action-scenes.js for why this registration exists.
+  (window.VyraActionsExtras = window.VyraActionsExtras || []).push(render);
+
   document.addEventListener('click', e => { if (e.target.closest('[data-extra="actions"]')) setTimeout(render, 170); }, true);
 })();

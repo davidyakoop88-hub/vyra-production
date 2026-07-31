@@ -71,5 +71,8 @@
       window.toast?.('Poänginställningar sparade');
     };
   }
+  // See action-scenes.js for why this registration exists.
+  (window.VyraActionsExtras = window.VyraActionsExtras || []).push(render);
+
   document.addEventListener('click', e => { if (e.target.closest('[data-extra="actions"]')) setTimeout(render, 180); }, true);
 })();
