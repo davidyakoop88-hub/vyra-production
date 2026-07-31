@@ -148,7 +148,12 @@
       const rows = el.querySelectorAll('.toplike-row');
       const metric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
       const range = w.dateRange || 'stream';
-      const top = (range === 'stream' ? sortedTop(metric) : sortedTopForRange(metric, range)).slice(0, rows.length);
+      // Points come from action-runtime.js's Add/Remove-points ledger (window.VyraPoints), not
+      // from raw live events, so there's no day-bucketed history to range-filter — always the
+      // ledger's current all-time totals, same as its own "Top Points" leaderboard would show.
+      const top = metric === 'points'
+        ? (window.VyraPoints?.getTop(rows.length) || [])
+        : (range === 'stream' ? sortedTop(metric) : sortedTopForRange(metric, range)).slice(0, rows.length);
       if (!top.length) return;
       rows.forEach((row, i) => {
         const person = top[i];
