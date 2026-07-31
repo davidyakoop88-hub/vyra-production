@@ -7,6 +7,27 @@
     ['prism', 'Prism'], ['arena', 'Arena']
   ];
 
+  // Custom font upload — same IndexedDB-blob pattern action-media.js already uses for action media,
+  // applied to widget fonts instead. Font bytes never touch the server; FontFace + document.fonts is
+  // what actually makes an uploaded file usable as a real font-family in the widget's own CSS.
+  function fontDb() { return new Promise((ok, no) => { const r = indexedDB.open('vyra-widget-fonts', 1); r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('fonts')) r.result.createObjectStore('fonts') }; r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error) }) }
+  async function storeFont(file) { const db = await fontDb(), id = 'font-' + Date.now(); await new Promise((ok, no) => { const tx = db.transaction('fonts', 'readwrite'); tx.objectStore('fonts').put(file, id); tx.oncomplete = ok; tx.onerror = () => no(tx.error) }); db.close(); return id }
+  async function loadFontFile(id) { const db = await fontDb(), blob = await new Promise((ok, no) => { const tx = db.transaction('fonts'); const r = tx.objectStore('fonts').get(id); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error) }); db.close(); return blob }
+  const loadedFontFamilies = new Set();
+  const failedFontIds = new Set();
+  async function ensureCustomFont(w) {
+    if (!w.customFontId || !w.customFontFamily || loadedFontFamilies.has(w.customFontFamily) || failedFontIds.has(w.customFontId)) return;
+    try {
+      const blob = await loadFontFile(w.customFontId);
+      if (!blob) return;
+      const face = new FontFace(w.customFontFamily, await blob.arrayBuffer());
+      await face.load();
+      document.fonts.add(face);
+      loadedFontFamilies.add(w.customFontFamily);
+      render();
+    } catch (err) { failedFontIds.add(w.customFontId); console.warn('[VYRA] Kunde inte ladda typsnitt', err) }
+  }
+
   // Avatar Frame library — real illustrated PNGs where a matching asset already exists in the repo
   // (reused across names/genders where thematically close), plain SVG placeholder rings elsewhere
   // (same "swap file-for-file, no code change" idea as this project's own DEV PLACEHOLDER themes —
@@ -192,7 +213,7 @@
     const skin = w.skin || 'royal-gold';
     const skinGroup = `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
     const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
-    const textFxGroup = `<div class="property-group"><h4>TEXTEFFEKTER</h4><label class="range-label">Skugga · blur <b>${w.textShadowBlur || 0}px</b><input id="wsShadowBlur" type="range" min="0" max="20" value="${w.textShadowBlur || 0}"></label><div class="property-grid"><label>Skugga X<input id="wsShadowX" type="number" min="-20" max="20" value="${w.textShadowX || 0}"></label><label>Skugga Y<input id="wsShadowY" type="number" min="-20" max="20" value="${w.textShadowY || 0}"></label></div><label>Skuggfärg<input id="wsShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label><label class="range-label">Konturbredd <b>${w.textOutlineWidth || 0}px</b><input id="wsOutlineWidth" type="range" min="0" max="4" step="0.5" value="${w.textOutlineWidth || 0}"></label><label>Konturfärg<input id="wsOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label></div>`;
+    const textFxGroup = `<div class="property-group"><h4>TEXTEFFEKTER</h4><label class="range-label">Skugga · blur <b>${w.textShadowBlur || 0}px</b><input id="wsShadowBlur" type="range" min="0" max="20" value="${w.textShadowBlur || 0}"></label><div class="property-grid"><label>Skugga X<input id="wsShadowX" type="number" min="-20" max="20" value="${w.textShadowX || 0}"></label><label>Skugga Y<input id="wsShadowY" type="number" min="-20" max="20" value="${w.textShadowY || 0}"></label></div><label>Skuggfärg<input id="wsShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label><label class="range-label">Konturbredd <b>${w.textOutlineWidth || 0}px</b><input id="wsOutlineWidth" type="range" min="0" max="4" step="0.5" value="${w.textOutlineWidth || 0}"></label><label>Konturfärg<input id="wsOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
     out = out.replace('<div class="property-group"><h4>POSITION', skinGroup + animGroup + textFxGroup + '<div class="property-group"><h4>POSITION');
     return out;
@@ -246,6 +267,22 @@
     if (outlineWidth) outlineWidth.oninput = e => { w.textOutlineWidth = +e.target.value; save(); render(); };
     const outlineColor = document.querySelector('#wsOutlineColor');
     if (outlineColor) outlineColor.oninput = e => { w.textOutlineColor = e.target.value; save(); render(); };
+
+    const customFont = document.querySelector('#wsCustomFont');
+    if (customFont) customFont.onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const id = await storeFont(file);
+      w.customFontId = id;
+      w.customFontFamily = 'vyra-font-' + w.id;
+      save();
+      render();
+      await ensureCustomFont(w);
+      toast('Typsnitt uppladdat: ' + file.name);
+    };
+    const removeFont = document.querySelector('#wsRemoveFont');
+    if (removeFont) removeFont.onclick = () => { delete w.customFontId; delete w.customFontFamily; save(); render(); };
+    ensureCustomFont(w);
 
     // Content / Design / Animation tabs, built once per render cycle from the property-group headings.
     const panel = document.querySelector('.properties');
