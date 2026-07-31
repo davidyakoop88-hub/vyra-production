@@ -71,6 +71,7 @@
 .toplike-skin-swatch.skin-prism i{background:linear-gradient(115deg,#ff9df0,#8ef0ff,#c9a9ff)}
 .toplike-skin-swatch.skin-arena i{background:linear-gradient(180deg,#1a1a1f,#050506);box-shadow:inset 0 2px 0 #fff}
 .toplike-skin-swatch.skin-clean i{background:linear-gradient(135deg,#26262e,#3a3a44)}
+.toplike-skin-swatch.skin-brandkit i{background:linear-gradient(135deg,var(--vyra-brand-highlight,#7c5cff),var(--vyra-brand-sub,#3a3a44))}
 
 /* ---- Skin rendering on the live widget (colors/glow only — never layout, .like-clean/.like-center own that) ---- */
 .vyra-toplike.skin-royal-gold{border-color:#caa04a!important;box-shadow:0 0 22px #caa04a30!important}
@@ -152,6 +153,18 @@
 .vyra-toplike.skin-clean>h3{color:#e8e8ec!important;text-shadow:none!important}
 .vyra-toplike.skin-clean .toplike-row>b{background:#2a2a30!important;color:#fff!important}
 .vyra-toplike.skin-clean .toplike-row em{color:var(--like)!important}
+
+/* ---- Brand Kit: reads the global "🎨 Färgschema" dialog's colors (studio.js's state.brandKit)
+   instead of a hardcoded palette. toplike-studio.js's wh() sets these --vyra-brand-* custom props
+   inline on the widget root only when this skin is selected, so the 14 skins above never see them
+   and stay pixel-identical. Badge text is fixed white+shadow (like "prism" below) rather than
+   computed from the highlight color, since CSS alone can't pick readable contrast for an arbitrary
+   user-chosen hue. */
+.vyra-toplike.skin-brandkit{border-color:var(--vyra-brand-highlight,#7c5cff)!important;box-shadow:0 0 22px color-mix(in srgb,var(--vyra-brand-highlight,#7c5cff),transparent 70%)!important}
+.vyra-toplike.skin-brandkit>h3{color:var(--vyra-brand-highlight,#7c5cff)!important;text-shadow:0 0 10px color-mix(in srgb,var(--vyra-brand-highlight,#7c5cff),transparent 50%)!important;font-family:var(--vyra-brand-font,inherit)!important}
+.vyra-toplike.skin-brandkit .toplike-row>b{background:var(--vyra-brand-highlight,#7c5cff)!important;color:#fff!important;text-shadow:0 0 6px rgba(0,0,0,.6)!important}
+.vyra-toplike.skin-brandkit .toplike-row strong{font-family:var(--vyra-brand-font,inherit)!important}
+.vyra-toplike.skin-brandkit .toplike-row em{color:var(--vyra-brand-sub,#c9c9d6)!important;font-family:var(--vyra-brand-font,inherit)!important}
 
 /* ---- Royal Gold badge accent: small laurel-leaf flourishes flanking the rank number, giving the
    "Elegant & Premium" headline style a distinguishing shape, not just a gold recolor. ---- */

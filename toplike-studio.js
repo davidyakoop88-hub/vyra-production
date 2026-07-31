@@ -4,7 +4,7 @@
     ['clean', 'Clean'], ['royal-gold', 'Royal Gold'], ['neon', 'Neon'], ['galaxy', 'Galaxy'], ['ice', 'Ice'],
     ['fire', 'Fire'], ['sakura', 'Sakura'], ['cyber', 'Cyber'], ['luxury', 'Luxury'],
     ['aurora', 'Aurora'], ['retro-crt', 'Retro CRT'], ['goldrush', 'Gold Rush'],
-    ['prism', 'Prism'], ['arena', 'Arena']
+    ['prism', 'Prism'], ['arena', 'Arena'], ['brandkit', 'Brand Kit']
   ];
 
   // Custom font upload — same IndexedDB-blob pattern action-media.js already uses for action media,
@@ -163,7 +163,12 @@
     const skin = w.skin || 'royal-gold';
     const anim = w.entranceAnimation && w.entranceAnimation !== 'none' ? ` ws-anim-${w.entranceAnimation}` : '';
     html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike skin-${skin}${anim}`);
-    html = html.replace('style="', `style="opacity:${w.opacity ?? 1};`);
+    // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
+    // .skin-brandkit rules in toplike-studio.css. The other 14 skins never see these vars.
+    const brandVars = skin === 'brandkit' && state.brandKit
+      ? `--vyra-brand-highlight:${state.brandKit.highlight};--vyra-brand-text:${state.brandKit.text};--vyra-brand-sub:${state.brandKit.secondaryText};` + (state.brandKit.fontFamily ? `--vyra-brand-font:${state.brandKit.fontFamily};` : '')
+      : '';
+    html = html.replace('style="', `style="opacity:${w.opacity ?? 1};${brandVars}`);
     // Skip the auto crown glyph when a custom illustrated frame is chosen - several frames (e.g.
     // golden-king) already have their own crown/regal motif baked into the art, so the separate ♛
     // badge just clutters the gap between the photo and the frame instead of adding anything.
