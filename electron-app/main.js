@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { startLocalServer } = require('./local-server');
 const { createTikTokService } = require('./tiktok-service');
+const { createObsService } = require('./obs-service');
 const Updater = require('./updater');
 
 const PORT = 4173;
@@ -148,6 +149,7 @@ app.whenReady().then(async () => {
   try {
     httpServer = await startLocalServer(appRoot(), PORT, {
       createLiveConnector: callbacks => createTikTokService({ ...callbacks, log }),
+      obsService: createObsService({ log }),
       cloudOrigin: CLOUD_ORIGIN
     });
     log('local server listening on', PORT, 'root =', appRoot());

@@ -86,6 +86,7 @@ function startLocalServer(root, port = 4173, options = {}) {
     return { ok: true, event };
   }
   const liveConnector = options.createLiveConnector?.({ onStatus: setConnection, onEvent: ingestEvent });
+  const obsService = options.obsService || null;
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -133,6 +134,33 @@ function startLocalServer(root, port = 4173, options = {}) {
       if (p === '/api/events' && req.method === 'POST') {
         const result = ingestEvent(JSON.parse((await readBody(req, 65536)) || '{}'));
         return sendJson(res, result, result.ok ? 200 : 400);
+      }
+      if (p === '/api/obs/status' && req.method === 'GET') {
+        if (!obsService) return sendJson(res, { ok: false, error: 'OBS-anslutningen finns endast i VYRA Desktop' }, 503);
+        return sendJson(res, { ok: true, ...obsService.getStatus() });
+      }
+      if (p === '/api/obs/connect' && req.method === 'POST') {
+        if (!obsService) return sendJson(res, { ok: false, error: 'OBS-anslutningen finns endast i VYRA Desktop' }, 503);
+        const d = JSON.parse((await readBody(req)) || '{}');
+        const ip = text(d.ip, 100) || '127.0.0.1', port = number(d.port, 1, 65535) || 4455, password = text(d.password, 200);
+        try { await obsService.connect(ip, port, password); return sendJson(res, { ok: true, ...obsService.getStatus() }); }
+        catch (error) { return sendJson(res, { ok: false, error: error.message }, 409); }
+      }
+      if (p === '/api/obs/disconnect' && req.method === 'POST') {
+        if (obsService) obsService.disconnect();
+        return sendJson(res, { ok: true });
+      }
+      if (p === '/api/obs/scene' && req.method === 'POST') {
+        if (!obsService) return sendJson(res, { ok: false, error: 'OBS-anslutningen finns endast i VYRA Desktop' }, 503);
+        const d = JSON.parse((await readBody(req)) || '{}');
+        try { await obsService.setScene(text(d.sceneName, 200)); return sendJson(res, { ok: true }); }
+        catch (error) { return sendJson(res, { ok: false, error: error.message }, 409); }
+      }
+      if (p === '/api/obs/source' && req.method === 'POST') {
+        if (!obsService) return sendJson(res, { ok: false, error: 'OBS-anslutningen finns endast i VYRA Desktop' }, 503);
+        const d = JSON.parse((await readBody(req)) || '{}');
+        try { await obsService.setSourceEnabled(text(d.sceneName, 200) || null, text(d.sourceName, 200), !!d.enabled); return sendJson(res, { ok: true }); }
+        catch (error) { return sendJson(res, { ok: false, error: error.message }, 409); }
       }
       if (p === '/api/state' && req.method === 'GET') {
         const backupFile = path.join(root, 'vyra-state-backup.json');

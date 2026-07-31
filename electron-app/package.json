@@ -10,7 +10,8 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "tiktok-live-connector": "^2.1.0"
+    "tiktok-live-connector": "^2.1.0",
+    "ws": "^8.21.1"
   },
   "devDependencies": {
     "electron": "^43.2.0",
@@ -21,9 +22,23 @@
     "productName": "VYRA",
     "compression": "maximum",
     "asar": true,
-    "directories": { "output": "dist2" },
-    "files": ["main.js", "local-server.js", "tiktok-service.js", "updater.js", "update-config.json", "splash.html", "icon.ico"],
-    "win": { "target": "nsis", "icon": "icon.ico" },
+    "directories": {
+      "output": "dist2"
+    },
+    "files": [
+      "main.js",
+      "local-server.js",
+      "tiktok-service.js",
+      "obs-service.js",
+      "updater.js",
+      "update-config.json",
+      "splash.html",
+      "icon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
     "nsis": {
       "artifactName": "VYRA-Setup.exe",
       "oneClick": false,
@@ -68,18 +83,18 @@
           "!.download-staging/**",
           "!CLAUDE-HANDOFF.md",
           "!CLAUDE.md",
-          "!.gitignore"
-          ,"!server"
-          ,"!server/**"
-          ,"!.github"
-          ,"!.github/**"
-          ,"!scripts"
-          ,"!scripts/**"
-          ,"!docs"
-          ,"!docs/**"
-          ,"!docker-compose.yml"
-          ,"!Caddyfile"
-          ,"!.dockerignore"
+          "!.gitignore",
+          "!server",
+          "!server/**",
+          "!.github",
+          "!.github/**",
+          "!scripts",
+          "!scripts/**",
+          "!docs",
+          "!docs/**",
+          "!docker-compose.yml",
+          "!Caddyfile",
+          "!.dockerignore"
         ]
       }
     ]
