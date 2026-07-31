@@ -70,12 +70,22 @@
   }
 
   function accentFor(w, typeKey) {
+    if (w.inheritBrandKit && state.brandKit?.highlight) return state.brandKit.highlight;
     if (w.followColor) return w.followColor;
     const active = activeKeysFor(w), multi = active.length > 1;
     if (multi) return TYPES[typeKey].multiAccent;
     const themeKeys = Object.keys(TYPES[typeKey].themes);
     const theme = themeKeys.includes(w.followTheme) ? w.followTheme : themeKeys[0];
     return TYPES[typeKey].themes[theme];
+  }
+  // Highlight (--last-x) comes from accentFor() above; text/secondary-text/font are static per
+  // render (not per incoming event) so they only need setting once here, not in applyLX().
+  function brandKitStyleFor(w) {
+    if (!w.inheritBrandKit || !state.brandKit) return '';
+    const kit = state.brandKit;
+    return (kit.text ? `;--last-x-text:${kit.text}` : '')
+      + (kit.secondaryText ? `;--last-x-sub:${kit.secondaryText}` : '')
+      + (kit.fontFamily ? `;--last-x-font:${kit.fontFamily}` : '');
   }
   function labelFor(w, typeKey) {
     const active = activeKeysFor(w), multi = active.length > 1;
@@ -115,7 +125,7 @@
     const label = labelFor(w, typeKey);
     const hasImage = w.profileImage ? ` data-has-image="1"` : '';
     return `<div class="widget last-x-widget design-${design} entrance-${entrance}${selected === w.id ? ' selected' : ''}" data-id="${w.id}"
-        style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent};zoom:${zoomFor(w)}">
+        style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent}${brandKitStyleFor(w)};zoom:${zoomFor(w)}">
       <div class="last-x-tilt">
         <div class="last-x-glass"><div class="last-x-sheen"></div><div class="last-x-gleam"></div></div>
         <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${w.profileImage || ''}" alt=""></div>
@@ -164,12 +174,13 @@
           <option value="fade">Mjuk fade</option>
         </select></label>
       </div>
-      <div class="property-group" id="lastXThemeGroup" style="display:${multi ? 'none' : ''}">
+      <div class="property-group" id="lastXThemeGroup" style="display:${multi || w.inheritBrandKit ? 'none' : ''}">
         <h4>TEMA</h4>
         <label>Färgtema<select id="followTheme">${themeKeys.map(t => `<option value="${t}">${t[0].toUpperCase() + t.slice(1)}</option>`).join('')}</select></label>
       </div>
       <div class="property-group"><h4>ACCENTFÄRG</h4>
-        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || TYPES[typeKey].themes[themeKeys[0]]}"></label>
+        <label class="last-x-type-check"><input type="checkbox" id="inheritBrandKit"${w.inheritBrandKit ? ' checked' : ''}><span>Ärv globalt färgschema (🎨 Färgschema-knappen ovan)</span></label>
+        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || TYPES[typeKey].themes[themeKeys[0]]}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
       </div>
       <div class="property-group"><h4>INNEHÅLL (förhandsvisning)</h4>
         <label>Rubrik<input id="followLabel" value="${w.followLabel || TYPES[typeKey].label}" ${multi ? 'disabled' : ''}></label>
@@ -316,6 +327,8 @@
       set('#lastXEntrance', 'lastXEntrance');
       set('#followTheme', 'followTheme');
       set('#followColor', 'followColor');
+      const inheritBox = document.querySelector('#inheritBrandKit');
+      if (inheritBox) inheritBox.onchange = e => { w.inheritBrandKit = e.target.checked; save(); render() };
       set('#followLabel', 'followLabel');
       set('#followName', 'followName');
       set('#followMessage', 'followMessage');

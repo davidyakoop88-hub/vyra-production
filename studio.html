@@ -57,6 +57,7 @@
     <header>
       <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title">God kväll, Streamer</h1></div>
       <div class="head-actions">
+        <button id="openBrandKit" type="button" title="Sätt Highlight/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det">🎨 Färgschema</button>
         <button class="connect connection"><i></i><span>Anslut TikTok</span></button>
         <button id="openOverlay" hidden aria-hidden="true"></button>
       </div>
@@ -70,6 +71,23 @@
     <label>Användarnamn<input id="tikUser" placeholder="@dittnamn"></label>
     <button class="primary" id="connectNow">Anslut konto</button>
     <small>VYRA ansluter direkt till din riktiga TikTok LIVE-sändning.</small>
+  </dialog>
+  <dialog id="brandKitModal">
+    <button class="bx" id="brandKitClose">×</button>
+    <i class="tiktok">🎨</i>
+    <h2>Färgschema</h2>
+    <p>Sätt Highlight, Text, Sekundär text och Typsnitt en gång. Widgets med "Ärv färgschema" ikryssat använder de här värdena istället för sina egna.</p>
+    <label>Highlight<input id="bkHighlight" type="color"></label>
+    <label>Text<input id="bkText" type="color"></label>
+    <label>Sekundär text<input id="bkSecondaryText" type="color"></label>
+    <label>Typsnitt<select id="bkFontFamily">
+      <option value="">Standard (widgetens egen)</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="'Courier New', monospace">Courier New</option>
+      <option value="'Segoe UI', Inter, sans-serif">Segoe UI</option>
+      <option value="Impact, Haettenschweiler, sans-serif">Impact</option>
+    </select></label>
+    <button class="primary" id="brandKitSave">Spara färgschema</button>
   </dialog>
   <div class="toast"></div>
   <script src="auth-client.js?v=20260728-1"></script>

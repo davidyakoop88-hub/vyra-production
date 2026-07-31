@@ -106,7 +106,7 @@
 .last-x-avatar[data-has-image] .last-x-initial{display:none}
 .last-x-initial{font-size:24px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 
-.last-x-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;transform:translateZ(var(--lx-cz,0px))}
+.last-x-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;transform:translateZ(var(--lx-cz,0px));font-family:var(--last-x-font,inherit)}
 .last-x-copy.lx-swap{animation:lx-swap .26s cubic-bezier(.2,.8,.2,1)}
 @keyframes lx-swap{
   0%{opacity:.2;transform:translateZ(var(--lx-cz,0px)) translateY(6px) scale(.97)}
@@ -119,7 +119,7 @@
 .last-x-name{
   font-size:23px;font-weight:800;line-height:1.15;color:var(--last-x-text,#f7f2ff);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  background:linear-gradient(180deg,#fff 28%,color-mix(in srgb,var(--last-x,#ff58d6),white 42%));
+  background:linear-gradient(180deg,var(--last-x-text,#fff) 28%,color-mix(in srgb,var(--last-x,#ff58d6),white 42%));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
 .last-x-message{
