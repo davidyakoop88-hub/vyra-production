@@ -37,6 +37,31 @@
   const pushLog = entry => { const log = [entry, ...getLog()].slice(0, 50); try { localStorage.setItem(LOG_KEY, JSON.stringify(log)) } catch {} };
   const clearLog = () => { try { localStorage.removeItem(LOG_KEY) } catch {} };
 
+  // --- Cloud voices: TikFinity's own "Female Voice"/"Male Voice" free tier turned out to be
+  // backed by their own server (confirmed via a POST to their /api/tts/auth-token when testing
+  // it), not the browser's native voice list — that's the only way to guarantee a real
+  // male/female voice regardless of what's installed on a viewer's own OS. VYRA's equivalent
+  // (server/tts.js) is free and needs no account: it's backed by the same neural voice service
+  // behind Microsoft Edge's "Read Aloud" feature. Cloud voice values are stored/passed around as
+  // plain strings prefixed "cloud:<voiceName>" so the existing single `voice` field can hold
+  // either a local SpeechSynthesis voice name or a cloud one without a second settings field.
+  function isCloudVoice(v) { return typeof v === 'string' && v.startsWith('cloud:'); }
+  function cloudVoiceName(v) { return v.slice(6); }
+  function currentWorkspaceId() { return window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.id || null; }
+  const cloudVoiceCache = {};
+  async function fetchCloudVoices(languageCode) {
+    const workspaceId = currentWorkspaceId();
+    if (!workspaceId || !window.VyraAuth) return [];
+    const cacheKey = languageCode || '*';
+    if (cloudVoiceCache[cacheKey]) return cloudVoiceCache[cacheKey];
+    try {
+      const q = languageCode ? `?languageCode=${encodeURIComponent(languageCode)}` : '';
+      const res = await window.VyraAuth.api(`/api/workspaces/${workspaceId}/tts/voices${q}`);
+      cloudVoiceCache[cacheKey] = res.voices || [];
+      return cloudVoiceCache[cacheKey];
+    } catch { return [] }
+  }
+
   // --- Speech queue: the browser can only speak one utterance cleanly at a time, so a burst of
   // matching chat messages has to queue rather than overlap. maxQueueLength mirrors the same
   // "drop new arrivals once full" pattern action-runtime.js already uses for overlay scene queues.
@@ -46,6 +71,11 @@
     if (speaking || !queue.length) return;
     const { text, opts } = queue.shift();
     speaking = true;
+    const done = () => { speaking = false; playNext() };
+    if (isCloudVoice(opts.voice)) speakCloud(text, opts).then(done).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err); done() });
+    else speakLocal(text, opts, done);
+  }
+  function speakLocal(text, opts, done) {
     const u = new SpeechSynthesisUtterance(text);
     if (opts.language) u.lang = opts.language;
     u.rate = Number(opts.speed) || 1;
@@ -54,13 +84,29 @@
     const voices = speechSynthesis.getVoices();
     if (voices.length) {
       if (opts.randomVoice) u.voice = voices[Math.floor(Math.random() * voices.length)];
-      else if (opts.voice) u.voice = voices.find(v => v.name === opts.voice) || null;
+      else if (opts.voice && !isCloudVoice(opts.voice)) u.voice = voices.find(v => v.name === opts.voice) || null;
     }
-    u.onend = u.onerror = () => { speaking = false; playNext() };
+    u.onend = u.onerror = done;
     speechSynthesis.speak(u);
   }
+  async function speakCloud(text, opts) {
+    const workspaceId = currentWorkspaceId();
+    if (!workspaceId || !window.VyraAuth) throw new Error('Molnröster kräver ett inloggat workspace');
+    const result = await window.VyraAuth.api(`/api/workspaces/${workspaceId}/tts/synthesize`, {
+      method: 'POST',
+      body: JSON.stringify({ text, languageCode: opts.language || undefined, voiceName: cloudVoiceName(opts.voice), speed: opts.speed, pitch: opts.pitch })
+    });
+    const audio = new Audio('data:audio/mpeg;base64,' + result.audioContent);
+    audio.volume = (Number(opts.volume) ?? 80) / 100;
+    await new Promise((resolve, reject) => {
+      audio.onended = resolve;
+      audio.onerror = () => reject(new Error('Uppspelning misslyckades'));
+      audio.play().catch(reject);
+    });
+  }
   function enqueueSpeech(text, opts, maxQueueLength) {
-    if (!text || !window.speechSynthesis) return false;
+    if (!text) return false;
+    if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
     if (queue.length >= Math.max(1, Number(maxQueueLength) || 5)) return false;
     queue.push({ text, opts });
     playNext();
@@ -145,9 +191,17 @@
   });
 
   // --- UI --------------------------------------------------------------------------------------
-  function populateVoiceSelect(select, selected) {
-    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    select.innerHTML = '<option value="">Standardröst</option>' + voices.map(v => `<option value="${v.name}"${v.name === selected ? ' selected' : ''}>${v.name} (${v.lang})</option>`).join('');
+  function voiceOptionsHtml(localVoices, cloudVoices, selected) {
+    const local = localVoices.map(v => `<option value="${v.name}"${v.name === selected ? ' selected' : ''}>${v.name} (${v.lang})</option>`).join('');
+    const cloud = cloudVoices.map(v => {
+      const value = 'cloud:' + v.name;
+      const genderLabel = v.gender === 'FEMALE' ? 'Kvinna' : v.gender === 'MALE' ? 'Man' : '';
+      const label = `☁ ${v.friendlyName || v.name}${genderLabel ? ' · ' + genderLabel : ''}`;
+      return `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`;
+    }).join('');
+    return '<option value="">Standardröst (lokal)</option>'
+      + (local ? `<optgroup label="Lokala röster (den här datorn)">${local}</optgroup>` : '')
+      + (cloud ? `<optgroup label="☁ Molnröster (gratis, funkar överallt)">${cloud}</optgroup>` : '');
   }
 
   function specialUserRow(s, i) {
@@ -245,15 +299,28 @@
   function bindTtsChat() {
     const root = document.querySelector('#view');
     if (!root) return;
-    populateVoiceSelect(root.querySelector('#ttsVoice'), getSettings().voice);
-    if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => populateVoiceSelect(root.querySelector('#ttsVoice'), getSettings().voice);
+
+    async function refreshVoiceOptions() {
+      const s = getSettings();
+      const localVoices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+      const cloudVoices = await fetchCloudVoices(s.language || 'sv-SE');
+      const mainSelect = root.querySelector('#ttsVoice');
+      if (mainSelect) mainSelect.innerHTML = voiceOptionsHtml(localVoices, cloudVoices, s.voice);
+      root.querySelectorAll('.tts-special-row').forEach(row => {
+        const su = s.specialUsers?.[+row.dataset.i];
+        const sel = row.querySelector('.ttsSuVoice');
+        if (sel) sel.innerHTML = voiceOptionsHtml(localVoices, cloudVoices, su?.voice || '');
+      });
+    }
+    refreshVoiceOptions();
+    if (window.speechSynthesis) speechSynthesis.onvoiceschanged = refreshVoiceOptions;
+    root.querySelector('#ttsLanguage').onchange = refreshVoiceOptions;
 
     root.querySelector('[name=ttsCommentType]')?.closest('.ae-radio-list').querySelectorAll('input').forEach(x => x.onchange = () => { root.querySelector('#ttsCommand').disabled = x.value !== 'command' || !x.checked });
     root.querySelectorAll('[name=ttsCharge]').forEach(x => x.onchange = () => { root.querySelector('#ttsCost').disabled = x.value !== 'yes' || !x.checked });
 
     function wireSpecialRows() {
       root.querySelectorAll('.tts-special-row').forEach(row => {
-        populateVoiceSelect(row.querySelector('.ttsSuVoice'), getSettings().specialUsers?.[+row.dataset.i]?.voice || '');
         row.querySelector('.tts-su-remove').onclick = () => {
           const s = getSettings();
           s.specialUsers.splice(+row.dataset.i, 1);
@@ -271,19 +338,21 @@
       rerender();
     };
 
-    root.querySelector('#ttsTesterPlay').onclick = () => {
+    root.querySelector('#ttsTesterPlay').onclick = async () => {
       const text = root.querySelector('#ttsTesterText').value.trim();
       if (!text) return window.toast?.('Skriv en text att testa');
       const s = getSettings();
+      const opts = { language: s.language, voice: s.voice, randomVoice: s.randomVoice, speed: s.speed, pitch: s.pitch, volume: s.volume };
+      if (isCloudVoice(s.voice)) {
+        const btn = root.querySelector('#ttsTesterPlay');
+        btn.disabled = true; btn.textContent = 'Laddar…';
+        try { await speakCloud(text, opts) }
+        catch (e) { window.toast?.(e.message || 'Kunde inte spela upp molnrösten') }
+        finally { btn.disabled = false; btn.textContent = '▶ Spela upp' }
+        return;
+      }
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      if (s.language) u.lang = s.language;
-      u.rate = Number(s.speed) || 1;
-      u.pitch = Number(s.pitch) || 1;
-      u.volume = (Number(s.volume) ?? 80) / 100;
-      const voices = speechSynthesis.getVoices();
-      if (voices.length) { if (s.randomVoice) u.voice = voices[Math.floor(Math.random() * voices.length)]; else if (s.voice) u.voice = voices.find(v => v.name === s.voice) || null }
-      speechSynthesis.speak(u);
+      speakLocal(text, opts, () => {});
     };
 
     root.querySelector('#ttsClearLog').onclick = () => { clearLog(); rerender() };

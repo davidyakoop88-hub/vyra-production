@@ -174,6 +174,63 @@ test('rejects a non-HTTPS cloudOrigin outright (falls back to local, like no clo
   }
 });
 
+test('proxies the TTS Chat synthesize POST to cloudOrigin, forwarding cookie/CSRF and returning the upstream body as-is', async (t) => {
+  const cloudOrigin = 'https://vyra-cloud.invalid';
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  let seen = null;
+  global.fetch = async (url, init) => {
+    const target = new URL(String(url));
+    if (target.origin !== cloudOrigin) return realFetch(url, init); // the test's own calls to our local server
+    seen = { pathname: target.pathname, method: init?.method, headers: init?.headers, body: init?.body };
+    return new Response(JSON.stringify({ ok: true, audioContent: 'QkFTRTY0' }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+
+  const proxied = await startLocalServer(ROOT, 4202, { cloudOrigin });
+  try {
+    const res = await fetch('http://127.0.0.1:4202/api/workspaces/ws-1/tts/synthesize', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: 'vyra_session=abc123', 'x-vyra-csrf': 'csrf-token-xyz' },
+      body: JSON.stringify({ text: 'hej', voiceName: 'sv-SE-SofieNeural' })
+    });
+    const data = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(data.audioContent, 'QkFTRTY0');
+    assert.equal(seen.pathname, '/api/workspaces/ws-1/tts/synthesize');
+    assert.equal(seen.method, 'POST');
+    assert.equal(seen.headers.cookie, 'vyra_session=abc123');
+    assert.equal(seen.headers['x-vyra-csrf'], 'csrf-token-xyz');
+    assert.equal(JSON.parse(seen.body).voiceName, 'sv-SE-SofieNeural');
+  } finally {
+    await new Promise((resolve) => proxied.close(resolve));
+  }
+});
+
+test('TTS synthesize proxy returns 503 without a cloudOrigin, and 502 when the cloud is unreachable', async (t) => {
+  const noCloud = await startLocalServer(ROOT, 4203);
+  try {
+    const res = await fetch('http://127.0.0.1:4203/api/workspaces/ws-1/tts/synthesize', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    assert.equal(res.status, 503);
+  } finally {
+    await new Promise((resolve) => noCloud.close(resolve));
+  }
+
+  const cloudOrigin = 'https://vyra-cloud.invalid';
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  global.fetch = async (url, init) => {
+    if (new URL(String(url)).origin === cloudOrigin) throw new Error('network down');
+    return realFetch(url, init);
+  };
+  const unreachable = await startLocalServer(ROOT, 4204, { cloudOrigin });
+  try {
+    const res = await fetch('http://127.0.0.1:4204/api/workspaces/ws-1/tts/synthesize', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    assert.equal(res.status, 502);
+  } finally {
+    await new Promise((resolve) => unreachable.close(resolve));
+  }
+});
+
 test('Spotify uses real PKCE authentication without a client secret or demo mode', async () => {
   const client = await (await fetch(origin + '/spotify-client.js')).text();
   const extras = await (await fetch(origin + '/extras.js')).text();

@@ -162,6 +162,27 @@ function startLocalServer(root, port = 4173, options = {}) {
         try { await obsService.setSourceEnabled(text(d.sceneName, 200) || null, text(d.sourceName, 200), !!d.enabled); return sendJson(res, { ok: true }); }
         catch (error) { return sendJson(res, { ok: false, error: error.message }, 409); }
       }
+      // TTS Chat's cloud-voice synthesis lives on the real cloud server (server/tts.js), not here —
+      // unlike /api/obs/* above, there's nothing Electron-specific about it. But it's a POST, and
+      // every unmatched POST/PUT/DELETE gets rejected at the `req.method !== 'GET'` guard below
+      // before it would ever reach the generic GET-only static-content proxy further down, so it
+      // needs its own explicit forward (cookie + CSRF header included) to actually reach the cloud.
+      if (/^\/api\/workspaces\/[^/]+\/tts\/synthesize$/.test(p) && req.method === 'POST') {
+        if (!cloudOrigin) return sendJson(res, { ok: false, error: 'TTS Chat kräver en internetanslutning' }, 503);
+        const raw = await readBody(req, 4096);
+        try {
+          const upstream = await fetch(cloudOrigin + p, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', cookie: req.headers.cookie || '', 'x-vyra-csrf': req.headers['x-vyra-csrf'] || '' },
+            body: raw, redirect: 'follow', signal: AbortSignal.timeout(15000)
+          });
+          const body = Buffer.from(await upstream.arrayBuffer());
+          res.writeHead(upstream.status, { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store', 'Content-Length': body.length });
+          return res.end(body);
+        } catch {
+          return sendJson(res, { ok: false, error: 'Kunde inte nå TTS-tjänsten' }, 502);
+        }
+      }
       if (p === '/api/state' && req.method === 'GET') {
         const backupFile = path.join(root, 'vyra-state-backup.json');
         if (fs.existsSync(backupFile)) {
