@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Goal — Image Frame</title>
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  *{box-sizing:border-box}
+  body{display:flex;align-items:center;justify-content:center;color:#fff;font-family:Georgia,"Times New Roman",Times,serif}
+
+  /* Skalar med BÅDE käll-bredd och käll-höjd: krymper OBS-källan i endera led
+     följer widgeten med, med bevarat bildförhållande. */
+  .widget{
+    position:relative;
+    height:min(94vh, calc(94vw / var(--aspect,0.36)), 900px);
+    width:calc(min(94vh, calc(94vw / var(--aspect,0.36)), 900px) * var(--aspect,0.36));
+    isolation:isolate;user-select:none;
+  }
+
+  .frame{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:contain;pointer-events:none;user-select:none;z-index:3;
+  }
+
+  .box{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;z-index:2}
+
+  .title-box .goal-label{
+    color:#ffe6a4;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 10px rgba(255,200,120,.35);
+    font-size:clamp(11px,3.4cqw,22px);letter-spacing:.06em;line-height:1.1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;
+  }
+
+  .number-box{flex-direction:column;gap:.15em}
+  .number-box .goal-numbers{
+    display:flex;align-items:baseline;gap:.2em;color:#fff;
+    font-size:clamp(14px,4.6cqw,30px);line-height:1;white-space:nowrap;
+    text-shadow:0 2px 5px rgba(0,0,0,.95);
+  }
+  .number-box .separator{color:#ded9e2;font-size:.7em}
+  .number-box .percentage{
+    color:#ffd57f;font-size:clamp(9px,2.4cqw,15px);
+    text-shadow:0 0 10px rgba(255,174,58,.55),0 2px 4px rgba(0,0,0,.9);
+  }
+
+  .shaft-box{align-items:flex-end;overflow:hidden;border-radius:6% / 3%}
+
+  .shaft-fill{
+    position:relative;width:100%;height:0%;
+    background:
+      repeating-linear-gradient(135deg,
+        rgba(255,255,255,.14) 0 2px,
+        transparent 2px 10px),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--accent,#a866ff) 85%, white 15%) 0%,
+        var(--accent,#a866ff) 55%,
+        color-mix(in srgb, var(--accent,#a866ff) 70%, black 30%) 100%);
+    box-shadow:inset 0 0 18px rgba(255,255,255,.35);
+    transition:height 650ms cubic-bezier(.2,.9,.2,1);
+  }
+
+  .shaft-fill::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:3px;
+    background:#fff;
+    box-shadow:0 0 10px 3px rgba(255,255,255,.9),0 0 22px 6px var(--accent,#a866ff);
+    opacity:.95;
+  }
+
+  /* Badge-läge: radiell progress-ring i cirkelfönstret */
+  .circle-box{border-radius:50%;overflow:hidden}
+  .ring{
+    position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(var(--accent,#a866ff) calc(var(--ratio,0)*1turn), rgba(255,255,255,.08) 0);
+    -webkit-mask:radial-gradient(closest-side, transparent 72%, #000 74%);
+            mask:radial-gradient(closest-side, transparent 72%, #000 74%);
+    filter:drop-shadow(0 0 6px var(--accent,#a866ff));
+    transition:--ratio 650ms;
+  }
+  .circle-pct{
+    position:relative;z-index:1;color:#fff;
+    font-size:clamp(13px,26cqw,42px);line-height:1;
+    text-shadow:0 0 12px var(--accent,#a866ff),0 2px 5px rgba(0,0,0,.9);
+  }
+
+  .widget[data-dark-text] .title-box .goal-label{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.55)}
+  .widget[data-dark-text] .number-box .goal-numbers{color:#5e2c46;text-shadow:0 1px 2px rgba(255,255,255,.55)}
+  .widget[data-dark-text] .number-box .separator{color:#9c6d85}
+  .widget[data-dark-text] .number-box .percentage{color:#8a4a68;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+
+  @media (prefers-reduced-motion:reduce){
+    .shaft-fill{transition:none}
+  }
+</style>
+</head>
+<body>
+  <main class="widget" id="widget">
+    <img class="frame" id="frame-img" alt="">
+    <section class="box title-box" id="title-box" style="container-type:inline-size">
+      <div class="goal-label" id="goal-label">FÖLJARE MÅL</div>
+    </section>
+    <section class="box shaft-box" id="shaft-box">
+      <div class="shaft-fill" id="shaft-fill"></div>
+    </section>
+    <section class="box circle-box" id="circle-box" style="container-type:inline-size;display:none">
+      <div class="ring" id="ring"></div>
+      <div class="circle-pct" id="circle-pct">0%</div>
+    </section>
+    <section class="box number-box" id="number-box" style="container-type:inline-size">
+      <div class="goal-numbers">
+        <span id="current-value">0</span>
+        <span class="separator">/</span>
+        <span id="goal-value">1000</span>
+      </div>
+      <div class="percentage" id="percentage-value">0.0%</div>
+    </section>
+  </main>
+
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  const DESIGNS = {"rose-pink":{"label":"Rose · Pink","file":"assets/goal-image-frame/rose-pink.png","aspect":0.35,"accent":"#ff5fb8","title":{"left":21.173,"top":14.107,"width":58.929,"height":7.143},"shaft":{"left":29.847,"top":21.25,"width":42.347,"height":58.75},"number":{"left":28.316,"top":80.0,"width":45.408,"height":12.321}},"royal-gold":{"label":"Royal · Gold Crown","file":"assets/goal-image-frame/royal-gold.png","aspect":0.3808,"accent":"#b083ff","title":{"left":23.104,"top":19.678,"width":53.439,"height":7.522},"shaft":{"left":30.335,"top":27.199,"width":38.977,"height":58.764},"number":{"left":29.277,"top":85.964,"width":41.093,"height":10.074}},"winged-amethyst":{"label":"Winged · Amethyst","file":"assets/goal-image-frame/winged-amethyst.png","aspect":0.3564,"accent":"#a866ff","title":{"left":23.339,"top":21.753,"width":53.86,"height":10.237},"shaft":{"left":27.648,"top":31.99,"width":45.781,"height":49.008},"number":{"left":26.571,"top":80.998,"width":47.935,"height":14.267}},"lotus-violet":{"label":"Lotus · Violet","file":"assets/goal-image-frame/lotus-violet.png","aspect":0.3506,"accent":"#b083ff","title":{"left":18.45,"top":17.27,"width":64.576,"height":10.737},"shaft":{"left":26.937,"top":28.008,"width":45.387,"height":52.846},"number":{"left":25.83,"top":80.854,"width":47.601,"height":10.996}},"crescent-star":{"label":"Crescent · Star","file":"assets/goal-image-frame/crescent-star.png","aspect":0.3754,"accent":"#c07bff","title":{"left":28.862,"top":23.582,"width":42.784,"height":11.409},"shaft":{"left":29.881,"top":34.99,"width":40.747,"height":47.61},"number":{"left":28.523,"top":82.6,"width":44.992,"height":12.747}},"crystal-bloom":{"label":"Crystal · Bloom","file":"assets/goal-image-frame/crystal-bloom.png","aspect":0.3282,"accent":"#a866ff","title":{"left":18.627,"top":18.662,"width":63.725,"height":8.044},"shaft":{"left":28.039,"top":26.705,"width":44.314,"height":58.237},"number":{"left":26.863,"top":84.942,"width":46.667,"height":8.366}},"heart-wings":{"label":"Heart · Wings","file":"assets/goal-image-frame/heart-wings.png","aspect":0.3593,"accent":"#e066ff","title":{"left":27.778,"top":17.964,"width":45.37,"height":8.649},"shaft":{"left":28.889,"top":26.613,"width":43.148,"height":51.364},"number":{"left":24.63,"top":77.977,"width":50.741,"height":15.236}},"moon-clouds":{"label":"Moon · Clouds","file":"assets/goal-image-frame/moon-clouds.png","aspect":0.3538,"accent":"#c07bff","title":{"left":29.24,"top":20.483,"width":42.105,"height":7.448},"shaft":{"left":30.409,"top":27.931,"width":39.766,"height":54.828},"number":{"left":19.493,"top":82.759,"width":62.378,"height":14.621}},"crystal-spike":{"label":"Crystal · Spike","file":"assets/goal-image-frame/crystal-spike.png","aspect":0.2727,"accent":"#a866ff","title":{"left":28.536,"top":22.801,"width":45.906,"height":8.187},"shaft":{"left":30.025,"top":30.988,"width":42.928,"height":53.721},"number":{"left":14.888,"top":84.709,"width":69.479,"height":12.72}},"rose-heart":{"label":"Rose · Heart","file":"assets/goal-image-frame/rose-heart.png","aspect":0.3782,"accent":"#ff5fb8","title":{"left":28.07,"top":17.585,"width":48.772,"height":10.617},"shaft":{"left":29.123,"top":28.202,"width":42.982,"height":49.768},"number":{"left":27.719,"top":77.969,"width":45.439,"height":13.603}},
+"badge-gold-wings":{"label":"Badge · Gold Wings","file":"assets/goal-image-frame/badge-gold-wings.png","aspect":0.8686,"accent":"#ffd57f","darkText":false,"title":{"left":25.439,"top":25.143,"width":49.561,"height":13.905},"circle":{"left":34.211,"top":39.238,"width":32.895,"height":31.81},"number":{"left":32.675,"top":73.714,"width":34.43,"height":14.286}},
+"badge-crystal-violet":{"label":"Badge · Crystal Violet","file":"assets/goal-image-frame/badge-crystal-violet.png","aspect":0.6429,"accent":"#a866ff","darkText":false,"title":{"left":18.421,"top":27.632,"width":63.45,"height":13.534},"circle":{"left":29.825,"top":42.105,"width":45.322,"height":28.759},"number":{"left":27.193,"top":73.496,"width":45.322,"height":13.722}},
+"badge-pink-heartwings":{"label":"Badge · Pink Heart","file":"assets/goal-image-frame/badge-pink-heartwings.png","aspect":0.7175,"accent":"#ff5fb8","darkText":true,"title":{"left":27.559,"top":32.203,"width":46.194,"height":11.299},"circle":{"left":32.808,"top":45.763,"width":34.908,"height":25.8},"number":{"left":34.646,"top":77.778,"width":33.333,"height":10.169}},
+"badge-dark-raven":{"label":"Badge · Dark Raven","file":"assets/goal-image-frame/badge-dark-raven.png","aspect":0.6449,"accent":"#9b5cff","darkText":false,"title":{"left":17.135,"top":25.543,"width":65.449,"height":12.5},"circle":{"left":28.09,"top":40.217,"width":44.101,"height":28.442},"number":{"left":27.247,"top":70.471,"width":45.787,"height":14.13}},
+"badge-ice-blue":{"label":"Badge · Ice Blue","file":"assets/goal-image-frame/badge-ice-blue.png","aspect":0.7568,"accent":"#6db8ff","darkText":false,"title":{"left":25.707,"top":24.319,"width":48.843,"height":13.424},"circle":{"left":32.391,"top":40.467,"width":35.733,"height":28.016},"number":{"left":30.334,"top":72.957,"width":40.103,"height":13.424}},
+"badge-rose-garden":{"label":"Badge · Rose Garden","file":"assets/goal-image-frame/badge-rose-garden.png","aspect":0.7383,"accent":"#ff8fc8","darkText":true,"title":{"left":25.926,"top":25.781,"width":49.206,"height":10.742},"circle":{"left":33.069,"top":39.648,"width":36.508,"height":27.93},"number":{"left":32.54,"top":73.828,"width":36.243,"height":10.938}},
+"badge-moon-mist":{"label":"Badge · Moon Mist","file":"assets/goal-image-frame/badge-moon-mist.png","aspect":0.7302,"accent":"#c07bff","darkText":false,"title":{"left":19.444,"top":19.675,"width":59.167,"height":16.43},"circle":{"left":29.722,"top":38.945,"width":39.167,"height":29.615},"number":{"left":27.222,"top":71.197,"width":43.889,"height":15.416}}};
+
+  const TYPES={
+    follows:{matches:e=>e.type==='follow',amount:()=>1,             label:'FÖLJARE MÅL'},
+    likes:  {matches:e=>e.type==='like'||e.type==='likes',  amount:e=>Number(e.count)||1,label:'LIKE MÅL'},
+    shares: {matches:e=>e.type==='share', amount:()=>1,             label:'DELNINGSMÅL'},
+    gifts:  {matches:e=>e.type==='gift',  amount:()=>1,             label:'GÅVOMÅL'},
+    diamonds:{matches:e=>e.type==='gift', amount:e=>Number(e.value)||0,label:'DIAMANTMÅL'}
+  };
+
+  const typeName=VyraWidget.get('type','follows').toLowerCase();
+  const handler=TYPES[typeName]||TYPES.follows;
+  if(!TYPES[typeName])VyraWidget.warn(`okänd ?type=${typeName} — faller tillbaka på "follows"`);
+
+  // ?design= är den riktiga parametern; ?variant= accepteras som alias eftersom
+  // Studios standalone-katalog (standalone-widgets.js) skickar sitt fritextfält så.
+  const designId=VyraWidget.get('design','')||VyraWidget.get('variant','royal-gold');
+  const design=DESIGNS[designId]||DESIGNS['royal-gold'];
+  if(!DESIGNS[designId])VyraWidget.warn(`okänd ?design=${designId} — faller tillbaka på "royal-gold"`);
+
+  const widgetEl=document.getElementById('widget');
+  widgetEl.style.setProperty('--aspect',design.aspect);
+  widgetEl.style.setProperty('--accent',design.accent);
+  document.getElementById('frame-img').src=design.file;
+
+  function place(elId,box){
+    const el=document.getElementById(elId);
+    el.style.left=box.left+'%';
+    el.style.top=box.top+'%';
+    el.style.width=box.width+'%';
+    el.style.height=box.height+'%';
+  }
+  place('title-box',design.title);
+  place('number-box',design.number);
+
+  const isBadge=!!design.circle;
+  if(isBadge){
+    document.getElementById('shaft-box').style.display='none';
+    const cb=document.getElementById('circle-box');
+    cb.style.display='flex';
+    place('circle-box',design.circle);
+    if(design.darkText)widgetEl.setAttribute('data-dark-text','');
+  }else{
+    place('shaft-box',design.shaft);
+  }
+
+  const goal=Math.max(1,Number(VyraWidget.get('goal',1000))||1000);
+
+  const labelEl=document.getElementById('goal-label');
+  const currentEl=document.getElementById('current-value');
+  const goalEl=document.getElementById('goal-value');
+  const pctEl=document.getElementById('percentage-value');
+  const fillEl=document.getElementById('shaft-fill');
+
+  labelEl.textContent=VyraWidget.get('label',handler.label);
+
+  const fmt=n=>Math.round(n).toLocaleString('en-US').replace(/,/g,'');
+
+  goalEl.textContent=fmt(goal);
+
+  let total=0;
+
+  const ringEl=document.getElementById('ring');
+  const circlePctEl=document.getElementById('circle-pct');
+
+  function paint(){
+    const ratio=Math.min(1,Math.max(0,total/goal));
+    currentEl.textContent=fmt(total);
+    pctEl.textContent=(ratio*100).toFixed(1)+'%';
+    if(isBadge){
+      ringEl.style.setProperty('--ratio',ratio);
+      circlePctEl.textContent=Math.round(ratio*100)+'%';
+    }else{
+      fillEl.style.height=(ratio*100)+'%';
+    }
+  }
+
+  function add(amount){
+    if(!(amount>0))return;
+    total+=amount;
+    paint();
+  }
+
+  function render(eventOrNumber){
+    if(typeof eventOrNumber==='number'){add(eventOrNumber);return}
+    const event=eventOrNumber;
+    if(!event||!handler.matches(event))return;
+    add(handler.amount(event));
+  }
+
+  window.VyraGoalWidget={
+    render,
+    reset(){total=0;paint()},
+    getState:()=>({type:typeName,design:designId,goal,total})
+  };
+
+  const seed=Number(VyraWidget.get('current',0))||0;
+  if(seed>0)total=seed;
+  paint();
+
+  const params=VyraWidget.getParams();
+  if(params.uid){
+    VyraWidget.connect({uid:params.uid,onEvent:render});
+  }else{
+    VyraWidget.warn('Inget uid — ansluter inte till någon live-ström (förhandsgranskningsläge).');
+  }
+})();
+</script>
+</body>
+</html>

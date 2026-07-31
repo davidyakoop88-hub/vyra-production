@@ -1,4 +1,4 @@
-// Embeds the 14 standalone OBS-widget pages (public/widgets/*.html, built on base-widget.js's own
+// Embeds the 15 standalone OBS-widget pages (public/widgets/*.html, built on base-widget.js's own
 // SSE engine) as real, draggable items inside Studio's existing Overlay/Layout canvas — so a
 // streamer never has to juggle a separate widget URL per source. Each embed is a same-origin
 // iframe; Caddyfile.production's frame-ancestors was loosened from 'none' to 'self' specifically to
@@ -21,7 +21,8 @@
     ['crystal-garden', 'Crystal Garden', 'Gift Campaign · 1-6 mål'],
     ['battle-mvp', 'Battle MVP', '9s hyllningsanimation'],
     ['goal-crystal-path', 'Goal · Crystal Path', 'Målmätare, kristalltema'],
-    ['goal-neon-pulse', 'Goal · Neon Pulse', 'Målmätare, neontema']
+    ['goal-neon-pulse', 'Goal · Neon Pulse', 'Målmätare, neontema'],
+    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 17 ramdesigner']
   ];
   const TYPE = 'standaloneWidget';
 
