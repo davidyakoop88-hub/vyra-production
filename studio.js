@@ -10,7 +10,7 @@ function getEditorCanvasScale(){
   return Number.isFinite(scale)&&scale>0?scale:1;
 }
 const state=safeParseStorage('vyra-state',{});
-state.user??='Streamer';state.tiktok??='';state.brandKit??={highlight:'#ff58d6',text:'#f7f2ff',secondaryText:'#b9a6dd',fontFamily:''};state.widgets??=[{id:'goal',type:'goal',x:55,y:80,title:'KVÄLLENS MÅL',value:'74 320 / 100K'},{id:'alert',type:'alert',x:65,y:300,title:'@alex skickade Galaxy',value:'×5'},{id:'leader',type:'leader',x:50,y:480,title:'TOP GIFTERS',value:'1. Alex · 15.5K'}];state.flows??=[{trigger:'Gåva mottagen',action:'Visa gift alert',on:true},{trigger:'Ny följare',action:'Spela ljud + TTS',on:true}];
+state.user??='Streamer';state.tiktok??='';state.brandKit??={background:'#1c1028',highlight:'#ff58d6',text:'#f7f2ff',secondaryText:'#b9a6dd',fontFamily:''};state.widgets??=[{id:'goal',type:'goal',x:55,y:80,title:'KVÄLLENS MÅL',value:'74 320 / 100K'},{id:'alert',type:'alert',x:65,y:300,title:'@alex skickade Galaxy',value:'×5'},{id:'leader',type:'leader',x:50,y:480,title:'TOP GIFTERS',value:'1. Alex · 15.5K'}];state.flows??=[{trigger:'Gåva mottagen',action:'Visa gift alert',on:true},{trigger:'Ny följare',action:'Spela ljud + TTS',on:true}];
 const save=()=>localStorage.setItem('vyra-state',JSON.stringify(state));let view=new URLSearchParams(location.search).has('overlay')?'editor':'home',selected=null,timer;
 function toast(t){$('.toast').textContent=t;$('.toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('.toast').classList.remove('show'),1700)}
 function chart(){return `<svg viewBox="0 0 700 220" preserveAspectRatio="none"><path d="M0 190 C80 185 100 120 170 145 S260 80 320 110 S410 140 470 68 S570 90 700 25" fill="none" stroke="#876bff" stroke-width="3"/></svg>`}
@@ -130,6 +130,7 @@ $('#openOverlay')&&($('#openOverlay').onclick=()=>window.open('overlay.html'));
 $('#userName')&&($('#userName').textContent=state.user);
 function openBrandKitDialog(){
   let kit=state.brandKit;
+  $('#bkBackground').value=kit.background||'#1c1028';
   $('#bkHighlight').value=kit.highlight;
   $('#bkText').value=kit.text;
   $('#bkSecondaryText').value=kit.secondaryText;
@@ -140,6 +141,7 @@ $('#openBrandKit')&&($('#openBrandKit').onclick=openBrandKitDialog);
 $('#brandKitClose')&&($('#brandKitClose').onclick=()=>$('#brandKitModal')?.close());
 $('#brandKitSave')&&($('#brandKitSave').onclick=()=>{
   state.brandKit={
+    background:$('#bkBackground').value,
     highlight:$('#bkHighlight').value,
     text:$('#bkText').value,
     secondaryText:$('#bkSecondaryText').value,
