@@ -29,7 +29,10 @@ function baseUser(data) {
   return {
     username: text(data?.uniqueId || data?.user?.uniqueId, 100),
     name: text(data?.nickname || data?.user?.nickname || data?.uniqueId, 500),
-    profileImage: avatarOf(data)
+    profileImage: avatarOf(data),
+    // TikTok's "Enigma" mode lets a viewer browse/gift anonymously (mask on). Surfacing this lets
+    // Events optionally exclude them, same as tiktok-live-proto exposes it on every User struct.
+    isAnonymous: !!(data?.user?.enigmaInfo?.isEnigmaMaskOn || data?.enigmaInfo?.isEnigmaMaskOn)
   };
 }
 

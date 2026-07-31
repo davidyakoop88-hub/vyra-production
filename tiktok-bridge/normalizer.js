@@ -25,7 +25,10 @@ function baseUser(data){
     userId:text(user?.userId||user?.id||user?.secUid||user?.uniqueId,160),
     username:text(user?.uniqueId||user?.displayId||'',120),
     name:text(user?.nickname||user?.uniqueId||'',120),
-    profileImage:profileImageOf(data)
+    profileImage:profileImageOf(data),
+    // TikTok's "Enigma" mode lets a viewer browse/gift anonymously (mask on) — surfaced so Events
+    // can optionally exclude them, matching what tiktok-live-proto exposes on every User struct.
+    isAnonymous:!!(user?.enigmaInfo?.isEnigmaMaskOn||data?.enigmaInfo?.isEnigmaMaskOn)
   };
 }
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
