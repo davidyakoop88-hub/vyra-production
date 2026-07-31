@@ -1243,10 +1243,10 @@
     mapper.clearStats();
 
     results.push(runCase('Mapper 1. Join mappas korrekt', function () {
-      var event = makeMergedEvent({ kind: 'join', id: 'm1', actor: { id: 'a1', username: 'david', displayName: 'David' }, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'join', id: 'm1', actor: { id: 'a1', username: 'robin', displayName: 'Robin' }, timestamp: 1000 });
       var r = mapper.map(event);
       var ok = r.status === 'mapped' && r.model.kind === 'join' && r.model.variant === 'join-soft'
-        && r.model.content.eyebrow === 'WELCOME' && r.model.content.title === 'David'
+        && r.model.content.eyebrow === 'WELCOME' && r.model.content.title === 'Robin'
         && r.model.content.subtitle === 'joined the live' && r.model.content.countLabel === null && r.model.content.coinLabel === null;
       return { pass: ok, details: JSON.stringify(r) };
     }));
@@ -1365,9 +1365,9 @@
     }));
 
     results.push(runCase('Mapper 19. DisplayName anvands fore username', function () {
-      var event = makeMergedEvent({ kind: 'join', id: 'm19', actor: { id: 'a19', username: 'dyakoop', displayName: 'David Yakoop' }, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'join', id: 'm19', actor: { id: 'a19', username: 'rlarsson', displayName: 'Robin Larsson' }, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.actor.displayName === 'David Yakoop' && r.model.content.title === 'David Yakoop', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.actor.displayName === 'Robin Larsson' && r.model.content.title === 'Robin Larsson', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 20. Username anvands som fallback', function () {
@@ -1383,15 +1383,15 @@
     }));
 
     results.push(runCase('Mapper 22. Initialer fran tva ord', function () {
-      var event = makeMergedEvent({ kind: 'join', id: 'm22', actor: { id: 'a22', username: 'dy', displayName: 'David Yakoop' }, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'join', id: 'm22', actor: { id: 'a22', username: 'rl', displayName: 'Robin Larsson' }, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.actor.initials === 'DY', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.actor.initials === 'RL', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 23. Initial fran ett ord', function () {
-      var event = makeMergedEvent({ kind: 'join', id: 'm23', actor: { id: 'a23', username: 'david', displayName: 'David' }, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'join', id: 'm23', actor: { id: 'a23', username: 'robin', displayName: 'Robin' }, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.actor.initials === 'D', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.actor.initials === 'R', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 24. Tomt namn ger fragetecken', function () {
@@ -1506,21 +1506,21 @@
     }));
 
     results.push(runCase('Mapper 41. Aria-label for join ar korrekt', function () {
-      var event = makeMergedEvent({ kind: 'join', id: 'm41', actor: { id: 'a41', username: 'david', displayName: 'David' }, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'join', id: 'm41', actor: { id: 'a41', username: 'robin', displayName: 'Robin' }, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'David joined the live', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'Robin joined the live', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 42. Aria-label for like anvander fullt tal', function () {
-      var event = makeMergedEvent({ kind: 'like', id: 'm42', actor: { id: 'a42', username: 'david', displayName: 'David' }, count: 1200, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'like', id: 'm42', actor: { id: 'a42', username: 'robin', displayName: 'Robin' }, count: 1200, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'David sent 1,200 likes', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'Robin sent 1,200 likes', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 43. Aria-label for gift innehaller antal, namn och coins', function () {
-      var event = makeMergedEvent({ kind: 'gift', id: 'm43', actor: { id: 'a43', username: 'david', displayName: 'David' }, gift: { id: 'g43', name: 'Rose', imageUrl: null }, count: 3, coins: 300, timestamp: 1000 });
+      var event = makeMergedEvent({ kind: 'gift', id: 'm43', actor: { id: 'a43', username: 'robin', displayName: 'Robin' }, gift: { id: 'g43', name: 'Rose', imageUrl: null }, count: 3, coins: 300, timestamp: 1000 });
       var r = mapper.map(event);
-      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'David sent 3 Rose gifts worth 300 coins', details: JSON.stringify(r) };
+      return { pass: r.status === 'mapped' && r.model.accessibility.ariaLabel === 'Robin sent 3 Rose gifts worth 300 coins', details: JSON.stringify(r) };
     }));
 
     results.push(runCase('Mapper 44. validateCardModel accepterar korrekt modell', function () {
@@ -1833,7 +1833,7 @@
     results.push(runCase('Card 19. Aria-label anvands', function () {
       if (!hasDom()) return skip();
       var container = freshMount();
-      var model = mapModel({ kind: 'join', actor: { displayName: 'David' } });
+      var model = mapModel({ kind: 'join', actor: { displayName: 'Robin' } });
       card.show(model);
       var el = card.getElement().querySelector('.vyra-recognition-card');
       var ok = !!el && el.getAttribute('aria-label') === model.accessibility.ariaLabel;

@@ -236,11 +236,11 @@
           if (!providerContext) { log('(inte ansluten)'); render(); return; }
           providerContext.reportError('simulerat providerfel');
         },
-        emitJoin: function () { emit('join', { username: 'davidyakoop', name: 'David Yakoop' }); },
-        emitLike: function () { emit('like', { username: 'davidyakoop', name: 'David Yakoop', count: 5 }); },
-        emitFollow: function () { emit('follow', { username: 'davidyakoop', name: 'David Yakoop' }); },
-        emitShare: function () { emit('share', { username: 'davidyakoop', name: 'David Yakoop' }); },
-        emitGift: function () { emit('gift', { username: 'davidyakoop', name: 'David Yakoop', giftId: 'galaxy', giftName: 'Galaxy', coins: 500 }); },
+        emitJoin: function () { emit('join', { username: 'robinlarsson', name: 'Robin Larsson' }); },
+        emitLike: function () { emit('like', { username: 'robinlarsson', name: 'Robin Larsson', count: 5 }); },
+        emitFollow: function () { emit('follow', { username: 'robinlarsson', name: 'Robin Larsson' }); },
+        emitShare: function () { emit('share', { username: 'robinlarsson', name: 'Robin Larsson' }); },
+        emitGift: function () { emit('gift', { username: 'robinlarsson', name: 'Robin Larsson', giftId: 'galaxy', giftName: 'Galaxy', coins: 500 }); },
         emitMalformed: function () {
           if (!providerContext) { log('(inte ansluten)'); render(); return; }
           providerContext.emit('', { broken: true }); // deliberately malformed providerEvent

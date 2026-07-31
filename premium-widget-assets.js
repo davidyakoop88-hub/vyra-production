@@ -23,7 +23,7 @@
   function initialsFromName(name) {
     var safe = (typeof name === 'string' ? name : '').trim();
     if (!safe) return '?';
-    // Split on whitespace so "David Yakoop" -> "DY"; a single word/emoji-only name -> first
+    // Split on whitespace so "Robin Larsson" -> "RL"; a single word/emoji-only name -> first
     // 1-2 code points (String iteration, not .charAt, so surrogate pairs/emoji don't split).
     var parts = safe.split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {

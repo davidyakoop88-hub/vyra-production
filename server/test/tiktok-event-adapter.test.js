@@ -12,7 +12,7 @@ test('gift route mounts and drives the premium gift widget',()=>{
   const calls=[];global.document={body:{}};
   global.VyraPremiumWidget={mount:target=>calls.push(['core-mount',target])};
   global.VyraPremiumGiftWidget={mount:target=>calls.push(['gift-mount',target]),show:model=>(calls.push(['show',model]),{status:'shown'})};
-  const out=adapter.route({id:'e2',type:'gift',userId:'u2',username:'david',giftId:'rose',giftImage:'https://img/rose.png',coins:5,count:1});
+  const out=adapter.route({id:'e2',type:'gift',userId:'u2',username:'robin',giftId:'rose',giftImage:'https://img/rose.png',coins:5,count:1});
   assert.equal(out.status,'routed');assert.equal(calls[2][0],'show');assert.equal(calls[2][1].presentation.showGiftName,false);
   delete global.document;delete global.VyraPremiumWidget;delete global.VyraPremiumGiftWidget;
 });

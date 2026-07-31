@@ -234,7 +234,7 @@
    .vyra-toplike.skin-* rules above; being later in the same file then wins the tie. */
 .vyra-toplike.vyra-toplike{border:0!important;box-shadow:none!important}
 
-/* ---- Centre position IS a podium (David's 3x3 reference) ----------------------------------------
+/* ---- Centre position IS a podium (3x3 reference layout) ----------------------------------------
    Places 2-1-3 as cards side by side with 1 raised and crowned, then places 4+ as ordinary wide rows
    beneath. Appended at the END of the file on purpose: the older .like-center block above and the
    signature-frame row rule both carry the same three-class specificity, so in a stylesheet this

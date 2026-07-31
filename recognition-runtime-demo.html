@@ -170,7 +170,7 @@
 
       function buildEvent(kind, overrides) {
         overrides = overrides || {};
-        var actor = Object.assign({ id: 'demo-actor', username: 'davidyakoop', displayName: 'David Yakoop', avatarUrl: null }, overrides.actor || {});
+        var actor = Object.assign({ id: 'demo-actor', username: 'robinlarsson', displayName: 'Robin Larsson', avatarUrl: null }, overrides.actor || {});
         var gift = overrides.gift === undefined ? null : overrides.gift;
         var mergeKey = kind === 'gift' ? ('gift:' + actor.id + ':' + (gift ? gift.id : 'unknown')) : (kind + ':' + actor.id);
         return {
