@@ -23,7 +23,11 @@
     object-fit:contain;pointer-events:none;user-select:none;z-index:3;
   }
 
-  .box{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;z-index:2}
+  /* Text/ring-boxar ligger ÖVER ramen (z4) — krävs för designer med ogenomskinliga
+     plattor (badges + blankark). Mätarfyllnaden ligger UNDER ramen (z2) och syns
+     genom det utstansade spårfönstret, så ramens kanter behåller sin finish. */
+  .box{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;z-index:4}
+  .shaft-box{z-index:2}
 
   .title-box .goal-label{
     color:#ffe6a4;text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 10px rgba(255,200,120,.35);
@@ -82,10 +86,10 @@
     text-shadow:0 0 12px var(--accent,#a866ff),0 2px 5px rgba(0,0,0,.9);
   }
 
-  .widget[data-dark-text] .title-box .goal-label{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.55)}
-  .widget[data-dark-text] .number-box .goal-numbers{color:#5e2c46;text-shadow:0 1px 2px rgba(255,255,255,.55)}
-  .widget[data-dark-text] .number-box .separator{color:#9c6d85}
-  .widget[data-dark-text] .number-box .percentage{color:#8a4a68;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+  .widget[data-dark-title] .title-box .goal-label{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.55)}
+  .widget[data-dark-number] .number-box .goal-numbers{color:#5e2c46;text-shadow:0 1px 2px rgba(255,255,255,.55)}
+  .widget[data-dark-number] .number-box .separator{color:#9c6d85}
+  .widget[data-dark-number] .number-box .percentage{color:#8a4a68;text-shadow:0 1px 2px rgba(255,255,255,.5)}
 
   @media (prefers-reduced-motion:reduce){
     .shaft-fill{transition:none}
@@ -127,7 +131,15 @@
 "badge-dark-raven":{"label":"Badge · Dark Raven","file":"assets/goal-image-frame/badge-dark-raven.png","aspect":0.6449,"accent":"#9b5cff","darkText":false,"title":{"left":17.135,"top":25.543,"width":65.449,"height":12.5},"circle":{"left":28.09,"top":40.217,"width":44.101,"height":28.442},"number":{"left":27.247,"top":70.471,"width":45.787,"height":14.13}},
 "badge-ice-blue":{"label":"Badge · Ice Blue","file":"assets/goal-image-frame/badge-ice-blue.png","aspect":0.7568,"accent":"#6db8ff","darkText":false,"title":{"left":25.707,"top":24.319,"width":48.843,"height":13.424},"circle":{"left":32.391,"top":40.467,"width":35.733,"height":28.016},"number":{"left":30.334,"top":72.957,"width":40.103,"height":13.424}},
 "badge-rose-garden":{"label":"Badge · Rose Garden","file":"assets/goal-image-frame/badge-rose-garden.png","aspect":0.7383,"accent":"#ff8fc8","darkText":true,"title":{"left":25.926,"top":25.781,"width":49.206,"height":10.742},"circle":{"left":33.069,"top":39.648,"width":36.508,"height":27.93},"number":{"left":32.54,"top":73.828,"width":36.243,"height":10.938}},
-"badge-moon-mist":{"label":"Badge · Moon Mist","file":"assets/goal-image-frame/badge-moon-mist.png","aspect":0.7302,"accent":"#c07bff","darkText":false,"title":{"left":19.444,"top":19.675,"width":59.167,"height":16.43},"circle":{"left":29.722,"top":38.945,"width":39.167,"height":29.615},"number":{"left":27.222,"top":71.197,"width":43.889,"height":15.416}}};
+"badge-moon-mist":{"label":"Badge · Moon Mist","file":"assets/goal-image-frame/badge-moon-mist.png","aspect":0.7302,"accent":"#c07bff","darkText":false,"title":{"left":19.444,"top":19.675,"width":59.167,"height":16.43},"circle":{"left":29.722,"top":38.945,"width":39.167,"height":29.615},"number":{"left":27.222,"top":71.197,"width":43.889,"height":15.416}},
+"amethyst-spire":{"label":"Spire · Amethyst","file":"assets/goal-image-frame/amethyst-spire.png","aspect":0.2962,"accent":"#b083ff","title":{"left":19.439,"top":23.539,"width":61.575,"height":7.882},"shaft":{"left":38.009,"top":32.976,"width":24.434,"height":45.576},"number":{"left":14.395,"top":80.483,"width":70.679,"height":14.415}},
+"luna-pearl":{"label":"Luna · Pearl","file":"assets/goal-image-frame/luna-pearl.png","aspect":0.3716,"accent":"#ffd57f","title":{"left":26.766,"top":19.89,"width":47.25,"height":10.729},"shaft":{"left":39.453,"top":32.511,"width":21.875,"height":43.832},"number":{"left":28.047,"top":78.374,"width":44.297,"height":15.239}},
+"heart-crown":{"label":"Heart · Crown","file":"assets/goal-image-frame/heart-crown.png","aspect":0.3305,"accent":"#ff5fb8","title":{"left":20.661,"top":17.591,"width":61.22,"height":11.176},"shaft":{"left":38.136,"top":30.672,"width":26.271,"height":45.378},"number":{"left":27.068,"top":77.922,"width":57.305,"height":13.765}},
+"rosen-arch":{"label":"Rosen · Arch","file":"assets/goal-image-frame/rosen-arch.png","aspect":0.365,"accent":"#ff8fc8","darkTitle":true,"title":{"left":29.716,"top":16.884,"width":42.483,"height":9.869},"shaft":{"left":39.847,"top":28.531,"width":21.456,"height":45.874},"number":{"left":16.107,"top":76.509,"width":68.552,"height":16.213}},
+"angelic-heart":{"label":"Angelic · Heart","file":"assets/goal-image-frame/angelic-heart.png","aspect":0.3225,"accent":"#ff9fd0","darkTitle":true,"darkNumber":true,"title":{"left":26.044,"top":23.465,"width":48.786,"height":8.282},"shaft":{"left":37.555,"top":33.38,"width":22.707,"height":44.648},"number":{"left":28.437,"top":79.459,"width":41.817,"height":9.11}},
+"halo-ring":{"label":"Halo · Ring","file":"assets/goal-image-frame/halo-ring.png","aspect":0.28,"accent":"#c07bff","title":{"left":22.857,"top":12.988,"width":53.793,"height":14.714},"shaft":{"left":41.379,"top":29.931,"width":16.749,"height":45.793},"number":{"left":16.611,"top":78.108,"width":65.793,"height":19.233}},
+"frost-crystal":{"label":"Frost · Crystal","file":"assets/goal-image-frame/frost-crystal.png","aspect":0.3025,"accent":"#6db8ff","title":{"left":12.877,"top":18.127,"width":63.288,"height":14.851},"shaft":{"left":38.813,"top":35.221,"width":23.744,"height":41.713},"number":{"left":17.9,"top":78.989,"width":63.288,"height":15.779}},
+"nordic-heart":{"label":"Nordic · Heart","file":"assets/goal-image-frame/nordic-heart.png","aspect":0.3592,"accent":"#9b5cff","title":{"left":22.727,"top":26.667,"width":54.924,"height":9.524},"shaft":{"left":40.909,"top":36.871,"width":18.939,"height":40.408},"number":{"left":21.045,"top":79.314,"width":57.909,"height":15.657}}};
 
   const TYPES={
     follows:{matches:e=>e.type==='follow',amount:()=>1,             label:'FÖLJARE MÅL'},
@@ -168,10 +180,11 @@
     const cb=document.getElementById('circle-box');
     cb.style.display='flex';
     place('circle-box',design.circle);
-    if(design.darkText)widgetEl.setAttribute('data-dark-text','');
   }else{
     place('shaft-box',design.shaft);
   }
+  if(design.darkText||design.darkTitle)widgetEl.setAttribute('data-dark-title','');
+  if(design.darkText||design.darkNumber)widgetEl.setAttribute('data-dark-number','');
 
   const goal=Math.max(1,Number(VyraWidget.get('goal',1000))||1000);
 

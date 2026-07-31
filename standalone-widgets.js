@@ -22,7 +22,7 @@
     ['battle-mvp', 'Battle MVP', '9s hyllningsanimation'],
     ['goal-crystal-path', 'Goal · Crystal Path', 'Målmätare, kristalltema'],
     ['goal-neon-pulse', 'Goal · Neon Pulse', 'Målmätare, neontema'],
-    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 17 ramdesigner']
+    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner']
   ];
   const TYPE = 'standaloneWidget';
 
