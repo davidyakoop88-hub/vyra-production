@@ -19,6 +19,13 @@ function profileImageOf(data){
     ||user?.avatarThumb?.urlList?.[0]||user?.avatarThumb?.urlListList?.[0]
     ||'',1200);
 }
+// userIdentity (isModeratorOfAnchor/isSubscriberOfAnchor/isFollowerOfAnchor) only exists on chat,
+// gift and emote messages in TikTok's protocol — join/like/follow/share/member messages don't carry
+// it, so those event types always report false here regardless of the viewer's real status.
+function identityOf(data){
+  const id=data?.userIdentity;
+  return{isModerator:!!id?.isModeratorOfAnchor,isFollower:!!id?.isFollowerOfAnchor,isSubscriber:!!id?.isSubscriberOfAnchor};
+}
 function baseUser(data){
   const user=userOf(data);
   return{
@@ -28,7 +35,10 @@ function baseUser(data){
     profileImage:profileImageOf(data),
     // TikTok's "Enigma" mode lets a viewer browse/gift anonymously (mask on) — surfaced so Events
     // can optionally exclude them, matching what tiktok-live-proto exposes on every User struct.
-    isAnonymous:!!(user?.enigmaInfo?.isEnigmaMaskOn||data?.enigmaInfo?.isEnigmaMaskOn)
+    isAnonymous:!!(user?.enigmaInfo?.isEnigmaMaskOn||data?.enigmaInfo?.isEnigmaMaskOn),
+    ...identityOf(data),
+    // "Team" level in TikTok's own UI = the viewer's Fan Club level with this streamer specifically.
+    fanClubLevel:number(user?.fansClub?.data?.level)
   };
 }
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
@@ -44,4 +54,4 @@ function battleFields(data){
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
-module.exports={text,number,profileImageOf,baseUser,giftFields,battleFields,cloudEvent};
+module.exports={text,number,profileImageOf,identityOf,baseUser,giftFields,battleFields,cloudEvent};

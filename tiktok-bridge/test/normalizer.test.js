@@ -28,3 +28,17 @@ test('battle fields support common score shapes',()=>{
   const out=N.battleFields({battleInfo:{hostScore:1200,guestScore:900,multiplier:3}});
   assert.equal(out.scoreUs,1200);assert.equal(out.scoreThem,900);assert.equal(out.multiplier,3);
 });
+test('moderator/subscriber/follower flags come from userIdentity, not the user struct',()=>{
+  const out=N.baseUser({user:{uniqueId:'alex'},userIdentity:{isModeratorOfAnchor:true,isSubscriberOfAnchor:false,isFollowerOfAnchor:true}});
+  assert.equal(out.isModerator,true);assert.equal(out.isFollower,true);assert.equal(out.isSubscriber,false);
+});
+test('identity flags default to false when userIdentity is absent (join/like/follow messages)',()=>{
+  const out=N.baseUser({user:{uniqueId:'alex'}});
+  assert.equal(out.isModerator,false);assert.equal(out.isFollower,false);assert.equal(out.isSubscriber,false);
+});
+test('fan club level reads user.fansClub.data.level and defaults to 0',()=>{
+  const withClub=N.baseUser({user:{uniqueId:'alex',fansClub:{data:{level:12}}}});
+  assert.equal(withClub.fanClubLevel,12);
+  const noClub=N.baseUser({user:{uniqueId:'alex'}});
+  assert.equal(noClub.fanClubLevel,0);
+});

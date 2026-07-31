@@ -52,15 +52,20 @@ function recordSeenUser(e){
 // liveEventTriggers() below already computes into its own throwaway `payload` for Actions & Events
 // — that normalized shape never made it onto `e` itself, so anything listening directly to
 // 'vyra-live-event' (points-system.js's subscriber bonus, tts-chat.js's audience gating) was
-// always reading undefined fields off the raw event and silently never matching. Moderator/top
-// gifter/team-level still have no real data source anywhere in the app (tiktok-bridge/normalizer.js
-// never extracts them) — that's a pre-existing gap, not something this fixes.
+// always reading undefined fields off the raw event and silently never matching.
+// isModerator/isFollower/isSubscriber/fanClubLevel now arrive as real fields on `e` from
+// tiktok-bridge/normalizer.js and electron-app/tiktok-service.js (TikTok's userIdentity/fansClub
+// data) — only chat/gift/emote messages actually carry userIdentity, so those three booleans stay
+// false on other event types regardless of the viewer's real status; that's a TikTok protocol
+// limit, not a bug. isTopGifter has no TikTok field at all — it's computed here by checking whether
+// this event's sender is currently #1 on the session's own coin leaderboard.
 function normalizeUserFlags(e){
   const t=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
   e.isFollower=!!e.isFollower||t==='follow';
   e.isSubscriber=!!(e.isSubscriber||e.isMember)||t==='member'||t==='subscribe'||t==='subscription';
   e.isModerator=!!e.isModerator;
-  e.isTopGifter=!!e.isTopGifter;
+  const topGifter=window.VyraLeaderboard?.getTop('coins',1)[0];
+  e.isTopGifter=!!e.isTopGifter||(!!e.username&&!!topGifter&&String(topGifter.username||'').toLowerCase()===String(e.username).toLowerCase());
   e.isAnonymous=!!e.isAnonymous;
   e.teamLevel=Number(e.teamLevel||e.fanClubLevel||0);
   return e;

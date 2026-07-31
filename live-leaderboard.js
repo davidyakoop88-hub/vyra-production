@@ -75,7 +75,7 @@
     const username = e.username || e.uniqueId || e.userId || e.name;
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
-    const t = totals[username] || (totals[username] = { name: e.name || username, profileImage: e.profileImage || '', likes: 0, activeLikes: 0, likeEvents: [], coins: 0, lastLikeAt: 0, present: true });
+    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, activeLikes: 0, likeEvents: [], coins: 0, lastLikeAt: 0, present: true });
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;

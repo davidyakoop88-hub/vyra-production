@@ -25,14 +25,27 @@ function avatarOf(data) {
     || '', 2048);
 }
 
+// userIdentity (isModeratorOfAnchor/isSubscriberOfAnchor/isFollowerOfAnchor) only exists on chat,
+// gift and emote messages in TikTok's protocol — join/like/follow/share/member messages don't carry
+// it, so those event types always report false here regardless of the viewer's real status. Mirrors
+// tiktok-bridge/normalizer.js's identityOf.
+function identityOf(data) {
+  const id = data?.userIdentity;
+  return { isModerator: !!id?.isModeratorOfAnchor, isFollower: !!id?.isFollowerOfAnchor, isSubscriber: !!id?.isSubscriberOfAnchor };
+}
+
 function baseUser(data) {
+  const user = data?.user || data;
   return {
     username: text(data?.uniqueId || data?.user?.uniqueId, 100),
     name: text(data?.nickname || data?.user?.nickname || data?.uniqueId, 500),
     profileImage: avatarOf(data),
     // TikTok's "Enigma" mode lets a viewer browse/gift anonymously (mask on). Surfacing this lets
     // Events optionally exclude them, same as tiktok-live-proto exposes it on every User struct.
-    isAnonymous: !!(data?.user?.enigmaInfo?.isEnigmaMaskOn || data?.enigmaInfo?.isEnigmaMaskOn)
+    isAnonymous: !!(data?.user?.enigmaInfo?.isEnigmaMaskOn || data?.enigmaInfo?.isEnigmaMaskOn),
+    ...identityOf(data),
+    // "Team" level in TikTok's own UI = the viewer's Fan Club level with this streamer specifically.
+    fanClubLevel: number(user?.fansClub?.data?.level)
   };
 }
 
