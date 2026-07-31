@@ -1,0 +1,35 @@
+.guide-steps-card{padding:16px;margin-bottom:20px}
+.guide-steps-card header{border-bottom:1px solid #39203e;padding-bottom:10px;margin-bottom:14px}
+.guide-steps-card header h3{margin:0}
+.guide-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.guide-step{display:flex;gap:12px;padding:14px;border:1px solid #3d2544;border-radius:10px;background:#100a14}
+.guide-step>b{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#9d30c7;color:#fff;font-size:16px}
+.guide-step h4{margin:0 0 6px;color:#ef8cff;font-size:14px}
+.guide-step p{margin:0;color:#c7b8cc;font-size:12px;line-height:1.55}
+.guide-step p b{color:#fff}
+
+.guide-features-head{margin:26px 0 12px}
+.guide-features-head h3{margin:0 0 4px}
+.guide-features-head p{margin:0;color:#a998af;font-size:12px}
+.guide-features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:22px}
+.guide-feature{padding:15px}
+.guide-feature header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.guide-feature-icon{font-size:22px;line-height:1}
+.guide-feature h4{margin:0;font-size:14px;display:flex;align-items:center;gap:6px}
+.guide-feature p{margin:0 0 10px;color:#c7b8cc;font-size:12px;line-height:1.6}
+.guide-feature p b{color:#fff}
+.guide-feature-where{color:#8e8492;font-size:10.5px}
+
+.guide-faq-card{padding:16px}
+.guide-faq-card header{border-bottom:1px solid #39203e;padding-bottom:10px;margin-bottom:6px}
+.guide-faq-card header h3{margin:0}
+.guide-faq{display:grid;gap:2px}
+.guide-faq-item{padding:12px 4px;border-bottom:1px solid #2a1930}
+.guide-faq-item:last-child{border-bottom:none}
+.guide-faq-item summary{cursor:pointer;font-weight:700;font-size:13px;color:#eee;list-style:none;display:flex;align-items:center;gap:8px}
+.guide-faq-item summary::before{content:'▸';color:#ef8cff;transition:transform .15s ease}
+.guide-faq-item[open] summary::before{transform:rotate(90deg)}
+.guide-faq-item summary::-webkit-details-marker{display:none}
+.guide-faq-item p{margin:8px 0 0 18px;color:#c7b8cc;font-size:12px;line-height:1.6}
+
+@media(max-width:900px){.guide-steps{grid-template-columns:1fr}}
