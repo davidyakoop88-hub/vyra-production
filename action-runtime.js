@@ -1,19 +1,52 @@
 (() => {
   const seen=new Set(),queue=[];let busy=false;
-  // Points ledger — awarded/removed by "Add points"/"Remove points" Actions (TikFinity's own
-  // model too), not derived from raw live events like the likes/coins leaderboard. Exposed
-  // globally so the Top Points widget (live-leaderboard.js/toplike-studio.js) can read it as a
-  // real 'points' liveMetric instead of the demo-only fallback it had before this existed.
+  // Points ledger — awarded/removed by "Add points"/"Remove points" Actions, and (since
+  // points-system.js) auto-earned from real live events (coins/shares/likes/chat activity) at
+  // configurable rates, matching TikFinity's viewer-economy model. Exposed globally so the Top
+  // Points widget (live-leaderboard.js/toplike-studio.js) can read it as a real 'points'
+  // liveMetric, and so viewer-triggered Events (action-event-advanced.js) can gate on cost/level.
   const POINTS_KEY='vyra-points-v1';
+  const POINTS_SETTINGS_KEY='vyra-points-settings-v1'; // written by points-system.js's settings UI
   function loadPoints(){try{return JSON.parse(localStorage.getItem(POINTS_KEY)||'{}')}catch{return{}}}
   function savePoints(p){try{localStorage.setItem(POINTS_KEY,JSON.stringify(p))}catch{}}
   function pointsKeyFor(username){return String(username||'').replace(/^@/,'').toLowerCase()}
-  function adjustPoints(username,delta){const key=pointsKeyFor(username);if(!key||!delta)return;const p=loadPoints();p[key]={name:username,points:Math.max(0,(p[key]?.points||0)+delta)};savePoints(p)}
+  // 'earned' is a lifetime running total of every positive add() — used for levels, never
+  // decreases when points are spent/removed, same as XP vs. spendable currency in most games.
+  function adjustPoints(username,delta){
+    const key=pointsKeyFor(username);if(!key||!delta)return;
+    const p=loadPoints();
+    const entry=p[key]||{name:username,points:0,earned:0};
+    entry.name=username;
+    entry.points=Math.max(0,entry.points+delta);
+    if(delta>0)entry.earned=(entry.earned||0)+delta;
+    p[key]=entry;
+    savePoints(p);
+  }
+  // Level curve: level N requires levelBasePoints*(levelMultiplier^(N-1)) MORE lifetime points
+  // than level N-1 needed in total — "the number of points required to reach the next level
+  // increases exponentially" (TikFinity's own wording for this exact setting).
+  function computeLevel(earned){
+    let settings={};try{settings=JSON.parse(localStorage.getItem(POINTS_SETTINGS_KEY)||'{}')}catch{}
+    const base=Math.max(1,Number(settings.levelBasePoints)||100),mult=Math.max(1,Number(settings.levelMultiplier)||1.2);
+    let level=0,threshold=base,cumulative=0;
+    while(cumulative+threshold<=earned&&level<999){cumulative+=threshold;level++;threshold=Math.round(threshold*mult)}
+    return{level,pointsIntoLevel:earned-cumulative,pointsForNextLevel:threshold};
+  }
   window.VyraPoints={
     get:username=>loadPoints()[pointsKeyFor(username)]?.points||0,
     getTop:(count=10)=>Object.values(loadPoints()).sort((a,b)=>b.points-a.points).slice(0,count),
     add:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0)),
-    remove:(username,amount)=>adjustPoints(username,-Math.abs(Number(amount)||0))
+    remove:(username,amount)=>adjustPoints(username,-Math.abs(Number(amount)||0)),
+    getLevel:username=>computeLevel(loadPoints()[pointsKeyFor(username)]?.earned||0),
+    // Returns false (and charges nothing) if the balance is insufficient. amount<=0 always succeeds.
+    spend:(username,amount)=>{
+      amount=Math.abs(Number(amount)||0);
+      if(!amount)return true;
+      const key=pointsKeyFor(username);
+      if(!key||(loadPoints()[key]?.points||0)<amount)return false;
+      adjustPoints(username,-amount);
+      return true;
+    }
   };
   const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
   function openDb(){return new Promise((ok,no)=>{const r=indexedDB.open('vyra-action-media',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('files'))r.result.createObjectStore('files')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
