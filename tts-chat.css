@@ -1,0 +1,29 @@
+.tts-chat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.tts-chat-grid .card{padding:14px}
+.tts-chat-grid .card header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #39203e;padding-bottom:10px;margin-bottom:10px}
+.tts-chat-grid .card header h3{margin:0}
+.tts-chat-grid .card header span{color:#ab8bb3;font-size:11px}
+.tts-chat-grid .card header button{border:1px solid #553060;background:#1b1021;color:#eee;padding:6px 10px;border-radius:6px;font-size:11px}
+.tts-chat-grid label{display:block;margin:8px 0}
+.tts-chat-grid input:not([type=checkbox]):not([type=radio]):not([type=range]),.tts-chat-grid select,.tts-chat-grid textarea{display:block;width:100%;margin-top:5px;padding:9px;border:1px solid #503058;border-radius:6px;background:#0b080e;color:#fff}
+.tts-chat-grid textarea{resize:vertical;font:inherit}
+.tts-enabled-row{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:10px}
+.tts-inline-check{display:flex;align-items:center;gap:7px;margin:6px 0;font-size:13px}
+.tts-inline-check input[type=number]{display:inline-block;width:64px!important;margin:0 0 0 4px!important;padding:4px 6px!important}
+.tts-audience-list{display:grid;gap:2px}
+.tts-inline-check{flex-wrap:wrap}
+.tts-inline-num{display:inline-flex;align-items:center;gap:5px;color:#a58ea9;font-size:11px;margin-left:4px}
+.tts-charge-header{margin-top:14px!important;padding-top:10px!important;border-top:1px solid #39203e}
+.tts-special-row{display:grid;grid-template-columns:1.4fr auto 1fr .7fr .7fr auto;gap:6px;align-items:center;margin-bottom:8px}
+.tts-special-row input,.tts-special-row select{margin:0!important}
+.tts-su-remove{border:1px solid #553060;background:#1b1021;color:#eee;border-radius:6px;padding:8px 11px}
+.tts-tester-row{display:flex;gap:8px}
+.tts-tester-row input{flex:1;margin:0!important}
+.tts-tester-row button{flex:none;white-space:nowrap}
+.tts-log-list{display:grid;gap:6px;max-height:220px;overflow-y:auto}
+.tts-log-row{display:grid;grid-template-columns:auto auto 1fr;gap:8px;padding:7px 9px;border:1px solid #3d2544;border-radius:7px;background:#0d0911;font-size:12px}
+.tts-log-row small{color:#8e8492}
+.tts-log-row b{color:#ef8cff}
+.tts-log-row span{color:#d8c4dd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tts-save{margin-top:4px}
+@media(max-width:900px){.tts-chat-grid{grid-template-columns:1fr}.tts-special-row{grid-template-columns:1fr 1fr}}
