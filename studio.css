@@ -595,3 +595,14 @@ html.overlay-output .widget{
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
 }
+
+/* Fan Level Up / Gifter Level Up "video per nivå" (media.js's playLevelVideo) — a per-level video
+   plays over the whole widget instead of its normal HTML/CSS template. Hidden by default so widgets
+   with no level video assigned are pixel-identical to before this existed. */
+.fan-level-up .level-up-video,.gifter-level-up .level-up-video{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:5}
+.fan-level-up.playing-level-video .level-up-video,.gifter-level-up.playing-level-video .level-up-video{display:block}
+.fan-level-up.playing-level-video>*:not(.level-up-video):not(.resize-handle),.gifter-level-up.playing-level-video>*:not(.level-up-video):not(.resize-handle){visibility:hidden}
+.level-video-editor .level-video-hint{font-size:8px;color:#8f94a3;line-height:1.5;margin:0 0 4px}
+.level-video-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.level-video-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:#151821;border:1px solid #292d39;border-radius:6px;font-size:9px;color:#c7c9d1}
+.level-video-row button{background:none;border:0;color:#ff5c5c;font-size:12px;cursor:pointer;padding:0 4px}
