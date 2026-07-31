@@ -26,10 +26,18 @@
   const TYPE = 'standaloneWidget';
 
   // The same "Säker OBS-länk" token Studio already issues/revokes via overlay-access.js's manager
-  // dialog — reused here instead of minting a second, parallel token system. openManager() stores
-  // the full URL (e.g. https://.../overlay.html?access=xyz) in sessionStorage on creation; every
-  // public/widgets page accepts that same token as either ?uid= or ?access= (base-widget.js).
+  // dialog — reused here instead of minting a second, parallel token system. Two different places
+  // this token can come from, checked in this order:
+  // 1. The page's OWN URL (?access=xyz) — this is the real OBS/overlay.html case: overlay.html
+  //    forwards its own ?access= into studio.html?overlay=1&access=xyz (see overlay.html), which is
+  //    a fresh browser context (OBS's browser source) with no sessionStorage carried over from the
+  //    Studio tab that created the link.
+  // 2. sessionStorage['vyra-overlay-access-url'] — the editor-canvas-preview case: openManager()
+  //    stores the full URL there right after creating a link IN THIS SAME Studio tab, so a widget
+  //    just added to the canvas can preview immediately without needing to reload with ?access=.
   function currentAccessToken() {
+    const fromUrl = new URLSearchParams(location.search).get('access');
+    if (fromUrl) return fromUrl;
     try {
       const raw = sessionStorage.getItem('vyra-overlay-access-url');
       if (!raw) return '';
