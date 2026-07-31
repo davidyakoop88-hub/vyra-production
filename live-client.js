@@ -32,10 +32,27 @@ function recordSeenEmote(e){
     localStorage.setItem(KEY,JSON.stringify(list.slice(0,40)));
   }catch{}
 }
+// Same reasoning as recordSeenEmote — TikTok gives no "pick from your followers" API to any
+// third-party connector (confirmed: no fetchFollowers/userList route exists anywhere in
+// tiktok-live-connector), so the Events "specific user" picker can't ship with a real follower
+// list either. Every live event already carries a real username, so capture-as-seen is the only
+// technically honest way to offer a picker instead of free text.
+function recordSeenUser(e){
+  const username=e.username||e.uniqueId||e.user;
+  if(!username)return;
+  try{
+    const KEY='vyra-seen-users-v1';
+    const id=String(username).replace(/^@/,'');
+    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.username.toLowerCase()!==id.toLowerCase());
+    list.unshift({username:id,name:e.name||id,profileImage:e.profileImage||e.avatarUrl||'',lastSeen:Date.now()});
+    localStorage.setItem(KEY,JSON.stringify(list.slice(0,60)));
+  }catch{}
+}
 function ingest(e){
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
   recordSeenEmote(e);
+  recordSeenUser(e);
   if(typeof routeLiveBattleEvent==='function')routeLiveBattleEvent(e);
   if(window.VyraActionEvent)liveEventTriggers(e).forEach(([trigger,payload])=>window.VyraActionEvent.handleEvent(trigger,payload));
 }
