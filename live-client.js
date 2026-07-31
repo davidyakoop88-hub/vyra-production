@@ -19,9 +19,23 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
 // `VyraLive.ingest(event)` directly for every 'live' message it receives. Keeping this as one
 // shared function (instead of duplicating the routing in both places) is what makes the cloud
 // SSE path actually drive widget animations the same way the local demo/bridge path already did.
+// Subscriber emotes have no human-readable name (TikTok only gives an opaque emoteId), so the
+// Events picker can't ship with a fixed catalog like gifts have. Instead it offers whatever emotes
+// have actually appeared live, most-recent-first, capped so a long session doesn't grow forever.
+function recordSeenEmote(e){
+  const type=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
+  if(type!=='subscriberemote'||!e.emote)return;
+  try{
+    const KEY='vyra-seen-emotes-v1';
+    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.id!==e.emote);
+    list.unshift({id:e.emote,image:e.giftImage||'',lastSeen:Date.now()});
+    localStorage.setItem(KEY,JSON.stringify(list.slice(0,40)));
+  }catch{}
+}
 function ingest(e){
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
+  recordSeenEmote(e);
   if(typeof routeLiveBattleEvent==='function')routeLiveBattleEvent(e);
   if(window.VyraActionEvent)liveEventTriggers(e).forEach(([trigger,payload])=>window.VyraActionEvent.handleEvent(trigger,payload));
 }

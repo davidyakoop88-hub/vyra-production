@@ -93,6 +93,14 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       count: number(data?.likeCount, 1e9),
       points: number(data?.totalLikeCount, 1e12)
     }, data));
+    connection.on(WebcastEvent.EMOTE, data => {
+      const emote = data?.emoteList?.[0];
+      emit('subscriberemote', {
+        ...baseUser(data),
+        emote: text(emote?.emoteId, 160),
+        giftImage: text(emote?.image?.urlList?.[0], 2048)
+      }, data);
+    });
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => emit('battle', {
       scoreUs: number(data?.battleUsers?.[0]?.score || data?.scoreUs, 1e12),
       scoreThem: number(data?.battleUsers?.[1]?.score || data?.scoreThem, 1e12)
