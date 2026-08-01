@@ -677,3 +677,21 @@ html.overlay-output .widget{
 .streak-framed .sframe-row strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .streak-framed .sframe-row b{color:var(--streak);text-shadow:0 0 12px var(--streak);white-space:nowrap}
 .streak-framed.hit .sframe-row b{animation:streakNumber .8s ease}
+
+/* Top Gift · ramdesigner (giftFrame): AI-ram, gift->profil-flip genom utstansat cirkelfönster (z2 under z3), rubrik på övre plattan och namn+summa på nedre (z4). tf-dark-* = ljus platta, mörk text. */
+.vyra-topgift.topgift-framed{height:auto!important;aspect-ratio:var(--fa);display:block!important;padding:0!important;overflow:visible!important;background:transparent!important;border:none!important;box-shadow:none!important;border-radius:0!important;text-align:initial!important}
+.vyra-topgift.topgift-framed:before,.vyra-topgift.topgift-framed:after{display:none!important}
+.topgift-framed .tgf-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:3}
+.topgift-framed .vyra-flip{position:absolute!important;width:auto!important;height:auto!important;z-index:2;margin:0!important}
+.topgift-framed .vyra-gift-face,.topgift-framed .vyra-profile-face{border:none!important;box-shadow:none!important;background:#0d0614;border-radius:50%}
+.topgift-framed .vyra-gift-face img{width:64%;height:64%;object-fit:contain}
+.topgift-framed .vyra-gift-face span{display:none}
+.topgift-framed .vyra-profile-face img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.topgift-framed .tgf-title{position:absolute;z-index:4;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:900;letter-spacing:3px;color:#ffe6a4;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;overflow:hidden;white-space:nowrap}
+.topgift-framed.tf-dark-title .tgf-title{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+.topgift-framed .tgf-plate{position:absolute;z-index:4;display:flex;align-items:baseline;justify-content:center;gap:8px;text-align:center;pointer-events:none;overflow:hidden;line-height:1.1}
+.topgift-framed .tgf-plate strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topgift-framed .tgf-plate em{font-style:normal;font-weight:800;color:var(--accent);text-shadow:0 0 12px var(--accent);white-space:nowrap;font-size:13px}
+.topgift-framed.tf-dark-name .tgf-plate strong{color:#5e2c46!important;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+.topgift-framed.tf-dark-name .tgf-plate em{text-shadow:none}
+.topgift-framed.play .vyra-flip{animation-duration:3.8s}
