@@ -78,30 +78,14 @@
       <button class="delete" id="del">Ta bort</button>`;
   };
 
+  // 2026-08-01: katalogsektionen "VYRA WIDGETS · OBS-KÄLLOR" borttagen på Davids begäran —
+  // widget-sidorna nås nu enbart som direkta OBS-länkar (public/widgets/goal-image-frame.html
+  // ?design=...&uid=...). Render/props-vägarna nedan behålls så att redan utplacerade
+  // standalone-widgets på sparade layouter fortsätter fungera.
   const standaloneCatalogBind = bind;
   bind = function () {
     standaloneCatalogBind();
     if (view !== 'editor' && view !== 'overlay') return;
-    const catalog = document.querySelector('.widget-catalog');
-    if (catalog && !catalog.querySelector('[data-standalone-widgets]')) {
-      const section = document.createElement('section');
-      section.dataset.standaloneWidgets = '1';
-      section.className = 'toplike-template-section';
-      section.innerHTML = '<h4>VYRA WIDGETS · OBS-KÄLLOR · VARJE DESIGN SEPARAT</h4>' + CATALOG.flatMap(([slug, name, desc, designs]) =>
-        (designs || [[null, name, desc]]).map(([designId, designLabel, designDesc]) =>
-          `<button data-standalone="${slug}"${designId ? ` data-standalone-design="${designId}"` : ''}><i>▣</i><span><b>${designLabel}</b><small>${designDesc || desc}</small></span></button>`
-        )
-      ).join('');
-      catalog.prepend(section);
-      section.querySelectorAll('[data-standalone]').forEach(button => button.onclick = () => {
-        const slug = button.dataset.standalone, design = button.dataset.standaloneDesign || '', entry = CATALOG.find(c => c[0] === slug);
-        const label = button.querySelector('b').textContent;
-        const id = TYPE + Date.now();
-        state.widgets.push({ id, type: TYPE, widgetSlug: slug, widgetVariant: design, x: 80, y: 120, width: 320, height: 220, title: label });
-        selected = id; save(); render();
-        toast(currentAccessToken() ? label + ' skapad' : label + ' skapad — skapa en Säker OBS-länk för att se förhandsvisning');
-      });
-    }
     const w = state.widgets.find(x => x.id === selected);
     if (!w || w.type !== TYPE) return;
     const variant = document.querySelector('#swVariant');

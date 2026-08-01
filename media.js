@@ -506,7 +506,7 @@ Promise.resolve().then(()=>{['gift-fireworks.css','action-event.css'].forEach(hr
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=7';document.head.append(css);let js=document.createElement('script');js.src='profile-frames-premium.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260731-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20260801-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260731-1';document.body.append(js)});
