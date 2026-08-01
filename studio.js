@@ -111,7 +111,7 @@ function bind(){
     if(w){
       $('#pt')&&($('#pt').onchange=e=>{w.title=e.target.value;save();render()});
       $('#pv')&&($('#pv').onchange=e=>{w.value=e.target.value;save();render()});
-      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);selected=null;save();render()});
+      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;save();render()});
     }
     $('#testEvent')&&($('#testEvent').onclick=send);
     $('#saveProject')&&($('#saveProject').onclick=()=>{save();toast('Projekt sparat')});
