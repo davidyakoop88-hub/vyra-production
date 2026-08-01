@@ -9,7 +9,7 @@
 // compatibility approach as the old Last-X Alerts shim).
 (function () {
   const CATALOG = [
-    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner']
+    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner', [['rose-pink','Goal · Rose Pink','Mätarram · rosa ros'],['royal-gold','Goal · Royal Gold','Mätarram · guldkrona'],['winged-amethyst','Goal · Winged Amethyst','Mätarram · bevingat hjärta'],['lotus-violet','Goal · Lotus Violet','Mätarram · lotus'],['crescent-star','Goal · Crescent Star','Mätarram · halvmåne'],['crystal-bloom','Goal · Crystal Bloom','Mätarram · kristallblom'],['heart-wings','Goal · Heart Wings','Mätarram · hjärtkrona'],['moon-clouds','Goal · Moon Clouds','Mätarram · måne & moln'],['crystal-spike','Goal · Crystal Spike','Mätarram · kristallspets'],['rose-heart','Goal · Rose Heart','Mätarram · roshjärta'],['badge-gold-wings','Badge · Gold Wings','Progress-ring · guldvingar'],['badge-crystal-violet','Badge · Crystal Violet','Progress-ring · lila kristall'],['badge-pink-heartwings','Badge · Pink Heartwings','Progress-ring · rosa hjärta'],['badge-dark-raven','Badge · Dark Raven','Progress-ring · svarta vingar'],['badge-ice-blue','Badge · Ice Blue','Progress-ring · isblå'],['badge-rose-garden','Badge · Rose Garden','Progress-ring · rosenträdgård'],['badge-moon-mist','Badge · Moon Mist','Progress-ring · måndimma'],['amethyst-spire','Goal · Amethyst Spire','Mätarram · kristallspira'],['luna-pearl','Goal · Luna Pearl','Mätarram · guldmåne'],['heart-crown','Goal · Heart Crown','Mätarram · hjärtkrona'],['rosen-arch','Goal · Rosen Arch','Mätarram · rosenbåge'],['angelic-heart','Goal · Angelic Heart','Mätarram · änglahjärta'],['halo-ring','Goal · Halo Ring','Mätarram · gloriaring'],['frost-crystal','Goal · Frost Crystal','Mätarram · issnöflinga'],['nordic-heart','Goal · Nordic Heart','Mätarram · mörkt hjärta']]]
   ];
   const RETIRED = new Set(['gift-alert','follow-alert','like-counter','top-gifters','combo-counter',
     'goal-tracker','diamond-counter','vip-zone','welcome-viewer','screen-takeover','crystal-garden',
@@ -87,16 +87,19 @@
       const section = document.createElement('section');
       section.dataset.standaloneWidgets = '1';
       section.className = 'toplike-template-section';
-      section.innerHTML = '<h4>VYRA WIDGETS · OBS-KÄLLOR</h4>' + CATALOG.map(([slug, name, desc]) =>
-        `<button data-standalone="${slug}"><i>▣</i><span><b>${name}</b><small>${desc}</small></span></button>`
+      section.innerHTML = '<h4>VYRA WIDGETS · OBS-KÄLLOR · VARJE DESIGN SEPARAT</h4>' + CATALOG.flatMap(([slug, name, desc, designs]) =>
+        (designs || [[null, name, desc]]).map(([designId, designLabel, designDesc]) =>
+          `<button data-standalone="${slug}"${designId ? ` data-standalone-design="${designId}"` : ''}><i>▣</i><span><b>${designLabel}</b><small>${designDesc || desc}</small></span></button>`
+        )
       ).join('');
       catalog.prepend(section);
       section.querySelectorAll('[data-standalone]').forEach(button => button.onclick = () => {
-        const slug = button.dataset.standalone, entry = CATALOG.find(c => c[0] === slug);
+        const slug = button.dataset.standalone, design = button.dataset.standaloneDesign || '', entry = CATALOG.find(c => c[0] === slug);
+        const label = button.querySelector('b').textContent;
         const id = TYPE + Date.now();
-        state.widgets.push({ id, type: TYPE, widgetSlug: slug, x: 80, y: 120, width: 320, height: 220, title: entry[1] });
+        state.widgets.push({ id, type: TYPE, widgetSlug: slug, widgetVariant: design, x: 80, y: 120, width: 320, height: 220, title: label });
         selected = id; save(); render();
-        toast(currentAccessToken() ? entry[1] + ' skapad' : entry[1] + ' skapad — skapa en Säker OBS-länk för att se förhandsvisning');
+        toast(currentAccessToken() ? label + ' skapad' : label + ' skapad — skapa en Säker OBS-länk för att se förhandsvisning');
       });
     }
     const w = state.widgets.find(x => x.id === selected);

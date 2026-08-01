@@ -364,17 +364,21 @@
     if (catalog && !catalog.querySelector('[data-last-x]')) {
       const section = document.createElement('section');
       section.dataset.lastX = '1'; section.className = 'last-x-template-section';
-      section.innerHTML = '<h4>LAST-X ALERTS</h4><button data-last-x-add><i>✦</i><span><b>Last-X Alerts</b><small>Gifter · Liker · Sharer · Subscriber — 5 designer</small></span></button>';
+      const lastXCards = [['card', 'Card'], ['stack', 'Stack'], ['skew', 'Skew'], ['badge', 'Badge'], ['royal', 'Royal Coronation']];
+      section.innerHTML = '<h4>LAST-X ALERTS · VARJE DESIGN SEPARAT</h4>' + lastXCards.map(([d, label]) =>
+        `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gifter · Liker · Sharer · Subscriber</small></span></button>`
+      ).join('');
       catalog.prepend(section);
-      section.querySelector('[data-last-x-add]').onclick = () => {
+      section.querySelectorAll('[data-last-x-add]').forEach(b => b.onclick = () => {
+        const design = b.dataset.lastXAdd, label = lastXCards.find(c => c[0] === design)[1];
         const id = 'templateLastX' + Date.now();
         state.widgets.push({
           id, type: 'templateLastX', x: 100, y: 80, width: 500,
-          title: 'Last-X Alerts', lastXType: 'all', lastXDesign: 'card', lastXEntrance: 'slide-left',
+          title: 'Last-X Alerts', lastXType: 'all', lastXDesign: design, lastXEntrance: 'slide-left',
           followDuration: 5
         });
-        selected = id; save(); render(); toast('Last-X Alerts skapad');
-      };
+        selected = id; save(); render(); toast('Last-X · ' + label + ' skapad');
+      });
     }
   };
 
