@@ -138,6 +138,42 @@ an error — one error line per event during a live stream, drowning the message
 bridge now skips the local post entirely when `VYRA_CLOUD_URL` is set and `VYRA_SERVER_URL` is not.
 Only set it if you deliberately want a bridge to also feed a local server.
 
+### Service root directories — railway.json is only read from the service's own root
+
+Railway reads `railway.json` from the **root directory configured on the service**, not from the
+repository root. The two files in this repo are therefore only picked up with these settings:
+
+| Service | Root directory | Config file that applies |
+|---|---|---|
+| API | `server` | `server/railway.json` |
+| TikTok manager | `tiktok-bridge` | `tiktok-bridge/railway.json` |
+
+`server` is the correct root for the API: it does not serve any HTML — Caddy is the public entry
+point for static files and only proxies API traffic here — so nothing outside `server/` needs to be
+in that image.
+
+**Verify detection in the dashboard; do not assume it from the file existing in Git.** After the
+first deploy, the service's Settings should show the values below already filled in. If they are
+blank, the root directory is wrong and the file was never read — set them by hand:
+
+| Setting | API | Manager |
+|---|---|---|
+| Root directory | `server` | `tiktok-bridge` |
+| Pre-deploy command | `npm run migrate` | *(none)* |
+| Start command | *(default `npm start`)* | `npm run manager` |
+| Health check path | `/health/ready` | `/health` |
+| Health check timeout | `300` | `60` |
+| Restart policy | on failure, max 10 | on failure, max 10 |
+
+The pre-deploy command is the one that must not be skipped. `/health/ready` now probes a write
+against `health_probe`; a build that starts serving before the migration created that table answers
+503 with `probe-table-missing-run-migrate` and Railway stops routing to it. A failed migration fails
+the deploy and leaves the previous version serving, which is the outcome you want.
+
+If the API service's root directory is the repository root rather than `server` for some other
+reason, `server/railway.json` will be ignored entirely — set every value in the table above by hand
+and point the pre-deploy command at `npm --prefix server run migrate`.
+
 **Migration runs before the deploy takes traffic**
 
 `server/railway.json` sets `preDeployCommand: npm run migrate`, so the schema is applied by the

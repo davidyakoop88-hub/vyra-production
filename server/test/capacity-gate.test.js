@@ -22,6 +22,7 @@ function makeDatabase(rows = []) {
       released: false,
       async query(sql, params = []) {
         order.push(`${name}:${sql.slice(0, 34).replace(/\s+/g, ' ').trim()}`);
+        const key = v => String(v || '').trim().toLowerCase().replace(/^@+/, '');
 
         if (sql.includes('pg_advisory_xact_lock')) {
           while (held) await held;       // wait for the current holder
@@ -32,12 +33,15 @@ function makeDatabase(rows = []) {
           const hit = table.filter(r => r.workspace_id === params[0] && r.active);
           return { rows: hit, rowCount: hit.length };
         }
-        if (sql.includes('AND tiktok_username=$1 AND workspace_id<>$2')) {
-          const hit = table.filter(r => r.active && r.tiktok_username === params[0] && r.workspace_id !== params[1]);
+        // Mirrors ACCOUNT_KEY_SQL: trim, lowercase, strip every leading @ — the same reduction the
+        // fleet manager's accountKey() applies, which is the point of normalizing in SQL at all.
+        if (sql.includes('workspace_id<>$2')) {
+          const hit = table.filter(r => r.active && r.workspace_id !== params[1]
+            && key(r.tiktok_username) === params[0] && key(r.tiktok_username) !== '');
           return { rows: hit, rowCount: hit.length };
         }
-        if (sql.includes('count(DISTINCT tiktok_username)')) {
-          const n = new Set(table.filter(r => r.active).map(r => r.tiktok_username)).size;
+        if (sql.includes('count(DISTINCT')) {
+          const n = new Set(table.filter(r => r.active).map(r => key(r.tiktok_username)).filter(Boolean)).size;
           return { rows: [{ n }], rowCount: 1 };
         }
         if (sql.startsWith('INSERT INTO tiktok_connections')) {

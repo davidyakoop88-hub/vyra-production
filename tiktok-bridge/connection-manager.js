@@ -49,7 +49,7 @@ function defaultSpawnBridge(workspaceId, username) {
 // (as this file used to) let both spawn a bridge, so one live stream got two independent readers:
 // duplicate events downstream and two connections TikTok can rate-limit or block as abuse.
 function accountKey(username) {
-  return String(username || '').trim().toLowerCase().replace(/^@/, '');
+  return String(username || '').trim().toLowerCase().replace(/^@+/, '');
 }
 
 // pool: an object with an async query(sql, params) method — matches `pg`'s Pool interface (and
