@@ -138,6 +138,40 @@ an error — one error line per event during a live stream, drowning the message
 bridge now skips the local post entirely when `VYRA_CLOUD_URL` is set and `VYRA_SERVER_URL` is not.
 Only set it if you deliberately want a bridge to also feed a local server.
 
+### APP_ENV — staging and production are both real deployments
+
+`NODE_ENV=production` in BOTH. That is what enables every hardening path in the stack, and a staging
+box must not become a development box just because it needs test payment keys. `APP_ENV` is a
+separate axis that says which real deployment this is: `staging` or `production`, nothing else.
+
+It is required and never defaulted. Both guesses are bad — default to production and a staging
+deploy demands live Stripe keys; default to staging and a production deploy would accept a test key
+and quietly take no money at all while looking like it worked. A missing `APP_ENV` fails the boot.
+
+**Nothing is relaxed for staging.** Every secret, URL and token check applies identically in both,
+and the test suite asserts that for each check individually — if one ever stops firing under
+`APP_ENV=staging`, staging has become the soft way in. Staging is stricter in one place:
+
+| | production | staging |
+|---|---|---|
+| Stripe secret key | must be `sk_live_`; `sk_test_` refused | must be `sk_test_`; `sk_live_` refused |
+| Stripe price + webhook secret | live mode | test mode, from the same test-mode account |
+| `OBJECT_KEY_PREFIX` or own `OBJECT_BUCKET` | optional | **required** |
+| every other check | applies | applies identically |
+
+Stripe is refused in both directions rather than only checked for the right prefix: a live key on
+staging charges real cards from a test box, and a test key in production silently takes no money.
+The error names which of the two mistakes was made.
+
+`OBJECT_KEY_PREFIX` is prepended to every media key (`staging/workspaces/<id>/<asset>.<ext>`), so a
+staging environment can share the production bucket without ever writing into its namespace. Empty
+in production, where keys stay byte-for-byte what they have always been.
+
+For Resend and desktop metadata the validator can only check shape, not provenance — it cannot tell
+a staging API key from a production one. Use a separate Resend key restricted to a domain you
+control and route alerts away from the production on-call channel; see `.env.staging.example`, which
+spells out the safe value for each.
+
 ### Service root directories — railway.json is only read from the service's own root
 
 Railway reads `railway.json` from the **root directory configured on the service**, not from the
