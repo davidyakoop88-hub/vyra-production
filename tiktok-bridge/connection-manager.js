@@ -22,6 +22,7 @@
 
 const { fork } = require('child_process');
 const path = require('path');
+const crypto = require('crypto');
 
 const START_STAGGER_MS = 500; // wait between each bridge start — avoids TikTok rate-limiting a burst of connects
 const DEFAULT_MAX_BRIDGES = 5;
@@ -282,7 +283,74 @@ function createConnectionManager({
   return { startAll, syncOnce, startBridge, stopBridge, stopAll, stats };
 }
 
-module.exports = { createConnectionManager, accountKey, DEFAULT_MAX_BRIDGES };
+// ---- HTTP surface -------------------------------------------------------------------------
+// /status used to be unauthenticated and returned, per running bridge AND per queued workspace,
+// the workspace id and the streamer's TikTok username. On a service with a public domain that is
+// an open directory of every customer's TikTok account, readable by anyone who guesses the URL.
+//
+// Railway does need an endpoint it can health check without credentials — but it only needs to
+// know the process is up, not who is streaming. So the two are split: /health and /health/live
+// stay open and say nothing beyond "alive", and /status requires the same METRICS_TOKEN the API
+// uses for /api/internal/metrics and answers with counts only.
+//
+// A token shorter than 32 characters is refused rather than accepted: a half-configured service
+// must not end up easier to read than a locked one. The comparison is constant-time, so the
+// endpoint cannot be used as an oracle to recover the token a byte at a time.
+function tokenAccepted(supplied, expected) {
+  if (expected.length < 32 || supplied.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+}
+
+// Split out of the runtime block below so the auth and the response shape are testable without
+// binding a port or forking a real bridge.
+//   manager  — anything exposing stats()
+//   syncInfo — () => { lastSyncAt, lastSyncError, syncIntervalMs }, read fresh on every request
+//   token    — () => the expected bearer token, read fresh so a restart is not needed to rotate
+function createHttpHandler({
+  manager,
+  syncInfo = () => ({}),
+  token = () => String(process.env.METRICS_TOKEN || '')
+}) {
+  return function handle(req, res) {
+    const url = String(req.url || '').split('?')[0];
+    const json = (code, body) => {
+      res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify(body));
+    };
+
+    if (url === '/health' || url === '/health/live') return json(200, { ok: true, status: 'live' });
+
+    if (url === '/status') {
+      const supplied = String((req.headers && req.headers.authorization) || '').replace(/^Bearer\s+/i, '');
+      if (!tokenAccepted(supplied, String(token() || ''))) {
+        return json(401, { ok: false, error: 'Ogiltig metrics-token' });
+      }
+
+      const s = manager.stats();
+      const sync = syncInfo() || {};
+      // Built field by field and never spread from stats(): a field added to stats() later must not
+      // become public here by accident. s.bridges and s.waiting — the only two carrying workspace
+      // ids and usernames — are deliberately absent, and a test asserts they stay that way.
+      return json(200, {
+        ok: true,
+        activeBridges: s.totalBridges,
+        maxBridges: s.maxBridges,
+        atCapacity: s.atCapacity,
+        waitingCount: s.waitingCount,
+        restarts: s.restarts,
+        lastEventTime: s.lastEventTime,
+        lastSyncAt: sync.lastSyncAt === undefined ? null : sync.lastSyncAt,
+        lastSyncError: sync.lastSyncError === undefined ? null : sync.lastSyncError,
+        syncIntervalMs: sync.syncIntervalMs === undefined ? null : sync.syncIntervalMs,
+        at: Date.now()
+      });
+    }
+
+    return json(404, { ok: false, error: 'Hittades inte' });
+  };
+}
+
+module.exports = { createConnectionManager, accountKey, DEFAULT_MAX_BRIDGES, createHttpHandler, tokenAccepted };
 
 // ---- Fleet runtime — only runs when executed directly (`node connection-manager.js`), never on
 // require() (e.g. from tests), matching bridge.js's/server/index.js's same require.main guard.
@@ -330,34 +398,15 @@ if (require.main === module) {
   // bridges it already started keep streaming, so failing the check here would have Railway restart
   // a healthy fleet over a transient database blip. The database state is in the body instead.
   const PORT = Number(process.env.PORT || 4180);
-  const health = http.createServer((req, res) => {
-    const url = String(req.url || '').split('?')[0];
-    if (url === '/health' || url === '/health/live') {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ ok: true, status: 'live' }));
-    }
-    if (url === '/status') {
-      const s = manager.stats();
-      res.writeHead(200, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({
-        ok: true,
-        activeBridges: s.totalBridges,
-        maxBridges: s.maxBridges,
-        atCapacity: s.atCapacity,
-        waitingCount: s.waitingCount,
-        waiting: s.waiting,
-        restarts: s.restarts,
-        lastEventTime: s.lastEventTime,
-        lastSyncAt,
-        lastSyncError,
-        syncIntervalMs: SYNC_MS,
-        bridges: s.bridges,
-        at: Date.now()
-      }));
-    }
-    res.writeHead(404, { 'content-type': 'application/json' });
-    res.end(JSON.stringify({ ok: false, error: 'Hittades inte' }));
-  });
+  const health = http.createServer(createHttpHandler({
+    manager,
+    syncInfo: () => ({ lastSyncAt, lastSyncError, syncIntervalMs: SYNC_MS })
+  }));
+
+  // Without this the endpoint just answers 401 forever and looks broken rather than locked.
+  if (String(process.env.METRICS_TOKEN || '').length < 32) {
+    console.warn('[connection-manager] METRICS_TOKEN saknas eller är för kort — /status svarar 401 tills den sätts. /health påverkas inte.');
+  }
   health.listen(PORT, '0.0.0.0', () => console.log(`[connection-manager] Health/status lyssnar på :${PORT}`));
 
   console.log(`[connection-manager] Startar. MAX_BRIDGES=${manager.stats().maxBridges}. Synkar tiktok_connections var ${SYNC_MS} ms.`);
