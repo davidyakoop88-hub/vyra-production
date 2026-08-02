@@ -93,6 +93,34 @@ the fleet manager re-establishes every active workspace's bridge from Postgres w
 step. It depends on `migrate` (for the `tiktok_connections` table) and a healthy `api` (bridges
 forward events to it) before starting.
 
+### Registering a connection
+
+Nothing wrote to `tiktok_connections` until `PUT /api/workspaces/:workspaceId/tiktok-connection`
+existed — the table was read by the manager but never populated, so the cloud path could not be
+used at all. The endpoint (owner/admin/editor only) upserts one row per workspace:
+
+- `GET` returns the current row or `null`
+- `PUT {"username":"streamer"}` activates it — the username is normalised by
+  `normalizeTikTokUsername` (strips `@`, lowercases, and accepts only 2-24 chars of `a-z 0-9 . _`)
+  because the value becomes both a primary-key row and an argv entry for a forked bridge process
+- `DELETE` sets `active=false` rather than deleting, so the history of who connected survives
+
+In the browser, `live-client.js` calls these when there is no VYRA Desktop runtime, so
+**Anslut TikTok** in Studio now works on the web instead of throwing "Öppna VYRA Desktop".
+
+### Running the manager on Railway
+
+Railway builds one service per repo path, so the manager needs its own service pointing at
+`tiktok-bridge/Dockerfile` (whose `CMD` is already `node connection-manager.js`). Give it
+`DATABASE_URL` (same Postgres as the API), `VYRA_CLOUD_URL` (the API origin, e.g.
+`https://vyralive.app`), and `VYRA_INGEST_TOKEN` (must equal the API's `TIKTOK_INGEST_TOKEN`).
+`PROXY_LIST` is optional and disabled when empty — start without it and only add proxies once
+TikTok actually rate-limits the shared datacenter IP, which is what `proxy-manager.js` exists for.
+
+Note the manager starts a bridge for every `active` row at boot and keeps reconnecting, so an
+account that has stopped streaming still holds a process. That is fine for a handful of
+workspaces; revisit it before running a large fleet.
+
 ## OBS overlay links
 
 Create a dedicated link with **Säker OBS-länk** in Studio. Only a SHA-256 hash

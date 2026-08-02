@@ -6,7 +6,8 @@
   "main": "bridge.js",
   "scripts": {
     "start": "node bridge.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "manager": "node connection-manager.js"
   },
   "dependencies": {
     "tiktok-live-connector": "^2",

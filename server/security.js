@@ -12,4 +12,9 @@ function sessionCookie(value,maxAge){return`vyra_session=${encodeURIComponent(va
 function clearCookie(){return'vyra_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'}
 function safeText(v,max=120){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,max)}
 function validOverlayState(v){return !!(v&&typeof v==='object'&&!Array.isArray(v)&&Array.isArray(v.widgets)&&v.widgets.length<=500&&v.widgets.every(w=>w&&typeof w==='object'&&typeof w.id==='string'&&w.id.length>0&&w.id.length<=160))}
-module.exports={normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,safeText,validOverlayState};
+// TikTok usernames: 2-24 chars of a-z 0-9 . _ (TikTok's own rule), case-folded and with a
+// leading @ stripped so "@Alice" and "alice" are the same connection. Strict on purpose — the
+// value ends up as an argv entry for a forked bridge process and inside a Postgres primary key,
+// so anything outside this alphabet is rejected rather than sanitised into something surprising.
+function normalizeTikTokUsername(v){const raw=String(v||'').trim().replace(/^@+/,'').toLowerCase();return /^[a-z0-9._]{2,24}$/.test(raw)?raw:null}
+module.exports={normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,safeText,validOverlayState,normalizeTikTokUsername};

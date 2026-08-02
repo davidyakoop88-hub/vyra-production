@@ -79,6 +79,28 @@ function ingest(e){
   if(typeof routeLiveBattleEvent==='function')routeLiveBattleEvent(e);
   if(window.VyraActionEvent)liveEventTriggers(e).forEach(([trigger,payload])=>window.VyraActionEvent.handleEvent(trigger,payload));
 }
-if(!localRuntime){const unavailable=async()=>{throw Error('Öppna VYRA Desktop för att ansluta TikTok LIVE')};window.VyraLive={status:async()=>({ok:true,localRuntime:false,connection:{connected:false,state:'desktop-required'}}),connect:unavailable,disconnect:unavailable,send:unavailable,on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest};dispatchEvent(new CustomEvent('vyra-desktop-required'));return}
+// Webblaget (ingen VYRA Desktop): anslutningen registreras i molnet istallet for att oppnas harifran.
+// PUT lagger raden i tiktok_connections; tiktok-bridge/connection-manager.js ser den och startar en
+// bridge-process pa servern som skickar events till /api/events/tiktok/:workspaceId. Sjalva event-
+// stromen ut till widgets gar redan via SSE (base-widget.js), sa inget mer behovs pa klientsidan.
+if(!localRuntime){
+  const workspaceId=()=>window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.id||null;
+  const cloud=async(method,payload)=>{const id=workspaceId();
+    if(!id)throw Error('Logga in for att ansluta TikTok LIVE');
+    const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection`,
+      payload===undefined?{method}:{method,body:JSON.stringify(payload)});
+    return r};
+  const shape=c=>({ok:true,localRuntime:false,cloud:true,
+    connection:c&&c.active?{connected:true,state:'cloud',username:c.tiktok_username}
+                          :{connected:false,state:'idle'}});
+  window.VyraLive={
+    status:async()=>{try{const r=await cloud('GET');return shape(r.connection)}
+      catch{return{ok:true,localRuntime:false,cloud:true,connection:{connected:false,state:'idle'}}}},
+    connect:async username=>shape((await cloud('PUT',{username})).connection),
+    disconnect:async()=>shape((await cloud('DELETE')).connection),
+    send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
+    on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
+    mapEvent:liveEventTriggers,ingest};
+  dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
 const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
 async function poll(){try{let d=await json('/events?after='+last);for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{setTimeout(poll,650)}}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest};status().catch(()=>{});poll()})();
