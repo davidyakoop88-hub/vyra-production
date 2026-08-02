@@ -13,6 +13,11 @@
 // This file zeroes the *rendered* values in overlay mode only (studio.html?overlay=1, i.e. what
 // overlay.html loads for OBS). It never touches state.widgets, so nothing is saved, the editor is
 // unaffected, and the moment a real event arrives the normal update paths paint over these zeros.
+//
+// Scope: the ranking rows and the single-value widgets below — the families whose placeholder is
+// baked into the markup or into state.widgets. Goals, Gift Campaign and the video-widget text
+// layers invent theirs in a render-time fallback instead, and are handled at that level in
+// media.js; see the note further down for why DOM patching cannot work for them.
 (function () {
   'use strict';
   if (!new URLSearchParams(location.search).has('overlay')) return;
@@ -68,9 +73,13 @@
     { box: '.vyra-streak', name: '.streak-copy strong, .sframe-row strong', values: ['.streak-score b', '.sframe-row b'] },
     { box: '.battle-mvp', name: 'h2, .mvpf-row strong', values: ['.mvp-copy strong', '.mvpf-row b'] },
     { box: '.topgift-framed', name: '.tgf-plate strong', values: ['.tgf-plate em'] },
-    { box: '.vyra-fanlevel, .vyra-gifterlevel', name: 'strong, h2', values: ['em, b'] },
-    { box: '.vyra-followalert', name: 'strong, h2', values: ['em'] },
   ];
+  // Fan Level Up, Gifter Level Up and the Follower alert are deliberately absent. Earlier entries
+  // named .vyra-fanlevel/.vyra-gifterlevel/.vyra-followalert, which exist nowhere in the codebase —
+  // the real classes are .fan-level-up/.gifter-level-up/.follower-spotlight. Correcting them would
+  // still be wasted work: all three sit at opacity:0;visibility:hidden until an event triggers them,
+  // so their 'HeartRiser'/'ThunderGifter'/'Aurora Vale' placeholders are never on screen at rest,
+  // and by the time one IS on screen it is showing a real viewer.
 
   function zeroSingleValueWidgets(root) {
     SINGLE_WIDGETS.forEach(({ box, name, values }) => {
@@ -85,15 +94,13 @@
     });
   }
 
-  // Goals ship at 658/1000 and 43/50; only the current value is a placeholder — the target is a
-  // real setting the streamer chose, so it stays.
-  function zeroGoals(root) {
-    root.querySelectorAll('#current-value, .goal-current, .heart-current').forEach(el => {
-      if (/\d/.test(el.textContent || '')) setText(el, ZERO_NUM);
-    });
-    root.querySelectorAll('.goal-fill, .shaft-fill, .heart-fill').forEach(el => { setStyle(el, 'height', '0%'); setStyle(el, 'width', '0%') });
-    root.querySelectorAll('#percentage-value, .goal-percent').forEach(el => { setText(el, '0%') });
-  }
+  // Goals, Gift Campaign and the video-widget text layers are NOT handled here. Their placeholders
+  // come from a `??`/`||` fallback inside media.js's own renderers, so patching the DOM could not
+  // hold: this file disconnects on the first real event, and the next render() — a gift landing in
+  // campaign slot 1, say — repaints every other slot back to its demo value mid-stream. media.js
+  // suppresses those fallbacks in overlay mode instead (see VYRA_OVERLAY / ph / phv / phn there),
+  // which cannot come back. What this file still owns is the demo data that lives in the DOM or in
+  // state.widgets rather than in a render-time fallback, and so has no equivalent cure.
 
   let live = false, writing = false;   // flips on the first real event; after that the widgets own their values
 
@@ -103,7 +110,6 @@
     try {
       zeroRankingRows(document);
       zeroSingleValueWidgets(document);
-      zeroGoals(document);
     } catch (err) {
       console.warn('[vyra] live-zero-state:', err.message);
     } finally {

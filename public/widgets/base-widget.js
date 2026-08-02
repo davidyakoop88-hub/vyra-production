@@ -12,6 +12,19 @@
 // Any other param is available via VyraWidget.get(name, fallback).
 'use strict';
 (function(global){
+  // server/event-bus.js's cleanEvent() puts the avatar on `profileUrl` and the gift value on
+  // `value`, but every widget here — like the Studio widgets — was written against the desktop
+  // shape and reads `profileImage`/`coins`. Nothing in the client reads `profileUrl` at all, so
+  // without this every OBS widget rendered its placeholder avatar on live data. Mirrors
+  // normalizeCloudFields() in live-client.js; the two consumer families each need their own copy
+  // because the standalone widgets never load live-client.js.
+  function normalizeCloudFields(event){
+    if(event&&typeof event==='object'){
+      if(event.profileImage==null&&event.profileUrl)event.profileImage=event.profileUrl;
+      if(event.coins==null&&event.value!=null)event.coins=event.value;
+    }
+    return event;
+  }
 
   function get(name,fallback=''){
     const value=new URLSearchParams(location.search).get(name);
@@ -61,7 +74,7 @@
       }
       source.addEventListener('live',message=>{
         try{
-          const event=JSON.parse(message.data);
+          const event=normalizeCloudFields(JSON.parse(message.data));
           log('event mottaget',event.type,event);
           onEvent?.(event);
         }catch(err){

@@ -70,7 +70,22 @@ function normalizeUserFlags(e){
   e.teamLevel=Number(e.teamLevel||e.fanClubLevel||0);
   return e;
 }
+// The cloud pipeline and the desktop runtime disagree on two field names, and every widget was
+// written against the desktop shape. server/event-bus.js's cleanEvent() emits `profileUrl`, while
+// live-leaderboard.js, media.js and last-x-alerts.js all read `profileImage` — nothing in the whole
+// client reads `profileUrl`, so on vyralive.app every avatar silently stayed on test-profile.svg
+// while the same widget showed real photos in the desktop build. Same story for the gift value:
+// `value` on the wire, `coins` in most readers.
+//
+// Normalizing once here rather than at ~15 call sites keeps the widgets' shape as the single one
+// they were built for, and is a no-op on desktop where the fields already arrive named this way.
+function normalizeCloudFields(e){
+  if(e.profileImage==null&&e.profileUrl)e.profileImage=e.profileUrl;
+  if(e.coins==null&&e.value!=null)e.coins=e.value;
+  return e;
+}
 function ingest(e){
+  normalizeCloudFields(e);
   normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);

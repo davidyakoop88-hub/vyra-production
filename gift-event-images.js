@@ -45,8 +45,16 @@
       }
 
       if (widget.type === 'templateGiftCampaign') {
-        for (var index = 0; index < 6; index += 1) {
-          if (key(widget['giftName' + index]) !== key(giftName)) continue;
+        // Match against the slot names the widget actually SHOWS, defaults included. Reading
+        // widget.giftName<i> alone missed every untouched slot (undefined -> key '' -> no match),
+        // so a campaign only ever counted gifts whose names the streamer had retyped by hand.
+        var slots = typeof window.VyraCampaignItems === 'function'
+          ? window.VyraCampaignItems(widget)
+          : [];
+        // An unnamed incoming gift keys to '' and would otherwise match every empty slot at once.
+        var incoming = key(giftName);
+        for (var index = 0; incoming && index < slots.length; index += 1) {
+          if (key(slots[index].name) !== incoming) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];
           widget['giftCurrent' + index] =
             Number(widget['giftCurrent' + index] || 0) + Number(detail.count || 1);
