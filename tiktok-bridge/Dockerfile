@@ -14,6 +14,9 @@ USER vyra
 # without a listener Railway can restart (or refuse to route to) the very process running the
 # fleet. PORT is supplied by the platform; 4180 is only the local default.
 EXPOSE 4180
-# `npm run manager` rather than the bare node call, so the start command is the same one
-# documented for Railway and used locally.
-CMD ["npm","run","manager"]
+# Deliberately the direct node call, not `npm run manager`. docker-compose.production.yml runs this
+# image with read_only:true and only /tmp writable, and npm wants a writable cache/log directory —
+# the wrapper would risk failing the one service that uses this image. `npm run manager` is the
+# documented START COMMAND for the Railway service (set in the dashboard, where the filesystem is
+# writable); both run this exact same entrypoint.
+CMD ["node","connection-manager.js"]

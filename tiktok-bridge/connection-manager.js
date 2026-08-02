@@ -200,9 +200,13 @@ function createConnectionManager({
   //
   // Starts are staggered by `staggerMs` so a fleet restart doesn't fire a burst of connects at
   // TikTok all at once, and one workspace failing or being refused never stops the rest.
+  // ORDER BY updated_at: when the fleet is at capacity the rows that do not fit are refused, and
+  // without a deterministic order Postgres could hand back a different sequence every tick — so
+  // which workspace got the freed slot would be luck, and an unlucky one could wait indefinitely
+  // while later arrivals jumped ahead. Oldest connection first makes the queue fair and repeatable.
   async function syncOnce() {
     if (!pool) throw new Error('connection-manager: pool krävs för syncOnce()');
-    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true');
+    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true ORDER BY updated_at ASC, workspace_id ASC');
     const wanted = new Map(rows.map(r => [r.workspace_id, r.tiktok_username]));
     let started = 0, stopped = 0, refused = 0;
 
@@ -239,7 +243,7 @@ function createConnectionManager({
 
   async function startAll() {
     if (!pool) throw new Error('connection-manager: pool krävs för startAll()');
-    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true');
+    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true ORDER BY updated_at ASC, workspace_id ASC');
     for (const row of rows) {
       let entry = null;
       try {
