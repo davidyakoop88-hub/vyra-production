@@ -63,7 +63,7 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 }
 // 'likes' ingår eftersom bryggan skickar LIKE-events med type 'likes' (bridge.js) — event-bussens
 // TYPE_ALIASES normaliserar till 'like' vid publish, men valideringen här körs före aliaseringen.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member']);
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
@@ -76,6 +76,9 @@ const TTS_SYNTH_RATE_LIMIT=20,TTS_SYNTH_RATE_WINDOW_SECONDS=30;
 function validateTikTokIngestPayload(payload){
   const type=String(payload?.type||'').toLowerCase();
   if(!TIKTOK_INGEST_TYPES.has(type))throw Object.assign(new Error(`Ogiltig event-typ — måste vara en av: ${[...TIKTOK_INGEST_TYPES].join(', ')}`),{status:400});
+  // Room-level events (viewer count, battle score) describe the room, not a person, so the bridge
+  // sends them without a username — requiring one there rejected every single one with a 400.
+  if(TIKTOK_ROOM_TYPES.has(type))return;
   if(typeof payload?.username!=='string'||!payload.username.trim())throw Object.assign(new Error('Fältet "username" saknas eller är inte en sträng'),{status:400});
 }
 // Rate limit first (cheapest check, sheds load before touching Redis Streams/Pub-Sub or even

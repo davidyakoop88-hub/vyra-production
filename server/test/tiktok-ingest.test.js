@@ -16,8 +16,13 @@ function redisReachable(url){
   });
 }
 
-test('TIKTOK_INGEST_TYPES is exactly gift/like/likes/chat/follow/share/member',()=>{
-  assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),['chat','follow','gift','like','likes','member','share']);
+test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
+  // Widened 2026-08-02: the set was person-events only, but bridge.js also emits subscribe,
+  // viewer and battle. In production every one of those came back 400, so the cloud path
+  // silently lost viewer counts and battle scores that the desktop path has always had —
+  // a web/desktop parity break. Keep this list in sync with sendEvent() calls in bridge.js.
+  assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
+    ['battle','chat','follow','gift','like','likes','member','share','subscribe','viewer']);
 });
 
 // Regression: bryggan skickar LIKE-events som 'likes' — de måste passera valideringen (som körs
@@ -33,8 +38,8 @@ test('validateTikTokIngestPayload accepts every allowed type, case-insensitively
 });
 
 test('validateTikTokIngestPayload rejects a type outside the allowed set',()=>{
-  assert.throws(()=>validateTikTokIngestPayload({type:'battle',username:'Alice'}),/Ogiltig event-typ/);
-  assert.throws(()=>validateTikTokIngestPayload({type:'viewer',username:'Alice'}),/Ogiltig event-typ/); // internal alias target, not accepted raw here
+  assert.throws(()=>validateTikTokIngestPayload({type:'nonsense',username:'Alice'}),/Ogiltig event-typ/);
+  assert.throws(()=>validateTikTokIngestPayload({type:'',username:'Alice'}),/Ogiltig event-typ/);
   assert.throws(()=>validateTikTokIngestPayload({username:'Alice'}),/Ogiltig event-typ/); // missing type
 });
 
@@ -125,4 +130,27 @@ test('ingestTikTokEvent enforces max 100 events/second per workspace, scoped ind
   }finally{
     await eventBus.close().catch(()=>{});
   }
+});
+
+// --- Room-level events (added 2026-08-02) ---
+// The bridge emits viewer counts and battle scores with no username because they describe the
+// room, not a person. Every one of them was rejected with a 400 in production until the ingest
+// learned about them, which is what "Cloud-event misslyckades: Cloud HTTP 400" was.
+test('accepts the room-level types the bridge actually sends', () => {
+  assert.doesNotThrow(() => validateTikTokIngestPayload({ type: 'viewer', count: 42 }));
+  assert.doesNotThrow(() => validateTikTokIngestPayload({ type: 'battle', scoreUs: 10, scoreThem: 3 }));
+});
+
+test('accepts subscribe, which does carry a username', () => {
+  assert.doesNotThrow(() => validateTikTokIngestPayload({ type: 'subscribe', username: 'alice' }));
+});
+
+test('still requires a username for person-level events', () => {
+  for (const type of ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member', 'subscribe']) {
+    assert.throws(() => validateTikTokIngestPayload({ type }), /username/, `${type} must require a username`);
+  }
+});
+
+test('still rejects an unknown type', () => {
+  assert.throws(() => validateTikTokIngestPayload({ type: 'nonsense', username: 'alice' }), /Ogiltig event-typ/);
 });
