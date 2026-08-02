@@ -12,6 +12,9 @@ const event={
     type:TYPE_ALIASES[String(input?.type||'').toLowerCase()]||String(input?.type||'').toLowerCase(),
     userId:String(input?.userId||'').slice(0,160),
     username:String(input?.username||'').slice(0,120),
+    // The chat message itself. Without this field the bridge's comment never reached a browser:
+    // it arrives on `name`, which cleanEvent does not carry, so every chat consumer got ''.
+    comment:String(input?.comment||input?.name||'').slice(0,500),
     profileUrl:String(input?.profileUrl||input?.profileImage||'').slice(0,1200),
     giftId:String(input?.giftId||'').slice(0,160),
     giftName:String(input?.giftName||'').slice(0,160),

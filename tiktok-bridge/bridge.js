@@ -215,9 +215,15 @@ if (require.main === module) {
 
     connection.on(WebcastEvent.CHAT, data => {
       const comment = data.comment || '';
+      // `name` carries the comment for the desktop runtime, which has always read it there.
+      // `comment` is the field that survives server/event-bus.js's cleanEvent() — it has no `name`,
+      // so on the cloud path the chat text was dropped outright and TTS Chat, chat-triggered
+      // Actions and chatbot commands all received an empty string. Both readers do
+      // `ev.comment || ev.name`, so sending both keeps desktop and cloud on one shape.
       sendEvent(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', {
         ...N.baseUser(data),
         name: comment,
+        comment,
       }, data);
     });
 

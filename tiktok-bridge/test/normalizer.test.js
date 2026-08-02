@@ -8,7 +8,7 @@ test('gift streak is converted to total diamonds and keeps gift image',()=>{
 });
 test('cloud event preserves canonical identity and bounded values',()=>{
   const out=N.cloudEvent('evt-1','GIFT',{userId:'u1',username:'alex',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',coins:5,count:5},123);
-  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',at:123});
+  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',comment:'',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',at:123});
 });
 test('avatar picks the largest variant TikTok offers, not the 100x100 thumb',()=>{
   const all=N.giftFields({user:{userId:'u1',uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']},avatarMedium:{urlList:['https://img/medium.jpg']},avatarLarger:{urlList:['https://img/larger.jpg']}}});
@@ -41,4 +41,11 @@ test('fan club level reads user.fansClub.data.level and defaults to 0',()=>{
   assert.equal(withClub.fanClubLevel,12);
   const noClub=N.baseUser({user:{uniqueId:'alex'}});
   assert.equal(noClub.fanClubLevel,0);
+});
+
+// Regression: the chat text used to ride on `name`, which cleanEvent() does not carry, so every
+// browser-side chat consumer received an empty string on the cloud path.
+test('cloud event carries the chat comment through to the browser',()=>{
+  const out=N.cloudEvent('evt-2','CHAT',{userId:'u2',username:'mia',comment:'hej alla!'},456);
+  assert.equal(out.comment,'hej alla!');
 });
