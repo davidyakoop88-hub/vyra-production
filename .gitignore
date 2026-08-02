@@ -10,3 +10,9 @@ electron-app/dist/
 electron-app/dist2/
 electron-app/dist3/
 electron-app/dist4/
+
+# Secrets: real env files never get committed. The tracked *.example files are templates
+# with placeholder values only — everything else matching .env* stays local.
+.env
+.env.*
+!.env*.example
