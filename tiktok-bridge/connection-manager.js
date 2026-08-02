@@ -99,6 +99,36 @@ function createConnectionManager({ pool, spawnBridge = defaultSpawnBridge, stagg
   // for each, staggered by `staggerMs` so a fleet restart doesn't fire a burst of connects at
   // TikTok all at once. One workspace failing to start never stops the rest from starting —
   // matches startBridge()'s own isolation.
+  // Reconciles running bridges against the table in both directions: starts one for every active
+  // row that has no bridge (or whose username changed), and stops bridges whose row went inactive
+  // or was renamed. startAll() only ever ran at boot, so a connection registered afterwards was
+  // never picked up — this is what makes the connection API actually take effect.
+  async function syncOnce() {
+    if (!pool) throw new Error('connection-manager: pool krävs för syncOnce()');
+    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true');
+    const wanted = new Map(rows.map(r => [r.workspace_id, r.tiktok_username]));
+    let started = 0, stopped = 0;
+
+    for (const [workspaceId, entry] of [...bridges.entries()]) {
+      const want = wanted.get(workspaceId);
+      if (want === undefined || want !== entry.username) {
+        stopBridge(workspaceId);
+        stopped++;
+      }
+    }
+    for (const [workspaceId, username] of wanted) {
+      if (bridges.has(workspaceId)) continue;
+      try {
+        startBridge(workspaceId, username);
+        started++;
+      } catch (err) {
+        console.error(`[connection-manager] Kunde inte starta bridge för workspace ${workspaceId}:`, err.message);
+      }
+      await sleepFn(staggerMs);
+    }
+    return { started, stopped, running: bridges.size };
+  }
+
   async function startAll() {
     if (!pool) throw new Error('connection-manager: pool krävs för startAll()');
     const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true');
@@ -126,7 +156,7 @@ function createConnectionManager({ pool, spawnBridge = defaultSpawnBridge, stagg
     };
   }
 
-  return { startAll, startBridge, stopBridge, stopAll, stats };
+  return { startAll, syncOnce, startBridge, stopBridge, stopAll, stats };
 }
 
 module.exports = { createConnectionManager };
@@ -141,15 +171,35 @@ if (require.main === module) {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const manager = createConnectionManager({ pool });
 
-  manager.startAll()
-    .then(count => console.log(`[connection-manager] ${count} bridge(r) startade från tiktok_connections.`))
-    .catch(err => {
+  // Poll rather than start-once: with an empty table startAll() left nothing holding the event
+  // loop open, so the process exited immediately and a connection registered later was never seen.
+  // The interval keeps the manager alive AND makes connect/disconnect in Studio take effect within
+  // one cycle. A failed poll is logged and retried on the next tick instead of killing the fleet.
+  const SYNC_MS = Number(process.env.SYNC_INTERVAL_MS || 15000);
+  let syncing = false;
+
+  async function tick() {
+    if (syncing) return;
+    syncing = true;
+    try {
+      const { started, stopped, running } = await manager.syncOnce();
+      if (started || stopped) {
+        console.log(`[connection-manager] +${started} / -${stopped} bridge(r), ${running} aktiva.`);
+      }
+    } catch (err) {
       console.error('[connection-manager] Kunde inte hämta aktiva workspaces från Postgres:', err.message);
-      process.exitCode = 1;
-    });
+    } finally {
+      syncing = false;
+    }
+  }
+
+  console.log(`[connection-manager] Startar. Synkar tiktok_connections var ${SYNC_MS} ms.`);
+  tick();
+  const timer = setInterval(tick, SYNC_MS);
 
   async function shutdown(signal) {
     console.log(`[connection-manager] Stänger ner (${signal})...`);
+    clearInterval(timer);
     manager.stopAll();
     await pool.end().catch(() => {});
     process.exit(0);

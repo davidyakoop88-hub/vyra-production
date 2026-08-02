@@ -117,9 +117,16 @@ Railway builds one service per repo path, so the manager needs its own service p
 `PROXY_LIST` is optional and disabled when empty — start without it and only add proxies once
 TikTok actually rate-limits the shared datacenter IP, which is what `proxy-manager.js` exists for.
 
-Note the manager starts a bridge for every `active` row at boot and keeps reconnecting, so an
-account that has stopped streaming still holds a process. That is fine for a handful of
-workspaces; revisit it before running a large fleet.
+The manager polls `tiktok_connections` every `SYNC_INTERVAL_MS` (default 15000) and reconciles:
+it starts a bridge for any active row that has none, stops one whose row went inactive, and
+restarts one whose username changed. Before this it called `startAll()` exactly once at boot,
+which meant two things — a connection registered afterwards was never picked up, and with an
+empty table nothing held the event loop open so the process exited straight away.
+
+Note that a bridge stays up as long as its row is active, reconnecting even while the account is
+offline, so a workspace that has stopped streaming still holds a process. Fine for a handful of
+workspaces; before a large fleet the bridges should be tied to whether the account is actually
+live, since ~100 idle Node processes is several GB of RAM.
 
 ## OBS overlay links
 
