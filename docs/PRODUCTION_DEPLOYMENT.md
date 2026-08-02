@@ -110,23 +110,80 @@ In the browser, `live-client.js` calls these when there is no VYRA Desktop runti
 
 ### Running the manager on Railway
 
-Railway builds one service per repo path, so the manager needs its own service pointing at
-`tiktok-bridge/Dockerfile` (whose `CMD` is already `node connection-manager.js`). Give it
-`DATABASE_URL` (same Postgres as the API), `VYRA_CLOUD_URL` (the API origin, e.g.
-`https://vyralive.app`), and `VYRA_INGEST_TOKEN` (must equal the API's `TIKTOK_INGEST_TOKEN`).
-`PROXY_LIST` is optional and disabled when empty — start without it and only add proxies once
-TikTok actually rate-limits the shared datacenter IP, which is what `proxy-manager.js` exists for.
+The API and the manager must be **two separate Railway services**. They share nothing but the
+database: the API writes rows to `tiktok_connections`, the manager polls them and forks one bridge
+child process per active row. Putting them in one service means bridge memory pressure can OOM-kill
+the API, taking login and every widget down with it — the bridges are the part that scales with
+users, so they need their own memory budget.
 
-The manager polls `tiktok_connections` every `SYNC_INTERVAL_MS` (default 15000) and reconciles:
-it starts a bridge for any active row that has none, stops one whose row went inactive, and
-restarts one whose username changed. Before this it called `startAll()` exactly once at boot,
-which meant two things — a connection registered afterwards was never picked up, and with an
-empty table nothing held the event loop open so the process exited straight away.
+The manager service points at `tiktok-bridge/Dockerfile`, whose `CMD` is `npm run manager`
+(the same command you use locally).
+
+**Environment**
+
+| Variable | Value | Notes |
+|---|---|---|
+| `DATABASE_URL` | same Postgres as the API | how it discovers active connections |
+| `VYRA_CLOUD_URL` | the API origin, e.g. `https://vyralive.app` | where bridges post events |
+| `VYRA_INGEST_TOKEN` | must equal the API's `TIKTOK_INGEST_TOKEN` | |
+| `MAX_BRIDGES` | start at `5` | see the capacity note below |
+| `PORT` | supplied by Railway | the health/status listener binds to it |
+| `SYNC_INTERVAL_MS` | optional, default `15000` | how fast connect/disconnect takes effect |
+| `PROXY_LIST` | optional, disabled when empty | only once TikTok actually rate-limits the shared IP |
+
+**Leave `VYRA_SERVER_URL` unset in the cloud.** It points at the desktop build's local server
+(`server.ps1` on `127.0.0.1:4173`), which does not exist on Railway. It used to default to that
+address regardless, so every event, heartbeat, connect and disconnect fired a doomed POST and logged
+an error — one error line per event during a live stream, drowning the messages that matter. The
+bridge now skips the local post entirely when `VYRA_CLOUD_URL` is set and `VYRA_SERVER_URL` is not.
+Only set it if you deliberately want a bridge to also feed a local server.
+
+**Health check**
+
+Point Railway's health check at `/health` (returns `{"ok":true,"status":"live"}`).
+
+It deliberately reports 200 even while Postgres is unreachable. The manager process is alive and the
+bridges it already started keep streaming, so failing the check on a transient database blip would
+have Railway restart a healthy fleet. The database state is in the body of `/status` instead
+(`lastSyncError`), not in the health verdict.
+
+`/status` is the operational view:
+
+```json
+{"ok":true,"activeBridges":3,"maxBridges":5,"atCapacity":false,"waitingCount":0,
+ "waiting":[],"restarts":0,"lastEventTime":1785691939627,"lastSyncAt":1785691939000,
+ "lastSyncError":null,"syncIntervalMs":15000,"bridges":[...]}
+```
+
+Watch `atCapacity` and `waitingCount`: a non-zero `waitingCount` means real users are being refused
+and `MAX_BRIDGES` (or the plan) needs raising. A climbing `restarts` means a bridge is crash-looping.
+
+**Capacity — measure, do not guess**
+
+Each bridge is a full Node process, roughly 40–60 MB resident. `MAX_BRIDGES` is a hard ceiling on
+how many run at once; the manager refuses beyond it and reports the workspace as waiting rather than
+letting the container run out of memory. Refusal is controlled: already-running bridges are never
+touched, and a waiting workspace starts automatically on the next sync once a slot frees.
+
+Start at `MAX_BRIDGES=5`, run a load test with real streams, and read actual RSS per bridge before
+raising it. Leave the manager service clear headroom — the ceiling should be reached by the refusal
+path, never by the OOM killer.
+
+The manager polls `tiktok_connections` every `SYNC_INTERVAL_MS` and reconciles: it starts a bridge
+for any active row that has none, stops one whose row went inactive, and restarts one whose username
+changed. A bridge that exits unexpectedly frees its slot immediately and is retried with exponential
+backoff (5 s doubling to a 5 minute cap), so a permanently broken connection cannot spin in a restart
+loop. A bridge that stayed up for more than a minute has its backoff counter reset, so an ordinary
+reconnect carries no penalty. A stop we asked for is not treated as a crash.
+
+The same TikTok account is never given two processes, even if two different workspaces both
+configure it — the second is reported as waiting with reason `duplicate-account`. Two readers on one
+stream would duplicate every event downstream and give TikTok two connections to rate-limit.
 
 Note that a bridge stays up as long as its row is active, reconnecting even while the account is
-offline, so a workspace that has stopped streaming still holds a process. Fine for a handful of
-workspaces; before a large fleet the bridges should be tied to whether the account is actually
-live, since ~100 idle Node processes is several GB of RAM.
+offline, so a workspace that has stopped streaming still holds a process and a capacity slot. Fine
+for a handful of workspaces; before a large fleet the bridges should be tied to whether the account
+is actually live, since ~100 idle Node processes is several GB of RAM.
 
 ## OBS overlay links
 

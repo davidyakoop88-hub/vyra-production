@@ -24,12 +24,12 @@ test('starts a bridge for a connection registered after boot', async () => {
   const h = harness([]);
 
   let result = await h.manager.syncOnce();
-  assert.deepEqual(result, { started: 0, stopped: 0, running: 0 }, 'empty table starts nothing');
+  assert.deepEqual(result, { started: 0, stopped: 0, refused: 0, running: 0, waiting: 0 }, 'empty table starts nothing');
 
   h.setRows([{ workspace_id: 'ws-1', tiktok_username: 'piiikabom' }]);
   result = await h.manager.syncOnce();
 
-  assert.deepEqual(result, { started: 1, stopped: 0, running: 1 });
+  assert.deepEqual(result, { started: 1, stopped: 0, refused: 0, running: 1, waiting: 0 });
   assert.deepEqual(h.spawned, [{ workspaceId: 'ws-1', username: 'piiikabom' }]);
 });
 
@@ -40,7 +40,7 @@ test('stops the bridge when the row goes inactive', async () => {
   h.setRows([]);                        // DELETE sets active=false, so it drops out of the query
   const result = await h.manager.syncOnce();
 
-  assert.deepEqual(result, { started: 0, stopped: 1, running: 0 });
+  assert.deepEqual(result, { started: 0, stopped: 1, refused: 0, running: 0, waiting: 0 });
   assert.deepEqual(h.killed, [{ workspaceId: 'ws-1', username: 'piiikabom' }]);
 });
 
@@ -51,7 +51,7 @@ test('restarts the bridge when the username changes', async () => {
   h.setRows([{ workspace_id: 'ws-1', tiktok_username: 'newname' }]);
   const result = await h.manager.syncOnce();
 
-  assert.deepEqual(result, { started: 1, stopped: 1, running: 1 });
+  assert.deepEqual(result, { started: 1, stopped: 1, refused: 0, running: 1, waiting: 0 });
   assert.deepEqual(h.killed, [{ workspaceId: 'ws-1', username: 'oldname' }]);
   assert.deepEqual(h.spawned.at(-1), { workspaceId: 'ws-1', username: 'newname' });
 });
@@ -62,7 +62,7 @@ test('is idempotent — an unchanged table spawns nothing new', async () => {
   await h.manager.syncOnce();
   const result = await h.manager.syncOnce();
 
-  assert.deepEqual(result, { started: 0, stopped: 0, running: 1 });
+  assert.deepEqual(result, { started: 0, stopped: 0, refused: 0, running: 1, waiting: 0 });
   assert.equal(h.spawned.length, 1, 'must not respawn a bridge that is already running');
   assert.deepEqual(h.killed, []);
 });
@@ -80,7 +80,7 @@ test('handles several workspaces at once', async () => {
   ]);                                                     // ws-1 disconnected
   const result = await h.manager.syncOnce();
 
-  assert.deepEqual(result, { started: 1, stopped: 1, running: 2 });
+  assert.deepEqual(result, { started: 1, stopped: 1, refused: 0, running: 2, waiting: 0 });
   assert.deepEqual(h.killed, [{ workspaceId: 'ws-1', username: 'alice' }]);
   assert.deepEqual(h.spawned.at(-1), { workspaceId: 'ws-3', username: 'carol' });
 });
