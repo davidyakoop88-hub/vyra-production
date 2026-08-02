@@ -101,6 +101,31 @@ if(!localRuntime){
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
     mapEvent:liveEventTriggers,ingest};
+  // Subscribe to the workspace event stream. Without this Studio never saw a single live event in
+  // web mode: the desktop build gets them from its poll() loop against the local server, and OBS
+  // widgets open their own EventSource, but the Studio canvas had no source at all — so widgets
+  // sat on their placeholder data and only the auto-play flip animation moved.
+  let stream = null;
+  function openStream() {
+    const id = workspaceId();
+    if (!id || stream) return;
+    stream = new EventSource(`/api/workspaces/${id}/events/stream`);
+    // The server sends `event: live`, not a default message event, so onmessage never fires —
+    // base-widget.js listens the same way.
+    stream.addEventListener('live', message => {
+      let payload;
+      try { payload = JSON.parse(message.data) } catch { return }
+      if (!payload || payload.type === 'heartbeat') return;
+      ingest(payload);
+    });
+    // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
+    // login can open a fresh one rather than reusing a stream bound to the previous workspace.
+    stream.onerror = () => { if (stream && stream.readyState === EventSource.CLOSED) stream = null };
+  }
+  addEventListener('vyra-auth-ready', openStream);
+  openStream();
+  setTimeout(openStream, 2000);
+
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
 const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
 async function poll(){try{let d=await json('/events?after='+last);for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{setTimeout(poll,650)}}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest};status().catch(()=>{});poll()})();
