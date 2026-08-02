@@ -1,6 +1,7 @@
 'use strict';
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
+const {decideTikTokCapacity}=require('./capacity-gate');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
 const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
@@ -130,9 +131,18 @@ async function probeWrite(){
     // version would have passed on a disk-full or read-only replica — exactly the failure this is
     // here to catch. The transaction is always rolled back, so health_probe keeps its single row
     // forever and no health check ever grows the database.
-    const q=await client.query('UPDATE health_probe SET checked_at=now() WHERE id=1');
+    // FOR UPDATE first: taking a real row lock already fails on a read-only transaction or a hot
+    // standby, before any write is attempted.
+    const before=await client.query('SELECT checked_at FROM health_probe WHERE id=1 FOR UPDATE');
+    if(before.rowCount!==1){await client.query('ROLLBACK');return{ok:false,reason:'probe-row-missing'}}
+    // clock_timestamp(), not now(): now() is the transaction's start time and would be identical on
+    // a retry, so the probe could not prove the value actually moved. clock_timestamp() advances,
+    // and comparing before/after turns this from "an UPDATE was issued" into "a new value was
+    // really written" — which is the whole point of a full-disk test.
+    const after=await client.query('UPDATE health_probe SET checked_at=clock_timestamp() WHERE id=1 RETURNING checked_at');
+    const changed=after.rowCount===1&&String(after.rows[0].checked_at)!==String(before.rows[0].checked_at);
     await client.query('ROLLBACK');
-    return q.rowCount===1?{ok:true}:{ok:false,reason:'probe-row-missing'};
+    return changed?{ok:true}:{ok:false,reason:'probe-write-had-no-effect'};
   }catch(error){
     try{await client.query('ROLLBACK')}catch{}
     // 42P01 = undefined_table. That is not a read-only database, it is this build deployed before
@@ -154,7 +164,10 @@ async function checkMfaCode(c,user,code){if(user.mfa_secret_enc&&MFA.verify(MFA.
 async function cleanupPendingMedia(){try{const q=await pool.query("UPDATE media_assets SET status='deleted',deleted_at=now() WHERE id IN (SELECT id FROM media_assets WHERE status='pending' AND created_at<now()-interval '1 hour' LIMIT 25) RETURNING object_key");await Promise.allSettled(q.rows.map(row=>mediaStorage.remove(row.object_key)));if(q.rowCount)console.log(JSON.stringify({level:'info',event:'media_cleanup',count:q.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'media_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function cleanupAuthData(){try{const sessions=await pool.query("DELETE FROM sessions WHERE expires_at<now() OR (mfa_verified_at IS NULL AND created_at<now()-interval '30 minutes')"),tokens=await pool.query("DELETE FROM auth_tokens WHERE expires_at<now()-interval '7 days' OR consumed_at<now()-interval '7 days'"),audit=await pool.query("DELETE FROM audit_log WHERE created_at<now()-interval '180 days'");if(sessions.rowCount||tokens.rowCount||audit.rowCount)console.log(JSON.stringify({level:'info',event:'auth_cleanup',sessions:sessions.rowCount,tokens:tokens.rowCount,audit:audit.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'auth_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function deleteDueAccounts(){try{const q=await pool.query("SELECT id,email FROM users WHERE deletion_requested_at<=now()-interval '7 days' ORDER BY deletion_requested_at LIMIT 10");for(const user of q.rows){const media=await pool.query('SELECT m.object_key FROM media_assets m JOIN workspaces w ON w.id=m.workspace_id WHERE w.owner_user_id=$1',[user.id]);await Promise.all(media.rows.map(row=>mediaStorage.remove(row.object_key)));await tx(async c=>{await c.query('DELETE FROM notification_outbox WHERE recipient=$1',[user.email]);await c.query('DELETE FROM audit_log WHERE actor_user_id=$1',[user.id]);await c.query('DELETE FROM users WHERE id=$1',[user.id])});console.log(JSON.stringify({level:'info',event:'account_deleted',userId:S.digest(user.id).slice(0,12),at:new Date().toISOString()}))}}catch(error){console.error(JSON.stringify({level:'error',event:'account_deletion_failed',message:error.message,at:new Date().toISOString()}))}}
-const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});if(p==='/health/ready'&&req.method==='GET'){try{await pool.query('SELECT 1');
+const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
+// in a dashboard, and pointing it at a path that 404s marks the service unhealthy — an outage caused
+// by the config rather than the code. Both spellings answer so either is safe to configure.
+  if((p==='/health/ready'||p==='/api/health/ready')&&req.method==='GET'){try{await pool.query('SELECT 1');
     // Readiness has to fail on a database that reads but cannot write: that is precisely the state
     // the login outage ran in, and a read-only probe reported ready throughout it.
     const write=await probeWrite();
@@ -229,15 +242,13 @@ const server=http.createServer(async(req,res)=>{const started=Date.now(),request
       // no explanation anywhere they could see. An internal queue is not feedback.
       // Re-activating a workspace that already holds a row is always allowed: it occupies its slot
       // already, so it can never push the fleet past the limit.
-      const already=await pool.query('SELECT 1 FROM tiktok_connections WHERE workspace_id=$1 AND active=true',[workspaceId]);
-      if(!already.rowCount){
-        const limit=Number(process.env.MAX_BRIDGES||5);
-        const inUse=await pool.query('SELECT count(*)::int AS n FROM tiktok_connections WHERE active=true');
-        if(inUse.rows[0].n>=limit)return send(res,503,{ok:false,capacity:{inUse:inUse.rows[0].n,limit},
-          error:`Alla ${limit} live-platser ar upptagna just nu. Prova igen om en stund — en plats frigors sa fort en annan sandning avslutas.`});
-      }
-      const q=await pool.query('INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=$2,active=true,updated_at=now() RETURNING tiktok_username,active,updated_at',[workspaceId,username]);
-      return send(res,200,{ok:true,connection:q.rows[0]})}
+      const limit=Number(process.env.MAX_BRIDGES||5);
+      // The whole decision is one transaction: see server/capacity-gate.js for why the check and
+      // the write cannot be separate queries, and why it counts accounts rather than rows.
+      const decision=await tx(c=>decideTikTokCapacity(c,{workspaceId,username,limit}));
+      if(decision.refused==='duplicate')return send(res,409,{ok:false,error:decision.error});
+      if(decision.refused==='capacity')return send(res,503,{ok:false,capacity:{inUse:decision.inUse,limit},error:decision.error});
+      return send(res,200,{ok:true,connection:decision.connection})}
     if(req.method==='DELETE'){await pool.query('UPDATE tiktok_connections SET active=false,updated_at=now() WHERE workspace_id=$1',[workspaceId]);
       return send(res,200,{ok:true,connection:null})}
     return send(res,405,{ok:false,error:'Metoden stods inte'})}

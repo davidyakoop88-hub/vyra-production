@@ -138,6 +138,18 @@ an error — one error line per event during a live stream, drowning the message
 bridge now skips the local post entirely when `VYRA_CLOUD_URL` is set and `VYRA_SERVER_URL` is not.
 Only set it if you deliberately want a bridge to also feed a local server.
 
+**Migration runs before the deploy takes traffic**
+
+`server/railway.json` sets `preDeployCommand: npm run migrate`, so the schema is applied by the
+deployment itself rather than by someone remembering to open a console. This matters now that
+`/health/ready` probes a write against `health_probe`: a build that starts serving readiness before
+that table exists answers 503 and the platform stops routing to it. If the migration fails the
+deploy fails and the previous version keeps serving, which is the outcome you want.
+
+The migration is idempotent (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT
+EXISTS`, `INSERT ... ON CONFLICT DO NOTHING`), and CI proves it by running it twice, so re-running it
+on every deploy is safe.
+
 **Health check**
 
 Point Railway's health check at `/health` (returns `{"ok":true,"status":"live"}`).
