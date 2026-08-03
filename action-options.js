@@ -10,7 +10,7 @@
     host.innerHTML = '';
     const el = document.createElement('div');
     el.className = `vyra-action-alert ${c.alertStyle || 'premium'} ${c.alertPosition || 'bottom'}${payload.profileImage ? ' has-avatar' : ''}`;
-    if (payload.profileImage) { const img = document.createElement('img'); img.className = 'vaa-avatar'; img.src = payload.profileImage; el.append(img); }
+    if (payload.profileImage) { const img = document.createElement('img'); img.className = 'vaa-avatar'; img.src = VyraSafe.src(payload.profileImage); el.append(img); }
     const text = document.createElement('span'); text.className = 'vaa-text'; text.textContent = fill(c.alertText || 'Tack {username} för {giftname}!', payload); el.append(text);
     const bkColor=(own,field,fallback)=>(c.inheritBrandKit&&state.brandKit&&state.brandKit[field])?state.brandKit[field]:(own||fallback);
     el.style.cssText = `--alert-color:${bkColor(c.alertColor,'text','#fff')};--alert-bg:${bkColor(c.alertBackground,'background','#16091d')};--alert-accent:${bkColor(c.alertAccent,'highlight','#ff3eaa')};--alert-size:${c.alertSize||28}px;--alert-font:${c.inheritBrandKit&&state.brandKit?.fontFamily||c.alertFont||'Inter,Arial,sans-serif'}`;

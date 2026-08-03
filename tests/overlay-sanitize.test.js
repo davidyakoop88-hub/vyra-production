@@ -51,8 +51,12 @@ const HOSTILE_URL = [
 // is inert. What must not change is the shape of the markup — the same number of tag boundaries and
 // attribute delimiters as when the value is empty. If the payload cannot open a tag or close an
 // attribute, it cannot introduce an element or a handler.
-function assertInert(build, payload, label) {
-  const empty = build('');
+// `benign` is the baseline value. It defaults to the empty string, but a template that branches on
+// its input — the pickers render <i>👤</i> instead of <img> when there is no avatar — needs a real
+// value, or the comparison is against a different shape rather than against the same shape with a
+// hostile value in it.
+function assertInert(build, payload, label, benign = '') {
+  const empty = build(benign);
   const hostile = build(payload);
   const count = (s, re) => (s.match(re) || []).length;
   assert.equal(count(hostile, /</g), count(empty, /</g), `${label}: en ny tagg öppnades`);
@@ -208,4 +212,94 @@ test('the overlay only writes the layout side-tables it owns', () => {
   assert.deepEqual(overlay.slice().sort(), cloud.slice().sort(), 'listorna har glidit isär');
   assert.ok(!overlay.some(k => /token|session|auth|access/i.test(k)),
     'en autentiseringsnyckel finns i listan');
+});
+
+// ---- the four sinks the first pass missed --------------------------------------------------------
+// The seen-users and seen-emotes pickers in Actions & Events render straight from the lists
+// live-client.js's recordSeenUser/recordSeenEmote build out of live events, so a viewer's display
+// name and avatar URL reached innerHTML there too — a second, quieter copy of the same hole.
+// action-options.js assigns an event avatar to .src, and premium-final.js shipped a helper called
+// safeImg that neither escaped nor validated anything. Premium widgets are not loaded today; the
+// helper is fixed now precisely so it cannot ship broken later.
+const SINKS = [
+  ['action-event-advanced.js', 'seen-users-väljaren', [
+    /data-username="\$\{VyraSafe\.text\(u\.username\)\}"/,
+    /title="\$\{VyraSafe\.text\(u\.username\)\}"/,
+    /src="\$\{VyraSafe\.url\(u\.profileImage\)\}"/,
+    /<span>\$\{VyraSafe\.text\(u\.name\|\|u\.username\)\}<\/span>/
+  ]],
+  ['action-event-advanced.js', 'emote-väljaren', [
+    /data-id="\$\{VyraSafe\.text\(e\.id\)\}"/,
+    /src="\$\{VyraSafe\.url\(e\.image\)\}"/
+  ]],
+  ['action-options.js', 'alert-avataren', [/img\.src = VyraSafe\.src\(payload\.profileImage\)/]],
+  ['premium-final.js', 'premium safeImg', [
+    /src="\$\{VyraSafe\.url\(src,fallback\)\}"/,
+    /this\.src='\$\{VyraSafe\.url\(fallback\)\}'/
+  ]]
+];
+
+for (const [file, label, patterns] of SINKS) {
+  test(`${label} i ${file} går genom VyraSafe`, () => {
+    const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    patterns.forEach(re => assert.match(source, re, `${label}: ${re} saknas`));
+  });
+}
+
+test('seen-user-väljaren skapar ingen markup av ett fientligt namn', () => {
+  // The picker's real template, with the helper applied exactly as the file applies it.
+  const button = u => `<button type="button" class="ae-user-choice" ` +
+    `data-username="${VyraSafe.text(u.username)}" title="${VyraSafe.text(u.username)}">` +
+    `${u.profileImage ? `<img loading="lazy" src="${VyraSafe.url(u.profileImage)}">` : '<i>👤</i>'}` +
+    `<span>${VyraSafe.text(u.name || u.username)}</span></button>`;
+  for (const [label, payload] of HOSTILE_TEXT) {
+    assertInert(v => button({ username: v, name: v, profileImage: 'assets/images/test-profile.svg' }),
+      payload, `seen-user ${label}`);
+  }
+  for (const [label, payload] of HOSTILE_URL) {
+    assertInert(v => button({ username: 'jokero', name: 'Jokero', profileImage: v }),
+      payload, `seen-user avatar ${label}`, 'assets/images/test-profile.svg');
+    assertNoExecutableUrl(button({ username: 'jokero', name: 'Jokero', profileImage: payload }),
+      `seen-user avatar ${label}`);
+  }
+});
+
+test('emote-väljaren skapar ingen markup av ett fientligt emote-ID eller bild', () => {
+  const button = e => `<button type="button" class="ae-emote-choice" ` +
+    `data-id="${VyraSafe.text(e.id)}" title="${VyraSafe.text(e.id)}">` +
+    `${e.image ? `<img loading="lazy" src="${VyraSafe.url(e.image)}">` : '❓'}</button>`;
+  for (const [label, payload] of HOSTILE_TEXT) {
+    assertInert(v => button({ id: v, image: 'assets/gifts/part1/gifts/0001_Rose.png' }), payload,
+      `emote ${label}`);
+  }
+  for (const [label, payload] of HOSTILE_URL) {
+    assertInert(v => button({ id: 'e1', image: v }), payload, `emote-bild ${label}`,
+      'assets/gifts/part1/gifts/0001_Rose.png');
+    assertNoExecutableUrl(button({ id: 'e1', image: payload }), `emote-bild ${label}`);
+  }
+});
+
+test('premium safeImg bryter varken src eller onerror', () => {
+  // Two attributes from one value, and the second is a single-quoted JS string inside an attribute.
+  const safeImg = (src, fallback) =>
+    `src="${VyraSafe.url(src, fallback)}" onerror="this.onerror=null;this.src='${VyraSafe.url(fallback)}'"`;
+  const FALLBACK = 'assets/images/test-profile.svg';
+  for (const [label, payload] of [...HOSTILE_URL, ...HOSTILE_TEXT]) {
+    assertInert(v => `<img ${safeImg(v, FALLBACK)}>`, payload, `safeImg ${label}`);
+    assertNoExecutableUrl(`<img ${safeImg(payload, FALLBACK)}>`, `safeImg ${label}`);
+    // The handler must still be exactly one statement pair, not a payload-extended one.
+    const markup = `<img ${safeImg(payload, FALLBACK)}>`;
+    assert.equal((markup.match(/ onerror="/g) || []).length, 1, `safeImg ${label}: dubbel onerror`);
+  }
+});
+
+test('varje sink laddas efter overlay-sanitize.js', () => {
+  // These four files are pulled in by media.js's bundle, which studio.html loads after the helper.
+  const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
+  for (const file of ['action-event-advanced.js', 'action-options.js']) {
+    assert.match(media, new RegExp(file.replace('.', '\.')), `${file} laddas inte av media.js`);
+  }
+  const html = fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8');
+  assert.ok(html.indexOf('overlay-sanitize.js') < html.indexOf('media.js?'),
+    'hjälparen laddas efter bundlen som drar in sinkarna');
 });

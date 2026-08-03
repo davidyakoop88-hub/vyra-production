@@ -8,7 +8,12 @@
   };
   const GOALS={crystal:'Crystal Path',celestial:'Celestial Journey',royal:'Royal Community',pulse:'Neon Pulse',garden:'Garden Growth',portal:'Portal Progress',constellation:'Community Constellation'};
   const fallbackProfile='assets/images/test/test-profile.png',fallbackGift='assets/gifts/part1/gifts/0001_Rose.png';
-  const safeImg=(src,fallback)=>`src="${src||fallback}" onerror="this.onerror=null;this.src='${fallback}'"`;
+  // Named safeImg but neither escaped nor validated anything: it interpolated the URL straight into
+  // src="…" and again into an inline onerror handler, so an avatar URL carrying a quote closed both
+  // attributes. Premium widgets are not loaded today, which is exactly why this had to be fixed
+  // before they ship rather than after. Both slots now go through VyraSafe.url — the fallback too,
+  // because it ends up inside a single-quoted JS string in the handler.
+  const safeImg=(src,fallback)=>`src="${VyraSafe.url(src,fallback)}" onerror="this.onerror=null;this.src='${VyraSafe.url(fallback)}'"`;
 
   vyraStreak=function(w){let style=w.streakTheme||'liquid',value=w.dataValue||18;return `<div class="widget vyra-streak premium-streak streak-${style}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||520}px;--streak:${w.accent||STREAKS[style]?.[1]||'#d9a441'};--speed:${w.streakSpeed||1};--gift-size:${w.giftSize||64}px;--streak-glow:${w.streakGlow??50}%;zoom:${w.widgetScale||1}"><div class="streak-identity"><div class="streak-flip"><div class="streak-profile-face"><img ${safeImg(w.profileImage,fallbackProfile)}></div><div class="streak-gift-face"><img ${safeImg(w.giftImage,fallbackGift)}></div></div><div class="streak-copy"><small>${w.templateTitle||'TOP STREAK'}</small><strong>${VyraSafe.text(w.dataName,'@StreamQueen')}</strong></div></div><div class="streak-score"><b>${w.streakPrefix??'×'}${value}</b><span>${w.streakLabel||'STREAK'}</span></div><div class="streak-mechanism"><i></i><i></i><i></i><i></i><i></i><em>GOOD</em><em>GREAT</em><em>AMAZING</em><em>LEGENDARY</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`};
 
