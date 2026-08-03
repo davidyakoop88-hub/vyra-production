@@ -47,6 +47,20 @@ function giftFields(data){
   const coinsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
   return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};
 }
+// tiktok-live-proto renamed the like fields in v3, which is the version tiktok-live-connector 2.4.0
+// imports: likeCount -> count, totalLikeCount -> total, and total is now a STRING rather than a
+// number. Reading only the old names produced 0 for every like in production — 251 of 251 — so no
+// viewer could ever reach a leaderboard. The library README still shows the v1/v2 names, so both
+// are read here and the shape of the socket payload stops mattering.
+//
+// count  = the increment for THIS event. The only value a leaderboard may accumulate.
+// points = TikTok's running room-wide total. Carried for display, never summed: adding a running
+//          total once per event would multiply every tally by the number of events received.
+function likeFields(data){
+  return{...baseUser(data),
+    count:number(data?.count??data?.likeCount,1e9),
+    points:number(data?.total??data?.totalLikeCount,1e12)};
+}
 function battleFields(data){
   const battle=data?.battleInfo||data?.battle||data||{};
   return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battle?.status||battle?.battleStatus||'',64)};
@@ -54,4 +68,4 @@ function battleFields(data){
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
-module.exports={text,number,profileImageOf,identityOf,baseUser,giftFields,battleFields,cloudEvent};
+module.exports={text,number,profileImageOf,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};
