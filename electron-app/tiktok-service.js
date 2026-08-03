@@ -18,7 +18,8 @@ function number(value, max = Number.MAX_SAFE_INTEGER) {
 function avatarOf(data) {
   const user = data?.user || data;
   return text(
-    user?.avatarLarger?.urlList?.[0] || user?.avatarLarger?.urlListList?.[0]
+    user?.avatarLarge?.urlList?.[0] || user?.avatarLarge?.urlListList?.[0]
+    || user?.avatarLarger?.urlList?.[0] || user?.avatarLarger?.urlListList?.[0]
     || user?.avatarMedium?.urlList?.[0] || user?.avatarMedium?.urlListList?.[0]
     || data?.profilePictureUrl || user?.profilePictureUrl
     || user?.avatarThumb?.urlList?.[0] || user?.avatarThumb?.urlListList?.[0]
@@ -50,7 +51,7 @@ function baseUser(data) {
 }
 
 function eventKey(type, data, fields) {
-  const nativeId = data?.msgId || data?.messageId || data?.logId || data?.id;
+  const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
   return nativeId
     ? `${type}:${nativeId}`
     : `${type}:${fields.username || ''}:${fields.giftName || ''}:${fields.count || ''}:${Math.floor(Date.now() / 1000)}`;
@@ -90,12 +91,17 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       emit(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', { ...baseUser(data), name: comment }, data);
     });
     connection.on(WebcastEvent.GIFT, data => {
-      if (data?.giftType === 1 && !data?.repeatEnd) return;
+      // v3 keeps the type in gift.type and repeatEnd as a number; older shapes kept both flat.
+      const streakable = (data?.gift?.type ?? data?.giftType ?? data?.giftDetails?.giftType) === 1;
+      const finalFrame = data?.repeatEnd === undefined ? true : !!Number(data.repeatEnd);
+      if (streakable && !finalFrame) return;
       emit('gift', {
         ...baseUser(data),
         giftName: text(data?.giftName || data?.gift?.name, 160),
         giftImage: text(data?.giftPictureUrl || data?.gift?.image?.url_list?.[0], 2048),
-        coins: number(data?.diamondCount || data?.gift?.diamond_count, 1e9),
+        // Total diamond cost of the forwarded event, identical to the cloud path. Reading only
+        // diamondCount made the same gift worth repeatCount times less over the desktop connection.
+        coins: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         count: number(data?.repeatCount || 1, 1e7)
       }, data);
     });
