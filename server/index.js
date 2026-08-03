@@ -108,6 +108,11 @@ async function overlayAccess(raw){if(!raw||raw.length<32)return null;const q=awa
 async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=null){
   accessToken=accessToken||u.pathname.match(/^\/api\/overlay-access\/([^/]+)\/events\/stream$/)?.[1]||null;
   res.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache, no-transform','connection':'keep-alive','x-accel-buffering':'no'});
+  // writeHead alone does not put the header block on the socket — Node holds it until the first
+  // chunk. On a quiet stream that is up to one heartbeat, 30 seconds, during which the client has an
+  // open connection it cannot tell is open, and any proxy in between sees a request with no response
+  // yet. Flushing costs nothing and makes "connected" mean connected.
+  res.flushHeaders();
   // The only thing that writes to this response. GoalSse.sseChunk() decides what a message becomes,
   // so the overlay rule is applied BEFORE any bytes exist — on the replay path below as well as the
   // live one — and null means silence rather than an error the client could probe.

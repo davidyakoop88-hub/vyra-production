@@ -114,8 +114,24 @@ test.after(async () => {
 // several assertions below are about what is NOT in it.
 async function openStream(token) {
   const controller = new AbortController();
-  const res = await fetch(`${base}/api/overlay-access/${token}/events/stream`,
-    { headers: { accept: 'text/event-stream' }, signal: controller.signal });
+  // The head has to arrive on its own, before any event: a stream that only becomes visible when
+  // the first message happens to be published is not an open connection. Guarded so a server that
+  // holds the header fails here, quickly and by name, instead of as a 30 s test timeout.
+  let timer;
+  const guard = new Promise((_, reject) => { timer = setTimeout(() => reject(
+    new Error('SSE-huvudet kom aldrig inom 5 s — flushas headern?')), 5000) });
+  let res;
+  try {
+    res = await Promise.race([
+      fetch(`${base}/api/overlay-access/${token}/events/stream`,
+        { headers: { accept: 'text/event-stream' }, signal: controller.signal }),
+      guard]);
+  } catch (error) {
+    // The server has already subscribed by now; without this the connection — and its subscription
+    // — would linger and take every later test's quiet() with it.
+    controller.abort();
+    throw error;
+  } finally { clearTimeout(timer) }
   const stream = { status: res.status, text: '', close: () => controller.abort() };
   if (res.status === 200) {
     const reader = res.body.getReader(), decoder = new TextDecoder();
