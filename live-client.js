@@ -84,7 +84,19 @@ function normalizeCloudFields(e){
   if(e.coins==null&&e.value!=null)e.coins=e.value;
   return e;
 }
-function ingest(e){
+// Every way an event can reach a consumer funnels through ingest(): the SSE stream, the desktop
+// poll loop, and live-leaderboard.js's history fetch. The gate therefore belongs here and nowhere
+// else — a second gate downstream would be a second place to forget.
+//
+// frameId is the SSE frame's own id, which the server stamps with the Redis stream id
+// (server/index.js: `id: ${item.streamId}`). It is the only identifier guaranteed unique and ordered
+// per workspace; the bridge's own event.id is the fallback for the desktop path, which has no
+// stream behind it.
+const eventGate=window.VyraDedupe
+  ? window.VyraDedupe.create(sessionStorage,'vyra-seen-events')
+  : {accept:()=>true};
+function ingest(e,frameId){
+  if(!eventGate.accept(frameId||e?.id))return;
   normalizeCloudFields(e);
   normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
@@ -131,7 +143,7 @@ if(!localRuntime){
       let payload;
       try { payload = JSON.parse(message.data) } catch { return }
       if (!payload || payload.type === 'heartbeat') return;
-      ingest(payload);
+      ingest(payload, message.lastEventId);
     });
     // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
     // login can open a fresh one rather than reusing a stream bound to the previous workspace.

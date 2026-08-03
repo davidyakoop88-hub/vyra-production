@@ -170,7 +170,16 @@
   }
 
   // Backfill from whatever's still in the server's rolling event buffer, then keep listening live.
-  fetch('/api/events?after=0').then(r => r.json()).then(d => { (d.events || []).forEach(record); }).catch(() => {});
+  // The history fetch used to call record() directly, which meant it bypassed the one place that
+  // knows what this source has already handled — so a reload re-counted the whole rolling buffer
+  // into the localStorage day buckets. It goes through ingest() now like every other source of
+  // events; the vyra-live-event listener below then receives whatever survives the gate.
+  fetch('/api/events?after=0').then(r => r.json()).then(d => {
+    (d.events || []).forEach(event => {
+      if (typeof window.VyraLive?.ingest === 'function') window.VyraLive.ingest(event);
+      else record(event);
+    });
+  }).catch(() => {});
   addEventListener('vyra-live-event', e => record(e.detail || {}));
   setInterval(updateLiveLeaderboards, 1000);
 
