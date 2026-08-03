@@ -11,7 +11,17 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 test('cloud Studio never polls the desktop TikTok endpoints', () => {
   const liveClient = read('live-client.js');
   assert.match(liveClient, /localRuntime=\['127\.0\.0\.1','localhost'\]\.includes\(location\.hostname\)/);
-  assert.match(liveClient, /Öppna VYRA Desktop för att ansluta TikTok LIVE/);
+  // This used to assert the "Öppna VYRA Desktop för att ansluta TikTok LIVE" message, which the
+  // cloud path deliberately removed when web mode learned to connect on its own — so the test has
+  // been red on main ever since, describing a product decision that no longer holds. A permanently
+  // red suite is what let f7792bf ship a feature that never loaded, so it asserts the CURRENT
+  // contract instead: in web mode Studio takes its events from the workspace SSE stream and returns
+  // before the desktop poll loop is ever reached.
+  assert.match(liveClient, /new EventSource\(`\/api\/workspaces\/\$\{id\}\/events\/stream`\)/);
+  const cloudBranch = liveClient.indexOf('if(!localRuntime){');
+  const desktopPoll = liveClient.indexOf("json('/events?after='");
+  assert.ok(cloudBranch !== -1 && desktopPoll !== -1, 'både moln- och desktopvägen ska finnas kvar');
+  assert.ok(cloudBranch < desktopPoll, 'molnvägen måste returnera innan desktop-pollningen definieras');
 });
 
 test('Studio cannot claim a demo TikTok connection', () => {
