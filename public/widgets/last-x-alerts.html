@@ -381,8 +381,8 @@
     liker:{
       label:'LAST LIKER',events:['like','likes'],multiAccent:'#ff58d6',
       themes:{neon:'#ff58d6',blue:'#4fc3ff',lime:'#a3e635'},
-      message:e=>`SENT ${(nOf(e.count,e.value)||1).toLocaleString('sv-SE')} LIKES`,
-      lines:e=>({value:`${(nOf(e.count,e.value)||1).toLocaleString('sv-SE')} LIKES`,detail:''})
+      message:e=>`SENT ${(nOf(e.count,e.likes)||1).toLocaleString('sv-SE')} LIKES`,
+      lines:e=>({value:`${(nOf(e.count,e.likes)||1).toLocaleString('sv-SE')} LIKES`,detail:''})
     },
     sharer:{
       label:'LAST SHARER',events:['share'],multiAccent:'#2dd4bf',
