@@ -143,6 +143,16 @@ async function applyEvent(pool, workspaceId, event, opts = {}) {
   });
 }
 
+// pg returns bigint as a string so precision is not silently lost. Every one of these fits in a
+// Number, and a caller comparing progress === 0 must not fail against "0" depending on which
+// function returned the row — so both readGoal and resetGoal pass through here.
+function normalizeGoalRow(row) {
+  if (!row) return null;
+  return { ...row,
+    epoch: Number(row.epoch), baseline: Number(row.baseline),
+    progress: Number(row.progress), target: Number(row.target) };
+}
+
 // Reset clears progress and moves the goal into a new epoch. baseline is untouched — "start value"
 // and "reset" are separate ideas, and a reset must not silently discard the number the streamer typed.
 // The row lock is what serialises this against a concurrent event: whichever commits first, the other
@@ -158,7 +168,7 @@ async function resetGoal(pool, overlayId, widgetId) {
         WHERE overlay_id = $1 AND widget_id = $2
         RETURNING *`,
       [overlayId, widgetId]);
-    return q.rows[0] || null;
+    return normalizeGoalRow(q.rows[0]);
   });
 }
 
@@ -178,10 +188,9 @@ async function upsertGoal(pool, { overlayId, widgetId, metric, baseline = 0, tar
 async function readGoal(pool, overlayId, widgetId) {
   const q = await pool.query(
     'SELECT * FROM goal_runtime WHERE overlay_id=$1 AND widget_id=$2', [overlayId, widgetId]);
-  const row = q.rows[0];
+  const row = normalizeGoalRow(q.rows[0]);
   if (!row) return null;
-  return { ...row, baseline: Number(row.baseline), progress: Number(row.progress),
-    target: Number(row.target), value: Number(row.baseline) + Number(row.progress) };
+  return { ...row, value: row.baseline + row.progress };
 }
 
 // Batched so a long vacuum pause cannot block ingest, and bounded by a window wider than the Redis
@@ -197,6 +206,6 @@ async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000 } = {})
 
 module.exports = {
   METRICS, CLAIM_SQL, incrementSql,
-  goalAmount, contributionsFor,
+  goalAmount, contributionsFor, normalizeGoalRow,
   applyEvent, resetGoal, upsertGoal, readGoal, sweepApplied
 };

@@ -264,6 +264,7 @@ db('visat värde är baseline + progress, och baseline rörs aldrig av event', a
 });
 
 db('samma event-ID ökar målet exakt en gång', async () => {
+  await goalsOnly([['w1', 'follows']]);
   const before = (await G.readGoal(pool, OVERLAY, 'w1')).progress;
   const first = await G.applyEvent(pool, WS, { id: 'dup-1', type: 'follow' });
   const second = await G.applyEvent(pool, WS, { id: 'dup-1', type: 'follow' });
@@ -274,6 +275,7 @@ db('samma event-ID ökar målet exakt en gång', async () => {
 });
 
 db('event-ID och uppräkning ligger i samma transaktion', async () => {
+  await goalsOnly([['w1', 'follows']]);
   // The increment is made to fail after the id row is inserted. Both must roll back, or a lost
   // increment becomes permanent: the id is spent and the event can never be applied again.
   const before = await G.readGoal(pool, OVERLAY, 'w1');
@@ -289,8 +291,11 @@ db('event-ID och uppräkning ligger i samma transaktion', async () => {
 });
 
 db('reset nollar progress, behåller baseline och höjer epoch', async () => {
-  const before = await G.readGoal(pool, OVERLAY, 'w1');
-  const after = await G.resetGoal(pool, OVERLAY, 'w1');
+  // Builds its own goal: no test may depend on a row an earlier one happened to leave behind.
+  await goalsOnly([['w-reset', 'follows']]);
+  await G.applyEvent(pool, WS, { id: 'reset-seed', type: 'follow' });
+  const before = await G.readGoal(pool, OVERLAY, 'w-reset');
+  const after = await G.resetGoal(pool, OVERLAY, 'w-reset');
   assert.equal(after.progress, 0);
   assert.equal(after.baseline, before.baseline, 'reset ändrade baseline');
   assert.equal(after.epoch, before.epoch + 1, 'epoch höjdes inte');
@@ -298,6 +303,7 @@ db('reset nollar progress, behåller baseline och höjer epoch', async () => {
 });
 
 db('två samtidiga event tappar ingen ökning', async () => {
+  await goalsOnly([['w1', 'follows']]);
   await G.resetGoal(pool, OVERLAY, 'w1');
   const before = (await G.readGoal(pool, OVERLAY, 'w1')).progress;
   const N = 50;
@@ -309,6 +315,7 @@ db('två samtidiga event tappar ingen ökning', async () => {
 });
 
 db('samma event-ID samtidigt från två anslutningar appliceras en gång', async () => {
+  await goalsOnly([['w1', 'follows']]);
   await G.resetGoal(pool, OVERLAY, 'w1');
   const before = (await G.readGoal(pool, OVERLAY, 'w1')).progress;
   const both = await Promise.all([
@@ -320,6 +327,7 @@ db('samma event-ID samtidigt från två anslutningar appliceras en gång', async
 });
 
 db('goal_event_apply skrivs inte när ingen aktiv metrik matchar', async () => {
+  await goalsOnly([['w1', 'follows']]);
   // The workspace has a follows goal only. A like must therefore leave no idempotency row at all —
   // this is the whole defence against one row per like, forever, on accounts with no like goal.
   const before = await pool.query('SELECT count(*)::int c FROM goal_event_apply WHERE workspace_id=$1', [WS]);
@@ -461,13 +469,13 @@ db('reset som konkurrerar med ett gift-event serialiseras för båda måltyperna
 // Anything else — a lost increment, a double application, or an increment credited to an epoch that
 // no longer exists — is a defect.
 db('reset och event samtidigt: utfallet följer ordningen exakt', async () => {
-  await G.resetGoal(pool, OVERLAY, 'w1');
-  const start = await G.readGoal(pool, OVERLAY, 'w1');
+  await goalsOnly([['w-race', 'follows']]);
+  const start = await G.readGoal(pool, OVERLAY, 'w-race');
   const [event] = await Promise.all([
     G.applyEvent(pool, WS, { id: 'reset-race', type: 'follow' }),
-    G.resetGoal(pool, OVERLAY, 'w1')
+    G.resetGoal(pool, OVERLAY, 'w-race')
   ]);
-  const after = await G.readGoal(pool, OVERLAY, 'w1');
+  const after = await G.readGoal(pool, OVERLAY, 'w-race');
 
   assert.equal(after.epoch, start.epoch + 1, 'reset gick förlorad eller kördes två gånger');
   assert.equal(event.applied, true, 'eventet tappades helt');
@@ -484,60 +492,26 @@ db('reset och event samtidigt: utfallet följer ordningen exakt', async () => {
   // The id is spent in both orders, so a redelivery cannot double-count across the reset.
   const again = await G.applyEvent(pool, WS, { id: 'reset-race', type: 'follow' });
   assert.equal(again.applied, false, 'ID:t kunde återanvändas efter en reset');
-  assert.equal((await G.readGoal(pool, OVERLAY, 'w1')).progress, after.progress,
+  assert.equal((await G.readGoal(pool, OVERLAY, 'w-race')).progress, after.progress,
     'omleveransen ändrade progress');
 });
 
-// ---- TILLFÄLLIG DIAGNOSTIK — tas bort när rotorsakerna är bevisade ------------------------------
-// Prints values and types rather than asserting, so the two remaining failures can be explained
-// instead of guessed at. No assertion in this block.
-db('DIAGNOSTIK: epochens och bigintfältens faktiska typer', async () => {
-  await goalsOnly([['w-diag', 'follows']]);
-  const before = await G.readGoal(pool, OVERLAY, 'w-diag');
-  const after = await G.resetGoal(pool, OVERLAY, 'w-diag');
-  const reread = await G.readGoal(pool, OVERLAY, 'w-diag');
-  const show = (label, row) => console.log(`  ${label}: `
-    + ['epoch', 'baseline', 'progress', 'target'].map(k =>
-      `${k}=${JSON.stringify(row?.[k])} (${typeof row?.[k]})`).join('  '));
-  console.log('\n  --- DIAGNOSTIK epoch/bigint ---');
-  show('readGoal före ', before);
-  show('resetGoal ret ', after);
-  show('readGoal efter', reread);
-  console.log(`  before.epoch + 1 === after.epoch ? ${before.epoch + 1 === after.epoch}`);
-});
-
-db('DIAGNOSTIK: vad städningen faktiskt ser', async () => {
-  await goalsOnly([['w-sweep', 'follows']]);
-  const applied = await G.applyEvent(pool, WS, { id: 'diag-sweep', type: 'follow' });
-  console.log('\n  --- DIAGNOSTIK cleanup ---');
-  console.log(`  applyEvent: applied=${applied.applied} updatedGoals=${applied.updatedGoals}`);
-  const rows = await pool.query(
-    `SELECT event_id, applied_at, now() AS nu,
-            now() - $1::interval AS cutoff,
-            (applied_at < now() - $1::interval) AS skulle_raderas
-       FROM goal_event_apply WHERE workspace_id = $2 ORDER BY applied_at DESC LIMIT 10`,
-    ['48 hours', WS]);
-  console.log(`  rader i tabellen: ${rows.rowCount}`);
-  for (const r of rows.rows) {
-    console.log(`    ${r.event_id}  applied_at=${r.applied_at.toISOString()}  `
-      + `cutoff=${r.cutoff.toISOString()}  raderas=${r.skulle_raderas}`);
+db('resetGoal returnerar tal, inte strängar', async () => {
+  // pg hands back bigint as a string. readGoal converted; resetGoal did not, so the same row had
+  // different types depending on which function returned it and progress === 0 failed against '0'.
+  await goalsOnly([['w-types', 'follows']]);
+  const row = await G.resetGoal(pool, OVERLAY, 'w-types');
+  for (const field of ['epoch', 'baseline', 'progress', 'target']) {
+    assert.equal(typeof row[field], 'number',
+      `resetGoal returnerade ${field} som ${typeof row[field]}: ${JSON.stringify(row[field])}`);
   }
-  // Exactly which ids the cleanup CTE picks, before any DELETE runs.
-  const picked = await pool.query(
-    `SELECT event_id FROM goal_event_apply
-      WHERE applied_at < now() - $1::interval LIMIT $2`, ['48 hours', 5000]);
-  console.log(`  CTE:n väljer ${picked.rowCount} rader: `
-    + picked.rows.map(r => r.event_id).join(', '));
-  console.log(`  sweepApplied-signatur: ${G.sweepApplied.toString().split('\n')[0].trim()}`);
-  const swept = await G.sweepApplied(pool, { olderThan: '48 hours', limit: 5000 });
-  console.log(`  sweepApplied raderade: ${swept.deleted}`);
-  const still = await pool.query(
-    'SELECT 1 FROM goal_event_apply WHERE workspace_id=$1 AND event_id=$2', [WS, 'diag-sweep']);
-  console.log(`  diag-sweep finns kvar: ${still.rowCount === 1}`);
+  assert.equal(row.progress, 0);
 });
-// ---- SLUT PÅ TILLFÄLLIG DIAGNOSTIK -------------------------------------------------------------
 
 db('städningen är batchad och rör inte rader som ännu kan behöva replay', async () => {
+  // Needs a follows goal of its own, or the event below is never claimed and the row it asserts on
+  // is one that was never written — which reads as "the sweep took it".
+  await goalsOnly([['w-sweep-keep', 'follows']]);
   const kept = await G.sweepApplied(pool, { olderThan: '48 hours', limit: 5000 });
   assert.ok(typeof kept.deleted === 'number');
   const fresh = await pool.query(
