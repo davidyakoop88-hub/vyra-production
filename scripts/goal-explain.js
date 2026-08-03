@@ -19,7 +19,10 @@ async function seed(client) {
   await client.query('DELETE FROM users');
   for (let w = 1; w <= 60; w += 1) {
     await client.query(
-      `INSERT INTO users (id,email,password_hash) VALUES ($1,$2,'x') ON CONFLICT DO NOTHING`,
+      // display_name is NOT NULL in the real schema — the fixture has to satisfy every constraint
+      // the production tables carry, or the seed throws before a single plan is produced.
+      `INSERT INTO users (id,email,password_hash,display_name)
+       VALUES ($1,$2,'x','explain') ON CONFLICT DO NOTHING`,
       [uuid(w), `u${w}@ci.invalid`]);
     await client.query(
       `INSERT INTO workspaces (id,name,owner_user_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
