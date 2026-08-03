@@ -70,10 +70,33 @@ jobs:
         run: node --test test/goal-runtime-contract.test.js
         working-directory: server
 
+      # Order independence, proven rather than asserted: each of these runs alone, in a fresh
+      # process, so neither can be relying on a row an earlier test happened to leave behind.
+      - name: Ordningsbevis — reset och cleanup var för sig
+        run: |
+          node --test --test-name-pattern="reset nollar progress" test/goal-runtime-contract.test.js
+          node --test --test-name-pattern="städningen är batchad" test/goal-runtime-contract.test.js
+        working-directory: server
+
       - name: EXPLAIN (ANALYZE, BUFFERS) med realistiska fixtures
         run: node ../scripts/goal-explain.js
         working-directory: server
 
       - name: Faktisk storlek per apply-rad
         run: node ../scripts/goal-size.js
+        working-directory: server
+
+      # ---- kapacitetsblock ----------------------------------------------------------------------
+      # Architecture signal from a GitHub runner. Not a capacity proof for Railway: different CPU,
+      # different disk, and the database in the same container.
+      - name: Planerarskala — 10 000 overlays, 50 000 mål, före/efter index
+        run: node ../scripts/goal-scale.js
+        working-directory: server
+
+      - name: Genomströmning — 10, 20, 100 ev/s och 5 workspaces
+        run: node ../scripts/goal-throughput.js
+        working-directory: server
+
+      - name: Lagringsalternativ — text vs sha256, btree vs BRIN
+        run: node ../scripts/goal-storage.js
         working-directory: server
