@@ -1,0 +1,79 @@
+name: Goal runtime · Postgres 18
+
+# Railway runs PostgreSQL 18.4, so the goal contract is proved against major 18. The existing CI job
+# in ci.yml stays on 16-alpine on purpose — ubuntu-latest ships the 16 client its backup/restore proof
+# needs — so this is a separate job rather than a change to that one.
+#
+# The database here is a throwaway service container. It never sees a Railway credential, and no
+# production or staging URL appears in this file. Only the goal-runtime contract uses it.
+#
+# Correctness and relative index comparisons from this job are trustworthy. Absolute timings are NOT:
+# a GitHub runner says nothing about Railway's capacity. Load testing at 10/20/100 events per second
+# happens later, against an explicitly approved isolated database.
+on:
+  push:
+    branches: [integration/live-goals-base]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  goal-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: goals_ci
+          POSTGRES_USER: goals_ci
+          POSTGRES_PASSWORD: goals-ci-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U goals_ci -d goals_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      # Throwaway container only. Deliberately not named DATABASE_URL, so nothing that reads the
+      # production variable name can pick it up by accident.
+      TEST_DATABASE_URL: postgres://goals_ci:goals-ci-password@localhost:5432/goals_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Bekräfta majorversionen mot Railway
+        run: |
+          version=$(psql "$TEST_DATABASE_URL" -tAc "SHOW server_version")
+          echo "CI Postgres: $version"
+          case "$version" in 18.*) ;; *) echo "::error::förväntade major 18, fick $version"; exit 1;; esac
+
+      - name: Installera serverberoenden
+        run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: server
+
+      # The migration must work on a database that has never seen it, which is the case Railway will
+      # be in exactly once and can therefore never be retried.
+      - name: Migration från tom databas
+        run: DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+        working-directory: server
+
+      - name: Migrationen är idempotent
+        run: |
+          DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+          DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+        working-directory: server
+
+      # The 21 contracts that are blocked without a real database. If any of these is red the job
+      # fails and the run stops here — the test is not adjusted to match the implementation.
+      - name: Goal runtime-kontrakten
+        run: node --test test/goal-runtime-contract.test.js
+        working-directory: server
+
+      - name: EXPLAIN (ANALYZE, BUFFERS) med realistiska fixtures
+        run: node ../scripts/goal-explain.js
+        working-directory: server
+
+      - name: Faktisk storlek per apply-rad
+        run: node ../scripts/goal-size.js
+        working-directory: server
