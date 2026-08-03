@@ -78,6 +78,10 @@ jobs:
           node --test --test-name-pattern="städningen är batchad" test/goal-runtime-contract.test.js
         working-directory: server
 
+      - name: Overlay-PUT och sync i samma transaktion
+        run: node --test test/overlay-put-sync.test.js
+        working-directory: server
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server
