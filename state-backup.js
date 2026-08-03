@@ -1,5 +1,12 @@
 (function(root){
   'use strict';
+  // Backup is a Studio feature. The overlay authenticates with ?access=<token> and has no session
+  // cookie, so every /api/state call it makes is a guaranteed 401 — and the 3s loop below retried
+  // forever: two failed POSTs per tick, for the whole broadcast, on the machine that is streaming.
+  // An overlay also has no layout of its own to protect, and must never write one back. So nothing
+  // in this file may start in overlay mode: no fetch, no timer, no restore.
+  const VYRA_PARAMS=new URLSearchParams(location.search);
+  if(VYRA_PARAMS.has('overlay')||VYRA_PARAMS.has('access'))return;
   const STATE_KEY='vyra-state', EXTRA_KEYS=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-wishlist','vyra-overlay-resolution'], AUTO_VERSION_MS=5*60*1000;
   let lastSynced=localStorage.getItem(STATE_KEY),lastVersioned=lastSynced,lastVersionAt=0,busy=false;
   function parse(raw,fallback={}){try{return JSON.parse(raw)}catch{return fallback}}
@@ -20,7 +27,11 @@
   async function drawVersions(modal){const host=modal.querySelector('#vbVersions');try{const list=await versions();host.innerHTML=list.length?list.map((v,i)=>`<article><span><b>${i===0?'Senaste version':'Tidigare version'}</b><small>${date(v.createdAt)} · ${Math.ceil(v.size/1024)} KB</small></span><button data-vb-restore="${v.id}">Återställ</button></article>`).join(''):'<p>Ingen versionshistorik ännu.</p>';host.querySelectorAll('[data-vb-restore]').forEach(b=>b.onclick=async()=>{if(!confirm('Återställa denna version? Nuvarande layout säkerhetskopieras först.'))return;try{await restore(b.dataset.vbRestore);modal.remove()}catch(e){root.toast?.(e.message)}})}catch(e){host.innerHTML='<p>Starta VYRA-servern för att använda versionshistorik.</p>'}}
   function injectSettings(){if(typeof view==='undefined'||view!=='settings')return;const card=document.querySelector('#view .settings-page');if(!card||card.querySelector('#openBackupManager'))return;const box=document.createElement('div');box.className='vb-settings';box.innerHTML='<span><b>Backup och versionshistorik</b><small>Automatiskt skydd för layout, widgets och automationer.</small></span><button id="openBackupManager">Hantera backup</button>';card.append(box);box.querySelector('button').onclick=openManager}
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-view="settings"]'))setTimeout(injectSettings,80)});
-  setInterval(async()=>{const current=localStorage.getItem(STATE_KEY);if(!current||current===lastSynced)return;lastSynced=current;try{await syncLatest()}catch{}if(current!==lastVersioned&&Date.now()-lastVersionAt>=AUTO_VERSION_MS)try{await createVersion('Automatisk')}catch{}},3000);
+  // lastVersionAt used to advance only on SUCCESS, so a backend that was down left the five-minute
+  // gate permanently open: every tick with a changed layout fired another version POST. Stamping
+  // the attempt instead means a failing backend costs one try per five minutes, not one per three
+  // seconds, while a healthy one behaves exactly as before.
+  setInterval(async()=>{const current=localStorage.getItem(STATE_KEY);if(!current||current===lastSynced)return;lastSynced=current;try{await syncLatest()}catch{}if(current!==lastVersioned&&Date.now()-lastVersionAt>=AUTO_VERSION_MS){lastVersionAt=Date.now();try{await createVersion('Automatisk')}catch{}}},3000);
   if(!primary())fetch('/api/state').then(r=>r.ok?r.json():null).then(data=>{if(validate(data)){const count=apply(data);console.log('[VYRA] Återställde '+count+' widgets från backup.')}}).catch(()=>{});else syncLatest().catch(()=>{});
   root.VyraBackup={createVersion,versions,restore,download,openManager,validate,packageState};
 })(typeof window!=='undefined'?window:globalThis);

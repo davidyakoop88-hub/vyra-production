@@ -517,7 +517,7 @@ function vyraLoadStyleOnce(href){if(vyraLoadedAssets[href])return vyraLoadedAsse
 function vyraLoadScriptOnce(src){if(vyraLoadedAssets[src])return vyraLoadedAssets[src];vyraLoadedAssets[src]=new Promise((resolve,reject)=>{let existing=document.querySelector(`script[data-vyra-asset="${src}"]`);if(existing)return resolve(existing);let js=document.createElement('script');js.src=src;js.dataset.vyraAsset=src;js.onload=()=>resolve(js);js.onerror=()=>reject(new Error('Kunde inte ladda '+src));document.body.append(js)});return vyraLoadedAssets[src]}
 function vyraLoadBundle(name,assets){let key='bundle:'+name;if(vyraLoadedAssets[key])return vyraLoadedAssets[key];vyraLoadedAssets[key]=assets.reduce((p,asset)=>p.then(()=>asset.endsWith('.css')||asset.includes('.css?')?vyraLoadStyleOnce(asset):vyraLoadScriptOnce(asset)),Promise.resolve()).catch(err=>{delete vyraLoadedAssets[key];throw err});return vyraLoadedAssets[key]}
 function refreshIfVisible(match){if(match()&&typeof render==='function')setTimeout(()=>render(),0)}
-function ensureEditorOverlayBundle(){return vyraLoadBundle('editor-overlay',['toplike-studio.css?v=1','toplike-studio.js?v=1','last-x-alerts.css?v=1','last-x-alerts.js?v=20260801-1','gift-alert-frames.css?v=1','gift-alert-frames.js?v=1','gift-alert-chrome.js?v=1','live-leaderboard.js?v=20260731-2','live-zero-state.js?v=20260802-1','widget-background.js?v=1','custom-widgets.js?v=1','profile-frames-premium.css?v=7','profile-frames-premium.js?v=1']).then(()=>refreshIfVisible(()=>view==='editor'||view==='overlay')).catch(err=>console.warn('[VYRA] editor bundle misslyckades',err))}
+function ensureEditorOverlayBundle(){return vyraLoadBundle('editor-overlay',['toplike-studio.css?v=1','toplike-studio.js?v=1','last-x-alerts.css?v=1','last-x-alerts.js?v=20260801-1','gift-alert-frames.css?v=1','gift-alert-frames.js?v=1','gift-alert-chrome.js?v=1','live-leaderboard.js?v=20260803-overlayfix','live-zero-state.js?v=20260803-overlayfix','widget-background.js?v=1','custom-widgets.js?v=1','profile-frames-premium.css?v=7','profile-frames-premium.js?v=1']).then(()=>refreshIfVisible(()=>view==='editor'||view==='overlay')).catch(err=>console.warn('[VYRA] editor bundle misslyckades',err))}
 function ensurePackagesBundle(){return vyraLoadBundle('packages-view',['overlay-packages.js?v=1']).then(()=>refreshIfVisible(()=>view==='packages')).catch(err=>console.warn('[VYRA] packages bundle misslyckades',err))}
 function ensureActionsBundle(){return vyraLoadBundle('actions-ui',['action-media.js','action-scenes.js','action-options.js','action-event-advanced.js']).then(()=>window.VyraActionEvent?.refresh?.()).catch(err=>console.warn('[VYRA] actions bundle misslyckades',err))}
 function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sound-alerts.js?v=1']).catch(err=>console.warn('[VYRA] sound alerts bundle misslyckades',err))}
@@ -534,11 +534,11 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260731-2';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260803-overlayfix';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-zero-state.js?v=20260802-2';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-zero-state.js?v=20260803-overlayfix';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='stream-time-analytics.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-timers.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260731-1';document.body.append(js)});
@@ -546,7 +546,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='poin
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='state-backup.js?v=1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='state-backup.js?v=20260803-overlayfix';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});
