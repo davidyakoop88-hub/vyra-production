@@ -111,6 +111,25 @@
     };
   }
 
-  global.VyraWidget={getParams,get,log,warn,error,connect};
+  // Avatar and gift URLs arrive from the event stream and are assigned straight to img.src. These
+  // pages write every piece of event text with textContent, so there is no HTML sink here — the URL
+  // is the one value that still needs a decision. Same rule as VyraSafe.src() in the Studio bundle:
+  // http(s) and bitmap data: URIs only, everything else falls back to the shipped asset. Duplicated
+  // here for the same reason normalizeCloudFields is: these pages never load the Studio bundle, and
+  // a widget running in OBS must not depend on one.
+  const SAFE_URL=/^(?:https?:|data:image\/(?:png|jpe?g|gif|webp|avif);)/;
+  function safeSrc(value,fallback=''){
+    const raw=String(value==null?'':value).trim();
+    if(!raw)return fallback;
+    let probe='';
+    for(let i=0;i<raw.length;i+=1)if(raw.charCodeAt(i)>0x20)probe+=raw[i];
+    probe=probe.toLowerCase();
+    if(probe.startsWith('//'))return fallback;
+    if(/^[a-z][a-z0-9+.-]*:/.test(probe)&&!SAFE_URL.test(probe))return fallback;
+    if(/["'<>`\s]/.test(raw))return fallback;
+    return raw;
+  }
+
+  global.VyraWidget={getParams,get,log,warn,error,connect,safeSrc};
 
 })(typeof window!=='undefined'?window:globalThis);

@@ -477,7 +477,7 @@
     els.detail.textContent=data.detail;
     els.message.textContent=data.message;
     els.initial.textContent=(data.username[0]||'✦').toUpperCase();
-    if(data.avatar){els.img.src=data.avatar;els.avatar.dataset.hasImage='1'}
+    if(data.avatar){els.img.src=VyraWidget.safeSrc(data.avatar);els.avatar.dataset.hasImage='1'}
     else delete els.avatar.dataset.hasImage;
     if(swap){
       els.copy.classList.remove('swap');
