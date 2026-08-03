@@ -32,10 +32,20 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U goals_ci -d goals_ci"
           --health-interval 5s --health-timeout 3s --health-retries 20
+      # The overlay-isolation proof is about a real pub/sub fan-out: one workspace channel, two
+      # subscribers, and a rule that decides which of them may see a message. A fake channel would
+      # fan out however the fake was written, so this job needs a real Redis as well.
+      redis:
+        image: redis:8-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
     env:
       # Throwaway container only. Deliberately not named DATABASE_URL, so nothing that reads the
       # production variable name can pick it up by accident.
       TEST_DATABASE_URL: postgres://goals_ci:goals-ci-password@localhost:5432/goals_ci
+      REDIS_URL: redis://127.0.0.1:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -86,6 +96,18 @@ jobs:
       # CSRF header. Without this step a route that kept its own UPDATE would pass everything else.
       - name: PUT-rutten kör transaktionen — HTTP, session och CSRF
         run: node --test test/overlay-put-http.test.js
+        working-directory: server
+
+      # Frame shape and the write path. Pure, so it also runs in the main CI job — but the isolation
+      # step below only means something if these hold, and a failure here should stop this job too.
+      - name: Goal-SSE — absoluta frames, normalisering och skrivvägen
+        run: node --test test/goal-sse.test.js
+        working-directory: server
+
+      # Two overlays, one workspace, two OBS links, two live SSE connections over real sockets and a
+      # real Redis channel. This is the isolation proof; nothing else in the suite covers it.
+      - name: Overlay-isolering — två länkar på samma workspace
+        run: node --test test/goal-sse-isolation.test.js
         working-directory: server
 
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
