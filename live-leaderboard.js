@@ -85,7 +85,12 @@
     if (type === 'join' || type.includes('enter')) t.present = true;
     if (type === 'leave' || type.includes('viewer_leave') || type.includes('member_leave') || type.includes('exit')) t.present = false;
     if (type === 'likes' || type === 'like' || type.includes('tap')) {
-      const count = Number(e.count || e.likes || e.value) || 0;
+      // Increment fields only. cloudEvent() fills `value` from coins ?? points ?? score, and a like
+      // has no coins — so `value` is TikTok's running room-wide like total, the same number the
+      // protocol calls total/totalLikeCount. Falling back to it would credit one viewer with the
+      // whole room's likes on a single tap, once per event. `??` rather than `||` so a genuine
+      // count of 0 stays 0 instead of reaching for the next field.
+      const count = Number(e.count ?? e.likes) || 0;
       t.likes += count;
       t.likeEvents.push([Date.now(), count]);
       t.lastLikeAt = Date.now();

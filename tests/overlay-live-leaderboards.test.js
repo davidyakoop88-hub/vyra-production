@@ -321,3 +321,82 @@ test('viewer, like, gift and a repaint: the audience never sees a demo person', 
   assert.deepEqual(env.fetchCalls.filter(c => c.url.includes('/api/state')), [],
     'overlay-läget gjorde ett /api/state-anrop');
 });
+
+// ---- the room total is never an increment -----------------------------------------------------
+// cloudEvent() in tiktok-bridge/normalizer.js maps `value` from coins ?? points ?? score. A like has
+// no coins, so `value` carries `points` — TikTok's running room-wide like counter. Reading it as a
+// per-viewer increment would add the whole room's total to one person on a single tap, and it would
+// do so once per event, so a stream with a 900-like room total would hand out hundreds of thousands
+// of likes within a minute. The bridge already refuses to conflate the two (see
+// tiktok-bridge/test/like-fields.test.js); this is the same rule on the browser side, which is where
+// the value actually lands in a leaderboard.
+const likeTotals = (env, username = 'jokero') =>
+  env.sandbox.window.VyraLeaderboard.getTop('likes', 10).find(t => t.username === username);
+
+test('a like with count 0 and a room total of 943 adds exactly 0', () => {
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 0, value: 943 });
+  assert.equal(likeTotals(env)?.likes ?? 0, 0, 'rumstotalen 943 lades till som inkrement');
+});
+
+test('the room total is ignored under every name it travels by', () => {
+  // `value` is what reaches the browser today, but the same number is called points on the bridge's
+  // internal shape and total/totalLikeCount in the TikTok protocol. None of them is an increment —
+  // neither alongside a zero count nor as the only number in the payload, which is the case that
+  // catches a total quietly appended to the end of the fallback chain.
+  for (const field of ['value', 'points', 'total', 'totalLikeCount']) {
+    for (const extra of [{ count: 0 }, {}]) {
+      const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+      env.run('live-leaderboard.js');
+      env.live({ type: 'like', username: 'jokero', name: 'Jokero', ...extra, [field]: 943 });
+      assert.equal(likeTotals(env)?.likes ?? 0, 0,
+        `${field} användes som inkrement (${'count' in extra ? 'med count 0' : 'ensamt fält'})`);
+    }
+  }
+});
+
+test('an explicit count of 0 wins over the legacy likes field', () => {
+  // `??` not `||`: a like the protocol really reported as 0 must stay 0, not fall through to a
+  // stale `likes` value from another shape. The bridge's likeFields() makes the same distinction.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 0, likes: 5, value: 943 });
+  assert.equal(likeTotals(env)?.likes ?? 0, 0, 'ett äkta 0 ersattes av ett annat fält');
+});
+
+test('a real count is still counted, and still accumulates', () => {
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 7, value: 943 });
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 3, value: 946 });
+  assert.equal(likeTotals(env).likes, 10, 'inkrementet ska summeras, och bara inkrementet');
+});
+
+test('the legacy `likes` field still works when no count is present', () => {
+  // The desktop bridge shape carries `likes`; dropping it would silently zero that path.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', likes: 4, value: 943 });
+  assert.equal(likeTotals(env).likes, 4);
+});
+
+test('a like with no increment at all is 0, not the room total', () => {
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', value: 943 });
+  assert.equal(likeTotals(env)?.likes ?? 0, 0);
+});
+
+test('the persisted daily bucket is not inflated by the room total either', () => {
+  // recordDaily() survives reloads in localStorage, so a total leaking in there would keep showing
+  // up in Today/Week/Month long after the stream ended.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 0, value: 943 });
+  env.intervals.forEach(fn => fn());                       // flushes the 5s daily save
+  const stored = env.sandbox.localStorage.getItem('vyra-leaderboard-daily-v1');
+  const days = Object.values(JSON.parse(stored || '{}'));
+  const likes = days.flatMap(day => Object.values(day)).reduce((sum, t) => sum + (t.likes || 0), 0);
+  assert.equal(likes, 0, 'rumstotalen skrevs till den persistenta dagsbudgeten');
+});
