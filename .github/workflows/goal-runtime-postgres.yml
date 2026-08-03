@@ -78,6 +78,14 @@ jobs:
           node --test --test-name-pattern="städningen är batchad" test/goal-runtime-contract.test.js
         working-directory: server
 
+      - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
+        run: node --test test/goal-cleanup.test.js
+        working-directory: server
+
+      - name: Churn — 1 000 000 rader, stabiliseras storleken?
+        run: node ../scripts/goal-churn.js
+        working-directory: server
+
       - name: EXPLAIN (ANALYZE, BUFFERS) med realistiska fixtures
         run: node ../scripts/goal-explain.js
         working-directory: server

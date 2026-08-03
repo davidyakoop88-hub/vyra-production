@@ -193,19 +193,89 @@ async function readGoal(pool, overlayId, widgetId) {
   return { ...row, value: row.baseline + row.progress };
 }
 
-// Batched so a long vacuum pause cannot block ingest, and bounded by a window wider than the Redis
-// dedupe TTL so a row that could still be replayed is never removed.
+// One batch, one short statement. FOR UPDATE SKIP LOCKED is what lets two processes — or two
+// replicas — drain at the same time: each takes rows the other has not locked rather than queueing
+// behind it. Ingest only ever INSERTs, so it is never blocked by this either way. The window stays
+// wider than the Redis dedupe TTL, so a row that could still be replayed is never removed.
+const SWEEP_SQL = `
+  DELETE FROM goal_event_apply
+   WHERE ctid IN (
+     SELECT ctid FROM goal_event_apply
+      WHERE applied_at < now() - $1::interval
+      LIMIT $2
+      FOR UPDATE SKIP LOCKED
+   )
+`;
+
 async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000 } = {}) {
-  const q = await pool.query(
-    `DELETE FROM goal_event_apply
-      WHERE ctid IN (SELECT ctid FROM goal_event_apply
-                      WHERE applied_at < now() - $1::interval LIMIT $2)`,
-    [olderThan, limit]);
+  const q = await pool.query(SWEEP_SQL, [olderThan, limit]);
   return { deleted: q.rowCount };
+}
+
+// A single 5 000-row batch covers 50 seconds of inflow at the 100 events/s ingest ceiling, so one
+// batch per tick can never keep up: on a fifteen-minute timer the queue would grow by ~5 700 rows
+// every round and the retention window would stop meaning anything.
+//
+// So several short batches per run, bounded twice. maxBatches caps the work, budgetMs caps the time,
+// and a short batch means the queue is empty. Each batch is its own statement — never one long
+// transaction holding locks across the whole drain.
+//
+// 20 x 5 000 per 60 s is 100 000 rows/minute against a need of 6 000. The time budget is the real
+// guard; the batch cap stops a pathological queue turning one tick into a long job.
+async function drainApplied(pool, { batch = 5000, maxBatches = 20, budgetMs = 5000,
+                                    olderThan = '48 hours', now = Date.now } = {}) {
+  const deadline = now() + budgetMs;
+  let deleted = 0, batches = 0, exhausted = false;
+  while (batches < maxBatches && now() < deadline) {
+    const out = await sweepApplied(pool, { olderThan, limit: batch });
+    deleted += out.deleted;
+    batches += 1;
+    if (out.deleted < batch) { exhausted = true; break }
+  }
+  return { deleted, batches, exhausted };
+}
+
+// The scheduler. `running` stops a slow drain from having a second one started on top of it by the
+// next tick — the same shape startCapacityMonitor already uses. Errors go through the project's JSON
+// line format and are swallowed, so a failing batch leaves the timer alive for the next tick instead
+// of becoming an unhandled rejection.
+function startAppliedDrain({ pool, metrics = null, intervalMs = 60_000, ...options } = {}) {
+  let running = false;
+  const tick = async () => {
+    if (running) return { skipped: true };
+    running = true;
+    const startedAt = Date.now();
+    try {
+      const out = await drainApplied(pool, options);
+      const durationMs = Date.now() - startedAt;
+      if (metrics) {
+        metrics.gauge('goal_cleanup_last_run_at', startedAt);
+        metrics.gauge('goal_cleanup_deleted', out.deleted);
+        metrics.gauge('goal_cleanup_duration_ms', durationMs);
+      }
+      if (out.deleted) {
+        console.log(JSON.stringify({ level: 'info', event: 'goal_cleanup', deleted: out.deleted,
+          batches: out.batches, exhausted: out.exhausted, durationMs, at: new Date().toISOString() }));
+      }
+      return out;
+    } catch (error) {
+      if (metrics) metrics.gauge('goal_cleanup_errors', 1);
+      console.error(JSON.stringify({ level: 'error', event: 'goal_cleanup_failed',
+        message: error.message, at: new Date().toISOString() }));
+      return { error: error.message };
+    } finally {
+      running = false;
+    }
+  };
+  const timer = setInterval(tick, intervalMs);
+  // Cleanup must never be the only thing keeping the process alive.
+  if (typeof timer.unref === 'function') timer.unref();
+  return { stop: () => clearInterval(timer), tick, isRunning: () => running };
 }
 
 module.exports = {
   METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
-  applyEvent, resetGoal, upsertGoal, readGoal, sweepApplied
+  applyEvent, resetGoal, upsertGoal, readGoal,
+  SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain
 };
