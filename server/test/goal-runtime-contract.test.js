@@ -178,8 +178,10 @@ test.before(async () => {
 
 // Fixtures live here, not in goal-runtime.js — production code has no business creating workspaces.
 async function seedWorkspace(id) {
+  // display_name is NOT NULL in the real schema — the fixture has to satisfy every constraint the
+  // production tables carry, or the contract never gets as far as being evaluated.
   await pool.query(
-    `INSERT INTO users (id, email, password_hash) VALUES ($1,$2,'x')
+    `INSERT INTO users (id, email, password_hash, display_name) VALUES ($1,$2,'x','contract')
      ON CONFLICT (id) DO NOTHING`, [id, `${id}@test.invalid`]);
   await pool.query(
     `INSERT INTO workspaces (id, name, owner_user_id) VALUES ($1,'test',$2)
