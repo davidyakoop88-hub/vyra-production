@@ -10,7 +10,12 @@ const media = fs.readFileSync(path.join(root, 'media.js'), 'utf8');
 test('individual widget links retain the secure access token and widget id', () => {
   assert.match(preview, /overlayShareUrl\(widgetId\)/);
   assert.match(media, /searchParams\.set\('widget',widgetId\)/);
-  assert.match(media, /get\('widget'\)/);
+  // The ?widget= read moved out of media.js. It used to build every widget and then hide all but
+  // one with display:none; the selection now happens before the markup is built, in studio.js's
+  // vyraRenderWidgets(), so the parameter is read there instead.
+  const studio = fs.readFileSync(path.join(root, 'studio.js'), 'utf8');
+  assert.match(studio, /params\.get\('widget'\)/);
+  assert.match(studio, /VyraWidgets\.selectForRender\(state\.widgets,\{widgetId:wanted\}\)/);
 });
 
 test('every active layout widget has its own copy-link control', () => {

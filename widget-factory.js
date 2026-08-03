@@ -303,8 +303,32 @@
   const isStandalone = w => !!w && w.placement === 'standalone';
   const isLayout = w => !isStandalone(w);          // missing placement means layout
 
+  // ---- what gets rendered -----------------------------------------------------------------------
+  // One decision, used by the canvas, the layer list and the overlay alike. Standalone instances
+  // exist in the same state.widgets array as everything else, so without this they would be drawn
+  // into the Layout the streamer is editing. They are filtered out of the list before it is mapped
+  // to markup rather than hidden afterwards: a hidden widget is still built, still animated, and
+  // still in the DOM for anything that queries it.
+  //
+  // `hidden` stays a separate concept. It is the streamer's own eye toggle on a layout widget, and a
+  // standalone instance the streamer has hidden must still open on its own link.
+  function selectForRender(widgets, options) {
+    const list = Array.isArray(widgets) ? widgets : [];
+    const wanted = options && options.widgetId ? String(options.widgetId) : '';
+    if (wanted) {
+      // Exact string identity, never a pattern: the id comes from a URL and must not be able to
+      // reach a selector or any markup.
+      const match = list.filter(w => w && String(w.id) === wanted);
+      return match.length ? { widgets: match, error: null } : { widgets: [], error: 'missing-widget' };
+    }
+    return { widgets: list.filter(isLayout), error: null };
+  }
+
+  // The layer list is the Layout's own inspector — a standalone instance has no place on the stage.
+  const layoutOnly = widgets => (Array.isArray(widgets) ? widgets : []).filter(isLayout);
+
   root.VyraWidgets = {
-    create, newId, isStandalone, isLayout,
+    create, newId, isStandalone, isLayout, selectForRender, layoutOnly,
     families: () => Object.keys(RESOLVE),
     builders: () => Object.keys(BUILD),
     // A copy, so adding or replacing a key touches the caller's object and not the registry.

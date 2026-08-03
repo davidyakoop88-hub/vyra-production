@@ -135,12 +135,19 @@ test('två create()-anrop delar inte muterbart nästlat state', () => {
   const a = VyraWidgets.create('catalog:topgift:frame:' + Object.keys(VyraWidgets.variants('topgift.frame'))[0]);
   const b = VyraWidgets.create('catalog:topgift:frame:' + Object.keys(VyraWidgets.variants('topgift.frame'))[0]);
   assert.notEqual(a.id, b.id);
-  // Every value a widget carries must be its own: two widgets sharing an object would mean editing
-  // one silently edits the other, and both are saved into the same layout.
+  // The invariant that makes sharing impossible: a widget carries primitives only. Looping over
+  // object values alone would be vacuous today — there are none — and would stay green the day a
+  // builder started handing out a table entry by reference.
   for (const [field, value] of Object.entries(a)) {
-    if (value && typeof value === 'object') {
-      assert.notEqual(value, b[field], `${field} delas mellan två widgets`);
-    }
+    assert.ok(value === null || typeof value !== 'object',
+      `${field} är ett objekt: två widgets kan dela det, och en redigering av den ena ändrar den andra`);
+    assert.notEqual(value, b[field] && typeof b[field] === 'object' ? b[field] : Symbol('olik'),
+      `${field} delas mellan två widgets`);
+  }
+  // And nothing a widget carries may be a live reference into the registry.
+  const frames = VyraWidgets.variants('topgift.frame');
+  for (const entry of Object.values(frames)) {
+    assert.ok(!Object.values(a).includes(entry), 'en widget bär en referens rakt in i varianttabellen');
   }
   a.title = 'ändrad';
   assert.notEqual(b.title, 'ändrad');
