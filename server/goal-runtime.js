@@ -83,6 +83,11 @@ const CLAIM_SQL = `
 // goal_runtime is keyed by overlay; an event arrives for a workspace. The join through overlays is
 // what turns one into the other. The contributions arrive as a VALUES table so a gift updates both
 // its metrics in a single statement rather than one round trip per metric.
+//
+// baseline and target ride along in the RETURNING because the caller publishes an absolute goal
+// frame from exactly these rows. Reading them back in a second query would be a second
+// transaction's answer: by then a PATCH or a reset could have moved them, and the frame would carry
+// a value that never existed.
 function incrementSql(contributions) {
   const rows = contributions
     .map((_, i) => `($${i * 2 + 2}::text, $${i * 2 + 3}::bigint)`)
@@ -97,7 +102,7 @@ function incrementSql(contributions) {
        AND o.workspace_id = $1
        AND gr.metric = contribution.metric
        AND contribution.amount <> 0
-    RETURNING gr.overlay_id, gr.widget_id, gr.metric, gr.progress, gr.epoch
+    RETURNING gr.overlay_id, gr.widget_id, gr.metric, gr.baseline, gr.progress, gr.target, gr.epoch
   `;
 }
 

@@ -123,6 +123,21 @@ jobs:
         env:
           API_RATE_LIMIT: "100000"
 
+      # The ingest order and its failure semantics, with every dependency injected. Pure, so it also
+      # runs in the main CI job — but the chain below is only worth trusting if these hold.
+      - name: Ingestkedjan — ordning, dubbletter och felsemantik
+        run: node --test test/goal-ingest.test.js
+        working-directory: server
+
+      # The same chain for real: the bridge's own route, a real Postgres, a real Redis channel and
+      # two OBS links on real sockets. API_RATE_LIMIT is raised here for the same reason as above —
+      # the suite is a burst of real requests from one address, not what the per-IP budget is for.
+      - name: Ingestkedjan mot riktig Postgres och Redis
+        run: node --test test/goal-ingest-http.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server

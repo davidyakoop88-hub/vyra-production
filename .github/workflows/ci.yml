@@ -51,6 +51,10 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
+      # Before the suite, not after: ingest now applies goal progress in Postgres before it publishes
+      # anything, so the Redis-backed ingest tests need the schema to exist. The idempotency proof
+      # further down still runs the migration twice on top of this one.
+      - run: npm run migrate
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
       - name: Validate JavaScript syntax

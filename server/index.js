@@ -1,8 +1,8 @@
 'use strict';
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
-const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse');
+const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -91,13 +91,20 @@ function validateTikTokIngestPayload(payload){
 // then validate, then publish. Thrown errors carry .status and propagate to the server's shared
 // catch block below, which already turns any {status,message} error into a typed JSON response —
 // no separate error handling needed here.
+// Postgres, then the raw event, then the goal frames — the order and the failure semantics live in
+// goal-ingest.js with every dependency injected, so they are provable without a database or a Redis.
+// cleanEvent goes in from here: normalising once is what makes the id Postgres claims and the id
+// Redis dedupes on the same string.
+const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent});
 async function ingestTikTokEvent(workspaceId,payload){
   if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
   validateTikTokIngestPayload(payload);
-  const out=await eventBus.publish(workspaceId,payload);
-  if(!out.duplicate){metrics.event(out.event.type);lastTikTokEventAt=Date.now()}
-  return out;
+  const{raw}=await ingestEvent(workspaceId,payload);
+  // Unchanged rule, unchanged place: the counters follow the RAW event, not the goal path, and the
+  // route still gets exactly the publish result it has always sent back.
+  if(!raw.duplicate){metrics.event(raw.event.type);lastTikTokEventAt=Date.now()}
+  return raw;
 }
 function send(res,status,data,headers={}){const body=Buffer.from(JSON.stringify(data));res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':body.length,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; frame-ancestors 'none'",...headers});res.end(body)}
 function body(req,max=1024*1024){if(req._vyraBody)return req._vyraBody;return req._vyraBody=new Promise((resolve,reject)=>{let size=0,chunks=[];req.on('data',c=>{size+=c.length;if(size>max)return reject(Object.assign(new Error('Payload för stor'),{status:413}));chunks.push(c)});req.on('end',()=>{try{resolve(JSON.parse(Buffer.concat(chunks)||'{}'))}catch{reject(Object.assign(new Error('Ogiltig JSON'),{status:400}))}});req.on('error',reject)})}
