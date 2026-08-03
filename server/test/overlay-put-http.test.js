@@ -57,9 +57,12 @@ test.before(async () => {
   ({ pool } = require('../db'));
   ({ server, eventBus } = require('../index'));
 
+  // email_verified_at is not optional here: index.js refuses every non-GET from an unverified
+  // account with its own 403, before membership is even looked at.
   await pool.query(
-    `INSERT INTO users (id,email,password_hash,display_name) VALUES ($1,$2,'x','put-http'),($3,$4,'x','put-http-viewer')
-     ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO users (id,email,password_hash,display_name,email_verified_at)
+     VALUES ($1,$2,'x','put-http',now()),($3,$4,'x','put-http-viewer',now())
+     ON CONFLICT (id) DO UPDATE SET email_verified_at = now()`,
     [OWNER, `${OWNER}@test.invalid`, VIEWER, `${VIEWER}@test.invalid`]);
   await pool.query(`INSERT INTO workspaces (id,name,owner_user_id) VALUES ($1,'put-http',$2)
      ON CONFLICT (id) DO NOTHING`, [WS, OWNER]);
@@ -116,7 +119,9 @@ const runtimeIds = async () => (await pool.query(
 http('ett 200 från rutten betyder att målet räknar — inget GET emellan', async () => {
   await reset();
   const saved = await put({ version: 1, state: stateWith(goalWidget('w-http')) });
-  assert.equal(saved.status, 200);
+  // The body goes into the message: a route this test cannot reach answers with a reason, and the
+  // status code alone does not say which gate it was.
+  assert.equal(saved.status, 200, JSON.stringify(saved.body));
   assert.equal(saved.body.ok, true);
   // The response body the Studio client already parses: an overlay row with the new version.
   assert.equal(saved.body.overlay.version, 2, 'svaret bar inte den uppräknade versionen');
@@ -224,6 +229,10 @@ http('utan CSRF-huvud: 401 och ingenting skrivet', async () => {
   await reset();
   const out = await put({ version: 1, state: stateWith(goalWidget('w-nocsrf')) }, { csrf: null });
   assert.equal(out.status, 401);
+  // Asserting the reason, not just the code: an unrelated gate answering 401/403 would otherwise
+  // make this pass while proving nothing — which is exactly what an unverified e-post did on the
+  // first CI run of this file.
+  assert.equal(out.body.error, 'Inte inloggad');
   assert.deepEqual(await runtimeIds(), []);
   assert.equal((await overlayRow()).version, 1);
 });
@@ -232,6 +241,7 @@ http('en viewer får 403 och skapar inga målrader', async () => {
   await reset();
   const out = await put({ version: 1, state: stateWith(goalWidget('w-viewer')) }, { as: 'viewer' });
   assert.equal(out.status, 403);
+  assert.equal(out.body.error, 'Behörighet saknas', 'ett annat 403 än medlemskapets svarade');
   assert.deepEqual(await runtimeIds(), []);
   assert.equal((await overlayRow()).version, 1);
 });
