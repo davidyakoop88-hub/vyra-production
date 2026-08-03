@@ -276,12 +276,27 @@ function startAppliedDrain({ pool, metrics = null, intervalMs = 60_000, ...optio
   return { stop: () => clearInterval(timer), tick, isRunning: () => running };
 }
 
+// ---- limits the goal API enforces ----------------------------------------------------------------
+// Declared here rather than beside the functions that use them further down: module.exports runs at
+// load time, and a const below it would still be in its temporal dead zone.
+//
+// 1e12 is far past any real follower count or diamond total, and four orders of magnitude below
+// 2^53, so baseline + progress stays an exact JavaScript number in the widget that renders it. The
+// bigint column would take far more; the browser is the binding constraint, not Postgres.
+const MAX_GOAL_VALUE = 1_000_000_000_000;
+
+// A PATCH may set the two numbers the streamer owns. progress, epoch and metric are the server's:
+// progress comes from events, epoch from reset, metric from the widget in the layout.
+const PATCH_FIELDS = ['baseline', 'target'];
+
 module.exports = {
   METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
   applyEvent, resetGoal, upsertGoal, readGoal,
   SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain,
-  syncGoalsFromState, putOverlayWithGoals
+  syncGoalsFromState, putOverlayWithGoals,
+  MAX_GOAL_VALUE, PATCH_FIELDS, validateGoalPatch, goalItem,
+  listGoals, patchGoal, resetGoalWidget
 };
 
 // ---- overlay save and goal sync, in one transaction ----------------------------------------------
@@ -361,4 +376,138 @@ async function putOverlayWithGoals(pool, { overlayId, workspaceId, name = null, 
   } finally {
     client.release();
   }
+}
+
+// ---- the goal API's read and write paths ---------------------------------------------------------
+// Everything below is what the four goal routes call. The routes own auth, membership, CSRF and the
+// HTTP shape; these own the transaction and the rules about what a goal row may become.
+//
+// The overlay is the boundary. Every statement is keyed by (overlay_id, widget_id) and the overlay
+// is loaded by its own id — optionally narrowed to a workspace — so a widget id belonging to another
+// overlay simply does not exist for this one. There is no path where an id from the URL selects a
+// row on its own.
+
+const inRange = (value, min) => typeof value === 'number' && Number.isSafeInteger(value)
+  && value >= min && value <= MAX_GOAL_VALUE;
+
+// Number.isSafeInteger is the whole check: NaN, Infinity (which JSON turns into null on the way in
+// anyway), decimals and any exponent landing outside 2^53 all fail it, and a numeric string fails
+// the typeof before that. Returns {patch} or {error}; the route turns an error into a 400.
+function validateGoalPatch(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { error: 'Patchen måste vara ett objekt med baseline och/eller target' };
+  }
+  const keys = Object.keys(input);
+  if (!keys.length) return { error: 'Tom patch — ange baseline och/eller target' };
+  const unknown = keys.filter(key => !PATCH_FIELDS.includes(key));
+  if (unknown.length) return { error: `Okända fält: ${unknown.join(', ')}` };
+
+  const patch = {};
+  if ('baseline' in input) {
+    if (!inRange(input.baseline, 0)) return { error: `baseline måste vara ett heltal 0–${MAX_GOAL_VALUE}` };
+    patch.baseline = input.baseline;
+  }
+  if ('target' in input) {
+    if (!inRange(input.target, 1)) return { error: `target måste vara ett heltal 1–${MAX_GOAL_VALUE}` };
+    patch.target = input.target;
+  }
+  return { patch };
+}
+
+// The API shape, and the only place a row becomes one. pg returns bigint as a string so precision is
+// never lost silently; every number a client sees is converted here exactly once. `at` is a
+// millisecond number rather than a timestamp string, so the REST list and the SSE frame agree.
+function goalItem(row) {
+  const baseline = Number(row.baseline), progress = Number(row.progress);
+  return {
+    overlayId: row.overlay_id, widgetId: row.widget_id, metric: row.metric,
+    baseline, progress, value: baseline + progress,
+    target: Number(row.target), epoch: Number(row.epoch),
+    at: new Date(row.updated_at).getTime()
+  };
+}
+
+// FOR UPDATE, so a lazy backfill and a concurrent Layout save cannot both decide what this overlay's
+// goals are. workspaceId narrows the lookup rather than being checked afterwards: an overlay in
+// another workspace has to be indistinguishable from one that does not exist.
+async function loadOverlay(client, overlayId, workspaceId) {
+  const q = workspaceId
+    ? await client.query('SELECT id, state FROM overlays WHERE id=$1 AND workspace_id=$2 FOR UPDATE',
+        [overlayId, workspaceId])
+    : await client.query('SELECT id, state FROM overlays WHERE id=$1 FOR UPDATE', [overlayId]);
+  return q.rows[0] || null;
+}
+
+// Sorted by widget_id, so two calls — and the OBS link and Studio — always agree on the order.
+async function selectGoals(client, overlayId) {
+  const q = await client.query(
+    'SELECT * FROM goal_runtime WHERE overlay_id=$1 ORDER BY widget_id', [overlayId]);
+  return q.rows.map(goalItem);
+}
+
+// Lazy backfill and listing in ONE transaction. Overlays saved before the PUT started syncing have
+// goal widgets and no rows; a GET that returned an empty list and filled the table for next time
+// would show a streamer nothing at all on the first load. The layout state is the authority on what
+// is a goal — it comes from the database, never from the caller — so the same sync the PUT uses runs
+// here, which also means a widget deleted from the layout stops being listed the moment it is gone.
+async function listGoals(pool, overlayId, { workspaceId = null } = {}) {
+  return withTransaction(pool, async client => {
+    const overlay = await loadOverlay(client, overlayId, workspaceId);
+    if (!overlay) return { missing: true };
+    const sync = await syncGoalsFromState(client, overlayId, overlay.state);
+    return { goals: await selectGoals(client, overlayId), sync };
+  });
+}
+
+// The one row a write is about. Only a widget that is STILL a goal widget in the saved layout can be
+// reached: an id that is unknown, deleted, or no longer a goal type gets `unknownWidget` and the
+// transaction ends without having written anything — no row is created for it, and no other widget's
+// row is touched on the way.
+async function withGoalWidget(pool, overlayId, widgetId, workspaceId, apply) {
+  return withTransaction(pool, async client => {
+    const overlay = await loadOverlay(client, overlayId, workspaceId);
+    if (!overlay) return { missing: true };
+
+    const goal = Metrics.goalWidgetsIn(overlay.state).find(g => g.widgetId === widgetId);
+    if (!goal) return { unknownWidget: true };
+
+    // The same backfill the GET does, narrowed to this widget: a legacy overlay must be editable
+    // without a listing call first, and DO NOTHING keeps the server's numbers if the row exists.
+    await client.query(
+      `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, target)
+       VALUES ($1,$2,$3,$4,$5) ON CONFLICT (overlay_id, widget_id) DO NOTHING`,
+      [overlayId, goal.widgetId, goal.metric, goal.baseline, goal.target]);
+
+    return apply(client);
+  });
+}
+
+// COALESCE so an absent field keeps what is there — one field at a time is the normal case in the
+// Studio UI, and a PATCH must never take the other one along by writing a default.
+async function patchGoal(pool, overlayId, widgetId, patch, { workspaceId = null } = {}) {
+  return withGoalWidget(pool, overlayId, widgetId, workspaceId, async client => {
+    const q = await client.query(
+      `UPDATE goal_runtime
+          SET baseline = COALESCE($3, baseline), target = COALESCE($4, target), updated_at = now()
+        WHERE overlay_id = $1 AND widget_id = $2
+        RETURNING *`,
+      [overlayId, widgetId,
+       patch.baseline === undefined ? null : patch.baseline,
+       patch.target === undefined ? null : patch.target]);
+    return { goal: goalItem(q.rows[0]) };
+  });
+}
+
+// Reset means "start counting again", not "forget the numbers": progress goes to zero and the epoch
+// moves, while baseline and target stay exactly as the streamer set them. The epoch is what lets a
+// widget tell a reset apart from a lost event.
+async function resetGoalWidget(pool, overlayId, widgetId, { workspaceId = null } = {}) {
+  return withGoalWidget(pool, overlayId, widgetId, workspaceId, async client => {
+    const q = await client.query(
+      `UPDATE goal_runtime
+          SET progress = 0, epoch = epoch + 1, reset_at = now(), updated_at = now()
+        WHERE overlay_id = $1 AND widget_id = $2
+        RETURNING *`, [overlayId, widgetId]);
+    return { goal: goalItem(q.rows[0]) };
+  });
 }

@@ -110,6 +110,19 @@ jobs:
         run: node --test test/goal-sse-isolation.test.js
         working-directory: server
 
+      # The four goal routes, over real sockets: token status, the role matrix, workspace and overlay
+      # isolation, lazy backfill, PATCH limits, reset and 404-without-row-creation.
+      #
+      # API_RATE_LIMIT is raised for this step alone. The suite drives ~100 real requests from one
+      # address in a few seconds, and the per-IP budget — which the steps above share through the
+      # same Redis bucket — would refuse the tail of it for reasons that have nothing to do with the
+      # routes. Production keeps the default; nothing here changes it.
+      - name: Mål-API:t — fyra rutter, roller och overlay-gränsen
+        run: node --test test/goal-api.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server
