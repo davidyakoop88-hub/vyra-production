@@ -138,6 +138,16 @@ jobs:
         env:
           API_RATE_LIMIT: "100000"
 
+      # Studio's authenticated, overlay-scoped goal stream — plus the two standing rules around it:
+      # the workspace-wide stream still gets no frames, and a test event stays visual and never
+      # touches a persistent goal. API_RATE_LIMIT is raised for the same reason as the steps above:
+      # the shared per-IP bucket has been counting since the first HTTP step of this job.
+      - name: Studio-strömmen — overlay-scopad, testeventet visuellt
+        run: node --test test/studio-goal-stream.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server

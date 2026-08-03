@@ -1,4 +1,14 @@
 name: VYRA CI
+# Runs on pull requests and on pushes to main — deliberately not on the integration branches.
+#
+# So the live-goals work does not exercise this job while it is being built: its proof is the
+# "Goal runtime · Postgres 18" workflow, which runs on every push to integration/live-goals-base and
+# provisions both a Postgres 18 and a Redis of its own. The first real run of THIS job for that work
+# happens when the collected draft PR is opened; the `npm run migrate` step below was added ahead of
+# that, because the ingest path now writes goal progress to Postgres before it publishes and the
+# Redis-backed ingest tests reach it. The trigger is not to be widened just to force an early run —
+# that would put the whole main suite, including the backup/restore proof, on every intermediate
+# commit of a branch that is not ready for it.
 on:
   pull_request:
   push:
