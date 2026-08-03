@@ -1,4 +1,7 @@
 'use strict';
+// Metric rules live in goal-metrics.js — the server's own copy, because widget-factory.js is
+// outside the Docker build context. See tests/goal-metric-parity.test.js.
+const Metrics = require('./goal-metrics');
 // Live-driven goals: what an event is worth, and how that reaches Postgres exactly once.
 //
 // Progress is the server's, not the browser's. A layout link and a widget link for the same widget id
@@ -277,5 +280,85 @@ module.exports = {
   METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
   applyEvent, resetGoal, upsertGoal, readGoal,
-  SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain
+  SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain,
+  syncGoalsFromState, putOverlayWithGoals
 };
+
+// ---- overlay save and goal sync, in one transaction ----------------------------------------------
+// A successful Layout save has to mean the goal is live. Splitting the save from the sync leaves a
+// window where the widget is on screen and does not count, and those events are lost rather than
+// delayed — nothing retries a save that already returned 200.
+//
+// Sync only ever adds what is missing and removes what is gone. It never UPDATEs: once a row exists
+// the server owns baseline, progress, target and epoch, and a later save still carrying the old
+// goalCurrent must not undo a PATCH or a reset.
+async function syncGoalsFromState(client, overlayId, state) {
+  const goals = Metrics.goalWidgetsIn(state);
+  const ids = goals.map(g => g.widgetId);
+
+  // An empty list is a real case — every goal removed — and `x <> ALL('{}')` is true for every row,
+  // so this deletes them all without needing a special path.
+  const removed = await client.query(
+    'DELETE FROM goal_runtime WHERE overlay_id = $1 AND widget_id <> ALL($2::text[]) RETURNING widget_id',
+    [overlayId, ids]);
+
+  let created = 0;
+  for (const goal of goals) {
+    const q = await client.query(
+      `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, target)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (overlay_id, widget_id) DO NOTHING
+       RETURNING widget_id`,
+      [overlayId, goal.widgetId, goal.metric, goal.baseline, goal.target]);
+    created += q.rowCount;
+  }
+  return { created, removed: removed.rowCount, total: goals.length };
+}
+
+// The whole save. Auth, membership, body validation and same-origin stay outside — this owns the
+// transaction and nothing else. Returns a typed outcome for the caller to map onto its existing HTTP
+// contract; only a genuine database failure throws, which the shared handler turns into a 500.
+async function putOverlayWithGoals(pool, { overlayId, workspaceId, name = null, state,
+                                           expectedVersion, allowEmptyWidgets = false,
+                                           failSync = false } = {}) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // FOR UPDATE so two saves racing on the same version serialise here rather than both reading the
+    // old row and both believing they won.
+    const existing = await client.query(
+      'SELECT state, version FROM overlays WHERE id=$1 AND workspace_id=$2 FOR UPDATE',
+      [overlayId, workspaceId]);
+    if (!existing.rows[0]) { await client.query('ROLLBACK'); return { missing: true } }
+
+    // Wipe-guard: a client with empty local state must not silently blank a cloud layout that has
+    // widgets. Same rule as before, now inside the transaction so a block leaves nothing behind.
+    const hadWidgets = Array.isArray(existing.rows[0].state?.widgets)
+      && existing.rows[0].state.widgets.length > 0;
+    const incomingEmpty = !Array.isArray(state?.widgets) || state.widgets.length === 0;
+    if (hadWidgets && incomingEmpty && allowEmptyWidgets !== true) {
+      await client.query('ROLLBACK');
+      return { emptyBlocked: true };
+    }
+
+    const updated = await client.query(
+      `UPDATE overlays SET name=COALESCE($1,name), state=$2, version=version+1, updated_at=now()
+        WHERE id=$3 AND workspace_id=$4 AND version=$5 RETURNING *`,
+      [name, state, overlayId, workspaceId, expectedVersion]);
+    if (!updated.rows[0]) { await client.query('ROLLBACK'); return { conflict: true } }
+
+    // Same client, so the sync is inside this transaction. Using the pool here would commit
+    // independently and defeat the whole point.
+    const sync = await syncGoalsFromState(client, overlayId, state);
+    if (failSync) throw new Error('injicerat syncfel');
+
+    await client.query('COMMIT');
+    return { ok: true, overlay: updated.rows[0], sync };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}

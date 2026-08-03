@@ -175,4 +175,62 @@ db('sync skapar bara saknade rader och rör inga andra overlays', async () => {
   assert.deepEqual(await runtimeIds(), ['w-a', 'w-b'], 'en icke-målwidget fick en runtime-rad');
 });
 
+db('två samtidiga PUT med samma version: exakt en commit', async () => {
+  await reset(stateWith(goalWidget('w-a')));
+  const v = (await overlayRow()).version;
+  // Both read the same version. FOR UPDATE serialises them; the second must lose on the optimistic
+  // check rather than both believing they won.
+  const [one, two] = await Promise.all([
+    putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS, state: stateWith(goalWidget('w-a'), goalWidget('w-x')), expectedVersion: v }),
+    putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS, state: stateWith(goalWidget('w-a'), goalWidget('w-y')), expectedVersion: v })
+  ]);
+  const won = [one, two].filter(r => r.ok);
+  const lost = [one, two].filter(r => r.conflict);
+  assert.equal(won.length, 1, `${won.length} PUT committade på samma version`);
+  assert.equal(lost.length, 1, 'förloraren fick inte en versionskonflikt');
+  assert.equal((await overlayRow()).version, v + 1, 'versionen räknades upp mer än ett steg');
+  const ids = await runtimeIds();
+  assert.equal(ids.length, 2, 'båda PUT:arnas mål hamnade i runtime');
+});
+
+db('sync använder transaktionsclienten, aldrig poolen vid sidan om', async () => {
+  await reset(stateWith(goalWidget('w-a')));
+  const v = (await overlayRow()).version;
+  // If sync ran on the pool it would commit independently, and this row would survive the rollback.
+  await assert.rejects(() => putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a'), goalWidget('w-leak')), expectedVersion: v, failSync: true }));
+  assert.deepEqual(await runtimeIds(), [], 'en rad överlevde rollbacken — sync körde utanför transaktionen');
+  assert.equal((await overlayRow()).version, v);
+});
+
+db('fel efter INSERT och DELETE men före commit återställer allt', async () => {
+  await reset(stateWith(goalWidget('w-old')));
+  await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS, state: stateWith(goalWidget('w-old')), expectedVersion: 1 });
+  const before = await overlayRow();
+  // This save both removes w-old and adds w-new, then fails: neither half may survive.
+  await assert.rejects(() => putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-new')), expectedVersion: before.version, failSync: true }));
+  assert.deepEqual(await runtimeIds(), ['w-old'], 'DELETE eller INSERT överlevde rollbacken');
+  assert.equal((await overlayRow()).version, before.version);
+});
+
+db('tom mållista tar bort alla runtime-rader utan ogiltig SQL', async () => {
+  await reset(stateWith(goalWidget('w-a'), goalWidget('w-b')));
+  await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a'), goalWidget('w-b')), expectedVersion: 1 });
+  assert.equal((await runtimeIds()).length, 2);
+  const v = (await overlayRow()).version;
+  // Widgets remain, but none of them is a goal: the empty id list must still be valid SQL.
+  const out = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith({ id: 'w-gift', type: 'templateTopGift' }), expectedVersion: v });
+  assert.equal(out.ok, true);
+  assert.deepEqual(await runtimeIds(), [], 'runtime-rader blev kvar när alla mål togs bort');
+});
+
+db('okänd overlay ger missing, inte ett kast', async () => {
+  const out = await putWithSync(pool, { overlayId: 'eeeeeeee-9999-0000-0000-000000000000',
+    workspaceId: WS, state: stateWith(), expectedVersion: 1 });
+  assert.equal(out.missing, true);
+});
+
 test.after(async () => { if (pool) await pool.end() });
