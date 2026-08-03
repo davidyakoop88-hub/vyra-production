@@ -110,6 +110,18 @@
     return Object.values(totals).filter(t => metric === 'likes' ? (t.present !== false && t.activeLikes > 0) : t[metric] > 0).sort((a, b) => metric === 'likes' ? b.activeLikes - a.activeLikes : b[metric] - a[metric]);
   }
 
+  // A gift landing while the flip is still running must update the name, value and both pictures
+  // without rewinding the animation — see window.VyraFlip in media.js for why. That helper owns the
+  // timing for both Top Gift and Top Streak; this file only says which of the two things happened.
+  // The fallback keeps the old behaviour if media.js has not run, rather than skipping the flip.
+  function armFlip(el) {
+    const flip = window.VyraFlip;
+    if (flip) { if (!flip.resume(el)) flip.start(el); return; }
+    el.classList.remove('play');
+    void el.offsetWidth;
+    el.classList.add('play');
+  }
+
   function updateTopGift(e, person) {
     if (typeof state === 'undefined' || !state?.widgets) return;
     const image = e.giftImage || e.image || e.giftPicture || e.gift?.image || '';
@@ -131,9 +143,7 @@
       if (gift && image) gift.src = image;
       if (name) name.textContent = person.name;
       if (coins) coins.textContent = '◉ ' + formatNum(value);
-      el.classList.remove('play');
-      void el.offsetWidth;
-      el.classList.add('play');
+      armFlip(el);
     });
     if (changed && typeof save === 'function') save();
   }

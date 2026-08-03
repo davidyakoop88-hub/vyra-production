@@ -120,7 +120,10 @@ function makeSandbox({ search = '', state = null } = {}) {
         row.append(strong, em, small);
         widgetEl.append(row);
       });
-      observers.forEach(o => o.on && o.cb());
+      // A real MutationObserver always hands its callback a record list; pass one, or a listener
+      // that reads record.addedNodes would only ever be exercised against a stub that cannot fail.
+      observers.forEach(o => o.on && o.cb([{ type: 'childList', target: widgetEl,
+        addedNodes: widgetEl.children.slice(), removedNodes: [] }], o));
     },
     live(detail) { sandbox.dispatchEvent(new sandbox.CustomEvent('vyra-live-event', { detail })) },
     tick() { intervals.forEach(fn => fn()) }
