@@ -160,6 +160,22 @@ let pool = null;
 const WS = '11111111-1111-1111-1111-111111111111';
 const OVERLAY = '22222222-2222-2222-2222-222222222222';
 
+// Opens the throwaway database and puts the fixtures the contract assumes in place. Runs only when
+// TEST_DATABASE_URL is set; without it every db() below is skipped and this never executes.
+test.before(async () => {
+  if (BLOCKED) return;
+  const { Pool } = require(path.join(__dirname, '..', 'node_modules', 'pg'));
+  pool = new Pool({ connectionString: DB_URL, max: 8 });
+  await pool.query(SCHEMA);
+  await seedWorkspace(WS);
+  await pool.query(
+    `INSERT INTO overlays (id, workspace_id, name, state)
+     VALUES ($1, $2, 'contract', '{"widgets":[]}'::jsonb)
+     ON CONFLICT (id) DO NOTHING`, [OVERLAY, WS]);
+  await pool.query('DELETE FROM goal_event_apply WHERE workspace_id = $1', [WS]);
+  await pool.query('DELETE FROM goal_runtime WHERE overlay_id = $1', [OVERLAY]);
+});
+
 // Fixtures live here, not in goal-runtime.js — production code has no business creating workspaces.
 async function seedWorkspace(id) {
   await pool.query(
