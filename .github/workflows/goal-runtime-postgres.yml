@@ -82,6 +82,12 @@ jobs:
         run: node --test test/overlay-put-sync.test.js
         working-directory: server
 
+      # The transaction proved above, reached through the real HTTP route with a real session and
+      # CSRF header. Without this step a route that kept its own UPDATE would pass everything else.
+      - name: PUT-rutten kör transaktionen — HTTP, session och CSRF
+        run: node --test test/overlay-put-http.test.js
+        working-directory: server
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server
