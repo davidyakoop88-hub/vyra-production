@@ -148,3 +148,48 @@ CREATE TABLE IF NOT EXISTS tiktok_connections (
   created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS tiktok_connections_active_idx ON tiktok_connections(workspace_id) WHERE active;
+
+-- Live-driven goals. Progress is the server's, so a layout link and a widget link for the same
+-- widget id read one row and cannot drift, and a reload or a Railway restart cannot reset a goal.
+-- The displayed number is baseline + progress: "start value" and "reset" stay separate ideas, so a
+-- reset never discards the number the streamer typed.
+CREATE TABLE IF NOT EXISTS goal_runtime (
+  overlay_id  uuid    NOT NULL REFERENCES overlays(id) ON DELETE CASCADE,
+  widget_id   text    NOT NULL,
+  metric      text    NOT NULL CHECK (metric IN ('follows','likes','shares','gifts','diamonds')),
+  baseline    bigint  NOT NULL DEFAULT 0 CHECK (baseline >= 0),
+  progress    bigint  NOT NULL DEFAULT 0 CHECK (progress >= 0),
+  target      bigint  NOT NULL DEFAULT 1000 CHECK (target > 0),
+  epoch       integer NOT NULL DEFAULT 1 CHECK (epoch >= 1),
+  reset_at    timestamptz,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (overlay_id, widget_id)
+);
+CREATE INDEX IF NOT EXISTS goal_runtime_metric_idx ON goal_runtime(overlay_id,metric);
+
+-- One row per event that actually moved a goal. The FK matters more here than anywhere else in this
+-- file: this is the highest-volume table in the system, and without ON DELETE CASCADE a deleted
+-- workspace would leave millions of rows nothing could ever reference again. Rows are only written
+-- when at least one goal matches the event's metrics, so an account with no like goal never grows a
+-- row per like.
+CREATE TABLE IF NOT EXISTS goal_event_apply (
+  workspace_id uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  event_id     text        NOT NULL,
+  applied_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, event_id)
+) WITH (fillfactor = 90);
+CREATE INDEX IF NOT EXISTS goal_event_apply_sweep_idx ON goal_event_apply(applied_at);
+
+-- Backfill: existing saved goals keep their number as baseline, progress starts at zero, so nobody
+-- sees their figure jump. Idempotent, and only an optimisation — the read path upserts lazily, so a
+-- goal without a runtime row can never break.
+INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, target)
+SELECT o.id, w->>'id',
+       CASE WHEN w->>'type' = 'templateHeartGoal' THEN 'likes'
+            WHEN w->>'goalKind' = 'likes' THEN 'likes' ELSE 'follows' END,
+       GREATEST(0, COALESCE((w->>'goalCurrent')::bigint, (w->>'heartCurrent')::bigint, 0)),
+       GREATEST(1, COALESCE((w->>'goalTarget')::bigint, (w->>'heartTarget')::bigint, 1000))
+  FROM overlays o, jsonb_array_elements(o.state->'widgets') w
+ WHERE w->>'type' IN ('templateSocialGoal','templateHeartGoal')
+   AND w->>'id' IS NOT NULL
+ON CONFLICT (overlay_id, widget_id) DO NOTHING;
