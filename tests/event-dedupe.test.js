@@ -143,7 +143,8 @@ for (const [name, factory] of IMPLEMENTATIONS) {
     assert.equal(gate.accept('id-100-uuid'), false, 'ett ID inom ringen glömdes bort');
     // …and the oldest have fallen out rather than growing without bound.
     assert.equal(gate.accept('id-0-uuid'), true, 'ringen växte obegränsat');
-    const persisted = storage.getItem('vyra-seen-events') || '';
+    // The key is namespaced per stream; with no namespace supplied it falls back to 'anon'.
+    const persisted = storage.getItem('vyra-seen-events:anon') || '';
     assert.ok(persisted.length < 40000, `persistensen växte till ${persisted.length} tecken`);
     const parsed = JSON.parse(persisted);
     assert.ok((parsed.ids || []).length <= 512, `ringen höll ${(parsed.ids || []).length} ID:n`);
