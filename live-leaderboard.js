@@ -9,6 +9,10 @@
   // uses for its cycle feature) rather than mutating topLikePeople + calling render(), so it never
   // disrupts whatever the user is doing in the editor (selection, scroll, open panels).
 
+  // media.js has its own VYRA_OVERLAY, but it is a module-scope const there and not reachable from
+  // this file. Same source of truth (the ?overlay flag studio.html is loaded with), read locally.
+  const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
+
   const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
   const LIKE_IDLE_MS = 10 * 60 * 1000;
 
@@ -159,7 +163,21 @@
       const top = metric === 'points'
         ? (window.VyraPoints?.getTop(rows.length) || [])
         : (range === 'stream' ? sortedTop(metric) : sortedTopForRange(metric, range)).slice(0, rows.length);
-      if (!top.length) return;
+      // An empty tally used to mean "leave the DOM alone", which in the editor is right — the demo
+      // rows are what the streamer is designing against. In the overlay it meant a live audience
+      // saw shipped placeholder people with invented totals, and kept seeing them: sortedTop
+      // filters on activeLikes > 0, so a like stream whose events carry count 0 never produces a
+      // single entry, and the rows are never reached. Zero the rows instead of inventing anything.
+      if (!top.length) {
+        if (!VYRA_OVERLAY) return;
+        rows.forEach(row => {
+          const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
+          if (strong) strong.textContent = '';
+          if (small) small.textContent = '';
+          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; em.textContent = icon + ' 0' }
+        });
+        return;
+      }
       rows.forEach((row, i) => {
         const person = top[i];
         row.style.display = person ? '' : 'none';
