@@ -278,7 +278,7 @@ db('event-ID och uppräkning ligger i samma transaktion', async () => {
   // increment becomes permanent: the id is spent and the event can never be applied again.
   const before = await G.readGoal(pool, OVERLAY, 'w1');
   await assert.rejects(
-    () => G.applyEvent(pool, WS, { id: 'tx-1', type: 'follow' }, { failAfterInsert: true }));
+    () => G.applyEvent(pool, WS, { id: 'tx-1', type: 'follow' }, { failAfterClaim: true }));
   const seen = await pool.query(
     'SELECT 1 FROM goal_event_apply WHERE workspace_id=$1 AND event_id=$2', [WS, 'tx-1']);
   assert.equal(seen.rowCount, 0, 'event-ID:t blev kvar trots att uppräkningen misslyckades');
@@ -487,6 +487,55 @@ db('reset och event samtidigt: utfallet följer ordningen exakt', async () => {
   assert.equal((await G.readGoal(pool, OVERLAY, 'w1')).progress, after.progress,
     'omleveransen ändrade progress');
 });
+
+// ---- TILLFÄLLIG DIAGNOSTIK — tas bort när rotorsakerna är bevisade ------------------------------
+// Prints values and types rather than asserting, so the two remaining failures can be explained
+// instead of guessed at. No assertion in this block.
+db('DIAGNOSTIK: epochens och bigintfältens faktiska typer', async () => {
+  await goalsOnly([['w-diag', 'follows']]);
+  const before = await G.readGoal(pool, OVERLAY, 'w-diag');
+  const after = await G.resetGoal(pool, OVERLAY, 'w-diag');
+  const reread = await G.readGoal(pool, OVERLAY, 'w-diag');
+  const show = (label, row) => console.log(`  ${label}: `
+    + ['epoch', 'baseline', 'progress', 'target'].map(k =>
+      `${k}=${JSON.stringify(row?.[k])} (${typeof row?.[k]})`).join('  '));
+  console.log('\n  --- DIAGNOSTIK epoch/bigint ---');
+  show('readGoal före ', before);
+  show('resetGoal ret ', after);
+  show('readGoal efter', reread);
+  console.log(`  before.epoch + 1 === after.epoch ? ${before.epoch + 1 === after.epoch}`);
+});
+
+db('DIAGNOSTIK: vad städningen faktiskt ser', async () => {
+  await goalsOnly([['w-sweep', 'follows']]);
+  const applied = await G.applyEvent(pool, WS, { id: 'diag-sweep', type: 'follow' });
+  console.log('\n  --- DIAGNOSTIK cleanup ---');
+  console.log(`  applyEvent: applied=${applied.applied} updatedGoals=${applied.updatedGoals}`);
+  const rows = await pool.query(
+    `SELECT event_id, applied_at, now() AS nu,
+            now() - $1::interval AS cutoff,
+            (applied_at < now() - $1::interval) AS skulle_raderas
+       FROM goal_event_apply WHERE workspace_id = $2 ORDER BY applied_at DESC LIMIT 10`,
+    ['48 hours', WS]);
+  console.log(`  rader i tabellen: ${rows.rowCount}`);
+  for (const r of rows.rows) {
+    console.log(`    ${r.event_id}  applied_at=${r.applied_at.toISOString()}  `
+      + `cutoff=${r.cutoff.toISOString()}  raderas=${r.skulle_raderas}`);
+  }
+  // Exactly which ids the cleanup CTE picks, before any DELETE runs.
+  const picked = await pool.query(
+    `SELECT event_id FROM goal_event_apply
+      WHERE applied_at < now() - $1::interval LIMIT $2`, ['48 hours', 5000]);
+  console.log(`  CTE:n väljer ${picked.rowCount} rader: `
+    + picked.rows.map(r => r.event_id).join(', '));
+  console.log(`  sweepApplied-signatur: ${G.sweepApplied.toString().split('\n')[0].trim()}`);
+  const swept = await G.sweepApplied(pool, { olderThan: '48 hours', limit: 5000 });
+  console.log(`  sweepApplied raderade: ${swept.deleted}`);
+  const still = await pool.query(
+    'SELECT 1 FROM goal_event_apply WHERE workspace_id=$1 AND event_id=$2', [WS, 'diag-sweep']);
+  console.log(`  diag-sweep finns kvar: ${still.rowCount === 1}`);
+});
+// ---- SLUT PÅ TILLFÄLLIG DIAGNOSTIK -------------------------------------------------------------
 
 db('städningen är batchad och rör inte rader som ännu kan behöva replay', async () => {
   const kept = await G.sweepApplied(pool, { olderThan: '48 hours', limit: 5000 });
