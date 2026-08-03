@@ -243,6 +243,22 @@ test('frame-felet loggas utan token, payload eller identitet', async () => {
   assert.ok(parsed.at, 'loggraden saknar tidpunkt');
 });
 
+test('utan injicerad logger går felraden till console.error vid anropet', async () => {
+  // Not to whatever console.error was when the ingest was created: a snapshot taken at construction
+  // ignores every transport installed later, and it is why the first CI run of the chain test saw
+  // the frame failure reach the real stderr instead of the capture it had just installed.
+  const h = harness({ frameError: new Error('redis publish failed') });
+  delete h.deps.log;
+  const ingest = Ingest.createEventIngest(h.deps);
+
+  const lines = [], real = console.error;
+  console.error = line => lines.push(String(line));
+  try { await ingest(WS, PAYLOAD) } finally { console.error = real }
+
+  assert.equal(lines.length, 1, 'standardloggern nådde inte console.error');
+  assert.match(lines[0], /goal_frame_publish_failed/);
+});
+
 test('inget annat loggas när allt går bra', async () => {
   const h = harness();
   await h.ingest(WS, PAYLOAD);

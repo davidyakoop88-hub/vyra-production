@@ -28,8 +28,12 @@
 // Everything is injected: no module-level pool, no bus, no logger. That keeps the order and the
 // failure semantics testable without a database or a Redis, which is exactly where those claims are
 // easiest to get wrong.
+// The default logger forwards to console.error at CALL time rather than capturing the function that
+// happened to be there when the ingest was created. A snapshot would ignore anything that replaced
+// console.error afterwards — which is how a test captures the line, and how any log transport added
+// later would work too.
 function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
-                             log = console.error, now = Date.now } = {}) {
+                             log = (...args) => console.error(...args), now = Date.now } = {}) {
   // A frame failure must not fail the request: the number is committed and the raw event is out, so
   // the response is already true. The widget corrects itself on the next event or the next GET,
   // because a frame is absolute — that is what makes losing one survivable.
