@@ -318,6 +318,34 @@
     "mvpColor2": "#ffe239",
     "mvpDuration": 7
   },
+  "catalog:battlemvp:inferno": {
+    "type": "templateBattleMvp",
+    "x": 100,
+    "y": 90,
+    "width": 240,
+    "title": "Battle MVP",
+    "mvpLabel": "BATTLE MVP",
+    "mvpName": "TestAlpha",
+    "mvpScore": 1500,
+    "mvpStyle": "inferno",
+    "mvpColor": "#ff8b16",
+    "mvpColor2": "#ffe239",
+    "mvpDuration": 7
+  },
+  "catalog:battlemvp:royal": {
+    "type": "templateBattleMvp",
+    "x": 100,
+    "y": 90,
+    "width": 240,
+    "title": "Battle MVP",
+    "mvpLabel": "BATTLE MVP",
+    "mvpName": "TestAlpha",
+    "mvpScore": 1500,
+    "mvpStyle": "royal",
+    "mvpColor": "#ff8b16",
+    "mvpColor2": "#ffe239",
+    "mvpDuration": 7
+  },
   "catalog:battlemvp:frame:gold-crown": {
     "type": "templateBattleMvp",
     "mvpFrame": "gold-crown",

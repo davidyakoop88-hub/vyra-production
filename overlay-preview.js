@@ -221,14 +221,30 @@ function styleOverlayCatalogCards() {
     linkBtn.title = 'Lägg till widgeten och kopiera dess egen länk';
     linkBtn.onclick = async e => {
       e.stopPropagation();
-      originalClick.call(btn, e);
-      const widgetId = selected;
-      if (!widgetId) return toast('Widgeten kunde inte skapas');
-      overlayPreviewWidgetId = widgetId;
+      // The catalog key is internal metadata published by the catalog handler itself — it is never
+      // assembled here and never comes from anything the streamer typed.
+      const catalogKey = btn.dataset.catalogKey;
+      if (!catalogKey) return toast('Widgeten kunde inte skapas');
+      // Without a secure link there is nothing to copy, so the token flow opens first and no
+      // candidate is built.
+      if (location.protocol !== 'file:' && !new URL(owgWidgetUrl('')).searchParams.has('access')) {
+        document.querySelector('.oa-open')?.click();
+        return toast('Skapa en säker länk först');
+      }
+      let result;
+      try {
+        result = await window.VyraStandalone.create(catalogKey);
+      } catch (err) {
+        // Whatever the flow refuses with is already a finished sentence; nothing from a server
+        // response or a URL reaches the streamer.
+        return toast(err && err.message ? err.message : 'Widgeten kunde inte skapas');
+      }
+      // Only now, with the server's yes in hand, is there a link to copy. A clipboard failure after
+      // this point is a copy problem, not a reason to remove a widget the server accepted.
+      overlayPreviewWidgetId = result.widget.id;
       overlayDraftPreviewHtml = null;
       overlayDraftPreviewName = null;
-      save();
-      await owgCopyWidgetLink(widgetId);
+      await owgCopyWidgetLink(result.widget.id);
       render();
     };
 

@@ -23,9 +23,35 @@ test('every active layout widget has its own copy-link control', () => {
   assert.match(preview, /owgCopyWidgetLink\(button\.dataset\.copyWidgetLink\)/);
 });
 
-test('catalog link creates the widget and copies only that widget', () => {
+test('the catalog link button goes through the standalone flow, not the layout handler', () => {
+  // The old flow ran the catalog button's own onclick and copied a link to whatever that produced —
+  // a layout widget. 🔗 now creates a standalone instance from the key the button already carries,
+  // and copies the id the flow returns. The layout button is the one that still calls originalClick.
+  const linkHandler = preview.slice(preview.indexOf("linkBtn.onclick"), preview.indexOf('const row ='));
+  assert.match(linkHandler, /const catalogKey = btn\.dataset\.catalogKey/);
+  assert.match(linkHandler, /window\.VyraStandalone\.create\(catalogKey\)/);
+  assert.match(linkHandler, /await owgCopyWidgetLink\(result\.widget\.id\)/);
+  assert.ok(!linkHandler.includes('originalClick'),
+    '🔗 kör fortfarande katalogknappens layouthandler');
+
+  // The key is the only input, and a button without one creates nothing at all.
+  assert.match(linkHandler, /if \(!catalogKey\) return toast\(/);
+  assert.ok(linkHandler.indexOf('if (!catalogKey)') < linkHandler.indexOf('VyraStandalone.create'),
+    'nyckeln kontrolleras inte före skapandet');
+
+  // Baseline-red: the shape this replaced would fail every assertion above.
+  const OLD_FLOW = "linkBtn.onclick = async e => { originalClick.call(btn, e);" +
+    " const widgetId = state.widgets[state.widgets.length - 1].id;" +
+    " await owgCopyWidgetLink(widgetId); };";
+  assert.ok(!/const catalogKey = btn\.dataset\.catalogKey/.test(OLD_FLOW));
+  assert.ok(OLD_FLOW.includes('originalClick'));
+});
+
+test('the layout button is untouched and still creates a layout widget', () => {
+  // Both paths exist side by side: 🔗 is standalone, the card itself stays layout. Losing this is how
+  // an existing layout widget would start consuming a second instance and a second quota slot.
   assert.match(preview, /originalClick\.call\(btn, e\)/);
-  assert.match(preview, /await owgCopyWidgetLink\(widgetId\)/);
+  assert.match(media, /VyraWidgets\.create\(catalogKey/);
 });
 
 test('copying has a fallback when the Clipboard API is unavailable', () => {

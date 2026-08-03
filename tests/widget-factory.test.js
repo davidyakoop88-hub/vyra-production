@@ -173,3 +173,76 @@ test('denna svit läser varken git eller andra brancher', () => {
     }
   }
 });
+
+// ---- catalog/registry defects found by the strict harness -----------------------------------------
+// Three catalog buttons produced keys the registry rejected, and one function let a missing key
+// through as a silent default. Each of these throws at click time in a real browser, which is what
+// executing the handlers surfaced and reading the source never did.
+
+test('Battle MVP: inferno och royal accepteras med legacyfärgen', { timeout: 5000 }, () => {
+  // Captured structurally from the pre-factory handler, not chosen: mvpColors had five entries and
+  // the catalog offered seven, so both fell through `||'#ff8b16'`. The registry must say exactly
+  // that — inventing a colour here would silently restyle two shipped designs.
+  for (const style of ['inferno', 'royal']) {
+    const w = VyraWidgets.create('catalog:battlemvp:' + style);
+    assert.equal(w.mvpColor, '#ff8b16', `${style} fick en annan färg än legacykoden gav`);
+    assert.equal(w.mvpColor2, '#ffe239');
+    assert.equal(w.mvpStyle, style);
+    assert.equal(w.width, 240);
+  }
+});
+
+test('Top Gift: sakura hör till extra-registret, inte tema-registret', { timeout: 5000 }, () => {
+  // The injected extra themes carried data-theme-template, which resolves against topgift.theme —
+  // four entries that do not include sakura. There is deliberately no fallback between the two
+  // registries: one would hide exactly this kind of misclassification.
+  assert.doesNotThrow(() => VyraWidgets.create('catalog:topgift:extra:sakura'));
+  assert.throws(() => VyraWidgets.create('catalog:topgift:sakura'), /Okänd tema/,
+    'sakura får inte tas emot som ett grundtema');
+  // The four real base themes stay where they are.
+  for (const theme of ['royal', 'neon', 'cyber', 'glass']) {
+    assert.doesNotThrow(() => VyraWidgets.create('catalog:topgift:' + theme));
+    assert.throws(() => VyraWidgets.create('catalog:topgift:extra:' + theme), /Okänd extratema/,
+      `${theme} bytte kategori`);
+  }
+});
+
+test('Social Goal: followers normaliseras till follows', { timeout: 5000 }, () => {
+  // `follows` is the canonical identity. `followers` is what the renderer defaults to for widgets
+  // saved before this, so it is accepted as a legacy alias and normalised — otherwise the same goal
+  // variant could produce two standalone instances with two different links.
+  const canonical = VyraWidgets.create('catalog:socialgoal:follows:1:portrait');
+  const legacy = VyraWidgets.create('catalog:socialgoal:followers:1:portrait');
+  assert.equal(legacy.createdFrom, canonical.createdFrom,
+    'aliaset gav en annan createdFrom och därmed en andra standalone-instans');
+  assert.equal(legacy.goalKind, canonical.goalKind, 'goalKind normaliserades inte');
+  assert.equal(canonical.goalTitle, 'FOLLOWERS GOAL');
+  // Likes is untouched.
+  const likes = VyraWidgets.create('catalog:socialgoal:likes:1:portrait');
+  assert.equal(likes.goalKind, 'likes');
+  assert.equal(likes.goalTitle, 'LIKE GOAL');
+  assert.notEqual(likes.createdFrom, canonical.createdFrom);
+});
+
+test('Social Goal: normaliseringen finns som återanvändbar hjälpare', { timeout: 5000 }, () => {
+  // The coming goal runtime has to agree with the catalog about what a saved widget means.
+  assert.equal(typeof VyraWidgets.goalKind, 'function', 'ingen delad normaliseringshjälpare');
+  assert.equal(VyraWidgets.goalKind('followers'), 'follows', 'legacyvärdet normaliseras inte');
+  assert.equal(VyraWidgets.goalKind('follows'), 'follows');
+  assert.equal(VyraWidgets.goalKind(undefined), 'follows', 'saknat värde ska betyda followers');
+  assert.equal(VyraWidgets.goalKind(''), 'follows');
+  assert.equal(VyraWidgets.goalKind('likes'), 'likes', 'likes påverkades');
+});
+
+test('addBoostPack kräver en nyckel och kastar före varje stateändring', { timeout: 5000 }, () => {
+  const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
+  assert.ok(!media.includes('catalogKey=null'),
+    'addBoostPack har kvar en default som kan bli en tyst fallback');
+  const at = media.indexOf('function addBoostPack(');
+  const body = media.slice(at, at + 700);
+  // The guard's exact spelling is not the contract — that it is guarded on catalogKey and throws is.
+  assert.match(body, /if\(!catalogKey[^)]*\)\s*throw/, 'saknad nyckel kastar inte');
+  // The throw has to come before anything touches state.
+  assert.ok(body.indexOf('throw') < body.indexOf('state.widgets'),
+    'state ändras innan nyckeln kontrollerats');
+});

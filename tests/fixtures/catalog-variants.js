@@ -82,6 +82,18 @@ const CONTRACT = [
   { name: 'Battle MVP · stil', key: 'catalog:battlemvp:ice',
     marker: "type:'templateBattleMvp',x:100,y:90,width:240",
     bindings: { id: 'x', b: { dataset: { mvpStyle: 'ice' } }, mvpColors: { ice: '#52d9ff' } } },
+  // inferno and royal are the two styles the catalog offered that mvpColors never had an entry for,
+  // so the old literal fell through to its `||'#ff8b16'` fallback. The real five-entry legacy table is
+  // passed in on purpose: the miss has to be genuine, not staged by handing the literal an empty
+  // object. This is what pins #ff8b16 as captured behaviour rather than a colour anyone chose.
+  { name: 'Battle MVP · stil inferno (legacyfallback)', key: 'catalog:battlemvp:inferno',
+    marker: "type:'templateBattleMvp',x:100,y:90,width:240",
+    bindings: { id: 'x', b: { dataset: { mvpStyle: 'inferno' } },
+      mvpColors: { ice: '#52d9ff', cyber: '#cb46ff', storm: '#6d7bff', aurora: '#4fd8c4', samurai: '#ff3355' } } },
+  { name: 'Battle MVP · stil royal (legacyfallback)', key: 'catalog:battlemvp:royal',
+    marker: "type:'templateBattleMvp',x:100,y:90,width:240",
+    bindings: { id: 'x', b: { dataset: { mvpStyle: 'royal' } },
+      mvpColors: { ice: '#52d9ff', cyber: '#cb46ff', storm: '#6d7bff', aurora: '#4fd8c4', samurai: '#ff3355' } } },
   { name: 'Battle MVP · ram', key: 'catalog:battlemvp:frame:gold-crown',
     marker: "type:'templateBattleMvp',mvpFrame:fid",
     bindings: { id: 'x', fid: 'gold-crown', f: { accent: '#ffc13b' } } },

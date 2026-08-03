@@ -47,7 +47,7 @@
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
     'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
     'fanlevel.theme': {gold:['#ff8a20','#ffd36b'],neon:['#ff3ac8','#a74cff'],ice:['#29cfff','#b9f5ff'],emerald:['#35e783','#baffd4'],fire:['#ff3c24','#ffb52d'],sakura:['#ff6fa8','#ffd9e8'],storm:['#6d7bff','#d6dbff'],royal:['#c79bff','#f0e2ff']},
-    'battlemvp.style': {ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355'},
+    'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
@@ -61,6 +61,21 @@
   // moment this file has loaded. media.js reads them back through variants() for rendering.
   // Frozen at load and handed out as a copy: media.js reads these back for rendering, and a caller
   // that mutated what it got would be editing the production source of every future widget.
+  // The catalog and the renderer disagreed on the name for the same goal: the renderer defaults to
+  // followers, the catalog snapshot said follows. follows is canonical; followers is accepted as a
+  // legacy alias and normalised, so one variant can never produce two standalone instances with two
+  // different links. Exported because whatever reads a saved widget later — the goal runtime — has
+  // to agree with the catalog about what it means.
+  const GOAL_KINDS = { follows: 'follows', followers: 'follows', likes: 'likes' };
+  function goalKind(value) {
+    const raw = value === undefined || value === null || value === '' ? 'follows' : String(value);
+    const canonical = GOAL_KINDS[raw];
+    if (!canonical) {
+      throw new Error('Okänd måltyp "' + raw + '" — giltiga: ' + Object.keys(GOAL_KINDS).join(', '));
+    }
+    return canonical;
+  }
+
   const deepFreeze = value => {
     if (value && typeof value === 'object' && !Object.isFrozen(value)) {
       Object.freeze(value);
@@ -229,11 +244,12 @@
     },
     'heartgoal': parts => ['heartgoal.theme', { theme: parts[0], color: pick('heartgoal.theme', parts[0], 'hjärttema')[0] }],
     'socialgoal': parts => {
-      const kind = parts[0], model = Number(parts[1]), orientation = parts[2];
-      if (kind !== 'likes' && kind !== 'follows') throw new Error('Okänd måltyp "' + kind + '" — giltiga: likes, follows');
+      // goalKind() throws on anything else, and normalises the legacy alias so both spellings
+      // resolve to one canonical key — the third return value below.
+      const kind = goalKind(parts[0]), model = Number(parts[1]), orientation = parts[2];
       if (!Number.isFinite(model)) throw new Error('catalog:socialgoal kräver en modell som siffra');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
-      return ['socialgoal.kind', { kind, model, orientation }];
+      return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
     'fanlevel': parts => {
       const c = pick('fanlevel.theme', parts[0], 'fan level-tema');
@@ -274,6 +290,8 @@
   };
 
 
+  // A resolver may return a third value: the canonical form of the key it was given. Legacy
+  // aliases resolve to the same one, so createdFrom identifies the variant rather than the spelling.
   function resolve(catalogKey, extra) {
     const segments = String(catalogKey || '').split(':');
     if (segments.shift() !== 'catalog') throw new Error('Katalognyckel måste börja med "catalog:": ' + catalogKey);
@@ -288,14 +306,14 @@
   // never the other way round.
   function create(catalogKey, options) {
     const opts = options || {};
-    const [builderName, values] = resolve(catalogKey, opts.values);
+    const [builderName, values, canonicalKey] = resolve(catalogKey, opts.values);
     const build = BUILD[builderName];
     if (!build) throw new Error('Okänd widgetvariant: ' + builderName);
     const defaults = build(values);
     if (!defaults.type) throw new Error('Katalogvarianten gav ingen widgettyp: ' + catalogKey);
     // id first so a caller cannot shadow it; createdFrom and placement last so they are never
     // mistaken for part of the shipped default configuration.
-    const widget = Object.assign({ id: newId(defaults.type) }, defaults, { createdFrom: catalogKey });
+    const widget = Object.assign({ id: newId(defaults.type) }, defaults, { createdFrom: canonicalKey || catalogKey });
     if (opts.placement === 'standalone') widget.placement = 'standalone';
     return widget;
   }
@@ -328,7 +346,7 @@
   const layoutOnly = widgets => (Array.isArray(widgets) ? widgets : []).filter(isLayout);
 
   root.VyraWidgets = {
-    create, newId, isStandalone, isLayout, selectForRender, layoutOnly,
+    create, newId, isStandalone, isLayout, selectForRender, layoutOnly, goalKind,
     families: () => Object.keys(RESOLVE),
     builders: () => Object.keys(BUILD),
     // A copy, so adding or replacing a key touches the caller's object and not the registry.
