@@ -91,3 +91,40 @@ test('trasig state ger tom lista i stället för att kasta', { timeout: 5000 }, 
     assert.deepEqual(M.goalWidgetsIn(state), []);
   }
 });
+
+// ---- target-default per widgettyp ----------------------------------------------------------------
+// A Heart Goal and a Social Goal are different products with different scales: 1000 followers is a
+// session's work, 50 hearts is a few minutes. One shared fallback would make every Heart Goal that
+// lost its target look fifty times harder than it is.
+const TARGET_DEFAULTS = [
+  { type: 'templateSocialGoal', fallback: 1000 },
+  { type: 'templateHeartGoal', fallback: 50 }
+];
+
+for (const { type, fallback } of TARGET_DEFAULTS) {
+  test(`${type}: ogiltigt target faller tillbaka på ${fallback}`, { timeout: 5000 }, () => {
+    const field = type === 'templateHeartGoal' ? 'heartTarget' : 'goalTarget';
+    for (const bad of [0, -5, undefined, null, '', NaN, 'abc', Infinity, {}]) {
+      assert.equal(M.targetForWidget({ type, [field]: bad }), fallback,
+        `target ${JSON.stringify(bad)} gav inte typens egen default`);
+    }
+  });
+
+  test(`${type}: giltigt target behålls`, { timeout: 5000 }, () => {
+    const field = type === 'templateHeartGoal' ? 'heartTarget' : 'goalTarget';
+    assert.equal(M.targetForWidget({ type, [field]: 7 }), 7);
+    assert.equal(M.targetForWidget({ type, [field]: '250' }), 250, 'sparad sträng räknas som tal');
+  });
+}
+
+test('en ny widget startar på baseline 0, en befintlig behåller sitt kundvärde', { timeout: 5000 }, () => {
+  // The distinction the whole default change rests on: a widget the factory just made carries 0, and
+  // a widget saved before this release carries whatever the streamer had typed. Backfill must never
+  // flatten the second case to the first.
+  assert.equal(M.baselineForWidget({ type: 'templateSocialGoal', goalCurrent: 0 }), 0);
+  assert.equal(M.baselineForWidget({ type: 'templateHeartGoal', heartCurrent: 0 }), 0);
+  assert.equal(M.baselineForWidget({ type: 'templateSocialGoal', goalCurrent: 658 }), 658,
+    'befintligt kundvärde tappades');
+  assert.equal(M.baselineForWidget({ type: 'templateHeartGoal', heartCurrent: 43 }), 43,
+    'befintligt kundvärde tappades');
+});

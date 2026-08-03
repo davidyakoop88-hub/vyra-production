@@ -43,9 +43,17 @@ function baselineForWidget(widget) {
   return nonNegative(widget && (widget.goalCurrent ?? widget.heartCurrent));
 }
 
-// target has a CHECK (target > 0) in the schema, so a saved 0 has to be lifted rather than rejected.
+// Each goal type has its own scale. 1000 followers is a session's work; 50 hearts is a few minutes.
+// One shared fallback would make every Heart Goal that lost its target look fifty times harder than
+// it is, so the default follows the widget type.
+const TARGET_DEFAULTS = { templateSocialGoal: 1000, templateHeartGoal: 50 };
+
+// target has a CHECK (target > 0) in the schema, so 0, negative, missing, NaN and anything
+// unparseable all fall back to the type's own default rather than being rejected or lifted to 1 —
+// a target of 1 would read as complete the instant the first event landed.
 function targetForWidget(widget) {
-  return Math.max(1, nonNegative(widget && (widget.goalTarget ?? widget.heartTarget)) || 1000);
+  const saved = nonNegative(widget && (widget.goalTarget ?? widget.heartTarget));
+  return saved > 0 ? saved : (TARGET_DEFAULTS[widget && widget.type] || 1000);
 }
 
 // Every goal widget in a saved overlay state, with what its runtime row should start as. Tolerates a
@@ -66,4 +74,5 @@ function goalWidgetsIn(state) {
   return out;
 }
 
-module.exports = { GOAL_KINDS, goalKind, metricForWidget, baselineForWidget, targetForWidget, goalWidgetsIn };
+module.exports = { GOAL_KINDS, TARGET_DEFAULTS, goalKind, metricForWidget,
+  baselineForWidget, targetForWidget, goalWidgetsIn };
