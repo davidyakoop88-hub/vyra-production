@@ -74,8 +74,13 @@ jobs:
           path: electron-app/dist2/VYRA-Setup.exe
           if-no-files-found: error
           retention-days: 1
+      # Signing runs on release tags only. A pull request builds and tests the same installer but
+      # does not sign it: SignPath's REST API is a third party, and when it is down (repeated 503s
+      # through the whole retry budget, as in August 2026) an unsigned PR check turns red for a
+      # reason that has nothing to do with the code under review. Tag builds still require it —
+      # "Validate SignPath configuration" above throws on a tag with the config missing.
       - name: Sign installer with SignPath
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
+        if: ${{ vars.SIGNPATH_ENABLED == 'true' && startsWith(github.ref, 'refs/tags/v') }}
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -85,8 +90,10 @@ jobs:
           github-artifact-id: ${{ steps.upload-unsigned-installer.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: electron-app/dist2/signed
+      # Same gate as the signing step itself — this reads dist2/signed, which only exists once
+      # SignPath has returned something.
       - name: Use signed installer
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
+        if: ${{ vars.SIGNPATH_ENABLED == 'true' && startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh
         run: |
           $signed = Get-ChildItem 'dist2/signed' -Recurse -Filter 'VYRA-Setup.exe' | Select-Object -First 1
