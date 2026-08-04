@@ -37,6 +37,18 @@ test('a blocking verdict stops the polling and explains itself',()=>{
   assert.match(source,/entryReasonShown/,'rutan skulle visas en gang i sekunden');
 });
 
+// Utan den har bryggan star den lokala Studion utan session: molnets kaka ar satt for vyralive.app
+// och skickas aldrig till 127.0.0.1, sa auth-client visar en inloggningsruta som postar till den
+// lokala servern — vilket var 405:an anvandaren fick.
+test('the cloud session is bridged before leaving the cloud origin',()=>{
+  const bridge=source.indexOf('cookies.get({url:CLOUD_ORIGIN})');
+  const leave=source.indexOf('studio.html?desktop=1');
+  assert.ok(bridge>=0,'sessionen bryggas inte alls');
+  assert.ok(bridge<leave,'kakan maste lasas medan fonstret fortfarande ar kvar pa molnorigin');
+  assert.match(source,/cloudSession:\s*\(\)\s*=>\s*cloudSessionCookie/,
+    'servern far en engangsstrang i stallet for en lasare — den startar fore inloggningen');
+});
+
 test('Studio loads account security before cloud and payment features',()=>{
   const auth=studio.indexOf('auth-client.js');
   const entitlement=studio.indexOf('entitlement-gate.js');

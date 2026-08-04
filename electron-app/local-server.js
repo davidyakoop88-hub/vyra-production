@@ -48,6 +48,12 @@ function validateCloudOrigin(value) {
 
 function startLocalServer(root, port = 4173, options = {}) {
   const cloudOrigin = validateCloudOrigin(options.cloudOrigin);
+  // Sessionskakan for molnet, bryggad av huvudprocessen. Den ar satt for vyralive.app och skickas
+  // aldrig till 127.0.0.1, sa utan den har bryggan svarar molnet 401 pa allt den lokala Studion
+  // fragar om. En funktion, inte en strang: inloggningen sker efter att servern startat.
+  const cloudSession = typeof options.cloudSession === 'function'
+    ? options.cloudSession
+    : () => options.cloudSession || '';
   const events = [];
   const connection = { connected: false, username: '', mode: 'live', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
   const seenEvents = new Map();
@@ -210,6 +216,39 @@ function startLocalServer(root, port = 4173, options = {}) {
         const raw = await readBody(req, 5 * 1024 * 1024); const parsedState = JSON.parse(raw || '{}'); if (!Array.isArray(parsedState.widgets)) return sendJson(res, { ok: false, error: 'Ogiltig VYRA-state' }, 400);
         fs.mkdirSync(backupDir, { recursive: true }); const id = String(Date.now()); writeAtomic(path.join(backupDir, `state-${id}.json`), raw);
         versionFiles().slice(20).forEach(file => fs.unlinkSync(path.join(backupDir, file))); return sendJson(res, { ok: true, id });
+      }
+
+      // Allt under /api/ som INTE ar en av enhetsrutterna ovan hor till molnet. Den lokala Studion
+      // kor samma auth-, moln- och betalningskod som webben, sa utan den har vidarebefordran fick
+      // varje POST 405 fran catch-allen nedan — inklusive inloggningen, vilket ar exakt vad
+      // anvandaren sag. GET-anrop foll i stallet till den statiska proxyn, som hamtade dem utan
+      // kaka och darfor alltid fick 401.
+      //
+      // Enhetsrutterna ar redan besvarade ovan och kan inte na hit: /api/status ar TikTok-
+      // anslutningen i DEN HAR processen och far aldrig ga till molnet.
+      if (p.startsWith('/api/') && cloudOrigin) {
+        const raw = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req, 5 * 1024 * 1024);
+        try {
+          // URL:en byggs av cloudOrigin + path, sa kakan kan inte folja med nagon annanstans.
+          const upstream = await fetch(cloudOrigin + p + (parsed.search || ''), {
+            method: req.method,
+            headers: {
+              'content-type': req.headers['content-type'] || 'application/json',
+              accept: req.headers.accept || 'application/json',
+              cookie: cloudSession() || '',
+              'x-vyra-csrf': req.headers['x-vyra-csrf'] || ''
+            },
+            body: raw, redirect: 'follow', signal: AbortSignal.timeout(15000)
+          });
+          const body = Buffer.from(await upstream.arrayBuffer());
+          res.writeHead(upstream.status, {
+            'Content-Type': upstream.headers.get('content-type') || 'application/json',
+            'Cache-Control': 'no-store', 'Content-Length': body.length
+          });
+          return res.end(body);
+        } catch {
+          return sendJson(res, { ok: false, error: 'Kunde inte nå VYRA-molnet' }, 502);
+        }
       }
 
       if (req.method !== 'GET') {

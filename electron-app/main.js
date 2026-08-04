@@ -13,6 +13,11 @@ let updateCheckRunning=false;
 let desktopAuthTimer;
 // Ett terminalt hinder forklaras en gang per korning, inte en gang per pollning.
 let entryReasonShown=false;
+// Molnets sessionskaka, bryggad hit nar inloggningen ar klar. Den ar satt for vyralive.app och
+// skickas aldrig till 127.0.0.1, sa den lokala Studion har ingen egen session — den lokala servern
+// faster den har pa anrop den vidarebefordrar. Vardet stannar i huvudprocessen och nar aldrig
+// sidans JS.
+let cloudSessionCookie='';
 
 // Diagnostics: this process runs detached (no visible console), so log to a file we can inspect —
 // console.log alone is invisible once packaged.
@@ -122,6 +127,14 @@ async function createMainWindow() {
         );
         if(verdict&&verdict.ok){
           clearInterval(desktopAuthTimer);
+          // Brygga sessionen INNAN vi lamnar molnorigin. Efter navigeringen kor Studion pa
+          // 127.0.0.1, dar molnets kaka inte finns — utan det har steget svarar molnet 401 pa allt
+          // sidan fragar om, och auth-client visar en inloggningsruta som inte kan fungera.
+          try{
+            const jar=await session.defaultSession.cookies.get({url:CLOUD_ORIGIN});
+            cloudSessionCookie=jar.map(c=>`${c.name}=${c.value}`).join('; ');
+            log('bridged cloud session:',jar.length,'cookies');
+          }catch(error){log('cookie bridge failed:',error.message)}
           const profile=encodeURIComponent(Buffer.from(JSON.stringify(verdict.account),'utf8').toString('base64'));
           await main.loadURL(`${localOrigin}/studio.html?desktop=1&profile=${profile}`);
           return;
@@ -180,7 +193,9 @@ app.whenReady().then(async () => {
     httpServer = await startLocalServer(appRoot(), PORT, {
       createLiveConnector: callbacks => createTikTokService({ ...callbacks, log }),
       obsService: createObsService({ log }),
-      cloudOrigin: CLOUD_ORIGIN
+      cloudOrigin: CLOUD_ORIGIN,
+      // Lases vid varje proxat anrop, inte en gang vid start: servern startar fore inloggningen.
+      cloudSession: () => cloudSessionCookie
     });
     log('local server listening on', PORT, 'root =', appRoot());
   } catch (err) {
