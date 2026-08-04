@@ -85,9 +85,52 @@ function overlayPreviewHtml() {
 // it would have created via wh() — the exact renderer the real canvas uses — then undoes the push.
 // render/toast are reassignable (matching this codebase's monkey-patch convention) so they're
 // swapped for no-ops here to avoid a real re-render/toast per button; save() is declared `const`
-// in studio.js and can't be swapped the same way, so it's left to write for real (harmless — it's
-// a synchronous localStorage.setItem, and styleOverlayCatalogCards() does one corrective save()
-// after the whole batch to flush the true state back once every dry-run has undone its push).
+// in studio.js and can't be swapped the same way, so it writes for real — and this function
+// therefore does its own corrective save() after restoring, at the bottom.
+//
+// It used to rely on styleOverlayCatalogCards() doing ONE corrective save() after the whole batch.
+// That stopped being true when thumbnails went lazy: owgThumbObserver renders one card at a time
+// as it scrolls into view, long after that save has run. Every lazily rendered card then left its
+// throwaway widget in localStorage — which is what cloud-sync's one-second ticker reads and pushes.
+// En miniatyr behover ETT widgetobjekt att rendera — ingenting mer. Tidigare togs det genom att
+// anropa kortets riktiga "lagg till i layout"-handler och sedan angra, vilket lade widgeten i
+// anvandarens layout pa vagen. Handlern sparar, och save() gar inte att stanga av: den ar `const`
+// i studio.js. Sa lange alla kort ritades i en batch stadade en avslutande save() upp; nar
+// miniatyrerna blev lazy — ett kort i taget vid scroll — fanns ingen sadan stadning kvar, och
+// varje renderat kort lamnade sin engangswidget efter sig. Uppmatt i produktion: ett klick i
+// katalogen gav 9 widgets i localStorage medan state.widgets stod pa 0.
+//
+// Varje kort bar redan vilket objekt det representerar, sa objektet kan byggas direkt. Ingen
+// handler anropas, ingenting laggs i layouten, ingenting sparas.
+function overlayPreviewWidget(btn) {
+  const d = (btn && btn.dataset) || {};
+
+  if (d.catalogKey) {
+    try { return root.VyraWidgets.create(d.catalogKey) } catch (e) { return null }
+  }
+
+  // last-x-alerts.js:373 — samma falt som knappen sjalv satter.
+  if (d.lastXAdd) {
+    return { id: 'owg-preview-lastx', type: 'templateLastX', x: 0, y: 0, width: 500,
+      title: 'Last-X Alerts', lastXType: 'all', lastXDesign: d.lastXAdd,
+      lastXEntrance: 'slide-left', followDuration: 5 };
+  }
+
+  // custom-widgets.js:27 — text, bild och video, med knappens egna defaults.
+  if (d.cw) {
+    const type = d.cw === 'text' ? 'templateCustomText'
+      : d.cw === 'image' ? 'templateCustomImage'
+      : d.cw === 'video' ? 'templateCustomVideo' : null;
+    if (!type) return null;
+    const extra = d.cw === 'text'
+      ? { width: 420, height: 90, customText: 'Skriv din text har' }
+      : { width: 300, height: d.cw === 'video' ? 450 : 300 };
+    return { id: 'owg-preview-' + d.cw, type, x: 0, y: 0, ...extra };
+  }
+
+  return null;   // okant kort: behaller sin ikon, precis som nar previewen misslyckades forut
+}
+
 function overlayCatalogPreviewHtml(originalClick) {
   const savedWidgets = state.widgets.slice();
   const savedSelected = selected, savedPreviewId = overlayPreviewWidgetId;
@@ -103,6 +146,19 @@ function overlayCatalogPreviewHtml(originalClick) {
   selected = savedSelected;
   overlayPreviewWidgetId = savedPreviewId;
   render = realRender; toast = realToast;
+  // Skriv tillbaka det aterstallda laget direkt. save() gar inte att stanga av — den ar `const` i
+  // studio.js — sa originalClick() har redan hunnit spara torrkorningens widget till localStorage.
+  // Minnet aterstalls ovan, men utan den har raden star LAGRINGEN kvar smutsig, och det ar
+  // lagringen cloud-syncs sekundtickare laser och skickar till servern.
+  //
+  // Det var tackt sa lange alla miniatyrer ritades i en batch: styleOverlayCatalogCards() gjorde
+  // en korrigerande save() pa slutet. Sedan blev miniatyrerna lazy — owgThumbObserver ritar ett
+  // kort i taget nar det scrollas in, langt efter att den sparningen redan kort. Varje lat
+  // renderat kort lamnade darfor kvar sin engangswidget.
+  //
+  // Uppmatt i produktion: ett klick i katalogen gav 9 widgets i localStorage medan state.widgets
+  // stod pa 0.
+  save();
   return { html, name };
 }
 
@@ -119,9 +175,15 @@ function scaleThumbnailToFit(thumb) {
 // cards that actually scroll near the viewport ever run overlayCatalogPreviewHtml()'s dry-run,
 // instead of all ~50+ catalog widgets at once (which is what used to lock the renderer).
 function owgRenderCardThumb(btn) {
-  const originalClick = btn._owgOriginalClick;
-  if (!originalClick) return;
-  const { html: thumbHtml } = overlayCatalogPreviewHtml(originalClick);
+  const preview = overlayPreviewWidget(btn);
+  let thumbHtml = null;
+  if (preview) {
+    try { thumbHtml = wh(preview) } catch (e) { thumbHtml = null }
+  } else if (btn._owgOriginalClick) {
+    // Enbart for kort som saknar all igenkant markning. Torrkorningen ar kvar som sista utvag,
+    // men ingen av katalogens 108 knappar tar den vagen i dag.
+    thumbHtml = overlayCatalogPreviewHtml(btn._owgOriginalClick).html;
+  }
   if (!thumbHtml) return;
   const icon = btn.querySelector('i');
   const thumb = document.createElement('div');
