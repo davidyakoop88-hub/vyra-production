@@ -110,23 +110,162 @@ In the browser, `live-client.js` calls these when there is no VYRA Desktop runti
 
 ### Running the manager on Railway
 
-Railway builds one service per repo path, so the manager needs its own service pointing at
-`tiktok-bridge/Dockerfile` (whose `CMD` is already `node connection-manager.js`). Give it
-`DATABASE_URL` (same Postgres as the API), `VYRA_CLOUD_URL` (the API origin, e.g.
-`https://vyralive.app`), and `VYRA_INGEST_TOKEN` (must equal the API's `TIKTOK_INGEST_TOKEN`).
-`PROXY_LIST` is optional and disabled when empty — start without it and only add proxies once
-TikTok actually rate-limits the shared datacenter IP, which is what `proxy-manager.js` exists for.
+The API and the manager must be **two separate Railway services**. They share nothing but the
+database: the API writes rows to `tiktok_connections`, the manager polls them and forks one bridge
+child process per active row. Putting them in one service means bridge memory pressure can OOM-kill
+the API, taking login and every widget down with it — the bridges are the part that scales with
+users, so they need their own memory budget.
 
-The manager polls `tiktok_connections` every `SYNC_INTERVAL_MS` (default 15000) and reconciles:
-it starts a bridge for any active row that has none, stops one whose row went inactive, and
-restarts one whose username changed. Before this it called `startAll()` exactly once at boot,
-which meant two things — a connection registered afterwards was never picked up, and with an
-empty table nothing held the event loop open so the process exited straight away.
+The manager service points at `tiktok-bridge/Dockerfile`, whose `CMD` is `npm run manager`
+(the same command you use locally).
+
+**Environment**
+
+| Variable | Value | Notes |
+|---|---|---|
+| `DATABASE_URL` | same Postgres as the API | how it discovers active connections |
+| `VYRA_CLOUD_URL` | the API origin, e.g. `https://vyralive.app` | where bridges post events |
+| `VYRA_INGEST_TOKEN` | must equal the API's `TIKTOK_INGEST_TOKEN` | |
+| `MAX_BRIDGES` | start at `5` | see the capacity note below |
+| `PORT` | supplied by Railway | the health/status listener binds to it |
+| `SYNC_INTERVAL_MS` | optional, default `15000` | how fast connect/disconnect takes effect |
+| `PROXY_LIST` | optional, disabled when empty | only once TikTok actually rate-limits the shared IP |
+
+**Leave `VYRA_SERVER_URL` unset in the cloud.** It points at the desktop build's local server
+(`server.ps1` on `127.0.0.1:4173`), which does not exist on Railway. It used to default to that
+address regardless, so every event, heartbeat, connect and disconnect fired a doomed POST and logged
+an error — one error line per event during a live stream, drowning the messages that matter. The
+bridge now skips the local post entirely when `VYRA_CLOUD_URL` is set and `VYRA_SERVER_URL` is not.
+Only set it if you deliberately want a bridge to also feed a local server.
+
+### APP_ENV — staging and production are both real deployments
+
+`NODE_ENV=production` in BOTH. That is what enables every hardening path in the stack, and a staging
+box must not become a development box just because it needs test payment keys. `APP_ENV` is a
+separate axis that says which real deployment this is: `staging` or `production`, nothing else.
+
+It is required and never defaulted. Both guesses are bad — default to production and a staging
+deploy demands live Stripe keys; default to staging and a production deploy would accept a test key
+and quietly take no money at all while looking like it worked. A missing `APP_ENV` fails the boot.
+
+**Nothing is relaxed for staging.** Every secret, URL and token check applies identically in both,
+and the test suite asserts that for each check individually — if one ever stops firing under
+`APP_ENV=staging`, staging has become the soft way in. Staging is stricter in one place:
+
+| | production | staging |
+|---|---|---|
+| Stripe secret key | must be `sk_live_`; `sk_test_` refused | must be `sk_test_`; `sk_live_` refused |
+| Stripe price + webhook secret | live mode | test mode, from the same test-mode account |
+| `OBJECT_KEY_PREFIX` or own `OBJECT_BUCKET` | optional | **required** |
+| every other check | applies | applies identically |
+
+Stripe is refused in both directions rather than only checked for the right prefix: a live key on
+staging charges real cards from a test box, and a test key in production silently takes no money.
+The error names which of the two mistakes was made.
+
+`OBJECT_KEY_PREFIX` is prepended to every media key (`staging/workspaces/<id>/<asset>.<ext>`), so a
+staging environment can share the production bucket without ever writing into its namespace. Empty
+in production, where keys stay byte-for-byte what they have always been.
+
+For Resend and desktop metadata the validator can only check shape, not provenance — it cannot tell
+a staging API key from a production one. Use a separate Resend key restricted to a domain you
+control and route alerts away from the production on-call channel; see `.env.staging.example`, which
+spells out the safe value for each.
+
+### Service root directories — railway.json is only read from the service's own root
+
+Railway reads `railway.json` from the **root directory configured on the service**, not from the
+repository root. The two files in this repo are therefore only picked up with these settings:
+
+| Service | Root directory | Config file that applies |
+|---|---|---|
+| API | `server` | `server/railway.json` |
+| TikTok manager | `tiktok-bridge` | `tiktok-bridge/railway.json` |
+
+`server` is the correct root for the API: it does not serve any HTML — Caddy is the public entry
+point for static files and only proxies API traffic here — so nothing outside `server/` needs to be
+in that image.
+
+**Verify detection in the dashboard; do not assume it from the file existing in Git.** After the
+first deploy, the service's Settings should show the values below already filled in. If they are
+blank, the root directory is wrong and the file was never read — set them by hand:
+
+| Setting | API | Manager |
+|---|---|---|
+| Root directory | `server` | `tiktok-bridge` |
+| Pre-deploy command | `npm run migrate` | *(none)* |
+| Start command | *(default `npm start`)* | `npm run manager` |
+| Health check path | `/health/ready` | `/health` |
+| Health check timeout | `300` | `60` |
+| Restart policy | on failure, max 10 | on failure, max 10 |
+
+The pre-deploy command is the one that must not be skipped. `/health/ready` now probes a write
+against `health_probe`; a build that starts serving before the migration created that table answers
+503 with `probe-table-missing-run-migrate` and Railway stops routing to it. A failed migration fails
+the deploy and leaves the previous version serving, which is the outcome you want.
+
+If the API service's root directory is the repository root rather than `server` for some other
+reason, `server/railway.json` will be ignored entirely — set every value in the table above by hand
+and point the pre-deploy command at `npm --prefix server run migrate`.
+
+**Migration runs before the deploy takes traffic**
+
+`server/railway.json` sets `preDeployCommand: npm run migrate`, so the schema is applied by the
+deployment itself rather than by someone remembering to open a console. This matters now that
+`/health/ready` probes a write against `health_probe`: a build that starts serving readiness before
+that table exists answers 503 and the platform stops routing to it. If the migration fails the
+deploy fails and the previous version keeps serving, which is the outcome you want.
+
+The migration is idempotent (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT
+EXISTS`, `INSERT ... ON CONFLICT DO NOTHING`), and CI proves it by running it twice, so re-running it
+on every deploy is safe.
+
+**Health check**
+
+Point Railway's health check at `/health` (returns `{"ok":true,"status":"live"}`).
+
+It deliberately reports 200 even while Postgres is unreachable. The manager process is alive and the
+bridges it already started keep streaming, so failing the check on a transient database blip would
+have Railway restart a healthy fleet. The database state is in the body of `/status` instead
+(`lastSyncError`), not in the health verdict.
+
+`/status` is the operational view:
+
+```json
+{"ok":true,"activeBridges":3,"maxBridges":5,"atCapacity":false,"waitingCount":0,
+ "waiting":[],"restarts":0,"lastEventTime":1785691939627,"lastSyncAt":1785691939000,
+ "lastSyncError":null,"syncIntervalMs":15000,"bridges":[...]}
+```
+
+Watch `atCapacity` and `waitingCount`: a non-zero `waitingCount` means real users are being refused
+and `MAX_BRIDGES` (or the plan) needs raising. A climbing `restarts` means a bridge is crash-looping.
+
+**Capacity — measure, do not guess**
+
+Each bridge is a full Node process, roughly 40–60 MB resident. `MAX_BRIDGES` is a hard ceiling on
+how many run at once; the manager refuses beyond it and reports the workspace as waiting rather than
+letting the container run out of memory. Refusal is controlled: already-running bridges are never
+touched, and a waiting workspace starts automatically on the next sync once a slot frees.
+
+Start at `MAX_BRIDGES=5`, run a load test with real streams, and read actual RSS per bridge before
+raising it. Leave the manager service clear headroom — the ceiling should be reached by the refusal
+path, never by the OOM killer.
+
+The manager polls `tiktok_connections` every `SYNC_INTERVAL_MS` and reconciles: it starts a bridge
+for any active row that has none, stops one whose row went inactive, and restarts one whose username
+changed. A bridge that exits unexpectedly frees its slot immediately and is retried with exponential
+backoff (5 s doubling to a 5 minute cap), so a permanently broken connection cannot spin in a restart
+loop. A bridge that stayed up for more than a minute has its backoff counter reset, so an ordinary
+reconnect carries no penalty. A stop we asked for is not treated as a crash.
+
+The same TikTok account is never given two processes, even if two different workspaces both
+configure it — the second is reported as waiting with reason `duplicate-account`. Two readers on one
+stream would duplicate every event downstream and give TikTok two connections to rate-limit.
 
 Note that a bridge stays up as long as its row is active, reconnecting even while the account is
-offline, so a workspace that has stopped streaming still holds a process. Fine for a handful of
-workspaces; before a large fleet the bridges should be tied to whether the account is actually
-live, since ~100 idle Node processes is several GB of RAM.
+offline, so a workspace that has stopped streaming still holds a process and a capacity slot. Fine
+for a handful of workspaces; before a large fleet the bridges should be tied to whether the account
+is actually live, since ~100 idle Node processes is several GB of RAM.
 
 ## OBS overlay links
 

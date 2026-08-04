@@ -28,7 +28,14 @@ const { HttpsProxyAgent } = require('https-proxy-agent');
 const N = require('./normalizer');
 const { createProxyManager } = require('./proxy-manager');
 
+// The local server only exists in the desktop build (server.ps1 on 127.0.0.1:4173). In the cloud
+// there is nothing listening there, so defaulting to it made every event, heartbeat, connect and
+// disconnect fire a doomed POST and log an error — one error line per event during a live stream,
+// which buries the messages that matter and burns log quota on a memory-capped host.
+// LOCAL_ENABLED is false when the bridge is running as part of the cloud fleet (VYRA_CLOUD_URL set)
+// and no local server was explicitly configured. Set VYRA_SERVER_URL to opt back in.
 const SERVER = process.env.VYRA_SERVER_URL || 'http://127.0.0.1:4173';
+const LOCAL_ENABLED = !!process.env.VYRA_SERVER_URL || !process.env.VYRA_CLOUD_URL;
 const CLOUD = process.env.VYRA_CLOUD_URL || '';
 const WORKSPACE = process.env.VYRA_WORKSPACE_ID || '';
 const INGEST_TOKEN = process.env.VYRA_INGEST_TOKEN || '';
@@ -149,6 +156,8 @@ if (require.main === module) {
   }
 
   async function postJson(path, body) {
+    // Not an error worth reporting: in cloud mode there is deliberately no local server.
+    if (!LOCAL_ENABLED) return null;
     try {
       const res = await fetch(SERVER + path, {
         method: 'POST',

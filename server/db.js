@@ -22,8 +22,12 @@ const pool = new Pool({
       : false
 });
 
-async function tx(fn) {
-  const client = await pool.connect();
+// Exported as a factory so tests can run the REAL transaction logic against a fake pool. Copying
+// this into a test would only prove the copy works, and the thing under test here — that the
+// advisory lock is still held when the INSERT lands — lives entirely in this shape.
+function makeTx(poolLike) {
+  return async function tx(fn) {
+  const client = await poolLike.connect();
 
   try {
     await client.query('BEGIN');
@@ -36,6 +40,9 @@ async function tx(fn) {
   } finally {
     client.release();
   }
+  };
 }
 
-module.exports = { pool, tx };
+const tx = makeTx(pool);
+
+module.exports = { pool, tx, makeTx };
