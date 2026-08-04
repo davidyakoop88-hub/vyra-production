@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS goal_runtime (
   progress    bigint  NOT NULL DEFAULT 0 CHECK (progress >= 0),
   target      bigint  NOT NULL DEFAULT 1000 CHECK (target > 0),
   epoch       integer NOT NULL DEFAULT 1 CHECK (epoch >= 1),
+  -- Ordningsfältet klienten jämför frames på. Bumpas av varje sats som ändrar vad en frame bär.
+  revision    bigint  NOT NULL DEFAULT 0 CHECK (revision >= 0),
   reset_at    timestamptz,
   updated_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (overlay_id, widget_id)
@@ -223,20 +225,40 @@ db('schemat kan skapas och beskriver de fält kontraktet kräver', async () => {
     'epoch', 'revision', 'reset_at', 'updated_at']) assert.ok(names.includes(col), `kolumnen ${col} saknas`);
 });
 
-// Produktionens goal_runtime fanns innan revision gjorde det. CREATE TABLE IF NOT EXISTS rör inte
-// en befintlig tabell, så det som måste fungera är ALTER-vägen — och den provas genom att ta bort
-// kolumnen och köra schemat igen, precis som migrationen gör mot Railway.
-db('revision läggs till på en tabell som redan finns', async () => {
-  await pool.query(SCHEMA);
-  await pool.query('ALTER TABLE goal_runtime DROP COLUMN IF EXISTS revision');
-  await pool.query(SCHEMA);
-  const q = await pool.query(
+// Produktionens goal_runtime fanns innan revision gjorde det, och CREATE TABLE IF NOT EXISTS rör
+// inte en befintlig tabell — så det enda som kan lägga till kolumnen där är ALTER-satsen i
+// schema.sql. Den måste provas mot den RIKTIGA filen: SCHEMA-konstanten ovan är den här filens egen
+// kopia av formen, och det är precis så det här testet först gick fel — kopian hade inte kolumnen,
+// så "kör schemat igen" lade aldrig tillbaka den.
+//
+// Allt sker i en transaktion som alltid rullas tillbaka. DDL är transaktionellt i Postgres, och
+// första försöket bevisade varför det behövs: ett destruktivt test som föll mitt i lämnade tabellen
+// utan kolumn och tog med sig tjugo tester efter sig, som alla rapporterade fel om andra saker.
+db('migrationen lägger till revision på en tabell som redan finns', async () => {
+  const migration = require('fs').readFileSync(path.join(__dirname, '..', 'schema.sql'), 'utf8');
+  const client = await pool.connect();
+  const column = () => client.query(
     `SELECT data_type, is_nullable, column_default FROM information_schema.columns
       WHERE table_name = 'goal_runtime' AND column_name = 'revision'`);
-  assert.equal(q.rowCount, 1, 'revision kom inte tillbaka — migrationen är inte idempotent');
-  assert.equal(q.rows[0].data_type, 'bigint');
-  assert.equal(q.rows[0].is_nullable, 'NO');
-  assert.match(q.rows[0].column_default || '', /0/, 'befintliga rader får ingen startrevision');
+  try {
+    await client.query('BEGIN');
+    await client.query('ALTER TABLE goal_runtime DROP COLUMN revision');
+    assert.equal((await column()).rowCount, 0, 'kolumnen gick inte att ta bort — testet bevisar inget');
+
+    await client.query(migration);
+
+    const q = await column();
+    assert.equal(q.rowCount, 1, 'migrationen lade inte tillbaka revision på en befintlig tabell');
+    assert.equal(q.rows[0].data_type, 'bigint');
+    assert.equal(q.rows[0].is_nullable, 'NO');
+    assert.match(q.rows[0].column_default || '', /0/, 'befintliga rader får ingen startrevision');
+
+    const rows = await client.query('SELECT count(*)::int c FROM goal_runtime WHERE revision <> 0');
+    assert.equal(rows.rows[0].c, 0, 'befintliga rader fick något annat än 0 som startpunkt');
+  } finally {
+    await client.query('ROLLBACK').catch(() => {});
+    client.release();
+  }
 });
 
 db('schemats garantier finns i databasen, inte bara i koden', async () => {
