@@ -223,8 +223,10 @@ chain('ett follow räknas i Postgres och syns som en absolut frame', async () =>
     assert.equal(frame.overlayId, A);
     assert.equal(frame.metric, 'follows');
     assert.equal(frame.epoch, Number(row.epoch));
+    // revision kommer ur RETURNING-raden och gar ut som sifferstrang — se goal-contract.test.js.
+    assert.equal(frame.revision, String(row.revision));
     assert.deepEqual(Object.keys(frame).sort(),
-      ['at', 'epoch', 'metric', 'overlayId', 'target', 'value', 'widgetId']);
+      ['at', 'epoch', 'metric', 'overlayId', 'revision', 'target', 'value', 'widgetId']);
 
     // And the raw event still arrives, unchanged.
     assert.equal(raws(a)[0].id, id);

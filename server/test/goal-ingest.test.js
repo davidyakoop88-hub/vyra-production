@@ -30,7 +30,7 @@ const PAYLOAD = { id: 'evt-1', type: 'follow', username: 'Alice', userId: 'u-1',
   profileUrl: 'https://x/y.png', count: 1 };
 
 const row = (over = {}) => ({ overlay_id: 'o-1', widget_id: 'w-1', metric: 'follows',
-  baseline: '10', progress: '3', target: '100', epoch: 1, ...over });
+  baseline: '10', progress: '3', target: '100', epoch: 1, revision: '4', ...over });
 
 // One harness, so each test only says what is different about it.
 function harness(over = {}) {
@@ -176,6 +176,8 @@ test('framen byggs absolut ur raden som faktiskt uppdaterades', async () => {
   assert.equal(update.progress, '3');
   assert.equal(update.target, '100');
   assert.equal(update.epoch, 1);
+  // Raden gar oforandrad vidare, sa ordningsfaltet foljer med utan att ingest kanner till det.
+  assert.equal(update.revision, '4');
   assert.equal(update.overlay_id, 'o-1');
   assert.equal(update.at, h.seen.apply.event.at, 'framen bär inte eventets tidpunkt');
   assert.equal(update.amount, undefined, 'framen bär ett delta');

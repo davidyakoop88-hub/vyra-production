@@ -185,7 +185,8 @@ const quiet = () => waitFor(() => subscribers() === 0, { why: 'att tidigare str�
 
 const studioPath = (ws, overlayId) => `/api/workspaces/${ws}/overlays/${overlayId}/events/stream`;
 const frameFor = (overlayId, widgetId, over = {}) => ({ overlayId, widgetId, metric: 'follows',
-  baseline: 0, progress: 3, target: 100, epoch: 1, at: 1_700_000_000_000, ...over });
+  baseline: 0, progress: 3, target: 100, epoch: 1, revision: '1',
+  at: 1_700_000_000_000, ...over });
 const goalRow = async (overlayId, widgetId) => (await pool.query(
   'SELECT * FROM goal_runtime WHERE overlay_id=$1 AND widget_id=$2', [overlayId, widgetId])).rows[0];
 const applyRows = async () => Number((await pool.query(
@@ -207,9 +208,9 @@ studio('en inloggad medlem får sitt overlays frames och de råa eventen', async
     assert.deepEqual(goals(a).map(f => f.widgetId), ['w-a-goal']);
     assert.equal(goals(a)[0].value, 7);
     assert.equal(goals(a)[0].overlayId, A);
-    // The same seven fields an OBS link gets — one frame format, built in one place.
+    // The same eight fields an OBS link gets — one frame format, built in one place.
     assert.deepEqual(Object.keys(goals(a)[0]).sort(),
-      ['at', 'epoch', 'metric', 'overlayId', 'target', 'value', 'widgetId']);
+      ['at', 'epoch', 'metric', 'overlayId', 'revision', 'target', 'value', 'widgetId']);
     assert.equal(raws(a)[0].username, 'Alice');
   } finally { a.close() }
 });

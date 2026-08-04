@@ -192,7 +192,7 @@ async function publishRaw(envelope) {
 
 const frameFor = (overlayId, widgetId, over = {}) => ({
   overlayId, widgetId, metric: 'follows', baseline: 0, progress: 7, target: 100, epoch: 1,
-  at: 1_700_000_000_000, ...over });
+  revision: '1', at: 1_700_000_000_000, ...over });
 
 // ---- the isolation proof -------------------------------------------------------------------------
 sse('A och B får samma råa event, men bara sitt eget mål', async () => {
@@ -257,9 +257,11 @@ sse('en frame utan overlayId eller med okänt overlayId släpps av strömmen', a
   try {
     await waitFor(() => subscribers() === 2, { why: 'båda prenumerationerna' });
 
-    await publishRaw({ goal: { widgetId: 'w-noid', metric: 'follows', value: 5, target: 10, epoch: 1, at: 1 } });
+    await publishRaw({ goal: { widgetId: 'w-noid', metric: 'follows', value: 5, target: 10, epoch: 1,
+      revision: '1', at: 1 } });
     await publishRaw({ goal: frameFor(UNKNOWN_OVERLAY, 'w-unknown', { progress: 5 }) });
-    await publishRaw({ goal: { overlayId: OVERLAY_A, widgetId: 'w-bad', metric: 'kramar', value: 1, target: 2, epoch: 1, at: 1 } });
+    await publishRaw({ goal: { overlayId: OVERLAY_A, widgetId: 'w-bad', metric: 'kramar', value: 1, target: 2,
+      epoch: 1, revision: '1', at: 1 } });
     // A valid frame published last: when THIS arrives, the three above have already been handled.
     await GoalSse.publish(eventBus, WS, frameFor(OVERLAY_A, 'w-ok', { progress: 4 }));
 
@@ -273,7 +275,7 @@ sse('en frame utan overlayId eller med okänt overlayId släpps av strömmen', a
   } finally { a.close(); b.close() }
 });
 
-sse('framen på tråden bär exakt de sju fälten och inga identiteter', async () => {
+sse('framen på tråden bär exakt de åtta fälten och inga identiteter', async () => {
   await quiet();
   const a = await openStream(link.a);
   try {
@@ -287,7 +289,7 @@ sse('framen på tråden bär exakt de sju fälten och inga identiteter', async (
     await settle();
     const frame = goals(a)[0];
     assert.deepEqual(Object.keys(frame).sort(),
-      ['at', 'epoch', 'metric', 'overlayId', 'target', 'value', 'widgetId']);
+      ['at', 'epoch', 'metric', 'overlayId', 'revision', 'target', 'value', 'widgetId']);
     for (const secret of [WS, USER, 'Streamer', link.a, link.b, 'hash', 'evt-1']) {
       assert.ok(!a.text.includes(secret), `${secret} nådde klienten`);
     }
