@@ -15,8 +15,8 @@ name: 'VYRA verification (E2E — manuell)'
 # Nasta steg innan detta blir obligatoriskt:
 #   npm i -D @playwright/test
 #   npx playwright install --with-deps chromium
-#   npx playwright test --project=web        # ska vara gron
-#   npx playwright test --project=desktop    # ska vara gron
+#   npx playwright test --config tests/e2e/playwright.config.js --project=web        # ska vara gron
+#   npx playwright test --config tests/e2e/playwright.config.js --project=desktop    # ska vara gron
 # Forst darefter flyttas jobben in i ci.yml.
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
       - run: npm ci
       - run: npm i -D @playwright/test
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --project=web
+      - run: npx playwright test --config tests/e2e/playwright.config.js --project=web
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -60,7 +60,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       # Electron ritar inget utan display pa Linux. xvfb ger den en, sa "headless" betyder har
       # "ingen skarm" — inte "ingen rendering". Utan det syns inga CSS- eller layoutfel.
-      - run: xvfb-run --auto-servernum npx playwright test --project=desktop
+      - run: xvfb-run --auto-servernum npx playwright test --config tests/e2e/playwright.config.js --project=desktop
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
