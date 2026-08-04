@@ -1,66 +1,39 @@
-name: VYRA verification
+name: 'VYRA verification (E2E — manuell)'
 
-# Fem lager, snabbast forst. Ett lager som faller stoppar de dyrare efter sig — ingen anledning att
-# starta Electron nar kontraktet redan ar brutet.
+# INTE obligatorisk CI. Kors bara pa begaran.
 #
-# Lager 1 och 2 kors redan i ci.yml (npm test tacker bada, eftersom kontraktstestet ligger i
-# tests/). Det har workflowet lagger till 3, 4 och 5 och gor lagren synliga var for sig.
+# Lager 1, 2 och 5 flyttade in i ci.yml och kors pa varje PR. Det har workflowet ar lager 3 och 4 —
+# E2E i webblasare och i Electron — och de ar medvetet INTE kopplade till merge an, av tre skal:
+#
+#   1. De kraver ett beroende repot inte har: @playwright/test plus en nedladdad Chromium.
+#      Att lagga ett obligatoriskt CI-steg pa ett oinstallerat paket ger rott pa allt, direkt.
+#   2. De ar inte korda en enda gang an. Ett gatande steg som aldrig varit gront ar ett hinder,
+#      inte en kontroll.
+#   3. Electron-lagret pekar mot en lokal statisk server, eftersom CI saknar molnsession. Det gor
+#      att just inloggningen — dar 405-buggen bodde — inte tackas har anda.
+#
+# Nasta steg innan detta blir obligatoriskt:
+#   npm i -D @playwright/test
+#   npx playwright install --with-deps chromium
+#   npx playwright test --project=web        # ska vara gron
+#   npx playwright test --project=desktop    # ska vara gron
+# Forst darefter flyttas jobben in i ci.yml.
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  # ---- LAGER 1 + 2 -------------------------------------------------------------------------------
-  unit-and-contract:
-    name: 'Lager 1-2 · enhet + kontrakt'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm }
-      - run: npm ci
-
-      - name: 'Lager 1 · alla enhetstester'
-        run: npm test
-
-      - name: 'Lager 2 · eventkontrakt brygga -> moln -> klient'
-        run: node --test tests/event-contract.test.js
-
-      # node --test har ingen inbyggd coverage-rapport i alla versioner; --experimental-test-coverage
-      # ger en textsammanfattning. Den faller inte bygget — en siffra som stoppar en fix ar ett
-      # hinder, inte en kvalitetskontroll.
-      - name: 'Coverage (informativ)'
-        continue-on-error: true
-        run: node --experimental-test-coverage --test tests/*.test.js | tail -40
-
-  # ---- LAGER 5 -----------------------------------------------------------------------------------
-  fuzz:
-    name: 'Lager 5 · 1000 slumpade events'
-    runs-on: ubuntu-latest
-    needs: unit-and-contract
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm }
-      - run: npm ci
-      - run: node --test tests/live-fuzz.test.js
-
-  # ---- LAGER 3 -----------------------------------------------------------------------------------
   e2e-web:
     name: 'Lager 3 · E2E webb'
     runs-on: ubuntu-latest
-    needs: unit-and-contract
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm }
+        with: { node-version: 24, cache: npm, cache-dependency-path: package-lock.json }
       - run: npm ci
+      - run: npm i -D @playwright/test
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --project=web
       - uses: actions/upload-artifact@v4
@@ -72,24 +45,22 @@ jobs:
             test-results
           if-no-files-found: ignore
 
-  # ---- LAGER 4 -----------------------------------------------------------------------------------
   e2e-desktop:
     name: 'Lager 4 · E2E Electron'
     runs-on: ubuntu-latest
-    needs: unit-and-contract
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: npm }
+        with: { node-version: 24, cache: npm, cache-dependency-path: package-lock.json }
       - run: npm ci
       - name: Electron-appens egna beroenden
         working-directory: electron-app
         run: npm ci
+      - run: npm i -D @playwright/test
       - run: npx playwright install --with-deps chromium
-      # Electron ritar inget utan display pa Linux. xvfb ger den en, sa "headless" har betyder
-      # "ingen skarm", inte "ingen rendering" — annars skulle inga CSS- eller layoutfel synas.
-      - name: Starta appen under xvfb
-        run: xvfb-run --auto-servernum npx playwright test --project=desktop
+      # Electron ritar inget utan display pa Linux. xvfb ger den en, sa "headless" betyder har
+      # "ingen skarm" — inte "ingen rendering". Utan det syns inga CSS- eller layoutfel.
+      - run: xvfb-run --auto-servernum npx playwright test --project=desktop
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

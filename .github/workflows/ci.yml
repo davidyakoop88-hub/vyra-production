@@ -102,7 +102,27 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
-      - run: npm test
+
+      # Billigast forst, sa ett brutet kontrakt namnges innan hela sviten hinner koras. Alla tre
+      # stegen kor filer ur tests/, sa `npm test` tacker dem redan — de tva forsta finns for att
+      # felet ska ha ett NAMN i CI-vyn, inte for att ge extra tackning. Kostar ~1 s.
+      - name: 'Kontrakt · brygga -> moln -> klient'
+        run: npm run test:contract
+
+      - name: 'Fuzz · 1000 seedade events'
+        run: npm run test:fuzz
+
+      - name: 'Hela klientsviten'
+        run: npm test
+
+      # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
+      # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
+      # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde
+      # — syns inte alls, eftersom de laddas som <script> i jsdom. Se docs/ci.md.
+      - name: 'Coverage (informativ, tacker inte widgetfilerna)'
+        continue-on-error: true
+        run: npm run test:coverage 2>&1 | sed -n '/start of coverage/,/end of coverage/p'
+
       - run: npm audit --audit-level=high
 
   test-tiktok-bridge:
