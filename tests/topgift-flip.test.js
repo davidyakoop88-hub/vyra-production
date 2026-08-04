@@ -136,6 +136,12 @@ function harness() {
       return -parseFloat(d) || 0;
     },
     run() {
+      // overlay-sanitize.js definierar VyraSafe, som live-leaderboard.js kallar pa varje rad den
+      // skriver ut. Den filen kom till efter det har testet skrevs, sa sandladan kande inte till
+      // den och koden foll pa ReferenceError innan en enda flip hunnit borja. Den riktiga filen
+      // laddas hellre an en stubb: det ar just escapningen som ska galla aven har.
+      vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'overlay-sanitize.js'), 'utf8'),
+        sandbox, { filename: 'overlay-sanitize.js' });
       vm.runInNewContext(VYRA_FLIP_SRC, sandbox, { filename: 'media.js#VyraFlip' });
       vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'live-leaderboard.js'), 'utf8'),
         sandbox, { filename: 'live-leaderboard.js' });
@@ -144,7 +150,10 @@ function harness() {
       sandbox.dispatchEvent(new sandbox.CustomEvent('vyra-live-event', {
         detail: {
           type: 'gift', username: 'testgifter', name: 'TestGifter',
-          profileImage: 'data:image/svg+xml,PROFILE', giftImage: 'data:image/svg+xml,GIFT',
+          // Riktiga bild-URL:er, inte data:image/svg+xml. overlay-sanitize.js slapper inte igenom
+          // SVG som data-URL — en SVG kan bara script — sa den gamla fixturen kom ut som tom
+          // strang och testet matte sanitizern i stallet for flippen.
+          profileImage: 'https://p16.tiktokcdn.com/profile.jpg', giftImage: 'assets/gifts/rose.png',
           giftName: 'TESTROS', coins
         }
       }));
@@ -169,8 +178,8 @@ test('a gift event sets name, value, profile image and gift image', () => {
   const n = h.node;
   assert.equal(n.querySelector('strong').textContent, 'TestGifter');
   assert.equal(n.querySelector('em').textContent, '◉ 250');
-  assert.equal(n.querySelector('.vyra-profile-face img').src, 'data:image/svg+xml,PROFILE');
-  assert.equal(n.querySelector('.vyra-gift-face img').src, 'data:image/svg+xml,GIFT');
+  assert.equal(n.querySelector('.vyra-profile-face img').src, 'https://p16.tiktokcdn.com/profile.jpg');
+  assert.equal(n.querySelector('.vyra-gift-face img').src, 'assets/gifts/rose.png');
   assert.ok(n.classList.contains('play'), 'flippen startade inte alls');
 });
 

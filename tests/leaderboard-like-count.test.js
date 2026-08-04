@@ -39,6 +39,11 @@ function leaderboard() {
       setItem: (k, v) => store.set(k, String(v)),
       removeItem: k => store.delete(k)
     },
+    // live-leaderboard.js laser ?overlay ur adressen for att veta om den star i en OBS-kalla.
+    // Sandladan ar inte en webblasare, sa bada maste skickas in explicit — utan dem faller
+    // filen pa ReferenceError innan en enda like hunnit raknas.
+    location: { search: '' },
+    URLSearchParams,
     document: { querySelector: () => null, querySelectorAll: () => [], createElement: el, body: el() },
     fetch: () => Promise.reject(new Error('ingen nätverkstrafik i testet'))
   };
