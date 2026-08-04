@@ -95,6 +95,7 @@ function incrementSql(contributions) {
   return `
     UPDATE goal_runtime gr
        SET progress = gr.progress + contribution.amount,
+           revision = gr.revision + 1,
            updated_at = now()
       FROM overlays o,
            (VALUES ${rows}) AS contribution(metric, amount)
@@ -102,7 +103,8 @@ function incrementSql(contributions) {
        AND o.workspace_id = $1
        AND gr.metric = contribution.metric
        AND contribution.amount <> 0
-    RETURNING gr.overlay_id, gr.widget_id, gr.metric, gr.baseline, gr.progress, gr.target, gr.epoch
+    RETURNING gr.overlay_id, gr.widget_id, gr.metric, gr.baseline, gr.progress, gr.target, gr.epoch,
+              gr.revision
   `;
 }
 
@@ -154,11 +156,17 @@ async function applyEvent(pool, workspaceId, event, opts = {}) {
 // pg returns bigint as a string so precision is not silently lost. Every one of these fits in a
 // Number, and a caller comparing progress === 0 must not fail against "0" depending on which
 // function returned the row — so both readGoal and resetGoal pass through here.
+//
+// revision is deliberately NOT in that list. It is the one bigint here that is allowed to grow past
+// 2^53, and it exists to order two writes against each other — the moment it becomes a double, two
+// distinct revisions can compare equal and the newer frame looks stale. It stays a string of digits
+// from the column to the widget.
 function normalizeGoalRow(row) {
   if (!row) return null;
   return { ...row,
     epoch: Number(row.epoch), baseline: Number(row.baseline),
-    progress: Number(row.progress), target: Number(row.target) };
+    progress: Number(row.progress), target: Number(row.target),
+    revision: String(row.revision) };
 }
 
 // Reset clears progress and moves the goal into a new epoch. baseline is untouched — "start value"
@@ -172,7 +180,8 @@ async function resetGoal(pool, overlayId, widgetId) {
       [overlayId, widgetId]);
     const q = await client.query(
       `UPDATE goal_runtime
-          SET progress = 0, epoch = epoch + 1, reset_at = now(), updated_at = now()
+          SET progress = 0, epoch = epoch + 1, revision = revision + 1,
+              reset_at = now(), updated_at = now()
         WHERE overlay_id = $1 AND widget_id = $2
         RETURNING *`,
       [overlayId, widgetId]);
@@ -186,7 +195,8 @@ async function upsertGoal(pool, { overlayId, widgetId, metric, baseline = 0, tar
      VALUES ($1,$2,$3,$4,$5)
      ON CONFLICT (overlay_id, widget_id)
        DO UPDATE SET metric = EXCLUDED.metric, baseline = EXCLUDED.baseline,
-                     target = EXCLUDED.target, updated_at = now()
+                     target = EXCLUDED.target, revision = goal_runtime.revision + 1,
+                     updated_at = now()
      RETURNING *`,
     [overlayId, widgetId, metric, baseline, target]);
   return q.rows[0];
@@ -422,12 +432,16 @@ function validateGoalPatch(input) {
 // The API shape, and the only place a row becomes one. pg returns bigint as a string so precision is
 // never lost silently; every number a client sees is converted here exactly once. `at` is a
 // millisecond number rather than a timestamp string, so the REST list and the SSE frame agree.
+// revision is the exception and stays a string — see normalizeGoalRow. The snapshot this builds and
+// the SSE frame are ordered against each other in the browser, so both have to carry it in the same
+// form or a GET after a reconnect would look either newer or older than it is.
 function goalItem(row) {
   const baseline = Number(row.baseline), progress = Number(row.progress);
   return {
     overlayId: row.overlay_id, widgetId: row.widget_id, metric: row.metric,
     baseline, progress, value: baseline + progress,
     target: Number(row.target), epoch: Number(row.epoch),
+    revision: String(row.revision),
     at: new Date(row.updated_at).getTime()
   };
 }
@@ -493,7 +507,8 @@ async function patchGoal(pool, overlayId, widgetId, patch, { workspaceId = null 
   return withGoalWidget(pool, overlayId, widgetId, workspaceId, async client => {
     const q = await client.query(
       `UPDATE goal_runtime
-          SET baseline = COALESCE($3, baseline), target = COALESCE($4, target), updated_at = now()
+          SET baseline = COALESCE($3, baseline), target = COALESCE($4, target),
+              revision = revision + 1, updated_at = now()
         WHERE overlay_id = $1 AND widget_id = $2
         RETURNING *`,
       [overlayId, widgetId,
@@ -510,7 +525,8 @@ async function resetGoalWidget(pool, overlayId, widgetId, { workspaceId = null }
   return withGoalWidget(pool, overlayId, widgetId, workspaceId, async client => {
     const q = await client.query(
       `UPDATE goal_runtime
-          SET progress = 0, epoch = epoch + 1, reset_at = now(), updated_at = now()
+          SET progress = 0, epoch = epoch + 1, revision = revision + 1,
+              reset_at = now(), updated_at = now()
         WHERE overlay_id = $1 AND widget_id = $2
         RETURNING *`, [overlayId, widgetId]);
     return { goal: goalItem(q.rows[0]) };

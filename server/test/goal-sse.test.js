@@ -17,11 +17,17 @@ try { G = require(path.join(__dirname, '..', 'goal-sse.js')) } catch (_) { /* re
 
 const OVERLAY_A = '11111111-aaaa-0000-0000-000000000000';
 const OVERLAY_B = '22222222-bbbb-0000-0000-000000000000';
-const FIELDS = ['overlayId', 'widgetId', 'metric', 'value', 'target', 'epoch', 'at'];
+// Åtta fält sedan 2026-08-04, inte sju. Klienten ordnar sina ramar på `revision` och ingenting
+// annat, och fältet fanns inte på serversidan — så varje ram efter den första kastades och
+// målwidgeten frös på sitt första värde. Sju var alltså inte ett kontrakt som höll, det var buggen
+// nedskriven som en assertion. tests/goal-contract.test.js kör numera båda sidorna som en kedja
+// så att de två aldrig kan glida isär igen.
+const FIELDS = ['overlayId', 'widgetId', 'metric', 'value', 'target', 'epoch', 'at', 'revision'];
 
 const update = (over = {}) => ({
   overlayId: OVERLAY_A, widgetId: 'w-1', metric: 'follows',
-  baseline: 100, progress: 5, target: 1000, epoch: 1, at: 1_700_000_000_000, ...over });
+  baseline: 100, progress: 5, target: 1000, epoch: 1, revision: '1',
+  at: 1_700_000_000_000, ...over });
 
 test('goal-sse.js finns', () => {
   assert.ok(G, 'server/goal-sse.js finns inte');
@@ -43,15 +49,50 @@ test('en ren delta-uppdatering avvisas — den kan inte bli en absolut frame', (
 
 test('value får anges direkt, och vinner inte över baseline+progress i smyg', () => {
   assert.equal(G.buildFrame({ overlayId: OVERLAY_A, widgetId: 'w-1', metric: 'likes',
-    value: 42, target: 50, epoch: 2, at: 1 }).value, 42);
+    value: 42, target: 50, epoch: 2, revision: '1', at: 1 }).value, 42);
   // Both given and disagreeing is a caller bug, not something to guess about.
   assert.equal(G.buildFrame(update({ value: 999 })), null,
     'value och baseline+progress fick säga emot varandra');
 });
 
-test('framen innehåller exakt de sju fälten, inget mer', () => {
+test('framen innehåller exakt de åtta fälten, inget mer', () => {
   const frame = G.buildFrame(update());
   assert.deepEqual(Object.keys(frame).sort(), [...FIELDS].sort());
+});
+
+// ---- revision ------------------------------------------------------------------------------------
+// Ordningsfältet. Det passerar som siffersträng hela vägen: kolumnen är bigint, och förbi 2^53
+// rundas två skilda revisioner till samma double — jämför man dem som tal ser den nyare stale ut.
+test('revision passerar som sträng, aldrig som tal', () => {
+  const frame = G.buildFrame(update({ revision: '9007199254740993' }));
+  assert.equal(typeof frame.revision, 'string');
+  assert.equal(frame.revision, '9007199254740993');
+  assert.match(JSON.stringify(frame), /"revision":"9007199254740993"/,
+    'revision gick ut som JSON-tal och tappade precision på vägen');
+});
+
+test('ett heltal accepteras men normaliseras till sträng', () => {
+  assert.equal(G.buildFrame(update({ revision: 12 })).revision, '12');
+  assert.equal(G.buildFrame(update({ revision: '007' })).revision, '7',
+    'inledande nollor gör jämförelsen på längd fel');
+});
+
+test('en uppdatering utan revision blir ingen frame', () => {
+  const { revision, ...utan } = update();
+  assert.equal(G.buildFrame(utan), null,
+    'en frame utan ordningsfält kan inte placeras mot en annan — vägra, gissa inte');
+});
+
+test('en revision som inte är ett icke-negativt heltal blir ingen frame', () => {
+  for (const bad of ['', '   ', 'abc', '-1', '1.5', '1e3', '0x10', null, true, [], {}, NaN, Infinity]) {
+    assert.equal(G.buildFrame(update({ revision: bad })), null,
+      `revision ${JSON.stringify(bad)} accepterades`);
+  }
+});
+
+test('revision skrivs inte över av något annat fältnamn', () => {
+  // snake_case finns inte för det här fältet — kolumnen heter redan revision i båda formerna.
+  assert.equal(G.buildFrame(update({ revision: '5' })).revision, '5');
 });
 
 test('inget från uppdateringen läcker med — inte workspace, användare eller token', () => {
@@ -80,7 +121,7 @@ test('pg:s bigint-strängar blir tal', () => {
 
 test('snake_case från en databasrad duger lika bra som camelCase', () => {
   const frame = G.buildFrame({ overlay_id: OVERLAY_A, widget_id: 'w-1', metric: 'gifts',
-    baseline: 0, progress: 7, target: 10, epoch: 1, at: 5 });
+    baseline: 0, progress: 7, target: 10, epoch: 1, revision: '3', at: 5 });
   assert.equal(frame.overlayId, OVERLAY_A);
   assert.equal(frame.widgetId, 'w-1');
   assert.equal(frame.value, 7);
@@ -177,7 +218,8 @@ test('en frame från ett annat overlay blir inga bytes alls', () => {
 test('sseChunk normaliserar om framen — extra fält på tråden kommer inte ut', () => {
   // A publisher that skipped buildFrame cannot smuggle a field through the write path.
   const chunk = G.sseChunk({ goal: { overlayId: OVERLAY_A, widgetId: 'w-1', metric: 'likes',
-    value: 3, target: 10, epoch: 1, at: 5, workspaceId: 'hemligt', username: 'Streamer' } }, OVERLAY_A);
+    value: 3, target: 10, epoch: 1, revision: '1', at: 5,
+    workspaceId: 'hemligt', username: 'Streamer' } }, OVERLAY_A);
   assert.ok(!chunk.includes('hemligt') && !chunk.includes('Streamer'), 'extra fält skrevs ut');
   assert.deepEqual(Object.keys(JSON.parse(chunk.slice(chunk.indexOf('data: ') + 6))).sort(),
     [...FIELDS].sort());

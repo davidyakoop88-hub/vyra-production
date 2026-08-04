@@ -343,6 +343,33 @@ api('varje tal i svaret är ett JavaScript-tal, inte en bigint-sträng', async (
     assert.equal(typeof goal[field], 'number', `${field} är ${typeof goal[field]}`);
   }
   assert.equal(goal.value, 9007199255);
+  // revision är undantaget, och det är avsiktligt: den är den enda bigint som får växa förbi 2^53,
+  // och som Number skulle två skilda revisioner runda till samma tal.
+  assert.equal(typeof goal.revision, 'string', `revision är ${typeof goal.revision}`);
+  assert.match(goal.revision, /^\d+$/);
+});
+
+api('revision överlever ett värde som inte får plats i en double', async () => {
+  await reset();
+  await call('GET', memberPath(WS1, A), { as: 'owner' });
+  await pool.query(
+    `UPDATE goal_runtime SET revision=9007199254740993
+      WHERE overlay_id=$1 AND widget_id='w-a1'`, [A]);
+  const out = await call('GET', memberPath(WS1, A), { as: 'owner' });
+  const goal = out.body.goals.find(g => g.widgetId === 'w-a1');
+  assert.equal(goal.revision, '9007199254740993',
+    'revision gick genom Number och tappade sista siffran');
+  assert.match(out.text, /"revision":"9007199254740993"/,
+    'revision serialiserades som JSON-tal i svarskroppen');
+});
+
+api('varje mål i listan bär en revision', async () => {
+  await reset();
+  const out = await call('GET', memberPath(WS1, A), { as: 'owner' });
+  assert.ok(out.body.goals.length, 'listan var tom — testet bevisar inget');
+  for (const goal of out.body.goals) {
+    assert.match(String(goal.revision), /^\d+$/, `${goal.widgetId} saknar revision`);
+  }
 });
 
 // ---- PATCH ----------------------------------------------------------------------------------------
@@ -425,6 +452,8 @@ api('reset nollar progress, höjer epoch och lämnar baseline och target', async
   for (const field of ['baseline', 'progress', 'value', 'target', 'epoch']) {
     assert.equal(typeof out.body.goal[field], 'number');
   }
+  assert.ok(BigInt(out.body.goal.revision) > BigInt(before.revision),
+    'reset ändrade progress och epoch utan att höja revision — klienten ser ingen ny version');
 });
 
 // ---- unknown widgets ------------------------------------------------------------------------------

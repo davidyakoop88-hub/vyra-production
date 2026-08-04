@@ -161,11 +161,27 @@ CREATE TABLE IF NOT EXISTS goal_runtime (
   progress    bigint  NOT NULL DEFAULT 0 CHECK (progress >= 0),
   target      bigint  NOT NULL DEFAULT 1000 CHECK (target > 0),
   epoch       integer NOT NULL DEFAULT 1 CHECK (epoch >= 1),
+  revision    bigint  NOT NULL DEFAULT 0 CHECK (revision >= 0),
   reset_at    timestamptz,
   updated_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (overlay_id, widget_id)
 );
 CREATE INDEX IF NOT EXISTS goal_runtime_metric_idx ON goal_runtime(overlay_id,metric);
+
+-- revision is what the browser orders frames by, and it is the only field that can do the job.
+-- updated_at cannot: now() is transaction_timestamp(), the transaction's START, so two overlapping
+-- writes can commit in the opposite order to their timestamps. epoch says which run a number belongs
+-- to, not which of two writes came last. So: one counter per row, bumped by every statement that
+-- changes what a frame carries, in the same transaction as the change itself.
+--
+-- bigint rather than integer because it is never reset — a busy goal takes one step per event — and
+-- it is carried as a string of digits all the way to the widget, because past 2^53 two distinct
+-- revisions round to the same double and the newer one would look stale.
+--
+-- Separate ALTER because CREATE TABLE IF NOT EXISTS does nothing to a table that already exists,
+-- and every production row predates this column. DEFAULT 0 starts them all at the same place; the
+-- first write after the migration is 1 and every client sees it as newer.
+ALTER TABLE goal_runtime ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0;
 
 -- One row per event that actually moved a goal. The FK matters more here than anywhere else in this
 -- file: this is the highest-volume table in the system, and without ON DELETE CASCADE a deleted

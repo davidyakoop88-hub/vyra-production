@@ -220,7 +220,23 @@ db('schemat kan skapas och beskriver de fält kontraktet kräver', async () => {
       WHERE table_name = 'goal_runtime' ORDER BY column_name`);
   const names = q.rows.map(r => r.column_name);
   for (const col of ['overlay_id', 'widget_id', 'metric', 'baseline', 'progress', 'target',
-    'epoch', 'reset_at', 'updated_at']) assert.ok(names.includes(col), `kolumnen ${col} saknas`);
+    'epoch', 'revision', 'reset_at', 'updated_at']) assert.ok(names.includes(col), `kolumnen ${col} saknas`);
+});
+
+// Produktionens goal_runtime fanns innan revision gjorde det. CREATE TABLE IF NOT EXISTS rör inte
+// en befintlig tabell, så det som måste fungera är ALTER-vägen — och den provas genom att ta bort
+// kolumnen och köra schemat igen, precis som migrationen gör mot Railway.
+db('revision läggs till på en tabell som redan finns', async () => {
+  await pool.query(SCHEMA);
+  await pool.query('ALTER TABLE goal_runtime DROP COLUMN IF EXISTS revision');
+  await pool.query(SCHEMA);
+  const q = await pool.query(
+    `SELECT data_type, is_nullable, column_default FROM information_schema.columns
+      WHERE table_name = 'goal_runtime' AND column_name = 'revision'`);
+  assert.equal(q.rowCount, 1, 'revision kom inte tillbaka — migrationen är inte idempotent');
+  assert.equal(q.rows[0].data_type, 'bigint');
+  assert.equal(q.rows[0].is_nullable, 'NO');
+  assert.match(q.rows[0].column_default || '', /0/, 'befintliga rader får ingen startrevision');
 });
 
 db('schemats garantier finns i databasen, inte bara i koden', async () => {
@@ -527,6 +543,80 @@ db('städningen är batchad och rör inte rader som ännu kan behöva replay', a
   const still = await pool.query(
     'SELECT 1 FROM goal_event_apply WHERE workspace_id=$1 AND event_id=$2', [WS, 'sweep-keep']);
   assert.equal(still.rowCount, 1, 'städningen tog en rad som fortfarande behövs för replay');
+});
+
+// ---- revision -------------------------------------------------------------------------------------
+// Ordningsfältet klienten litar på. Kravet är inte "ändras ibland" utan: varje skrivning som ändrar
+// vad en frame bär höjer det, i SAMMA transaktion, och det går aldrig bakåt för en given rad. Går
+// det bakåt en enda gång skriver en gammal frame över en nyare på skärmen.
+const revisionOf = async widgetId => {
+  const q = await pool.query(
+    'SELECT revision FROM goal_runtime WHERE overlay_id=$1 AND widget_id=$2', [OVERLAY, widgetId]);
+  return BigInt(q.rows[0].revision);
+};
+
+db('ett applicerat event höjer revision', async () => {
+  await goalsOnly([['w-rev', 'follows']]);
+  const before = await revisionOf('w-rev');
+  const out = await G.applyEvent(pool, WS, { id: 'rev-1', type: 'follow' });
+  assert.equal(out.applied, true);
+  assert.ok(await revisionOf('w-rev') > before, 'progress ändrades utan att revision höjdes');
+});
+
+db('den returnerade raden bär revisionen som skrevs, inte den innan', async () => {
+  // Frames byggs ur RETURNING-raden. Läser den en äldre revision än den som committades pekar
+  // klientens ordning på fel version av samma tal.
+  await goalsOnly([['w-ret', 'follows']]);
+  const out = await G.applyEvent(pool, WS, { id: 'rev-ret', type: 'follow' });
+  const row = out.rows.find(r => r.widget_id === 'w-ret');
+  assert.ok(row, 'raden följde inte med ut ur applyEvent');
+  assert.ok('revision' in row, 'RETURNING saknar revision — framen kan inte ordnas');
+  assert.equal(BigInt(row.revision), await revisionOf('w-ret'));
+});
+
+db('en dublett höjer inte revision', async () => {
+  await goalsOnly([['w-dup', 'follows']]);
+  await G.applyEvent(pool, WS, { id: 'rev-dup', type: 'follow' });
+  const after = await revisionOf('w-dup');
+  const again = await G.applyEvent(pool, WS, { id: 'rev-dup', type: 'follow' });
+  assert.equal(again.applied, false);
+  assert.equal(await revisionOf('w-dup'), after, 'en dublett rörde revision');
+});
+
+db('patch och reset höjer revision', async () => {
+  await goalsOnly([['w-pr', 'follows']]);
+  const start = await revisionOf('w-pr');
+  await G.patchGoal(pool, OVERLAY, 'w-pr', { baseline: 50 });
+  const afterPatch = await revisionOf('w-pr');
+  assert.ok(afterPatch > start, 'PATCH ändrade baseline utan att höja revision');
+  await G.resetGoalWidget(pool, OVERLAY, 'w-pr');
+  assert.ok(await revisionOf('w-pr') > afterPatch, 'reset höjde inte revision');
+  await G.resetGoal(pool, OVERLAY, 'w-pr');
+  assert.ok(await revisionOf('w-pr') > afterPatch + 1n, 'resetGoal höjde inte revision');
+});
+
+db('en synk som inte ändrar något rör inte revision', async () => {
+  // syncGoalsFromState och backfillen är ON CONFLICT DO NOTHING. En layout som sparas om utan att
+  // målet ändras får inte se ut som en ny version för klienten.
+  await goalsOnly([['w-sync', 'follows']]);
+  await G.applyEvent(pool, WS, { id: 'rev-sync', type: 'follow' });
+  const before = await revisionOf('w-sync');
+  await G.listGoals(pool, OVERLAY);            // kör syncGoalsFromState + backfill
+  assert.equal(await revisionOf('w-sync'), before, 'en ren läsning höjde revision');
+});
+
+db('femtio samtidiga event ger femtio strikt växande revisioner', async () => {
+  await goalsOnly([['w-mono', 'follows']]);
+  const start = await revisionOf('w-mono');
+  const N = 50;
+  const out = await Promise.all(Array.from({ length: N }, (_, i) =>
+    G.applyEvent(pool, WS, { id: `rev-mono-${i}`, type: 'follow' })));
+  const seen = out.filter(r => r.applied).map(r =>
+    BigInt(r.rows.find(x => x.widget_id === 'w-mono').revision));
+  assert.equal(seen.length, N, 'alla event applicerades inte');
+  assert.equal(new Set(seen.map(String)).size, N,
+    'två samtidiga skrivningar fick samma revision — ordningen mellan dem är inte avgörbar');
+  assert.equal(await revisionOf('w-mono'), start + BigInt(N));
 });
 
 test.after(async () => { if (pool) await pool.end() });

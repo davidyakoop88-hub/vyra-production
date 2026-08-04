@@ -26,10 +26,15 @@
 // the cheapest guarantee that none of it lands in a log line is to have no logging at all.
 const { METRICS } = require('./goal-runtime');
 
-// The frame, in full. Exactly these seven fields reach the browser — no workspace id, no user, no
-// token, no event id. A widget needs the value, the target and which epoch it belongs to; anything
-// else would be identity leaking through a public OBS link.
-const FIELDS = ['overlayId', 'widgetId', 'metric', 'value', 'target', 'epoch', 'at'];
+// The frame, in full. Exactly these eight fields reach the browser — no workspace id, no user, no
+// token, no event id. A widget needs the value, the target, which epoch it belongs to and which
+// version of the row it is; anything else would be identity leaking through a public OBS link.
+//
+// revision is the ordering field and the browser uses nothing else for it. It was missing until
+// 2026-08-04, which meant every frame after the first was discarded as "not newer" and the widget
+// froze on its first value. tests/goal-contract.test.js now runs a row through this module and into
+// the real goal-client.js, so the two halves cannot drift apart again.
+const FIELDS = ['overlayId', 'widgetId', 'metric', 'value', 'target', 'epoch', 'at', 'revision'];
 
 // An increment cannot be turned into an absolute frame here, and a caller sending both an absolute
 // value and a delta has not decided what it means. Either way: reject, do not guess.
@@ -44,6 +49,19 @@ function intOf(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? Math.floor(value) : null;
   if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) return Number(value.trim());
   return null;
+}
+
+// The one field that must NOT go through intOf(). revision is bigint and unbounded — a busy goal
+// takes one step per event and never resets — so past 2^53 Number() rounds two distinct revisions to
+// the same double and the newer frame would compare as stale. It stays a string of digits the whole
+// way: out of pg as a string, onto the wire as a string, compared by length-then-lexicographic in
+// the browser. A plain integer is accepted for callers that hold a small one, and normalised.
+function revisionOf(value) {
+  const text = typeof value === 'number'
+    ? (Number.isSafeInteger(value) && value >= 0 ? String(value) : '')
+    : (typeof value === 'string' ? value.trim() : '');
+  if (!/^\d+$/.test(text)) return null;
+  return text.replace(/^0+(?=\d)/, '');
 }
 
 function idOf(value) {
@@ -91,11 +109,17 @@ function buildFrame(update) {
     if (target === null || target <= 0) return null;
     if (epoch === null || epoch < 1) return null;
 
+    // Fail closed. A frame with no usable revision cannot be placed against the one already on
+    // screen, and guessing — treating it as newest, or as oldest — is how an old value overwrites a
+    // new one. Refusing costs at most one update; the next frame is absolute and carries the truth.
+    const revision = revisionOf(pick(update, 'revision'));
+    if (revision === null) return null;
+
     // The timestamp is the transport's, not the caller's: a missing or unusable one is filled in
     // rather than costing a real update, which none of the fields above would be.
     const at = intOf(pick(update, 'at')) ?? Date.now();
 
-    return { overlayId, widgetId, metric, value, target, epoch, at };
+    return { overlayId, widgetId, metric, value, target, epoch, at, revision };
   } catch (_) {
     return null;
   }
