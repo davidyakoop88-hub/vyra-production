@@ -131,6 +131,14 @@
     if (typeof state === 'undefined' || !state?.widgets) return;
     const image = e.giftImage || e.image || e.giftPicture || e.gift?.image || '';
     const value = Number(e.coins || e.diamondCount || e.value) || person.coins;
+    // Top Gift är en topplista, inte "senaste gåvan". Den här funktionen skrev tidigare över namn,
+    // bild och värde på VARJE gåva, så en 1-coins-gåva slog ut en 30 000-coins-gåva direkt.
+    // Rekordet ägs av gift-event-images.js, som är den andra skrivaren till samma widget — två
+    // egna högvattenmärken för samma värde hade blivit två sanningar. Saknas modulen (äldre
+    // överlägg som inte laddar den) faller vi tillbaka på det gamla beteendet i stället för att
+    // sluta uppdatera helt.
+    const records = window.VyraGiftRecords;
+    if (records && value < records.giftCoins) return;
     let changed = false;
     state.widgets.filter(w => w.type === 'templateTopGift').forEach(w => {
       w.dataName = person.name;
