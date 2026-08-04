@@ -279,8 +279,15 @@ test('flaggan skrivs aldrig till state, localStorage eller molnpayloaden', () =>
   for (const sink of ['state.', 'localStorage', 'JSON.stringify', 'payload']) {
     assert.ok(!lines.some(l => l.includes(sink)), `flaggan når ${sink}`);
   }
-  // cloud-sync consumes it and clears it in a finally, so it cannot survive one save.
+  // cloud-sync must not let the flag outlive the save it authorised — but it also must not let a
+  // FAILED save consume it. Clearing it in a `finally` did both: a version conflict or a network
+  // blip threw the user's intent away, every retry was then blocked by the server's emptyBlocked,
+  // and the layout could never be emptied. So the property is narrower than "always clears":
   const sync = fs.readFileSync(path.join(ROOT, 'cloud-sync.js'), 'utf8');
-  assert.match(sync, /finally\{if\(emptied\)delete root\.__vyraUserEmptiedWidgets\}/,
-    'cloud-sync rensar inte flaggan efter sparningen');
+  assert.doesNotMatch(sync, /finally\{if\(emptied\)delete root\.__vyraUserEmptiedWidgets\}/,
+    'flaggan rensas i ett finally och forbrukas darmed aven av ett misslyckat forsok');
+  assert.match(sync, /if\(emptied\)delete root\.__vyraUserEmptiedWidgets;/,
+    'flaggan rensas inte efter en lyckad sparning');
+  assert.match(sync, /__vyraUserEmptiedWidgets===true&&data\.widgets\.length>0\)delete/,
+    'en inaktuell avsikt rensas inte nar anvandaren lagt tillbaka widgets');
 });

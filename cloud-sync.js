@@ -28,7 +28,15 @@
   // i den här sessionen (flaggas av layer-delete i media.js). En tom layout från t.ex. en
   // nyinloggad enhet utan lokal historik stoppas annars av serverns 409 emptyBlocked och
   // hamnar i den vanliga konfliktdialogen istället för att tyst nolla molnet.
-  async function push(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true;let d;try{d=await call(`/api/workspaces/${workspace.id}/overlays/${overlay.id}`,{method:'PUT',body:JSON.stringify({name:overlay.name,state:data,version:overlay.version,allowEmptyWidgets:data.widgets.length===0&&emptied})})}finally{if(emptied)delete root.__vyraUserEmptiedWidgets}if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+  async function push(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true&&data.widgets.length===0;
+      // Har anvandaren lagt tillbaka widgets ar avsikten "jag tomde layouten" inaktuell och
+      // raderas direkt. Annars kunde en gammal avsikt ligga kvar och tillata en senare tomning
+      // som ingen bett om.
+      if(root.__vyraUserEmptiedWidgets===true&&data.widgets.length>0)delete root.__vyraUserEmptiedWidgets;let d;d=await call(`/api/workspaces/${workspace.id}/overlays/${overlay.id}`,{method:'PUT',body:JSON.stringify({name:overlay.name,state:data,version:overlay.version,allowEmptyWidgets:data.widgets.length===0&&emptied})});
+      // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
+      // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
+      // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await push();bar.remove()}catch{setStatus('offline')}}}
@@ -77,7 +85,25 @@
           reason:'backup-restored'});
         if(mine!==session)return;
         if(out.ok){localStorage.removeItem(backupKey(workspace.id));lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced')}
-        else{await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')}
+        // Misslyckas aterlamningen behalls backupen och molnets layout skrivs INTE in. Tidigare
+        // ersattes det parkerade arbetet tyst av molnet — anvandaren sag bara "synced" och att
+        // widgetarna var borta. Nasta initialize forsoker igen, sa lange backupen ligger kvar.
+        else{setStatus('offline','Kunde inte återställa din layout — försöker igen')}
+      // "Lokalt har noll widgets" betydde tidigare alltid "den har enheten har inget — hamta
+      // molnets". Grenen finns for en ny dator, och det ar ratt. Men den kunde inte skilja
+      // "har ingen layout an" fran "anvandaren raderade precis allt" eller "utloggningen
+      // neutraliserade staten" — alla tre ser ut som widgets.length === 0. Foljden var att en
+      // tomd layout fylldes med molnets widgets, inklusive sadana anvandaren aldrig valt.
+      //
+      // Skillnaden ar durabel och fanns redan: meta.lastLocal ar den lokala state som senast
+      // synkats. Skiljer sig nuvarande state fran den har enheten OSYNKAT arbete — aven nar det
+      // arbetet bestar i att ha raderat allt. Da far molnet inte skriva over det tyst.
+      }else if(ownsLocal&&!local?.widgets?.length&&localStorage.getItem('vyra-state')!==meta?.lastLocal){
+        // Anvandarens tomhet ar sanningen som ska upp. Servern har sin egen wipe-guard och svarar
+        // 409 emptyBlocked om den inte tror pa den — da hamnar vi i konfliktdialogen, som ar den
+        // avsedda vagen. Det som INTE far hanta ar att molnet vinner utan att nagon fragat.
+        localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:local}));
+        saveMeta();setStatus('saving');schedule()
       }else if(!ownsLocal||!local?.widgets?.length){
         await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')
       }else if(meta&&Number(meta.version)<Number(overlay.version)&&localStorage.getItem('vyra-state')!==meta.lastLocal){
