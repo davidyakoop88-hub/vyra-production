@@ -739,3 +739,62 @@ html.overlay-output .widget{
 .mvp-framed.play .mvpf-plate{animation:mvpFramePlate 900ms cubic-bezier(.16,1,.3,1) 120ms both}
 @keyframes mvpFramePhoto{0%{opacity:0;transform:scale(.72)}60%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
 @keyframes mvpFramePlate{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+
+/* ---- Battle MVP premium — tre designer med egen fasmaskin ---------------------------------------
+   Entre 0,9 s (scale .9 -> 1), hall 5 s med en subtil shimmer, exit 0,9 s tillbaka till scale .95.
+   Rorelsen sitter pa .mvp-plate, aldrig pa roten: basregeln satter transform:scale(1)!important pa
+   .mvp-active, och en !important-deklaration slar en CSS-animation — en entre pa roten hade inte
+   spelat alls. Roten tonar, plattan ror sig. Samma uppdelning som Last-X (#card / #tilt).
+   Allt ar CSS: kronan, hexagonen och diamanten ar clip-path, ingen extern bild. */
+.battle-mvp.mvp-premium{display:block!important;padding:0!important;transform:none!important;transition:opacity .9s cubic-bezier(.16,1,.3,1),visibility 0s linear .9s!important}
+.battle-mvp.mvp-premium.selected,.battle-mvp.mvp-premium.mvp-active{transform:none!important;transition:opacity .9s cubic-bezier(.16,1,.3,1),visibility 0s linear!important}
+.mvp-premium .mvp-plate{position:relative;padding:26px 20px 18px;text-align:center;opacity:0;transform:scale(.95);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1);will-change:transform,opacity}
+.mvp-premium.selected .mvp-plate,.mvp-premium.mvp-active .mvp-plate{opacity:1;transform:scale(1);animation:mvpPremiumIn .9s cubic-bezier(.16,1,.3,1) both}
+@keyframes mvpPremiumIn{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+.mvp-premium .mvp-emblem{position:relative;width:70px!important;height:70px!important;min-width:70px!important;margin:0 auto 10px!important;border:0!important;padding:0!important;background:none!important;box-shadow:none!important;animation:none!important}
+.mvp-premium .mvp-emblem img{width:100%!important;height:100%!important;object-fit:cover!important;animation:none!important}
+.mvp-premium .mvp-copy{display:block!important;text-align:center!important}
+.mvp-premium .mvp-copy small{display:block;font-weight:800}
+.mvp-premium .mvp-copy h2{margin:4px 0 3px!important;line-height:1.1!important}
+.mvp-premium .mvp-copy strong{display:block;font-weight:600}
+
+/* 1 · Royal Purple — djuplila platta, guldkant som pulserar, CSS-krona over avataren. */
+.battle-mvp.mvp-royal-purple .mvp-plate{border-radius:16px;background:linear-gradient(160deg,#2a1147,#1a0a2e 55%,#12061f);box-shadow:0 0 0 1.5px var(--mvp),0 0 22px -4px color-mix(in srgb,var(--mvp),transparent 45%),0 16px 34px #00000059}
+/* Guldpulsen hor till HALLET och far darfor bara ligga pa .mvp-active. Lag den pa plattans egen
+   regel spelade entren vid sidladdning i stallet for vid trigger, och aldrig igen. */
+.mvp-royal-purple.selected .mvp-plate,.mvp-royal-purple.mvp-active .mvp-plate{animation:mvpPremiumIn .9s cubic-bezier(.16,1,.3,1) both,mvpRoyalEdge 2.6s ease-in-out .9s infinite}
+@keyframes mvpRoyalEdge{0%,100%{box-shadow:0 0 0 1.5px var(--mvp),0 0 18px -6px color-mix(in srgb,var(--mvp),transparent 55%),0 16px 34px #00000059}50%{box-shadow:0 0 0 1.5px var(--mvp),0 0 30px 0 color-mix(in srgb,var(--mvp),transparent 25%),0 16px 34px #00000059}}
+.mvp-royal-purple .mvp-crown{position:absolute;left:50%;top:-13px;width:46px;height:27px;transform:translateX(-50%);background:linear-gradient(180deg,#ffe9a8,var(--mvp) 55%,#a9762a);clip-path:polygon(0% 100%,8% 34%,26% 62%,50% 8%,74% 62%,92% 34%,100% 100%);filter:drop-shadow(0 0 7px color-mix(in srgb,var(--mvp),transparent 20%))}
+.mvp-royal-purple .mvp-emblem{border-radius:50%!important;box-shadow:0 0 0 2px var(--mvp),0 0 0 5px #1a0a2e,0 0 0 6.5px color-mix(in srgb,var(--mvp),transparent 45%),0 0 18px -2px color-mix(in srgb,var(--mvp),transparent 40%)!important}
+.mvp-royal-purple .mvp-emblem img{border-radius:50%!important}
+.mvp-royal-purple .mvp-copy small{font-size:9.5px;letter-spacing:.34em;background:linear-gradient(180deg,#fff3cf,var(--mvp));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mvp-royal-purple .mvp-copy h2{font-size:23px;font-weight:800;color:#fff;text-shadow:0 0 14px color-mix(in srgb,var(--mvp),transparent 25%),0 2px 3px #000}
+.mvp-royal-purple .mvp-copy strong{font-size:11px;letter-spacing:.1em;color:#c9b489}
+
+/* 2 · Neon Cyber — avhuggna horn, hexagonal avatarram, scanlinje och en glitch tva ganger per hall. */
+.battle-mvp.mvp-neon-cyber .mvp-plate{overflow:hidden;background:linear-gradient(150deg,#0a0f1a,#06070d 70%);clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mvp),transparent 50%),0 14px 30px #00000099}
+.mvp-neon-cyber .mvp-plate::after{content:"";position:absolute;left:0;right:0;height:34%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--mvp),transparent 87%),transparent);animation:mvpCyberScan 2.8s linear .9s infinite;pointer-events:none}
+@keyframes mvpCyberScan{0%{transform:translateY(-120%)}100%{transform:translateY(320%)}}
+.mvp-neon-cyber .mvp-crown{display:none}
+.mvp-neon-cyber .mvp-emblem{clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);background:linear-gradient(150deg,var(--mvp),var(--mvp2))!important;padding:3px!important;filter:drop-shadow(0 0 9px color-mix(in srgb,var(--mvp),transparent 30%))}
+.mvp-neon-cyber .mvp-emblem img{clip-path:inherit}
+@keyframes mvpCyberGlitch{0%,88%,100%{transform:none}90%{transform:translateX(-2px) skewX(-6deg)}92%{transform:translateX(3px) skewX(5deg)}94%{transform:none}}
+.mvp-neon-cyber .mvp-copy small{font-size:9px;letter-spacing:.36em;color:var(--mvp);text-shadow:0 0 9px var(--mvp);animation:mvpCyberGlitch 5s steps(1) .9s infinite}
+.mvp-neon-cyber .mvp-copy h2{font-size:22px;font-weight:800;color:#fff;text-shadow:-1.5px 0 var(--mvp2),1.5px 0 var(--mvp),0 0 16px color-mix(in srgb,var(--mvp),transparent 45%);animation:mvpCyberGlitch 5s steps(1) .9s infinite}
+.mvp-neon-cyber .mvp-copy strong{font-size:10.5px;letter-spacing:.18em;color:var(--mvp2);text-shadow:0 0 8px color-mix(in srgb,var(--mvp2),transparent 30%)}
+
+/* 3 · Diamond Elite — glasplatta med EGEN bakgrund: i OBS finns ingenting bakom att blurra, sa
+   backdrop-filter ensamt hade gjort designen osynlig. Diamanten ar en roterad ruta. */
+.battle-mvp.mvp-diamond-elite .mvp-plate{overflow:hidden;border-radius:14px;padding-top:44px;background:linear-gradient(160deg,#14161bd9,#0a0b0ed9);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px #ffffff29,0 14px 34px #0000008c}
+.mvp-diamond-elite .mvp-plate::after{content:"";position:absolute;top:0;bottom:0;width:55%;background:linear-gradient(105deg,transparent,#ffffff29,transparent);animation:mvpDiamondShimmer 4.2s ease-in-out .9s infinite;pointer-events:none}
+@keyframes mvpDiamondShimmer{0%{transform:translateX(-70%)}100%{transform:translateX(170%)}}
+.mvp-diamond-elite .mvp-crown{position:absolute;left:50%;top:12px;width:24px;height:24px;transform:translateX(-50%) rotate(45deg);border-radius:4px;background:linear-gradient(135deg,#fff,#b9c2cc 45%,#7d8792);box-shadow:0 0 14px #ffffff80}
+.mvp-diamond-elite .mvp-emblem{border-radius:50%!important;box-shadow:0 0 0 1px #ffffff8c,0 0 0 6px #ffffff12!important}
+.mvp-diamond-elite .mvp-emblem img{border-radius:50%!important}
+.mvp-diamond-elite .mvp-copy small{font-size:9px;letter-spacing:.42em;color:#aeb6c0;font-weight:600}
+.mvp-diamond-elite .mvp-copy h2{font-size:25px;font-weight:400;font-family:Georgia,'Times New Roman',serif;color:#fff;letter-spacing:.01em;text-shadow:none}
+.mvp-diamond-elite .mvp-copy strong{font-size:10.5px;letter-spacing:.22em;color:var(--mvp2)}
+
+@media (prefers-reduced-motion:reduce){
+  .mvp-premium .mvp-plate,.mvp-premium.mvp-active .mvp-plate,.mvp-premium .mvp-plate::after{animation:none!important}
+}

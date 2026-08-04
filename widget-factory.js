@@ -15,6 +15,11 @@
 (function (root) {
   'use strict';
 
+  // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
+  // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett
+  // rorelseomslag (.mvp-plate) som de gamla inte far — se battleMvpHtml i media.js.
+  const PREMIUM_MVP_STYLES = new Set(['royal-purple', 'neon-cyber', 'diamond-elite']);
+
   // A widget id is a link that has to stay valid, so it needs real entropy — Date.now() alone
   // collides whenever two widgets are created in the same millisecond. There is deliberately no
   // Math.random() fallback: a weak id would be a link that silently points at someone else's widget
@@ -47,7 +52,7 @@
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
     'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
     'fanlevel.theme': {gold:['#ff8a20','#ffd36b'],neon:['#ff3ac8','#a74cff'],ice:['#29cfff','#b9f5ff'],emerald:['#35e783','#baffd4'],fire:['#ff3c24','#ffb52d'],sakura:['#ff6fa8','#ffd9e8'],storm:['#6d7bff','#d6dbff'],royal:['#c79bff','#f0e2ff']},
-    'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355'},
+    'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
@@ -193,10 +198,15 @@
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
       gloveColor2: v.color2, gloveDuration: 6, layer: 20, battleVideoMode: true
     }),
+    // De tre premiumstilarna bar sin egen fasmaskin: 0,9 s entre, 5 s hall, 0,9 s exit. De sju
+    // aldre har ingen entre alls och behaller sin 7-sekundersvisning oforandrad.
     'battlemvp.style': v => ({
-      type: 'templateBattleMvp', x: 100, y: 90, width: 240, title: 'Battle MVP',
+      type: 'templateBattleMvp', x: 100, y: 90,
+      width: PREMIUM_MVP_STYLES.has(v.style) ? 300 : 240, title: 'Battle MVP',
       mvpLabel: 'BATTLE MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpStyle: v.style,
-      mvpColor: v.color, mvpColor2: '#ffe239', mvpDuration: 7
+      mvpColor: v.color,
+      mvpColor2: v.style === 'neon-cyber' ? '#ff3fd0' : v.style === 'diamond-elite' ? '#8d96a2' : '#ffe239',
+      mvpDuration: PREMIUM_MVP_STYLES.has(v.style) ? 5 : 7
     }),
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
