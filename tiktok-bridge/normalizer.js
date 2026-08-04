@@ -13,7 +13,8 @@ function userOf(data){return data?.user||data?.userInfo||data}
 function profileImageOf(data){
   const user=userOf(data);
   return text(
-    user?.avatarLarger?.urlList?.[0]||user?.avatarLarger?.urlListList?.[0]
+    user?.avatarLarge?.urlList?.[0]||user?.avatarLarge?.urlListList?.[0]
+    ||user?.avatarLarger?.urlList?.[0]||user?.avatarLarger?.urlListList?.[0]
     ||user?.avatarMedium?.urlList?.[0]||user?.avatarMedium?.urlListList?.[0]
     ||user?.profilePicture?.urls?.[0]
     ||user?.avatarThumb?.urlList?.[0]||user?.avatarThumb?.urlListList?.[0]
@@ -41,11 +42,39 @@ function baseUser(data){
     fanClubLevel:number(user?.fansClub?.data?.level)
   };
 }
+// Measured on staging 2026-08-03: WebcastGiftMessage in tiktok-live-proto v3 carries no giftType at
+// all — the type sits in gift.type as a number — and repeatEnd is a number, not a boolean. The old
+// guard compared data.giftType with 1, which was always false, so every cumulative frame of a streak
+// was forwarded and a streak of ten counted as forty-five.
+//
+// Only a gift we can positively identify as streakable is ever filtered. Every gift in the sample had
+// gift.type 1, so the non-streakable path is unproven by traffic; defaulting to "forward it" means an
+// unrecognised shape is counted once rather than dropped.
+function isStreakable(data){return (data?.gift?.type??data?.giftType??data?.giftDetails?.giftType)===1}
+// A gift with no repeatEnd at all is complete on arrival — treating it as unfinished would lose it.
+function isFinalFrame(data){return data?.repeatEnd===undefined?true:!!Number(data.repeatEnd)}
+// The same received event must keep the same id across every delivery attempt, so this is derived
+// from the message, never minted per retry. v3 nests msgId under common; the rest are older shapes.
+function sourceId(data){return text(data?.common?.msgId||data?.msgId||data?.messageId||data?.logId||data?.id,160)}
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
 function giftFields(data){
   const repeatCount=Math.max(1,number(data?.repeatCount||data?.repeat_count||1,1e7));
   const coinsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
   return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};
+}
+// tiktok-live-proto renamed the like fields in v3, which is the version tiktok-live-connector 2.4.0
+// imports: likeCount -> count, totalLikeCount -> total, and total is now a STRING rather than a
+// number. Reading only the old names produced 0 for every like in production — 251 of 251 — so no
+// viewer could ever reach a leaderboard. The library README still shows the v1/v2 names, so both
+// are read here and the shape of the socket payload stops mattering.
+//
+// count  = the increment for THIS event. The only value a leaderboard may accumulate.
+// points = TikTok's running room-wide total. Carried for display, never summed: adding a running
+//          total once per event would multiply every tally by the number of events received.
+function likeFields(data){
+  return{...baseUser(data),
+    count:number(data?.count??data?.likeCount,1e9),
+    points:number(data?.total??data?.totalLikeCount,1e12)};
 }
 function battleFields(data){
   const battle=data?.battleInfo||data?.battle||data||{};
@@ -54,4 +83,4 @@ function battleFields(data){
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
-module.exports={text,number,profileImageOf,identityOf,baseUser,giftFields,battleFields,cloudEvent};
+module.exports={text,number,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};

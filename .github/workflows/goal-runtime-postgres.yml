@@ -1,0 +1,180 @@
+name: Goal runtime · Postgres 18
+
+# Railway runs PostgreSQL 18.4, so the goal contract is proved against major 18. The existing CI job
+# in ci.yml stays on 16-alpine on purpose — ubuntu-latest ships the 16 client its backup/restore proof
+# needs — so this is a separate job rather than a change to that one.
+#
+# The database here is a throwaway service container. It never sees a Railway credential, and no
+# production or staging URL appears in this file. Only the goal-runtime contract uses it.
+#
+# Correctness and relative index comparisons from this job are trustworthy. Absolute timings are NOT:
+# a GitHub runner says nothing about Railway's capacity. Load testing at 10/20/100 events per second
+# happens later, against an explicitly approved isolated database.
+on:
+  push:
+    branches: [integration/live-goals-base]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  goal-runtime:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: goals_ci
+          POSTGRES_USER: goals_ci
+          POSTGRES_PASSWORD: goals-ci-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U goals_ci -d goals_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      # The overlay-isolation proof is about a real pub/sub fan-out: one workspace channel, two
+      # subscribers, and a rule that decides which of them may see a message. A fake channel would
+      # fan out however the fake was written, so this job needs a real Redis as well.
+      redis:
+        image: redis:8-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      # Throwaway container only. Deliberately not named DATABASE_URL, so nothing that reads the
+      # production variable name can pick it up by accident.
+      TEST_DATABASE_URL: postgres://goals_ci:goals-ci-password@localhost:5432/goals_ci
+      REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Bekräfta majorversionen mot Railway
+        run: |
+          version=$(psql "$TEST_DATABASE_URL" -tAc "SHOW server_version")
+          echo "CI Postgres: $version"
+          case "$version" in 18.*) ;; *) echo "::error::förväntade major 18, fick $version"; exit 1;; esac
+
+      - name: Installera serverberoenden
+        run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: server
+
+      # The migration must work on a database that has never seen it, which is the case Railway will
+      # be in exactly once and can therefore never be retried.
+      - name: Migration från tom databas
+        run: DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+        working-directory: server
+
+      - name: Migrationen är idempotent
+        run: |
+          DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+          DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
+        working-directory: server
+
+      # The 21 contracts that are blocked without a real database. If any of these is red the job
+      # fails and the run stops here — the test is not adjusted to match the implementation.
+      - name: Goal runtime-kontrakten
+        run: node --test test/goal-runtime-contract.test.js
+        working-directory: server
+
+      # Order independence, proven rather than asserted: each of these runs alone, in a fresh
+      # process, so neither can be relying on a row an earlier test happened to leave behind.
+      - name: Ordningsbevis — reset och cleanup var för sig
+        run: |
+          node --test --test-name-pattern="reset nollar progress" test/goal-runtime-contract.test.js
+          node --test --test-name-pattern="städningen är batchad" test/goal-runtime-contract.test.js
+        working-directory: server
+
+      - name: Overlay-PUT och sync i samma transaktion
+        run: node --test test/overlay-put-sync.test.js
+        working-directory: server
+
+      # The transaction proved above, reached through the real HTTP route with a real session and
+      # CSRF header. Without this step a route that kept its own UPDATE would pass everything else.
+      - name: PUT-rutten kör transaktionen — HTTP, session och CSRF
+        run: node --test test/overlay-put-http.test.js
+        working-directory: server
+
+      # Frame shape and the write path. Pure, so it also runs in the main CI job — but the isolation
+      # step below only means something if these hold, and a failure here should stop this job too.
+      - name: Goal-SSE — absoluta frames, normalisering och skrivvägen
+        run: node --test test/goal-sse.test.js
+        working-directory: server
+
+      # Two overlays, one workspace, two OBS links, two live SSE connections over real sockets and a
+      # real Redis channel. This is the isolation proof; nothing else in the suite covers it.
+      - name: Overlay-isolering — två länkar på samma workspace
+        run: node --test test/goal-sse-isolation.test.js
+        working-directory: server
+
+      # The four goal routes, over real sockets: token status, the role matrix, workspace and overlay
+      # isolation, lazy backfill, PATCH limits, reset and 404-without-row-creation.
+      #
+      # API_RATE_LIMIT is raised for this step alone. The suite drives ~100 real requests from one
+      # address in a few seconds, and the per-IP budget — which the steps above share through the
+      # same Redis bucket — would refuse the tail of it for reasons that have nothing to do with the
+      # routes. Production keeps the default; nothing here changes it.
+      - name: Mål-API:t — fyra rutter, roller och overlay-gränsen
+        run: node --test test/goal-api.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
+      # The ingest order and its failure semantics, with every dependency injected. Pure, so it also
+      # runs in the main CI job — but the chain below is only worth trusting if these hold.
+      - name: Ingestkedjan — ordning, dubbletter och felsemantik
+        run: node --test test/goal-ingest.test.js
+        working-directory: server
+
+      # The same chain for real: the bridge's own route, a real Postgres, a real Redis channel and
+      # two OBS links on real sockets. API_RATE_LIMIT is raised here for the same reason as above —
+      # the suite is a burst of real requests from one address, not what the per-IP budget is for.
+      - name: Ingestkedjan mot riktig Postgres och Redis
+        run: node --test test/goal-ingest-http.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
+      # Studio's authenticated, overlay-scoped goal stream — plus the two standing rules around it:
+      # the workspace-wide stream still gets no frames, and a test event stays visual and never
+      # touches a persistent goal. API_RATE_LIMIT is raised for the same reason as the steps above:
+      # the shared per-IP bucket has been counting since the first HTTP step of this job.
+      - name: Studio-strömmen — overlay-scopad, testeventet visuellt
+        run: node --test test/studio-goal-stream.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
+      - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
+        run: node --test test/goal-cleanup.test.js
+        working-directory: server
+
+      - name: Churn — 1 000 000 rader, stabiliseras storleken?
+        run: node ../scripts/goal-churn.js
+        working-directory: server
+
+      - name: EXPLAIN (ANALYZE, BUFFERS) med realistiska fixtures
+        run: node ../scripts/goal-explain.js
+        working-directory: server
+
+      - name: Faktisk storlek per apply-rad
+        run: node ../scripts/goal-size.js
+        working-directory: server
+
+      # ---- kapacitetsblock ----------------------------------------------------------------------
+      # Architecture signal from a GitHub runner. Not a capacity proof for Railway: different CPU,
+      # different disk, and the database in the same container.
+      - name: Planerarskala — 10 000 overlays, 50 000 mål, före/efter index
+        run: node ../scripts/goal-scale.js
+        working-directory: server
+
+      - name: Genomströmning — 10, 20, 100 ev/s och 5 workspaces
+        run: node ../scripts/goal-throughput.js
+        working-directory: server
+
+      - name: Lagringsalternativ — text vs sha256, btree vs BRIN
+        run: node ../scripts/goal-storage.js
+        working-directory: server

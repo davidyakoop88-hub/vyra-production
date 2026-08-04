@@ -5,7 +5,7 @@
 (() => {
   const KEY = 'vyra-action-event-v2';
   const getState = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{"actions":[],"events":[],"timers":[]}') } catch { return { actions: [], events: [], timers: [] } } };
-  const setState = state => localStorage.setItem(KEY, JSON.stringify(state));
+  const setState = state => window.VyraSessionState.writeActive(KEY, JSON.stringify(state));
 
   // Tracked from the first real "connected" status this page sees, not from page load — so a
   // timer created mid-stream doesn't immediately fire on its next 10s tick, and a timer left

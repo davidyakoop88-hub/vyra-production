@@ -33,8 +33,8 @@
     }).filter(event=>event.actionId||event.allActionIds?.length||event.randomActionIds?.length);
     return{state:{...state,actions,events},changed:true};
   }
-  const read=()=>{try{const parsed=JSON.parse(localStorage.getItem(KEY)||'{"actions":[],"events":[]}');const cleaned=cleanupLegacyTestState(parsed);if(cleaned.changed)localStorage.setItem(KEY,JSON.stringify(cleaned.state));return cleaned.state}catch(e){console.warn('[VYRA] Ogiltig action-state',e);return{actions:[],events:[]}}};
-  const write=state=>localStorage.setItem(KEY,JSON.stringify(state));
+  const read=()=>{try{const parsed=JSON.parse(localStorage.getItem(KEY)||'{"actions":[],"events":[]}');const cleaned=cleanupLegacyTestState(parsed);if(cleaned.changed)window.VyraSessionState.writeActive(KEY,JSON.stringify(cleaned.state));return cleaned.state}catch(e){console.warn('[VYRA] Ogiltig action-state',e);return{actions:[],events:[]}}};
+  const write=state=>window.VyraSessionState.writeActive(KEY,JSON.stringify(state));
   function formatActionName(action){
     const raw=String(action?.name||'').trim();
     const widget=String(action?.config?.widget||'').trim();

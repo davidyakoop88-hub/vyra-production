@@ -1,4 +1,14 @@
 name: VYRA CI
+# Runs on pull requests and on pushes to main — deliberately not on the integration branches.
+#
+# So the live-goals work does not exercise this job while it is being built: its proof is the
+# "Goal runtime · Postgres 18" workflow, which runs on every push to integration/live-goals-base and
+# provisions both a Postgres 18 and a Redis of its own. The first real run of THIS job for that work
+# happens when the collected draft PR is opened; the `npm run migrate` step below was added ahead of
+# that, because the ingest path now writes goal progress to Postgres before it publishes and the
+# Redis-backed ingest tests reach it. The trigger is not to be widened just to force an early run —
+# that would put the whole main suite, including the backup/restore proof, on every intermediate
+# commit of a branch that is not ready for it.
 on:
   pull_request:
   push:
@@ -51,6 +61,10 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
+      # Before the suite, not after: ingest now applies goal progress in Postgres before it publishes
+      # anything, so the Redis-backed ingest tests need the schema to exist. The idempotency proof
+      # further down still runs the migration twice on top of this one.
+      - run: npm run migrate
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
       - name: Validate JavaScript syntax
@@ -70,6 +84,26 @@ jobs:
       - name: Prove database backup and restore
         working-directory: .
         run: bash scripts/verify-backup-restore.sh
+
+  # The client files at the repository root: the session owner, the goal runtime and the DOM patcher.
+  # Until now this suite only ever ran on a developer machine. jsdom is the single devDependency and
+  # ships nowhere — server/Dockerfile builds from the server/ context, and the electron builder
+  # excludes package.json, node_modules and tests from extraResources.
+  #
+  # The audit here runs WITH devDependencies, unlike server and bridge: jsdom is a test tool that
+  # executes on this CI runner, which is exactly where a vulnerability in it would matter.
+  test-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --audit-level=high
 
   test-tiktok-bridge:
     runs-on: ubuntu-latest

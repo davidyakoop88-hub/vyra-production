@@ -18,16 +18,24 @@ const SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/widge
 
 
 const VOLATILE = ['id', 'placement', 'createdFrom'];
+// The snapshot records what the pre-factory inline literals produced. That is the migration contract
+// — the number an existing customer's saved widget carries, and the baseline backfill preserves —
+// and it must not change. A newly created goal is a different question: it starts at zero, because
+// 658 followers and 43 hearts were demo figures that looked like real progress before anything had
+// happened. So these two fields are compared by the dedicated test below, not against the snapshot.
+const DELIBERATELY_CHANGED = ['goalCurrent', 'heartCurrent'];
 const stripVolatile = w => {
   const copy = Object.assign({}, w);
-  VOLATILE.forEach(k => delete copy[k]);
+  VOLATILE.concat(DELIBERATELY_CHANGED).forEach(k => delete copy[k]);
   return copy;
 };
 
 for (const row of CONTRACT) {
   test(`${row.name}: ${row.key} ger katalogens defaultkonfiguration`, () => {
-    const expected = SNAPSHOT[row.key];
-    assert.ok(expected, `snapshot saknar ${row.key}`);
+    assert.ok(SNAPSHOT[row.key], `snapshot saknar ${row.key}`);
+    // Both sides go through the same stripping, so the deliberately changed start values are out of
+    // this comparison entirely rather than half-removed. They have their own test below.
+    const expected = stripVolatile(SNAPSHOT[row.key]);
     const produced = stripVolatile(VyraWidgets.create(row.key, { values: row.values }));
     assert.deepEqual(produced, expected);
     // deepEqual ignores key order; the field set has to match exactly too, or a default could be

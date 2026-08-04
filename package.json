@@ -1,0 +1,11 @@
+{
+  "name": "vyra-client",
+  "private": true,
+  "description": "Testkörning för klientfilerna i repotroten. Ingen runtime-dependency: webbläsaren laddar filerna direkt, och ingenting här packas med i Railway-imagen eller desktopinstallern.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1"
+  }
+}

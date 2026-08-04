@@ -164,7 +164,7 @@ if (require.main === module) {
   }
 
   function eventKey(type, data, fields) {
-    const nativeId = data?.msgId || data?.messageId || data?.logId || data?.id;
+    const nativeId = N.sourceId(data);
     return nativeId ? `${type}:${nativeId}` : `${type}:${fields.username || ''}:${fields.giftName || ''}:${fields.count || ''}:${Math.floor(Date.now() / 1000)}`;
   }
 
@@ -228,7 +228,8 @@ if (require.main === module) {
     });
 
     connection.on(WebcastEvent.GIFT, data => {
-      if (data.giftType === 1 && !data.repeatEnd) return;
+      // Cumulative frames: forward only the last one, or the streak is counted as a triangular number.
+      if (N.isStreakable(data) && !N.isFinalFrame(data)) return;
       sendEvent('gift', N.giftFields(data), data);
     });
 
@@ -242,13 +243,9 @@ if (require.main === module) {
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
     connection.on(WebcastEvent.STREAM_END, () => scheduleReconnect('TikTok LIVE avslutades'));
 
-    connection.on(WebcastEvent.LIKE, data => {
-      sendEvent('likes', {
-        ...N.baseUser(data),
-        count: data.likeCount || 0,
-        points: data.totalLikeCount || 0
-      }, data);
-    });
+    // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
+    // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.
+    connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
 
     connection.on(ControlEvent.DISCONNECTED, () => {
       if (activeConnection === connection) activeConnection = null;

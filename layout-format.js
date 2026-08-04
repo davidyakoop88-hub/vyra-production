@@ -23,7 +23,7 @@
     var value = FORMATS[format] ? format : 'mobile';
     var data = currentState();
     data.layoutFormat = value;
-    localStorage.setItem('vyra-state', JSON.stringify(data));
+    window.VyraSessionState.writeActive('vyra-state', JSON.stringify(data));
   }
 
   function applyFormat() {

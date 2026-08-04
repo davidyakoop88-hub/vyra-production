@@ -39,7 +39,7 @@
     box.querySelector('#aoPreviewAlert').onclick = () => showAlert({duration:3,config:read()},{username:'TestUser',giftname:'Rose',repeatcount:5,coins:5});
     box.querySelector('#aoTest').onclick = () => { const text=fill(box.querySelector('#aoTts').value); if(!text)return window.toast?.('Skriv TTS-text först'); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text);u.rate=+box.querySelector('#aoSpeed').value;u.pitch=+box.querySelector('#aoPitch').value;speechSynthesis.speak(u); };
     const before = JSON.parse(localStorage.getItem(KEY)||'{"actions":[]}').actions.length;
-    modal.querySelector('#saveAeAction').addEventListener('click',()=>{const config=read();let i=0,t=setInterval(()=>{const s=JSON.parse(localStorage.getItem(KEY)||'{"actions":[]}');if(s.actions.length>before){s.actions.at(-1).config=config;localStorage.setItem(KEY,JSON.stringify(s));clearInterval(t)}else if(++i>40)clearInterval(t)},100)},true);
+    modal.querySelector('#saveAeAction').addEventListener('click',()=>{const config=read();let i=0,t=setInterval(()=>{const s=JSON.parse(localStorage.getItem(KEY)||'{"actions":[]}');if(s.actions.length>before){s.actions.at(-1).config=config;window.VyraSessionState.writeActive(KEY,JSON.stringify(s));clearInterval(t)}else if(++i>40)clearInterval(t)},100)},true);
     update();
   }
   document.addEventListener('vyra:runtime-alert', e => { const {action,payload={}}=e.detail||{}; if(action?.types?.includes('alert'))showAlert(action,payload); });

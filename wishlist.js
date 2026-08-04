@@ -5,7 +5,16 @@ const WISHLIST_KEY = 'vyra-wishlist';
 // TODO: byt till den riktiga support-/önskemål-adressen när den finns.
 const WISHLIST_EMAIL = 'TODO@exempel.se';
 const wishlistItems = JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]');
-function saveWishlistItems() { localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlistItems)); }
+// Samma skal som i extras.js: cachen lastes en gang vid load. Parsningen sker fore mutationen, sa
+// ett trasigt varde lamnar listan orord i stallet for halvtom.
+function vyraReloadWishlist(value){
+  const next = value == null ? [] : JSON.parse(value);
+  wishlistItems.length = 0;
+  wishlistItems.push(...next);
+}
+window.VyraWishlist = { get data(){ return wishlistItems }, reload: vyraReloadWishlist };
+window.VyraSessionState?.registerCache?.(WISHLIST_KEY, vyraReloadWishlist);
+function saveWishlistItems() { window.VyraSessionState.writeActive(WISHLIST_KEY, JSON.stringify(wishlistItems)); }
 
 function wishlistHtml() {
   const list = wishlistItems.length

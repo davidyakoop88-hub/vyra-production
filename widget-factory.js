@@ -158,7 +158,7 @@
 
     'heartgoal.theme': v => ({
       type: 'templateHeartGoal', x: 80, y: 120, width: 310, title: 'Heart Me Goal',
-      templateTitle: 'HEART ME GOAL', heartCurrent: 43, heartTarget: 50, heartTheme: v.theme,
+      templateTitle: 'HEART ME GOAL', heartCurrent: 0, heartTarget: 50, heartTheme: v.theme,
       heartColor: v.color, heartTextColor: '#ffffff', heartNumberColor: v.color
     }),
     'socialgoal.kind': v => ({
@@ -166,7 +166,7 @@
       width: v.orientation === 'portrait' ? 220 : 440,
       title: v.kind === 'likes' ? 'Like Goal' : 'Follower Goal',
       goalTitle: v.kind === 'likes' ? 'LIKE GOAL' : 'FOLLOWERS GOAL',
-      goalCurrent: 658, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
+      goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: v.kind === 'likes' ? '#ff3f8f' : '#24d8df', goalColor2: '#b84ee8'
     }),
 
