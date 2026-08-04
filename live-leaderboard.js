@@ -9,6 +9,10 @@
   // uses for its cycle feature) rather than mutating topLikePeople + calling render(), so it never
   // disrupts whatever the user is doing in the editor (selection, scroll, open panels).
 
+  // media.js has its own VYRA_OVERLAY, but it is a module-scope const there and not reachable from
+  // this file. Same source of truth (the ?overlay flag studio.html is loaded with), read locally.
+  const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
+
   const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
   const LIKE_IDLE_MS = 10 * 60 * 1000;
 
@@ -111,6 +115,18 @@
     return Object.values(totals).filter(t => metric === 'likes' ? (t.present !== false && t.activeLikes > 0) : t[metric] > 0).sort((a, b) => metric === 'likes' ? b.activeLikes - a.activeLikes : b[metric] - a[metric]);
   }
 
+  // A gift landing while the flip is still running must update the name, value and both pictures
+  // without rewinding the animation — see window.VyraFlip in media.js for why. That helper owns the
+  // timing for both Top Gift and Top Streak; this file only says which of the two things happened.
+  // The fallback keeps the old behaviour if media.js has not run, rather than skipping the flip.
+  function armFlip(el) {
+    const flip = window.VyraFlip;
+    if (flip) { if (!flip.resume(el)) flip.start(el); return; }
+    el.classList.remove('play');
+    void el.offsetWidth;
+    el.classList.add('play');
+  }
+
   function updateTopGift(e, person) {
     if (typeof state === 'undefined' || !state?.widgets) return;
     const image = e.giftImage || e.image || e.giftPicture || e.gift?.image || '';
@@ -132,9 +148,7 @@
       if (gift && image) gift.src = VyraSafe.src(image);
       if (name) name.textContent = person.name;
       if (coins) coins.textContent = '◉ ' + formatNum(value);
-      el.classList.remove('play');
-      void el.offsetWidth;
-      el.classList.add('play');
+      armFlip(el);
     });
     if (changed && typeof save === 'function') save();
   }
@@ -159,7 +173,21 @@
       const top = metric === 'points'
         ? (window.VyraPoints?.getTop(rows.length) || [])
         : (range === 'stream' ? sortedTop(metric) : sortedTopForRange(metric, range)).slice(0, rows.length);
-      if (!top.length) return;
+      // An empty tally used to mean "leave the DOM alone", which in the editor is right — the demo
+      // rows are what the streamer is designing against. In the overlay it meant a live audience
+      // saw shipped placeholder people with invented totals, and kept seeing them: sortedTop
+      // filters on activeLikes > 0, so a like stream whose events carry count 0 never produces a
+      // single entry, and the rows are never reached. Zero the rows instead of inventing anything.
+      if (!top.length) {
+        if (!VYRA_OVERLAY) return;
+        rows.forEach(row => {
+          const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
+          if (strong) strong.textContent = '';
+          if (small) small.textContent = '';
+          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; em.textContent = icon + ' 0' }
+        });
+        return;
+      }
       rows.forEach((row, i) => {
         const person = top[i];
         row.style.display = person ? '' : 'none';

@@ -102,10 +102,20 @@
   // which cannot come back. What this file still owns is the demo data that lives in the DOM or in
   // state.widgets rather than in a render-time fallback, and so has no equivalent cure.
 
-  let live = false, writing = false;   // flips on the first real event; after that the widgets own their values
+  // This used to carry a `live` flag that stopped all zeroing after the first event, and the
+  // listener at the bottom disconnected the observer outright. Both were wrong for the same
+  // reason: the bridge emits a `viewer` event within seconds of connecting — 125 of 159 of them
+  // carry no username at all — so zeroing died before a single like or gift had been counted. The
+  // next render() then painted the shipped demo rows straight back, and nothing was left watching.
+  // That is why a live broadcast showed Alex 98.7K / Mia 82.4K / Leo 71.1K to a real audience.
+  //
+  // The observer now runs for the whole broadcast. It is safe to leave running because zeroing is
+  // gated on isDemoName(): a row holding real data is never touched (see zeroRankingRows and
+  // zeroSingleValueWidgets below). `writing` remains, to ignore the mutations we cause ourselves.
+  let writing = false;
 
   function zeroAll() {
-    if (live || writing) return;
+    if (writing) return;
     writing = true;                       // second guard: ignore the mutations we cause ourselves
     try {
       zeroRankingRows(document);
@@ -125,7 +135,7 @@
   zeroAll();
   addEventListener('DOMContentLoaded', zeroAll);
 
-  // First real event: stop zeroing and disconnect, so this file costs nothing for the rest of the
-  // stream and can never fight a legitimate update.
-  addEventListener('vyra-live-event', () => { live = true; observer.disconnect() }, { once: true });
+  // Deliberately no 'vyra-live-event' listener and no observer.disconnect(). Real data is protected
+  // by isDemoName(), not by switching this file off — and switching it off is precisely what let
+  // the demo rows return mid-broadcast.
 })();

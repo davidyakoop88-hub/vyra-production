@@ -22,7 +22,7 @@
       label: 'LAST LIKER', catalogLabel: 'Last Liker', events: ['like', 'likes'], multiAccent: '#ff58d6',
       themes: { neon: '#ff58d6', blue: '#4fc3ff', lime: '#a3e635' },
       defaultName: 'Mia', defaultMsg: 'SENT 1 000 LIKES',
-      message: e => e.__test ? undefined : `SENT ${Math.max(1, Math.round(Number(e.count ?? e.value) || 1)).toLocaleString('sv-SE')} LIKES`
+      message: e => e.__test ? undefined : `SENT ${Math.max(1, Math.round(Number(e.count ?? e.likes) || 1)).toLocaleString('sv-SE')} LIKES`
     },
     sharer: {
       label: 'LAST SHARER', catalogLabel: 'Last Sharer', events: ['share'], multiAccent: '#2dd4bf',

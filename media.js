@@ -136,7 +136,65 @@ function overlayShareBase(){return sessionStorage.getItem('vyra-overlay-access-u
 function overlayShareUrl(widgetId=''){let url=new URL(overlayShareBase(),location.href);if(widgetId)url.searchParams.set('widget',widgetId);else url.searchParams.delete('widget');return url.href}
 const overlayLinkBind=bind;bind=function(){overlayLinkBind();if(view!=='editor')return;let shell=document.querySelector('.editor-shell');if(!shell||document.querySelector('.overlay-link-bar'))return;let bar=document.createElement('div'),choices=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||!w.hidden).map(w=>`<option value="${VyraSafe.text(w.id)}">${VyraSafe.text(w.templateTitle||w.title||w.group||w.type||'Widget')}${VyraWidgets.isStandalone(w)?' · endast widgetlänk':' · i Layout'}</option>`).join('');bar.className='overlay-link-bar';bar.innerHTML=`<div><span><i></i> OVERLAYLÄNK · HELA OVERLAYN ELLER EN WIDGET</span><select id="overlayLinkTarget"><option value="">Hela overlayn</option>${choices}</select><input id="overlayLinkValue" readonly></div><button id="copyObsLink">Kopiera till OBS</button><button id="copyTikTokLink">Kopiera till TikTok</button><button id="previewOverlayLink">Förhandsvisa ↗</button><button id="deleteStandaloneWidget" hidden>Ta bort widgeten</button>`;document.body.append(bar);let target=bar.querySelector('#overlayLinkTarget'),input=bar.querySelector('#overlayLinkValue'),update=()=>{input.value=overlayShareUrl(target.value)};const del=bar.querySelector('#deleteStandaloneWidget'),syncDelete=()=>{const w=state.widgets.find(x=>x.id===target.value);del.hidden=!VyraWidgets.isStandalone(w)};update();syncDelete();target.onchange=()=>{update();syncDelete()};del.onclick=async()=>{const id=target.value;if(!id)return;const outcome=await window.VyraStandalone.deleteStandalone(id);if(outcome.deleted){toast('Widgeten och dess länk är borttagna');render()}else if(outcome.reason==='conflict')toast('Ladda om och försök igen');else if(outcome.reason==='failed')toast('Widgeten kunde inte tas bort. Försök igen.')};let copy=async platform=>{let url=overlayShareUrl(target.value);if(!new URL(url).searchParams.has('access')){document.querySelector('.oa-open')?.click();toast('Skapa en säker länk först');return}try{await navigator.clipboard.writeText(url);toast((target.value?'Widgetlänken':'Overlaylänken')+' kopierad för '+platform)}catch{input.select();document.execCommand('copy');toast('Länken kopierad för '+platform)}};bar.querySelector('#copyObsLink').onclick=()=>copy('OBS');bar.querySelector('#copyTikTokLink').onclick=()=>copy('TikTok LIVE Studio');bar.querySelector('#previewOverlayLink').onclick=()=>window.open(overlayShareUrl(target.value),'_blank');addEventListener('vyra-overlay-access-created',update)};
 const layoutOnlyOverlayBarBind=bind;bind=function(){layoutOnlyOverlayBarBind();if(view!=='editor')document.querySelector('.overlay-link-bar')?.remove()};
-function autoStartAllFlips(root=document){root.querySelectorAll('.vyra-topgift:not([data-auto-flip]),.vyra-streak:not([data-auto-flip])').forEach(el=>{el.dataset.autoFlip='1';requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add(el.classList.contains('vyra-streak')?'hit':'play')))})}
+// Top Gift and Top Streak are the two widgets that flip from the gift picture to the profile
+// picture, and both are thrown away and rebuilt by render() on every gift — gift-event-images.js
+// updates their state and repaints. Arming the fresh node naively restarts the animation, and
+// neither flip rotates at all before roughly 42% of its duration (vyraFlipSmooth holds rotateY(0)
+// until 1.76s of 4.2s, streakFlip likewise). On a live stream gifts arrive far closer together than
+// that, so the widget was pinned to the gift face for the whole stream.
+//
+// One flip therefore owns its widget until it has run out: a rebuilt node picks the animation up at
+// the same offset through a negative animation-delay, and only an event arriving after the flip has
+// finished starts a new one. Shared by autoStartAllFlips below and live-leaderboard.js's
+// updateTopGift so there is a single copy of the timing logic.
+const VyraFlip=window.VyraFlip=(function(){
+  const running={};                                             // widget id -> {startedAt,durationMs}
+  // Only the parts a flip actually animates. Keeping the list explicit is what stops the offset from
+  // reaching decorative loops elsewhere in the widget, or any widget that does not flip at all.
+  const PARTS='.vyra-flip,.streak-flip,.vyra-gift-face,.vyra-profile-face,.streak-gift-face,.streak-profile-face';
+  const DEFAULT_MS={play:4200,hit:3800};
+  const trigger=el=>el.classList.contains('vyra-streak')?'hit':'play';
+  const parts=el=>[el,...el.querySelectorAll(PARTS)];
+  function offset(el,ms){parts(el).forEach(node=>{node.style.animationDelay=ms?-Math.round(ms)+'ms':''})}
+  // Themes and frames change the length (.topgift-framed is 3.8s, .streak-ice drops the wrapper
+  // animation and runs the two faces for var(--speed) instead), so measure the widget in front of us
+  // rather than hardcoding one number per type. Must run with the trigger class already applied.
+  function durationOf(el){
+    if(typeof getComputedStyle!=='function')return 0;
+    let longest=0;
+    parts(el).forEach(node=>{
+      const style=getComputedStyle(node);
+      if(!style||!style.animationName||style.animationName==='none')return;
+      String(style.animationDuration).split(',').forEach((value,i)=>{
+        const counts=String(style.animationIterationCount||'1').split(',');
+        if((counts[i]||counts[0]||'1').trim()==='infinite')return;
+        const ms=parseFloat(value)*(/ms\s*$/.test(value.trim())?1:1000);
+        if(Number.isFinite(ms))longest=Math.max(longest,ms);
+      });
+    });
+    return longest;
+  }
+  return {
+    // Picks a running flip up where it is. false means nothing is in flight and the caller may
+    // start a new one — that is the only path that ever rewinds the animation.
+    resume(el){
+      const state=running[el.dataset.id];
+      if(!state||Date.now()-state.startedAt>=state.durationMs){offset(el,0);return false}
+      offset(el,Date.now()-state.startedAt);
+      el.classList.add(trigger(el));
+      return true;
+    },
+    start(el){
+      const cls=trigger(el);
+      offset(el,0);
+      el.classList.remove(cls);
+      void el.offsetWidth;
+      el.classList.add(cls);
+      running[el.dataset.id]={startedAt:Date.now(),durationMs:durationOf(el)||DEFAULT_MS[cls]};
+    }
+  };
+})();
+function autoStartAllFlips(root=document){root.querySelectorAll('.vyra-topgift:not([data-auto-flip]),.vyra-streak:not([data-auto-flip])').forEach(el=>{el.dataset.autoFlip='1';if(VyraFlip.resume(el))return;requestAnimationFrame(()=>requestAnimationFrame(()=>VyraFlip.start(el)))})}
 new MutationObserver(()=>autoStartAllFlips()).observe(document.body,{childList:true,subtree:true});autoStartAllFlips();
 const topLikePeople=[['Alex','98.7K'],['Mia','82.4K'],['Leo','71.2K'],['Sara','64.8K'],['Zoe','58.1K'],['Emma','49.5K'],['Noah','42.3K'],['Sofia','36.9K'],['Liam','31.4K'],['Ella','27.8K']];
 function topLikeTextEffectStyle(w){let shadow=w.textShadowBlur||w.textShadowX||w.textShadowY?`${w.textShadowX||0}px ${w.textShadowY||0}px ${w.textShadowBlur||0}px ${w.textShadowColor||'#000000'}`:'none',outline=w.textOutlineWidth?`${w.textOutlineWidth}px ${w.textOutlineColor||'#000000'}`:'0 transparent';return `--row-shadow:${shadow};--row-outline:${outline}`}
