@@ -94,7 +94,13 @@
           "!docs/**",
           "!docker-compose.yml",
           "!Caddyfile",
-          "!.dockerignore"
+          "!.dockerignore",
+          "!package.json",
+          "!package-lock.json",
+          "!node_modules",
+          "!node_modules/**",
+          "!tests",
+          "!tests/**"
         ]
       }
     ]
