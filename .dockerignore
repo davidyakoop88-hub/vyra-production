@@ -10,3 +10,23 @@ electron-app/dist
 !.env.production.example
 .deploy
 backups
+
+# The client test suite. Railway's vyra-production service builds vyralive.app from the repository
+# ROOT with Railpack, which decides what kind of project this is by looking at what it finds there.
+# A package.json in the root makes it "Detected Node", and it then aborts the build because no start
+# command exists — which is exactly what happened to the Live Goals deploy:
+#
+#   ↳ Found .dockerignore file, applying filters
+#   ⚠ No node package manager detected, using npm
+#   ↳ Detected Node
+#   ✖ No start command detected.
+#
+# There is nothing to start. The root package.json exists only so `npm test` can run the jsdom suite;
+# the browser loads these files directly and none of them are served by Node. Filtering them out
+# restores the static-site detection that builds the Caddy image the Caddyfile describes.
+#
+# The leading slash is load-bearing. Unanchored, `package.json` would also match server/package.json
+# and tiktok-bridge/package.json and break those builds instead.
+/package.json
+/package-lock.json
+/tests
