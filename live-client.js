@@ -151,32 +151,47 @@ if(!localRuntime){
     disconnect:async()=>shape((await cloud('DELETE')).connection),
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
-    mapEvent:liveEventTriggers,ingest};
+    mapEvent:liveEventTriggers,ingest,closeStream};
   // Subscribe to the workspace event stream. Without this Studio never saw a single live event in
   // web mode: the desktop build gets them from its poll() loop against the local server, and OBS
   // widgets open their own EventSource, but the Studio canvas had no source at all — so widgets
   // sat on their placeholder data and only the auto-play flip animation moved.
-  let stream = null;
+  let stream = null, streamGeneration = 0, onLiveMessage = null;
+  // Namngiven callback med generationsvakt. Bada behovs: en anonym pil kan inte tas bort med
+  // removeEventListener, och close() garanterar inte att redan kolagda meddelanden uteblir - sa
+  // vakten sitter i callbacken, inte i strommen.
+  function closeStream() {
+    streamGeneration += 1;
+    if (stream) {
+      if (onLiveMessage) stream.removeEventListener('live', onLiveMessage);
+      stream.onerror = null;
+      try { stream.close() } catch (_) {}
+    }
+    stream = null; onLiveMessage = null; activeUsers.clear();
+  }
   function openStream() {
     const id = workspaceId();
     if (!id || stream) return;
+    const mine = streamGeneration;
     stream = new EventSource(`/api/workspaces/${id}/events/stream`);
-    // The server sends `event: live`, not a default message event, so onmessage never fires —
-    // base-widget.js listens the same way.
-    stream.addEventListener('live', message => {
+    onLiveMessage = message => {
+      if (mine !== streamGeneration) return;
       let payload;
       try { payload = JSON.parse(message.data) } catch { return }
       if (!payload || payload.type === 'heartbeat') return;
       ingest(payload, message.lastEventId);
-    });
+    };
+    stream.addEventListener('live', onLiveMessage);
     // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
     // login can open a fresh one rather than reusing a stream bound to the previous workspace.
     stream.onerror = () => { if (stream && stream.readyState === EventSource.CLOSED) stream = null };
   }
+  window.VyraSessionState?.registerTeardown?.('live-client', closeStream);
+  addEventListener('vyra-session-ended', closeStream);
   addEventListener('vyra-auth-ready', openStream);
   openStream();
   setTimeout(openStream, 2000);
 
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
 const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
-async function poll(){try{let d=await json('/events?after='+last);for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{setTimeout(poll,650)}}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest};status().catch(()=>{});poll()})();
+let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();

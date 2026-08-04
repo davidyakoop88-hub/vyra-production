@@ -9,9 +9,22 @@ function getEditorCanvasScale(){
   let scale=match?parseFloat(match[1]):1;
   return Number.isFinite(scale)&&scale>0?scale:1;
 }
-const state=safeParseStorage('vyra-state',{});
-state.user??='Streamer';state.tiktok??='';state.brandKit??={background:'#1c1028',highlight:'#ff58d6',text:'#f7f2ff',secondaryText:'#b9a6dd',fontFamily:''};state.widgets??=[{id:'goal',type:'goal',x:55,y:80,title:'KVÄLLENS MÅL',value:'74 320 / 100K'},{id:'alert',type:'alert',x:65,y:300,title:'@alex skickade Galaxy',value:'×5'},{id:'leader',type:'leader',x:50,y:480,title:'TOP GIFTERS',value:'1. Alex · 15.5K'}];state.flows??=[{trigger:'Gåva mottagen',action:'Visa gift alert',on:true},{trigger:'Ny följare',action:'Spela ljud + TTS',on:true}];
-const save=()=>localStorage.setItem('vyra-state',JSON.stringify(state));let view=new URLSearchParams(location.search).has('overlay')?'editor':'home',selected=null,timer;
+// Aldrig localStorage direkt: agaren avgor vad som ar sakert att visa, och returnerar samma
+// objektreferens hela sidans livstid - allt har muterar den in-place.
+const state=window.VyraSessionState.activeState();
+
+// Defaults ags av session-state.js (neutralState/onboardingState). Kvar har star bara flows,
+// som ingen projektion fyller i.
+state.flows??=[{trigger:'Gava mottagen',action:'Visa gift alert',on:true},{trigger:'Ny foljare',action:'Spela ljud + TTS',on:true}];
+// Asynkron sedan skrivmonopolet: agaren tar ett origin-gemensamt las, sa tva flikar aldrig
+// skriver samtidigt. Kastar aldrig - utfallet lases ur resultatet, och saveThenRender() nedan ar
+// vagen for allt som ritar om efterat.
+const save=()=>window.VyraSessionState.writeActive('vyra-state',JSON.stringify(state));
+// Ett anrop i taget. Drag-slut, egenskapsfalt och radera kan alla utlosas tva ganger innan den
+// forsta skrivningen slappt laset, och utan detta koar de bakom varandra och renderar var sin gang.
+let saveInFlight=null;
+async function saveThenRender(){if(saveInFlight)return saveInFlight;saveInFlight=(async()=>{const out=await save();if(!out.ok)toast(out.reason==='lost-ownership'?'Layouten andrades i en annan flik':'Kunde inte spara');render();return out})();try{return await saveInFlight}finally{saveInFlight=null}}
+let view=new URLSearchParams(location.search).has('overlay')?'editor':'home',selected=null,timer;
 function toast(t){$('.toast').textContent=t;$('.toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('.toast').classList.remove('show'),1700)}
 function chart(){return `<svg viewBox="0 0 700 220" preserveAspectRatio="none"><path d="M0 190 C80 185 100 120 170 145 S260 80 320 110 S410 140 470 68 S570 90 700 25" fill="none" stroke="#876bff" stroke-width="3"/></svg>`}
 function rows(){return ''}
@@ -125,16 +138,16 @@ function bind(){
     });
     let w=state.widgets.find(x=>x.id===selected);
     if(w){
-      $('#pt')&&($('#pt').onchange=e=>{w.title=e.target.value;save();render()});
-      $('#pv')&&($('#pv').onchange=e=>{w.value=e.target.value;save();render()});
-      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;save();render()});
+      $('#pt')&&($('#pt').onchange=e=>{w.title=e.target.value;saveThenRender()});
+      $('#pv')&&($('#pv').onchange=e=>{w.value=e.target.value;saveThenRender()});
+      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;saveThenRender()});
     }
     $('#testEvent')&&($('#testEvent').onclick=send);
     $('#saveProject')&&($('#saveProject').onclick=()=>{save();toast('Projekt sparat')});
   }
   if(view==='flows'){
-    document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{state.flows[+b.dataset.toggle].on=!state.flows[+b.dataset.toggle].on;save();render()});
-    $('#newFlow').onclick=()=>{state.flows.push({trigger:'Chatt !hype',action:'Visa animation',on:true});save();render()};
+    document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{state.flows[+b.dataset.toggle].on=!state.flows[+b.dataset.toggle].on;saveThenRender()});
+    $('#newFlow').onclick=()=>{state.flows.push({trigger:'Chatt !hype',action:'Visa animation',on:true});saveThenRender()};
   }
   if(view==='settings')$('#ss').onclick=()=>{state.user=$('#dn').value;save();$('#userName').textContent=state.user;render();toast('Sparat')};
 }

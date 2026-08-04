@@ -8,7 +8,7 @@
     const profile = JSON.parse(new TextDecoder().decode(bytes));
     const state = JSON.parse(localStorage.getItem('vyra-state') || '{}');
     state.user = profile.user?.displayName || profile.user?.email || 'VYRA-konto';
-    localStorage.setItem('vyra-state', JSON.stringify(state));
+    window.VyraSessionState.writeActive('vyra-state', JSON.stringify(state));
 
     addEventListener('DOMContentLoaded', () => {
       const plan = document.querySelector('#accountPlan');

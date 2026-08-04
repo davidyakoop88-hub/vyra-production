@@ -19,7 +19,7 @@ const soundAlerts={
 const SA_TRIGGERS={gift:'Gåva mottagen',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',chat:'Kommentar',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp'};
 const SA_AE_KEY='vyra-action-event-v2';
 function aeRead(){return JSON.parse(localStorage.getItem(SA_AE_KEY)||'{"actions":[],"events":[]}')}
-function aeWrite(state){localStorage.setItem(SA_AE_KEY,JSON.stringify(state))}
+function aeWrite(state){window.VyraSessionState.writeActive(SA_AE_KEY,JSON.stringify(state))}
 function saConnection(soundId){let state=aeRead(),event=state.events.find(e=>e.soundAlertId===soundId);if(!event)return null;let action=state.actions.find(a=>a.id===event.actionId);return {event,action}}
 async function saGetMediaMeta(sound){if(sound.mediaMeta)return sound.mediaMeta;if(!sound.path)return null;let resp=await fetch(sound.path),blob=await resp.blob(),file=new File([blob],sound.name+'.mp3',{type:blob.type||'audio/mpeg'});sound.mediaMeta=await cwStore(file);return sound.mediaMeta}
 

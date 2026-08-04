@@ -26,7 +26,7 @@
     modal.querySelector('#saveAeAction').addEventListener('click', () => {
       const before = getState().actions.length;
       const scene = {number:+box.querySelector('#aeScene').value,placement:box.querySelector('#aePlacement').value,x:+box.querySelector('#aePosX').value,y:+box.querySelector('#aePosY').value,width:+box.querySelector('#aePosWidth').value,layer:+box.querySelector('#aeLayer').value};
-      let attempts=0, timer=setInterval(()=>{const state=getState();if(state.actions.length>before){state.actions.at(-1).scene=scene;localStorage.setItem(KEY,JSON.stringify(state));clearInterval(timer)}else if(++attempts>40)clearInterval(timer)},100);
+      let attempts=0, timer=setInterval(()=>{const state=getState();if(state.actions.length>before){state.actions.at(-1).scene=scene;window.VyraSessionState.writeActive(KEY,JSON.stringify(state));clearInterval(timer)}else if(++attempts>40)clearInterval(timer)},100);
     }, true);
   }
 

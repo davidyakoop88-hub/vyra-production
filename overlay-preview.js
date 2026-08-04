@@ -12,7 +12,7 @@ function owgGetFavorites() {
   try { return new Set(JSON.parse(localStorage.getItem(OWG_FAV_KEY) || '[]')); }
   catch { return new Set(); }
 }
-function owgSaveFavorites(set) { localStorage.setItem(OWG_FAV_KEY, JSON.stringify([...set])); }
+function owgSaveFavorites(set) { window.VyraSessionState.writeActive(OWG_FAV_KEY, JSON.stringify([...set])); }
 
 function owgOverlayUrl() {
   return location.protocol === 'file:' ? 'http://127.0.0.1:4173/overlay.html' : new URL('overlay.html', location.href).href;

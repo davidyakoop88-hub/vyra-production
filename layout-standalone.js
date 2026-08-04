@@ -33,7 +33,7 @@
         });
       source.layoutFormat = format;
       rawOriginal = JSON.stringify(source);
-      localStorage.setItem('vyra-state', rawOriginal);
+      window.VyraSessionState.writeActive('vyra-state', rawOriginal);
     } catch (_) {}
   }
 

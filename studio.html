@@ -93,7 +93,10 @@
     <button class="primary" id="brandKitSave">Spara färgschema</button>
   </dialog>
   <div class="toast"></div>
-  <script src="auth-client.js?v=20260728-1"></script>
+  <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
+       extras.js cachar sitt vid load — båda före auth hinner svara. -->
+  <script src="session-state.js?v=20260804-session"></script>
+  <script src="auth-client.js?v=20260804-session"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <script src="auth-security.js?v=20260724-1"></script>
   <script src="entitlement-gate.js?v=20260728-1"></script>
