@@ -124,8 +124,10 @@ test('local-server /api/obs routes proxy through to a real OBS connection', asyn
   const { createObsService: freshObsService } = require('../obs-service');
   const obsService = freshObsService({ log: () => {} });
   const ROOT = path.resolve(__dirname, '../..');
-  const server = await startLocalServer(ROOT, 4198, { obsService });
-  const origin = 'http://127.0.0.1:4198';
+  // 4210/4211, not 4198/4199: local-server.test.js owns 4197-4204, and `node --test` runs the two
+  // files at the same time, so a shared port is an EADDRINUSE race rather than a real failure.
+  const server = await startLocalServer(ROOT, 4210, { obsService });
+  const origin = 'http://127.0.0.1:4210';
   try {
     const statusBefore = await (await fetch(origin + '/api/obs/status')).json();
     assert.equal(statusBefore.connected, false);
@@ -151,8 +153,8 @@ test('local-server /api/obs routes proxy through to a real OBS connection', asyn
 
 test('local-server /api/obs routes report 503 when no OBS service is configured (plain web build)', async () => {
   const ROOT = path.resolve(__dirname, '../..');
-  const server = await startLocalServer(ROOT, 4199, {});
-  const origin = 'http://127.0.0.1:4199';
+  const server = await startLocalServer(ROOT, 4211, {});
+  const origin = 'http://127.0.0.1:4211';
   try {
     assert.equal((await fetch(origin + '/api/obs/status')).status, 503);
     assert.equal((await fetch(origin + '/api/obs/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 503);
