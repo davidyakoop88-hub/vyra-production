@@ -1,6 +1,6 @@
 {
   "name": "vyra-desktop",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "VYRA — TikTok LIVE overlay studio, desktop app",
   "main": "main.js",
   "private": true,
