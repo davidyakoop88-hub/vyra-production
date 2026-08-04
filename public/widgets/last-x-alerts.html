@@ -324,10 +324,12 @@
   }
   html[data-design="royal"] #name,html[data-design="royal"] #value,html[data-design="royal"] #detail,
   html[data-design="royal"] #message,html[data-design="royal"] #emblem{display:none}
-  html[data-design="royal"] #card.show #tilt{animation:royalholo 9s ease-in-out infinite}
-  @keyframes royalholo{
-    0%,100%{transform:rotateY(-3.5deg)}
-    50%{transform:rotateY(3.5deg)}
+  /* Kröningen loopar inte. En Last-X-alert har enter -> hold -> exit, så rörelsen hör till entrén
+     och lämnar widgeten stilla under hold — den eviga 3,5-graderspendlingen gjorde den rastlös. */
+  html[data-design="royal"] #card.show #tilt{animation:royal-enter .7s cubic-bezier(.22,1,.36,1) both}
+  @keyframes royal-enter{
+    0%{opacity:0;transform:translateY(-10px) scale(.96)}
+    100%{opacity:1;transform:translateY(0) scale(1)}
   }
 
   @media (prefers-reduced-motion:reduce){
