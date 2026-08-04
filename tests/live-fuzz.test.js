@@ -50,8 +50,21 @@ function boot(widgets) {
   h.load('gift-event-images.js');
   const canvas = h.paint(widgets);
   const script = h.document.createElement('script');
-  script.textContent = `state.widgets.length=0;state.widgets.push(...${JSON.stringify(widgets)})`;
+  script.textContent = `state.widgets.length=0;state.widgets.push(...${JSON.stringify(widgets)});`
+    + `window.__fuzzLanded=state.widgets.map(w=>w&&w.type);`;
   h.document.body.append(script);
+  // Utan den har kontrollen ar hela sviten vardelos. Ett skriptfel inne i jsdom kastar inte testet
+  // — det bara loggas — sa en trasig injektion lamnar state.widgets fel och VARJE assertion
+  // passerar. Exakt det hande: push(arr.flat()) la in ARRAYEN som ett element, handlern sag ett
+  // objekt utan .type, ingenting matchade, allt var gront.
+  //
+  // Kontrollen laser TYPERNA, inte langden. En langdkontroll gar pa samma mina: push([w]) ger
+  // ocksa langden 1. Det testade jag, och den slapp igenom.
+  // Kopieras till var egen realm forst: assert/strict jamfor prototyper, och en array fran jsdoms
+  // realm har en annan Array.prototype an var.
+  const landed = [...(h.window.__fuzzLanded || [])];
+  assert.deepEqual(landed, widgets.map(w => w.type),
+    `state.widgets innehaller ${JSON.stringify(landed)} — testet mater ingenting`);
   let saves = 0, renders = 0;
   h.window.save = () => { saves += 1 };
   h.window.render = () => { renders += 1 };
