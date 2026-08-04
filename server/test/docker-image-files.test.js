@@ -102,6 +102,26 @@ test('testet blir rött om en nåbar fil tas ur COPY-listan', { timeout: 10000 }
     'att ta bort en nåbar fil ur vitlistan upptäcks inte — vakten är verkningslös');
 });
 
+// Fran #39: index.js ar inte den enda ingangen i imagen. migrate.js kors som eget kommando —
+// numera dessutom som preDeployCommand — och dess require-graf maste vara lika komplett, annars
+// faller migrationen med MODULE_NOT_FOUND precis nar den behovs som mest.
+test('aven migrate.js:s require-graf finns i COPY-listan', { timeout: 10000 }, () => {
+  const copied = copiedFiles();
+  const reachable = reachableFrom(path.join(SERVER, 'migrate.js'))
+    .filter(f => !/[\/]test[\/]/.test(f))
+    .map(f => path.basename(f));
+  const missing = reachable.filter(name => !copied.has(name)).sort();
+  assert.deepEqual(missing, [],
+    `dessa kravs av migrate.js men saknas i COPY-listan: ${missing.join(', ')}`);
+});
+
+// Fran #39: en vitlista far inte namna filer som inte finns. COPY av en saknad fil faller bygget,
+// men ett stavfel i ett filnamn som redan star dar upptacks annars forst i Railway.
+test('varje fil i COPY-listan finns pa disk', { timeout: 10000 }, () => {
+  const saknas = [...copiedFiles()].filter(name => !fs.existsSync(path.join(SERVER, name))).sort();
+  assert.deepEqual(saknas, [], `COPY-listan namner filer som inte finns: ${saknas.join(', ')}`);
+});
+
 test('buildkontexten är fortfarande server/ och vitlistan är kvar', { timeout: 10000 }, () => {
   // A broad `COPY . .` would make this whole test meaningless, and moving the context would change
   // how the API is built. Neither may happen quietly.

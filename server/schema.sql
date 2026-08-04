@@ -217,3 +217,14 @@ ON CONFLICT (overlay_id, widget_id) DO NOTHING;
 DROP INDEX IF EXISTS goal_event_apply_sweep_idx;
 CREATE INDEX IF NOT EXISTS goal_event_apply_sweep_brin
   ON goal_event_apply USING brin (applied_at);
+
+-- Single-row target for /health/ready's write probe. The probe UPDATEs this row inside a
+-- transaction it always rolls back, so the table never grows and no health check leaves data
+-- behind — but the UPDATE still exercises the real write path (WAL, disk, read-only state), which
+-- a temp table would not. `SELECT 1` alone reported a healthy database right through an outage
+-- where reads worked and every write failed.
+CREATE TABLE IF NOT EXISTS health_probe(
+  id integer PRIMARY KEY,
+  checked_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO health_probe(id) VALUES(1) ON CONFLICT(id) DO NOTHING;

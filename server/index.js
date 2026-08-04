@@ -1,6 +1,7 @@
 'use strict';
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
+const {decideTikTokCapacity}=require('./capacity-gate');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
 const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
@@ -142,6 +143,38 @@ async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=
   req.once('close',()=>{clearInterval(heartbeat);unsubscribe().catch(()=>{})});
 }
 async function createSession(c,user,req,mfaVerified=true){const raw=S.token(),csrf=S.token(),expires=new Date(Date.now()+SESSION_SECONDS*1000),q=await c.query('INSERT INTO sessions(user_id,token_hash,csrf_hash,expires_at,ip_hash,user_agent,mfa_verified_at) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[user.id,S.digest(raw),S.digest(csrf),expires,S.digest(req.socket.remoteAddress||''),S.safeText(req.headers['user-agent'],300),mfaVerified?new Date():null]);return{id:q.rows[0].id,raw,csrf,expires}}
+// SELECT 1 alone reported postgres:true through an outage where nobody could log in: reads worked
+// and the writes were the thing failing. A read-only probe cannot see that, so health looked green
+// while the product was down. This writes inside a transaction and rolls it back, so it exercises
+// the write path (and its WAL/disk requirements) without leaving a row behind.
+async function probeWrite(){
+  const client=await pool.connect();
+  try{
+    await client.query('BEGIN');
+    // UPDATE of a real, permanent row rather than a temp table: temp tables are unlogged, so that
+    // version would have passed on a disk-full or read-only replica — exactly the failure this is
+    // here to catch. The transaction is always rolled back, so health_probe keeps its single row
+    // forever and no health check ever grows the database.
+    // FOR UPDATE first: taking a real row lock already fails on a read-only transaction or a hot
+    // standby, before any write is attempted.
+    const before=await client.query('SELECT checked_at FROM health_probe WHERE id=1 FOR UPDATE');
+    if(before.rowCount!==1){await client.query('ROLLBACK');return{ok:false,reason:'probe-row-missing'}}
+    // clock_timestamp(), not now(): now() is the transaction's start time and would be identical on
+    // a retry, so the probe could not prove the value actually moved. clock_timestamp() advances,
+    // and comparing before/after turns this from "an UPDATE was issued" into "a new value was
+    // really written" — which is the whole point of a full-disk test.
+    const after=await client.query('UPDATE health_probe SET checked_at=clock_timestamp() WHERE id=1 RETURNING checked_at');
+    const changed=after.rowCount===1&&String(after.rows[0].checked_at)!==String(before.rows[0].checked_at);
+    await client.query('ROLLBACK');
+    return changed?{ok:true}:{ok:false,reason:'probe-write-had-no-effect'};
+  }catch(error){
+    try{await client.query('ROLLBACK')}catch{}
+    // 42P01 = undefined_table. That is not a read-only database, it is this build deployed before
+    // `npm run migrate` created health_probe — a deploy-order problem with a completely different
+    // fix, and readiness returning a bare 503 for both would send you hunting the wrong one.
+    return{ok:false,reason:error?.code==='42P01'?'probe-table-missing-run-migrate':'postgres-read-only',code:error?.code};
+  }finally{client.release()}
+}
 async function notifyLogin(c,email,sessionId,userAgent){const device=describeDevice(userAgent).label;await c.query("INSERT INTO notification_outbox(recipient,template,payload,dedupe_key) VALUES($1,'new_login',$2,$3) ON CONFLICT(dedupe_key) DO NOTHING",[email,{device},`new_login:${sessionId}`])}
 // Same split as the successful-login path: the brute-force counter is the part that must land, the
 // audit row and the warning mail are bookkeeping. Keeping them in one transaction meant a broken
@@ -155,7 +188,15 @@ async function checkMfaCode(c,user,code){if(user.mfa_secret_enc&&MFA.verify(MFA.
 async function cleanupPendingMedia(){try{const q=await pool.query("UPDATE media_assets SET status='deleted',deleted_at=now() WHERE id IN (SELECT id FROM media_assets WHERE status='pending' AND created_at<now()-interval '1 hour' LIMIT 25) RETURNING object_key");await Promise.allSettled(q.rows.map(row=>mediaStorage.remove(row.object_key)));if(q.rowCount)console.log(JSON.stringify({level:'info',event:'media_cleanup',count:q.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'media_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function cleanupAuthData(){try{const sessions=await pool.query("DELETE FROM sessions WHERE expires_at<now() OR (mfa_verified_at IS NULL AND created_at<now()-interval '30 minutes')"),tokens=await pool.query("DELETE FROM auth_tokens WHERE expires_at<now()-interval '7 days' OR consumed_at<now()-interval '7 days'"),audit=await pool.query("DELETE FROM audit_log WHERE created_at<now()-interval '180 days'");if(sessions.rowCount||tokens.rowCount||audit.rowCount)console.log(JSON.stringify({level:'info',event:'auth_cleanup',sessions:sessions.rowCount,tokens:tokens.rowCount,audit:audit.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'auth_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function deleteDueAccounts(){try{const q=await pool.query("SELECT id,email FROM users WHERE deletion_requested_at<=now()-interval '7 days' ORDER BY deletion_requested_at LIMIT 10");for(const user of q.rows){const media=await pool.query('SELECT m.object_key FROM media_assets m JOIN workspaces w ON w.id=m.workspace_id WHERE w.owner_user_id=$1',[user.id]);await Promise.all(media.rows.map(row=>mediaStorage.remove(row.object_key)));await tx(async c=>{await c.query('DELETE FROM notification_outbox WHERE recipient=$1',[user.email]);await c.query('DELETE FROM audit_log WHERE actor_user_id=$1',[user.id]);await c.query('DELETE FROM users WHERE id=$1',[user.id])});console.log(JSON.stringify({level:'info',event:'account_deleted',userId:S.digest(user.id).slice(0,12),at:new Date().toISOString()}))}}catch(error){console.error(JSON.stringify({level:'error',event:'account_deletion_failed',message:error.message,at:new Date().toISOString()}))}}
-const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});if(p==='/health/ready'&&req.method==='GET'){try{await pool.query('SELECT 1');if(process.env.REDIS_REQUIRED==='true')await eventBus.ping();return send(res,200,{ok:true,status:'ready'})}catch{return send(res,503,{ok:false,status:'not-ready'})}}if(p==='/api/health'&&req.method==='GET'){const[postgresUp,redisUp]=await Promise.all([pool.query('SELECT 1').then(()=>true).catch(()=>false),eventBus.ping().then(()=>true).catch(()=>false)]),payload=buildHealthStatus({postgresUp,redisUp,sseConnections:metrics.sse,lastTikTokEventAt});return send(res,payload.status==='ok'?200:503,payload)}if(p==='/api/auth/config'&&req.method==='GET')return send(res,200,{ok:true,authRequired:true});if(p==='/api/downloads/windows'&&req.method==='GET'){const release=desktopRelease();if(u.searchParams.get('meta')==='1')return send(res,200,{ok:true,...release,url:undefined});const dls=await session(req);if(!dls)return send(res,401,{ok:false,error:'Logga in och aktivera VYRA Premium för att ladda ner VYRA Desktop',loginRequired:true});if(!dls.email_verified_at)return send(res,403,{ok:false,error:'Verifiera din e-post innan du laddar ner VYRA Desktop',emailVerificationRequired:true});const dlw=await pool.query('SELECT w.id FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at LIMIT 1',[dls.user_id]),dlWorkspaceId=dlw.rows[0]?.id,dlEnt=dlWorkspaceId?await Billing.entitlement(pool,dlWorkspaceId):{plan:'free'};if(dlEnt.plan!=='premium')return send(res,402,{ok:false,error:'Premium (3 dagar gratis) krävs för att ladda ner VYRA Desktop',entitlementRequired:true});res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}if(p==='/api/public/status'&&req.method==='GET'){const q=await pool.query("SELECT id,title,status,impact,message,started_at,resolved_at,updated_at FROM platform_incidents WHERE resolved_at IS NULL OR resolved_at>now()-interval '7 days' ORDER BY started_at DESC LIMIT 20"),active=q.rows.filter(row=>!row.resolved_at),overall=active.some(row=>row.impact==='critical')?'major_outage':active.length?'degraded':'operational';return send(res,200,{ok:true,overall,checkedAt:new Date(),incidents:q.rows})}if(!p.startsWith('/api/'))return send(res,404,{ok:false,error:'Hittades inte'});// Everything under an OBS link. The trailing part is matched loosely on purpose: a token-scoped
+const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
+// in a dashboard, and pointing it at a path that 404s marks the service unhealthy — an outage caused
+// by the config rather than the code. Both spellings answer so either is safe to configure.
+  if((p==='/health/ready'||p==='/api/health/ready')&&req.method==='GET'){try{await pool.query('SELECT 1');
+    // Readiness has to fail on a database that reads but cannot write: that is precisely the state
+    // the login outage ran in, and a read-only probe reported ready throughout it.
+    const write=await probeWrite();
+    if(!write.ok)return send(res,503,{ok:false,status:'not-ready',reason:write.reason,code:write.code});
+    if(process.env.REDIS_REQUIRED==='true')await eventBus.ping();return send(res,200,{ok:true,status:'ready'})}catch{return send(res,503,{ok:false,status:'not-ready'})}}if(p==='/api/health'&&req.method==='GET'){const[postgresUp,redisUp]=await Promise.all([pool.query('SELECT 1').then(()=>true).catch(()=>false),eventBus.ping().then(()=>true).catch(()=>false)]),payload=buildHealthStatus({postgresUp,redisUp,sseConnections:metrics.sse,lastTikTokEventAt});return send(res,payload.status==='ok'?200:503,payload)}if(p==='/api/auth/config'&&req.method==='GET')return send(res,200,{ok:true,authRequired:true});if(p==='/api/downloads/windows'&&req.method==='GET'){const release=desktopRelease();if(u.searchParams.get('meta')==='1')return send(res,200,{ok:true,...release,url:undefined});const dls=await session(req);if(!dls)return send(res,401,{ok:false,error:'Logga in och aktivera VYRA Premium för att ladda ner VYRA Desktop',loginRequired:true});if(!dls.email_verified_at)return send(res,403,{ok:false,error:'Verifiera din e-post innan du laddar ner VYRA Desktop',emailVerificationRequired:true});const dlw=await pool.query('SELECT w.id FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at LIMIT 1',[dls.user_id]),dlWorkspaceId=dlw.rows[0]?.id,dlEnt=dlWorkspaceId?await Billing.entitlement(pool,dlWorkspaceId):{plan:'free'};if(dlEnt.plan!=='premium')return send(res,402,{ok:false,error:'Premium (3 dagar gratis) krävs för att ladda ner VYRA Desktop',entitlementRequired:true});res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}if(p==='/api/public/status'&&req.method==='GET'){const q=await pool.query("SELECT id,title,status,impact,message,started_at,resolved_at,updated_at FROM platform_incidents WHERE resolved_at IS NULL OR resolved_at>now()-interval '7 days' ORDER BY started_at DESC LIMIT 20"),active=q.rows.filter(row=>!row.resolved_at),overall=active.some(row=>row.impact==='critical')?'major_outage':active.length?'degraded':'operational';return send(res,200,{ok:true,overall,checkedAt:new Date(),incidents:q.rows})}if(!p.startsWith('/api/'))return send(res,404,{ok:false,error:'Hittades inte'});// Everything under an OBS link. The trailing part is matched loosely on purpose: a token-scoped
 // path must be answered here — 405 for a write, 404 for a subpath that does not exist — and never
 // fall through to the session gate, where it would come back as "Inte inloggad" and read as if the
 // link were the wrong kind of thing. The method is refused before any of it is looked at: a link is
@@ -250,8 +291,19 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       return send(res,200,{ok:true,connection:q.rows[0]||null})}
     if(req.method==='PUT'){const d=await body(req,4096),username=S.normalizeTikTokUsername(d.username);
       if(!username)return send(res,400,{ok:false,error:'Ogiltigt TikTok-anvandarnamn'});
-      const q=await pool.query('INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=$2,active=true,updated_at=now() RETURNING tiktok_username,active,updated_at',[workspaceId,username]);
-      return send(res,200,{ok:true,connection:q.rows[0]})}
+      // Capacity is refused HERE, not silently in the fleet manager. The manager caps concurrent
+      // bridges at MAX_BRIDGES, but it only ever sees a row that was already written — so without
+      // this the user pressed Connect, got a success response, and then nothing ever happened with
+      // no explanation anywhere they could see. An internal queue is not feedback.
+      // Re-activating a workspace that already holds a row is always allowed: it occupies its slot
+      // already, so it can never push the fleet past the limit.
+      const limit=Number(process.env.MAX_BRIDGES||5);
+      // The whole decision is one transaction: see server/capacity-gate.js for why the check and
+      // the write cannot be separate queries, and why it counts accounts rather than rows.
+      const decision=await tx(c=>decideTikTokCapacity(c,{workspaceId,username,limit}));
+      if(decision.refused==='duplicate')return send(res,409,{ok:false,error:decision.error});
+      if(decision.refused==='capacity')return send(res,503,{ok:false,capacity:{inUse:decision.inUse,limit},error:decision.error});
+      return send(res,200,{ok:true,connection:decision.connection})}
     if(req.method==='DELETE'){await pool.query('UPDATE tiktok_connections SET active=false,updated_at=now() WHERE workspace_id=$1',[workspaceId]);
       return send(res,200,{ok:true,connection:null})}
     return send(res,405,{ok:false,error:'Metoden stods inte'})}
