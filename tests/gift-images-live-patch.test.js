@@ -201,7 +201,11 @@ test('Top Streak målas om i sin egen DOM', () => {
   assert.equal(dom.querySelector('.streak-gift-face img').src, 'assets/gifts/rose.png');
   assert.equal(dom.querySelector('.streak-profile-face img').src, 'https://cdn/p.jpg');
   assert.match(dom.querySelector('.streak-copy strong').textContent, /wpwer17/);
-  assert.equal(dom.querySelector('.streak-score b').textContent, '×10',
+  // ×3, inte ×10: siffran är GIFT.count (combolängden), inte GIFT.coins. Fram till A2 delade
+  // Top Gift och Top Streak samma gren och båda visade coins, vilket är den bugg A2 rättar —
+  // den här raden förväntade sig alltså tidigare det felaktiga värdet. Separationen i sig bevisas
+  // i tests/top-streak-separation.test.js; här kontrolleras bara att värdet hamnar rätt i DOM:en.
+  assert.equal(dom.querySelector('.streak-score b').textContent, '×3',
     'streakens värde sitter i .streak-score b med × framför, inte i ett <em>');
 });
 

@@ -23,6 +23,13 @@
     resolve: resolve
   };
 
+  // Sändningens rekord. Exponerade, inte privata, eftersom gift-event-images.js inte är ensam
+  // skrivare till templateTopGift — live-leaderboard.js:130 skriver också dit, på varje gåva. Utan
+  // en gemensam sanning hade separationen gällt i testet men inte i produktion: Top Gift skulle
+  // fortsätta byta namn på varje billig gåva.
+  var records = { giftCoins: 0, streakCount: 0 };
+  window.VyraGiftRecords = records;
+
   // ---- riktad DOM-patchning ------------------------------------------------------------------
   // Den här vägen slutade tidigare på save() + render() för VARJE gåva. render() ritar om hela
   // canvasen, vilket river ner den animation som just spelar — precis det VyraFlip byggdes för att
@@ -159,12 +166,38 @@
 
     if (typeof state === 'undefined' || !Array.isArray(state.widgets)) return;
 
+    // De två topplistorna mäter olika saker och delade tidigare en gren, så båda blev en dubblett
+    // av den senaste gåvan. Bryggan skiljer dem åt: `coins:coinsEach*repeatCount, count:repeatCount`
+    // i tiktok-bridge/normalizer.js. En billig gåva spammad 50 gånger är en stor STREAK men en liten
+    // GÅVA; en enda dyr gåva är tvärtom.
+    var coins = Number(detail.coins || 0) || 0;
+    var streak = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
+
+    // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden
+    // gäller sändningen, inte layouten — de nollställs vid omladdning, precis som topplistorna.
+    var newGift = coins > records.giftCoins;
+    var newStreak = streak > records.streakCount;
+    if (newGift) records.giftCoins = coins;
+    if (newStreak) records.streakCount = streak;
+
     state.widgets.forEach(function (widget) {
-      if (widget.type === 'templateTopGift' || widget.type === 'templateTopStreak') {
+      if (widget.type === 'templateTopGift' && newGift) {
         widget.giftName = giftName || widget.giftName;
         widget.giftImage = detail.giftImage || widget.giftImage;
         widget.dataName = detail.username || detail.name || widget.dataName;
-        widget.dataValue = Number(detail.coins || 0) || detail.count || widget.dataValue;
+        widget.dataValue = coins;
+        schedule(widget);
+      }
+
+      if (widget.type === 'templateTopStreak' && newStreak) {
+        widget.giftName = giftName || widget.giftName;
+        widget.giftImage = detail.giftImage || widget.giftImage;
+        widget.dataName = detail.username || detail.name || widget.dataName;
+        // Renderaren skriver `×${dataValue}`, så det här ÄR combolängden — inte coins.
+        widget.dataValue = streak;
+        // Top Gifts avatar sätts av live-leaderboard.js. Streaken har ingen sådan skrivare, så
+        // utan den här raden står den kvar på testbilden hela sändningen.
+        widget.profileImage = detail.profileImage || detail.avatar || widget.profileImage;
         schedule(widget);
       }
 
