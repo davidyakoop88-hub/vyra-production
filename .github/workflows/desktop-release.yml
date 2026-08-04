@@ -28,7 +28,12 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          npm version $version --no-git-tag-version
+          $current = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          # npm version faller med "Version not changed" om package.json redan star pa taggen.
+          # Steget ska garantera att de matchar, inte att de skiljde sig innan — en release dar
+          # versionen hojdes i en PR fore taggen ar det normala flodet, inte ett fel.
+          if ($current -eq $version) { Write-Host "package.json ar redan $version" }
+          else { npm version $version --no-git-tag-version }
       - name: Configure production update API
         shell: pwsh
         env:
