@@ -209,11 +209,16 @@
       fountainCount: 42, fountainSize: 22, fountainSpeed: 5, fountainHeight: 420,
       fountainColor: '#ff3c88', fountainColor2: '#b94cff'
     }),
+    // Undertexten är temats egen röst. Alla teman utom Crystal Garden delar 'PUSH THE EVENT';
+    // kristallträdgården växer i stället för att pushas, och namnger det själv.
     'giftcampaign.theme': v => ({
       type: 'templateGiftCampaign', x: 70, y: 110,
       width: v.orientation === 'portrait' ? 260 : 430, title: 'Gift Campaign',
-      templateTitle: 'GIFT CAMPAIGN', campaignSubtitle: 'PUSH THE EVENT', campaignTheme: v.theme,
-      campaignOrientation: v.orientation, accent: '#ff3fa4'
+      templateTitle: 'GIFT CAMPAIGN',
+      campaignSubtitle: v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT',
+      campaignTheme: v.theme,
+      campaignOrientation: v.orientation,
+      accent: v.theme === 'crystal-garden' ? '#ff6ec7' : '#ff3fa4'
     })
   };
 
