@@ -85,9 +85,13 @@ function overlayPreviewHtml() {
 // it would have created via wh() — the exact renderer the real canvas uses — then undoes the push.
 // render/toast are reassignable (matching this codebase's monkey-patch convention) so they're
 // swapped for no-ops here to avoid a real re-render/toast per button; save() is declared `const`
-// in studio.js and can't be swapped the same way, so it's left to write for real (harmless — it's
-// a synchronous localStorage.setItem, and styleOverlayCatalogCards() does one corrective save()
-// after the whole batch to flush the true state back once every dry-run has undone its push).
+// in studio.js and can't be swapped the same way, so it writes for real — and this function
+// therefore does its own corrective save() after restoring, at the bottom.
+//
+// It used to rely on styleOverlayCatalogCards() doing ONE corrective save() after the whole batch.
+// That stopped being true when thumbnails went lazy: owgThumbObserver renders one card at a time
+// as it scrolls into view, long after that save has run. Every lazily rendered card then left its
+// throwaway widget in localStorage — which is what cloud-sync's one-second ticker reads and pushes.
 function overlayCatalogPreviewHtml(originalClick) {
   const savedWidgets = state.widgets.slice();
   const savedSelected = selected, savedPreviewId = overlayPreviewWidgetId;
@@ -103,6 +107,19 @@ function overlayCatalogPreviewHtml(originalClick) {
   selected = savedSelected;
   overlayPreviewWidgetId = savedPreviewId;
   render = realRender; toast = realToast;
+  // Skriv tillbaka det aterstallda laget direkt. save() gar inte att stanga av — den ar `const` i
+  // studio.js — sa originalClick() har redan hunnit spara torrkorningens widget till localStorage.
+  // Minnet aterstalls ovan, men utan den har raden star LAGRINGEN kvar smutsig, och det ar
+  // lagringen cloud-syncs sekundtickare laser och skickar till servern.
+  //
+  // Det var tackt sa lange alla miniatyrer ritades i en batch: styleOverlayCatalogCards() gjorde
+  // en korrigerande save() pa slutet. Sedan blev miniatyrerna lazy — owgThumbObserver ritar ett
+  // kort i taget nar det scrollas in, langt efter att den sparningen redan kort. Varje lat
+  // renderat kort lamnade darfor kvar sin engangswidget.
+  //
+  // Uppmatt i produktion: ett klick i katalogen gav 9 widgets i localStorage medan state.widgets
+  // stod pa 0.
+  save();
   return { html, name };
 }
 
