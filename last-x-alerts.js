@@ -128,7 +128,7 @@
         style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent}${brandKitStyleFor(w)};zoom:${zoomFor(w)}">
       <div class="last-x-tilt">
         <div class="last-x-glass"><div class="last-x-sheen"></div><div class="last-x-gleam"></div></div>
-        <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${w.profileImage || ''}" alt=""></div>
+        <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${VyraSafe.url(w.profileImage)}" alt=""></div>
         <div class="last-x-copy">
           <div class="last-x-label">${label}</div>
           <div class="last-x-name">${name}</div>
@@ -184,9 +184,9 @@
       </div>
       <div class="property-group"><h4>INNEHÅLL (förhandsvisning)</h4>
         <label>Rubrik<input id="followLabel" value="${w.followLabel || TYPES[typeKey].label}" ${multi ? 'disabled' : ''}></label>
-        <label>Testnamn<input id="followName" value="${w.followName || TYPES[typeKey].defaultName}"></label>
-        <label>Testhändelse<input id="followMessage" value="${w.followMessage || TYPES[typeKey].defaultMsg}" ${multi ? 'disabled' : ''}></label>
-        <label>Profilbild (URL)<input id="followProfile" value="${w.profileImage || ''}"></label>
+        <label>Testnamn<input id="followName" value="${VyraSafe.text(w.followName, TYPES[typeKey].defaultName)}"></label>
+        <label>Testhändelse<input id="followMessage" value="${VyraSafe.text(w.followMessage, TYPES[typeKey].defaultMsg)}" ${multi ? 'disabled' : ''}></label>
+        <label>Profilbild (URL)<input id="followProfile" value="${VyraSafe.url(w.profileImage)}"></label>
       </div>
       <div class="property-group follow-trigger-editor"><h4>TRIGGER</h4>
         <label class="range-label">Visningstid <b>${Math.max(4, Math.min(6, w.followDuration || 5))} sek</b><input id="followDuration" type="range" min="4" max="6" value="${Math.max(4, Math.min(6, w.followDuration || 5))}"></label>
@@ -214,7 +214,7 @@
     if (message) message.textContent = data.message;
     if (initial) initial.textContent = (data.username[0] || '✦').toUpperCase();
     if (avatar) {
-      if (data.avatar) { img.src = data.avatar; avatar.dataset.hasImage = '1' } else delete avatar.dataset.hasImage;
+      if (data.avatar) { img.src = VyraSafe.src(data.avatar); avatar.dataset.hasImage = '1' } else delete avatar.dataset.hasImage;
     }
     const copy = box.querySelector('.last-x-copy');
     if (swap && copy) { copy.classList.remove('lx-swap'); void copy.offsetWidth; copy.classList.add('lx-swap') }
@@ -300,7 +300,7 @@
     const name = box.querySelector('.last-x-name'), message = box.querySelector('.last-x-message'), image = box.querySelector('.last-x-avatar img');
     if (name) name.textContent = w.followName;
     if (message) message.textContent = w.followMessage;
-    if (image && w.profileImage) image.src = w.profileImage;
+    if (image && w.profileImage) image.src = VyraSafe.src(w.profileImage);
     box.classList.remove('last-x-active', 'last-x-leaving');
     void box.offsetWidth;
     box.classList.add('last-x-active');

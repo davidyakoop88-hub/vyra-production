@@ -123,8 +123,8 @@
       const gift = el.querySelector('.vyra-gift-face img');
       const name = el.querySelector(':scope > strong');
       const coins = el.querySelector(':scope > em');
-      if (profile && person.profileImage) profile.src = person.profileImage;
-      if (gift && image) gift.src = image;
+      if (profile && person.profileImage) profile.src = VyraSafe.src(person.profileImage);
+      if (gift && image) gift.src = VyraSafe.src(image);
       if (name) name.textContent = person.name;
       if (coins) coins.textContent = '◉ ' + formatNum(value);
       el.classList.remove('play');
@@ -164,7 +164,7 @@
         if (small) small.textContent = '@' + person.name.toLowerCase().replace(/\s+/g, '');
         if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; const displayValue = range === 'stream' && metric === 'likes' ? person.activeLikes : person[metric]; em.textContent = icon + ' ' + formatNum(displayValue); }
         const img = row.querySelector('img:not(.pro-frame-art)');
-        if (img && person.profileImage) img.src = person.profileImage;
+        if (img && person.profileImage) img.src = VyraSafe.src(person.profileImage);
       });
     });
   }

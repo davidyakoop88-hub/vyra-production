@@ -20,7 +20,7 @@
   function seenUsers(){try{return JSON.parse(localStorage.getItem('vyra-seen-users-v1')||'[]')}catch{return[]}}
   function renderUserPickerHtml(){
     const seen=seenUsers();
-    return seen.length?`<div class="ae-user-grid">${seen.map(u=>`<button type="button" class="ae-user-choice" data-username="${u.username}" title="${u.username}">${u.profileImage?`<img loading="lazy" src="${u.profileImage}">`:'<i>👤</i>'}<span>${u.name||u.username}</span></button>`).join('')}</div>`:'<small>Inga användare har setts live än — skriv ett användarnamn manuellt.</small>';
+    return seen.length?`<div class="ae-user-grid">${seen.map(u=>`<button type="button" class="ae-user-choice" data-username="${VyraSafe.text(u.username)}" title="${VyraSafe.text(u.username)}">${u.profileImage?`<img loading="lazy" src="${VyraSafe.url(u.profileImage)}">`:'<i>👤</i>'}<span>${VyraSafe.text(u.name||u.username)}</span></button>`).join('')}</div>`:'<small>Inga användare har setts live än — skriv ett användarnamn manuellt.</small>';
   }
   function wireUserPicker(root){
     root.querySelectorAll('.ae-user-choice').forEach(btn=>btn.onclick=()=>{
@@ -32,7 +32,7 @@
   function seenEmotes(){try{return JSON.parse(localStorage.getItem('vyra-seen-emotes-v1')||'[]')}catch{return[]}}
   function renderEmotePickerHtml(){
     const seen=seenEmotes();
-    const grid=seen.length?`<div class="ae-emote-grid">${seen.map(e=>`<button type="button" class="ae-emote-choice" data-id="${e.id}" title="${e.id}">${e.image?`<img loading="lazy" src="${e.image}">`:'❓'}</button>`).join('')}</div>`:'<small>Inga emotes har setts live än — lämna tomt för alla subscriber-emotes, eller skriv ett emote-ID manuellt.</small>';
+    const grid=seen.length?`<div class="ae-emote-grid">${seen.map(e=>`<button type="button" class="ae-emote-choice" data-id="${VyraSafe.text(e.id)}" title="${VyraSafe.text(e.id)}">${e.image?`<img loading="lazy" src="${VyraSafe.url(e.image)}">`:'❓'}</button>`).join('')}</div>`:'<small>Inga emotes har setts live än — lämna tomt för alla subscriber-emotes, eller skriv ett emote-ID manuellt.</small>';
     return `<label>Emote (valfritt)<input id="aeAdvancedValue" placeholder="Lämna tomt för alla emotes"></label>${grid}`;
   }
   function wireEmotePicker(d){
