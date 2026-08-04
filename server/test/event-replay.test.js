@@ -18,13 +18,19 @@ function redisReachable(url){
 }
 
 // A minimal fake HTTP req/res pair — just enough of the surface openEventStream() actually uses
-// (req.headers, req.once('close',...), res.writeHead/write/end) to drive it in a test without a
-// real HTTP server.
+// (req.headers, req.once('close',...), res.writeHead/flushHeaders/write/end) to drive it in a test
+// without a real HTTP server.
+//
+// flushHeaders is a no-op here and must stay on the fake: a real ServerResponse always has it, and
+// openEventStream() calls it because writeHead() alone does not put the header block on the socket —
+// without the flush an EventSource sits waiting for the response head while the events pile up. The
+// stream tests that prove that behaviour run against a real server; this fake only has to look like
+// one. Assert against `writes` for what is sent, never against flushHeaders being called.
 function fakeStream(headers={}) {
   const req=new EventEmitter();
   req.headers=headers;
   const writes=[];
-  const res={writeHead(){},write(chunk){writes.push(chunk)},end(){req.emit('close')}};
+  const res={writeHead(){},flushHeaders(){},write(chunk){writes.push(chunk)},end(){req.emit('close')}};
   return {req,res,writes};
 }
 
