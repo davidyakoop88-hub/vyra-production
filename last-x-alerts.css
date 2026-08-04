@@ -146,8 +146,8 @@
 /* card — holographic panel: slow 3D tilt, avatar/text/emblem at different depths. */
 .last-x-widget.design-card .last-x-tilt{--lx-az:26px;--lx-cz:12px;--lx-ez:34px}
 .last-x-widget.design-card .last-x-gleam{display:block}
-.last-x-active .last-x-tilt{animation:lx-holo 8s ease-in-out infinite}
-.last-x-active .last-x-gleam{animation:lx-glide 8s ease-in-out infinite}
+.last-x-widget.design-card.last-x-active .last-x-tilt{animation:lx-holo 8s ease-in-out infinite}
+.last-x-widget.design-card.last-x-active .last-x-gleam{animation:lx-glide 8s ease-in-out infinite}
 @keyframes lx-holo{
   0%,100%{transform:rotateY(-6deg) rotateX(3deg)}
   50%{transform:rotateY(6deg) rotateX(-3deg)}
@@ -179,10 +179,10 @@
 }
 .last-x-widget.design-stack .last-x-message{text-shadow:0 1px 8px rgba(0,0,0,.8)}
 .last-x-widget.design-stack .last-x-emblem{font-size:16px}
-.last-x-active .last-x-tilt{animation:lx-hover3d 5s ease-in-out infinite}
-.last-x-active .last-x-avatar{animation:lx-coin .8s cubic-bezier(.2,.8,.2,1) both}
-.last-x-active .last-x-glass{animation:lx-shadowbreath 5s ease-in-out infinite}
-.last-x-active .last-x-avatar::after{animation:lx-ringpulse .7s ease-out .25s both}
+.last-x-widget.design-stack.last-x-active .last-x-tilt{animation:lx-hover3d 5s ease-in-out infinite}
+.last-x-widget.design-stack.last-x-active .last-x-avatar{animation:lx-coin .8s cubic-bezier(.2,.8,.2,1) both}
+.last-x-widget.design-stack.last-x-active .last-x-glass{animation:lx-shadowbreath 5s ease-in-out infinite}
+.last-x-widget.design-stack.last-x-active .last-x-avatar::after{animation:lx-ringpulse .7s ease-out .25s both}
 @keyframes lx-shadowbreath{
   0%,100%{transform:translateX(-50%) scale(1);opacity:.55}
   50%{transform:translateX(-50%) scale(.82);opacity:.32}
@@ -232,7 +232,7 @@
 .last-x-widget.design-skew.last-x-active .last-x-tilt{
   animation:lx-swing3d .55s cubic-bezier(.2,.8,.2,1) both,lx-bank 6s ease-in-out .55s infinite;
 }
-.last-x-active .last-x-tilt::after{animation:lx-slashpulse 2.2s ease-in-out infinite}
+.last-x-widget.design-skew.last-x-active .last-x-tilt::after{animation:lx-slashpulse 2.2s ease-in-out infinite}
 @keyframes lx-swing3d{
   0%{transform:rotateY(58deg)}
   100%{transform:rotateY(0)}
@@ -266,8 +266,8 @@
   background:linear-gradient(115deg,transparent 44%,color-mix(in srgb,var(--last-x,#ff58d6),transparent 82%) 50%,transparent 56%);
   transform:translateX(-45%);will-change:transform,opacity;pointer-events:none;
 }
-.last-x-active .last-x-copy::after{animation:lx-capshine 3.8s ease-in-out 1s infinite}
-.last-x-active .last-x-avatar::after{animation:lx-ringpulse .7s ease-out .85s both}
+.last-x-widget.design-badge.last-x-active .last-x-copy::after{animation:lx-capshine 3.8s ease-in-out 1s infinite}
+.last-x-widget.design-badge.last-x-active .last-x-avatar::after{animation:lx-ringpulse .7s ease-out .85s both}
 @keyframes lx-capshine{
   0%,55%,100%{opacity:0;transform:translateX(-45%)}
   70%{opacity:1}
@@ -318,10 +318,13 @@
   text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 14px rgba(255,211,93,.45);
 }
 .last-x-widget.design-royal .last-x-name,.last-x-widget.design-royal .last-x-message{display:none}
-.last-x-active .last-x-tilt{animation:lx-royalholo 9s ease-in-out infinite}
-@keyframes lx-royalholo{
-  0%,100%{transform:rotateY(-3.5deg)}
-  50%{transform:rotateY(3.5deg)}
+/* Kroningen loopar inte. En Last-X-alert har enter -> hold -> exit, sa rorelsen hor till
+   entren och lamnar widgeten stilla under hold — den eviga 3,5-graderspendlingen gjorde
+   den rastlos. */
+.last-x-widget.design-royal.last-x-active .last-x-tilt{animation:lx-royal-enter .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes lx-royal-enter{
+  0%{opacity:0;transform:translateY(-10px) scale(.96)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
 }
 
 /* ---- catalog + property panel chrome (same visual language as the old follower-alert section) */
