@@ -84,7 +84,43 @@ function normalizeCloudFields(e){
   if(e.coins==null&&e.value!=null)e.coins=e.value;
   return e;
 }
-function ingest(e){
+// Every way an event can reach a consumer funnels through ingest(): the SSE stream, the desktop
+// poll loop, and live-leaderboard.js's history fetch. The gate therefore belongs here and nowhere
+// else — a second gate downstream would be a second place to forget.
+//
+// frameId is the SSE frame's own id, which the server stamps with the Redis stream id
+// (server/index.js: `id: ${item.streamId}`). It is the only identifier guaranteed unique and ordered
+// per workspace; the bridge's own event.id is the fallback for the desktop path, which has no
+// stream behind it.
+// The gate is keyed to the stream it describes, not to the browser. Studio can move between
+// workspaces without a reload — cloud-sync's conflict dialog does exactly that — and an overlay tab
+// can be pointed at a different access token, so a gate built once at load would carry the previous
+// stream's high-water into one that has never seen it and drop every event as stale. It is rebuilt
+// whenever the identity changes.
+//
+// A workspace id is not a credential and is used verbatim, which keeps the stored key readable while
+// debugging. An access token is, so it goes through the one-way digest and never reaches storage.
+function safeSessionStorage(){try{return sessionStorage}catch(_){return null}}
+function currentNamespace(){
+  const workspace=window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.id;
+  if(workspace)return window.VyraDedupe?window.VyraDedupe.namespace(workspace,{sensitive:false}):String(workspace);
+  const access=new URLSearchParams(location.search).get('access');
+  if(access)return window.VyraDedupe?window.VyraDedupe.namespace(access):'anon';
+  return 'anon';
+}
+let gateNamespace=null,eventGate={accept:()=>true};
+function gateFor(){
+  const ns=currentNamespace();
+  if(ns!==gateNamespace){
+    gateNamespace=ns;
+    eventGate=window.VyraDedupe
+      ? window.VyraDedupe.create(safeSessionStorage(),'vyra-seen-events',ns)
+      : {accept:()=>true};
+  }
+  return eventGate;
+}
+function ingest(e,frameId){
+  if(!gateFor().accept(frameId||e?.id))return;
   normalizeCloudFields(e);
   normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
@@ -131,7 +167,7 @@ if(!localRuntime){
       let payload;
       try { payload = JSON.parse(message.data) } catch { return }
       if (!payload || payload.type === 'heartbeat') return;
-      ingest(payload);
+      ingest(payload, message.lastEventId);
     });
     // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
     // login can open a fresh one rather than reusing a stream bound to the previous workspace.

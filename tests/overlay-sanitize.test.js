@@ -174,7 +174,10 @@ test('the standalone OBS widgets validate the avatar URL they are handed', () =>
   assert.match(page, /els\.img\.src=VyraWidget\.safeSrc\(data\.avatar\)/,
     'avatar-URL:en sätts fortfarande utan validering');
   // Same rule, second implementation — it has to refuse the same things.
-  const sandbox = { window: {}, document: { documentElement: { dataset: {} } }, console };
+  // base-widget.js reads its query parameters at load time now that the dedupe gate is keyed on
+  // them, so the sandbox has to provide the two globals that needs.
+  const sandbox = { window: {}, document: { documentElement: { dataset: {} } }, console,
+    location: { search: '' }, URLSearchParams, JSON, Math, Number, String, Set };
   sandbox.globalThis = sandbox;
   require('vm').runInNewContext(base, sandbox, { filename: 'base-widget.js' });
   for (const [label, payload] of HOSTILE_URL) {
