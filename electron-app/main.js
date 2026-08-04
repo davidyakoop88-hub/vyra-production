@@ -11,6 +11,8 @@ const CLOUD_ORIGIN = 'https://vyralive.app';
 let splash, main, httpServer;
 let updateCheckRunning=false;
 let desktopAuthTimer;
+// Ett terminalt hinder forklaras en gang per korning, inte en gang per pollning.
+let entryReasonShown=false;
 
 // Diagnostics: this process runs detached (no visible console), so log to a file we can inspect —
 // console.log alone is invisible once packaged.
@@ -87,28 +89,56 @@ async function createMainWindow() {
     const openLocalStudioWhenEntitled=async()=>{
       if(!main||main.isDestroyed()||!main.webContents.getURL().startsWith(CLOUD_ORIGIN))return clearInterval(desktopAuthTimer);
       try{
-        const account=await main.webContents.executeJavaScript(
+        // Sonden lamnar ett SKAL, aldrig null. Tidigare blev varje misslyckande samma `null` och
+        // Node-sidan gjorde `if(account)`, sa 401, MFA-krav och "inget premium" blev identisk tyst
+        // vantan — for alltid, utan ett ord. Det ar darfor appen ser ut att kasta ut en: man loggar
+        // in, det lyckas, sidan star kvar.
+        //
+        // `wait` skiljer lagen som loser sig av sig sjalva (du haller pa att logga in, du fyller i
+        // MFA, natet hackade) fran dem som aldrig gor det (inget premium, inget workspace). Bara de
+        // senare stoppar pollningen och sager till.
+        /* desktop-entry-probe */
+        const verdict=await main.webContents.executeJavaScript(
           `(async()=>{
+            const get=async u=>{const r=await fetch(u,{credentials:'include',cache:'no-store',headers:{accept:'application/json'}});return {res:r,body:await r.json().catch(()=>null)}};
             try {
-              const meResponse=await fetch('/api/auth/me',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}});
-              if(!meResponse.ok)return null;
-              const me=await meResponse.json();
-              const workspace=me.workspaces?.[0];
-              if(!workspace)return null;
-              if(me.user?.isPlatformAdmin)return {user:me.user,workspace,plan:'admin',status:'active'};
-              const billingResponse=await fetch('/api/workspaces/'+encodeURIComponent(workspace.id)+'/billing',{credentials:'include',cache:'no-store',headers:{accept:'application/json'}});
-              if(!billingResponse.ok)return null;
-              const billing=await billingResponse.json();
-              if(billing.plan!=='premium'||!['active','trialing','past_due'].includes(billing.subscription?.status))return null;
-              return {user:me.user,workspace,plan:billing.plan,status:billing.subscription.status};
-            } catch { return null; }
+              const me=await get('/api/auth/me');
+              if(me.res.status===401)return {ok:false,reason:'not-logged-in',wait:true};
+              if(me.body&&me.body.mfaRequired)return {ok:false,reason:'mfa',wait:true};
+              if(!me.res.ok)return {ok:false,reason:'me-failed',wait:false,code:me.res.status};
+              const workspace=me.body.workspaces&&me.body.workspaces[0];
+              if(!workspace)return {ok:false,reason:'no-workspace',wait:false};
+              if(me.body.user&&me.body.user.isPlatformAdmin)
+                return {ok:true,account:{user:me.body.user,workspace,plan:'admin',status:'active'}};
+              const billing=await get('/api/workspaces/'+encodeURIComponent(workspace.id)+'/billing');
+              if(!billing.res.ok)return {ok:false,reason:'billing-unavailable',wait:false,code:billing.res.status};
+              const plan=billing.body&&billing.body.plan;
+              const status=billing.body&&billing.body.subscription&&billing.body.subscription.status;
+              if(plan!=='premium'||['active','trialing','past_due'].indexOf(status)===-1)
+                return {ok:false,reason:'not-premium',wait:false,plan:plan||'okänd',status:status||'ingen'};
+              return {ok:true,account:{user:me.body.user,workspace,plan,status}};
+            } catch(e) { return {ok:false,reason:'network',wait:true,detail:String(e&&e.message||e)}; }
           })()`
         );
-        if(account){
+        if(verdict&&verdict.ok){
           clearInterval(desktopAuthTimer);
-          const profile=encodeURIComponent(Buffer.from(JSON.stringify(account),'utf8').toString('base64'));
+          const profile=encodeURIComponent(Buffer.from(JSON.stringify(verdict.account),'utf8').toString('base64'));
           await main.loadURL(`${localOrigin}/studio.html?desktop=1&profile=${profile}`);
+          return;
         }
+        if(!verdict||verdict.wait)return;                 // loser sig av sig sjalv — fortsatt polla
+        clearInterval(desktopAuthTimer);                  // annars: sluta polla och sag varfor,
+        if(entryReasonShown)return;                       // en gang, inte en gang i sekunden
+        entryReasonShown=true;
+        log('desktop entry blocked:',verdict.reason,JSON.stringify(verdict));
+        const TEXT={
+          'not-premium':['Kontot saknar aktivt Premium',`VYRA Desktop kräver Premium. Kontots plan är "${verdict.plan}" med status "${verdict.status}".\n\nAktivera Premium på vyralive.app och starta om appen.`],
+          'no-workspace':['Kontot har ingen arbetsyta','Logga in på vyralive.app och skapa din första overlay, starta sedan om appen.'],
+          'billing-unavailable':['Kunde inte läsa kontots plan',`Servern svarade ${verdict.code} på betalningsstatus. Försök igen om en stund.`],
+          'me-failed':['Kunde inte läsa kontot',`Servern svarade ${verdict.code}. Försök igen om en stund.`]
+        };
+        const [message,detail]=TEXT[verdict.reason]||['VYRA kunde inte öppnas',`Okänt hinder: ${verdict.reason}`];
+        if(main&&!main.isDestroyed())dialog.showMessageBox(main,{type:'warning',title:'VYRA Desktop',message,detail,buttons:['OK']}).catch(()=>{});
       }catch(error){log('desktop auth check failed:',error.message)}
     };
     desktopAuthTimer=setInterval(openLocalStudioWhenEntitled,1000);
