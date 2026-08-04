@@ -1,35 +1,35 @@
 'use strict';
 // Att oppna widgetkatalogen lade till widgets i anvandarens layout.
 //
-// Reproducerat i produktion: ETT klick pa "Lägg till i Layout" gav 9 widgets i localStorage medan
-// state.widgets i minnet stod pa 0. Blandningen — templateLastX x2, templateGiftFireworks,
-// templateGiftCampaign x5, templateLikeFountain — ar katalogens forsta sektioner i ordning, inte
-// nagot anvandaren valt.
+// Reproducerat i produktion med stackspar: ETT klick i katalogen gav 9 widgets i localStorage
+// medan state.widgets stod pa 0. Blandningen — templateLastX x2, templateGiftFireworks,
+// templateGiftCampaign x5, templateLikeFountain — var katalogens forsta sektioner i ordning.
 //
-// Mekanismen ar en avsiktlig TORRKORNING i overlay-preview.js: for att rita ett korts miniatyr
-// anropas kortets riktiga onclick, widgeten som skapas renderas med wh(), och sedan aterstalls
-// state.widgets. render och toast byts mot no-ops. Men save() ar `const` i studio.js och gar inte
-// att byta — den skriver pa riktigt.
+//   at b.onclick                 (last-x-alerts.js:375)
+//   at overlayCatalogPreviewHtml (overlay-preview.js:98)
+//   at owgRenderCardThumb        (overlay-preview.js:124)
 //
-// Det var hanterat sa lange alla miniatyrer ritades i en batch: styleOverlayCatalogCards() gjorde
-// EN korrigerande save() pa slutet (rad 270, `if (generatedAny) save()`). Sedan blev miniatyrerna
-// lazy — owgThumbObserver ritar ett kort i taget nar det scrollas in, alltsa LANGT efter att den
-// korrigerande sparningen redan kort. Varje lat renderat kort lamnar darfor kvar sin
-// engangswidget i localStorage, och cloud-syncs sekundtickare laser localStorage direkt och
-// skickar upp den till servern.
+// overlay-preview.js ritade ett korts miniatyr genom att anropa kortets RIKTIGA onclick — alltsa
+// "lagg till i layout" — och sedan angra. render och toast byttes mot no-ops, men save() ar `const`
+// i studio.js och skrev pa riktigt. Sa lange alla kort ritades i en batch tackte en avslutande
+// korrigerande save() det. Sedan blev miniatyrerna lazy, ritade ett kort i taget vid scroll, langt
+// efter den sparningen.
 //
-// ROTT NU: torrkorningen lamnar lagringen smutsig.
+// Ratt fix ar inte att stada efter torrkorningen. Det ar att inte torrkora alls: en miniatyr
+// behover bara ETT widgetobjekt att rendera, och varje kort bar redan vilket objekt det
+// representerar — data-catalog-key, data-last-x-add eller data-cw.
+//
+// ROTT NU: previewen gar via anvandarens layout.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const SOURCE = fs.readFileSync(path.join(ROOT, 'overlay-preview.js'), 'utf8');
 
-// Sandladan speglar studio.js:s globaler sa nara torrkorningen kraver: ett state-objekt, en save()
-// som skriver till en fejkad localStorage, och de funktioner overlayCatalogPreviewHtml ror.
 function makeEnv() {
   const store = new Map();
   const state = { widgets: [] };
+  const calls = { saves: 0, renders: 0 };
   const sandbox = {
     console: { log() {}, warn() {}, error() {} },
     JSON, Object, Array, String, Number, Math, Map, Set, Boolean, Error, Date,
@@ -43,38 +43,43 @@ function makeEnv() {
     document: {
       querySelector: () => null, querySelectorAll: () => [],
       createElement: () => ({ style: {}, dataset: {}, classList: { add() {}, remove() {} },
-        append() {}, appendChild() {}, querySelector: () => null, querySelectorAll: () => [] }),
+        append() {}, appendChild() {}, prepend() {}, remove() {},
+        querySelector: () => null, querySelectorAll: () => [] }),
       addEventListener() {}, body: { append() {} }
     },
     addEventListener() {},
-    state, selected: null, overlayPreviewWidgetId: null,
-    view: 'overlay',
-    wh: w => `<div data-id="${w.id}"></div>`,
-    liveLayerName: () => 'Namn',
-    render() {}, toast() {},
-    // save() ar den riktiga vagen till lagring — den enda som INTE gar att byta ut i produktion.
-    save() { sandbox.localStorage.setItem('vyra-state', JSON.stringify({ widgets: state.widgets })) }
+    state, selected: null, overlayPreviewWidgetId: null, view: 'overlay',
+    wh: w => `<div class="widget" data-id="${w.id}" data-type="${w.type}"></div>`,
+    liveLayerName: w => 'Namn:' + w.type,
+    render() { calls.renders += 1 }, toast() {},
+    save() { calls.saves += 1; sandbox.localStorage.setItem('vyra-state', JSON.stringify({ widgets: state.widgets })) },
+    VyraWidgets: {
+      create(key) {
+        if (!String(key).startsWith('catalog:')) throw new Error('okand nyckel');
+        return { id: 'created-' + key, type: 'templateGiftCampaign', width: 430 };
+      }
+    }
   };
   sandbox.window = sandbox; sandbox.globalThis = sandbox; sandbox.root = sandbox;
   vm.createContext(sandbox);
-  // Bara funktionen under test plockas ut — resten av filen kraver en hel Studio.
-  const at = SOURCE.indexOf('function overlayCatalogPreviewHtml');
-  assert.notEqual(at, -1, 'hittade inte overlayCatalogPreviewHtml');
-  const end = SOURCE.indexOf('\nfunction ', at + 10);
-  vm.runInContext(SOURCE.slice(at, end === -1 ? SOURCE.length : end), sandbox,
-    { filename: 'overlay-preview.js' });
-  return sandbox;
+  // Plocka ut previewfunktionerna. Resten av filen kraver en hel Studio.
+  const from = SOURCE.indexOf('function overlayPreviewWidget');
+  const at = from !== -1 ? from : SOURCE.indexOf('function overlayCatalogPreviewHtml');
+  const stop = SOURCE.indexOf('function scaleThumbnailToFit');
+  assert.notEqual(at, -1); assert.notEqual(stop, -1);
+  vm.runInContext(SOURCE.slice(at, stop), sandbox, { filename: 'overlay-preview.js' });
+  return Object.assign(sandbox, { calls });
 }
 
-// En katalogknapps riktiga onclick: skapar en widget, lagger den i layouten, sparar och ritar om.
-// Exakt vad media.js:568 och last-x-alerts.js:375 gor.
-function catalogClick(env, type) {
-  return () => {
-    const w = { id: type + '-' + env.state.widgets.length, type };
-    env.state.widgets.push(w);
-    env.selected = w.id;
-    env.save();
-    env.render();
+// Ett kort, sa som katalogen bygger det. onclick ar den RIKTIGA lagg-till-handlern och far aldrig
+// anropas for att rita en miniatyr — anropas den hamnar widgeten i anvandarens layout.
+function card(dataset) {
+  return {
+    dataset,
+    _owgOriginalClick() { throw new Error('onclick anropades — previewen gick via layouten') },
+    querySelector: () => null, querySelectorAll: () => [],
+    closest: () => null, prepend() {}, cloneNode: () => ({ querySelector: () => null,
+      querySelectorAll: () => [], textContent: '' })
   };
 }
 
@@ -83,61 +88,60 @@ const stored = env => {
   return raw ? (JSON.parse(raw).widgets || []).map(w => w.type) : null;
 };
 
-test('en torrkord miniatyr lamnar ingen widget kvar i lagringen', () => {
-  const env = makeEnv();
-  env.save();                                   // utgangslage: tom layout, sparad
-  assert.deepEqual(stored(env), []);
+// ---- de tre sorternas kort ---------------------------------------------------------------------
+const KORT = [
+  ['katalognyckel', { catalogKey: 'catalog:giftcampaign:neon:landscape' }],
+  ['Last-X', { lastXAdd: 'card' }],
+  ['eget innehall', { cw: 'text' }]
+];
 
-  env.overlayCatalogPreviewHtml(catalogClick(env, 'templateGiftCampaign'));
-
-  assert.deepEqual(env.state.widgets.map(w => w.type), [],
-    'minnet ficks tillbaka — det fungerade redan');
-  assert.deepEqual(stored(env), [],
-    'lagringen har kvar torrkorningens widget: den dyker upp i layouten och synkas till servern');
-});
-
-test('en anvandares egna widgets overlever en torrkorning', () => {
-  const env = makeEnv();
-  env.state.widgets.push({ id: 'min-1', type: 'templateTopGift' });
-  env.save();
-
-  env.overlayCatalogPreviewHtml(catalogClick(env, 'templateLastX'));
-
-  assert.deepEqual(stored(env), ['templateTopGift'],
-    'anvandarens layout ska sta oforandrad efter att ett kort ritats');
-});
-
-test('sjutton lat renderade kort lamnar lagringen ororad', () => {
-  // Katalogen har 17 sektioner. Lat rendering betyder att varje kort ar sin EGEN batch — det
-  // finns ingen gemensam korrigerande save() langre.
-  const env = makeEnv();
-  env.state.widgets.push({ id: 'min-1', type: 'templateTopGift' });
-  env.save();
-
-  for (let i = 0; i < 17; i += 1) {
-    env.overlayCatalogPreviewHtml(catalogClick(env, 'templateGiftCampaign'));
-  }
-  assert.deepEqual(stored(env), ['templateTopGift'],
-    `lagringen innehaller ${JSON.stringify(stored(env))} efter 17 miniatyrer`);
-});
-
-test('en onclick som kastar lamnar inte heller nagot kvar', () => {
-  const env = makeEnv();
-  env.save();
-  env.overlayCatalogPreviewHtml(() => {
-    env.state.widgets.push({ id: 'halv', type: 'templateLikeFountain' });
+for (const [namn, dataset] of KORT) {
+  test(`${namn}: miniatyren ritas utan att rora layouten`, () => {
+    const env = makeEnv();
+    env.state.widgets.push({ id: 'min-1', type: 'templateTopGift' });
     env.save();
-    throw new Error('handlern sprack mitt i');
+    const saveFore = env.calls.saves;
+
+    const w = env.overlayPreviewWidget(card(dataset));
+
+    assert.ok(w && w.type, `inget widgetobjekt for ${namn}: ${JSON.stringify(w)}`);
+    assert.deepEqual(env.state.widgets.map(x => x.type), ['templateTopGift'],
+      'previewen andrade layouten i minnet');
+    assert.deepEqual(stored(env), ['templateTopGift'], 'previewen andrade lagringen');
+    assert.equal(env.calls.saves, saveFore, 'previewen sparade — det ar sa widgetarna lackte ut');
+    assert.equal(env.calls.renders, 0, 'previewen ritade om canvasen');
   });
-  assert.deepEqual(stored(env), [],
-    'ett undantag mitt i torrkorningen lamnade widgeten i lagringen');
+}
+
+test('previewen anropar aldrig kortets lagg-till-handler', () => {
+  const env = makeEnv();
+  // card()._owgOriginalClick kastar. Kommer vi hit utan undantag har den aldrig rorts.
+  for (const [, dataset] of KORT) env.overlayPreviewWidget(card(dataset));
 });
 
-test('miniatyren genereras fortfarande', () => {
-  // Fixen far inte losa lackan genom att sluta rita korten.
+test('ett kort utan igenkant markning ger null, inte ett undantag', () => {
   const env = makeEnv();
+  assert.equal(env.overlayPreviewWidget(card({})), null,
+    'okanda kort ska falla tillbaka pa sin ikon, inte krascha katalogen');
+});
+
+test('en trasig katalognyckel valter inte katalogen', () => {
+  const env = makeEnv();
+  assert.equal(env.overlayPreviewWidget(card({ catalogKey: 'trasig' })), null);
+  assert.deepEqual(env.state.widgets, []);
+});
+
+// ---- kravet: en widget man valt sjalv star kvar --------------------------------------------------
+test('anvandarens layout ar orord efter att hela katalogen ritats', () => {
+  const env = makeEnv();
+  env.state.widgets.push({ id: 'min-1', type: 'templateTopGift' },
+                         { id: 'min-2', type: 'templateHeartGoal' });
   env.save();
-  const out = env.overlayCatalogPreviewHtml(catalogClick(env, 'templateGiftCampaign'));
-  assert.match(String(out.html), /data-id=/, 'ingen miniatyr genererades langre');
-  assert.equal(out.name, 'Namn');
+  // 108 kort, sa som katalogen faktiskt ser ut.
+  for (let i = 0; i < 108; i += 1) {
+    env.overlayPreviewWidget(card(KORT[i % KORT.length][1]));
+  }
+  assert.deepEqual(stored(env), ['templateTopGift', 'templateHeartGoal'],
+    `lagringen blev ${JSON.stringify(stored(env))} efter 108 miniatyrer`);
+  assert.equal(env.calls.saves, 1, 'bara den forsta egna sparningen far ha skett');
 });
