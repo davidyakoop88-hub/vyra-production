@@ -85,6 +85,26 @@ jobs:
         working-directory: .
         run: bash scripts/verify-backup-restore.sh
 
+  # The client files at the repository root: the session owner, the goal runtime and the DOM patcher.
+  # Until now this suite only ever ran on a developer machine. jsdom is the single devDependency and
+  # ships nowhere — server/Dockerfile builds from the server/ context, and the electron builder
+  # excludes package.json, node_modules and tests from extraResources.
+  #
+  # The audit here runs WITH devDependencies, unlike server and bridge: jsdom is a test tool that
+  # executes on this CI runner, which is exactly where a vulnerability in it would matter.
+  test-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --audit-level=high
+
   test-tiktok-bridge:
     runs-on: ubuntu-latest
     defaults:
