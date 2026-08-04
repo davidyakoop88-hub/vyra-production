@@ -1,0 +1,71 @@
+name: 'VYRA verification (E2E — manuell)'
+
+# INTE obligatorisk CI. Kors bara pa begaran.
+#
+# Lager 1, 2 och 5 flyttade in i ci.yml och kors pa varje PR. Det har workflowet ar lager 3 och 4 —
+# E2E i webblasare och i Electron — och de ar medvetet INTE kopplade till merge an, av tre skal:
+#
+#   1. De kraver ett beroende repot inte har: @playwright/test plus en nedladdad Chromium.
+#      Att lagga ett obligatoriskt CI-steg pa ett oinstallerat paket ger rott pa allt, direkt.
+#   2. De ar inte korda en enda gang an. Ett gatande steg som aldrig varit gront ar ett hinder,
+#      inte en kontroll.
+#   3. Electron-lagret pekar mot en lokal statisk server, eftersom CI saknar molnsession. Det gor
+#      att just inloggningen — dar 405-buggen bodde — inte tackas har anda.
+#
+# Nasta steg innan detta blir obligatoriskt:
+#   npm i -D @playwright/test
+#   npx playwright install --with-deps chromium
+#   npx playwright test --project=web        # ska vara gron
+#   npx playwright test --project=desktop    # ska vara gron
+# Forst darefter flyttas jobben in i ci.yml.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-web:
+    name: 'Lager 3 · E2E webb'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: package-lock.json }
+      - run: npm ci
+      - run: npm i -D @playwright/test
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --project=web
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-web-trace
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
+  e2e-desktop:
+    name: 'Lager 4 · E2E Electron'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: package-lock.json }
+      - run: npm ci
+      - name: Electron-appens egna beroenden
+        working-directory: electron-app
+        run: npm ci
+      - run: npm i -D @playwright/test
+      - run: npx playwright install --with-deps chromium
+      # Electron ritar inget utan display pa Linux. xvfb ger den en, sa "headless" betyder har
+      # "ingen skarm" — inte "ingen rendering". Utan det syns inga CSS- eller layoutfel.
+      - run: xvfb-run --auto-servernum npx playwright test --project=desktop
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-desktop-trace
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
