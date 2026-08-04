@@ -1,41 +1,64 @@
-# vyralive.app — the static site and its reverse proxy, built explicitly.
+# vyralive.app — the static site and its reverse proxy.
 #
-# This file exists to stop Railway guessing. The service had no Dockerfile, so Railpack inspected
-# the repository root and inferred the project type from what it found there. That worked until the
-# client test suite added a package.json to the root: Railpack then read the repo as a Node app,
-# found no start command, and aborted the build in fifteen seconds. The site stayed on the previous
-# commit and Live Goals never reached production. Adding the file to .dockerignore did not help —
-# those filters decide what is copied into the image, not what the detector reads.
+# Two stages, and the reason is the whole point of this file: what reaches the document root is
+# assembled by an allowlist rather than by copying the repository and deleting afterwards.
 #
-# Railway prefers a Dockerfile over Railpack whenever one sits at the build context root, so from
-# here the build is what this file says and nothing else. A file appearing in the repository can no
-# longer change how the site is built.
+# The previous version did `COPY . /app` followed by `RUN rm -f /app/Caddyfile`. The build log showed
+# that step succeeding, and the file was served in production anyway — a deletion in a later layer
+# does not reliably survive the image export. Anything built that way rests on a guess about layer
+# semantics, and a guess is not a security boundary. A file that was never copied cannot be served.
 #
-# What runs is unchanged: the same Caddy, the same Caddyfile, the same document root. The Caddyfile
-# binds :80, serves /app, and reverse-proxies /api/* and /health/* to the api service — that is the
-# reason this is a Caddy image and not a static-file provider. Handing the serving to something that
-# generates its own configuration would drop the proxy, and with it every API call the browser makes.
+# It also closes what was there before either version: the image carried the entire repository, so
+# /server/index.js, /server/schema.sql, /electron-app/main.js, /docker-compose.yml and
+# /.env.production.example were all publicly readable on vyralive.app.
+#
+# The allowlist is not a guess either. Scanning every HTML, CSS and JS file in the repository
+# resolves 162 local references across 169 sources, and not one of them falls outside what is copied
+# here. tests/site-image-contents.test.js keeps it that way.
+
+# ---- stage 1: assemble exactly what is served -----------------------------------------------------
+FROM alpine:3 AS site
+WORKDIR /src
+COPY . .
+RUN set -eux; \
+    mkdir -p /site; \
+    # The two directories the pages load from. Everything under them is site content: gift artwork,
+    # sounds, frames, and the standalone widget pages OBS opens.
+    cp -R assets /site/; \
+    cp -R public /site/; \
+    # The repository root is a flat pile of the files the pages load by name, so the root is taken by
+    # extension rather than by a list that would go stale the first time someone adds a widget.
+    for f in *.html *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp *.woff *.woff2 *.mp3 *.wav; do \
+      [ -e "$f" ] && cp "$f" /site/ || true; \
+    done; \
+    # Two data files the pages fetch by name; every other .json in the root is tooling.
+    for f in manifest.json theme.schema.json; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
+    # Belt and braces. .dockerignore already keeps these out of the context and no rule above would
+    # pick them up, but this is the file someone reads in a year to learn what is public.
+    rm -f /site/package.json /site/package-lock.json /site/Caddyfile /site/Caddyfile.production; \
+    # Nothing outside the allowlist can have arrived. This does not remove anything — it fails the
+    # build if that ever stops being true.
+    for forbidden in server electron-app tiktok-bridge tests scripts docs deploy web \
+                     .env.production.example docker-compose.yml docker-compose.production.yml \
+                     Dockerfile Caddyfile package.json; do \
+      if [ -e "/site/$forbidden" ]; then echo "FEL: $forbidden hamnade i dokumentroten"; exit 1; fi; \
+    done
+
+# ---- stage 2: serve it ----------------------------------------------------------------------------
+# Caddy, because the Caddyfile does more than serve files: it reverse-proxies /api/* and /health/* to
+# the api service. A static-file provider that generates its own configuration would drop the proxy,
+# and every API call the browser makes with it.
 FROM caddy:2-alpine
 
-# The proxy rules and headers, at the path the base image's default command already reads.
+# Configuration, and only into the config path. It is never copied into the document root, so
+# /Caddyfile cannot publish the internal upstream address the way it did after the previous deploy.
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# The site. `root * /app` in the Caddyfile is what makes this the document root.
-#
-# Everything in the build context, deliberately: the root of this repository is a flat pile of the
-# .js, .css and image files the pages load by name, and enumerating them here would mean the build
-# breaks the day someone adds one. .dockerignore is where exclusions belong, and it already keeps
-# out node_modules, archives, secrets and the client test suite.
-COPY . /app
-
-# The Caddyfiles are configuration, not content. COPY brought them along with everything else, and
-# leaving them under the document root would publish the internal upstream address to anyone who
-# asked for /Caddyfile. Nothing on any page loads them.
-RUN rm -f /app/Caddyfile /app/Caddyfile.production
+# `root * /app` in the Caddyfile is what makes this the document root.
+COPY --from=site /site /app
 
 # Matches the Caddyfile's :80. Railway routes to the exposed port.
 EXPOSE 80
 
 # No CMD: the base image already runs
 #   caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
-# and repeating it here would be one more thing to keep in step with the upstream image.
