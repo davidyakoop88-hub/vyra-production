@@ -14,12 +14,27 @@ test('desktop requires the production account before opening local Studio',()=>{
   const local=source.indexOf('studio.html?desktop=1');
   assert.ok(login>=0,'remote login entry is missing');
   assert.ok(local>login,'local Studio must open only after the remote login gate');
-  assert.match(source,/fetch\('\/api\/auth\/me'/);
+  // Sonden hamtar bada endpointarna via en get()-hjalpare i stallet for tva raka fetch-anrop,
+  // sa raderna matchar pa endpointen — det som faktiskt maste anropas — inte pa stavningen.
+  assert.match(source,/'\/api\/auth\/me'/);
   assert.match(source,/\/billing'/);
-  assert.match(source,/billing\.plan!=='premium'/);
-  assert.match(source,/me\.user\?\.isPlatformAdmin/);
-  assert.match(source,/if\(account\)/);
+  assert.match(source,/plan!=='premium'/);
+  assert.match(source,/isPlatformAdmin/);
+  // Lokala Studion far bara oppnas pa ett positivt utslag. Tidigare `if(account)`; sonden lamnar nu
+  // ett skal aven vid avslag, sa grinden ar ok-flaggan och inte "sanningsvardet av nagot".
+  assert.match(source,/if\(verdict&&verdict\.ok\)/);
   assert.match(source,/profile=/);
+});
+
+// Hela poangen med omskrivningen: ett avslag som aldrig loser sig sjalvt maste sagas hogt.
+// Utan detta gick appen tillbaka till tyst pollning och anvandaren fick veta ingenting.
+test('a blocking verdict stops the polling and explains itself',()=>{
+  assert.match(source,/wait:true/,'inget lage ar markt som "vanta" — allt skulle bli terminalt');
+  assert.match(source,/wait:false/,'inget lage ar markt som terminalt — allt skulle bli tyst vantan');
+  assert.match(source,/reason:'not-premium'/,'saknad premium ar det vanligaste hindret och maste namnges');
+  assert.match(source,/reason:'mfa'/,'MFA far inte se ut som utloggad');
+  assert.match(source,/showMessageBox/,'anvandaren far ingen forklaring');
+  assert.match(source,/entryReasonShown/,'rutan skulle visas en gang i sekunden');
 });
 
 test('Studio loads account security before cloud and payment features',()=>{
