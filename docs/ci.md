@@ -71,5 +71,5 @@ Tre skäl, i den ordning de väger:
 3. **Electron-lagret pekar mot en lokal statisk server**, eftersom CI saknar molnsession — så just
    inloggningen, där felen faktiskt bodde, täcks inte ändå.
 
-Filerna finns kvar (`playwright.config.js`, `tests/e2e/`) och körs manuellt via workflowet
+Filerna finns kvar (`tests/e2e/`, med configen i samma mapp) och körs manuellt via workflowet
 **VYRA verification (E2E — manuell)**. Ordningen för att göra dem obligatoriska står i den filen.

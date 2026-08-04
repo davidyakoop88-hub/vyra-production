@@ -13,7 +13,10 @@
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: './tests/e2e',
+  // Configen ligger i tests/e2e/, sa testDir ar mappen den star i. Den lag i roten forut
+  // och foljde da med i bade Railway-imagens dokumentrot och desktopinstallern — Dockerfilens
+  // sajtbygge kopierar ALLA *.js i roten till /site/, sa den hade serverats publikt.
+  testDir: '.',
   // Livescenarion ar tidsberoende: fasmaskiner, hall-fonster, koade alerts. Parallella arbetare
   // som slass om samma port gor dem flakiga utan att hitta nagot.
   workers: 1,
@@ -32,7 +35,7 @@ module.exports = defineConfig({
   },
 
   webServer: {
-    command: 'node tests/e2e/static-server.js 4321',
+    command: 'node static-server.js 4321',
     url: 'http://127.0.0.1:4321/layout.html',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000
