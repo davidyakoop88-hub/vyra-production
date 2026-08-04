@@ -194,6 +194,16 @@ async function seedWorkspace(id) {
      ON CONFLICT (id) DO NOTHING`, [id, id]);
 }
 
+// Sätter overlayns sparade layout till exakt de här målwidgetarna. goalsOnly() skriver rader direkt
+// i goal_runtime; det här är den andra halvan — allt som går via withGoalWidget eller listGoals
+// läser layouten och behandlar en widget som inte står där som obefintlig.
+async function stateWithGoals(widgetIds) {
+  const widgets = widgetIds.map(id => ({
+    id, type: 'templateSocialGoal', goalKind: 'follows', goalCurrent: 0, goalTarget: 1000 }));
+  await pool.query('UPDATE overlays SET state = $2 WHERE id = $1',
+    [OVERLAY, JSON.stringify({ widgets })]);
+}
+
 // Replaces the goal set for the overlay, so each test states exactly which metrics exist.
 async function goalsOnly(pairs) {
   await pool.query('DELETE FROM goal_runtime WHERE overlay_id=$1', [OVERLAY]);
@@ -606,7 +616,11 @@ db('en dublett höjer inte revision', async () => {
 });
 
 db('patch och reset höjer revision', async () => {
+  // patchGoal och resetGoalWidget gar via withGoalWidget, som bara nar en widget som FORTFARANDE ar
+  // ett malwidget i overlayns sparade layout. Overlayn i den har filen ar tom by default, sa utan
+  // det har blir bada anropen unknownWidget och testet skulle bevisa att ingenting hander.
   await goalsOnly([['w-pr', 'follows']]);
+  await stateWithGoals(['w-pr']);
   const start = await revisionOf('w-pr');
   await G.patchGoal(pool, OVERLAY, 'w-pr', { baseline: 50 });
   const afterPatch = await revisionOf('w-pr');
@@ -621,6 +635,7 @@ db('en synk som inte ändrar något rör inte revision', async () => {
   // syncGoalsFromState och backfillen är ON CONFLICT DO NOTHING. En layout som sparas om utan att
   // målet ändras får inte se ut som en ny version för klienten.
   await goalsOnly([['w-sync', 'follows']]);
+  await stateWithGoals(['w-sync']);            // annars raderar synken raden i stallet
   await G.applyEvent(pool, WS, { id: 'rev-sync', type: 'follow' });
   const before = await revisionOf('w-sync');
   await G.listGoals(pool, OVERLAY);            // kör syncGoalsFromState + backfill
