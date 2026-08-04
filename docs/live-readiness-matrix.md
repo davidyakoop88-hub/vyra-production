@@ -53,8 +53,8 @@ nothing feeds it · **Partial** = fires but with a known defect · **Unknown** =
 | Fan Level Up | yes | `widget-factory.js` | `media.js` | wired, never reached | `routeLiveBattleEvent` on type `fan_level` — **not an ingest type** | client | no | yes | **Preview-only in practice** |
 | New Follower Alert | yes | `widget-factory.js` | `media.js` | yes | follow → Actions → `triggerNewFollower` (queued 5 s) | client | no | yes | **Live** |
 | Glove Snipe | yes | `widget-factory.js` | `media.js`, `live-control.js` | wired, never reached | `routeLiveBattleEvent` on `tap`/`snipe`/`glove`/`x2`/`x3` — **none are ingest types** | client | no | yes | **Preview-only in practice** |
-| Last-X Alerts | yes | `last-x-alerts.js` | `last-x-alerts.js` | **no** | `triggerLastXAlert` defined, **no caller**, no event listener | client | no | yes | **Preview-only** |
-| Last Gifter / Liker / Sharer / Subscriber | no | — | `last-x-alerts.js` (as modes of Last-X) | **no** | none | client | no | yes | **Preview-only** |
+| Last-X Alerts | yes | `last-x-alerts.js` | `last-x-alerts.js` | yes | `ingest()` → `routeLiveBattleEvent` (rewrapped in `last-x-alerts.js:385`) → `showLastX` | client | no | yes | **Live** |
+| Last Gifter / Liker / Sharer / Subscriber | no | — | `last-x-alerts.js` (as modes of Last-X) | yes | gift / like / share / subscribe via the same wrapper | client | no | yes | **Live** |
 | Title | yes | `widget-factory.js` | `media.js` | n/a | static text | client | no | yes | **Live** (static by design) |
 | Custom text / image / video | yes | `custom-widgets.js` | `custom-widgets.js` | n/a | static content | client | no | yes | **Live** (static by design) |
 | Standalone widget links | yes | `standalone-links.js` | `public/widgets/base-widget.js` | yes | own `EventSource` on `/api/overlay-access/:token/events/stream` | server token | no | yes | **Live** |
@@ -64,7 +64,7 @@ nothing feeds it · **Partial** = fires but with a known defect · **Unknown** =
 | Actions & Events | yes | `action-event.js` | `action-runtime.js` | yes | `VyraActionEvent.handleEvent` from `ingest()` | client (localStorage) | no | yes | **Live** |
 | TTS Chat | yes | `tts-chat.js` | `tts-chat.js` | yes | `vyra-live-event` (chat) | client + server TTS | no | yes | **Live** |
 | Sound Alerts | yes | `sound-alerts.js` | `sound-alerts.js` | via Actions | Actions engine only | client | no | yes | **Live** |
-| Chatbot overlay | yes | `chatbot-overlay.js` | `chatbot-overlay.js` | **no** | no live listener, no Actions reference | client | no | yes | **Preview-only** |
+| Chatbot overlay | yes | `chatbot-overlay.js` | `chatbot-overlay.js` | via Actions | Actions type `chat` → `vyra:chatbot-send` → `chatbot-overlay.js:20` | client | no | yes | **Live-ready via Actions** |
 | Points system | n/a | `points-system.js` | `points-system.js` | yes | `vyra-live-event` (gift/like/chat) | client (localStorage) | no | yes | **Live** |
 | Stream time analytics | yes | `stream-time-analytics.js` | — | yes | `vyra-live-event` | client (localStorage) | no | yes | **Live** |
 | State backup | yes | `state-backup.js` | — | n/a | 3 s timer, disabled in overlay mode | both | no | yes | **Live** |
@@ -128,12 +128,29 @@ tell it will never react.
 
 | Feature | Why it never fires |
 |---|---|
-| **Last-X Alerts** | `window.triggerLastXAlert` is defined in `last-x-alerts.js` and called from nowhere in the codebase. The file has no `vyra-live-event` listener and appears in none of the 18 files that touch live data. |
-| **Last Gifter / Last Liker / Last Sharer / Last Subscriber** | Modes of Last-X, so they inherit the same dead trigger. They also have no catalog entry and appear in `media.js` only as labels in the layer-name lookup. |
-| **Fan Level Up** | Two paths, neither reaches it. `routeLiveBattleEvent()` fires it on event type `fan_level`, which the ingest whitelist does not accept. The Actions route sends any widget name containing `level` to `triggerGifterLevelUp`, so a rule naming the fan level widget reaches the **gifter** widget instead. |
+| **Fan Level Up** | One path left. The Actions half is **fixed** — `runWidget()` now tests `fan level` before `level`, so a rule naming the fan widget reaches `triggerFanLevelUp` (`tests/action-widget-routing.test.js`). What remains is the automatic path: `routeLiveBattleEvent()` fires it on event type `fan_level`, which the ingest whitelist does not accept. A streamer with an Actions rule can drive it today; nothing drives it on its own. |
 | **Glove Snipe** | `routeLiveBattleEvent()` fires it on `tap`, `snipe`, `glove`, `x2` or `x3`. None of those are in `TIKTOK_INGEST_TYPES`, so no such event can ever arrive. There is no Actions route for it either; `live-control.js` drives it from the battle UI only. |
-| **Chatbot overlay** | No live listener and no Actions reference. Renders from settings alone. |
 | **Gift Fireworks "Testa" button** | Fires immediately and bypasses `VyraAlertQueue`, so the editor shows a responsiveness the live path does not have — one gift plays for six seconds before the next is allowed to start. |
+
+### Corrected after the first pass
+
+Three rows in the table above were wrong in the first version of this audit, and the corrections
+matter because a cleanup plan was nearly written against them.
+
+- **Last-X Alerts** and its four modes are **live**, not preview-only. The first pass searched for
+  callers of `window.triggerLastXAlert` and found none. That is the wrong name. The real path is
+  `ingest()` in `live-client.js:130`, which calls `routeLiveBattleEvent(e)` for *every* live event;
+  `last-x-alerts.js:385` rewrites that global and adds `showLastX` for `gift`, `like`, `share` and
+  `subscribe` — all four real ingest types. Proven end to end in
+  `tests/last-x-live-wiring.test.js`: a routed gift changes the widget's name from the `Alex`
+  placeholder to the real username.
+- **Chatbot overlay** is **live via Actions**, the same shape as Sound Alerts. `chat` is a
+  selectable action type (`action-event.js:4`), `action-runtime.js` dispatches `vyra:chatbot-send`,
+  and `chatbot-overlay.js:20` listens. It is not in the widget catalog at all.
+
+Both mistakes share a cause: searching for a trigger by name instead of following the call chain
+from `ingest()`. Anything still marked preview-only below should be re-checked that way before it is
+acted on.
 
 Two more that mislead without being dead:
 

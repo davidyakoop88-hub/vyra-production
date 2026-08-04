@@ -1,5 +1,14 @@
 # Preview-only cleanup — Studio exposure plan
 
+> **Superseded in part.** The recommendation to hide Last-X Alerts was wrong and was never
+> implemented. Last-X is live: `ingest()` (`live-client.js:130`) calls `routeLiveBattleEvent` for
+> every event, and `last-x-alerts.js:385` rewraps it to fire `showLastX` on `gift`, `like`, `share`
+> and `subscribe`. Proven in `tests/last-x-live-wiring.test.js`. Together with the Chatbot row, that
+> is **two of the four** features in this plan that turned out not to be preview-only at all — both
+> because the audit searched for a trigger by name instead of following the chain from `ingest()`.
+> The Fan Level Up and Glove Snipe sections below still stand; nothing in this plan was implemented
+> except the A4 routing fix.
+
 Scope: only the features `docs/live-readiness-matrix.md` classifies as **preview-only or
 misleading**, and only where Studio exposes them. Nothing is implemented here.
 
@@ -36,8 +45,8 @@ dead feature.
 
 | Feature | Studio file | Current exposure method | Recommended action | Risk of hiding |
 |---|---|---|---|---|
-| **Last-X Alerts** (5 designs: Card, Stack, Skew, Badge, Royal Coronation) | `last-x-alerts.js:363–381` | JS-injected `<section data-last-x class="last-x-template-section">` prepended to `.widget-catalog` in `bind()`. 5 buttons `[data-last-x-add]`, each pushing a `templateLastX` widget. | **Hide completely.** Remove the section with a one-line bind wrapper. | **Low.** No other feature depends on the section. Widgets a streamer already placed keep rendering and stay editable — only the ability to add a *new* one goes away. |
-| **Last Gifter / Liker / Sharer / Subscriber** | same block; modes of `templateLastX` (`TYPES` at `last-x-alerts.js:14–43`) | Not separately exposed. They are the `lastXType` field on a placed Last-X widget; new widgets default to `'all'`. | **Covered by hiding Last-X.** No separate change. | **None** — no independent entry point. |
+| **Last-X Alerts** (5 designs: Card, Stack, Skew, Badge, Royal Coronation) | `last-x-alerts.js:363–381` | JS-injected `<section data-last-x class="last-x-template-section">` prepended to `.widget-catalog` in `bind()`. 5 buttons `[data-last-x-add]`, each pushing a `templateLastX` widget. | **Leave alone — it is live.** See the banner above. | **High — do not hide.** Hiding would remove a working widget family from the catalog. |
+| **Last Gifter / Liker / Sharer / Subscriber** | same block; modes of `templateLastX` (`TYPES` at `last-x-alerts.js:14–43`) | Not separately exposed. They are the `lastXType` field on a placed Last-X widget; new widgets default to `'all'`. | **Leave alone — live.** Each mode is driven by its own ingest type. | **High — do not hide.** |
 | **Glove Snipe** | `media.js:541` (live entry) · `media.js:576` (already retired) | Its own catalog section was **already retired** — `media.js:576` removes `[data-glove-snipe]` on every bind. The only remaining path is `<div data-video-packs>` at `media.js:541`: 2 sections (Koi Pearl Lagoon, Masquerade Ball) × 4 buttons, each creating a `templateGloveSnipe` via `addBoostPack()`. | **Label, do not hide.** The buttons are branded as VIDEO FX packs, not as Glove Snipe. | **Medium.** Hiding `[data-video-packs]` removes the entire VIDEO FX pack offering, which is 8 of the catalog's buttons and is how the packs are sold visually. Hiding a widget class by removing an unrelated product surface is the wrong trade. |
 | **Fan Level Up** (8 themes) | `media.js:441` | JS-injected `<section data-fan-level class="fan-level-template-section">` prepended to `.widget-catalog`. 8 buttons `[data-fan-theme]`, each creating a `catalog:fanlevel:<theme>` widget. | **Label** (preferred) or hide. See note below. | **Low-medium.** Nothing else reads `[data-fan-level]`. The risk is product-side: 8 finished designs disappear from the library for a routing bug that is a small fix. |
 
@@ -58,10 +67,9 @@ Hiding them removes finished designs from the library to work around a defect th
 directly. Labelling tells the streamer the truth without throwing away the work, and reverses by
 deleting one line.
 
-**Last-X is different and should be hidden.** Its trigger `window.triggerLastXAlert`
-(`last-x-alerts.js:312`) has no caller anywhere in the codebase — no event listener, no Actions
-branch, no ingest path. There is no near-term fix to wait for, so there is nothing to label
-*toward*. A streamer adding one gets a widget that can never react.
+**Last-X needs neither.** It works. The paragraph that used to stand here argued for hiding it on
+the grounds that `window.triggerLastXAlert` has no caller. That is true and irrelevant: the live
+path does not go through that name at all. See the banner at the top.
 
 ---
 
@@ -79,7 +87,6 @@ Every injected section carries a stable `data-*` marker, so the same shape appli
 
 | Target | Marker |
 |---|---|
-| Last-X Alerts | `[data-last-x]` |
 | Fan Level Up | `[data-fan-level]` |
 | Video FX packs (Glove Snipe) | `[data-video-packs]` |
 
@@ -113,10 +120,12 @@ buttons stay in the DOM and stay clickable by keyboard and by script.
 
 1. **Fix the matrix row for Chatbot overlay.** It is misclassified, and the plan should not carry a
    cleanup item for a working feature.
-2. **Hide Last-X Alerts** — `[data-last-x]`, one line. This is the only genuinely dead entry.
-3. **Label Fan Level Up and the VIDEO FX packs** — badge plus disabled buttons.
-4. **Revisit after A3 and A4 land.** Both labels should come off at that point, which is the reason
-   for preferring labels over removal.
+2. ~~Hide Last-X Alerts~~ — **dropped.** It is live; hiding it would be a regression.
+3. **Label the VIDEO FX packs** (Glove Snipe) — badge plus disabled buttons. Still open: A3.
+4. **Fan Level Up needs no label for the Actions path** — A4 is fixed, so a streamer's own rule
+   drives it correctly today. Only the automatic `fan_level` ingest path is still missing.
+5. **Revisit after A3 lands.** The remaining label should come off at that point, which is the
+   reason for preferring labels over removal.
 
 ---
 
