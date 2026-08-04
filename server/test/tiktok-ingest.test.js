@@ -1,7 +1,8 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const net=require('node:net');
-const {eventBus,buildTestEvent,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES}=require('../index');
+const {eventBus,buildTestEvent,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,
+  TIKTOK_INGEST_RATE_LIMIT}=require('../index');
 
 function redisReachable(url){
   return new Promise(resolve=>{
@@ -109,6 +110,35 @@ test('ingestTikTokEvent rejects an invalid payload before publishing (no streamI
   }
 });
 
+// RateLimiter.exceeded() counts into a FIXED bucket, not a sliding window:
+//
+//   bucket = Math.floor(Date.now() / (windowSeconds * 1000))
+//
+// With a one-second window that bucket is the current wall-clock second, and it ticks over on the
+// second boundary regardless of when the first event arrived. This test used to send 100 events
+// through ingestTikTokEvent and then assert the 101st was refused — which only holds if all 101
+// land inside the SAME second. It did, until server/test grew from 23 files to 35 with the live
+// goals work: `node --test test/*.test.js` runs those files concurrently against one Postgres and
+// one Redis, the loop started straddling the boundary, the counter reset mid-flight, and the 101st
+// was allowed. The failure read "Missing expected rejection", which points at the limiter and not
+// at the clock, so it cost a real investigation to place.
+//
+// The rule under test is a property of the bucket, so the bucket is what the test sets up. Both the
+// current bucket and the next one are pre-filled to the limit: whichever second the call lands in —
+// and the boundary may pass between the seeding and the call — the counter is already full and the
+// refusal is certain. Two writes and two calls, no loop, no timing assumption.
+const bucketKey=(workspaceId,at)=>`vyra:rate:tiktok-ingest:${workspaceId}:${Math.floor(at/1000)}`;
+
+async function fillIngestBudget(workspaceId,limit){
+  const client=await eventBus.connect(),now=Date.now();
+  // This second and the next, so a boundary crossing mid-test cannot un-fill the budget.
+  for(const at of [now,now+1000]){
+    const key=bucketKey(workspaceId,at);
+    await client.set(key,String(limit));
+    await client.expire(key,5);
+  }
+}
+
 test('ingestTikTokEvent enforces max 100 events/second per workspace, scoped independently per workspace',async t=>{
   const url=process.env.REDIS_URL||'redis://127.0.0.1:6379';
   if(!await redisReachable(url)){t.skip(`No Redis reachable at ${url}`);return}
@@ -116,9 +146,11 @@ test('ingestTikTokEvent enforces max 100 events/second per workspace, scoped ind
   const busyWorkspace='77777777-7777-7777-7777-777777777777';
   const otherWorkspace='88888888-8888-8888-8888-888888888888';
   try{
-    for(let i=0;i<100;i++){
-      await ingestTikTokEvent(busyWorkspace,buildTestEvent('like',{username:`Fan${i}`}));
-    }
+    // The limit is read from the server, not repeated here: a change to TIKTOK_INGEST_RATE_LIMIT
+    // must move this test with it rather than leave it asserting a number nothing uses any more.
+    assert.equal(TIKTOK_INGEST_RATE_LIMIT,100,'gränsen har flyttat — meddelandet nedan säger 100/sekund');
+    await fillIngestBudget(busyWorkspace,TIKTOK_INGEST_RATE_LIMIT);
+
     await assert.rejects(
       ()=>ingestTikTokEvent(busyWorkspace,buildTestEvent('like',{username:'OneTooMany'})),
       err=>{assert.equal(err.status,429);assert.match(err.message,/100\/sekund/);return true}
@@ -127,6 +159,37 @@ test('ingestTikTokEvent enforces max 100 events/second per workspace, scoped ind
     // A different workspace's own per-second budget must be untouched by busyWorkspace's flood.
     const out=await ingestTikTokEvent(otherWorkspace,buildTestEvent('like',{username:'UnaffectedFan'}));
     assert.equal(out.duplicate,false);
+  }finally{
+    await eventBus.close().catch(()=>{});
+  }
+});
+
+// The boundary itself, which the old test could only ever hit by accident: a workspace that spent
+// its whole budget in one second must be allowed again in the next one. Only the current bucket is
+// filled, then the test waits for the wall clock to cross into a new second and sends one real
+// event. Any later second works, so a slow or loaded machine cannot make this flaky — it can only
+// make the wait longer.
+test('en ny sekund ger workspacet sin budget tillbaka',async t=>{
+  const url=process.env.REDIS_URL||'redis://127.0.0.1:6379';
+  if(!await redisReachable(url)){t.skip(`No Redis reachable at ${url}`);return}
+
+  const workspaceId='99999999-9999-9999-9999-999999999999';
+  try{
+    const client=await eventBus.connect(),now=Date.now();
+    const spent=bucketKey(workspaceId,now);
+    await client.set(spent,String(TIKTOK_INGEST_RATE_LIMIT));
+    await client.expire(spent,5);
+
+    // Budgeten ar slut i DEN har sekunden.
+    await assert.rejects(()=>ingestTikTokEvent(workspaceId,buildTestEvent('like',{username:'Blocked'})),
+      err=>err.status===429);
+
+    // Vanta tills vaggklockan bytt sekund, sa nasta anrop raknas mot en annan hink.
+    const second=Math.floor(Date.now()/1000);
+    while(Math.floor(Date.now()/1000)===second)await new Promise(r=>setTimeout(r,25));
+
+    const out=await ingestTikTokEvent(workspaceId,buildTestEvent('like',{username:'FreshSecond'}));
+    assert.equal(out.duplicate,false,'budgeten aterstalldes inte nar sekunden bytte');
   }finally{
     await eventBus.close().catch(()=>{});
   }
