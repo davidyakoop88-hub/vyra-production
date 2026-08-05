@@ -54,3 +54,25 @@
 .vyra-topgift.topgift-arch .topgift-ornament i:nth-child(3){right:22%;width:2px;top:68%;bottom:10%;border:0;background:linear-gradient(180deg,var(--accent),transparent);opacity:.7}
 .vyra-topgift.topgift-arch:after{content:"";position:absolute;left:22%;right:22%;bottom:10%;height:24%;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--accent) 50%,transparent),transparent 70%);animation:tgArchPass 5.5s ease-in-out infinite}
 @keyframes tgArchPass{0%,100%{opacity:.15;transform:translateY(16%)}50%{opacity:.9;transform:translateY(0)}}
+
+/* ── TOP STREAK · liquid ────────────────────────────────────────────────────────────────────────
+   "Liquid Gold Fuse" erbjuds som designval men hade NOLL egna regler och ritades som
+   grundutseendet - en rad med fem cirklar, identisk med hur en ostylad streak ser ut.
+
+   Rorelsen ar en fyllnad som rinner genom lontan, alltsa det namnet lovar. Nodema blir droppar
+   som lyser upp nar vatskan passerar. */
+.streak-liquid .streak-mechanism:before{
+  height:6px;border-radius:6px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--streak) 25%,transparent),var(--streak),#fff3c4,var(--streak),color-mix(in srgb,var(--streak) 25%,transparent));
+  background-size:220% 100%;animation:streakLiquidFlow calc(4s / var(--speed,1)) linear infinite}
+.streak-liquid .streak-mechanism i{
+  width:13px;height:13px;border:0;border-radius:50% 50% 55% 55%;
+  background:radial-gradient(circle at 35% 30%,#fff6d0,var(--streak));
+  box-shadow:0 0 calc(10px * var(--streak-glow,50) / 50) color-mix(in srgb,var(--streak) 60%,transparent);
+  animation:streakLiquidDrop calc(2.4s / var(--speed,1)) ease-in-out infinite}
+.streak-liquid .streak-mechanism i:nth-child(2){animation-delay:.18s}
+.streak-liquid .streak-mechanism i:nth-child(3){animation-delay:.36s}
+.streak-liquid .streak-mechanism i:nth-child(4){animation-delay:.54s}
+.streak-liquid .streak-mechanism i:nth-child(5){animation-delay:.72s}
+@keyframes streakLiquidFlow{0%{background-position:120% 0}100%{background-position:-120% 0}}
+@keyframes streakLiquidDrop{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.12)}}
