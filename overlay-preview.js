@@ -102,6 +102,33 @@ function overlayPreviewHtml() {
 //
 // Varje kort bar redan vilket objekt det representerar, sa objektet kan byggas direkt. Ingen
 // handler anropas, ingenting laggs i layouten, ingenting sparas.
+// Vakt mot "renderaren struntar i widgetobjektet".
+//
+// Femton designer — atta Top Streak-ramar och sju Top Gift-ramar — byggdes med ratt falt av
+// fabriken och ritades anda som nagot helt annat, for att premium-final.js skrev over renderaren
+// utan att titta pa ramfaltet. Ingen faltjamforelse kunde se det: objektet var korrekt, det var
+// steget efter som tappade det.
+//
+// Den har vakten LASER bara. Den ror inte state, sparar ingenting och skriver inget till DOM:en —
+// se incidenten i tests/thumb-no-overlay-leak.test.js, dar katalogens matning gick via layouten
+// och lamnade widgets i anvandarens overlay.
+const KATALOGFALT = ['streakFrame', 'topGiftFrame', 'mvpFrame', 'giftFrame', 'goalFrame', 'frameId'];
+const owgVarnat = new Set();
+function owgVarnaOmTappatFalt(widget, html, kalla) {
+  if (!widget || typeof html !== 'string') return;
+  for (const falt of KATALOGFALT) {
+    const varde = widget[falt];
+    if (!varde || typeof varde !== 'string') continue;
+    if (html.includes(varde)) continue;
+    const nyckel = kalla + ':' + falt + ':' + varde;
+    if (owgVarnat.has(nyckel)) continue;
+    owgVarnat.add(nyckel);
+    console.warn(`[VYRA] ${falt}="${varde}" nadde aldrig fram till det som ritas (${kalla}). ` +
+      'Widgetobjektet ar ratt, sa felet ligger i renderaren — nagon har troligen skrivit over ' +
+      'den utan att falla tillbaka pa originalet for det har faltet.');
+  }
+}
+
 function overlayPreviewWidget(btn) {
   const d = (btn && btn.dataset) || {};
 
@@ -161,6 +188,9 @@ function owgRenderCardThumb(btn) {
   let thumbHtml = null;
   if (preview) {
     try { thumbHtml = wh(preview) } catch (e) { thumbHtml = null }
+    // Katalogen ritar varje design en gang, sa det ar den enda platsen dar ALLA designer passerar
+    // samma kod. Darfor sitter vakten har och inte i renderaren.
+    owgVarnaOmTappatFalt(preview, thumbHtml, (btn && btn.dataset && btn.dataset.catalogKey) || 'katalog');
   }
   // TORRKORNINGEN AR BORTA. Den kallade kortets RIKTIGA lagg-till-handler, last av widgeten och
   // angrade — men angringen aterstallde bara state.widgets, medan handlerns save() redan skrivit
