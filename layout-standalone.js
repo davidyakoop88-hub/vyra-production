@@ -97,7 +97,7 @@
   }
 
   function propertiesHtml() {
-    var widget = state.widgets.find(function (item) { return item.id === selected; });
+    var widget = liveWidget(selected);
     if (!widget) return '<p>Välj ett element på canvas.</p>';
     return '<h3>' + escapeHtml(label(widget)) + '</h3>' +
       '<label>Rubrik<input id="propertyTitle" value="' + escapeHtml(widget.title || '') + '"></label>' +
@@ -167,7 +167,7 @@
       toast.classList.add('show');
       setTimeout(function () { toast.classList.remove('show'); }, 1700);
     };
-    var widget = state.widgets.find(function (item) { return item.id === selected; });
+    var widget = liveWidget(selected);
     if (!widget) return;
     document.getElementById('propertyTitle').onchange = function (event) {
       widget.title = event.target.value;

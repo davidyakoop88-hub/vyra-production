@@ -33,7 +33,7 @@
     applyAllBackgrounds();
     if (view !== 'editor') return;
 
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     const panel = document.querySelector('.properties');
     if (!w || !panel || panel.querySelector('.wb-group')) return;
 

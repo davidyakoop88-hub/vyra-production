@@ -31,8 +31,11 @@ const state=window.VyraSessionState.activeState();
 //
 // null nar den saknas, inte en proxy: en proxy ar alltid sann, och varje `if(!w||w.type!==...)
 // return` i klienten skulle sluta skydda.
-function liveWidget(id){
-  if(!state.widgets.some(w=>w&&w.id===id))return null;
+// type ar valfri: flera binds letade `id===selected && type===X` och ska ge falskt nar typen inte
+// stammer, precis som find() gjorde.
+function liveWidget(id,type){
+  const traff=state.widgets.find(w=>w&&w.id===id);
+  if(!traff||(type&&traff.type!==type))return null;
   const at=()=>state.widgets.find(w=>w&&w.id===id)||{};
   return new Proxy({},{
     get:(_,k)=>at()[k],

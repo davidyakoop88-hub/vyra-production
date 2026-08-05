@@ -139,7 +139,7 @@ function overlayCatalogPreviewHtml(originalClick) {
   let html = null, name = null;
   try {
     originalClick();
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (w) { html = wh(w); name = liveLayerName(w); }
   } catch (e) { /* leave html null, card falls back to its plain icon */ }
   state.widgets = savedWidgets;

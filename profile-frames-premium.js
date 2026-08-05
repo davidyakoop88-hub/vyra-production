@@ -16,7 +16,7 @@ bind = function () {
   premiumProfileFramesBind();
   if (view !== 'editor') return;
 
-  const widget = state.widgets.find(item => item.id === selected);
+  const widget = liveWidget(selected);
   const picker = document.querySelector('.pro-frame-picker');
   if (!widget || !picker) return;
 

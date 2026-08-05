@@ -199,7 +199,7 @@
   const wsExtraProps = props;
   props = function () {
     const html = wsExtraProps();
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || !RANKING_TYPES.includes(w.type)) return html;
 
     let out = html.replace(
@@ -232,7 +232,7 @@
   bind = function () {
     wsExtraBind();
     if (view !== 'editor') return;
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || !RANKING_TYPES.includes(w.type)) return;
 
     const crown = document.querySelector('#wsShowCrown');
@@ -357,7 +357,7 @@
   bind = function () {
     wsFramesBind();
     if (view !== 'editor') return;
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     const picker = document.querySelector('.pro-frame-picker');
     if (!w || !RANKING_TYPES.includes(w.type) || !picker) return;
 
