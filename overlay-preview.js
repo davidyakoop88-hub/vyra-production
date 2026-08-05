@@ -171,8 +171,61 @@ function overlayPreviewWidget(btn) {
 // overlayPreviewWidget(). Varje katalogknapp bar en sadan, och catalog-truth.test.js faller om
 // nagon slutar satta den.
 
+// MINIATYREN BOR I EN SHADOW ROOT.
+//
+// Alert-widgets vilar slackta — visibility:hidden och opacity:0 — och tands av en triggerklass nar
+// de spelar. I katalogen finns ingen trigger, sa 48 kort visade en tom ruta: Battle MVP, Gifter
+// Level, Fan Level, Last-X, Follower Alert, Koi Pearl, Masquerade och Gift Fireworks.
+//
+// #84 losste det med en regel i dokumentet, scopad till katalogen. Den regeln kunde bevisligen inte
+// na overlayen — men den backades ut i #86 mitt under en lackageincident, och lardomen David drog
+// var riktig: en losning som bygger pa att SELEKTORN ar ratt skriven ar en losning som haller tills
+// nagon skriver fel. Tva ganger har disciplin inte rackt i den har kodbasen.
+//
+// Har ar tandningsregeln i stallet inlast i en shadow root. Den finns inte i document.styleSheets
+// och kan darfor inte matcha nagot pa overlayen — inte for att selektorn ar noga vald, utan for att
+// webblasaren inte slapper ut den. Sidans egna stilmallar adopteras in sa widgeten ser ut som den
+// ska.
+//
+// TVA SATT ATT VARA SLACKT, BADA MASTE TACKAS.
+// 45 kort har en slackt widgetROT. De ovriga tre — Gift Fireworks — har synlig rot men ett slackt
+// INRE effektlager (.gift-fireworks-fx:not(.play){opacity:0}). En regel som bara tande .widget
+// hade fixat 45 av 48. Darfor traffar regeln aven ättlingar.
+const OWG_TAND = `.owg-thumb-inner .widget,
+.owg-thumb-inner .widget *{visibility:visible!important;opacity:1!important}`;
+
+// Arken byggs EN gang och delas av alla kort. Att kopiera ett trettiotal stilmallar per miniatyr
+// hade kostat mer an hela katalogen ar vard; adoptedStyleSheets ar gjort for att delas.
+let owgArkCache = null;
+function owgAdopteradeArk() {
+  if (owgArkCache) return owgArkCache;
+  const ark = [];
+  for (const sheet of document.styleSheets) {
+    let regler;
+    try { regler = sheet.cssRules } catch (_) { continue }   // cross-origin: gar inte att lasa
+    const kopia = new CSSStyleSheet();
+    for (const r of regler) { try { kopia.insertRule(r.cssText, kopia.cssRules.length) } catch (_) {} }
+    ark.push(kopia);
+  }
+  const lokal = new CSSStyleSheet();
+  lokal.replaceSync(OWG_TAND);
+  ark.push(lokal);
+  owgArkCache = ark;
+  return ark;
+}
+
+// Stods shadow DOM med konstruerbara stilmallar? Annars ritas miniatyren som forr, i vanlig DOM.
+// Da ar alert-korten tomma igen — kosmetiskt — men ingenting gar sonder, och framfor allt smiter
+// ingen tandningsregel ut i dokumentet som kompensation.
+const OWG_SKUGGA_STODS = typeof CSSStyleSheet === 'function' &&
+  (() => { try { new CSSStyleSheet(); return true } catch (_) { return false } })() &&
+  typeof Element !== 'undefined' && !!Element.prototype.attachShadow;
+
+// Inuti eller utanfor skuggan — anropare ska inte behova veta vilket.
+function owgThumbRot(thumb) { return thumb.shadowRoot || thumb }
+
 function scaleThumbnailToFit(thumb) {
-  const inner = thumb.querySelector('.owg-thumb-inner');
+  const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner');
   const widget = inner && inner.firstElementChild;
   if (!widget) return;
   const w = widget.offsetWidth || 300, h = widget.offsetHeight || 150;
@@ -207,7 +260,13 @@ function owgRenderCardThumb(btn) {
   const icon = btn.querySelector('i');
   const thumb = document.createElement('div');
   thumb.className = 'owg-thumb';
-  thumb.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
+  if (OWG_SKUGGA_STODS) {
+    const rot = thumb.attachShadow({ mode: 'open' });
+    rot.adoptedStyleSheets = owgAdopteradeArk();
+    rot.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
+  } else {
+    thumb.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
+  }
   btn.prepend(thumb);
 
   // En VIDEO FX-widget ar ett <video> med autoplay, loop, muted och playsinline. Den laddar klart
@@ -216,7 +275,7 @@ function owgRenderCardThumb(btn) {
   //
   // Att soka till en tidpunkt tvingar fram en avkodad ruta aven nar videon ar pausad. Det ar
   // billigare an att spela, och funkar oavsett vad autoplay-policyn sager.
-  thumb.querySelectorAll('video').forEach(video => {
+  owgThumbRot(thumb).querySelectorAll('video').forEach(video => {
     video.muted = true;
     video.preload = 'auto';
     const ritaEnRuta = () => { try { if (video.currentTime < 0.05) video.currentTime = 0.1 } catch (_) {} };

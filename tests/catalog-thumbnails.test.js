@@ -52,7 +52,11 @@ function katalogMedMiniatyrer() {
 test('resolvern refererar inget som inte finns i filen', () => {
   // Den direkta orsaken, som statisk kontroll: `root` ar inte deklarerat nagonstans i filen, sa
   // varje anvandning av det kastar. try/catch runt anropet gor felet osynligt.
-  const kall = fs.readFileSync(path.join(ROOT, 'overlay-preview.js'), 'utf8');
+  const rakall = fs.readFileSync(path.join(ROOT, 'overlay-preview.js'), 'utf8');
+  // Kommentarer bort forst. Vakten trafffade tidigare pa prosa — meningen "en shadow root. Den
+  // finns inte i dokumentet" innehaller `root.` och gjorde testet rott for korrekt kod. Vad som
+  // KORS ar det enda som kan kasta ReferenceError.
+  const kall = rakall.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
   const deklarerar = /(^|\W)(const|let|var|function)\s+root\W/.test(kall) ||
     /\(function\s*\([^)]*\broot\b/.test(kall);
   const anvander = /\broot\s*\./.test(kall);
