@@ -36,6 +36,10 @@ function panel(giftCount) {
   // VyraSafe behovs nar props()/wh() KORS, inte nar media.js laddas — darfor racker det att ladda
   // den har, efter harnessens egen kedja.
   h.load('overlay-sanitize.js');
+  // Manifestet laddas efter media.js har, och det GAR eftersom campaignGiftList() ar en
+  // funktion som laser window.VYRA_GIFTS vid anropet. Vore den en const, som forr, skulle
+  // vardet vara last nar media.js laddades och valjaren stod tom.
+  h.load('assets/gifts/gifts-manifest.js');
 
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
   run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(w)});selected='c1';view='editor';`);

@@ -62,6 +62,10 @@ function panel(giftCount) {
   const h = createDom({ url: 'https://vyralive.app/studio.html?open=layout',
     state: { widgets: [w], projectName: 'picker' } });
   h.load('overlay-sanitize.js');
+  // Manifestet laddas efter media.js har, och det GAR eftersom campaignGiftList() ar en
+  // funktion som laser window.VYRA_GIFTS vid anropet. Vore den en const, som forr, skulle
+  // vardet vara last nar media.js laddades och valjaren stod tom.
+  h.load('assets/gifts/gifts-manifest.js');
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
   run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(w)});selected='c1';view='editor';`);
   run(`document.querySelector('#view').innerHTML='<div class="editor-shell"><div class="canvas">'
@@ -78,7 +82,7 @@ test('forsta klicket ger den sidindelade valjaren over hela listan', () => {
       const modal = document.querySelector('.gift-picker-modal');
       __p.sidfot = !!modal.querySelector('.gift-picker-pages');
       __p.status = modal.querySelector('footer strong').textContent;
-      __p.helaListan = allCampaignGiftChoices.length;
+      __p.helaListan = campaignGiftList().length;
     } catch (e) { __p.fel = e.message }
   `);
   const p = h.window.__p || {};
