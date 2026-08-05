@@ -134,36 +134,15 @@ function overlayPreviewWidget(btn) {
   return null;   // okant kort: behaller sin ikon, precis som nar previewen misslyckades forut
 }
 
-function overlayCatalogPreviewHtml(originalClick) {
-  const savedWidgets = state.widgets.slice();
-  const savedSelected = selected, savedPreviewId = overlayPreviewWidgetId;
-  const realRender = render, realToast = toast;
-  render = () => {}; toast = () => {};
-  let html = null, name = null;
-  try {
-    originalClick();
-    const w = liveWidget(selected);
-    if (w) { html = wh(w); name = liveLayerName(w); }
-  } catch (e) { /* leave html null, card falls back to its plain icon */ }
-  state.widgets = savedWidgets;
-  selected = savedSelected;
-  overlayPreviewWidgetId = savedPreviewId;
-  render = realRender; toast = realToast;
-  // Skriv tillbaka det aterstallda laget direkt. save() gar inte att stanga av — den ar `const` i
-  // studio.js — sa originalClick() har redan hunnit spara torrkorningens widget till localStorage.
-  // Minnet aterstalls ovan, men utan den har raden star LAGRINGEN kvar smutsig, och det ar
-  // lagringen cloud-syncs sekundtickare laser och skickar till servern.
-  //
-  // Det var tackt sa lange alla miniatyrer ritades i en batch: styleOverlayCatalogCards() gjorde
-  // en korrigerande save() pa slutet. Sedan blev miniatyrerna lazy — owgThumbObserver ritar ett
-  // kort i taget nar det scrollas in, langt efter att den sparningen redan kort. Varje lat
-  // renderat kort lamnade darfor kvar sin engangswidget.
-  //
-  // Uppmatt i produktion: ett klick i katalogen gav 9 widgets i localStorage medan state.widgets
-  // stod pa 0.
-  save();
-  return { html, name };
-}
+// TORRKORNINGEN AR BORTTAGEN. Den korde kortets riktiga lagg-till-handler for att lasa av
+// widgeten och angrade sedan — men handlerns save() hade redan skrivit till disk, och angringen
+// aterstallde bara state.widgets. Uppmatt i produktion: state.widgets tomt medan localStorage bar
+// templateGiftFireworks, templateBattleMvp, templateTopLike och templateTopGift. De syntes i OBS
+// utan att nagon lagt dit dem.
+//
+// Bade miniatyren och Preview bygger nu widgeten ur kortets katalognyckel via
+// overlayPreviewWidget(). Varje katalogknapp bar en sadan, och catalog-truth.test.js faller om
+// nagon slutar satta den.
 
 function scaleThumbnailToFit(thumb) {
   const inner = thumb.querySelector('.owg-thumb-inner');
@@ -182,11 +161,18 @@ function owgRenderCardThumb(btn) {
   let thumbHtml = null;
   if (preview) {
     try { thumbHtml = wh(preview) } catch (e) { thumbHtml = null }
-  } else if (btn._owgOriginalClick) {
-    // Enbart for kort som saknar all igenkant markning. Torrkorningen ar kvar som sista utvag,
-    // men ingen av katalogens 108 knappar tar den vagen i dag.
-    thumbHtml = overlayCatalogPreviewHtml(btn._owgOriginalClick).html;
   }
+  // TORRKORNINGEN AR BORTA. Den kallade kortets RIKTIGA lagg-till-handler, last av widgeten och
+  // angrade — men angringen aterstallde bara state.widgets, medan handlerns save() redan skrivit
+  // till disk. Signaturen ar omisskannlig och den sags i produktion: state.widgets tomt medan
+  // localStorage bar templateGiftFireworks, templateBattleMvp, templateTopLike och templateTopGift,
+  // alltsa katalogens forsta sektioner i ordning. De hamnade i anvandarens overlay utan att nagon
+  // lagt dit dem.
+  //
+  // Den beskrevs som "sista utvag for kort utan igenkand markning". Sadana kort finns inte langre:
+  // varje katalogknapp bar en katalognyckel, och det finns ett test som faller om nagon slutar
+  // gora det. Ett kort vars widget inte gar att bygga far darfor behalla sin ikon — ett tomt kort
+  // ar kosmetiskt, en widget som smyger in i en sandning ar det inte.
   if (!thumbHtml) return;
   const icon = btn.querySelector('i');
   const thumb = document.createElement('div');
@@ -295,9 +281,13 @@ function styleOverlayCatalogCards() {
     previewBtn.textContent = '▶ Preview';
     previewBtn.onclick = e => {
       e.stopPropagation();
-      const fresh = overlayCatalogPreviewHtml(originalClick);
-      overlayDraftPreviewHtml = fresh.html;
-      overlayDraftPreviewName = fresh.name;
+      // Bygger ur kortets katalognyckel. Forr kordes kortets RIKTIGA lagg-till-handler och
+      // angrades — men handlern sparar, och angringen aterstallde bara state.widgets. Det som
+      // redan natt disken lag kvar, och widgeten dok upp i anvandarens overlay. En Preview far
+      // inte kunna andra layouten.
+      const utkast = overlayPreviewWidget(btn);
+      overlayDraftPreviewHtml = utkast ? wh(utkast) : null;
+      overlayDraftPreviewName = utkast ? liveLayerName(utkast) : null;
       overlayPreviewWidgetId = null;
       render();
     };
