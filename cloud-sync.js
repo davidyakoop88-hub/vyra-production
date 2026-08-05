@@ -39,7 +39,11 @@
       if(emptied)delete root.__vyraUserEmptiedWidgets;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
-  function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await push();bar.remove()}catch{setStatus('offline')}}}
+  function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await push();
+    // Online-knappen ovan projicerar via apply(). Den har gjorde det inte: push() skriver till
+    // SERVERN, inte till sessionen, sa "behall den har datorn" lamnade sessionen okommitterad och
+    // darmed oskrivbar - anvandaren fick sin layout kvar men kunde inte andra nagot i den.
+    await apply(payload());bar.remove()}catch{setStatus('offline')}}}
   // Legacy: den globala metan namnger sin agare, kon gor det inte. Matchar metan aktuellt workspace
   // migreras bada till namespacet. Gor den det inte - eller saknas den helt - kan agarskapet inte
   // bevisas, och da far datan varken visas eller adopteras av nagon. Den karantaniseras under ett
@@ -102,6 +106,11 @@
         // Anvandarens tomhet ar sanningen som ska upp. Servern har sin egen wipe-guard och svarar
         // 409 emptyBlocked om den inte tror pa den — da hamnar vi i konfliktdialogen, som ar den
         // avsedda vagen. Det som INTE far hanta ar att molnet vinner utan att nagon fragat.
+        // Samma sak som i gren 6 nedan, av samma skal: utan projektion ar sessionen inte skrivbar.
+        // Har biter det extra hart - anvandaren har precis tomt sin layout, och utan den har raden
+        // kan hen inte lagga tillbaka nagonting alls under resten av sessionen. Kon och pushen
+        // skriver till servern, inte till sessionen, och gor alltsa inte det har at oss.
+        await apply(local);if(mine!==session)return;
         localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:local}));
         saveMeta();setStatus('saving');schedule()
       }else if(!ownsLocal||!local?.widgets?.length){
@@ -111,6 +120,23 @@
       }else if(meta&&Number(meta.version)<Number(overlay.version)){
         await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')
       }else{
+        // Lokalt och moln ar overens. Tidigare stannade boot har utan att projicera - och det ar
+        // projektionen som gor bada de sakerna som behovs: den laddar layouten fran disk in i det
+        // aktiva stateobjektet, alltsa det canvasen ritar, OCH den satter laget till
+        // studio-committed, som ar det enda skrivbara laget (session-state.js:123).
+        //
+        // Utan den sag anvandaren en tom canvas medan layouten lag kvar pa disk, och allt hen
+        // gjorde darefter - ny widget, flytt, storleksandring - returnerade tyst not-writable och
+        // nadde aldrig disken. Nasta inloggning sag likadan ut. Uppmatt i produktion: 1 widget pa
+        // disk, 0 i minnet, 0 pa canvas, lage boot-neutral.
+        //
+        // Det ar dessutom NORMALLAGET, inte ett kantfall: hit gar varje inloggning dar ingenting
+        // andrats sedan sist.
+        //
+        // Det som projiceras ar den LOKALA layouten, inte molnets. Innehallet ar detsamma har, men
+        // lokalt ags redan av det har workspacet, och payload() bar med sig extras som annu kan
+        // sakna sin motsvarighet i molnet.
+        await apply(local);if(mine!==session)return;
         saveMeta();setStatus('synced');if(read(QUEUE()))schedule()
       }
       startTicker();
