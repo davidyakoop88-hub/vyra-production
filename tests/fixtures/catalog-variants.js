@@ -7,6 +7,13 @@
 // The values here are the real ones from the tables that now live in widget-factory.js — a fixture
 // with invented colours would prove nothing.
 const CONTRACT = [
+  // De tre familjer vars literaler ALDRIG lag i media.js — de byggdes i last-x-alerts.js,
+  // custom-widgets.js och gift-fireworks.js. De har darfor ingen `marker`: baseline-beviset i
+  // widget-defaults-migration.test.js galler media.js och hoppar over dem. Att fabriken ger exakt
+  // det knapparna byggde bevisas i stallet falt for falt i tests/factory-last-eleven.test.js.
+  { name: 'Last-X · design card', key: 'catalog:lastx:card' },
+  { name: 'Eget innehåll · text', key: 'catalog:custom:text' },
+  { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",
     values: { title: 'Aurora', value: 'aurora.mp4', src: 'assets/videos/aurora.mp4' },
     bindings: { f: 'aurora.mp4', mediaTitle: () => 'Aurora', normalizeMediaFile: () => 'aurora.mp4', mediaAssetPath: () => 'assets/videos/aurora.mp4' } },

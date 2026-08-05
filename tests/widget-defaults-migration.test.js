@@ -50,6 +50,11 @@ function literalContaining(marker) {
 
 test('snapshot matchar de ursprungliga katalogliteralerna', { skip }, () => {
   for (const row of CONTRACT) {
+    // Rader utan markor har aldrig haft en literal i media.js: Last-X, Eget innehall och Gift
+    // Fireworks byggde sina widgets i sina egna filer. Baseline-beviset galler media.js, sa de kan
+    // varken hittas eller jamforas har. Deras motsvarande bevis — att fabriken ger exakt det
+    // knappen byggde — star i tests/factory-last-eleven.test.js.
+    if (!row.marker) continue;
     const sandbox = Object.assign({ Math, Number, String, Object, Array, JSON, Date }, row.bindings);
     // Copied into this realm before comparing: an object built inside a vm context carries that
     // context's Object.prototype, and deepEqual is strict about prototypes.
