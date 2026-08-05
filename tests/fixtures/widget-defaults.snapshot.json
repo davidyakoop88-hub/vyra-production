@@ -385,5 +385,41 @@
     "campaignTheme": "neon",
     "campaignOrientation": "portrait",
     "accent": "#ff3fa4"
+  },
+  "catalog:lastx:card": {
+    "type": "templateLastX",
+    "x": 100,
+    "y": 80,
+    "width": 500,
+    "title": "Last-X Alerts",
+    "lastXType": "all",
+    "lastXDesign": "card",
+    "lastXEntrance": "slide-left",
+    "followDuration": 5
+  },
+  "catalog:custom:text": {
+    "type": "templateCustomText",
+    "x": 60,
+    "y": 120,
+    "width": 420,
+    "height": 90,
+    "customText": "Skriv din text här"
+  },
+  "catalog:giftfireworks:magnetic": {
+    "type": "templateGiftFireworks",
+    "x": 80,
+    "y": 950,
+    "width": 360,
+    "title": "Gift Fireworks",
+    "fwMotion": "magnetic",
+    "fwMin": 1,
+    "fwSpeed": 0.6,
+    "fwDuration": 5,
+    "fwGiftSize": 110,
+    "fwExplosion": 100,
+    "fwDensity": 70,
+    "fwColor": "#ff4fa3",
+    "fwColor2": "#ffd45b",
+    "fwSound": true
   }
 }

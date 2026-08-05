@@ -369,15 +369,18 @@
         `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gifter · Liker · Sharer · Subscriber</small></span></button>`
       ).join('');
       catalog.prepend(section);
-      section.querySelectorAll('[data-last-x-add]').forEach(b => b.onclick = () => {
+      // Nyckeln pa knappen ar det som gor designen matbar, forhandsvisningsbar och aterskapbar.
+      // Widgeten byggs ur fabriken i stallet for handknackt har; ett test jamfor falt for falt mot
+      // den gamla formen sa befintliga anvandare far exakt samma sak.
+      section.querySelectorAll('[data-last-x-add]').forEach(b => {
         const design = b.dataset.lastXAdd, label = lastXCards.find(c => c[0] === design)[1];
-        const id = 'templateLastX' + Date.now();
-        state.widgets.push({
-          id, type: 'templateLastX', x: 100, y: 80, width: 500,
-          title: 'Last-X Alerts', lastXType: 'all', lastXDesign: design, lastXEntrance: 'slide-left',
-          followDuration: 5
-        });
-        selected = id; save(); render(); toast('Last-X · ' + label + ' skapad');
+        const catalogKey = 'catalog:lastx:' + design;
+        b.dataset.catalogKey = catalogKey;
+        b.onclick = () => {
+          const created = VyraWidgets.create(catalogKey);
+          state.widgets.push(created);
+          selected = created.id; save(); render(); toast('Last-X · ' + label + ' skapad');
+        };
       });
     }
   };

@@ -106,7 +106,10 @@ function overlayPreviewWidget(btn) {
   const d = (btn && btn.dataset) || {};
 
   if (d.catalogKey) {
-    try { return root.VyraWidgets.create(d.catalogKey) } catch (e) { return null }
+    // window, inte root: den har filen ar ett vanligt toppnivaskript utan IIFE, sa `root`
+    // ar odeklarerat och kastade ReferenceError for VARJE knapp. try/catch svalde det, sa
+    // resolvern gav null och ingen miniatyr ritades nagonsin.
+    try { return window.VyraWidgets.create(d.catalogKey) } catch (e) { return null }
   }
 
   // last-x-alerts.js:373 — samma falt som knappen sjalv satter.
@@ -227,16 +230,24 @@ function styleOverlayCatalogCards() {
   let generatedAny = false;
   gallery.querySelectorAll('button').forEach(btn => {
     if (btn.dataset.owgWrapped) return;
-    btn.dataset.owgWrapped = '1';
     const originalClick = btn.onclick;
-    if (!originalClick) return;
 
-    // Rendering every real widget thumbnail during page load used to create and undo every
-    // catalog widget at once, which could lock the renderer with premium packs installed.
-    // Instead, only render a card's thumbnail once it actually scrolls near the viewport —
-    // owgThumbObserver below fires owgRenderCardThumb() lazily, one card at a time.
-    btn._owgOriginalClick = originalClick;
+    // Markeringen satts EFTER att kortet observerats, inte fore. Forr satts den forst, och en knapp
+    // vars onclick annu inte hunnit kopplas foll ut pa raden under - permanent, eftersom nasta varv
+    // sag markeringen och hoppade over den. Da observerades den aldrig och fick aldrig nagon
+    // miniatyr.
+    //
+    // onclick behovs inte langre for att RITA miniatyren: varje katalogknapp bar en katalognyckel,
+    // och resolvern bygger widgeten ur den. Klicket sparas bara som sista utvag for ett kort utan
+    // igenkand markning.
+    //
+    // Att rita alla miniatyrer vid sidladdning skapade och angrade varje katalogwidget pa en gang,
+    // vilket kunde lasa renderaren med premiumpaket installerade. Kortet ritas darfor forst nar det
+    // narmar sig vyn - owgThumbObserver kor owgRenderCardThumb() ett kort i taget.
+    if (originalClick) btn._owgOriginalClick = originalClick;
     owgThumbObserver.observe(btn);
+    btn.dataset.owgWrapped = '1';
+    if (!originalClick) return;
 
     const key = owgCardKey(btn);
     const star = document.createElement('span');

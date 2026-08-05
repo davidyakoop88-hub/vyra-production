@@ -45,6 +45,14 @@
     // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
     // Accenten ar densamma for alla 21; tabellen bar etiketten sa den sager nagot mer an att
     // namnet finns.
+    // De tre sista katalogsektionerna. Etiketterna ar desamma som knapparna visar, sa tabellen
+    // bar nagot mer an att namnet finns - en okand variant kastar med giltiga alternativ i texten.
+    'lastx.design': { card: 'Card', stack: 'Stack', skew: 'Skew', badge: 'Badge',
+      royal: 'Royal Coronation' },
+    'custom.kind': { text: 'templateCustomText', image: 'templateCustomImage',
+      video: 'templateCustomVideo' },
+    'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
+      bloom: 'Crystal Bloom' },
     'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
       glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
       galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
@@ -126,6 +134,22 @@
     // Falt for falt det som premium-final.js:s knapp byggde for hand. Avviker nagot har byter
     // varje befintlig anvandare utseende nasta gang de lagger till en design, sa det finns ett
     // test som jamfor mot den gamla formen.
+    'lastx.design': v => ({
+      type: 'templateLastX', x: 100, y: 80, width: 500, title: 'Last-X Alerts',
+      lastXType: 'all', lastXDesign: v.design, lastXEntrance: 'slide-left', followDuration: 5
+    }),
+    // Text har egen bredd och en starttext; bild och video delar allt utom hojden. Formen ar
+    // hamtad falt for falt fran custom-widgets.js sa befintliga anvandare far samma sak.
+    'custom.kind': v => Object.assign(
+      { type: v.type, x: 60, y: 120 },
+      v.kind === 'text' ? { width: 420, height: 90, customText: 'Skriv din text här' }
+                        : { width: 300, height: v.kind === 'video' ? 450 : 300 }
+    ),
+    'giftfireworks.motion': v => ({
+      type: 'templateGiftFireworks', x: 80, y: 950, width: 360, title: 'Gift Fireworks',
+      fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
+      fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
+    }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
@@ -315,6 +339,15 @@
       return ['battlemvp.style', { style: parts[0], color: pick('battlemvp.style', parts[0], 'MVP-stil') }];
     },
     'likefountain': () => ['likefountain', {}],
+    'lastx': parts => {
+      pick('lastx.design', parts[0], 'Last-X-design');
+      return ['lastx.design', { design: parts[0] }];
+    },
+    'custom': parts => ['custom.kind', { kind: parts[0], type: pick('custom.kind', parts[0], 'innehållstyp') }],
+    'giftfireworks': parts => {
+      pick('giftfireworks.motion', parts[0], 'fyrverkerirörelse');
+      return ['giftfireworks.motion', { motion: parts[0] }];
+    },
     'giftcampaign': parts => {
       const orientation = parts[1];
       if (!parts[0]) throw new Error('catalog:giftcampaign kräver ett tema');

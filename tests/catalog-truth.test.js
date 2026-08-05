@@ -45,6 +45,12 @@ test.after(closeAll);
 function katalog() {
   const h = createDom({ url: 'https://vyralive.app/studio.html', state: { widgets: [], projectName: 'kat' } });
   h.load('overlay-sanitize.js');
+  // Alla filer som bygger katalogsektioner maste laddas, annars mater testet en katalog som ar
+  // mindre an den anvandaren ser. Riggen saknade dessa tre och sag 14 av 17 sektioner - kravet
+  // "varje knapp bar en nyckel" blev darfor gront medan elva knappar i webblasaren saknade en.
+  h.load('custom-widgets.js');
+  h.load('last-x-alerts.js');
+  h.load('gift-fireworks.js');
   h.load('premium-final.js');
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
   // Katalogen bor i EDITORVYNS vansterpanel (studio.js:91), inte i nagon egen overlay-vy, och
