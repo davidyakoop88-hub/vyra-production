@@ -609,6 +609,32 @@ function applyProfessionalCatalogIcons(){document.querySelectorAll('.widget-cata
 const professionalIconBind=bind;bind=function(){professionalIconBind();if(view==='editor'||view==='overlay')applyProfessionalCatalogIcons()};
 
 function openPagedGiftPicker(w,index){document.querySelector('.gift-picker-modal')?.remove();let modal=document.createElement('div');modal.className='gift-picker-modal';modal.innerHTML=`<div><header><b>VÄLJ GIFT ${index+1}</b><button>×</button></header><input placeholder="Sök gifts (valfritt)"><section></section><footer class="gift-picker-pages"><button data-page="prev">‹ Föregående</button><strong></strong><button data-page="next">Nästa ›</button></footer></div>`;document.body.append(modal);let page=0,pageSize=30,filtered=campaignGiftList(),section=modal.querySelector('section'),status=modal.querySelector('footer strong');function draw(){let pages=Math.max(1,Math.ceil(filtered.length/pageSize));page=Math.max(0,Math.min(page,pages-1));let start=page*pageSize;section.innerHTML=filtered.slice(start,start+pageSize).map(g=>`<button data-gift-file="${VyraSafe.url(g.file)}" data-gift-name="${VyraSafe.text(g.name)}"><img loading="lazy" src="${VyraSafe.url(g.file)}"><span>${VyraSafe.text(g.name)}</span></button>`).join('');status.textContent=`Sida ${page+1} av ${pages} · ${filtered.length} gifts`;modal.querySelector('[data-page="prev"]').disabled=page===0;modal.querySelector('[data-page="next"]').disabled=page>=pages-1;section.querySelectorAll('button').forEach(b=>b.onclick=()=>{w['giftImage'+index]=b.dataset.giftFile;w['giftName'+index]=b.dataset.giftName;save();modal.remove();render();toast(b.dataset.giftName+' vald')})}modal.querySelector('[data-page="prev"]').onclick=()=>{page--;draw();section.scrollTop=0};modal.querySelector('[data-page="next"]').onclick=()=>{page++;draw();section.scrollTop=0};modal.querySelector('header button').onclick=()=>modal.remove();modal.onclick=e=>{if(e.target===modal)modal.remove()};modal.querySelector('input').oninput=e=>{let q=e.target.value.trim().toLowerCase();filtered=q?campaignGiftList().filter(g=>g.name.toLowerCase().includes(q)):campaignGiftList();page=0;draw()};draw()}
+/* Ett skript som utokar bind() efter sista bind()-anropet blir dod kod.
+
+   Den har filen injicerar ett tjugotal skript, och nastan varje ett utokar bind() for att lagga
+   till sin egen katalogsektion eller sina egna handlers. Vyn renderas och binder medan de
+   fortfarande laddas. Ingenting anropar bind() igen, sa allt som installerats efter den sista
+   bindningen kor aldrig — forran anvandaren rakar byta vy.
+
+   Uppmatt i produktion: premium-final.js var laddad, window.VyraStreakPremium fanns med sina sju
+   designer, och anda saknades bade VYRA TOP STREAK · PREMIUM och TOP GIFTER · DESIGNVAL helt.
+   Bada varselementen bar dataset.finalPremium = null. Ett enda extra bind() byggde bada
+   sektionerna, 7 respektive 21 knappar.
+
+   EN LYSSNARE, INTE TJUGO ONLOAD-HAKAR. Att haka i varje injektionsstalle gor det ratt for de
+   tjugo som finns i dag och missar det tjugoforsta. load bubblar inte fran <script>, men den kan
+   FANGAS — sa en enda lyssnare i capture-fasen pa document tacker varje skript som laddas, aven
+   sadana som ingen kommer ihag att haka i.
+
+   Koad till en microtask: en skur av skript ger en ombindning, inte tjugo. Ofarligt att kora om —
+   sektionsbygget vaktas av dataset-flaggor och katalogens kortstyling hoppar over redan kopplade
+   knappar (overlay-preview.js). */
+let vyraRebindKoad=false;
+document.addEventListener('load',e=>{
+  if(!e.target||e.target.tagName!=='SCRIPT'||vyraRebindKoad)return;
+  vyraRebindKoad=true;
+  queueMicrotask(()=>{vyraRebindKoad=false;try{if(typeof bind==='function')bind()}catch(err){console.error('[VYRA] ombindning efter skriptladdning misslyckades',err)}});
+},true);
 Promise.resolve().then(()=>{let live=document.createElement('script');live.src='live-client.js?v=20260802-3';live.onload=()=>{let ui=document.createElement('script');ui.src='studio-live.js?v=20260724-4';document.body.append(ui)};document.body.append(live)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
