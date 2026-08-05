@@ -257,9 +257,13 @@ function styleOverlayCatalogCards() {
   const gallery = document.querySelector('.overlay-widget-gallery .widget-catalog');
   if (!gallery) return;
   const favorites = owgGetFavorites();
-  let generatedAny = false;
   gallery.querySelectorAll('button').forEach(btn => {
     if (btn.dataset.owgWrapped) return;
+    // En knapp INUTI en miniatyr ar en del av en renderad widget, inte ett katalogkort. Den fick
+    // aldrig plockas upp, men sa lange stylingen kordes exakt en gang per sidladdning kunde den
+    // inte heller gora det: miniatyrerna fanns annu inte. Nu kors stylingen om nar sena sektioner
+    // dyker upp, och da hade en sadan knapp fatt bade stjarna och Configure-rad.
+    if (btn.closest('.owg-thumb')) return;
     const originalClick = btn.onclick;
 
     // Markeringen satts EFTER att kortet observerats, inte fore. Forr satts den forst, och en knapp
@@ -374,11 +378,49 @@ function styleOverlayCatalogCards() {
       render();
     };
   });
-  if (generatedAny) save();
+  // Har stod `if (generatedAny) save();`. generatedAny sattes aldrig till true nagonstans — den var
+  // kvar fran torrkorningen, som skapade widgets for att kunna mata dem och behovde stada upp
+  // efterat. Torrkorningen togs bort i #86; stadningen blev kvar som dod kod. En save() i
+  // katalogvagen ar precis det som lackte fyra widgets till Davids overlay, sa den far inte ligga
+  // och se ofarlig ut i vantan pa att nagon satter flaggan igen.
+}
+
+// Sektioner kan komma NAR SOM HELST.
+//
+// media.js injicerar overlay-preview.js och premium-final.js som tva oberoende dynamiska skript.
+// Dynamiska <script> har async=true som standard, sa de kor i den ordning de hinner laddas — inte
+// i den ordning de laggs till. Landar premium sist byggs VYRA TOP STREAK · PREMIUM och
+// TOP GIFTER · DESIGNVAL efter att stylingen redan gatt igenom galleriet, och de knapparna far
+// varken miniatyr eller Configure/Preview. Uppmatt i produktion; lokalt vann de loppet och det sag
+// friskt ut.
+//
+// Att tvinga en laddningsordning hade gjort det ratt i dag och gatt sonder nasta gang nagon lagger
+// till en sektion. Katalogen tar i stallet hand om kort som dyker upp senare, oavsett varfor.
+let owgSectionObserver = null;
+function owgWatchForLateCards(gallery) {
+  if (owgSectionObserver) owgSectionObserver.disconnect();
+  if (typeof MutationObserver !== 'function') return;
+  let koad = false;
+  owgSectionObserver = new MutationObserver(records => {
+    // Bara NYA katalogknappar raknas. Stylingen muterar sjalv korten — stjarna, actions, miniatyr —
+    // och en observator som reagerar pa sina egna andringar hade snurrat.
+    const nytt = records.some(r => [...r.addedNodes].some(n => n.nodeType === 1 &&
+      !n.closest?.('.owg-thumb') &&
+      (n.matches?.('button:not([data-owg-wrapped])') ||
+       n.querySelector?.('button:not([data-owg-wrapped])'))));
+    if (!nytt || koad) return;
+    koad = true;
+    queueMicrotask(() => { koad = false; styleOverlayCatalogCards() });
+  });
+  owgSectionObserver.observe(gallery, { childList: true, subtree: true });
 }
 
 function bindOverlayPreview() {
   styleOverlayCatalogCards();
+  // Galleriet byggs om vid varje render(), sa bevakningen satts upp pa nytt harifran. Den gamla
+  // kopplas ner inuti funktionen.
+  const gallery = document.querySelector('.overlay-widget-gallery .widget-catalog');
+  if (gallery) owgWatchForLateCards(gallery);
   document.querySelectorAll('[data-copy-widget-link]').forEach(button => {
     button.onclick = async event => {
       event.stopPropagation();
