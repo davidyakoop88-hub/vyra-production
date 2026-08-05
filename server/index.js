@@ -63,7 +63,7 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
   if(type==='gift'){
     event.giftId=S.safeText(overrides.giftId,160)||'test-gift-rose';
     event.giftName=S.safeText(overrides.giftName,160)||'Rose';
-    event.giftImage=S.safeText(overrides.giftImage,1200)||'assets/gifts/part1/gifts/0001_Rose.png';
+    event.giftImage=S.safeText(overrides.giftImage,1200)||'assets/gifts/events/0001_Rose.png';
   }
   return event;
 }
