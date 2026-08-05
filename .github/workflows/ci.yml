@@ -152,3 +152,45 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
+
+  # Sanningens karta over widgetkatalogen, regenererad vid varje push till main — alltsa vid varje
+  # deploy, eftersom Railway bygger pa main.
+  #
+  # Kartan genereras ur den KORANDE katalogen i en riktig webblasare, inte ur kallkoden. Det ar hela
+  # poangen: rubriker som pastod fel antal, knappar utan katalognyckel och tva sektioner som aldrig
+  # byggdes sag alla korrekta ut i koden.
+  #
+  # Kor bara pa push till main, inte pa pull requests: en PR-gren ska inte fa en commit tillbaka i
+  # ansiktet mitt under granskning. Pushar gjorda med GITHUB_TOKEN startar inga nya workflows, sa
+  # jobbet kan inte trigga sig sjalvt.
+  katalogkarta:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      # ubuntu-latest levereras med Google Chrome; playwright-core startar den utan egen
+      # nedladdning. Hittas ingen webblasare avbryter generatorn hellre an skriver en halvsann
+      # karta — darfor far steget falla.
+      - name: 'Generera kartan'
+        run: npm run karta
+
+      - name: 'Committa om nagot andrats'
+        run: |
+          if [ -z "$(git status --porcelain docs/katalogkarta.md)" ]; then
+            echo 'kartan ar oforandrad'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/katalogkarta.md
+          git commit -m 'Uppdatera sanningens karta [skip ci]'
+          git push
