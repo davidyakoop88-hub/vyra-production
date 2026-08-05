@@ -17,8 +17,40 @@
   // cacherna, och mutera globala state-objektet in-place. Utan det kunde tva flikar committa
   // varsin layout och den forlorande rulla tillbaka ovanpa vinnaren.
   async function apply(remote){if(!remote||!Array.isArray(remote.widgets))throw new Error('Online-layouten ar ogiltig');const data={...remote},meta=data.__vyraCloud;delete data.__vyraCloud;const extras={};Object.entries(meta?.storage||{}).forEach(([k,v])=>{if(EXTRA.includes(k)&&typeof v==='string')extras[k]=v});const token=root.VyraSessionState.beginProjection();const out=await root.VyraSessionState.projectActive(token,{mode:'studio-committed',workspaceId:workspace&&workspace.id,overlayId:overlay&&overlay.id,state:data,extras});if(!out.ok)throw new Error('Sessionen kunde inte projiceras');lastLocal=localStorage.getItem('vyra-state');root.render?.()}
-  function setStatus(next,text){status=next;document.querySelectorAll('.cloud-status').forEach(el=>{el.dataset.state=next;el.querySelector('span').textContent=text||({synced:'Sparad online',saving:'Sparar…',offline:'Offline · sparas senare',conflict:'Synkkonflikt',local:'Lokalt läge'}[next])})}
-  function mountStatus(){}
+  const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',conflict:'Synkkonflikt',local:'Lokalt läge'};
+  // Konsekvensen, inte tillstandet. "Offline" i sig forklarar inte varfor OBS ser gammalt ut, och
+  // da felsoker man widgeten i stallet for anslutningen — precis det som hant.
+  const OFFLINE_NOTE='Dina ändringar finns kvar på den här datorn, men OBS hämtar layouten från servern och ser dem inte förrän synken är tillbaka.';
+  // Senaste laget sparas for att en SEN mount ska kunna rita det. Lankraden byggs av media.js
+  // bind(), alltsa efter att cloud-sync redan bootat och satt sitt forsta lage; utan minnet hade
+  // rutan statt tom anda tills nasta statusbyte.
+  let statusText=STATUS_TEXT.local;
+  function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];paint();offlineNote()}
+  function paint(){document.querySelectorAll('.cloud-status').forEach(el=>{el.dataset.state=status;const span=el.querySelector('span');if(span)span.textContent=statusText})}
+  function offlineNote(){
+    const bar=document.querySelector('.overlay-link-bar');
+    let note=document.querySelector('.cs-offline-note');
+    if(status!=='offline'){note?.remove();return}
+    if(!bar)return;
+    if(!note){note=document.createElement('div');note.className='cs-offline-note';document.body.append(note)}
+    note.innerHTML='<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+'</span>';
+  }
+  // Var en tom stubb. setStatus() skrev till document.querySelectorAll('.cloud-status') och det
+  // fanns inget sadant element pa sidan — ingen skapade det. Hela statusmaskinen raknade ut ratt
+  // lage och skickade det till noll element, och cloud-sync.css bar fardig styling for varje lage
+  // som aldrig ritades. Anvandaren kunde alltsa inte se om en sparning natt molnet, och refreshade
+  // OBS for tidigt.
+  //
+  // Anropas bade fran initialize() och fran tickern varje sekund, darfor idempotent: lankraden
+  // finns annu inte nar cloud-sync bootar.
+  function mountStatus(){
+    const bar=document.querySelector('.overlay-link-bar');
+    if(!bar)return false;
+    if(bar.querySelector('.cloud-status'))return true;
+    const host=bar.querySelector('div')||bar,el=document.createElement('div');
+    el.className='cloud-status';el.innerHTML='<i></i><span></span>';
+    host.append(el);paint();offlineNote();return true;
+  }
   async function call(path,options){return root.VyraAuth.api(path,options)}
   async function list(){return call(`/api/workspaces/${workspace.id}/overlays`)}
   async function create(){const data=payload();const d=await call(`/api/workspaces/${workspace.id}/overlays`,{method:'POST',body:JSON.stringify({name:'Min VYRA-overlay',state:data})});overlay=d.overlay;saveMeta();return overlay}
@@ -157,5 +189,14 @@
   function startTicker(){if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal){lastLocal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
+  // Mountningen far INTE hanga pa initialize() eller startTicker(): bada kraver ett workspace, och
+  // desktopappen har inget kontosystem alls (vyra-auth-local -> projectLocalSession). Uppmatt i
+  // webblasaren: lankraden fanns, .cloud-status fanns inte, status='local'. Da ser den som kor
+  // utan moln ingenting — och det ar den anvandaren som mest behover veta att OBS aldrig kommer
+  // att hamta hens andringar. Egen intervall, inte sessionsbunden, sa den overlever bade utloggning
+  // och att lankraden byggs om.
+  // Slutar sa fort den lyckats. Lankraden byggs en gang (bind() vaktar mot dubbletter), och nar
+  // man ar inloggad halls monteringen anda vid liv av tickern.
+  const mountTimer=setInterval(()=>{if(mountStatus())clearInterval(mountTimer)},1000);
   root.VyraCloudSync={initialize,push,status:()=>status,current:()=>({workspace,overlay})};
 })(typeof window!=='undefined'?window:globalThis);
