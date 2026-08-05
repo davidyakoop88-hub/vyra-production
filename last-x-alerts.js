@@ -143,7 +143,7 @@
   // ---- sidebar property panel ----
   const lastXProps = props;
   props = function () {
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || !isLastX(w)) return lastXProps();
     // Old widgets (templateLastGifter etc.) get read-only info instead of the full new panel until
     // the user actually re-adds a fresh "Last-X Alerts" widget from the catalog — editing an old
@@ -230,7 +230,7 @@
   function startHoldLX(box) {
     const s = stateFor(box);
     clearTimeout(s.holdTimer);
-    s.holdTimer = setTimeout(() => exitLX(box), holdMsOf(state.widgets.find(x => x.id === box.dataset.id)));
+    s.holdTimer = setTimeout(() => exitLX(box), holdMsOf(liveWidget(box.dataset.id)));
   }
   function exitLX(box) {
     const s = stateFor(box);
@@ -244,7 +244,7 @@
     }, 360);
   }
   function advanceLX(box) {
-    const s = stateFor(box), w = state.widgets.find(x => x.id === box.dataset.id);
+    const s = stateFor(box), w = liveWidget(box.dataset.id);
     if (!w || !s.order.length) return;
     if (s.phase === 'idle') {
       const typeKey = s.order.shift(), data = s.slots[typeKey]; s.slots[typeKey] = null;
@@ -316,7 +316,7 @@
   bind = function () {
     lastXBind();
     if (view !== 'editor' && view !== 'overlay') return;
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
 
     if (w && isLastX(w) && w.type === 'templateLastX') {
       const set = (id, key, opts = {}) => {

@@ -57,7 +57,7 @@
       '</section>';
 
     host.querySelectorAll('[data-safe-layer]').forEach(function (row) {
-      var widget = state.widgets.find(function (item) { return item.id === row.dataset.safeLayer; });
+      var widget = liveWidget(row.dataset.safeLayer);
       if (!widget) return;
       row.querySelector('.layer-select').onclick = function () {
         selected = widget.id;
@@ -107,7 +107,7 @@
   }
 
   function bindProperties() {
-    var widget = state.widgets.find(function (item) { return item.id === selected; });
+    var widget = liveWidget(selected);
     if (!widget) return;
     var title = document.querySelector('#pt');
     var value = document.querySelector('#pv');

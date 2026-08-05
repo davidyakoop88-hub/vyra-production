@@ -69,7 +69,7 @@
   // explicit height, e.g. templateCustomVideo, relies on the canvas resize-handle drag instead).
   const standaloneProps = props;
   props = function () {
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || w.type !== TYPE) return standaloneProps();
     const entry = CATALOG.find(c => c[0] === w.widgetSlug);
     return `<h3>${(entry ? entry[1] : 'VYRA-WIDGET').toUpperCase()}</h3><div hidden><input id="pt" value="${w.title || ''}"><input id="pv" value=""></div>
@@ -86,7 +86,7 @@
   bind = function () {
     standaloneCatalogBind();
     if (view !== 'editor' && view !== 'overlay') return;
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || w.type !== TYPE) return;
     const variant = document.querySelector('#swVariant');
     if (variant) variant.onchange = e => { w.widgetVariant = e.target.value.trim(); save(); render() };

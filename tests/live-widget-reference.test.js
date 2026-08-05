@@ -34,7 +34,7 @@
 //
 // ROTT NU.
 const test = require('node:test'), assert = require('node:assert/strict');
-const path = require('path');
+const fs = require('fs'), path = require('path');
 const { createDom, closeAll } = require('./helpers/dom-harness.js');
 
 const ROOT = path.join(__dirname, '..');
@@ -127,6 +127,63 @@ test('att ta bort ett falt gar fortfarande', () => {
        window.__d = { kvar: 'giftFrame' in state.widgets[0] }`);
 
   assert.equal(h.window.__d.kvar, false, 'delete nadde inte den aktuella widgeten');
+});
+
+// ---- typkontrollen ---------------------------------------------------------------------------------
+// Flera binds letade `id===selected && type===X` och ska ge falskt nar typen inte stammer, precis
+// som find() gjorde. Utan det hade svepet gjort dem sannare an de var.
+test('liveWidget med typ ger null nar typen inte stammer', () => {
+  const { h, run } = boot([{ id: 'w1', type: 'templateTopGift' }]);
+  run(`window.__t = {
+    ratt: !!liveWidget('w1','templateTopGift'),
+    fel: liveWidget('w1','templateGiftFireworks'),
+    utanTyp: !!liveWidget('w1')
+  }`);
+  const t = h.window.__t;
+
+  assert.equal(t.ratt, true, 'ratt typ gav inget');
+  assert.equal(t.fel, null, 'fel typ gav nagot sant — en bind som filtrerade pa typ slutar filtrera');
+  assert.equal(t.utanTyp, true, 'utan typ ska den bete sig som forut');
+});
+
+test('typkontrollen laser inte fast sig — byter widgeten typ foljer den med', () => {
+  const { h, run } = boot([{ id: 'w1', type: 'templateTopGift' }]);
+  run(`const w = liveWidget('w1','templateTopGift');
+       ${BYT}
+       state.widgets[0].giftName = 'Lion';
+       window.__b = { laser: w.giftName }`);
+
+  assert.equal(h.window.__b.laser, 'Lion', 'proxyn slutade folja med efter typkontrollen');
+});
+
+// ---- last: monstret far inte komma tillbaka -----------------------------------------------------------
+// Svepet gick over 15 filer. Ett strukturellt las ar det enda som hindrar att nasta bind skrivs med
+// den gamla formen igen - och den formen ser helt normal ut, vilket ar precis problemet.
+test('ingen levererad klientfil fangar den valda widgeten vid bind', () => {
+  const HOPPA = new Set(['node_modules', '.git', 'assets', 'tests', 'scripts', '.github',
+    'electron-app', 'server', 'tiktok-bridge', 'coverage', 'dist']);
+  const filer = [];
+  (function walk(d) {
+    for (const post of fs.readdirSync(d, { withFileTypes: true })) {
+      if (HOPPA.has(post.name)) continue;
+      const p = path.join(d, post.name);
+      if (post.isDirectory()) walk(p);
+      else if (/\.js$/.test(post.name)) filer.push(p);
+    }
+  })(ROOT);
+
+  // Alla stavningar av "hitta den valda widgeten", blankstegsokansligt.
+  const FORMER = [
+    /state\s*\.\s*widgets\s*\.\s*find\s*\(\s*(\w+)\s*=>\s*\1\s*\.\s*id\s*===\s*selected/,
+    /state\s*\.\s*widgets\s*\.\s*find\s*\(\s*function\s*\(\s*(\w+)\s*\)\s*\{\s*return\s+\1\s*\.\s*id\s*===\s*selected/
+  ];
+  const kvar = filer
+    .filter(f => FORMER.some(re => re.test(fs.readFileSync(f, 'utf8'))))
+    .map(f => path.relative(ROOT, f).split(path.sep).join('/'));
+
+  assert.deepEqual(kvar, [],
+    'dessa haller den valda widgeten fran bind till klick; anvand liveWidget(selected) i stallet:\n' +
+    kvar.map(f => '  ' + f).join('\n'));
 });
 
 // ---- hela kedjan: gavovaljaren -----------------------------------------------------------------------

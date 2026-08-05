@@ -68,7 +68,7 @@
   bind = function () {
     gafBind();
     if (view !== 'editor') return;
-    const w = state.widgets.find(x => x.id === selected);
+    const w = liveWidget(selected);
     if (!w || !GIFT_ALERT_TYPES.includes(w.type)) return;
     const panel = document.querySelector('.properties');
     if (!panel) return;
