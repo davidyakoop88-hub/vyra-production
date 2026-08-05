@@ -98,31 +98,20 @@ test('varje knapp i en sektion skapar en egen widget', () => {
 });
 
 // ---- 3. varje knapp gar att aterskapa fran en nyckel -------------------------------------------
-// Malet ar att VARJE knapp bar en nyckel: da gar den att mata, forhandsvisa och aterskapa. Tva
-// sektioner gor det inte an, och att ge dem nycklar kraver nya familjer i widget-factory.js -
-// eget arbete, inte en rad.
-//
-// Listan ar darfor exakt, inte ett undantag: gapet kan inte VAXA, och nar en sektion far sina
-// nycklar faller testet tills raden tas bort harifran. Ett "hoppa over det som saknas" hade
-// dolt bade tillvaxt och framsteg.
-const UTAN_NYCKEL_ANNU = {
-  'VYRA TOP STREAK · PREMIUM': 7,
-  'TOP GIFTER · DESIGNVAL': 21
-};
-
-test('inga fler katalogknappar an de kanda saknar en nyckel', () => {
+// Malet ar natt: VARJE knapp bar en nyckel, och da gar varje design att mata, forhandsvisa och
+// aterskapa. Kartan UTAN_NYCKEL_ANNU behovs inte langre - den lat gapet krympa men aldrig vaxa, och
+// den ar nu tom. Kravet star kvar som ett rakt krav.
+test('varje katalogknapp bar en katalognyckel', () => {
   const { sektioner } = katalog();
-  const nu = {};
+  const utan = [];
   for (const s of sektioner) {
     const n = s.knappar.filter(b => !b.dataset.catalogKey).length;
-    if (n) nu[s.rubrik] = n;
+    if (n) utan.push(`${s.rubrik} — ${n} av ${s.knappar.length}`);
   }
 
-  assert.deepEqual(nu, UTAN_NYCKEL_ANNU,
-    'kartan over knappar utan katalognyckel har andrats.\n' +
-    '  Blev det FLER: de gar varken att mata, forhandsvisa eller aterskapa.\n' +
-    '  Blev det FARRE: bra — ta bort raden ur UTAN_NYCKEL_ANNU.\n' +
-    '  nu: ' + JSON.stringify(nu));
+  assert.deepEqual(utan, [],
+    'dessa knappar gar varken att mata, forhandsvisa eller aterskapa fran en nyckel:\n  ' +
+    utan.join('\n  '));
 });
 
 test('varje katalognyckel gar att losa upp', () => {
