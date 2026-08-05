@@ -2,6 +2,10 @@
   const STREAKS={
     liquid:['Liquid Gold Fuse','#d9a441'],momentum:['Momentum Steps','#d8dee9'],tier:['Momentum Tier','#c68cff'],thread:['Silk Golden Thread','#e7bc63'],chrono:['Chronograph Timeline','#9db7d0'],chain:['Jewelry Chain Reaction','#d2d5da'],thermo:['Thermochromic Gauge','#ff8a36']
   };
+  // Menyn i media.js maste kanna till de har designerna. Utan en last lista maste namnen
+  // dubbleras dar, och dubblerade listor ar precis det som gled isar: Stil-menyn listade bara
+  // de klassiska sju och pastod darfor fel design for alla premium.
+  window.VyraStreakPremium=STREAKS;
   const TOP_GIFTS={
     royal:'Royal Gold',neon:'Neon Purple',cyber:'Cyber Blue',glass:'Glass',sakura:'Sakura Pink',fire:'Inferno Fire',ice:'Ice Crystal',galaxy:'Galaxy',aurora:'Aurora',retro:'Retro',goldrush:'Gold Rush',
     hall:'VYRA Hall of Fame',throne:'Royal Throne',champion:'Celestial Champion',pedestal:'Diamond Pedestal',arch:'Celestial Arch',phoenix:'Phoenix Ribbon',signal:'Neon Signal',fireworks:'Celestial Fireworks',bloom:'Crystal Bloom',comet:'Royal Comet'
