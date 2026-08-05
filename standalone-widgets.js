@@ -1,8 +1,11 @@
 // Embeds standalone OBS-widget pages (public/widgets/*.html, built on base-widget.js's own
 // SSE engine) as real, draggable items inside Studio's existing Overlay/Layout canvas — so a
 // streamer never has to juggle a separate widget URL per source. Each embed is a same-origin
-// iframe; Caddyfile.production's frame-ancestors was loosened from 'none' to 'self' specifically to
-// allow this (still refuses every other origin). 2026-08-01: the 14 first-generation standalone
+// iframe. A note that used to sit here credited Caddyfile.production's frame-ancestors 'self' for
+// allowing it — that file was never the one deployed (Dockerfile copies ./Caddyfile) and has been
+// deleted. The live config sends no Content-Security-Policy at all, so same-origin framing works
+// by default; whoever adds a CSP must keep frame-ancestors 'self' or these embeds go blank.
+// 2026-08-01: the 14 first-generation standalone
 // widgets (gift-alert, follow-alert, goal-crystal-path m.fl.) were retired on David's request —
 // their pages are deleted and only Goal · Image Frame remains; RETIRED below keeps already-placed
 // copies of the old ones from crashing saved layouts (they render a friendly "utgått" card, same

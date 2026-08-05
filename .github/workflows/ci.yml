@@ -137,6 +137,19 @@ jobs:
 
       - run: npm audit --audit-level=high
 
+  # Caddyfilen ar det enda i repot som kan ta ner HELA sajten utan att nagot test marker det:
+  # den kopieras rakt in i imagen av Dockerfile:55 och las forst av Caddy vid start. Ett syntaxfel
+  # upptacktes alltsa tidigast vid deploy. tests/static-cache-headers.test.js laser filens TEXT och
+  # kan darfor inte se om Caddy faktiskt accepterar den - det ar vad det har steget gor.
+  caddy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 'Caddy · konfigurationen gar att lasa'
+        run: |
+          docker run --rm -v "$PWD:/w" -w /w \
+            caddy:2-alpine caddy validate --adapter caddyfile --config Caddyfile
+
   test-tiktok-bridge:
     runs-on: ubuntu-latest
     defaults:
