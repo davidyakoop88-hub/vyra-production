@@ -76,8 +76,11 @@ function iMiniatyr(h, nyckel) {
   run(`document.querySelector('.overlay-widget-gallery .owg-thumb-inner').innerHTML = wh(${JSON.stringify(w)})`);
   const el = box.querySelector('.owg-thumb-inner').firstElementChild;
   const s = h.window.getComputedStyle(el);
+  const synlig = n => { const c = h.window.getComputedStyle(n);
+    return c.display !== 'none' && c.visibility !== 'hidden' && Number(c.opacity) > 0.05 };
+  const harSynligtBarn = [...el.querySelectorAll('*')].some(synlig);
   box.remove();
-  return { opacity: Number(s.opacity), visibility: s.visibility, klass: el.className };
+  return { opacity: Number(s.opacity), visibility: s.visibility, klass: el.className, harSynligtBarn };
 }
 
 // Hela katalogen, inte ett stickprov. Ett urval hade missat familjer som ingen tankte pa - och
@@ -94,7 +97,16 @@ test('varje katalogknapps miniatyr visar sin widget', () => {
     for (const b of sek.querySelectorAll('button')) {
       if (!b.dataset.catalogKey) continue;
       const s = iMiniatyr(h, b.dataset.catalogKey);
-      if (!(s.opacity > 0.5) || s.visibility === 'hidden') tomma.push(rubrik + ' — ' + b.dataset.catalogKey);
+      // Roten RACKER INTE. Gift Fireworks hade synlig rot men ett effektlager pa opacity 0, och
+      // den har matningen sa "synlig" medan kortet var tomt. Minst ett barn maste ocksa synas.
+      //
+      // Det finns en niva till som jsdom inte kan na: ett barn som ar synligt men inte MALAR nagot
+      // - ett <video> utan laddad bildruta, till exempel. jsdom har ingen layout alls, sa
+      // getBoundingClientRect ar 0x0 for varje element. Den fragan gar bara att stalla i en
+      // webblasare, och det ar sa VIDEO FX-korten kunde vara tomma trots gront test.
+      if (!(s.opacity > 0.5) || s.visibility === 'hidden' || !s.harSynligtBarn) {
+        tomma.push(rubrik + ' — ' + b.dataset.catalogKey);
+      }
     }
   }
 
