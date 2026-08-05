@@ -193,6 +193,20 @@ function owgRenderCardThumb(btn) {
   thumb.className = 'owg-thumb';
   thumb.innerHTML = `<div class="owg-thumb-inner">${thumbHtml}</div>`;
   btn.prepend(thumb);
+
+  // En VIDEO FX-widget ar ett <video> med autoplay, loop, muted och playsinline. Den laddar klart
+  // (readyState 4) men Chrome pausar video-only bakgrundsmedia for att spara strom: play() avbryts,
+  // currentTime star kvar pa 0, och utan poster malas ingen bildruta alls. Kortet blev tomt.
+  //
+  // Att soka till en tidpunkt tvingar fram en avkodad ruta aven nar videon ar pausad. Det ar
+  // billigare an att spela, och funkar oavsett vad autoplay-policyn sager.
+  thumb.querySelectorAll('video').forEach(video => {
+    video.muted = true;
+    video.preload = 'auto';
+    const ritaEnRuta = () => { try { if (video.currentTime < 0.05) video.currentTime = 0.1 } catch (_) {} };
+    if (video.readyState >= 2) ritaEnRuta();
+    else video.addEventListener('loadeddata', ritaEnRuta, { once: true });
+  });
   if (icon) icon.remove();
   scaleThumbnailToFit(thumb);
 }

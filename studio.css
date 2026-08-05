@@ -280,6 +280,10 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget,
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget *{visibility:visible!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget{opacity:1!important}
+/* Effektlagret ar inte en partikel utan hela innehallet: .gift-fireworks-fx:not(.play) star pa
+   opacity 0!important, sa fyrverkeriets kort ritade en tom ruta aven med roten synlig. Partiklarnas
+   EGNA opacity ror vi fortfarande inte - de ska inte alla lysa samtidigt. */
+.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .gift-fireworks-fx{opacity:1!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget.selected{outline:0!important}
 .overlay-widget-gallery .widget-catalog button i{font-style:normal;font-size:20px;width:40px;height:40px;margin:14px 0 0 14px;display:flex;align-items:center;justify-content:center;background:#0d0714;border-radius:9px;color:#b490ff}
 .overlay-widget-gallery .widget-catalog button span{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px 4px}
