@@ -22,13 +22,14 @@
 // hade fangat felet nar paketen togs bort.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
+const { hoppaOver } = require('./helpers/skip-dirs.js');
 
 const ROOT = path.join(__dirname, '..');
 // tests/ och scripts/ ar med flit utanfor. De innehaller avsiktliga fixturer — 'assets/gifts/rose.png'
 // finns inte och ska inte finnas, den ar en stubb for att se ATT en sokvag skrivs ut. Att krava att
 // fixturer pekar pa riktiga filer vore att mata fel sak. Det som ska halla ar koden som levereras
 // till webblasaren, och den ligger i roten, server/ och electron-app/.
-const HOPPA_OVER = new Set(['node_modules', '.git', 'assets', 'coverage', 'dist', 'tests', 'scripts']);
+const HOPPA_OVER = hoppaOver('assets', 'tests', 'scripts');
 // Manifestet listar hela gavokatalogen och kollas av scripts/test/event-gifts.test.js.
 const EJ_FIL = new Set(['gifts-manifest.js']);
 

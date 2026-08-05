@@ -11,6 +11,7 @@
 // hela poängen: det ska gå i CI, på varje PR, utan en byggmiljö.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
+const { hoppaOver } = require('./helpers/skip-dirs.js');
 
 const ROOT = path.join(__dirname, '..');
 const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
@@ -100,8 +101,8 @@ test('sidorna och deras filer serveras fortfarande', () => {
 // gång för hand när tillåtlistan skrevs, men körd på varje PR: lägger någon till en widget som
 // laddar en .woff2 eller en .mp4 från roten fångas det här, inte av en trasig sajt i produktion.
 test('allt sidorna refererar täcks av tillåtlistan', () => {
-  const SKIP = new Set(['.git', 'node_modules', 'server', 'electron-app', 'tiktok-bridge',
-    'tests', 'scripts', 'docs', 'deploy', 'web', '.github', '.claude', '.deploy', 'backups']);
+  const SKIP = hoppaOver('server', 'electron-app', 'tiktok-bridge',
+    'tests', 'scripts', 'docs', 'deploy', 'web', '.github', '.claude', '.deploy', 'backups');
   const walk = (dir, out = []) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) { if (!SKIP.has(entry.name)) walk(path.join(dir, entry.name), out) }
