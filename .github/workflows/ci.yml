@@ -115,6 +115,18 @@ jobs:
       - name: 'Hela klientsviten'
         run: npm test
 
+      # Lackagevakten kors i en RIKTIG webblasare, inte i jsdom.
+      #
+      # jsdom har ingen Web Locks-implementation, sa session-state faller tillbaka pa read-only och
+      # save() skriver aldrig — ett lackage som gar via save() ar osynligt dar. Det var precis
+      # darfor widgetarna som dok upp i Davids OBS-overlay (#86) kunde ligga bakom en gron vakt.
+      # jsdom har inte heller nagon layout, sa fragan "syns den har widgeten?" gar inte att stalla.
+      #
+      # ubuntu-latest levereras med Google Chrome; playwright-core startar den utan att ladda ner
+      # nagon egen webblasare. Hittas ingen hoppar testet hogljutt i stallet for att falla.
+      - name: 'Lackage · riktig webblasare'
+        run: npm run test:browser
+
       # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
       # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
       # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde
