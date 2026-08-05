@@ -25,7 +25,9 @@ test('serves every primary page and repaired asset', async () => {
     '/spotify-callback.html',
     '/spotify-client.js',
     '/overlay.html',
-    '/gifts-manifest.js',
+    // The manifest studio.html loads. Was '/gifts-manifest.js' at the root — 708 KB that nothing
+    // loaded, listing the removed part1..part9 packs. Serving it proved nothing about gift images.
+    '/assets/gifts/gifts-manifest.js',
     '/assets/gifts/gift-placeholder.svg',
     '/assets/images/test-profile.svg'
   ]) {

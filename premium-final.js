@@ -7,7 +7,7 @@
     hall:'VYRA Hall of Fame',throne:'Royal Throne',champion:'Celestial Champion',pedestal:'Diamond Pedestal',arch:'Celestial Arch',phoenix:'Phoenix Ribbon',signal:'Neon Signal',fireworks:'Celestial Fireworks',bloom:'Crystal Bloom',comet:'Royal Comet'
   };
   const GOALS={crystal:'Crystal Path',celestial:'Celestial Journey',royal:'Royal Community',pulse:'Neon Pulse',garden:'Garden Growth',portal:'Portal Progress',constellation:'Community Constellation'};
-  const fallbackProfile='assets/images/test/test-profile.png',fallbackGift='assets/gifts/part1/gifts/0001_Rose.png';
+  const fallbackProfile='assets/images/test/test-profile.png',fallbackGift='assets/gifts/events/0001_Rose.png';
   // Named safeImg but neither escaped nor validated anything: it interpolated the URL straight into
   // src="…" and again into an inline onerror handler, so an avatar URL carrying a quote closed both
   // attributes. Premium widgets are not loaded today, which is exactly why this had to be fixed
