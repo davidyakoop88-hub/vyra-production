@@ -95,6 +95,40 @@ test('med manifest erbjuds hela uppsattningen', () => {
     'valjaren erbjuder inte hela manifestet');
 });
 
+// ---- borttagna namn far inte leva kvar nagonstans -------------------------------------------------
+// allCampaignGiftChoices byttes mot campaignGiftList(). Omdopningen kordes bara over media.js, och
+// gift-fireworks.js anvande samma namn pa tre stallen. Det syntes inte i nagot test: filen laddas
+// utan att kasta, och felet slog forst nar buildComboRockets faktiskt kordes - alltsa nar en gava
+// kom in. Fyrverkerierna var trasiga i produktion.
+//
+// En textsokning over ALLA levererade filer, inte bara den man rakade andra i.
+test('inget borttaget gavonamn lever kvar i levererad kod', () => {
+  const BORTTAGNA = ['allCampaignGiftChoices', 'campaignGiftChoices'];
+  const HOPPA = new Set(['node_modules', '.git', 'assets', 'tests', 'scripts', '.github',
+    'electron-app', 'server', 'tiktok-bridge', 'coverage', 'dist']);
+  const filer = [];
+  (function walk(d) {
+    for (const post of fs.readdirSync(d, { withFileTypes: true })) {
+      if (HOPPA.has(post.name)) continue;
+      const p = path.join(d, post.name);
+      if (post.isDirectory()) walk(p);
+      else if (/\.(js|html)$/.test(post.name)) filer.push(p);
+    }
+  })(ROOT);
+
+  const traffar = [];
+  for (const f of filer) {
+    const text = fs.readFileSync(f, 'utf8');
+    for (const namn of BORTTAGNA) {
+      if (text.includes(namn)) traffar.push(path.relative(ROOT, f).split(path.sep).join('/') + ': ' + namn);
+    }
+  }
+
+  assert.deepEqual(traffar, [],
+    'dessa refererar ett namn som inte finns langre — koden laddas utan att kasta och felet slar ' +
+    'forst nar raden korrs:\n' + traffar.map(t => '  ' + t).join('\n'));
+});
+
 // ---- manifestet ar och forblir den enda sanningen -----------------------------------------------------
 test('varje gava i manifestet finns pa disk, och varje bild pa disk star i manifestet', () => {
   const sandbox = { window: {} };
