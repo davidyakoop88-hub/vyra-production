@@ -173,6 +173,10 @@ function runBlock(source, extras = {}, containers = []) {
     document: dom.document,
     state: { widgets: [] },
     view: 'editor', selected: null,
+    // studio.js:15 deklarerar den pa sidan. Sandladan kor utdrag ur media.js utan studio.js, sa den
+    // maste finnas har ocksa - annars kastar varje bind som slar upp den valda widgeten.
+    // Samma kontrakt som den riktiga: null nar id:t inte finns, sa `if(!w)return` fortsatter stoppa.
+    liveWidget: id => sandbox.state.widgets.find(w => w && w.id === id) || null,
     bind: () => {}, save: () => {}, render: () => {}, toast: () => {},
     ...extras
   });
