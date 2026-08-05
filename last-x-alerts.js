@@ -42,7 +42,21 @@
   };
   const TYPE_KEYS = Object.keys(TYPES);
   const DESIGNS = { card: 'Card', stack: 'Stack', skew: 'Skew', badge: 'Badge', royal: 'Royal Coronation' };
-  const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'fade'];
+  const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'roll', 'fade'];
+  const ENTRANCE_LABEL = {
+    'slide-left': 'Slider in från vänster', 'slide-right': 'Slider in från höger',
+    pop: 'Zoomar in', roll: 'Rullar in', fade: 'Tonar in'
+  };
+  // Outron är intron baklänges — .last-x-leaving går tillbaka till entréns egen vilotransform.
+  // Därför finns ingen outroINSTÄLLNING: varje val här bär sin egen utgång i CSS:en.
+  const ENTRANCE_OUTRO = {
+    'slide-left': 'glider ut åt vänster', 'slide-right': 'glider ut åt höger',
+    pop: 'krymper ihop', roll: 'rullar ut', fade: 'tonar bort'
+  };
+  // Visningstiden. Den gamla skalan var ett reglage klampat till 4–6 s, med klampen upprepad på
+  // fyra ställen (här, panelen, legacy-vägen och OBS-widgetens HOLD_MS) — fyra ställen som kunde
+  // säga olika saker. Nu finns tiderna på ETT ställe och alla fyra läser dem härifrån.
+  const DURATIONS = [5, 10, 15];
   const EMBLEM = { card: '✦', stack: '✦', skew: '✦', badge: '◆', royal: '✦' };
 
   // Old placed widgets used one type PER template (templateLastGifter etc.) — map those onto the
@@ -93,7 +107,11 @@
   }
   function designOf(w) { return DESIGNS[w.lastXDesign] ? w.lastXDesign : 'card'; }
   function entranceOf(w) { return ENTRANCES.includes(w.lastXEntrance) ? w.lastXEntrance : 'slide-left'; }
-  function holdMsOf(w) { return Math.max(4, Math.min(6, w.followDuration || 5)) * 1000; }
+  // Okända tider (inklusive de gamla 4:orna och 6:orna som redan ligger sparade i folks layouter)
+  // faller till 5 s i stället för att klampas — 6 hade annars blivit 6, ett värde panelen inte
+  // längre kan visa, och reglaget hade sett tomt ut.
+  function durationOf(w) { return DURATIONS.includes(w.followDuration) ? w.followDuration : 5; }
+  function holdMsOf(w) { return durationOf(w) * 1000; }
 
   // card/stack/skew/badge hug their own content (last-x-alerts.css's width:fit-content) so the
   // resize handle sits exactly at the plate's edge — but that means dragging it changes w.width
@@ -165,14 +183,14 @@
           ${TYPE_KEYS.map(k => `<label class="last-x-type-check"><input type="checkbox" id="lastXType_${k}" data-key="${k}"${active.includes(k) ? ' checked' : ''}><span>${TYPES[k].catalogLabel}</span></label>`).join('')}
         </div>
       </div>
-      <div class="property-group"><h4>DESIGN & RÖRELSE</h4>
+      <div class="property-group"><h4>DESIGN</h4>
         <label>Design<select id="lastXDesign">${Object.entries(DESIGNS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
-        <label>Rörelse<select id="lastXEntrance">
-          <option value="slide-left">Slider in från vänster</option>
-          <option value="slide-right">Slider in från höger</option>
-          <option value="pop">Poppar in</option>
-          <option value="fade">Mjuk fade</option>
+      </div>
+      <div class="property-group"><h4>ANIMATION</h4>
+        <label>Intro — hur rutan kommer in<select id="lastXEntrance">
+          ${ENTRANCES.map(e => `<option value="${e}">${ENTRANCE_LABEL[e]}</option>`).join('')}
         </select></label>
+        <p class="last-x-type-hint">Outron speglar intron: när tiden tar slut ${ENTRANCE_OUTRO[entranceOf(w)]} rutan igen. Därför finns inget eget outro-val.</p>
       </div>
       <div class="property-group" id="lastXThemeGroup" style="display:${multi || w.inheritBrandKit ? 'none' : ''}">
         <h4>TEMA</h4>
@@ -188,8 +206,11 @@
         <label>Testhändelse<input id="followMessage" value="${VyraSafe.text(w.followMessage, TYPES[typeKey].defaultMsg)}" ${multi ? 'disabled' : ''}></label>
         <label>Profilbild (URL)<input id="followProfile" value="${VyraSafe.url(w.profileImage)}"></label>
       </div>
-      <div class="property-group follow-trigger-editor"><h4>TRIGGER</h4>
-        <label class="range-label">Visningstid <b>${Math.max(4, Math.min(6, w.followDuration || 5))} sek</b><input id="followDuration" type="range" min="4" max="6" value="${Math.max(4, Math.min(6, w.followDuration || 5))}"></label>
+      <div class="property-group follow-trigger-editor"><h4>VISNINGSTID</h4>
+        <label>Rutan ligger kvar<select id="followDuration">
+          ${DURATIONS.map(d => `<option value="${d}">${d} sekunder</option>`).join('')}
+        </select></label>
+        <p class="last-x-type-hint">Räknat från att intron är klar. Kommer en ny händelse av samma typ under tiden byts namnet på plats och tiden börjar om.</p>
         <button id="testLastX" type="button">▶ Testa alert</button>
         ${multi ? '<button id="testLastXAll" type="button">▶ Testa alla fyra i rad</button>' : ''}
       </div>
@@ -305,7 +326,7 @@
     void box.offsetWidth;
     box.classList.add('last-x-active');
     clearTimeout(box._lastXTimer); clearTimeout(box._lastXLeaveTimer);
-    const duration = Math.max(4, Math.min(6, w.followDuration || 5)) * 1000;
+    const duration = holdMsOf(w);
     box._lastXLeaveTimer = setTimeout(() => box.classList.add('last-x-leaving'), duration - 420);
     box._lastXTimer = setTimeout(() => box.classList.remove('last-x-active', 'last-x-leaving'), duration);
   }
@@ -351,6 +372,7 @@
 
       const designSel = document.querySelector('#lastXDesign'); if (designSel) designSel.value = designOf(w);
       const entranceSel = document.querySelector('#lastXEntrance'); if (entranceSel) entranceSel.value = entranceOf(w);
+      const durationSel = document.querySelector('#followDuration'); if (durationSel) durationSel.value = durationOf(w);
       const themeSel = document.querySelector('#followTheme');
       if (themeSel) { const active = activeKeysFor(w); themeSel.value = w.followTheme || Object.keys(TYPES[active[0]].themes)[0] }
 

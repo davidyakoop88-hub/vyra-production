@@ -38,6 +38,10 @@
 .last-x-widget.entrance-slide-left{transform:translateX(-48px)}
 .last-x-widget.entrance-slide-right{transform:translateX(48px)}
 .last-x-widget.entrance-pop{transform:scale(.85)}
+/* rulla in — vridningen ligger FÖRE förflyttningen, så rutan rullar längs sin väg i stället för
+   att glida in och vrida sig på stället. .selected/.last-x-active nollställer till
+   translateX(0) scale(1), som inte bär någon rotation, så vinkeln går tillbaka till 0 av sig själv. */
+.last-x-widget.entrance-roll{transform:rotate(-14deg) translateX(-40px)}
 .last-x-widget.entrance-fade{transform:none}
 
 /* Visible while selected (so you can position/resize it in the layout editor) or while actually
@@ -54,6 +58,7 @@
 .last-x-widget.entrance-slide-left.last-x-leaving{transform:translateX(-48px)!important}
 .last-x-widget.entrance-slide-right.last-x-leaving{transform:translateX(48px)!important}
 .last-x-widget.entrance-pop.last-x-leaving{transform:scale(.85)!important}
+.last-x-widget.entrance-roll.last-x-leaving{transform:rotate(-14deg) translateX(-40px)!important}
 
 /* ---- the plate ---- */
 /* No width here — the plate hugs its own content (avatar+text+emblem), exactly like the source
