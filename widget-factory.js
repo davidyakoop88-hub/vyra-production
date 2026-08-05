@@ -41,8 +41,22 @@
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
     'topgift.theme': { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' },
+    // Premiumdesignerna ar en EGEN familj, inte fler rader i topgift.theme ovan: de delar bara
+    // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
+    // Accenten ar densamma for alla 21; tabellen bar etiketten sa den sager nagot mer an att
+    // namnet finns.
+    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
+      glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
+      galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
+      hall: 'VYRA Hall of Fame', throne: 'Royal Throne', champion: 'Celestial Champion',
+      pedestal: 'Diamond Pedestal', arch: 'Celestial Arch', phoenix: 'Phoenix',
+      signal: 'Signal', fireworks: 'Fireworks', bloom: 'Bloom', comet: 'Comet' },
     'topgift.extra': {"sakura":"#ff69b4","fire":"#ff4b16","ice":"#64dfff","galaxy":"#9b5cff","aurora":"#4fd8c4","retro":"#ffcf3d","goldrush":"#e8b64d","coronation":"#e8c25a"},
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
+    // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
+    // som skiljer sig per design.
+    'topstreak.premium': { liquid: '#d9a441', momentum: '#d8dee9', tier: '#c68cff',
+      thread: '#e7bc63', chrono: '#9db7d0', chain: '#d2d5da', thermo: '#ff8a36' },
     'topstreak.width': {neon:235,'sakura-rail':235,'cyber-grid':330,storm:310},
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
     'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
@@ -108,6 +122,19 @@
       type: 'templateTopGift', x: 70, y: 180, width: 280, title: 'VYRA Top Gift', value: '',
       dataName: '@StreamQueen', dataValue: '44 999', accent: '#ff9d28', dataColor: '#ffffff',
       valueColor: '#ff9d28', dataSize: 18, showDataValue: true
+    }),
+    // Falt for falt det som premium-final.js:s knapp byggde for hand. Avviker nagot har byter
+    // varje befintlig anvandare utseende nasta gang de lagger till en design, sa det finns ett
+    // test som jamfor mot den gamla formen.
+    'topgift.premium': v => ({
+      type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
+      templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
+      accent: '#d9a441', giftSize: 110, dataSize: 20, topGiftFlipSpeed: 1, topGiftGlow: 55
+    }),
+    'topstreak.premium': v => ({
+      type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 170, width: 520,
+      title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
+      accent: v.accent, giftSize: 64, streakSpeed: 1, streakGlow: 50
     }),
     'topgift.theme': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 180, width: 280, title: 'VYRA Top Gift',
@@ -231,11 +258,13 @@
       if (!parts.length) return ['topgift', {}];
       if (parts[0] === 'frame') return ['topgift.frame', { frame: parts[1], accent: pick('topgift.frame', parts[1], 'gåvoram').accent }];
       if (parts[0] === 'extra') return ['topgift.extra', { theme: parts[1], accent: pick('topgift.extra', parts[1], 'extratema') }];
+      if (parts[0] === 'premium') { pick('topgift.premium', parts[1], 'premiumdesign'); return ['topgift.premium', { theme: parts[1] }] }
       return ['topgift.theme', { theme: parts[0], accent: pick('topgift.theme', parts[0], 'tema') }];
     },
     'topstreak': parts => {
       if (!parts.length) return ['topstreak', {}];
       if (parts[0] === 'frame') return ['topstreak.frame', { frame: parts[1], accent: pick('topstreak.frame', parts[1], 'streakram').accent }];
+      if (parts[0] === 'premium') return ['topstreak.premium', { theme: parts[1], accent: pick('topstreak.premium', parts[1], 'premiumdesign') }];
       return ['topstreak.theme', { theme: parts[0], accent: pick('topstreak.theme', parts[0], 'streaktema'), width: table('topstreak.width')[parts[0]] || 310 }];
     },
     'toplike': parts => {
