@@ -19,7 +19,21 @@
   // because it ends up inside a single-quoted JS string in the handler.
   const safeImg=(src,fallback)=>`src="${VyraSafe.url(src,fallback)}" onerror="this.onerror=null;this.src='${VyraSafe.url(fallback)}'"`;
 
-  vyraStreak=function(w){let style=w.streakTheme||'liquid',value=w.dataValue||18;return `<div class="widget vyra-streak premium-streak streak-${style}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||520}px;--streak:${w.accent||STREAKS[style]?.[1]||'#d9a441'};--speed:${w.streakSpeed||1};--gift-size:${w.giftSize||64}px;--streak-glow:${w.streakGlow??50}%;zoom:${w.widgetScale||1}"><div class="streak-identity"><div class="streak-flip"><div class="streak-profile-face"><img ${safeImg(w.profileImage,fallbackProfile)}></div><div class="streak-gift-face"><img ${safeImg(w.giftImage,fallbackGift)}></div></div><div class="streak-copy"><small>${w.templateTitle||'TOP STREAK'}</small><strong>${VyraSafe.text(w.dataName,'@StreamQueen')}</strong></div></div><div class="streak-score"><b>${w.streakPrefix??'×'}${value}</b><span>${w.streakLabel||'STREAK'}</span></div><div class="streak-mechanism"><i></i><i></i><i></i><i></i><i></i><em>GOOD</em><em>GREAT</em><em>AMAZING</em><em>LEGENDARY</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`};
+  // Ramdesignerna ritas av media.js:s vyraStreak, som bar .sframe-art och den urstansade
+  // profilrutan. Den har overskrivningen tog ALLA Top Streak-widgets, aven de atta som bar
+  // streakFrame, och gjorde ramgrenen till dod kod. Uppmatt i webblasaren:
+  //
+  //     catalog:topstreak:frame:rose-heart
+  //       widgetobjekt:  streakFrame: "rose-heart"        ratt
+  //       renderad:      premium-streak streak-liquid     fel
+  //
+  // Widgetobjektet var alltsa korrekt hela tiden; renderaren laste det bara aldrig. Darfor kunde
+  // ingen faltjamforelse fanga det — se tests/renderer-honors-widget.test.js.
+  //
+  // Brast 2026-08-04 i PR #51, nar media.js borjade injicera den har filen. Ramarna lades till
+  // 2026-08-01 och fungerade i tre dagar.
+  const klassiskStreak=vyraStreak;
+  vyraStreak=function(w){if(w.streakFrame)return klassiskStreak(w);let style=w.streakTheme||'liquid',value=w.dataValue||18;return `<div class="widget vyra-streak premium-streak streak-${style}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||520}px;--streak:${w.accent||STREAKS[style]?.[1]||'#d9a441'};--speed:${w.streakSpeed||1};--gift-size:${w.giftSize||64}px;--streak-glow:${w.streakGlow??50}%;zoom:${w.widgetScale||1}"><div class="streak-identity"><div class="streak-flip"><div class="streak-profile-face"><img ${safeImg(w.profileImage,fallbackProfile)}></div><div class="streak-gift-face"><img ${safeImg(w.giftImage,fallbackGift)}></div></div><div class="streak-copy"><small>${w.templateTitle||'TOP STREAK'}</small><strong>${VyraSafe.text(w.dataName,'@StreamQueen')}</strong></div></div><div class="streak-score"><b>${w.streakPrefix??'×'}${value}</b><span>${w.streakLabel||'STREAK'}</span></div><div class="streak-mechanism"><i></i><i></i><i></i><i></i><i></i><em>GOOD</em><em>GREAT</em><em>AMAZING</em><em>LEGENDARY</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`};
 
   vyraTopGift=function(w){let style=w.theme||'royal';return `<div class="widget vyra-topgift premium-topgift topgift-${style}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||340}px;--accent:${w.accent||'#d9a441'};--gift-size:${w.giftSize||110}px;--topgift-glow:${w.topGiftGlow??55}%;--flip-speed:${w.topGiftFlipSpeed||1};zoom:${w.widgetScale||1}"><div class="topgift-ornament"><i></i><i></i><i></i></div><div class="vyra-gift-title">${w.templateTitle||'TOP GIFTER'}</div><div class="vyra-flip"><div class="vyra-profile-face"><img ${safeImg(w.profileImage,fallbackProfile)}></div><div class="vyra-gift-face"><img ${safeImg(w.giftImage,fallbackGift)}></div></div><div class="topgift-copy"><strong style="font-size:${w.dataSize||20}px;color:${w.dataColor||'#fff'}">${VyraSafe.text(w.dataName,'@StreamQueen')}</strong><em style="color:${w.valueColor||w.accent||'#d9a441'}">◉ ${VyraSafe.text(w.dataValue,'44 999')}</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`};
 
