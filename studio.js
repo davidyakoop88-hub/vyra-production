@@ -12,6 +12,40 @@ function getEditorCanvasScale(){
 // Aldrig localStorage direkt: agaren avgor vad som ar sakert att visa, och returnerar samma
 // objektreferens hela sidans livstid - allt har muterar den in-place.
 const state=window.VyraSessionState.activeState();
+// En handler binds nar egenskapspanelen ritas och SKRIVER nar anvandaren klickar, kanske sekunder
+// senare. Emellan hinner en sparning projicera, och session-state.js:94 byter da ut varje
+// widgetobjekt mot en klon:
+//
+//   Object.keys(activeStateObject).forEach(k=>{delete activeStateObject[k]});
+//   Object.assign(activeStateObject, clone(next));
+//
+// `state` behaller sin identitet - det ar hela poangen med den permanenta referensen - men
+// state.widgets och varje widget i den ersatts. En fangad referens pekar darefter pa nagot som
+// inte langre ligger i layouten: skrivningen ser ut att lyckas och ar borta utan felmeddelande.
+// Cloud-syncs tickare sparar varje sekund, sa fonstret ar alltid oppet.
+//
+// Uppmatt i produktion pa gavovaljaren: modalen stangdes, giftImage5 blev aldrig satt.
+//
+// Proxyn slar upp widgeten pa id vid VARJE atkomst, sa bade lasning och skrivning traffar det
+// objekt som faktiskt ligger i state.widgets just da.
+//
+// null nar den saknas, inte en proxy: en proxy ar alltid sann, och varje `if(!w||w.type!==...)
+// return` i klienten skulle sluta skydda.
+function liveWidget(id){
+  if(!state.widgets.some(w=>w&&w.id===id))return null;
+  const at=()=>state.widgets.find(w=>w&&w.id===id)||{};
+  return new Proxy({},{
+    get:(_,k)=>at()[k],
+    set:(_,k,v)=>{at()[k]=v;return true},
+    has:(_,k)=>k in at(),
+    deleteProperty:(_,k)=>{delete at()[k];return true},
+    ownKeys:()=>Reflect.ownKeys(at()),
+    // Malet ar tomt och utsträckbart, sa rapporterade nycklar maste vara configurable - annars
+    // kastar bade spread och JSON.stringify pa en invariant.
+    getOwnPropertyDescriptor:(_,k)=>{const d=Object.getOwnPropertyDescriptor(at(),k);return d?{...d,configurable:true}:undefined}
+  })
+}
+window.liveWidget=liveWidget;
 
 // Defaults ags av session-state.js (neutralState/onboardingState). Kvar har star bara flows,
 // som ingen projektion fyller i.
@@ -50,8 +84,8 @@ function vyraRenderWidgets(){
   return picked.widgets.map(wh).join('');
 }
 function layerList(){const layoutWidgets=window.VyraWidgets?window.VyraWidgets.layoutOnly(state.widgets):state.widgets;return layoutWidgets.length?layoutWidgets.slice().sort((a,b)=>(b.layer||1)-(a.layer||1)).map((w,i)=>layerItemMarkup(w,i)).join(''):'<div class="editor-layer-empty">Inga widgets på scenen ännu. Lägg till första objektet för att börja.</div>'}
-function props(){let w=state.widgets.find(x=>x.id===selected);return w?`<h3>${w.type}</h3><label>Rubrik<input id="pt" value="${w.title??''}"></label><label>Värde<input id="pv" value="${w.value??''}"></label><button class="delete" id="del">Ta bort</button>`:'<div class="properties-empty"><strong>Välj en widget</strong><span>Klicka på en widget i vänsterlistan eller direkt på scenen för att redigera layout, färg och animation.</span></div>'}
-function editor(){let currentWidget=state.widgets.find(x=>x.id===selected);return `<div class="editor-shell"><div class="elements"><div class="elements-panel"><div class="elements-head"><div><small class="panel-kicker">Overlay</small><div class="panel-title">Live-lager</div></div><button class="elements-add" data-open-overlay title="Öppna overlay">＋</button></div><div class="catalog-notice elements-note"><b>Enkel byggyta</b><span>Välj en widget, justera till höger och håll scenen ren i mitten.</span></div><input class="widget-search" placeholder="Filter"><div class="editor-layer-list">${layerList()}</div><div class="elements-actions"><button data-open-overlay>＋ Add item</button></div><div class="widget-catalog"></div></div></div><div class="workarea"><div class="stage-topbar"><div class="stage-topbar-format"></div><div class="stage-topbar-center"></div><div class="stage-topbar-actions"></div></div><div class="stage-shell"><div class="stage-rail stage-rail-left"></div><div class="canvas-wrap"><div class="stage-caption"><span>Mobilskärm</span><b>1080 × 1920</b></div><div class="canvas-frame"><div class="canvas">${vyraRenderWidgets()}</div></div></div><div class="stage-rail stage-rail-right"></div></div></div><div class="properties"><div class="properties-head"><small class="panel-kicker">Inspector</small><div class="panel-title">${currentWidget?formatWidgetLabel(currentWidget):'Välj widget'}</div><p>${currentWidget?'Redigera vald widget med en egen panel som använder hela ytan för just den här widgeten.':'Välj en widget på scenen för att öppna dess egna inställningar.'}</p></div><div class="properties-body">${props()}</div></div></div>`}
+function props(){let w=liveWidget(selected);return w?`<h3>${w.type}</h3><label>Rubrik<input id="pt" value="${w.title??''}"></label><label>Värde<input id="pv" value="${w.value??''}"></label><button class="delete" id="del">Ta bort</button>`:'<div class="properties-empty"><strong>Välj en widget</strong><span>Klicka på en widget i vänsterlistan eller direkt på scenen för att redigera layout, färg och animation.</span></div>'}
+function editor(){let currentWidget=liveWidget(selected);return `<div class="editor-shell"><div class="elements"><div class="elements-panel"><div class="elements-head"><div><small class="panel-kicker">Overlay</small><div class="panel-title">Live-lager</div></div><button class="elements-add" data-open-overlay title="Öppna overlay">＋</button></div><div class="catalog-notice elements-note"><b>Enkel byggyta</b><span>Välj en widget, justera till höger och håll scenen ren i mitten.</span></div><input class="widget-search" placeholder="Filter"><div class="editor-layer-list">${layerList()}</div><div class="elements-actions"><button data-open-overlay>＋ Add item</button></div><div class="widget-catalog"></div></div></div><div class="workarea"><div class="stage-topbar"><div class="stage-topbar-format"></div><div class="stage-topbar-center"></div><div class="stage-topbar-actions"></div></div><div class="stage-shell"><div class="stage-rail stage-rail-left"></div><div class="canvas-wrap"><div class="stage-caption"><span>Mobilskärm</span><b>1080 × 1920</b></div><div class="canvas-frame"><div class="canvas">${vyraRenderWidgets()}</div></div></div><div class="stage-rail stage-rail-right"></div></div></div><div class="properties"><div class="properties-head"><small class="panel-kicker">Inspector</small><div class="panel-title">${currentWidget?formatWidgetLabel(currentWidget):'Välj widget'}</div><p>${currentWidget?'Redigera vald widget med en egen panel som använder hela ytan för just den här widgeten.':'Välj en widget på scenen för att öppna dess egna inställningar.'}</p></div><div class="properties-body">${props()}</div></div></div>`}
 function flows(){return `<div class="flow-head"><h2>Automationer</h2><button class="primary" id="newFlow">＋ Ny automation</button></div><div class="flows">${state.flows.map((f,i)=>`<article class="card flow-row"><div class="node"><b>◇ ${f.trigger}</b><small>TRIGGER</small></div><div class="arrow">→</div><div class="node"><b>▶ ${f.action}</b><small>ACTION</small></div><button data-toggle="${i}">${f.on?'Aktiv':'Pausad'}</button></article>`).join('')}</div>`}
 function events(){return `<article class="card" style="padding:20px"><h2>Eventhistorik</h2><p>Händelser visas här när TikTok LIVE är anslutet.</p></article>`}
 function analytics(){return `<div class="analytics-grid"><article class="card big-chart"><h2>Tillväxt senaste 30 dagarna</h2><p>Analys visas efter din första riktiga livesändning.</p></article><article class="card rank"><h2>Top supporters</h2><p>Ingen livedata ännu.</p></article></div>`}
@@ -136,7 +170,7 @@ function bind(){
       el.onpointerup=finishDrag;
       el.onpointercancel=finishDrag;
     });
-    let w=state.widgets.find(x=>x.id===selected);
+    let w=liveWidget(selected);
     if(w){
       $('#pt')&&($('#pt').onchange=e=>{w.title=e.target.value;saveThenRender()});
       $('#pv')&&($('#pv').onchange=e=>{w.value=e.target.value;saveThenRender()});
