@@ -36,6 +36,7 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const { createDom, closeAll } = require('./helpers/dom-harness.js');
+const { hoppaOver } = require('./helpers/skip-dirs.js');
 
 const ROOT = path.join(__dirname, '..');
 const VyraWidgets = require(path.join(ROOT, 'widget-factory.js'));
@@ -160,8 +161,8 @@ test('typkontrollen laser inte fast sig — byter widgeten typ foljer den med', 
 // Svepet gick over 15 filer. Ett strukturellt las ar det enda som hindrar att nasta bind skrivs med
 // den gamla formen igen - och den formen ser helt normal ut, vilket ar precis problemet.
 test('ingen levererad klientfil fangar den valda widgeten vid bind', () => {
-  const HOPPA = new Set(['node_modules', '.git', 'assets', 'tests', 'scripts', '.github',
-    'electron-app', 'server', 'tiktok-bridge', 'coverage', 'dist']);
+  const HOPPA = hoppaOver('assets', 'tests', 'scripts', '.github',
+    'electron-app', 'server', 'tiktok-bridge');
   const filer = [];
   (function walk(d) {
     for (const post of fs.readdirSync(d, { withFileTypes: true })) {

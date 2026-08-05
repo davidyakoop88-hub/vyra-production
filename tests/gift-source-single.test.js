@@ -20,6 +20,7 @@
 // Testerna nedan later den inte komma tillbaka.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path'), vm = require('vm');
+const { hoppaOver } = require('./helpers/skip-dirs.js');
 
 const ROOT = path.join(__dirname, '..');
 const MEDIA = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
@@ -104,8 +105,8 @@ test('med manifest erbjuds hela uppsattningen', () => {
 // En textsokning over ALLA levererade filer, inte bara den man rakade andra i.
 test('inget borttaget gavonamn lever kvar i levererad kod', () => {
   const BORTTAGNA = ['allCampaignGiftChoices', 'campaignGiftChoices'];
-  const HOPPA = new Set(['node_modules', '.git', 'assets', 'tests', 'scripts', '.github',
-    'electron-app', 'server', 'tiktok-bridge', 'coverage', 'dist']);
+  const HOPPA = hoppaOver('assets', 'tests', 'scripts', '.github',
+    'electron-app', 'server', 'tiktok-bridge');
   const filer = [];
   (function walk(d) {
     for (const post of fs.readdirSync(d, { withFileTypes: true })) {
