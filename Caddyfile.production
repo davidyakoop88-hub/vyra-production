@@ -6,6 +6,15 @@
     health_uri /health/ready
     health_interval 10s
   }
+  # Samma cachningsregler som ./Caddyfile, som ar den Dockerfile:55 faktiskt kopierar och alltsa
+  # den som kor. Den har filen anvands av web/Dockerfile, som inte ar bygget Railway korr - men den
+  # SAKNADE HTML-regeln helt, sa ett byte hit hade borjat cacha sjalva appskalet heuristiskt. Ett
+  # test jamfor de tva filernas cachningsregler mot varandra sa de inte kan glida isar igen.
+  @html path / *.html
+  header @html Cache-Control "no-cache, no-store, must-revalidate"
+  @assets path *.js *.css
+  header @assets Cache-Control "no-cache"
+
   root * /srv
   try_files {path} /index.html
   file_server

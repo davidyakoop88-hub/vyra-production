@@ -4,6 +4,20 @@
   @html path / *.html
   header @html Cache-Control "no-cache, no-store, must-revalidate"
 
+  # Skript och stilmallar revalideras i stallet for att gissas.
+  #
+  # Utan Cache-Control faller webblasaren tillbaka pa HEURISTISK cachning: den behaller svaret i
+  # ungefar 10 % av tiden sedan Last-Modified. Last-Modified ar deploytidpunkten for alla filer,
+  # sa en andring kunde vara osynlig i upp till en tiondel av tiden sedan forra deployen - olika
+  # lange for olika anvandare. Skyddet var ?v=-markorer i media.js, satta pa ungefar tio av
+  # femtio filer; gift-fireworks.css var en av de fyrtio utan och laddades osynligt gammal.
+  #
+  # `no-cache` betyder inte "cacha inte" utan "cacha, men fraga alltid forst". file_server skickar
+  # redan ETag, sa fragan blir ett tomt 304-svar. Bilder, ljud och typsnitt lamnas med flit utanfor:
+  # de ar i praktiken bara tillagda, aldrig andrade, och tjanar pa att cachas.
+  @assets path *.js *.css
+  header @assets Cache-Control "no-cache"
+
   @backend path /api/* /health/*
   handle @backend {
     reverse_proxy api:8080 {
