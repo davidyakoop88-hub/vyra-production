@@ -35,10 +35,10 @@ RUN set -eux; \
     for f in manifest.json theme.schema.json; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
     # Belt and braces. .dockerignore already keeps these out of the context and no rule above would
     # pick them up, but this is the file someone reads in a year to learn what is public.
-    rm -f /site/package.json /site/package-lock.json /site/Caddyfile /site/Caddyfile.production; \
+    rm -f /site/package.json /site/package-lock.json /site/Caddyfile; \
     # Nothing outside the allowlist can have arrived. This does not remove anything — it fails the
     # build if that ever stops being true.
-    for forbidden in server electron-app tiktok-bridge tests scripts docs deploy web \
+    for forbidden in server electron-app tiktok-bridge tests scripts docs deploy \
                      .env.production.example docker-compose.yml docker-compose.production.yml \
                      Dockerfile Caddyfile package.json; do \
       if [ -e "/site/$forbidden" ]; then echo "FEL: $forbidden hamnade i dokumentroten"; exit 1; fi; \

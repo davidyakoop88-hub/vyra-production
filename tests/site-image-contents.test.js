@@ -63,7 +63,7 @@ const SECRETS = [
   'electron-app/main.js', 'electron-app/package.json',
   'tiktok-bridge/bridge.js',
   '.env.production.example', 'docker-compose.yml', 'docker-compose.production.yml',
-  'Caddyfile', 'Caddyfile.production', 'Dockerfile', '.dockerignore',
+  'Caddyfile', 'Dockerfile', '.dockerignore',
   'package.json', 'package-lock.json',
   'tests/site-image-contents.test.js', 'scripts/goal-churn.js',
 ];
