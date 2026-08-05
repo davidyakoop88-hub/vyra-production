@@ -71,6 +71,78 @@ test('renderaren satter fortfarande topgift-klassen — testet mater ratt sak', 
     'vyraTopGift satter inte langre topgift-<namn>; testerna ovan mater fel klass');
 });
 
+// ---- ingen design far vara en kopia av en annan -------------------------------------------------
+// Efter omdopningen gick 8 -> 18 unika utseenden, men fyra designval var fortfarande kopior:
+// hall delade sin ENDA regel med throne, och champion sin med arch. De var inte trasiga, bara
+// aldrig fardigritade.
+//
+// Jamforelsen sker pa REGELUPPSATTNING och inte pa beraknad stil: jsdom kan inte lasa
+// pseudoelement, och temana ligger till stor del i :before och :after. En matning som missar dem
+// sager "identiska" om tva designer som i sjalva verket skiljer sig - det hande, och sa foll
+// signal felaktigt ut som en kopia av cyber.
+const ALLA_TEMAN = () => designval();
+const CSS_REGLER = [...CSS.matchAll(/([^{}@]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), dekl: m[2].trim() }));
+
+function regeluppsattning(tema, teman) {
+  // ALLA temanamn normaliseras bort, inte bara det aktuella - annars ser en regel som DELAS av tva
+  // teman olika ut for dem, och de raknas felaktigt som unika.
+  const alla = new RegExp('\\.topgift-(' + teman.join('|') + ')(?![a-z0-9-])', 'g');
+  return CSS_REGLER
+    .filter(r => new RegExp('\\.topgift-' + tema + '(?![a-z0-9-])').test(r.sel))
+    .map(r => r.sel.replace(alla, '.T') + '{' + r.dekl + '}')
+    .sort().join('\n');
+}
+
+test('inga tva designval har identisk styling', () => {
+  const teman = ALLA_TEMAN();
+  const per = {};
+  for (const t of teman) (per[regeluppsattning(t, teman)] ||= []).push(t);
+  const kopior = Object.values(per).filter(x => x.length > 1);
+
+  assert.deepEqual(kopior, [],
+    'dessa designval ser likadana ut for anvandaren:\n' +
+    kopior.map(x => '  ' + x.join(' = ')).join('\n'));
+});
+
+test('de fyra tunnaste designvalen har fatt en egen siluett', () => {
+  const teman = ALLA_TEMAN();
+  const tunna = ['hall', 'throne', 'champion', 'arch'].filter(t => {
+    const n = regeluppsattning(t, teman);
+    return !n || n.split('\n').length < 3;
+  });
+
+  assert.deepEqual(tunna, [],
+    `dessa har farre an tre regler och kan darfor inte ha en egen form: ${tunna.join(', ')}`);
+});
+
+test('varje ny design har en egen signaturrorelse', () => {
+  // VYRA:s designsprak: egen siluett OCH egen rorelse per design. Delar tva designer animation
+  // ar de inte sarskilda i rorelse, bara i farg.
+  const rorelser = {};
+  for (const t of ['hall', 'throne', 'champion', 'arch']) {
+    const namn = [...regeluppsattning(t, ALLA_TEMAN()).matchAll(/animation:\s*(?!none\b)([a-zA-Z][\w-]*)/g)]
+      .map(m => m[1]);
+    assert.ok(namn.length, `${t} har ingen animation alls`);
+    namn.forEach(n => (rorelser[n] ||= []).push(t));
+  }
+  const delade = Object.entries(rorelser).filter(([, t]) => new Set(t).size > 1);
+
+  assert.deepEqual(delade.map(([n, t]) => n + ': ' + [...new Set(t)].join(', ')), [],
+    'dessa designer delar rorelse');
+});
+
+test('varje rorelse har sina keyframes', () => {
+  const anvanda = new Set();
+  for (const t of ['hall', 'throne', 'champion', 'arch']) {
+    [...regeluppsattning(t, ALLA_TEMAN()).matchAll(/animation:\s*(?!none\b)([a-zA-Z][\w-]*)/g)]
+      .forEach(m => anvanda.add(m[1]));
+  }
+  const saknas = [...anvanda].filter(n => !new RegExp('@keyframes\\s+' + n + '\\b').test(CSS));
+
+  assert.deepEqual(saknas, [],
+    `dessa animationer namnges men har inga keyframes, sa ingenting ror sig: ${saknas.join(', ')}`);
+});
+
 // ---- DOM-kontraktet som de aterupplivade reglerna hanger pa -------------------------------------
 // Reglerna skrevs mot den GAMLA renderarens DOM. De flesta krokarna finns kvar, men strong har
 // flyttat in i .topgift-copy - en regel som star pa `>strong` traffar darfor ingenting langre.
