@@ -76,3 +76,30 @@
 .streak-liquid .streak-mechanism i:nth-child(5){animation-delay:.72s}
 @keyframes streakLiquidFlow{0%{background-position:120% 0}100%{background-position:-120% 0}}
 @keyframes streakLiquidDrop{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.12)}}
+
+/* ── GIFT CAMPAIGN · neon och glass fick tillbaka sin identitet ────────────────────────────────
+   neon, glass och minimal ritades identiskt — sex knappar, en design. Orsaken var den ramlosa
+   aterstallningen i studio.css, som listade alla tre och uttryckligen slacker background OCH
+   backdrop-filter. Den ar bade senare och mer specifik an .campaign-glass, sa glasets egen panel
+   forsvann helt. minimal ar redan precis det aterstallningen gor, sa den ar orord - den ska vara
+   den bara.
+
+   glass bygger inte langre pa backdrop-filter. I en OBS browser source finns ingenting bakom
+   elementet att sudda, sa blurren syns bara i editorn - en design som ser ut pa ett satt i Studion
+   och ett annat i sandningen ar varre an ingen design. Glaset gors i stallet med en genomskinlig
+   panel och en ljus kant, vilket haller pa transparent bakgrund. */
+
+.vyra-campaign.campaign-glass{
+  background:linear-gradient(160deg,#ffffff14,#ffffff05)!important;
+  border:1px solid #ffffff2e!important;border-radius:14px!important;
+  box-shadow:inset 0 1px 0 #ffffff33, 0 10px 28px #00000055!important;backdrop-filter:none!important}
+.vyra-campaign.campaign-glass .campaign-gifts article{
+  background:#ffffff0d!important;border:1px solid #ffffff1f!important;border-radius:10px!important}
+
+/* neon hade ingen egen regel alls och lag pa grundutseendet. Namnet lovar ljus: en kantlinje som
+   glodar i widgetens accentfarg, utan fylld bakgrund. */
+.vyra-campaign.campaign-neon{
+  border:1px solid color-mix(in srgb,var(--campaign) 55%,transparent)!important;border-radius:12px!important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--campaign) 35%,transparent),
+             inset 0 0 12px color-mix(in srgb,var(--campaign) 12%,transparent)!important}
+.vyra-campaign.campaign-neon h3{text-shadow:0 0 10px color-mix(in srgb,var(--campaign) 60%,transparent)}
