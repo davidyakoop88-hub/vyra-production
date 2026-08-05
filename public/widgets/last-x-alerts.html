@@ -30,11 +30,13 @@
     transition:opacity .32s ease,transform .38s cubic-bezier(.22,1,.36,1);
   }
 
-  /* ---- entrance/exit variants (?entrance=slide-left|slide-right|pop|fade) — each sets its own
-     resting transform; .show settles to identity, .hide eases back out the way it came in. */
+  /* ---- entrance/exit variants (?entrance=slide-left|slide-right|pop|roll|fade) — each sets its own
+     resting transform; .show settles to identity, .hide eases back out the way it came in. The exit
+     is always the entrance backwards, which is why there is no separate outro setting. */
   html[data-entrance="slide-left"] #card{transform:translateX(-48px)}
   html[data-entrance="slide-right"] #card{transform:translateX(48px)}
   html[data-entrance="pop"] #card{transform:scale(.85)}
+  html[data-entrance="roll"] #card{transform:rotate(-14deg) translateX(-40px)}
   html[data-entrance="fade"] #card{transform:none}
   #card.show{opacity:1;transform:translateX(0) scale(1)}
   #card.hide{
@@ -44,6 +46,7 @@
   html[data-entrance="slide-left"] #card.hide{transform:translateX(-48px)}
   html[data-entrance="slide-right"] #card.hide{transform:translateX(48px)}
   html[data-entrance="pop"] #card.hide{transform:scale(.85)}
+  html[data-entrance="roll"] #card.hide{transform:rotate(-14deg) translateX(-40px)}
 
   /* ---- the plate ---- */
   #tilt{
@@ -429,7 +432,7 @@
   }
   document.documentElement.style.setProperty('--last-x',accentFor(active[0]));
 
-  const ENTRANCES=['slide-left','slide-right','pop','fade'];
+  const ENTRANCES=['slide-left','slide-right','pop','roll','fade'];
   const entranceParam=VyraWidget.get('entrance','slide-left');
   document.documentElement.dataset.entrance=ENTRANCES.includes(entranceParam)?entranceParam:'slide-left';
 
@@ -457,8 +460,12 @@
   els.label.textContent=labelFor(active[0]);
   els.img.onerror=()=>delete els.avatar.dataset.hasImage;
 
-  // Studio clamps visningstiden to 4–6 s — keep the exact same envelope here.
-  const HOLD_MS=Math.max(4,Math.min(6,Number(VyraWidget.get('hold','5'))||5))*1000;
+  // Studio offers exactly these three display times — keep the same set here, or ?hold= would accept
+  // values the Studio panel can no longer show. An unknown ?hold= (including the 4 and 6 that older
+  // OBS links carry) falls back to 5 rather than being clamped into a value nobody picked.
+  const DURATIONS=[5,10,15];
+  const holdParam=Number(VyraWidget.get('hold','5'));
+  const HOLD_MS=(DURATIONS.includes(holdParam)?holdParam:5)*1000;
   const ENTER_MS=400,EXIT_MS=360;
 
   // ---- enter → hold → exit phase machine over per-type latest-event slots. "Last X" means
