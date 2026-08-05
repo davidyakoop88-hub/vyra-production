@@ -4,9 +4,47 @@
   function applyPerformance(){document.documentElement.dataset.performance=mode;localStorage.setItem(PERF_KEY,mode)}
   applyPerformance();
 
-  const queue=[],wrapped=new Set();let busy=false;
-  function next(){if(busy||!queue.length)return;busy=true;let job=queue.shift();try{job.run()}catch(e){console.error('[VYRA queue]',e)}setTimeout(()=>{busy=false;next()},Math.max(800,job.duration||5000))}
-  window.VyraAlertQueue={push(run,duration=5000,priority=0){queue.push({run,duration,priority});queue.sort((a,b)=>b.priority-a.priority);next()},clear(){queue.length=0},size(){return queue.length+(busy?1:0)}};
+  // Fem alerts delar den har kon: Battle MVP, Gifter Level Up, Fan Level Up, Gift Fireworks och
+  // New Follower. En i taget ar avsiktligt - de skulle rita over varandra annars.
+  //
+  // Taket och maxaldern ar det inte. Kon hade varken, och clear() anropades fran ingenstans: hundra
+  // gavor koade hundra fyrverkerier, cirka tio minuter som fortsatte spela langt efter att gavorna
+  // slutade. Uppmatt: forsta fyrverkeriet pa 54 ms, andra pa 7 000 ms. En alert som ar en halv minut
+  // gammal beskriver inte langre det som hander pa skarmen.
+  const queue=[],wrapped=new Set();let busy=false,kastade=0;
+  const MAX_VANTANDE=10,MAX_ALDER=30000;
+  // Kastet tar de LAGST prioriterade forst, och bland dem den aldsta. Kon ar sorterad fallande pa
+  // prioritet och sorteringen ar stabil, sa den gruppen ligger sist i inlaggsordning. Utan det
+  // hade en gavostorm kunnat tranga ut en Battle MVP, alltsa precis tvartemot vad prioriteterna
+  // sager.
+  function trimma(){
+    const nu=Date.now();
+    for(let i=queue.length-1;i>=0;i-=1)if(nu-queue[i].at>MAX_ALDER){queue.splice(i,1);kastade+=1}
+    while(queue.length>MAX_VANTANDE){
+      let i=queue.length-1;const p=queue[i].priority;
+      while(i>0&&queue[i-1].priority===p)i-=1;
+      queue.splice(i,1);kastade+=1;
+    }
+  }
+  function next(){
+    if(busy)return;
+    // Aldern provas HAR, inte bara vid push. Blockerar en lang Battle MVP kon i tva minuter kommer
+    // inga nya push:ar som kan trimma, och det som legat och vantat skulle spela som om det vore
+    // farskt. Ratt tidpunkt att fraga "ar det har fortfarande aktuellt" ar nar sloten blir ledig.
+    trimma();
+    if(!queue.length){
+      // Rapporteras nar kon tomts, inte per kastad alert: en storm hade gett nittio rader.
+      if(kastade){console.warn('[VYRA queue] kastade '+kastade+' alerts (tak '+MAX_VANTANDE+', maxalder '+(MAX_ALDER/1000)+'s)');kastade=0}
+      return;
+    }
+    busy=true;let job=queue.shift();try{job.run()}catch(e){console.error('[VYRA queue]',e)}setTimeout(()=>{busy=false;next()},Math.max(800,job.duration||5000))}
+  window.VyraAlertQueue={push(run,duration=5000,priority=0){queue.push({run,duration,priority,at:Date.now()});queue.sort((a,b)=>b.priority-a.priority);trimma();next()},clear(){queue.length=0;kastade=0},size(){return queue.length+(busy?1:0)},stats(){return{vantande:queue.length,spelar:busy,kastade}}};
+  // Kon var sessionsbunden utan att veta om det. cloud-sync.js, goal-client.js, live-client.js och
+  // session-state.js river alla sitt vid sessionsslut; den har gjorde inte det, sa en utloggning
+  // mitt i en gavostorm lamnade kon kvar och den fortsatte spela forra sessionens alerts.
+  function riv(){queue.length=0;busy=false;kastade=0}
+  window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
+  addEventListener('vyra-session-ended',riv);
   const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6]};
   function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||8)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
