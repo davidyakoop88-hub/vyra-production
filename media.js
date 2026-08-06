@@ -743,6 +743,13 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260806-1';document.body.append(js)});
+/* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
+   fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
+   wishlist.js redan tagit over. Knappen agar support nu; wishlist.js sjalv ar orord eftersom dess
+   lagringsnyckel ar inflatad i cloud-sync, session-state och state-backup.
+   Felrapporteringen sitter pa modulnivan i filen, sa den aktiveras av att skriptet laddas — den
+   ska fanga fel aven for nagon som aldrig oppnar supportvyn. */
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='support-client.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='support-client.js?v=20260806-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260806-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
