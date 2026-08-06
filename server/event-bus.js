@@ -25,7 +25,11 @@ const event={
     scoreThem:Math.max(0,Math.min(1e12,Number(input?.scoreThem)||0)),
     multiplier:Math.max(0,Math.min(100,Number(input?.multiplier)||0)),
     battleStatus:String(input?.battleStatus||'').slice(0,64),
-    at:Number(input?.at)||Date.now()
+    at:Number(input?.at)||Date.now(),
+    // Avsandarens fan-klubbsniva. Utan den var Fan Level Up dod pa molnvagen: bryggan raknar
+    // fram den och klienten laser den, men cleanEvent strok faltet daremellan. Bada namnen tas
+    // emot (bryggan: fanClubLevel, klienten: teamLevel). Klamps 0-50; 0 = ingen niva rapporterad.
+    fanClubLevel:Math.max(0,Math.min(50,Math.round(Number(input?.fanClubLevel??input?.teamLevel)||0)))
   };
   if(!event.id||!ALLOWED.has(event.type))throw Object.assign(new Error('Ogiltigt live-event'),{status:400});
   if(Buffer.byteLength(JSON.stringify(event))>MAX_EVENT_BYTES)throw Object.assign(new Error('Event för stort'),{status:413});
