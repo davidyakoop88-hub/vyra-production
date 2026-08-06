@@ -172,6 +172,30 @@ if (require.main === module) {
     }
   }
 
+  // FLODESRAKNAREN: hur manga event bryggan faktiskt SKICKAR, per typ.
+  //
+  // Uppmatt 2026-08-06: battle-payloaden visade atta skilda gavotillfallen under en match medan
+  // overlayn flippade Top Gift tva ganger. Gapet gick inte att avgora - LINK_MIC_ARMIES speglar HELA
+  // battlen, alltsa aven motstandarens sida, sa atta mot tva kan vara helt korrekt eller sa tappas
+  // sex gavor pa vagen. sendEvent loggade inte per event, sa loggen kunde inte saga vilket.
+  //
+  // Det ar samma blinda flack som lat en hel sandning ga utan ETT enda battle-event utan att loggen
+  // kunde saga varfor.
+  //
+  // EN RAKNARE, INTE EN EVENTLOGG. Bara typnamn och tal. En rad per event hade burit anvandarnamn,
+  // gavonamn och kommentarer rakt in i Railways logg; `gift=8 chat=41` bar ingenting.
+  const flodeRaknare = new Map();
+  const FLODE_INTERVALL_MS = 60_000;
+  let flodeSenaste = '';
+  const flodeTimer = setInterval(() => {
+    if (!flodeRaknare.size) return;
+    const rad = [...flodeRaknare.entries()].sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t}=${n}`).join(' ');
+    if (rad === flodeSenaste) return;   // oforandrat sedan forra minuten: ingen rad
+    flodeSenaste = rad;
+    console.log(`[bridge][flode] ${rad}`);
+  }, FLODE_INTERVALL_MS);
+  if (typeof flodeTimer.unref === 'function') flodeTimer.unref();
+
   function eventKey(type, data, fields) {
     const nativeId = N.sourceId(data);
     return nativeId ? `${type}:${nativeId}` : `${type}:${fields.username || ''}:${fields.giftName || ''}:${fields.count || ''}:${Math.floor(Date.now() / 1000)}`;
@@ -180,6 +204,10 @@ if (require.main === module) {
   function sendEvent(type, fields, data) {
     const key = eventKey(type, data, fields), now = Date.now();
     for (const [oldKey, at] of recentEventKeys) if (now - at > 120_000) recentEventKeys.delete(oldKey);
+    // Dubbletter i egen hink: annars gar det inte att se om gavor tappas i dedupen eller aldrig kom.
+    const dubblett = recentEventKeys.has(key);
+    const flodeNyckel = dubblett ? `${type} dubblett` : type;
+    flodeRaknare.set(flodeNyckel, (flodeRaknare.get(flodeNyckel) || 0) + 1);
     if (recentEventKeys.has(key)) return Promise.resolve({ ok: true, duplicate: true });
     recentEventKeys.set(key, now);
     reportToParent('event', { eventType: type, at: now });
@@ -205,11 +233,27 @@ if (require.main === module) {
   // det som andrats fangas varje overgang, och stillastaende brus kostar ingenting.
   const battleSondRaknare = new Map();
   const battleSondSenaste = new Map();
+  let battleSondMatch = null;
   const BATTLE_SOND_TAK = 40;
   function loggaBattleSond(namn, data) {
     let probe;
     try { probe = N.battleProbe(data); }
     catch (err) { console.log(`[bridge][battle-sond] ${namn} kunde inte lasas: ${err.message}`); return }
+    // TAKET AR PER MATCH, INTE PER BRYGGPROCESS.
+    //
+    // Uppmatt 2026-08-06: match 1 forbrukade 14 av de 40 raderna. Match 2 fick resten och slog i
+    // taket pa rad #40, som fortfarande bar battleSettings.status=1 - alltsa en PAGAENDE battle.
+    // Slutet hamnade efter taket och gick forlorat, och just slutet var hela anledningen till sonden.
+    //
+    // battleId ar det TikTok sjalv byter nar en ny match borjar, och det finns i bade
+    // LINK_MIC_BATTLE och LINK_MIC_ARMIES. Bada kartorna maste nollstallas: bara antalsraknaren och
+    // forsta raden i nya matchen blir tyst, eftersom den ser likadan ut som en rad i den forra.
+    const battleId = probe.skalarer && probe.skalarer.battleId;
+    if (battleId && battleId !== battleSondMatch) {
+      battleSondMatch = battleId;
+      battleSondRaknare.clear();
+      battleSondSenaste.clear();
+    }
     const signatur = JSON.stringify(probe.skalarer);
     if (battleSondSenaste.get(namn) === signatur) return;   // oforandrat sedan forra loggade raden
     battleSondSenaste.set(namn, signatur);
