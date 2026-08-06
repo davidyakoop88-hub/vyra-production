@@ -34,6 +34,23 @@
   }
 
   header {
+    # Steg 1 av tre. HSTS och CSP fanns en gang i Caddyfile.production, men den filen deployades
+    # aldrig (Dockerfile:55 kopierar den har) och ar borttagen. Uppmatt pa vyralive.app innan det
+    # har: HSTS och CSP saknades HELT, och ingenting sa till om det.
+    #
+    # Trappan ar 300 -> 86400 -> ett ar med includeSubDomains, ett steg i taget med verifiering
+    # emellan. `preload` star med FLIT inte har: den bakas in i webblasarna sjalva och tar manader
+    # att ta sig ur. Den gamla konfigurationen hade den, och det var ingen som beslutade det.
+    Strict-Transport-Security "max-age=300"
+    # Bara de fyra direktiv som inte KAN slacka appen, for de blockerar sadant appen aldrig gor:
+    # enda formularet i repot (operations.html) saknar action, enda iframen ar en relativ sokvag
+    # till egen origin, ingen <base> sats nagonstans, och det finns inga <object>/<embed>.
+    #
+    # Resursdirektiven - script, style, img, media, connect - ar MEDVETET utelamnade. De kan blanka
+    # Studion och slacka avatarer i OBS. Innan de ens far kora i Report-Only behovs en
+    # insamlingsendpoint och en riktig OBS-session: OBS kor CEF, och uteblivna rapporter darifran
+    # bevisar ingenting. Ett test faller den som lagger till dem i forbifarten.
+    Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
     X-Content-Type-Options nosniff
     Referrer-Policy no-referrer
     Permissions-Policy "camera=(), microphone=(), geolocation=()"
