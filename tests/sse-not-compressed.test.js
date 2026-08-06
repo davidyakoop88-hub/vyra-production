@@ -35,8 +35,25 @@ test('matcharen utesluter event-strommen', () => {
   assert.ok(namn, 'ingen namngiven matchare pa encode');
   const def = CADDY.split('\n').find(l => new RegExp(`^\\s*@${namn}\\s`).test(l)) || '';
   assert.match(def, /\bnot\b/, `matcharen ${namn} utesluter ingenting: "${def.trim()}"`);
-  assert.match(def, /events\/stream/,
-    `matcharen ${namn} namner inte event-strommen: "${def.trim()}"`);
+
+  // Sökvägen måste sluta med `*`. Ett `*` MITT i en sökväg korsar inte snedstreck i Caddys
+  // path-matchare — bara ett avslutande `*` är ett prefixmatch. Första fixen var
+  // `not path /api/*/events/stream`: den validerade rent, gick igenom alla textbaserade tester,
+  // och gjorde noll skillnad i produktion. Uppmätt 20 minuter efter en bekräftad deploy.
+  const sokvagar = def.replace(/^\s*@\w+\s+not\s+path\s+/, '').trim().split(/\s+/).filter(Boolean);
+  assert.ok(sokvagar.length > 0, `ingen sökväg i matcharen: "${def.trim()}"`);
+  assert.ok(sokvagar.every(v => v.endsWith('*')),
+    `matcharen förlitar sig på ett * mitt i sökvägen, vilket inte matchar: "${def.trim()}"`);
+  assert.ok(sokvagar.some(v => v.startsWith('/api/')),
+    `matcharen täcker inte API:t, där strömmen ligger: "${def.trim()}"`);
+});
+
+test('CI provar strömmen mot en riktig Caddy', () => {
+  // Textbaserade tester kan inte se om Caddy FAKTISKT släpper igenom strömmen. Det är precis den
+  // skillnaden som lät den första fixen se korrekt ut medan overlayn fortfarande var död.
+  const ci = fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  assert.match(ci, /event-strommen komprimeras inte/, 'CI provar inte strömmen mot en riktig server');
+  assert.match(ci, /text\/event-stream/, 'CI startar ingen SSE-server att prova mot');
 });
 
 test('komprimeringen ar kvar for allt annat', () => {
