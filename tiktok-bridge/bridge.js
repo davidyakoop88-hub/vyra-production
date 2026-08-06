@@ -195,20 +195,33 @@ if (require.main === module) {
     beat(); heartbeatTimer = setInterval(beat, HEARTBEAT_MS);
   }
 
-  // Taket finns for att LINK_MIC_ARMIES kan fyra manga ganger i minuten under en battle. Atta rader
-  // per handelsetyp racker for att se BADE att den fyrar och vilka falt den bar; mer ar brus.
+  // LOGGAR VID FORANDRING, inte vid varje handelse.
+  //
+  // Sond ett hade ett tak pa atta rader per typ. LINK_MIC_ARMIES slog i det efter atta identiska
+  // rader, och slutet kan mycket val ha legat i nummer nio. Att bara hoja taket hade dranks loggen:
+  // armies fyrar flera ganger i minuten under en match.
+  //
+  // Skiftet start -> aktiv -> slut ar per definition en FORANDRING i payloadens skalarer. Loggas bara
+  // det som andrats fangas varje overgang, och stillastaende brus kostar ingenting.
   const battleSondRaknare = new Map();
-  const BATTLE_SOND_TAK = 8;
+  const battleSondSenaste = new Map();
+  const BATTLE_SOND_TAK = 40;
   function loggaBattleSond(namn, data) {
+    let probe;
+    try { probe = N.battleProbe(data); }
+    catch (err) { console.log(`[bridge][battle-sond] ${namn} kunde inte lasas: ${err.message}`); return }
+    const signatur = JSON.stringify(probe.skalarer);
+    if (battleSondSenaste.get(namn) === signatur) return;   // oforandrat sedan forra loggade raden
+    battleSondSenaste.set(namn, signatur);
+    // Taket raknar LOGGADE rader, inte handelser — annars branner en pratig strom taket pa
+    // oforandrade varden och tystnar innan det intressanta hander.
     const n = (battleSondRaknare.get(namn) || 0) + 1;
     battleSondRaknare.set(namn, n);
     if (n > BATTLE_SOND_TAK) return;
-    try {
-      console.log(`[bridge][battle-sond] ${namn} #${n} ${JSON.stringify(N.battleProbe(data))}`);
-      if (n === BATTLE_SOND_TAK) console.log(`[bridge][battle-sond] ${namn}: taket natt, tystnar`);
-    } catch (err) {
-      console.log(`[bridge][battle-sond] ${namn} #${n} kunde inte serialiseras: ${err.message}`);
-    }
+    // Nyckellistan bara pa forsta raden — den ar lang och andras inte.
+    const nyttLage = n === 1 ? ` nycklar=${JSON.stringify(probe.nycklar)}` : '';
+    console.log(`[bridge][battle-sond] ${namn} #${n} ${signatur}${nyttLage}`);
+    if (n === BATTLE_SOND_TAK) console.log(`[bridge][battle-sond] ${namn}: taket natt, tystnar`);
   }
 
   function scheduleReconnect(reason) {

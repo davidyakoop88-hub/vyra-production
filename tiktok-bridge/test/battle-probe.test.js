@@ -25,46 +25,61 @@ const BRYGGAN = fs.readFileSync(path.join(__dirname, '..', 'bridge.js'), 'utf8')
 
 // ---- vad sonden plockar ut -----------------------------------------------------------------------
 
-test('sonden namnger nycklarna i payloaden', () => {
-  const ut = N.battleProbe({ battleInfo: { status: 2, hostScore: 1200 }, common: {} });
-  assert.deepEqual(ut.rotnycklar, ['battleInfo', 'common']);
-  assert.deepEqual(ut.battlenycklar, ['status', 'hostScore']);
+test('sonden tar ALLA skalarer, inte bara de vars namn later som status', () => {
+  // Sond ett letade efter namn som matchade status/stage/state/type/phase/result. Mot en riktig
+  // TikTok-payload gav det EN traff: inviteeGiftPermissionType. Det som faktiskt bar lage var
+  // `action` — som inte matchade — och battleResult, som ar ett objekt.
+  const ut = N.battleProbe({ battleId: '7534', action: 2, battleSettings: { duration: 300 } });
+  assert.equal(ut.skalarer.action, 2, 'action foll bort — det ar troligen just den som bar laget');
+  assert.equal(ut.skalarer.battleId, '7534');
+  assert.equal(ut.skalarer['battleSettings.duration'], 300, 'gick inte ner i nastlade objekt');
 });
 
-test('sonden plockar ut statusliknande falt, oavsett vad de heter', () => {
-  const ut = N.battleProbe({ battleInfo: { status: 2, battleStage: 'end', armiesState: 1 } });
-  assert.deepEqual(ut.statusliknande, { status: 2, battleStage: 'end', armiesState: 1 });
+test('sonden gar ner i battleResult', () => {
+  const ut = N.battleProbe({ battleResult: { winnerType: 1, teamResult: 2 } });
+  assert.equal(ut.skalarer['battleResult.winnerType'], 1);
+  assert.equal(ut.skalarer['battleResult.teamResult'], 2);
+});
+
+test('arrayer redovisas med langd, aldrig innehall', () => {
+  // Det ar i armies och anchorsInfo deltagarna bor.
+  const ut = N.battleProbe({ armies: [{ nickname: 'A' }, { nickname: 'B' }] });
+  assert.equal(ut.skalarer['armies.length'], 2);
+  assert.ok(!JSON.stringify(ut.skalarer).includes('nickname'), 'arrayens innehall loggades');
 });
 
 test('sonden slapper aldrig igenom anvandardata', () => {
-  // Payloaden bar deltagarnas profiler. En logg ar inte ratt plats for dem.
-  const ut = N.battleProbe({ battleInfo: {
-    status: 1, anchorName: 'hemligt-namn', avatarUrl: 'https://bild/x.png',
-    nickname: 'Nagon', comment: 'text', hostScore: 999
-  } });
-  const varden = JSON.stringify(ut.statusliknande);
-  for (const lackage of ['hemligt-namn', 'https://bild/x.png', 'Nagon', 'text']) {
-    assert.ok(!varden.includes(lackage), `sonden loggade ${lackage}`);
+  const ut = N.battleProbe({
+    action: 1,
+    anchorsInfo: { nickname: 'HEMLIG', avatarUrl: 'https://bild/x.png', userId: '123' },
+    bubbleText: 'en text med mellanslag',
+    ownerNickname: 'Nagon'
+  });
+  const s = JSON.stringify(ut.skalarer);
+  for (const lackage of ['HEMLIG', 'https://bild/x.png', 'en text', 'Nagon', '123']) {
+    assert.ok(!s.includes(lackage), `sonden loggade ${lackage}`);
   }
-  // NyckelNAMNEN far synas — de ar det som gor payloaden begriplig.
-  assert.ok(ut.battlenycklar.includes('anchorName'));
+  assert.equal(ut.skalarer.action, 1, 'filtret tog med sig det vi faktiskt behover');
 });
 
-test('en lang strang loggas inte, aven om faltet heter status', () => {
-  const lang = 'x'.repeat(200);
-  const ut = N.battleProbe({ battleInfo: { statusText: lang } });
-  assert.equal(ut.statusliknande.statusText, undefined, 'en 200 teckens strang hamnade i loggen');
+test('fritext med mellanslag loggas inte, aven under en ofarlig nyckel', () => {
+  const ut = N.battleProbe({ status: 'en lang mening som ar fritext' });
+  assert.equal(ut.skalarer.status, undefined);
+  // Men ett kort enum-varde utan mellanslag ska med.
+  assert.equal(N.battleProbe({ status: 'ended' }).skalarer.status, 'ended');
+});
+
+test('sonden gar inte ner i all oandlighet', () => {
+  const djupt = { a: { b: { c: { d: { e: 1 } } } } };
+  assert.doesNotThrow(() => N.battleProbe(djupt));
+  assert.equal(JSON.stringify(N.battleProbe(djupt).skalarer).includes('a.b.c.d.e'), false,
+    'ingen djupgrans — en cirkulär eller mycket djup payload skulle svalla loggen');
 });
 
 test('en trasig payload valter inte sonden', () => {
   for (const skrap of [null, undefined, 0, 'strang', []]) {
     assert.doesNotThrow(() => N.battleProbe(skrap), `kastade pa ${JSON.stringify(skrap)}`);
   }
-});
-
-test('utan battleInfo laser sonden roten', () => {
-  const ut = N.battleProbe({ battleStatus: 'ended', foo: 1 });
-  assert.deepEqual(ut.statusliknande, { battleStatus: 'ended' });
 });
 
 // ---- hur bryggan anvander den --------------------------------------------------------------------
@@ -88,10 +103,29 @@ test('sonden vidarebefordrar ingenting', () => {
 });
 
 test('sonden har ett tak sa loggen inte dranks', () => {
+  // Spannet ar HOGRE an i sond ett, och det ar avsiktligt: dar raknades varje handelse, har raknas
+  // bara FORANDRADE rader. LINK_MIC_ARMIES fyrar upprepat med samma innehall och kostar nu noll.
+  // Det som kostar ar riktiga skiften — dem far det inte finnas farre av an en match innehaller.
   const tak = BRYGGAN.match(/BATTLE_SOND_TAK\s*=\s*(\d+)/);
-  assert.ok(tak, 'inget tak — LINK_MIC_ARMIES kan fyra manga ganger i minuten');
-  assert.ok(Number(tak[1]) >= 3 && Number(tak[1]) <= 25,
-    `taket ar ${tak[1]}; for lagt sager inget, for hogt dranker loggen`);
+  assert.ok(tak, 'inget tak — en payload med tickande sekundraknare andras vid varje handelse');
+  assert.ok(Number(tak[1]) >= 20 && Number(tak[1]) <= 80,
+    `taket ar ${tak[1]}; under 20 kan slutet klippas bort, over 80 dranker loggen om nagot rakneverk tickar`);
+});
+
+test('sonden loggar bara nar varden andrats', () => {
+  // LINK_MIC_ARMIES slog i sond ettas tak efter atta IDENTISKA rader, och slutet kan ha legat i
+  // nummer nio. Skiftet start -> aktiv -> slut ar per definition en forandring.
+  assert.match(BRYGGAN, /battleSondSenaste\.get\(namn\)\s*===\s*signatur/,
+    'sonden jamfor inte mot forra loggade raden — brus branner taket');
+});
+
+test('taket raknar loggade rader, inte handelser', () => {
+  // Raknas handelser i stallet tystnar sonden pa oforandrat brus innan det intressanta hander.
+  const kropp = BRYGGAN.slice(BRYGGAN.indexOf('function loggaBattleSond'), BRYGGAN.indexOf('function scheduleReconnect'));
+  const iJamforelse = kropp.indexOf('battleSondSenaste.get(namn) === signatur');
+  const iRaknare = kropp.indexOf('battleSondRaknare.set(namn, n)');
+  assert.ok(iJamforelse > -1 && iRaknare > iJamforelse,
+    'raknaren okas fore forandringskontrollen');
 });
 
 test('taket anvands, inte bara deklareras', () => {
