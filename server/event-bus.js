@@ -29,7 +29,11 @@ const event={
     // Avsandarens fan-klubbsniva. Utan den var Fan Level Up dod pa molnvagen: bryggan raknar
     // fram den och klienten laser den, men cleanEvent strok faltet daremellan. Bada namnen tas
     // emot (bryggan: fanClubLevel, klienten: teamLevel). Klamps 0-50; 0 = ingen niva rapporterad.
-    fanClubLevel:Math.max(0,Math.min(50,Math.round(Number(input?.fanClubLevel??input?.teamLevel)||0)))
+    fanClubLevel:Math.max(0,Math.min(50,Math.round(Number(input?.fanClubLevel??input?.teamLevel)||0))),
+    // Gifter-badgens niva, fran user.payGrade.level i bryggan. Ett ANNAT tal an fanClubLevel ovan:
+    // fan club-nivan galler mot en enskild streamer, gifter-nivan ar tittarens globala grad. Samma
+    // klampning 0-50, dar 0 betyder "ingen niva rapporterad".
+    gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0)))
   };
   if(!event.id||!ALLOWED.has(event.type))throw Object.assign(new Error('Ogiltigt live-event'),{status:400});
   if(Buffer.byteLength(JSON.stringify(event))>MAX_EVENT_BYTES)throw Object.assign(new Error('Event för stort'),{status:413});
