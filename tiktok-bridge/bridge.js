@@ -195,6 +195,22 @@ if (require.main === module) {
     beat(); heartbeatTimer = setInterval(beat, HEARTBEAT_MS);
   }
 
+  // Taket finns for att LINK_MIC_ARMIES kan fyra manga ganger i minuten under en battle. Atta rader
+  // per handelsetyp racker for att se BADE att den fyrar och vilka falt den bar; mer ar brus.
+  const battleSondRaknare = new Map();
+  const BATTLE_SOND_TAK = 8;
+  function loggaBattleSond(namn, data) {
+    const n = (battleSondRaknare.get(namn) || 0) + 1;
+    battleSondRaknare.set(namn, n);
+    if (n > BATTLE_SOND_TAK) return;
+    try {
+      console.log(`[bridge][battle-sond] ${namn} #${n} ${JSON.stringify(N.battleProbe(data))}`);
+      if (n === BATTLE_SOND_TAK) console.log(`[bridge][battle-sond] ${namn}: taket natt, tystnar`);
+    } catch (err) {
+      console.log(`[bridge][battle-sond] ${namn} #${n} kunde inte serialiseras: ${err.message}`);
+    }
+  }
+
   function scheduleReconnect(reason) {
     if (stopping || reconnectTimer) return;
     clearInterval(heartbeatTimer); heartbeatTimer = null;
@@ -250,6 +266,26 @@ if (require.main === module) {
     connection.on(WebcastEvent.SUB_NOTIFY, data => sendEvent('subscribe', N.baseUser(data), data));
     connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.viewerCount || data?.userCount, 1e9) }, data));
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
+
+    // ---- battle-sond -------------------------------------------------------------------------
+    // En hel sandning gick 2026-08-06 utan att ETT ENDA battle-event nadde klienten, trots att
+    // anslutningen satt stabilt (loggen: alla anslutningsfel FORE den enda "Ansluten till @", inget
+    // efter) och trots att tittare, gavor och chatt kom fram hela tiden.
+    //
+    // Loggen kunde inte saga varfor: sendEvent loggar inte per event. Biblioteket har sju
+    // link-mic-handelser och bryggan prenumererade pa en. Det gar inte att gissa sig till vilken
+    // TikTok faktiskt anvander for en battle - och ett felaktigt gissat forsok kostade redan en
+    // deploy i kvall.
+    //
+    // Sonden LOGGAR BARA. Den vidarebefordrar med flit ingenting: LINK_MIC_ARMIES fyrar upprepat
+    // under en pagaende match, och skickades den som `battle` skulle klientens sessionslogik stanga
+    // och oppna om sessionen om och om igen - och tanda MVP-overlayn varje varv, mitt i sandningen.
+    // Forst nar vi VET vilken handelse som bar slutet kopplas den in pa riktigt.
+    for (const probeNamn of ['LINK_MIC_BATTLE', 'LINK_MIC_ARMIES', 'LINK_MIC_BATTLE_PUNISH_FINISH', 'LINK_MIC_BATTLE_TASK']) {
+      const handelse = WebcastEvent[probeNamn];
+      if (!handelse) { console.log(`[bridge][battle-sond] ${probeNamn} finns inte i biblioteket`); continue }
+      connection.on(handelse, data => loggaBattleSond(probeNamn, data));
+    }
     connection.on(WebcastEvent.STREAM_END, () => scheduleReconnect('TikTok LIVE avslutades'));
 
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
