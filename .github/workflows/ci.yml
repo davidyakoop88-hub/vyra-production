@@ -172,7 +172,7 @@ jobs:
               echo "SAKNAS I SVARET: $1"; exit 1
             fi
           }
-          krav 'strict-transport-security: max-age=300'
+          krav 'strict-transport-security: max-age=86400'
           krav "content-security-policy:.*frame-ancestors 'self'"
           krav "content-security-policy:.*base-uri 'self'"
           krav "content-security-policy:.*form-action 'self'"

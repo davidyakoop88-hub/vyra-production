@@ -18,7 +18,8 @@
 // Studion och släcka avatarer i OBS, och kräver en insamlingsendpoint plus en riktig OBS-session
 // innan de ens får köra i Report-Only. Testet nedan fäller den som lägger till dem i förbifarten.
 //
-// HSTS ligger på max-age=300 utan includeSubDomains och utan preload. preload bakas in i
+// HSTS star pa STEG 2 av tre. Trappan ar 300 -> 86400 -> ett ar med includeSubDomains.
+// Steg 1 verifierades i produktion 2026-08-06; steg 2 samma dag. preload bakas in i
 // webbläsarna själva och tar månader att ta sig ur; den gamla konfigurationen hade den, och det var
 // ingen som beslutade det.
 //
@@ -32,6 +33,11 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const CADDY = fs.readFileSync(path.join(ROOT, 'Caddyfile'), 'utf8');
 
+// Trappan, pa ett stalle. Nasta steg ar en rad har plus samma rad i Caddyfile och i CI-jobbets
+// `krav`-kontroll — och det ar meningen att alla tre ska behova andras tillsammans, sa att ingen
+// halvhojning kan glida igenom.
+const FORVANTAD_MAXAGE = 86400;
+
 const headerVarde = namn => {
   const m = CADDY.match(new RegExp(`^\\s*${namn}\\s+"([^"]*)"`, 'mi'));
   return m ? m[1] : null;
@@ -42,12 +48,14 @@ const headerVarde = namn => {
 test('HSTS skickas', () => {
   const v = headerVarde('Strict-Transport-Security');
   assert.ok(v, 'Strict-Transport-Security saknas helt — samma tysta lucka som före #95');
-  assert.match(v, /max-age=300\b/, `steg 1 är max-age=300, inte "${v}"`);
+  assert.match(v, new RegExp(`max-age=${FORVANTAD_MAXAGE}\\b`),
+    `förväntat max-age=${FORVANTAD_MAXAGE}, fick "${v}"`);
 });
 
-test('HSTS står kvar på steg 1 — ingen includeSubDomains, ingen preload', () => {
-  // Trappan är 300 → 86400 → ett år med includeSubDomains. Att hoppa direkt till slutet är precis
-  // det den gamla konfigurationen gjorde, och preload går inte att ångra på en eftermiddag.
+test('HSTS har inte hoppat till sista steget — ingen includeSubDomains, ingen preload', () => {
+  // Att hoppa direkt till slutet är precis det den gamla konfigurationen gjorde, och preload går
+  // inte att ångra på en eftermiddag. includeSubDomains kräver dessutom att alla underdomäner
+  // räknats upp först — bara downloads.vyralive.app är känd och verifierad över HTTPS.
   const v = headerVarde('Strict-Transport-Security');
   assert.doesNotMatch(v, /includeSubDomains/i,
     'includeSubDomains gäller ALLA underdomäner — räkna upp dem först');
@@ -107,6 +115,8 @@ test('de befintliga headrarna finns kvar', () => {
 test('CI hämtar headrarna från en körande Caddy, inte bara ur filen', () => {
   // Det här testet läser TEXT. Utan ett riktigt svar bevisar det inte att Caddy skickar något.
   const ci = fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  assert.match(ci, new RegExp(`max-age=${FORVANTAD_MAXAGE}`),
+    'CI kontrollerar ett annat max-age an testet — da kan halvhojningar glida igenom');
   assert.match(ci, /Strict-Transport-Security/i,
     'CI verifierar inte de faktiska svarsheadrarna — då kan en syntaktiskt giltig fil ändå tiga');
   assert.match(ci, /docker run[^\n]*caddy/i, 'CI startar ingen Caddy att fråga');
