@@ -17,6 +17,28 @@ set('#fwSound','fwSound',true);set('#fwExcludeAnon','fwExcludeAnon',true);set('#
    reglage, och utan klampning hade 9999 hamnat rakt i widgeten. */
 [['fwSpeed',.1],['fwDuration',1],['fwGiftSize',1],['fwExplosion',1],['fwDensity',1],['fwTextSize',1],['fwVolume',1]].forEach(([id,steg])=>{const r=document.querySelector('#'+id),n=document.querySelector('#'+id+'Num');if(!r||!n)return;const klamp=v=>Math.min(+r.max,Math.max(+r.min,Number.isFinite(+v)?+v:+r.min));const skriv=(v,fran)=>{const k=klamp(v);w[id]=k;if(fran!=='r')r.value=k;if(fran!=='n')n.value=k;const b=r.closest('.range-label')?.querySelector('b');if(b)b.textContent=k};r.oninput=x=>skriv(x.target.value,'r');r.onchange=x=>{skriv(x.target.value,'r');save();render()};n.onchange=x=>{skriv(x.target.value,'n');save();render()};});bkBind(w);let preset=document.querySelector('#fwPreset');if(preset)preset.onchange=x=>{let p=fwPresets[x.target.value];if(p)Object.assign(w,p);save();render()};let t=document.querySelector('#testFw');if(t)t.onclick=()=>{let e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);e.classList.remove('play');void e.offsetWidth;e.classList.add('play');setTimeout(()=>e.classList.remove('play'),(w.fwDuration||5)*1000)}};
 document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))return;event.preventDefault();let w=liveWidget(selected,'templateGiftFireworks');if(!w)return toast('Välj Gift Fireworks på canvasen först');let e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;let combo=Math.max(1,Math.min(100,+document.querySelector('#fwCombo')?.value||w.fwCombo||1));w.fwCombo=combo;save();buildComboRockets(w,e,combo);e.classList.remove('play');void e.offsetWidth;e.classList.add('play');e.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});setTimeout(()=>e.classList.remove('play'),(w.fwDuration||5)*1000)},true);
+/* En timer per EFFEKT, inte en per gava. Forr fick varje gava sin egen setTimeout som tog bort
+   .play; tva gavor tatt inpa varandra gav tva timers, och den FORSTA klippte den andra animationen
+   kort mitt i. Nu satts samma timer om, sa en ny gava FORLANGER visningen i stallet for att avbryta
+   den — samma regel som VyraFlip gav Top Gift och Top Streak. */
+const fwTimers=new Map();
+function fwSpela(w,e,combo){
+  buildComboRockets(w,e,combo);
+  e.classList.add('play');
+  const ms=Math.max(0,(w.fwDuration||5)*1000),forra=fwTimers.get(e);
+  if(forra)clearTimeout(forra.id);
+  const id=setTimeout(()=>{e.classList.remove('play');fwTimers.delete(e)},ms);
+  fwTimers.set(e,{id,slutarVid:Date.now()+ms});
+}
+window.VyraFireworks={
+  timers:()=>fwTimers.size,
+  slutarVid:()=>Math.max(0,...[...fwTimers.values()].map(t=>t.slutarVid)),
+  spelar:e=>fwTimers.has(e),
+  /* Timerns id, sa ett test kan bevisa att just DEN rensades — genom att spionera pa clearTimeout,
+     inte genom att lita pa en raknare koden sjalv okar. En raknare gar att luras: tar man bort
+     clearTimeout men later raknaren sta kvar blir testet gront anda (uppmatt). */
+  aktivId:e=>fwTimers.get(e)&&fwTimers.get(e).id
+};
 function buildComboRockets(w,e,combo=w.fwCombo||1){combo=Math.max(1,Math.min(100,+combo||1));e.querySelectorAll('.fw-rocket').forEach(x=>x.remove());let burst=e.querySelector('.fw-burst'),gift=w.fwGiftImage||campaignGiftList()[0]?.file;for(let i=0;i<combo;i++){let rocket=document.createElement('div');rocket.className='fw-rocket';rocket.style.setProperty('--x',`${8+((i*37)%85)}%`);rocket.style.setProperty('--delay',`${(i%20)*.045}s`);rocket.style.setProperty('--hue',`${(i*29)%360}deg`);rocket.style.setProperty('--gift-scale',`${.62+(i%5)*.08}`);rocket.innerHTML=`<img class="fw-rocket-gift" src="${gift}" alt="">`;e.insertBefore(rocket,burst)}return combo}
 /* Tar emot bade ett rent tal och hela eventet. action-runtime skickade i alla tider bara
    combon, och runtime-controls koar triggern med samma argument - men anonymfiltret och
@@ -40,13 +62,15 @@ window.triggerGiftFireworks=input=>{const d=(input&&typeof input==='object')?inp
 const traffar=state.widgets.filter(x=>x.type==='templateGiftFireworks'&&!x.hidden&&fwSlapperIgenom(x,d));
 if(!traffar.length)return false;
 const combo=Math.max(1,Math.min(100,+(d.combo??d.repeatcount??d.count)||1));
-/* Ett save()+render() for hela omgangen. render() bygger om canvasen, sa ett anrop per widget
-   hade rivit bort .play fran de widgetar som redan tants i samma varv. */
-traffar.forEach(w=>{w.fwCombo=combo});save();render();
+/* Ingen omritning alls har langre — se kommentaren vid nagotTandes nedan. */
+/* Inga writes till layouten. Forr stod har `traffar.forEach(w=>{w.fwCombo=combo});save();render();`
+   — senaste gavans combo hamnade permanent i den sparade layouten, hela canvasen byggdes om per
+   gava, och omritningen rev ner den animation som just spelade. Combon ar ett argument nu, aldrig
+   ett falt pa widgeten; w.fwCombo tillhor editorns testknapp. Se docs/tech-debt.md punkt 3. */
 let nagotTandes=false;
 traffar.forEach(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;/* textContent, aldrig innerHTML: anvandarnamnet kommer fran TikTok via molnet och ar inte
    betrott innehall. */
-const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');buildComboRockets(w,e,combo);e.classList.add('play');setTimeout(()=>e.classList.remove('play'),(w.fwDuration||5)*1000);nagotTandes=true});
+const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,combo);nagotTandes=true});
 if(!nagotTandes)return false;
 /* Ljudet spelas HAR, efter att bade filtren och widgetuppslaget passerat - ett ljud utan
    synligt fyrverkeri ar varre an inget ljud alls. En gang per omgang, inte en gang per widget:

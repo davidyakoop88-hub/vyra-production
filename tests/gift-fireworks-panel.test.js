@@ -124,11 +124,19 @@ test('ar den av tands fyrverkeriet aven av en anonym gava', () => {
 test('ett rent tal fungerar fortfarande som argument', () => {
   // runtime-controls koar triggern och action-runtime har skickat ett tal i alla tider. Bade den
   // gamla och den nya formen maste ga.
-  const { h, run } = panel();
+  //
+  // Assertionen om w.fwCombo ar BORTTAGEN med flit. Den lasta fast att livevagen skrev combon pa
+  // widgetobjektet — precis det som gjorde senaste gavans combo persistent i den sparade layouten.
+  // Avsikten testet skyddar ar talformen, inte skrivningen; den mats nu pa antalet raketer i stallet.
+  // Se tests/gift-fireworks-live-path.test.js och docs/tech-debt.md punkt 3.
+  const { h, run, d } = panel();
   run(`window.__d = { svar: triggerGiftFireworks(4), combo: state.widgets[0].fwCombo }`);
 
   assert.equal(h.window.__d.svar, true, 'den gamla anropsformen slutade fungera');
-  assert.equal(h.window.__d.combo, 4, 'combon lastes inte ur talet');
+  assert.equal(d.querySelectorAll('[data-id="fw1"] .fw-rocket').length, 4,
+    'combon lastes inte ur talet');
+  assert.equal(h.window.__d.combo, undefined,
+    'livevagen skrev combon pa widgeten igen — den blir da persistent mellan sandningar');
 });
 
 // ---- 3. TEXT-sektionen ---------------------------------------------------------------------------

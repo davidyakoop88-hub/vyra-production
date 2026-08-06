@@ -3,7 +3,7 @@
 //
 // The stream, the callback and the caches are three separate leaks that all survive a logout today:
 // nothing closes the EventSource, its listener is an anonymous arrow that cannot be removed, and
-// extras.js/wishlist.js parse their key once at load and never again.
+// extras.js parses its key once at load and never again.
 const test = require('node:test'), assert = require('node:assert/strict');
 const { createBrowser } = require('./helpers/browser-harness.js');
 const H = require('./helpers/session-harness.js');
@@ -80,22 +80,18 @@ test('desktop-pollen har ett stopphandtag', async () => {
 });
 
 // ---- cacherna ------------------------------------------------------------------------------------
-test('extras och wishlist laddar om sin cache vid varje projektion', async () => {
+test('extras laddar om sin cache vid varje projektion', async () => {
   const browser = createBrowser();
   browser.storage.setItem('vyra-extras', JSON.stringify({ commands: [{ cmd: '!A', reply: 'A', on: true }] }));
-  browser.storage.setItem('vyra-wishlist', JSON.stringify([{ id: 'A-wish' }]));
   // extras.js overlagrar studio.js globala bind()/view, precis som i den riktiga sidan dar
   // studio.js laddas fore den. Harnessen tillhandahaller dem sa filen kan koras som den ar.
   browser.sandbox.bind = () => {};
   browser.sandbox.view = 'home';
   browser.load('session-state.js');
   browser.load('extras.js');
-  browser.load('wishlist.js');
 
   assert.equal(typeof browser.sandbox.VyraExtras?.reload, 'function',
     'extras.js registrerar ingen omläsare');
-  assert.equal(typeof browser.sandbox.VyraWishlist?.reload, 'function',
-    'wishlist.js registrerar ingen omläsare');
 
   const session = browser.sandbox.VyraSessionState;
   const token = session.beginProjection();
@@ -104,8 +100,6 @@ test('extras och wishlist laddar om sin cache vid varje projektion', async () =>
 
   assert.match(JSON.stringify(browser.sandbox.VyraExtras.data), /!B/,
     'extras-cachen visar fortfarande förra kontots kommandon');
-  assert.match(JSON.stringify(browser.sandbox.VyraWishlist.data), /B-wish/,
-    'wishlist-cachen visar fortfarande förra kontots poster');
 });
 
 test('cachen töms när sessionen neutraliseras', async () => {
@@ -114,7 +108,6 @@ test('cachen töms när sessionen neutraliseras', async () => {
   browser.sandbox.view = 'home';
   browser.load('session-state.js');
   browser.load('extras.js');
-  browser.load('wishlist.js');
   const session = browser.sandbox.VyraSessionState;
   const token = session.beginProjection();
   await session.projectActive(token, { mode: 'studio-committed', workspaceId: WS, overlayId: 'ov',
@@ -123,20 +116,22 @@ test('cachen töms när sessionen neutraliseras', async () => {
 
   assert.ok(!JSON.stringify(browser.sandbox.VyraExtras.data).includes('!A'),
     'A:s kommandon låg kvar i minnet efter logout');
-  assert.deepEqual(browser.sandbox.VyraWishlist.data, [],
-    'A:s önskelista låg kvar i minnet efter logout');
 });
 
 test('omläsarna är idempotenta — samma resultat vid upprepade anrop', async () => {
   const browser = createBrowser();
-  browser.storage.setItem('vyra-wishlist', JSON.stringify([{ id: 'x' }]));
+  // Subjektet var wishlist.js, som ar pensionerad. Egenskapen — att en omlasare ger samma resultat
+  // hur manga ganger den anropas — hor till omlasarna som helhet och provas nu pa extras.js.
+  browser.sandbox.bind = () => {};
+  browser.sandbox.view = 'home';
+  browser.storage.setItem('vyra-extras', JSON.stringify({ commands: [{ cmd: '!x', reply: 'x', on: true }] }));
   browser.load('session-state.js');
-  browser.load('wishlist.js');
-  const value = JSON.stringify([{ id: 'y' }, { id: 'z' }]);
-  browser.sandbox.VyraWishlist.reload(value);
-  const first = JSON.stringify(browser.sandbox.VyraWishlist.data);
-  browser.sandbox.VyraWishlist.reload(value);
-  browser.sandbox.VyraWishlist.reload(value);
-  assert.equal(JSON.stringify(browser.sandbox.VyraWishlist.data), first,
+  browser.load('extras.js');
+  const value = JSON.stringify({ commands: [{ cmd: '!y', reply: 'y', on: true }] });
+  browser.sandbox.VyraExtras.reload(value);
+  const first = JSON.stringify(browser.sandbox.VyraExtras.data);
+  browser.sandbox.VyraExtras.reload(value);
+  browser.sandbox.VyraExtras.reload(value);
+  assert.equal(JSON.stringify(browser.sandbox.VyraExtras.data), first,
     'omläsaren muterar inkrementellt i stället för att byta ut hela värdet');
 });

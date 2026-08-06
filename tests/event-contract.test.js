@@ -102,3 +102,34 @@ test('inget falt tappas mellan bryggans gava och molnets event', () => {
     assert.match(BUS, new RegExp(`\\b${f}\\s*:`), `molnet tappar ${f}`);
   }
 });
+
+// ---- fan-nivan maste overleva molnvagen --------------------------------------------------------
+// tiktok-bridge/normalizer.js raknar fram fanClubLevel i baseUser, och live-client.js laser
+// teamLevel||fanClubLevel. Daremellan strok cleanEvent faltet helt, sa pa molnvagen blev nivan 0 -
+// och Fan Level Up-widgetens eget gate, (w.fanLevel||0) < (w.minLevel||1), gjorde da att den aldrig
+// visades ens om den triggades. Samma sorts tyst falt-tapp som chattexten en gang hade.
+test('cleanEvent bar fan-nivan', () => {
+  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  assert.match(shape, /\bfanClubLevel\s*:/,
+    'molnet tappar fanClubLevel — Fan Level Up blir dod for alla molnanvandare');
+});
+
+test('molnets fan-niva accepterar bade bryggans och klientens namn', () => {
+  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  const rad = shape.split('\n').find(l => /fanClubLevel\s*:/.test(l)) || '';
+  assert.match(rad, /teamLevel/,
+    'teamLevel ar namnet klienten redan anvander och maste tas emot ocksa');
+});
+
+test('bryggan skickar fan-nivan', () => {
+  const norm = read('tiktok-bridge/normalizer.js');
+  assert.match(norm, /fanClubLevel\s*:/, 'bryggan slutade skicka fanClubLevel');
+});
+
+test('fan-nivan klamps till spannet 1-50', () => {
+  // Widgeten, panelen och triggern arbetar alla i 1-50. Slapper molnet igenom 9999 far widgeten ett
+  // varde den inte kan visa, och en trasig strom kan skicka vad som helst.
+  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  const rad = shape.split('\n').find(l => /fanClubLevel\s*:/.test(l)) || '';
+  assert.match(rad, /50/, `ingen ovre grans pa fan-nivan: ${rad.trim()}`);
+});

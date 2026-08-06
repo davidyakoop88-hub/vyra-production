@@ -17,7 +17,7 @@ const ROOT = path.join(__dirname, '..');
 const OWNER = 'session-state.js';
 
 const PROTECTED = ['vyra-state', 'vyra-session-projection', 'vyra-extras',
-  'vyra-action-event-v2', 'vyra-favorite-widgets', 'vyra-wishlist'];
+  'vyra-action-event-v2', 'vyra-favorite-widgets'];
 
 // Client files only. server/, tiktok-bridge/ and electron-app/ have their own storage story, and
 // tests/ and scripts/ are not shipped.
