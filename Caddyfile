@@ -1,5 +1,19 @@
 :80 {
-  encode zstd gzip
+  # Komprimera ALLT UTOM event-strommen.
+  #
+  # `encode zstd gzip` buffrar en SSE-strom i all oandlighet: komprimering samlar byte innan den
+  # skickar, och en handelsestrom skickar sallan nog for att fylla bufferten. Foljden var att
+  # overlayn aldrig fick ett enda event i produktion — proxyn hade en oppen begaran utan svar, och
+  # klienten sag 502.
+  #
+  # Uppmatt mot https://vyralive.app 2026-08-06, samma URL, enda skillnaden Accept-Encoding:
+  #   identity -> 200, text/event-stream, 636 byte inom 8 s
+  #   gzip     -> 0 byte, inga headers alls
+  #
+  # Servern gor redan sitt: den satter x-accel-buffering: no och anropar res.flushHeaders()
+  # uttryckligen. Det hjalper inte mot en komprimerare i vagen.
+  @komprimerbart not path /api/*/events/stream /api/*/events/stream/*
+  encode @komprimerbart zstd gzip
 
   @html path / *.html
   header @html Cache-Control "no-cache, no-store, must-revalidate"
