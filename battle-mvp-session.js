@@ -105,7 +105,36 @@
   }
 
   let session = null;                 // {bidrag: Map, oppnadAt} eller null när ingen match pågår
-  const seenStatuses = [];            // varje rått battleStatus-värde, i den ordning det setts
+
+  // ---- vad TikTok faktiskt skickar --------------------------------------------------------------
+  // Värdena är omätta (se filhuvudet), och den enda källan är en riktig battle. Därför överlever
+  // anteckningen både en omladdning och att streamen tar slut: den skrivs till localStorage och kan
+  // läsas i lugn och ro efteråt, i stället för att kräva att någon står vid konsolen mitt i matchen.
+  // En OBS-browserkälla har egen localStorage, sa lasningen ska ske i samma vy som körde matchen.
+  const LAGER = 'vyra-battle-status-seen';
+
+  function lasSparade() {
+    try {
+      const rå = root.localStorage && root.localStorage.getItem(LAGER);
+      const lista = rå ? JSON.parse(rå) : [];
+      return Array.isArray(lista) ? lista.filter(v => typeof v === 'string') : [];
+    } catch (_) { return [] }
+  }
+
+  const seenStatuses = lasSparade();  // varje rått battleStatus-värde, i den ordning det setts
+
+  function anteckna(rå) {
+    if (!rå || seenStatuses.includes(rå)) return;
+    seenStatuses.push(rå);
+    // Loggas ocksa: ett varde som klassas 'okänd' ar hela anledningen till att vi tittar.
+    try {
+      root.console && root.console.log(
+        `[VYRA] battleStatus sett: ${JSON.stringify(rå)} → ${klassa(rå)}`);
+    } catch (_) {}
+    try {
+      root.localStorage && root.localStorage.setItem(LAGER, JSON.stringify(seenStatuses.slice(-40)));
+    } catch (_) {}
+  }
 
   function oppna() {
     session = { bidrag: new Map(), oppnadAt: Date.now() };
@@ -157,7 +186,7 @@
 
   function hanteraBattle(e) {
     const rå = e.battleStatus == null ? '' : String(e.battleStatus);
-    if (rå && !seenStatuses.includes(rå)) seenStatuses.push(rå);
+    anteckna(rå);
     const läge = klassa(rå);
     if (läge === 'slut') { stang(); return }
     if (läge === 'aktiv') {
@@ -182,6 +211,13 @@
     aktiv: () => !!session,
     bidrag: () => (session ? [...session.bidrag.values()] : []),
     // Break-glass: stäng en session för hand om slutvärdet visar sig aldrig kännas igen live.
-    avsluta: stang
+    avsluta: stang,
+    // Läs efter en riktig match: varje sett värde och hur klassificeringen tolkade det. Ett värde
+    // som står som 'okänd' är precis det som behöver pinnas i SLUT/AKTIV ovan.
+    rapport: () => seenStatuses.map(v => ({ värde: v, tolkades_som: klassa(v) })),
+    glomStatusar: () => {
+      seenStatuses.length = 0;
+      try { root.localStorage && root.localStorage.removeItem(LAGER) } catch (_) {}
+    }
   };
 })(window);

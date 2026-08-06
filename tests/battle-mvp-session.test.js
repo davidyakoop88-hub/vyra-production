@@ -222,3 +222,25 @@ test('ingen toast vid trigger', () => {
   assert.doesNotMatch(rad, /toast\(/,
     'en Studio-notis per MVP i skarp drift — felsökningsrest');
 });
+
+// ---- 9. anteckningen överlever en omladdning ---------------------------------------------------
+
+test('sedda statusvärden sparas så de kan läsas efter matchen', () => {
+  // Värdena är omätta och enda källan är en riktig battle. Behölls de bara i minnet skulle en
+  // omladdning — eller att streamen tar slut — radera det enda beviset.
+  const { h, skicka } = boot();
+  skicka(battle('nagot_okant_fran_tiktok'));
+  const sparat = h.window.localStorage.getItem('vyra-battle-status-seen');
+  assert.ok(sparat, 'ingenting skrevs till localStorage');
+  assert.ok(JSON.parse(sparat).includes('nagot_okant_fran_tiktok'));
+});
+
+test('rapporten visar hur varje värde tolkades', () => {
+  const { h, skicka } = boot();
+  skicka(battle('battle_start'));
+  skicka(battle('helt_okant'));
+  const rapport = [...h.window.VyraBattleMvp.rapport()];
+  assert.deepEqual(rapport.map(r => `${r.värde}=${r.tolkades_som}`),
+    ['battle_start=aktiv', 'helt_okant=okänd'],
+    'utan tolkningen går det inte att se VILKET värde som behöver pinnas');
+});
