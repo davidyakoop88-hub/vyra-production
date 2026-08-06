@@ -39,7 +39,12 @@ function baseUser(data){
     isAnonymous:!!(user?.enigmaInfo?.isEnigmaMaskOn||data?.enigmaInfo?.isEnigmaMaskOn),
     ...identityOf(data),
     // "Team" level in TikTok's own UI = the viewer's Fan Club level with this streamer specifically.
-    fanClubLevel:number(user?.fansClub?.data?.level)
+    fanClubLevel:number(user?.fansClub?.data?.level),
+    // The gifter badge level — TikTok's own "Gifter Lv." next to a name. It lives on payGrade, which
+    // is a UserHonor in tiktok-live-proto v3, and is a DIFFERENT number from fanClubLevel above:
+    // fan club level is per-streamer, gifter level is the viewer's global spending grade. Nothing
+    // read this field before, so the gifter level did not exist anywhere in the pipeline.
+    gifterLevel:number(user?.payGrade?.level)
   };
 }
 // Measured on staging 2026-08-03: WebcastGiftMessage in tiktok-live-proto v3 carries no giftType at

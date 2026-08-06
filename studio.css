@@ -755,3 +755,30 @@ html.overlay-output .widget{
 .mvp-framed.play .mvpf-plate{animation:mvpFramePlate 900ms cubic-bezier(.16,1,.3,1) 120ms both}
 @keyframes mvpFramePhoto{0%{opacity:0;transform:scale(.72)}60%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
 @keyframes mvpFramePlate{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+
+/* Gifter Level Up: transformationssekvensen gammal -> burst -> ny. Rent CSS, ingen 3D.
+   Siffran byts av JS mitt i bursten, nar den ar som ljusast, sa bytet aldrig syns som ett hopp.
+   Tiderna speglar XFORM_GAMMAL/XFORM_BURST i media.js: 450 ms gammal, 300 ms burst, resten ny. */
+.gifter-xform-old .gifter-big-level{opacity:.85;filter:saturate(.7)}
+.gifter-xform-burst .gifter-big-level{animation:gifter-burst .3s ease-in both}
+.gifter-xform-new .gifter-big-level{animation:gifter-land .5s cubic-bezier(.2,.9,.25,1.15) both}
+/* Diamantstapeln blinkar till i takt med bursten sa hela widgeten reagerar, inte bara siffran. */
+.gifter-xform-burst .gifter-diamond-stack{animation:gifter-flash .3s ease-in-out both}
+@keyframes gifter-burst{
+  0%{transform:scale(1);filter:brightness(1) blur(0)}
+  70%{transform:scale(1.45);filter:brightness(2.6) blur(1px)}
+  100%{transform:scale(1.7);filter:brightness(3.4) blur(6px);opacity:0}
+}
+@keyframes gifter-land{
+  0%{transform:scale(.45);filter:brightness(2.4) blur(4px);opacity:0}
+  55%{transform:scale(1.12);filter:brightness(1.3) blur(0);opacity:1}
+  100%{transform:scale(1);filter:brightness(1);opacity:1}
+}
+@keyframes gifter-flash{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(2.2)}
+}
+@media(prefers-reduced-motion:reduce){
+  .gifter-xform-burst .gifter-big-level,.gifter-xform-new .gifter-big-level,
+  .gifter-xform-burst .gifter-diamond-stack{animation:none!important}
+}
