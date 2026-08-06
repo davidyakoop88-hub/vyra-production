@@ -7,7 +7,7 @@
   // in this file may start in overlay mode: no fetch, no timer, no restore.
   const VYRA_PARAMS=new URLSearchParams(location.search);
   if(VYRA_PARAMS.has('overlay')||VYRA_PARAMS.has('access'))return;
-  const STATE_KEY='vyra-state', EXTRA_KEYS=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-wishlist','vyra-overlay-resolution'], AUTO_VERSION_MS=5*60*1000;
+  const STATE_KEY='vyra-state', EXTRA_KEYS=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution'], AUTO_VERSION_MS=5*60*1000;
   let lastSynced=localStorage.getItem(STATE_KEY),lastVersioned=lastSynced,lastVersionAt=0,busy=false;
   function parse(raw,fallback={}){try{return JSON.parse(raw)}catch{return fallback}}
   function sanitizeWidget(w){if(!w||typeof w!=='object'||!w.id)return null;return {...w,title:w.title||w.type||'Widget'}}

@@ -28,7 +28,15 @@
   const STATE_KEY = 'vyra-state';
   // The four that belong to an account. vyra-overlay-resolution is deliberately absent: it is a
   // property of the machine's screen, not of whoever is logged in.
-  const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widgets', 'vyra-wishlist'];
+  const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widgets'];
+  // Nycklar vi inte langre anvander, men vars DATA fortfarande maste torkas nar ett konto lamnas.
+  // En gammal installation har dem kvar, och de far inte folja med in i nasta konto pa en delad
+  // dator. De projiceras inte, synkas inte och sakerhetskopieras inte — de bara torkas.
+  //
+  // vyra-wishlist: wishlist.js sparade onskemal lokalt och oppnade e-postklienten mot
+  // 'TODO@exempel.se'. Inget onskemal nadde nagonsin nagon. Knappen togs over av supportsystemet
+  // i PR #106 och filen ar borttagen.
+  const RETIRED_KEYS = ['vyra-wishlist'];
   const PROTECTED_KEYS = [STATE_KEY, MARKER_KEY, ...EXTRA_KEYS];
 
   const BRAND_KIT = { background: '#1c1028', highlight: '#ff58d6', text: '#f7f2ff',
@@ -394,7 +402,7 @@
         }
 
         try { storage.setItem(STATE_KEY, JSON.stringify(neutralState())) } catch (_) { degraded = true }
-        for (const key of EXTRA_KEYS) { try { storage.removeItem(key) } catch (_) { degraded = true } }
+        for (const key of [...EXTRA_KEYS, ...RETIRED_KEYS]) { try { storage.removeItem(key) } catch (_) { degraded = true } }
         try { storage.removeItem(MARKER_KEY) } catch (_) { degraded = true }
 
         swapActive(neutralState());
@@ -457,7 +465,7 @@
     };
 
     return {
-      MARKER_KEY, STATE_KEY, EXTRA_KEYS, PROTECTED_KEYS,
+      MARKER_KEY, STATE_KEY, EXTRA_KEYS, RETIRED_KEYS, PROTECTED_KEYS,
       activeState: () => activeStateObject,
       readActiveExtra: key => (key in activeExtras ? activeExtras[key] : null),
       mode: () => mode,

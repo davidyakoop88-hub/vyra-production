@@ -126,21 +126,13 @@ test('anvandarens egna texter skrivs som text, inte som HTML', () => {
   assert.match(KLIENT, /esc\(ticket\.category\)/);
 });
 
-// ---- 6. wishlist ar orord -----------------------------------------------------------------------
+// ---- 6. wishlist ar pensionerad -----------------------------------------------------------------
 
-test('wishlist.js och dess lagring ar ororda', () => {
-  // Nyckeln vyra-wishlist ar inflatad i cloud-sync, session-state och state-backup. Bara knappen
-  // byter agare; filen och dess data ror vi inte.
-  assert.ok(fs.existsSync(path.join(ROOT, 'wishlist.js')), 'wishlist.js togs bort');
-  assert.match(MEDIA, /wishlist\.js/, 'wishlist.js slutade laddas — dess sync-integration bryts');
-  for (const fil of ['cloud-sync.js', 'session-state.js', 'state-backup.js']) {
-    assert.match(las(fil), /vyra-wishlist/, `${fil} tappade lagringsnyckeln`);
-  }
-});
-
-test('wishlist kraschar inte nar dess knapp ar borta', () => {
-  // renderWishlist laser knappen med optional chaining. Utan den hade varje klick i sidomenyn
-  // kastat sa fort knappen forsvann.
-  assert.match(las('wishlist.js'), /querySelector\('\[data-extra="wishlist"\]'\)\?\./,
-    'wishlist.js laser knappen utan optional chaining och kastar nu nar den inte finns');
+test('wishlist ar borta, men dess data torkas fortfarande', () => {
+  // Nar den har PR:en skrevs var wishlist.js kvar med flit — bara knappen bytte agare. Filen ar
+  // sedan dess pensionerad, och nyckeln vyra-wishlist lever kvar i session-state.js RETIRED_KEYS
+  // enbart for att fortfarande torkas vid kontobyte. Se tests/wishlist-retired.test.js.
+  assert.equal(fs.existsSync(path.join(ROOT, 'wishlist.js')), false, 'wishlist.js ligger kvar');
+  assert.match(las('session-state.js'), /RETIRED_KEYS[\s\S]{0,200}vyra-wishlist/,
+    'gammal onskelistedata torkas inte langre nar ett konto lamnas');
 });

@@ -709,7 +709,6 @@ function ensureEditorOverlayBundle(){return vyraLoadBundle('editor-overlay',['to
 function ensurePackagesBundle(){return vyraLoadBundle('packages-view',['overlay-packages.js?v=1']).then(()=>refreshIfVisible(()=>view==='packages')).catch(err=>console.warn('[VYRA] packages bundle misslyckades',err))}
 function ensureActionsBundle(){return vyraLoadBundle('actions-ui',['action-media.js','action-scenes.js','action-options.js','action-event-advanced.js']).then(()=>window.VyraActionEvent?.refresh?.()).catch(err=>console.warn('[VYRA] actions bundle misslyckades',err))}
 function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sound-alerts.js?v=1']).catch(err=>console.warn('[VYRA] sound alerts bundle misslyckades',err))}
-function ensureWishlistBundle(){return vyraLoadBundle('wishlist-ui',['wishlist.js?v=1']).catch(err=>console.warn('[VYRA] wishlist bundle misslyckades',err))}
 function ensureHomePremiumBundle(){return vyraLoadBundle('home-premium',['overview-premium.css','overview-premium.js']).then(()=>refreshIfVisible(()=>view==='home')).catch(err=>console.warn('[VYRA] home premium bundle misslyckades',err))}
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
@@ -745,8 +744,8 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260806-1';document.body.append(js)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
-   wishlist.js redan tagit over. Knappen agar support nu; wishlist.js sjalv ar orord eftersom dess
-   lagringsnyckel ar inflatad i cloud-sync, session-state och state-backup.
+   wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
+   kvar i session-state.js RETIRED_KEYS enbart for att fortfarande torkas vid kontobyte.
    Felrapporteringen sitter pa modulnivan i filen, sa den aktiveras av att skriptet laddas — den
    ska fanga fel aven for nagon som aldrig oppnar supportvyn. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='support-client.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='support-client.js?v=20260806-1';document.body.append(js)});
@@ -755,7 +754,6 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='wishlist.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260726-lazy-thumbs';document.body.append(js)});
 

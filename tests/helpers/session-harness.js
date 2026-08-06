@@ -108,7 +108,7 @@ function createOwner(factory, { storage, locks, tabId, extras = {} }) {
 
 // The exact keys the write monopoly protects.
 const PROTECTED = ['vyra-state', 'vyra-session-projection', 'vyra-extras',
-  'vyra-action-event-v2', 'vyra-favorite-widgets', 'vyra-wishlist'];
+  'vyra-action-event-v2', 'vyra-favorite-widgets'];
 
 // A layout that is unmistakably one account's.
 const layout = (owner, over = {}) => ({
@@ -119,7 +119,6 @@ const layout = (owner, over = {}) => ({
 const extrasFor = owner => ({
   'vyra-extras': JSON.stringify({ commands: [{ cmd: `!${owner}`, reply: owner, on: true }] }),
   'vyra-action-event-v2': JSON.stringify({ actions: [{ id: `${owner}-a` }], events: [] }),
-  'vyra-wishlist': JSON.stringify([{ id: `${owner}-wish` }]),
   'vyra-favorite-widgets': JSON.stringify([`${owner}-fav`])
 });
 
