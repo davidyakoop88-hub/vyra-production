@@ -88,28 +88,37 @@ function battleFields(data){
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
-// Vilka nycklar en battle-payload faktiskt bar, och vilka av dem som ser ut som ett statusvarde.
-// Returnerar NAMN och sma tal — aldrig anvandarnamn, bilder eller fritext. Payloaden innehaller
-// deltagarnas profiler, och en logg ar inte ratt plats for dem.
+// Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
-// Finns for att en hel sandning gick utan att ett enda battle-event nadde klienten, och loggen inte
-// kunde saga om LINK_MIC_BATTLE fyrade eller inte: sendEvent loggar inte per event. Utan det har
-// gar det bara att gissa vilken av bibliotekets sju link-mic-handelser TikTok faktiskt anvander.
+// Sond nummer ett letade efter falt vars NAMN innehol status/stage/state/type/phase/result. Den
+// matningen gav nastan ingenting: den enda traffen var inviteeGiftPermissionType. Payloaden fran en
+// riktig match visade sig bara nycklarna
+//
+//   battleId, battleSettings, action, battleResult, armies, teamBattleResult, matchPunishExtraInfo
+//
+// och VARKEN battleInfo ELLER battleStatus. `action` matchade inte monstret, och battleResult ar ett
+// objekt — sa bada foll bort. Darfor: ta alla skalarer, gissa inte vilka namn som betyder nagot.
+//
+// Anvandarnara nycklar filtreras bort. Payloaden bar deltagarnas profiler, och en logg ar inte ratt
+// plats for dem. Arrayer redovisas med sin LANGD, aldrig sitt innehall — det ar dar deltagarna bor.
+const ANVANDARNYCKEL=/user|anchor|nick|name|avatar|url|display|text|desc|title|image|icon|owner|invitee|host|guest|sec_?uid|comment/i;
+const MAX_DJUP=2;
+function skalarer(varde,prefix,djup,ut){
+  if(!varde||typeof varde!=='object'||djup>MAX_DJUP)return ut;
+  for(const [k,v] of Object.entries(varde)){
+    if(ANVANDARNYCKEL.test(k))continue;
+    const namn=prefix?prefix+'.'+k:k;
+    if(v===null||v===undefined)continue;
+    if(typeof v==='number'||typeof v==='boolean')ut[namn]=v;
+    // Korta varden utan mellanslag: enum-strangar och id:n, inte fritext.
+    else if(typeof v==='string'){if(v.length<=24&&!/\s/.test(v)&&v.length>0)ut[namn]=v}
+    else if(Array.isArray(v))ut[namn+'.length']=v.length;
+    else if(typeof v==='object')skalarer(v,namn,djup+1,ut);
+  }
+  return ut;
+}
 function battleProbe(data){
   const rot=data&&typeof data==='object'?data:{};
-  const battle=rot.battleInfo||rot.battle||rot;
-  const statusliknande={};
-  for(const k of Object.keys(battle||{})){
-    if(!/status|stage|state|type|phase|result|stad/i.test(k))continue;
-    const v=battle[k];
-    if(v===null||v===undefined)continue;
-    if(typeof v==='number'||typeof v==='boolean')statusliknande[k]=v;
-    else if(typeof v==='string'&&v.length<=40)statusliknande[k]=v;
-  }
-  return{
-    rotnycklar:Object.keys(rot).slice(0,25),
-    battlenycklar:Object.keys(battle||{}).slice(0,25),
-    statusliknande
-  };
+  return{nycklar:Object.keys(rot).slice(0,30),skalarer:skalarer(rot,'',0,{})};
 }
 module.exports={text,number,battleProbe,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};
