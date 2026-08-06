@@ -79,8 +79,13 @@ jobs:
           if ($missing.Count -gt 0) {
             Write-Warning "Unsigned manual test build. Missing GitHub configuration: $($missing -join ', ')"
           }
+      # Samma villkor som signeringssteget nedan, med flit. SignPath ar den ENDA konsumenten av den
+      # har artefakten (den laser artifact-id harifran), och signeringen kor bara pa taggar. Utan
+      # taggvillkoret laddades 268 MB upp pa varje pull request for att sedan aldrig lasas av nagon.
+      # Villkoren maste folja varandra: uppladdning utan signering ar slosat utrymme, och signering
+      # utan uppladdning ar ett trasigt bygge.
       - name: Upload unsigned installer for SignPath
-        if: ${{ vars.SIGNPATH_ENABLED == 'true' }}
+        if: ${{ vars.SIGNPATH_ENABLED == 'true' && startsWith(github.ref, 'refs/tags/v') && vars.UNSIGNED_RELEASE != github.ref_name }}
         id: upload-unsigned-installer
         uses: actions/upload-artifact@v4
         with:
@@ -127,7 +132,14 @@ jobs:
           "$hash  VYRA-Setup.exe" | Set-Content 'dist2/VYRA-Setup.exe.sha256' -Encoding ascii
           $appVersion = (Get-Content 'package.json' -Raw | ConvertFrom-Json).version
           @{ version = $appVersion; sizeBytes = $file.Length; sha256 = $hash; platform = 'windows-x64' } | ConvertTo-Json | Set-Content 'dist2/latest.json' -Encoding utf8
+      # Bara pa taggar. En pull request BYGGER fortfarande installern — steget "Build NSIS installer"
+      # ovan ar beviset att bygget gar — men ingen laddar ner en installer fran en PR, och 268 MB per
+      # korning fyllde GitHubs artefaktkvot tills den 2026-08-06 borjade FALLA PR:er som inte hade
+      # nagot med desktop-appen att gora (97 levande artefakter, 24,6 GB).
+      # Publiceringen nedan laser filerna fran DISK, inte harifran, sa releasen ar oberoende av det
+      # har steget.
       - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           name: VYRA-Windows-Installer
           path: |
