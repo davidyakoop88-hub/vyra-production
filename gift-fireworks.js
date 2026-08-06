@@ -55,7 +55,25 @@ function fwSlapperIgenom(w,d){
   const belopp=fwBelopp(d);
   return belopp===undefined||belopp>=(w.fwMin||1);
 }
+/* En gava far tanda ETT fyrverkeri, aven om den kommer in tva vagar.
+   gift-fireworks-session.js ger widgeten sin riktiga livetrigger, men action-runtime.js:62 anropar
+   redan den har funktionen for den som SJALV lagt upp en Action med "firework" i widgetnamnet. Utan
+   sparren skulle just de anvandarna — de enda som haft en fungerande gift-trigger hittills — plotsligt
+   fa tva fyrverkerier per gava. Triggern ar den enda punkt bada vagarna passerar, sa sparren hor hemma
+   har och ingen annanstans.
+   Nyckeln ar molnets event-id. Saknas det sparras ingenting: panelens testknapp skickar inget id, och
+   ett tryck till maste alltid ge ett nytt fyrverkeri. */
+const fwSedda=new Map(),FW_SPARR_MS=1500;
+function fwRedanTand(d){
+  const id=d&&d.id;if(!id)return false;
+  const nu=Date.now();
+  for(const [k,t] of fwSedda)if(nu-t>FW_SPARR_MS)fwSedda.delete(k);
+  const nyckel=String(id);
+  if(fwSedda.has(nyckel))return true;
+  fwSedda.set(nyckel,nu);return false;
+}
 window.triggerGiftFireworks=input=>{const d=(input&&typeof input==='object')?input:{combo:input};
+if(fwRedanTand(d))return false;
 /* Alla synliga fyrverkerier, inte bara det forsta. Varje widget gor sin EGEN bedomning av
    anonymfiltret och sin egen granss - tva fyrverkerier med olika fwMin ar hela poangen med att
    det numera far finnas flera. */
