@@ -88,4 +88,28 @@ function battleFields(data){
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
-module.exports={text,number,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};
+// Vilka nycklar en battle-payload faktiskt bar, och vilka av dem som ser ut som ett statusvarde.
+// Returnerar NAMN och sma tal — aldrig anvandarnamn, bilder eller fritext. Payloaden innehaller
+// deltagarnas profiler, och en logg ar inte ratt plats for dem.
+//
+// Finns for att en hel sandning gick utan att ett enda battle-event nadde klienten, och loggen inte
+// kunde saga om LINK_MIC_BATTLE fyrade eller inte: sendEvent loggar inte per event. Utan det har
+// gar det bara att gissa vilken av bibliotekets sju link-mic-handelser TikTok faktiskt anvander.
+function battleProbe(data){
+  const rot=data&&typeof data==='object'?data:{};
+  const battle=rot.battleInfo||rot.battle||rot;
+  const statusliknande={};
+  for(const k of Object.keys(battle||{})){
+    if(!/status|stage|state|type|phase|result|stad/i.test(k))continue;
+    const v=battle[k];
+    if(v===null||v===undefined)continue;
+    if(typeof v==='number'||typeof v==='boolean')statusliknande[k]=v;
+    else if(typeof v==='string'&&v.length<=40)statusliknande[k]=v;
+  }
+  return{
+    rotnycklar:Object.keys(rot).slice(0,25),
+    battlenycklar:Object.keys(battle||{}).slice(0,25),
+    statusliknande
+  };
+}
+module.exports={text,number,battleProbe,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};
