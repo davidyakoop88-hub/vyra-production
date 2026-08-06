@@ -178,53 +178,54 @@ jobs:
           krav "content-security-policy:.*form-action 'self'"
           krav "content-security-policy:.*object-src 'none'"
           krav 'x-content-type-options: nosniff'
-
-      # Bevisar att event-strommen inte komprimeras — mot en RIKTIG Caddy med en riktig SSE-server
-      # bakom. Det har steget finns for att gissningen inte gick att lita pa: en forsta fix med
-      # `not path /api/*/events/stream` validerade rent, gick igenom alla textbaserade tester, och
-      # gjorde noll skillnad i produktion. Ett `*` mitt i en sokvag korsar inte snedstreck.
-      #
-      # Utan komprimering kommer headers direkt (status 200). Buffras strommen kommer ingenting
-      # alls och curl rapporterar 000.
-      - name: 'Caddy · event-strommen komprimeras inte'
-        run: |
-          set -eu
-          node -e "require('http').createServer((q,s)=>{s.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache'});s.flushHeaders();s.write(': ping
-
-');setInterval(()=>s.write(': ping
-
-'),1000)}).listen(8080,'127.0.0.1')" &
-          NODEPID=$!
-          for i in $(seq 20); do curl -sf -o /dev/null --max-time 1 http://127.0.0.1:8080/ && break || sleep 0.5; done
-          docker run -d --name vyra-sse --network host --add-host api:127.0.0.1             -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" -v /tmp/vyra-site:/app:ro caddy:2-alpine
-          for i in $(seq 30); do curl -sf -o /dev/null http://127.0.0.1/ && break || sleep 1; done
-
-          stream() {
-            curl -sS -N --max-time 6 -H 'Accept: text/event-stream' -H "Accept-Encoding: $1"               -o /dev/null -w '%{http_code}' "http://127.0.0.1/api/overlay-access/T0KEN/events/stream" || true
-          }
-          GZIP=$(stream 'gzip, deflate, br, zstd')
-          IDENT=$(stream 'identity')
-          echo "gzip=$GZIP identity=$IDENT"
-          docker logs vyra-sse 2>&1 | tail -5 || true
-          docker rm -f vyra-sse > /dev/null; kill $NODEPID 2>/dev/null || true
-
-          if [ "$IDENT" != "200" ]; then echo "FEL: strommen svarar inte ens utan komprimering"; exit 1; fi
-          if [ "$GZIP" != "200" ]; then
-            echo "FEL: strommen buffras nar klienten ber om gzip — precis det som gjorde overlayn dod i produktion"
-            exit 1
-          fi
-
-          # Och komprimeringen ska vara kvar for allt annat.
-          docker run -d --name vyra-sse2 --network host --add-host api:127.0.0.1             -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" -v /tmp/vyra-site:/app:ro caddy:2-alpine
-          for i in $(seq 30); do curl -sf -o /dev/null http://127.0.0.1/ && break || sleep 1; done
-          ENC=$(curl -sSI -H 'Accept-Encoding: gzip' http://127.0.0.1/index.html | tr -d '' | grep -i '^content-encoding:' || true)
-          docker rm -f vyra-sse2 > /dev/null
-          echo "statisk fil: ${ENC:-ingen content-encoding}"
-          case "$ENC" in *gzip*) : ;; *) echo 'FEL: komprimeringen slutade fungera for vanliga filer'; exit 1 ;; esac
           # Steg 1 far inte smyga vidare i trappan.
           if grep -qiE 'strict-transport-security:.*(includesubdomains|preload)' /tmp/vyra-headers.txt; then
             echo 'HSTS gick forbi steg 1 - includeSubDomains/preload ska beslutas separat'; exit 1
           fi
+
+      # Bevisar att event-strommen inte komprimeras — mot en RIKTIG Caddy med en riktig SSE-server
+      # bakom. Steget finns for att gissningen inte gick att lita pa: en forsta fix med
+      # `not path /api/*/events/stream` validerade rent, gick igenom alla textbaserade tester, och
+      # gjorde noll skillnad i produktion. Ett `*` mitt i en sokvag korsar inte snedstreck.
+      #
+      # Utan buffring kommer headers direkt (200). Buffras strommen kommer ingenting alls och curl
+      # rapporterar 000 — precis det som gjorde overlayn dod.
+      - name: 'Caddy · event-strommen komprimeras inte'
+        run: |
+          set -eu
+          cat > /tmp/sse-stub.js <<'STUB'
+          const http = require('http');
+          http.createServer((req, res) => {
+            res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache' });
+            res.flushHeaders();
+            res.write(': ping\n\n');
+            setInterval(() => res.write(': ping\n\n'), 1000);
+          }).listen(8080, '127.0.0.1');
+          STUB
+          node /tmp/sse-stub.js &
+          STUB_PID=$!
+          for i in $(seq 20); do curl -sf -o /dev/null --max-time 1 http://127.0.0.1:8080/ && break || sleep 1; done
+
+          mkdir -p /tmp/vyra-site
+          printf '<!doctype html><title>sse</title>%.0s' $(seq 1 40) > /tmp/vyra-site/index.html
+          docker run -d --name vyra-sse --network host --add-host api:127.0.0.1 -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" -v /tmp/vyra-site:/app:ro caddy:2-alpine
+          for i in $(seq 30); do curl -sf -o /dev/null http://127.0.0.1/ && break || sleep 1; done
+
+          stream() {
+            curl -sS -N --max-time 6 -H 'Accept: text/event-stream' -H "Accept-Encoding: $1" -o /dev/null -w '%{http_code}' "http://127.0.0.1/api/overlay-access/T0KEN/events/stream" || true
+          }
+          GZIP=$(stream 'gzip, deflate, br, zstd')
+          IDENT=$(stream 'identity')
+          ENC=$(curl -sSI -H 'Accept-Encoding: gzip' http://127.0.0.1/index.html | tr -d '\r' | grep -i '^content-encoding:' || true)
+
+          docker logs vyra-sse 2>&1 | tail -5 || true
+          docker rm -f vyra-sse > /dev/null
+          kill $STUB_PID 2>/dev/null || true
+
+          echo "gzip=$GZIP identity=$IDENT statisk=${ENC:-ingen}"
+          if [ "$IDENT" != "200" ]; then echo 'FEL: strommen svarar inte ens utan komprimering'; exit 1; fi
+          if [ "$GZIP" != "200" ]; then echo 'FEL: strommen buffras nar klienten ber om gzip'; exit 1; fi
+          case "$ENC" in *gzip*) : ;; *) echo 'FEL: komprimeringen slutade fungera for vanliga filer'; exit 1 ;; esac
 
   test-tiktok-bridge:
     runs-on: ubuntu-latest
