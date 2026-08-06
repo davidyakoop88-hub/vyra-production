@@ -12,7 +12,14 @@
   #
   # Servern gor redan sitt: den satter x-accel-buffering: no och anropar res.flushHeaders()
   # uttryckligen. Det hjalper inte mot en komprimerare i vagen.
-  @komprimerbart not path /api/*/events/stream /api/*/events/stream/*
+  # `/api/*` i sin helhet, inte bara strommens sokvag. Forsta forsoket var
+  # `not path /api/*/events/stream`, och det gjorde INGEN skillnad i produktion (uppmatt: gzip gav
+  # fortfarande noll svar 20 minuter efter en bekraftad deploy). Ett `*` MITT i en sokvag korsar
+  # inte snedstreck i Caddys path-matchare — bara ett avslutande `*` ar ett prefixmatch.
+  #
+  # /api/* ar grovre an nodvandigt men entydigt. Priset ar att API:ts JSON-svar inte komprimeras;
+  # de ar sma, och sidan med sina skript och stilmallar behaller gzip.
+  @komprimerbart not path /api/*
   encode @komprimerbart zstd gzip
 
   @html path / *.html
