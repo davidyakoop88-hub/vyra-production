@@ -150,6 +150,39 @@ jobs:
           docker run --rm -v "$PWD:/w" -w /w \
             caddy:2-alpine caddy validate --adapter caddyfile --config Caddyfile
 
+      # tests/security-headers.test.js laser Caddyfilens TEXT. Det bevisar inte att Caddy faktiskt
+      # SKICKAR nagot - en syntaktiskt giltig fil kan tiga. Har startas servern pa riktigt och
+      # headrarna hamtas ur svaret. Det var precis den skillnaden som lat HSTS och CSP saknas i
+      # produktion i manader utan att nagot test markte det.
+      - name: 'Caddy · headrarna skickas faktiskt'
+        run: |
+          set -eu
+          mkdir -p /tmp/vyra-site
+          printf '<!doctype html><title>headertest</title>' > /tmp/vyra-site/index.html
+          docker run -d --name vyra-caddy -p 8080:80 \
+            -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            -v /tmp/vyra-site:/app:ro caddy:2-alpine
+          for i in $(seq 40); do curl -sf -o /dev/null http://127.0.0.1:8080/ && break; sleep 1; done
+          curl -sSI http://127.0.0.1:8080/ | tr -d '\r' > /tmp/vyra-headers.txt
+          docker logs vyra-caddy || true
+          docker rm -f vyra-caddy > /dev/null
+          echo '--- svarsheaders ---'; cat /tmp/vyra-headers.txt
+          krav() {
+            if ! grep -qi "$1" /tmp/vyra-headers.txt; then
+              echo "SAKNAS I SVARET: $1"; exit 1
+            fi
+          }
+          krav 'strict-transport-security: max-age=300'
+          krav "content-security-policy:.*frame-ancestors 'self'"
+          krav "content-security-policy:.*base-uri 'self'"
+          krav "content-security-policy:.*form-action 'self'"
+          krav "content-security-policy:.*object-src 'none'"
+          krav 'x-content-type-options: nosniff'
+          # Steg 1 far inte smyga vidare i trappan.
+          if grep -qiE 'strict-transport-security:.*(includesubdomains|preload)' /tmp/vyra-headers.txt; then
+            echo 'HSTS gick forbi steg 1 - includeSubDomains/preload ska beslutas separat'; exit 1
+          fi
+
   test-tiktok-bridge:
     runs-on: ubuntu-latest
     defaults:
