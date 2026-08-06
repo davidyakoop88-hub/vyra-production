@@ -33,7 +33,11 @@ function fwSpela(w,e,combo){
 window.VyraFireworks={
   timers:()=>fwTimers.size,
   slutarVid:()=>Math.max(0,...[...fwTimers.values()].map(t=>t.slutarVid)),
-  spelar:e=>fwTimers.has(e)
+  spelar:e=>fwTimers.has(e),
+  /* Timerns id, sa ett test kan bevisa att just DEN rensades — genom att spionera pa clearTimeout,
+     inte genom att lita pa en raknare koden sjalv okar. En raknare gar att luras: tar man bort
+     clearTimeout men later raknaren sta kvar blir testet gront anda (uppmatt). */
+  aktivId:e=>fwTimers.get(e)&&fwTimers.get(e).id
 };
 function buildComboRockets(w,e,combo=w.fwCombo||1){combo=Math.max(1,Math.min(100,+combo||1));e.querySelectorAll('.fw-rocket').forEach(x=>x.remove());let burst=e.querySelector('.fw-burst'),gift=w.fwGiftImage||campaignGiftList()[0]?.file;for(let i=0;i<combo;i++){let rocket=document.createElement('div');rocket.className='fw-rocket';rocket.style.setProperty('--x',`${8+((i*37)%85)}%`);rocket.style.setProperty('--delay',`${(i%20)*.045}s`);rocket.style.setProperty('--hue',`${(i*29)%360}deg`);rocket.style.setProperty('--gift-scale',`${.62+(i%5)*.08}`);rocket.innerHTML=`<img class="fw-rocket-gift" src="${gift}" alt="">`;e.insertBefore(rocket,burst)}return combo}
 /* Tar emot bade ett rent tal och hela eventet. action-runtime skickade i alla tider bara

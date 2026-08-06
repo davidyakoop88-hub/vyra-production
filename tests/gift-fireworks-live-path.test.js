@@ -124,23 +124,33 @@ test('combon klamps till 1-100', () => {
 
 // ---- 3. en ny gava forlanger, den avbryter inte -------------------------------------------------
 
-test('den forsta gavans timer avbryts — den far inte klippa den andra animationen', async () => {
-  // Den verkliga skadan, matt med riktiga timers: gava A satter en deadline, gava B kommer strax
-  // efter och ska flytta fram den. Avbryts inte A:s timer tar den bort .play mitt i B:s animation.
-  // 60 ms visningstid gor det matbart utan att testet tar sekunder.
-  const { h, d } = boot([fw('fw1', { fwDuration: 0.06 })]);
-  const vanta = ms => new Promise(r => h.window.setTimeout(r, ms));
+test('den forsta gavans timer avbryts — den far inte klippa den andra animationen', () => {
+  // MATT DETERMINISTISKT, och pa det FAKTISKA anropet.
+  //
+  // Forsta forsoket vantade ut riktiga timers (60 ms visningstid) och foll 3 av 5 lokala korningar
+  // — och rev main efter merge, dar korningen tog 1030 ms i stallet for 120. En belastad maskin
+  // hinner lata A:s deadline passera innan B ens triggas; da mater testet schemalaggaren.
+  //
+  // Andra forsoket raknade avbrott i en variabel koden sjalv okade. Den gick att luras: tar man
+  // bort clearTimeout men later raknaren sta kvar blev testet gront anda (uppmatt).
+  //
+  // Det har spionerar pa clearTimeout och kraver att just A:s timer-id rensades.
+  const { h, d, run } = boot();
+  const el = fx(d);
 
   h.window.triggerGiftFireworks({ username: 'a', coins: 100, combo: 2 });
-  await vanta(40);
+  run(`window.__idA = VyraFireworks.aktivId(document.querySelector('[data-id="fw1"] .gift-fireworks-fx'))`);
+  const idA = h.window.__idA;
+  assert.ok(idA, 'forsta gavan satte ingen timer alls');
+
+  run(`window.__rensade=[];const c0=clearTimeout;clearTimeout=id=>{window.__rensade.push(id);return c0(id)}`);
   h.window.triggerGiftFireworks({ username: 'b', coins: 100, combo: 3 });
-  await vanta(35);   // forbi A:s ursprungliga deadline (60 ms), fore B:s (40+60 ms)
 
-  assert.ok(fx(d).classList.contains('play'),
-    'A:s timer levde kvar och tog bort effekten mitt i B:s animation');
-
-  await vanta(45);   // nu ska aven B ha hunnit ta slut
-  assert.ok(!fx(d).classList.contains('play'), 'effekten stannade kvar for evigt');
+  assert.ok([...h.window.__rensade].includes(idA),
+    `A:s timer (${idA}) rensades aldrig — den kommer att ta bort .play mitt i B:s animation`);
+  assert.equal(h.window.VyraFireworks.timers(), 1, 'timers staplades i stallet for att ersattas');
+  assert.notEqual(h.window.VyraFireworks.aktivId(el), idA, 'ingen ny timer sattes for B');
+  assert.ok(el.classList.contains('play'), 'effekten slutade spela');
 });
 
 test('den andra gavans raketer bygger pa, de ersatter inte', () => {
