@@ -679,7 +679,11 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='poin
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='state-backup.js?v=1';document.body.append(js)});
+/* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
+   ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
+   .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
+   Samma par-monster som grannarna ovan anvander. */
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});
