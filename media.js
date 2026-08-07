@@ -751,6 +751,11 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='support-client.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='support-client.js?v=20260806-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260806-1';document.body.append(js)});
+/* Gift Fireworks trigger, samma monster som fan-level-session.js. Widgeten hade ingen livevag alls:
+   enda anroparen var action-runtime.js:62, som bara kors for den som SJALV lagt upp en Action med
+   "firework" i widgetnamnet. Uppmatt 2026-08-06 mot deployad kod - en gava genom VyraLive.ingest
+   anropade triggern noll ganger medan Top Gift flippade som den skulle. */
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-fireworks-session.js?v=20260806-1';document.body.append(js)});
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
