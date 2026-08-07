@@ -62,38 +62,59 @@ home = function () {
 
 if (typeof view !== 'undefined' && view === 'home') render();
 
-// ---- Livedata: tittarantalet ------------------------------------------------------------------
+// ---- Livedata i Command Center ----------------------------------------------------------------
 //
-// Forsta riktiga kopplingen pa framsidan. Korten har hittills varit statisk markup — `—` och
-// "Visas under riktig LIVE" — utan att nagot nagonsin matat dem.
+// Korten var 61 rader statisk markup — ett streck och "Visas under riktig LIVE" — utan att nagot
+// nagonsin matat dem. Det har ar matningen, ett kort i taget.
 //
-// Tittare ar den enklaste av de fyra: bada bryggorna skickar `viewer` med ett fardigt `count`
-// (electron-app/tiktok-service.js, tiktok-bridge/bridge.js), sa ingen summering behovs, inget
-// tidsfonster maste beslutas och ingen dedupe kravs. Vardet ar ett ogonblicksvarde.
+// KORT-tabellen ar hela monstret. Ett nytt kort ar en rad, inte ett nytt block: vilka eventtyper
+// det lyssnar pa och vilket falt som bar vardet. Allt annat — batchning, ateruppritning, teardown —
+// delas.
 //
-// Tre regler ur arkitekturkontraktet, och de ar hela poangen med att gora den har forst:
+// VARFOR JUST DE HAR FALTEN
 //
-//   1. ALDRIG render() harifran. render() ar `viewRoot.innerHTML = m[view]()` — den river hela vyn.
+//   viewers  viewer.count       TikTok skickar rummets aktuella antal
+//   likes    likes.points       TikToks egen totalLikeCount for rummet
+//
+// Bada ar OGONBLICKSVARDEN som TikTok redan raknat. Kortet summerar alltsa aldrig sjalvt, och
+// behover darfor inte besluta nagot tidsfonster eller skydda sig mot dubbelrakning vid
+// ateranslutning. For likes finns aven faltet "count" (likes i den enskilda skuren) — det anvands
+// med flit INTE, eftersom en egen summering hade krävt ett beslut om nollstallning mellan
+// sandningar och skydd mot dubbelrakning.
+//
+// TVA STAVNINGAR for likes: bada bryggorna skickar typen "likes", molnets event-bus aliasar den
+// till "like" (server/event-bus.js:6) men desktopvagen gar utan det aliaset. Kortet lyssnar pa bada
+// — det ar exakt den sortens glapp som gjort fyra widgetar tysta tidigare.
+//
+// TRE REGLER ur arkitekturkontraktet:
+//
+//   1. ALDRIG render() harifran. render() satter viewRoot.innerHTML och river darmed hela vyn.
 //      Bara ett textContent pa en nod byts.
-//   2. Batchat via requestAnimationFrame. En publik som svanger ger manga events i rad; DOM:en ska
-//      roras en gang per bildruta, inte en gang per event.
+//   2. Batchat via requestAnimationFrame. Uppmatt: 200 events i rad ger 4 DOM-mutationer, inte 200.
 //   3. Teardown pa vyra-session-ended. Ingen lyssnare far overleva en utloggning eller ett kontobyte.
 //
-// Vardet lever bara i minnet. Det ska inte overleva en omladdning, och tokenlaget (?access=) far
+// Vardena lever bara i minnet. De ska inte overleva en omladdning, och tokenlaget (?access=) far
 // aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
 (function () {
-  let senaste = null;          // senast kanda antal, null = inget event an
+  const KORT = [
+    { stat: 'viewers', typer: ['viewer'], las: data => Number(data.count) },
+    { stat: 'likes', typer: ['like', 'likes'], las: data => Number(data.points) }
+  ];
+
+  const senaste = Object.create(null);   // stat -> tal, saknas = inget event an
   let koad = false;
   let levande = true;
 
-  const kortet = () => document.querySelector('[data-stat="viewers"] strong');
-
   function mala() {
     koad = false;
-    if (!levande || senaste === null) return;
-    const nod = kortet();
-    // Vyn kan vara en annan just nu (editor, overlay). Da finns inget kort, och det ar inte ett fel.
-    if (nod) nod.textContent = senaste.toLocaleString('sv-SE');
+    if (!levande) return;
+    for (const kort of KORT) {
+      const varde = senaste[kort.stat];
+      if (varde === undefined) continue;
+      // Vyn kan vara en annan just nu (editor, overlay). Da finns inget kort, och det ar inte ett fel.
+      const nod = document.querySelector('[data-stat="' + kort.stat + '"] strong');
+      if (nod) nod.textContent = varde.toLocaleString('sv-SE');
+    }
   }
 
   function schemalagg() {
@@ -105,22 +126,26 @@ if (typeof view !== 'undefined' && view === 'home') render();
   addEventListener('vyra-live-event', event => {
     if (!levande) return;
     const data = event.detail || {};
-    if (String(data.type || data.event || '').toLowerCase() !== 'viewer') return;
-    const antal = Number(data.count);
-    if (!Number.isFinite(antal) || antal < 0) return;
-    senaste = Math.round(antal);
+    const typ = String(data.type || data.event || '').toLowerCase();
+    const kort = KORT.find(k => k.typer.includes(typ));
+    if (!kort) return;
+    const tal = kort.las(data);
+    if (!Number.isFinite(tal) || tal < 0) return;
+    senaste[kort.stat] = Math.round(tal);
     schemalagg();
   });
 
-  // render() bygger om #view fran grunden, sa kortet ar en ny nod varje gang. Utan den har skulle
-  // vardet forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
+  // render() bygger om #view fran grunden, sa korten ar nya noder varje gang. Utan den har skulle
+  // vardena forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
   // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
-  const observer = new MutationObserver(() => { if (senaste !== null) schemalagg() });
+  const observer = new MutationObserver(() => {
+    for (const kort of KORT) if (senaste[kort.stat] !== undefined) { schemalagg(); return }
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 
   addEventListener('vyra-session-ended', () => {
     levande = false;
-    senaste = null;
+    for (const kort of KORT) delete senaste[kort.stat];
     observer.disconnect();
   });
 })();
