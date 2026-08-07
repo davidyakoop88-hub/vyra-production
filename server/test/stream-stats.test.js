@@ -241,3 +241,38 @@ test('den obevakade skrivningen kan inte fälla processen', () => {
   const rad = indexKod.split(/\r?\n/).find(l => /streamStats\.record\(/.test(l));
   assert.match(rad, /\.catch\(/, `record() saknar .catch(): ${rad.trim()}`);
 });
+
+// ---- den sessionsautentiserade ingest-rutten ----------------------------------------------------
+//
+// KALLKODSKONTROLL. Rutten gar bara att kora med bade Postgres och Redis, sa det uttommande provet
+// bor i CI (server/test/goal-ingest-http.test.js:s monster). Det har vaktar de tre besluten som
+// gar att fa fel utan att nagot blir rott, och som alla ar sakerhetsbeslut.
+const ruttKod = indexKod.split(/\r?\n/).map(rad => rad.replace(/\/\/[^\r\n]*/, '')).join('\n');
+const RUTT = /const wsIngest=p\.match\([\s\S]{0,4000}?\n  \}/.exec(ruttKod);
+
+test('desktop-ingesten finns som egen rutt', () => {
+  assert.ok(RUTT, 'hittade ingen /api/workspaces/:id/events-rutt — Desktop har ingenstans att posta');
+  assert.match(RUTT[0], /req\.method==='POST'/);
+});
+
+// Desktop far ALDRIG den globala TIKTOK_INGEST_TOKEN: den ar en huvudnyckel till alla workspaces
+// (rutten /api/events/tiktok/:workspace binder den inte till nagot workspace) och en installerad
+// .exe gar att packa upp. Behorigheten maste komma ur medlemskapet i stallet.
+test('rutten auktoriserar via medlemskap, inte via delad hemlighet', () => {
+  assert.match(RUTT[0], /membership\(si\.user_id,workspaceId,/,
+    'ingen medlemskapskontroll — vem som helst med en giltig session kunde posta till vilket workspace som helst');
+  assert.equal(/INGEST_TOKEN/.test(RUTT[0]), false, 'rutten lutar sig mot en delad hemlighet');
+});
+
+// CSRF-token gar inte att anvanda har: GET /api/auth/me roterar csrf_hash vid varje anrop, och
+// Studio-sidan anropar den regelbundet inuti desktopfonstret — en cachad token blir garanterat
+// inaktuell. Skyddet ar i stallet Origin: en webblasare skickar ALLTID Origin over sajtgrans,
+// Desktops egen fetch skickar ingen alls. Utan den har raden ar rutten oskyddad mot CSRF.
+test('rutten kräver samma ursprung', () => {
+  assert.match(RUTT[0], /if\(!sameOrigin\(req\)\)/,
+    'ingen ursprungskontroll — och rutten har medvetet ingen CSRF-token, så den vore helt oskyddad');
+});
+
+test('rutten avvisar den som inte är inloggad', () => {
+  assert.match(RUTT[0], /if\(!si\)return send\(res,401/);
+});
