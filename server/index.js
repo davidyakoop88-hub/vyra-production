@@ -3,7 +3,7 @@ if(process.env.NODE_ENV==='production')require('./production-config').validatePr
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -99,6 +99,10 @@ function validateTikTokIngestPayload(payload){
 // Nivaminnet far poolens query direkt, inte poolen: viewer-levels.js kor ett enda uttalande och ska
 // inte kunna halla en klient eller oppna en transaktion.
 const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params)});
+// Stromningshistoriken bakom "All time" pa framsidan. Samma form som nivaminnet: den far poolens
+// query, inte poolen, och svaljer sina egna fel — en analysskrivning far aldrig kunna stoppa ett
+// event fran att na overlayet.
+const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels});
 async function ingestTikTokEvent(workspaceId,payload){
   if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
@@ -108,6 +112,15 @@ async function ingestTikTokEvent(workspaceId,payload){
   // Unchanged rule, unchanged place: the counters follow the RAW event, not the goal path, and the
   // route still gets exactly the publish result it has always sent back.
   if(!raw.duplicate){metrics.event(raw.event.type);lastTikTokEventAt=Date.now()}
+  // Historiken bakom "All time" pa framsidan. Skrivs BARA nar eventet inte ar en dubblett:
+  // dubbelrakning i en summa gar inte att upptacka i efterhand, till skillnad fran ett
+  // ogonblicksvarde som nasta korrekta event skriver over.
+  //
+  // Inte await:at, och stream-stats svaljer sina egna fel. Statistiken ar ett sidoresultat — tappas
+  // en rad blir det en lucka i historiken, men ett kastat fel hade hindrat eventet fran att na
+  // overlayet, och da slutar sandningen fungera for att en analysskrivning strulade. .catch() ar
+  // andå kvar: en avvisad promise utan hanterare faller hela processen i Node.
+  if(!raw.duplicate)streamStats.record(workspaceId,raw.event).catch(()=>{});
   return raw;
 }
 function send(res,status,data,headers={}){const body=Buffer.from(JSON.stringify(data));res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':body.length,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; frame-ancestors 'none'",...headers});res.end(body)}

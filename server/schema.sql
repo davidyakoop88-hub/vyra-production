@@ -254,3 +254,69 @@ CREATE TABLE IF NOT EXISTS viewer_levels (
 -- goal_event_apply, och samma skäl att välja BRIN framför B-tree.
 CREATE INDEX IF NOT EXISTS viewer_levels_sweep_brin
   ON viewer_levels USING brin (seen_at);
+
+-- Strömningshistorik — underlaget för "All time" på framsidan.
+--
+-- Fram till nu räknades all statistik i webbläsaren (live-leaderboard.js -> localStorage). En
+-- sändning utan Studio-fliken uppe hamnade därför aldrig i statistiken, ett datorbyte nollställde
+-- den, och en rensad webbläsare raderade den. Uppmätt 2026-08-07: 5 dagar och 10 givare lokalt,
+-- mot en konkurrents 472 givare sedan juni. Skillnaden är inte räknandet utan var det sker.
+--
+-- INGEN RÅ EVENTLOGG. Allt en analysvy visar är summor, och summor växer förutsägbart. En rå logg
+-- hade vuxit med varje tapp i en likestorm; de tre tabellerna nedan har bunden tillväxt:
+--
+--   gifter_totals  en rad per givare           växer med publiken
+--   daily_totals   en rad per dag              365 rader per år
+--   slot_totals    en rad per veckodag+timme   FAST 168 rader, växer aldrig
+--
+-- Nyckeln bär tiktok_username för att statistiken följer TikTok-kontot. Byter streamern konto
+-- blandas inte två publiker ihop — att slå ihop i efterhand går, att separera gör det inte.
+--
+-- Tiden lagras i UTC. Lagrades lokal tid låstes historiken till den tidszon användaren råkade ha
+-- när raden skrevs, och veckodagsmönstret — hela poängen med "sänd torsdag–fredag 18–24" — blir
+-- fel för den som flyttar. Klienten räknar om till lokal tid vid visning.
+CREATE TABLE IF NOT EXISTS gifter_totals (
+  workspace_id       uuid   NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username    text   NOT NULL,
+  viewer_id          text   NOT NULL,
+  display_name       text,
+  avatar_url         text,
+  gifts              bigint NOT NULL DEFAULT 0,
+  diamonds           bigint NOT NULL DEFAULT 0,
+  likes              bigint NOT NULL DEFAULT 0,
+  best_gift_name     text,
+  best_gift_diamonds bigint NOT NULL DEFAULT 0,
+  first_seen         timestamptz NOT NULL DEFAULT now(),
+  last_seen          timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, tiktok_username, viewer_id)
+);
+
+-- Topplistan sorterar på diamanter inom ett konto, och "sovande givare" på last_seen. Båda är
+-- läsvägar som körs varje gång framsidan öppnas.
+CREATE INDEX IF NOT EXISTS gifter_totals_topplista
+  ON gifter_totals (workspace_id, tiktok_username, diamonds DESC);
+CREATE INDEX IF NOT EXISTS gifter_totals_sovande_brin
+  ON gifter_totals USING brin (last_seen);
+
+CREATE TABLE IF NOT EXISTS daily_totals (
+  workspace_id    uuid   NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username text   NOT NULL,
+  day             date   NOT NULL,
+  gifts           bigint NOT NULL DEFAULT 0,
+  diamonds        bigint NOT NULL DEFAULT 0,
+  likes           bigint NOT NULL DEFAULT 0,
+  PRIMARY KEY (workspace_id, tiktok_username, day)
+);
+
+-- Fast storlek: 7 veckodagar x 24 timmar per konto. Den här är underlaget för "bästa tid att sända"
+-- och kan därför aldrig bli den tabell som växer sig dyr.
+CREATE TABLE IF NOT EXISTS slot_totals (
+  workspace_id    uuid     NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username text     NOT NULL,
+  weekday         smallint NOT NULL CHECK (weekday BETWEEN 0 AND 6),
+  hour            smallint NOT NULL CHECK (hour    BETWEEN 0 AND 23),
+  gifts           bigint   NOT NULL DEFAULT 0,
+  diamonds        bigint   NOT NULL DEFAULT 0,
+  likes           bigint   NOT NULL DEFAULT 0,
+  PRIMARY KEY (workspace_id, tiktok_username, weekday, hour)
+);
