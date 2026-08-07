@@ -235,3 +235,44 @@ test('utan en från-nivå visas den föregående nivån som standard', () => {
   assert.match(box.querySelector('.fan-level-pill').textContent.replace(/\s+/g, ' '), /11\s*→\s*12/,
     'förhandsvisningen i editorn ska visa samma form som en riktig level-up');
 });
+
+// ---- serverns stämpel äger jämförelsen -------------------------------------------------------
+// Kartan ovan lever i RAM och dör med sidan, så den kan bara se en höjning om SAMMA tittare syns
+// TVÅ gånger i SAMMA sändning. Fanklubbsnivå rör sig på veckor — därför var widgeten tyst i
+// praktiken. viewer-levels.js på servern minns mellan sändningar och stämplar eventet med
+// {from,to}; klienten renderar den slutsatsen i stället för att försöka dra den själv.
+test('en stämplad höjning fyrar direkt, utan att tittaren setts förut', () => {
+  const env = boot();
+  env.skicka({ type: 'gift', username: 'aterkommande', teamLevel: 9,
+    fanLevelUp: { from: 7, to: 9 } });
+  assert.equal(env.traffar().length, 1, 'stämpeln ignorerades — det är hela poängen med den');
+  assert.equal(env.traffar()[0].fromLevel, 7);
+  assert.equal(env.traffar()[0].level, 9);
+});
+
+test('stämpeln fyrar en gång per höjning, inte två', () => {
+  // Reserven får inte lägga på en egen alert ovanpå serverns. Kön släpper EN i taget, så den andra
+  // måste släppas fram med nastaNu() — annars mäter testet köpolicyn i stället för dubbelfyrning.
+  const env = boot();
+  env.skicka({ type: 'gift', username: 'en', teamLevel: 4, fanLevelUp: { from: 2, to: 4 } });
+  env.skicka({ type: 'gift', username: 'en', teamLevel: 6, fanLevelUp: { from: 4, to: 6 } });
+  assert.equal(env.traffar().length, 1, 'kön släppte fler än en åt gången');
+  env.run('VyraFanLevel.nastaNu()');
+  assert.equal(env.traffar().length, 2, 'den andra höjningen kom aldrig fram');
+  env.run('VyraFanLevel.nastaNu()');
+  assert.equal(env.traffar().length, 2,
+    'en tredje alert dök upp — reserven fyrade ovanpå serverns stämpel');
+  // Spridningen drar in arrayen i Nodes realm — jsdom:s Array har en annan prototyp, och strikt
+  // deepEqual jämför den.
+  assert.deepEqual([...env.traffar()].map(x => Number(x.level)), [4, 6]);
+});
+
+test('en trasig stämpel ignoreras och reserven tar över', () => {
+  const env = boot();
+  // to <= from är ingen höjning. Utan spärren hade en felaktig stämpel gett en falsk alert.
+  env.skicka({ type: 'gift', username: 'lugn', teamLevel: 5, fanLevelUp: { from: 5, to: 5 } });
+  assert.equal(env.traffar().length, 0, 'en icke-höjning stämplades fram som en höjning');
+  env.skicka({ type: 'gift', username: 'lugn', teamLevel: 8 });
+  assert.equal(env.traffar().length, 1, 'reserven slutade fungera för event utan stämpel');
+  assert.equal(env.traffar()[0].fromLevel, 5);
+});

@@ -32,7 +32,12 @@
 // happened to be there when the ingest was created. A snapshot would ignore anything that replaced
 // console.error afterwards — which is how a test captures the line, and how any log transport added
 // later would work too.
+// viewerLevels är valfri och defaultar till tystnad. Nivåminnet är en förbättring av vad widgetarna
+// FÅR veta, inte en förutsättning för att eventet ska nå fram — faller det bort ska gåvan gå ut ändå.
+const INGA_NIVAER = { applyEvent: async () => ({ fanLevelUp: null, gifterLevelUp: null }) };
+
 function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
+                             viewerLevels = INGA_NIVAER,
                              log = (...args) => console.error(...args), now = Date.now } = {}) {
   // A frame failure must not fail the request: the number is committed and the raw event is out, so
   // the response is already true. The widget corrects itself on the next event or the next GET,
@@ -64,6 +69,12 @@ function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
 
   return async function ingestEvent(workspaceId, payload) {
     const event = cleanEvent(payload);
+    // FÖRE publish, för det är det publicerade eventet widgeten läser. Klienten avgör ingenting
+    // längre: den renderar den höjning servern redan konstaterat, precis som konkurrentens widget
+    // gör — skillnaden är att vårt minne ligger i molnet och inte i en app på en dator.
+    const nivaer = await viewerLevels.applyEvent(workspaceId, event);
+    if (nivaer.fanLevelUp) event.fanLevelUp = nivaer.fanLevelUp;
+    if (nivaer.gifterLevelUp) event.gifterLevelUp = nivaer.gifterLevelUp;
     const applied = await goalRuntime.applyEvent(pool, workspaceId, event);
     const raw = await eventBus.publish(workspaceId, event);
     const frames = applied.applied && applied.rows.length

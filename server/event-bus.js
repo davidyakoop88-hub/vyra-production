@@ -35,6 +35,17 @@ const event={
     // klampning 0-50, dar 0 betyder "ingen niva rapporterad".
     gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0)))
   };
+  // Nivahojningen, konstaterad av viewer-levels.js FORE publish. Utan de har tva raderna droppar
+  // vitlistan stampeln igen i publish(), som kor cleanEvent en gang till - och widgeten far tillbaka
+  // exakt det glapp den satt i: ett falt som fardas hela vagen fram till kontraktet och stryks dar.
+  // Bara en akta hojning bars vidare; allt annat utelamnas hellre an skickas som noll.
+  const hojning=v=>{
+    const fran=Math.round(Number(v?.from)),till=Math.round(Number(v?.to));
+    return Number.isInteger(fran)&&Number.isInteger(till)&&fran>=1&&till<=50&&till>fran?{from:fran,to:till}:null;
+  };
+  const fanUpp=hojning(input?.fanLevelUp),gifterUpp=hojning(input?.gifterLevelUp);
+  if(fanUpp)event.fanLevelUp=fanUpp;
+  if(gifterUpp)event.gifterLevelUp=gifterUpp;
   if(!event.id||!ALLOWED.has(event.type))throw Object.assign(new Error('Ogiltigt live-event'),{status:400});
   if(Buffer.byteLength(JSON.stringify(event))>MAX_EVENT_BYTES)throw Object.assign(new Error('Event för stort'),{status:413});
   return event;
