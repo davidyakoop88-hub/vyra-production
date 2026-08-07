@@ -760,6 +760,10 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260806-1';document.body.append(js)});
+/* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
+   lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
+   skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});
