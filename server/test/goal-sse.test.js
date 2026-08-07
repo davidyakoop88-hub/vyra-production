@@ -262,8 +262,14 @@ test('publish vägrar en ogiltig frame i stället för att lägga skräp på kan
 
 // Both source checks below read the CODE, not the comments — a file that explains why it does not
 // call xAdd must not fail for saying so.
+//
+// `[^\r\n]*`, INTE `.*$`. JS-punkten matchar inte \r, så på en CRLF-checkout matchade `$` aldrig och
+// hela strippningen blev en no-op: kommentaren på goal-sse.js:20 som NÄMNER xAdd överlevde, och
+// provet nedan blev rött av att filen förklarade varför den inte gör det. Grönt i CI (LF), rött på
+// varje Windows-maskin. Riktningen avgör hur det yttrar sig — ett `!/x/`-prov blir falskt rött, ett
+// `assert.match`-prov blir falskt GRÖNT av en kommentar som råkar nämna saken.
 const code = () => fs.readFileSync(path.join(__dirname, '..', 'goal-sse.js'), 'utf8')
-  .split('\n').map(line => line.replace(/\/\/.*$/, '')).join('\n');
+  .split(/\r?\n/).map(line => line.replace(/\/\/[^\r\n]*/, '')).join('\n');
 
 test('frames läggs aldrig i Redis-strömmen — de är inte återspelbara', () => {
   assert.ok(!/xAdd/.test(code()), 'goal-sse.js skriver till strömmen; en frame får bara publiceras');

@@ -18,8 +18,11 @@ const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
 
 // Kommentarer bort först: filen förklarar sig själv i prosa, och den prosan nämner precis de
 // sökvägar testet letar efter.
-const instructions = dockerfile.split('\n')
-  .map(line => line.replace(/^\s*#.*$/, '').replace(/\s+#\s.*$/, ''))
+//
+// `[^\r\n]*`, inte `.*$`: JS-punkten matchar inte \r, så på en CRLF-checkout matchade `$` aldrig och
+// strippningen blev en no-op — prosan lästes som instruktioner.
+const instructions = dockerfile.split(/\r?\n/)
+  .map(line => line.replace(/^\s*#[^\r\n]*/, '').replace(/\s+#\s[^\r\n]*/, ''))
   .join('\n');
 
 // ---- reglerna, lästa ur filen -------------------------------------------------------------------
