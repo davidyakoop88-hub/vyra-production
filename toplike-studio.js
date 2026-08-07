@@ -264,17 +264,17 @@
     if (opacity) opacity.onchange = e => { w.opacity = (+e.target.value) / 100; save(); render(); };
 
     const shadowBlur = document.querySelector('#wsShadowBlur');
-    if (shadowBlur) shadowBlur.oninput = e => { w.textShadowBlur = +e.target.value; save(); render(); };
+    if (shadowBlur) { shadowBlur.oninput = e => vyraLivePatch(w, shadowBlur, 'textShadowBlur', +e.target.value); shadowBlur.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
     const shadowX = document.querySelector('#wsShadowX');
     if (shadowX) shadowX.onchange = e => { w.textShadowX = +e.target.value; save(); render(); };
     const shadowY = document.querySelector('#wsShadowY');
     if (shadowY) shadowY.onchange = e => { w.textShadowY = +e.target.value; save(); render(); };
     const shadowColor = document.querySelector('#wsShadowColor');
-    if (shadowColor) shadowColor.oninput = e => { w.textShadowColor = e.target.value; save(); render(); };
+    if (shadowColor) { shadowColor.oninput = e => vyraLivePatch(w, shadowColor, 'textShadowColor', e.target.value); shadowColor.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
     const outlineWidth = document.querySelector('#wsOutlineWidth');
-    if (outlineWidth) outlineWidth.oninput = e => { w.textOutlineWidth = +e.target.value; save(); render(); };
+    if (outlineWidth) { outlineWidth.oninput = e => vyraLivePatch(w, outlineWidth, 'textOutlineWidth', +e.target.value); outlineWidth.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
     const outlineColor = document.querySelector('#wsOutlineColor');
-    if (outlineColor) outlineColor.oninput = e => { w.textOutlineColor = e.target.value; save(); render(); };
+    if (outlineColor) { outlineColor.oninput = e => vyraLivePatch(w, outlineColor, 'textOutlineColor', e.target.value); outlineColor.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
 
     const customFont = document.querySelector('#wsCustomFont');
     if (customFont) customFont.onchange = async e => {
