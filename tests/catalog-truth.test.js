@@ -136,20 +136,20 @@ test('varje katalognyckel gar att losa upp', () => {
 });
 
 // ---- 4. kampanjtemana maste skilja sig -----------------------------------------------------------
-test('inget kampanjtema slacks av den ramlosa aterstallningen', () => {
-  // Aterstallningen ska ta bort RAMAR. Den far inte lista teman vars identitet ar just det den
-  // slacker — glasets panel och blur ar inte en ram.
-  const css = fs.readFileSync(path.join(ROOT, 'studio.css'), 'utf8');
-  const reset = css.match(/\.vyra-campaign(?:,[^{]*)?\{[^{}]*backdrop-filter:none!important[^{}]*\}/);
-  assert.ok(reset, 'hittade inte den ramlosa aterstallningen — testet mater ingenting');
-
-  const listade = [...reset[0].matchAll(/\.campaign-([a-z-]+)/g)].map(m => m[1]);
-  const forbjudna = listade.filter(t => t === 'glass');
-
-  assert.deepEqual(forbjudna, [],
-    `${forbjudna.join(', ')} listas i aterstallningen, som uttryckligen slacker backdrop-filter ` +
-    'och bakgrund — alltsa hela designens identitet');
-});
+//
+// Har fanns 'inget kampanjtema slacks av den ramlosa aterstallningen', som sokte efter strangen
+// `.vyra-campaign{…backdrop-filter:none!important…}` och kravde att `glass` inte listades dar.
+//
+// Den forankrade en MEKANISM, inte ett utfall. En strangsokning kan inte se en kaskad — den vet
+// inte om regeln vann, bara att den star skriven. Nar den ramlosa aterstallningen togs bort (ramar
+// hor inte hemma pa wrappern alls) foll provet, trots att det det skyddade fortfarande holl.
+//
+// Kontraktet mats nu dar det gar att mata pa riktigt, i en verklig kaskad:
+//   tests/browser/campaign-frames.browser.test.js
+//     · 'sandningen har transparent bakgrund, och glass behaller sin identitet i editorn'
+//
+// Systertestet nedan ligger kvar och bevakar samma sak fran kallkodshallet: att glass overhuvudtaget
+// HAR en egen styling att forlora.
 
 test('neon, glass och minimal har var sin egen styling', () => {
   const css = fs.readdirSync(ROOT).filter(f => f.endsWith('.css'))
