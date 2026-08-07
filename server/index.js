@@ -245,6 +245,33 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   if(p==='/api/auth/email/verify'&&req.method==='POST'){const d=await body(req);await AuthFlow.verifyEmail(pool,d.token);return send(res,200,{ok:true,message:'Din e-postadress är verifierad.'})}
   if(p==='/api/auth/me'&&req.method==='GET'){const s=await session(req);if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});const csrf=S.token();await pool.query('UPDATE sessions SET csrf_hash=$1,last_seen_at=now() WHERE id=$2',[S.digest(csrf),s.id]);if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'MFA krävs',mfaRequired:true,csrfToken:csrf});const w=await pool.query('SELECT w.id,w.name,m.role FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at',[s.user_id]);return send(res,200,{ok:true,user:{id:s.user_id,email:s.email,displayName:s.display_name,emailVerified:!!s.email_verified_at,mfaEnabled:!!s.mfa_enabled_at,isPlatformAdmin:!!s.is_platform_admin},workspaces:w.rows,csrfToken:csrf})}
   if(p==='/api/auth/logout'&&req.method==='POST'){const s=await session(req,{csrf:true});if(!s)return send(res,401,{ok:false,error:'Ogiltig session'});await pool.query('DELETE FROM sessions WHERE id=$1',[s.id]);return send(res,200,{ok:true},{'set-cookie':S.clearCookie()})}
+  // TikTok-event fran VYRA Desktop, postade som den INLOGGADE ANVANDAREN.
+  //
+  // Den befintliga /api/events/tiktok/:workspace tar en global serverhemlighet (TIKTOK_INGEST_TOKEN,
+  // grupperad med APP_ENCRYPTION_KEY i production-config.js) och laser workspace ur URL:en UTAN att
+  // binda det till token. Den som har token kan posta till vilket workspace som helst. Desktop ar en
+  // installerad .exe pa anvandarens dator — en enda uppackning hade lackt huvudnyckeln till alla
+  // streamers overlays. Darfor far Desktop aldrig den token; den anvander sessionen den redan har.
+  //
+  // Rutten ligger FORE den gemensamma session-raden nedan for att den behover ett eget CSRF-beslut:
+  //
+  //   INGEN CSRF-TOKEN, ORIGIN-KRAV I STALLET. GET /api/auth/me ROTERAR csrf_hash vid varje anrop
+  //   (raden ovan), och Studio-sidan anropar den regelbundet inuti desktopfonstret. En token som
+  //   Desktop cachar blir darfor garanterat inaktuell, och varje event hade blivit en tyst 401. Att
+  //   i stallet hamta en farsk token vid varje event hade roterat bort Studio-sidans egen — tva
+  //   klienter delar en session och det finns bara en CSRF-plats.
+  //   Skyddet blir sameOrigin: en webblasare skickar ALLTID Origin vid ett anrop over sajtgrans, och
+  //   en JSON-POST kraver dessutom preflight som servern inte besvarar. Desktops egen fetch skickar
+  //   ingen Origin alls och slapps igenom. Samma skydd, utan den delade token.
+  const wsIngest=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/events$/i);
+  if(wsIngest&&req.method==='POST'){
+    if(!sameOrigin(req))return send(res,403,{ok:false,error:'Fel ursprung'});
+    const si=await session(req);if(!si)return send(res,401,{ok:false,error:'Inte inloggad'});
+    const workspaceId=wsIngest[1];
+    if(!await membership(si.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    const d=await body(req,64*1024),out=await ingestTikTokEvent(workspaceId,d);
+    return send(res,out.duplicate?200:202,{ok:true,...out});
+  }
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
   if(p==='/api/auth/mfa/challenge'&&req.method==='POST'){if(!s.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(s.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[s.user_id]),user={...q.rows[0],user_id:s.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[s.id]);await notifyLogin(c,s.email,s.id,s.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[s.user_id,s.id,{device:describeDevice(s.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});

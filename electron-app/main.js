@@ -18,6 +18,10 @@ let entryReasonShown=false;
 // faster den har pa anrop den vidarebefordrar. Vardet stannar i huvudprocessen och nar aldrig
 // sidans JS.
 let cloudSessionCookie='';
+// Workspace-id:t som TikTok-eventen ska bokforas pa. Satts pa samma stalle som kakan ovan, av samma
+// skal: bada ar kanda forst nar behorighetsgrinden svarat ok. Utan det speglar local-server.js
+// ingenting till molnet, och da sparas ingen statistik alls.
+let cloudWorkspaceId='';
 
 // Diagnostics: this process runs detached (no visible console), so log to a file we can inspect —
 // console.log alone is invisible once packaged.
@@ -135,6 +139,8 @@ async function createMainWindow() {
             cloudSessionCookie=jar.map(c=>`${c.name}=${c.value}`).join('; ');
             log('bridged cloud session:',jar.length,'cookies');
           }catch(error){log('cookie bridge failed:',error.message)}
+          cloudWorkspaceId=String((verdict.account&&verdict.account.workspace&&verdict.account.workspace.id)||'');
+          log('cloud workspace for event mirroring:',cloudWorkspaceId||'(saknas)');
           const profile=encodeURIComponent(Buffer.from(JSON.stringify(verdict.account),'utf8').toString('base64'));
           await main.loadURL(`${localOrigin}/studio.html?desktop=1&profile=${profile}`);
           return;
@@ -196,6 +202,8 @@ app.whenReady().then(async () => {
       cloudOrigin: CLOUD_ORIGIN,
       // Lases vid varje proxat anrop, inte en gang vid start: servern startar fore inloggningen.
       cloudSession: () => cloudSessionCookie,
+      // Lases vid varje event, av samma skal som kakan: grinden har inte svarat nar servern startar.
+      cloudIdentity: () => ({workspaceId: cloudWorkspaceId}),
       // Anvandardata hor hemma i userData, aldrig i installationskatalogen. Se local-server.js.
       dataDir: app.getPath('userData')
     });

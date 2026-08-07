@@ -54,6 +54,12 @@ function startLocalServer(root, port = 4173, options = {}) {
   const cloudSession = typeof options.cloudSession === 'function'
     ? options.cloudSession
     : () => options.cloudSession || '';
+  // Vilket workspace eventen hor till. Samma skal som cloudSession ar en funktion: servern startar
+  // fore inloggningen, och workspace-id:t blir kant forst nar behorighetsgrinden i main.js har
+  // svarat. Utan det finns ingen rutt att posta till, och da skickas ingenting alls.
+  const cloudIdentity = typeof options.cloudIdentity === 'function'
+    ? options.cloudIdentity
+    : () => options.cloudIdentity || {};
   const events = [];
   const connection = { connected: false, username: '', mode: 'live', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
   const seenEvents = new Map();
@@ -121,7 +127,44 @@ function startLocalServer(root, port = 4173, options = {}) {
     const event = { id, ...d, timestamp: id };
     events.push(event);
     while (events.length > 5000) events.shift();
+    speglaTillMolnet(d);
     return { ok: true, event };
+  }
+
+  // ---- Spegling till molnet ---------------------------------------------------------------------
+  //
+  // Fram till nu stannade varje TikTok-event i arrayen ovan. Overlayen i OBS laser den lokalt, sa
+  // sandningen sag korrekt ut — men servern fick ALDRIG ett enda event (uppmatt: /api/health
+  // rapporterade tiktokBridge.lastEventSecondsAgo = null), och darmed kunde ingen statistik sparas.
+  // Speglingen ar det som gor "All time" mojligt.
+  //
+  // TRE REGLER, alla av samma skal: den lokala kon ar sandningen, molnet ar bokforingen.
+  //
+  //   1. ALDRIG await:ad. Ett langsamt nat far inte fordroja ett event pa vag till OBS.
+  //   2. Svaljer sina egna fel. Ett natverksfel eller en 401 blir en lucka i historiken; ett kastat
+  //      fel hade stoppat gavan fran att synas pa skarmen.
+  //   3. Postas som den inloggade anvandaren, med sessionskakan som redan bryggas hit. Desktop far
+  //      aldrig TIKTOK_INGEST_TOKEN — den ar en global huvudnyckel och en .exe gar att packa upp.
+  //
+  // Chatt utesluts. Den ar den frekventaste typen under en aktiv sandning, ingest-takten ar 100
+  // event/s per workspace, och server/stream-stats.js raknar inte chatt overhuvudtaget.
+  const EJ_TILL_MOLNET = new Set(['chat']);
+  function speglaTillMolnet(d) {
+    if (!cloudOrigin || EJ_TILL_MOLNET.has(d.type)) return;
+    const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
+    if (!workspaceId) return;
+    const kaka = cloudSession();
+    if (!kaka) return;
+    // Anropet ar avsiktligt obevakat. .catch() ar anda obligatoriskt: en avvisad promise utan
+    // hanterare faller hela Electron-processen.
+    Promise.resolve()
+      .then(() => fetch(`${cloudOrigin}/api/workspaces/${encodeURIComponent(workspaceId)}/events`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json', cookie: kaka },
+        body: JSON.stringify(d),
+        signal: AbortSignal.timeout(10000)
+      }))
+      .catch(() => {});
   }
   const liveConnector = options.createLiveConnector?.({ onStatus: setConnection, onEvent: ingestEvent });
   const obsService = options.obsService || null;
