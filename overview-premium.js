@@ -8,7 +8,12 @@ home = function () {
     ['👁', 'TITTARE', 'viewers'],
     ['♥', 'LIKES', 'likes'],
     ['◆', 'GÅVOR', 'gifts'],
-    ['↗', 'INTÄKT', 'revenue']
+    // DIAMANTER, inte INTAKT. Faltet gift.coins fylls fran diamondCount i bada bryggorna, och
+    // diamanter ar vad kreatoren far — coins ar vad tittaren kopar for, grovt dubbelt sa manga.
+    // Ingen av konkurrenterna rakar heller om till pengar: TikFinity visar "Coins Earned",
+    // TikControl "Total Diamonds". Kursen varierar med region och avtal, och ett fel belopp i
+    // kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
+    ['💎', 'DIAMANTER', 'diamonds']
   ];
 
   return `<section class="home-welcome">
@@ -108,7 +113,10 @@ if (typeof view !== 'undefined' && view === 'home') render();
     // SISTA ramen av en streakbar gava (tiktok-bridge/bridge.js:314,
     // electron-app/tiktok-service.js:97) — annars hade en combo blivit ett triangeltal. Nar
     // eventet nar hit motsvarar det en avslutad gava eller combo, med count = repeatCount.
-    { stat: 'gifts', typer: ['gift'], lagg: data => Number(data.count) }
+    { stat: 'gifts', typer: ['gift'], lagg: data => Number(data.count) },
+    // Samma event som GAVOR, annat tal: `coins` bar redan hela combons diamantvarde
+    // (coinsEach x repeatCount), sa det laggs till rakt av och multipliceras aldrig med count.
+    { stat: 'diamonds', typer: ['gift'], lagg: data => Number(data.coins) }
   ];
 
   const senaste = Object.create(null);   // stat -> tal, saknas = inget event an
@@ -192,17 +200,23 @@ if (typeof view !== 'undefined' && view === 'home') render();
       schemalagg();
     }
 
-    const kort = KORT.find(k => k.typer.includes(typ));
-    if (!kort) return;
-    const tal = (kort.las || kort.lagg)(data);
-    if (!Number.isFinite(tal) || tal < 0) return;
-    // Ett trasigt event far inte oka en summa. `las` skriver over och ar darmed sjalvlakande —
-    // nasta korrekta event rattar den. En felaktig `lagg` sitter kvar hela sessionen.
-    if (kort.lagg && tal === 0) return;
-    senaste[kort.stat] = kort.lagg
-      ? (senaste[kort.stat] || 0) + Math.round(tal)
-      : Math.round(tal);
-    schemalagg();
+    // filter, inte find: ETT event kan mata flera kort. En gava bar bade sitt antal (GAVOR) och
+    // sitt diamantvarde (DIAMANTER), och med find hade bara det forsta av dem uppdaterats.
+    const traffar = KORT.filter(k => k.typer.includes(typ));
+    if (!traffar.length) return;
+    let nagotAndrat = false;
+    for (const kort of traffar) {
+      const tal = (kort.las || kort.lagg)(data);
+      if (!Number.isFinite(tal) || tal < 0) continue;
+      // Ett trasigt event far inte oka en summa. `las` skriver over och ar darmed sjalvlakande —
+      // nasta korrekta event rattar den. En felaktig `lagg` sitter kvar hela sessionen.
+      if (kort.lagg && tal === 0) continue;
+      senaste[kort.stat] = kort.lagg
+        ? (senaste[kort.stat] || 0) + Math.round(tal)
+        : Math.round(tal);
+      nagotAndrat = true;
+    }
+    if (nagotAndrat) schemalagg();
   });
 
   // render() bygger om #view fran grunden, sa korten ar nya noder varje gang. Utan den har skulle
