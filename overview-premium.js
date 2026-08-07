@@ -34,6 +34,25 @@ home = function () {
       <div><small>${item[1]}</small><strong>—</strong><em><span>Visas under riktig LIVE</span></em></div>
     </article>`).join('')}
   </div>
+  <!-- TOTALT: historiken, inte sessionen.
+       Korten ovanfor visar SESSIONEN och star pa "—" sa fort man inte sander. Den har raden ar
+       summorna som overlever en omladdning. Egna noder, aldrig samma som korten: live-vagen patchar
+       dem under sandning, och skriver de tva over varandra betyder siffran olika saker beroende pa
+       nar man tittar. "NU" och "TOTALT" ar skilda matningar. -->
+  <section class="card alltime" data-alltime>
+    <div class="alltime-head">
+      <div><span class="eyebrow">TOTALT</span><h3>Din historik</h3></div>
+      <div class="alltime-periods">
+        ${[['all', 'All time'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
+          .map(([v, etikett], i) => `<button data-alltime-period="${v}"${i === 0 ? ' class="vald"' : ''}>${etikett}</button>`).join('')}
+      </div>
+    </div>
+    <div class="alltime-stats">
+      ${[['◆', 'GÅVOR', 'gifts'], ['💎', 'DIAMANTER', 'diamonds'], ['♥', 'LIKES', 'likes']]
+        .map(item => `<div><small>${item[0]} ${item[1]}</small><strong data-alltime-stat="${item[2]}">—</strong></div>`).join('')}
+    </div>
+    <p data-alltime-note>Hämtar din historik…</p>
+  </section>
   <div class="command-grid">
     <article class="card live-preview-card">
       <div class="preview-top">
@@ -232,6 +251,102 @@ if (typeof view !== 'undefined' && view === 'home') render();
     levande = false;
     for (const kort of KORT) delete senaste[kort.stat];
     puls.length = 0;
+    observer.disconnect();
+  });
+})();
+
+// ---- TOTALT: historiken från servern -----------------------------------------------------------
+//
+// Davids invändning, ordagrant: "meningen med fram sidan skulle vissa mig så inte när man är live få
+// det info". Korten ovanför mäter sessionen och står på "—" när man inte sänder. Den här raden är
+// summorna som överlever en omladdning — server/stats-read.js över de tre aggregattabellerna.
+//
+// EGNA NODER, ALDRIG KORTENS. Live-vägen patchar korten under sändning. Delade de noder skulle de
+// två skriva över varandra och siffran betyda olika saker beroende på när man tittar.
+(function () {
+  const PERIODER = new Set(['all', '90d', '30d', '7d']);
+  let period = 'all';
+  let levande = true;
+  // Ökas vid varje hämtning: ett långsamt svar på en gammal period får inte skriva över ett nyare.
+  let generation = 0;
+
+  const nummer = n => Number(n || 0).toLocaleString('sv-SE');
+
+  function skriv(stat, varde) {
+    const nod = document.querySelector(`[data-alltime-stat="${stat}"]`);
+    if (nod) nod.textContent = varde;
+  }
+  function notera(text) {
+    const nod = document.querySelector('[data-alltime-note]');
+    if (nod) nod.textContent = text;
+  }
+
+  function mala(data) {
+    for (const stat of ['gifts', 'diamonds', 'likes']) skriv(stat, nummer(data.totalt?.[stat]));
+    for (const knapp of document.querySelectorAll('[data-alltime-period]')) {
+      knapp.classList.toggle('vald', knapp.dataset.alltimePeriod === period);
+    }
+    if (data.fel) return notera('Kunde inte hämta historiken just nu. Siffrorna ovan är inte hela sanningen.');
+    // Tomläget ska vara ÄRLIGT. Nollor utan förklaring ser ut som ett resultat — och för ett nytt
+    // konto är sanningen att inspelningen inte börjat, inte att ingen gav något.
+    if (!data.forstaDagen) {
+      return notera(data.konto
+        ? 'Ingen historik ännu — den börjar byggas vid din nästa sändning.'
+        : 'Ingen TikTok ansluten ännu. Historiken börjar när du sänder första gången.');
+    }
+    notera(period === 'all'
+      ? `Allt sedan ${data.forstaDagen} · ${data.dagar?.length || 0} dagar med sändning`
+      : `Sedan ${data.fran || data.forstaDagen} · ${data.dagar?.length || 0} dagar med sändning`);
+  }
+
+  async function hamta() {
+    if (!levande) return;
+    const min = ++generation;
+    const workspace = window.VyraCloudSync?.current?.()?.workspace;
+    // Inte inloggad eller ingen arbetsyta än: markupen står kvar med sitt streck. Det är ett normalt
+    // läge i editorn och på en ny installation, inte ett fel att skrika om.
+    if (!workspace?.id || !window.VyraAuth?.api) return notera('Logga in för att se din historik.');
+    try {
+      const data = await window.VyraAuth.api(
+        `/api/workspaces/${encodeURIComponent(workspace.id)}/stats?period=${encodeURIComponent(period)}`);
+      // Ett äldre svar som kommer efter ett nyare får inte vinna.
+      if (min !== generation || !levande) return;
+      mala(data || {});
+    } catch (_) {
+      if (min !== generation || !levande) return;
+      // Analysvyn får aldrig fälla framsidan. Ett kastat fel här hade tagit hela sidan med sig.
+      mala({ fel: true });
+    }
+  }
+
+  // Delegerad lyssnare på document: render() bygger om #view från grunden, så knapparna är nya
+  // noder varje gång. En hake per knapp hade tystnat vid första omritningen.
+  document.addEventListener('click', event => {
+    const knapp = event.target?.closest?.('[data-alltime-period]');
+    if (!knapp || !levande) return;
+    const vald = knapp.dataset.alltimePeriod;
+    if (!PERIODER.has(vald) || vald === period) return;
+    period = vald;
+    notera('Hämtar…');
+    hamta();
+  });
+
+  // Raden finns bara i home-vyn, och render() river den vid varje vybyte. Samma observer-mönster
+  // som live-korten: fånga varje väg som kan bygga om vyn, även de som tillkommer senare.
+  let sedd = null;
+  const observer = new MutationObserver(() => {
+    if (!levande) return;
+    const rad = document.querySelector('[data-alltime]');
+    if (rad && rad !== sedd) { sedd = rad; hamta() }
+    else if (!rad) sedd = null;
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  if (document.querySelector('[data-alltime]')) { sedd = document.querySelector('[data-alltime]'); hamta() }
+
+  addEventListener('vyra-session-ended', () => {
+    levande = false;
+    generation++;
     observer.disconnect();
   });
 })();

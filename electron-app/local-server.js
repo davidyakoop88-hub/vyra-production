@@ -146,11 +146,24 @@ function startLocalServer(root, port = 4173, options = {}) {
   //   3. Postas som den inloggade anvandaren, med sessionskakan som redan bryggas hit. Desktop far
   //      aldrig TIKTOK_INGEST_TOKEN — den ar en global huvudnyckel och en .exe gar att packa upp.
   //
-  // Chatt utesluts. Den ar den frekventaste typen under en aktiv sandning, ingest-takten ar 100
-  // event/s per workspace, och server/stream-stats.js raknar inte chatt overhuvudtaget.
-  const EJ_TILL_MOLNET = new Set(['chat']);
+  // VITLISTA, inte svartlista — och det ar hela poangen med den har raden.
+  //
+  // Forsta versionen var `new Set(['chat'])`: allt utom chatt skickades. Men tiktok-service.js
+  // skickar tva typer molnet inte kanner igen — `chatcommand` (en chattrad som borjar med "!",
+  // rad 91) och `subscriberemote` (rad 120). Ingen av dem finns i server/index.js:72, sa bada
+  // avvisas med 400. Och eftersom speglingen svaljer sina egna fel hade ingen markt det: de ater
+  // ingest-takten och lamnar ingenting efter sig.
+  //
+  // En svartlista slapper dessutom igenom VARJE ny typ nagon lagger till i framtiden. En vitlista
+  // gor tvartom: en okand typ stannar hemma tills nagon medvetet slapper fram den.
+  //
+  // Listan ar molnets egna tillatna typer minus `chat`, som utesluts pa volym: den ar den
+  // frekventaste typen under en aktiv sandning, ingest-takten ar 100 event/s per workspace, och
+  // server/stream-stats.js raknar inte chatt overhuvudtaget.
+  const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
+    'viewer', 'battle']);
   function speglaTillMolnet(d) {
-    if (!cloudOrigin || EJ_TILL_MOLNET.has(d.type)) return;
+    if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
     if (!workspaceId) return;
     const kaka = cloudSession();
