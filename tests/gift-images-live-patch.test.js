@@ -138,7 +138,12 @@ function makeEnv({ widgets, dom }) {
   return { sandbox, state, calls, root, gift };
 }
 
-const GIFT = { type: 'gift', giftName: 'Rose', username: 'wpwer17', coins: 10, count: 3,
+// `coins` är combons TOTAL och `count` dess längd, precis som bryggan skickar dem
+// (normalizer.js: `coins:coinsEach*repeatCount`). 30 coins fördelat på 3 gåvor är alltså en gåva
+// värd 10 — och 10 är vad Top Gift visar, eftersom widgeten rankar gåvans värde och inte combons
+// summa. Fixturen stod tidigare på `coins: 10, count: 3`, vilket inte går ihop med något
+// heltalsstyckpris; den råkade se rätt ut bara så länge totalen visades rakt av.
+const GIFT = { type: 'gift', giftName: 'Rose', username: 'wpwer17', coins: 30, count: 3,
   profileImage: 'https://cdn/p.jpg', giftImage: 'assets/gifts/rose.png' };
 
 // ---- livevägen får inte spara eller rita om --------------------------------------------------------

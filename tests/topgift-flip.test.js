@@ -26,7 +26,9 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const FLIP_MS = 4200;
+// 10 s per varv: 5 s gåvan, 5 s profilbilden, för alltid. Var 4,2 s och en enda vändning fram till
+// 2026-08-07, då David bad om en flipp som aldrig stannar.
+const FLIP_MS = 10000;
 
 // The thresholds below are only meaningful if they match the shipped CSS, so read them from it.
 const CSS = fs.readFileSync(path.join(ROOT, 'studio.css'), 'utf8');
@@ -38,15 +40,17 @@ const KEYFRAMES = (() => {
     .filter(k => Number.isFinite(k.pct))
     .sort((a, b) => a.pct - b.pct);
 })();
-const HOLD_PCT = Math.max(...KEYFRAMES.filter(k => k.deg === 0).map(k => k.pct));   // 42
-const FLIPPED_PCT = Math.min(...KEYFRAMES.filter(k => k.deg === 180).map(k => k.pct)); // 65
-const ROTATION_STARTS_MS = FLIP_MS * HOLD_PCT / 100;      // 1764
-const PROFILE_SHOWN_MS = FLIP_MS * FLIPPED_PCT / 100;     // 2730
+const HOLD_PCT = Math.max(...KEYFRAMES.filter(k => k.deg === 0).map(k => k.pct));   // 43
+const FLIPPED_PCT = Math.min(...KEYFRAMES.filter(k => k.deg === 180).map(k => k.pct)); // 50
+const ROTATION_STARTS_MS = FLIP_MS * HOLD_PCT / 100;      // 4300
+const PROFILE_SHOWN_MS = FLIP_MS * FLIPPED_PCT / 100;     // 5000 — femsekundersslaget
 
 test('the keyframes this suite reasons about are the ones that ship', () => {
-  assert.equal(HOLD_PCT, 42);
-  assert.equal(FLIPPED_PCT, 65);
-  assert.match(CSS, /\.vyra-topgift\.play \.vyra-flip\{animation:vyraFlipSmooth 4\.2s/);
+  assert.equal(HOLD_PCT, 43);
+  assert.equal(FLIPPED_PCT, 50);
+  // Profilbilden ska stå framme på sekunden, inte "någonstans i andra halvan" — det är kravet.
+  assert.equal(PROFILE_SHOWN_MS, 5000, 'bytet ligger inte på femsekundersslaget');
+  assert.match(CSS, /\.vyra-topgift\.play \.vyra-flip\{animation:vyraFlipSmooth 10s [^}]*infinite\}/);
 });
 
 const { el, matches, makeDocument } = require('./helpers/flip-dom');
@@ -80,12 +84,13 @@ function computedStyleFor(node, body) {
   const box = body.querySelector('.vyra-topgift');
   const off = { animationName: 'none', animationDuration: '0s', animationIterationCount: '1' };
   if (!box || !box.classList.contains('play')) return off;
-  const anim = (animationName, animationDuration) =>
-    ({ animationName, animationDuration, animationIterationCount: '1' });
+  const anim = (animationName, animationDuration, animationIterationCount = '1') =>
+    ({ animationName, animationDuration, animationIterationCount });
   if (node === box) return anim('vyraAppear', '3.6s');
-  if (matches(node, '.vyra-flip')) return anim('vyraFlipSmooth', '4.2s');
+  if (matches(node, '.vyra-flip')) return anim('vyraFlipSmooth', '10s', 'infinite');
   if (matches(node, '.vyra-profile-face')) return anim('profileGlow', '4.2s');
-  if (matches(node, '.vyra-gift-face')) return anim('giftPulse', '2.1s');
+  // Pulsen sitter på .record numera och finns bara direkt efter ett nytt rekord.
+  if (matches(node, '.vyra-gift-face')) return box.classList.contains('record') ? anim('giftPulse', '2.1s') : off;
   return off;
 }
 
@@ -212,46 +217,55 @@ test('gift spam still lets the widget rotate and reach the profile side', () => 
   const h = harness(); h.run();
   const seen = [];
   h.gift(1); seen.push(h.progressMs);
-  for (let i = 0; i < 3; i += 1) { h.advance(1000); h.gift(1); seen.push(h.progressMs); }
+  // Sex sekunder, inte tre: profilbilden kommer fram vid 5 s nu när cykeln är 10 s.
+  for (let i = 0; i < 6; i += 1) { h.advance(1000); h.gift(1); seen.push(h.progressMs); }
   const reached = Math.max(...seen);
   assert.ok(reached > ROTATION_STARTS_MS,
     `förloppet nådde bara ${reached} ms, rotationen börjar först vid ${ROTATION_STARTS_MS} ms`);
   assert.ok(reached >= PROFILE_SHOWN_MS,
     `profilbildssidan nås vid ${PROFILE_SHOWN_MS} ms men förloppet nådde bara ${reached} ms`);
-  // And once that flip is done, the next gift is allowed to start a fresh one.
+  // Ett helt varv senare fortsätter loopen i fas i stället för att nollställas. Tidigare stod här
+  // motsatsen — att en gåva efter avslutad flipp fick starta en ny — men en flipp som aldrig tar
+  // slut kan inte startas om utan att rotationen hackar mitt i en vändning.
   h.advance(FLIP_MS); h.gift(1);
-  assert.equal(h.progressMs, 0, 'en gåva efter avslutad flipp startade ingen ny animation');
+  assert.equal(h.progressMs, 6000,
+    'loopen nollställdes av en gåva i stället för att fortsätta där den var');
 });
 
 // ---- 3. a rebuild resumes instead of restarting -----------------------------------------------
 test('a rebuild mid-flip resumes the animation where it was', () => {
   const h = harness(); h.run();
   h.gift(250);
-  h.advance(2500);
+  h.advance(5500);                                   // förbi rotationsstarten vid 4 300 ms
   h.render();
   assert.ok(h.node.classList.contains('play'), 'play saknas efter ombyggnad');
-  assert.ok(Math.abs(h.progressMs - 2500) < 200,
-    `förloppet bevarades inte vid ombyggnad (${h.progressMs} ms, väntade ~2500 ms)`);
+  assert.ok(Math.abs(h.progressMs - 5500) < 200,
+    `förloppet bevarades inte vid ombyggnad (${h.progressMs} ms, väntade ~5500 ms)`);
   assert.ok(h.progressMs > ROTATION_STARTS_MS, 'den ombyggda noden står kvar före rotationen');
 });
 
-test('a rebuild after the flip has finished does not revive it', () => {
+test('a rebuild a full cycle later lands in phase, not at zero', () => {
+  // Testet hette tidigare "a rebuild after the flip has finished does not revive it" och krävde
+  // progress 0. Med en evig loop finns inget "klart" — noll hade betytt att rotationen kastades
+  // tillbaka till gåvosidan mitt i sändningen, varje gång canvasen byggdes om.
   const h = harness(); h.run();
   h.gift(250);
   h.advance(FLIP_MS + 500);
   h.render();
-  assert.equal(h.progressMs, 0, 'en avslutad flipp fick ett negativt delay och spelades om');
+  assert.equal(h.progressMs, 500,
+    'ett helt varv plus 500 ms ska ge 500 ms in i nästa varv, inte en omstart');
 });
 
-// ---- 4. a later gift starts a genuinely new flip ----------------------------------------------
-test('a gift after the flip restarts it from the beginning with the new value', () => {
+// ---- 4. a later gift updates the value without disturbing the loop ----------------------------
+test('a gift after a full cycle updates the value without restarting the loop', () => {
   const h = harness(); h.run();
   h.gift(250);
   h.advance(FLIP_MS + 100);
   h.gift(300);
   assert.equal(h.node.querySelector('em').textContent, '◉ 300');
-  assert.ok(h.node.classList.contains('play'), 'andra gåvan startade ingen animation');
-  assert.equal(h.progressMs, 0, 'en ny flipp ska börja på noll, inte återupptas');
+  assert.ok(h.node.classList.contains('play'), 'andra gåvan tappade animationen');
+  assert.equal(h.progressMs, 100, 'gåvan nollställde loopen i stället för att låta den snurra');
+  assert.ok(h.node.classList.contains('record'), 'det nya rekordet fick ingen markering');
 });
 
 // ---- 5. repeat gifts keep the tally and the display moving ------------------------------------

@@ -18,8 +18,16 @@ const CSS = fs.readFileSync(path.join(ROOT, 'studio.css'), 'utf8');
 
 // ---- the durations this suite models are the ones that ship ----------------------------------
 const SHIPPED = {
-  topgift: /\.vyra-topgift\.play \.vyra-flip\{animation:vyraFlipSmooth 4\.2s/,
-  topgiftFramed: /\.topgift-framed\.play \.vyra-flip\{animation-duration:3\.8s\}/,
+  // Top Gift snurrar hela sändningen: 5 s gåva, 5 s profilbild, om och om igen. Davids krav
+  // 2026-08-07 — "den ska inte stanna alls". Cykeln är 10 s med vändningen lagd PÅ slaget, så
+  // bytet sker exakt var femte sekund.
+  topgift: /\.vyra-topgift\.play \.vyra-flip\{animation:vyraFlipSmooth 10s [^}]*infinite\}/,
+  // 0-43 % gåvan (0-4,3 s), vänder över 5-sekundersslaget, 50-93 % profilbilden (5-9,3 s), vänder
+  // tillbaka och landar på 360° vid 100 % — samma bild som 0°, så loopen inte hackar vid varvet.
+  topgiftCykel: /@keyframes vyraFlipSmooth\{0%,43%\{transform:rotateY\(0\)\}[\s\S]*?50%,93%\{transform:rotateY\(180deg\)\}[\s\S]*?100%\{transform:rotateY\(360deg\)\}\}/,
+  // Rekordpulsen har en EGEN klass. Låg den kvar på `play` skulle den bara spelas en gång i
+  // sändningen, eftersom en evig flipp aldrig startas om.
+  topgiftRekord: /\.vyra-topgift\.record \.vyra-gift-face\{animation:giftPulse 2\.1s/,
   topgiftRoot: /\.vyra-topgift\.play\{animation:vyraAppear 3\.6s/,
   streak: /\.vyra-streak\.hit \.streak-flip\{animation:streakFlip 3\.8s/,
   iceWrapper: /\.streak-ice\.hit \.streak-flip\{animation:none!important\}/,
@@ -29,6 +37,14 @@ const SHIPPED = {
 test('the CSS this suite models is the CSS that ships', () => {
   Object.entries(SHIPPED).forEach(([name, re]) =>
     assert.match(CSS, re, `${name} ser inte ut som testet antar`));
+});
+
+test('ingen variant har en egen flipptakt', () => {
+  // `.topgift-framed.play .vyra-flip{animation-duration:3.8s}` gav den ramade varianten en egen
+  // längd. Med en evig loop blir en avvikande längd ett avvikande BEAT — den ramade hade bytt bild
+  // var 1,9:e sekund medan alla andra bytte var 5:e.
+  assert.doesNotMatch(CSS, /\.play \.vyra-flip\{animation-duration:/,
+    'någon variant sätter fortfarande en egen animation-duration på Top Gift-flippen');
 });
 
 // ---- load the helper straight out of media.js -------------------------------------------------
@@ -52,13 +68,15 @@ function computedStyleFor(node, rootOf) {
   if (!on) return none;
   const has = c => root._classes.has(c);
   const is = c => node._classes.has(c);
-  const anim = (animationName, animationDuration) =>
-    ({ animationName, animationDuration, animationIterationCount: '1' });
+  const anim = (animationName, animationDuration, animationIterationCount = '1') =>
+    ({ animationName, animationDuration, animationIterationCount });
   if (has('vyra-topgift')) {
     if (node === root) return anim('vyraAppear', '3.6s');
-    if (is('vyra-flip')) return anim('vyraFlipSmooth', has('topgift-framed') ? '3.8s' : '4.2s');
-    if (is('vyra-gift-face')) return anim('giftPulse', '2.1s');
-    // Only the wrapper's duration is overridden for the framed variant; profileGlow stays 4.2s.
+    // Samma 10 s för varenda variant: den ramade har ingen egen längd längre, annars hade den
+    // snurrat i en annan takt än resten och 5-sekundersslaget bara gällt vissa teman.
+    if (is('vyra-flip')) return anim('vyraFlipSmooth', '10s', 'infinite');
+    // Rekordpulsen sitter på sin egen klass och finns bara när ett rekord just slagits.
+    if (is('vyra-gift-face')) return has('record') ? anim('giftPulse', '2.1s') : none;
     if (is('vyra-profile-face')) return anim('profileGlow', '4.2s');
     return none;
   }
@@ -120,9 +138,11 @@ function streak(id, extraClasses = [], speed) {
   box.append(flip, el('b'));
   return box;
 }
+// `evig` skiljer de två familjerna åt. Top Gift snurrar hela sändningen och kan därför aldrig vara
+// "klar"; Top Streak spelar en gång per träff och ska fortsätta göra exakt det.
 const VARIANTS = [
-  { name: 'Top Gift · standardtema', trigger: 'play', durationMs: 4200, build: id => topGift(id, ['theme-neon']) },
-  { name: 'Top Gift · ram', trigger: 'play', durationMs: 4200, build: id => topGift(id, ['topgift-framed']) },
+  { name: 'Top Gift · standardtema', trigger: 'play', durationMs: 10000, evig: true, build: id => topGift(id, ['theme-neon']) },
+  { name: 'Top Gift · ram', trigger: 'play', durationMs: 10000, evig: true, build: id => topGift(id, ['topgift-framed']) },
   { name: 'Top Streak · tema', trigger: 'hit', durationMs: 3800, build: id => streak(id, ['streak-inferno']) },
   { name: 'Top Streak · ram', trigger: 'hit', durationMs: 3800, build: id => streak(id, ['streak-framed']) },
   { name: 'Top Streak · ice', trigger: 'hit', durationMs: 2000, build: id => streak(id, ['streak-ice'], '2s') }
@@ -161,29 +181,89 @@ for (const v of VARIANTS) {
     assert.ok(Math.abs(h.delayOf(fresh) - midway) < 60, 'widgetens egen entré spelades om');
   });
 
-  test(`${v.name}: flippen mäts efter sin egen längd, inte en hårdkodad siffra`, () => {
-    const h = harness();
-    const node = v.build('w1');
-    h.body.append(node);
-    h.VyraFlip.start(node);
-    h.advance(v.durationMs - 200);
-    assert.equal(h.VyraFlip.resume(node), true, `flippen släpptes ${v.durationMs - 200} ms in`);
-    h.advance(400);
-    assert.equal(h.VyraFlip.resume(node), false, `flippen höll kvar efter ${v.durationMs + 200} ms`);
-  });
+  if (!v.evig) {
+    test(`${v.name}: flippen mäts efter sin egen längd, inte en hårdkodad siffra`, () => {
+      const h = harness();
+      const node = v.build('w1');
+      h.body.append(node);
+      h.VyraFlip.start(node);
+      h.advance(v.durationMs - 200);
+      assert.equal(h.VyraFlip.resume(node), true, `flippen släpptes ${v.durationMs - 200} ms in`);
+      h.advance(400);
+      assert.equal(h.VyraFlip.resume(node), false, `flippen höll kvar efter ${v.durationMs + 200} ms`);
+    });
 
-  test(`${v.name}: nästa event startar en ny flipp när den förra är klar`, () => {
-    const h = harness();
-    const node = v.build('w1');
-    h.body.append(node);
-    h.VyraFlip.start(node);
-    h.advance(v.durationMs + 100);
-    assert.equal(h.VyraFlip.resume(node), false);
-    h.VyraFlip.start(node);
-    assert.ok(node.classList.contains(v.trigger));
-    assert.equal(h.delayOf(node.querySelector('.vyra-flip,.streak-flip')), 0,
-      'en ny flipp ska börja på noll');
-  });
+    test(`${v.name}: nästa event startar en ny flipp när den förra är klar`, () => {
+      const h = harness();
+      const node = v.build('w1');
+      h.body.append(node);
+      h.VyraFlip.start(node);
+      h.advance(v.durationMs + 100);
+      assert.equal(h.VyraFlip.resume(node), false);
+      h.VyraFlip.start(node);
+      assert.ok(node.classList.contains(v.trigger));
+      assert.equal(h.delayOf(node.querySelector('.vyra-flip,.streak-flip')), 0,
+        'en ny flipp ska börja på noll');
+    });
+  }
+
+  if (v.evig) {
+    test(`${v.name}: flippen tar aldrig slut`, () => {
+      const h = harness();
+      const node = v.build('w1');
+      h.body.append(node);
+      h.VyraFlip.start(node);
+      // En hel sändning, inte bara ett par cykler. Returnerar resume() någonsin false kallar
+      // armFlip() start(), och start() spolar tillbaka rotationen — synligt hack mitt i vändningen.
+      for (const ms of [5000, 10000, 60000, 600000, 3600000]) {
+        h.advance(ms);
+        assert.equal(h.VyraFlip.resume(node), true, `flippen ansågs avslutad ${ms} ms senare`);
+      }
+    });
+
+    test(`${v.name}: en ombyggd nod faller in i fas i stället för att börja om`, () => {
+      const h = harness();
+      h.body.append(v.build('w1'));
+      h.VyraFlip.start(h.body.children[0]);
+      h.advance(23000);                                  // 2,3 varv in i loopen
+      const fresh = v.build('w1');
+      h.body.children.length = 0; h.body.append(fresh);
+      h.autoStart(h.sandbox.document); h.frames();
+      assert.equal(h.delayOf(fresh.querySelector('.vyra-flip')), 3000,
+        'loopen lades inte i fas — 23 000 ms in i en 10 s-cykel är 3 000 ms, inte något annat');
+    });
+
+    test(`${v.name}: entrén spelas inte om när loopen slår runt`, () => {
+      // Fällan i en naiv modulo: 23 000 % 10 000 = 3 000, och lägger man DEN siffran på widgetens
+      // egen 3,6 s-entré spelas den upp igen mitt i sändningen. Bara det som faktiskt loopar får
+      // räknas om; allt annat ska stå kvar på sitt verkliga förlopp och alltså vara färdigt.
+      const h = harness();
+      h.body.append(v.build('w1'));
+      h.VyraFlip.start(h.body.children[0]);
+      h.advance(23000);
+      const fresh = v.build('w1');
+      h.body.children.length = 0; h.body.append(fresh);
+      h.autoStart(h.sandbox.document); h.frames();
+      assert.equal(h.delayOf(fresh), 23000, 'widgetens entré fick loopens fas och spelades om');
+      assert.equal(h.delayOf(fresh.querySelector('.vyra-profile-face')), 23000,
+        'profilbildens engångsglöd fick loopens fas');
+    });
+
+    test(`${v.name}: ett nytt rekord märks utan att loopen rubbas`, () => {
+      const h = harness();
+      const node = v.build('w1');
+      h.body.append(node);
+      h.VyraFlip.start(node);
+      h.advance(7000);
+      const fore = h.delayOf(node.querySelector('.vyra-flip'));
+      h.VyraFlip.mark(node);
+      assert.ok(node.classList.contains('record'), 'rekordet fick ingen markering');
+      assert.equal(h.delayOf(node.querySelector('.vyra-flip')), fore,
+        'markeringen rubbade rotationens fas');
+      assert.equal(h.delayOf(node.querySelector('.vyra-gift-face')), 0,
+        'pulsen ärvde ett förlopp och hann aldrig synas');
+    });
+  }
 
   test(`${v.name}: gåvospam låter flippen nå profilbildssidan`, () => {
     // Rotation starts at ~42% of the duration. Under a restart-per-gift this value never grew.

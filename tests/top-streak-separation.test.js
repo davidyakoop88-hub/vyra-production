@@ -80,8 +80,12 @@ test('en dyr engångsgåva sätter Top Gift men rör inte Top Streak', () => {
 
 test('widgetarna visar olika siffror för samma gåva', () => {
   const env = makeEnv();
+  // 500 coins fördelat på 10 gåvor: Top Gift visar gåvans värde (50), Top Streak combons längd (10).
+  // Top Gift visade tidigare totalen, 500. Regeln ändrades på Davids begäran 2026-08-07 — se
+  // records.styckvarde i gift-event-images.js. Separationen, som är vad det HÄR testet vaktar,
+  // håller lika bra: 50 är fortfarande inte 10.
   env.gift({ type: 'gift', giftName: 'Rose', username: 'a', coins: 500, count: 10 });
-  assert.equal(env.topGift().dataValue, 500, 'Top Gift ska visa coins');
+  assert.equal(env.topGift().dataValue, 50, 'Top Gift ska visa gåvans värde');
   assert.equal(env.topStreak().dataValue, 10, 'Top Streak ska visa antalet, inte coins');
   assert.notEqual(env.topGift().dataValue, env.topStreak().dataValue,
     'widgetarna visar fortfarande samma siffra — det är hela buggen');

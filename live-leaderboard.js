@@ -121,7 +121,14 @@
   // The fallback keeps the old behaviour if media.js has not run, rather than skipping the flip.
   function armFlip(el) {
     const flip = window.VyraFlip;
-    if (flip) { if (!flip.resume(el)) flip.start(el); return; }
+    if (flip) {
+      if (!flip.resume(el)) flip.start(el);
+      // Enda anroparen är updateTopGift, efter att rekordgrinden släppt igenom en ny toppgåva —
+      // alltså är ett anrop hit per definition ett nytt rekord. Flippen snurrar numera hela
+      // sändningen och får inte startas om; markeringen är det enda som säger att något hänt.
+      flip.mark?.(el);
+      return;
+    }
     el.classList.remove('play');
     void el.offsetWidth;
     el.classList.add('play');
@@ -130,7 +137,6 @@
   function updateTopGift(e, person) {
     if (typeof state === 'undefined' || !state?.widgets) return;
     const image = e.giftImage || e.image || e.giftPicture || e.gift?.image || '';
-    const value = Number(e.coins || e.diamondCount || e.value) || person.coins;
     // Top Gift är en topplista, inte "senaste gåvan". Den här funktionen skrev tidigare över namn,
     // bild och värde på VARJE gåva, så en 1-coins-gåva slog ut en 30 000-coins-gåva direkt.
     // Rekordet ägs av gift-event-images.js, som är den andra skrivaren till samma widget — två
@@ -138,6 +144,19 @@
     // överlägg som inte laddar den) faller vi tillbaka på det gamla beteendet i stället för att
     // sluta uppdatera helt.
     const records = window.VyraGiftRecords;
+    // Det som jämförs är GÅVANS värde, inte combons summa: elva rosor är 1, inte 11. Regeln och
+    // motiveringen bor hos records.styckvarde i gift-event-images.js. Fallbacken räknar likadant
+    // lokalt i stället för att falla tillbaka på totalen — annars kunde ett gammalt överlägg utan
+    // modulen visa ett annat tal än det som ligger i rekordet.
+    const styck = records?.styckvarde || ((coins, antal) => {
+      const summa = Number(coins);
+      if (!Number.isFinite(summa) || summa <= 0) return 0;
+      const n = Math.round(Number(antal));
+      return Math.round(summa / (Number.isFinite(n) && n >= 1 ? n : 1));
+    });
+    const summa = Number(e.coins || e.diamondCount || e.value);
+    // person.coins är tittarens ACKUMULERADE bidrag, inte en gåva — den får aldrig delas med antalet.
+    const value = Number.isFinite(summa) && summa > 0 ? styck(summa, e.count) : person.coins;
     if (records && value < records.giftCoins) return;
     let changed = false;
     state.widgets.filter(w => w.type === 'templateTopGift').forEach(w => {
