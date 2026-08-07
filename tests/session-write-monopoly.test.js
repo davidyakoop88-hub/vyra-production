@@ -37,8 +37,11 @@ function clientFiles(dir = ROOT, out = []) {
 }
 
 // Comments are stripped so a file that documents the rule is not accused of breaking it.
-const code = file => fs.readFileSync(file, 'utf8').split('\n')
-  .map(line => line.replace(/\/\/.*$/, '')).join('\n');
+//
+// `[^\r\n]*`, not `.*$`: the JS dot does not match \r, so on a CRLF checkout `$` never matched and
+// the strip became a no-op — every comment was scanned as if it were code.
+const code = file => fs.readFileSync(file, 'utf8').split(/\r?\n/)
+  .map(line => line.replace(/\/\/[^\r\n]*/, '')).join('\n');
 
 // A write is setItem/removeItem whose first argument names a protected key — as a literal, or via a
 // constant that resolves to one in the same file (the pattern state-backup.js and cloud-sync.js use).

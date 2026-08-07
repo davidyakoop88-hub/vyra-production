@@ -22,9 +22,13 @@ const FILER = ['media.js', 'premium-final.js', 'toplike-studio.js', 'gift-alert-
   'widget-background.js', 'standalone-widgets.js'];
 
 // Kommentarer bort, sa en fil som DOKUMENTERAR regeln inte anklagas for att bryta mot den.
+//
+// `[^\r\n]*`, INTE `.*$`: JS-punkten matchar inte \r, sa pa en CRLF-checkout matchade `$` aldrig och
+// strippningen blev en no-op. Proven nedan ar assert.match — en kommentar som namner vyraLivePatch
+// hade darfor kunnat halla vakten gron utan att funktionen fanns.
 function kod(fil) {
   return fs.readFileSync(path.join(ROOT, fil), 'utf8')
-    .split('\n').map(rad => rad.replace(/^\s*\/\/.*$/, '')).join('\n')
+    .split(/\r?\n/).map(rad => rad.replace(/^\s*\/\/[^\r\n]*/, '')).join('\n')
     .replace(/\/\*[\s\S]*?\*\//g, '');
 }
 

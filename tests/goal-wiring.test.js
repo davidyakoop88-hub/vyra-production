@@ -10,7 +10,10 @@ const fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(ROOT, file), 'utf8');
-const code = file => read(file).split('\n').map(line => line.replace(/\/\/.*$/, '')).join('\n');
+// `[^\r\n]*`, INTE `.*$`: JS-punkten matchar inte \r, så på en CRLF-checkout matchade `$` aldrig och
+// strippningen blev en no-op. Farligast åt det här hållet — proven nedan är assert.match, så en
+// kommentar som bara NÄMNER attachSource hade uppfyllt kravet och vakten varit grön på prosa.
+const code = file => read(file).split(/\r?\n/).map(line => line.replace(/\/\/[^\r\n]*/, '')).join('\n');
 
 // ---- laddningsordning ------------------------------------------------------------------------------
 test('studio.html laddar goal-client.js efter ägaren och före media.js', () => {
