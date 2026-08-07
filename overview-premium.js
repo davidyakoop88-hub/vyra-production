@@ -96,9 +96,19 @@ if (typeof view !== 'undefined' && view === 'home') render();
 // Vardena lever bara i minnet. De ska inte overleva en omladdning, och tokenlaget (?access=) far
 // aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
 (function () {
+  // `las` = TikTok skickar redan totalen, kortet visar den rakt av.
+  // `lagg` = ingen total finns, kortet summerar sjalvt.
   const KORT = [
     { stat: 'viewers', typer: ['viewer'], las: data => Number(data.count) },
-    { stat: 'likes', typer: ['like', 'likes'], las: data => Number(data.points) }
+    { stat: 'likes', typer: ['like', 'likes'], las: data => Number(data.points) },
+    // GAVOR ar ANTAL. Coin-vardet (falt: coins) hor till INTAKT-kortet — vill man byta ar det
+    // `lagg: data => Number(data.coins)` och inget annat.
+    //
+    // Summering ar saker har, och det ar inte sjalvklart: bada bryggorna vidarebefordrar bara
+    // SISTA ramen av en streakbar gava (tiktok-bridge/bridge.js:314,
+    // electron-app/tiktok-service.js:97) — annars hade en combo blivit ett triangeltal. Nar
+    // eventet nar hit motsvarar det en avslutad gava eller combo, med count = repeatCount.
+    { stat: 'gifts', typer: ['gift'], lagg: data => Number(data.count) }
   ];
 
   const senaste = Object.create(null);   // stat -> tal, saknas = inget event an
@@ -129,9 +139,14 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const typ = String(data.type || data.event || '').toLowerCase();
     const kort = KORT.find(k => k.typer.includes(typ));
     if (!kort) return;
-    const tal = kort.las(data);
+    const tal = (kort.las || kort.lagg)(data);
     if (!Number.isFinite(tal) || tal < 0) return;
-    senaste[kort.stat] = Math.round(tal);
+    // Ett trasigt event far inte oka en summa. `las` skriver over och ar darmed sjalvlakande —
+    // nasta korrekta event rattar den. En felaktig `lagg` sitter kvar hela sessionen.
+    if (kort.lagg && tal === 0) return;
+    senaste[kort.stat] = kort.lagg
+      ? (senaste[kort.stat] || 0) + Math.round(tal)
+      : Math.round(tal);
     schemalagg();
   });
 
