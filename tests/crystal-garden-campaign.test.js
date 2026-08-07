@@ -63,11 +63,16 @@ test('temat har en egen CSS-regel', () => {
     'ingen stil för temat — widgeten skulle se ut som standardkampanjen');
 });
 
-test('bakgrunden är transparent för OBS', () => {
-  const block = CSS.slice(CSS.indexOf('.vyra-campaign.campaign-crystal-garden'));
-  assert.match(block.slice(0, 400), /background:\s*transparent/,
-    'en opak bakgrund blir en solid ruta över sändningen i OBS');
-});
+// 'bakgrunden är transparent för OBS' lag har och sokte efter den bokstavliga strangen
+// `background:transparent` i temats regel.
+//
+// Den forankrade en MEKANISM, inte ett utfall. Transparensen i sandningen kommer inte fran den
+// strangen utan fran kaskaden: `html.overlay-output .widget` vager tyngre an varje `.vyra-campaign*`
+// och nollstaller bakgrunden oavsett vad temat sjalvt skriver. Nar temat slutade deklarera en egen
+// bakgrund foll provet — trots att sandningen var lika transparent som forut.
+//
+// En strangsokning kan inte se vem som vann. Kontraktet mats nu i en verklig kaskad:
+//   tests/browser/campaign-frames.browser.test.js · 'crystal-garden ar transparent i sandningen'
 
 test('varje gift får en stor cirkel med glow', () => {
   const at = CSS.indexOf('.campaign-crystal-garden .campaign-gifts article .campaign-gift-image');
