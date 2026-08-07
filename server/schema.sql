@@ -228,3 +228,29 @@ CREATE TABLE IF NOT EXISTS health_probe(
   checked_at timestamptz NOT NULL DEFAULT now()
 );
 INSERT INTO health_probe(id) VALUES(1) ON CONFLICT(id) DO NOTHING;
+
+-- Senast sedda fanklubbs- och gifternivå per tittare och arbetsyta.
+--
+-- Fan Level Up och Gifter Level Up höll tidigare den här jämförelsen i en Map i webbläsarens RAM.
+-- Den dog med sidan, så en höjning kunde bara upptäckas om samma tittare syntes TVÅ gånger i SAMMA
+-- sändning — och fanklubbsnivå rör sig på veckor. Widgetarna var därför tysta i praktiken.
+--
+-- Den bor på servern och inte i localStorage för att session-state.js gör den flik som inte äger
+-- låset skrivskyddad, och under en sändning kör överlägget i OBS ofta bredvid en öppen Studio. En
+-- ledger som skrivs vid varje event kan inte ligga i den fliken.
+--
+-- Nivåerna är NULL tills TikTok faktiskt rapporterat en: 0 betyder "ingen nivå", inte nivå noll,
+-- och en tittare som inte gått med i fanklubben har inget `fansClub` i payloaden alls.
+CREATE TABLE IF NOT EXISTS viewer_levels (
+  workspace_id uuid    NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  viewer_id    text    NOT NULL,
+  fan_level    integer CHECK (fan_level    BETWEEN 1 AND 50),
+  gifter_level integer CHECK (gifter_level BETWEEN 1 AND 50),
+  seen_at      timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, viewer_id)
+);
+
+-- Gallringen väljer på ålder över hela tabellen och skrivs i seen_at-ordning — samma form som
+-- goal_event_apply, och samma skäl att välja BRIN framför B-tree.
+CREATE INDEX IF NOT EXISTS viewer_levels_sweep_brin
+  ON viewer_levels USING brin (seen_at);

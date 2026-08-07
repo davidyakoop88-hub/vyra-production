@@ -772,7 +772,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260806-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260807-levels';document.body.append(js)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
    wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
@@ -781,7 +781,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-
    ska fanga fel aven for nagon som aldrig oppnar supportvyn. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='support-client.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='support-client.js?v=20260806-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260806-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260807-levels';document.body.append(js)});
 /* Gift Fireworks trigger, samma monster som fan-level-session.js. Widgeten hade ingen livevag alls:
    enda anroparen var action-runtime.js:62, som bara kors for den som SJALV lagt upp en Action med
    "firework" i widgetnamnet. Uppmatt 2026-08-06 mot deployad kod - en gava genom VyraLive.ingest
@@ -791,6 +791,10 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260806-1';document.body.append(js)});
+/* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
+   lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
+   skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});

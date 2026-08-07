@@ -3,7 +3,7 @@ if(process.env.NODE_ENV==='production')require('./production-config').validatePr
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -96,7 +96,10 @@ function validateTikTokIngestPayload(payload){
 // goal-ingest.js with every dependency injected, so they are provable without a database or a Redis.
 // cleanEvent goes in from here: normalising once is what makes the id Postgres claims and the id
 // Redis dedupes on the same string.
-const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent});
+// Nivaminnet far poolens query direkt, inte poolen: viewer-levels.js kor ett enda uttalande och ska
+// inte kunna halla en klient eller oppna en transaktion.
+const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params)});
+const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels});
 async function ingestTikTokEvent(workspaceId,payload){
   if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
