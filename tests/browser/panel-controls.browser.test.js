@@ -67,7 +67,10 @@ test.after(async () => {
 
 // Ett litet fonster med flit: panelen ar ~2900px hog, sa kontrollerna langst ner hamnar utanfor
 // bild precis som pa Davids skarm. Ett hogt testfonster skulle dolja hela buggen.
-async function editorMed(typ, id = 'w1') {
+// `extra` finns for kontroller som bara renderas i ett visst widgetlage. Battle MVP:s
+// storleksreglage byggs t.ex. bara nar en MVP-ram ar vald (mvpFrameOptionsBind i media.js kraver
+// w.mvpFrame), vilket ar precis darfor de inte syntes i den forsta inventeringen.
+async function editorMed(typ, id = 'w1', extra = null) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.render === 'function' && typeof window.wh === 'function',
@@ -76,13 +79,16 @@ async function editorMed(typ, id = 'w1') {
   // provas har; utan dem matter testet fel panel.
   await page.waitForFunction(() => !!document.querySelector('script[src*="premium-final"]'),
     null, { timeout: 20000 });
-  await page.evaluate(async ([typ, id]) => {
+  await page.evaluate(async ([typ, id, extra]) => {
     view = 'editor';
-    state.widgets = [{ id, type: typ, x: 20, y: 20, width: 280 }];
+    state.widgets = [{ id, type: typ, x: 20, y: 20, width: 280, ...(extra || {}) }];
     selected = id;
     render();
+    // Kontroller som byggs av en senare bind()-utokning (t.ex. MVP-ramens reglage) finns inte
+    // efter forsta render(); ett extra bind() bygger dem, precis som ett klick i panelen gor.
+    if (typeof bind === 'function') bind();
     await new Promise(r => setTimeout(r, 400));
-  }, [typ, id]);
+  }, [typ, id, extra]);
   return page;
 }
 
@@ -128,12 +134,18 @@ const FALL = [
   { namn: 'TOP LIKES', typ: 'templateTopLike', kontroll: 'wsOutlineWidth', nyckel: 'textOutlineWidth' },
   { namn: 'LikeFountain', typ: 'templateLikeFountain', kontroll: 'fountainSize', nyckel: 'fountainSize' },
   { namn: 'TOP GIFT · Bredd', typ: 'templateTopGift', kontroll: 'propWidth', nyckel: 'width' },
-  { namn: 'TOP LIKES · Bredd', typ: 'templateTopLike', kontroll: 'propWidth', nyckel: 'width' }
+  { namn: 'TOP LIKES · Bredd', typ: 'templateTopLike', kontroll: 'propWidth', nyckel: 'width' },
+  // Femte bindaren: num() i media.js, en tredje parametervariant av samma kropp. Reglagen byggs
+  // bara nar en MVP-ram ar vald, sa utan `extra` finns kontrollen inte och testet blir tyst gront.
+  { namn: 'Battle MVP', typ: 'templateBattleMvp', kontroll: 'mvpScoreSize', nyckel: 'mvpScoreSize',
+    extra: { mvpFrame: 'royal-purple' } },
+  { namn: 'Battle MVP · namn', typ: 'templateBattleMvp', kontroll: 'mvpNameSize', nyckel: 'mvpNameSize',
+    extra: { mvpFrame: 'royal-purple' } }
 ];
 
 for (const fall of FALL) {
   test(`${fall.namn}: ett dragsteg ersätter inte elementet`, { skip }, async () => {
-    const page = await editorMed(fall.typ);
+    const page = await editorMed(fall.typ, 'w1', fall.extra);
     const ut = await page.evaluate(DRAGSTEG, [fall.kontroll, fall.nyckel]);
     await page.close();
     assert.equal(ut.sammaElement, true,
@@ -141,7 +153,7 @@ for (const fall of FALL) {
   });
 
   test(`${fall.namn}: scrollpositionen överlever ett dragsteg`, { skip }, async () => {
-    const page = await editorMed(fall.typ);
+    const page = await editorMed(fall.typ, 'w1', fall.extra);
     const ut = await page.evaluate(DRAGSTEG, [fall.kontroll, fall.nyckel]);
     await page.close();
     assert.equal(ut.scrollEfter, ut.fore.scroll,
@@ -151,7 +163,7 @@ for (const fall of FALL) {
   });
 
   test(`${fall.namn}: fokus stannar på kontrollen`, { skip }, async () => {
-    const page = await editorMed(fall.typ);
+    const page = await editorMed(fall.typ, 'w1', fall.extra);
     const ut = await page.evaluate(([id]) => {
       const el = document.getElementById(id);
       el.scrollIntoView({ block: 'center' });
@@ -168,7 +180,7 @@ for (const fall of FALL) {
   // ("130128126124…px") andrar den ocksa, och slank igenom den forsta versionen av det har testet.
   // Kravet ar att den visar exakt det nya vardet med enheten kvar.
   test(`${fall.namn}: live-förhandsvisning visar rätt värde under dragningen`, { skip }, async () => {
-    const page = await editorMed(fall.typ);
+    const page = await editorMed(fall.typ, 'w1', fall.extra);
     const ut = await page.evaluate(DRAGSTEG, [fall.kontroll, fall.nyckel]);
     await page.close();
     // State forst: det ar den egenskap som galler for ALLA kontroller. Talfalten (Bredd) har
@@ -187,7 +199,7 @@ for (const fall of FALL) {
   // dar den gamla bindaren korde en naken render(). Uppmatt pa propWidth fore fixen:
   // scrollTop 1319 -> 0 och faltet kastat fran y=335 till y=1654 i ett 720px hogt fonster.
   test(`${fall.namn}: panelen står kvar när kontrollen släpps`, { skip }, async () => {
-    const page = await editorMed(fall.typ);
+    const page = await editorMed(fall.typ, 'w1', fall.extra);
     const ut = await page.evaluate(([id, nyckel]) => {
       const el = document.getElementById(id);
       el.scrollIntoView({ block: 'center' });
