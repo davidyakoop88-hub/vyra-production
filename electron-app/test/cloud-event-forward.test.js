@@ -283,3 +283,60 @@ test('ingen global ingest-token finns i desktopkoden', () => {
       `${fil} postar till token-rutten i stället för den sessionsautentiserade`);
   }
 });
+
+// ---- kontraktet mot molnets validator ------------------------------------------------------------
+//
+// Hittat 2026-08-08, efter att speglingen redan var mergad: tiktok-service.js skickar typer som
+// molnet INTE kanner igen.
+//
+//   molnet (server/index.js:72):  gift like likes chat follow share member subscribe viewer battle
+//   desktop (tiktok-service.js):  ... + chatcommand + subscriberemote
+//
+// `chatcommand` fods pa rad 91 nar en chattrad borjar med "!", `subscriberemote` pa rad 120. Bada
+// avvisas av molnet med 400 — och eftersom speglingen sval jer sina egna fel skulle ingen marka
+// det. De ater ingest-takten och lamnar ingenting efter sig.
+//
+// Chattfiltret var dessutom en SVARTLISTA (`new Set(['chat'])`), vilket inte ens fangar
+// `chatcommand`. En svartlista slapper igenom varje ny typ som nagon lagger till i framtiden.
+// Ratt form ar en VITLISTA: en okand typ ska stanna hemma, inte skickas och avvisas.
+//
+// ROTT NU: bada.
+const TIKTOK_INGEST_TYPES = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member',
+  'subscribe', 'viewer', 'battle'];
+
+// Typerna lases ur kallan, inte ur en handskriven lista: laggs en ny till i tiktok-service.js ska
+// det har provet upptacka den, inte en manniska som rakar minnas att uppdatera bada stallena.
+function desktopTyper() {
+  const kod = fs.readFileSync(path.join(__dirname, '..', 'tiktok-service.js'), 'utf8');
+  const typer = new Set();
+  for (const m of kod.matchAll(/emit\(\s*'([a-z]+)'/g)) typer.add(m[1]);
+  // Raden `emit(comment.startsWith('!') ? 'chatcommand' : 'chat', ...)` matchar inte monstret ovan.
+  for (const m of kod.matchAll(/\?\s*'([a-z]+)'\s*:\s*'([a-z]+)'/g)) { typer.add(m[1]); typer.add(m[2]) }
+  return [...typer].sort();
+}
+
+test('alla typer desktop kan skicka är kända — annars måste de stanna hemma', async (t) => {
+  const okanda = desktopTyper().filter(typ => !TIKTOK_INGEST_TYPES.includes(typ));
+  const seen = stubCloud(t, svarOk);
+  const { kanal, options } = riggen();
+  await medServer(t, 4270, options, async () => {
+    await kravLevandeKanal(kanal, seen);
+    for (const typ of okanda) kanal.skicka({ type: typ, username: 'nagon', eventKey: 'k-' + typ });
+    await slappFram();
+  });
+  assert.deepEqual(seen.map(a => JSON.parse(a.body).type), [],
+    `dessa typer skickades men avvisas av molnet med 400: ${okanda.join(', ')}`);
+});
+
+// Vitlista, inte svartlista. Mats genom att skicka en typ som inte finns alls: en svartlista
+// slapper igenom den, en vitlista stoppar den.
+test('en okänd typ skickas inte vidare', async (t) => {
+  const seen = stubCloud(t, svarOk);
+  const { kanal, options } = riggen();
+  await medServer(t, 4271, options, async () => {
+    await kravLevandeKanal(kanal, seen);
+    kanal.skicka({ type: 'nagotheltnytt', username: 'anna', eventKey: 'nytt-1' });
+    await slappFram();
+  });
+  assert.equal(seen.length, 0, 'filtret är en svartlista — varje ny typ läcker igenom och 400:ar');
+});

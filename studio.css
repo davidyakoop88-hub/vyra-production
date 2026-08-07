@@ -785,6 +785,24 @@ html.overlay-output .widget{
   0%,100%{filter:brightness(1)}
   50%{filter:brightness(2.2)}
 }
+
+/* TOTALT — historikraden på framsidan.
+   MEDVETET PLACERAD HÄR, inte sist i filen: studio.css har en obalanserad klammer (issue #126) och
+   allt efter rad 787 hamnar inuti ett oavslutat block. Regler i slutet av filen ser korrekta ut i
+   källkoden men gäller bara under @media (prefers-reduced-motion). Rad 787 är den sista där
+   klammerdjupet är noll — flyttas den här regeln längre ned slutar den att gälla. */
+.alltime{margin:18px 0;padding:18px 20px}
+.alltime-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.alltime-head h3{margin:2px 0 0}
+.alltime-periods{display:flex;gap:6px;flex-wrap:wrap}
+.alltime-periods button{padding:6px 12px;border-radius:999px;font-size:12px;letter-spacing:.04em;
+  border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;cursor:pointer;opacity:.65}
+.alltime-periods button:hover{opacity:1}
+.alltime-periods button.vald{opacity:1;border-color:transparent;background:rgba(255,255,255,.14)}
+.alltime-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:16px 0 8px}
+.alltime-stats small{display:block;font-size:11px;letter-spacing:.12em;opacity:.6}
+.alltime-stats strong{display:block;font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums}
+.alltime [data-alltime-note]{margin:0;font-size:12px;opacity:.6}
 @media(prefers-reduced-motion:reduce){
   .gifter-xform-burst .gifter-big-level,.gifter-xform-new .gifter-big-level,
   .gifter-xform-burst .gifter-diamond-stack{animation:none!important}

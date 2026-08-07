@@ -3,7 +3,7 @@ if(process.env.NODE_ENV==='production')require('./production-config').validatePr
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -103,6 +103,7 @@ const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params
 // query, inte poolen, och svaljer sina egna fel — en analysskrivning far aldrig kunna stoppa ett
 // event fran att na overlayet.
 const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
+const statsReader=createStatsReader({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels});
 async function ingestTikTokEvent(workspaceId,payload){
   if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
@@ -314,6 +315,20 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!scoped.rows[0])return send(res,404,{ok:false,error:'Overlay saknas'});
     await openEventStream(req,res,u,workspaceId,null,scoped.rows[0].id);return}
   const eventStream=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/events\/stream$/i);if(eventStream&&req.method==='GET'){const workspaceId=eventStream[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});await openEventStream(req,res,u,workspaceId);return}
+  // Historiken bakom "All time" pa framsidan. GET, sa den passerar den gemensamma session-raden
+  // ovan utan CSRF-krav — den laser och andrar ingenting.
+  //
+  // Alla roller far lasa, aven 'viewer': det ar samma siffror som redan visas pa overlayen under
+  // sandning, bara summerade over tid.
+  const statsRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/stats$/i);
+  if(statsRoute&&req.method==='GET'){
+    const workspaceId=statsRoute[1];
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    // Perioden ar en uppraknad mangd i stats-read.js — ett okant varde faller tillbaka pa 'all'
+    // i stallet for att bli ett 400. En periodvaljare ska inte kunna ge en trasig sida.
+    const ut=await statsReader.sammanfattning(workspaceId,u.searchParams.get('period')||'all');
+    return send(res,200,{ok:true,...ut},{'cache-control':'no-store'});
+  }
   const ttsVoicesRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/voices$/i);if(ttsVoicesRoute&&req.method==='GET'){const workspaceId=ttsVoicesRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});try{return send(res,200,{ok:true,voices:await TTS.listVoices(u.searchParams.get('languageCode')||'')})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   const ttsSynthRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/synthesize$/i);if(ttsSynthRoute&&req.method==='POST'){const workspaceId=ttsSynthRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`tts-synth:${workspaceId}`,TTS_SYNTH_RATE_LIMIT,TTS_SYNTH_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många TTS-förfrågningar just nu — vänta en stund'});const d=await body(req);try{return send(res,200,{ok:true,audioContent:await TTS.synthesize({text:d.text,languageCode:d.languageCode,voiceName:d.voiceName,speed:d.speed,pitch:d.pitch})})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   // Deliberately eventBus.publish() and NOT the ingest path: a test event is for looking at, and it
