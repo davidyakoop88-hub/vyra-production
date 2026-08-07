@@ -46,7 +46,7 @@ home = function () {
       </div>
     </article>
     <div class="command-side">
-      <article class="card activity premium-activity">
+      <article class="card activity premium-activity" data-pulse>
         <div class="card-head"><div><span class="eyebrow">LIVE PULSE</span><h2>Senaste händelser</h2></div></div>
         <p>Riktiga TikTok-händelser visas här när VYRA Desktop är anslutet.</p>
       </article>
@@ -115,6 +115,32 @@ if (typeof view !== 'undefined' && view === 'home') render();
   let koad = false;
   let levande = true;
 
+  // ---- LIVE PULSE -----------------------------------------------------------------------------
+  //
+  // Kortet holl en fast mening: "Riktiga TikTok-handelser visas har nar VYRA Desktop ar anslutet."
+  //
+  // Fas A sa att detta skulle bli enkelt eftersom VyraLiveControl.getSnapshot() redan finns. Det
+  // var fel: live-control.js finns som fil och serveras (200 i produktion), men INGENTING laddar
+  // den — varken studio.html eller media.js namner den, sa VyraLiveControl definieras aldrig.
+  // Pulsen haller darfor sin egen buffert.
+  //
+  // `viewer` och `chat` utesluts med flit. Tittarantalet ar inte en handelse utan ett tal som redan
+  // har ett eget kort, och bada typerna kommer sa tatt att de skulle tranga ut allt annat.
+  const PULS_MAX = 8;
+  const puls = [];                       // nyaste forst
+  const PULS_TEXT = {
+    gift: data => '🎁 @' + namn(data) + (data.giftName ? ' · ' + data.giftName : '')
+      + (Number(data.count) > 1 ? ' ×' + Math.round(Number(data.count)) : ''),
+    follow: data => '＋ @' + namn(data) + ' började följa',
+    like: data => '♥ @' + namn(data),
+    likes: data => '♥ @' + namn(data),
+    share: data => '↗ @' + namn(data) + ' delade',
+    subscribe: data => '★ @' + namn(data) + ' prenumererar'
+  };
+  function namn(data) {
+    return String(data.username || data.uniqueId || data.user || 'okänd').replace(/^@/, '');
+  }
+
   function mala() {
     koad = false;
     if (!levande) return;
@@ -125,6 +151,28 @@ if (typeof view !== 'undefined' && view === 'home') render();
       const nod = document.querySelector('[data-stat="' + kort.stat + '"] strong');
       if (nod) nod.textContent = varde.toLocaleString('sv-SE');
     }
+    malaPuls();
+  }
+
+  // Raderna bar ANVANDARDATA fran TikTok. Listan byggs darfor med createElement och textContent —
+  // aldrig innerHTML. Ett anvandarnamn som ser ut som markup ska visas som text, inte tolkas.
+  function malaPuls() {
+    if (!puls.length) return;
+    const kort = document.querySelector('[data-pulse]');
+    if (!kort) return;
+    const lista = document.createElement('ul');
+    lista.className = 'pulse-list';
+    for (const rad of puls) {
+      const post = document.createElement('li');
+      post.textContent = rad;
+      lista.append(post);
+    }
+    const gammal = kort.querySelector('.pulse-list');
+    if (gammal) gammal.replaceWith(lista);
+    else kort.append(lista);
+    // Tomtexten har gjort sitt sa fort det finns riktiga handelser.
+    const tomtext = kort.querySelector('p');
+    if (tomtext) tomtext.hidden = true;
   }
 
   function schemalagg() {
@@ -137,6 +185,13 @@ if (typeof view !== 'undefined' && view === 'home') render();
     if (!levande) return;
     const data = event.detail || {};
     const typ = String(data.type || data.event || '').toLowerCase();
+    const berattare = PULS_TEXT[typ];
+    if (berattare) {
+      puls.unshift(berattare(data));
+      if (puls.length > PULS_MAX) puls.length = PULS_MAX;
+      schemalagg();
+    }
+
     const kort = KORT.find(k => k.typer.includes(typ));
     if (!kort) return;
     const tal = (kort.las || kort.lagg)(data);
@@ -154,6 +209,7 @@ if (typeof view !== 'undefined' && view === 'home') render();
   // vardena forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
   // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
   const observer = new MutationObserver(() => {
+    if (puls.length) { schemalagg(); return }
     for (const kort of KORT) if (senaste[kort.stat] !== undefined) { schemalagg(); return }
   });
   observer.observe(document.body, { childList: true, subtree: true });
@@ -161,6 +217,7 @@ if (typeof view !== 'undefined' && view === 'home') render();
   addEventListener('vyra-session-ended', () => {
     levande = false;
     for (const kort of KORT) delete senaste[kort.stat];
+    puls.length = 0;
     observer.disconnect();
   });
 })();
