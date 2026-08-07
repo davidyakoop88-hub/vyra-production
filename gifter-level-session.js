@@ -77,6 +77,23 @@
     if (!namn) return;
     const forra = senaste.get(namn);
     senaste.set(namn, niva);
+
+    // SERVERN ÄGER JÄMFÖRELSEN — se viewer-levels.js. Kartan här lever i RAM och dör med sidan, så
+    // den ser bara en höjning om samma tittare syns två gånger i samma sändning. Spendergraden
+    // rör sig långsammare än så.
+    const stampel = e.gifterLevelUp;
+    if (stampel && Number(stampel.to) > Number(stampel.from)) {
+      koa({
+        name: namn,
+        fromLevel: Number(stampel.from),
+        level: Number(stampel.to),
+        profileImage: String(e.profileImage || e.avatar || '')
+      });
+      return;
+    }
+
+    // RESERVEN gäller bara event som aldrig passerat molnets ingest — desktop-appen publicerar
+    // direkt till klienten och stämplar ingenting.
     if (forra === undefined) return;
     if (niva <= forra) return;
     koa({

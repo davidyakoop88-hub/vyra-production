@@ -85,6 +85,26 @@
     if (!namn) return;
     const forra = senaste.get(namn);
     senaste.set(namn, niva);
+
+    // SERVERN ÄGER JÄMFÖRELSEN. viewer-levels.js minns senast sedda nivå per tittare och arbetsyta
+    // och stämplar eventet med {from,to} när den stigit. Kartan här ovan lever i RAM och dör med
+    // sidan, så den kan bara se en höjning om samma tittare syns TVÅ gånger i SAMMA sändning — och
+    // fanklubbsnivå rör sig på veckor. Det var därför widgeten var tyst i praktiken.
+    const stampel = e.fanLevelUp;
+    if (stampel && Number(stampel.to) > Number(stampel.from)) {
+      koa({
+        name: namn,
+        fromLevel: Number(stampel.from),
+        level: Number(stampel.to),
+        profileImage: String(e.profileImage || e.avatar || ''),
+        isTeamMember: e.isTeamMember !== false
+      });
+      return;
+    }
+
+    // RESERVEN gäller bara event som ALDRIG passerat molnets ingest — desktop-appen publicerar
+    // direkt till klienten. Där finns ingen stämpel, och då är den gamla regeln bättre än ingen.
+    // Den fyrar aldrig dubbelt: kommer stämpeln returnerar vi ovan.
     if (forra === undefined) return;   // första gången: lär bara in
     if (niva <= forra) return;         // oförändrad eller sänkt
     koa({
