@@ -2,11 +2,13 @@ home = function () {
   const connected = Boolean(state.tiktok);
   const user = state.user || 'VYRA-konto';
   const connectionText = connected ? `TikTok sparad · ${state.tiktok}` : 'TikTok väntar';
+  // Tredje faltet ar en STABIL hook for livedata. Index-klasserna (.s0…) beskriver plats i raden,
+  // inte innebord — flyttas ett kort byter de betydelse under fotterna pa den som lyssnar.
   const emptyStats = [
-    ['👁', 'TITTARE'],
-    ['♥', 'LIKES'],
-    ['◆', 'GÅVOR'],
-    ['↗', 'INTÄKT']
+    ['👁', 'TITTARE', 'viewers'],
+    ['♥', 'LIKES', 'likes'],
+    ['◆', 'GÅVOR', 'gifts'],
+    ['↗', 'INTÄKT', 'revenue']
   ];
 
   return `<section class="home-welcome">
@@ -22,7 +24,7 @@ home = function () {
     </div>
   </section>
   <div class="stats premium-stats">
-    ${emptyStats.map((item, index) => `<article class="card stat premium-stat s${index}">
+    ${emptyStats.map((item, index) => `<article class="card stat premium-stat s${index}" data-stat="${item[2]}">
       <div class="stat-icon">${item[0]}</div>
       <div><small>${item[1]}</small><strong>—</strong><em><span>Visas under riktig LIVE</span></em></div>
     </article>`).join('')}
@@ -59,3 +61,66 @@ home = function () {
 };
 
 if (typeof view !== 'undefined' && view === 'home') render();
+
+// ---- Livedata: tittarantalet ------------------------------------------------------------------
+//
+// Forsta riktiga kopplingen pa framsidan. Korten har hittills varit statisk markup — `—` och
+// "Visas under riktig LIVE" — utan att nagot nagonsin matat dem.
+//
+// Tittare ar den enklaste av de fyra: bada bryggorna skickar `viewer` med ett fardigt `count`
+// (electron-app/tiktok-service.js, tiktok-bridge/bridge.js), sa ingen summering behovs, inget
+// tidsfonster maste beslutas och ingen dedupe kravs. Vardet ar ett ogonblicksvarde.
+//
+// Tre regler ur arkitekturkontraktet, och de ar hela poangen med att gora den har forst:
+//
+//   1. ALDRIG render() harifran. render() ar `viewRoot.innerHTML = m[view]()` — den river hela vyn.
+//      Bara ett textContent pa en nod byts.
+//   2. Batchat via requestAnimationFrame. En publik som svanger ger manga events i rad; DOM:en ska
+//      roras en gang per bildruta, inte en gang per event.
+//   3. Teardown pa vyra-session-ended. Ingen lyssnare far overleva en utloggning eller ett kontobyte.
+//
+// Vardet lever bara i minnet. Det ska inte overleva en omladdning, och tokenlaget (?access=) far
+// aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
+(function () {
+  let senaste = null;          // senast kanda antal, null = inget event an
+  let koad = false;
+  let levande = true;
+
+  const kortet = () => document.querySelector('[data-stat="viewers"] strong');
+
+  function mala() {
+    koad = false;
+    if (!levande || senaste === null) return;
+    const nod = kortet();
+    // Vyn kan vara en annan just nu (editor, overlay). Da finns inget kort, och det ar inte ett fel.
+    if (nod) nod.textContent = senaste.toLocaleString('sv-SE');
+  }
+
+  function schemalagg() {
+    if (koad || !levande) return;
+    koad = true;
+    requestAnimationFrame(mala);
+  }
+
+  addEventListener('vyra-live-event', event => {
+    if (!levande) return;
+    const data = event.detail || {};
+    if (String(data.type || data.event || '').toLowerCase() !== 'viewer') return;
+    const antal = Number(data.count);
+    if (!Number.isFinite(antal) || antal < 0) return;
+    senaste = Math.round(antal);
+    schemalagg();
+  });
+
+  // render() bygger om #view fran grunden, sa kortet ar en ny nod varje gang. Utan den har skulle
+  // vardet forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
+  // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
+  const observer = new MutationObserver(() => { if (senaste !== null) schemalagg() });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  addEventListener('vyra-session-ended', () => {
+    levande = false;
+    senaste = null;
+    observer.disconnect();
+  });
+})();
