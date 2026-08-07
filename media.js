@@ -164,33 +164,55 @@ const VyraFlip=window.VyraFlip=(function(){
   const DEFAULT_MS={play:4200,hit:3800};
   const trigger=el=>el.classList.contains('vyra-streak')?'hit':'play';
   const parts=el=>[el,...el.querySelectorAll(PARTS)];
-  function offset(el,ms){parts(el).forEach(node=>{node.style.animationDelay=ms?-Math.round(ms)+'ms':''})}
-  // Themes and frames change the length (.topgift-framed is 3.8s, .streak-ice drops the wrapper
-  // animation and runs the two faces for var(--speed) instead), so measure the widget in front of us
-  // rather than hardcoding one number per type. Must run with the trigger class already applied.
-  function durationOf(el){
-    if(typeof getComputedStyle!=='function')return 0;
-    let longest=0;
-    parts(el).forEach(node=>{
-      const style=getComputedStyle(node);
-      if(!style||!style.animationName||style.animationName==='none')return;
-      String(style.animationDuration).split(',').forEach((value,i)=>{
-        const counts=String(style.animationIterationCount||'1').split(',');
-        if((counts[i]||counts[0]||'1').trim()==='infinite')return;
-        const ms=parseFloat(value)*(/ms\s*$/.test(value.trim())?1:1000);
-        if(Number.isFinite(ms))longest=Math.max(longest,ms);
-      });
+  // Every animation on one node, as {ms, evig}. Read once and reused by all three measurements
+  // below, so "how long" and "does it ever end" can never disagree about the same node.
+  function rader(node){
+    if(typeof getComputedStyle!=='function')return[];
+    const style=getComputedStyle(node);
+    if(!style||!style.animationName||style.animationName==='none')return[];
+    const counts=String(style.animationIterationCount||'1').split(',');
+    return String(style.animationDuration).split(',').map((value,i)=>{
+      const ms=parseFloat(value)*(/ms\s*$/.test(value.trim())?1:1000);
+      return{ms:Number.isFinite(ms)?ms:0,evig:(counts[i]||counts[0]||'1').trim()==='infinite'};
     });
+  }
+  // Hur lång en varvcykel är på just den här noden, 0 om ingenting loopar där.
+  function loopMsOf(node){let m=0;rader(node).forEach(r=>{if(r.evig)m=Math.max(m,r.ms)});return m}
+  // FÖRLOPPET RÄKNAS OM MODULO CYKELN — men bara på de noder som faktiskt loopar.
+  //
+  // Top Gift snurrar för alltid, så 23 s in i sändningen ska rotationen ligga 3 s in i sitt varv.
+  // Widgetens egen 3,6 s-entré och profilbildens engångsglöd ska däremot ligga 23 s in, alltså vara
+  // färdiga. Lades loopens fas på dem skulle entrén spelas upp igen vid varje varv, mitt i sändningen.
+  function offset(el,ms){parts(el).forEach(node=>{
+    const loop=loopMsOf(node),d=loop?ms%loop:ms;
+    node.style.animationDelay=d?-Math.round(d)+'ms':'';
+  })}
+  // Themes and frames change the length (.streak-ice drops the wrapper animation and runs the two
+  // faces for var(--speed) instead), so measure the widget in front of us rather than hardcoding one
+  // number per type. Must run with the trigger class already applied. Eviga animationer räknas inte
+  // in i längden — de har ingen — utan fångas av loopOf nedan.
+  function durationOf(el){
+    let longest=0;
+    parts(el).forEach(node=>rader(node).forEach(r=>{if(!r.evig)longest=Math.max(longest,r.ms)}));
     return longest;
   }
+  function loopOf(el){let m=0;parts(el).forEach(node=>{m=Math.max(m,loopMsOf(node))});return m}
   return {
     // Picks a running flip up where it is. false means nothing is in flight and the caller may
     // start a new one — that is the only path that ever rewinds the animation.
     resume(el){
       const state=running[el.dataset.id];
-      if(!state||Date.now()-state.startedAt>=state.durationMs){offset(el,0);return false}
-      offset(el,Date.now()-state.startedAt);
+      if(!state){offset(el,0);return false}
+      const gone=Date.now()-state.startedAt;
+      // En evig flipp är ALDRIG klar. Returnerades false här skulle armFlip anropa start(), och
+      // start() spolar tillbaka rotationen — ett synligt hack mitt i en vändning, vid varje gåva.
+      if(!state.loopMs&&gone>=state.durationMs){offset(el,0);return false}
+      // Klassen FÖRST, förloppet sedan. offset() frågar getComputedStyle vad noden animerar, och en
+      // nyss ombyggd nod utan triggerklassen animerar ingenting — då hittas ingen cykel att räkna
+      // modulo mot, och loopen får hela sändningens gångtid som fas i stället för sin plats i varvet.
+      // Ingen reflow tvingas fram mellan raderna, så animationen kan inte hinna starta om.
       el.classList.add(trigger(el));
+      offset(el,gone);
       return true;
     },
     start(el){
@@ -199,7 +221,16 @@ const VyraFlip=window.VyraFlip=(function(){
       el.classList.remove(cls);
       void el.offsetWidth;
       el.classList.add(cls);
-      running[el.dataset.id]={startedAt:Date.now(),durationMs:durationOf(el)||DEFAULT_MS[cls]};
+      running[el.dataset.id]={startedAt:Date.now(),durationMs:durationOf(el)||DEFAULT_MS[cls],loopMs:loopOf(el)};
+    },
+    // Nytt rekord ska synas även när flippen aldrig tar slut. Egen klass, egen engångsanimation, och
+    // ingen omstart av loopen. Pulsens eget förlopp nollställs — offset() har lagt sändningens hela
+    // gångtid på gåvosidan, och en 2,1 s-puls som är 23 s "gammal" syns inte alls.
+    mark(el){
+      el.querySelectorAll('.vyra-gift-face,.streak-gift-face').forEach(n=>{n.style.animationDelay=''});
+      el.classList.remove('record');
+      void el.offsetWidth;
+      el.classList.add('record');
     }
   };
 })();
@@ -721,7 +752,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260803-dedupe';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260807-topgift';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.

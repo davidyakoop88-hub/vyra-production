@@ -30,6 +30,23 @@
   var records = { giftCoins: 0, streakCount: 0 };
   window.VyraGiftRecords = records;
 
+  // Top Gift rankar GÅVANS värde, inte combons summa. Davids regel 2026-08-07: "1 ros 1 coins,
+  // 11 rosor 1 coins" — elva rosor är elva gånger samma ros och får aldrig slå ut en gåva som
+  // ensam kostar mer.
+  //
+  // Bryggan skickar med flit totalen (`coins:coinsEach*repeatCount` i tiktok-bridge/normalizer.js),
+  // för Top Coins, fyrverkeriernas fwMin, målen och giftCoins-triggern läser alla den. Styckpriset
+  // räknas därför fram HÄR i stället för att fältet över nätet ändras, och definitionen exponeras
+  // så att live-leaderboard.js — den andra skrivaren till samma widget — inte kan hamna på ett
+  // annat tal. Två högvattenmärken för samma värde var precis buggen den här grinden en gång löste.
+  records.styckvarde = function (coins, antal) {
+    var total = Number(coins);
+    if (!Number.isFinite(total) || total <= 0) return 0;
+    var n = Math.round(Number(antal));
+    if (!Number.isFinite(n) || n < 1) n = 1;              // count saknas, är 0 eller skräp
+    return Math.round(total / n);
+  };
+
   // ---- riktad DOM-patchning ------------------------------------------------------------------
   // Den här vägen slutade tidigare på save() + render() för VARJE gåva. render() ritar om hela
   // canvasen, vilket river ner den animation som just spelar — precis det VyraFlip byggdes för att
@@ -175,9 +192,12 @@
 
     // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden
     // gäller sändningen, inte layouten — de nollställs vid omladdning, precis som topplistorna.
-    var newGift = coins > records.giftCoins;
+    // Gåvans eget värde avgör Top Gift; antalet avgör Top Streak. `coins` självt lämnas orört —
+    // det är totalen alla andra läsare räknar med.
+    var giftVarde = records.styckvarde(coins, streak);
+    var newGift = giftVarde > records.giftCoins;
     var newStreak = streak > records.streakCount;
-    if (newGift) records.giftCoins = coins;
+    if (newGift) records.giftCoins = giftVarde;
     if (newStreak) records.streakCount = streak;
 
     state.widgets.forEach(function (widget) {
@@ -185,7 +205,7 @@
         widget.giftName = giftName || widget.giftName;
         widget.giftImage = detail.giftImage || widget.giftImage;
         widget.dataName = detail.username || detail.name || widget.dataName;
-        widget.dataValue = coins;
+        widget.dataValue = giftVarde;
         schedule(widget);
       }
 

@@ -64,6 +64,77 @@ test('en dyrare gåva tar fortfarande över', () => {
 test('rekordet delas mellan de två skrivarna', () => {
   const env = boot();
   env.fire({ type: 'gift', giftName: 'Rose', username: 'a', coins: 4200, count: 3 });
-  assert.equal(env.h.window.VyraGiftRecords.giftCoins, 4200,
+  assert.equal(env.h.window.VyraGiftRecords.giftCoins, 1400,
     'live-leaderboard läser den här siffran — utan den finns ingen gemensam sanning');
+});
+
+// ---- styckpris, inte combosumma ---------------------------------------------------------------
+// Davids regel 2026-08-07, ordagrant: "1 ros 1 coins, 11 rosor 1 coins". Top Gift rankar GÅVANS
+// värde. Elva rosor är elva gånger samma ros, inte en gåva värd elva, och får därför aldrig slå ut
+// en gåva som ensam kostar mer.
+//
+// Bryggan skickar `coins` som styckpris × antal (normalizer.js: `coins: coinsEach * repeatCount`)
+// och `count` som antalet. Den totalen är RÄTT för Top Coins, för fyrverkeriernas fwMin, för målen
+// och för giftCoins-triggern — därför räknas styckpriset fram här, hos Top Gifts två skrivare, och
+// fältet över nätet lämnas i fred. Ett test längre ned vaktar att eventet inte muteras.
+//
+// Streaks kommer som ETT event med repeatCount, inte elva separata (bryggan släpper bara igenom
+// sista framen), så det är just den multiplikationen som avgör utfallet.
+const gift = (over = {}) => ({ type: 'gift', giftName: 'Rose', username: 'x', count: 1, ...over });
+
+test('en ros är 1 coins, och elva rosor är också 1 coins', () => {
+  const env = boot();
+  env.fire(gift({ username: 'en', coins: 1, count: 1 }));
+  assert.equal(Number(env.widget().dataValue), 1, 'en ensam ros visade fel värde');
+
+  const env2 = boot();
+  env2.fire(gift({ username: 'elva', coins: 11, count: 11 }));
+  assert.equal(Number(env2.widget().dataValue), 1,
+    'elva rosor visades som 11 — combons summa i stället för gåvans värde');
+});
+
+test('elva rosor tar inte över ett tio-coins-rekord', () => {
+  const env = boot();
+  env.fire(gift({ username: 'tio', giftName: 'Perfume', coins: 10, count: 1 }));
+  assert.equal(Number(env.widget().dataValue), 10);
+
+  env.fire(gift({ username: 'rosor', coins: 11, count: 11 }));
+  assert.equal(env.widget().dataName, 'tio',
+    'elva rosor (11 totalt, 1 styck) slog ut en gåva som ensam kostar 10');
+  assert.equal(Number(env.widget().dataValue), 10);
+});
+
+test('en dyrare enskild gåva tar över, oavsett antal', () => {
+  const env = boot();
+  env.fire(gift({ username: 'tio', coins: 10, count: 1 }));
+  env.fire(gift({ username: 'galaxy', giftName: 'Galaxy', coins: 1000, count: 1 }));
+  assert.equal(env.widget().dataName, 'galaxy', 'ett äkta rekord blockerades');
+  assert.equal(Number(env.widget().dataValue), 1000);
+});
+
+test('tre Galaxy visar 1000, inte 3000', () => {
+  const env = boot();
+  env.fire(gift({ username: 'tre', giftName: 'Galaxy', coins: 3000, count: 3 }));
+  assert.equal(Number(env.widget().dataValue), 1000,
+    'antalet drev upp värdet — Top Gift ska visa vad gåvan kostar, inte vad combon summerade till');
+});
+
+test('count som saknas eller är noll behandlas som en enda gåva', () => {
+  const utan = boot();
+  utan.fire({ type: 'gift', giftName: 'Rose', username: 'utan', coins: 250 });
+  assert.equal(Number(utan.widget().dataValue), 250, 'ett event utan count tappade sitt värde');
+
+  const noll = boot();
+  noll.fire(gift({ username: 'noll', coins: 250, count: 0 }));
+  assert.equal(Number(noll.widget().dataValue), 250,
+    'count:0 gav en division som inte går att visa');
+});
+
+test('eventet självt lämnas orört — coins bär fortfarande totalen', () => {
+  const env = boot();
+  const e = gift({ username: 'a', coins: 3000, count: 3 });
+  env.fire(e);
+  assert.equal(e.coins, 3000,
+    'Top Gift skrev om coins i eventet — Top Coins, fwMin, målen och giftCoins-triggern läser det');
+  assert.equal(e.count, 3, 'antalet skrevs om');
 });
