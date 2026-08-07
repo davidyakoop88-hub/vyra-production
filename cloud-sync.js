@@ -5,7 +5,7 @@
   // B:s overlay vid ett kontobyte. Namespacet gor A:s ko oatkomlig for B utan att kasta bort den.
   const LEGACY_META='vyra-cloud-sync-meta',LEGACY_QUEUE='vyra-cloud-sync-queue',
     metaKey=id=>`vyra-cloud-sync-meta:${id}`,queueKey=id=>`vyra-cloud-sync-queue:${id}`,
-    backupKey=id=>`vyra-session-backup:${id}`,EXTRA=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution'];
+    backupKey=id=>`vyra-session-backup:${id}`,EXTRA=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution','vyra-scene-settings-v1'];
   let workspace=null,overlay=null,lastLocal=localStorage.getItem('vyra-state'),timer=null,syncing=false,status='local',initialized=false;
   // Sessionsgeneration: varje async operation fangar den fore sitt await och avbryter tyst om den
   // hunnit bytas. Utan den kan en PUT som startade som A landa - och skriva state - som B.

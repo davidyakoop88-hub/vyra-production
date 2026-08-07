@@ -7,7 +7,7 @@
   // always filtered on the same set, and this is the copy that was missing it. Kept identical to
   // EXTRA in cloud-sync.js and EXTRA_KEYS in state-backup.js: the widget layout itself travels in
   // vyra-state above, and these five are the only side-tables that belong to a layout.
-  const EXTRA_KEYS=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution'];
+  const EXTRA_KEYS=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution','vyra-scene-settings-v1'];
   // En OBS-lank projiceras read-only i minnet: ingen las, ingen markor, ingen skriven nyckel.
   // En tokenflik far aldrig gora en Studio-flik skrivskyddad eller lamna nagot en annan flik
   // kan adoptera - darfor gar den via agarens egen tokenvag och inte via localStorage.

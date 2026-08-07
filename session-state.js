@@ -26,9 +26,16 @@
   const LOCK = 'vyra-session-projection';
   const MARKER_KEY = 'vyra-session-projection';
   const STATE_KEY = 'vyra-state';
-  // The four that belong to an account. vyra-overlay-resolution is deliberately absent: it is a
+  // The ones that belong to an account. vyra-overlay-resolution is deliberately absent: it is a
   // property of the machine's screen, not of whoever is logged in.
-  const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widgets'];
+  //
+  // vyra-scene-settings-v1 (per-scen max kolangd) hor daremot till layouten: den satts i Actions &
+  // Events bredvid scenlankarna och maste folja med ut i OBS, annars kor overlayn alltid obegransad
+  // ko oavsett vad streamern stallt in. Utan den har raden filtrerar projectReadonlyOverlay bort
+  // nyckeln igen langre ner, sa den maste sta i ALLA fyra listorna (har, overlay-access.js,
+  // cloud-sync.js, state-backup.js) for att na hela vagen.
+  const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widgets',
+    'vyra-scene-settings-v1'];
   // Nycklar vi inte langre anvander, men vars DATA fortfarande maste torkas nar ett konto lamnas.
   // En gammal installation har dem kvar, och de far inte folja med in i nasta konto pa en delad
   // dator. De projiceras inte, synkas inte och sakerhetskopieras inte — de bara torkas.
@@ -468,6 +475,25 @@
       MARKER_KEY, STATE_KEY, EXTRA_KEYS, RETIRED_KEYS, PROTECTED_KEYS,
       activeState: () => activeStateObject,
       readActiveExtra: key => (key in activeExtras ? activeExtras[key] : null),
+      // Den enda lasvagen konsumenterna ska anvanda for en EXTRA-nyckel.
+      //
+      // Tokenlaget (?access=) skriver INGEN nyckel — swapExtras lagger dem bara i minnet. En lasare
+      // som gar direkt pa localStorage far darfor tomt i OBS browser source, vilket ar exakt varfor
+      // en scenlank kunde vara helt korrekt och anda aldrig spela nagon action.
+      //
+      // Ordningen ar inte godtycklig: i tokenlage laser vi ENBART minnet. En inloggad flik som
+      // oppnar nagon annans overlaylank har sina egna nycklar kvar i localStorage, och en fallback
+      // dit skulle kora fel kontos actions i lankens overlay.
+      readExtra: key => {
+        if (!EXTRA_KEYS.includes(key)) return null;
+        const fromMemory = key in activeExtras ? activeExtras[key] : null;
+        if (mode === 'overlay-token-readonly') return fromMemory;
+        try {
+          const local = storage.getItem(key);
+          if (local != null) return local;
+        } catch (_) { /* blockerade kakor: minnet ar det vi har kvar */ }
+        return fromMemory;
+      },
       mode: () => mode,
       neutralState, onboardingState,
       beginProjection, isCurrent,
