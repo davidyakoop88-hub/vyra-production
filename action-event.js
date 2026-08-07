@@ -1,5 +1,9 @@
 (() => {
   const KEY='vyra-action-event-v2';
+  // Tokenlaget (?access=) skriver ingen nyckel — extras projiceras bara i minnet. En direkt
+  // localStorage-lasning ger darfor noll actions i en OBS browser source, och scenen spelar
+  // ingenting hur ratt lanken an ar. session-state.js ager bade minnet och localStorage.
+  const readExtra=key=>{try{return window.VyraSessionState?.readExtra?.(key)??localStorage.getItem(key)}catch{return null}};
   const actionRunChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('vyra-action-run'):null;
   const actionTypes=[['overlay','Visa overlay/widget'],['animation','Visa animation'],['picture','Visa bild/GIF'],['audio','Spela ljud'],['video','Spela video'],['alert','Visa alert'],['tts','Läs text (TTS)'],['chat','Skicka chatbotmeddelande'],['spotify','Spela Spotify'],['obsScene','Byt OBS-scen'],['obsSource','Aktivera OBS-källa'],['webhook','Anropa webhook'],['addPoints','Lägg till poäng'],['removePoints','Ta bort poäng']];
   const triggerNames={gift:'Gåva mottagen',giftCombo:'Gift-combo',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',level:'Level up',battle:'Battle-event',chat:'Chattkommando',join:'Går med i liven',firstActivity:'Första aktiviteten',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp'};
@@ -33,7 +37,7 @@
     }).filter(event=>event.actionId||event.allActionIds?.length||event.randomActionIds?.length);
     return{state:{...state,actions,events},changed:true};
   }
-  const read=()=>{try{const parsed=JSON.parse(localStorage.getItem(KEY)||'{"actions":[],"events":[]}');const cleaned=cleanupLegacyTestState(parsed);if(cleaned.changed)window.VyraSessionState.writeActive(KEY,JSON.stringify(cleaned.state));return cleaned.state}catch(e){console.warn('[VYRA] Ogiltig action-state',e);return{actions:[],events:[]}}};
+  const read=()=>{try{const parsed=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');const cleaned=cleanupLegacyTestState(parsed);if(cleaned.changed)window.VyraSessionState.writeActive(KEY,JSON.stringify(cleaned.state));return cleaned.state}catch(e){console.warn('[VYRA] Ogiltig action-state',e);return{actions:[],events:[]}}};
   const write=state=>window.VyraSessionState.writeActive(KEY,JSON.stringify(state));
   function formatActionName(action){
     const raw=String(action?.name||'').trim();

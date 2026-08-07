@@ -1,13 +1,34 @@
 (() => {
   const KEY = 'vyra-action-event-v2';
-  const getState = () => JSON.parse(localStorage.getItem(KEY) || '{"actions":[],"events":[]}');
-  const sceneUrl = number => `${location.origin}${location.pathname}?overlay=1&scene=${number}`;
+  const readExtra = key => {
+    try { return window.VyraSessionState?.readExtra?.(key) ?? localStorage.getItem(key) }
+    catch { return null }
+  };
+  const getState = () => JSON.parse(readExtra(KEY) || '{"actions":[],"events":[]}');
+  // Scenlanken byggdes tidigare ur `location` och bar darfor ingen access-token. Den fungerade i
+  // David egen inloggade webblasare och gav inloggningssidan i OBS, som varken har session eller
+  // kakor. Den enda giltiga basen ar overlayns egen token-lank — samma kalla som overlaylankraden
+  // i media.js (overlayShareBase). Serverns raa token returneras bara en gang, vid skapandet, sa
+  // finns den inte i sessionStorage finns det ingen lank att visa: da ar ratt svar att skicka
+  // streamern till tokenhanteraren, inte att rendera en lank som ser giltig ut men inte ar det.
+  const sceneUrl = number => {
+    const base = sessionStorage.getItem('vyra-overlay-access-url');
+    if (!base) return '';
+    try {
+      const url = new URL(base, location.href);
+      if (!url.searchParams.get('access')) return '';
+      url.searchParams.set('scene', String(number));
+      return url.href;
+    } catch { return '' }
+  };
   // Per-scene max queue length — read by action-runtime.js's execute() to drop new actions once
   // a scene's queue is already full, instead of letting e.g. a gift storm queue up dozens of
   // alerts that keep playing long after the storm ends. 0/empty = unlimited (today's behavior).
   const SETTINGS_KEY = 'vyra-scene-settings-v1';
-  const getSceneSettings = () => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') } catch { return {} } };
-  const setSceneMaxQueue = (number, value) => { const s = getSceneSettings(); s[number] = { ...(s[number] || {}), maxQueue: Math.max(0, Number(value) || 0) }; localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) };
+  const getSceneSettings = () => { try { return JSON.parse(readExtra(SETTINGS_KEY) || '{}') } catch { return {} } };
+  // Nyckeln ar numera en EXTRA-nyckel (den foljer med ut i OBS), och da ager session-state.js
+  // skrivningen — annars gar den forbi laset, markoren och generationsvakten.
+  const setSceneMaxQueue = (number, value) => { const s = getSceneSettings(); s[number] = { ...(s[number] || {}), maxQueue: Math.max(0, Number(value) || 0) }; window.VyraSessionState.writeActive(SETTINGS_KEY, JSON.stringify(s)).catch(() => window.toast?.('Kunde inte spara koinstallningen')) };
 
   function addSceneSettings() {
     const modal = document.querySelector('.ae-modal');
@@ -37,7 +58,14 @@
     const section = document.createElement('section');
     section.className = 'ae-scenes-overview';
     const sceneSettings = getSceneSettings();
-    section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,url=sceneUrl(n),maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><input readonly value="${url}"><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button></article>`}).join('')}</div>`;
+    const link = n => {
+      const url = sceneUrl(n);
+      // Ingen token = ingen lank. Ett tomt falt dar det brukar sta en URL later som ett fel i
+      // appen; texten sager i stallet vad som faktiskt saknas och knappen gar dit man loser det.
+      if (!url) return `<small class="ae-scene-needs-token">Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.</small><button type="button" data-create-scene-link>Skapa säker OBS-länk</button>`;
+      return `<input readonly value="${url}"><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button>`;
+    };
+    section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;
     steps.after(section);
     updateSceneStatuses();
     section.querySelectorAll('[data-scene-max-queue]').forEach(input => input.onchange = () => setSceneMaxQueue(input.dataset.sceneMaxQueue, input.value));
@@ -63,15 +91,31 @@
     if (event.target.closest('[data-extra=actions]')) setTimeout(renderScenes,120);
     const show = event.target.closest('[data-show-scene]');
     if (show) document.querySelector(`[data-scene-link="${show.dataset.showScene}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});
+    // Samma vag som overlaylankraden i media.js tar nar token saknas: oppna tokenhanteraren
+    // (.oa-open ar overlay-access.js dolda knapp) i stallet for att lamna streamern utan nasta steg.
+    if (event.target.closest('[data-create-scene-link]')) {
+      document.querySelector('.oa-open')?.click();
+      window.toast?.('Skapa en säker OBS-länk först — sedan får varje scen sin länk');
+    }
     const copy = event.target.closest('[data-copy-scene]');
     if (copy) {
       const url=sceneUrl(copy.dataset.copyScene);
+      if (!url) { document.querySelector('.oa-open')?.click(); window.toast?.('Skapa en säker OBS-länk först'); return }
       try { await navigator.clipboard.writeText(url); window.toast?.(`Länk för Scen ${copy.dataset.copyScene} kopierad`); }
-      catch { const input=document.querySelector(`[data-scene-link="${copy.dataset.copyScene}"] input`);input.select();document.execCommand('copy');window.toast?.('Scenlänken kopierad'); }
+      // input[readonly] specifikt: artikelns forsta <input> ar numera Max ko-faltet, sa en
+      // otypad selektor har skulle kopiera kolangden i stallet for lanken.
+      catch { const input=document.querySelector(`[data-scene-link="${copy.dataset.copyScene}"] input[readonly]`);input.select();document.execCommand('copy');window.toast?.('Scenlänken kopierad'); }
     }
     const open = event.target.closest('[data-open-scene]');
-    if (open) window.open(sceneUrl(open.dataset.openScene),'_blank','noopener');
+    if (open) { const url=sceneUrl(open.dataset.openScene); if (url) window.open(url,'_blank','noopener') }
   }, true);
+
+  // Skapas en token medan Actions-sidan ar oppen ligger scenpanelen kvar i sitt tomma lage tills
+  // nagot annat rebuildar den. Samma handelse som overlaylankraden lyssnar pa (media.js).
+  addEventListener('vyra-overlay-access-created', () => {
+    document.querySelector('.ae-scenes-overview')?.remove();
+    renderScenes();
+  });
 
   const params = new URLSearchParams(location.search);
   if (params.has('overlay') && params.has('scene')) {

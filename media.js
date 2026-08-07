@@ -743,7 +743,7 @@ function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sou
 function ensureHomePremiumBundle(){return vyraLoadBundle('home-premium',['overview-premium.css','overview-premium.js']).then(()=>refreshIfVisible(()=>view==='home')).catch(err=>console.warn('[VYRA] home premium bundle misslyckades',err))}
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['gift-fireworks.js?v=20260806-trigger','action-event.js?v=20260731-1','action-media.js?v=1','action-scenes.js?v=20260731-1','action-options.js?v=1','action-event-advanced.js?v=20260731-1','action-runtime.js?v=20260731-1'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['gift-fireworks.js?v=20260806-trigger','action-event.js?v=20260807-scene','action-media.js?v=1','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260807-scene','action-runtime.js?v=20260807-scene'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=7';document.head.append(css);let js=document.createElement('script');js.src='profile-frames-premium.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260731-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=1';document.body.append(js)});
@@ -768,7 +768,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
    .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
    Samma par-monster som grannarna ovan anvander. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=20260807-scene';document.body.append(js)});
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
