@@ -8,9 +8,18 @@
   // fixed-color asset. Scoped to the default theme per widget for Top Gift/Top Streak (which have
   // theme variants) — every other theme renders exactly as before, unchanged.
 
-  const crownBadge = `<svg class="gaf-crown-badge" viewBox="0 0 48 40" style="position:absolute;left:50%;top:-27px;transform:translateX(-50%);width:30px;height:25px;z-index:5;filter:drop-shadow(0 0 6px var(--accent))"><path d="M4 34 L2 14 L14 22 L24 6 L34 22 L46 14 L44 34 Z" fill="var(--accent)"/><circle cx="24" cy="6" r="4" fill="var(--accent)"/><rect x="4" y="34" width="40" height="4" rx="1.5" fill="var(--accent)"/></svg>`;
-
-  const royalFrame = `<svg class="gaf-royal-frame" viewBox="0 0 200 140" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1"><rect x="4" y="4" width="192" height="132" rx="10" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity="0.85"/><rect x="9" y="9" width="182" height="122" rx="7" fill="none" stroke="var(--accent)" stroke-width="0.75" opacity="0.5"/><path d="M4 18 Q4 4 18 4" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M196 18 Q196 4 182 4" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M4 122 Q4 136 18 136" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M196 122 Q196 136 182 136" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="11" cy="11" r="2.5" fill="var(--accent)"/><circle cx="189" cy="11" r="2.5" fill="var(--accent)"/><circle cx="11" cy="129" r="2.5" fill="var(--accent)"/><circle cx="189" cy="129" r="2.5" fill="var(--accent)"/></svg>`;
+  // Har lag tidigare royalFrame och crownBadge — en SVG-rektangel med hornprickar som ritades over
+  // hela widgetytan (position:absolute, inset:0) och en krona pa top:-27px, alltsa utanfor ladan.
+  //
+  // Bada togs bort 2026-08-07: widgetar ska rendera fritt over videon i OBS, utan foder runt
+  // innehallet. html.overlay-output .widget i studio.css tar redan bort CSS-ramen, bakgrunden och
+  // skuggan pa wrappern — men de har tva var markup, inte stil, sa den regeln nadde dem aldrig.
+  // Uppmatt i webblasaren fore borttagningen: ramen 280x260px over hela widgeten, kronan pa
+  // top:-27px med z-index 5.
+  //
+  // Ovrig chrome i den har filen sitter INUTI innehallet (flamman i streak-siffran, ljuskaglan
+  // bakom follower-avataren, stjarnan bakom fan-hjartat, ringen runt gifter-avataren) och ar darfor
+  // kvar — det ar dekor pa innehallet, inte en ram runt widgeten.
 
   const flameBadge = `<svg class="gaf-flame-badge" viewBox="0 0 40 48" style="width:100%;height:100%"><path d="M20 46C10 46 4 38 4 29C4 20 10 14 12 6C13 10 17 12 17 17C17 12 22 8 21 2C28 8 32 16 32 26C32 22 35 20 36 17C37 22 36 27 36 29C36 38 30 46 20 46Z" fill="var(--streak)" opacity="0.9"/><path d="M20 40C15 40 12 35 12 30C12 26 15 23 16 19C17 22 19 23 19 26C19 23 22 21 21 17C25 21 27 26 27 30C27 35 25 40 20 40Z" fill="#fff" opacity="0.55"/></svg>`;
 
@@ -42,11 +51,6 @@
   wh = function (w) {
     let html = gafWh(w);
 
-    if (w.type === 'templateTopGift' && (w.theme || 'royal') === 'royal') {
-      html = html.replace('<div class="vyra-gift-title"', royalFrame + '<div class="vyra-gift-title"');
-      html = html.replace('<div class="vyra-flip"', crownBadge + '<div class="vyra-flip"');
-    }
-
     if (w.type === 'templateTopStreak' && (w.streakTheme || 'inferno') === 'inferno') {
       html = html.replace(/(<i style="[^"]*">)🔥(<\/i>)/, `$1${flameBadge}$2`);
     }
@@ -73,12 +77,11 @@
     return html;
   };
 
-  // Suppresses the old CSS-generated crown character (`:before{content:"♛"}`) for Top Gift's royal
-  // theme now that a real SVG crown badge replaces it — kept in its own small stylesheet rather than
-  // touching studio.css directly.
-  const style = document.createElement('style');
-  style.textContent = '.vyra-topgift.theme-royal .vyra-flip:before{content:none!important}';
-  document.head.append(style);
+  // Har lag en style-tagg som skulle slacka den CSS-genererade kronan (`:before{content:"♛"}`) nar
+  // SVG-kronan ersatte den. Den var scopad till `.vyra-topgift.theme-royal` — en klass som ingen
+  // widget far: renderaren satter `topgift-royal`. Regeln matchade alltsa aldrig nagonting, och
+  // teckenkronan ritades hela tiden dold bakom SVG-kronan pa nastan samma position (-25px mot
+  // -27px). Bada ar nu borttagna vid kallan (regeln i studio.css), sa dampningen behovs inte.
 
   if (new URLSearchParams(location.search).has('overlay') && typeof render === 'function') render();
 })();
