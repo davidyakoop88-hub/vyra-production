@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `09d6760`
+Commit: `5a9a0a9`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -35,23 +35,23 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
-| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| FOLLOWERS & LIKE GOALS · VARJE DESIGN SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| FAN LEVEL UP · VARJE TEMA SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| VYRA TOP RANKING · VARJE DESIGN SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| TOP LIKE · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| VYRA TOP STREAK · PREMIUM | 7 | 7/7 | 7/7 | 7/7 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| TOP GIFTER · DESIGNVAL | 36 | 36/36 | 36/36 | 36/36 | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| FOLLOWERS & LIKE GOALS · VARJE DESIGN SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| FAN LEVEL UP · VARJE TEMA SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| VYRA TOP RANKING · VARJE DESIGN SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| TOP LIKE · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| VYRA TOP STREAK · PREMIUM | 7 | 7/7 | 7/7 | 7/7 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| TOP GIFTER · DESIGNVAL | 36 | 36/36 | 36/36 | 36/36 | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ## Varje kort
 
@@ -59,238 +59,238 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Text | `catalog:custom:text` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Video | `catalog:custom:video` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Text | `catalog:custom:text` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Video | `catalog:custom:video` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Last-X · Card | `catalog:lastx:card` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Last-X · Stack | `catalog:lastx:stack` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Last-X · Card | `catalog:lastx:card` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Last-X · Stack | `catalog:lastx:stack` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### GIFT FIREWORKS
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fireworks · Magnetic Return | `catalog:giftfireworks:magnetic` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fireworks · Spiral Recall | `catalog:giftfireworks:spiral` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fireworks · Crystal Bloom | `catalog:giftfireworks:bloom` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Fireworks · Magnetic Return | `catalog:giftfireworks:magnetic` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fireworks · Spiral Recall | `catalog:giftfireworks:spiral` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fireworks · Crystal Bloom | `catalog:giftfireworks:bloom` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### GIFT CAMPAIGN · VARJE TEMA SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Neon Event | `catalog:giftcampaign:neon:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Neon Event | `catalog:giftcampaign:neon:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Gold | `catalog:giftcampaign:royal:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Gold | `catalog:giftcampaign:royal:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Glass | `catalog:giftcampaign:glass:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Glass | `catalog:giftcampaign:glass:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Minimal | `catalog:giftcampaign:minimal:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Minimal | `catalog:giftcampaign:minimal:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Aurora | `catalog:giftcampaign:aurora:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Aurora | `catalog:giftcampaign:aurora:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Retro Arcade | `catalog:giftcampaign:retro:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Retro Arcade | `catalog:giftcampaign:retro:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gold Rush | `catalog:giftcampaign:goldrush:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gold Rush | `catalog:giftcampaign:goldrush:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Neon Event | `catalog:giftcampaign:neon:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Neon Event | `catalog:giftcampaign:neon:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Gold | `catalog:giftcampaign:royal:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Gold | `catalog:giftcampaign:royal:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Glass | `catalog:giftcampaign:glass:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Glass | `catalog:giftcampaign:glass:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Minimal | `catalog:giftcampaign:minimal:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Minimal | `catalog:giftcampaign:minimal:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Aurora | `catalog:giftcampaign:aurora:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Aurora | `catalog:giftcampaign:aurora:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Retro Arcade | `catalog:giftcampaign:retro:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Retro Arcade | `catalog:giftcampaign:retro:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gold Rush | `catalog:giftcampaign:goldrush:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gold Rush | `catalog:giftcampaign:goldrush:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Crystal Garden | `catalog:giftcampaign:crystal-garden:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Crystal Garden | `catalog:giftcampaign:crystal-garden:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### LIKE FOUNTAIN
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### BATTLE MVP · 17 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Ice | `catalog:battlemvp:ice` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Purple | `catalog:battlemvp:royal-purple` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Neon Cyber | `catalog:battlemvp:neon-cyber` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Diamond Elite | `catalog:battlemvp:diamond-elite` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gold Crown | `catalog:battlemvp:frame:gold-crown` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Ice | `catalog:battlemvp:ice` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Purple | `catalog:battlemvp:royal-purple` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Neon Cyber | `catalog:battlemvp:neon-cyber` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Diamond Elite | `catalog:battlemvp:diamond-elite` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gold Crown | `catalog:battlemvp:frame:gold-crown` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### Koi Pearl Lagoon · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### Masquerade Ball · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### NEW FOLLOWER ALERT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Follower Spotlight | `catalog:followeralert` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Follower Spotlight | `catalog:followeralert` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### FOLLOWERS & LIKE GOALS · VARJE DESIGN SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Follower Goal · Gradient Bar | `catalog:socialgoal:followers:1:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Gradient Bar | `catalog:socialgoal:followers:1:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Neon Capsule | `catalog:socialgoal:followers:2:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Neon Capsule | `catalog:socialgoal:followers:2:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Minimal Glow | `catalog:socialgoal:followers:3:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Minimal Glow | `catalog:socialgoal:followers:3:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Circular Ring | `catalog:socialgoal:followers:4:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Follower Goal · Circular Ring | `catalog:socialgoal:followers:4:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Gradient Bar | `catalog:socialgoal:likes:1:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Gradient Bar | `catalog:socialgoal:likes:1:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Neon Capsule | `catalog:socialgoal:likes:2:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Neon Capsule | `catalog:socialgoal:likes:2:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Minimal Glow | `catalog:socialgoal:likes:3:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Minimal Glow | `catalog:socialgoal:likes:3:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Circular Ring | `catalog:socialgoal:likes:4:landscape` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Like Goal · Circular Ring | `catalog:socialgoal:likes:4:portrait` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Follower Goal · Gradient Bar | `catalog:socialgoal:followers:1:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Gradient Bar | `catalog:socialgoal:followers:1:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Neon Capsule | `catalog:socialgoal:followers:2:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Neon Capsule | `catalog:socialgoal:followers:2:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Minimal Glow | `catalog:socialgoal:followers:3:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Minimal Glow | `catalog:socialgoal:followers:3:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Circular Ring | `catalog:socialgoal:followers:4:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Follower Goal · Circular Ring | `catalog:socialgoal:followers:4:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Gradient Bar | `catalog:socialgoal:likes:1:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Gradient Bar | `catalog:socialgoal:likes:1:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Neon Capsule | `catalog:socialgoal:likes:2:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Neon Capsule | `catalog:socialgoal:likes:2:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Minimal Glow | `catalog:socialgoal:likes:3:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Minimal Glow | `catalog:socialgoal:likes:3:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Circular Ring | `catalog:socialgoal:likes:4:landscape` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Like Goal · Circular Ring | `catalog:socialgoal:likes:4:portrait` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### GIFTER LEVEL UP · VARJE MODELL SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Modell 1 · Profil i orbit | `catalog:gifterlevel:profile` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 2 · Stort nivånummer | `catalog:gifterlevel:number` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 3 · Diamantstapel | `catalog:gifterlevel:stack` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 4 · Sidobadge | `catalog:gifterlevel:sidebadge` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 5 · Diamantreveal | `catalog:gifterlevel:reveal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 6 · Orbitnivå | `catalog:gifterlevel:orbitlevel` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 7 · Stigande nivåer | `catalog:gifterlevel:risingtier` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Modell 1 · Profil i orbit | `catalog:gifterlevel:profile` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 2 · Stort nivånummer | `catalog:gifterlevel:number` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 3 · Diamantstapel | `catalog:gifterlevel:stack` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 4 · Sidobadge | `catalog:gifterlevel:sidebadge` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 5 · Diamantreveal | `catalog:gifterlevel:reveal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 6 · Orbitnivå | `catalog:gifterlevel:orbitlevel` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 7 · Stigande nivåer | `catalog:gifterlevel:risingtier` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### FAN LEVEL UP · VARJE TEMA SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fan Level Up · Gold | `catalog:fanlevel:gold` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Neon | `catalog:fanlevel:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Ice | `catalog:fanlevel:ice` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Emerald | `catalog:fanlevel:emerald` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Fire | `catalog:fanlevel:fire` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Sakura | `catalog:fanlevel:sakura` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Storm | `catalog:fanlevel:storm` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Fan Level Up · Royal | `catalog:fanlevel:royal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Fan Level Up · Gold | `catalog:fanlevel:gold` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Neon | `catalog:fanlevel:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Ice | `catalog:fanlevel:ice` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Emerald | `catalog:fanlevel:emerald` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Fire | `catalog:fanlevel:fire` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Sakura | `catalog:fanlevel:sakura` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Storm | `catalog:fanlevel:storm` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Fan Level Up · Royal | `catalog:fanlevel:royal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### HEART ME GOAL · VARJE TEMA SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Heart Me Goal · Classic | `catalog:heartgoal:classic` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Dark | `catalog:heartgoal:dark` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Emerald | `catalog:heartgoal:emerald` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Galaxy | `catalog:heartgoal:galaxy` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Golden | `catalog:heartgoal:golden` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Ice | `catalog:heartgoal:ice` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Neon | `catalog:heartgoal:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Ocean | `catalog:heartgoal:ocean` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Sakura | `catalog:heartgoal:sakura` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Frost | `catalog:heartgoal:frost` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Midnight | `catalog:heartgoal:midnight` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Heart Me Goal · Citrus | `catalog:heartgoal:citrus` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Heart Me Goal · Classic | `catalog:heartgoal:classic` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Dark | `catalog:heartgoal:dark` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Emerald | `catalog:heartgoal:emerald` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Galaxy | `catalog:heartgoal:galaxy` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Golden | `catalog:heartgoal:golden` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Ice | `catalog:heartgoal:ice` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Neon | `catalog:heartgoal:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Ocean | `catalog:heartgoal:ocean` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Sakura | `catalog:heartgoal:sakura` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Frost | `catalog:heartgoal:frost` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Midnight | `catalog:heartgoal:midnight` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Heart Me Goal · Citrus | `catalog:heartgoal:citrus` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### VYRA TOP RANKING · VARJE DESIGN SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Coins · Stil 1 · Lista | `catalog:ranking:templateTopCoins:clean` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Coins · Stil 2 · Tre i mitten | `catalog:ranking:templateTopCoins:center` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Coins · Stil 3 · Podium | `catalog:ranking:templateTopCoins:podium` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Coins · Stil 4 · Neon | `catalog:ranking:templateTopCoins:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Top Coins · Stil 1 · Lista | `catalog:ranking:templateTopCoins:clean` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Coins · Stil 2 · Tre i mitten | `catalog:ranking:templateTopCoins:center` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Coins · Stil 3 · Podium | `catalog:ranking:templateTopCoins:podium` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Coins · Stil 4 · Neon | `catalog:ranking:templateTopCoins:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### TOP LIKE · VARJE DESIGN SEPARAT
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Stil 1 · Lista | `catalog:toplike:clean` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Stil 2 · Tre i mitten | `catalog:toplike:center` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Stil 3 · Podium | `catalog:toplike:podium` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Stil 4 · Neon | `catalog:toplike:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Stil 1 · Lista | `catalog:toplike:clean` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Stil 2 · Tre i mitten | `catalog:toplike:center` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Stil 3 · Podium | `catalog:toplike:podium` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Stil 4 · Neon | `catalog:toplike:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### VYRA TOP STREAK · PREMIUM
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Liquid Gold Fuse | `catalog:topstreak:premium:liquid` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Momentum Steps | `catalog:topstreak:premium:momentum` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Momentum Tier | `catalog:topstreak:premium:tier` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Silk Golden Thread | `catalog:topstreak:premium:thread` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Chronograph Timeline | `catalog:topstreak:premium:chrono` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Liquid Gold Fuse | `catalog:topstreak:premium:liquid` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Momentum Steps | `catalog:topstreak:premium:momentum` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Momentum Tier | `catalog:topstreak:premium:tier` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Silk Golden Thread | `catalog:topstreak:premium:thread` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Chronograph Timeline | `catalog:topstreak:premium:chrono` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
 ### TOP GIFTER · DESIGNVAL
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Glass | `catalog:topgift:premium:glass` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Sakura Pink | `catalog:topgift:premium:sakura` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Inferno Fire | `catalog:topgift:premium:fire` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Ice Crystal | `catalog:topgift:premium:ice` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Galaxy | `catalog:topgift:premium:galaxy` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Aurora | `catalog:topgift:premium:aurora` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Retro | `catalog:topgift:premium:retro` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gold Rush | `catalog:topgift:premium:goldrush` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| VYRA Hall of Fame | `catalog:topgift:premium:hall` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Throne | `catalog:topgift:premium:throne` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Celestial Champion | `catalog:topgift:premium:champion` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Diamond Pedestal | `catalog:topgift:premium:pedestal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Celestial Arch | `catalog:topgift:premium:arch` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Phoenix Ribbon | `catalog:topgift:premium:phoenix` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Neon Signal | `catalog:topgift:premium:signal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Celestial Fireworks | `catalog:topgift:premium:fireworks` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Royal Wings | `catalog:topgift:frame:royal-wings` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Crystal Spire | `catalog:topgift:frame:crystal-spire` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Angel Heart | `catalog:topgift:frame:angel-heart` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Dark Raven | `catalog:topgift:frame:dark-raven` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Frost Crystal | `catalog:topgift:frame:frost-crystal` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Rose Garden | `catalog:topgift:frame:rose-garden` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
-| Gifter · Luna Mist | `catalog:topgift:frame:luna-mist` | ✓ | ✓ | 2026-08-07 | [#117](https://github.com/davidyakoop88-hub/vyra-production/pull/117) |
+| Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Glass | `catalog:topgift:premium:glass` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Sakura Pink | `catalog:topgift:premium:sakura` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Inferno Fire | `catalog:topgift:premium:fire` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Ice Crystal | `catalog:topgift:premium:ice` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Galaxy | `catalog:topgift:premium:galaxy` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Aurora | `catalog:topgift:premium:aurora` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Retro | `catalog:topgift:premium:retro` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gold Rush | `catalog:topgift:premium:goldrush` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| VYRA Hall of Fame | `catalog:topgift:premium:hall` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Throne | `catalog:topgift:premium:throne` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Celestial Champion | `catalog:topgift:premium:champion` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Diamond Pedestal | `catalog:topgift:premium:pedestal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Celestial Arch | `catalog:topgift:premium:arch` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Phoenix Ribbon | `catalog:topgift:premium:phoenix` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Neon Signal | `catalog:topgift:premium:signal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Celestial Fireworks | `catalog:topgift:premium:fireworks` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Royal Wings | `catalog:topgift:frame:royal-wings` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Crystal Spire | `catalog:topgift:frame:crystal-spire` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Angel Heart | `catalog:topgift:frame:angel-heart` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Dark Raven | `catalog:topgift:frame:dark-raven` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Frost Crystal | `catalog:topgift:frame:frost-crystal` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Rose Garden | `catalog:topgift:frame:rose-garden` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
+| Gifter · Luna Mist | `catalog:topgift:frame:luna-mist` | ✓ | ✓ | 2026-08-07 | [#116](https://github.com/davidyakoop88-hub/vyra-production/pull/116) |
 
