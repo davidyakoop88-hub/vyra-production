@@ -58,8 +58,40 @@ function startLocalServer(root, port = 4173, options = {}) {
   const connection = { connected: false, username: '', mode: 'live', state: 'idle', roomId: '', heartbeat: 0, reconnectAttempt: 0, updated: Date.now() };
   const seenEvents = new Map();
   const requestBuckets = new Map();
-  const backupDir = path.join(root, '.vyra-backups');
+  // `root` ar installationskatalogen och agar ENBART statiska filer. Allt som skrivs gar till
+  // dataDir, som huvudprocessen satter till app.getPath('userData').
+  //
+  // Varfor: i en paketerad app ar root = C:\Program Files\VYRA\resources\app, dar en vanlig
+  // anvandare bara har ReadAndExecute. Att spara layouten dar kastar EACCES for alla — utom for
+  // den som kor med avstangd UAC, dar den tyst lyckas. Buggen var darfor osynlig pa precis den
+  // maskin dar den upptacktes, och versionerade backuper hade aldrig sparats en enda gang.
+  //
+  // Fallback till root nar dataDir utelamnas: befintliga anropare (och testerna) fortsatter
+  // fungera oforandrat. Det ar ett bakatkompatibelt tillagg, inte ett nytt kontrakt.
+  const dataDir = options.dataDir || root;
+  const backupDir = path.join(dataDir, '.vyra-backups');
+  const stateFile = path.join(dataDir, 'vyra-state-backup.json');
+  // En ren installation har ingen dataDir an, och writeAtomic skriver sin .tmp i samma katalog —
+  // utan den har raden faller forsta sparningen pa ENOENT i stallet for att skapa katalogen.
+  try { fs.mkdirSync(dataDir, { recursive: true }) } catch (_) { /* fangas nar skrivningen sker */ }
   function writeAtomic(file, raw) { const tmp = file + '.tmp'; fs.writeFileSync(tmp, raw, 'utf8'); fs.renameSync(tmp, file); }
+
+  // Engangsflytt av en backup som skrevs pa den gamla platsen. Kors vid start, tyst och idempotent.
+  //
+  // Tre forsiktighetsatgarder: en befintlig fil i dataDir ar alltid nyare och rors aldrig;
+  // originalet raderas BAST-EFFORT eftersom kallan ligger i en skrivskyddad katalog pa varje
+  // maskin med UAC pa — en misslyckad radering far inte hindra att layouten raddades; och hela
+  // migreringen ar innesluten sa en trasig gammal fil aldrig kan stoppa serverstarten.
+  function migrateLegacyState() {
+    if (path.resolve(dataDir) === path.resolve(root)) return;
+    const legacy = path.join(root, 'vyra-state-backup.json');
+    try {
+      if (!fs.existsSync(legacy) || fs.existsSync(stateFile)) return;
+      writeAtomic(stateFile, fs.readFileSync(legacy, 'utf8'));
+      try { fs.unlinkSync(legacy) } catch (_) { /* skrivskyddad installationskatalog */ }
+    } catch (_) { /* ingen migrering ar battre an ingen serverstart */ }
+  }
+  migrateLegacyState();
   function versionFiles() { if (!fs.existsSync(backupDir)) return []; return fs.readdirSync(backupDir).filter(n => /^state-\d+\.json$/.test(n)).sort().reverse(); }
 
   function sendJson(res, obj, status = 200) {
@@ -190,7 +222,7 @@ function startLocalServer(root, port = 4173, options = {}) {
         }
       }
       if (p === '/api/state' && req.method === 'GET') {
-        const backupFile = path.join(root, 'vyra-state-backup.json');
+        const backupFile = stateFile;
         if (fs.existsSync(backupFile)) {
           const body = fs.readFileSync(backupFile);
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Content-Length': body.length });
@@ -200,7 +232,10 @@ function startLocalServer(root, port = 4173, options = {}) {
       }
       if (p === '/api/state' && req.method === 'POST') {
         const raw = await readBody(req, 5 * 1024 * 1024);
-        if (raw) { JSON.parse(raw); writeAtomic(path.join(root, 'vyra-state-backup.json'), raw); }
+        // Tom kropp skrev tidigare ingenting men svarade anda ok:true — den enda vagen dar servern
+        // pastod att layouten var sparad utan att den var det.
+        if (!raw) return sendJson(res, { ok: false, error: 'Tom kropp — ingenting sparades' }, 400);
+        JSON.parse(raw); writeAtomic(stateFile, raw);
         return sendJson(res, { ok: true });
       }
       if (p === '/api/state/versions' && req.method === 'GET') {

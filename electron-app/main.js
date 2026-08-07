@@ -195,7 +195,9 @@ app.whenReady().then(async () => {
       obsService: createObsService({ log }),
       cloudOrigin: CLOUD_ORIGIN,
       // Lases vid varje proxat anrop, inte en gang vid start: servern startar fore inloggningen.
-      cloudSession: () => cloudSessionCookie
+      cloudSession: () => cloudSessionCookie,
+      // Anvandardata hor hemma i userData, aldrig i installationskatalogen. Se local-server.js.
+      dataDir: app.getPath('userData')
     });
     log('local server listening on', PORT, 'root =', appRoot());
   } catch (err) {
