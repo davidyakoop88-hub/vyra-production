@@ -253,8 +253,20 @@ jobs:
   # Kor bara pa push till main, inte pa pull requests: en PR-gren ska inte fa en commit tillbaka i
   # ansiktet mitt under granskning. Pushar gjorda med GITHUB_TOKEN startar inga nya workflows, sa
   # jobbet kan inte trigga sig sjalvt.
+  #
+  # EN KORNING AT GANGEN. Jobbet committar tillbaka till main, sa tva samtidiga korningar tavlar om
+  # samma ref: den som pushar sist far `! [rejected] (fetch first)` och hela korningen blir rod.
+  # Det hande 2026-08-07 nar #137 och #138 mergades med 14 sekunders mellanrum — kartan blev korrekt
+  # anda, men main sag trasig ut. Och eftersom jobbet bara kor pa push till main kan ingen PR fanga
+  # det i forvag.
+  #
+  # cancel-in-progress: den aldre korningen har per definition en aldre karta. Att avbryta den ar
+  # inte en forlust — det ar att slippa rakna fram nagot som anda skulle skrivas over.
   katalogkarta:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: katalogkarta
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -283,4 +295,23 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add docs/katalogkarta.md
           git commit -m 'Uppdatera sanningens karta [skip ci]'
-          git push
+
+          # Concurrency-gruppen ovan tar de flesta krockarna, men inte alla: avbrytningen kan komma
+          # nar den aldre korningen redan star mellan `git commit` och `git push`. Da ar en avvisad
+          # push inget FEL — den betyder att en nyare korning redan agt kartan, vilket ar exakt det
+          # utfall vi vill ha. Att fella pa det hade gjort ratt beteende till en rod main.
+          #
+          # Men bara DA. En avvisad push av nagon annan orsak (borttagen behorighet, skyddad gren)
+          # maste fortfarande falla, annars tystnar jobbet den dag det slutar fungera pa riktigt.
+          # Skillnaden ar matbar: HEAD~1 ar den commit vi checkade ut. Star origin/main kvar dar ar
+          # det ingen kapplopning och felet ar akta.
+          if git push; then
+            exit 0
+          fi
+          git fetch origin main
+          if [ "$(git rev-parse HEAD~1)" != "$(git rev-parse origin/main)" ]; then
+            echo 'main har flyttat sedan checkouten — en nyare korning ager kartan. Star ner.'
+            exit 0
+          fi
+          echo 'push avvisad utan att main flyttat — detta ar inte en kapplopning'
+          exit 1
