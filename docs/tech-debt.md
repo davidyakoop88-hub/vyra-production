@@ -8,7 +8,7 @@ Filen ersätter `docs/live-readiness-matrix.md` (PR #54, stängd 2026-08-06). De
 rader höll på att pensionera en fungerande widgetfamilj. Det här är i stället bara de påståenden som
 fortfarande stämmer, och som ingen annanstans är nedskrivna.
 
-Senast verifierad mot `main`: **2026-08-06**.
+Senast verifierad mot `main`: **2026-08-08**.
 
 ---
 
@@ -59,6 +59,43 @@ Level Up patchar i stället DOM riktat och rör aldrig widgetobjektet.
 
 Fixen fanns påbörjad i PR #53, som stängdes för att grenen var för gammal för att merga
 (den byggde på en kodbas där `allCampaignGiftChoices` fortfarande fanns).
+
+## 4. widget-defaults-migration-provet beror på en lokal baseline-gren
+
+`tests/widget-defaults-migration.test.js` letar efter en gammal `media.js` med de
+inline-katalogliteraler som fanns före widget-fabriken. Den söker i denna ordning:
+
+```js
+for (const rev of ['feature/event-deduplication:media.js', 'origin/main:media.js', 'main:media.js'])
+```
+
+Första posten är en **lokal grenreferens**. Efter Steg 0.5 (2026-08-08) raderades den grenen —
+den var mergad och övergiven. Provet hoppar nu över hos utvecklare som städar sina lokala grenar.
+Fjärrgrenen finns kvar på origin, så fixen är att låta provet peka på
+`origin/feature/event-deduplication:media.js` i stället.
+
+Uppmätt 2026-08-08 — bara den ena refen bär literalerna:
+
+```
+JA   origin/feature/event-deduplication:media.js
+nej  origin/main:media.js
+nej  main:media.js
+```
+
+Provet är redan byggt för att hoppa över graceful — se raderna 2 och 9–10 i filen, som förklarar
+att detta är "local migration proof, not part of the permanent contract" och att CI:s grunda
+checkout alltid skippar det. Ingenting i CI påverkas. Det är en utvecklarbekvämlighet, inte ett
+kontraktsbrott.
+
+**Bevisa så här:**
+
+```bash
+node --test tests/widget-defaults-migration.test.js
+```
+
+Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om — eller efter lokal
+återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
+kör alla prov.
 
 ---
 
