@@ -53,7 +53,18 @@ function bidragFranEvent(event, nu = new Date()) {
   // `coins` bar redan hela combons varde (coinsEach x repeatCount i normalizer.js) — att
   // multiplicera med count igen hade kvadrerat varje combo.
   const gifts = arGava ? heltal(data.count) : 0;
-  const diamonds = arGava ? heltal(data.coins) : 0;
+  // `coins` ELLER `value` — de tva vagarna doper faltet olika.
+  //
+  //   desktop (electron-app/tiktok-service.js)      coins
+  //   molnbryggan (tiktok-bridge/normalizer.js)     value: number(fields.coins ?? points ?? score)
+  //
+  // Uppmatt under en riktig sandning 2026-08-08: gifts=1 men diamonds=0, for att bara `coins`
+  // lastes. Varje gava som kom via molnet sparades utan sitt varde — och felet ar permanent, en
+  // summa som skrivits som noll gar inte att rakna om i efterhand.
+  //
+  // BARA FOR GAVOR. `value` bar coins ?? points ?? score i cloudEvent, sa en like skulle annars
+  // bidra med TikToks rumstotal som diamanter.
+  const diamonds = arGava ? heltal(data.coins ?? data.value) : 0;
   // `points` ar TikToks lopande rumstotal. Den visas rakt av pa ett kort, men att ADDERA den en
   // gang per event multiplicerar summan med antalet event. Bara `count` far ackumuleras.
   const likes = arLike ? heltal(data.count) : 0;
