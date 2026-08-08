@@ -93,8 +93,19 @@ function flows(){return `<div class="flow-head"><h2>Automationer</h2><button cla
 function events(){return `<article class="card" style="padding:20px"><h2>Eventhistorik</h2><p>Händelser visas här när TikTok LIVE är anslutet.</p></article>`}
 function analytics(){return `<div class="analytics-grid"><article class="card big-chart"><h2>Tillväxt senaste 30 dagarna</h2><p>Analys visas efter din första riktiga livesändning.</p></article><article class="card rank"><h2>Top supporters</h2><p>Ingen livedata ännu.</p></article></div>`}
 function settings(){return `<article class="card settings-page"><h2>Kontoinställningar</h2><label>Visningsnamn<input id="dn" value="${state.user}"></label><label>TikTok<input value="${state.tiktok||'Inte anslutet'}" disabled></label><button class="primary" id="ss">Spara</button></article>`}
-function render(){let m={home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:view[0].toUpperCase()+view.slice(1);bind()}
-function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
+function render(){let m={home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:vyraNavEtikett(view)||view[0].toUpperCase()+view.slice(1);bind()}
+// Titeln togs forut ur VYNYCKELN med versal — darfor stod det "Settings" pa en sida vars navval
+// heter "Installningar". Navetiketten ar den enda kalla som stammer, och den ar samma kalla som
+// brodsmulan anvander. Faller tillbaka pa gamla beteendet for vyer utan eget navval (t.ex. editor).
+function vyraNavEtikett(v){
+  const b=document.querySelector(`[data-view="${v}"]`);
+  if(!b)return'';
+  return (b.querySelector('span')||b).textContent.trim();
+}
+// Selektorn tar BADA sorterna med flit. Ett vy-byte maste slacka aven extra-knapparna (Guide,
+// Spotify, Chatbot ...), annars ligger de kvar tanda: extras.js:11 rensar hela `aside button`,
+// men den har rensade bara [data-view] — och den asymmetrin gav tva tanda val samtidigt.
+function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view],[data-extra]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
 function send(){window.VyraLive?.ingest?.({type:'gift',username:'TestGifter',name:'TestGifter',giftName:'Testgåva',coins:1,count:1});toast('Testgåva skickad')}
 function bind(){
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -189,6 +200,25 @@ function bind(){
   if(view==='settings')$('#ss').onclick=()=>{state.user=$('#dn').value;save();$('#userName').textContent=state.user;render();toast('Sparat')};
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>go(b.dataset.view));
+// Brodsmulan foljde aldrig med. #crumb skrevs pa ETT stalle i hela kodbasen (live-control.js:42)
+// och stod darfor kvar pa "VYRA / OVERSIKT" i varje vy. Den harleds nu ur navetiketten — inte ur
+// #title, eftersom Oversikt medvetet visar en halsning i stallet for sidnamnet.
+//
+// En capture-lyssnare pa dokumentet i stallet for en hake per knapp: navknapparna binds om av
+// flera moduler (studio.js, extras.js, media.js), och capture kor fore dem alla. Da spelar det
+// ingen roll vem som ager klicket eller i vilken ordning skripten laddades.
+function vyraSyncCrumb(button){
+  const crumb=$('#crumb');
+  if(!crumb||!button)return;
+  const etikett=(button.querySelector('span')||button).textContent.trim();
+  if(etikett)crumb.textContent='VYRA / '+etikett.toLocaleUpperCase('sv-SE');
+}
+document.addEventListener('click',e=>{
+  const b=e.target?.closest?.('[data-view],[data-extra]');
+  if(b)vyraSyncCrumb(b);
+},true);
+vyraSyncCrumb(document.querySelector('[data-view].active,[data-extra].active')
+  ||document.querySelector('[data-view="home"]'));
 $('.connect')&&($('.connect').onclick=()=>$('#connectModal')?.showModal());
 $('.x')&&($('.x').onclick=()=>$('#connectModal')?.close());
 $('#connectNow')&&($('#connectNow').onclick=()=>toast('TikTok-anslutningen förbereds…'));

@@ -571,7 +571,8 @@ render = function () {
   if (view === 'overlay') {
     $('#view').innerHTML = overlayPreviewHtml();
     $('#title').textContent = 'Overlay';
-    document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    // Bada sorterna, av samma skal som go() i studio.js: ett vy-byte maste slacka extra-knapparna.
+    document.querySelectorAll('[data-view],[data-extra]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     bind();
     return;
   }
