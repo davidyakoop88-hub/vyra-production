@@ -187,24 +187,38 @@ test('sidtiteln matchar navetiketten', { skip, timeout: 120000 }, async () => {
 test('inga synliga navetiketter kapas', { skip, timeout: 90000 }, async () => {
   const page = await oppnaStudio();
   try {
+    // scrollWidth DUGER INTE har. Med text-overflow:ellipsis mater den den REDAN forkortade
+    // texten, inte den fulla. Uppmatt fall: "Automation" gav scrollWidth 69 mot clientWidth 68 —
+    // alltsa "ryms" — medan ordet i verkligheten behover 71px och renderades som "Automati...".
+    // En klon utan breddbegransning ger den sanna textbredden.
     const matt = await page.evaluate(() =>
       [...document.querySelectorAll('[data-view],[data-extra]')]
         .filter(b => b.getBoundingClientRect().width > 0)
         .map(b => {
           const span = b.querySelector('span') || b;
+          const klon = span.cloneNode(true);
+          klon.style.cssText =
+            'position:absolute;left:-9999px;width:auto;max-width:none;white-space:nowrap;overflow:visible';
+          span.parentElement.appendChild(klon);
+          const full = klon.getBoundingClientRect().width;
+          klon.remove();
           return {
             etikett: span.textContent.trim(),
-            scrollW: span.scrollWidth,
-            clientW: span.clientWidth,
+            full,
+            yta: span.getBoundingClientRect().width,
           };
         }));
 
     assert.ok(matt.length >= 10, `hittade bara ${matt.length} synliga navetiketter`);
 
-    // +1px slack: delpixelavrundning i olika typsnittsmotorer far inte gora provet flackigt.
-    const kapade = matt.filter(m => m.scrollW > m.clientW + 1);
+    // INGEN heltalsslack. En overspillning pa en enda pixel tander ellipsen och kapar ordet:
+    // "Automation" behovde 69px i en 68px yta och renderades som "Automati...". En tidigare
+    // version av det har provet hade `+1` som skydd mot flakighet och slappte igenom precis det.
+    // 0.5px tacker delpixelavrundning utan att dolja en verklig kapning.
+    const kapade = matt.filter(m => m.full - m.yta > 0.5);
 
-    assert.deepEqual(kapade.map(m => `${m.etikett} (${m.scrollW}px i ${m.clientW}px)`), [],
+    assert.deepEqual(
+      kapade.map(m => `${m.etikett} (behover ${m.full.toFixed(1)}px, har ${m.yta.toFixed(1)}px)`), [],
       'varje navetikett ska fa plats i sin yta, men dessa kapas');
   } finally { await page.close() }
 });
