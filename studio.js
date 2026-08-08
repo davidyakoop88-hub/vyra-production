@@ -94,7 +94,10 @@ function events(){return `<article class="card" style="padding:20px"><h2>Eventhi
 function analytics(){return `<div class="analytics-grid"><article class="card big-chart"><h2>Tillväxt senaste 30 dagarna</h2><p>Analys visas efter din första riktiga livesändning.</p></article><article class="card rank"><h2>Top supporters</h2><p>Ingen livedata ännu.</p></article></div>`}
 function settings(){return `<article class="card settings-page"><h2>Kontoinställningar</h2><label>Visningsnamn<input id="dn" value="${state.user}"></label><label>TikTok<input value="${state.tiktok||'Inte anslutet'}" disabled></label><button class="primary" id="ss">Spara</button></article>`}
 function render(){let m={home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:view[0].toUpperCase()+view.slice(1);bind()}
-function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
+// Selektorn tar BADA sorterna med flit. Ett vy-byte maste slacka aven extra-knapparna (Guide,
+// Spotify, Chatbot ...), annars ligger de kvar tanda: extras.js:11 rensar hela `aside button`,
+// men den har rensade bara [data-view] — och den asymmetrin gav tva tanda val samtidigt.
+function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view],[data-extra]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
 function send(){window.VyraLive?.ingest?.({type:'gift',username:'TestGifter',name:'TestGifter',giftName:'Testgåva',coins:1,count:1});toast('Testgåva skickad')}
 function bind(){
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
