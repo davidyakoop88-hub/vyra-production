@@ -130,12 +130,21 @@ test('A1: tomma scenraden klammer inte sitt innehall', { skip, timeout: 90000 },
       // Dodytan: fran radens sista element till artikelns hogra innerkant.
       const sistaHoger = Math.max(hr.right, kr.right);
       const artInnerHoger = ar.right - parseFloat(getComputedStyle(art).paddingRight);
+      // Knappens naturliga bredd via obegransad klon — samma metod som nav-state prov 4.
+      // En knapp som ar smalare an sitt innehall klipper eller radbryter texten, och det syns
+      // varken pa klamning eller dodyta: .ae-scenes-overview button (28px 1fr-grid, skriven for
+      // scenKORTEN) traffar aven den har knappen och kollapsar 1fr till 0.
+      const klon = knapp.cloneNode(true);
+      klon.style.cssText = 'position:absolute;left:-9999px;display:inline-block;width:auto;white-space:nowrap';
+      document.body.appendChild(klon);
+      const knappNaturlig = klon.getBoundingClientRect().width;
+      klon.remove();
       return {
         hjalpBredd: Math.round(hr.width),
         hjalpHojd: Math.round(hr.height),
         radhojdTak: Math.round(lh * 3),
         knappBredd: Math.round(kr.width),
-        knappEnRadHojd: null,
+        knappNaturlig: Math.round(knappNaturlig),
         dodyta: Math.round(artInnerHoger - sistaHoger),
       };
     });
@@ -145,6 +154,7 @@ test('A1: tomma scenraden klammer inte sitt innehall', { skip, timeout: 90000 },
     if (m.hjalpBredd < 300) fel.push(`hjalptexten far ${m.hjalpBredd}px — klamd (ska ha >= 300px)`);
     if (m.hjalpHojd > m.radhojdTak) fel.push(`hjalptexten ar ${m.hjalpHojd}px hog — bruten pa manga rader (tak ${m.radhojdTak}px)`);
     if (m.dodyta > 100) fel.push(`${m.dodyta}px dodyta till hoger om radens innehall (ska vara <= 100px)`);
+    if (m.knappBredd < m.knappNaturlig - 1) fel.push(`knappen far ${m.knappBredd}px men innehallet behover ${m.knappNaturlig}px — texten klipps`);
 
     assert.deepEqual(fel, [], 'tomma scenraden:\n  ' + fel.join('\n  '));
   } finally { await page.close() }
@@ -169,10 +179,23 @@ test('A1: fyllda scenraden ger URL-faltet plats och radbryter inte Oppna', { ski
       const url = art.querySelector('input[readonly]');
       const kopiera = art.querySelector('[data-copy-scene]');
       const oppna = art.querySelector('[data-open-scene]');
+      // Samma klonmatt som i prov 1: knappar far inte vara smalare an sitt innehall.
+      const naturlig = el => {
+        const k = el.cloneNode(true);
+        k.style.cssText = 'position:absolute;left:-9999px;display:inline-block;width:auto;white-space:nowrap';
+        document.body.appendChild(k);
+        const w = k.getBoundingClientRect().width;
+        k.remove();
+        return w;
+      };
       return {
         urlBredd: Math.round(url.getBoundingClientRect().width),
         kopieraHojd: Math.round(kopiera.getBoundingClientRect().height),
         oppnaHojd: Math.round(oppna.getBoundingClientRect().height),
+        kopieraBredd: Math.round(kopiera.getBoundingClientRect().width),
+        kopieraNaturlig: Math.round(naturlig(kopiera)),
+        oppnaBredd: Math.round(oppna.getBoundingClientRect().width),
+        oppnaNaturlig: Math.round(naturlig(oppna)),
       };
     });
 
@@ -181,6 +204,8 @@ test('A1: fyllda scenraden ger URL-faltet plats och radbryter inte Oppna', { ski
     // Radbrytningsmatt: Kopiera ar samma sorts knapp med en rad text. Ar Oppna markbart hogre
     // har dess innehall brutits.
     if (m.oppnaHojd > m.kopieraHojd + 2) fel.push(`Oppna-knappen ar ${m.oppnaHojd}px hog mot Kopieras ${m.kopieraHojd}px — innehallet radbryter`);
+    if (m.kopieraBredd < m.kopieraNaturlig - 1) fel.push(`Kopiera far ${m.kopieraBredd}px men behover ${m.kopieraNaturlig}px — texten klipps`);
+    if (m.oppnaBredd < m.oppnaNaturlig - 1) fel.push(`Oppna far ${m.oppnaBredd}px men behover ${m.oppnaNaturlig}px — texten klipps`);
 
     assert.deepEqual(fel, [], 'fyllda scenraden:\n  ' + fel.join('\n  '));
   } finally { await page.close() }
