@@ -113,9 +113,12 @@ async function klicka(page, nyckel) {
 test('bara ett navval ar aktivt at gangen', { skip, timeout: 90000 }, async () => {
   const page = await oppnaStudio();
   try {
-    // Ordningen ar inte godtycklig: ett extra forst, sedan tva vyer. Det ar exakt den kedja som
-    // gav [guide, analytics] och [guide, settings] vid matningen.
-    for (const nyckel of ['guide', 'analytics', 'settings']) {
+    // Guide forst med flit — ett extra-val ar det som blir kvar tant. Sedan VARJE synligt navval,
+    // eftersom asymmetrin bor i varje enskild routingfunktion: studio.js go(), overlay-preview.js
+    // och overlay-packages.js har var sin kopia av samma toggle. En kedja med tre val hade bara
+    // bevisat de tre.
+    const navval = await navvalen(page);
+    for (const { nyckel } of [{ nyckel: 'guide' }, ...navval]) {
       await klicka(page, nyckel);
       const aktiva = await page.evaluate(() =>
         [...document.querySelectorAll('[data-view],[data-extra]')]
