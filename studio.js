@@ -189,6 +189,25 @@ function bind(){
   if(view==='settings')$('#ss').onclick=()=>{state.user=$('#dn').value;save();$('#userName').textContent=state.user;render();toast('Sparat')};
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>go(b.dataset.view));
+// Brodsmulan foljde aldrig med. #crumb skrevs pa ETT stalle i hela kodbasen (live-control.js:42)
+// och stod darfor kvar pa "VYRA / OVERSIKT" i varje vy. Den harleds nu ur navetiketten — inte ur
+// #title, eftersom Oversikt medvetet visar en halsning i stallet for sidnamnet.
+//
+// En capture-lyssnare pa dokumentet i stallet for en hake per knapp: navknapparna binds om av
+// flera moduler (studio.js, extras.js, media.js), och capture kor fore dem alla. Da spelar det
+// ingen roll vem som ager klicket eller i vilken ordning skripten laddades.
+function vyraSyncCrumb(button){
+  const crumb=$('#crumb');
+  if(!crumb||!button)return;
+  const etikett=(button.querySelector('span')||button).textContent.trim();
+  if(etikett)crumb.textContent='VYRA / '+etikett.toLocaleUpperCase('sv-SE');
+}
+document.addEventListener('click',e=>{
+  const b=e.target?.closest?.('[data-view],[data-extra]');
+  if(b)vyraSyncCrumb(b);
+},true);
+vyraSyncCrumb(document.querySelector('[data-view].active,[data-extra].active')
+  ||document.querySelector('[data-view="home"]'));
 $('.connect')&&($('.connect').onclick=()=>$('#connectModal')?.showModal());
 $('.x')&&($('.x').onclick=()=>$('#connectModal')?.close());
 $('#connectNow')&&($('#connectNow').onclick=()=>toast('TikTok-anslutningen förbereds…'));
