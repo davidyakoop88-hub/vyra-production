@@ -182,3 +182,29 @@ test('stats-read.js finns i Dockerfilens COPY-lista', () => {
   assert.match(dockerfil, /stats-read\.js/,
     'filen kopieras inte in i imagen — servern hade kraschat med MODULE_NOT_FOUND i Railway');
 });
+
+// ---- topplistan ska bara innehålla folk som faktiskt gett något ----------------------------------
+//
+// gifter_totals får en rad även för ren NÄRVARO — en följare, en delning, en prenumeration skriver
+// en rad med bara nollor (server/stream-stats.js: bidragFranEvent ger presence utan gifts/diamonds/
+// likes). En "topplista" som listar folk med noll gåvor och noll diamanter är inte en topplista.
+//
+// Upptäckt i produktion 2026-08-08: ett follow-event under kedjetestet lade "vyra-kedjetest" överst
+// i toppGivare, eftersom listan var det enda som fanns.
+test('topplistan utesluter rader utan bidrag', async () => {
+  const pool = falskPool();
+  await createStatsReader(pool).sammanfattning('ws-1', 'all', NU);
+  const givarfraga = pool.anrop.find(a => /FROM gifter_totals/.test(a.sql));
+  assert.match(givarfraga.sql, /gifts\s*>\s*0|diamonds\s*>\s*0|likes\s*>\s*0/,
+    'listan tar med rader som bara är närvaro — en följare hamnar överst på en tom topplista');
+});
+
+test('den som gett något finns kvar', async () => {
+  const pool = falskPool({ givare: { rowCount: 1, rows: [
+    { viewer_id: 'anna', display_name: 'Anna', avatar_url: '', gifts: '3', diamonds: '900',
+      likes: '0', best_gift_name: 'Rose', best_gift_diamonds: '300' }
+  ] } });
+  const ut = await createStatsReader(pool).sammanfattning('ws-1', 'all', NU);
+  assert.equal(ut.toppGivare.length, 1);
+  assert.equal(ut.toppGivare[0].diamonds, 900);
+});
