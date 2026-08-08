@@ -25,3 +25,61 @@
 .follower-spotlight.selected{outline:1px dashed #ec72ff!important;outline-offset:8px!important}.follower-spotlight.selected>.resize-handle{display:grid!important;place-items:center!important;position:absolute!important;right:-20px!important;bottom:-20px!important;width:32px!important;height:32px!important;border:2px solid #fff!important;border-radius:50%!important;background:linear-gradient(135deg,#d62fff,#713cff)!important;color:#fff!important;font-size:15px!important;cursor:nwse-resize!important;box-shadow:0 0 16px #c43cff,0 4px 12px #000!important;z-index:50!important;touch-action:none!important}.follower-size-editor:after{content:'Du kan också dra det lila handtaget nere till höger på widgeten.';display:block;margin-top:8px;color:#bca2c5;font-size:7px;line-height:1.5}
 .follower-spotlight{cursor:grab!important;user-select:none!important;touch-action:none!important}.follower-spotlight img{user-select:none!important;-webkit-user-drag:none!important;pointer-events:none!important}.follower-spotlight.is-dragging{cursor:grabbing!important;filter:drop-shadow(0 0 14px #d94cff)}
 [data-view="flows"],[data-go="flows"]{display:none!important}
+
+/* Raketens flip: avsandaren pa vag upp, gavan i vandpunkten.
+   Behallaren arver .fw-rocket-gift:s gamla plats (spetsen, top:-24px) sa raketen ser likadan ut
+   som forut — det ar bara innehallet som far tva sidor. --gift-scale flyttas hit fran gavan, annars
+   skalas bara ena sidan.
+   Flippen sitter pa 62-78% av stigningen: fw-rocket nar sitt hogsta lage vid 100%, sa vandningen
+   hinner bli klar precis innan explosionen tar over blicken. */
+.fw-rocket-flip{position:absolute!important;left:50%!important;top:-24px!important;
+  width:34px!important;height:34px!important;translate:-50% 0!important;
+  scale:var(--gift-scale,1)!important;
+  animation:fwRocketFlip var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
+/* 80-88%%: uppmatt att raketen ar UTANFOR widgeten till ~60%% av stigningen — den kommer in i
+   bild forst da. Med flippen pa 62%% syntes avsandaren i tva procent av animationen, alltsa aldrig.
+   Nu: avsandaren fran 60%% till 80%%, gavan resten. */
+@keyframes fwRocketFlip{0%,100%{transform:none}}
+
+/* Spåret tonar bort (fw-rocket gar till opacity 0), men NYTTOLASTEN ska inte folja med — uppmatt
+   opacitet 0.30 vid 87%% och 0.09 vid 97%%, sa gavan var nastan osynlig precis nar den avslojades.
+   Egen opacitet har haller bilden lasbar hela vagen och lamnar over till explosionen. */
+.fw-rocket-flip,.fw-rocket>.fw-rocket-gift{animation-name:fwRocketFlip,fwPayloadHold!important}
+@keyframes fwPayloadHold{0%{opacity:0}18%{opacity:1}100%{opacity:1}}
+
+/* Bada sidorna fyller behallaren och doljer sin bakre yta, annars lyser de igenom varandra. */
+.fw-rocket-flip>img{position:absolute!important;left:0!important;top:0!important;
+  width:100%!important;height:100%!important;translate:none!important;scale:1!important;
+  object-fit:contain!important}
+.fw-rocket-flip .fw-rocket-avatar{border-radius:50%!important;
+  filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #ff4fa3)!important}
+/* VAXLING PA OPACITET, inte rotateY. 3D-vandningen fungerade i teorin — behallaren stod pa 180,
+   backface-visibility rapporterade hidden — men avsandaren syntes ANDA, for att filter pa bilderna
+   plattar ut 3D-kontexten. Uppmatt i riktig Chrome, osynligt i alla computed-styles-kontroller.
+   Tva staplade bilder som byter opacitet gor samma sak utan att bero pa 3D alls. */
+.fw-rocket-flip .fw-rocket-avatar{animation:fwFaceOut var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
+.fw-rocket-flip .fw-rocket-gift{animation:fwFaceIn var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
+@keyframes fwFaceOut{0%,80%{opacity:1}88%,100%{opacity:0}}
+@keyframes fwFaceIn{0%,80%{opacity:0}88%,100%{opacity:1}}
+
+/* SPARET tonar bort, inte hela raketen.
+   Forsta forsoket gav nyttolasten en egen opacity:1 — verkningslost, eftersom opacitet arvs
+   MULTIPLIKATIVT: barnets 1 gangras med forlaldrarns 0.09 vid 97%, sa gavan var nastan osynlig
+   precis nar den avslojades (uppmatt i riktig Chrome, syntes inte i nagot prov).
+   Losningen: .fw-rocket behaller sin rorelse men slutar tona, och den lysande gradienten flyttas
+   till ett pseudoelement som tonar for sig. Spåret ser likadant ut; nyttolasten slipper folja med. */
+.fw-rocket{background:none!important;opacity:1!important;
+  animation:fw-rocket-move var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
+@keyframes fw-rocket-move{0%{translate:0 150px}100%{translate:0 0}}
+.fw-rocket::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(transparent,#fff,#ff4fa3);
+  animation:fw-rocket-trail var(--speed) ease-in both;animation-delay:var(--delay,0s)}
+@keyframes fw-rocket-trail{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+
+/* INGEN FILTER PA SIDORNA. `filter` plattar ut 3D-kontexten — med drop-shadow pa bilderna slutade
+   backface-visibility galla och avsandaren syntes ANDA efter flippen, trots att behallaren stod pa
+   rotateY(180). Mattes i riktig Chrome; ingen av computed-styles-kontrollerna avslojade det,
+   eftersom bade transform och backface-visibility rapporterade ratt varden.
+   Glodet flyttas till .fw-rocket, som ligger utanfor det 3D-lagret. */
+
+
