@@ -276,3 +276,44 @@ test('rutten kräver samma ursprung', () => {
 test('rutten avvisar den som inte är inloggad', () => {
   assert.match(RUTT[0], /if\(!si\)return send\(res,401/);
 });
+
+// ---- fältkontraktet mot molnbryggan --------------------------------------------------------------
+//
+// MÄTT UNDER EN RIKTIG SÄNDNING 2026-08-08: gifts=1 men diamonds=0. Orsaken är ett namnglapp som
+// funnits hela tiden och som inget prov täckte:
+//
+//   tiktok-bridge/normalizer.js cloudEvent():  value: number(fields.coins ?? fields.points ?? ...)
+//   server/stream-stats.js:                    diamonds = heltal(data.coins)
+//
+// Molnbryggan döper om coins till `value` när den bygger sitt moln-event. Desktopvägen behåller
+// `coins`. Läser vi bara `coins` blir varje gåva som kommer via MOLNET värd noll diamanter — och
+// diamanter är hela poängen med intäktsstatistiken. Felet är permanent: en summa som skrivits som
+// noll går inte att räkna om i efterhand.
+//
+// Samma glapp som redan bitit en gång: molnet skickar profileUrl där widgetarna läser profileImage.
+//
+// ROTT NU: `value` ignoreras.
+test('en gåva från molnbryggan bär sitt värde i fältet value', () => {
+  const b = bidragFranEvent({ type: 'gift', username: 'anna', count: 2, value: 300 });
+  assert.equal(b.diamonds, 300,
+    'molnvägens gåvor sparas med 0 diamanter — hela intäktsstatistiken blir noll');
+  assert.equal(b.gifts, 2);
+});
+
+test('desktopvägens coins fungerar oförändrat', () => {
+  assert.equal(bidragFranEvent({ type: 'gift', username: 'a', count: 1, coins: 500 }).diamonds, 500);
+});
+
+// Bär eventet båda vinner coins: det är desktopvägens egna fält och alltid rått, medan value är
+// molnbryggans omdöpning av samma tal.
+test('coins vinner när båda finns', () => {
+  assert.equal(bidragFranEvent({ type: 'gift', username: 'a', count: 1, coins: 500, value: 9 }).diamonds, 500);
+});
+
+// value bärs av flera typer i cloudEvent (coins ?? points ?? score), så den får bara läsas för
+// gåvor. En like med value=9000 (TikToks rumstotal) skulle annars bli 9000 diamanter.
+test('value läses inte för likes', () => {
+  const b = bidragFranEvent({ type: 'likes', username: 'a', count: 5, value: 9000 });
+  assert.equal(b.diamonds, 0, 'en like skrev diamanter — value är rumstotalen, inte en gåva');
+  assert.equal(b.likes, 5);
+});
