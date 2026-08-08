@@ -121,4 +121,27 @@ function battleProbe(data){
   const rot=data&&typeof data==='object'?data:{};
   return{nycklar:Object.keys(rot).slice(0,30),skalarer:skalarer(rot,'',0,{})};
 }
-module.exports={text,number,battleProbe,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent};
+// Vilka typer som far postas till molnets ingest-rutt.
+//
+// VITLISTA, inte svartlista. Bryggan skickade tidigare ALLT dit, och tva saker gick fel:
+//
+//   1. bridge.js:305 skickar `chatcommand` nar en chattrad borjar med "!". Den typen finns inte i
+//      server/index.js:72, sa molnet svarar 400. Bryggan loggar det (bridge.js:216 kastar pa !r.ok
+//      och fangar med console.error), sa det ar inte tyst — men det ar en console.error per
+//      utropsteckenkommando under hela sandningen, i en logg dar riktiga fel ska synas.
+//
+//   2. VARRE: takten kollas FORE valideringen (server/index.js:108 fore :111). Chatt ar den
+//      overlagset frekventaste typen under en aktiv sandning och ingest-taket ar 100 event/s per
+//      workspace. Chatten kan alltsa ata upp budgeten och fa GAVOR avvisade med 429 — och gavor ar
+//      det enda som betyder nagot for intaktsstatistiken. Ett event som avvisas dar finns inte i
+//      historiken, och det gar inte att upptacka i efterhand.
+//
+// Darfor: `chat` ar giltig for molnet men stoppas anda, pa VOLYM. Allt annat som slapps fram ar
+// nagot server/stream-stats.js faktiskt raknar.
+//
+// Galler BARA molnpostningen. Den lokala vagen (/api/events) matar overlayen och far inte
+// filtreras — chattwidgetar i OBS lever pa den.
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle']);
+function tillMolnet(typ){return TILL_MOLNET.has(typ)}
+
+module.exports={text,number,battleProbe,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET};

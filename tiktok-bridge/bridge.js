@@ -213,7 +213,9 @@ if (require.main === module) {
     reportToParent('event', { eventType: type, at: now });
     const local = { type, eventKey: key, source: 'tiktok-bridge', ...fields };
     const jobs = [postJson('/api/events', local)];
-    if (CLOUD && WORKSPACE && INGEST_TOKEN) jobs.push(fetch(`${CLOUD}/api/events/tiktok/${WORKSPACE}`, { method: 'POST', headers: { 'content-type': 'application/json', 'authorization': `Bearer ${INGEST_TOKEN}` }, body: JSON.stringify(N.cloudEvent(key, type, fields)) }).then(r => { if (!r.ok) throw new Error(`Cloud HTTP ${r.status}`) }).catch(err => console.error('[bridge] Cloud-event misslyckades:', err.message)));
+    // N.tillMolnet: vitlista, se normalizer.js. Gäller BARA molnpostningen — den lokala raden ovan
+    // matar overlayen och får inte filtreras, annars tystnar chattwidgetarna i OBS.
+    if (CLOUD && WORKSPACE && INGEST_TOKEN && N.tillMolnet(type)) jobs.push(fetch(`${CLOUD}/api/events/tiktok/${WORKSPACE}`, { method: 'POST', headers: { 'content-type': 'application/json', 'authorization': `Bearer ${INGEST_TOKEN}` }, body: JSON.stringify(N.cloudEvent(key, type, fields)) }).then(r => { if (!r.ok) throw new Error(`Cloud HTTP ${r.status}`) }).catch(err => console.error('[bridge] Cloud-event misslyckades:', err.message)));
     return Promise.all(jobs);
   }
 
