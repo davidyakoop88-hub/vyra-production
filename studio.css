@@ -806,6 +806,7 @@ html.overlay-output .widget{
 @media(prefers-reduced-motion:reduce){
   .gifter-xform-burst .gifter-big-level,.gifter-xform-new .gifter-big-level,
   .gifter-xform-burst .gifter-diamond-stack{animation:none!important}
+}
 /* ---- Battle MVP premium — tre designer med egen fasmaskin ---------------------------------------
    Entre 0,9 s (scale .9 -> 1), hall 5 s med en subtil shimmer, exit 0,9 s tillbaka till scale .95.
    Rorelsen sitter pa .mvp-plate, aldrig pa roten: basregeln satter transform:scale(1)!important pa
