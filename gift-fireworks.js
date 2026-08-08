@@ -22,8 +22,15 @@ document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))re
    kort mitt i. Nu satts samma timer om, sa en ny gava FORLANGER visningen i stallet for att avbryta
    den — samma regel som VyraFlip gav Top Gift och Top Streak. */
 const fwTimers=new Map();
-function fwSpela(w,e,combo){
-  buildComboRockets(w,e,combo);
+/* `gavobild` ar den gava som FAKTISKT skickades, hamtad ur eventet. Utan den visade varje raket
+   panelinstallningens bild — standard 0001_Rose.png — sa tva lion gav tva rosor. */
+function fwSpela(w,e,combo,gavobild){
+  buildComboRockets(w,e,combo,gavobild);
+  /* Den CENTRALA gavan — den som aterformas i mitten och ar widgetens storsta grafik. Den byggs
+     en gang av wh() ur panelinstallningen och rors annars aldrig av live-vagen: raketerna kunde
+     bara ratt gava medan mitten fortfarande visade en ros (uppmatt i riktig Chrome).
+     Direktbarnet, inte querySelector('img'): raketerna bar egna <img class="fw-rocket-gift">. */
+  if(gavobild){const mitt=[...e.children].find(n=>n.tagName==='IMG');if(mitt)mitt.setAttribute('src',gavobild)}
   e.classList.add('play');
   const ms=Math.max(0,(w.fwDuration||5)*1000),forra=fwTimers.get(e);
   if(forra)clearTimeout(forra.id);
@@ -39,7 +46,10 @@ window.VyraFireworks={
      clearTimeout men later raknaren sta kvar blir testet gront anda (uppmatt). */
   aktivId:e=>fwTimers.get(e)&&fwTimers.get(e).id
 };
-function buildComboRockets(w,e,combo=w.fwCombo||1){combo=Math.max(1,Math.min(100,+combo||1));e.querySelectorAll('.fw-rocket').forEach(x=>x.remove());let burst=e.querySelector('.fw-burst'),gift=w.fwGiftImage||campaignGiftList()[0]?.file;for(let i=0;i<combo;i++){let rocket=document.createElement('div');rocket.className='fw-rocket';rocket.style.setProperty('--x',`${8+((i*37)%85)}%`);rocket.style.setProperty('--delay',`${(i%20)*.045}s`);rocket.style.setProperty('--hue',`${(i*29)%360}deg`);rocket.style.setProperty('--gift-scale',`${.62+(i%5)*.08}`);rocket.innerHTML=`<img class="fw-rocket-gift" src="${gift}" alt="">`;e.insertBefore(rocket,burst)}return combo}
+/* `gavobild` vinner over panelinstallningen, och det ar hela poangen med widgeten: den ska visa
+   vilken gava som skickades. Panelbilden ar RESERV — editorns testknapp har ingen gava alls, och
+   ett event utan bild ska inte ge en tom <img src="">. */
+function buildComboRockets(w,e,combo=w.fwCombo||1,gavobild){combo=Math.max(1,Math.min(100,+combo||1));e.querySelectorAll('.fw-rocket').forEach(x=>x.remove());let burst=e.querySelector('.fw-burst'),gift=gavobild||w.fwGiftImage||campaignGiftList()[0]?.file;for(let i=0;i<combo;i++){let rocket=document.createElement('div');rocket.className='fw-rocket';rocket.style.setProperty('--x',`${8+((i*37)%85)}%`);rocket.style.setProperty('--delay',`${(i%20)*.045}s`);rocket.style.setProperty('--hue',`${(i*29)%360}deg`);rocket.style.setProperty('--gift-scale',`${.62+(i%5)*.08}`);rocket.innerHTML=`<img class="fw-rocket-gift" src="${gift}" alt="">`;e.insertBefore(rocket,burst)}return combo}
 /* Tar emot bade ett rent tal och hela eventet. action-runtime skickade i alla tider bara
    combon, och runtime-controls koar triggern med samma argument - men anonymfiltret och
    textmallen behover avsandare och gavonamn, som bara finns i eventet. Bada formerna gar. */
@@ -88,7 +98,7 @@ const combo=Math.max(1,Math.min(100,+(d.combo??d.repeatcount??d.count)||1));
 let nagotTandes=false;
 traffar.forEach(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;/* textContent, aldrig innerHTML: anvandarnamnet kommer fran TikTok via molnet och ar inte
    betrott innehall. */
-const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,combo);nagotTandes=true});
+const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,combo,d.giftImage);nagotTandes=true});
 if(!nagotTandes)return false;
 /* Ljudet spelas HAR, efter att bade filtren och widgetuppslaget passerat - ett ljud utan
    synligt fyrverkeri ar varre an inget ljud alls. En gang per omgang, inte en gang per widget:

@@ -177,3 +177,118 @@ test('editorns testknapp far fortfarande spara sitt combovarde', () => {
   assert.match(KALLA, /w\.fwCombo\s*=\s*Math\.max\(1,Math\.min\(100/,
     'testknappens combofalt togs bort av misstag');
 });
+
+// ---- 4. raketen visar den gava som faktiskt skickades -------------------------------------------
+//
+// Davids rapport 2026-08-08, ordagrant: "GIFT FIREWORKS vissar bara rose gift och den ska skicka
+// vilken gava man ska skicka ... skickar man en rose da flyger en raket om skickar 2 lion da flyger
+// tva lion".
+//
+// HALVA VAGEN FANNS REDAN. Rad 82 laser combon ur eventet (combo ?? repeatcount ?? count) och
+// buildComboRockets bygger en raket per styck — ANTALET var alltsa alltid ratt. Men samma funktion
+// gor:
+//
+//   let gift = w.fwGiftImage || campaignGiftList()[0]?.file
+//
+// Bilden kommer fran PANELINSTALLNINGEN, aldrig fran eventet. Standardvardet ar 0001_Rose.png, sa
+// den som inte bytt bild ser en ros oavsett vad som skickas. Tva lion gav tva raketer med rosbild.
+//
+// Eventets giftImage nar hela vagen fram — molnbryggan (giftImageOf), desktop (giftPictureUrl) och
+// servern (cleanEvent) bar alla faltet. Widgeten kastade bort det.
+//
+// Samma monster som tystat fyra widgetar: fardig grafik utan live-trigger. Har hade TEXTEN en
+// trigger (raden ovanfor satter gavonamnet) men bilden inte — halva kopplingen, vilket ar svarare
+// att se an ingen alls.
+//
+// ROTT NU.
+const bilder = (d, id = 'fw1') =>
+  [...fx(d, id).querySelectorAll('.fw-rocket .fw-rocket-gift')].map(i => i.getAttribute('src'));
+
+const LION = 'https://p16.tiktokcdn.com/img/lion.png';
+
+test('raketen visar gavan ur eventet, inte panelbilden', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Lion', giftImage: LION });
+  assert.deepEqual(bilder(d), [LION],
+    'raketen visar fortfarande panelbilden — en ros flyger nar nagon skickat ett lejon');
+});
+
+// Antalet fungerade redan; provet halls kvar sa en fix av bilden inte rakar ta sonder det.
+test('tva lion ger tva raketer, bada med lejonbilden', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 2, giftName: 'Lion', giftImage: LION });
+  assert.equal(raketer(d), 2, 'antalet foljer inte gavans count');
+  assert.deepEqual(bilder(d), [LION, LION], 'bara nagra av raketerna fick ratt bild');
+});
+
+// Panelinstallningen far inte bli meningslos: editorns testknapp har ingen gava alls, och ett event
+// utan bild ska inte ge en trasig <img src="">.
+test('utan bild i eventet anvands panelbilden', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0042_Galaxy.png' })]);
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Galaxy' });
+  assert.deepEqual(bilder(d), ['assets/gifts/events/0042_Galaxy.png'],
+    'reserven foll bort — en gava utan bild ger nu en tom <img>');
+});
+
+test('en ny gava byter bild pa raketerna', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
+  h.window.triggerGiftFireworks({ username: 'a', coins: 5, count: 1, giftImage: LION });
+  assert.deepEqual(bilder(d), [LION]);
+  const ros = 'https://p16.tiktokcdn.com/img/rose.png';
+  h.window.triggerGiftFireworks({ username: 'b', coins: 5, count: 1, giftImage: ros });
+  assert.deepEqual(bilder(d), [ros], 'bilden fastnade pa den forra gavan');
+});
+
+// DEN CENTRALA GAVAN — den som faktiskt syns storst.
+//
+// Raketerna var bara halva felet. Basmarkupen (gift-fireworks.js:9) har en NAKEN <img> som ar
+// gavan som aterformas i mitten:
+//
+//   <div class="fw-burst">…</div><div class="fw-ring"></div><img src="${w.fwGiftImage||'…0001_Rose.png'}">
+//
+// Den byggs EN gang av wh() ur panelinstallningen och rors aldrig av live-vagen. Uppmatt i riktig
+// Chrome efter att raketerna fixats: raketerna bar ratt gava, men mitt i bilden satt fortfarande
+// en ros. Det ar den David faktiskt ser — den ar storst.
+//
+// ROTT NU.
+const mittbild = (d, id = 'fw1') => {
+  const nod = [...fx(d, id).children].find(n => n.tagName === 'IMG');
+  return nod ? nod.getAttribute('src') : '(ingen central bild)';
+};
+
+test('den centrala gavan byts till den som skickades', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Lion', giftImage: LION });
+  assert.equal(mittbild(d), LION,
+    'mittbilden visar fortfarande panelbilden — det ar den storsta grafiken i widgeten');
+});
+
+test('utan bild i eventet star den centrala kvar pa panelbilden', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0042_Galaxy.png' })]);
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Galaxy' });
+  assert.equal(mittbild(d), 'assets/gifts/events/0042_Galaxy.png');
+});
+
+// ---- 5. en gava som inte gar att ladda faller tillbaka pa en GAVA, inte ett ansikte -------------
+//
+// FOLJD AV FIXEN OVAN. Fore den var raketernas src alltid en lokal fil som alltid finns; nu ar den
+// en TikTok-CDN-URL som kan fallera (natet, en utgangen signatur, en blockerad domain).
+//
+// runtime-controls.js:52 fangar image-fel globalt och byter till en platshallare — men valet gors
+// pa `img.closest('.vyra-gift-face,.streak-gift-face,.campaign-gift-image')`. En raketbild matchar
+// ingen av dem, sa den fick PROFILPLATSHALLAREN: ett ansiktsfoto flygande i ett fyrverkeri.
+//
+// Den centrala bilden har redan ett eget onerror (gift-fireworks.js:118 lagger pa det), sa det ar
+// raketerna som saknar skydd.
+//
+// ROTT NU: selektorn kanner inte igen fyrverkeriets bilder.
+const KALLA_RUNTIME = fs.readFileSync(path.join(ROOT, 'runtime-controls.js'), 'utf8');
+
+test('fyrverkeriets bilder raknas som gavor i fallback-selektorn', () => {
+  const rad = KALLA_RUNTIME.split(/\r?\n/).find(l => /fallbackApplied/.test(l) && /closest\(/.test(l));
+  assert.ok(rad, 'hittade ingen fallback-rad att kontrollera');
+  const selektor = /closest\('([^']+)'\)/.exec(rad);
+  assert.ok(selektor, `kunde inte lasa selektorn ur: ${rad.trim().slice(0, 120)}`);
+  assert.match(selektor[1], /gift-fireworks-fx/,
+    'en gavobild som inte gar att ladda i Gift Fireworks byts mot ett PROFILFOTO i stallet for en gava');
+});
