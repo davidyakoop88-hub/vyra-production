@@ -292,3 +292,67 @@ test('fyrverkeriets bilder raknas som gavor i fallback-selektorn', () => {
   assert.match(selektor[1], /gift-fireworks-fx/,
     'en gavobild som inte gar att ladda i Gift Fireworks byts mot ett PROFILFOTO i stallet for en gava');
 });
+
+// ---- 6. raketen visar avsandaren och flippar till gavan -----------------------------------------
+//
+// Davids avsikt, ordagrant: "nar raketen nar toppen visar profilbilden sen flipar gift bild".
+//
+// Raketen hade EN bild. Nu tva sidor: avsandarens profilbild pa framsidan, gavan pa baksidan, och
+// en rotateY i vandpunkten. Samma 3D-idiom som TOP GIFT redan anvander (.vyra-flip i studio.css) —
+// widgetarna ska rora sig som slaktingar, inte som framlingar.
+//
+// PROFILBILDEN BAR TVA NAMN: `profileImage` pa desktopvagen, `profileUrl` fran molnet
+// (server/event-bus.js cleanEvent doper om det). Bada lases — samma faltglapp som en gang gjorde
+// alla diamanter till noll.
+//
+// UTAN AVSANDARBILD SKA DET INTE FLIPPA. En tom framsida ar samre an ingen flip alls.
+//
+// ROTT NU.
+const AVATAR = 'https://p16.tiktokcdn.com/img/anna.png';
+const framsidor = (d, id = 'fw1') =>
+  [...fx(d, id).querySelectorAll('.fw-rocket .fw-rocket-avatar')].map(i => i.getAttribute('src'));
+
+test('raketen bar avsandarens profilbild pa framsidan', () => {
+  const { h, d } = boot();
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1,
+    giftImage: LION, profileImage: AVATAR });
+  assert.deepEqual(framsidor(d), [AVATAR],
+    'raketen har ingen avsandarsida — det finns inget att flippa fran');
+  assert.deepEqual(bilder(d), [LION], 'gavosidan forsvann nar framsidan lades till');
+});
+
+test('molnets profileUrl duger lika bra som desktops profileImage', () => {
+  const { h, d } = boot();
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1,
+    giftImage: LION, profileUrl: AVATAR });
+  assert.deepEqual(framsidor(d), [AVATAR],
+    'bara ett av de tva faltnamnen lases — halva anvandarna far ingen avsandarbild');
+});
+
+// BARA FORSTA RAKETEN bar avsandaren. Davids beslut: samma ansikte pa tjugo raketer blir brus —
+// den forsta racker for att saga VEM, resten sager VAD.
+test('bara forsta raketen bar avsandaren, resten ar ren gava', () => {
+  const { h, d } = boot();
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 3,
+    giftImage: LION, profileImage: AVATAR });
+  assert.equal(raketer(d), 3, 'antalet foljer inte gavans count');
+  assert.deepEqual(framsidor(d), [AVATAR], 'fler an en raket bar avsandarbilden');
+  assert.deepEqual(bilder(d), [LION, LION, LION], 'alla tre ska anda visa gavan');
+});
+
+// Utan avsandarbild ska raketen se ut precis som fore: en gava, ingen tom framsida.
+test('utan profilbild finns ingen avsandarsida alls', () => {
+  const { h, d } = boot();
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1, giftImage: LION });
+  assert.deepEqual(framsidor(d), [], 'en tom <img> lades till som framsida');
+  assert.deepEqual(bilder(d), [LION], 'gavan forsvann nar avsandaren saknades');
+});
+
+// Flippen ska vara CSS-driven pa en behallare, inte en JS-timer per raket: en timer per raket vid
+// hundra raketer ar hundra timers, och de overlever inte att widgeten rivs.
+test('flippen ar CSS-driven, inte en JS-timer', () => {
+  assert.equal(/setTimeout\([^)]*flip/i.test(KALLA), false,
+    'flippen drivs av en timer i JS — den overlever inte att noden byts ut');
+  assert.match(KALLA, /fw-rocket-flip|fw-rocket-avatar/,
+    'ingen flipstruktur byggs alls');
+});
