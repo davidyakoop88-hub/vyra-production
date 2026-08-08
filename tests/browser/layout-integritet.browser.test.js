@@ -268,10 +268,14 @@ test('A9: Spara-knappen har andning fran raden ovan', { skip, timeout: 90000 }, 
     await tillInstallningar(page);
     const m = await page.evaluate(() => {
       const knapp = document.querySelector('#ss');
-      const rader = document.querySelectorAll('.settings-page label');
+      // Sista FORMRADEN, oavsett sort. En tidigare version matte bara label — nar TikTok-raden
+      // blev en statusdiv raknades hela dess hojd som "luft" och provet gick gront medan Spara
+      // fortfarande satt klistrad mot raden ovanfor.
+      const rader = document.querySelectorAll('.settings-page label, .settings-page .settings-status');
       if (!knapp || !rader.length) return null;
-      const sista = rader[rader.length - 1].getBoundingClientRect();
-      return { avstand: Math.round(knapp.getBoundingClientRect().top - sista.bottom) };
+      const sista = [...rader].reduce((a, b) =>
+        a.getBoundingClientRect().bottom > b.getBoundingClientRect().bottom ? a : b);
+      return { avstand: Math.round(knapp.getBoundingClientRect().top - sista.getBoundingClientRect().bottom) };
     });
     assert.ok(m, 'hittar inte Spara-knappen eller formraderna');
     assert.ok(m.avstand >= 16,
