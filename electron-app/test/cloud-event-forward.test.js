@@ -340,3 +340,59 @@ test('en okänd typ skickas inte vidare', async (t) => {
   });
   assert.equal(seen.length, 0, 'filtret är en svartlista — varje ny typ läcker igenom och 400:ar');
 });
+
+// ---- id:t som gjorde hela speglingen verkningslös -------------------------------------------------
+//
+// MÄTT MOT PRODUKTION 2026-08-08, inte gissat. Ett riktigt follow-event matades in i den körande
+// desktopappen och molnet svarade:
+//
+//   HTTP 400  {"ok":false,"error":"Ogiltigt live-event"}
+//
+// server/event-bus.js:49 kräver ett id: `if(!event.id||!ALLOWED.has(event.type)) throw ... 400`.
+// Molnbryggan sätter det via N.cloudEvent(key, ...), men speglingen postade det lokala eventet rakt
+// av — och det bär `eventKey`, inte `id`. Följden: VARJE speglat event hade avvisats med 400.
+// Speglingen var alltså helt verkningslös, och eftersom den sväljer sina egna fel hade det inte
+// synts någonstans. Det upptäcktes bara för att kedjan provades mot riktig produktion.
+//
+// Kontraktsprovet ovan missade det: det prövade payloaden mot validateTikTokIngestPayload (typ och
+// username) men aldrig mot cleanEvent, som körs efteråt och har egna krav.
+//
+// ROTT NU: nyttolasten saknar id.
+test('nyttolasten bär ett id — utan det avvisar molnet varje event med 400', async (t) => {
+  const seen = stubCloud(t, svarOk);
+  const { kanal, options } = riggen();
+  await medServer(t, 4272, options, async () => {
+    kanal.skicka({ ...GAVA, eventKey: 'gift-anna-1' });
+    await slappFram();
+  });
+  assert.equal(seen.length, 1, 'inget skickades');
+  const nytta = JSON.parse(seen[0].body);
+  assert.ok(nytta.id, `nyttolasten saknar id: ${JSON.stringify(nytta).slice(0, 200)}`);
+  assert.equal(typeof nytta.id, 'string');
+});
+
+// eventKey är innehållshärledd och ger samma dedupe-semantik som molnbryggan (N.cloudEvent tar
+// samma nyckel). Den föredras därför när den finns.
+test('id:t är eventKey när en sådan finns', async (t) => {
+  const seen = stubCloud(t, svarOk);
+  const { kanal, options } = riggen();
+  await medServer(t, 4273, options, async () => {
+    kanal.skicka({ ...GAVA, eventKey: 'gift-anna-42' });
+    await slappFram();
+  });
+  assert.equal(JSON.parse(seen[0].body).id, 'gift-anna-42');
+});
+
+// Men eventKey är inte garanterad. Ett event utan nyckel måste ändå få ett id, annars faller det
+// på exakt samma 400 igen — och den lokala kön har redan deduplicerat vid det här laget.
+test('utan eventKey används det lokala löpnumret', async (t) => {
+  const seen = stubCloud(t, svarOk);
+  const { kanal, options } = riggen();
+  await medServer(t, 4274, options, async () => {
+    kanal.skicka({ type: 'gift', username: 'anna', count: 1, coins: 5 });
+    await slappFram();
+  });
+  const nytta = JSON.parse(seen[0].body);
+  assert.ok(nytta.id && String(nytta.id).length > 0,
+    `ett event utan eventKey fick inget id: ${JSON.stringify(nytta).slice(0, 200)}`);
+});

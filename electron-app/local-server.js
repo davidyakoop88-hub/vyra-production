@@ -127,7 +127,9 @@ function startLocalServer(root, port = 4173, options = {}) {
     const event = { id, ...d, timestamp: id };
     events.push(event);
     while (events.length > 5000) events.shift();
-    speglaTillMolnet(d);
+    // `event`, inte `d`: molnet kraver ett id (server/event-bus.js:49) och `event` bar bade
+    // eventKey och det lokala lopnumret. Se speglaTillMolnet.
+    speglaTillMolnet(event);
     return { ok: true, event };
   }
 
@@ -168,13 +170,24 @@ function startLocalServer(root, port = 4173, options = {}) {
     if (!workspaceId) return;
     const kaka = cloudSession();
     if (!kaka) return;
+    // ID:T ÄR INTE VALFRITT. server/event-bus.js:49 avvisar allt utan id med 400 "Ogiltigt
+    // live-event". Första versionen postade det lokala eventet rakt av — och det bär `eventKey`,
+    // inte `id`. Följden: VARJE speglat event avvisades. Speglingen var helt verkningslös, och
+    // eftersom den sväljer sina egna fel syntes det ingenstans. Upptäckt först när kedjan provades
+    // mot riktig produktion, inte i något test.
+    //
+    // eventKey föredras: den är innehållshärledd och ger samma dedupe-semantik som molnbryggan
+    // (N.cloudEvent tar samma nyckel). Det lokala löpnumret är reserven — det är monotont och
+    // unikt, och kön har redan deduplicerat vid det här laget.
+    const nytta = { ...d, id: String(d.eventKey || d.id || '') };
+    if (!nytta.id) return;
     // Anropet ar avsiktligt obevakat. .catch() ar anda obligatoriskt: en avvisad promise utan
     // hanterare faller hela Electron-processen.
     Promise.resolve()
       .then(() => fetch(`${cloudOrigin}/api/workspaces/${encodeURIComponent(workspaceId)}/events`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', accept: 'application/json', cookie: kaka },
-        body: JSON.stringify(d),
+        body: JSON.stringify(nytta),
         signal: AbortSignal.timeout(10000)
       }))
       .catch(() => {});

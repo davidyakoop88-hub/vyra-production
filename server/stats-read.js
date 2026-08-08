@@ -16,6 +16,11 @@ const DAGAR = { '7d': 7, '30d': 30, '90d': 90 };
 
 // Taket finns för att ETT svar inte ska bli obegränsat stort. TikControl visar 472 givare sedan
 // juni; en topplista är ändå bara intressant i toppen, och resten summeras redan i `totalt`.
+//
+// Raderna filtreras dessutom på faktiskt bidrag: gifter_totals får en rad även för ren NÄRVARO —
+// en följare, en delning, en prenumeration skriver en rad med bara nollor. En "topplista" som
+// listar folk med noll gåvor och noll diamanter är inte en topplista. Upptäckt i produktion när
+// ett follow-event under kedjetestet lade testkontot överst, eftersom listan var det enda som fanns.
 const TOPP_GIVARE = 50;
 
 function datumStrang(d) {
@@ -56,6 +61,7 @@ const GIVARE_SQL = `
          best_gift_name, best_gift_diamonds, first_seen, last_seen
     FROM gifter_totals
    WHERE workspace_id=$1 AND tiktok_username=$2
+     AND (gifts > 0 OR diamonds > 0 OR likes > 0)
    ORDER BY diamonds DESC, gifts DESC
    LIMIT ${TOPP_GIVARE}
 `;
