@@ -73,7 +73,7 @@ async function framsidan() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(
-    () => typeof home === 'function' && home.toString().includes('COMMAND CENTER'),
+    () => typeof home === 'function' && home.toString().includes('KOMMANDOCENTRAL'),
     null, { timeout: 20000 });
   await page.evaluate(() => { view = 'home'; render() });
   await page.waitForSelector('.home-welcome', { timeout: 10000 });
