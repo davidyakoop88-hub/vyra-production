@@ -136,9 +136,45 @@
     });
   }
 
-  new MutationObserver(ritaInstallningsrad).observe(document.documentElement,
+  // ---- knappen i sidhuvudet -----------------------------------------------------------------
+  // Raden i Installningar ar den utforliga hemvisten, men den som PRECIS loggat in ska inte
+  // behova leta i menyn for att hitta skrivbordsappen. Darfor ocksa en plats hogst upp.
+  //
+  // Det ar samtidigt skalet att de tomma tillstanden INTE far var sin nedladdningsknapp: da
+  // hade "Ladda ner VYRA Desktop" statt pa fem stallen, tva av dem bredvid varandra i
+  // Statistik-vyn. En plats hogt upp slar fem utspridda.
+  function ritaSidhuvud() {
+    const rad = document.querySelector('header .head-actions');
+    if (!rad || rad.querySelector('[data-ladda-desktop]')) return;
+
+    const el = document.createElement('a');
+    el.className = 'head-desktop';
+    el.setAttribute('data-ladda-desktop', '');
+    el.setAttribute('href', RUTT);
+    el.setAttribute('aria-disabled', 'true');
+    el.textContent = '⬇ VYRA Desktop';
+    // Fore Fargschema: nedrakningen fran #174 lagger sig forst i raden, sa ordningen blir
+    // provperiod, nedladdning, fargschema, anslut.
+    const fore = rad.querySelector('#openBrandKit');
+    if (fore) rad.insertBefore(el, fore); else rad.prepend(el);
+
+    hamtaMetadata().then(data => {
+      const knapp = document.querySelector('header .head-actions [data-ladda-desktop]');
+      if (!knapp) return;
+      if (data.fel) { knapp.title = data.fel; return }
+      const storlek = megabyte(data.sizeBytes);
+      // Versionen far inte plats i sidhuvudet men ska ga att se — den bor i verktygstipset.
+      knapp.title = 'VYRA Desktop ' + data.version + (storlek ? ' · ' + storlek : '') +
+        ' · behövs för OBS-scenstyrning';
+      knapp.removeAttribute('aria-disabled');
+    });
+  }
+
+  function rita() { ritaInstallningsrad(); ritaSidhuvud() }
+
+  new MutationObserver(rita).observe(document.documentElement,
     { childList: true, subtree: true });
-  ritaInstallningsrad();
+  rita();
 
   root.VyraDesktop = { kanLaddaNer, hamtaMetadata, RUTT };
 })();

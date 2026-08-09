@@ -270,6 +270,48 @@ test('guidens OBS-kort bar en riktig handling, inte bara ordet Desktop', { skip,
   } finally { await s.stang() }
 });
 
+// ---- Prov 8b · den syns direkt efter inloggning -------------------------------------------------
+// Davids beslut: raden i Installningar racker inte. Den som precis loggat in ska kunna hamta
+// skrivbordsappen utan att leta i menyn — och det ar ocksa svaret pa varfor de tomma tillstanden
+// INTE ska ha var sin nedladdningsknapp. En plats hogt upp, inte fem utspridda.
+test('nedladdningen finns i sidhuvudet, synlig direkt efter inloggning', { skip, timeout: 90000 }, async () => {
+  const s = await studion();
+  try {
+    const m = await s.page.evaluate(`(() => {
+      const el = document.querySelector('header .head-actions [data-ladda-desktop]');
+      if (!el) return { saknas: true };
+      const s2 = getComputedStyle(el);
+      return { text: el.textContent.replace(/\\s+/g, ' ').trim(), synlig: (${SYNLIG})(el),
+        href: el.getAttribute('href'), bakgrund: s2.backgroundColor };
+    })()`);
+    assert.ok(!m.saknas,
+      'ingen nedladdning i sidhuvudet — den som precis loggat in ska inte behova leta');
+    assert.equal(m.synlig.ok, true, `den syns inte (${m.synlig.skal})`);
+    assert.equal(m.href, '/api/downloads/windows', 'samma rutt som overallt annars');
+    assert.match(m.text, /Desktop/i, `texten ska namna Desktop — fick "${m.text}"`);
+    assert.notEqual(m.bakgrund, 'rgba(0, 0, 0, 0)', 'ostylad — bor regeln i ratt stilmall?');
+  } finally { await s.stang() }
+});
+
+// Sidhuvudet ar tranger: Fargschema, Anslut TikTok och provperiodens nedrakning (#174) bor
+// redan dar. En fjarde knapp far inte trycka ut nagon av dem ur fonstret.
+test('sidhuvudets ovriga knappar ryms fortfarande', { skip, timeout: 90000 }, async () => {
+  const s = await studion();
+  try {
+    const m = await s.page.evaluate(`(() => {
+      const rad = document.querySelector('header .head-actions');
+      if (!rad) return { saknas: true };
+      return [...rad.children].filter(el => !el.hidden).map(el => ({
+        namn: (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 22) || el.id || el.tagName,
+        synlig: (${SYNLIG})(el),
+      }));
+    })()`);
+    assert.ok(!m.saknas, 'kontrollmatning: .head-actions ska finnas');
+    const osynliga = m.filter(x => !x.synlig.ok).map(x => `${x.namn} (${x.synlig.skal})`);
+    assert.deepEqual(osynliga, [], 'knappar som trangts ut ur sidhuvudet: ' + osynliga.join(', '));
+  } finally { await s.stang() }
+});
+
 // ---- Prov 9 · mekanismen tal att vyn ritas om ---------------------------------------------------
 test('handlingen fungerar aven pa noder som skapats efter sidladdningen', { skip, timeout: 90000 }, async () => {
   // Hela orsaken till att download-client.js inte gick att ateranvanda: den binder

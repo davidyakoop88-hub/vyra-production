@@ -40,3 +40,10 @@
 .desktop-nedladdning small{color:#a996b3}
 .desktop-nedladdning-knapp{justify-self:start;padding:10px 16px;border-radius:9px;background:linear-gradient(135deg,#9235ed,#d93bdb);color:#fff;text-decoration:none;font:750 13px inherit;cursor:pointer}
 .desktop-nedladdning-knapp[aria-disabled="true"]{background:#2a1633;color:#a996b3;cursor:not-allowed}
+
+/* Nedladdningen i sidhuvudet. Speglar .head-actions button i studio.css — en <a> traffas inte
+   av den regeln, sa varden upprepas har i stallet for att sankas till en <button> (rutten
+   svarar 302 och ska ga att hogerklicka och spara). */
+.head-desktop{display:inline-flex;align-items:center;border:1px solid #352145;background:#130b1b;color:#c9cbd2;border-radius:7px;padding:9px 12px;font-size:9px;text-decoration:none;white-space:nowrap}
+.head-desktop:hover{border-color:#4c285e;color:#eadfee}
+.head-desktop[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
