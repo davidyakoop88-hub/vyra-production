@@ -75,7 +75,7 @@ function overlayPreviewHtml() {
   </div>` : ''}
   <div class="overlay-widget-gallery">
     <span class="section-header-eyebrow">Alla widgets</span>
-    <p>Klicka på en widget för att lägga till den i din layout, eller använd Preview/Configure/länk-knapparna på kortet.</p>
+    <p>Klicka på en widget för att lägga till den i din layout, eller använd Förhandsvisa/Anpassa/länk-knapparna på kortet.</p>
     <div class="search-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input class="widget-search" placeholder="Sök widget..."></div>
     <div class="widget-catalog"></div>
   </div>`;
@@ -361,7 +361,7 @@ function styleOverlayCatalogCards() {
 
     const configureBtn = document.createElement('span');
     configureBtn.className = 'btn btn-secondary btn-sm owg-configure';
-    configureBtn.textContent = '⚙ Configure';
+    configureBtn.textContent = '⚙ Anpassa';
     configureBtn.onclick = e => {
       e.stopPropagation();
       originalClick.call(btn, e);
@@ -371,7 +371,7 @@ function styleOverlayCatalogCards() {
 
     const previewBtn = document.createElement('span');
     previewBtn.className = 'btn btn-secondary btn-sm owg-preview';
-    previewBtn.textContent = '▶ Preview';
+    previewBtn.textContent = '▶ Förhandsvisa';
     previewBtn.onclick = e => {
       e.stopPropagation();
       // Bygger ur kortets katalognyckel. Forr kordes kortets RIKTIGA lagg-till-handler och
@@ -535,11 +535,11 @@ function renderConfigureModal() {
     document.body.append(modal);
   }
   modal.innerHTML = `<div class="owg-configure-panel">
-    <header><h3>Configure ${liveLayerName(w)}</h3><button class="btn btn-icon btn-ghost owg-configure-close" type="button">×</button></header>
+    <header><h3>Anpassa ${liveLayerName(w)}</h3><button class="btn btn-icon btn-ghost owg-configure-close" type="button">×</button></header>
     <div class="owg-configure-settings properties">${props()}</div>
   </div>
   <div class="owg-configure-preview">
-    <span class="section-header-eyebrow">Preview</span>
+    <span class="section-header-eyebrow">Förhandsvisning</span>
     <div class="owg-configure-preview-stage">${wh(w)}</div>
   </div>
   <button class="btn btn-primary owg-configure-done" type="button">Klar · lägg till i Layout</button>
