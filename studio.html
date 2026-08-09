@@ -121,6 +121,10 @@
   <script src="cloud-sync.js?v=20260807-scene"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
   <script src="billing-client.js?v=20260724-4"></script>
+  <!-- H-falt + proportionslas. Skarvar in i den RENDERADE panelen, inte i props-strangen:
+       fyra av panelbyggarna laddas dynamiskt av media.js och lagger alltid sina props-wrappar
+       utanpa de statiska skriptens. Se filens huvudkommentar. -->
+  <script src="vyra-proportioner.js?v=1"></script>
   <script src="overlay-access.js?v=20260807-scene"></script>
   <script>
     (function () {

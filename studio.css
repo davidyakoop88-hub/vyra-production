@@ -896,3 +896,11 @@ html.overlay-output .widget{
 .tom-lista i::after{content:"";position:absolute;left:54px;top:50%;transform:translateY(-50%);width:45%;height:10px;border-radius:5px;background:#241834}
 /* Basta tid-kortet spanner hela raden i tomt lage sa Statistik-ytan bar sig (>=80 %). */
 .stream-time-card{grid-column:1/-1;min-height:160px}
+
+/* Kedjelas mellan Bredd och Hojd. clear:both for att panelens etiketter flytar sina falt at
+   hoger — utan det hade knappen krupit upp bredvid Bredd-faltet. */
+.aspect-lock{clear:both;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0;padding:6px;border:1px solid #4c285e;border-radius:6px;background:#1b0d25;color:#d6bddf;font-size:9px;letter-spacing:.04em;line-height:1;cursor:pointer}
+.aspect-lock i{font-style:normal;font-size:11px}
+.aspect-lock:hover{border-color:#cd55f4;color:#fff}
+.aspect-lock.last{border-color:#bd3cff;background:#2a1140;color:#fff}
+.properties label[data-aspect-source] input[disabled]{opacity:.55;cursor:not-allowed}

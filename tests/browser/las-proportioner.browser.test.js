@@ -244,6 +244,32 @@ test('media ar last som default, innehallsstyrd ar olast', { skip, timeout: 1200
   assert.deepEqual(fel, [], 'defaultlagen:\n  ' + fel.join('\n  '));
 });
 
+// ---- Prov 10 · nytt media -> ny ratio ---------------------------------------------------------
+// Byter anvandaren fran en liggande fil till en staende ska laset folja den NYA filen. Gammal
+// ratio kvar hade strackt eller beskurit bilden tyst — samma klass av tyst fel som resten av
+// det har arbetet stangt.
+test('nytt media uppdaterar aspectRatio nar laset ar pa', { skip, timeout: 90000 }, async () => {
+  const page = await panelenFor(MEDIA);
+  try {
+    const m = await page.evaluate(async () => {
+      const w = state.widgets[0];
+      if (w.aspectLocked !== true) return { fel: 'media ska vara last som default (prov 8)' };
+      const fore = w.aspectRatio;
+      // Byt fil: ny mediaMeta + ny form pa den renderade noden.
+      const nod = document.querySelector('.canvas [data-id="p2"]');
+      if (nod) { nod.style.width = '200px'; nod.style.height = '400px' }
+      w.mediaMeta = { id: 'demo2', name: 'staende.png' };
+      window.dispatchEvent(new CustomEvent('vyra-media-bytt', { detail: { id: 'p2' } }));
+      await new Promise(r => setTimeout(r, 500));
+      return { fore, efter: state.widgets[0].aspectRatio };
+    });
+    assert.ok(!m.fel, m.fel);
+    assert.ok(m.efter > 0, 'aspectRatio ska finnas efter filbytet');
+    assert.notEqual(m.efter, m.fore,
+      `aspectRatio skulle folja den nya filen: var ${m.fore}, ar ${m.efter}`);
+  } finally { await page.close() }
+});
+
 // ---- Prov 9 · persistens genom monopolet ------------------------------------------------------
 test('last tillstand persisterar via writeActive', { skip, timeout: 90000 }, async () => {
   const page = await panelenFor(INNEHALL);
