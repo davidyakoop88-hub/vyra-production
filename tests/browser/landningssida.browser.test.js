@@ -21,6 +21,7 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const { servera } = require('../rigg/servera.js');
 const { KONTRAST, SYNLIG } = require('../fixtures/synlighet.js');
+const { FORBJUDNA_PASTAENDEN } = require('../fixtures/sprak-ordlista.js');
 
 const ROT = path.join(__dirname, '..', '..');
 
@@ -131,6 +132,14 @@ test('AGENCYPORTAL ligger kvar men dold', { skip, timeout: 60000 }, async () => 
 test('mini-sidfoten bar integritetspolicy, villkor och kontakt', { skip, timeout: 60000 }, async () => {
   const { context, page } = await sidan();
   try {
+    // En sidfot ligger langst ner. Att krava att den syns utan att man rullat vore att krava fel
+    // sak. Rullningen sker i ett EGET anrop: sidan har scroll-behavior:smooth, sa en matning i
+    // samma anrop laser rutan innan rullningen hunnit fram (uppmatt: y=1879 i ett 900px fonster).
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = 'auto';
+      document.querySelector('[data-mini-sidfot]')?.scrollIntoView({ block: 'center' });
+    });
+    await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
     const m = await page.evaluate(`(() => {
       const kontrast = ${KONTRAST};
       const fot = document.querySelector('[data-mini-sidfot]');
@@ -177,19 +186,30 @@ test('ingen navlank pekar pa nagot som inte finns', { skip, timeout: 60000 }, as
 });
 
 // ---- Prov 7-8 · inga pahittade personer, inga konkurrentnamn -----------------------------------
-test('inga pahittade personer eller konkurrentnamn i kallkoden', { skip: false }, () => {
-  const forbjudna = ['StreamKing', 'LiveQueen', 'TikPro', 'BetterTok', 'TikFinity'];
-  const filer = fs.readdirSync(ROT).filter(f => /\.(html|js|css)$/.test(f) && !/\.min\./.test(f));
+test('inga pahittade personer nagonstans, inga konkurrentpastaenden i anvandarvand text',
+  { skip: false }, () => {
+  const { personer, konkurrenter, anvandarvandaFiler } = FORBJUDNA_PASTAENDEN;
   const brott = [];
-  for (const fil of filer) {
+
+  // De uppdiktade personerna har ingen legitim anvandning nagonstans — inte ens i en kommentar.
+  const allaFiler = fs.readdirSync(ROT).filter(f => /\.(html|js|css)$/.test(f) && !/\.min\./.test(f));
+  for (const fil of allaFiler) {
     const s = fs.readFileSync(path.join(ROT, fil), 'utf8');
-    for (const ord of forbjudna) {
-      if (s.includes(ord)) brott.push(`${fil}: ${ord}`);
-    }
+    for (const ord of personer) if (s.includes(ord)) brott.push(`${fil}: ${ord} (uppdiktad person)`);
   }
+
+  // Konkurrentnamnen forekommer legitimt i sex JS-filer som tekniska kommentarer. Det ar
+  // PASTAENDENA mot en besokare som ska bort, inte kunskapen om marknaden.
+  for (const fil of anvandarvandaFiler) {
+    const full = path.join(ROT, fil);
+    if (!fs.existsSync(full)) continue;
+    const s = fs.readFileSync(full, 'utf8');
+    for (const ord of konkurrenter) if (s.includes(ord)) brott.push(`${fil}: ${ord} (konkurrentpastaende)`);
+  }
+
   assert.deepEqual(brott, [],
-    'Pahittade personer och overifierbara pastaenden om namngivna konkurrenter ska inte ligga ' +
-    'kvar i kallkoden — dar kan de tandas igen:\n  ' + brott.join('\n  '));
+    'Uppdiktade personer och overifierbara pastaenden om namngivna konkurrenter ska inte kunna ' +
+    'komma tillbaka:\n  ' + brott.join('\n  '));
 });
 
 // ---- Prov 9 · sidans ordning ---------------------------------------------------------------------

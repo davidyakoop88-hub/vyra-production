@@ -49,13 +49,16 @@ async function landningssidan(vy, zoom) {
 const MAT = `(() => {
   const el = document.querySelector('.price-fineprint');
   if (!el) return { saknas: true };
-  const knapp = el.previousElementSibling;
   const r = el.getBoundingClientRect();
+  const belopp = document.querySelector('[data-hero-pris-belopp]');
+  const uppmaning = document.querySelector('.hero-actions');
+  const avstand = e => e ? Math.round(r.top - e.getBoundingClientRect().bottom) : null;
   return {
     kontrast: (${KONTRAST})(el),
     text: el.textContent.replace(/\\s+/g, ' ').trim(),
-    knappText: knapp ? knapp.textContent.trim() : null,
-    avstandTillKnapp: knapp ? Math.round(r.top - knapp.getBoundingClientRect().bottom) : null,
+    beloppText: belopp ? belopp.textContent.replace(/\\s+/g, ' ').trim() : null,
+    avstandTillBelopp: avstand(belopp),
+    avstandTillUppmaning: avstand(uppmaning),
   };
 })()`;
 
@@ -65,8 +68,11 @@ test('finstilta klarar WCAG AA pa desktop', { skip, timeout: 60000 }, async () =
   try {
     const m = await page.evaluate(MAT);
     assert.ok(!m.saknas, 'kontrollmatning: .price-fineprint ska finnas');
-    assert.equal(m.knappText, 'Kom igång gratis',
-      'kontrollmatning: finstilta ska sitta direkt efter den knapp den kvalificerar');
+    // Finstilta flyttade fran priskortet till heron i PR 172. Provet mater darfor NARHET till det
+    // den kvalificerar i stallet for att kraeva ett visst syskon — det var avsikten hela tiden,
+    // formuleringen var bara bunden till den gamla markupen.
+    assert.match(m.beloppText || '', /15 USD/,
+      'kontrollmatning: finstilta ska sitta tillsammans med det belopp den kvalificerar');
     assert.equal(m.kontrast.klararAA, true,
       `kontrastkvot ${m.kontrast.kvot}:1 mot kravet ${m.kontrast.krav}:1 ` +
       `(${m.kontrast.px} px, ${m.kontrast.textFarg} mot ${m.kontrast.bakgrund}). ` +
@@ -103,9 +109,11 @@ test('finstilta namner bade provperiod och loppris', { skip, timeout: 60000 }, a
     assert.match(m.text, /15 USD/, `finstilta: "${m.text}"`);
     assert.match(m.text, /automatisk förnyelse/,
       'att abonnemanget fornyas av sig sjalvt ar det som maste sagas, inte antydas');
-    assert.ok(m.avstandTillKnapp !== null && m.avstandTillKnapp <= 24,
-      `finstilta ligger ${m.avstandTillKnapp} px fran knappen — en kvalificering langt bort ` +
+    assert.ok(m.avstandTillBelopp !== null && m.avstandTillBelopp <= 24,
+      `finstilta ligger ${m.avstandTillBelopp} px fran beloppet — en kvalificering langt bort ` +
       'lases inte tillsammans med det den kvalificerar');
+    assert.ok(m.avstandTillUppmaning !== null && m.avstandTillUppmaning <= 140,
+      `och ${m.avstandTillUppmaning} px fran narmaste uppmaning`);
   } finally { await context.close() }
 });
 

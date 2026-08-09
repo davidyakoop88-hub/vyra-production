@@ -42,4 +42,25 @@ const NAV_TITEL_ORD = ['Events', 'Analytics', 'Core', 'Insights', 'Automation'];
 const TILLATNA = ['Overlay', 'Layout', 'Sound Alerts', 'TTS Chat', 'Chatbot',
   'LIVE', 'PRO', 'AI', 'OBS', 'TikTok', 'Spotify', 'VYRA', 'Media'];
 
-module.exports = { KALLKOD_MONSTER, DOM_FRASER, NAV_TITEL_ORD, TILLATNA };
+
+// Pastaenden som togs bort ur landningssidan i PR 172 och inte far komma tillbaka.
+//
+// TVA GRUPPER, och skillnaden ar inte kosmetisk:
+//
+//   personer      tre uppdiktade streamers med citat, daribland "okade mina donationer med
+//                 40 %". De har ingen legitim anvandning nagonstans i repot — inte i UI, inte
+//                 i en kommentar, inte i ett prov. Forbjudna overallt.
+//
+//   konkurrenter  BetterTok och TikFinity stod i en jamforelsetabell med pastaenden om vad de
+//                 kan och inte kan. Namnen forekommer OCKSA i sex JS-filer som kommentarer som
+//                 beskriver konkurrentens beteende av tekniska skal ("matching TikFinity's
+//                 viewer-economy model"). Det ar arlig teknisk dokumentation, och att forbjuda
+//                 den hade tagit bort kunskap for att komma at ett pastaende. Forbjudna bara i
+//                 det en besokare laser.
+const FORBJUDNA_PASTAENDEN = {
+  personer: ['StreamKing', 'LiveQueen', 'TikPro'],
+  konkurrenter: ['BetterTok', 'TikFinity'],
+  anvandarvandaFiler: ['index.html', 'privacy.html', 'terms.html', 'status.html'],
+};
+
+module.exports = { KALLKOD_MONSTER, DOM_FRASER, NAV_TITEL_ORD, TILLATNA, FORBJUDNA_PASTAENDEN };

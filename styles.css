@@ -547,3 +547,16 @@ nav a:hover{color:#fff}
   .feature-intro h2,.steps>h2{font-size:34px}
   .cta h2{font-size:35px}
 }
+
+/* Prisbadge i heron. Priset lag i en egen sektion langre ner; nar den sektionen togs bort maste
+   priset folja med hit — det ar det enda av landningssidans innehall som bar ett loften.
+   Kvalificeringen behaller klassen .price-fineprint sa WCAG-vakten fran PR 171 mater samma sak. */
+.hero-pris{display:flex;flex-direction:column;align-items:center;gap:6px;margin:22px auto 0;max-width:520px;text-align:center}
+.hero-pris b{font:800 20px/1 var(--font-display);color:var(--text);letter-spacing:-.01em}
+.hero-pris b span{font:600 12px/1 inherit;color:var(--muted);margin-left:3px}
+
+/* Mini-sidfot. Enda vagen till integritetspolicyn, villkoren och supportadressen — de lag
+   tidigare bara i den stora sidfoten, som togs bort med sin sektion. En rad, inte en sektion. */
+.mini-sidfot{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;padding:14px 20px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted-dim)}
+.mini-sidfot a{color:var(--muted);text-decoration:none}
+.mini-sidfot a:hover{color:var(--text);text-decoration:underline}
