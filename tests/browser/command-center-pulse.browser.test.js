@@ -64,7 +64,7 @@ async function framsidan() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(
-    () => typeof home === 'function' && home.toString().includes('COMMAND CENTER'),
+    () => typeof home === 'function' && home.toString().includes('KOMMANDOCENTRAL'),
     null, { timeout: 20000 });
   await page.evaluate(() => { view = 'home'; render() });
   await page.waitForSelector('.home-welcome', { timeout: 10000 });
@@ -165,7 +165,10 @@ test('före första händelsen står tomtexten kvar', { skip }, async () => {
   });
   await page.close();
   assert.equal(ut.rader, 0, 'pulsen visade rader innan något hänt');
-  assert.match(ut.text, /Riktiga TikTok-händelser visas här/, 'den ärliga tomtexten försvann');
+  // Tomtexten ags av tests/fixtures/tomma-tillstand.js sedan Etapp 4 PR B — provet foljer
+  // fixturen i stallet for att hardkoda en fras som sprakandringar fallde en gang redan.
+  const { TOMMA } = require('../fixtures/tomma-tillstand.js');
+  assert.ok(ut.text.includes(TOMMA['oversikt-puls'].text), 'den ärliga tomtexten försvann');
 });
 
 test('teardown: pulsen tystnar efter utloggning', { skip }, async () => {

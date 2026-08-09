@@ -62,7 +62,7 @@
       const url = sceneUrl(n);
       // Ingen token = ingen lank. Ett tomt falt dar det brukar sta en URL later som ett fel i
       // appen; texten sager i stallet vad som faktiskt saknas och knappen gar dit man loser det.
-      if (!url) return `<small class="ae-scene-needs-token">Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.</small><button type="button" data-create-scene-link>Skapa säker OBS-länk</button>`;
+      if (!url) return `<small class="ae-scene-needs-token" data-tom="automatik-scenlank">Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.</small><button type="button" data-create-scene-link>Skapa säker OBS-länk</button>`;
       return `<input readonly value="${url}"><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button>`;
     };
     section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;

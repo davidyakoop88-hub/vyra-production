@@ -18,7 +18,7 @@ home = function () {
 
   return `<section class="home-welcome">
     <div>
-      <span class="eyebrow">VYRA LIVE COMMAND CENTER</span>
+      <span class="eyebrow">VYRA LIVE-KOMMANDOCENTRAL</span>
       <h2>Din live är redo att <em>glänsa.</em></h2>
       <p>Bygg din overlay och anslut en riktig TikTok LIVE i VYRA Desktop.</p>
     </div>
@@ -43,7 +43,7 @@ home = function () {
     <div class="alltime-head">
       <div><span class="eyebrow">TOTALT</span><h3>Din historik</h3></div>
       <div class="alltime-periods">
-        ${[['all', 'All time'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
+        ${[['all', 'Alltid'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
           .map(([v, etikett], i) => `<button data-alltime-period="${v}"${i === 0 ? ' class="vald"' : ''}>${etikett}</button>`).join('')}
       </div>
     </div>
@@ -51,7 +51,7 @@ home = function () {
       ${[['◆', 'GÅVOR', 'gifts'], ['💎', 'DIAMANTER', 'diamonds'], ['♥', 'LIKES', 'likes']]
         .map(item => `<div><small>${item[0]} ${item[1]}</small><strong data-alltime-stat="${item[2]}">—</strong></div>`).join('')}
     </div>
-    <p data-alltime-note>Hämtar din historik…</p>
+    <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
   <div class="command-grid">
     <article class="card live-preview-card">
@@ -71,8 +71,8 @@ home = function () {
     </article>
     <div class="command-side">
       <article class="card activity premium-activity" data-pulse>
-        <div class="card-head"><div><span class="eyebrow">LIVE PULSE</span><h2>Senaste händelser</h2></div></div>
-        <p>Riktiga TikTok-händelser visas här när VYRA Desktop är anslutet.</p>
+        <div class="card-head"><div><span class="eyebrow">LIVE-PULS</span><h2>Senaste händelser</h2></div></div>
+        <p data-tom="oversikt-puls">Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.</p>
       </article>
       <article class="card launch-card">
         <span class="eyebrow">SNABBSTART</span>
@@ -305,7 +305,7 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const workspace = window.VyraCloudSync?.current?.()?.workspace;
     // Inte inloggad eller ingen arbetsyta än: markupen står kvar med sitt streck. Det är ett normalt
     // läge i editorn och på en ny installation, inte ett fel att skrika om.
-    if (!workspace?.id || !window.VyraAuth?.api) return notera('Logga in för att se din historik.');
+    if (!workspace?.id || !window.VyraAuth?.api) return notera('Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.');
     try {
       const data = await window.VyraAuth.api(
         `/api/workspaces/${encodeURIComponent(workspace.id)}/stats?period=${encodeURIComponent(period)}`);

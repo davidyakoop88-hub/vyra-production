@@ -32,7 +32,7 @@ body {
 .owg-configure, .owg-preview, .owg-copylink, .owg-add, .owg-star,
 .owg-configure-close, .owg-configure-done, .live-layer-add,
 .ws-frame-gender-tabs button, .ws-tabs button, .pro-frame-picker button,
-.like-count-choice button, .overlay-link-bar button, .gift-picker-modal button,
+.overlay-link-bar button, .gift-picker-modal button,
 .ae-modal button, .ae-steps button, .pack-actions button, .delete, .x,
 .editor-video-list article > button, .sidebar-feedback-cta {
   border-radius: var(--radius-md);
@@ -86,7 +86,7 @@ body {
 .btn-secondary, .head-actions button, .editor-toolbar button, .command button,
 .action-item button, .flow-row > button, .property-actions button, .use-media,
 .owg-configure, .owg-preview, .owg-copylink, .ws-frame-gender-tabs button,
-.ws-tabs button, .like-count-choice button, .overlay-link-bar button,
+.ws-tabs button, .overlay-link-bar button,
 .gift-picker-modal button, .ae-modal button, .ae-steps button, #testGift, #testEvent {
   background: linear-gradient(145deg, var(--surface-1), #0d0814) !important;
   border: 1px solid var(--border-subtle) !important;
@@ -97,19 +97,13 @@ body {
 .command button:hover, .action-item button:hover, .flow-row > button:hover,
 .property-actions button:hover, .use-media:hover, .owg-configure:hover,
 .owg-preview:hover, .owg-copylink:hover, .ws-frame-gender-tabs button:hover,
-.ws-tabs button:hover, .like-count-choice button:hover, .overlay-link-bar button:hover,
+.ws-tabs button:hover, .overlay-link-bar button:hover,
 #testGift:hover, #testEvent:hover {
   border-color: var(--border-active) !important;
   color: #fff !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 0 1px rgba(177, 60, 255, .12) !important;
 }
 .ws-frame-gender-tabs button.active, .ws-tabs button.active,
-.like-count-choice button.active {
-  background: linear-gradient(135deg, var(--accent-violet), #b43dff) !important;
-  border-color: rgba(255, 255, 255, .2) !important;
-  color: #fff !important;
-}
-
 /* --- Ghost: low-priority icon/close actions --- */
 .btn-ghost, .owg-star, .owg-configure-close, .x, .editor-video-list article > button {
   background: rgba(255, 255, 255, .04) !important;

@@ -147,6 +147,41 @@ undertryckning av 409-vägens nya banderoll blir ofarlig. Fyra prov i
 Online-kedjan som vakter. Röda före fixen, mutationsprovade (`if(false)return` fäller prov 1–2).
 Kvarstår att verifiera i produktion efter deploy.
 
+## 6. Laddningsgrindar i browser-prov pekar på UI-kopia
+
+Sex command-center-prov väntar på att premium-vyn ersatt basvyn genom att läsa **kopiatexten** ur
+funktionskällan:
+
+```js
+() => typeof home === 'function' && home.toString().includes('KOMMANDOCENTRAL')
+```
+
+Mönstret brister vid varje språk- eller kopieändring. Bevisat i PR #154: när eyebrown byttes från
+"VYRA LIVE COMMAND CENTER" till "VYRA LIVE-KOMMANDOCENTRAL" stod grindarna evigt falska och
+**43 prov dog i 20-sekunderstimeouts** — inte för att något var trasigt, utan för att grindens
+signal var själva texten som byttes. Lagningen i #154 bytte bara strängen; skulden är mönstret.
+
+Filerna (grindraden i respektive fil):
+`command-center-alltime` :83 · `-diamonds` :73 · `-gifts` :73 · `-likes` :73 · `-pulse` :67 ·
+`-viewers` :76 — alla i `tests/browser/`.
+
+**Bevisa så här:**
+
+```bash
+git grep -nE "toString\(\)\.includes\('[A-ZÅÄÖ]" -- tests/
+```
+
+Sex träffar = skulden kvarstår. Noll = konverterad.
+
+**Åtgärd:** grinda på en strukturell markör i stället — ett stabilt klassnamn eller
+data-attribut som premium-vyn redan renderar (t.ex. att `.eyebrow`-elementet finns i `#view`),
+eller ett explicit `data-cc-ready`-attribut som `overview-premium.js` sätter. Egen städ-PR;
+uppmätt 2026-08-09 att inga ANDRA prov i sviten delar mönstret, så konverteringen är avgränsad
+till de sex filerna.
+
+Verifierad: 2026-08-09.
+>>>>>>> origin/main
+
 ---
 
 ## Sådant som är löst, men värt att minnas
