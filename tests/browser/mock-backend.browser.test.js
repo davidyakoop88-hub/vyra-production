@@ -72,21 +72,33 @@ async function studion(opts) {
 // writeActive ar den enda vagen in i tillstandet anda.
 const LAGE = async (page, { vantaPa = null, ms = 6000 } = {}) => {
   const slut = Date.now() + ms;
-  let sista;
+  let sista, forsok = 0;
   do {
+    forsok++;
     sista = await page.evaluate(async () => {
       const skriv = await window.VyraSessionState.writeActive('vyra-state', JSON.stringify({ widgets: [] }));
       return {
         skrivbar: skriv.ok === true,
         anledning: skriv.reason || null,
         inloggningsruta: !!document.querySelector('.auth-gate'),
+        // Diagnostik: forsta hardningen gissade pa langsamhet och hade fel — provet korde 9,3 s
+        // i CI och blev anda inte skrivbart. Utan de har faltet star nasta CI-fall lika tyst.
+        lokalSession: window.VyraAuth?.isLocalSession?.() ?? null,
+        authKravs: window.VyraAuth?.isRequired?.() ?? null,
+        anvandare: !!window.VyraAuth?.currentUser?.(),
       };
     });
+    sista.forsok = forsok;
     if (vantaPa === null || sista.skrivbar === vantaPa) return sista;
     await new Promise(r => setTimeout(r, 250));
   } while (Date.now() < slut);
   return sista;
 };
+
+// Alla falt i ett felmeddelande — CI visar bara det som star har.
+const beskriv = m => `skrivbar=${m.skrivbar} anledning=${m.anledning} forsok=${m.forsok} ` +
+  `lokalSession=${m.lokalSession} authKravs=${m.authKravs} anvandare=${m.anvandare} ` +
+  `inloggningsruta=${m.inloggningsruta}`;
 
 // ---- Prov 1 · av som default -------------------------------------------------------------------
 test('mock-backenden ar AV som default', { skip, timeout: 60000 }, async () => {
@@ -161,7 +173,7 @@ test('fejkad inloggning ger ett skrivbart lage', { skip, timeout: 90000 }, async
     assert.equal(m.inloggningsruta, false,
       'med ett giltigt me-svar ska ingen inloggningsruta visas');
     assert.equal(m.skrivbar, true,
-      `writeActive svarade "${m.anledning}" — inloggat lage ska na studio-committed`);
+      `inloggat lage ska na studio-committed. ${beskriv(m)}`);
   } finally { await s.stang() }
 });
 
@@ -227,7 +239,7 @@ test('bara ett uttryckligt authRequired:false oppnar skrivlaget', { skip, timeou
   try {
     const m = await LAGE(s.page, { vantaPa: true });
     assert.equal(m.skrivbar, true,
-      'authRequired:false ar det ENDA svar som ska ge en skrivbar lokal session');
+      'authRequired:false ar det ENDA svar som ska ge en skrivbar lokal session. ' + beskriv(m));
     assert.equal(m.inloggningsruta, false, 'och ingen inloggningsruta');
   } finally { await s.stang() }
 });
