@@ -915,3 +915,17 @@ html.overlay-output .widget{
 .vy-kontroll button{min-width:30px;height:26px;padding:0 9px;border:1px solid #4c285e;border-radius:6px;background:#160c1fef;color:#d6bddf;font-size:10px;line-height:1;cursor:pointer;backdrop-filter:blur(6px)}
 .vy-kontroll button:hover{border-color:#cd55f4;color:#fff}
 .vy-kontroll [data-zoom-niva]{min-width:42px;text-align:center;font-size:9px;color:#9a8da8;font-variant-numeric:tabular-nums}
+
+/* Rutnatet syns BARA under dragningen. Ett standigt synligt rutnat bryter mot det ramlosa
+   formspraket, och feedbacken behovs nar man drar — inte resten av tiden. */
+.snapp-rutnat{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .15s ease;background-image:linear-gradient(to right,#ffffff14 1px,transparent 1px),linear-gradient(to bottom,#ffffff14 1px,transparent 1px);background-size:8px 8px}
+.snapp-rutnat.visar{opacity:1}
+/* Selektorn maste bara .vy-kontroll button: den regeln har hogre specificitet (0,1,1) an
+   .snapp-vaxel (0,1,0) och at upp hela pa-laget tyst. Provet fangade det — pa och av sag
+   likadana ut i computed styles. */
+.vy-kontroll button.snapp-vaxel{display:grid;place-items:center;min-width:30px;height:26px;padding:0 7px;border:1px solid #cd55f4;border-radius:6px;background:linear-gradient(180deg,#a734e8,#7a1fb5);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+.vy-kontroll button.snapp-vaxel svg{width:14px;height:14px;display:block}
+/* Pa-laget ar FYLLT, inte bara en nyans morkare. Uppmatt pa skarm i 3x: skillnaden mellan
+   #2a1140 och #160c1f gick inte att se vid 26px hojd — vaxeln sag likadan ut i bada lagen. */
+.vy-kontroll button.snapp-vaxel.av{border-color:#4c285e;background:#160c1fef;color:#7d6e8a}
+.vy-kontroll button.snapp-vaxel:hover{border-color:#cd55f4}

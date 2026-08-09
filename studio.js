@@ -182,7 +182,15 @@ function bind(){
         if(s&&e.pointerId===s.pointerId){
           let nextLeft=s.l+(e.clientX-s.x)/s.scale;
           let nextTop=s.t+(e.clientY-s.y)/s.scale;
+          // moved raknas pa det RAA laget: en rorelse som snappen ater upp ar anda en rorelse,
+          // och suppressClick bygger pa att veta om anvandaren drog eller klickade.
           if(Math.abs(nextLeft-s.l)>.5||Math.abs(nextTop-s.t)>.5)s.moved=true;
+          // Snappen ar en ren berakning och den enda vagen in i positionerna. Den far medvetet
+          // INTE ligga i render() eller save() — da hade programmatiska lagen ocksa kvantiserats.
+          if(window.VyraSnapp){
+            let snappat=window.VyraSnapp.justera(el,nextLeft,nextTop,e,s.scale);
+            nextLeft=snappat.left;nextTop=snappat.top;
+          }
           el.style.left=Math.round(nextLeft)+'px';
           el.style.top=Math.round(nextTop)+'px';
         }
