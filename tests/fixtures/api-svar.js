@@ -76,6 +76,14 @@ const SVAR = {
       cancel_at_period_end: false,
     },
   }),
+  // Skrivbordsappens metadata. ?meta=1-grenen ar PUBLIK — den ligger fore sessionskontrollen i
+  // server/index.js, sa den svarar aven utloggad. Formen ar uppmatt mot produktionen 2026-08-09.
+  // Sjalva nedladdningen ar en 302 och provas inte har: 268 MB i en rigg ar ingen matning.
+  'GET /api/downloads/windows': () => ({
+    ok: true, version: '1.2.3',
+    sha256: '592261d4940d723bb09d3d3078f97e43b3c1b5c69a7699613f5a570927f3f3cd',
+    sizeBytes: 281005462, platform: 'Windows 10/11', format: 'EXE installer',
+  }),
   'GET /api/workspaces/:ws/stats': () => ({
     ok: true, period: 'all', totalt: { gifts: 0, diamonds: 0, likes: 0 }, dagar: [], toppGivare: [],
   }),

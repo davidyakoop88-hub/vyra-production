@@ -33,3 +33,11 @@
 .guide-faq-item p{margin:8px 0 0 18px;color:#c7b8cc;font-size:12px;line-height:1.6}
 
 @media(max-width:900px){.guide-steps{grid-template-columns:1fr}}
+
+/* OBS-kortet lovar VYRA Desktop. Handlingen ligger fore platsraden sa kortet laser
+   [vad det ar] -> [gor det] -> [var det finns]. Regeln maste bo HAR: studio.html laddar
+   inte styles.css, och guide.css injiceras av media.js tillsammans med guide.js. */
+.guide-feature-handling{display:block;width:fit-content;margin:4px 0 8px;padding:8px 13px;border-radius:9px;background:#2a1633;color:#eadfee;text-decoration:none;font:750 12px inherit;cursor:pointer}
+.guide-feature-handling:hover{background:#3a1f47}
+.guide-feature-handling[aria-disabled="true"]{color:#a996b3;cursor:not-allowed}
+.guide-feature-where{display:block}
