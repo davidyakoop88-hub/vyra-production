@@ -534,6 +534,7 @@ body:has(.editor-shell) .overlay-link-bar{left:64px!important;height:68px!import
 .editor-shell .canvas[data-layout-format="mobile"]::after{content:"MOBIL · 9:16"}
 .editor-shell .canvas[data-layout-format="widescreen"]::after{content:"16:9 · 1920 × 1080"}
 html.overlay-output .layout-format-picker,
+html.overlay-output .layout-format-status,
 html.overlay-output .canvas::after{display:none!important}
 @media(max-width:1100px){.layout-format-status{display:none}.layout-format-picker button{padding:5px 7px!important}}
 
