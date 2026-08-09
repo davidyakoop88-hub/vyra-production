@@ -37,18 +37,25 @@ const utanKommentarer = s => s.replace(/^\s*(\/\/|\*).*$/gm, '');
 
 // ---- Prov 1 · ett pris, en valuta -------------------------------------------------------------
 test('inget pris anges i kronor', () => {
-  // "60 sek" ar sekunder, inte valuta — mönstret kraver en siffra tatt fore kr/SEK/kronor.
-  const SEK = /\d[\d\s]{0,6}(kr\b|SEK\b|kronor\b)|\bkr\s*\/\s*(mån|månad)/gi;
+  // TVA monster, och det ar inte en snygghetsfraga. Forsta versionen hade SEK i det
+  // skiftlagesokansliga monstret och traffade "Kor live pa 60 sek" — sekunder, inte valuta.
+  // Valutakoden ar versal; ordet for tid ar det inte.
+  const MONSTER = [
+    /\d[\d\s]{0,6}(kr\b|kronor\b)|\bkr\s*\/\s*(mån|månad)/gi,   // 150 kr, kr/månad
+    /\d[\d\s]{0,6}SEK\b/g,                                       // 150 SEK, versalt med flit
+  ];
   const brott = [];
   for (const fil of ANVANDARVANDA) {
     const s = las(fil);
     if (s === null) continue;
     const rader = utanKommentarer(s).split('\n');
     rader.forEach((rad, n) => {
-      SEK.lastIndex = 0;
-      let m;
-      while ((m = SEK.exec(rad))) {
-        brott.push(`${fil}:${n + 1} — "${rad.slice(Math.max(0, m.index - 40), m.index + 60).trim()}"`);
+      for (const re of MONSTER) {
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(rad))) {
+          brott.push(`${fil}:${n + 1} — "${rad.slice(Math.max(0, m.index - 40), m.index + 60).trim()}"`);
+        }
       }
     });
   }

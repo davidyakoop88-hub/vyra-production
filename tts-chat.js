@@ -222,7 +222,7 @@
     }).join('');
     return '<option value="">Standardröst (lokal)</option>'
       + (local ? `<optgroup label="Lokala röster (den här datorn)">${local}</optgroup>` : '')
-      + (cloud ? `<optgroup label="☁ Molnröster (gratis, funkar överallt)">${cloud}</optgroup>` : '');
+      + (cloud ? `<optgroup label="☁ Molnröster (ingår i Premium, funkar överallt)">${cloud}</optgroup>` : '');
   }
 
   function specialUserRow(s, i) {
