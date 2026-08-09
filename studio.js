@@ -105,7 +105,10 @@ function vyraRenderWidgets(){
   return picked.widgets.map(wh).join('');
 }
 function layerList(){const layoutWidgets=window.VyraWidgets?window.VyraWidgets.layoutOnly(state.widgets):state.widgets;return layoutWidgets.length?layoutWidgets.slice().sort((a,b)=>(b.layer||1)-(a.layer||1)).map((w,i)=>layerItemMarkup(w,i)).join(''):'<div class="editor-layer-empty">Inga widgets på scenen ännu. Lägg till första objektet för att börja.</div>'}
-function props(){let w=liveWidget(selected);return w?`<h3>${w.type}</h3><label>Rubrik<input id="pt" value="${w.title??''}"></label><label>Värde<input id="pv" value="${w.value??''}"></label><button class="delete" id="del">Ta bort</button>`:'<div class="properties-empty"><strong>Välj en widget</strong><span>Klicka på en widget i vänsterlistan eller direkt på scenen för att redigera layout, färg och animation.</span></div>'}
+function props(){let w=liveWidget(selected);return w?`<h3>${w.type}</h3><label>Rubrik<input id="pt" value="${w.title??''}"></label><label>Värde<input id="pv" value="${w.value??''}"></label><button class="delete" id="del">Ta bort</button>`:/* Punkt och blanksteg i MARKUPEN, inte bara block i CSS:en. Rubrik och brodtext lag inline utan
+   avskiljare och lastes ihop till "Valj en widgetKlicka pa en widget..." — CSS lagade skarmen men
+   inte texten, och det ar samma strang en skarmlasare och en textextraktion far. */
+'<div class="properties-empty"><strong>Välj en widget.</strong> <span>Klicka på en widget i vänsterlistan eller direkt på scenen för att redigera layout, färg och animation.</span></div>'}
 function editor(){let currentWidget=liveWidget(selected);return `<div class="editor-shell"><div class="elements"><div class="elements-panel"><div class="elements-head"><div><small class="panel-kicker">Overlay</small><div class="panel-title">Live-lager</div></div><button class="elements-add" data-open-overlay title="Öppna overlay">＋</button></div><div class="catalog-notice elements-note"><b>Enkel byggyta</b><span>Välj en widget, justera till höger och håll scenen ren i mitten.</span></div><input class="widget-search" placeholder="Filter"><div class="editor-layer-list">${layerList()}</div><div class="elements-actions"><button data-open-overlay>＋ Add item</button></div><div class="widget-catalog"></div></div></div><div class="workarea"><div class="stage-topbar"><div class="stage-topbar-format"></div><div class="stage-topbar-center"></div><div class="stage-topbar-actions"></div></div><div class="stage-shell"><div class="stage-rail stage-rail-left"></div><div class="canvas-wrap"><div class="stage-caption"><span>Mobilskärm</span><b>1080 × 1920</b></div><div class="canvas-frame"><div class="canvas">${vyraRenderWidgets()}</div></div></div><div class="stage-rail stage-rail-right"></div></div></div><div class="properties"><div class="properties-head"><small class="panel-kicker">Inspector</small><div class="panel-title">${currentWidget?formatWidgetLabel(currentWidget):'Välj widget'}</div><p>${currentWidget?'Redigera vald widget med en egen panel som använder hela ytan för just den här widgeten.':'Välj en widget på scenen för att öppna dess egna inställningar.'}</p></div><div class="properties-body">${props()}</div></div></div>`}
 function flows(){return `<div class="flow-head"><h2>Automationer</h2><button class="primary" id="newFlow">＋ Ny automation</button></div><div class="flows">${state.flows.map((f,i)=>`<article class="card flow-row"><div class="node"><b>◇ ${f.trigger}</b><small>TRIGGER</small></div><div class="arrow">→</div><div class="node"><b>▶ ${f.action}</b><small>ACTION</small></div><button data-toggle="${i}">${f.on?'Aktiv':'Pausad'}</button></article>`).join('')}</div>`}
 function events(){return `<article class="card" style="padding:20px"><h2>Eventhistorik</h2><p data-tom="handelser-tom">Inga händelser ännu. Anslut TikTok LIVE så fylls historiken på här i realtid.</p><div class="tom-lista" aria-hidden="true"><i></i><i></i><i></i><i></i></div></article>`}
@@ -126,7 +129,11 @@ function vyraNavEtikett(v){
 // Selektorn tar BADA sorterna med flit. Ett vy-byte maste slacka aven extra-knapparna (Guide,
 // Spotify, Chatbot ...), annars ligger de kvar tanda: extras.js:11 rensar hela `aside button`,
 // men den har rensade bara [data-view] — och den asymmetrin gav tva tanda val samtidigt.
-function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view],[data-extra]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
+// Rensningen maste tacka aven navposter UTAN data-view. "Layout" ar ett <a href="layout.html">
+// (en helsidesladdning till studio.html?open=layout) och slapp darfor aldrig sin markering:
+// uppmatt 2026-08-09 lyste bade "Overlay" och "Layout" i overlay-vyn, och bade "Översikt" och
+// "Layout" pa Oversikt. Samma fel som A3 i Etapp 1, pa det enda element den fixen inte natte.
+function go(v){if(!v)return;view=v;document.querySelectorAll('[data-view],[data-extra],aside a.active').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
 function send(){window.VyraLive?.ingest?.({type:'gift',username:'TestGifter',name:'TestGifter',giftName:'Testgåva',coins:1,count:1});toast('Testgåva skickad')}
 function bind(){
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -250,6 +257,30 @@ document.addEventListener('click',e=>{
 },true);
 vyraSyncCrumb(document.querySelector('[data-view].active,[data-extra].active')
   ||document.querySelector('[data-view="home"]'));
+// Klicket racker inte hela vagen. Editor-vyn nas UTAN klick — via ?open=layout (snabbstartens
+// knapp) och via navets <a href="layout.html">, som ar en helsidesladdning. Uppmatt 2026-08-09:
+// brodsmulan stod kvar pa "VYRA / ÖVERSIKT" pa en sida som heter Layout, alltsa pa den forsta yta
+// en ny anvandare landar pa.
+//
+// Titeln ar den enda punkt alla vagar passerar — tio filer skriver #title, bland dem
+// layout-safe.js:150 som ager editor-vyn och aldrig ror render-kedjan (se kommentaren vid
+// render()). En observator pa #title fangar dem alla; tio hakar hade fangat nio.
+//
+// Oversikt ar undantaget: den visar medvetet en halsning i stallet for sidnamnet, och en halsning
+// far aldrig bli brodsmula.
+(function(){
+  const titel=$('#title');
+  if(!titel)return;
+  const syncFranTitel=()=>{
+    const crumb=$('#crumb');
+    const text=titel.textContent.trim();
+    if(!crumb||!text||(typeof view!=='undefined'&&view==='home'))return;
+    const ny='VYRA / '+text.toLocaleUpperCase('sv-SE');
+    if(crumb.textContent!==ny)crumb.textContent=ny;
+  };
+  new MutationObserver(syncFranTitel).observe(titel,{childList:true,characterData:true,subtree:true});
+  syncFranTitel();
+})();
 $('.connect')&&($('.connect').onclick=()=>$('#connectModal')?.showModal());
 $('.x')&&($('.x').onclick=()=>$('#connectModal')?.close());
 $('#connectNow')&&($('#connectNow').onclick=()=>toast('TikTok-anslutningen förbereds…'));

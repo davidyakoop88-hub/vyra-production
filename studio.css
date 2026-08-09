@@ -929,3 +929,8 @@ html.overlay-output .widget{
    #2a1140 och #160c1f gick inte att se vid 26px hojd — vaxeln sag likadan ut i bada lagen. */
 .vy-kontroll button.snapp-vaxel.av{border-color:#4c285e;background:#160c1fef;color:#7d6e8a}
 .vy-kontroll button.snapp-vaxel:hover{border-color:#cd55f4}
+
+/* Rubrik och brodtext ar tva olika saker och ska se ut som det. Bada var inline och renderades
+   ihop till en enda mening pa skarmen (uppmatt 2026-08-09 i tom profil). */
+.properties-empty strong{display:block;margin-bottom:5px;color:#e9d8f2}
+.properties-empty span{display:block}

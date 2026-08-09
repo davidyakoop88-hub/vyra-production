@@ -2,6 +2,12 @@ home = function () {
   const connected = Boolean(state.tiktok);
   const user = state.user || 'VYRA-konto';
   const connectionText = connected ? `TikTok sparad · ${state.tiktok}` : 'TikTok väntar';
+  // Statusraden pastod "Overlay redo" for varje anvandare, aven en med noll widgets — den var
+  // hardkodad. Nu speglar den state.widgets, som filen redan laser.
+  const widgetAntal = Array.isArray(state.widgets) ? state.widgets.length : 0;
+  const overlayText = widgetAntal
+    ? `Overlay · ${widgetAntal} ${widgetAntal === 1 ? 'widget' : 'widgets'}`
+    : 'Overlay tom';
   // Tredje faltet ar en STABIL hook for livedata. Index-klasserna (.s0…) beskriver plats i raden,
   // inte innebord — flyttas ett kort byter de betydelse under fotterna pa den som lyssnar.
   const emptyStats = [
@@ -24,8 +30,7 @@ home = function () {
     </div>
     <div class="live-status">
       <span><i class="${connected ? '' : 'offline'}"></i>${connectionText}</span>
-      <span><i></i>OBS redo</span>
-      <span><i></i>Overlay redo</span>
+      <span><i class="${widgetAntal ? '' : 'offline'}"></i>${overlayText}</span>
     </div>
   </section>
   <div class="stats premium-stats">
