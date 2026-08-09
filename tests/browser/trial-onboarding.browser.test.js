@@ -132,10 +132,17 @@ test('valkomsten stangs och aterkommer inte', { skip, timeout: 90000 }, async ()
 
 // ---- Prov 4-5 · nedrakningen -------------------------------------------------------------------
 test('nedrakningen visar ratt antal dagar kvar', { skip, timeout: 180000 }, async () => {
+  // KONTRAKTET MOTSA SIG SJALVT har, och det gick inte att se forran siffrorna sattes in:
+  // "1 dag tredje dagen" och "sista dagen nar mindre an 24 h kvar" beskriver SAMMA lage. Med 23 h
+  // kvar ar bada sanna, och bara den ena kan visas.
+  //
+  // Valet: under ett dygn sags "sista dagen". "1 dag kvar" med tre timmar kvar ar missvisande pa
+  // ett satt som kostar anvandaren pengar — hon tror att hon har imorgon pa sig.
   const fall = [
     { kvar: 71, vantat: /3 dagar/, namn: 'strax under tre dygn' },
     { kvar: 47, vantat: /2 dagar/, namn: 'strax under tva dygn' },
-    { kvar: 23, vantat: /1 dag/, namn: 'strax under ett dygn' },
+    { kvar: 25, vantat: /2 dagar/, namn: 'drygt ett dygn' },
+    { kvar: 23, vantat: /sista dagen/i, namn: 'strax under ett dygn' },
     { kvar: 5, vantat: /sista dagen/i, namn: 'fem timmar kvar' },
   ];
   for (const f of fall) {
@@ -171,16 +178,25 @@ test('sista dygnet visas en prompt med tva vagar', { skip, timeout: 90000 }, asy
 });
 
 test('"Paminn senare" stanger prompten for den har laddningen', { skip, timeout: 90000 }, async () => {
-  const s = await studion({ billing: billingSvar({ trialEnd: timmar(5) }) });
+  const svar = billingSvar({ trialEnd: timmar(5) });
+  const s = await studion({ billing: svar });
   try {
-    const m = await s.page.evaluate(async () => {
+    const m = await s.page.evaluate(async billing => {
       document.querySelector('[data-trial-prompt] [data-trial-senare]').click();
       await new Promise(r => setTimeout(r, 400));
-      return { kvar: !!document.querySelector('[data-trial-prompt]'),
+      const efterKlick = !!document.querySelector('[data-trial-prompt]');
+      // Att den forsvinner vid klick bevisar bara att den togs bort. Fragan ar om den HALLER sig
+      // borta: modulen ritar om vid varje entitlement-handelse och vid varje vybyte. En forsta
+      // version av det har provet slutade vid raden ovan — och da overlevde en mutation som tog
+      // bort hela uppskjutningskontrollen, eftersom ingenting nagonsin ritade om.
+      dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail: { billing } }));
+      await new Promise(r => setTimeout(r, 400));
+      return { kvar: efterKlick, aterkom: !!document.querySelector('[data-trial-prompt]'),
         lokal: localStorage.getItem('vyra-trial-prompt-uppskjuten'),
         session: sessionStorage.getItem('vyra-trial-prompt-uppskjuten') };
-    });
+    }, svar.kropp);
     assert.equal(m.kvar, false, 'prompten ska forsvinna');
+    assert.equal(m.aterkom, false, 'och inte komma tillbaka vid nasta omritning');
     assert.ok(m.session, 'uppskjutandet ska galla den har laddningen');
     assert.equal(m.lokal, null,
       'och INTE for alltid — sista dygnet ar precis nar pamminnelsen behovs');
@@ -189,8 +205,17 @@ test('"Paminn senare" stanger prompten for den har laddningen', { skip, timeout:
 
 // ---- Prov 8 · nar provperioden tagit slut ------------------------------------------------------
 test('utgangen provperiod moter varmare sprak', { skip, timeout: 90000 }, async () => {
+  // En AVSLUTAD provperiod: planen ar free, men prenumerationen finns kvar med sin status. Det ar
+  // det som skiljer den fran en ny anvandare som aldrig borjat.
+  //
+  // Anvandaren maste vara VERIFIERAD har. Mockens grundlage ar overifierad — och da visar grinden
+  // sin e-postgren i stallet, vilket forsta versionen av provet matte utan att marka det.
   const s = await studion({
-    billing: { status: 200, kropp: { ok: true, plan: 'free', subscription: null } },
+    billing: { status: 200, kropp: { ok: true, plan: 'free',
+      subscription: { status: 'canceled', trial_end: timmar(-2), cancel_at_period_end: false } } },
+    fel: { 'GET /api/auth/me': { status: 200, kropp: { ok: true, csrfToken: 'mock-csrf-token',
+      user: { id: 'u1', email: 'mock@vyra.test', displayName: 'Mock', emailVerified: true },
+      workspaces: [{ id: 'ws-mock', name: 'Mock' }] } } },
   });
   try {
     const m = await s.page.evaluate(() => {
@@ -198,6 +223,8 @@ test('utgangen provperiod moter varmare sprak', { skip, timeout: 90000 }, async 
       return g ? { text: g.textContent.replace(/\s+/g, ' ').trim() } : { saknas: true };
     });
     assert.ok(!m.saknas, 'kontrollmatning: grinden ska visas nar planen inte ar giltig');
+    assert.doesNotMatch(m.text, /Verifiera din e-post/,
+      'kontrollmatning: anvandaren ar verifierad, sa e-postgrenen ska inte visas');
     assert.match(m.text, /sparade|kvar|finns kvar/i,
       `att arbetet finns kvar ar det viktigaste beskedet i det laget: "${m.text}"`);
   } finally { await s.stang() }
@@ -288,5 +315,30 @@ test('trial-onboardingen ror inte skrivmonopolet', { skip, timeout: 90000 }, asy
     assert.equal(m.skrivningar, 0,
       'onboarding ar en vyinstallning. Gar den genom save() blir varje stangd valkomst ett ' +
       'angra-steg — samma separation som zoom och H-faltets visningsvarde.');
+  } finally { await s.stang() }
+});
+
+// ---- Prov 13 · teardown vid kontobyte ----------------------------------------------------------
+// Widgetkontraktet kraver teardown pa vyra-session-ended. Utan den bar nasta konto foregaende
+// kontos nedrakning — samma lacka som tatades i angra/gor om (#158). Provet fanns inte i forsta
+// omgangen, och da overlevde en mutation som tog bort hela teardown-kroppen.
+test('allt rivs nar sessionen avslutas', { skip, timeout: 90000 }, async () => {
+  const s = await studion({ sokvag: '/studio.html?billing=success',
+    billing: billingSvar({ trialEnd: timmar(5) }) });
+  try {
+    const m = await s.page.evaluate(async () => {
+      const finns = () => ['[data-trial-valkomst]', '[data-trial-nedrakning]', '[data-trial-prompt]']
+        .filter(v => document.querySelector(v));
+      const fore = finns();
+      dispatchEvent(new CustomEvent('vyra-session-ended'));
+      await new Promise(r => setTimeout(r, 400));
+      return { fore, efter: finns() };
+    });
+    assert.deepEqual(m.fore.sort(),
+      ['[data-trial-nedrakning]', '[data-trial-prompt]', '[data-trial-valkomst]'],
+      'kontrollmatning: alla tre ytorna ska finnas innan sessionen avslutas — annars bevisar ' +
+      'provet bara att tomt forblir tomt');
+    assert.deepEqual(m.efter, [],
+      'kvar efter kontobyte: ' + m.efter.join(', '));
   } finally { await s.stang() }
 });
