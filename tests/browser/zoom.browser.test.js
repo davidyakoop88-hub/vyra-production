@@ -253,7 +253,10 @@ test('kanvasen zoomar fran ovre vanstra hornet', { skip, timeout: 90000 }, async
     assert.equal(m.origin, '0px 0px',
       `origin ar ${m.origin} — med centrum som origin vandrar innehallet under zoomningen och ` +
       'dragmatten maste kompensera for en forskjutning som inte syns i skalan');
-    assert.ok(/top\s+left|0px\s+0px/.test(m.inline), 'origin ska sattas inline, inte via stilark');
+    // Webblasaren normaliserar sokordsformen: 'top left' lases tillbaka som 'left top'. Provet
+    // godtar bada serialiseringarna i stallet for att lasa in en av dem.
+    assert.ok(/^(0px 0px|left top|top left)$/.test(m.inline),
+      `origin ska sattas inline, inte via stilark — inline-vardet ar "${m.inline}"`);
   } finally { await context.close() }
 });
 
