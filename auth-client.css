@@ -1,1 +1,12 @@
 .auth-gate{position:fixed;inset:0;z-index:50000;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 15%,#2a0c3d,#07030b 55%)}.auth-gate>section{width:min(410px,100%);padding:28px;border:1px solid #512c65;border-radius:18px;background:#0e0715;box-shadow:0 30px 100px #000}.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:25px}.auth-brand i{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,#8e24d9,#d544f5);box-shadow:0 0 22px #b23be866;font-style:normal;font-weight:900}.auth-gate h1{margin:0 0 7px;font-size:25px}.auth-gate header p{margin:0 0 22px;color:#94839f}.auth-gate form{display:grid;gap:13px}.auth-gate label{display:grid;gap:6px;color:#b9a8c4;font-size:11px}.auth-gate input{padding:12px;border:1px solid #432552;border-radius:9px;background:#160b1e;color:#fff;font-size:14px}.auth-gate input:focus{outline:2px solid #a93ee2;border-color:transparent}.auth-gate form button{padding:13px;border:0;border-radius:9px;background:linear-gradient(90deg,#8e24d9,#cb43f4);color:#fff;font-weight:800}.auth-gate form button:disabled{opacity:.55}.auth-gate #authSwitch{width:100%;margin-top:12px;border:0;background:transparent;color:#c178e5}.auth-gate>section>small{display:block;margin-top:20px;text-align:center;color:#71647a;font-size:9px}.auth-gate #authError{min-height:16px;margin:0;color:#ff8295;font-size:11px}
+
+/* Losenordsstyrka. Stapeln ligger direkt under falten den beskriver, och fargen ar det snabba
+   beskedet medan texten ar det exakta. */
+.losenordsstyrka{margin:-6px 0 12px}
+.losenordsstyrka b{display:block;height:4px;border-radius:3px;background:#2a1b36;overflow:hidden}
+.losenordsstyrka i{display:block;height:100%;width:0;border-radius:3px;transition:width .18s ease,background .18s ease;background:#e0483c}
+.losenordsstyrka span{display:block;margin-top:6px;font-size:10px;color:#9a8da8}
+.losenordsstyrka[data-losenordsstyrka="ok"] i{background:#e0a33c}
+.losenordsstyrka[data-losenordsstyrka="stark"] i{background:#3cc98a}
+.losenordsstyrka[data-losenordsstyrka="stark"] span{color:#3cc98a}
+.losenordsstyrka[data-losenordsstyrka="tom"] span{min-height:13px}

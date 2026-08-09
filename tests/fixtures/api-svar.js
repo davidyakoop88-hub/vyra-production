@@ -18,7 +18,10 @@ const ANVANDARE = {
   id: 'u-mock',
   email: 'mock@vyra.test',
   display_name: 'Mock Streamer',
-  email_verified: true,
+  // Overifierad som grundlage: sa ser ett nyss skapat konto ut, och det ar det lage
+  // verifieringspamminnelsen finns for. Prov som vill ha motsatsen skickar in eget svar.
+  emailVerified: false,
+  email_verified_at: null,
 };
 const CSRF = 'mock-csrf-token';
 
@@ -36,6 +39,17 @@ const SVAR = {
   'GET /api/auth/me': () => ({
     ok: true, user: ANVANDARE, workspaces: [ARBETSYTA], csrfToken: CSRF,
   }),
+  // Serverns 201-svar. workspaces i PLURAL: finish(), cloud-sync.initialize() och
+  // entitlement-gate laser alla detail.workspaces[0], och singularformen kostade ett extra
+  // me-anrop per registrering (uppmatt).
+  'POST /api/auth/register': () => ({
+    ok: true, user: { ...ANVANDARE, email: 'ny@vyra.test', display_name: 'Ny Streamer' },
+    workspaces: [ARBETSYTA], csrfToken: CSRF,
+  }),
+  'POST /api/auth/login': () => ({
+    ok: true, user: ANVANDARE, workspaces: [ARBETSYTA], csrfToken: CSRF,
+  }),
+  'POST /api/auth/email/verify': () => ({ ok: true, emailVerified: true }),
   'POST /api/auth/logout': () => ({ ok: true }),
   'GET /api/status': () => ({ ok: true, connected: false, uptime: 0 }),
   'GET /api/state': () => ({ ok: true, state: LAYOUT, version: 1 }),
@@ -48,7 +62,11 @@ const SVAR = {
   'POST /api/workspaces/:ws/overlays': () => ({ ok: true, overlay: OVERLAY }),
   'GET /api/workspaces/:ws/overlays/:ov': () => ({ ok: true, overlay: { ...OVERLAY, state: LAYOUT } }),
   'PUT /api/workspaces/:ws/overlays/:ov': () => ({ ok: true, overlay: { ...OVERLAY, state: LAYOUT } }),
-  'GET /api/workspaces/:ws/billing': () => ({ ok: true, plan: 'free', status: 'active' }),
+  // premium/trialing i grundlaget. Med plan:'free' lagger entitlement-gate en betalvagg over
+  // Studion vid varje inloggad laddning — prov som vill se den skickar in eget svar.
+  'GET /api/workspaces/:ws/billing': () => ({
+    ok: true, plan: 'premium', subscription: { status: 'trialing' },
+  }),
   'GET /api/workspaces/:ws/stats': () => ({
     ok: true, period: 'all', totalt: { gifts: 0, diamonds: 0, likes: 0 }, dagar: [], toppGivare: [],
   }),
