@@ -97,6 +97,48 @@ Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om —
 återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
 kör alla prov.
 
+## 5. Synkkonflikt-banderollen kan tystas utan att lösa konflikten
+
+`push()` (`cloud-sync.js:63`) returnerar `{ok:false,status:409}` **utan att kasta** när servern
+svarar 409. "Den här datorn"-knappen i `showConflict()` (`cloud-sync.js:74`) kör
+`await push();await apply(payload());bar.remove()` i ett try-block — kedjan fortsätter alltså
+förbi den misslyckade pushen och tar bort banderollen ändå. Status stannar på `conflict`, kön
+ligger kvar, men UI:t visar ingenting.
+
+Dubbelfel: 409-vägen i `push()` försöker visa en ny banderoll, men `showConflict()` har vakten
+`if(document.querySelector('.cs-conflict'))return` — och den gamla banderollen finns fortfarande
+i DOM i det ögonblicket. Den nya undertrycks, den gamla tas bort strax därpå. Tyst permanent
+konflikt.
+
+Följden: användarens val når aldrig servern. Nästa lokala ändring skrivs till kön men synkas
+inte; andra enheter (och OBS, som hämtar från servern) ser den gamla versionen. Ingen märker
+något förrän layouten saknas på en annan enhet.
+
+"Online"-knappen delar **inte** felet: dess `apply()` kastar vid ogiltigt svar, så catch-grenen
+behåller banderollen.
+
+Reproducerad i produktion 2026-08-09 under synkkonflikt-lösningen efter Etapp 2: efter klicket
+hade servern fortfarande 4 widgets i stället för valda 5, `VyraCloudSync.status()` sa `conflict`
+— utan banderoll. Räddad med ett manuellt `VyraCloudSync.push()`, som gav `{ok:true}` och tömde
+kön.
+
+**Bevisa så här** (i Studions konsol, direkt efter klicket på "Den här datorn"):
+
+```js
+VyraCloudSync.status()   // 'conflict' fast banderollen ar borta = tyst konflikt
+const cur = VyraCloudSync.current();
+const svar = await VyraAuth.api(`/api/workspaces/${cur.workspace.id}/overlays/${cur.overlay.id}`);
+svar.overlay.state.widgets.length   // skiljer sig fran Studions antal = valet nadde aldrig servern
+```
+
+**Åtgärd:** kontrollera push-resultatet i knapphanteraren (`const r=await push(); if(!r.ok)return`
+före `bar.remove()`), eller ta bort banderollen först när status faktiskt bytt till `synced`.
+Provet ska verifiera både banderollens frånvaro OCH att servern tagit emot den valda versionen —
+banderollens frånvaro ensam är exakt det som ljög här. Rött browser-prov som simulerar dubbel-409
+först, enligt repo-praxis.
+
+Verifierad: 2026-08-09.
+
 ---
 
 ## Sådant som är löst, men värt att minnas
