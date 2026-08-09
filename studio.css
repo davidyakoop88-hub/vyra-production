@@ -526,6 +526,8 @@ body:has(.editor-shell) .overlay-link-bar{left:64px!important;height:68px!import
 .layout-format-picker button.active{border-color:#bb5cf2!important;background:linear-gradient(110deg,#7023a7,#a83cdd)!important;color:#fff!important;box-shadow:0 0 14px #a43bdd42}
 .layout-format-picker button.active small{color:#f0d9ff}
 .layout-format-status{margin-left:4px;color:#c3b8cc;font-size:9px;white-space:nowrap}
+.historik-knappar{display:flex;gap:5px;margin-left:8px}
+.historik-knappar button[disabled]{opacity:.35;cursor:default}
 #saveProject{border:1px solid #db72ff!important;background:linear-gradient(105deg,#8d24ee,#ce3cff)!important;color:#fff!important;font-weight:700!important;box-shadow:0 0 12px #a525ff55}
 #saveProject:hover{box-shadow:0 0 16px #a525ff80}
 .editor-shell .canvas{width:var(--layout-width,432px);height:var(--layout-height,768px);transition:width .22s ease,height .22s ease}

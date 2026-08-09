@@ -132,18 +132,29 @@ test('angra aterstaller senaste flytten, via writeActive', { skip, timeout: 9000
     const m = await page.evaluate(async () => {
       const knapp = document.querySelector('.editor-toolbar [data-angra]');
       if (!knapp) return { fel: 'knappen saknas' };
+      // Spion pa monopolets skrivvag: delegerar oforandrat, raknar bara. localStorage gar inte
+      // att lasa har — i oautentiserad miljo svarar writeActive {ok:false,'not-writable'} och
+      // skriver ingenting, sa kontraktet "aterstallning GENOM save()/writeActive" maste bevisas
+      // vid anropet, inte i lagringen.
+      const riktig = window.VyraSessionState.writeActive.bind(window.VyraSessionState);
+      const anrop = [];
+      window.VyraSessionState.writeActive = (nyckel, varde) => {
+        anrop.push({ nyckel, x: nyckel === 'vyra-state' ? JSON.parse(varde).widgets?.[0]?.x : null });
+        return riktig(nyckel, varde);
+      };
       knapp.click();
       await new Promise(r => setTimeout(r, 300));
+      window.VyraSessionState.writeActive = riktig;
       return {
         lage: { x: state.widgets[0].x, y: state.widgets[0].y },
-        persisterat: JSON.parse(localStorage.getItem('vyra-state') || '{}').widgets?.[0]?.x,
+        skrevs: anrop.filter(a => a.nyckel === 'vyra-state').map(a => a.x),
         canvasX: parseInt(document.querySelector('.canvas [data-id="u1"]')?.style.left || '-1', 10),
       };
     });
     assert.ok(!m.fel, m.fel);
     assert.deepEqual(m.lage, { x: 100, y: 100 }, 'angra ska aterstalla positionen fore flytten');
-    assert.equal(m.persisterat, 100,
-      'aterstallningen ska vara PERSISTERAD via save()/writeActive — inte bara i minnet');
+    assert.deepEqual(m.skrevs, [100],
+      'aterstallningen ska ga GENOM writeActive med det aterstallda laget — ingen ny skrivvag');
     assert.equal(m.canvasX, 100, 'canvasen ska rita det aterstallda laget');
   } finally { await page.close() }
 });
@@ -153,14 +164,16 @@ test('gor om aterstaller det angrade laget', { skip, timeout: 90000 }, async () 
   const page = await editorMedWidget();
   try {
     await FLYTTA(page, 250, 260);
+    // Farska queries efter varje klick: renderingen bygger om verktygsraden, och en
+    // franskopplad knappnods .disabled ar fruset — samma matfalla som formatstatus-provet.
     const m = await page.evaluate(async () => {
-      const angra = document.querySelector('.editor-toolbar [data-angra]');
-      const gorOm = document.querySelector('.editor-toolbar [data-gor-om]');
-      if (!angra || !gorOm) return { fel: 'knapparna saknas' };
-      angra.click();
+      const angra = () => document.querySelector('.editor-toolbar [data-angra]');
+      const gorOm = () => document.querySelector('.editor-toolbar [data-gor-om]');
+      if (!angra() || !gorOm()) return { fel: 'knapparna saknas' };
+      angra().click();
       await new Promise(r => setTimeout(r, 250));
-      const mellan = { x: state.widgets[0].x, gorOmDisablad: gorOm.disabled };
-      gorOm.click();
+      const mellan = { x: state.widgets[0].x, gorOmDisablad: gorOm().disabled };
+      gorOm().click();
       await new Promise(r => setTimeout(r, 250));
       return { mellan, efter: { x: state.widgets[0].x, y: state.widgets[0].y } };
     });
@@ -206,8 +219,14 @@ test('Ctrl+Z i ett textfalt ror inte layouten', { skip, timeout: 90000 }, async 
   try {
     await FLYTTA(page, 250, 260);
     const m = await page.evaluate(async () => {
-      const falt = document.querySelector('.properties input[type="text"], .properties input:not([type]), #likeTitle');
-      if (!falt) return { fel: 'hittar inget textfalt i panelen' };
+      // Ett SYNLIGT textfalt — selektorer utan synlighetsfilter traffade #pt, ett gomt falt
+      // vars focus() tyst misslyckas, och da star activeElement kvar pa body och vakten ser
+      // aldrig nagot fokus att respektera.
+      const falt = [...document.querySelectorAll('.properties input')].find(i => {
+        const r = i.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && (i.type === 'text' || !i.getAttribute('type'));
+      });
+      if (!falt) return { fel: 'hittar inget SYNLIGT textfalt i panelen' };
       falt.focus();
       const posterFore = window.VyraHistorik ? window.VyraHistorik.length() : null;
       falt.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }));
