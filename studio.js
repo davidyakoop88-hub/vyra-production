@@ -1,13 +1,28 @@
 document.addEventListener("error",event=>{const image=event.target;if(!(image instanceof HTMLImageElement)||image.dataset.vyraFallback)return;image.dataset.vyraFallback="1";image.src=image.src.includes("/assets/gifts/")?"assets/gifts/gift-placeholder.svg":"assets/images/test-profile.svg"},true);
 const $=s=>document.querySelector(s);
 function safeParseStorage(key,fallback){try{let raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(e){console.warn('[VYRA] Ogiltig localStorage för',key,e);return fallback}}
+// Skalan pa editorduken. ALLT som raknar om en pekarrorelse till dukpixlar maste ga via den har
+// - draget (rad 163), alla fyra storlekshandtagen och kommande zoom.
+//
+// Fallbacken pa getComputedStyle var lange dod: den returnerar ALLTID matrix(...), aldrig
+// scale(...), sa en zoom satt via CSS-klass gav tyst 1 och varje drag landade dubbelt fel.
+// Uppmatt 2026-08-09: scale(0.5) -> 0.5, matrix(0.5,0,0,0.5,0,0) -> 1. Bada laser nu.
 function getEditorCanvasScale(){
   let canvas=document.querySelector('.canvas');
   if(!canvas)return 1;
-  let transform=canvas.style.transform||getComputedStyle(canvas).transform||'';
-  let match=transform.match(/scale\(([\d.]+)\)/);
-  let scale=match?parseFloat(match[1]):1;
-  return Number.isFinite(scale)&&scale>0?scale:1;
+  return vyraScaleUrTransform(canvas.style.transform)
+    ??vyraScaleUrTransform(getComputedStyle(canvas).transform)
+    ??1;
+}
+// null nar strangen inte bar nagon skala, sa anroparen kan ga vidare till nasta kalla.
+// matrix(a,b,c,d,tx,ty): a ar x-skalan. matrix3d har den forst av sina sexton.
+function vyraScaleUrTransform(transform){
+  if(!transform||transform==='none')return null;
+  let m=transform.match(/scale\(\s*([\d.]+)/)
+    ||transform.match(/matrix(?:3d)?\(\s*(-?[\d.e+-]+)/);
+  if(!m)return null;
+  let scale=Math.abs(parseFloat(m[1]));
+  return Number.isFinite(scale)&&scale>0?scale:null;
 }
 // Aldrig localStorage direkt: agaren avgor vad som ar sakert att visa, och returnerar samma
 // objektreferens hela sidans livstid - allt har muterar den in-place.
