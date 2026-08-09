@@ -74,7 +74,13 @@ const GENERISK = { id: 'g1', type: 'templateTopLike', x: 40, y: 40, width: 300 }
 const VIDEO = { id: 'v1', type: 'video', x: 40, y: 40, width: 300, height: 450 };
 const CUSTOM = { id: 'c1', type: 'templateCustomImage', x: 40, y: 40, width: 300,
   mediaMeta: { id: 'demo', name: 'demo.png' } };
-const GIFT = { id: 'f1', type: 'templateTopGift', x: 40, y: 40, width: 300, giftSize: 60 };
+// Gavohandtaget har en mycket smalare yta an namnet antyder. Uppmatt 2026-08-09 over fyra
+// konfigurationer: det renderas BARA for Top Streak med en ram. Top Gift (med eller utan ram),
+// Top Streak utan ram och Top Streak med tema far alla premium-final.js renderare, som ritar
+// ett vanligt .resize-handle i stallet. Forsta fixturen gissade Top Gift och provet matte da
+// en tom sida i stallet for en storleksandring.
+const GIFT = { id: 'f1', type: 'templateTopStreak', x: 40, y: 40, width: 300, giftSize: 60,
+  streakFrame: 'ocean-oracle' };
 
 // Skrivbar session kravs — utan projektion svarar writeActive not-writable och proven hade matt
 // franvaron av en SPARNING i stallet for av ett varde (tech-debt-principen fran indikator-PR:en).
@@ -179,21 +185,21 @@ test('drag vid matrix-satt skala 0.5 landar ocksa ratt', { skip, timeout: 90000 
 });
 
 // ---- Prov 4 · helskale-handtaget (agare for generiska widgets) ---------------------------------
+// Invarianten, inte en hardkodad siffra: samma rorelse UTTRYCKT I DUKPIXLAR ska ge samma
+// resultat oavsett zoom. Ett prov som gissar widgetens inre bredd matte fel sak — templateTopLike
+// renderas 222px bred, inte 300 som dess width-nyckel sager.
 test('helskale-handtaget respekterar skalan', { skip, timeout: 90000 }, async () => {
   const page = await editorn(GENERISK);
+  const page2 = await editorn(GENERISK);
   try {
-    const ettTill1 = await dra(page, { valjare: '.resize-handle', skala: 1, dx: 100, dy: 0 });
-    const page2 = await editorn(GENERISK);
+    const vidEtt = await dra(page, { valjare: '.resize-handle', skala: 1, dx: 200, dy: 0 });
     const vidHalv = await dra(page2, { valjare: '.resize-handle', skala: 0.5, dx: 100, dy: 0 });
-    await page2.close();
-    // startScale 1 + rorelse/max(180, bredd). Bredden ar 300 i BADA fallen: den far inte tas ur
-    // en skalad rect, for da krymper namnaren och samma rorelse ger olika resultat.
-    assert.ok(Math.abs(ettTill1.widgetScale - (1 + 100 / 300)) <= 0.02,
-      `vid skala 1: forvantat ~1.33, fick ${ettTill1.widgetScale}`);
-    assert.ok(Math.abs(vidHalv.widgetScale - (1 + 200 / 300)) <= 0.02,
-      `vid skala 0.5 ska 100 skarmpixlar rakna som 200 dukpixlar mot en OSKALAD bredd 300: ` +
-      `forvantat ~1.67, fick ${vidHalv.widgetScale}`);
-  } finally { await page.close() }
+    assert.ok(vidEtt.widgetScale > 1, 'kontrollmatning: skalan ska ha andrats vid zoom 1');
+    assert.ok(Math.abs(vidHalv.widgetScale - vidEtt.widgetScale) <= 0.02,
+      `200 dukpixlar ska ge samma resultat vid bada zoomnivaerna: ${vidEtt.widgetScale} vid ` +
+      `zoom 1 mot ${vidHalv.widgetScale} vid zoom 0.5. Skiljer de sig ar antingen rorelsen ` +
+      `odelad eller startWidth taget ur en skalad rect.`);
+  } finally { await page.close(); await page2.close() }
 });
 
 // ---- Prov 5 · video-handtaget, bade X och Y ----------------------------------------------------
