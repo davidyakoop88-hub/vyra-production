@@ -180,7 +180,6 @@ uppmätt 2026-08-09 att inga ANDRA prov i sviten delar mönstret, så konverteri
 till de sex filerna.
 
 Verifierad: 2026-08-09.
->>>>>>> origin/main
 
 ---
 
