@@ -66,10 +66,17 @@
     picker.innerHTML =
       '<span>Format</span>' +
       '<button type="button" data-format="mobile">Mobil <small>9:16</small></button>' +
-      '<button type="button" data-format="widescreen">Dator <small>16:9 · 1920 × 1080</small></button>' +
-      '<output class="layout-format-status" aria-live="polite"></output>';
+      '<button type="button" data-format="widescreen">Dator <small>16:9 · 1920 × 1080</small></button>';
+
+    // Statusen ar SYSKON till pickern, inte barn. Inuti role="group" stod texten dar ett tredje
+    // klickbart val forvantas sta och saag ut som en knapp utan funktion. aria-live behalls sa
+    // skarmavlasare far formatbytet upplast precis som forut.
+    var status = document.createElement('output');
+    status.className = 'layout-format-status';
+    status.setAttribute('aria-live', 'polite');
 
     toolbar.prepend(picker);
+    picker.after(status);
     picker.addEventListener('click', function (event) {
       var button = event.target.closest('[data-format]');
       if (!button) return;
