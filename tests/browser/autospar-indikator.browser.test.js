@@ -70,12 +70,23 @@ async function editorn() {
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.render === 'function', null, { timeout: 20000 });
   await page.evaluate(async () => {
+    // SKRIVBAR session kravs: utan projektion ar mode varken studio- eller local-committed,
+    // och writeActive svarar {ok:false,'not-writable'} utan att skriva nagot alls. Da naar
+    // ingen sparning success-vagen och indikatorn har inget att visa — provet hade matt
+    // franvaron av en sparning, inte franvaron av en tidsstampel.
+    // projectLocalSession() ar samma vag desktopappen tar (cloud-sync.js:202, vyra-auth-local).
+    await window.VyraSessionState.projectLocalSession();
     view = 'editor';
     state.widgets = [{ id: 's1', type: 'templateTopLike', x: 100, y: 100, width: 260, likeCount: 5 }];
     selected = 's1';
     render();
     await new Promise(r => setTimeout(r, 500));
   });
+  // cloud-sync monterar .cloud-status fran sin sekundtickare, inte synkront med renderingen
+  // (cloud-sync.js:44-46 — lankraden finns annu inte nar den bootar). Utan den har vantan
+  // laste ett prov indikatorn innan den fanns och rapporterade "ingen .cloud-status" — ett
+  // riggfel som ser ut som ett produktfel.
+  await page.waitForFunction(() => !!document.querySelector('.cloud-status'), null, { timeout: 15000 });
   return page;
 }
 
@@ -141,7 +152,30 @@ test('tidpunkten uppdateras vid nasta sparning', { skip, timeout: 90000 }, async
   } finally { await page.close() }
 });
 
-// ---- Prov 4 · en indikator, inte tva ----------------------------------------------------------
+// ---- Prov 4 · indikatorn syns pa skarmen ------------------------------------------------------
+// Monterad rackte inte: forsta implementationen la statusen som eget rutnatsradsobjekt och den
+// hamnade pa y=902 i ett 900px fonster — under vikningen, osynlig precis som A10. En indikator
+// ingen ser bar ingen information.
+test('indikatorn ligger inom synligt fonster', { skip, timeout: 90000 }, async () => {
+  const page = await editorn();
+  try {
+    const m = await page.evaluate(async () => {
+      state.widgets[0].x = 240;
+      await save();
+      await new Promise(r => setTimeout(r, 500));
+      const r = document.querySelector('.cloud-status').getBoundingClientRect();
+      return { topp: Math.round(r.top), botten: Math.round(r.bottom), hojd: Math.round(r.height),
+               fonster: window.innerHeight };
+    });
+    assert.ok(m.hojd > 0, 'indikatorn ska ha hojd');
+    assert.ok(m.botten <= m.fonster,
+      `indikatorn slutar pa y=${m.botten} i ett ${m.fonster}px fonster — under vikningen, ` +
+      'alltsa osynlig for anvandaren');
+    assert.ok(m.topp >= 0, `indikatorn borjar pa y=${m.topp} — ovanfor fonstret`);
+  } finally { await page.close() }
+});
+
+// ---- Prov 5 · en indikator, inte tva ----------------------------------------------------------
 test('det finns exakt en sparindikator i UI:t', { skip, timeout: 90000 }, async () => {
   const page = await editorn();
   try {

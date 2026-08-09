@@ -194,7 +194,9 @@ function bind(){
       $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;saveThenRender()});
     }
     $('#testEvent')&&($('#testEvent').onclick=send);
-    $('#saveProject')&&($('#saveProject').onclick=()=>{save();toast('Projekt sparat')});
+    // #saveProject-hanteraren ar borttagen: autosparet skriver redan vid varje andring, och
+    // .cloud-status visar klockslaget. Stubben i overlay-preview.js far sta kvar tom — den
+    // finns for att den har raden en gang band den ovillkorligt.
   }
   if(view==='flows'){
     document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{state.flows[+b.dataset.toggle].on=!state.flows[+b.dataset.toggle].on;saveThenRender()});

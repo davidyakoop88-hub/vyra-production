@@ -26,7 +26,16 @@
   // rutan statt tom anda tills nasta statusbyte.
   let statusText=STATUS_TEXT.local;
   function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];paint();offlineNote()}
-  function paint(){document.querySelectorAll('.cloud-status').forEach(el=>{el.dataset.state=status;const span=el.querySelector('span');if(span)span.textContent=statusText})}
+  // Tidpunkten for senaste LYCKADE skrivning, satt av agarens egen signal nedan. Visas som
+  // suffix pa statusen i stallet for som eget element: .cloud-status ager redan fragan
+  // "ar det sparat?", och tva element for samma svar ar dubbelkontrollen Etapp 3 tog bort.
+  let sparatVid=null;
+  const klockan=ms=>new Date(ms).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  function paint(){document.querySelectorAll('.cloud-status').forEach(el=>{el.dataset.state=status;if(sparatVid){el.dataset.sparatVid=String(sparatVid)}else{delete el.dataset.sparatVid}const span=el.querySelector('span');if(span)span.textContent=sparatVid?`${statusText} · sparat ${klockan(sparatVid)}`:statusText})}
+  // Agaren annonserar varje lyckad skrivning (session-state.js). Autosparet syns darmed aven i
+  // lokalt lage, dar molnstatusen aldrig nar 'synced' — det ar precis det laget en oinloggad
+  // anvandare ser, och det som fick Spara-knappen att verka nodvandig.
+  root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();paint()});
   function offlineNote(){
     const bar=document.querySelector('.overlay-link-bar');
     let note=document.querySelector('.cs-offline-note');
