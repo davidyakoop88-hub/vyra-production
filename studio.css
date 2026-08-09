@@ -904,3 +904,14 @@ html.overlay-output .widget{
 .aspect-lock:hover{border-color:#cd55f4;color:#fff}
 .aspect-lock.last{border-color:#bd3cff;background:#2a1140;color:#fff}
 .properties label[data-aspect-source] input[disabled]{opacity:.55;cursor:not-allowed}
+
+/* Vykontroll (zoom, och snappvaxeln i nasta PR). position:sticky, INTE absolute: .workarea
+   rullar, och en absolut placerad kontroll ankras mot innehallets botten — den hade hamnat
+   under vecket precis som autospar-indikatorn gjorde innan A10-fixen. Den negativa
+   marginalen lyfter tillbaka den over duken sa den inte lagger till rullhojd. */
+.workarea{position:relative}
+.vy-kontroll{position:sticky;bottom:12px;z-index:6;display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-46px 12px 0 0;pointer-events:none}
+.vy-kontroll>*{pointer-events:auto}
+.vy-kontroll button{min-width:30px;height:26px;padding:0 9px;border:1px solid #4c285e;border-radius:6px;background:#160c1fef;color:#d6bddf;font-size:10px;line-height:1;cursor:pointer;backdrop-filter:blur(6px)}
+.vy-kontroll button:hover{border-color:#cd55f4;color:#fff}
+.vy-kontroll [data-zoom-niva]{min-width:42px;text-align:center;font-size:9px;color:#9a8da8;font-variant-numeric:tabular-nums}
