@@ -56,7 +56,10 @@ state.flows??=[{trigger:'Gava mottagen',action:'Visa gift alert',on:true},{trigg
 // Asynkron sedan skrivmonopolet: agaren tar ett origin-gemensamt las, sa tva flikar aldrig
 // skriver samtidigt. Kastar aldrig - utfallet lases ur resultatet, och saveThenRender() nedan ar
 // vagen for allt som ritar om efterat.
-const save=()=>window.VyraSessionState.writeActive('vyra-state',JSON.stringify(state));
+// notera() fore skrivningen: historiken diffar layoutprojektionen och pushar laget FORE
+// mutationen (fran forra renderns baslinje). Ingen ny skrivvag — writeActive ager fortsatt
+// varje beständig skrivning ensam.
+const save=()=>{window.VyraHistorik?.notera?.();return window.VyraSessionState.writeActive('vyra-state',JSON.stringify(state))};
 // Ett anrop i taget. Drag-slut, egenskapsfalt och radera kan alla utlosas tva ganger innan den
 // forsta skrivningen slappt laset, och utan detta koar de bakom varandra och renderar var sin gang.
 let saveInFlight=null;
