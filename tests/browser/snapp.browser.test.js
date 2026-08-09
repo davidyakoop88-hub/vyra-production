@@ -245,10 +245,20 @@ test('snappvaxeln syns och stanger av snappen', { skip, timeout: 90000 }, async 
       'vaxeln ska ha en yta pa skarmen, inte bara finnas i DOM');
     assert.ok(synlig.iKontrollen, 'vaxeln ska sitta i vykontrollen, pa platsen #162 reserverade');
     assert.equal(synlig.tryckt, 'true', 'snapp ar pa som default');
-    await page.evaluate(async () => {
-      document.querySelector('[data-snapp-vaxel]').click();
-      await new Promise(r => setTimeout(r, 200));
+    // aria-pressed racker inte: forsta versionen skilde lagen med #2a1140 mot #160c1f, och den
+    // skillnaden gick inte att se pa skarm vid 26px hojd. Vaxeln maste SYNAS vara av.
+    const utseende = await page.evaluate(async () => {
+      const v = document.querySelector('[data-snapp-vaxel]');
+      const las = () => { const cs = getComputedStyle(v);
+        return cs.backgroundImage + '|' + cs.backgroundColor + '|' + cs.borderTopColor };
+      const pa = las();
+      v.click();
+      await new Promise(r => setTimeout(r, 250));
+      return { pa, av: las() };
     });
+    assert.notEqual(utseende.pa, utseende.av,
+      `pa- och av-laget ser likadana ut (${utseende.pa}) — en vaxel man inte ser laget pa ar ` +
+      'lika oanvandbar som en knapp utan verkan');
     const m = await dra(page, { malLeft: 205, malTop: 61 });
     assert.equal(m.left, 205, `med snappen avstangd ska laget vara orort — blev ${m.left}`);
   } finally { await context.close() }
