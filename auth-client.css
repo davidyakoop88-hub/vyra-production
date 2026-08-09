@@ -31,3 +31,12 @@
 .trial-prompt span{font-size:12px;line-height:1.55;color:#d6bddf}
 .trial-prompt button{padding:10px;border:1px solid #4c285e;border-radius:9px;background:#160c1f;color:#d6bddf;font-size:12px;font-weight:700;cursor:pointer}
 .trial-prompt button.primary{border:0;background:linear-gradient(135deg,#9235ed,#d93bdb);color:#fff}
+
+/* Vagen till skrivbordsappen i Installningar. Speglar .privacy-settings pa samma sida sa
+   de tva sektionerna laser som ett par, inte som tva olika appar. */
+.desktop-nedladdning{display:grid;gap:15px;margin-top:16px;padding:18px;border:1px solid #432451;border-radius:14px;background:#0d0612}
+.desktop-nedladdning header div{display:grid;gap:4px}
+.desktop-nedladdning b{color:#fff}
+.desktop-nedladdning small{color:#a996b3}
+.desktop-nedladdning-knapp{justify-self:start;padding:10px 16px;border-radius:9px;background:linear-gradient(135deg,#9235ed,#d93bdb);color:#fff;text-decoration:none;font:750 13px inherit;cursor:pointer}
+.desktop-nedladdning-knapp[aria-disabled="true"]{background:#2a1633;color:#a996b3;cursor:not-allowed}

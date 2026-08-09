@@ -59,8 +59,15 @@
       const workspace = detail.workspaces[0];
       const billing = await window.VyraAuth.api(`/api/workspaces/${workspace.id}/billing`);
       const active = billing.plan === 'premium' && ['active', 'trialing', 'past_due'].includes(billing.subscription?.status);
-      if (!active) showGate(detail, billing);
-      else dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail: { ...detail, billing } }));
+      // Bada utfallen sags hogt. Tidigare fanns bara ok-handelsen, och da gick "inte behorig"
+      // inte att skilja fran "svaret har inte kommit an" — en lyssnare som vill veta planen
+      // maste kunna lita pa att tystnad betyder just tystnad.
+      if (!active) {
+        dispatchEvent(new CustomEvent('vyra-entitlement-blocked', { detail: { ...detail, billing } }));
+        showGate(detail, billing);
+      } else {
+        dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail: { ...detail, billing } }));
+      }
     } catch (error) {
       mounted = false;
       window.toast?.(error.message);

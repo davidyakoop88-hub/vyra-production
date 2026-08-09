@@ -20,7 +20,7 @@
     { icon: '🎵', title: 'Spotify', where: 'Spotify', body: 'Koppla ditt Spotify-konto oberoende av TikTok LIVE. Visa vilken låt som spelas i chatten med "!song", låt moderatorer byta låt med "!skip", eller koppla en gåva till att spela en specifik låt.' },
     { icon: '🎬', title: 'Vip-paket', where: 'Vip-widget', badge: 'PRO', body: 'Färdiga, tema-paketerade video-effekter (t.ex. Koi Pearl Lagoon, Masquerade Ball) du kan lägga direkt på din overlay-canvas — praktiskt för battle-boosts och liknande visuella effekter.' },
     { icon: '🎨', title: 'Färgschema', where: 'Knappen "🎨 Färgschema" högst upp', body: 'Sätt bakgrund, highlight, text, sekundär text och typsnitt EN gång. Alla widgets som har "Ärv färgschema" ikryssat använder automatiskt dessa värden istället för sina egna — praktiskt för att hålla hela overlayen visuellt enhetlig.' },
-    { icon: '🎥', title: 'OBS-koppling', where: 'Automatik → OBS-anslutning', body: 'Låt Actions byta OBS-scen eller aktivera/inaktivera en OBS-källa automatiskt, t.ex. vid en stor gåva. Kräver VYRA Desktop (skrivbordsappen) och att OBS WebSocket Server är påslaget i OBS.' },
+    { icon: '🎥', title: 'OBS-koppling', where: 'Automatik → OBS-anslutning', body: 'Låt Actions byta OBS-scen eller aktivera/inaktivera en OBS-källa automatiskt, t.ex. vid en stor gåva. Kräver VYRA Desktop (skrivbordsappen) och att OBS WebSocket Server är påslaget i OBS.', handling: { text: 'Ladda ner VYRA Desktop', attribut: 'data-ladda-desktop href="/api/downloads/windows"' } },
     { icon: '📊', title: 'Statistik', where: 'Statistik', body: 'Se din tillväxt över tid, dina största supportrar, och (efter några sändningar) rekommendationer för bästa tid att gå live baserat på dina egna tidigare sändningar.' }
   ];
 
@@ -39,7 +39,7 @@
       <div class="guide-steps">${STEPS.map(s => `<article class="guide-step"><b>${s.n}</b><div><h4>${s.title}</h4><p>${s.body}</p></div></article>`).join('')}</div>
     </section>
     <section class="guide-features-head"><h3>Funktioner i VYRA</h3><p>Klicka dig fram i menyn till vänster — här ser du vad varje sida gör.</p></section>
-    <div class="guide-features-grid">${FEATURES.map(f => `<article class="card guide-feature"><header><span class="guide-feature-icon">${f.icon}</span><h4>${f.title}${f.badge ? ` <b class="nav-badge ${f.badge === 'PRO' ? 'nav-badge-pro' : f.badge === 'LIVE' ? 'nav-badge-live' : 'nav-badge-ai'}">${f.badge}</b>` : ''}</h4></header><p>${f.body}</p><small class="guide-feature-where">📍 ${f.where}</small></article>`).join('')}</div>
+    <div class="guide-features-grid">${FEATURES.map(f => `<article class="card guide-feature"><header><span class="guide-feature-icon">${f.icon}</span><h4>${f.title}${f.badge ? ` <b class="nav-badge ${f.badge === 'PRO' ? 'nav-badge-pro' : f.badge === 'LIVE' ? 'nav-badge-live' : 'nav-badge-ai'}">${f.badge}</b>` : ''}</h4></header><p>${f.body}</p>${f.handling ? `<a class="guide-feature-handling" ${f.handling.attribut}>${f.handling.text}</a>` : ''}<small class="guide-feature-where">📍 ${f.where}</small></article>`).join('')}</div>
     <section class="card guide-faq-card">
       <header><h3>Vanliga frågor</h3></header>
       <div class="guide-faq">${FAQ.map(f => `<details class="guide-faq-item"><summary>${f.q}</summary><p>${f.a}</p></details>`).join('')}</div>
