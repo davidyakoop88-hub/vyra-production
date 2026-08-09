@@ -199,8 +199,16 @@
     workspace=null;overlay=null;lastLocal=null;syncing=false;initialized=false;setStatus('local')}
   root.VyraSessionState?.registerTeardown?.('cloud-sync',resetSession);
   addEventListener('vyra-session-ended',resetSession);
-  addEventListener('vyra-auth-local',()=>{root.VyraSessionState.projectLocalSession()});
-  addEventListener('vyra-auth-ready',e=>initialize(e.detail));addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>setStatus('offline'));
+  let authHanterad=false;
+  addEventListener('vyra-auth-local',()=>{authHanterad=true;root.VyraSessionState.projectLocalSession()});
+  addEventListener('vyra-auth-ready',e=>{authHanterad=true;initialize(e.detail)});
+  setTimeout(()=>{
+    if(authHanterad)return;
+    authHanterad=true;
+    if(root.VyraAuth?.isLocalSession?.()){root.VyraSessionState.projectLocalSession();return}
+    const d=root.VyraAuth?.lastDetail?.();
+    if(d?.workspaces?.length)initialize(d);
+  },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>setStatus('offline'));
   function startTicker(){if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal){lastLocal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
