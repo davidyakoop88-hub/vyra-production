@@ -6,13 +6,18 @@
     const gate = document.createElement('div');
     gate.className = 'entitlement-gate';
     const verified = detail.user?.emailVerified !== false;
+  // Har en prenumeration funnits? Da ar det en avslutad provperiod, inte en ny anvandare — och
+  // det viktigaste beskedet ar da att arbetet finns kvar.
+  const hattProv = !!billing?.subscription;
     gate.innerHTML = `<section>
       <div class="auth-brand"><i>V</i><b>VYRA</b></div>
       <small>KONTO KLART</small>
-      <h1>${verified ? 'Aktivera VYRA Premium' : 'Verifiera din e-post'}</h1>
-      <p>${verified
-        ? 'Börja med 3 dagar gratis. Därefter kostar Premium 15 USD per månad och kan sägas upp när som helst.'
-        : 'Vi behöver bekräfta din e-post innan en provperiod eller betalning kan startas.'}</p>
+      <h1>${!verified ? 'Verifiera din e-post' : hattProv ? 'Provperioden är slut' : 'Aktivera VYRA Premium'}</h1>
+      <p>${!verified
+        ? 'Vi behöver bekräfta din e-post innan en provperiod eller betalning kan startas.'
+        : hattProv
+        ? 'Dina overlays och inställningar är sparade och finns kvar. Aktivera Premium så fortsätter allt som vanligt.'
+        : 'Börja med 3 dagar gratis. Därefter kostar Premium 15 USD per månad och kan sägas upp när som helst.'}</p>
       <strong>${detail.user?.displayName || detail.user?.email || 'Ditt VYRA-konto'}</strong>
       <button class="primary entitlement-start">${verified ? 'Starta 3 dagar gratis' : 'Skicka verifieringsmejl'}</button>
       <button class="entitlement-logout">Logga ut</button>
@@ -47,7 +52,7 @@
     if (mounted || !detail?.workspaces?.length) return;
     mounted = true;
     if (detail.user?.isPlatformAdmin) {
-      dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail }));
+      dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail: { ...detail, billing: null } }));
       return;
     }
     try {
@@ -55,7 +60,7 @@
       const billing = await window.VyraAuth.api(`/api/workspaces/${workspace.id}/billing`);
       const active = billing.plan === 'premium' && ['active', 'trialing', 'past_due'].includes(billing.subscription?.status);
       if (!active) showGate(detail, billing);
-      else dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail, billing }));
+      else dispatchEvent(new CustomEvent('vyra-entitlement-ok', { detail: { ...detail, billing } }));
     } catch (error) {
       mounted = false;
       window.toast?.(error.message);
