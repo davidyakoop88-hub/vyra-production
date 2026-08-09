@@ -139,6 +139,14 @@ först, enligt repo-praxis.
 
 Verifierad: 2026-08-09.
 
+**ÅTGÄRDAD 2026-08-09:** `if(!r.ok)return` i `[data-cs-local]`-hanteraren — banderollen tas bara
+bort när skrivningen bevisligen lyckats; står den kvar kan användaren välja igen, så vaktens
+undertryckning av 409-vägens nya banderoll blir ofarlig. Fyra prov i
+`tests/browser/cloud-sync-conflict.browser.test.js` (äkta cloud-sync.js i riktig Chrome): dubbel-409,
+409-sedan-ok (bevisar att servern tagit emot den valda versionen), rak lyckad push och
+Online-kedjan som vakter. Röda före fixen, mutationsprovade (`if(false)return` fäller prov 1–2).
+Kvarstår att verifiera i produktion efter deploy.
+
 ---
 
 ## Sådant som är löst, men värt att minnas
