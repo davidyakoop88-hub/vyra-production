@@ -51,7 +51,7 @@ home = function () {
       ${[['◆', 'GÅVOR', 'gifts'], ['💎', 'DIAMANTER', 'diamonds'], ['♥', 'LIKES', 'likes']]
         .map(item => `<div><small>${item[0]} ${item[1]}</small><strong data-alltime-stat="${item[2]}">—</strong></div>`).join('')}
     </div>
-    <p data-alltime-note>Hämtar din historik…</p>
+    <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
   <div class="command-grid">
     <article class="card live-preview-card">
@@ -72,7 +72,7 @@ home = function () {
     <div class="command-side">
       <article class="card activity premium-activity" data-pulse>
         <div class="card-head"><div><span class="eyebrow">LIVE-PULS</span><h2>Senaste händelser</h2></div></div>
-        <p>Riktiga TikTok-händelser visas här när VYRA Desktop är anslutet.</p>
+        <p data-tom="oversikt-puls">Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.</p>
       </article>
       <article class="card launch-card">
         <span class="eyebrow">SNABBSTART</span>
@@ -305,7 +305,7 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const workspace = window.VyraCloudSync?.current?.()?.workspace;
     // Inte inloggad eller ingen arbetsyta än: markupen står kvar med sitt streck. Det är ett normalt
     // läge i editorn och på en ny installation, inte ett fel att skrika om.
-    if (!workspace?.id || !window.VyraAuth?.api) return notera('Logga in för att se din historik.');
+    if (!workspace?.id || !window.VyraAuth?.api) return notera('Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.');
     try {
       const data = await window.VyraAuth.api(
         `/api/workspaces/${encodeURIComponent(workspace.id)}/stats?period=${encodeURIComponent(period)}`);

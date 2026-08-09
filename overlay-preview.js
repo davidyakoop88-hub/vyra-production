@@ -67,7 +67,7 @@ function overlayPreviewHtml() {
   return `<div class="page-header section-head"><div><h2>Overlay</h2><p>Widgets du lägger till här dyker upp direkt i din layout.</p></div></div>
   <div class="overlay-preview-sidebar">
     <span class="section-header-eyebrow">Vad som visas nu · ${visibleWidgets.length}</span>
-    <div class="overlay-widget-list">${visibleWidgets.length ? visibleWidgets.map(w => `<article><i>◇</i><span>${liveLayerName(w)}</span><button type="button" data-copy-widget-link="${w.id}" title="Kopiera endast denna widget">Kopiera länk</button></article>`).join('') : `<div class="empty-state">${emptyStateIcon}<h3>Inga widgets ännu</h3><p>Lägg till en widget från katalogen nedan så visas den här direkt.</p></div>`}</div>
+    <div class="overlay-widget-list">${visibleWidgets.length ? visibleWidgets.map(w => `<article><i>◇</i><span>${liveLayerName(w)}</span><button type="button" data-copy-widget-link="${w.id}" title="Kopiera endast denna widget">Kopiera länk</button></article>`).join('') : `<div class="empty-state" data-tom="overlay-tom">${emptyStateIcon}<h3>Inga widgets ännu.</h3> <p>Lägg till en från katalogen nedan så visas den här direkt.</p></div>`}</div>
   </div>
   ${stageHtml ? `<div class="overlay-live-preview">
     <span class="section-header-eyebrow">Så här ser den ut · ${stageName}</span>

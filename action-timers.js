@@ -46,7 +46,7 @@
       const action = state.actions.find(a => a.id === t.actionId);
       return `<article class="${t.enabled ? '' : 'off'}"><i>⏱</i><span><b>Var ${t.intervalMinutes} min</b><small>→ ${action ? action.name : 'Ingen Action vald'}</small></span><button data-toggle-timer="${t.id}">${t.enabled ? 'Aktiv' : 'Pausad'}</button><button data-delete-timer="${t.id}">×</button></article>`;
     }).join('');
-    section.innerHTML = `<header><h3>Timer</h3><span>${(state.timers || []).length} timers</span></header><p class="ae-timer-hint">Kör en Action med jämna mellanrum medan du är live. Timern börjar räkna när TikTok-anslutningen blir aktiv.</p><button id="newAeTimer" class="primary">＋ Ny Timer</button><div class="ae-list">${rows || '<p>Inga timers ännu.</p>'}</div>`;
+    section.innerHTML = `<header><h3>Timer</h3><span>${(state.timers || []).length} timers</span></header><p class="ae-timer-hint">Kör en Action med jämna mellanrum medan du är live. Timern börjar räkna när TikTok-anslutningen blir aktiv.</p><button id="newAeTimer" class="primary">＋ Ny Timer</button><div class="ae-list">${rows || '<p data-tom="automatik-timers">Inga timers ännu. Skapa en som kör en Action på schema.</p>'}</div>`;
     anchor.after(section);
     wireTimers();
   }
