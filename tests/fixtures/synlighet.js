@@ -67,6 +67,54 @@ const MATT = `(el) => {
     andelAvVyn: { b: +(r.width / innerWidth).toFixed(2), h: +(r.height / innerHeight).toFixed(2) } };
 }`;
 
+// Lasbarhet, inte bara synlighet. WCAG 2.1 AA kraver kontrastkvot 4.5:1 for normaltext och 3:1
+// for stor text (>= 24px, eller >= 18.66px fet). Ett element kan vara fullt synligt och anda
+// olasligt — det ar samma familj som resten av filen: syns det, och gar det att TA TILL SIG?
+//
+// Genomskinlig text och genomskinlig bakgrund blandas mot det som ligger bakom, annars raknar
+// formeln pa en farg som ingen ser.
+const KONTRAST = `(el) => {
+  if (!el) return null;
+  function kanal(v){ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4) }
+  function lum(rgb){ return 0.2126*kanal(rgb[0]) + 0.7152*kanal(rgb[1]) + 0.0722*kanal(rgb[2]) }
+  function tolka(s){
+    const m = String(s).match(/rgba?\\(([^)]+)\\)/);
+    if (!m) return null;
+    const d = m[1].split(',').map(x => parseFloat(x.trim()));
+    return { rgb: [d[0], d[1], d[2]], a: d.length > 3 ? d[3] : 1 };
+  }
+  const blanda = (fram, bak) => [0,1,2].map(i => Math.round(fram.rgb[i]*fram.a + bak[i]*(1-fram.a)));
+  function bakgrundBakom(n){
+    while (n && n !== document.documentElement) {
+      const b = tolka(getComputedStyle(n).backgroundColor);
+      if (b && b.a > 0) return blanda(b, [0,0,0]);
+      n = n.parentElement;
+    }
+    return [0,0,0];
+  }
+  const cs = getComputedStyle(el);
+  // Gradienttext: fargen ar genomskinlig med flit och bilden bakom ar sjalva texten. Kvoten gar
+  // inte att rakna pa en farg som inte finns — svaret ar "kan inte matas", inte "faller".
+  // (Uppmatt: landningssidans rubrik gav 1:1 och sag ut som ett brott.)
+  if ((cs.webkitBackgroundClip === 'text' || cs.backgroundClip === 'text') &&
+      /rgba\\(0, 0, 0, 0\\)|transparent/.test(cs.color)) {
+    return { omatbar: 'gradienttext (background-clip:text)', klararAA: null };
+  }
+  const bak = bakgrundBakom(el);
+  const fram = tolka(cs.color);
+  if (!fram) return null;
+  const text = blanda(fram, bak);
+  const L1 = lum(text), L2 = lum(bak);
+  const px = parseFloat(cs.fontSize), fet = parseInt(cs.fontWeight, 10) >= 700;
+  const storText = px >= 24 || (fet && px >= 18.66);
+  const kvot = +(((Math.max(L1,L2) + 0.05) / (Math.min(L1,L2) + 0.05)).toFixed(2));
+  return {
+    kvot, px: +px.toFixed(1), vikt: cs.fontWeight, radavstand: cs.lineHeight,
+    textFarg: cs.color, bakgrund: 'rgb(' + bak.join(',') + ')',
+    storText, krav: storText ? 3 : 4.5, klararAA: kvot >= (storText ? 3 : 4.5),
+  };
+}`;
+
 // Bekvamlighet: en enda evaluate som ger alla fyra for en selektor.
 function granskaKalla(selektor, foralderSelektor) {
   return `() => {
@@ -81,4 +129,4 @@ function granskaKalla(selektor, foralderSelektor) {
   }`;
 }
 
-module.exports = { SYNLIG, INOM, UTSEENDE, MATT, granskaKalla };
+module.exports = { SYNLIG, INOM, UTSEENDE, MATT, KONTRAST, granskaKalla };
