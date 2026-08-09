@@ -90,7 +90,9 @@ test('varje tomt tillstand ar taggat och bar exakt fixturens text', { skip, time
           .filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 })
           .map(el => ({ nyckel: el.dataset.tom, text: el.textContent.replace(/\s+/g, ' ').trim() })));
 
-      const funnaNycklar = funna.map(f => f.nyckel).sort();
+      // Unika nycklar: samma rost far upprepas (scenlanken star pa alla tio scenrader) —
+      // det ar TEXTEN som ska vara identisk, vilket loopen nedan provar per forekomst.
+      const funnaNycklar = [...new Set(funna.map(f => f.nyckel))].sort();
       const vantade = [...nycklar].sort();
       if (JSON.stringify(funnaNycklar) !== JSON.stringify(vantade)) {
         fel.push(`${vy}: forvantade [${vantade}] men fann [${funnaNycklar}] — otaggade roster kvar`);

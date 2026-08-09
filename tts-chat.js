@@ -286,7 +286,7 @@
       <section class="card tts-special">
         <header><h3>Specialanvändare</h3></header>
         <small class="ae-timer-hint">Tillåt/blockera specifika användare och ge dem egna röster.</small>
-        <div id="ttsSpecialRows">${(s.specialUsers || []).map(specialUserRow).join('') || '<p class="ae-timer-hint">Inga specialanvändare tillagda.</p>'}</div>
+        <div id="ttsSpecialRows">${(s.specialUsers || []).map(specialUserRow).join('') || '<p class="ae-timer-hint" data-tom="tts-special">Inga specialanvändare tillagda. Lägg till en för egen röst eller blockering.</p>'}</div>
         <button type="button" id="ttsAddSpecial" class="primary">＋ Lägg till användare</button>
       </section>
       <section class="card tts-tester">
@@ -295,7 +295,7 @@
       </section>
       <section class="card tts-logs">
         <header><h3>TTS-logg</h3><button type="button" id="ttsClearLog">Rensa</button></header>
-        <div class="tts-log-list">${log.length ? log.map(l => `<div class="tts-log-row"><small>${new Date(l.time).toLocaleTimeString('sv-SE')}</small><b>${l.nickname || l.username}:</b><span>${l.text}</span></div>`).join('') : '<p class="ae-timer-hint">Inget upplästs ännu.</p>'}</div>
+        <div class="tts-log-list">${log.length ? log.map(l => `<div class="tts-log-row"><small>${new Date(l.time).toLocaleTimeString('sv-SE')}</small><b>${l.nickname || l.username}:</b><span>${l.text}</span></div>`).join('') : '<p class="ae-timer-hint" data-tom="tts-logg">Inget uppläst ännu. När chatten läses upp visas raderna här.</p>'}</div>
       </section>
       <section class="card tts-spam">
         <header><h3>Spamskydd</h3></header>

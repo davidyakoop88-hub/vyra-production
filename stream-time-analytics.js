@@ -86,7 +86,7 @@
     const pad = n => String(n).padStart(2, '0');
     const card = best
       ? `<article class="card stream-time-card"><h2>Bästa tid att gå live</h2><p>${best.dowName} ${pad(best.start)}:00–${pad(best.end)}:00${best.pct > 0 ? ` fångar +${best.pct}% jämfört med ditt snitt` : ''}</p><small>Baserat på ${days} dagars aktivitet</small></article>`
-      : `<article class="card stream-time-card"><h2>Bästa tid att gå live</h2><p>Behöver minst ${MIN_DAYS} dagars livedata för en riktig rekommendation (har ${days} just nu).</p></article>`;
+      : `<article class="card stream-time-card"><h2>Bästa tid att gå live</h2><p data-tom="statistik-basta-tid">Behöver minst ${MIN_DAYS} dagars livedata (har ${days} just nu). Sänd ${MIN_DAYS} dagar i rad så räknar VYRA ut din bästa sändningstid.</p></article>`;
     // Anchored to the END of the string (the outer .analytics-grid wrapper's own closing tag),
     // not the first '</div>' anywhere in the HTML — a plain first-match replace would silently
     // misplace this card the moment analytics()'s own markup grows a nested <div> before that point.
