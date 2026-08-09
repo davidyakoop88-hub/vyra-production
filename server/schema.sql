@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   workspace_id uuid PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
   stripe_subscription_id text UNIQUE, stripe_price_id text, plan text NOT NULL DEFAULT 'free'
     CHECK(plan IN ('free','premium')),
-  status text NOT NULL DEFAULT 'inactive', current_period_end timestamptz,
+  status text NOT NULL DEFAULT 'inactive', current_period_end timestamptz, trial_end timestamptz,
   cancel_at_period_end boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS billing_events (
@@ -182,6 +182,10 @@ CREATE INDEX IF NOT EXISTS goal_runtime_metric_idx ON goal_runtime(overlay_id,me
 -- and every production row predates this column. DEFAULT 0 starts them all at the same place; the
 -- first write after the migration is 1 and every client sees it as newer.
 ALTER TABLE goal_runtime ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0;
+-- CREATE TABLE IF NOT EXISTS hoppas over for en tabell som redan finns, sa en ny kolumn nar
+-- ALDRIG en befintlig databas utan den har raden. Utan den hade webhookens INSERT kraschat pa
+-- "column trial_end does not exist" i produktion, och varje prenumerationshandelse gatt forlorad.
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS trial_end timestamptz;
 
 -- One row per event that actually moved a goal. The FK matters more here than anywhere else in this
 -- file: this is the highest-volume table in the system, and without ON DELETE CASCADE a deleted

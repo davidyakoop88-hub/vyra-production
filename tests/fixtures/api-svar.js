@@ -64,8 +64,17 @@ const SVAR = {
   'PUT /api/workspaces/:ws/overlays/:ov': () => ({ ok: true, overlay: { ...OVERLAY, state: LAYOUT } }),
   // premium/trialing i grundlaget. Med plan:'free' lagger entitlement-gate en betalvagg over
   // Studion vid varje inloggad laddning — prov som vill se den skickar in eget svar.
+  // Speglar entitlement(): plan, limits, subscription med status, current_period_end,
+  // trial_end och cancel_at_period_end. FASTA datum — riggen far inte bero pa nar den kors,
+  // och prov som vill ha "snart slut" satter sina egna varden.
   'GET /api/workspaces/:ws/billing': () => ({
-    ok: true, plan: 'premium', subscription: { status: 'trialing' },
+    ok: true, plan: 'premium',
+    subscription: {
+      status: 'trialing',
+      current_period_end: '2026-08-12T06:00:00.000Z',
+      trial_end: '2026-08-12T06:00:00.000Z',
+      cancel_at_period_end: false,
+    },
   }),
   'GET /api/workspaces/:ws/stats': () => ({
     ok: true, period: 'all', totalt: { gifts: 0, diamonds: 0, likes: 0 }, dagar: [], toppGivare: [],
