@@ -18,7 +18,7 @@ home = function () {
 
   return `<section class="home-welcome">
     <div>
-      <span class="eyebrow">VYRA LIVE COMMAND CENTER</span>
+      <span class="eyebrow">VYRA LIVE-KOMMANDOCENTRAL</span>
       <h2>Din live är redo att <em>glänsa.</em></h2>
       <p>Bygg din overlay och anslut en riktig TikTok LIVE i VYRA Desktop.</p>
     </div>
@@ -43,7 +43,7 @@ home = function () {
     <div class="alltime-head">
       <div><span class="eyebrow">TOTALT</span><h3>Din historik</h3></div>
       <div class="alltime-periods">
-        ${[['all', 'All time'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
+        ${[['all', 'Alltid'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
           .map(([v, etikett], i) => `<button data-alltime-period="${v}"${i === 0 ? ' class="vald"' : ''}>${etikett}</button>`).join('')}
       </div>
     </div>
@@ -71,7 +71,7 @@ home = function () {
     </article>
     <div class="command-side">
       <article class="card activity premium-activity" data-pulse>
-        <div class="card-head"><div><span class="eyebrow">LIVE PULSE</span><h2>Senaste händelser</h2></div></div>
+        <div class="card-head"><div><span class="eyebrow">LIVE-PULS</span><h2>Senaste händelser</h2></div></div>
         <p>Riktiga TikTok-händelser visas här när VYRA Desktop är anslutet.</p>
       </article>
       <article class="card launch-card">
