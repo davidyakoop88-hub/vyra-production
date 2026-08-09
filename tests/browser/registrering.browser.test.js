@@ -112,9 +112,13 @@ test('losenordsstyrkan visas och uppdateras medan man skriver', { skip, timeout:
       };
       return { tom: await skriv(''), kort: await skriv('abc'), langre: await skriv('abcdefghij') };
     });
-    assert.ok(m.kort, 'malaren [data-losenordsstyrka] saknas');
-    assert.notEqual(m.kort.niva, m.langre.niva,
-      `nivan andrades inte mellan 3 och 10 tecken (bada "${m.kort.niva}") — mataren reagerar inte`);
+    assert.ok(m.kort, 'mataren [data-losenordsstyrka] saknas');
+    // Bada ar "svag" under kravet — det ar RATT. Det som ska rora sig ar stapeln och beskedet om
+    // hur mycket som saknas. Forsta versionen av provet jamforde nivanamnet och matte darfor fel sak.
+    assert.notDeepEqual({ b: m.kort.bredd, t: m.kort.text }, { b: m.langre.bredd, t: m.langre.text },
+      `varken stapel eller besked andrades mellan 3 och 10 tecken: ${JSON.stringify(m.kort)}`);
+    assert.match(m.kort.text, /9 tecken till/, `vid 3 tecken: "${m.kort.text}"`);
+    assert.match(m.langre.text, /2 tecken till/, `vid 10 tecken: "${m.langre.text}"`);
   } finally { await s.stang() }
 });
 
@@ -248,7 +252,7 @@ test('verifieringslanken ger en bekraftelse som namner Premium', { skip, timeout
   try {
     const m = await s.page.evaluate(async () => {
       await new Promise(r => setTimeout(r, 1200));
-      const el = document.querySelector('.auth-modal, .auth-gate');
+      const el = document.querySelector('.security-modal, .auth-gate');
       return el ? { text: el.textContent.replace(/\s+/g, ' ').trim(),
         knapp: (el.querySelector('button.primary') || {}).textContent } : { saknas: true };
     });
@@ -266,7 +270,7 @@ test('bekraftelseskarmens knapp skiljer inloggad fran utloggad', { skip, timeout
   try {
     utloggadKnapp = await utloggad.page.evaluate(async () => {
       await new Promise(r => setTimeout(r, 1200));
-      return (document.querySelector('.auth-modal button.primary, .auth-gate button.primary') || {}).textContent;
+      return (document.querySelector('.security-modal button.primary, .auth-gate button.primary') || {}).textContent;
     });
   } finally { await utloggad.stang() }
 
@@ -276,7 +280,7 @@ test('bekraftelseskarmens knapp skiljer inloggad fran utloggad', { skip, timeout
   await page.goto(`${rigg.bas}/studio.html?verify-email=demo-token`, { waitUntil: 'load' });
   await page.evaluate(() => new Promise(r => setTimeout(r, 1800)));
   const inloggadKnapp = await page.evaluate(() =>
-    (document.querySelector('.auth-modal button.primary, .auth-gate button.primary') || {}).textContent);
+    (document.querySelector('.security-modal button.primary, .auth-gate button.primary') || {}).textContent);
   await context.close(); await rigg.stang();
 
   assert.ok(utloggadKnapp, 'utloggad: ingen knapp hittades');
