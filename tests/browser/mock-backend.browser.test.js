@@ -64,14 +64,29 @@ async function studion(opts) {
   return { rigg, context, page, stang: async () => { await context.close(); await rigg.stang() } };
 }
 
-const LAGE = async page => page.evaluate(async () => {
-  const skriv = await window.VyraSessionState.writeActive('vyra-state', JSON.stringify({ widgets: [] }));
-  return {
-    skrivbar: skriv.ok === true,
-    anledning: skriv.reason || null,
-    inloggningsruta: !!document.querySelector('.auth-gate'),
-  };
-});
+// projectLocalSession() och projectActive() ar ASYNKRONA och gar via Web Locks. En fast vantan
+// racker inte: provet var gront lokalt och foll i CI, dar maskinen ar langsammare. Vi provar
+// darfor tills sessionen svarar — eller tills tiden tar slut, och da ar svaret arligt nej.
+//
+// Att skriva samma vyra-state flera ganger ar ofarligt: det ar samma varde varje gang, och
+// writeActive ar den enda vagen in i tillstandet anda.
+const LAGE = async (page, { vantaPa = null, ms = 6000 } = {}) => {
+  const slut = Date.now() + ms;
+  let sista;
+  do {
+    sista = await page.evaluate(async () => {
+      const skriv = await window.VyraSessionState.writeActive('vyra-state', JSON.stringify({ widgets: [] }));
+      return {
+        skrivbar: skriv.ok === true,
+        anledning: skriv.reason || null,
+        inloggningsruta: !!document.querySelector('.auth-gate'),
+      };
+    });
+    if (vantaPa === null || sista.skrivbar === vantaPa) return sista;
+    await new Promise(r => setTimeout(r, 250));
+  } while (Date.now() < slut);
+  return sista;
+};
 
 // ---- Prov 1 · av som default -------------------------------------------------------------------
 test('mock-backenden ar AV som default', { skip, timeout: 60000 }, async () => {
@@ -142,7 +157,7 @@ test('fejkad inloggning ger ett skrivbart lage', { skip, timeout: 90000 }, async
   riggFinns();
   const s = await studion({ backend: true });
   try {
-    const m = await LAGE(s.page);
+    const m = await LAGE(s.page, { vantaPa: true });
     assert.equal(m.inloggningsruta, false,
       'med ett giltigt me-svar ska ingen inloggningsruta visas');
     assert.equal(m.skrivbar, true,
@@ -210,7 +225,7 @@ test('bara ett uttryckligt authRequired:false oppnar skrivlaget', { skip, timeou
     fel: { 'GET /api/auth/config': { status: 200, kropp: { authRequired: false } } },
   });
   try {
-    const m = await LAGE(s.page);
+    const m = await LAGE(s.page, { vantaPa: true });
     assert.equal(m.skrivbar, true,
       'authRequired:false ar det ENDA svar som ska ge en skrivbar lokal session');
     assert.equal(m.inloggningsruta, false, 'och ingen inloggningsruta');
