@@ -3,7 +3,11 @@
 /* Synkstatusen bor i overlaylankraden, dar man faktiskt star nar man ska kopiera lanken till OBS.
    Pricken fanns styrad har fran borjan; det var mountStatus() som var en tom stubb, sa den ritades
    aldrig. Se cloud-sync.js. */
-.overlay-link-bar .cloud-status{grid-column:1/-1;font-size:7px;color:#b6a4c0;letter-spacing:.05em}
+/* Rad 1, hogerstalld: som eget rutnatsradsobjekt (grid-column:1/-1 utan grid-row) hamnade
+   statusen pa en NY rad under lankraden — uppmatt y=902 i ett 900px fonster, alltsa under
+   vikningen. Den bar sparningens tidsstampel och maste synas; rubrikraden har fri yta till
+   hoger, och justify-self:end sarar den fran rubriktexten i samma cell. */
+.overlay-link-bar .cloud-status{grid-column:1/-1;grid-row:1;justify-self:end;font-size:7px;color:#b6a4c0;letter-spacing:.05em}
 .overlay-link-bar .cloud-status[data-state="synced"] span{color:#7df0c0}
 .overlay-link-bar .cloud-status[data-state="offline"] span,
 .overlay-link-bar .cloud-status[data-state="conflict"] span{color:#ffc07a}

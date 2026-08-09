@@ -139,7 +139,10 @@
       '<div class="editor-shell">' +
         '<div class="elements"></div>' +
         '<div class="workarea">' +
-          '<div class="editor-toolbar"><button id="testEvent">▶ Testevent</button><button id="saveProject">Spara</button></div>' +
+          // Ingen Spara-knapp: autosparet skriver vid varje andring, och .cloud-status visar
+          // nar det senast lyckades. En knapp som gor det som redan skett fick anvandaren att
+          // tro att sparning kravde ett tryck.
+          '<div class="editor-toolbar"><button id="testEvent">▶ Testevent</button></div>' +
           '<div class="canvas">' + items.map(wh).join('') + '</div>' +
         '</div>' +
         '<div class="properties"><div class="panel-title">EGENSKAPER</div>' + props() + '</div>' +

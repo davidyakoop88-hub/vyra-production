@@ -305,6 +305,10 @@
           committed = { ...committed, version };
           safeState = clone(activeStateObject);
           safeExtras = { ...activeExtras };
+          // Agaren annonserar sin egen lyckade skrivning. Ingen ny skrivvag — en signal, sa att
+          // UI:t kan visa NAR autosparet senast lyckades utan att nagon konsument behover
+          // gissa, polla eller linda writeActive. Skickas forst efter att markoren committats.
+          dispatch('vyra-session-state-saved', { key, version, at: Date.now() });
           return { ok: true };
         } catch (error) {
           // Restore storage where possible, and the in-memory object always: the caller mutated a
