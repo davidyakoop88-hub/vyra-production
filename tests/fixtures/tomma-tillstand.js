@@ -9,6 +9,16 @@
 //
 // 'monster' i stallet for 'text' nar strangen bar dynamiska tal; 'exempel' ar da det
 // formelprovet granskar.
+// 'handling' ar Etapp 6E: texten sager "Skapa den forsta" — da ska det ga att gora harifran.
+//
+// Handlingen ar ett SYSKON till [data-tom]-noden, aldrig ett barn. Rostprovet jamfor nodens
+// normaliserade textContent EXAKT mot 'text' nedan, sa en knapp inuti noden hade fallt det.
+// automatik-scenlank har burit sin knapp som syskon sedan Etapp 4 — det ar monstret.
+//
+// 'mal' ar den befintliga mekanismen i samma vy, uppmatt som narvarande och synlig 2026-08-09.
+// Tillstand UTAN handling har inget att klicka pa: tts-logg och statistik-topp beskriver en
+// konsekvens, statistik-basta-tid en troskel, och oversikt-puls/statistik-tillvaxt pekar pa
+// skrivbordsappen som sedan #175 bor i sidhuvudet — fem utspridda knappar slar en hogt upp.
 const TOMMA = {
   // Oversikt
   'oversikt-historik': { text: 'Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.' },
@@ -17,14 +27,19 @@ const TOMMA = {
   'overlay-tom': { text: 'Inga widgets ännu. Lägg till en från katalogen nedan så visas den här direkt.' },
   // Automatik (mallen)
   'automatik-scenlank': { text: 'Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.' },
-  'automatik-actions': { text: 'Inga Actions ännu. Skapa den första.' },
-  'automatik-events': { text: 'Inga Events ännu. Koppla ett event till en Action.' },
-  'automatik-timers': { text: 'Inga timers ännu. Skapa en som kör en Action på schema.' },
+  'automatik-actions': { text: 'Inga Actions ännu. Skapa den första.',
+    handling: { etikett: 'Skapa din första Action', mal: '#newAeAction' } },
+  'automatik-events': { text: 'Inga Events ännu. Koppla ett event till en Action.',
+    handling: { etikett: 'Koppla ditt första Event', mal: '#newAeEvent' } },
+  'automatik-timers': { text: 'Inga timers ännu. Skapa en som kör en Action på schema.',
+    handling: { etikett: 'Skapa din första timer', mal: '#newAeTimer' } },
   // TTS Chat
-  'tts-special': { text: 'Inga specialanvändare tillagda. Lägg till en för egen röst eller blockering.' },
+  'tts-special': { text: 'Inga specialanvändare tillagda. Lägg till en för egen röst eller blockering.',
+    handling: { etikett: 'Lägg till användare', mal: '#ttsAddSpecial' } },
   'tts-logg': { text: 'Inget uppläst ännu. När chatten läses upp visas raderna här.' },
   // Handelser
-  'handelser-tom': { text: 'Inga händelser ännu. Anslut TikTok LIVE så fylls historiken på här i realtid.' },
+  'handelser-tom': { text: 'Inga händelser ännu. Anslut TikTok LIVE så fylls historiken på här i realtid.',
+    handling: { etikett: 'Anslut TikTok LIVE', mal: '.connect' } },
   // Statistik
   'statistik-tillvaxt': { text: 'Ingen livedata ännu. Gå live med VYRA Desktop så ritas din tillväxt här dag för dag.' },
   'statistik-topp': { text: 'Inga supportrar att visa ännu. Efter din första livesändning listas dina största gåvogivare här.' },
