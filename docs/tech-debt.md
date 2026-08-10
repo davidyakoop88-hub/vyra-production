@@ -43,22 +43,23 @@ fyrverkerier; fem riktiga gåvor spelas efter varandra med sekunder emellan.
 Det är inte fel i sig — en testknapp ska vara omedelbar — men det är en fälla när någon justerar
 timing i editorn och tror att det är vad tittarna ser.
 
-## 3. Gift Fireworks skriver live-data till den sparade layouten
+## ~~3. Gift Fireworks skriver live-data till den sparade layouten~~ — LÖST
 
-`gift-fireworks.js` `triggerGiftFireworks()` gör fortfarande:
+Punkten stod kvar som öppen efter att koden lagats. Den kostade en hel ansats: 2026-08-10 valdes
+den som "den farligaste kvarvarande skulden" och arbetet påbörjades innan mätningen visade att
+det inte fanns något att laga. **Ett skuldregister som ljuger kostar mer än skulden det beskriver.**
 
-```js
-traffar.forEach(w=>{w.fwCombo=combo});save();render();
-```
+Skrivningen `traffar.forEach(w=>{w.fwCombo=combo});save();render();` är borta ur
+`triggerGiftFireworks()`. Combon är ett argument, aldrig ett fält på widgeten. Se kommentaren på
+platsen i `gift-fireworks.js`, som hänvisar hit.
 
-Tre problem i en rad: senaste gåvans combo hamnar permanent i den sparade layouten, hela canvasen
-byggs om per gåva, och omritningen river ner den animation som just spelar.
+Vaktat av tre prov i `tests/gift-fireworks-live-path.test.js`:
 
-**Gift Fireworks är den enda widgeten som fortfarande gör det.** Last-X, Fan Level Up och Gifter
-Level Up patchar i stället DOM riktat och rör aldrig widgetobjektet.
+- `combon skrivs inte pa widgetobjektet`
+- `livevagen gor inga writes i kallan heller`
+- `render() river inte ner noden som just spelar`
 
-Fixen fanns påbörjad i PR #53, som stängdes för att grenen var för gammal för att merga
-(den byggde på en kodbas där `allCampaignGiftChoices` fortfarande fanns).
+Verifierad löst: 2026-08-10.
 
 ## 4. widget-defaults-migration-provet beror på en lokal baseline-gren
 
