@@ -934,3 +934,58 @@ html.overlay-output .widget{
    ihop till en enda mening pa skarmen (uppmatt 2026-08-09 i tom profil). */
 .properties-empty strong{display:block;margin-bottom:5px;color:#e9d8f2}
 .properties-empty span{display:block}
+/* Gift Jar В· seven scalable, transparent live designs. */
+.gift-jar-widget{aspect-ratio:.72;height:auto;min-width:80px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible;isolation:isolate;filter:drop-shadow(0 12px 18px #0009);font-family:Inter,sans-serif;transform-origin:center bottom}
+.gift-jar-aura{position:absolute;inset:15% -10% 5%;border-radius:50%;background:radial-gradient(circle,var(--jar-light) 0,transparent 62%);opacity:.2;filter:blur(18px);animation:jarAura 3s ease-in-out .9s infinite}
+.gift-jar-crown{position:absolute;z-index:5;left:20%;top:0;width:60%;height:15%;display:flex;align-items:center;justify-content:center;gap:7%;color:var(--jar-light);filter:drop-shadow(0 0 7px var(--jar))}
+.gift-jar-crown b{display:grid;place-items:center;width:34%;aspect-ratio:1;border:2px solid var(--jar);background:radial-gradient(circle at 35% 25%,#fff,var(--jar-light) 15%,var(--jar) 48%,#120b24 74%);clip-path:polygon(50% 0,95% 35%,78% 92%,22% 92%,5% 35%);font-size:clamp(16px,9cqw,30px);color:#fff;text-shadow:0 0 8px var(--jar)}
+.gift-jar-crown i{width:25%;height:2px;background:linear-gradient(90deg,transparent,var(--jar-light));box-shadow:0 0 7px var(--jar)}
+.gift-jar-crown i:last-child{transform:scaleX(-1)}
+.gift-jar-lid{position:absolute;z-index:6;left:24%;top:13%;width:52%;height:10%;border:2px solid color-mix(in srgb,var(--jar-light),white 28%);border-radius:45% 45% 25% 25%;background:linear-gradient(180deg,#fff8,var(--jar-light) 15%,#11162a 42%,var(--jar) 72%,#050711);box-shadow:0 0 11px var(--jar),inset 0 2px 2px #fff9;display:flex;align-items:center;justify-content:space-evenly;overflow:hidden}
+.gift-jar-lid i{width:2px;height:90%;background:#fff7;transform:skewX(-20deg)}
+.gift-jar-glass{position:absolute;z-index:2;left:14%;top:19%;width:72%;height:67%;overflow:hidden;border:3px solid color-mix(in srgb,var(--jar-light),white 38%);border-top-width:6px;border-radius:17% 17% 27% 27%/10% 10% 19% 19%;background:linear-gradient(105deg,#fff2 0 8%,transparent 13% 70%,#fff2 78%,transparent 84%),linear-gradient(180deg,#080a18b8,#11132a66 50%,#050611c7);box-shadow:inset 0 0 24px color-mix(in srgb,var(--jar),transparent 48%),0 0 12px color-mix(in srgb,var(--jar),transparent 25%)}
+.gift-jar-glass:before,.gift-jar-glass:after{content:"";position:absolute;z-index:4;pointer-events:none}
+.gift-jar-glass:before{inset:2%;border:1px solid #fff4;border-radius:inherit}
+.gift-jar-glass:after{left:9%;top:8%;width:7%;height:60%;border-radius:99px;background:linear-gradient(#fff8,transparent);filter:blur(1px)}
+.gift-jar-fill{position:absolute;z-index:0;left:0;right:0;bottom:0;min-height:0;background:linear-gradient(180deg,transparent,var(--jar) 18%,color-mix(in srgb,var(--jar),#080717 52%));opacity:.42;transition:height .45s cubic-bezier(.2,.8,.2,1);box-shadow:0 -7px 18px var(--jar)}
+.gift-jar-items{position:absolute;z-index:2;inset:5% 4% 4%}
+.gift-jar-widget .gift-jar-item{position:absolute;left:var(--jar-x);top:-22%;width:22%;aspect-ratio:1;display:grid;place-items:center;color:var(--jar-light);font-style:normal;font-size:clamp(14px,9cqw,26px);filter:drop-shadow(0 0 5px var(--jar));animation:giftJarDrop .95s cubic-bezier(.21,.76,.28,1.15) var(--jar-delay) forwards}
+.gift-jar-item img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.gift-jar-shine{position:absolute;z-index:3;inset:0;background:linear-gradient(118deg,transparent 35%,#fff0 43%,#fff7 48%,#fff0 53%,transparent 62%);transform:translateX(-100%);animation:jarShine 4s ease-in-out .9s infinite}
+.gift-jar-facets{position:absolute;z-index:1;inset:10%;display:flex;justify-content:space-around;opacity:.28}
+.gift-jar-facets i{height:86%;width:1px;background:linear-gradient(transparent,var(--jar-light),transparent);transform:rotate(8deg)}
+.gift-jar-facets i:nth-child(2){transform:rotate(-8deg)}
+.gift-jar-base{position:absolute;z-index:6;left:8%;bottom:5%;width:84%;height:12%;display:flex;align-items:center;justify-content:center;gap:5%;clip-path:polygon(7% 0,93% 0,100% 35%,92% 100%,8% 100%,0 35%);border:1px solid var(--jar);background:linear-gradient(180deg,color-mix(in srgb,var(--jar),#161124 42%),#080913 55%,color-mix(in srgb,var(--jar),#000 72%));box-shadow:0 0 13px var(--jar);color:#fff;text-transform:uppercase;letter-spacing:.14em;font-size:clamp(7px,4.5cqw,13px);text-shadow:0 0 6px var(--jar)}
+.gift-jar-base i{width:13%;height:1px;background:var(--jar-light)}
+.gift-jar-counter{position:absolute;z-index:7;left:25%;bottom:-2%;width:50%;min-height:9%;box-sizing:border-box;padding:2% 5%;border:1px solid var(--jar-light);border-radius:999px;background:#080913e8;box-shadow:0 0 10px var(--jar);align-items:center;justify-content:center;gap:5%;white-space:nowrap}
+.gift-jar-counter span{font-size:clamp(5px,3cqw,9px);letter-spacing:.12em;color:var(--jar-light)}
+.gift-jar-counter strong{font-size:clamp(8px,5cqw,15px);color:#fff}
+.gift-jar-widget.jar-full{animation:jarFull .7s ease-in-out 2}
+.gift-jar-widget.jar-full .gift-jar-aura{opacity:.48}
+.jar-royal .gift-jar-crown b{clip-path:polygon(8% 18%,28% 48%,50% 2%,72% 48%,92% 18%,82% 92%,18% 92%)}
+.jar-royal .gift-jar-base{clip-path:polygon(10% 0,90% 0,100% 50%,90% 100%,10% 100%,0 50%)}
+.jar-neon .gift-jar-glass{border-radius:32% 32% 24% 24%;border-color:var(--jar);box-shadow:0 0 8px var(--jar),0 0 22px var(--jar-light),inset 0 0 18px var(--jar)}
+.jar-neon .gift-jar-crown b{border-radius:50%;clip-path:none;background:#080913;box-shadow:inset 0 0 12px var(--jar-light)}
+.jar-fire .gift-jar-aura{background:radial-gradient(ellipse at 50% 75%,var(--jar-light),var(--jar) 22%,transparent 63%);animation-duration:1.1s}
+.jar-fire .gift-jar-glass{clip-path:polygon(16% 0,84% 0,100% 20%,92% 100%,8% 100%,0 20%)}
+.jar-ice .gift-jar-glass{clip-path:polygon(14% 0,86% 0,100% 18%,88% 100%,12% 100%,0 18%);border-radius:7%}
+.jar-ice .gift-jar-crown b{clip-path:polygon(50% 0,64% 34%,100% 50%,66% 65%,50% 100%,34% 66%,0 50%,35% 34%)}
+.jar-heart .gift-jar-glass{border-radius:16% 16% 30% 30%}
+.jar-heart .gift-jar-crown b{clip-path:polygon(50% 96%,18% 68%,4% 44%,4% 24%,17% 8%,34% 8%,50% 26%,66% 8%,83% 8%,96% 24%,96% 44%,82% 68%)}
+.jar-galaxy .gift-jar-glass{border-radius:48% 48% 28% 28%;background:radial-gradient(circle at 35% 25%,#fff6 0 1%,transparent 2%),radial-gradient(circle at 65% 47%,var(--jar-light) 0 1%,transparent 2%),radial-gradient(ellipse at 50% 65%,#27125da8,#080817 67%)}
+.jar-galaxy .gift-jar-aura{animation:jarGalaxy 7s linear .9s infinite;background:conic-gradient(from 0deg,transparent,var(--jar),var(--jar-light),transparent,var(--jar))}
+@media(prefers-reduced-motion:reduce){.gift-jar-widget *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+@keyframes giftJarDrop{0%{top:-22%;opacity:0;transform:translateX(-50%) rotate(0) scale(.65)}12%{opacity:1}72%{top:var(--jar-y);transform:translateX(-50%) rotate(var(--jar-r)) scale(1.05)}86%{top:calc(var(--jar-y) - 3%);transform:translateX(-50%) rotate(var(--jar-r)) scale(.95)}100%{top:var(--jar-y);opacity:1;transform:translateX(-50%) rotate(var(--jar-r)) scale(1)}}
+@keyframes jarShine{0%,58%{transform:translateX(-120%)}82%,100%{transform:translateX(130%)}}
+@keyframes jarAura{50%{opacity:.34;transform:scale(1.06)}}
+@keyframes jarFull{50%{transform:scale(1.045) rotate(.7deg)}}
+@keyframes jarGalaxy{to{transform:rotate(360deg)}}
+
+
+
+.jar-heart .gift-jar-aura::before{transform:rotate(-45deg);transform-origin:0 100%}
+.jar-heart .gift-jar-aura::after{transform:translateX(-100%) rotate(45deg);transform-origin:100% 100%}
+.jar-heart .gift-jar-aura::before{transform:translate(-100%,-50%) rotate(-45deg)}
+.jar-heart .gift-jar-aura::after{transform:translate(0,-50%) rotate(45deg) scaleX(-1)}
+.jar-heart .gift-jar-lid{border-radius:52% 52% 34% 34%/68% 68% 30% 30%}

@@ -77,6 +77,17 @@
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
+    // Gift Jar. Till skillnad fran temaregistren ovan bar varje modell bade farg OCH symbol:
+    // burken ritas ur dem — accent ar glaset, light ar innehallet, symbol ar markningen.
+    'giftjar.model': {
+      crystal:{label:'Crystal Jar',accent:'#b98cff',light:'#76e7ff',symbol:'◆'},
+      royal:{label:'Royal Jar',accent:'#e7b85b',light:'#fff0a8',symbol:'♛'},
+      neon:{label:'Neon Jar',accent:'#ff3bd4',light:'#36e8ff',symbol:'◉'},
+      fire:{label:'Fire Jar',accent:'#ff4b24',light:'#ffc13b',symbol:'▲'},
+      ice:{label:'Ice Jar',accent:'#42cfff',light:'#dcfbff',symbol:'❄'},
+      heart:{label:'Heart Jar',accent:'#ff4f9c',light:'#ffd0e5',symbol:'♥'},
+      galaxy:{label:'Galaxy Jar',accent:'#8a5cff',light:'#54d8ff',symbol:'✦'}
+    },
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
     // they are geometry as much as colour, and one copy is the whole point.
     'topgift.frame': {'royal-wings':{label:'Royal Wings',accent:'#ffc13b',aspect:0.8327,circle:{left:33.51,top:42.86,width:33.46,height:29.0},titlePlate:{left:27.14,top:25.56,width:45.97,height:12.19},namePlate:{left:34.22,top:76.81,width:31.32,height:12.7}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.5888,circle:{left:28.19,top:45.95,width:44.29,height:26.27},titlePlate:{left:19.42,top:28.85,width:61.51,height:11.57},namePlate:{left:28.22,top:77.2,width:43.57,height:12.07}},'angel-heart':{label:'Angel Heart',accent:'#ff8fc8',aspect:0.6766,circle:{left:31.86,top:47.71,width:36.88,height:25.14},titlePlate:{left:25.14,top:32.91,width:50.3,height:10.23},namePlate:{left:31.76,top:80.57,width:36.18,height:9.72},darkTitle:true,darkName:true},'dark-raven':{label:'Dark Raven',accent:'#9b5cff',aspect:0.6267,circle:{left:28.49,top:43.99,width:44.61,height:27.58},titlePlate:{left:19.26,top:27.05,width:61.8,height:11.57},namePlate:{left:28.36,top:77.98,width:43.61,height:11.9}},'frost-crystal':{label:'Frost Crystal',accent:'#6db8ff',aspect:0.6907,circle:{left:30.8,top:40.27,width:39.0,height:27.72},titlePlate:{left:26.33,top:23.6,width:47.64,height:11.78},namePlate:{left:30.82,top:76.45,width:38.36,height:10.39}},'rose-garden':{label:'Rose Garden',accent:'#ff8fc8',aspect:0.695,circle:{left:32.27,top:39.47,width:38.44,height:27.5},titlePlate:{left:27.07,top:24.49,width:49.15,height:10.98},namePlate:{left:31.94,top:75.43,width:37.61,height:9.93},darkTitle:true,darkName:true},'luna-mist':{label:'Luna Mist',accent:'#c07bff',aspect:0.6695,circle:{left:27.45,top:39.52,width:41.91,height:29.06},titlePlate:{left:20.34,top:22.64,width:56.45,height:11.64},namePlate:{left:27.81,top:73.77,width:41.2,height:13.43}}},
@@ -280,6 +291,14 @@
       campaignTheme: v.theme,
       campaignOrientation: v.orientation,
       accent: v.theme === 'crystal-garden' ? '#ff6ec7' : '#ff3fa4'
+    }),
+    // jarCount startar pa 0 och stannar dar: antalet ar LIVE-data och bor i en runtime-Map i
+    // media.js, aldrig pa widgetobjektet. Skrevs det hit hamnade varje gava i den sparade
+    // layouten — se docs/tech-debt.md punkt 3, skulden som inte ska aterskapas.
+    'giftjar.model': v => ({
+      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
+      jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
+      jarCount: 0, jarCapacity: 50, jarShowCounter: true, jarAutoResetMs: 0
     })
   };
 
@@ -363,6 +382,11 @@
       if (!parts[0]) throw new Error('catalog:giftcampaign kräver ett tema');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
       return ['giftcampaign.theme', { theme: parts[0], orientation }];
+    },
+    'giftjar': parts => {
+      if (!parts[0]) throw new Error('catalog:giftjar kräver en modell');
+      const model = pick('giftjar.model', parts[0], 'gift jar-modell');
+      return ['giftjar.model', { model: parts[0], accent: model.accent, light: model.light, symbol: model.symbol }];
     }
   };
 
