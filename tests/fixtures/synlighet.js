@@ -35,6 +35,25 @@ const SYNLIG = `(el) => {
   return { ok: true, skal: null, ruta: { x: Math.round(r.x), y: Math.round(r.y), b: Math.round(r.width), h: Math.round(r.height) } };
 }`;
 
+// NABAR: samma matning, men rullar dit forst.
+//
+// SYNLIG svarar "ligger elementet i vyn just nu", vilket ar ratt fraga for en modal, en banner
+// eller en indikator — sadant som ska mota ogat utan att man letar. Det ar FEL fraga for
+// innehall langre ner pa en lang sida: en sidfot, en installningsrad, ett tomt tillstand i en
+// 2763 px hog vy. Kravet dar ar att det GAR ATT NA.
+//
+// Skrivet efter tre fall av samma misstag i rad — sidfoten (#172), nedladdningsraden i
+// Installningar (#175) och handlingarna i de tomma tillstanden (6E). Tva ganger ar slump, tre
+// ganger ar en saknad matning. Valj SYNLIG nar lage i vyn ar kravet, NABAR nar det inte ar det.
+//
+// Rullningen sker i SAMMA anrop som matningen med flit: ett separat page.evaluate() foll nar
+// auth-security.js hann lagga till fler sektioner daremellan och knuffade tillbaka elementet.
+const NABAR = `(el) => {
+  if (!el) return { ok: false, skal: 'elementet finns inte' };
+  el.scrollIntoView({ block: 'center' });
+  return (${SYNLIG})(el);
+}`;
+
 // Ligger elementet innanfor foralderns SYNLIGA ruta? Fangar den klass dar ett absolut placerat
 // element ankras mot innehallets botten i en rullande behallare och hamnar under vecket.
 const INOM = `(el, foralder) => {
@@ -129,4 +148,4 @@ function granskaKalla(selektor, foralderSelektor) {
   }`;
 }
 
-module.exports = { SYNLIG, INOM, UTSEENDE, MATT, KONTRAST, granskaKalla };
+module.exports = { SYNLIG, NABAR, INOM, UTSEENDE, MATT, KONTRAST, granskaKalla };
