@@ -21,7 +21,23 @@
 // skrivbordsappen som sedan #175 bor i sidhuvudet — fem utspridda knappar slar en hogt upp.
 const TOMMA = {
   // Oversikt
-  'oversikt-historik': { text: 'Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.' },
+  // FLERA ROSTER PA SAMMA NYCKEL. [data-alltime-note] byter text beroende pa lage, och
+  // testmiljon ar alltid utloggad — sa vakten har bara nagonsin sett den forsta. De tre andra
+  // fanns i koden fran borjan utan att nagon matning natt dem.
+  //
+  // 'text' ar den DOM-provet moter. 'varianter' ar de ovriga som formelprovet och kallvakten
+  // kraver. 'laddar' ar undantaget: "Hamtar din historik…" ar ett OVERGANGSLAGE, inte ett tomt
+  // tillstand, och har darfor varken tva delar eller en handling.
+  'oversikt-historik': {
+    text: 'Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.',
+    varianter: [
+      'Ingen historik ännu — den börjar byggas vid din nästa sändning.',
+      'Ingen TikTok ansluten ännu. Historiken börjar när du sänder första gången.',
+      'Kunde inte hämta historiken just nu. Siffrorna ovan är inte hela sanningen.',
+    ],
+    laddar: 'Hämtar din historik…',
+    kalla: 'overview-premium.js',
+  },
   'oversikt-puls': { text: 'Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.' },
   // Overlay (wrapper: rubrik + rad — bada raknas in i texten)
   'overlay-tom': { text: 'Inga widgets ännu. Lägg till en från katalogen nedan så visas den här direkt.' },
