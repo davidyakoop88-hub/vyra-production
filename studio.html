@@ -20,7 +20,6 @@
   <aside>
     <div class="sidebar-head">
       <a href="index.html" class="brand"><i>V</i><b>VYRA</b></a>
-      <button class="sidebar-collapse-toggle" type="button" title="Fäll ihop/ut menyn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     </div>
     <nav>
       <div class="nav-section">
@@ -156,24 +155,6 @@
         const query = params.toString();
         history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
       }, { once: true });
-    })();
-  </script>
-  <script>
-    (function () {
-      var KEY = 'vyra-sidebar-collapsed';
-      function applyState(collapsed) {
-        document.body.classList.toggle('sidebar-collapsed', collapsed);
-        var aside = document.querySelector('aside');
-        if (aside) aside.classList.toggle('collapsed', collapsed);
-      }
-      applyState(localStorage.getItem(KEY) === '1');
-      document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.sidebar-collapse-toggle');
-        if (!btn) return;
-        var collapsed = !document.body.classList.contains('sidebar-collapsed');
-        localStorage.setItem(KEY, collapsed ? '1' : '0');
-        applyState(collapsed);
-      });
     })();
   </script>
 </body>

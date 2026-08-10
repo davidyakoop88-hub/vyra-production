@@ -463,18 +463,12 @@ html.overlay-output .resize-handle{display:none!important}
 @media(prefers-reduced-motion:reduce){.like-fountain.lf-live-react .lf-stream{animation:none!important}}
 
 /* Full-screen editor: use the viewport, keep controls compact, avoid page scrolling. */
-body:has(.editor-shell){grid-template-columns:64px minmax(0,1fr);height:100vh;min-height:0;overflow:hidden}
-body:has(.editor-shell)>aside{width:64px;padding:10px 7px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#71308a transparent}
-body:has(.editor-shell)>aside .brand b,
-body:has(.editor-shell)>aside .nav-section-label,
-body:has(.editor-shell)>aside nav button span,
-body:has(.editor-shell)>aside nav a span,
-body:has(.editor-shell)>aside .nav-badge,
-body:has(.editor-shell)>aside .user span,
-body:has(.editor-shell)>aside .sidebar-feedback-cta span{display:none!important}
-body:has(.editor-shell)>aside nav button,
-body:has(.editor-shell)>aside nav a,
-body:has(.editor-shell)>aside .aside-bottom>button{justify-content:center;padding:10px!important}
+body:has(.editor-shell){grid-template-columns:186px minmax(0,1fr);height:100vh;min-height:0;overflow:hidden}
+/* Editorn hade en 64px-skena dar etiketterna klipptes av overflow-x. Menyn ska se likadan
+   ut overallt, sa bredden foljer nu resten av Studion. Rullningslisten ar DOLD men rullningen
+   kvar: innehallet ar 866px och ryms vid 900px fonsterhojd, men inte vid 768. */
+body:has(.editor-shell)>aside{width:186px;padding:12px 9px;overflow-y:auto;overflow-x:hidden}
+
 body:has(.editor-shell)>main{height:100vh;min-height:0;overflow:hidden;padding-bottom:0!important}
 body:has(.editor-shell) main>header{height:58px;padding:0 16px}
 body:has(.editor-shell) header h1{font-size:17px;margin:2px 0}
@@ -989,3 +983,21 @@ html.overlay-output .widget{
 .jar-heart .gift-jar-aura::before{transform:translate(-100%,-50%) rotate(-45deg)}
 .jar-heart .gift-jar-aura::after{transform:translate(0,-50%) rotate(45deg) scaleX(-1)}
 .jar-heart .gift-jar-lid{border-radius:52% 52% 34% 34%/68% 68% 30% 30%}
+/* Ingen synlig rullningslist i menyn. Rullningen finns kvar for korta fonster. */
+aside{scrollbar-width:none;-ms-overflow-style:none}
+aside::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* Kompakt meny i EDITORN. Full meny med etiketter tar 1241px i hojd, men editorn har ofta
+   bara 768px. Raderna kortas dar — inte i ovriga Studion, dar hojden finns. Uppmatt: knapp
+   57px -> 34px, sektionsetikett 34px -> 18px, sektionsavstand 22px -> 10px. */
+body:has(.editor-shell)>aside nav{gap:10px}
+body:has(.editor-shell)>aside .nav-section button,
+body:has(.editor-shell)>aside .nav-section a{padding:7px 9px;font-size:12px;gap:9px}
+body:has(.editor-shell)>aside nav button svg,
+body:has(.editor-shell)>aside nav a svg{width:16px;height:16px}
+body:has(.editor-shell)>aside .nav-section{gap:2px}
+body:has(.editor-shell)>aside .nav-section-label{padding:2px 9px;margin-bottom:1px;font-size:9px}
+body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px}
+body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
+body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
+body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
