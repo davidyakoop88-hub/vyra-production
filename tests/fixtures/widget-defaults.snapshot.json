@@ -421,5 +421,23 @@
     "fwColor": "#ff4fa3",
     "fwColor2": "#ffd45b",
     "fwSound": true
+  },
+  "catalog:giftjar:crystal": {
+    "type": "templateGiftJar",
+    "x": 90,
+    "y": 150,
+    "width": 250,
+    "title": "Gift Jar",
+    "jarModel": "crystal",
+    "jarAccent": "#b98cff",
+    "jarLight": "#76e7ff",
+    "jarSymbol": "◆",
+    "jarCount": 0,
+    "jarCapacity": 50,
+    "jarShowCounter": true,
+    "jarAutoResetMs": 0,
+    "jarFilterMode": "all",
+    "jarMinCoins": 0,
+    "jarGiftName": ""
   }
 }

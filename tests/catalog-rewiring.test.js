@@ -223,8 +223,11 @@ test('followers och follows ger samma standalone-instans', () => {
 test('inga gamla inline-defaultobjekt finns kvar', () => {
   assert.equal((MEDIA.match(/state\.widgets\.push\(\{/g) || []).length, 0,
     'media.js har kvar minst ett inline-objektliteral i push()');
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 20,
-    'antalet kataloganrop stämmer inte med de tjugo katalogställena');
+  // 21 sedan Gift Jar: en census-vakt, inte ett tak. Hojs den utan att en katalogsektion
+  // faktiskt tillkommit ar det ett tecken pa att nagon lagt tillbaka ett inline-defaultobjekt
+  // pa omvagen — darfor ska siffran andras medvetet, aldrig "for att fa gront".
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 21,
+    'antalet kataloganrop stämmer inte med de tjugoen katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {
