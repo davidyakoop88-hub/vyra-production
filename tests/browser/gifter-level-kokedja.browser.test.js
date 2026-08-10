@@ -49,9 +49,23 @@ async function oppnaStudio() {
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${rigg.bas}/studio.html?open=layout`, { waitUntil: 'load', timeout: 120000 });
-  // Kowrapparna installeras vid 500 ms, 2200 ms och load. Matningen ska ske EFTER det, annars
-  // matas rafunktionen och kon provas aldrig.
-  await page.evaluate(() => new Promise(r => setTimeout(r, 6000)));
+
+  // VILLKORSSTYRD vantan, inte en fast. Kowrapparna installeras vid 500 ms, 2200 ms och load,
+  // och matningen maste ske EFTER det — annars mats rafunktionen och kon provas aldrig.
+  //
+  // Har stod forst `setTimeout(6000)`. Det var ett TIDSANTAGANDE av precis den sort provet
+  // finns for att avskaffa, och med tva provfall kostade det tolv sekunder ren vantan. Nu vantar
+  // vi pa att sakerna FINNS i stallet for pa att klockan gatt.
+  //
+  // Wrappern kanns igen pa att den namner VyraAlertQueue; ratriggern i media.js gor det inte.
+  await page.waitForFunction(() =>
+    typeof window.VyraLive?.ingest === 'function'
+    && !!window.VyraGifterLevel
+    && typeof window.VyraAlertQueue?.push === 'function'
+    && typeof window.triggerGifterLevelUp === 'function'
+    && String(window.triggerGifterLevelUp).includes('VyraAlertQueue'),
+  null, { timeout: 60000, polling: 100 });
+
   return { rigg, context, page, stang: async () => { await context.close(); await rigg.stang() } };
 }
 
