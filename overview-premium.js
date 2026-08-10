@@ -332,7 +332,10 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const vald = knapp.dataset.alltimePeriod;
     if (!PERIODER.has(vald) || vald === period) return;
     period = vald;
-    notera('Hämtar…');
+    // Samma lydelse som markupens laddtext. De sa olika saker ("Hämtar…" hor mot "Hämtar din
+    // historik…") beroende pa om sidan just laddats eller om man bytt period — samma nod, tva
+    // roster. Upptackt av kallvakten i tests/tomma-tillstand.test.js.
+    notera('Hämtar din historik…');
     hamta();
   });
 
