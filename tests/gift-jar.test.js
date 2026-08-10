@@ -134,6 +134,22 @@ test('varje animation som CSS:en anropar finns ocksa definierad', () => {
     'CSS anropar animationer som inte ar definierade: ' + saknas.join(', '));
 });
 
+test('rorelsedodaren galler bara den som bett om reducerad rorelse', () => {
+  // Tredje traffen for samma rotorsak: CSS:en porterades med en regexutdragning som inte
+  // matchade nastlade klamrar. Forst foll @keyframes bort, sedan det har @media-omslaget — och
+  // utan omslaget slog animation-duration:.01ms!important mot ALLA anvandare.
+  //
+  // Skarmkontrollen kunde inte se det: .01ms betyder att animationen fullbordas omedelbart, sa
+  // partiklarna star pa ratt slutposition i en stillbild. Det som saknas ar rorelsen dit.
+  const rad = '.gift-jar-widget *{animation-duration:.01ms!important';
+  const i = CSS.indexOf(rad);
+  assert.ok(i > 0, 'kontrollmatning: hittade inte reduced-motion-regeln alls');
+  const fore = CSS.slice(Math.max(0, i - 60), i);
+  assert.match(fore, /@media\s*\(?prefers-reduced-motion/,
+    'regeln som stoppar Gift Jars animationer ligger utanfor sitt @media-omslag och galler ' +
+    'darmed alla — inte bara den som bett om reducerad rorelse');
+});
+
 test('varje modell utom grundutforandet har en egen CSS-regel', () => {
   // crystal ar GRUNDUTFORANDET och styrs av .gift-jar-widget sjalv — en tom .jar-crystal hade
   // bara varit en regel som sager "som vanligt". De sex ovriga ar avvikelser och maste synas.

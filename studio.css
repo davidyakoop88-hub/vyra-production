@@ -974,7 +974,7 @@ html.overlay-output .widget{
 .jar-heart .gift-jar-crown b{clip-path:path('M50 88 C15 60 5 42 10 25 C17 3 42 4 50 22 C58 4 83 3 90 25 C95 42 85 60 50 88Z')}
 .jar-galaxy .gift-jar-glass{border-radius:48% 48% 28% 28%;background:radial-gradient(circle at 35% 25%,#fff6 0 1%,transparent 2%),radial-gradient(circle at 65% 47%,var(--jar-light) 0 1%,transparent 2%),radial-gradient(ellipse at 50% 65%,#27125da8,#080817 67%)}
 .jar-galaxy .gift-jar-aura{animation:jarGalaxy 7s linear .9s infinite;background:conic-gradient(from 0deg,transparent,var(--jar),var(--jar-light),transparent,var(--jar))}
-.gift-jar-widget *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+@media(prefers-reduced-motion:reduce){.gift-jar-widget *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 @keyframes giftJarDrop{0%{top:-22%;opacity:0;transform:translateX(-50%) rotate(0) scale(.65)}12%{opacity:1}72%{top:var(--jar-y);transform:translateX(-50%) rotate(var(--jar-r)) scale(1.05)}86%{top:calc(var(--jar-y) - 3%);transform:translateX(-50%) rotate(var(--jar-r)) scale(.95)}100%{top:var(--jar-y);opacity:1;transform:translateX(-50%) rotate(var(--jar-r)) scale(1)}}
 @keyframes jarShine{0%,58%{transform:translateX(-120%)}82%,100%{transform:translateX(130%)}}
