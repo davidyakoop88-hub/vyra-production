@@ -83,7 +83,7 @@
       crystal:{label:'Crystal Jar',accent:'#b98cff',light:'#76e7ff',symbol:'◆'},
       royal:{label:'Royal Jar',accent:'#e7b85b',light:'#fff0a8',symbol:'♛'},
       neon:{label:'Neon Jar',accent:'#ff3bd4',light:'#36e8ff',symbol:'◉'},
-      fire:{label:'Fire Jar',accent:'#ff4b24',light:'#ffc13b',symbol:'🔥'},
+      fire:{label:'Fire Jar',accent:'#ff4b24',light:'#ffc13b',symbol:'▲'},
       ice:{label:'Ice Jar',accent:'#42cfff',light:'#dcfbff',symbol:'❄'},
       heart:{label:'Heart Jar',accent:'#ff4f9c',light:'#ffd0e5',symbol:'♥'},
       galaxy:{label:'Galaxy Jar',accent:'#8a5cff',light:'#54d8ff',symbol:'✦'}

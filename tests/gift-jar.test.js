@@ -190,6 +190,20 @@ test('rorelsedodaren galler bara den som bett om reducerad rorelse', () => {
     'darmed alla — inte bara den som bett om reducerad rorelse');
 });
 
+test('ingen modellsymbol ar en emoji', () => {
+  // Fire bar 🔥 fran referensgrenen. En emoji ritas av teckensnittets EGNA farger och har svart
+  // kontur — den arver varken var(--jar-light) eller glodet, sa den sag billigare ut an de sex
+  // ovriga. Alla symboler ska vara monokroma glyfer som tar burkens farg.
+  const fel = [];
+  for (const [namn, m] of Object.entries(VyraWidgets.variants('giftjar.model'))) {
+    const kod = m.symbol.codePointAt(0);
+    // Emoji-blocken: Misc Symbols and Pictographs, Emoticons, Transport, Supplemental.
+    if (kod >= 0x1f300) fel.push(`${namn}: ${m.symbol} (U+${kod.toString(16).toUpperCase()})`);
+    if (m.symbol.includes('️')) fel.push(`${namn}: bar variantväljare U+FE0F`);
+  }
+  assert.deepEqual(fel, [], 'modeller med emoji i stallet for monokrom glyf: ' + fel.join(', '));
+});
+
 test('varje modell utom grundutforandet har en egen CSS-regel', () => {
   // crystal ar GRUNDUTFORANDET och styrs av .gift-jar-widget sjalv — en tom .jar-crystal hade
   // bara varit en regel som sager "som vanligt". De sex ovriga ar avvikelser och maste synas.
