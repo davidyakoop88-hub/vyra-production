@@ -970,10 +970,8 @@ html.overlay-output .widget{
 .jar-fire .gift-jar-glass{clip-path:polygon(16% 0,84% 0,100% 20%,92% 100%,8% 100%,0 20%)}
 .jar-ice .gift-jar-glass{clip-path:polygon(14% 0,86% 0,100% 18%,88% 100%,12% 100%,0 18%);border-radius:7%}
 .jar-ice .gift-jar-crown b{clip-path:polygon(50% 0,64% 34%,100% 50%,66% 65%,50% 100%,34% 66%,0 50%,35% 34%)}
-.jar-heart .gift-jar-glass{clip-path:polygon(50% 13%,61% 2%,81% 2%,97% 18%,97% 42%,84% 63%,50% 90%,16% 63%,3% 42%,3% 18%,19% 2%,39% 2%);border-radius:18% 18% 35% 35%}
-.jar-heart .gift-jar-items{inset:9% 15% 36%}
-.jar-heart .gift-jar-fill{max-height:64%}
-.jar-heart .gift-jar-crown b{clip-path:path('M50 88 C15 60 5 42 10 25 C17 3 42 4 50 22 C58 4 83 3 90 25 C95 42 85 60 50 88Z')}
+.jar-heart .gift-jar-glass{border-radius:16% 16% 30% 30%}
+.jar-heart .gift-jar-crown b{clip-path:polygon(50% 96%,18% 68%,4% 44%,4% 24%,17% 8%,34% 8%,50% 26%,66% 8%,83% 8%,96% 24%,96% 44%,82% 68%)}
 .jar-galaxy .gift-jar-glass{border-radius:48% 48% 28% 28%;background:radial-gradient(circle at 35% 25%,#fff6 0 1%,transparent 2%),radial-gradient(circle at 65% 47%,var(--jar-light) 0 1%,transparent 2%),radial-gradient(ellipse at 50% 65%,#27125da8,#080817 67%)}
 .jar-galaxy .gift-jar-aura{animation:jarGalaxy 7s linear .9s infinite;background:conic-gradient(from 0deg,transparent,var(--jar),var(--jar-light),transparent,var(--jar))}
 @media(prefers-reduced-motion:reduce){.gift-jar-widget *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
@@ -984,3 +982,10 @@ html.overlay-output .widget{
 @keyframes jarFull{50%{transform:scale(1.045) rotate(.7deg)}}
 @keyframes jarGalaxy{to{transform:rotate(360deg)}}
 
+
+
+.jar-heart .gift-jar-aura::before{transform:rotate(-45deg);transform-origin:0 100%}
+.jar-heart .gift-jar-aura::after{transform:translateX(-100%) rotate(45deg);transform-origin:100% 100%}
+.jar-heart .gift-jar-aura::before{transform:translate(-100%,-50%) rotate(-45deg)}
+.jar-heart .gift-jar-aura::after{transform:translate(0,-50%) rotate(45deg) scaleX(-1)}
+.jar-heart .gift-jar-lid{border-radius:52% 52% 34% 34%/68% 68% 30% 30%}
