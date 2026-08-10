@@ -435,9 +435,6 @@
     "jarCount": 0,
     "jarCapacity": 50,
     "jarShowCounter": true,
-    "jarAutoResetMs": 0,
-    "jarFilterMode": "all",
-    "jarMinCoins": 0,
-    "jarGiftName": ""
+    "jarAutoResetMs": 0
   }
 }

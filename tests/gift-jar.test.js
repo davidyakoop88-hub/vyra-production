@@ -48,8 +48,48 @@ test('burken fods tom', () => {
   // En burk som fods halvfull ljuger om vad tittarna har gett.
   const w = VyraWidgets.create('catalog:giftjar:crystal');
   assert.equal(w.jarCount, 0);
-  assert.equal(w.jarFilterMode, 'all');
   assert.equal(w.jarShowCounter, true);
+});
+
+// ---- Alla gavor, inte en ------------------------------------------------------------------------
+// En Gift Jar tar emot ALLT. Porteringen slapade med ett filter (vald gava / minsta coins) fran
+// referensgrenen utan att nagon fragade om det horde hemma — en burk som bara tar emot en
+// gavosort ar ingen gavoburk.
+test('inga filterfalt finns kvar i defaults', () => {
+  const w = VyraWidgets.create('catalog:giftjar:crystal');
+  for (const falt of ['jarFilterMode', 'jarGiftName', 'jarMinCoins']) {
+    assert.ok(!(falt in w), `${falt} finns kvar i katalogens defaults`);
+  }
+});
+
+test('panelen erbjuder inget filter', () => {
+  for (const id of ['jarFilterMode', 'jarGiftName', 'jarMinCoins']) {
+    assert.ok(!MEDIA.includes('id="' + id + '"'),
+      `egenskapspanelen har kvar filterkontrollen ${id}`);
+  }
+});
+
+test('varje gavotyp slapps igenom', () => {
+  const i = MEDIA.indexOf('function giftJarAccepts');
+  assert.ok(i > 0, 'kontrollmatning: giftJarAccepts hittades inte');
+  const rad = MEDIA.slice(i, MEDIA.indexOf('\n', i));
+  // Funktionen ska saga ja utan att titta pa vare sig widgeten eller eventet.
+  assert.match(rad, /function giftJarAccepts\(\)\{return true\}/,
+    'giftJarAccepts vager fortfarande in nagot — burken ska ta emot alla gavor: ' + rad.slice(0, 120));
+});
+
+test('gamla filtervarden pa sparade widgetar ignoreras, inte overskrivs', () => {
+  // Widgetar som sparats fore andringen kan bara jarFilterMode:'selected' med ett gavonamn.
+  // Livevagen ska strunta i faltet — men den far ALDRIG stada bort det, for da skriver den till
+  // den sparade layouten. Det ar exakt tech-debt §3.
+  const i = MEDIA.indexOf('function dropIntoGiftJar');
+  const kropp = MEDIA.slice(i, MEDIA.indexOf('\nfunction triggerGiftJarDrop', i));
+  for (const falt of ['jarFilterMode', 'jarGiftName', 'jarMinCoins']) {
+    assert.ok(!kropp.includes(falt),
+      `dropIntoGiftJar rör ${falt} — gamla falt ska ignoreras, varken lasas eller raderas`);
+  }
+  assert.ok(!/delete\s+w\.jar/.test(MEDIA),
+    'nagot raderar jar-falt fran widgetobjektet — det ar en skrivning till sparad layout');
 });
 
 // ---- Livevagen ---------------------------------------------------------------------------------

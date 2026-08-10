@@ -298,8 +298,7 @@
     'giftjar.model': v => ({
       type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
       jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
-      jarCount: 0, jarCapacity: 50, jarShowCounter: true, jarAutoResetMs: 0,
-      jarFilterMode: 'all', jarMinCoins: 0, jarGiftName: ''
+      jarCount: 0, jarCapacity: 50, jarShowCounter: true, jarAutoResetMs: 0
     })
   };
 
