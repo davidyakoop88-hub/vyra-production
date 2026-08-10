@@ -219,14 +219,17 @@ const HOISTED = [
   ['Top Streak · tema', "catalogKey='catalog:topstreak:'+theme", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Top Streak · ram', "catalogKey='catalog:topstreak:frame:'+fid", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Heart Goal', "catalogKey='catalog:heartgoal:'+t", { heartThemes: FRAMES('heartgoal.theme') }],
-  ['Fan Level', "catalogKey='catalog:fanlevel:'+t", { fanLevelThemes: FRAMES('fanlevel.theme') }],
-  ['Gifter Level', "catalogKey='catalog:gifterlevel:'+layout",
-    { glLayouts: [['profile', 'Modell 1'], ['flip', 'Modell 2'], ['sidebadge', 'Modell 3']] }],
-  ['Social Goal', "catalogKey='catalog:socialgoal:'+kind", {}],
+  ['Fan Level', "catalogKey='catalog:fanlevel:layout:'+layout", { fanLevelThemes: FRAMES('fanlevel.theme'), fanLevelLayouts: Object.entries(FRAMES('fanlevel.layout')) }],
+  ['Gifter Level', "catalogKey='catalog:gifterlevel:'+layout", {}],
+  ['Social Goal', "catalogKey='catalog:socialgoal:'+kind", {
+    SOCIAL_GOAL_PORTRAITS: Array.from({ length: 20 }, (_, i) => ['portrait-' + (i + 1), 'Portrait ' + (i + 1), .3]),
+    SOCIAL_GOAL_LANDSCAPES: Array.from({ length: 7 }, (_, i) => ['landscape-' + (i + 1), 'Landscape ' + (i + 1), 1.7])
+  }],
   ['Battle MVP · stil', "catalogKey='catalog:battlemvp:'+b.dataset.mvpStyle", { MVP_FRAMES: FRAMES('battlemvp.frame') }],
   ['Battle MVP · ram', "catalogKey='catalog:battlemvp:frame:'+fid", { MVP_FRAMES: FRAMES('battlemvp.frame') }],
   ['Gift Campaign', "catalogKey='catalog:giftcampaign:'+t+':'+o",
-    { gcThemes: [['neon', 'Neon Event'], ['aurora', 'Aurora']] }]
+    { gcThemes: [['neon', 'Neon Event'], ['aurora', 'Aurora']] }],
+  ['Gift Jar', "catalogKey='catalog:giftjar:'+model", { GIFT_JAR_MODELS: FRAMES('giftjar.model') }]
 ];
 
 for (const [name, marker, extras, containers = []] of HOISTED) {

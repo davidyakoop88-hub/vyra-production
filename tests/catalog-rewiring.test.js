@@ -42,6 +42,7 @@ function everyCatalogKey() {
   v('topstreak.frame').forEach(f => keys.push('catalog:topstreak:frame:' + f));
   v('heartgoal.theme').forEach(t => keys.push('catalog:heartgoal:' + t));
   v('fanlevel.theme').forEach(t => keys.push('catalog:fanlevel:' + t));
+  v('fanlevel.layout').forEach(l => keys.push('catalog:fanlevel:layout:' + l));
   v('battlemvp.style').forEach(t => keys.push('catalog:battlemvp:' + t));
   v('battlemvp.frame').forEach(f => keys.push('catalog:battlemvp:frame:' + f));
   v('ranking.kind').forEach(type => ['gold', 'violet'].forEach(t => keys.push('catalog:ranking:' + type + ':' + t)));
@@ -49,11 +50,14 @@ function everyCatalogKey() {
     [2, 3].forEach(m => keys.push('catalog:glovesnipe:' + p + ':' + k + ':' + m))));
   // Themes and layouts the registry does not gate: the catalog UI owns their lists.
   ['clean', 'neon', 'royal'].forEach(t => keys.push('catalog:toplike:' + t));
-  ['profile', 'flip', 'sidebadge'].forEach(l => keys.push('catalog:gifterlevel:' + l));
-  ['likes', 'follows'].forEach(k => [1, 2, 3].forEach(m =>
-    ['portrait', 'landscape'].forEach(o => keys.push('catalog:socialgoal:' + k + ':' + m + ':' + o))));
-  ['neon', 'aurora'].forEach(t => ['portrait', 'landscape'].forEach(o =>
+  v('gifterlevel.layout').forEach(l => keys.push('catalog:gifterlevel:' + l));
+  ['likes', 'follows'].forEach(k => {
+    Array.from({ length: 20 }, (_, i) => i + 1).forEach(m => keys.push('catalog:socialgoal:' + k + ':' + m + ':portrait'));
+    [1, 2, 3, 4, 5, 6, 7].forEach(m => keys.push('catalog:socialgoal:' + k + ':' + m + ':landscape'));
+  });
+  ['neon', 'aurora', 'crystal-garden'].forEach(t => ['portrait', 'landscape'].forEach(o =>
     keys.push('catalog:giftcampaign:' + t + ':' + o)));
+  v('giftjar.model').forEach(model => keys.push('catalog:giftjar:' + model));
   return keys;
 }
 
@@ -91,13 +95,13 @@ test('varje katalogknapp publicerar en nyckel som registret känner igen', () =>
   const unknown = [...families].filter(f => !VyraWidgets.families().includes(f));
   assert.deepEqual(unknown, [], 'media.js bygger nycklar för familjer registret inte känner');
   // Every assembled key is bound to a name the handler closes over, never re-derived at click time.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 20,
-    'alla tjugo factory-anrop går inte via den bundna nyckeln');
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 21,
+    'alla 21 factory-anrop går inte via den bundna nyckeln');
 });
 
 test('nyckeln publiceras när knappen byggs, inte när den klickas', () => {
   const now = count(MEDIA);
-  assert.equal(now.total, 20, `factoryplatser: ${now.total}`);
+  assert.equal(now.total, 21, `factoryplatser: ${now.total}`);
   assert.equal(now.insideDirectOnclick, 0,
     'dessa publicerar först vid klick: ' +
     now.sites.filter(s => s.insideDirectOnclick).map(s => s.button).join(', '));
@@ -220,11 +224,16 @@ test('followers och follows ger samma standalone-instans', () => {
   assert.throws(() => VyraWidgets.create('catalog:socialgoal:subscribers:1:portrait'), /Okänd måltyp/);
 });
 
+test('Social Goal avvisar modeller som saknar en designresurs', () => {
+  assert.throws(() => VyraWidgets.create('catalog:socialgoal:follows:21:portrait'), /Okänd stående målmodell/);
+  assert.throws(() => VyraWidgets.create('catalog:socialgoal:likes:8:landscape'), /Okänd liggande målmodell/);
+});
+
 test('inga gamla inline-defaultobjekt finns kvar', () => {
   assert.equal((MEDIA.match(/state\.widgets\.push\(\{/g) || []).length, 0,
     'media.js har kvar minst ett inline-objektliteral i push()');
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 20,
-    'antalet kataloganrop stämmer inte med de tjugo katalogställena');
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 21,
+    'antalet kataloganrop stämmer inte med de 21 katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {

@@ -63,8 +63,8 @@ const CONTRACT = [
 
   { name: 'Fan Level Up · tema', key: 'catalog:fanlevel:gold',
     marker: "type:'templateFanLevel'", bindings: { id: 'x', t: 'gold', c: ['#ff8a20', '#ffd36b'] } },
-  { name: 'Gifter Level Up · layout', key: 'catalog:gifterlevel:profile',
-    marker: "type:'templateGifterLevel'", bindings: { id: 'x', layout: 'profile' } },
+  { name: 'Gifter Level Up · layout', key: 'catalog:gifterlevel:stack',
+    marker: "type:'templateGifterLevel'", bindings: { id: 'x', layout: 'stack' } },
   { name: 'New Follower Alert', key: 'catalog:followeralert',
     marker: "type:'templateFollowerAlert'", bindings: { id: 'x' } },
 
@@ -108,7 +108,9 @@ const CONTRACT = [
   { name: 'Like Fountain', key: 'catalog:likefountain',
     marker: "type:'templateLikeFountain'", bindings: { id: 'x' } },
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',
-    marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } }
+    marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } },
+  { name: 'Gift Jar · Crystal', key: 'catalog:giftjar:crystal',
+    marker: "type:'templateGiftJar'", bindings: { id: 'x', model: 'crystal' } }
 ];
 
 module.exports = { CONTRACT };

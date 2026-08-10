@@ -74,13 +74,24 @@
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
     'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
     'fanlevel.theme': {gold:['#ff8a20','#ffd36b'],neon:['#ff3ac8','#a74cff'],ice:['#29cfff','#b9f5ff'],emerald:['#35e783','#baffd4'],fire:['#ff3c24','#ffb52d'],sakura:['#ff6fa8','#ffd9e8'],storm:['#6d7bff','#d6dbff'],royal:['#c79bff','#f0e2ff']},
+    'fanlevel.layout': {stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    'gifterlevel.layout': {stack:'Original Stack',sidebadge:'Side Badge',reveal:'Diamond Reveal',orbitlevel:'Orbit Level',risingtier:'Rising Tier',flip:'Flip Token',duo:'Compact Duo'},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
+    'giftjar.model': {
+      crystal:{label:'Crystal Jar',accent:'#b98cff',light:'#76e7ff',symbol:'◆'},
+      royal:{label:'Royal Jar',accent:'#e7b85b',light:'#fff0a8',symbol:'♛'},
+      neon:{label:'Neon Jar',accent:'#ff3bd4',light:'#36e8ff',symbol:'◉'},
+      fire:{label:'Fire Jar',accent:'#ff4b24',light:'#ffc13b',symbol:'🔥'},
+      ice:{label:'Ice Jar',accent:'#42cfff',light:'#dcfbff',symbol:'❄'},
+      heart:{label:'Heart Jar',accent:'#ff4f9c',light:'#ffd0e5',symbol:'♥'},
+      galaxy:{label:'Galaxy Jar',accent:'#8a5cff',light:'#54d8ff',symbol:'✦'}
+    },
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
     // they are geometry as much as colour, and one copy is the whole point.
-    'topgift.frame': {'royal-wings':{label:'Royal Wings',accent:'#ffc13b',aspect:0.8327,circle:{left:33.51,top:42.86,width:33.46,height:29.0},titlePlate:{left:27.14,top:25.56,width:45.97,height:12.19},namePlate:{left:34.22,top:76.81,width:31.32,height:12.7}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.5888,circle:{left:28.19,top:45.95,width:44.29,height:26.27},titlePlate:{left:19.42,top:28.85,width:61.51,height:11.57},namePlate:{left:28.22,top:77.2,width:43.57,height:12.07}},'angel-heart':{label:'Angel Heart',accent:'#ff8fc8',aspect:0.6766,circle:{left:31.86,top:47.71,width:36.88,height:25.14},titlePlate:{left:25.14,top:32.91,width:50.3,height:10.23},namePlate:{left:31.76,top:80.57,width:36.18,height:9.72},darkTitle:true,darkName:true},'dark-raven':{label:'Dark Raven',accent:'#9b5cff',aspect:0.6267,circle:{left:28.49,top:43.99,width:44.61,height:27.58},titlePlate:{left:19.26,top:27.05,width:61.8,height:11.57},namePlate:{left:28.36,top:77.98,width:43.61,height:11.9}},'frost-crystal':{label:'Frost Crystal',accent:'#6db8ff',aspect:0.6907,circle:{left:30.8,top:40.27,width:39.0,height:27.72},titlePlate:{left:26.33,top:23.6,width:47.64,height:11.78},namePlate:{left:30.82,top:76.45,width:38.36,height:10.39}},'rose-garden':{label:'Rose Garden',accent:'#ff8fc8',aspect:0.695,circle:{left:32.27,top:39.47,width:38.44,height:27.5},titlePlate:{left:27.07,top:24.49,width:49.15,height:10.98},namePlate:{left:31.94,top:75.43,width:37.61,height:9.93},darkTitle:true,darkName:true},'luna-mist':{label:'Luna Mist',accent:'#c07bff',aspect:0.6695,circle:{left:27.45,top:39.52,width:41.91,height:29.06},titlePlate:{left:20.34,top:22.64,width:56.45,height:11.64},namePlate:{left:27.81,top:73.77,width:41.2,height:13.43}}},
-    'topstreak.frame': {'amethyst-heart':{label:'Amethyst Heart',accent:'#c07bff',aspect:0.9143,circle:{left:28.9,top:27.65,width:42.19,height:36.38},plate:{left:16.57,top:70.15,width:66.58,height:16.58}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.7871,circle:{left:28.13,top:32.66,width:43.43,height:33.73},plate:{left:12.81,top:72.71,width:77.11,height:14.87}},'gold-wings':{label:'Golden Wings',accent:'#ffc13b',aspect:0.8717,circle:{left:28.85,top:27.29,width:42.3,height:35.73},plate:{left:16.66,top:70.03,width:66.97,height:15.86}},'rose-heart':{label:'Rose Heart',accent:'#ff8fc8',aspect:0.8947,circle:{left:30.68,top:22.04,width:39.81,height:39.33},plate:{left:23.29,top:70.2,width:53.12,height:15.92}},'luna-stars':{label:'Luna Stars',accent:'#ffd57f',aspect:0.7673,circle:{left:25.27,top:25.97,width:50.13,height:36.54},plate:{left:19.89,top:68.68,width:61.88,height:14.82}},'crystal-tiara':{label:'Crystal Tiara',accent:'#b083ff',aspect:0.899,circle:{left:29.56,top:27.64,width:41.18,height:37.99},plate:{left:20.32,top:71.36,width:59.07,height:14.8}},'violet-wings':{label:'Violet Wings',accent:'#a866ff',aspect:0.9644,circle:{left:29.18,top:24.79,width:41.93,height:38.37},plate:{left:15.87,top:67.95,width:68.25,height:17.26}},'star-crown':{label:'Star Crown',accent:'#e8c25a',aspect:0.8042,circle:{left:26.18,top:26.88,width:47.31,height:38.05},plate:{left:15.7,top:70.49,width:71.57,height:15.11}}},
+    'topgift.frame': {'royal-wings':{label:'Royal Wings',accent:'#ffc13b',aspect:0.8327,circle:{left:33.51,top:42.86,width:33.46,height:29.0},titlePlate:{left:27.14,top:25.56,width:45.97,height:12.19},namePlate:{left:34.22,top:76.81,width:31.32,height:12.7}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.5888,circle:{left:28.19,top:45.95,width:44.29,height:26.27},titlePlate:{left:19.42,top:28.85,width:61.51,height:11.57},namePlate:{left:28.22,top:77.2,width:43.57,height:12.07}},'angel-heart':{label:'Angel Heart',accent:'#ff8fc8',aspect:0.6766,circle:{left:31.86,top:47.71,width:36.88,height:25.14},titlePlate:{left:25.14,top:32.91,width:50.3,height:10.23},namePlate:{left:31.76,top:80.57,width:36.18,height:9.72},darkTitle:true,darkName:true},'dark-raven':{label:'Dark Raven',accent:'#9b5cff',aspect:0.6267,circle:{left:28.49,top:43.99,width:44.61,height:27.58},titlePlate:{left:19.26,top:27.05,width:61.8,height:11.57},namePlate:{left:28.36,top:77.98,width:43.61,height:11.9}},'frost-crystal':{label:'Frost Crystal',accent:'#6db8ff',aspect:0.6907,circle:{left:30.8,top:40.27,width:39.0,height:27.72},titlePlate:{left:26.33,top:23.6,width:47.64,height:11.78},namePlate:{left:30.82,top:76.45,width:38.36,height:10.39}},'rose-garden':{label:'Rose Garden',accent:'#ff8fc8',aspect:0.695,circle:{left:32.27,top:39.47,width:38.44,height:27.5},titlePlate:{left:27.07,top:24.49,width:49.15,height:10.98},namePlate:{left:31.94,top:75.43,width:37.61,height:9.93},darkTitle:true,darkName:true},'luna-mist':{label:'Luna Mist',accent:'#c07bff',aspect:0.6695,circle:{left:27.45,top:39.52,width:41.91,height:29.06},titlePlate:{left:20.34,top:22.64,width:56.45,height:11.64},namePlate:{left:27.81,top:73.77,width:41.2,height:13.43}}, 'hall-of-fame':{label:'Hall of Fame',continuous:true,accent:'#e8b64d',aspect:.666667,circle:{left:22.46,top:36.98,width:55.08,height:36.72},titlePlate:{left:28,top:7,width:44,height:7},namePlate:{left:11,top:71,width:78,height:18}},'royal-throne':{label:'Royal Throne',continuous:true,accent:'#e8b64d',aspect:.562799,circle:{left:18.1,top:27.51,width:63.76,height:35.89},titlePlate:{left:30,top:12,width:40,height:7},namePlate:{left:8,top:68,width:84,height:20}},'celestial-champion':{label:'Celestial Champion',continuous:true,accent:'#a982ff',aspect:.562799,circle:{left:18.1,top:29.9,width:63.76,height:35.89},titlePlate:{left:31,top:5,width:38,height:6},namePlate:{left:10,top:69,width:80,height:19}},'diamond-pedestal':{label:'Diamond Pedestal',continuous:true,accent:'#dce9ff',aspect:.562799,circle:{left:17,top:23.3,width:65.89,height:37.08},titlePlate:{left:26,top:5,width:48,height:7},namePlate:{left:15,top:67,width:70,height:23}},'celestial-fireworks':{label:'Celestial Fireworks',continuous:true,accent:'#e8c25a',aspect:.666667,circle:{left:19.73,top:27.99,width:60.55,height:40.36},titlePlate:{left:20,top:67,width:60,height:8},namePlate:{left:9,top:77,width:82,height:15}},'crystal-bloom':{label:'Crystal Bloom',continuous:true,accent:'#9f75ff',aspect:.75,circle:{left:24.22,top:27.62,width:51.57,height:38.67},titlePlate:{left:26,top:68,width:48,height:8},namePlate:{left:12,top:78,width:76,height:15}},'royal-comet':{label:'Royal Comet',continuous:true,accent:'#56d6a0',aspect:.666667,circle:{left:22.17,top:24.41,width:55.66,height:37.11},titlePlate:{left:25,top:67,width:50,height:8},namePlate:{left:14,top:77,width:72,height:15}}},
+    'topstreak.frame': {'amethyst-heart':{label:'Amethyst Heart',accent:'#c07bff',aspect:0.9143,circle:{left:28.9,top:27.65,width:42.19,height:36.38},plate:{left:16.57,top:70.15,width:66.58,height:16.58}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.7871,circle:{left:28.13,top:32.66,width:43.43,height:33.73},plate:{left:12.81,top:72.71,width:77.11,height:14.87}},'gold-wings':{label:'Golden Wings',accent:'#ffc13b',aspect:0.8717,circle:{left:28.85,top:27.29,width:42.3,height:35.73},plate:{left:16.66,top:70.03,width:66.97,height:15.86}},'rose-heart':{label:'Rose Heart',accent:'#ff8fc8',aspect:0.8947,circle:{left:30.68,top:22.04,width:39.81,height:39.33},plate:{left:23.29,top:70.2,width:53.12,height:15.92}},'luna-stars':{label:'Luna Stars',accent:'#ffd57f',aspect:0.7673,circle:{left:25.27,top:25.97,width:50.13,height:36.54},plate:{left:19.89,top:68.68,width:61.88,height:14.82}},'crystal-tiara':{label:'Crystal Tiara',accent:'#b083ff',aspect:0.899,circle:{left:29.56,top:27.64,width:41.18,height:37.99},plate:{left:20.32,top:71.36,width:59.07,height:14.8}},'violet-wings':{label:'Violet Wings',accent:'#a866ff',aspect:0.9644,circle:{left:29.18,top:24.79,width:41.93,height:38.37},plate:{left:15.87,top:67.95,width:68.25,height:17.26}},'star-crown':{label:'Star Crown',accent:'#e8c25a',aspect:0.8042,circle:{left:26.18,top:26.88,width:47.31,height:38.05},plate:{left:15.7,top:70.49,width:71.57,height:15.11}}, 'crystal-ascension':{label:'Crystal Ascension',continuous:true,accent:'#a866ff',aspect:.666667,circle:{left:32.42,top:25.07,width:35.16,height:23.44},plate:{left:18,top:66,width:64,height:18}},'royal-coronation':{label:'Royal Coronation',continuous:true,accent:'#e8c25a',aspect:.665582,circle:{left:33.43,top:25.05,width:33.24,height:22.12},plate:{left:16,top:63,width:68,height:23}},'celestial-awakening':{label:'Celestial Awakening',continuous:true,accent:'#89b8ff',aspect:.706434,circle:{left:33.4,top:26.47,width:33.2,height:23.46},plate:{left:11,top:65,width:78,height:18}},'phoenix-rise':{label:'Phoenix Rise',continuous:true,accent:'#ff5038',aspect:.562799,circle:{left:31.35,top:26.02,width:37.19,height:20.93},plate:{left:7,top:66,width:86,height:17}},'diamond-evolution':{label:'Diamond Evolution',continuous:true,accent:'#62bfff',aspect:.706434,circle:{left:33.4,top:24.8,width:33.2,height:23.46},plate:{left:15,top:64,width:70,height:19}},'portal-rebirth':{label:'Portal Rebirth',continuous:true,accent:'#42d8ff',aspect:.666667,circle:{left:29.49,top:23.76,width:41.02,height:27.34},plate:{left:13,top:66,width:74,height:16}},'legendary-bloom':{label:'Legendary Bloom',continuous:true,accent:'#d184ff',aspect:.667101,circle:{left:32.42,top:26.06,width:35.16,height:23.45},plate:{left:11,top:64,width:78,height:18}}},
     'battlemvp.frame': {'gold-crown':{label:'Gold Crown',accent:'#ffc13b',aspect:0.8906,circle:{left:23.98,top:22.92,width:53.8,height:47.92},plate:{left:20.44,top:80.83,width:60.58,height:13.33}},'royal-ribbon':{label:'Royal Ribbon',accent:'#e8c25a',aspect:0.8125,circle:{left:18.74,top:23.04,width:62.51,height:50.79},plate:{left:15.16,top:80.52,width:70.0,height:12.92}},'laurel-star':{label:'Laurel Star',accent:'#ffd166',aspect:0.8229,circle:{left:17.63,top:20.24,width:63.47,height:52.23},plate:{left:13.29,top:83.1,width:73.42,height:12.71}},'dark-wings':{label:'Dark Wings',accent:'#c9d2e0',aspect:0.9728,circle:{left:21.97,top:22.46,width:55.51,height:54.0},plate:{left:17.21,top:81.66,width:66.15,height:14.13}},'dragon-fire':{label:'Dragon Fire',accent:'#ff5230',aspect:0.8639,circle:{left:16.19,top:15.56,width:65.79,height:56.84},plate:{left:13.48,top:78.66,width:73.94,height:15.71}},'nautical-helm':{label:'Nautical Helm',accent:'#d9a05b',aspect:0.8717,circle:{left:20.01,top:16.92,width:59.68,height:52.02},plate:{left:16.76,top:80.37,width:66.79,height:14.66}},'shadow-star':{label:'Shadow Star',accent:'#e8b64d',aspect:0.9124,circle:{left:19.96,top:12.56,width:60.38,height:55.1},plate:{left:15.7,top:80.56,width:68.61,height:11.75}}}
   };
 
@@ -219,9 +230,9 @@
     }),
     'socialgoal.kind': v => ({
       type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
-      width: v.orientation === 'portrait' ? 220 : 440,
-      title: v.kind === 'likes' ? 'Like Goal' : 'Follower Goal',
-      goalTitle: v.kind === 'likes' ? 'LIKE GOAL' : 'FOLLOWERS GOAL',
+      width: v.orientation === 'portrait' ? 220 : 520,
+      title: v.kind === 'likes' ? 'Like-mål' : 'Följarmål',
+      goalTitle: v.kind === 'likes' ? 'LIKE MÅL' : 'FÖLJARE MÅL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: v.kind === 'likes' ? '#ff3f8f' : '#24d8df', goalColor2: '#b84ee8'
     }),
@@ -229,7 +240,8 @@
     'fanlevel.theme': v => ({
       type: 'templateFanLevel', x: 100, y: 80, width: 260, title: 'Fan Level Up',
       fanHeadline: 'LEVEL UP', fanLevelLabel: 'FAN LEVEL', fanLevel: 12, fanName: 'HeartRiser',
-      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light
+      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light,
+      ...(v.layout ? { fanLayout: v.layout } : {})
     }),
     'gifterlevel.layout': v => ({
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
@@ -274,12 +286,16 @@
     // kristallträdgården växer i stället för att pushas, och namnger det själv.
     'giftcampaign.theme': v => ({
       type: 'templateGiftCampaign', x: 70, y: 110,
-      width: v.orientation === 'portrait' ? 260 : 430, title: 'Gift Campaign',
-      templateTitle: 'GIFT CAMPAIGN',
-      campaignSubtitle: v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT',
-      campaignTheme: v.theme,
-      campaignOrientation: v.orientation,
-      accent: v.theme === 'crystal-garden' ? '#ff6ec7' : '#ff3fa4'
+      width: v.orientation === 'portrait' ? 260 : (v.theme === 'crystal-garden' ? 520 : 430), title: 'Gift Campaign',
+      templateTitle: 'GIFT CAMPAIGN', campaignSubtitle: v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT', campaignTheme: v.theme,
+      campaignOrientation: v.orientation, accent: v.theme === 'crystal-garden' ? '#d8a85c' : '#ff3fa4',
+      ...(v.theme === 'crystal-garden' ? { giftCount: 4 } : {})
+    }),
+    'giftjar.model': v => ({
+      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
+      jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
+      jarCount: 0, jarCapacity: 50, jarShowCounter: true, jarAutoResetMs: 0,
+      jarFilterMode: 'all', jarMinCoins: 0, jarGiftName: ''
     })
   };
 
@@ -315,17 +331,28 @@
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
       const kind = goalKind(parts[0]), model = Number(parts[1]), orientation = parts[2];
-      if (!Number.isFinite(model)) throw new Error('catalog:socialgoal kräver en modell som siffra');
+      if (!Number.isInteger(model) || model < 1) throw new Error('catalog:socialgoal kräver en positiv modell som heltal');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
+      if (orientation === 'portrait' && model > 20) throw new Error('Okänd stående målmodell "' + model + '" — giltiga: 1–20');
+      if (orientation === 'landscape' && model > 7) throw new Error('Okänd liggande målmodell "' + model + '" — giltiga: 1–7');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
     'fanlevel': parts => {
+      if (parts[0] === 'layout') {
+        const layout = parts[1];
+        if (!layout) throw new Error('catalog:fanlevel:layout kräver en layout');
+        pick('fanlevel.layout', layout, 'fan level-layout');
+        const c = TABLES['fanlevel.theme'].gold;
+        return ['fanlevel.theme', { theme: 'gold', color: c[0], light: c[1], layout }];
+      }
       const c = pick('fanlevel.theme', parts[0], 'fan level-tema');
       return ['fanlevel.theme', { theme: parts[0], color: c[0], light: c[1] }];
     },
     'gifterlevel': parts => {
-      if (!parts[0]) throw new Error('catalog:gifterlevel kräver en layout');
-      return ['gifterlevel.layout', { layout: parts[0] }];
+      const layout = parts[0];
+      if (!layout) throw new Error('catalog:gifterlevel kräver en layout');
+      pick('gifterlevel.layout', layout, 'gifter level-layout');
+      return ['gifterlevel.layout', { layout }];
     },
     'followeralert': () => ['followeralert', {}],
     'glovesnipe': parts => {
@@ -363,6 +390,11 @@
       if (!parts[0]) throw new Error('catalog:giftcampaign kräver ett tema');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
       return ['giftcampaign.theme', { theme: parts[0], orientation }];
+    },
+    'giftjar': parts => {
+      if (!parts[0]) throw new Error('catalog:giftjar kräver en modell');
+      const model = pick('giftjar.model', parts[0], 'gift jar-modell');
+      return ['giftjar.model', { model: parts[0], accent: model.accent, light: model.light, symbol: model.symbol }];
     }
   };
 

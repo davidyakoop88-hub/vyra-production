@@ -84,6 +84,7 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
     ['catalog:ranking:felstavat:gold', /Okänd rankingtyp/],
     ['catalog:heartgoal:felstavat', /Okänd hjärttema/],
     ['catalog:fanlevel:felstavat', /Okänd fan level-tema/],
+    ['catalog:fanlevel:layout:felstavat', /Okänd fan level-layout/],
     ['catalog:battlemvp:felstavat', /Okänd MVP-stil/],
     ['catalog:battlemvp:frame:felstavat', /Okänd MVP-ram/],
     ['catalog:glovesnipe:felstavat:tap', /Okänd boostpaket/],
@@ -91,6 +92,7 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
     ['catalog:socialgoal:felstavat:1:portrait', /Okänd måltyp/],
     ['catalog:socialgoal:likes:1:felstavat', /Okänd orientering/],
     ['catalog:giftcampaign:neon:felstavat', /Okänd orientering/],
+    ['catalog:giftjar:felstavat', /Okänd gift jar-modell/],
     ['catalog:toplike', /kräver ett tema/],
     ['catalog:gifterlevel', /kräver en layout/]
   ];
@@ -224,11 +226,11 @@ test('Social Goal: followers normaliseras till follows', { timeout: 5000 }, () =
   assert.equal(legacy.createdFrom, canonical.createdFrom,
     'aliaset gav en annan createdFrom och därmed en andra standalone-instans');
   assert.equal(legacy.goalKind, canonical.goalKind, 'goalKind normaliserades inte');
-  assert.equal(canonical.goalTitle, 'FOLLOWERS GOAL');
+  assert.equal(canonical.goalTitle, 'FÖLJARE MÅL');
   // Likes is untouched.
   const likes = VyraWidgets.create('catalog:socialgoal:likes:1:portrait');
   assert.equal(likes.goalKind, 'likes');
-  assert.equal(likes.goalTitle, 'LIKE GOAL');
+  assert.equal(likes.goalTitle, 'LIKE MÅL');
   assert.notEqual(likes.createdFrom, canonical.createdFrom);
 });
 
