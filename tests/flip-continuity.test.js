@@ -29,10 +29,10 @@ const SHIPPED = {
   // sändningen, eftersom en evig flipp aldrig startas om.
   topgiftRekord: /\.vyra-topgift\.record \.vyra-gift-face\{animation:giftPulse 2\.1s/,
   topgiftRoot: /\.vyra-topgift\.play\{animation:vyraAppear 3\.6s/,
-  streak: /\.vyra-streak\.hit \.streak-flip\{animation:streakFlip 3\.8s/,
+  streak: /\.vyra-streak\.hit \.streak-flip\{animation:streakFlipLoop var\(--speed,3\.8s\) [^}]*infinite\}/,
   iceWrapper: /\.streak-ice\.hit \.streak-flip\{animation:none!important\}/,
-  iceGift: /\.streak-ice\.hit \.streak-gift-face\{animation:iceGiftOut var\(--speed\)/,
-  iceProfile: /\.streak-ice\.hit \.streak-profile-face\{animation:iceProfileIn var\(--speed\)/
+  iceGift: /\.streak-ice\.hit \.streak-gift-face\{animation:iceGiftLoop var\(--speed\) [^}]*infinite\}/,
+  iceProfile: /\.streak-ice\.hit \.streak-profile-face\{animation:iceProfileLoop var\(--speed\) [^}]*infinite\}/
 };
 test('the CSS this suite models is the CSS that ships', () => {
   Object.entries(SHIPPED).forEach(([name, re]) =>
@@ -83,9 +83,9 @@ function computedStyleFor(node, rootOf) {
   if (has('vyra-streak')) {
     const speed = root.style.speed || '3.8s';                       // markup writes --speed inline
     if (node === root) return anim('streakEnter', has('streak-ice') ? speed : '3.8s');
-    if (is('streak-flip')) return has('streak-ice') ? none : anim('streakFlip', '3.8s');
-    if (is('streak-gift-face')) return has('streak-ice') ? anim('iceGiftOut', speed) : none;
-    if (is('streak-profile-face')) return has('streak-ice') ? anim('iceProfileIn', speed) : none;
+    if (is('streak-flip')) return has('streak-ice') ? none : anim('streakFlipLoop', speed, 'infinite');
+    if (is('streak-gift-face')) return has('streak-ice') ? anim('iceGiftLoop', speed, 'infinite') : none;
+    if (is('streak-profile-face')) return has('streak-ice') ? anim('iceProfileLoop', speed, 'infinite') : none;
     return none;
   }
   return none;
@@ -138,14 +138,14 @@ function streak(id, extraClasses = [], speed) {
   box.append(flip, el('b'));
   return box;
 }
-// `evig` skiljer de två familjerna åt. Top Gift snurrar hela sändningen och kan därför aldrig vara
-// "klar"; Top Streak spelar en gång per träff och ska fortsätta göra exakt det.
+// Båda familjerna snurrar hela sändningen. En liveuppdatering får patcha innehållet men aldrig
+// stoppa eller spola tillbaka växlingen mellan gåva och profilbild.
 const VARIANTS = [
   { name: 'Top Gift · standardtema', trigger: 'play', durationMs: 10000, evig: true, build: id => topGift(id, ['theme-neon']) },
   { name: 'Top Gift · ram', trigger: 'play', durationMs: 10000, evig: true, build: id => topGift(id, ['topgift-framed']) },
-  { name: 'Top Streak · tema', trigger: 'hit', durationMs: 3800, build: id => streak(id, ['streak-inferno']) },
-  { name: 'Top Streak · ram', trigger: 'hit', durationMs: 3800, build: id => streak(id, ['streak-framed']) },
-  { name: 'Top Streak · ice', trigger: 'hit', durationMs: 2000, build: id => streak(id, ['streak-ice'], '2s') }
+  { name: 'Top Streak · tema', trigger: 'hit', durationMs: 3800, evig: true, build: id => streak(id, ['streak-inferno']) },
+  { name: 'Top Streak · ram', trigger: 'hit', durationMs: 3800, evig: true, build: id => streak(id, ['streak-framed']) },
+  { name: 'Top Streak · ice', trigger: 'hit', durationMs: 2000, evig: true, build: id => streak(id, ['streak-ice'], '2s') }
 ];
 
 for (const v of VARIANTS) {
@@ -229,8 +229,11 @@ for (const v of VARIANTS) {
       const fresh = v.build('w1');
       h.body.children.length = 0; h.body.append(fresh);
       h.autoStart(h.sandbox.document); h.frames();
-      assert.equal(h.delayOf(fresh.querySelector('.vyra-flip')), 3000,
-        'loopen lades inte i fas — 23 000 ms in i en 10 s-cykel är 3 000 ms, inte något annat');
+      const expected = 23000 % v.durationMs;
+      const loopPart = v.name.includes('ice') ? fresh.querySelector('.streak-gift-face')
+        : fresh.querySelector('.vyra-flip,.streak-flip');
+      assert.equal(h.delayOf(loopPart), expected,
+        `loopen lades inte i fas — 23 000 ms in i en ${v.durationMs} ms-cykel är ${expected} ms`);
     });
 
     test(`${v.name}: entrén spelas inte om när loopen slår runt`, () => {
@@ -245,11 +248,12 @@ for (const v of VARIANTS) {
       h.body.children.length = 0; h.body.append(fresh);
       h.autoStart(h.sandbox.document); h.frames();
       assert.equal(h.delayOf(fresh), 23000, 'widgetens entré fick loopens fas och spelades om');
-      assert.equal(h.delayOf(fresh.querySelector('.vyra-profile-face')), 23000,
-        'profilbildens engångsglöd fick loopens fas');
+      const profileExpected = v.name.includes('ice') ? 23000 % v.durationMs : 23000;
+      assert.equal(h.delayOf(fresh.querySelector('.vyra-profile-face,.streak-profile-face')), profileExpected,
+        'profilbildens animation fick fel fas');
     });
 
-    test(`${v.name}: ett nytt rekord märks utan att loopen rubbas`, () => {
+    if (v.name.startsWith('Top Gift')) test(`${v.name}: ett nytt rekord märks utan att loopen rubbas`, () => {
       const h = harness();
       const node = v.build('w1');
       h.body.append(node);

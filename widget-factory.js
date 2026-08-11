@@ -234,7 +234,8 @@
       title: v.kind === 'likes' ? 'Like Goal' : 'Follower Goal',
       goalTitle: v.kind === 'likes' ? 'LIKE GOAL' : 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
-      goalColor: v.kind === 'likes' ? '#ff3f8f' : '#24d8df', goalColor2: '#b84ee8'
+      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff'})[v.model] || '#ff4f9f',
+      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff'})[v.model] || '#ffb1dc'
     }),
 
     'fanlevel.theme': v => ({
@@ -265,14 +266,16 @@
     'battlemvp.style': v => ({
       type: 'templateBattleMvp', x: 100, y: 90,
       width: PREMIUM_MVP_STYLES.has(v.style) ? 300 : 240, title: 'Battle MVP',
-      mvpLabel: 'BATTLE MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpStyle: v.style,
+      mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpStyle: v.style,
+      mvpShowLabel: true, mvpShowName: false, mvpShowCoins: false,
       mvpColor: v.color,
       mvpColor2: v.style === 'neon-cyber' ? '#ff3fd0' : v.style === 'diamond-elite' ? '#8d96a2' : '#ffe239',
       mvpDuration: PREMIUM_MVP_STYLES.has(v.style) ? 5 : 7
     }),
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
-      mvpLabel: 'BATTLE MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpShowCoins: false,
+      mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
+      mvpShowLabel: true, mvpShowName: false, mvpShowCoins: false,
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
