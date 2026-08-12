@@ -354,7 +354,10 @@ html.overlay-output .resize-handle{display:none!important}
 .lf-title{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 10px/1 Manrope,sans-serif;letter-spacing:.16em;color:var(--gold,#e8b968);text-shadow:0 0 10px var(--gold,#e8b968);opacity:.85;white-space:nowrap;z-index:4}
 .fountain-portrait .lf-title{font-size:9px}
 .lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}
-.lf-p{position:absolute;left:calc(50% + var(--ox,0%));bottom:14px;font-style:normal;line-height:1;opacity:0;will-change:transform,opacity}
+/* Alla partiklar maste borja i samma kalla. Sidledsspridningen sker i
+   keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
+   en egen startpunkt. */
+.lf-p{position:absolute;left:50%;bottom:14px;font-style:normal;line-height:1;opacity:0;will-change:transform,opacity}
 .lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 3px #fff,0 0 var(--glow,14px) var(--c),0 0 calc(var(--glow,14px) * 1.6) var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-72%);width:calc(var(--sz,20px) * .68);height:calc(var(--sz,20px) * .68);border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 8px var(--c),0 0 3px rgba(255,255,255,.7);pointer-events:none}
 .lf-p-spark{color:var(--c);font-size:11px;text-shadow:0 0 6px var(--c);animation:lfSparkRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}

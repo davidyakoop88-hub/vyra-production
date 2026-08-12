@@ -98,4 +98,26 @@
    glodar i widgetens accentfarg, utan fylld bakgrund. */
 .vyra-campaign.campaign-neon{border-radius:12px!important;}
 .vyra-campaign.campaign-neon h3{text-shadow:0 0 10px color-mix(in srgb,var(--campaign) 60%,transparent)}
-.premium-goal.goal-framed{min-height:250px;padding:90px 11% 52px!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:auto 48px!important;isolation:isolate;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--goal-a),transparent 45%))}.premium-goal.goal-framed .goal-frame-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:-1}.premium-goal.goal-framed>.goal-icon{display:none}.premium-goal.goal-framed>.goal-copy,.premium-goal.goal-framed>.goal-track{grid-column:1!important}.premium-goal.goal-framed>.goal-copy{grid-row:1!important;text-align:center;padding:0 4%}.premium-goal.goal-framed>.goal-copy h3{font-family:Georgia,serif;font-size:clamp(12px,2.4vw,24px);letter-spacing:.09em;text-shadow:0 2px 5px #180710}.premium-goal.goal-framed>.goal-copy strong{justify-content:center;font-size:clamp(14px,2.6vw,28px);color:#fff5fb;text-shadow:0 2px 6px #16040d}.premium-goal.goal-framed>.goal-copy small{justify-self:center;font-size:9px}.premium-goal.goal-framed>.goal-track{grid-row:2!important;height:25px;margin:0 3%;border:2px solid color-mix(in srgb,var(--goal-b),white 35%);border-radius:999px;background:#08070bdd;box-shadow:inset 0 0 12px #000,0 0 12px color-mix(in srgb,var(--goal-a),transparent 40%)}.premium-goal.goal-framed>.goal-track:before,.premium-goal.goal-framed>.goal-track i{top:7px;height:8px;border-radius:999px}.premium-goal.goal-framed>.goal-track b{display:none}.premium-goal.goal-framed>em{top:21%;right:9%;font-size:9px}.premium-goal.goal-framed.goal-rose-frame{--goal-a:#ff70b7;--goal-b:#ffd0e7}.premium-goal.goal-framed.goal-heart-frame{--goal-a:#ff4d9a;--goal-b:#ffe1ef}.premium-goal.goal-framed.goal-sapphire-frame{--goal-a:#46cbff;--goal-b:#8cceff}
+/* Framed Goal använder transparenta ram-PNG:er. Grafiken ska ligga BAKOM
+   innehållet i widgetens egen stacking context, inte bakom hela canvasen.
+   Liggande och stående har olika grid eftersom samma konstverk annars trycks
+   ihop till en toppremsa i stående läge. */
+.premium-goal.goal-framed{min-height:250px;padding:90px 11% 52px!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:auto 48px!important;isolation:isolate;overflow:visible!important;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--goal-a),transparent 45%))}
+.premium-goal.goal-framed .goal-frame-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:0}
+.premium-goal.goal-framed>.goal-icon{display:none}
+.premium-goal.goal-framed>.goal-copy,.premium-goal.goal-framed>.goal-track,.premium-goal.goal-framed>em{z-index:1}
+.premium-goal.goal-framed>.goal-copy,.premium-goal.goal-framed>.goal-track{grid-column:1!important}
+.premium-goal.goal-framed>.goal-copy{grid-row:1!important;text-align:center;padding:0 4%}
+.premium-goal.goal-framed>.goal-copy h3{font-family:Georgia,serif;font-size:clamp(12px,2.4vw,24px);letter-spacing:.09em;text-shadow:0 2px 5px #180710}
+.premium-goal.goal-framed>.goal-copy strong{justify-content:center;font-size:clamp(14px,2.6vw,28px);color:#fff5fb;text-shadow:0 2px 6px #16040d}
+.premium-goal.goal-framed>.goal-copy small{justify-self:center;font-size:9px}
+.premium-goal.goal-framed>.goal-track{grid-row:2!important;height:25px;margin:0 3%;border:2px solid color-mix(in srgb,var(--goal-b),white 35%);border-radius:999px;background:#08070bdd;box-shadow:inset 0 0 12px #000,0 0 12px color-mix(in srgb,var(--goal-a),transparent 40%)}
+.premium-goal.goal-framed>.goal-track:before,.premium-goal.goal-framed>.goal-track i{top:7px;height:8px;border-radius:999px}
+.premium-goal.goal-framed>.goal-track b{display:none}
+.premium-goal.goal-framed>em{top:21%;right:9%;font-size:9px}
+.premium-goal.goal-framed.goal-portrait{min-height:440px;padding:122px 12% 64px!important;grid-template-rows:auto 48px!important;align-content:end}
+.premium-goal.goal-framed.goal-portrait .goal-frame-art{object-fit:contain;object-position:center top}
+.premium-goal.goal-framed.goal-portrait>.goal-copy{padding:0 2%}
+.premium-goal.goal-framed.goal-portrait>.goal-track{margin:0}
+.premium-goal.goal-framed.goal-portrait>em{top:18%;right:8%}
+.premium-goal.goal-framed.goal-rose-frame{--goal-a:#ff70b7;--goal-b:#ffd0e7}.premium-goal.goal-framed.goal-heart-frame{--goal-a:#ff4d9a;--goal-b:#ffe1ef}.premium-goal.goal-framed.goal-sapphire-frame{--goal-a:#46cbff;--goal-b:#8cceff}

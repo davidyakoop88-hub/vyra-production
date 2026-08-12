@@ -861,11 +861,14 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 if(new URLSearchParams(location.search).get('vfxdemo')==='2'){Promise.resolve().then(()=>{let files=['pixi.min.js','gsap.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-fountain-types.js','vfx-rng.js','vfx-crystal-heart-particle.js','vfx-sparkle-particle.js','vfx-trail-pool.js','vfx-fountain-source.js','vfx-fountain-emitter.js','vfx-fountain-debug.js','vfx-fountain-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 
-/* VYRA_PREMIUM_WIDGET_BUNDLE_20260727
+/* VYRA_PREMIUM_WIDGET_BUNDLE_20260812
    Activates the premium widget files that are already versioned in this repository.
    Keep the scripts sequential: premium-final and runtime-controls both extend bind(). */
 Promise.resolve().then(()=>{
-  const version='20260727-premium-widget-sync';
+  // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
+  // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
+  // samtidigt som panelen redan erbjuder de nya stilnamnen.
+  const version='20260812-premium-widget-rendering';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
