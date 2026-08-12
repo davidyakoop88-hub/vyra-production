@@ -237,8 +237,8 @@
       title: v.kind === 'likes' ? 'Like Goal' : 'Follower Goal',
       goalTitle: v.kind === 'likes' ? 'LIKE GOAL' : 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
-      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff'})[v.model] || '#ff4f9f',
-      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff'})[v.model] || '#ffb1dc'
+      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff','rose-frame':'#ff70b7','heart-frame':'#ff4d9a','sapphire-frame':'#46cbff','azure-frame':'#3a9cff'})[v.model] || '#ff4f9f',
+      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff','rose-frame':'#ffd0e7','heart-frame':'#ffe1ef','sapphire-frame':'#8cceff','azure-frame':'#b7e6ff'})[v.model] || '#ffb1dc'
     }),
 
     'fanlevel.theme': v => ({
@@ -345,8 +345,8 @@
     'socialgoal': parts => {
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
-      const kind = goalKind(parts[0]), model = Number(parts[1]), orientation = parts[2];
-      if (!Number.isFinite(model)) throw new Error('catalog:socialgoal kräver en modell som siffra');
+      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['rose-frame','heart-frame','sapphire-frame','azure-frame']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
+      if (!(frameModels.has(rawModel) || Number.isFinite(model))) throw new Error('catalog:socialgoal kräver en giltig modell');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
