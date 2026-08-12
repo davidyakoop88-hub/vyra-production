@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `b59d044`
+Commit: `6e77cb4`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -20,11 +20,11 @@ Commit: `b59d044`
 
 | | |
 |---|---|
-| Kort totalt | **153** |
+| Kort totalt | **152** |
 | Sektioner | 18 |
-| Med katalognyckel | 153 / 153 |
-| Med shadow DOM-miniatyr | 153 / 153 |
-| Ritar sin design | 153 / 153 |
+| Med katalognyckel | 152 / 152 |
+| Med shadow DOM-miniatyr | 152 / 152 |
+| Ritar sin design | 152 / 152 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -47,7 +47,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-12 | — |
 | FOLLOWERS & LIKE GOALS · 4 LIGGANDE DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-12 | — |
-| FAN LEVEL UP · VARJE TEMA SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
+| FAN LEVEL UP · 7 MODELLER | 7 | 7/7 | 7/7 | 7/7 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-12 | — |
 | VYRA TOP RANKING · VARJE DESIGN SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | TOP LIKE · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-08-12 | — |
@@ -194,18 +194,17 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-08-12 | — |
 | Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-08-12 | — |
 
-### FAN LEVEL UP · VARJE TEMA SEPARAT
+### FAN LEVEL UP · 7 MODELLER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fan Level Up · Gold | `catalog:fanlevel:gold` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Neon | `catalog:fanlevel:neon` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Ice | `catalog:fanlevel:ice` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Emerald | `catalog:fanlevel:emerald` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Fire | `catalog:fanlevel:fire` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Sakura | `catalog:fanlevel:sakura` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Storm | `catalog:fanlevel:storm` | ✓ | ✓ | 2026-08-12 | — |
-| Fan Level Up · Royal | `catalog:fanlevel:royal` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Original Fan Stack | `catalog:fanlevel:layout:stack` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Heartbeat Side | `catalog:fanlevel:layout:heartbeat` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Fan Badge Reveal | `catalog:fanlevel:layout:badgereveal` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Loyalty Ring | `catalog:fanlevel:layout:loyalty` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Rising Hearts | `catalog:fanlevel:layout:hearts` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Welcome Ribbon | `catalog:fanlevel:layout:ribbon` | ✓ | ✓ | 2026-08-12 | — |
+| Fan Level Up · Community Duo | `catalog:fanlevel:layout:duo` | ✓ | ✓ | 2026-08-12 | — |
 
 ### HEART ME GOAL · VARJE TEMA SEPARAT
 
