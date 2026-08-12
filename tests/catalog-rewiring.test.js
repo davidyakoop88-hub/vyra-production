@@ -42,6 +42,7 @@ function everyCatalogKey() {
   v('topstreak.frame').forEach(f => keys.push('catalog:topstreak:frame:' + f));
   v('heartgoal.theme').forEach(t => keys.push('catalog:heartgoal:' + t));
   v('fanlevel.theme').forEach(t => keys.push('catalog:fanlevel:' + t));
+  v('fanlevel.layout').forEach(l => keys.push('catalog:fanlevel:layout:' + l));
   v('battlemvp.style').forEach(t => keys.push('catalog:battlemvp:' + t));
   v('battlemvp.frame').forEach(f => keys.push('catalog:battlemvp:frame:' + f));
   v('ranking.kind').forEach(type => ['gold', 'violet'].forEach(t => keys.push('catalog:ranking:' + type + ':' + t)));
