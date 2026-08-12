@@ -46,6 +46,7 @@ function studio() {
 // En familj dar varje variant ska ge ett SYNLIGT eget avtryck.
 const FAMILJER = [
   { familj: 'topstreak.frame', nyckel: v => `catalog:topstreak:frame:${v}`, falt: 'streakFrame' },
+  { familj: 'topgift.frame', nyckel: v => `catalog:topgift:frame:${v}`, falt: 'giftFrame' },
   { familj: 'battlemvp.frame', nyckel: v => `catalog:battlemvp:frame:${v}`, falt: 'mvpFrame' }
 ];
 
@@ -58,7 +59,7 @@ const FAMILJER = [
 // Listan star har i stallet for att familjen tyst utelamnas: en utelamnad rad ser ut som att
 // familjen inte finns, en namngiven lucka ser ut som det den ar. Nasta PR tar bort raden och
 // lagger till familjen ovan.
-const ANNU_INTE_FIXADE = { 'topgift.frame': 'vyraTopGift — egen PR, samma monster' };
+const ANNU_INTE_FIXADE = {};
 
 for (const { familj, nyckel, falt } of FAMILJER) {
   test(`${familj}: varje variant renderas olika`, () => {
@@ -139,9 +140,7 @@ test('ingen renderare skriver over en annan utan att lamna en vag tillbaka', () 
   // inte falla tillbaka pa den, och da ar varje gren i originalet dod kod — tyst.
   const fs = require('fs'), path = require('path');
   const kall = fs.readFileSync(path.join(__dirname, '..', 'premium-final.js'), 'utf8');
-  // vyraTopGift ar den kanda luckan ovan. Den namnges har med, sa att listan over vad som INTE ar
-  // fixat star pa ett stalle och forsvinner nar PR 2 landar.
-  const KANDA = new Set(['vyraTopGift']);
+  const KANDA = new Set();
   const brister = [];
   for (const m of kall.matchAll(/\n *(vyra[A-Z]\w*) *= *function/g)) {
     const namn = m[1];
