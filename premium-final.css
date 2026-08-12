@@ -124,3 +124,8 @@
 
 /* Use CSS code-point escapes: a UTF-8 mojibake string previously leaked into this ornament. */
 .topgift-fireworks .topgift-ornament:after{content:"\2726\00a0\00b7\00a0\2727\00a0\00b7\00a0\2726"}
+
+/* Samma dubbelkodning som ornamentet ovan: originalstrangen langre upp i filen
+   manglades i bdcb7bd. Code-point-escapes kan inte manglas av en teckenkodning.
+   Tre halvfasta mellanslag per lucka, som originalets tre vanliga. */
+.goal-constellation .goal-track:after{content:"\2726\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2727\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2726"}
