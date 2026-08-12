@@ -219,7 +219,7 @@ const HOISTED = [
   ['Top Streak · tema', "catalogKey='catalog:topstreak:'+theme", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Top Streak · ram', "catalogKey='catalog:topstreak:frame:'+fid", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Heart Goal', "catalogKey='catalog:heartgoal:'+t", { heartThemes: FRAMES('heartgoal.theme') }],
-  ['Fan Level', "catalogKey='catalog:fanlevel:'+t", { fanLevelThemes: FRAMES('fanlevel.theme') }],
+  ['Fan Level', "catalogKey='catalog:fanlevel:layout:'+layout", {}],
   ['Gifter Level', "catalogKey='catalog:gifterlevel:'+layout",
     { glLayouts: [['profile', 'Modell 1'], ['flip', 'Modell 2'], ['sidebadge', 'Modell 3']] }],
   ['Social Goal', "catalogKey='catalog:socialgoal:'+kind", {}],
