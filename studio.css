@@ -248,7 +248,7 @@ html.overlay-output body>aside,html.overlay-output body>main>header,html.overlay
 html.overlay-output body>main,html.overlay-output #view,html.overlay-output .editor-shell,html.overlay-output .workarea{display:block!important;position:static!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;overflow:hidden!important}
 html.overlay-output .canvas{position:absolute!important;margin:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform-origin:top left!important}
 html.overlay-output .widget.selected{outline:0!important}
-html.overlay-output .resize-handle{display:none!important}
+html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none!important}
 .widget-catalog button i.vyra-pro-icon{display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.12),0 5px 14px rgba(0,0,0,.24);font-style:normal}
 .widget-catalog button i.vyra-pro-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor)}
 .battle-mvp-template-section .mvp-style-grid button i.vyra-pro-icon{margin:0}
@@ -284,7 +284,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-live-preview h4{margin:0 0 14px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-live-preview-stage{position:relative;min-height:180px;padding:30px;background:#050308;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:auto}
 .overlay-live-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important}
-.overlay-live-preview-stage .resize-handle{display:none!important}
+.overlay-live-preview-stage .resize-handle,.overlay-live-preview-stage .vyra-handle{display:none!important}
 .overlay-widget-gallery{margin-top:22px;background:#110a18;border:1px solid var(--line,#2b2438);border-radius:12px;padding:18px}
 .overlay-widget-gallery h4{margin:0 0 4px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-widget-gallery>p{color:#9d87ac;font-size:9px;margin:0 0 14px;max-width:640px}
@@ -298,7 +298,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb{position:relative;width:100%;height:104px;background:#0a0510;overflow:hidden;flex:0 0 auto}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget{position:relative!important;left:auto!important;top:auto!important}
-.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle{display:none!important}
+.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle,.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .vyra-handle{display:none!important}
 /* BORTTAGET 2026-08-05: en synlighetsregel for miniatyren lackte till overlayen. Ett fyrverkeri,
    en Battle MVP och Top Gifters testtext lag och syntes i OBS utan att nagot triggats.
 
@@ -340,7 +340,7 @@ html.overlay-output .resize-handle{display:none!important}
 .owg-configure-preview h4{margin:0 0 12px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .owg-configure-preview-stage{position:relative;min-height:220px;background:#050308;border:1px solid #2b2438;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .owg-configure-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important;pointer-events:none!important}
-.owg-configure-preview-stage .resize-handle{display:none!important}
+.owg-configure-preview-stage .resize-handle,.owg-configure-preview-stage .vyra-handle{display:none!important}
 .owg-configure-done{grid-column:1/3;grid-row:2/3;margin:0;border:0;border-radius:0;padding:16px;background:#211230;border-top:1px solid #452656;color:#fff;font-size:12px;font-weight:700}
 .owg-configure-done:hover{background:#2d1740}
 @media(max-width:900px){.owg-configure-modal{grid-template-columns:1fr}.owg-configure-preview{display:none}}
@@ -1011,3 +1011,19 @@ body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px
 body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
 body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
 body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+/* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
+   translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
+   satts som transform, och tva transformer pa samma element hade slagit ut varandra. */
+.vyra-handle{position:absolute;z-index:98;padding:0;background:#9f35ff;border:2px solid #fff;box-shadow:0 0 10px #9f35ff;border-radius:6px;transform-origin:center}
+.vyra-handle-n,.vyra-handle-s{left:50%;width:26px;height:11px;margin-left:-13px;cursor:ns-resize}
+.vyra-handle-e,.vyra-handle-w{top:50%;width:11px;height:26px;margin-top:-13px;cursor:ew-resize}
+.vyra-handle-n{top:-6px}
+.vyra-handle-s{bottom:-6px}
+.vyra-handle-w{left:-6px}
+.vyra-handle-e{right:-6px}
+.vyra-handle-nw,.vyra-handle-ne,.vyra-handle-sw{width:14px;height:14px;border-radius:50%}
+.vyra-handle-nw{left:-7px;top:-7px;cursor:nwse-resize}
+.vyra-handle-ne{right:-7px;top:-7px;cursor:nesw-resize}
+.vyra-handle-sw{left:-7px;bottom:-7px;cursor:nesw-resize}
+.vyra-handle:hover{filter:brightness(1.25)}
