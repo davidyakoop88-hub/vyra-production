@@ -1261,3 +1261,42 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
   width:58px!important;height:58px!important}
 .gifter-layout-profile .gifter-diamond-stack img.gifter-diamond,
 .gifter-layout-number .gifter-diamond-stack img.gifter-diamond{width:36px!important;height:36px!important}
+
+/* ===== GIFTER LEVEL UP · fyra rattelser efter Davids granskning 2026-08-13 =====
+
+   1. DEN MORKA FYRKANTEN. Uppmatt i canvas: PNG:en har 0 % genomskinliga pixlar och 73 %
+      nastan svarta, alla fyra horn rgb(17,17,17) med full opacitet. Alfakanalen finns men ar
+      helt ogenomskinlig — den morka brickan ar INBAKAD i konstverket, inte satt av CSS.
+      `mix-blend-mode:screen` loser det utan ny bildfil: screen mot nastan svart lamnar
+      underlaget orort, sa fyrkanten forsvinner medan diamanten blir kvar. `isolation:isolate`
+      haller blandningen innanfor medaljongen. */
+.gifter-level-up .gifter-diamond-stack{isolation:isolate!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{mix-blend-mode:screen!important}
+
+/* 2. DIAMOND REVEAL: brickan lag sa tatt att den kroc med den nu storre medaljongen. */
+.gifter-layout-reveal .gifter-level-badge{margin-top:14px!important;position:relative;z-index:3}
+.gifter-layout-reveal .gifter-diamond-row{margin-bottom:4px!important}
+
+/* 3. ORBIT LEVEL: medaljongen lag absolut pa top:118px/left:146px och skar in i profilbilden
+      nar den vaxte till 74 px. Den flyttas ut ur orbitens bana. */
+.gifter-layout-orbitlevel .gifter-diamond-row{top:auto!important;bottom:-6px!important;
+  left:50%!important;transform:translateX(-50%)!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack{width:58px!important;height:58px!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack img.gifter-diamond{width:34px!important;height:34px!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:34px!important;position:relative;z-index:3}
+
+/* 4. FLIP TOKEN: diamantkolumnen ar 44 px men medaljongen blev 74 och trangde in pa avataren.
+      Kolumnen breddas och medaljongen halls lagom for en "token". */
+.gifter-layout-flip.gifter-level-up{grid-template-columns:74px 1fr auto!important;column-gap:12px!important}
+.gifter-layout-flip .gifter-diamond-stack{width:64px!important;height:64px!important;border-radius:50%!important}
+.gifter-layout-flip .gifter-diamond{width:40px!important;height:40px!important;object-fit:contain!important;
+  border-radius:0!important}
+
+/* ORBIT LEVEL, andra forsoket. Forsta fixen flyttade medaljongen till bottom:-6px — den slutade
+   krocka med profilbilden men lade sig i stallet OVANPA namnet och undertexten. Absolut
+   positionering var problemet: den kan inte veta var texten hamnar. Medaljongen gar darfor
+   tillbaka i flodet, mellan orbiten och brickan, dar den inte kan overlappa nagot. */
+.gifter-layout-orbitlevel .gifter-diamond-row{position:static!important;transform:none!important;
+  order:1!important;display:flex!important;justify-content:center!important;
+  margin:10px auto 0!important;top:auto!important;left:auto!important;bottom:auto!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:8px!important}

@@ -89,10 +89,19 @@ async function mat(layout) {
                        && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.05,
                text: (e.textContent || '').trim(), bredd: r.width, hojd: r.height,
                radie: cs.borderRadius, kant: cs.borderColor, opacity: cs.opacity } };
+    const box = n => { const e = el.querySelector(n); if (!e) return null;
+      const r = e.getBoundingClientRect();
+      return { v: r.left, h: r.right, o: r.top, u: r.bottom, bredd: r.width, hojd: r.height } };
     return { rubrik: info('h2'), namn: info('h3'), under: info('p'),
              bricka: info('.gifter-level-badge'),
              diamant: info('.gifter-diamond-stack img.gd-1'),
-             medaljong: info('.gifter-diamond-stack') };
+             medaljong: info('.gifter-diamond-stack'),
+             blandning: (() => { const e = el.querySelector('.gifter-diamond-stack img.gd-1');
+               return e ? getComputedStyle(e).mixBlendMode : null })(),
+             rMedaljong: box('.gifter-diamond-stack'),
+             rProfil: box('.gifter-orbit img'),
+             rBricka: box('.gifter-level-badge'),
+             rNamn: box('h3'), rUnder: box('p'), rRubrik: box('h2') };
   });
   await page.close();
   return m;
@@ -135,3 +144,51 @@ for (const layout of MODELLER) {
       `medaljongen har border-radius "${m.medaljong.radie}" — referensen visar en RUND bricka`);
   });
 }
+
+
+// ---- Rattelser efter Davids granskning ---------------------------------------------------
+// Overlapp mats som area, inte som "ser det ok ut" — tva rektanglar som delar yta ar en bugg
+// oavsett hur det upplevs vid en viss storlek.
+function overlapp(a, b) {
+  if (!a || !b) return 0;
+  const bredd = Math.min(a.h, b.h) - Math.max(a.v, b.v);
+  const hojd = Math.min(a.u, b.u) - Math.max(a.o, b.o);
+  return bredd > 0 && hojd > 0 ? Math.round(bredd * hojd) : 0;
+}
+
+for (const layout of MODELLER) {
+  test(`${layout}: diamanten blandas sa den morka fyrkanten forsvinner`, { skip }, async () => {
+    const m = await mat(layout);
+    assert.equal(m.blandning, 'screen',
+      'PNG:en har 0 % genomskinliga pixlar och 73 % nastan svarta — utan screen-blandning '
+      + 'syns konstverkets inbakade morka fyrkant inuti medaljongen');
+  });
+}
+
+for (const layout of ['orbitlevel', 'flip']) {
+  test(`${layout}: medaljongen och profilbilden overlappar inte`, { skip }, async () => {
+    const m = await mat(layout);
+    const yta = overlapp(m.rMedaljong, m.rProfil);
+    assert.equal(yta, 0,
+      `medaljongen och profilbilden delar ${yta} px yta — de ska aldrig rora varandra`);
+  });
+}
+
+// Forsta fixen for orbitlevel flyttade medaljongen ur vagen for profilbilden men lade den
+// OVANPA texten i stallet — och provet var gront, for det vaktade bara mot bilden. Overlapp
+// mot texten maste vaktas lika hart, annars flyttar man bara buggen.
+for (const layout of MODELLER) {
+  test(`${layout}: medaljongen ligger inte over texten`, { skip }, async () => {
+    const m = await mat(layout);
+    for (const [namn, r] of [['rubriken', m.rRubrik], ['namnet', m.rNamn], ['undertexten', m.rUnder]]) {
+      const yta = overlapp(m.rMedaljong, r);
+      assert.equal(yta, 0, `medaljongen och ${namn} delar ${yta} px yta`);
+    }
+  });
+}
+
+test('reveal: brickan krockar inte med medaljongen', { skip }, async () => {
+  const m = await mat('reveal');
+  const yta = overlapp(m.rBricka, m.rMedaljong);
+  assert.equal(yta, 0, `brickan och medaljongen delar ${yta} px yta`);
+});
