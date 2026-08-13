@@ -93,6 +93,11 @@ async function mat(layout) {
       rubrik: info('h2'), namn: info('h3'), pill: info('.fan-level-pill'),
       banderoll: info('.fan-ribbon'), puls: info('.fan-pulse-line'), ring: info('.fan-ring'),
       vingeV: info('.fan-wing.left'), vingeH: info('.fan-wing.right'),
+      // Emblemet ritas i ::after pa halvmanen, sa det ar dar bilden ska matas.
+      vingeVEmblem: (() => { const e = el.querySelector('.fan-wing.left');
+        return e ? getComputedStyle(e, '::after').backgroundImage : null })(),
+      vingeHEmblem: (() => { const e = el.querySelector('.fan-wing.right');
+        return e ? getComputedStyle(e, '::after').backgroundImage : null })(),
       emblem: info('.fan-burst img'),
       hjartan: [...el.querySelectorAll('.fan-rising-hearts i')].map(e => {
         const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
@@ -172,9 +177,13 @@ test('loyalty: ringen ar segmenterad', { skip }, async () => {
 
 test('badgereveal: bada halvmanarna bar emblemet', { skip }, async () => {
   const m = await mat('badgereveal');
-  for (const [namn, v] of [['vanster', m.vingeV], ['hoger', m.vingeH]]) {
+  for (const [namn, v, emblem] of [['vanster', m.vingeV, m.vingeVEmblem],
+                                   ['hoger', m.vingeH, m.vingeHEmblem]]) {
     assert.ok(v && v.synlig, `${namn} halvmane syns inte`);
-    assert.notEqual(v.bild, 'none',
-      `${namn} halvmane har ingen emblembild — referensen visar ett hjarta i varje`);
+    assert.ok(v.bredd >= 60 && v.hojd >= 100,
+      `${namn} halvmane ar ${Math.round(v.bredd)}x${Math.round(v.hojd)} px — referensen visar en STOR `
+      + 'bage som omfamnar profilbilden, inte en liten ikon vid kanten');
+    assert.notEqual(emblem, 'none',
+      `${namn} halvmane bar inget emblem — referensen visar ett hjarta i varje`);
   }
 });

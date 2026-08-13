@@ -1133,3 +1133,66 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
   background-color:transparent!important;
   filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
 .fan-layout-badgereveal .fan-wing.left{transform:scaleX(-1)}
+
+/* ===== FAN LEVEL UP · tre rattelser efter Davids granskning 2026-08-13 =====
+
+   3 BADGE REVEAL: vingarna var 50x70 px och satt 46 px UT fran bilden, sa emblemet blev en
+   liten ikon vid kanten i stallet for en halvmane som omfamnar profilbilden. Bagen ritas nu
+   som en riktig cirkelbage med ::before (tva fargade kanter pa en rund ram, roterad 45 grader
+   ger ett C), och emblemet ligger i ::after mitt i bagen. */
+.fan-layout-badgereveal .fan-wing{
+  width:74px!important;height:136px!important;top:50%!important;transform:translateY(-50%)!important;
+  background:none!important;background-image:none!important;clip-path:none!important;overflow:visible!important}
+.fan-layout-badgereveal .fan-wing.left{left:-70px!important}
+.fan-layout-badgereveal .fan-wing.right{right:-70px!important;transform:translateY(-50%) scaleX(-1)!important}
+.fan-layout-badgereveal .fan-wing::before{
+  content:"";position:absolute;top:2px;left:6px;width:132px;height:132px;border-radius:50%;
+  border:13px solid transparent;border-top-color:#ffb545;border-left-color:#ff5f14;
+  transform:rotate(-45deg);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+.fan-layout-badgereveal .fan-wing::after{
+  content:"";position:absolute;top:50%;left:6px;width:52px;height:52px;transform:translateY(-50%);
+  background:url("assets/images/heart-character.png?v=1") center/contain no-repeat;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 35%))}
+.fan-layout-badgereveal .fan-profile{z-index:2}
+
+/* 4 LOYALTY RING: den forra conic-gradienten hade 4 %-luckor och last darfor som ett band med
+   en spricka. Nu jamna segment med tydliga mellanrum, plus en gnista som i referensen. */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:repeating-conic-gradient(from -8deg,
+    var(--fan) 0deg 26deg, transparent 26deg 40deg)!important;
+  border:0!important;box-shadow:none!important;inset:-11px!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 45%))}
+.fan-layout-loyalty .fan-profile .fan-ring::after{
+  content:"";position:absolute;top:4%;right:11%;width:11px;height:11px;border-radius:50%;
+  background:#fff8e6;box-shadow:0 0 10px 4px #ffcf7a,0 0 22px 8px #ff8a2088}
+
+/* 2 HEARTBEAT och 7 COMMUNITY DUO: namn, TROGEN SUPPORTER och FAN LEVEL UP lag pa egna rader
+   UNDER hela widgeten. Referensen har dem i en egen kolumn TILL HOGER om profilbilden.
+   Rutnaten far darfor en fjarde rad-uppsattning dar avatar och puls spanner alla rader. */
+.fan-layout-heartbeat.fan-level-up{
+  grid-template-columns:60px 46px 1fr!important;
+  grid-template-areas:"avatar pulse burst" "avatar pulse title" "avatar pulse name" "avatar pulse msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-duo.fan-level-up{
+  grid-template-columns:auto auto auto 1fr!important;
+  grid-template-areas:"burst pulse avatar badge" "burst pulse avatar title" "burst pulse avatar name" "burst pulse avatar msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-heartbeat>h2,.fan-layout-duo>h2{grid-area:title!important;text-align:left!important;
+  justify-self:start!important;font-size:15px!important;margin:2px 0 0!important}
+.fan-layout-heartbeat>h3,.fan-layout-duo>h3{grid-area:name!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+.fan-layout-heartbeat>p,.fan-layout-duo>p{grid-area:msg!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+/* Pillen sitter kvar i sitt eget omrade i duo; i heartbeat ligger den absolut over emblemet. */
+.fan-layout-duo .fan-level-pill{grid-area:badge!important;justify-self:start!important;align-self:center!important}
+
+/* Hogerkolumnen i Community Duo blev sa smal att TROGEN SUPPORTER brots till tva rader nar
+   texten flyttades dit. Widgeten ar 300 px, sa kolumnen far hellre krympa emblemet an bryta ord. */
+.fan-layout-duo.fan-level-up{width:320px!important}
+.fan-layout-duo>h2,.fan-layout-duo>h3,.fan-layout-duo>p{white-space:nowrap!important}
+.fan-layout-duo>h2{font-size:14px!important}
+.fan-layout-duo .fan-burst{width:40px!important;height:40px!important}
+.fan-layout-duo .fan-burst img{width:38px!important;height:38px!important}
