@@ -1,18 +1,64 @@
+# ---- Hemligheter ----
+# Riktiga env-filer committas aldrig. De spårade *.example-filerna är mallar med
+# platshållarvärden — allt annat som matchar .env* stannar lokalt.
+.env
+.env.*
+!.env*.example
+*.key
+*.pem
+
+# ---- Beroenden och byggcache ----
 .tools/
 node_modules/
-vyra-state-backup.json
-.vyra-backups/
-VYRA-Download.zip
-VYRA-Setup.exe
-vyra-payload.zip
-.download-staging/
+dist/
+build/
+.cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---- Byggutdata och paketerade installers ----
 electron-app/dist/
 electron-app/dist2/
 electron-app/dist3/
 electron-app/dist4/
+VYRA-Download.zip
+VYRA-Setup.exe
+vyra-payload.zip
+.download-staging/
+*.zip
+*.rar
+*.7z
 
-# Secrets: real env files never get committed. The tracked *.example files are templates
-# with placeholder values only — everything else matching .env* stays local.
-.env
-.env.*
-!.env*.example
+# ---- Renderade sekvenser ----
+renders/
+out/
+*-sequence/
+
+# ---- Exporterat Studio-state (personligt, checka in medvetet om du vill) ----
+# vyra-state-sync.js döper sina exporter till vyra-state-<tidsstämpel>.json.
+vyra-state-backup.json
+vyra-state-*.json
+.vyra-backups/
+
+# ---- OS och editor ----
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.bak
+*.log
+# Blenders autobackup. Sjalva .blend-filerna ar spardade — det har ar bara kopian bredvid.
+*.blend1
+
+# ---- OBS: assets/ och källfiler ignoreras INTE ----
+# Ett tidigare utkast av den här filen ignorerade assets/gifts/, assets/videos/,
+# assets/presenters/ samt *.mp4, *.mov, *.webm och *.blend. Det ser rimligt ut — men
+# repot spårar redan 1150 filer under assets/gifts/, åtta mp4:or under assets/videos/
+# och sju .blend-filer som blender_*.py-skripten bygger vidare på. Git slutar inte spåra
+# filer som redan är spårade, så inget hade försvunnit direkt. I stället hade NYA
+# giftresurser och battle-videor tyst uteblivit ur `git add`, och saknade assets syns
+# först som trasiga widgets hos någon annan. Lägg tunga råklipp under renders/ eller out/
+# om de ska hållas utanför git.
