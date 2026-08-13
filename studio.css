@@ -1027,3 +1027,33 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
 .vyra-handle-ne{right:-7px;top:-7px;cursor:nesw-resize}
 .vyra-handle-sw{left:-7px;bottom:-7px;cursor:nesw-resize}
 .vyra-handle:hover{filter:brightness(1.25)}
+/* SIDOPANELEN blir en flexkolumn sa att "+ Lagg till widget" kan bottenjusteras. Knappen ar
+   sedan media.js ett DIREKT barn till .elements — margin-top:auto verkar bara pa flexbarn. */
+.elements{display:flex;flex-direction:column}
+.elements>.live-layer-add{margin-top:auto;flex:0 0 auto}
+
+/* ZOOMKONTROLLERNA flyttade upp i verktygsraden. Den gamla regeln lade dem svavande over
+   duken med position:sticky och en negativ marginal; har ar de ett vanligt flexbarn langst
+   till hoger. Den 12 px hoga sticky-boxen var dessutom hela orsaken till dukens lodrata
+   rullningslist (scrollHeight 864 mot clientHeight 852) — den forsvinner med flytten. */
+.editor-toolbar .vy-kontroll{position:static;margin:0 0 0 auto;bottom:auto;justify-content:flex-end;flex:0 0 auto}
+
+/* RULLNINGSLISTEN pa duken ska inte synas. Innehallet ar 864 px i en 852 px hog yta
+   (40 verktygsrad + 768 duk + 28 marginal), sa overskottet ar inbyggt i layouten — det var
+   INTE zoomboxen som orsakade det. Rullningen behalls darfor, bara listen doljs: stanger man
+   av rullningen blir dukens nederkant onabar i sma fonster. */
+.workarea{scrollbar-width:none;-ms-overflow-style:none}
+.workarea::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* Zoom- och snappknapparna arvde verktygsradens egen knappstil nar de flyttade dit, och da blev
+   snappvaxelns pa- och av-lage identiska — en vaxel man inte ser laget pa. Modulens egna stilar
+   asserteras darfor om med hogre specificitet inne i raden. */
+.editor-toolbar .vy-kontroll button{background:#160c1fef;border:1px solid #4c285e;color:#d6bddf;border-radius:6px;font-size:10px}
+.editor-toolbar .vy-kontroll button:hover{border-color:#cd55f4;color:#fff}
+/* !important behovs har, och skalet ar laddningsordningen — inte lathet: design-system.css
+   laddas EFTER studio.css i studio.html och vinner darfor vid lika specificitet. Uppmatt:
+   selektorn matchar (`matches()` svarar true) men den beraknade bakgrunden blev anda
+   `linear-gradient(145deg,#130b1c,#0d0814)` fran den senare filen. Bara vaxelns tva lagen
+   hojs, inte all knappstil, sa raden i ovrigt behaller sitt utseende. */
+.editor-toolbar .vy-kontroll button.snapp-vaxel{border-color:#cd55f4!important;background:linear-gradient(180deg,#7a2fb5,#4a1a72)!important;color:#fff!important}
+.editor-toolbar .vy-kontroll button.snapp-vaxel.av{border-color:#4c285e!important;background:#160c1fef!important;color:#7d6e8a!important}
