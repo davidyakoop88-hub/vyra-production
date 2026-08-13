@@ -111,6 +111,9 @@ function cmdVisa(karta, id, json) {
   console.log(`Syfte:   ${d.syfte}`);
   console.log(`Filer:   ${filer.length} st, ${kb(summa)}`);
   console.log(`Tester:  ${tester.length} st`);
+  if (d.e2e && d.e2e.length) {
+    console.log(`E2E:     ${expandera(d.e2e).join(', ')}  (kors med "npx playwright test", inte node --test)`);
+  }
   if (d.matning && d.matning.length) {
     console.log('Matning:');
     for (const m of d.matning) console.log(`  - ${m.namn}: ${m.kommando}`);
@@ -164,6 +167,12 @@ function cmdTest(karta, id) {
     console.log(`\n== ${d.namn}: ${filer.length} test i ${cwd === '.' ? 'roten' : cwd} ==`);
     const r = spawnSync('node', ['--test', ...filer], { cwd: path.join(ROT, cwd), stdio: 'inherit' });
     if (r.status !== 0) fel += 1;
+  }
+  // E2E-specarna kors av Playwrights egen runner. De ar inte node:test-filer och far darfor
+  // aldrig hamna i spawnSync ovan - dar hanger de i stallet for att falla.
+  if (d.e2e && d.e2e.length) {
+    console.log(`\n== ${d.namn}: ${d.e2e.length} e2e-spec kors separat ==`);
+    console.log(`   npx playwright test --config tests/e2e/playwright.config.js ${expandera(d.e2e).join(' ')}`);
   }
   process.exit(fel ? 1 : 0);
 }

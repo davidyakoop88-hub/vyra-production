@@ -74,7 +74,25 @@ test('varje testmönster träffar minst ett riktigt testfil', () => {
       const funna = träffar(mönster);
       assert.ok(funna.length > 0, `Domänen ${d.id}: testmönstret "${mönster}" träffar ingen fil`);
       for (const f of funna) {
-        assert.match(f, /\.(test|spec|browser\.test)\.js$/, `Domänen ${d.id}: "${f}" listas som test men ser inte ut som ett testfil`);
+        assert.match(f, /\.(test|browser\.test)\.js$/, `Domänen ${d.id}: "${f}" listas som test men ser inte ut som ett testfil`);
+      }
+    }
+  }
+});
+
+// En Playwright-spec är inte en node:test-fil. Kör man den med `node --test` faller den inte —
+// den hänger, tills något utifrån dödar den. Det kostade 900 s per domän första gången tavlan
+// kördes, och ett hängande test är dyrare än ett rött: det ser ut som att sviten är långsam.
+test('e2e-specar står i e2e-fältet och aldrig bland node:test-filerna', () => {
+  for (const d of karta.domaner) {
+    for (const mönster of d.tester || []) {
+      assert.ok(!mönster.includes('/e2e/'), `Domänen ${d.id}: "${mönster}" är en Playwright-spec och hör hemma i "e2e", inte i "tester"`);
+    }
+    for (const mönster of d.e2e || []) {
+      const funna = träffar(mönster);
+      assert.ok(funna.length > 0, `Domänen ${d.id}: e2e-mönstret "${mönster}" träffar ingen fil`);
+      for (const f of funna) {
+        assert.match(f, /\.spec\.js$/, `Domänen ${d.id}: "${f}" står under e2e men är inte en .spec.js`);
       }
     }
   }

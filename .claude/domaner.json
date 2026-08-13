@@ -270,6 +270,7 @@
         "tests/browser/command-center-*.browser.test.js",
         "server/test/tiktok-event-adapter.test.js"
       ],
+      "e2e": ["tests/e2e/live-scenarios.spec.js"],
       "matning": [
         { "namn": "Ingest under last", "kommando": "node tests/load/live-ingest.js" }
       ],
@@ -599,9 +600,9 @@
         "electron-app/test/*.test.js",
         "tests/desktop-entry-reason.test.js",
         "tests/browser/desktop-nedladdning.browser.test.js",
-        "tests/e2e/desktop.spec.js",
         "server/test/desktop-release.test.js"
       ],
+      "e2e": ["tests/e2e/desktop.spec.js"],
       "matning": [],
       "risker": [
         "Installerarens version maste folja slapptaggen - workflowet vaktar det.",
