@@ -10,6 +10,9 @@
 # ---- Beroenden och byggcache ----
 .tools/
 node_modules/
+# Redis lägger sin ögonblicksbild i den katalog servern startades från. Kör man en lokal
+# redis-server i repotroten för att köra server-testerna hamnar den alltså här.
+dump.rdb
 dist/
 build/
 .cache/
