@@ -366,7 +366,7 @@
     "mvpName": "TestAlpha",
     "mvpScore": 1500,
     "mvpShowLabel": true,
-    "mvpShowName": false,
+    "mvpShowName": true,
     "mvpShowCoins": false,
     "mvpColor": "#ffc13b",
     "mvpColor2": "#ffe239",

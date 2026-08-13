@@ -284,7 +284,7 @@
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
       mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
-      mvpShowLabel: true, mvpShowName: false, mvpShowCoins: false,
+      mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
