@@ -79,8 +79,19 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   assert.match(sek.querySelector('h4').textContent, /PREMIUM/);
   assert.equal(sek.querySelectorAll('[data-pf-streak]').length, 7);
 
+  // .prototype-section har TVA rubriker, och det ar med flit. Forut satte premium-final.js
+  // innerHTML pa sektionen och tog darmed bort "VYRA ORIGINAL · REDIGERBARA" tillsammans med
+  // media.js:129:s atta extrateman och sju Top Gift-ramar — femton knappar som forsvann vid varje
+  // forsta bind-pass. Vid ett andra bind blockerade finalPremium-flaggan overskrivningen och
+  // knapparna kom tillbaka, vilket fick felet att se ut som ett ombindningsproblem.
+  // Uppmatt i Chromium: 145 knappar vid navigering, 164 efter rattelsen.
   const proto = h.document.querySelector('.prototype-section');
-  assert.match(proto.querySelector('h4').textContent, /TOP GIFTER/);
+  const rubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
+  assert.ok(rubriker.some(t => /TOP GIFTER/.test(t)),
+    `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(rubriker)}`);
+  assert.ok(rubriker.some(t => /VYRA ORIGINAL/.test(t)),
+    'premium-final.js skrev over sektionen igen — "VYRA ORIGINAL" och dess femton knappar ar borta:\n  ' +
+    JSON.stringify(rubriker));
   assert.ok(proto.querySelectorAll('[data-pf-topgift]').length >= 21,
     `bara ${proto.querySelectorAll('[data-pf-topgift]').length} Top Gifter-knappar`);
 });
