@@ -157,7 +157,7 @@ Write-Host @'
      renderade sekvenser (renders\, out\) ligger utanfor git.
 
   2. Exportera state pa datorn dar dina scener finns, importera har.
-     Knapparna sitter nere till vanster i Studio (vyra-state-sync.js laddas
+     Knapparna sitter under Installningar i Studio (vyra-state-sync.js laddas
      redan av studio.html — inget att kopiera in for hand).
 
   3. Rutin varje gang: git pull innan du borjar, git push innan du slutar.

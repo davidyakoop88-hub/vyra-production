@@ -219,30 +219,59 @@
     }, STATUS_TIMEOUT_MS);
   }
 
+  // Stilarna ligger i skriptet i stallet for en egen .css: filen ska kunna laggas in
+  // och tas bort i ett steg, utan ett stilmallspar att halla ihop.
   function injectStyles() {
+    if (document.getElementById('vyra-state-sync-styles')) return;
     var style = document.createElement('style');
+    style.id = 'vyra-state-sync-styles';
     style.textContent = [
-      '#vyra-state-sync{position:fixed;left:16px;bottom:16px;z-index:99999;',
-      'font:500 12px/1.4 system-ui,Segoe UI,sans-serif;display:flex;flex-direction:column;gap:6px;align-items:flex-start}',
-      '#vyra-state-sync .vss-row{display:flex;gap:6px}',
-      '#vyra-state-sync button{cursor:pointer;padding:7px 12px;border-radius:8px;color:#f4eaff;',
-      'background:rgba(18,10,30,.92);border:1px solid rgba(178,102,255,.55);',
-      'box-shadow:0 2px 14px rgba(178,102,255,.18);transition:border-color .15s,box-shadow .15s}',
-      '#vyra-state-sync button:hover{border-color:#e05cff;box-shadow:0 2px 18px rgba(224,92,255,.4)}',
-      '#vyra-state-sync .vss-status{max-width:320px;padding:7px 11px;border-radius:8px;',
-      'background:rgba(18,10,30,.95);border:1px solid rgba(178,102,255,.4);color:#f4eaff;display:none}',
+      '#vyra-state-sync{display:flex;align-items:center;justify-content:space-between;gap:16px;',
+      'margin-top:20px;padding:16px;border:1px solid #452656;border-radius:12px;background:#130a1b}',
+      '#vyra-state-sync>span{display:grid;gap:4px}',
+      '#vyra-state-sync small{color:#8f809a}',
+      '#vyra-state-sync .vss-row{display:flex;gap:8px;flex-wrap:wrap}',
+      '#vyra-state-sync button{cursor:pointer;padding:10px 14px;border-radius:8px;color:#fff;',
+      'background:#24102f;border:1px solid #8e36bd;transition:border-color .15s}',
+      '#vyra-state-sync button:hover{border-color:#e05cff}',
+      '#vyra-state-sync .vss-status{grid-column:1/-1;margin-top:6px;padding:7px 11px;border-radius:8px;',
+      'background:#1a0f24;border:1px solid rgba(178,102,255,.4);color:#f4eaff;display:none}',
       '#vyra-state-sync .vss-status[data-tone="warn"]{border-color:#ffcc66;color:#ffe0a3}',
       '#vyra-state-sync .vss-status[data-tone="error"]{border-color:#ff6b8a;color:#ffc2ce}'
     ].join('');
     document.head.appendChild(style);
   }
 
-  function buildPanel() {
-    var panel = document.createElement('div');
-    panel.id = 'vyra-state-sync';
+  /**
+   * Raden bor i Installningar, inte i ett flytande lager over editorn.
+   *
+   * Ett forsta utkast lade panelen `position:fixed` nere till vanster. Sidopanelen ar 186px
+   * bred och gar hela vagen ner, sa panelen la sig 170px in OVANPA menyn — exakt det
+   * tests/browser/meny-yta.browser.test.js finns for att fanga. Nere till hoger gar heller
+   * inte: `.overlay-link-bar` ar fixed och tacker hela bottenremsan (x 186→1366, y 700→768).
+   *
+   * Att i stallet mata in raden i Installningar foljer state-backup.js, som ar samma sorts
+   * funktion (exportera/importera state) och redan har den vagen. I normalt flode kan den
+   * inte lagga sig over nagot alls, och bredden pa menyn behover inte upprepas har.
+   */
+  function injectSettings() {
+    var card = document.querySelector('#view .settings-page');
+    if (!card || card.querySelector('#vyra-state-sync')) return;
+
+    var box = document.createElement('div');
+    box.id = 'vyra-state-sync';
+
+    var label = document.createElement('span');
+    var title = document.createElement('b');
+    title.textContent = 'Flytta state mellan datorer';
+    var hint = document.createElement('small');
+    hint.textContent = 'Exporterar scener, widgets och Action & Event som en JSON-fil.';
+    label.appendChild(title);
+    label.appendChild(hint);
 
     statusElement = document.createElement('div');
     statusElement.className = 'vss-status';
+    label.appendChild(statusElement);
 
     var exportButton = document.createElement('button');
     exportButton.type = 'button';
@@ -270,15 +299,23 @@
     row.appendChild(exportButton);
     row.appendChild(importButton);
 
-    panel.appendChild(statusElement);
-    panel.appendChild(row);
-    panel.appendChild(fileInput);
-    document.body.appendChild(panel);
+    box.appendChild(label);
+    box.appendChild(row);
+    box.appendChild(fileInput);
+    card.appendChild(box);
   }
 
   function init() {
     injectStyles();
-    buildPanel();
+    // Installningsvyn ritas om vid varje vybyte, sa raden matas in efter klicket — samma
+    // hake som state-backup.js anvander. Forsta forsoket tacker fallet dar Studion redan
+    // startar i Installningar.
+    injectSettings();
+    document.addEventListener('click', function (event) {
+      if (event.target.closest && event.target.closest('[data-view="settings"]')) {
+        setTimeout(injectSettings, 80);
+      }
+    });
   }
 
   if (document.readyState === 'loading') {
