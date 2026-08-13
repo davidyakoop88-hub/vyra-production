@@ -80,9 +80,25 @@ const basicProps=props;props=function(){let w=liveWidget(selected);if(!w)return 
 const styledWh=wh;wh=function(w){let html=styledWh(w),extra=`width:${w.width||300}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};${w.hidden?'display:none;':''}`;return html.replace(`style="left:${w.x}px;top:${w.y}px"`,`style="left:${w.x}px;top:${w.y}px;${extra}"`)};
 const advancedPropertyBind=bind;bind=function(){advancedPropertyBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w)return;let change=(id,key,number=true)=>{let el=document.querySelector(id);if(!el)return;const las=e=>number?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};change('#propX','x');change('#propY','y');change('#propWidth','width');change('#propLayer','layer');change('#propAnimation','animation',false);change('#counterLabel','counterLabel',false);change('#counterValue','counterValue',false);change('#counterColor','counterColor',false);change('#counterSize','counterSize');let showCounter=document.querySelector('#showCounter');if(showCounter)showCounter.onchange=e=>{w.showCounter=e.target.checked;save();render()};let opacity=document.querySelector('#propOpacity');if(opacity)opacity.oninput=e=>{w.opacity=+e.target.value;document.querySelector('#opacityValue').textContent=w.opacity+'%';let el=document.querySelector(`[data-id="${w.id}"]`);if(el)el.style.opacity=w.opacity/100;save()};let duplicate=document.querySelector('#duplicateWidget');if(duplicate)duplicate.onclick=()=>{let copy={...w,id:w.type+Date.now(),x:w.x+20,y:w.y+20,title:(w.title||'Widget')+' kopia'};state.widgets.push(copy);selected=copy.id;save();render();toast('Widgeten duplicerades')};let toggle=document.querySelector('#toggleWidget');if(toggle)toggle.onclick=()=>{w.hidden=!w.hidden;save();render();toast(w.hidden?'Widgeten är dold':'Widgeten visas')}};
 
-// Remove the old visual demo widgets. The studio now exposes only real video assets
-// until each live-data widget has a proper event connection.
-if(!localStorage.getItem('vyra-video-only-migration')){state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type==='video');selected=null;save();localStorage.setItem('vyra-video-only-migration','1')}
+// BORTTAGEN 2026-08-13: vyra-video-only-migration.
+//
+// Den behöll BARA standalone och type==='video' och raderade allt annat. Villkoret i dess egen
+// kommentar — "until each live-data widget has a proper event connection" — gällde en tidig fas
+// då bara video var pålitligt. Det stämmer inte längre: battle-mvp-session.js,
+// fan-level-session.js och gifter-level-session.js har sina kopplingar, och rad ~680 nedan
+// pensionerade dessutom video helt.
+//
+// Kvar stod två städningar som var varandras motsatser. Båda är top-level och kör vid varje
+// laddning, skyddade bara av sin flagga, så i en webbläsare där INGEN av flaggorna var satt kördes
+// de efter varandra: den här behöll bara video, och nästa tog bort video. Uppmätt på en layout med
+// sex widgetar blev resultatet noll — och save() skrev ner det.
+//
+// I praktiken maskerades det av ordningen (en ny webbläsare kör städningarna på ett tomt state och
+// sätter flaggorna innan någon layout hunnit in), men varje väg som skriver vyra-state utan
+// flaggorna var en riktig risk — särskilt en import som avbryts efter att "ersätt allt" redan
+// raderat dem. Att ta bort den föråldrade halvan tar bort hela motsägelsen.
+//
+// Flaggan lästes ingen annanstans. Vaktat av tests/laddningsstadning.test.js.
 enhanceWidgetCatalog=function(){
   let panel=document.querySelector('.elements');
   if(!panel||panel.dataset.expanded)return;

@@ -380,6 +380,17 @@ Verifierad: 2026-08-09.
 
 ## Sådant som är löst, men värt att minnas
 
+- **Två engångsstädningar som var varandras motsatser tömde hela layouten.** `vyra-video-only-migration`
+  behöll bara standalone och `type==='video'`; `vyra-remove-old-video-widgets` behöll allt utom
+  `video`. Båda låg top-level i `media.js` och kördes vid varje laddning, skyddade bara av sin
+  flagga — så i en webbläsare där ingen flagga var satt kördes de efter varandra och sex widgetar
+  blev noll, med `save()` efteråt. Ordningen maskerade det (en ny webbläsare sätter flaggorna på ett
+  tomt state), men varje väg som skrev `vyra-state` utan flaggorna var exponerad — särskilt en
+  import som avbryts efter att "ersätt allt" redan raderat dem. Den föråldrade halvan togs bort
+  2026-08-13; villkoret i dess egen kommentar, *"until each live-data widget has a proper event
+  connection"*, hade slutat gälla. **Lärdomen är inte "ta bort gammal kod" utan att en engångsstädning
+  aldrig får anta att den kör ensam.** Vaktat av `tests/laddningsstadning.test.js`, som läser de
+  riktiga filtren ur `media.js` och faller om de tillsammans tömmer en layout.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.

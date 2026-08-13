@@ -25,23 +25,24 @@ De fem sidotabellerna är samma lista i fyra filer: `state-backup.js` (`EXTRA_KE
 
 ## Engångsstädningarna — den farligaste ytan
 
-Tre filter i `media.js` körs **top-level vid varje laddning**, skyddade bara av sin flagga:
+Filtren i `media.js` körs **top-level vid varje laddning**, skyddade bara av sin flagga. Två är kvar:
 
-| Rad | Flagga | Vad den gör |
-| --- | --- | --- |
-| 85 | `vyra-video-only-migration` | behåller **bara** standalone och `type==='video'` |
-| 683 | `vyra-remove-old-video-widgets` | behåller standalone och allt **utom** `video` |
-| 701 | `vyra-remove-retired-battle-fx` | tar bort `templateGloveSnipe` |
+| Flagga | Vad den gör |
+| --- | --- |
+| `vyra-remove-old-video-widgets` | behåller standalone och allt **utom** `video` |
+| `vyra-remove-retired-battle-fx` | tar bort `templateGloveSnipe` |
 
-Rad 85 och 683 är varandras motsatser. Kör båda på samma laddning — vilket händer i en webbläsare där ingen av flaggorna är satt — överlever **inga** widgetar alls, och `save()` skriver ner resultatet. Uppmätt: en layout med sex widgetar blir noll.
+**En tredje togs bort 2026-08-13, och den är värd att minnas.** `vyra-video-only-migration` behöll *bara* standalone och `type==='video'` — raka motsatsen till `vyra-remove-old-video-widgets`. I en webbläsare där ingen av flaggorna var satt kördes de efter varandra: den första behöll bara video, den andra tog bort video. En layout med sex widgetar blev **noll**, och `save()` skrev ner resultatet.
 
-I praktiken maskeras det av ordningen: en ny webbläsare kör städningarna på ett tomt state och sätter flaggorna innan någon layout hunnit laddas. Men varje väg som skriver `vyra-state` **utan** flaggorna är en riktig risk:
+Ordningen maskerade det — en ny webbläsare kör städningarna på ett tomt state och sätter flaggorna innan någon layout hunnit in. Men varje väg som skriver `vyra-state` **utan** flaggorna var en riktig risk, och det är den formen du ska leta efter:
 
-- en importfil som saknar flaggorna (`vyra-state-sync.js` exporterar dem, men en handredigerad eller äldre fil kanske inte gör det)
-- en import som avbryts halvvägs efter att "ersätt allt" redan raderat flaggorna — kvotfel är den realistiska varianten
+- en importfil som saknar flaggorna
+- en import som avbryts efter att "ersätt allt" redan raderat dem — kvotfel är den realistiska varianten
 - serveråterställning via `/api/state` om den någonsin skulle hinna före `media.js`
 
-**Kontrollera alltid** att en ny väg som skriver layouten också bär flaggorna, eller att den kör innan städningarna.
+`tests/laddningsstadning.test.js` vaktar formen nu: den läser de riktiga filtren ur `media.js`, kör dem i filordning mot en layout byggd ur fabriken, och faller om de tillsammans tömmer den. Lägger du till en fjärde städning följer provet med automatiskt.
+
+**Kontrollera ändå alltid** att en ny väg som skriver layouten också bär flaggorna, eller att den kör innan städningarna.
 
 ## Vad du ska leta efter
 

@@ -161,7 +161,12 @@ test('varje singleton-filter i media.js skyddar standalone', () => {
   const all = (MEDIA.match(/state\.widgets=state\.widgets\.filter\(w=>/g) || []).length;
   const guarded = (MEDIA.match(/state\.widgets=state\.widgets\.filter\(w=>VyraWidgets\.isStandalone\(w\)\|\|/g) || []).length;
   assert.equal(guarded, all, `${all - guarded} filter i media.js kan fortfarande radera standalone`);
-  assert.ok(guarded >= 18, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
+  // Golvet är en kontrollmätning: det ska fånga att mönstret slutat matcha, inte låsa antalet.
+  // Sänkt från 18 till 17 den 2026-08-13, när vyra-video-only-migration togs bort — den behöll
+  // bara video och motsade vyra-remove-old-video-widgets, så tillsammans tömde de layouten.
+  // Se docs/tech-debt.md och tests/laddningsstadning.test.js. Sänk aldrig golvet för att tysta
+  // provet: ett filter som försvinner ska ha ett skäl som går att peka på.
+  assert.ok(guarded >= 17, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
 });
 
 // ---- hidden and placement stay separate ---------------------------------------------------------
