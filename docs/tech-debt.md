@@ -8,7 +8,8 @@ Filen ersätter `docs/live-readiness-matrix.md` (PR #54, stängd 2026-08-06). De
 rader höll på att pensionera en fungerande widgetfamilj. Det här är i stället bara de påståenden som
 fortfarande stämmer, och som ingen annanstans är nedskrivna.
 
-Senast verifierad mot `main`: **2026-08-09**.
+Senast verifierad mot `main`: **2026-08-13** (§4 åtgärdad; §1, §3 och §6 mätta av
+`tests/tech-debt-aktuell.test.js`, som kör grönt).
 
 ---
 
@@ -61,7 +62,7 @@ Vaktat av tre prov i `tests/gift-fireworks-live-path.test.js`:
 
 Verifierad löst: 2026-08-10.
 
-## 4. widget-defaults-migration-provet beror på en lokal baseline-gren
+## ~~4. widget-defaults-migration-provet beror på en lokal baseline-gren~~ — LÖST
 
 `tests/widget-defaults-migration.test.js` letar efter en gammal `media.js` med de
 inline-katalogliteraler som fanns före widget-fabriken. Den söker i denna ordning:
@@ -97,6 +98,30 @@ node --test tests/widget-defaults-migration.test.js
 Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om — eller efter lokal
 återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
 kör alla prov.
+
+**ÅTGÄRDAD 2026-08-13:** `origin/feature/event-deduplication:media.js` står nu direkt efter den
+lokala refen i kedjan. Provet gick från **2 skippade, 0 körda** till **3 prov, 0 fel**.
+
+Ompekningen visade två saker som skippen hade dolt i fem dagar:
+
+- **Sex nycklar hade glidit** — men båda grupperna ur *en* avsiktlig commit, `d0a7156`
+  "feat(widgets): finish verified widget designs": `socialgoal` fick nya `goalColor`/`goalColor2`,
+  och `battlemvp` kortade etiketten till `MVP` och fick tre nya reglage (`mvpShowLabel`,
+  `mvpShowName`, `mvpShowCoins`, levande i `widget-factory.js` och vaktade av
+  `tests/battle-mvp-display.test.js`). De ligger i `AVSIKTLIGT_ANDRAT` i provet, med commiten
+  utskriven. **Övriga 27 nycklar jämförs oförändrade och driftar inte.**
+- **`catalog:giftjar:crystal` finns inte i baslinjen** — Gift Jar tillkom efter migrationen. Förr
+  hade det fällt hela provet med "hittade ingen katalogliteral"; nu står nyckeln i
+  `EFTER_BASLINJEN`, så en *felstavad* markör inte kan gömma sig bakom samma tystnad.
+
+Provet bär nu en kontrollmätning (`ANTAL_JAMFORDA = 27`) av precis det skäl §7 beskriver: utan den
+kunde täckningen krympa till noll och provet ändå vara grönt. Mutationsprovat åt båda hållen — ett
+ändrat fält utanför undantagslistan fäller provet, och en bortfiltrerad nyckelgrupp ger
+"jämförde 22 nycklar, väntade 27".
+
+**Kvarstår:** `origin/feature/event-deduplication` är den **enda** ref som bär baslinjen. Raderas
+den vid en grenrensning bryts beviskedjan permanent — CI märks inte, eftersom den grunda checkouten
+hoppar över ändå. Grenen ska därför inte städas bort.
 
 ## 5. Synkkonflikt-banderollen kan tystas utan att lösa konflikten
 
