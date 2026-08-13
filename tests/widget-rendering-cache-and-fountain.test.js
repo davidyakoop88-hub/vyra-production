@@ -16,8 +16,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   const media = read('media.js');
   // Bumpad 2026-08-13 for Battle MVP-ramarna: andringen lag i media.js och widget-factory.js,
   // och utan ny strang fortsatter en cachad webblasare servera de gamla filerna.
-  assert.match(studio, /studio\.css\?v=20260813-battle-mvp/);
-  assert.match(studio, /media\.js\?v=20260813-battle-mvp/);
+  assert.match(studio, /studio\.css\?v=20260813-fan-level/);
+  assert.match(studio, /media\.js\?v=20260813-fan-level/);
   assert.match(studio, /widget-factory\.js\?v=20260813-battle-mvp/);
   assert.match(media, /const version='20260812-premium-widget-rendering'/);
 });
