@@ -1057,3 +1057,79 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
    hojs, inte all knappstil, sa raden i ovrigt behaller sitt utseende. */
 .editor-toolbar .vy-kontroll button.snapp-vaxel{border-color:#cd55f4!important;background:linear-gradient(180deg,#7a2fb5,#4a1a72)!important;color:#fff!important}
 .editor-toolbar .vy-kontroll button.snapp-vaxel.av{border-color:#4c285e!important;background:#160c1fef!important;color:#7d6e8a!important}
+
+/* ================= FAN LEVEL UP · referensdesignen 2026-08-13 =================
+   Sju modeller mot Davids referensbild. Strukturen fanns redan — rubrik, namn, pill,
+   banderoll, pulslinje, vingar, hjartan och ring — sa det har ar utforande, inte anatomi.
+
+   RUBRIKEN doldes av varje layout med `display:none!important`, sa den maste tas tillbaka
+   med samma vapen. Referensen visar "FAN LEVEL UP" i ALLA sju. */
+.fan-level-up>h2{
+  display:block!important;order:3;margin:3px 0 0;padding:0;
+  font:900 18px/1.06 Inter,system-ui,sans-serif;letter-spacing:.01em;text-align:center;white-space:nowrap;
+  background:linear-gradient(180deg,#ffd98a 0%,#ff9a2a 52%,#ff4f1a 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 55%))}
+
+/* Namnet vitt och kraftigt, supporterraden i rott — som referensen. */
+.fan-level-up>h3{order:4;margin:1px 0 0;font:800 15px/1.15 Inter,system-ui,sans-serif;color:#fff;
+  text-shadow:0 1px 6px #00000080;text-align:center;white-space:nowrap}
+.fan-level-up>p{order:5;margin:1px 0 0;font:800 9px/1.2 Inter,system-ui,sans-serif;letter-spacing:.14em;
+  text-transform:uppercase;color:#ff5a3c;text-align:center}
+
+/* Nivapillen: en enkel LV.-bricka i orange, som referensens. */
+.fan-level-up .fan-level-pill{
+  background:linear-gradient(180deg,#ffb545,#ff7a12)!important;border:0!important;color:#3a1500!important;
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em;border-radius:999px!important;
+  padding:6px 15px!important;box-shadow:0 3px 12px #ff7a1255,0 0 0 1px #ffd08a55 inset!important}
+
+/* Emblemet tydligare: varm glod i stallet for platt bild. */
+.fan-level-up .fan-burst img{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--fan),transparent 35%))
+  drop-shadow(0 0 30px color-mix(in srgb,#ff4f1a,transparent 55%))}
+
+/* ---- 2 Heartbeat Side och 7 Community Duo: EKG-kurva med hjarta -------------------------------
+   Referensen visar en pulskurva, inte ett streck. Kurvan ar en inbakad SVG sa den inte kan
+   tappas av en saknad bildfil, och hjartat sitter i mitten som i bilden. */
+.fan-layout-heartbeat .fan-pulse-line,
+.fan-layout-duo .fan-pulse-line{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M0 12h18l5-9 6 18 6-13 5 4h14' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M60 8.5c1.6-3 6-2.4 6 1 0 3-4 5-6 7-2-2-6-4-6-7 0-3.4 4.4-4 6-1z' fill='%23ff3b2f'/%3E%3Cpath d='M72 12h14l5-4 6 13 6-18 5 9h6' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:100% auto!important;
+  background-color:transparent!important;height:24px!important;min-width:110px;
+  filter:drop-shadow(0 0 8px #ff7a1288)}
+
+/* ---- 5 Rising Hearts: tre glodande hjartan i trappa --------------------------------------- */
+.fan-layout-hearts .fan-rising-hearts i{opacity:1!important;color:#ff3b52!important;
+  text-shadow:0 0 10px #ff3b52,0 0 22px #ff7a12aa!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(1){font-size:13px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:19px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(3){font-size:25px!important}
+
+/* ---- 6 Welcome Ribbon: en riktig banderoll, inte en platt pill ---------------------------- */
+.fan-layout-ribbon .fan-ribbon{display:block!important;order:2;margin:-14px auto 2px;position:relative;
+  padding:9px 30px;min-width:190px;text-align:center;
+  background:linear-gradient(180deg,#ff9a2a,#ff5f14)!important;
+  border:2px solid #ffd08a!important;border-radius:7px;
+  box-shadow:0 6px 18px #ff5f1455,0 0 0 1px #ffffff22 inset;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)}
+.fan-layout-ribbon .fan-ribbon span{font:900 15px/1 Inter,system-ui,sans-serif;letter-spacing:.05em;
+  color:#fff;text-shadow:0 2px 4px #8a2c00}
+.fan-layout-ribbon .fan-level-pill{display:none!important}   /* banderollen bar nivan i den har modellen */
+
+/* ---- 4 Loyalty Ring: segmenterad ring med gnista ------------------------------------------ */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:conic-gradient(var(--fan) 0 18%,transparent 18% 22%,var(--fan) 22% 40%,
+    transparent 40% 44%,var(--fan) 44% 62%,transparent 62% 66%,#ffd98a 66% 78%,
+    transparent 78% 82%,var(--fan) 82% 100%)!important;
+  border:0!important;border-radius:50%!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 45%))}
+
+/* ---- 3 Fan Badge Reveal: halvmanar med emblemet i vardera --------------------------------- */
+.fan-layout-badgereveal .fan-wing{
+  background-image:url("assets/images/heart-character.png?v=1")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:64% auto!important;
+  background-color:transparent!important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+.fan-layout-badgereveal .fan-wing.left{transform:scaleX(-1)}
