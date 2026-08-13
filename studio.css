@@ -1196,3 +1196,107 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
 .fan-layout-duo>h2{font-size:14px!important}
 .fan-layout-duo .fan-burst{width:40px!important;height:40px!important}
 .fan-layout-duo .fan-burst img{width:38px!important;height:38px!important}
+
+/* ============ GIFTER LEVEL UP · lila diamantformspraket 2026-08-13 ============
+   Davids referens visar sju paneler; katalogen har nio. De tva utan egen panel — Profil i
+   orbit och Stort nivanummer — far samma gemensamma sprak, eftersom David vill behalla alla
+   nio. Paletten var redan lila (--gifter: #9965ff); det som skiljde var utforandet.
+
+   DIAMANTEN var storsta gapet: en liten mork fyrkant dar referensen visar en STOR RUND
+   medaljong med guldring, lila falt och en ljus gradientdiamant. */
+.gifter-level-up .gifter-diamond-stack{
+  position:relative;display:grid!important;place-items:center!important;
+  width:74px!important;height:74px!important;border-radius:50%!important;
+  background:radial-gradient(circle at 50% 38%,#5b2ea8 0%,#38176e 62%,#25104a 100%)!important;
+  box-shadow:0 0 0 4px #d8a63a,0 0 0 6px #8a651f,0 0 22px color-mix(in srgb,var(--gifter),transparent 35%),
+    inset 0 2px 12px #00000066!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{
+  width:46px!important;height:46px!important;object-fit:contain!important;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gifter),transparent 30%)) brightness(1.25) saturate(1.2)!important}
+/* Bara den forsta diamanten ar medaljongens motiv; de tva andra ar stapelns spar och
+   ska ligga bakom, inte staplas ovanpa varandra i mitten. */
+.gifter-level-up .gifter-diamond-stack img.gd-2,
+.gifter-level-up .gifter-diamond-stack img.gd-3{position:absolute!important;opacity:.28!important;
+  width:36px!important;height:36px!important;filter:none!important}
+
+/* Profilbilden far referensens ring: guld ytterst, lila glod. */
+.gifter-level-up .gifter-orbit img,
+.gifter-level-up .gifter-bottom-profile img{
+  border:3px solid #d8a63a!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--gifter),transparent 40%),
+    0 0 20px color-mix(in srgb,var(--gifter),transparent 45%)!important}
+
+/* LEVEL UP: vit till lavendel, som referensen. */
+.gifter-level-up>h2{
+  background:linear-gradient(180deg,#ffffff 0%,#e6d8ff 48%,#b98cff 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gifter),transparent 45%))}
+
+/* Namnet vitt, undertexten dampad versal — referensens tva rader. */
+.gifter-level-up>h3{color:#fff!important;font-weight:800!important}
+.gifter-level-up>p{color:#b9a9d6!important;font:700 9px/1.2 Inter,system-ui,sans-serif!important;
+  letter-spacing:.15em!important;text-transform:uppercase!important}
+
+/* Nivabrickan: lila pill med ljus kant, bara LV. och siffran. */
+.gifter-level-up .gifter-level-badge{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:5px 14px!important;border-radius:999px!important;
+  background:linear-gradient(180deg,#7c3ff0,#5a22c4)!important;
+  border:1px solid #c7a6ff!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--gifter),transparent 55%)!important}
+.gifter-level-up .gifter-level-badge strong{
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em!important;color:#fff!important}
+.gifter-level-up .gifter-level-badge span{display:none!important}
+
+/* Profil i orbit och Stort nivanummer saknar egen panel i referensen, men David vill behalla
+   alla nio och ge samtliga det nya utseendet. Diamantmedaljongen ar sjalva formspraket, sa de
+   far den ocksa — placerad sa att den inte tranger undan modellens egen identitet (orbiten
+   respektive det stora nivanumret). Det ar min tolkning, inte en kopia av en referenspanel. */
+.gifter-layout-profile .gifter-diamond-row,
+.gifter-layout-number .gifter-diamond-row{display:flex!important;order:0!important;
+  justify-content:center!important;margin:0 auto 6px!important}
+.gifter-layout-profile .gifter-diamond-stack,
+.gifter-layout-number .gifter-diamond-stack{display:grid!important;
+  width:58px!important;height:58px!important}
+.gifter-layout-profile .gifter-diamond-stack img.gifter-diamond,
+.gifter-layout-number .gifter-diamond-stack img.gifter-diamond{width:36px!important;height:36px!important}
+
+/* ===== GIFTER LEVEL UP · fyra rattelser efter Davids granskning 2026-08-13 =====
+
+   1. DEN MORKA FYRKANTEN. Uppmatt i canvas: PNG:en har 0 % genomskinliga pixlar och 73 %
+      nastan svarta, alla fyra horn rgb(17,17,17) med full opacitet. Alfakanalen finns men ar
+      helt ogenomskinlig — den morka brickan ar INBAKAD i konstverket, inte satt av CSS.
+      `mix-blend-mode:screen` loser det utan ny bildfil: screen mot nastan svart lamnar
+      underlaget orort, sa fyrkanten forsvinner medan diamanten blir kvar. `isolation:isolate`
+      haller blandningen innanfor medaljongen. */
+.gifter-level-up .gifter-diamond-stack{isolation:isolate!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{mix-blend-mode:screen!important}
+
+/* 2. DIAMOND REVEAL: brickan lag sa tatt att den kroc med den nu storre medaljongen. */
+.gifter-layout-reveal .gifter-level-badge{margin-top:14px!important;position:relative;z-index:3}
+.gifter-layout-reveal .gifter-diamond-row{margin-bottom:4px!important}
+
+/* 3. ORBIT LEVEL: medaljongen lag absolut pa top:118px/left:146px och skar in i profilbilden
+      nar den vaxte till 74 px. Den flyttas ut ur orbitens bana. */
+.gifter-layout-orbitlevel .gifter-diamond-row{top:auto!important;bottom:-6px!important;
+  left:50%!important;transform:translateX(-50%)!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack{width:58px!important;height:58px!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack img.gifter-diamond{width:34px!important;height:34px!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:34px!important;position:relative;z-index:3}
+
+/* 4. FLIP TOKEN: diamantkolumnen ar 44 px men medaljongen blev 74 och trangde in pa avataren.
+      Kolumnen breddas och medaljongen halls lagom for en "token". */
+.gifter-layout-flip.gifter-level-up{grid-template-columns:74px 1fr auto!important;column-gap:12px!important}
+.gifter-layout-flip .gifter-diamond-stack{width:64px!important;height:64px!important;border-radius:50%!important}
+.gifter-layout-flip .gifter-diamond{width:40px!important;height:40px!important;object-fit:contain!important;
+  border-radius:0!important}
+
+/* ORBIT LEVEL, andra forsoket. Forsta fixen flyttade medaljongen till bottom:-6px — den slutade
+   krocka med profilbilden men lade sig i stallet OVANPA namnet och undertexten. Absolut
+   positionering var problemet: den kan inte veta var texten hamnar. Medaljongen gar darfor
+   tillbaka i flodet, mellan orbiten och brickan, dar den inte kan overlappa nagot. */
+.gifter-layout-orbitlevel .gifter-diamond-row{position:static!important;transform:none!important;
+  order:1!important;display:flex!important;justify-content:center!important;
+  margin:10px auto 0!important;top:auto!important;left:auto!important;bottom:auto!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:8px!important}

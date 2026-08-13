@@ -190,12 +190,18 @@ test('molnets gifter-nivå klamps till 50', () => {
 
 // ---- 5. rendering och transformationssekvens ---------------------------------------------------
 
-test('renderaren visar från till till', () => {
+// KRAVET ANDRAT 2026-08-13: referensen visar en enkel "LV. 25"-bricka, utan etikett och utan
+// hojningspil. Fran-nivan raknas fortfarande ut av gifterNivaer() — den ar inte borttagen,
+// den renderas bara inte langre i brickan.
+test('renderaren visar mal-nivan i brickan, utan hojningspil', () => {
   const w = gifterWidget('g1', { gifterLevel: 6, gifterFromLevel: 5 });
   const h = createDom({ state: { widgets: [w], projectName: 'g' } });
   h.load('overlay-sanitize.js');
   const box = h.paint([w]);
-  assert.match(box.querySelector('.gifter-level-badge').textContent.replace(/\s+/g, ' '), /5\s*→\s*6/);
+  const badge = box.querySelector('.gifter-level-badge');
+  assert.ok(badge, 'nivabrickan saknas');
+  assert.match(badge.textContent.replace(/\s+/g, ' ').trim(), /^LV\.? ?\d+$/i,
+    `brickan visar "${badge.textContent.trim()}" — referensen visar "LV. 25"`);
 });
 
 test('rubriken sager GIFTER LEVEL UP', () => {

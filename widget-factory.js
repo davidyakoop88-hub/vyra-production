@@ -255,7 +255,7 @@
     'gifterlevel.layout': v => ({
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
-      gifterName: 'ThunderGifter', gifterMessage: 'Level up!', gifterLayout: v.layout,
+      gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
       gifterColor: '#9965ff', gifterLight: '#e2d6ff'
     }),
     'followeralert': () => ({
