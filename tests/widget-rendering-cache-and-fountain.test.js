@@ -14,8 +14,11 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 test('studio och premium-bundlen cachebustas tillsammans', () => {
   const studio = read('studio.html');
   const media = read('media.js');
-  assert.match(studio, /studio\.css\?v=20260812-widget-rendering/);
-  assert.match(studio, /media\.js\?v=20260812-widget-rendering/);
+  // Bumpad 2026-08-13 for Battle MVP-ramarna: andringen lag i media.js och widget-factory.js,
+  // och utan ny strang fortsatter en cachad webblasare servera de gamla filerna.
+  assert.match(studio, /studio\.css\?v=20260813-battle-mvp/);
+  assert.match(studio, /media\.js\?v=20260813-battle-mvp/);
+  assert.match(studio, /widget-factory\.js\?v=20260813-battle-mvp/);
   assert.match(media, /const version='20260812-premium-widget-rendering'/);
 });
 
