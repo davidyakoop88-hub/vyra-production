@@ -1011,3 +1011,21 @@ body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px
 body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
 body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
 body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+/* SIDOPANELEN blir en flexkolumn sa att "+ Lagg till widget" kan bottenjusteras. Knappen ar
+   sedan media.js ett DIREKT barn till .elements — margin-top:auto verkar bara pa flexbarn. */
+.elements{display:flex;flex-direction:column}
+.elements>.live-layer-add{margin-top:auto;flex:0 0 auto}
+
+/* ZOOMKONTROLLERNA flyttade upp i verktygsraden. Den gamla regeln lade dem svavande over
+   duken med position:sticky och en negativ marginal; har ar de ett vanligt flexbarn langst
+   till hoger. Den 12 px hoga sticky-boxen var dessutom hela orsaken till dukens lodrata
+   rullningslist (scrollHeight 864 mot clientHeight 852) — den forsvinner med flytten. */
+.editor-toolbar .vy-kontroll{position:static;margin:0 0 0 auto;bottom:auto;justify-content:flex-end;flex:0 0 auto}
+
+/* RULLNINGSLISTEN pa duken ska inte synas. Innehallet ar 864 px i en 852 px hog yta
+   (40 verktygsrad + 768 duk + 28 marginal), sa overskottet ar inbyggt i layouten — det var
+   INTE zoomboxen som orsakade det. Rullningen behalls darfor, bara listen doljs: stanger man
+   av rullningen blir dukens nederkant onabar i sma fonster. */
+.workarea{scrollbar-width:none;-ms-overflow-style:none}
+.workarea::-webkit-scrollbar{width:0;height:0;display:none}
