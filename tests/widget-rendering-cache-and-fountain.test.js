@@ -16,10 +16,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   const media = read('media.js');
   // Bumpad 2026-08-13 for Battle MVP-ramarna: andringen lag i media.js och widget-factory.js,
   // och utan ny strang fortsatter en cachad webblasare servera de gamla filerna.
-  assert.match(studio, /studio\.css\?v=20260813-gifter-level/);
-  assert.match(studio, /media\.js\?v=20260813-gifter-level/);
+  assert.match(studio, /studio\.css\?v=20260813-topstreak-ramar/);
+  assert.match(studio, /media\.js\?v=20260813-topstreak-ramar/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260812-premium-widget-rendering'/);
+  assert.match(media, /const version='20260813-topstreak-ramar-premium'/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {
