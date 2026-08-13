@@ -116,7 +116,12 @@
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Aterkalla forst efter att webblasaren hunnit starta nedladdningen. En synkron
+    // revokeObjectURL direkt efter click() hinner rycka undan blobben i vissa webblasare,
+    // och da blir filen tom eller uteblir. state-backup.js gor redan pa det har sattet.
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
 
     showStatus('Exporterade ' + keyCount + ' nycklar (' + formatBytes(blob.size) + ').', 'ok');
   }
@@ -137,6 +142,18 @@
     return parsed;
   }
 
+  /**
+   * Samma vakt som pa exportsidan, men har ar den viktigare.
+   *
+   * Exportfiltret skyddar filer SOM DEN HAR versionen skriver. Filen som importeras kan komma
+   * fran vad som helst: en aldre version av skriptet (som exporterade allt), en annan dator,
+   * eller en handredigerad fil. Utan filter hade `vyra-session-backup:<workspaceId>` och
+   * `vyra-cloud-sync-meta:` skrivits rakt in har, och da hade den har datorn havdat ett annat
+   * workspaces agarskap. Skrivsidan ar den enda plats som faktiskt kan garantera det.
+   *
+   * `readAllKeys()` filtrerar ocksa, sa "ersatt allt" rader aldrig den har datorns egen
+   * session eller synkko — bara det som verkligen ar flyttbart.
+   */
   function writeEntries(entries, shouldReplaceAll) {
     if (shouldReplaceAll) {
       readAllKeys().forEach(function (key) {
@@ -145,12 +162,25 @@
     }
 
     var writtenCount = 0;
+    var skipped = [];
+
     Object.keys(entries).forEach(function (key) {
+      if (!isExportableKey(key)) {
+        skipped.push(key);
+        return;
+      }
+      // Sidotabellerna ar strangar i localStorage. Ett objekt hade lagrats som
+      // "[object Object]" och tyst forstort nyckeln — samma typkontroll som
+      // cloud-sync.js, state-backup.js och overlay-access.js redan gor.
+      if (typeof entries[key] !== 'string') {
+        skipped.push(key);
+        return;
+      }
       localStorage.setItem(key, entries[key]);
       writtenCount++;
     });
 
-    return writtenCount;
+    return { written: writtenCount, skipped: skipped };
   }
 
   function importFromFile(file) {
@@ -175,15 +205,33 @@
       var existingCount = readAllKeys().length;
       var exportedDate = snapshot.exportedAt ? snapshot.exportedAt.slice(0, 16).replace('T', ' ') : 'okänt datum';
 
+      // Tva steg, for att det forsta utkastet inte gick att avbryta: OK ersatte allt och
+      // Avbryt slog ihop, sa fel vald fil skrev over statet oavsett vad man klickade — och
+      // det finns ingen versionshistorik har att backa till.
+      var proceed = window.confirm(
+        'Importera ' + incomingCount + ' nycklar (exporterad ' + exportedDate + ')?\n\n' +
+        'Avbryt lämnar allt orört.'
+      );
+      if (!proceed) {
+        showStatus('Importen avbröts — inget ändrades.', 'warn');
+        return;
+      }
+
       var shouldReplaceAll = window.confirm(
-        'Importera ' + incomingCount + ' nycklar (exporterad ' + exportedDate + ').\n\n' +
         'OK = ersätt allt befintligt state (' + existingCount + ' nycklar raderas först).\n' +
         'Avbryt = slå ihop, importerade nycklar skriver över de med samma namn.'
       );
 
       try {
-        var writtenCount = writeEntries(snapshot.entries, shouldReplaceAll);
-        showStatus('Importerade ' + writtenCount + ' nycklar. Laddar om…', 'ok');
+        var result = writeEntries(snapshot.entries, shouldReplaceAll);
+        var message = 'Importerade ' + result.written + ' nycklar';
+        if (result.skipped.length) {
+          // Aldre exportfiler bar med sig maskinbundna nycklar. Att hoppa over dem tyst hade
+          // sett ut som att allt kom med.
+          message += ' (' + result.skipped.length + ' maskinbundna hoppades över)';
+          console.warn('VYRA State Sync — hoppade över:', result.skipped);
+        }
+        showStatus(message + '. Laddar om…', 'ok');
         setTimeout(function () {
           location.reload();
         }, 900);
