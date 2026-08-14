@@ -19,11 +19,10 @@
 //
 // RÃTT NU: modell 1, 2 och 4 lÃ¤gger spÃ¥ret i ikonkolumnen.
 const test = require('node:test'), assert = require('node:assert/strict');
-const path = require('path'), http = require('http'), fs = require('fs'), childProcess = require('child_process');
+const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
-let chromium = null;
-try { ({ chromium } = require('playwright-core')) } catch (_) {}
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -42,25 +41,13 @@ function servera() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
-async function startaWebblasare() {
-  for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
-  }
-  try { return await chromium.launch() } catch (_) {}
-  return null;
-}
-
-const harSystemWebblasare = ['google-chrome', 'google-chrome-stable', 'msedge', 'chromium', 'chromium-browser']
-  .some(bin => childProcess.spawnSync('which', [bin], { stdio: 'ignore' }).status === 0);
 let server, browser, bas;
-let skip = !chromium ? 'playwright-core saknas â kor `npm i` (hoppar, faller inte)'
-  : !harSystemWebblasare ? 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)'
-  : false;
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) { skip = 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)'; return }
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   server = await servera();
   bas = `http://127.0.0.1:${server.address().port}`;
 });

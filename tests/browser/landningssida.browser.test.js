@@ -25,24 +25,15 @@ const { FORBJUDNA_PASTAENDEN } = require('../fixtures/sprak-ordlista.js');
 
 const ROT = path.join(__dirname, '..', '..');
 
-let chromium = null;
-try { ({ chromium } = require('playwright-core')) } catch (_) {}
-
-async function startaWebblasare() {
-  for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
-  }
-  try { return await chromium.launch() } catch (_) {}
-  return null;
-}
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 let browser, rigg;
-let skip = chromium ? false : 'playwright-core saknas — kor `npm i` (hoppar, faller inte)';
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) { skip = 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)'; return }
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   rigg = await servera();
 });
 test.after(async () => { if (browser) await browser.close(); if (rigg) await rigg.stang() });

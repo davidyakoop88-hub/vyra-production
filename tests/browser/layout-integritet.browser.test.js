@@ -30,8 +30,7 @@ const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-let chromium = null;
-try { ({ chromium } = require('playwright-core')) } catch (_) {}
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -50,21 +49,13 @@ function servera() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
-async function startaWebblasare() {
-  for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
-  }
-  try { return await chromium.launch() } catch (_) {}
-  return null;
-}
-
 let server, browser, bas;
-let skip = chromium ? false : 'playwright-core saknas — kor `npm i` (hoppar, faller inte)';
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) { skip = 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)'; return }
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   server = await servera();
   bas = `http://127.0.0.1:${server.address().port}`;
 });

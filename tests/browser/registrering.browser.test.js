@@ -18,24 +18,15 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const { servera } = require('../rigg/servera.js');
 const api = require('../fixtures/api-svar.js');
 
-let chromium = null;
-try { ({ chromium } = require('playwright-core')) } catch (_) {}
-
-async function startaWebblasare() {
-  for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
-  }
-  try { return await chromium.launch() } catch (_) {}
-  return null;
-}
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 let browser;
-let skip = chromium ? false : 'playwright-core saknas — kor `npm i` (hoppar, faller inte)';
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) skip = 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)';
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
 });
 test.after(async () => { if (browser) await browser.close() });
 
