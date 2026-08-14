@@ -5,7 +5,10 @@ import sys
 from pathlib import Path
 from mathutils import Vector
 
-ROOT = Path(r"C:\Users\A\Documents\hemsidan")
+# ROOT lag hardkodad som r"C:\Users\A\Documents\hemsidan" fram till 2026-08-14. Skriptet
+# kunde alltsa bara koras av en person pa en maskin. Blender satter __file__ nar skriptet kors
+# med `blender --python`, sa repotroten gar att harleda - och gor det pa vilken dator som helst.
+ROOT = Path(__file__).resolve().parent
 STAGE = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "x2"
 FRAMES = 180
 FPS = 60

@@ -3,8 +3,11 @@ import os
 import subprocess
 import sys
 
-ROOT = Path(__file__).parents[1]
-sys.path.insert(0, str(ROOT / ".codex-video-tools"))
+# parents[1] fram till 2026-08-14, alltsa katalogen OVANFOR repot: skriptet har flyttats hit
+# fran en underkatalog utan att sokvagen foljde med, och laste darfor assets/renders/ utanfor
+# arbetskopian. sys.path-raden pekade pa .codex-video-tools, en verktygslada som inte finns i
+# repot och inte heller bredvid det.
+ROOT = Path(__file__).parents[0]
 try:
     import imageio_ffmpeg
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
