@@ -46,7 +46,27 @@
   window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
   addEventListener('vyra-session-ended',riv);
   const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGloveSnipe:[6000,4],triggerGiftFireworks:[6000,6]};
-  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;if(name==='triggerGloveSnipe')d=(state.widgets.find(w=>w.type==='templateGloveSnipe')?.gloveDuration||6)*1000;if(name==='triggerGiftFireworks')d=(state.widgets.find(w=>w.type==='templateGiftFireworks')?.fwDuration||5)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
+  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration,mal=null;
+    if(name==='triggerBattleMvp')d=((mal=state.widgets.find(w=>w.type==='templateBattleMvp'))?.mvpDuration||7)*1000;
+    if(name==='triggerGifterLevelUp')d=((mal=state.widgets.find(w=>w.type==='templateGifterLevel'))?.gifterDuration||6)*1000;
+    if(name==='triggerFanLevelUp')d=((mal=state.widgets.find(w=>w.type==='templateFanLevel'))?.fanDuration||6)*1000;
+    if(name==='triggerGloveSnipe')d=((mal=state.widgets.find(w=>w.type==='templateGloveSnipe'))?.gloveDuration||6)*1000;
+    if(name==='triggerGiftFireworks')d=((mal=state.widgets.find(w=>w.type==='templateGiftFireworks'))?.fwDuration||5)*1000;
+    /* SEKVENSLANGD FOR KOREOGRAFERADE WIDGETS. En koreograferad alert ar langre an sin
+       visningstid: 500 + 900 + hold + 600. Uppmatt fore det har: nasta alert slapptes fram
+       vid 2036 ms medan Gifters sekvens var klar forst vid 4052 ms.
+       Kon kanner INTE till nagra widgettyper eller layouter — koreografifilerna publicerar
+       sig sjalva i window.VyraFasKoreografi och slas upp generiskt. Tom lista eller ingen
+       traff => oforandrat beteende. En passar() som kastar hoppas over och far aldrig doda kon. */
+    if(mal&&Array.isArray(window.VyraFasKoreografi)){
+      for(const k of window.VyraFasKoreografi){
+        let traff=false;
+        try{traff=!!(k&&typeof k.passar==='function'&&k.passar(mal))}
+        catch(e){console.warn('[VYRA queue] koreografins passar() kastade, hoppar over: '+((e&&e.message)||e));continue}
+        if(traff){const t=(k&&k.tider)||{};d+=(t.anticipationMs||0)+(t.enterMs||0)+(t.exitMs||0);break}
+      }
+    }
+    VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
 
   /* .gift-fireworks-fx star med sedan raketerna borjade visa den RIKTIGA gavan: deras src ar numera

@@ -366,3 +366,147 @@ test('6e. kon respekterar anvandarens gloveDuration, inte ett fast varde', { ski
   assert.ok(r.fanVid <= 16000,
     `nasta alert vantade ${r.fanVid} ms — langre an de 12 s anvandaren stallt in`);
 });
+
+/* ---- PUBLICERINGSLISTAN window.VyraFasKoreografi -------------------------------------------
+   Kon holl tidigare en alerts lucka i bara dess visningstid. En koreograferad widget ar
+   langre an sa: 500 + 900 + hold + 600. Uppmatt fore fixen slapptes nasta alert fram vid
+   2036 ms medan Gifters sekvens var klar forst vid 4052 ms — tva sekunders overlapp.
+
+   Kon far INTE kanna till nagra widgettyper. Koreografifilerna publicerar sig sjalva i
+   window.VyraFasKoreografi och kon slar upp generiskt. */
+
+// 6f. Koreograferad widget: kon ska halla hela sekvensen, inte bara visningstiden.
+test('6f. kon haller hela sekvensen for en koreograferad widget', { skip }, async () => {
+  const page = await studion();
+  const r = await page.evaluate(async () => {
+    state.widgets.length = 0;
+    // `duo` valjs medvetet: gifter-fas.js koreograferar bara risingtier, sa den har
+    // registreringen ar provets egen och kan inte forvaxlas med produktionens.
+    const g = window.VyraWidgets.create('catalog:gifterlevel:duo');
+    g.x = 20; g.y = 20; g.gifterDuration = 3;
+    const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
+    fan.x = 320; fan.y = 20; fan.fanDuration = 1;
+    state.widgets.push(g, fan); selected = null; render();
+    for (const w of [g, fan])
+      for (let i = 0; i < 90 && !document.querySelector(`[data-id="${w.id}"]`); i++)
+        await new Promise(r => requestAnimationFrame(r));
+
+    window.VyraFasKoreografi = window.VyraFasKoreografi || [];
+    window.VyraFasKoreografi.push({
+      passar: w => w.type === 'templateGifterLevel' && (w.gifterLayout || '') === 'duo',
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+    });
+
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
+    window.VyraAlertQueue.clear();
+    const t0 = performance.now();
+    window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
+    window.triggerFanLevelUp({ __test: true, name: 'FanProv', level: 9 });
+
+    let fanVid = null;
+    while (performance.now() - t0 < 12000 && fanVid === null) {
+      const el = document.querySelector(`[data-id="${fan.id}"]`);
+      if (el?.className.split(/\s+/).includes('fan-active')) fanVid = Math.round(performance.now() - t0);
+      await new Promise(r => setTimeout(r, 40));
+    }
+    return { fel: null, fanVid };
+  });
+  await page.close();
+
+  assert.equal(r.fel, null, r.fel);
+  assert.notEqual(r.fanVid, null, 'Fan fick aldrig sin tur inom 12 s');
+  // 3000 hold + 500 + 900 + 600 = 5000 ms. Utan publiceringslistan slapps Fan vid ~3000 ms.
+  assert.ok(r.fanVid >= 4600,
+    `Fan slapptes fram vid ${r.fanVid} ms — kon raknade bara visningstiden (3000 ms) och ` +
+    `inte hela sekvensen (5000 ms)`);
+  assert.ok(r.fanVid <= 6200,
+    `Fan vantade ${r.fanVid} ms — langre an hela sekvensen pa 5000 ms`);
+});
+
+// 6g. Okoreograferad widget: oforandrat beteende. Regressionsvakt.
+test('6g. en okoreograferad widget haller kon exakt sin visningstid', { skip }, async () => {
+  const page = await studion();
+  const r = await page.evaluate(async () => {
+    state.widgets.length = 0;
+    const f = window.VyraWidgets.create('catalog:followeralert');
+    f.x = 20; f.y = 20;
+    const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
+    fan.x = 320; fan.y = 20; fan.fanDuration = 1;
+    state.widgets.push(f, fan); selected = null; render();
+    for (const w of [f, fan])
+      for (let i = 0; i < 90 && !document.querySelector(`[data-id="${w.id}"]`); i++)
+        await new Promise(r => requestAnimationFrame(r));
+
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
+    const registrerade = Array.isArray(window.VyraFasKoreografi) ? window.VyraFasKoreografi.length : 0;
+    window.VyraAlertQueue.clear();
+    const t0 = performance.now();
+    window.triggerNewFollower({ __test: true, name: 'Prov' });
+    window.triggerFanLevelUp({ __test: true, name: 'FanProv', level: 9 });
+
+    let fanVid = null;
+    while (performance.now() - t0 < 12000 && fanVid === null) {
+      const el = document.querySelector(`[data-id="${fan.id}"]`);
+      if (el?.className.split(/\s+/).includes('fan-active')) fanVid = Math.round(performance.now() - t0);
+      await new Promise(r => setTimeout(r, 40));
+    }
+    return { fel: null, fanVid, registrerade };
+  });
+  await page.close();
+
+  assert.equal(r.fel, null, r.fel);
+  assert.notEqual(r.fanVid, null, 'Fan fick aldrig sin tur inom 12 s');
+  // triggerNewFollower har 5000 ms i configs och ingen matchande koreografi.
+  assert.ok(Math.abs(r.fanVid - 5000) <= 700,
+    `Fan slapptes fram vid ${r.fanVid} ms — New Follower ar inte koreograferad och luckan ` +
+    `ska vara exakt dess 5000 ms (${r.registrerade} koreografier registrerade)`);
+});
+
+// 6h. En trasig koreografifil far inte doda alertsystemet.
+test('6h. en passar() som kastar stoppar inte kon', { skip }, async () => {
+  const page = await studion();
+  const varningar = [];
+  page.on('console', m => { if (m.type() === 'warning') varningar.push(m.text()) });
+  const r = await page.evaluate(async () => {
+    state.widgets.length = 0;
+    const g = window.VyraWidgets.create('catalog:gifterlevel:duo');
+    g.x = 20; g.y = 20; g.gifterDuration = 1;
+    const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
+    fan.x = 320; fan.y = 20; fan.fanDuration = 1;
+    state.widgets.push(g, fan); selected = null; render();
+    for (const w of [g, fan])
+      for (let i = 0; i < 90 && !document.querySelector(`[data-id="${w.id}"]`); i++)
+        await new Promise(r => requestAnimationFrame(r));
+
+    window.VyraFasKoreografi = window.VyraFasKoreografi || [];
+    window.VyraFasKoreografi.push({
+      passar: () => { throw new Error('boom') },
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+    });
+
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
+    window.VyraAlertQueue.clear();
+    const t0 = performance.now();
+    window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
+    window.triggerFanLevelUp({ __test: true, name: 'FanProv', level: 9 });
+
+    let fanVid = null;
+    while (performance.now() - t0 < 10000 && fanVid === null) {
+      const el = document.querySelector(`[data-id="${fan.id}"]`);
+      if (el?.className.split(/\s+/).includes('fan-active')) fanVid = Math.round(performance.now() - t0);
+      await new Promise(r => setTimeout(r, 40));
+    }
+    return { fel: null, fanVid, koLever: window.VyraAlertQueue.stats().kastade === 0 };
+  });
+  await page.close();
+
+  assert.equal(r.fel, null, r.fel);
+  assert.notEqual(r.fanVid, null,
+    'Fan fick aldrig sin tur — en kastande passar() dodade kon');
+  assert.ok(r.koLever, 'kon kastade alerts efter att passar() fallerade');
+  // Utan koreografi kvar: luckan ar bara visningstiden, alltso max(800, 1000) ms.
+  assert.ok(r.fanVid <= 2500,
+    `Fan slapptes fram vid ${r.fanVid} ms — den trasiga koreografin borde ha hoppats over helt`);
+  assert.ok(varningar.some(v => /koreografi|passar|VyraFas/i.test(v)),
+    'ingen console.warn loggades nar passar() kastade');
+});

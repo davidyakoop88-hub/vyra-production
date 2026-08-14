@@ -310,3 +310,137 @@
   .social-goal.premium-goal.goal-framed>.goal-track b{display:none!important}
   .social-goal.premium-goal.goal-framed>em{display:none!important}
 }
+
+/* ==========================================================================================
+   GIFTER LEVEL UP · MODELL risingtier · FYRAFASKOREOGRAFI
+   ==========================================================================================
+   Additivt och isolerat. Allt hanger pa attributet [data-fas], som inte fanns i kodbasen
+   innan widget-fas.js — de 105 befintliga -active/-exit-reglerna kan darfor inte kollidera
+   med nagot harunder. Scopet .gifter-layout-risingtier lamnar de atta andra modellerna ororda.
+
+   Varaktigheterna lases ur motorns egna variabler (--fas-ljus-tid osv, satta av widget-fas.js
+   vid varje fasbyte) i stallet for att upprepas har. Da kan CSS och JS aldrig glida isar.
+
+   Endast transform/opacity/filter — inga layoutegenskaper — sa OBS haller 60 fps.
+
+   Referens: guld + lila + kristall. Fas 1 uppatstigande stralar, fas 2 materialisering,
+   fas 3 levande hyllning, fas 4 partikelfontan. */
+
+/* Neutralisera de befintliga entrean pa de element koreografin sjalv styr. Additiv override,
+   ingen andring av originalreglerna. */
+.gifter-layout-risingtier[data-fas] .gifter-arrow-up,
+.gifter-layout-risingtier[data-fas] .gifter-diamond,
+.gifter-layout-risingtier[data-fas] .gifter-orbit,
+.gifter-layout-risingtier[data-fas] .gifter-level-badge,
+.gifter-layout-risingtier[data-fas] .gifter-diamond-row,
+.gifter-layout-risingtier[data-fas] > h2,
+.gifter-layout-risingtier[data-fas] > h3,
+.gifter-layout-risingtier[data-fas] > p{animation:none}
+
+/* ---- FAS 1 · LJUS: uppbyggnaden ---------------------------------------------------------- */
+@keyframes gfStraleUpp{
+  from{opacity:0;transform:translateY(14px) scaleY(.4)}
+  60%{opacity:.9}
+  to{opacity:.75;transform:translateY(0) scaleY(1)}}
+/* Nivastapeln tands NEDIFRAN OCH UPP, en niva i taget, med en kort glodpuls vid tandningen
+   sa varje steg lases som att nivan aktiveras. Endast opacity och filter — stapelns geometri
+   (margin-bottom:-22px) ar orord, den ar en del av risingtiers grunddesign. */
+@keyframes gfTierTand{
+  0%{opacity:0;filter:brightness(.6) drop-shadow(0 0 0 var(--gifter,#9965ff))}
+  55%{opacity:var(--tier-end-op,1);filter:brightness(1.9) drop-shadow(0 0 14px var(--gifter,#9965ff))}
+  100%{opacity:var(--tier-end-op,1);filter:brightness(1.1) drop-shadow(0 0 4px var(--gifter,#9965ff))}}
+
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-arrow-up{
+  animation:gfStraleUpp var(--fas-ljus-tid,500ms) cubic-bezier(.22,.9,.3,1) both;
+  filter:drop-shadow(0 0 6px var(--gifter-light,#e2d6ff))}
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-arrow-up.right{animation-delay:60ms}
+
+/* Alla tre startar slackta och tands 0 / 150 / 300 ms in i fas 1, svagast forst. Sista
+   tandningen ar klar precis nar fasen tar slut (300 + 200 = 500 ms). */
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-diamond{opacity:0}
+.gifter-layout-risingtier[data-fas="ljus"] .gd-3{animation:gfTierTand 200ms ease-out 0ms both}
+.gifter-layout-risingtier[data-fas="ljus"] .gd-2{animation:gfTierTand 200ms ease-out 150ms both}
+.gifter-layout-risingtier[data-fas="ljus"] .gd-1{animation:gfTierTand 200ms ease-out 300ms both}
+
+/* Fas 1 ar en TOM SCEN med bara stralar och den tandande stapeln. Ramen ar inte
+   materialiserad och textblocket har inte kommit in — utan det finns ingen dramaturgi
+   att bygga upp. */
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-orbit{opacity:0;transform:scale(.82)}
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-level-badge{opacity:0}
+.gifter-layout-risingtier[data-fas="ljus"] > h2,
+.gifter-layout-risingtier[data-fas="ljus"] > h3,
+.gifter-layout-risingtier[data-fas="ljus"] > p,
+.gifter-layout-risingtier[data-fas="ljus"] .gifter-big-level{opacity:0}
+
+/* ---- FAS 2 · OPPNA: materialiseringen ----------------------------------------------------- */
+@keyframes gfMaterialisera{
+  from{opacity:0;transform:scale(.82);filter:brightness(1.8) blur(6px)}
+  55%{opacity:1;filter:brightness(1.25) blur(0)}
+  to{opacity:1;transform:scale(1);filter:brightness(1) blur(0)}}
+@keyframes gfPortrattFram{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:scale(1)}}
+@keyframes gfMarkeStampa{
+  from{opacity:0;transform:translateY(10px) scale(.9)}
+  70%{transform:translateY(0) scale(1.06)}
+  to{opacity:1;transform:translateY(0) scale(1)}}
+
+.gifter-layout-risingtier[data-fas="oppna"] .gifter-orbit{
+  animation:gfMaterialisera var(--fas-oppna-tid,900ms) cubic-bezier(.2,.75,.25,1) both}
+.gifter-layout-risingtier[data-fas="oppna"] .gifter-orbit img{
+  animation:gfPortrattFram calc(var(--fas-oppna-tid,900ms) * .55) ease-out
+            calc(var(--fas-oppna-tid,900ms) * .35) both}
+.gifter-layout-risingtier[data-fas="oppna"] .gifter-level-badge{
+  animation:gfMarkeStampa calc(var(--fas-oppna-tid,900ms) * .5)
+            cubic-bezier(.2,1.4,.35,1) calc(var(--fas-oppna-tid,900ms) * .45) both}
+/* Texten kommer in EFTER att ramen borjat materialisera sig, inte samtidigt: 300 ms in i
+   fas 2. Da laser sekvensen som ljus -> ram -> budskap, i den ordningen. */
+@keyframes gfTextFram{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.gifter-layout-risingtier[data-fas="oppna"] > h2,
+.gifter-layout-risingtier[data-fas="oppna"] > h3,
+.gifter-layout-risingtier[data-fas="oppna"] > p,
+.gifter-layout-risingtier[data-fas="oppna"] .gifter-big-level{
+  animation:gfTextFram 420ms cubic-bezier(.2,.85,.3,1) 300ms both}
+.gifter-layout-risingtier[data-fas="oppna"] > h3{animation-delay:380ms}
+.gifter-layout-risingtier[data-fas="oppna"] > p{animation-delay:440ms}
+.gifter-layout-risingtier[data-fas="oppna"] .gifter-arrow-up{opacity:.75}
+
+/* ---- FAS 3 · HYLLNING: levande rorelse ---------------------------------------------------- */
+@keyframes gfAndas{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.025)}}
+@keyframes gfGlodPuls{
+  0%,100%{filter:drop-shadow(0 0 5px var(--gifter,#9965ff)) brightness(1)}
+  50%{filter:drop-shadow(0 0 16px var(--gifter,#9965ff)) brightness(1.3)}}
+@keyframes gfStrimma{0%,100%{opacity:.25}50%{opacity:.85}}
+
+.gifter-layout-risingtier[data-fas="hyllning"] .gifter-diamond-stack{
+  animation:gfAndas 2.4s ease-in-out infinite}
+.gifter-layout-risingtier[data-fas="hyllning"] .gd-1{
+  animation:gfGlodPuls 1.9s ease-in-out infinite}
+.gifter-layout-risingtier[data-fas="hyllning"] .gifter-streak{
+  animation:gfStrimma 2.1s ease-in-out infinite}
+.gifter-layout-risingtier[data-fas="hyllning"] .gifter-arrow-up{opacity:.55}
+
+/* ---- FAS 4 · UPPLOSNING: partikelfontanen ------------------------------------------------- */
+@keyframes gfFontan{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  45%{opacity:.9;transform:translateY(-16px) scale(1.04)}
+  to{opacity:0;transform:translateY(-46px) scale(.86)}}
+@keyframes gfDraInat{
+  from{opacity:1;transform:scale(1)}
+  to{opacity:0;transform:scale(.7);filter:brightness(1.6)}}
+@keyframes gfStraleUt{from{opacity:.55}to{opacity:0;transform:translateY(-10px)}}
+
+.gifter-layout-risingtier[data-fas="upplosning"] .gifter-diamond-row{
+  animation:gfFontan var(--fas-upplosning-tid,600ms) cubic-bezier(.3,.05,.6,1) both}
+.gifter-layout-risingtier[data-fas="upplosning"] .gd-2{animation-delay:60ms}
+.gifter-layout-risingtier[data-fas="upplosning"] .gd-3{animation-delay:120ms}
+.gifter-layout-risingtier[data-fas="upplosning"] .gifter-orbit{
+  animation:gfDraInat calc(var(--fas-upplosning-tid,600ms) * .8) ease-in both}
+.gifter-layout-risingtier[data-fas="upplosning"] .gifter-level-badge{
+  animation:gfDraInat calc(var(--fas-upplosning-tid,600ms) * .6) ease-in both}
+/* Stralarna slacks sist — de var forst in och ar sist ut. */
+.gifter-layout-risingtier[data-fas="upplosning"] .gifter-arrow-up{
+  animation:gfStraleUt var(--fas-upplosning-tid,600ms) ease-in
+            calc(var(--fas-upplosning-tid,600ms) * .35) both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-risingtier[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
