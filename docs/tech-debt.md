@@ -182,26 +182,38 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
-## 12. goal-ingest-http faller sällsynt under parallell last
+## 12. 111 av serverns 410 prov körs aldrig i CI
 
-`chain('ett like räknar bara count, aldrig rummets totalvärde')` i
-`server/test/goal-ingest-http.test.js` väntar på SSE-ramar via `waitFor(...)`. Under parallell
-körning med de övriga måltesterna hinner ramen ibland inte fram innan väntan ger upp.
+Åtta provfiler grindar sig själva på `TEST_DATABASE_URL` och hoppar tyst över utan den:
+`goal-api`, `goal-cleanup`, `goal-ingest-http`, `goal-runtime-contract`, `goal-sse-isolation`,
+`overlay-put-http`, `overlay-put-sync` och `studio-goal-stream`. Grindningen är rätt — de kräver
+en engångsdatabas och vägrar röra en delad — men **ingen körning sätter variabeln**.
 
-**Uppmätt 2026-08-14**, fem körningar av
+`ci.yml` gör det inte, trots att jobbet redan har en Postgres-tjänst igång. Den enda plats som
+sätter den är `goal-runtime-postgres.yml`, och den startar bara på push till
+`integration/live-goals-base`. Grenen finns kvar, men inget flöde rör den längre. Proven kördes
+alltså medan mål-arbetet byggdes och har inte körts sedan dess.
 
-```bash
-node --test test/goal-*.test.js test/studio-goal-stream.test.js
-```
+**Uppmätt 2026-08-14**, `npm test` i `server/` med Postgres 16 och Redis uppe:
 
-**en röd, fyra gröna** — och seriellt (`--test-concurrency=1`) grön varje gång. Det är alltså last,
-inte ordning: samma sorts tidsberoende som §7 varnar för, fast i serverprovet.
+| | Prov | Gröna | Röda | Överhoppade |
+|---|---|---|---|---|
+| Utan `TEST_DATABASE_URL` (som CI) | 410 | 299 | 0 | **111** |
+| Med engångsdatabas | 410 | 408 | **1** | 1 |
 
-Det är inte samma fel som rate-limit-kollisionen som lagades samma dag (se listan över löst nedan) —
-den var deterministisk och gav 429, den här ger en utebliven ram.
+Den röda är `overlay-put-sync.test.js` → `db: ett event direkt efter lyckad PUT räknas`, som faller
+på `eventet claimades inte — inget mål matchade`. **Deterministiskt**: ensam fil, friska tjänster,
+samma fel varje gång. Ett mål blir alltså inte aktivt direkt efter ett lyckat Layout-save, utan en
+GET emellan — vilket är precis den egenskap filen skrevs för att bevisa.
 
-**Åtgärd:** vänta på ett villkor som inte är en tidsgräns — låt riggen räkna publicerade ramar och
-vänta på antalet i stället för på att en period ska passera.
+Det här är samma familj som `{ skip }`-felet i browserproven (se listan över löst nedan): tystnad
+som ser ut som grönt. Skillnaden är att här är grindningen medvetet skriven — det som saknas är
+databasen CI redan har.
+
+**Åtgärd:** ge `ci.yml` en engångsdatabas vid sidan av den befintliga, migrera den och sätt
+`TEST_DATABASE_URL`. Då körs de 111 proven på varje PR, och den röda blir synlig i stället för
+överhoppad. Fixa den därefter — testet är skrivet först med flit, så det är implementationen som
+ska möta provet, inte tvärtom.
 
 Verifierad: 2026-08-14.
 
