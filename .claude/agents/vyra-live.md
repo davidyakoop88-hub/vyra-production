@@ -26,6 +26,12 @@ Du ager vagen fran serverns handelsebuffert till ratt widget.
 - Nolltillstandet ar en riktig vy, inte en tom yta - `live-zero-state.js` maste folja med nar
   nya paneler tillkommer.
 
+## Oppna fragor som kraver en riktig sandning
+
+`docs/live-verifiering.md` — battleStatus-VARDENA ar oumatta. Klassificeringen i
+battle-mvp-session.js ar tolerant med flit, och `VyraBattleMvp.seenStatuses` samlar varje ratt varde
+som setts. En enda riktig match racker for att stanga fragan.
+
 ## Innan du ar klar
 
 ```

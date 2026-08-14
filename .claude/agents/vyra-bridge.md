@@ -25,6 +25,12 @@ samt `ANSLUT-TIKTOK-LIVE.cmd`.
 - Minne over tid ar en verklig risk i en process som lever hela sandningen:
   `bash scripts/measure-bridge-memory.sh`.
 
+## Oppna fragor som kraver en riktig sandning
+
+`docs/live-verifiering.md` — sonden loggar fyra LINK_MIC-kandidater utan att vidarebefordra nagot,
+och boost-fonstret skickas pa START trots att `rewardStartTimestamp` sager nar det faktiskt borjar.
+Bada ar medvetna gissningar. Las av dem nasta gang det kors live, och stang punkten.
+
 ## Innan du ar klar
 
 ```

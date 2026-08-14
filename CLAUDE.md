@@ -61,6 +61,12 @@ node scripts/domaner.js test <domän>   # bara en domän
 cd server && npm test       # moln-API:t (kräver Postgres + Redis)
 ```
 
+## Inför en riktig sändning
+
+`docs/live-verifiering.md` listar det som **inte går att avgöra utan en riktig TikTok LIVE-match** —
+fyra ställen i battle-kedjan där koden idag gissar, med exakt vad som ska läsas av i loggen och i
+konsolen. Läs den före sändningen, fyll i den efteråt.
+
 ## Läs vidare
 
 - `docs/VYRA_ARCHITECTURE.md` — hur systemet faktiskt ser ut idag, med utskrivna gap
