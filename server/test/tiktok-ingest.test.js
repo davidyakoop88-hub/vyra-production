@@ -22,8 +22,11 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // viewer and battle. In production every one of those came back 400, so the cloud path
   // silently lost viewer counts and battle scores that the desktop path has always had —
   // a web/desktop parity break. Keep this list in sync with sendEvent() calls in bridge.js.
+  // Vidgad 2026-08-14 med 'glove': multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK.
+  // Klienten kunde redan tanda Glove Snipe pa det och cleanEvent bar redan `multiplier` — det var
+  // bara kallan som saknades, sa utan den har raden hade fonstret 400:ats bort i molnet.
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','chat','follow','gift','like','likes','member','share','subscribe','viewer']);
+    ['battle','chat','follow','gift','glove','like','likes','member','share','subscribe','viewer']);
 });
 
 // Regression: bryggan skickar LIKE-events som 'likes' — de måste passera valideringen (som körs

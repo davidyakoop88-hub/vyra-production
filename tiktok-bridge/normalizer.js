@@ -85,6 +85,52 @@ function battleFields(data){
   const battle=data?.battleInfo||data?.battle||data||{};
   return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battle?.status||battle?.battleStatus||'',64)};
 }
+// Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
+//
+// VARFOR DEN HAR FUNKTIONEN FINNS. Klienten har hela vagen redan byggd: media.js
+// routeLiveBattleEvent tander Glove Snipe pa `type.includes('glove')` och pa multiplier 2/3,
+// cleanEvent i molnet bar faltet `multiplier` (0-100), och battleFields ovan letar redan efter
+// `battle.multiplier ?? battle.boostMultiplier`. Ingen rad FYLLDE det: LINK_MIC_BATTLE bar inte
+// multiplikatorn. Den ligger i LINK_MIC_BATTLE_TASK.
+//
+// Formen ur tiktok-live-proto/v3 (WebcastLinkmicBattleTaskMessage):
+//
+//   taskMessageType   0=START 1=TASK_UPDATE 2=TASK_SETTLE 3=REWARD_SETTLE
+//   start.config.rewardConfig -> RewardPeriodConfig {
+//       rewardMultiple         talet: 2, 3, 5 ...
+//       rewardStartTimestamp   nar fonstret borjar
+//       duration               hur lange det varar
+//   }
+//   taskUpdate { progress, fromUserId }   vem som drev uppgiften
+//   taskSettle { result }                 0=SUCCEED 1=FAILED 2=BOTH_SUCCEED
+//   battleId
+//
+// TOLERANT LASNING, av samma skal som battleFields: biblioteket har bytt faltnamn mellan v2 och
+// v3 forr, och en v3-omdopning nollade en gang varenda like utan att nagot larmade. Darfor provas
+// flera vagar in till samma varde i stallet for en.
+function battleTaskFields(data){
+  const rot=data&&typeof data==='object'?data:{};
+  const belon=rot.start?.config?.rewardConfig||rot.config?.rewardConfig||rot.rewardConfig||{};
+  const uppdatering=rot.taskUpdate||{};
+  const slut=rot.taskSettle||{};
+  return{
+    multiplier:number(belon.rewardMultiple??belon.multiple??rot.rewardMultiple,100),
+    fonsterStart:number(belon.rewardStartTimestamp??belon.rewardStartTime,Number.MAX_SAFE_INTEGER),
+    fonsterSekunder:number(belon.duration,86400),
+    steg:number(rot.taskMessageType,10),
+    resultat:number(slut.result,10),
+    battleId:text(rot.battleId||rot.battle_id||'',64),
+    fromUserId:text(uppdatering.fromUserId||'',160)
+  };
+}
+// Ett boost-event ska bara skickas nar det finns ett riktigt fonster att visa.
+//
+// Multiplikator 0 eller 1 ar inget att tanda en overlay for, och TASK_UPDATE fyrar upprepat under
+// hela uppgiften — skickades varje uppdatering skulle Glove Snipe blinka i ett. Bara steget som
+// BAR konfigurationen (START) eller ett lyckat slutlage far passera.
+function arBoostFonster(f){
+  return !!f && f.multiplier>=2 && (f.steg===0 || (f.steg===2&&(f.resultat===0||f.resultat===2)));
+}
 function cloudEvent(id,type,fields,at=Date.now()){
   return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
@@ -141,7 +187,8 @@ function battleProbe(data){
 //
 // Galler BARA molnpostningen. Den lokala vagen (/api/events) matar overlayen och far inte
 // filtreras — chattwidgetar i OBS lever pa den.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle']);
+// 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove']);
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
-module.exports={text,number,battleProbe,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET};
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET};

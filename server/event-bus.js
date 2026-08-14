@@ -2,7 +2,11 @@
 const {createClient}=require('redis');
 const {CircuitBreaker}=require('./observability');
 
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer']);
+// 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle (LINK_MIC_BATTLE_TASK ->
+// rewardConfig.rewardMultiple). Fyra listor maste namna en typ for att den ska na en widget —
+// bryggans TILL_MOLNET, index.js TIKTOK_INGEST_TYPES, TIKTOK_ROOM_TYPES och den har. Missas en
+// enda tystnar typen nagonstans pa vagen; tests/event-contract.test.js vaktar att de moter varandra.
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove']);
 const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 

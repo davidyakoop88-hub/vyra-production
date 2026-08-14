@@ -12,25 +12,39 @@ Senast verifierad mot `main`: **2026-08-09**.
 
 ---
 
-## 1. Glove Snipe kan inte tändas av ett riktigt event
+## ~~1. Glove Snipe kan inte tändas av ett riktigt event~~ — LÖST
 
-`media.js` `routeLiveBattleEvent()` tänder Glove Snipe på eventtyperna `tap`, `snipe`, `glove`,
-`x2` och `x3`. **Ingen av dem är en ingest-typ.** Bryggan publicerar `gift`, `like`, `share`,
-`subscribe`, `member`, `chat`, `viewer`, `battle` och `follow` — inget annat.
+Punkten löd: `routeLiveBattleEvent()` tänder Glove Snipe på `tap`, `snipe`, `glove`, `x2` och `x3`,
+och **ingen av dem är en ingest-typ** — bryggan publicerade bara gift, like, share, subscribe,
+member, chat, viewer, battle och follow. Widgeten kunde alltså bara nås från battle-UI:t eller en
+Actions-regel.
 
-Widgeten kan alltså bara nås från battle-UI:t eller en Actions-regel. Den är preview-only i praktiken.
+**Vad som saknades var källan, inte vägen.** Klientsidan var redan komplett, `cleanEvent` bar redan
+fältet `multiplier` (0–100), och `battleFields` letade redan efter `battle.multiplier ??
+battle.boostMultiplier`. Problemet var att `LINK_MIC_BATTLE` inte bär någon multiplikator.
 
-**Bevisa så här:**
+Hittad 2026-08-14 i `tiktok-live-proto/v3`: den ligger i **`LINK_MIC_BATTLE_TASK`**, på
+`start.config.rewardConfig` → `RewardPeriodConfig { rewardMultiple, rewardStartTimestamp, duration }`.
+Det är TikToks Boosting Glove — ett tidsfönster där gåvor ger multiplicerade poäng.
 
-```bash
-git grep -c "'tap'\|'snipe'\|'glove'" -- tiktok-bridge/
-```
+Bryggan prenumererar nu på den händelsen och skickar typen `glove` med multiplikatorn. Typen är med
+flit inte `battle`: `battle-mvp-session.js` öppnar och stänger sin session på allt vars typ
+innehåller "battle", och ett boost-event mitt i en match hade tänt MVP-overlayn i fel ögonblick.
 
-Svarar den 0 finns ingen väg dit.
+Fyra listor måste namnge en typ för att den ska nå en widget — bryggans `TILL_MOLNET`,
+`TIKTOK_INGEST_TYPES`, `TIKTOK_ROOM_TYPES` och event-bussens `ALLOWED`. Jag missade den fjärde, och
+`tests/event-contract.test.js` fångade det direkt: *"bryggan skickar typer molnet kastar: glove"*.
 
-Det här är samma mönster som redan åtgärdats i tre widgetar — se
-`battle-mvp-session.js`, `fan-level-session.js` och `gifter-level-session.js` för receptet.
-Glove Snipe är den sista kända kvarvarande.
+Vaktat av 13 prov: åtta i `tiktok-bridge/test/battle-task.test.js` (fältläsning, att TASK_UPDATE
+aldrig skickas, att 5× passerar) och fem i `tests/glove-live-wiring.test.js` (hela vägen genom
+`routeLiveBattleEvent`, aldrig via triggern direkt). Mutationsprovat i tre lager: tas fältläsningen,
+molnets vitlista eller klientens gren bort faller proven.
+
+**Kvar att verifiera live:** vilket steg i uppgiften som ska tända overlayen. Vi skickar på START,
+som är det enda steget som bär konfigurationen. `rewardStartTimestamp` säger när fönstret faktiskt
+börjar — visar det sig att START kommer märkbart före, ska sändningen fördröjas dit.
+
+Verifierad löst: 2026-08-14.
 
 ## 2. Gift Fireworks "Testa"-knappen kringgår alertkön
 

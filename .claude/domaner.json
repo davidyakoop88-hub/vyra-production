@@ -271,6 +271,7 @@
         "tests/event-dedupe-hardening.test.js",
         "tests/live-fuzz.test.js",
         "tests/live-widget-reference.test.js",
+        "tests/glove-live-wiring.test.js",
         "tests/panel-live-path.test.js",
         "tests/leaderboard-like-count.test.js",
         "tests/browser/likecount-en-kontroll.browser.test.js",
