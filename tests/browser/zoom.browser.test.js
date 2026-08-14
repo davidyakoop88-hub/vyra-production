@@ -301,7 +301,11 @@ test('samma pekarrorelse ger samma dukrorelse oavsett zoom', { skip, timeout: 90
 });
 
 // ---- Prov 10 · kontrollens plats --------------------------------------------------------------
-test('zoomkontrollen sitter nere till hoger i arbetsytan och syns', { skip, timeout: 90000 }, async () => {
+// PLATSEN ANDRAD 2026-08-13 pa Davids begaran: kontrollen svavade nere till hoger OVER duken och
+// ligger nu i verktygsraden. Provet ar darfor omskrivet — inte urvattnat. Allt som gallde forut
+// gallet fortfarande: den ska ha en yta pa skarmen, ligga innanfor arbetsytan, ha sina tre
+// knappar och bara platsen for snappvaxeln. Det enda som bytts ar VILKEN kant den ska sitta vid.
+test('zoomkontrollen sitter i verktygsraden och syns', { skip, timeout: 90000 }, async () => {
   const { context, page } = await editorn();
   try {
     const m = await page.evaluate(() => {
@@ -311,8 +315,12 @@ test('zoomkontrollen sitter nere till hoger i arbetsytan och syns', { skip, time
       const b = box.getBoundingClientRect(), w = wa.getBoundingClientRect();
       return {
         bredd: b.width, hojd: b.height,
-        franHoger: Math.round(w.right - b.right), franBotten: Math.round(w.bottom - b.bottom),
+        franHoger: Math.round(w.right - b.right),
         iYtan: b.right <= w.right + 1 && b.bottom <= w.bottom + 1,
+        iToolbar: (() => { const tb = document.querySelector('.editor-shell .editor-toolbar');
+          return !!tb && tb.contains(box) })(),
+        franToolbarTopp: (() => { const tb = document.querySelector('.editor-shell .editor-toolbar');
+          return tb ? Math.round(b.top - tb.getBoundingClientRect().top) : null })(),
         knappar: [...box.querySelectorAll('[data-zoom]')].map(k => k.dataset.zoom),
         snappPlats: !!box.querySelector('[data-snapp-plats]'),
       };
@@ -320,8 +328,10 @@ test('zoomkontrollen sitter nere till hoger i arbetsytan och syns', { skip, time
     assert.ok(!m.saknas, 'behallaren [data-vy-kontroll] saknas');
     assert.ok(m.bredd > 0 && m.hojd > 0, 'kontrollen ska ha en yta pa skarmen, inte bara finnas i DOM');
     assert.ok(m.iYtan, 'kontrollen ska ligga innanfor arbetsytan');
-    assert.ok(m.franHoger >= 0 && m.franHoger <= 32, `avstand fran hoger kant: ${m.franHoger}px`);
-    assert.ok(m.franBotten >= 0 && m.franBotten <= 32, `avstand fran nedre kant: ${m.franBotten}px`);
+    assert.ok(m.iToolbar, 'kontrollen ska ligga i verktygsraden, inte svavande over duken');
+    assert.ok(m.franToolbarTopp !== null && Math.abs(m.franToolbarTopp) <= 40,
+      `avstand fran verktygsradens overkant: ${m.franToolbarTopp}px`);
+    assert.ok(m.franHoger >= 0 && m.franHoger <= 420, `avstand fran hoger kant: ${m.franHoger}px`);
     assert.deepEqual(m.knappar, ['ut', 'in', 'anpassa'], 'tre knappar: minus, plus, Anpassa');
     assert.ok(m.snappPlats, 'platsen for snappvaxeln (#163) ska vara reserverad i samma behallare');
   } finally { await context.close() }

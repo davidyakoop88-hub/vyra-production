@@ -248,7 +248,7 @@ html.overlay-output body>aside,html.overlay-output body>main>header,html.overlay
 html.overlay-output body>main,html.overlay-output #view,html.overlay-output .editor-shell,html.overlay-output .workarea{display:block!important;position:static!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;overflow:hidden!important}
 html.overlay-output .canvas{position:absolute!important;margin:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform-origin:top left!important}
 html.overlay-output .widget.selected{outline:0!important}
-html.overlay-output .resize-handle{display:none!important}
+html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none!important}
 .widget-catalog button i.vyra-pro-icon{display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.12),0 5px 14px rgba(0,0,0,.24);font-style:normal}
 .widget-catalog button i.vyra-pro-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor)}
 .battle-mvp-template-section .mvp-style-grid button i.vyra-pro-icon{margin:0}
@@ -284,7 +284,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-live-preview h4{margin:0 0 14px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-live-preview-stage{position:relative;min-height:180px;padding:30px;background:#050308;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:auto}
 .overlay-live-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important}
-.overlay-live-preview-stage .resize-handle{display:none!important}
+.overlay-live-preview-stage .resize-handle,.overlay-live-preview-stage .vyra-handle{display:none!important}
 .overlay-widget-gallery{margin-top:22px;background:#110a18;border:1px solid var(--line,#2b2438);border-radius:12px;padding:18px}
 .overlay-widget-gallery h4{margin:0 0 4px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-widget-gallery>p{color:#9d87ac;font-size:9px;margin:0 0 14px;max-width:640px}
@@ -298,7 +298,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb{position:relative;width:100%;height:104px;background:#0a0510;overflow:hidden;flex:0 0 auto}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget{position:relative!important;left:auto!important;top:auto!important}
-.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle{display:none!important}
+.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle,.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .vyra-handle{display:none!important}
 /* BORTTAGET 2026-08-05: en synlighetsregel for miniatyren lackte till overlayen. Ett fyrverkeri,
    en Battle MVP och Top Gifters testtext lag och syntes i OBS utan att nagot triggats.
 
@@ -340,7 +340,7 @@ html.overlay-output .resize-handle{display:none!important}
 .owg-configure-preview h4{margin:0 0 12px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .owg-configure-preview-stage{position:relative;min-height:220px;background:#050308;border:1px solid #2b2438;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .owg-configure-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important;pointer-events:none!important}
-.owg-configure-preview-stage .resize-handle{display:none!important}
+.owg-configure-preview-stage .resize-handle,.owg-configure-preview-stage .vyra-handle{display:none!important}
 .owg-configure-done{grid-column:1/3;grid-row:2/3;margin:0;border:0;border-radius:0;padding:16px;background:#211230;border-top:1px solid #452656;color:#fff;font-size:12px;font-weight:700}
 .owg-configure-done:hover{background:#2d1740}
 @media(max-width:900px){.owg-configure-modal{grid-template-columns:1fr}.owg-configure-preview{display:none}}
@@ -1011,3 +1011,304 @@ body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px
 body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
 body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
 body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+/* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
+   translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
+   satts som transform, och tva transformer pa samma element hade slagit ut varandra. */
+.vyra-handle{position:absolute;z-index:98;padding:0;background:#9f35ff;border:2px solid #fff;box-shadow:0 0 10px #9f35ff;border-radius:6px;transform-origin:center}
+.vyra-handle-n,.vyra-handle-s{left:50%;width:26px;height:11px;margin-left:-13px;cursor:ns-resize}
+.vyra-handle-e,.vyra-handle-w{top:50%;width:11px;height:26px;margin-top:-13px;cursor:ew-resize}
+.vyra-handle-n{top:-6px}
+.vyra-handle-s{bottom:-6px}
+.vyra-handle-w{left:-6px}
+.vyra-handle-e{right:-6px}
+.vyra-handle-nw,.vyra-handle-ne,.vyra-handle-sw{width:14px;height:14px;border-radius:50%}
+.vyra-handle-nw{left:-7px;top:-7px;cursor:nwse-resize}
+.vyra-handle-ne{right:-7px;top:-7px;cursor:nesw-resize}
+.vyra-handle-sw{left:-7px;bottom:-7px;cursor:nesw-resize}
+.vyra-handle:hover{filter:brightness(1.25)}
+/* SIDOPANELEN blir en flexkolumn sa att "+ Lagg till widget" kan bottenjusteras. Knappen ar
+   sedan media.js ett DIREKT barn till .elements — margin-top:auto verkar bara pa flexbarn. */
+.elements{display:flex;flex-direction:column}
+.elements>.live-layer-add{margin-top:auto;flex:0 0 auto}
+
+/* ZOOMKONTROLLERNA flyttade upp i verktygsraden. Den gamla regeln lade dem svavande over
+   duken med position:sticky och en negativ marginal; har ar de ett vanligt flexbarn langst
+   till hoger. Den 12 px hoga sticky-boxen var dessutom hela orsaken till dukens lodrata
+   rullningslist (scrollHeight 864 mot clientHeight 852) — den forsvinner med flytten. */
+.editor-toolbar .vy-kontroll{position:static;margin:0 0 0 auto;bottom:auto;justify-content:flex-end;flex:0 0 auto}
+
+/* RULLNINGSLISTEN pa duken ska inte synas. Innehallet ar 864 px i en 852 px hog yta
+   (40 verktygsrad + 768 duk + 28 marginal), sa overskottet ar inbyggt i layouten — det var
+   INTE zoomboxen som orsakade det. Rullningen behalls darfor, bara listen doljs: stanger man
+   av rullningen blir dukens nederkant onabar i sma fonster. */
+.workarea{scrollbar-width:none;-ms-overflow-style:none}
+.workarea::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* Zoom- och snappknapparna arvde verktygsradens egen knappstil nar de flyttade dit, och da blev
+   snappvaxelns pa- och av-lage identiska — en vaxel man inte ser laget pa. Modulens egna stilar
+   asserteras darfor om med hogre specificitet inne i raden. */
+.editor-toolbar .vy-kontroll button{background:#160c1fef;border:1px solid #4c285e;color:#d6bddf;border-radius:6px;font-size:10px}
+.editor-toolbar .vy-kontroll button:hover{border-color:#cd55f4;color:#fff}
+/* !important behovs har, och skalet ar laddningsordningen — inte lathet: design-system.css
+   laddas EFTER studio.css i studio.html och vinner darfor vid lika specificitet. Uppmatt:
+   selektorn matchar (`matches()` svarar true) men den beraknade bakgrunden blev anda
+   `linear-gradient(145deg,#130b1c,#0d0814)` fran den senare filen. Bara vaxelns tva lagen
+   hojs, inte all knappstil, sa raden i ovrigt behaller sitt utseende. */
+.editor-toolbar .vy-kontroll button.snapp-vaxel{border-color:#cd55f4!important;background:linear-gradient(180deg,#7a2fb5,#4a1a72)!important;color:#fff!important}
+.editor-toolbar .vy-kontroll button.snapp-vaxel.av{border-color:#4c285e!important;background:#160c1fef!important;color:#7d6e8a!important}
+
+/* ================= FAN LEVEL UP · referensdesignen 2026-08-13 =================
+   Sju modeller mot Davids referensbild. Strukturen fanns redan — rubrik, namn, pill,
+   banderoll, pulslinje, vingar, hjartan och ring — sa det har ar utforande, inte anatomi.
+
+   RUBRIKEN doldes av varje layout med `display:none!important`, sa den maste tas tillbaka
+   med samma vapen. Referensen visar "FAN LEVEL UP" i ALLA sju. */
+.fan-level-up>h2{
+  display:block!important;order:3;margin:3px 0 0;padding:0;
+  font:900 18px/1.06 Inter,system-ui,sans-serif;letter-spacing:.01em;text-align:center;white-space:nowrap;
+  background:linear-gradient(180deg,#ffd98a 0%,#ff9a2a 52%,#ff4f1a 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 55%))}
+
+/* Namnet vitt och kraftigt, supporterraden i rott — som referensen. */
+.fan-level-up>h3{order:4;margin:1px 0 0;font:800 15px/1.15 Inter,system-ui,sans-serif;color:#fff;
+  text-shadow:0 1px 6px #00000080;text-align:center;white-space:nowrap}
+.fan-level-up>p{order:5;margin:1px 0 0;font:800 9px/1.2 Inter,system-ui,sans-serif;letter-spacing:.14em;
+  text-transform:uppercase;color:#ff5a3c;text-align:center}
+
+/* Nivapillen: en enkel LV.-bricka i orange, som referensens. */
+.fan-level-up .fan-level-pill{
+  background:linear-gradient(180deg,#ffb545,#ff7a12)!important;border:0!important;color:#3a1500!important;
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em;border-radius:999px!important;
+  padding:6px 15px!important;box-shadow:0 3px 12px #ff7a1255,0 0 0 1px #ffd08a55 inset!important}
+
+/* Emblemet tydligare: varm glod i stallet for platt bild. */
+.fan-level-up .fan-burst img{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--fan),transparent 35%))
+  drop-shadow(0 0 30px color-mix(in srgb,#ff4f1a,transparent 55%))}
+
+/* ---- 2 Heartbeat Side och 7 Community Duo: EKG-kurva med hjarta -------------------------------
+   Referensen visar en pulskurva, inte ett streck. Kurvan ar en inbakad SVG sa den inte kan
+   tappas av en saknad bildfil, och hjartat sitter i mitten som i bilden. */
+.fan-layout-heartbeat .fan-pulse-line,
+.fan-layout-duo .fan-pulse-line{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M0 12h18l5-9 6 18 6-13 5 4h14' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M60 8.5c1.6-3 6-2.4 6 1 0 3-4 5-6 7-2-2-6-4-6-7 0-3.4 4.4-4 6-1z' fill='%23ff3b2f'/%3E%3Cpath d='M72 12h14l5-4 6 13 6-18 5 9h6' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:100% auto!important;
+  background-color:transparent!important;height:24px!important;min-width:110px;
+  filter:drop-shadow(0 0 8px #ff7a1288)}
+
+/* ---- 5 Rising Hearts: tre glodande hjartan i trappa --------------------------------------- */
+.fan-layout-hearts .fan-rising-hearts i{opacity:1!important;color:#ff3b52!important;
+  text-shadow:0 0 10px #ff3b52,0 0 22px #ff7a12aa!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(1){font-size:13px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:19px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(3){font-size:25px!important}
+
+/* ---- 6 Welcome Ribbon: en riktig banderoll, inte en platt pill ---------------------------- */
+.fan-layout-ribbon .fan-ribbon{display:block!important;order:2;margin:-14px auto 2px;position:relative;
+  padding:9px 30px;min-width:190px;text-align:center;
+  background:linear-gradient(180deg,#ff9a2a,#ff5f14)!important;
+  border:2px solid #ffd08a!important;border-radius:7px;
+  box-shadow:0 6px 18px #ff5f1455,0 0 0 1px #ffffff22 inset;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)}
+.fan-layout-ribbon .fan-ribbon span{font:900 15px/1 Inter,system-ui,sans-serif;letter-spacing:.05em;
+  color:#fff;text-shadow:0 2px 4px #8a2c00}
+.fan-layout-ribbon .fan-level-pill{display:none!important}   /* banderollen bar nivan i den har modellen */
+
+/* ---- 4 Loyalty Ring: segmenterad ring med gnista ------------------------------------------ */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:conic-gradient(var(--fan) 0 18%,transparent 18% 22%,var(--fan) 22% 40%,
+    transparent 40% 44%,var(--fan) 44% 62%,transparent 62% 66%,#ffd98a 66% 78%,
+    transparent 78% 82%,var(--fan) 82% 100%)!important;
+  border:0!important;border-radius:50%!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 45%))}
+
+/* ---- 3 Fan Badge Reveal: halvmanar med emblemet i vardera --------------------------------- */
+.fan-layout-badgereveal .fan-wing{
+  background-image:url("assets/images/heart-character.png?v=1")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:64% auto!important;
+  background-color:transparent!important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+.fan-layout-badgereveal .fan-wing.left{transform:scaleX(-1)}
+
+/* ===== FAN LEVEL UP · tre rattelser efter Davids granskning 2026-08-13 =====
+
+   3 BADGE REVEAL: vingarna var 50x70 px och satt 46 px UT fran bilden, sa emblemet blev en
+   liten ikon vid kanten i stallet for en halvmane som omfamnar profilbilden. Bagen ritas nu
+   som en riktig cirkelbage med ::before (tva fargade kanter pa en rund ram, roterad 45 grader
+   ger ett C), och emblemet ligger i ::after mitt i bagen. */
+.fan-layout-badgereveal .fan-wing{
+  width:74px!important;height:136px!important;top:50%!important;transform:translateY(-50%)!important;
+  background:none!important;background-image:none!important;clip-path:none!important;overflow:visible!important}
+.fan-layout-badgereveal .fan-wing.left{left:-70px!important}
+.fan-layout-badgereveal .fan-wing.right{right:-70px!important;transform:translateY(-50%) scaleX(-1)!important}
+.fan-layout-badgereveal .fan-wing::before{
+  content:"";position:absolute;top:2px;left:6px;width:132px;height:132px;border-radius:50%;
+  border:13px solid transparent;border-top-color:#ffb545;border-left-color:#ff5f14;
+  transform:rotate(-45deg);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+.fan-layout-badgereveal .fan-wing::after{
+  content:"";position:absolute;top:50%;left:6px;width:52px;height:52px;transform:translateY(-50%);
+  background:url("assets/images/heart-character.png?v=1") center/contain no-repeat;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 35%))}
+.fan-layout-badgereveal .fan-profile{z-index:2}
+
+/* 4 LOYALTY RING: den forra conic-gradienten hade 4 %-luckor och last darfor som ett band med
+   en spricka. Nu jamna segment med tydliga mellanrum, plus en gnista som i referensen. */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:repeating-conic-gradient(from -8deg,
+    var(--fan) 0deg 26deg, transparent 26deg 40deg)!important;
+  border:0!important;box-shadow:none!important;inset:-11px!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 45%))}
+.fan-layout-loyalty .fan-profile .fan-ring::after{
+  content:"";position:absolute;top:4%;right:11%;width:11px;height:11px;border-radius:50%;
+  background:#fff8e6;box-shadow:0 0 10px 4px #ffcf7a,0 0 22px 8px #ff8a2088}
+
+/* 2 HEARTBEAT och 7 COMMUNITY DUO: namn, TROGEN SUPPORTER och FAN LEVEL UP lag pa egna rader
+   UNDER hela widgeten. Referensen har dem i en egen kolumn TILL HOGER om profilbilden.
+   Rutnaten far darfor en fjarde rad-uppsattning dar avatar och puls spanner alla rader. */
+.fan-layout-heartbeat.fan-level-up{
+  grid-template-columns:60px 46px 1fr!important;
+  grid-template-areas:"avatar pulse burst" "avatar pulse title" "avatar pulse name" "avatar pulse msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-duo.fan-level-up{
+  grid-template-columns:auto auto auto 1fr!important;
+  grid-template-areas:"burst pulse avatar badge" "burst pulse avatar title" "burst pulse avatar name" "burst pulse avatar msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-heartbeat>h2,.fan-layout-duo>h2{grid-area:title!important;text-align:left!important;
+  justify-self:start!important;font-size:15px!important;margin:2px 0 0!important}
+.fan-layout-heartbeat>h3,.fan-layout-duo>h3{grid-area:name!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+.fan-layout-heartbeat>p,.fan-layout-duo>p{grid-area:msg!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+/* Pillen sitter kvar i sitt eget omrade i duo; i heartbeat ligger den absolut over emblemet. */
+.fan-layout-duo .fan-level-pill{grid-area:badge!important;justify-self:start!important;align-self:center!important}
+
+/* Hogerkolumnen i Community Duo blev sa smal att TROGEN SUPPORTER brots till tva rader nar
+   texten flyttades dit. Widgeten ar 300 px, sa kolumnen far hellre krympa emblemet an bryta ord. */
+.fan-layout-duo.fan-level-up{width:320px!important}
+.fan-layout-duo>h2,.fan-layout-duo>h3,.fan-layout-duo>p{white-space:nowrap!important}
+.fan-layout-duo>h2{font-size:14px!important}
+.fan-layout-duo .fan-burst{width:40px!important;height:40px!important}
+.fan-layout-duo .fan-burst img{width:38px!important;height:38px!important}
+
+/* ============ GIFTER LEVEL UP · lila diamantformspraket 2026-08-13 ============
+   Davids referens visar sju paneler; katalogen har nio. De tva utan egen panel — Profil i
+   orbit och Stort nivanummer — far samma gemensamma sprak, eftersom David vill behalla alla
+   nio. Paletten var redan lila (--gifter: #9965ff); det som skiljde var utforandet.
+
+   DIAMANTEN var storsta gapet: en liten mork fyrkant dar referensen visar en STOR RUND
+   medaljong med guldring, lila falt och en ljus gradientdiamant. */
+.gifter-level-up .gifter-diamond-stack{
+  position:relative;display:grid!important;place-items:center!important;
+  width:74px!important;height:74px!important;border-radius:50%!important;
+  background:radial-gradient(circle at 50% 38%,#5b2ea8 0%,#38176e 62%,#25104a 100%)!important;
+  box-shadow:0 0 0 4px #d8a63a,0 0 0 6px #8a651f,0 0 22px color-mix(in srgb,var(--gifter),transparent 35%),
+    inset 0 2px 12px #00000066!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{
+  width:46px!important;height:46px!important;object-fit:contain!important;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gifter),transparent 30%)) brightness(1.25) saturate(1.2)!important}
+/* Bara den forsta diamanten ar medaljongens motiv; de tva andra ar stapelns spar och
+   ska ligga bakom, inte staplas ovanpa varandra i mitten. */
+.gifter-level-up .gifter-diamond-stack img.gd-2,
+.gifter-level-up .gifter-diamond-stack img.gd-3{position:absolute!important;opacity:.28!important;
+  width:36px!important;height:36px!important;filter:none!important}
+
+/* Profilbilden far referensens ring: guld ytterst, lila glod. */
+.gifter-level-up .gifter-orbit img,
+.gifter-level-up .gifter-bottom-profile img{
+  border:3px solid #d8a63a!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--gifter),transparent 40%),
+    0 0 20px color-mix(in srgb,var(--gifter),transparent 45%)!important}
+
+/* LEVEL UP: vit till lavendel, som referensen. */
+.gifter-level-up>h2{
+  background:linear-gradient(180deg,#ffffff 0%,#e6d8ff 48%,#b98cff 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gifter),transparent 45%))}
+
+/* Namnet vitt, undertexten dampad versal — referensens tva rader. */
+.gifter-level-up>h3{color:#fff!important;font-weight:800!important}
+.gifter-level-up>p{color:#b9a9d6!important;font:700 9px/1.2 Inter,system-ui,sans-serif!important;
+  letter-spacing:.15em!important;text-transform:uppercase!important}
+
+/* Nivabrickan: lila pill med ljus kant, bara LV. och siffran. */
+.gifter-level-up .gifter-level-badge{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:5px 14px!important;border-radius:999px!important;
+  background:linear-gradient(180deg,#7c3ff0,#5a22c4)!important;
+  border:1px solid #c7a6ff!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--gifter),transparent 55%)!important}
+.gifter-level-up .gifter-level-badge strong{
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em!important;color:#fff!important}
+.gifter-level-up .gifter-level-badge span{display:none!important}
+
+/* Profil i orbit och Stort nivanummer saknar egen panel i referensen, men David vill behalla
+   alla nio och ge samtliga det nya utseendet. Diamantmedaljongen ar sjalva formspraket, sa de
+   far den ocksa — placerad sa att den inte tranger undan modellens egen identitet (orbiten
+   respektive det stora nivanumret). Det ar min tolkning, inte en kopia av en referenspanel. */
+.gifter-layout-profile .gifter-diamond-row,
+.gifter-layout-number .gifter-diamond-row{display:flex!important;order:0!important;
+  justify-content:center!important;margin:0 auto 6px!important}
+.gifter-layout-profile .gifter-diamond-stack,
+.gifter-layout-number .gifter-diamond-stack{display:grid!important;
+  width:58px!important;height:58px!important}
+.gifter-layout-profile .gifter-diamond-stack img.gifter-diamond,
+.gifter-layout-number .gifter-diamond-stack img.gifter-diamond{width:36px!important;height:36px!important}
+
+/* ===== GIFTER LEVEL UP · fyra rattelser efter Davids granskning 2026-08-13 =====
+
+   1. DEN MORKA FYRKANTEN. Uppmatt i canvas: PNG:en har 0 % genomskinliga pixlar och 73 %
+      nastan svarta, alla fyra horn rgb(17,17,17) med full opacitet. Alfakanalen finns men ar
+      helt ogenomskinlig — den morka brickan ar INBAKAD i konstverket, inte satt av CSS.
+      `mix-blend-mode:screen` loser det utan ny bildfil: screen mot nastan svart lamnar
+      underlaget orort, sa fyrkanten forsvinner medan diamanten blir kvar. `isolation:isolate`
+      haller blandningen innanfor medaljongen. */
+.gifter-level-up .gifter-diamond-stack{isolation:isolate!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{mix-blend-mode:screen!important}
+
+/* 2. DIAMOND REVEAL: brickan lag sa tatt att den kroc med den nu storre medaljongen. */
+.gifter-layout-reveal .gifter-level-badge{margin-top:14px!important;position:relative;z-index:3}
+.gifter-layout-reveal .gifter-diamond-row{margin-bottom:4px!important}
+
+/* 3. ORBIT LEVEL: medaljongen lag absolut pa top:118px/left:146px och skar in i profilbilden
+      nar den vaxte till 74 px. Den flyttas ut ur orbitens bana. */
+.gifter-layout-orbitlevel .gifter-diamond-row{top:auto!important;bottom:-6px!important;
+  left:50%!important;transform:translateX(-50%)!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack{width:58px!important;height:58px!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack img.gifter-diamond{width:34px!important;height:34px!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:34px!important;position:relative;z-index:3}
+
+/* 4. FLIP TOKEN: diamantkolumnen ar 44 px men medaljongen blev 74 och trangde in pa avataren.
+      Kolumnen breddas och medaljongen halls lagom for en "token". */
+.gifter-layout-flip.gifter-level-up{grid-template-columns:74px 1fr auto!important;column-gap:12px!important}
+.gifter-layout-flip .gifter-diamond-stack{width:64px!important;height:64px!important;border-radius:50%!important}
+.gifter-layout-flip .gifter-diamond{width:40px!important;height:40px!important;object-fit:contain!important;
+  border-radius:0!important}
+
+/* ORBIT LEVEL, andra forsoket. Forsta fixen flyttade medaljongen till bottom:-6px — den slutade
+   krocka med profilbilden men lade sig i stallet OVANPA namnet och undertexten. Absolut
+   positionering var problemet: den kan inte veta var texten hamnar. Medaljongen gar darfor
+   tillbaka i flodet, mellan orbiten och brickan, dar den inte kan overlappa nagot. */
+.gifter-layout-orbitlevel .gifter-diamond-row{position:static!important;transform:none!important;
+  order:1!important;display:flex!important;justify-content:center!important;
+  margin:10px auto 0!important;top:auto!important;left:auto!important;bottom:auto!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:8px!important}
+
+/* TOP STREAK · RAMVARIANTERNA saknade flippanimation helt. Uppmatt: animationIterationCount
+   var inte "infinite" pa nagot av ansiktena — bara `.streak-ice` loopar i den klassiska vagen,
+   och `both infinite` som lades till tidigare galler `.premium-streak`, inte `.streak-framed`.
+   Egna keyframes har, sa ramvarianten inte hanger pa att premium-final.css rakar vara laddad.
+   Keyframsen ar loopvanliga: fram slutar pa 360 grader (= 0), bak pa 540 (= 180). */
+@keyframes sframeFront{0%,18%{transform:rotateY(0)}55%,82%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+@keyframes sframeBack{0%,18%{transform:rotateY(180deg)}55%,82%{transform:rotateY(360deg)}100%{transform:rotateY(540deg)}}
+.streak-framed .streak-flip{perspective:700px;transform-style:preserve-3d}
+.streak-framed .streak-profile-face,.streak-framed .streak-gift-face{backface-visibility:hidden}
+.streak-framed .streak-profile-face{animation:sframeFront calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}
+.streak-framed .streak-gift-face{animation:sframeBack calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}

@@ -255,7 +255,7 @@
     'gifterlevel.layout': v => ({
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
-      gifterName: 'ThunderGifter', gifterMessage: 'Level up!', gifterLayout: v.layout,
+      gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
       gifterColor: '#9965ff', gifterLight: '#e2d6ff'
     }),
     'followeralert': () => ({
@@ -284,7 +284,7 @@
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
       mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
-      mvpShowLabel: true, mvpShowName: false, mvpShowCoins: false,
+      mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
