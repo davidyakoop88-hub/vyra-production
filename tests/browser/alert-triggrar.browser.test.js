@@ -108,65 +108,87 @@ async function studion() {
   return page;
 }
 
-// TODO: unblocked by playLevelVideo fix — provet ar RÖTT med Davids uttryckliga godkannande
-// tills orsaken bakom "forsta triggern efter en render fungerar, efterfoljande inte" ar lagad.
-// OBS: `playLevelVideo` ar AVFARDAD som orsak (uppmatt: den faller pa `if(!url)return` for
-// katalogskapade widgetar, och felet uppstar aven nar Fan-triggern returnerar direkt utan att
-// rora DOM). Namnet pa markoren behalls som David skrev den; den verkliga orsaken utreds.
-//
-// Alla fem widgetar laggs pa duken SAMTIDIGT och renderas en gang, precis som i drift.
-// Ett tidigare upplagg som nollstallde state.widgets mellan familjerna gav ett missvisande
-// utfall: den familj som tandes FORST fungerade alltid och den andra aldrig, oavsett ordning.
-// Det ar en egenskap hos den riggen — inte hos produkten — och namns i rapporten som nagot
-// att utreda separat.
-test('6. de befintliga -active-klasserna satts precis som idag', { skip }, async () => {
+/* ---- 6. ALERTKON ------------------------------------------------------------------------
+   Provet ar OMSKRIVET 2026-08-14. Den forsta versionen tande fem alerts och forvantade sig
+   fem samtidiga -active-klasser. Den premissen motsade produktens design och gav mig tva
+   felaktiga slutsatser ("tre av fem satter aldrig sin klass", "en tidigare trigger forgiftar
+   senare"). Bada var matfel: jag lasde av 150-400 ms in i en ko som serialiserar 6-8 sekunder.
+
+   DET VERKLIGA KONTRAKTET, uppmatt i runtime-controls.js:14-52:
+   `installQueueWrappers()` (500 ms, 2200 ms och pa `load`) byter ut triggrarna mot koade
+   varianter. Kon spelar EN alert i taget och haller nasta i max(800, duration) ms:
+     triggerBattleMvp 8000/prio 10 · triggerGifterLevelUp 6000/8 · triggerFanLevelUp 6000/7
+     triggerNewFollower 5000/3 · triggerGiftFireworks 6000/6
+   triggerGloveSnipe SAKNAS i configs och koas alltsa inte — darfor kunde den tanda mitt under
+   en annan alert. Provet asserterar INTE att Glove tander direkt, sa det forblir gront nar
+   Glove laggs i kon.
+
+   Visningstiderna kortas till 1 s per widget sa sviten inte tar en minut: wrappern raknar ut
+   sin duration ur widgetens egen `fanDuration`/`gifterDuration`/`mvpDuration`. */
+test('6. alertkon serialiserar, tappar ingenting och varje familj far sin klass', { skip }, async () => {
   const page = await studion();
-  const utfall = await page.evaluate(async (familjer) => {
+  const r = await page.evaluate(async (familjer) => {
     state.widgets.length = 0;
     const uppsatta = [];
     for (const f of familjer) {
-      let w = null, anvand = null;
-      for (const n of f.nycklar) {
-        try { w = window.VyraWidgets.create(n); anvand = n; break } catch (_) {}
-      }
-      if (!w) { uppsatta.push({ familj: f.namn, fel: 'kunde inte skapa: ' + f.nycklar.join(', ') }); continue }
+      let w = null;
+      for (const n of f.nycklar) { try { w = window.VyraWidgets.create(n); break } catch (_) {} }
+      if (!w) return { fel: 'kunde inte skapa ' + f.namn };
       w.x = 20 + uppsatta.length * 40; w.y = 20;
+      // Kort visningstid -> kon dranerar snabbt. Wrappern laser dessa faltet.
+      w.fanDuration = 1; w.gifterDuration = 1; w.mvpDuration = 1;
       state.widgets.push(w);
-      uppsatta.push({ familj: f.namn, forvantad: f.forvantad, trigger: f.trigger, id: w.id, anvand });
+      uppsatta.push({ namn: f.namn, trigger: f.trigger, forvantad: f.forvantad, id: w.id, sedd: false });
     }
     selected = null; render();
-
-    // Triggarna gor `if(!box)return` — tands de innan renderingen slagit igenom returnerar de
-    // tyst, och provet blir falskt rott.
     for (const u of uppsatta) {
-      if (u.fel) continue;
       for (let i = 0; i < 60 && !document.querySelector(`[data-id="${u.id}"]`); i++)
         await new Promise(r => requestAnimationFrame(r));
     }
 
-    for (const u of uppsatta) {
-      if (u.fel) continue;
-      if (typeof window[u.trigger] !== 'function') { u.fel = 'trigger saknas: ' + u.trigger; continue }
-      window[u.trigger]({ __test: true, name: 'Prov', level: 12, score: 5, multiplier: 2 });
-    }
-    await new Promise(r => setTimeout(r, 400));
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas — kon installerades aldrig' };
+    window.VyraAlertQueue.clear();
 
     for (const u of uppsatta) {
-      if (u.fel) continue;
-      const el = document.querySelector(`[data-id="${u.id}"]`);
-      u.finns = !!el;
-      u.faktisk = el ? el.className : '';
+      if (typeof window[u.trigger] !== 'function') return { fel: 'trigger saknas: ' + u.trigger };
+      window[u.trigger]({ __test: true, name: 'Prov', level: 12, score: 5, multiplier: 2 });
     }
-    return uppsatta;
+    const direkt = window.VyraAlertQueue.stats();
+
+    // Polla tills alla setts tanda minst en gang, eller tills tiden gar ut.
+    const start = Date.now();
+    while (Date.now() - start < 25000 && uppsatta.some(u => !u.sedd)) {
+      for (const u of uppsatta) {
+        if (u.sedd) continue;
+        const el = document.querySelector(`[data-id="${u.id}"]`);
+        if (el && el.className.split(/\s+/).includes(u.forvantad)) u.sedd = true;
+      }
+      await new Promise(r => setTimeout(r, 60));
+    }
+    return { fel: null, direkt, slut: window.VyraAlertQueue.stats(),
+             resultat: uppsatta.map(u => ({ namn: u.namn, sedd: u.sedd })),
+             vantetid: Date.now() - start };
   }, FAMILJER);
   await page.close();
 
-  for (const u of utfall) {
-    assert.equal(u.fel, undefined, `${u.familj}: ${u.fel}`);
-    assert.ok(u.finns, `${u.familj}: widgeten renderades inte (nyckel ${u.anvand})`);
-    assert.ok(u.faktisk.split(/\s+/).includes(u.forvantad),
-      `${u.familj}: "${u.forvantad}" sattes inte — klasserna var "${u.faktisk}"`);
-  }
+  assert.equal(r.fel, null, r.fel);
+
+  // 1. Ingenting far tappas. `kastade` raknar alerts kon slangt pa tak eller alder.
+  assert.equal(r.direkt.kastade, 0, `kon kastade ${r.direkt.kastade} alerts direkt vid tandning`);
+  assert.equal(r.slut.kastade, 0, `kon kastade ${r.slut.kastade} alerts under korningen`);
+
+  // 2. Alerts ska SERIALISERAS, inte spelas samtidigt: nagot spelar och nagot star och vantar.
+  assert.ok(r.direkt.spelar, 'ingen alert borjade spela — kon startade aldrig');
+  assert.ok(r.direkt.vantande >= 1,
+    `inget hamnade i kon (vantande=${r.direkt.vantande}) — alerts spelades samtidigt`);
+
+  // 3. Var och en ska till slut fa sin klass.
+  const uteblivna = r.resultat.filter(x => !x.sedd).map(x => x.namn);
+  assert.deepEqual(uteblivna, [],
+    `dessa fick aldrig sin klass inom ${Math.round(r.vantetid / 1000)} s: ${uteblivna.join(', ')}`);
+
+  // 4. Kon ska vara tom nar allt spelat klart.
+  assert.equal(r.slut.vantande, 0, 'alerts ligger kvar i kon efter att alla setts');
 });
 
 // 6c. KORSKONTAMINATION. Uppmatt 2026-08-14 FORE fixen: Glove Snipe tande sin egen klass

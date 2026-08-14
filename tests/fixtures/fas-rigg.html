@@ -1,0 +1,27 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Rigg for widget-fas.js</title>
+<style>
+  body{margin:0;background:#0d0f14}
+  .provwidget{position:absolute;left:20px;top:20px;width:200px;height:120px;background:#222}
+</style>
+<div id="scen"></div>
+<script src="/widget-fas.js"></script>
+<script>
+  // Riggen ger proven en ren yta: ingen Studio, inga andra skript, inga fardiga widgetar.
+  // Motorn ska ga att driva mot ETT befintligt element — det ar hela poangen med adaptern.
+  window.nyWidget = function (id) {
+    const el = document.createElement('div');
+    el.className = 'provwidget';
+    el.dataset.id = id || 'prov';
+    document.getElementById('scen').appendChild(el);
+    return el;
+  };
+  window.nyBild = function (el, src) {
+    const img = document.createElement('img');
+    img.alt = '';
+    if (src) img.src = src;
+    el.appendChild(img);
+    return img;
+  };
+</script>
