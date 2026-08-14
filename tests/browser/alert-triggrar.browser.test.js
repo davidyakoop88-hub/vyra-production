@@ -136,7 +136,7 @@ test('6. alertkon serialiserar, tappar ingenting och varje familj far sin klass'
       if (!w) return { fel: 'kunde inte skapa ' + f.namn };
       w.x = 20 + uppsatta.length * 40; w.y = 20;
       // Kort visningstid -> kon dranerar snabbt. Wrappern laser dessa faltet.
-      w.fanDuration = 1; w.gifterDuration = 1; w.mvpDuration = 1;
+      w.fanDuration = 1; w.gifterDuration = 1; w.mvpDuration = 1; w.gloveDuration = 1;
       state.widgets.push(w);
       uppsatta.push({ namn: f.namn, trigger: f.trigger, forvantad: f.forvantad, id: w.id, sedd: false });
     }
@@ -266,4 +266,103 @@ test('6b. Top Streak tands fortfarande med hit-klassen', { skip }, async () => {
   await page.close();
   assert.equal(r.fel, null, r.fel);
   assert.ok(r.harHit, 'hit-klassen fastnade inte');
+});
+
+/* ---- 6d. GLOVE SNIPE OCH KON -------------------------------------------------------------
+   BASLINJE, rod fore fixen. Uppmatt 2026-08-14: `triggerGloveSnipe` saknas i
+   runtime-controls `configs`, sa den koas inte. Den tander direkt — aven mitt under en
+   pagaende alert. Det var det som gjorde korskontaminationen synlig (den byggde om hela
+   duken med render() medan Fan spelade), och det blir mycket mer stotande nar Fan/Gifter/MVP
+   far fyrafaskoreografi: en Glove kan da klippa rakt in i hyllningsfasen.
+
+   Provet tander Fan forst (som ar koad och borjar spela), och sedan Glove. Glove ska DA sta
+   i kon, inte tanda. */
+test('6d. Glove Snipe respekterar alertkon', { skip }, async () => {
+  const page = await studion();
+  const r = await page.evaluate(async () => {
+    state.widgets.length = 0;
+    const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
+    fan.x = 20; fan.y = 20; fan.fanDuration = 3;
+    const glove = window.VyraWidgets.create('catalog:glovesnipe:koiPearl');
+    glove.x = 320; glove.y = 20;
+    state.widgets.push(fan, glove);
+    selected = null; render();
+    for (let i = 0; i < 60 && !document.querySelector(`[data-id="${glove.id}"]`); i++)
+      await new Promise(r => requestAnimationFrame(r));
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
+    window.VyraAlertQueue.clear();
+
+    window.triggerFanLevelUp({ __test: true, name: 'Prov', level: 12 });
+    await new Promise(r => setTimeout(r, 120));          // Fan har hunnit borja spela
+    const fanSpelar = !!document.querySelector(`[data-id="${fan.id}"]`)
+      ?.className.split(/\s+/).includes('fan-active');
+
+    window.triggerGloveSnipe({ __test: true, multiplier: 3 });
+    await new Promise(r => setTimeout(r, 120));
+    const gloveEl = document.querySelector(`[data-id="${glove.id}"]`);
+    const gloveTandeDirekt = !!gloveEl?.className.split(/\s+/).includes('glove-active');
+    const ko = window.VyraAlertQueue.stats();
+
+    // Vanta ut Fan och kontrollera att Glove till slut far sin tur.
+    let gloveSedd = gloveTandeDirekt;
+    const start = Date.now();
+    while (Date.now() - start < 15000 && !gloveSedd) {
+      const el = document.querySelector(`[data-id="${glove.id}"]`);
+      if (el?.className.split(/\s+/).includes('glove-active')) gloveSedd = true;
+      await new Promise(r => setTimeout(r, 60));
+    }
+    return { fel: null, fanSpelar, gloveTandeDirekt, ko, gloveSedd };
+  });
+  await page.close();
+
+  assert.equal(r.fel, null, r.fel);
+  assert.ok(r.fanSpelar, 'Fan borjade aldrig spela — provet mater fel sak');
+  assert.equal(r.gloveTandeDirekt, false,
+    'Glove tande mitt under en pagaende alert i stallet for att sta i kon ' +
+    `(kostatus: ${JSON.stringify(r.ko)})`);
+  assert.ok(r.gloveSedd, 'Glove fick aldrig sin tur — den tappades i stallet for att koas');
+});
+
+/* ---- 6e. ANVANDARENS VISNINGSTID ----------------------------------------------------------
+   Vakten mot exakt den bugg som undveks nar Glove lades i kon. De ovriga wrapparna raknar ut
+   sin duration ur widgetens EGET falt (`state.widgets.find(...)?.mvpDuration||7`). Skrivs
+   Glove in med ett fast 6000 slapper kon vidare efter 6 s aven om anvandaren stallt 12 —
+   alerten skulle da klippas av nasta. Provet later Glove spela med gloveDuration 12 och
+   kontrollerar att nasta alert far vanta pa den, inte pa ett hardkodat varde. */
+test('6e. kon respekterar anvandarens gloveDuration, inte ett fast varde', { skip }, async () => {
+  const page = await studion();
+  const r = await page.evaluate(async () => {
+    state.widgets.length = 0;
+    const glove = window.VyraWidgets.create('catalog:glovesnipe:koiPearl');
+    glove.x = 20; glove.y = 20; glove.gloveDuration = 12;       // anvandarens val
+    const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
+    fan.x = 320; fan.y = 20; fan.fanDuration = 1;
+    state.widgets.push(glove, fan);
+    selected = null; render();
+    for (let i = 0; i < 60 && !document.querySelector(`[data-id="${fan.id}"]`); i++)
+      await new Promise(r => requestAnimationFrame(r));
+    if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
+    window.VyraAlertQueue.clear();
+
+    const t0 = performance.now();
+    window.triggerGloveSnipe({ __test: true, multiplier: 3 });
+    window.triggerFanLevelUp({ __test: true, name: 'Prov', level: 12 });
+
+    let fanVid = null;
+    while (performance.now() - t0 < 20000 && fanVid === null) {
+      const el = document.querySelector(`[data-id="${fan.id}"]`);
+      if (el?.className.split(/\s+/).includes('fan-active')) fanVid = performance.now() - t0;
+      await new Promise(r => setTimeout(r, 60));
+    }
+    return { fel: null, fanVid: fanVid === null ? null : Math.round(fanVid) };
+  });
+  await page.close();
+
+  assert.equal(r.fel, null, r.fel);
+  assert.notEqual(r.fanVid, null, 'Fan fick aldrig sin tur inom 20 s');
+  assert.ok(r.fanVid >= 10000,
+    `nasta alert slapptes fram efter ${r.fanVid} ms — kon anvander inte widgetens ` +
+    `gloveDuration (12 s) utan ett kortare, troligen hardkodat varde`);
+  assert.ok(r.fanVid <= 16000,
+    `nasta alert vantade ${r.fanVid} ms — langre an de 12 s anvandaren stallt in`);
 });
