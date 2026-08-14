@@ -182,11 +182,34 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
+## 12. goal-ingest-http faller sällsynt under parallell last
+
+`chain('ett like räknar bara count, aldrig rummets totalvärde')` i
+`server/test/goal-ingest-http.test.js` väntar på SSE-ramar via `waitFor(...)`. Under parallell
+körning med de övriga måltesterna hinner ramen ibland inte fram innan väntan ger upp.
+
+**Uppmätt 2026-08-14**, fem körningar av
+
+```bash
+node --test test/goal-*.test.js test/studio-goal-stream.test.js
+```
+
+**en röd, fyra gröna** — och seriellt (`--test-concurrency=1`) grön varje gång. Det är alltså last,
+inte ordning: samma sorts tidsberoende som §7 varnar för, fast i serverprovet.
+
+Det är inte samma fel som rate-limit-kollisionen som lagades samma dag (se listan över löst nedan) —
+den var deterministisk och gav 429, den här ger en utebliven ram.
+
+**Åtgärd:** vänta på ett villkor som inte är en tidsgräns — låt riggen räkna publicerade ramar och
+vänta på antalet i stället för på att en period ska passera.
+
+Verifierad: 2026-08-14.
+
 ---
 
 # Regler som kostat oss något
 
-§1–§6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§1–§6 och §12 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
@@ -358,6 +381,21 @@ Verifierad: 2026-08-09.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.
+- **Ett `{ skip }` i optionsobjektet avgörs när provet registreras, inte när det körs.** 43
+  browserprov satte `skip` på nytt inne i `test.before` när ingen webbläsare gick att starta.
+  Omtilldelningen nådde aldrig fram: `test('...', { skip }, ...)` hade redan läst värdet. På en
+  maskin utan startbar webbläsare föll varje prov på `newContext of null` i stället för att hoppas
+  över, och de filer som startar riggen inne i provkroppen läckte en lyssnande server så att
+  processen hängde. Uppmätt 2026-08-14: 87 hårda fel och sex domäner som aldrig blev klara. Löst
+  genom att avgöra saken synkront före registreringen — `tests/helpers/webblasare.js`, vaktat av
+  `tests/browser-rigg.test.js`. Vill man skjuta upp beslutet till körtid finns `t.skip(...)` inne i
+  provet; det är mönstret server-provens `blocked()` redan använder.
+- **Delade räknare i Redis kopplar ihop provfiler som tror att de är ensamma.** API-gränsen nycklas
+  på klientens IP, och varje provfil kommer från 127.0.0.1 mot samma Redis — så måltesterna gjorde
+  slut på budgeten och `studio-goal-stream` fick 429 där den väntade 202. Grön ensam, röd i grupp,
+  och olika fel beroende på om körningen var parallell eller seriell. Löst i `server/rate-limit.js`:
+  `NODE_TEST_CONTEXT` (sätts av node:test, finns aldrig i drift) ger en egen nyckelrymd per process.
+  Drift delar fortfarande räknare — två instanser bakom samma lastdelare måste göra det.
 - **`cleanEvent` är den tystaste förlustpunkten i hela kedjan.** Chattexten, profilbilden,
   gåvovärdet, fan-nivån och gifter-nivån har alla i tur och ordning strukits där utan att något
   larmade. Lägg nya fält **efter `at:`** — ett kontraktstest läser bara 1600 tecken från

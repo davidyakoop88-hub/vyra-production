@@ -127,7 +127,11 @@ test('ingestTikTokEvent rejects an invalid payload before publishing (no streamI
 // current bucket and the next one are pre-filled to the limit: whichever second the call lands in —
 // and the boundary may pass between the seeding and the call — the counter is already full and the
 // refusal is certain. Two writes and two calls, no loop, no timing assumption.
-const bucketKey=(workspaceId,at)=>`vyra:rate:tiktok-ingest:${workspaceId}:${Math.floor(at/1000)}`;
+// Nyckelrymden kommer fran rate-limit.js och ar inte tom i ett prov: node:test ger varje
+// provprocess en egen rymd, sa att filerna slutar rakna ihop varandras trafik. Byggs nyckeln
+// har for hand utan den, seedar provet en hink som ingen laser.
+const {nyckelrymd}=require('../rate-limit');
+const bucketKey=(workspaceId,at)=>`vyra:rate:${nyckelrymd()}tiktok-ingest:${workspaceId}:${Math.floor(at/1000)}`;
 
 async function fillIngestBudget(workspaceId,limit){
   const client=await eventBus.connect(),now=Date.now();
