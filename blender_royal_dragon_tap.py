@@ -2,7 +2,11 @@ import bpy
 import math
 import random
 
-ROOT = r"C:\Users\A\Documents\hemsidan"
+# ROOT lag hardkodad som r"C:\Users\A\Documents\hemsidan" fram till 2026-08-14. Skriptet
+# kunde alltsa bara koras av en person pa en maskin. Blender satter __file__ nar skriptet kors
+# med `blender --python`, sa repotroten gar att harleda - och gor det pa vilken dator som helst.
+import os
+ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT_BLEND = ROOT + r"\assets\blender\royal-dragon-tap.blend"
 OUT_FRAMES = ROOT + r"\assets\renders\royal-dragon-tap\frame_"
 

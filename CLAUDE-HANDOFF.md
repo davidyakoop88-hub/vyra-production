@@ -1,5 +1,10 @@
 # VYRA – projektöverlämning
 
+> Arbetsordningen och domänindelningen står i `CLAUDE.md`. Där finns kartan över vem som äger
+> vad (`.claude/domaner.json`), en agent per domän (`.claude/agents/`) och kommandona för att
+> köra eller mäta en enskild domän (`node scripts/domaner.js`). Den här filen beskriver
+> projektet självt.
+
 ## Projektet
 
 VYRA är en lokal webbapp för TikTok Live/OBS med en overlay-studio, widgets, Action & Event, scener och transparent overlay-output. Projektet är byggt i vanlig HTML, CSS och JavaScript utan ett obligatoriskt byggsteg.

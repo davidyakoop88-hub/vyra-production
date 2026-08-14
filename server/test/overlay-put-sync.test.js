@@ -40,8 +40,15 @@ test.before(async () => {
 });
 
 // Puts the overlay back to a known state and clears its runtime rows.
+//
+// goal_event_apply måste med. Provet nedan applicerar eventet 'after-put-1', och claimen är
+// idempotent per (workspace_id, event_id): raden ligger kvar efter körningen, så nästa körning mot
+// samma databas claimar ingenting och provet faller på "eventet claimades inte". Grönt en gång,
+// rött för alltid därefter — det syntes inte i CI, eftersom Postgres-tjänsten där är ny varje gång.
+// Uppmätt 2026-08-14: grön på färsk databas, röd direkt på andra körningen mot samma.
 async function reset(state = stateWith()) {
   await pool.query('DELETE FROM goal_runtime WHERE overlay_id = $1', [OVERLAY]);
+  await pool.query('DELETE FROM goal_event_apply WHERE workspace_id = $1', [WS]);
   await pool.query(
     `INSERT INTO overlays (id,workspace_id,name,state,version) VALUES ($1,$2,'put',$3,1)
      ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, version = 1`,

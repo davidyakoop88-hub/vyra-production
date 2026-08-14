@@ -12,25 +12,39 @@ Senast verifierad mot `main`: **2026-08-09**.
 
 ---
 
-## 1. Glove Snipe kan inte tändas av ett riktigt event
+## ~~1. Glove Snipe kan inte tändas av ett riktigt event~~ — LÖST
 
-`media.js` `routeLiveBattleEvent()` tänder Glove Snipe på eventtyperna `tap`, `snipe`, `glove`,
-`x2` och `x3`. **Ingen av dem är en ingest-typ.** Bryggan publicerar `gift`, `like`, `share`,
-`subscribe`, `member`, `chat`, `viewer`, `battle` och `follow` — inget annat.
+Punkten löd: `routeLiveBattleEvent()` tänder Glove Snipe på `tap`, `snipe`, `glove`, `x2` och `x3`,
+och **ingen av dem är en ingest-typ** — bryggan publicerade bara gift, like, share, subscribe,
+member, chat, viewer, battle och follow. Widgeten kunde alltså bara nås från battle-UI:t eller en
+Actions-regel.
 
-Widgeten kan alltså bara nås från battle-UI:t eller en Actions-regel. Den är preview-only i praktiken.
+**Vad som saknades var källan, inte vägen.** Klientsidan var redan komplett, `cleanEvent` bar redan
+fältet `multiplier` (0–100), och `battleFields` letade redan efter `battle.multiplier ??
+battle.boostMultiplier`. Problemet var att `LINK_MIC_BATTLE` inte bär någon multiplikator.
 
-**Bevisa så här:**
+Hittad 2026-08-14 i `tiktok-live-proto/v3`: den ligger i **`LINK_MIC_BATTLE_TASK`**, på
+`start.config.rewardConfig` → `RewardPeriodConfig { rewardMultiple, rewardStartTimestamp, duration }`.
+Det är TikToks Boosting Glove — ett tidsfönster där gåvor ger multiplicerade poäng.
 
-```bash
-git grep -c "'tap'\|'snipe'\|'glove'" -- tiktok-bridge/
-```
+Bryggan prenumererar nu på den händelsen och skickar typen `glove` med multiplikatorn. Typen är med
+flit inte `battle`: `battle-mvp-session.js` öppnar och stänger sin session på allt vars typ
+innehåller "battle", och ett boost-event mitt i en match hade tänt MVP-overlayn i fel ögonblick.
 
-Svarar den 0 finns ingen väg dit.
+Fyra listor måste namnge en typ för att den ska nå en widget — bryggans `TILL_MOLNET`,
+`TIKTOK_INGEST_TYPES`, `TIKTOK_ROOM_TYPES` och event-bussens `ALLOWED`. Jag missade den fjärde, och
+`tests/event-contract.test.js` fångade det direkt: *"bryggan skickar typer molnet kastar: glove"*.
 
-Det här är samma mönster som redan åtgärdats i tre widgetar — se
-`battle-mvp-session.js`, `fan-level-session.js` och `gifter-level-session.js` för receptet.
-Glove Snipe är den sista kända kvarvarande.
+Vaktat av 13 prov: åtta i `tiktok-bridge/test/battle-task.test.js` (fältläsning, att TASK_UPDATE
+aldrig skickas, att 5× passerar) och fem i `tests/glove-live-wiring.test.js` (hela vägen genom
+`routeLiveBattleEvent`, aldrig via triggern direkt). Mutationsprovat i tre lager: tas fältläsningen,
+molnets vitlista eller klientens gren bort faller proven.
+
+**Kvar att verifiera live:** vilket steg i uppgiften som ska tända overlayen. Vi skickar på START,
+som är det enda steget som bär konfigurationen. `rewardStartTimestamp` säger när fönstret faktiskt
+börjar — visar det sig att START kommer märkbart före, ska sändningen fördröjas dit.
+
+Verifierad löst: 2026-08-14.
 
 ## 2. Gift Fireworks "Testa"-knappen kringgår alertkön
 
@@ -60,43 +74,6 @@ Vaktat av tre prov i `tests/gift-fireworks-live-path.test.js`:
 - `render() river inte ner noden som just spelar`
 
 Verifierad löst: 2026-08-10.
-
-## 4. widget-defaults-migration-provet beror på en lokal baseline-gren
-
-`tests/widget-defaults-migration.test.js` letar efter en gammal `media.js` med de
-inline-katalogliteraler som fanns före widget-fabriken. Den söker i denna ordning:
-
-```js
-for (const rev of ['feature/event-deduplication:media.js', 'origin/main:media.js', 'main:media.js'])
-```
-
-Första posten är en **lokal grenreferens**. Efter Steg 0.5 (2026-08-08) raderades den grenen —
-den var mergad och övergiven. Provet hoppar nu över hos utvecklare som städar sina lokala grenar.
-Fjärrgrenen finns kvar på origin, så fixen är att låta provet peka på
-`origin/feature/event-deduplication:media.js` i stället.
-
-Uppmätt 2026-08-08 — bara den ena refen bär literalerna:
-
-```
-JA   origin/feature/event-deduplication:media.js
-nej  origin/main:media.js
-nej  main:media.js
-```
-
-Provet är redan byggt för att hoppa över graceful — se raderna 2 och 9–10 i filen, som förklarar
-att detta är "local migration proof, not part of the permanent contract" och att CI:s grunda
-checkout alltid skippar det. Ingenting i CI påverkas. Det är en utvecklarbekvämlighet, inte ett
-kontraktsbrott.
-
-**Bevisa så här:**
-
-```bash
-node --test tests/widget-defaults-migration.test.js
-```
-
-Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om — eller efter lokal
-återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
-kör alla prov.
 
 ## 5. Synkkonflikt-banderollen kan tystas utan att lösa konflikten
 
@@ -182,11 +159,92 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
----
+## 13. Poäng dras även när actionen aldrig spelar
+
+`action-event-advanced.js` drar kostnaden i `handleEvent`:
+
+```js
+if (e.pointsCost && window.VyraPoints && !window.VyraPoints.spend(payload.username, e.pointsCost)) return;
+ids.forEach(id => window.VyraActionEvent?.runAction(...));
+```
+
+Avdraget sker alltså **innan** något är känt om huruvida actionen kommer att köras. `runAction`
+och runtimens `allowed()` kan säga nej av fyra skäl efteråt, och poängen är redan borta:
+
+| Skäl | Var |
+|---|---|
+| Cooldown | `action-event.js` — `stored.cooldown` |
+| Cooldown per användare | `action-event.js` — `stored.userCooldown` |
+| Actionen finns inte (raderad, eventet kvar) | `action-event.js` — `state.actions.find` ger undefined |
+| Fel scen | `action-runtime.js:54` — `allowed()` |
+
+**Uppmätt 2026-08-14** i jsdom med de riktiga filerna, cooldown 30 s och kostnad 100:
+
+```
+  forsok 1: 1 korningar totalt | poang 1000 -> 900
+  forsok 2: 1 korningar totalt | poang  900 -> 800
+  forsok 3: 1 korningar totalt | poang  800 -> 700
+  forsok 4: 1 korningar totalt | poang  700 -> 600
+  forsok 5: 1 korningar totalt | poang  600 -> 500
+  RESULTAT: 1 korning, 500 poang spenderade
+```
+
+En tittare som spammar sitt kommando under cooldown betalar varje gång och får en uppspelning.
+Samma sak vid fel scen och vid raderad action: 0 körningar, 100 poäng borta.
+
+Det syns inte i något prov eftersom inget prov gick hela vägen från regel till spelad widget —
+`tests/action-event-kedjan.test.js` gör det nu, men mäter avsiktligt inte den här punkten: att
+låsa fast dagens beteende hade gjort det till ett kontrakt.
+
+**Åtgärd, två vägar:**
+
+1. *Kolla före avdraget.* Flytta cooldown- och scenkontrollen till en fråga `runAction` kan svara
+   på utan att köra (`window.VyraActionEvent.kanKora(action, payload)`), och dra bara när svaret är
+   ja. Renast, men två ställen måste hållas i takt.
+2. *Betala tillbaka.* Låt `runAction` returnera varför den sa nej och återför poängen vid
+   avslag. Enklare, men ett kort ögonblick står saldot fel — och två flikar som båda kör
+   `handleEvent` gör fönstret större.
+
+Väg 1 är att föredra för att den aldrig visar ett saldo som inte stämmer.
+
+Verifierad: 2026-08-14.
+
+## 14. Actions och TTS Chat är två skilda talsystem
+
+En TTS-action går till `window.speechSynthesis` direkt (`action-runtime.js` → `tts()`).
+TTS Chat-panelen (`tts-chat.js`) har en egen väg: molnröster via `server/tts.js` (msedge-tts,
+prefixet `cloud:`) **eller** webbläsarens, med kö, maxlängd, cooldown, Special Users och Comment
+Types.
+
+**Uppmätt 2026-08-14** — en action med `types:['tts']`, text `"Tack {username} for {giftname}!"`,
+volym 60, i jsdom med de riktiga filerna:
+
+```
+  talade:          "Tack lisa for Rose!"  rate 1.2, pitch 0.9, volume 0.6
+  nätverksanrop:   (inga)
+  VyraTtsChat:     undefined
+```
+
+Platshållarna fylls och hastighet/tonhöjd/volym går fram — kopplingen fungerar. Men:
+
+1. **Molnrösterna är oåtkomliga för Actions.** En röst vald i TTS Chat bär prefixet `cloud:`, och
+   `action-runtime.js` skickar värdet rakt in i `speechSynthesis`. Ingen träff → standardrösten.
+2. **Ingen delad kö.** TTS Chat spelar en i taget; Actions går utanför. En gåva mitt i en
+   chattuppläsning ger två röster samtidigt.
+
+Röstlistan i action-panelen var ett tredje fel i samma familj och är åtgärdad — se
+`tests/action-tts-rost.test.js`. De två ovan kvarstår.
+
+**Åtgärd:** låt Actions gå genom `tts-chat.js`:s uppspelningsväg i stället för att ropa på
+`speechSynthesis` själva. Det löser båda på en gång, men kräver att `tts-chat.js` exponerar sin kö
+(den exponerar inget API idag) och att röstlistan i action-panelen får med `cloud:`-rösterna.
+Volymen är per action och per TTS Chat-inställning — bestäm vilken som vinner innan de slås ihop.
+
+Verifierad: 2026-08-14.
 
 # Regler som kostat oss något
 
-§1–§6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6, §13 och §14 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
@@ -358,6 +416,54 @@ Verifierad: 2026-08-09.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.
+- **Ett prov som hoppar över på varje utvecklarmaskin ser ut som CI:s grunda checkout.**
+  `widget-defaults-migration.test.js` sökte baseline i ordningen `feature/event-deduplication`,
+  `origin/main`, `main`. Den första var en LOKAL grenreferens; grenen raderades i Steg 0.5 eftersom
+  den var mergad, och därefter hittade listan ingen ref med literalerna hos någon som städar sina
+  lokala grenar. Provet skippade tyst i månader och såg ut att bara vara CI som skippade.
+  Fjärrgrenen fanns kvar hela tiden. Löst 2026-08-14 genom att sätta `origin/`-formen först.
+- **Ett migrationsbevis slutar vara sant den dag designen medvetet går vidare.** När provet väl
+  kördes föll det: 8 av 28 varianter skilde sig från historien — målfärgerna (d0a7156, palett per
+  modell), battle-MVP:s etikett och visa-flaggor (195fc8a), gifter-nivåns text (058badb) och Gift
+  Jar som porterades först efteråt (23ece1d). Alla åtta var beslutade. Historien ändras inte i
+  efterhand, så ett krav på exakt likhet kunde aldrig bli grönt igen. Provet är därför omskrivet
+  till en driftvakt: varje avvikelse måste stå i `AVSIKTLIG_DRIFT` med commiten som beslutade den,
+  och de 20 varianter som ingen rört jämförs fortfarande bit för bit. Mutationsprovat åt båda
+  hållen — en tyst ändring i en icke-beslutad variant faller, och ett extra fält utöver ett
+  beslutat undantag faller också.
+- **Ett prov som bara kan köras en gång ser rätt ut i CI för att CI alltid är ny.**
+  `overlay-put-sync.test.js` applicerade eventet `after-put-1` och lät raden ligga kvar i
+  `goal_event_apply`. Claimen är idempotent per `(workspace_id, event_id)`, så andra körningen mot
+  samma databas claimade ingenting och provet föll på "eventet claimades inte — inget mål matchade".
+  Grön en gång, röd för alltid därefter. Uppmätt 2026-08-14: grön på färsk databas, röd direkt på
+  omkörning. GitHubs tjänstecontainer är ny varje körning och dolde det. `reset()` tömmer nu även
+  idempotenstabellen. **Städa allt provet skriver, inte bara det du kom att tänka på** — annars är
+  "order independence, proven rather than asserted" bara den första körningens tur.
+- **Åtta provfiler kördes ingenstans.** De grindar sig på `TEST_DATABASE_URL` — riktigt, de kräver
+  en engångsdatabas — men `ci.yml` sätter den aldrig och `goal-runtime-postgres.yml` startade bara
+  på push till `integration/live-goals-base`, en gren inget flöde rör längre. Uppmätt 2026-08-14:
+  **111 av serverns 410 prov överhoppade** i den konfiguration CI faktiskt körde. Löst genom att
+  flytta triggern till samma villkor som `ci.yml`; jobbet är inte en dubblett, det bevisar
+  målkontraktet mot Postgres 18 (Railways version) medan `ci.yml` står på 16 för sin backup-klient.
+- **Släppporten läste `web/Dockerfile`.** Katalogen har aldrig funnits i repot — hela git-historiken
+  är tom på den — så `validatePublicArtifact()` kastade ENOENT i stället för att kontrollera något.
+  Den publika imagen byggs av `Dockerfile` i roten, som redan failar bygget om `server`, `scripts`,
+  `docs`, `electron-app` eller `tiktok-bridge` hamnar i dokumentroten. Porten läser den filen nu.
+- **Ett `{ skip }` i optionsobjektet avgörs när provet registreras, inte när det körs.** 43
+  browserprov satte `skip` på nytt inne i `test.before` när ingen webbläsare gick att starta.
+  Omtilldelningen nådde aldrig fram: `test('...', { skip }, ...)` hade redan läst värdet. På en
+  maskin utan startbar webbläsare föll varje prov på `newContext of null` i stället för att hoppas
+  över, och de filer som startar riggen inne i provkroppen läckte en lyssnande server så att
+  processen hängde. Uppmätt 2026-08-14: 87 hårda fel och sex domäner som aldrig blev klara. Löst
+  genom att avgöra saken synkront före registreringen — `tests/helpers/webblasare.js`, vaktat av
+  `tests/browser-rigg.test.js`. Vill man skjuta upp beslutet till körtid finns `t.skip(...)` inne i
+  provet; det är mönstret server-provens `blocked()` redan använder.
+- **Delade räknare i Redis kopplar ihop provfiler som tror att de är ensamma.** API-gränsen nycklas
+  på klientens IP, och varje provfil kommer från 127.0.0.1 mot samma Redis — så måltesterna gjorde
+  slut på budgeten och `studio-goal-stream` fick 429 där den väntade 202. Grön ensam, röd i grupp,
+  och olika fel beroende på om körningen var parallell eller seriell. Löst i `server/rate-limit.js`:
+  `NODE_TEST_CONTEXT` (sätts av node:test, finns aldrig i drift) ger en egen nyckelrymd per process.
+  Drift delar fortfarande räknare — två instanser bakom samma lastdelare måste göra det.
 - **`cleanEvent` är den tystaste förlustpunkten i hela kedjan.** Chattexten, profilbilden,
   gåvovärdet, fan-nivån och gifter-nivån har alla i tur och ordning strukits där utan att något
   larmade. Lägg nya fält **efter `at:`** — ett kontraktstest läser bara 1600 tecken från

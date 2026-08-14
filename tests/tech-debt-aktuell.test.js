@@ -29,18 +29,18 @@ function filerUnder(katalog, filter) {
   return ut;
 }
 
-// ---- §1 · Glove Snipe kan inte tandas av ett riktigt event -------------------------------------
-test('§1 star kvar: bryggan publicerar ingen av Glove Snipes eventtyper', () => {
-  const typer = ["'tap'", "'snipe'", "'glove'"];
-  const traffar = [];
-  for (const fil of filerUnder('tiktok-bridge', n => n.endsWith('.js'))) {
-    const kalla = las(fil);
-    for (const t of typer) if (kalla.includes(t)) traffar.push(`${fil}: ${t}`);
-  }
-  assert.deepEqual(traffar, [],
-    'Bryggan publicerar numera en av Glove Snipes typer. Antingen ar §1 LOST och ska flyttas ' +
-    'till "Sadant som ar lost", eller sa har nagon lagt till en typ utan att stanga punkten:\n  ' +
-    traffar.join('\n  '));
+// ---- §1 · Glove Snipe tands av ett riktigt multiplikatorfonster ------------------------------
+//
+// Punkten var oppen till 2026-08-14 och lod: bryggan publicerar ingen av Glove Snipes eventtyper,
+// sa widgeten kan bara nas fran battle-UI:t eller en Actions-regel. Provet vaktade da FRANVARON av
+// typerna. Nu ar det tvartom: kallan hittades i LINK_MIC_BATTLE_TASK och bryggan skickar `glove`,
+// sa provet vaktar att kopplingen finns kvar.
+test('§1 ar lost: bryggan publicerar multiplikatorfonstret som glove', () => {
+  const bryggan = las('tiktok-bridge/bridge.js');
+  assert.match(bryggan, /LINK_MIC_BATTLE_TASK/,
+    'bryggan prenumererar inte langre pa handelsen som bar multiplikatorn');
+  assert.match(bryggan, /sendEvent\('glove'/,
+    'bryggan skickar inte langre glove — Glove Snipe har tappat sin enda riktiga trigger');
 });
 
 // ---- §3 · aterfallsvakt -------------------------------------------------------------------------
@@ -99,7 +99,9 @@ test('§6 star kvar: sex browser-prov grindar pa kopiatext', () => {
 test('varje punkt provet vaktar finns kvar i registret', () => {
   const doc = las('docs/tech-debt.md');
   const saknas = [];
-  if (!/^## 1\. Glove Snipe/m.test(doc)) saknas.push('§1');
+  // §1 skrevs om till "löst" 2026-08-14 när multiplikatorfönstret kopplades in — rubriken bär
+  // därför överstrykning nu, precis som §3.
+  if (!/^## ~~1\. Glove Snipe/m.test(doc)) saknas.push('§1 (som löst)');
   if (!/^## ~~3\. Gift Fireworks skriver live-data/m.test(doc)) saknas.push('§3 (som löst)');
   if (!/^## 6\. Laddningsgrindar/m.test(doc)) saknas.push('§6');
   assert.deepEqual(saknas, [],

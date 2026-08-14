@@ -1,6 +1,10 @@
 import bpy, math, random
 
-ROOT=r"C:\Users\A\Documents\hemsidan"; SLUG="pastel-tap-v2"
+# ROOT lag hardkodad som r"C:\Users\A\Documents\hemsidan" fram till 2026-08-14. Skriptet
+# kunde alltsa bara koras av en person pa en maskin. Blender satter __file__ nar skriptet kors
+# med `blender --python`, sa repotroten gar att harleda - och gor det pa vilken dator som helst.
+import os
+ROOT=os.path.dirname(os.path.abspath(__file__)); SLUG="pastel-tap-v2"
 OUT=ROOT+"\\assets\\blender\\"+SLUG+".blend"; FR=ROOT+"\\assets\\renders\\"+SLUG+"\\frame_"
 def mat(n,c,emit=None,s=0,metal=0,rough=.28):
  m=bpy.data.materials.new(n); m.use_nodes=True; p=m.node_tree.nodes['Principled BSDF']; p.inputs['Base Color'].default_value=(*c,1); p.inputs['Metallic'].default_value=metal; p.inputs['Roughness'].default_value=rough

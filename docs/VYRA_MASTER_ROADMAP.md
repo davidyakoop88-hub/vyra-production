@@ -39,6 +39,40 @@ Status legend: `done` / `in-progress` / `not-started` / `blocked`.
 `VYRA_PROJECT_STATE.md` → "Exact next action" for the specific work items and current status.
 **Phase 6 — Top Gifter Widget** is next. Phase 5 (Premium Gift Widget) is done.
 
+## TikTok-händelser vi inte använder
+
+**Uppmätt 2026-08-14** direkt ur det installerade biblioteket (`tiktok-live-connector` 2.4.0):
+
+```
+antal händelser i WebcastEvent: 67
+bryggan prenumererar på:        10
+```
+
+De tio är CHAT, FOLLOW, GIFT, LIKE, LINK_MIC_BATTLE, MEMBER, ROOM_USER, SHARE, STREAM_END och
+SUB_NOTIFY. Sedan dess även LINK_MIC_BATTLE_TASK (multiplikatorfönstret). Fältnamnen nedan är lästa
+ur `tiktok-live-proto/v3`, inte ur dokumentation.
+
+| Händelse | Vad den låser upp | Bärande fält |
+|---|---|---|
+| `LINK_MIC_ARMIES` | **Nästa steg.** Gör Battle MVP exakt i stället för uträknad, och ger en armé-leaderboard per sida | `BattleUserArmy { userId, nickname, score, diamondScore, avatarThumb }`, `hostscore` |
+| `ENVELOPE` | Skattkistan — en nedräkning på overlayen är det starkaste "stanna kvar"-verktyget TikTok har | `TreasureBoxData { coins, canOpen }` |
+| `RANK_UPDATE`, `HOURLY_RANK` | Egen placering i timrankingen. "Vi är #4 — 200 diamanter till #3" driver gåvor hårdare än ett eget mål | `updatesList { rankType, ownerRank }` |
+| `GOAL_UPDATE` | TikToks **egna** mål. Vi bygger egna; här kan plattformens speglas | `contributeCount`, `contributeScore` |
+| `SUPER_FAN`, `SUPER_FAN_JOIN`, `SUPER_FAN_BOX` | Super Fan är TikToks eget statusbegrepp — riktiga entré-alerts | `envelopeInfo` |
+| `EMOTE` | Emote-vägg. Konkurrenterna har den, vi inte | `emoteList` |
+| `QUESTION_NEW`, `POLL_MESSAGE` | Q&A och omröstningar på overlayen | `questionText` |
+| `GIFT_BROADCAST` | Stora gåvor som sänds över rum — gratis räckvidd att visa | — |
+| `SUB_PIN_EVENT`, `ROOM_PIN` | Fäst meddelande på overlayen | `pinnedMessage` |
+
+**Innan något av detta byggs:** en händelse måste namnges i **fyra** listor för att nå en widget —
+bryggans `TILL_MOLNET`, `TIKTOK_INGEST_TYPES`, `TIKTOK_ROOM_TYPES` och event-bussens `ALLOWED`.
+Missas en tystnar typen någonstans på vägen. `tests/event-contract.test.js` fångar det.
+
+**En idé som gör resten billigare:** en inspelare i bryggan som sparar råa payloads till fil under
+en sändning. Idag väntar battle-arbetet på att någon ska hinna läsa loggen i stunden (se
+`docs/live-verifiering.md`). Med inspelade data kan varje händelse ovan utvecklas och testas offline,
+om och om igen, mot verklig trafik.
+
 ## Open decisions requiring the user (not resolved unilaterally)
 
 1. **Local-first vs. hosted multi-tenant SaaS** — deferred along with the Account/Workspace

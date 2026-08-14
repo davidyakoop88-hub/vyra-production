@@ -326,6 +326,33 @@ if (require.main === module) {
     connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.viewerCount || data?.userCount, 1e9) }, data));
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
 
+    // ---- multiplikatorfonstret (Boosting Glove) ------------------------------------------------
+    // Klientsidan har redan hela vagen: media.js tander Glove Snipe pa `glove` i typen och laser
+    // `multiplier`, och molnets cleanEvent bar faltet. Det enda som saknades var kallan —
+    // LINK_MIC_BATTLE bar ingen multiplikator, den ligger i LINK_MIC_BATTLE_TASK.
+    //
+    // TYPEN AR MED FLIT INTE `battle`. battle-mvp-session.js oppnar och stanger sin session pa
+    // allt vars typ innehaller "battle", och ett boost-event mitt i en match hade da stangt
+    // sessionen och tant MVP-overlayn i fel ogonblick. `glove` innehaller inte "battle" och gar
+    // darfor bara till Glove Snipe.
+    //
+    // EN GANG PER FONSTER. START kan komma flera ganger for samma fonster; nyckeln ar matchen plus
+    // fonstrets starttid, sa ett omsant meddelande inte later overlayn blinka.
+    const settaBoostFonster = new Map();
+    connection.on(WebcastEvent.LINK_MIC_BATTLE_TASK, data => {
+      let f;
+      try { f = N.battleTaskFields(data) } catch (err) {
+        console.log(`[bridge] battle-task kunde inte lasas: ${err.message}`); return;
+      }
+      if (!N.arBoostFonster(f)) return;
+      const nyckel = `${f.battleId}:${f.fonsterStart}:${f.multiplier}`;
+      if (settaBoostFonster.has(nyckel)) return;
+      for (const [gammalNyckel, at] of settaBoostFonster) if (Date.now() - at > 600_000) settaBoostFonster.delete(gammalNyckel);
+      settaBoostFonster.set(nyckel, Date.now());
+      console.log(`[bridge] boost-fonster x${f.multiplier} i match ${f.battleId || 'okand'}, ${f.fonsterSekunder || '?'}s`);
+      sendEvent('glove', { multiplier: f.multiplier }, data);
+    });
+
     // ---- battle-sond -------------------------------------------------------------------------
     // En hel sandning gick 2026-08-06 utan att ETT ENDA battle-event nadde klienten, trots att
     // anslutningen satt stabilt (loggen: alla anslutningsfel FORE den enda "Ansluten till @", inget

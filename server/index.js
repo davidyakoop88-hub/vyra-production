@@ -69,7 +69,10 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 }
 // 'likes' ingår eftersom bryggan skickar LIKE-events med type 'likes' (bridge.js) — event-bussens
 // TYPE_ALIASES normaliserar till 'like' vid publish, men valideringen här körs före aliaseringen.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle']);
+// 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
+// en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
+// kommer utan username och far inte krava ett.
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
@@ -135,6 +138,7 @@ async function overlayAccess(raw){if(!raw||raw.length<32)return null;const q=awa
 // workspace-wide, exactly as before. An OBS link names one overlay and passes it; the Studio
 // stream is workspace-level and passes nothing, which means no frames at all — deny by default,
 // because a frame carries a widget id and a value that belong to one overlay's link.
+let openHeartbeats=0;
 async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=null){
   accessToken=accessToken||u.pathname.match(/^\/api\/overlay-access\/([^/]+)\/events\/stream$/)?.[1]||null;
   res.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache, no-transform','connection':'keep-alive','x-accel-buffering':'no'});
@@ -156,8 +160,15 @@ async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=
   // Replay always finishes before this subscription starts, so replayed events are never
   // interleaved with live ones — replay first, then live, exactly in that order.
   const unsubscribe=await eventBus.subscribe(workspaceId,write);
+  // openHeartbeats räknas här och ingen annanstans. Provet som vaktar att en stängd anslutning
+  // inte lämnar något efter sig räknade tidigare varje Timeout i processen, och pg-poolens
+  // tomgångstimers är också Timeouts: öppnar man två strömmar samtidigt kan poolen växa med en
+  // klient som lever kvar, och provet rapporterade det som en läckt hjärtslagstimer. Den här
+  // räknaren mäter det påståendet handlar om.
   const heartbeat=setInterval(async()=>{if(accessToken&&!await overlayAccess(accessToken)){res.end();return}res.write(': heartbeat\n\n')},SSE_HEARTBEAT_MS);
-  req.once('close',()=>{clearInterval(heartbeat);unsubscribe().catch(()=>{})});
+  openHeartbeats+=1;
+  let stangd=false;
+  req.once('close',()=>{if(stangd)return;stangd=true;openHeartbeats-=1;clearInterval(heartbeat);unsubscribe().catch(()=>{})});
 }
 async function createSession(c,user,req,mfaVerified=true){const raw=S.token(),csrf=S.token(),expires=new Date(Date.now()+SESSION_SECONDS*1000),q=await c.query('INSERT INTO sessions(user_id,token_hash,csrf_hash,expires_at,ip_hash,user_agent,mfa_verified_at) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[user.id,S.digest(raw),S.digest(csrf),expires,S.digest(req.socket.remoteAddress||''),S.safeText(req.headers['user-agent'],300),mfaVerified?new Date():null]);return{id:q.rows[0].id,raw,csrf,expires}}
 // SELECT 1 alone reported postgres:true through an outage where nobody could log in: reads worked
@@ -420,4 +431,4 @@ return send(res,200,{ok:true,overlay:out.overlay})}}
 server.on('request',(req,res)=>{const started=process.hrtime.bigint(),path=routeName(String(req.url||'').split('?')[0]),isSse=path.endsWith('/events/stream');if(isSse){metrics.sse++;req.once('close',()=>{metrics.sse=Math.max(0,metrics.sse-1)})}res.once('finish',()=>{const seconds=Number(process.hrtime.bigint()-started)/1e9;metrics.observe(req.method||'GET',path,res.statusCode,seconds);if(res.statusCode>=500)webhookAlert('http_5xx',{method:req.method,path,status:res.statusCode,durationSeconds:seconds})})});
 const notificationWorker=require.main===module?setInterval(()=>Notifications.processOutbox(pool).catch(error=>console.error(JSON.stringify({level:'error',event:'notification_worker_failed',message:error.message,at:new Date().toISOString()}))),30000):null;notificationWorker?.unref();
 if(require.main===module){const stopMonitor=startRuntimeMonitor({alert:webhookAlert}),stopCapacity=startCapacityMonitor({pool,eventBus,metrics,alert:webhookAlert}),mediaCleanup=setInterval(cleanupPendingMedia,15*60*1000),goalCleanup=GoalRuntime.startAppliedDrain({pool,metrics}),authCleanup=setInterval(()=>{cleanupAuthData();deleteDueAccounts()},60*60*1000);mediaCleanup.unref();authCleanup.unref();cleanupAuthData();deleteDueAccounts();server.listen(PORT,'0.0.0.0',()=>console.log(JSON.stringify({level:'info',event:'server_started',port:PORT,at:new Date().toISOString()})));let closing=false;const shutdown=signal=>{if(closing)return;closing=true;stopMonitor();stopCapacity();clearInterval(mediaCleanup);goalCleanup.stop();clearInterval(authCleanup);console.log(JSON.stringify({level:'info',event:'shutdown_started',signal,at:new Date().toISOString()}));server.close(async()=>{await Promise.allSettled([pool.end(),eventBus.close(),mediaStorage.close()]);console.log(JSON.stringify({level:'info',event:'shutdown_complete',at:new Date().toISOString()}));process.exit(0)});setTimeout(()=>process.exit(1),Number(process.env.SHUTDOWN_TIMEOUT_MS||10000)).unref()};process.on('SIGTERM',()=>shutdown('SIGTERM'));process.on('SIGINT',()=>shutdown('SIGINT'));process.on('unhandledRejection',error=>{console.error(JSON.stringify({level:'fatal',event:'unhandled_rejection',message:error?.message||String(error),at:new Date().toISOString()}));webhookAlert('unhandled_rejection',{message:error?.message||String(error)})});process.on('uncaughtException',error=>{console.error(JSON.stringify({level:'fatal',event:'uncaught_exception',message:error.message,stack:error.stack,at:new Date().toISOString()}));webhookAlert('uncaught_exception',{message:error.message}).finally(()=>shutdown('uncaughtException'))})}
-module.exports={server,eventBus,metrics,dbBreaker,redisBreaker,buildHealthStatus,buildTestEvent,openEventStream,SSE_HEARTBEAT_MS,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,TIKTOK_INGEST_RATE_LIMIT};
+module.exports={server,eventBus,sseHeartbeats:()=>openHeartbeats,metrics,dbBreaker,redisBreaker,buildHealthStatus,buildTestEvent,openEventStream,SSE_HEARTBEAT_MS,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,TIKTOK_INGEST_RATE_LIMIT};
