@@ -81,7 +81,6 @@
         "gift-alert-frames.js",
         "gift-alert-frames.css",
         "gift-alert-chrome.js",
-        "gift-counter-overlay-original.html",
         "last-x-alerts.js",
         "last-x-alerts.css",
         "toplike-studio.js",
@@ -624,6 +623,7 @@
       "syfte": "Bilder, ramar, videor, ljud, teman och Blender-/kodningsverktygen som producerar dem.",
       "filer": [
         "assets/*",
+        "tools/*",
         "blender_*.py",
         "theme_validator.py",
         "create_theme_placeholders.py",
@@ -636,10 +636,7 @@
         "slice-battle-packs.ps1",
         "*.png",
         "*.blend",
-        "*.mov",
-        "README.md",
-        "pink-princess-alpha-check.html",
-        "reference-review.html"
+        "README.md"
       ],
       "tester": [
         "tests/site-image-contents.test.js",
