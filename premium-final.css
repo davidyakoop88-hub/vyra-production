@@ -129,3 +129,184 @@
    manglades i bdcb7bd. Code-point-escapes kan inte manglas av en teckenkodning.
    Tre halvfasta mellanslag per lucka, som originalets tre vanliga. */
 .goal-constellation .goal-track:after{content:"\2726\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2727\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2726"}
+
+/* ================= RAMADE MAL · Davids anmarkningar 2026-08-14 =================
+
+   ORSAKEN till alla tre felen var EN specificitetskollision. Ramlayouten satte
+   `grid-template-columns:1fr!important` (0-2-0), men `.social-goal.premium-goal.goal-landscape`
+   fran #183 ar 0-3-0 och vann. Uppmatt: `133.156px 258.844px` vid 440 px bredd — alltsa
+   tvakolumns. Texten klamdes till vansterkolumnen och .goal-track (den "morka ovalen",
+   rgba(8,7,11,.867), radie 24 px) hamnade dar med.
+
+   Fixen ar 0-4-0: samma tre klasser PLUS .goal-framed. Da vinner ramen utan att
+   landskapsregeln sanks — modell 1, 2 och 4 far behalla sina 45px/347px och modell 3 sin
+   enkolumn pa 404 px. Att sanka den regeln i stallet hade riskerat samma sonderfall som
+   modell 3 drabbades av. */
+.social-goal.premium-goal.goal-landscape.goal-framed,
+.social-goal.premium-goal.goal-portrait.goal-framed{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  justify-items:center!important;
+  /* Proportionerna ur konsten i stallet for fast min-height: da skalar ramen med bredden
+     i stallet for att mosas ihop. Uppmatt 440x250 liggande, 240x348 staende. */
+  aspect-ratio:1.76!important;height:auto!important;min-height:0!important;
+  padding:20.5% 11% 11.8%!important;
+  container-type:inline-size}
+.social-goal.premium-goal.goal-portrait.goal-framed{aspect-ratio:.69!important;padding:34% 12% 15%!important}
+
+/* Texten i konstens MITTFALT, inte i en vansterkolumn. */
+.social-goal.premium-goal.goal-framed>.goal-copy{
+  grid-column:1!important;grid-row:1!important;width:100%!important;
+  display:block!important;text-align:center!important;justify-self:center!important}
+.social-goal.premium-goal.goal-framed>.goal-copy h3,
+.social-goal.premium-goal.goal-framed>.goal-copy strong,
+.social-goal.premium-goal.goal-framed>.goal-copy small{
+  display:block!important;width:100%!important;text-align:center!important;justify-content:center!important}
+
+/* Sparet spanner mittfaltet och tappar sin morka oval — ramkonsten bar redan sin egen
+   mork bakgrund dar, sa en till lades ovanpa och blev den svarta klumpen pa bilden. */
+.social-goal.premium-goal.goal-framed>.goal-track{
+  grid-column:1!important;grid-row:2!important;
+  width:94%!important;margin:0 auto!important;
+  background:transparent!important;
+  border:1px solid color-mix(in srgb,var(--goal-b),transparent 55%)!important;
+  box-shadow:none!important}
+
+/* ---- KOMPAKT LAGE ------------------------------------------------------------------------
+   Brytpunkt med EGNA matt, inte transform:scale(). Container-fragor mater widgetens egen
+   bredd — en mediefraga hade matt fonstret, och widgeten sätts i px av anvandaren. */
+@container (max-width: 300px){
+  .social-goal.premium-goal.goal-framed>.goal-copy h3{font-size:clamp(8px,3.4cqw,13px)!important;letter-spacing:.04em!important}
+  .social-goal.premium-goal.goal-framed>.goal-copy strong{font-size:clamp(9px,3.8cqw,15px)!important}
+  .social-goal.premium-goal.goal-framed>.goal-copy small{font-size:clamp(6px,2.4cqw,9px)!important}
+  .social-goal.premium-goal.goal-framed>.goal-track{height:12px!important;width:88%!important;border-width:1px!important}
+  .social-goal.premium-goal.goal-framed>.goal-track b{display:none!important}   /* dekor forenklas, inte pressas */
+  .social-goal.premium-goal.goal-framed>em{display:none!important}
+}
+
+/* ===== RAMADE MAL, ANDRA VARVET · innehallet placeras I konsten =====================
+   Forsta forsoket centrerade texten men lat den ligga kvar i ett RUTNAT under konsten. Foljden
+   syntes direkt pa bilden: ramens inre stav stod tom, texten hamnade under den och sparet
+   utanfor ramen. Och eftersom innehallet floadade tvingade det upp hojden — 220x248 mot
+   440x250, alltsa kvot 1.13 mot 0.57. `aspect-ratio` forlorar alltid mot innehall som vaxer.
+
+   Losningen ar monstret som redan anvands av Top Gift, Top Streak och Battle MVP: ramkonsten
+   definierar geometrin, och innehallet placeras i PROCENTKOORDINATER ovanpa den. Da kan
+   innehallet aldrig tvinga hojden, och allt skalar med ramen utan en enda transform. */
+.social-goal.premium-goal.goal-landscape.goal-framed,
+.social-goal.premium-goal.goal-portrait.goal-framed{
+  display:block!important;position:relative!important;
+  padding:0!important;height:auto!important;min-height:0!important;
+  overflow:visible!important;container-type:inline-size}
+/* ===== TREDJE VARVET · VARJE RAM BAR SIN EGEN GEOMETRI ==============================
+   Forra varvet satte EN aspect-ratio (1.76) for alla fyra ramarna. Uppmatt ur filerna
+   (scratchpad/mat-ramkonst.js + mat-ramstav.js, riktig Chrome + canvas + alfakanal):
+
+     ram              fil       KONST      konst-aspect   stav (v/h/t/hojd i % av konsten)
+     azure-wing       800x800   800x565    1.4159         18.13 / 18.13 / 51.33 / 12.21
+     pink-crown       800x800   780x530    1.4717         14.62 / 14.62 / 39.43 / 16.23
+     rose-crystal     800x800   793x486    1.6317         20.55 / 20.55 / 43.42 / 16.26
+     sapphire-dragon  800x533   794x520    1.5269         16.75 / 16.12 / 42.50 / 14.04
+
+   TVA fynd som forklarar felet, och som ingen av dem syns i filnamnen eller filmatten:
+   1. Filens matt sager inget om konsten. Tre av fyra filer ar kvadratiska med stora
+      GENOMSKINLIGA marginaler — sjalva konsten ar liggande i alla fyra. Sapphire sag
+      "nastan ratt" ut bara for att den ar den enda utan marginal.
+   2. Stavens insida ar ett HAL (alfa 0), inte en vit yta. Det vita man ser i en
+      bildvisare ar visarens egen bakgrund.
+
+   Foljden av (1): med object-fit:contain passas FILEN in, inte konsten, sa konsten
+   hamnar mindre och forskjuten — och procentkoordinaterna ovanpa foljer da ladan i
+   stallet for ramen. Darfor mappas nu konstens delrektangel exakt pa widgetens box:
+   bilden skalas upp med fil/konst och forskjuts med -konst-origo. Variablerna kommer
+   fran registret i premium-final.js, samma monster som --fa hos Top Gift/Battle MVP. */
+.social-goal.premium-goal.goal-landscape.goal-framed{aspect-ratio:var(--ramA,1.5)!important}
+.social-goal.premium-goal.goal-portrait.goal-framed{aspect-ratio:.69!important}
+
+.social-goal.premium-goal.goal-framed>.goal-frame-art{
+  position:absolute!important;inset:auto!important;
+  left:var(--ramBV,0)!important;top:var(--ramBO,0)!important;
+  width:var(--ramBB,100%)!important;height:var(--ramBH,100%)!important;
+  object-fit:fill!important;z-index:0!important}
+
+/* ---- LIGGANDE: innehallet i staven -------------------------------------------------------
+   Staven ar mycket bred och lag (azure 510x69 = 7.4:1), sa rubrik och varde ligger pa
+   SAMMA rad — staplade skulle de spilla ut ur hallet. Sparet ar en tunn linje i nederkant. */
+.social-goal.premium-goal.goal-landscape.goal-framed>.goal-copy{
+  position:absolute!important;
+  left:calc(var(--stavV) + 2%)!important;right:calc(var(--stavH) + 2%)!important;
+  top:calc(var(--stavT) + var(--stavHojd) * .06)!important;
+  height:calc(var(--stavHojd) * .56)!important;width:auto!important;
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:space-between!important;
+  gap:6px!important;z-index:2!important}
+.social-goal.premium-goal.goal-landscape.goal-framed>.goal-track{
+  position:absolute!important;
+  left:calc(var(--stavV) + 3.5%)!important;right:calc(var(--stavH) + 3.5%)!important;
+  top:calc(var(--stavT) + var(--stavHojd) * .68)!important;
+  height:calc(var(--stavHojd) * .24)!important;
+  width:auto!important;margin:0!important;z-index:2!important}
+
+/* ---- STAENDE ------------------------------------------------------------------------------
+   OBS: det finns ingen staende ramkonst — alla fyra filerna ar liggande. Ramen laggs
+   darfor overst i sin EGNA proportion (aldrig beskuren, aldrig utdragen) och maldata
+   staplas under den. --ramBHP/--ramBOP/--stavP* ar samma matning omraknad mot den
+   staende boxens hojd. Om David vill ha aakta staende ramar kravs fyra nya bildfiler. */
+.social-goal.premium-goal.goal-portrait.goal-framed>.goal-frame-art{
+  height:var(--ramBHP,100%)!important;top:var(--ramBOP,0)!important}
+.social-goal.premium-goal.goal-portrait.goal-framed>.goal-copy{
+  position:absolute!important;
+  left:calc(var(--stavV) + 2%)!important;right:calc(var(--stavH) + 2%)!important;
+  top:calc(var(--stavPT) + var(--stavPHojd) * .06)!important;
+  height:calc(var(--stavPHojd) * .56)!important;width:auto!important;
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:space-between!important;
+  gap:6px!important;z-index:2!important}
+.social-goal.premium-goal.goal-portrait.goal-framed>.goal-track{
+  position:absolute!important;
+  left:calc(var(--stavV) + 3.5%)!important;right:calc(var(--stavH) + 3.5%)!important;
+  top:calc(var(--stavPT) + var(--stavPHojd) * .68)!important;
+  height:calc(var(--stavPHojd) * .24)!important;
+  width:auto!important;margin:0!important;z-index:2!important}
+
+/* Typografin foljer ramens bredd, sa den skalar utan brytpunkt i det normala fallet. */
+.social-goal.premium-goal.goal-framed>.goal-copy h3{
+  font-size:clamp(7px,3.2cqw,17px)!important;line-height:1.05!important;margin:0!important;
+  white-space:nowrap!important;text-align:center!important}
+.social-goal.premium-goal.goal-framed>.goal-copy strong{
+  font-size:clamp(8px,4.2cqw,22px)!important;line-height:1.05!important;
+  display:flex!important;justify-content:center!important;gap:4px!important;white-space:nowrap!important}
+/* Procenttalet ryms inte i hallet nar rubrik och varde ligger pa samma rad — sparet
+   visar redan samma sak grafiskt. Doljs bara i ramarna, de vanliga modellerna rors inte. */
+.social-goal.premium-goal.goal-framed>.goal-copy small{display:none!important}
+
+/* "+1 @NOVA" ar absolutpositionerad och hamnar mitt pa ornamentiken i alla fyra ramarna
+   (uppmatt 354,65 i en 440x311-widget, alltsa rakt over hogra vingen). Ramarna har ingen
+   yta over for den. Doljs i ramarna; de vanliga modellerna behaller den. */
+.social-goal.premium-goal.goal-framed>em{display:none!important}
+.social-goal.premium-goal.goal-framed>.goal-track{
+  background:transparent!important;box-shadow:none!important;
+  border:1px solid color-mix(in srgb,var(--goal-b),transparent 55%)!important;border-radius:999px!important}
+.social-goal.premium-goal.goal-framed>.goal-track:before,
+.social-goal.premium-goal.goal-framed>.goal-track i{top:50%!important;transform:translateY(-50%)!important;
+  height:56%!important;border-radius:999px!important}
+
+/* ---- KOMPAKT LAGE: egna matt, inte nedskalning -------------------------------------------
+   Under 300 px forenklas dekoren och texten far egen typografi. Ramen behaller sina
+   proportioner av sig sjalv, eftersom aspect-ratio nu inte kan overroestas av innehall. */
+@container (max-width: 300px){
+  .social-goal.premium-goal.goal-framed>.goal-copy small{display:none!important}
+  .social-goal.premium-goal.goal-framed>.goal-copy h3{font-size:clamp(6px,3.6cqw,11px)!important}
+  .social-goal.premium-goal.goal-framed>.goal-copy strong{font-size:clamp(8px,5cqw,14px)!important}
+  /* Placeringen foljer stavvariablerna aven har. Tidigare stod det top:43%;height:15%
+     hardkodat, vilket slog calc()-reglerna ovan och drog ut texten ur hallet i azure. */
+  .social-goal.premium-goal.goal-landscape.goal-framed>.goal-copy{
+    top:calc(var(--stavT) + var(--stavHojd) * .04)!important;
+    height:calc(var(--stavHojd) * .52)!important}
+  /* Sparet far ett golv i px: 24 % av en liten stav blir 4-5 px och forsvinner visuellt.
+     Golvet ryms — vid 220 px ar staven ca 19 px och texten tar ca 10 av dem. */
+  .social-goal.premium-goal.goal-framed>.goal-track{
+    height:calc(var(--stavHojd) * .30)!important;min-height:6px!important}
+  .social-goal.premium-goal.goal-framed>.goal-track b{display:none!important}
+  .social-goal.premium-goal.goal-framed>em{display:none!important}
+}
