@@ -635,7 +635,6 @@
         "build-profile-frames.ps1",
         "slice-battle-packs.ps1",
         "*.png",
-        "*.jpg",
         "*.blend",
         "*.mov",
         "README.md",
