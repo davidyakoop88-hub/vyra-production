@@ -159,9 +159,59 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
+## 13. Poäng dras även när actionen aldrig spelar
+
+`action-event-advanced.js` drar kostnaden i `handleEvent`:
+
+```js
+if (e.pointsCost && window.VyraPoints && !window.VyraPoints.spend(payload.username, e.pointsCost)) return;
+ids.forEach(id => window.VyraActionEvent?.runAction(...));
+```
+
+Avdraget sker alltså **innan** något är känt om huruvida actionen kommer att köras. `runAction`
+och runtimens `allowed()` kan säga nej av fyra skäl efteråt, och poängen är redan borta:
+
+| Skäl | Var |
+|---|---|
+| Cooldown | `action-event.js` — `stored.cooldown` |
+| Cooldown per användare | `action-event.js` — `stored.userCooldown` |
+| Actionen finns inte (raderad, eventet kvar) | `action-event.js` — `state.actions.find` ger undefined |
+| Fel scen | `action-runtime.js:54` — `allowed()` |
+
+**Uppmätt 2026-08-14** i jsdom med de riktiga filerna, cooldown 30 s och kostnad 100:
+
+```
+  forsok 1: 1 korningar totalt | poang 1000 -> 900
+  forsok 2: 1 korningar totalt | poang  900 -> 800
+  forsok 3: 1 korningar totalt | poang  800 -> 700
+  forsok 4: 1 korningar totalt | poang  700 -> 600
+  forsok 5: 1 korningar totalt | poang  600 -> 500
+  RESULTAT: 1 korning, 500 poang spenderade
+```
+
+En tittare som spammar sitt kommando under cooldown betalar varje gång och får en uppspelning.
+Samma sak vid fel scen och vid raderad action: 0 körningar, 100 poäng borta.
+
+Det syns inte i något prov eftersom inget prov gick hela vägen från regel till spelad widget —
+`tests/action-event-kedjan.test.js` gör det nu, men mäter avsiktligt inte den här punkten: att
+låsa fast dagens beteende hade gjort det till ett kontrakt.
+
+**Åtgärd, två vägar:**
+
+1. *Kolla före avdraget.* Flytta cooldown- och scenkontrollen till en fråga `runAction` kan svara
+   på utan att köra (`window.VyraActionEvent.kanKora(action, payload)`), och dra bara när svaret är
+   ja. Renast, men två ställen måste hållas i takt.
+2. *Betala tillbaka.* Låt `runAction` returnera varför den sa nej och återför poängen vid
+   avslag. Enklare, men ett kort ögonblick står saldot fel — och två flikar som båda kör
+   `handleEvent` gör fönstret större.
+
+Väg 1 är att föredra för att den aldrig visar ett saldo som inte stämmer.
+
+Verifierad: 2026-08-14.
+
 # Regler som kostat oss något
 
-§1–§3, §5 och §6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6 och §13 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 

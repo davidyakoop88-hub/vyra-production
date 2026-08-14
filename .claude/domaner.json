@@ -204,6 +204,7 @@
       ],
       "tester": [
         "tests/action-widget-routing.test.js",
+        "tests/action-event-kedjan.test.js",
         "scripts/test/event-gifts.test.js"
       ],
       "matning": [],
