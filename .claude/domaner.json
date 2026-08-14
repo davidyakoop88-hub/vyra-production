@@ -37,11 +37,15 @@
         "vyra-snapp.js",
         "vyra-historik.js",
         "vyra-proportioner.js",
-        "vyra-tomma-handlingar.js"
+        "vyra-tomma-handlingar.js",
+        "widget-handles.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
         "tests/tomma-tillstand.test.js",
+        "tests/handtag-lackage.test.js",
+        "tests/browser/widget-handtag.browser.test.js",
+        "tests/browser/editor-ui-placering.browser.test.js",
         "tests/browser/nav-state.browser.test.js",
         "tests/browser/angra-gor-om.browser.test.js",
         "tests/browser/zoom.browser.test.js",
@@ -129,7 +133,11 @@
         "tests/streak-style-menu.test.js",
         "tests/flip-continuity.test.js",
         "tests/ornament-teckenkodning.test.js",
-        "tests/wishlist-retired.test.js"
+        "tests/wishlist-retired.test.js",
+        "tests/browser/battle-mvp-ramar.browser.test.js",
+        "tests/browser/fan-level-referens.browser.test.js",
+        "tests/browser/gifter-level-referens.browser.test.js",
+        "tests/browser/streak-katalog.browser.test.js"
       ],
       "matning": [
         { "namn": "Widgetsnapshot", "kommando": "node scripts/generate-widget-snapshot.js" },
