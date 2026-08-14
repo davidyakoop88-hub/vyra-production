@@ -182,46 +182,9 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
-## 12. 111 av serverns 410 prov körs aldrig i CI
-
-Åtta provfiler grindar sig själva på `TEST_DATABASE_URL` och hoppar tyst över utan den:
-`goal-api`, `goal-cleanup`, `goal-ingest-http`, `goal-runtime-contract`, `goal-sse-isolation`,
-`overlay-put-http`, `overlay-put-sync` och `studio-goal-stream`. Grindningen är rätt — de kräver
-en engångsdatabas och vägrar röra en delad — men **ingen körning sätter variabeln**.
-
-`ci.yml` gör det inte, trots att jobbet redan har en Postgres-tjänst igång. Den enda plats som
-sätter den är `goal-runtime-postgres.yml`, och den startar bara på push till
-`integration/live-goals-base`. Grenen finns kvar, men inget flöde rör den längre. Proven kördes
-alltså medan mål-arbetet byggdes och har inte körts sedan dess.
-
-**Uppmätt 2026-08-14**, `npm test` i `server/` med Postgres 16 och Redis uppe:
-
-| | Prov | Gröna | Röda | Överhoppade |
-|---|---|---|---|---|
-| Utan `TEST_DATABASE_URL` (som CI) | 410 | 299 | 0 | **111** |
-| Med engångsdatabas | 410 | 408 | **1** | 1 |
-
-Den röda är `overlay-put-sync.test.js` → `db: ett event direkt efter lyckad PUT räknas`, som faller
-på `eventet claimades inte — inget mål matchade`. **Deterministiskt**: ensam fil, friska tjänster,
-samma fel varje gång. Ett mål blir alltså inte aktivt direkt efter ett lyckat Layout-save, utan en
-GET emellan — vilket är precis den egenskap filen skrevs för att bevisa.
-
-Det här är samma familj som `{ skip }`-felet i browserproven (se listan över löst nedan): tystnad
-som ser ut som grönt. Skillnaden är att här är grindningen medvetet skriven — det som saknas är
-databasen CI redan har.
-
-**Åtgärd:** ge `ci.yml` en engångsdatabas vid sidan av den befintliga, migrera den och sätt
-`TEST_DATABASE_URL`. Då körs de 111 proven på varje PR, och den röda blir synlig i stället för
-överhoppad. Fixa den därefter — testet är skrivet först med flit, så det är implementationen som
-ska möta provet, inte tvärtom.
-
-Verifierad: 2026-08-14.
-
----
-
 # Regler som kostat oss något
 
-§1–§6 och §12 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§1–§6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
@@ -393,6 +356,24 @@ Verifierad: 2026-08-09.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.
+- **Ett prov som bara kan köras en gång ser rätt ut i CI för att CI alltid är ny.**
+  `overlay-put-sync.test.js` applicerade eventet `after-put-1` och lät raden ligga kvar i
+  `goal_event_apply`. Claimen är idempotent per `(workspace_id, event_id)`, så andra körningen mot
+  samma databas claimade ingenting och provet föll på "eventet claimades inte — inget mål matchade".
+  Grön en gång, röd för alltid därefter. Uppmätt 2026-08-14: grön på färsk databas, röd direkt på
+  omkörning. GitHubs tjänstecontainer är ny varje körning och dolde det. `reset()` tömmer nu även
+  idempotenstabellen. **Städa allt provet skriver, inte bara det du kom att tänka på** — annars är
+  "order independence, proven rather than asserted" bara den första körningens tur.
+- **Åtta provfiler kördes ingenstans.** De grindar sig på `TEST_DATABASE_URL` — riktigt, de kräver
+  en engångsdatabas — men `ci.yml` sätter den aldrig och `goal-runtime-postgres.yml` startade bara
+  på push till `integration/live-goals-base`, en gren inget flöde rör längre. Uppmätt 2026-08-14:
+  **111 av serverns 410 prov överhoppade** i den konfiguration CI faktiskt körde. Löst genom att
+  flytta triggern till samma villkor som `ci.yml`; jobbet är inte en dubblett, det bevisar
+  målkontraktet mot Postgres 18 (Railways version) medan `ci.yml` står på 16 för sin backup-klient.
+- **Släppporten läste `web/Dockerfile`.** Katalogen har aldrig funnits i repot — hela git-historiken
+  är tom på den — så `validatePublicArtifact()` kastade ENOENT i stället för att kontrollera något.
+  Den publika imagen byggs av `Dockerfile` i roten, som redan failar bygget om `server`, `scripts`,
+  `docs`, `electron-app` eller `tiktok-bridge` hamnar i dokumentroten. Porten läser den filen nu.
 - **Ett `{ skip }` i optionsobjektet avgörs när provet registreras, inte när det körs.** 43
   browserprov satte `skip` på nytt inne i `test.before` när ingen webbläsare gick att starta.
   Omtilldelningen nådde aldrig fram: `test('...', { skip }, ...)` hade redan läst värdet. På en

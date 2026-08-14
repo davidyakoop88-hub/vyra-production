@@ -42,7 +42,12 @@ function listFiles(dir, predicate, output = []) {
 function validatePublicArtifact() {
   const required = ['index.html', 'studio.html', 'live-client.js', 'overlay.html'];
   const missing = required.filter((name) => !fs.existsSync(path.join(ROOT, name)));
-  const dockerfile = fs.readFileSync(path.join(ROOT, 'web', 'Dockerfile'), 'utf8');
+  // Läste web/Dockerfile fram till 2026-08-14. Den katalogen har aldrig funnits i repot — hela
+  // git-historiken är tom på den — så porten kastade ENOENT i stället för att kontrollera något.
+  // Den publika imagen byggs av Dockerfile i roten: stage "site" kopierar assets, public och
+  // rotens filer per filändelse, och failar bygget om server, scripts, docs, electron-app eller
+  // tiktok-bridge hamnar i dokumentroten. Det är den filen påståendet handlar om.
+  const dockerfile = fs.readFileSync(path.join(ROOT, 'Dockerfile'), 'utf8');
   const forbidden = ['server', 'scripts', 'docs', 'electron-app', 'tiktok-bridge'];
   const exclusionsMissing = forbidden.filter((name) => !dockerfile.includes(name));
   if (missing.length || exclusionsMissing.length) {

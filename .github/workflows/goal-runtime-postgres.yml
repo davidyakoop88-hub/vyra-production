@@ -10,9 +10,18 @@ name: Goal runtime · Postgres 18
 # Correctness and relative index comparisons from this job are trustworthy. Absolute timings are NOT:
 # a GitHub runner says nothing about Railway's capacity. Load testing at 10/20/100 events per second
 # happens later, against an explicitly approved isolated database.
+# Körde fram till 2026-08-14 bara på push till integration/live-goals-base. Den grenen byggdes
+# klart och inget flöde rör den längre, så de åtta provfilerna som kräver TEST_DATABASE_URL kördes
+# ingenstans: ci.yml sätter aldrig variabeln, och då hoppar de över sig själva. Uppmätt samma dag:
+# 111 av serverns 410 prov var överhoppade i den konfiguration CI faktiskt kör.
+#
+# Triggern är därför flyttad hit, till samma villkor som ci.yml. Jobbet är inte en dubblett av det:
+# Railway kör PostgreSQL 18.4 och ci.yml står kvar på 16-alpine med flit, eftersom ubuntu-latest
+# levererar den 16-klient dess backup/restore-bevis behöver. Målkontraktet bevisas mot major 18.
 on:
+  pull_request:
   push:
-    branches: [integration/live-goals-base]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
