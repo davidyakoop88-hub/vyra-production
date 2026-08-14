@@ -61,43 +61,6 @@ Vaktat av tre prov i `tests/gift-fireworks-live-path.test.js`:
 
 Verifierad löst: 2026-08-10.
 
-## 4. widget-defaults-migration-provet beror på en lokal baseline-gren
-
-`tests/widget-defaults-migration.test.js` letar efter en gammal `media.js` med de
-inline-katalogliteraler som fanns före widget-fabriken. Den söker i denna ordning:
-
-```js
-for (const rev of ['feature/event-deduplication:media.js', 'origin/main:media.js', 'main:media.js'])
-```
-
-Första posten är en **lokal grenreferens**. Efter Steg 0.5 (2026-08-08) raderades den grenen —
-den var mergad och övergiven. Provet hoppar nu över hos utvecklare som städar sina lokala grenar.
-Fjärrgrenen finns kvar på origin, så fixen är att låta provet peka på
-`origin/feature/event-deduplication:media.js` i stället.
-
-Uppmätt 2026-08-08 — bara den ena refen bär literalerna:
-
-```
-JA   origin/feature/event-deduplication:media.js
-nej  origin/main:media.js
-nej  main:media.js
-```
-
-Provet är redan byggt för att hoppa över graceful — se raderna 2 och 9–10 i filen, som förklarar
-att detta är "local migration proof, not part of the permanent contract" och att CI:s grunda
-checkout alltid skippar det. Ingenting i CI påverkas. Det är en utvecklarbekvämlighet, inte ett
-kontraktsbrott.
-
-**Bevisa så här:**
-
-```bash
-node --test tests/widget-defaults-migration.test.js
-```
-
-Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om — eller efter lokal
-återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
-kör alla prov.
-
 ## 5. Synkkonflikt-banderollen kan tystas utan att lösa konflikten
 
 `push()` (`cloud-sync.js:63`) returnerar `{ok:false,status:409}` **utan att kasta** när servern
@@ -184,7 +147,7 @@ Verifierad: 2026-08-09.
 
 # Regler som kostat oss något
 
-§1–§6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§1–§3, §5 och §6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
@@ -356,6 +319,21 @@ Verifierad: 2026-08-09.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.
+- **Ett prov som hoppar över på varje utvecklarmaskin ser ut som CI:s grunda checkout.**
+  `widget-defaults-migration.test.js` sökte baseline i ordningen `feature/event-deduplication`,
+  `origin/main`, `main`. Den första var en LOKAL grenreferens; grenen raderades i Steg 0.5 eftersom
+  den var mergad, och därefter hittade listan ingen ref med literalerna hos någon som städar sina
+  lokala grenar. Provet skippade tyst i månader och såg ut att bara vara CI som skippade.
+  Fjärrgrenen fanns kvar hela tiden. Löst 2026-08-14 genom att sätta `origin/`-formen först.
+- **Ett migrationsbevis slutar vara sant den dag designen medvetet går vidare.** När provet väl
+  kördes föll det: 8 av 28 varianter skilde sig från historien — målfärgerna (d0a7156, palett per
+  modell), battle-MVP:s etikett och visa-flaggor (195fc8a), gifter-nivåns text (058badb) och Gift
+  Jar som porterades först efteråt (23ece1d). Alla åtta var beslutade. Historien ändras inte i
+  efterhand, så ett krav på exakt likhet kunde aldrig bli grönt igen. Provet är därför omskrivet
+  till en driftvakt: varje avvikelse måste stå i `AVSIKTLIG_DRIFT` med commiten som beslutade den,
+  och de 20 varianter som ingen rört jämförs fortfarande bit för bit. Mutationsprovat åt båda
+  hållen — en tyst ändring i en icke-beslutad variant faller, och ett extra fält utöver ett
+  beslutat undantag faller också.
 - **Ett prov som bara kan köras en gång ser rätt ut i CI för att CI alltid är ny.**
   `overlay-put-sync.test.js` applicerade eventet `after-put-1` och lät raden ligga kvar i
   `goal_event_apply`. Claimen är idempotent per `(workspace_id, event_id)`, så andra körningen mot
