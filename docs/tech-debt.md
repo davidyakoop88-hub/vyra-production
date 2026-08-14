@@ -209,9 +209,42 @@ Väg 1 är att föredra för att den aldrig visar ett saldo som inte stämmer.
 
 Verifierad: 2026-08-14.
 
+## 14. Actions och TTS Chat är två skilda talsystem
+
+En TTS-action går till `window.speechSynthesis` direkt (`action-runtime.js` → `tts()`).
+TTS Chat-panelen (`tts-chat.js`) har en egen väg: molnröster via `server/tts.js` (msedge-tts,
+prefixet `cloud:`) **eller** webbläsarens, med kö, maxlängd, cooldown, Special Users och Comment
+Types.
+
+**Uppmätt 2026-08-14** — en action med `types:['tts']`, text `"Tack {username} for {giftname}!"`,
+volym 60, i jsdom med de riktiga filerna:
+
+```
+  talade:          "Tack lisa for Rose!"  rate 1.2, pitch 0.9, volume 0.6
+  nätverksanrop:   (inga)
+  VyraTtsChat:     undefined
+```
+
+Platshållarna fylls och hastighet/tonhöjd/volym går fram — kopplingen fungerar. Men:
+
+1. **Molnrösterna är oåtkomliga för Actions.** En röst vald i TTS Chat bär prefixet `cloud:`, och
+   `action-runtime.js` skickar värdet rakt in i `speechSynthesis`. Ingen träff → standardrösten.
+2. **Ingen delad kö.** TTS Chat spelar en i taget; Actions går utanför. En gåva mitt i en
+   chattuppläsning ger två röster samtidigt.
+
+Röstlistan i action-panelen var ett tredje fel i samma familj och är åtgärdad — se
+`tests/action-tts-rost.test.js`. De två ovan kvarstår.
+
+**Åtgärd:** låt Actions gå genom `tts-chat.js`:s uppspelningsväg i stället för att ropa på
+`speechSynthesis` själva. Det löser båda på en gång, men kräver att `tts-chat.js` exponerar sin kö
+(den exponerar inget API idag) och att röstlistan i action-panelen får med `cloud:`-rösterna.
+Volymen är per action och per TTS Chat-inställning — bestäm vilken som vinner innan de slås ihop.
+
+Verifierad: 2026-08-14.
+
 # Regler som kostat oss något
 
-§2, §5, §6 och §13 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6, §13 och §14 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
