@@ -444,3 +444,184 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-risingtier[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* ==========================================================================================
+   GIFTER LEVEL UP · MODELL stack · FYRAFASKOREOGRAFI
+   ==========================================================================================
+   FALL OCH NEDSLAG — inversen av risingtiers uppatstigande, samma dramaturgi.
+
+   Additivt och isolerat, precis som risingtier: allt hanger pa [data-fas], scopat till
+   .gifter-layout-stack. De befintliga -active/-exit-reglerna ar ororda.
+
+   UPPMATT GEOMETRI (scratchpad/mat-stack-delar.js, tand widget):
+     .gifter-diamond-row    74x74   ordning 1
+     .gifter-diamond-stack  74x74   SJALVA SKIVAN — gold ring via box-shadow rgb(216,166,58)
+                                    4px + rgb(138,101,31) 6px, lila radial-gradient som botten
+     .gd-1                  46x46   enda synliga adelstenen (.gd-2/.gd-3 ar display:none)
+     .gifter-orbit         190x190  ordning 2, margin-top:-14px
+     .gifter-orbit img      86x86   portrattet, guldkant rgb(216,166,58) — decode-ankaret
+     .gifter-level-badge   135x25   ordning 3
+   Grundgeometrin ar orord: ordningen och margin-top:-14px hor till stacks design.
+
+   TVA BEFINTLIGA ENTREER NEUTRALISERAS, inte en:
+     studio.css:204  gStackBounceIn pa .gifter-diamond-stack OCH .gifter-orbit
+     studio.css:562  gl-drop pa .gifter-diamond-stack, 564 gl-sharpen pa .gifter-level-badge
+   Bada ar uppmatta som levande (animationName gl-drop resp. gStackBounceIn pa en tand widget).
+   `.gifter-bottom-profile` star medvetet INTE i listan: den ar display:none via basregeln
+   studio.css:202, och prov 8f faller om nagon fas-regel riktar sig mot den.
+
+   VARFOR GNISTORNA SLACKS UNDER FALLET. De tva ✦ ar ::before/::after pa SKIVAN, alltsa barn
+   till det element som faller. De kan darfor inte sta stilla medan skivan ror sig, och de kan
+   inte visas i fas 1 utan att skivan ocksa visas. Losningen ar dramaturgisk i stallet for
+   teknisk: gnistorna tands ensamma i fas 1, slacks medan stenen faller, och slar tillbaka i
+   nedslagsogonblicket. Fas 1 doljer skivans egen yta (background-image/box-shadow) — statiska
+   malegenskaper, inget som animeras, sa 60 fps-kravet star kvar.
+
+   Endast transform/opacity/filter ANIMERAS. Inga layoutegenskaper nagonstans. */
+
+.gifter-layout-stack[data-fas]{--gs-guld:#d8a63a;--gs-guld-ljus:#f2c96f}
+
+/* Neutralisera bada de befintliga entreerna pa de element koreografin sjalv styr. */
+.gifter-layout-stack[data-fas] .gifter-diamond-row,
+.gifter-layout-stack[data-fas] .gifter-diamond-stack,
+.gifter-layout-stack[data-fas] .gifter-diamond,
+.gifter-layout-stack[data-fas] .gifter-orbit,
+.gifter-layout-stack[data-fas] .gifter-orbit img,
+.gifter-layout-stack[data-fas] .gifter-level-badge,
+.gifter-layout-stack[data-fas] > h2,
+.gifter-layout-stack[data-fas] > h3,
+.gifter-layout-stack[data-fas] > p{animation:none}
+
+/* ---- FAS 1 · LJUS: tom scen ---------------------------------------------------------------- */
+@keyframes gsGnistTand{
+  0%{opacity:0;transform:translateY(-50%) scale(.4)}
+  60%{opacity:1;transform:translateY(-50%) scale(1.25)}
+  100%{opacity:.92;transform:translateY(-50%) scale(1)}}
+@keyframes gsRingGlimt{
+  0%{opacity:.06}55%{opacity:.26}100%{opacity:.14}}
+
+/* Skivans egen yta doljs sa bara gnistorna syns. Statiskt, inte animerat.
+   `!important` KRAVS och ar inget slarv: studio.css:1210-1212 satter bade background och
+   box-shadow med !important, sa en vanlig deklaration kan aldrig vinna hur specifik den an ar.
+   Uppmatt i fas 1 utan flaggan: bada egenskaperna oforandrade, och den lila skivan med
+   guldringen syntes genom hela uppbyggnaden. !important som svar pa !important ar ratt svar
+   nar man inte ager ursprungsregeln — och hela blocket studio.css:1207-1291 ar redan sa skrivet.
+   Scopat till exakt [data-fas="ljus"], sa fas 2-4 och alla andra modeller ar oberorda. */
+.gifter-layout-stack[data-fas="ljus"] .gifter-diamond-stack{
+  background-image:none!important;box-shadow:none!important}
+.gifter-layout-stack[data-fas="ljus"] .gifter-diamond{opacity:0}
+.gifter-layout-stack[data-fas="ljus"] .gifter-diamond-stack::before{
+  animation:gsGnistTand var(--fas-ljus-tid,500ms) cubic-bezier(.22,.9,.3,1) both}
+.gifter-layout-stack[data-fas="ljus"] .gifter-diamond-stack::after{
+  animation:gsGnistTand var(--fas-ljus-tid,500ms) cubic-bezier(.22,.9,.3,1) 90ms both}
+
+/* Ringen glimmar svagt — scenen ar annars tom. */
+.gifter-layout-stack[data-fas="ljus"] .gifter-orbit{
+  animation:gsRingGlimt var(--fas-ljus-tid,500ms) ease-in-out both}
+.gifter-layout-stack[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-stack[data-fas="ljus"] > h2,
+.gifter-layout-stack[data-fas="ljus"] > h3,
+.gifter-layout-stack[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: stenen faller och landar ----------------------------------------------- */
+/* Skivan landar vid 66 % av gsFall = 594 ms. Ljusstoten startar vid 60 % (540 ms) och toppar
+   40 % in i sina 150 ms, alltsa vid 600 ms — samtidigt som landningen.
+   FORSTA FORSOKET la stoten pa 66 %, vilket lat riktigt i teorin men gav toppen vid 654 ms:
+   uppmatt var filtret fortfarande brightness(1) vid 576 ms och nadde 1.47 forst vid 678 ms.
+   Blommningen ska ske NAR stenen traffar, inte 60 ms efter. */
+@keyframes gsFall{
+  0%{opacity:0;transform:translateY(-72px) scale(.72)}
+  18%{opacity:1}
+  66%{transform:translateY(0) scale(1.07)}
+  80%{transform:translateY(0) scale(.97)}
+  100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes gsNedslag{
+  0%{filter:brightness(1) drop-shadow(0 0 0 rgba(216,166,58,0))}
+  40%{filter:brightness(1.6) drop-shadow(0 0 20px rgba(242,201,111,.95))}
+  100%{filter:brightness(1) drop-shadow(0 0 0 rgba(216,166,58,0))}}
+@keyframes gsRingMot{
+  from{opacity:.14;transform:scale(.86)}
+  to{opacity:1;transform:scale(1)}}
+@keyframes gsStenFram{from{opacity:0}to{opacity:1}}
+/* Gnistorna ar slackta medan stenen faller och slar tillbaka i nedslaget. */
+@keyframes gsGnistNedslag{
+  0%{opacity:0;transform:translateY(-50%) scale(.7)}
+  35%{opacity:1;transform:translateY(-50%) scale(1.5)}
+  100%{opacity:.92;transform:translateY(-50%) scale(1)}}
+@keyframes gsUppat{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}}
+@keyframes gsSkarpa{
+  from{opacity:0;filter:blur(7px)}
+  to{opacity:1;filter:blur(0)}}
+
+.gifter-layout-stack[data-fas="oppna"] .gifter-diamond-stack{
+  animation:gsFall var(--fas-oppna-tid,900ms) cubic-bezier(.3,.75,.35,1) both,
+            gsNedslag 150ms ease-out calc(var(--fas-oppna-tid,900ms) * .60) both}
+.gifter-layout-stack[data-fas="oppna"] .gifter-diamond{
+  animation:gsStenFram calc(var(--fas-oppna-tid,900ms) * .3) ease-out both}
+.gifter-layout-stack[data-fas="oppna"] .gifter-diamond-stack::before{opacity:0;
+  animation:gsGnistNedslag calc(var(--fas-oppna-tid,900ms) * .34)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .62) both}
+.gifter-layout-stack[data-fas="oppna"] .gifter-diamond-stack::after{opacity:0;
+  animation:gsGnistNedslag calc(var(--fas-oppna-tid,900ms) * .34)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .68) both}
+
+/* Ringen materialiseras for att MOTA stenen — klar precis nar den landar. */
+.gifter-layout-stack[data-fas="oppna"] .gifter-orbit{
+  animation:gsRingMot calc(var(--fas-oppna-tid,900ms) * .66) cubic-bezier(.2,.75,.25,1) both,
+            gsNedslag 150ms ease-out calc(var(--fas-oppna-tid,900ms) * .60) both}
+
+/* Text och bricka kommer efter nedslaget, i lasordning. */
+.gifter-layout-stack[data-fas="oppna"] .gifter-level-badge{
+  animation:gsSkarpa calc(var(--fas-oppna-tid,900ms) * .3)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .7) both}
+.gifter-layout-stack[data-fas="oppna"] > h2{
+  animation:gsUppat calc(var(--fas-oppna-tid,900ms) * .28)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .72) both}
+.gifter-layout-stack[data-fas="oppna"] > h3{
+  animation:gsUppat calc(var(--fas-oppna-tid,900ms) * .28)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .8) both}
+.gifter-layout-stack[data-fas="oppna"] > p{
+  animation:gsUppat calc(var(--fas-oppna-tid,900ms) * .28)
+            ease-out calc(var(--fas-oppna-tid,900ms) * .88) both}
+
+/* ---- FAS 3 · HYLLNING: levande hall -------------------------------------------------------- */
+@keyframes gsAndas{
+  0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes gsGnistPuls{
+  0%,100%{opacity:.45;transform:translateY(-50%) scale(.92)}
+  50%{opacity:1;transform:translateY(-50%) scale(1.12)}}
+
+.gifter-layout-stack[data-fas="hyllning"] .gifter-diamond-stack{
+  animation:gsAndas 2600ms ease-in-out infinite}
+.gifter-layout-stack[data-fas="hyllning"] .gifter-diamond-stack::before{
+  animation:gsGnistPuls 1800ms ease-in-out infinite}
+.gifter-layout-stack[data-fas="hyllning"] .gifter-diamond-stack::after{
+  animation:gsGnistPuls 1800ms ease-in-out 900ms infinite}
+
+/* ---- FAS 4 · UPPLOSNING: stapeln sjunker --------------------------------------------------- */
+/* Aterbruk av gl-snuffs form: ljusstyrkan gar UPP forst, sedan ut. */
+@keyframes gsSjunk{
+  0%{transform:translateY(0) scale(1);opacity:1;filter:brightness(1)}
+  35%{filter:brightness(2.2)}
+  100%{transform:translateY(26px) scale(.9);opacity:0;filter:brightness(2.4)}}
+@keyframes gsNedat{
+  to{opacity:0;transform:translateY(18px)}}
+@keyframes gsRingUt{to{opacity:0;transform:scale(.94)}}
+
+.gifter-layout-stack[data-fas="upplosning"] .gifter-diamond-stack{
+  animation:gsSjunk var(--fas-upplosning-tid,600ms) ease-in both}
+.gifter-layout-stack[data-fas="upplosning"] .gifter-level-badge,
+.gifter-layout-stack[data-fas="upplosning"] > h2,
+.gifter-layout-stack[data-fas="upplosning"] > h3,
+.gifter-layout-stack[data-fas="upplosning"] > p{
+  animation:gsNedat calc(var(--fas-upplosning-tid,600ms) * .7) ease-in both}
+/* Ringen slapper SIST — den ar det sista som star kvar nar stenen ar borta. */
+.gifter-layout-stack[data-fas="upplosning"] .gifter-orbit{
+  animation:gsRingUt calc(var(--fas-upplosning-tid,600ms) * .55)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .45) both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-stack[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
