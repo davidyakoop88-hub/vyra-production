@@ -1,9 +1,15 @@
 'use strict';
-// Gifter Level Up · modell `stack` — fyrafaskoreografi. Prov 8a-8f, skrivna FORE koden.
+// Gifter Level Up · modell `stack` — fyrafaskoreografi. Prov 8a-8e, skrivna FORE koden.
 //
 // Egen fil: 7-serien ar last och far inte roras. Den vaktar risingtier (referensen) och
 // KOPPLINGEN mellan modelltabellen och koreografin. Den har filen vaktar INNEHALLET i stacks
-// koreografi — faslangder, hyllningens kalla, kons lucka, decode-ankaret och fas-CSS:en.
+// koreografi — faslangder, hyllningens kalla, kons lucka och decode-grinden.
+//
+// TVA PROV HAR FLYTTAT HARIFRAN. De hette 8d (decode-ankarets synlighet) och 8f (fas-CSS finns
+// och ror aldrig ett slackt .gifter-bottom-profile), men de loopade bada over hela
+// VyraGifterFas.modeller och var alltsa aldrig stack-specifika. De ligger nu som G1 och G2 i
+// gifter-fas-generella.browser.test.js. 8d-numret ar aterbrukat for det enda som VAR
+// stack-specifikt: medlemskapet i modelltabellen.
 //
 // VALD MODELL: stack. Uppmatt: 18 CSS-regler, 12 adresserade delar, 6 element redan i rorelse,
 // samma 86x86 portratt i `.gifter-orbit img` som risingtier — receptet flyttar darfor ordagrant.
@@ -217,76 +223,27 @@ test('8c. kon slapper inte fram nasta alert mitt i stacks sekvens', { skip }, as
     `window.VyraFasKoreografi? RAPPORTERA, laga inte i runtime-controls.js.`);
 });
 
-// ---- 8d. Decode-ankaret pekar pa nagot som faktiskt SYNS --------------------------------------
-// ERSATTER det ursprungligen planerade 8d ("de atta andra modellerna ar ororda"), som blev
-// redundant nar 7d skrevs om till biconditionell form — 7d tacker bada riktningarna for alla nio.
+// ---- 8d. Stack ar inkopplad i modelltabellen --------------------------------------------------
+// Det som forut stod har — decode-ankarets synlighet — var aldrig stack-specifikt: det loopade
+// over hela VyraGifterFas.modeller. Det bor nu i gifter-fas-generella.browser.test.js som G1,
+// tillsammans med den tidigare 8f (nu G2).
 //
-// Det har provar i stallet nagot ingen annan gor: att modellens decodeAnkare pekar pa ett
-// SYNLIGT element. `.gifter-bottom-profile` ar slackt av basregeln i studio.css:202, och
-// `.gifter-orbit img` ar slackt i `number`. En grind som vantar pa ett display:none-element
-// avkodar anda (bilden laddas) — 8e skulle alltsa passera medan grinden i praktiken vaktar
-// ingenting och fas 2 oppnar mot en tom cirkel.
-test('8d. varje koreograferad modells decodeAnkare pekar pa ett synligt element', { skip }, async () => {
+// KVAR HAR ligger den enda genuint stack-specifika delen: att stack faktiskt star i tabellen.
+// De ovriga proven i filen faller ocksa om den inte gor det, men da pa en fasordning eller en
+// kolucka — den har raden sager RAKT UT vad som saknas.
+test('8d. stack star i modelltabellen VyraGifterFas.modeller', { skip }, async () => {
   const page = await studion();
-  const r = await page.evaluate(async (modell) => {
+  const r = await page.evaluate(() => {
     const G = window.VyraGifterFas;
     if (!G || !Array.isArray(G.modeller)) return { fel: 'VyraGifterFas.modeller saknas' };
-    const koreograferade = G.modeller.slice();
-    const ut = [];
-    // Stack provas alltid, aven innan den star i tabellen — det ar hela poangen med baslinjen.
-    const attProva = koreograferade.indexOf(modell) === -1
-      ? koreograferade.concat([modell]) : koreograferade;
-
-    for (const layout of attProva) {
-      state.widgets.length = 0;
-      const w = window.VyraWidgets.create('catalog:gifterlevel:' + layout);
-      w.x = 40; w.y = 40; w.gifterDuration = 2;
-      state.widgets.push(w); selected = null; render();
-      for (let i = 0; i < 90 && !document.querySelector(`[data-id="${w.id}"]`); i++)
-        await new Promise(r => requestAnimationFrame(r));
-      const box = document.querySelector(`[data-id="${w.id}"]`);
-      if (!box) { ut.push({ layout, fel: 'renderades inte' }); continue }
-
-      if (window.VyraAlertQueue) window.VyraAlertQueue.clear();
-      window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
-      // Widgeten ligger pa opacity:0 tills den tands — allt matt fore det blir SLACKT.
-      const t0 = performance.now();
-      while (performance.now() - t0 < 9000 &&
-             !box.className.split(/\s+/).includes('gifter-active'))
-        await new Promise(r => setTimeout(r, 40));
-      await new Promise(r => setTimeout(r, 400));
-
-      const iTabellen = koreograferade.indexOf(layout) !== -1;
-      // Ankaret ar inte utlast ur tabellen (den exporterar inte valjaren), sa provet
-      // kontrollerar bada kandidaterna och rapporterar vilken som duger.
-      const matt = sel => {
-        const el = box.querySelector(sel);
-        if (!el) return { finns: false, synlig: false };
-        const s = getComputedStyle(el), rect = el.getBoundingClientRect();
-        return { finns: true,
-                 synlig: s.display !== 'none' && s.visibility !== 'hidden' &&
-                         Number(s.opacity) > 0.01 && rect.width > 1 && rect.height > 1,
-                 matt: Math.round(rect.width) + 'x' + Math.round(rect.height) };
-      };
-      ut.push({ layout, iTabellen,
-                orbit: matt('.gifter-orbit img'), botten: matt('.gifter-bottom-profile img') });
-    }
-    return { fel: null, koreograferade, rader: ut };
-  }, MODELL);
+    return { fel: null, modeller: G.modeller.slice() };
+  });
   await page.close();
 
   assert.equal(r.fel, null, r.fel);
-  assert.ok(r.koreograferade.includes(MODELL),
-    `"${MODELL}" star inte i VyraGifterFas.modeller — koreografin ar inte inkopplad. ${SAKNAS}`);
-
-  for (const u of r.rader) {
-    assert.equal(u.fel, undefined, `${u.layout}: ${u.fel}`);
-    assert.ok(u.orbit.synlig || u.botten.synlig,
-      `Modell ${u.layout} har inget synligt portratt att grinda fas 2 pa: ` +
-      `.gifter-orbit img ${u.orbit.finns ? '(slackt)' : '(saknas)'}, ` +
-      `.gifter-bottom-profile img ${u.botten.finns ? '(slackt)' : '(saknas)'}. ` +
-      `Decode-grinden skulle vakta ingenting.`);
-  }
+  assert.ok(r.modeller.includes(MODELL),
+    `"${MODELL}" star inte i VyraGifterFas.modeller — koreografin ar inte inkopplad. ` +
+    `Registrerade modeller: ${JSON.stringify(r.modeller)}. ${SAKNAS}`);
 });
 
 // ---- 8e. Decode-grinden i stacks koreografi ---------------------------------------------------
@@ -318,95 +275,3 @@ for (const fall of [
     }
   });
 }
-
-// ---- 8f. Fas-CSS:en finns, och spenderar ingen rorelse pa ett slackt element -------------------
-// FYND B, mätt 2026-08-15: `.gifter-big-level,.gifter-bottom-profile{display:none}`
-// (studio.css:202) ar en BASREGEL. Bara `number` tander bottenportrattet igen. Stacks
-// befintliga `gl-rise` (563) och `gl-sink` (565) animerar darfor ett display:none-element —
-// dod rorelse. Samma sak galler reveal, orbitlevel, flip, duo och referensen risingtier.
-// Vi stadar INTE det bakat nu (beslut 2026-08-15), men koreografin far inte upprepa felet.
-//
-// Provet laser den LEVANDE CSSOM:en (document.styleSheets), inte filtext — det ar det
-// webblasaren faktiskt parsat, och det tacker bade studio.css och premium-final.css.
-// Generellt over alla koreograferade modeller, sa varje framtida modell tacks automatiskt.
-test('8f. fas-CSS finns for varje koreograferad modell och riktar sig aldrig mot ett slackt .gifter-bottom-profile',
-  { skip }, async () => {
-  const page = await studion();
-  const r = await page.evaluate(async (modell) => {
-    const G = window.VyraGifterFas;
-    if (!G || !Array.isArray(G.modeller)) return { fel: 'VyraGifterFas.modeller saknas' };
-    const koreograferade = G.modeller.slice();
-    const attProva = koreograferade.indexOf(modell) === -1
-      ? koreograferade.concat([modell]) : koreograferade;
-
-    // Samla alla stilregler ur den levande CSSOM:en, aven de som ligger i @media.
-    const valjare = [];
-    const gaIgenom = regler => {
-      for (const regel of regler) {
-        if (regel.cssRules && !regel.selectorText) { gaIgenom(regel.cssRules); continue }
-        if (regel.selectorText) valjare.push({ sel: regel.selectorText, css: regel.cssText });
-      }
-    };
-    for (const ark of document.styleSheets) {
-      try { gaIgenom(ark.cssRules) } catch (e) { /* cross-origin — finns inte lokalt */ }
-    }
-
-    // Ar bottenportrattet slackt i modellen? Provas pa en TAND widget.
-    const bottenSlackt = {};
-    for (const layout of attProva) {
-      state.widgets.length = 0;
-      const w = window.VyraWidgets.create('catalog:gifterlevel:' + layout);
-      w.x = 40; w.y = 40; w.gifterDuration = 2;
-      state.widgets.push(w); selected = null; render();
-      for (let i = 0; i < 90 && !document.querySelector(`[data-id="${w.id}"]`); i++)
-        await new Promise(r => requestAnimationFrame(r));
-      const box = document.querySelector(`[data-id="${w.id}"]`);
-      if (window.VyraAlertQueue) window.VyraAlertQueue.clear();
-      window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
-      const t0 = performance.now();
-      while (performance.now() - t0 < 9000 &&
-             !box.className.split(/\s+/).includes('gifter-active'))
-        await new Promise(r => setTimeout(r, 40));
-      await new Promise(r => setTimeout(r, 300));
-      const bp = box.querySelector('.gifter-bottom-profile');
-      bottenSlackt[layout] = !bp || getComputedStyle(bp).display === 'none';
-    }
-
-    const ut = attProva.map(layout => {
-      const klass = '.gifter-layout-' + layout;
-      /* `[data-fas` UTAN avslutande hakparentes. Fasreglerna skrivs `[data-fas="ljus"]` osv,
-         och ett filter pa `[data-fas]` hittar bara neutraliseringsblocket — alltsa just de
-         regler som INTE gor nagot. Uppmatt: 8 traffar i stallet for hela koreografin, och en
-         bottenprofil-regel scopad till en enskild fas hade sluppit rakt igenom vakten. */
-      const fasRegler = valjare.filter(v => v.sel.includes(klass) && v.sel.includes('[data-fas'));
-      return {
-        layout,
-        iTabellen: koreograferade.indexOf(layout) !== -1,
-        antalFasRegler: fasRegler.length,
-        bottenSlackt: bottenSlackt[layout],
-        brytare: fasRegler
-          .filter(v => v.sel.includes('.gifter-bottom-profile'))
-          .map(v => v.sel),
-      };
-    });
-    return { fel: null, koreograferade, rader: ut };
-  }, MODELL);
-  await page.close();
-
-  assert.equal(r.fel, null, r.fel);
-
-  for (const u of r.rader) {
-    assert.ok(u.antalFasRegler > 0,
-      `Modell ${u.layout} har noll CSS-regler som bade namner ${'.gifter-layout-' + u.layout} ` +
-      `och [data-fas] — fas-CSS:en ar inte skriven. Motorn skulle satta attributet utan att ` +
-      `nagot syns. ${u.layout === MODELL ? SAKNAS : ''}`);
-
-    if (u.bottenSlackt) {
-      assert.equal(u.brytare.length, 0,
-        `Modell ${u.layout}: ${u.brytare.length} fas-regel(er) riktar sig mot ` +
-        `.gifter-bottom-profile, som ar display:none i den modellen (basregeln i ` +
-        `studio.css:202). Rorelsen skulle aldrig synas. Brytande valjare:\n  ` +
-        u.brytare.join('\n  '));
-    }
-  }
-});
