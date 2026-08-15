@@ -81,6 +81,28 @@
       decodeTimeoutMs: DECODE_TIMEOUT_MS,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // IRIS. Modellen heter reveal och motorns fas 2 heter oppna — portrattet ar SLUTET och
+      // oppnas. Har ar decode-grinden inte kosmetik utan sjalva premissen: irisen far aldrig
+      // oppnas mot en oavkodad bild, for da avslojar den ett tomt hal dar ansiktet ska vara.
+      // Prov 9f vaktar bade formen (stangd i fas 1, oppen i fas 3) och grinden.
+      modell: 'reveal',
+      passar: arLayout('reveal'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      /* 900, INTE standardens 500 — och det ar hela skalet till att taket ar ett falt per modell.
+         Motorn vantar pa BADA, ljusfasen och bilden, och racknar ihop dem (widget-fas.js:173-183):
+             max(anticipationMs, min(avkodningstid, decodeTimeoutMs))
+         Med ett tak pa 500 mot en ljusfas pa 500 kan grinden ALDRIG bli den bindande faktorn —
+         uppbyggnaden tacker redan hela avkodningsfonstret, och fas 2 startar pa 500 ms oavsett
+         om bilden finns. Uppmatt: irisen oppnade vid 542 ms mot en bild som avkodades vid 730 ms.
+         For de andra modellerna ar det harmlost (de fade:ar in ett portratt som annu ar tomt),
+         men reveal AVSLOJAR det — irisen oppnas mot ett hal dar ansiktet ska vara.
+         900 ms lyfter taket over ljusfasen sa grinden faktiskt kan halla. Prov 9f-C vaktar det.
+         Ovriga modeller behaller 500. */
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
