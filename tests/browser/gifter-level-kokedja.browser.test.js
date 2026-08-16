@@ -88,6 +88,31 @@ async function FORLOPP(blockerareMs) {
   const nod = document.querySelector('[data-id="' + w.id + '"]');
   if (!nod) return { nodSaknas: true };
 
+  /* VANTAD KOTID. Widgeten ar en `profile`, och profile ar renderarens DEFAULT
+     (media.js:578) — alltsa den layout varje gifter-widget utan uttryckligt val far.
+     Nar profile koreograferas vaxer koslotten fran visningstiden till hela sekvensen,
+     for kowrappern (runtime-controls.js:61-68) adderar modellens anticipation+enter+exit.
+     Ett hardkodat 6000 hade dott den dagen, precis som prov 6h dog nar duo koreograferades.
+     Vi laser darfor MODELLENS EGEN publicerade `tider` ur registret i stallet.
+
+     Svagheten ar erkand: bade produktionen och provet summerar samma tre tal, sa provet
+     kan inte fanga att SJALVA SUMMERINGEN ar fel. Det provet vaktar ar att slotten
+     motsvarar hela sekvensen och inte bara visningstiden — och den skillnaden fangas,
+     for `bas` och `tillagg` mats var for sig nedan. */
+  const bas = (w.gifterDuration || 6) * 1000;
+  let tillagg = 0, koreograferad = false;
+  if (Array.isArray(window.VyraFasKoreografi)) {
+    for (const k of window.VyraFasKoreografi) {
+      let traff = false;
+      try { traff = !!(k && typeof k.passar === 'function' && k.passar(w)) } catch (e) { continue }
+      if (!traff) continue;
+      const t = (k && k.tider) || {};
+      tillagg = (t.anticipationMs || 0) + (t.enterMs || 0) + (t.exitMs || 0);
+      koreograferad = true;
+      break;
+    }
+  }
+
   // Ogonblicksbild av widgetobjektet: livevagen far inte rora det.
   const foreObjekt = JSON.parse(JSON.stringify(w));
 
@@ -136,7 +161,7 @@ async function FORLOPP(blockerareMs) {
 
   const slut = document.querySelector('[data-id="' + w.id + '"]');
   return {
-    logg, mittI, skrivningar,
+    logg, mittI, skrivningar, bas, tillagg, koreograferad,
     foreObjekt, efterObjekt: JSON.parse(JSON.stringify(w)),
     slutDom: slut ? { klasser: slut.className } : null,
   };
@@ -156,8 +181,16 @@ test('en riktig gavohandelse tander Gifter Level Up genom bada koerna',
       // exakt den fallan som lat widgeten se dod ut i tva matningar.
       assert.ok(push, 'Gifter Level-jobbet lades aldrig i den globala kon (priority 8):\n' +
         JSON.stringify(m.logg, null, 1));
-      assert.equal(push.duration, 6000,
-        'kowrappern kade jobbet med fel visningstid — runtime-controls sager 6000');
+      assert.equal(m.bas, 6000,
+        'kontrollmatning: widgetens visningstid ar inte 6000 ms, sa resten av provet mater fel sak');
+      assert.equal(push.duration, m.bas + m.tillagg,
+        `kowrappern kade jobbet med fel visningstid — visningstid ${m.bas} ms` +
+        (m.koreograferad ? ` + koreografins ${m.tillagg} ms` : ' (modellen ar okoreograferad)') +
+        `, men slotten blev ${push.duration} ms`);
+      if (m.koreograferad)
+        assert.ok(push.duration > m.bas,
+          'modellen ar koreograferad men slotten holl bara visningstiden — nasta alert ' +
+          'slapps da fram mitt i sekvensen, vilket ar precis det kon finns for att hindra');
       assert.ok(kord, 'job.run() kordes aldrig:\n' + JSON.stringify(m.logg, null, 1));
 
       // Serialiseringen: jobbet ska VANTA medan blockeraren haller sloten.
