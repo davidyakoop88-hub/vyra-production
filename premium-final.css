@@ -1575,3 +1575,113 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-orbitlevel[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   FAN LEVEL UP · MODELL 1 · HERO — "Samlingen"
+   =================================================================================================
+   Forsta Fan-koreografin. Motorn och kon ar desamma som for Gifter; det som skiljer star har.
+
+   PREMISS: hero ar den NAKNA basdesignen — noll egna regler, for att basen `.fan-level-up`
+   (18 regler) ar modellen. Men den ar inte stilla: hjartfiguren pulsar REDAN FORE TANDNING
+   (`fanLevelPop 2s` pa bilden, `fanRing 2s` pa dess ring, bada infinita) precis som
+   orbitlevels `gOrb`. Hjartat ar alltsa redan igang; alerten ar nar ljuset nar det och resten
+   SAMLAS under det:
+     fas 1  hjartat tonar in ensamt, redan pulsande
+     fas 2  avataren stiger upp under det, sedan nivapillen, sist rubrik/namn/meddelande
+     fas 3  inget nytt — de infinita baslagren bar hyllningen
+     fas 4  samlingen skingras nerifran och upp, hjartat sist
+
+   `fanAlertEnter` SLOPAS, DEN LAGAS INTE. `.fan-level-up.fan-active` satter bade
+   `animation:fanAlertEnter .65s` och `transform:translateY(0) scale(1)!important` — och
+   viktiga deklarationer slar animationer. Entrens `scale(.6) translateY(25px)` ->
+   `scale(1.08)` -> `scale(1)` har DARFOR ALDRIG SYNTS: uppmatt rot-transform genom hela
+   forloppet ar `matrix(1,0,0,1,0,0)` vid 80/200/350/500 ms, och bara `filter: blur` (0,73 ->
+   0 px) nar fram. Ligger den kvar konkurrerar dess blur-puls med fas 1. Prov 16g vaktar att
+   den ar borta ur rotens animationName i ALLA fyra faser.
+   Neutraliseringen bar `.fan-active` for att matcha specificiteten (0,2,0) hos regeln den
+   overtar — ett vanligt `[data-fas]`-scope hade forlorat kaskaden och blivit tyst
+   verkningslost. Samma lardom som orbitlevel.
+
+   ROR ALDRIG `.fan-burst img` ELLER `.fan-burst > i`. De ager de infinita baslagren, och en
+   `animation`-deklaration pa ett sadant element ERSATTER hela shorthanden och dodar lagret.
+   All rorelse laggs pa `.fan-burst` sjalv, alltsa foraldern. Prov 16g mater `startTime` pa
+   bada lagren, sa en omstart syns aven nar namnet ser likadant ut.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms):
+     avataren     0   -> 380 ms  =  0 %     -> 42,22 %
+     nivapillen  220  -> 560 ms  = 24,44 %  -> 62,22 %
+     texten      380  -> 860 ms  = 42,22 %  -> 95,56 %
+   Ordningen ar premissen och prov 16f mater den vid 150 och 300 ms.
+
+   `linear` overallt: varje keyframe satter explicit sin transform, sa "halva rorelsen vid
+   halva tiden" gar att rakna ut i huvudet. */
+
+/* ---- NEUTRALISERING (galler alla faser) ---------------------------------------------------- */
+.fan-layout-hero.fan-active[data-fas]{animation:none}
+
+/* ---- FAS 1 · LJUS: hjartat tonar in ensamt, redan pulsande --------------------------------- */
+/* Ren opacitet pa .fan-burst — pulsen bor pa dess barn och ska inte rubbas. */
+@keyframes fheHjartaIn{from{opacity:0}to{opacity:1}}
+.fan-layout-hero[data-fas="ljus"] .fan-burst{
+  animation:fheHjartaIn var(--fas-ljus-tid,500ms) ease-out both}
+.fan-layout-hero[data-fas="ljus"] .fan-profile,
+.fan-layout-hero[data-fas="ljus"] .fan-level-pill,
+.fan-layout-hero[data-fas="ljus"] > h2,
+.fan-layout-hero[data-fas="ljus"] > h3,
+.fan-layout-hero[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: samlingen ---------------------------------------------------------------- */
+@keyframes fheAvatarUpp{
+  0%       {opacity:0;transform:translateY(16px)}
+  42.22%   {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+@keyframes fhePillIn{
+  0%,24.44%{opacity:0;transform:translateY(12px)}
+  62.22%   {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+@keyframes fheTextIn{
+  0%,42.22%{opacity:0;transform:translateY(14px)}
+  95.56%   {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+
+.fan-layout-hero[data-fas="oppna"] .fan-profile{
+  animation:fheAvatarUpp var(--fas-oppna-tid,900ms) linear both}
+.fan-layout-hero[data-fas="oppna"] .fan-level-pill{
+  animation:fhePillIn var(--fas-oppna-tid,900ms) linear both}
+.fan-layout-hero[data-fas="oppna"] > h2,
+.fan-layout-hero[data-fas="oppna"] > h3,
+.fan-layout-hero[data-fas="oppna"] > p{
+  animation:fheTextIn var(--fas-oppna-tid,900ms) linear both}
+
+/* ---- FAS 3 · HYLLNING: inget nytt ------------------------------------------------------------ */
+/* fanLevelPop och fanRing bar den. Ett vilolager till hade blivit stok — samma beslut som
+   orbitlevel. Att INTE lagga nagot har ar ett val, inte en lucka. */
+
+/* ---- FAS 4 · UPPLOSNING: samlingen skingras nerifran och upp, hjartat sist ------------------ */
+@keyframes fheTextUt{
+  0%  {opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(8px)}}
+@keyframes fhePillUt{
+  0%,15%{opacity:1;transform:translateY(0)}
+  100%  {opacity:0;transform:translateY(8px)}}
+@keyframes fheAvatarUt{
+  0%,30%{opacity:1;transform:translateY(0)}
+  100%  {opacity:0;transform:translateY(10px)}}
+@keyframes fheHjartaUt{
+  0%,45%{opacity:1}
+  100%  {opacity:0}}
+
+.fan-layout-hero[data-fas="upplosning"] > h2,
+.fan-layout-hero[data-fas="upplosning"] > h3,
+.fan-layout-hero[data-fas="upplosning"] > p{
+  animation:fheTextUt var(--fas-upplosning-tid,600ms) ease-in both}
+.fan-layout-hero[data-fas="upplosning"] .fan-level-pill{
+  animation:fhePillUt var(--fas-upplosning-tid,600ms) ease-in both}
+.fan-layout-hero[data-fas="upplosning"] .fan-profile{
+  animation:fheAvatarUt var(--fas-upplosning-tid,600ms) ease-in both}
+.fan-layout-hero[data-fas="upplosning"] .fan-burst{
+  animation:fheHjartaUt var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .fan-layout-hero[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
