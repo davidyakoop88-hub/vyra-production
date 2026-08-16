@@ -137,6 +137,26 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // TREDJE LIGGANDE ARKETYPEN, och varken flip eller sidebadge. FYRA kolumner
+      // ("diamond pulse avatar badge") med pulslinjen MELLAN gavan och personen.
+      // Duo delar inte ett enda animationsnamn med flip — ingen risk for konkurrerande keyframes.
+      //
+      // PREMISSEN: PULSEN. Designens egna keyframes sager det: gl-trace ritar, gl-beat slar
+      // (scaleY 1 -> 1,9 -> 0,75, en EKG-spik) och basregeln har clip-path:inset(0 100% 0 0),
+      // alltsa en linje som ar helt bortklippt tills nagot ritar den.
+      //
+      // decodeTimeoutMs 900 som reveal och flip: portrattet SNAPPER IN nar pulsen nar det,
+      // alltsa avslojas det. Uppmatt vid rod baslinje utan koreografi: portrattet var synligt
+      // vid 15 ms medan bilden avkodades forst vid 730 ms. Grinden haller bara tillbaka fas 2,
+      // sa portrattet maste dessutom vara DOLT i fas 1 — annars kan den inte skydda alls.
+      modell: 'duo',
+      passar: arLayout('duo'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma

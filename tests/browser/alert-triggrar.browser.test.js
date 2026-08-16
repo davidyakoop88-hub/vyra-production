@@ -467,10 +467,18 @@ test('6h. en passar() som kastar stoppar inte kon', { skip }, async () => {
   const page = await studion();
   const varningar = [];
   page.on('console', m => { if (m.type() === 'warning') varningar.push(m.text()) });
+  /* WIDGETEN AR NEW FOLLOWER, INTE EN GIFTER-LAYOUT. Provet skapade tidigare sin testwidget som
+     `catalog:gifterlevel:duo` med motiveringen "utan koreografi kvar ar luckan bara visningstiden".
+     Det holl bara sa lange duo var okoreograferad — nar den koreograferades lade kon korrekt pa
+     500+900+600 ms och provet foll pa 3058 ms mot taket 2500. Samma familj som prov 7d:s
+     handskrivna lista.
+     New Follower star i kons configs men far enligt planen ALDRIG nagon koreografi, sa den
+     kastande passar() konsulteras fortfarande och maste hoppas over — utan att provet nagonsin
+     kan kollidera med Gifter-arbetet igen. Kontraktet som mats ar oforandrat. */
   const r = await page.evaluate(async () => {
     state.widgets.length = 0;
-    const g = window.VyraWidgets.create('catalog:gifterlevel:duo');
-    g.x = 20; g.y = 20; g.gifterDuration = 1;
+    const g = window.VyraWidgets.create('catalog:followeralert');
+    g.x = 20; g.y = 20;
     const fan = window.VyraWidgets.create('catalog:fanlevel:layout:duo');
     fan.x = 320; fan.y = 20; fan.fanDuration = 1;
     state.widgets.push(g, fan); selected = null; render();
@@ -487,7 +495,7 @@ test('6h. en passar() som kastar stoppar inte kon', { skip }, async () => {
     if (!window.VyraAlertQueue) return { fel: 'VyraAlertQueue saknas' };
     window.VyraAlertQueue.clear();
     const t0 = performance.now();
-    window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
+    window.triggerNewFollower({ __test: true, name: 'Prov' });
     window.triggerFanLevelUp({ __test: true, name: 'FanProv', level: 9 });
 
     let fanVid = null;
@@ -505,8 +513,12 @@ test('6h. en passar() som kastar stoppar inte kon', { skip }, async () => {
     'Fan fick aldrig sin tur — en kastande passar() dodade kon');
   assert.ok(r.koLever, 'kon kastade alerts efter att passar() fallerade');
   // Utan koreografi kvar: luckan ar bara visningstiden, alltso max(800, 1000) ms.
-  assert.ok(r.fanVid <= 2500,
-    `Fan slapptes fram vid ${r.fanVid} ms — den trasiga koreografin borde ha hoppats over helt`);
+  /* New Follower har 5000 ms i configs och far ingen koreografi. Luckan ska darfor vara EXAKT
+     den — hade den kastande passar() raknats med hade den lagt pa 2000 ms till. Samma tal som
+     prov 6g mater utan koreografiposter alls; skillnaden ar att den trasiga posten finns har. */
+  assert.ok(r.fanVid <= 5700,
+    `Fan slapptes fram vid ${r.fanVid} ms — den trasiga koreografin borde ha hoppats over helt ` +
+    `(New Followers lucka ar 5000 ms; ligger vardet nara 7000 har den trasiga posten raknats med)`);
   assert.ok(varningar.some(v => /koreografi|passar|VyraFas/i.test(v)),
     'ingen console.warn loggades nar passar() kastade');
 });

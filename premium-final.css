@@ -1075,3 +1075,141 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-flip[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* ==========================================================================================
+   GIFTER LEVEL UP · MODELL duo · FYRAFASKOREOGRAFI
+   ==========================================================================================
+   PULSEN. Tredje liggande arketypen — och varken sidebadge eller flip.
+
+   UPPMATT (mat-modell-delar.js + diag-sidebadge-layout.js duo, tand widget):
+     widgeten 300x151, CSS grid med FYRA kolumner (sidebadge 2, flip 3):
+         columns 74,4 / 24,4 / 44,4 / 108,7
+         areas "diamond pulse avatar badge" / "head…" / "name…" / "msg…"
+     PULSLINJEN SITTER MELLAN GAVAN OCH PERSONEN. Text i full bredd under.
+     diamantskiva 74x74 · portratt 44x44 (127,27) · bricka 108x25 (179,37)
+     `.gifter-diamond-row` ar display:contents — SKIVAN sitter direkt i griden, tvartom mot flip.
+   Griden ar basen och rors aldrig.
+
+   PREMISSEN LIGGER I DESIGNENS EGNA KEYFRAMES:
+     gl-trace  scaleX 0 -> 1          (linjen ritas)
+     gl-beat   scaleY 1 -> 1,9 -> 0,75 (EKG-spiken)
+     basregeln clip-path:inset(0 100% 0 0) — helt bortklippt tills nagot ritar den
+   Koreografin: pulsen gar fran gavan till personen, och portrattet snapper in pa slaget.
+
+   EN MATNING SOM NASTAN MISSADES: riggens synlighetskontroll laste display/visibility/opacity
+   och rutan men INTE clip-path, och kallade darfor pulslinjen "synlig 24x2" trots att basregeln
+   klipper bort hela ytan. Fixad, och korningen pa alla nio visade att duo var det ENDA fallet.
+
+   Endast transform/opacity/filter/clip-path ANIMERAS.
+   `.gifter-bottom-profile` ar orord (G2 vaktar). */
+
+.gifter-layout-duo[data-fas]{--du-ljus:#e2d6ff}
+
+/* Neutralisera de fyra befintliga entreerna. gSnapPulse ligger pa BADA emblemen. */
+.gifter-layout-duo[data-fas] .gifter-orbit,
+.gifter-layout-duo[data-fas] .gifter-orbit img,
+.gifter-layout-duo[data-fas] .gifter-diamond-stack,
+.gifter-layout-duo[data-fas] .gifter-diamond,
+.gifter-layout-duo[data-fas] .gifter-pulse-line,
+.gifter-layout-duo[data-fas] .gifter-level-badge,
+.gifter-layout-duo[data-fas] > h2,
+.gifter-layout-duo[data-fas] > h3,
+.gifter-layout-duo[data-fas] > p{animation:none}
+
+/* ---- FAS 1 · LJUS: gavan kommer, linjen ar oritad ---------------------------------------------- */
+@keyframes duSnappIn{
+  0%{opacity:0;transform:scale(.72)}
+  62%{opacity:1;transform:scale(1.07)}
+  100%{opacity:1;transform:scale(1)}}
+
+.gifter-layout-duo[data-fas="ljus"] .gifter-diamond-stack{
+  animation:duSnappIn calc(var(--fas-ljus-tid,500ms) * .8) cubic-bezier(.2,1.2,.3,1) both}
+/* Linjen ar helt bortklippt — samma varde som basregeln, uttryckt i % sa fas 2 kan interpolera. */
+.gifter-layout-duo[data-fas="ljus"] .gifter-pulse-line{clip-path:inset(0 100% 0 0)}
+/* PORTRATTET AR DOLT I FAS 1. Grinden haller bara tillbaka fas 2 — visas portrattet redan har
+   kan den inte skydda alls, och da snapper ett tomt portratt in. Uppmatt utan koreografi: 15 ms
+   mot en avkodning vid 730 ms. */
+.gifter-layout-duo[data-fas="ljus"] .gifter-orbit,
+.gifter-layout-duo[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-duo[data-fas="ljus"] > h2,
+.gifter-layout-duo[data-fas="ljus"] > h3,
+.gifter-layout-duo[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: pulsen ritas och slar ------------------------------------------------------ */
+/* Ritningen ar LINJAR over 500 ms sa halva linjen ar ritad vid halva tiden — regeln som tre
+   modeller i rad har lart oss. Bada andlagena i PROCENT, annars interpolerar Chrome mellan
+   100% och 0px och producerar calc(), vilket gor vardet omatbart for prov 12f-A.
+   Slaget kommer nar ritningen nar portrattcellen, och portrattet snapper in i samma ogonblick. */
+@keyframes duRita{
+  from{clip-path:inset(0 100% 0 0)}
+  to{clip-path:inset(0 0% 0 0)}}
+@keyframes duSlag{
+  0%{transform:scaleY(1)}
+  42%{transform:scaleY(1.9)}
+  58%{transform:scaleY(.75)}
+  100%{transform:scaleY(1)}}
+@keyframes duTextUpp{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}}
+
+.gifter-layout-duo[data-fas="oppna"] .gifter-pulse-line{
+  animation:duRita 500ms linear both,
+            duSlag 260ms ease-out 350ms both}
+/* Portrattet snapper in PA SLAGET — 350 ms, dar ritningen nar portrattcellen. */
+.gifter-layout-duo[data-fas="oppna"] .gifter-orbit{
+  animation:duSnappIn 180ms cubic-bezier(.2,1.3,.3,1) 350ms both}
+/* Brickan pa nasta slag. */
+.gifter-layout-duo[data-fas="oppna"] .gifter-level-badge{
+  animation:duSnappIn 180ms cubic-bezier(.2,1.3,.3,1) 600ms both}
+.gifter-layout-duo[data-fas="oppna"] > h2{animation:duTextUpp 190ms ease-out 700ms both}
+.gifter-layout-duo[data-fas="oppna"] > h3{animation:duTextUpp 190ms ease-out 760ms both}
+.gifter-layout-duo[data-fas="oppna"] > p{animation:duTextUpp 190ms ease-out 820ms both}
+
+/* ---- FAS 3 · HYLLNING: pulsen gar lugnt -------------------------------------------------------- */
+/* Linjen ar ritad och slar i vilopuls — langsammare an i fas 2. Emblemen andas i samma takt,
+   forskjutna sa raden lever utan att flimra. gl-beats 42/58-form ar bevarad. */
+@keyframes duVilopuls{
+  0%,100%{transform:scaleY(1)}
+  42%{transform:scaleY(1.55)}
+  58%{transform:scaleY(.85)}}
+@keyframes duAndas{
+  0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+.gifter-layout-duo[data-fas="hyllning"] .gifter-pulse-line{
+  clip-path:inset(0 0% 0 0);
+  animation:duVilopuls 1900ms ease-in-out infinite}
+.gifter-layout-duo[data-fas="hyllning"] .gifter-diamond-stack{
+  animation:duAndas 1900ms ease-in-out infinite}
+.gifter-layout-duo[data-fas="hyllning"] .gifter-orbit{
+  animation:duAndas 1900ms ease-in-out 950ms infinite}
+
+/* ---- FAS 4 · UPPLOSNING: ett sista slag, sedan avritas linjen ---------------------------------- */
+/* Spegelvant: linjen avritas HOGER -> VANSTER (vanstra insetet vaxer), och emblemen slapper i
+   omvand ordning — bricka, portratt, diamant. Texten faller forst. */
+@keyframes duSistaSlaget{
+  0%{transform:scaleY(1)}
+  40%{transform:scaleY(2)}
+  100%{transform:scaleY(1)}}
+@keyframes duAvrita{
+  from{clip-path:inset(0 0% 0 0)}
+  to{clip-path:inset(0 0% 0 100%)}}
+@keyframes duSlappa{to{opacity:0;transform:scale(.8)}}
+@keyframes duTextNed{to{opacity:0;transform:translateY(11px)}}
+
+.gifter-layout-duo[data-fas="upplosning"] > h2,
+.gifter-layout-duo[data-fas="upplosning"] > h3,
+.gifter-layout-duo[data-fas="upplosning"] > p{
+  animation:duTextNed calc(var(--fas-upplosning-tid,600ms) * .5) ease-in both}
+.gifter-layout-duo[data-fas="upplosning"] .gifter-pulse-line{
+  animation:duSistaSlaget 150ms ease-out both,
+            duAvrita 300ms linear calc(var(--fas-upplosning-tid,600ms) * .25) both}
+.gifter-layout-duo[data-fas="upplosning"] .gifter-level-badge{
+  animation:duSlappa 160ms ease-in calc(var(--fas-upplosning-tid,600ms) * .3) both}
+.gifter-layout-duo[data-fas="upplosning"] .gifter-orbit{
+  animation:duSlappa 160ms ease-in calc(var(--fas-upplosning-tid,600ms) * .48) both}
+.gifter-layout-duo[data-fas="upplosning"] .gifter-diamond-stack{
+  animation:duSlappa 160ms ease-in calc(var(--fas-upplosning-tid,600ms) * .66) both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-duo[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
