@@ -936,3 +936,142 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-sidebadge[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* ==========================================================================================
+   GIFTER LEVEL UP · MODELL flip · FYRAFASKOREOGRAFI
+   ==========================================================================================
+   MYNTVANDNINGEN. Andra liggande arketypen — men inte sidebadge med mer text.
+
+   UPPMATT (scratchpad/mat-modell-delar.js + diag-sidebadge-layout.js flip, tand widget):
+     widgeten 290x154, CSS grid med TRE kolumner (sidebadge har tva):
+         columns 74px 64px 104px
+         areas "diamond avatar badge" / "head head head" / "name name name" / "msg msg msg"
+     EMBLEMRAD overst:  diamant 12,12 (64x64) · portratt 98,12 (64x64) · bricka 174,25 (104x38)
+     TEXT i full bredd:  rubrik 12,82 · namn 12,108 · meddelande 12,131
+     `.gifter-streak` ar SLACKT (0x0, static) — sidebadges signatur finns inte, svepet flyttar inte.
+   Griden ar basen och rors aldrig.
+
+   PREMISSEN KOMMER FRAN DESIGNEN SJALV. Animationsnamnen ar gl-flip, gCoinFlipIn och
+   gl-flip-reveal, och basens keyframe ar `perspective(500px) rotateY(0deg -> 360deg)` med
+   `width` 20 -> 44 -> 20. Alltsa ett 3D-mynt. Koreografin vander de tre emblemen som mynt,
+   i foljd vanster -> hoger, med portrattmyntet grindat mot avkodningen.
+
+   ROTATIONEN MATS, INTE PASTAS. Prov 11f laser m11 ur berakningens matrix3d — det ar cos av
+   Y-rotationen — sa en ren fade (2D-matrix) kan aldrig passera som en myntvandning.
+
+   Endast transform/opacity/filter ANIMERAS. .gifter-bottom-profile ar orord (G2 vaktar). */
+
+.gifter-layout-flip[data-fas]{--fl-guld:#f2c96f;--fl-djup:600px}
+
+/* Neutralisera de FYRA befintliga entreerna. gCoinFlipIn animerar aven `width` — det ar den
+   som far myntet att ga pa hogkant i basdesignen, och den maste bort innan var egen rotation
+   tar over, annars far vi tva myntvandningar pa samma element. */
+.gifter-layout-flip[data-fas] .gifter-orbit,
+.gifter-layout-flip[data-fas] .gifter-orbit img,
+.gifter-layout-flip[data-fas] .gifter-diamond-row,
+.gifter-layout-flip[data-fas] .gifter-diamond-stack,
+.gifter-layout-flip[data-fas] .gifter-diamond,
+.gifter-layout-flip[data-fas] .gifter-level-badge,
+.gifter-layout-flip[data-fas] > h2,
+.gifter-layout-flip[data-fas] > h3,
+.gifter-layout-flip[data-fas] > p{animation:none}
+
+/* ---- FAS 1 · LJUS: mynten star pa hogkant ----------------------------------------------------- */
+/* 88 grader, inte 90 — vid exakt 90 ar elementet noll pixlar brett och myntet forsvinner helt.
+   Vid 88 blir det en hairline som fangar ljuset, alltsa tre mynt som STAR pa hogkant.
+   Glimten vandrar vanster -> hoger over raden och foregriper vandningens ordning. */
+@keyframes flGlimt{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(2.4) drop-shadow(0 0 7px var(--fl-guld))}}
+
+.gifter-layout-flip[data-fas="ljus"] .gifter-diamond-row,
+.gifter-layout-flip[data-fas="ljus"] .gifter-orbit,
+.gifter-layout-flip[data-fas="ljus"] .gifter-level-badge{
+  transform:perspective(var(--fl-djup)) rotateY(88deg)}
+.gifter-layout-flip[data-fas="ljus"] .gifter-diamond-row{
+  animation:flGlimt calc(var(--fas-ljus-tid,500ms) * .5) ease-in-out both}
+.gifter-layout-flip[data-fas="ljus"] .gifter-orbit{
+  animation:flGlimt calc(var(--fas-ljus-tid,500ms) * .5)
+            ease-in-out calc(var(--fas-ljus-tid,500ms) * .2) both}
+.gifter-layout-flip[data-fas="ljus"] .gifter-level-badge{
+  animation:flGlimt calc(var(--fas-ljus-tid,500ms) * .5)
+            ease-in-out calc(var(--fas-ljus-tid,500ms) * .4) both}
+.gifter-layout-flip[data-fas="ljus"] > h2,
+.gifter-layout-flip[data-fas="ljus"] > h3,
+.gifter-layout-flip[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: mynten vander, vanster -> hoger -------------------------------------------- */
+/* Varje mynt gar fran hogkant till rakt framifran pa 320 ms, forskjutet 180 ms sa ordningen ar
+   otvetydig: diamant landar ~320, portratt ~500, bricka ~680 ms. Den korta ljusstoten ligger
+   mitt i vandningen, dar myntets kant moter tittaren.
+   PORTRATTMYNTET ar det enda som avslojar nagot — och eftersom hela fas 2 halls tillbaka av
+   decode-grinden (tak 900 ms) kan det aldrig vanda sig mot en oavkodad bild. Prov 11f-C mater det. */
+/* LINJAR, och med transform i VARJE keyframe. Forsta forsoket hade cubic-bezier(.3,.75,.35,1)
+   och en 35 %-keyframe som bara satte opacity/filter. Tva fel som forstarkte varandra: kurvan ar
+   framtung, och en keyframe utan transform gor att rotationen interpoleras rakt fran 0 % till
+   70 %. Uppmatt blev myntet m11 0,98 — alltsa i praktiken rakt framifran — bara 80 ms in i sin
+   320 ms-vandning. Det snappte i stallet for att vanda. Samma fella som reveals iris. */
+@keyframes flVand{
+  0%{transform:perspective(var(--fl-djup)) rotateY(88deg);opacity:.55}
+  40%{transform:perspective(var(--fl-djup)) rotateY(40deg);opacity:1;
+      filter:brightness(1.9) drop-shadow(0 0 10px var(--fl-guld))}
+  75%{transform:perspective(var(--fl-djup)) rotateY(-10deg);filter:brightness(1.15)}
+  100%{transform:perspective(var(--fl-djup)) rotateY(0deg);opacity:1;filter:brightness(1)}}
+@keyframes flTextUpp{
+  from{opacity:0;transform:translateY(9px)}
+  to{opacity:1;transform:translateY(0)}}
+
+.gifter-layout-flip[data-fas="oppna"] .gifter-diamond-row{
+  animation:flVand 320ms linear 0ms both}
+.gifter-layout-flip[data-fas="oppna"] .gifter-orbit{
+  animation:flVand 320ms linear 180ms both}
+.gifter-layout-flip[data-fas="oppna"] .gifter-level-badge{
+  animation:flVand 320ms linear 360ms both}
+/* Texten landar efter det sista myntet (680 ms), i lasordning. */
+.gifter-layout-flip[data-fas="oppna"] > h2{animation:flTextUpp 200ms ease-out 700ms both}
+.gifter-layout-flip[data-fas="oppna"] > h3{animation:flTextUpp 200ms ease-out 760ms both}
+.gifter-layout-flip[data-fas="oppna"] > p{animation:flTextUpp 200ms ease-out 820ms both}
+
+/* ---- FAS 3 · HYLLNING: levande hall ------------------------------------------------------------ */
+/* Mynten ligger stilla rakt framifran. En langsam skimmer vandrar over raden i samma riktning
+   som vandningen gick — den haller liggande-lasordningen levande utan att rora nagot. */
+@keyframes flSkimmer{
+  0%,70%,100%{filter:brightness(1)}
+  12%{filter:brightness(1.35) drop-shadow(0 0 8px rgba(242,201,111,.6))}}
+
+.gifter-layout-flip[data-fas="hyllning"] .gifter-diamond-row,
+.gifter-layout-flip[data-fas="hyllning"] .gifter-orbit,
+.gifter-layout-flip[data-fas="hyllning"] .gifter-level-badge{
+  transform:perspective(var(--fl-djup)) rotateY(0deg)}
+.gifter-layout-flip[data-fas="hyllning"] .gifter-diamond-row{
+  animation:flSkimmer 3200ms ease-in-out infinite}
+.gifter-layout-flip[data-fas="hyllning"] .gifter-orbit{
+  animation:flSkimmer 3200ms ease-in-out 260ms infinite}
+.gifter-layout-flip[data-fas="hyllning"] .gifter-level-badge{
+  animation:flSkimmer 3200ms ease-in-out 520ms infinite}
+
+/* ---- FAS 4 · UPPLOSNING: mynten vander bort ---------------------------------------------------- */
+/* Omvand ordning — bricka, portratt, diamant — och at motsatt hall, sa det last som att raden
+   vecklas ihop dar den veks ut. Texten faller forst. */
+@keyframes flVandBort{
+  0%{transform:perspective(var(--fl-djup)) rotateY(0deg);opacity:1}
+  100%{transform:perspective(var(--fl-djup)) rotateY(-88deg);opacity:.35}}
+@keyframes flTextNed{to{opacity:0;transform:translateY(12px)}}
+
+.gifter-layout-flip[data-fas="upplosning"] > h2,
+.gifter-layout-flip[data-fas="upplosning"] > h3,
+.gifter-layout-flip[data-fas="upplosning"] > p{
+  animation:flTextNed calc(var(--fas-upplosning-tid,600ms) * .45) ease-in both}
+.gifter-layout-flip[data-fas="upplosning"] .gifter-level-badge{
+  animation:flVandBort calc(var(--fas-upplosning-tid,600ms) * .4)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .25) both}
+.gifter-layout-flip[data-fas="upplosning"] .gifter-orbit{
+  animation:flVandBort calc(var(--fas-upplosning-tid,600ms) * .4)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .38) both}
+.gifter-layout-flip[data-fas="upplosning"] .gifter-diamond-row{
+  animation:flVandBort calc(var(--fas-upplosning-tid,600ms) * .4)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .51) both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-flip[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

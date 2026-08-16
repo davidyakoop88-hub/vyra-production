@@ -117,6 +117,26 @@
       decodeTimeoutMs: DECODE_TIMEOUT_MS,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // ANDRA LIGGANDE ARKETYPEN, men inte sidebadge med mer text. Tre kolumner i stallet for
+      // tva: en EMBLEMRAD overst (diamant · portratt · bricka) och text i full bredd under.
+      // `.gifter-streak` — sidebadges signatur — ar slackt har, sa svep-receptet flyttar inte.
+      //
+      // PREMISSEN: MYNTVANDNINGEN, och designen sager det sjalv. Animationsnamnen ar gl-flip,
+      // gCoinFlipIn och gl-flip-reveal, och keyframen ar `perspective(500px) rotateY(0->360)`.
+      //
+      // decodeTimeoutMs 900 av EXAKT samma skal som reveal: portrattet sitter i ett mynt som
+      // VANDER SIG och avslojar ansiktet. Med standardtaket 500 mot en lika lang ljusfas kan
+      // grinden aldrig bli bindande (widget-fas.js:173-183), och myntet hade landat blankt.
+      // Att designens egen gRevealFade vantar till 44 % innan portrattet tonas in visar att
+      // den redan vet om att bilden behover tid. Prov 11f-C vaktar det.
+      modell: 'flip',
+      passar: arLayout('flip'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
