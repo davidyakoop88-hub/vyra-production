@@ -795,3 +795,144 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-reveal[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* ==========================================================================================
+   GIFTER LEVEL UP · MODELL sidebadge · FYRAFASKOREOGRAFI
+   ==========================================================================================
+   STRALEN SOM SKRIVER. Forsta LIGGANDE arketypen — den tajming flip och duo sedan arver.
+
+   UPPMATT (scratchpad/mat-modell-delar.js + diag-sidebadge-layout.js, tand widget):
+     widgeten 300x156 — bredare an hog, mot de staende modellernas 270x~400
+     display:grid!important, columns 64px 1fr (uppmatt 64px 202px), areas:
+         "diamond head" / "diamond badge" / "avatar name" / "avatar msg"
+     emblemkolumn  diamantrad 12,12 (74x74) · portratt 12,88 (56x56)
+     textkolumn    rubrik 86,18 · bricka 86,55 · namn 86,94 · meddelande 86,128
+     .gifter-streak 26x2 vid 82,48 — absolut, linear-gradient(90deg), transform-origin:left,
+                    basregelns transform ar translateY(-50%) scaleX(1) och MASTE bevaras
+   Griden ar sidebadges BAS och rors aldrig — koreografin ligger ovanpa med transform/opacity/filter.
+
+   SVEPETS GEOMETRI. Stralens vanstra kant star pa x=82. Textkolumnen slutar vid x=288, alltsa
+   ar svepets langd 180 px i translateX. Textdelarna fods nar svepet passerar deras position:
+       rubrik  x~86  -> translateX   4  -> 215 ms
+       bricka  x~120 -> translateX  38  -> 310 ms
+       namn    x~160 -> translateX  78  -> 420 ms
+       medd.   x~200 -> translateX 118  -> 530 ms
+   Svepet gar linjart 200 -> 700 ms sa position och tid hanger ihop; darfor kan fodslarna
+   raknas fram ur geometrin i stallet for att stallas pa kanslan. Prov 10f mater bada.
+
+   Endast transform/opacity/filter ANIMERAS. .gifter-bottom-profile ar orord (G2 vaktar). */
+
+.gifter-layout-sidebadge[data-fas]{--sb-guld:#d8a63a;--sb-svep:180px}
+
+/* Neutralisera de tre befintliga entreerna. OBS att det ar RADEN som snurrar in i sidebadge,
+   inte skivan — tvartom mot stack. */
+.gifter-layout-sidebadge[data-fas] .gifter-diamond-row,
+.gifter-layout-sidebadge[data-fas] .gifter-diamond-stack,
+.gifter-layout-sidebadge[data-fas] .gifter-diamond,
+.gifter-layout-sidebadge[data-fas] .gifter-streak,
+.gifter-layout-sidebadge[data-fas] .gifter-orbit,
+.gifter-layout-sidebadge[data-fas] .gifter-orbit img,
+.gifter-layout-sidebadge[data-fas] .gifter-level-badge,
+.gifter-layout-sidebadge[data-fas] > h2,
+.gifter-layout-sidebadge[data-fas] > h3,
+.gifter-layout-sidebadge[data-fas] > p{animation:none}
+
+/* ---- FAS 1 · LJUS: emblemkolumnen kommer ------------------------------------------------------ */
+/* Textkolumnen ar tom. Stralen LADDAR vid kolumngransen — vaxer i ljus, men ror sig inte i
+   sidled an. Rorelsen tillhor fas 2 och far inte forekommas har. */
+@keyframes sbSnurraIn{
+  0%{opacity:0;transform:rotate(-140deg) scale(.5)}
+  70%{opacity:1;transform:rotate(8deg) scale(1.06)}
+  100%{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes sbRingFram{
+  from{opacity:0;transform:scale(.7)}
+  to{opacity:1;transform:scale(1)}}
+@keyframes sbLadda{
+  0%{opacity:0;transform:translateY(-50%) scaleX(.05)}
+  60%{opacity:1;transform:translateY(-50%) scaleX(.35)}
+  100%{opacity:.85;transform:translateY(-50%) scaleX(.22)}}
+
+.gifter-layout-sidebadge[data-fas="ljus"] .gifter-diamond-row{
+  animation:sbSnurraIn calc(var(--fas-ljus-tid,500ms) * .9) cubic-bezier(.16,1,.3,1) both}
+.gifter-layout-sidebadge[data-fas="ljus"] .gifter-orbit{
+  animation:sbRingFram calc(var(--fas-ljus-tid,500ms) * .6)
+            ease-out calc(var(--fas-ljus-tid,500ms) * .35) both}
+.gifter-layout-sidebadge[data-fas="ljus"] .gifter-streak{
+  animation:sbLadda var(--fas-ljus-tid,500ms) ease-out both}
+.gifter-layout-sidebadge[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-sidebadge[data-fas="ljus"] > h2,
+.gifter-layout-sidebadge[data-fas="ljus"] > h3,
+.gifter-layout-sidebadge[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: stralen sveper och skriver ------------------------------------------------ */
+/* Svepet startar 200 ms in sa laddningen i fas 1 hinner lasas, och gar LINJART till 700 ms.
+   `translateY(-50%)` maste sta kvar i varje keyframe — basregeln bygger stralens lodrata
+   centrering pa den, och en transform utan den hoppar 1 px upp. */
+@keyframes sbSvep{
+  0%{transform:translateY(-50%) translateX(0) scaleX(.22);opacity:.85}
+  8%{opacity:1;transform:translateY(-50%) translateX(0) scaleX(1)}
+  88%{opacity:1;transform:translateY(-50%) translateX(var(--sb-svep)) scaleX(1)}
+  100%{opacity:0;transform:translateY(-50%) translateX(var(--sb-svep)) scaleX(.4)}}
+/* Texten fods BAKOM stralen — den skrivs fram, den tonar inte in samtidigt. */
+@keyframes sbSkriv{
+  from{opacity:0;transform:translateX(-10px)}
+  to{opacity:1;transform:translateX(0)}}
+
+/* STRALENS SYNLIGHET, bara i fas 2. Basdesignens 2 px las som ett tunt streck i fotot — och
+   stralen ar sidebadges signatur, sa relationen "texten fods bakom den" maste ga att se.
+   Hojden ar en statisk deklaration, inte en animation, och den ror inte griden. Bytet tillbaka
+   till 2 px vid fasgransen sker medan stralen ar osynlig (sbSvep slutar pa opacity:0), sa det
+   syns aldrig som ett hopp. Fas 3 och 4 behaller basdesignen — hyllningen ska forbli subtil. */
+.gifter-layout-sidebadge[data-fas="oppna"] .gifter-streak{
+  height:3px;
+  filter:drop-shadow(0 0 6px rgba(216,166,58,.8));
+  animation:sbSvep 500ms linear 200ms both}
+.gifter-layout-sidebadge[data-fas="oppna"] > h2{animation:sbSkriv 190ms ease-out 215ms both}
+.gifter-layout-sidebadge[data-fas="oppna"] .gifter-level-badge{
+  animation:sbSkriv 190ms ease-out 310ms both}
+.gifter-layout-sidebadge[data-fas="oppna"] > h3{animation:sbSkriv 190ms ease-out 420ms both}
+.gifter-layout-sidebadge[data-fas="oppna"] > p{animation:sbSkriv 190ms ease-out 530ms both}
+
+/* ---- FAS 3 · HYLLNING: levande hall ----------------------------------------------------------- */
+/* Stralen ar tillbaka vid kolumngransen (fas 2:s regel galler inte langre, sa transformen
+   aterstalls till basen) och ligger kvar som en mjuk puls. Texten star stilla. */
+@keyframes sbPuls{
+  0%,100%{opacity:.35;transform:translateY(-50%) scaleX(.22)}
+  50%{opacity:.9;transform:translateY(-50%) scaleX(.5)}}
+@keyframes sbAndas{
+  0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+.gifter-layout-sidebadge[data-fas="hyllning"] .gifter-streak{
+  animation:sbPuls 2400ms ease-in-out infinite}
+.gifter-layout-sidebadge[data-fas="hyllning"] .gifter-diamond-row{
+  animation:sbAndas 2800ms ease-in-out infinite}
+
+/* ---- FAS 4 · UPPLOSNING: stralen sveper tillbaka ---------------------------------------------- */
+/* Spegelvant: svepet gar hoger -> vanster och texten wipe:as ut i OMVAND ordning bakom det.
+   Emblemkolumnen lamnar sist — den kom forst och gar sist. */
+@keyframes sbSvepTillbaka{
+  0%{opacity:0;transform:translateY(-50%) translateX(var(--sb-svep)) scaleX(.4)}
+  10%{opacity:1;transform:translateY(-50%) translateX(var(--sb-svep)) scaleX(1)}
+  90%{opacity:1;transform:translateY(-50%) translateX(0) scaleX(1)}
+  100%{opacity:0;transform:translateY(-50%) translateX(0) scaleX(.2)}}
+@keyframes sbSudda{to{opacity:0;transform:translateX(12px)}}
+@keyframes sbEmblemUt{to{opacity:0;transform:scale(.85) rotate(-12deg)}}
+
+.gifter-layout-sidebadge[data-fas="upplosning"] .gifter-streak{
+  animation:sbSvepTillbaka calc(var(--fas-upplosning-tid,600ms) * .67) linear both}
+.gifter-layout-sidebadge[data-fas="upplosning"] > p{
+  animation:sbSudda 170ms ease-in 140ms both}
+.gifter-layout-sidebadge[data-fas="upplosning"] > h3{
+  animation:sbSudda 170ms ease-in 230ms both}
+.gifter-layout-sidebadge[data-fas="upplosning"] .gifter-level-badge{
+  animation:sbSudda 170ms ease-in 320ms both}
+.gifter-layout-sidebadge[data-fas="upplosning"] > h2{
+  animation:sbSudda 170ms ease-in 390ms both}
+.gifter-layout-sidebadge[data-fas="upplosning"] .gifter-diamond-row,
+.gifter-layout-sidebadge[data-fas="upplosning"] .gifter-orbit{
+  animation:sbEmblemUt calc(var(--fas-upplosning-tid,600ms) * .3)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .7) both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-sidebadge[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

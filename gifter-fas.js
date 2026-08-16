@@ -103,6 +103,20 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // FORSTA LIGGANDE ARKETYPEN. Widgeten ar 300x156 och byggs med CSS grid och namngivna
+      // areas, inte flex order. Rorelsen gar darfor I SIDLED: `.gifter-streak` (26x2, en
+      // linear-gradient vid kolumngransen, tand BARA av sidebadge) sveper vanster -> hoger och
+      // textkolumnen fods bakom den. Prov 10f vaktar bade svepet och ordningen.
+      // Standardtaket 500 racker: sidebadge TONAR IN portrattet, den avslojar det inte som
+      // reveal, sa grindens no-op mot en lika lang ljusfas ar harmlos har.
+      modell: 'sidebadge',
+      passar: arLayout('sidebadge'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      decodeTimeoutMs: DECODE_TIMEOUT_MS,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
