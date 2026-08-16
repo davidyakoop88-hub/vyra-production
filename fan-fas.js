@@ -70,6 +70,24 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_FAN,
     },
+    {
+      // "Mottagandet". Stack har REDAN en komplett, staggrad entre — fsIconDrop (hjartat
+      // faller fran -40px), fsPillPop (nivapillen poppar) och fsAvatarRise (avataren stiger).
+      // Dramaturgin FALL -> POP -> STIGNING ar designens egen och bevaras. Problemet ar inte
+      // formen utan KLOCKAN: hela sekvensen (0-650 ms) spelar i dag under anticipationsfasen,
+      // som ska vara uppbyggnad och inte ankomst. Koreografin ATERANVANDER darfor keyframsen i
+      // fas 2 i stallet for att skriva egna kopior. Prov 17g gor det till ett kontrakt.
+      //
+      // Ankaret ar avataren, som i hero: hjartfiguren i .fan-burst ar en statisk dekorbild.
+      // decodeTimeoutMs 900 — avataren stiger upp SIST i sekvensen (480-800 ms i fas 2), sa en
+      // oavkodad bild ger en tom cirkel i mottagandets slutbeat.
+      modell: 'stack',
+      passar: arLayout('stack'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.fan-profile img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_FAN,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget. */

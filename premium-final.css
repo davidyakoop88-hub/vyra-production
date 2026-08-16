@@ -1685,3 +1685,103 @@
 @media (prefers-reduced-motion: reduce){
   .fan-layout-hero[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   FAN LEVEL UP · MODELL 2 · STACK — "Mottagandet"
+   =================================================================================================
+
+   PREMISSEN AR DESIGNENS EGEN, OCH KEYFRAMSEN ATERANVANDS. Stack har redan en komplett,
+   staggrad entre:
+     fsIconDrop   .5s  @ 0 ms    hjartat faller fran -40px, scale(.7), overskjutande kurva
+     fsPillPop    .4s  @ 100 ms  nivapillen poppar fran scale(.5)
+     fsAvatarRise .45s @ 200 ms  avataren stiger fran +20px
+   FALL -> POP -> STIGNING: hjartat faller in, pillen poppar ut under det, avataren stiger upp
+   for att mota det. Problemet ar inte formen utan KLOCKAN — hela sekvensen spelar i dag under
+   ANTICIPATIONSFASEN, som ska vara uppbyggnad och inte ankomst. Fas 1 neutraliserar dem
+   darfor, och fas 2 utfardar SAMMA keyframes pa nytt. Prov 17g vaktar bada hallen: inget av
+   dem i fas 1, exakt dessa namn i fas 2. Det ar latt att av bekvamlighet skriva en egen
+   `fstHjartaFall` och tappa bort att formen redan fanns.
+
+   TIDERNA AR PROPORTIONELLA MOT FASEN, inte hardkodade millisekunder. Keyframsen har bara
+   0 % och 100 %, sa staggern maste ligga i duration + delay — och da kan husets
+   `var(--fas-oppna-tid)`-monster bara behallas via calc(). Andras faslangden foljer taktningen
+   med:
+     hjartat   0      -> 46,7 %   (0-420 ms av 900)
+     pillen   33,3 %  -> 68,9 %   (300-620)
+     avataren 53,3 %  -> 88,9 %   (480-800)
+     texten   62,2 %  -> 96,7 %   (560-870)
+
+   FAS 1 AR TOM, OCH DET AR ETT VAL. Forsta utkastet lat hjartat "tona in" i fas 1 — men
+   fsIconDrop sitter pa `.fan-burst`, alltsa hela enheten inklusive halo-ringen, sa hjartat
+   hade tonat fram pa plats och sedan hoppat upp till -40px for att falla igen. Ett fall maste
+   landa i en TOM bild. Fas 1 ar darfor det hallna andetaget fore nedslaget.
+
+   NEUTRALISERINGEN OCH ATERUTFARDANDET BAR SAMMA TYNGD. Entreerna kommer fran
+   `.fan-layout-stack.fan-active .X` = (0,3,0). Bada blocken nedan ar (0,4,0) och scopade till
+   var sin fas, sa de kan aldrig konkurrera om samma element i samma fas — och neutraliseringen
+   kan inte rakta doda fas 2:s aterinforda animationer.
+
+   FAS 4 LAMNAS AT MODELLEN. `.fan-layout-stack.fan-exit` ger redan fsAvatarSink, fsPillPop
+   reverse och fsIconDrop reverse — mottagandet baklanges. Koreografin lagger bara till att
+   texten lamnar. */
+
+/* ---- FAS 1 · LJUS: det hallna andetaget --------------------------------------------------- */
+.fan-layout-stack.fan-active[data-fas="ljus"] .fan-burst,
+.fan-layout-stack.fan-active[data-fas="ljus"] .fan-level-pill,
+.fan-layout-stack.fan-active[data-fas="ljus"] .fan-profile{animation:none;opacity:0}
+.fan-layout-stack[data-fas="ljus"] > h2,
+.fan-layout-stack[data-fas="ljus"] > h3,
+.fan-layout-stack[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: fall -> pop -> stigning, sedan texten ---------------------------------- */
+/* KURVORNA AR VARA, KEYFRAMSEN AR DESIGNENS. Beslutet var "klockan, inte keyframsen" — och en
+   timingfunktion ar klocka, inte form. Originalens `cubic-bezier(.34,1.56,.64,1)` ar extremt
+   fronttung: UPPMATT stod hjartat pa ty -0,55 vid 150 ms av ett 420 ms-fall, alltsa 98,6 % av
+   strackan avverkad pa 35,7 % av tiden. Det SNAPPAR i stallet for att falla, och det bryter
+   arbetsregeln "halva rorelsen vid halva tiden" som alla nio Gifter-modeller haller.
+   `cubic-bezier(.5,0,.5,1.25)` behaller studsen (y gar over 1 mot slutet) men lagger halva
+   rorelsen kring halva tiden — uppmatt ty -31,7 vid 150 ms i stallet for -0,55.
+   Avataren stiger utan studs och far darfor husets symmetriska kurva. */
+.fan-layout-stack.fan-active[data-fas="oppna"] .fan-burst{
+  animation:fsIconDrop calc(var(--fas-oppna-tid,900ms) * .467)
+            cubic-bezier(.5,0,.5,1.25) both}
+.fan-layout-stack.fan-active[data-fas="oppna"] .fan-level-pill{
+  animation:fsPillPop calc(var(--fas-oppna-tid,900ms) * .356)
+            cubic-bezier(.5,0,.5,1.25) calc(var(--fas-oppna-tid,900ms) * .333) both}
+.fan-layout-stack.fan-active[data-fas="oppna"] .fan-profile{
+  animation:fsAvatarRise calc(var(--fas-oppna-tid,900ms) * .356)
+            cubic-bezier(.5,.02,.5,.98) calc(var(--fas-oppna-tid,900ms) * .533) both}
+
+/* Texten ar det enda stack saknar en egen form for — den far en, och bara den. */
+@keyframes fstTextIn{
+  from{opacity:0;transform:translateY(10px)}
+  to  {opacity:1;transform:translateY(0)}}
+.fan-layout-stack[data-fas="oppna"] > h2,
+.fan-layout-stack[data-fas="oppna"] > h3,
+.fan-layout-stack[data-fas="oppna"] > p{
+  animation:fstTextIn calc(var(--fas-oppna-tid,900ms) * .344)
+            linear calc(var(--fas-oppna-tid,900ms) * .622) both}
+
+/* ---- FAS 3 · HYLLNING: inget nytt vilolager ------------------------------------------------ */
+/* fanLevelPop pa hjartbilden och fanRing pa halo-ringen bar den, precis som i hero.
+   OCH EN MEKANISM VARD ATT KANNA TILL: nar data-fas lamnar "oppna" slutar reglerna ovan matcha,
+   och `.fan-layout-stack.fan-active .fan-burst{animation:fsIconDrop .5s}` blir vinnare igen.
+   Entren spelar anda INTE om — animationen behaller sin IDENTITET (samma namn, samma plats i
+   listan), sa dess currentTime bars over och ligger da langt bortom den nya kortare
+   varaktigheten. Uppmatt vid +24, +120 och +300 ms in i hyllningen: ty 0, skala 1, opacity 1.
+   DARFOR AR ATERANVANDNINGEN INTE BARA SNYGG UTAN NODVANDIG: skrevs en egen kopia
+   (`fstHjartaFall`) i fas 2 skulle namnbytet vid fasovergangen starta om `fsIconDrop` fran
+   -40px mitt i hyllningen. Prov 17g haller namnidentiteten. */
+
+/* ---- FAS 4 · UPPLOSNING: modellens egen exit, plus texten ---------------------------------- */
+@keyframes fstTextUt{
+  from{opacity:1;transform:translateY(0)}
+  to  {opacity:0;transform:translateY(6px)}}
+.fan-layout-stack[data-fas="upplosning"] > h2,
+.fan-layout-stack[data-fas="upplosning"] > h3,
+.fan-layout-stack[data-fas="upplosning"] > p{
+  animation:fstTextUt var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .fan-layout-stack[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
