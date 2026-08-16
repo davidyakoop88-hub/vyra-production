@@ -1213,3 +1213,155 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-duo[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   MODELL 6 · PROFILE — "Classic Rise & Pop"
+   =================================================================================================
+
+   PREMISS (Davids ord): profile ar renderarens DEFAULT (media.js:578,
+   `w.gifterLayout||'profile'`) och alltsa den modell varje anvandare far som aldrig oppnar
+   modellvaljaren. Den ska vara ren, snartig och professionell — inget overdrivet. En mjuk men
+   snabb uppstigning av HELA widgeten, sedan namnet mjukt fram, sedan nivabrickan i en pop.
+
+   VARFOR RORELSEN LIGGER PA BARNEN OCH INTE PA ROTEN.
+   studio.css:201 satter `transform:scale(.8)!important` pa .gifter-level-up och
+   `.gifter-active` satter `scale(1)!important`. I kaskadordningen ligger animationer UNDER
+   viktiga forfattardeklarationer, och en animation kan inte markas !important — uppmatt gav en
+   provanimation pa rotens transform identitetsmatris, alltsa inget genomslag alls. Det ar ocksa
+   forklaringen till att ingen av de fem foregaende koreografierna ror roten. `[data-id]`,
+   `.widget` och `.gifter-layout-profile` ar dessutom SAMMA element, sa det finns inget inre
+   lager att flytta rorelsen till. Premissen "hela widgeten stiger" bars darfor av de SEX
+   BARNEN som grupp. Draghanterarna ar oskyldiga: de skriver style.left/top (uppmatt noll
+   skrivningar till transform).
+
+   INGET ATT NEUTRALISERA. Profile ar den enda av nio utan konkurrerande entre. Det enda
+   rorliga i basdesignen ar de tva omarkta <b>-gnistorna i orbiten (`heartSpark 1.5s infinite`)
+   och de ror vi inte — de tindrar genom hela sekvensen, precis som forut.
+   `.gifter-bottom-profile` star medvetet INTE i nagon selektor har: den ar slackt av basregeln
+   studio.css:202 och prov G2 faller om en fas-regel riktar sig mot den.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms):
+     stigning    0   -> 520 ms  =  0 %      -> 57,78 %
+     namnet    380   -> 640 ms  = 42,22 %   -> 71,11 %
+     brickan   560   -> 860 ms  = 62,22 %   -> 95,56 %, topp vid 710 ms = 78,89 %
+
+   VARFOR KOMBINERADE KEYFRAMES. Ett element kan bara ha EN `transform`, och tva animationer
+   som bada skriver den komponerar inte — den sista i listan vinner hela egenskapen. Brickan
+   och namnet behover bade gruppens stigning och en egen rorelse, sa deras keyframes bar bada.
+   Priset ar att stigningsdelen maste vara IDENTISK i alla fyra keyframe-uppsattningarna,
+   annars laser sig de sex delarna inte som en kropp (prov 13f mater exakt det, vid 260 ms).
+   Darfor ar mellanvardena skrivna som calc() av samma `--pr-stig` med kvoten utraknad i
+   klartext, i stallet for som losryckta pixeltal.
+
+   VARFOR `linear`. Arbetsregeln "halva rorelsen vid halva tiden" tillater linear NAR VARJE
+   KEYFRAME EXPLICIT SATTER TRANSFORM — och det gor de har, aven de som egentligen bara byter
+   opacitet. Da gar stigningen att rakna ut i huvudet: vid 260 ms (halva stigtiden) star alla
+   sex pa 11 px av 22. Prov 13g mater det. */
+
+.gifter-layout-profile[data-fas]{--pr-stig:22px}
+
+/* ---- FAS 1 · LJUS: ringen glimmar ensam --------------------------------------------------- */
+/* Scenen ar tom sa nar som pa ringen, som tonar upp till .35. Portrattet ARVER containerns
+   opacitet och ligger darfor kvar som en svag skugga bakom ringen — det ar avsiktligt.
+   FORSTA FORSOKET slackte portrattet separat (`.gifter-orbit img{opacity:0}`) for att ge
+   decode-grinden nagot att skydda. Prov G1 fallde det, och med ratt: G1 mater ankarets EGNA
+   berakningsvarde 400 ms efter tandning, alltsa mitt i fas 1, och ett ankare pa opacity 0 ar
+   inget ankare. De ovriga modellerna klarar G1 for att de doljer portrattet pa ett satt som
+   inte ror elementets eget varde — risingtier slacker CONTAINERN (barnets opacity ar da
+   fortfarande 1), reveal anvander clip-path.
+   Ratt svar var inte att kringga vakten utan att inse att regeln inte galler har: "hall
+   portrattet dolt i fas 1" galler nar modellen AVSLOJAR portrattet (reveal, flip, duo).
+   Profile TONAR IN det, och da ar grindens no-op harmlos — precis som pa sidebadge. */
+@keyframes prGlimt{from{opacity:0}to{opacity:.35}}
+.gifter-layout-profile[data-fas="ljus"] .gifter-orbit{
+  animation:prGlimt var(--fas-ljus-tid,500ms) ease-out both}
+.gifter-layout-profile[data-fas="ljus"] .gifter-diamond-row,
+.gifter-layout-profile[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-profile[data-fas="ljus"] > h2,
+.gifter-layout-profile[data-fas="ljus"] > h3,
+.gifter-layout-profile[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: kroppen stiger, namnet foljer, brickan poppar -------------------------- */
+/* Gruppen. 20 %-keyframen byter opacitet men BAR ANDA sin transform — utan den interpoleras
+   transformen forbi keyframen och linjariteten gar inte langre att rakna pa.
+   .6539 = 1 - 20/57,78. */
+@keyframes prStig{
+  0%    {opacity:0;transform:translateY(var(--pr-stig))}
+  20%   {opacity:1;transform:translateY(calc(var(--pr-stig) * .6539))}
+  57.78%{opacity:1;transform:translateY(0)}
+  100%  {opacity:1;transform:translateY(0)}}
+
+/* Ringen borjar pa .35 dar fas 1 lamnade den — annars slocknar den ett ogonblick vid fasbytet.
+   .4808 = 1 - 30/57,78. */
+@keyframes prStigRing{
+  0%    {opacity:.35;transform:translateY(var(--pr-stig))}
+  30%   {opacity:1;transform:translateY(calc(var(--pr-stig) * .4808))}
+  57.78%{opacity:1;transform:translateY(0)}
+  100%  {opacity:1;transform:translateY(0)}}
+
+/* Namnet foljer kroppen exakt till 42,22 % och far darefter en EGEN kort resa. Vardet vid
+   42,22 % ar gruppens egna (.2693 = 1 - 42,22/57,78), sa sparen ar identiska fram till dess. */
+@keyframes prNamnFram{
+  0%    {opacity:0;transform:translateY(var(--pr-stig))}
+  20%   {opacity:0;transform:translateY(calc(var(--pr-stig) * .6539))}
+  42.22%{opacity:0;transform:translateY(calc(var(--pr-stig) * .2693))}
+  57.78%{transform:translateY(calc(var(--pr-stig) * .1818))}
+  71.11%{opacity:1;transform:translateY(0)}
+  100%  {opacity:1;transform:translateY(0)}}
+
+/* Brickan rider upp med gruppen pa skala .82 och poppar sedan. Popen passerar OVER 1 — en
+   "pop" som bara vaxer till 1 ar en intoning, inte en pop. */
+@keyframes prBrickaPop{
+  0%    {opacity:0;transform:translateY(var(--pr-stig)) scale(.82)}
+  20%   {opacity:1;transform:translateY(calc(var(--pr-stig) * .6539)) scale(.82)}
+  57.78%{transform:translateY(0) scale(.82)}
+  62.22%{transform:translateY(0) scale(.82)}
+  78.89%{transform:translateY(0) scale(1.06)}
+  95.56%{transform:translateY(0) scale(1)}
+  100%  {opacity:1;transform:translateY(0) scale(1)}}
+
+/* Portrattet har ingen egen regel: det arver bade ringens rorelse och dess opacitet, vilket ar
+   precis vad premissen "en kropp" sager. */
+.gifter-layout-profile[data-fas="oppna"] .gifter-orbit{
+  animation:prStigRing var(--fas-oppna-tid,900ms) linear both}
+.gifter-layout-profile[data-fas="oppna"] .gifter-diamond-row,
+.gifter-layout-profile[data-fas="oppna"] > h2,
+.gifter-layout-profile[data-fas="oppna"] > p{
+  animation:prStig var(--fas-oppna-tid,900ms) linear both}
+.gifter-layout-profile[data-fas="oppna"] > h3{
+  animation:prNamnFram var(--fas-oppna-tid,900ms) linear both}
+.gifter-layout-profile[data-fas="oppna"] .gifter-level-badge{
+  animation:prBrickaPop var(--fas-oppna-tid,900ms) linear both}
+
+/* ---- FAS 3 · HYLLNING: ett lagt andetag ---------------------------------------------------- */
+/* Alla atta ovriga modeller har ett vilolager sa widgeten inte star dod under hyllningen.
+   Profiles ar medvetet det diskretaste av dem — 1,2 % skala. Gnistorna tindrar som forut. */
+@keyframes prAndas{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+.gifter-layout-profile[data-fas="hyllning"] .gifter-orbit{
+  animation:prAndas 2.6s ease-in-out infinite both}
+
+/* ---- FAS 4 · UPPLOSNING: spegelvand entre -------------------------------------------------- */
+/* Samma dramaturgi baklanges: brickan lamnar forst, ringen sist. */
+@keyframes prSjunk{
+  0%  {opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(18px)}}
+@keyframes prRingSjunk{
+  0%,25%{opacity:1;transform:translateY(0)}
+  100%  {opacity:0;transform:translateY(18px)}}
+@keyframes prBrickaSjunk{
+  0%      {opacity:1;transform:translateY(0) scale(1)}
+  60%,100%{opacity:0;transform:translateY(10px) scale(.9)}}
+
+.gifter-layout-profile[data-fas="upplosning"] .gifter-diamond-row,
+.gifter-layout-profile[data-fas="upplosning"] > h2,
+.gifter-layout-profile[data-fas="upplosning"] > h3,
+.gifter-layout-profile[data-fas="upplosning"] > p{
+  animation:prSjunk var(--fas-upplosning-tid,600ms) ease-in both}
+.gifter-layout-profile[data-fas="upplosning"] .gifter-orbit{
+  animation:prRingSjunk var(--fas-upplosning-tid,600ms) ease-in both}
+.gifter-layout-profile[data-fas="upplosning"] .gifter-level-badge{
+  animation:prBrickaSjunk var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-profile[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

@@ -157,6 +157,29 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // "Classic Rise & Pop". Profile ar renderarens DEFAULT (media.js:578,
+      // `w.gifterLayout||'profile'`) — alltsa den modell varje anvandare far som aldrig
+      // oppnar modellvaljaren. Premissen ar darfor medvetet den lugnaste av nio: en mjuk men
+      // snabb uppstigning av hela widgeten, sedan namnet fram, sedan brickan i en pop.
+      //
+      // OBS att posten tander koreografi pa varje gifter-widget UTAN uttrycklig layout.
+      // arLayout() defaultar redan till 'profile' av precis det skalet.
+      //
+      // decodeTimeoutMs 500 (standard) av sidebadges skal: profile TONAR IN portrattet, det
+      // avslojar det inte. Grinden blir da en strukturell no-op — uppbyggnaden pa 500 ms
+      // tacker redan hela avkodningsfonstret — och det ar harmlost for en intoning.
+      // Ett forsta forsok slackte dessutom portrattet i fas 1 "sa grinden har nagot att
+      // skydda". Prov G1 fallde det: ett ankare pa opacity 0 ar inget ankare. Portrattet
+      // arver nu ringens opacitet i stallet, och regeln "hall portrattet dolt i fas 1"
+      // galler bara modeller som AVSLOJAR det (reveal, flip, duo).
+      modell: 'profile',
+      passar: arLayout('profile'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      decodeTimeoutMs: DECODE_TIMEOUT_MS,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
