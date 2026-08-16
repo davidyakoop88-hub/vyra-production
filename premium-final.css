@@ -1785,3 +1785,84 @@
 @media (prefers-reduced-motion: reduce){
   .fan-layout-stack[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   FAN LEVEL UP · MODELL 3 · RIBBON — "Valkomnandet"
+   =================================================================================================
+
+   PREMISSEN AR DESIGNENS EGEN: POP -> UTRULLNING -> TEXT. Avataren poppar fram
+   (fbProfilePop, scale .6 -> 1) och ett band rullas ut under den (frbUnfurl, scaleX .3 -> 1)
+   for att namnge personen. Modellen heter Welcome Ribbon och meddelandet ar "TROGEN
+   SUPPORTER" — det ar ett valkomnande, inte en ankomst. Keyframsen ateranvands; bara klockan
+   byts, som i stack.
+
+   FAS 1 AR TOM. Avataren poppar fran scale(.6) — den maste ANLANDA, inte forhandsvisas. Och
+   till skillnad fran hero och stack finns det inget baslager att visa i stallet: uppmatt fore
+   tandning har ribbon NOLL levande animationer.
+
+   DARFOR HAR RIBBON ETT EGET VILOLAGER, som ingen tidigare Fan-modell har. Hero och stack far
+   sin hyllning buren av fanLevelPop (hjartbilden) och fanRing (halo-ringen). Ribbon har
+   varken burst eller nivapill — bada display:none!important — sa ett tomt fas 3 blir DOTT i
+   upp till sex sekunder, inte aterhallet. `frbAndas` ar medvetet mycket lagt (1,2 % skala),
+   ligger pa .fan-profile och INTE pa roten eller bandet, och gar bara i hyllningen.
+   Prov 18g vaktar bada hallen: att det finns i hyllningen, och att det INTE finns i ljus
+   eller oppna — smyger det in i oppningen blir entren svajig och inget annat prov marker det.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms), proportionell via calc() av samma skal som i stack —
+   keyframsen har bara 0 % och 100 %, sa staggern maste ligga i duration + delay:
+     avataren   0      -> 42,2 %   (0-380 ms av 900)
+     bandet    28,9 %  -> 73,3 %   (260-660)
+     texten    57,8 %  -> 95,6 %   (520-860)
+   Overlappet mellan pop och utrullning ar designens eget (150 ms i originalet), skalat.
+
+   `.fan-burst img` HAR EN DOD fanLevelPop — bursten ar display:none!important har. Ingen
+   fas-regel far rikta sig mot den; F2 faller annars. */
+
+/* ---- FAS 1 · LJUS: tom scen ----------------------------------------------------------------- */
+.fan-layout-ribbon.fan-active[data-fas="ljus"] .fan-profile,
+.fan-layout-ribbon.fan-active[data-fas="ljus"] .fan-ribbon{animation:none;opacity:0}
+.fan-layout-ribbon[data-fas="ljus"] > h2,
+.fan-layout-ribbon[data-fas="ljus"] > h3,
+.fan-layout-ribbon[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: pop -> utrullning -> text ------------------------------------------------ */
+/* KURVORNA AR VARA, KEYFRAMSEN AR DESIGNENS — och bytet var inte kosmetik. UPPMATT med
+   originalkurvorna: poppen hade 109 % av rorelsen gjord vid halva tiden (den hann forbi sin
+   egen overskjutning, 0,605 -> 1,035 -> 1) och utrullningen 97 % (0,31 -> 0,98 -> 1). Bada
+   var i praktiken over innan de hann synas. `cubic-bezier(.34,1.56,.64,1)` ar samma kurva som
+   snappade stacks fall.
+   Poppen far studsen kvar via (.5,0,.5,1.25); bandet far en svagare studs (.5,0,.5,1.15) sa
+   det SPANNS AT i slutet i stallet for att flyta ut. */
+.fan-layout-ribbon.fan-active[data-fas="oppna"] .fan-profile{
+  animation:fbProfilePop calc(var(--fas-oppna-tid,900ms) * .422)
+            cubic-bezier(.5,0,.5,1.25) both}
+.fan-layout-ribbon.fan-active[data-fas="oppna"] .fan-ribbon{
+  animation:frbUnfurl calc(var(--fas-oppna-tid,900ms) * .444)
+            cubic-bezier(.5,0,.5,1.15) calc(var(--fas-oppna-tid,900ms) * .289) both}
+
+@keyframes frbTextIn{
+  from{opacity:0;transform:translateY(10px)}
+  to  {opacity:1;transform:translateY(0)}}
+.fan-layout-ribbon[data-fas="oppna"] > h2,
+.fan-layout-ribbon[data-fas="oppna"] > h3,
+.fan-layout-ribbon[data-fas="oppna"] > p{
+  animation:frbTextIn calc(var(--fas-oppna-tid,900ms) * .378)
+            linear calc(var(--fas-oppna-tid,900ms) * .578) both}
+
+/* ---- FAS 3 · HYLLNING: modellens enda vilolager ---------------------------------------------- */
+@keyframes frbAndas{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+.fan-layout-ribbon[data-fas="hyllning"] .fan-profile{
+  animation:frbAndas 2.8s ease-in-out infinite both}
+
+/* ---- FAS 4 · UPPLOSNING: modellens egen exit, plus texten ------------------------------------ */
+@keyframes frbTextUt{
+  from{opacity:1;transform:translateY(0)}
+  to  {opacity:0;transform:translateY(6px)}}
+.fan-layout-ribbon[data-fas="upplosning"] > h2,
+.fan-layout-ribbon[data-fas="upplosning"] > h3,
+.fan-layout-ribbon[data-fas="upplosning"] > p{
+  animation:frbTextUt var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .fan-layout-ribbon[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

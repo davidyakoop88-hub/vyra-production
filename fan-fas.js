@@ -88,6 +88,27 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_FAN,
     },
+    {
+      // "Valkomnandet". Dramaturgin ar designens egen — POP -> UTRULLNING -> TEXT: avataren
+      // poppar fram (fbProfilePop, scale .6 -> 1), och ett band rullas ut under den
+      // (frbUnfurl, scaleX .3 -> 1) for att namnge personen. Modellen heter Welcome Ribbon.
+      // Keyframsen ateranvands; bara klockan byts, som i stack.
+      //
+      // RIBBON AR FORSTA FAN-MODELLEN UTAN INFINITA BASLAGER. Uppmatt fore tandning: noll
+      // levande animationer. Hero och stack far sin hyllning buren av fanLevelPop och fanRing
+      // — ribbon har ingenting, sa den far ett eget vilolager. Prov 18g vaktar att det ligger
+      // i HYLLNINGEN och ingen annanstans.
+      //
+      // Ankaret ar sjalvklart har: modellen har varken .fan-burst eller .fan-level-pill (bada
+      // display:none!important), sa avataren ar dess ENDA bild — och dess enda dynamiska.
+      // Tak 900 for att avataren halls mork i fas 1 och poppar fram i fas 2, alltsa avslojas.
+      modell: 'ribbon',
+      passar: arLayout('ribbon'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.fan-profile img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_FAN,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget. */
