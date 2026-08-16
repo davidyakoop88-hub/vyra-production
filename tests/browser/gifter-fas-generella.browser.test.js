@@ -28,9 +28,24 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
   '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp4': 'video/mp4',
   '.mp3': 'audio/mpeg', '.json': 'application/json', '.woff2': 'font/woff2' };
 
+/* En 1x1-pixel som kan serveras med godtycklig fordrojning. G3 behover kunna gora EN bild
+   langsam i taget for att visa vilket element grinden faktiskt vantar pa. */
+const PIXEL = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64');
+
 function servera() {
   const server = http.createServer((req, res) => {
-    const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '');
+    const url = new URL(req.url, 'http://x');
+    const rel = decodeURIComponent(url.pathname).replace(/^\/+/, '');
+    if (rel === 'bild.png') {
+      const ms = Number(url.searchParams.get('ms')) || 0;
+      setTimeout(() => {
+        res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store' });
+        res.end(PIXEL);
+      }, ms);
+      return;
+    }
     const fil = path.join(ROOT, rel);
     if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
       res.writeHead(404); res.end('nej'); return;
@@ -106,8 +121,9 @@ test('G1. varje koreograferad modells decodeAnkare pekar pa ett synligt element'
         await new Promise(r => setTimeout(r, 40));
       await new Promise(r => setTimeout(r, 400));
 
-      // Ankaret ar inte utlast ur tabellen (den exporterar inte valjaren), sa provet
-      // kontrollerar bada kandidaterna och rapporterar vilken som duger.
+      // Ankaret lases nu ur tabellen via G.ankare(layout). Bada kandidaterna mats anda, dels
+      // for att felmeddelandet ska kunna saga vilken som HADE dugt, dels for att skilja
+      // "modellen deklarerar fel ankare" fran "ingen av dem syns".
       const matt = sel => {
         const el = box.querySelector(sel);
         if (!el) return { finns: false, synlig: false };
@@ -117,7 +133,10 @@ test('G1. varje koreograferad modells decodeAnkare pekar pa ett synligt element'
                          Number(s.opacity) > 0.01 && rect.width > 1 && rect.height > 1,
                  matt: Math.round(rect.width) + 'x' + Math.round(rect.height) };
       };
-      ut.push({ layout, orbit: matt('.gifter-orbit img'), botten: matt('.gifter-bottom-profile img') });
+      const deklarerat = typeof G.ankare === 'function' ? G.ankare(layout) : undefined;
+      ut.push({ layout, deklarerat,
+                deklaratMatt: typeof deklarerat === 'string' ? matt(deklarerat) : null,
+                orbit: matt('.gifter-orbit img'), botten: matt('.gifter-bottom-profile img') });
     }
     return { fel: null, koreograferade, rader: ut };
   });
@@ -129,11 +148,31 @@ test('G1. varje koreograferad modells decodeAnkare pekar pa ett synligt element'
 
   for (const u of r.rader) {
     assert.equal(u.fel, undefined, `${u.layout}: ${u.fel}`);
+
+    // Kontrollmatning FORST: finns det overhuvudtaget ett synligt portratt i modellen?
+    // Utan den skulle nasta pastaende inte kunna skilja "fel ankare valt" fran
+    // "modellen har inget portratt alls", och felmeddelandet hade skickat felsokningen fel.
     assert.ok(u.orbit.synlig || u.botten.synlig,
       `Modell ${u.layout} har inget synligt portratt att grinda fas 2 pa: ` +
       `.gifter-orbit img ${u.orbit.finns ? '(slackt)' : '(saknas)'}, ` +
       `.gifter-bottom-profile img ${u.botten.finns ? '(slackt)' : '(saknas)'}. ` +
       `Decode-grinden skulle vakta ingenting.`);
+
+    // OCH att det ar det DEKLARERADE ankaret som syns. Den forra versionen godtog att
+    // NAGON av kandidaterna syntes, sa en modell kunde deklarera `.gifter-orbit img` medan
+    // bara bottenportrattet var synligt — grinden hade da vantat pa ett element som aldrig
+    // renderas, och provet hade varit gront. Det ar precis den fallan `number` star i.
+    assert.equal(typeof u.deklarerat, 'string',
+      `VyraGifterFas.ankare("${u.layout}") gav ${JSON.stringify(u.deklarerat)} — tabellen ` +
+      'exporterar inte sitt decodeAnkare, sa provet kan inte kontrollera VILKET element ' +
+      'grinden vaktar. Lagg till ankare() i exporten.');
+    assert.ok(u.deklaratMatt && u.deklaratMatt.synlig,
+      `Modell ${u.layout} deklarerar decodeAnkare "${u.deklarerat}" men det elementet ` +
+      `${u.deklaratMatt && u.deklaratMatt.finns ? 'ar SLACKT' : 'FINNS INTE'} i den tanda ` +
+      `widgeten. Synliga kandidater: ` +
+      `${[u.orbit.synlig && '.gifter-orbit img', u.botten.synlig && '.gifter-bottom-profile img']
+        .filter(Boolean).join(', ') || 'inga'}. ` +
+      'Grinden vaktar ett element som aldrig renderas — fas 2 oppnar mot en tom yta.');
   }
 });
 
@@ -223,3 +262,149 @@ test('G2. fas-CSS finns for varje koreograferad modell och riktar sig aldrig mot
     }
   }
 });
+
+// ---- G3. Grinden vantar pa MODELLENS EGET ankare, inte pa en hardkodad valjare ----------------
+// G1 ar strukturell: den sager att det deklarerade ankaret SYNS. Den kan inte saga att grinden
+// faktiskt tittar dit. Skillnaden spelar roll i det ogonblick en modell behover ett annat
+// portratt an de ovriga — `number` slacker `.gifter-orbit img` och maste peka pa
+// `.gifter-bottom-profile img`. Vore uppslaget hardkodat nagonstans skulle G1 vara gron medan
+// fas 2 anda oppnade mot en oavkodad bild.
+//
+// METOD: gor EN bild langsam i taget.
+//   A) langsam bild i det DEKLARERADE ankaret  -> fas 2 ska HALLAS TILLBAKA
+//   B) langsam bild i den ANDRA kandidaten     -> fas 2 ska INTE hallas tillbaka
+// Bagge behovs. Bara A hade passerat aven med en hardkodad valjare som rakade peka ratt for
+// de modeller som provas i dag; det ar B som visar att grinden inte vaktar nagot annat.
+//
+// Provet kan bara mata modeller dar grinden overhuvudtaget KAN binda, alltsa dar
+// decodeTak > anticipationMs. Med tak 500 mot en ljusfas pa 500 tacker uppbyggnaden redan hela
+// avkodningsfonstret och grinden ar en strukturell no-op — da finns ingen skillnad att mata.
+test('G3. decode-grinden vantar pa modellens egna decodeAnkare, inte pa en hardkodad valjare',
+  { skip, timeout: 300000 }, async () => {
+    const page = await studion();
+    const r = await page.evaluate(async () => {
+      const G = window.VyraGifterFas;
+      if (!G || !Array.isArray(G.modeller)) return { fel: 'VyraGifterFas.modeller saknas' };
+      if (typeof G.ankare !== 'function' || typeof G.decodeTak !== 'function')
+        return { fel: 'VyraGifterFas exporterar inte ankare()/decodeTak() — provet kan inte ' +
+                      'veta vilket element modellen sager sig vakta, eller om grinden kan binda' };
+
+      const KANDIDATER = ['.gifter-orbit img', '.gifter-bottom-profile img'];
+      const ut = [];
+
+      for (const layout of G.modeller) {
+        const tider = G.tider(layout) || {};
+        const tak = G.decodeTak(layout);
+        const ankare = G.ankare(layout);
+        if (!(tak > (tider.anticipationMs || 0))) { ut.push({ layout, hoppad: true, tak, tider }); continue }
+        const andra = KANDIDATER.find(s => s !== ankare);
+        if (!andra) { ut.push({ layout, fel: `okand ankarvaljare "${ankare}"` }); continue }
+
+        /* KON MASTE VARA LEDIG INNAN VARJE KORNING — annars mater provet fel sak.
+           `clear()` tommer de VANTANDE men slapper inte den SPELANDE sloten, och slotten ar
+           gifterDuration + koreografins langd. Andra korningens trigger lag darfor och vantade
+           i ~3 s medan den langsamma bilden i lugn och ro laddades klart: nar sekvensen val
+           startade var bilden REDAN AVKODAD och grinden slapp igenom vid 508 ms. Det sag ut
+           som en grind som inte vaktade. Reveal (forsta modellen, tom ko) matte ratt, flip och
+           duo fel — samma signatur som en cache, vilket forst ledde mig fel.
+           Proben har lagsta prioritet och kor darfor forst nar allt annat slappt sloten; att
+           den KOR ar beviset. Sedan vantas dess egen slot (kon haller minst 800 ms) ut.
+           OBS DURATION 1, INTE 0. Kon slapper sloten efter `Math.max(800, job.duration||5000)`
+           (runtime-controls.js:38), och `0||5000` ar 5000 — en probe med duration 0 haller
+           alltsa sloten i FEM SEKUNDER. Med det felet startade sekvensen forst vid 4089 ms
+           medan bilden var klar vid 820, sa grinden slapp igenom vid 504 ms och det sag ut som
+           att den inte vaktade. Uppmatt med scratchpad/mat-grind.js. */
+        const vantaPaLedigKo = async () => {
+          let kord = false;
+          window.VyraAlertQueue.push(() => { kord = true }, 1, -100);
+          const deadline = performance.now() + 15000;
+          while (performance.now() < deadline && !kord)
+            await new Promise(r => setTimeout(r, 20));
+          await new Promise(r => setTimeout(r, 900));
+          return kord;
+        };
+
+        const kor = async (langsamPa) => {
+          state.widgets.length = 0;
+          const g = window.VyraWidgets.create('catalog:gifterlevel:' + layout);
+          g.x = 40; g.y = 40; g.gifterDuration = 1;
+          state.widgets.push(g); selected = null; render();
+          for (let i = 0; i < 90 && !document.querySelector(`[data-id="${g.id}"]`); i++)
+            await new Promise(r => requestAnimationFrame(r));
+          const box = document.querySelector(`[data-id="${g.id}"]`);
+          if (!box) return { fel: layout + ' renderades inte' };
+
+          /* VARJE HAMTNING MASTE VARA UNIK. Forsta forsoket ateranvande samma URL for alla
+             modeller: reveal (den forsta) matte ratt, men flip och duo fick en REDAN AVKODAD
+             bild ur webblasarens minnescache och oppnade vid 510 ms — det sag ut som en grind
+             som inte vaktade, fast det var cachen. `cache-control: no-store` racker inte;
+             den styr HTTP-lagret, inte dokumentets avkodade bilder. */
+          for (const sel of KANDIDATER) {
+            const el = box.querySelector(sel);
+            if (!el) return { fel: `${layout}: ${sel} finns inte i markupen` };
+            const ms = sel === langsamPa ? 800 : 60;
+            el.src = `/bild.png?ms=${ms}&n=${encodeURIComponent(layout + ':' + langsamPa + ':' + sel)}`;
+          }
+
+          /* MAT FRAN LJUSFASENS BORJAN, inte fran triggern. De tva korningarna ligger i
+             foljd och kon slapper inte sin spelande slot bara for att clear() anropas —
+             forsta forsoket matte 2695 ms och sag ut som en grind som holl kvar, medan det
+             i sjalva verket var run A:s koslot (gifterDuration 1 s + koreografins 2 s).
+             Avstandet ljus -> oppna ar immunt mot allt som hander fore tandningen. */
+          let ljus = null, oppna = null;
+          new MutationObserver(() => {
+            const f = box.getAttribute('data-fas');
+            if (f === 'ljus' && ljus === null) ljus = performance.now();
+            if (f === 'oppna' && oppna === null && ljus !== null)
+              oppna = Math.round(performance.now() - ljus);
+          }).observe(box, { attributes: true, attributeFilter: ['data-fas'] });
+
+          if (window.VyraAlertQueue) window.VyraAlertQueue.clear();
+          window.triggerGifterLevelUp({ __test: true, name: 'Prov', level: 12 });
+
+          // ABSOLUT grans tagen FORE loopen, och tilltagen sa den rymmer koslotten.
+          const deadline = performance.now() + 12000;
+          while (performance.now() < deadline && oppna === null)
+            await new Promise(r => setTimeout(r, 10));
+          return { oppna };
+        };
+
+        const ledigA = await vantaPaLedigKo();
+        const a = await kor(ankare);
+        const ledigB = await vantaPaLedigKo();
+        const b = await kor(andra);
+        ut.push({ layout, ankare, andra, tak, anticipation: tider.anticipationMs,
+                  aOppna: a.oppna, bOppna: b.oppna, ledigA, ledigB, fel: a.fel || b.fel });
+      }
+      return { fel: null, rader: ut };
+    });
+    await page.close();
+
+    assert.equal(r.fel, null, r.fel);
+    const matta = r.rader.filter(u => !u.hoppad);
+    // Utan den har raden hade provet varit tyst gront den dag alla modeller far tak 500.
+    assert.ok(matta.length > 0,
+      'ingen modell har decodeTak > anticipationMs, sa grinden kan inte binda nagonstans och ' +
+      'provet har inte matt nagonting. Hoppade: ' +
+      JSON.stringify(r.rader.map(u => `${u.layout} (tak ${u.tak})`)));
+
+    for (const u of matta) {
+      assert.equal(u.fel, undefined, `${u.layout}: ${u.fel}`);
+      // Kontrollmatning: bekraftar att kon faktiskt var ledig fore bada korningarna. Utan den
+      // kan ett rott utfall lika garna vara kolatens som en felvaktande grind.
+      assert.ok(u.ledigA && u.ledigB,
+        `${u.layout}: kon blev aldrig ledig fore korningarna (A=${u.ledigA}, B=${u.ledigB}) — ` +
+        'matningen skulle inte kunna skilja grindens fordrojning fran koslottens');
+      assert.ok(u.aOppna != null && u.bOppna != null,
+        `${u.layout}: fas 2 kom aldrig (A=${u.aOppna}, B=${u.bOppna})`);
+      const grans = (u.anticipation + u.tak) / 2;   // 700 ms vid 500/900
+      assert.ok(u.aOppna > grans,
+        `${u.layout}: en LANGSAM bild i det deklarerade ankaret "${u.ankare}" holl inte ` +
+        `tillbaka fas 2 — den oppnade vid ${u.aOppna} ms (uppbyggnaden ar ${u.anticipation} ms). ` +
+        'Grinden vaktar alltsa inte det element modellen sager.');
+      assert.ok(u.bOppna < grans,
+        `${u.layout}: en langsam bild i "${u.andra}" — som modellen INTE deklarerat — holl ` +
+        `tillbaka fas 2 till ${u.bOppna} ms. Grinden vaktar ett element den inte borde, ` +
+        'sannolikt en hardkodad valjare.');
+    }
+  });

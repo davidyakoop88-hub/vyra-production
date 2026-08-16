@@ -312,6 +312,25 @@
         if (MODELLER[i].modell === modell) return MODELLER[i].tider;
       return null;
     },
+    /* Grinden har ALLTID slagit upp sitt ankare per modell (`bild:` i koreografera nedan) —
+       det som saknades var en vag for proven att lasa VILKET element modellen sager sig vakta.
+       Utan den kunde prov G1 bara konstatera att NAGON av de tva portrattkandidaterna syntes,
+       och en modell som deklarerade fel av dem hade sluppit igenom med gron vakt medan fas 2
+       oppnade mot en oavkodad bild. G3 anvander bada accessorerna for att visa att grinden
+       faktiskt vantar pa det deklarerade elementet och inte pa nagot annat. */
+    ankare: function (modell) {
+      for (var i = 0; i < MODELLER.length; i++)
+        if (MODELLER[i].modell === modell) return MODELLER[i].decodeAnkare;
+      return null;
+    },
+    // Samma tak som koreografera anvander, inklusive fallbacken — annars kan ett prov rakna
+    // pa ett annat varde an motorn far.
+    decodeTak: function (modell) {
+      for (var i = 0; i < MODELLER.length; i++)
+        if (MODELLER[i].modell === modell)
+          return MODELLER[i].decodeTimeoutMs || DECODE_TIMEOUT_MS;
+      return null;
+    },
     // Antal wrappers VI har lagt pa triggern. Ska vara 1 oavsett antal modeller — det ar hela
     // poangen med tabellen, och prov 7f bevisar det. Raknas fran var egen wrapper, inte fran
     // window.triggerGifterLevelUp, eftersom kon ligger ovanpa oss och inte gar att ga bakat genom.
