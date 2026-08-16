@@ -58,7 +58,13 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-const LAYOUTER = ['stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'];
+/* `hero` ar renderarens DEFAULT (`w.fanLayout||'hero'`) och basdesignen. Den saknades i
+   fabrikens tabell och gick darfor varken att skapa eller prova — trots att den var det man
+   fick utan aktivt val. Nu ar den med.
+   Listan ar fortfarande handskriven, och det ar en kand svaghet: den kan glida isar fran
+   fabrikens tabell utan att nagot sager till. Provet "layoutlistan matchar fabrikens tabell"
+   langst ned stanger den luckan — samma losning som gjorde prov 7d biconditionellt. */
+const LAYOUTER = ['hero', 'stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'];
 
 async function mat(layout) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -110,7 +116,29 @@ async function mat(layout) {
   return m;
 }
 
-// ---- Krav som galler ALLA sju -----------------------------------------------------------------
+// ---- Listan far inte glida isar fran fabrikens tabell -----------------------------------------
+// Utan den har vakten kan en ny modell laggas till i widget-factory.js och tyst sta oprovad,
+// eller en borttagen modell ligga kvar har och prova nagot som inte finns. Bada riktningarna.
+test('layoutlistan i provet matchar fabrikens fanlevel.layout-tabell', { skip }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+  const fabriken = await page.evaluate(() => {
+    const V = window.VyraWidgets;
+    if (!V || typeof V.variants !== 'function') return null;
+    return Object.keys(V.variants('fanlevel.layout'));
+  });
+  await page.close();
+  assert.ok(Array.isArray(fabriken) && fabriken.length > 0,
+    'kunde inte lasa fabrikens fanlevel.layout-tabell — exponerar VyraWidgets nagon variants()?');
+  assert.deepEqual([...LAYOUTER].sort(), [...fabriken].sort(),
+    `provets LAYOUTER och fabrikens tabell har glidit isar.\n  provet:   ${JSON.stringify(LAYOUTER)}` +
+    `\n  fabriken: ${JSON.stringify(fabriken)}`);
+});
+
+// ---- Krav som galler ALLA atta ----------------------------------------------------------------
 for (const layout of LAYOUTER) {
   test(`${layout}: "FAN LEVEL UP" syns`, { skip }, async () => {
     const m = await mat(layout);

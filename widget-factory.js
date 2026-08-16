@@ -76,7 +76,11 @@
     'fanlevel.theme': {gold:['#ff8a20','#ffd36b'],neon:['#ff3ac8','#a74cff'],ice:['#29cfff','#b9f5ff'],emerald:['#35e783','#baffd4'],fire:['#ff3c24','#ffb52d'],sakura:['#ff6fa8','#ffd9e8'],storm:['#6d7bff','#d6dbff'],royal:['#c79bff','#f0e2ff']},
     // The seven layouts from the Fan Level reference board. Theme remains an editor choice;
     // layout controls structure and motion, so a created catalog widget is never just a recolour.
-    'fanlevel.layout': {stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    // `hero` ar renderarens DEFAULT (`w.fanLayout||'hero'`, media.js:546) och basdesignen —
+    // basen `.fan-level-up` har 18 regler, sa modellen behover ingen egen modifierare. Den
+    // saknades anda i tabellen, sa fabriken kastade "Okand fan level-modell" och den gick inte
+    // att skapa eller prova trots att den var det man fick utan aktivt val.
+    'fanlevel.layout': {hero:'Stor Level Up',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
