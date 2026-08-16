@@ -1468,3 +1468,110 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-number[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   MODELL 8 · ORBITLEVEL — "Banan"   (den nionde och sista modellen)
+   =================================================================================================
+
+   PREMISS: scenen snurrar redan. Uppmatt FORE tandning kor ringen
+   (`.gifter-orbit > i:nth-child(1)`, display:block, egen opacitet 1) `gOrb` med
+   iteration-count infinite. Widgeten ar opacity:0 / visibility:hidden, sa rorelsen ar OSYNLIG
+   — men den startar aldrig om. Alerten ar alltsa inte "nagot borjar", den ar "vi tonar in i
+   nagot som redan gar, och medaljongen gar in i banan".
+
+   DARFOR NEUTRALISERAS gOrbitSpinIn.
+   Vid tandning lagger `.gifter-active` en KONKURRERANDE shorthand pa samma ring:
+     .gifter-layout-orbitlevel.gifter-active .gifter-orbit>i:nth-child(1)
+       {animation:gOrbitSpinIn .7s ease-out both, gOrb 7s linear infinite .7s}
+   Den ersatter ringens eviga rotation med ett 720-graderssnurr och startar sedan om den. Det
+   ar precis det monstret premissen sager nej till. Vi deklarerar om shorthanden med ENBART
+   gOrb — bada ligger i SAMMA shorthand, sa den ena gar inte att ta bort utan att skriva om
+   den andra. Prov 15f mater det pa animationName.
+
+   TVA MATNINGAR SOM AVGJORDE FORMEN:
+
+     1. `.gifter-diamond-stack` AGER `gl-orbit` (radie 38 px, infinit). En fas-regel som satter
+        `animation` pa DEN skulle ersatta hela shorthanden och doda banan. Medaljongen
+        koreograferas darfor via sin FORALDER `.gifter-diamond-row`, som saknar animation helt.
+        En skala pa foraldern skalar dessutom banans radie — orbiten oppnar sig nar medaljongen
+        gar in i den, vilket ar gratis och ratt. Prov 15g vaktar att banan gar obrutet, och
+        mater `startTime`: en omstart ger ett nytt varde aven om namnet ser likadant ut.
+
+     2. SPECIFICITET. Bade `gl-ring-in` (pa .gifter-orbit) och ringens shorthand kommer fran
+        regler med `.gifter-active` (0,3,0 respektive 0,4,1). Ett vanligt `[data-fas]`-scope
+        (0,2,0) hade FORLORAT och neutraliseringen blivit tyst verkningslos. Darfor bar
+        neutraliseringarna nedan bade `.gifter-active` OCH `[data-fas]`.
+
+   VI BEHALLER MODELLENS EGNA EXITER. `.gifter-exit` ger redan `gl-spiral` pa medaljongen
+   (spiralar inat och krymper) och `gl-shrink` pa orbiten. Bada ar ratt form for "banan
+   kollapsar", sa fas 4 lagger bara till att TEXTEN lamnar. De gar pa `var(--ged)` =
+   gifterExitDuration (500 ms som standard) medan fasen ar 600 ms, alltsa klara ~100 ms fore
+   fasslutet — medvetet, inte ett glapp att laga.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms):
+     medaljongen   300 -> 650 ms  = 33,33 % -> 72,22 %
+     texten        350 -> 860 ms  = 38,89 % -> 95,56 %
+   Medaljongen gar in i banan FORE texten — prov 15f mater ordningen.
+
+   INGET RIKTAS MOT `.gifter-bottom-profile`: den ar display:none i orbitlevel och prov G2
+   faller om en fas-regel spenderar rorelse pa den. */
+
+/* ---- NEUTRALISERINGAR (galler alla faser) -------------------------------------------------- */
+/* gl-ring-in pa orbiten. Utan `.gifter-active` i selektorn forlorar den har raden kaskaden och
+   scale-in:en hade kommit tillbaka i fas 2, mitt i sekvensen. */
+.gifter-layout-orbitlevel.gifter-active[data-fas] .gifter-orbit{animation:none}
+/* Ringen: samma shorthand, men utan gOrbitSpinIn. gOrb behalls exakt som basdesignen har den. */
+.gifter-layout-orbitlevel.gifter-active[data-fas] .gifter-orbit > i:nth-child(1){
+  animation:gOrb 7s linear infinite}
+
+/* ---- FAS 1 · LJUS: scenen tonar in ur morkret, redan i rorelse ----------------------------- */
+/* Ren opacitet, ingen transform: ringen roterar och medaljongen kretsar, och koreografin ska
+   inte lagga en andra rorelse ovanpa dem. */
+@keyframes obScenIn{from{opacity:0}to{opacity:1}}
+.gifter-layout-orbitlevel.gifter-active[data-fas="ljus"] .gifter-orbit{
+  animation:obScenIn var(--fas-ljus-tid,500ms) linear both}
+.gifter-layout-orbitlevel[data-fas="ljus"] .gifter-diamond-row,
+.gifter-layout-orbitlevel[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-orbitlevel[data-fas="ljus"] > h2,
+.gifter-layout-orbitlevel[data-fas="ljus"] > h3,
+.gifter-layout-orbitlevel[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: medaljongen gar in i banan, sedan monteras texten ---------------------- */
+/* Skalan ligger pa RADEN, aldrig pa stacken — stacken ager gl-orbit. */
+@keyframes obMedaljongIn{
+  0%,33.33%{opacity:0;transform:scale(.6)}
+  72.22%   {opacity:1;transform:scale(1)}
+  100%     {opacity:1;transform:scale(1)}}
+/* Texten: varje keyframe satter explicit sin transform, sa `linear` ger halva rorelsen vid
+   halva tiden och prov 15f kan rakna pa den. */
+@keyframes obMontera{
+  0%,38.89%{opacity:0;transform:translateY(12px)}
+  95.56%   {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+
+.gifter-layout-orbitlevel[data-fas="oppna"] .gifter-diamond-row{
+  animation:obMedaljongIn var(--fas-oppna-tid,900ms) linear both}
+.gifter-layout-orbitlevel[data-fas="oppna"] .gifter-level-badge,
+.gifter-layout-orbitlevel[data-fas="oppna"] > h2,
+.gifter-layout-orbitlevel[data-fas="oppna"] > h3,
+.gifter-layout-orbitlevel[data-fas="oppna"] > p{
+  animation:obMontera var(--fas-oppna-tid,900ms) linear both}
+
+/* ---- FAS 3 · HYLLNING: inget nytt vilolager ------------------------------------------------ */
+/* Modellen har redan mest rorelse av alla nio — ringen roterar (gOrb 7 s) och medaljongen
+   kretsar (gl-orbit 3,4 s). Ett andetag till hade blivit stok. Att INTE lagga nagot har ar ett
+   beslut, inte en lucka. */
+
+/* ---- FAS 4 · UPPLOSNING: texten lamnar, banan kollapsar med modellens egna exiter ---------- */
+@keyframes obUt{
+  0%  {opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(10px)}}
+.gifter-layout-orbitlevel[data-fas="upplosning"] .gifter-level-badge,
+.gifter-layout-orbitlevel[data-fas="upplosning"] > h2,
+.gifter-layout-orbitlevel[data-fas="upplosning"] > h3,
+.gifter-layout-orbitlevel[data-fas="upplosning"] > p{
+  animation:obUt var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-orbitlevel[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

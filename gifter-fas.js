@@ -209,6 +209,26 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // "Banan" — den nionde och sista. Uppmatt FORE tandning kor ringen
+      // (`.gifter-orbit > i:nth-child(1)`, display:block, egen opacitet 1) redan `gOrb` med
+      // iteration-count infinite. Widgeten ar opacity:0/visibility:hidden, sa rorelsen ar
+      // osynlig — men den startar aldrig om. Scenen snurrar alltsa redan; alerten ar
+      // ogonblicket da medaljongen gar in i banan.
+      //
+      // decodeTimeoutMs ar standardens 500, INTE 900 som forst foreslogs. Premissen gor att
+      // portrattet tonar in redan i FAS 1 tillsammans med scenen, och duos matning ar entydig:
+      // grinden haller bara tillbaka fas 2, sa ett portratt som visas i fas 1 kan den inte
+      // skydda alls. Ett hogre tak hade sett bra ut i tabellen utan att gora nagot. Grinden ar
+      // en medveten no-op har, precis som pa sidebadge, och prov G1 vaktar anda att ankaret ar
+      // ett synligt element. Foljden ar att G3 hoppar over orbitlevel — korrekt, inte ett hal.
+      modell: 'orbitlevel',
+      passar: arLayout('orbitlevel'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-orbit img',
+      decodeTimeoutMs: DECODE_TIMEOUT_MS,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
