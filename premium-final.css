@@ -1866,3 +1866,148 @@
 @media (prefers-reduced-motion: reduce){
   .fan-layout-ribbon[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   FAN LEVEL UP · MODELL 4 · LOYALTY — "Inringningen"
+   =================================================================================================
+
+   PREMISSEN STAR I DESIGNENS EGET ANIMATIONSNAMN: flRingDraw. Ringen ar en segmenterad
+   lojalitetsring med en GNISTA i ::after (11x11, box-shadow 22 px blur / 8 px spread) uppe till
+   hoger. Gnistan ar barn till det roterande elementet, sa den FARDAS ett kvarts varv medan ringen
+   vrids -90deg -> 0. Gnistan ar pennspetsen; ringen ritas. Avataren anlander, ringen ritas RUNT
+   personen, och brickan stamplas som sigill.
+
+   FAS 1 AR TOM, som i stack och ribbon. Avataren poppar fran scale(.6) och maste ANLANDA, inte
+   forhandsvisas. Ringen borjar ritas 200 ms in i fas 2, alltsa MEDAN avataren landar (0-300) —
+   ringen sluts runt nagon som ar dar, vilket ar hela premissen.
+
+   EN REN `animation:none` RACKER INTE I FAS 1. Alla tre entreerna bar `both`, och det ar
+   FYLLNINGEN som haller elementen dolda: tas animationen bort slapps de till sitt vilolage, som
+   ar fullt synligt. Darfor `animation:none;opacity:0` — samma idiom som ribbon.
+
+   LOYALTY HAR INGA INFINITA BASLAGER — andra Fan-modellen efter ribbon, uppmatt i bada
+   riktningar: fore tandning "inga levande animationer", och tradsvepet efter tandning ger exakt
+   de tre entreerna. `.fan-burst img` bar `fanLevelPop 2s` i beraknad stil men elementet ar
+   display:none, sa animationen existerar inte. Ett tomt fas 3 blir alltsa DOTT i upp till sex
+   sekunder, inte aterhallet. Modellen far darfor `flPuls` pa .fan-ring — sigillet fortsatter lysa.
+
+   RINGEN FAR INTE OVERSKJUTA, och det ar ett TAK och ingen smakfraga. Den ar 102x102 i en
+   80x80-ruta och ligger 3 px ovanfor widgetens overkant redan i vila. Geometrin ar uppmatt:
+   ringens mitt ligger vid y = 48 och den ar 102 px hog, alltsa blir malad topp 48 - 51*s:
+       skala 1,00 -> -3,0 px       1,06 -> -6,1 px       1,12 -> -9,1 px
+   Ringen far darfor den studsfria kurvan (.5,.02,.5,.98). Prov 19f vaktar taket i VARJE
+   matpunkt, inte bara i slutet. Rigg: scratchpad/mat-loyalty-ring2.js.
+
+   KURVBYTET MED SIFFROR (rigg: scratchpad/mat-loyaltykurvor.js). Alla fyra rorelser snappade i
+   original — andel av rorelsen gjord vid halva tiden:
+       avataren        109 %  ->  59 %      ringens rotation  68 %  ->  50 %
+       ringens skala    68 %  ->  50 %      brickan          109 %  ->  59 %
+   De tva 109-varena bar `cubic-bezier(.34,1.56,.64,1)`, exakt samma kurva som snappade stacks
+   fall och ribbons pop, och de hann forbi sin EGEN overskjutning fore halvtid.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms), proportionell via calc() av samma skal som i stack och
+   ribbon — keyframsen har bara 0 % och 100 %, sa staggern maste ligga i duration + delay:
+     avataren   0      -> 33,3 %   (0-300 ms av 900)
+     ringen    22,2 %  -> 88,9 %   (200-800)
+     texten    57,8 %  -> 95,6 %   (520-860)
+     brickan   71,1 %  -> 100 %    (640-900)
+   Brickan stamplas SIST, efter att ringen slutits — sigillet ar sekvensens punkt.
+
+   `.fan-burst img` HAR EN DOD fanLevelPop — bursten ar display:none i loyalty. Ingen fas-regel
+   far rikta sig mot den; F2 faller annars. */
+
+/* ---- FAS 1 · LJUS: tom scen ------------------------------------------------------------------ */
+/* TVA SAKER SOM BADA KOSTADE EN OMGANG, och de drar at motsatt hall.
+   1. `.fan-profile` MASTE MED. Behallaren ar en egen orange sockel med radialgradient och
+      glod — inte en osynlig wrapper runt avataren. Forsta versionen dolde bara innehallet
+      (img, .fan-ring) och pillen, och da stod en lysande orange skiva kvar genom hela
+      anticipationen. Alla tre elementen provet vaktade lag korrekt pa opacitet 0; provet var
+      gront. FOTOT avslojade det.
+   2. ANKARET FAR INTE SLACKAS DIREKT. Nasta version satte `opacity:0` pa `.fan-profile img`
+      ocksa — och da foll den generella vakten F1, som mater ankarets EGNA beraknade opacitet
+      400 ms efter tandning, alltsa mitt i fas 1. Ett ankare pa opacitet 0 ar inget ankare.
+      Det ar samma laxa som Gifters G1: risingtier slacker CONTAINERN, sa barnets eget varde
+      ar fortfarande 1. Ribbon klarar F1 av precis det skalet.
+   Losningen forenar bada: SOCKELN och PILLEN slacks, avataren och ringen far bara sin
+   animation neutraliserad och arver sockelns nolla. Prov 19g mater darfor EFFEKTIV synlighet
+   (produkten upp till widgetroten), inte elementets eget varde — annars hade provet krävt
+   exakt det som F1 forbjuder. */
+.fan-layout-loyalty.fan-active[data-fas="ljus"] .fan-profile,
+.fan-layout-loyalty.fan-active[data-fas="ljus"] .fan-level-pill{animation:none;opacity:0}
+.fan-layout-loyalty.fan-active[data-fas="ljus"] .fan-profile img,
+.fan-layout-loyalty.fan-active[data-fas="ljus"] .fan-ring{animation:none}
+.fan-layout-loyalty[data-fas="ljus"] > h2,
+.fan-layout-loyalty[data-fas="ljus"] > h3,
+.fan-layout-loyalty[data-fas="ljus"] > p{opacity:0}
+
+/* ---- FAS 2 · OPPNA: avatar -> ring -> text -> sigill ------------------------------------------ */
+/* Avataren far studsen kvar via (.5,0,.5,1.25) — den ANLANDER. Ringen far den studsfria
+   (.5,.02,.5,.98): den skalar och roterar i SAMMA keyframe, sa en overskjutning hade tagit
+   skalan forbi 1 och ringen maler redan utanfor widgeten vid skala 1. Brickan far studsen —
+   en stampel ska sla till. */
+/* Sockeln tonar in UNDER avatarens pop — opacitet BARA, ingen transform. En transform har hade
+   komponerats med barnens egna (behallaren ar foralder till bade avataren och ringen) och gett
+   avataren en dubbel pop. Utan den har raden slar sockeln pa som ett hugg i fas 2:s forsta
+   bildruta, eftersom fas 1-regeln slutar matcha i samma ogonblick. */
+@keyframes flSockelIn{from{opacity:0}to{opacity:1}}
+.fan-layout-loyalty.fan-active[data-fas="oppna"] .fan-profile{
+  animation:flSockelIn calc(var(--fas-oppna-tid,900ms) * .333) linear both}
+.fan-layout-loyalty.fan-active[data-fas="oppna"] .fan-profile img{
+  animation:fbProfilePop calc(var(--fas-oppna-tid,900ms) * .333)
+            cubic-bezier(.5,0,.5,1.25) both}
+.fan-layout-loyalty.fan-active[data-fas="oppna"] .fan-ring{
+  animation:flRingDraw calc(var(--fas-oppna-tid,900ms) * .667)
+            cubic-bezier(.5,.02,.5,.98) calc(var(--fas-oppna-tid,900ms) * .222) both}
+.fan-layout-loyalty.fan-active[data-fas="oppna"] .fan-level-pill{
+  animation:fsPillPop calc(var(--fas-oppna-tid,900ms) * .289)
+            cubic-bezier(.5,0,.5,1.25) calc(var(--fas-oppna-tid,900ms) * .711) both}
+
+/* Texten ar det enda loyalty saknar en egen form for — den far en, och bara den. */
+@keyframes flTextIn{
+  from{opacity:0;transform:translateY(10px)}
+  to  {opacity:1;transform:translateY(0)}}
+.fan-layout-loyalty[data-fas="oppna"] > h2,
+.fan-layout-loyalty[data-fas="oppna"] > h3,
+.fan-layout-loyalty[data-fas="oppna"] > p{
+  animation:flTextIn calc(var(--fas-oppna-tid,900ms) * .378)
+            linear calc(var(--fas-oppna-tid,900ms) * .578) both}
+
+/* ---- FAS 3 · HYLLNING: modellens enda vilolager ----------------------------------------------- */
+/* Regeln bar `.fan-active` (0,4,0) och inte bara [data-fas] (0,3,0). Originalets
+   `.fan-layout-loyalty.fan-active .fan-ring` ar ocksa (0,3,0), sa ett oviktat fas-scope hade
+   avgjorts av FILORDNINGEN i stallet for av specificiteten. Ribbons vilolagerregel forlorade
+   pa exakt det en gang. 1,5 % ar medvetet mycket lagt — vid skala 1,015 blir ringens malade
+   topp -3,8 px, alltsa inom det som redan galler i vila. */
+@keyframes flPuls{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+.fan-layout-loyalty.fan-active[data-fas="hyllning"] .fan-ring{
+  animation:flPuls 2.6s ease-in-out infinite both}
+
+/* ---- FAS 4 · UPPLOSNING: spegelvand — sigillet bryts forst ------------------------------------ */
+/* Motorn TAR INTE BORT `fan-active` vid exit, den LAGGER TILL `fan-exit` (widget-fas.js:139), sa
+   originalets `.fan-layout-loyalty.fan-exit .X` (0,3,0) lever parallellt med de har reglerna.
+   (0,4,0) vinner over den. Brickan far en exit som originalet saknar helt — den forsvann forr
+   med roten. Ordningen ar premissens spegel: sigillet bryts, texten lamnar, ringen ritas ut,
+   personen sist. */
+@keyframes flTextUt{
+  from{opacity:1;transform:translateY(0)}
+  to  {opacity:0;transform:translateY(6px)}}
+.fan-layout-loyalty.fan-active[data-fas="upplosning"] .fan-level-pill{
+  animation:fsPillPop calc(var(--fas-upplosning-tid,600ms) * .333) ease-in reverse both}
+.fan-layout-loyalty[data-fas="upplosning"] > h2,
+.fan-layout-loyalty[data-fas="upplosning"] > h3,
+.fan-layout-loyalty[data-fas="upplosning"] > p{
+  animation:flTextUt calc(var(--fas-upplosning-tid,600ms) * .433)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .1) both}
+.fan-layout-loyalty.fan-active[data-fas="upplosning"] .fan-ring{
+  animation:flRingDraw calc(var(--fas-upplosning-tid,600ms) * .6)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .267) reverse both}
+.fan-layout-loyalty.fan-active[data-fas="upplosning"] .fan-profile img{
+  animation:fbProfilePop calc(var(--fas-upplosning-tid,600ms) * .5)
+            ease-in calc(var(--fas-upplosning-tid,600ms) * .5) reverse both}
+.fan-layout-loyalty.fan-active[data-fas="upplosning"] .fan-profile{
+  animation:flSockelIn calc(var(--fas-upplosning-tid,600ms) * .5)
+            linear calc(var(--fas-upplosning-tid,600ms) * .5) reverse both}
+
+@media (prefers-reduced-motion: reduce){
+  .fan-layout-loyalty[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

@@ -109,6 +109,38 @@
       decodeTimeoutMs: 900,
       vokabular: VOKABULAR_FAN,
     },
+    {
+      // "Inringningen". Premissen star i designens eget animationsnamn — flRingDraw. Ringen ar
+      // en segmenterad lojalitetsring med en GNISTA i ::after, och gnistan ar barn till det
+      // roterande elementet: den FARDAS ett kvarts varv medan ringen vrids -90deg -> 0.
+      // Gnistan ar pennspetsen, ringen ritas. Avataren anlander (fbProfilePop, scale .6 -> 1),
+      // ringen ritas RUNT personen (flRingDraw), och brickan stamplas sist som sigill
+      // (fsPillPop, scale .5 -> 1). Keyframsen ateranvands; bara klockan byts, som i stack.
+      //
+      // LOYALTY AR ANDRA FAN-MODELLEN UTAN INFINITA BASLAGER, efter ribbon. Uppmatt i bada
+      // riktningar: fore tandning noll levande animationer, och tradsvepet efter tandning ger
+      // exakt de tre entreerna. (`.fan-burst img` bar `fanLevelPop 2s` i beraknad stil, men
+      // bursten ar display:none har — animationen existerar inte.) Modellen far darfor ett
+      // eget vilolager, `flPuls` pa .fan-ring. Prov 19g vaktar att det ligger i HYLLNINGEN
+      // och ingen annanstans.
+      //
+      // ETT TAK SOM INTE ARVS FRAN NAGON ANNAN MODELL: ringen ar 102x102 i en 80x80-ruta och
+      // maler redan 3 px ovanfor widgetens overkant i vila. Uppmatt geometri ger malad topp
+      // 48 - 51*skala, sa varje overskjutning syns direkt. Ringen har darfor en STUDSFRI kurva
+      // i CSS:en och prov 19f vaktar skala <= 1,005 i varje matpunkt.
+      //
+      // Ankaret ar avataren: `.fan-burst` ar display:none i loyalty (uppmatt 0x0), sa den ar
+      // modellens enda bild och dessutom den enda dynamiska. Tak 900 for att fas 1 ar TOM och
+      // avataren poppar fram i fas 2, alltsa avslojas den — och da vore 500 mot en ljusfas pa
+      // 500 en strukturell no-op. (Jamfor orbitlevel, dar portrattet tonar in redan i fas 1
+      // och taket darfor med flit lamnades pa 500.)
+      modell: 'loyalty',
+      passar: arLayout('loyalty'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.fan-profile img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_FAN,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget. */
