@@ -1365,3 +1365,106 @@
 @media (prefers-reduced-motion: reduce){
   .gifter-layout-profile[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* =================================================================================================
+   MODELL 7 · NUMBER — "Rakneverket"
+   =================================================================================================
+
+   PREMISS: siffran ar widgeten. `.gifter-big-level` ar 88x68 och sitter inuti orbiten, och dess
+   forvandling ar REDAN koreograferad — i JS, sedan lange:
+
+     gifterTransform (media.js:589), XFORM_GAMMAL 450 / XFORM_BURST 300 / XFORM_TOTAL 1250
+       0-450 ms   .gifter-xform-old    gamla siffran star kvar, dampad
+       450-750    .gifter-xform-burst  burst
+       750        siffran byts MITT I bursten — bytet ses aldrig som ett hopp
+       750-1250   .gifter-xform-new    gifter-land .5s
+
+   Den mekaniken duplicerar vi INTE. Koreografin ramar in den, och tiderna mots exakt:
+     fas 1 ar 0-500 ms   -> nastan precis den gamla siffrans egen beat
+     bytet vid 750 ms    -> 250 ms in i fas 2 = 27,78 % av 900
+
+   DARFOR AR NUMBER ENDA MODELLEN VARS FAS 1 INTE AR EN TOM SCEN. Ringen och den GAMLA siffran
+   ar redan uppe — de ar anticipationen. Allt annat vantar, och monteras forst efter bytet.
+   Prov 14f vaktar alla tre delarna: att fas 1 visar gamla vardet, att inget annat syns fore
+   bytet, och att monteringen borjar efter det.
+
+   TAKTNINGEN INUTI FAS 2 (900 ms):
+     bytet          250 ms  = 27,78 %   (gifterTransforms egen klocka, inte var)
+     vag A          250 -> 630 ms  = 27,78 % -> 70 %     diamantraden + rubriken
+     vag B          405 -> 860 ms  = 45 %    -> 95,56 %  brickan, namnet, texten, bottenavataren
+
+   `.gifter-bottom-profile` SYNS i number — enda modellen dar den gor det — sa prov G2 tillater
+   fas-regler mot den har. I alla andra modeller ar den display:none och en regel mot den vore
+   dod rorelse.
+
+   FAS 1 SLACKER FORALDERN, ALDRIG BILDEN SJALV. `.gifter-bottom-profile` gar till opacity 0,
+   men `.gifter-bottom-profile img` — som ar modellens decodeAnkare — behaller sitt EGNA varde.
+   Prov G1 mater ankarets eget berakningsvarde, och profile fick just den lardagen: ett ankare
+   pa opacity 0 ar inget ankare.
+
+   `linear` overallt av samma skal som profile: varje keyframe satter explicit sin transform, sa
+   "halva rorelsen vid halva tiden" gar att rakna ut i huvudet. Prov 14g mater vag A. */
+
+.gifter-layout-number[data-fas]{--nm-lyft:14px}
+
+/* ---- FAS 1 · LJUS: ringen ritar sig runt den gamla siffran -------------------------------- */
+@keyframes nmRing{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+.gifter-layout-number[data-fas="ljus"] .gifter-orbit svg{
+  animation:nmRing var(--fas-ljus-tid,500ms) cubic-bezier(.2,.9,.3,1) both}
+/* Siffran rors INTE har — gifterTransform ager den under hela fas 1. */
+.gifter-layout-number[data-fas="ljus"] .gifter-diamond-row,
+.gifter-layout-number[data-fas="ljus"] > h2,
+.gifter-layout-number[data-fas="ljus"] .gifter-level-badge,
+.gifter-layout-number[data-fas="ljus"] > h3,
+.gifter-layout-number[data-fas="ljus"] > p,
+.gifter-layout-number[data-fas="ljus"] .gifter-bottom-profile{opacity:0}
+
+/* ---- FAS 2 · OPPNA: widgeten monteras runt den NYA siffran --------------------------------- */
+/* Bada vagorna star still pa opacity 0 tills sin startpunkt — det ar det som gor att inget kan
+   synas fore bytet. Slutkeyframen upprepar sluttillstandet sa `both` haller det genom resten. */
+@keyframes nmMonteraA{
+  0%,27.78%{opacity:0;transform:translateY(var(--nm-lyft))}
+  70%      {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+@keyframes nmMonteraB{
+  0%,45%   {opacity:0;transform:translateY(var(--nm-lyft))}
+  95.56%   {opacity:1;transform:translateY(0)}
+  100%     {opacity:1;transform:translateY(0)}}
+
+.gifter-layout-number[data-fas="oppna"] .gifter-diamond-row,
+.gifter-layout-number[data-fas="oppna"] > h2{
+  animation:nmMonteraA var(--fas-oppna-tid,900ms) linear both}
+.gifter-layout-number[data-fas="oppna"] .gifter-level-badge,
+.gifter-layout-number[data-fas="oppna"] > h3,
+.gifter-layout-number[data-fas="oppna"] > p,
+.gifter-layout-number[data-fas="oppna"] .gifter-bottom-profile{
+  animation:nmMonteraB var(--fas-oppna-tid,900ms) linear both}
+
+/* ---- FAS 3 · HYLLNING: ringen och siffran andas ihop --------------------------------------- */
+/* Utslaget ligger pa .gifter-orbit, alltsa pa ring OCH siffra samtidigt — de ar ett foremal i
+   den har modellen. 1,4 %, nagot mer an profiles 1,2 for att siffran ar stor och tal det. */
+@keyframes nmAndas{0%,100%{transform:scale(1)}50%{transform:scale(1.014)}}
+.gifter-layout-number[data-fas="hyllning"] .gifter-orbit{
+  animation:nmAndas 2.8s ease-in-out infinite both}
+
+/* ---- FAS 4 · UPPLOSNING: siffran lamnar sist ----------------------------------------------- */
+@keyframes nmSjunk{
+  0%  {opacity:1;transform:translateY(0)}
+  100%{opacity:0;transform:translateY(12px)}}
+@keyframes nmSiffraUt{
+  0%,40%{opacity:1;transform:scale(1)}
+  100%  {opacity:0;transform:scale(.82)}}
+
+.gifter-layout-number[data-fas="upplosning"] .gifter-diamond-row,
+.gifter-layout-number[data-fas="upplosning"] > h2,
+.gifter-layout-number[data-fas="upplosning"] .gifter-level-badge,
+.gifter-layout-number[data-fas="upplosning"] > h3,
+.gifter-layout-number[data-fas="upplosning"] > p,
+.gifter-layout-number[data-fas="upplosning"] .gifter-bottom-profile{
+  animation:nmSjunk var(--fas-upplosning-tid,600ms) ease-in both}
+.gifter-layout-number[data-fas="upplosning"] .gifter-orbit{
+  animation:nmSiffraUt var(--fas-upplosning-tid,600ms) ease-in both}
+
+@media (prefers-reduced-motion: reduce){
+  .gifter-layout-number[data-fas] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

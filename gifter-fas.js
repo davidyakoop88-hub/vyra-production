@@ -180,6 +180,35 @@
       decodeTimeoutMs: DECODE_TIMEOUT_MS,
       vokabular: VOKABULAR_GIFTER,
     },
+    {
+      // "Rakneverket". Number ar den siffercentrerade modellen, och siffrans forvandling ar
+      // REDAN koreograferad i JS: gifterTransform (media.js:589) later den gamla siffran sta
+      // kvar 450 ms, bursten gar 450-750, och siffran byts MITT I bursten vid 750 ms.
+      // Koreografin duplicerar inte det utan ramar in det — tiderna mots exakt: fas 1 ar
+      // 0-500 ms (nastan precis den gamla siffrans beat) och bytet vid 750 ms ligger 250 ms
+      // in i fas 2, vilket ar dar monteringen av resten borjar.
+      // Number ar darfor ENDA modellen vars fas 1 inte ar en tom scen: ringen och den gamla
+      // siffran ar sjalva anticipationen. Prov 14f vaktar det.
+      //
+      // ANKARET ar bottenavataren, inte orbitbilden: `.gifter-orbit img` ar display:none i
+      // number, och number ar samtidigt enda modellen dar `.gifter-bottom-profile` SYNS.
+      //
+      // decodeTimeoutMs 900, inte standardens 500. Bottenavataren ar modellens enda portratt
+      // och sista beaten i monteringen — en oavkodad bild ger en tom cirkel i klimax. Ett tak
+      // pa 500 kan dessutom aldrig bli bindande mot en ljusfas pa 500, sa grinden hade varit
+      // en no-op och prov G3 hade hoppat over modellen.
+      // KAND INTERAKTION: med ett bindande tak kan fas 2 skjutas fram till som mest 900 ms
+      // medan gifterTransform gar pa sin EGEN klocka och byter siffra vid 750. Vid en mycket
+      // langsam bild sker bytet alltsa strax fore monteringen i stallet for samtidigt. Det ar
+      // acceptabelt — siffran ar synlig hela tiden — och 14f mater darfor bytet relativt
+      // FASBYTET, inte relativt triggern.
+      modell: 'number',
+      passar: arLayout('number'),
+      tider: { anticipationMs: 500, enterMs: 900, exitMs: 600 },
+      decodeAnkare: '.gifter-bottom-profile img',
+      decodeTimeoutMs: 900,
+      vokabular: VOKABULAR_GIFTER,
+    },
   ];
 
   /* Forsta traffen vinner. En passar() som kastar far aldrig sanka hela uppslaget — samma
