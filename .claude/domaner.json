@@ -209,6 +209,7 @@
         "tests/action-event-poang.test.js",
         "tests/action-event-flikar.test.js",
         "tests/action-cooldown-lager.test.js",
+        "tests/action-poang-retur.test.js",
         "tests/action-tts-rost.test.js",
         "scripts/test/event-gifts.test.js"
       ],

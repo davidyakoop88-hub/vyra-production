@@ -29,6 +29,9 @@ const H = require('./session-harness.js');
 const ROOT = path.join(__dirname, '..', '..');
 const las = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const KEY = 'vyra-action-event-v2';
+// Samma lista som session-state.js:EXTRA_KEYS — de nycklar en projektion äger och därmed rensar.
+const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widgets',
+  'vyra-scene-settings-v1'];
 
 // Filerna en flik behöver för att ta emot ett live-event och spela en action.
 const FILER = ['session-state.js', 'action-master.js', 'action-runtime.js', 'action-event.js',
@@ -95,10 +98,20 @@ async function fonster({ namn = 'flik', scen = null, lager, skrivbar = false,
   }
 
   if (skrivbar) {
+    // EN PROJEKTION ÄR EN ERSÄTTNING, INTE ETT TILLÄGG. projectActive skriver de EXTRA_KEYS den
+    // får och rensar resten — så ett prov som seedar t.ex. vyra-scene-settings-v1 (per-scen
+    // maxQueue) i lagret och sedan startar en skrivbar studioflik tappar nyckeln i samma stund,
+    // tyst. Det kostade en felsökning: overlayn såg maxQueue som null och köade obegränsat, och
+    // provet såg ut som ett fel i koden det mätte. Allt lagret redan bär följer därför med in.
+    const extras = {};
+    for (const nyckel of EXTRA_KEYS) {
+      const varde = lager.getItem(nyckel);
+      if (varde != null) extras[nyckel] = varde;
+    }
+    extras[KEY] = JSON.stringify({ actions, events });
     const token = window.VyraSessionState.beginProjection();
     const r = await window.VyraSessionState.projectActive(token, { mode: 'studio-committed',
-      workspaceId: 'ws-prov', overlayId: 'ov-prov', state: { widgets: [], user: 'Streamer' },
-      extras: { [KEY]: JSON.stringify({ actions, events }) } });
+      workspaceId: 'ws-prov', overlayId: 'ov-prov', state: { widgets: [], user: 'Streamer' }, extras });
     if (!r.ok) throw new Error(`${namn} blev inte skrivbar: ${JSON.stringify(r)}`);
   }
 
@@ -109,4 +122,4 @@ async function fonster({ namn = 'flik', scen = null, lager, skrivbar = false,
   return window;
 }
 
-module.exports = { delatLager, fonster, KEY, FILER };
+module.exports = { delatLager, fonster, KEY, EXTRA_KEYS, FILER };

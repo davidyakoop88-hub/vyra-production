@@ -12,13 +12,18 @@
   function pointsKeyFor(username){return String(username||'').replace(/^@/,'').toLowerCase()}
   // 'earned' is a lifetime running total of every positive add() — used for levels, never
   // decreases when points are spent/removed, same as XP vs. spendable currency in most games.
-  function adjustPoints(username,delta){
+  //
+  // raknaSomIntjanat=false ar HELA skillnaden mellan add() och refund() (§15c). En atervandande
+  // poang ar inte intjanad; hade den rakhats in i 'earned' kunde en tittare nivat upp genom att
+  // med flit svamma over kon och fa tillbaka pengarna om och om igen. Defaulten (undefined) ar
+  // dagens beteende exakt, sa add/remove/spend ar oforandrade.
+  function adjustPoints(username,delta,raknaSomIntjanat){
     const key=pointsKeyFor(username);if(!key||!delta)return;
     const p=loadPoints();
     const entry=p[key]||{name:username,points:0,earned:0};
     entry.name=username;
     entry.points=Math.max(0,entry.points+delta);
-    if(delta>0)entry.earned=(entry.earned||0)+delta;
+    if(delta>0&&raknaSomIntjanat!==false)entry.earned=(entry.earned||0)+delta;
     p[key]=entry;
     savePoints(p);
   }
@@ -46,7 +51,11 @@
       if(!key||(loadPoints()[key]?.points||0)<amount)return false;
       adjustPoints(username,-amount);
       return true;
-    }
+    },
+    // Motsatsen till spend, och INTE detsamma som add: saldot atervands utan att 'earned' rors.
+    // Anvands nar en betald uppspelning strops av en full ko (§15c) — tittaren ska fa tillbaka
+    // sin valuta, inte sin XP.
+    refund:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0),false)
   };
   const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
   function openDb(){return new Promise((ok,no)=>{const r=indexedDB.open('vyra-action-media',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('files'))r.result.createObjectStore('files')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
@@ -70,6 +79,25 @@
   // page's own scene number, since each scene runs its own independent copy of this whole file
   // (its own queue/busy state), not a shared one across scenes.
   function sceneMaxQueue(){try{const stored=window.VyraSessionState?.readExtra?.('vyra-scene-settings-v1')??localStorage.getItem('vyra-scene-settings-v1');const settings=JSON.parse(stored||'{}');return Math.max(0,Number(settings[window.VYRA_OVERLAY_SCENE]?.maxQueue)||0)}catch{return 0}}
-  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över`);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
+  // EN STRYPT UPPSPELNING SKA GE PENGARNA TILLBAKA (§15c i docs/tech-debt.md).
+  //
+  // Bara den har grenen rapporteras. execute() sager nej av fyra skal, och tre av dem ar INTE en
+  // forlorad uppspelning: ett trasigt meddelande, en dubbelleverans (seen) och fel scen (allowed)
+  // — det sista ar routing, inte en strypning. Notera ocksa ordningen: kogrinden ligger FORE
+  // seen.add, sa en avvisad runId hamnar aldrig i seen och kan rapporteras igen fran en annan
+  // flik. Mastern dedupar darfor sjalv.
+  //
+  // 'Hoppa over om nasta action vantar i kon' (skipOnNext) hor INTE hit: den kortar ner en
+  // uppspelning som faktiskt sker. Tittaren fick sin effekt, om an kortvarigt.
+  function rapporteraStrypt(runId){
+    if(!runId)return;
+    const bud={runId,skal:'ko-full',at:Date.now()};
+    // Tva vagar, precis som utskicket at andra hallet. Ett storage-event nar aldrig sin egen
+    // skribent, och den vanligaste uppsattningen ar EN flik som bade drar poangen och droppar
+    // uppspelningen — dar hade en ren storage-brygga inte lagat nagonting.
+    document.dispatchEvent(new CustomEvent('vyra:action-dropped',{detail:bud}));
+    try{localStorage.setItem('vyra-action-refund',JSON.stringify(bud))}catch{}
+  }
+  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över och poängen betalas tillbaka`);rapporteraStrypt(detail.runId);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
   document.addEventListener('vyra:action',e=>execute(e.detail));addEventListener('storage',e=>{if(e.key==='vyra-action-run'&&e.newValue)try{execute(JSON.parse(e.newValue))}catch{}});window.VyraActionRuntime={execute,queueSize:()=>queue.length+(busy?1:0),clearQueue:()=>queue.splice(0)};
 })();

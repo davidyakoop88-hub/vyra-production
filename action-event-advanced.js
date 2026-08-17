@@ -69,12 +69,73 @@
   // kanKora ar ren: den skriver inget och startar ingen cooldown, sa fragan kan stallas i forvag
   // utan att paverka svaret. Saknas den (en flik med en aldre cachad action-event.js) faller vi
   // tillbaka pa den enda grind vi kan se harifran — att actionen over huvud taget finns.
+  // HUVUDBOKEN OVER BETALDA UPPSPELNINGAR (§15c i docs/tech-debt.md).
+  //
+  // Kon i overlayn kan strypa en uppspelning som redan ar betald. Uppmatt: fyra gavor a 100 mot
+  // en scen med maxQueue 1 gav 400 dragna poang, en spelning och tva strypta — 200 poang for
+  // ingenting. Det var den enda av §13:s grindar som inte gick att flytta fore avdraget, eftersom
+  // den lever i en annan flik bakom en BroadcastChannel.
+  //
+  // TVA SAKER SOM AR LATTA ATT BYGGA FEL HAR:
+  //
+  //   KOSTNADEN LAMNAR ALDRIG MASTERN. Overlayn sager bara "runId X strops"; belopp och mottagare
+  //   slas upp har. En overlay kan darfor inte begara en godtycklig aterbetalning.
+  //
+  //   ATERBETALNING SKER PER KOP, INTE PER KORNING. Ett event betalar EN gang men kan skicka ut
+  //   flera actions. Spelade en av tre fick tittaren det hen betalade for — pengarna kommer bara
+  //   tillbaka nar ALLA strops.
+  //
+  // Huvudboken ligger i minnet, inte i localStorage. Dor mastern mitt i flodet uteblir
+  // aterbetalningen; det felar mot "ingen aterbetalning" i stallet for "dubbel", vilket ar ratt
+  // hall att fela at.
+  const KOP_LIVSLANGD=30000;
+  const kopForRun=new Map();       // runId -> kopId
+  const kopen=new Map();           // kopId -> {kvar, username, belopp, klar}
+  // RAPPORTEN KAN KOMMA FORE REGISTRERINGEN. runAction skickar ut synkront: overlayns execute()
+  // hinner saga "kon ar full" innan map() ens har lamnat ifran sig sitt sista runId. En
+  // huvudbok som bara tittar bakat hade darfor missat precis de fall den byggdes for. Tidiga
+  // rapporter parkeras har och hamtas hem av registreringen — ordningen mellan de tva far inte
+  // spela nagon roll.
+  const tidigaStrypta=new Set();
+  let kopRaknare=0;
+  function registreraKop(runIds,username,belopp){
+    if(!belopp)return;
+    // Betalt men ingenting utskickat: det kan inte hanta sa lange kanKora och runAction kor i
+    // samma tick, men om det nagonsin gor det ar pengarna forlorade utan den har raden.
+    if(!runIds.length)return void window.VyraPoints?.refund?.(username,belopp);
+    const kopId='kop-'+(++kopRaknare);
+    kopen.set(kopId,{kvar:runIds.length,username,belopp,klar:false});
+    runIds.forEach(r=>kopForRun.set(r,kopId));
+    setTimeout(()=>{runIds.forEach(r=>kopForRun.delete(r));kopen.delete(kopId)},KOP_LIVSLANGD);
+    runIds.forEach(r=>{if(tidigaStrypta.delete(r))strypt(r)});   // hamta hem det som redan strops
+  }
+  function strypt(runId){
+    // INGEN MASTER-VAKT HAR, OCH DET AR MED FLIT. Planen hade en: "bara mastern betalar tillbaka".
+    // Mutationsprovet visade att den var bade overflodig och skadlig. Overflodig for att
+    // huvudboken redan ar vakten — bara den flik som DROG poangen kanner igen ett runId, och bara
+    // mastern drar. Skadlig for att en flik som drog och sedan TAPPADE platsen (en niva 2-overlay
+    // nar studion oppnas) hade slutat betala tillbaka mitt i flodet, och tittaren forlorat pengar
+    // pa att streamern startade Studion.
+    //
+    // Den som tog betalt ar den som betalar tillbaka. Inget annat villkor behovs.
+    if(!runId)return;
+    const kopId=kopForRun.get(runId);
+    if(!kopId){tidigaStrypta.add(runId);setTimeout(()=>tidigaStrypta.delete(runId),KOP_LIVSLANGD);return}
+    kopForRun.delete(runId);                // samma runId far bara raknas en gang
+    const kop=kopen.get(kopId);
+    if(!kop||kop.klar||--kop.kvar>0)return; // nagon annan action i samma kop spelade an
+    kop.klar=true;
+    window.VyraPoints?.refund?.(kop.username,kop.belopp);
+  }
+  document.addEventListener('vyra:action-dropped',e=>strypt(e.detail?.runId));
+  addEventListener('storage',e=>{if(e.key==='vyra-action-refund'&&e.newValue)try{strypt(JSON.parse(e.newValue).runId)}catch{}});
+
   // En forare for automationen (§15). Varje oppen flik tar emot samma live-event, sa utan den har
   // graden betalar och spelar tre flikar samma gava tre ganger. Slavarna tiger inte om
   // uppspelningen - de far den via localStorage['vyra-action-run'], som action-runtime.js lyssnar
   // pa. __test slipper igenom: replay-knappen i live-control.js och Testa-knapparna ar uttryckliga
   // handgrepp i studion, inte live-trafik. Saknas modulen kor vi som forr (fail-open) - hellre ett
   // dubbelavdrag an en svart overlay.
-  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if(['gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=s.actions.find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;korbara.forEach(id=>window.VyraActionEvent?.runAction(s.actions.find(a=>a.id===id),payload))})}
+  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if(['gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=s.actions.find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;const runIds=korbara.map(id=>window.VyraActionEvent?.runAction(s.actions.find(a=>a.id===id),payload)).filter(r=>typeof r==='string');if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)})}
   new MutationObserver(enhance).observe(document.documentElement,{childList:true,subtree:true});window.VyraAdvancedEvents={handleEvent};
 })();
