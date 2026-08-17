@@ -1,5 +1,66 @@
 # VYRA Project State
 
+## Checkpoint 32 — poängekonomin, talutrymmet, inspelaren och Fan Level Up (2026-08-17)
+
+En hel dags arbete i sju steg, varje steg en egen PR mot `main`. Alla mätta före och efter.
+Skrivet på svenska till skillnad från checkpoint 26–31 — det är språket resten av dagens
+dokumentation och kod-kommentarer håller.
+
+### Vad som stängdes
+
+| § | Felet | Lagningen | PR | Merge |
+|---|---|---|---|---|
+| 13 | Poäng drogs innan något visste om actionen skulle spela. Fem försök under cooldown kostade 500 i stället för 100. | Check-Then-Act: `kanKora(action, payload)` svarar `{ok, skal, scen, kvar}` **utan att skriva**. `runAction` frågar först. | #202 | `602fcf3` |
+| 15a | Varje öppen flik drog sin egen kostnad och spelade sin egen kopia. | `action-master.js` — tvånivåval av en förare per lagerrymd. | #202 | `602fcf3` |
+| 15b | Cooldown-stämplarna låg i en nyckel bara en skrivbar flik kunde spara, så cooldown var verkningslös i overlayn. | Egen nyckel `vyra-action-cooldowns` + `EPHEMERAL_KEYS` i `session-state.js` (används, torkas, synkas aldrig). | #203 | `04c0875` |
+| 15c | En full scenkö tog betalt för uppspelningar som aldrig hände. | Återbetalningsväg: `VyraPoints.refund`, spegelvänd returbrygga, kvitto per köp. | #204 | `b7d095d` |
+| 14 | Actions och TTS-chatt var två skilda talsystem, och tre flikar läste samma chattrad högt. | `vyra-tal.js` (delad kö + duckning) och `VyraRostMaster` (omvänt val: overlay är nivå 1, studion nivå 2). | #205 | `bc9aea5` |
+| — | `LINK_MIC_ARMIES` gick bara att studera live, mitt i ett femminuters battle. | `tiktok-bridge/inspelare.js` — maskerade råa payloads till fil. Av som default, stänger av sig själv vid fel. | #206 | `bfd3e38` |
+| — | `card` fanns i CSS men i inget register; `hero` renderades hela tiden men fanns i inget register. | `card` raderad, `hero` formellt registrerad som modell 8. | #207 | `26b04b4` |
+
+**I luften:** PR #208 — `fan-fas.js`, vakterna F1–F3 och hero-koreografin "Samlingen".
+
+### Invarianter som inte får brytas
+
+- **Poäng dras aldrig före ett `kanKora`-svar.** Kontrollen skriver inte, och får aldrig börja göra det.
+- **Vem som betalar och vem som låter är två olika frågor.** Automationsmastern avgör *om* en rad ska
+  läsas och drar kostnaden — en gång. Röstmastern talar. Actions TTS gateas **inte** på röstmastern:
+  `allowed()` routar dem redan till rätt scens overlay, och en grind ovanpå hade tystat scen 1:s
+  action så fort scen 2:s overlay råkade hålla röstplatsen.
+- **`strypt(runId)` har ingen master-grind.** Kvittot är grinden. En grind där hade tystat en flik som
+  hunnit betala och sedan förlorat sätet.
+- **Röstmastern är nivå 1 i overlayn, inte i studion.** En streamer fångar ljudet via browser source i
+  OBS; en röst som bara talar i Studion försvinner ur sändningen.
+- **En inspelad typ når aldrig molnet.** Inspelaren prenumererar bredare än bryggan skickar. Vaktat av
+  `tiktok-bridge/test/inspelare.test.js` prov 6, som läser prenumerationsblocket ur källan.
+- **Ny CSS hör inte hemma sist i `studio.css`.** Filen har en obalanserad klammer (issue #126) och allt
+  efter rad 787 hamnar i ett oavslutat block — reglerna ser korrekta ut och biter aldrig.
+- **Koreografins koppling måste sitta innanför alertkön.** `runtime-controls.js` byter 500 ms efter
+  start ut triggern mot en köad variant. Lägger sig något utanför den startar rörelsen när alerten
+  *köas* i stället för när den *spelas*.
+
+### Tre lärdomar som kostade något att lära sig
+
+1. **Mutationsprovet, inte testkörningen, avslöjar ett värdelöst prov.** Fem gånger under dagen var en
+   svit grön medan ett av proven inte kunde falla: poängprov 5 låg i en oskrivbar flik, returprov 7
+   läste `earned` före återbetalningen, returprov 4b behövde en *sen* dubblett, talutrymmesprov 8 lät
+   actionkön göra jobbet, och F2 i fan-fas fångade bara om-kopplingen efter att en mutation lagts till.
+2. **Bevisa varför kod ska raderas, inte bara att den kan raderas.** `card` antogs vara trasigt skräp.
+   Uppmätt renderade den en sammanhängande ruta på 280×295 px med varje del synlig — men med 12 skilda
+   egenskaper mot 15 identiska mot `hero`. Den föll på `PREMIUM_WIDGET_SPEC` ("inga omfärgade
+   rektanglar"), inte på att vara trasig. Det ger en starkare `git blame` om ett år.
+3. **Inget arbete får ligga lokalt utan en PR som ankarplats.** Ett tidigare Fan Level Up-arbete gick
+   förlorat med sin container. Git-forensik visade att de fyra påstådda commitarna aldrig funnits i
+   det här repot och att reflogen är oavbruten från containerstart. Oåterkalleligt.
+
+### Nästa steg: `stack` · "Mottagandet"
+
+Koreografi nummer två, byggd på `fan-fas.js` som redan finns. Formen: **fall → pop → stigning**.
+Byt ut klockan, behåll de befintliga keyframesen — `stack` har redan 13 egna `fan-layout-stack`-regler
+i `studio.css` som rörelsen ska hänga på, och basens `fanLevelPop`/`fanRing` ska inte startas om.
+
+Arbetsgången som fungerat hela dagen: plan först, godkännande, bygg, mät, mutationsprova, PR.
+
 ## Checkpoint 31 — full bug and duplicate cleanup (2026-07-23)
 
 The browser entry points now have automated resource coverage and the Electron local server is
@@ -70,21 +131,23 @@ commit after it follows the new Phase 4-12 sequence.
 
 ## Current branch
 
-`feature/vyra-vfx-engine`
+`main`. Arbetet går i en gren per steg (`claude/<vad-det-gäller>`), som mergas till `main` via
+en egen PR så fort dess sviter är gröna. Öppet just nu: `claude/fan-hero-koreografi` (PR #208).
+
+Sektionerna nedan om `feature/vyra-vfx-engine` och Phase 0–12 hör till en äldre roadmap och
+beskriver inte dagens arbetsordning. De står kvar som historik — se checkpoint 32 överst för
+var arbetet faktiskt står.
 
 ## Latest verified commit
 
-Phase 5 (Premium Gift Widget) commit — see git log for exact SHA after push.
-Prior verified commits: `6dbd631` (Phase 4 refinement, `fix(widgets): differentiate premium
-family animations`), `61bc455` (Phase 4 foundation, `feat(widgets): add premium widget design
-system`), `e670003` (Phase 3, `feat(recognition): add generic live event adapter contract`),
-`f022cf0` (Phase 2, `fix(recognition): harden runtime lifecycle and failure handling`),
-`21cffb8` (Phase 0 docs), `540eaac` (Phase 1, `feat(recognition): add standalone recognition
-runtime`). Local HEAD confirmed equal to `origin/feature/vyra-vfx-engine` after each push.
+`26b04b4` — Fan Level Up: raderade döda `card` och registrerade `hero` som åttonde modellen
+(PR #207). Alla sviter gröna vid mergen: `npm test` 1156/0 fel, `test:contract` + `test:fuzz`
+16/16, `domaner test widgets` 647/0, `domaner test studio-core` 81/0, referensprovet i webbläsare
+30/30, `domaner luckor` 233/233 med exakt en ägare.
 
-Working tree at audit time: clean except pre-existing unrelated untracked items
-(`.claude/agents/`, `.claude/data/`, `assets/gifts/`, `assets/images/test/` — not created by
-this roadmap, left untouched).
+Tidigare verifierade merges den här dagen: `bfd3e38` (#206 inspelaren), `bc9aea5` (#205
+talutrymmet), `b7d095d` (#204 återbetalningen), `04c0875` (#203 cooldown-lagret), `602fcf3`
+(#202 §13 + §15a).
 
 ## Completed systems
 
@@ -325,7 +388,14 @@ roadmap entirely (Account/Workspace is in the explicitly deferred section).
 
 ## Exact next action
 
-Begin **Phase 6 — Top Gifter Widget**: session-based gift ranking display (configurable time
+**Bygg `stack` · "Mottagandet"** — koreografi nummer två på `fan-fas.js`. Se checkpoint 32 överst
+för formen (fall → pop → stigning), vilka keyframes som ska återanvändas och varför klockan byts
+ut i stället för att skrivas om. Vänta tills PR #208 är mergad; `fan-fas.js` och vakterna F1–F3
+kommer därifrån.
+
+Avsnittet nedan tillhör den äldre roadmapen och är inte nästa steg.
+
+### (historik) Phase 6 — Top Gifter Widget: session-based gift ranking display (configurable time
 window, total coins, total gifts, streak info, profile+gift imagery as one composition, no
 requirement to show the gift name), built on the Phase 4 visual families, with its own
 ranking engine **separate from Card Mapper** (per the original roadmap prompt). Consider

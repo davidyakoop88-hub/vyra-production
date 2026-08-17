@@ -69,6 +69,8 @@ konsolen. Läs den före sändningen, fyll i den efteråt.
 
 ## Läs vidare
 
+- `docs/VYRA_PROJECT_STATE.md` — **börja här.** Senaste checkpointen överst säger var arbetet
+  står, vilka invarianter som inte får brytas och vad nästa steg är
 - `docs/VYRA_ARCHITECTURE.md` — hur systemet faktiskt ser ut idag, med utskrivna gap
 - `docs/katalogkarta.md` — genererad sanning om widgetkatalogen
 - `docs/VYRA_MASTER_ROADMAP.md` — vad som är planerat, och i vilken ordning
