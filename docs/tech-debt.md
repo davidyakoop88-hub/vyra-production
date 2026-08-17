@@ -159,9 +159,37 @@ till de sex filerna.
 
 Verifierad: 2026-08-09.
 
-## 13. Poäng dras även när actionen aldrig spelar
+## ~~13. Poäng dras även när actionen aldrig spelar~~ — LÖST
 
-`action-event-advanced.js` drar kostnaden i `handleEvent`:
+**Löst 2026-08-17.** `action-event.js` har nu `kanKora(action, payload)` — samma fyra grindar, utan
+en enda skrivning — och `runAction` **anropar** den i stället för att upprepa villkoren. Därmed
+finns en implementation av grindarna, inte två som kan glida isär (det var invändningen mot väg 1
+nedan). Toast och scroll ligger kvar i `runAction`: de är svaret på ett nej, inte en del av frågan.
+`action-event-advanced.js` frågar först och drar bara när minst en action faktiskt kommer att spela.
+
+Samma mätning som nedan, efter fixen:
+
+```
+  forsok 1: 1 korningar totalt | poang 1000 -> 900
+  forsok 2: 1 korningar totalt | poang  900 -> 900
+  forsok 3: 1 korningar totalt | poang  900 -> 900
+  forsok 4: 1 korningar totalt | poang  900 -> 900
+  forsok 5: 1 korningar totalt | poang  900 -> 900
+  RESULTAT: 1 korning, 100 poang spenderade
+```
+
+Vaktat av `tests/action-event-poang.test.js` (12 prov). Mutationsprovat åt tre håll: utan
+`if(!korbara.length)return` faller B1-B4, utan `bypassCooldown` i checken faller combo-provet, och
+en `lastRun`-skrivning inne i checken faller på A1.
+
+**Två rester som fixen inte täcker står i §15** — de mättes när den här punkten stängdes och är
+en annan sorts fel: de handlar om vem som drar poängen, inte om när.
+
+Ursprungsbeskrivningen står kvar nedan, för mätningen och för resonemanget.
+
+---
+
+`action-event-advanced.js` drog kostnaden i `handleEvent`:
 
 ```js
 if (e.pointsCost && window.VyraPoints && !window.VyraPoints.spend(payload.username, e.pointsCost)) return;
@@ -207,7 +235,136 @@ låsa fast dagens beteende hade gjort det till ett kontrakt.
 
 Väg 1 är att föredra för att den aldrig visar ett saldo som inte stämmer.
 
-Verifierad: 2026-08-14.
+Verifierad: 2026-08-14. Åtgärdad via väg 1 den 2026-08-17.
+
+## 15. Poängen dras en gång per öppen flik, och cooldown gäller bara i studion
+
+Två fel som hittades när §13 stängdes. De ligger **utanför** §13:s fix: den avgör *när* avdraget
+sker, de här handlar om *vem* som drar det och *var* cooldownen finns.
+
+**15a är löst 2026-08-17, och 15b är nedskalat med den. 15c står kvar.** `action-master.js` väljer
+en förare för automationen; `handleEvent` i båda vägarna frågar `VyraAutomationMaster.farKora()`
+innan något dras eller körs. Vaktat av `tests/action-event-flikar.test.js` (9 prov) på en rigg som
+ger flera jsdom-fönster **ett** delat lager och korsflik-`storage`-event
+(`tests/helpers/flikar.js`).
+
+Samma mätning som i 15a, efter fixen:
+
+```
+  studio          utskick: 0   spelningar: 0
+  overlay scen 1  utskick: 0   spelningar: 1
+  overlay scen 2  utskick: 0   spelningar: 0
+
+  avdrag for EN gava: 1        (var 3)
+  koer direkt efter gavan: overlay scen 1: 1     (var 3)
+```
+
+Valet har två nivåer, och den andra är inte en artighet: en streamer som startar OBS före Studion
+förväntar sig att tittarnas effekter fungerar. **Nivå 1** — en flik i `studio-committed` — tar
+platsen alltid, även från en levande nivå 2. **Nivå 2** — vilken flik som helst — tar en ledig eller
+inaktuell plats. Nyckeln `vyra-automation-master` förnyas var 2:e sekund och räknas som inaktuell
+efter 6 s, samma fönster som `sceneOnline()`. Anspråket sker under `navigator.locks`, som finns i
+varje flik — det är `mode`, inte låshanteraren, som saknas i en overlay.
+
+Slavarna tiger om *avdraget*, inte om *uppspelningen*: den når dem via
+`localStorage['vyra-action-run']` som `action-runtime.js:74` redan lyssnar på. Den bryggan bar
+trafiken redan före fixen — det var just därför spelningarna blev tre.
+
+**Kvarvarande lucka, medvetet vald:** `farKora()` är synkron och kan inte vänta på låset, så två
+flikar som behandlar samma event i exakt det ögonblick en master dör kan båda se en tom plats och
+båda köra. Kostnaden är ett extra avdrag för ett event, högst en gång per 6-sekundersfönster. Att i
+stället tiga tills låset svarat hade kostat en tappad uppspelning, vilket är dyrare.
+
+`BroadcastChannel('vyra-action-run')` i `action-event.js:7` postas till men har **ingen
+prenumerant** någonstans i repot. Den är skrivbar död kod och rörs inte här; `execute()` dedupar på
+`runId`, så den kan kopplas in senare utan risk för dubbel uppspelning.
+
+### ~~15a. Varje öppen flik drar sin egen kostnad för samma gåva~~ — LÖST
+
+`live-client.js:131` anropar `handleEvent` utan någon overlay-spärr, och `studio.html?overlay=1` är
+samma sida — alltså laddar varje scenlänk i OBS sin egen kopia. Dedupe-grinden (`gateFor().accept`)
+är per flik, och `VyraPoints` ligger i `localStorage`, som alla flikar delar.
+
+**Uppmätt 2026-08-17** med två fönster mot ett gemensamt lager, en enda gåva, kostnad 100:
+
+```
+  delat saldo:        1000 -> 800
+  avdrag for EN gava: 2 st a 100 poang
+```
+
+En streamer med studion plus tre scenlänkar uppe tar alltså fyra gånger betalt. Fixen är inte att
+flytta avdraget igen utan att bestämma **vilken flik som äger poängekonomin** — rimligen den
+skrivbara studiofliken, med overlayflikarna som rena mottagare.
+
+**Mätt igen 2026-08-17 med tre flikar och en riktig korsflik-rigg**, och det var värre än så: gåvan
+betalades tre gånger **och spelades tre gånger**. Kön dolde det — med `duration: 6` ser tre köade
+uppspelningar ut som en om man mäter direkt efter gåvan.
+
+```
+  studio          utskick: 0   spelningar: 0
+  overlay scen 1  utskick: 1   spelningar: 3
+  overlay scen 2  utskick: 1   spelningar: 0
+
+  avdrag for EN gava: 3
+  koer direkt efter gavan: overlay scen 1: 3
+```
+
+Åtgärdad via en förare — se toppen av §15.
+
+### 15b. Cooldown fungerar inte i en flik utan skrivrätt — NEDSKALAT
+
+`runAction` sparar `lastRun` med `VyraSessionState.writeActive`, som kräver `studio-committed`
+eller `local-committed` (`session-state.js:138` och `:284`). En overlayflik står i
+`overlay-token-readonly` och kan aldrig skriva. Då fastnar inget `lastRun`, och cooldownen —
+både den globala och den per användare — är **helt verkningslös** där.
+
+**Uppmätt 2026-08-17**, samma fem gåvor som i §13 men i ett fönster utan skrivrätt:
+
+```
+  runAction sa ja:    5 ganger
+  lastRun sparad:     NEJ
+  poang spenderade:   500
+```
+
+Tillsammans med 15a betydde det att en overlayflik både tog betalt **och** ignorerade cooldownen.
+Streamern såg en inställning i panelen som inte gällde i den utgång som faktiskt sändes.
+
+**Nedskalat 2026-08-17 av samma fix som 15a.** Nivå 1 i master-valet är per definition den enda
+flik som får skriva, så när studion är öppen fastnar `lastRun` och cooldownen fungerar igen —
+uppmätt med tre flikar: fem gåvor under cooldown 30 s ger en spelning och ett avdrag
+(`tests/action-event-flikar.test.js`, prov 9).
+
+**Rotorsaken står kvar.** En självkörande nivå 2-flik — OBS igång utan öppen studio — kan
+fortfarande inte skriva, och där är cooldownen alltjämt verkningslös. Att laga det kräver att
+`lastRun` får en väg som inte går genom `writeActive`, alltså ett eget litet lager för
+körningstidsstämplar som inte är kontobunden layout. Det är en egen ändring.
+
+Det förklarar också varför `tests/action-event-kedjan.test.js` aldrig kunde se en cooldown: den
+riggen sätter `navigator.locks = undefined`. `tests/action-event-poang.test.js` projicerar därför
+ett riktigt `studio-committed`-läge först — utan det mäter inget prov i filen det det tror.
+
+### 15c. En full kö tar betalt för det som aldrig ryms
+
+`sceneMaxQueue` i `action-runtime.js` lever i overlayfliken, bakom en BroadcastChannel, och går
+inte att fråga synkront därifrån poängen dras. `kanKora` kan därför inte svara på den.
+
+**Uppmätt 2026-08-17**, fyra gåvor utan cooldown mot en scen med `maxQueue: 1`:
+
+```
+  runAction sa ja:    4 ganger
+  widgeten spelade:   1 gang(er)
+  koen rymmer:        2
+  poang spenderade:   400
+```
+
+Fyra betalda, tre som ryms, en som tystnade. Det här är den enda av §13:s grindar som inte gick att
+flytta före avdraget, och den kräver en väg tillbaka från overlayn — alltså väg 2 (återbetalning)
+för just det här fallet.
+
+**Ingen av 15a-15c är låst i ett prov.** Att assertera dagens siffror hade gjort dem till kontrakt,
+vilket är precis det §13 varnade för. Siffrorna ovan är mätningar, inte krav.
+
+Verifierad: 2026-08-17.
 
 ## 14. Actions och TTS Chat är två skilda talsystem
 
@@ -244,7 +401,7 @@ Verifierad: 2026-08-14.
 
 # Regler som kostat oss något
 
-§2, §5, §6, §13 och §14 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6, §14 och §15 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 

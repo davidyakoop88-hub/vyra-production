@@ -58,6 +58,23 @@
   // COULD ever fire for this person; the trigger still has to match (right command text, right
   // gift, etc.) below before we know it's genuinely happening, so charging any earlier would
   // dock points for a near-miss (e.g. typing a similar but wrong command).
-  function handleEvent(trigger,payload={}){const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if(['gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];ids.forEach(id=>window.VyraActionEvent?.runAction(s.actions.find(a=>a.id===id),payload))})}
+  //
+  // Samma resonemang ett steg till (§13 i docs/tech-debt.md): en trigger som matchar är ännu inte
+  // en uppspelning. Cooldown, cooldown per anvandare, raderad action och offline scen avgors alla
+  // i runAction EFTERAT — och avdraget lag forr fore dem. Uppmatt: cooldown 30 s, kostnad 100,
+  // fem gavor gav 1 korning och 500 spenderade poang. Darfor fragar vi kanKora() forst, och drar
+  // bara nar minst en action faktiskt kommer att spela. Kostnaden hor till EVENTET, sa den dras
+  // en gang aven nar tre actions kor.
+  //
+  // kanKora ar ren: den skriver inget och startar ingen cooldown, sa fragan kan stallas i forvag
+  // utan att paverka svaret. Saknas den (en flik med en aldre cachad action-event.js) faller vi
+  // tillbaka pa den enda grind vi kan se harifran — att actionen over huvud taget finns.
+  // En forare for automationen (§15). Varje oppen flik tar emot samma live-event, sa utan den har
+  // graden betalar och spelar tre flikar samma gava tre ganger. Slavarna tiger inte om
+  // uppspelningen - de far den via localStorage['vyra-action-run'], som action-runtime.js lyssnar
+  // pa. __test slipper igenom: replay-knappen i live-control.js och Testa-knapparna ar uttryckliga
+  // handgrepp i studion, inte live-trafik. Saknas modulen kor vi som forr (fail-open) - hellre ett
+  // dubbelavdrag an en svart overlay.
+  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if(['gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=s.actions.find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;korbara.forEach(id=>window.VyraActionEvent?.runAction(s.actions.find(a=>a.id===id),payload))})}
   new MutationObserver(enhance).observe(document.documentElement,{childList:true,subtree:true});window.VyraAdvancedEvents={handleEvent};
 })();
