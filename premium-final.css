@@ -247,3 +247,50 @@
 .fan-level-up.fan-layout-stack.fan-fas-stigning > h2{animation:fsAvatarRise .28s ease-out .02s both}
 .fan-level-up.fan-layout-stack.fan-fas-stigning > h3{animation:fsAvatarRise .28s ease-out .04s both}
 .fan-level-up.fan-layout-stack.fan-fas-stigning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · ribbon · "VÄLKOMNANDET" ─────────────────────────────────────────────────────
+   Pop → utrullning → text. Rörelserna är ribbons egna (fbProfilePop, frbUnfurl i studio.css) och
+   texten lånar stacks fsAvatarRise — den stiger in underifrån, vilket är precis vad text som
+   landar under en banderoll ska göra. Ingen av dem kopieras hit.
+
+   UPPMÄTT FÖRE (opacitet per del, ms från triggern):
+
+       ms | profil | banderoll (scaleX) | h2   | h3   | p
+       87 |  0.61  | 0.00 (0.300)       | 1.00 | 1.00 | 1.00
+      207 |  1.00  | 0.36 (0.552)       | 1.00 | 1.00 | 1.00
+      366 |  1.00  | 0.94 (0.958)       | 1.00 | 1.00 | 1.00
+      527 |  1.00  | 1.00 (0.998)       | 1.00 | 1.00 | 1.00
+
+   Poppen och utrullningen rörde sig alltså redan, och mjukt. Det som snäppte var TEXTEN: rubrik,
+   namn och meddelande låg på opacity 1 redan i första bildrutan, färdiglästa medan banderollen
+   fortfarande var hoprullad till 30 % bredd. Widgeten berättade slutet före början.
+
+   VILOLAGRET. Ribbon gömmer `.fan-burst`, och med hjärtat försvinner basens två enda oändliga
+   animationer — fanLevelPop och fanRing. Efter 527 ms stod modellen fullständigt stilla, som
+   enda modell i familjen. Den får därför en egen andning.
+
+   Andningen hänger på MODELLEN, inte på en fas. En `infinite` som ligger på en fasklass dör när
+   klassen tas bort — alltså exakt när den skulle ha börjat behövas. Undantagen är explicita i
+   stället för att lita på källordning: under poppen äger fbProfilePop profilbilden, och under
+   uttoningen äger studio.css:s `.fan-exit`-regel den. Utan `:not()`-paret hade den här regeln
+   haft samma specificitet som uttoningens och vunnit bara för att den laddas senare. */
+
+.fan-level-up.fan-layout-ribbon:not(.fan-exit):not(.fan-fas-pop) .fan-profile{animation:frbAndning 3.2s ease-in-out infinite}
+@keyframes frbAndning{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+.fan-level-up.fan-layout-ribbon.fan-fas-pop .fan-ribbon,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > h2,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > h3,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > p{opacity:0}
+.fan-level-up.fan-layout-ribbon.fan-fas-pop .fan-profile{animation:fbProfilePop .32s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > h2,
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > h3,
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > p{opacity:0}
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning .fan-ribbon{animation:frbUnfurl .42s cubic-bezier(.16,1,.3,1) both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 18d. */
+.fan-level-up.fan-layout-ribbon.fan-fas-text > h2{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-ribbon.fan-fas-text > h3{animation:fsAvatarRise .28s ease-out .03s both}
+.fan-level-up.fan-layout-ribbon.fan-fas-text > p{animation:fsAvatarRise .28s ease-out .06s both}

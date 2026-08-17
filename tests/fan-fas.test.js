@@ -155,11 +155,18 @@ test('F2: den orörda markupen bär ingen fasklass', () => {
 });
 
 test('F2: en modell utan koreografi får ingen fasklass alls', () => {
-  const { win, lada, faser } = boot([fanWidget('fan1', { fanLayout: 'ribbon' })]);
+  // Modellen VÄLJS ur registren i stället för att skrivas ut. Provet hade `ribbon` hårdkodad och
+  // föll i samma stund ribbon fick sin koreografi — inte för att något gick sönder, utan för att
+  // exemplet hann bli inaktuellt. En vakt som måste redigeras varje gång familjen växer är en
+  // vakt som förr eller senare redigeras fel.
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const utan = fabriksnycklar().find(l => !FASER[l]);
+  assert.ok(utan, 'alla modeller har koreografi — flytta då det här provet till en fixtur');
+  const { win, lada, faser } = boot([fanWidget('fan1', { fanLayout: utan })]);
   const spelade = win.VyraFanFas.spela(lada('fan1'));
   assert.equal(spelade, false, 'spela() påstod att den koreograferade en oregistrerad modell');
   assert.deepEqual(faser('fan1'), [],
-    'ribbon har ingen post i FASER och ska spela precis som förut — en halvfärdig fas är sämre '
+    `${utan} har ingen post i FASER och ska spela precis som förut — en halvfärdig fas är sämre `
     + 'än ingen fas');
 });
 
@@ -470,4 +477,139 @@ test('17g: rubriken, namnet och meddelandet är med i mottagandet', () => {
   assert.ok(har('h2'), 'rubriken (h2) har ingen rörelse i stigningen — den snäpper fram');
   assert.ok(har('h3'), 'användarnamnet (h3) har ingen rörelse i stigningen — det snäpper fram');
   assert.ok(har('p'), 'meddelandet (p) har ingen rörelse i stigningen — det snäpper fram');
+});
+
+// ================================================================================================
+// 18a–18g — RIBBON · "VÄLKOMNANDET"
+//
+// Pop → utrullning → text. Profilbilden poppar fram, banderollen rullar ut i sidled, texten
+// kommer sist.
+//
+// LÄGET FÖRE, uppmätt i Chromium (opacitet per del, ms från triggern):
+//
+//     ms | profil | banderoll (scaleX) | h2   | h3   | p
+//     87 |  0.61  | 0.00 (0.300)       | 1.00 | 1.00 | 1.00
+//    207 |  1.00  | 0.36 (0.552)       | 1.00 | 1.00 | 1.00
+//    366 |  1.00  | 0.94 (0.958)       | 1.00 | 1.00 | 1.00
+//    527 |  1.00  | 1.00 (0.998)       | 1.00 | 1.00 | 1.00
+//
+// Poppen och utrullningen rörde sig alltså redan, och mjukt. Det som snäppte var TEXTEN: rubrik,
+// namn och meddelande stod på opacity 1 redan i första bildrutan, färdiglästa medan banderollen
+// fortfarande var hoprullad till 30 % bredd. Widgeten berättade slutet före början.
+//
+// OCH RIBBON HAR INGET EGET VILOLAGER. `.fan-layout-ribbon .fan-burst{display:none!important}`
+// gömmer hjärtat, och med det gömmer den basens två enda oändliga animationer — fanLevelPop och
+// fanRing. Efter 527 ms är modellen fullständigt stillastående, till skillnad från alla andra.
+// Därför får den en egen diskret andning, och därför kan den andningen INTE hänga på en fasklass:
+// fasklassen tas bort när sekvensen är slut, och animationen hade dött i samma stund. Vaktat av 18g.
+// ================================================================================================
+
+test('18a: ribbon har tre faser i ordningen pop → utrullning → text', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.ribbon, 'ribbon saknar koreografi i FASER');
+  assert.deepEqual(FASER.ribbon.map(f => f.namn), ['pop', 'utrullning', 'text'],
+    'Välkomnandet är profilen som poppar, banderollen som rullar ut, texten sist — i den ordningen');
+});
+
+test('18b: triggern tänder ribbons första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'ribbon' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['pop'], 'poppen sattes inte i samma anrop som triggern');
+});
+
+test('18c: ribbons faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [pop, utrullning, text] = FASER.ribbon;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'ribbon' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(pop.ms - 1);
+  assert.deepEqual(faser('fan1'), ['pop'], 'poppen slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['utrullning'], 'utrullningen började inte när poppen tog slut');
+  klocka.fram(utrullning.ms);
+  assert.deepEqual(faser('fan1'), ['text'], 'texten började inte när utrullningen tog slut');
+  klocka.fram(text.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('18d: varje ribbon-fas har CSS, texten kommer i textfasen, och inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.ribbon) {
+    const rader = PREMIUM_CSS.split('\n')
+      .filter(r => r.includes(`fan-layout-ribbon.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((a, b) => a + b, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  // Fasen heter `text` — då ska den också bära texten. Det var den enda delen som snäppte förut.
+  const textfas = 'fan-layout-ribbon.fan-fas-text';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(textfas) && r.includes('animation:'));
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${textfas}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i textfasen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('18e: ribbon återanvänder fbProfilePop och frbUnfurl', () => {
+  for (const namn of ['fbProfilePop', 'frbUnfurl']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`),
+      `ribbon använder inte den befintliga ${namn} — Välkomnandet ska återanvända rörelsen`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har försvunnit ur studio.css`);
+  }
+});
+
+test('18f: utrullningen rullar UT och poppen växer', () => {
+  // Riktningsvakten. En banderoll som rullar ihop i stället för ut ser fortfarande animerad ut,
+  // varje annat prov förblir grönt, och premissen "Välkomnandet" är tyst bruten.
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  const skala = (block, fn) => [...block.matchAll(new RegExp(`${fn}\\((\\d*\\.?\\d+)\\)`, 'g'))]
+    .map(x => parseFloat(x[1]));
+
+  const unfurl = skala(kf('frbUnfurl'), 'scaleX');
+  assert.equal(unfurl.length, 2, 'frbUnfurl ska gå från en bredd till en annan');
+  assert.ok(unfurl[0] < unfurl[1],
+    `frbUnfurl går från scaleX ${unfurl[0]} till ${unfurl[1]} — en utrullning måste BREDDAS`);
+  assert.equal(unfurl[1], 1, `frbUnfurl slutar på scaleX ${unfurl[1]} i stället för i viloläget`);
+
+  const pop = skala(kf('fbProfilePop'), 'scale');
+  assert.equal(pop.length, 2, 'fbProfilePop ska gå från en skala till en annan');
+  assert.ok(pop[0] < 1, `fbProfilePop börjar på skala ${pop[0]} — en pop måste växa`);
+  assert.equal(pop[1], 1, `fbProfilePop slutar på skala ${pop[1]} i stället för 1`);
+});
+
+test('18g: ribbon har ett vilolager, och det hänger inte på en fasklass', () => {
+  // Ribbon gömmer .fan-burst, och därmed basens enda två oändliga animationer (fanLevelPop och
+  // fanRing). Utan ett eget vilolager står modellen fullständigt stilla efter entrén — uppmätt:
+  // ingenting rörde sig efter 527 ms.
+  //
+  // Och lagret får inte hänga på en fasklass. Fasklassen tas bort när sekvensen är slut, och en
+  // `infinite` som ligger på den dör i samma sekund — precis när den skulle ha börjat behövas.
+  // Det är därför den ligger på modellen själv, som basens fanLevelPop gör.
+  const rader = (STUDIO_CSS + PREMIUM_CSS).split('\n')
+    .filter(r => r.includes('fan-layout-ribbon') && r.includes('.fan-profile')
+                 && r.includes('animation:') && r.includes('infinite'));
+  assert.ok(rader.length,
+    'ribbon har ingen oändlig rörelse på profilbilden — modellen står helt stilla efter entrén');
+  for (const rad of rader) {
+    // `:not(.fan-fas-pop)` är en UTESLUTNING, inte ett villkor — den betyder att andningen tystnar
+    // medan poppen äger profilbilden, vilket är precis vad som ska hända. Uttrycket får därför
+    // inte träffa den. Utan den här strykningen mäter provet stavning i stället för beteende.
+    const utanNot = rad.replace(/:not\([^)]*\)/g, '');
+    assert.ok(!utanNot.includes('fan-fas-'),
+      `vilolagret hänger på en fasklass och dör när sekvensen tar slut: ${rad.trim()}`);
+    assert.ok(!utanNot.includes('.fan-active'),
+      `vilolagret hänger på .fan-active — F4 förbjuder det för en registrerad modell: ${rad.trim()}`);
+  }
 });
