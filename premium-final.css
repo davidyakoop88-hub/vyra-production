@@ -135,10 +135,13 @@
    Kontraktet är enkelriktat: JS bestämmer NÄR, den här filen bestämmer VAD. Ingen regel här får
    läsa en tid ur JS, och ingen fas i JS får känna till en enda animation härifrån.
 
-   VARFÖR HÄR OCH INTE I studio.css. studio.css har en obalanserad klammer (issue #126): allt
-   efter rad 787 hamnar inuti ett oavslutat block. Reglerna nedan hade sett korrekta ut i filen
-   och aldrig bitit i webbläsaren. premium-final.css är dessutom redan platsen för "designval som
-   aldrig ritades färdigt", vilket är precis vad de sju modellerna utan koreografi är.
+   VARFÖR HÄR OCH INTE I studio.css. RÄTTAD 2026-08-17: det här stycket sa först att studio.css
+   har en obalanserad klammer (issue #126) och att reglerna aldrig hade bitit. Den varningen stod
+   i studio.css självt och togs för god utan att räknas efter. Uppmätt: filen har 2312 öppnande
+   och 2312 stängande klamrar, klammerdjupet är noll vid rad 787 och vid filens slut, och en regel
+   långt efter 787 vinner cascaden i Chromium. Skälet håller ändå, men det är ett annat:
+   premium-final.css är repots plats för "designval som aldrig ritades färdigt", och att hålla
+   hela fassystemet i en fil gör att nästa modells koreografi hittas på ett ställe.
 
    BARA hero i den här omgången. Övriga modeller saknar post i FASER och får därför ingen enda av
    klasserna nedan — de spelar exakt som förut. En halvfärdig fas är sämre än ingen fas.
@@ -203,3 +206,44 @@
 @media(prefers-reduced-motion:reduce){
   .fan-level-up[class*="fan-fas-"] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+/* ── FAN LEVEL UP · stack · "MOTTAGANDET" ───────────────────────────────────────────────────────
+   Fall → pop → stigning. Rörelserna är stacks egna sedan tidigare och ligger kvar i studio.css:
+   fsIconDrop, fsPillPop och fsAvatarRise delas med hearts och loyalty och får INTE kopieras hit —
+   två sanningar om samma rörelse är hur den ena tyst hamnar ur takt med den andra.
+
+   DET SOM BYTS ÄR KLOCKAN. Förut låg den i `animation-delay` på `.fan-layout-stack.fan-active`
+   (0 / .1s / .2s). Den timingen var osynlig för fan-fas.js och därmed för F3:s tak på 2 s, och
+   texten hade ingen rörelse alls att fördröja — rubrik, namn och meddelande snäppte fram i samma
+   bildruta som lådan medan burst, pill och profil koreograferades. De gamla reglerna är borttagna
+   ur studio.css i samma ändring; ligger båda kvar startar två klockor på samma trigger. Vaktat
+   av F4.
+
+   RUBRIKEN KOM MED FÖRST EFTER MÄTNINGEN. `.fan-layout-stack>h2{display:none!important}` såg ut
+   att dölja den, men den regeln var död: `.fan-level-up>h2` har samma specificitet, kommer senare
+   i studio.css och bär `display:block!important`. Rubriken syns alltså, den är stacks största
+   textelement, och den snäppte värst av alla. Den döda regeln är borttagen.
+
+   Delarna som ännu inte anlänt hålls på `opacity:0` av fasen före. Varje animation slutar på sitt
+   basvärde, så när sista fasklassen tas bort står lådan redan rätt och ingenting snäpper. */
+
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-level-pill,
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-profile,
+.fan-level-up.fan-layout-stack.fan-fas-fall > h2,
+.fan-level-up.fan-layout-stack.fan-fas-fall > h3,
+.fan-level-up.fan-layout-stack.fan-fas-fall > p{opacity:0}
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-burst{animation:fsIconDrop .3s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-stack.fan-fas-pop .fan-profile,
+.fan-level-up.fan-layout-stack.fan-fas-pop > h2,
+.fan-level-up.fan-layout-stack.fan-fas-pop > h3,
+.fan-level-up.fan-layout-stack.fan-fas-pop > p{opacity:0}
+.fan-level-up.fan-layout-stack.fan-fas-pop .fan-level-pill{animation:fsPillPop .26s cubic-bezier(.34,1.56,.64,1) both}
+
+/* Trappan i stigningen är räknad mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet =
+   0,34 s, exakt fasens 340 ms. Går den över tas klassen bort mitt i rörelsen och elementet
+   hoppar till sitt slutläge — det syns bara i en webbläsare, aldrig i koden. Vaktat av 17d. */
+.fan-level-up.fan-layout-stack.fan-fas-stigning .fan-profile{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > h2{animation:fsAvatarRise .28s ease-out .02s both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > p{animation:fsAvatarRise .28s ease-out .06s both}

@@ -321,3 +321,153 @@ test('H7: varje hero-fas har CSS, och ingen rörelse spiller över sin fas', () 
       `en rörelse i samlingen slutar vid ${slut} ms men fasen är ${samling.ms} ms: ${rad.trim()}`);
   }
 });
+
+// ================================================================================================
+// F4 — EN MODELL MED KOREOGRAFI HAR BARA EN KLOCKA.
+//
+// Hålet den här vakten stänger hittades när stack skulle byggas: sex av de sju modellerna hade
+// REDAN rörelse, driven av `animation-delay` på `.fan-layout-X.fan-active` i studio.css. Den
+// timingen är osynlig för fan-fas.js, och därmed osynlig för F3 — takets vakt kunde inte se en
+// enda av dem. Värre: läggs faser ovanpå utan att de gamla reglerna tas bort startar BÅDA
+// klockorna på samma trigger, och delarna rycker mellan två uppsättningar animationer.
+//
+// Vakten är enkelriktad med flit. En modell UTAN koreografi får gärna ha sin rörelse i
+// `.fan-active` — det är så de sex andra ser ut idag och de spelar precis som förut. Men den som
+// registreras i FASER måste ha flyttat hela sin ingång dit.
+// ================================================================================================
+
+test('F4: en registrerad koreografi har ingen konkurrerande .fan-active-animation', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const layout of Object.keys(FASER)) {
+    const kvar = (STUDIO_CSS + PREMIUM_CSS)
+      .split('\n')
+      .filter(r => r.includes(`fan-layout-${layout}.fan-active`) && r.includes('animation:'));
+    assert.deepEqual(kvar, [],
+      `${layout} har koreografi i FASER men animerar fortfarande på .fan-active — två klockor på `
+      + 'samma trigger, och delarna rycker mellan dem');
+  }
+});
+
+// ================================================================================================
+// 17a–17g — STACK · "MOTTAGANDET"
+//
+// Fall → pop → stigning. Ikonen faller ner uppifrån, nivåpillen poppar fram, profilbilden stiger
+// underifrån — och texten kommer med den, vilket den inte gjorde förut.
+//
+// LÄGET FÖRE, uppmätt: stack hade redan de tre rörelserna, men klockan låg i CSS:ens
+// `animation-delay` (0 / .1s / .2s på `.fan-active`). Tre saker följde av det:
+//   1. F3:s tak på 2 s kunde inte se stacks timing alls — den fanns inte i något register.
+//   2. `h3` och `p` (namn och meddelande) hade INGEN rörelse. De snäppte fram i samma bildruta
+//      som lådan medan resten koreograferades. Det är snäppet.
+//   3. Familjen hade två olika klockor: hero i JS, stack i CSS.
+// Keyframesen är däremot rätt och återanvänds — fsIconDrop, fsPillPop och fsAvatarRise är också
+// delade med hearts och loyalty, så de rörs inte.
+// ================================================================================================
+
+test('17a: stack har tre faser i ordningen fall → pop → stigning', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.stack, 'stack saknar koreografi i FASER');
+  assert.deepEqual(FASER.stack.map(f => f.namn), ['fall', 'pop', 'stigning'],
+    'Mottagandet är ikonen som faller, pillen som poppar, profilen som stiger — i den ordningen');
+});
+
+test('17b: triggern tänder stacks första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'stack' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['fall'], 'fallet sattes inte i samma anrop som triggern');
+});
+
+test('17c: stacks faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [fall, pop, stigning] = FASER.stack;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'stack' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(fall.ms - 1);
+  assert.deepEqual(faser('fan1'), ['fall'], 'fallet slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['pop'], 'poppen började inte när fallet tog slut');
+  klocka.fram(pop.ms);
+  assert.deepEqual(faser('fan1'), ['stigning'], 'stigningen började inte när poppen tog slut');
+  klocka.fram(stigning.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('17d: varje stack-fas har CSS, och ingen rörelse spiller över sin fas', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.stack) {
+    const rader = PREMIUM_CSS.split('\n')
+      .filter(r => r.includes(`fan-layout-stack.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((a, b) => a + b, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+});
+
+test('17e: de befintliga keyframesen återanvänds — inga nya för samma rörelse', () => {
+  // fsIconDrop, fsPillPop och fsAvatarRise delas med hearts och loyalty och ligger kvar i
+  // studio.css. En kopia i premium-final.css hade varit två sanningar om samma rörelse, och den
+  // som ändrade den ena hade aldrig fått veta om den andra.
+  for (const namn of ['fsIconDrop', 'fsPillPop', 'fsAvatarRise']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`),
+      `stack använder inte den befintliga ${namn} — Mottagandet ska återanvända rörelsen, inte rita om den`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css och delas med andra modeller`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har försvunnit ur studio.css — hearts och loyalty animerar på den`);
+  }
+});
+
+test('17f: rörelserna går åt rätt håll — fallet faller, stigningen stiger', () => {
+  // Utan den här vakten är ett teckenfel osynligt: en ikon som stiger uppåt i stället för att
+  // falla ner ser fortfarande "animerad" ut, varje annat prov förblir grönt, och premissen
+  // "Mottagandet" är tyst bruten.
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  // Enheten är valfri med flit: viloläget skrivs `translateY(0)` utan px, och ett uttryck som
+  // kräver enheten hittar bara startvärdet. Då blir vakten grön av fel skäl — den mäter ett
+  // enda tal och kan inte längre säga något om riktningen.
+  const translateY = block => [...block.matchAll(/translateY\((-?\d*\.?\d+)(?:px)?\)/g)].map(x => parseFloat(x[1]));
+
+  const drop = translateY(kf('fsIconDrop'));
+  assert.equal(drop.length, 2, 'fsIconDrop ska gå från ett läge till ett annat');
+  assert.ok(drop[0] < 0, `fsIconDrop börjar på ${drop[0]}px — ett fall måste börja OVANFÖR vilopositionen`);
+  assert.equal(drop[1], 0, `fsIconDrop slutar på ${drop[1]}px i stället för i viloläget`);
+
+  const rise = translateY(kf('fsAvatarRise'));
+  assert.equal(rise.length, 2, 'fsAvatarRise ska gå från ett läge till ett annat');
+  assert.ok(rise[0] > 0, `fsAvatarRise börjar på ${rise[0]}px — en stigning måste börja UNDER vilopositionen`);
+  assert.equal(rise[1], 0, `fsAvatarRise slutar på ${rise[1]}px i stället för i viloläget`);
+
+  const pop = [...kf('fsPillPop').matchAll(/scale\((\d*\.?\d+)\)/g)].map(x => parseFloat(x[1]));
+  assert.equal(pop.length, 2, 'fsPillPop ska gå från en skala till en annan');
+  assert.ok(pop[0] < 1, `fsPillPop börjar på skala ${pop[0]} — en pop måste börja mindre än sitt slutläge`);
+  assert.equal(pop[1], 1, `fsPillPop slutar på skala ${pop[1]} i stället för 1`);
+});
+
+test('17g: rubriken, namnet och meddelandet är med i mottagandet', () => {
+  // Snäppet. Förut animerades bara burst, pill och profil; texten dök upp i samma bildruta som
+  // lådan och stod stilla medan resten rörde sig. Uppmätt i Chromium: opacity 1 vid 0 ms medan
+  // profilbilden fortfarande låg på 0.
+  //
+  // h2 kom med först efter mätningen. Testkartan sa "namn och meddelande", eftersom
+  // `.fan-layout-stack>h2{display:none!important}` såg ut att dölja rubriken för stack. Den
+  // regeln var död: `.fan-level-up>h2` har SAMMA specificitet, kommer senare i studio.css och bär
+  // `display:block!important`. Rubriken syns alltså — den är stacks största textelement, och den
+  // snäppte värst av alla. Den döda regeln är borttagen i samma ändring, och referensprovet
+  // ("FAN LEVEL UP syns", alla åtta modeller) vaktar att rubriken ska synas.
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const stigning = `fan-layout-stack.fan-fas-${FASER.stack[FASER.stack.length - 1].namn}`;
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(stigning) && r.includes('animation:'));
+  const har = del => rader.some(r => new RegExp(`${stigning}[^,{]*>\\s*${del}\\b`).test(r));
+  assert.ok(har('h2'), 'rubriken (h2) har ingen rörelse i stigningen — den snäpper fram');
+  assert.ok(har('h3'), 'användarnamnet (h3) har ingen rörelse i stigningen — det snäpper fram');
+  assert.ok(har('p'), 'meddelandet (p) har ingen rörelse i stigningen — det snäpper fram');
+});

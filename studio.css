@@ -697,8 +697,7 @@ html.overlay-output .widget{
    show/hide/reposition the shared parts, mirroring exactly how Gifter Level Up's 9 layouts work
    (see the "Gifter Level Up: one distinct motion per layout" block above). Each entrance/exit pair
    reuses or reverses the same mechanism per part, never a generic fade — same principle as gifter's. */
-.fan-layout-stack .fan-burst{order:1;width:110px;height:110px}.fan-layout-stack .fan-burst img{width:108px;height:108px}.fan-layout-stack .fan-level-pill{order:2;margin-top:-10px;min-width:110px}.fan-layout-stack .fan-profile{order:3;width:64px;height:64px;margin-top:10px}.fan-layout-stack>h3{order:4;margin-top:8px}.fan-layout-stack>p{order:5}.fan-layout-stack>h2{display:none!important}
-.fan-layout-stack.fan-active .fan-burst{animation:fsIconDrop .5s cubic-bezier(.34,1.56,.64,1) both}.fan-layout-stack.fan-active .fan-level-pill{animation:fsPillPop .4s cubic-bezier(.34,1.56,.64,1) .1s both}.fan-layout-stack.fan-active .fan-profile{animation:fsAvatarRise .45s ease-out .2s both}
+.fan-layout-stack .fan-burst{order:1;width:110px;height:110px}.fan-layout-stack .fan-burst img{width:108px;height:108px}.fan-layout-stack .fan-level-pill{order:2;margin-top:-10px;min-width:110px}.fan-layout-stack .fan-profile{order:3;width:64px;height:64px;margin-top:10px}.fan-layout-stack>h3{order:4;margin-top:8px}.fan-layout-stack>p{order:5}
 .fan-layout-stack.fan-exit .fan-profile{animation:fsAvatarSink var(--fed) ease-in both}.fan-layout-stack.fan-exit .fan-level-pill{animation:fsPillPop var(--fed) ease-in .06s reverse both}.fan-layout-stack.fan-exit .fan-burst{animation:fsIconDrop var(--fed) ease-in .12s reverse both}
 @keyframes fsIconDrop{from{opacity:0;transform:translateY(-40px) scale(.7)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes fsPillPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}@keyframes fsAvatarRise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes fsAvatarSink{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
 
@@ -808,10 +807,14 @@ html.overlay-output .widget{
 }
 
 /* TOTALT — historikraden på framsidan.
-   MEDVETET PLACERAD HÄR, inte sist i filen: studio.css har en obalanserad klammer (issue #126) och
-   allt efter rad 787 hamnar inuti ett oavslutat block. Regler i slutet av filen ser korrekta ut i
-   källkoden men gäller bara under @media (prefers-reduced-motion). Rad 787 är den sista där
-   klammerdjupet är noll — flyttas den här regeln längre ned slutar den att gälla. */
+   RÄTTAD 2026-08-17: den här kommentaren sa att filen har en obalanserad klammer (issue #126) och
+   att allt efter rad 787 hamnar i ett oavslutat block som bara gäller under
+   @media (prefers-reduced-motion). Det stämmer inte längre. Uppmätt: 2312 öppnande och 2312
+   stängande klamrar, och klammerdjupet är noll både vid rad 787 och vid filens slut. Kontrollerat
+   i Chromium på en regel långt efter 787 (`.fan-level-up>h2`, rad ~1065): den vinner cascaden och
+   gäller utan någon media query alls. Placeringen här är alltså inte längre nödvändig — men den
+   är heller inte fel, så regeln får ligga kvar. Räkna om innan du litar på den gamla varningen:
+   den kostade en felaktig motivering i premium-final.css innan den upptäcktes. */
 .alltime{margin:18px 0;padding:18px 20px}
 .alltime-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .alltime-head h3{margin:2px 0 0}
