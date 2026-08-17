@@ -244,6 +244,50 @@
   function bindClose(){document.querySelectorAll('[data-close-ae]').forEach(x=>x.onclick=()=>document.querySelector('#aeModal').innerHTML='')}
   function actionModal(){document.querySelector('#aeModal').innerHTML=`<div class="ae-modal"><div><header><h3>Ny Action</h3><button data-close-ae>×</button></header><label>Actionens namn<input id="aeActionName" placeholder="Exempel: Ny Action"></label><fieldset><legend>Vad ska hända? Flera val är möjliga.</legend>${actionTypes.map(x=>`<label><input type="checkbox" value="${x[0]}"> ${x[1]}</label>`).join('')}</fieldset><div class="ae-grid"><label>Visningstid<input id="aeDuration" type="number" min="1" max="60" value="6"></label><label>Global cooldown<input id="aeCooldown" type="number" min="0" max="300" value="2"></label><label>Cooldown per användare<input id="aeUserCooldown" type="number" min="0" max="600" value="0"></label><label>Volym<input id="aeVolume" type="range" min="0" max="100" value="80"></label><label><input id="aeFade" type="checkbox" checked> Fade in/ut</label><label><input id="aeRepeatCombo" type="checkbox"> Upprepa med gift-combo</label><label><input id="aeSkipOnNext" type="checkbox"> Hoppa över om nästa action väntar i kön</label></div><footer><button data-close-ae>Avbryt</button><button id="saveAeAction" class="primary">Spara Action</button></footer></div></div>`;bindClose();const modal=document.querySelector('.ae-modal');bindActionNameAutomation(modal);document.querySelector('#saveAeAction').onclick=()=>{const m=document.querySelector('.ae-modal'),actionName=m.querySelector('#aeActionName').value.trim(),types=[...m.querySelectorAll('fieldset input:checked')].map(x=>x.value);if(!actionName||!types.length)return window.toast?.('Ange namn och välj minst en funktion');const state=read();state.actions.push({id:'a'+Date.now(),name:actionName,types,duration:+m.querySelector('#aeDuration').value,cooldown:+m.querySelector('#aeCooldown').value,userCooldown:+m.querySelector('#aeUserCooldown').value,volume:+m.querySelector('#aeVolume').value,fade:m.querySelector('#aeFade').checked,repeatCombo:m.querySelector('#aeRepeatCombo').checked,skipOnNext:m.querySelector('#aeSkipOnNext').checked});persist(state);window.toast?.('Action sparad')}}
   function eventModal(){const state=read();if(!state.actions.length)return window.toast?.('Skapa en Action först');document.querySelector('#aeModal').innerHTML=`<div class="ae-modal"><div><header><h3>Nytt Event</h3><button data-close-ae>×</button></header><label>När detta händer<select id="aeTrigger">${Object.entries(triggerNames).slice(0,9).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Värde / villkor<input id="aeCondition" placeholder="Exempel: Rose, 10000 eller !hype"></label><label>Kör denna Action<select id="aeActionId">${state.actions.map(a=>`<option value="${a.id}">${formatActionName(a)}</option>`).join('')}</select></label><footer><button data-close-ae>Avbryt</button><button id="saveAeEvent" class="primary">Spara Event</button></footer></div></div>`;bindClose();bindEventAutomation(document.querySelector('.ae-modal'),state);document.querySelector('#saveAeEvent').onclick=()=>{const current=read();current.events.push({id:'e'+Date.now(),trigger:document.querySelector('#aeTrigger').value,condition:document.querySelector('#aeCondition').value.trim(),actionId:document.querySelector('#aeActionId').value,enabled:true});persist(current);window.toast?.('Event kopplat till Action')}}
+  // KÖRNINGSTIDSSTÄMPLARNA BOR I EN EGEN NYCKEL (§15b i docs/tech-debt.md).
+  //
+  // De låg förr inne i actionen i `vyra-action-event-v2`, alltså i en EXTRA_KEY, och det gav två
+  // fel på en gång. Nyckeln skrivs bara via `VyraSessionState.writeActive`, som kräver
+  // `studio-committed` eller `local-committed` (session-state.js:138, :284) — så en overlayflik
+  // kunde aldrig spara ett `lastRun`, och cooldownen var **helt verkningslös** i själva utgången
+  // som sänds. Uppmätt: fem gåvor under cooldown 30 s gav fem uppspelningar och 500 spenderade
+  // poäng i ett fönster utan skrivrätt. Dessutom synkades stämplarna till molnet och följde med
+  // till nästa dator, som om "när spelade det här senast" vore en del av layouten.
+  //
+  // Nyckeln är rå `localStorage` — samma väg som `vyra-action-run` och scenernas hjärtslag redan
+  // går. Ingen projektion, ingen version, inget lås: efter §15a är det en förare per lagerrymd som
+  // skriver, och en förlorad skrivning kostar i värsta fall en cooldown.
+  //
+  // Den är registrerad i `EPHEMERAL_KEYS` i session-state.js, INTE i EXTRA_KEYS. Skillnaden är
+  // hela poängen: den projiceras inte, synkas inte och backas inte upp — men den **torkas vid
+  // kontobyte**, för `per` är keyad på tittarnas användarnamn och de spåren får aldrig ligga kvar
+  // åt nästa konto på en delad dator.
+  //
+  // Form: { "<action-id>": { at: <ms>, per: { "<tittare>": <ms> } } }
+  const COOLDOWN_KEY='vyra-action-cooldowns';
+  // Ingen annan städar den här nyckeln. En post vars nyaste stämpel är äldre än så här är död —
+  // den längsta cooldown panelen tillåter är 600 s, alltså med väldigt god marginal.
+  const COOLDOWN_GALLRING=24*60*60*1000;
+  const lasCooldowns=()=>{try{const o=JSON.parse(localStorage.getItem(COOLDOWN_KEY)||'{}');return o&&typeof o==='object'?o:{}}catch{return{}}};
+  const nyaste=post=>Math.max(Number(post?.at)||0,...Object.values(post?.per||{}).map(v=>Number(v)||0));
+  function skrivCooldown(id,now,userKey){
+    if(!id)return;
+    const bok=lasCooldowns(),post=bok[id]||{};
+    post.at=now;
+    if(userKey){
+      const per={...(post.per||{}),[userKey]:now},poster=Object.entries(per);
+      post.per=poster.length>200?Object.fromEntries(poster.sort((a,b)=>b[1]-a[1]).slice(0,200)):per;
+    }
+    bok[id]=post;
+    for(const [nyckel,varde] of Object.entries(bok)){const sist=nyaste(varde);if(!sist||now-sist>COOLDOWN_GALLRING)delete bok[nyckel]}
+    try{localStorage.setItem(COOLDOWN_KEY,JSON.stringify(bok))}catch{}
+  }
+  // Läsningen är TVÅKÄLLIG, skrivningen enkällig: en installation som uppgraderar har kvar sina
+  // stämplar inne i actionen, och utan reservläsningen nollställs varje cooldown vid uppdateringen.
+  // De gamla fälten skrivs aldrig igen och vittrar bort av sig själva.
+  const sistKord=(post,stored)=>Number(post?.at)||Number(stored?.lastRun)||0;
+  const sistKordAv=(post,stored,userKey)=>Number(post?.per?.[userKey])||Number(stored?.lastRunByUser?.[userKey])||0;
+
   // Check-Then-Act (§13 i docs/tech-debt.md). Grindarna nedan svarar UTAN att röra något, så att
   // en anropare kan fråga innan den tar betalt — poängavdraget i action-event-advanced.js låg förr
   // före allt det här och drog poäng för uppspelningar som sedan aldrig skedde.
@@ -262,9 +306,10 @@
     // otherwise a fast combo would only ever play the action once. A brand-new (first-tap) event
     // is still subject to normal cooldown rules either way.
     const bypassCooldown=stored.repeatCombo&&Number(payload.combo||payload.repeatcount||1)>1;
-    if(!bypassCooldown&&stored.lastRun){const kvar=(stored.cooldown||0)*1000-(now-stored.lastRun);if(kvar>0)return{ok:false,skal:'cooldown',scen:scene,kvar}}
+    const post=lasCooldowns()[stored.id],sist=sistKord(post,stored);
+    if(!bypassCooldown&&sist){const kvar=(stored.cooldown||0)*1000-(now-sist);if(kvar>0)return{ok:false,skal:'cooldown',scen:scene,kvar}}
     const userKey=payload.username?String(payload.username).replace(/^@/,'').toLowerCase():'';
-    if(!bypassCooldown&&stored.userCooldown&&userKey){const lastForUser=(stored.lastRunByUser||{})[userKey];if(lastForUser){const kvar=stored.userCooldown*1000-(now-lastForUser);if(kvar>0)return{ok:false,skal:'cooldown-anvandare',scen:scene,kvar}}}
+    if(!bypassCooldown&&stored.userCooldown&&userKey){const lastForUser=sistKordAv(post,stored,userKey);if(lastForUser){const kvar=stored.userCooldown*1000-(now-lastForUser);if(kvar>0)return{ok:false,skal:'cooldown-anvandare',scen:scene,kvar}}}
     return{ok:true,skal:'',scen:scene,kvar:0};
   }
   function runAction(action,payload={}){
@@ -277,8 +322,11 @@
     }
     const state=read(),stored=state.actions.find(a=>a.id===action.id)||action,scene=dom.scen,now=Date.now();
     const userKey=payload.username?String(payload.username).replace(/^@/,'').toLowerCase():'';
-    stored.lastRun=now;if(userKey){stored.lastRunByUser=stored.lastRunByUser||{};stored.lastRunByUser[userKey]=now;const entries=Object.entries(stored.lastRunByUser);if(entries.length>200)stored.lastRunByUser=Object.fromEntries(entries.sort((a,b)=>b[1]-a[1]).slice(0,200))}
-    if(!state.actions.some(a=>a.id===stored.id))state.actions.push(stored);write(state);const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{actionRunChannel?.postMessage(detail)}catch{}try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);return true}
+    // Stämpeln går till sin egen nyckel, inte in i actionen. Därmed försvinner också det write()
+    // som stod här: varje körd action utlöste förr en låst, versionshanterad projektion — i den
+    // varmaste vägen i hela appen, och bara för att spara ett tal som inte hör till layouten.
+    skrivCooldown(stored.id,now,userKey);
+    const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{actionRunChannel?.postMessage(detail)}catch{}try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);return true}
   function actionsForEvent(state,event){if(event.allActionIds?.length)return event.allActionIds;if(event.randomActionIds?.length)return[event.randomActionIds[Math.floor(Math.random()*event.randomActionIds.length)]];return[event.actionId]}
   function runEvent(event,payload={}){const state=read();if(!event?.enabled&&payload.__test!==true)return false;actionsForEvent(state,event).forEach(id=>runAction(state.actions.find(a=>a.id===id),payload));return true}
   // Reservvagen nar action-event-advanced.js inte ar laddad. Master-graden star EFTER delegeringen,

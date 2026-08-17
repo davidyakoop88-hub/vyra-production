@@ -311,7 +311,7 @@ uppspelningar ut som en om man mäter direkt efter gåvan.
 
 Åtgärdad via en förare — se toppen av §15.
 
-### 15b. Cooldown fungerar inte i en flik utan skrivrätt — NEDSKALAT
+### ~~15b. Cooldown fungerar inte i en flik utan skrivrätt~~ — LÖST
 
 `runAction` sparar `lastRun` med `VyraSessionState.writeActive`, som kräver `studio-committed`
 eller `local-committed` (`session-state.js:138` och `:284`). En overlayflik står i
@@ -334,14 +334,37 @@ flik som får skriva, så när studion är öppen fastnar `lastRun` och cooldown
 uppmätt med tre flikar: fem gåvor under cooldown 30 s ger en spelning och ett avdrag
 (`tests/action-event-flikar.test.js`, prov 9).
 
-**Rotorsaken står kvar.** En självkörande nivå 2-flik — OBS igång utan öppen studio — kan
-fortfarande inte skriva, och där är cooldownen alltjämt verkningslös. Att laga det kräver att
-`lastRun` får en väg som inte går genom `writeActive`, alltså ett eget litet lager för
-körningstidsstämplar som inte är kontobunden layout. Det är en egen ändring.
+**Rotorsaken löst 2026-08-17.** Körningstidsstämplarna bor nu i en egen nyckel,
+`vyra-action-cooldowns`, skriven med rå `localStorage` — ingen projektion, ingen version, inget
+lås. Cooldownen fungerar därmed i **varje** flik, också en självkörande nivå 2-overlay med OBS
+igång utan öppen studio. Uppmätt i en ensam overlay, fem gåvor under cooldown 30 s och kostnad 100:
+en uppspelning och 100 poäng, mot fem och 500 före.
 
-Det förklarar också varför `tests/action-event-kedjan.test.js` aldrig kunde se en cooldown: den
-riggen sätter `navigator.locks = undefined`. `tests/action-event-poang.test.js` projicerar därför
-ett riktigt `studio-committed`-läge först — utan det mäter inget prov i filen det det tror.
+Tre följder av flytten, alla avsiktliga:
+
+- **Cooldowns synkas inte längre till molnet.** De låg förr inne i `vyra-action-event-v2`, en
+  EXTRA_KEY, och följde alltså med till nästa dator som om "när spelade det här senast" vore en del
+  av layouten. Nu är de per maskin, precis som poängsaldot.
+- **`write(state)` försvann ur den varmaste vägen.** Varje körd action utlöste förr en låst,
+  versionshanterad projektion, bara för att spara ett tal.
+- **Nyckeln torkas vid kontobyte.** `per` är keyad på tittarnas användarnamn, så en kvarlämnad
+  nyckel hade låtit nästa konto på en delad dator läsa förra kontots tittare. `beginLogout` torkade
+  bara `EXTRA_KEYS`, `RETIRED_KEYS` och markören — därför finns nu **`EPHEMERAL_KEYS`** i
+  `session-state.js`: nycklar vi *använder*, som varken projiceras, synkas eller backas upp, men
+  som måste torkas. Vaktat av prov 6 i `tests/action-cooldown-lager.test.js`.
+
+Läsningen är tvåkällig och skrivningen enkällig: en installation som uppgraderar har kvar sina
+stämplar inne i actionen, och utan reservläsningen hade varje cooldown nollställts vid
+uppdateringen. De gamla fälten skrivs aldrig igen och vittrar bort av sig själva.
+
+Vaktat av `tests/action-cooldown-lager.test.js` (8 prov), mutationsprovat åt fyra håll. Prov 5 —
+"stämpeln läcker inte tillbaka in i det som synkas" — måste köras i en **skrivbar** flik: i en
+overlay stoppas den gamla skrivningen ändå av `writeActive`, så provet hade varit grönt även med
+felet återinfört.
+
+Det förklarade också varför `tests/action-event-kedjan.test.js` aldrig kunde se en cooldown: den
+riggen sätter `navigator.locks = undefined`. Efter flytten gäller det inte längre — cooldownen
+lever utanför projektionen och biter i vilken rigg som helst.
 
 ### 15c. En full kö tar betalt för det som aldrig ryms
 
@@ -401,7 +424,7 @@ Verifierad: 2026-08-14.
 
 # Regler som kostat oss något
 
-§2, §5, §6, §14 och §15 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6, §14 och §15c är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 

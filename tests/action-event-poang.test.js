@@ -12,11 +12,14 @@
 //
 // TRE SAKER SOM ÄR LÄTTA ATT TRO FEL OM I DEN HÄR FILEN:
 //
-//   1. COOLDOWN KRÄVER ETT SKRIVBART FÖNSTER. `runAction` sparar `lastRun` via
-//      `VyraSessionState.writeActive`, som vägrar utan låshanterare och utan committad
-//      projektion. Ett fönster som riggas som kedjan-provets (`navigator.locks = undefined`)
-//      har ingen fungerande cooldown alls — inget `lastRun` fastnar, och varenda gåva kör.
-//      Därför projicerar `studio()` här ett riktigt `studio-committed`-läge först.
+//   1. FÖNSTRET HÄR ÄR SKRIVBART MED FLIT. När filen skrevs sparade `runAction` sin `lastRun` via
+//      `VyraSessionState.writeActive`, som vägrar utan låshanterare och utan committad projektion
+//      — så ett fönster riggat som kedjan-provets (`navigator.locks = undefined`) hade ingen
+//      fungerande cooldown alls. Sedan §15b bor stämplarna i `vyra-action-cooldowns` och fungerar
+//      i vilken flik som helst, men `studio()` projicerar fortfarande ett riktigt
+//      `studio-committed`-läge: proven nedan handlar om poängen, och de ska mätas i den flik där
+//      allt annat också fungerar. De tre prov som seedar `lastRun` INNE i actionen (C2b, C3, C4)
+//      läses numera via §15b:s reservläsning och vaktar därmed uppgraderingsvägen på köpet.
 //   2. KÖN ÄR INTE COOLDOWN. Med `duration: 6` spelar overlayn en action var sjätte sekund;
 //      fyra köade actions ser ut som "bara en körde" om man bara räknar widgetträffar. Proven
 //      räknar därför `vyra:action`-utskicken — det `runAction` faktiskt beslutade — och
