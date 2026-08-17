@@ -129,3 +129,77 @@
    manglades i bdcb7bd. Code-point-escapes kan inte manglas av en teckenkodning.
    Tre halvfasta mellanslag per lucka, som originalets tre vanliga. */
 .goal-constellation .goal-track:after{content:"\2726\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2727\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2726"}
+
+/* ── FAN LEVEL UP · KOREOGRAFI ──────────────────────────────────────────────────────────────────
+   Faserna sätts av fan-fas.js. Klasserna heter `fan-fas-<namn>` och ligger på widgetlådan.
+   Kontraktet är enkelriktat: JS bestämmer NÄR, den här filen bestämmer VAD. Ingen regel här får
+   läsa en tid ur JS, och ingen fas i JS får känna till en enda animation härifrån.
+
+   VARFÖR HÄR OCH INTE I studio.css. studio.css har en obalanserad klammer (issue #126): allt
+   efter rad 787 hamnar inuti ett oavslutat block. Reglerna nedan hade sett korrekta ut i filen
+   och aldrig bitit i webbläsaren. premium-final.css är dessutom redan platsen för "designval som
+   aldrig ritades färdigt", vilket är precis vad de sju modellerna utan koreografi är.
+
+   BARA hero i den här omgången. Övriga modeller saknar post i FASER och får därför ingen enda av
+   klasserna nedan — de spelar exakt som förut. En halvfärdig fas är sämre än ingen fas.
+
+   FAS 1 · hjarta (420 ms). Hjärtat ensamt: det stiger ur botten och skalas upp. Pulsen är basens
+   egen `fanLevelPop` på `.fan-burst img` — den rörs inte, den fortsätter oavbrutet, och det är
+   just därför hjärtat "pulsar från basen" i stället för att starta om.
+
+   FAS 2 · samling (560 ms). Resten samlas runt hjärtat i en trappa: profil, pill, rubrik, namn,
+   meddelande. Trappan är räknad så att den SISTA animationen slutar exakt när fasen gör det
+   (0,24 s fördröjning + 0,32 s varaktighet = 0,56 s). Går trappan över fasens längd tas klassen
+   bort mitt i rörelsen och elementet hoppar — det syns bara i webbläsaren, aldrig i koden.
+
+   FAS 3 · vila (270 ms). Glöden lägger sig. Både fas 1 och fas 2 håller `brightness(1.3)` på
+   burst-ringen, och fas 3 ramar ner den till 1 — så när klassen tas bort står lådan redan på
+   sitt basvärde och ingenting snäpper tillbaka.
+
+   Totalt 1250 ms, väl inom visningsreglagets golv på 2 s. F3 i tests/fan-fas.test.js vaktar det. */
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > h2,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > h3,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > p,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-profile,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-level-pill{opacity:0}
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-burst{animation:fanSamlingHjarta .42s cubic-bezier(.16,1,.3,1) both}
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-burst,
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-burst{filter:brightness(1.3)}
+
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-profile{animation:fanSamlingIn .32s cubic-bezier(.2,.9,.25,1.1) both}
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-level-pill{animation:fanSamlingIn .32s cubic-bezier(.2,.9,.25,1.1) .06s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > h2{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .12s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > h3{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .18s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > p{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .24s both}
+
+.fan-level-up.fan-layout-hero.fan-fas-vila .fan-burst{animation:fanVilaGlod .27s ease-out both}
+
+@keyframes fanSamlingHjarta{
+  0%{transform:translateY(26px) scale(.72);opacity:0}
+  60%{opacity:1}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+/* Samlas UTIFRÅN — profil och pill glider in mot mitten underifrån. */
+@keyframes fanSamlingIn{
+  0%{transform:translateY(16px) scale(.86);opacity:0}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+/* Texten faller ned på plats i stället: rubrik, namn och meddelande ligger UNDER hjärtat i
+   flödet, så en rörelse nedifrån hade fått dem att korsa varandra. */
+@keyframes fanSamlingNed{
+  0%{transform:translateY(-12px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
+}
+@keyframes fanVilaGlod{
+  0%{filter:brightness(1.3)}
+  100%{filter:brightness(1)}
+}
+
+/* Samma hänsyn som de tre premiumfamiljerna längre upp i filen. Faserna byts fortfarande — det är
+   BARA rörelsen som tas bort, så tittaren ser samma slutbild i samma ordning. */
+@media(prefers-reduced-motion:reduce){
+  .fan-level-up[class*="fan-fas-"] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

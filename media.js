@@ -835,6 +835,11 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260807-levels';document.body.append(js)});
+/* Fan Level Up:s koreografi. Egen fil av samma skal som CLAUDE.md ger: media.js ar storst i repot,
+   och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
+   ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
+   sa laddordningen mot runtime-controls.js:s koade trigger inte spelar nagon roll. */
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-fas.js?v=20260817-hero';document.body.append(js)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
    wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
@@ -873,7 +878,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260813-topstreak-ramar-premium';
+  const version='20260817-fan-hero-koreografi';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
