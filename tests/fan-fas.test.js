@@ -613,3 +613,136 @@ test('18g: ribbon har ett vilolager, och det hänger inte på en fasklass', () =
       `vilolagret hänger på .fan-active — F4 förbjuder det för en registrerad modell: ${rad.trim()}`);
   }
 });
+
+// ================================================================================================
+// 19a–19g — LOYALTY · "INRINGNINGEN"
+//
+// Pop → ring → stämpel. Profilbilden poppar in, ringen ritas ett kvarts varv (−90° → 0), och
+// nivåpillen och texten stämplas in sist.
+//
+// LÄGET FÖRE, uppmätt i Chromium (opacitet per del, ms från triggern):
+//
+//     ms | img (ankaret) | .fan-profile (behållaren) | ring | pill | h2   | h3   | p
+//     24 |     0.18      |          1.00            | 0.04 | 0.00 | 1.00 | 1.00 | 1.00
+//    126 |     0.89      |          1.00            | 0.26 | 0.00 | 1.00 | 1.00 | 1.00
+//    306 |     1.00      |          1.00            | 0.60 | 0.00 | 1.00 | 1.00 | 1.00
+//
+// SOCKELFÄLLAN. `.fan-active .fan-profile img{animation:fbProfilePop}` animerade ANKARET, inte
+// behållaren. Men behållaren har ett eget utseende: `background:linear-gradient(145deg,
+// var(--fan-light),var(--fan))` plus `box-shadow:0 0 13px var(--fan)` — en glödande orange skiva
+// på 80×80 px. Den stod alltså fullt målad redan i första bildrutan, och "poppen" var ett foto som
+// tonade in INUTI en skiva som aldrig rörde sig. Fotograferat: en naiv fas 1 som bara släcker
+// barnen (img, ring, pill, text) lämnar skivan lysande ensam på canvasen.
+//
+// Regeln är därför: rör BEHÅLLAREN, aldrig ankaret. Ankaret rider med. Vaktat av 19g.
+//
+// OCH `visibility` DUGER INTE SOM MÅTT. `.fan-level-up` är `visibility:hidden` tills alerten
+// tänds, men uppmätt rapporterar barnen ändå `visibility: visible` — arvet bryts på vägen ned.
+// En DOM-vakt som frågar efter visibility får alltså grönt oavsett vad som syns. Proven här mäter
+// opacitet och målade pixlar i stället.
+// ================================================================================================
+
+test('19a: loyalty har tre faser i ordningen pop → ring → stampel', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.loyalty, 'loyalty saknar koreografi i FASER');
+  assert.deepEqual(FASER.loyalty.map(f => f.namn), ['pop', 'ring', 'stampel'],
+    'Inringningen är profilen som poppar, ringen som ritas, texten som stämplas — i den ordningen');
+});
+
+test('19b: triggern tänder loyaltys första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'loyalty' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['pop'], 'poppen sattes inte i samma anrop som triggern');
+});
+
+test('19c: loyaltys faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [pop, ring, stampel] = FASER.loyalty;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'loyalty' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(pop.ms - 1);
+  assert.deepEqual(faser('fan1'), ['pop'], 'poppen slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['ring'], 'ringen började inte när poppen tog slut');
+  klocka.fram(ring.ms);
+  assert.deepEqual(faser('fan1'), ['stampel'], 'stämpeln började inte när ringen tog slut');
+  klocka.fram(stampel.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('19d: varje loyalty-fas har CSS, stämpeln bär pill och text, och inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.loyalty) {
+    const rader = PREMIUM_CSS.split('\n')
+      .filter(r => r.includes(`fan-layout-loyalty.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((a, b) => a + b, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  const stampel = 'fan-layout-loyalty.fan-fas-stampel';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(stampel) && r.includes('animation:'));
+  assert.ok(rader.some(r => r.includes('.fan-level-pill')), 'nivåpillen stämplas inte in');
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${stampel}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i stämpelfasen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('19e: loyalty återanvänder flRingDraw, fbProfilePop och fsPillPop', () => {
+  for (const namn of ['flRingDraw', 'fbProfilePop', 'fsPillPop']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`),
+      `loyalty använder inte den befintliga ${namn}`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har försvunnit ur studio.css`);
+  }
+});
+
+test('19f: ringen ritas ett kvarts varv, och poppen växer', () => {
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  const ring = kf('flRingDraw');
+  const grader = [...ring.matchAll(/rotate\((-?\d*\.?\d+)deg\)/g)].map(x => parseFloat(x[1]));
+  // `rotate(0)` skrivs utan enhet, precis som translateY(0) gör — fånga den separat.
+  const nollor = [...ring.matchAll(/rotate\(0\)/g)].length;
+  assert.equal(grader.length + nollor, 2, 'flRingDraw ska gå från en vinkel till en annan');
+  assert.equal(grader[0], -90,
+    `flRingDraw börjar på ${grader[0]}deg — Inringningen ritar ett KVARTS varv från -90`);
+  assert.equal(nollor, 1, 'flRingDraw ska sluta på rotate(0), alltså i viloläget');
+
+  const pop = [...kf('fbProfilePop').matchAll(/scale\((\d*\.?\d+)\)/g)].map(x => parseFloat(x[1]));
+  assert.equal(pop.length, 2, 'fbProfilePop ska gå från en skala till en annan');
+  assert.ok(pop[0] < 1, `fbProfilePop börjar på skala ${pop[0]} — en pop måste växa`);
+  assert.equal(pop[1], 1, `fbProfilePop slutar på skala ${pop[1]} i stället för 1`);
+});
+
+test('19g: sockelvakten — poppen rör behållaren, aldrig ankaret', () => {
+  // Behållaren `.fan-profile` bär en egen linear-gradient och en box-shadow. Animeras bara
+  // `.fan-profile img` står skivan kvar fullt målad medan fotot tonar in inuti den — uppmätt:
+  // ankaret 0.18 medan behållaren låg på 1.00 i samma bildruta.
+  //
+  // Ankaret får därför aldrig nämnas i en loyalty-fas. Det rider med behållaren.
+  const faser = require('./helpers/fan-fas-register.js').FASER.loyalty.map(f => f.namn);
+  const rader = PREMIUM_CSS.split('\n')
+    .filter(r => faser.some(n => r.includes(`fan-layout-loyalty.fan-fas-${n}`)));
+
+  const poppar = rader.filter(r => r.includes('animation:') && r.includes('fbProfilePop'));
+  assert.ok(poppar.length, 'ingen fas poppar profilbilden alls');
+  for (const rad of poppar) {
+    assert.ok(/\.fan-profile\s*\{/.test(rad) || /\.fan-profile\{/.test(rad),
+      `poppen ligger inte på behållaren .fan-profile: ${rad.trim()}`);
+  }
+  for (const rad of rader) {
+    assert.ok(!/\.fan-profile\s+img/.test(rad),
+      `en loyalty-fas rör ankaret (.fan-profile img) — sockeln blir kvar när ankaret släcks: ${rad.trim()}`);
+  }
+});
