@@ -40,11 +40,24 @@
   // med en trappa emellan. Sist lägger sig glöden. Totalt 1250 ms, samma total som gifter-
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
+  //
+  // stack · MOTTAGANDET. Ikonen faller ner uppifrån, nivåpillen poppar fram, profilbilden stiger
+  // underifrån — och namnet och meddelandet stiger med den. Rörelserna är stacks EGNA sedan
+  // tidigare (fsIconDrop, fsPillPop, fsAvatarRise i studio.css, delade med hearts och loyalty);
+  // det som byts är klockan. Förut låg den i CSS:ens `animation-delay` på `.fan-active`, vilket
+  // gjorde tre saker: F3:s tak på 2 s kunde inte se stacks timing alls, familjen hade två olika
+  // klockor, och `h3`/`p` hade ingen rörelse att fördröja — de snäppte fram i samma bildruta som
+  // lådan medan resten koreograferades.
   const FASER = {
     hero: [
       { namn: 'hjarta', ms: 420 },
       { namn: 'samling', ms: 560 },
       { namn: 'vila', ms: 270 },
+    ],
+    stack: [
+      { namn: 'fall', ms: 300 },
+      { namn: 'pop', ms: 260 },
+      { namn: 'stigning', ms: 340 },
     ],
   };
 
