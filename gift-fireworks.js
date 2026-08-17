@@ -15,8 +15,19 @@ const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay
 set('#fwSound','fwSound',true);set('#fwExcludeAnon','fwExcludeAnon',true);set('#fwTextOn','fwTextOn',true);set('#fwTextSize','fwTextSize');let tc=document.querySelector('#fwTextColor');if(tc)tc.onchange=x=>{w.fwTextColor=x.target.value;save();render()};let tm=document.querySelector('#fwText');if(tm)tm.onchange=x=>{w.fwText=x.target.value;save();render()};/* Reglaget och dess nummerfalt visar samma varde och ska folja varandra. Klampningen sitter
    pa BADA: ett nummerfalt slapper igenom vad som helst som skrivs in, till skillnad fran ett
    reglage, och utan klampning hade 9999 hamnat rakt i widgeten. */
-[['fwSpeed',.1],['fwDuration',1],['fwGiftSize',1],['fwExplosion',1],['fwDensity',1],['fwTextSize',1],['fwVolume',1]].forEach(([id,steg])=>{const r=document.querySelector('#'+id),n=document.querySelector('#'+id+'Num');if(!r||!n)return;const klamp=v=>Math.min(+r.max,Math.max(+r.min,Number.isFinite(+v)?+v:+r.min));const skriv=(v,fran)=>{const k=klamp(v);w[id]=k;if(fran!=='r')r.value=k;if(fran!=='n')n.value=k;const b=r.closest('.range-label')?.querySelector('b');if(b)b.textContent=k};r.oninput=x=>skriv(x.target.value,'r');r.onchange=x=>{skriv(x.target.value,'r');save();render()};n.onchange=x=>{skriv(x.target.value,'n');save();render()};});bkBind(w);let preset=document.querySelector('#fwPreset');if(preset)preset.onchange=x=>{let p=fwPresets[x.target.value];if(p)Object.assign(w,p);save();render()};let t=document.querySelector('#testFw');if(t)t.onclick=()=>{let e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);e.classList.remove('play');void e.offsetWidth;e.classList.add('play');setTimeout(()=>e.classList.remove('play'),(w.fwDuration||5)*1000)}};
-document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))return;event.preventDefault();let w=liveWidget(selected,'templateGiftFireworks');if(!w)return toast('Välj Gift Fireworks på canvasen först');let e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;let combo=Math.max(1,Math.min(100,+document.querySelector('#fwCombo')?.value||w.fwCombo||1));w.fwCombo=combo;save();buildComboRockets(w,e,combo);e.classList.remove('play');void e.offsetWidth;e.classList.add('play');e.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});setTimeout(()=>e.classList.remove('play'),(w.fwDuration||5)*1000)},true);
+[['fwSpeed',.1],['fwDuration',1],['fwGiftSize',1],['fwExplosion',1],['fwDensity',1],['fwTextSize',1],['fwVolume',1]].forEach(([id,steg])=>{const r=document.querySelector('#'+id),n=document.querySelector('#'+id+'Num');if(!r||!n)return;const klamp=v=>Math.min(+r.max,Math.max(+r.min,Number.isFinite(+v)?+v:+r.min));const skriv=(v,fran)=>{const k=klamp(v);w[id]=k;if(fran!=='r')r.value=k;if(fran!=='n')n.value=k;const b=r.closest('.range-label')?.querySelector('b');if(b)b.textContent=k};r.oninput=x=>skriv(x.target.value,'r');r.onchange=x=>{skriv(x.target.value,'r');save();render()};n.onchange=x=>{skriv(x.target.value,'n');save();render()};});bkBind(w);let preset=document.querySelector('#fwPreset');if(preset)preset.onchange=x=>{let p=fwPresets[x.target.value];if(p)Object.assign(w,p);save();render()};/* Testknappens klick agas av capture-lyssnaren nedan, som gar genom triggern. Har satt forr en
+   ANDRA onclick som tande `.play` rakt av — tva genvagar forbi kon, tva rader isar. */};
+/* Testknappen gar genom den PUBLIKA triggern, aldrig forbi den.
+   Forr byggde den har lyssnaren raketerna sjalv och satte `.play` direkt pa noden. Da gick
+   testet forbi VyraAlertQueue (runtime-controls.js lindar bara triggern), forbi dubblettsparren
+   fwRedanTand, och det tande bara den VALDA widgeten medan en riktig gava tander alla synliga.
+   Man kunde alltsa inte prova det man mest behover prova: hur fyrverkerier pacear mot andra
+   alerts. Nu ar knappen en gava som alla andra.
+   __test hoppar over fwMin och anonymfiltret — annars tystnar knappen sa fort streamern hojer
+   sin grans — men behaller kon och sparren. Samma monster som triggerFanLevelUp.
+   Combon LASES ur faltet och skickas som argument. Den skrivs inte till widgeten har; det gor
+   faltets egen onchange langre ner. Se docs/tech-debt.md punkt 3. */
+document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))return;event.preventDefault();let w=liveWidget(selected,'templateGiftFireworks');if(!w)return toast('Välj Gift Fireworks på canvasen först');let combo=Math.max(1,Math.min(100,+document.querySelector('#fwCombo')?.value||w.fwCombo||1));window.triggerGiftFireworks({combo,username:'@Test',giftName:'Rose',__test:true})},true);
 /* En timer per EFFEKT, inte en per gava. Forr fick varje gava sin egen setTimeout som tog bort
    .play; tva gavor tatt inpa varandra gav tva timers, och den FORSTA klippte den andra animationen
    kort mitt i. Nu satts samma timer om, sa en ny gava FORLANGER visningen i stallet for att avbryta
@@ -68,6 +79,10 @@ function buildComboRockets(w,e,combo=w.fwCombo||1,gavobild,avatarbild){combo=Mat
    annars slutat tanda nagot alls. Bara ett KANT belopp under gransen stoppas. */
 const fwBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
 function fwSlapperIgenom(w,d){
+  /* Editorns testknapp slipper grindarna, men bara de. Utan undantaget blir knappen TYST sa fort
+     streamern hojer fwMin: man trycker och ingenting hander, utan forklaring. Kon och
+     dubblettsparren galler fortfarande — det ar dem man testar. */
+  if(d.__test)return true;
   if(w.fwExcludeAnon&&d.isAnonymous)return false;
   const belopp=fwBelopp(d);
   return belopp===undefined||belopp>=(w.fwMin||1);
