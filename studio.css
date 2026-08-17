@@ -716,8 +716,8 @@ html.overlay-output .widget{
 .fan-layout-loyalty.fan-exit .fan-ring{animation:flRingDraw var(--fed) ease-in reverse both}.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
 @keyframes flRingDraw{from{opacity:0;transform:rotate(-90deg) scale(.7)}to{opacity:1;transform:rotate(0) scale(1)}}
 
-.fan-layout-hearts{flex-direction:column}.fan-layout-hearts .fan-rising-hearts{display:flex;order:1;gap:4px;height:36px;align-items:flex-end;justify-content:center}.fan-layout-hearts .fan-rising-hearts i{font-style:normal;color:var(--fan-light);text-shadow:0 0 8px var(--fan);font-size:14px}.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:18px;margin-bottom:6px}.fan-layout-hearts .fan-burst{order:2;width:90px;height:90px;margin-top:-4px}.fan-layout-hearts .fan-burst img{width:88px;height:88px}.fan-layout-hearts .fan-level-pill{order:3;margin-top:-8px}.fan-layout-hearts .fan-profile{display:none!important}.fan-layout-hearts>h2{display:none!important}.fan-layout-hearts>h3{order:4;margin-top:8px}.fan-layout-hearts>p{order:5}
-.fan-layout-hearts.fan-active .fan-rising-hearts i{animation:frHeartRise 1.6s ease-in-out infinite}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(1){animation-delay:0s}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(2){animation-delay:.4s}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(3){animation-delay:.8s}.fan-layout-hearts.fan-active .fan-burst{animation:fsIconDrop .5s cubic-bezier(.34,1.56,.64,1) both}
+.fan-layout-hearts{flex-direction:column}.fan-layout-hearts .fan-rising-hearts{display:flex;order:1;gap:4px;height:36px;align-items:flex-end;justify-content:center}.fan-layout-hearts .fan-rising-hearts i{font-style:normal;color:var(--fan-light);text-shadow:0 0 8px var(--fan);font-size:14px}.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:18px;margin-bottom:6px}.fan-layout-hearts .fan-burst{order:2;width:90px;height:90px;margin-top:-4px}.fan-layout-hearts .fan-burst img{width:88px;height:88px}.fan-layout-hearts .fan-level-pill{order:3;margin-top:-8px}.fan-layout-hearts .fan-profile{display:none!important}.fan-layout-hearts>h3{order:4;margin-top:8px}.fan-layout-hearts>p{order:5}
+
 .fan-layout-hearts.fan-exit .fan-burst{animation:fsIconDrop var(--fed) ease-in reverse both}.fan-layout-hearts.fan-exit .fan-rising-hearts i{animation:none!important;opacity:0;transition:opacity var(--fed) ease-in}
 @keyframes frHeartRise{0%{transform:translateY(0);opacity:0}30%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
 
@@ -1101,7 +1101,7 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
   filter:drop-shadow(0 0 8px #ff7a1288)}
 
 /* ---- 5 Rising Hearts: tre glodande hjartan i trappa --------------------------------------- */
-.fan-layout-hearts .fan-rising-hearts i{opacity:1!important;color:#ff3b52!important;
+.fan-layout-hearts .fan-rising-hearts i{color:#ff3b52!important;
   text-shadow:0 0 10px #ff3b52,0 0 22px #ff7a12aa!important}
 .fan-layout-hearts .fan-rising-hearts i:nth-child(1){font-size:13px!important}
 .fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:19px!important}

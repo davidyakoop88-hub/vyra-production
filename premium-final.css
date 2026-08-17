@@ -387,3 +387,49 @@
 .fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > h2{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) .02s both}
 .fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > h3{animation:fsAvatarRise .28s ease-out .04s both}
 .fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · hearts · "UPPSTIGNINGEN" ────────────────────────────────────────────────────
+   Nedslag → uppstigning → hyllning. Inga nya keyframes alls: fsIconDrop (delad med stack),
+   fsAvatarRise (delad med stack, ribbon och loyalty) och fsPillPop räcker.
+
+   VILOLAGRET FLYTTAT TILL MODELLEN. De tre hjärtanas oändliga loop låg på `.fan-active`. Ett
+   vilolager måste finnas oavsett om alerten står i en fas eller inte — ligger det på `.fan-active`
+   krävs en specialvakt för när det får starta, och på en fasklass dör det när klassen tas bort.
+   Basens fanLevelPop ligger på modellen; den här gör likadant. Widgeten är ändå
+   `visibility:hidden` tills alerten tänds, så ingenting syns i förväg. Vaktat av 21h.
+
+   OCH TONNINGEN ÄR LAGAD. `.fan-rising-hearts i{opacity:1!important}` pinnade opaciteten och
+   dödade halva frHeartRise. Uppmätt före:
+
+       ms | hjärta 1        | hjärta 2        | hjärta 3
+     1552 | y -26  op 1.00  | y -21  op 1.00  | y -11  op 1.00
+     1803 | y  -1  op 1.00  | y -25  op 1.00  | y -18  op 1.00
+
+   Hjärtat steg 26 px och teleporterade tillbaka till noll VID FULL LJUSSTYRKA, var 1,6:e sekund,
+   tre gånger förskjutet. Vid opacitet 0 i toppen är samma återgång osynlig — det är hela skälet
+   till att keyframen tonar ut. `!important` är borta. Vaktat av 21g. */
+
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i{animation:frHeartRise 1.6s ease-in-out infinite}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(1){animation-delay:0s}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(2){animation-delay:.4s}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(3){animation-delay:.8s}
+
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-rising-hearts,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-level-pill,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > h2,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > h3,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > p{opacity:0}
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-burst{animation:fsIconDrop .3s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning .fan-level-pill,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > h2,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > h3,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > p{opacity:0}
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning .fan-rising-hearts{animation:fsAvatarRise .32s ease-out both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 21d. */
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning .fan-level-pill{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > h2{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) .02s both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > p{animation:fsAvatarRise .28s ease-out .06s both}
