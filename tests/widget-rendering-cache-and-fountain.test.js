@@ -17,17 +17,17 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-08-13 for Battle MVP-ramarna: andringen lag i media.js och widget-factory.js,
   // och utan ny strang fortsatter en cachad webblasare servera de gamla filerna.
   //
-  // Bumpad 2026-08-17 for hero-koreografin, och igen samma dag for stack. Regeln ar densamma
-  // bada gangerna: BARA de strangar vars filer faktiskt andrades. For stack ar det tre —
-  // studio.css (stacks gamla .fan-active-regler borttagna), media.js (fan-fas.js:s egen
-  // versionsstrang) och premium-bundlens version (som styr premium-final.css dar faserna bor).
-  // widget-factory.js ar orord och behaller sin strang; en bump utan andring ar en gratis
-  // omladdning for varje anvandare och gor nasta lasare osaker pa vad som faktiskt bytts.
-  assert.match(studio, /studio\.css\?v=20260817-fan-stack-mottagandet/);
-  assert.match(studio, /media\.js\?v=20260817-fan-stack-mottagandet/);
+  // Bumpad 2026-08-17 for hero-koreografin, sedan for stack, sedan for ribbon. Regeln ar densamma
+  // varje gang: BARA de strangar vars filer faktiskt andrades. For stack och ribbon ar det tre —
+  // studio.css (modellens gamla .fan-active-regler borttagna), media.js (som bar bade sin egen
+  // och fan-fas.js:s versionsstrang) och premium-bundlens version, som styr premium-final.css dar
+  // faserna bor. widget-factory.js ar orord i bada och behaller sin strang; en bump utan andring
+  // ar en gratis omladdning for varje anvandare och gor nasta lasare osaker pa vad som bytts.
+  assert.match(studio, /studio\.css\?v=20260817-fan-ribbon-valkomnandet/);
+  assert.match(studio, /media\.js\?v=20260817-fan-ribbon-valkomnandet/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260817-fan-stack-mottagandet'/);
-  assert.match(media, /fan-fas\.js\?v=20260817-fan-stack-mottagandet/);
+  assert.match(media, /const version='20260817-fan-ribbon-valkomnandet'/);
+  assert.match(media, /fan-fas\.js\?v=20260817-fan-ribbon-valkomnandet/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {

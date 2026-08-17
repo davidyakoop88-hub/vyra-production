@@ -41,6 +41,18 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // ribbon · VÄLKOMNANDET. Profilbilden poppar, banderollen rullar ut i sidled, texten kommer
+  // sist. Även här är rörelserna modellens egna (fbProfilePop, frbUnfurl) och det är klockan som
+  // byts. Uppmätt före: poppen och utrullningen rörde sig redan mjukt, men rubrik, namn och
+  // meddelande stod på opacity 1 i första bildrutan — färdiglästa medan banderollen fortfarande
+  // var hoprullad till 30 % bredd. Widgeten berättade slutet före början.
+  //
+  // Ribbon är dessutom den enda modellen UTAN vilolager: `.fan-burst` är display:none, och med
+  // hjärtat försvinner basens två enda oändliga animationer (fanLevelPop, fanRing). Efter entrén
+  // stod modellen fullständigt stilla. Den har därför fått en egen diskret andning — men på
+  // modellen, inte på en fas. En `infinite` som hänger på en fasklass dör när klassen tas bort,
+  // alltså precis när den skulle ha börjat behövas. Vaktat av 18g.
+  //
   // stack · MOTTAGANDET. Ikonen faller ner uppifrån, nivåpillen poppar fram, profilbilden stiger
   // underifrån — och namnet och meddelandet stiger med den. Rörelserna är stacks EGNA sedan
   // tidigare (fsIconDrop, fsPillPop, fsAvatarRise i studio.css, delade med hearts och loyalty);
@@ -58,6 +70,11 @@
       { namn: 'fall', ms: 300 },
       { namn: 'pop', ms: 260 },
       { namn: 'stigning', ms: 340 },
+    ],
+    ribbon: [
+      { namn: 'pop', ms: 320 },
+      { namn: 'utrullning', ms: 420 },
+      { namn: 'text', ms: 340 },
     ],
   };
 
