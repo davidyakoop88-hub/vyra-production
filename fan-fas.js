@@ -41,6 +41,14 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // duo · MÖTET. Två parter, en förbindelse — namnet är modellens hela idé. Ikonen och avataren
+  // spänner var sin sida av en 320×89-bar, pulslinjen går emellan, och texten står staplad till
+  // höger. Den renaste modellen av de åtta: fyra entréer och alla fungerade, ingen `!important` i
+  // vägen, och som ENDA modell animerades nivåpillen redan. Bara h2, h3 och p snäppte.
+  //
+  // Med duo registrerad är familjen sluten. 23g vänder på F1:s beroende och kräver att VARJE
+  // modell i fabrikstabellen har en koreografi — den vakten gick inte att skriva förrän nu.
+  //
   // heartbeat · PULSSLAGET. Profilbilden glider in från vänster, ikonen från höger, pulslinjen
   // ritas mellan dem, och avläsningen kommer sist. Ordningen följer rutnätets egen logik:
   // "avatar pulse burst" med text staplad i högerkolumnen.
@@ -129,6 +137,11 @@
     heartbeat: [
       { namn: 'sidorna', ms: 340 },
       { namn: 'pulsen', ms: 320 },
+      { namn: 'avlasning', ms: 340 },
+    ],
+    duo: [
+      { namn: 'parterna', ms: 340 },
+      { namn: 'linjen', ms: 320 },
       { namn: 'avlasning', ms: 340 },
     ],
   };
