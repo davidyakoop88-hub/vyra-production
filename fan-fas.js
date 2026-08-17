@@ -41,6 +41,18 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // heartbeat · PULSSLAGET. Profilbilden glider in från vänster, ikonen från höger, pulslinjen
+  // ritas mellan dem, och avläsningen kommer sist. Ordningen följer rutnätets egen logik:
+  // "avatar pulse burst" med text staplad i högerkolumnen.
+  //
+  // Första modellen där den befintliga entrén var HEL — fhSlideL, fhSlideR och fhPulseDraw rörde
+  // sig alla tre, ingen `!important` i vägen. Bara klockan flyttas, plus rörelse åt de fyra delar
+  // som snäppte (pill, h2, h3, p).
+  //
+  // Och rutnätet är ett eget problem: en fas som döljer med `display:none` KOLLAPSAR spåret, och
+  // allt annat hoppar mitt i koreografin. Faserna döljer med opacitet. Vaktat av 22g, som gäller
+  // både heartbeat och duo.
+  //
   // hearts · UPPSTIGNINGEN. Ikonen slår ner, hjärtana framträder, texten hyllas. Modellen har
   // redan ett riktigt vilolager — `.fan-burst` är synlig, så basens fanLevelPop och fanRing går —
   // men de tre hjärtanas egen loop låg på `.fan-active`. Ett vilolager måste finnas oavsett om
@@ -113,6 +125,11 @@
       { namn: 'nedslag', ms: 300 },
       { namn: 'uppstigning', ms: 320 },
       { namn: 'hyllning', ms: 340 },
+    ],
+    heartbeat: [
+      { namn: 'sidorna', ms: 340 },
+      { namn: 'pulsen', ms: 320 },
+      { namn: 'avlasning', ms: 340 },
     ],
   };
 

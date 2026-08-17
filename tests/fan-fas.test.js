@@ -1048,3 +1048,145 @@ test('21h: hjärtanas oändliga loop hänger på modellen, inte på .fan-active 
       `vilolagret hänger på en fasklass och dör när sekvensen tar slut: ${r.valjare.trim()}`);
   }
 });
+
+// ================================================================================================
+// 22a–22g — HEARTBEAT · "PULSSLAGET"
+//
+// Sidorna → pulsen → avläsning. Profilbilden glider in från vänster och ikonen från höger,
+// pulslinjen ritas mellan dem, och avläsningen kommer sist.
+//
+// FÖRSTA MODELLEN DÄR DEN BEFINTLIGA ENTRÉN ÄR HEL. Uppmätt i Chromium:
+//
+//     ms | profil       | burst        | puls  | pill | h2   | h3   | p
+//     38 | 0.21  x-19   | 0.21  x 19   |  100% | 1.00 | 1.00 | 1.00 | 1.00
+//    253 | 0.98  x -1   | 0.98  x  1   |  100% | 1.00 | 1.00 | 1.00 | 1.00
+//    603 | 1.00  x  0   | 1.00  x  0   |   29% | 1.00 | 1.00 | 1.00 | 1.00
+//
+// Alla tre rör sig faktiskt: fhSlideL, fhSlideR och fhPulseDraw. Ingen `!important` hindrar dem —
+// sökt på transform, opacity och clip-path i modellens regler, noll träffar. Det som snäpper är
+// pill, h2, h3 och p, precis som i de fem föregående.
+//
+// OCH RUTNÄTET ÄR ETT EGET PROBLEM. Modellen är `display:grid` med
+// `"avatar pulse burst" / "avatar pulse title" / "avatar pulse name" / "avatar pulse msg"`.
+// I en flexbox kan man slarva med `display:none` för att dölja en del under en fas. I ett rutnät
+// KOLLAPSAR spåret i stället, och allt annat hoppar till en ny plats mitt i koreografin. Faserna
+// måste dölja med opacitet och låta rutnätet stå still. Vaktat av 22g, som skrivs generellt över
+// BÅDA gridmodellerna — duo är byggd likadant och ska ärva vakten utan att någon minns den.
+// ================================================================================================
+
+const GRIDMODELLER = ['heartbeat', 'duo'];
+
+test('22a: heartbeat har tre faser i ordningen sidorna → pulsen → avlasning', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.heartbeat, 'heartbeat saknar koreografi i FASER');
+  assert.deepEqual(FASER.heartbeat.map(f => f.namn), ['sidorna', 'pulsen', 'avlasning'],
+    'Pulsslaget är sidorna som kommer in, pulsen som kopplar ihop dem, avläsningen sist');
+});
+
+test('22b: triggern tänder heartbeats första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'heartbeat' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['sidorna'], 'sidfasen sattes inte i samma anrop som triggern');
+});
+
+test('22c: heartbeats faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [a, b, c] = FASER.heartbeat;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'heartbeat' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(a.ms - 1);
+  assert.deepEqual(faser('fan1'), ['sidorna'], 'sidfasen slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['pulsen'], 'pulsen började inte när sidorna var på plats');
+  klocka.fram(b.ms);
+  assert.deepEqual(faser('fan1'), ['avlasning'], 'avläsningen började inte när pulsen var klar');
+  klocka.fram(c.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('22d: varje heartbeat-fas har CSS, avlasningen bär pill och text, inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.heartbeat) {
+    const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(`fan-layout-heartbeat.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((x, y) => x + y, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  const a = 'fan-layout-heartbeat.fan-fas-avlasning';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(a) && r.includes('animation:'));
+  assert.ok(rader.some(r => r.includes('.fan-level-pill')), 'nivåpillen läses inte av');
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${a}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i avläsningen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('22e: heartbeat återanvänder fhSlideL, fhSlideR och fhPulseDraw', () => {
+  for (const namn of ['fhSlideL', 'fhSlideR', 'fhPulseDraw']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`), `heartbeat använder inte ${namn}`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`), `${namn} har försvunnit ur studio.css`);
+  }
+});
+
+test('22f: sidorna kommer från var sitt håll och pulsen ritas åt höger', () => {
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  const x = block => [...block.matchAll(/translateX\((-?\d*\.?\d+)(?:px)?\)/g)].map(m => parseFloat(m[1]));
+
+  const v = x(kf('fhSlideL'));
+  assert.equal(v.length, 2, 'fhSlideL ska gå från ett läge till ett annat');
+  assert.ok(v[0] < 0, `fhSlideL börjar på ${v[0]}px — profilbilden kommer från VÄNSTER`);
+  assert.equal(v[1], 0, `fhSlideL slutar på ${v[1]}px i stället för i viloläget`);
+
+  const h = x(kf('fhSlideR'));
+  assert.equal(h.length, 2, 'fhSlideR ska gå från ett läge till ett annat');
+  assert.ok(h[0] > 0, `fhSlideR börjar på ${h[0]}px — ikonen kommer från HÖGER`);
+  assert.equal(h[1], 0, `fhSlideR slutar på ${h[1]}px i stället för i viloläget`);
+
+  // Pulsen ritas genom att inset-rutans HÖGERSIDA krymper från 100 % till 0. Vänds den ritas
+  // linjen bakifrån, och kopplingen mellan avatar och ikon läses åt fel håll.
+  const puls = kf('fhPulseDraw');
+  const insets = [...puls.matchAll(/inset\(([^)]*)\)/g)].map(m => m[1].trim().split(/\s+/));
+  assert.equal(insets.length, 2, 'fhPulseDraw ska gå från en inset till en annan');
+  const hoger = insets.map(i => parseFloat(i[1]));
+  assert.equal(hoger[0], 100, `fhPulseDraw börjar med högersidan på ${hoger[0]} — linjen ska vara helt dold`);
+  assert.equal(hoger[1], 0, `fhPulseDraw slutar med högersidan på ${hoger[1]} — linjen ska vara helt ritad`);
+});
+
+test('22g: gridmodellernas faser döljer med opacitet och rör aldrig rutnätet', () => {
+  // I en flexbox trycks elementen bara ihop av `display:none`. I ett rutnät KOLLAPSAR spåret, och
+  // allt annat hoppar till en ny plats mitt i koreografin — en relayout som ingen enhetsprovning
+  // ser och som bara syns som ett ryck i webbläsaren. Samma sak om en fas ändrar `grid-area` eller
+  // `grid-template-*`: rutnätet ritas om under pågående rörelse.
+  //
+  // Vakten gäller BÅDA gridmodellerna, så duo ärver den utan att någon behöver minnas den.
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  let provade = 0;
+  for (const modell of GRIDMODELLER) {
+    for (const fas of FASER[modell] || []) {
+      const regler = REGLER.filter(r => r.valjare.includes(`fan-layout-${modell}.fan-fas-${fas.namn}`));
+      for (const regel of regler) {
+        provade += 1;
+        assert.doesNotMatch(regel.kropp, /display\s*:\s*none/,
+          `${modell}:${fas.namn} döljer med display:none — i ett rutnät kollapsar spåret och allt `
+          + `annat hoppar: ${regel.valjare}`);
+        assert.doesNotMatch(regel.kropp, /visibility\s*:/,
+          `${modell}:${fas.namn} rör visibility — det ärvs inte pålitligt ned i den här widgeten, `
+          + `använd opacitet: ${regel.valjare}`);
+        assert.doesNotMatch(regel.kropp, /grid-(area|template|column|row)/,
+          `${modell}:${fas.namn} ändrar rutnätet mitt i koreografin: ${regel.valjare}`);
+      }
+    }
+  }
+  assert.ok(provade > 0, 'ingen gridmodell hade några fasregler att pröva');
+});
