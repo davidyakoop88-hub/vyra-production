@@ -23,11 +23,27 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // och fan-fas.js:s versionsstrang) och premium-bundlens version, som styr premium-final.css dar
   // faserna bor. widget-factory.js ar orord i bada och behaller sin strang; en bump utan andring
   // ar en gratis omladdning for varje anvandare och gor nasta lasare osaker pa vad som bytts.
+  //
+  // Bumpad 2026-08-17 for duckningen (§14): media.js bar versionsstrangarna for de sex filer som
+  // andrades, sa media.js sjalv maste bumpas — annars fortsatter en cachad media.js peka pa de
+  // gamla URL:erna och ingen av de sex byts ut. studio.css, widget-factory.js och fan-fas.js ar
+  // OFORANDRADE och behaller darfor sina strangar. Det ar forsta gangen strangarna gar isar, och
+  // det ar meningen: de ska folja filerna, inte varandra.
   assert.match(studio, /studio\.css\?v=20260817-fan-duo-motet/);
-  assert.match(studio, /media\.js\?v=20260817-fan-duo-motet/);
+  assert.match(studio, /[^-]media\.js\?v=20260817-tal-duckning/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260817-fan-duo-motet'/);
+  assert.match(media, /const version='20260817-tal-duckning'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
+
+  // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
+  // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.
+  for (const fil of ['gift-fireworks', 'vyra-tal', 'action-event', 'action-runtime',
+                     'battle-mvp-session', 'sound-alerts']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
+  }
+  // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
+  assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
+  assert.match(media, /action-master\.js\?v=20260817-tal/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {

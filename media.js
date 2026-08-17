@@ -801,11 +801,11 @@ function refreshIfVisible(match){if(match()&&typeof render==='function')setTimeo
 function ensureEditorOverlayBundle(){return vyraLoadBundle('editor-overlay',['toplike-studio.css?v=1','toplike-studio.js?v=20260807-panel','last-x-alerts.css?v=20260806-animation','last-x-alerts.js?v=20260806-animation','gift-alert-frames.css?v=1','gift-alert-frames.js?v=1','gift-alert-chrome.js?v=20260807-frameless','live-leaderboard.js?v=20260803-dedupe','live-zero-state.js?v=20260802-1','widget-background.js?v=1','custom-widgets.js?v=1','profile-frames-premium.css?v=7','profile-frames-premium.js?v=1']).then(()=>refreshIfVisible(()=>view==='editor'||view==='overlay')).catch(err=>console.warn('[VYRA] editor bundle misslyckades',err))}
 function ensurePackagesBundle(){return vyraLoadBundle('packages-view',['overlay-packages.js?v=1']).then(()=>refreshIfVisible(()=>view==='packages')).catch(err=>console.warn('[VYRA] packages bundle misslyckades',err))}
 function ensureActionsBundle(){return vyraLoadBundle('actions-ui',['action-media.js','action-scenes.js','action-options.js','action-event-advanced.js']).then(()=>window.VyraActionEvent?.refresh?.()).catch(err=>console.warn('[VYRA] actions bundle misslyckades',err))}
-function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sound-alerts.js?v=1']).catch(err=>console.warn('[VYRA] sound alerts bundle misslyckades',err))}
+function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sound-alerts.js?v=20260817-duckning']).catch(err=>console.warn('[VYRA] sound alerts bundle misslyckades',err))}
 function ensureHomePremiumBundle(){return vyraLoadBundle('home-premium',['overview-premium.css','overview-premium.js']).then(()=>refreshIfVisible(()=>view==='home')).catch(err=>console.warn('[VYRA] home premium bundle misslyckades',err))}
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['gift-fireworks.js?v=20260806-trigger','vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-tal','action-event.js?v=20260817-retur','action-media.js?v=20260807-panel','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260817-retur','action-runtime.js?v=20260817-tal'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['gift-fireworks.js?v=20260817-duckning','vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260817-duckning','action-media.js?v=20260807-panel','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260817-retur','action-runtime.js?v=20260817-duckning'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=7';document.head.append(css);let js=document.createElement('script');js.src='profile-frames-premium.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260731-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260807-panel';document.body.append(js)});
@@ -857,14 +857,14 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260806-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260817-duckning';document.body.append(js)});
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260817-duckning';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260726-lazy-thumbs';document.body.append(js)});
 
@@ -878,7 +878,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260817-fan-duo-motet';
+  const version='20260817-tal-duckning';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

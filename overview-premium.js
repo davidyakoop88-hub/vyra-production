@@ -358,3 +358,12 @@ if (typeof view !== 'undefined' && view === 'home') render();
     observer.disconnect();
   });
 })();
+
+// LADDNINGSMARKÖREN (§6 i docs/tech-debt.md). Sex browsertester väntade förr på den här filen
+// genom att läsa kopiatexten ur `home.toString()`. När eyebrown byttes i #154 stod grindarna
+// evigt falska och 43 prov dog i 20-sekunderstimeouts — grindens signal var själva texten som
+// byttes.
+//
+// Raden ligger SIST med flit: då betyder markören "hela modulen är installerad", inte bara att
+// `home` bytts. Kastar någon av IIFE:erna ovan sätts den aldrig, vilket är rätt svar.
+document.documentElement.dataset.ccReady = '1';
