@@ -839,7 +839,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
    sa laddordningen mot runtime-controls.js:s koade trigger inte spelar nagon roll. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-fas.js?v=20260817-fan-loyalty-inringningen';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-fas.js?v=20260817-fan-badgereveal-uppenbarelsen';document.body.append(js)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
    wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
@@ -878,7 +878,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260817-fan-loyalty-inringningen';
+  const version='20260817-fan-badgereveal-uppenbarelsen';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

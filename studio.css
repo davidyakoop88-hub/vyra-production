@@ -706,10 +706,10 @@ html.overlay-output .widget{
 .fan-layout-heartbeat.fan-exit .fan-pulse-line{animation:fhPulseDraw var(--fed) linear reverse both}.fan-layout-heartbeat.fan-exit .fan-profile{animation:fhSlideL var(--fed) ease-in .1s reverse both}.fan-layout-heartbeat.fan-exit .fan-burst{animation:fhSlideR var(--fed) ease-in .1s reverse both}
 @keyframes fhSlideL{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}@keyframes fhSlideR{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}@keyframes fhPulseDraw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
-.fan-layout-badgereveal{flex-direction:column}.fan-layout-badgereveal .fan-profile{order:1;width:84px;height:84px;position:relative}.fan-layout-badgereveal .fan-wing{display:block;position:absolute;width:50px;height:70px;top:50%;transform:translateY(-50%);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fan),transparent 20%),transparent 70%);filter:blur(1px)}.fan-layout-badgereveal .fan-wing.left{left:-46px;clip-path:polygon(100% 20%,20% 0,0 50%,20% 100%,100% 80%)}.fan-layout-badgereveal .fan-wing.right{right:-46px;clip-path:polygon(0 20%,80% 0,100% 50%,80% 100%,0 80%)}.fan-layout-badgereveal .fan-level-pill{order:2;margin-top:10px}.fan-layout-badgereveal .fan-burst{display:none!important}.fan-layout-badgereveal>h2{display:none!important}.fan-layout-badgereveal>h3{order:3}.fan-layout-badgereveal>p{order:4}
-.fan-layout-badgereveal.fan-active .fan-wing.left{animation:fbWingL .5s ease-out both}.fan-layout-badgereveal.fan-active .fan-wing.right{animation:fbWingR .5s ease-out both}.fan-layout-badgereveal.fan-active .fan-profile{animation:fbProfilePop .4s cubic-bezier(.34,1.56,.64,1) .15s both}
+.fan-layout-badgereveal{flex-direction:column}.fan-layout-badgereveal .fan-profile{order:1;width:84px;height:84px;position:relative}.fan-layout-badgereveal .fan-wing{display:block;position:absolute;width:50px;height:70px;top:50%;transform:translateY(-50%);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fan),transparent 20%),transparent 70%);filter:blur(1px)}.fan-layout-badgereveal .fan-wing.left{left:-46px;clip-path:polygon(100% 20%,20% 0,0 50%,20% 100%,100% 80%)}.fan-layout-badgereveal .fan-wing.right{right:-46px;clip-path:polygon(0 20%,80% 0,100% 50%,80% 100%,0 80%)}.fan-layout-badgereveal .fan-level-pill{order:2;margin-top:10px}.fan-layout-badgereveal .fan-burst{display:none!important}.fan-layout-badgereveal>h3{order:3}.fan-layout-badgereveal>p{order:4}
+
 .fan-layout-badgereveal.fan-exit .fan-wing.left{animation:fbWingL var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-wing.right{animation:fbWingR var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in reverse both}
-@keyframes fbWingL{from{opacity:0;transform:translate(20px,-50%) scale(.5)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbWingR{from{opacity:0;transform:translate(-20px,-50%) scale(.5)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbProfilePop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes fbWingL{from{opacity:0;transform:translate(-24px,-50%) scale(.72)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbWingR{from{opacity:0;transform:translate(24px,-50%) scaleX(-.72) scaleY(.72)}to{opacity:1;transform:translate(0,-50%) scaleX(-1) scaleY(1)}}@keyframes fbProfilePop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 
 .fan-layout-loyalty{flex-direction:column}.fan-layout-loyalty .fan-profile{order:1;width:80px;height:80px;position:relative}.fan-layout-loyalty .fan-ring{display:block;position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--fan-light);box-shadow:0 0 14px var(--fan);pointer-events:none}.fan-layout-loyalty .fan-level-pill{order:2;margin-top:-14px;position:relative;z-index:2}.fan-layout-loyalty .fan-burst{display:none!important}.fan-layout-loyalty>h3{order:3;margin-top:8px}.fan-layout-loyalty>p{order:4}
 
@@ -1134,7 +1134,7 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
   background-repeat:no-repeat!important;background-position:center!important;background-size:64% auto!important;
   background-color:transparent!important;
   filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
-.fan-layout-badgereveal .fan-wing.left{transform:scaleX(-1)}
+
 
 /* ===== FAN LEVEL UP · tre rattelser efter Davids granskning 2026-08-13 =====
 
@@ -1143,10 +1143,10 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
    som en riktig cirkelbage med ::before (tva fargade kanter pa en rund ram, roterad 45 grader
    ger ett C), och emblemet ligger i ::after mitt i bagen. */
 .fan-layout-badgereveal .fan-wing{
-  width:74px!important;height:136px!important;top:50%!important;transform:translateY(-50%)!important;
+  width:74px!important;height:136px!important;top:50%!important;transform:translateY(-50%);
   background:none!important;background-image:none!important;clip-path:none!important;overflow:visible!important}
 .fan-layout-badgereveal .fan-wing.left{left:-70px!important}
-.fan-layout-badgereveal .fan-wing.right{right:-70px!important;transform:translateY(-50%) scaleX(-1)!important}
+.fan-layout-badgereveal .fan-wing.right{right:-70px!important;transform:translateY(-50%) scaleX(-1)}
 .fan-layout-badgereveal .fan-wing::before{
   content:"";position:absolute;top:2px;left:6px;width:132px;height:132px;border-radius:50%;
   border:13px solid transparent;border-top-color:#ffb545;border-left-color:#ff5f14;
