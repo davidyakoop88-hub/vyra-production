@@ -746,3 +746,167 @@ test('19g: sockelvakten — poppen rör behållaren, aldrig ankaret', () => {
       `en loyalty-fas rör ankaret (.fan-profile img) — sockeln blir kvar när ankaret släcks: ${rad.trim()}`);
   }
 });
+
+// ================================================================================================
+// 20a–20g — BADGEREVEAL · "UPPENBARELSEN"
+//
+// Vingar → avtäckning → hyllning. Halvmånarna sveper in utifrån och bär fram emblemen,
+// profilbilden avtäcks mellan dem, pill och text hyllas sist.
+//
+// LÄGET FÖRE, uppmätt i Chromium (opacitet, och transformmatrisens a/x):
+//
+//     ms | vingeV         | vingeH          | profil | pill | h2   | h3   | p
+//     34 | 0.06 a1.00 x0  | 0.06 a-1.00 x0  |  0.00  | 1.00 | 1.00 | 1.00 | 1.00
+//    256 | 0.65 a1.00 x0  | 0.65 a-1.00 x0  |  0.72  | 1.00 | 1.00 | 1.00 | 1.00
+//    604 | 1.00 a1.00 x0  | 1.00 a-1.00 x0  |  1.00  | 1.00 | 1.00 | 1.00 | 1.00
+//
+// VINGARNAS TRANSFORM RÖRDE SIG ALDRIG. a och x står stilla hela vägen. `fbWingL`/`fbWingR`
+// animerar både opacity och transform, men `.fan-layout-badgereveal .fan-wing{transform:
+// translateY(-50%)!important}` slår animationen — `!important` i en vanlig regel vinner över en
+// CSS-animation. Halva keyframen har alltså aldrig kört. Vingarna gled inte in; de tonade in.
+//
+// Att "återanvända" en keyframe som aldrig kört är inte återanvändning. Därför skrivs fbWingL och
+// fbWingR om så att de sveper in UTIFRÅN och bär sin egen spegling, och `!important` tas bort.
+//
+// OCH VÄNSTERVINGEN SKA FÖRBLI OSPEGLAD. `.fan-wing.left{transform:scaleX(-1)}` (rad 1137) är
+// död idag — den förlorar mot `!important`-regeln. Tas bara `!important` bort vinner den på
+// specificitet, och då vänder båda bågarna åt samma håll: omfamningen bryts. Fotograferat före
+// och efter. Regeln raderas i stället för att väckas.
+// ================================================================================================
+
+test('20a: badgereveal har tre faser i ordningen vingar → avtackning → hyllning', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.badgereveal, 'badgereveal saknar koreografi i FASER');
+  assert.deepEqual(FASER.badgereveal.map(f => f.namn), ['vingar', 'avtackning', 'hyllning'],
+    'Uppenbarelsen är vingarna som sveper in, profilen som avtäcks, texten som hyllas');
+});
+
+test('20b: triggern tänder badgereveals första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'badgereveal' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['vingar'], 'vingfasen sattes inte i samma anrop som triggern');
+});
+
+test('20c: badgereveals faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [a, b, c] = FASER.badgereveal;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'badgereveal' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(a.ms - 1);
+  assert.deepEqual(faser('fan1'), ['vingar'], 'vingfasen slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['avtackning'], 'avtäckningen började inte när vingarna var klara');
+  klocka.fram(b.ms);
+  assert.deepEqual(faser('fan1'), ['hyllning'], 'hyllningen började inte när avtäckningen var klar');
+  klocka.fram(c.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('20d: varje badgereveal-fas har CSS, hyllningen bär pill och text, inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.badgereveal) {
+    const rader = PREMIUM_CSS.split('\n')
+      .filter(r => r.includes(`fan-layout-badgereveal.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((a, b) => a + b, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  const h = 'fan-layout-badgereveal.fan-fas-hyllning';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(h) && r.includes('animation:'));
+  assert.ok(rader.some(r => r.includes('.fan-level-pill')), 'nivåpillen hyllas inte');
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${h}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i hyllningen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('20e: badgereveal återanvänder fbWingL, fbWingR, fbProfilePop och fsPillPop', () => {
+  for (const namn of ['fbWingL', 'fbWingR', 'fbProfilePop', 'fsPillPop']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`),
+      `badgereveal använder inte ${namn}`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har försvunnit ur studio.css`);
+  }
+});
+
+test('20f: vingarna sveper in UTIFRÅN, och högervingen behåller sin spegling hela vägen', () => {
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  // Enheten är valfri: viloläget skrivs `translate(0,-50%)` utan px på nollan. Ett uttryck som
+  // kräver enheten hittar bara startvärdet, och då mäter vakten ett enda tal och kan inte längre
+  // säga något om riktningen. Exakt samma fälla som 17f gick i.
+  const x = block => [...block.matchAll(/translate\((-?\d*\.?\d+)(?:px)?\s*,/g)].map(m => parseFloat(m[1]));
+
+  const v = x(kf('fbWingL'));
+  assert.equal(v.length, 2, 'fbWingL ska gå från ett läge till ett annat');
+  assert.ok(v[0] < 0, `fbWingL börjar på ${v[0]}px — vänstervingen sveper in FRÅN VÄNSTER, alltså utifrån`);
+  assert.equal(v[1], 0, `fbWingL slutar på ${v[1]}px i stället för i viloläget`);
+
+  const h = x(kf('fbWingR'));
+  assert.equal(h.length, 2, 'fbWingR ska gå från ett läge till ett annat');
+  assert.ok(h[0] > 0, `fbWingR börjar på ${h[0]}px — högervingen sveper in FRÅN HÖGER, alltså utifrån`);
+  assert.equal(h[1], 0, `fbWingR slutar på ${h[1]}px i stället för i viloläget`);
+
+  // Speglingen måste bäras av VARJE steg. Saknas den i ett av dem blinkar vingen om mitt i svepet.
+  const steg = kf('fbWingR').split('}').filter(s => s.includes('transform'));
+  assert.equal(steg.length, 2, 'fbWingR ska ha två steg med transform');
+  for (const s of steg) {
+    assert.match(s, /scaleX\(-/,
+      `ett steg i fbWingR saknar sin spegling: ${s.trim()} — vingen vänder sig mitt i rörelsen`);
+  }
+  // Och vänstervingen ska INTE spegla sig. Fotograferat: då vänder båda bågarna åt samma håll.
+  assert.doesNotMatch(kf('fbWingL'), /scaleX\(-/,
+    'fbWingL speglar vänstervingen — då vänder båda bågarna åt samma håll och omfamningen bryts');
+});
+
+test('20g: ingen !important-transform får döda vingarnas rörelse', () => {
+  // `!important` i en vanlig regel slår en CSS-animation. Den enda anledningen att vingarnas
+  // transform aldrig rörde sig var en sådan deklaration — och den ser fullkomligt harmlös ut i
+  // källan. Vakten läser båda CSS-filerna, så regeln inte kan smyga tillbaka via någondera.
+  // REGEL FÖR REGEL, INTE RAD FÖR RAD. Första versionen filtrerade rader som innehöll både
+  // `fan-layout-badgereveal` och `.fan-wing` — men vingregeln är flerradig, och `!important`
+  // sitter på rad två medan selektorn står på rad ett. Mutationen som återinförde `!important`
+  // ÖVERLEVDE därför provet. En vakt som inte kan falla på det den finns för är värre än ingen
+  // vakt alls, eftersom den intygar något den aldrig mätt.
+  const regler = [...(STUDIO_CSS + PREMIUM_CSS).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .map(m => ({ valjare: m[1], kropp: m[2] }))
+    .filter(r => r.valjare.includes('fan-layout-badgereveal') && r.valjare.includes('.fan-wing'));
+  assert.ok(regler.length, 'hittade inga vingregler alls — läser provet rätt fil?');
+  for (const regel of regler) {
+    for (const t of [...regel.kropp.matchAll(/transform\s*:[^;}]*/g)].map(m => m[0])) {
+      assert.ok(!/!important/.test(t),
+        `en !important-transform på .fan-wing dödar fasens rörelse tyst: ${t.trim()}`);
+    }
+  }
+  // Och den döda vänsterspeglingen får inte ligga kvar och vakna av att !important försvinner.
+  assert.ok(!/\.fan-layout-badgereveal \.fan-wing\.left\{transform:scaleX\(-1\)\}/.test(STUDIO_CSS),
+    'den döda .fan-wing.left{transform:scaleX(-1)} ligger kvar — utan !important vinner den på '
+    + 'specificitet och vänder vänstervingen åt fel håll');
+});
+
+test('20h: badgereveal har ett vilolager som inte hänger på en fasklass', () => {
+  // Samma tomhet som ribbon: `.fan-burst` är display:none, alltså inget fanLevelPop och ingen
+  // fanRing. Uppmätt: 0 levande animationer i vila. Lagret ligger på modellen, inte på en fas —
+  // en `infinite` på en fasklass dör när klassen tas bort.
+  const rader = (STUDIO_CSS + PREMIUM_CSS).split('\n')
+    .filter(r => r.includes('fan-layout-badgereveal') && r.includes('.fan-profile')
+                 && r.includes('animation:') && r.includes('infinite'));
+  assert.ok(rader.length, 'badgereveal har ingen oändlig rörelse — modellen står helt stilla efter entrén');
+  for (const rad of rader) {
+    const utanNot = rad.replace(/:not\([^)]*\)/g, '');
+    assert.ok(!utanNot.includes('fan-fas-'),
+      `vilolagret hänger på en fasklass och dör när sekvensen tar slut: ${rad.trim()}`);
+    assert.ok(!utanNot.includes('.fan-active'),
+      `vilolagret hänger på .fan-active — F4 förbjuder det för en registrerad modell: ${rad.trim()}`);
+  }
+});

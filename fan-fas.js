@@ -41,6 +41,16 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // badgereveal · UPPENBARELSEN. Halvmånarna sveper in utifrån och bär fram emblemen,
+  // profilbilden avtäcks mellan dem, pill och text hyllas sist.
+  //
+  // Här räckte det inte att byta klocka. `fbWingL`/`fbWingR` animerar både opacity och transform,
+  // men `.fan-wing{transform:translateY(-50%)!important}` slog animationen — `!important` i en
+  // vanlig regel vinner över en CSS-animation. Uppmätt: vingarnas transformmatris stod stilla
+  // hela entrén. Halva keyframen hade aldrig kört, och vingarna tonade bara in. Att återanvända
+  // en keyframe som aldrig kört är inte återanvändning, så de är omskrivna: de sveper in utifrån
+  // och bär sin egen spegling. Vaktat av 20f och 20g.
+  //
   // loyalty · INRINGNINGEN. Profilbilden poppar, ringen ritas ett kvarts varv (-90° -> 0), pill
   // och text stämplas in sist. SOCKELFÄLLAN: poppen låg på `.fan-profile img`, alltså på ankaret,
   // medan behållaren `.fan-profile` bär sin egen linear-gradient och box-shadow. Uppmätt vid
@@ -87,6 +97,11 @@
       { namn: 'pop', ms: 320 },
       { namn: 'ring', ms: 440 },
       { namn: 'stampel', ms: 340 },
+    ],
+    badgereveal: [
+      { namn: 'vingar', ms: 340 },
+      { namn: 'avtackning', ms: 360 },
+      { namn: 'hyllning', ms: 340 },
     ],
   };
 

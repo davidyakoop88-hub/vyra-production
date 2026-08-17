@@ -17,17 +17,17 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-08-13 for Battle MVP-ramarna: andringen lag i media.js och widget-factory.js,
   // och utan ny strang fortsatter en cachad webblasare servera de gamla filerna.
   //
-  // Bumpad 2026-08-17 for hero-koreografin, sedan for stack, ribbon och loyalty. Regeln ar densamma
+  // Bumpad 2026-08-17 for hero-koreografin, sedan for stack, ribbon, loyalty och badgereveal. Regeln ar densamma
   // varje gang: BARA de strangar vars filer faktiskt andrades. For stack och ribbon ar det tre —
   // studio.css (modellens gamla .fan-active-regler borttagna), media.js (som bar bade sin egen
   // och fan-fas.js:s versionsstrang) och premium-bundlens version, som styr premium-final.css dar
   // faserna bor. widget-factory.js ar orord i bada och behaller sin strang; en bump utan andring
   // ar en gratis omladdning for varje anvandare och gor nasta lasare osaker pa vad som bytts.
-  assert.match(studio, /studio\.css\?v=20260817-fan-loyalty-inringningen/);
-  assert.match(studio, /media\.js\?v=20260817-fan-loyalty-inringningen/);
+  assert.match(studio, /studio\.css\?v=20260817-fan-badgereveal-uppenbarelsen/);
+  assert.match(studio, /media\.js\?v=20260817-fan-badgereveal-uppenbarelsen/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260817-fan-loyalty-inringningen'/);
-  assert.match(media, /fan-fas\.js\?v=20260817-fan-loyalty-inringningen/);
+  assert.match(media, /const version='20260817-fan-badgereveal-uppenbarelsen'/);
+  assert.match(media, /fan-fas\.js\?v=20260817-fan-badgereveal-uppenbarelsen/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {
