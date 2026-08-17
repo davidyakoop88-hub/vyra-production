@@ -46,16 +46,30 @@ börjar — visar det sig att START kommer märkbart före, ska sändningen för
 
 Verifierad löst: 2026-08-14.
 
-## 2. Gift Fireworks "Testa"-knappen kringgår alertkön
+## ~~2. Gift Fireworks "Testa"-knappen kringgår alertkön~~ — LÖST
 
-Testknappen i panelen anropar effekten direkt. Livevägen går genom `VyraAlertQueue`, som spelar en
-alert i taget och håller nästa tillbaka i hela visningstiden.
+Testknappen anropade effekten direkt: den byggde raketerna och satte `.play` på DOM-noden. Livevägen
+går genom `VyraAlertQueue`, som spelar en alert i taget och håller nästa tillbaka i hela
+visningstiden. Editorn kändes därför snabbare än verkligheten, och den som justerade timing i
+panelen såg något tittarna aldrig får se.
 
-Följden: **editorn känns snabbare än verkligheten.** Klickar man testknappen fem gånger ser man fem
-fyrverkerier; fem riktiga gåvor spelas efter varandra med sekunder emellan.
+**Det fanns TVÅ genvägar, inte en.** En capture-lyssnare på `document` och — två rader bort — en
+`t.onclick` satt i `bind()`. Båda tände `.play` rakt av. Den första källvakten läste bara den ena
+och blev grön medan den andra satt kvar; provet mätte en rad och intygade en fil. Vakten kräver nu
+att `.play` tänds på **exakt ett** ställe i `gift-fireworks.js`, och att det stället är `fwSpela()`
+— den funktion både en riktig gåva och testknappen går genom.
 
-Det är inte fel i sig — en testknapp ska vara omedelbar — men det är en fälla när någon justerar
-timing i editorn och tror att det är vad tittarna ser.
+Knappen skickar `__test: true`, som hoppar över `fwMin` och anonymfiltret men **behåller kön och
+dubblettspärren**. Utan undantaget hade knappen tystnat så fort streamern höjer sin gräns: man
+trycker, och ingenting händer. Samma mönster som `triggerFanLevelUp` redan använder. En riktig gåva
+under `fwMin` tänder fortfarande ingenting — vaktat.
+
+Combon läses ur fältet och skickas som argument; den skrivs inte längre till widgeten av klicket.
+Det gör fältets egen `onchange`, vilket är samma regel som punkt 3 ovan drev igenom för livevägen.
+
+Prov: `tests/alert-queue.test.js` (kön + källvakten) och `tests/gift-fireworks-panel.test.js`
+(klicket går genom triggern, bär `__test`, och rör inte layouten). Mutationsprovat åt sju håll,
+alla dödade — inklusive den som återinför den andra genvägen.
 
 ## ~~3. Gift Fireworks skriver live-data till den sparade layouten~~ — LÖST
 
