@@ -10,6 +10,33 @@ fel, och där felet bara syns i sändning.
 **Ta med:** en dator med bryggans logg synlig (`ANSLUT-TIKTOK-LIVE.cmd` skriver till konsolen) och
 Studion öppen i en flik. Punkt 1 och 2 kan läsas efteråt; punkt 3 måste ses i stunden.
 
+## Starta med inspelning i stället
+
+**Kör `SPELA-IN-TIKTOK.cmd` i stället för `ANSLUT-TIKTOK-LIVE.cmd`.** Då sparas de råa payloads
+TikTok skickar till `tiktok-bridge/inspelningar/`, och punkterna nedan behöver inte läsas i stunden
+— de kan läsas i lugn och ro efteråt, om och om igen.
+
+```
+tiktok-bridge\inspelningar\2026-08-17T2014-a3f2.jsonl
+```
+
+En rad per händelse, JSON Lines. Fyra saker att veta:
+
+- **Filerna är maskerade.** Användar-id, smeknamn, avatar-länkar och kommentarer ersätts av hashar
+  och platshållare. Hasharna är stabila, så samma tittare går att följa genom hela filen — det är
+  det som gör en armé-lista läsbar i efterhand. **Tal, tidsstämplar och fältnamn är orörda**, och
+  det är dem inspelningen finns för.
+- **Både rått och normaliserat loggas.** En vidarebefordrad händelse ger två rader: `kalla:
+  "vidarebefordrad"` med TikToks payload, och `_utgaende` med det bryggan faktiskt skickade. Diffen
+  mellan dem pekar ut var ett fält tappas — vilket är precis vad fyra-listor-problemet kräver.
+- **Inspelningen ser mer än bryggan skickar.** Default är battle-familjen, inklusive
+  `LINK_MIC_ARMIES` som bryggan *inte* prenumererar på. Vill du ha allt:
+  `set VYRA_INSPELNING_TYPER=alla` före start. En inspelad typ når aldrig molnet.
+- **Den slutar skriva vid 50 MB** (`VYRA_INSPELNING_MAX_MB`) och stänger av sig själv om katalogen
+  inte går att skapa. Sändningen påverkas inte i något av fallen.
+
+Mappen är gitignorerad. Titta i filerna innan du delar dem vidare.
+
 ---
 
 ## 1. Tänder handsken vid rätt ögonblick?
