@@ -417,7 +417,7 @@ det trasiga beteendet — det var precis vad §13 varnade för.
 
 Verifierad: 2026-08-17.
 
-## 14. Actions och TTS Chat är två skilda talsystem
+## ~~14. Actions och TTS Chat är två skilda talsystem~~ — LÖST
 
 En TTS-action går till `window.speechSynthesis` direkt (`action-runtime.js` → `tts()`).
 TTS Chat-panelen (`tts-chat.js`) har en egen väg: molnröster via `server/tts.js` (msedge-tts,
@@ -450,9 +450,57 @@ Volymen är per action och per TTS Chat-inställning — bestäm vilken som vinn
 
 Verifierad: 2026-08-14.
 
+**Löst 2026-08-17.** Uppmätt före och efter, samma två scenarier:
+
+```
+FORE                                        EFTER
+  roster som talade:  3 (alla flikar)         roster som talade:  1 (overlay 1)
+  poang spenderade:   30                      poang spenderade:   10
+  TTS-action i mun pa chatten: JA (+12 ms)    talade samtidigt:   nej
+```
+
+**Inventeringen avslöjade ett tredje fel, större än de två nedskrivna.** `tts-chat.js` lyssnar
+direkt på `vyra-live-event` utan overlay-vakt och utan master-grind, så varje öppen flik läste upp
+samma chattrad *och* drog sin egen kostnad. Det är §15a om igen, för rösten — och att automationen
+lagades först gjorde asymmetrin värre, inte bättre.
+
+### Vad som byggdes
+
+- **`vyra-tal.js`** — ett delat talutrymme. Kön var talspecifik (`{text, opts}`), men det verkliga
+  villkoret är *ett ljud i taget, nästa startar när föregående rapporterar klart*. Enheten är
+  därför ett anspråk med ett löfte: `koa({kalla, spela: () => Promise, maxKo})`. Då kan chatten och
+  en action dela kö utan att kön behöver veta vad ett `cloud:`-röstnamn är.
+- **Ljudfiler köas inte — de duckas.** Ett gåvoljud hör ihop med sin visuella effekt i tid; att
+  lägga det bakom en tjugo sekunder lång uppläsning förstör larmet i stället för att rädda det.
+  `volymfaktor()` + `lyssna()` sänker ljudet medan någon talar, även ett som redan rullar.
+  Duckningen är enkelriktad med flit: talet duckar aldrig för ett gåvoljud.
+- **`vyra-masterval.js`** — elektionen ur `action-master.js` utbruten till en fabrik, eftersom
+  rösten behöver exakt samma mekanism med **omvänd** prioritet. Två hjärtslagsnycklar, en
+  implementation; att kopiera 60 rader hade varit precis det fel §13 handlade om.
+- **`VyraRostMaster`** — nivå 1 är en **overlay**, inte studion. En streamer fångar sitt ljud via
+  browser source i OBS, inte via desktop audio, så en röst som bara talar i Studion försvinner ur
+  sändningen. Nivå 2 är studion, så en ensam studioflik fortfarande låter.
+- **Vem betalar och vem låter är två olika frågor.** Automationsmastern avgör *om* raden ska läsas
+  och drar kostnaden — en gång. Beslutet går sedan ut till alla flikar, och röstmastern talar.
+
+Actions TTS gateas **inte** på röstmastern: `allowed()` routar dem redan till rätt scens overlay,
+och en grind ovanpå det hade tystat scen 1:s action så fort scen 2:s overlay råkade hålla
+röstplatsen.
+
+Vaktat av `tests/action-talutrymme.test.js` (8 prov), mutationsprovat åt sju håll.
+
+**Ett fel fixen själv skapade och som mätningen fångade:** kapacitetskontrollen före avdraget läste
+den *egna* fliken kö. Efter uppdelningen är den betalande fliken sällan den talande, så studion såg
+en tom kö och tog betalt för rader overlayn sedan slängde — 40 poäng för två upplästa rader.
+Röstmastern publicerar därför sin kölängd i `vyra-tal-ko`, och `hasQueueRoom` läser den.
+
+**Kvar:** fyra fristående ljudkällor rör fortfarande inte talutrymmet — `sound-alerts.js`,
+`gift-fireworks.js`, `battle-mvp-session.js` och `media.js` spelar var och en `new Audio().play()`
+rakt av. `VyraTal.lyssna()` är byggd så att de kan adoptera duckningen utan omskrivning.
+
 # Regler som kostat oss något
 
-§2, §5, §6 och §14 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5 och §6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 

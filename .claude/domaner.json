@@ -201,6 +201,8 @@
         "action-timers.js",
         "action-simulator.js",
         "action-master.js",
+        "vyra-masterval.js",
+        "vyra-tal.js",
         "points-system.js"
       ],
       "tester": [
@@ -210,6 +212,7 @@
         "tests/action-event-flikar.test.js",
         "tests/action-cooldown-lager.test.js",
         "tests/action-poang-retur.test.js",
+        "tests/action-talutrymme.test.js",
         "tests/action-tts-rost.test.js",
         "scripts/test/event-gifts.test.js"
       ],
