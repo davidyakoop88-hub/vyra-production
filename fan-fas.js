@@ -41,6 +41,12 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // hearts · UPPSTIGNINGEN. Ikonen slår ner, hjärtana framträder, texten hyllas. Modellen har
+  // redan ett riktigt vilolager — `.fan-burst` är synlig, så basens fanLevelPop och fanRing går —
+  // men de tre hjärtanas egen loop låg på `.fan-active`. Ett vilolager måste finnas oavsett om
+  // alerten står i en fas eller inte, annars behövs en specialvakt för när det får starta. Loopen
+  // ligger nu på modellen, som basens fanLevelPop. Vaktat av 21h.
+  //
   // badgereveal · UPPENBARELSEN. Halvmånarna sveper in utifrån och bär fram emblemen,
   // profilbilden avtäcks mellan dem, pill och text hyllas sist.
   //
@@ -101,6 +107,11 @@
     badgereveal: [
       { namn: 'vingar', ms: 340 },
       { namn: 'avtackning', ms: 360 },
+      { namn: 'hyllning', ms: 340 },
+    ],
+    hearts: [
+      { namn: 'nedslag', ms: 300 },
+      { namn: 'uppstigning', ms: 320 },
       { namn: 'hyllning', ms: 340 },
     ],
   };

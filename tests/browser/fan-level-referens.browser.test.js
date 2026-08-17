@@ -143,14 +143,58 @@ for (const layout of ['heartbeat', 'duo']) {
   });
 }
 
-test('hearts: de tre hjartana glodar och ar olika stora', { skip }, async () => {
-  const m = await mat('hearts');
-  assert.equal(m.hjartan.length, 3, `hittade ${m.hjartan.length} hjartan, referensen har tre`);
-  for (const [i, h] of m.hjartan.entries()) {
-    assert.ok(h.synlig, `hjarta ${i + 1} syns inte`);
-    assert.notEqual(h.skugga, 'none', `hjarta ${i + 1} saknar glod`);
+// MATT OVER TID, inte i en enda bildruta.
+//
+// Provet hette forr samma sak och laste EN matning: alla tre hjartan skulle ligga over opacity
+// 0.5 samtidigt. Det var sant per definition, eftersom
+// `.fan-layout-hearts .fan-rising-hearts i{opacity:1!important}` pinnade opaciteten och dodade
+// halva frHeartRise. Hjartana steg 26 px och teleporterade tillbaka till noll VID FULL
+// LJUSSTYRKA, var 1,6:e sekund. Provet skyddade alltsa buggen, inte designen.
+//
+// Med tonningen lagad ar tre samtidigt ljusa hjartan omojligt — de ar forskjutna med 0,4 s
+// vardera, och det ar hela effekten. Kravet ar i stallet att vart och ett NAR full styrka nagon
+// gang under en cykel, och att det tonar hela vagen ner igen sa aterhoppet aldrig syns.
+async function hjartanOverTid() {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+  await page.evaluate(() => {
+    state.widgets.length = 0;
+    const w = window.VyraWidgets.create('catalog:fanlevel:layout:hearts');
+    w.x = 60; w.y = 40; state.widgets.push(w); selected = null; render();
+    document.querySelector('.fan-level-up').classList.add('fan-active');
+  });
+  await page.waitForTimeout(600);
+  // En hel cykel (1,6 s) plus den storsta forskjutningen (0,8 s), med marginal.
+  const prov = [];
+  for (let i = 0; i < 26; i += 1) {
+    prov.push(await page.evaluate(() => [...document.querySelectorAll('.fan-rising-hearts i')]
+      .map(e => { const cs = getComputedStyle(e);
+        return { op: +cs.opacity, skugga: cs.textShadow, storlek: parseFloat(cs.fontSize) } })));
+    await page.waitForTimeout(100);
   }
-  const storlekar = m.hjartan.map(h => h.storlek);
+  await page.close();
+  return prov;
+}
+
+test('hearts: de tre hjartana glodar, tonar och ar olika stora', { skip }, async () => {
+  const prov = await hjartanOverTid();
+  assert.ok(prov.length, 'ingen matning gjordes');
+  assert.equal(prov[0].length, 3, `hittade ${prov[0].length} hjartan, referensen har tre`);
+  for (let i = 0; i < 3; i += 1) {
+    const serie = prov.map(p => p[i]);
+    const hogst = Math.max(...serie.map(h => h.op));
+    const lagst = Math.min(...serie.map(h => h.op));
+    assert.ok(hogst > 0.9,
+      `hjarta ${i + 1} nadde bara ${hogst.toFixed(2)} i opacitet — det tands aldrig helt`);
+    assert.ok(lagst < 0.2,
+      `hjarta ${i + 1} gick aldrig under ${lagst.toFixed(2)} — utan uttoning syns aterhoppet `
+      + 'till botten som ett hopp vid full ljusstyrka');
+    assert.notEqual(serie[0].skugga, 'none', `hjarta ${i + 1} saknar glod`);
+  }
+  const storlekar = prov[0].map(h => h.storlek);
   assert.ok(new Set(storlekar).size > 1,
     `alla tre hjartan ar ${storlekar[0]} px — referensen trappar storleken`);
 });

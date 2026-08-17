@@ -29,6 +29,15 @@ const MEDIA = las('media.js');
 const STUDIO_CSS = las('studio.css');
 const PREMIUM_CSS = las('premium-final.css');
 
+// CSS UTAN KOMMENTARER. Vakterna som läser regel för regel matchar `nagot { nagot }`, och en
+// kommentar strax före en regel hamnar då inuti "selektorn". Vakten flaggade sin egen
+// dokumentation: blocket för hearts citerar `opacity:1!important` för att förklara vad som var
+// fel, och 21g läste citatet som en levande deklaration. Ett prov som faller på sin egen
+// beskrivning mäter texten, inte koden.
+const utanKommentarer = css => css.replace(/\/\*[\s\S]*?\*\//g, '');
+const REGLER = [...utanKommentarer(STUDIO_CSS + PREMIUM_CSS).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+  .map(m => ({ valjare: m[1].trim(), kropp: m[2] }));
+
 // ---- Registren, lästa ur källan ----------------------------------------------------------------
 // Ur `'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',…}`.
 function fabriksnycklar() {
@@ -878,9 +887,8 @@ test('20g: ingen !important-transform får döda vingarnas rörelse', () => {
   // sitter på rad två medan selektorn står på rad ett. Mutationen som återinförde `!important`
   // ÖVERLEVDE därför provet. En vakt som inte kan falla på det den finns för är värre än ingen
   // vakt alls, eftersom den intygar något den aldrig mätt.
-  const regler = [...(STUDIO_CSS + PREMIUM_CSS).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-    .map(m => ({ valjare: m[1], kropp: m[2] }))
-    .filter(r => r.valjare.includes('fan-layout-badgereveal') && r.valjare.includes('.fan-wing'));
+  const regler = REGLER.filter(r => r.valjare.includes('fan-layout-badgereveal')
+                                    && r.valjare.includes('.fan-wing'));
   assert.ok(regler.length, 'hittade inga vingregler alls — läser provet rätt fil?');
   for (const regel of regler) {
     for (const t of [...regel.kropp.matchAll(/transform\s*:[^;}]*/g)].map(m => m[0])) {
@@ -908,5 +916,135 @@ test('20h: badgereveal har ett vilolager som inte hänger på en fasklass', () =
       `vilolagret hänger på en fasklass och dör när sekvensen tar slut: ${rad.trim()}`);
     assert.ok(!utanNot.includes('.fan-active'),
       `vilolagret hänger på .fan-active — F4 förbjuder det för en registrerad modell: ${rad.trim()}`);
+  }
+});
+
+// ================================================================================================
+// 21a–21h — HEARTS · "UPPSTIGNINGEN"
+//
+// Nedslag → uppstigning → hyllning. Ikonen slår ner, hjärtana framträder, texten hyllas.
+//
+// LÄGET FÖRE, uppmätt i Chromium. Bara `.fan-burst` rörde sig i entrén (0.15 → 0.78 → 1.00);
+// pill, h2, h3 och p låg på 1.00 från 33 ms. Men det stora felet satt i vilolagret:
+//
+//     ms | hjärta 1        | hjärta 2        | hjärta 3
+//   1552 | y -26  op 1.00  | y -21  op 1.00  | y -11  op 1.00
+//   1613 | y -26  op 1.00  | y -22  op 1.00  | y -13  op 1.00
+//   1803 | y  -1  op 1.00  | y -25  op 1.00  | y -18  op 1.00
+//
+// `frHeartRise` vill `0% opacity:0 → 30% opacity:1 → 100% opacity:0` — tona in, stiga, tona ut.
+// Men `.fan-layout-hearts .fan-rising-hearts i{opacity:1!important}` pinnar opaciteten. Hjärtat
+// steg 26 px och TELEPORTERADE tillbaka till noll vid full ljusstyrka, var 1,6:e sekund, tre
+// gånger förskjutet. Samma fälla som badgereveals `!important`-transform, fast på en oändlig loop.
+//
+// OCH DEN GJORDE REFERENSPROVET INTETSÄGANDE. `hearts: de tre hjärtana glöder och är olika stora`
+// krävde opacity > 0.5 på alla tre vid EN tidpunkt — sant per definition när opaciteten är pinnad.
+// Provet skyddade buggen, inte designen. Det mäter nu över ett tidsfönster i stället.
+// ================================================================================================
+
+test('21a: hearts har tre faser i ordningen nedslag → uppstigning → hyllning', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.hearts, 'hearts saknar koreografi i FASER');
+  assert.deepEqual(FASER.hearts.map(f => f.namn), ['nedslag', 'uppstigning', 'hyllning'],
+    'Uppstigningen är ikonen som slår ner, hjärtana som framträder, texten som hyllas');
+});
+
+test('21b: triggern tänder hearts första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'hearts' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['nedslag'], 'nedslaget sattes inte i samma anrop som triggern');
+});
+
+test('21c: hearts faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [a, b, c] = FASER.hearts;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'hearts' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(a.ms - 1);
+  assert.deepEqual(faser('fan1'), ['nedslag'], 'nedslaget slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['uppstigning'], 'uppstigningen började inte i tid');
+  klocka.fram(b.ms);
+  assert.deepEqual(faser('fan1'), ['hyllning'], 'hyllningen började inte i tid');
+  klocka.fram(c.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('21d: varje hearts-fas har CSS, hyllningen bär pill och text, inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.hearts) {
+    const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(`fan-layout-hearts.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((x, y) => x + y, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  const h = 'fan-layout-hearts.fan-fas-hyllning';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(h) && r.includes('animation:'));
+  assert.ok(rader.some(r => r.includes('.fan-level-pill')), 'nivåpillen hyllas inte');
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${h}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i hyllningen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('21e: hearts återanvänder fsIconDrop, fsAvatarRise och fsPillPop', () => {
+  for (const namn of ['fsIconDrop', 'fsAvatarRise', 'fsPillPop']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`), `hearts använder inte ${namn}`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+  }
+});
+
+test('21f: hjärtat stiger UPPÅT och tonar ut — inte teleporterar', () => {
+  const m = STUDIO_CSS.match(/@keyframes\s+frHeartRise\{([\s\S]*?\})\s*\}/);
+  assert.ok(m, 'hittade inte @keyframes frHeartRise');
+  const kropp = m[1];
+  const y = [...kropp.matchAll(/translateY\((-?\d*\.?\d+)(?:px)?\)/g)].map(x => parseFloat(x[1]));
+  assert.equal(y.length, 2, 'frHeartRise ska gå från ett läge till ett annat');
+  assert.equal(y[0], 0, `frHeartRise börjar på ${y[0]}px i stället för i utgångsläget`);
+  assert.ok(y[1] < 0, `frHeartRise slutar på ${y[1]}px — ett stigande hjärta måste gå UPPÅT`);
+
+  // Tonningen är hela skälet till att banan inte syns som ett hopp: vid opacitet 0 i toppen är
+  // återgången till noll osynlig. Slutar den på 1 teleporterar hjärtat vid full ljusstyrka.
+  const op = [...kropp.matchAll(/opacity:\s*(\d*\.?\d+)/g)].map(x => parseFloat(x[1]));
+  assert.ok(op.length >= 3, `frHeartRise har ${op.length} opacitetssteg — den ska tona in OCH ut`);
+  assert.equal(op[0], 0, `frHeartRise börjar på opacitet ${op[0]} i stället för osynlig`);
+  assert.equal(op[op.length - 1], 0,
+    `frHeartRise slutar på opacitet ${op[op.length - 1]} — då teleporterar hjärtat tillbaka i full styrka`);
+  assert.ok(Math.max(...op) >= 1, 'frHeartRise når aldrig full styrka på vägen');
+});
+
+test('21g: ingen !important-opacitet får döda hjärtanas tonning', () => {
+  // Läses REGEL FÖR REGEL från början. 20g skrevs först rad för rad och överlevde sin egen
+  // mutation, eftersom vingregeln var flerradig. Den lärdomen är inbyggd här.
+  const regler = REGLER.filter(r => r.valjare.includes('fan-rising-hearts')
+                                    && !r.valjare.includes('fan-exit'));
+  assert.ok(regler.length, 'hittade inga regler för .fan-rising-hearts alls');
+  for (const regel of regler) {
+    for (const d of [...regel.kropp.matchAll(/opacity\s*:[^;}]*/g)].map(m => m[0])) {
+      assert.ok(!/!important/.test(d),
+        `en !important-opacitet på hjärtana dödar tonningen tyst: ${regel.valjare.trim()} { ${d.trim()} }`);
+    }
+  }
+});
+
+test('21h: hjärtanas oändliga loop hänger på modellen, inte på .fan-active eller en fas', () => {
+  // Ett vilolager måste finnas oavsett om alerten står i en fas eller inte. Ligger det på
+  // `.fan-active` krävs en specialvakt för när det får starta; ligger det på en fasklass dör det
+  // när klassen tas bort. Basens fanLevelPop ligger på modellen — den här gör likadant.
+  const regler = REGLER.filter(r => r.valjare.includes('fan-rising-hearts')
+                                    && /animation:[^;}]*infinite/.test(r.kropp));
+  assert.ok(regler.length, 'hjärtana har ingen oändlig rörelse alls');
+  for (const r of regler) {
+    const utanNot = r.valjare.replace(/:not\([^)]*\)/g, '');
+    assert.ok(!utanNot.includes('.fan-active'),
+      `vilolagret hänger på .fan-active: ${r.valjare.trim()}`);
+    assert.ok(!utanNot.includes('fan-fas-'),
+      `vilolagret hänger på en fasklass och dör när sekvensen tar slut: ${r.valjare.trim()}`);
   }
 });
