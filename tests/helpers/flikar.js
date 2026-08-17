@@ -13,10 +13,15 @@
 //
 // Att fasaden är per fönster är alltså inte en detalj: den är hela mekanismen för "vem skrev".
 //
-// VARFÖR SKRIVBARHET ÄR EN FLAGGA. runAction sparar lastRun via VyraSessionState.writeActive, som
-// vägrar utan låshanterare och utan committad projektion. Ett fönster riggat som overlay (skrivbar:
-// false) har därför ingen fungerande cooldown alls — det är verkligheten i en OBS-flik, inte en
-// brist i riggen. Studion riggas med en riktig låshanterare och en committad projektion.
+// VARFÖR SKRIVBARHET ÄR EN FLAGGA. `VyraSessionState.writeActive` vägrar utan låshanterare och utan
+// committad projektion, så ett fönster riggat som overlay (`skrivbar: false`) kan inte röra någon
+// skyddad nyckel — det är verkligheten i en OBS-flik, inte en brist i riggen. Studion riggas med en
+// committad projektion och kan därför skriva.
+//
+// Cooldownen hänger sedan §15b INTE på den flaggan: körningstidsstämplarna bor i
+// `vyra-action-cooldowns`, som skrivs med rå localStorage och fungerar i vilken flik som helst.
+// Flaggan avgör alltså vem som får skriva LAYOUTEN, inte vem som kan hålla en cooldown — och just
+// därför är den fortfarande värd att kunna sätta åt båda hållen.
 const fs = require('fs'), path = require('path');
 const { JSDOM } = require('jsdom');
 const H = require('./session-harness.js');

@@ -157,7 +157,7 @@ test('8: utan modulen kör fliken som förr (fail-open)', async () => {
   assert.equal(spenderat(flikar[0], fore), 100, 'en flik utan modulen slutade köra helt');
 });
 
-// ---- 9. §15b: cooldownen fungerar när föraren är den som får skriva ------------------------------
+// ---- 9. en förare betyder en cooldown -----------------------------------------------------------
 
 test('9: fem gåvor under cooldown ger en spelning och ett avdrag, med tre flikar', async () => {
   const { flikar } = await uppsattning({ actions: [action({ cooldown: 30 })] });
@@ -166,6 +166,6 @@ test('9: fem gåvor under cooldown ger en spelning och ett avdrag, med tre flika
   await vanta(200);
 
   assert.equal(spenderat(flikar[0], fore), 100,
-    'cooldownen bet inte — föraren var inte den flik som får skriva lastRun');
+    'cooldownen bet inte — fler än en flik körde, eller stämpeln nådde inte fram');
   assert.equal(spelningar(flikar), 1);
 });

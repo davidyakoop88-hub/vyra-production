@@ -19,10 +19,13 @@
   //   Niva 1  en flik i studio-committed tar platsen ALLTID, även från en levande niva 2.
   //   Niva 2  vilken flik som helst tar en ledig eller inaktuell plats.
   //
-  // Nivå 1 vinner för att det är den enda flik som kan SKRIVA. runAction sparar lastRun via
-  // writeActive, som kräver studio-committed (session-state.js:138, :284) — i en overlay fastnar
-  // inget lastRun och cooldownen är verkningslös. Med studion som förare fungerar cooldownen igen.
-  // En självkörande niva 2-flik har den kvar som skuld; det står i §15b.
+  // Nivå 1 vinner för att det är den flik som äger layouten: den kan skriva de skyddade nycklarna
+  // via writeActive (session-state.js:138, :284) och är den streamern faktiskt tittar på.
+  //
+  // Nar den har raden skrevs vann niva 1 av ett STARKARE skal: cooldownen levde i
+  // vyra-action-event-v2 och kunde darfor bara sparas av en skrivbar flik, sa en sjalvkorande niva
+  // 2-flik korde helt utan cooldown. Det ar lagat i §15b — stamplarna bor i vyra-action-cooldowns
+  // och fungerar i vilken flik som helst. Niva 2 ar alltsa inte langre ett andra klassens lage.
   //
   // VARFÖR EN HJÄRTSLAGSNYCKEL OCH INTE session-states MARKER_KEY. Markören skrivs vid projektion
   // och skrivning, aldrig på en timer. En stängd studioflik lämnar en markör som ser färsk ut för

@@ -44,6 +44,16 @@
   // 'TODO@exempel.se'. Inget onskemal nadde nagonsin nagon. Knappen togs over av supportsystemet
   // i PR #106 och filen ar borttagen.
   const RETIRED_KEYS = ['vyra-wishlist'];
+  // Nycklar vi ANVANDER, men som ar efemara: de beskriver vad den har maskinen just gjorde, inte
+  // vad kontot ager. De projiceras inte, synkas inte och sakerhetskopieras inte — men de MASTE
+  // torkas vid kontobyte, precis som RETIRED_KEYS, for de bar spar av kontots tittare.
+  //
+  // vyra-action-cooldowns: nar en action senast kordes, globalt och per tittare (§15b i
+  // docs/tech-debt.md). Lag forr inne i vyra-action-event-v2, vilket hade tva foljder: stamplarna
+  // synkades till molnet som om de vore layout, och en flik utan skrivratt kunde inte spara dem
+  // alls — sa cooldownen var verkningslos i varje overlay. Nyckeln skrivs med ra localStorage och
+  // ar darfor inte en PROTECTED_KEY; det ar hela poangen med den.
+  const EPHEMERAL_KEYS = ['vyra-action-cooldowns'];
   const PROTECTED_KEYS = [STATE_KEY, MARKER_KEY, ...EXTRA_KEYS];
 
   const BRAND_KIT = { background: '#1c1028', highlight: '#ff58d6', text: '#f7f2ff',
@@ -413,7 +423,7 @@
         }
 
         try { storage.setItem(STATE_KEY, JSON.stringify(neutralState())) } catch (_) { degraded = true }
-        for (const key of [...EXTRA_KEYS, ...RETIRED_KEYS]) { try { storage.removeItem(key) } catch (_) { degraded = true } }
+        for (const key of [...EXTRA_KEYS, ...RETIRED_KEYS, ...EPHEMERAL_KEYS]) { try { storage.removeItem(key) } catch (_) { degraded = true } }
         try { storage.removeItem(MARKER_KEY) } catch (_) { degraded = true }
 
         swapActive(neutralState());
@@ -476,7 +486,7 @@
     };
 
     return {
-      MARKER_KEY, STATE_KEY, EXTRA_KEYS, RETIRED_KEYS, PROTECTED_KEYS,
+      MARKER_KEY, STATE_KEY, EXTRA_KEYS, RETIRED_KEYS, EPHEMERAL_KEYS, PROTECTED_KEYS,
       activeState: () => activeStateObject,
       readActiveExtra: key => (key in activeExtras ? activeExtras[key] : null),
       // Den enda lasvagen konsumenterna ska anvanda for en EXTRA-nyckel.
