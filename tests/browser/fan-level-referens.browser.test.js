@@ -1,5 +1,5 @@
 'use strict';
-// Fan Level Up · de sju modellerna mot Davids referensbild 2026-08-13.
+// Fan Level Up · de atta modellerna mot Davids referensbild 2026-08-13.
 //
 // LAGET FORE, uppmatt: markupen har redan varje del referensen behover — <h2> rubrik, <h3> namn,
 // .fan-level-pill, .fan-ribbon, .fan-pulse-line, .fan-wing, .fan-rising-hearts, .fan-ring — och
@@ -49,7 +49,10 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-const LAYOUTER = ['stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'];
+// 'hero' star forst for att den ar STANDARD: fanLevelHtml gor fan-layout-${w.fanLayout||'hero'},
+// och katalogens tema-ingang satter tema utan layout. Varje widget som skapas den vagen far alltsa
+// hero — den mest anvanda modellen var lange den enda utan tackning har.
+const LAYOUTER = ['hero', 'stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'];
 
 async function mat(layout) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -101,7 +104,7 @@ async function mat(layout) {
   return m;
 }
 
-// ---- Krav som galler ALLA sju -----------------------------------------------------------------
+// ---- Krav som galler ALLA atta -----------------------------------------------------------------
 for (const layout of LAYOUTER) {
   test(`${layout}: "FAN LEVEL UP" syns`, { skip }, async () => {
     const m = await mat(layout);
