@@ -326,7 +326,12 @@
     // som stod här: varje körd action utlöste förr en låst, versionshanterad projektion — i den
     // varmaste vägen i hela appen, och bara för att spara ett tal som inte hör till layouten.
     skrivCooldown(stored.id,now,userKey);
-    const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{actionRunChannel?.postMessage(detail)}catch{}try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);return true}
+    const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{actionRunChannel?.postMessage(detail)}catch{}try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);
+    // Returnerar runId, inte true (§15c). Anroparen behover det for att kunna koppla ihop ett
+    // avdrag med de uppspelningar det betalade for — en strypt uppspelning ska ge pengarna
+    // tillbaka, och rapporten fran overlayn bar bara ett runId. Strangen ar truthy, sa varje
+    // befintlig `if (runAction(...))` beter sig precis som forr.
+    return detail.runId}
   function actionsForEvent(state,event){if(event.allActionIds?.length)return event.allActionIds;if(event.randomActionIds?.length)return[event.randomActionIds[Math.floor(Math.random()*event.randomActionIds.length)]];return[event.actionId]}
   function runEvent(event,payload={}){const state=read();if(!event?.enabled&&payload.__test!==true)return false;actionsForEvent(state,event).forEach(id=>runAction(state.actions.find(a=>a.id===id),payload));return true}
   // Reservvagen nar action-event-advanced.js inte ar laddad. Master-graden star EFTER delegeringen,

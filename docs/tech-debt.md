@@ -242,7 +242,8 @@ Verifierad: 2026-08-14. Åtgärdad via väg 1 den 2026-08-17.
 Två fel som hittades när §13 stängdes. De ligger **utanför** §13:s fix: den avgör *när* avdraget
 sker, de här handlar om *vem* som drar det och *var* cooldownen finns.
 
-**15a är löst 2026-08-17, och 15b är nedskalat med den. 15c står kvar.** `action-master.js` väljer
+**Hela §15 är löst 2026-08-17** — 15a av en förare för automationen, 15b av ett eget lager för
+körningstidsstämplarna, 15c av en återbetalning från overlayn. `action-master.js` väljer
 en förare för automationen; `handleEvent` i båda vägarna frågar `VyraAutomationMaster.farKora()`
 innan något dras eller körs. Vaktat av `tests/action-event-flikar.test.js` (9 prov) på en rigg som
 ger flera jsdom-fönster **ett** delat lager och korsflik-`storage`-event
@@ -366,7 +367,7 @@ Det förklarade också varför `tests/action-event-kedjan.test.js` aldrig kunde 
 riggen sätter `navigator.locks = undefined`. Efter flytten gäller det inte längre — cooldownen
 lever utanför projektionen och biter i vilken rigg som helst.
 
-### 15c. En full kö tar betalt för det som aldrig ryms
+### ~~15c. En full kö tar betalt för det som aldrig ryms~~ — LÖST
 
 `sceneMaxQueue` i `action-runtime.js` lever i overlayfliken, bakom en BroadcastChannel, och går
 inte att fråga synkront därifrån poängen dras. `kanKora` kan därför inte svara på den.
@@ -384,8 +385,35 @@ Fyra betalda, tre som ryms, en som tystnade. Det här är den enda av §13:s gri
 flytta före avdraget, och den kräver en väg tillbaka från overlayn — alltså väg 2 (återbetalning)
 för just det här fallet.
 
-**Ingen av 15a-15c är låst i ett prov.** Att assertera dagens siffror hade gjort dem till kontrakt,
-vilket är precis det §13 varnade för. Siffrorna ovan är mätningar, inte krav.
+**Löst 2026-08-17 via väg 2.** Overlayn rapporterar en strypt uppspelning, mastern betalar tillbaka.
+Samma mätning efter fixen: 400 dragna blev **200**, och de 200 som ströps kom tillbaka.
+
+Fyra saker som avgör om en återbetalning är rätt, och som alla är lätta att bygga fel:
+
+- **Bara kö-grenen räknas.** `execute()` säger nej av fyra skäl; tre av dem är inte förlorade
+  uppspelningar. Fel scen (`allowed()`) är **routing** — räknades det som strypning vore varje
+  flerscensuppsättning en gratis återbetalningsautomat. `skipOnNext` hör inte heller hit: den
+  kortar ner en uppspelning som faktiskt sker.
+- **Återbetalning sker per KÖP, inte per körning.** Ett event betalar en gång men kan skicka ut
+  flera actions; spelade en av tre fick tittaren det hen betalade för. Mastern håller en huvudbok
+  `{runIds, kvar, username, belopp}` och betalar först när sista körningen ströps.
+- **Rapporten kan komma FÖRE registreringen.** `runAction` skickar ut synkront, så overlayns
+  `execute()` hinner säga nej innan `map()` lämnat ifrån sig sitt sista `runId`. En huvudbok som
+  bara tittar bakåt hade missat precis de fall den byggdes för; tidiga rapporter parkeras och
+  hämtas hem av registreringen.
+- **`add()` är inte `refund()`.** `add` räknar upp `earned`, livstidssumman bakom `getLevel()`, och
+  `spend` sänker den aldrig. Med `add` hade en tittare kunnat nivå upp genom att med flit svämma
+  över kön. Nya `VyraPoints.refund` återställer saldot utan att röra `earned`.
+
+**Ingen master-vakt i återbetalningen, med flit.** Planen hade en; mutationsprovet visade att den
+var både överflödig och skadlig. Överflödig för att huvudboken redan är vakten — bara den flik som
+*drog* poängen känner igen ett `runId`. Skadlig för att en flik som drog och sedan tappade platsen
+(en nivå 2-overlay när studion öppnas) hade slutat betala tillbaka mitt i flödet.
+
+Vaktat av `tests/action-poang-retur.test.js` (10 prov), mutationsprovat åt sju håll.
+
+**Siffrorna för 15a-15c är mätningar, inte krav.** Ingen av dem är låst i ett prov som asserterar
+det trasiga beteendet — det var precis vad §13 varnade för.
 
 Verifierad: 2026-08-17.
 
@@ -424,7 +452,7 @@ Verifierad: 2026-08-14.
 
 # Regler som kostat oss något
 
-§2, §5, §6, §14 och §15c är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§2, §5, §6 och §14 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 
