@@ -41,6 +41,13 @@
   // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
   // samma app.
   //
+  // loyalty · INRINGNINGEN. Profilbilden poppar, ringen ritas ett kvarts varv (-90° -> 0), pill
+  // och text stämplas in sist. SOCKELFÄLLAN: poppen låg på `.fan-profile img`, alltså på ankaret,
+  // medan behållaren `.fan-profile` bär sin egen linear-gradient och box-shadow. Uppmätt vid
+  // 24 ms: ankaret 0.18 medan behållaren stod på 1.00 — en glödande orange skiva på 80×80 px var
+  // fullt målad i första bildrutan, och "poppen" var ett foto som tonade in inuti något som
+  // aldrig rörde sig. Faserna rör därför BEHÅLLAREN. Ankaret rider med. Vaktat av 19g.
+  //
   // ribbon · VÄLKOMNANDET. Profilbilden poppar, banderollen rullar ut i sidled, texten kommer
   // sist. Även här är rörelserna modellens egna (fbProfilePop, frbUnfurl) och det är klockan som
   // byts. Uppmätt före: poppen och utrullningen rörde sig redan mjukt, men rubrik, namn och
@@ -75,6 +82,11 @@
       { namn: 'pop', ms: 320 },
       { namn: 'utrullning', ms: 420 },
       { namn: 'text', ms: 340 },
+    ],
+    loyalty: [
+      { namn: 'pop', ms: 320 },
+      { namn: 'ring', ms: 440 },
+      { namn: 'stampel', ms: 340 },
     ],
   };
 
