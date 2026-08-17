@@ -215,3 +215,107 @@ test('8: en action som fortfarande talar hindrar nästa från att bryta in', asy
   assert.ok(ov.__tal[1].vid >= ov.__tal[0].slut,
     `den andra actionen bröt in ${ov.__tal[0].slut - ov.__tal[1].vid} ms innan den första tystnat`);
 });
+
+// ---- 9-14. de fristående ljudkällorna adopterar duckningen ------------------------------------
+//
+// §14 lämnade fyra ljudkällor utanför talutrymmet. UPPMÄTT 2026-08-17 innan något byggdes:
+//
+//   gift-fireworks.js     new Audio(...), volym ur fwVolume          -> ska duckas
+//   battle-mvp-session.js new Audio(FANFAR_FIL) + en WebAudio-fallback -> ska duckas
+//   sound-alerts.js       new Audio(...) i panelens förhandsvisning   -> ska duckas
+//   media.js              NOLL `new Audio`. Varje videoelement är `muted` (rad 11, 65, 546,
+//                         578, 712) — det finns ingenting att ducka. Registret påstod motsatsen.
+//
+// Och action-runtime.js bar redan sin EGEN duckaMedan. Att lägga en delad hjälpare bredvid den
+// hade gett fem implementationer av samma dans i stället för en ägare — precis det §13 handlade
+// om. Den privata är därför borttagen och alla fyra går genom VyraTal.duckaLjud.
+
+// Returnerar ELEMENTET, inte avregistreraren — provet nedan behöver noden för att kunna avsluta den.
+const dukaLjud = (w, bas) => { const el = new w.Audio('x.mp3'); w.VyraTal.duckaLjud(el, bas); return el };
+
+test('9: duckaLjud sänker en pågående uppspelning när rösten börjar, och släpper efteråt', async () => {
+  const { flikar, overlay } = await uppsattning({ scener: [1] });
+  const ov = overlay(1);
+  const el = new ov.Audio('gava.mp3');
+  ov.VyraTal.duckaLjud(el, 0.6);
+
+  assert.equal(el.volume, 0.6, 'volymen sattes inte till basvolymen när ingen talade');
+  chatta(flikar);
+  await vanta(30);
+  assert.ok(Math.abs(el.volume - 0.6 * ov.VyraTal.DUCK) < 0.001,
+    `duckad volym ${el.volume}, väntade ${0.6 * ov.VyraTal.DUCK}`);
+  await vanta(250);
+  assert.equal(el.volume, 0.6, 'volymen kom aldrig tillbaka efter uppläsningen');
+});
+
+test('10: lyssnaren avregistreras när ljudet tar slut', async () => {
+  // Utan avregistrering läcker varje uppspelning en lyssnare mot en död nod. Kontrollmätningen är
+  // att volymen INTE rör sig när nästa uppläsning börjar — hade prenumerationen levat kvar hade
+  // den skrivit på ett element som ingen längre spelar.
+  const { flikar, overlay } = await uppsattning({ scener: [1] });
+  const ov = overlay(1);
+  const el = dukaLjud(ov, 0.6);
+  el.__avsluta();
+
+  chatta(flikar);
+  await vanta(30);
+  assert.equal(el.volume, 0.6, 'volymen ändrades på ett ljud som redan tagit slut — lyssnaren lever kvar');
+});
+
+test('11: samma element som spelas om staplar inte lyssnare', async () => {
+  // sound-alerts.js återanvänder SAMMA audioEl per kort över alla klick. Ett andra anrop måste
+  // därför ersätta prenumerationen, inte lägga en till. Mäts genom att den FÖRSTA basvolymen inte
+  // får leva kvar och slåss med den andra.
+  const { flikar, overlay } = await uppsattning({ scener: [1] });
+  const ov = overlay(1);
+  const el = new ov.Audio('pling.mp3');
+  ov.VyraTal.duckaLjud(el, 0.9);
+  ov.VyraTal.duckaLjud(el, 0.4);
+
+  chatta(flikar);
+  await vanta(30);
+  assert.ok(Math.abs(el.volume - 0.4 * ov.VyraTal.DUCK) < 0.001,
+    `volymen blev ${el.volume} — den gamla prenumerationen på 0.9 lever kvar`);
+});
+
+// ---- källvakter: att varje källa faktiskt GÅR genom hjälparen ---------------------------------
+
+const fs = require('node:fs'), path = require('node:path');
+const kallan = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+
+test('12: varje fil som bygger ett Audio duckar det', () => {
+  const fel = [];
+  for (const f of ['gift-fireworks.js', 'battle-mvp-session.js', 'sound-alerts.js', 'action-runtime.js']) {
+    const src = kallan(f);
+    if (!/new (root\.)?Audio\(/.test(src)) { fel.push(`${f}: bygger inget Audio längre — vakten mäter fel fil`); continue }
+    // `?.` mellan namnet och parentesen: varje anropsställe är fail-open (`VyraTal?.duckaLjud?.(…)`),
+    // så en vakt som kräver `duckaLjud(` direkt hittar ingenting alls.
+    if (!/duckaLjud\s*\??\.?\s*\(/.test(src)) fel.push(`${f}: bygger ett Audio utan att gå genom VyraTal.duckaLjud`);
+  }
+  assert.deepEqual(fel, [], fel.join(' | '));
+});
+
+test('13: det finns bara EN implementation av duckningsdansen', () => {
+  // Dansen är tre steg — sätt volym, prenumerera, avregistrera vid slut — och den enda platsen
+  // som får kunna den är vyra-tal.js. En privat kopia i en annan fil glider isär.
+  const agare = kallan('vyra-tal.js');
+  assert.match(agare, /function duckaLjud\(/, 'ägaren har tappat hjälparen');
+
+  const fel = [];
+  for (const f of ['gift-fireworks.js', 'battle-mvp-session.js', 'sound-alerts.js', 'action-runtime.js']) {
+    if (/VyraTal\?\.lyssna|VyraTal\.lyssna/.test(kallan(f))) fel.push(`${f}: prenumererar själv i stället för att använda duckaLjud`);
+  }
+  assert.deepEqual(fel, [], fel.join(' | '));
+});
+
+test('14: media.js har fortfarande inget ljud att ducka', () => {
+  // Registret påstod att media.js spelar `new Audio().play()` rakt av. Mätningen 2026-08-17 sa
+  // noll träffar, och varje videoelement är muted. Vakten finns för att ett OMUTAT videoelement
+  // eller ett nytt Audio ska tvinga fram ett beslut i stället för att smyga in ostyrt.
+  const src = kallan('media.js');
+  assert.equal((src.match(/new Audio\(/g) || []).length, 0,
+    'media.js har fått ett Audio — det ska antingen duckas eller motiveras här');
+  const videotaggar = src.match(/<video\b[^>]*>/g) || [];
+  const omutade = videotaggar.filter(t => !/\bmuted\b/.test(t));
+  assert.deepEqual(omutade, [], 'omutat videoelement i media.js: ' + omutade.join(' | '));
+});

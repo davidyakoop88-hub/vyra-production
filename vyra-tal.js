@@ -41,6 +41,37 @@
     return () => lyssnare.delete(fn);
   }
 
+  // DUCKNINGENS TRE STEG, PÅ ETT STÄLLE. Sätt basvolymen, prenumerera under hela uppspelningen,
+  // och AVREGISTRERA när ljudet tar slut. Missas det sista läcker varje uppspelning en lyssnare
+  // mot en död nod — se lyssna() ovan.
+  //
+  // Dansen låg tidigare som en privat `duckaMedan` i action-runtime.js, och §14 lämnade tre
+  // fristående ljudkällor helt utanför den. Att kopiera den till de tre hade gett fyra
+  // implementationer som kan glida isär; det var precis invändningen mot väg 1 i §13.
+  //
+  // Tar både <audio> och <video>: action-runtime.js duckar sina videoelement med samma anrop.
+  function duckaLjud(el, basvolym = 1) {
+    if (!el || typeof el.addEventListener !== 'function') return () => {};
+    const bas = Math.min(1, Math.max(0, Number(basvolym) || 0));
+    // SAMMA ELEMENT KAN SPELAS OM. sound-alerts.js bygger ett audioEl per kort och återanvänder
+    // det vid varje klick. Utan den här raden staplas en ny prenumeration per klick, och den
+    // gamla fortsätter skriva sin egen basvolym på samma nod.
+    try { el.__vyraDuckAv?.() } catch (_) {}
+    const satt = f => { try { el.volume = bas * f } catch (_) {} };
+    satt(volymfaktor());
+    const av = lyssna(satt);
+    const slapp = () => {
+      av();
+      if (el.__vyraDuckAv === slapp) el.__vyraDuckAv = null;
+      el.removeEventListener('ended', slapp);
+      el.removeEventListener('error', slapp);
+    };
+    el.__vyraDuckAv = slapp;
+    el.addEventListener('ended', slapp);
+    el.addEventListener('error', slapp);
+    return slapp;
+  }
+
   // KÖLÄNGDEN MÅSTE VARA LÄSBAR FRÅN EN ANNAN FLIK (§14). Den som DRAR kostnaden för en chattrad
   // är automationsmastern; den som TALAR är röstmastern, och de är sällan samma flik. Kollar den
   // betalande fliken sin egen tomma kö tar den betalt för rader som röstmastern sedan slänger —
@@ -97,7 +128,7 @@
   }
 
   window.VyraTal = {
-    koa, lyssna, volymfaktor,
+    koa, lyssna, volymfaktor, duckaLjud,
     talar: () => talarNu,
     koLangd: () => ko.length,
     koLangdDelad,

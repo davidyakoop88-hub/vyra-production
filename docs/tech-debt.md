@@ -8,7 +8,12 @@ Filen ersätter `docs/live-readiness-matrix.md` (PR #54, stängd 2026-08-06). De
 rader höll på att pensionera en fungerande widgetfamilj. Det här är i stället bara de påståenden som
 fortfarande stämmer, och som ingen annanstans är nedskrivna.
 
-Senast verifierad mot `main`: **2026-08-09**.
+Senast verifierad mot `main`: **2026-08-17**.
+
+**Ingen numrerad skuld är öppen längre som går att lösa här.** Kvar står §5, som är åtgärdad i koden
+och vaktad av fyra browser-prov men som bara en riktig deploy kan stänga. §1:s sista fråga — vilket
+steg i multiplikatoruppgiften som ska tända overlayn — kräver en riktig TikTok LIVE och står i
+`docs/live-verifiering.md` tillsammans med de andra tre ställena i battle-kedjan där koden gissar.
 
 ---
 
@@ -139,9 +144,42 @@ undertryckning av 409-vägens nya banderoll blir ofarlig. Fyra prov i
 Online-kedjan som vakter. Röda före fixen, mutationsprovade (`if(false)return` fäller prov 1–2).
 Kvarstår att verifiera i produktion efter deploy.
 
-## 6. Laddningsgrindar i browser-prov pekar på UI-kopia
+## ~~6. Laddningsgrindar i browser-prov pekar på UI-kopia~~ — LÖST
 
-Sex command-center-prov väntar på att premium-vyn ersatt basvyn genom att läsa **kopiatexten** ur
+**Löst 2026-08-17.** `overview-premium.js` sätter `document.documentElement.dataset.ccReady = '1'`
+och de sex grindarna läser det attributet. Noll träffar på mönstret, som registret krävde.
+
+**Raden ligger sist i filen, och det är ett val.** Grinden mäter *laddning*, inte rendering — vid
+dess tidpunkt är ingenting renderat än, proven tvingar fram sin render efteråt. Registrets förslag
+"ett data-attribut som premium-vyn redan **renderar**" hade därför inte fungerat. Sist i filen
+betyder markören dessutom "hela modulen är installerad", inte bara att `home` bytts: kastar någon
+av de två IIFE:erna som bygger livekorten och historikraden sätts den aldrig.
+
+**Det påståendet var först obevakat, och en mutation överlevde på det.** Markören flyttad överst i
+filen samtidigt som den sista IIFE:n kastar gav fyra gröna prov. 6c krävde då bara att noden
+`[data-alltime]` fanns efter render — men den **markupen kommer från `home()`**, inte från IIFE:n.
+Bara siffran i raden gör det. 6c stubbar därför API:t och kräver att historikraden faktiskt fylls.
+Ett prov som mäter markup i stället för beteende är §7 en gång till: det ser ut att mäta modulen och
+mäter mallen.
+
+**Frånvaron räckte inte som bevis.** Första versionen av avbrottsprovet blockerade
+`overview-premium.js` och krävde att markören uteblev — och var **grön redan innan markören fanns**,
+eftersom ett attribut som inte finns i koden alls också uteblir. Provet har nu en positiv kontroll i
+samma kropp: en oblockerad sida i samma körning måste tända markören. Det är §7:s regel om
+kontrollmätning, i en variant som är lätt att gå på.
+
+Vaktat av fyra browser-prov i `tests/browser/command-center-grind.browser.test.js` (6a–6d) och två
+källvakter i `tests/browser-rigg.test.js`. 6d är det som mäter själva skulden: den serverar en
+`overview-premium.js` där kopiatexten bytts ut och kräver att **den gamla grinden slocknar medan
+markören står kvar** — exakt det som hände i #154. Källvakten läser alla browsertester, inte bara de
+sex; mönstret uppstår på nytt varje gång någon behöver vänta på en modul och tar det som ligger
+närmast.
+
+Ursprungsbeskrivningen står kvar nedan.
+
+---
+
+Sex command-center-prov väntade på att premium-vyn ersatt basvyn genom att läsa **kopiatexten** ur
 funktionskällan:
 
 ```js
@@ -163,7 +201,8 @@ Filerna (grindraden i respektive fil):
 git grep -nE "toString\(\)\.includes\('[A-ZÅÄÖ]" -- tests/
 ```
 
-Sex träffar = skulden kvarstår. Noll = konverterad.
+Sex träffar = skulden kvarstår. Noll = konverterad. **Noll sedan 2026-08-17**, och vaktat så att det
+förblir noll.
 
 **Åtgärd:** grinda på en strukturell markör i stället — ett stabilt klassnamn eller
 data-attribut som premium-vyn redan renderar (t.ex. att `.eyebrow`-elementet finns i `#view`),
@@ -290,9 +329,11 @@ flikar som behandlar samma event i exakt det ögonblick en master dör kan båda
 båda köra. Kostnaden är ett extra avdrag för ett event, högst en gång per 6-sekundersfönster. Att i
 stället tiga tills låset svarat hade kostat en tappad uppspelning, vilket är dyrare.
 
-`BroadcastChannel('vyra-action-run')` i `action-event.js:7` postas till men har **ingen
-prenumerant** någonstans i repot. Den är skrivbar död kod och rörs inte här; `execute()` dedupar på
-`runId`, så den kan kopplas in senare utan risk för dubbel uppspelning.
+`BroadcastChannel('vyra-action-run')` i `action-event.js:7` postades till men hade **ingen
+prenumerant** någonstans i repot. **Raderad 2026-08-17.** `action-runtime.js` lyssnar på
+document-eventet `vyra:action` och på localStorage-nyckeln med samma namn — aldrig på kanalen, som
+alltså var skrivbar död kod sedan den skrevs. Nyckeln lever kvar och bär hela trafiken. Behövs
+kanalen igen dedupar `execute()` på `runId`, så den kan kopplas in utan risk för dubbel uppspelning.
 
 ### ~~15a. Varje öppen flik drar sin egen kostnad för samma gåva~~ — LÖST
 
@@ -508,13 +549,37 @@ den *egna* fliken kö. Efter uppdelningen är den betalande fliken sällan den t
 en tom kö och tog betalt för rader overlayn sedan slängde — 40 poäng för två upplästa rader.
 Röstmastern publicerar därför sin kölängd i `vyra-tal-ko`, och `hasQueueRoom` läser den.
 
-**Kvar:** fyra fristående ljudkällor rör fortfarande inte talutrymmet — `sound-alerts.js`,
-`gift-fireworks.js`, `battle-mvp-session.js` och `media.js` spelar var och en `new Audio().play()`
-rakt av. `VyraTal.lyssna()` är byggd så att de kan adoptera duckningen utan omskrivning.
+**Resten adopterad 2026-08-17 — och listan var fel.** Punkten sa fyra fristående ljudkällor. Mätt i
+källan var det **tre**:
+
+| Fil | Vad som faktiskt spelas | Utfall |
+|---|---|---|
+| `gift-fireworks.js` | `new Audio(...)`, volym ur `fwVolume` | duckas |
+| `battle-mvp-session.js` | `new Audio(FANFAR_FIL)` **plus en WebAudio-fallback** punkten inte nämnde | båda duckas |
+| `sound-alerts.js` | `new Audio(...)` i panelens förhandsvisning | duckas |
+| ~~`media.js`~~ | **noll `new Audio`.** Varje videoelement är `muted` (rad 11, 65, 546, 578, 712) | inget att göra |
+
+`media.js` hade alltså aldrig något ljud att ducka. Vaktat ändå (prov 14), så att ett nytt `Audio`
+eller ett omutat videoelement tvingar fram ett beslut i stället för att smyga in ostyrt.
+
+**Och `action-runtime.js` bar redan sin egen `duckaMedan`.** Att lägga en delad hjälpare bredvid den
+hade gett fyra implementationer av samma tre steg — sätt volym, prenumerera, avregistrera — som kan
+glida isär. Den privata är därför borttagen; `VyraTal.duckaLjud()` äger dansen och alla fyra går
+genom den. Prov 13 vaktar att ingen av dem prenumererar på egen hand igen.
+
+Ett element kan spelas om: `sound-alerts.js` bygger ett `audioEl` per kort och återanvänder det vid
+varje klick. `duckaLjud` släpper därför en tidigare prenumeration på samma nod innan den tecknar en
+ny — annars staplas en per klick, och den gamla fortsätter skriva sin egen basvolym.
+
+Den syntetiska fanfaren läser duckningen **en gång, vid schemaläggningen**. Salvan är ~1,1 s
+förschemalagda ramper; att ändra dem mitt i kräver att varje ramp skrivs om, för en fallback som
+bara körs när ljudfilen saknas.
+
+Vaktat av prov 9–14 i `tests/action-talutrymme.test.js`.
 
 # Regler som kostat oss något
 
-§2, §5 och §6 är skuld: namngivna platser i koden som väntar på en fix. §7–§11 är av en annan sort —
+§5 är skuld: en namngiven plats i koden som väntar på en fix. §7–§11 är av en annan sort —
 **mönster som bet flera gånger under Etapp 5**, och som inte går att laga en gång för alla eftersom
 de uppstår på nytt varje gång någon skriver ett prov eller lägger till en modul.
 

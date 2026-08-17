@@ -4,7 +4,12 @@
   // localStorage-lasning ger darfor noll actions i en OBS browser source, och scenen spelar
   // ingenting hur ratt lanken an ar. session-state.js ager bade minnet och localStorage.
   const readExtra=key=>{try{return window.VyraSessionState?.readExtra?.(key)??localStorage.getItem(key)}catch{return null}};
-  const actionRunChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('vyra-action-run'):null;
+  /* Har lag `actionRunChannel`, en BroadcastChannel('vyra-action-run') som postades till men som
+     INGEN prenumererade pa. action-runtime.js:139 lyssnar pa document-eventet `vyra:action` och pa
+     localStorage-nyckeln `vyra-action-run` — aldrig pa kanalen. Skrivbar dod kod sedan den skrevs.
+     Nyckeln med samma namn lever kvar och bar hela trafiken; det ar den vyra-state-sync.js listar
+     som flyktig signal. Behovs kanalen igen dedupar execute() pa runId, sa den kan kopplas in utan
+     risk for dubbel uppspelning. Se docs/tech-debt.md §15. */
   const actionTypes=[['overlay','Visa overlay/widget'],['animation','Visa animation'],['picture','Visa bild/GIF'],['audio','Spela ljud'],['video','Spela video'],['alert','Visa alert'],['tts','Läs text (TTS)'],['chat','Skicka chatbotmeddelande'],['spotify','Spela Spotify'],['obsScene','Byt OBS-scen'],['obsSource','Aktivera OBS-källa'],['webhook','Anropa webhook'],['addPoints','Lägg till poäng'],['removePoints','Ta bort poäng']];
   const triggerNames={gift:'Gåva mottagen',giftCombo:'Gift-combo',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',level:'Level up',battle:'Battle-event',chat:'Chattkommando',join:'Går med i liven',firstActivity:'Första aktiviteten',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp'};
   const persistentWidgetMatchers=[
@@ -326,7 +331,7 @@
     // som stod här: varje körd action utlöste förr en låst, versionshanterad projektion — i den
     // varmaste vägen i hela appen, och bara för att spara ett tal som inte hör till layouten.
     skrivCooldown(stored.id,now,userKey);
-    const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{actionRunChannel?.postMessage(detail)}catch{}try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);
+    const detail={action:stored,payload,runId:'run-'+now+'-'+Math.random().toString(36).slice(2)};if(window.VYRA_OVERLAY_SCENE)document.dispatchEvent(new CustomEvent('vyra:action',{detail}));try{localStorage.setItem('vyra-action-run',JSON.stringify({...detail,at:now}))}catch{}window.toast?.(`Kör ${stored.name} på Scen ${scene}`);
     // Returnerar runId, inte true (§15c). Anroparen behover det for att kunna koppla ihop ett
     // avdrag med de uppspelningar det betalade for — en strypt uppspelning ska ge pengarna
     // tillbaka, och rapporten fran overlayn bar bara ett runId. Strangen ar truthy, sa varje

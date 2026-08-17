@@ -130,7 +130,12 @@ if(!nagotTandes)return false;
    editorn utan anvandargest. Det fangas tyst: animationen ar det som syns och far aldrig
    falla for att ljudet nekades. */
 const ljudW=traffar.find(w=>w.fwSound!==false);
-if(ljudW){try{const a=new Audio('assets/sounds/freesound/gift-fireworks.mp3');a.volume=Math.min(1,Math.max(0,(ljudW.fwVolume??60)/100));a.currentTime=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(_){}}
+if(ljudW){try{const a=new Audio('assets/sounds/freesound/gift-fireworks.mp3');const bas=Math.min(1,Math.max(0,(ljudW.fwVolume??60)/100));
+/* Duckas medan nagon talar (§14). Ett gavoljud hor ihop med sin effekt i TID och far darfor
+   aldrig koas bakom en uppslasning - det sanker sig i stallet. Fail-open: saknas vyra-tal.js
+   spelar det pa sin basvolym, precis som forr. */
+if(!window.VyraTal?.duckaLjud?.(a,bas))a.volume=bas;
+a.currentTime=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(_){}}
 return true};
 document.addEventListener('click',event=>{if(!event.target.closest('[data-fw] button'))return;setTimeout(()=>{let w=state.widgets.filter(x=>x.type==='templateGiftFireworks').at(-1);if(!w)return;w.x=120;w.y=380;w.width=360;w.hidden=false;w.fwGiftImage=campaignGiftList()[0]?.file;selected=w.id;save();render()},0)});
 /* Har lag en rensning som vid VARJE sidladdning behol bara den sist tillagda fyrverkeri-widgeten,

@@ -67,10 +67,14 @@
   // sanker det sig medan nagon talar. Prenumerationen loper under hela uppspelningen, sa ett ljud
   // som REDAN rullar duckas nar en upplasning borjar — och avregistreras nar ljudet tar slut,
   // annars lacker varje uppspelning en lyssnare mot en dod nod.
+  // Dansen bor numera i vyra-tal.js som VyraTal.duckaLjud — den ar delad med gift-fireworks.js,
+  // battle-mvp-session.js och sound-alerts.js, som §14 lamnade utanfor talutrymmet. Den privata
+  // kopian har hade blivit den fjarde implementationen av samma tre steg.
+  // Fail-open: saknas vyra-tal.js (laddningsfel, cacheskev) spelar ljudet pa sin basvolym.
   function duckaMedan(el,basvolym,slut){
-    el.volume=basvolym*(window.VyraTal?.volymfaktor?.()??1);
-    const av=window.VyraTal?.lyssna?.(f=>{el.volume=basvolym*f});
-    if(typeof av==='function'){const stang=()=>{av();el.removeEventListener('ended',stang)};el.addEventListener('ended',stang);if(slut)slut(stang)}
+    const av=window.VyraTal?.duckaLjud?.(el,basvolym);
+    if(typeof av==='function'){if(slut)slut(av);return}
+    try{el.volume=basvolym}catch(_){}
   }
   async function playMedia(action,kind,meta){const staticPath=meta?.packagePath;const blob=staticPath?null:await file(meta);if(!staticPath&&!blob)return;const url=staticPath||URL.createObjectURL(blob);if(kind==='audio'){const audio=new Audio(url);duckaMedan(audio,(action.volume??80)/100);if(!staticPath)audio.onended=()=>URL.revokeObjectURL(url);await audio.play().catch(()=>window.toast?.('Webbläsaren blockerade ljudet'));return}const el=stage(action),media=document.createElement(kind==='video'?'video':'img');media.src=url;if(kind==='video'){media.autoplay=true;media.playsInline=true;duckaMedan(media,(action.volume??80)/100);media.onended=()=>el.remove()}media.onload=media.onloadeddata=()=>el.classList.add('loaded');el.append(media);if(!staticPath)setTimeout(()=>URL.revokeObjectURL(url),Math.max(2,action.duration||6)*1000+1000)}
   // EN ACTION TALAR I SAMMA UTRYMME SOM CHATTEN (§14). Forr gick den rakt pa speechSynthesis, och
