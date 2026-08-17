@@ -476,3 +476,40 @@
 .fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > h2{animation:fsAvatarRise .28s ease-out .02s both}
 .fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > h3{animation:fsAvatarRise .28s ease-out .04s both}
 .fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · duo · "MÖTET"  ·  DEN SISTA MODELLEN ────────────────────────────────────────
+   Parterna → linjen → avläsning. Namnet är modellens hela idé: två parter, en förbindelse. Ikonen
+   och avataren spänner var sin sida av en 320×89-bar, pulslinjen går emellan, och texten står
+   staplad till höger i rutnätets `badge/title/name/msg`-kolumn.
+
+   DEN RENASTE MODELLEN AV DE ÅTTA. Uppmätt i Chromium:
+
+       ms | burst | profil | pill | puls  | h2   | h3   | p
+       34 | 0.00  |  0.07  | 0.07 |  100% | 1.00 | 1.00 | 1.00
+      253 | 0.61  |  0.77  | 0.77 |   92% | 1.00 | 1.00 | 1.00
+      602 | 1.00  |  1.00  | 1.00 |    4% | 1.00 | 1.00 | 1.00
+
+   Fyra entréer och alla fungerade — ingen `!important` i vägen. Och duo är den ENDA modellen där
+   nivåpillen redan animerades; i de sju föregående snäppte den. Kvar snäppte bara h2, h3 och p.
+
+   Rutnätet döljs med opacitet, aldrig med display — samma regel som heartbeat, vaktad av 22g som
+   skrevs generellt över båda gridmodellerna just för det här ögonblicket. */
+
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-pulse-line,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > h2,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > h3,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > p{opacity:0}
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-burst,
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-level-pill{animation:fdSnap .3s ease-out both}
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-profile{animation:fdSnap .3s ease-out .04s both}
+
+.fan-level-up.fan-layout-duo.fan-fas-linjen > h2,
+.fan-level-up.fan-layout-duo.fan-fas-linjen > h3,
+.fan-level-up.fan-layout-duo.fan-fas-linjen > p{opacity:0}
+.fan-level-up.fan-layout-duo.fan-fas-linjen .fan-pulse-line{animation:fhPulseDraw .32s linear both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 23d. */
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > h2{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > h3{animation:fsAvatarRise .28s ease-out .03s both}
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > p{animation:fsAvatarRise .28s ease-out .06s both}

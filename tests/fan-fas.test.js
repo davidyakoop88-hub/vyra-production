@@ -164,13 +164,18 @@ test('F2: den orörda markupen bär ingen fasklass', () => {
 });
 
 test('F2: en modell utan koreografi får ingen fasklass alls', () => {
-  // Modellen VÄLJS ur registren i stället för att skrivas ut. Provet hade `ribbon` hårdkodad och
-  // föll i samma stund ribbon fick sin koreografi — inte för att något gick sönder, utan för att
-  // exemplet hann bli inaktuellt. En vakt som måste redigeras varje gång familjen växer är en
-  // vakt som förr eller senare redigeras fel.
+  // MODELLEN ÄR PÅHITTAD, med flit. Provet hade först `ribbon` hårdkodad och föll när ribbon fick
+  // sin koreografi. Det gjordes då om att VÄLJA en oregistrerad modell ur registren — och föll
+  // igen, i samma stund duo registrerades och 23g blev grön: från och med då finns det ingen
+  // oregistrerad modell kvar att välja. De två vakterna är varandras komplement, och 23g:s
+  // sanning gör den dynamiska varianten omöjlig.
+  //
+  // Det som ska bevisas är att `spela()` VÄGRAR en modell den inte känner — inte att någon sådan
+  // modell råkar finnas i katalogen just idag. En påhittad layout är därför rätt fixtur, och den
+  // förblir giltig hur många modeller familjen än får.
+  const utan = 'ingenkoreografi';
   const { FASER } = require('./helpers/fan-fas-register.js');
-  const utan = fabriksnycklar().find(l => !FASER[l]);
-  assert.ok(utan, 'alla modeller har koreografi — flytta då det här provet till en fixtur');
+  assert.ok(!FASER[utan], `fixturen ${utan} har oväntat fått en koreografi — byt namn i provet`);
   const { win, lada, faser } = boot([fanWidget('fan1', { fanLayout: utan })]);
   const spelade = win.VyraFanFas.spela(lada('fan1'));
   assert.equal(spelade, false, 'spela() påstod att den koreograferade en oregistrerad modell');
@@ -1189,4 +1194,122 @@ test('22g: gridmodellernas faser döljer med opacitet och rör aldrig rutnätet'
     }
   }
   assert.ok(provade > 0, 'ingen gridmodell hade några fasregler att pröva');
+});
+
+// ================================================================================================
+// 23a–23g — DUO · "MÖTET"  ·  DEN SISTA MODELLEN
+//
+// Parterna → linjen → avläsning. Namnet är modellens hela idé: två parter, en förbindelse.
+//
+// LÄGET FÖRE, uppmätt i Chromium (widget 320×89, en bar snarare än en box):
+//
+//     ms | burst | profil | pill | puls  | h2   | h3   | p
+//     34 | 0.00  |  0.07  | 0.07 |  100% | 1.00 | 1.00 | 1.00
+//    253 | 0.61  |  0.77  | 0.77 |   92% | 1.00 | 1.00 | 1.00
+//    602 | 1.00  |  1.00  | 1.00 |    4% | 1.00 | 1.00 | 1.00
+//
+// Den renaste modellen av alla åtta. Fyra entréer och alla fungerar — fdSnap på burst och pill,
+// fdSnap på profilen med 0,06 s trappa, fhPulseDraw på linjen. Ingen `!important` i vägen. Och
+// duo är den ENDA modellen där nivåpillen redan animerades; i de sju föregående snäppte den.
+// Kvar snäpper bara h2, h3 och p.
+//
+// Rutnätet: "burst pulse avatar badge" över fyra rader, med ikon och avatar spännande hela höjden
+// på var sin sida och texten staplad till höger. duo ärver gridvakten 22g, som skrevs generellt
+// över båda gridmodellerna just för det här ögonblicket.
+// ================================================================================================
+
+test('23a: duo har tre faser i ordningen parterna → linjen → avlasning', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  assert.ok(FASER.duo, 'duo saknar koreografi i FASER');
+  assert.deepEqual(FASER.duo.map(f => f.namn), ['parterna', 'linjen', 'avlasning'],
+    'Mötet är parterna som kommer fram, linjen som kopplar ihop dem, avläsningen sist');
+});
+
+test('23b: triggern tänder duos första fas synkront', () => {
+  const { win, faser } = boot([fanWidget('fan1', { fanLayout: 'duo' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  assert.deepEqual(faser('fan1'), ['parterna'], 'partfasen sattes inte i samma anrop som triggern');
+});
+
+test('23c: duos faser byter på exakt sina tider och ingen överlever', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const [a, b, c] = FASER.duo;
+  const { win, klocka, faser } = boot([fanWidget('fan1', { fanLayout: 'duo' })]);
+  win.triggerFanLevelUp({ name: 'HeartRiser', level: 13, fromLevel: 12, isTeamMember: true });
+  klocka.fram(a.ms - 1);
+  assert.deepEqual(faser('fan1'), ['parterna'], 'partfasen slutade en millisekund för tidigt');
+  klocka.fram(1);
+  assert.deepEqual(faser('fan1'), ['linjen'], 'linjen började inte när parterna var framme');
+  klocka.fram(b.ms);
+  assert.deepEqual(faser('fan1'), ['avlasning'], 'avläsningen började inte när linjen var dragen');
+  klocka.fram(c.ms);
+  assert.deepEqual(faser('fan1'), [], 'en fasklass låg kvar efter sista fasen');
+  assert.equal(klocka.kvar(), 0, 'en timer lämnades kvar');
+});
+
+test('23d: varje duo-fas har CSS, avlasningen bär all text, inget spiller över', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  for (const fas of FASER.duo) {
+    const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(`fan-layout-duo.fan-fas-${fas.namn}`));
+    assert.ok(rader.length, `fasen ${fas.namn} har ingen regel i premium-final.css`);
+    for (const rad of rader.filter(r => r.includes('animation:'))) {
+      const slut = [...rad.matchAll(/(\d*\.?\d+)s/g)]
+        .map(m => Math.round(parseFloat(m[1]) * 1000)).reduce((x, y) => x + y, 0);
+      assert.ok(slut <= fas.ms,
+        `en rörelse i ${fas.namn} slutar vid ${slut} ms men fasen är ${fas.ms} ms: ${rad.trim()}`);
+    }
+  }
+  const a = 'fan-layout-duo.fan-fas-avlasning';
+  const rader = PREMIUM_CSS.split('\n').filter(r => r.includes(a) && r.includes('animation:'));
+  for (const del of ['h2', 'h3', 'p']) {
+    assert.ok(rader.some(r => new RegExp(`${a}[^,{]*>\\s*${del}\\b`).test(r)),
+      `${del} har ingen rörelse i avläsningen — den delen snäpper fortfarande fram`);
+  }
+});
+
+test('23e: duo återanvänder fdSnap och fhPulseDraw', () => {
+  for (const namn of ['fdSnap', 'fhPulseDraw']) {
+    assert.match(PREMIUM_CSS, new RegExp(`animation:\\s*${namn}\\b`), `duo använder inte ${namn}`);
+    assert.doesNotMatch(PREMIUM_CSS, new RegExp(`@keyframes\\s+${namn}\\b`),
+      `${namn} har kopierats till premium-final.css — den bor i studio.css`);
+    assert.match(STUDIO_CSS, new RegExp(`@keyframes\\s+${namn}\\b`), `${namn} har försvunnit ur studio.css`);
+  }
+});
+
+test('23f: parterna växer fram och linjen dras åt höger', () => {
+  const kf = namn => {
+    const m = STUDIO_CSS.match(new RegExp(`@keyframes\\s+${namn}\\{([\\s\\S]*?)\\}\\s*\\}`));
+    assert.ok(m, `hittade inte @keyframes ${namn}`);
+    return m[1];
+  };
+  const snap = [...kf('fdSnap').matchAll(/scale\((\d*\.?\d+)\)/g)].map(x => parseFloat(x[1]));
+  assert.equal(snap.length, 2, 'fdSnap ska gå från en skala till en annan');
+  assert.ok(snap[0] < 1, `fdSnap börjar på skala ${snap[0]} — parterna ska VÄXA fram`);
+  assert.equal(snap[1], 1, `fdSnap slutar på skala ${snap[1]} i stället för i viloläget`);
+
+  const insets = [...kf('fhPulseDraw').matchAll(/inset\(([^)]*)\)/g)].map(m => m[1].trim().split(/\s+/));
+  assert.equal(insets.length, 2, 'fhPulseDraw ska gå från en inset till en annan');
+  const hoger = insets.map(i => parseFloat(i[1]));
+  assert.equal(hoger[0], 100, `linjen börjar med högersidan på ${hoger[0]} — den ska vara helt dold`);
+  assert.equal(hoger[1], 0, `linjen slutar med högersidan på ${hoger[1]} — den ska vara helt dragen`);
+});
+
+// ================================================================================================
+// 23g — SLUTVAKTEN
+//
+// F1 vaktar åt ena hållet: varje koreografi hör till en registrerad modell. Den här vänder på
+// beroendet: VARJE REGISTRERAD MODELL HAR EN KOREOGRAFI.
+//
+// Den gick inte att skriva förrän nu. I går hade den varit röd för sju av åtta modeller — och det
+// var exakt det tillståndet som lät `hero` vara appens mest använda modell utan att stå i ett enda
+// register. Med duo på plats är familjen sluten: ingen nionde modell kan smyga in i katalogen utan
+// klocka, och ingen av de åtta kan tyst tappa sin.
+// ================================================================================================
+
+test('23g: varje registrerad modell har en koreografi', () => {
+  const { FASER } = require('./helpers/fan-fas-register.js');
+  const utan = fabriksnycklar().filter(l => !FASER[l]);
+  assert.deepEqual(utan, [],
+    `${utan.join(', ')} står i fabrikstabellen men har ingen koreografi i FASER — modellen spelar `
+    + 'utan klocka, och F3:s tak kan inte se den');
 });
