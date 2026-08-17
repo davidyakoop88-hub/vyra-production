@@ -242,7 +242,44 @@ Verifierad: 2026-08-14. Åtgärdad via väg 1 den 2026-08-17.
 Två fel som hittades när §13 stängdes. De ligger **utanför** §13:s fix: den avgör *när* avdraget
 sker, de här handlar om *vem* som drar det och *var* cooldownen finns.
 
-### 15a. Varje öppen flik drar sin egen kostnad för samma gåva
+**15a är löst 2026-08-17, och 15b är nedskalat med den. 15c står kvar.** `action-master.js` väljer
+en förare för automationen; `handleEvent` i båda vägarna frågar `VyraAutomationMaster.farKora()`
+innan något dras eller körs. Vaktat av `tests/action-event-flikar.test.js` (9 prov) på en rigg som
+ger flera jsdom-fönster **ett** delat lager och korsflik-`storage`-event
+(`tests/helpers/flikar.js`).
+
+Samma mätning som i 15a, efter fixen:
+
+```
+  studio          utskick: 0   spelningar: 0
+  overlay scen 1  utskick: 0   spelningar: 1
+  overlay scen 2  utskick: 0   spelningar: 0
+
+  avdrag for EN gava: 1        (var 3)
+  koer direkt efter gavan: overlay scen 1: 1     (var 3)
+```
+
+Valet har två nivåer, och den andra är inte en artighet: en streamer som startar OBS före Studion
+förväntar sig att tittarnas effekter fungerar. **Nivå 1** — en flik i `studio-committed` — tar
+platsen alltid, även från en levande nivå 2. **Nivå 2** — vilken flik som helst — tar en ledig eller
+inaktuell plats. Nyckeln `vyra-automation-master` förnyas var 2:e sekund och räknas som inaktuell
+efter 6 s, samma fönster som `sceneOnline()`. Anspråket sker under `navigator.locks`, som finns i
+varje flik — det är `mode`, inte låshanteraren, som saknas i en overlay.
+
+Slavarna tiger om *avdraget*, inte om *uppspelningen*: den når dem via
+`localStorage['vyra-action-run']` som `action-runtime.js:74` redan lyssnar på. Den bryggan bar
+trafiken redan före fixen — det var just därför spelningarna blev tre.
+
+**Kvarvarande lucka, medvetet vald:** `farKora()` är synkron och kan inte vänta på låset, så två
+flikar som behandlar samma event i exakt det ögonblick en master dör kan båda se en tom plats och
+båda köra. Kostnaden är ett extra avdrag för ett event, högst en gång per 6-sekundersfönster. Att i
+stället tiga tills låset svarat hade kostat en tappad uppspelning, vilket är dyrare.
+
+`BroadcastChannel('vyra-action-run')` i `action-event.js:7` postas till men har **ingen
+prenumerant** någonstans i repot. Den är skrivbar död kod och rörs inte här; `execute()` dedupar på
+`runId`, så den kan kopplas in senare utan risk för dubbel uppspelning.
+
+### ~~15a. Varje öppen flik drar sin egen kostnad för samma gåva~~ — LÖST
 
 `live-client.js:131` anropar `handleEvent` utan någon overlay-spärr, och `studio.html?overlay=1` är
 samma sida — alltså laddar varje scenlänk i OBS sin egen kopia. Dedupe-grinden (`gateFor().accept`)
@@ -259,7 +296,22 @@ En streamer med studion plus tre scenlänkar uppe tar alltså fyra gånger betal
 flytta avdraget igen utan att bestämma **vilken flik som äger poängekonomin** — rimligen den
 skrivbara studiofliken, med overlayflikarna som rena mottagare.
 
-### 15b. Cooldown fungerar inte i en flik utan skrivrätt
+**Mätt igen 2026-08-17 med tre flikar och en riktig korsflik-rigg**, och det var värre än så: gåvan
+betalades tre gånger **och spelades tre gånger**. Kön dolde det — med `duration: 6` ser tre köade
+uppspelningar ut som en om man mäter direkt efter gåvan.
+
+```
+  studio          utskick: 0   spelningar: 0
+  overlay scen 1  utskick: 1   spelningar: 3
+  overlay scen 2  utskick: 1   spelningar: 0
+
+  avdrag for EN gava: 3
+  koer direkt efter gavan: overlay scen 1: 3
+```
+
+Åtgärdad via en förare — se toppen av §15.
+
+### 15b. Cooldown fungerar inte i en flik utan skrivrätt — NEDSKALAT
 
 `runAction` sparar `lastRun` med `VyraSessionState.writeActive`, som kräver `studio-committed`
 eller `local-committed` (`session-state.js:138` och `:284`). En overlayflik står i
@@ -274,8 +326,18 @@ både den globala och den per användare — är **helt verkningslös** där.
   poang spenderade:   500
 ```
 
-Tillsammans med 15a betyder det att en overlayflik både tar betalt **och** ignorerar cooldownen.
-Streamern ser en inställning i panelen som inte gäller i den utgång som faktiskt sänds.
+Tillsammans med 15a betydde det att en overlayflik både tog betalt **och** ignorerade cooldownen.
+Streamern såg en inställning i panelen som inte gällde i den utgång som faktiskt sändes.
+
+**Nedskalat 2026-08-17 av samma fix som 15a.** Nivå 1 i master-valet är per definition den enda
+flik som får skriva, så när studion är öppen fastnar `lastRun` och cooldownen fungerar igen —
+uppmätt med tre flikar: fem gåvor under cooldown 30 s ger en spelning och ett avdrag
+(`tests/action-event-flikar.test.js`, prov 9).
+
+**Rotorsaken står kvar.** En självkörande nivå 2-flik — OBS igång utan öppen studio — kan
+fortfarande inte skriva, och där är cooldownen alltjämt verkningslös. Att laga det kräver att
+`lastRun` får en väg som inte går genom `writeActive`, alltså ett eget litet lager för
+körningstidsstämplar som inte är kontobunden layout. Det är en egen ändring.
 
 Det förklarar också varför `tests/action-event-kedjan.test.js` aldrig kunde se en cooldown: den
 riggen sätter `navigator.locks = undefined`. `tests/action-event-poang.test.js` projicerar därför

@@ -75,6 +75,35 @@ Samma data ger dessutom en armé-leaderboard per sida, vilket ingen konkurrent h
 
 **Läs samma sondrader som punkt 3** — `LINK_MIC_ARMIES` loggar sina nycklar och skalärer.
 
+## 5. Delar OBS browser source samma `localStorage` som webbläsaren?
+
+**Antagandet:** ingen — och det är hela poängen med punkten. `vyra-points-v1` är rå `localStorage`
+och synkas aldrig till molnet, så poängekonomin är **per lagerrymd**. Vilken rymd OBS browser
+source hamnar i går inte att avgöra ur koden: CEF kör med egen cachekatalog, men om streamern i
+stället förhandsgranskar overlaylänken i samma webbläsare som Studion delar de rymd.
+
+Det avgör vilken form problemet i §15a hade innan det lagades — och vilken form resten av 15b tar:
+
+| Om lagret delas | Om det inte delas |
+|---|---|
+| En förare per maskin. Master-valet i `action-master.js` gör sitt jobb. | Varje rymd väljer sin **egen** förare och för sitt **eget** saldo för samma tittare. |
+| Cooldown fungerar när Studion är öppen. | OBS-rymden har ingen skrivbar flik alls — cooldown verkningslös där (§15b). |
+
+Divergerande saldon är inte mindre allvarligt än trippeldebitering; det är svårare att upptäcka.
+
+**Läs av så här, med Studion och OBS igång samtidigt:**
+
+1. Låt en känd tittare trigga ett event med `pointsCost` **en** gång.
+2. I Studions konsol: `VyraPoints.get('<tittarnamn>')`
+3. I OBS browser sources konsol (högerklick källan → Interact → F12, eller `--remote-debugging-port`):
+   samma anrop, plus `localStorage.getItem('vyra-automation-master')`.
+
+**Samma saldo och samma `tabId` i master-nyckeln** → rymden är delad, och allt i §15 gäller som mätt.
+**Olika saldon, eller två olika `tabId`** → rymderna är skilda, och då är nästa arbete att bestämma
+om poängen ska bo i molnet i stället för i `localStorage`.
+
+Koden: `action-runtime.js` → `POINTS_KEY`, och `action-master.js` → `NYCKEL`.
+
 ---
 
 ## Efteråt
