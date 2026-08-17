@@ -62,8 +62,45 @@
   async function file(meta){if(!meta?.id)return null;const db=await openDb(),value=await new Promise((ok,no)=>{const tx=db.transaction('files');const r=tx.objectStore('files').get(meta.id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});db.close();return value}
   function allowed(action){const scene=window.VYRA_OVERLAY_SCENE;return !!scene&&Number(action.scene?.number||1)===Number(scene)}
   function stage(action){let host=document.querySelector('#vyraActionRuntime');if(!host){host=document.createElement('div');host.id='vyraActionRuntime';document.body.append(host)}const scene=action.scene||{},el=document.createElement('div');el.className=`vyra-runtime-item ${action.fade?'fade':''}`;el.style.cssText=`--x:${scene.x??160};--y:${scene.y??1450};--w:${scene.width??760};--z:${scene.layer??10}`;host.append(el);requestAnimationFrame(()=>el.classList.add('active'));const ms=Math.max(1,action.duration||6)*1000;setTimeout(()=>el.classList.remove('active'),ms-350);setTimeout(()=>el.remove(),ms);return el}
-  async function playMedia(action,kind,meta){const staticPath=meta?.packagePath;const blob=staticPath?null:await file(meta);if(!staticPath&&!blob)return;const url=staticPath||URL.createObjectURL(blob);if(kind==='audio'){const audio=new Audio(url);audio.volume=(action.volume??80)/100;if(!staticPath)audio.onended=()=>URL.revokeObjectURL(url);await audio.play().catch(()=>window.toast?.('Webbläsaren blockerade ljudet'));return}const el=stage(action),media=document.createElement(kind==='video'?'video':'img');media.src=url;if(kind==='video'){media.autoplay=true;media.playsInline=true;media.volume=(action.volume??80)/100;media.onended=()=>el.remove()}media.onload=media.onloadeddata=()=>el.classList.add('loaded');el.append(media);if(!staticPath)setTimeout(()=>URL.revokeObjectURL(url),Math.max(2,action.duration||6)*1000+1000)}
-  function tts(action,payload){const c=action.config||{},text=fill(c.ttsText,payload);if(!text||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text),voices=speechSynthesis.getVoices();u.rate=c.speed||1;u.pitch=c.pitch||1;u.volume=(action.volume??80)/100;if(voices.length){if(c.randomVoice)u.voice=voices[Math.floor(Math.random()*voices.length)];else if(c.voice)u.voice=voices.find(v=>v.name===c.voice||v.lang===c.voice)||null}speechSynthesis.speak(u)}
+  // DUCKNING, INTE KOANDE, FOR RENA LJUD (§14). Ett gavoljud hor ihop med sin visuella effekt i
+  // tid; laggs det i talkon spelar det tjugo sekunder efter fyrverkeriet det tillhorde. I stallet
+  // sanker det sig medan nagon talar. Prenumerationen loper under hela uppspelningen, sa ett ljud
+  // som REDAN rullar duckas nar en upplasning borjar — och avregistreras nar ljudet tar slut,
+  // annars lacker varje uppspelning en lyssnare mot en dod nod.
+  function duckaMedan(el,basvolym,slut){
+    el.volume=basvolym*(window.VyraTal?.volymfaktor?.()??1);
+    const av=window.VyraTal?.lyssna?.(f=>{el.volume=basvolym*f});
+    if(typeof av==='function'){const stang=()=>{av();el.removeEventListener('ended',stang)};el.addEventListener('ended',stang);if(slut)slut(stang)}
+  }
+  async function playMedia(action,kind,meta){const staticPath=meta?.packagePath;const blob=staticPath?null:await file(meta);if(!staticPath&&!blob)return;const url=staticPath||URL.createObjectURL(blob);if(kind==='audio'){const audio=new Audio(url);duckaMedan(audio,(action.volume??80)/100);if(!staticPath)audio.onended=()=>URL.revokeObjectURL(url);await audio.play().catch(()=>window.toast?.('Webbläsaren blockerade ljudet'));return}const el=stage(action),media=document.createElement(kind==='video'?'video':'img');media.src=url;if(kind==='video'){media.autoplay=true;media.playsInline=true;duckaMedan(media,(action.volume??80)/100);media.onended=()=>el.remove()}media.onload=media.onloadeddata=()=>el.classList.add('loaded');el.append(media);if(!staticPath)setTimeout(()=>URL.revokeObjectURL(url),Math.max(2,action.duration||6)*1000+1000)}
+  // EN ACTION TALAR I SAMMA UTRYMME SOM CHATTEN (§14). Forr gick den rakt pa speechSynthesis, och
+  // uppmatt startade den 12 ms in i en pagaende chattupplasning — tva roster samtidigt, i det
+  // ogonblick en tittare precis betalat for att horas.
+  //
+  // Vagen gar nu genom VyraTal.koa, och sjalva talandet genom tts-chat.js:s uppspelning nar den
+  // finns. Det ar ocksa vad som gor MOLNROSTERNA atkomliga for Actions: en rost vald i TTS Chat
+  // bar prefixet `cloud:`, och det vardet sagde speechSynthesis ingenting om — den foll tyst
+  // tillbaka pa standardrosten. Bada halvorna av §14 stangs alltsa av samma omkoppling.
+  //
+  // Saknas nagon av dem talar vi som forr. Hellre en rost i mun pa en annan an ingen rost alls.
+  function tts(action,payload){
+    const c=action.config||{},text=fill(c.ttsText,payload);
+    if(!text)return;
+    const opts={voice:c.voice,randomVoice:c.randomVoice,speed:c.speed||1,pitch:c.pitch??1,volume:action.volume??80,language:c.language};
+    const spela=()=>window.VyraTtsChat?.tala?.(text,opts)??talaLokalt(text,opts);
+    if(window.VyraTal?.koa)return void window.VyraTal.koa({kalla:'action',spela,maxMs:text.length*120});
+    spela();
+  }
+  function talaLokalt(text,opts){
+    if(!window.speechSynthesis)return Promise.resolve();
+    return new Promise(klar=>{
+      const u=new SpeechSynthesisUtterance(text),voices=speechSynthesis.getVoices();
+      u.rate=Number(opts.speed)||1;u.pitch=Number(opts.pitch)??1;u.volume=(Number(opts.volume)??80)/100;
+      if(voices.length){if(opts.randomVoice)u.voice=voices[Math.floor(Math.random()*voices.length)];else if(opts.voice)u.voice=voices.find(v=>v.name===opts.voice||v.lang===opts.voice)||null}
+      u.onend=u.onerror=()=>klar();
+      try{speechSynthesis.speak(u)}catch{klar()}
+    });
+  }
   // Kedjan nedan matchar på delsträng, så ordningen ÄR logiken. 'fan level' måste testas före
   // 'level': widgetnamnen kommer från liveLayerName() i media.js, och både 'Fan Level Up' och
   // 'Gifter Level Up' innehåller 'level'. Med bara level-grenen nådde en regel som pekade på fan-

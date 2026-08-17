@@ -34,8 +34,8 @@ const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widget
   'vyra-scene-settings-v1'];
 
 // Filerna en flik behöver för att ta emot ett live-event och spela en action.
-const FILER = ['session-state.js', 'action-master.js', 'action-runtime.js', 'action-event.js',
-               'action-event-advanced.js'];
+const FILER = ['session-state.js', 'vyra-masterval.js', 'action-master.js', 'vyra-tal.js',
+               'action-runtime.js', 'action-event.js', 'action-event-advanced.js'];
 
 // Ett delat lager OCH en delad låshanterare — båda hör till maskinen, inte till fliken.
 // navigator.locks är per origin i en webbläsare, så en låshanterare per fönster hade gjort varje
@@ -74,8 +74,46 @@ function delatLager() {
   return bas;
 }
 
-async function fonster({ namn = 'flik', scen = null, lager, skrivbar = false,
-                         actions = [], events = [] } = {}) {
+// jsdom har varken SpeechSynthesis eller en Audio som kan spela. Stubbarna nedan mäter det som
+// faktiskt är intressant: VEM som talar, NÄR, och vilken volym ett ljud fick — inte att en riktig
+// ljudkort-buffert fylldes. `__tal` och `__ljud` är fönstrets logg.
+function talstubbe(window) {
+  window.__tal = [];
+  window.speechSynthesis = {
+    speak(u) {
+      const post = { text: String(u.text), vid: Date.now(), flik: window.__namn, slut: 0 };
+      window.__tal.push(post);
+      // Uppläsningen tar tid — annars kan inget prov se skillnad på "efter" och "samtidigt".
+      // Längden följer texten, så ett prov kan konstruera ett yttrande som är LÄNGRE än actionens
+      // visningstid: det är då actionkön släpper nästa action medan den förra fortfarande talar,
+      // och bara talutrymmet kan hålla isär dem.
+      setTimeout(() => { post.slut = Date.now(); try { u.onend && u.onend() } catch (_) {} },
+        Math.max(80, String(u.text).length * 10));
+    },
+    getVoices: () => [],
+    cancel() {},
+  };
+  window.SpeechSynthesisUtterance = function (text) { this.text = text; this.onend = null; this.onerror = null };
+}
+function ljudstubbe(window) {
+  window.__ljud = [];
+  window.Audio = function (src) {
+    const lyssnare = {};
+    const el = {
+      src, volume: 1, paused: true,
+      play() { this.paused = false; return Promise.resolve() },
+      addEventListener(n, fn) { (lyssnare[n] = lyssnare[n] || []).push(fn) },
+      removeEventListener(n, fn) { lyssnare[n] = (lyssnare[n] || []).filter(x => x !== fn) },
+      // Provet får avsluta ljudet när det vill, så avregistreringen går att bevisa.
+      __avsluta() { (lyssnare.ended || []).slice().forEach(fn => fn()); if (this.onended) this.onended() },
+    };
+    window.__ljud.push(el);
+    return el;
+  };
+}
+
+async function fonster({ namn = 'flik', scen = null, lager, skrivbar = false, extraFiler = [],
+                         tal = false, ljud = false, actions = [], events = [] } = {}) {
   const dom = new JSDOM('<!doctype html><html><body><div id="title"></div>' +
     '<div id="view"><div class="ae-steps"></div></div></body></html>',
     { url: 'https://vyralive.app/studio.html', pretendToBeVisual: false, runScripts: 'dangerously' });
@@ -90,8 +128,10 @@ async function fonster({ namn = 'flik', scen = null, lager, skrivbar = false,
   window.__namn = namn;
   window.__utskick = 0;
   window.document.addEventListener('vyra:action', () => { window.__utskick++ });
+  if (tal) talstubbe(window);
+  if (ljud) ljudstubbe(window);
 
-  for (const f of FILER) {
+  for (const f of [...FILER, ...extraFiler]) {
     const s = window.document.createElement('script');
     s.textContent = las(f);
     window.document.body.append(s);
