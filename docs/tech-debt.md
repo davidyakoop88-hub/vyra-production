@@ -818,3 +818,19 @@ Verifierad: 2026-08-09.
   `opacity` och transformskalan hela vägen upp till widgetlådan, alltså den effektiva, ärvda
   synligheten. Den siffran bryr sig inte om vilket element som råkar bära animationen, och det är
   precis därför den håller. `tests/browser/fan-fas-loyalty.browser.test.js`.
+- **En handskriven lista over "filerna som vaktas" ar korrekt den dag den skrivs.**
+  `panel-live-path.test.js` bar regeln *render() far inte anropas fran en oninput-handler* och sex
+  filnamn skrivna for hand. Tva panelfiler tillkom efterat — `custom-widgets.js` och
+  `gift-fireworks.js` — och vakten sag dem aldrig. Uppmatt i riktig Chrome 2026-08-18: av **atta
+  tecken skrivna i egenskapspanelens textruta kom ETT fram**. Resten gick till `BODY`, eftersom
+  `render()` bytt ut elementet innan andra tangenttrycket. Anvandaren fick klicka i rutan for varje
+  bokstav. Listan ar nu harledd ur klientens egen monkey-patch-konvention (`props=function` /
+  `bind=function`), sa en nionde panelfil arver regeln utan att nagon behover komma ihag den.
+  **En vakt som raknar upp vaktar bara det nagon kom ihag.** Löst 2026-08-18.
+- **Ett prov som blir gront bade fore och efter lagningen ar ingen vakt, hur rimligt det an later.**
+  Samma omgang: ett prov skulle mata att panelens scrollTop overlever skrivandet. Det foll fint —
+  men pa `el.focus()`, som sjalv drar in elementet i en scrollbar behallare, inte pa omrenderingen.
+  Med baslinjen tagen efter fokus blev provet gront i bada tillstanden, eftersom textrutan ligger sa
+  hogt i panelen att fokus och omrendering landar pa samma varde. Det togs bort i stallet for att
+  behallas som utfyllnad. Kravet star kvar: **mutationsprova at bada hallen, och stryk det som inte
+  kan falla.**

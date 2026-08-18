@@ -238,3 +238,107 @@ test('live-vägen skriver till state utan att bygga om vyn', { skip }, async () 
   assert.equal(ut.giftSize, 190, 'live-vägen skrev inte värdet till state');
   assert.equal(ut.canvasSammaNod, true, 'hela canvasen byggdes om från en oninput — full render i live-vägen');
 });
+
+
+// ================================================================================================
+// ATT SKRIVA I ETT TEXTFALT ar samma fel som att dra i ett reglage — bara mer synligt.
+//
+// Reglagets fall matte ETT dragsteg. Ett tangenttryck ar samma sak: handlaren kor, render() river
+// vyn, och elementet anvandaren star i finns inte langre. Skillnaden ar att man MARKER det, for
+// nasta tecken gar ingenstans.
+//
+// UPPMATT I RIKTIG CHROME 2026-08-18, atta tecken skrivna i foljd utan att klicka om:
+//
+//   panel                       | falt            | fram | fokus kvar | samma nod
+//   ----------------------------+-----------------+------+------------+-----------
+//   custom-widgets.js           | #ctwText        | 1/8  | nej        | nej
+//   gift-fireworks.js           | #followName     | 1/8  | nej        | nej
+//   gift-fireworks.js           | #followMessage  | 1/8  | nej        | nej
+//   media.js (advancedProperty) | #propWidth      | 5/5  | ja         | ja      (KONTROLL)
+//
+// `#propWidth` ar kontrollen och star i SAMMA panel som `#ctwText`. Den ags av
+// advancedPropertyBind i media.js, alltsa av den delade live-vagen, och klarar sig helt. Utan den
+// raden mater provet "skriver Chrome tecken?" i stallet for "river panelen sig sjalv?".
+//
+// ATT SKRIVA PA RIKTIGT, inte dispatcha ett Event: en syntetisk `input` mot en nod vi redan haller
+// i skulle na fram aven efter att panelen bytt ut den. Det ar just den skillnaden som ar felet.
+//
+// PANELENS SCROLL MATS INTE HAR, och det ar ett resultat av en matning, inte en forbiseelse.
+// Ett forsta utkast satte scrollTop till 300 fore fokus och foll — men det var `el.focus()` som
+// scrollade, inte en omrendering: focus() drar sjalv in elementet i en scrollbar behallare. Med
+// baslinjen tagen EFTER fokus blev provet gront bade fore och efter lagningen, eftersom textrutan
+// ligger sa hogt i panelen att focus() och en omrendering landar pa samma varde. Ett prov som inte
+// kan falla pa felet det pastar sig vakta ar en lognare, sa det togs bort. Panelens scroll under en
+// DRAGNING mats fortfarande, av fallen langre upp i filen.
+const TEXTFALT = [
+  { namn: 'Egen text', typ: 'templateCustomText', kontroll: 'ctwText', nyckel: 'customText',
+    skriv: 'Hej alla' },
+  { namn: 'Follower Spotlight · namn', typ: 'templateFollowerAlert', kontroll: 'followName',
+    nyckel: 'followName', skriv: 'Hej alla' },
+  { namn: 'Follower Spotlight · meddelande', typ: 'templateFollowerAlert', kontroll: 'followMessage',
+    nyckel: 'followMessage', skriv: 'Hej alla' },
+  // KONTROLLEN. Samma panel som Egen text, men bunden av den delade live-vagen. Ett talfalt, sa
+  // siffror skrivs i stallet — det som mats ar fokus och elementidentitet, inte tecknen i sig.
+  { namn: 'Egen text · Bredd (kontroll)', typ: 'templateCustomText', kontroll: 'propWidth',
+    nyckel: 'width', skriv: '12345' }
+];
+
+// En sida per falt, inte en per pastaende: samma sida, samma widget, samma tangenttryck.
+const skrivet = new Map();
+
+async function skriv(fall) {
+  if (skrivet.has(fall.namn)) return skrivet.get(fall.namn);
+  const page = await editorMed(fall.typ);
+  try {
+    const fore = await page.evaluate(id => {
+      const el = document.getElementById(id);
+      if (!el) return { fel: `kontrollen #${id} finns inte i panelen` };
+      el.scrollIntoView({ block: 'center' });
+      el.value = '';
+      el.focus();                       // focus() scrollar sjalv — matt tas EFTER
+      window.__falt = el;
+      const panel = document.querySelector('.properties');
+      return { scroll: panel ? panel.scrollTop : 0, fokus: document.activeElement === el };
+    }, fall.kontroll);
+    if (fore.fel) { skrivet.set(fall.namn, fore); return fore }
+    for (const tecken of fall.skriv) await page.keyboard.type(tecken, { delay: 25 });
+    const ut = await page.evaluate(([id, nyckel]) => {
+      const el = document.getElementById(id);
+      return {
+        iRutan: el ? el.value : null,
+        iState: String(state.widgets[0][nyckel] ?? ''),
+        sammaNod: window.__falt === el,
+        fokus: document.activeElement ? (document.activeElement.id || document.activeElement.tagName) : null,
+        scroll: (document.querySelector('.properties') || {}).scrollTop
+      };
+    }, [fall.kontroll, fall.nyckel]);
+    const svar = { ...ut, fore };
+    skrivet.set(fall.namn, svar);
+    return svar;
+  } finally { await page.close() }
+}
+
+for (const fall of TEXTFALT) {
+  test(`${fall.namn}: fältet finns och tar emot fokus`, { skip }, async () => {
+    // POSITIV KONTROLL. Utan den blir de tva foljande grona for ett falt som aldrig renderades —
+    // vilket ar precis vad som hander om panelen byter id eller widgeten byter typnamn.
+    const m = await skriv(fall);
+    assert.ok(!m.fel, m.fel);
+    assert.equal(m.fore.fokus, true, `#${fall.kontroll} gick inte att fokusera`);
+  });
+
+  test(`${fall.namn}: hela meningen kommer fram utan att klicka om`, { skip }, async () => {
+    const m = await skriv(fall);
+    assert.ok(!m.fel, m.fel);
+    assert.equal(m.iRutan, fall.skriv,
+      `av ${fall.skriv.length} tecken kom ${(m.iRutan || '').length} fram: ${JSON.stringify(m.iRutan)} — ` +
+      `resten gick till ${m.fokus}`);
+  });
+
+  test(`${fall.namn}: elementet byts inte ut mellan tangenttryck`, { skip }, async () => {
+    const m = await skriv(fall);
+    assert.ok(!m.fel, m.fel);
+    assert.equal(m.sammaNod, true, 'fältet ersattes av en ny nod medan användaren skrev i det');
+    assert.equal(m.fokus, fall.kontroll, `fokus hamnade på ${m.fokus} i stället för på fältet`);
+  });
+}

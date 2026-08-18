@@ -16,10 +16,23 @@ const fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 
-// Panelfilerna. Enbart de som faktiskt binder egenskapskontroller — resten av klienten har sina
-// egna renderingsvagar och ar inte det som provas har.
-const FILER = ['media.js', 'premium-final.js', 'toplike-studio.js', 'gift-alert-frames.js',
-  'widget-background.js', 'standalone-widgets.js'];
+// PANELFILERNA LASES UR KALLAN, INTE UR EN LISTA.
+//
+// Har stod tidigare sex filnamn skrivna for hand. Listan var korrekt den dag den skrevs och fel
+// tre dagar senare: custom-widgets.js och gift-fireworks.js binder ocksa egenskapskontroller,
+// stod inte med, och bar darfor tre render()-anrop i oninput-handlers som vakten aldrig sag.
+// Uppmatt i riktig Chrome 2026-08-18: av atta tecken skrivna i egenskapspanelens textruta kom
+// ETT fram. Resten gick till BODY, eftersom elementet var utbytt innan andra tangenttrycket.
+//
+// En handskriven lista vaktar de filer nagon kom ihag. Registret ar i stallet klientens egen
+// monkey-patch-konvention: en fil som binder egenskapskontroller skriver `props=function` eller
+// `bind=function`. Den som lagger till en nionde panelfil arver darfor regeln utan att veta om
+// det — samma princip som F1/23g i fan-fas-provet, dar uppraekningen byttes mot ett register.
+const PANELMONSTER = /props\s*=\s*function|bind\s*=\s*function/;
+const FILER = fs.readdirSync(ROOT)
+  .filter(f => f.endsWith('.js') && !f.endsWith('.min.js'))
+  .filter(f => PANELMONSTER.test(fs.readFileSync(path.join(ROOT, f), 'utf8')))
+  .sort();
 
 // Kommentarer bort, sa en fil som DOKUMENTERAR regeln inte anklagas for att bryta mot den.
 //
@@ -50,6 +63,16 @@ function oninputKroppar(src) {
 }
 
 const radFor = (src, index) => src.slice(0, index).split('\n').length;
+
+test('harledningen hittar panelfilerna', () => {
+  // En skanning som tappar sitt underlag ser ut som ett gront prov. Golvet ar satt under dagens
+  // 15 sa en borttagen panelfil inte faller provet i onodan, men langt over noll.
+  assert.ok(FILER.length >= 12,
+    `harledningen hittade bara ${FILER.length} panelfiler (${FILER.join(', ')}) — monstret traffar inte langre`);
+  for (const namn of ['media.js', 'custom-widgets.js', 'gift-fireworks.js']) {
+    assert.ok(FILER.includes(namn), `${namn} binder egenskapskontroller men harleddes inte fram`);
+  }
+});
 
 test('render() anropas inte från någon oninput-handler', () => {
   const brott = [];
