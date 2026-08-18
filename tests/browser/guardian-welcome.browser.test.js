@@ -62,9 +62,25 @@ const cache = new Map();
 
 // Mätfunktionen som körs INNE i sidan. Effektiv opacitet och skala är produkten hela vägen upp
 // till widgetlådan — en del kan stå på opacity 1 och ändå vara osläckt av en förälder.
+// EN FÄRSK NOD PER MÄTNING. Det här är den enda ordning som håller, och det tog två felslut att
+// komma fram till.
+//
+// Att pinna en animation MUTERAR sidan på ett sätt som inte går att städa bort:
+//   · en PAUSAD animation överlever att dess CSS-regel slutar gälla — pausningen ger den en
+//     hold-time och den räknas inte längre som idle, så den fortsätter bidra till computed style.
+//     Uppmätt: rubriken bar "gwFadeOut@0, gwStamp@0" samtidigt, och gwStamp med fill-mode both
+//     höll den på opacity 0 mitt i upplösningen.
+//   · `cancel()` löser det men lämnar CSS-animationen detachad — nästa klassbyte återuppväckte
+//     den inte, och stämpeln mättes som en död rörelse.
+//   · `play()` före klassbytet gav i stället DUBBLETTER: tre gwStamp på samma element.
+//
+// Slutsatsen är enklare än alla tre: en mätning som muterar sitt eget mätobjekt behöver ett nytt
+// mätobjekt varje gång. `render()` bygger om canvasen ur `wh`, alltså en helt ny nod utan en enda
+// animation. Det kostar ingen sidladdning och är fullständigt deterministiskt.
 const MATARE = `(() => {
-  const box = document.querySelector('.guardian-welcome');
+  const lada = () => document.querySelector('.guardian-welcome');
   window.__gwEff = sel => {
+    const box = lada();
     const e = box.querySelector(sel);
     if (!e) return null;
     if (getComputedStyle(e).display === 'none') return { doljd: true };
@@ -83,24 +99,25 @@ const MATARE = `(() => {
              text: (e.textContent || '').trim(),
              spacing: cs.letterSpacing,
              animationer: e.getAnimations().map(a => a.animationName || 'transition'),
-             spelar: e.getAnimations().some(a => a.playState === 'running'),
              oandliga: e.getAnimations().filter(a => {
                const t = a.effect && a.effect.getTiming();
                return t && t.iterations === Infinity;
              }).length };
   };
   window.__gwFas = (namn, ms) => {
-    [...box.classList].forEach(k => { if (k.startsWith('gw-fas-')) box.classList.remove(k) });
+    render();                                   // ny nod, noll animationer
+    const box = lada();
     if (namn) box.classList.add('gw-fas-' + namn);
     void box.offsetWidth;
     if (typeof ms === 'number') {
-      box.querySelectorAll('*').forEach(n => n.getAnimations().forEach(a => { a.pause(); a.currentTime = ms }));
-      box.getAnimations().forEach(a => { a.pause(); a.currentTime = ms });
+      const alla = [...box.getAnimations()];
+      box.querySelectorAll('*').forEach(n => alla.push(...n.getAnimations()));
+      alla.forEach(a => { a.pause(); a.currentTime = ms });
       void box.offsetWidth;
     }
   };
-  const r = box.getBoundingClientRect();
-  return { bredd: Math.round(r.width), hojd: Math.round(r.height), klasser: box.className };
+  const r = lada().getBoundingClientRect();
+  return { bredd: Math.round(r.width), hojd: Math.round(r.height), klasser: lada().className };
 })()`;
 
 async function sida(storlek, sprak = 'sv') {
@@ -153,10 +170,15 @@ for (const storlek of STORLEKAR) {
     const s = await sida(storlek);
     assert.ok(!s.fel, s.fel);
     await fas(s.page, null);
+    // AURORAN HAR EN EGEN GOLVNIVÅ, och det är inte en eftergift. Den är widgetens vilolager och
+    // andas i all oändlighet mellan .72 och 1 (gwAuroraBreathe). Att kräva >0.8 av den hade varit
+    // att mäta var i loopen bildrutan råkade landa — grönt eller rött beroende på tur. Golvet är
+    // satt vid loopens uppmätta botten; sjunker den under det har andningen slutat vara en andning.
+    const GOLV = { '.gw-aurora': 0.7 };
     for (const del of ['.gw-aurora', '.gw-shield', '.gw-title', '.gw-username', '.gw-subtitle']) {
       const m = await las(s.page, del);
       assert.ok(m && !m.doljd, `${del} saknas eller är display:none i vilotillståndet`);
-      assert.ok(m.o > 0.8, `${del} står på effektiv opacitet ${m.o} i vilotillståndet`);
+      assert.ok(m.o >= (GOLV[del] || 0.8), `${del} står på effektiv opacitet ${m.o} i vilotillståndet`);
       assert.ok(m.bredd > 0 && m.hojd > 0, `${del} har rektangeln ${m.bredd}×${m.hojd}`);
     }
     const svg = await las(s.page, '.gw-shield svg');

@@ -863,7 +863,154 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='batt
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
+/* =================================================================================================
+   GUARDIAN WELCOME — en egen widgetfamilj for TikToks Guardians.
+
+   INTE EN VARIANT AV FAN LEVEL UP. Familjerna delar monster (fasklasser, utbytbar klocka, ett
+   register) men inga data, och de tva ska aldrig kunna glida in i varandra. Koreografin bor i
+   guardian-fas.js, temat i guardian-welcome.css, och registret over storlekar i widget-factory.js.
+
+   SPRAKET AVGORS PA ETT STALLE. `VyraGuardianFas.sprak(w)` ar det stallet — se dess kommentar for
+   fallbackordningen. Renderaren fragar och far 'sv' eller 'en'; den kanner inte till navigator,
+   och den dag VyraLang byggs andras ingenting har.
+
+   TESTKNAPPEN KOAR PER DEFINITION. Den anropar `window.triggerGuardianWelcome`, och
+   runtime-controls.js har bytt ut just det namnet mot en koad variant. Knappen KAN alltsa inte
+   kringga kon — till skillnad fran fyrverkeriets testknapp (§2), som byggde raketerna direkt pa
+   DOM och behovde lagas i efterhand. Den globala referensen AR kon.
+   =============================================================================================== */
+function gwStorlek(w){return ['banner','kort','full'].includes(w.guardianSize)?w.guardianSize:'kort'}
+function gwVecka(w){let n=Math.round(Number(w.guardianWeek));return Number.isFinite(n)&&n>=1&&n<=53?n:gwVeckaNu()}
+/* ISO-veckan. Anvands bara som default nar eventet inte bar nagon vecka — TikToks egen Guardian-vecka
+   ar det som galler nar den finns, och den kommer i payloaden. */
+function gwVeckaNu(){let d=new Date(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()));let dag=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-dag);let start=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil(((d-start)/86400000+1)/7)}
+/* Hjorten. Stiliserad och medvetet enkel: silverfargad kropp, guldgevir, ritad som EN sokvag per
+   del sa den gar att byta mot riktig grafik utan att rora nagot annat. Fyllningarna kommer fran
+   CSS-klasserna, inte fran attribut, sa temat ager fargen. */
+const GW_HJORT='<svg class="gw-deer-svg" viewBox="0 0 64 64" aria-hidden="true"><path class="gw-deer-antler" d="M26 28 L22 17 M22 17 L17 12 M22 17 L24 10 M22 17 L16 18 M38 28 L42 17 M42 17 L47 12 M42 17 L40 10 M42 17 L48 18"/><ellipse class="gw-deer-body" cx="22.5" cy="32" rx="3.6" ry="5.4" transform="rotate(-24 22.5 32)"/><ellipse class="gw-deer-body" cx="41.5" cy="32" rx="3.6" ry="5.4" transform="rotate(24 41.5 32)"/><path class="gw-deer-body" d="M32 24c5.4 0 8.6 4.2 8.2 10-.3 4.6-2 8.4-3.9 11.2-1.5 2.2-2.9 3.6-4.3 4.8-1.4-1.2-2.8-2.6-4.3-4.8-1.9-2.8-3.6-6.6-3.9-11.2-.4-5.8 2.8-10 8.2-10z"/><circle class="gw-deer-eye" cx="28.4" cy="33.6" r="1.5"/><circle class="gw-deer-eye" cx="35.6" cy="33.6" r="1.5"/><path class="gw-deer-eye" d="M32 44.4c1.5 0 2.4.9 2.4 2s-1.1 1.9-2.4 1.9-2.4-.8-2.4-1.9.9-2 2.4-2z"/></svg>';
+/* SYSKONFILEN AR INTE GARANTERAD, OCH ETT KAST HAR AR DYRT. `render()` gor
+   `widgets.map(wh).join('')` — en enda widget som kastar i sin renderare tar HELA duken med sig,
+   och streamern ser en tom layout utan forklaring. `guardianWelcomeHtml` fick darfor aldrig lita
+   pa att `VyraGuardianFas` finns.
+
+   Uppmatt 2026-08-18: i en rigg som laddar media.js men inte guardian-fas.js kastade renderaren, och
+   katalogens miniatyrvakt sag det som tre knappar utan miniatyr. I studio.html laddas filerna i rad
+   och problemet kan inte intraffa — men "kan inte intraffa i den ordning vi rakar ha idag" ar inte
+   samma sak som robust.
+
+   SPRAKET AVGORS FORTFARANDE PA ETT STALLE. guardian-fas.js ar det stallet. Raden nedan ar en
+   sista utvag, inte ett andra beslut: den valjer inte sprak, den anvander appens. Att de tva
+   svenska strangarna ar identiska vaktas av ett prov, sa de inte kan glida isar. */
+function gwText(w){
+  const F=window.VyraGuardianFas;
+  if(F&&typeof F.sprak==='function')return F.text(F.sprak(w),gwVecka(w));
+  return {rubrik:'BESKYDDAREN HAR ANLÄNT',vecka:'Vecka '+gwVecka(w)+' · Din Beskyddare'};
+}
+function guardianWelcomeHtml(w){
+  let storlek=gwStorlek(w),t=gwText(w);
+  /* Egen text vinner over veckoraden, och veckoraden gar att stanga av. Bada vagarna leder till
+     SAMMA element — en tom `.gw-subtitle` hade sett ut som en bugg i en vakt som raknar delar. */
+  let egen=String(w.guardianCustomText||'').trim();
+  let underrad=egen?VyraSafe.text(egen):(w.guardianShowWeek===false?'':VyraSafe.text(t.vecka));
+  return `<div class="widget guardian-welcome guardian-size-${storlek}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||300}px;height:${w.height||280}px;zoom:${w.widgetScale||1}"><div class="gw-aurora"></div><div class="gw-shield">${GW_HJORT}</div><div class="gw-content"><h2 class="gw-title">${VyraSafe.text(t.rubrik)}</h2><div class="gw-username">${VyraSafe.text(w.guardianUsername||'@Guardian')}</div>${underrad?`<div class="gw-subtitle">${underrad}</div>`:''}</div><div class="gw-ornament gw-ornament-left">&#9670;</div><div class="gw-ornament gw-ornament-right">&#9670;</div>${selected===w.id?'<span class="resize-handle">&#8600;</span>':''}</div>`;
+}
+const guardianWh=wh;wh=function(w){return w.type==='templateGuardianWelcome'?guardianWelcomeHtml(w):guardianWh(w)};
+
+const guardianProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateGuardianWelcome')return guardianProps();
+  let vald=(v,mot)=>v===mot?' selected':'';
+  let storlek=gwStorlek(w),sprak=w.guardianLang||'auto';
+  return `<h3>GUARDIAN WELCOME</h3><div class="template-badge">REDIGERBAR ALERT</div><div hidden><input id="pt" value="${VyraSafe.text(w.title||'')}"><input id="pv" value=""></div>`
+    +`<div class="property-group"><h4>INNEHÅLL</h4>`
+    +`<label>Användarnamn<input id="gwUsername" value="${VyraSafe.text(w.guardianUsername||'@Guardian')}"></label>`
+    +`<label>Vecka<input id="gwWeek" type="number" min="1" max="53" value="${gwVecka(w)}"></label>`
+    +`<label>Egen text<textarea id="gwCustomText" rows="2">${VyraSafe.text(w.guardianCustomText||'')}</textarea></label>`
+    +`<div class="switch-row one"><label><input id="gwShowWeek" type="checkbox" ${w.guardianShowWeek===false?'':'checked'}> Visa veckoraden</label></div></div>`
+    +`<div class="property-group"><h4>UTSEENDE</h4>`
+    +`<label>Storlek<select id="gwSize"><option value="banner"${vald('banner',storlek)}>Banner (270×180)</option><option value="kort"${vald('kort',storlek)}>Kort (300×280)</option><option value="full"${vald('full',storlek)}>Full (400×300)</option></select></label>`
+    +`<label>Språk<select id="gwLang"><option value="auto"${vald('auto',sprak)}>Följ webbläsaren</option><option value="sv"${vald('sv',sprak)}>Svenska</option><option value="en"${vald('en',sprak)}>Engelska</option></select></label></div>`
+    +`<div class="property-group"><h4>TESTA</h4><button id="testGuardian">Testa Guardian-välkomnande</button>`
+    +`<small>Går genom samma kö som en riktig Guardian — inte snabbare.</small></div>`;
+};
+
+const guardianBind=bind;bind=function(){guardianBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGuardianWelcome')return;
+  /* LIVE-VAGEN, INTE render(). `render()` river hela vyn, egenskapspanelen inkluderad — anropad
+     fran en `oninput` byts faltet man skriver i ut vid varje tangenttryck. Mallen ar
+     giftFieldBind: input patchar bara canvasnoden, change committar. Vaktat av
+     tests/panel-live-path.test.js, som harleder sin fillista ur `props=function`/`bind=function`. */
+  let falt=(id,nyckel,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;
+    el.oninput=e=>vyraLivePatch(w,el,nyckel,las(e));
+    el.onchange=e=>{w[nyckel]=las(e);save();vyraRenderKeepingPanel()}};
+  falt('#gwUsername','guardianUsername');falt('#gwWeek','guardianWeek',true);falt('#gwCustomText','guardianCustomText');
+  /* Storlek och sprak byter BADE utseende och matt, sa de committar direkt — det finns ingen
+     meningsfull mellanposition att forhandsvisa i en select. */
+  let vaxel=(id,nyckel)=>{let el=document.querySelector(id);if(!el)return;el.value=w[nyckel]||el.value;
+    el.onchange=e=>{w[nyckel]=e.target.value;
+      if(nyckel==='guardianSize'){let m={banner:[270,180],kort:[300,280],full:[400,300]}[e.target.value];if(m){w.width=m[0];w.height=m[1]}}
+      save();vyraRenderKeepingPanel()}};
+  vaxel('#gwSize','guardianSize');vaxel('#gwLang','guardianLang');
+  let vecko=document.querySelector('#gwShowWeek');if(vecko)vecko.onchange=e=>{w.guardianShowWeek=e.target.checked;save();vyraRenderKeepingPanel()};
+  /* TESTKNAPPEN. Anropar det globala namnet och inget annat — ingen klass sätts har, ingen
+     koreografi startas har, och ingenting skrivs till widgeten. `__test` sager bara at triggern
+     att hoppa over gatet, precis som fan- och gifter-familjerna gor. */
+  let testa=document.querySelector('#testGuardian');if(testa)testa.onclick=()=>{
+    window.triggerGuardianWelcome({username:w.guardianUsername||'@Guardian',weekNumber:gwVecka(w),__test:true})};
+};
+
+/* Triggern. Tander varje Guardian-widget, byter ut `_gwTimer` sa guardian-fas.js kan se exakt
+   vilka lador som triggades, och tar ned alerten nar visningstiden gatt ut. */
+/* KATALOGSEKTIONEN. Utan den gar widgeten inte att skapa fran granssnittet — fabriken kan bygga
+   den, men ingen knapp ber om det. En familj som bara nas via en katalognyckel i konsolen ar inte
+   levererad, och docs/katalogkarta.md (som CI genererar ur knapparna) hade inte kant till den.
+
+   Tre knappar, en per storlek, med matten utskrivna i etiketten: storleken ar familjens enda
+   variant och den bestammer bade utseende och yta, sa den som valjer ska se vad hen valjer.
+
+   `data-guardian-welcome` ar grinden mot dubbel injektion. bind() kor pa varje render, och utan
+   den hade sektionen lagts till en gang per omrendering — samma fella som mvpFrameOptions loste. */
+const guardianCatalog=bind;bind=function(){guardianCatalog();if(view!=='editor'&&view!=='overlay')return;
+  let catalog=document.querySelector('.widget-catalog');
+  if(!catalog||catalog.querySelector('[data-guardian-welcome]'))return;
+  let section=document.createElement('section');
+  section.dataset.guardianWelcome='1';
+  section.className='guardian-template-section';
+  section.innerHTML='<h4>GUARDIAN WELCOME · 3 STORLEKAR</h4>'
+    +'<button data-gw="banner"><i>&#9670;</i><span><b>Banner</b><small>270×180 · liggande</small></span></button>'
+    +'<button data-gw="kort"><i>&#9670;</i><span><b>Kort</b><small>300×280 · staende</small></span></button>'
+    +'<button data-gw="full"><i>&#9670;</i><span><b>Full</b><small>400×300 · stor scen</small></span></button>';
+  catalog.prepend(section);
+  section.querySelectorAll('button').forEach(knapp=>{
+    let nyckel='catalog:guardianwelcome:'+knapp.dataset.gw;
+    knapp.dataset.catalogKey=nyckel;
+    knapp.onclick=()=>{
+      let skapad=VyraWidgets.create(nyckel);
+      /* En Guardian i taget i layouten. Tva samtidiga valkomnanden ar inte en design, det ar tva
+         alerts som talar i mun pa varandra — samma regel som Follower Spotlight foljer. */
+      state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateGuardianWelcome');
+      state.widgets.push(skapad);selected=skapad.id;save();render();
+      toast('Guardian Welcome skapad')}});
+};
+
+function triggerGuardianWelcome(event={}){
+  let widgets=state.widgets.filter(w=>w.type==='templateGuardianWelcome');
+  if(!widgets.length)return;
+  widgets.forEach(w=>{
+    let box=document.querySelector(`[data-id="${w.id}"]`);
+    if(!box)return;
+    if(event.username)box.querySelector('.gw-username').textContent=String(event.username);
+    let vecka=Math.round(Number(event.weekNumber));
+    if(Number.isFinite(vecka)&&vecka>=1&&vecka<=53){
+      let rad=box.querySelector('.gw-subtitle');
+      if(rad&&!String(w.guardianCustomText||'').trim())rad.textContent=gwText(Object.assign({},w,{guardianWeek:vecka})).vecka;
+    }
+    box.classList.remove('gw-active');void box.offsetWidth;box.classList.add('gw-active');
+    clearTimeout(box._gwTimer);
+    box._gwTimer=setTimeout(()=>{box.classList.remove('gw-active')},Math.max(VyraGuardianFas.total(gwStorlek(w)),4000));
+  });
+}
+window.triggerGuardianWelcome=triggerGuardianWelcome;
+
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20260818-panel-live';document.body.append(js)});
+
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260817-duckning';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260726-lazy-thumbs';document.body.append(js)});
@@ -878,7 +1025,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260817-tal-duckning';
+  const version='20260818-guardian';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

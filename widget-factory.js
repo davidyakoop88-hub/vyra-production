@@ -39,6 +39,10 @@
 
   function newId(type) { return String(type) + '-' + Date.now().toString(36) + '-' + token(); }
 
+  // Guardian Welcome-matten, en gang. Bade BUILD och katalogkortet laser harifran; en widget vars
+  // hojd star pa tva stallen far forr eller senare tva olika varden.
+  const GUARDIAN_MATT = { banner: [270, 180], kort: [300, 280], full: [400, 300] };
+
   // ---- variant tables ---------------------------------------------------------------------------
   // Short tables live here. The three frame tables are registered by media.js, which owns them for
   // rendering; duplicating 73 frame definitions to satisfy a lookup would be the same mistake this
@@ -56,6 +60,11 @@
       royal: 'Royal Coronation' },
     'custom.kind': { text: 'templateCustomText', image: 'templateCustomImage',
       video: 'templateCustomVideo' },
+    // Guardian Welcome. Storleken ar familjens ENDA variant — tema och sprak ar panelval, inte
+    // katalogingangar, eftersom en Guardian alltid ser likadan ut och bara upptar olika mycket
+    // plats. Matten star i GUARDIAN_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida
+    // isar utan att ett prov ser det.
+    'guardianwelcome.size': { banner: 'Banner', kort: 'Kort', full: 'Full' },
     'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
       bloom: 'Crystal Bloom' },
     'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
@@ -261,6 +270,15 @@
       gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
       gifterColor: '#9965ff', gifterLight: '#e2d6ff'
     }),
+    'guardianwelcome.size': v => ({
+      type: 'templateGuardianWelcome', x: 100, y: 80,
+      width: GUARDIAN_MATT[v.size][0], height: GUARDIAN_MATT[v.size][1],
+      title: 'Guardian Welcome', guardianSize: v.size,
+      // 'auto' som default: en streamer som inte rort valet ska fa sitt eget sprak, inte vart.
+      guardianLang: 'auto', guardianShowWeek: true, guardianCustomText: '',
+      guardianUsername: '@Guardian', guardianWeek: 47
+    }),
+
     'followeralert': () => ({
       type: 'templateFollowerAlert', x: 100, y: 80, width: 300, title: 'New Follower Alert',
       followLabel: 'NEW FOLLOWER', followName: 'Aurora Vale', followMessage: 'TAKES THE STAGE',
@@ -365,6 +383,11 @@
     'gifterlevel': parts => {
       if (!parts[0]) throw new Error('catalog:gifterlevel kräver en layout');
       return ['gifterlevel.layout', { layout: parts[0] }];
+    },
+    'guardianwelcome': parts => {
+      if (!parts[0]) throw new Error('catalog:guardianwelcome kraver en storlek');
+      pick('guardianwelcome.size', parts[0], 'Guardian-storlek');
+      return ['guardianwelcome.size', { size: parts[0] }];
     },
     'followeralert': () => ['followeralert', {}],
     'glovesnipe': parts => {

@@ -14,6 +14,12 @@ const CONTRACT = [
   { name: 'Last-X · design card', key: 'catalog:lastx:card' },
   { name: 'Eget innehåll · text', key: 'catalog:custom:text' },
   { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
+  // Guardian Welcome ar en NY familj, inte en migrerad — den har aldrig funnits som en literal i
+  // media.js. Alla tre storlekarna star med, for det ar matten som skiljer dem at och ett kontrakt
+  // pa bara en storlek hade latit de andra tva glida.
+  { name: 'Guardian Welcome · banner', key: 'catalog:guardianwelcome:banner' },
+  { name: 'Guardian Welcome · kort', key: 'catalog:guardianwelcome:kort' },
+  { name: 'Guardian Welcome · full', key: 'catalog:guardianwelcome:full' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",
     values: { title: 'Aurora', value: 'aurora.mp4', src: 'assets/videos/aurora.mp4' },
     bindings: { f: 'aurora.mp4', mediaTitle: () => 'Aurora', normalizeMediaFile: () => 'aurora.mp4', mediaAssetPath: () => 'assets/videos/aurora.mp4' } },

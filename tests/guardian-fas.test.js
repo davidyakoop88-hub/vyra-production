@@ -120,7 +120,36 @@ function boot(widgets = [gwWidget()]) {
   const klocka = manuellKlocka(h.window);
   const lada = id => canvas.querySelector(`[data-id="${id}"]`);
   const faser = id => [...lada(id).classList].filter(k => k.startsWith('gw-fas-')).map(k => k.slice(7));
-  return { h, canvas, klocka, lada, faser, win: h.window };
+
+  // EGENSKAPSPANELEN MÅSTE BYGGAS, den kommer inte med `paint`. `paint` bygger canvasen ur `wh`;
+  // panelen bor i `props` och binds av `bind`, och båda kräver att `selected` pekar på widgeten.
+  // `selected` är en top-level `let` i studio.js, alltså i den delade globala lexikala miljön och
+  // INTE på window — den går bara att sätta från ett script som körs i sidan.
+  //
+  // `bind()` kör hela kedjan av bindare, och en granne som kastar i riggen skulle annars ta med sig
+  // Guardians bindning i fallet. Kastet fångas därför, men provet lutar sig inte på tystnaden:
+  // kontrollmätningen (`anrop === 1`) bevisar att just den här bindningen kom fram.
+  const panel = id => {
+    const s = h.document.createElement('script');
+    // `view='editor'` MÅSTE sättas. Varje panelbindare i media.js börjar med
+    // `if(view!=='editor')return`, och studio.js startar i 'home'. Utan raden binds ingenting, och
+    // provet nedan hade mätt en knapp utan hanterare i stället för en knapp som inte muterar state.
+    s.textContent = `view='editor';selected=${JSON.stringify(id)};(function(){`
+      + `let host=document.querySelector('.properties');`
+      + `if(!host){host=document.createElement('div');host.className='properties';document.body.append(host)}`
+      + `host.innerHTML=props();try{bind()}catch(e){window.__bindFel=String(e&&e.message||e)}})();`;
+    h.document.body.append(s);
+    return h.document.querySelector('.properties');
+  };
+  // `state` är en top-level `const` i studio.js — den bor i den delade globala lexikala miljön och
+  // finns INTE på window. Ett prov som vill jämföra state före och efter måste hämta den härifrån.
+  const statebild = () => {
+    const s = h.document.createElement('script');
+    s.textContent = 'window.__gwStatebild=JSON.stringify(state.widgets[0]||null)';
+    h.document.body.append(s);
+    return h.window.__gwStatebild;
+  };
+  return { h, canvas, klocka, lada, faser, panel, statebild, win: h.window };
 }
 
 // ================================================================================================
@@ -465,8 +494,9 @@ test('Kön: testknappen muterar inte widgetens state vid klick', () => {
   // Kontrollmätning enligt §7: knappen MÅSTE ha gjort något (en trigger räknades), och ändå får
   // inget fält i widgeten ha ändrats. Utan första halvan är andra halvan sann för en knapp som
   // inte finns.
-  const { h, win } = boot([gwWidget('gw1')]);
-  const fore = JSON.stringify(h.window.state.widgets[0]);
+  const { h, win, panel, statebild } = boot([gwWidget('gw1')]);
+  panel('gw1');
+  const fore = statebild();
   let anrop = 0;
   const original = win.triggerGuardianWelcome;
   win.triggerGuardianWelcome = function (...a) { anrop += 1; return original.apply(this, a) };
@@ -474,8 +504,25 @@ test('Kön: testknappen muterar inte widgetens state vid klick', () => {
   assert.ok(knapp, 'testknappen #testGuardian finns inte i panelen');
   knapp.click();
   assert.equal(anrop, 1, 'kontrollmätning: knappen anropade inte triggern');
-  assert.equal(JSON.stringify(h.window.state.widgets[0]), fore,
+  assert.equal(statebild(), fore,
     'knappen skrev till widgetens state — ett testklick ska inte spara något');
+});
+
+test('Renderaren kastar inte om syskonfilen saknas, och reservtexten är samma svenska', () => {
+  // `render()` gör `widgets.map(wh).join('')` — EN widget som kastar i sin renderare tar hela duken
+  // med sig, och streamern ser en tom layout utan förklaring. Uppmätt: i en rigg som laddar media.js
+  // men inte guardian-fas.js kastade renderaren, och katalogens miniatyrvakt såg det som tre knappar
+  // utan miniatyr. I studio.html laddas filerna i rad, men "kan inte inträffa i den ordning vi råkar
+  // ha idag" är inte samma sak som robust.
+  //
+  // Reservtexten är en sista utväg, inte ett andra språkbeslut. Att de två svenska strängarna är
+  // identiska vaktas här, så de aldrig kan glida isär.
+  const { textIRymd } = require('./helpers/guardian-fas-register.js');
+  const sv = textIRymd('sv', 47);
+  const reserv = MEDIA.match(/return \{rubrik:'([^']+)',vecka:'([^']+)'\+gwVecka\(w\)\+'([^']+)'\}/);
+  assert.ok(reserv, 'hittade ingen reservtext i gwText — renderaren litar på att syskonfilen finns');
+  assert.equal(reserv[1], sv.rubrik, 'reservrubriken har glidit ifrån guardian-fas.js svenska');
+  assert.equal(reserv[2] + '47' + reserv[3], sv.vecka, 'reservveckoraden har glidit ifrån');
 });
 
 // ================================================================================================
@@ -485,7 +532,7 @@ test('Kön: testknappen muterar inte widgetens state vid klick', () => {
 test('Fabriken: catalog:guardianwelcome:<storlek> ger rätt typ och mått', () => {
   const MATT = { banner: [270, 180], kort: [300, 280], full: [400, 300] };
   const { STORLEKAR } = require('./helpers/guardian-fas-register.js');
-  const sandlada = { window: {} };
+  const sandlada = { window: { crypto: require('crypto').webcrypto } };
   sandlada.window.window = sandlada.window;
   const vm = require('vm');
   vm.runInNewContext(FABRIK, sandlada.window, { filename: 'widget-factory.js' });
@@ -500,7 +547,7 @@ test('Fabriken: catalog:guardianwelcome:<storlek> ger rätt typ och mått', () =
 
 test('Fabriken: en okänd storlek kastar med giltiga alternativ i texten', () => {
   const vm = require('vm');
-  const sandlada = { window: {} };
+  const sandlada = { window: { crypto: require('crypto').webcrypto } };
   sandlada.window.window = sandlada.window;
   vm.runInNewContext(FABRIK, sandlada.window, { filename: 'widget-factory.js' });
   assert.throws(() => sandlada.window.VyraWidgets.create('catalog:guardianwelcome:jatte'),

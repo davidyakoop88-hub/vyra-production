@@ -1,5 +1,100 @@
 # VYRA Project State
 
+## Checkpoint 36 — Guardian Welcome, en ny familj byggd bakifrån (2026-08-18)
+
+Första familjen i repot där **varenda rad prov skrevs innan en rad implementation**. 53 prov, röd
+baslinje fotograferad, sedan kod tills allt var grönt.
+
+### Vad som byggdes
+
+`templateGuardianWelcome` — en egen widgetfamilj för TikToks Guardians. Inte en variant av Fan
+Level Up: samma mönster, inga delade data.
+
+| Fil | Roll |
+|---|---|
+| `guardian-fas.js` | koreografin "Beskyddet", registret `FASER`/`STORLEKAR`, och `sprak()` |
+| `guardian-welcome.css` | temat och koreografins VAD |
+| `tests/guardian-fas.test.js` | 35 prov — vaktnätet, tiderna, språket, kön, markupen |
+| `tests/browser/guardian-welcome.browser.test.js` | 18 prov — vad tittaren faktiskt ser |
+| `tests/helpers/guardian-fas-register.js` | registret utan en hel sida |
+
+Ändrat: `widget-factory.js` (familjen + måtten på ett ställe), `media.js` (renderare, panel,
+katalogsektion, trigger), `runtime-controls.js` (kön), `studio.html`, `tiktok-bridge/bridge.js`
+(förberedd trigger), tre fixtures och tre dokument.
+
+### Koreografin "Beskyddet"
+
+| Fas | ms | Vad |
+|---|---|---|
+| `ljus` | 500 | auroran tonar in på **tom scen** — inget annat syns |
+| `oppna` | 900 | skölden glider in från vänster, rubriken stämplas fram (teckenavstånd .5em → .15em), namn +200 ms, underrubrik +400 ms |
+| `hyllning` | 1200/1600/2000 | sköldens glöd pulserar, auroran andas, inget annat rör sig |
+| `upplosning` | 600 | omvänd ordning, **auroran sist** |
+
+Bara hyllningen varierar med storleken. Tre storlekar: banner 270×180, kort 300×280, full 400×300.
+
+### Vaktnätet, matematiskt slutet
+
+`G1` kräver att varje storlek i `FASER` har CSS och att varje fas har en regel. `G-SLUT` vänder på
+beroendet och kräver att fabriken, panelväljaren och `FASER` är **exakt samma mängd**. Utan båda
+hållen kan en fjärde storlek läggas till utan koreografi — det var precis så `card` levde i Fan
+Level Ups CSS ett helt repo-liv utan att finnas i fabriken.
+
+Dessutom `G-IMPORTANT` (ingen `!important` på transform/opacity/clip-path), `G-DÖD-CSS` (ingen
+döljning som en senare regel med samma specificitet motsäger) och `G-VILOLAGER` (ingen `infinite`
+på en fas som tas bort).
+
+**Mutationsprovat: 8 av 8 dödade av rätt vakt.** Fjärde storlek utan koreografi → `G-SLUT`.
+`!important` på transform → `G-IMPORTANT`. `infinite` flyttad till öppnandet → `G-VILOLAGER`. Död
+`display:none` → `G-DÖD-CSS`. Testknappen tänder DOM direkt → köproven. Guardian ur `configs` →
+köprovet. Omkastad fasordning → tre fasprov. Symmetrisk språkfallback → språkprovet.
+
+### Tre fynd som kostade något
+
+**1. §7-fällan, fångad medan den byggdes.** Första körningen av den röda baslinjen gav fem gröna,
+inte två. `G-IMPORTANT`, `G-DÖD-CSS` och `G-VILOLAGER` var alla gröna — **mot en fil som inte
+fanns**. Matcharna fungerade (deras positiva kontroller bevisade det), men de kördes mot en tom
+sträng: *"ingen `!important` i CSS:en"* är trivialt sant om det inte finns någon CSS. Att luta sig
+mot att `G0` fångar det räcker inte — G0 är ett **annat** prov, och ett grönt prov säger ingenting
+om vad grannen mätte. Kontrollmätningen `kravCss()` ligger nu inne i varje frånvaroprov.
+
+**2. En pausad animation överlever att dess CSS-regel slutar gälla.** Browsersviten pinnar varje
+fas med Web Animations API. Efter att öppnandet pinnats och klassen bytts mot upplösningen bar
+rubriken **båda** — `gwFadeOut@0` och `gwStamp@0` — och `gwStamp` med fill-mode `both` höll den på
+opacity 0. Mätningen sa alltså att upplösningen började från en släckt rubrik, och hade fått mig
+att "laga" en design som fungerade. En körande CSS-animation tas bort när regeln försvinner; en
+pausad gör det inte, för pausningen ger den en hold-time och den räknas inte längre som idle.
+
+`cancel()` löste det men lämnade animationen detachad — nästa klassbyte återuppväckte den inte.
+`play()` före klassbytet gav i stället **dubbletter**: tre `gwStamp` på samma element. Slutsatsen
+är enklare än alla tre: **en mätning som muterar sitt eget mätobjekt behöver ett nytt mätobjekt
+varje gång.** `render()` bygger en ny nod utan en enda animation.
+
+**3. En kommentar som citerar kod fäller en källkodsvakt — tredje gången i repot.** Det förberedda
+bryggblocket innehåller en utkommenterad `sendEvent('guardian', …)`. `battle-probe.test.js` skannar
+**rå** källkod från `battle-sond ---` till `STREAM_END` och förbjuder `sendEvent(` där. Blocket
+flyttades utanför regionen i stället för att vakten gjordes blindare.
+
+### Vad som medvetet INTE gjordes
+
+**Bryggans fyra listor rörs inte.** `docs/live-verifiering.md` punkt 6 beskriver vad som ska läsas
+av under en riktig sändning: vilken `WebcastEvent` som bär Guardian-status, vilket fält som skiljer
+en Guardian från en vanlig medlem, och om payloaden bär TikToks egen veckosiffra. Att namnge typen
+`guardian` i kontraktet innan någon kod skickar den vore en död kontraktspost — samma sorts lögn
+som §3 kostade en hel ansats för.
+
+### Nästa steg
+
+1. **Testa via panelens knapp** — "Testa Guardian-välkomnande" spelar samma väg som en riktig
+   Guardian, genom kön, inte snabbare.
+2. **Kör en sändning med inspelaren på** (`set VYRA_INSPELNING_TYPER=alla`) och vänta på att en
+   Guardian går in. Skicka payload-loggen tillbaka.
+3. Då aktiveras triggern och de fyra listorna i samma ändring.
+
+Oförändrat sedan checkpoint 34–35: §5 väntar på en deploy, battle-kedjan på samma sändning, och
+`VYRA_MASTER_ROADMAP.md` har fortfarande driftat från verkligheten.
+
+
 ## Checkpoint 35 — panelens live-väg, ett tecken av åtta (2026-08-18)
 
 Rapporterat av David: *"när man skriver text måste man klicka hela tiden på rutan."* Mätt visade

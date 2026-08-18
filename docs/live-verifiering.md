@@ -1,6 +1,7 @@
 # Att läsa av under nästa riktiga sändning
 
-Fyra saker i battle-kedjan går **inte** att avgöra utan en riktig TikTok LIVE-match. De är byggda
+Fyra saker i battle-kedjan går **inte** att avgöra utan en riktig TikTok LIVE-match, och sedan
+2026-08-18 väntar Guardian Welcome (punkt 6) på samma sändning. De är byggda
 med tolerant kod och medvetna gissningar, och varje gissning står utskriven här tillsammans med
 exakt vad man ska titta på för att stänga den.
 
@@ -132,6 +133,48 @@ om poängen ska bo i molnet i stället för i `localStorage`.
 Koden: `action-runtime.js` → `POINTS_KEY`, och `action-master.js` → `NYCKEL`.
 
 ---
+
+## 6. Vilket event bär Guardian-status, och vilket fält bär veckan?
+
+**Widgeten är klar och väntar bara på ett event.** `templateGuardianWelcome` finns i katalogen i tre
+storlekar, koreografin "Beskyddet" spelar, texten finns på svenska och engelska, och
+`window.triggerGuardianWelcome` är köad i `runtime-controls.js`. Det enda som saknas är kopplingen
+till verkligheten.
+
+**Vad vi inte vet.** `tiktok-live-connector` 2.4.0 har 67 händelser; bryggan prenumererar på elva.
+Ingen av dem är dokumenterad som "Guardian". Kandidaterna, lästa ur `tiktok-live-proto/v3`:
+
+| Kandidat | Vad som skulle bära statusen |
+|---|---|
+| `MEMBER` | ett rollfält på användaren — `guardianType`, `userRole` eller en post i `badgeList` |
+| `USER_NAVIGATION_EVENT` | en flagga som `isGuardian` |
+| en typ vi inte prenumererar på | okänd — det är därför inspelningen ska köras med `alla` |
+
+**Så här läser du av det.** Kör `SPELA-IN-TIKTOK.cmd` med `set VYRA_INSPELNING_TYPER=alla` före
+start, så spelas varje WebcastEvent till fil även de bryggan inte skickar vidare. En inspelad typ
+når aldrig molnet, så det är riskfritt.
+
+När en Guardian går in: notera klockslaget. Leta sedan i `tiktok-bridge/inspelningar/<fil>.jsonl`
+efter rader kring den tidpunkten och jämför `kalla:"vidarebefordrad"` (TikToks råa payload) med
+`_utgaende` (det bryggan faktiskt skickade). **Fältnamn och tal är omaskerade** — det är precis dem
+inspelningen finns för.
+
+Tre saker ska antecknas:
+
+1. **Händelsetypen.** Vilken `WebcastEvent`-nyckel raden bär.
+2. **Fältet som skiljer en Guardian från en vanlig medlem.** Jämför med en rad för någon som
+   uppenbart inte är Guardian — utan den jämförelsen är varje fält en kandidat.
+3. **Veckonumret.** Bär payloaden TikToks egen Guardian-vecka, eller måste vi räkna själva? Widgeten
+   räknar ISO-vecka som default, men plattformens egen siffra vinner om den finns.
+
+**Vad som händer sedan.** Fältet skrivs in i det förberedda blocket i `tiktok-bridge/bridge.js`
+(sök `GUARDIAN ENTRY — FORBEREDD`), och typen `guardian` läggs till i **alla fyra** listorna i samma
+ändring: bryggans `TILL_MOLNET`, serverns `TIKTOK_INGEST_TYPES` och `TIKTOK_ROOM_TYPES`, och
+event-bussens `ALLOWED`. Missas en tystnar typen någonstans på vägen; `tests/event-contract.test.js`
+fångar det direkt.
+
+Listorna rörs **inte** innan dess. En typ som står i kontraktet men som ingen kod någonsin skickar
+är en död kontraktspost — samma sorts lögn som §3 kostade en hel ansats för.
 
 ## Efteråt
 

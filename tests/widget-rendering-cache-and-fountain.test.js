@@ -41,10 +41,20 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // av filerna byts ut. Samma skal som duckningen 2026-08-17. gift-fireworks lamnar darfor
   // duckningslistan nedan: dess strang foljer numera panellagningen, inte duckningen.
   // studio.css, widget-factory.js, fan-fas.js och premium-bundlens version ar OFORANDRADE.
+  //
+  // Bumpad 2026-08-18 for Guardian Welcome: media.js (renderare, panel, katalogsektion, trigger),
+  // widget-factory.js (familjen registrerad) och runtime-controls.js (kons configs-tabell) andrades
+  // alla tre. runtime-controls laddas av premium-bundlens `version`, sa den bumpas i stallet for
+  // en egen strang. studio.css och fan-fas.js ar OFORANDRADE och behaller sina.
+  //
+  // De tva nya filerna har egna strangar i studio.html och vaktas nedan: en ny fil utan cachebust
+  // ar inte ett cacheproblem forsta dagen, men blir det andra gangen den andras.
   assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
-  assert.match(studio, /[^-]media\.js\?v=20260818-panel-live/);
-  assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260817-tal-duckning'/);
+  assert.match(studio, /guardian-welcome\.css\?v=20260818-guardian/);
+  assert.match(studio, /guardian-fas\.js\?v=20260818-guardian/);
+  assert.match(studio, /[^-]media\.js\?v=20260818-guardian/);
+  assert.match(studio, /widget-factory\.js\?v=20260818-guardian/);
+  assert.match(media, /const version='20260818-guardian'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
