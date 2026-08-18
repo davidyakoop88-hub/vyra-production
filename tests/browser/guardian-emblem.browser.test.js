@@ -59,49 +59,47 @@ test.after(async () => {
 });
 
 const STEG = ['1', '2', '3', '4'];
-const LADHOJD = 680;   // samma i alla fyra stegen — se filhuvudet
+const LADHOJD = 700;   // samma i alla fyra stegen — se filhuvudet
 
 // Mätfunktionerna körs INNE i sidan.
-//
-// `__geOmfang` mäter delarnas gemensamma rektangel och räknar bara delar som FAKTISKT MÅLAS:
-// effektiv opacitet över noll, och en rektangel med både bredd och höjd. En del som ligger
-// gömd bakom `opacity:0` bidrar inte till prakten och ska inte heller bidra till måttet.
 const MATARE = `(() => {
   const box = () => document.querySelector('.guardian-emblem');
-  const effektiv = e => {
-    let o = 1;
-    for (let n = e; n && n !== box().parentElement; n = n.parentElement) {
-      const cs = getComputedStyle(n);
-      if (cs.display === 'none' || cs.visibility === 'hidden') return 0;
-      o *= parseFloat(cs.opacity);
-    }
-    return o;
-  };
-  window.__geEff = sel => {
-    const e = box().querySelector(sel);
-    if (!e) return null;
-    const r = e.getBoundingClientRect();
-    return { o: +effektiv(e).toFixed(3), bredd: +r.width.toFixed(1), hojd: +r.height.toFixed(1) };
-  };
-  window.__geOmfang = () => {
+  window.__geMatt = () => {
     const b = box();
-    const delar = [...b.querySelectorAll('[class*="ge-"]')].filter(e => {
-      if (!/(^|\\s)ge-(?!fas-|step-)/.test(e.className.baseVal || e.className || '')) return false;
-      const r = e.getBoundingClientRect();
-      return r.width > 0 && r.height > 0 && effektiv(e) > 0.01;
-    });
-    if (!delar.length) return { antal: 0 };
-    const rutor = delar.map(e => e.getBoundingClientRect());
-    const topp = Math.min(...rutor.map(r => r.top));
-    const botten = Math.max(...rutor.map(r => r.bottom));
-    const vanster = Math.min(...rutor.map(r => r.left));
-    const hoger = Math.max(...rutor.map(r => r.right));
+    const img = b.querySelector('.ge-bild>img');
+    const hal = b.querySelector('.ge-avatar');
     const lada = b.getBoundingClientRect();
-    return { antal: delar.length, hojd: +(botten - topp).toFixed(1), bredd: +(hoger - vanster).toFixed(1),
-             ladhojd: +lada.height.toFixed(1), ladbredd: +lada.width.toFixed(1) };
+    const ir = img.getBoundingClientRect();
+    const hr = hal.getBoundingClientRect();
+    const delar = [...b.querySelectorAll('.ge-bild,.ge-namn,.ge-undertext')]
+      .map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+    return {
+      laddad: img.complete && img.naturalWidth > 0,
+      naturlig: img.naturalWidth + 'x' + img.naturalHeight,
+      src: img.getAttribute('src'),
+      bildBredd: +ir.width.toFixed(1), bildHojd: +ir.height.toFixed(1),
+      halBredd: +hr.width.toFixed(1), halHojd: +hr.height.toFixed(1),
+      // Hålets mitt uttryckt i BILDENS egna koordinater, 0–1.
+      halMittX: +((hr.left + hr.width / 2 - ir.left) / ir.width).toFixed(4),
+      halMittY: +((hr.top + hr.height / 2 - ir.top) / ir.height).toFixed(4),
+      omfangHojd: +(Math.max(...delar.map(r => r.bottom)) - Math.min(...delar.map(r => r.top))).toFixed(1),
+      omfangBredd: +(Math.max(...delar.map(r => r.right)) - Math.min(...delar.map(r => r.left))).toFixed(1),
+      ladBredd: +lada.width.toFixed(1), ladHojd: +lada.height.toFixed(1),
+    };
+  };
+  // Läser en pixel UR SJÄLVA KONSTVERKET. Sidan serveras från samma origin, så duken smutsas inte.
+  window.__gePixel = (u, v) => {
+    const img = box().querySelector('.ge-bild>img');
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0);
+    const d = g.getImageData(Math.round(u * img.naturalWidth), Math.round(v * img.naturalHeight), 1, 1).data;
+    const max = Math.max(d[0], d[1], d[2]), min = Math.min(d[0], d[1], d[2]);
+    return { r: d[0], g: d[1], b: d[2], a: d[3], mattnad: max - min, ljus: max };
   };
   window.__geFas = (namn, ms) => {
-    render();                                   // ny nod, noll animationer
+    render();
     const b = box();
     if (namn) b.classList.add('ge-fas-' + namn);
     void b.offsetWidth;
@@ -115,8 +113,6 @@ const MATARE = `(() => {
   return true;
 })()`;
 
-// En sida per steg — inte en per påstående. Att öppna studio.html kostar fyra sekunder styck och
-// säger ingenting nytt: samma sida, samma widget, samma bildrutor.
 const cache = new Map();
 
 async function sida(steg) {
@@ -137,79 +133,111 @@ async function sida(steg) {
   }, [steg, LADHOJD]);
   const svar = { page };
   if (!start.finns) svar.fel = `steg ${steg} renderades inte${start.fel ? ': ' + start.fel : ''}`;
-  else await page.evaluate(MATARE);
+  else {
+    await page.evaluate(MATARE);
+    // Bilden laddas asynkront; utan den här väntan mäter provet en tom låda.
+    await page.waitForFunction(() => {
+      const i = document.querySelector('.guardian-emblem .ge-bild>img');
+      return i && i.complete && i.naturalWidth > 0;
+    }, null, { timeout: 15000, polling: 100 }).catch(() => {});
+  }
   cache.set(steg, svar);
   return svar;
 }
 
-const fas = (page, namn, ms) => page.evaluate(([n, m]) => window.__geFas(n, m), [namn, ms]);
-const omfang = page => page.evaluate(() => window.__geOmfang());
-const las = (page, sel) => page.evaluate(s => window.__geEff(s), sel);
+const matt = page => page.evaluate(() => window.__geMatt());
+const pixel = (page, u, v) => page.evaluate(([u, v]) => window.__gePixel(u, v), [u, v]);
 
-// Alla fyra stegen mätta mitt i hyllningen, där vapnet står färdigt och stilla.
 async function allaSteg() {
-  const matt = {};
+  const ut = {};
   for (const s of STEG) {
     const { page, fel } = await sida(s);
-    assert.ok(!fel, `kontrollmätning: ${fel}`);   // utan den här raden vore provet grönt av ingenting
-    await fas(page, 'hyllning', 200);
-    matt[s] = await omfang(page);
-    assert.ok(matt[s].antal > 0, `steg ${s} målar inte en enda del — omfånget är tomt`);
+    assert.ok(!fel, `kontrollmätning: ${fel}`);
+    ut[s] = await matt(page);
+    assert.ok(ut[s].laddad, `steg ${s}: bilden ${ut[s].src} laddades aldrig — widgeten är tom i overlayn`);
   }
-  return matt;
+  return ut;
 }
+
+// ================================================================================================
+// G-BILD — KONSTVERKET ÄR FAKTISKT DÄR
+//
+// Det här är provet som jsdom aldrig kan ersätta. En felstavad sökväg, en fil som inte committades,
+// en bild som ligger utanför den serverade katalogen — allt ger samma sak i jsdom: markup som ser
+// perfekt ut. Först en riktig webbläsare säger om bilden VERKLIGEN laddades.
+// ================================================================================================
+
+test('G-BILD: varje steg laddar sin bild på riktigt', { skip }, async () => {
+  const m = await allaSteg();
+  for (const s of STEG) {
+    assert.ok(m[s].naturlig !== '0x0', `steg ${s}: bilden har inga mått`);
+    assert.ok(m[s].bildBredd > 300, `steg ${s}: bilden målas ${m[s].bildBredd} px bred i en 400 px låda`);
+  }
+});
+
+test('G-BILD: avatarhålet landar på konstverkets egen platshållarskiva', { skip }, async () => {
+  // GEOMETRINS ENDA ÄRLIGA PROV. Tabellen säger var hålet sitter; det här läser pixeln som faktiskt
+  // ligger där i bilden och kräver att den är mörk och omättad — alltså skivan, inte guldet.
+  // Kontrollmätningen ligger i samma prov: en punkt en bit UTANFÖR hålet ska vara mättad eller ljus,
+  // annars mäter provet en bild som är mörk överallt.
+  for (const s of STEG) {
+    const { page, fel } = await sida(s);
+    assert.ok(!fel, `kontrollmätning: ${fel}`);
+    const m = await matt(page);
+    const inne = await pixel(page, m.halMittX, m.halMittY);
+    assert.ok(inne.a > 200, `steg ${s}: hålets mitt är genomskinlig — tabellen pekar utanför emblemet`);
+    assert.ok(inne.mattnad < 40 && inne.ljus < 190,
+      `steg ${s}: hålets mitt är mättad/ljus (${inne.r},${inne.g},${inne.b}) — tabellen pekar på guldet, inte på skivan`);
+    // Kontrollmätningen tar en RING av punkter runt hålet, inte en enda. En enskild punkt landar
+    // förr eller senare i en genomskinlig lucka mellan två guldblad — uppmätt i steg 2, där punkten
+    // 0,34 åt höger föll utanför emblemet och rapporterade svart. Ett prov vars kontroll beror på
+    // var i ornamentet man råkar peka mäter ornamentet, inte påståendet.
+    const ring = [];
+    for (let i = 0; i < 12; i++) {
+      const v = i / 12 * Math.PI * 2;
+      const u = m.halMittX + Math.cos(v) * 0.30, w = m.halMittY + Math.sin(v) * 0.30 / (m.bildHojd / m.bildBredd);
+      if (u < 0.02 || u > 0.98 || w < 0.02 || w > 0.98) continue;
+      ring.push(await pixel(page, u, w));
+    }
+    const malade = ring.filter(q => q.a > 200);
+    assert.ok(malade.length >= 4,
+      `kontrollmätning steg ${s}: bara ${malade.length} av ${ring.length} punkter runt hålet är målade`);
+    assert.ok(malade.some(q => q.mattnad > 40 || q.ljus > 190),
+      `kontrollmätning steg ${s}: ingen punkt runt hålet är mättad eller ljus — bilden är mörk överallt och provet mäter ingenting`);
+  }
+});
 
 // ================================================================================================
 // G-STEG-HÖJD — PRAKTEN VÄXER, OCH DET SYNS
 // ================================================================================================
 
-test('G-STEG-HÖJD: delarnas omfång växer för varje steg, med lådan konstant', { skip }, async () => {
-  const matt = await allaSteg();
-  const hojder = STEG.map(s => matt[s].hojd);
-  assert.deepEqual([...new Set(STEG.map(s => matt[s].ladhojd))], [LADHOJD],
-    `lådan är inte lika hög i alla steg (${STEG.map(s => matt[s].ladhojd).join('/')}) — då mäter provet fixturen, inte prakten`);
+test('G-STEG-HÖJD: emblemets målade omfång växer för varje steg, med lådan konstant', { skip }, async () => {
+  const m = await allaSteg();
+  assert.deepEqual([...new Set(STEG.map(s => m[s].ladHojd))], [LADHOJD],
+    `lådan är inte lika hög i alla steg — då mäter provet fixturen, inte prakten`);
+  const h = STEG.map(s => m[s].omfangHojd);
   for (let i = 1; i < STEG.length; i++) {
-    assert.ok(hojder[i] > hojder[i - 1],
-      `steg ${STEG[i]} målar inte högre än steg ${STEG[i - 1]}: ${hojder.join(' / ')} px`);
-  }
-});
-
-test('G-STEG-HÖJD: fler delar målas för varje steg', { skip }, async () => {
-  const matt = await allaSteg();
-  const antal = STEG.map(s => matt[s].antal);
-  for (let i = 1; i < STEG.length; i++) {
-    assert.ok(antal[i] > antal[i - 1],
-      `steg ${STEG[i]} målar inte fler delar än steg ${STEG[i - 1]}: ${antal.join(' / ')}`);
+    assert.ok(h[i] > h[i - 1],
+      `steg ${STEG[i]} målar inte högre än steg ${STEG[i - 1]}: ${h.join(' / ')} px`);
   }
 });
 
 test('G-STEG-HÖJD: inget steg målar utanför sin 400 px breda låda', { skip }, async () => {
-  // Automatisk höjd betyder att höjden får växa. Bredden får den inte — familjens format är 400 px,
-  // och en del som sticker ut blir avklippt i overlayn utan att någon ser det i studion.
-  const matt = await allaSteg();
+  const m = await allaSteg();
   for (const s of STEG) {
-    assert.equal(matt[s].ladbredd, 400, `steg ${s} har inte 400 px bred låda`);
-    assert.ok(matt[s].bredd <= 400.5,
-      `steg ${s} målar ${matt[s].bredd} px brett i en 400 px låda — kanterna klipps i overlayn`);
+    assert.equal(m[s].ladBredd, 400, `steg ${s} har inte 400 px bred låda`);
+    assert.ok(m[s].omfangBredd <= 400.5,
+      `steg ${s} målar ${m[s].omfangBredd} px brett i en 400 px låda — kanterna klipps i overlayn`);
   }
 });
 
-test('G-STEG-PROGRESSION (synlig halva): stegets nya delar är verkligen målade', { skip }, async () => {
-  // Den här är kontrollen som gör G-STEG-HÖJD ärlig. Omfånget kan växa av ETT stort element lika
-  // gärna som av tre nya — det här provet pekar ut varje ny del vid namn och kräver att just den
-  // har både yta och ärvd opacitet över noll i sitt eget steg.
-  const NYA = { 2: ['innerring', 'kronskold'],
-                3: ['hjort', 'kronspets', 'skold-vanster', 'skold-hoger'],
-                4: ['kristall-vanster', 'kristall-yttre-hoger', 'banderoll'] };
-  for (const steg of ['2', '3', '4']) {
-    const { page, fel } = await sida(steg);
-    assert.ok(!fel, `kontrollmätning: ${fel}`);
-    await fas(page, 'hyllning', 200);
-    for (const del of NYA[steg]) {
-      const m = await las(page, '.ge-' + del);
-      assert.ok(m, `steg ${steg} renderar inte .ge-${del}`);
-      assert.ok(m.o > 0.01, `.ge-${del} är släckt i steg ${steg} (effektiv opacitet ${m && m.o})`);
-      assert.ok(m.bredd > 0 && m.hojd > 0, `.ge-${del} är nollstor i steg ${steg}`);
-    }
+test('G-STEG-HÖJD: avatarhålet är runt i renderad form', { skip }, async () => {
+  // Tabellen bär procenttal mot en bild med egen proportion. Att de blir en CIRKEL på skärmen är ett
+  // annat påstående än att talen ser rimliga ut, och det är det här provet som mäter det.
+  const m = await allaSteg();
+  for (const s of STEG) {
+    const kvot = m[s].halBredd / m[s].halHojd;
+    assert.ok(kvot > 0.88 && kvot < 1.14,
+      `steg ${s}: hålet renderas ${m[s].halBredd}×${m[s].halHojd} px — det är ingen cirkel`);
   }
 });

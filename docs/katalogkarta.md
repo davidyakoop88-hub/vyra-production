@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `e39bb9e`
+Commit: `ca9e4f3`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -102,9 +102,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Ram | `catalog:guardianemblem:1` | ✓ | ✓ | 2026-08-18 | — |
-| Sköld | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-08-18 | — |
-| Hjort | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-08-18 | — |
-| Full prakt | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-08-18 | — |
+| Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-08-18 | — |
+| Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-08-18 | — |
+| Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-08-18 | — |
 
 ### GIFT CAMPAIGN · VARJE TEMA SEPARAT
 

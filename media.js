@@ -907,131 +907,43 @@ function geStegAv(w){let n=Math.round(Number(w.guardianStep));return n>=1&&n<=4?
 
    Reservlistorna nedan ar en sista utvag, inte ett andra beslut. Att de svenska strangarna ar
    identiska med registrets vaktas av ett prov, sa de inte kan glida isar. */
-const GE_RESERV={1:['stralkrans','voluter','lov-vanster','lov-hoger','ram','avatar','diamant','bricka','namn','undertext']};
-GE_RESERV[2]=GE_RESERV[1].concat(['innerring','kronskold']);
-GE_RESERV[3]=GE_RESERV[2].concat(['hjort','kronspets','skold-vanster','skold-hoger']);
-GE_RESERV[4]=GE_RESERV[3].concat(['kristall-vanster','kristall-hoger','kristall-yttre-vanster','kristall-yttre-hoger','banderoll']);
+const GE_RESERV=['bild','avatar','namn','undertext'];
 function geDelar(steg){
   const F=window.VyraGuardianEmblemFas;
-  if(F&&F.STEG&&F.STEG[steg])return F.STEG[steg].delar;
-  return GE_RESERV[steg]||GE_RESERV[3];
+  return (F&&F.DELAR)?F.DELAR:GE_RESERV;
 }
 function geText(w){
   const F=window.VyraGuardianEmblemFas;
   if(F&&typeof F.sprak==='function')return F.text(F.sprak(w));
   return {banderoll:'BESKYDDARE',undertext:'Tack för ditt beskydd'};
 }
-/* GRAFIKEN, ritad efter docs/referens/guardian-emblem.md. Sokvagar med UTSKRIVNA fargattribut i
-   stallet for klasser: varje `ge-`-klass maste vara en registrerad DEL (G1 vaktar det at bada
-   hallen), och en dekorklass inuti en SVG hade sett ut som en del som ingen renderare skapar.
-
-   GRADIENT-ID:N AR GLOBALA I DOKUMENTET och prefixas darfor `geG…`, av exakt samma skal som
-   keyframe-namnen. En `id="guld"` hade kunnat kapas av vilken annan SVG som helst pa sidan. */
-const GE_GULD = grad => '<defs><linearGradient id="' + grad + '" x1="0" y1="0" x2="0" y2="1">'
-  + '<stop offset="0" stop-color="#f7e08a"/><stop offset=".42" stop-color="#d4af37"/>'
-  + '<stop offset="1" stop-color="#8a6d1f"/></linearGradient></defs>';
-/* Hjorten. Geviret ar emblemets BREDASTE form och far sticka ut over ramen — det ar den detaljen som
-   gor vapnet till ett vapen. Vanstra geviret ar ritat en gang och speglas, sa de tva halvorna aldrig
-   kan glida isar. */
-const GE_GEVIR = '<path d="M156 58C130 38 96 24 50 20"/><path d="M138 45C132 26 124 14 112 4"/>'
-  + '<path d="M116 34C106 18 94 8 78 2"/><path d="M92 26C78 14 62 6 46 4"/>'
-  + '<path d="M66 21C50 16 32 16 18 22"/><path d="M50 20C36 26 24 36 18 50"/>'
-  + '<path d="M156 58C147 66 141 76 139 88"/>';
-/* HUVUDET AR RITAT FRAMIFRAN, som i referensen: hog panna som smalnar av mot en mork nos, oronen
-   ut at sidorna UNDER geviret, och ett guldhalsband nedtill. Forsta forsoket gav en rund skalle med
-   stora runda oron — det last som en mus, inte som en hjort. Skillnaden ar avsmalningen: en hjort
-   har ett LANGT ansikte, och tappar man det blir det ett gnagare oavsett hur stort geviret ar. */
-const GE_HJORT = '<svg viewBox="0 0 340 190" aria-hidden="true">' + GE_GULD('geGHjort')
-  + '<g fill="none" stroke="url(#geGHjort)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">'
-  + GE_GEVIR + '<g transform="translate(340,0) scale(-1,1)">' + GE_GEVIR + '</g></g>'
-  + '<g fill="#e8e0d0" stroke="#b9ab8e" stroke-width="1.5">'
-  + '<path d="M144 62c-14-8-30-9-40-2 9 8 20 15 34 17z"/>'
-  + '<path d="M196 62c14-8 30-9 40-2-9 8-20 15-34 17z"/>'
-  + '<path d="M170 46c17 0 27 10 28 26l-2 30c-1 14-4 26-8 36-4 10-9 16-18 16s-14-6-18-16c-4-10-7-22-8-36l-2-30c1-16 11-26 28-26z"/></g>'
-  + '<path d="M142 66c-9-5-19-6-25-2 6 5 13 9 22 11z" fill="#c9b39a"/>'
-  + '<path d="M198 66c9-5 19-6 25-2-6 5-13 9-22 11z" fill="#c9b39a"/>'
-  + '<ellipse cx="156" cy="90" rx="4.4" ry="5.4" fill="#2b2118"/>'
-  + '<ellipse cx="184" cy="90" rx="4.4" ry="5.4" fill="#2b2118"/>'
-  + '<path d="M170 128c5 0 8.2 2.8 8.2 6.2s-3.6 5.4-8.2 5.4-8.2-2-8.2-5.4 3.2-6.2 8.2-6.2z" fill="#2b2118"/>'
-  + '<path d="M170 141v5" stroke="#2b2118" stroke-width="1.8" stroke-linecap="round"/>'
-  + '<g fill="none" stroke="url(#geGHjort)" stroke-width="5" stroke-linecap="round">'
-  + '<path d="M148 156q22 11 44 0"/><path d="M152 168q18 8 36 0"/></g></svg>';
-/* Plymen. FLAMMOR, inte lagerkvistar — guldblad som spretar uppat och utat, med morkgrona blad
-   bakom. Referensen ar tydlig pa den punkten: bladen ar lika breda som ramen, inte en tunn krans. */
-const GE_PLYM = '<svg viewBox="0 0 110 150" aria-hidden="true">' + GE_GULD('geGPlym')
-  + '<g fill="#0d3b2a"><path d="M96 148C86 112 84 74 96 34c10 40 8 78 0 114z"/>'
-  + '<path d="M78 150C64 116 60 78 70 40c12 38 12 76 8 110z"/></g>'
-  + '<g fill="url(#geGPlym)">'
-  + '<path d="M104 150C82 120 66 84 68 44c18 36 30 72 36 106z"/>'
-  + '<path d="M92 150C64 126 42 92 38 52c24 32 44 64 54 98z"/>'
-  + '<path d="M80 150C48 134 20 106 10 68c30 26 58 52 70 82z"/>'
-  + '<path d="M70 150C40 146 12 132 0 108c30 12 56 26 70 42z"/></g></svg>';
-/* Voluterna. Guldslingor som rullar ut at bada sidor och slutar i spiraler. Symmetriskt kring 170. */
-const GE_VOLUTER = '<svg viewBox="0 0 340 88" aria-hidden="true">' + GE_GULD('geGVolut')
-  + '<g fill="none" stroke="url(#geGVolut)" stroke-width="6" stroke-linecap="round">'
-  + '<path d="M170 14C122 14 74 28 42 52c-16 12-24 4-20-6 4-10 18-12 24-2"/>'
-  + '<path d="M170 14c48 0 96 14 128 38 16 12 24 4 20-6-4-10-18-12-24-2"/>'
-  + '<path d="M170 30c-34 2-68 14-90 32"/><path d="M170 30c34 2 68 14 90 32"/></g></svg>';
-/* Sidoskolden: morkgront falt, guldkant, guldhjorthuvud. Samma figur i liten skala som kronskolden. */
-const GE_SIDOSKOLD = '<svg viewBox="0 0 54 66" aria-hidden="true">' + GE_GULD('geGSkold')
-  + '<path d="M27 2 52 10v26c0 15-11 24-25 30C13 60 2 51 2 36V10z" fill="#0d3b2a" stroke="url(#geGSkold)" stroke-width="3" stroke-linejoin="round"/>'
-  + '<g fill="none" stroke="#d4af37" stroke-width="2" stroke-linecap="round">'
-  + '<path d="M22 25 18 16M18 16 13 12M18 16 20 10M32 25 36 16M36 16 41 12M36 16 34 10"/></g>'
-  + '<path d="M27 23c4.4 0 6.9 3.3 6.6 7.8-.3 3.5-1.6 6.4-3.1 8.5-1.1 1.6-2.3 2.8-3.5 3.7-1.2-.9-2.4-2.1-3.5-3.7-1.5-2.1-2.8-5-3.1-8.5-.3-4.5 2.2-7.8 6.6-7.8z" fill="#d4af37"/></svg>';
-/* Kristallen. Spetsig smaragd i guldfattning — den enda delen dar gront ar kontur OCH botten. */
-const GE_KRISTALL = '<svg viewBox="0 0 28 76" aria-hidden="true">'
-  + '<defs><linearGradient id="geGKrist" x1="0" y1="0" x2="0" y2="1">'
-  + '<stop offset="0" stop-color="#8affc4"/><stop offset=".5" stop-color="#2ecc71"/>'
-  + '<stop offset="1" stop-color="#0d3b2a"/></linearGradient></defs>'
-  + '<path d="M14 2 25 26 14 74 3 26z" fill="url(#geGKrist)" stroke="#d4af37" stroke-width="2" stroke-linejoin="round"/>'
-  + '<path d="M14 2v72M3 26h22" stroke="#d4af37" stroke-width="1" opacity=".55"/></svg>';
-/* Kronspetsen: den lilla guldromben med smaragd som sitter i skarven mellan hjortens hals och
-   ramens overkant, med tva vingspetsar ut at sidorna. */
-const GE_KRONSPETS = '<svg viewBox="0 0 64 44" aria-hidden="true">' + GE_GULD('geGSpets')
-  + '<path d="M4 22C14 14 22 12 32 12s18 2 28 10c-10 2-18 6-28 6s-18-4-28-6z" fill="url(#geGSpets)"/>'
-  + '<path d="M32 2 46 22 32 42 18 22z" fill="#2ecc71" stroke="url(#geGSpets)" stroke-width="3" stroke-linejoin="round"/></svg>';
-/* Bottendiamanten: stor smaragd i fyruddig guldinfattning, mitt under ramen. */
-const GE_DIAMANT = '<svg viewBox="0 0 60 60" aria-hidden="true">' + GE_GULD('geGDiam')
-  + '<path d="M30 0 38 22 60 30 38 38 30 60 22 38 0 30 22 22z" fill="url(#geGDiam)"/>'
-  + '<path d="M30 10 44 30 30 50 16 30z" fill="#2ecc71" stroke="#8a6d1f" stroke-width="1.5"/></svg>';
-/* NASTADE DELAR. Allt som HANGER pa ramen ritas inuti den, sa ramen blir det enda positionerings-
-   ankaret for hela vapnet. Alternativet — att placera fjorton delar mot widgetladan — hade betytt
-   att varje steg maste raknas om nar ramens storlek andras. */
-const GE_NASTAD = { innerring:'ram', avatar:'ram', 'lov-vanster':'ram', 'lov-hoger':'ram',
-  kronspets:'ram', kronskold:'ram', 'skold-vanster':'ram', 'skold-hoger':'ram',
-  'kristall-vanster':'ram', 'kristall-hoger':'ram', 'kristall-yttre-vanster':'ram',
-  'kristall-yttre-hoger':'ram', voluter:'ram' };
-function geDel(namn,w,t,delar){
-  const nast = d => delar.includes(d) ? geDel(d,w,t,delar) : '';
+/* GEOMETRIN. Reservtabellen speglar registret i guardian-emblem-fas.js och finns av samma skal som
+   GE_RESERV en gang gjorde: `render()` gor `widgets.map(wh).join('')`, sa EN widget som kastar i sin
+   renderare tar hela duken med sig. Ett prov haller de tva tabellerna identiska. */
+const GE_GEO_RESERV={
+  1:{bild:'steg-1.png',aspect:0.9842,circle:{left:26.81,top:32.71,width:45.47,height:44.33}},
+  2:{bild:'steg-2.png',aspect:1.2071,circle:{left:29.1,top:47.67,width:40.76,height:31.7}},
+  3:{bild:'steg-3.png',aspect:1.2646,circle:{left:27.38,top:47.49,width:43.52,height:32.43}},
+  4:{bild:'steg-4.png',aspect:1.2859,circle:{left:28.98,top:48.22,width:42.17,height:30.56}}
+};
+const GE_BILDBAS='assets/guardian-emblem/';
+function geGeo(steg){
+  const F=window.VyraGuardianEmblemFas;
+  if(F&&F.STEG&&F.STEG[steg])return F.STEG[steg];
+  return GE_GEO_RESERV[steg]||GE_GEO_RESERV[3];
+}
+function geDel(namn,w,t,geo){
   switch(namn){
-    /* Ramen ritas SIST i sin egen kedja: innerringen bakom avataren, dekoren runt om. */
-    case 'ram':return '<div class="ge-ram">'+nast('innerring')+nast('avatar')
-      +nast('lov-vanster')+nast('lov-hoger')+nast('voluter')
-      +nast('skold-vanster')+nast('skold-hoger')
-      +nast('kristall-yttre-vanster')+nast('kristall-yttre-hoger')
-      +nast('kristall-vanster')+nast('kristall-hoger')
-      +nast('kronspets')+nast('kronskold')+'</div>';
-    case 'innerring':return '<div class="ge-innerring"></div>';
-    case 'avatar':{let bild=String(w.guardianAvatar||'').trim();
-      return '<div class="ge-avatar"'+(bild?' style="background-image:url('+VyraSafe.url(bild)+')"':'')+'></div>'}
-    case 'lov-vanster':return '<div class="ge-lov-vanster">'+GE_PLYM+'</div>';
-    case 'lov-hoger':return '<div class="ge-lov-hoger">'+GE_PLYM+'</div>';
-    case 'voluter':return '<div class="ge-voluter">'+GE_VOLUTER+'</div>';
-    case 'diamant':return '<div class="ge-diamant">'+GE_DIAMANT+'</div>';
-    case 'skold-vanster':return '<div class="ge-skold-vanster">'+GE_SIDOSKOLD+'</div>';
-    case 'skold-hoger':return '<div class="ge-skold-hoger">'+GE_SIDOSKOLD+'</div>';
-    case 'kronskold':return '<div class="ge-kronskold">'+GE_SIDOSKOLD+'</div>';
-    case 'kronspets':return '<div class="ge-kronspets">'+GE_KRONSPETS+'</div>';
-    case 'kristall-vanster':return '<div class="ge-kristall-vanster">'+GE_KRISTALL+'</div>';
-    case 'kristall-hoger':return '<div class="ge-kristall-hoger">'+GE_KRISTALL+'</div>';
-    case 'kristall-yttre-vanster':return '<div class="ge-kristall-yttre-vanster">'+GE_KRISTALL+'</div>';
-    case 'kristall-yttre-hoger':return '<div class="ge-kristall-yttre-hoger">'+GE_KRISTALL+'</div>';
-    case 'hjort':return '<div class="ge-hjort">'+GE_HJORT+'</div>';
-    case 'stralkrans':return '<div class="ge-stralkrans"></div>';
-    /* Brickan: en STAENDE romb med praktstegets siffra. Siffran motroteras av CSS — en romb som
-       roterar sitt eget innehall gor talet olasligt, och det ar en form, inte en layout. */
-    case 'bricka':return '<div class="ge-bricka"><b>'+geStegAv(w)+'</b></div>';
-    case 'banderoll':return '<div class="ge-banderoll">'+VyraSafe.text(t.banderoll)+'</div>';
+    /* Bilden bar sitt eget hojd-bredd-forhallande genom `padding-top` i procent. Den tekniken later
+       ladan folja konstverket i stallet for tvartom — satter man hojden i pixlar racker det att ett
+       steg byts ut mot en bild med annan proportion for att emblemet ska bli utdraget. */
+    case 'bild':return '<div class="ge-bild" style="padding-top:'+(geo.aspect*100).toFixed(3)+'%">'
+      +'<img src="'+GE_BILDBAS+geo.bild+'" alt="">'
+      +geDel('avatar',w,t,geo)+'</div>';
+    /* Avatarhalet star dar det MATTS i bilden, inte dar nagon gissat. Samma falt som mvpf-photo. */
+    case 'avatar':{let bild=String(w.guardianAvatar||'').trim(),c=geo.circle;
+      return '<div class="ge-avatar" style="left:'+c.left+'%;top:'+c.top+'%;width:'+c.width+'%;height:'+c.height+'%">'
+        +(bild?'<img src="'+VyraSafe.url(bild)+'" alt="">':'')+'</div>'}
     case 'namn':return w.guardianShowUsername===false?'':'<div class="ge-namn">'+VyraSafe.text(w.guardianUsername||'@Guardian')+'</div>';
     case 'undertext':{let egen=String(w.guardianCustomText||'').trim();
       return '<div class="ge-undertext">'+VyraSafe.text(egen||t.undertext)+'</div>'}
@@ -1039,9 +951,9 @@ function geDel(namn,w,t,delar){
   }
 }
 function guardianEmblemHtml(w){
-  let steg=geStegAv(w),t=geText(w),delar=geDelar(steg);
-  let inne=delar.filter(d=>!GE_NASTAD[d]).map(d=>geDel(d,w,t,delar)).join('');
-  return `<div class="widget guardian-emblem ge-step-${steg}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||400}px;height:${w.height||380}px;zoom:${w.widgetScale||1}">${inne}${selected===w.id?'<span class="resize-handle">&#8600;</span>':''}</div>`;
+  let steg=geStegAv(w),t=geText(w),geo=geGeo(steg),delar=geDelar(steg);
+  let inne=delar.filter(d=>d!=='avatar').map(d=>geDel(d,w,t,geo)).join('');
+  return `<div class="widget guardian-emblem ge-step-${steg}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||400}px;height:${w.height||480}px;zoom:${w.widgetScale||1}">${inne}${selected===w.id?'<span class="resize-handle">&#8600;</span>':''}</div>`;
 }
 const emblemWh=wh;wh=function(w){return w.type==='templateGuardianEmblem'?guardianEmblemHtml(w):emblemWh(w)};
 
@@ -1102,7 +1014,7 @@ const emblemBind=bind;bind=function(){emblemBind();if(view!=='editor')return;let
 const emblemCatalog=bind;bind=function(){emblemCatalog();if(view!=='editor'&&view!=='overlay')return;
   let catalog=document.querySelector('.widget-catalog');
   if(!catalog||catalog.querySelector('[data-guardian-emblem]'))return;
-  let geSteg=[['1','Ram','400×330 · ramen och guldet'],['2','Sköld','400×360 · grön innerring och hjortsköld'],['3','Hjort','400×495 · geviret och sidosköldarna'],['4','Full prakt','400×585 · kristaller och banderoll']];
+  let geSteg=[['1','Ram','400×450 · ringen ensam'],['2','Hjort','400×535 · geviret och två kristaller'],['3','Krona','400×560 · krona och fyra kristaller'],['4','Kungakrona','400×570 · kungakronan och vingarna']];
   let section=document.createElement('section');
   section.dataset.guardianEmblem='1';
   section.className='guardian-emblem-template-section';

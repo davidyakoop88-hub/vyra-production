@@ -43,6 +43,9 @@
 
   const STEGNYCKLAR = ['1', '2', '3', '4'];
 
+  // Var bilderna bor. En strang, sa renderaren och proven aldrig kan peka pa olika mappar.
+  const BILDBAS = 'assets/guardian-emblem/';
+
   // FASERNA ÄR DESAMMA I VARJE STEG. Guardian Welcome lät hållet variera med storleken; här gör
   // det inte det, och skälet är att praktnivån redan är skillnaden. Ett steg 1 som spelade kortare
   // än ett steg 4 hade känts som två olika widgetar i stället för en widget med ett reglage.
@@ -71,25 +74,31 @@
   // DELARNA ÄR KUMULATIVA OCH ORDNADE. Varje steg börjar med föregående stegs lista, oförändrad,
   // och lägger till sina egna sist. Renderaren går igenom listan i ordning, så samma tabell styr
   // både VAD som ritas och I VILKEN ORDNING det staplas — ingen andra tabell att hålla i synk.
-  // DELARNA, LASTA UR docs/referens/guardian-emblem.md. Ordningen ar den de TILLKOM i, inte den de
-  // hamnar i — placeringen bor i CSS `order` och `z-index`. Se kommentaren dar.
-  //
-  // Steg 1 ar avatarramen med guld runt: ram, plymer, voluter, bottendiamant. Steg 2 lagger till
-  // gron innerring och en liten hjortskold ovanpa ramen. Steg 3 ar det som gor emblemet till ett
-  // VAPEN: hjorten med geviret, kronspetsen och de tva sidoskoldarna. Steg 4 ar full stat —
-  // kristaller och GUARDIAN-banderollen.
-  const STEG_1 = ['stralkrans', 'voluter', 'lov-vanster', 'lov-hoger', 'ram', 'avatar',
-    'diamant', 'bricka', 'namn', 'undertext'];
-  const STEG_2 = STEG_1.concat(['innerring', 'kronskold']);
-  const STEG_3 = STEG_2.concat(['hjort', 'kronspets', 'skold-vanster', 'skold-hoger']);
-  const STEG_4 = STEG_3.concat(['kristall-vanster', 'kristall-hoger',
-    'kristall-yttre-vanster', 'kristall-yttre-hoger', 'banderoll']);
+  // DELARNA. Fyra i varje steg, och samma fyra: emblemet ar en BILD, inte en hop av handritade
+  // former. Det ar hela poangen med ombyggnaden — konstverket ar levererat som PNG och ska inte
+  // ritas om i SVG, lika lite som Battle MVP ritar om sina ramar.
+  const DELAR = ['bild', 'avatar', 'namn', 'undertext'];
 
+  // REGISTRET, matt ur bilderna 2026-08-18 och inte skattat.
+  //
+  // `aspect` ar hojd delat med bredd for den beskurna bilden. `circle` ar AVATARHALET i procent av
+  // bilden — samma falt som `'battlemvp.frame'` bar for assets/mvp-frames/. Halet mattes som storsta
+  // sammanhangande yta av omattade morka pixlar, och alla fyra gav fyllnadsgraden 0,78 mot sin
+  // bounding box. Det ar pi/4, alltsa exakt vad en CIRKEL ger — mätningen hittade en skiva i varje
+  // bild, inte en skugga.
+  //
+  // PRAKTEN VAXER I HOJD. Bredden ar 400 px i alla steg, sa `aspect` ar det praktnivan betalar med:
+  // 0,98 → 1,21 → 1,26 → 1,29. Ett femte steg som inte ar hogre an sitt foregaende ar inte en hogre
+  // praktniva, och en vakt sager ifran.
   const STEG = {
-    1: { namn: 'Ram', delar: STEG_1 },
-    2: { namn: 'Sköld', delar: STEG_2 },
-    3: { namn: 'Hjort', delar: STEG_3 },
-    4: { namn: 'Full prakt', delar: STEG_4 },
+    1: { namn: 'Ram', bild: 'steg-1.png', aspect: 0.9842,
+      circle: { left: 26.81, top: 32.71, width: 45.47, height: 44.33 } },
+    2: { namn: 'Hjort', bild: 'steg-2.png', aspect: 1.2071,
+      circle: { left: 29.1, top: 47.67, width: 40.76, height: 31.7 } },
+    3: { namn: 'Krona', bild: 'steg-3.png', aspect: 1.2646,
+      circle: { left: 27.38, top: 47.49, width: 43.52, height: 32.43 } },
+    4: { namn: 'Kungakrona', bild: 'steg-4.png', aspect: 1.2859,
+      circle: { left: 28.98, top: 48.22, width: 42.17, height: 30.56 } },
   };
 
   // ---- Språket -----------------------------------------------------------------------------------
@@ -146,7 +155,7 @@
     rensa: id => root.clearTimeout(id),
   };
 
-  const delar = steg => (STEG[steg] && STEG[steg].delar) || null;
+  const delar = steg => (STEG[steg] ? DELAR : null);
   const total = () => FASER.reduce((s, f) => s + TIDER[f], 0);
 
   // Steget läses ur lådans EGNA klasser i stället för ur widgetobjektet. Skälet är att det är den
@@ -189,7 +198,7 @@
   }
 
   root.VyraGuardianEmblemFas = {
-    PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, KORTASTE_VISNING, TEXT_NYCKLAR,
+    PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, DELAR, BILDBAS, KORTASTE_VISNING, TEXT_NYCKLAR,
     delar, total, stegAv, spela, avbryt, klocka, sprak, text,
   };
 

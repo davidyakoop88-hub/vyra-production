@@ -207,17 +207,16 @@ test('G1: ingen CSS stylar ett steg som inte finns i registret', () => {
 });
 
 test('G1: varje del som något steg bär har minst en CSS-regel', () => {
-  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
+  const { DELAR } = require('./helpers/guardian-emblem-fas-register.js');
   const styled = new Set(cssdelar());
-  const alla = [...new Set(Object.values(STEG).flatMap(s => s.delar))];
-  const utan = alla.filter(d => !styled.has(d));
+  const utan = DELAR.filter(d => !styled.has(d));
   assert.deepEqual(utan, [],
     `delen renderas men stylas inte: ${utan.join(', ')} — ett osynligt element i vapnet`);
 });
 
 test('G1: ingen del stylas som inget steg bär', () => {
-  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  const burna = new Set(Object.values(STEG).flatMap(s => s.delar));
+  const { DELAR } = require('./helpers/guardian-emblem-fas-register.js');
+  const burna = new Set(DELAR);
   const foraldralosa = cssdelar().filter(d => !burna.has(d));
   assert.deepEqual(foraldralosa, [],
     `CSS stylar ${foraldralosa.join(', ')} som ingen renderare skapar — död kod som ser levande ut`);
@@ -283,38 +282,77 @@ test('G-SLUT: varje steg har ett eget namn som katalogen kan skriva ut', () => {
 // så CSS:ens staplingsordning och renderarens ordning kan hållas ihop utan en andra tabell.
 // ================================================================================================
 
-test('G-STEG-PROGRESSION: varje steg bär allt det föregående bär, i samma ordning', () => {
+test('G-STEG-PROGRESSION: varje steg har sin egen bildfil, och alla fyra finns på disk', () => {
+  // KONSTVERKET AR REGISTRET NU. Delarna ar fyra och lika i varje steg — det som skiljer nivaerna at
+  // ar BILDEN. En saknad fil ger en trasig bildikon i overlayn mitt i en sandning, och det ar den
+  // sortens fel som aldrig hinner lagas i tid.
+  const { STEG, BILDBAS } = require('./helpers/guardian-emblem-fas-register.js');
+  const saknas = [], sma = [];
+  for (const [n, s] of Object.entries(STEG)) {
+    const p = path.join(ROOT, BILDBAS + s.bild);
+    if (!fs.existsSync(p)) { saknas.push(`${n}: ${s.bild}`); continue }
+    if (fs.statSync(p).size < 20000) sma.push(`${n}: ${s.bild} (${fs.statSync(p).size} B)`);
+  }
+  assert.deepEqual(saknas, [], `bildfilen saknas: ${saknas.join(', ')}`);
+  assert.deepEqual(sma, [], `bildfilen är i praktiken tom: ${sma.join(', ')}`);
+});
+
+test('G-STEG-PROGRESSION: inga två steg delar bild', () => {
   const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  for (let n = 2; n <= 4; n++) {
-    const forra = STEG[n - 1].delar, denna = STEG[n].delar;
-    assert.deepEqual(denna.slice(0, forra.length), forra,
-      `steg ${n} bär inte steg ${n - 1}:s delar som prefix — prakten byts ut i stället för att växa`);
+  const bilder = Object.values(STEG).map(s => s.bild);
+  assert.equal(new Set(bilder).size, bilder.length,
+    `två praktsteg pekar på samma bild: ${bilder.join(', ')} — då är de inte två nivåer`);
+});
+
+test('G-STEG-PROGRESSION: emblemet blir högre för varje steg', () => {
+  // Bredden ar 400 px i alla steg, sa `aspect` ar det praktnivan betalar med. Det ar samma pastaende
+  // som G-STEG-HOJD mater i webblasaren, fast last ur registret: hall bada, sa kan varken tabellen
+  // eller bilden glida ensam.
+  const { STEG, STEGNYCKLAR } = require('./helpers/guardian-emblem-fas-register.js');
+  const a = STEGNYCKLAR.map(n => STEG[n].aspect);
+  for (let i = 1; i < a.length; i++) {
+    assert.ok(a[i] > a[i - 1],
+      `steg ${i + 1} är inte högre än steg ${i}: ${a.join(' / ')} — prakten växer inte`);
   }
 });
 
-test('G-STEG-PROGRESSION: varje steg lägger till minst en ny del', () => {
-  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  for (let n = 2; n <= 4; n++) {
-    const nya = STEG[n].delar.length - STEG[n - 1].delar.length;
-    assert.ok(nya >= 1,
-      `steg ${n} lägger inte till någonting utöver steg ${n - 1} — två steg som ser likadana ut`);
-  }
-});
-
-test('G-STEG-PROGRESSION: ingen del förekommer två gånger i samma steg', () => {
+test('G-STEG-PROGRESSION: avatarhålet är runt och ligger inne i bilden', () => {
+  // KONTROLLMATNINGEN FOR HELA GEOMETRIN. Halet mattes automatiskt ur bilderna, och ett matfel skulle
+  // annars folja med tyst hela vagen till sandningen. En SKIVA ar lika bred som hog i pixlar —
+  // procenttalen skiljer sig at eftersom bilderna har olika proportioner, sa jamforelsen maste
+  // rakna tillbaka till pixlar via `aspect`.
   const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
   for (const [n, s] of Object.entries(STEG)) {
-    assert.equal(new Set(s.delar).size, s.delar.length,
-      `steg ${n} listar samma del två gånger — den skulle renderas dubbelt`);
+    const c = s.circle;
+    const bredd = c.width, hojd = c.height * s.aspect;      // bada nu i samma enhet
+    const kvot = bredd / hojd;
+    assert.ok(kvot > 0.86 && kvot < 1.16,
+      `steg ${n}: hålet är ${kvot.toFixed(2)} gånger bredare än högt — det är ingen cirkel`);
+    assert.ok(c.left > 5 && c.top > 5 && c.left + c.width < 95 && c.top + c.height < 95,
+      `steg ${n}: hålet ligger i bildens kant (${c.left}/${c.top} + ${c.width}×${c.height}) — mätningen tog något annat`);
+    assert.ok(c.width > 25 && c.width < 60,
+      `steg ${n}: hålet är ${c.width} % brett — orimligt för en avatarring`);
   }
 });
 
-test('G-STEG-PROGRESSION: delnamnen är ASCII, eftersom de blir CSS-klasser', () => {
-  // Samma regel som fasnamnen: `oppna` och `upplosning`, inte `öppna` och `upplösning`. Resten av
-  // repot håller sig till a-z i klassnamn (avtackning, avlasning, uppstigning).
+test('G-STEG-PROGRESSION: media.js reservtabell är identisk med registret', () => {
+  // Renderaren far inte kasta om syskonfilen saknas, sa den bar en egen kopia av geometrin. Tva
+  // tabeller som ska vara lika ar tva tabeller som kan glida isar — det har provet ar det enda som
+  // hindrar det.
   const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  const fel = [...new Set(Object.values(STEG).flatMap(s => s.delar))].filter(d => !/^[a-z0-9-]+$/.test(d));
-  assert.deepEqual(fel, [], `delnamnet duger inte som CSS-klass: ${fel.join(', ')}`);
+  const rad = MEDIA.match(/const GE_GEO_RESERV=\{([\s\S]*?)\n\};/);
+  assert.ok(rad, 'hittade ingen GE_GEO_RESERV i media.js');
+  for (const [n, s] of Object.entries(STEG)) {
+    const post = rad[1].match(new RegExp(`\\n?\\s*${n}:\\{([^}]*\\}[^}]*)\\}`));
+    assert.ok(post, `reservtabellen saknar steg ${n}`);
+    const text = post[1];
+    assert.ok(text.includes(`'${s.bild}'`), `steg ${n}: reservtabellen pekar på fel bild`);
+    assert.ok(text.includes(String(s.aspect)), `steg ${n}: reservtabellens aspect har glidit ifrån registret`);
+    for (const [nyckel, varde] of Object.entries(s.circle)) {
+      assert.ok(text.includes(`${nyckel}:${varde}`),
+        `steg ${n}: reservtabellens circle.${nyckel} är inte ${varde}`);
+    }
+  }
 });
 
 // ================================================================================================
@@ -734,7 +772,7 @@ test('G-SPRÅK: renderaren kastar inte om syskonfilen saknas, och reservtexten �
 // FABRIKEN, PANELEN OCH MARKUPEN — kontraktet runt vaktnätet
 // ================================================================================================
 
-const MATT = { 1: [400, 330], 2: [400, 360], 3: [400, 495], 4: [400, 585] };
+const MATT = { 1: [400, 450], 2: [400, 535], 3: [400, 560], 4: [400, 570] };
 
 test('Fabriken: catalog:guardianemblem:<steg> ger rätt typ, steg och mått', () => {
   const { STEGNYCKLAR } = require('./helpers/guardian-emblem-fas-register.js');
@@ -783,64 +821,58 @@ test('Panelen: fälten ligger på den delade live-vägen, inte på render()', ()
     'ett Emblem-fält bygger om hela vyn från en oninput — fältet man skriver i byts ut vid varje tangenttryck');
 });
 
-test('Markup: widgeten bär sin stegklass och stegets delar — och inga andras', () => {
-  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  for (const steg of ['1', '4']) {
+test('Markup: widgeten bär sin stegklass och sitt stegs bild', () => {
+  const { STEG, BILDBAS } = require('./helpers/guardian-emblem-fas-register.js');
+  for (const steg of ['1', '2', '3', '4']) {
     const { lada } = boot([geWidget('ge' + steg, { guardianStep: Number(steg) })]);
     const box = lada('ge' + steg);
     assert.ok(box, `steg ${steg} renderades inte`);
     assert.ok(box.classList.contains('guardian-emblem'), 'familjeklassen saknas');
     assert.ok(box.classList.contains('ge-step-' + steg), `stegklassen ge-step-${steg} saknas`);
-    for (const del of STEG[steg].delar) {
-      assert.ok(box.querySelector('.ge-' + del), `delen .ge-${del} saknas i steg ${steg}`);
-    }
-    // Kontrollmätning åt andra hållet: ett lågt steg får INTE bära ett högre stegs delar.
-    const hogre = STEG['4'].delar.filter(d => !STEG[steg].delar.includes(d));
-    for (const del of hogre) {
-      assert.equal(box.querySelector('.ge-' + del), null,
-        `steg ${steg} renderar .ge-${del} som hör till en högre praktnivå`);
-    }
+    const img = box.querySelector('.ge-bild>img');
+    assert.ok(img, `steg ${steg} bär ingen bild`);
+    assert.equal(img.getAttribute('src'), BILDBAS + STEG[steg].bild,
+      `steg ${steg} laddar fel bild — då visar praktnivån någon annans emblem`);
   }
 });
 
-test('Markup: hjorten är ritad, inte skriven — och först i steg 3', () => {
-  // Referensen (docs/referens/guardian-emblem.md) ar tydlig: steg 1 och 2 har INGEN hjort, bara
-  // ramen och guldet. Hjorten med geviret ar det som gor emblemet till ett vapen, och den ar
-  // darfor steg 3:s hela poang. Kontrollmatningen ligger i samma prov: finns den i steg 3, sa ar
-  // franvaron i steg 2 en franvaro och inte en trasig renderare.
-  const tre = boot([geWidget('ge3', { guardianStep: 3 })]);
-  assert.ok(tre.lada('ge3').querySelector('.ge-hjort svg'), 'hjorten bär ingen SVG i steg 3');
-  const tva = boot([geWidget('ge2', { guardianStep: 2 })]);
-  assert.equal(tva.lada('ge2').querySelector('.ge-hjort'), null,
-    'steg 2 renderar hjorten — den hör till steg 3 och uppåt');
-});
-
-test('Markup: ramen är rund och bär avataren — aldrig en sköld', () => {
-  const { lada } = boot([geWidget('ge1', { guardianStep: 1 })]);
-  const box = lada('ge1');
-  assert.ok(box.querySelector('.ge-ram'), 'ramen saknas');
-  assert.ok(box.querySelector('.ge-ram .ge-avatar'), 'avataren ligger inte inuti ramen');
-  assert.equal(box.querySelector('.ge-skold'), null,
-    'en central sköld renderas — referensen har en RUND ram, sköldformen finns bara i sidoemblemen');
-});
-
-test('Markup: användarnamnet går att stänga av, och det syns', () => {
-  // Kontrollmätning enligt §7: namnet måste FINNAS när det är påslaget, annars är frånvaron
-  // trivialt sann.
-  const pa = boot([geWidget('geA', { guardianShowUsername: true })]);
-  assert.ok(pa.lada('geA').querySelector('.ge-namn'),
-    'kontrollmätning: namnet syns inte ens när det är påslaget');
-  const av = boot([geWidget('geB', { guardianShowUsername: false })]);
-  assert.equal(av.lada('geB').querySelector('.ge-namn'), null,
-    'namnet renderas trots att guardianShowUsername är false');
-});
-
-test('Markup: praktstegets bricka bär stegets siffra', () => {
+test('Markup: bildlådan bär sitt eget höjdförhållande', () => {
+  // `padding-top` i procent later ladan folja konstverket. Satts hojden i pixlar racker det att ett
+  // steg byts mot en bild med annan proportion for att emblemet ska bli utdraget — och det syns
+  // forst i sandning.
+  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
   for (const steg of ['1', '4']) {
-    const { lada } = boot([geWidget('geb' + steg, { guardianStep: Number(steg) })]);
-    assert.equal(lada('geb' + steg).querySelector('.ge-bricka').textContent.trim(), steg,
-      `brickan visar inte siffran ${steg}`);
+    const { lada } = boot([geWidget('gea' + steg, { guardianStep: Number(steg) })]);
+    const bild = lada('gea' + steg).querySelector('.ge-bild');
+    // JAMFOR TALET, INTE STRANGEN. DOM:en normaliserar bort avslutande nollor — `98.420%` laser
+    // tillbaka som `98.42%`, och ett stranglikhetsprov hade fallit pa formatering i stallet for pa
+    // proportionen det pastar sig vakta.
+    const uppmatt = parseFloat(bild.style.paddingTop);
+    assert.match(bild.style.paddingTop, /%$/, `steg ${steg}: höjdförhållandet är inte i procent`);
+    assert.ok(Math.abs(uppmatt - STEG[steg].aspect * 100) < 0.01,
+      `steg ${steg} har fel höjdförhållande: ${uppmatt} mot väntade ${STEG[steg].aspect * 100}`);
   }
+});
+
+test('Markup: avatarhålet står där det mättes i bilden', () => {
+  const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
+  for (const steg of ['1', '3']) {
+    const { lada } = boot([geWidget('geb' + steg, { guardianStep: Number(steg) })]);
+    const hal = lada('geb' + steg).querySelector('.ge-bild .ge-avatar');
+    assert.ok(hal, `steg ${steg}: avatarhålet ligger inte inuti bildlådan`);
+    const c = STEG[steg].circle;
+    assert.equal(hal.style.left, c.left + '%', `steg ${steg}: fel vänsterkant`);
+    assert.equal(hal.style.top, c.top + '%', `steg ${steg}: fel överkant`);
+    assert.equal(hal.style.width, c.width + '%', `steg ${steg}: fel bredd`);
+    assert.equal(hal.style.height, c.height + '%', `steg ${steg}: fel höjd`);
+  }
+});
+
+test('Markup: en egen avatarbild saneras i stället för att tolkas som markup', () => {
+  const { lada } = boot([geWidget('ge1', { guardianAvatar: 'javascript:alert(1)' })]);
+  const img = lada('ge1').querySelector('.ge-avatar img');
+  if (img) assert.ok(!/^javascript:/i.test(img.getAttribute('src') || ''),
+    'en avatar-URL gick oskadd genom VyraSafe');
 });
 
 test('Markup: egen text ersätter undertexten när den är ifylld', () => {

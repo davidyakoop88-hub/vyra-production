@@ -1,5 +1,84 @@
 # VYRA Project State
 
+## Checkpoint 39 — Guardian Emblem är konstverket, inte en teckning av det (2026-08-18)
+
+Checkpoint 38 byggde om kompositionen för hand i SVG efter referensbilderna. Det var fortfarande fel
+svar på fel fråga: **konstverket var levererat som PNG och skulle aldrig ha ritats om.** Familjen är
+nu byggd på samma mönster som Battle MVP redan använder — en bild per steg plus en geometritabell.
+
+### Vad som gjordes
+
+| | Före | Nu |
+|---|---|---|
+| Emblemet | 21 handritade delar i SVG | **fyra bilder**, en per praktsteg |
+| Delregistret | 10/12/16/21 delar per steg | `['bild','avatar','namn','undertext']` — samma fyra i alla steg |
+| Progressionen | vilka delar som finns | **`aspect`**: 0,98 → 1,21 → 1,26 → 1,29 |
+| Avatarhålet | en CSS-position | **mätt ur bilden**, i procent, som `'battlemvp.frame'` bär sina |
+| CSS-filen | 430 rader | 210 rader |
+| Paletten | skogsgrönt och smaragd | guld, vitt och **isblått** — läst ur bilderna |
+
+### Hur bilderna kom hit
+
+Fyra försök innan filerna nådde containern, och varje misslyckande var samma sak i en ny form:
+**sessionen kör i molnet och når varken din disk eller dina bilagor.** UUID:n, en Windows-sökväg och
+en GitHub-kommentar gav alla samma vägg — kommentarsbilagor ligger på `user-attachments`, som
+proxyn nekar. Det som fungerade var att committa bilderna **i repot**.
+
+Originalarken ligger kvar som `kalla-ark-a.png` och `kalla-ark-b.png`. Utan dem hade en ny mätning
+krävt en ny leverans.
+
+### Mätningarna
+
+**Bakgrunden** är en jämn guldgradient som ligger nära ornamentets guld — en färgnyckel hade ätit hål
+i emblemet. Flood fill från bildkanten som jämför mot **grannen** i stället för mot ett globalt
+frövärde följer gradienten och stannar vid varje hård kant.
+
+**Avatarhålet** mättes som största sammanhängande yta av omättade mörka pixlar. Första försöket tog
+bounding box över alla sådana pixlar och fick 87 % bredd — den ramade in varje skugga mellan
+guldbladen. Alla fyra ger nu fyllnadsgrad **0,78**, alltså π/4. Det är exakt vad en cirkel ger:
+mätningen hittade en skiva i varje bild, inte en skugga.
+
+### Vaktnätet följde designen
+
+Delregistret krympte från 21 till 4, så `G-STEG-PROGRESSION` mäter inte längre *vilka delar som
+tillkommer* — det påståendet är inte längre sant om designen. Den mäter nu i stället:
+
+- varje steg har sin **egen** bildfil, och alla fyra finns på disk med rimlig storlek
+- inga två steg delar bild
+- `aspect` växer strikt med steget
+- hålet är **runt** (bredd/höjd inom 0,86–1,16 efter omräkning via `aspect`) och ligger inne i bilden
+- `media.js` reservtabell är **identisk** med registret, fält för fält
+
+Plus en helt ny vakt i webbläsaren som jsdom aldrig kan ersätta:
+
+**`G-BILD`** — bilden laddades på riktigt (`naturalWidth > 0`), och avatarhålets mitt landar på en
+**mörk, omättad pixel i själva konstverket**. En felstavad sökväg ger markup som ser perfekt ut i
+jsdom; bara en riktig webbläsare säger om bilden finns. Kontrollmätningen tar en **ring** av tolv
+punkter runt hålet — en enda punkt landade i en genomskinlig lucka mellan två guldblad i steg 2 och
+rapporterade svart, och ett prov vars kontroll beror på var i ornamentet man råkar peka mäter
+ornamentet, inte påståendet.
+
+**9 av 9 mutationer** fällde rätt vakt.
+
+### Två fel som bara fotot kunde se
+
+1. **Avataren låg bakom konstverket.** Bilden bär sin egen platshållare i hålet — en ogenomskinlig
+   svart skiva. En avatar under den hade aldrig synts, i någon sändning, någonsin. Den ligger nu
+   över, med genomskinlig botten så platshållaren syns tills en Guardian anländer.
+2. **Höjdförhållandet måste bo i `padding-top`, inte i pixlar.** Annars räcker det att ett steg byts
+   mot en bild med annan proportion för att emblemet ska bli utdraget.
+
+### Lärdomen
+
+**Ritade om något som redan var ritat.** Referensen fanns, den var levererad som färdig grafik, och
+jag byggde två hela omgångar SVG innan frågan "ska det här vara en bild?" ställdes. Repot hade redan
+svaret — `assets/mvp-frames/` med `'battlemvp.frame'` bredvid — och mönstret var en `grep` bort.
+**Leta efter det befintliga mönstret innan du bygger ett nytt.**
+
+### Sviter
+
+Node 1302/1302 gröna. Emblemets fem browservakter gröna.
+
 ## Checkpoint 38 — Guardian Emblem byggd om mot referensbilderna (2026-08-18)
 
 Checkpoint 37:s emblem var **tekniskt rätt och visuellt fel**: en sköld med en hjort i, när

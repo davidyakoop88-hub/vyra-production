@@ -38,13 +38,13 @@ function rymd({ sprakkod = 'sv-SE', vyraLang = null, timer = null } = {}) {
 }
 
 const bas = rymd();
-const { PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, KORTASTE_VISNING } = bas.VyraGuardianEmblemFas;
+const { PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, DELAR, BILDBAS, KORTASTE_VISNING } = bas.VyraGuardianEmblemFas;
 
 // Klonat ur vm-rymden med flit. En array som skapats i en annan realm har en annan
 // Array.prototype, och assert/strict jämför prototyper — deepEqual faller annars på två listor som
 // ser identiska ut i utskriften. Bara data korsar gränsen; funktionerna hör hemma i rymden.
 module.exports = Object.assign(
-  JSON.parse(JSON.stringify({ PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, KORTASTE_VISNING })),
+  JSON.parse(JSON.stringify({ PREFIX, FASER, TIDER, STEG, STEGNYCKLAR, DELAR, BILDBAS, KORTASTE_VISNING })),
   {
     rymd,
     sprakIRymd: (widget, opts) => rymd(opts).VyraGuardianEmblemFas.sprak(widget),
