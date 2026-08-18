@@ -103,13 +103,16 @@ async function dra(page, riktning, dx, dy) {
   await page.waitForTimeout(350);
 }
 
-test('den valda widgeten har handtag i alla atta lagen', { skip }, async () => {
+test('den valda widgeten har handtag i alla atta lagen plus rotationens', { skip }, async () => {
+  // Kontraktet vaxte 2026-08-18: atta vaderstreck + rotationslollipopen ('rot') ur
+  // feat/rotation-ui. Rotationens beteende provas i widget-rotation.browser.test.js —
+  // har pinnas bara UPPSATTNINGEN, sa ett tappat eller paketerat handtag syns direkt.
   const { page } = await editorMedWidget();
   const funna = await page.evaluate(() =>
     [...document.querySelectorAll('[data-vyra-handle]')].map(e => e.dataset.vyraHandle).sort());
   await page.close();
-  assert.deepEqual(funna, [...RIKTNINGAR].sort(),
-    `hittade ${funna.length} handtag (${funna.join(',')}) — kontraktet ar atta, ett per vaderstreck`);
+  assert.deepEqual(funna, [...RIKTNINGAR, 'rot'].sort(),
+    `hittade ${funna.length} handtag (${funna.join(',')}) — kontraktet ar atta vaderstreck + rot`);
 });
 
 test('handtagen sitter pa widgetens kanter och horn', { skip }, async () => {

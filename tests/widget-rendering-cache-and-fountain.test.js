@@ -48,13 +48,16 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // en andring utan bump ar en tyst gammal fil. widget-factory.js och fan-fas.js ar ororda.
   // Bumpad 2026-08-18 igen for scenbakgrunden: studio.css (nodens tva ytor + kontrollen) och
   // vyra-historik.js (stageBackground i projektionen) andrades; stage-background.js ar ny (v=1).
-  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  // Bumpad 2026-08-18 en tredje gang for rotations-UI:t: studio.css (rot-handtaget + faltet),
+  // vyra-rotation.js (panelfaltet) och widget-handles.js (handtag + kontraroterade deltan).
+  assert.match(studio, /studio\.css\?v=20260818-rotation-ui/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   // Bumpad 2026-08-18 for rotationen: widget-handles.js andrades (delegering till komposoren +
   // center-origin-matten); vyra-rotation.js ar ny (v=1).
-  assert.match(studio, /vyra-rotation\.js\?v=1/);
-  assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
+  assert.match(studio, /vyra-rotation\.js\?v=20260818-rotation-ui/);
+  assert.match(studio, /vyra-proportioner\.js\?v=20260818-rotation-ui/);
+  assert.match(studio, /widget-handles\.js\?v=20260818-rotation-ui/);
   assert.match(studio, /[^-]media\.js\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);

@@ -62,12 +62,53 @@
 
   window.VyraTransform = { applicera: applicera, appliceraAlla: appliceraAlla };
 
+  // ---- Panelfaltet: injiceras efter Hojd-faltet i den RENDERADE panelen (tech-debt paragraf 9:
+  // dynamiskt laddade panelbyggare hamnar alltid utanpa ett statiskt skripts props-wrap, sa
+  // faltet far ALDRIG skrivas in i props()-strangarna). oninput ar en ren stilpatch via
+  // komposoren — vyraLivePatch byter outerHTML och PR #221:s kontrakt ar att textfalt inte
+  // river vyn. onchange gar genom save-tratten. Fokusvakten ar proportioner-lardomen:
+  // ror inte DOM nar ratt falt redan star ratt.
+  function injiceraFalt() {
+    if (typeof view === 'undefined' || view !== 'editor') return;
+    if (typeof liveWidget !== 'function' || typeof selected === 'undefined') return;
+    var w = liveWidget(selected);
+    if (!w) return;
+    var varde = (typeof w.rotation === 'number' && isFinite(w.rotation)) ? w.rotation : 0;
+    var falt = document.getElementById('propRotation');
+    if (falt) {
+      if (document.activeElement !== falt && falt.value !== String(varde)) falt.value = varde;
+      return;
+    }
+    var ankare = document.querySelector('label[data-aspect-source]');
+    if (!ankare) {
+      var wFalt = document.getElementById('propWidth');
+      ankare = wFalt && (wFalt.closest('label') || wFalt.parentElement);
+    }
+    if (!ankare) return;
+    ankare.insertAdjacentHTML('afterend',
+      '<label data-rotation-falt>Rotation (\u00b0)<input id="propRotation" type="number" step="1" min="-180" max="180" value="' + varde + '"></label>');
+    falt = document.getElementById('propRotation');
+    falt.oninput = function () {
+      var v = parseFloat(falt.value);
+      if (!isFinite(v)) return;
+      var el = document.querySelector('.canvas [data-id="' + String(w.id).replace(/"/g, '') + '"]');
+      if (el) applicera({ rotation: v, widgetScaleY: w.widgetScaleY }, el);
+    };
+    falt.onchange = function () {
+      var v = parseFloat(falt.value);
+      w.rotation = isFinite(v) ? Math.max(-180, Math.min(180, Math.round(v * 10) / 10)) : 0;
+      if (typeof save === 'function') save();
+      if (typeof vyraRenderKeepingPanel === 'function') vyraRenderKeepingPanel();
+      else if (typeof render === 'function') render();
+    };
+  }
+
   // Post-render-applicering utan editor-grind: samma målare når editorn och sändningen
   // (overlay.html är en redirect till studio.html?overlay=1 med samma render-kedja).
   // childList-observation ser inte style-skrivningarna ovan, så ingen loop. Projektioner
   // byter statens INNEHÅLL utan DOM-ändring — därför även sessionssignalerna
   // (scenbakgrund-lärdomen: OBS-vägen projicerar efter sidladdning).
-  new MutationObserver(appliceraAlla).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(function () { appliceraAlla(); injiceraFalt(); }).observe(document.documentElement, { childList: true, subtree: true });
   addEventListener('vyra-session-state', appliceraAlla);
   addEventListener('vyra-session-state-saved', appliceraAlla);
   appliceraAlla();
