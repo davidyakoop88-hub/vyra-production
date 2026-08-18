@@ -34,19 +34,30 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // fran ankaret `.fan-profile img` till behallaren `.fan-profile`. media.js, widget-factory.js,
   // fan-fas.js och premium-bundlens version ar oforandrade och behaller sina strangar. Andra
   // gangen strangarna gar isar, och av samma skal som forsta: de foljer filerna, inte varandra.
+  //
+  // Bumpad 2026-08-18 for panelens live-vag: custom-widgets.js och gift-fireworks.js andrades
+  // (oninput byggde om hela vyn och slog ut faltet man skrev i). media.js BAR bada strangarna, sa
+  // media.js sjalv maste bumpas — annars pekar en cachead media.js pa de gamla URL:erna och ingen
+  // av filerna byts ut. Samma skal som duckningen 2026-08-17. gift-fireworks lamnar darfor
+  // duckningslistan nedan: dess strang foljer numera panellagningen, inte duckningen.
+  // studio.css, widget-factory.js, fan-fas.js och premium-bundlens version ar OFORANDRADE.
   assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
-  assert.match(studio, /[^-]media\.js\?v=20260817-tal-duckning/);
+  assert.match(studio, /[^-]media\.js\?v=20260818-panel-live/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
   assert.match(media, /const version='20260817-tal-duckning'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
   // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.
-  for (const fil of ['gift-fireworks', 'vyra-tal', 'action-event', 'action-runtime',
+  for (const fil of ['vyra-tal', 'action-event', 'action-runtime',
                      'battle-mvp-session', 'sound-alerts']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
+  // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
+  // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
+  assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
+  assert.match(media, /gift-fireworks\.js\?v=20260818-panel-live/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 });

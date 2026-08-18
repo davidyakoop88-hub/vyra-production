@@ -1,5 +1,86 @@
 # VYRA Project State
 
+## Checkpoint 35 — panelens live-väg, ett tecken av åtta (2026-08-18)
+
+Rapporterat av David: *"när man skriver text måste man klicka hela tiden på rutan."* Mätt visade
+det sig vara värre än så.
+
+### Felet, uppmätt
+
+`render()` i `studio.js` är `viewRoot.innerHTML = m[view]()` — den river hela vyn, inklusive
+egenskapspanelen. Två panelfiler anropade den från en `oninput`-handler, alltså vid **varje
+tangenttryck**. Uppmätt i riktig Chrome, åtta tecken skrivna i följd utan att klicka om:
+
+| panel | fält | tecken fram | fokus kvar | samma nod |
+|---|---|---|---|---|
+| `custom-widgets.js` | `#ctwText` | **1/8** | nej | nej |
+| `gift-fireworks.js` | `#followName` | **1/8** | nej | nej |
+| `gift-fireworks.js` | `#followMessage` | **1/8** | nej | nej |
+| `media.js` (advancedPropertyBind) | `#propWidth` | 5/5 | ja | ja | ← kontroll |
+
+Efter första tecknet blev `document.activeElement` **`BODY`**. Kontrollen står i *samma panel* som
+`#ctwText` men ägs av den delade live-vägen och klarar sig helt — det är den raden som gör
+mätningen till ett mått på panelen och inte på webbläsaren.
+
+### Vakten fanns redan. Den tittade bara åt fel håll.
+
+`tests/panel-live-path.test.js` bar regeln sedan tidigare — *render() får inte anropas från en
+oninput-handler* — men listade **sex filnamn skrivna för hand**. `custom-widgets.js` och
+`gift-fireworks.js` tillkom efteråt och stod inte med.
+
+Listan härleds nu ur klientens egen monkey-patch-konvention: en fil som binder egenskapskontroller
+skriver `props=function` eller `bind=function`. Det ger 15 filer i stället för 6, och en nionde
+panelfil ärver regeln utan att någon behöver komma ihåg den. Samma princip som `F1`/`23g` i
+fan-fas-provet, där uppräkningen byttes mot ett register.
+
+### Lagningen
+
+Alla tre lades på den mall `giftFieldBind` i `media.js` redan följer:
+
+```js
+el.oninput  = e => vyraLivePatch(w, el, key, las(e));          // live, rör aldrig panelen
+el.onchange = e => { w[key] = las(e); save(); vyraRenderKeepingPanel() };   // commit
+```
+
+`gift-fireworks.js` behåller sina billigare stilputtar för `x`/`y`/`width` (de rör inte ens
+canvasnoden) och byter bara ut `else render()`. Efter lagningen: **8/8 tecken, fokus kvar, samma
+nod** för alla tre.
+
+### Vakterna
+
+| Vakt | Var | Vad |
+|---|---|---|
+| statisk | `tests/panel-live-path.test.js` | härledd fillista + golv på 12 filer, så en trasig härledning inte kan skanna noll |
+| `fältet finns och tar emot fokus` | `tests/browser/panel-controls.browser.test.js` | positiv kontroll |
+| `hela meningen kommer fram` | samma fil | alla tecken måste nå fram |
+| `elementet byts inte ut` | samma fil | nodidentitet och fokus genom hela skrivandet |
+
+Röd baslinje: den statiska vakten namngav tre brott; browserproven föll 6 av 12 för de tre trasiga
+fälten medan kontrollen och den positiva kontrollen stod gröna. Mutationsprovat åt båda hållen —
+med koden återställd faller exakt samma sex.
+
+### Ett prov ströks, med flit
+
+Ett fjärde browserprov skulle mäta att panelens `scrollTop` överlever skrivandet. Det föll fint —
+men på `el.focus()`, som själv drar in elementet i en scrollbar behållare, inte på omrenderingen.
+Med baslinjen tagen efter fokus blev det grönt i **båda** tillstånden. **Ett prov som inte kan falla
+på felet det påstår sig vakta är en lögnare**, så det togs bort i stället för att behållas som
+utfyllnad. Panelens scroll under en *dragning* mäts fortfarande av fallen längre upp i filen.
+
+### Vad som inte gick att mäta här
+
+Commit-vägen anropar samma `save()` som varje annat panelfält, i samma ögonblick (`change`). Om
+skrivningen verkligen når disk går **inte** att avgöra i riggen: utan en inloggad, skrivägande
+session svarar `save()` `{ok:false, reason:"not-writable"}`. Det gäller alla fält, inte bara dessa
+— en pre-existerande egenskap hos riggen, inte något den här ändringen infört.
+
+### Nästa steg
+
+Oförändrat sedan checkpoint 34: §5 väntar på en deploy, battle-kedjan på en inspelad sändning, och
+`VYRA_MASTER_ROADMAP.md` har driftat från verkligheten (fas 6–9 står som `not-started` fast Top
+Gifter, Battle MVP och Like Fountain finns byggda och testade).
+
+
 ## Checkpoint 34 — loyaltys uttoning, den sista designskulden (2026-08-18)
 
 En ändring, en rad CSS. Arbetsordningen densamma: **mät först → röd vakt → implementera →
