@@ -90,6 +90,7 @@
         "fan-fas.js",
         "gifter-level-session.js",
         "profile-frames-premium.css",
+        "stage-background.js",
         "public/widgets/*"
       ],
       "tester": [

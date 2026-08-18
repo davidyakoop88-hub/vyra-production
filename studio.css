@@ -1313,3 +1313,20 @@ body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
 .streak-framed .streak-profile-face,.streak-framed .streak-gift-face{backface-visibility:hidden}
 .streak-framed .streak-profile-face{animation:sframeFront calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}
 .streak-framed .streak-gift-face{animation:sframeBack calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}
+
+/* Scenbakgrund. Sandningsnoden ligger fixerad bakom allt (transparensen ovanfor ar oror d);
+   editor-forhandsvisningen ligger forst i canvasen, bakom widgetarna. Kontrollen foljer
+   verktygsradens formsprak och popovern ar en liten mork panel. */
+html.overlay-output .vyra-scenbakgrund{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;pointer-events:none;z-index:-1;border:0}
+.canvas>.vyra-scenbakgrund{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0;border-radius:inherit}
+.scenbakgrund-kontroll{position:relative;display:inline-flex;margin-left:8px}
+.scenbakgrund-kontroll .sb-oppna{background:#151821;border:1px solid #292d39;color:#c9cbd2;border-radius:6px;padding:6px 10px;font-size:10px}
+.scenbakgrund-kontroll .sb-oppna.active{border-color:var(--purple,#7c5cff);color:#fff}
+.scenbakgrund-kontroll .sb-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:80;width:250px;display:flex;flex-direction:column;gap:8px;background:#0e0a16;border:1px solid #2c2340;border-radius:10px;padding:12px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.scenbakgrund-kontroll .sb-popover>span{font-size:8px;letter-spacing:.09em;color:#8f94a3}
+.scenbakgrund-kontroll .sb-popover label{display:flex;flex-direction:column;gap:4px;font-size:9px;color:#9a9ea8}
+.scenbakgrund-kontroll .sb-popover select,.scenbakgrund-kontroll .sb-popover input[type=text]{background:#151821;border:1px solid #292d39;color:#c9cbd2;border-radius:6px;padding:6px;font-size:10px}
+.scenbakgrund-kontroll .sb-popover input[type=color]{width:100%;height:30px;border:1px solid #292d39;border-radius:6px;background:#151821;padding:2px}
+.scenbakgrund-kontroll .sb-obs-not{font-size:8px;line-height:1.4;color:#767b89}
+.scenbakgrund-kontroll .sb-anvand{background:var(--purple,#7c5cff);border:0;color:#fff;border-radius:6px;padding:7px;font-size:10px;font-weight:700}
+.scenbakgrund-kontroll [hidden]{display:none!important}

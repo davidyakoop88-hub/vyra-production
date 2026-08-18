@@ -46,7 +46,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // toplike-studio.js/.css, gift-alert-frames.js och profile-frames-premium.css (v=8) andrades.
   // De tre injicerade strangarna bars av media.js och pinnas nedan av samma skal som fan-fas:
   // en andring utan bump ar en tyst gammal fil. widget-factory.js och fan-fas.js ar ororda.
-  assert.match(studio, /studio\.css\?v=20260818-ramstad/);
+  // Bumpad 2026-08-18 igen for scenbakgrunden: studio.css (nodens tva ytor + kontrollen) och
+  // vyra-historik.js (stageBackground i projektionen) andrades; stage-background.js ar ny (v=1).
+  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
+  assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /[^-]media\.js\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
