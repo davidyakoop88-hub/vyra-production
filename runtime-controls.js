@@ -45,16 +45,7 @@
   function riv(){queue.length=0;busy=false;kastade=0}
   window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
   addEventListener('vyra-session-ended',riv);
-    /* GUARDIAN WELCOME ligger pa 8000/5. Varaktigheten ar koreografins tak (4 s) med marginal, sa
-     hela "Beskyddet" hinner spelas fardigt innan nasta alert slapps fram. Prioriteten 5 satter den
-     under gavor och nivahojningar men over nya foljare: en Guardian ar sallsynt och betydande, men
-     en gavostorm ska inte behova vanta pa den.
-
-     ATT DEN STAR HAR AR SJALVA POANGEN. installQueueWrappers byter ut `window.triggerGuardianWelcome`
-     mot en koad variant, alltsa AR den globala referensen kon. Panelens testknapp anropar det
-     namnet och kan darfor inte kringga kon ens av misstag — till skillnad fran fyrverkeriets
-     testknapp (§2), som byggde raketerna direkt pa DOM och behovde lagas i efterhand. */
-  const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerGuardianWelcome:[8000,5],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6]};
+    const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6]};
   function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;if(name==='triggerGiftFireworks')d=(state.widgets.find(w=>w.type==='templateGiftFireworks')?.fwDuration||5)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
 

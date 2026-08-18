@@ -447,47 +447,5 @@
     "jarCapacity": 50,
     "jarShowCounter": true,
     "jarAutoResetMs": 0
-  },
-  "catalog:guardianwelcome:banner": {
-    "type": "templateGuardianWelcome",
-    "x": 100,
-    "y": 80,
-    "width": 270,
-    "height": 180,
-    "title": "Guardian Welcome",
-    "guardianSize": "banner",
-    "guardianLang": "auto",
-    "guardianShowWeek": true,
-    "guardianCustomText": "",
-    "guardianUsername": "@Guardian",
-    "guardianWeek": 47
-  },
-  "catalog:guardianwelcome:kort": {
-    "type": "templateGuardianWelcome",
-    "x": 100,
-    "y": 80,
-    "width": 300,
-    "height": 280,
-    "title": "Guardian Welcome",
-    "guardianSize": "kort",
-    "guardianLang": "auto",
-    "guardianShowWeek": true,
-    "guardianCustomText": "",
-    "guardianUsername": "@Guardian",
-    "guardianWeek": 47
-  },
-  "catalog:guardianwelcome:full": {
-    "type": "templateGuardianWelcome",
-    "x": 100,
-    "y": 80,
-    "width": 400,
-    "height": 300,
-    "title": "Guardian Welcome",
-    "guardianSize": "full",
-    "guardianLang": "auto",
-    "guardianShowWeek": true,
-    "guardianCustomText": "",
-    "guardianUsername": "@Guardian",
-    "guardianWeek": 47
   }
 }
