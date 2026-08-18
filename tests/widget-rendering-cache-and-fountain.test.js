@@ -51,6 +51,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
+  // Bumpad 2026-08-18 for rotationen: widget-handles.js andrades (delegering till komposoren +
+  // center-origin-matten); vyra-rotation.js ar ny (v=1).
+  assert.match(studio, /vyra-rotation\.js\?v=1/);
+  assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
   assert.match(studio, /[^-]media\.js\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
