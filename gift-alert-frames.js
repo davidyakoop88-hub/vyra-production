@@ -85,7 +85,6 @@
 
       const picker = frameGroup.querySelector('.pro-frame-picker');
       picker.innerHTML = window.vyraBuildFramePicker(w);
-      picker.querySelector('select').value = w.profileFrame || 'none';
       picker.querySelectorAll('[data-ws-gender]').forEach(btn => btn.onclick = () => { w.frameGenderTab = btn.dataset.wsGender; render(); });
       picker.querySelectorAll('[data-ws-frame]').forEach(btn => btn.onclick = () => {
         w.profileFrame = btn.dataset.wsFrame; save(); render();

@@ -41,8 +41,17 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // av filerna byts ut. Samma skal som duckningen 2026-08-17. gift-fireworks lamnar darfor
   // duckningslistan nedan: dess strang foljer numera panellagningen, inte duckningen.
   // studio.css, widget-factory.js, fan-fas.js och premium-bundlens version ar OFORANDRADE.
-  assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
-  assert.match(studio, /[^-]media\.js\?v=20260818-panel-live/);
+  // Bumpad 2026-08-18 for ramvaljarens stadning: media.js (tre pickergenerationer reducerade
+  // till EN containerskapare, premium-skriptet raderat), studio.css (dott klassbaserat ramarv),
+  // toplike-studio.js/.css, gift-alert-frames.js och profile-frames-premium.css (v=8) andrades.
+  // De tre injicerade strangarna bars av media.js och pinnas nedan av samma skal som fan-fas:
+  // en andring utan bump ar en tyst gammal fil. widget-factory.js och fan-fas.js ar ororda.
+  assert.match(studio, /studio\.css\?v=20260818-ramstad/);
+  assert.match(studio, /[^-]media\.js\?v=20260818-ramstad/);
+  assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
+  assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
+  assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
+  assert.match(media, /profile-frames-premium\.css\?v=8/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
   assert.match(media, /const version='20260817-tal-duckning'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
