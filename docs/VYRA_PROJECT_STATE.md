@@ -44,10 +44,37 @@ Dessutom `G-IMPORTANT` (ingen `!important` på transform/opacity/clip-path), `G-
 döljning som en senare regel med samma specificitet motsäger) och `G-VILOLAGER` (ingen `infinite`
 på en fas som tas bort).
 
-**Mutationsprovat: 8 av 8 dödade av rätt vakt.** Fjärde storlek utan koreografi → `G-SLUT`.
-`!important` på transform → `G-IMPORTANT`. `infinite` flyttad till öppnandet → `G-VILOLAGER`. Död
-`display:none` → `G-DÖD-CSS`. Testknappen tänder DOM direkt → köproven. Guardian ur `configs` →
-köprovet. Omkastad fasordning → tre fasprov. Symmetrisk språkfallback → språkprovet.
+**Mutationsprovat: 9 av 9 dödade av rätt vakt**, körda om mot koden MED ramen inbyggd — en
+visuell omgång kan flytta det en vakt tittar på, och ett gammalt mutationsresultat är inget bevis
+om koden hunnit ändras sedan dess.
+
+| Mutation | Vakt som föll |
+|---|---|
+| fjärde storlek utan koreografi | `G-SLUT` |
+| `!important` på transform | `G-IMPORTANT` |
+| `infinite` flyttad till öppnandet | `G-VILOLAGER` |
+| död `display:none` | `G-DÖD-CSS` |
+| testknappen tänder DOM direkt | båda köproven |
+| Guardian ur `configs` | köprovet |
+| omkastad fasordning | tre fasprov |
+| symmetrisk språkfallback | språkprovet |
+| reservtexten glider från syskonfilen | reservtextprovet (ny i ramomgången) |
+
+### Kön är mätt i beteende, inte bara i källkod
+
+Källvakten läser text: står `triggerGuardianWelcome` i `configs`, och anropar knappen det globala
+namnet? Det är en stavningskontroll. Den kan inte se om kön FAKTISKT håller tillbaka, och det är
+det enda som gör §2:s lärdom sann. Uppmätt i Chromium, tre klick i följd:
+
+| | vantande | spelar | `gw-active` |
+|---|---|---|---|
+| före klick | 0 | false | false |
+| ett klick | 0 | **true** | true (fas `gw-fas-ljus`) |
+| tre klick | **2** | true | — |
+
+De två extra hölls alltså i kön i stället för att spela ovanpå den första. Provet bär också
+kontrollmätningen: utan att klicket bevisligen startade något vore "kön höll tillbaka" trivialt
+sant för en knapp som inte gör någonting alls.
 
 ### Tre fynd som kostade något
 

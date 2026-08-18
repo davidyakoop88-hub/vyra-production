@@ -380,3 +380,60 @@ test('källvakt: testknappen finns i panelen och kan klickas', { skip }, async (
   assert.notEqual(m.display, 'none', 'knappen är display:none');
   assert.match(m.text, /Guardian/i, `knappen säger "${m.text}"`);
 });
+
+// ================================================================================================
+// FAS 4 · KÖN, MÄTT I BETEENDE — inte i källkod
+//
+// tests/guardian-fas.test.js läser källan: står `triggerGuardianWelcome` i configs-tabellen, och
+// anropar knappen det globala namnet? Det är en stavningskontroll. Den kan inte se om kön FAKTISKT
+// håller tillbaka, och det är det enda som gör §2:s lärdom sann.
+//
+// EGEN SIDA MED FLIT. `installQueueWrappers` körs på 500 och 2200 ms efter start. En sida som mätts
+// efter 2500 ms har hunnit få wrappern, men marginalen är två tiondelar — och en mätning som lutar
+// sig mot att en timer hann före är ingen mätning. Den här väntar ut båda.
+//
+// UPPMÄTT 2026-08-18, tre klick i följd:
+//     före klick   vantande 0  spelar false  gw-active false
+//     ett klick    vantande 0  spelar TRUE   gw-active true   fas gw-fas-ljus
+//     tre klick    vantande 2  spelar true
+// De två extra hölls alltså i kön i stället för att spela ovanpå den första.
+test('fas 4: testknappen spelar genom kön, och kön håller tillbaka resten', { skip }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1700, height: 900 } });
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+      { timeout: 30000, polling: 100 });
+    await page.waitForFunction(() => !!window.VyraAlertQueue, null, { timeout: 20000, polling: 100 });
+    await page.waitForTimeout(3000);
+
+    const m = await page.evaluate(() => {
+      state.widgets.length = 0;
+      const w = window.VyraWidgets.create('catalog:guardianwelcome:kort');
+      w.x = 60; w.y = 40; state.widgets.push(w); selected = w.id; render();
+      const knapp = document.querySelector('#testGuardian');
+      if (!knapp) return { fel: 'testknappen finns inte i panelen' };
+      const box = () => document.querySelector('.guardian-welcome');
+      const fore = { ...VyraAlertQueue.stats(), aktiv: box().classList.contains('gw-active') };
+      knapp.click();
+      const ett = { ...VyraAlertQueue.stats(), aktiv: box().classList.contains('gw-active'),
+                    fas: [...box().classList].filter(k => k.startsWith('gw-fas-')) };
+      knapp.click(); knapp.click();
+      const tre = VyraAlertQueue.stats();
+      return { fore, ett, tre };
+    });
+    await page.close();
+
+    assert.ok(!m.fel, m.fel);
+    // KONTROLLMÄTNING (§7): utan den är "kön höll tillbaka" trivialt sant för en knapp som inte
+    // gör någonting alls. Klicket MÅSTE ha startat något.
+    assert.equal(m.fore.spelar, false, 'kön spelade redan innan knappen rördes');
+    assert.equal(m.fore.aktiv, false, 'widgeten var redan tänd innan knappen rördes');
+    assert.equal(m.ett.spelar, true, 'kön spelar inte efter klicket — knappen gick utanför den');
+    assert.equal(m.ett.aktiv, true, 'widgeten tändes inte av klicket');
+    assert.deepEqual(m.ett.fas, ['gw-fas-ljus'], 'koreografin började inte på ljusfasen');
+    // DET SOM FAKTISKT PROVAS: två klick till medan den första spelar ska KÖAS, inte spela.
+    assert.equal(m.tre.vantande, 2,
+      `${m.tre.vantande} jobb väntar i stället för 2 — kön håller inte tillbaka, och två Guardians `
+      + 'skulle tala i mun på varandra');
+  } catch (e) { await page.close().catch(() => {}); throw e }
+});
