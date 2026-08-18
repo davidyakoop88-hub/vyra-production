@@ -12,6 +12,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
 const KALLA = path.join(__dirname, '..', '..', 'fan-fas.js');
+const MOTOR = path.join(__dirname, '..', '..', 'widget-fas.js');
 
 const root = {
   setTimeout: () => 0,
@@ -20,6 +21,9 @@ const root = {
   document: { addEventListener: () => {}, querySelectorAll: () => [] },
 };
 root.window = root;
+// Fabriken först — sedan 2026-08-19 bor mekaniken i widget-fas.js och arten kräver den vid
+// parsning. Båda är de RIKTIGA filerna; stubbrymden är fortfarande minimal.
+vm.runInNewContext(fs.readFileSync(MOTOR, 'utf8'), root, { filename: 'widget-fas.js' });
 vm.runInNewContext(fs.readFileSync(KALLA, 'utf8'), root, { filename: 'fan-fas.js' });
 
 // Klonat ur vm-rymden med flit. En array som skapats i en annan realm har en annan

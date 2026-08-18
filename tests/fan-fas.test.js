@@ -100,6 +100,7 @@ function manuellKlocka(win) {
 function boot(widgets = [fanWidget()]) {
   const h = createDom({ state: { widgets, projectName: 'fan' } });
   h.load('overlay-sanitize.js');    // renderaren går genom VyraSafe för namn och bild-URL
+  h.load('widget-fas.js');          // fabriken — mekaniken bor där sedan 2026-08-19
   h.load('fan-fas.js');
   // state fylls om EFTER att media.js laddats: studio.js:s egen uppstart nollar listan, så
   // createDom-argumentet ensamt ger `state.widgets.length === 0` och triggern hittar ingenting

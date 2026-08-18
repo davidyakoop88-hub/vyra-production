@@ -55,14 +55,18 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // center-origin-matten); vyra-rotation.js ar ny (v=1).
   assert.match(studio, /vyra-rotation\.js\?v=1/);
   assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
-  assert.match(studio, /[^-]media\.js\?v=20260818-ramstad/);
+  assert.match(studio, /[^-]media\.js\?v=20260819-fabriken/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260817-tal-duckning'/);
-  assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
+  assert.match(media, /const version='20260819-fabriken'/);
+  // Bumpad 2026-08-19: motorkärnan bröts ut till widget-fas.js (fabriken, v=1) och fan-fas
+  // blev konfiguration — media.js kedjar laddningen fabrik→art eftersom arten kräver fabriken
+  // vid parsning.
+  assert.match(media, /widget-fas\.js\?v=1/);
+  assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
   // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.
