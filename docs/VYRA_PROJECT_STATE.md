@@ -1,5 +1,110 @@
 # VYRA Project State
 
+## Checkpoint 33 — Fan Level Up stängd, skuldregistret nollat (2026-08-17, kväll)
+
+Fortsättningen på checkpoint 32, samma dag. Elva PR:er till, samma arbetsordning varje gång:
+**mät först → lägg fram planen → bygg den röda testkartan → implementera → fotografera →
+mutationsprova → PR**. Ingen koreografi byggdes innan modellen var uppmätt.
+
+### Fan Level Up: alla åtta modeller har en klocka
+
+`fan-fas.js` är förarens hela idé: **JS bestämmer NÄR, CSS bestämmer VAD.** Drivrutinen sätter
+fasklasser (`fan-fas-<namn>`) i tur och ordning och tar bort dem sist. Klockan är utbytbar
+(`VyraFanFas.klocka`), så fasproven är exakta och omedelbara i stället för att sova.
+
+| Modell | Dramaturgi | Faser (ms) | PR | Merge |
+|---|---|---|---|---|
+| `hero` | Samlingen | hjarta 420 · samling 560 · vila 270 | #208 | `6bd462b` |
+| `stack` | Mottagandet | fall 300 · pop 260 · stigning 340 | #210 | `172fcc3` |
+| `ribbon` | Välkomnandet | pop 320 · utrullning 420 · text 340 | #211 | `9d5de2b` |
+| `loyalty` | Inringningen | pop 320 · ring 440 · stampel 340 | #212 | `cac5e35` |
+| `badgereveal` | Uppenbarelsen | vingar 340 · avtackning 360 · hyllning 340 | #213 | `7d920a7` |
+| `hearts` | Uppstigningen | nedslag 300 · uppstigning 320 · hyllning 340 | #214 | `0256cf3` |
+| `heartbeat` | Pulsslaget | sidorna 340 · pulsen 320 · avlasning 340 | #215 | `8a370bd` |
+| `duo` | Mötet | parterna 340 · linjen 320 · avlasning 340 | #216 | `1ff1656` |
+
+**Vaktnätet är matematiskt slutet.** `F1` kräver att varje registrerad modell finns i CSS:en;
+`23g` (SLUTVAKTEN) kräver att varje modell i modellregistret finns i `FASER`. En nionde layout
+kan därför inte läggas till utan klocka — provet faller innan någon hinner se den snäppa fram.
+70 prov i `tests/fan-fas.test.js`, från 0.
+
+### Skuldregistret: allt lokalt lösbart är stängt
+
+| § | Vad | PR | Merge |
+|---|---|---|---|
+| 2 | Testknappen för fyrverkerier kringgick alertkön | #217 | `f4013b0` |
+| 6 | Sex laddningsgrindar hängde på en UI-sträng | #218 | `74160e7` |
+| 14 (rest) | Tre fristående ljudkällor duckade inte för rösten | #218 | `74160e7` |
+| — | `BroadcastChannel('vyra-action-run')` utan prenumerant | #218 | `74160e7` |
+
+**Kvar i registret, och inget av det går att lösa här:**
+
+- **§5** — synkkonflikt-banderollen. Koden är lagad och vaktad av fyra browser-prov. Bara en riktig
+  deploy kan stänga den.
+- **§1:s sista fråga** — vilket steg i `LINK_MIC_BATTLE_TASK` som ska tända overlayn. Kräver en
+  riktig TikTok LIVE. Står i `docs/live-verifiering.md` med de andra tre gissningarna i battle-kedjan.
+- **§7–§11** är regler, inte skuld. De uppstår på nytt varje gång någon skriver ett prov.
+
+### Den enda öppna designskulden
+
+**Loyaltys asymmetriska uttoning.** `studio.css:716` lyder:
+
+```css
+.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+```
+
+Regeln träffar `.fan-profile img` — **ankaret** — inte behållaren. Bilden krymper alltså bort medan
+den orangea sockeln står kvar i full styrka tills rotens transition tonar ut hela widgeten. Grannarna
+`ribbon` (rad 726) och `badgereveal` (rad 711) animerar `.fan-profile` direkt och har inte problemet.
+Medvetet sparad till en egen omgång. Ingen krasch — en halv sekund med sockel utan ansikte, per alert.
+
+Badgereveals geometri (−70/+256 i en 260 px-box) är också uppmätt och medvetet lämnad.
+
+### Invarianter som tillkom (utöver checkpoint 32:s)
+
+- **`!important` i en vanlig regel slår en CSS-animation.** Tre separata döda animationer hade samma
+  rot: loyaltys sockel, badgereveals transform, hearts opacitet. Ser fullkomligt harmlöst ut i källan.
+- **`display:none` i ett grid kollapsar spåret.** Faser måste dölja med `opacity`, aldrig `display`.
+  Vaktat av gridvakten `22g` över både `heartbeat` och `duo`.
+- **Ett vilolager kan varken bo på en fasklass eller på `.fan-active`.** Fasklassen tas bort när
+  sekvensen slutar; `.fan-active` bryter mot `F4`. Det hänger på modellklassen.
+- **Badgereveals vänstra vinge ska förbli ospeglad.** Att ta bort dess `!important` väcker en död
+  `.fan-wing.left{transform:scaleX(-1)}` och bryter omfamningen. Fotograferat åt båda håll.
+- **Cachebust-strängar följer filerna, inte varandra.** #218 är första gången de går isär: sex filer
+  bumpades, `studio.css`/`widget-factory.js`/`fan-fas.js` behöll sina.
+
+### Fem lärdomar som kostade något
+
+1. **Ett referensprov kan skydda buggen det tror sig vakta.** `hearts`-provet krävde att alla tre
+   hjärtan lyste samtidigt — sant *bara för att* `opacity:1!important` dödat uttoningen. Provet var
+   grönt på grund av felet. Omskrivet till att mäta över ett tidsfönster: 26 prov över 2,6 s, där
+   varje hjärta måste nå full styrka **och** gå under 0.2.
+2. **Ett frånvaroprov utan positiv kontroll är grönt innan koden finns.** §6:s avbrottsprov blockerade
+   modulen och krävde att markören uteblev — lika sant för ett attribut som inte finns i koden alls.
+   Det *kändes* som en kontrollmätning. Nu öppnar det en oblockerad sida i samma kropp.
+3. **Ett prov som mäter markup mäter inte beteende.** Mutationen "markören flyttad först + sista
+   IIFE:n kastar" gav fyra gröna prov, eftersom `[data-alltime]`-noden renderas av `home()`, inte av
+   IIFE:n. Bara siffran i raden kommer därifrån.
+4. **Leta efter vakten innan du skriver en.** Tre gånger på en dag fanns ägaren redan:
+   `tech-debt-aktuell.test.js` för §6, `duckaMedan` i `action-runtime.js` för §14, och båda gångerna
+   var jag på väg att lägga en andra bredvid. Registret ljög dessutom om `media.js` — noll `new Audio`,
+   varje videoelement `muted`. Samma sorts fel som §3 kostade en hel ansats för 2026-08-10.
+5. **Ett fotobevis kan ljuga på tre sätt.** Summerade `waitForTimeout` ignorerar att en skärmdump
+   kostar 100–300 ms; `locator.screenshot()` väntar på att elementet står stilla och fångar därför
+   den färdiga widgeten; och att trigga om mellan bilderna köar i stället för att spela. Lösningen är
+   Web Animations API — pinna varje animation till **sin egen** origo, inte till fasens.
+
+### Nästa steg
+
+Bordet är rent. Två saker väntar, och den andra är den som styr:
+
+1. **Loyaltys uttoning** — den enda kvarvarande designskulden, uppmätt och beskriven ovan.
+2. **Battle MVP och det inspelade TikTok-materialet.** `tiktok-bridge/inspelare.js` (#206) finns och
+   är av som default. `docs/live-verifiering.md` listar de fyra ställena i battle-kedjan där koden
+   gissar, med exakt vad som ska läsas av i loggen och i konsolen. Läs den före sändningen, fyll i
+   den efteråt.
+
+
 ## Checkpoint 32 — poängekonomin, talutrymmet, inspelaren och Fan Level Up (2026-08-17)
 
 En hel dags arbete i sju steg, varje steg en egen PR mot `main`. Alla mätta före och efter.
