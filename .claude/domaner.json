@@ -89,7 +89,6 @@
         "fan-level-session.js",
         "fan-fas.js",
         "gifter-level-session.js",
-        "profile-frames-premium.js",
         "profile-frames-premium.css",
         "public/widgets/*"
       ],
