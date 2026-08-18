@@ -1,5 +1,105 @@
 # VYRA Project State
 
+## Checkpoint 34 — loyaltys uttoning, den sista designskulden (2026-08-18)
+
+En ändring, en rad CSS. Arbetsordningen densamma: **mät först → röd vakt → implementera →
+mutationsprova → fotografera**.
+
+### Felet, uppmätt
+
+`studio.css` lät loyaltys uttoning ligga på **ankaret** i stället för på **behållaren**:
+
+```css
+.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+```
+
+`.fan-profile` bär `linear-gradient(145deg,var(--fan-light),var(--fan))` och
+`box-shadow:0 0 13px var(--fan)` — en glödande orange skiva på 80×80 px. Krymper man bara ankaret
+släcks ansiktet medan skivan står kvar. Effektiv (ärvd) opacitet i Chromium, `--fed` = 500 ms:
+
+| ms | behållare | ankare | ring |
+|---|---|---|---|
+| 0 | 1.00 s1.00 | 1.00 s1.00 | 1.00 |
+| 125 | **1.00 s1.00** | 0.62 s0.85 | 0.62 |
+| 250 | **1.00 s1.00** | 0.32 s0.73 | 0.32 |
+| 480 | **1.00 s1.00** | 0.00 s0.60 | 0.00 |
+
+Fotograferat vid 490 ms: en tom lysande orange skiva över texten. En halv sekund, i varje alert.
+
+Det är **samma fälla som fas 1 hade, spegelvänd** (#212, "Inringningen"). Regeln är densamma åt
+båda hållen: **rör behållaren, aldrig ankaret. Ankaret rider med.**
+
+### Lagningen
+
+Selektorn flyttad från `.fan-profile img` till `.fan-profile`. Efteråt, samma mätning:
+
+| ms | behållare | ankare (ärver) | ring |
+|---|---|---|---|
+| 0 | 1.00 s1.00 | 1.00 | 1.00 |
+| 250 | 0.32 s0.73 | 0.32 | 0.32 |
+| 480 | 0.00 s0.60 | 0.00 | 0.00 |
+
+Loyalty gör nu som `stack`, `heartbeat`, `badgereveal`, `ribbon` och `duo` redan gjorde.
+Cachebust: bara `studio.css` (`20260818-fan-loyalty-uttoning`). `media.js`, `widget-factory.js`,
+`fan-fas.js` och premium-bundlens version är orörda och behåller sina strängar — andra gången
+strängarna går isär, av samma skäl som första.
+
+### Vakterna
+
+| Vakt | Var | Vad |
+|---|---|---|
+| `19h` | `tests/fan-fas.test.js` | snabb grind: exit-regelns selektor måste sluta på `.fan-profile`, och ingen exit-regel får nämna `.fan-profile img` |
+| `U1` | `tests/browser/fan-fas-loyalty.browser.test.js` | positiv kontroll — sockeln är fullt målad när uttoningen börjar |
+| `U2`–`U3` | samma fil | behållaren måste nå ≤ 0.15 opacitet och < 0.9 skala vid 96 % av `--fed` |
+| `U4` | samma fil | **sockelvakten**: behållaren får aldrig vara mer målad än ankaret den bär |
+| `U5` | samma fil | uttoningen går bara nedåt |
+| `U6` | samma fil | samma krav på alla sex modeller vars profilbehållare tonar ut |
+
+Röd baslinje före lagningen: `19h` föll, och 4 av 11 browserprov föll. `U1` och `U5` var gröna,
+alltså kalibrerade — och `U6` var grön för alla fem grannarna. Måttet är därför bevisat rätt av
+fem modeller som redan gjorde rätt, och rött bara för den som inte gjorde det.
+
+### Mutationsprov
+
+| Mutation | `19h` | Browser |
+|---|---|---|
+| tillbaka till `.fan-profile img` | faller | 4 faller |
+| `.fan-profile>img` (barnkombinator) | faller | 4 faller |
+| `reverse` borttaget (tonar in i stället) | **grön** | 5 faller, inkl. `U1` och `U5` |
+| regeln helt borttagen | faller | 3 faller |
+
+Den tredje raden är hela poängen med att ha båda: `19h` mäter stavning, browserprovet mäter
+rörelse. Ingen av dem räcker ensam.
+
+### Invarianten som tillkom
+
+**Ett prov som mäter ett elements EGNA opacitet mäter inte vad som är målat.** Efter lagningen
+läser `.fan-profile img` `opacity: 1` — ankaret har ingen egen animation längre, det ärver
+behållarens. Ett prov som krävt att *ankaret* tonar ut hade alltså varit grönt före lagningen och
+rött efter: det hade vaktat buggen. Samma fälla som `hearts`-provet gick i (lärdom 1, checkpoint
+33). Måttet som bär är **produkten av `opacity` och transformskalan hela vägen upp till
+widgetlådan** — den effektiva, ärvda synligheten. Den bryr sig inte om vilket element som råkar
+bära animationen.
+
+### Två modeller står med flit utanför familjevakten
+
+`hearts` döljer profilbilden helt (`display:none`), och `hero` har **ingen uttoningskoreografi
+alls** — där tonar hela lådan ut samlat via rotens transition. Det är symmetriskt, alltså inte
+samma fel, och därför beskrivet i stället för lagat. `U6` räknar upp exakt vilka modeller som
+omfattas, så en nionde modell kan inte glida in i undantaget utan att någon skriver ut den.
+
+### Nästa steg
+
+**Bordet är rent på designsidan.** Kvar står bara det som inte går att avgöra härifrån:
+
+1. **§5** — synkkonflikt-banderollen. Lagad i koden, vaktad av fyra browser-prov, kräver en deploy.
+2. **§1:s sista fråga** — vilket steg i `LINK_MIC_BATTLE_TASK` som ska tända overlayn.
+3. **Battle MVP och det inspelade TikTok-materialet.** `tiktok-bridge/inspelare.js` (#206) finns och
+   är av som default. `docs/live-verifiering.md` listar de fyra ställena i battle-kedjan där koden
+   gissar, med exakt vad som ska läsas av i loggen och i konsolen. Läs den före sändningen, fyll i
+   den efteråt.
+
+
 ## Checkpoint 33 — Fan Level Up stängd, skuldregistret nollat (2026-08-17, kväll)
 
 Fortsättningen på checkpoint 32, samma dag. Elva PR:er till, samma arbetsordning varje gång:

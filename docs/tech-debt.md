@@ -8,7 +8,7 @@ Filen ersätter `docs/live-readiness-matrix.md` (PR #54, stängd 2026-08-06). De
 rader höll på att pensionera en fungerande widgetfamilj. Det här är i stället bara de påståenden som
 fortfarande stämmer, och som ingen annanstans är nedskrivna.
 
-Senast verifierad mot `main`: **2026-08-17**.
+Senast verifierad mot `main`: **2026-08-18**.
 
 **Ingen numrerad skuld är öppen längre som går att lösa här.** Kvar står §5, som är åtgärdad i koden
 och vaktad av fyra browser-prov men som bara en riktig deploy kan stänga. §1:s sista fråga — vilket
@@ -803,3 +803,18 @@ Verifierad: 2026-08-09.
   gåvovärdet, fan-nivån och gifter-nivån har alla i tur och ordning strukits där utan att något
   larmade. Lägg nya fält **efter `at:`** — ett kontraktstest läser bara 1600 tecken från
   `function cleanEvent`.
+- **En ram, en sockel eller en glöd som animeras via sitt innehåll överlever innehållet.** Fan Level
+  Ups `loyalty` hade felet åt båda hållen. På väg IN låg poppen på `.fan-profile img`, så ansiktet
+  tonade in inuti en orange skiva som stod fullt målad från första bildrutan (löst i #212). På väg
+  UT låg samma animation på samma ankare, så ansiktet krympte bort medan skivan lyste vidare —
+  uppmätt i Chromium vid 480 ms av 500: behållaren 1.00, ankaret 0.00, och fotograferat som en tom
+  glödande skiva över texten i varje alert. Grannarna `stack`, `heartbeat`, `badgereveal`, `ribbon`
+  och `duo` animerade redan `.fan-profile` direkt och hade aldrig problemet. Regeln är densamma åt
+  båda hållen: **rör behållaren, aldrig ankaret** — ankaret rider med. Löst 2026-08-18.
+- **Ett prov som mäter ett elements EGNA opacitet mäter inte vad som är målat.** Samma lagning
+  läser efteråt `opacity: 1` på `.fan-profile img`, för att ankaret inte längre har någon egen
+  animation — det ärver behållarens. Ett prov som krävt att ankaret tonar ut hade alltså varit
+  grönt före lagningen och rött efter den: det hade vaktat buggen. Måttet som bär är produkten av
+  `opacity` och transformskalan hela vägen upp till widgetlådan, alltså den effektiva, ärvda
+  synligheten. Den siffran bryr sig inte om vilket element som råkar bära animationen, och det är
+  precis därför den håller. `tests/browser/fan-fas-loyalty.browser.test.js`.

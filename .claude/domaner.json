@@ -137,6 +137,7 @@
         "tests/wishlist-retired.test.js",
         "tests/browser/battle-mvp-ramar.browser.test.js",
         "tests/browser/fan-level-referens.browser.test.js",
+        "tests/browser/fan-fas-loyalty.browser.test.js",
         "tests/browser/gifter-level-referens.browser.test.js",
         "tests/browser/streak-katalog.browser.test.js"
       ],

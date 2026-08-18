@@ -29,7 +29,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // gamla URL:erna och ingen av de sex byts ut. studio.css, widget-factory.js och fan-fas.js ar
   // OFORANDRADE och behaller darfor sina strangar. Det ar forsta gangen strangarna gar isar, och
   // det ar meningen: de ska folja filerna, inte varandra.
-  assert.match(studio, /studio\.css\?v=20260817-fan-duo-motet/);
+  //
+  // Bumpad 2026-08-18 for loyaltys uttoning: BARA studio.css andrades — exit-regeln flyttade
+  // fran ankaret `.fan-profile img` till behallaren `.fan-profile`. media.js, widget-factory.js,
+  // fan-fas.js och premium-bundlens version ar oforandrade och behaller sina strangar. Andra
+  // gangen strangarna gar isar, och av samma skal som forsta: de foljer filerna, inte varandra.
+  assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
   assert.match(studio, /[^-]media\.js\?v=20260817-tal-duckning/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
   assert.match(media, /const version='20260817-tal-duckning'/);
