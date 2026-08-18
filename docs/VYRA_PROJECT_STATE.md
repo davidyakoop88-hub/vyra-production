@@ -1,5 +1,64 @@
 # VYRA Project State
 
+## Checkpoint 38 — Guardian Emblem byggd om mot referensbilderna (2026-08-18)
+
+Checkpoint 37:s emblem var **tekniskt rätt och visuellt fel**: en sköld med en hjort i, när
+referensen är en **rund avatarram med en hjort över**. 1300 gröna prov, 18 mutationer och åtta
+foton — och ingen av dem kunde se att det var fel widget.
+
+### Varför det blev fel
+
+Referensbilderna kom som bilagor i chatten. Innan bygget började tog sessionen slut på kontext och
+samtalet sammanfattades: **text överlever en sammanfattning, bilagor gör det inte.** Kvar fanns en
+ordlista över vilka delar som skulle finnas — hjort, lövverk, voluter, smaragder, banderoll — och
+den listan byggde jag efter. Delarna stämde. Kompositionen var en annan widget.
+
+**Felet var inte att bygga ur texten. Felet var att inte säga att jag byggde blint.** Ett
+meddelande hade kostat mindre än en hel designomgång.
+
+Åtgärden är `docs/referens/guardian-emblem.md`: bilderna kan inte sparas i repot, men beskrivningen
+kan — komposition uppifrån och ner, vad varje praktsteg visar, paletten, och de regler som följer av
+bilderna. **Läs den innan du rör `guardian-emblem.css`.**
+
+### Vad som ändrades
+
+| | Före | Efter |
+|---|---|---|
+| Centrum | sköld med hjort i | **rund guldram** med grön innerring och avatar |
+| Hjorten | liten, inuti skölden | **ovanför ramen**, gevir som breder ut sig över hela bredden |
+| Sidorna | smala lagerkvistar | guldplymer som spretar som flammor, mörkgröna blad bakom |
+| Nedtill | rak sockel | voluter som rullar ut i spiraler + stor bottendiamant |
+| Sköldar | ingen | **två sidosköldar** med guldhjorthuvud, plus en kronsköld i steg 2 |
+| Praktsteg | inget märke | **diamantbricka med siffran** överst |
+| Rubriken | `BESKYDDAREN HAR ANLÄNT` | utgår — banderollen är emblemets namnskylt |
+| Delar | 6/9/12/15 | 10/12/16/21 |
+| Mått | 260–440 | 330–585 |
+
+### Tre fel som bara fotot kunde se
+
+1. **Hjorten blev en mus.** Rund skalle, stora runda öron, ingen mule. Skillnaden mot en hjort är
+   avsmalningen — ett långt ansikte från hög panna till mörk nos.
+2. **Kronspetsen låg över mulen.** Hjortens negativa undermarginal är en **mätning**, inte en smak.
+3. **Bottendiamanten kunde inte nå över banderollen.** Den låg inuti ramen, och **en absolut
+   placerad del inuti en förälder med eget `z-index` kan aldrig nå över en granne till föräldern**,
+   hur högt dess eget `z-index` än är. Diamanten ligger nu i flödet.
+
+### Vad vaktnätet gjorde och inte gjorde
+
+Alla tolv vakter höll genom hela ombyggnaden och behövde inte mjukas upp en enda gång. Registret
+byttes ut, fjorton delar bytte namn, koreografin skrevs om — och `G1`, `G-SLUT` och
+`G-STEG-PROGRESSION` fångade varje glapp direkt: fyra föräldralösa CSS-regler (`rubrik`, `krona`,
+`skold`, `sockel`) hittades i samma sekund de blev döda.
+
+Men **inget prov kunde se att det var fel widget.** Vaktnätet svarar på *hänger delarna ihop*, inte
+på *ser det ut som referensen*. Det är inte en brist i näten — det är gränsen för vad ett prov kan
+veta, och därför finns referensfilen.
+
+### Sviter
+
+Node 1302/1302 gröna. Browser: emblemets fyra gröna; svitens enda röda är `ovre handtag strackar
+lodratt` i `widget-handtag.browser.test.js`, grön i isolering och orörd av den här ändringen.
+
 ## Checkpoint 37 — Guardian Emblem: familjen skrotad, byggd om, och vaktnätet slöt sig (2026-08-18)
 
 Guardian Welcome revs helt (1943 rader) och ersattes av **`templateGuardianEmblem`** — ett

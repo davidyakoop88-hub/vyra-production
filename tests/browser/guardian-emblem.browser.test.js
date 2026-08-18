@@ -59,7 +59,7 @@ test.after(async () => {
 });
 
 const STEG = ['1', '2', '3', '4'];
-const LADHOJD = 520;   // samma i alla fyra stegen — se filhuvudet
+const LADHOJD = 680;   // samma i alla fyra stegen — se filhuvudet
 
 // Mätfunktionerna körs INNE i sidan.
 //
@@ -198,9 +198,9 @@ test('G-STEG-PROGRESSION (synlig halva): stegets nya delar är verkligen målade
   // Den här är kontrollen som gör G-STEG-HÖJD ärlig. Omfånget kan växa av ETT stort element lika
   // gärna som av tre nya — det här provet pekar ut varje ny del vid namn och kräver att just den
   // har både yta och ärvd opacitet över noll i sitt eget steg.
-  const NYA = { 2: ['krona', 'kristall-vanster', 'kristall-hoger'],
-                3: ['lov-vanster', 'lov-hoger', 'diamant'],
-                4: ['stralkrans', 'voluter', 'sockel'] };
+  const NYA = { 2: ['innerring', 'kronskold'],
+                3: ['hjort', 'kronspets', 'skold-vanster', 'skold-hoger'],
+                4: ['kristall-vanster', 'kristall-yttre-hoger', 'banderoll'] };
   for (const steg of ['2', '3', '4']) {
     const { page, fel } = await sida(steg);
     assert.ok(!fel, `kontrollmätning: ${fel}`);

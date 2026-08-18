@@ -71,15 +71,24 @@
   // DELARNA ÄR KUMULATIVA OCH ORDNADE. Varje steg börjar med föregående stegs lista, oförändrad,
   // och lägger till sina egna sist. Renderaren går igenom listan i ordning, så samma tabell styr
   // både VAD som ritas och I VILKEN ORDNING det staplas — ingen andra tabell att hålla i synk.
-  const STEG_1 = ['skold', 'avatar', 'rubrik', 'banderoll', 'namn', 'undertext'];
-  const STEG_2 = STEG_1.concat(['krona', 'kristall-vanster', 'kristall-hoger']);
-  const STEG_3 = STEG_2.concat(['lov-vanster', 'lov-hoger', 'diamant']);
-  const STEG_4 = STEG_3.concat(['stralkrans', 'voluter', 'sockel']);
+  // DELARNA, LASTA UR docs/referens/guardian-emblem.md. Ordningen ar den de TILLKOM i, inte den de
+  // hamnar i — placeringen bor i CSS `order` och `z-index`. Se kommentaren dar.
+  //
+  // Steg 1 ar avatarramen med guld runt: ram, plymer, voluter, bottendiamant. Steg 2 lagger till
+  // gron innerring och en liten hjortskold ovanpa ramen. Steg 3 ar det som gor emblemet till ett
+  // VAPEN: hjorten med geviret, kronspetsen och de tva sidoskoldarna. Steg 4 ar full stat —
+  // kristaller och GUARDIAN-banderollen.
+  const STEG_1 = ['stralkrans', 'voluter', 'lov-vanster', 'lov-hoger', 'ram', 'avatar',
+    'diamant', 'bricka', 'namn', 'undertext'];
+  const STEG_2 = STEG_1.concat(['innerring', 'kronskold']);
+  const STEG_3 = STEG_2.concat(['hjort', 'kronspets', 'skold-vanster', 'skold-hoger']);
+  const STEG_4 = STEG_3.concat(['kristall-vanster', 'kristall-hoger',
+    'kristall-yttre-vanster', 'kristall-yttre-hoger', 'banderoll']);
 
   const STEG = {
-    1: { namn: 'Vapensköld', delar: STEG_1 },
-    2: { namn: 'Krona', delar: STEG_2 },
-    3: { namn: 'Lagrar', delar: STEG_3 },
+    1: { namn: 'Ram', delar: STEG_1 },
+    2: { namn: 'Sköld', delar: STEG_2 },
+    3: { namn: 'Hjort', delar: STEG_3 },
     4: { namn: 'Full prakt', delar: STEG_4 },
   };
 
@@ -98,11 +107,15 @@
   // FALLBACKEN ÄR ASYMMETRISK MED FLIT. Bara engelska ger engelska. En tysk eller spansk webbläsare
   // får svenska, eftersom svenska är appens språk och engelska är ett aktivt val — inte "allt som
   // inte är svenska blir engelska".
-  const TEXT_NYCKLAR = ['rubrik', 'banderoll', 'undertext'];
+  // RUBRIKEN UTGAR MED REFERENSDESIGNEN. Bilderna bar ingen ovanforliggande rubriktext — emblemets
+  // egen banderoll ar dess namnskylt, och en rubrik ovanfor hade konkurrerat med brickan om samma
+  // plats. `namn` och `undertext` star kvar under emblemet: widgeten ar en ALERT och maste saga vem
+  // som kom in, vilket en profilram inte behover.
+  const TEXT_NYCKLAR = ['banderoll', 'undertext'];
 
   const TEXTER = {
-    sv: { rubrik: 'BESKYDDAREN HAR ANLÄNT', banderoll: 'BESKYDDARE', undertext: 'Tack för ditt beskydd' },
-    en: { rubrik: 'GUARDIAN HAS ARRIVED', banderoll: 'GUARDIAN', undertext: 'Thank you for your protection' },
+    sv: { banderoll: 'BESKYDDARE', undertext: 'Tack för ditt beskydd' },
+    en: { banderoll: 'GUARDIAN', undertext: 'Thank you for your protection' },
   };
 
   function sprak(w) {
@@ -116,7 +129,7 @@
 
   function text(lang) {
     const t = TEXTER[lang] || TEXTER.sv;
-    return { rubrik: t.rubrik, banderoll: t.banderoll, undertext: t.undertext };
+    return { banderoll: t.banderoll, undertext: t.undertext };
   }
 
   // ---- Koreografin -------------------------------------------------------------------------------

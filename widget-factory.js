@@ -47,7 +47,7 @@
   // `VyraWidgets.variants('guardianemblem.matt')` nar praktsteget byts — en widget vars hojd star
   // pa tva stallen far forr eller senare tva olika varden. Bredden ar 400 i varje steg: det ar
   // familjens format, inte en installning per niva.
-  const GE_MATT = { 1: [400, 260], 2: [400, 320], 3: [400, 380], 4: [400, 440] };
+  const GE_MATT = { 1: [400, 330], 2: [400, 360], 3: [400, 495], 4: [400, 585] };
 
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
@@ -91,7 +91,7 @@
     // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett
     // prov ser det. Namnen ar desamma som STEG-registret i guardian-emblem-fas.js bar.
     'guardianemblem.matt': GE_MATT,
-    'guardianemblem.step': {1:'Vapenskold',2:'Krona',3:'Lagrar',4:'Full prakt'},
+    'guardianemblem.step': {1:'Ram',2:'Skold',3:'Hjort',4:'Full prakt'},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},

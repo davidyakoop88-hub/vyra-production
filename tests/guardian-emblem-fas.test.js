@@ -700,16 +700,16 @@ test('G-SPRÅK: VyraLang vinner över navigator när den en dag finns', () => {
     { sprakkod: 'sv-SE', vyraLang: { current: () => 'en-GB' } }), 'en');
 });
 
-test('G-SPRÅK: båda språken har rubrik, banderoll och undertext, och de skiljer sig åt', () => {
+test('G-SPRÅK: båda språken har banderoll och undertext, och de skiljer sig åt', () => {
+  // RUBRIKEN UTGICK med referensdesignen: emblemets banderoll ar dess namnskylt, och en rubrik
+  // ovanfor hade konkurrerat med praktstegsbrickan om samma plats.
   const R = require('./helpers/guardian-emblem-fas-register.js');
   const sv = R.textIRymd('sv'), en = R.textIRymd('en');
-  assert.equal(sv.rubrik, 'BESKYDDAREN HAR ANLÄNT');
-  assert.equal(en.rubrik, 'GUARDIAN HAS ARRIVED');
   assert.equal(sv.banderoll, 'BESKYDDARE');
   assert.equal(en.banderoll, 'GUARDIAN');
   assert.equal(sv.undertext, 'Tack för ditt beskydd');
   assert.equal(en.undertext, 'Thank you for your protection');
-  for (const nyckel of ['rubrik', 'banderoll', 'undertext']) {
+  for (const nyckel of ['banderoll', 'undertext']) {
     assert.notEqual(sv[nyckel], en[nyckel],
       `språken ger samma ${nyckel} — översättningen är en attrapp`);
   }
@@ -724,18 +724,17 @@ test('G-SPRÅK: renderaren kastar inte om syskonfilen saknas, och reservtexten �
   // identiska vaktas här, så de aldrig kan glida isär.
   const { textIRymd } = require('./helpers/guardian-emblem-fas-register.js');
   const sv = textIRymd('sv');
-  const reserv = MEDIA.match(/return \{rubrik:'([^']+)',banderoll:'([^']+)',undertext:'([^']+)'\}/);
+  const reserv = MEDIA.match(/return \{banderoll:'([^']+)',undertext:'([^']+)'\}/);
   assert.ok(reserv, 'hittade ingen reservtext i geText — renderaren litar på att syskonfilen finns');
-  assert.equal(reserv[1], sv.rubrik, 'reservrubriken har glidit ifrån guardian-emblem-fas.js svenska');
-  assert.equal(reserv[2], sv.banderoll, 'reservbanderollen har glidit ifrån');
-  assert.equal(reserv[3], sv.undertext, 'reservundertexten har glidit ifrån');
+  assert.equal(reserv[1], sv.banderoll, 'reservbanderollen har glidit ifrån guardian-emblem-fas.js svenska');
+  assert.equal(reserv[2], sv.undertext, 'reservundertexten har glidit ifrån');
 });
 
 // ================================================================================================
 // FABRIKEN, PANELEN OCH MARKUPEN — kontraktet runt vaktnätet
 // ================================================================================================
 
-const MATT = { 1: [400, 260], 2: [400, 320], 3: [400, 380], 4: [400, 440] };
+const MATT = { 1: [400, 330], 2: [400, 360], 3: [400, 495], 4: [400, 585] };
 
 test('Fabriken: catalog:guardianemblem:<steg> ger rätt typ, steg och mått', () => {
   const { STEGNYCKLAR } = require('./helpers/guardian-emblem-fas-register.js');
@@ -804,9 +803,25 @@ test('Markup: widgeten bär sin stegklass och stegets delar — och inga andras'
   }
 });
 
-test('Markup: skölden bär en SVG — hjorten är ritad, inte skriven', () => {
-  const { lada } = boot([geWidget('ge1')]);
-  assert.ok(lada('ge1').querySelector('.ge-skold svg'), 'skölden bär ingen SVG');
+test('Markup: hjorten är ritad, inte skriven — och först i steg 3', () => {
+  // Referensen (docs/referens/guardian-emblem.md) ar tydlig: steg 1 och 2 har INGEN hjort, bara
+  // ramen och guldet. Hjorten med geviret ar det som gor emblemet till ett vapen, och den ar
+  // darfor steg 3:s hela poang. Kontrollmatningen ligger i samma prov: finns den i steg 3, sa ar
+  // franvaron i steg 2 en franvaro och inte en trasig renderare.
+  const tre = boot([geWidget('ge3', { guardianStep: 3 })]);
+  assert.ok(tre.lada('ge3').querySelector('.ge-hjort svg'), 'hjorten bär ingen SVG i steg 3');
+  const tva = boot([geWidget('ge2', { guardianStep: 2 })]);
+  assert.equal(tva.lada('ge2').querySelector('.ge-hjort'), null,
+    'steg 2 renderar hjorten — den hör till steg 3 och uppåt');
+});
+
+test('Markup: ramen är rund och bär avataren — aldrig en sköld', () => {
+  const { lada } = boot([geWidget('ge1', { guardianStep: 1 })]);
+  const box = lada('ge1');
+  assert.ok(box.querySelector('.ge-ram'), 'ramen saknas');
+  assert.ok(box.querySelector('.ge-ram .ge-avatar'), 'avataren ligger inte inuti ramen');
+  assert.equal(box.querySelector('.ge-skold'), null,
+    'en central sköld renderas — referensen har en RUND ram, sköldformen finns bara i sidoemblemen');
 });
 
 test('Markup: användarnamnet går att stänga av, och det syns', () => {
@@ -818,6 +833,14 @@ test('Markup: användarnamnet går att stänga av, och det syns', () => {
   const av = boot([geWidget('geB', { guardianShowUsername: false })]);
   assert.equal(av.lada('geB').querySelector('.ge-namn'), null,
     'namnet renderas trots att guardianShowUsername är false');
+});
+
+test('Markup: praktstegets bricka bär stegets siffra', () => {
+  for (const steg of ['1', '4']) {
+    const { lada } = boot([geWidget('geb' + steg, { guardianStep: Number(steg) })]);
+    assert.equal(lada('geb' + steg).querySelector('.ge-bricka').textContent.trim(), steg,
+      `brickan visar inte siffran ${steg}`);
+  }
 });
 
 test('Markup: egen text ersätter undertexten när den är ifylld', () => {

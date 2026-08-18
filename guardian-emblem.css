@@ -47,206 +47,270 @@
 }
 
 /* ---- Praktstegen -------------------------------------------------------------------------------
- * Stegklassen bär bara det som skiljer nivåerna åt i skala. Vilka DELAR som finns avgörs av
- * renderaren ur STEG-registret, inte av CSS: en dold del är fortfarande en renderad del, och
- * `display:none` per steg hade gjort registret till en lögn.
+ * Stegklassen bar bara det som skiljer nivaerna at i SKALA och LUFT. Vilka DELAR som finns avgors
+ * av renderaren ur STEG-registret, inte av CSS: en dold del ar fortfarande en renderad del, och
+ * `display:none` per steg hade gjort registret till en logn.
+ *
+ * Marginalen ovanfor ramen vaxer fran steg 2, dar kronskolden behover plats mellan brickan och
+ * ramens overkant. Det ar ocksa det som gor att emblemets HOJD vaxer med praktnivan utan att nagon
+ * skriver in en hojd per steg — G-STEG-HOJD mater just det.
  */
-.guardian-emblem.ge-step-1{--ge-skala:.86}
-.guardian-emblem.ge-step-2{--ge-skala:.92}
-.guardian-emblem.ge-step-3{--ge-skala:1}
-.guardian-emblem.ge-step-4{--ge-skala:1.06}
+.guardian-emblem.ge-step-1{--ge-skala:1}
+.guardian-emblem.ge-step-2{--ge-skala:1;--ge-ramluft:26px}
+.guardian-emblem.ge-step-3{--ge-skala:1;--ge-ramluft:26px}
+.guardian-emblem.ge-step-4{--ge-skala:1.02;--ge-ramluft:26px}
 
-/* ---- Delarna i flödet --------------------------------------------------------------------------- */
+/* ---- Flodet -------------------------------------------------------------------------------------
+ * Sex delar ligger i floden uppifran och ner: brickan, hjorten, ramen, banderollen, namnet och
+ * undertexten. Allt annat hanger pa ramen och ar absolut placerat mot den.
+ *
+ * PLACERINGEN BOR HAR, INTE I REGISTRET. STEG[n].delar ar sorterad efter NAR delarna tillkom — det
+ * ar den ordningen G-STEG-PROGRESSION kraever prefixlikhet i — sa utan `order` blir DOM-ordningen
+ * ocksa den visuella. Uppmatt en gang: kronan hamnade under skolden av precis det skalet.
+ */
+.guardian-emblem .ge-bricka{order:1}
+.guardian-emblem .ge-hjort{order:2}
+.guardian-emblem .ge-ram{order:3}
+.guardian-emblem .ge-banderoll{order:4}
+.guardian-emblem .ge-diamant{order:5}
+.guardian-emblem .ge-namn{order:6}
+.guardian-emblem .ge-undertext{order:7}
 
-.guardian-emblem .ge-rubrik{
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:var(--ge-spacing);
-  color:var(--ge-gold-light);
-  text-shadow:0 0 8px rgba(212,175,55,.55);
-  white-space:nowrap;
-}
-
-.guardian-emblem .ge-diamant{
-  width:14px;
-  height:14px;
-  transform:rotate(45deg);
-  background:linear-gradient(135deg,var(--ge-emerald) 0%,var(--ge-emerald-dark) 100%);
-  border:1px solid var(--ge-gold);
-  box-shadow:0 0 10px rgba(46,204,113,.6);
-}
-
-.guardian-emblem .ge-krona{
-  width:calc(76px * var(--ge-skala));
-  height:30px;
-  color:var(--ge-gold);
-  filter:drop-shadow(0 0 6px rgba(212,175,55,.5));
-}
-.guardian-emblem .ge-krona svg{width:100%;height:100%;display:block}
-
-.guardian-emblem .ge-skold{
-  position:relative;
-  width:calc(132px * var(--ge-skala));
-  height:calc(150px * var(--ge-skala));
+/* Praktstegets bricka: en STAENDE romb med siffran i guld. Siffran motroteras — en romb som roterar
+   sitt eget innehall gor talet olasligt. */
+.guardian-emblem .ge-bricka{
+  width:40px;
+  height:40px;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:var(--ge-gold);
-  filter:drop-shadow(0 4px 14px rgba(0,0,0,.55));
+  transform:rotate(45deg);
+  background:linear-gradient(135deg,#12482f 0%,var(--ge-forest-dark) 100%);
+  border:3px solid var(--ge-gold);
+  box-shadow:0 0 12px rgba(212,175,55,.45);
+  flex:none;
 }
-.guardian-emblem .ge-skold svg{width:100%;height:100%;display:block}
+.guardian-emblem .ge-bricka b{
+  transform:rotate(-45deg);
+  font-size:20px;
+  font-weight:700;
+  color:var(--ge-gold-light);
+  line-height:1;
+}
 
-/* Avataren ligger inuti sköldens övre fält. `border-box` på både origin och clip: annars ritas
- * guldkanten i padding-boxen och göms under sköldens egen kontur. */
+/* Hjorten. Geviret ar emblemets bredaste form och far sticka ut i HOJD — den negativa
+   undermarginalen later hjortens hals ga in bakom ramens overkant, precis som i referensen. */
+.guardian-emblem .ge-hjort{
+  width:calc(356px * var(--ge-skala));
+  height:calc(178px * var(--ge-skala));
+  /* NEGATIVA MARGINALEN AR EN MATNING, INTE EN SMAK. Kronspetsen sitter vid ramens overkant, och
+     drar hjorten for langt ner hamnar spetsen over MULEN i stallet for under den — uppmatt i foto 3
+     av omgang tre, dar den grona romben last som ett munskydd. -20 satter ramens overkant strax
+     under nosen, dar halsen borjar. */
+  margin-bottom:-20px;
+  flex:none;
+  z-index:1;
+}
+.guardian-emblem .ge-hjort svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* ---- Ramen och allt som hanger pa den -----------------------------------------------------------
+ * Ramen ar RUND, aldrig en skold. Skoldformen finns bara i de tva sidoemblemen och i kronskolden.
+ * Ramen ar ocksa positioneringsankaret for fjorton andra delar — se GE_NASTAD i media.js.
+ */
+.guardian-emblem .ge-ram{
+  position:relative;
+  width:calc(170px * var(--ge-skala));
+  height:calc(170px * var(--ge-skala));
+  margin-top:var(--ge-ramluft,0);
+  border-radius:50%;
+  background:linear-gradient(150deg,var(--ge-gold-light) 0%,var(--ge-gold) 45%,var(--ge-gold-deep) 100%);
+  box-shadow:0 0 18px rgba(212,175,55,.35),inset 0 0 10px rgba(0,0,0,.35);
+  flex:none;
+  z-index:3;
+}
+/* Den grona innerringen. Absolut mot ramen sa den aldrig kan trycka isar nagot. */
+.guardian-emblem .ge-innerring{
+  position:absolute;
+  inset:9px;
+  border-radius:50%;
+  background:linear-gradient(160deg,#12583c 0%,var(--ge-forest-mid) 100%);
+  z-index:1;
+}
+/* Avataren. `border-box` pa bade origin och clip: annars ritas guldkanten i padding-boxen och goms
+   under ramens egen kontur — uppmatt en gang pa hornstenarna i PR #222. */
 .guardian-emblem .ge-avatar{
   position:absolute;
-  top:22%;
-  width:calc(46px * var(--ge-skala));
-  height:calc(46px * var(--ge-skala));
+  inset:24px;
   border-radius:50%;
-  border:2px solid var(--ge-gold);
+  border:2px solid var(--ge-gold-deep);
   background-origin:border-box;
   background-clip:border-box;
   background-size:cover;
   background-position:center;
-  background-color:var(--ge-forest-mid);
-  box-shadow:0 0 12px rgba(212,175,55,.45);
+  background-color:#0b0f0d;
+  z-index:2;
   overflow:hidden;
 }
 .guardian-emblem .ge-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 
+/* Plymerna: guldblad som spretar uppat och utat som flammor, med morkgrona blad bakom. De ar lika
+   breda som ramen — referensen ar tydlig pa att det INTE ar en tunn lagerkrans. */
+.guardian-emblem .ge-lov-vanster,
+.guardian-emblem .ge-lov-hoger{
+  position:absolute;
+  top:-34px;
+  width:104px;
+  height:142px;
+  pointer-events:none;
+  z-index:0;
+}
+.guardian-emblem .ge-lov-vanster{left:-88px}
+.guardian-emblem .ge-lov-hoger{right:-88px;transform:scaleX(-1)}
+.guardian-emblem .ge-lov-vanster svg,
+.guardian-emblem .ge-lov-hoger svg{width:100%;height:100%;display:block}
+
+/* Voluterna rullar ut at bada sidor under ramen och slutar i spiraler. */
+.guardian-emblem .ge-voluter{
+  position:absolute;
+  top:126px;
+  left:-105px;
+  width:380px;
+  height:96px;
+  pointer-events:none;
+  z-index:0;
+}
+.guardian-emblem .ge-voluter svg{width:100%;height:100%;display:block}
+
+/* Bottendiamanten ligger i FLODET, inte inuti ramen. Skalet ar en stackningsregel som kostade en
+   fotoomgang: en absolut placerad del inuti en foralder med eget `z-index` kan aldrig na over en
+   GRANNE till foraldern, hur hogt dess eget z-index an ar. Diamanten lag i ramen (z-index 3) och
+   banderollen ar ramens granne (z-index 5) — diamanten hamnade darfor under bandet oavsett vad som
+   stod pa den. Som del i floden har den sin egen plats i samma stackningskontext som bandet. */
+.guardian-emblem .ge-diamant{
+  position:relative;
+  margin-top:-28px;
+  width:52px;
+  height:52px;
+  flex:none;
+  z-index:8;
+}
+.guardian-emblem .ge-diamant svg{width:100%;height:100%;display:block}
+
+/* Sidoskoldarna sitter i hojd med ramens nederkant, en at vart hall. */
+.guardian-emblem .ge-skold-vanster,
+.guardian-emblem .ge-skold-hoger{
+  position:absolute;
+  top:96px;
+  width:50px;
+  height:62px;
+  z-index:4;
+}
+.guardian-emblem .ge-skold-vanster{left:-76px}
+.guardian-emblem .ge-skold-hoger{right:-76px}
+.guardian-emblem .ge-skold-vanster svg,
+.guardian-emblem .ge-skold-hoger svg{width:100%;height:100%;display:block}
+
+/* Kronskolden sitter ovanpa ramens overkant — steg 2:s enda synliga tillskott utover innerringen. */
+.guardian-emblem .ge-kronskold{
+  position:absolute;
+  top:-42px;
+  left:calc(50% - 22px);
+  width:44px;
+  height:54px;
+  z-index:5;
+}
+.guardian-emblem .ge-kronskold svg{width:100%;height:100%;display:block}
+
+/* Kronspetsen ligger i skarven mellan hjortens hals och ramens overkant. */
+.guardian-emblem .ge-kronspets{
+  position:absolute;
+  top:-24px;
+  left:calc(50% - 32px);
+  width:64px;
+  height:44px;
+  z-index:6;
+}
+.guardian-emblem .ge-kronspets svg{width:100%;height:100%;display:block}
+
+/* Kristallerna sticker upp BAKOM plymerna — tva inre, tva yttre och hogre. */
+.guardian-emblem .ge-kristall-vanster,
+.guardian-emblem .ge-kristall-hoger,
+.guardian-emblem .ge-kristall-yttre-vanster,
+.guardian-emblem .ge-kristall-yttre-hoger{
+  position:absolute;
+  width:24px;
+  height:64px;
+  pointer-events:none;
+  z-index:0;
+}
+.guardian-emblem .ge-kristall-vanster{left:-46px;top:-58px}
+.guardian-emblem .ge-kristall-hoger{right:-46px;top:-58px}
+.guardian-emblem .ge-kristall-yttre-vanster{left:-88px;top:-86px}
+.guardian-emblem .ge-kristall-yttre-hoger{right:-88px;top:-86px}
+.guardian-emblem .ge-kristall-vanster svg,
+.guardian-emblem .ge-kristall-hoger svg,
+.guardian-emblem .ge-kristall-yttre-vanster svg,
+.guardian-emblem .ge-kristall-yttre-hoger svg{width:100%;height:100%;display:block}
+
+/* ---- Banderollen och texten ---------------------------------------------------------------------
+ * Banderollen sveper over emblemets nedre tredjedel. Den ligger i floden och drar sig UPP med en
+ * negativ toppmarginal, sa den delvis tacker ramen precis som i referensen.
+ */
 .guardian-emblem .ge-banderoll{
   position:relative;
-  min-width:150px;
-  padding:5px 22px;
-  font-size:12px;
+  margin-top:-14px;
+  min-width:286px;
+  padding:7px 28px;
+  font-size:19px;
   font-weight:700;
   letter-spacing:var(--ge-spacing);
-  color:var(--ge-forest-dark);
-  background:linear-gradient(180deg,var(--ge-gold-light) 0%,var(--ge-gold) 55%,var(--ge-gold-deep) 100%);
-  clip-path:polygon(0 0,100% 0,94% 50%,100% 100%,0 100%,6% 50%);
+  color:var(--ge-gold-light);
+  text-shadow:0 1px 0 rgba(0,0,0,.6);
+  background:linear-gradient(180deg,#12583c 0%,var(--ge-forest-dark) 100%);
+  border-top:3px solid var(--ge-gold);
+  border-bottom:3px solid var(--ge-gold);
+  clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%);
   white-space:nowrap;
+  flex:none;
+  z-index:5;
 }
 
 .guardian-emblem .ge-namn{
-  font-size:17px;
+  position:relative;
+  margin-top:6px;
+  font-size:18px;
   font-weight:700;
-  letter-spacing:.06em;
+  letter-spacing:.05em;
   color:var(--ge-text-light);
   text-shadow:0 0 10px rgba(46,204,113,.45);
   max-width:100%;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  z-index:5;
 }
-
 .guardian-emblem .ge-undertext{
-  font-size:11px;
-  font-weight:400;
+  position:relative;
+  font-size:12px;
   letter-spacing:.04em;
   color:rgba(245,240,230,.78);
   max-width:100%;
+  z-index:5;
 }
 
-.guardian-emblem .ge-sockel{
-  width:calc(190px * var(--ge-skala));
-  height:12px;
-  background:linear-gradient(90deg,transparent 0%,var(--ge-gold) 22%,var(--ge-gold-light) 50%,var(--ge-gold) 78%,transparent 100%);
-  clip-path:polygon(6% 0,94% 0,100% 100%,0 100%);
-}
-
-/* ---- Dekoren runt omkring -----------------------------------------------------------------------
- * Absolut placerad med flit: den ska omge flödet, inte trycka isär det. Ingen del får bli bredare
- * än familjens 400 px — en kant som sticker ut klipps i overlayn utan att någon ser det i studion.
- */
-
+/* Stralkransen ligger bakom allt och ar det enda som lyser i ljusfasen. */
 .guardian-emblem .ge-stralkrans{
   position:absolute;
   top:50%;
   left:50%;
-  width:300px;
-  height:300px;
-  margin:-150px 0 0 -150px;
+  width:330px;
+  height:330px;
+  margin:-165px 0 0 -165px;
   border-radius:50%;
-  background:radial-gradient(circle,rgba(212,175,55,.30) 0%,rgba(46,204,113,.14) 42%,transparent 70%);
+  background:radial-gradient(circle,rgba(212,175,55,.28) 0%,rgba(46,204,113,.13) 44%,transparent 70%);
   pointer-events:none;
   z-index:0;
 }
-
-.guardian-emblem .ge-voluter{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:280px;
-  height:170px;
-  margin:-95px 0 0 -140px;
-  color:var(--ge-gold);
-  opacity:.85;
-  pointer-events:none;
-  z-index:0;
-}
-.guardian-emblem .ge-voluter svg{width:100%;height:100%;display:block}
-
-.guardian-emblem .ge-lov-vanster,
-.guardian-emblem .ge-lov-hoger{
-  position:absolute;
-  top:50%;
-  width:64px;
-  height:150px;
-  margin-top:-70px;
-  color:var(--ge-gold);
-  filter:drop-shadow(0 0 5px rgba(212,175,55,.4));
-  pointer-events:none;
-  z-index:1;
-}
-.guardian-emblem .ge-lov-vanster{left:28px}
-.guardian-emblem .ge-lov-hoger{right:28px;transform:scaleX(-1)}
-.guardian-emblem .ge-lov-vanster svg,
-.guardian-emblem .ge-lov-hoger svg{width:100%;height:100%;display:block}
-
-.guardian-emblem .ge-kristall-vanster,
-.guardian-emblem .ge-kristall-hoger{
-  position:absolute;
-  top:50%;
-  width:12px;
-  height:20px;
-  margin-top:-58px;
-  background:linear-gradient(180deg,var(--ge-emerald) 0%,var(--ge-emerald-dark) 100%);
-  border:1px solid var(--ge-gold);
-  clip-path:polygon(50% 0,100% 32%,50% 100%,0 32%);
-  z-index:2;
-}
-.guardian-emblem .ge-kristall-vanster{left:104px}
-.guardian-emblem .ge-kristall-hoger{right:104px}
-
-/* PLACERINGEN BOR HAR, INTE I REGISTRET. STEG[n].delar ar en STABIL lista — det ar den som later
- * G-STEG-PROGRESSION kraeva prefixlikhet mellan stegen — och den listan ar sorterad efter NAR
- * delarna tillkom, inte efter var de hamnar. Renderaren foljer registret rakt av, sa utan `order`
- * blir DOM-ordningen ocksa den visuella ordningen: kronan hamnade UNDER skolden i det forsta fotot,
- * eftersom den tillkommer i steg 2 och skolden i steg 1.
- *
- * Uppmatt i foto 4, forsta omgangen. Det ar precis den sortens fel som inget prov i vaktnatet kan
- * se — alla delar FANNS, alla var malade, och omfanget vaxte. Ogat ar matinstrumentet for placering.
- */
-.guardian-emblem .ge-rubrik{order:1}
-.guardian-emblem .ge-diamant{order:2}
-.guardian-emblem .ge-krona{order:3}
-.guardian-emblem .ge-skold{order:4}
-.guardian-emblem .ge-banderoll{order:5}
-.guardian-emblem .ge-namn{order:6}
-.guardian-emblem .ge-undertext{order:7}
-.guardian-emblem .ge-sockel{order:8}
-
-/* Flödesdelarna ska ligga ÖVER dekoren. Ett z-index på var och en hade varit sju rader som säger
- * samma sak; en gemensam regel för det som inte är dekor räcker. */
-.guardian-emblem .ge-rubrik,
-.guardian-emblem .ge-diamant,
-.guardian-emblem .ge-krona,
-.guardian-emblem .ge-skold,
-.guardian-emblem .ge-banderoll,
-.guardian-emblem .ge-namn,
-.guardian-emblem .ge-undertext,
-.guardian-emblem .ge-sockel{position:relative;z-index:3}
 
 /* ================================================================================================
  * KOREOGRAFIN "VAPENSKÖLDEN"
@@ -255,85 +319,94 @@
  * sätter nästa, så CSS:en aldrig behöver bry sig om kombinationer.
  * ================================================================================================ */
 
-/* ---- ljus (600 ms) — ljuset samlas, ingen del syns ännu -----------------------------------------
- * Skulle skölden skymta fram här vore ankomsten redan avslöjad.
+/* ---- ljus (600 ms) — ljuset samlas, ingen del syns annu ------------------------------------------
+ * Skulle ramen eller geviret skymta fram har vore ankomsten redan avslojad.
  */
-.guardian-emblem.ge-fas-ljus .ge-rubrik,
-.guardian-emblem.ge-fas-ljus .ge-diamant,
-.guardian-emblem.ge-fas-ljus .ge-krona,
-.guardian-emblem.ge-fas-ljus .ge-skold,
+.guardian-emblem.ge-fas-ljus .ge-bricka,
+.guardian-emblem.ge-fas-ljus .ge-hjort,
+.guardian-emblem.ge-fas-ljus .ge-ram,
 .guardian-emblem.ge-fas-ljus .ge-banderoll,
 .guardian-emblem.ge-fas-ljus .ge-namn,
 .guardian-emblem.ge-fas-ljus .ge-undertext,
-.guardian-emblem.ge-fas-ljus .ge-sockel,
-.guardian-emblem.ge-fas-ljus .ge-voluter,
 .guardian-emblem.ge-fas-ljus .ge-lov-vanster,
 .guardian-emblem.ge-fas-ljus .ge-lov-hoger,
+.guardian-emblem.ge-fas-ljus .ge-voluter,
+.guardian-emblem.ge-fas-ljus .ge-diamant,
+.guardian-emblem.ge-fas-ljus .ge-skold-vanster,
+.guardian-emblem.ge-fas-ljus .ge-skold-hoger,
+.guardian-emblem.ge-fas-ljus .ge-kronskold,
+.guardian-emblem.ge-fas-ljus .ge-kronspets,
 .guardian-emblem.ge-fas-ljus .ge-kristall-vanster,
-.guardian-emblem.ge-fas-ljus .ge-kristall-hoger{opacity:0}
+.guardian-emblem.ge-fas-ljus .ge-kristall-hoger,
+.guardian-emblem.ge-fas-ljus .ge-kristall-yttre-vanster,
+.guardian-emblem.ge-fas-ljus .ge-kristall-yttre-hoger{opacity:0}
 .guardian-emblem.ge-fas-ljus .ge-stralkrans{animation:geLjusSamlas 600ms ease-out both}
 
-/* ---- oppna (1200 ms) — utifrån och in ------------------------------------------------------------
- * Dekoren först, sedan krona och kristaller, sist sköld och namn. Rubriken STÄMPLAS fram: den
- * krymper sitt teckenavstånd i stället för att tona in.
+/* ---- oppna (1200 ms) — utifran och in -------------------------------------------------------------
+ * Kristaller och voluter forst, sedan plymerna, sedan ramen, sist hjorten och texten. Ordningen ar
+ * referensens lasordning bakifran: dekoren finns redan nar vapnet reser sig.
  *
- * `--ge-spacing` är en variabel och inte en hårdkodad `.18em` av ett skäl som kostade en mätning
- * en gång: en keyframe med `fill-mode: both` som landar på ett fast värde SLÅR varje storleks- och
- * stegspecifikt värde efteråt. Ett storleksval som inte överlever sin egen animation är ingen
- * inställning.
+ * SPEGLADE DELAR BAR SIN SPEGLING GENOM ANIMATIONEN. `.ge-lov-hoger` star pa `scaleX(-1)` och
+ * `.ge-bricka` pa `rotate(45deg)` — bada ar FORMENS IDENTITET, inte ett tillstand. En keyframe som
+ * skriver `transform` utan dem slar ut dem: uppmatt en gang, da diamanten var en gron kvadrat under
+ * hela oppna. Darfor har varje sadan del ett eget spar.
  */
-.guardian-emblem.ge-fas-oppna .ge-voluter{animation:geUtfallning 520ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-lov-vanster{animation:geUtfallning 520ms 80ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-lov-hoger{animation:geUtfallningSpegel 520ms 80ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-krona{animation:geResning 560ms 220ms ease-out both}
-/* Diamanten har sin EGEN resning, och det ar inte en detalj. `.ge-diamant` ar en kvadrat som ar
-   ROTERAD 45 grader — rotationen ar formens identitet, inte ett tillstand. `geResning` skriver
-   `transform` och slog darfor ut rotationen: uppmatt i foto 6, dar diamanten var en gron KVADRAT
-   under hela oppna-fasen och blev en diamant forst i hyllningen.
-
-   Det ar samma lardom som `--ge-spacing`, en niva djupare: en egenskap som en animation skriver
-   over maste animationen sjalv bara med sig. `geUttoning` ror bara opacity och behover darfor inget
-   eget spar for diamanten. */
-.guardian-emblem.ge-fas-oppna .ge-diamant{animation:geResningDiamant 460ms 300ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-kristall-yttre-vanster,
+.guardian-emblem.ge-fas-oppna .ge-kristall-yttre-hoger{animation:geUtfallning 520ms ease-out both}
 .guardian-emblem.ge-fas-oppna .ge-kristall-vanster,
-.guardian-emblem.ge-fas-oppna .ge-kristall-hoger{animation:geResning 460ms 340ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-skold{animation:geResning 620ms 380ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-rubrik{animation:geStampel 620ms 120ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-banderoll{animation:geResning 520ms 620ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-namn{animation:geResning 520ms 760ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-undertext{animation:geResning 480ms 860ms ease-out both}
-.guardian-emblem.ge-fas-oppna .ge-sockel{animation:geUtfallning 480ms 900ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-kristall-hoger{animation:geUtfallning 520ms 90ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-voluter{animation:geUtfallning 540ms 120ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-lov-vanster{animation:geUtfallning 540ms 180ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-lov-hoger{animation:geUtfallningSpegel 540ms 180ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-skold-vanster,
+.guardian-emblem.ge-fas-oppna .ge-skold-hoger{animation:geResning 480ms 300ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-ram{animation:geResning 620ms 340ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-diamant{animation:geResning 460ms 420ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-hjort{animation:geResning 640ms 460ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-kronspets,
+.guardian-emblem.ge-fas-oppna .ge-kronskold{animation:geResning 460ms 560ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-bricka{animation:geResningBricka 480ms 620ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-banderoll{animation:geStampel 560ms 700ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-namn{animation:geResning 500ms 820ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-undertext{animation:geResning 460ms 900ms ease-out both}
 
-/* ---- hyllning (3500 ms) — hållet -----------------------------------------------------------------
- * Guldet andas och kristallerna glimtar. Namnet står ABSOLUT STILLA — det är det tittaren ska
- * hinna läsa, och en rörelse där hade tagit uppmärksamheten från den enda text som betyder något.
+/* ---- hyllning (3500 ms) — hallet -----------------------------------------------------------------
+ * Guldet andas och smaragderna glimtar. Namnet star ABSOLUT STILLA — det ar det tittaren ska hinna
+ * lasa, och en rorelse dar hade tagit uppmarksamheten fran den enda text som betyder nagot.
  *
- * De oändliga animationerna hör hemma just här, på en fas som SLUTAR. Ribbons andning lärde oss
- * att en `infinite` på en fasklass dör när klassen tas bort — men det gäller vilolager, inte
- * hållet. G-VILOLAGER vaktar därför bara ljus, oppna och upplosning.
+ * De oandliga animationerna hor hemma just har, pa en fas som SLUTAR. G-VILOLAGER vaktar darfor
+ * bara ljus, oppna och upplosning.
  */
 .guardian-emblem.ge-fas-hyllning .ge-stralkrans{animation:geAndning 2600ms ease-in-out infinite}
-.guardian-emblem.ge-fas-hyllning .ge-krona{animation:geGuldglod 2200ms ease-in-out infinite}
+.guardian-emblem.ge-fas-hyllning .ge-ram{animation:geGuldglod 2200ms ease-in-out infinite}
+.guardian-emblem.ge-fas-hyllning .ge-diamant{animation:geGlimt 2000ms ease-in-out infinite}
 .guardian-emblem.ge-fas-hyllning .ge-kristall-vanster{animation:geGlimt 1800ms ease-in-out infinite}
 .guardian-emblem.ge-fas-hyllning .ge-kristall-hoger{animation:geGlimt 1800ms 900ms ease-in-out infinite}
-.guardian-emblem.ge-fas-hyllning .ge-diamant{animation:geGlimt 2400ms 400ms ease-in-out infinite}
+.guardian-emblem.ge-fas-hyllning .ge-kristall-yttre-vanster{animation:geGlimt 2200ms 400ms ease-in-out infinite}
+.guardian-emblem.ge-fas-hyllning .ge-kristall-yttre-hoger{animation:geGlimt 2200ms 1300ms ease-in-out infinite}
 
-/* ---- upplosning (800 ms) — omvänd ordning --------------------------------------------------------
- * Ljuset sist, så det släcks efter det som stod i det.
+/* ---- upplosning (800 ms) — omvand ordning ---------------------------------------------------------
+ * Ljuset sist, sa det slacks efter det som stod i det. `geUttoning` ror BARA opacity och behover
+ * darfor inget eget spar for de speglade delarna.
  */
 .guardian-emblem.ge-fas-upplosning .ge-undertext,
 .guardian-emblem.ge-fas-upplosning .ge-namn,
 .guardian-emblem.ge-fas-upplosning .ge-banderoll,
-.guardian-emblem.ge-fas-upplosning .ge-sockel{animation:geUttoning 420ms ease-in both}
-.guardian-emblem.ge-fas-upplosning .ge-skold,
-.guardian-emblem.ge-fas-upplosning .ge-rubrik{animation:geUttoning 460ms 140ms ease-in both}
-.guardian-emblem.ge-fas-upplosning .ge-krona,
-.guardian-emblem.ge-fas-upplosning .ge-diamant,
-.guardian-emblem.ge-fas-upplosning .ge-kristall-vanster,
-.guardian-emblem.ge-fas-upplosning .ge-kristall-hoger,
+.guardian-emblem.ge-fas-upplosning .ge-bricka{animation:geUttoning 420ms ease-in both}
+.guardian-emblem.ge-fas-upplosning .ge-hjort,
+.guardian-emblem.ge-fas-upplosning .ge-kronspets,
+.guardian-emblem.ge-fas-upplosning .ge-kronskold,
+.guardian-emblem.ge-fas-upplosning .ge-ram{animation:geUttoning 460ms 140ms ease-in both}
 .guardian-emblem.ge-fas-upplosning .ge-lov-vanster,
 .guardian-emblem.ge-fas-upplosning .ge-lov-hoger,
-.guardian-emblem.ge-fas-upplosning .ge-voluter{animation:geUttoning 500ms 200ms ease-in both}
+.guardian-emblem.ge-fas-upplosning .ge-voluter,
+.guardian-emblem.ge-fas-upplosning .ge-diamant,
+.guardian-emblem.ge-fas-upplosning .ge-skold-vanster,
+.guardian-emblem.ge-fas-upplosning .ge-skold-hoger,
+.guardian-emblem.ge-fas-upplosning .ge-kristall-vanster,
+.guardian-emblem.ge-fas-upplosning .ge-kristall-hoger,
+.guardian-emblem.ge-fas-upplosning .ge-kristall-yttre-vanster,
+.guardian-emblem.ge-fas-upplosning .ge-kristall-yttre-hoger{animation:geUttoning 500ms 200ms ease-in both}
 .guardian-emblem.ge-fas-upplosning .ge-stralkrans{animation:geUttoning 560ms 240ms ease-in both}
 
 /* ================================================================================================
@@ -352,8 +425,8 @@
   0%{opacity:0;transform:scale(.7)}
   100%{opacity:.85;transform:scale(1)}
 }
-@keyframes geResningDiamant{
-  0%{opacity:0;transform:rotate(45deg) translateY(14px) scale(.9)}
+@keyframes geResningBricka{
+  0%{opacity:0;transform:rotate(45deg) translateY(-12px) scale(.8)}
   100%{opacity:1;transform:rotate(45deg) translateY(0) scale(1)}
 }
 @keyframes geUtfallningSpegel{
@@ -370,8 +443,8 @@
   50%{opacity:1;transform:scale(1.06)}
 }
 @keyframes geGuldglod{
-  0%,100%{filter:drop-shadow(0 0 6px rgba(212,175,55,.5))}
-  50%{filter:drop-shadow(0 0 14px rgba(244,212,124,.9))}
+  0%,100%{box-shadow:0 0 18px rgba(212,175,55,.35),inset 0 0 10px rgba(0,0,0,.35)}
+  50%{box-shadow:0 0 30px rgba(244,212,124,.75),inset 0 0 10px rgba(0,0,0,.35)}
 }
 @keyframes geGlimt{
   0%,100%{opacity:.75}
