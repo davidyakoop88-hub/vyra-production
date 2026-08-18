@@ -51,22 +51,17 @@
   }
 
 
-  // Strackningen satts inline och bara nar den behovs. Handtagen far invers skala sa att de
-  // inte blir avlanga med widgeten — de positioneras med left/top plus negativ marginal, aldrig
-  // med translate, sa den har transformen krockar inte med placeringen.
-  function satStrackning(widget, sy) {
+  // ROTEN AGS AV KOMPOSOREN (vyra-rotation.js): rotation och strackning maste skrivas av EN
+  // hand, annars vinner den som skrev sist tyst. Har justeras bara HANDTAGEN — invers skala sa
+  // att de inte blir avlanga med widgeten; de positioneras med left/top plus negativ marginal,
+  // aldrig med translate, sa den transformen krockar inte med placeringen. !important-skalet
+  // som en gang mattes har (inline utan !important forlorade kaskaden) lever vidare i
+  // komposoren. `w` behovs sa aven rotationen foljer med under sjalva draget.
+  function satStrackning(widget, sy, w) {
     var handtag = widget.querySelectorAll(':scope > [data-vyra-handle]');
-    if (!sy || Math.abs(sy - 1) < 0.005) {
-      widget.style.removeProperty('transform');
-      widget.style.removeProperty('transform-origin');
-      for (var i = 0; i < handtag.length; i++) handtag[i].style.transform = '';
-      return;
-    }
-    // Uppmatt: inline `transform` UTAN !important gav berakndad identitetsmatris — nagon
-    // regel vann kaskaden. Inline med !important slar aven author-!important, sa den biter.
-    widget.style.setProperty('transform', 'scaleY(' + sy + ')', 'important');
-    widget.style.setProperty('transform-origin', 'top left', 'important');
-    for (var j = 0; j < handtag.length; j++) handtag[j].style.transform = 'scaleY(' + (1 / sy) + ')';
+    if (window.VyraTransform && w) window.VyraTransform.applicera(w, widget);
+    var neutral = !sy || Math.abs(sy - 1) < 0.005;
+    for (var i = 0; i < handtag.length; i++) handtag[i].style.transform = neutral ? '' : 'scaleY(' + (1 / sy) + ')';
   }
 
   function editorVy() {
@@ -112,13 +107,15 @@
           var vaxt = (riktning === 's' ? dy : -dy);
           var ny = Math.max(0.3, Math.min(4, start.skalaY * (1 + vaxt / start.rectHojd)));
           w.widgetScaleY = Math.round(ny * 100) / 100;
-          satStrackning(widget, w.widgetScaleY);
-          if (riktning === 'n') {
-            // underkanten ska sta stilla: hojdokningen i skarm-px flyttas bort fran toppen
-            var okning = start.rectHojd * (w.widgetScaleY / start.skalaY - 1);
-            w.y = Math.round(start.wy - okning / f);
-            widget.style.top = w.y + 'px';
-          }
+          satStrackning(widget, w.widgetScaleY, w);
+          // ORIGIN AR CENTER (komposoren): skalningen vaxer at BADA hallen, halften var.
+          // Kontraktet ur #158-163 star kvar — ned haller overkanten stilla, upp haller
+          // underkanten stilla — sa y kompenseras med HALVA okningen, at var sitt hall.
+          // (Forr, med origin top left, vaxte allt nedat och bara n-draget kompenserade.)
+          var okning = start.rectHojd * (w.widgetScaleY / start.skalaY - 1);
+          w.y = Math.round(riktning === 's' ? start.wy + (okning / 2) / f
+                                            : start.wy - (okning / 2) / f);
+          widget.style.top = w.y + 'px';
         } else if (HORN[riktning]) {
           // likformig skalning, samma matematik som sydostra hornet i media.js:151
           var riktningX = (riktning === 'nw' || riktning === 'sw') ? -1 : 1;
@@ -173,7 +170,7 @@
       widget.appendChild(h);
     }
 
-    satStrackning(widget, w.widgetScaleY || 1);
+    satStrackning(widget, w.widgetScaleY || 1, w);
   }
 
   function stadaAlla() {
