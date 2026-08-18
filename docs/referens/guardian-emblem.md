@@ -1,77 +1,61 @@
 # Guardian Emblem — referensdesignen
 
-Tre referensbilder skickades 2026-08-18. **Bilderna själva finns inte i repot** — de kom som
-bilagor i chatten, och en bilaga överlever inte att samtalet sammanfattas. Den här filen är det som
-gör att designbeslutet gör det. Läs den innan du rör `guardian-emblem.css`.
+Fyra referensbilder levererade 2026-08-18, som två ark med två emblem på varje. Bildfilerna ligger i
+`assets/guardian-emblem/`. Den här filen säger vad som är vad, eftersom filnamn ensamma inte
+förklarar en progression.
 
-Första bygget gjordes efter att bilderna försvunnit i en sammanfattning, ur enbart spec-texten. Det
-gav en **sköld med en hjort i**. Referensen är en **rund avatarram med en hjort över**. Delarna
-stämde, kompositionen var en annan widget. Det är därför den här filen finns.
+## Placeringen — låst
 
-## Kompositionen, uppifrån och ner
+| Ark | Vänster | Höger |
+|---|---|---|
+| Ark A | steg **1** | steg **3** |
+| Ark B | steg **2** | steg **4** |
 
-1. **Praktstegsbrickan.** En stående guldinramad romb med mörkgrön botten och praktstegets SIFFRA i
-   guld. Sitter fritt ovanför allt annat, med luft omkring sig.
-2. **Hjorten.** Vit-beige hjorthuvud rakt framifrån med guldhalsband. Geviret är **guld**, enormt,
-   och bågar ut åt båda sidor — det är emblemets bredaste form och får sticka ut utanför ramen.
-   Hjorten sitter BAKOM och ÖVER avatarramen, som en krona av horn.
-3. **Kronspetsen.** En liten guldromb med grön smaragd sitter i skarven mellan hjortens hals och
-   ramens överkant, med två små vingspetsar ut åt sidorna.
-4. **Avatarramen.** En tjock GULDRING, cirkulär. Innanför den en mörkgrön ring (steg 2 och uppåt),
-   och innanför den svart botten med användarens bild. Ramen är emblemets mitt och dess största
-   sammanhängande yta.
-5. **Plymerna.** Guldblad som spretar uppåt och utåt från ramens sidor — formade som flammor, inte
-   som lagerkvistar. Mellan guldbladen sitter MÖRKGRÖNA blad. De är stora: tillsammans ungefär lika
-   breda som ramen är.
-6. **Sidosköldarna.** Två små mörkgröna sköldar med guldkant och ett GULDHJORTHUVUD i, en till
-   vänster och en till höger, i höjd med ramens nederkant. Under varje sköld en liten grön romb.
-7. **Voluterna.** Guldslingor som rullar ut åt båda sidor längst ner och slutar i spiraler.
-8. **Bottendiamanten.** En stor grön smaragd i en fyruddig guldinfattning, mitt under ramen.
-9. **Kristallerna.** Fyra spetsiga gröna kristaller i guldfattning som sticker upp bakom plymerna —
-   två inre, två yttre och högre.
-10. **GUARDIAN-banderollen.** Ett brett mörkgrönt band med guldram och guldtexten i versaler, som
-    sveper över emblemets nedre tredjedel och delvis täcker ramen. Sidosköldarna sitter bakom
-    bandets ändar.
+## Vad varje praktsteg lägger till
 
-## Vad varje praktsteg visar
+| Steg | Nytt i det här steget |
+|---|---|
+| **1** | Ringen ensam. Guldblad som spretar utåt, vita fjädrar bakom, blå diamant i guldfattning nedtill. **Ingen hjort.** |
+| **2** | **Hjorten anländer** — bart huvud, stort guldgevir som breder ut sig över hela bredden, diamantspets på ringens överkant, **två** blå kristaller |
+| **3** | **Liten krona** på hjortens huvud med en blå sten, **fyra** kristaller |
+| **4** | **Stor kronkrona** med flera spiror och blå stenar, fylligare vita vingar, fyra kristaller |
 
-| Steg | Referens | Mått | Vad som tillkommer |
-|---|---|---|---|
-| 1 | bild 2, vänster | 400×330 | ram, avatar, plymer, voluter, bottendiamant, bricka med "1" |
-| 2 | bild 2, höger | 400×360 | grön innerring, liten hjortsköld ovanpå ramen |
-| 3 | bild 1 | 400×495 | hjorten med geviret, kronspetsen, två sidosköldar |
-| 4 | bild 3 | 400×585 | fyra kristaller, GUARDIAN-banderollen |
+Progressionen är kumulativ: varje steg bär allt det föregående bär.
 
-## Paletten
+## Paletten — guld, vitt, isblått
 
 | | |
 |---|---|
-| Guld, ljust | `#f4d47c` |
-| Guld | `#d4af37` |
-| Guld, djupt | `#8a6d1f` |
-| Smaragd | `#2ecc71` |
-| Mörkgrönt fält | `#0d3b2a` |
-| Skogsgrönt, djupt | `#0a1f1a` |
-| Hjortens päls | `#e8e0d0` |
+| Guld, ljust | `#f0c96a` |
+| Guld | `#d9a327` |
+| Guld, djupt | `#9a6f16` |
+| Diamant, ljus | `#dceaff` |
+| Diamant, mättad | `#5b9ff5` |
+| Fjäder, vit | `#f7f5f0` |
+| Avatarhål | `#1a1a1a` |
+
+**Det finns inget grönt i designen.** Fjädrarna är vita, stenarna är blå diamanter. En tidig version
+byggdes i skogsgrönt och smaragd — det var fel läsning och är borttaget.
 
 ## Regler som följer av bilderna
 
-- **Ramen är rund, aldrig en sköld.** Sköldformen finns bara i de två små sidoemblemen.
-- **Geviret får sticka ut utanför lådan i höjd, men aldrig i bredd** — 400 px är formatet.
-- **Hjorten tillkommer i steg 3.** Steg 1 och 2 har ingen hjort alls, bara ramen och guldet.
-- **Grönt är alltid botten, guld är alltid kontur.** Aldrig tvärtom.
+- **Ramen är rund, aldrig en sköld.** Det finns inga sköldar någonstans i designen.
+- **Hjorten hör till steg 2 och uppåt.** Steg 1 har ingen hjort.
+- **Kronan skiljer steg 3 från steg 4** — liten mot stor, inte närvarande mot frånvarande.
+- **Geviret får sticka ut i höjd, aldrig i bredd.** 400 px är formatet.
+- Bilderna kommer med **vit bakgrund**. Den måste bort: overlayn i OBS är transparent, och en vit
+  platta bakom emblemet syns som en vit ruta i sändningen.
 
-## Mätta fallgropar i bygget
+## Så byggs den — samma mönster som Battle MVP
 
-Tre saker gick fel och syntes bara på foto — inget prov i vaktnätet kunde se någon av dem.
+Ingen handritad SVG. En PNG per steg plus en geometritabell som säger var avatarhålet sitter, precis
+som `'battlemvp.frame'` gör för `assets/mvp-frames/gold-crown.png`:
 
-1. **Hjorten blev en mus.** Rund skalle, stora runda öron, ingen mule. Skillnaden mot en hjort är
-   **avsmalningen**: ett långt ansikte som går från hög panna ner till en mörk nos. Tappar man den
-   blir det ett gnagare oavsett hur stort geviret är.
-2. **Kronspetsen låg över mulen.** Hjortens negativa undermarginal drog ner huvudet så att den gröna
-   romben hamnade mitt i ansiktet. Marginalen är en **mätning**, inte en smak: ramens överkant ska
-   ligga strax under nosen, där halsen börjar.
-3. **Bottendiamanten kunde inte nå över banderollen.** Den låg inuti ramen, och ramen har eget
-   `z-index`. En absolut placerad del inuti en förälder med `z-index` kan **aldrig** nå över en
-   granne till föräldern, hur högt dess eget `z-index` än är. Diamanten ligger nu i flödet, i samma
-   stackningskontext som bandet.
+```
+assets/guardian-emblem/steg-1.png … steg-4.png
+'guardianemblem.step': { 1:{ aspect, circle:{left,top,width,height} }, … }
+```
+
+Koreografin står kvar oförändrad — den animerar bildlagret, avatarhålet och texten i stället för
+fjorton handritade delar.
+
