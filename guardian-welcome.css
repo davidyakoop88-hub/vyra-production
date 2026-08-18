@@ -48,7 +48,7 @@
   gap:14px;
   padding:16px;
   border-radius:14px;
-  border:1px solid color-mix(in srgb,var(--gw-gold),transparent 55%);
+  border:1px solid color-mix(in srgb,var(--gw-gold),transparent 30%);
   /* background-color OCH background-image var för sig: en gradient är en bild, och en låda som
      bara bär gradient rapporterar `rgba(0,0,0,0)` som backgroundColor. En vakt som frågar efter
      bakgrundsfärgen hade då sett en genomskinlig widget. */
@@ -59,6 +59,59 @@
   box-shadow:0 10px 34px rgba(0,0,0,.55),inset 0 0 44px rgba(10,31,26,.7);
   color:var(--gw-text-light);
   font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+
+/* ---- Ramen: dubbellinje, hornstenar och en diamant som bryter linjen --------------------------
+   TikToks egen Guardian-yta bygger pa tre saker som en enkel 1px-ram inte ger: en YTTRE och en
+   INRE guldlinje med en smal springa emellan, en liten sten i varje horn dar linjerna moots, och
+   en diamant som sitter PA linjen i stallet for bredvid den.
+
+   Bada linjerna ritas utan ett enda nytt element. `::before` bar den inre ramen och hornstenarna,
+   `::after` bar diamanten. Skalet ar inte snalhet — markupen ar ett kontrakt som proven laser, och
+   en ram ar dekoration. En del som inte kan bara text eller data ska inte finnas i DOM:en.
+
+   RAMEN HOR TILL SCENEN, INTE TILL INNEHALLET. Den syns darfor redan i ljusfasen, precis som
+   bakgrunden och auroran gor. Det ar ladans kant; det ar inte nagot som "anlander". */
+.guardian-welcome::before{
+  content:'';
+  position:absolute;
+  inset:6px;
+  border:1px solid color-mix(in srgb,var(--gw-gold),transparent 52%);
+  border-radius:9px;
+  pointer-events:none;
+  /* Hornstenarna: fyra sma smaragder dar linjerna moots, satta i guld. Ritade som gradienter i
+     stallet for element av samma skal som ovan. */
+  background-image:
+    radial-gradient(circle at 0 0,var(--gw-gold-light) 0 2.2px,var(--gw-emerald) 2.2px 3.6px,color-mix(in srgb,var(--gw-gold),transparent 15%) 3.6px 5.2px,transparent 5.2px),
+    radial-gradient(circle at 100% 0,var(--gw-gold-light) 0 2.2px,var(--gw-emerald) 2.2px 3.6px,color-mix(in srgb,var(--gw-gold),transparent 15%) 3.6px 5.2px,transparent 5.2px),
+    radial-gradient(circle at 0 100%,var(--gw-gold-light) 0 2.2px,var(--gw-emerald) 2.2px 3.6px,color-mix(in srgb,var(--gw-gold),transparent 15%) 3.6px 5.2px,transparent 5.2px),
+    radial-gradient(circle at 100% 100%,var(--gw-gold-light) 0 2.2px,var(--gw-emerald) 2.2px 3.6px,color-mix(in srgb,var(--gw-gold),transparent 15%) 3.6px 5.2px,transparent 5.2px);
+  background-repeat:no-repeat;
+  /* Hornen ligger dar RAMEN gar, inte dar innehallet borjar — utan de har tva raderna ritas
+     stenarna innanfor linjen och forsvinner under den. */
+  background-origin:border-box;
+  background-clip:border-box;
+}
+/* Diamanten sitter mitt pa den inre linjens ovankant och BRYTER den: den bar samma bakgrund som
+   ladan, sa linjen forsvinner bakom den i stallet for att ga igenom.
+
+   EN ROTERAD KVADRAT, INTE ETT TECKEN — ett glyf hade bytt form med typsnittet. Ett forsok att fa
+   tva diamanter (topp och botten) ur EN pseudoelement med koniska gradienter gav trianglar, inte
+   rutor: en conic-gradient med 90 graders sektor ar en kvadrant, inte en roterad kvadrat. En
+   diamant i topp plus de tva pa sidorna bar formspraket; en andra i botten hade krävt ett element
+   i markupen, och markupen ar ett kontrakt — dekoration hor inte dit. */
+.guardian-welcome::after{
+  content:'';
+  position:absolute;
+  top:6px;
+  left:50%;
+  width:10px;
+  height:10px;
+  transform:translate(-50%,-50%) rotate(45deg);
+  background-color:var(--gw-forest-dark);
+  border:1px solid var(--gw-gold);
+  box-shadow:0 0 8px color-mix(in srgb,var(--gw-gold),transparent 50%);
+  pointer-events:none;
 }
 
 /* ---- Auroran: bakgrundsljuset, och widgetens enda vilolager ----------------------------------- */
@@ -105,10 +158,11 @@
   min-width:0;
 }
 .guardian-welcome .gw-title{
+  --gw-spacing:.15em;
   margin:0;
   font-family:'Cinzel','Trajan Pro',Georgia,serif;
   font-weight:700;
-  letter-spacing:.15em;
+  letter-spacing:var(--gw-spacing);
   line-height:1.15;
   color:var(--gw-gold-light);
   text-shadow:0 0 8px rgba(212,175,55,.4);
@@ -130,17 +184,21 @@
 }
 
 /* ---- Ornamenten ------------------------------------------------------------------------------- */
+/* Sidodiamanterna sitter PA den inre linjen (inset 6px), inte inne i ytan. En ornament som svavar
+   en bit fran ramen ser ut som ett tecken nagon glomt; en som sitter pa linjen ser ut som smide. */
 .guardian-welcome .gw-ornament{
   position:absolute;
   top:50%;
-  transform:translateY(-50%);
-  color:var(--gw-gold);
-  font-size:9px;
-  opacity:.75;
+  transform:translate(-50%,-50%);
+  color:var(--gw-gold-light);
+  font-size:13px;
+  line-height:1;
+  text-shadow:0 0 6px color-mix(in srgb,var(--gw-gold),transparent 40%);
+  opacity:.95;
   pointer-events:none;
 }
-.guardian-welcome .gw-ornament-left{left:7px}
-.guardian-welcome .gw-ornament-right{right:7px}
+.guardian-welcome .gw-ornament-left{left:6px}
+.guardian-welcome .gw-ornament-right{left:calc(100% - 6px)}
 
 /* ---- De tre storlekarna ------------------------------------------------------------------------
    Måtten är exakta och vaktade: banner 270×180, kort 300×280, full 400×300. `box-sizing:border-box`
@@ -150,8 +208,8 @@
 }
 .guardian-size-banner .gw-content{align-items:flex-start;text-align:left}
 .guardian-size-banner .gw-shield{width:64px;height:72px}
-.guardian-size-banner .gw-title{font-size:13px}
-.guardian-size-banner .gw-username{font-size:15px}
+.guardian-size-banner .gw-title{font-size:10px;--gw-spacing:.08em}
+.guardian-size-banner .gw-username{font-size:14px}
 .guardian-size-banner .gw-subtitle{font-size:9px}
 
 .guardian-welcome.guardian-size-kort{
@@ -223,9 +281,9 @@
 @keyframes gwShieldIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes gwShieldOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.86)}}
 @keyframes gwShieldPulse{0%,100%{box-shadow:0 0 16px color-mix(in srgb,var(--gw-gold),transparent 60%),inset 0 0 18px rgba(0,0,0,.55)}50%{box-shadow:0 0 30px color-mix(in srgb,var(--gw-gold),transparent 24%),inset 0 0 18px rgba(0,0,0,.45)}}
-@keyframes gwStamp{from{opacity:0;letter-spacing:.5em}to{opacity:1;letter-spacing:.15em}}
+@keyframes gwStamp{from{opacity:0;letter-spacing:.5em}to{opacity:1;letter-spacing:var(--gw-spacing)}}
 @keyframes gwRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes gwOrnamentIn{from{opacity:0}to{opacity:.75}}
+@keyframes gwOrnamentIn{from{opacity:0}to{opacity:.95}}
 @keyframes gwFadeOut{from{opacity:1}to{opacity:0}}
 
 /* Reducerad rörelse: samma dramaturgi, ingen rörelse. Widgeten ska fortfarande synas — att stänga
