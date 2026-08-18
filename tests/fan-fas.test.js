@@ -629,7 +629,7 @@ test('18g: ribbon har ett vilolager, och det hänger inte på en fasklass', () =
 });
 
 // ================================================================================================
-// 19a–19g — LOYALTY · "INRINGNINGEN"
+// 19a–19h — LOYALTY · "INRINGNINGEN" och "UTTONINGEN"
 //
 // Pop → ring → stämpel. Profilbilden poppar in, ringen ritas ett kvarts varv (−90° → 0), och
 // nivåpillen och texten stämplas in sist.
@@ -758,6 +758,35 @@ test('19g: sockelvakten — poppen rör behållaren, aldrig ankaret', () => {
   for (const rad of rader) {
     assert.ok(!/\.fan-profile\s+img/.test(rad),
       `en loyalty-fas rör ankaret (.fan-profile img) — sockeln blir kvar när ankaret släcks: ${rad.trim()}`);
+  }
+});
+
+test('19h: uttoningsvakten — exit-regeln rör behållaren, aldrig ankaret', () => {
+  // SAMMA FÄLLA, SPEGELVÄND. Fas 1 tog sockeln på väg in; uttoningen hade den på väg ut.
+  // `.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) reverse}`
+  // krympte och släckte ANSIKTET medan skivan stod kvar orörd. Uppmätt i Chromium, effektiv
+  // opacitet vid 480 ms av 500: behållaren 1.00, ankaret 0.00. Fotograferat: en tom lysande
+  // orange skiva över texten i varje alert, en halv sekund lång.
+  //
+  // Grannarna gjorde redan rätt — stack, heartbeat, badgereveal, ribbon och duo animerar alla
+  // `.fan-profile` direkt. Loyalty var den enda som pekade på ankaret.
+  //
+  // Det här provet är den SNABBA grinden. Beteendet — att det som är målat faktiskt tonar ut —
+  // mäts i tests/browser/fan-fas-loyalty.browser.test.js (U2–U4, U6), som är det enda stället där
+  // ärvd opacitet går att läsa av. Ett markupprov kan bara neka det uppenbart fel skrivna.
+  const exitRegler = REGLER.filter(r => /\.fan-layout-loyalty\.fan-exit\b/.test(r.valjare));
+  assert.ok(exitRegler.length, 'loyalty har ingen uttoningsregel alls');
+
+  const profil = exitRegler.filter(r => r.kropp.includes('animation:')
+    && /\.fan-profile\b/.test(r.valjare));
+  assert.ok(profil.length, 'inget i loyaltys uttoning rör profilen — sockeln lämnas åt roten');
+  for (const r of profil) {
+    assert.match(r.valjare.trim(), /\.fan-profile$/,
+      `uttoningen ligger inte på behållaren .fan-profile: ${r.valjare.trim()}`);
+  }
+  for (const r of exitRegler) {
+    assert.ok(!/\.fan-profile\s+img/.test(r.valjare),
+      `loyaltys uttoning rör ankaret (.fan-profile img) — sockeln blir kvar när ankaret släcks: ${r.valjare.trim()}`);
   }
 });
 

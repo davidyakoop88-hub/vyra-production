@@ -713,7 +713,13 @@ html.overlay-output .widget{
 
 .fan-layout-loyalty{flex-direction:column}.fan-layout-loyalty .fan-profile{order:1;width:80px;height:80px;position:relative}.fan-layout-loyalty .fan-ring{display:block;position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--fan-light);box-shadow:0 0 14px var(--fan);pointer-events:none}.fan-layout-loyalty .fan-level-pill{order:2;margin-top:-14px;position:relative;z-index:2}.fan-layout-loyalty .fan-burst{display:none!important}.fan-layout-loyalty>h3{order:3;margin-top:8px}.fan-layout-loyalty>p{order:4}
 
-.fan-layout-loyalty.fan-exit .fan-ring{animation:flRingDraw var(--fed) ease-in reverse both}.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+/* Uttoningen rör BEHÅLLAREN `.fan-profile`, aldrig ankaret `.fan-profile img` — samma regel som
+   entrefaserna följer (se loyalty-blocket i premium-final.css). Behållaren bär den orangea
+   gradienten och glöden; krymper man bara ankaret släcks ansiktet medan skivan står kvar fullt
+   målad tills rotens transition städar bort hela lådan. Uppmätt i Chromium vid 480 ms av 500:
+   behållaren 1.00, ankaret 0.00. Vaktat av 19h i tests/fan-fas.test.js och av U2-U4/U6 i
+   tests/browser/fan-fas-loyalty.browser.test.js. */
+.fan-layout-loyalty.fan-exit .fan-ring{animation:flRingDraw var(--fed) ease-in reverse both}.fan-layout-loyalty.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in reverse both}
 @keyframes flRingDraw{from{opacity:0;transform:rotate(-90deg) scale(.7)}to{opacity:1;transform:rotate(0) scale(1)}}
 
 .fan-layout-hearts{flex-direction:column}.fan-layout-hearts .fan-rising-hearts{display:flex;order:1;gap:4px;height:36px;align-items:flex-end;justify-content:center}.fan-layout-hearts .fan-rising-hearts i{font-style:normal;color:var(--fan-light);text-shadow:0 0 8px var(--fan);font-size:14px}.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:18px;margin-bottom:6px}.fan-layout-hearts .fan-burst{order:2;width:90px;height:90px;margin-top:-4px}.fan-layout-hearts .fan-burst img{width:88px;height:88px}.fan-layout-hearts .fan-level-pill{order:3;margin-top:-8px}.fan-layout-hearts .fan-profile{display:none!important}.fan-layout-hearts>h3{order:4;margin-top:8px}.fan-layout-hearts>p{order:5}
