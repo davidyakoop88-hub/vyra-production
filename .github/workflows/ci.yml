@@ -172,15 +172,15 @@ jobs:
               echo "SAKNAS I SVARET: $1"; exit 1
             fi
           }
-          krav 'strict-transport-security: max-age=86400'
+          krav 'strict-transport-security: max-age=31536000; includeSubDomains'
           krav "content-security-policy:.*frame-ancestors 'self'"
           krav "content-security-policy:.*base-uri 'self'"
           krav "content-security-policy:.*form-action 'self'"
           krav "content-security-policy:.*object-src 'none'"
           krav 'x-content-type-options: nosniff'
-          # Steg 1 far inte smyga vidare i trappan.
-          if grep -qiE 'strict-transport-security:.*(includesubdomains|preload)' /tmp/vyra-headers.txt; then
-            echo 'HSTS gick forbi steg 1 - includeSubDomains/preload ska beslutas separat'; exit 1
+          # Sista steget ar taget (includeSubDomains, 2026-08-18) — men preload ska ALDRIG smyga med.
+          if grep -qiE 'strict-transport-security:.*preload' /tmp/vyra-headers.txt; then
+            echo 'HSTS har preload - den bakas in i webblasarna och ska beslutas separat'; exit 1
           fi
 
       # Bevisar att event-strommen inte komprimeras — mot en RIKTIG Caddy med en riktig SSE-server

@@ -18,8 +18,9 @@
 // Studion och släcka avatarer i OBS, och kräver en insamlingsendpoint plus en riktig OBS-session
 // innan de ens får köra i Report-Only. Testet nedan fäller den som lägger till dem i förbifarten.
 //
-// HSTS star pa STEG 2 av tre. Trappan ar 300 -> 86400 -> ett ar med includeSubDomains.
-// Steg 1 verifierades i produktion 2026-08-06; steg 2 samma dag. preload bakas in i
+// HSTS star pa STEG 3 av tre — sista steget. Trappan ar 300 -> 86400 -> ett ar med
+// includeSubDomains. Steg 1 och 2 verifierades i produktion 2026-08-06; steg 3 togs 2026-08-18
+// efter underdomansinventering (downloads.vyralive.app ar den enda, HTTPS ok). preload bakas in i
 // webbläsarna själva och tar månader att ta sig ur; den gamla konfigurationen hade den, och det var
 // ingen som beslutade det.
 //
@@ -36,7 +37,7 @@ const CADDY = fs.readFileSync(path.join(ROOT, 'Caddyfile'), 'utf8');
 // Trappan, pa ett stalle. Nasta steg ar en rad har plus samma rad i Caddyfile och i CI-jobbets
 // `krav`-kontroll — och det ar meningen att alla tre ska behova andras tillsammans, sa att ingen
 // halvhojning kan glida igenom.
-const FORVANTAD_MAXAGE = 86400;
+const FORVANTAD_MAXAGE = 31536000;
 
 const headerVarde = namn => {
   const m = CADDY.match(new RegExp(`^\\s*${namn}\\s+"([^"]*)"`, 'mi'));
@@ -52,13 +53,13 @@ test('HSTS skickas', () => {
     `förväntat max-age=${FORVANTAD_MAXAGE}, fick "${v}"`);
 });
 
-test('HSTS har inte hoppat till sista steget — ingen includeSubDomains, ingen preload', () => {
-  // Att hoppa direkt till slutet är precis det den gamla konfigurationen gjorde, och preload går
-  // inte att ångra på en eftermiddag. includeSubDomains kräver dessutom att alla underdomäner
-  // räknats upp först — bara downloads.vyralive.app är känd och verifierad över HTTPS.
+test('HSTS står på sista steget — includeSubDomains med, preload aldrig', () => {
+  // includeSubDomains togs 2026-08-18 efter inventering: downloads.vyralive.app är den enda
+  // underdomänen och svarar över HTTPS. preload förblir förbjuden — den bakas in i webbläsarna
+  // själva, tar månader att ta sig ur, och ska i så fall vara ett eget uttryckligt beslut.
   const v = headerVarde('Strict-Transport-Security');
-  assert.doesNotMatch(v, /includeSubDomains/i,
-    'includeSubDomains gäller ALLA underdomäner — räkna upp dem först');
+  assert.match(v, /includeSubDomains/i,
+    'includeSubDomains föll bort — steg 3 är taget och ska inte tyst backas');
   assert.doesNotMatch(v, /preload/i,
     'preload bakas in i webbläsarna och tar månader att ta sig ur');
 });
