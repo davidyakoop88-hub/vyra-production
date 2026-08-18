@@ -447,5 +447,57 @@
     "jarCapacity": 50,
     "jarShowCounter": true,
     "jarAutoResetMs": 0
+  },
+  "catalog:guardianemblem:1": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 260,
+    "title": "Guardian Emblem",
+    "guardianStep": 1,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:2": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 320,
+    "title": "Guardian Emblem",
+    "guardianStep": 2,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:3": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 380,
+    "title": "Guardian Emblem",
+    "guardianStep": 3,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:4": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 440,
+    "title": "Guardian Emblem",
+    "guardianStep": 4,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
   }
 }

@@ -45,7 +45,7 @@
   function riv(){queue.length=0;busy=false;kastade=0}
   window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
   addEventListener('vyra-session-ended',riv);
-    const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6]};
+    const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6],triggerGuardianEmblem:[8000,5]};
   function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;if(name==='triggerGiftFireworks')d=(state.widgets.find(w=>w.type==='templateGiftFireworks')?.fwDuration||5)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
 

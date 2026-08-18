@@ -231,8 +231,14 @@ test('inga gamla inline-defaultobjekt finns kvar', () => {
   // Kortvarigt 22 (Guardian Welcome) och tillbaka till 21 samma dag nar den familjen skrotades.
   // En census som gar UPP och sedan NER ar inget varningstecken i sig; det ar en katalogsektion
   // som kom och gick. Att den gar ner UTAN att en sektion tagits bort vore daremot allvarligt.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 21,
-    'antalet kataloganrop stämmer inte med de tjugoen katalogställena');
+  //
+  // 22 igen sedan Guardian Emblem — EN sektion, EN create(). Siffran gick kortvarigt till 23 under
+  // bygget, och det var vakten som gjorde ratt: den andra traffen var ingen katalogplats alls utan
+  // en panel som skapade en kastad widget bara for att lasa dess matt. Den lasningen gar nu genom
+  // `VyraWidgets.variants('guardianemblem.matt')` i stallet. Censusen raknar KATALOGSTALLEN, och en
+  // matt-uppslagning som smyger in bland dem gor siffran obegriplig for nasta lasare.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 22,
+    'antalet kataloganrop stämmer inte med de tjugotvå katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {

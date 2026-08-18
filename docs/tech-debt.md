@@ -834,3 +834,30 @@ Verifierad: 2026-08-09.
   hogt i panelen att fokus och omrendering landar pa samma varde. Det togs bort i stallet for att
   behallas som utfyllnad. Kravet star kvar: **mutationsprova at bada hallen, och stryk det som inte
   kan falla.**
+- **En cachebust-sträng får inte namnge det den bustar.** `const version='20260818-guardian'` levde
+  i `media.js` i tre timmar och överlevde den familj den var uppkallad efter. Vid skrotningen fanns
+  ingen Guardian-kod kvar, men strängen hade blivit kvar om inte en assertion i skrotningsskriptet
+  fångat den — och nästa läsare som sökte på "guardian" hade hittat en versionsträng och ingen
+  implementation, och fått lägga ihop varför själv. **En sträng som namnger kod är ett löfte om att
+  koden finns.** Strängen ska svara på NÄR filen byttes, inte på VAD som låg i den; vad som ändrades
+  hör hemma i commiten och i bump-kommentaren. Regeln vaktas nu av
+  `tests/widget-rendering-cache-and-fountain.test.js` (*ingen cachebust-strang namnger en
+  widgetfamilj*), med en svartlista över familjenamn i stället för en generisk ordregel — ett datum
+  eller en ordningssiffra är precis vad vi vill ha och får inte fällas. Vakten hittade direkt en
+  ärvd överträdelse, `20260807-topgift`, som står kvar i en uttrycklig och krympande lista: att döpa
+  om den nu vore en bump utan ändring, alltså en gratis omladdning för varje användare.
+- **En egenskap som en animation skriver över måste animationen själv bära med sig.**
+  `.ge-diamant` är en kvadrat roterad 45 grader — rotationen är formens identitet, inte ett
+  tillstånd. Entréanimationen skrev `transform`, och därmed försvann rotationen: uppmätt i foto 6 av
+  Guardian Emblem, där diamanten var en grön **kvadrat** under hela `oppna` och blev en diamant
+  först i hyllningen. Det är samma lärdom som `--gw-spacing` (*ett storleksval som inte överlever
+  sin egen animation är ingen inställning*), en nivå djupare: det gäller varje egenskap i samma
+  `transform`-sträng, inte bara de som råkar vara inställningar. Lagningen är en egen keyframe som
+  bär rotationen i båda ändarna. **Inget prov i vaktnätet kunde se det — delen fanns, var målad och
+  hade yta. Ögat är mätinstrumentet för form och placering.**
+- **En grund klon ger systematiskt fel proveniens i genererade kartor.** `docs/katalogkarta.md` har
+  datum- och PR-kolumner ur `git log` per fil. I en shallow clone finns bara de senaste commitarna,
+  så varje sektion tillskrivs den nyaste synliga commiten. Uppmätt 2026-08-18: **20 sektioner** stod
+  som ändrade den dagen i PR #221 när de i själva verket inte rörts sedan 5 augusti och PR #92.
+  Kartan såg komplett ut och var systematiskt fel — den farligaste sorten. `generate-catalog-map.js`
+  varnar nu när `.git/shallow` finns, och kartan i det här repot är omgenererad på full historik.

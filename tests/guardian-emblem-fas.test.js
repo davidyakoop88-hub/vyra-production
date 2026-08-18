@@ -86,8 +86,11 @@ function cssteg() {
   return [...new Set([...utanKommentarer(GE_CSS).matchAll(/ge-step-([a-z0-9]+)/g)].map(m => m[1]))];
 }
 // Varje `.ge-<del>` som CSS:en stylar — utan stegklasserna och fasklasserna, som inte är delar.
+// Teckenklassen ar `[A-Za-z0-9-]`, inte `[a-z0-9-]`. Uppmatt i mutationsprov M1: med bara sma
+// bokstaver last `.ge-kronaX` som `krona`, och en felstavning med versal hade blivit OSYNLIG for
+// bada halvorna av G1 — den skulle bade se en del som stylad och missa en foraldralos regel.
 function cssdelar() {
-  return [...new Set([...utanKommentarer(GE_CSS).matchAll(/\.ge-([a-z0-9-]+)/g)].map(m => m[1]))]
+  return [...new Set([...utanKommentarer(GE_CSS).matchAll(/\.ge-([A-Za-z0-9-]+)/g)].map(m => m[1]))]
     .filter(d => !/^step-/.test(d) && !/^fas-/.test(d));
 }
 
@@ -433,23 +436,53 @@ test('G-KLOCKA: matcharen kan faktiskt fälla — positiv kontroll', () => {
     'matcharen fäller ett anrop som går genom klockan');
 });
 
+// Klockans EGEN deklaration är det enda stället i filen som får nämna setTimeout — det är den som
+// delegerar. Blocket lyfts bort innan vakten läser resten.
+//
+// EN URKLIPPNING SOM SVÄLJER FÖR MYCKET ÄR EN TYST GRÖN VAKT. Ett girigt mönster hade kunnat ta
+// halva filen med sig och lämna ingenting att mäta, och provet hade blivit grönt av tomhet — §7 i
+// en form som är lätt att missa, eftersom vakten SER ut att mäta något. Kontrollen nedan kräver
+// därför både att blocket hittades och att det som togs bort är litet.
+function utanKlockan(kalla) {
+  const traff = /const klocka = \{[\s\S]*?\n\s*\};/.exec(kalla);
+  assert.ok(traff, 'hittade ingen flerradig `const klocka = {…};` — se invarianten i guardian-emblem-fas.js');
+  assert.ok(traff[0].length < 400,
+    `urklippningen svalde ${traff[0].length} tecken — då mäter vakten inte längre filen`);
+  return kalla.replace(traff[0], '');
+}
+
 test('G-KLOCKA: koreografin anropar aldrig setTimeout förbi klockan', () => {
   assert.ok(GE_JS.trim().length > 200,
     'kontrollmätning: guardian-emblem-fas.js saknas eller är tom — frånvaroprovet skulle bli grönt utan att mäta något');
-  // Klockans EGEN definition är det enda stället som får nämna setTimeout: det är den som
-  // delegerar. Raden känns igen på att den ligger inuti `klocka`-objektet.
-  const utanKlockan = GE_JS.replace(/klocka\s*:\s*\{[\s\S]*?\n\s*\}/, '');
-  const traffar = [...utanKlockan.matchAll(DIREKT_TIMER)].map(m => m[0]);
+  const traffar = [...utanKlockan(GE_JS).matchAll(DIREKT_TIMER)].map(m => m[0]);
   assert.deepEqual(traffar, [],
     'ett direktanrop till setTimeout går förbi klockan — fasproven mäter då en fas som redan hunnit gå');
+});
+
+test('G-KLOCKA: urklippningen av klockan kan faktiskt fälla — positiv kontroll', () => {
+  // Utan den här kontrollen är föregående prov grönt om urklippningen slutar hitta blocket på ett
+  // sätt som råkar ta med sig hela filen.
+  const syntetisk = 'const klocka = {\n  satt: (fn, ms) => root.setTimeout(fn, ms),\n};\nsetTimeout(x, 1);';
+  assert.deepEqual([...utanKlockan(syntetisk).matchAll(DIREKT_TIMER)].map(m => m[0]), ['setTimeout('],
+    'urklippningen tog med sig kod utanför klockan');
+  assert.throws(() => utanKlockan('const klocka = {satt: 1};'), /flerradig/,
+    'en enradig klocka ska fälla vakten, inte tyst släppas förbi');
 });
 
 test('G-KLOCKA: en utbytt klocka stoppar koreografin helt tills provet säger till', () => {
   // Kontrollmätningen för hela riggen. Om utbytet INTE fick genomslag skulle jobbet ligga i en
   // riktig timer i stället, och kön här vara tom.
+  //
+  // FYRA JOBB, INTE ETT. Drivrutinen beväpnar alla fasgränser på en gång vid triggern i stället för
+  // att låta varje fas boka nästa. Uppmätt: 4. Skillnaden är inte kosmetisk — en kedja där varje fas
+  // bokar nästa kan tappa resten av sekvensen om ETT anrop kastar, medan en upplagd lista antingen
+  // finns hel eller inte alls. Siffran står utskriven här så en omskrivning till kedjeformen fäller
+  // provet i stället för att glida igenom.
+  const { FASER } = require('./helpers/guardian-emblem-fas-register.js');
   const { win, klocka, faser } = boot([geWidget('ge1')]);
   win.triggerGuardianEmblem({ username: '@TestGuardian', __test: true });
-  assert.equal(klocka.kvar(), 1, 'koreografin la inte sitt nästa steg i den utbytta klockan');
+  assert.equal(klocka.kvar(), FASER.length,
+    'koreografin la inte hela sin fassekvens i den utbytta klockan');
   klocka.fram(0);
   assert.deepEqual(faser('ge1'), ['ljus'], 'en fas bytte utan att klockan gick fram');
 });

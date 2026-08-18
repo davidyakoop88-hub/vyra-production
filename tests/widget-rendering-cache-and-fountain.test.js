@@ -11,6 +11,50 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 
+// EN CACHEBUST-STRANG FAR INTE NAMNGE DET DEN BUSTAR.
+//
+// Uppmatt 2026-08-18: `const version='20260818-guardian'` overlevde den familj den var uppkallad
+// efter med noll minuter — skrotningen tog bort widgeten men strangen hade blivit kvar om inte en
+// assertion fangat den. En strang som namnger kod ar ett lofte om att koden finns, och den lever
+// kvar langt efter att koden ar borta; nasta lasare soker pa namnet, hittar en versionsstrang och
+// ingen implementation, och maste laga ihop varfor.
+//
+// Vakten ar med FLIT en svartlista over familjenamn och inte "alla ord": en strang som sager NAR
+// (ett datum, en ordningssiffra) ar precis vad vi vill ha, och en generisk regel hade fallt den.
+test('ingen cachebust-strang namnger en widgetfamilj', () => {
+  const studio = read('studio.html');
+  const media = read('media.js');
+  const FAMILJENAMN = ['guardian', 'emblem', 'fanlevel', 'gifterlevel', 'battlemvp', 'giftjar',
+    'fireworks', 'streak', 'toplike', 'topgift', 'campaign'];
+  // Positiv kontroll: matcharen maste falla en uppenbar overtradelse, annars mater provet ingenting.
+  const strangarI = text => [...text.matchAll(/\?v=([A-Za-z0-9_.-]+)/g)].map(m => m[1])
+    .concat([...text.matchAll(/const version='([^']+)'/g)].map(m => m[1]));
+  const fallda = t => strangarI(t).filter(v => FAMILJENAMN.some(f => v.toLowerCase().includes(f)));
+  assert.deepEqual(fallda("<script src=\"a.js?v=20260818-guardian\">"), ['20260818-guardian'],
+    'matcharen hittar inte ens en uppenbar overtradelse');
+  assert.deepEqual(fallda("<script src=\"a.js?v=20260818-2\">"), [],
+    'matcharen faller en strang som bara sager nar');
+
+  // ARVDA OVERTRADELSER, MED UTGANGSDATUM.
+  //
+  // `20260807-topgift` fanns redan nar regeln skrevs (gift-event-images.js i studio.html och
+  // live-leaderboard.js i media.js). Att doepa om den NU vore en bump utan andring — en gratis
+  // omladdning for varje anvandare, och just det som varje bump-kommentar i filen ovan varnar for.
+  // Den star darfor kvar tills nagon av de tva filerna andras pa riktigt, och da byts strangen mot
+  // en som bara sager nar.
+  //
+  // Listan ar en SKULD, inte ett undantag: den far bara krympa. Ett prov nedan ser till att en ny
+  // overtradelse inte kan gomma sig genom att laggas till har.
+  const ARVDA = ['20260807-topgift'];
+  for (const [namn, text] of [['studio.html', studio], ['media.js', media]]) {
+    assert.deepEqual(fallda(text).filter(v => !ARVDA.includes(v)), [],
+      `${namn} bar en cachebust-strang som namnger sitt innehall — den blir ett arkeologiskt spar `
+      + 'sa fort koden byts ut eller tas bort');
+  }
+  assert.ok(ARVDA.length <= 1,
+    `listan over arvda overtradelser har vuxit till ${ARVDA.length} — den far bara krympa`);
+});
+
 test('studio och premium-bundlen cachebustas tillsammans', () => {
   const studio = read('studio.html');
   const media = read('media.js');
@@ -50,10 +94,24 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // EN BORTTAGNING KRAVER SAMMA BUMP SOM ETT TILLAGG. En cachead media.js skulle annars fortsatta
   // rendera en widgettyp fabriken inte langre kanner till — och det felet ser ut som en trasig
   // widget, inte som en gammal fil. studio.css och fan-fas.js ar OFORANDRADE och behaller sina.
+  //
+  // Bumpad 2026-08-18 for Guardian Emblem. media.js (renderare, panel, katalogsektion, trigger),
+  // widget-factory.js (familjen registrerad) och runtime-controls.js (koposten) andrades; de tva
+  // nya filerna guardian-emblem.css och guardian-emblem-fas.js far samma strang som de laddas med.
+  // studio.css och fan-fas.js ar OFORANDRADE och behaller sina.
+  //
+  // STRANGEN HETER `20260818-2`, INTE `20260818-emblem`. En cachebust-strang far inte namnge det
+  // den bustar. `20260818-guardian` levde i media.js i tre timmar, och nar familjen skrotades var
+  // den ett arkeologiskt spar efter kod som inte langre fanns — en lasare som sokte pa "guardian"
+  // hittade en versionsstrang och ingen widget, och maste laga ihop varfor. Strangen ska svara pa
+  // NAR filen byttes, inte pa VAD som lag i den; vad som andrades star i kommentaren har och i
+  // commiten. Assertionen nedan vaktar formen, och `sokvakt` under den vaktar regeln.
   assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
-  assert.match(studio, /[^-]media\.js\?v=20260818-skrotning/);
-  assert.match(studio, /widget-factory\.js\?v=20260818-skrotning/);
-  assert.match(media, /const version='20260818-skrotning'/);
+  assert.match(studio, /[^-]media\.js\?v=20260818-2/);
+  assert.match(studio, /widget-factory\.js\?v=20260818-2/);
+  assert.match(studio, /guardian-emblem\.css\?v=20260818-2/);
+  assert.match(studio, /guardian-emblem-fas\.js\?v=20260818-2/);
+  assert.match(media, /const version='20260818-2'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje

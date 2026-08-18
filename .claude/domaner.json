@@ -88,6 +88,8 @@
         "battle-mvp-session.js",
         "fan-level-session.js",
         "fan-fas.js",
+        "guardian-emblem-fas.js",
+        "guardian-emblem.css",
         "gifter-level-session.js",
         "profile-frames-premium.js",
         "profile-frames-premium.css",

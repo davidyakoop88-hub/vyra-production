@@ -1,5 +1,103 @@
 # VYRA Project State
 
+## Checkpoint 37 — Guardian Emblem: familjen skrotad, byggd om, och vaktnätet slöt sig (2026-08-18)
+
+Guardian Welcome revs helt (1943 rader) och ersattes av **`templateGuardianEmblem`** — ett
+heraldiskt vapen i fyra praktsteg. 56 prov skrivna före en rad implementation, röd baslinje
+committad och pushad, sedan kod tills allt var grönt. 18 mutationsprov, 8 foton.
+
+### Vad som finns nu
+
+| | |
+|---|---|
+| Typ | `templateGuardianEmblem`, katalognyckel `catalog:guardianemblem:1–4` |
+| Format | **400 px brett i varje steg** — höjden är det praktnivån betalar med (260/320/380/440) |
+| Koreografi | "Vapenskölden": `ljus` 600 → `oppna` 1200 → `hyllning` 3500 → `upplosning` 800 = 6100 ms |
+| Delar | 6 → 9 → 12 → 15, strikt kumulativa (steg N bär steg N−1 som **prefix**) |
+| Filer | `guardian-emblem-fas.js`, `guardian-emblem.css` + tre provfiler |
+| Kö | `triggerGuardianEmblem:[8000,5]` i `runtime-controls.js` |
+| Brygga | förberedd men **inte aktiverad** — se `docs/live-verifiering.md` punkt 6 |
+
+### Vaktnätet: tolv vakter, och varför de är slutna
+
+`G1` kräver att varje registrerat steg och varje registrerad DEL har CSS. `G-SLUT` kräver det
+omvända: att varje steg som går att **skapa** finns i registret — och den jämför **fyra** källor,
+inte två (fabriken, panelväljaren, katalogsektionen, registret). `G-STEG-PROGRESSION` kräver
+prefixlikhet mellan stegen, och `G-STEG-HÖJD` mäter i en riktig webbläsare att det syns.
+
+De fyra frånvarovakterna (`G-PREFIX-ISOLATION`, `G-IMPORTANT`, `G-DÖD-CSS`, `G-VILOLAGER`) bär
+`kravCss()` **inne i sin egen kropp**. Det är §7 i sin skarpaste form och kom direkt ur PR #222:s
+fas 0, där tre vakter var gröna mot en fil som inte fanns. Ett grönt prov säger ingenting om vad
+grannen mätte.
+
+### Fem lärdomar
+
+**1. En cachebust-sträng får inte namnge det den bustar.** `20260818-guardian` överlevde sin egen
+familj. Strängen ska svara på NÄR filen byttes, inte på VAD som låg i den — annars blir den ett
+arkeologiskt spår efter kod som inte finns, och nästa läsare söker på namnet, hittar en
+versionsträng och ingen implementation. Nu vaktat, med en svartlista över familjenamn i stället för
+en generisk ordregel: ett datum är precis vad vi vill ha. Strängen här heter `20260818-2`. Vakten
+hittade direkt en ärvd överträdelse (`20260807-topgift`) som står i en uttryckligen **krympande**
+lista — att döpa om den nu vore en bump utan ändring.
+
+**2. Ett prov som jämför tomma listor är grönt av frånvaro.** `G-STEG-HÖJD` skulle ha varit grön vid
+den röda baslinjen: fyra steg som inte renderas ger fyra tomma mätningar som jämför lika. Varje
+mätning börjar därför med `assert.ok(!fel)` som bär renderingsfelet i texten.
+
+**3. Ett prov får inte bevisa sin egen fixtur.** Fabriken bestämmer höjden per steg. Att mäta den i
+webbläsaren hade läst tillbaka en siffra jsdom redan vaktar. Alla fyra sidorna sätter därför **samma
+lådhöjd**, och det som mäts är delarnas gemensamma omfång — bara delar med yta och ärvd opacitet
+över noll räknas. Mutation M17 visade varför det behövs tre prov och inte ett: när steg 4:s tre nya
+delar doldes fortsatte omfånget att växa (skalan växer också), men *antalet målade delar* och *varje
+ny del vid namn* föll direkt. **En enskild geometrisk mätning är inte ett semantiskt bevis.**
+
+**4. En egenskap som en animation skriver över måste animationen bära med sig.** Diamanten är en
+kvadrat roterad 45°. Entréanimationen skrev `transform` och rotationen försvann — den var en grön
+**kvadrat** under hela `oppna`. Samma lärdom som `--gw-spacing`, en nivå djupare: det gäller varje
+egenskap i samma `transform`-sträng, inte bara de som råkar vara inställningar. **Inget prov i
+vaktnätet kunde se det** — delen fanns, var målad, hade yta. Ögat är mätinstrumentet för form.
+
+**5. Registrets ordning är inte placeringen.** `STEG[n].delar` är sorterad efter NÄR delarna
+tillkom — det är den ordningen `G-STEG-PROGRESSION` kräver prefixlikhet i. Renderaren följer
+registret rakt av, så utan `order` i CSS blev DOM-ordningen också den visuella: kronan hamnade
+**under** skölden. JS bestämmer VAD och NÄR, CSS bestämmer VAR och HUR.
+
+### Oväntade fynd, rapporterade och lagade
+
+- **`docs/katalogkarta.md` hade systematiskt fel proveniens.** Datum- och PR-kolumnerna kommer ur
+  `git log` per fil, och kartan hade genererats i en **shallow clone** — 20 sektioner stod som
+  ändrade 2026-08-18 i PR #221 när de inte rörts sedan 5 augusti och PR #92. Kartan är omgenererad
+  på full historik, och generatorn varnar nu när `.git/shallow` finns.
+- **`G1`:s delcensus var blind för versaler.** `.ge-kronaX` lästes som `krona`, så en felstavning
+  med versal hade varit osynlig för **båda** halvorna av G1. Upptäckt av mutation M1, som inte föll.
+  Teckenklassen är nu `[A-Za-z0-9-]`.
+- **Censusen i `catalog-rewiring` gick till 23 i stället för 22.** Det andra `VyraWidgets.create(`
+  var ingen katalogplats utan en panel som skapade en kastad widget bara för att läsa dess mått.
+  Uppslagningen går nu genom `VyraWidgets.variants('guardianemblem.matt')`. **Vakten gjorde rätt:**
+  en måttläsning som smyger in bland katalogställena gör siffran obegriplig för nästa läsare.
+- **`G-KLOCKA`:s urklippning matchade inte den kod den skulle undanta.** Mönstret var skrivet mot en
+  form jag ännu inte författat. Regionidentifieringen lagades — inte källan — och vakten fick en
+  egen kontroll som kräver att urklippningen både hittar blocket och tar bort **mindre än 400
+  tecken**: ett girigt mönster som svalde halva filen hade annars gjort provet grönt av tomhet.
+
+### Invarianter som inte får brytas
+
+- `klocka` i `guardian-emblem-fas.js` **måste vara flerradig** och sluta med `};` på egen rad —
+  `G-KLOCKA` lyfter bort just det blocket innan den letar direktanrop till `setTimeout`. Det är en
+  formkoppling, inte en beteendekoppling: bryts den blir provet **rött**, aldrig tyst grönt.
+- Praktsteget är ett **studioval**. Bryggan ska aldrig skicka något steg — ett steg utifrån hade
+  tyst skrivit över streamerns val.
+- Varje `ge-`-klass måste vara en registrerad DEL. Grafik inuti SVG:erna använder därför utskrivna
+  färgattribut, inte klasser.
+
+### Nästa steg
+
+1. **Visuell finjustering** (fas 11) om fotona motiverar det — avatarens medaljong är tom utan bild,
+   och steg 1 har gott om luft.
+2. **Live-verifiering punkt 6** — vilket TikTok-event bär Guardian-status. Widgeten är klar och
+   väntar bara på ett fältnamn.
+3. `20260807-topgift` byts nästa gång `gift-event-images.js` eller `live-leaderboard.js` ändras.
+
 ## Checkpoint 36 — Guardian Welcome, en ny familj byggd bakifrån (2026-08-18)
 
 Första familjen i repot där **varenda rad prov skrevs innan en rad implementation**. 53 prov, röd

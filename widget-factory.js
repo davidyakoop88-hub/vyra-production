@@ -43,6 +43,12 @@
   // Short tables live here. The three frame tables are registered by media.js, which owns them for
   // rendering; duplicating 73 frame definitions to satisfy a lookup would be the same mistake this
   // file exists to undo.
+  // Guardian Emblem-matten, EN gang. BUILD bygger ur den, och panelen laser samma tabell via
+  // `VyraWidgets.variants('guardianemblem.matt')` nar praktsteget byts — en widget vars hojd star
+  // pa tva stallen far forr eller senare tva olika varden. Bredden ar 400 i varje steg: det ar
+  // familjens format, inte en installning per niva.
+  const GE_MATT = { 1: [400, 260], 2: [400, 320], 3: [400, 380], 4: [400, 440] };
+
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
     'topgift.theme': { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' },
@@ -80,6 +86,12 @@
     // ||'hero'}, sa en widget utan vald modell ar redan en hero. Den saknade bara sin plats i
     // registret, vilket gjorde att katalogen inte kunde skapa den och provet inte kunde mata den.
     'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    // Guardian Emblem. Praktsteget ar familjens ENDA katalogingang — sprak, namn och egen text ar
+    // panelval, eftersom ett emblem alltid ser likadant ut och bara bar olika mycket guld. Matten
+    // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett
+    // prov ser det. Namnen ar desamma som STEG-registret i guardian-emblem-fas.js bar.
+    'guardianemblem.matt': GE_MATT,
+    'guardianemblem.step': {1:'Vapenskold',2:'Krona',3:'Lagrar',4:'Full prakt'},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
@@ -255,6 +267,17 @@
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
       fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout
     }),
+    // Guardian Emblem. Bredden ar 400 i VARJE steg — det ar familjens format, inte en installning
+    // per niva. Hojden ar det praktnivan betalar med, och den vaxer monotont. En widget vars hojd
+    // star pa tva stallen far forr eller senare tva olika varden, sa GE_MATT ar det enda stallet.
+    'guardianemblem.step': v => ({
+      type: 'templateGuardianEmblem', x: 100, y: 80,
+      width: GE_MATT[v.step][0], height: GE_MATT[v.step][1],
+      title: 'Guardian Emblem', guardianStep: Number(v.step),
+      // 'auto' som default: en streamer som inte rort valet ska fa sitt eget sprak, inte vart.
+      guardianLang: 'auto', guardianShowUsername: true, guardianCustomText: '',
+      guardianUsername: '@Guardian'
+    }),
     'gifterlevel.layout': v => ({
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
@@ -361,6 +384,11 @@
       }
       const c = pick('fanlevel.theme', parts[0], 'fan level-tema');
       return ['fanlevel.theme', { theme: parts[0], color: c[0], light: c[1] }];
+    },
+    'guardianemblem': parts => {
+      if (!parts[0]) throw new Error('catalog:guardianemblem kraver ett praktsteg');
+      pick('guardianemblem.step', parts[0], 'Guardian-praktsteg');
+      return ['guardianemblem.step', { step: parts[0] }];
     },
     'gifterlevel': parts => {
       if (!parts[0]) throw new Error('catalog:gifterlevel kräver en layout');
