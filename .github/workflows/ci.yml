@@ -155,10 +155,20 @@ jobs:
 
       # --with-deps aven vid cachetraff: cachen bar webblasaren, inte systembiblioteken den lankar
       # mot, och de bor utanfor katalogen. Ar binaren redan pa plats ar nedladdningen en no-op.
-      - name: 'Visuell · installera pinnad Chromium'
-        run: npx playwright install --with-deps chromium
+      # Uppdelat i tva steg med tak av samma skal som i visuell-referenser.yml: ett hangande
+      # `--with-deps` visar ingen utdata alls och blir omojligt att felsoka. Samma
+      # uppsattning systemberoenden som referensjobbet — typsnitten avgor rastreringen, och
+      # bilderna maste skrivas och jamforas under samma forutsattningar.
+      - name: 'Visuell · systemberoenden'
+        timeout-minutes: 10
+        run: npx playwright install-deps chromium
+
+      - name: 'Visuell · pinnad Chromium'
+        timeout-minutes: 10
+        run: npx playwright install chromium
 
       - name: 'Visuell · alla katalognycklar mot referens'
+        timeout-minutes: 30
         run: npm run test:visual
 
       # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt

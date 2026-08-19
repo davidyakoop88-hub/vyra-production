@@ -63,10 +63,29 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
-      - name: 'Installera den pinnade Chromium'
-        run: npx playwright install --with-deps chromium
+      # TVA STEG, INTE ETT, OCH BADA MED TAK.
+      #
+      # `npx playwright install --with-deps chromium` hangde 33 minuter utan ett ord i loggen och
+      # utan att falla — GitHub visar ingen utdata for ett pagaende steg, sa det gick inte att se om
+      # det var nedladdningen eller apt som stod still. Uppdelningen ger felet ett namn, och
+      # timeout-minutes gor en hangning till ett rott steg pa nagra minuter i stallet for ett jobb
+      # som tuggar mot sexttimmarsgransen.
+      #
+      # SYSTEMBEROENDENA AR INTE VALFRIA. --with-deps installerar bland annat fonts-wqy-zenhei,
+      # fonts-freefont-ttf, fonts-ipafont-gothic och fonts-unifont. Typsnitt paverkar rastreringen,
+      # alltsa pixlarna. Jobbet som SKRIVER referenserna och jobbet i ci.yml som JAMFOR mot dem maste
+      # darfor installera exakt samma uppsattning — annars jamfor vakten bilder tagna under olika
+      # forutsattningar och skyller skillnaden pa widgetarna.
+      - name: 'Systemberoenden (typsnitten som paverkar rastreringen)'
+        timeout-minutes: 10
+        run: npx playwright install-deps chromium
+
+      - name: 'Den pinnade Chromium'
+        timeout-minutes: 10
+        run: npx playwright install chromium
 
       - name: 'Fotografera alla katalognycklar'
+        timeout-minutes: 30
         env:
           # Pushvagen har ingen inmatningsruta. Commitmeddelandet ar da motiveringen, och det ar
           # rimligt: den som pushar [referenser] har just skrivit ner varfor.
@@ -85,6 +104,7 @@ jobs:
       # Skrivs de under andra villkor an vakten laser dem faller varenda nyckel forsta gangen
       # vakten kors, och da hade felet upptackts i nasta PR i stallet for har.
       - name: 'Vakten ska vara gron mot de nyss skrivna bilderna'
+        timeout-minutes: 30
         run: npm run test:visual
 
       - name: 'Committa bilderna till grenen'
