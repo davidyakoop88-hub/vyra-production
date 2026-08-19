@@ -568,3 +568,48 @@ nav a:hover{color:#fff}
    duken far INTE pointer-events:none (da tystnar effekten over tomma ytor). */
 .tubes-fx{position:fixed;inset:0;z-index:0;display:block}
 main,.mini-sidfot{position:relative;z-index:1}
+
+/* ==== Framsidan som inloggningssida (2026-08-19, Davids skiss). Kortet till vanster talar
+   samma API som gaten (landing-login.js); heron ligger i hogerspalten. Sektionerna under
+   vecket ar DOLDA men KVAR (agency-prejudikatet) — och hidden far en display-ryggrad:
+   author-display slar annars attributet (scenbakgrundens uppmatta laxa 2026-08-18). */
+[hidden]{display:none!important}
+.hero-kolumner{display:grid;grid-template-columns:400px minmax(0,1fr);gap:56px;align-items:start;
+  max-width:1460px;margin:0 auto;position:relative;z-index:1;text-align:left}
+.hero-innehall{text-align:center;min-width:0}
+.login-kort{position:sticky;top:96px;background:linear-gradient(165deg,#171022e6,#0d0815cc);
+  border:1px solid #3a2848;border-radius:18px;padding:26px 24px;backdrop-filter:blur(14px);
+  box-shadow:0 24px 70px -30px #000,0 0 0 1px #ffffff08 inset}
+.login-flikar{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0d0815;
+  border:1px solid #2c2138;border-radius:12px;padding:5px;margin-bottom:20px}
+.login-flikar button{border:0;border-radius:9px;padding:10px 0;background:transparent;
+  color:var(--muted);font:600 13px var(--font-body);cursor:pointer;transition:.15s}
+.login-flikar button.active{background:linear-gradient(135deg,#a855f7,#ff5da2);color:#fff;
+  box-shadow:0 0 20px -2px #a855f7b3,0 4px 14px -6px #ff5da280,0 0 0 1px #ffffff26 inset;
+  text-shadow:0 1px 6px #00000055}
+.login-glomt-rad{display:flex;justify-content:flex-end;margin-top:-8px}
+.login-glomt-rad a{font-size:11.5px;font-weight:600;color:#c3a8e8;text-decoration:none}
+.login-glomt-rad a:hover{color:#fff;text-decoration:underline}
+.login-tillbaka{margin-top:14px;width:100%;background:none;border:0;color:var(--muted);
+  font:600 12px var(--font-body);cursor:pointer}
+.login-tillbaka:hover{color:#fff}
+.login-kort form{display:grid;gap:14px}
+.login-kort label{display:grid;gap:7px;font-size:11.5px;font-weight:600;letter-spacing:.04em;
+  color:var(--muted);text-align:left}
+.login-kort input{background:#0d0815;border:1px solid #2c2138;border-radius:10px;color:#fff;
+  padding:12px 14px;font:500 14px var(--font-body);outline:0;transition:border-color .15s}
+.login-kort input:focus{border-color:var(--violet-light);box-shadow:0 0 0 3px #a78bfa26}
+.login-kort #loginError,.login-kort #loginMfaError{min-height:16px;margin:0;font-size:12px;
+  color:#ff7a9c;text-align:left}
+.login-knapp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:14px 0;font-size:15px}
+.login-knapp span{transition:transform .15s}
+.login-knapp:hover span{transform:translateX(3px)}
+.login-mfa-text{font-size:12.5px;line-height:1.6;color:var(--muted);text-align:left;margin:0 0 14px}
+.login-fin{display:block;margin-top:16px;font-size:10.5px;line-height:1.5;color:var(--muted-dim);
+  text-align:center}
+@media(max-width:980px){
+  .hero-kolumner{grid-template-columns:1fr;gap:40px}
+  .login-kort{position:static;order:2;width:100%;max-width:440px;margin:0 auto}
+  .hero-innehall{order:1}
+}
