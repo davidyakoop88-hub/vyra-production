@@ -71,3 +71,8 @@ desktop.ini
 # inte detsamma som ofarliga: de bar tidsstamplar och stabila hashar per tittare, och de hor till
 # streamerns egen dator. De ska aldrig committas.
 tiktok-bridge/inspelningar/
+
+# Diffbilderna som den visuella regressionsvakten skriver nar en nyckel skiljer sig fran sin
+# referens. De ar en felsokningsartefakt for den korningen — referensen och det faktiska fotot
+# finns redan, och en incheckad diff hade bara varit en gammal sanning om ett fel som ar fixat.
+tests/visual/diff/

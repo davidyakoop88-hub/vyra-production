@@ -746,6 +746,75 @@ Verifierad: 2026-08-09.
 
 ---
 
+## 12. En CSS-animation finns inte förrän nästa bildruta — mät aldrig direkt efter `render()`
+
+Webbläsaren skapar CSS-animationer i bildrutans steg *update animations*, inte när noden läggs in i
+DOM:en. Under fönstret mellan `render()` och nästa bildruta gäller därför **basstilen**, och
+`element.getAnimations()` returnerar en **tom lista**. En forcerad layout (`void el.offsetWidth`,
+`getComputedStyle`) hjälper inte — den räknar om stil, den startar inga animationer.
+
+Uppmätt 2026-08-19 i den visuella regressionsvakten, 100 fotograferingar av fyra katalognycklar:
+
+| Utfall | Antal | Rapporterade måtten |
+|---|---|---|
+| Rätt | 98 | 340×340, opacitet 1 |
+| Fel | 2 | **221×221, opacitet 0** |
+
+221 är 340 × 0,65, och `studio.css` säger
+`@keyframes vyraAppear{0%{opacity:0;transform:scale(.65)}15%,100%{opacity:1;transform:scale(1)}}`.
+Widgeten stod alltså på entréanimationens **allra första bildruta** — den hade inte frysts alls.
+Riggen hade gjort allt i rätt ordning, men för tidigt: synlighetsvakten läste basstilen (opacitet 1,
+full storlek) och slog till direkt, skanningen pausade en tom animationslista, skrev `currentTime`
+på ingenting, och först därefter kom bildrutan som skapade `vyraAppear` och startade den på 0 %.
+
+**Varför det är värre än ett vanligt fel:** utfallet berodde på om en bildruta hann passera, alltså
+på maskinens belastning. Vilken nyckel som föll varierade mellan körningar, och felet pekade på
+widgeten fast bristen satt i mätningen. En vakt med nolltolerans får inte ha en sådan komponent.
+
+**Mät så här:** vänta tills antalet animationer stått stilla i flera på varandra följande rundor om
+två `requestAnimationFrame`, och tills varje animations `ready`-löfte har infriats. En animation som
+ännu är *pending* ignorerar det `currentTime` man skriver till den. `tests/helpers/visuell.js`
+gör det i `__visStabil()`, och skanningen anropar den som sitt första steg så att ingen kan
+fotografera förbi villkoret.
+
+**Gäller alla browser-prov,** inte bara den visuella vakten: varje prov som mäter utseende, storlek
+eller opacitet direkt efter en render mäter basstilen och inte det användaren ser.
+
+Verifierad: 2026-08-19 — 0 fel på 200 fotograferingar efter åtgärden, mot 2 på 100 före.
+
+---
+
+## 13. `getAnimations()` utan `{subtree: true}` missar pseudoelementen
+
+`element.getAnimations()` returnerar animationer på **elementet självt**. Den tar inte med
+`::before` och `::after`. Att gå igenom `querySelectorAll('*')` hjälper inte — pseudoelement är
+inte noder och finns inte i den listan. Enda vägen är `element.getAnimations({ subtree: true })`,
+som täcker både efterkommande och deras pseudoelement.
+
+Uppmätt 2026-08-19 i den visuella regressionsvakten. Sex katalognycklar fortsatte röra sig efter att
+"alla" animationer frusits. Diffen mellan två foton tagna 300 ms isär avgränsade rörelsen:
+
+| Nyckel | Bildens storlek | Området som ändrades | Vad som satt där |
+|---|---|---|---|
+| `catalog:topstreak` | 310×105 | 302×6 vid y=96 | glansstrimma på ett `::after` |
+| `catalog:lastx:skew` | 501×115 | 324×18 vid y=97 | samma mönster |
+| `catalog:battlemvp:aurora` | 240×144 | 179×144 | hela innehållsytan |
+
+Felsökningen gick först åt fel håll, och det är värt att minnas hur: eftersom lådan rapporterade
+**noll animationer** såg det ut som något helt annat än CSS — en `setInterval`-räknare, en
+`<canvas>`, en animerad GIF. Alla tre uteslöts med mätningar (inga dukar, inga videor, inga
+animerade bildfiler) innan den enkla förklaringen prövades. Ett tomt svar från
+`getAnimations()` betyder inte "här finns inga animationer" utan "här finns inga animationer **av
+det slag jag frågade om**".
+
+**Åtgärd:** ett anrop, `box.getAnimations({ subtree: true })`, ersatte både elementanropet och
+loopen över efterkommande. Sex nycklar gick från "står aldrig stilla" till 24 lyckade
+fotograferingar av 24.
+
+Verifierad: 2026-08-19.
+
+---
+
 ## Sådant som är löst, men värt att minnas
 
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram

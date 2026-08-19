@@ -11,7 +11,9 @@
     "test:browser": "node --test tests/browser/*.browser.test.js",
     "karta": "node scripts/generate-catalog-map.js",
     "domaner": "node scripts/domaner.js",
-    "test:doman": "node scripts/domaner.js test"
+    "test:doman": "node scripts/domaner.js test",
+    "test:visual": "node --test tests/visual/visuell-regression.browser.test.js",
+    "test:visual:update": "node scripts/visuell-referens.js"
   },
   "devDependencies": {
     "jsdom": "30.0.1",

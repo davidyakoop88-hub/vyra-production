@@ -179,6 +179,28 @@ fångar det direkt.
 Listorna rörs **inte** innan dess. En typ som står i kontraktet men som ingen kod någonsin skickar
 är en död kontraktspost — samma sorts lögn som §3 kostade en hel ansats för.
 
+## 7. Spelar Glove Snipes effektvideor i OBS?
+
+**Ingen automat kan svara på det här.** Glove Snipes åtta katalogvarianter visar effekten som en
+H.264-kodad MP4 (`pack-fx-video`). Uppmätt 2026-08-19: playwright-core:s Chromium — den webbläsare
+CI och alla browserprov kör i — saknar stöd för den kodeken. Videon faller med
+`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`, och `canPlayType('video/mp4; codecs="avc1.42E01E")` svarar med
+tom sträng. Alla åtta varianter målar därför 0 % i provbrowsern, och den visuella regressionsvakten
+undantar dem av det skälet.
+
+Vanlig Chrome och OBS browser source har H.264 — så mätningen säger ingenting om huruvida de
+faktiskt spelar där. Det är den enda widgetfamiljen i katalogen där ingen vakt kan uttala sig.
+
+**Läs av så här, i OBS med scenens overlay-länk:**
+
+1. Lägg in en Glove Snipe-widget och trigga den (Testa-knappen räcker).
+2. Syns effekten? Notera vilken variant och vilket paket.
+3. Öppna OBS browser source-loggen och sök efter `DEMUXER` eller `pack-fx-video`.
+4. Skriv in svaret här: **spelar / spelar inte**, och i så fall vilken variant.
+
+Spelar de inte heller i OBS är det en riktig bugg som ingen vakt hittat — och då är nästa steg att
+byta kodek (VP9/WebM spelas av båda) i stället för att jaga den i provbrowsern.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

@@ -1,0 +1,14 @@
+# Referensbilderna för den visuella regressionsvakten.
+#
+# `binary` säger två saker på en gång: rör aldrig radsluten (en CRLF-konvertering på en Windows-
+# maskin hade ändrat varenda byte och gjort varje referens obrukbar), och försök aldrig visa en
+# textdiff. `-diff` upprepar den andra halvan uttryckligen, så att `git diff` och kodgranskningen
+# skriver "Binary files differ" i stället för att spy ut 200 kB PNG-brus.
+#
+# Bilderna är avsiktligt inte i Git LFS. Hela uppsättningen väger ~9 MB för 178 nycklar och byts
+# bara när någon medvetet kör `npm run test:visual:update`. LFS hade lagt ett extra installationssteg
+# på varje kloning och i CI för att spara några megabyte en gång.
+tests/visual/referenser/*.png binary -diff
+
+# Manifestet SKA vara läsbart i en diff — det är det som avslöjar en webbläsarväxling.
+tests/visual/referenser/manifest.json -binary diff

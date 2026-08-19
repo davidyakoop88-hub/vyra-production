@@ -127,6 +127,40 @@ jobs:
       - name: 'Lackage · riktig webblasare'
         run: npm run test:browser
 
+      # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
+      #
+      # Steget installerar playwright-core:s EGNA pinnade Chromium i stallet for att anvanda
+      # ubuntu-latest:s Google Chrome. Skalet ar att vakten har NOLLTOLERANS: den skiljer inte pa
+      # "widgeten andrades" och "rastreraren andrades", sa referensbilderna ar bara giltiga pa exakt
+      # den binar de togs pa. Runnerns Chrome uppdateras utan att en rad i repot andras, och hade
+      # gjort alla nycklar roda samtidigt en slumpmassig tisdag. Den pinnade revisionen andras bara
+      # nar package-lock.json andras — alltsa i en commit nagon kan peka pa.
+      #
+      # Cachen ar nycklad pa exakt den versionen, sa en uppdatering av playwright-core ger en ny
+      # cache i stallet for en tyst traff pa fel binar. Manifestet i referenskatalogen bar samma
+      # sanning och faller hogljutt om de tva glider isar.
+      #
+      # Provet bor i tests/visual/ och inte i tests/browser/ just for att `npm run test:browser`
+      # ovanfor INTE ska plocka upp det: dar hade det kort en gang till pa runnerns Google Chrome
+      # och fallit av fel skal. tests/browser-rigg.test.js vaktar bada katalogerna.
+      - name: 'Visuell · lastversion for webblasarcachen'
+        id: pw
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # --with-deps aven vid cachetraff: cachen bar webblasaren, inte systembiblioteken den lankar
+      # mot, och de bor utanfor katalogen. Ar binaren redan pa plats ar nedladdningen en no-op.
+      - name: 'Visuell · installera pinnad Chromium'
+        run: npx playwright install --with-deps chromium
+
+      - name: 'Visuell · alla katalognycklar mot referens'
+        run: npm run test:visual
+
       # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
       # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
       # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde

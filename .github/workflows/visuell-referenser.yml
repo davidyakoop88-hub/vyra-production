@@ -1,0 +1,95 @@
+# GENERERAR DE VISUELLA REFERENSBILDERNA. Enda stallet dar de KAN goras.
+#
+# Referenserna jamfors pixel for pixel utan tolerans, och ar darfor bara giltiga pa exakt den
+# Chromium-build de togs pa — tva builds rastrerar typsnitt olika. Den build som galler ar den
+# `package-lock.json` pinnar, och den finns inte pa en godtycklig utvecklarmaskin. Ett foto taget
+# lokalt hade gett 178 roda prov i CI med ett felmeddelande som pekade pa widgetarna i stallet for
+# pa webblasaren.
+#
+# `npm run test:visual:update` finns kvar for lokal felsokning — se hur en andring ser ut innan den
+# lamnas ifran sig. Men det som CHECKAS IN kommer harifran.
+#
+# KOR SA HAR:
+#   Actions -> "Visuella referenser" -> Run workflow -> valj gren, skriv motiveringen.
+# eller genom att pusha en commit vars meddelande innehaller [referenser].
+name: Visuella referenser
+
+on:
+  workflow_dispatch:
+    inputs:
+      motiv:
+        description: 'Varfor bilderna ska bytas (skrivs till historik.md, minst 12 tecken)'
+        required: true
+      bara:
+        description: 'Valfritt filter, t.ex. battlemvp — tomt betyder alla nycklar'
+        required: false
+        default: ''
+  push:
+    branches:
+      - 'guard/**'
+      - 'visuell-referenser/**'
+
+# Jobbet skriver tillbaka bilderna till grenen det kordes pa. Utan det finns ingen vag alls fran
+# den pinnade binaren till repot.
+permissions:
+  contents: write
+
+jobs:
+  referenser:
+    # Pushvagen kraver en uttrycklig markor i commitmeddelandet. Utan den hade varje push till en
+    # guard-gren kort ett tolvminutersjobb, och botens EGEN commit hade startat nasta varv —
+    # markoren saknas i den, sa loopen kan inte sluta sig.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[referenser]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: 'Lastversion for webblasarcachen'
+        id: pw
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: 'Installera den pinnade Chromium'
+        run: npx playwright install --with-deps chromium
+
+      - name: 'Fotografera alla katalognycklar'
+        env:
+          # Pushvagen har ingen inmatningsruta. Commitmeddelandet ar da motiveringen, och det ar
+          # rimligt: den som pushar [referenser] har just skrivit ner varfor.
+          VYRA_VISUELL_MOTIV: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
+          VYRA_VISUELL_BARA: ${{ github.event.inputs.bara }}
+        run: npm run test:visual:update
+
+      # Kontrollen som gor steget ovan meningsfullt: bilderna ska OCKSA ga att jamfora mot.
+      # Skrivs de under andra villkor an vakten laser dem faller varenda nyckel forsta gangen
+      # vakten kors, och da hade felet upptackts i nasta PR i stallet for har.
+      - name: 'Vakten ska vara gron mot de nyss skrivna bilderna'
+        run: npm run test:visual
+
+      - name: 'Committa bilderna till grenen'
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/visual/referenser
+          if git diff --cached --quiet; then
+            echo 'Inga bilder andrades — inget att committa.'
+            exit 0
+          fi
+          ANTAL=$(git diff --cached --name-only -- 'tests/visual/referenser/*.png' | wc -l)
+          git commit -m "Visuella referenser: $ANTAL bilder skrivna pa den pinnade Chromium"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}

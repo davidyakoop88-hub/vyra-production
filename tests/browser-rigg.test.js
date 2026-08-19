@@ -19,32 +19,55 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const rigg = require('./helpers/webblasare.js');
 
-const KATALOG = path.join(__dirname, 'browser');
-const FILER = fs.readdirSync(KATALOG).filter(f => f.endsWith('.browser.test.js'));
+// Browsertesterna bor i TVA kataloger, och vakten maste folja med till bada.
+//
+// tests/visual/ finns for att den visuella regressionsvakten INTE ska plockas upp av
+// `npm run test:browser`. Den kraver den pinnade Chromium-binaren ur package-lock.json — pa nagon
+// annan build rastreras typsnitten olika och varje nyckel faller utan att en rad kod andrats — sa
+// den kors i ett eget CI-steg efter `npx playwright install`. Lag den kvar i tests/browser/ hade
+// den kort tva ganger: en gang pa runnerns Google Chrome (rott av fel skal) och en gang pa ratt
+// binar. Katalogbytet ar alltsa inte kosmetik utan det som gor att den kan ha nolltolerans.
+//
+// Priset ar att den hamnar utanfor den har vakten om listan inte namner den. Darav radena nedan.
+const KATALOGER = [path.join(__dirname, 'browser'), path.join(__dirname, 'visual')];
+const FILER = KATALOGER.flatMap(kat =>
+  fs.existsSync(kat)
+    ? fs.readdirSync(kat).filter(f => f.endsWith('.browser.test.js')).map(f => path.join(kat, f))
+    : []);
+const kort = f => path.relative(path.join(__dirname, '..'), f);
 
 test('det finns browsertester att vakta', () => {
   assert.ok(FILER.length >= 40, `hittade bara ${FILER.length} browsertester — har katalogen flyttat?`);
 });
 
+// §7: en vakt som bara laser en katalog ar gron aven nar den andra katalogen ar tom. Kontrollen
+// namner filen som flyttades ut, sa att utflytten inte kan gora den osynlig for de tre proven nedan.
+test('den visuella vakten ligger i listan trots att den bor i en egen katalog', () => {
+  const visuella = FILER.filter(f => f.includes(`${path.sep}visual${path.sep}`));
+  assert.ok(visuella.length >= 1,
+    'tests/visual/ innehaller ingen *.browser.test.js — antingen har filen flyttat igen, '
+    + 'eller sa laser den har vakten fel katalog och de tre proven nedan tacker den inte langre');
+});
+
 test('ingen browsertestfil har en egen webbläsarstart', () => {
   const egna = FILER.filter(f => {
-    const text = fs.readFileSync(path.join(KATALOG, f), 'utf8');
+    const text = fs.readFileSync(f, 'utf8');
     return /async function startaWebblasare/.test(text) || text.includes("require('playwright-core')");
   });
-  assert.deepEqual(egna, [], `De här filerna har en egen launcher i stället för tests/helpers/webblasare.js: ${egna.join(', ')}`);
+  assert.deepEqual(egna.map(kort), [], `De här filerna har en egen launcher i stället för tests/helpers/webblasare.js: ${egna.map(kort).join(', ')}`);
 });
 
 test('varje browsertestfil avgör skip synkront via riggen', () => {
   const fel = [];
   for (const f of FILER) {
-    const text = fs.readFileSync(path.join(KATALOG, f), 'utf8');
-    if (!text.includes("require('../helpers/webblasare.js')")) { fel.push(`${f}: använder inte riggen`); continue }
+    const text = fs.readFileSync(f, 'utf8');
+    if (!text.includes("require('../helpers/webblasare.js')")) { fel.push(`${kort(f)}: använder inte riggen`); continue }
     const skip = /let skip = ([^;]*);/.exec(text);
-    if (!skip) { fel.push(`${f}: ingen skip-sats`); continue }
-    if (skip[1].trim() !== 'hoppaOver()') fel.push(`${f}: skip sätts till "${skip[1].trim()}" i stället för hoppaOver()`);
+    if (!skip) { fel.push(`${kort(f)}: ingen skip-sats`); continue }
+    if (skip[1].trim() !== 'hoppaOver()') fel.push(`${kort(f)}: skip sätts till "${skip[1].trim()}" i stället för hoppaOver()`);
     // Omtilldelning i before är just det som aldrig fungerade.
     if (/\bskip = (?!hoppaOver)/.test(text.slice(skip.index + skip[0].length))) {
-      fel.push(`${f}: skriver om skip efter registreringen — det når aldrig fram till test()`);
+      fel.push(`${kort(f)}: skriver om skip efter registreringen — det når aldrig fram till test()`);
     }
   }
   assert.deepEqual(fel, [], fel.join(' | '));

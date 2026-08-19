@@ -1,5 +1,94 @@
 # VYRA Project State
 
+## Checkpoint 41 — Visuell regressionsvakt: 167 nycklar fotograferade pixel för pixel (2026-08-19)
+
+Checkpoint 40 skrev ut den största kvarvarande luckan i klartext: **"målas" är inte "är korrekt"**.
+Overlay-revisionen bevisade att varje widget renderas, har yta och ärvd opacitet över noll — men en
+avklippt kant, två rader text ovanpå varandra eller en etikett som spiller ut ur sin platta passerar
+den utan ett ljud. Den här checkpointen stänger den luckan för 167 av 181 katalognycklar.
+
+### Vad vakten gör
+
+`tests/visual/visuell-regression.browser.test.js` bygger varje katalognyckel i riktigt overlay-läge,
+väcker den om den är en alert, ställer den still, fotograferar den med transparent bakgrund och
+jämför **pixel för pixel** mot en incheckad referens. **Ingen procenttolerans.**
+
+Nolltoleransen är mätt, inte vald av principskäl: samma widget fotograferad två gånger i samma
+session gav 0 olika pixlar av 224 000, och 0 igen efter en helt ny webbläsarstart. Determinismen
+finns — en tolerans hade bara dolt exakt de förskjutningar vakten är till för att hitta.
+
+Priset är att bilderna bara gäller på **samma Chromium-build**. Referenserna bär därför ett manifest
+med binärens versionssträng, och vakten vägrar jämföra någon annanstans i stället för att skylla
+167 fel på widgetarna. CI installerar den build `package-lock.json` pinnar.
+
+### Att ställa en widget still var hela arbetet
+
+Fyra fel i mätriggen hittades och rättades, vart och ett med en mätning:
+
+| Fel | Hur det såg ut | Vad det var |
+|---|---|---|
+| Mätt före första bildrutan | 2 av 100 foton gav 221×221 och opacitet 0, olika nyckel varje gång | en CSS-animation skapas i bildrutans *update animations*-steg — dessförinnan är `getAnimations()` tom och basstilen gäller |
+| Fryst utifrån en klassdriven koreografi | Guardian Emblem: 0 % målat vid alla nio tidpunkter, 66–82 % levande | JS-klockan byter fasklasser; att spola animationerna till en annan tidpunkt ger en omöjlig kombination |
+| Pseudoelementen missades | 6 nycklar rörde sig efter frysningen; diffen var ett 302×6 px band | `getAnimations()` tar inte med `::before`/`::after` — bara `{subtree: true}` gör det |
+| Kön svalde andra triggern | widgeten blev 0×0 vid ombyggnad | `clear()` tömmer de väntande men nollställer inte `busy` — riggen väntar nu ut `spelar` innan den triggar |
+
+Rad 1 och 3 är skrivna som §12 och §13 i `docs/tech-debt.md`, eftersom de gäller **alla**
+browserprov och inte bara den här vakten.
+
+En femte misstänkt — JS-drivna räknare och progressmätare — byggdes bort och **togs sedan bort
+igen**: ett maskineri som lindade `setTimeout`/`setInterval`/`requestAnimationFrame` och släckte
+widgetens egna timrar. Mätt med och utan efter att pseudoelementen kommit med i frysningen: 27
+fotograferingar av 27 lyckades i båda fallen. Det löste alltså ingenting, och det rev kön som
+bieffekt. Kod som inte kan visa vad den räddar ska inte ligga kvar.
+
+### Vad som är uppmätt
+
+| | Antal | |
+|---|---|---|
+| Katalognycklar totalt | 181 | |
+| Fotograferade och jämförda | **167** | 0 trasiga, 0 tomma i den sista körningen |
+| Undantagna med utskrivet skäl | 14 | se tabellen nedan |
+
+| Undantag | Nycklar | Uppmätt skäl |
+|---|---|---|
+| `catalog:custom:image` / `:video` | 2 | tomma behållare som väntar på användarens egen fil (0,4 % / 0,2 % målat) |
+| `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
+| `catalog:glovesnipe:` | 8 | effekten är **H.264-video**, och provets Chromium saknar kodeken |
+| `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
+
+Guardian Emblem hörde först hit men gör det inte längre: familjen fotograferas nu genom sin **egen
+utbytbara klocka** (`REGI` i `tests/helpers/katalognycklar.js`), som stoppar klockan, ställer lådan
+i fasen `hyllning` och fryser animationerna 900 ms in i just den fasen. 20 fotograferingar av 20
+lyckades, 72–81 % målat.
+
+### Ett fynd som ingen vakt kan stänga
+
+Glove Snipes åtta varianter går **inte** att verifiera automatiskt alls. Effekten är en H.264-MP4,
+och playwright-core:s Chromium svarar tomt på `canPlayType('video/mp4; codecs="avc1.42E01E")` och
+faller med `DEMUXER_ERROR_NO_SUPPORTED_STREAMS`. I vanlig Chrome och i OBS finns kodeken — så
+mätningen säger ingenting om huruvida de spelar där. Det är nu **punkt 7 i
+`docs/live-verifiering.md`**, att läsa av i OBS före sändning.
+
+### Invarianter som inte får brytas
+
+- **Referenserna görs bara på den pinnade Chromium-binären**, alltså i CI
+  (`.github/workflows/visuell-referenser.yml`). En bild tagen på en annan build är obrukbar.
+- **En referens uppdateras aldrig utan motivering.** `VYRA_VISUELL_MOTIV` är obligatorisk och
+  skrivs till `historik.md`. Utan det kravet blir den snabbaste vägen till grönt att skriva om
+  bilden — och då har vi bytt ett larm mot en tystnad.
+- **En bild som målar under 3 % skrivs aldrig som referens.** En tom referens matchar allt.
+- **Varje undantag ska bära en mätning**, inte ett "gick inte". Listan har ett tak i provet.
+- **Provet ligger i `tests/visual/`, inte i `tests/browser/`**, så `npm run test:browser` inte kör
+  det på runnerns Google Chrome. `tests/browser-rigg.test.js` vaktar båda katalogerna.
+
+### Nästa steg
+
+Referensbilderna finns ännu inte — baslinjen är avsiktligt röd med
+*"167 av 167 nycklar saknar referensbild"*. Nästa steg är att generera dem i CI, mutationsprova att
+vakten faktiskt faller när en CSS-regel ändras, och att mutera jämförelsen så att varje prov faller.
+
+---
+
 ## Checkpoint 40 — Hela katalogen mätt i overlay, och vakten som håller den där (2026-08-19)
 
 Frågan som startade det: *"kan vi säkert säga att allt funkar i overlay?"* Svaret var **nej**, och

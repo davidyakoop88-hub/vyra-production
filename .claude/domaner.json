@@ -675,11 +675,15 @@
         "tests/fixtures/*",
         "tests/rigg/*",
         "tests/e2e/*",
-        "tests/skip-dirs.test.js"
+        "tests/skip-dirs.test.js",
+        "tests/visual/*",
+        "scripts/visuell-referens.js"
       ],
       "tester": [
         "tests/skip-dirs.test.js",
-        "tests/browser/mock-backend.browser.test.js"
+        "tests/browser/mock-backend.browser.test.js",
+        "tests/visual/visuell-regression.browser.test.js",
+        "tests/browser-rigg.test.js"
       ],
       "matning": [],
       "risker": [
@@ -718,6 +722,7 @@
         "Dockerfile",
         ".dockerignore",
         ".gitignore",
+        ".gitattributes",
         "docker-compose.yml",
         "docker-compose.production.yml",
         "Caddyfile",
