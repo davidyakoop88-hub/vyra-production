@@ -869,3 +869,18 @@ Verifierad: 2026-08-09.
   overlay?" ar exakt fel fraga for en alert; ratt fraga ar "ar den SLACKT i vila och tands den av sin
   trigger?". Vaktat av `tests/browser/overlay-alla-widgets.browser.test.js`, som kraver bada halvorna
   for varje alert-familj — och som hittade felet forsta gangen den kordes.
+- **Ett prov som infererar fel ur en timeout rapporterar sin egen last, inte kodens tillstånd.**
+  Overlay-vakten pollade `img.complete` med åtta sekunders tak och svalde timeouten med
+  `.catch(() => {})`. På en lastad CI-löpare hann en 1,2 MB PNG inte fram, och provet rapporterade
+  `steg-2.png: bilden laddas inte` om en fil som var spårad i git, 1 216 755 B och avkodade till
+  763×921. **Vänta på det som faktiskt svarar:** `img.decode()` löser när bilden är avkodad och
+  avvisar vid riktigt fel, så skillnaden mellan *långsam* och *trasig* blir ett svar från
+  webbläsaren i stället för en slutsats från en klocka. Muterat efteråt — med filen bortflyttad
+  rapporterar vakten `EncodingError`, så den kan fortfarande falla och nu på rätt grund.
+- **Verifiera ett "fynd" innan det rapporteras — i en handmätning är mätfelen fler än buggarna.**
+  Overlay-revisionen av 181 katalognycklar gav fyra anmärkningar. **Tre av dem var mina egna:** ett
+  reguljärt uttryck som klippte vid versaler (`catalog:glovesnipe:koiPearl` → `koi`), ett anrop med
+  fel argumenttyp (`triggerLastXAlert(typeKey, event)` matad med ett objekt, vilket tystade fem
+  friska widgets), och timeouten ovan. Bara **en** var en riktig bugg. En handmätning granskas av
+  ingen, körs om av ingen och muteras av ingen — och det är hela skälet att den ska bli ett prov
+  innan resultatet får kallas ett fynd.

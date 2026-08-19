@@ -1,5 +1,86 @@
 # VYRA Project State
 
+## Checkpoint 40 — Hela katalogen mätt i overlay, och vakten som håller den där (2026-08-19)
+
+Frågan som startade det: *"kan vi säkert säga att allt funkar i overlay?"* Svaret var **nej**, och
+det gick inte att svara på utan att mäta — allt som testats dittills kördes på
+`studio.html?open=layout`, alltså **editorn**. `widget-frameless-output.test.js` täckte en enda typ
+(`templateTopGift`), och ingen vakt öppnade `?overlay=1` överhuvudtaget.
+
+### Vad som mättes
+
+**181 katalognycklar**, var och en skapad och renderad i riktigt overlay-läge:
+
+| Utfall | Antal |
+|---|---|
+| Synliga i vila (mål, listor, leaderboards) | **133** |
+| Triggas, spelar koreografin och slocknar | **48** |
+| Renderingsfel · trasiga bilder · kast | **0 · 0 · 0** |
+
+Overlay-läget självt kontrollmättes först: `html.overlay-output`, `body` helt genomskinlig, inget
+studio-chrome synligt, widget-wrappern utan kant, bakgrund eller skugga.
+
+### Buggen som revisionen missade och vakten hittade
+
+**Guardian Emblem syntes redan i vila i overlay.** Varje annan alert-familj bär `opacity:0` tills
+sin aktiveringsklass sätts; emblemet saknade regeln helt och hade legat **kvar permanent på
+skärmen** i stället för att dyka upp när en Guardian anländer. Widgeten gjorde motsatsen till vad
+den är till för.
+
+Revisionen såg det inte, eftersom den frågade *"syns widgeten i overlay?"* — och **det är fel fråga
+för en alert**. Rätt fråga är *"är den släckt i vila **och** tänds den av sin trigger?"*. Vakten
+ställer båda, och föll på emblemet första gången den kördes.
+
+Lagningen är scopad till overlay: Fan Level Up döljer sig i båda lägena och syns bara när den är
+vald, så i editorn ser man ingenting förrän man klickar. Här gäller regeln bara i sändningen, så
+layoutläget behåller sin förhandsvisning. Inget `!important` — två klasser slår en på specificitet.
+
+### Tre falska larm, alla mina egna
+
+Värt att skriva ut, eftersom alla tre först såg ut som repo-buggar:
+
+1. **Nyckeluttrycket klippte vid versaler.** `catalog:glovesnipe:koiPearl` blev `koi` och
+   rapporterades som en katalognyckel fabriken inte kunde bygga.
+2. **`triggerLastXAlert(typeKey, event)` anropades med ett objekt** där en typnyckel skulle stå, så
+   filtret matchade ingen widget — och fem friska Last-X-varianter rapporterades som *"tänds
+   aldrig"*.
+3. **CI föll på `steg-2.png`** medan filen bevisligen var hel. Vakten pollade `img.complete` med
+   åtta sekunders tak och **svalde timeouten**; på en lastad löpare hann 1,2 MB inte fram och provet
+   drog slutsatsen "trasig" av sin egen otålighet. Bytt mot `img.decode()`, som löser när bilden är
+   avkodad och **avvisar** vid riktigt fel — skillnaden mellan långsam och trasig blir ett svar från
+   webbläsaren i stället för en gissning från en klocka.
+
+**Tre av fyra "fel" i en handmätning var mätfel.** Det är hela argumentet för att en mätning ska
+bli ett prov: provet körs om, granskas och muteras — en handmätning gör ingetdera.
+
+### Vakten
+
+`tests/browser/overlay-alla-widgets.browser.test.js`:
+
+- overlay-läget är verkligen påslaget — kontrollmätning för hela filen
+- varje katalognyckel renderas utan kast och utan bild som inte går att avkoda
+- en representant per alert-familj tänds av sin trigger och slocknar igen
+
+Nycklarna läses ur den **genererade** katalogkartan, inte ur en handskriven lista, så en ny familj
+hamnar där av sig själv. Koreografipasset provar en nyckel per familj i stället för alla 48: att
+prova alla hade tagit tio minuter i CI för att bevisa samma sak som sex gör.
+
+### Vad som fortfarande INTE är verifierat
+
+Det här är gränsen, och den flyttas bara av en riktig sändning:
+
+- **Att widgetarna ser rätt ut.** Mätningen säger "målas", inte "är korrekt". Överlappande text,
+  avklippta kanter och fel färg är osynliga för den.
+- **Riktiga data genom hela kedjan** brygga → moln-API → live-client → trigger. Proven sköt in
+  `__test`-nyttolaster direkt på `window.trigger*`.
+- **Flera widgets samtidigt**, med kö, z-index och partiklar som slåss om samma bildrutor.
+- **OBS självt** — browser source, verklig scen, GPU-komposition.
+- **Vilket TikTok-event som bär Guardian-status** — `docs/live-verifiering.md` punkt 6.
+
+### Sviter
+
+Node **1317/1317** gröna. Overlay-vakten fyra av fyra. Mergad som `a928e70` (PR #233).
+
 ## Checkpoint 39 — Guardian Emblem är konstverket, inte en teckning av det (2026-08-18)
 
 Checkpoint 38 byggde om kompositionen för hand i SVG efter referensbilderna. Det var fortfarande fel
