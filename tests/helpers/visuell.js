@@ -306,20 +306,34 @@ const JAMFOR = (async ([a, b]) => {
   g.drawImage(y, 0, 0); const d2 = g.getImageData(0, 0, c.width, c.height);
   const p1 = d1.data, p2 = d2.data;
   let olika = 0;
+  // AVGRANSNINGEN OCH STORSTA KANALSKILLNADEN FOLJER MED I SVARET.
+  //
+  // Diffbilden skrivs till tests/visual/diff/ — en katalog som forsvinner med lopararen. I CI, alltsa
+  // pa det ENDA stalle dar vakten normalt faller, pekade felmeddelandet darfor pa en fil ingen kunde
+  // oppna. Siffrorna nedan reser i loggen i stallet: var skillnaden sitter, hur stor den ar per
+  // kanal, och darmed om det ar en kantutjamning pa en pixel eller en riktig omritning.
+  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, storsta = 0;
   const diff = g.createImageData(c.width, c.height);
   for (let i = 0; i < p1.length; i += 4) {
     const skiljer = p1[i] !== p2[i] || p1[i+1] !== p2[i+1] || p1[i+2] !== p2[i+2] || p1[i+3] !== p2[i+3];
     if (skiljer) {
       olika++;
+      const d = Math.max(Math.abs(p1[i] - p2[i]), Math.abs(p1[i+1] - p2[i+1]),
+        Math.abs(p1[i+2] - p2[i+2]), Math.abs(p1[i+3] - p2[i+3]));
+      if (d > storsta) storsta = d;
+      const punkt = i / 4, px = punkt % c.width, py = (punkt / c.width) | 0;
+      if (px < x0) x0 = px; if (px > x1) x1 = px;
+      if (py < y0) y0 = py; if (py > y1) y1 = py;
       diff.data[i] = 255; diff.data[i+1] = 0; diff.data[i+2] = 60; diff.data[i+3] = 255;
     } else {
       diff.data[i] = p2[i]; diff.data[i+1] = p2[i+1]; diff.data[i+2] = p2[i+2];
       diff.data[i+3] = Math.round(p2[i+3] * 0.22);
     }
   }
+  const ruta = olika ? [x0, y0, x1 - x0 + 1, y1 - y0 + 1] : null;
   if (!olika) return { olika: 0, total: p1.length / 4 };
   g.clearRect(0, 0, c.width, c.height); g.putImageData(diff, 0, 0);
-  return { olika, total: p1.length / 4, diff: c.toDataURL('image/png').split(',')[1] };
+  return { olika, total: p1.length / 4, ruta, storsta, diff: c.toDataURL('image/png').split(',')[1] };
 });
 
 

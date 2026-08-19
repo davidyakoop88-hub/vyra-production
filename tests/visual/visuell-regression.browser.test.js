@@ -130,8 +130,14 @@ test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
     if (r.olika) {
       const diffil = path.join(V.DIFFKAT, V.filnamn(nyckel));
       fs.writeFileSync(diffil, Buffer.from(r.diff, 'base64'));
+      // Siffrorna före filnamnet, inte efter: diffbilden ligger på en löpare som försvinner, och i
+      // CI är meddelandet allt man har. En skillnad på 26 pixlar med största kanalskillnad 1 i en
+      // ruta om 6×4 är kantutjämning; 5000 pixlar över hela ytan är en omritning. Utan talen ser de
+      // två likadana ut.
+      const ruta = r.ruta ? `${r.ruta[2]}×${r.ruta[3]} px vid (${r.ruta[0]},${r.ruta[1]})` : 'okänd';
       avviker.push(`${nyckel}: ${r.olika} av ${r.total} pixlar skiljer `
-        + `(${(r.olika / r.total * 100).toFixed(2)} %) — se ${path.relative(ROOT, diffil)}`);
+        + `(${(r.olika / r.total * 100).toFixed(2)} %), inom ${ruta}, största kanalskillnad `
+        + `${r.storsta} av 255 — se ${path.relative(ROOT, diffil)}`);
     }
   }
 

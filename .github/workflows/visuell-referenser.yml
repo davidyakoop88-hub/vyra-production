@@ -125,6 +125,19 @@ jobs:
         timeout-minutes: 30
         run: npm run test:visual
 
+      # DIFFBILDERNA UT UR LOPAREN. Felmeddelandet pekar pa tests/visual/diff/, och den katalogen
+      # forsvinner nar jobbet ar slut — i CI, alltsa pa det enda stalle dar vakten normalt faller,
+      # gick bilderna darfor inte att titta pa. Siffrorna star numera i loggen, och bilderna finns
+      # har.
+      - name: 'Diffbilder nar vakten faller'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visuella-diffar-referenser
+          path: tests/visual/diff/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: 'Committa bilderna till grenen'
         run: |
           set -eu
