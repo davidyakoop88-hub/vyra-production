@@ -1,5 +1,363 @@
 # VYRA Project State
 
+## Checkpoint 39 — Guardian Emblem är konstverket, inte en teckning av det (2026-08-18)
+
+Checkpoint 38 byggde om kompositionen för hand i SVG efter referensbilderna. Det var fortfarande fel
+svar på fel fråga: **konstverket var levererat som PNG och skulle aldrig ha ritats om.** Familjen är
+nu byggd på samma mönster som Battle MVP redan använder — en bild per steg plus en geometritabell.
+
+### Vad som gjordes
+
+| | Före | Nu |
+|---|---|---|
+| Emblemet | 21 handritade delar i SVG | **fyra bilder**, en per praktsteg |
+| Delregistret | 10/12/16/21 delar per steg | `['bild','avatar','namn','undertext']` — samma fyra i alla steg |
+| Progressionen | vilka delar som finns | **`aspect`**: 0,98 → 1,21 → 1,26 → 1,29 |
+| Avatarhålet | en CSS-position | **mätt ur bilden**, i procent, som `'battlemvp.frame'` bär sina |
+| CSS-filen | 430 rader | 210 rader |
+| Paletten | skogsgrönt och smaragd | guld, vitt och **isblått** — läst ur bilderna |
+
+### Hur bilderna kom hit
+
+Fyra försök innan filerna nådde containern, och varje misslyckande var samma sak i en ny form:
+**sessionen kör i molnet och når varken din disk eller dina bilagor.** UUID:n, en Windows-sökväg och
+en GitHub-kommentar gav alla samma vägg — kommentarsbilagor ligger på `user-attachments`, som
+proxyn nekar. Det som fungerade var att committa bilderna **i repot**.
+
+Originalarken ligger kvar som `kalla-ark-a.png` och `kalla-ark-b.png`. Utan dem hade en ny mätning
+krävt en ny leverans.
+
+### Mätningarna
+
+**Bakgrunden** är en jämn guldgradient som ligger nära ornamentets guld — en färgnyckel hade ätit hål
+i emblemet. Flood fill från bildkanten som jämför mot **grannen** i stället för mot ett globalt
+frövärde följer gradienten och stannar vid varje hård kant.
+
+**Avatarhålet** mättes som största sammanhängande yta av omättade mörka pixlar. Första försöket tog
+bounding box över alla sådana pixlar och fick 87 % bredd — den ramade in varje skugga mellan
+guldbladen. Alla fyra ger nu fyllnadsgrad **0,78**, alltså π/4. Det är exakt vad en cirkel ger:
+mätningen hittade en skiva i varje bild, inte en skugga.
+
+### Vaktnätet följde designen
+
+Delregistret krympte från 21 till 4, så `G-STEG-PROGRESSION` mäter inte längre *vilka delar som
+tillkommer* — det påståendet är inte längre sant om designen. Den mäter nu i stället:
+
+- varje steg har sin **egen** bildfil, och alla fyra finns på disk med rimlig storlek
+- inga två steg delar bild
+- `aspect` växer strikt med steget
+- hålet är **runt** (bredd/höjd inom 0,86–1,16 efter omräkning via `aspect`) och ligger inne i bilden
+- `media.js` reservtabell är **identisk** med registret, fält för fält
+
+Plus en helt ny vakt i webbläsaren som jsdom aldrig kan ersätta:
+
+**`G-BILD`** — bilden laddades på riktigt (`naturalWidth > 0`), och avatarhålets mitt landar på en
+**mörk, omättad pixel i själva konstverket**. En felstavad sökväg ger markup som ser perfekt ut i
+jsdom; bara en riktig webbläsare säger om bilden finns. Kontrollmätningen tar en **ring** av tolv
+punkter runt hålet — en enda punkt landade i en genomskinlig lucka mellan två guldblad i steg 2 och
+rapporterade svart, och ett prov vars kontroll beror på var i ornamentet man råkar peka mäter
+ornamentet, inte påståendet.
+
+**9 av 9 mutationer** fällde rätt vakt.
+
+### Två fel som bara fotot kunde se
+
+1. **Avataren låg bakom konstverket.** Bilden bär sin egen platshållare i hålet — en ogenomskinlig
+   svart skiva. En avatar under den hade aldrig synts, i någon sändning, någonsin. Den ligger nu
+   över, med genomskinlig botten så platshållaren syns tills en Guardian anländer.
+2. **Höjdförhållandet måste bo i `padding-top`, inte i pixlar.** Annars räcker det att ett steg byts
+   mot en bild med annan proportion för att emblemet ska bli utdraget.
+
+### Lärdomen
+
+**Ritade om något som redan var ritat.** Referensen fanns, den var levererad som färdig grafik, och
+jag byggde två hela omgångar SVG innan frågan "ska det här vara en bild?" ställdes. Repot hade redan
+svaret — `assets/mvp-frames/` med `'battlemvp.frame'` bredvid — och mönstret var en `grep` bort.
+**Leta efter det befintliga mönstret innan du bygger ett nytt.**
+
+### Sviter
+
+Node 1302/1302 gröna. Emblemets fem browservakter gröna.
+
+## Checkpoint 38 — Guardian Emblem byggd om mot referensbilderna (2026-08-18)
+
+Checkpoint 37:s emblem var **tekniskt rätt och visuellt fel**: en sköld med en hjort i, när
+referensen är en **rund avatarram med en hjort över**. 1300 gröna prov, 18 mutationer och åtta
+foton — och ingen av dem kunde se att det var fel widget.
+
+### Varför det blev fel
+
+Referensbilderna kom som bilagor i chatten. Innan bygget började tog sessionen slut på kontext och
+samtalet sammanfattades: **text överlever en sammanfattning, bilagor gör det inte.** Kvar fanns en
+ordlista över vilka delar som skulle finnas — hjort, lövverk, voluter, smaragder, banderoll — och
+den listan byggde jag efter. Delarna stämde. Kompositionen var en annan widget.
+
+**Felet var inte att bygga ur texten. Felet var att inte säga att jag byggde blint.** Ett
+meddelande hade kostat mindre än en hel designomgång.
+
+Åtgärden är `docs/referens/guardian-emblem.md`: bilderna kan inte sparas i repot, men beskrivningen
+kan — komposition uppifrån och ner, vad varje praktsteg visar, paletten, och de regler som följer av
+bilderna. **Läs den innan du rör `guardian-emblem.css`.**
+
+### Vad som ändrades
+
+| | Före | Efter |
+|---|---|---|
+| Centrum | sköld med hjort i | **rund guldram** med grön innerring och avatar |
+| Hjorten | liten, inuti skölden | **ovanför ramen**, gevir som breder ut sig över hela bredden |
+| Sidorna | smala lagerkvistar | guldplymer som spretar som flammor, mörkgröna blad bakom |
+| Nedtill | rak sockel | voluter som rullar ut i spiraler + stor bottendiamant |
+| Sköldar | ingen | **två sidosköldar** med guldhjorthuvud, plus en kronsköld i steg 2 |
+| Praktsteg | inget märke | **diamantbricka med siffran** överst |
+| Rubriken | `BESKYDDAREN HAR ANLÄNT` | utgår — banderollen är emblemets namnskylt |
+| Delar | 6/9/12/15 | 10/12/16/21 |
+| Mått | 260–440 | 330–585 |
+
+### Tre fel som bara fotot kunde se
+
+1. **Hjorten blev en mus.** Rund skalle, stora runda öron, ingen mule. Skillnaden mot en hjort är
+   avsmalningen — ett långt ansikte från hög panna till mörk nos.
+2. **Kronspetsen låg över mulen.** Hjortens negativa undermarginal är en **mätning**, inte en smak.
+3. **Bottendiamanten kunde inte nå över banderollen.** Den låg inuti ramen, och **en absolut
+   placerad del inuti en förälder med eget `z-index` kan aldrig nå över en granne till föräldern**,
+   hur högt dess eget `z-index` än är. Diamanten ligger nu i flödet.
+
+### Vad vaktnätet gjorde och inte gjorde
+
+Alla tolv vakter höll genom hela ombyggnaden och behövde inte mjukas upp en enda gång. Registret
+byttes ut, fjorton delar bytte namn, koreografin skrevs om — och `G1`, `G-SLUT` och
+`G-STEG-PROGRESSION` fångade varje glapp direkt: fyra föräldralösa CSS-regler (`rubrik`, `krona`,
+`skold`, `sockel`) hittades i samma sekund de blev döda.
+
+Men **inget prov kunde se att det var fel widget.** Vaktnätet svarar på *hänger delarna ihop*, inte
+på *ser det ut som referensen*. Det är inte en brist i näten — det är gränsen för vad ett prov kan
+veta, och därför finns referensfilen.
+
+### Sviter
+
+Node 1302/1302 gröna. Browser: emblemets fyra gröna; svitens enda röda är `ovre handtag strackar
+lodratt` i `widget-handtag.browser.test.js`, grön i isolering och orörd av den här ändringen.
+
+## Checkpoint 37 — Guardian Emblem: familjen skrotad, byggd om, och vaktnätet slöt sig (2026-08-18)
+
+Guardian Welcome revs helt (1943 rader) och ersattes av **`templateGuardianEmblem`** — ett
+heraldiskt vapen i fyra praktsteg. 56 prov skrivna före en rad implementation, röd baslinje
+committad och pushad, sedan kod tills allt var grönt. 18 mutationsprov, 8 foton.
+
+### Vad som finns nu
+
+| | |
+|---|---|
+| Typ | `templateGuardianEmblem`, katalognyckel `catalog:guardianemblem:1–4` |
+| Format | **400 px brett i varje steg** — höjden är det praktnivån betalar med (260/320/380/440) |
+| Koreografi | "Vapenskölden": `ljus` 600 → `oppna` 1200 → `hyllning` 3500 → `upplosning` 800 = 6100 ms |
+| Delar | 6 → 9 → 12 → 15, strikt kumulativa (steg N bär steg N−1 som **prefix**) |
+| Filer | `guardian-emblem-fas.js`, `guardian-emblem.css` + tre provfiler |
+| Kö | `triggerGuardianEmblem:[8000,5]` i `runtime-controls.js` |
+| Brygga | förberedd men **inte aktiverad** — se `docs/live-verifiering.md` punkt 6 |
+
+### Vaktnätet: tolv vakter, och varför de är slutna
+
+`G1` kräver att varje registrerat steg och varje registrerad DEL har CSS. `G-SLUT` kräver det
+omvända: att varje steg som går att **skapa** finns i registret — och den jämför **fyra** källor,
+inte två (fabriken, panelväljaren, katalogsektionen, registret). `G-STEG-PROGRESSION` kräver
+prefixlikhet mellan stegen, och `G-STEG-HÖJD` mäter i en riktig webbläsare att det syns.
+
+De fyra frånvarovakterna (`G-PREFIX-ISOLATION`, `G-IMPORTANT`, `G-DÖD-CSS`, `G-VILOLAGER`) bär
+`kravCss()` **inne i sin egen kropp**. Det är §7 i sin skarpaste form och kom direkt ur PR #222:s
+fas 0, där tre vakter var gröna mot en fil som inte fanns. Ett grönt prov säger ingenting om vad
+grannen mätte.
+
+### Fem lärdomar
+
+**1. En cachebust-sträng får inte namnge det den bustar.** `20260818-guardian` överlevde sin egen
+familj. Strängen ska svara på NÄR filen byttes, inte på VAD som låg i den — annars blir den ett
+arkeologiskt spår efter kod som inte finns, och nästa läsare söker på namnet, hittar en
+versionsträng och ingen implementation. Nu vaktat, med en svartlista över familjenamn i stället för
+en generisk ordregel: ett datum är precis vad vi vill ha. Strängen här heter `20260818-2`. Vakten
+hittade direkt en ärvd överträdelse (`20260807-topgift`) som står i en uttryckligen **krympande**
+lista — att döpa om den nu vore en bump utan ändring.
+
+**2. Ett prov som jämför tomma listor är grönt av frånvaro.** `G-STEG-HÖJD` skulle ha varit grön vid
+den röda baslinjen: fyra steg som inte renderas ger fyra tomma mätningar som jämför lika. Varje
+mätning börjar därför med `assert.ok(!fel)` som bär renderingsfelet i texten.
+
+**3. Ett prov får inte bevisa sin egen fixtur.** Fabriken bestämmer höjden per steg. Att mäta den i
+webbläsaren hade läst tillbaka en siffra jsdom redan vaktar. Alla fyra sidorna sätter därför **samma
+lådhöjd**, och det som mäts är delarnas gemensamma omfång — bara delar med yta och ärvd opacitet
+över noll räknas. Mutation M17 visade varför det behövs tre prov och inte ett: när steg 4:s tre nya
+delar doldes fortsatte omfånget att växa (skalan växer också), men *antalet målade delar* och *varje
+ny del vid namn* föll direkt. **En enskild geometrisk mätning är inte ett semantiskt bevis.**
+
+**4. En egenskap som en animation skriver över måste animationen bära med sig.** Diamanten är en
+kvadrat roterad 45°. Entréanimationen skrev `transform` och rotationen försvann — den var en grön
+**kvadrat** under hela `oppna`. Samma lärdom som `--gw-spacing`, en nivå djupare: det gäller varje
+egenskap i samma `transform`-sträng, inte bara de som råkar vara inställningar. **Inget prov i
+vaktnätet kunde se det** — delen fanns, var målad, hade yta. Ögat är mätinstrumentet för form.
+
+**5. Registrets ordning är inte placeringen.** `STEG[n].delar` är sorterad efter NÄR delarna
+tillkom — det är den ordningen `G-STEG-PROGRESSION` kräver prefixlikhet i. Renderaren följer
+registret rakt av, så utan `order` i CSS blev DOM-ordningen också den visuella: kronan hamnade
+**under** skölden. JS bestämmer VAD och NÄR, CSS bestämmer VAR och HUR.
+
+### Oväntade fynd, rapporterade och lagade
+
+- **`docs/katalogkarta.md` hade systematiskt fel proveniens.** Datum- och PR-kolumnerna kommer ur
+  `git log` per fil, och kartan hade genererats i en **shallow clone** — 20 sektioner stod som
+  ändrade 2026-08-18 i PR #221 när de inte rörts sedan 5 augusti och PR #92. Kartan är omgenererad
+  på full historik, och generatorn varnar nu när `.git/shallow` finns.
+- **`G1`:s delcensus var blind för versaler.** `.ge-kronaX` lästes som `krona`, så en felstavning
+  med versal hade varit osynlig för **båda** halvorna av G1. Upptäckt av mutation M1, som inte föll.
+  Teckenklassen är nu `[A-Za-z0-9-]`.
+- **Censusen i `catalog-rewiring` gick till 23 i stället för 22.** Det andra `VyraWidgets.create(`
+  var ingen katalogplats utan en panel som skapade en kastad widget bara för att läsa dess mått.
+  Uppslagningen går nu genom `VyraWidgets.variants('guardianemblem.matt')`. **Vakten gjorde rätt:**
+  en måttläsning som smyger in bland katalogställena gör siffran obegriplig för nästa läsare.
+- **`G-KLOCKA`:s urklippning matchade inte den kod den skulle undanta.** Mönstret var skrivet mot en
+  form jag ännu inte författat. Regionidentifieringen lagades — inte källan — och vakten fick en
+  egen kontroll som kräver att urklippningen både hittar blocket och tar bort **mindre än 400
+  tecken**: ett girigt mönster som svalde halva filen hade annars gjort provet grönt av tomhet.
+
+### Invarianter som inte får brytas
+
+- `klocka` i `guardian-emblem-fas.js` **måste vara flerradig** och sluta med `};` på egen rad —
+  `G-KLOCKA` lyfter bort just det blocket innan den letar direktanrop till `setTimeout`. Det är en
+  formkoppling, inte en beteendekoppling: bryts den blir provet **rött**, aldrig tyst grönt.
+- Praktsteget är ett **studioval**. Bryggan ska aldrig skicka något steg — ett steg utifrån hade
+  tyst skrivit över streamerns val.
+- Varje `ge-`-klass måste vara en registrerad DEL. Grafik inuti SVG:erna använder därför utskrivna
+  färgattribut, inte klasser.
+
+### Nästa steg
+
+1. **Visuell finjustering** (fas 11) om fotona motiverar det — avatarens medaljong är tom utan bild,
+   och steg 1 har gott om luft.
+2. **Live-verifiering punkt 6** — vilket TikTok-event bär Guardian-status. Widgeten är klar och
+   väntar bara på ett fältnamn.
+3. `20260807-topgift` byts nästa gång `gift-event-images.js` eller `live-leaderboard.js` ändras.
+
+## Checkpoint 36 — Guardian Welcome, en ny familj byggd bakifrån (2026-08-18)
+
+Första familjen i repot där **varenda rad prov skrevs innan en rad implementation**. 53 prov, röd
+baslinje fotograferad, sedan kod tills allt var grönt.
+
+### Vad som byggdes
+
+`templateGuardianWelcome` — en egen widgetfamilj för TikToks Guardians. Inte en variant av Fan
+Level Up: samma mönster, inga delade data.
+
+| Fil | Roll |
+|---|---|
+| `guardian-fas.js` | koreografin "Beskyddet", registret `FASER`/`STORLEKAR`, och `sprak()` |
+| `guardian-welcome.css` | temat och koreografins VAD |
+| `tests/guardian-fas.test.js` | 35 prov — vaktnätet, tiderna, språket, kön, markupen |
+| `tests/browser/guardian-welcome.browser.test.js` | 18 prov — vad tittaren faktiskt ser |
+| `tests/helpers/guardian-fas-register.js` | registret utan en hel sida |
+
+Ändrat: `widget-factory.js` (familjen + måtten på ett ställe), `media.js` (renderare, panel,
+katalogsektion, trigger), `runtime-controls.js` (kön), `studio.html`, `tiktok-bridge/bridge.js`
+(förberedd trigger), tre fixtures och tre dokument.
+
+### Koreografin "Beskyddet"
+
+| Fas | ms | Vad |
+|---|---|---|
+| `ljus` | 500 | auroran tonar in på **tom scen** — inget annat syns |
+| `oppna` | 900 | skölden glider in från vänster, rubriken stämplas fram (teckenavstånd .5em → .15em), namn +200 ms, underrubrik +400 ms |
+| `hyllning` | 1200/1600/2000 | sköldens glöd pulserar, auroran andas, inget annat rör sig |
+| `upplosning` | 600 | omvänd ordning, **auroran sist** |
+
+Bara hyllningen varierar med storleken. Tre storlekar: banner 270×180, kort 300×280, full 400×300.
+
+### Vaktnätet, matematiskt slutet
+
+`G1` kräver att varje storlek i `FASER` har CSS och att varje fas har en regel. `G-SLUT` vänder på
+beroendet och kräver att fabriken, panelväljaren och `FASER` är **exakt samma mängd**. Utan båda
+hållen kan en fjärde storlek läggas till utan koreografi — det var precis så `card` levde i Fan
+Level Ups CSS ett helt repo-liv utan att finnas i fabriken.
+
+Dessutom `G-IMPORTANT` (ingen `!important` på transform/opacity/clip-path), `G-DÖD-CSS` (ingen
+döljning som en senare regel med samma specificitet motsäger) och `G-VILOLAGER` (ingen `infinite`
+på en fas som tas bort).
+
+**Mutationsprovat: 9 av 9 dödade av rätt vakt**, körda om mot koden MED ramen inbyggd — en
+visuell omgång kan flytta det en vakt tittar på, och ett gammalt mutationsresultat är inget bevis
+om koden hunnit ändras sedan dess.
+
+| Mutation | Vakt som föll |
+|---|---|
+| fjärde storlek utan koreografi | `G-SLUT` |
+| `!important` på transform | `G-IMPORTANT` |
+| `infinite` flyttad till öppnandet | `G-VILOLAGER` |
+| död `display:none` | `G-DÖD-CSS` |
+| testknappen tänder DOM direkt | båda köproven |
+| Guardian ur `configs` | köprovet |
+| omkastad fasordning | tre fasprov |
+| symmetrisk språkfallback | språkprovet |
+| reservtexten glider från syskonfilen | reservtextprovet (ny i ramomgången) |
+
+### Kön är mätt i beteende, inte bara i källkod
+
+Källvakten läser text: står `triggerGuardianWelcome` i `configs`, och anropar knappen det globala
+namnet? Det är en stavningskontroll. Den kan inte se om kön FAKTISKT håller tillbaka, och det är
+det enda som gör §2:s lärdom sann. Uppmätt i Chromium, tre klick i följd:
+
+| | vantande | spelar | `gw-active` |
+|---|---|---|---|
+| före klick | 0 | false | false |
+| ett klick | 0 | **true** | true (fas `gw-fas-ljus`) |
+| tre klick | **2** | true | — |
+
+De två extra hölls alltså i kön i stället för att spela ovanpå den första. Provet bär också
+kontrollmätningen: utan att klicket bevisligen startade något vore "kön höll tillbaka" trivialt
+sant för en knapp som inte gör någonting alls.
+
+### Tre fynd som kostade något
+
+**1. §7-fällan, fångad medan den byggdes.** Första körningen av den röda baslinjen gav fem gröna,
+inte två. `G-IMPORTANT`, `G-DÖD-CSS` och `G-VILOLAGER` var alla gröna — **mot en fil som inte
+fanns**. Matcharna fungerade (deras positiva kontroller bevisade det), men de kördes mot en tom
+sträng: *"ingen `!important` i CSS:en"* är trivialt sant om det inte finns någon CSS. Att luta sig
+mot att `G0` fångar det räcker inte — G0 är ett **annat** prov, och ett grönt prov säger ingenting
+om vad grannen mätte. Kontrollmätningen `kravCss()` ligger nu inne i varje frånvaroprov.
+
+**2. En pausad animation överlever att dess CSS-regel slutar gälla.** Browsersviten pinnar varje
+fas med Web Animations API. Efter att öppnandet pinnats och klassen bytts mot upplösningen bar
+rubriken **båda** — `gwFadeOut@0` och `gwStamp@0` — och `gwStamp` med fill-mode `both` höll den på
+opacity 0. Mätningen sa alltså att upplösningen började från en släckt rubrik, och hade fått mig
+att "laga" en design som fungerade. En körande CSS-animation tas bort när regeln försvinner; en
+pausad gör det inte, för pausningen ger den en hold-time och den räknas inte längre som idle.
+
+`cancel()` löste det men lämnade animationen detachad — nästa klassbyte återuppväckte den inte.
+`play()` före klassbytet gav i stället **dubbletter**: tre `gwStamp` på samma element. Slutsatsen
+är enklare än alla tre: **en mätning som muterar sitt eget mätobjekt behöver ett nytt mätobjekt
+varje gång.** `render()` bygger en ny nod utan en enda animation.
+
+**3. En kommentar som citerar kod fäller en källkodsvakt — tredje gången i repot.** Det förberedda
+bryggblocket innehåller en utkommenterad `sendEvent('guardian', …)`. `battle-probe.test.js` skannar
+**rå** källkod från `battle-sond ---` till `STREAM_END` och förbjuder `sendEvent(` där. Blocket
+flyttades utanför regionen i stället för att vakten gjordes blindare.
+
+### Vad som medvetet INTE gjordes
+
+**Bryggans fyra listor rörs inte.** `docs/live-verifiering.md` punkt 6 beskriver vad som ska läsas
+av under en riktig sändning: vilken `WebcastEvent` som bär Guardian-status, vilket fält som skiljer
+en Guardian från en vanlig medlem, och om payloaden bär TikToks egen veckosiffra. Att namnge typen
+`guardian` i kontraktet innan någon kod skickar den vore en död kontraktspost — samma sorts lögn
+som §3 kostade en hel ansats för.
+
+### Nästa steg
+
+1. **Testa via panelens knapp** — "Testa Guardian-välkomnande" spelar samma väg som en riktig
+   Guardian, genom kön, inte snabbare.
+2. **Kör en sändning med inspelaren på** (`set VYRA_INSPELNING_TYPER=alla`) och vänta på att en
+   Guardian går in. Skicka payload-loggen tillbaka.
+3. Då aktiveras triggern och de fyra listorna i samma ändring.
+
+Oförändrat sedan checkpoint 34–35: §5 väntar på en deploy, battle-kedjan på samma sändning, och
+`VYRA_MASTER_ROADMAP.md` har fortfarande driftat från verkligheten.
+
+
 ## Checkpoint 35 — panelens live-väg, ett tecken av åtta (2026-08-18)
 
 Rapporterat av David: *"när man skriver text måste man klicka hela tiden på rutan."* Mätt visade
