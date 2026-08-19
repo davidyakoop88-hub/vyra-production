@@ -25,7 +25,8 @@ node scripts/domaner.js luckor           # filer utan ägare eller med två äga
 Agenterna ligger i `.claude/agents/` — en per domän, med domänens regler, tester och gränser.
 Tabellen över alla domäner finns i `.claude/agents/README.md`.
 
-Slash-kommandon: `/fixa <uppgift>`, `/byt <del>`, `/mat <domän>`, `/agare <fil>`.
+Slash-kommandon: `/fixa <uppgift>`, `/byt <del>`, `/mat <domän>`, `/agare <fil>`,
+`/david` — överlämningen: var arbetet står, vad som är bevisat och vad som står på tur.
 
 ## Så arbetar vi
 
