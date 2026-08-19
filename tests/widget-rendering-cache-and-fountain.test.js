@@ -55,16 +55,17 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // center-origin-matten); vyra-rotation.js ar ny (v=1).
   assert.match(studio, /vyra-rotation\.js\?v=1/);
   assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
-  // Bumpad 2026-08-19 igen for Stigningen: media.js kedjar nu aven gifter-fas.js?v=1,
-  // studio.css pensionerade risingtiers parallella entre, premium-final.css bar koreografin.
-  assert.match(studio, /[^-]media\.js\?v=20260819-stigningen/);
-  assert.match(media, /gifter-fas\.js\?v=1/);
+  // Bumpad 2026-08-19 tredje gangen for Rise & Pop (PR C): gifter-fas.js fick profile-posten
+  // och premium-final.css bar koreografin — bada strangarna bumpas i takt. studio.css ar orord
+  // den har gangen (profile hade ingen gammal entre att pensionera).
+  assert.match(studio, /[^-]media\.js\?v=20260819-rise-pop/);
+  assert.match(media, /gifter-fas\.js\?v=20260819-rise-pop/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260819-stigningen'/);
+  assert.match(media, /const version='20260819-rise-pop'/);
   // Bumpad 2026-08-19: motorkärnan bröts ut till widget-fas.js (fabriken, v=1) och fan-fas
   // blev konfiguration — media.js kedjar laddningen fabrik→art eftersom arten kräver fabriken
   // vid parsning.

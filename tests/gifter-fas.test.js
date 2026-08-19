@@ -65,6 +65,15 @@ test('risingtier är registrerad med byggplanens faser', () => {
   assert.deepEqual(FASER.risingtier.map(f => f.ms), [340, 360, 340]);
 });
 
+test('profile är registrerad med byggplanens faser', () => {
+  // Byggplanen (PR C): glimt 400 → stigning 480 → pop 340. Profile är renderarens DEFAULT
+  // (media.js gifterLevelHtml, `w.gifterLayout||'profile'`) — koreografin träffar därmed även
+  // varje gifter-widget vars användare aldrig öppnat modellväljaren.
+  assert.ok(FASER.profile, 'profile saknas i registret');
+  assert.deepEqual(FASER.profile.map(f => f.namn), ['glimt', 'stigning', 'pop']);
+  assert.deepEqual(FASER.profile.map(f => f.ms), [400, 480, 340]);
+});
+
 test('kopplingen sitter: gifter-fas dekorerar triggerGifterLevelUp innanför kön', () => {
   // Strukturellt: media.js kedjar fabrik→fan→gifter (eller motsvarande) så att arten laddas
   // statiskt före runtime-controls 500 ms-omkoppling — samma krav som fan (uppmätt fälla).
