@@ -74,36 +74,74 @@ function servera() {
   }
   console.log('');
 
-  const browser = await startaWebblasare();
-  const server = await servera();
-  const bas = `http://127.0.0.1:${server.address().port}`;
-  const sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
-  await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
-  await sida.waitForFunction(() => typeof window.render === 'function', null,
-    { timeout: 30000, polling: 100 });
-  await sida.waitForTimeout(4500);
-  await sida.evaluate(V.RIGG);
+  // TVA OBEROENDE SESSIONER, OCH BARA DET SOM REPRODUCERAR SKRIVS.
+  //
+  // En referens ar per definition en bild som gar att ta om. Att skriva den efter ETT foto ar att
+  // anta det. Uppmatt 2026-08-19 vad antagandet kostade: CI skrev 167 referenser och nasta korning
+  // pa samma maskin och samma binar hittade en nyckel som inte reproducerade — forsta gangen
+  // rose-heart, andra gangen giftjar:heart. Varje sadan runda ar en tjugominuters CI-cykel som
+  // slutar med att ingenting committas.
+  //
+  // Nu fotograferas allt i webblasare A, allt i en helt ny webblasare B, och bara de nycklar dar
+  // A och B ar identiska skrivs. De ovriga namnges med sina siffror sa att de gar att beddoma
+  // direkt i stallet for att upptackas en cykel senare.
+  async function session(nummer) {
+    const browser = await startaWebblasare();
+    const server = await servera();
+    const bas = `http://127.0.0.1:${server.address().port}`;
+    const sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+    await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    await sida.waitForFunction(() => typeof window.render === 'function', null,
+      { timeout: 30000, polling: 100 });
+    await sida.waitForTimeout(4500);
+    await sida.evaluate(V.RIGG);
+
+    const foton = new Map();
+    for (const nyckel of nycklar) foton.set(nyckel, await V.fotografera(sida, nyckel, ALERTS));
+    console.log(`Session ${nummer}: ${[...foton.values()].filter(f => !f.fel).length} av `
+      + `${nycklar.length} fotograferade`);
+    return { browser, server, sida, foton };
+  }
+
+  const a = await session(1);
+  await a.browser.close();
+  await new Promise(r => a.server.close(r));
+
+  const b = await session(2);
 
   fs.mkdirSync(V.REFKAT, { recursive: true });
   const skrivna = [], hoppade = [];
 
   for (const nyckel of nycklar) {
-    const foto = await V.fotografera(sida, nyckel, ALERTS);
-    if (foto.fel) { hoppade.push(`${nyckel}: ${foto.fel}`); continue }
+    const f1 = a.foton.get(nyckel), f2 = b.foton.get(nyckel);
+    if (f1.fel || f2.fel) { hoppade.push(`${nyckel}: ${f1.fel || f2.fel}`); continue }
 
-    // EN TOM REFERENS MATCHAR ALLT. Att skriva den vore att tysta vakten för just den nyckeln, och
-    // den sortens tystnad upptäcks aldrig — provet är ju grönt.
-    if (foto.fyllnad.procent < 3) {
-      hoppade.push(`${nyckel}: bara ${foto.fyllnad.procent} % målad — vägrar skriva en tom referens`);
+    // EN TOM REFERENS MATCHAR ALLT. Att skriva den vore att tysta vakten for just den nyckeln, och
+    // den sortens tystnad upptacks aldrig — provet ar ju gront.
+    if (f2.fyllnad.procent < 3) {
+      hoppade.push(`${nyckel}: bara ${f2.fyllnad.procent} % malad — vagrar skriva en tom referens`);
       continue;
     }
-    fs.writeFileSync(V.refvag(nyckel), Buffer.from(foto.b64, 'base64'));
-    skrivna.push({ nyckel, fyllnad: foto.fyllnad.procent,
-      matt: `${foto.fyllnad.bredd}×${foto.fyllnad.hojd}` });
+
+    const r = await b.sida.evaluate(V.JAMFOR, [f1.b64, f2.b64, V.KANALTROSKEL]);
+    if (r.matt) {
+      hoppade.push(`${nyckel}: matten skilde mellan tva sessioner, ${r.ref} mot ${r.ny}`);
+      continue;
+    }
+    if (r.olika) {
+      const ruta = r.ruta ? `${r.ruta[2]}x${r.ruta[3]} px vid (${r.ruta[0]},${r.ruta[1]})` : 'okand';
+      hoppade.push(`${nyckel}: REPRODUCERAR INTE — ${r.olika} av ${r.total} pixlar skiljer mellan `
+        + `tva sessioner, inom ${ruta}, storsta kanalskillnad ${r.storsta} av 255`);
+      continue;
+    }
+
+    fs.writeFileSync(V.refvag(nyckel), Buffer.from(f2.b64, 'base64'));
+    skrivna.push({ nyckel, fyllnad: f2.fyllnad.procent,
+      matt: `${f2.fyllnad.bredd}x${f2.fyllnad.hojd}` });
   }
 
-  await browser.close();
-  await new Promise(r => server.close(r));
+  await b.browser.close();
+  await new Promise(r => b.server.close(r));
 
   if (skrivna.length) {
     // MANIFESTET SLÅS SAMMAN, DET SKRIVS INTE ÖVER.

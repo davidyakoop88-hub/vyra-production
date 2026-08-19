@@ -187,6 +187,22 @@ const RIGG = `(() => {
     await bildruta();
     await bildruta();
 
+    // TYPSNITTEN MASTE VARA PA PLATS INNAN NAGOT MATS.
+    //
+    // Ett tecken som ritas i ett reservtypsnitt medan det riktiga annu laddas ger tva fel samtidigt:
+    // sjalva glyferna ser annorlunda ut, och textens BREDD blir en annan — vilket flyttar allt som
+    // star efter den en braksdel av en pixel.
+    //
+    // UPPMATT 2026-08-19 i CI, tva korningar pa samma maskin och samma binar:
+    //   catalog:giftjar:heart      115 pixlar inom 232x34 px, storsta kanalskillnad 18  (en textrad)
+    //   catalog:topstreak:frame:rose-heart   26 pixlar inom 1x40 px, storsta kanalskillnad 1
+    // Alltsa en textrad som ritats olika, och en enda pixelkolumn som forskjutits. Bada ar vad ett
+    // typsnitt som byts mitt i ser ut som.
+    //
+    // document.fonts.ready loses nar webblasaren ar klar med alla teckensnitt sidan begart. Den
+    // vantar per SIDA, sa kostnaden ar en gang per widget och normalt noll efter den forsta.
+    try { await document.fonts.ready } catch (e) {}
+
     const alla = rakna();
     // ready loses nar animationen faktiskt borjat spela. En animation som annu ar "pending" ignorerar
     // det currentTime skanningen skriver, och da mater stegen samma bildruta nio ganger.
