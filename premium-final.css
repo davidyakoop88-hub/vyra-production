@@ -513,3 +513,38 @@
 .fan-level-up.fan-layout-duo.fan-fas-avlasning > h2{animation:fsAvatarRise .28s ease-out both}
 .fan-level-up.fan-layout-duo.fan-fas-avlasning > h3{animation:fsAvatarRise .28s ease-out .03s both}
 .fan-level-up.fan-layout-duo.fan-fas-avlasning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ==== GIFTER · RISINGTIER · "Stigningen" — sekventiell trefas (fyrfasporten PR B, 2026-08-19).
+   JS ager NAR (gifter-fas.js via widget-fas-fabriken), det har ager VAD. Faserna ar exklusiva:
+   en klass i taget, sa varje fas slacker det som annu inte fatt sin entre — och delar som redan
+   spelat star pa sina DESIGNADE vilovarden nar fasklassen byts (default-CSS:en tar over;
+   slutlage = designens vila, ingen kombinationslogik). Trappans vila ar 0,28-ekolagren ur
+   #198:s formsprak — koreografin andrar aldrig designens slut, bara vagen dit. */
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-orbit>img,
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-level-badge,
+.gifter-layout-risingtier.gifter-fas-stralar>h2,
+.gifter-layout-risingtier.gifter-fas-stralar>h3,
+.gifter-layout-risingtier.gifter-fas-stralar>p,
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-bottom-profile{opacity:0;animation:none}
+.gifter-layout-risingtier.gifter-fas-materialisering>h2,
+.gifter-layout-risingtier.gifter-fas-materialisering>h3,
+.gifter-layout-risingtier.gifter-fas-materialisering>p{opacity:0;animation:none}
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-arrow-up{animation:gfrPilUpp .34s ease-out both}
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-streak{animation:gfrLadda .34s ease-in both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-3{animation:gfrTandEko .14s ease-out both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-2{animation:gfrTandEko .14s ease-out .1s both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-1{animation:gfrTandFull .14s ease-out .2s both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-orbit>img{animation:gfrMaterialisera .36s cubic-bezier(.2,.9,.3,1.15) both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-level-badge{animation:gfrStampla .36s ease-out both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-bottom-profile{animation:gfrFram .3s ease-out both}
+.gifter-layout-risingtier.gifter-fas-avlasning>h2{animation:gfrLas .2s ease-out both}
+.gifter-layout-risingtier.gifter-fas-avlasning>h3{animation:gfrLas .2s ease-out .09s both}
+.gifter-layout-risingtier.gifter-fas-avlasning>p{animation:gfrLas .2s ease-out .18s both}
+@keyframes gfrPilUpp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrLadda{from{opacity:0}to{opacity:1}}
+@keyframes gfrTandEko{from{opacity:0;transform:translateY(10px)}to{opacity:.28;transform:translateY(0)}}
+@keyframes gfrTandFull{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrMaterialisera{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+@keyframes gfrStampla{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
+@keyframes gfrFram{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrLas{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}

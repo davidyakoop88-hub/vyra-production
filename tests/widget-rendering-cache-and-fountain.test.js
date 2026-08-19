@@ -48,20 +48,23 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // en andring utan bump ar en tyst gammal fil. widget-factory.js och fan-fas.js ar ororda.
   // Bumpad 2026-08-18 igen for scenbakgrunden: studio.css (nodens tva ytor + kontrollen) och
   // vyra-historik.js (stageBackground i projektionen) andrades; stage-background.js ar ny (v=1).
-  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  assert.match(studio, /studio\.css\?v=20260819-stigningen/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   // Bumpad 2026-08-18 for rotationen: widget-handles.js andrades (delegering till komposoren +
   // center-origin-matten); vyra-rotation.js ar ny (v=1).
   assert.match(studio, /vyra-rotation\.js\?v=1/);
   assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
-  assert.match(studio, /[^-]media\.js\?v=20260819-fabriken/);
+  // Bumpad 2026-08-19 igen for Stigningen: media.js kedjar nu aven gifter-fas.js?v=1,
+  // studio.css pensionerade risingtiers parallella entre, premium-final.css bar koreografin.
+  assert.match(studio, /[^-]media\.js\?v=20260819-stigningen/);
+  assert.match(media, /gifter-fas\.js\?v=1/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
   assert.match(studio, /widget-factory\.js\?v=20260813-gifter-level/);
-  assert.match(media, /const version='20260819-fabriken'/);
+  assert.match(media, /const version='20260819-stigningen'/);
   // Bumpad 2026-08-19: motorkärnan bröts ut till widget-fas.js (fabriken, v=1) och fan-fas
   // blev konfiguration — media.js kedjar laddningen fabrik→art eftersom arten kräver fabriken
   // vid parsning.
