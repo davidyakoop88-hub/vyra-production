@@ -126,8 +126,19 @@ const RIGG_KALLA = `(() => {
                bilder: box ? [...box.querySelectorAll('img')].map(i => i.getAttribute('src') || '') : [] };
     } catch (e) { return { fel: String(e && e.message || e).slice(0, 140) } }
   };
-  window.__ovTrasiga = () => [...document.querySelectorAll('[data-id] img')]
-    .filter(i => !(i.complete && i.naturalWidth > 0)).map(i => i.getAttribute('src') || '');
+  // VANTA PA AVKODNING, INTE PA EN TIMEOUT. Forsta versionen pollade \`img.complete\` med atta
+  // sekunders tak och svalde timeouten — pa en lastad CI-lopare hann en 1,2 MB PNG inte fram, och
+  // vakten drog slutsatsen \"bilden ar trasig\" av sin egen otalighet. Uppmatt: steg-2.png foll i CI
+  // medan filen bevisligen var hel och avkodningsbar.
+  //
+  // \`decode()\` loser NAR bilden ar avkodad och AVVISAR vid riktigt fel. Skillnaden mellan langsam
+  // och trasig blir da ett svar fran webblasaren i stallet for en slutsats fran en klocka.
+  window.__ovTrasiga = async () => {
+    const bilder = [...document.querySelectorAll('[data-id] img')];
+    const utfall = await Promise.all(bilder.map(i =>
+      i.decode().then(() => null).catch(e => (i.getAttribute('src') || '') + ' → ' + String(e && e.name || e))));
+    return utfall.filter(Boolean);
+  };
   window.__ovTrig = (...a) => {
     const n = a.shift();
     if (typeof window[n] !== 'function') return 'saknas: ' + n;
@@ -163,10 +174,8 @@ test('varje katalognyckel renderas i overlay utan att kasta', { skip }, async ()
     if (r.fel) { fel.push(`${nyckel}: kastar — ${r.fel}`); continue }
     if (!r.renderad) { fel.push(`${nyckel}: renderas inte`); continue }
     if (r.bilder.length) {
-      await sida.waitForFunction(() => [...document.querySelectorAll('[data-id] img')].every(i => i.complete),
-        null, { timeout: 8000, polling: 100 }).catch(() => {});
       const trasiga = await sida.evaluate(() => window.__ovTrasiga());
-      if (trasiga.length) fel.push(`${nyckel}: bilden laddas inte — ${trasiga.join(', ')}`);
+      if (trasiga.length) fel.push(`${nyckel}: bilden går inte att avkoda — ${trasiga.join(', ')}`);
     }
     const kast = sida.__kast.slice(fore);
     if (kast.length) fel.push(`${nyckel}: kast under rendering — ${kast.join(' | ')}`);
