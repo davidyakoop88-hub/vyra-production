@@ -70,9 +70,16 @@ jobs:
         env:
           # Pushvagen har ingen inmatningsruta. Commitmeddelandet ar da motiveringen, och det ar
           # rimligt: den som pushar [referenser] har just skrivit ner varfor.
-          VYRA_VISUELL_MOTIV: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
+          #
+          # Bara FORSTA raden, och utan markoren: historik.md ska bara en mening om varfor bilderna
+          # byttes, inte ett helt commitmeddelande med medforfattare och sessionslank.
+          MOTIV_RAA: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
           VYRA_VISUELL_BARA: ${{ github.event.inputs.bara }}
-        run: npm run test:visual:update
+        run: |
+          set -eu
+          MOTIV=$(printf '%s' "$MOTIV_RAA" | head -1 | sed 's/^\[referenser\] *//')
+          echo "Motivering: $MOTIV"
+          VYRA_VISUELL_MOTIV="$MOTIV" npm run test:visual:update
 
       # Kontrollen som gor steget ovan meningsfullt: bilderna ska OCKSA ga att jamfora mot.
       # Skrivs de under andra villkor an vakten laser dem faller varenda nyckel forsta gangen

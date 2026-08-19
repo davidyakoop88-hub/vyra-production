@@ -13,7 +13,8 @@
 // rastrerar typsnitt olika. Manifestet spelar in vilken, och vakten vägrar jämföra någon annanstans.
 const path = require('path'), http = require('http'), fs = require('fs');
 const { startaWebblasare, hoppaOver } = require('../tests/helpers/webblasare.js');
-const { kravNycklar, ALERTS } = require('../tests/helpers/katalognycklar.js');
+const { kravNycklar, ALERTS, UTAN_REFERENS, utanReferens } =
+  require('../tests/helpers/katalognycklar.js');
 const V = require('../tests/helpers/visuell.js');
 
 const ROOT = V.ROOT;
@@ -52,10 +53,26 @@ function servera() {
   const skal = hoppaOver();
   if (skal) { console.error('Ingen körbar webbläsare: ' + skal); process.exit(1) }
 
-  const nycklar = kravNycklar().filter(k => !BARA || k.includes(BARA));
+  // SAMMA UNDANTAGSLISTA SOM VAKTEN, av precis samma skäl som fotograferingen bor i en delad fil:
+  // två listor glider isär, och den som glider bort skriver referenser vakten aldrig läser eller
+  // saknar referenser vakten kräver.
+  //
+  // Uppmätt 2026-08-19 varför det spelar roll: utan filtret gick skriptet igenom alla 181 nycklar,
+  // skrev 167, kunde inte skriva de 14 undantagna — och satte då exitkod 1. CI-jobbet föll efter
+  // att ha gjort hela sitt arbete, så bilderna aldrig blev committade. Ett undantag är ett väntat
+  // utfall och får inte se ut som ett fel.
+  const alla = kravNycklar();
+  const undantagna = alla.filter(utanReferens);
+  const nycklar = alla.filter(k => !utanReferens(k)).filter(k => !BARA || k.includes(BARA));
   const motor = V.motorn();
   console.log(`Motor: ${motor.version}  (${motor.binar})`);
-  console.log(`Skriver ${nycklar.length} referenser${BARA ? ` (filter: ${BARA})` : ''}\n`);
+  console.log(`Skriver ${nycklar.length} av ${alla.length} referenser${BARA ? ` (filter: ${BARA})` : ''}`);
+  console.log(`${undantagna.length} nycklar är undantagna med skäl i UTAN_REFERENS:`);
+  for (const [prefix, skal] of Object.entries(UTAN_REFERENS)) {
+    const n = alla.filter(k => k === prefix || k.startsWith(prefix)).length;
+    console.log(`   · ${prefix} (${n} st) — ${skal.slice(0, 100)}`);
+  }
+  console.log('');
 
   const browser = await startaWebblasare();
   const server = await servera();
@@ -123,8 +140,10 @@ function servera() {
   }
 
   console.log(`\n${skrivna.length} referenser skrivna till ${path.relative(ROOT, V.REFKAT)}`);
+  // De här är INTE de undantagna — de är nycklar som skulle ha fått en referens men inte kunde.
+  // Exitkod 1 är rätt svar: vakten kommer falla på dem, och det ska synas här och inte först då.
   if (hoppade.length) {
-    console.log(`\n${hoppade.length} HOPPADE — de har ingen referens och vakten kommer falla på dem:`);
+    console.log(`\n${hoppade.length} MISSLYCKADES — de har ingen referens och vakten kommer falla på dem:`);
     hoppade.forEach(h => console.log('   ✘ ' + h));
     process.exitCode = 1;
   }
