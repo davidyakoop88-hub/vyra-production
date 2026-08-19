@@ -7,7 +7,34 @@ jämför **pixel för pixel** mot bilden här. Ingen procenttolerans.
 `manifest.json` säger vilka bilder som finns, deras mått och hur stor andel av ytan som är målad,
 samt vilken webbläsarbuild de togs på. `historik.md` säger *varför* de senast byttes.
 
-## Varför nolltolerans
+## Tröskeln: 1 av 255 per kanal, och ingen budget
+
+Två färger som skiljer en 255-del räknas som samma färg. Det är **inte** en procenttolerans, och
+skillnaden är hela poängen:
+
+| | Säger | Följd |
+|---|---|---|
+| Procenttolerans | "upp till N % av bilden får skilja sig" | en budget som ett riktigt fel kan gömma sig i — en avklippt etikett på 200 pixlar passerar om budgeten är 300 |
+| Tröskel per kanal | "1/255 är samma färg" | ingen budget alls: **en enda** pixel som skiljer 2 fäller provet |
+
+Skälet är uppmätt. CI skrev 167 referenser och körde sedan vakten mot dem på samma maskin och samma
+binär. 166 reproducerade exakt — noll pixlar. En gjorde inte det:
+
+```
+catalog:topstreak:frame:rose-heart: 26 av 100800 pixlar, inom 1×40 px vid (127,248),
+största kanalskillnad 1 av 255
+```
+
+Ett hårstreck, en pixel brett, där ett värde avrundas åt olika håll mellan två körningar. Samma
+nyckel reproducerar perfekt lokalt på en annan Chromium-build över två helt skilda webbläsarstarter.
+En avrundning i sista biten syns inte på någon skärm.
+
+Tröskeln döljer inte en flyttad kant, en ändrad färg, text ovanpå text eller en avklippt platta —
+allt sådant ändrar kanaler med tiotal eller hundratal. Och den vaktas av ett eget prov: ett par
+bilder som skiljer 1 på varje kanal ska räknas som identiska, ett par som skiljer 2 på **en enda**
+pixel ska fälla. Höjs tröskeln till 2 blir det provet rött.
+
+## Varför inga procent
 
 Uppmätt 2026-08-19: samma widget fotograferad två gånger i samma session gav 0 olika pixlar av
 224 000, och 0 igen efter en helt ny webbläsarstart. Determinismen finns. En procenttolerans hade

@@ -291,8 +291,31 @@ const FYLLNAD = (async (b64) => {
 
 /* Pixeljämförelsen. Chromium avkodar båda bilderna; ingen Node-dependency behövs, och avkodningen
    är samma motor som ritade dem. Vid skillnad byggs en diffbild: originalet nedtonat med de
-   avvikande pixlarna i rött, så felet går att SE och inte bara räkna. */
-const JAMFOR = (async ([a, b]) => {
+   avvikande pixlarna i rött, så felet går att SE och inte bara räkna.
+
+   TRÖSKELN ÄR 1 AV 255 PER KANAL, OCH DET ÄR INTE EN PROCENTTOLERANS.
+
+   Skillnaden spelar roll. En procenttolerans säger "upp till N procent av bilden får skilja sig",
+   alltså en BUDGET som ett riktigt fel kan gömma sig i: en avklippt etikett på 200 pixlar passerar
+   om budgeten är 300. Tröskeln här säger något annat — att två färger som skiljer en 255-del är
+   SAMMA färg. Det finns ingen budget: en enda pixel som skiljer 2 fäller provet.
+
+   UPPMÄTT 2026-08-19 varför den behövs. CI skrev 167 referenser och körde sedan vakten mot dem på
+   samma maskin och samma binär. 166 reproducerade exakt, noll pixlar. En gjorde inte det:
+
+     catalog:topstreak:frame:rose-heart: 26 av 100800 pixlar, inom 1×40 px vid (127,248),
+     största kanalskillnad 1 av 255
+
+   Alltså ett enda hårstreck, en pixel brett, där ett värde avrundas åt olika håll mellan två
+   körningar. Samma nyckel reproducerar perfekt lokalt på chromium-1194 över två helt skilda
+   webblasarstarter — det är CI:s build som gör det. En avrundning i sista biten är inte en visuell
+   regression; den syns inte på någon skärm och för inget mänskligt öga.
+
+   Vad tröskeln INTE döljer: en flyttad kant, en ändrad färg, text ovanpå text, en avklippt platta.
+   Allt sådant ändrar kanaler med tiotal eller hundratal, inte med ett. */
+const KANALTROSKEL = 1;   // se kommentaren ovan: en 255-del är samma färg, 2 är en skillnad
+
+const JAMFOR = (async ([a, b, KANALTROSKEL]) => {
   const ld = u => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = 'data:image/png;base64,' + u });
   const [x, y] = await Promise.all([ld(a), ld(b)]);
   if (x.width !== y.width || x.height !== y.height) {
@@ -315,11 +338,10 @@ const JAMFOR = (async ([a, b]) => {
   let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, storsta = 0;
   const diff = g.createImageData(c.width, c.height);
   for (let i = 0; i < p1.length; i += 4) {
-    const skiljer = p1[i] !== p2[i] || p1[i+1] !== p2[i+1] || p1[i+2] !== p2[i+2] || p1[i+3] !== p2[i+3];
-    if (skiljer) {
+    const d = Math.max(Math.abs(p1[i] - p2[i]), Math.abs(p1[i+1] - p2[i+1]),
+      Math.abs(p1[i+2] - p2[i+2]), Math.abs(p1[i+3] - p2[i+3]));
+    if (d > KANALTROSKEL) {
       olika++;
-      const d = Math.max(Math.abs(p1[i] - p2[i]), Math.abs(p1[i+1] - p2[i+1]),
-        Math.abs(p1[i+2] - p2[i+2]), Math.abs(p1[i+3] - p2[i+3]));
       if (d > storsta) storsta = d;
       const punkt = i / 4, px = punkt % c.width, py = (punkt / c.width) | 0;
       if (px < x0) x0 = px; if (px > x1) x1 = px;
@@ -514,4 +536,4 @@ async function fotografera(sida, nyckel, ALERTS) {
 }
 
 module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
-  motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE };
+  motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL };

@@ -106,6 +106,42 @@ test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || u
     'undantagen täcker inte exakt de nycklar som faktiskt hoppas över');
 });
 
+// KONTROLLEN FÖR TRÖSKELN (§7). En tolerans är ett hål tills någon har mätt hur stort det är.
+//
+// Provet bygger två par bilder i webbläsaren och kör dem genom exakt samma JAMFOR som vakten:
+// ett par som skiljer 1 av 255 på varje kanal, och ett par som skiljer 2 på EN enda pixel.
+// Det första ska räknas som identiskt, det andra ska falla. Utan det här provet vore
+// KANALTROSKEL bara en siffra någon kunde höja till 40 utan att något blev rött.
+test('tröskeln släpper igenom 1 av 255 och fäller 2 — på en enda pixel', { skip }, async () => {
+  const svar = await sida.evaluate(async ([JAMFOR_KALLA, troskel]) => {
+    const JAMFOR = eval(JAMFOR_KALLA);
+    const gor = (mala) => {
+      const c = document.createElement('canvas');
+      c.width = 40; c.height = 40;
+      const g = c.getContext('2d');
+      g.fillStyle = 'rgb(100,150,200)'; g.fillRect(0, 0, 40, 40);
+      mala(g);
+      return c.toDataURL('image/png').split(',')[1];
+    };
+    const bas = gor(() => {});
+    const allaEtt = gor(g => { g.fillStyle = 'rgb(101,151,201)'; g.fillRect(0, 0, 40, 40) });
+    const enTva = gor(g => { g.fillStyle = 'rgb(102,150,200)'; g.fillRect(7, 9, 1, 1) });
+    return {
+      ettPaAlla: await JAMFOR([bas, allaEtt, troskel]),
+      tvaPaEn: await JAMFOR([bas, enTva, troskel]),
+    };
+  }, [V.JAMFOR.toString(), V.KANALTROSKEL]);
+
+  assert.equal(svar.ettPaAlla.olika, 0,
+    `1 av 255 på varje kanal ska räknas som samma färg, men ${svar.ettPaAlla.olika} pixlar `
+    + 'rapporterades som olika — då är tröskeln inte den som står i koden');
+  assert.equal(svar.tvaPaEn.olika, 1,
+    `en enda pixel som skiljer 2 ska fälla provet, men jämförelsen rapporterade `
+    + `${svar.tvaPaEn.olika} olika pixlar. Tröskeln är en avrundning, inte en budget: det finns `
+    + 'ingen mängd avvikande pixlar som ska få passera.');
+  assert.equal(svar.tvaPaEn.storsta, 2, 'största kanalskillnaden ska rapporteras rätt');
+});
+
 test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
   fs.mkdirSync(V.DIFFKAT, { recursive: true });
   const saknas = [], avviker = [], trasiga = [], tomma = [];
@@ -125,7 +161,8 @@ test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
     const ref = V.refvag(nyckel);
     if (!fs.existsSync(ref)) { saknas.push(nyckel); continue }
 
-    const r = await sida.evaluate(V.JAMFOR, [fs.readFileSync(ref).toString('base64'), foto.b64]);
+    const r = await sida.evaluate(V.JAMFOR,
+      [fs.readFileSync(ref).toString('base64'), foto.b64, V.KANALTROSKEL]);
     if (r.matt) { avviker.push(`${nyckel}: måtten ändrades, referens ${r.ref} mot ny ${r.ny}`); continue }
     if (r.olika) {
       const diffil = path.join(V.DIFFKAT, V.filnamn(nyckel));
