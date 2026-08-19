@@ -884,3 +884,11 @@ Verifierad: 2026-08-09.
   friska widgets), och timeouten ovan. Bara **en** var en riktig bugg. En handmätning granskas av
   ingen, körs om av ingen och muteras av ingen — och det är hela skälet att den ska bli ett prov
   innan resultatet får kallas ett fynd.
+- **En checkpoint ar ett pastaende och maste granskas som ett.** Checkpoint 40 skrevs ur farskt minne
+  och innehol fyra fel som en genomgang mot data hittade: pastandet *"ingen vakt oppnade `?overlay=1`
+  overhuvudtaget"* var rakt av falskt — **tio** provfiler gjorde det redan, tre i browserlanen;
+  pastandet *"varje annan alert-familj bar `opacity:0`"* var en generalisering fran **ett** stickprov;
+  siffrorna 133/48 beskrev laget **fore** lagningen och inte efter (129/52); och en tidsuppskattning
+  stod som om den vore uppmatt. **Ingen av dem andrade slutsatsen, alla fyra andrade vad en framtida
+  lasare skulle tro.** Ett dokument som ska overleva sessionen forlorar sitt varde exakt nar det bar
+  ett pastaende ingen langre kan kontrollera — sa kontrollera det medan datan fortfarande finns kvar.

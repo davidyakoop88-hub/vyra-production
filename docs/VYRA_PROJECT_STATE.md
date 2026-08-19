@@ -3,29 +3,43 @@
 ## Checkpoint 40 — Hela katalogen mätt i overlay, och vakten som håller den där (2026-08-19)
 
 Frågan som startade det: *"kan vi säkert säga att allt funkar i overlay?"* Svaret var **nej**, och
-det gick inte att svara på utan att mäta — allt som testats dittills kördes på
-`studio.html?open=layout`, alltså **editorn**. `widget-frameless-output.test.js` täckte en enda typ
-(`templateTopGift`), och ingen vakt öppnade `?overlay=1` överhuvudtaget.
+det gick inte att svara på utan att mäta — allt som testats på emblemet dittills kördes på
+`studio.html?open=layout`, alltså **editorn**.
+
+**Vad som redan fanns, korrekt räknat:** tio provfiler öppnar `?overlay=1`, tre av dem i
+browserlanen (`scenbakgrund`, `widget-rotation`, `thumb-leak`). De provar var sin avgränsade sak.
+`widget-frameless-output.test.js` provar frameless-utgången för **en** typ, `templateTopGift`.
+Luckan var alltså inte att overlay-läget var oprovat, utan att **ingen vakt svepte hela katalogen,
+och ingen provade att en alert tänds och slocknar.**
 
 ### Vad som mättes
 
 **181 katalognycklar**, var och en skapad och renderad i riktigt overlay-läge:
 
-| Utfall | Antal |
-|---|---|
-| Synliga i vila (mål, listor, leaderboards) | **133** |
-| Triggas, spelar koreografin och slocknar | **48** |
-| Renderingsfel · trasiga bilder · kast | **0 · 0 · 0** |
+| Utfall | Före lagningen | Efter |
+|---|---|---|
+| Synliga i vila (mål, listor, leaderboards) | 133 | **129** |
+| Triggas, spelar koreografin och slocknar | 48 | **52** |
+| Renderingsfel · trasiga bilder · kast | 0 · 0 · 0 | **0 · 0 · 0** |
+
+De fyra som flyttade är Guardian Emblems praktsteg — se buggen nedan. **Före-kolumnen är inte
+historia utan bevis:** revisionen räknade emblemet bland de 133 friska, och det är exakt så felet
+kunde passera.
 
 Overlay-läget självt kontrollmättes först: `html.overlay-output`, `body` helt genomskinlig, inget
 studio-chrome synligt, widget-wrappern utan kant, bakgrund eller skugga.
 
 ### Buggen som revisionen missade och vakten hittade
 
-**Guardian Emblem syntes redan i vila i overlay.** Varje annan alert-familj bär `opacity:0` tills
-sin aktiveringsklass sätts; emblemet saknade regeln helt och hade legat **kvar permanent på
-skärmen** i stället för att dyka upp när en Guardian anländer. Widgeten gjorde motsatsen till vad
-den är till för.
+**Guardian Emblem syntes redan i vila i overlay** och hade legat **kvar permanent på skärmen** i
+stället för att dyka upp när en Guardian anländer. Widgeten gjorde motsatsen till vad den är till
+för.
+
+Vad som är **mätt**: alla 52 alert-nycklar är släckta i vila och tänds av sin trigger — inklusive
+Battle MVP, Last-X, Follower Alert, Gifter Level Up och Fan Level Up, var och en verifierad i
+webbläsaren. Vad som **inte** är kartlagt: hur var och en döljer sig. Fan Level Up bär `opacity:0`
+i en vanlig regel och emblemet gör det nu också, men de övriga familjernas mekanism är inte
+undersökt — beteendet är mätt, inte tekniken bakom.
 
 Revisionen såg det inte, eftersom den frågade *"syns widgeten i overlay?"* — och **det är fel fråga
 för en alert**. Rätt fråga är *"är den släckt i vila **och** tänds den av sin trigger?"*. Vakten
@@ -62,8 +76,10 @@ bli ett prov: provet körs om, granskas och muteras — en handmätning gör ing
 - en representant per alert-familj tänds av sin trigger och slocknar igen
 
 Nycklarna läses ur den **genererade** katalogkartan, inte ur en handskriven lista, så en ny familj
-hamnar där av sig själv. Koreografipasset provar en nyckel per familj i stället för alla 48: att
-prova alla hade tagit tio minuter i CI för att bevisa samma sak som sex gör.
+hamnar där av sig själv. Koreografipasset provar **sex** nycklar, en per alert-familj, i stället för
+alla 52: hela revisionen tog omkring tio minuter i vägguret, och den kostnaden i varje CI-körning
+köper inget utöver vad sex representanter redan visar. Skiljer sig två nycklar i samma familj åt är
+det designdata, och det vaktas av familjens egen provfil.
 
 ### Vad som fortfarande INTE är verifierat
 
