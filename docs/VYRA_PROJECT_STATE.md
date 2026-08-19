@@ -125,6 +125,31 @@ Två strukturella lärdomar sitter kvar i koden:
   i CI — det enda stället vakten normalt faller — pekade meddelandet annars på en fil ingen kunde
   öppna.
 
+### ÖPPET: brusgolvet på CI är inte 1/255 utan uppemot 6
+
+Första körningen av vakten mot de incheckade referenserna (CI-körning 692, commit `45070c5`) föll på
+**tre** nycklar — alla mikroskopiska:
+
+| Nyckel | Pixlar | Område | Största kanalskillnad |
+|---|---|---|---|
+| `catalog:lastx:badge` | 1 av 196500 | 1×1 px vid (241,359) | 2 av 255 |
+| `catalog:lastx:stack` | 6 av 212925 | 203×246 px vid (142,75) | 6 av 255 |
+| `catalog:topstreak:frame:crystal-spire` | 1 av 114600 | 1×1 px vid (197,232) | 5 av 255 |
+
+Läs det rätt: referensjobbet krävde att session 2 och 3 var **exakt** identiska, och det var de för
+alla 166. Men en **fjärde** session — vakten i ett annat jobb, på en annan löpare — skiljer sig på
+enstaka pixlar. Tröskeln 1/255 kalibrerades på en enda observation (hårstrecket i `rose-heart`), och
+den siffran var för snäv.
+
+**Beslutet är inte tekniskt utan ägarens:** höj `KANALTROSKEL` i `tests/helpers/visuell.js` till 6,
+med kontrollprovet uppdaterat så att det fäller vid 7, och skriv ner mätningen ovan som skälet.
+Alternativet — att undanta tre nycklar till — är sämre: hålen växer och orsaken är densamma.
+
+Tröskeln är fortfarande ingen procenttolerans. Den säger att färger inom 6/255 är samma färg, inte
+att en andel av bilden får skilja sig. En flyttad kant eller överlappande text ändrar kanaler med
+tiotal eller hundratal.
+
+
 ### Nästa steg
 
 1. **Mutationsprov fas 3.** Ändra en CSS-regel (t.ex. `.topgift-sakura` ramfärg i `studio.css`),
