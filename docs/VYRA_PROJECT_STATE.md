@@ -96,11 +96,46 @@ mätningen säger ingenting om huruvida de spelar där. Det är nu **punkt 7 i
 - **Provet ligger i `tests/visual/`, inte i `tests/browser/`**, så `npm run test:browser` inte kör
   det på runnerns Google Chrome. `tests/browser-rigg.test.js` vaktar båda katalogerna.
 
+### Baslinjen ligger — och vad den kostade
+
+**166 referensbilder, 12 MB, tagna på `Google Chrome for Testing 151.0.7922.34` (chromium-1234)**,
+den build `package-lock.json` pinnar. De genererades av
+`.github/workflows/visuell-referenser.yml`, som är det **enda** stället de kan göras: binären finns
+inte på en godtycklig utvecklarmaskin, och en bild tagen någon annanstans är obrukbar.
+
+Vägen dit tog sex CI-cykler, och **varje cykel hittade ett verkligt fel** — ingen var en omkörning:
+
+| Cykel | Vad som föll ut |
+|---|---|
+| 1 | uppdateringsskriptet satte exitkod 1 för de undantagna nycklarna → jobbet dog efter att ha gjort hela arbetet, bilderna committades aldrig |
+| 2 | `playwright install --with-deps` hängde 33 min utan ett ord i loggen |
+| 3 | uppdelat steg + tak gav hängningen ett namn: apt hämtade 21 MB typsnitt på 9 min från en trög spegel |
+| 4 | en referens reproducerade inte — 1 px kolumn, kanalskillnad 1 → tröskeln 1/255 infördes med egen kontroll |
+| 5 | typsnitt som inte hunnit laddas gav en textrad två utseenden → `document.fonts.ready` |
+| 6 | `catalog:giftjar:heart` växlar mellan två renderingar på CI, stabil lokalt → undantagen, orsak ofastställd |
+
+Två strukturella lärdomar sitter kvar i koden:
+
+- **Uppdateringsskriptet skriver bara referenser det bevisat kan ta om.** Tre sessioner: den första är
+  uppvärmning och röstar inte, referensen tas ur den andra och måste reproduceras av den tredje. En
+  referens är per definition en bild som går att ta om; att skriva den efter ett enda foto är att
+  anta det.
+- **Siffrorna reser i loggen, inte bara i bilden.** Felmeddelandet bär avgränsning och största
+  kanalskillnad, och diffbilderna laddas upp som artefakt. Diffkatalogen försvinner med löparen, så
+  i CI — det enda stället vakten normalt faller — pekade meddelandet annars på en fil ingen kunde
+  öppna.
+
 ### Nästa steg
 
-Referensbilderna finns ännu inte — baslinjen är avsiktligt röd med
-*"167 av 167 nycklar saknar referensbild"*. Nästa steg är att generera dem i CI, mutationsprova att
-vakten faktiskt faller när en CSS-regel ändras, och att mutera jämförelsen så att varje prov faller.
+1. **Mutationsprov fas 3.** Ändra en CSS-regel (t.ex. `.topgift-sakura` ramfärg i `studio.css`),
+   pusha, och verifiera att **exakt** de nycklar som använder regeln faller — med diffbild och
+   siffror — och att de övriga förblir gröna. Återställ sedan.
+2. **Mutationsprov fas 4.** Mutera `JAMFOR` åt båda hållen: alltid "olika" ska fälla alla 166
+   (bevisar att varje nyckel verkligen jämförs), alltid "identisk" ska släppa igenom en verklig
+   CSS-ändring (bevisar att det är jämförelsen som fångar den).
+3. **Ta PR #235 ur utkastläge** när båda mutationerna är gjorda.
+
+Båda mutationerna måste köras **i CI** — referenserna gäller bara där. Räkna ~20 min per varv.
 
 ---
 

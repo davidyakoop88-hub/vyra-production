@@ -43,7 +43,12 @@ För en riktig TikTok LIVE-anslutning (inte demoläge): kör `ANSLUT-TIKTOK-LIVE
 
 ## Läget just nu (2026-08-19)
 
-Senaste arbetet står i `docs/VYRA_PROJECT_STATE.md`, checkpoint 40 överst. I korthet:
+Senaste arbetet står i `docs/VYRA_PROJECT_STATE.md`, checkpoint 41 överst. I korthet:
+
+- **Visuell regressionsvakt i drift.** 166 av 181 katalognycklar fotograferas i overlay-läge och
+  jämförs **pixel för pixel** mot incheckade referenser i `tests/visual/referenser/`. Kör med
+  `npm run test:visual`. 15 nycklar är undantagna, var och en med ett uppmätt skäl i
+  `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`).
 
 - **Guardian Emblem** (`templateGuardianEmblem`) är byggd och i produktion — fyra praktsteg, en PNG
   per steg plus en geometritabell, samma mönster som `'battlemvp.frame'`. Grafiken ligger i
@@ -71,6 +76,26 @@ Senaste arbetet står i `docs/VYRA_PROJECT_STATE.md`, checkpoint 40 överst. I k
 - **Sessionen kör i molnet och når varken din disk eller dina chattbilagor.** En fil når en Claude
   Code-session bara om den ligger i repot — inte via en sökväg på din dator, ett fil-ID eller en
   bilaga i ett GitHub-issue.
+
+## Den visuella vakten — det du måste veta innan du rör den
+
+- **Referenserna gäller bara på CI:s pinnade Chromium.** `npm run test:visual` går inte att köra på
+  en vanlig maskin: vakten läser manifestets versionssträng och vägrar jämföra mot en annan build
+  i stället för att skylla alla nycklar på widgetarna. Det är avsiktligt — två builds rastrerar
+  typsnitt olika.
+- **Referenser görs bara i `.github/workflows/visuell-referenser.yml`.** Kör den från Actions med en
+  motivering, eller pusha en commit vars meddelande innehåller `[referenser]`. Jobbet fotograferar i
+  tre webbläsarsessioner, kastar den första som uppvärmning, skriver bara det som session 2 och 3
+  reproducerar identiskt, kör vakten mot resultatet och committar först då.
+- **`VYRA_VISUELL_MOTIV` är obligatorisk och hamnar i `historik.md`.** En referens som går att byta
+  utan eftertanke är ingen vakt: nästa gång provet faller är den snabbaste vägen till grönt att
+  skriva om bilden, och då har ett larm bytts mot en tystnad.
+- **Tröskeln är 1 av 255 per kanal — inte en procenttolerans.** Det finns ingen budget av tillåtna
+  avvikande pixlar; en enda pixel som skiljer 2 fäller provet. Tröskeln har en egen kontroll som
+  blir röd om någon höjer den.
+- **En bild som målar under 3 % skrivs aldrig som referens.** En tom referens matchar allt.
+- **Provet ligger i `tests/visual/`, inte i `tests/browser/`**, så `npm run test:browser` inte kör
+  det på fel webbläsare. `tests/browser-rigg.test.js` vaktar båda katalogerna.
 
 ## Filer som inte ligger i kodarkivet
 
