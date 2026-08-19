@@ -103,11 +103,31 @@ function servera() {
     return { browser, server, sida, foton };
   }
 
-  const a = await session(1);
+  // TRE SESSIONER, OCH DEN FORSTA ROSTAR INTE.
+  //
+  // Uppmatt 2026-08-19, tva CI-korningar med IDENTISKT utfall: catalog:giftjar:heart skiljde sig med
+  // exakt 115 av 87000 pixlar, inom exakt 232x34 px vid (13,254), med exakt kanalskillnad 18 — bade
+  // nar referensen kom fran session 1 och vakten kordes i en ny session, och nar session 1 jamfordes
+  // med session 2. Samma siffror tva ganger ar inte brus, det ar en systematisk skillnad mellan den
+  // FORSTA sessionen och alla senare.
+  //
+  // Lokalt reproducerar samma nyckel perfekt (0 av 87000) — och lokalt har maskinen redan renderat
+  // sidan manga ganger. Det som skiljer ar alltsa nagot som varms upp av den forsta sessionen och
+  // sedan delas av resten; en kall fontconfig-cache passar bade fyndet och det avgransade
+  // textbandet.
+  //
+  // Darfor: session 1 ar en uppvarmning och kastas. Referensen tas ur session 2 och maste
+  // reproduceras av session 3. Det ar ocksa exakt det tillstand vakten sjalv kommer att kora i,
+  // eftersom den aldrig ar det forsta som startar en webblasare pa maskinen.
+  const varm = await session('1 (uppvarmning, rostar inte)');
+  await varm.browser.close();
+  await new Promise(r => varm.server.close(r));
+
+  const a = await session(2);
   await a.browser.close();
   await new Promise(r => a.server.close(r));
 
-  const b = await session(2);
+  const b = await session(3);
 
   fs.mkdirSync(V.REFKAT, { recursive: true });
   const skrivna = [], hoppade = [];
@@ -131,7 +151,7 @@ function servera() {
     if (r.olika) {
       const ruta = r.ruta ? `${r.ruta[2]}x${r.ruta[3]} px vid (${r.ruta[0]},${r.ruta[1]})` : 'okand';
       hoppade.push(`${nyckel}: REPRODUCERAR INTE — ${r.olika} av ${r.total} pixlar skiljer mellan `
-        + `tva sessioner, inom ${ruta}, storsta kanalskillnad ${r.storsta} av 255`);
+        + `session 2 och 3, inom ${ruta}, storsta kanalskillnad ${r.storsta} av 255`);
       continue;
     }
 
