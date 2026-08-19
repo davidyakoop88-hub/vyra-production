@@ -560,3 +560,11 @@ nav a:hover{color:#fff}
 .mini-sidfot{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;padding:14px 20px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted-dim)}
 .mini-sidfot a{color:var(--muted);text-decoration:none}
 .mini-sidfot a:hover{color:var(--text);text-decoration:underline}
+
+/* Tubes-strimman (landing-tubes.js): duken tacker hela fonstret BAKOM innehallet.
+   Duken ar positionerad pa z 0 och malas darfor OVER opositionerat innehall — main,
+   sidfoten och heron lyfts till z 1 sa allt lasbart ligger ovanpa ljuset. Headern (z 50)
+   och startmodalen (z 100) ligger redan over. Biblioteket lyssnar pa pekaren sjalvt;
+   duken far INTE pointer-events:none (da tystnar effekten over tomma ytor). */
+.tubes-fx{position:fixed;inset:0;z-index:0;display:block}
+main,.mini-sidfot{position:relative;z-index:1}
