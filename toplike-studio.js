@@ -349,8 +349,7 @@
       <div class="ws-frame-grid">
         <button type="button" data-ws-frame="none" class="ws-frame-swatch${current === 'none' ? ' active' : ''}"><i>×</i><b>Ingen</b></button>
         ${FRAMES[gender].map(swatch).join('')}
-      </div>
-      <select id="proTopLikeFrame" aria-label="Profilram"><option value="none">Ingen</option>${Object.values(FRAMES).flat().map(([id, name]) => `<option value="${id}">${name}</option>`).join('')}</select>`;
+      </div>`;
   };
 
   const wsFramesBind = bind;
@@ -363,8 +362,6 @@
 
     const current = w.profileFrame || 'none';
     picker.innerHTML = window.vyraBuildFramePicker(w);
-
-    picker.querySelector('select').value = current;
     picker.querySelectorAll('[data-ws-gender]').forEach(btn => btn.onclick = () => { w.frameGenderTab = btn.dataset.wsGender; render(); });
     picker.querySelectorAll('[data-ws-frame]').forEach(btn => btn.onclick = () => {
       w.profileFrame = btn.dataset.wsFrame; save(); render();

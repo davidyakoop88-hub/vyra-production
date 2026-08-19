@@ -86,31 +86,42 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // duckningslistan nedan: dess strang foljer numera panellagningen, inte duckningen.
   // studio.css, widget-factory.js, fan-fas.js och premium-bundlens version ar OFORANDRADE.
   //
-  // Bumpad 2026-08-18 for SKROTNINGEN av Guardian Welcome. media.js (renderare, panel,
-  // katalogsektion och trigger borttagna), widget-factory.js (familjen avregistrerad) och
-  // runtime-controls.js (kopost borttagen) andrades alla tre. runtime-controls laddas av
-  // premium-bundlens `version`, sa den bumpas i stallet for en egen strang.
+  // Bumpad 2026-08-18 for SKROTNINGEN av Guardian Welcome, och strax darpa for Guardian Emblem:
+  // media.js (renderare, panel, katalogsektion, trigger), widget-factory.js (familjen registrerad)
+  // och runtime-controls.js (koposten) andrades; de tva nya filerna guardian-emblem.css och
+  // guardian-emblem-fas.js far samma strang som de laddas med. EN BORTTAGNING KRAVER SAMMA BUMP SOM
+  // ETT TILLAGG — en cachead media.js hade annars fortsatt rendera en widgettyp fabriken inte langre
+  // kanner till, och det felet ser ut som en trasig widget, inte som en gammal fil.
   //
-  // EN BORTTAGNING KRAVER SAMMA BUMP SOM ETT TILLAGG. En cachead media.js skulle annars fortsatta
-  // rendera en widgettyp fabriken inte langre kanner till — och det felet ser ut som en trasig
-  // widget, inte som en gammal fil. studio.css och fan-fas.js ar OFORANDRADE och behaller sina.
+  // Bumpad 2026-08-18 for ramvaljarens stadning: media.js (tre pickergenerationer reducerade till EN
+  // containerskapare), studio.css, toplike-studio.js/.css, gift-alert-frames.js och
+  // profile-frames-premium.css (v=8). Sedan igen for scenbakgrunden: studio.css och vyra-historik.js
+  // andrades, stage-background.js ar ny. Och for rotationen: widget-handles.js andrades,
+  // vyra-rotation.js ar ny.
   //
-  // Bumpad 2026-08-18 for Guardian Emblem. media.js (renderare, panel, katalogsektion, trigger),
-  // widget-factory.js (familjen registrerad) och runtime-controls.js (koposten) andrades; de tva
-  // nya filerna guardian-emblem.css och guardian-emblem-fas.js far samma strang som de laddas med.
-  // studio.css och fan-fas.js ar OFORANDRADE och behaller sina.
+  // MEDIA.JS BAR EN TREDJE STRANG EFTER SAMMANSLAGNINGEN, `20260819-1`. Bada grenarna andrade filen
+  // — huvudgrenen till `-ramstad`, emblemgrenen till `-2` — och det sammanslagna innehallet ar
+  // varken det ena eller det andra. Att behalla nagondera hade betytt att halften av andringen
+  // levererades under en strang som redan var utrullad. En sammanslagning som ror en fil ar en
+  // andring av den filen.
   //
-  // STRANGEN HETER `20260818-2`, INTE `20260818-emblem`. En cachebust-strang far inte namnge det
-  // den bustar. `20260818-guardian` levde i media.js i tre timmar, och nar familjen skrotades var
-  // den ett arkeologiskt spar efter kod som inte langre fanns — en lasare som sokte pa "guardian"
-  // hittade en versionsstrang och ingen widget, och maste laga ihop varfor. Strangen ska svara pa
-  // NAR filen byttes, inte pa VAD som lag i den; vad som andrades star i kommentaren har och i
-  // commiten. Assertionen nedan vaktar formen, och `sokvakt` under den vaktar regeln.
-  assert.match(studio, /studio\.css\?v=20260818-fan-loyalty-uttoning/);
-  assert.match(studio, /[^-]media\.js\?v=20260818-2/);
+  // STRANGEN SAGER NAR, INTE VAD. `20260818-guardian` levde i media.js i tre timmar och overlevde
+  // den familj den var uppkallad efter; en lasare som sokte pa "guardian" hittade en versionsstrang
+  // och ingen widget. Vad som andrades star i kommentaren har och i commiten. `sokvakt` nedan
+  // vaktar regeln.
+  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
+  assert.match(studio, /stage-background\.js\?v=1/);
+  assert.match(studio, /vyra-rotation\.js\?v=1/);
+  assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
+  assert.match(studio, /[^-]media\.js\?v=20260819-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   assert.match(studio, /guardian-emblem\.css\?v=20260818-2/);
   assert.match(studio, /guardian-emblem-fas\.js\?v=20260818-2/);
+  assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
+  assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
+  assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
+  assert.match(media, /profile-frames-premium\.css\?v=8/);
   assert.match(media, /const version='20260818-2'/);
   assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
 

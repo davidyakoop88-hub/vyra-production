@@ -29,7 +29,9 @@
   function proj() {
     try {
       if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return null;
-      return JSON.stringify({ widgets: state.widgets, layoutFormat: state.layoutFormat });
+      // stageBackground ar layoutburen precis som layoutFormat — utanfor projektionen vore
+      // ett bakgrundsbyte osynligt for angra/gor om.
+      return JSON.stringify({ widgets: state.widgets, layoutFormat: state.layoutFormat, stageBackground: state.stageBackground });
     } catch (_) { return null; }
   }
 
@@ -38,6 +40,8 @@
     state.widgets = data.widgets;
     if (data.layoutFormat !== undefined) state.layoutFormat = data.layoutFormat;
     else delete state.layoutFormat;
+    if (data.stageBackground !== undefined) state.stageBackground = data.stageBackground;
+    else delete state.stageBackground;
   }
 
   function uppdateraKnappar() {

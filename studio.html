@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA Studio</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20260818-fan-loyalty-uttoning">
+  <link rel="stylesheet" href="studio.css?v=20260818-scenbakgrund">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260818-2">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20260726-nav-a-fix">
@@ -109,9 +109,10 @@
   <script src="desktop-profile.js?v=20260724-1"></script>
   <script src="studio.js?v=20260731-1"></script>
   <script src="layout-format.js?v=20260726-freeze-fix"></script>
+  <script src="stage-background.js?v=1"></script>
   <!-- Angra/gor om: wrappar render for baslinjesynk och monterar sina knappar efter
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
-  <script src="vyra-historik.js?v=1"></script>
+  <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
   <script src="spotify-client.js?v=20260724-1"></script>
   <script src="extras.js?v=20260724-spotify"></script>
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
@@ -122,11 +123,11 @@
   <script src="event-dedupe.js?v=20260803-dedupe"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260804-goals"></script>
-  <script src="media.js?v=20260818-2"></script>
+  <script src="media.js?v=20260819-1"></script>
   <!-- Koreografin "Vapenskolden": EFTER media.js, som definierar triggern den lindar. -->
   <script src="guardian-emblem-fas.js?v=20260818-2"></script>
   <!-- Handtag pa alla sidor: injiceras efter render, darfor EFTER media.js. -->
-  <script src="widget-handles.js?v=20260813-handtag"></script>
+  <script src="widget-handles.js?v=20260818-rotation"></script>
   <script src="layout-safe.js?v=20260726-obs-bar-fix"></script>
   <script src="cloud-sync.js?v=20260807-scene"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
@@ -139,6 +140,7 @@
   <script src="vyra-snapp.js?v=1"></script>
   <script src="vyra-zoom.js?v=1"></script>
   <script src="vyra-proportioner.js?v=1"></script>
+  <script src="vyra-rotation.js?v=1"></script>
   <!-- Vagen till skrivbordsappen. Delegerad lyssnare pa document, sa aven vyer som ritas om
        och tomma tillstand kan bara [data-ladda-desktop]. Se filens huvudkommentar. -->
   <script src="vyra-desktop.js?v=1"></script>

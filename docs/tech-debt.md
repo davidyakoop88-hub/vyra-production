@@ -290,7 +290,7 @@ Väg 1 är att föredra för att den aldrig visar ett saldo som inte stämmer.
 
 Verifierad: 2026-08-14. Åtgärdad via väg 1 den 2026-08-17.
 
-## 15. Poängen dras en gång per öppen flik, och cooldown gäller bara i studion
+## ~~15. Poängen dras en gång per öppen flik, och cooldown gäller bara i studion~~ — LÖST
 
 Två fel som hittades när §13 stängdes. De ligger **utanför** §13:s fix: den avgör *när* avdraget
 sker, de här handlar om *vem* som drar det och *var* cooldownen finns.
