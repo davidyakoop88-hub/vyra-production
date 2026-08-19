@@ -861,3 +861,11 @@ Verifierad: 2026-08-09.
   som ändrade den dagen i PR #221 när de i själva verket inte rörts sedan 5 augusti och PR #92.
   Kartan såg komplett ut och var systematiskt fel — den farligaste sorten. `generate-catalog-map.js`
   varnar nu när `.git/shallow` finns, och kartan i det här repot är omgenererad på full historik.
+- **En alert som inte har ett vilolage ligger kvar pa skarmen hela sandningen.** Guardian Emblem
+  saknade regeln helt: varje annan alert-familj bar `opacity:0` i vila och tands av sin
+  aktiveringsklass, men emblemet renderades fullt synligt sa fort det lag i en scen. I overlay betydde
+  det att det stod kvar permanent i stallet for att dyka upp nar en Guardian anlande — widgeten gjorde
+  motsatsen till vad den ar till for. **En handmatning hittade det inte**, eftersom "syns widgeten i
+  overlay?" ar exakt fel fraga for en alert; ratt fraga ar "ar den SLACKT i vila och tands den av sin
+  trigger?". Vaktat av `tests/browser/overlay-alla-widgets.browser.test.js`, som kraver bada halvorna
+  for varje alert-familj — och som hittade felet forsta gangen den kordes.

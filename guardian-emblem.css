@@ -45,6 +45,24 @@
   background:transparent;
 }
 
+/* ---- VILOLAGET I SANDNINGEN -----------------------------------------------------------------------
+ * EN ALERT SKA INTE SYNAS FORRAN DEN UTLOSTS. Uppmatt 2026-08-19 i overlay-revisionen: emblemet lag
+ * kvar PERMANENT pa skarmen medan varje annan alert-familj var slackt i vila. I en sandning hade det
+ * statt dar hela tiden i stallet for att dyka upp nar en Guardian anlander — och det ar inte ett
+ * skonhetsfel, det ar widgeten som gor motsatsen till vad den ar till for.
+ *
+ * SCOPAD TILL OVERLAY MED FLIT. Fan Level Up doljer sig i BADA lagen och syns bara nar den ar vald,
+ * sa i editorn ser man ingenting forran man klickar. Har galler regeln bara i sandningen, sa
+ * layoutlaget behaller sin forhandsvisning — man ska kunna placera emblemet utan att forst trigga
+ * det.
+ *
+ * INGET `!important`. Tva klasser slar en, sa `.guardian-emblem.ge-active` vinner over
+ * `.guardian-emblem` pa specificitet allena. G-IMPORTANT finns just for att `!important` i en vanlig
+ * regel slar en CSS-animation och later halva keyframen aldrig kora.
+ */
+html.overlay-output .guardian-emblem{opacity:0}
+html.overlay-output .guardian-emblem.ge-active{opacity:1}
+
 /* ---- Praktstegen -------------------------------------------------------------------------------
  * Stegklassen ar en KROK, inte en stilkalla. Vad ett steg ser ut som avgors av dess BILD, och den
  * kommer ur registret — inte ur CSS. Klassen finns for koreografins skull och for att ett prov ska

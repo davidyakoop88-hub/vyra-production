@@ -116,7 +116,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
   assert.match(studio, /[^-]media\.js\?v=20260819-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
-  assert.match(studio, /guardian-emblem\.css\?v=20260818-2/);
+  // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
+  // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
+  // en bump utan andring ar en gratis omladdning for varje anvandare.
+  assert.match(studio, /guardian-emblem\.css\?v=20260819-2/);
   assert.match(studio, /guardian-emblem-fas\.js\?v=20260818-2/);
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
