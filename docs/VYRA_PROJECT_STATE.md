@@ -46,8 +46,8 @@ bieffekt. Kod som inte kan visa vad den räddar ska inte ligga kvar.
 | | Antal | |
 |---|---|---|
 | Katalognycklar totalt | 181 | |
-| Fotograferade och jämförda | **167** | 0 trasiga, 0 tomma i den sista körningen |
-| Undantagna med utskrivet skäl | 14 | se tabellen nedan |
+| Fotograferade och jämförda | **166** | 0 trasiga, 0 tomma i den sista körningen |
+| Undantagna med utskrivet skäl | 15 | se tabellen nedan |
 
 | Undantag | Nycklar | Uppmätt skäl |
 |---|---|---|
@@ -55,6 +55,21 @@ bieffekt. Kod som inte kan visa vad den räddar ska inte ligga kvar.
 | `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
 | `catalog:glovesnipe:` | 8 | effekten är **H.264-video**, och provets Chromium saknar kodeken |
 | `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
+| `catalog:giftjar:heart` | 1 | orsak **inte fastställd** — se nedan |
+
+### Den enda posten utan fastställd orsak
+
+`catalog:giftjar:heart` är undantagen med ett skäl som ärligt talat inte är ett skäl utan en
+mätning: nyckeln växlar **på CI** mellan exakt två renderingar som skiljer 115 av 87000 pixlar,
+alltid inom exakt samma 232×34 px vid (13,254), alltid med största kanalskillnad 18 av 255 — samma
+siffror i fyra körningar. **Lokalt är den helt stabil:** tio ombyggnader gav en enda bild, två
+skilda webbläsarsessioner gav 0 av 87000, och hundra sekunders väntan ändrade ingenting. De övriga
+sex Gift Jar-varianterna reproducerar.
+
+Bandet ligger vid burkens fyllnadsnivå. En hypotes är att nivån speglar hopsamlat gåvotillstånd från
+de alerts som triggats tidigare i körningen, och därmed beror på ordningen — men det är en
+**hypotes, inte en mätning**, och den står som en sådan i `UTAN_REFERENS`. Nyckeln är undantagen
+tills någon visat vad som faktiskt skiljer. Fyra CI-cykler lades på den innan den lades åt sidan.
 
 Guardian Emblem hörde först hit men gör det inte längre: familjen fotograferas nu genom sin **egen
 utbytbara klocka** (`REGI` i `tests/helpers/katalognycklar.js`), som stoppar klockan, ställer lådan

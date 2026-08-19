@@ -92,7 +92,7 @@ test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || u
   const poster = Object.entries(UTAN_REFERENS);
   // Taket finns for att listan ska gora ont att vaxa, inte for att fem ar ett magiskt tal. Hojs det
   // ska skalet till varje ny post sta i UTAN_REFERENS — och det ska vara en MATNING, inte "gick inte".
-  assert.ok(poster.length <= 5,
+  assert.ok(poster.length <= 6,
     `${poster.length} nycklar är undantagna från visuell jämförelse — varje post är ett hål`);
   const utanSkal = poster.filter(([, skal]) => !skal || skal.length < 25).map(([k]) => k);
   assert.deepEqual(utanSkal, [], `undantag utan begripligt skäl: ${utanSkal.join(', ')}`);

@@ -71,6 +71,16 @@ const UTAN_REFERENS = {
     + 'sträng och videon faller med DEMUXER_ERROR_NO_SUPPORTED_STREAMS, så alla åtta varianter '
     + 'målar 0 %. Det är webbläsaren i provet som saknar kodeken — i OBS och i vanlig Chrome '
     + 'spelar de. Undantaget gäller alltså provmiljön, inte widgeten.',
+  'catalog:giftjar:heart':
+    'ORSAKEN AR INTE FASTSTALLD, och det star har med flit. Uppmatt 2026-08-19: nyckeln vaxlar pa '
+    + 'CI mellan exakt tva renderingar som skiljer 115 av 87000 pixlar, alltid inom exakt samma '
+    + '232x34 px vid (13,254), alltid med storsta kanalskillnad 18 av 255. Samma siffror i fyra '
+    + 'korningar. Lokalt ar den daremot helt stabil: 10 ombyggnader gav en enda bild, tva skilda '
+    + 'webblasarsessioner gav 0 av 87000, och 100 sekunders vantan andrade ingenting. De ovriga sex '
+    + 'giftjar-varianterna reproducerar. Bandet ligger vid burkens fyllnadsniva, sa en hypotes ar '
+    + 'att nivan speglar hopsamlat gavotillstand fran de alerts som triggats tidigare i korningen '
+    + 'och darmed beror pa ordningen - men det ar en HYPOTES, inte en matning. Nyckeln ar undantagen '
+    + 'tills nagon har visat vad som faktiskt skiljer.',
   'catalog:likefountain':
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '

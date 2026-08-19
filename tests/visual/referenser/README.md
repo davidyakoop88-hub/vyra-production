@@ -97,7 +97,7 @@ Guardian Emblem fotograferas i `hyllning` vid 900 ms — 20 fotograferingar av 2
 
 ## Vad som INTE har någon referens
 
-Fem poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans 14 av 181
+Sex poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans 15 av 181
 nycklar. Varje post bär sitt uppmätta skäl:
 
 | Post | Nycklar | Skäl i korthet |
@@ -106,6 +106,7 @@ nycklar. Varje post bär sitt uppmätta skäl:
 | `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
 | `catalog:glovesnipe:` | 8 | effekten är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de |
 | `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
+| `catalog:giftjar:heart` | 1 | **orsak inte fastställd** — växlar på CI mellan exakt två renderingar (115 px inom 232×34, kanalskillnad 18), men är helt stabil lokalt |
 
 Ett undantag är alltid ett hål i täckningen, och listan har ett tak i provet så att den ska göra ont
 att växa. En tom referens matchar allt — både vakten och uppdateringsskriptet vägrar därför skriva
