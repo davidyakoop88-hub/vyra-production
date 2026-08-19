@@ -89,9 +89,15 @@ function cssteg() {
 // Teckenklassen ar `[A-Za-z0-9-]`, inte `[a-z0-9-]`. Uppmatt i mutationsprov M1: med bara sma
 // bokstaver last `.ge-kronaX` som `krona`, och en felstavning med versal hade blivit OSYNLIG for
 // bada halvorna av G1 — den skulle bade se en del som stylad och missa en foraldralos regel.
+//
+// TILLSTAND AR INTE DELAR. `ge-step-`, `ge-fas-` och `ge-active` beskriver vilket LAGE widgeten ar
+// i, inte vad vapnet bestar av. Att de star har som undantag ar hela skalet att listan ocksa vaktas
+// i storlek: ett undantag ar precis vad man skulle lagga till for att smuggla forbi en foraldralos
+// regel, sa den far inte vaxa utan att nagon lagger marke till det.
+const EJ_DELAR = [/^step-/, /^fas-/, /^active$/];
 function cssdelar() {
   return [...new Set([...utanKommentarer(GE_CSS).matchAll(/\.ge-([A-Za-z0-9-]+)/g)].map(m => m[1]))]
-    .filter(d => !/^step-/.test(d) && !/^fas-/.test(d));
+    .filter(d => !EJ_DELAR.some(r => r.test(d)));
 }
 
 // En fabrik i egen rymd. `newId` kräver riktig crypto, annars kastar den.
@@ -212,6 +218,18 @@ test('G1: varje del som något steg bär har minst en CSS-regel', () => {
   const utan = DELAR.filter(d => !styled.has(d));
   assert.deepEqual(utan, [],
     `delen renderas men stylas inte: ${utan.join(', ')} — ett osynligt element i vapnet`);
+});
+
+test('G1: undantagslistan för tillståndsklasser är kort', () => {
+  // Kontrollmatningen for provet nedan. Varje post i EJ_DELAR ar ett hal i censusen, och tre ar
+  // vad familjen behover: steg, fas och aktiv. Vaxer listan ar det antingen ett nytt tillstand som
+  // ska motiveras, eller en foraldralos regel som nagon ville tysta.
+  assert.ok(EJ_DELAR.length <= 3,
+    `undantagslistan har vuxit till ${EJ_DELAR.length} — varje post är ett hål i delcensusen`);
+  assert.deepEqual(['step-1', 'fas-ljus', 'active'].filter(d => !EJ_DELAR.some(r => r.test(d))), [],
+    'undantagen träffar inte längre de tre tillståndsklasser de finns för');
+  assert.deepEqual(['skold', 'namn', 'activerad'].filter(d => EJ_DELAR.some(r => r.test(d))), [],
+    'ett undantag är för brett och släpper förbi riktiga delnamn');
 });
 
 test('G1: ingen del stylas som inget steg bär', () => {
