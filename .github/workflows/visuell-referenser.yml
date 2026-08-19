@@ -77,8 +77,26 @@ jobs:
       # darfor installera exakt samma uppsattning — annars jamfor vakten bilder tagna under olika
       # forutsattningar och skyller skillnaden pa widgetarna.
       - name: 'Systemberoenden (typsnitten som paverkar rastreringen)'
-        timeout-minutes: 10
-        run: npx playwright install-deps chromium
+        timeout-minutes: 25
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -eu
+          # UPPMATT 2026-08-19: samma 21 MB typsnittspaket hamtades pa ~1 sekund kl 15:25 och tog
+          # over 9 minuter kl 16:14 — fonts-freefont-ttf ensamt tog 3 minuter fran
+          # azure.archive.ubuntu.com. Det ar spegelns dagsform, inte var kod. Ett tak utan
+          # omforsok gor da ett vantat hack till ett rott bygge.
+          #
+          # apt sparar de .deb-filer det redan hunnit hamta, sa ett omforsok fortsatter dar det
+          # slutade i stallet for att borja om. Tre forsok och ett tak pa 25 minuter racker for en
+          # trog spegel; en spegel som ar NERE faller fortfarande, och det ska den.
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/99vyra-retries > /dev/null
+          for i in 1 2 3; do
+            if npx playwright install-deps chromium; then exit 0; fi
+            echo "Forsok $i gav upp — provar igen om 20 s"
+            sleep 20
+          done
+          exit 1
 
       - name: 'Den pinnade Chromium'
         timeout-minutes: 10
