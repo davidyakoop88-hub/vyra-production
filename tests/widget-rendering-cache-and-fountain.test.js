@@ -105,28 +105,43 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // levererades under en strang som redan var utrullad. En sammanslagning som ror en fil ar en
   // andring av den filen.
   //
+  // SAMMANSLAGNINGEN 2026-08-20 (rotations-UI:t mot main): studio.css, vyra-rotation.js,
+  // vyra-proportioner.js och widget-handles.js andrades av BADA grenarna, sa alla fyra far
+  // en NY strang som bara sager nar. media.js rordes INTE av rotations-UI:t och behaller
+  // darfor mains 20260819-1 — strangarna foljer filerna, inte varandra.
+  //
   // STRANGEN SAGER NAR, INTE VAD. `20260818-guardian` levde i media.js i tre timmar och overlevde
   // den familj den var uppkallad efter; en lasare som sokte pa "guardian" hittade en versionsstrang
   // och ingen widget. Vad som andrades star i kommentaren har och i commiten. `sokvakt` nedan
   // vaktar regeln.
-  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  assert.match(studio, /studio\.css\?v=20260820-3/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
-  assert.match(studio, /vyra-rotation\.js\?v=1/);
-  assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
-  assert.match(studio, /[^-]media\.js\?v=20260819-1/);
+  assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
+  assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
+  assert.match(studio, /widget-handles\.js\?v=20260820-1/);
+  assert.match(studio, /[^-]media\.js\?v=20260820-5/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
   assert.match(studio, /guardian-emblem\.css\?v=20260819-2/);
   assert.match(studio, /guardian-emblem-fas\.js\?v=20260818-2/);
+  // SAMMANSLAGNINGEN 2026-08-20 (Stigningen mot main): studio.css och media.js andrades av
+  // BADA grenarna, sa bada far strangen 20260820-3. Grenen andrade dessutom
+  // premium-final.css, som laddas via den injicerade version-konstanten — darfor byts
+  // aven den. gifter-fas.js ar grenens nya fil och behaller v=1.
+  assert.match(media, /gifter-fas\.js\?v=20260820-5/);
+  // SAMMANSLAGNINGEN 2026-08-20 (Rise & Pop mot main): media.js andrades av bada
+  // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
+  // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
-  assert.match(media, /const version='20260818-2'/);
-  assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
+  assert.match(media, /const version='20260820-5'/);
+  assert.match(media, /widget-fas\.js\?v=1/);
+  assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
   // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.

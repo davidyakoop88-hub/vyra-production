@@ -132,6 +132,26 @@ test('flera level-ups köas och visas efter varandra', () => {
   assert.equal(traffar()[0].name, 'a');
 });
 
+test('vyra-session-ended glömmer nivåkartan och tömmer kön — nästa konto ärver ingenting', () => {
+  // Teardown-luckan (uppmätt 2026-08-19): utan lyssnaren överlevde senaste-kartan och kön ett
+  // kontobyte, och nästa projektion kunde både tysta riktiga nivåhopp (gammalt "senast sett")
+  // och spela förra kontots köade alerts. Kontraktets obligatoriska teardown gäller även gifter.
+  const { skicka, traffar, h } = boot();
+  // En level-up är en HÖJNING: första vågen är baslinjer, andra vågen fyller kön.
+  for (const n of ['a', 'b', 'c']) skicka(chatt(n, 5));
+  for (const n of ['a', 'b', 'c']) skicka(chatt(n, 6));
+  assert.ok(h.window.VyraGifterLevel.koLangd() > 0, 'riggen fyllde ingen kö — provet mäter inget');
+  h.window.dispatchEvent(new h.window.Event('vyra-session-ended'));
+  assert.equal(h.window.VyraGifterLevel.koLangd(), 0, 'kön överlevde sessionens slut');
+  assert.equal(h.window.VyraGifterLevel.spelar(), false, 'spelar-flaggan överlevde sessionens slut');
+  // Och nivåkartan är glömd: samma användare på högre nivå är nu en BASLINJE, ingen alert —
+  // annars hade nästa konto ärvt förra kontots "senast sett" och tänt på fel människors hopp.
+  const fore = traffar().length;
+  skicka(chatt('a', 10));
+  assert.equal(traffar().length, fore,
+    'nivåkartan överlevde sessionens slut — a:s hopp tände en alert ur förra kontots minne');
+});
+
 test('kön töms i ankomstordning', () => {
   const { skicka, traffar, h } = boot();
   for (const n of ['a', 'b', 'c']) skicka(chatt(n, 5));

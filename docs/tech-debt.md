@@ -94,6 +94,67 @@ Vaktat av tre prov i `tests/gift-fireworks-live-path.test.js`:
 
 Verifierad löst: 2026-08-10.
 
+## ~~4. widget-defaults-migration-provet beror på en lokal baseline-gren~~ — LÖST
+
+`tests/widget-defaults-migration.test.js` letar efter en gammal `media.js` med de
+inline-katalogliteraler som fanns före widget-fabriken. Den söker i denna ordning:
+
+```js
+for (const rev of ['feature/event-deduplication:media.js', 'origin/main:media.js', 'main:media.js'])
+```
+
+Första posten är en **lokal grenreferens**. Efter Steg 0.5 (2026-08-08) raderades den grenen —
+den var mergad och övergiven. Provet hoppar nu över hos utvecklare som städar sina lokala grenar.
+Fjärrgrenen finns kvar på origin, så fixen är att låta provet peka på
+`origin/feature/event-deduplication:media.js` i stället.
+
+Uppmätt 2026-08-08 — bara den ena refen bär literalerna:
+
+```
+JA   origin/feature/event-deduplication:media.js
+nej  origin/main:media.js
+nej  main:media.js
+```
+
+Provet är redan byggt för att hoppa över graceful — se raderna 2 och 9–10 i filen, som förklarar
+att detta är "local migration proof, not part of the permanent contract" och att CI:s grunda
+checkout alltid skippar det. Ingenting i CI påverkas. Det är en utvecklarbekvämlighet, inte ett
+kontraktsbrott.
+
+**Bevisa så här:**
+
+```bash
+node --test tests/widget-defaults-migration.test.js
+```
+
+Efter Steg 0.5 utan fixen: 2 prov skippas, 0 fel. Efter att provet pekats om — eller efter lokal
+återskapning med `git branch feature/event-deduplication origin/feature/event-deduplication` —
+kör alla prov.
+
+**ÅTGÄRDAD 2026-08-13:** `origin/feature/event-deduplication:media.js` står nu direkt efter den
+lokala refen i kedjan. Provet gick från **2 skippade, 0 körda** till **3 prov, 0 fel**.
+
+Ompekningen visade två saker som skippen hade dolt i fem dagar:
+
+- **Sex nycklar hade glidit** — men båda grupperna ur *en* avsiktlig commit, `d0a7156`
+  "feat(widgets): finish verified widget designs": `socialgoal` fick nya `goalColor`/`goalColor2`,
+  och `battlemvp` kortade etiketten till `MVP` och fick tre nya reglage (`mvpShowLabel`,
+  `mvpShowName`, `mvpShowCoins`, levande i `widget-factory.js` och vaktade av
+  `tests/battle-mvp-display.test.js`). De ligger i `AVSIKTLIGT_ANDRAT` i provet, med commiten
+  utskriven. **Övriga 27 nycklar jämförs oförändrade och driftar inte.**
+- **`catalog:giftjar:crystal` finns inte i baslinjen** — Gift Jar tillkom efter migrationen. Förr
+  hade det fällt hela provet med "hittade ingen katalogliteral"; nu står nyckeln i
+  `EFTER_BASLINJEN`, så en *felstavad* markör inte kan gömma sig bakom samma tystnad.
+
+Provet bär nu en kontrollmätning (`ANTAL_JAMFORDA = 27`) av precis det skäl §7 beskriver: utan den
+kunde täckningen krympa till noll och provet ändå vara grönt. Mutationsprovat åt båda hållen — ett
+ändrat fält utanför undantagslistan fäller provet, och en bortfiltrerad nyckelgrupp ger
+"jämförde 22 nycklar, väntade 27".
+
+**Kvarstår:** `origin/feature/event-deduplication` är den **enda** ref som bär baslinjen. Raderas
+den vid en grenrensning bryts beviskedjan permanent — CI märks inte, eftersom den grunda checkouten
+hoppar över ändå. Grenen ska därför inte städas bort.
+
 ## 5. Synkkonflikt-banderollen kan tystas utan att lösa konflikten
 
 `push()` (`cloud-sync.js:63`) returnerar `{ok:false,status:409}` **utan att kasta** när servern
@@ -817,6 +878,17 @@ Verifierad: 2026-08-19.
 
 ## Sådant som är löst, men värt att minnas
 
+- **Två engångsstädningar som var varandras motsatser tömde hela layouten.** `vyra-video-only-migration`
+  behöll bara standalone och `type==='video'`; `vyra-remove-old-video-widgets` behöll allt utom
+  `video`. Båda låg top-level i `media.js` och kördes vid varje laddning, skyddade bara av sin
+  flagga — så i en webbläsare där ingen flagga var satt kördes de efter varandra och sex widgetar
+  blev noll, med `save()` efteråt. Ordningen maskerade det (en ny webbläsare sätter flaggorna på ett
+  tomt state), men varje väg som skrev `vyra-state` utan flaggorna var exponerad — särskilt en
+  import som avbryts efter att "ersätt allt" redan raderat dem. Den föråldrade halvan togs bort
+  2026-08-13; villkoret i dess egen kommentar, *"until each live-data widget has a proper event
+  connection"*, hade slutat gälla. **Lärdomen är inte "ta bort gammal kod" utan att en engångsstädning
+  aldrig får anta att den kör ensam.** Vaktat av `tests/laddningsstadning.test.js`, som läser de
+  riktiga filtren ur `media.js` och faller om de tillsammans tömmer en layout.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.

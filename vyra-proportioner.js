@@ -64,6 +64,13 @@
       const nw = media.naturalWidth || media.videoWidth, nh = media.naturalHeight || media.videoHeight;
       if (nw > 0 && nh > 0) return { w: nw, h: nh };
     }
+    // Rotationsvakt (2026-08-18): for en roterad widget ar bbox STORRE an elementet, sa
+    // fangad aspectRatio och visad Hojd blir fel ur getBoundingClientRect. offsetmatten ar
+    // orroterade och ratta — bbox behalls bara som sista utvag for orroterade element.
+    const roterad = typeof w.rotation === 'number' && isFinite(w.rotation) && Math.abs(w.rotation) >= 0.01;
+    if (roterad || (el.offsetWidth > 0 && el.offsetHeight > 0)) {
+      return el.offsetWidth > 0 && el.offsetHeight > 0 ? { w: el.offsetWidth, h: el.offsetHeight } : null;
+    }
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 ? { w: r.width, h: r.height } : null;
   }
