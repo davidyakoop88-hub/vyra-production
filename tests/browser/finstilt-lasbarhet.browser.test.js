@@ -103,8 +103,11 @@ test('finstilta namner bade provperiod och loppris', { skip, timeout: 60000 }, a
     assert.ok(m.avstandTillBelopp !== null && m.avstandTillBelopp <= 24,
       `finstilta ligger ${m.avstandTillBelopp} px fran beloppet — en kvalificering langt bort ` +
       'lases inte tillsammans med det den kvalificerar');
-    assert.ok(m.avstandTillUppmaning !== null && m.avstandTillUppmaning <= 140,
-      `och ${m.avstandTillUppmaning} px fran narmaste uppmaning`);
+    // Uppmanings-mattet utgick 2026-08-20: framsidan blev inloggningssidan och alla
+    // kop/nedladdnings-knappar togs bort pa Davids beslut — skrivbordsappen laddas ner EFTER
+    // kontoskapandet, inne i Studio ([data-ladda-desktop], egen svit). Finstilta kvalificerar
+    // PRISET, och priset ar det enda den behover sitta ihop med. MAT behaller matpunkten sa
+    // vakten kan aterinforas den dag en uppmaning kommer tillbaka.
   } finally { await context.close() }
 });
 

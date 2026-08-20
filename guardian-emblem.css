@@ -1,0 +1,212 @@
+/* guardian-emblem.css — det heraldiska vapnet: fyra praktsteg och koreografin "Vapenskölden".
+ *
+ * ARBETSFÖRDELNINGEN. guardian-emblem-fas.js bestämmer NÄR (den sätter `ge-fas-<namn>` på lådan i
+ * tur och ordning); den här filen bestämmer VAD. En ändrad rörelse ska aldrig kräva en ändrad
+ * timer, och en ändrad timing ska aldrig kräva ny CSS.
+ *
+ * VARJE SELEKTOR ÄR FÖRANKRAD I FAMILJEN. Filen laddas på samma sida som studio.css,
+ * premium-final.css och nio andra. En selektor som inte bär `.guardian-emblem` eller en
+ * `.ge-`-klass träffar widgetar den aldrig hört talas om, och felet syns någon annanstans än där
+ * det skrevs — §11 i tech-debt.md. G-PREFIX-ISOLATION vaktar det, keyframe-namnen inräknade:
+ * `@keyframes glow` är globalt i hela dokumentet och den som lästs sist vinner.
+ *
+ * INGEN `!important` PÅ TRANSFORM, OPACITY ELLER CLIP-PATH. En vanlig regel med `!important` slår
+ * en CSS-animation, så halva keyframen kör aldrig. Tre döda animationer i Fan Level Up hade den
+ * roten, och alla tre såg korrekta ut i källan.
+ *
+ * PRAKTEN VÄXER, DEN BYTS INTE UT. Steg N visar allt steg N-1 visar plus mer. Delarna ligger i
+ * flödet där de kan (rubrik, krona, sköld, banderoll, namn, undertext, sockel) och absolut där de
+ * är dekor runt omkring (strålkrans, voluter, lövverk, kristaller). Det är därför höjden växer med
+ * steget utan att någon skriver in en höjd per steg — G-STEG-HÖJD mäter just det.
+ */
+
+.guardian-emblem{
+  /* Paletten ar LAST UR BILDERNA, inte vald: guld, vitt och isblatt. En tidig version byggdes i
+     skogsgront och smaragd — det var fel lasning av referensen och finns inte kvar nagonstans. */
+  --ge-gold:#d9a327;
+  --ge-gold-light:#f0c96a;
+  --ge-gold-deep:#9a6f16;
+  --ge-diamond:#dceaff;
+  --ge-diamond-deep:#5b9ff5;
+  --ge-feather:#f7f5f0;
+  --ge-text-light:#f5f0e6;
+
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  box-sizing:border-box;
+  padding:8px 10px;
+  font-family:'Cinzel','Trajan Pro',Georgia,serif;
+  color:var(--ge-text-light);
+  text-align:center;
+  background:transparent;
+}
+
+/* ---- VILOLAGET I SANDNINGEN -----------------------------------------------------------------------
+ * EN ALERT SKA INTE SYNAS FORRAN DEN UTLOSTS. Uppmatt 2026-08-19 i overlay-revisionen: emblemet lag
+ * kvar PERMANENT pa skarmen medan varje annan alert-familj var slackt i vila. I en sandning hade det
+ * statt dar hela tiden i stallet for att dyka upp nar en Guardian anlander — och det ar inte ett
+ * skonhetsfel, det ar widgeten som gor motsatsen till vad den ar till for.
+ *
+ * SCOPAD TILL OVERLAY MED FLIT. Fan Level Up doljer sig i BADA lagen och syns bara nar den ar vald,
+ * sa i editorn ser man ingenting forran man klickar. Har galler regeln bara i sandningen, sa
+ * layoutlaget behaller sin forhandsvisning — man ska kunna placera emblemet utan att forst trigga
+ * det.
+ *
+ * INGET `!important`. Tva klasser slar en, sa `.guardian-emblem.ge-active` vinner over
+ * `.guardian-emblem` pa specificitet allena. G-IMPORTANT finns just for att `!important` i en vanlig
+ * regel slar en CSS-animation och later halva keyframen aldrig kora.
+ */
+html.overlay-output .guardian-emblem{opacity:0}
+html.overlay-output .guardian-emblem.ge-active{opacity:1}
+
+/* ---- Praktstegen -------------------------------------------------------------------------------
+ * Stegklassen ar en KROK, inte en stilkalla. Vad ett steg ser ut som avgors av dess BILD, och den
+ * kommer ur registret — inte ur CSS. Klassen finns for koreografins skull och for att ett prov ska
+ * kunna se vilket steg som renderats.
+ */
+.guardian-emblem.ge-step-1,
+.guardian-emblem.ge-step-2,
+.guardian-emblem.ge-step-3,
+.guardian-emblem.ge-step-4{--ge-steg:1}
+
+/* ---- Bilden -------------------------------------------------------------------------------------
+ * Konstverket ar levererat som PNG och ritas inte om. `padding-top` i procent later ladan folja
+ * bildens egna proportioner: satter man hojden i pixlar racker det att ett steg byts mot en bild med
+ * annan proportion for att emblemet ska bli utdraget, och ingen skulle se det forran i sandning.
+ */
+.guardian-emblem .ge-bild{
+  position:relative;
+  width:100%;
+  height:0;
+  flex:none;
+  z-index:1;
+}
+.guardian-emblem .ge-bild>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 4px 18px rgba(0,0,0,.5));
+}
+
+/* ---- Avatarhalet ---------------------------------------------------------------------------------
+ * Star dar det MATTS i bilden — left/top/width/height kommer inline ur registret, precis som
+ * `.mvpf-photo` far sina ur `'battlemvp.frame'`. Ingen siffra har i CSS:en, for da hade den funnits
+ * pa tva stallen och forr eller senare fatt tva varden.
+ *
+ * AVATAREN LIGGER OVER BILDEN, och det ar en MATNING och inte en smak. Forsta forsoket la den under
+ * med resonemanget att ringens mjuka innerkant skulle falla pa avataren — men konstverket bar sin
+ * EGEN platshallare i halet, en ogenomskinlig svart skiva med en gra siluett. En avatar under den
+ * hade aldrig synts. Uppmatt i foto 1 av bildomgangen: halet var helsvart oavsett vad som lag i det.
+ *
+ * BAKGRUNDEN AR GENOMSKINLIG med flit. Utan avatarbild ska konstverkets egen platshallare synas
+ * igenom — det ar den studion visar nar ingen Guardian har anlant an. En fylld platta hade dolt den
+ * och gjort forhandsvisningen till en svart cirkel.
+ */
+.guardian-emblem .ge-avatar{
+  position:absolute;
+  border-radius:50%;
+  overflow:hidden;
+  background:transparent;
+  z-index:2;
+}
+.guardian-emblem .ge-avatar>img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ---- Texten under emblemet ----------------------------------------------------------------------
+ * Konstverket bar ingen text alls — det ar en profilram. Widgeten ar en ALERT och maste saga vem som
+ * kom in, sa namnet och undertexten star under bilden i stallet for i den.
+ */
+.guardian-emblem .ge-namn{
+  position:relative;
+  margin-top:8px;
+  font-size:19px;
+  font-weight:700;
+  letter-spacing:.05em;
+  color:var(--ge-text-light);
+  text-shadow:0 0 12px rgba(212,175,55,.45),0 2px 4px rgba(0,0,0,.6);
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  flex:none;
+  z-index:2;
+}
+.guardian-emblem .ge-undertext{
+  position:relative;
+  font-size:12px;
+  letter-spacing:.04em;
+  color:rgba(245,240,230,.78);
+  max-width:100%;
+  flex:none;
+  z-index:2;
+}
+
+/* ================================================================================================
+ * KOREOGRAFIN "VAPENSKOLDEN"
+ *
+ * Fyra delar i stallet for tjugoen, och det gor rorelsen ENKLARE, inte fattigare: en bild kan bara
+ * roras som en helhet, sa fasen far bara ett angreppssatt — skala, opacitet, glod. Att animera
+ * enskilda ornament kraver att de ar enskilda element, och det ar de inte langre.
+ *
+ * Varje fas ager sin klass ensam — drivrutinen tar bort den foregaende i samma anrop som den satter
+ * nasta, sa CSS:en aldrig behover bry sig om kombinationer.
+ * ================================================================================================ */
+
+/* ---- ljus (600 ms) — ljuset samlas, emblemet syns inte an ---------------------------------------- */
+.guardian-emblem.ge-fas-ljus .ge-bild,
+.guardian-emblem.ge-fas-ljus .ge-namn,
+.guardian-emblem.ge-fas-ljus .ge-undertext{opacity:0}
+.guardian-emblem.ge-fas-ljus{animation:geLjusSamlas 600ms ease-out both}
+
+/* ---- oppna (1200 ms) — vapnet reser sig, texten foljer -------------------------------------------
+ * Bilden vaxer fram ur ett ljus och sjunker pa plats; namnet kommer efter den, undertexten sist.
+ */
+.guardian-emblem.ge-fas-oppna .ge-bild{animation:geResningBild 760ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-namn{animation:geResning 520ms 720ms ease-out both}
+.guardian-emblem.ge-fas-oppna .ge-undertext{animation:geResning 480ms 860ms ease-out both}
+
+/* ---- hyllning (3500 ms) — hallet -----------------------------------------------------------------
+ * Guldet andas. NAMNET STAR ABSOLUT STILLA — det ar det tittaren ska hinna lasa, och en rorelse dar
+ * hade tagit uppmarksamheten fran den enda text som betyder nagot.
+ *
+ * Den oandliga animationen hor hemma just har, pa en fas som SLUTAR. G-VILOLAGER vaktar darfor bara
+ * ljus, oppna och upplosning.
+ */
+.guardian-emblem.ge-fas-hyllning .ge-bild>img{animation:geGuldglod 2800ms ease-in-out infinite}
+
+/* ---- upplosning (800 ms) — omvand ordning --------------------------------------------------------- */
+.guardian-emblem.ge-fas-upplosning .ge-undertext,
+.guardian-emblem.ge-fas-upplosning .ge-namn{animation:geUttoning 420ms ease-in both}
+.guardian-emblem.ge-fas-upplosning .ge-bild{animation:geUttoning 520ms 200ms ease-in both}
+
+/* ================================================================================================
+ * KEYFRAMES — varje namn borjar pa `ge`, eftersom keyframe-namn ar globala i hela dokumentet.
+ * ================================================================================================ */
+
+@keyframes geLjusSamlas{
+  0%{filter:brightness(2.6) blur(8px)}
+  100%{filter:none}
+}
+@keyframes geResningBild{
+  0%{opacity:0;transform:translateY(18px) scale(.86)}
+  60%{opacity:1}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes geResning{
+  0%{opacity:0;transform:translateY(12px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes geGuldglod{
+  0%,100%{filter:drop-shadow(0 4px 18px rgba(0,0,0,.5)) brightness(1)}
+  50%{filter:drop-shadow(0 4px 26px rgba(240,201,106,.45)) brightness(1.09)}
+}
+@keyframes geUttoning{
+  0%{opacity:1}
+  100%{opacity:0}
+}

@@ -834,3 +834,61 @@ Verifierad: 2026-08-09.
   hogt i panelen att fokus och omrendering landar pa samma varde. Det togs bort i stallet for att
   behallas som utfyllnad. Kravet star kvar: **mutationsprova at bada hallen, och stryk det som inte
   kan falla.**
+- **En cachebust-sträng får inte namnge det den bustar.** `const version='20260818-guardian'` levde
+  i `media.js` i tre timmar och överlevde den familj den var uppkallad efter. Vid skrotningen fanns
+  ingen Guardian-kod kvar, men strängen hade blivit kvar om inte en assertion i skrotningsskriptet
+  fångat den — och nästa läsare som sökte på "guardian" hade hittat en versionsträng och ingen
+  implementation, och fått lägga ihop varför själv. **En sträng som namnger kod är ett löfte om att
+  koden finns.** Strängen ska svara på NÄR filen byttes, inte på VAD som låg i den; vad som ändrades
+  hör hemma i commiten och i bump-kommentaren. Regeln vaktas nu av
+  `tests/widget-rendering-cache-and-fountain.test.js` (*ingen cachebust-strang namnger en
+  widgetfamilj*), med en svartlista över familjenamn i stället för en generisk ordregel — ett datum
+  eller en ordningssiffra är precis vad vi vill ha och får inte fällas. Vakten hittade direkt en
+  ärvd överträdelse, `20260807-topgift`, som står kvar i en uttrycklig och krympande lista: att döpa
+  om den nu vore en bump utan ändring, alltså en gratis omladdning för varje användare.
+- **En egenskap som en animation skriver över måste animationen själv bära med sig.**
+  `.ge-diamant` är en kvadrat roterad 45 grader — rotationen är formens identitet, inte ett
+  tillstånd. Entréanimationen skrev `transform`, och därmed försvann rotationen: uppmätt i foto 6 av
+  Guardian Emblem, där diamanten var en grön **kvadrat** under hela `oppna` och blev en diamant
+  först i hyllningen. Det är samma lärdom som `--gw-spacing` (*ett storleksval som inte överlever
+  sin egen animation är ingen inställning*), en nivå djupare: det gäller varje egenskap i samma
+  `transform`-sträng, inte bara de som råkar vara inställningar. Lagningen är en egen keyframe som
+  bär rotationen i båda ändarna. **Inget prov i vaktnätet kunde se det — delen fanns, var målad och
+  hade yta. Ögat är mätinstrumentet för form och placering.**
+- **En grund klon ger systematiskt fel proveniens i genererade kartor.** `docs/katalogkarta.md` har
+  datum- och PR-kolumner ur `git log` per fil. I en shallow clone finns bara de senaste commitarna,
+  så varje sektion tillskrivs den nyaste synliga commiten. Uppmätt 2026-08-18: **20 sektioner** stod
+  som ändrade den dagen i PR #221 när de i själva verket inte rörts sedan 5 augusti och PR #92.
+  Kartan såg komplett ut och var systematiskt fel — den farligaste sorten. `generate-catalog-map.js`
+  varnar nu när `.git/shallow` finns, och kartan i det här repot är omgenererad på full historik.
+- **En alert som inte har ett vilolage ligger kvar pa skarmen hela sandningen.** Guardian Emblem
+  saknade regeln helt: varje annan alert-familj bar `opacity:0` i vila och tands av sin
+  aktiveringsklass, men emblemet renderades fullt synligt sa fort det lag i en scen. I overlay betydde
+  det att det stod kvar permanent i stallet for att dyka upp nar en Guardian anlande — widgeten gjorde
+  motsatsen till vad den ar till for. **En handmatning hittade det inte**, eftersom "syns widgeten i
+  overlay?" ar exakt fel fraga for en alert; ratt fraga ar "ar den SLACKT i vila och tands den av sin
+  trigger?". Vaktat av `tests/browser/overlay-alla-widgets.browser.test.js`, som kraver bada halvorna
+  for varje alert-familj — och som hittade felet forsta gangen den kordes.
+- **Ett prov som infererar fel ur en timeout rapporterar sin egen last, inte kodens tillstånd.**
+  Overlay-vakten pollade `img.complete` med åtta sekunders tak och svalde timeouten med
+  `.catch(() => {})`. På en lastad CI-löpare hann en 1,2 MB PNG inte fram, och provet rapporterade
+  `steg-2.png: bilden laddas inte` om en fil som var spårad i git, 1 216 755 B och avkodade till
+  763×921. **Vänta på det som faktiskt svarar:** `img.decode()` löser när bilden är avkodad och
+  avvisar vid riktigt fel, så skillnaden mellan *långsam* och *trasig* blir ett svar från
+  webbläsaren i stället för en slutsats från en klocka. Muterat efteråt — med filen bortflyttad
+  rapporterar vakten `EncodingError`, så den kan fortfarande falla och nu på rätt grund.
+- **Verifiera ett "fynd" innan det rapporteras — i en handmätning är mätfelen fler än buggarna.**
+  Overlay-revisionen av 181 katalognycklar gav fyra anmärkningar. **Tre av dem var mina egna:** ett
+  reguljärt uttryck som klippte vid versaler (`catalog:glovesnipe:koiPearl` → `koi`), ett anrop med
+  fel argumenttyp (`triggerLastXAlert(typeKey, event)` matad med ett objekt, vilket tystade fem
+  friska widgets), och timeouten ovan. Bara **en** var en riktig bugg. En handmätning granskas av
+  ingen, körs om av ingen och muteras av ingen — och det är hela skälet att den ska bli ett prov
+  innan resultatet får kallas ett fynd.
+- **En checkpoint ar ett pastaende och maste granskas som ett.** Checkpoint 40 skrevs ur farskt minne
+  och innehol fyra fel som en genomgang mot data hittade: pastandet *"ingen vakt oppnade `?overlay=1`
+  overhuvudtaget"* var rakt av falskt — **tio** provfiler gjorde det redan, tre i browserlanen;
+  pastandet *"varje annan alert-familj bar `opacity:0`"* var en generalisering fran **ett** stickprov;
+  siffrorna 133/48 beskrev laget **fore** lagningen och inte efter (129/52); och en tidsuppskattning
+  stod som om den vore uppmatt. **Ingen av dem andrade slutsatsen, alla fyra andrade vad en framtida
+  lasare skulle tro.** Ett dokument som ska overleva sessionen forlorar sitt varde exakt nar det bar
+  ett pastaende ingen langre kan kontrollera — sa kontrollera det medan datan fortfarande finns kvar.
