@@ -120,7 +120,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
   assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
   assert.match(studio, /widget-handles\.js\?v=20260820-1/);
-  assert.match(studio, /[^-]media\.js\?v=20260819-1/);
+  assert.match(studio, /[^-]media\.js\?v=20260820-2/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -131,8 +131,13 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
-  assert.match(media, /const version='20260818-2'/);
-  assert.match(media, /fan-fas\.js\?v=20260817-fan-duo-motet/);
+  // SAMMANSLAGNINGEN 2026-08-20 (fasfabriken mot main): media.js andrades av BADA grenarna
+  // — fabriken kedjar widget-fas+fan-fas, main bar Guardian Emblem — sa bade skript-URL:en
+  // och den injicerade version-konstanten far strangen 20260820-2. Guardian-filerna och
+  // fan-fas' egen strang kommer fran respektive gren, oforandrade.
+  assert.match(media, /const version='20260820-2'/);
+  assert.match(media, /widget-fas\.js\?v=1/);
+  assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
   // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
   // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.

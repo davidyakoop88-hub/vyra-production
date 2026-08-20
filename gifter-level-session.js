@@ -110,6 +110,11 @@
     hantera(event);
   };
 
+  // Teardown-luckan (uppmätt 2026-08-19): utan den överlever nivåkartan och kön ett kontobyte,
+  // och nästa projektion ärver förra kontots nivåer — kontraktets obligatoriska teardown.
+  addEventListener('vyra-session-ended', () => root.VyraGifterLevel.glom());
+  root.VyraSessionState?.registerTeardown?.('gifter-level-session', () => root.VyraGifterLevel.glom());
+
   root.VyraGifterLevel = {
     nivaAv,
     koLangd: () => ko.length,

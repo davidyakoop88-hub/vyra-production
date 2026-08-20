@@ -1,5 +1,12 @@
 // fan-fas.js — koreografin för Fan Level Up, en fas i taget.
 //
+// SEDAN 2026-08-19 bor MEKANIKEN (klocka, spela/avbryt, trigger-koppling) i widget-fas.js —
+// fabriken som även driver Gifter Level Up. Den här filen äger det Fan-specifika: registret
+// FASER, tiderna, modellernas dokumentation och de fem konfigurationspunkterna. Mekanikens
+// varför-kommentarer flyttade med till fabriken; kontrakten (bytbar klocka, exklusiva
+// sekventiella fasklasser, koppling innanför alertkön via _fanTimer-identitetsdiffen) är
+// oförändrade och vaktas av tests/fan-fas.test.js precis som förut.
+//
 // VARFÖR FILEN FINNS. Gifter Level Up har redan exakt den här mekanismen, men den ligger inne i
 // media.js (gifterTransform, rad 583–597): tre klasser som byts av tre setTimeout, med tiderna
 // namngivna så ett prov kan bevisa att hela sekvensen ryms i den kortaste visningstiden.
@@ -146,108 +153,20 @@
     ],
   };
 
-  // Bytbar med flit — se filhuvudet. Provet ersätter den med en manuell klocka.
-  const klocka = {
-    satt: (fn, ms) => root.setTimeout(fn, ms),
-    rensa: id => root.clearTimeout(id),
-  };
+  // De fem Fan-punkterna, samlade på ETT ställe. layoutPrefix speglar renderarens
+  // fan-layout-<modell>-klasser; selector/aktivKlass är triggerns egna; _fanTimer är spåret
+  // media.js lämnar per tänd låda (vaktat av F2 — provet faller om media.js slutar sätta det);
+  // triggerFanLevelUp är namnet kopplingen lindar sig runt, INNANFÖR alertkön.
+  const motor = root.VyraWidgetFas.skapa({
+    prefix: PREFIX,
+    kortasteVisning: KORTASTE_VISNING,
+    faser: FASER,
+    layoutPrefix: 'fan-layout-',
+    selector: '.fan-level-up',
+    aktivKlass: 'fan-active',
+    timerFalt: '_fanTimer',
+    triggerNamn: 'triggerFanLevelUp',
+  });
 
-  const faser = layout => FASER[layout] || null;
-  const total = layout => (faser(layout) || []).reduce((s, f) => s + f.ms, 0);
-
-  // Modellen läses ur lådans egna klasser i stället för ur widgetobjektet. Skälet är att det är
-  // DEN RENDERADE lådan koreografin gäller: står det `fan-layout-hero` i DOM:en är det hero som
-  // syns, oavsett vad någon råkat skriva i state. Samma princip som renderer-honors-widget.
-  function layoutAv(box) {
-    for (const k of box.classList) if (k.startsWith('fan-layout-')) return k.slice(11);
-    return '';
-  }
-
-  function stadaKlasser(box) {
-    [...box.classList].forEach(k => { if (k.startsWith(PREFIX)) box.classList.remove(k) });
-  }
-
-  // Avbryter en pågående koreografi och lämnar lådan i sitt vilotillstånd. Anropas både vid en
-  // ny trigger (omstart) och när sekvensen tar slut.
-  function avbryt(box) {
-    if (box._fasTimers) box._fasTimers.forEach(klocka.rensa);
-    box._fasTimers = [];
-    stadaKlasser(box);
-  }
-
-  // Spelar modellens faser i ordning. Varje fas äger sin klass ensam — två faser är aldrig
-  // aktiva samtidigt, så CSS:en aldrig behöver bry sig om kombinationer.
-  function spela(box, layout = layoutAv(box)) {
-    const lista = faser(layout);
-    avbryt(box);
-    if (!lista || !lista.length) return false;
-    box.classList.add(PREFIX + lista[0].namn);
-    let vid = 0;
-    for (let i = 0; i < lista.length; i += 1) {
-      vid += lista[i].ms;
-      const nasta = lista[i + 1];
-      const fran = lista[i].namn;
-      box._fasTimers.push(klocka.satt(() => {
-        box.classList.remove(PREFIX + fran);
-        if (nasta) box.classList.add(PREFIX + nasta.namn);
-      }, vid));
-    }
-    return true;
-  }
-
-  root.VyraFanFas = { PREFIX, FASER, KORTASTE_VISNING, faser, total, layoutAv, spela, avbryt, klocka };
-
-  // ---- Kopplingen till triggern --------------------------------------------------------------
-  //
-  // `triggerFanLevelUp` i media.js talar inte om vilka lådor den tände; den returnerar inget.
-  // Att räkna ut det igen här hade betytt att gatet (fanTeamOnly, autoTrigger, minLevel) fanns
-  // på två ställen — precis den sortens dubblering som lät `card` och `hero` glida isär.
-  //
-  // Men triggern lämnar ett spår som går att läsa: för varje låda den tänder gör den
-  // `clearTimeout(box._fanTimer)` och sätter ett NYTT `box._fanTimer`. Identiteten på det
-  // handtaget byts alltså exakt för de lådor som triggades, och för inga andra. Vi läser före
-  // och efter och jämför. En låda som redan spelade och INTE triggades om får därmed behålla
-  // sin pågående koreografi i stället för att ryckas om från fas 1.
-  //
-  // Kopplingen till `_fanTimer` är medveten och vaktad: F2 i provet faller om media.js slutar
-  // sätta fältet.
-  //
-  // EXAKT EN GÅNG, OCH TIDIGT. runtime-controls.js byter 500 ms efter start ut
-  // `window.triggerFanLevelUp` mot en KÖAD variant som bara lägger jobbet i VyraAlertQueue och
-  // returnerar. Vi måste sitta INNANFÖR den kön: en koreografi som startar när alerten köas i
-  // stället för när den spelas hamnar ur takt med sin egen widget — flera sekunder fel under en
-  // gåvostorm.
-  //
-  // Ett första försök tolererade omkoppling ("laddordningen är inte garanterad") och lindade
-  // därför en andra gång runt köaren. Uppmätt i Chromium: den yttre linden såg aldrig
-  // `_fanTimer` ändras, eftersom köaren returnerar innan alerten spelat, och gjorde ingenting —
-  // ofarligt den här gången, men bara av en slump. Kopplingen sker nu en enda gång, och
-  // återförsöken slutar i samma stund den lyckats.
-  let arKopplad = false;
-  function koppla() {
-    const original = root.triggerFanLevelUp;
-    if (arKopplad || typeof original !== 'function') return false;
-    const kopplad = function (event) {
-      const lador = [...root.document.querySelectorAll('.fan-level-up')];
-      const fore = new Map(lador.map(box => [box, box._fanTimer]));
-      const svar = original.apply(this, arguments);
-      for (const box of root.document.querySelectorAll('.fan-level-up')) {
-        if (!box.classList.contains('fan-active')) continue;
-        if (fore.has(box) && fore.get(box) === box._fanTimer) continue;   // spelade redan
-        spela(box);
-      }
-      return svar;
-    };
-    kopplad.__fasKopplad = true;
-    root.triggerFanLevelUp = kopplad;
-    arKopplad = true;
-    return true;
-  }
-  root.VyraFanFas = Object.assign(root.VyraFanFas, { koppla, arKopplad: () => arKopplad });
-
-  // media.js laddar den här filen ur skriptsvansen, alltså efter att triggern definierats — det
-  // första försöket lyckas i praktiken alltid. Lyssnaren finns för det fall det inte gör det, och
-  // slutar göra något så fort kopplingen suttit.
-  koppla();
-  root.document.addEventListener('load', () => koppla(), true);
+  root.VyraFanFas = motor;
 })(window);
