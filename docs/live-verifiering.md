@@ -127,7 +127,34 @@ Samma data ger dessutom en armé-leaderboard per sida, vilket ingen konkurrent h
 
 **Läs samma sondrader som punkt 3** — `LINK_MIC_ARMIES` loggar sina nycklar och skalärer.
 
-## 5. Delar OBS browser source samma `localStorage` som webbläsaren?
+## 5. Delar OBS browser source samma `localStorage` som webbläsaren? — **MÄTT 2026-08-20: NEJ**
+
+**Svaret är EGEN RYMD.** Uppmätt mot OBS 32.2.1 med en provsida som både sätter och läser en nyckel,
+laddad på **exakt samma origin** (`http://127.0.0.1:8123`) i båda — så skillnaden kan bara komma ur
+lagringen, inte ur origin-reglerna:
+
+| Var | Vad som hände |
+|---|---|
+| Chrome | satte `vyra-obs-lagerprov` = `CHROME-SATTE-DETTA` |
+| OBS browser source | läste samma nyckel → **fanns inte** |
+
+Avläsningen gjordes med OBS egen `GetSourceScreenshot`, så det är OBS egen bild av sidan som mätts.
+
+**Följden, som är större än punkten själv:** `vyra-points-v1` är rå `localStorage` och synkas aldrig
+till molnet, så poängekonomin är per rymd. En åtgärd med `pointsCost` kan därför köras i Studion och
+tigas i sändningen — eller tvärtom — beroende på var poängen råkar ligga.
+
+**Och den träffar §15 i skuldregistret.** Förarvalet (`vyra-automation-master`) är en `localStorage`-
+nyckel som delas mellan *flikar*, med korsflik-`storage`-event. OBS är ingen flik: den ser aldrig
+Studions nyckel och Studion ser aldrig OBS. Båda kan därför tro att de är förare samtidigt — precis
+det §15 stängde mellan flikar. Det är en **slutsats av mätningen plus koden**, inte en egen mätning:
+för att se dubbelspelningen krävs ett riktigt event med en giltig scenlänk i båda samtidigt.
+
+**Vad som behöver göras** (eget arbete, inte en rad här): förarvalet måste flytta till en yta båda
+ser — molnet eller den lokala servern i skrivbordsappen — eller så måste overlayn aldrig kunna vara
+förare för poängavdrag. Skriv designen innan koden.
+
+### Ursprunglig fråga (besvarad ovan)
 
 **Antagandet:** ingen — och det är hela poängen med punkten. `vyra-points-v1` är rå `localStorage`
 och synkas aldrig till molnet, så poängekonomin är **per lagerrymd**. Vilken rymd OBS browser
@@ -203,7 +230,22 @@ fångar det direkt.
 Listorna rörs **inte** innan dess. En typ som står i kontraktet men som ingen kod någonsin skickar
 är en död kontraktspost — samma sorts lögn som §3 kostade en hel ansats för.
 
-## 7. Spelar Glove Snipes effektvideor i OBS?
+## 7. Spelar Glove Snipes effektvideor i OBS? — **MÄTT 2026-08-20: JA**
+
+**Svaret är JA.** Samma fil som Glove Snipe använder
+(`assets/videos/battle/koi-pearl/glove.mp4`, H.264) laddades i en OBS browser source och mättes med
+OBS egen `GetSourceScreenshot`:
+
+| Miljö | Resultat |
+|---|---|
+| OBS 32.2.1 browser source | **57 dekodade bildrutor**, 732×1256 |
+| Vanlig Chrome | spelar, 4 bildrutor på 1,2 s, `canPlayType` = `probably` |
+| playwright-core:s Chromium (provbrowsern) | saknar kodeken — `DEMUXER_ERROR_NO_SUPPORTED_STREAMS` |
+
+Det var alltså aldrig videorna det var fel på, utan **provbrowsern**. Undantaget i den visuella
+regressionsvakten står kvar av det skälet — inte för att widgetarna är trasiga.
+
+### Ursprunglig fråga (besvarad ovan)
 
 **Ingen automat kan svara på det här.** Glove Snipes åtta katalogvarianter visar effekten som en
 H.264-kodad MP4 (`pack-fx-video`). Uppmätt 2026-08-19: playwright-core:s Chromium — den webbläsare
