@@ -548,3 +548,36 @@
 @keyframes gfrStampla{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
 @keyframes gfrFram{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes gfrLas{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ==== GIFTER · PROFILE · "Rise & Pop" — sekventiell trefas (fyrfasporten PR C, 2026-08-19).
+   Profile ar renderarens DEFAULT (`w.gifterLayout||'profile'`) — entren varje anvandare far som
+   aldrig oppnar modellvaljaren — sa premissen ar medvetet den lugnaste av nio: ringen glimmar,
+   kroppen stiger som EN kropp, namnet fram, brickan i en pop. JS ager NAR (gifter-fas.js via
+   widget-fas-fabriken), det har ager VAD. Faserna ar exklusiva: en klass i taget, och delar som
+   redan spelat star pa sina DESIGNADE vilovarden nar fasklassen byts (default-CSS:en tar over).
+   PORTRATTET FAR ALDRIG EN EGEN OPACITETSREGEL — det arver medaljongens (wt-g:s G1-laxa: en
+   slackt bild ar inget ankare; profile TONAR IN portrattet, avslojar det inte — den regeln
+   galler reveal/flip/duo). Idlen (heartSpark pa gnistorna) ar mains egen och rors inte. */
+.gifter-layout-profile.gifter-fas-glimt .gifter-diamond-row,
+.gifter-layout-profile.gifter-fas-glimt .gifter-level-badge,
+.gifter-layout-profile.gifter-fas-glimt>h2,
+.gifter-layout-profile.gifter-fas-glimt>h3,
+.gifter-layout-profile.gifter-fas-glimt>p{opacity:0;animation:none}
+.gifter-layout-profile.gifter-fas-glimt .gifter-orbit{animation:gfpGlimt .4s ease-out both}
+.gifter-layout-profile.gifter-fas-stigning>h3,
+.gifter-layout-profile.gifter-fas-stigning .gifter-level-badge{opacity:0;animation:none}
+.gifter-layout-profile.gifter-fas-stigning .gifter-orbit{animation:gfpStigRing .48s ease-out both}
+.gifter-layout-profile.gifter-fas-stigning .gifter-diamond-row,
+.gifter-layout-profile.gifter-fas-stigning>h2,
+.gifter-layout-profile.gifter-fas-stigning>p{animation:gfpStig .48s ease-out both}
+.gifter-layout-profile.gifter-fas-pop>h3{animation:gfpNamn .2s ease-out both}
+.gifter-layout-profile.gifter-fas-pop .gifter-level-badge{animation:gfpBrickaPop .34s ease-out both}
+/* Glimten stannar pa 0,35 — stigningen borjar dar den slutade, sa ringen aldrig slocknar
+   ett ogonblick vid fasbytet. Kroppens opacitet ar framme vid 40 % sa resten av resan ar
+   ren rorelse — halva stigningen ska LASAS, inte anas. Poppen passerar OVER 1: en pop som
+   bara vaxer till 1 ar en intoning. */
+@keyframes gfpGlimt{from{opacity:0}to{opacity:.35}}
+@keyframes gfpStig{0%{opacity:0;transform:translateY(22px)}40%{opacity:1;transform:translateY(13.2px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gfpStigRing{0%{opacity:.35;transform:translateY(22px)}40%{opacity:1;transform:translateY(13.2px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gfpNamn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfpBrickaPop{0%{opacity:0;transform:scale(.82)}55%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}

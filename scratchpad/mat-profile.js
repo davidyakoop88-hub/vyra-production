@@ -1,6 +1,6 @@
 'use strict';
-// Engångsmätning för PR B-byggplanen: risingtiers entré på MAIN, del för del.
-// Kör: node scratchpad/mat-risingtier.js
+// Engångsmätning för PR C-byggplanen: profiles entré på MAIN, del för del.
+// Kör: node scratchpad/mat-profile.js
 const path = require('path'), http = require('http'), fs = require('fs');
 const ROOT = path.join(__dirname, '..');
 const { startaWebblasare } = require(path.join(ROOT, 'tests', 'helpers', 'webblasare.js'));

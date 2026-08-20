@@ -35,7 +35,29 @@
   //
   // Totalt 1040 ms — samma storleksordning som Fan-modellerna, för att två alerts ur samma
   // familj ska kännas som samma app. Exit och idle (gOrb, heartSpark) är mains egna, orörda.
+  // profile · RISE & POP. Uppmätt på main 2026-08-19 (scratchpad/mat-profile.json) före bygget:
+  // profile är mains nakna DEFAULTMODELL — vid 40 ms stod allt på sina vilovärden (opacitet 1,00,
+  // ekolagren 0,28) utan en enda entréanimation; widgeten snäppte på. Eftersom renderaren
+  // defaultar till profile (media.js gifterLevelHtml, `w.gifterLayout||'profile'`) är det här
+  // entrén varje användare får som aldrig öppnar modellväljaren — därför medvetet den lugnaste
+  // av nio (wt-g-storyboarden 'Classic Rise & Pop'): ringen glimmar, kroppen stiger som en
+  // enhet, namnet fram, brickan i en pop.
+  //
+  //   fas 1 · glimt     400 ms   ringen tonar upp ensam till 0,35 — porträttet ÄRVER
+  //                              medaljongens opacitet och släcks ALDRIG självt (wt-g:s
+  //                              G1-läxa: profile TONAR IN porträttet, avslöjar det inte)
+  //   fas 2 · stigning  480 ms   kroppen — medaljong, diamantrad, rubrik, meddelande —
+  //                              stiger som EN kropp; namnet och brickan väntar
+  //   fas 3 · pop       340 ms   namnet fram i kort egen resa, brickan poppar ÖVER 1
+  //
+  // Totalt 1220 ms. Exit finns inte för profile på main och porten gäller entrén — widgeten
+  // lämnar som förut. Idlen (heartSpark-gnistorna) är mains egen, orörd.
   const FASER = {
+    profile: [
+      { namn: 'glimt', ms: 400 },
+      { namn: 'stigning', ms: 480 },
+      { namn: 'pop', ms: 340 },
+    ],
     risingtier: [
       { namn: 'stralar', ms: 340 },
       { namn: 'materialisering', ms: 360 },
