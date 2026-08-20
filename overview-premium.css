@@ -16,3 +16,57 @@
 .toppgivare-kort b{display:block;overflow:hidden;font-size:11px;font-weight:600;color:#efeaf5;white-space:nowrap;text-overflow:ellipsis}
 .toppgivare-kort strong{display:block;margin-top:3px;font:600 15px Manrope;color:#fff}
 .toppgivare-kort em{display:block;margin-top:2px;font-style:normal;font-size:10px;color:#7f8492}
+
+/* ---- LIV I DET TOMMA LAGET + SKEN I BAKGRUNDEN (Davids beslut 2026-08-20) -------------------
+   Oversikten sa arligt "inget har hant an" men gjorde det med en ensam gra rad text i ett stort
+   tomrum. Formen finns nu dar innan forsta gavan: fem platshallarkort som andas, fyra pulsrader,
+   och tre sken som driver langsamt bakom allt.
+
+   ALLT ar aria-hidden och rent dekorativt. En skarmlasare ska inte fa nio tomma element upplasta.
+   Och allt stannar pa prefers-reduced-motion — regeln galler i hela repot, och den galler sarskilt
+   har: Studion ar ett arbetsverktyg man sitter i lange. */
+
+/* Skelettet BAR klassen .toppgivare-rad med flit: malaToppgivare() byter ut .toppgivare-rad mot
+   den riktiga raden, sa platshallaren forsvinner av sig sjalv nar forsta gavan kommer. Ingen extra
+   rad kod behovs for att stada bort den. */
+.toppgivare-skelett span{display:block;height:66px;border-radius:11px;border:1px solid #221e2c;background:linear-gradient(100deg,#141019 30%,#1d1727 50%,#141019 70%);background-size:300% 100%;animation:toppSkelett 2.6s ease-in-out infinite}
+.toppgivare-skelett span:nth-child(2){animation-delay:.18s}
+.toppgivare-skelett span:nth-child(3){animation-delay:.36s}
+.toppgivare-skelett span:nth-child(4){animation-delay:.54s}
+.toppgivare-skelett span:nth-child(5){animation-delay:.72s}
+@keyframes toppSkelett{0%,100%{background-position:120% 0}50%{background-position:-20% 0}}
+
+/* INTE <ul>/<li>. Den riktiga pulslistan ar en <ul>, och command-center-pulse raknar
+   `[data-pulse] li` — ett skelett av li:n forgiftade den rakningen och fallde fyra prov.
+   Skelettet ar dekoration, inte en lista, och ska inte se ut som en for var sig prov eller
+   skarmlasare. */
+.puls-skelett{margin:14px 0 0;padding:0;display:grid;gap:9px}
+.puls-skelett span{display:block;height:13px;border-radius:7px;background:linear-gradient(100deg,#161120 30%,#211a2d 50%,#161120 70%);background-size:300% 100%;animation:toppSkelett 2.6s ease-in-out infinite}
+/* Fallande bredd: en lista med lika langa streck laser sig som en tabell, inte som handelser. */
+.puls-skelett span:nth-child(1){width:86%}
+.puls-skelett span:nth-child(2){width:72%;animation-delay:.2s}
+.puls-skelett span:nth-child(3){width:79%;animation-delay:.4s}
+.puls-skelett span:nth-child(4){width:64%;animation-delay:.6s}
+
+/* Skenet ligger i #view, inte i body: da kan det aldrig hamna ovanpa sidomenyn eller sidhuvudet,
+   och det foljer med nar vyn byts. #view far position:relative for att bli dess referensram. */
+#view{position:relative}
+.oversikt-sken{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:24px}
+/* Opaciteten ar UPPMATT, inte vald pa kansla: vid .5 blev hela vyn ett lila falt och rubriken
+   'Din live ar redo att glansa' stod i en ljus plamm — rorelse far aldrig kosta laslighet.
+   .13 syns tydligt i rorelse men lamnar texten i fred. */
+.oversikt-sken i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.13}
+.oversikt-sken i:nth-child(1){width:420px;height:420px;left:-4%;top:-6%;background:#8d24ee;animation:skenA 19s ease-in-out infinite}
+.oversikt-sken i:nth-child(2){width:360px;height:360px;right:2%;top:14%;background:#d43cff;animation:skenB 23s ease-in-out infinite}
+.oversikt-sken i:nth-child(3){width:300px;height:300px;left:38%;bottom:-8%;background:#ec4899;opacity:.1;animation:skenC 27s ease-in-out infinite}
+/* Innehallet maste ligga OVANFOR skenet. .home-welcome och .home-grid ar premiumvyns tva block,
+   .toppgivare och .stats basvyns — alla fyra namns, annars sjunker halva vyn ner i blurren. */
+#view>.home-welcome,#view>.home-grid,#view>.toppgivare,#view>.stats,#view>.card{position:relative;z-index:1}
+@keyframes skenA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(120px,70px) scale(1.18)}}
+@keyframes skenB{0%,100%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-140px,50px) scale(.9)}}
+@keyframes skenC{0%,100%{transform:translate(0,0) scale(.95)}50%{transform:translate(90px,-80px) scale(1.2)}}
+
+@media (prefers-reduced-motion:reduce){
+  .toppgivare-skelett span,.puls-skelett span,.oversikt-sken i{animation:none}
+  .toppgivare-skelett span,.puls-skelett span{display:block;background-position:50% 0}
+}

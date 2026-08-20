@@ -9,7 +9,10 @@ home = function () {
     ? `Overlay · ${widgetAntal} ${widgetAntal === 1 ? 'widget' : 'widgets'}`
     : 'Overlay tom';
 
-  return `<section class="home-welcome">
+  // Skenet ligger FORST och absolut i #view, bakom allt annat. Det ar rent dekorativt och
+  // aria-hidden: en skarmlasare ska inte fa tre tomma element upplasta for sig.
+  return `<div class="oversikt-sken" aria-hidden="true"><i></i><i></i><i></i></div>
+  <section class="home-welcome">
     <div>
       <span class="eyebrow">VYRA LIVE-KOMMANDOCENTRAL</span>
       <h2>Din live är redo att <em>glänsa.</em></h2>
@@ -21,6 +24,7 @@ home = function () {
     </div>
   </section>
   <div class="toppgivare" data-toppgivare>
+    <div class="toppgivare-rad toppgivare-skelett" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
     <p class="toppgivare-tom">Toppgivarna visas här under riktig LIVE.</p>
   </div>
   <!-- TOTALT: historiken, inte sessionen.
@@ -62,6 +66,7 @@ home = function () {
       <article class="card activity premium-activity" data-pulse>
         <div class="card-head"><div><span class="eyebrow">LIVE-PULS</span><h2>Senaste händelser</h2></div></div>
         <p data-tom="oversikt-puls">Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.</p>
+        <div class="puls-skelett" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       </article>
       <article class="card launch-card">
         <span class="eyebrow">SNABBSTART</span>
@@ -254,9 +259,11 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const gammal = kort.querySelector('.pulse-list');
     if (gammal) gammal.replaceWith(lista);
     else kort.append(lista);
-    // Tomtexten har gjort sitt sa fort det finns riktiga handelser.
+    // Tomtexten och skelettet har gjort sitt sa fort det finns riktiga handelser.
     const tomtext = kort.querySelector('p');
     if (tomtext) tomtext.hidden = true;
+    const skelett = kort.querySelector('.puls-skelett');
+    if (skelett) skelett.hidden = true;
   }
 
   function schemalagg() {
