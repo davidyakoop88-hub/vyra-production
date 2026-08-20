@@ -46,6 +46,12 @@ function validateCloudOrigin(value) {
   } catch { return null; }
 }
 
+// Forarplatserna lever i minnet med flit: de ar en OGONBLICKSBILD av vilka flikar som ar oppna
+// just nu, inte data. Startar appen om ar varje plats ledig, vilket ar exakt ratt — ingen flik
+// haller den langre. TTL:n ar densamma som i vyra-masterval.js och sceneOnline().
+const forarplatser = new Map();
+const FORAR_TTL = 6000;
+
 function startLocalServer(root, port = 4173, options = {}) {
   const cloudOrigin = validateCloudOrigin(options.cloudOrigin);
   // Sessionskakan for molnet, bryggad av huvudprocessen. Den ar satt for vyralive.app och skickas
@@ -242,6 +248,41 @@ function startLocalServer(root, port = 4173, options = {}) {
         const result = ingestEvent(JSON.parse((await readBody(req, 65536)) || '{}'));
         return sendJson(res, result, result.ok ? 200 : 400);
       }
+      // ---- FORARVALET, DELAT MELLAN STUDIO OCH OVERLAY (SS15, forts. 2026-08-20) --------------
+      //
+      // UPPMATT mot OBS 32.2.1: en browser source har sin EGEN localStorage-rymd (samma origin,
+      // varde satt i Chrome, OBS hittade det inte — docs/live-verifiering.md punkt 5). SS15:s
+      // forarval ar en localStorage-nyckel som delas mellan FLIKAR via storage-event, och OBS ar
+      // ingen flik. Studion och overlayn ser darfor aldrig varandras nyckel och bada kan tro att
+      // de ar forare: tittaren betalar tva ganger och ser effekten tva ganger.
+      //
+      // Den har servern ser BADA — de talar redan med 127.0.0.1 — och blir domare nar appen kor.
+      // localStorage ar kvar som reserv for den som kor webben utan appen; klienten valjer.
+      //
+      // REGLERNA AR IDENTISKA MED vyra-masterval.js, annars vore det tva sanningar i systemet.
+      if (p === '/api/automation/master' && (req.method === 'POST' || req.method === 'DELETE')) {
+        const d = JSON.parse((await readBody(req, 8192)) || '{}');
+        const nyckel = text(d.nyckel, 80), tabId = text(d.tabId, 120);
+        if (!nyckel || !tabId) return sendJson(res, { ok: false, error: 'nyckel och tabId kravs' }, 400);
+        if (req.method === 'DELETE') {
+          // Bara innehavaren far lamna platsen. Annars kan vem som helst peta foraren genom att
+          // gissa nyckeln — och ett avsked ar ett anspraks motsats, inte en oppen dorr.
+          const m = forarplatser.get(nyckel);
+          if (m && m.tabId === tabId) forarplatser.delete(nyckel);
+          return sendJson(res, { ok: true, master: (forarplatser.get(nyckel) || {}).tabId || null });
+        }
+        const niva = Number(d.niva) === 1 ? 1 : 2;
+        // __nuForProv finns bara for att kunna aldra en plats i prov utan att sova 6 sekunder.
+        const nu = Number(d.__nuForProv) || Date.now();
+        const m = forarplatser.get(nyckel);
+        const farsk = !!m && Date.now() - Number(m.at || 0) < FORAR_TTL;
+        const farTaOver = !farsk || m.tabId === tabId || (niva === 1 && Number(m.niva || 2) > 1);
+        if (farTaOver) forarplatser.set(nyckel, { tabId, niva, at: nu });
+        const nuvarande = forarplatser.get(nyckel) || {};
+        return sendJson(res, { ok: true, master: nuvarande.tabId || null,
+          niva: nuvarande.niva || null, jagArMaster: nuvarande.tabId === tabId });
+      }
+
       if (p === '/api/obs/status' && req.method === 'GET') {
         if (!obsService) return sendJson(res, { ok: false, error: 'OBS-anslutningen finns endast i VYRA Desktop' }, 503);
         return sendJson(res, { ok: true, ...obsService.getStatus() });

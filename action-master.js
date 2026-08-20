@@ -23,8 +23,21 @@
   //
   // Själva elektionen bor i vyra-masterval.js, eftersom rösten behöver exakt samma mekanism med
   // omvänd prioritet. Två hjärtslagsnycklar, en implementation.
+  // DOMAREN NAR DEN GAR ATT NA (2026-08-20). UPPMATT mot OBS 32.2.1: en browser source har sin
+  // EGEN localStorage-rymd, sa nyckeln nedan nar aldrig over gransen mellan Studion och overlayn
+  // — och bada kan tro att de ar forare. Skrivbordsappens lokala server ser bada och blir domare.
+  //
+  // BARA PA 127.0.0.1, och det ar ingen forsiktighetsatgard utan en gransdragning: en sida pa
+  // https://vyralive.app FAR INTE anropa http://127.0.0.1 (mixed content), samma regel som tvingade
+  // OBS-styrningen in i Electron-processen. Kor bada pa 127.0.0.1 — appens Studio och en
+  // overlay-lank fran appen — delar de domare. Kor overlayn fran vyralive.app tiger domaren och
+  // den lokala vagen galler ofrandrad, precis som forut.
+  const paLokalServer = typeof location === 'object'
+    && (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
+
   const val = window.VyraMasterval?.skapa?.({
     nyckel: 'vyra-automation-master',
+    domare: paLokalServer ? location.origin : null,
     // studio-committed sätts bara när session-state har en committad projektion, och högst en
     // flik kan äga den åt gången. Nivå 1 kan därför aldrig vara två.
     minNiva: () => (window.VyraSessionState?.mode?.() === 'studio-committed' ? 1 : 2),
