@@ -836,7 +836,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
    sa laddordningen mot runtime-controls.js:s koade trigger inte spelar nagon roll. */
-Promise.resolve().then(()=>{let motor=document.createElement('script');motor.src='widget-fas.js?v=1';motor.onload=()=>{let js=document.createElement('script');js.src='fan-fas.js?v=20260819-fabriken';document.body.append(js)};document.body.append(motor)});
+Promise.resolve().then(()=>{let motor=document.createElement('script');motor.src='widget-fas.js?v=1';motor.onload=()=>{let fan=document.createElement('script');fan.src='fan-fas.js?v=20260819-fabriken';document.body.append(fan);let gifter=document.createElement('script');gifter.src='gifter-fas.js?v=1';document.body.append(gifter)};document.body.append(motor)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
    wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
@@ -1054,7 +1054,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260820-2';
+  const version='20260820-3';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
