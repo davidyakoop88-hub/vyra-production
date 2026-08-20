@@ -192,7 +192,8 @@
         "tests/browser/finstilt-lasbarhet.browser.test.js",
         "tests/browser/meny-yta.browser.test.js",
         "tests/browser/skalfix.browser.test.js",
-        "tests/browser/sprak-vakt.browser.test.js"
+        "tests/browser/sprak-vakt.browser.test.js",
+        "tests/browser/sidhuvud-knappar.browser.test.js"
       ],
       "matning": [],
       "risker": [

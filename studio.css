@@ -512,6 +512,24 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
 @keyframes lfCrystalFacet{50%{opacity:.22;transform:scale(.72) rotate(28deg)}}
 .head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
+/* Alla tre knapparna i sidhuvudet lyser (Davids beslut 2026-08-20). Regeln bor HAR, bredvid den
+   grona, for att de tre glodena maste lasas ihop: de tva neutrala i husets violett, anslutningen
+   i gront — for DEN gronskan betyder "TikTok ar anslutet". Samma glod pa alla tre hade bytt bort
+   information mot dekoration, och det ar den halvan tests/browser/sidhuvud-knappar.browser.test.js
+   vaktar hardast.
+   .head-desktop ar ett <a> och bor i auth-client.css, alltsa INTE traffad av `.head-actions
+   button`. Den maste namnas separat, annars lyser tva av tre och det ser ut som ett slarvfel.
+   !important ar inte slarv har utan nodvandigt: design-system.css satter
+   `box-shadow: inset ... !important` pa `.head-actions button` OCH laddas efter studio.css, sa
+   utan det vinner den platta skuggan pa Fargschema — men inte pa Desktop, som ar ett <a>. Det
+   var precis den halvan-lyser-halvan-inte som provet fallde forsta gangen. Den grona regeln
+   ovanfor bar !important av exakt samma skal. */
+/* background-color OCH background-image, inte genvagen `background`: genvagen nollstaller
+   background-color till transparent, och desktop-nedladdning.browser.test.js mater just
+   backgroundColor — den vakten finns for att en ostylad lank en gang renderades som en naken
+   bla webblasarlank. Tva egenskaper ger dessutom en riktig reservfarg om gradienten inte ritas. */
+.head-actions .head-desktop,.head-actions #openBrandKit{background-color:#1f1030!important;background-image:linear-gradient(145deg,#2a1440,#1a0d28)!important;border:1px solid #b558ff!important;box-shadow:0 0 18px #a83aef70,inset 0 0 12px #a83aef26!important;color:#f2e6ff!important}
+.head-actions .head-desktop:hover,.head-actions #openBrandKit:hover{border-color:#c463ff!important;box-shadow:0 0 24px #b94cff66!important;color:#fff!important}
 
 /* Layout format preview: portrait mobile or standard 16:9 broadcast canvas. */
 .editor-shell .editor-toolbar{align-items:center;gap:10px}
