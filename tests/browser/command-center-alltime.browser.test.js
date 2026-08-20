@@ -158,13 +158,22 @@ test('historiken rör inte live-korten', { skip }, async () => {
   const page = await framsidan();
   await page.waitForSelector('[data-alltime]', { timeout: 8000 }).catch(() => {});
   await kravRaden(page);
-  const ut = await page.evaluate(() => ({
-    viewers: document.querySelector('[data-stat="viewers"] strong')?.textContent,
-    diamonds: document.querySelector('[data-stat="diamonds"] strong')?.textContent
-  }));
+  // Riktades om 2026-08-20: de fyra live-korten ersattes av toppgivarraden, men fragan ar
+  // OFORANDRAD — historiken och sessionen ar tva olika sanningar och far aldrig skriva i
+  // varandras noder. Raden ska sta kvar i sitt tomlage tills en RIKTIG gava kommit in.
+  const ut = await page.evaluate(() => {
+    const rad = document.querySelector('[data-toppgivare]');
+    return {
+      finns: !!rad,
+      kort: rad ? rad.querySelectorAll('.toppgivare-kort').length : -1,
+      tomSynlig: !!rad?.querySelector('.toppgivare-tom:not([hidden])')
+    };
+  });
   await page.close();
-  assert.equal(ut.viewers, '—', `live-kortet TITTARE skrevs över med historik: "${ut.viewers}"`);
-  assert.equal(ut.diamonds, '—', `live-kortet DIAMANTER skrevs över med historik: "${ut.diamonds}"`);
+  assert.equal(ut.finns, true, '[data-toppgivare] saknas — testet mätte ingenting');
+  assert.equal(ut.kort, 0,
+    `historiken fyllde live-raden med ${ut.kort} kort — sessionens rad ska vara tom utan gåvor`);
+  assert.equal(ut.tomSynlig, true, 'tomtexten i live-raden skrevs över av historiken');
 });
 
 // En ny anvandare har ingen historik. Da ska raden saga det arligt — inte visa nollor som ser ut
