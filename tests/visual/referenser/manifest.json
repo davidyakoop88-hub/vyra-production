@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 166,
+ "antal": 170,
  "senaste": {
-  "motiv": "Fyra nya Top Gift-nycklar (cyber, glass, neon, royal) kom in i katalogen med PR #241, som lade tillbaka femton knappar premium-final.js tidigare skrev over. De har aldrig haft referensbilder.",
-  "nycklar": 36,
-  "tid": "2026-08-20T10:41:51.454Z"
+  "motiv": "Ta om ALLA referenser i en korning: fyra nya Top Gift-nycklar kom in med PR 241, och ranking:templateTopPoints:neon foll pa textrendering (all text markerad, kanalskillnad 255, avatarer och plattor identiska) vilket tyder pa typsnittsdrift mellan tva CI-tillfallen. En gemensam omtagning pa samma binar tar bort driften mellan gamla och nya bilder.",
+  "nycklar": 170,
+  "tid": "2026-08-20T11:23:16.528Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -675,6 +675,22 @@
   "catalog:topstreak:storm": {
    "matt": "310x98",
    "fyllnad": 26.38
+  },
+  "catalog:topgift:cyber": {
+   "matt": "280x260",
+   "fyllnad": 15.42
+  },
+  "catalog:topgift:glass": {
+   "matt": "280x260",
+   "fyllnad": 13.72
+  },
+  "catalog:topgift:neon": {
+   "matt": "210x270",
+   "fyllnad": 20.24
+  },
+  "catalog:topgift:royal": {
+   "matt": "280x260",
+   "fyllnad": 15.42
   }
  }
 }
