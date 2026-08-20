@@ -95,7 +95,7 @@ nav a:hover{color:#fff}
 .actions{display:flex;gap:8px}
 
 /* ---------- hero ---------- */
-.hero{text-align:center;padding:118px 20px 0;position:relative;overflow:hidden}
+.hero{text-align:center;padding:36px 20px 0;position:relative;overflow:hidden;min-height:calc(100svh - 52px);display:flex;flex-direction:column;justify-content:flex-start}
 .hero-grid{position:absolute;inset:0;z-index:0;pointer-events:none;
   background-image:linear-gradient(rgba(167,139,250,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.1) 1px,transparent 1px);
   background-size:42px 42px;
@@ -574,10 +574,10 @@ main,.mini-sidfot{position:relative;z-index:1}
    vecket ar DOLDA men KVAR (agency-prejudikatet) — och hidden far en display-ryggrad:
    author-display slar annars attributet (scenbakgrundens uppmatta laxa 2026-08-18). */
 [hidden]{display:none!important}
-.hero-kolumner{display:grid;grid-template-columns:400px minmax(0,1fr);gap:56px;align-items:start;
-  max-width:1460px;margin:0 auto;position:relative;z-index:1;text-align:left}
-.hero-innehall{text-align:center;min-width:0}
-.login-kort{position:sticky;top:96px;background:linear-gradient(165deg,#171022e6,#0d0815cc);
+.hero-topp{max-width:900px;margin:0 auto;position:relative;z-index:1;text-align:center}
+.hero-botten{max-width:1460px;margin:34px auto 0;width:100%;position:relative;z-index:1;
+  display:flex;justify-content:flex-start;text-align:left}
+.login-kort{width:400px;background:linear-gradient(165deg,#171022e6,#0d0815cc);
   border:1px solid #3a2848;border-radius:18px;padding:26px 24px;backdrop-filter:blur(14px);
   box-shadow:0 24px 70px -30px #000,0 0 0 1px #ffffff08 inset}
 .login-flikar{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0d0815;
@@ -609,7 +609,104 @@ main,.mini-sidfot{position:relative;z-index:1}
 .login-fin{display:block;margin-top:16px;font-size:10.5px;line-height:1.5;color:var(--muted-dim);
   text-align:center}
 @media(max-width:980px){
-  .hero-kolumner{grid-template-columns:1fr;gap:40px}
-  .login-kort{position:static;order:2;width:100%;max-width:440px;margin:0 auto}
-  .hero-innehall{order:1}
+  .hero-botten{justify-content:center}
+  .login-kort{width:100%;max-width:440px}
+}
+
+/* Prisraden bor langst ner i mitten (Davids skiss 2026-08-20): heron ar flex-kolumn, sa
+   margin-top:auto trycker raden mot sidfoten och friligger mitten for bilden som kommer.
+   Huvudbudskapet ar avsiktligt provperioden, inte beloppet. */
+.hero-prisrad{margin-top:auto;position:relative;z-index:1;text-align:center;padding:24px 0 20px}
+.pris-fri{display:block;font:700 21px/1.3 var(--font-display);color:#fff;letter-spacing:.01em;
+  text-shadow:0 0 20px #a78bfa80,0 0 44px #ec489940;margin-bottom:4px}
+
+/* ==== Mobilbilden i mitten (Davids beslut 2026-08-20): konkurrentens uppmatta svav
+   (rotate -3grader i vila, upp-hoger till -1.2grader/8px/-16px/1.018 over 5,5 s) fast i 3D —
+   rotateY/rotateX-drift i keyframen — plus perspektivlutningen mot pekaren (landing-mobil.js).
+   TVA LAGER med flit: scenen ags av JS, figuren av CSS-animationen. En transform, en skrivare. */
+.hero-mobil-scen{margin:0 auto;position:relative;z-index:1;transform-style:preserve-3d;will-change:transform}
+.hero-mobil{margin:0;width:min(320px,40vw);border-radius:16px;overflow:hidden;position:relative;
+  box-shadow:12px 18px 30px -6px #000000a6,0 0 18px #9965ff40;
+  transform:rotate(-3deg);animation:vyraSvavHoger 5.5s ease-in-out infinite;
+  will-change:transform;transform-style:preserve-3d}
+.hero-mobil img{display:block;width:100%;height:auto;border-radius:inherit}
+@keyframes vyraSvavHoger{
+  0%{transform:rotate(-3deg) rotateY(-6deg) rotateX(2deg) translate(0,0) scale(1)}
+  50%{transform:rotate(-1.2deg) rotateY(6deg) rotateX(-2.5deg) translate(8px,-16px) scale(1.018)}
+  100%{transform:rotate(-3deg) rotateY(-6deg) rotateX(2deg) translate(0,0) scale(1)}}
+@media (prefers-reduced-motion:reduce){.hero-mobil{animation:none;transform:none}.hero-mobil-scen{transform:none!important}}
+@media (max-width:980px){.hero-mobil-scen{margin-top:28px}.hero-botten{flex-wrap:wrap}}
+
+
+
+/* ==== GAVOBANAN — atta gavor som lever TILLSAMMANS (Davids beslut 2026-08-20, ersatter atta
+   losa svavare). En enda bana kretsar runt mobilen; gavorna sitter pa den med 45 graders
+   mellanrum och delar darfor EN rorelse i stallet for atta. Fasen kommer ur --i, inte ur
+   olika keyframes.
+
+   TRE LAGER, EN SKRIVARE VAR — samma komposor-lakxa som transformen i Studion:
+     .hero-gavoring   snurrar hela banan (vyraRing)
+     .hero-gava       staller gavan pa sin plats i banan: rotateY(i*45deg) translateZ(radie)
+     .hero-gava-bb    motroterar exakt lika mycket (vyraRingMot + negativ delay per fas), sa
+                      gavan alltid vetter mot betraktaren i stallet for att vanda rygg
+     img              andetaget — egen tid per gava (--bob), det som gor dem levande var for sig
+
+   Djupet ar akta: perspective-EGENSKAPEN pa scenen (inte perspective() i transform, som bara
+   galler elementet sjalvt) gor att gavor pa bortre halvan blir mindre OCH hamnar bakom mobilen
+   i djupsorteringen. Ingen z-index behovs — 3D-rummet gor jobbet. */
+.hero-mobil-scen{perspective:1300px;--radie:clamp(190px,21vw,268px)}
+/* BANANS LUTNING OCH HOJD ar det som gor att gavorna aldrig vandrar over streamerns ansikte:
+   en vagrat bana pa mobilens mitt gjorde precis det. Ringen ligger darfor vid mobilens FOT
+   (top 62 %) och lutar 22 grader mot betraktaren — gavorna kretsar kring basen som ringar
+   runt en planet, passerar framfor nederkanten och skyms bakom mobilen pa bortre halvan.
+   Lutningen bor pa ett EGET lager: rotationsanimationen ager transformen pa lagret under. */
+.hero-gavoring{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;
+  transform:rotateX(-22deg)}
+.hero-gavoring-rot{position:absolute;inset:0;transform-style:preserve-3d;
+  animation:vyraRing 34s linear infinite}
+.hero-gava{position:absolute;top:62%;left:50%;width:var(--gava);margin-left:calc(var(--gava) / -2);
+  transform-style:preserve-3d;
+  transform:rotateY(calc(var(--i) * 45deg)) translateZ(var(--radie))}
+.hero-gava-bb{display:block;transform-style:preserve-3d;
+  animation:vyraRingMot 34s linear infinite;
+  animation-delay:calc(var(--i) * -4.25s)}
+.hero-gava-kom{display:block;transform:rotateX(22deg)}
+.hero-gava img{display:block;width:100%;height:auto;
+  filter:drop-shadow(0 14px 20px #000000a0) drop-shadow(0 0 14px #9965ff4d);
+  animation:vyraGavaAndas var(--bob,4s) ease-in-out infinite}
+@keyframes vyraRing{to{transform:rotateY(360deg)}}
+@keyframes vyraRingMot{to{transform:rotateY(-360deg)}}
+@keyframes vyraGavaAndas{
+  0%,100%{transform:translateY(0) scale(1) rotate(-2deg)}
+  50%{transform:translateY(-11px) scale(1.06) rotate(2deg)}}
+@media (prefers-reduced-motion:reduce){
+  .hero-gavoring-rot,.hero-gava-bb,.hero-gava img{animation:none}}
+@media (max-width:1200px){.hero-mobil-scen{--radie:clamp(170px,21vw,230px);--gava:76px}}
+@media (max-width:760px){.hero-gavoring{display:none}}
+
+/* ==== SIST I FILEN MED FLIT. Bada reglerna nedan raderades en gang av misstag nar ett block
+   ovanfor klipptes ut, och foljden var tyst: gavorna tappade sin storleksvariabel och sidan
+   vaxte sa prisraden hamnade under vecket (uppmatt y=936 i en 900 px vy). De bor darfor
+   nederst, med eget rubrikstycke, sa nasta redigering inte sveper med dem. */
+.hero-mobil-scen{--gava:clamp(68px,8vw,104px)}
+
+/* Korta fonster: prisraden ar sidans sista rad och MASTE synas utan skrollning (landnings-
+   vakten mater det vid 900 px hojd). Vi krymper kortet, mobilen och luften i stallet for att
+   flytta raden — placeringen ar Davids beslut, hojden ar var uppgift. */
+@media (max-height:1000px){
+  .hero{padding-top:20px}
+  .hero h1{font-size:50px;margin:12px 0 10px}
+  .lead{font-size:15px;line-height:1.5}
+  .hero-botten{margin-top:14px}
+  .login-kort{padding:18px 20px}
+  .login-flikar{margin-bottom:12px}
+  .login-kort form{gap:9px}
+  .login-kort input{padding:9px 13px}
+  .login-knapp{padding:11px 0}
+  .login-fin{margin-top:10px}
+  .hero-mobil{width:min(232px,28vw)}
+  .hero-prisrad{padding:8px 0 10px}
+  .pris-fri{font-size:18px}
+  .social-proof{margin:0}
+  .trust{margin-top:4px}
 }
