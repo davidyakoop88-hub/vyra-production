@@ -21,7 +21,7 @@ const { SYNLIG } = require('../fixtures/synlighet.js');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 let browser, rigg;
-const skip = hoppaOver();
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
