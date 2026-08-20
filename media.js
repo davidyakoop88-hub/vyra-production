@@ -836,7 +836,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
    sa laddordningen mot runtime-controls.js:s koade trigger inte spelar nagon roll. */
-Promise.resolve().then(()=>{let motor=document.createElement('script');motor.src='widget-fas.js?v=1';motor.onload=()=>{let fan=document.createElement('script');fan.src='fan-fas.js?v=20260819-fabriken';document.body.append(fan);let gifter=document.createElement('script');gifter.src='gifter-fas.js?v=20260819-rise-pop';document.body.append(gifter)};document.body.append(motor)});
+Promise.resolve().then(()=>{let motor=document.createElement('script');motor.src='widget-fas.js?v=1';motor.onload=()=>{let fan=document.createElement('script');fan.src='fan-fas.js?v=20260819-fabriken';document.body.append(fan);let gifter=document.createElement('script');gifter.src='gifter-fas.js?v=20260820-4';document.body.append(gifter)};document.body.append(motor)});
 /* Supportsystemet. Klienten, servern (/api/support/tickets, /api/client-errors) och tabellerna
    fanns fardiga men laddades av ingen — support-client.js band mot [data-extra="wishlist"], en knapp
    wishlist.js tagit over. wishlist.js ar sedan dess borttagen; dess nyckel vyra-wishlist lever
@@ -860,13 +860,192 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='batt
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=1';document.body.append(js)});
+
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20260818-panel-live';document.body.append(js)});
+
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260817-duckning';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260726-lazy-thumbs';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 if(new URLSearchParams(location.search).get('vfxdemo')==='2'){Promise.resolve().then(()=>{let files=['pixi.min.js','gsap.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-fountain-types.js','vfx-rng.js','vfx-crystal-heart-particle.js','vfx-sparkle-particle.js','vfx-trail-pool.js','vfx-fountain-source.js','vfx-fountain-emitter.js','vfx-fountain-debug.js','vfx-fountain-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
+
+/* =================================================================================================
+   GUARDIAN EMBLEM — ett heraldiskt vapen for TikToks Guardians, i fyra praktsteg.
+
+   INTE EN VARIANT AV NAGON ANNAN FAMILJ. Monstret delas med fan-fas.js (fasklasser, utbytbar
+   klocka, ett register) men inga data. Koreografin bor i guardian-emblem-fas.js, vapnet i
+   guardian-emblem.css, och registret over praktsteg i widget-factory.js.
+
+   REGISTRET RITAR WIDGETEN. Renderaren raknar inte upp delar; den gar igenom STEG[n].delar och
+   ritar var och en. Ett femte steg behover darfor bara en rad i registret — och en del som laggs
+   till dar kan inte glommas bort har. Det ar samma slutna net som G1 och G-SLUT vaktar.
+
+   ORDNINGEN I REGISTRET ÄR INTE PLACERINGEN. Listan ar stabil sa att G-STEG-PROGRESSION kan kraeva
+   prefixlikhet mellan stegen; VAR delarna hamnar bestams av `order` och `z-index` i CSS:en. JS
+   bestammer VAD och NAR, CSS bestammer VAR och HUR.
+
+   SPRAKET AVGORS PA ETT STALLE. `VyraGuardianEmblemFas.sprak(w)` ar det stallet — se dess kommentar
+   for fallbackordningen. Renderaren fragar och far 'sv' eller 'en'; den kanner inte till navigator,
+   och den dag VyraLang byggs andras ingenting har.
+
+   TESTKNAPPEN KOAR PER DEFINITION. Den anropar `window.triggerGuardianEmblem`, och
+   runtime-controls.js har bytt ut just det namnet mot en koad variant. Knappen KAN alltsa inte
+   kringga kon — till skillnad fran fyrverkeriets testknapp (§2), som byggde raketerna direkt pa
+   DOM och behovde lagas i efterhand. Den globala referensen AR kon.
+   =============================================================================================== */
+function geStegAv(w){let n=Math.round(Number(w.guardianStep));return n>=1&&n<=4?String(n):'3'}
+/* SYSKONFILEN AR INTE GARANTERAD, OCH ETT KAST HAR AR DYRT. `render()` gor
+   `widgets.map(wh).join('')` — en enda widget som kastar i sin renderare tar HELA duken med sig,
+   och streamern ser en tom layout utan forklaring. Uppmatt i PR #222: i en rigg som laddade media.js
+   men inte syskonfilen kastade renderaren, och katalogens miniatyrvakt sag det som knappar utan
+   miniatyr. I studio.html laddas filerna i rad — men "kan inte intraffa i den ordning vi rakar ha
+   idag" ar inte samma sak som robust.
+
+   Reservlistorna nedan ar en sista utvag, inte ett andra beslut. Att de svenska strangarna ar
+   identiska med registrets vaktas av ett prov, sa de inte kan glida isar. */
+const GE_RESERV=['bild','avatar','namn','undertext'];
+function geDelar(steg){
+  const F=window.VyraGuardianEmblemFas;
+  return (F&&F.DELAR)?F.DELAR:GE_RESERV;
+}
+function geText(w){
+  const F=window.VyraGuardianEmblemFas;
+  if(F&&typeof F.sprak==='function')return F.text(F.sprak(w));
+  return {banderoll:'BESKYDDARE',undertext:'Tack för ditt beskydd'};
+}
+/* GEOMETRIN. Reservtabellen speglar registret i guardian-emblem-fas.js och finns av samma skal som
+   GE_RESERV en gang gjorde: `render()` gor `widgets.map(wh).join('')`, sa EN widget som kastar i sin
+   renderare tar hela duken med sig. Ett prov haller de tva tabellerna identiska. */
+const GE_GEO_RESERV={
+  1:{bild:'steg-1.png',aspect:0.9842,circle:{left:26.81,top:32.71,width:45.47,height:44.33}},
+  2:{bild:'steg-2.png',aspect:1.2071,circle:{left:29.1,top:47.67,width:40.76,height:31.7}},
+  3:{bild:'steg-3.png',aspect:1.2646,circle:{left:27.38,top:47.49,width:43.52,height:32.43}},
+  4:{bild:'steg-4.png',aspect:1.2859,circle:{left:28.98,top:48.22,width:42.17,height:30.56}}
+};
+const GE_BILDBAS='assets/guardian-emblem/';
+function geGeo(steg){
+  const F=window.VyraGuardianEmblemFas;
+  if(F&&F.STEG&&F.STEG[steg])return F.STEG[steg];
+  return GE_GEO_RESERV[steg]||GE_GEO_RESERV[3];
+}
+function geDel(namn,w,t,geo){
+  switch(namn){
+    /* Bilden bar sitt eget hojd-bredd-forhallande genom `padding-top` i procent. Den tekniken later
+       ladan folja konstverket i stallet for tvartom — satter man hojden i pixlar racker det att ett
+       steg byts ut mot en bild med annan proportion for att emblemet ska bli utdraget. */
+    case 'bild':return '<div class="ge-bild" style="padding-top:'+(geo.aspect*100).toFixed(3)+'%">'
+      +'<img src="'+GE_BILDBAS+geo.bild+'" alt="">'
+      +geDel('avatar',w,t,geo)+'</div>';
+    /* Avatarhalet star dar det MATTS i bilden, inte dar nagon gissat. Samma falt som mvpf-photo. */
+    case 'avatar':{let bild=String(w.guardianAvatar||'').trim(),c=geo.circle;
+      return '<div class="ge-avatar" style="left:'+c.left+'%;top:'+c.top+'%;width:'+c.width+'%;height:'+c.height+'%">'
+        +(bild?'<img src="'+VyraSafe.url(bild)+'" alt="">':'')+'</div>'}
+    case 'namn':return w.guardianShowUsername===false?'':'<div class="ge-namn">'+VyraSafe.text(w.guardianUsername||'@Guardian')+'</div>';
+    case 'undertext':{let egen=String(w.guardianCustomText||'').trim();
+      return '<div class="ge-undertext">'+VyraSafe.text(egen||t.undertext)+'</div>'}
+    default:return '';
+  }
+}
+function guardianEmblemHtml(w){
+  let steg=geStegAv(w),t=geText(w),geo=geGeo(steg),delar=geDelar(steg);
+  let inne=delar.filter(d=>d!=='avatar').map(d=>geDel(d,w,t,geo)).join('');
+  return `<div class="widget guardian-emblem ge-step-${steg}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||400}px;height:${w.height||480}px;zoom:${w.widgetScale||1}">${inne}${selected===w.id?'<span class="resize-handle">&#8600;</span>':''}</div>`;
+}
+const emblemWh=wh;wh=function(w){return w.type==='templateGuardianEmblem'?guardianEmblemHtml(w):emblemWh(w)};
+
+const emblemProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateGuardianEmblem')return emblemProps();
+  let vald=(v,mot)=>v===mot?' selected':'';
+  let steg=geStegAv(w),sprak=w.guardianLang||'auto';
+  /* OPTIONERNA STAR UTSKRIVNA, INTE GENERERADE. En `.map()` over en lokal lista hade varit kortare
+     — och hade gjort listan till en FEMTE kalla for vilka praktsteg som finns, oläsbar for G-SLUT
+     som laser kallkoden. Fyra rader dubblering ar billigare an en vakt som inte kan se panelen. */
+  return `<h3>GUARDIAN EMBLEM</h3><div class="template-badge">REDIGERBAR ALERT</div><div hidden><input id="pt" value="${VyraSafe.text(w.title||'')}"><input id="pv" value=""></div>`
+    +`<div class="property-group"><h4>INNEHÅLL</h4>`
+    +`<label>Användarnamn<input id="geUsername" value="${VyraSafe.text(w.guardianUsername||'@Guardian')}"></label>`
+    +`<label>Egen text<textarea id="geCustomText" rows="2">${VyraSafe.text(w.guardianCustomText||'')}</textarea></label>`
+    +`<div class="switch-row one"><label><input id="geShowUsername" type="checkbox" ${w.guardianShowUsername===false?'':'checked'}> Visa användarnamnet</label></div></div>`
+    +`<div class="property-group"><h4>PRAKT</h4>`
+    +`<label>Praktsteg<select id="geStep">`
+    +`<option value="1"${vald('1',steg)}>Steg 1 · Ram (400×330)</option>`
+    +`<option value="2"${vald('2',steg)}>Steg 2 · Sköld (400×360)</option>`
+    +`<option value="3"${vald('3',steg)}>Steg 3 · Hjort (400×495)</option>`
+    +`<option value="4"${vald('4',steg)}>Steg 4 · Full prakt (400×585)</option>`
+    +`</select></label>`
+    +`<label>Språk<select id="geLang"><option value="auto"${vald('auto',sprak)}>Följ webbläsaren</option><option value="sv"${vald('sv',sprak)}>Svenska</option><option value="en"${vald('en',sprak)}>Engelska</option></select></label></div>`
+    +`<div class="property-group"><h4>TESTA</h4><button id="testGuardianEmblem">Testa Guardian-emblemet</button>`
+    +`<small>Går genom samma kö som en riktig Guardian — inte snabbare.</small></div>`;
+};
+
+const emblemBind=bind;bind=function(){emblemBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGuardianEmblem')return;
+  /* LIVE-VAGEN, INTE render(). `render()` river hela vyn, egenskapspanelen inkluderad — anropad
+     fran en `oninput` byts faltet man skriver i ut vid varje tangenttryck. Mallen ar giftFieldBind:
+     input patchar bara canvasnoden, change committar. Vaktat av tests/panel-live-path.test.js, som
+     harleder sin fillista ur `props=function`/`bind=function`. */
+  let falt=(id,nyckel)=>{let el=document.querySelector(id);if(!el)return;
+    el.oninput=e=>vyraLivePatch(w,el,nyckel,e.target.value);
+    el.onchange=e=>{w[nyckel]=e.target.value;save();vyraRenderKeepingPanel()}};
+  falt('#geUsername','guardianUsername');falt('#geCustomText','guardianCustomText');
+  /* Praktsteget byter BADE utseende och matt, sa det committar direkt — det finns ingen meningsfull
+     mellanposition att forhandsvisa i en select. Matten laser fabrikens EGEN tabell i stallet for
+     en kopia har: tva stallen med matt blir forr eller senare tva olika matt. */
+  let vaxel=(id,nyckel)=>{let el=document.querySelector(id);if(!el)return;
+    el.onchange=e=>{w[nyckel]=nyckel==='guardianStep'?Number(e.target.value):e.target.value;
+      if(nyckel==='guardianStep'){let m=VyraWidgets.variants('guardianemblem.matt')[e.target.value];if(m){w.width=m[0];w.height=m[1]}}
+      save();vyraRenderKeepingPanel()}};
+  vaxel('#geStep','guardianStep');vaxel('#geLang','guardianLang');
+  let visa=document.querySelector('#geShowUsername');if(visa)visa.onchange=e=>{w.guardianShowUsername=e.target.checked;save();vyraRenderKeepingPanel()};
+  /* TESTKNAPPEN. Anropar det globala namnet och inget annat — ingen klass satts har, ingen
+     koreografi startas har, och ingenting skrivs till widgeten. `__test` sager bara at triggern att
+     hoppa over gatet, precis som fan- och gifter-familjerna gor. */
+  let testa=document.querySelector('#testGuardianEmblem');if(testa)testa.onclick=()=>{
+    window.triggerGuardianEmblem({username:w.guardianUsername||'@Guardian',__test:true})};
+};
+
+/* KATALOGSEKTIONEN. Utan den gar widgeten inte att skapa fran granssnittet — fabriken kan bygga
+   den, men ingen knapp ber om det. En familj som bara nas via en katalognyckel i konsolen ar inte
+   levererad, och docs/katalogkarta.md (som CI genererar ur knapparna) hade inte kant till den.
+
+   `data-guardian-emblem` ar grinden mot dubbel injektion. bind() kor pa varje render, och utan den
+   hade sektionen lagts till en gang per omrendering — samma falla som mvpFrameOptions loste. */
+const emblemCatalog=bind;bind=function(){emblemCatalog();if(view!=='editor'&&view!=='overlay')return;
+  let catalog=document.querySelector('.widget-catalog');
+  if(!catalog||catalog.querySelector('[data-guardian-emblem]'))return;
+  let geSteg=[['1','Ram','400×450 · ringen ensam'],['2','Hjort','400×535 · geviret och två kristaller'],['3','Krona','400×560 · krona och fyra kristaller'],['4','Kungakrona','400×570 · kungakronan och vingarna']];
+  let section=document.createElement('section');
+  section.dataset.guardianEmblem='1';
+  section.className='guardian-emblem-template-section';
+  section.innerHTML='<h4>GUARDIAN EMBLEM · 4 PRAKTSTEG</h4>'
+    +geSteg.map(([n,titel,under])=>`<button data-ge="${n}"><i>&#9670;</i><span><b>${titel}</b><small>${under}</small></span></button>`).join('');
+  catalog.prepend(section);
+  section.querySelectorAll('button').forEach(knapp=>{
+    let nyckel='catalog:guardianemblem:'+knapp.dataset.ge;
+    knapp.dataset.catalogKey=nyckel;
+    knapp.onclick=()=>{
+      let skapad=VyraWidgets.create(nyckel);
+      /* Ett emblem i taget i layouten. Tva samtidiga vapen ar inte en design, det ar tva alerts som
+         talar i mun pa varandra — samma regel som Follower Spotlight foljer. */
+      state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateGuardianEmblem');
+      state.widgets.push(skapad);selected=skapad.id;save();render();
+      toast('Guardian Emblem skapad')}});
+};
+
+/* Triggern. Tander varje emblem, byter ut `_geTimer` sa guardian-emblem-fas.js kan se exakt vilka
+   lador som triggades, och tar ned alerten nar visningstiden gatt ut. */
+function triggerGuardianEmblem(event={}){
+  let widgets=state.widgets.filter(w=>w.type==='templateGuardianEmblem');
+  if(!widgets.length)return;
+  widgets.forEach(w=>{
+    let box=document.querySelector(`[data-id="${w.id}"]`);
+    if(!box)return;
+    if(event.username){let namn=box.querySelector('.ge-namn');if(namn)namn.textContent=String(event.username)}
+    box.classList.remove('ge-active');void box.offsetWidth;box.classList.add('ge-active');
+    clearTimeout(box._geTimer);
+    let F=window.VyraGuardianEmblemFas;
+    box._geTimer=setTimeout(()=>{box.classList.remove('ge-active')},Math.max(F&&F.total?F.total():0,6500));
+  });
+}
+window.triggerGuardianEmblem=triggerGuardianEmblem;
 
 /* VYRA_PREMIUM_WIDGET_BUNDLE_20260812
    Activates the premium widget files that are already versioned in this repository.
@@ -875,7 +1054,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260819-rise-pop';
+  const version='20260820-4';
   ['premium-final.css','runtime-controls.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
