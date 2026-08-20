@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `8c4ee0c`
+Commit: `52cbb8d`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -20,11 +20,11 @@ Commit: `8c4ee0c`
 
 | | |
 |---|---|
-| Kort totalt | **227** |
-| Sektioner | 21 |
-| Med katalognyckel | 227 / 227 |
-| Med shadow DOM-miniatyr | 227 / 227 |
-| Ritar sin design | 227 / 227 |
+| Kort totalt | **271** |
+| Sektioner | 22 |
+| Med katalognyckel | 271 / 271 |
+| Med shadow DOM-miniatyr | 271 / 271 |
+| Ritar sin design | 271 / 271 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -46,7 +46,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-20 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-20 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-20 | — |
-| FOLLOWERS & LIKE GOALS · 4 LIGGANDE DESIGNER | 31 | 31/31 | 31/31 | 31/31 | 2026-08-20 | — |
+| FOLLOWERS & LIKE GOALS · 4 LIGGANDE DESIGNER | 16 | 16/16 | 16/16 | 16/16 | 2026-08-20 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-20 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-20 | — |
@@ -55,7 +55,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK · REDIGERBAR | 23 | 23/23 | 23/23 | 23/23 | 2026-08-20 | — |
 | VYRA TOP STREAK · REDIGERBARA | 23 | 23/23 | 23/23 | 23/23 | 2026-08-20 | — |
 | VYRA TOP STREAK · PREMIUM | 23 | 23/23 | 23/23 | 23/23 | 2026-08-20 | — |
-| TOP GIFTER · DESIGNVAL | 21 | 21/21 | 21/21 | 21/21 | 2026-08-20 | — |
+| VYRA ORIGINAL · REDIGERBARA | 40 | 40/40 | 40/40 | 40/40 | 2026-08-20 | — |
+| TOP GIFTER · DESIGNVAL | 40 | 40/40 | 40/40 | 40/40 | 2026-08-20 | — |
 
 ## Varje kort
 
@@ -199,21 +200,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Like · Royal Heart Frame | `catalog:socialgoal:likes:heart-frame:landscape` | ✓ | ✓ | 2026-08-20 | — |
 | Like · Sapphire Dragon Frame | `catalog:socialgoal:likes:sapphire-frame:landscape` | ✓ | ✓ | 2026-08-20 | — |
 | Like · Azure Crown Frame | `catalog:socialgoal:likes:azure-frame:landscape` | ✓ | ✓ | 2026-08-20 | — |
-| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-20 | — |
-| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-20 | — |
-| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-20 | — |
-| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-20 | — |
-| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-20 | — |
-| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-20 | — |
-| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-20 | — |
-| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Royal Wings | `catalog:topgift:frame:royal-wings` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Crystal Spire | `catalog:topgift:frame:crystal-spire` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Angel Heart | `catalog:topgift:frame:angel-heart` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Dark Raven | `catalog:topgift:frame:dark-raven` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Frost Crystal | `catalog:topgift:frame:frost-crystal` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Rose Garden | `catalog:topgift:frame:rose-garden` | ✓ | ✓ | 2026-08-20 | — |
-| Gifter · Luna Mist | `catalog:topgift:frame:luna-mist` | ✓ | ✓ | 2026-08-20 | — |
 
 ### GIFTER LEVEL UP · VARJE MODELL SEPARAT
 
@@ -365,10 +351,74 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-20 | — |
 | Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-20 | — |
 
+### VYRA ORIGINAL · REDIGERBARA
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Royal Gold | `catalog:topgift:royal` | ✓ | ✓ | 2026-08-20 | — |
+| Neon Purple | `catalog:topgift:neon` | ✓ | ✓ | 2026-08-20 | — |
+| Cyber Blue | `catalog:topgift:cyber` | ✓ | ✓ | 2026-08-20 | — |
+| Glass | `catalog:topgift:glass` | ✓ | ✓ | 2026-08-20 | — |
+| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-20 | — |
+| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-20 | — |
+| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-20 | — |
+| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-20 | — |
+| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-20 | — |
+| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-20 | — |
+| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-20 | — |
+| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Royal Wings | `catalog:topgift:frame:royal-wings` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Crystal Spire | `catalog:topgift:frame:crystal-spire` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Angel Heart | `catalog:topgift:frame:angel-heart` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Dark Raven | `catalog:topgift:frame:dark-raven` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Frost Crystal | `catalog:topgift:frame:frost-crystal` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Rose Garden | `catalog:topgift:frame:rose-garden` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Luna Mist | `catalog:topgift:frame:luna-mist` | ✓ | ✓ | 2026-08-20 | — |
+| Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-20 | — |
+| Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-20 | — |
+| Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-20 | — |
+| Glass | `catalog:topgift:premium:glass` | ✓ | ✓ | 2026-08-20 | — |
+| Sakura Pink | `catalog:topgift:premium:sakura` | ✓ | ✓ | 2026-08-20 | — |
+| Inferno Fire | `catalog:topgift:premium:fire` | ✓ | ✓ | 2026-08-20 | — |
+| Ice Crystal | `catalog:topgift:premium:ice` | ✓ | ✓ | 2026-08-20 | — |
+| Galaxy | `catalog:topgift:premium:galaxy` | ✓ | ✓ | 2026-08-20 | — |
+| Aurora | `catalog:topgift:premium:aurora` | ✓ | ✓ | 2026-08-20 | — |
+| Retro | `catalog:topgift:premium:retro` | ✓ | ✓ | 2026-08-20 | — |
+| Gold Rush | `catalog:topgift:premium:goldrush` | ✓ | ✓ | 2026-08-20 | — |
+| VYRA Hall of Fame | `catalog:topgift:premium:hall` | ✓ | ✓ | 2026-08-20 | — |
+| Royal Throne | `catalog:topgift:premium:throne` | ✓ | ✓ | 2026-08-20 | — |
+| Celestial Champion | `catalog:topgift:premium:champion` | ✓ | ✓ | 2026-08-20 | — |
+| Diamond Pedestal | `catalog:topgift:premium:pedestal` | ✓ | ✓ | 2026-08-20 | — |
+| Celestial Arch | `catalog:topgift:premium:arch` | ✓ | ✓ | 2026-08-20 | — |
+| Phoenix Ribbon | `catalog:topgift:premium:phoenix` | ✓ | ✓ | 2026-08-20 | — |
+| Neon Signal | `catalog:topgift:premium:signal` | ✓ | ✓ | 2026-08-20 | — |
+| Celestial Fireworks | `catalog:topgift:premium:fireworks` | ✓ | ✓ | 2026-08-20 | — |
+| Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-20 | — |
+| Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-20 | — |
+
 ### TOP GIFTER · DESIGNVAL
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
+| Royal Gold | `catalog:topgift:royal` | ✓ | ✓ | 2026-08-20 | — |
+| Neon Purple | `catalog:topgift:neon` | ✓ | ✓ | 2026-08-20 | — |
+| Cyber Blue | `catalog:topgift:cyber` | ✓ | ✓ | 2026-08-20 | — |
+| Glass | `catalog:topgift:glass` | ✓ | ✓ | 2026-08-20 | — |
+| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-20 | — |
+| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-20 | — |
+| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-20 | — |
+| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-20 | — |
+| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-20 | — |
+| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-20 | — |
+| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-20 | — |
+| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Royal Wings | `catalog:topgift:frame:royal-wings` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Crystal Spire | `catalog:topgift:frame:crystal-spire` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Angel Heart | `catalog:topgift:frame:angel-heart` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Dark Raven | `catalog:topgift:frame:dark-raven` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Frost Crystal | `catalog:topgift:frame:frost-crystal` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Rose Garden | `catalog:topgift:frame:rose-garden` | ✓ | ✓ | 2026-08-20 | — |
+| Gifter · Luna Mist | `catalog:topgift:frame:luna-mist` | ✓ | ✓ | 2026-08-20 | — |
 | Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-20 | — |
 | Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-20 | — |
 | Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-20 | — |
