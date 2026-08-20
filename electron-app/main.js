@@ -6,6 +6,7 @@ const { createTikTokService } = require('./tiktok-service');
 const { createObsService } = require('./obs-service');
 const Updater = require('./updater');
 
+const BRYT = String.fromCharCode(10);
 const PORT = 4173;
 const CLOUD_ORIGIN = 'https://vyralive.app';
 let splash, main, httpServer;
@@ -77,7 +78,8 @@ async function createMainWindow() {
   const isSpotifyAuthUrl=url=>{
     try{return new URL(url).origin==='https://accounts.spotify.com'}catch{return false}
   };
-  main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`);
+  main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`)
+    .catch(err => log('forsta laddningen mot molnet foll:', err.message));
   main.webContents.setWindowOpenHandler(({url})=>{
     if(isTrustedAppUrl(url))return{action:'allow',overrideBrowserWindowOptions:{webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}};
     if(isSpotifyAuthUrl(url))return{action:'allow',overrideBrowserWindowOptions:{width:520,height:760,autoHideMenuBar:true,webPreferences:{contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true}}};
@@ -164,7 +166,46 @@ async function createMainWindow() {
     desktopAuthTimer.unref?.();
     openLocalStudioWhenEntitled();
   });
-  main.webContents.on('did-fail-load', (e, code, desc) => log('main did-fail-load', code, desc));
+  /* moln-onabart */
+  // NAR MOLNET INTE GAR ATT NA sa hande ingenting: did-fail-load loggade till en fil i
+  // temp-katalogen, pollningen som forklarar hinder startas inuti did-finish-load och startade
+  // alltsa aldrig, och ready-to-show visade fonstret anda. Anvandaren fick en svart ruta utan ett
+  // ord. Samma felklass som behorighetshindret (desktop-entry-reason) — tyst vantan dar ett skal
+  // behovdes — fast ett steg tidigare i kedjan.
+  //
+  // -3 (ABORTED) hoppas over med flit: den fyrar aven vid normala omnavigeringar, till exempel
+  // nar vi sjalva byter till den lokala Studion efter lyckad inloggning.
+  let molnFelVisat = false, molnForsok = 0, molnTimer;
+  main.webContents.on('did-fail-load', (e, code, desc, url, isMainFrame) => {
+    log('main did-fail-load', code, desc, url);
+    if (!isMainFrame || code === -3) return;
+    if (!String(url || '').startsWith(CLOUD_ORIGIN)) return;
+    // Splashen ligger annars kvar ovanpa ett tomt fonster: ready-to-show ar inte garanterad nar
+    // laddningen fallit, och den ar enda stallet som stanger den i det lyckade flodet.
+    if (splash && !splash.isDestroyed()) splash.destroy();
+    if (main && !main.isDestroyed() && !main.isVisible()) main.show();
+    // Ett nedslaget moln kommer tillbaka. Vi forsoker igen med vaxande mellanrum sa att
+    // anvandaren slipper starta om appen nar natet ar dar igen — men vi sager till EN gang.
+    molnForsok += 1;
+    clearTimeout(molnTimer);
+    molnTimer = setTimeout(() => {
+      if (main && !main.isDestroyed()) main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`)
+        .catch(err => log('omforsok mot molnet foll:', err.message));
+    }, Math.min(30000, 3000 * molnForsok));
+    molnTimer.unref?.();
+    if (molnFelVisat) return;
+    molnFelVisat = true;
+    if (main && !main.isDestroyed()) dialog.showMessageBox(main, {
+      type: 'warning', title: 'VYRA Desktop',
+      message: 'Kunde inte nå vyralive.app',
+      detail: 'VYRA hämtar Studion från vyralive.app och kom inte fram.' + BRYT + BRYT
+        + 'Kontrollera din internetanslutning. Appen försöker igen automatiskt — du behöver inte '
+        + 'starta om den.' + BRYT + BRYT
+        + `Teknisk orsak: ${desc || 'okänd'} (${code}).`,
+      buttons: ['OK'],
+    }).catch(() => {});
+  });
+  main.webContents.on('did-finish-load', () => { molnFelVisat = false; molnForsok = 0; clearTimeout(molnTimer) });
   main.webContents.on('render-process-gone', (e, details) => log('main render-process-gone', JSON.stringify(details)));
   main.once('ready-to-show', () => {
     log('main ready-to-show');
