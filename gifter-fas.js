@@ -52,7 +52,28 @@
   //
   // Totalt 1220 ms. Exit finns inte för profile på main och porten gäller entrén — widgeten
   // lämnar som förut. Idlen (heartSpark-gnistorna) är mains egen, orörd.
+  // number · RÄKNEVERKET. Uppmätt på main 2026-08-20 (scratchpad/mat-number.json): allt stod
+  // på vilovärdena vid 40 ms — MEN siffran hade redan sin egen koreografi (`.gifter-big-level`
+  // dämpad till 0,85 av xform-old, gifter-land i slutet). gifterTransform (media.js) äger den
+  // mekaniken sedan länge: gamla siffran 0–450, burst 450–750, BYTET vid 750, land till 1250.
+  //
+  // VI DUPLICERAR DEN INTE — vi ramar in den, och tiderna möts exakt:
+  //   fas 1 · ratt       460 ms   ringen och den GAMLA siffran ÄR anticipationen. Number är
+  //                               därför ENDA modellen vars fas 1 inte är en tom scen; allt
+  //                               annat väntar släckt.
+  //   fas 2 · montering  480 ms   bytet vid 750 ligger 290 ms in i fasen. Först DÄREFTER
+  //                               monteras diamantraden och rubriken (väg A), sedan badgen,
+  //                               namnet, texten och bottenavataren (väg B).
+  //   fas 3 · avlasning  340 ms   sista raderna landar.
+  //
+  // Totalt 1280 ms. `.gifter-bottom-profile` är modellens enda porträtt och syns BARA här —
+  // fas 1 släcker föräldern, aldrig bilden själv (profile-läxan, prov Db).
   const FASER = {
+    number: [
+      { namn: 'ratt', ms: 460 },
+      { namn: 'montering', ms: 480 },
+      { namn: 'avlasning', ms: 340 },
+    ],
     profile: [
       { namn: 'glimt', ms: 400 },
       { namn: 'stigning', ms: 480 },

@@ -120,7 +120,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
   assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
   assert.match(studio, /widget-handles\.js\?v=20260820-1/);
-  assert.match(studio, /[^-]media\.js\?v=20260820-4/);
+  assert.match(studio, /[^-]media\.js\?v=20260820-5/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -131,7 +131,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // BADA grenarna, sa bada far strangen 20260820-3. Grenen andrade dessutom
   // premium-final.css, som laddas via den injicerade version-konstanten — darfor byts
   // aven den. gifter-fas.js ar grenens nya fil och behaller v=1.
-  assert.match(media, /gifter-fas\.js\?v=20260820-4/);
+  assert.match(media, /gifter-fas\.js\?v=20260820-5/);
   // SAMMANSLAGNINGEN 2026-08-20 (Rise & Pop mot main): media.js andrades av bada
   // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
@@ -139,7 +139,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
-  assert.match(media, /const version='20260820-4'/);
+  assert.match(media, /const version='20260820-5'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 

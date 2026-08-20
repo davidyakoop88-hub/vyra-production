@@ -581,3 +581,34 @@
 @keyframes gfpStigRing{0%{opacity:.35;transform:translateY(22px)}40%{opacity:1;transform:translateY(13.2px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes gfpNamn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes gfpBrickaPop{0%{opacity:0;transform:scale(.82)}55%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+
+/* ==== GIFTER · NUMBER · "Rakneverket" — sekventiell trefas (fyrfasporten PR D, 2026-08-20).
+   RAMAR IN gifterTransform, duplicerar den aldrig: siffrans byte vid 750 ms gar pa JS:ens
+   EGEN klocka och ligger 290 ms in i fas 2. Fas 1 ar darfor ingen tom scen — ringen och den
+   GAMLA siffran ar anticipationen — och monteringen borjar forst efter bytet.
+   FAS 1 SLACKER FORALDERN, ALDRIG BILDEN: .gifter-bottom-profile ar modellens enda portratt
+   (och syns bara i number), sa dess img behaller sitt egna varde. */
+.gifter-layout-number.gifter-fas-ratt .gifter-diamond-row,
+.gifter-layout-number.gifter-fas-ratt .gifter-level-badge,
+.gifter-layout-number.gifter-fas-ratt>h2,
+.gifter-layout-number.gifter-fas-ratt>h3,
+.gifter-layout-number.gifter-fas-ratt>p,
+.gifter-layout-number.gifter-fas-ratt .gifter-bottom-profile{opacity:0;animation:none}
+/* Vag A (diamantrad + rubrik) startar 290 ms in i fasen — exakt vid bytet. 290/480 = 60,4 %.
+   Vag B (badge, namn, text, bottenavatar) foljer 100 ms senare = 81,3 %. */
+.gifter-layout-number.gifter-fas-montering .gifter-diamond-row,
+.gifter-layout-number.gifter-fas-montering>h2{opacity:0;animation:gfnStig .48s ease-out both}
+.gifter-layout-number.gifter-fas-montering .gifter-level-badge,
+.gifter-layout-number.gifter-fas-montering>h3,
+.gifter-layout-number.gifter-fas-montering>p,
+.gifter-layout-number.gifter-fas-montering .gifter-bottom-profile{opacity:0;animation:gfnStigSen .48s ease-out both}
+.gifter-layout-number.gifter-fas-avlasning>h3,
+.gifter-layout-number.gifter-fas-avlasning>p{animation:gfnLas .22s ease-out both}
+.gifter-layout-number.gifter-fas-avlasning .gifter-bottom-profile{animation:gfnLas .22s ease-out .08s both}
+@keyframes gfnStig{
+  0%,60.4%{opacity:0;transform:translateY(14px)}
+  100%{opacity:1;transform:translateY(0)}}
+@keyframes gfnStigSen{
+  0%,81.3%{opacity:0;transform:translateY(12px) scale(.94)}
+  100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes gfnLas{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

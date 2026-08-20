@@ -74,6 +74,21 @@ test('profile är registrerad med byggplanens faser', () => {
   assert.deepEqual(FASER.profile.map(f => f.ms), [400, 480, 340]);
 });
 
+test('number är registrerad med byggplanens faser', () => {
+  // Byggplanen (PR D): ratt 460 → montering 480 → avlasning 340 = 1280 ms.
+  // NUMBER ÄR ENDA MODELLEN VARS FAS 1 INTE ÄR EN TOM SCEN. Siffrans förvandling är redan
+  // koreograferad i JS sedan länge (gifterTransform, media.js: XFORM_GAMMAL 450 /
+  // XFORM_BURST 300 / bytet vid 750 ms / gifter-land till 1250). Den mekaniken duplicerar vi
+  // INTE — fas 1 ÄR den gamla siffrans beat, och monteringen börjar först efter bytet, som
+  // ligger 290 ms in i fas 2.
+  assert.ok(FASER.number, 'number saknas i registret');
+  assert.deepEqual(FASER.number.map(f => f.namn), ['ratt', 'montering', 'avlasning']);
+  assert.deepEqual(FASER.number.map(f => f.ms), [460, 480, 340]);
+  const fore = FASER.number[0].ms;
+  assert.ok(fore < 750 && fore + FASER.number[1].ms > 750,
+    `bytet vid 750 ms måste ligga INNE i fas 2 — fas 1 slutar ${fore}`);
+});
+
 test('kopplingen sitter: gifter-fas dekorerar triggerGifterLevelUp innanför kön', () => {
   // Strukturellt: media.js kedjar fabrik→fan→gifter (eller motsvarande) så att arten laddas
   // statiskt före runtime-controls 500 ms-omkoppling — samma krav som fan (uppmätt fälla).
