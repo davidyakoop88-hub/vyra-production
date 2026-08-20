@@ -80,7 +80,8 @@
       var rect = widget.getBoundingClientRect();
       var start = {
         x: e.clientX, y: e.clientY,
-        bredd: w.width || Math.round(rect.width / f),
+        // offsetWidth ar orroterat (bbox blaser upp rect for roterade widgets — steg 6-vakten)
+        bredd: w.width || widget.offsetWidth || Math.round(rect.width / f),
         wx: w.x || 0, wy: w.y || 0,
         skala: w.widgetScale || 1,
         skalaY: w.widgetScaleY || 1,
@@ -92,6 +93,16 @@
 
       function flytta(ev) {
         var dx = ev.clientX - start.x, dy = ev.clientY - start.y;
+
+        // Under rotation pekar handtagen inte langs skarmaxlarna: vid 90 grader ligger
+        // e-handtaget nedat. Pekardeltat kontraroteras till widgetlokala axlar innan
+        // riktningsmatten — annars beter sig e/w/n/s sidledes vid 90 och inverterat vid 180.
+        var rot = (typeof w.rotation === 'number' && isFinite(w.rotation)) ? w.rotation : 0;
+        if (rot) {
+          var rad = -rot * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
+          var rdx = dx * c - dy * sn, rdy = dx * sn + dy * c;
+          dx = rdx; dy = rdy;
+        }
 
         if (riktning === 'e' || riktning === 'w') {
           var d = (riktning === 'e' ? dx : -dx) / f;
@@ -141,6 +152,48 @@
     });
   }
 
+  // Rotationshandtaget: lollipopen ovanfor n. Vinkeln behover INTE kanvasskalan — likformig
+  // scale bevarar vinklar, sa atan2 kring widgetens mitt ar zoominvariant by construction
+  // (provet drar samma bana vid skala 1 och 0.5 och kraver samma grader). Under draget skrivs
+  // ENDAST DOM via komposoren; save()+render() forst vid slapp — samma livscykel som ovriga
+  // handtag. Shift = 15-graderssteg (omvant mot snappens Shift-av; namngivet i title-texten).
+  function bindRotationsHandtag(el) {
+    el.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      var w = valdWidget();
+      var widget = el.closest('.widget');
+      if (!w || !widget) return;
+      var rect = widget.getBoundingClientRect();
+      // Mitten ur bbox ar rotationsinvariant nar origin ar center — samma punkt oavsett vinkel.
+      var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      var startPekare = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+      var startRot = (typeof w.rotation === 'number' && isFinite(w.rotation)) ? w.rotation : 0;
+      el.setPointerCapture(e.pointerId);
+      pagaende = { el: el, riktning: 'rot' };
+
+      function flytta(ev) {
+        var nu = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+        var rot = startRot + (nu - startPekare);
+        if (ev.shiftKey) rot = Math.round(rot / 15) * 15;
+        rot = ((rot + 180) % 360 + 360) % 360 - 180;
+        w.rotation = Math.round(rot * 10) / 10;
+        if (window.VyraTransform) window.VyraTransform.applicera(w, widget);
+      }
+      function slapp() {
+        el.removeEventListener('pointermove', flytta);
+        el.removeEventListener('pointerup', slapp);
+        el.removeEventListener('pointercancel', slapp);
+        pagaende = null;
+        if (typeof save === 'function') save();
+        if (typeof render === 'function') render();
+      }
+      el.addEventListener('pointermove', flytta);
+      el.addEventListener('pointerup', slapp);
+      el.addEventListener('pointercancel', slapp);
+    });
+  }
+
   function synka() {
     if (!editorVy()) { stadaAlla(); return; }
     var widget = document.querySelector('.editor-shell .widget.selected')
@@ -168,6 +221,16 @@
       h.setAttribute('aria-hidden', 'true');
       bindHandtag(h, r);
       widget.appendChild(h);
+    }
+
+    if (!widget.querySelector(':scope > [data-vyra-handle="rot"]')) {
+      var rh = document.createElement('span');
+      rh.className = 'vyra-handle vyra-handle-rot';
+      rh.setAttribute('data-vyra-handle', 'rot');
+      rh.setAttribute('aria-hidden', 'true');
+      rh.title = 'Rotera (Shift = 15\u00b0-steg)';
+      bindRotationsHandtag(rh);
+      widget.appendChild(rh);
     }
 
     satStrackning(widget, w.widgetScaleY || 1, w);

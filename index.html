@@ -1,30 +1,34 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VYRA — TikTok LIVE, under kontroll</title><link rel="stylesheet" href="styles.css?v=20260728-1"></head><body>
-<header class="site-header"><a class="logo" href="#"><i>V</i>VYRA <span>LIVE</span></a><nav><a href="#product">Produkt</a><a href="status.html">Driftstatus</a></nav><div class="actions"><a class="login-link" href="studio.html">Logga in</a><button class="primary glow" data-open-start>Kom igång <b>↓</b></button></div><button class="menu" aria-label="Öppna meny" aria-expanded="false">☰</button><nav class="mobile-nav"><a href="#product">Produkt</a><a href="status.html">Driftstatus</a><a class="login-link" href="studio.html">Logga in</a><button class="primary" data-open-start>Kom igång <b>↓</b></button></nav></header>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VYRA — TikTok LIVE, under kontroll</title><link rel="stylesheet" href="styles.css?v=20260820-11"></head><body>
+<canvas id="tubes-fx" class="tubes-fx" aria-hidden="true"></canvas>
 <main>
- <section class="hero"><div class="hero-grid" aria-hidden="true"></div><div class="halo"></div><div class="halo halo-blue"></div><div class="halo halo-pink"></div><div class="eyebrow"><span></span> BYGGD FÖR TIKTOK LIVE</div><h1><span class="accent-word">Overlays</span> som får din <span class="grad-shimmer">TikTok Live</span> att sticka ut</h1><p class="lead">Top Gifters, Gift Alerts &amp; Leaderboards. Ingen kodning — funkar direkt med OBS, Streamlabs och TikTok Live Studio.</p><div class="hero-actions"><button class="primary big" data-open-start>Kom igång <b>↓</b></button><button class="demo big"><i>▶</i> Se hur det fungerar</button></div><div class="hero-pris" data-hero-pris><b data-hero-pris-belopp>15 USD<span>/månad</span></b><span class="price-fineprint">3 dagar gratis provperiod, därefter 15 USD/månad med automatisk förnyelse.</span></div><div class="social-proof"><span>OBS</span><i>·</i><span>Streamlabs</span><i>·</i><span>TikTok Live</span></div><div class="hero-visual"><canvas id="hero3d" aria-hidden="true"></canvas><div class="obs-demo">
-  <div class="obs-demo-bar"><i></i><i></i><i></i><b>OBS — Overlay-förhandsvisning</b><span class="obs-live"><em></em>LIVE</span></div>
-  <div class="demo-tabs" role="tablist">
-   <button class="demo-tab active" data-demo="gifters" role="tab" aria-selected="true">Top Gifters</button>
-   <button class="demo-tab" data-demo="alert" role="tab" aria-selected="false">Gift Alert</button>
-   <button class="demo-tab" data-demo="leaderboard" role="tab" aria-selected="false">Leaderboard</button>
+ <section class="hero"><div class="hero-grid" aria-hidden="true"></div><div class="halo"></div><div class="halo halo-blue"></div><div class="halo halo-pink"></div><div class="hero-topp"><div class="eyebrow"><span></span> BYGGD FÖR TIKTOK LIVE</div><h1><span class="accent-word">Overlays</span> som får din <span class="grad-shimmer">TikTok Live</span> att sticka ut</h1><p class="lead">Top Gifters, Gift Alerts &amp; Leaderboards. Ingen kodning — funkar direkt med OBS, Streamlabs och TikTok Live Studio.</p>
+ </div>
+ <div class="hero-botten">
+ <aside class="login-kort" data-login>
+  <div class="login-flikar" role="tablist"><button type="button" class="active" data-login-flik="login" role="tab" aria-selected="true">Logga in</button><button type="button" data-login-flik="register" role="tab" aria-selected="false">Skapa konto</button></div>
+  <form>
+   <label data-login-namn hidden>Visningsnamn<input id="loginName" autocomplete="nickname" maxlength="80"></label>
+   <label>E-post<input id="loginEmail" type="email" autocomplete="email" maxlength="254" required></label>
+   <label>Lösenord<input id="loginPassword" type="password" autocomplete="current-password" minlength="12" maxlength="128" required></label>
+   <div class="login-glomt-rad"><a href="#" data-login-glomt>Glömt lösenord?</a></div>
+   <p id="loginError" role="alert"></p>
+   <button class="primary big login-knapp" type="submit"><b>Logga in</b> <span>→</span></button>
+  </form>
+  <div data-login-mfa hidden>
+   <p class="login-mfa-text">Tvåstegsverifiering — ange koden från din autentiseringsapp eller en återställningskod.</p>
+   <form><label>Säkerhetskod<input id="loginMfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" required></label><p id="loginMfaError" role="alert"></p><button class="primary big login-knapp" type="submit"><b>Bekräfta</b></button></form>
   </div>
-  <div class="demo-panels">
-   <div class="demo-panel active" data-panel="gifters">
-    <div class="demo-row rank-1"><i class="demo-crown">👑</i><span class="avatar-wrap"><img src="assets/images/hero-creator.png" alt=""><span class="frame-ring gold"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">Galaxy</b><small class="demo-score" contenteditable="true" spellcheck="false">◆ 2 400</small></span></div>
-    <div class="demo-row rank-2"><span class="avatar-wrap"><span class="avatar-fallback">M</span><span class="frame-ring silver"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">@mia</b><small class="demo-score" contenteditable="true" spellcheck="false">◆ 1 180</small></span></div>
-    <div class="demo-row rank-3"><span class="avatar-wrap"><span class="avatar-fallback">L</span><span class="frame-ring bronze"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">@leo</b><small class="demo-score" contenteditable="true" spellcheck="false">◆ 940</small></span></div>
-   </div>
-   <div class="demo-panel" data-panel="alert">
-    <div class="demo-alert-card"><span class="avatar-wrap"><span class="avatar-fallback">A</span><span class="frame-ring pink"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">@alex</b><small class="demo-score" contenteditable="true" spellcheck="false">skickade Galaxy</small></span><strong class="demo-alert-x">×5</strong></div>
-   </div>
-   <div class="demo-panel" data-panel="leaderboard">
-    <div class="demo-row"><i class="demo-rank">1</i><span class="avatar-wrap"><img src="assets/images/hero-creator.png" alt=""><span class="frame-ring cyan"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">Galaxy</b><small class="demo-score" contenteditable="true" spellcheck="false">♥ 84K</small></span></div>
-    <div class="demo-row"><i class="demo-rank">2</i><span class="avatar-wrap"><span class="avatar-fallback">M</span><span class="frame-ring cyan"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">@mia</b><small class="demo-score" contenteditable="true" spellcheck="false">♥ 61K</small></span></div>
-    <div class="demo-row"><i class="demo-rank">3</i><span class="avatar-wrap"><span class="avatar-fallback">L</span><span class="frame-ring cyan"></span></span><span class="demo-text"><b class="demo-name" contenteditable="true" spellcheck="false">@leo</b><small class="demo-score" contenteditable="true" spellcheck="false">♥ 47K</small></span></div>
-   </div>
+  <div data-login-forgot hidden>
+   <p class="login-mfa-text">Skriv din e-postadress. Om kontot finns skickar vi en säker engångslänk för att välja ett nytt lösenord.</p>
+   <form><label>E-post<input id="loginForgotEmail" type="email" autocomplete="email" maxlength="254" required></label><p id="loginForgotError" role="alert"></p><button class="primary big login-knapp" type="submit"><b>Skicka länk</b></button></form>
+   <button type="button" class="login-tillbaka" data-login-tillbaka>← Tillbaka till inloggningen</button>
   </div>
- </div></div><div class="trust"><span>3 dagar gratis</span><span>Windows 10/11</span><span>Vanlig .exe-installation</span></div>
-  <div class="product" id="product"><div class="browser-top"><div class="dots"><i></i><i></i><i></i></div><div class="browser-title"><b>VYRA</b> / Studio</div><div class="live-dot"><i></i> LIVE <span>1 284 tittare</span></div></div><aside><b class="mini-logo">V</b><button class="active" title="Studio">◫</button><button title="Automation">⌁</button><button title="Community">◎</button><button title="Analytics">⌗</button><button title="Inställningar">⚙</button><span></span><button title="Profil">AV</button></aside>
+  <small class="login-fin">Säkra HttpOnly-sessioner · lösenordet sparas aldrig i webbläsaren</small>
+ </aside>
+ <div class="hero-mobil-scen" aria-hidden="true"><figure class="hero-mobil"><img src="assets/images/vyralive-live-lejon.webp?v=1" alt="" width="680" height="1218" decoding="async"></figure><div class="hero-gavoring" aria-hidden="true"><div class="hero-gavoring-rot"><span class="hero-gava" style="--i:0;--bob:3.4s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8377_Zeus.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:1;--bob:3.8s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8361_Phoenix.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:2;--bob:4.1s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8282_Lili_and_Sakura.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:3;--bob:4.5s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8374_Sam_the_Whale.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:4;--bob:4.9s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8211_Desert_Wolf.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:5;--bob:5.2s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8049_Pim_Bear.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:6;--bob:5.6s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8373_Gorilla.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span><span class="hero-gava" style="--i:7;--bob:6.0s"><span class="hero-gava-bb"><span class="hero-gava-kom"><img src="assets/gifts/events/8378_Leon_and_Lion.png" alt="" width="168" height="168" decoding="async" loading="lazy"></span></span></span></div></div></div>
+ </div>
+ <div class="hero-prisrad"><div class="hero-pris" data-hero-pris><strong class="pris-fri">3 dagar gratis att använda</strong><b data-hero-pris-belopp>15 USD<span>/månad</span></b><span class="price-fineprint">3 dagar gratis provperiod, därefter 15 USD/månad med automatisk förnyelse.</span></div><div class="social-proof"><span>OBS</span><i>·</i><span>Streamlabs</span><i>·</i><span>TikTok Live</span></div><div class="trust"><span>3 dagar gratis</span><span>Windows 10/11</span><span>Vanlig .exe-installation</span></div></div>
+  <div class="product" id="product" hidden><div class="browser-top"><div class="dots"><i></i><i></i><i></i></div><div class="browser-title"><b>VYRA</b> / Studio</div><div class="live-dot"><i></i> LIVE <span>1 284 tittare</span></div></div><aside><b class="mini-logo">V</b><button class="active" title="Studio">◫</button><button title="Automation">⌁</button><button title="Community">◎</button><button title="Analytics">⌗</button><button title="Inställningar">⚙</button><span></span><button title="Profil">AV</button></aside>
    <div class="studio"><div class="studio-head"><div><small>OVERLAY STUDIO</small><h2>Summer Live</h2></div><div><button class="subtle">Förhandsvisa</button><button class="publish">Publicera</button></div></div><div class="tabs"><button class="active">Canvas</button><button>Automationer <b>4</b></button><button>Testläge</button></div>
     <div class="canvas-wrap"><div class="toolbox"><small>ELEMENT</small><button data-add="goal">＋ <span><b>Mål</b><em>Likes & följare</em></span></button><button data-add="alert">＋ <span><b>Alert</b><em>Gåvor & events</em></span></button><button data-add="leader">＋ <span><b>Topplista</b><em>Live ranking</em></span></button><button data-add="chat">＋ <span><b>Chatt</b><em>Meddelanden</em></span></button></div>
      <div class="canvas"><div class="canvas-bar"><span>9:16 PORTRAIT</span><span>− &nbsp; 72% &nbsp; ＋</span></div><div class="phone"><div class="stream"><div class="stream-person"><i></i></div><div class="live-badge">LIVE</div><div class="viewer">◉ 1.2K</div><div class="gift-alert selected"><div class="gift">◆</div><div><b>@alex</b><span>skickade Galaxy</span></div><strong>×5</strong><i class="handle h1"></i><i class="handle h2"></i><i class="handle h3"></i><i class="handle h4"></i></div><div class="like-goal"><span>KVÄLLENS MÅL</span><b>84 730 <i>/ 100K</i></b><div><i></i></div></div><div class="chat"><p><b>@sara</b> Vilken grym stream! 🔥</p><p><b>@leo</b> Nu kör vi!</p></div></div></div></div>
@@ -33,7 +37,7 @@
    </div>
   </div>
  </section>
- <section class="logos"><p>FUNGERAR MED VERKTYGEN DU REDAN ANVÄNDER</p><div><b>◉ TikTok LIVE Studio</b><b>◈ OBS Studio</b><b>▣ Streamlabs</b><b>◫ Stream Deck</b></div></section>
+ <section class="logos" hidden><p>FUNGERAR MED VERKTYGEN DU REDAN ANVÄNDER</p><div><b>◉ TikTok LIVE Studio</b><b>◈ OBS Studio</b><b>▣ Streamlabs</b><b>◫ Stream Deck</b></div></section>
 <!-- AGENCYPORTAL ar en reklamplats som saljs till agencies. Innehallet nedan ar PAHITTAT:
      namngivna agencies med uppdiktade creator-siffror, tre doda knappar och en logorad.
      Dolt tills en riktig annonsor finns, och ska da byggas om till bild + info + kontakt. -->
@@ -46,29 +50,10 @@
  
  
 </main><footer class="mini-sidfot" data-mini-sidfot><a href="privacy.html">Integritet &amp; cookies</a><a href="terms.html">Användarvillkor</a><a href="mailto:support@vyralive.app">support@vyralive.app</a><a href="status.html">Driftstatus</a><span>© 2026 VYRA. Inte anslutet till TikTok.</span></footer>
-<div class="start-modal" id="startModal" hidden><div class="start-modal-backdrop" data-close-start></div><div class="start-modal-panel"><button class="start-modal-close" data-close-start aria-label="Stäng">×</button><h2>Hur vill du börja?</h2><p>Båda kräver ett VYRA-konto och startar med 3 dagar gratis.</p><div class="start-options"><a class="start-option" href="studio.html"><i class="start-icon">🌐</i><span><b>Webbapp</b><small>Bygg och redigera din overlay direkt i webbläsaren — ingen nedladdning.</small></span></a><a class="start-option" href="studio.html?intent=download"><i class="start-icon">🖥</i><span><b>Skrivbordsapp</b><small>Ladda ner VYRA för Windows — bäst prestanda och OBS-integration.</small></span><em>→</em></a></div></div></div>
-<div class="toast"></div><script src="app.js?v=20260728-1"></script><script src="download-client.js"></script><script type="module" src="home-3d.js"></script>
+</div>
+<div class="toast"></div><script src="app.js?v=20260728-1"></script><script type="module" src="landing-tubes.js?v=1"></script><script src="landing-login.js?v=2" defer></script><script src="landing-mobil.js?v=1" defer></script>
 <script>
-(function(){
-  var modal=document.getElementById('startModal');
-  function open(){modal.hidden=false;requestAnimationFrame(function(){modal.classList.add('open')})}
-  function close(){modal.classList.remove('open');setTimeout(function(){modal.hidden=true},200)}
-  document.querySelectorAll('[data-open-start]').forEach(function(btn){btn.addEventListener('click',open)});
-  document.querySelectorAll('[data-close-start]').forEach(function(el){el.addEventListener('click',close)});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!modal.hidden)close()});
-})();
-(function(){
-  // Purely visual tab switch for the hero's OBS-preview demo — no backend, no data fetch.
-  var demo=document.querySelector('.obs-demo');
-  if(!demo)return;
-  demo.querySelectorAll('.demo-tab').forEach(function(tab){
-    tab.addEventListener('click',function(){
-      demo.querySelectorAll('.demo-tab').forEach(function(t){t.classList.remove('active');t.setAttribute('aria-selected','false')});
-      demo.querySelectorAll('.demo-panel').forEach(function(p){p.classList.remove('active')});
-      tab.classList.add('active');tab.setAttribute('aria-selected','true');
-      demo.querySelector('.demo-panel[data-panel="'+tab.dataset.demo+'"]').classList.add('active');
-    });
-  });
-})();
+
+
 </script>
 </body></html>
