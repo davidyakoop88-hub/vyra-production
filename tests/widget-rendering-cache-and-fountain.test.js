@@ -114,7 +114,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // den familj den var uppkallad efter; en lasare som sokte pa "guardian" hittade en versionsstrang
   // och ingen widget. Vad som andrades star i kommentaren har och i commiten. `sokvakt` nedan
   // vaktar regeln.
-  assert.match(studio, /studio\.css\?v=20260820-3/);
+  // Bumpad 2026-08-20 for glodet pa sidhuvudets tre knappar: BARA studio.css andrades. media.js,
+  // widget-factory.js och premium-bundlens version ar oforandrade och behaller sina strangar —
+  // samma regel som loyaltys uttoning: strangarna foljer filerna, inte varandra.
+  assert.match(studio, /studio\.css\?v=20260820-4/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
