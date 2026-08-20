@@ -40,6 +40,30 @@ Mappen är gitignorerad. Titta i filerna innan du delar dem vidare.
 
 ---
 
+## Läs av med ett kommando
+
+Sedan 2026-08-20 finns en analysator som svarar på punkt 1, 2, 3, 4 och 6 direkt ur inspelningen:
+
+```
+node tiktok-bridge/analysera-inspelning.js tiktok-bridge/inspelningar/<fil>.jsonl
+```
+
+Den skriver ut varje punkt med sitt svar, siffrorna den byggde svaret på och vad som bör göras.
+Tre saker den gör med flit:
+
+- **Den svarar `inget underlag` hellre än att gissa.** En punkt utan data i filen får inget svar —
+  ett verktyg som gissar flyttar bara gissningen ett steg.
+- **Den flaggar orimliga mätvärden.** Ett avstånd på minuter mellan START och `rewardStartTimestamp`
+  är inte en timing-avvikelse utan trasig data (sekunder mot millisekunder, lokal tid mot UTC), och
+  då säger den det i stället för att ge ett timing-råd.
+- **Punkt 5 och 7 svarar `kräver OBS`.** Ingen fil kan avgöra vilken `localStorage`-rymd OBS hamnar
+  i, eller om OBS spelar H.264. De två läses av för hand enligt sina avsnitt nedan.
+
+Vaktat av `tests/analysera-inspelning.test.js`, som bland annat fäller varje version som svarar
+något annat än `inget underlag` på en inspelning utan battle-händelser.
+
+---
+
 ## 1. Tänder handsken vid rätt ögonblick?
 
 **Antagandet:** bryggan skickar boost-eventet på `taskMessageType = START`, eftersom det är det enda
