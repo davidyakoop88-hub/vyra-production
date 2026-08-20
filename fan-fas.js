@@ -1,0 +1,172 @@
+// fan-fas.js — koreografin för Fan Level Up, en fas i taget.
+//
+// SEDAN 2026-08-19 bor MEKANIKEN (klocka, spela/avbryt, trigger-koppling) i widget-fas.js —
+// fabriken som även driver Gifter Level Up. Den här filen äger det Fan-specifika: registret
+// FASER, tiderna, modellernas dokumentation och de fem konfigurationspunkterna. Mekanikens
+// varför-kommentarer flyttade med till fabriken; kontrakten (bytbar klocka, exklusiva
+// sekventiella fasklasser, koppling innanför alertkön via _fanTimer-identitetsdiffen) är
+// oförändrade och vaktas av tests/fan-fas.test.js precis som förut.
+//
+// VARFÖR FILEN FINNS. Gifter Level Up har redan exakt den här mekanismen, men den ligger inne i
+// media.js (gifterTransform, rad 583–597): tre klasser som byts av tre setTimeout, med tiderna
+// namngivna så ett prov kan bevisa att hela sekvensen ryms i den kortaste visningstiden.
+// Mönstret är rätt. Platsen är fel — CLAUDE.md säger rakt ut att media.js är störst i repot och
+// att nya renderare hör hemma i en systerfil. Fan Level Up får därför sin koreografi här, och
+// gifter-varianten är förlagan snarare än något att kopiera in.
+//
+// VAD EN FAS ÄR. En fas är en klass på widgetlådan plus en varaktighet. Klassen heter
+// `fan-fas-<namn>`, och CSS:en i premium-final.css hänger sina animationer på den. JS bestämmer
+// alltså NÄR något händer, CSS bestämmer VAD. Den uppdelningen är hela poängen: en ändrad
+// rörelse ska aldrig kräva en ändrad timer, och en ändrad timing ska aldrig kräva ny CSS.
+//
+// KLOCKAN GÅR ATT BYTA UT. `klocka` är en öppen krok med flit. Ett prov som ska bevisa att fas 2
+// följer fas 1 skulle annars behöva sova 420 ms per påstående — långsamt, och flaky på en lastad
+// maskin. Med en manuell klocka blir samma prov exakt och tar noll tid. Det är samma skäl som
+// gör att tiderna nedan är namngivna konstanter och inte siffror inne i ett anrop.
+//
+// TAKET. Visningstidsreglaget i egenskapspanelen börjar på 2 sekunder. En koreografi som är
+// längre än så hinner aldrig spelas färdigt innan uttoningen börjar, och tittaren ser en
+// avhuggen rörelse. `KORTASTE_VISNING` är den gränsen, och F3 i tests/fan-fas.test.js vaktar
+// den för varje registrerad modell — inte bara för dem som råkar finnas idag.
+(function (root) {
+  'use strict';
+
+  const PREFIX = 'fan-fas-';
+
+  // Reglaget `fanDuration` går från 2 till 15 sekunder (media.js, fanTriggerProps). Ingen
+  // koreografi får vara längre än golvet.
+  const KORTASTE_VISNING = 2000;
+
+  // REGISTRET. En modell utan post här får ingen koreografi alls — den spelar som förut, med
+  // bara `fan-active` och basens fanAlertEnter. Det är avsiktligt: modellerna byggs en i taget,
+  // och en halvfärdig fas är sämre än ingen fas.
+  //
+  // hero · SAMLINGEN. Hjärtat kommer först och ensamt, stiger ur botten och pulsar — pulsen är
+  // basens egen `fanLevelPop`, inte en ny animation, så den fortsätter oavbrutet efteråt. Sedan
+  // samlas resten runt det: profilbild, nivåpill, rubrik, namn, meddelande, i den ordningen och
+  // med en trappa emellan. Sist lägger sig glöden. Totalt 1250 ms, samma total som gifter-
+  // sekvensen — inte av en slump, utan för att två alerts från samma familj ska kännas som
+  // samma app.
+  //
+  // duo · MÖTET. Två parter, en förbindelse — namnet är modellens hela idé. Ikonen och avataren
+  // spänner var sin sida av en 320×89-bar, pulslinjen går emellan, och texten står staplad till
+  // höger. Den renaste modellen av de åtta: fyra entréer och alla fungerade, ingen `!important` i
+  // vägen, och som ENDA modell animerades nivåpillen redan. Bara h2, h3 och p snäppte.
+  //
+  // Med duo registrerad är familjen sluten. 23g vänder på F1:s beroende och kräver att VARJE
+  // modell i fabrikstabellen har en koreografi — den vakten gick inte att skriva förrän nu.
+  //
+  // heartbeat · PULSSLAGET. Profilbilden glider in från vänster, ikonen från höger, pulslinjen
+  // ritas mellan dem, och avläsningen kommer sist. Ordningen följer rutnätets egen logik:
+  // "avatar pulse burst" med text staplad i högerkolumnen.
+  //
+  // Första modellen där den befintliga entrén var HEL — fhSlideL, fhSlideR och fhPulseDraw rörde
+  // sig alla tre, ingen `!important` i vägen. Bara klockan flyttas, plus rörelse åt de fyra delar
+  // som snäppte (pill, h2, h3, p).
+  //
+  // Och rutnätet är ett eget problem: en fas som döljer med `display:none` KOLLAPSAR spåret, och
+  // allt annat hoppar mitt i koreografin. Faserna döljer med opacitet. Vaktat av 22g, som gäller
+  // både heartbeat och duo.
+  //
+  // hearts · UPPSTIGNINGEN. Ikonen slår ner, hjärtana framträder, texten hyllas. Modellen har
+  // redan ett riktigt vilolager — `.fan-burst` är synlig, så basens fanLevelPop och fanRing går —
+  // men de tre hjärtanas egen loop låg på `.fan-active`. Ett vilolager måste finnas oavsett om
+  // alerten står i en fas eller inte, annars behövs en specialvakt för när det får starta. Loopen
+  // ligger nu på modellen, som basens fanLevelPop. Vaktat av 21h.
+  //
+  // badgereveal · UPPENBARELSEN. Halvmånarna sveper in utifrån och bär fram emblemen,
+  // profilbilden avtäcks mellan dem, pill och text hyllas sist.
+  //
+  // Här räckte det inte att byta klocka. `fbWingL`/`fbWingR` animerar både opacity och transform,
+  // men `.fan-wing{transform:translateY(-50%)!important}` slog animationen — `!important` i en
+  // vanlig regel vinner över en CSS-animation. Uppmätt: vingarnas transformmatris stod stilla
+  // hela entrén. Halva keyframen hade aldrig kört, och vingarna tonade bara in. Att återanvända
+  // en keyframe som aldrig kört är inte återanvändning, så de är omskrivna: de sveper in utifrån
+  // och bär sin egen spegling. Vaktat av 20f och 20g.
+  //
+  // loyalty · INRINGNINGEN. Profilbilden poppar, ringen ritas ett kvarts varv (-90° -> 0), pill
+  // och text stämplas in sist. SOCKELFÄLLAN: poppen låg på `.fan-profile img`, alltså på ankaret,
+  // medan behållaren `.fan-profile` bär sin egen linear-gradient och box-shadow. Uppmätt vid
+  // 24 ms: ankaret 0.18 medan behållaren stod på 1.00 — en glödande orange skiva på 80×80 px var
+  // fullt målad i första bildrutan, och "poppen" var ett foto som tonade in inuti något som
+  // aldrig rörde sig. Faserna rör därför BEHÅLLAREN. Ankaret rider med. Vaktat av 19g.
+  //
+  // ribbon · VÄLKOMNANDET. Profilbilden poppar, banderollen rullar ut i sidled, texten kommer
+  // sist. Även här är rörelserna modellens egna (fbProfilePop, frbUnfurl) och det är klockan som
+  // byts. Uppmätt före: poppen och utrullningen rörde sig redan mjukt, men rubrik, namn och
+  // meddelande stod på opacity 1 i första bildrutan — färdiglästa medan banderollen fortfarande
+  // var hoprullad till 30 % bredd. Widgeten berättade slutet före början.
+  //
+  // Ribbon är dessutom den enda modellen UTAN vilolager: `.fan-burst` är display:none, och med
+  // hjärtat försvinner basens två enda oändliga animationer (fanLevelPop, fanRing). Efter entrén
+  // stod modellen fullständigt stilla. Den har därför fått en egen diskret andning — men på
+  // modellen, inte på en fas. En `infinite` som hänger på en fasklass dör när klassen tas bort,
+  // alltså precis när den skulle ha börjat behövas. Vaktat av 18g.
+  //
+  // stack · MOTTAGANDET. Ikonen faller ner uppifrån, nivåpillen poppar fram, profilbilden stiger
+  // underifrån — och namnet och meddelandet stiger med den. Rörelserna är stacks EGNA sedan
+  // tidigare (fsIconDrop, fsPillPop, fsAvatarRise i studio.css, delade med hearts och loyalty);
+  // det som byts är klockan. Förut låg den i CSS:ens `animation-delay` på `.fan-active`, vilket
+  // gjorde tre saker: F3:s tak på 2 s kunde inte se stacks timing alls, familjen hade två olika
+  // klockor, och `h3`/`p` hade ingen rörelse att fördröja — de snäppte fram i samma bildruta som
+  // lådan medan resten koreograferades.
+  const FASER = {
+    hero: [
+      { namn: 'hjarta', ms: 420 },
+      { namn: 'samling', ms: 560 },
+      { namn: 'vila', ms: 270 },
+    ],
+    stack: [
+      { namn: 'fall', ms: 300 },
+      { namn: 'pop', ms: 260 },
+      { namn: 'stigning', ms: 340 },
+    ],
+    ribbon: [
+      { namn: 'pop', ms: 320 },
+      { namn: 'utrullning', ms: 420 },
+      { namn: 'text', ms: 340 },
+    ],
+    loyalty: [
+      { namn: 'pop', ms: 320 },
+      { namn: 'ring', ms: 440 },
+      { namn: 'stampel', ms: 340 },
+    ],
+    badgereveal: [
+      { namn: 'vingar', ms: 340 },
+      { namn: 'avtackning', ms: 360 },
+      { namn: 'hyllning', ms: 340 },
+    ],
+    hearts: [
+      { namn: 'nedslag', ms: 300 },
+      { namn: 'uppstigning', ms: 320 },
+      { namn: 'hyllning', ms: 340 },
+    ],
+    heartbeat: [
+      { namn: 'sidorna', ms: 340 },
+      { namn: 'pulsen', ms: 320 },
+      { namn: 'avlasning', ms: 340 },
+    ],
+    duo: [
+      { namn: 'parterna', ms: 340 },
+      { namn: 'linjen', ms: 320 },
+      { namn: 'avlasning', ms: 340 },
+    ],
+  };
+
+  // De fem Fan-punkterna, samlade på ETT ställe. layoutPrefix speglar renderarens
+  // fan-layout-<modell>-klasser; selector/aktivKlass är triggerns egna; _fanTimer är spåret
+  // media.js lämnar per tänd låda (vaktat av F2 — provet faller om media.js slutar sätta det);
+  // triggerFanLevelUp är namnet kopplingen lindar sig runt, INNANFÖR alertkön.
+  const motor = root.VyraWidgetFas.skapa({
+    prefix: PREFIX,
+    kortasteVisning: KORTASTE_VISNING,
+    faser: FASER,
+    layoutPrefix: 'fan-layout-',
+    selector: '.fan-level-up',
+    aktivKlass: 'fan-active',
+    timerFalt: '_fanTimer',
+    triggerNamn: 'triggerFanLevelUp',
+  });
+
+  root.VyraFanFas = motor;
+})(window);

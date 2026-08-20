@@ -25,7 +25,9 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 const { HttpsProxyAgent } = require('https-proxy-agent');
+const path = require('path');
 const N = require('./normalizer');
+const Inspelare = require('./inspelare');
 const { createProxyManager } = require('./proxy-manager');
 
 // The local server only exists in the desktop build (server.ps1 on 127.0.0.1:4173). In the cloud
@@ -40,6 +42,17 @@ const CLOUD = process.env.VYRA_CLOUD_URL || '';
 const WORKSPACE = process.env.VYRA_WORKSPACE_ID || '';
 const INGEST_TOKEN = process.env.VYRA_INGEST_TOKEN || '';
 const DISCORD_ALERT_WEBHOOK_URL = process.env.DISCORD_ALERT_WEBHOOK_URL || '';
+// ---- ra-inspelning (lokalt verktyg, av som default) -------------------------------------------
+// Se tiktok-bridge/inspelare.js for varfor den bara ar meningsfull lokalt: molncontainern kor
+// read_only med bara tmpfs skrivbar, sa en inspelning dar hade varken kunnat skrivas eller hamtas.
+// Vilken biblioteksversion som producerade payloaden ar det forsta man vill veta nar en
+// inspelning lases om ett halvar senare: v3-omdopningarna har redan nollat falt en gang.
+function bibliotekVersion() {
+  try { return require('tiktok-live-connector/package.json').version } catch { return 'okand' }
+}
+const INSPELNING = process.env.VYRA_INSPELNING === '1';
+const INSPELNING_KATALOG = process.env.VYRA_INSPELNING_KATALOG || path.join(__dirname, 'inspelningar');
+const INSPELNING_MAX_MB = Number(process.env.VYRA_INSPELNING_MAX_MB) || 50;
 const HEARTBEAT_MS = 5_000;
 const MAX_RECONNECT_MS = 60_000;
 const RECONNECT_BASE_MS = 1_000;
@@ -201,7 +214,22 @@ if (require.main === module) {
     return nativeId ? `${type}:${nativeId}` : `${type}:${fields.username || ''}:${fields.giftName || ''}:${fields.count || ''}:${Math.floor(Date.now() / 1000)}`;
   }
 
+  // Skapas aven nar den ar avstangd: en avstangd inspelare ror inte disken alls, och da behover
+  // ingen anropsplats nedan veta om den finns.
+  const inspelare = Inspelare.skapa({
+    pa: INSPELNING,
+    katalog: INSPELNING_KATALOG,
+    anvandare: username,
+    maxByte: INSPELNING_MAX_MB * 1024 * 1024,
+    typer: process.env.VYRA_INSPELNING_TYPER,
+  });
+  let inspelningsytaLoggad = false;
+  if (inspelare.aktiv) inspelare.metarad({ bibliotek: bibliotekVersion(), anvandarhash: Inspelare.hash(username) });
+
   function sendEvent(type, fields, data) {
+    // Den normaliserade formen loggas vid sidan av den raa, sa ra -> normaliserat gar att diffa
+    // offline. Aldrig fore dedupen: en dubblett som inte skickas ska inte heller spelas in som
+    // utgaende, annars ljuger filen om vad molnet faktiskt fick.
     const key = eventKey(type, data, fields), now = Date.now();
     for (const [oldKey, at] of recentEventKeys) if (now - at > 120_000) recentEventKeys.delete(oldKey);
     // Dubbletter i egen hink: annars gar det inte att se om gavor tappas i dedupen eller aldrig kom.
@@ -210,6 +238,11 @@ if (require.main === module) {
     flodeRaknare.set(flodeNyckel, (flodeRaknare.get(flodeNyckel) || 0) + 1);
     if (recentEventKeys.has(key)) return Promise.resolve({ ok: true, duplicate: true });
     recentEventKeys.set(key, now);
+    // Bada raderna for en vidarebefordrad handelse: den raa payloaden OCH det normaliserade
+    // resultatet. Det ar den enda vagen att se VAR ett falt tappas — fyra listor maste namna en
+    // typ for att den ska na en widget, och en diff mellan de tva raderna pekar ut vilken.
+    inspelare.raa(type, data, 'vidarebefordrad');
+    inspelare.utgaende(type, fields);
     reportToParent('event', { eventType: type, at: now });
     const local = { type, eventKey: key, source: 'tiktok-bridge', ...fields };
     const jobs = [postJson('/api/events', local)];
@@ -326,6 +359,33 @@ if (require.main === module) {
     connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.viewerCount || data?.userCount, 1e9) }, data));
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
 
+    // ---- multiplikatorfonstret (Boosting Glove) ------------------------------------------------
+    // Klientsidan har redan hela vagen: media.js tander Glove Snipe pa `glove` i typen och laser
+    // `multiplier`, och molnets cleanEvent bar faltet. Det enda som saknades var kallan —
+    // LINK_MIC_BATTLE bar ingen multiplikator, den ligger i LINK_MIC_BATTLE_TASK.
+    //
+    // TYPEN AR MED FLIT INTE `battle`. battle-mvp-session.js oppnar och stanger sin session pa
+    // allt vars typ innehaller "battle", och ett boost-event mitt i en match hade da stangt
+    // sessionen och tant MVP-overlayn i fel ogonblick. `glove` innehaller inte "battle" och gar
+    // darfor bara till Glove Snipe.
+    //
+    // EN GANG PER FONSTER. START kan komma flera ganger for samma fonster; nyckeln ar matchen plus
+    // fonstrets starttid, sa ett omsant meddelande inte later overlayn blinka.
+    const settaBoostFonster = new Map();
+    connection.on(WebcastEvent.LINK_MIC_BATTLE_TASK, data => {
+      let f;
+      try { f = N.battleTaskFields(data) } catch (err) {
+        console.log(`[bridge] battle-task kunde inte lasas: ${err.message}`); return;
+      }
+      if (!N.arBoostFonster(f)) return;
+      const nyckel = `${f.battleId}:${f.fonsterStart}:${f.multiplier}`;
+      if (settaBoostFonster.has(nyckel)) return;
+      for (const [gammalNyckel, at] of settaBoostFonster) if (Date.now() - at > 600_000) settaBoostFonster.delete(gammalNyckel);
+      settaBoostFonster.set(nyckel, Date.now());
+      console.log(`[bridge] boost-fonster x${f.multiplier} i match ${f.battleId || 'okand'}, ${f.fonsterSekunder || '?'}s`);
+      sendEvent('glove', { multiplier: f.multiplier }, data);
+    });
+
     // ---- battle-sond -------------------------------------------------------------------------
     // En hel sandning gick 2026-08-06 utan att ETT ENDA battle-event nadde klienten, trots att
     // anslutningen satt stabilt (loggen: alla anslutningsfel FORE den enda "Ansluten till @", inget
@@ -346,7 +406,45 @@ if (require.main === module) {
       connection.on(handelse, data => loggaBattleSond(probeNamn, data));
     }
     connection.on(WebcastEvent.STREAM_END, () => scheduleReconnect('TikTok LIVE avslutades'));
+    /* GUARDIAN — FORBEREDD, INTE AKTIVERAD.
+       ===========================================================================================
+       VANTAR PA EVENT-VERIFIERING. Se docs/live-verifiering.md punkt 6: vi vet inte vilken
+       WebcastEvent-typ som bar Guardian-status, eller vilket falt som skiljer en Guardian fran en
+       vanlig medlem. Sannolika kandidater, lasta ur tiktok-live-proto/v3:
+         · MEMBER med ett rollfalt (guardianType / userRole / badgeList)
+         · USER_NAVIGATION_EVENT med isGuardian
+         · en egen typ vi inte prenumererar pa an
 
+       ATT GISSA HAR SKULLE KOSTA MER AN DET SMAKAR. En typ som namnges i molnets fyra listor men
+       som ingen kod nagonsin skickar ar en dod kontraktspost — precis den sortens logn tech-debt.md
+       varnar for. Listorna (bryggans TILL_MOLNET, TIKTOK_INGEST_TYPES, TIKTOK_ROOM_TYPES och
+       event-bussens ALLOWED) rors darfor INTE forran payloaden ar verifierad; tests/event-contract
+       .test.js skulle dessutom falla direkt pa en typ som inte gar hela vagen.
+
+       NAR FALTET AR VERIFIERAT: avkommentera, byt ut FALT_TBD, och lagg 'guardian' i alla fyra
+       listorna i SAMMA andring. Klientsidan ar redan klar — window.triggerGuardianEmblem finns,
+       ar koad i runtime-controls.js, och vantar bara pa ett event.
+
+       PRAKTSTEGET ar ett STUDIOVAL, inte ett faltvarde. Bryggan ska darfor INTE skicka nagot steg:
+       streamern valjer sin praktniva i panelen, och ett steg som kom utifran hade tyst skrivit over
+       den. Det enda eventet behover bara bara ar VEM som kom in.
+
+       TYPEN SKRIVS UT SOM `TYP` OCH INTE SOM STRANGEN NEDAN, med flit.
+       tests/event-contract.test.js skannar RA kallkod efter `sendEvent('<typ>'` och kraver att varje
+       traff finns i molnets fyra listor. En utkommenterad rad raknas — provet laser text, inte
+       beteende. Att gora vakten kommentarsblind hade gjort den svagare for allas skull; att skriva
+       exemplet med en variabel kostar ingenting och lamnar vakten exakt lika strang.
+
+       // const TYP = 'guardian';                      <- lagg samtidigt till i de fyra listorna
+       // connection.on(WebcastEvent.FALT_TBD_TYP, data => {
+       //   if (!data?.FALT_TBD) return;
+       //   sendEvent(TYP, { ...N.baseUser(data) }, data);
+       // });
+
+       INSPELAREN SER DEN REDAN. `set VYRA_INSPELNING_TYPER=alla` fore start spelar in varje
+       WebcastEvent till fil, aven de bryggan inte prenumererar pa — och en inspelad typ nar
+       aldrig molnet. Det ar den vagen fram: spela in en sandning dar en Guardian gar in, och las
+       diffen mellan raden `kalla:"vidarebefordrad"` och `_utgaende`. */
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
     // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
@@ -359,6 +457,40 @@ if (require.main === module) {
     connection.on(ControlEvent.ERROR, err => {
       console.error('[bridge] Anslutningsfel:', err?.message || err);
     });
+
+    // ---- ra-inspelning: EN EGEN PRENUMERATIONSYTA, HELT SKILD FRAN sendEvent ------------------
+    //
+    // Poangen med inspelaren ar att se de handelser bryggan INTE prenumererar pa — LINK_MIC_ARMIES
+    // ar just den vi inte vet formen pa, och en inspelare som bara sag de elva vidarebefordrade
+    // typerna hade inte kunnat svara pa fragan den finns for.
+    //
+    // DEN OVILLKORLIGA REGELN: en typ som spelas in men inte redan vidarebefordras far ALDRIG na
+    // molnet. Lyssnarna nedan anropar bara inspelare.raa() — aldrig sendEvent, aldrig
+    // reportToParent. Skulle de gora det hade event-bussens ALLOWED avvisat typen, men forst
+    // efter en 400-rad per arme-event, flera ganger i minuten under en match.
+    //
+    // Redan prenumererade typer far INTE en andra lyssnare har: det hade dubblerat raderna i filen
+    // och gjort en inspelning omojlig att rakna pa.
+    if (inspelare.aktiv) {
+      const onskade = inspelare.typer();
+      const redanLyssnade = new Set(['CHAT', 'GIFT', 'LIKE', 'FOLLOW', 'SHARE', 'MEMBER',
+        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK']);
+      const spelaIn = Object.keys(WebcastEvent)
+        .filter(namn => onskade === null || onskade.has(namn))
+        .filter(namn => !redanLyssnade.has(namn));
+      for (const namn of spelaIn) {
+        try { connection.on(WebcastEvent[namn], data => inspelare.raa(namn, data)) }
+        catch (err) { console.log(`[bridge][inspelning] kunde inte lyssna pa ${namn}: ${err.message}`) }
+      }
+      // EN GANG, INTE PER ATERANSLUTNING. connect() kors om vid varje aterforsok med ett nytt
+      // connection-objekt (sa inga lyssnare lacker), men raden hor till uppstarten — under en
+      // sandning med omkopplingar hade den annars dranks loggen den sjalv finns for att gora
+      // lasbar.
+      if (!inspelningsytaLoggad) {
+        inspelningsytaLoggad = true;
+        console.log(`[bridge][inspelning] spelar in ${spelaIn.length} extra typ(er): ${spelaIn.join(', ') || '(inga)'}`);
+      }
+    }
 
     connection.connect()
       .then(state => {

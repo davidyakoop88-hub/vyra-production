@@ -9,7 +9,9 @@
     "test:coverage": "node --experimental-test-coverage --test tests/*.test.js",
     "test:ci": "npm run test:contract && npm run test:fuzz && npm test && npm run test:browser",
     "test:browser": "node --test tests/browser/*.browser.test.js",
-    "karta": "node scripts/generate-catalog-map.js"
+    "karta": "node scripts/generate-catalog-map.js",
+    "domaner": "node scripts/domaner.js",
+    "test:doman": "node scripts/domaner.js test"
   },
   "devDependencies": {
     "jsdom": "30.0.1",

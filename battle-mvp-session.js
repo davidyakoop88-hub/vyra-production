@@ -74,6 +74,7 @@
       if (!Ctx) return;
       const ctx = new Ctx();
       const nu = ctx.currentTime;
+      const niva = root.VyraTal?.volymfaktor?.() ?? 1;
       // Tre stigande toner och ett avslutande ackord — en durtreklang, C5-E5-G5-C6.
       const toner = [[523.25, 0], [659.25, 0.12], [783.99, 0.24], [1046.5, 0.36]];
       for (const [hz, offset] of toner) {
@@ -82,7 +83,10 @@
         osc.frequency.value = hz;
         const start = nu + offset, slut = start + (offset === 0.36 ? 0.7 : 0.22);
         gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.22, start + 0.02);
+        // Duckningen läses EN gång, vid schemaläggningen (§14). Salvan är ~1,1 s förschemalagda
+        // ramper; att ändra dem mitt i kräver att varje ramp skrivs om, och vinsten är en dryg
+        // sekund av en fallback som bara körs när ljudfilen saknas.
+        gain.gain.linearRampToValueAtTime(0.22 * niva, start + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, slut);
         osc.connect(gain).connect(ctx.destination);
         osc.start(start);
@@ -96,7 +100,8 @@
     try {
       if (typeof root.Audio !== 'function') return syntetiseraFanfar();
       const a = new root.Audio(FANFAR_FIL);
-      a.volume = 0.6;
+      // Duckas medan någon talar (§14). Fail-open: saknas vyra-tal.js spelar fanfaren på 0.6.
+      if (!root.VyraTal?.duckaLjud?.(a, 0.6)) a.volume = 0.6;
       // Saknas filen får error-händelsen ta över — annars vore ljudet tyst utan att någon märkte det.
       a.addEventListener('error', syntetiseraFanfar, { once: true });
       const pr = a.play();

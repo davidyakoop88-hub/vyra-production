@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA Studio</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20260812-widget-rendering">
+  <link rel="stylesheet" href="studio.css?v=20260820-3">
+  <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20260726-nav-a-fix">
   <link rel="stylesheet" href="auth-client.css?v=20260724-1">
@@ -94,7 +95,7 @@
   <div class="toast"></div>
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
-  <script src="session-state.js?v=20260807-scene"></script>
+  <script src="session-state.js?v=20260817-cooldown"></script>
   <script src="auth-client.js?v=20260804-session"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
@@ -108,20 +109,25 @@
   <script src="desktop-profile.js?v=20260724-1"></script>
   <script src="studio.js?v=20260731-1"></script>
   <script src="layout-format.js?v=20260726-freeze-fix"></script>
+  <script src="stage-background.js?v=1"></script>
   <!-- Angra/gor om: wrappar render for baslinjesynk och monterar sina knappar efter
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
-  <script src="vyra-historik.js?v=1"></script>
+  <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
   <script src="spotify-client.js?v=20260724-1"></script>
   <script src="extras.js?v=20260724-spotify"></script>
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
   <script src="gift-event-images.js?v=20260807-topgift"></script>
-  <script src="widget-factory.js?v=20260803-factory"></script>
+  <script src="widget-factory.js?v=20260818-2"></script>
   <script src="standalone-links.js?v=20260803-links"></script>
   <script src="overlay-sanitize.js?v=20260803-sanitize"></script>
   <script src="event-dedupe.js?v=20260803-dedupe"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260804-goals"></script>
-  <script src="media.js?v=20260812-widget-rendering"></script>
+  <script src="media.js?v=20260820-5"></script>
+  <!-- Koreografin "Vapenskolden": EFTER media.js, som definierar triggern den lindar. -->
+  <script src="guardian-emblem-fas.js?v=20260818-2"></script>
+  <!-- Handtag pa alla sidor: injiceras efter render, darfor EFTER media.js. -->
+  <script src="widget-handles.js?v=20260820-1"></script>
   <script src="layout-safe.js?v=20260726-obs-bar-fix"></script>
   <script src="cloud-sync.js?v=20260807-scene"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
@@ -133,7 +139,8 @@
   <!-- Snapp + rutnat. Haken sitter i dragmatten (studio.js), aldrig i render eller save. -->
   <script src="vyra-snapp.js?v=1"></script>
   <script src="vyra-zoom.js?v=1"></script>
-  <script src="vyra-proportioner.js?v=1"></script>
+  <script src="vyra-proportioner.js?v=20260820-1"></script>
+  <script src="vyra-rotation.js?v=20260820-1"></script>
   <!-- Vagen till skrivbordsappen. Delegerad lyssnare pa document, sa aven vyer som ritas om
        och tomma tillstand kan bara [data-ladda-desktop]. Se filens huvudkommentar. -->
   <script src="vyra-desktop.js?v=1"></script>

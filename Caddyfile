@@ -60,14 +60,15 @@
     # har: HSTS och CSP saknades HELT, och ingenting sa till om det.
     #
     # Trappan ar 300 -> 86400 -> ett ar med includeSubDomains, ett steg i taget med verifiering
-    # emellan. Steg 1 (300 s) verifierades i produktion 2026-08-06. Vi star nu pa STEG 2.
+    # emellan. Steg 1 (300 s) verifierades i produktion 2026-08-06, steg 2 (86400) samma dag.
+    # Vi star nu pa STEG 3 — sista steget.
     #
     # `preload` star med FLIT inte har: den bakas in i webblasarna sjalva och tar manader att ta
     # sig ur. Den gamla konfigurationen hade den, och det var ingen som beslutade det.
     #
-    # `includeSubDomains` vantar till steg 3, och kraver att ALLA underdomaner racknats upp forst.
-    # Bara downloads.vyralive.app ar kand och verifierad att svara over HTTPS.
-    Strict-Transport-Security "max-age=86400"
+    # `includeSubDomains` kravde att ALLA underdomaner racknats upp forst. Inventerat 2026-08-18:
+    # downloads.vyralive.app ar den enda som finns, och den svarar over HTTPS (www finns inte alls).
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
     # Bara de fyra direktiv som inte KAN slacka appen, for de blockerar sadant appen aldrig gor:
     # enda formularet i repot (operations.html) saknar action, enda iframen ar en relativ sokvag
     # till egen origin, ingen <base> sats nagonstans, och det finns inga <object>/<embed>.

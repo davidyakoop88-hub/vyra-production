@@ -1,6 +1,9 @@
 Add-Type -AssemblyName System.Drawing
-$source = Join-Path $PSScriptRoot '..\assets\images\profile-frames\frames-source.png'
-$output = Join-Path $PSScriptRoot '..\assets\images\profile-frames'
+# Arket ligger i tools/frames/ och foljer varken med i webbimagen eller installern.
+# Skriptet pekade fram till 2026-08-14 pa assets/images/profile-frames/frames-source.png,
+# en sokvag som aldrig funnits - filen lag i repotroten. Bygget kunde alltsa inte koras.
+$source = Join-Path $PSScriptRoot 'tools\frames\frames-source.png'
+$output = Join-Path $PSScriptRoot 'assets\images\profile-frames'
 $names = @('neon-purple','cyber-blue','pink-angel','golden-king','ice-crystal','galaxy','emerald','samurai','minimal-glow')
 $image = [System.Drawing.Bitmap]::FromFile($source)
 $cellWidth = [int]($image.Width / 3)

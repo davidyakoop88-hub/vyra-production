@@ -10,6 +10,9 @@
 # ---- Beroenden och byggcache ----
 .tools/
 node_modules/
+# Redis lägger sin ögonblicksbild i den katalog servern startades från. Kör man en lokal
+# redis-server i repotroten för att köra server-testerna hamnar den alltså här.
+dump.rdb
 dist/
 build/
 .cache/
@@ -62,3 +65,9 @@ desktop.ini
 # giftresurser och battle-videor tyst uteblivit ur `git add`, och saknade assets syns
 # först som trasiga widgets hos någon annan. Lägg tunga råklipp under renders/ eller out/
 # om de ska hållas utanför git.
+
+# ---- Ra-inspelningar fran bryggan ----
+# SPELA-IN-TIKTOK.cmd skriver maskerade TikTok-payloads hit for offline-felsokning. Maskerade ar
+# inte detsamma som ofarliga: de bar tidsstamplar och stabila hashar per tittare, och de hor till
+# streamerns egen dator. De ska aldrig committas.
+tiktok-bridge/inspelningar/

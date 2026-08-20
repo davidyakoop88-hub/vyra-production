@@ -76,7 +76,14 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
     'premium-final.js laddades efter sista bind() och dess sektionskod kordes aldrig — ' +
     'exakt det som gjorde att TOP STREAK · PREMIUM och TOP GIFTER · DESIGNVAL saknades helt ' +
     'i produktion');
-  assert.match(sek.querySelector('h4').textContent, /PREMIUM/);
+  // Sektionen bar sedan 2026-08-13 TVA rubriker: media.js bygger "REDIGERBARA" (7 klassiska
+  // stilar + 8 ramar) och premium-final.js lagger till "PREMIUM" efter den. Bada anvander nu
+  // tillagg i stallet for `innerHTML =`, sa ingen raderar den andra. querySelector('h4') tar
+  // den FORSTA rubriken och sager darfor REDIGERBARA — kravet ar att PREMIUM finns, inte att
+  // den ar ensam.
+  const rubriker = [...sek.querySelectorAll('h4')].map(h => h.textContent.trim());
+  assert.ok(rubriker.some(t => /PREMIUM/.test(t)),
+    `ingen PREMIUM-rubrik; rubrikerna ar: ${rubriker.join(' | ') || '(inga)'}`);
   assert.equal(sek.querySelectorAll('[data-pf-streak]').length, 7);
 
   // .prototype-section har TVA rubriker, och det ar med flit. Forut satte premium-final.js
@@ -86,12 +93,12 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   // knapparna kom tillbaka, vilket fick felet att se ut som ett ombindningsproblem.
   // Uppmatt i Chromium: 145 knappar vid navigering, 164 efter rattelsen.
   const proto = h.document.querySelector('.prototype-section');
-  const rubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
-  assert.ok(rubriker.some(t => /TOP GIFTER/.test(t)),
-    `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(rubriker)}`);
-  assert.ok(rubriker.some(t => /VYRA ORIGINAL/.test(t)),
+  const protoRubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
+  assert.ok(protoRubriker.some(t => /TOP GIFTER/.test(t)),
+    `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(protoRubriker)}`);
+  assert.ok(protoRubriker.some(t => /VYRA ORIGINAL/.test(t)),
     'premium-final.js skrev over sektionen igen — "VYRA ORIGINAL" och dess femton knappar ar borta:\n  ' +
-    JSON.stringify(rubriker));
+    JSON.stringify(protoRubriker));
   assert.ok(proto.querySelectorAll('[data-pf-topgift]').length >= 21,
     `bara ${proto.querySelectorAll('[data-pf-topgift]').length} Top Gifter-knappar`);
 });

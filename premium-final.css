@@ -129,3 +129,486 @@
    manglades i bdcb7bd. Code-point-escapes kan inte manglas av en teckenkodning.
    Tre halvfasta mellanslag per lucka, som originalets tre vanliga. */
 .goal-constellation .goal-track:after{content:"\2726\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2727\00a0\00a0\00a0\00b7\00a0\00a0\00a0\2726"}
+
+/* ── FAN LEVEL UP · KOREOGRAFI ──────────────────────────────────────────────────────────────────
+   Faserna sätts av fan-fas.js. Klasserna heter `fan-fas-<namn>` och ligger på widgetlådan.
+   Kontraktet är enkelriktat: JS bestämmer NÄR, den här filen bestämmer VAD. Ingen regel här får
+   läsa en tid ur JS, och ingen fas i JS får känna till en enda animation härifrån.
+
+   VARFÖR HÄR OCH INTE I studio.css. RÄTTAD 2026-08-17: det här stycket sa först att studio.css
+   har en obalanserad klammer (issue #126) och att reglerna aldrig hade bitit. Den varningen stod
+   i studio.css självt och togs för god utan att räknas efter. Uppmätt: filen har 2312 öppnande
+   och 2312 stängande klamrar, klammerdjupet är noll vid rad 787 och vid filens slut, och en regel
+   långt efter 787 vinner cascaden i Chromium. Skälet håller ändå, men det är ett annat:
+   premium-final.css är repots plats för "designval som aldrig ritades färdigt", och att hålla
+   hela fassystemet i en fil gör att nästa modells koreografi hittas på ett ställe.
+
+   BARA hero i den här omgången. Övriga modeller saknar post i FASER och får därför ingen enda av
+   klasserna nedan — de spelar exakt som förut. En halvfärdig fas är sämre än ingen fas.
+
+   FAS 1 · hjarta (420 ms). Hjärtat ensamt: det stiger ur botten och skalas upp. Pulsen är basens
+   egen `fanLevelPop` på `.fan-burst img` — den rörs inte, den fortsätter oavbrutet, och det är
+   just därför hjärtat "pulsar från basen" i stället för att starta om.
+
+   FAS 2 · samling (560 ms). Resten samlas runt hjärtat i en trappa: profil, pill, rubrik, namn,
+   meddelande. Trappan är räknad så att den SISTA animationen slutar exakt när fasen gör det
+   (0,24 s fördröjning + 0,32 s varaktighet = 0,56 s). Går trappan över fasens längd tas klassen
+   bort mitt i rörelsen och elementet hoppar — det syns bara i webbläsaren, aldrig i koden.
+
+   FAS 3 · vila (270 ms). Glöden lägger sig. Både fas 1 och fas 2 håller `brightness(1.3)` på
+   burst-ringen, och fas 3 ramar ner den till 1 — så när klassen tas bort står lådan redan på
+   sitt basvärde och ingenting snäpper tillbaka.
+
+   Totalt 1250 ms, väl inom visningsreglagets golv på 2 s. F3 i tests/fan-fas.test.js vaktar det. */
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > h2,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > h3,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta > p,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-profile,
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-level-pill{opacity:0}
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-burst{animation:fanSamlingHjarta .42s cubic-bezier(.16,1,.3,1) both}
+
+.fan-level-up.fan-layout-hero.fan-fas-hjarta .fan-burst,
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-burst{filter:brightness(1.3)}
+
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-profile{animation:fanSamlingIn .32s cubic-bezier(.2,.9,.25,1.1) both}
+.fan-level-up.fan-layout-hero.fan-fas-samling .fan-level-pill{animation:fanSamlingIn .32s cubic-bezier(.2,.9,.25,1.1) .06s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > h2{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .12s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > h3{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .18s both}
+.fan-level-up.fan-layout-hero.fan-fas-samling > p{animation:fanSamlingNed .32s cubic-bezier(.2,.9,.25,1.1) .24s both}
+
+.fan-level-up.fan-layout-hero.fan-fas-vila .fan-burst{animation:fanVilaGlod .27s ease-out both}
+
+@keyframes fanSamlingHjarta{
+  0%{transform:translateY(26px) scale(.72);opacity:0}
+  60%{opacity:1}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+/* Samlas UTIFRÅN — profil och pill glider in mot mitten underifrån. */
+@keyframes fanSamlingIn{
+  0%{transform:translateY(16px) scale(.86);opacity:0}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+/* Texten faller ned på plats i stället: rubrik, namn och meddelande ligger UNDER hjärtat i
+   flödet, så en rörelse nedifrån hade fått dem att korsa varandra. */
+@keyframes fanSamlingNed{
+  0%{transform:translateY(-12px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
+}
+@keyframes fanVilaGlod{
+  0%{filter:brightness(1.3)}
+  100%{filter:brightness(1)}
+}
+
+/* Samma hänsyn som de tre premiumfamiljerna längre upp i filen. Faserna byts fortfarande — det är
+   BARA rörelsen som tas bort, så tittaren ser samma slutbild i samma ordning. */
+@media(prefers-reduced-motion:reduce){
+  .fan-level-up[class*="fan-fas-"] *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+
+/* ── FAN LEVEL UP · stack · "MOTTAGANDET" ───────────────────────────────────────────────────────
+   Fall → pop → stigning. Rörelserna är stacks egna sedan tidigare och ligger kvar i studio.css:
+   fsIconDrop, fsPillPop och fsAvatarRise delas med hearts och loyalty och får INTE kopieras hit —
+   två sanningar om samma rörelse är hur den ena tyst hamnar ur takt med den andra.
+
+   DET SOM BYTS ÄR KLOCKAN. Förut låg den i `animation-delay` på `.fan-layout-stack.fan-active`
+   (0 / .1s / .2s). Den timingen var osynlig för fan-fas.js och därmed för F3:s tak på 2 s, och
+   texten hade ingen rörelse alls att fördröja — rubrik, namn och meddelande snäppte fram i samma
+   bildruta som lådan medan burst, pill och profil koreograferades. De gamla reglerna är borttagna
+   ur studio.css i samma ändring; ligger båda kvar startar två klockor på samma trigger. Vaktat
+   av F4.
+
+   RUBRIKEN KOM MED FÖRST EFTER MÄTNINGEN. `.fan-layout-stack>h2{display:none!important}` såg ut
+   att dölja den, men den regeln var död: `.fan-level-up>h2` har samma specificitet, kommer senare
+   i studio.css och bär `display:block!important`. Rubriken syns alltså, den är stacks största
+   textelement, och den snäppte värst av alla. Den döda regeln är borttagen.
+
+   Delarna som ännu inte anlänt hålls på `opacity:0` av fasen före. Varje animation slutar på sitt
+   basvärde, så när sista fasklassen tas bort står lådan redan rätt och ingenting snäpper. */
+
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-level-pill,
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-profile,
+.fan-level-up.fan-layout-stack.fan-fas-fall > h2,
+.fan-level-up.fan-layout-stack.fan-fas-fall > h3,
+.fan-level-up.fan-layout-stack.fan-fas-fall > p{opacity:0}
+.fan-level-up.fan-layout-stack.fan-fas-fall .fan-burst{animation:fsIconDrop .3s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-stack.fan-fas-pop .fan-profile,
+.fan-level-up.fan-layout-stack.fan-fas-pop > h2,
+.fan-level-up.fan-layout-stack.fan-fas-pop > h3,
+.fan-level-up.fan-layout-stack.fan-fas-pop > p{opacity:0}
+.fan-level-up.fan-layout-stack.fan-fas-pop .fan-level-pill{animation:fsPillPop .26s cubic-bezier(.34,1.56,.64,1) both}
+
+/* Trappan i stigningen är räknad mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet =
+   0,34 s, exakt fasens 340 ms. Går den över tas klassen bort mitt i rörelsen och elementet
+   hoppar till sitt slutläge — det syns bara i en webbläsare, aldrig i koden. Vaktat av 17d. */
+.fan-level-up.fan-layout-stack.fan-fas-stigning .fan-profile{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > h2{animation:fsAvatarRise .28s ease-out .02s both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-stack.fan-fas-stigning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · ribbon · "VÄLKOMNANDET" ─────────────────────────────────────────────────────
+   Pop → utrullning → text. Rörelserna är ribbons egna (fbProfilePop, frbUnfurl i studio.css) och
+   texten lånar stacks fsAvatarRise — den stiger in underifrån, vilket är precis vad text som
+   landar under en banderoll ska göra. Ingen av dem kopieras hit.
+
+   UPPMÄTT FÖRE (opacitet per del, ms från triggern):
+
+       ms | profil | banderoll (scaleX) | h2   | h3   | p
+       87 |  0.61  | 0.00 (0.300)       | 1.00 | 1.00 | 1.00
+      207 |  1.00  | 0.36 (0.552)       | 1.00 | 1.00 | 1.00
+      366 |  1.00  | 0.94 (0.958)       | 1.00 | 1.00 | 1.00
+      527 |  1.00  | 1.00 (0.998)       | 1.00 | 1.00 | 1.00
+
+   Poppen och utrullningen rörde sig alltså redan, och mjukt. Det som snäppte var TEXTEN: rubrik,
+   namn och meddelande låg på opacity 1 redan i första bildrutan, färdiglästa medan banderollen
+   fortfarande var hoprullad till 30 % bredd. Widgeten berättade slutet före början.
+
+   VILOLAGRET. Ribbon gömmer `.fan-burst`, och med hjärtat försvinner basens två enda oändliga
+   animationer — fanLevelPop och fanRing. Efter 527 ms stod modellen fullständigt stilla, som
+   enda modell i familjen. Den får därför en egen andning.
+
+   Andningen hänger på MODELLEN, inte på en fas. En `infinite` som ligger på en fasklass dör när
+   klassen tas bort — alltså exakt när den skulle ha börjat behövas. Undantagen är explicita i
+   stället för att lita på källordning: under poppen äger fbProfilePop profilbilden, och under
+   uttoningen äger studio.css:s `.fan-exit`-regel den. Utan `:not()`-paret hade den här regeln
+   haft samma specificitet som uttoningens och vunnit bara för att den laddas senare. */
+
+.fan-level-up.fan-layout-ribbon:not(.fan-exit):not(.fan-fas-pop) .fan-profile{animation:frbAndning 3.2s ease-in-out infinite}
+@keyframes frbAndning{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
+.fan-level-up.fan-layout-ribbon.fan-fas-pop .fan-ribbon,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > h2,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > h3,
+.fan-level-up.fan-layout-ribbon.fan-fas-pop > p{opacity:0}
+.fan-level-up.fan-layout-ribbon.fan-fas-pop .fan-profile{animation:fbProfilePop .32s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > h2,
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > h3,
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning > p{opacity:0}
+.fan-level-up.fan-layout-ribbon.fan-fas-utrullning .fan-ribbon{animation:frbUnfurl .42s cubic-bezier(.16,1,.3,1) both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 18d. */
+.fan-level-up.fan-layout-ribbon.fan-fas-text > h2{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-ribbon.fan-fas-text > h3{animation:fsAvatarRise .28s ease-out .03s both}
+.fan-level-up.fan-layout-ribbon.fan-fas-text > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · loyalty · "INRINGNINGEN" ────────────────────────────────────────────────────
+   Pop → ring → stämpel. Alla tre rörelserna är befintliga och ligger kvar i studio.css:
+   fbProfilePop, flRingDraw och fsPillPop. Det som byts är klockan — och VAD poppen sitter på.
+
+   SOCKELFÄLLAN, uppmätt i Chromium (opacitet, ms från triggern):
+
+       ms | img (ankaret) | .fan-profile (behållaren) | ring | h2   | h3   | p
+       24 |     0.18      |          1.00            | 0.04 | 1.00 | 1.00 | 1.00
+      126 |     0.89      |          1.00            | 0.26 | 1.00 | 1.00 | 1.00
+      306 |     1.00      |          1.00            | 0.60 | 1.00 | 1.00 | 1.00
+
+   Poppen låg på `.fan-profile img`. Men behållaren har ett eget utseende —
+   `background:linear-gradient(145deg,var(--fan-light),var(--fan))` och `box-shadow:0 0 13px
+   var(--fan)`, en glödande orange skiva på 80×80 px. Den stod fullt målad redan i första
+   bildrutan, och "poppen" var ett foto som tonade in inuti något som aldrig rörde sig.
+   Fotograferat: en fas som bara släcker barnen lämnar skivan lysande ensam på canvasen.
+
+   Faserna rör därför BEHÅLLAREN. Ankaret nämns inte en enda gång — det rider med. Vaktat av 19g.
+
+   Texten snäppte här också: h2, h3 och p låg på opacity 1 i första bildrutan. Och `.fan-layout-
+   loyalty>h2{display:none!important}` var död på samma sätt som stacks — `.fan-level-up>h2` har
+   samma specificitet, kommer senare och bär `display:block!important`. Rubriken syns alltså, och
+   är med i stämpeln. Den döda regeln är borttagen. */
+
+.fan-level-up.fan-layout-loyalty.fan-fas-pop .fan-ring,
+.fan-level-up.fan-layout-loyalty.fan-fas-pop .fan-level-pill,
+.fan-level-up.fan-layout-loyalty.fan-fas-pop > h2,
+.fan-level-up.fan-layout-loyalty.fan-fas-pop > h3,
+.fan-level-up.fan-layout-loyalty.fan-fas-pop > p{opacity:0}
+.fan-level-up.fan-layout-loyalty.fan-fas-pop .fan-profile{animation:fbProfilePop .32s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-loyalty.fan-fas-ring .fan-level-pill,
+.fan-level-up.fan-layout-loyalty.fan-fas-ring > h2,
+.fan-level-up.fan-layout-loyalty.fan-fas-ring > h3,
+.fan-level-up.fan-layout-loyalty.fan-fas-ring > p{opacity:0}
+.fan-level-up.fan-layout-loyalty.fan-fas-ring .fan-ring{animation:flRingDraw .44s ease-out both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 19d. */
+.fan-level-up.fan-layout-loyalty.fan-fas-stampel .fan-level-pill{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.fan-level-up.fan-layout-loyalty.fan-fas-stampel > h2{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) .02s both}
+.fan-level-up.fan-layout-loyalty.fan-fas-stampel > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-loyalty.fan-fas-stampel > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · badgereveal · "UPPENBARELSEN" ───────────────────────────────────────────────
+   Vingar → avtäckning → hyllning. Halvmånarna sveper in utifrån och bär fram emblemen,
+   profilbilden avtäcks mellan dem, pill och text hyllas sist.
+
+   HÄR RÄCKTE DET INTE ATT BYTA KLOCKA. Uppmätt i Chromium, entrén före:
+
+       ms | vingeV        | vingeH         | profil | pill | h2   | h3   | p
+       34 | 0.06 a1.00 x0 | 0.06 a-1.00 x0 |  0.00  | 1.00 | 1.00 | 1.00 | 1.00
+      256 | 0.65 a1.00 x0 | 0.65 a-1.00 x0 |  0.72  | 1.00 | 1.00 | 1.00 | 1.00
+      604 | 1.00 a1.00 x0 | 1.00 a-1.00 x0 |  1.00  | 1.00 | 1.00 | 1.00 | 1.00
+
+   Transformmatrisens a och x står stilla hela vägen. `fbWingL`/`fbWingR` animerar både opacity
+   och transform, men `.fan-wing{transform:translateY(-50%)!important}` slog animationen —
+   `!important` i en vanlig regel vinner över en CSS-animation. Halva keyframen hade aldrig kört.
+   Vingarna gled inte in; de tonade in. `!important` är borta och keyframesen omskrivna: de sveper
+   in UTIFRÅN, och högervingen bär sin spegling i BÅDA stegen så den inte vänder sig mitt i.
+
+   VÄNSTERVINGEN SKA VARA OSPEGLAD. `.fan-wing.left{transform:scaleX(-1)}` var död — den förlorade
+   mot `!important`-regeln. Utan den hade den vunnit på specificitet, och då vänder båda bågarna åt
+   samma håll: omfamningen bryts. Fotograferat före och efter. Regeln är raderad, inte väckt.
+
+   VILOLAGRET. `.fan-burst` är display:none, alltså inget fanLevelPop och ingen fanRing — uppmätt
+   0 levande animationer i vila, samma tomhet som ribbon hade. Andningen ligger på modellen, inte
+   på en fas: en `infinite` som hänger på en fasklass dör när klassen tas bort. Undantagen är
+   explicita så avtäckningen och uttoningen får äga profilbilden i sin tur. */
+
+.fan-level-up.fan-layout-badgereveal:not(.fan-exit):not(.fan-fas-avtackning) .fan-profile{animation:frbAndning 3.2s ease-in-out infinite}
+
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar .fan-profile,
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar .fan-level-pill,
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar > h2,
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar > h3,
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar > p{opacity:0}
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar .fan-wing.left{animation:fbWingL .34s cubic-bezier(.16,1,.3,1) both}
+.fan-level-up.fan-layout-badgereveal.fan-fas-vingar .fan-wing.right{animation:fbWingR .34s cubic-bezier(.16,1,.3,1) both}
+
+.fan-level-up.fan-layout-badgereveal.fan-fas-avtackning .fan-level-pill,
+.fan-level-up.fan-layout-badgereveal.fan-fas-avtackning > h2,
+.fan-level-up.fan-layout-badgereveal.fan-fas-avtackning > h3,
+.fan-level-up.fan-layout-badgereveal.fan-fas-avtackning > p{opacity:0}
+.fan-level-up.fan-layout-badgereveal.fan-fas-avtackning .fan-profile{animation:fbProfilePop .36s cubic-bezier(.34,1.56,.64,1) both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 20d. */
+.fan-level-up.fan-layout-badgereveal.fan-fas-hyllning .fan-level-pill{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > h2{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) .02s both}
+.fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-badgereveal.fan-fas-hyllning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · hearts · "UPPSTIGNINGEN" ────────────────────────────────────────────────────
+   Nedslag → uppstigning → hyllning. Inga nya keyframes alls: fsIconDrop (delad med stack),
+   fsAvatarRise (delad med stack, ribbon och loyalty) och fsPillPop räcker.
+
+   VILOLAGRET FLYTTAT TILL MODELLEN. De tre hjärtanas oändliga loop låg på `.fan-active`. Ett
+   vilolager måste finnas oavsett om alerten står i en fas eller inte — ligger det på `.fan-active`
+   krävs en specialvakt för när det får starta, och på en fasklass dör det när klassen tas bort.
+   Basens fanLevelPop ligger på modellen; den här gör likadant. Widgeten är ändå
+   `visibility:hidden` tills alerten tänds, så ingenting syns i förväg. Vaktat av 21h.
+
+   OCH TONNINGEN ÄR LAGAD. `.fan-rising-hearts i{opacity:1!important}` pinnade opaciteten och
+   dödade halva frHeartRise. Uppmätt före:
+
+       ms | hjärta 1        | hjärta 2        | hjärta 3
+     1552 | y -26  op 1.00  | y -21  op 1.00  | y -11  op 1.00
+     1803 | y  -1  op 1.00  | y -25  op 1.00  | y -18  op 1.00
+
+   Hjärtat steg 26 px och teleporterade tillbaka till noll VID FULL LJUSSTYRKA, var 1,6:e sekund,
+   tre gånger förskjutet. Vid opacitet 0 i toppen är samma återgång osynlig — det är hela skälet
+   till att keyframen tonar ut. `!important` är borta. Vaktat av 21g. */
+
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i{animation:frHeartRise 1.6s ease-in-out infinite}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(1){animation-delay:0s}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(2){animation-delay:.4s}
+.fan-level-up.fan-layout-hearts .fan-rising-hearts i:nth-child(3){animation-delay:.8s}
+
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-rising-hearts,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-level-pill,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > h2,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > h3,
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag > p{opacity:0}
+.fan-level-up.fan-layout-hearts.fan-fas-nedslag .fan-burst{animation:fsIconDrop .3s cubic-bezier(.34,1.56,.64,1) both}
+
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning .fan-level-pill,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > h2,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > h3,
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning > p{opacity:0}
+.fan-level-up.fan-layout-hearts.fan-fas-uppstigning .fan-rising-hearts{animation:fsAvatarRise .32s ease-out both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 21d. */
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning .fan-level-pill{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > h2{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) .02s both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-hearts.fan-fas-hyllning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · heartbeat · "PULSSLAGET" ────────────────────────────────────────────────────
+   Sidorna → pulsen → avläsning. Ordningen följer rutnätets egen logik: `"avatar pulse burst"` med
+   rubrik, namn och meddelande staplade i högerkolumnen. Vänster kommer in, höger kommer in, pulsen
+   kopplar ihop dem, och först då går det att läsa.
+
+   FÖRSTA MODELLEN DÄR DEN BEFINTLIGA ENTRÉN VAR HEL. Uppmätt i Chromium:
+
+       ms | profil       | burst        | puls  | pill | h2   | h3   | p
+       38 | 0.21  x-19   | 0.21  x 19   |  100% | 1.00 | 1.00 | 1.00 | 1.00
+      253 | 0.98  x -1   | 0.98  x  1   |  100% | 1.00 | 1.00 | 1.00 | 1.00
+      603 | 1.00  x  0   | 1.00  x  0   |   29% | 1.00 | 1.00 | 1.00 | 1.00
+
+   fhSlideL, fhSlideR och fhPulseDraw rörde sig alla tre — ingen `!important` i vägen, sökt på
+   transform, opacity och clip-path i modellens regler. Bara klockan flyttas hit, plus rörelse åt
+   de fyra delar som snäppte.
+
+   RUTNÄTET DÖLJS MED OPACITET, ALDRIG MED display. I en flexbox trycks elementen bara ihop av
+   `display:none`. I ett rutnät KOLLAPSAR spåret, och allt annat hoppar till en ny plats mitt i
+   koreografin — en relayout som ingen enhetsprovning ser och som bara syns som ett ryck i
+   webbläsaren. Samma sak om en fas ändrar `grid-area` eller `grid-template-*`. Vaktat av 22g,
+   generellt över både heartbeat och duo. */
+
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna .fan-pulse-line,
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna .fan-level-pill,
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna > h2,
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna > h3,
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna > p{opacity:0}
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna .fan-profile{animation:fhSlideL .34s cubic-bezier(.16,1,.3,1) both}
+.fan-level-up.fan-layout-heartbeat.fan-fas-sidorna .fan-burst{animation:fhSlideR .34s cubic-bezier(.16,1,.3,1) both}
+
+.fan-level-up.fan-layout-heartbeat.fan-fas-pulsen .fan-level-pill,
+.fan-level-up.fan-layout-heartbeat.fan-fas-pulsen > h2,
+.fan-level-up.fan-layout-heartbeat.fan-fas-pulsen > h3,
+.fan-level-up.fan-layout-heartbeat.fan-fas-pulsen > p{opacity:0}
+.fan-level-up.fan-layout-heartbeat.fan-fas-pulsen .fan-pulse-line{animation:fhPulseDraw .32s linear both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 22d. */
+.fan-level-up.fan-layout-heartbeat.fan-fas-avlasning .fan-level-pill{animation:fsPillPop .28s cubic-bezier(.34,1.56,.64,1) both}
+.fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > h2{animation:fsAvatarRise .28s ease-out .02s both}
+.fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > h3{animation:fsAvatarRise .28s ease-out .04s both}
+.fan-level-up.fan-layout-heartbeat.fan-fas-avlasning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ── FAN LEVEL UP · duo · "MÖTET"  ·  DEN SISTA MODELLEN ────────────────────────────────────────
+   Parterna → linjen → avläsning. Namnet är modellens hela idé: två parter, en förbindelse. Ikonen
+   och avataren spänner var sin sida av en 320×89-bar, pulslinjen går emellan, och texten står
+   staplad till höger i rutnätets `badge/title/name/msg`-kolumn.
+
+   DEN RENASTE MODELLEN AV DE ÅTTA. Uppmätt i Chromium:
+
+       ms | burst | profil | pill | puls  | h2   | h3   | p
+       34 | 0.00  |  0.07  | 0.07 |  100% | 1.00 | 1.00 | 1.00
+      253 | 0.61  |  0.77  | 0.77 |   92% | 1.00 | 1.00 | 1.00
+      602 | 1.00  |  1.00  | 1.00 |    4% | 1.00 | 1.00 | 1.00
+
+   Fyra entréer och alla fungerade — ingen `!important` i vägen. Och duo är den ENDA modellen där
+   nivåpillen redan animerades; i de sju föregående snäppte den. Kvar snäppte bara h2, h3 och p.
+
+   Rutnätet döljs med opacitet, aldrig med display — samma regel som heartbeat, vaktad av 22g som
+   skrevs generellt över båda gridmodellerna just för det här ögonblicket. */
+
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-pulse-line,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > h2,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > h3,
+.fan-level-up.fan-layout-duo.fan-fas-parterna > p{opacity:0}
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-burst,
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-level-pill{animation:fdSnap .3s ease-out both}
+.fan-level-up.fan-layout-duo.fan-fas-parterna .fan-profile{animation:fdSnap .3s ease-out .04s both}
+
+.fan-level-up.fan-layout-duo.fan-fas-linjen > h2,
+.fan-level-up.fan-layout-duo.fan-fas-linjen > h3,
+.fan-level-up.fan-layout-duo.fan-fas-linjen > p{opacity:0}
+.fan-level-up.fan-layout-duo.fan-fas-linjen .fan-pulse-line{animation:fhPulseDraw .32s linear both}
+
+/* Trappan mot fasens längd: 0,06 s fördröjning + 0,28 s varaktighet = 0,34 s, exakt fasens
+   340 ms. Går den över tas klassen bort mitt i rörelsen och elementet hoppar. Vaktat av 23d. */
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > h2{animation:fsAvatarRise .28s ease-out both}
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > h3{animation:fsAvatarRise .28s ease-out .03s both}
+.fan-level-up.fan-layout-duo.fan-fas-avlasning > p{animation:fsAvatarRise .28s ease-out .06s both}
+
+/* ==== GIFTER · RISINGTIER · "Stigningen" — sekventiell trefas (fyrfasporten PR B, 2026-08-19).
+   JS ager NAR (gifter-fas.js via widget-fas-fabriken), det har ager VAD. Faserna ar exklusiva:
+   en klass i taget, sa varje fas slacker det som annu inte fatt sin entre — och delar som redan
+   spelat star pa sina DESIGNADE vilovarden nar fasklassen byts (default-CSS:en tar over;
+   slutlage = designens vila, ingen kombinationslogik). Trappans vila ar 0,28-ekolagren ur
+   #198:s formsprak — koreografin andrar aldrig designens slut, bara vagen dit. */
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-orbit>img,
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-level-badge,
+.gifter-layout-risingtier.gifter-fas-stralar>h2,
+.gifter-layout-risingtier.gifter-fas-stralar>h3,
+.gifter-layout-risingtier.gifter-fas-stralar>p,
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-bottom-profile{opacity:0;animation:none}
+.gifter-layout-risingtier.gifter-fas-materialisering>h2,
+.gifter-layout-risingtier.gifter-fas-materialisering>h3,
+.gifter-layout-risingtier.gifter-fas-materialisering>p{opacity:0;animation:none}
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-arrow-up{animation:gfrPilUpp .34s ease-out both}
+.gifter-layout-risingtier.gifter-fas-stralar .gifter-streak{animation:gfrLadda .34s ease-in both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-3{animation:gfrTandEko .14s ease-out both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-2{animation:gfrTandEko .14s ease-out .1s both}
+.gifter-layout-risingtier.gifter-fas-stralar .gd-1{animation:gfrTandFull .14s ease-out .2s both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-orbit>img{animation:gfrMaterialisera .36s cubic-bezier(.2,.9,.3,1.15) both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-level-badge{animation:gfrStampla .36s ease-out both}
+.gifter-layout-risingtier.gifter-fas-materialisering .gifter-bottom-profile{animation:gfrFram .3s ease-out both}
+.gifter-layout-risingtier.gifter-fas-avlasning>h2{animation:gfrLas .2s ease-out both}
+.gifter-layout-risingtier.gifter-fas-avlasning>h3{animation:gfrLas .2s ease-out .09s both}
+.gifter-layout-risingtier.gifter-fas-avlasning>p{animation:gfrLas .2s ease-out .18s both}
+@keyframes gfrPilUpp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrLadda{from{opacity:0}to{opacity:1}}
+@keyframes gfrTandEko{from{opacity:0;transform:translateY(10px)}to{opacity:.28;transform:translateY(0)}}
+@keyframes gfrTandFull{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrMaterialisera{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+@keyframes gfrStampla{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
+@keyframes gfrFram{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfrLas{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ==== GIFTER · PROFILE · "Rise & Pop" — sekventiell trefas (fyrfasporten PR C, 2026-08-19).
+   Profile ar renderarens DEFAULT (`w.gifterLayout||'profile'`) — entren varje anvandare far som
+   aldrig oppnar modellvaljaren — sa premissen ar medvetet den lugnaste av nio: ringen glimmar,
+   kroppen stiger som EN kropp, namnet fram, brickan i en pop. JS ager NAR (gifter-fas.js via
+   widget-fas-fabriken), det har ager VAD. Faserna ar exklusiva: en klass i taget, och delar som
+   redan spelat star pa sina DESIGNADE vilovarden nar fasklassen byts (default-CSS:en tar over).
+   PORTRATTET FAR ALDRIG EN EGEN OPACITETSREGEL — det arver medaljongens (wt-g:s G1-laxa: en
+   slackt bild ar inget ankare; profile TONAR IN portrattet, avslojar det inte — den regeln
+   galler reveal/flip/duo). Idlen (heartSpark pa gnistorna) ar mains egen och rors inte. */
+.gifter-layout-profile.gifter-fas-glimt .gifter-diamond-row,
+.gifter-layout-profile.gifter-fas-glimt .gifter-level-badge,
+.gifter-layout-profile.gifter-fas-glimt>h2,
+.gifter-layout-profile.gifter-fas-glimt>h3,
+.gifter-layout-profile.gifter-fas-glimt>p{opacity:0;animation:none}
+.gifter-layout-profile.gifter-fas-glimt .gifter-orbit{animation:gfpGlimt .4s ease-out both}
+.gifter-layout-profile.gifter-fas-stigning>h3,
+.gifter-layout-profile.gifter-fas-stigning .gifter-level-badge{opacity:0;animation:none}
+.gifter-layout-profile.gifter-fas-stigning .gifter-orbit{animation:gfpStigRing .48s ease-out both}
+.gifter-layout-profile.gifter-fas-stigning .gifter-diamond-row,
+.gifter-layout-profile.gifter-fas-stigning>h2,
+.gifter-layout-profile.gifter-fas-stigning>p{animation:gfpStig .48s ease-out both}
+.gifter-layout-profile.gifter-fas-pop>h3{animation:gfpNamn .2s ease-out both}
+.gifter-layout-profile.gifter-fas-pop .gifter-level-badge{animation:gfpBrickaPop .34s ease-out both}
+/* Glimten stannar pa 0,35 — stigningen borjar dar den slutade, sa ringen aldrig slocknar
+   ett ogonblick vid fasbytet. Kroppens opacitet ar framme vid 40 % sa resten av resan ar
+   ren rorelse — halva stigningen ska LASAS, inte anas. Poppen passerar OVER 1: en pop som
+   bara vaxer till 1 ar en intoning. */
+@keyframes gfpGlimt{from{opacity:0}to{opacity:.35}}
+@keyframes gfpStig{0%{opacity:0;transform:translateY(22px)}40%{opacity:1;transform:translateY(13.2px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gfpStigRing{0%{opacity:.35;transform:translateY(22px)}40%{opacity:1;transform:translateY(13.2px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gfpNamn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gfpBrickaPop{0%{opacity:0;transform:scale(.82)}55%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+
+/* ==== GIFTER · NUMBER · "Rakneverket" — sekventiell trefas (fyrfasporten PR D, 2026-08-20).
+   RAMAR IN gifterTransform, duplicerar den aldrig: siffrans byte vid 750 ms gar pa JS:ens
+   EGEN klocka och ligger 290 ms in i fas 2. Fas 1 ar darfor ingen tom scen — ringen och den
+   GAMLA siffran ar anticipationen — och monteringen borjar forst efter bytet.
+   FAS 1 SLACKER FORALDERN, ALDRIG BILDEN: .gifter-bottom-profile ar modellens enda portratt
+   (och syns bara i number), sa dess img behaller sitt egna varde. */
+.gifter-layout-number.gifter-fas-ratt .gifter-diamond-row,
+.gifter-layout-number.gifter-fas-ratt .gifter-level-badge,
+.gifter-layout-number.gifter-fas-ratt>h2,
+.gifter-layout-number.gifter-fas-ratt>h3,
+.gifter-layout-number.gifter-fas-ratt>p,
+.gifter-layout-number.gifter-fas-ratt .gifter-bottom-profile{opacity:0;animation:none}
+/* Vag A (diamantrad + rubrik) startar 290 ms in i fasen — exakt vid bytet. 290/480 = 60,4 %.
+   Vag B (badge, namn, text, bottenavatar) foljer 100 ms senare = 81,3 %. */
+.gifter-layout-number.gifter-fas-montering .gifter-diamond-row,
+.gifter-layout-number.gifter-fas-montering>h2{opacity:0;animation:gfnStig .48s ease-out both}
+.gifter-layout-number.gifter-fas-montering .gifter-level-badge,
+.gifter-layout-number.gifter-fas-montering>h3,
+.gifter-layout-number.gifter-fas-montering>p,
+.gifter-layout-number.gifter-fas-montering .gifter-bottom-profile{opacity:0;animation:gfnStigSen .48s ease-out both}
+.gifter-layout-number.gifter-fas-avlasning>h3,
+.gifter-layout-number.gifter-fas-avlasning>p{animation:gfnLas .22s ease-out both}
+.gifter-layout-number.gifter-fas-avlasning .gifter-bottom-profile{animation:gfnLas .22s ease-out .08s both}
+@keyframes gfnStig{
+  0%,60.4%{opacity:0;transform:translateY(14px)}
+  100%{opacity:1;transform:translateY(0)}}
+@keyframes gfnStigSen{
+  0%,81.3%{opacity:0;transform:translateY(12px) scale(.94)}
+  100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes gfnLas{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

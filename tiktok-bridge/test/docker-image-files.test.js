@@ -62,9 +62,22 @@ function referencedFiles(file) {
   return found;
 }
 
+// KATALOGER SOM PROCESSEN SKAPAR SJALV, inte moduler den laddar.
+//
+// DIRNAME_FILE fangar allt som adresseras relativt __dirname, vilket ar precis ratt for
+// fork(path.join(__dirname, 'bridge.js')). Men samma form anvands ocksa for en UTKATALOG:
+// bridge.js bygger sin inspelningskatalog med path.join(__dirname, 'inspelningar'). Den finns
+// inte i repot (den ar gitignorerad och skapas vid korning), sa resolveSpec gjorde den till
+// 'inspelningar.js' och vakten kravde att en katalog skulle COPYas in i imagen.
+//
+// Undantaget ar en NAMNGIVEN lista, inte en regel som "hoppa over det som inte finns" — den
+// senare hade tystat exakt det vakten byggdes for: en .js-fil som tappas ur COPY-listan.
+const UTKATALOGER = new Set(['inspelningar']);
+
 // Node resolves './normalizer' to normalizer.js. Mirror that, so the graph is keyed on the exact
 // filename the Dockerfile would have to name.
 const resolveSpec = spec => {
+  if (UTKATALOGER.has(spec)) return null;
   const full = path.join(ROOT, spec);
   return fs.existsSync(full) && fs.statSync(full).isFile() ? spec : `${spec}.js`;
 };
@@ -78,7 +91,7 @@ function runtimeFiles() {
     if (!file.endsWith('.js')) continue;
     if (!fs.existsSync(path.join(ROOT, file))) continue;   // covered by its own test below
     for (const dependency of referencedFiles(file).map(resolveSpec)) {
-      if (!seen.has(dependency)) queue.push(dependency);
+      if (dependency && !seen.has(dependency)) queue.push(dependency);
     }
   }
   return seen;

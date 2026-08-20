@@ -1,0 +1,802 @@
+{
+ "fel": null,
+ "klasser": "widget gifter-level-up gifter-layout-risingtier gifter-active gifter-xform-new",
+ "serier": {
+  "40": [
+   {
+    "namn": "div.gifter-orbit",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong.gifter-big-level",
+    "o": 0.85,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b.gifter-orbit-arrow",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "div.gifter-diamond-row",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i.gifter-arrow-up.left",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 3.55342)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "div.gifter-diamond-stack",
+    "o": 0.42,
+    "t": "matrix(0.897222, 0, 0, 0.897222, 0, 40.6",
+    "anim": "gl-climb"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-1",
+    "o": 0,
+    "t": "matrix(1, 0, 0, 1, 0, 30)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-2",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 30)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-3",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 26.265)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "i.gifter-arrow-up.right",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 3.55342)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "i.gifter-streak",
+    "o": 1,
+    "t": "",
+    "anim": "gl-tier-charge"
+   },
+   {
+    "namn": "i.gifter-pulse-line",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-level-badge",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h2",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h3",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "p",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-bottom-profile",
+    "o": 1,
+    "t": "",
+    "anim": "gl-rise"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "video.level-up-video",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   }
+  ],
+  "250": [
+   {
+    "namn": "div.gifter-orbit",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong.gifter-big-level",
+    "o": 0.85,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b.gifter-orbit-arrow",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "div.gifter-diamond-row",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i.gifter-arrow-up.left",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, -3.80356)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "div.gifter-diamond-stack",
+    "o": 0.99,
+    "t": "matrix(1.02776, 0, 0, 1.02776, 0, -4.231",
+    "anim": "gl-climb"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-1",
+    "o": 0.26,
+    "t": "matrix(1, 0, 0, 1, 0, 22.3066)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-2",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 17.1564)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-3",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 12.5102)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "i.gifter-arrow-up.right",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, -3.80356)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "i.gifter-streak",
+    "o": 1,
+    "t": "",
+    "anim": "gl-tier-charge"
+   },
+   {
+    "namn": "i.gifter-pulse-line",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-level-badge",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h2",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h3",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "p",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-bottom-profile",
+    "o": 1,
+    "t": "",
+    "anim": "gl-rise"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "video.level-up-video",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   }
+  ],
+  "500": [
+   {
+    "namn": "div.gifter-orbit",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong.gifter-big-level",
+    "o": 1,
+    "t": "",
+    "anim": "gifter-burst"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b.gifter-orbit-arrow",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "div.gifter-diamond-row",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i.gifter-arrow-up.left",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 2.71606)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "div.gifter-diamond-stack",
+    "o": 1,
+    "t": "matrix(1.03041, 0, 0, 1.03041, 0, -5.141",
+    "anim": "gl-climb"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-1",
+    "o": 0.74,
+    "t": "matrix(1, 0, 0, 1, 0, 7.94217)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-2",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 4.56098)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-3",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 1.95894)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "i.gifter-arrow-up.right",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 2.71606)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "i.gifter-streak",
+    "o": 1,
+    "t": "",
+    "anim": "gl-tier-charge"
+   },
+   {
+    "namn": "i.gifter-pulse-line",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-level-badge",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h2",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h3",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "p",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-bottom-profile",
+    "o": 1,
+    "t": "",
+    "anim": "gl-rise"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "video.level-up-video",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   }
+  ],
+  "800": [
+   {
+    "namn": "div.gifter-orbit",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong.gifter-big-level",
+    "o": 1,
+    "t": "",
+    "anim": "gifter-land"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b.gifter-orbit-arrow",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "div.gifter-diamond-row",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i.gifter-arrow-up.left",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, -3.18784)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "div.gifter-diamond-stack",
+    "o": 1,
+    "t": "matrix(0.99997, 0, 0, 0.99997, 0, 0.0049",
+    "anim": "gl-climb"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-1",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-2",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-3",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "i.gifter-arrow-up.right",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, -3.18784)",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "i.gifter-streak",
+    "o": 1,
+    "t": "",
+    "anim": "gl-tier-charge"
+   },
+   {
+    "namn": "i.gifter-pulse-line",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-level-badge",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h2",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h3",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "p",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-bottom-profile",
+    "o": 1,
+    "t": "",
+    "anim": "gl-rise"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "video.level-up-video",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   }
+  ],
+  "1200": [
+   {
+    "namn": "div.gifter-orbit",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "i",
+    "o": 1,
+    "t": "",
+    "anim": "gOrb"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong.gifter-big-level",
+    "o": 1,
+    "t": "",
+    "anim": "gifter-land"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "b.gifter-orbit-arrow",
+    "o": 1,
+    "t": "",
+    "anim": "heartSpark"
+   },
+   {
+    "namn": "div.gifter-diamond-row",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "i.gifter-arrow-up.left",
+    "o": 1,
+    "t": "",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "div.gifter-diamond-stack",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gl-climb"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-1",
+    "o": 1,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-2",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "img.gifter-diamond.gd-3",
+    "o": 0.28,
+    "t": "matrix(1, 0, 0, 1, 0, 0)",
+    "anim": "gTierClimbIn"
+   },
+   {
+    "namn": "i.gifter-arrow-up.right",
+    "o": 1,
+    "t": "",
+    "anim": "gArrowNudge"
+   },
+   {
+    "namn": "i.gifter-streak",
+    "o": 1,
+    "t": "",
+    "anim": "gl-tier-charge"
+   },
+   {
+    "namn": "i.gifter-pulse-line",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-level-badge",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "strong",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h2",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "h3",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "p",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "div.gifter-bottom-profile",
+    "o": 1,
+    "t": "",
+    "anim": "gl-rise"
+   },
+   {
+    "namn": "img",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   },
+   {
+    "namn": "video.level-up-video",
+    "o": 1,
+    "t": "",
+    "anim": ""
+   }
+  ]
+ },
+ "aktivaEfterEntre": [
+  "gl-climb",
+  "gTierClimbIn",
+  "gTierClimbIn",
+  "gTierClimbIn"
+ ]
+}

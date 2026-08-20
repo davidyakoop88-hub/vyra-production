@@ -1,5 +1,807 @@
 # VYRA Project State
 
+## Checkpoint 40 — Hela katalogen mätt i overlay, och vakten som håller den där (2026-08-19)
+
+Frågan som startade det: *"kan vi säkert säga att allt funkar i overlay?"* Svaret var **nej**, och
+det gick inte att svara på utan att mäta — allt som testats på emblemet dittills kördes på
+`studio.html?open=layout`, alltså **editorn**.
+
+**Vad som redan fanns, korrekt räknat:** tio provfiler öppnar `?overlay=1`, tre av dem i
+browserlanen (`scenbakgrund`, `widget-rotation`, `thumb-leak`). De provar var sin avgränsade sak.
+`widget-frameless-output.test.js` provar frameless-utgången för **en** typ, `templateTopGift`.
+Luckan var alltså inte att overlay-läget var oprovat, utan att **ingen vakt svepte hela katalogen,
+och ingen provade att en alert tänds och slocknar.**
+
+### Vad som mättes
+
+**181 katalognycklar**, var och en skapad och renderad i riktigt overlay-läge:
+
+| Utfall | Före lagningen | Efter |
+|---|---|---|
+| Synliga i vila (mål, listor, leaderboards) | 133 | **129** |
+| Triggas, spelar koreografin och slocknar | 48 | **52** |
+| Renderingsfel · trasiga bilder · kast | 0 · 0 · 0 | **0 · 0 · 0** |
+
+De fyra som flyttade är Guardian Emblems praktsteg — se buggen nedan. **Före-kolumnen är inte
+historia utan bevis:** revisionen räknade emblemet bland de 133 friska, och det är exakt så felet
+kunde passera.
+
+Overlay-läget självt kontrollmättes först: `html.overlay-output`, `body` helt genomskinlig, inget
+studio-chrome synligt, widget-wrappern utan kant, bakgrund eller skugga.
+
+### Buggen som revisionen missade och vakten hittade
+
+**Guardian Emblem syntes redan i vila i overlay** och hade legat **kvar permanent på skärmen** i
+stället för att dyka upp när en Guardian anländer. Widgeten gjorde motsatsen till vad den är till
+för.
+
+Vad som är **mätt**: alla 52 alert-nycklar är släckta i vila och tänds av sin trigger — inklusive
+Battle MVP, Last-X, Follower Alert, Gifter Level Up och Fan Level Up, var och en verifierad i
+webbläsaren. Vad som **inte** är kartlagt: hur var och en döljer sig. Fan Level Up bär `opacity:0`
+i en vanlig regel och emblemet gör det nu också, men de övriga familjernas mekanism är inte
+undersökt — beteendet är mätt, inte tekniken bakom.
+
+Revisionen såg det inte, eftersom den frågade *"syns widgeten i overlay?"* — och **det är fel fråga
+för en alert**. Rätt fråga är *"är den släckt i vila **och** tänds den av sin trigger?"*. Vakten
+ställer båda, och föll på emblemet första gången den kördes.
+
+Lagningen är scopad till overlay: Fan Level Up döljer sig i båda lägena och syns bara när den är
+vald, så i editorn ser man ingenting förrän man klickar. Här gäller regeln bara i sändningen, så
+layoutläget behåller sin förhandsvisning. Inget `!important` — två klasser slår en på specificitet.
+
+### Tre falska larm, alla mina egna
+
+Värt att skriva ut, eftersom alla tre först såg ut som repo-buggar:
+
+1. **Nyckeluttrycket klippte vid versaler.** `catalog:glovesnipe:koiPearl` blev `koi` och
+   rapporterades som en katalognyckel fabriken inte kunde bygga.
+2. **`triggerLastXAlert(typeKey, event)` anropades med ett objekt** där en typnyckel skulle stå, så
+   filtret matchade ingen widget — och fem friska Last-X-varianter rapporterades som *"tänds
+   aldrig"*.
+3. **CI föll på `steg-2.png`** medan filen bevisligen var hel. Vakten pollade `img.complete` med
+   åtta sekunders tak och **svalde timeouten**; på en lastad löpare hann 1,2 MB inte fram och provet
+   drog slutsatsen "trasig" av sin egen otålighet. Bytt mot `img.decode()`, som löser när bilden är
+   avkodad och **avvisar** vid riktigt fel — skillnaden mellan långsam och trasig blir ett svar från
+   webbläsaren i stället för en gissning från en klocka.
+
+**Tre av fyra "fel" i en handmätning var mätfel.** Det är hela argumentet för att en mätning ska
+bli ett prov: provet körs om, granskas och muteras — en handmätning gör ingetdera.
+
+### Vakten
+
+`tests/browser/overlay-alla-widgets.browser.test.js`:
+
+- overlay-läget är verkligen påslaget — kontrollmätning för hela filen
+- varje katalognyckel renderas utan kast och utan bild som inte går att avkoda
+- en representant per alert-familj tänds av sin trigger och slocknar igen
+
+Nycklarna läses ur den **genererade** katalogkartan, inte ur en handskriven lista, så en ny familj
+hamnar där av sig själv. Koreografipasset provar **sex** nycklar, en per alert-familj, i stället för
+alla 52: hela revisionen tog omkring tio minuter i vägguret, och den kostnaden i varje CI-körning
+köper inget utöver vad sex representanter redan visar. Skiljer sig två nycklar i samma familj åt är
+det designdata, och det vaktas av familjens egen provfil.
+
+### Vad som fortfarande INTE är verifierat
+
+Det här är gränsen, och den flyttas bara av en riktig sändning:
+
+- **Att widgetarna ser rätt ut.** Mätningen säger "målas", inte "är korrekt". Överlappande text,
+  avklippta kanter och fel färg är osynliga för den.
+- **Riktiga data genom hela kedjan** brygga → moln-API → live-client → trigger. Proven sköt in
+  `__test`-nyttolaster direkt på `window.trigger*`.
+- **Flera widgets samtidigt**, med kö, z-index och partiklar som slåss om samma bildrutor.
+- **OBS självt** — browser source, verklig scen, GPU-komposition.
+- **Vilket TikTok-event som bär Guardian-status** — `docs/live-verifiering.md` punkt 6.
+
+### Sviter
+
+Node **1317/1317** gröna. Overlay-vakten fyra av fyra. Mergad som `a928e70` (PR #233).
+
+## Checkpoint 39 — Guardian Emblem är konstverket, inte en teckning av det (2026-08-18)
+
+Checkpoint 38 byggde om kompositionen för hand i SVG efter referensbilderna. Det var fortfarande fel
+svar på fel fråga: **konstverket var levererat som PNG och skulle aldrig ha ritats om.** Familjen är
+nu byggd på samma mönster som Battle MVP redan använder — en bild per steg plus en geometritabell.
+
+### Vad som gjordes
+
+| | Före | Nu |
+|---|---|---|
+| Emblemet | 21 handritade delar i SVG | **fyra bilder**, en per praktsteg |
+| Delregistret | 10/12/16/21 delar per steg | `['bild','avatar','namn','undertext']` — samma fyra i alla steg |
+| Progressionen | vilka delar som finns | **`aspect`**: 0,98 → 1,21 → 1,26 → 1,29 |
+| Avatarhålet | en CSS-position | **mätt ur bilden**, i procent, som `'battlemvp.frame'` bär sina |
+| CSS-filen | 430 rader | 210 rader |
+| Paletten | skogsgrönt och smaragd | guld, vitt och **isblått** — läst ur bilderna |
+
+### Hur bilderna kom hit
+
+Fyra försök innan filerna nådde containern, och varje misslyckande var samma sak i en ny form:
+**sessionen kör i molnet och når varken din disk eller dina bilagor.** UUID:n, en Windows-sökväg och
+en GitHub-kommentar gav alla samma vägg — kommentarsbilagor ligger på `user-attachments`, som
+proxyn nekar. Det som fungerade var att committa bilderna **i repot**.
+
+Originalarken ligger kvar som `kalla-ark-a.png` och `kalla-ark-b.png`. Utan dem hade en ny mätning
+krävt en ny leverans.
+
+### Mätningarna
+
+**Bakgrunden** är en jämn guldgradient som ligger nära ornamentets guld — en färgnyckel hade ätit hål
+i emblemet. Flood fill från bildkanten som jämför mot **grannen** i stället för mot ett globalt
+frövärde följer gradienten och stannar vid varje hård kant.
+
+**Avatarhålet** mättes som största sammanhängande yta av omättade mörka pixlar. Första försöket tog
+bounding box över alla sådana pixlar och fick 87 % bredd — den ramade in varje skugga mellan
+guldbladen. Alla fyra ger nu fyllnadsgrad **0,78**, alltså π/4. Det är exakt vad en cirkel ger:
+mätningen hittade en skiva i varje bild, inte en skugga.
+
+### Vaktnätet följde designen
+
+Delregistret krympte från 21 till 4, så `G-STEG-PROGRESSION` mäter inte längre *vilka delar som
+tillkommer* — det påståendet är inte längre sant om designen. Den mäter nu i stället:
+
+- varje steg har sin **egen** bildfil, och alla fyra finns på disk med rimlig storlek
+- inga två steg delar bild
+- `aspect` växer strikt med steget
+- hålet är **runt** (bredd/höjd inom 0,86–1,16 efter omräkning via `aspect`) och ligger inne i bilden
+- `media.js` reservtabell är **identisk** med registret, fält för fält
+
+Plus en helt ny vakt i webbläsaren som jsdom aldrig kan ersätta:
+
+**`G-BILD`** — bilden laddades på riktigt (`naturalWidth > 0`), och avatarhålets mitt landar på en
+**mörk, omättad pixel i själva konstverket**. En felstavad sökväg ger markup som ser perfekt ut i
+jsdom; bara en riktig webbläsare säger om bilden finns. Kontrollmätningen tar en **ring** av tolv
+punkter runt hålet — en enda punkt landade i en genomskinlig lucka mellan två guldblad i steg 2 och
+rapporterade svart, och ett prov vars kontroll beror på var i ornamentet man råkar peka mäter
+ornamentet, inte påståendet.
+
+**9 av 9 mutationer** fällde rätt vakt.
+
+### Två fel som bara fotot kunde se
+
+1. **Avataren låg bakom konstverket.** Bilden bär sin egen platshållare i hålet — en ogenomskinlig
+   svart skiva. En avatar under den hade aldrig synts, i någon sändning, någonsin. Den ligger nu
+   över, med genomskinlig botten så platshållaren syns tills en Guardian anländer.
+2. **Höjdförhållandet måste bo i `padding-top`, inte i pixlar.** Annars räcker det att ett steg byts
+   mot en bild med annan proportion för att emblemet ska bli utdraget.
+
+### Lärdomen
+
+**Ritade om något som redan var ritat.** Referensen fanns, den var levererad som färdig grafik, och
+jag byggde två hela omgångar SVG innan frågan "ska det här vara en bild?" ställdes. Repot hade redan
+svaret — `assets/mvp-frames/` med `'battlemvp.frame'` bredvid — och mönstret var en `grep` bort.
+**Leta efter det befintliga mönstret innan du bygger ett nytt.**
+
+### Sviter
+
+Node 1302/1302 gröna. Emblemets fem browservakter gröna.
+
+## Checkpoint 38 — Guardian Emblem byggd om mot referensbilderna (2026-08-18)
+
+Checkpoint 37:s emblem var **tekniskt rätt och visuellt fel**: en sköld med en hjort i, när
+referensen är en **rund avatarram med en hjort över**. 1300 gröna prov, 18 mutationer och åtta
+foton — och ingen av dem kunde se att det var fel widget.
+
+### Varför det blev fel
+
+Referensbilderna kom som bilagor i chatten. Innan bygget började tog sessionen slut på kontext och
+samtalet sammanfattades: **text överlever en sammanfattning, bilagor gör det inte.** Kvar fanns en
+ordlista över vilka delar som skulle finnas — hjort, lövverk, voluter, smaragder, banderoll — och
+den listan byggde jag efter. Delarna stämde. Kompositionen var en annan widget.
+
+**Felet var inte att bygga ur texten. Felet var att inte säga att jag byggde blint.** Ett
+meddelande hade kostat mindre än en hel designomgång.
+
+Åtgärden är `docs/referens/guardian-emblem.md`: bilderna kan inte sparas i repot, men beskrivningen
+kan — komposition uppifrån och ner, vad varje praktsteg visar, paletten, och de regler som följer av
+bilderna. **Läs den innan du rör `guardian-emblem.css`.**
+
+### Vad som ändrades
+
+| | Före | Efter |
+|---|---|---|
+| Centrum | sköld med hjort i | **rund guldram** med grön innerring och avatar |
+| Hjorten | liten, inuti skölden | **ovanför ramen**, gevir som breder ut sig över hela bredden |
+| Sidorna | smala lagerkvistar | guldplymer som spretar som flammor, mörkgröna blad bakom |
+| Nedtill | rak sockel | voluter som rullar ut i spiraler + stor bottendiamant |
+| Sköldar | ingen | **två sidosköldar** med guldhjorthuvud, plus en kronsköld i steg 2 |
+| Praktsteg | inget märke | **diamantbricka med siffran** överst |
+| Rubriken | `BESKYDDAREN HAR ANLÄNT` | utgår — banderollen är emblemets namnskylt |
+| Delar | 6/9/12/15 | 10/12/16/21 |
+| Mått | 260–440 | 330–585 |
+
+### Tre fel som bara fotot kunde se
+
+1. **Hjorten blev en mus.** Rund skalle, stora runda öron, ingen mule. Skillnaden mot en hjort är
+   avsmalningen — ett långt ansikte från hög panna till mörk nos.
+2. **Kronspetsen låg över mulen.** Hjortens negativa undermarginal är en **mätning**, inte en smak.
+3. **Bottendiamanten kunde inte nå över banderollen.** Den låg inuti ramen, och **en absolut
+   placerad del inuti en förälder med eget `z-index` kan aldrig nå över en granne till föräldern**,
+   hur högt dess eget `z-index` än är. Diamanten ligger nu i flödet.
+
+### Vad vaktnätet gjorde och inte gjorde
+
+Alla tolv vakter höll genom hela ombyggnaden och behövde inte mjukas upp en enda gång. Registret
+byttes ut, fjorton delar bytte namn, koreografin skrevs om — och `G1`, `G-SLUT` och
+`G-STEG-PROGRESSION` fångade varje glapp direkt: fyra föräldralösa CSS-regler (`rubrik`, `krona`,
+`skold`, `sockel`) hittades i samma sekund de blev döda.
+
+Men **inget prov kunde se att det var fel widget.** Vaktnätet svarar på *hänger delarna ihop*, inte
+på *ser det ut som referensen*. Det är inte en brist i näten — det är gränsen för vad ett prov kan
+veta, och därför finns referensfilen.
+
+### Sviter
+
+Node 1302/1302 gröna. Browser: emblemets fyra gröna; svitens enda röda är `ovre handtag strackar
+lodratt` i `widget-handtag.browser.test.js`, grön i isolering och orörd av den här ändringen.
+
+## Checkpoint 37 — Guardian Emblem: familjen skrotad, byggd om, och vaktnätet slöt sig (2026-08-18)
+
+Guardian Welcome revs helt (1943 rader) och ersattes av **`templateGuardianEmblem`** — ett
+heraldiskt vapen i fyra praktsteg. 56 prov skrivna före en rad implementation, röd baslinje
+committad och pushad, sedan kod tills allt var grönt. 18 mutationsprov, 8 foton.
+
+### Vad som finns nu
+
+| | |
+|---|---|
+| Typ | `templateGuardianEmblem`, katalognyckel `catalog:guardianemblem:1–4` |
+| Format | **400 px brett i varje steg** — höjden är det praktnivån betalar med (260/320/380/440) |
+| Koreografi | "Vapenskölden": `ljus` 600 → `oppna` 1200 → `hyllning` 3500 → `upplosning` 800 = 6100 ms |
+| Delar | 6 → 9 → 12 → 15, strikt kumulativa (steg N bär steg N−1 som **prefix**) |
+| Filer | `guardian-emblem-fas.js`, `guardian-emblem.css` + tre provfiler |
+| Kö | `triggerGuardianEmblem:[8000,5]` i `runtime-controls.js` |
+| Brygga | förberedd men **inte aktiverad** — se `docs/live-verifiering.md` punkt 6 |
+
+### Vaktnätet: tolv vakter, och varför de är slutna
+
+`G1` kräver att varje registrerat steg och varje registrerad DEL har CSS. `G-SLUT` kräver det
+omvända: att varje steg som går att **skapa** finns i registret — och den jämför **fyra** källor,
+inte två (fabriken, panelväljaren, katalogsektionen, registret). `G-STEG-PROGRESSION` kräver
+prefixlikhet mellan stegen, och `G-STEG-HÖJD` mäter i en riktig webbläsare att det syns.
+
+De fyra frånvarovakterna (`G-PREFIX-ISOLATION`, `G-IMPORTANT`, `G-DÖD-CSS`, `G-VILOLAGER`) bär
+`kravCss()` **inne i sin egen kropp**. Det är §7 i sin skarpaste form och kom direkt ur PR #222:s
+fas 0, där tre vakter var gröna mot en fil som inte fanns. Ett grönt prov säger ingenting om vad
+grannen mätte.
+
+### Fem lärdomar
+
+**1. En cachebust-sträng får inte namnge det den bustar.** `20260818-guardian` överlevde sin egen
+familj. Strängen ska svara på NÄR filen byttes, inte på VAD som låg i den — annars blir den ett
+arkeologiskt spår efter kod som inte finns, och nästa läsare söker på namnet, hittar en
+versionsträng och ingen implementation. Nu vaktat, med en svartlista över familjenamn i stället för
+en generisk ordregel: ett datum är precis vad vi vill ha. Strängen här heter `20260818-2`. Vakten
+hittade direkt en ärvd överträdelse (`20260807-topgift`) som står i en uttryckligen **krympande**
+lista — att döpa om den nu vore en bump utan ändring.
+
+**2. Ett prov som jämför tomma listor är grönt av frånvaro.** `G-STEG-HÖJD` skulle ha varit grön vid
+den röda baslinjen: fyra steg som inte renderas ger fyra tomma mätningar som jämför lika. Varje
+mätning börjar därför med `assert.ok(!fel)` som bär renderingsfelet i texten.
+
+**3. Ett prov får inte bevisa sin egen fixtur.** Fabriken bestämmer höjden per steg. Att mäta den i
+webbläsaren hade läst tillbaka en siffra jsdom redan vaktar. Alla fyra sidorna sätter därför **samma
+lådhöjd**, och det som mäts är delarnas gemensamma omfång — bara delar med yta och ärvd opacitet
+över noll räknas. Mutation M17 visade varför det behövs tre prov och inte ett: när steg 4:s tre nya
+delar doldes fortsatte omfånget att växa (skalan växer också), men *antalet målade delar* och *varje
+ny del vid namn* föll direkt. **En enskild geometrisk mätning är inte ett semantiskt bevis.**
+
+**4. En egenskap som en animation skriver över måste animationen bära med sig.** Diamanten är en
+kvadrat roterad 45°. Entréanimationen skrev `transform` och rotationen försvann — den var en grön
+**kvadrat** under hela `oppna`. Samma lärdom som `--gw-spacing`, en nivå djupare: det gäller varje
+egenskap i samma `transform`-sträng, inte bara de som råkar vara inställningar. **Inget prov i
+vaktnätet kunde se det** — delen fanns, var målad, hade yta. Ögat är mätinstrumentet för form.
+
+**5. Registrets ordning är inte placeringen.** `STEG[n].delar` är sorterad efter NÄR delarna
+tillkom — det är den ordningen `G-STEG-PROGRESSION` kräver prefixlikhet i. Renderaren följer
+registret rakt av, så utan `order` i CSS blev DOM-ordningen också den visuella: kronan hamnade
+**under** skölden. JS bestämmer VAD och NÄR, CSS bestämmer VAR och HUR.
+
+### Oväntade fynd, rapporterade och lagade
+
+- **`docs/katalogkarta.md` hade systematiskt fel proveniens.** Datum- och PR-kolumnerna kommer ur
+  `git log` per fil, och kartan hade genererats i en **shallow clone** — 20 sektioner stod som
+  ändrade 2026-08-18 i PR #221 när de inte rörts sedan 5 augusti och PR #92. Kartan är omgenererad
+  på full historik, och generatorn varnar nu när `.git/shallow` finns.
+- **`G1`:s delcensus var blind för versaler.** `.ge-kronaX` lästes som `krona`, så en felstavning
+  med versal hade varit osynlig för **båda** halvorna av G1. Upptäckt av mutation M1, som inte föll.
+  Teckenklassen är nu `[A-Za-z0-9-]`.
+- **Censusen i `catalog-rewiring` gick till 23 i stället för 22.** Det andra `VyraWidgets.create(`
+  var ingen katalogplats utan en panel som skapade en kastad widget bara för att läsa dess mått.
+  Uppslagningen går nu genom `VyraWidgets.variants('guardianemblem.matt')`. **Vakten gjorde rätt:**
+  en måttläsning som smyger in bland katalogställena gör siffran obegriplig för nästa läsare.
+- **`G-KLOCKA`:s urklippning matchade inte den kod den skulle undanta.** Mönstret var skrivet mot en
+  form jag ännu inte författat. Regionidentifieringen lagades — inte källan — och vakten fick en
+  egen kontroll som kräver att urklippningen både hittar blocket och tar bort **mindre än 400
+  tecken**: ett girigt mönster som svalde halva filen hade annars gjort provet grönt av tomhet.
+
+### Invarianter som inte får brytas
+
+- `klocka` i `guardian-emblem-fas.js` **måste vara flerradig** och sluta med `};` på egen rad —
+  `G-KLOCKA` lyfter bort just det blocket innan den letar direktanrop till `setTimeout`. Det är en
+  formkoppling, inte en beteendekoppling: bryts den blir provet **rött**, aldrig tyst grönt.
+- Praktsteget är ett **studioval**. Bryggan ska aldrig skicka något steg — ett steg utifrån hade
+  tyst skrivit över streamerns val.
+- Varje `ge-`-klass måste vara en registrerad DEL. Grafik inuti SVG:erna använder därför utskrivna
+  färgattribut, inte klasser.
+
+### Nästa steg
+
+1. **Visuell finjustering** (fas 11) om fotona motiverar det — avatarens medaljong är tom utan bild,
+   och steg 1 har gott om luft.
+2. **Live-verifiering punkt 6** — vilket TikTok-event bär Guardian-status. Widgeten är klar och
+   väntar bara på ett fältnamn.
+3. `20260807-topgift` byts nästa gång `gift-event-images.js` eller `live-leaderboard.js` ändras.
+
+## Checkpoint 36 — Guardian Welcome, en ny familj byggd bakifrån (2026-08-18)
+
+Första familjen i repot där **varenda rad prov skrevs innan en rad implementation**. 53 prov, röd
+baslinje fotograferad, sedan kod tills allt var grönt.
+
+### Vad som byggdes
+
+`templateGuardianWelcome` — en egen widgetfamilj för TikToks Guardians. Inte en variant av Fan
+Level Up: samma mönster, inga delade data.
+
+| Fil | Roll |
+|---|---|
+| `guardian-fas.js` | koreografin "Beskyddet", registret `FASER`/`STORLEKAR`, och `sprak()` |
+| `guardian-welcome.css` | temat och koreografins VAD |
+| `tests/guardian-fas.test.js` | 35 prov — vaktnätet, tiderna, språket, kön, markupen |
+| `tests/browser/guardian-welcome.browser.test.js` | 18 prov — vad tittaren faktiskt ser |
+| `tests/helpers/guardian-fas-register.js` | registret utan en hel sida |
+
+Ändrat: `widget-factory.js` (familjen + måtten på ett ställe), `media.js` (renderare, panel,
+katalogsektion, trigger), `runtime-controls.js` (kön), `studio.html`, `tiktok-bridge/bridge.js`
+(förberedd trigger), tre fixtures och tre dokument.
+
+### Koreografin "Beskyddet"
+
+| Fas | ms | Vad |
+|---|---|---|
+| `ljus` | 500 | auroran tonar in på **tom scen** — inget annat syns |
+| `oppna` | 900 | skölden glider in från vänster, rubriken stämplas fram (teckenavstånd .5em → .15em), namn +200 ms, underrubrik +400 ms |
+| `hyllning` | 1200/1600/2000 | sköldens glöd pulserar, auroran andas, inget annat rör sig |
+| `upplosning` | 600 | omvänd ordning, **auroran sist** |
+
+Bara hyllningen varierar med storleken. Tre storlekar: banner 270×180, kort 300×280, full 400×300.
+
+### Vaktnätet, matematiskt slutet
+
+`G1` kräver att varje storlek i `FASER` har CSS och att varje fas har en regel. `G-SLUT` vänder på
+beroendet och kräver att fabriken, panelväljaren och `FASER` är **exakt samma mängd**. Utan båda
+hållen kan en fjärde storlek läggas till utan koreografi — det var precis så `card` levde i Fan
+Level Ups CSS ett helt repo-liv utan att finnas i fabriken.
+
+Dessutom `G-IMPORTANT` (ingen `!important` på transform/opacity/clip-path), `G-DÖD-CSS` (ingen
+döljning som en senare regel med samma specificitet motsäger) och `G-VILOLAGER` (ingen `infinite`
+på en fas som tas bort).
+
+**Mutationsprovat: 9 av 9 dödade av rätt vakt**, körda om mot koden MED ramen inbyggd — en
+visuell omgång kan flytta det en vakt tittar på, och ett gammalt mutationsresultat är inget bevis
+om koden hunnit ändras sedan dess.
+
+| Mutation | Vakt som föll |
+|---|---|
+| fjärde storlek utan koreografi | `G-SLUT` |
+| `!important` på transform | `G-IMPORTANT` |
+| `infinite` flyttad till öppnandet | `G-VILOLAGER` |
+| död `display:none` | `G-DÖD-CSS` |
+| testknappen tänder DOM direkt | båda köproven |
+| Guardian ur `configs` | köprovet |
+| omkastad fasordning | tre fasprov |
+| symmetrisk språkfallback | språkprovet |
+| reservtexten glider från syskonfilen | reservtextprovet (ny i ramomgången) |
+
+### Kön är mätt i beteende, inte bara i källkod
+
+Källvakten läser text: står `triggerGuardianWelcome` i `configs`, och anropar knappen det globala
+namnet? Det är en stavningskontroll. Den kan inte se om kön FAKTISKT håller tillbaka, och det är
+det enda som gör §2:s lärdom sann. Uppmätt i Chromium, tre klick i följd:
+
+| | vantande | spelar | `gw-active` |
+|---|---|---|---|
+| före klick | 0 | false | false |
+| ett klick | 0 | **true** | true (fas `gw-fas-ljus`) |
+| tre klick | **2** | true | — |
+
+De två extra hölls alltså i kön i stället för att spela ovanpå den första. Provet bär också
+kontrollmätningen: utan att klicket bevisligen startade något vore "kön höll tillbaka" trivialt
+sant för en knapp som inte gör någonting alls.
+
+### Tre fynd som kostade något
+
+**1. §7-fällan, fångad medan den byggdes.** Första körningen av den röda baslinjen gav fem gröna,
+inte två. `G-IMPORTANT`, `G-DÖD-CSS` och `G-VILOLAGER` var alla gröna — **mot en fil som inte
+fanns**. Matcharna fungerade (deras positiva kontroller bevisade det), men de kördes mot en tom
+sträng: *"ingen `!important` i CSS:en"* är trivialt sant om det inte finns någon CSS. Att luta sig
+mot att `G0` fångar det räcker inte — G0 är ett **annat** prov, och ett grönt prov säger ingenting
+om vad grannen mätte. Kontrollmätningen `kravCss()` ligger nu inne i varje frånvaroprov.
+
+**2. En pausad animation överlever att dess CSS-regel slutar gälla.** Browsersviten pinnar varje
+fas med Web Animations API. Efter att öppnandet pinnats och klassen bytts mot upplösningen bar
+rubriken **båda** — `gwFadeOut@0` och `gwStamp@0` — och `gwStamp` med fill-mode `both` höll den på
+opacity 0. Mätningen sa alltså att upplösningen började från en släckt rubrik, och hade fått mig
+att "laga" en design som fungerade. En körande CSS-animation tas bort när regeln försvinner; en
+pausad gör det inte, för pausningen ger den en hold-time och den räknas inte längre som idle.
+
+`cancel()` löste det men lämnade animationen detachad — nästa klassbyte återuppväckte den inte.
+`play()` före klassbytet gav i stället **dubbletter**: tre `gwStamp` på samma element. Slutsatsen
+är enklare än alla tre: **en mätning som muterar sitt eget mätobjekt behöver ett nytt mätobjekt
+varje gång.** `render()` bygger en ny nod utan en enda animation.
+
+**3. En kommentar som citerar kod fäller en källkodsvakt — tredje gången i repot.** Det förberedda
+bryggblocket innehåller en utkommenterad `sendEvent('guardian', …)`. `battle-probe.test.js` skannar
+**rå** källkod från `battle-sond ---` till `STREAM_END` och förbjuder `sendEvent(` där. Blocket
+flyttades utanför regionen i stället för att vakten gjordes blindare.
+
+### Vad som medvetet INTE gjordes
+
+**Bryggans fyra listor rörs inte.** `docs/live-verifiering.md` punkt 6 beskriver vad som ska läsas
+av under en riktig sändning: vilken `WebcastEvent` som bär Guardian-status, vilket fält som skiljer
+en Guardian från en vanlig medlem, och om payloaden bär TikToks egen veckosiffra. Att namnge typen
+`guardian` i kontraktet innan någon kod skickar den vore en död kontraktspost — samma sorts lögn
+som §3 kostade en hel ansats för.
+
+### Nästa steg
+
+1. **Testa via panelens knapp** — "Testa Guardian-välkomnande" spelar samma väg som en riktig
+   Guardian, genom kön, inte snabbare.
+2. **Kör en sändning med inspelaren på** (`set VYRA_INSPELNING_TYPER=alla`) och vänta på att en
+   Guardian går in. Skicka payload-loggen tillbaka.
+3. Då aktiveras triggern och de fyra listorna i samma ändring.
+
+Oförändrat sedan checkpoint 34–35: §5 väntar på en deploy, battle-kedjan på samma sändning, och
+`VYRA_MASTER_ROADMAP.md` har fortfarande driftat från verkligheten.
+
+
+## Checkpoint 35 — panelens live-väg, ett tecken av åtta (2026-08-18)
+
+Rapporterat av David: *"när man skriver text måste man klicka hela tiden på rutan."* Mätt visade
+det sig vara värre än så.
+
+### Felet, uppmätt
+
+`render()` i `studio.js` är `viewRoot.innerHTML = m[view]()` — den river hela vyn, inklusive
+egenskapspanelen. Två panelfiler anropade den från en `oninput`-handler, alltså vid **varje
+tangenttryck**. Uppmätt i riktig Chrome, åtta tecken skrivna i följd utan att klicka om:
+
+| panel | fält | tecken fram | fokus kvar | samma nod |
+|---|---|---|---|---|
+| `custom-widgets.js` | `#ctwText` | **1/8** | nej | nej |
+| `gift-fireworks.js` | `#followName` | **1/8** | nej | nej |
+| `gift-fireworks.js` | `#followMessage` | **1/8** | nej | nej |
+| `media.js` (advancedPropertyBind) | `#propWidth` | 5/5 | ja | ja | ← kontroll |
+
+Efter första tecknet blev `document.activeElement` **`BODY`**. Kontrollen står i *samma panel* som
+`#ctwText` men ägs av den delade live-vägen och klarar sig helt — det är den raden som gör
+mätningen till ett mått på panelen och inte på webbläsaren.
+
+### Vakten fanns redan. Den tittade bara åt fel håll.
+
+`tests/panel-live-path.test.js` bar regeln sedan tidigare — *render() får inte anropas från en
+oninput-handler* — men listade **sex filnamn skrivna för hand**. `custom-widgets.js` och
+`gift-fireworks.js` tillkom efteråt och stod inte med.
+
+Listan härleds nu ur klientens egen monkey-patch-konvention: en fil som binder egenskapskontroller
+skriver `props=function` eller `bind=function`. Det ger 15 filer i stället för 6, och en nionde
+panelfil ärver regeln utan att någon behöver komma ihåg den. Samma princip som `F1`/`23g` i
+fan-fas-provet, där uppräkningen byttes mot ett register.
+
+### Lagningen
+
+Alla tre lades på den mall `giftFieldBind` i `media.js` redan följer:
+
+```js
+el.oninput  = e => vyraLivePatch(w, el, key, las(e));          // live, rör aldrig panelen
+el.onchange = e => { w[key] = las(e); save(); vyraRenderKeepingPanel() };   // commit
+```
+
+`gift-fireworks.js` behåller sina billigare stilputtar för `x`/`y`/`width` (de rör inte ens
+canvasnoden) och byter bara ut `else render()`. Efter lagningen: **8/8 tecken, fokus kvar, samma
+nod** för alla tre.
+
+### Vakterna
+
+| Vakt | Var | Vad |
+|---|---|---|
+| statisk | `tests/panel-live-path.test.js` | härledd fillista + golv på 12 filer, så en trasig härledning inte kan skanna noll |
+| `fältet finns och tar emot fokus` | `tests/browser/panel-controls.browser.test.js` | positiv kontroll |
+| `hela meningen kommer fram` | samma fil | alla tecken måste nå fram |
+| `elementet byts inte ut` | samma fil | nodidentitet och fokus genom hela skrivandet |
+
+Röd baslinje: den statiska vakten namngav tre brott; browserproven föll 6 av 12 för de tre trasiga
+fälten medan kontrollen och den positiva kontrollen stod gröna. Mutationsprovat åt båda hållen —
+med koden återställd faller exakt samma sex.
+
+### Ett prov ströks, med flit
+
+Ett fjärde browserprov skulle mäta att panelens `scrollTop` överlever skrivandet. Det föll fint —
+men på `el.focus()`, som själv drar in elementet i en scrollbar behållare, inte på omrenderingen.
+Med baslinjen tagen efter fokus blev det grönt i **båda** tillstånden. **Ett prov som inte kan falla
+på felet det påstår sig vakta är en lögnare**, så det togs bort i stället för att behållas som
+utfyllnad. Panelens scroll under en *dragning* mäts fortfarande av fallen längre upp i filen.
+
+### Vad som inte gick att mäta här
+
+Commit-vägen anropar samma `save()` som varje annat panelfält, i samma ögonblick (`change`). Om
+skrivningen verkligen når disk går **inte** att avgöra i riggen: utan en inloggad, skrivägande
+session svarar `save()` `{ok:false, reason:"not-writable"}`. Det gäller alla fält, inte bara dessa
+— en pre-existerande egenskap hos riggen, inte något den här ändringen infört.
+
+### Nästa steg
+
+Oförändrat sedan checkpoint 34: §5 väntar på en deploy, battle-kedjan på en inspelad sändning, och
+`VYRA_MASTER_ROADMAP.md` har driftat från verkligheten (fas 6–9 står som `not-started` fast Top
+Gifter, Battle MVP och Like Fountain finns byggda och testade).
+
+
+## Checkpoint 34 — loyaltys uttoning, den sista designskulden (2026-08-18)
+
+En ändring, en rad CSS. Arbetsordningen densamma: **mät först → röd vakt → implementera →
+mutationsprova → fotografera**.
+
+### Felet, uppmätt
+
+`studio.css` lät loyaltys uttoning ligga på **ankaret** i stället för på **behållaren**:
+
+```css
+.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+```
+
+`.fan-profile` bär `linear-gradient(145deg,var(--fan-light),var(--fan))` och
+`box-shadow:0 0 13px var(--fan)` — en glödande orange skiva på 80×80 px. Krymper man bara ankaret
+släcks ansiktet medan skivan står kvar. Effektiv (ärvd) opacitet i Chromium, `--fed` = 500 ms:
+
+| ms | behållare | ankare | ring |
+|---|---|---|---|
+| 0 | 1.00 s1.00 | 1.00 s1.00 | 1.00 |
+| 125 | **1.00 s1.00** | 0.62 s0.85 | 0.62 |
+| 250 | **1.00 s1.00** | 0.32 s0.73 | 0.32 |
+| 480 | **1.00 s1.00** | 0.00 s0.60 | 0.00 |
+
+Fotograferat vid 490 ms: en tom lysande orange skiva över texten. En halv sekund, i varje alert.
+
+Det är **samma fälla som fas 1 hade, spegelvänd** (#212, "Inringningen"). Regeln är densamma åt
+båda hållen: **rör behållaren, aldrig ankaret. Ankaret rider med.**
+
+### Lagningen
+
+Selektorn flyttad från `.fan-profile img` till `.fan-profile`. Efteråt, samma mätning:
+
+| ms | behållare | ankare (ärver) | ring |
+|---|---|---|---|
+| 0 | 1.00 s1.00 | 1.00 | 1.00 |
+| 250 | 0.32 s0.73 | 0.32 | 0.32 |
+| 480 | 0.00 s0.60 | 0.00 | 0.00 |
+
+Loyalty gör nu som `stack`, `heartbeat`, `badgereveal`, `ribbon` och `duo` redan gjorde.
+Cachebust: bara `studio.css` (`20260818-fan-loyalty-uttoning`). `media.js`, `widget-factory.js`,
+`fan-fas.js` och premium-bundlens version är orörda och behåller sina strängar — andra gången
+strängarna går isär, av samma skäl som första.
+
+### Vakterna
+
+| Vakt | Var | Vad |
+|---|---|---|
+| `19h` | `tests/fan-fas.test.js` | snabb grind: exit-regelns selektor måste sluta på `.fan-profile`, och ingen exit-regel får nämna `.fan-profile img` |
+| `U1` | `tests/browser/fan-fas-loyalty.browser.test.js` | positiv kontroll — sockeln är fullt målad när uttoningen börjar |
+| `U2`–`U3` | samma fil | behållaren måste nå ≤ 0.15 opacitet och < 0.9 skala vid 96 % av `--fed` |
+| `U4` | samma fil | **sockelvakten**: behållaren får aldrig vara mer målad än ankaret den bär |
+| `U5` | samma fil | uttoningen går bara nedåt |
+| `U6` | samma fil | samma krav på alla sex modeller vars profilbehållare tonar ut |
+
+Röd baslinje före lagningen: `19h` föll, och 4 av 11 browserprov föll. `U1` och `U5` var gröna,
+alltså kalibrerade — och `U6` var grön för alla fem grannarna. Måttet är därför bevisat rätt av
+fem modeller som redan gjorde rätt, och rött bara för den som inte gjorde det.
+
+### Mutationsprov
+
+| Mutation | `19h` | Browser |
+|---|---|---|
+| tillbaka till `.fan-profile img` | faller | 4 faller |
+| `.fan-profile>img` (barnkombinator) | faller | 4 faller |
+| `reverse` borttaget (tonar in i stället) | **grön** | 5 faller, inkl. `U1` och `U5` |
+| regeln helt borttagen | faller | 3 faller |
+
+Den tredje raden är hela poängen med att ha båda: `19h` mäter stavning, browserprovet mäter
+rörelse. Ingen av dem räcker ensam.
+
+### Invarianten som tillkom
+
+**Ett prov som mäter ett elements EGNA opacitet mäter inte vad som är målat.** Efter lagningen
+läser `.fan-profile img` `opacity: 1` — ankaret har ingen egen animation längre, det ärver
+behållarens. Ett prov som krävt att *ankaret* tonar ut hade alltså varit grönt före lagningen och
+rött efter: det hade vaktat buggen. Samma fälla som `hearts`-provet gick i (lärdom 1, checkpoint
+33). Måttet som bär är **produkten av `opacity` och transformskalan hela vägen upp till
+widgetlådan** — den effektiva, ärvda synligheten. Den bryr sig inte om vilket element som råkar
+bära animationen.
+
+### Två modeller står med flit utanför familjevakten
+
+`hearts` döljer profilbilden helt (`display:none`), och `hero` har **ingen uttoningskoreografi
+alls** — där tonar hela lådan ut samlat via rotens transition. Det är symmetriskt, alltså inte
+samma fel, och därför beskrivet i stället för lagat. `U6` räknar upp exakt vilka modeller som
+omfattas, så en nionde modell kan inte glida in i undantaget utan att någon skriver ut den.
+
+### Nästa steg
+
+**Bordet är rent på designsidan.** Kvar står bara det som inte går att avgöra härifrån:
+
+1. **§5** — synkkonflikt-banderollen. Lagad i koden, vaktad av fyra browser-prov, kräver en deploy.
+2. **§1:s sista fråga** — vilket steg i `LINK_MIC_BATTLE_TASK` som ska tända overlayn.
+3. **Battle MVP och det inspelade TikTok-materialet.** `tiktok-bridge/inspelare.js` (#206) finns och
+   är av som default. `docs/live-verifiering.md` listar de fyra ställena i battle-kedjan där koden
+   gissar, med exakt vad som ska läsas av i loggen och i konsolen. Läs den före sändningen, fyll i
+   den efteråt.
+
+
+## Checkpoint 33 — Fan Level Up stängd, skuldregistret nollat (2026-08-17, kväll)
+
+Fortsättningen på checkpoint 32, samma dag. Elva PR:er till, samma arbetsordning varje gång:
+**mät först → lägg fram planen → bygg den röda testkartan → implementera → fotografera →
+mutationsprova → PR**. Ingen koreografi byggdes innan modellen var uppmätt.
+
+### Fan Level Up: alla åtta modeller har en klocka
+
+`fan-fas.js` är förarens hela idé: **JS bestämmer NÄR, CSS bestämmer VAD.** Drivrutinen sätter
+fasklasser (`fan-fas-<namn>`) i tur och ordning och tar bort dem sist. Klockan är utbytbar
+(`VyraFanFas.klocka`), så fasproven är exakta och omedelbara i stället för att sova.
+
+| Modell | Dramaturgi | Faser (ms) | PR | Merge |
+|---|---|---|---|---|
+| `hero` | Samlingen | hjarta 420 · samling 560 · vila 270 | #208 | `6bd462b` |
+| `stack` | Mottagandet | fall 300 · pop 260 · stigning 340 | #210 | `172fcc3` |
+| `ribbon` | Välkomnandet | pop 320 · utrullning 420 · text 340 | #211 | `9d5de2b` |
+| `loyalty` | Inringningen | pop 320 · ring 440 · stampel 340 | #212 | `cac5e35` |
+| `badgereveal` | Uppenbarelsen | vingar 340 · avtackning 360 · hyllning 340 | #213 | `7d920a7` |
+| `hearts` | Uppstigningen | nedslag 300 · uppstigning 320 · hyllning 340 | #214 | `0256cf3` |
+| `heartbeat` | Pulsslaget | sidorna 340 · pulsen 320 · avlasning 340 | #215 | `8a370bd` |
+| `duo` | Mötet | parterna 340 · linjen 320 · avlasning 340 | #216 | `1ff1656` |
+
+**Vaktnätet är matematiskt slutet.** `F1` kräver att varje registrerad modell finns i CSS:en;
+`23g` (SLUTVAKTEN) kräver att varje modell i modellregistret finns i `FASER`. En nionde layout
+kan därför inte läggas till utan klocka — provet faller innan någon hinner se den snäppa fram.
+70 prov i `tests/fan-fas.test.js`, från 0.
+
+### Skuldregistret: allt lokalt lösbart är stängt
+
+| § | Vad | PR | Merge |
+|---|---|---|---|
+| 2 | Testknappen för fyrverkerier kringgick alertkön | #217 | `f4013b0` |
+| 6 | Sex laddningsgrindar hängde på en UI-sträng | #218 | `74160e7` |
+| 14 (rest) | Tre fristående ljudkällor duckade inte för rösten | #218 | `74160e7` |
+| — | `BroadcastChannel('vyra-action-run')` utan prenumerant | #218 | `74160e7` |
+
+**Kvar i registret, och inget av det går att lösa här:**
+
+- **§5** — synkkonflikt-banderollen. Koden är lagad och vaktad av fyra browser-prov. Bara en riktig
+  deploy kan stänga den.
+- **§1:s sista fråga** — vilket steg i `LINK_MIC_BATTLE_TASK` som ska tända overlayn. Kräver en
+  riktig TikTok LIVE. Står i `docs/live-verifiering.md` med de andra tre gissningarna i battle-kedjan.
+- **§7–§11** är regler, inte skuld. De uppstår på nytt varje gång någon skriver ett prov.
+
+### Den enda öppna designskulden
+
+**Loyaltys asymmetriska uttoning.** `studio.css:716` lyder:
+
+```css
+.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+```
+
+Regeln träffar `.fan-profile img` — **ankaret** — inte behållaren. Bilden krymper alltså bort medan
+den orangea sockeln står kvar i full styrka tills rotens transition tonar ut hela widgeten. Grannarna
+`ribbon` (rad 726) och `badgereveal` (rad 711) animerar `.fan-profile` direkt och har inte problemet.
+Medvetet sparad till en egen omgång. Ingen krasch — en halv sekund med sockel utan ansikte, per alert.
+
+Badgereveals geometri (−70/+256 i en 260 px-box) är också uppmätt och medvetet lämnad.
+
+### Invarianter som tillkom (utöver checkpoint 32:s)
+
+- **`!important` i en vanlig regel slår en CSS-animation.** Tre separata döda animationer hade samma
+  rot: loyaltys sockel, badgereveals transform, hearts opacitet. Ser fullkomligt harmlöst ut i källan.
+- **`display:none` i ett grid kollapsar spåret.** Faser måste dölja med `opacity`, aldrig `display`.
+  Vaktat av gridvakten `22g` över både `heartbeat` och `duo`.
+- **Ett vilolager kan varken bo på en fasklass eller på `.fan-active`.** Fasklassen tas bort när
+  sekvensen slutar; `.fan-active` bryter mot `F4`. Det hänger på modellklassen.
+- **Badgereveals vänstra vinge ska förbli ospeglad.** Att ta bort dess `!important` väcker en död
+  `.fan-wing.left{transform:scaleX(-1)}` och bryter omfamningen. Fotograferat åt båda håll.
+- **Cachebust-strängar följer filerna, inte varandra.** #218 är första gången de går isär: sex filer
+  bumpades, `studio.css`/`widget-factory.js`/`fan-fas.js` behöll sina.
+
+### Fem lärdomar som kostade något
+
+1. **Ett referensprov kan skydda buggen det tror sig vakta.** `hearts`-provet krävde att alla tre
+   hjärtan lyste samtidigt — sant *bara för att* `opacity:1!important` dödat uttoningen. Provet var
+   grönt på grund av felet. Omskrivet till att mäta över ett tidsfönster: 26 prov över 2,6 s, där
+   varje hjärta måste nå full styrka **och** gå under 0.2.
+2. **Ett frånvaroprov utan positiv kontroll är grönt innan koden finns.** §6:s avbrottsprov blockerade
+   modulen och krävde att markören uteblev — lika sant för ett attribut som inte finns i koden alls.
+   Det *kändes* som en kontrollmätning. Nu öppnar det en oblockerad sida i samma kropp.
+3. **Ett prov som mäter markup mäter inte beteende.** Mutationen "markören flyttad först + sista
+   IIFE:n kastar" gav fyra gröna prov, eftersom `[data-alltime]`-noden renderas av `home()`, inte av
+   IIFE:n. Bara siffran i raden kommer därifrån.
+4. **Leta efter vakten innan du skriver en.** Tre gånger på en dag fanns ägaren redan:
+   `tech-debt-aktuell.test.js` för §6, `duckaMedan` i `action-runtime.js` för §14, och båda gångerna
+   var jag på väg att lägga en andra bredvid. Registret ljög dessutom om `media.js` — noll `new Audio`,
+   varje videoelement `muted`. Samma sorts fel som §3 kostade en hel ansats för 2026-08-10.
+5. **Ett fotobevis kan ljuga på tre sätt.** Summerade `waitForTimeout` ignorerar att en skärmdump
+   kostar 100–300 ms; `locator.screenshot()` väntar på att elementet står stilla och fångar därför
+   den färdiga widgeten; och att trigga om mellan bilderna köar i stället för att spela. Lösningen är
+   Web Animations API — pinna varje animation till **sin egen** origo, inte till fasens.
+
+### Nästa steg
+
+Bordet är rent. Två saker väntar, och den andra är den som styr:
+
+1. **Loyaltys uttoning** — den enda kvarvarande designskulden, uppmätt och beskriven ovan.
+2. **Battle MVP och det inspelade TikTok-materialet.** `tiktok-bridge/inspelare.js` (#206) finns och
+   är av som default. `docs/live-verifiering.md` listar de fyra ställena i battle-kedjan där koden
+   gissar, med exakt vad som ska läsas av i loggen och i konsolen. Läs den före sändningen, fyll i
+   den efteråt.
+
+
+## Checkpoint 32 — poängekonomin, talutrymmet, inspelaren och Fan Level Up (2026-08-17)
+
+En hel dags arbete i sju steg, varje steg en egen PR mot `main`. Alla mätta före och efter.
+Skrivet på svenska till skillnad från checkpoint 26–31 — det är språket resten av dagens
+dokumentation och kod-kommentarer håller.
+
+### Vad som stängdes
+
+| § | Felet | Lagningen | PR | Merge |
+|---|---|---|---|---|
+| 13 | Poäng drogs innan något visste om actionen skulle spela. Fem försök under cooldown kostade 500 i stället för 100. | Check-Then-Act: `kanKora(action, payload)` svarar `{ok, skal, scen, kvar}` **utan att skriva**. `runAction` frågar först. | #202 | `602fcf3` |
+| 15a | Varje öppen flik drog sin egen kostnad och spelade sin egen kopia. | `action-master.js` — tvånivåval av en förare per lagerrymd. | #202 | `602fcf3` |
+| 15b | Cooldown-stämplarna låg i en nyckel bara en skrivbar flik kunde spara, så cooldown var verkningslös i overlayn. | Egen nyckel `vyra-action-cooldowns` + `EPHEMERAL_KEYS` i `session-state.js` (används, torkas, synkas aldrig). | #203 | `04c0875` |
+| 15c | En full scenkö tog betalt för uppspelningar som aldrig hände. | Återbetalningsväg: `VyraPoints.refund`, spegelvänd returbrygga, kvitto per köp. | #204 | `b7d095d` |
+| 14 | Actions och TTS-chatt var två skilda talsystem, och tre flikar läste samma chattrad högt. | `vyra-tal.js` (delad kö + duckning) och `VyraRostMaster` (omvänt val: overlay är nivå 1, studion nivå 2). | #205 | `bc9aea5` |
+| — | `LINK_MIC_ARMIES` gick bara att studera live, mitt i ett femminuters battle. | `tiktok-bridge/inspelare.js` — maskerade råa payloads till fil. Av som default, stänger av sig själv vid fel. | #206 | `bfd3e38` |
+| — | `card` fanns i CSS men i inget register; `hero` renderades hela tiden men fanns i inget register. | `card` raderad, `hero` formellt registrerad som modell 8. | #207 | `26b04b4` |
+
+**I luften:** PR #208 — `fan-fas.js`, vakterna F1–F3 och hero-koreografin "Samlingen".
+
+### Invarianter som inte får brytas
+
+- **Poäng dras aldrig före ett `kanKora`-svar.** Kontrollen skriver inte, och får aldrig börja göra det.
+- **Vem som betalar och vem som låter är två olika frågor.** Automationsmastern avgör *om* en rad ska
+  läsas och drar kostnaden — en gång. Röstmastern talar. Actions TTS gateas **inte** på röstmastern:
+  `allowed()` routar dem redan till rätt scens overlay, och en grind ovanpå hade tystat scen 1:s
+  action så fort scen 2:s overlay råkade hålla röstplatsen.
+- **`strypt(runId)` har ingen master-grind.** Kvittot är grinden. En grind där hade tystat en flik som
+  hunnit betala och sedan förlorat sätet.
+- **Röstmastern är nivå 1 i overlayn, inte i studion.** En streamer fångar ljudet via browser source i
+  OBS; en röst som bara talar i Studion försvinner ur sändningen.
+- **En inspelad typ når aldrig molnet.** Inspelaren prenumererar bredare än bryggan skickar. Vaktat av
+  `tiktok-bridge/test/inspelare.test.js` prov 6, som läser prenumerationsblocket ur källan.
+- **Ny CSS hör inte hemma sist i `studio.css`.** Filen har en obalanserad klammer (issue #126) och allt
+  efter rad 787 hamnar i ett oavslutat block — reglerna ser korrekta ut och biter aldrig.
+- **Koreografins koppling måste sitta innanför alertkön.** `runtime-controls.js` byter 500 ms efter
+  start ut triggern mot en köad variant. Lägger sig något utanför den startar rörelsen när alerten
+  *köas* i stället för när den *spelas*.
+
+### Tre lärdomar som kostade något att lära sig
+
+1. **Mutationsprovet, inte testkörningen, avslöjar ett värdelöst prov.** Fem gånger under dagen var en
+   svit grön medan ett av proven inte kunde falla: poängprov 5 låg i en oskrivbar flik, returprov 7
+   läste `earned` före återbetalningen, returprov 4b behövde en *sen* dubblett, talutrymmesprov 8 lät
+   actionkön göra jobbet, och F2 i fan-fas fångade bara om-kopplingen efter att en mutation lagts till.
+2. **Bevisa varför kod ska raderas, inte bara att den kan raderas.** `card` antogs vara trasigt skräp.
+   Uppmätt renderade den en sammanhängande ruta på 280×295 px med varje del synlig — men med 12 skilda
+   egenskaper mot 15 identiska mot `hero`. Den föll på `PREMIUM_WIDGET_SPEC` ("inga omfärgade
+   rektanglar"), inte på att vara trasig. Det ger en starkare `git blame` om ett år.
+3. **Inget arbete får ligga lokalt utan en PR som ankarplats.** Ett tidigare Fan Level Up-arbete gick
+   förlorat med sin container. Git-forensik visade att de fyra påstådda commitarna aldrig funnits i
+   det här repot och att reflogen är oavbruten från containerstart. Oåterkalleligt.
+
+### Nästa steg: `stack` · "Mottagandet"
+
+Koreografi nummer två, byggd på `fan-fas.js` som redan finns. Formen: **fall → pop → stigning**.
+Byt ut klockan, behåll de befintliga keyframesen — `stack` har redan 13 egna `fan-layout-stack`-regler
+i `studio.css` som rörelsen ska hänga på, och basens `fanLevelPop`/`fanRing` ska inte startas om.
+
+Arbetsgången som fungerat hela dagen: plan först, godkännande, bygg, mät, mutationsprova, PR.
+
 ## Checkpoint 31 — full bug and duplicate cleanup (2026-07-23)
 
 The browser entry points now have automated resource coverage and the Electron local server is
@@ -70,21 +872,23 @@ commit after it follows the new Phase 4-12 sequence.
 
 ## Current branch
 
-`feature/vyra-vfx-engine`
+`main`. Arbetet går i en gren per steg (`claude/<vad-det-gäller>`), som mergas till `main` via
+en egen PR så fort dess sviter är gröna. Öppet just nu: `claude/fan-hero-koreografi` (PR #208).
+
+Sektionerna nedan om `feature/vyra-vfx-engine` och Phase 0–12 hör till en äldre roadmap och
+beskriver inte dagens arbetsordning. De står kvar som historik — se checkpoint 32 överst för
+var arbetet faktiskt står.
 
 ## Latest verified commit
 
-Phase 5 (Premium Gift Widget) commit — see git log for exact SHA after push.
-Prior verified commits: `6dbd631` (Phase 4 refinement, `fix(widgets): differentiate premium
-family animations`), `61bc455` (Phase 4 foundation, `feat(widgets): add premium widget design
-system`), `e670003` (Phase 3, `feat(recognition): add generic live event adapter contract`),
-`f022cf0` (Phase 2, `fix(recognition): harden runtime lifecycle and failure handling`),
-`21cffb8` (Phase 0 docs), `540eaac` (Phase 1, `feat(recognition): add standalone recognition
-runtime`). Local HEAD confirmed equal to `origin/feature/vyra-vfx-engine` after each push.
+`26b04b4` — Fan Level Up: raderade döda `card` och registrerade `hero` som åttonde modellen
+(PR #207). Alla sviter gröna vid mergen: `npm test` 1156/0 fel, `test:contract` + `test:fuzz`
+16/16, `domaner test widgets` 647/0, `domaner test studio-core` 81/0, referensprovet i webbläsare
+30/30, `domaner luckor` 233/233 med exakt en ägare.
 
-Working tree at audit time: clean except pre-existing unrelated untracked items
-(`.claude/agents/`, `.claude/data/`, `assets/gifts/`, `assets/images/test/` — not created by
-this roadmap, left untouched).
+Tidigare verifierade merges den här dagen: `bfd3e38` (#206 inspelaren), `bc9aea5` (#205
+talutrymmet), `b7d095d` (#204 återbetalningen), `04c0875` (#203 cooldown-lagret), `602fcf3`
+(#202 §13 + §15a).
 
 ## Completed systems
 
@@ -325,7 +1129,14 @@ roadmap entirely (Account/Workspace is in the explicitly deferred section).
 
 ## Exact next action
 
-Begin **Phase 6 — Top Gifter Widget**: session-based gift ranking display (configurable time
+**Bygg `stack` · "Mottagandet"** — koreografi nummer två på `fan-fas.js`. Se checkpoint 32 överst
+för formen (fall → pop → stigning), vilka keyframes som ska återanvändas och varför klockan byts
+ut i stället för att skrivas om. Vänta tills PR #208 är mergad; `fan-fas.js` och vakterna F1–F3
+kommer därifrån.
+
+Avsnittet nedan tillhör den äldre roadmapen och är inte nästa steg.
+
+### (historik) Phase 6 — Top Gifter Widget: session-based gift ranking display (configurable time
 window, total coins, total gifts, streak info, profile+gift imagery as one composition, no
 requirement to show the gift name), built on the Phase 4 visual families, with its own
 ranking engine **separate from Card Mapper** (per the original roadmap prompt). Consider

@@ -94,22 +94,15 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 .vyra-topgift.topgift-aurora,.vyra-topgift.topgift-retro,.vyra-topgift.topgift-goldrush{background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
 .vyra-topgift:before,.vyra-topgift.topgift-neon:before,.vyra-topgift.topgift-sakura:before,.vyra-topgift.topgift-fire:before,.vyra-topgift.topgift-ice:before,.vyra-topgift.topgift-galaxy:before,.vyra-topgift.topgift-aurora:before{border:0!important;box-shadow:none!important}
 .vyra-toplike{min-width:0!important;padding:14px 12px 10px!important;background:linear-gradient(160deg,#150c20ee,#0a0612ee)!important;backdrop-filter:blur(10px);border:1px solid color-mix(in srgb,var(--like),transparent 55%)!important;border-radius:14px!important;box-shadow:0 14px 34px #00000055,inset 0 0 0 1px #ffffff08!important}.vyra-toplike.selected{outline:none!important}.vyra-toplike>h3{margin:0 0 8px;color:var(--like);font-size:11px;letter-spacing:3px;text-align:center;text-shadow:0 0 12px var(--like)}.toplike-list{display:grid;gap:5px}.toplike-row{height:44px;display:grid;grid-template-columns:27px 37px 1fr auto;align-items:center;gap:7px;padding:4px 8px;border-bottom:1px solid color-mix(in srgb,var(--like),transparent 65%);background:linear-gradient(90deg,color-mix(in srgb,var(--like),transparent 88%),transparent)}.toplike-row>b{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:#160b1e;color:var(--like)}.toplike-row>img{width:58px;height:58px;border-radius:50%;object-fit:cover;border:1px solid var(--like)}
-.toplike-row>img.profile-frame{border:3px solid var(--like)!important;box-shadow:0 0 0 1px #ffffff22!important}
 .toplike-row>span>strong{color:#fff!important}.toplike-row>span{display:flex;flex-direction:column;min-width:0}.toplike-row strong{font-size:10px}.toplike-row small{font-size:6px;color:#968b9b}.toplike-row em{font-style:normal;font-size:9px;color:var(--like);font-weight:800}.like-podium .rank-1{height:62px;grid-template-columns:31px 50px 1fr auto}.like-podium .rank-1 img{width:48px;height:48px;box-shadow:0 0 15px var(--like)}.like-podium .rank-1>b{background:var(--like);color:#180712}.like-neon .toplike-row{border:1px solid color-mix(in srgb,var(--like),transparent 48%);border-radius:8px;box-shadow:inset 0 0 13px color-mix(in srgb,var(--like),transparent 88%)}.toplike-template-section{border:1px solid #7f2858!important;background:linear-gradient(145deg,#260b1b,#10060d);border-radius:8px;padding:7px!important}.toplike-template-section h4{color:#ff70b8!important}
 .toplike-row{height:52px!important;grid-template-columns:27px 37px 1fr!important;grid-template-rows:minmax(0,1fr) auto auto!important;column-gap:7px!important;row-gap:3px!important}.toplike-row>b,.toplike-row>img{grid-row:1/4;align-self:center}.toplike-row>span{grid-column:3;grid-row:2;align-self:start}.toplike-row>span small{display:none}.toplike-row>em{grid-column:3;grid-row:3;align-self:start;justify-self:start}.like-podium .rank-1{height:66px!important;grid-template-columns:31px 50px 1fr!important}
 .toplike-row{border-bottom:0!important}
 .vyra-toplike>h3{text-align:left!important;margin-left:42px!important;margin-bottom:7px!important}
 .like-neon .toplike-row,.like-clean .toplike-row,.like-podium .toplike-row{border:0!important;box-shadow:none!important}
-.toplike-row img.profile-frame{border-style:solid!important}.toplike-row img.frame-samurai{border-radius:10px!important}.toplike-row img.frame-golden-king{box-shadow:0 0 15px #ffae28!important}.toplike-row img.frame-luxury{border-width:3px!important}
-.avatar-frame{position:relative;width:42px;height:42px;display:grid;place-items:center;overflow:visible}.avatar-frame>img{width:32px!important;height:32px!important;border:0!important;box-shadow:none!important;z-index:2}.avatar-frame:before,.avatar-frame:after,.avatar-frame>i{position:absolute;pointer-events:none;z-index:3}.avatar-frame:before{content:"";inset:1px;border-radius:50%}.avatar-frame.frame-neon-purple:before{border:3px solid #bd45ff;box-shadow:0 0 8px #e06aff,inset 0 0 6px #8e2fff}.avatar-frame.frame-neon-purple:after{content:"◆";top:-4px;left:3px;color:#e474ff;text-shadow:26px 7px #9a31ff}.avatar-frame.frame-cyber-blue:before{border:3px dashed #20dfff;box-shadow:0 0 8px #18cfff}.avatar-frame.frame-cyber-blue:after{content:"✦";right:-2px;top:4px;color:#82eeff;text-shadow:-31px 22px #2bdfff}.avatar-frame.frame-pink-angel:before{border:3px solid #ff83c8;box-shadow:0 0 8px #ff83c8}.avatar-frame.frame-pink-angel:after{content:"♥  ♥";top:-10px;left:7px;color:#ff80c5;font-size:10px;letter-spacing:8px}.avatar-frame.frame-golden-king:before{border:3px solid #ffb629;box-shadow:0 0 9px #ff9c18}.avatar-frame.frame-golden-king:after{content:"♛";top:-14px;left:11px;color:#ffd34b;font-size:17px;text-shadow:0 0 7px #ff9c18}.avatar-frame.frame-ice-crystal:before{border:5px dotted #9eeaff;box-shadow:0 0 7px #5edbff;transform:rotate(8deg)}.avatar-frame.frame-ice-crystal:after{content:"◆";color:#d5f8ff;top:-4px;left:17px;text-shadow:15px 18px #75dfff,-15px 18px #75dfff}.avatar-frame.frame-galaxy:before{border:3px solid #8d52ff;box-shadow:0 0 0 3px #5c25b855,0 0 10px #914dff}.avatar-frame.frame-galaxy:after{content:"●";right:-4px;top:0;color:#a979ff;box-shadow:0 0 7px #a979ff}.avatar-frame.frame-emerald:before{border:4px dashed #38e45c;box-shadow:0 0 8px #22c94b}.avatar-frame.frame-emerald:after{content:"◆";top:-4px;left:16px;color:#80ff83;text-shadow:14px 20px #38dc5b,-14px 20px #38dc5b}.avatar-frame.frame-samurai{border-radius:5px}.avatar-frame.frame-samurai:before{border:3px solid #e64b22;border-radius:5px;clip-path:polygon(0 0,38% 0,38% 8%,62% 8%,62% 0,100% 0,100% 100%,62% 100%,62% 92%,38% 92%,38% 100%,0 100%)}.avatar-frame.frame-samurai:after{content:"♛";top:-10px;left:13px;color:#ffb42c}.avatar-frame.frame-minimal-glow:before{border:2px solid #83a9ff;box-shadow:0 0 8px #668cff}.avatar-frame.frame-luxury:before{border:5px dotted #e8eff8;box-shadow:0 0 8px #fff}.avatar-frame.frame-luxury:after{content:"◇";top:-5px;left:15px;color:#fff;text-shadow:14px 20px #dce9fa,-14px 20px #dce9fa}.avatar-frame.frame-royal-purple:before{border:3px double #9146ff;box-shadow:0 0 7px #9146ff}.avatar-frame.frame-royal-purple:after{content:"♛";top:-12px;left:12px;color:#ffbd35;font-size:15px}.avatar-frame.frame-stream-pro:before{border:4px dashed #15ddea;box-shadow:0 0 7px #00cbdc}.avatar-frame.frame-stream-pro:after{content:"";inset:4px;border:1px solid #6cf7ff;border-radius:50%}.toplike-row:has(.avatar-frame){grid-template-columns:27px 45px 1fr!important}
-.profile-frame{--frame:#b93dff;outline:0 solid transparent;outline-offset:3px}.frame-neon-purple{border:3px solid #ce4cff!important;box-shadow:0 0 8px #d54cff,0 0 22px #922cff!important}.frame-cyber-blue{border:3px dashed #25dbff!important;box-shadow:0 0 14px #13cfff!important}.frame-pink-angel{border:4px double #ff7fc8!important;box-shadow:0 -8px 18px #ff79c888!important}.frame-golden-king{border:4px double #ffc23b!important;box-shadow:0 0 18px #ff9d18!important}.frame-golden-king:after{content:"♛";position:absolute;top:-23px;left:50%;transform:translateX(-50%);color:#ffd24d;font-size:22px;text-shadow:0 0 10px #ff9d18}.frame-ice-crystal{border:4px dotted #a9efff!important;box-shadow:0 0 18px #55dfff!important}.frame-galaxy{border:3px solid #9560ff!important;box-shadow:0 0 0 5px #862eff44,0 0 22px #713dff!important}.frame-emerald{border:4px double #56f071!important;box-shadow:0 0 18px #20d854!important}.frame-samurai{border-radius:12px!important;border:3px solid #e95222!important;box-shadow:5px 5px 0 #52150b,-5px -5px 0 #ffb52b!important}.frame-minimal-glow{border:2px solid #8badff!important;box-shadow:0 0 10px #6a8fff!important}.frame-luxury{border:5px double #e7edf5!important;box-shadow:0 0 14px #fff!important}.frame-royal-purple{border:4px double #8d41ff!important;box-shadow:0 0 0 3px #ffb52b55,0 0 18px #8d41ff!important}.frame-stream-pro{border:4px dashed #19e6f2!important;box-shadow:0 0 18px #00d4e8!important}
-.profile-frame-picker{background:#25102f;border:1px solid #9e3cc4!important;border-radius:6px;padding:8px!important;margin:8px 0!important}.profile-frame-picker span{color:#ed9cff;font-weight:700}.profile-frame-picker select{width:125px!important}
-.profile-frame-picker{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important;clear:both}.profile-frame-picker span{display:block!important;float:none!important}.profile-frame-picker select{display:block!important;float:none!important;width:100%!important;min-height:34px;padding:6px 8px!important}.universal-gift-editor .switch-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;margin-top:9px!important}.universal-gift-editor .switch-row label{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;min-height:34px!important;padding:7px!important;white-space:nowrap!important}.universal-gift-editor .switch-row input{margin:0!important;flex:0 0 auto!important}
 .editor-shell{position:relative;padding-bottom:58px}.overlay-link-bar{position:absolute;left:0;right:0;bottom:0;height:58px;z-index:60;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:7px;padding:8px 10px;background:#0c0711f5;border-top:1px solid #4b265c;box-shadow:0 -10px 28px #050207}.overlay-link-bar>div{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px}.overlay-link-bar span{grid-column:1/-1;font-size:6px;color:#b98ac7;letter-spacing:.08em}.overlay-link-bar span i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#55eaa1;box-shadow:0 0 8px #55eaa1}.overlay-link-bar input{width:100%;min-width:150px;background:#160c1d;border:1px solid #432352;color:#cbbbd0;border-radius:5px;padding:6px;font-size:7px}.overlay-link-bar button{border:1px solid #512765;background:#1a0c23;color:#e6d8ea;border-radius:5px;padding:7px 9px;font-size:7px}.overlay-link-bar button:hover{border-color:#d14eff;background:#351044}
 .editor-shell{padding-bottom:86px!important}.overlay-link-bar{height:86px!important;grid-template-columns:minmax(360px,1fr) auto auto auto auto!important;gap:11px!important;padding:12px 16px!important;background:linear-gradient(90deg,#12081a,#0b0711)!important;border-top:2px solid #773294!important}.overlay-link-bar>div{grid-template-columns:170px minmax(240px,1fr)!important;gap:7px!important}.overlay-link-bar span{font-size:9px!important;font-weight:800!important;color:#e0b5ee!important;letter-spacing:.12em!important}.overlay-link-bar span i{width:8px!important;height:8px!important;margin-right:5px!important}.overlay-link-bar input,.overlay-link-bar select{min-height:34px!important;padding:9px 11px!important;font-size:10px!important;border:1px solid #69407a!important;border-radius:5px!important;background:#1b0e24!important;color:#fff!important}.overlay-link-bar input{min-width:240px!important}.overlay-link-bar button{min-height:40px!important;padding:10px 15px!important;font-size:10px!important;font-weight:700!important;white-space:nowrap!important;border-color:#7a3993!important;background:#281034!important}.overlay-link-bar #copyObsLink{background:linear-gradient(110deg,#7126ae,#a53be0)!important;color:#fff!important}.overlay-link-bar #copyTikTokLink{background:linear-gradient(110deg,#a51b73,#d9369c)!important;color:#fff!important}.overlay-link-bar #previewOverlayLink{background:#18251f!important;border-color:#3b9668!important;color:#78efac!important}
 .overlay-link-bar{position:fixed!important;left:210px!important;right:0!important;bottom:0!important;top:auto!important;width:auto!important;z-index:1000!important}.editor-shell{padding-bottom:0!important}body:has(.overlay-link-bar) main{padding-bottom:95px}@media(max-width:800px){.overlay-link-bar{left:58px!important;grid-template-columns:1fr!important;height:auto!important}.overlay-link-bar button{display:none}}
-.toplike-row>.avatar-frame{grid-column:2!important;grid-row:1/3!important;align-self:center!important;justify-self:center!important;width:40px!important;height:40px!important;display:grid!important;min-width:40px!important}.toplike-row>.avatar-frame>img{grid-column:auto!important;grid-row:auto!important;width:30px!important;height:30px!important;margin:0!important;border:0!important;box-shadow:none!important}.toplike-row>span:not(.avatar-frame){grid-column:3!important;grid-row:1!important;align-self:end!important}.toplike-row:has(.avatar-frame)>em{grid-column:3!important;grid-row:2!important}.toplike-row:has(.avatar-frame){grid-template-columns:27px 43px minmax(0,1fr)!important}.toplike-row>.avatar-frame:before{inset:2px!important}.toplike-row>.avatar-frame.frame-samurai{border:0!important;box-shadow:none!important}
-.profile-frame-picker,.avatar-frame{display:none!important}.toplike-row>img{display:block!important;grid-column:2!important;grid-row:1/3!important}.profile-frame{border:0!important;outline:0!important;box-shadow:none!important}
+.toplike-row>img{display:block!important;grid-column:2!important;grid-row:1/3!important}.profile-frame{border:0!important;outline:0!important;box-shadow:none!important}
 .pro-frame-picker{margin-top:12px;padding-top:10px;border-top:1px solid #4f285d}.pro-frame-picker>span{display:block;margin-bottom:8px;color:#e9a4ff;font-size:8px;font-weight:800;letter-spacing:.08em}.pro-frame-picker>div{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.properties .pro-frame-picker button{height:74px;padding:4px;border:1px solid #4b2b58;border-radius:7px;background:#100817;color:#cbb8d1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden}.properties .pro-frame-picker button.active{border-color:#e764ff;background:#2a1032;box-shadow:0 0 10px #c13de866}.pro-frame-picker button img{width:43px;height:43px;object-fit:contain}.pro-frame-picker button i{font-size:25px;font-style:normal;color:#a68bad}.pro-frame-picker button b{font-size:6px;white-space:nowrap}.pro-frame-picker select{display:none}.toplike-row>.pro-avatar-frame{position:relative;grid-column:2;grid-row:1/4;align-self:center;width:43px;height:43px;display:grid;place-items:center;overflow:visible}.pro-avatar-frame>img:first-child{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;border:0!important;box-shadow:none!important}.pro-avatar-frame>.pro-frame-art{position:absolute!important;inset:-3px!important;width:49px!important;height:49px!important;max-width:none!important;object-fit:contain!important;border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none!important;z-index:3}.toplike-row:has(.pro-avatar-frame){grid-template-columns:27px 47px minmax(0,1fr)!important}.toplike-row:has(.pro-avatar-frame)>span:not(.pro-avatar-frame){grid-column:3!important}.toplike-row:has(.pro-avatar-frame)>em{grid-column:3!important}
 
 /* Keep rank, framed avatar and profile text together as one compact row. */
@@ -197,7 +190,6 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 .fan-level-pill .fan-level-from,.fan-level-pill .fan-level-to{display:inline;font-size:14px}
 .fan-level-pill .fan-level-arrow{display:inline;margin:0 6px;font-style:normal;opacity:.85}.fan-level-up>h3{margin:10px 0 1px;font-size:19px;color:#fff;text-shadow:0 2px 5px #000}.fan-level-up>p{margin:0 0 8px;font-size:10px;color:var(--fan-light);font-weight:700}.fan-level-up>p span{color:#ff3c62}.fan-profile{width:52px;height:52px;border-radius:50%;padding:3px;background:linear-gradient(145deg,var(--fan-light),var(--fan));box-shadow:0 0 13px var(--fan)}.fan-profile img{width:100%;height:100%;border-radius:50%;object-fit:cover}.fan-level-template-section{border:1px solid #9d5c21!important;background:linear-gradient(145deg,#29180b,#100a05);border-radius:8px;padding:7px!important}.fan-level-template-section h4,.fan-level-template-section i{color:#ffc65b!important;text-shadow:0 0 9px #ff8a20}@keyframes fanLevelPop{0%,100%{transform:scale(.96)}50%{transform:scale(1.04)}}@keyframes fanRing{0%{transform:scale(.85);opacity:0}35%{opacity:.7}100%{transform:scale(1.12);opacity:0}}
 .fan-level-up{opacity:0!important;visibility:hidden!important;transform:translateY(18px) scale(.85)!important;transition:opacity .35s ease,transform .45s cubic-bezier(.2,.9,.25,1),visibility .35s!important;--fed:var(--fan-exit-duration,500ms)}.fan-level-up.selected,.fan-level-up.fan-active{opacity:1!important;visibility:visible!important;transform:translateY(0) scale(1)!important}.fan-level-up.fan-active{animation:fanAlertEnter .65s cubic-bezier(.16,1,.3,1)}.fan-level-up .fan-wing,.fan-level-up .fan-rising-hearts,.fan-level-up .fan-pulse-line,.fan-level-up .fan-ribbon,.fan-profile .fan-ring{display:none}.fan-trigger-editor{border:1px solid #94601e!important;background:#25170a!important}.fan-trigger-editor h4{color:#ffc35b!important}.fan-trigger-editor button{width:100%;padding:9px!important;background:linear-gradient(110deg,#bb5a12,#f59625)!important;color:#fff!important;border:0!important;border-radius:7px}.fan-trigger-editor small{display:block;margin-top:7px;color:#bca98d;font-size:7px;line-height:1.4}@keyframes fanAlertEnter{0%{filter:blur(5px);transform:scale(.6) translateY(25px)}65%{filter:blur(0);transform:scale(1.08) translateY(-5px)}100%{transform:scale(1) translateY(0)}}
-.fan-level-up.fan-layout-card{position:absolute!important;width:280px!important;height:295px!important;display:block!important;padding:18px!important;border:1px solid color-mix(in srgb,var(--fan),transparent 45%)!important;border-radius:24px!important;background:transparent!important;box-shadow:none!important}.fan-layout-card .fan-profile{position:absolute;left:32px;top:29px;width:48px;height:48px}.fan-layout-card>h3{position:absolute;left:91px;top:29px;margin:0!important;font-size:18px!important;text-align:left}.fan-layout-card>p{position:absolute;left:91px;top:53px;margin:0!important;font-size:10px!important;text-align:left}.fan-layout-card>p span{display:none}.fan-layout-card .fan-burst{position:absolute;left:76px;top:87px;width:130px;height:130px;background:transparent!important;box-shadow:none!important}.fan-layout-card .fan-burst img{width:130px;height:130px}.fan-layout-card .fan-burst i{display:none}.fan-layout-card>h2{display:none}.fan-layout-card .fan-level-pill{position:absolute;left:55px;bottom:25px;width:170px;box-sizing:border-box;padding:9px 12px;font-size:10px}.fan-layout-card .resize-handle{right:-8px!important;bottom:-8px!important}
 .gifter-level-up,.gifter-level-up.selected{display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;background:transparent!important;border:0!important;outline:0!important;box-shadow:none!important;color:#fff!important;overflow:visible!important;opacity:0!important;visibility:hidden!important;transform:scale(.8)!important;transition:.4s ease!important}.gifter-level-up.selected,.gifter-level-up.gifter-active{opacity:1!important;visibility:visible!important;transform:scale(1)!important}.gifter-orbit{position:relative;width:190px;height:190px;display:grid;place-items:center}.gifter-orbit>i{position:absolute;inset:8px;border:2px solid color-mix(in srgb,var(--gifter),transparent 45%);border-radius:50%;box-shadow:0 0 12px color-mix(in srgb,var(--gifter),transparent 55%);animation:gOrb 7s linear infinite}.gifter-orbit>i:nth-child(2){inset:27px;animation-direction:reverse;animation-duration:5s}.gifter-orbit>i:nth-child(3){inset:48px;animation-duration:3.5s}.gifter-orbit img{width:86px;height:86px;border-radius:50%;object-fit:cover;border:3px solid var(--gifter-light);box-shadow:0 0 18px var(--gifter);z-index:3}.gifter-orbit b{position:absolute;color:var(--gifter-light);text-shadow:0 0 8px var(--gifter);animation:heartSpark 1.5s infinite}.gifter-orbit b:nth-of-type(1){right:16px;top:45px}.gifter-orbit b:nth-of-type(2){left:14px;bottom:35px;animation-delay:.5s}.gifter-level-badge{margin-top:-9px;min-width:135px;padding:8px 16px;border-radius:10px;background:linear-gradient(120deg,var(--gifter),color-mix(in srgb,var(--gifter),white 28%));border:2px solid var(--gifter-light);box-shadow:0 0 16px var(--gifter)}.gifter-level-badge span{display:block;font-size:8px;letter-spacing:2px}.gifter-level-badge strong{display:block;font-size:22px}.gifter-level-up>h2{margin:10px 0 2px;font-size:39px;line-height:1;color:var(--gifter-light);text-shadow:0 3px 0 var(--gifter),0 0 16px var(--gifter)}.gifter-level-up>h3{margin:4px 0 0;font-size:18px}.gifter-level-up>p{margin:2px 0;color:var(--gifter-light);font-size:10px}.gifter-trigger-editor button{width:100%;padding:9px!important;background:linear-gradient(110deg,#6741c4,#9c65ff)!important;color:#fff!important;border:0!important;border-radius:7px}.gifter-level-template-section{border:1px solid #6e4bbb!important;background:linear-gradient(145deg,#1d1238,#0b0812);border-radius:8px;padding:7px!important}.gifter-level-template-section h4,.gifter-level-template-section i{color:#bd9aff!important;text-shadow:0 0 9px #8d5cff}@keyframes gOrb{to{transform:rotate(360deg)}}
 .gifter-big-level,.gifter-bottom-profile{display:none}.gifter-layout-number .gifter-orbit img{display:none}.gifter-layout-number .gifter-big-level{display:block;position:relative;z-index:4;font-size:68px;line-height:1;color:#fff;text-shadow:0 0 18px var(--gifter);font-weight:900}.gifter-layout-number .gifter-level-badge{order:3;margin-top:7px}.gifter-layout-number>h2{order:2;margin-top:-2px!important;font-size:43px!important}.gifter-layout-number .gifter-orbit{order:1}.gifter-layout-number>h3{order:4;margin-top:12px!important;font-size:20px}.gifter-layout-number>p{order:5;margin-top:7px}.gifter-layout-number .gifter-bottom-profile{display:block;order:6;margin-top:10px;width:48px;height:48px;padding:3px;border-radius:50%;background:linear-gradient(145deg,var(--gifter-light),var(--gifter));box-shadow:0 0 13px var(--gifter)}.gifter-layout-number .gifter-bottom-profile img{width:100%;height:100%;border-radius:50%;object-fit:cover}.gifter-layout-profile .gifter-bottom-profile{display:none}
 .gifter-diamond-row,.gifter-arrow-up,.gifter-streak,.gifter-pulse-line,.gd-2,.gd-3{display:none}.gifter-diamond{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 8px var(--gifter))}.gifter-diamond-row{position:relative;align-items:center;justify-content:center;gap:6px}.gifter-diamond-stack{position:relative;display:flex;align-items:center;justify-content:center}.gifter-arrow-up{color:var(--gifter-light);text-shadow:0 0 8px var(--gifter);font-size:14px;line-height:1}.gifter-arrow-up::after{content:"▲"}.gifter-orbit-arrow::after{content:none}
@@ -205,7 +197,7 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 .gifter-layout-sidebadge.gifter-level-up{display:grid!important;width:300px!important;grid-template-columns:64px 1fr;grid-template-areas:"diamond head" "diamond badge" "avatar name" "avatar msg";column-gap:10px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important}.gifter-layout-sidebadge .gifter-diamond-row{display:flex;grid-area:diamond;justify-content:center}.gifter-layout-sidebadge .gifter-orbit{grid-area:avatar;width:56px;height:56px}.gifter-layout-sidebadge .gifter-orbit>i,.gifter-layout-sidebadge .gifter-orbit>b{display:none}.gifter-layout-sidebadge .gifter-orbit img{width:56px;height:56px}.gifter-layout-sidebadge>h2{grid-area:head;margin:0;font-size:22px}.gifter-layout-sidebadge .gifter-level-badge{grid-area:badge;margin:0;min-width:0}.gifter-layout-sidebadge>h3{grid-area:name;margin:0}.gifter-layout-sidebadge>p{grid-area:msg;margin:0}.gifter-layout-sidebadge .gifter-streak{display:block;position:absolute;right:-22px;top:50%;width:26px;height:2px;background:linear-gradient(90deg,var(--gifter-light),transparent);transform:translateY(-50%) scaleX(1);transform-origin:left}.gifter-layout-sidebadge.gifter-active .gifter-diamond-row{animation:gSideSlideIn .5s cubic-bezier(.16,1,.3,1) both}.gifter-layout-sidebadge.gifter-active .gifter-streak{animation:gStreakSweep .5s linear both}@keyframes gSideSlideIn{from{opacity:0;transform:translateX(-36px)}to{opacity:1;transform:translateX(0)}}@keyframes gStreakSweep{from{opacity:0;transform:translateY(-50%) scaleX(0);transform-origin:left}to{opacity:1;transform:translateY(-50%) scaleX(1);transform-origin:left}}
 .gifter-layout-reveal .gifter-diamond-row{display:flex;order:1}.gifter-layout-reveal .gifter-arrow-up{display:block}.gifter-layout-reveal .gifter-level-badge{order:2}.gifter-layout-reveal .gifter-orbit{order:3}.gifter-layout-reveal .gifter-orbit>i,.gifter-layout-reveal .gifter-orbit>b{display:none}.gifter-layout-reveal>h2{order:4}.gifter-layout-reveal>h3{order:5}.gifter-layout-reveal>p{order:6}.gifter-layout-reveal.gifter-active .gifter-diamond-stack{animation:gRiseBlurIn .6s ease-out both}.gifter-layout-reveal.gifter-active .gifter-arrow-up{animation:gArrowNudge .6s ease-in-out 2}@keyframes gRiseBlurIn{from{opacity:0;filter:blur(6px);transform:translateY(24px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}@keyframes gArrowNudge{0%{transform:translateY(4px)}50%{transform:translateY(-4px)}100%{transform:translateY(4px)}}
 .gifter-layout-orbitlevel.gifter-level-up{position:relative}.gifter-layout-orbitlevel .gifter-orbit>i:nth-child(1){border-style:dotted;inset:-16px}.gifter-layout-orbitlevel .gifter-orbit>i:nth-child(2),.gifter-layout-orbitlevel .gifter-orbit>i:nth-child(3){display:none}.gifter-layout-orbitlevel .gifter-orbit>b:not(.gifter-orbit-arrow){display:none}.gifter-layout-orbitlevel .gifter-orbit-arrow::after{content:"➤";position:absolute;color:var(--gifter-light);text-shadow:0 0 6px var(--gifter);font-size:11px;top:-18px;left:50%;transform:translateX(-50%) rotate(20deg)}.gifter-layout-orbitlevel .gifter-diamond-row{display:block;position:absolute;top:118px;left:146px;width:auto}.gifter-layout-orbitlevel .gifter-diamond-row .gifter-arrow-up,.gifter-layout-orbitlevel .gifter-diamond-row .gifter-streak,.gifter-layout-orbitlevel .gifter-diamond-row .gifter-pulse-line{display:none}.gifter-layout-orbitlevel.gifter-active .gifter-orbit>i:nth-child(1){animation:gOrbitSpinIn .7s ease-out both,gOrb 7s linear infinite .7s}.gifter-layout-orbitlevel.gifter-active .gifter-diamond-stack{animation:gCornerPop .5s cubic-bezier(.34,1.56,.64,1) .25s both}@keyframes gOrbitSpinIn{from{opacity:0;transform:rotate(720deg) scale(.5)}to{opacity:1;transform:rotate(0) scale(1)}}@keyframes gCornerPop{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.15)}100%{transform:scale(1)}}
-.gifter-layout-risingtier .gifter-diamond-row{display:flex;flex-direction:column;align-items:center;order:1}.gifter-layout-risingtier .gifter-arrow-up{display:block}.gifter-layout-risingtier .gifter-diamond-stack{flex-direction:column-reverse}.gifter-layout-risingtier .gd-2,.gifter-layout-risingtier .gd-3{display:block}.gifter-layout-risingtier .gd-2{opacity:.5;margin-bottom:-22px;--tier-end-op:.5}.gifter-layout-risingtier .gd-3{opacity:.22;margin-bottom:-22px;--tier-end-op:.22}.gifter-layout-risingtier .gifter-orbit{order:2}.gifter-layout-risingtier .gifter-orbit>i,.gifter-layout-risingtier .gifter-orbit>b{display:none}.gifter-layout-risingtier .gifter-level-badge{order:3}.gifter-layout-risingtier>h2{order:4}.gifter-layout-risingtier>h3{order:5}.gifter-layout-risingtier>p{order:6}.gifter-layout-risingtier.gifter-active .gd-3{animation:gTierClimbIn .65s ease-out both}.gifter-layout-risingtier.gifter-active .gd-2{animation:gTierClimbIn .65s ease-out .08s both}.gifter-layout-risingtier.gifter-active .gd-1{animation:gTierClimbIn .65s ease-out .16s both}.gifter-layout-risingtier.gifter-active .gifter-arrow-up{animation:gArrowNudge .6s ease-in-out 2}@keyframes gTierClimbIn{from{opacity:0;transform:translateY(30px)}to{opacity:var(--tier-end-op,1);transform:translateY(0)}}
+.gifter-layout-risingtier .gifter-diamond-row{display:flex;flex-direction:column;align-items:center;order:1}.gifter-layout-risingtier .gifter-arrow-up{display:block}.gifter-layout-risingtier .gifter-diamond-stack{flex-direction:column-reverse}.gifter-layout-risingtier .gd-2,.gifter-layout-risingtier .gd-3{display:block}.gifter-layout-risingtier .gd-2{opacity:.5;margin-bottom:-22px;--tier-end-op:.5}.gifter-layout-risingtier .gd-3{opacity:.22;margin-bottom:-22px;--tier-end-op:.22}.gifter-layout-risingtier .gifter-orbit{order:2}.gifter-layout-risingtier .gifter-orbit>i,.gifter-layout-risingtier .gifter-orbit>b{display:none}.gifter-layout-risingtier .gifter-level-badge{order:3}.gifter-layout-risingtier>h2{order:4}.gifter-layout-risingtier>h3{order:5}.gifter-layout-risingtier>p{order:6}/* risingtiers gamla parallella entre pensionerad 2026-08-19 — sekvensen ags av gifter-fas (Stigningen, premium-final.css) */@keyframes gTierClimbIn{from{opacity:0;transform:translateY(30px)}to{opacity:var(--tier-end-op,1);transform:translateY(0)}}
 .gifter-layout-flip.gifter-level-up{display:grid!important;width:290px!important;grid-template-columns:44px 1fr auto;grid-template-areas:"diamond avatar badge" "head head head" "name name name" "msg msg msg";column-gap:10px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important}.gifter-layout-flip .gifter-diamond-row{display:flex;grid-area:diamond;justify-content:center}.gifter-layout-flip .gifter-diamond-stack{width:20px;height:44px}.gifter-layout-flip .gifter-diamond{width:100%;height:100%;object-fit:cover;border-radius:50%}.gifter-layout-flip .gifter-diamond-stack::after{content:"↻";position:absolute;top:-16px;right:-10px;color:var(--gifter-light);text-shadow:0 0 6px var(--gifter);font-size:13px}.gifter-layout-flip .gifter-orbit{grid-area:avatar;width:64px;height:64px}.gifter-layout-flip .gifter-orbit>i,.gifter-layout-flip .gifter-orbit>b{display:none}.gifter-layout-flip .gifter-orbit img{width:64px;height:64px}.gifter-layout-flip .gifter-level-badge{grid-area:badge;margin:0;min-width:0}.gifter-layout-flip>h2{grid-area:head;margin:4px 0 0;font-size:24px}.gifter-layout-flip>h3{grid-area:name;margin:0}.gifter-layout-flip>p{grid-area:msg;margin:0}.gifter-layout-flip.gifter-active .gifter-diamond-stack{animation:gCoinFlipIn .7s ease-in-out both}.gifter-layout-flip.gifter-active .gifter-orbit{animation:gRevealFade .7s linear both}@keyframes gCoinFlipIn{0%{transform:perspective(500px) rotateY(0deg);width:20px}50%{transform:perspective(500px) rotateY(180deg);width:44px}100%{transform:perspective(500px) rotateY(360deg);width:20px}}@keyframes gRevealFade{0%,44%{opacity:0}100%{opacity:1}}
 .gifter-layout-duo.gifter-level-up{display:grid!important;width:300px!important;grid-template-columns:auto auto auto auto;grid-template-areas:"diamond pulse avatar badge" "head head head head" "name name name name" "msg msg msg msg";column-gap:8px;row-gap:1px;align-items:center;text-align:left!important;justify-items:start!important}.gifter-layout-duo .gifter-diamond-row{display:contents}.gifter-layout-duo .gifter-diamond-stack{grid-area:diamond}.gifter-layout-duo .gifter-diamond{width:30px;height:30px}.gifter-layout-duo .gifter-pulse-line{display:block;grid-area:pulse;width:24px;height:2px;background:linear-gradient(90deg,var(--gifter),var(--gifter-light));clip-path:inset(0 100% 0 0)}.gifter-layout-duo .gifter-orbit{grid-area:avatar;width:44px;height:44px}.gifter-layout-duo .gifter-orbit>i,.gifter-layout-duo .gifter-orbit>b{display:none}.gifter-layout-duo .gifter-orbit img{width:44px;height:44px}.gifter-layout-duo .gifter-level-badge{grid-area:badge;margin:0;min-width:0;padding:5px 10px}.gifter-layout-duo>h2{grid-area:head;margin:2px 0 0;font-size:20px}.gifter-layout-duo>h3{grid-area:name;margin:0;font-size:14px}.gifter-layout-duo>p{grid-area:msg;margin:0;font-size:9px}.gifter-layout-duo.gifter-active .gifter-diamond-stack,.gifter-layout-duo.gifter-active .gifter-orbit,.gifter-layout-duo.gifter-active .gifter-level-badge{animation:gSnapPulse .4s ease-out both}.gifter-layout-duo.gifter-active .gifter-pulse-line{animation:gPulseDraw .4s linear both}@keyframes gSnapPulse{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}@keyframes gPulseDraw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .social-goal,.social-goal.selected{display:grid!important;grid-template-columns:40px 1fr!important;grid-template-rows:auto auto auto!important;gap:5px 10px!important;padding:10px 14px!important;background:transparent!important;border:0!important;outline:0!important;box-shadow:none!important;color:#fff!important}.social-goal h3{grid-column:2;margin:0;font-size:12px;letter-spacing:3px;color:#fff;text-shadow:0 0 9px var(--goal-a)}.goal-icon{grid-column:1;grid-row:1/4;align-self:center;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--goal-a),var(--goal-b));font-size:20px;box-shadow:0 0 13px var(--goal-a)}.goal-track{grid-column:2;position:relative;height:34px;border-radius:22px;background:#120d18;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff25}.goal-track i{position:absolute;inset:0 auto 0 0;border-radius:22px;background:linear-gradient(90deg,var(--goal-a),var(--goal-b));box-shadow:0 0 13px var(--goal-a)}.goal-track strong{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;text-shadow:0 2px 3px #000;z-index:2}.goal-track strong span{color:#ffffff99}.social-goal>small{grid-column:2;font-size:6px;letter-spacing:1px;color:#ffffffaa}.goal-2 .goal-track{height:44px;border:2px solid color-mix(in srgb,var(--goal-a),transparent 25%);box-shadow:0 0 16px color-mix(in srgb,var(--goal-a),transparent 45%),inset 0 0 15px #000}.goal-2 .goal-track i{background:linear-gradient(110deg,var(--goal-b),var(--goal-a));opacity:.8}.goal-2 .goal-icon{border-radius:12px}.goal-3 .goal-icon{background:transparent;color:var(--goal-a);font-size:27px;box-shadow:none;text-shadow:0 0 12px var(--goal-a)}.goal-3 .goal-track{height:10px;background:#ffffff1c;overflow:visible}.goal-3 .goal-track i{box-shadow:0 0 10px var(--goal-a)}.goal-3 .goal-track strong{top:-30px;justify-content:end;place-items:end;font-size:13px}.goal-portrait{width:220px!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;padding:14px!important}.goal-portrait .goal-icon{width:48px;height:48px}.goal-portrait h3{font-size:11px}.goal-portrait .goal-track{width:100%;height:180px!important;border-radius:26px!important}.goal-portrait .goal-track i{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:100%!important;height:var(--portrait-fill,65%);border-radius:26px!important}.goal-portrait .goal-track strong{writing-mode:vertical-rl;transform:rotate(180deg);font-size:14px}.goal-portrait.goal-3 .goal-track{width:18px!important}.goal-portrait.goal-3 .goal-track strong{writing-mode:horizontal-tb;transform:none;top:auto;bottom:-26px;white-space:nowrap}.goal-portrait>small{margin-top:3px}.social-goal-template-section{border:1px solid #275d88!important;background:linear-gradient(145deg,#0b2131,#100a19);border-radius:8px;padding:7px!important}.social-goal-template-section h4{color:#59dfff!important}.social-goal-template-section button:nth-of-type(2) i{color:#ff4f9a!important}
@@ -248,7 +240,7 @@ html.overlay-output body>aside,html.overlay-output body>main>header,html.overlay
 html.overlay-output body>main,html.overlay-output #view,html.overlay-output .editor-shell,html.overlay-output .workarea{display:block!important;position:static!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;overflow:hidden!important}
 html.overlay-output .canvas{position:absolute!important;margin:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform-origin:top left!important}
 html.overlay-output .widget.selected{outline:0!important}
-html.overlay-output .resize-handle{display:none!important}
+html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none!important}
 .widget-catalog button i.vyra-pro-icon{display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.12),0 5px 14px rgba(0,0,0,.24);font-style:normal}
 .widget-catalog button i.vyra-pro-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor)}
 .battle-mvp-template-section .mvp-style-grid button i.vyra-pro-icon{margin:0}
@@ -284,7 +276,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-live-preview h4{margin:0 0 14px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-live-preview-stage{position:relative;min-height:180px;padding:30px;background:#050308;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:auto}
 .overlay-live-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important}
-.overlay-live-preview-stage .resize-handle{display:none!important}
+.overlay-live-preview-stage .resize-handle,.overlay-live-preview-stage .vyra-handle{display:none!important}
 .overlay-widget-gallery{margin-top:22px;background:#110a18;border:1px solid var(--line,#2b2438);border-radius:12px;padding:18px}
 .overlay-widget-gallery h4{margin:0 0 4px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-widget-gallery>p{color:#9d87ac;font-size:9px;margin:0 0 14px;max-width:640px}
@@ -298,7 +290,7 @@ html.overlay-output .resize-handle{display:none!important}
 .overlay-widget-gallery .widget-catalog button .owg-thumb{position:relative;width:100%;height:104px;background:#0a0510;overflow:hidden;flex:0 0 auto}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 .overlay-widget-gallery .widget-catalog button .owg-thumb-inner .widget{position:relative!important;left:auto!important;top:auto!important}
-.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle{display:none!important}
+.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .resize-handle,.overlay-widget-gallery .widget-catalog button .owg-thumb-inner .vyra-handle{display:none!important}
 /* BORTTAGET 2026-08-05: en synlighetsregel for miniatyren lackte till overlayen. Ett fyrverkeri,
    en Battle MVP och Top Gifters testtext lag och syntes i OBS utan att nagot triggats.
 
@@ -340,7 +332,7 @@ html.overlay-output .resize-handle{display:none!important}
 .owg-configure-preview h4{margin:0 0 12px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .owg-configure-preview-stage{position:relative;min-height:220px;background:#050308;border:1px solid #2b2438;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .owg-configure-preview-stage .widget{position:relative!important;left:auto!important;top:auto!important;margin:0 auto!important;pointer-events:none!important}
-.owg-configure-preview-stage .resize-handle{display:none!important}
+.owg-configure-preview-stage .resize-handle,.owg-configure-preview-stage .vyra-handle{display:none!important}
 .owg-configure-done{grid-column:1/3;grid-row:2/3;margin:0;border:0;border-radius:0;padding:16px;background:#211230;border-top:1px solid #452656;color:#fff;font-size:12px;font-weight:700}
 .owg-configure-done:hover{background:#2d1740}
 @media(max-width:900px){.owg-configure-modal{grid-template-columns:1fr}.owg-configure-preview{display:none}}
@@ -611,9 +603,7 @@ html.overlay-output .canvas::after{display:none!important}
 @keyframes gl-tier-charge{0%{opacity:.15}55%{opacity:1}100%{opacity:.4}}
 @keyframes gl-descend{to{transform:translateY(70px) scale(.85);opacity:0}}
 @keyframes gl-tier-out{to{opacity:0}}
-.gifter-layout-risingtier.gifter-active .gifter-diamond-stack{animation:gl-climb .86s cubic-bezier(.2,1.15,.3,1) both}
-.gifter-layout-risingtier.gifter-active .gifter-streak{animation:gl-tier-charge .9s ease-out both}
-.gifter-layout-risingtier.gifter-active .gifter-bottom-profile{animation:gl-rise .5s ease-out both}
+/* risingtiers gl-entre pensionerad 2026-08-19 — se Stigningen i premium-final.css. Exiten nedan ar OROR D. */
 .gifter-layout-risingtier.gifter-exit .gifter-diamond-stack{animation:gl-descend var(--ged) ease-in both}
 .gifter-layout-risingtier.gifter-exit .gifter-streak,
 .gifter-layout-risingtier.gifter-exit .gifter-bottom-profile{animation:gl-tier-out var(--ged) ease-in both}
@@ -698,38 +688,43 @@ html.overlay-output .widget{
    show/hide/reposition the shared parts, mirroring exactly how Gifter Level Up's 9 layouts work
    (see the "Gifter Level Up: one distinct motion per layout" block above). Each entrance/exit pair
    reuses or reverses the same mechanism per part, never a generic fade — same principle as gifter's. */
-.fan-layout-stack .fan-burst{order:1;width:110px;height:110px}.fan-layout-stack .fan-burst img{width:108px;height:108px}.fan-layout-stack .fan-level-pill{order:2;margin-top:-10px;min-width:110px}.fan-layout-stack .fan-profile{order:3;width:64px;height:64px;margin-top:10px}.fan-layout-stack>h3{order:4;margin-top:8px}.fan-layout-stack>p{order:5}.fan-layout-stack>h2{display:none!important}
-.fan-layout-stack.fan-active .fan-burst{animation:fsIconDrop .5s cubic-bezier(.34,1.56,.64,1) both}.fan-layout-stack.fan-active .fan-level-pill{animation:fsPillPop .4s cubic-bezier(.34,1.56,.64,1) .1s both}.fan-layout-stack.fan-active .fan-profile{animation:fsAvatarRise .45s ease-out .2s both}
+.fan-layout-stack .fan-burst{order:1;width:110px;height:110px}.fan-layout-stack .fan-burst img{width:108px;height:108px}.fan-layout-stack .fan-level-pill{order:2;margin-top:-10px;min-width:110px}.fan-layout-stack .fan-profile{order:3;width:64px;height:64px;margin-top:10px}.fan-layout-stack>h3{order:4;margin-top:8px}.fan-layout-stack>p{order:5}
 .fan-layout-stack.fan-exit .fan-profile{animation:fsAvatarSink var(--fed) ease-in both}.fan-layout-stack.fan-exit .fan-level-pill{animation:fsPillPop var(--fed) ease-in .06s reverse both}.fan-layout-stack.fan-exit .fan-burst{animation:fsIconDrop var(--fed) ease-in .12s reverse both}
 @keyframes fsIconDrop{from{opacity:0;transform:translateY(-40px) scale(.7)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes fsPillPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}@keyframes fsAvatarRise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes fsAvatarSink{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
 
-.fan-layout-heartbeat.fan-level-up{display:grid!important;width:300px!important;grid-template-columns:60px 40px 1fr;grid-template-areas:"avatar pulse burst" "name name name" "msg msg msg";column-gap:8px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important;position:relative}.fan-layout-heartbeat .fan-profile{grid-area:avatar;width:56px;height:56px;margin:0}.fan-layout-heartbeat .fan-pulse-line{display:block;grid-area:pulse;width:36px;height:2px;background:linear-gradient(90deg,var(--fan),var(--fan-light));clip-path:inset(0 100% 0 0)}.fan-layout-heartbeat .fan-burst{grid-area:burst;width:76px;height:76px;margin:0;position:relative}.fan-layout-heartbeat .fan-burst img{width:74px;height:74px}.fan-layout-heartbeat .fan-level-pill{position:absolute;top:6px;right:6px;margin:0;min-width:0;padding:4px 9px;font-size:7px}.fan-layout-heartbeat>h2{display:none!important}.fan-layout-heartbeat>h3{grid-area:name;margin:6px 0 0;font-size:16px}.fan-layout-heartbeat>p{grid-area:msg;margin:0;font-size:9px}
-.fan-layout-heartbeat.fan-active .fan-profile{animation:fhSlideL .45s cubic-bezier(.16,1,.3,1) both}.fan-layout-heartbeat.fan-active .fan-burst{animation:fhSlideR .45s cubic-bezier(.16,1,.3,1) both}.fan-layout-heartbeat.fan-active .fan-pulse-line{animation:fhPulseDraw .4s linear .3s both}
+.fan-layout-heartbeat.fan-level-up{display:grid!important;width:300px!important;grid-template-columns:60px 40px 1fr;grid-template-areas:"avatar pulse burst" "name name name" "msg msg msg";column-gap:8px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important;position:relative}.fan-layout-heartbeat .fan-profile{grid-area:avatar;width:56px;height:56px;margin:0}.fan-layout-heartbeat .fan-pulse-line{display:block;grid-area:pulse;width:36px;height:2px;background:linear-gradient(90deg,var(--fan),var(--fan-light));clip-path:inset(0 100% 0 0)}.fan-layout-heartbeat .fan-burst{grid-area:burst;width:76px;height:76px;margin:0;position:relative}.fan-layout-heartbeat .fan-burst img{width:74px;height:74px}.fan-layout-heartbeat .fan-level-pill{position:absolute;top:6px;right:6px;margin:0;min-width:0;padding:4px 9px;font-size:7px}.fan-layout-heartbeat>h3{grid-area:name;margin:6px 0 0;font-size:16px}.fan-layout-heartbeat>p{grid-area:msg;margin:0;font-size:9px}
+
 .fan-layout-heartbeat.fan-exit .fan-pulse-line{animation:fhPulseDraw var(--fed) linear reverse both}.fan-layout-heartbeat.fan-exit .fan-profile{animation:fhSlideL var(--fed) ease-in .1s reverse both}.fan-layout-heartbeat.fan-exit .fan-burst{animation:fhSlideR var(--fed) ease-in .1s reverse both}
 @keyframes fhSlideL{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}@keyframes fhSlideR{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}@keyframes fhPulseDraw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 
-.fan-layout-badgereveal{flex-direction:column}.fan-layout-badgereveal .fan-profile{order:1;width:84px;height:84px;position:relative}.fan-layout-badgereveal .fan-wing{display:block;position:absolute;width:50px;height:70px;top:50%;transform:translateY(-50%);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fan),transparent 20%),transparent 70%);filter:blur(1px)}.fan-layout-badgereveal .fan-wing.left{left:-46px;clip-path:polygon(100% 20%,20% 0,0 50%,20% 100%,100% 80%)}.fan-layout-badgereveal .fan-wing.right{right:-46px;clip-path:polygon(0 20%,80% 0,100% 50%,80% 100%,0 80%)}.fan-layout-badgereveal .fan-level-pill{order:2;margin-top:10px}.fan-layout-badgereveal .fan-burst{display:none!important}.fan-layout-badgereveal>h2{display:none!important}.fan-layout-badgereveal>h3{order:3}.fan-layout-badgereveal>p{order:4}
-.fan-layout-badgereveal.fan-active .fan-wing.left{animation:fbWingL .5s ease-out both}.fan-layout-badgereveal.fan-active .fan-wing.right{animation:fbWingR .5s ease-out both}.fan-layout-badgereveal.fan-active .fan-profile{animation:fbProfilePop .4s cubic-bezier(.34,1.56,.64,1) .15s both}
-.fan-layout-badgereveal.fan-exit .fan-wing.left{animation:fbWingL var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-wing.right{animation:fbWingR var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in reverse both}
-@keyframes fbWingL{from{opacity:0;transform:translate(20px,-50%) scale(.5)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbWingR{from{opacity:0;transform:translate(-20px,-50%) scale(.5)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbProfilePop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.fan-layout-badgereveal{flex-direction:column}.fan-layout-badgereveal .fan-profile{order:1;width:84px;height:84px;position:relative}.fan-layout-badgereveal .fan-wing{display:block;position:absolute;width:50px;height:70px;top:50%;transform:translateY(-50%);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--fan),transparent 20%),transparent 70%);filter:blur(1px)}.fan-layout-badgereveal .fan-wing.left{left:-46px;clip-path:polygon(100% 20%,20% 0,0 50%,20% 100%,100% 80%)}.fan-layout-badgereveal .fan-wing.right{right:-46px;clip-path:polygon(0 20%,80% 0,100% 50%,80% 100%,0 80%)}.fan-layout-badgereveal .fan-level-pill{order:2;margin-top:10px}.fan-layout-badgereveal .fan-burst{display:none!important}.fan-layout-badgereveal>h3{order:3}.fan-layout-badgereveal>p{order:4}
 
-.fan-layout-loyalty{flex-direction:column}.fan-layout-loyalty .fan-profile{order:1;width:80px;height:80px;position:relative}.fan-layout-loyalty .fan-ring{display:block;position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--fan-light);box-shadow:0 0 14px var(--fan);pointer-events:none}.fan-layout-loyalty .fan-level-pill{order:2;margin-top:-14px;position:relative;z-index:2}.fan-layout-loyalty .fan-burst{display:none!important}.fan-layout-loyalty>h2{display:none!important}.fan-layout-loyalty>h3{order:3;margin-top:8px}.fan-layout-loyalty>p{order:4}
-.fan-layout-loyalty.fan-active .fan-ring{animation:flRingDraw .7s ease-out both}.fan-layout-loyalty.fan-active .fan-profile img{animation:fbProfilePop .4s cubic-bezier(.34,1.56,.64,1) both}.fan-layout-loyalty.fan-active .fan-level-pill{animation:fsPillPop .4s cubic-bezier(.34,1.56,.64,1) .3s both}
-.fan-layout-loyalty.fan-exit .fan-ring{animation:flRingDraw var(--fed) ease-in reverse both}.fan-layout-loyalty.fan-exit .fan-profile img{animation:fbProfilePop var(--fed) ease-in reverse both}
+.fan-layout-badgereveal.fan-exit .fan-wing.left{animation:fbWingL var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-wing.right{animation:fbWingR var(--fed) ease-in reverse both}.fan-layout-badgereveal.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in reverse both}
+@keyframes fbWingL{from{opacity:0;transform:translate(-24px,-50%) scale(.72)}to{opacity:1;transform:translate(0,-50%) scale(1)}}@keyframes fbWingR{from{opacity:0;transform:translate(24px,-50%) scaleX(-.72) scaleY(.72)}to{opacity:1;transform:translate(0,-50%) scaleX(-1) scaleY(1)}}@keyframes fbProfilePop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+
+.fan-layout-loyalty{flex-direction:column}.fan-layout-loyalty .fan-profile{order:1;width:80px;height:80px;position:relative}.fan-layout-loyalty .fan-ring{display:block;position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--fan-light);box-shadow:0 0 14px var(--fan);pointer-events:none}.fan-layout-loyalty .fan-level-pill{order:2;margin-top:-14px;position:relative;z-index:2}.fan-layout-loyalty .fan-burst{display:none!important}.fan-layout-loyalty>h3{order:3;margin-top:8px}.fan-layout-loyalty>p{order:4}
+
+/* Uttoningen rör BEHÅLLAREN `.fan-profile`, aldrig ankaret `.fan-profile img` — samma regel som
+   entrefaserna följer (se loyalty-blocket i premium-final.css). Behållaren bär den orangea
+   gradienten och glöden; krymper man bara ankaret släcks ansiktet medan skivan står kvar fullt
+   målad tills rotens transition städar bort hela lådan. Uppmätt i Chromium vid 480 ms av 500:
+   behållaren 1.00, ankaret 0.00. Vaktat av 19h i tests/fan-fas.test.js och av U2-U4/U6 i
+   tests/browser/fan-fas-loyalty.browser.test.js. */
+.fan-layout-loyalty.fan-exit .fan-ring{animation:flRingDraw var(--fed) ease-in reverse both}.fan-layout-loyalty.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in reverse both}
 @keyframes flRingDraw{from{opacity:0;transform:rotate(-90deg) scale(.7)}to{opacity:1;transform:rotate(0) scale(1)}}
 
-.fan-layout-hearts{flex-direction:column}.fan-layout-hearts .fan-rising-hearts{display:flex;order:1;gap:4px;height:36px;align-items:flex-end;justify-content:center}.fan-layout-hearts .fan-rising-hearts i{font-style:normal;color:var(--fan-light);text-shadow:0 0 8px var(--fan);font-size:14px}.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:18px;margin-bottom:6px}.fan-layout-hearts .fan-burst{order:2;width:90px;height:90px;margin-top:-4px}.fan-layout-hearts .fan-burst img{width:88px;height:88px}.fan-layout-hearts .fan-level-pill{order:3;margin-top:-8px}.fan-layout-hearts .fan-profile{display:none!important}.fan-layout-hearts>h2{display:none!important}.fan-layout-hearts>h3{order:4;margin-top:8px}.fan-layout-hearts>p{order:5}
-.fan-layout-hearts.fan-active .fan-rising-hearts i{animation:frHeartRise 1.6s ease-in-out infinite}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(1){animation-delay:0s}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(2){animation-delay:.4s}.fan-layout-hearts.fan-active .fan-rising-hearts i:nth-child(3){animation-delay:.8s}.fan-layout-hearts.fan-active .fan-burst{animation:fsIconDrop .5s cubic-bezier(.34,1.56,.64,1) both}
+.fan-layout-hearts{flex-direction:column}.fan-layout-hearts .fan-rising-hearts{display:flex;order:1;gap:4px;height:36px;align-items:flex-end;justify-content:center}.fan-layout-hearts .fan-rising-hearts i{font-style:normal;color:var(--fan-light);text-shadow:0 0 8px var(--fan);font-size:14px}.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:18px;margin-bottom:6px}.fan-layout-hearts .fan-burst{order:2;width:90px;height:90px;margin-top:-4px}.fan-layout-hearts .fan-burst img{width:88px;height:88px}.fan-layout-hearts .fan-level-pill{order:3;margin-top:-8px}.fan-layout-hearts .fan-profile{display:none!important}.fan-layout-hearts>h3{order:4;margin-top:8px}.fan-layout-hearts>p{order:5}
+
 .fan-layout-hearts.fan-exit .fan-burst{animation:fsIconDrop var(--fed) ease-in reverse both}.fan-layout-hearts.fan-exit .fan-rising-hearts i{animation:none!important;opacity:0;transition:opacity var(--fed) ease-in}
 @keyframes frHeartRise{0%{transform:translateY(0);opacity:0}30%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
 
 .fan-layout-ribbon{flex-direction:column}.fan-layout-ribbon .fan-profile{order:1;width:88px;height:88px}.fan-layout-ribbon .fan-burst{display:none!important}.fan-layout-ribbon .fan-ribbon{display:block;order:2;position:relative;margin-top:-6px;padding:6px 22px;background:linear-gradient(120deg,var(--fan),var(--fan-light));font-size:11px;font-weight:800;letter-spacing:1px;color:#fff;text-shadow:0 1px 2px #0006;clip-path:polygon(4% 0,96% 0,100% 50%,96% 100%,4% 100%,0 50%)}.fan-layout-ribbon .fan-level-pill{display:none!important}.fan-layout-ribbon>h2{order:3;font-size:20px;margin-top:8px}.fan-layout-ribbon>h3{order:4}.fan-layout-ribbon>p{order:5}
-.fan-layout-ribbon.fan-active .fan-profile{animation:fbProfilePop .4s cubic-bezier(.34,1.56,.64,1) both}.fan-layout-ribbon.fan-active .fan-ribbon{animation:frbUnfurl .5s cubic-bezier(.16,1,.3,1) .15s both}
+
 .fan-layout-ribbon.fan-exit .fan-ribbon{animation:frbUnfurl var(--fed) ease-in reverse both}.fan-layout-ribbon.fan-exit .fan-profile{animation:fbProfilePop var(--fed) ease-in .05s reverse both}
 @keyframes frbUnfurl{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}
 
-.fan-layout-duo.fan-level-up{display:grid!important;width:300px!important;grid-template-columns:auto auto auto auto;grid-template-areas:"burst pulse avatar badge" "name name name name" "msg msg msg msg";column-gap:8px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important}.fan-layout-duo .fan-burst{grid-area:burst;width:46px;height:46px;margin:0}.fan-layout-duo .fan-burst img{width:44px;height:44px}.fan-layout-duo .fan-burst i{display:none}.fan-layout-duo .fan-pulse-line{display:block;grid-area:pulse;width:26px;height:2px;background:linear-gradient(90deg,var(--fan),var(--fan-light));clip-path:inset(0 100% 0 0)}.fan-layout-duo .fan-profile{grid-area:avatar;width:46px;height:46px;margin:0}.fan-layout-duo .fan-level-pill{grid-area:badge;margin:0;min-width:0;padding:5px 10px;font-size:8px}.fan-layout-duo>h2{display:none!important}.fan-layout-duo>h3{grid-area:name;margin:2px 0 0;font-size:14px}.fan-layout-duo>p{grid-area:msg;margin:0;font-size:9px}
-.fan-layout-duo.fan-active .fan-burst,.fan-layout-duo.fan-active .fan-level-pill{animation:fdSnap .4s ease-out both}.fan-layout-duo.fan-active .fan-profile{animation:fdSnap .4s ease-out .06s both}.fan-layout-duo.fan-active .fan-pulse-line{animation:fhPulseDraw .4s linear .2s both}
+.fan-layout-duo.fan-level-up{display:grid!important;width:300px!important;grid-template-columns:auto auto auto auto;grid-template-areas:"burst pulse avatar badge" "name name name name" "msg msg msg msg";column-gap:8px;row-gap:2px;align-items:center;text-align:left!important;justify-items:start!important}.fan-layout-duo .fan-burst{grid-area:burst;width:46px;height:46px;margin:0}.fan-layout-duo .fan-burst img{width:44px;height:44px}.fan-layout-duo .fan-burst i{display:none}.fan-layout-duo .fan-pulse-line{display:block;grid-area:pulse;width:26px;height:2px;background:linear-gradient(90deg,var(--fan),var(--fan-light));clip-path:inset(0 100% 0 0)}.fan-layout-duo .fan-profile{grid-area:avatar;width:46px;height:46px;margin:0}.fan-layout-duo .fan-level-pill{grid-area:badge;margin:0;min-width:0;padding:5px 10px;font-size:8px}.fan-layout-duo>h3{grid-area:name;margin:2px 0 0;font-size:14px}.fan-layout-duo>p{grid-area:msg;margin:0;font-size:9px}
+
 .fan-layout-duo.fan-exit .fan-pulse-line{animation:fhPulseDraw var(--fed) linear reverse both}.fan-layout-duo.fan-exit .fan-burst,.fan-layout-duo.fan-exit .fan-profile,.fan-layout-duo.fan-exit .fan-level-pill{animation:fdSnap var(--fed) ease-in reverse both}
 @keyframes fdSnap{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
 
@@ -809,10 +804,14 @@ html.overlay-output .widget{
 }
 
 /* TOTALT — historikraden på framsidan.
-   MEDVETET PLACERAD HÄR, inte sist i filen: studio.css har en obalanserad klammer (issue #126) och
-   allt efter rad 787 hamnar inuti ett oavslutat block. Regler i slutet av filen ser korrekta ut i
-   källkoden men gäller bara under @media (prefers-reduced-motion). Rad 787 är den sista där
-   klammerdjupet är noll — flyttas den här regeln längre ned slutar den att gälla. */
+   RÄTTAD 2026-08-17: den här kommentaren sa att filen har en obalanserad klammer (issue #126) och
+   att allt efter rad 787 hamnar i ett oavslutat block som bara gäller under
+   @media (prefers-reduced-motion). Det stämmer inte längre. Uppmätt: 2312 öppnande och 2312
+   stängande klamrar, och klammerdjupet är noll både vid rad 787 och vid filens slut. Kontrollerat
+   i Chromium på en regel långt efter 787 (`.fan-level-up>h2`, rad ~1065): den vinner cascaden och
+   gäller utan någon media query alls. Placeringen här är alltså inte längre nödvändig — men den
+   är heller inte fel, så regeln får ligga kvar. Räkna om innan du litar på den gamla varningen:
+   den kostade en felaktig motivering i premium-final.css innan den upptäcktes. */
 .alltime{margin:18px 0;padding:18px 20px}
 .alltime-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .alltime-head h3{margin:2px 0 0}
@@ -1011,3 +1010,328 @@ body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px
 body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
 body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
 body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+/* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
+   translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
+   satts som transform, och tva transformer pa samma element hade slagit ut varandra. */
+.vyra-handle{position:absolute;z-index:98;padding:0;background:#9f35ff;border:2px solid #fff;box-shadow:0 0 10px #9f35ff;border-radius:6px;transform-origin:center}
+.vyra-handle-n,.vyra-handle-s{left:50%;width:26px;height:11px;margin-left:-13px;cursor:ns-resize}
+.vyra-handle-e,.vyra-handle-w{top:50%;width:11px;height:26px;margin-top:-13px;cursor:ew-resize}
+.vyra-handle-n{top:-6px}
+.vyra-handle-s{bottom:-6px}
+.vyra-handle-w{left:-6px}
+.vyra-handle-e{right:-6px}
+.vyra-handle-nw,.vyra-handle-ne,.vyra-handle-sw{width:14px;height:14px;border-radius:50%}
+.vyra-handle-nw{left:-7px;top:-7px;cursor:nwse-resize}
+.vyra-handle-ne{right:-7px;top:-7px;cursor:nesw-resize}
+.vyra-handle-sw{left:-7px;bottom:-7px;cursor:nesw-resize}
+.vyra-handle:hover{filter:brightness(1.25)}
+/* SIDOPANELEN blir en flexkolumn sa att "+ Lagg till widget" kan bottenjusteras. Knappen ar
+   sedan media.js ett DIREKT barn till .elements — margin-top:auto verkar bara pa flexbarn. */
+.elements{display:flex;flex-direction:column}
+.elements>.live-layer-add{margin-top:auto;flex:0 0 auto}
+
+/* ZOOMKONTROLLERNA flyttade upp i verktygsraden. Den gamla regeln lade dem svavande over
+   duken med position:sticky och en negativ marginal; har ar de ett vanligt flexbarn langst
+   till hoger. Den 12 px hoga sticky-boxen var dessutom hela orsaken till dukens lodrata
+   rullningslist (scrollHeight 864 mot clientHeight 852) — den forsvinner med flytten. */
+.editor-toolbar .vy-kontroll{position:static;margin:0 0 0 auto;bottom:auto;justify-content:flex-end;flex:0 0 auto}
+
+/* RULLNINGSLISTEN pa duken ska inte synas. Innehallet ar 864 px i en 852 px hog yta
+   (40 verktygsrad + 768 duk + 28 marginal), sa overskottet ar inbyggt i layouten — det var
+   INTE zoomboxen som orsakade det. Rullningen behalls darfor, bara listen doljs: stanger man
+   av rullningen blir dukens nederkant onabar i sma fonster. */
+.workarea{scrollbar-width:none;-ms-overflow-style:none}
+.workarea::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* Zoom- och snappknapparna arvde verktygsradens egen knappstil nar de flyttade dit, och da blev
+   snappvaxelns pa- och av-lage identiska — en vaxel man inte ser laget pa. Modulens egna stilar
+   asserteras darfor om med hogre specificitet inne i raden. */
+.editor-toolbar .vy-kontroll button{background:#160c1fef;border:1px solid #4c285e;color:#d6bddf;border-radius:6px;font-size:10px}
+.editor-toolbar .vy-kontroll button:hover{border-color:#cd55f4;color:#fff}
+/* !important behovs har, och skalet ar laddningsordningen — inte lathet: design-system.css
+   laddas EFTER studio.css i studio.html och vinner darfor vid lika specificitet. Uppmatt:
+   selektorn matchar (`matches()` svarar true) men den beraknade bakgrunden blev anda
+   `linear-gradient(145deg,#130b1c,#0d0814)` fran den senare filen. Bara vaxelns tva lagen
+   hojs, inte all knappstil, sa raden i ovrigt behaller sitt utseende. */
+.editor-toolbar .vy-kontroll button.snapp-vaxel{border-color:#cd55f4!important;background:linear-gradient(180deg,#7a2fb5,#4a1a72)!important;color:#fff!important}
+.editor-toolbar .vy-kontroll button.snapp-vaxel.av{border-color:#4c285e!important;background:#160c1fef!important;color:#7d6e8a!important}
+
+/* ================= FAN LEVEL UP · referensdesignen 2026-08-13 =================
+   Sju modeller mot Davids referensbild. Strukturen fanns redan — rubrik, namn, pill,
+   banderoll, pulslinje, vingar, hjartan och ring — sa det har ar utforande, inte anatomi.
+
+   RUBRIKEN doldes av varje layout med `display:none!important`, sa den maste tas tillbaka
+   med samma vapen. Referensen visar "FAN LEVEL UP" i ALLA sju. */
+.fan-level-up>h2{
+  display:block!important;order:3;margin:3px 0 0;padding:0;
+  font:900 18px/1.06 Inter,system-ui,sans-serif;letter-spacing:.01em;text-align:center;white-space:nowrap;
+  background:linear-gradient(180deg,#ffd98a 0%,#ff9a2a 52%,#ff4f1a 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 55%))}
+
+/* Namnet vitt och kraftigt, supporterraden i rott — som referensen. */
+.fan-level-up>h3{order:4;margin:1px 0 0;font:800 15px/1.15 Inter,system-ui,sans-serif;color:#fff;
+  text-shadow:0 1px 6px #00000080;text-align:center;white-space:nowrap}
+.fan-level-up>p{order:5;margin:1px 0 0;font:800 9px/1.2 Inter,system-ui,sans-serif;letter-spacing:.14em;
+  text-transform:uppercase;color:#ff5a3c;text-align:center}
+
+/* Nivapillen: en enkel LV.-bricka i orange, som referensens. */
+.fan-level-up .fan-level-pill{
+  background:linear-gradient(180deg,#ffb545,#ff7a12)!important;border:0!important;color:#3a1500!important;
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em;border-radius:999px!important;
+  padding:6px 15px!important;box-shadow:0 3px 12px #ff7a1255,0 0 0 1px #ffd08a55 inset!important}
+
+/* Emblemet tydligare: varm glod i stallet for platt bild. */
+.fan-level-up .fan-burst img{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--fan),transparent 35%))
+  drop-shadow(0 0 30px color-mix(in srgb,#ff4f1a,transparent 55%))}
+
+/* ---- 2 Heartbeat Side och 7 Community Duo: EKG-kurva med hjarta -------------------------------
+   Referensen visar en pulskurva, inte ett streck. Kurvan ar en inbakad SVG sa den inte kan
+   tappas av en saknad bildfil, och hjartat sitter i mitten som i bilden. */
+.fan-layout-heartbeat .fan-pulse-line,
+.fan-layout-duo .fan-pulse-line{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cpath d='M0 12h18l5-9 6 18 6-13 5 4h14' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M60 8.5c1.6-3 6-2.4 6 1 0 3-4 5-6 7-2-2-6-4-6-7 0-3.4 4.4-4 6-1z' fill='%23ff3b2f'/%3E%3Cpath d='M72 12h14l5-4 6 13 6-18 5 9h6' fill='none' stroke='%23ff7a12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:100% auto!important;
+  background-color:transparent!important;height:24px!important;min-width:110px;
+  filter:drop-shadow(0 0 8px #ff7a1288)}
+
+/* ---- 5 Rising Hearts: tre glodande hjartan i trappa --------------------------------------- */
+.fan-layout-hearts .fan-rising-hearts i{color:#ff3b52!important;
+  text-shadow:0 0 10px #ff3b52,0 0 22px #ff7a12aa!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(1){font-size:13px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(2){font-size:19px!important}
+.fan-layout-hearts .fan-rising-hearts i:nth-child(3){font-size:25px!important}
+
+/* ---- 6 Welcome Ribbon: en riktig banderoll, inte en platt pill ---------------------------- */
+.fan-layout-ribbon .fan-ribbon{display:block!important;order:2;margin:-14px auto 2px;position:relative;
+  padding:9px 30px;min-width:190px;text-align:center;
+  background:linear-gradient(180deg,#ff9a2a,#ff5f14)!important;
+  border:2px solid #ffd08a!important;border-radius:7px;
+  box-shadow:0 6px 18px #ff5f1455,0 0 0 1px #ffffff22 inset;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)}
+.fan-layout-ribbon .fan-ribbon span{font:900 15px/1 Inter,system-ui,sans-serif;letter-spacing:.05em;
+  color:#fff;text-shadow:0 2px 4px #8a2c00}
+.fan-layout-ribbon .fan-level-pill{display:none!important}   /* banderollen bar nivan i den har modellen */
+
+/* ---- 4 Loyalty Ring: segmenterad ring med gnista ------------------------------------------ */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:conic-gradient(var(--fan) 0 18%,transparent 18% 22%,var(--fan) 22% 40%,
+    transparent 40% 44%,var(--fan) 44% 62%,transparent 62% 66%,#ffd98a 66% 78%,
+    transparent 78% 82%,var(--fan) 82% 100%)!important;
+  border:0!important;border-radius:50%!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  mask:radial-gradient(circle,transparent 0 63%,#000 65% 100%);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 45%))}
+
+/* ---- 3 Fan Badge Reveal: halvmanar med emblemet i vardera --------------------------------- */
+.fan-layout-badgereveal .fan-wing{
+  background-image:url("assets/images/heart-character.png?v=1")!important;
+  background-repeat:no-repeat!important;background-position:center!important;background-size:64% auto!important;
+  background-color:transparent!important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+
+
+/* ===== FAN LEVEL UP · tre rattelser efter Davids granskning 2026-08-13 =====
+
+   3 BADGE REVEAL: vingarna var 50x70 px och satt 46 px UT fran bilden, sa emblemet blev en
+   liten ikon vid kanten i stallet for en halvmane som omfamnar profilbilden. Bagen ritas nu
+   som en riktig cirkelbage med ::before (tva fargade kanter pa en rund ram, roterad 45 grader
+   ger ett C), och emblemet ligger i ::after mitt i bagen. */
+.fan-layout-badgereveal .fan-wing{
+  width:74px!important;height:136px!important;top:50%!important;transform:translateY(-50%);
+  background:none!important;background-image:none!important;clip-path:none!important;overflow:visible!important}
+.fan-layout-badgereveal .fan-wing.left{left:-70px!important}
+.fan-layout-badgereveal .fan-wing.right{right:-70px!important;transform:translateY(-50%) scaleX(-1)}
+.fan-layout-badgereveal .fan-wing::before{
+  content:"";position:absolute;top:2px;left:6px;width:132px;height:132px;border-radius:50%;
+  border:13px solid transparent;border-top-color:#ffb545;border-left-color:#ff5f14;
+  transform:rotate(-45deg);
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
+.fan-layout-badgereveal .fan-wing::after{
+  content:"";position:absolute;top:50%;left:6px;width:52px;height:52px;transform:translateY(-50%);
+  background:url("assets/images/heart-character.png?v=1") center/contain no-repeat;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 35%))}
+.fan-layout-badgereveal .fan-profile{z-index:2}
+
+/* 4 LOYALTY RING: den forra conic-gradienten hade 4 %-luckor och last darfor som ett band med
+   en spricka. Nu jamna segment med tydliga mellanrum, plus en gnista som i referensen. */
+.fan-layout-loyalty .fan-profile .fan-ring{
+  background-image:repeating-conic-gradient(from -8deg,
+    var(--fan) 0deg 26deg, transparent 26deg 40deg)!important;
+  border:0!important;box-shadow:none!important;inset:-11px!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  mask:radial-gradient(circle,transparent 0 61%,#000 63% 100%);
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--fan),transparent 45%))}
+.fan-layout-loyalty .fan-profile .fan-ring::after{
+  content:"";position:absolute;top:4%;right:11%;width:11px;height:11px;border-radius:50%;
+  background:#fff8e6;box-shadow:0 0 10px 4px #ffcf7a,0 0 22px 8px #ff8a2088}
+
+/* 2 HEARTBEAT och 7 COMMUNITY DUO: namn, TROGEN SUPPORTER och FAN LEVEL UP lag pa egna rader
+   UNDER hela widgeten. Referensen har dem i en egen kolumn TILL HOGER om profilbilden.
+   Rutnaten far darfor en fjarde rad-uppsattning dar avatar och puls spanner alla rader. */
+.fan-layout-heartbeat.fan-level-up{
+  grid-template-columns:60px 46px 1fr!important;
+  grid-template-areas:"avatar pulse burst" "avatar pulse title" "avatar pulse name" "avatar pulse msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-duo.fan-level-up{
+  grid-template-columns:auto auto auto 1fr!important;
+  grid-template-areas:"burst pulse avatar badge" "burst pulse avatar title" "burst pulse avatar name" "burst pulse avatar msg"!important;
+  row-gap:1px!important;align-items:center!important}
+.fan-layout-heartbeat>h2,.fan-layout-duo>h2{grid-area:title!important;text-align:left!important;
+  justify-self:start!important;font-size:15px!important;margin:2px 0 0!important}
+.fan-layout-heartbeat>h3,.fan-layout-duo>h3{grid-area:name!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+.fan-layout-heartbeat>p,.fan-layout-duo>p{grid-area:msg!important;text-align:left!important;
+  justify-self:start!important;margin:0!important}
+/* Pillen sitter kvar i sitt eget omrade i duo; i heartbeat ligger den absolut over emblemet. */
+.fan-layout-duo .fan-level-pill{grid-area:badge!important;justify-self:start!important;align-self:center!important}
+
+/* Hogerkolumnen i Community Duo blev sa smal att TROGEN SUPPORTER brots till tva rader nar
+   texten flyttades dit. Widgeten ar 300 px, sa kolumnen far hellre krympa emblemet an bryta ord. */
+.fan-layout-duo.fan-level-up{width:320px!important}
+.fan-layout-duo>h2,.fan-layout-duo>h3,.fan-layout-duo>p{white-space:nowrap!important}
+.fan-layout-duo>h2{font-size:14px!important}
+.fan-layout-duo .fan-burst{width:40px!important;height:40px!important}
+.fan-layout-duo .fan-burst img{width:38px!important;height:38px!important}
+
+/* ============ GIFTER LEVEL UP · lila diamantformspraket 2026-08-13 ============
+   Davids referens visar sju paneler; katalogen har nio. De tva utan egen panel — Profil i
+   orbit och Stort nivanummer — far samma gemensamma sprak, eftersom David vill behalla alla
+   nio. Paletten var redan lila (--gifter: #9965ff); det som skiljde var utforandet.
+
+   DIAMANTEN var storsta gapet: en liten mork fyrkant dar referensen visar en STOR RUND
+   medaljong med guldring, lila falt och en ljus gradientdiamant. */
+.gifter-level-up .gifter-diamond-stack{
+  position:relative;display:grid!important;place-items:center!important;
+  width:74px!important;height:74px!important;border-radius:50%!important;
+  background:radial-gradient(circle at 50% 38%,#5b2ea8 0%,#38176e 62%,#25104a 100%)!important;
+  box-shadow:0 0 0 4px #d8a63a,0 0 0 6px #8a651f,0 0 22px color-mix(in srgb,var(--gifter),transparent 35%),
+    inset 0 2px 12px #00000066!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{
+  width:46px!important;height:46px!important;object-fit:contain!important;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gifter),transparent 30%)) brightness(1.25) saturate(1.2)!important}
+/* Bara den forsta diamanten ar medaljongens motiv; de tva andra ar stapelns spar och
+   ska ligga bakom, inte staplas ovanpa varandra i mitten. */
+.gifter-level-up .gifter-diamond-stack img.gd-2,
+.gifter-level-up .gifter-diamond-stack img.gd-3{position:absolute!important;opacity:.28;
+  width:36px!important;height:36px!important;filter:none!important}
+
+/* Profilbilden far referensens ring: guld ytterst, lila glod. */
+.gifter-level-up .gifter-orbit img,
+.gifter-level-up .gifter-bottom-profile img{
+  border:3px solid #d8a63a!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--gifter),transparent 40%),
+    0 0 20px color-mix(in srgb,var(--gifter),transparent 45%)!important}
+
+/* LEVEL UP: vit till lavendel, som referensen. */
+.gifter-level-up>h2{
+  background:linear-gradient(180deg,#ffffff 0%,#e6d8ff 48%,#b98cff 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gifter),transparent 45%))}
+
+/* Namnet vitt, undertexten dampad versal — referensens tva rader. */
+.gifter-level-up>h3{color:#fff!important;font-weight:800!important}
+.gifter-level-up>p{color:#b9a9d6!important;font:700 9px/1.2 Inter,system-ui,sans-serif!important;
+  letter-spacing:.15em!important;text-transform:uppercase!important}
+
+/* Nivabrickan: lila pill med ljus kant, bara LV. och siffran. */
+.gifter-level-up .gifter-level-badge{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:5px 14px!important;border-radius:999px!important;
+  background:linear-gradient(180deg,#7c3ff0,#5a22c4)!important;
+  border:1px solid #c7a6ff!important;
+  box-shadow:0 0 14px color-mix(in srgb,var(--gifter),transparent 55%)!important}
+.gifter-level-up .gifter-level-badge strong{
+  font:900 13px/1 Inter,system-ui,sans-serif!important;letter-spacing:.04em!important;color:#fff!important}
+.gifter-level-up .gifter-level-badge span{display:none!important}
+
+/* Profil i orbit och Stort nivanummer saknar egen panel i referensen, men David vill behalla
+   alla nio och ge samtliga det nya utseendet. Diamantmedaljongen ar sjalva formspraket, sa de
+   far den ocksa — placerad sa att den inte tranger undan modellens egen identitet (orbiten
+   respektive det stora nivanumret). Det ar min tolkning, inte en kopia av en referenspanel. */
+.gifter-layout-profile .gifter-diamond-row,
+.gifter-layout-number .gifter-diamond-row{display:flex!important;order:0!important;
+  justify-content:center!important;margin:0 auto 6px!important}
+.gifter-layout-profile .gifter-diamond-stack,
+.gifter-layout-number .gifter-diamond-stack{display:grid!important;
+  width:58px!important;height:58px!important}
+.gifter-layout-profile .gifter-diamond-stack img.gifter-diamond,
+.gifter-layout-number .gifter-diamond-stack img.gifter-diamond{width:36px!important;height:36px!important}
+
+/* ===== GIFTER LEVEL UP · fyra rattelser efter Davids granskning 2026-08-13 =====
+
+   1. DEN MORKA FYRKANTEN. Uppmatt i canvas: PNG:en har 0 % genomskinliga pixlar och 73 %
+      nastan svarta, alla fyra horn rgb(17,17,17) med full opacitet. Alfakanalen finns men ar
+      helt ogenomskinlig — den morka brickan ar INBAKAD i konstverket, inte satt av CSS.
+      `mix-blend-mode:screen` loser det utan ny bildfil: screen mot nastan svart lamnar
+      underlaget orort, sa fyrkanten forsvinner medan diamanten blir kvar. `isolation:isolate`
+      haller blandningen innanfor medaljongen. */
+.gifter-level-up .gifter-diamond-stack{isolation:isolate!important}
+.gifter-level-up .gifter-diamond-stack img.gifter-diamond{mix-blend-mode:screen!important}
+
+/* 2. DIAMOND REVEAL: brickan lag sa tatt att den kroc med den nu storre medaljongen. */
+.gifter-layout-reveal .gifter-level-badge{margin-top:14px!important;position:relative;z-index:3}
+.gifter-layout-reveal .gifter-diamond-row{margin-bottom:4px!important}
+
+/* 3. ORBIT LEVEL: medaljongen lag absolut pa top:118px/left:146px och skar in i profilbilden
+      nar den vaxte till 74 px. Den flyttas ut ur orbitens bana. */
+.gifter-layout-orbitlevel .gifter-diamond-row{top:auto!important;bottom:-6px!important;
+  left:50%!important;transform:translateX(-50%)!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack{width:58px!important;height:58px!important}
+.gifter-layout-orbitlevel .gifter-diamond-stack img.gifter-diamond{width:34px!important;height:34px!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:34px!important;position:relative;z-index:3}
+
+/* 4. FLIP TOKEN: diamantkolumnen ar 44 px men medaljongen blev 74 och trangde in pa avataren.
+      Kolumnen breddas och medaljongen halls lagom for en "token". */
+.gifter-layout-flip.gifter-level-up{grid-template-columns:74px 1fr auto!important;column-gap:12px!important}
+.gifter-layout-flip .gifter-diamond-stack{width:64px!important;height:64px!important;border-radius:50%!important}
+.gifter-layout-flip .gifter-diamond{width:40px!important;height:40px!important;object-fit:contain!important;
+  border-radius:0!important}
+
+/* ORBIT LEVEL, andra forsoket. Forsta fixen flyttade medaljongen till bottom:-6px — den slutade
+   krocka med profilbilden men lade sig i stallet OVANPA namnet och undertexten. Absolut
+   positionering var problemet: den kan inte veta var texten hamnar. Medaljongen gar darfor
+   tillbaka i flodet, mellan orbiten och brickan, dar den inte kan overlappa nagot. */
+.gifter-layout-orbitlevel .gifter-diamond-row{position:static!important;transform:none!important;
+  order:1!important;display:flex!important;justify-content:center!important;
+  margin:10px auto 0!important;top:auto!important;left:auto!important;bottom:auto!important}
+.gifter-layout-orbitlevel .gifter-level-badge{margin-top:8px!important}
+
+/* TOP STREAK · RAMVARIANTERNA saknade flippanimation helt. Uppmatt: animationIterationCount
+   var inte "infinite" pa nagot av ansiktena — bara `.streak-ice` loopar i den klassiska vagen,
+   och `both infinite` som lades till tidigare galler `.premium-streak`, inte `.streak-framed`.
+   Egna keyframes har, sa ramvarianten inte hanger pa att premium-final.css rakar vara laddad.
+   Keyframsen ar loopvanliga: fram slutar pa 360 grader (= 0), bak pa 540 (= 180). */
+@keyframes sframeFront{0%,18%{transform:rotateY(0)}55%,82%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+@keyframes sframeBack{0%,18%{transform:rotateY(180deg)}55%,82%{transform:rotateY(360deg)}100%{transform:rotateY(540deg)}}
+.streak-framed .streak-flip{perspective:700px;transform-style:preserve-3d}
+.streak-framed .streak-profile-face,.streak-framed .streak-gift-face{backface-visibility:hidden}
+.streak-framed .streak-profile-face{animation:sframeFront calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}
+.streak-framed .streak-gift-face{animation:sframeBack calc(1.4s / var(--flip-speed,1)) cubic-bezier(.2,.75,.2,1) .9s infinite both}
+
+/* Scenbakgrund. Sandningsnoden ligger fixerad bakom allt (transparensen ovanfor ar oror d);
+   editor-forhandsvisningen ligger forst i canvasen, bakom widgetarna. Kontrollen foljer
+   verktygsradens formsprak och popovern ar en liten mork panel. */
+html.overlay-output .vyra-scenbakgrund{position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;pointer-events:none;z-index:-1;border:0}
+.canvas>.vyra-scenbakgrund{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0;border-radius:inherit}
+.scenbakgrund-kontroll{position:relative;display:inline-flex;margin-left:8px}
+.scenbakgrund-kontroll .sb-oppna{background:#151821;border:1px solid #292d39;color:#c9cbd2;border-radius:6px;padding:6px 10px;font-size:10px}
+.scenbakgrund-kontroll .sb-oppna.active{border-color:var(--purple,#7c5cff);color:#fff}
+.scenbakgrund-kontroll .sb-popover{position:absolute;top:calc(100% + 6px);left:0;z-index:80;width:250px;display:flex;flex-direction:column;gap:8px;background:#0e0a16;border:1px solid #2c2340;border-radius:10px;padding:12px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.scenbakgrund-kontroll .sb-popover>span{font-size:8px;letter-spacing:.09em;color:#8f94a3}
+.scenbakgrund-kontroll .sb-popover label{display:flex;flex-direction:column;gap:4px;font-size:9px;color:#9a9ea8}
+.scenbakgrund-kontroll .sb-popover select,.scenbakgrund-kontroll .sb-popover input[type=text]{background:#151821;border:1px solid #292d39;color:#c9cbd2;border-radius:6px;padding:6px;font-size:10px}
+.scenbakgrund-kontroll .sb-popover input[type=color]{width:100%;height:30px;border:1px solid #292d39;border-radius:6px;background:#151821;padding:2px}
+.scenbakgrund-kontroll .sb-obs-not{font-size:8px;line-height:1.4;color:#767b89}
+.scenbakgrund-kontroll .sb-anvand{background:var(--purple,#7c5cff);border:0;color:#fff;border-radius:6px;padding:7px;font-size:10px;font-weight:700}
+.scenbakgrund-kontroll [hidden]{display:none!important}
+
+/* Rotationshandtaget: lollipop ovanfor n-handtaget — rund knopp pa ett kort skaft. Foljer
+   .vyra-handle-formspraket och arver inversskalningen vid strackning. */
+.vyra-handle-rot{left:50%;top:-32px;margin-left:-7px;width:14px;height:14px;border-radius:50%;cursor:grab}
+.vyra-handle-rot:active{cursor:grabbing}
+.vyra-handle-rot::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:12px;margin-left:-1px;background:#9f35ff;box-shadow:0 0 6px #9f35ff}
+label[data-rotation-falt] input{width:100%}

@@ -96,8 +96,20 @@
 
   function montera() {
     if (!iEditorn()) return false;
-    const w = yta();
-    if (!w || w.querySelector('[data-vy-kontroll]')) return false;
+    // Kontrollerna bor i verktygsraden, inte svavande over duken. Faller tillbaka pa
+    // arbetsytan om raden inte finns an, sa att de aldrig forsvinner helt.
+    //
+    // ORDNINGEN GAR INTE ATT LITA PA: raden byggs av layout-format.js/layout-safe.js och
+    // fanns uppmatt INTE nar den har modulen monterade forsta gangen — da hamnade boxen i
+    // arbetsytan och blev kvar. Darfor FLYTTAS en redan monterad box upp sa fort raden dyker
+    // upp, i stallet for att bara valja vard vid forsta forsoket.
+    const w = document.querySelector('.editor-shell .editor-toolbar') || yta();
+    if (!w) return false;
+    const befintlig = document.querySelector('[data-vy-kontroll]');
+    if (befintlig) {
+      if (befintlig.parentElement !== w) w.append(befintlig);
+      return false;
+    }
     const box = document.createElement('div');
     box.className = 'vy-kontroll';
     box.setAttribute('data-vy-kontroll', '');

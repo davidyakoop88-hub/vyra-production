@@ -217,22 +217,26 @@ test('ingen debug-toast vid trigger', () => {
 
 // ---- 5. från → till i renderingen --------------------------------------------------------------
 
-test('renderaren visar både från- och till-nivå', () => {
+// KRAVET ANDRAT 2026-08-13 pa Davids begaran: referensbilden visar en ENKEL "LV. 12"-pill,
+// utan pil och utan foregaende niva. Fran-nivan raknas fortfarande ut av fanNivaer() och anvands
+// pa fem stallen i media.js — den ar alltsa inte borttagen, den RENDERAS bara inte langre i pillen.
+test('renderaren visar mal-nivan i pillen, utan hojningspil', () => {
   const h = createDom({ state: { widgets: [fanWidget('fan1', { fanLevel: 12, fanFromLevel: 11 })], projectName: 'fan' } });
   h.load('overlay-sanitize.js');
   const box = h.paint([fanWidget('fan1', { fanLevel: 12, fanFromLevel: 11 })]);
   const pill = box.querySelector('.fan-level-pill');
   assert.ok(pill, 'nivåpillen saknas');
-  assert.match(pill.textContent.replace(/\s+/g, ' '), /11\s*→\s*12/,
-    `pillen visar inte höjningen: "${pill.textContent.trim()}"`);
+  assert.match(pill.textContent.replace(/\s+/g, ' ').trim(), /^LV\.? ?12$/i,
+    `pillen visar "${pill.textContent.trim()}" — referensen visar "LV. 12"`);
 });
 
-test('utan en från-nivå visas den föregående nivån som standard', () => {
+// Samma andring: pillen visar mal-nivan oavsett om en fran-niva ar satt eller inte.
+test('pillen visar mal-nivan aven utan en satt fran-niva', () => {
   const w = fanWidget('fan1', { fanLevel: 12 });
   const h = createDom({ state: { widgets: [w], projectName: 'fan' } });
   h.load('overlay-sanitize.js');
   const box = h.paint([w]);
-  assert.match(box.querySelector('.fan-level-pill').textContent.replace(/\s+/g, ' '), /11\s*→\s*12/,
+  assert.match(box.querySelector('.fan-level-pill').textContent.replace(/\s+/g, ' ').trim(), /^LV\.? ?12$/i,
     'förhandsvisningen i editorn ska visa samma form som en riktig level-up');
 });
 

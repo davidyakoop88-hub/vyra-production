@@ -1,14 +1,14 @@
 name: VYRA CI
-# Runs on pull requests and on pushes to main — deliberately not on the integration branches.
+# Runs on pull requests and on pushes to main.
 #
-# So the live-goals work does not exercise this job while it is being built: its proof is the
-# "Goal runtime · Postgres 18" workflow, which runs on every push to integration/live-goals-base and
-# provisions both a Postgres 18 and a Redis of its own. The first real run of THIS job for that work
-# happens when the collected draft PR is opened; the `npm run migrate` step below was added ahead of
-# that, because the ingest path now writes goal progress to Postgres before it publishes and the
-# Redis-backed ingest tests reach it. The trigger is not to be widened just to force an early run —
-# that would put the whole main suite, including the backup/restore proof, on every intermediate
-# commit of a branch that is not ready for it.
+# Det här jobbet sätter medvetet INTE TEST_DATABASE_URL. Åtta provfiler kräver en engångsdatabas och
+# hoppar över sig själva utan den — de körs i stället i "Goal runtime · Postgres 18", som
+# provisionerar en egen Postgres 18 och Redis och numera startar på samma villkor som det här
+# jobbet. Railway kör 18.4; den här sviten står kvar på 16-alpine eftersom ubuntu-latest levererar
+# den 16-klient backup/restore-beviset nedan behöver.
+#
+# `npm run migrate` finns för att ingestvägen skriver målprogress till Postgres innan den
+# publicerar, och de Redis-backade ingest-proven når dit.
 on:
   pull_request:
   push:
@@ -172,15 +172,15 @@ jobs:
               echo "SAKNAS I SVARET: $1"; exit 1
             fi
           }
-          krav 'strict-transport-security: max-age=86400'
+          krav 'strict-transport-security: max-age=31536000; includeSubDomains'
           krav "content-security-policy:.*frame-ancestors 'self'"
           krav "content-security-policy:.*base-uri 'self'"
           krav "content-security-policy:.*form-action 'self'"
           krav "content-security-policy:.*object-src 'none'"
           krav 'x-content-type-options: nosniff'
-          # Steg 1 far inte smyga vidare i trappan.
-          if grep -qiE 'strict-transport-security:.*(includesubdomains|preload)' /tmp/vyra-headers.txt; then
-            echo 'HSTS gick forbi steg 1 - includeSubDomains/preload ska beslutas separat'; exit 1
+          # Sista steget ar taget (includeSubDomains, 2026-08-18) — men preload ska ALDRIG smyga med.
+          if grep -qiE 'strict-transport-security:.*preload' /tmp/vyra-headers.txt; then
+            echo 'HSTS har preload - den bakas in i webblasarna och ska beslutas separat'; exit 1
           fi
 
       # Bevisar att event-strommen inte komprimeras — mot en RIKTIG Caddy med en riktig SSE-server

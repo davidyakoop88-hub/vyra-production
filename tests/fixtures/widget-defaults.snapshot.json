@@ -249,7 +249,7 @@
     "gifterLabel": "GIFTER LEVEL",
     "gifterLevel": 15,
     "gifterName": "ThunderGifter",
-    "gifterMessage": "Level up!",
+    "gifterMessage": "NY NIVÅ UPPLÅST",
     "gifterLayout": "profile",
     "gifterColor": "#9965ff",
     "gifterLight": "#e2d6ff"
@@ -366,7 +366,7 @@
     "mvpName": "TestAlpha",
     "mvpScore": 1500,
     "mvpShowLabel": true,
-    "mvpShowName": false,
+    "mvpShowName": true,
     "mvpShowCoins": false,
     "mvpColor": "#ffc13b",
     "mvpColor2": "#ffe239",
@@ -447,5 +447,57 @@
     "jarCapacity": 50,
     "jarShowCounter": true,
     "jarAutoResetMs": 0
+  },
+  "catalog:guardianemblem:1": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 450,
+    "title": "Guardian Emblem",
+    "guardianStep": 1,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:2": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 535,
+    "title": "Guardian Emblem",
+    "guardianStep": 2,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:3": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 560,
+    "title": "Guardian Emblem",
+    "guardianStep": 3,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
+  },
+  "catalog:guardianemblem:4": {
+    "type": "templateGuardianEmblem",
+    "x": 100,
+    "y": 80,
+    "width": 400,
+    "height": 570,
+    "title": "Guardian Emblem",
+    "guardianStep": 4,
+    "guardianLang": "auto",
+    "guardianShowUsername": true,
+    "guardianCustomText": "",
+    "guardianUsername": "@Guardian"
   }
 }

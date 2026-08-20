@@ -15,24 +15,15 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const { servera } = require('../rigg/servera.js');
 const { KONTRAST, SYNLIG } = require('../fixtures/synlighet.js');
 
-let chromium = null;
-try { ({ chromium } = require('playwright-core')) } catch (_) {}
-
-async function startaWebblasare() {
-  for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
-  }
-  try { return await chromium.launch() } catch (_) {}
-  return null;
-}
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
 let browser, rigg;
-let skip = chromium ? false : 'playwright-core saknas — kor `npm i` (hoppar, faller inte)';
+let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) { skip = 'ingen Chrome/Edge/Chromium hittades pa maskinen (hoppar, faller inte)'; return }
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   rigg = await servera();
 });
 test.after(async () => { if (browser) await browser.close(); if (rigg) await rigg.stang() });
@@ -112,8 +103,11 @@ test('finstilta namner bade provperiod och loppris', { skip, timeout: 60000 }, a
     assert.ok(m.avstandTillBelopp !== null && m.avstandTillBelopp <= 24,
       `finstilta ligger ${m.avstandTillBelopp} px fran beloppet — en kvalificering langt bort ` +
       'lases inte tillsammans med det den kvalificerar');
-    assert.ok(m.avstandTillUppmaning !== null && m.avstandTillUppmaning <= 140,
-      `och ${m.avstandTillUppmaning} px fran narmaste uppmaning`);
+    // Uppmanings-mattet utgick 2026-08-20: framsidan blev inloggningssidan och alla
+    // kop/nedladdnings-knappar togs bort pa Davids beslut — skrivbordsappen laddas ner EFTER
+    // kontoskapandet, inne i Studio ([data-ladda-desktop], egen svit). Finstilta kvalificerar
+    // PRISET, och priset ar det enda den behover sitta ihop med. MAT behaller matpunkten sa
+    // vakten kan aterinforas den dag en uppmaning kommer tillbaka.
   } finally { await context.close() }
 });
 

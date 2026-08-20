@@ -69,9 +69,31 @@
   // --- Speech queue: the browser can only speak one utterance cleanly at a time, so a burst of
   // matching chat messages has to queue rather than overlap. maxQueueLength mirrors the same
   // "drop new arrivals once full" pattern action-runtime.js already uses for overlay scene queues.
+  //
+  // KÖN LEVER NUMERA I vyra-tal.js (§14). Den här filens kö var talspecifik — enheten var
+  // {text, opts} — medan det verkliga villkoret är "ett ljud i taget". Actions hade ingen väg in,
+  // så en TTS-action startade mitt i en uppläsning: uppmätt 12 ms in, två röster samtidigt.
+  //
+  // Uppspelningen ligger kvar HÄR, för det är här kunskapen om cloud:-röster och Special Users
+  // finns. Bara serialiseringen flyttade. `tala()` nedan är samma väg, exponerad så att en action
+  // kan använda den — och därmed nå molnrösterna, som var §14:s andra halva.
+  //
+  // Den lokala kön finns kvar som reservväg. Saknas vyra-tal.js (laddningsfel, cacheskev) läser
+  // chatten upp precis som förr, en i taget.
   const queue = [];
   let speaking = false;
-  function hasQueueRoom(maxQueueLength) { return queue.length < Math.max(1, Number(maxQueueLength) || 5); }
+  function hasQueueRoom(maxQueueLength) {
+    const tal = window.VyraTal;
+    const langd = tal ? tal.koLangdDelad() : queue.length;
+    return langd < Math.max(1, Number(maxQueueLength) || 5);
+  }
+  // Ett löfte som håller tills rösten faktiskt tystnat — det är kontraktet VyraTal.koa vilar på.
+  function spelaUpp(text, opts) {
+    if (isCloudVoice(opts.voice)) {
+      return speakCloud(text, opts).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err) });
+    }
+    return new Promise(klar => speakLocal(text, opts, klar));
+  }
   function playNext() {
     if (speaking || !queue.length) return;
     const { text, opts } = queue.shift();
@@ -83,8 +105,7 @@
     // forever and the whole queue jams permanently until the page is reloaded.
     const safety = setTimeout(done, Math.max(8000, text.length * 120));
     const wrappedDone = () => { clearTimeout(safety); done() };
-    if (isCloudVoice(opts.voice)) speakCloud(text, opts).then(wrappedDone).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err); wrappedDone() });
-    else speakLocal(text, opts, wrappedDone);
+    spelaUpp(text, opts).then(wrappedDone, wrappedDone);
   }
   function speakLocal(text, opts, done) {
     const u = new SpeechSynthesisUtterance(text);
@@ -119,6 +140,9 @@
     if (!text) return false;
     if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
     if (!hasQueueRoom(maxQueueLength)) return false;
+    const tal = window.VyraTal;
+    if (tal?.koa) return tal.koa({ kalla: 'tts-chat', maxKo: maxQueueLength, maxMs: text.length * 120,
+      spela: () => spelaUpp(text, opts) });
     queue.push({ text, opts });
     playNext();
     return true;
@@ -191,6 +215,12 @@
     // burning their cooldown) for a message that then gets silently dropped because the queue was
     // full would be an unfair, invisible charge.
     if (!hasQueueRoom(settings.maxQueueLength)) return;
+    // AVDRAGET HOR TILL AUTOMATIONSMASTERN (§14/§15a). Utan den har graden lasers samma chattrad
+    // upp av VARJE oppen flik och kostar en gang per flik — uppmatt 2026-08-17 med tre flikar:
+    // tre roster i mun pa varandra och tre avdrag for EN rad. Kostnaden ar en ekonomifraga och
+    // dras dar automationen redan har sin enda forare; VAR det later avgors separat, av
+    // rost-mastern i vyra-tal.js. Saknas modulen kor vi som forr (fail-open).
+    if (window.VyraAutomationMaster && !window.VyraAutomationMaster.farKora()) return;
     if (settings.chargePoints) {
       if (!window.VyraPoints || !window.VyraPoints.spend(username, settings.costPerMessage)) return;
     }
@@ -203,8 +233,40 @@
     // `??`, not `||` — a special user explicitly set to speed/pitch 0 must not fall back to the
     // global default just because 0 is falsy.
     const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: numOrFallback(special?.speed, settings.speed), pitch: numOrFallback(special?.pitch, settings.pitch), volume: settings.volume };
-    if (enqueueSpeech(spoken, opts, settings.maxQueueLength)) pushLog({ time: now, username, nickname, text: spoken });
+    if (sandTal(spoken, opts, settings.maxQueueLength)) pushLog({ time: now, username, nickname, text: spoken });
   }
+  // VEM BETALAR OCH VEM LATER AR TVA OLIKA FRAGOR (§14).
+  //
+  // Automationsmastern bestammer OM raden ska lasas upp och drar kostnaden — en gang. Sedan gar
+  // beslutet ut till alla flikar, och rost-mastern ar den som faktiskt talar. De tva ar sallan
+  // samma flik: automationen foredrar studion (den far skriva), rosten foredrar en overlay (den
+  // hors i OBS). Se vyra-masterval.js for varfor prioriteringen ar inverterad.
+  //
+  // Tva vagar ut, precis som actions redan skickas: ett document-event nar den EGNA fliken (ett
+  // storage-event nar aldrig sin egen skribent) och localStorage nar de andra.
+  const TAL_KANAL = 'vyra-tal-utskick';
+  function sandTal(text, opts, maxKo) {
+    const bud = { id: 'tal-' + Date.now() + '-' + Math.random().toString(36).slice(2), text, opts, maxKo };
+    document.dispatchEvent(new CustomEvent('vyra:tal', { detail: bud }));
+    try { localStorage.setItem(TAL_KANAL, JSON.stringify(bud)) } catch {}
+    return true;
+  }
+  const hordaBud = new Set();
+  function taEmotTal(bud) {
+    if (!bud?.text || hordaBud.has(bud.id)) return;
+    hordaBud.add(bud.id);
+    setTimeout(() => hordaBud.delete(bud.id), 30000);
+    if (window.VyraRostMaster && !window.VyraRostMaster.farKora()) return;
+    enqueueSpeech(bud.text, bud.opts || {}, bud.maxKo);
+  }
+  document.addEventListener('vyra:tal', e => taEmotTal(e.detail));
+  addEventListener('storage', e => { if (e.key === TAL_KANAL && e.newValue) try { taEmotTal(JSON.parse(e.newValue)) } catch {} });
+
+  // Uppspelningen exponerad. action-runtime.js:s tts() anropar den har for att na SAMMA vag som
+  // chatten — inklusive molnrosterna, som var oatkomliga for Actions eftersom `cloud:`-prefixet
+  // inte sager speechSynthesis nagonting. Serialiseringen skoter VyraTal; det har ar bara talandet.
+  window.VyraTtsChat = { tala: (text, opts) => spelaUpp(text, opts || {}), installningar: getSettings };
+
   addEventListener('vyra-live-event', e => {
     const ev = e.detail || {};
     const type = String(ev.type || ev.event || '').toLowerCase().replace(/[\s_-]/g, '');

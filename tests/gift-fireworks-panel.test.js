@@ -179,3 +179,89 @@ test('texten skrivs som text, inte som HTML', () => {
   assert.equal(h.window.__x.barn, 0,
     'anvandarnamnet tolkades som HTML — ett namn fran TikTok far aldrig bli markup');
 });
+
+// ---- testknappen gar genom triggern, inte forbi den --------------------------------------------
+//
+// LAGET FORE: klicklyssnaren i gift-fireworks.js byggde raketerna och satte `.play` direkt pa
+// DOM-noden. Den anropade aldrig `window.triggerGiftFireworks`, och darmed:
+//
+//   - hamnade den aldrig i VyraAlertQueue (runtime-controls.js lindar bara triggern),
+//   - passerade den aldrig dubblettsparren fwRedanTand,
+//   - tande den bara den VALDA widgeten, medan en riktig gava tander alla synliga,
+//   - och den skrev `w.fwCombo = combo; save()` vid varje klick.
+//
+// Man kunde alltsa inte prova hur fyrverkerier pacear mot andra alerts — vilket ar precis det man
+// vill se innan en sandning. Kobeteendet i sig provas i tests/alert-queue.test.js.
+
+function klicka(h, id) {
+  const knapp = h.document.querySelector('#' + id);
+  assert.ok(knapp, `knappen #${id} finns inte i panelen`);
+  knapp.dispatchEvent(new h.window.MouseEvent('click', { bubbles: true }));
+}
+
+test('testknappen anropar triggern i stallet for att tanda DOM:en sjalv', () => {
+  const { h, run, d } = panel();
+  run(`window.__trigg=[];{const org=window.triggerGiftFireworks;
+       window.triggerGiftFireworks=function(p){window.__trigg.push(p);return true}}`);
+  const fx = d.querySelector('.gift-fireworks-fx');
+  assert.ok(fx, 'kontrollmatning: effektnoden finns inte');
+
+  klicka(h, 'testFw');
+
+  assert.equal(h.window.__trigg.length, 1,
+    'klicket gick inte genom triggern — da hamnar det aldrig i alertkon');
+  assert.equal(fx.classList.contains('play'), false,
+    'klicket satte .play direkt pa noden, forbi bade kon och dubblettsparren');
+});
+
+test('testknappen skickar __test sa den inte tystas av fwMin', () => {
+  // Utan flaggan hade en widget med hogt fwMin gjort knappen tyst: man trycker och ingenting
+  // hander, eftersom fwSlapperIgenom avvisar. Flaggan hoppar over min- och anonymgrinden men
+  // behaller kon och dubblettsparren — samma monster som triggerFanLevelUp redan har.
+  const { h, run } = panel({ fwMin: 5000, fwExcludeAnon: true });
+  run(`window.__trigg=[];{const org=window.triggerGiftFireworks;
+       window.triggerGiftFireworks=function(p){window.__trigg.push(p);return org.apply(this,arguments)}}`);
+  klicka(h, 'testFw');
+  assert.equal(h.window.__trigg.length, 1, 'triggern anropades inte');
+  assert.equal(h.window.__trigg[0].__test, true,
+    'anropet bar ingen __test-flagga — knappen tystnar sa fort widgetens fwMin hojs');
+});
+
+test('en riktig gava under fwMin tander fortfarande ingenting', () => {
+  // Grinden far inte oppnas for alla bara for att testknappen behover slippa den.
+  const { h, run } = panel({ fwMin: 5000 });
+  run(`window.__svar = triggerGiftFireworks({ combo: 2, username: 'lisa', coins: 10 })`);
+  assert.equal(h.window.__svar, false,
+    'en gava pa 10 coins tande ett fyrverkeri med fwMin 5000 — __test oppnade grinden for alla');
+});
+
+// `save` ar en `const` i studio.js. Ett prov som lindar den kastar "Assignment to constant
+// variable", raknaren star kvar pa noll, och provet blir gront utan att ha matt nagot. Forsta
+// versionen av det har provet gjorde precis det. Bada mater darfor VERKAN i stallet: klicket far
+// inte andra widgetens sparade combo, och faltet ska.
+const sparadCombo = (h, run) => {
+  run(`window.__combo = state.widgets[0].fwCombo`);
+  return h.window.__combo;
+};
+
+test('klicket laser combon men skriver den aldrig till layouten', () => {
+  const { h, run, d } = panel({ fwCombo: 1 });
+  run(`window.__trigg=[];window.triggerGiftFireworks=function(p){window.__trigg.push(p);return true}`);
+  const falt = d.querySelector('#fwCombo');
+  assert.ok(falt, 'kontrollmatning: combofaltet finns inte');
+  falt.value = '9';                       // andrat i faltet, men ANNU inte bekraftat med change
+  klicka(h, 'testFw');
+
+  assert.equal(h.window.__trigg[0]?.combo, 9, 'klicket skickade inte faltets varde som argument');
+  assert.equal(sparadCombo(h, run), 1,
+    'klicket skrev combon till den sparade layouten — den ska sparas av faltets onchange, '
+    + 'inte av varje test man kor');
+});
+
+test('combofaltet skriver sitt varde till widgeten', () => {
+  const { h, run, d } = panel({ fwCombo: 1 });
+  const falt = d.querySelector('#fwCombo');
+  falt.value = '7';
+  falt.dispatchEvent(new h.window.Event('change', { bubbles: true }));
+  assert.equal(sparadCombo(h, run), 7, 'faltet skrev inte combon till widgeten');
+});

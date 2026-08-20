@@ -12,13 +12,18 @@
   function pointsKeyFor(username){return String(username||'').replace(/^@/,'').toLowerCase()}
   // 'earned' is a lifetime running total of every positive add() — used for levels, never
   // decreases when points are spent/removed, same as XP vs. spendable currency in most games.
-  function adjustPoints(username,delta){
+  //
+  // raknaSomIntjanat=false ar HELA skillnaden mellan add() och refund() (§15c). En atervandande
+  // poang ar inte intjanad; hade den rakhats in i 'earned' kunde en tittare nivat upp genom att
+  // med flit svamma over kon och fa tillbaka pengarna om och om igen. Defaulten (undefined) ar
+  // dagens beteende exakt, sa add/remove/spend ar oforandrade.
+  function adjustPoints(username,delta,raknaSomIntjanat){
     const key=pointsKeyFor(username);if(!key||!delta)return;
     const p=loadPoints();
     const entry=p[key]||{name:username,points:0,earned:0};
     entry.name=username;
     entry.points=Math.max(0,entry.points+delta);
-    if(delta>0)entry.earned=(entry.earned||0)+delta;
+    if(delta>0&&raknaSomIntjanat!==false)entry.earned=(entry.earned||0)+delta;
     p[key]=entry;
     savePoints(p);
   }
@@ -46,15 +51,60 @@
       if(!key||(loadPoints()[key]?.points||0)<amount)return false;
       adjustPoints(username,-amount);
       return true;
-    }
+    },
+    // Motsatsen till spend, och INTE detsamma som add: saldot atervands utan att 'earned' rors.
+    // Anvands nar en betald uppspelning strops av en full ko (§15c) — tittaren ska fa tillbaka
+    // sin valuta, inte sin XP.
+    refund:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0),false)
   };
   const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
   function openDb(){return new Promise((ok,no)=>{const r=indexedDB.open('vyra-action-media',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('files'))r.result.createObjectStore('files')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
   async function file(meta){if(!meta?.id)return null;const db=await openDb(),value=await new Promise((ok,no)=>{const tx=db.transaction('files');const r=tx.objectStore('files').get(meta.id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});db.close();return value}
   function allowed(action){const scene=window.VYRA_OVERLAY_SCENE;return !!scene&&Number(action.scene?.number||1)===Number(scene)}
   function stage(action){let host=document.querySelector('#vyraActionRuntime');if(!host){host=document.createElement('div');host.id='vyraActionRuntime';document.body.append(host)}const scene=action.scene||{},el=document.createElement('div');el.className=`vyra-runtime-item ${action.fade?'fade':''}`;el.style.cssText=`--x:${scene.x??160};--y:${scene.y??1450};--w:${scene.width??760};--z:${scene.layer??10}`;host.append(el);requestAnimationFrame(()=>el.classList.add('active'));const ms=Math.max(1,action.duration||6)*1000;setTimeout(()=>el.classList.remove('active'),ms-350);setTimeout(()=>el.remove(),ms);return el}
-  async function playMedia(action,kind,meta){const staticPath=meta?.packagePath;const blob=staticPath?null:await file(meta);if(!staticPath&&!blob)return;const url=staticPath||URL.createObjectURL(blob);if(kind==='audio'){const audio=new Audio(url);audio.volume=(action.volume??80)/100;if(!staticPath)audio.onended=()=>URL.revokeObjectURL(url);await audio.play().catch(()=>window.toast?.('Webbläsaren blockerade ljudet'));return}const el=stage(action),media=document.createElement(kind==='video'?'video':'img');media.src=url;if(kind==='video'){media.autoplay=true;media.playsInline=true;media.volume=(action.volume??80)/100;media.onended=()=>el.remove()}media.onload=media.onloadeddata=()=>el.classList.add('loaded');el.append(media);if(!staticPath)setTimeout(()=>URL.revokeObjectURL(url),Math.max(2,action.duration||6)*1000+1000)}
-  function tts(action,payload){const c=action.config||{},text=fill(c.ttsText,payload);if(!text||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text),voices=speechSynthesis.getVoices();u.rate=c.speed||1;u.pitch=c.pitch||1;u.volume=(action.volume??80)/100;if(voices.length){if(c.randomVoice)u.voice=voices[Math.floor(Math.random()*voices.length)];else if(c.voice)u.voice=voices.find(v=>v.name===c.voice||v.lang===c.voice)||null}speechSynthesis.speak(u)}
+  // DUCKNING, INTE KOANDE, FOR RENA LJUD (§14). Ett gavoljud hor ihop med sin visuella effekt i
+  // tid; laggs det i talkon spelar det tjugo sekunder efter fyrverkeriet det tillhorde. I stallet
+  // sanker det sig medan nagon talar. Prenumerationen loper under hela uppspelningen, sa ett ljud
+  // som REDAN rullar duckas nar en upplasning borjar — och avregistreras nar ljudet tar slut,
+  // annars lacker varje uppspelning en lyssnare mot en dod nod.
+  // Dansen bor numera i vyra-tal.js som VyraTal.duckaLjud — den ar delad med gift-fireworks.js,
+  // battle-mvp-session.js och sound-alerts.js, som §14 lamnade utanfor talutrymmet. Den privata
+  // kopian har hade blivit den fjarde implementationen av samma tre steg.
+  // Fail-open: saknas vyra-tal.js (laddningsfel, cacheskev) spelar ljudet pa sin basvolym.
+  function duckaMedan(el,basvolym,slut){
+    const av=window.VyraTal?.duckaLjud?.(el,basvolym);
+    if(typeof av==='function'){if(slut)slut(av);return}
+    try{el.volume=basvolym}catch(_){}
+  }
+  async function playMedia(action,kind,meta){const staticPath=meta?.packagePath;const blob=staticPath?null:await file(meta);if(!staticPath&&!blob)return;const url=staticPath||URL.createObjectURL(blob);if(kind==='audio'){const audio=new Audio(url);duckaMedan(audio,(action.volume??80)/100);if(!staticPath)audio.onended=()=>URL.revokeObjectURL(url);await audio.play().catch(()=>window.toast?.('Webbläsaren blockerade ljudet'));return}const el=stage(action),media=document.createElement(kind==='video'?'video':'img');media.src=url;if(kind==='video'){media.autoplay=true;media.playsInline=true;duckaMedan(media,(action.volume??80)/100);media.onended=()=>el.remove()}media.onload=media.onloadeddata=()=>el.classList.add('loaded');el.append(media);if(!staticPath)setTimeout(()=>URL.revokeObjectURL(url),Math.max(2,action.duration||6)*1000+1000)}
+  // EN ACTION TALAR I SAMMA UTRYMME SOM CHATTEN (§14). Forr gick den rakt pa speechSynthesis, och
+  // uppmatt startade den 12 ms in i en pagaende chattupplasning — tva roster samtidigt, i det
+  // ogonblick en tittare precis betalat for att horas.
+  //
+  // Vagen gar nu genom VyraTal.koa, och sjalva talandet genom tts-chat.js:s uppspelning nar den
+  // finns. Det ar ocksa vad som gor MOLNROSTERNA atkomliga for Actions: en rost vald i TTS Chat
+  // bar prefixet `cloud:`, och det vardet sagde speechSynthesis ingenting om — den foll tyst
+  // tillbaka pa standardrosten. Bada halvorna av §14 stangs alltsa av samma omkoppling.
+  //
+  // Saknas nagon av dem talar vi som forr. Hellre en rost i mun pa en annan an ingen rost alls.
+  function tts(action,payload){
+    const c=action.config||{},text=fill(c.ttsText,payload);
+    if(!text)return;
+    const opts={voice:c.voice,randomVoice:c.randomVoice,speed:c.speed||1,pitch:c.pitch??1,volume:action.volume??80,language:c.language};
+    const spela=()=>window.VyraTtsChat?.tala?.(text,opts)??talaLokalt(text,opts);
+    if(window.VyraTal?.koa)return void window.VyraTal.koa({kalla:'action',spela,maxMs:text.length*120});
+    spela();
+  }
+  function talaLokalt(text,opts){
+    if(!window.speechSynthesis)return Promise.resolve();
+    return new Promise(klar=>{
+      const u=new SpeechSynthesisUtterance(text),voices=speechSynthesis.getVoices();
+      u.rate=Number(opts.speed)||1;u.pitch=Number(opts.pitch)??1;u.volume=(Number(opts.volume)??80)/100;
+      if(voices.length){if(opts.randomVoice)u.voice=voices[Math.floor(Math.random()*voices.length)];else if(opts.voice)u.voice=voices.find(v=>v.name===opts.voice||v.lang===opts.voice)||null}
+      u.onend=u.onerror=()=>klar();
+      try{speechSynthesis.speak(u)}catch{klar()}
+    });
+  }
   // Kedjan nedan matchar på delsträng, så ordningen ÄR logiken. 'fan level' måste testas före
   // 'level': widgetnamnen kommer från liveLayerName() i media.js, och både 'Fan Level Up' och
   // 'Gifter Level Up' innehåller 'level'. Med bara level-grenen nådde en regel som pekade på fan-
@@ -70,6 +120,25 @@
   // page's own scene number, since each scene runs its own independent copy of this whole file
   // (its own queue/busy state), not a shared one across scenes.
   function sceneMaxQueue(){try{const stored=window.VyraSessionState?.readExtra?.('vyra-scene-settings-v1')??localStorage.getItem('vyra-scene-settings-v1');const settings=JSON.parse(stored||'{}');return Math.max(0,Number(settings[window.VYRA_OVERLAY_SCENE]?.maxQueue)||0)}catch{return 0}}
-  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över`);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
+  // EN STRYPT UPPSPELNING SKA GE PENGARNA TILLBAKA (§15c i docs/tech-debt.md).
+  //
+  // Bara den har grenen rapporteras. execute() sager nej av fyra skal, och tre av dem ar INTE en
+  // forlorad uppspelning: ett trasigt meddelande, en dubbelleverans (seen) och fel scen (allowed)
+  // — det sista ar routing, inte en strypning. Notera ocksa ordningen: kogrinden ligger FORE
+  // seen.add, sa en avvisad runId hamnar aldrig i seen och kan rapporteras igen fran en annan
+  // flik. Mastern dedupar darfor sjalv.
+  //
+  // 'Hoppa over om nasta action vantar i kon' (skipOnNext) hor INTE hit: den kortar ner en
+  // uppspelning som faktiskt sker. Tittaren fick sin effekt, om an kortvarigt.
+  function rapporteraStrypt(runId){
+    if(!runId)return;
+    const bud={runId,skal:'ko-full',at:Date.now()};
+    // Tva vagar, precis som utskicket at andra hallet. Ett storage-event nar aldrig sin egen
+    // skribent, och den vanligaste uppsattningen ar EN flik som bade drar poangen och droppar
+    // uppspelningen — dar hade en ren storage-brygga inte lagat nagonting.
+    document.dispatchEvent(new CustomEvent('vyra:action-dropped',{detail:bud}));
+    try{localStorage.setItem('vyra-action-refund',JSON.stringify(bud))}catch{}
+  }
+  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över och poängen betalas tillbaka`);rapporteraStrypt(detail.runId);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
   document.addEventListener('vyra:action',e=>execute(e.detail));addEventListener('storage',e=>{if(e.key==='vyra-action-run'&&e.newValue)try{execute(JSON.parse(e.newValue))}catch{}});window.VyraActionRuntime={execute,queueSize:()=>queue.length+(busy?1:0),clearQueue:()=>queue.splice(0)};
 })();

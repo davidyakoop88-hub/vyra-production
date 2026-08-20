@@ -22,8 +22,11 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // viewer and battle. In production every one of those came back 400, so the cloud path
   // silently lost viewer counts and battle scores that the desktop path has always had —
   // a web/desktop parity break. Keep this list in sync with sendEvent() calls in bridge.js.
+  // Vidgad 2026-08-14 med 'glove': multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK.
+  // Klienten kunde redan tanda Glove Snipe pa det och cleanEvent bar redan `multiplier` — det var
+  // bara kallan som saknades, sa utan den har raden hade fonstret 400:ats bort i molnet.
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','chat','follow','gift','like','likes','member','share','subscribe','viewer']);
+    ['battle','chat','follow','gift','glove','like','likes','member','share','subscribe','viewer']);
 });
 
 // Regression: bryggan skickar LIKE-events som 'likes' — de måste passera valideringen (som körs
@@ -127,7 +130,11 @@ test('ingestTikTokEvent rejects an invalid payload before publishing (no streamI
 // current bucket and the next one are pre-filled to the limit: whichever second the call lands in —
 // and the boundary may pass between the seeding and the call — the counter is already full and the
 // refusal is certain. Two writes and two calls, no loop, no timing assumption.
-const bucketKey=(workspaceId,at)=>`vyra:rate:tiktok-ingest:${workspaceId}:${Math.floor(at/1000)}`;
+// Nyckelrymden kommer fran rate-limit.js och ar inte tom i ett prov: node:test ger varje
+// provprocess en egen rymd, sa att filerna slutar rakna ihop varandras trafik. Byggs nyckeln
+// har for hand utan den, seedar provet en hink som ingen laser.
+const {nyckelrymd}=require('../rate-limit');
+const bucketKey=(workspaceId,at)=>`vyra:rate:${nyckelrymd()}tiktok-ingest:${workspaceId}:${Math.floor(at/1000)}`;
 
 async function fillIngestBudget(workspaceId,limit){
   const client=await eventBus.connect(),now=Date.now();

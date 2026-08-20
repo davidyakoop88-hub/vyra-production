@@ -195,3 +195,64 @@ test('runtime-controls registrerar en teardown, som ovriga sessionsbundna module
   assert.ok(env.teardowns.size > 0 || (env.lyssnare.get('vyra-session-ended') || []).length > 0,
     'varken registerTeardown eller en vyra-session-ended-lyssnare — kon overlever sessionen');
 });
+
+// ---- 3. testknappen ska ko som en riktig gava ---------------------------------------------------
+// Testknappen for Gift Fireworks byggde forr raketerna och satte `.play` DIREKT pa DOM-noden
+// (gift-fireworks.js:19). Den gick alltsa forbi hela kon: man kunde inte prova hur fyrverkerier
+// pacear mot andra alerts, vilket ar precis vad man vill se innan en sandning.
+//
+// Har provas beteendet pa den niva riggen racker till: gar anropet genom `triggerGiftFireworks`
+// hamnar det i kon och far vanta pa sin slot. Den DOM-nara halvan — att klicket verkligen anropar
+// triggern och inte ror `.play` — provas i tests/gift-fireworks-panel.test.js, dar riggen har en
+// riktig widget och en riktig panel.
+test('ett testfyrverkeri vantar ut en pagaende Fan Level Up', () => {
+  const env = makeEnv();
+  env.sandbox.state.widgets = [{ type: 'templateFanLevel', fanDuration: 6 },
+                               { type: 'templateGiftFireworks', fwDuration: 5 }];
+  env.sandbox.triggerFanLevelUp({ i: 'fan' });
+  env.klocka.fram(50);
+  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan'], 'fan-alerten tog inte sloten');
+
+  // Knappen trycks mitt under alerten.
+  env.sandbox.triggerGiftFireworks({ i: 'testknapp', __test: true });
+  env.klocka.fram(50);
+  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan'],
+    'fyrverkeriet spelade mitt i fan-alerten — testknappen gick forbi kon');
+
+  // Fan Level Ups slot ar 6 s (fanDuration). Nar den slapper ska fyrverkeriet fa sin tur.
+  env.klocka.fram(6000);
+  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan', 'testknapp'],
+    'fyrverkeriet fick aldrig sin tur efter att fan-alerten slappt sloten');
+});
+
+test('testknappen applicerar inte .play direkt langre', () => {
+  // Kallvakt mot atervandning. Klicklyssnaren far bygga raketer och lasa faltet, men sjalva
+  // tandningen ska ga genom triggern — annars ar den i kon pa pappret och forbi den i praktiken.
+  // HELA FILEN, inte en rad. Forsta versionen lyfte ut just capture-lyssnarens rad och letade
+  // `.play` i den. Den blev gron — medan en ANDRA genvag satt tva rader bort: `bind()` satte
+  // dessutom `t.onclick` pa samma knapp, med samma raa DOM-tandning. Provet mätte en rad och
+  // intygade en fil. Samma fel som 20g gick i, i en annan skepnad.
+  //
+  // Regeln ar darfor absolut: `.play` far tandas pa EXAKT ETT stalle i filen, och det stallet ar
+  // fwSpela — den funktion bade den riktiga gavan och testknappen gar genom.
+  const FW = fs.readFileSync(path.join(ROOT, 'gift-fireworks.js'), 'utf8');
+  const tandningar = [...FW.matchAll(/classList\.add\(\s*['"]play['"]\s*\)/g)];
+  assert.equal(tandningar.length, 1,
+    `.play tands pa ${tandningar.length} stallen i gift-fireworks.js — varje stalle utom fwSpela `
+    + 'ar en genvag forbi alertkon');
+  const fore = FW.slice(0, tandningar[0].index);
+  const funktion = fore.slice(fore.lastIndexOf('function ')).split('(')[0].replace('function ', '');
+  assert.equal(funktion, 'fwSpela',
+    `.play tands i ${funktion}() i stallet for i fwSpela() — bara den vagen ar koad`);
+
+  // Och knappen ska ga genom triggern, utan att skriva till layouten.
+  const start = FW.indexOf("closest('#testFw')");
+  assert.ok(start > 0, 'kontrollmatning: hittade inte klicklyssnaren for #testFw');
+  const lyssnare = FW.slice(start, FW.indexOf('\n', start));
+  assert.match(lyssnare, /triggerGiftFireworks/,
+    'klicklyssnaren anropar inte triggerGiftFireworks — testet visar nagot en riktig gava aldrig gor');
+  assert.doesNotMatch(lyssnare, /\bsave\(\)/,
+    'klicklyssnaren skriver till den sparade layouten — combon ska sparas av faltet, inte av klicket');
+  assert.doesNotMatch(FW, /#testFw'\)[^\n]*onclick\s*=/,
+    'nagon satter onclick pa #testFw igen — capture-lyssnaren ager knappen, tva hanterare blir tva vagar');
+});

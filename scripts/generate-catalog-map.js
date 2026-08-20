@@ -59,8 +59,23 @@ function servera() {
 }
 
 (async () => {
+  // EN GRUND KLON GER FEL PROVENIENS. Datum- och PR-kolumnerna kommer ur `git log` for varje fil.
+  // I en shallow clone finns bara de senaste commitarna, sa VARJE sektion tillskrivs den nyaste
+  // commit som rakar vara synlig — kartan ser komplett ut och ar systematiskt fel. Uppmatt
+  // 2026-08-18: hela 20 sektioner stod som andrade den dagen i PR #221 nar de i sjalva verket inte
+  // rorts sedan augusti 5 och PR #92. Genereringen fortsatter, men den sager ifran.
+  if (fs.existsSync(path.join(ROOT, '.git', 'shallow'))) {
+    console.error('VARNING: grund klon — datum- och PR-kolumnerna blir fel. Kor '
+      + '`git fetch --unshallow` forst om kartan ska committas.');
+  }
   let browser = null;
+  // Samma krok som tests/helpers/webblasare.js: en miljo dar Chromium ligger pa en kand sokvag men
+  // inte som en installerad "channel" (containrar, CI-bilder) kunde annars inte generera kartan
+  // alls — och en karta som inte gar att regenerera slutar folja katalogen.
+  const binar = process.env.VYRA_CHROMIUM;
+  if (binar) { try { browser = await chromium.launch({ executablePath: binar }) } catch (_) {} }
   for (const channel of ['chrome', 'msedge', 'chromium']) {
+    if (browser) break;
     try { browser = await chromium.launch({ channel }); break } catch (_) {}
   }
   if (!browser) { try { browser = await chromium.launch() } catch (_) {} }

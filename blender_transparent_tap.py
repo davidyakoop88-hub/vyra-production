@@ -4,9 +4,14 @@ import random
 from mathutils import Vector
 
 
-OUT_BLEND = r"C:\Users\A\Documents\hemsidan\assets\blender\tap-neon-alpha.blend"
-OUT_VIDEO = r"C:\Users\A\Documents\hemsidan\assets\videos\tap-neon-alpha.webm"
-OUT_FRAMES = r"C:\Users\A\Documents\hemsidan\assets\renders\tap-neon-alpha\frame_"
+# De tre sokvagarna lag hardkodade mot r"C:\Users\A\Documents\hemsidan" fram till
+# 2026-08-14 och kunde alltsa bara koras av en person pa en maskin. Blender satter __file__
+# nar skriptet kors med `blender --python`, sa repotroten gar att harleda.
+import os
+ROOT = os.path.dirname(os.path.abspath(__file__))
+OUT_BLEND = os.path.join(ROOT, "assets", "blender", "tap-neon-alpha.blend")
+OUT_VIDEO = os.path.join(ROOT, "assets", "videos", "tap-neon-alpha.webm")
+OUT_FRAMES = os.path.join(ROOT, "assets", "renders", "tap-neon-alpha", "frame_")
 
 
 def clear_scene():

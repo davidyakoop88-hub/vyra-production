@@ -1,0 +1,785 @@
+{
+  "version": 1,
+  "beskrivning": "Sanningens karta over VYRAs domaner. En doman = ett agarskap = en agent. Varje fil i repotroten tillhor exakt en doman. Andra har forst, sedan agentfilen i .claude/agents/.",
+  "ovagda": [
+    "gsap.min.js",
+    "pixi.min.js",
+    "package.json",
+    "package-lock.json",
+    "manifest.json",
+    "theme.schema.json"
+  ],
+  "domaner": [
+    {
+      "id": "studio-core",
+      "namn": "Studio Core",
+      "agent": "vyra-studio-core",
+      "syfte": "SPA-skalet: state, vyer, render/bind, navigation, layoutlage, zoom, snapp, angra/gor-om och tomma tillstand.",
+      "filer": [
+        "studio.html",
+        "studio.js",
+        "studio.css",
+        "app.js",
+        "layout.html",
+        "layout-format.js",
+        "layout-safe.js",
+        "operations.html",
+        "operations.js",
+        "status.html",
+        "status-client.js",
+        "runtime-controls.js",
+        "runtime-controls.css",
+        "guide.js",
+        "guide.css",
+        "home-3d.js",
+        "landing-tubes.js",
+        "landing-login.js",
+        "landing-mobil.js",
+        "index.html",
+        "vyra-zoom.js",
+        "vyra-snapp.js",
+        "vyra-historik.js",
+        "vyra-proportioner.js",
+        "vyra-tomma-handlingar.js",
+        "widget-handles.js"
+      ],
+      "tester": [
+        "tests/rebind-after-late-scripts.test.js",
+        "tests/tomma-tillstand.test.js",
+        "tests/handtag-lackage.test.js",
+        "tests/browser/widget-handtag.browser.test.js",
+        "tests/browser/editor-ui-placering.browser.test.js",
+        "tests/browser/nav-state.browser.test.js",
+        "tests/browser/angra-gor-om.browser.test.js",
+        "tests/browser/zoom.browser.test.js",
+        "tests/browser/snapp.browser.test.js",
+        "tests/browser/layout-format-status.browser.test.js",
+        "tests/browser/layout-integritet.browser.test.js",
+        "tests/browser/tomma-handlingar.browser.test.js",
+        "tests/browser/las-proportioner.browser.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "studio.js ar minifierad handkod - andra aldrig direkt utan monkey-patcha fran syskonfil.",
+        "Sen inladdning: allt som binder maste tala rebind efter att sena skript kommit in."
+      ]
+    },
+    {
+      "id": "widgets",
+      "namn": "Widgetkatalog",
+      "agent": "vyra-widgets",
+      "syfte": "Widgetbiblioteket: renderare, fabrik, defaults, katalogkort, gavo-/nivalarm och alla widgetfamiljer.",
+      "filer": [
+        "media.js",
+        "widget-factory.js",
+        "widget-background.js",
+        "custom-widgets.js",
+        "extras.js",
+        "premium-widget-core.js",
+        "premium-widget-assets.js",
+        "premium-gift-widget.js",
+        "premium-widget-demo.html",
+        "premium-gift-widget-demo.html",
+        "gift-event-images.js",
+        "gift-alert-frames.js",
+        "gift-alert-frames.css",
+        "gift-alert-chrome.js",
+        "last-x-alerts.js",
+        "last-x-alerts.css",
+        "toplike-studio.js",
+        "toplike-studio.css",
+        "battle-mvp-session.js",
+        "fan-level-session.js",
+        "fan-fas.js",
+        "widget-fas.js",
+        "gifter-fas.js",
+        "guardian-emblem-fas.js",
+        "guardian-emblem.css",
+        "gifter-level-session.js",
+        "profile-frames-premium.css",
+        "stage-background.js",
+        "vyra-rotation.js",
+        "public/widgets/*"
+      ],
+      "tester": [
+        "tests/widget-factory.test.js",
+        "tests/widget-defaults-migration.test.js",
+        "tests/widget-placement.test.js",
+        "tests/widget-frameless-output.test.js",
+        "tests/widget-rendering-cache-and-fountain.test.js",
+        "tests/renderer-honors-widget.test.js",
+        "tests/factory-last-eleven.test.js",
+        "tests/factory-premium-families.test.js",
+        "tests/catalog-handlers.test.js",
+        "tests/catalog-truth.test.js",
+        "tests/catalog-rewiring.test.js",
+        "tests/catalog-thumbnails.test.js",
+        "tests/catalog-late-sections.test.js",
+        "tests/catalog-preview-no-leak.test.js",
+        "tests/alert-queue.test.js",
+        "tests/battle-mvp-display.test.js",
+        "tests/battle-mvp-premium.test.js",
+        "tests/battle-mvp-session.test.js",
+        "tests/fan-level-session.test.js",
+        "tests/fan-fas.test.js",
+        "tests/guardian-emblem-fas.test.js",
+        "tests/gifter-level-session.test.js",
+        "tests/gift-jar.test.js",
+        "tests/gift-source-single.test.js",
+        "tests/gift-image-paths.test.js",
+        "tests/gift-images-live-patch.test.js",
+        "tests/campaign-gift-picker.test.js",
+        "tests/campaign-gift-picker-single.test.js",
+        "tests/crystal-garden-campaign.test.js",
+        "tests/gift-campaign-fountain-motion.test.js",
+        "tests/last-x-animation-settings.test.js",
+        "tests/last-x-like-count.test.js",
+        "tests/last-x-live-wiring.test.js",
+        "tests/last-x-motion-scope.test.js",
+        "tests/topgift-designs.test.js",
+        "tests/topgift-flip.test.js",
+        "tests/top-gift-record-gate.test.js",
+        "tests/top-streak-separation.test.js",
+        "tests/streak-style-menu.test.js",
+        "tests/flip-continuity.test.js",
+        "tests/ornament-teckenkodning.test.js",
+        "tests/wishlist-retired.test.js",
+        "tests/browser/battle-mvp-ramar.browser.test.js",
+        "tests/browser/fan-level-referens.browser.test.js",
+        "tests/browser/fan-fas-loyalty.browser.test.js",
+        "tests/browser/guardian-emblem.browser.test.js",
+        "tests/browser/gifter-level-referens.browser.test.js",
+        "tests/browser/streak-katalog.browser.test.js"
+      ],
+      "matning": [
+        { "namn": "Widgetsnapshot", "kommando": "node scripts/generate-widget-snapshot.js" },
+        { "namn": "Katalogkarta", "kommando": "npm run karta" }
+      ],
+      "risker": [
+        "media.js ar storst i repot - lagg nya renderare i egen syskonfil i stallet for att vaxa den.",
+        "En dold widget ska finnas kvar i lagret men aldrig renderas i overlay-output."
+      ]
+    },
+    {
+      "id": "ui-design",
+      "namn": "Designsystem",
+      "agent": "vyra-ui-design",
+      "syfte": "Tokens, typografi, farger, premiumutseende och all CSS som inte agn av en enskild widget.",
+      "filer": [
+        "design-system.css",
+        "design-tokens.css",
+        "styles.css",
+        "premium-widget-tokens.css",
+        "premium-pack-library.css",
+        "premium-final.js",
+        "premium-final.css",
+        "overview-premium.js",
+        "overview-premium.css",
+        "sidebar-premium.css",
+        "battle-packs.css",
+        "battle-pack-images.css",
+        "battle-textures.css",
+        "performance-guard.css",
+        "legal.css",
+        "terms.html",
+        "privacy.html"
+      ],
+      "tester": [
+        "tests/css-struktur.test.js",
+        "tests/stylesheet-pairs.test.js",
+        "tests/sprak-vakt.test.js",
+        "tests/browser/finstilt-lasbarhet.browser.test.js",
+        "tests/browser/meny-yta.browser.test.js",
+        "tests/browser/skalfix.browser.test.js",
+        "tests/browser/sprak-vakt.browser.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Nya farger och matt ska bli tokens forst - aldrig hardkodade varden i widgetfiler."
+      ]
+    },
+    {
+      "id": "action-event",
+      "namn": "Action & Event",
+      "agent": "vyra-action-event",
+      "syfte": "Automationsmotorn: Actions, Events, scener (upp till tio), timers, media, simulator och poangekonomin.",
+      "filer": [
+        "action-event.js",
+        "action-event.css",
+        "action-event-advanced.js",
+        "action-options.js",
+        "action-runtime.js",
+        "action-scenes.js",
+        "action-media.js",
+        "action-timers.js",
+        "action-simulator.js",
+        "action-master.js",
+        "vyra-masterval.js",
+        "vyra-tal.js",
+        "points-system.js"
+      ],
+      "tester": [
+        "tests/action-widget-routing.test.js",
+        "tests/action-event-kedjan.test.js",
+        "tests/action-event-poang.test.js",
+        "tests/action-event-flikar.test.js",
+        "tests/action-cooldown-lager.test.js",
+        "tests/action-poang-retur.test.js",
+        "tests/action-talutrymme.test.js",
+        "tests/action-tts-rost.test.js",
+        "scripts/test/event-gifts.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Action skapas forst; Event valjer sedan vilken Action som triggas och i vilken scen.",
+        "Varje scen har egen overlay-lank och online/offline-status."
+      ]
+    },
+    {
+      "id": "overlay",
+      "namn": "Overlay-output",
+      "agent": "vyra-overlay",
+      "syfte": "OBS-utgangen: transparent rendering, scenlankar, atkomst, sanering, diagnostik och fristaende widgetar.",
+      "filer": [
+        "overlay.html",
+        "overlay-access.js",
+        "overlay-access.css",
+        "overlay-diagnostics.js",
+        "overlay-diagnostics.css",
+        "overlay-packages.js",
+        "overlay-preview.js",
+        "overlay-sanitize.js",
+        "layout-standalone.js",
+        "layout-standalone.css",
+        "standalone-links.js",
+        "standalone-widgets.js"
+      ],
+      "tester": [
+        "tests/overlay-sanitize.test.js",
+        "tests/overlay-live-leaderboards.test.js",
+        "tests/thumb-no-overlay-leak.test.js",
+        "tests/scene-links.test.js",
+        "tests/standalone-flow.test.js",
+        "tests/standalone-links.test.js",
+        "tests/browser/thumb-leak.browser.test.js",
+        "tests/browser/synlighet.browser.test.js"
+      ],
+      "matning": [
+        { "namn": "Overlaystrom under last", "kommando": "node tests/load/overlay-stream.js" }
+      ],
+      "risker": [
+        "Overlay-output ska ha transparent bakgrund - inget studio-chrome far synas i OBS-lanken.",
+        "Overlay ar studio.html i ?overlay=1-lage, inte en egen app."
+      ]
+    },
+    {
+      "id": "live",
+      "namn": "Live & Events",
+      "agent": "vyra-live",
+      "syfte": "Handelsflodet in i appen: polling, dedupe, routing, leaderboards, kontrollpanel och streamstatistik.",
+      "filer": [
+        "live-client.js",
+        "live-control.js",
+        "live-control.css",
+        "live-leaderboard.js",
+        "live-zero-state.js",
+        "studio-live.js",
+        "event-dedupe.js",
+        "tiktok-event-adapter.js",
+        "stream-time-analytics.js"
+      ],
+      "tester": [
+        "tests/event-contract.test.js",
+        "tests/event-dedupe.test.js",
+        "tests/event-dedupe-hardening.test.js",
+        "tests/live-fuzz.test.js",
+        "tests/live-widget-reference.test.js",
+        "tests/glove-live-wiring.test.js",
+        "tests/panel-live-path.test.js",
+        "tests/leaderboard-like-count.test.js",
+        "tests/browser/likecount-en-kontroll.browser.test.js",
+        "tests/browser/command-center-*.browser.test.js",
+        "server/test/tiktok-event-adapter.test.js"
+      ],
+      "e2e": ["tests/e2e/live-scenarios.spec.js"],
+      "matning": [
+        { "namn": "Ingest under last", "kommando": "node tests/load/live-ingest.js" }
+      ],
+      "risker": [
+        "Handelskontraktet ar delat med tiktok-bridge och server - andra aldrig faltnamn ensidigt.",
+        "Dubbletter maste stoppas i event-dedupe.js, inte i varje widget."
+      ]
+    },
+    {
+      "id": "recognition",
+      "namn": "Recognition Engine",
+      "agent": "vyra-recognition",
+      "syfte": "Fristaende pipeline: normalisering, regler, merge, ko, presentationsstyrning, kortmappning och kort.",
+      "filer": [
+        "recognition-types.js",
+        "recognition-rules.js",
+        "recognition-normalizer.js",
+        "recognition-merge.js",
+        "recognition-queue.js",
+        "recognition-controller.js",
+        "recognition-card-mapper.js",
+        "recognition-card.js",
+        "recognition-card.css",
+        "recognition-runtime.js",
+        "recognition-adapter.js",
+        "recognition-adapter-types.js",
+        "recognition-verify.js",
+        "recognition-verify.html",
+        "recognition-card-demo.html",
+        "recognition-adapter-demo.html",
+        "recognition-runtime-demo.html"
+      ],
+      "tester": [
+        "scripts/test/recognition-runtime.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Ingen fil i pipelinen far aga en egen timer utom recognition-card.js animationsfaser.",
+        "Alla externa bild-URL:er gar genom sanitizeImageUrl(); text renderas med textContent."
+      ]
+    },
+    {
+      "id": "vfx",
+      "namn": "VFX & Fireworks",
+      "agent": "vyra-vfx",
+      "syfte": "Partikelmotorn ovanpa Pixi/GSAP: ticker, pooler, kvalitetsnivaer, fontaner och Gift Fireworks.",
+      "filer": [
+        "vfx-*.js",
+        "fx-master-engine.js",
+        "gift-fireworks.js",
+        "gift-fireworks.css",
+        "gift-fireworks-session.js",
+        "validate_fx_theme.py"
+      ],
+      "tester": [
+        "tests/gift-fireworks-trigger.test.js",
+        "tests/gift-fireworks-live-trigger.test.js",
+        "tests/gift-fireworks-live-path.test.js",
+        "tests/gift-fireworks-panel.test.js",
+        "tests/gift-fireworks-sound.test.js"
+      ],
+      "matning": [
+        { "namn": "FPS/partikelbudget", "kommando": "node -e \"console.log('Oppna studio.html?vfxdemo=1 och las vfx-debug-overlay')\"" }
+      ],
+      "risker": [
+        "Exakt en agande ticker (vfx-ticker.js) - inget andra rAF-varv far introduceras.",
+        "VFX laddas bara via ?vfxdemo= idag, inte i normal widgetrendering."
+      ]
+    },
+    {
+      "id": "goals",
+      "namn": "Goals",
+      "agent": "vyra-goals",
+      "syfte": "Malwidgetar och malruntime hela vagen: klient, designer, ingest, SSE, metrik och lagring.",
+      "filer": [
+        "goal-client.js",
+        "server/goal-runtime.js",
+        "server/goal-ingest.js",
+        "server/goal-sse.js",
+        "server/goal-metrics.js",
+        "scripts/goal-*.js"
+      ],
+      "tester": [
+        "tests/goal-client.test.js",
+        "tests/goal-contract.test.js",
+        "tests/goal-dom.test.js",
+        "tests/goal-wiring.test.js",
+        "tests/goal-start-values.test.js",
+        "tests/goal-metric-parity.test.js",
+        "tests/goal-frame-designs.test.js",
+        "tests/social-goal-landscape-designs.test.js",
+        "tests/browser/goal-geometri.browser.test.js",
+        "tests/browser/goal-modell3-bredd.browser.test.js",
+        "server/test/goal-*.test.js",
+        "server/test/studio-goal-stream.test.js"
+      ],
+      "matning": [
+        { "namn": "Genomstromning", "kommando": "node scripts/goal-throughput.js" },
+        { "namn": "Skalning", "kommando": "node scripts/goal-scale.js" },
+        { "namn": "Lagring", "kommando": "node scripts/goal-storage.js" },
+        { "namn": "Churn", "kommando": "node scripts/goal-churn.js" },
+        { "namn": "Storlek", "kommando": "node scripts/goal-size.js" }
+      ],
+      "risker": [
+        "Malmetriken maste vara identisk i klient och server - goal-metric-parity vaktar det.",
+        "SSE far aldrig komprimeras (server/test/sse-not-compressed)."
+      ]
+    },
+    {
+      "id": "konto",
+      "namn": "Konto, sessioner & sakerhet",
+      "agent": "vyra-konto",
+      "syfte": "Inloggning, MFA, sessionsisolering mellan konton och flikar, tokenvalv, inbrottsskydd och support.",
+      "filer": [
+        "auth-client.js",
+        "auth-client.css",
+        "auth-security.js",
+        "auth-security.css",
+        "account-profile.js",
+        "session-state.js",
+        "vyra-losenordsstyrka.js",
+        "support-client.js",
+        "support-client.css",
+        "server/auth-flow.js",
+        "server/security.js",
+        "server/mfa.js",
+        "server/token-vault.js",
+        "server/login-protection.js",
+        "server/session-device.js",
+        "server/account-data.js",
+        "server/support.js",
+        "scripts/revoke-token.js"
+      ],
+      "tester": [
+        "tests/session-state.test.js",
+        "tests/session-race.test.js",
+        "tests/session-teardown.test.js",
+        "tests/session-lock-missing.test.js",
+        "tests/session-local-mode.test.js",
+        "tests/session-account-switch.test.js",
+        "tests/session-token-isolation.test.js",
+        "tests/session-write-monopoly.test.js",
+        "tests/support-client-wiring.test.js",
+        "tests/browser/registrering.browser.test.js",
+        "server/test/security.test.js",
+        "server/test/mfa.test.js",
+        "server/test/token-vault.test.js",
+        "server/test/login-protection.test.js",
+        "server/test/session-device.test.js",
+        "server/test/account-data.test.js",
+        "server/test/support.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "session-state.js ar enda skrivaren till de skyddade nycklarna - allt annat fragar.",
+        "Aldrig .env, API-nycklar eller hemligheter i frontendfiler."
+      ]
+    },
+    {
+      "id": "betalning",
+      "namn": "Betalning & entitlements",
+      "agent": "vyra-betalning",
+      "syfte": "Stripe, prenumerationsfalt, trial-onboarding och lasen som slapper fram premiuminnehall.",
+      "filer": [
+        "billing-client.js",
+        "billing-client.css",
+        "entitlement-gate.js",
+        "entitlement-gate.css",
+        "vyra-trial-onboarding.js",
+        "server/billing.js"
+      ],
+      "tester": [
+        "tests/pris-och-loften.test.js",
+        "tests/browser/trial-onboarding.browser.test.js",
+        "server/test/billing.test.js",
+        "server/test/prenumerationsfalt.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Priser i UI och Stripe-produkter maste stamma - pris-och-loften vaktar loftena."
+      ]
+    },
+    {
+      "id": "moln",
+      "namn": "Molnsync & backup",
+      "agent": "vyra-moln",
+      "syfte": "Synk av state mellan enheter, konfliktlosning, mediaupload och lokal export/import.",
+      "filer": [
+        "cloud-sync.js",
+        "cloud-sync.css",
+        "cloud-media.js",
+        "state-backup.js",
+        "state-backup.css",
+        "vyra-state-sync.js",
+        "server/media-storage.js"
+      ],
+      "tester": [
+        "tests/cloud-sync-empty-layout.test.js",
+        "tests/cloud-sync-steady-state.test.js",
+        "tests/sync-visibility.test.js",
+        "tests/browser/cloud-sync-conflict.browser.test.js",
+        "tests/browser/autospar-indikator.browser.test.js",
+        "server/test/media-storage.test.js",
+        "server/test/overlay-put-sync.test.js",
+        "server/test/overlay-put-http.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Maskin- och workspace-bundna nycklar far aldrig folja med i en export.",
+        "Tom layout far aldrig skriva over en fylld - konflikttestet vaktar det."
+      ]
+    },
+    {
+      "id": "integrationer",
+      "namn": "Externa integrationer",
+      "agent": "vyra-integrationer",
+      "syfte": "TTS, ljudlarm, Spotify, OBS-styrning och chatbot-overlay.",
+      "filer": [
+        "tts-chat.js",
+        "tts-chat.css",
+        "sound-alerts.js",
+        "spotify-client.js",
+        "spotify-callback.html",
+        "obs-client.js",
+        "chatbot-controls.js",
+        "chatbot-overlay.js",
+        "chatbot-overlay.css",
+        "configure_obs_tikcontrol.py",
+        "server/tts.js"
+      ],
+      "tester": [
+        "server/test/tts.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Tredjepartsnycklar bor aldrig i klienten - gar via server."
+      ]
+    },
+    {
+      "id": "server-api",
+      "namn": "Moln-API",
+      "agent": "vyra-server",
+      "syfte": "Node-API:t i server/: routing, handelsbuss, SSE, kapacitet, statistik, notiser och observability.",
+      "filer": [
+        "server/index.js",
+        "server/db.js",
+        "server/migrate.js",
+        "server/schema.sql",
+        "server/event-bus.js",
+        "server/rate-limit.js",
+        "server/capacity-gate.js",
+        "server/stream-stats.js",
+        "server/stats-read.js",
+        "server/viewer-levels.js",
+        "server/notifications.js",
+        "server/observability.js",
+        "server/production-config.js",
+        "server/desktop-release.js",
+        "server/package.json",
+        "server/README.md",
+        "server.ps1"
+      ],
+      "tester": [
+        "server/test/health.test.js",
+        "server/test/event-bus.test.js",
+        "server/test/event-replay.test.js",
+        "server/test/sse-integration.test.js",
+        "server/test/capacity.test.js",
+        "server/test/capacity-gate.test.js",
+        "server/test/capacity-race.test.js",
+        "server/test/stream-stats.test.js",
+        "server/test/stats-read.test.js",
+        "server/test/viewer-levels.test.js",
+        "server/test/notifications.test.js",
+        "server/test/observability.test.js",
+        "server/test/production-config.test.js",
+        "server/test/test-event.test.js",
+        "server/test/tiktok-ingest.test.js",
+        "server/test/tiktok-connection.test.js",
+        "tests/security-headers.test.js",
+        "tests/static-cache-headers.test.js",
+        "tests/sse-not-compressed.test.js"
+      ],
+      "matning": [
+        { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" }
+      ],
+      "risker": [
+        "server.ps1 (lokalt) och server/ (moln) ar tva skilda servrar med samma kontrakt.",
+        "Kapacitetsgrindar maste tala samtidiga anrop - capacity-race vaktar det."
+      ]
+    },
+    {
+      "id": "tiktok-bridge",
+      "namn": "TikTok-bryggan",
+      "agent": "vyra-bridge",
+      "syfte": "Fristaende Node-tjanst mot riktig TikTok LIVE: anslutning, proxy, normalisering och vidarebefordran.",
+      "filer": [
+        "tiktok-bridge/*",
+        "ANSLUT-TIKTOK-LIVE.cmd",
+        "SPELA-IN-TIKTOK.cmd"
+      ],
+      "tester": [
+        "tiktok-bridge/test/*.test.js"
+      ],
+      "matning": [
+        { "namn": "Minne over tid", "kommando": "bash scripts/measure-bridge-memory.sh" }
+      ],
+      "risker": [
+        "Bygger pa det ooficiella tiktok-live-connector - faltnamn kan andras utan forvarning.",
+        "Gavokontraktet delas med live-domanen; andra alltid i par."
+      ]
+    },
+    {
+      "id": "desktop",
+      "namn": "Skrivbordsapp",
+      "agent": "vyra-desktop",
+      "syfte": "Electron-paketeringen, lokala servern i appen, uppdateringar, OBS-tjanst och nedladdningsflodet.",
+      "filer": [
+        "electron-app/*",
+        "vyra-desktop.js",
+        "desktop-profile.js",
+        "download-client.js",
+        "build-download.ps1",
+        "BYGG-OCH-INSTALLERA-VYRA.cmd",
+        "STARTA-HEMSIDAN.cmd"
+      ],
+      "tester": [
+        "electron-app/test/*.test.js",
+        "tests/desktop-entry-reason.test.js",
+        "tests/browser/desktop-nedladdning.browser.test.js",
+        "server/test/desktop-release.test.js"
+      ],
+      "e2e": ["tests/e2e/desktop.spec.js"],
+      "matning": [],
+      "risker": [
+        "Installerarens version maste folja slapptaggen - workflowet vaktar det.",
+        "Samma statiska filer serveras av Electron som av server.ps1."
+      ]
+    },
+    {
+      "id": "assets",
+      "namn": "Assets & teman",
+      "agent": "vyra-assets",
+      "syfte": "Bilder, ramar, videor, ljud, teman och Blender-/kodningsverktygen som producerar dem.",
+      "filer": [
+        "assets/*",
+        "tools/*",
+        "blender_*.py",
+        "theme_validator.py",
+        "create_theme_placeholders.py",
+        "encode_*.py",
+        "make-profile-frames.ps1",
+        "build-profile-frames.ps1",
+        "slice-battle-packs.ps1",
+        "*.png",
+        "*.blend",
+        "README.md"
+      ],
+      "tester": [
+        "tests/site-image-contents.test.js",
+        "scripts/test/web-assets.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Varje temamapp maste ha manifest.json plus tio transparenta PNG-lager.",
+        "Stora ravideor hor inte hemma i repot."
+      ]
+    },
+    {
+      "id": "test-qa",
+      "namn": "Test & QA",
+      "agent": "vyra-test",
+      "syfte": "Testriggarna sjalva: harnesses, fixtures, mock-backend, browsertester och Playwright-uppsattningen.",
+      "filer": [
+        "tests/helpers/*",
+        "tests/fixtures/*",
+        "tests/rigg/*",
+        "tests/e2e/*",
+        "tests/skip-dirs.test.js"
+      ],
+      "tester": [
+        "tests/skip-dirs.test.js",
+        "tests/browser/mock-backend.browser.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "Rigg och fixtures ags har - domanagenter lagger tester, inte ny riggkod."
+      ]
+    },
+    {
+      "id": "prestanda",
+      "namn": "Prestanda & matning",
+      "agent": "vyra-prestanda",
+      "syfte": "Latens, lasttester, artefaktbudget och allt som svarar pa fragan hur snabbt eller hur tungt.",
+      "filer": [
+        "latency-probe.js",
+        "tests/load/*"
+      ],
+      "tester": [
+        "tests/latency-probe.test.js",
+        "tests/ci-artifact-budget.test.js",
+        "tests/browser/laddningskapplopning.browser.test.js"
+      ],
+      "matning": [
+        { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" },
+        { "namn": "Live-ingest", "kommando": "node tests/load/live-ingest.js" },
+        { "namn": "Overlaystrom", "kommando": "node tests/load/overlay-stream.js" }
+      ],
+      "risker": [
+        "Matning utan baslinje sager ingenting - notera alltid vad som jamfors mot."
+      ]
+    },
+    {
+      "id": "drift",
+      "namn": "Drift & release",
+      "agent": "vyra-drift",
+      "syfte": "Docker, Caddy, Railway, k8s, CI-flodena, slapportar och produktionsutrullning.",
+      "filer": [
+        "Dockerfile",
+        ".dockerignore",
+        ".gitignore",
+        "docker-compose.yml",
+        "docker-compose.production.yml",
+        "Caddyfile",
+        "deploy/*",
+        ".deploy/*",
+        ".github/*",
+        "scripts/deploy-production.sh",
+        "scripts/rollback-production.sh",
+        "scripts/backup-postgres.sh",
+        "scripts/verify-backup-restore.sh",
+        "scripts/verify-staging.sh",
+        "scripts/release-gate.js",
+        "scripts/production-preflight.js",
+        "setup-dator2.ps1",
+        ".env.production.example",
+        ".env.staging.example"
+      ],
+      "tester": [
+        "scripts/test/release-gate.test.js",
+        "scripts/test/production-runtime.test.js",
+        "server/test/docker-image-files.test.js",
+        "tiktok-bridge/test/docker-image-files.test.js"
+      ],
+      "matning": [],
+      "risker": [
+        "En andrad Dockerfile utan uppdaterat docker-image-files-test brukar bli en trasig image.",
+        "Slapporten (release-gate) ar sista kontrollen fore produktion."
+      ]
+    },
+    {
+      "id": "docs",
+      "namn": "Dokumentation & kartor",
+      "agent": "vyra-docs",
+      "syfte": "Arkitektur, roadmap, projekttillstand, teknisk skuld, katalogkarta och overlamningar.",
+      "filer": [
+        "docs/*",
+        "CLAUDE.md",
+        "CLAUDE-HANDOFF.md",
+        "LAS-MIG-FORST.txt",
+        "VYRA_VFX_ENGINE_M1_REPORT.md",
+        "VYRA_VFX_ENGINE_M2_REPORT.md",
+        "VYRA_VFX_ENGINE_M2_HARDENING_REPORT.md",
+        "VYRA_VFX_ENGINE_M2_VISUAL_QA.md",
+        "scripts/generate-catalog-map.js",
+        "scripts/generate-widget-snapshot.js",
+        ".claude/*"
+      ],
+      "tester": [
+        "tests/tech-debt-aktuell.test.js",
+        "tests/domankarta.test.js"
+      ],
+      "matning": [
+        { "namn": "Uppdatera katalogkarta", "kommando": "npm run karta" }
+      ],
+      "risker": [
+        "Kartan far aldrig beskriva onskelaget - bara det som verkligen finns i koden."
+      ]
+    }
+  ]
+}

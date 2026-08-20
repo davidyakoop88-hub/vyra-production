@@ -33,7 +33,7 @@ function redisReachable(url) {
 
 if (DB_URL) process.env.DATABASE_URL = DB_URL;
 
-let server = null, eventBus = null, pool = null, S = null, GoalSse = null, base = '';
+let server = null, eventBus = null, sseHeartbeats = null, pool = null, S = null, GoalSse = null, base = '';
 
 const USER = 'cccccccc-0000-0000-0000-000000000001';
 const WS = 'cccccccc-1111-0000-0000-000000000000';
@@ -75,7 +75,7 @@ test.before(async () => {
   S = require('../security');
   GoalSse = require('../goal-sse');
   ({ pool } = require('../db'));
-  ({ server, eventBus } = require('../index'));
+  ({ server, eventBus, sseHeartbeats } = require('../index'));
 
   await pool.query(
     `INSERT INTO users (id,email,password_hash,display_name,email_verified_at)
@@ -314,10 +314,18 @@ sse('en återkallad token kan inte öppna strömmen', async () => {
 });
 
 sse('en stängd anslutning lämnar varken prenumeration eller timer kvar', async () => {
-  const timers = () => process.getActiveResourcesInfo().filter(r => r === 'Timeout').length;
-  // Warm-up first: the route queries Postgres, and a pg client's idle timer is a Timeout too. One
-  // open/close cycle gets those clients into the pool so the measurement below sees the heartbeat
-  // and not the pool filling up.
+  // Räknar hjärtslagen, inte processens alla Timeouts.
+  //
+  // Provet räknade tidigare `process.getActiveResourcesInfo().filter(r => r === 'Timeout')`. En
+  // pg-klients tomgångstimer är också en Timeout, och uppvärmningen nedan öppnar EN ström medan
+  // mätningen öppnar TVÅ samtidigt — poolen kan alltså växa med en klient mitt i mätningen och
+  // rapporteras som en läckt hjärtslagstimer. Exakt det hände i CI 2026-08-14, första gången den
+  // här filen kördes där: "heartbeat-timern blev kvar: 1 före, 2 efter", medan clearInterval i
+  // index.js bevisligen kördes. Lokalt var provet grönt, eftersom poolen redan var varm.
+  //
+  // Det är §7 i tech-debt: ett prov som mäter en proxy i stället för verkligt tillstånd. index.js
+  // räknar nu sina öppna hjärtslag och exporterar summan.
+  const hjartslag = () => sseHeartbeats();
   await quiet();
   const warm = await openStream(link.a);
   await waitFor(() => subscribers() === 1, { why: 'uppvärmningsströmmen' });
@@ -325,18 +333,16 @@ sse('en stängd anslutning lämnar varken prenumeration eller timer kvar', async
   await quiet();
   await settle();
 
-  const timersBefore = timers();
+  const fore = hjartslag();
   const a = await openStream(link.a), b = await openStream(link.b);
   await waitFor(() => subscribers() === 2, { why: 'båda prenumerationerna' });
-  // Load-bearing: if an open stream did not add a timer, the check below would prove nothing.
-  assert.ok(timers() > timersBefore, 'en öppen ström la inte till någon timer — mätningen är blind');
+  // Bärande: hade en öppen ström inte lagt till ett hjärtslag vore kontrollen nedan blind.
+  assert.equal(hjartslag(), fore + 2, 'två öppna strömmar gav inte två hjärtslag — mätningen är blind');
 
   a.close(); b.close();
   await waitFor(() => subscribers() === 0, { why: 'att prenumerationerna städas bort' });
   await settle();
   assert.equal(subscribers(), 0, 'en Redis-prenumeration blev kvar efter stängning');
-  // Soft poll, so the failure below is the one that reports the numbers.
-  for (let i = 0; i < 40 && timers() > timersBefore; i++) await new Promise(r => setTimeout(r, 50));
-  assert.ok(timers() <= timersBefore,
-    `heartbeat-timern blev kvar: ${timersBefore} före, ${timers()} efter`);
+  for (let i = 0; i < 40 && hjartslag() > fore; i++) await new Promise(r => setTimeout(r, 50));
+  assert.equal(hjartslag(), fore, `heartbeat-timern blev kvar: ${fore} före, ${hjartslag()} efter`);
 });
