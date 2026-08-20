@@ -194,7 +194,8 @@
         "tests/browser/meny-yta.browser.test.js",
         "tests/browser/skalfix.browser.test.js",
         "tests/browser/sprak-vakt.browser.test.js",
-        "tests/browser/sidhuvud-knappar.browser.test.js"
+        "tests/browser/sidhuvud-knappar.browser.test.js",
+        "tests/browser/sidomeny-bredd.browser.test.js"
       ],
       "matning": [],
       "risker": [
