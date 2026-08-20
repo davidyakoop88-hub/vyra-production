@@ -1,0 +1,153 @@
+# GENERERAR DE VISUELLA REFERENSBILDERNA. Enda stallet dar de KAN goras.
+#
+# Referenserna jamfors pixel for pixel utan tolerans, och ar darfor bara giltiga pa exakt den
+# Chromium-build de togs pa — tva builds rastrerar typsnitt olika. Den build som galler ar den
+# `package-lock.json` pinnar, och den finns inte pa en godtycklig utvecklarmaskin. Ett foto taget
+# lokalt hade gett 178 roda prov i CI med ett felmeddelande som pekade pa widgetarna i stallet for
+# pa webblasaren.
+#
+# `npm run test:visual:update` finns kvar for lokal felsokning — se hur en andring ser ut innan den
+# lamnas ifran sig. Men det som CHECKAS IN kommer harifran.
+#
+# KOR SA HAR:
+#   Actions -> "Visuella referenser" -> Run workflow -> valj gren, skriv motiveringen.
+# eller genom att pusha en commit vars meddelande innehaller [referenser].
+name: Visuella referenser
+
+on:
+  workflow_dispatch:
+    inputs:
+      motiv:
+        description: 'Varfor bilderna ska bytas (skrivs till historik.md, minst 12 tecken)'
+        required: true
+      bara:
+        description: 'Valfritt filter, t.ex. battlemvp — tomt betyder alla nycklar'
+        required: false
+        default: ''
+  push:
+    branches:
+      - 'guard/**'
+      - 'visuell-referenser/**'
+
+# Jobbet skriver tillbaka bilderna till grenen det kordes pa. Utan det finns ingen vag alls fran
+# den pinnade binaren till repot.
+permissions:
+  contents: write
+
+jobs:
+  referenser:
+    # Pushvagen kraver en uttrycklig markor i commitmeddelandet. Utan den hade varje push till en
+    # guard-gren kort ett tolvminutersjobb, och botens EGEN commit hade startat nasta varv —
+    # markoren saknas i den, sa loopen kan inte sluta sig.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[referenser]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: 'Lastversion for webblasarcachen'
+        id: pw
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # TVA STEG, INTE ETT, OCH BADA MED TAK.
+      #
+      # `npx playwright install --with-deps chromium` hangde 33 minuter utan ett ord i loggen och
+      # utan att falla — GitHub visar ingen utdata for ett pagaende steg, sa det gick inte att se om
+      # det var nedladdningen eller apt som stod still. Uppdelningen ger felet ett namn, och
+      # timeout-minutes gor en hangning till ett rott steg pa nagra minuter i stallet for ett jobb
+      # som tuggar mot sexttimmarsgransen.
+      #
+      # SYSTEMBEROENDENA AR INTE VALFRIA. --with-deps installerar bland annat fonts-wqy-zenhei,
+      # fonts-freefont-ttf, fonts-ipafont-gothic och fonts-unifont. Typsnitt paverkar rastreringen,
+      # alltsa pixlarna. Jobbet som SKRIVER referenserna och jobbet i ci.yml som JAMFOR mot dem maste
+      # darfor installera exakt samma uppsattning — annars jamfor vakten bilder tagna under olika
+      # forutsattningar och skyller skillnaden pa widgetarna.
+      - name: 'Systemberoenden (typsnitten som paverkar rastreringen)'
+        timeout-minutes: 25
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -eu
+          # UPPMATT 2026-08-19: samma 21 MB typsnittspaket hamtades pa ~1 sekund kl 15:25 och tog
+          # over 9 minuter kl 16:14 — fonts-freefont-ttf ensamt tog 3 minuter fran
+          # azure.archive.ubuntu.com. Det ar spegelns dagsform, inte var kod. Ett tak utan
+          # omforsok gor da ett vantat hack till ett rott bygge.
+          #
+          # apt sparar de .deb-filer det redan hunnit hamta, sa ett omforsok fortsatter dar det
+          # slutade i stallet for att borja om. Tre forsok och ett tak pa 25 minuter racker for en
+          # trog spegel; en spegel som ar NERE faller fortfarande, och det ska den.
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/99vyra-retries > /dev/null
+          for i in 1 2 3; do
+            if npx playwright install-deps chromium; then exit 0; fi
+            echo "Forsok $i gav upp — provar igen om 20 s"
+            sleep 20
+          done
+          exit 1
+
+      - name: 'Den pinnade Chromium'
+        timeout-minutes: 10
+        run: npx playwright install chromium
+
+      - name: 'Fotografera alla katalognycklar'
+        timeout-minutes: 30
+        env:
+          # Pushvagen har ingen inmatningsruta. Commitmeddelandet ar da motiveringen, och det ar
+          # rimligt: den som pushar [referenser] har just skrivit ner varfor.
+          #
+          # Bara FORSTA raden, och utan markoren: historik.md ska bara en mening om varfor bilderna
+          # byttes, inte ett helt commitmeddelande med medforfattare och sessionslank.
+          MOTIV_RAA: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
+          VYRA_VISUELL_BARA: ${{ github.event.inputs.bara }}
+        run: |
+          set -eu
+          MOTIV=$(printf '%s' "$MOTIV_RAA" | head -1 | sed 's/^\[referenser\] *//')
+          echo "Motivering: $MOTIV"
+          VYRA_VISUELL_MOTIV="$MOTIV" npm run test:visual:update
+
+      # Kontrollen som gor steget ovan meningsfullt: bilderna ska OCKSA ga att jamfora mot.
+      # Skrivs de under andra villkor an vakten laser dem faller varenda nyckel forsta gangen
+      # vakten kors, och da hade felet upptackts i nasta PR i stallet for har.
+      - name: 'Vakten ska vara gron mot de nyss skrivna bilderna'
+        timeout-minutes: 30
+        run: npm run test:visual
+
+      # DIFFBILDERNA UT UR LOPAREN. Felmeddelandet pekar pa tests/visual/diff/, och den katalogen
+      # forsvinner nar jobbet ar slut — i CI, alltsa pa det enda stalle dar vakten normalt faller,
+      # gick bilderna darfor inte att titta pa. Siffrorna star numera i loggen, och bilderna finns
+      # har.
+      - name: 'Diffbilder nar vakten faller'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visuella-diffar-referenser
+          path: tests/visual/diff/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 'Committa bilderna till grenen'
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/visual/referenser
+          if git diff --cached --quiet; then
+            echo 'Inga bilder andrades — inget att committa.'
+            exit 0
+          fi
+          ANTAL=$(git diff --cached --name-only -- 'tests/visual/referenser/*.png' | wc -l)
+          git commit -m "Visuella referenser: $ANTAL bilder skrivna pa den pinnade Chromium"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}

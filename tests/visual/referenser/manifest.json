@@ -1,0 +1,696 @@
+{
+ "motor": {
+  "playwright": "1.62.1",
+  "binar": "/home/runner/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+  "version": "Google Chrome for Testing 151.0.7922.34",
+  "revision": "1234"
+ },
+ "antal": 170,
+ "senaste": {
+  "motiv": "Ta om ALLA referenser i en korning: fyra nya Top Gift-nycklar kom in med PR 241, och ranking:templateTopPoints:neon foll pa textrendering (all text markerad, kanalskillnad 255, avatarer och plattor identiska) vilket tyder pa typsnittsdrift mellan tva CI-tillfallen. En gemensam omtagning pa samma binar tar bort driften mellan gamla och nya bilder.",
+  "nycklar": 170,
+  "tid": "2026-08-20T11:23:16.528Z"
+ },
+ "bilder": {
+  "catalog:battlemvp:aurora": {
+   "matt": "240x146",
+   "fyllnad": 55.16
+  },
+  "catalog:battlemvp:cyber": {
+   "matt": "240x125",
+   "fyllnad": 32.07
+  },
+  "catalog:battlemvp:diamond-elite": {
+   "matt": "300x153",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:frame:dark-wings": {
+   "matt": "300x309",
+   "fyllnad": 59.04
+  },
+  "catalog:battlemvp:frame:dragon-fire": {
+   "matt": "300x348",
+   "fyllnad": 67.94
+  },
+  "catalog:battlemvp:frame:gold-crown": {
+   "matt": "300x337",
+   "fyllnad": 65.1
+  },
+  "catalog:battlemvp:frame:laurel-star": {
+   "matt": "300x365",
+   "fyllnad": 65.51
+  },
+  "catalog:battlemvp:frame:nautical-helm": {
+   "matt": "300x345",
+   "fyllnad": 58.88
+  },
+  "catalog:battlemvp:frame:royal-ribbon": {
+   "matt": "300x370",
+   "fyllnad": 59.47
+  },
+  "catalog:battlemvp:frame:shadow-star": {
+   "matt": "300x329",
+   "fyllnad": 70.5
+  },
+  "catalog:battlemvp:ice": {
+   "matt": "240x146",
+   "fyllnad": 23.25
+  },
+  "catalog:battlemvp:inferno": {
+   "matt": "240x125",
+   "fyllnad": 41.86
+  },
+  "catalog:battlemvp:neon-cyber": {
+   "matt": "300x135",
+   "fyllnad": 99.67
+  },
+  "catalog:battlemvp:royal": {
+   "matt": "240x132",
+   "fyllnad": 34.52
+  },
+  "catalog:battlemvp:royal-purple": {
+   "matt": "300x135",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:samurai": {
+   "matt": "240x125",
+   "fyllnad": 28.47
+  },
+  "catalog:battlemvp:storm": {
+   "matt": "240x146",
+   "fyllnad": 25.88
+  },
+  "catalog:custom:text": {
+   "matt": "420x90",
+   "fyllnad": 5.88
+  },
+  "catalog:fanlevel:layout:badgereveal": {
+   "matt": "260x189",
+   "fyllnad": 22.04
+  },
+  "catalog:fanlevel:layout:duo": {
+   "matt": "320x90",
+   "fyllnad": 17.42
+  },
+  "catalog:fanlevel:layout:heartbeat": {
+   "matt": "300x141",
+   "fyllnad": 24.34
+  },
+  "catalog:fanlevel:layout:hearts": {
+   "matt": "260x209",
+   "fyllnad": 19.93
+  },
+  "catalog:fanlevel:layout:hero": {
+   "matt": "260x292",
+   "fyllnad": 56.45
+  },
+  "catalog:fanlevel:layout:loyalty": {
+   "matt": "260x161",
+   "fyllnad": 25.87
+  },
+  "catalog:fanlevel:layout:ribbon": {
+   "matt": "260x183",
+   "fyllnad": 14.93
+  },
+  "catalog:fanlevel:layout:stack": {
+   "matt": "260x269",
+   "fyllnad": 10.16
+  },
+  "catalog:followeralert": {
+   "matt": "300x280",
+   "fyllnad": 45.54
+  },
+  "catalog:giftcampaign:aurora:landscape": {
+   "matt": "430x183",
+   "fyllnad": 25.83
+  },
+  "catalog:giftcampaign:aurora:portrait": {
+   "matt": "205x294",
+   "fyllnad": 35.63
+  },
+  "catalog:giftcampaign:crystal-garden:landscape": {
+   "matt": "430x194",
+   "fyllnad": 61.16
+  },
+  "catalog:giftcampaign:crystal-garden:portrait": {
+   "matt": "205x349",
+   "fyllnad": 47.41
+  },
+  "catalog:giftcampaign:glass:landscape": {
+   "matt": "430x185",
+   "fyllnad": 58.14
+  },
+  "catalog:giftcampaign:glass:portrait": {
+   "matt": "205x302",
+   "fyllnad": 68.44
+  },
+  "catalog:giftcampaign:goldrush:landscape": {
+   "matt": "430x183",
+   "fyllnad": 26
+  },
+  "catalog:giftcampaign:goldrush:portrait": {
+   "matt": "205x294",
+   "fyllnad": 36.05
+  },
+  "catalog:giftcampaign:minimal:landscape": {
+   "matt": "430x183",
+   "fyllnad": 25.83
+  },
+  "catalog:giftcampaign:minimal:portrait": {
+   "matt": "205x294",
+   "fyllnad": 35.63
+  },
+  "catalog:giftcampaign:neon:landscape": {
+   "matt": "430x183",
+   "fyllnad": 24.84
+  },
+  "catalog:giftcampaign:neon:portrait": {
+   "matt": "205x294",
+   "fyllnad": 34.34
+  },
+  "catalog:giftcampaign:retro:landscape": {
+   "matt": "430x180",
+   "fyllnad": 25.97
+  },
+  "catalog:giftcampaign:retro:portrait": {
+   "matt": "205x294",
+   "fyllnad": 35.52
+  },
+  "catalog:giftcampaign:royal:landscape": {
+   "matt": "430x183",
+   "fyllnad": 25.83
+  },
+  "catalog:giftcampaign:royal:portrait": {
+   "matt": "205x294",
+   "fyllnad": 35.63
+  },
+  "catalog:gifterlevel:duo": {
+   "matt": "300x151",
+   "fyllnad": 13.36
+  },
+  "catalog:gifterlevel:flip": {
+   "matt": "290x154",
+   "fyllnad": 17.66
+  },
+  "catalog:gifterlevel:number": {
+   "matt": "270x467",
+   "fyllnad": 30.11
+  },
+  "catalog:gifterlevel:orbitlevel": {
+   "matt": "270x406",
+   "fyllnad": 17.48
+  },
+  "catalog:gifterlevel:profile": {
+   "matt": "270x385",
+   "fyllnad": 34.8
+  },
+  "catalog:gifterlevel:reveal": {
+   "matt": "270x422",
+   "fyllnad": 27.06
+  },
+  "catalog:gifterlevel:risingtier": {
+   "matt": "270x435",
+   "fyllnad": 24.97
+  },
+  "catalog:gifterlevel:sidebadge": {
+   "matt": "300x156",
+   "fyllnad": 28.33
+  },
+  "catalog:gifterlevel:stack": {
+   "matt": "270x381",
+   "fyllnad": 14.18
+  },
+  "catalog:giftjar:crystal": {
+   "matt": "250x348",
+   "fyllnad": 89.76
+  },
+  "catalog:giftjar:fire": {
+   "matt": "250x348",
+   "fyllnad": 88.15
+  },
+  "catalog:giftjar:galaxy": {
+   "matt": "250x348",
+   "fyllnad": 91.56
+  },
+  "catalog:giftjar:ice": {
+   "matt": "250x348",
+   "fyllnad": 85.95
+  },
+  "catalog:giftjar:neon": {
+   "matt": "250x348",
+   "fyllnad": 89.45
+  },
+  "catalog:giftjar:royal": {
+   "matt": "250x348",
+   "fyllnad": 89.34
+  },
+  "catalog:guardianemblem:1": {
+   "matt": "400x450",
+   "fyllnad": 72
+  },
+  "catalog:guardianemblem:2": {
+   "matt": "400x535",
+   "fyllnad": 78.86
+  },
+  "catalog:guardianemblem:3": {
+   "matt": "400x560",
+   "fyllnad": 79.59
+  },
+  "catalog:guardianemblem:4": {
+   "matt": "400x570",
+   "fyllnad": 80.67
+  },
+  "catalog:heartgoal:citrus": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:classic": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:dark": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:emerald": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:frost": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:galaxy": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:golden": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:ice": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:midnight": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:neon": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:ocean": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:heartgoal:sakura": {
+   "matt": "230x264",
+   "fyllnad": 62.8
+  },
+  "catalog:lastx:badge": {
+   "matt": "500x393",
+   "fyllnad": 48.04
+  },
+  "catalog:lastx:card": {
+   "matt": "501x148",
+   "fyllnad": 74.65
+  },
+  "catalog:lastx:royal": {
+   "matt": "500x542",
+   "fyllnad": 44.24
+  },
+  "catalog:lastx:skew": {
+   "matt": "501x116",
+   "fyllnad": 75.82
+  },
+  "catalog:lastx:stack": {
+   "matt": "501x425",
+   "fyllnad": 27.01
+  },
+  "catalog:ranking:templateTopCoins:center": {
+   "matt": "302x264",
+   "fyllnad": 20.32
+  },
+  "catalog:ranking:templateTopCoins:clean": {
+   "matt": "220x388",
+   "fyllnad": 19.87
+  },
+  "catalog:ranking:templateTopCoins:neon": {
+   "matt": "300x406",
+   "fyllnad": 14.44
+  },
+  "catalog:ranking:templateTopCoins:podium": {
+   "matt": "300x406",
+   "fyllnad": 13.75
+  },
+  "catalog:ranking:templateTopPoints:center": {
+   "matt": "302x264",
+   "fyllnad": 20.45
+  },
+  "catalog:ranking:templateTopPoints:clean": {
+   "matt": "220x388",
+   "fyllnad": 20.13
+  },
+  "catalog:ranking:templateTopPoints:neon": {
+   "matt": "300x406",
+   "fyllnad": 14.61
+  },
+  "catalog:ranking:templateTopPoints:podium": {
+   "matt": "300x406",
+   "fyllnad": 13.92
+  },
+  "catalog:socialgoal:followers:1:landscape": {
+   "matt": "440x121",
+   "fyllnad": 35.21
+  },
+  "catalog:socialgoal:followers:2:landscape": {
+   "matt": "440x121",
+   "fyllnad": 49.96
+  },
+  "catalog:socialgoal:followers:3:landscape": {
+   "matt": "440x97",
+   "fyllnad": 19.61
+  },
+  "catalog:socialgoal:followers:4:landscape": {
+   "matt": "440x121",
+   "fyllnad": 53.54
+  },
+  "catalog:socialgoal:followers:azure-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 64.58
+  },
+  "catalog:socialgoal:followers:heart-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 61.36
+  },
+  "catalog:socialgoal:followers:rose-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 54.34
+  },
+  "catalog:socialgoal:followers:sapphire-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 75.75
+  },
+  "catalog:socialgoal:likes:1:landscape": {
+   "matt": "440x121",
+   "fyllnad": 32.85
+  },
+  "catalog:socialgoal:likes:2:landscape": {
+   "matt": "440x121",
+   "fyllnad": 47.61
+  },
+  "catalog:socialgoal:likes:3:landscape": {
+   "matt": "440x97",
+   "fyllnad": 16.71
+  },
+  "catalog:socialgoal:likes:4:landscape": {
+   "matt": "440x121",
+   "fyllnad": 51.18
+  },
+  "catalog:socialgoal:likes:azure-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 63.79
+  },
+  "catalog:socialgoal:likes:heart-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 60.68
+  },
+  "catalog:socialgoal:likes:rose-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 51.77
+  },
+  "catalog:socialgoal:likes:sapphire-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 75.73
+  },
+  "catalog:topgift:extra:aurora": {
+   "matt": "280x260",
+   "fyllnad": 7.62
+  },
+  "catalog:topgift:extra:coronation": {
+   "matt": "260x325",
+   "fyllnad": 7.77
+  },
+  "catalog:topgift:extra:fire": {
+   "matt": "280x312",
+   "fyllnad": 6.34
+  },
+  "catalog:topgift:extra:galaxy": {
+   "matt": "280x280",
+   "fyllnad": 7.07
+  },
+  "catalog:topgift:extra:goldrush": {
+   "matt": "280x260",
+   "fyllnad": 7.62
+  },
+  "catalog:topgift:extra:ice": {
+   "matt": "280x260",
+   "fyllnad": 7.62
+  },
+  "catalog:topgift:extra:retro": {
+   "matt": "280x260",
+   "fyllnad": 7.62
+  },
+  "catalog:topgift:extra:sakura": {
+   "matt": "280x280",
+   "fyllnad": 7.07
+  },
+  "catalog:topgift:frame:angel-heart": {
+   "matt": "300x444",
+   "fyllnad": 50.34
+  },
+  "catalog:topgift:frame:crystal-spire": {
+   "matt": "300x510",
+   "fyllnad": 54.62
+  },
+  "catalog:topgift:frame:dark-raven": {
+   "matt": "300x479",
+   "fyllnad": 55.49
+  },
+  "catalog:topgift:frame:frost-crystal": {
+   "matt": "300x435",
+   "fyllnad": 48.19
+  },
+  "catalog:topgift:frame:luna-mist": {
+   "matt": "300x449",
+   "fyllnad": 49.2
+  },
+  "catalog:topgift:frame:rose-garden": {
+   "matt": "300x432",
+   "fyllnad": 49.98
+  },
+  "catalog:topgift:frame:royal-wings": {
+   "matt": "300x361",
+   "fyllnad": 48.4
+  },
+  "catalog:topgift:premium:arch": {
+   "matt": "340x260",
+   "fyllnad": 14.45
+  },
+  "catalog:topgift:premium:aurora": {
+   "matt": "340x260",
+   "fyllnad": 13.27
+  },
+  "catalog:topgift:premium:bloom": {
+   "matt": "340x260",
+   "fyllnad": 19.53
+  },
+  "catalog:topgift:premium:champion": {
+   "matt": "340x260",
+   "fyllnad": 15.37
+  },
+  "catalog:topgift:premium:comet": {
+   "matt": "340x260",
+   "fyllnad": 19.09
+  },
+  "catalog:topgift:premium:cyber": {
+   "matt": "340x260",
+   "fyllnad": 13.26
+  },
+  "catalog:topgift:premium:fire": {
+   "matt": "340x378",
+   "fyllnad": 9.13
+  },
+  "catalog:topgift:premium:fireworks": {
+   "matt": "340x260",
+   "fyllnad": 13.4
+  },
+  "catalog:topgift:premium:galaxy": {
+   "matt": "340x340",
+   "fyllnad": 10.15
+  },
+  "catalog:topgift:premium:glass": {
+   "matt": "340x260",
+   "fyllnad": 11.49
+  },
+  "catalog:topgift:premium:goldrush": {
+   "matt": "340x260",
+   "fyllnad": 13.27
+  },
+  "catalog:topgift:premium:hall": {
+   "matt": "340x260",
+   "fyllnad": 15.54
+  },
+  "catalog:topgift:premium:ice": {
+   "matt": "340x315",
+   "fyllnad": 10.96
+  },
+  "catalog:topgift:premium:neon": {
+   "matt": "210x270",
+   "fyllnad": 20.81
+  },
+  "catalog:topgift:premium:pedestal": {
+   "matt": "340x260",
+   "fyllnad": 25.81
+  },
+  "catalog:topgift:premium:phoenix": {
+   "matt": "340x260",
+   "fyllnad": 16.88
+  },
+  "catalog:topgift:premium:retro": {
+   "matt": "340x262",
+   "fyllnad": 13.17
+  },
+  "catalog:topgift:premium:royal": {
+   "matt": "340x260",
+   "fyllnad": 13.27
+  },
+  "catalog:topgift:premium:sakura": {
+   "matt": "340x340",
+   "fyllnad": 10.15
+  },
+  "catalog:topgift:premium:signal": {
+   "matt": "340x252",
+   "fyllnad": 13.69
+  },
+  "catalog:topgift:premium:throne": {
+   "matt": "340x260",
+   "fyllnad": 15.06
+  },
+  "catalog:toplike:center": {
+   "matt": "302x264",
+   "fyllnad": 20.32
+  },
+  "catalog:toplike:clean": {
+   "matt": "220x388",
+   "fyllnad": 19.81
+  },
+  "catalog:toplike:neon": {
+   "matt": "220x406",
+   "fyllnad": 19.58
+  },
+  "catalog:toplike:podium": {
+   "matt": "220x406",
+   "fyllnad": 18.64
+  },
+  "catalog:topstreak": {
+   "matt": "310x105",
+   "fyllnad": 32.27
+  },
+  "catalog:topstreak:cyber-grid": {
+   "matt": "330x100",
+   "fyllnad": 28.21
+  },
+  "catalog:topstreak:frame:amethyst-heart": {
+   "matt": "300x329",
+   "fyllnad": 61
+  },
+  "catalog:topstreak:frame:crystal-spire": {
+   "matt": "300x382",
+   "fyllnad": 56.23
+  },
+  "catalog:topstreak:frame:crystal-tiara": {
+   "matt": "300x334",
+   "fyllnad": 52.86
+  },
+  "catalog:topstreak:frame:gold-wings": {
+   "matt": "300x345",
+   "fyllnad": 52.43
+  },
+  "catalog:topstreak:frame:luna-stars": {
+   "matt": "300x391",
+   "fyllnad": 50.22
+  },
+  "catalog:topstreak:frame:rose-heart": {
+   "matt": "300x336",
+   "fyllnad": 52.6
+  },
+  "catalog:topstreak:frame:star-crown": {
+   "matt": "300x374",
+   "fyllnad": 48.77
+  },
+  "catalog:topstreak:frame:violet-wings": {
+   "matt": "300x312",
+   "fyllnad": 53.3
+  },
+  "catalog:topstreak:ice": {
+   "matt": "205x230",
+   "fyllnad": 5.15
+  },
+  "catalog:topstreak:inferno": {
+   "matt": "336x92",
+   "fyllnad": 27.12
+  },
+  "catalog:topstreak:neon": {
+   "matt": "190x210",
+   "fyllnad": 22.22
+  },
+  "catalog:topstreak:premium:chain": {
+   "matt": "520x105",
+   "fyllnad": 18.49
+  },
+  "catalog:topstreak:premium:chrono": {
+   "matt": "520x105",
+   "fyllnad": 17.66
+  },
+  "catalog:topstreak:premium:liquid": {
+   "matt": "520x105",
+   "fyllnad": 18.42
+  },
+  "catalog:topstreak:premium:momentum": {
+   "matt": "520x105",
+   "fyllnad": 11.78
+  },
+  "catalog:topstreak:premium:thermo": {
+   "matt": "520x105",
+   "fyllnad": 18.41
+  },
+  "catalog:topstreak:premium:thread": {
+   "matt": "520x105",
+   "fyllnad": 16.77
+  },
+  "catalog:topstreak:premium:tier": {
+   "matt": "520x105",
+   "fyllnad": 18
+  },
+  "catalog:topstreak:royal": {
+   "matt": "250x205",
+   "fyllnad": 12.55
+  },
+  "catalog:topstreak:sakura-rail": {
+   "matt": "235x96",
+   "fyllnad": 30.35
+  },
+  "catalog:topstreak:storm": {
+   "matt": "310x98",
+   "fyllnad": 26.38
+  },
+  "catalog:topgift:cyber": {
+   "matt": "280x260",
+   "fyllnad": 15.42
+  },
+  "catalog:topgift:glass": {
+   "matt": "280x260",
+   "fyllnad": 13.72
+  },
+  "catalog:topgift:neon": {
+   "matt": "210x270",
+   "fyllnad": 20.24
+  },
+  "catalog:topgift:royal": {
+   "matt": "280x260",
+   "fyllnad": 15.42
+  }
+ }
+}

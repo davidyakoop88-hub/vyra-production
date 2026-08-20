@@ -1,5 +1,169 @@
 # VYRA Project State
 
+## Checkpoint 41 — Visuell regressionsvakt: 167 nycklar fotograferade pixel för pixel (2026-08-19)
+
+Checkpoint 40 skrev ut den största kvarvarande luckan i klartext: **"målas" är inte "är korrekt"**.
+Overlay-revisionen bevisade att varje widget renderas, har yta och ärvd opacitet över noll — men en
+avklippt kant, två rader text ovanpå varandra eller en etikett som spiller ut ur sin platta passerar
+den utan ett ljud. Den här checkpointen stänger den luckan för 167 av 181 katalognycklar.
+
+### Vad vakten gör
+
+`tests/visual/visuell-regression.browser.test.js` bygger varje katalognyckel i riktigt overlay-läge,
+väcker den om den är en alert, ställer den still, fotograferar den med transparent bakgrund och
+jämför **pixel för pixel** mot en incheckad referens. **Ingen procenttolerans.**
+
+Nolltoleransen är mätt, inte vald av principskäl: samma widget fotograferad två gånger i samma
+session gav 0 olika pixlar av 224 000, och 0 igen efter en helt ny webbläsarstart. Determinismen
+finns — en tolerans hade bara dolt exakt de förskjutningar vakten är till för att hitta.
+
+Priset är att bilderna bara gäller på **samma Chromium-build**. Referenserna bär därför ett manifest
+med binärens versionssträng, och vakten vägrar jämföra någon annanstans i stället för att skylla
+167 fel på widgetarna. CI installerar den build `package-lock.json` pinnar.
+
+### Att ställa en widget still var hela arbetet
+
+Fyra fel i mätriggen hittades och rättades, vart och ett med en mätning:
+
+| Fel | Hur det såg ut | Vad det var |
+|---|---|---|
+| Mätt före första bildrutan | 2 av 100 foton gav 221×221 och opacitet 0, olika nyckel varje gång | en CSS-animation skapas i bildrutans *update animations*-steg — dessförinnan är `getAnimations()` tom och basstilen gäller |
+| Fryst utifrån en klassdriven koreografi | Guardian Emblem: 0 % målat vid alla nio tidpunkter, 66–82 % levande | JS-klockan byter fasklasser; att spola animationerna till en annan tidpunkt ger en omöjlig kombination |
+| Pseudoelementen missades | 6 nycklar rörde sig efter frysningen; diffen var ett 302×6 px band | `getAnimations()` tar inte med `::before`/`::after` — bara `{subtree: true}` gör det |
+| Kön svalde andra triggern | widgeten blev 0×0 vid ombyggnad | `clear()` tömmer de väntande men nollställer inte `busy` — riggen väntar nu ut `spelar` innan den triggar |
+
+Rad 1 och 3 är skrivna som §12 och §13 i `docs/tech-debt.md`, eftersom de gäller **alla**
+browserprov och inte bara den här vakten.
+
+En femte misstänkt — JS-drivna räknare och progressmätare — byggdes bort och **togs sedan bort
+igen**: ett maskineri som lindade `setTimeout`/`setInterval`/`requestAnimationFrame` och släckte
+widgetens egna timrar. Mätt med och utan efter att pseudoelementen kommit med i frysningen: 27
+fotograferingar av 27 lyckades i båda fallen. Det löste alltså ingenting, och det rev kön som
+bieffekt. Kod som inte kan visa vad den räddar ska inte ligga kvar.
+
+### Vad som är uppmätt
+
+| | Antal | |
+|---|---|---|
+| Katalognycklar totalt | 181 | |
+| Fotograferade och jämförda | **166** | 0 trasiga, 0 tomma i den sista körningen |
+| Undantagna med utskrivet skäl | 15 | se tabellen nedan |
+
+| Undantag | Nycklar | Uppmätt skäl |
+|---|---|---|
+| `catalog:custom:image` / `:video` | 2 | tomma behållare som väntar på användarens egen fil (0,4 % / 0,2 % målat) |
+| `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
+| `catalog:glovesnipe:` | 8 | effekten är **H.264-video**, och provets Chromium saknar kodeken |
+| `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
+| `catalog:giftjar:heart` | 1 | orsak **inte fastställd** — se nedan |
+
+### Den enda posten utan fastställd orsak
+
+`catalog:giftjar:heart` är undantagen med ett skäl som ärligt talat inte är ett skäl utan en
+mätning: nyckeln växlar **på CI** mellan exakt två renderingar som skiljer 115 av 87000 pixlar,
+alltid inom exakt samma 232×34 px vid (13,254), alltid med största kanalskillnad 18 av 255 — samma
+siffror i fyra körningar. **Lokalt är den helt stabil:** tio ombyggnader gav en enda bild, två
+skilda webbläsarsessioner gav 0 av 87000, och hundra sekunders väntan ändrade ingenting. De övriga
+sex Gift Jar-varianterna reproducerar.
+
+Bandet ligger vid burkens fyllnadsnivå. En hypotes är att nivån speglar hopsamlat gåvotillstånd från
+de alerts som triggats tidigare i körningen, och därmed beror på ordningen — men det är en
+**hypotes, inte en mätning**, och den står som en sådan i `UTAN_REFERENS`. Nyckeln är undantagen
+tills någon visat vad som faktiskt skiljer. Fyra CI-cykler lades på den innan den lades åt sidan.
+
+Guardian Emblem hörde först hit men gör det inte längre: familjen fotograferas nu genom sin **egen
+utbytbara klocka** (`REGI` i `tests/helpers/katalognycklar.js`), som stoppar klockan, ställer lådan
+i fasen `hyllning` och fryser animationerna 900 ms in i just den fasen. 20 fotograferingar av 20
+lyckades, 72–81 % målat.
+
+### Ett fynd som ingen vakt kan stänga
+
+Glove Snipes åtta varianter går **inte** att verifiera automatiskt alls. Effekten är en H.264-MP4,
+och playwright-core:s Chromium svarar tomt på `canPlayType('video/mp4; codecs="avc1.42E01E")` och
+faller med `DEMUXER_ERROR_NO_SUPPORTED_STREAMS`. I vanlig Chrome och i OBS finns kodeken — så
+mätningen säger ingenting om huruvida de spelar där. Det är nu **punkt 7 i
+`docs/live-verifiering.md`**, att läsa av i OBS före sändning.
+
+### Invarianter som inte får brytas
+
+- **Referenserna görs bara på den pinnade Chromium-binären**, alltså i CI
+  (`.github/workflows/visuell-referenser.yml`). En bild tagen på en annan build är obrukbar.
+- **En referens uppdateras aldrig utan motivering.** `VYRA_VISUELL_MOTIV` är obligatorisk och
+  skrivs till `historik.md`. Utan det kravet blir den snabbaste vägen till grönt att skriva om
+  bilden — och då har vi bytt ett larm mot en tystnad.
+- **En bild som målar under 3 % skrivs aldrig som referens.** En tom referens matchar allt.
+- **Varje undantag ska bära en mätning**, inte ett "gick inte". Listan har ett tak i provet.
+- **Provet ligger i `tests/visual/`, inte i `tests/browser/`**, så `npm run test:browser` inte kör
+  det på runnerns Google Chrome. `tests/browser-rigg.test.js` vaktar båda katalogerna.
+
+### Baslinjen ligger — och vad den kostade
+
+**166 referensbilder, 12 MB, tagna på `Google Chrome for Testing 151.0.7922.34` (chromium-1234)**,
+den build `package-lock.json` pinnar. De genererades av
+`.github/workflows/visuell-referenser.yml`, som är det **enda** stället de kan göras: binären finns
+inte på en godtycklig utvecklarmaskin, och en bild tagen någon annanstans är obrukbar.
+
+Vägen dit tog sex CI-cykler, och **varje cykel hittade ett verkligt fel** — ingen var en omkörning:
+
+| Cykel | Vad som föll ut |
+|---|---|
+| 1 | uppdateringsskriptet satte exitkod 1 för de undantagna nycklarna → jobbet dog efter att ha gjort hela arbetet, bilderna committades aldrig |
+| 2 | `playwright install --with-deps` hängde 33 min utan ett ord i loggen |
+| 3 | uppdelat steg + tak gav hängningen ett namn: apt hämtade 21 MB typsnitt på 9 min från en trög spegel |
+| 4 | en referens reproducerade inte — 1 px kolumn, kanalskillnad 1 → tröskeln 1/255 infördes med egen kontroll |
+| 5 | typsnitt som inte hunnit laddas gav en textrad två utseenden → `document.fonts.ready` |
+| 6 | `catalog:giftjar:heart` växlar mellan två renderingar på CI, stabil lokalt → undantagen, orsak ofastställd |
+
+Två strukturella lärdomar sitter kvar i koden:
+
+- **Uppdateringsskriptet skriver bara referenser det bevisat kan ta om.** Tre sessioner: den första är
+  uppvärmning och röstar inte, referensen tas ur den andra och måste reproduceras av den tredje. En
+  referens är per definition en bild som går att ta om; att skriva den efter ett enda foto är att
+  anta det.
+- **Siffrorna reser i loggen, inte bara i bilden.** Felmeddelandet bär avgränsning och största
+  kanalskillnad, och diffbilderna laddas upp som artefakt. Diffkatalogen försvinner med löparen, så
+  i CI — det enda stället vakten normalt faller — pekade meddelandet annars på en fil ingen kunde
+  öppna.
+
+### ÖPPET: brusgolvet på CI är inte 1/255 utan uppemot 6
+
+Första körningen av vakten mot de incheckade referenserna (CI-körning 692, commit `45070c5`) föll på
+**tre** nycklar — alla mikroskopiska:
+
+| Nyckel | Pixlar | Område | Största kanalskillnad |
+|---|---|---|---|
+| `catalog:lastx:badge` | 1 av 196500 | 1×1 px vid (241,359) | 2 av 255 |
+| `catalog:lastx:stack` | 6 av 212925 | 203×246 px vid (142,75) | 6 av 255 |
+| `catalog:topstreak:frame:crystal-spire` | 1 av 114600 | 1×1 px vid (197,232) | 5 av 255 |
+
+Läs det rätt: referensjobbet krävde att session 2 och 3 var **exakt** identiska, och det var de för
+alla 166. Men en **fjärde** session — vakten i ett annat jobb, på en annan löpare — skiljer sig på
+enstaka pixlar. Tröskeln 1/255 kalibrerades på en enda observation (hårstrecket i `rose-heart`), och
+den siffran var för snäv.
+
+**Beslutet är inte tekniskt utan ägarens:** höj `KANALTROSKEL` i `tests/helpers/visuell.js` till 6,
+med kontrollprovet uppdaterat så att det fäller vid 7, och skriv ner mätningen ovan som skälet.
+Alternativet — att undanta tre nycklar till — är sämre: hålen växer och orsaken är densamma.
+
+Tröskeln är fortfarande ingen procenttolerans. Den säger att färger inom 6/255 är samma färg, inte
+att en andel av bilden får skilja sig. En flyttad kant eller överlappande text ändrar kanaler med
+tiotal eller hundratal.
+
+
+### Nästa steg
+
+1. **Mutationsprov fas 3.** Ändra en CSS-regel (t.ex. `.topgift-sakura` ramfärg i `studio.css`),
+   pusha, och verifiera att **exakt** de nycklar som använder regeln faller — med diffbild och
+   siffror — och att de övriga förblir gröna. Återställ sedan.
+2. **Mutationsprov fas 4.** Mutera `JAMFOR` åt båda hållen: alltid "olika" ska fälla alla 166
+   (bevisar att varje nyckel verkligen jämförs), alltid "identisk" ska släppa igenom en verklig
+   CSS-ändring (bevisar att det är jämförelsen som fångar den).
+3. **Ta PR #235 ur utkastläge** när båda mutationerna är gjorda.
+
+Båda mutationerna måste köras **i CI** — referenserna gäller bara där. Räkna ~20 min per varv.
+
+---
+
 ## Checkpoint 40 — Hela katalogen mätt i overlay, och vakten som håller den där (2026-08-19)
 
 Frågan som startade det: *"kan vi säkert säga att allt funkar i overlay?"* Svaret var **nej**, och

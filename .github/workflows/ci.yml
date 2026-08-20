@@ -127,6 +127,90 @@ jobs:
       - name: 'Lackage · riktig webblasare'
         run: npm run test:browser
 
+      # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
+      #
+      # Steget installerar playwright-core:s EGNA pinnade Chromium i stallet for att anvanda
+      # ubuntu-latest:s Google Chrome. Skalet ar att vakten har NOLLTOLERANS: den skiljer inte pa
+      # "widgeten andrades" och "rastreraren andrades", sa referensbilderna ar bara giltiga pa exakt
+      # den binar de togs pa. Runnerns Chrome uppdateras utan att en rad i repot andras, och hade
+      # gjort alla nycklar roda samtidigt en slumpmassig tisdag. Den pinnade revisionen andras bara
+      # nar package-lock.json andras — alltsa i en commit nagon kan peka pa.
+      #
+      # Cachen ar nycklad pa exakt den versionen, sa en uppdatering av playwright-core ger en ny
+      # cache i stallet for en tyst traff pa fel binar. Manifestet i referenskatalogen bar samma
+      # sanning och faller hogljutt om de tva glider isar.
+      #
+      # Provet bor i tests/visual/ och inte i tests/browser/ just for att `npm run test:browser`
+      # ovanfor INTE ska plocka upp det: dar hade det kort en gang till pa runnerns Google Chrome
+      # och fallit av fel skal. tests/browser-rigg.test.js vaktar bada katalogerna.
+      - name: 'Visuell · lastversion for webblasarcachen'
+        id: pw
+        run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # --with-deps aven vid cachetraff: cachen bar webblasaren, inte systembiblioteken den lankar
+      # mot, och de bor utanfor katalogen. Ar binaren redan pa plats ar nedladdningen en no-op.
+      # Uppdelat i tva steg med tak av samma skal som i visuell-referenser.yml: ett hangande
+      # `--with-deps` visar ingen utdata alls och blir omojligt att felsoka. Samma
+      # uppsattning systemberoenden som referensjobbet — typsnitten avgor rastreringen, och
+      # bilderna maste skrivas och jamforas under samma forutsattningar.
+      - name: 'Visuell · systemberoenden'
+        timeout-minutes: 25
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -eu
+          # UPPMATT 2026-08-19: samma 21 MB typsnittspaket hamtades pa ~1 sekund kl 15:25 och tog
+          # over 9 minuter kl 16:14 — fonts-freefont-ttf ensamt tog 3 minuter fran
+          # azure.archive.ubuntu.com. Det ar spegelns dagsform, inte var kod. Ett tak utan
+          # omforsok gor da ett vantat hack till ett rott bygge.
+          #
+          # apt sparar de .deb-filer det redan hunnit hamta, sa ett omforsok fortsatter dar det
+          # slutade i stallet for att borja om. Tre forsok och ett tak pa 25 minuter racker for en
+          # trog spegel; en spegel som ar NERE faller fortfarande, och det ska den.
+          echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/99vyra-retries > /dev/null
+          for i in 1 2 3; do
+            if npx playwright install-deps chromium; then exit 0; fi
+            echo "Forsok $i gav upp — provar igen om 20 s"
+            sleep 20
+          done
+          exit 1
+
+      - name: 'Visuell · pinnad Chromium'
+        timeout-minutes: 10
+        run: npx playwright install chromium
+
+      - name: 'Visuell · riggproven (jamforaren muterad, CSS-andring)'
+        timeout-minutes: 15
+        run: npm run test:visual:rigg
+
+      # RIGGPROVEN FORST, VAKTEN SEDAN. Fas 3 och 4 kraver inga referensbilder och kor darfor
+      # aven nar referenserna ar for gamla eller binaren har bytts: de bevisar att jamforaren
+      # avgor utfallet (mutation at bada hallen) och att en CSS-andring faller exakt de nycklar
+      # som anvander regeln. Faller de, sager vaktens 166 grona nycklar ingenting — da ar det
+      # riggen som ar trasig, inte widgetarna, och ordningen har gor det synligt i loggen.
+      - name: 'Visuell · alla katalognycklar mot referens'
+        timeout-minutes: 30
+        run: npm run test:visual
+
+      # DIFFBILDERNA UT UR LOPAREN. Felmeddelandet pekar pa tests/visual/diff/, och den katalogen
+      # forsvinner nar jobbet ar slut — i CI, alltsa pa det enda stalle dar vakten normalt faller,
+      # gick bilderna darfor inte att titta pa. Siffrorna star numera i loggen, och bilderna finns
+      # har.
+      - name: 'Diffbilder nar vakten faller'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visuella-diffar-ci
+          path: tests/visual/diff/
+          if-no-files-found: ignore
+          retention-days: 14
+
       # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
       # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
       # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde
