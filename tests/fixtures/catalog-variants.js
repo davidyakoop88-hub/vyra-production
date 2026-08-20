@@ -110,7 +110,14 @@ const CONTRACT = [
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',
     marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } },
   { name: 'Gift Jar · Crystal', key: 'catalog:giftjar:crystal',
-    marker: "type:'templateGiftJar'", bindings: { id: 'x', model: 'crystal' } }
+    marker: "type:'templateGiftJar'", bindings: { id: 'x', model: 'crystal' } },
+  // Guardian Emblem ar en NY familj, inte en migrerad — den har aldrig funnits som en literal i
+  // media.js. Alla fyra praktstegen star med, for det ar matten och praktnivan som skiljer dem at
+  // och ett kontrakt pa bara ett steg hade latit de andra tre glida.
+  { name: 'Guardian Emblem · steg 1', key: 'catalog:guardianemblem:1' },
+  { name: 'Guardian Emblem · steg 2', key: 'catalog:guardianemblem:2' },
+  { name: 'Guardian Emblem · steg 3', key: 'catalog:guardianemblem:3' },
+  { name: 'Guardian Emblem · steg 4', key: 'catalog:guardianemblem:4' },
 ];
 
 module.exports = { CONTRACT };
