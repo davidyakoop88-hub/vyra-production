@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -14 292 218" role="img" aria-label="VYRALIVE">
+  <title>VYRALIVE</title>
+  <defs><linearGradient id="vlFront" gradientUnits="userSpaceOnUse" x1="30" y1="20" x2="240" y2="180">
+    <stop offset="0" stop-color="#e879ff"/><stop offset=".45" stop-color="#a83aef"/><stop offset="1" stop-color="#06b6d4"/>
+  </linearGradient></defs>
+  <g fill="none" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(21.60,21.60)" stroke="#311046"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(20.25,20.25)" stroke="#35124c"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(18.90,18.90)" stroke="#391353"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(17.55,17.55)" stroke="#3e1559"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(16.20,16.20)" stroke="#42165f"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(14.85,14.85)" stroke="#461865"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(13.50,13.50)" stroke="#4b196b"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(12.15,12.15)" stroke="#4f1b72"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(10.80,10.80)" stroke="#531c78"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(9.45,9.45)" stroke="#571e7e"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(8.10,8.10)" stroke="#5c1f84"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(6.75,6.75)" stroke="#60208a"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(5.40,5.40)" stroke="#642291"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(4.05,4.05)" stroke="#692397"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(2.70,2.70)" stroke="#6d259d"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g transform="translate(1.35,1.35)" stroke="#7126a3"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+    <g stroke="url(#vlFront)"><path d="M40 34 L80 154 L120 34"/><path d="M160 34 V154 H216"/></g>
+  </g>
+</svg>

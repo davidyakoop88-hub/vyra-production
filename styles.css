@@ -575,6 +575,10 @@ main,.mini-sidfot{position:relative;z-index:1}
    author-display slar annars attributet (scenbakgrundens uppmatta laxa 2026-08-18). */
 [hidden]{display:none!important}
 .hero-topp{max-width:900px;margin:0 auto;position:relative;z-index:1;text-align:center}
+/* Market ar sidans avsandare och star forst. Hojden ar medvetet liten: heron ar en flexkolumn
+   dar .hero-prisrad haller sig kvar i botten med margin-top:auto, sa varje pixel har uppe ar en
+   pixel narmare vecket for prisraden. Krympningen bor i @media (max-height:1000px) sist i filen. */
+.hero-marke{display:block;margin:0 auto 16px;width:min(248px,54vw);height:auto}
 .hero-botten{max-width:1460px;margin:34px auto 0;width:100%;position:relative;z-index:1;
   display:flex;justify-content:flex-start;text-align:left}
 .login-kort{width:400px;background:linear-gradient(165deg,#171022e6,#0d0815cc);
@@ -695,6 +699,7 @@ main,.mini-sidfot{position:relative;z-index:1}
    flytta raden — placeringen ar Davids beslut, hojden ar var uppgift. */
 @media (max-height:1000px){
   .hero{padding-top:20px}
+  .hero-marke{width:min(196px,44vw);margin-bottom:11px}
   .hero h1{font-size:50px;margin:12px 0 10px}
   .lead{font-size:15px;line-height:1.5}
   .hero-botten{margin-top:14px}
