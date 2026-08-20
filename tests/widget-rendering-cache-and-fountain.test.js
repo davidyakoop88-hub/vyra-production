@@ -105,15 +105,21 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // levererades under en strang som redan var utrullad. En sammanslagning som ror en fil ar en
   // andring av den filen.
   //
+  // SAMMANSLAGNINGEN 2026-08-20 (rotations-UI:t mot main): studio.css, vyra-rotation.js,
+  // vyra-proportioner.js och widget-handles.js andrades av BADA grenarna, sa alla fyra far
+  // en NY strang som bara sager nar. media.js rordes INTE av rotations-UI:t och behaller
+  // darfor mains 20260819-1 — strangarna foljer filerna, inte varandra.
+  //
   // STRANGEN SAGER NAR, INTE VAD. `20260818-guardian` levde i media.js i tre timmar och overlevde
   // den familj den var uppkallad efter; en lasare som sokte pa "guardian" hittade en versionsstrang
   // och ingen widget. Vad som andrades star i kommentaren har och i commiten. `sokvakt` nedan
   // vaktar regeln.
-  assert.match(studio, /studio\.css\?v=20260818-scenbakgrund/);
+  assert.match(studio, /studio\.css\?v=20260820-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
-  assert.match(studio, /vyra-rotation\.js\?v=1/);
-  assert.match(studio, /widget-handles\.js\?v=20260818-rotation/);
+  assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
+  assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
+  assert.match(studio, /widget-handles\.js\?v=20260820-1/);
   assert.match(studio, /[^-]media\.js\?v=20260819-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga

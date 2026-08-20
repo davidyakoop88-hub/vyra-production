@@ -1330,3 +1330,10 @@ html.overlay-output .vyra-scenbakgrund{position:fixed;inset:0;width:100vw;height
 .scenbakgrund-kontroll .sb-obs-not{font-size:8px;line-height:1.4;color:#767b89}
 .scenbakgrund-kontroll .sb-anvand{background:var(--purple,#7c5cff);border:0;color:#fff;border-radius:6px;padding:7px;font-size:10px;font-weight:700}
 .scenbakgrund-kontroll [hidden]{display:none!important}
+
+/* Rotationshandtaget: lollipop ovanfor n-handtaget — rund knopp pa ett kort skaft. Foljer
+   .vyra-handle-formspraket och arver inversskalningen vid strackning. */
+.vyra-handle-rot{left:50%;top:-32px;margin-left:-7px;width:14px;height:14px;border-radius:50%;cursor:grab}
+.vyra-handle-rot:active{cursor:grabbing}
+.vyra-handle-rot::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:12px;margin-left:-1px;background:#9f35ff;box-shadow:0 0 6px #9f35ff}
+label[data-rotation-falt] input{width:100%}
