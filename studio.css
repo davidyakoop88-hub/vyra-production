@@ -1353,3 +1353,4 @@ html.overlay-output .vyra-scenbakgrund{position:fixed;inset:0;width:100vw;height
 .vyra-handle-rot:active{cursor:grabbing}
 .vyra-handle-rot::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:12px;margin-left:-1px;background:#9f35ff;box-shadow:0 0 6px #9f35ff}
 label[data-rotation-falt] input{width:100%}
+

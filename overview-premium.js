@@ -8,19 +8,6 @@ home = function () {
   const overlayText = widgetAntal
     ? `Overlay · ${widgetAntal} ${widgetAntal === 1 ? 'widget' : 'widgets'}`
     : 'Overlay tom';
-  // Tredje faltet ar en STABIL hook for livedata. Index-klasserna (.s0…) beskriver plats i raden,
-  // inte innebord — flyttas ett kort byter de betydelse under fotterna pa den som lyssnar.
-  const emptyStats = [
-    ['👁', 'TITTARE', 'viewers'],
-    ['♥', 'LIKES', 'likes'],
-    ['◆', 'GÅVOR', 'gifts'],
-    // DIAMANTER, inte INTAKT. Faltet gift.coins fylls fran diamondCount i bada bryggorna, och
-    // diamanter ar vad kreatoren far — coins ar vad tittaren kopar for, grovt dubbelt sa manga.
-    // Ingen av konkurrenterna rakar heller om till pengar: TikFinity visar "Coins Earned",
-    // TikControl "Total Diamonds". Kursen varierar med region och avtal, och ett fel belopp i
-    // kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
-    ['💎', 'DIAMANTER', 'diamonds']
-  ];
 
   return `<section class="home-welcome">
     <div>
@@ -33,11 +20,8 @@ home = function () {
       <span><i class="${widgetAntal ? '' : 'offline'}"></i>${overlayText}</span>
     </div>
   </section>
-  <div class="stats premium-stats">
-    ${emptyStats.map((item, index) => `<article class="card stat premium-stat s${index}" data-stat="${item[2]}">
-      <div class="stat-icon">${item[0]}</div>
-      <div><small>${item[1]}</small><strong>—</strong><em><span>Visas under riktig LIVE</span></em></div>
-    </article>`).join('')}
+  <div class="toppgivare" data-toppgivare>
+    <p class="toppgivare-tom">Toppgivarna visas här under riktig LIVE.</p>
   </div>
   <!-- TOTALT: historiken, inte sessionen.
        Korten ovanfor visar SESSIONEN och star pa "—" sa fort man inte sander. Den har raden ar
@@ -125,25 +109,39 @@ if (typeof view !== 'undefined' && view === 'home') render();
 // Vardena lever bara i minnet. De ska inte overleva en omladdning, och tokenlaget (?access=) far
 // aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
 (function () {
-  // `las` = TikTok skickar redan totalen, kortet visar den rakt av.
-  // `lagg` = ingen total finns, kortet summerar sjalvt.
-  const KORT = [
-    { stat: 'viewers', typer: ['viewer'], las: data => Number(data.count) },
-    { stat: 'likes', typer: ['like', 'likes'], las: data => Number(data.points) },
-    // GAVOR ar ANTAL. Coin-vardet (falt: coins) hor till INTAKT-kortet — vill man byta ar det
-    // `lagg: data => Number(data.coins)` och inget annat.
-    //
-    // Summering ar saker har, och det ar inte sjalvklart: bada bryggorna vidarebefordrar bara
-    // SISTA ramen av en streakbar gava (tiktok-bridge/bridge.js:314,
-    // electron-app/tiktok-service.js:97) — annars hade en combo blivit ett triangeltal. Nar
-    // eventet nar hit motsvarar det en avslutad gava eller combo, med count = repeatCount.
-    { stat: 'gifts', typer: ['gift'], lagg: data => Number(data.count) },
-    // Samma event som GAVOR, annat tal: `coins` bar redan hela combons diamantvarde
-    // (coinsEach x repeatCount), sa det laggs till rakt av och multipliceras aldrig med count.
-    { stat: 'diamonds', typer: ['gift'], lagg: data => Number(data.coins) }
-  ];
+  // ---- TOPPGIVARNA ----------------------------------------------------------------------------
+  //
+  // Ersatte de fyra summakorten (TITTARE/LIKES/GAVOR/DIAMANTER) 2026-08-20 pa Davids beslut:
+  // en rad med de fem som gett mest, var och en med sin andel av totalen.
+  //
+  // DIAMANTER, inte INTAKT — samma skal som det gamla kortet bar: faltet gift.coins fylls fran
+  // diamondCount i bada bryggorna, och diamanter ar vad kreatoren far. Coins ar vad tittaren koper
+  // for, grovt dubbelt sa manga. Ingen av konkurrenterna rakar heller om till pengar: TikFinity
+  // visar "Coins Earned", TikControl "Total Diamonds". Kursen varierar med region och avtal, och
+  // ett fel belopp i kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
+  //
+  // SUMMERING AR SAKER, och det ar inte sjalvklart: bada bryggorna vidarebefordrar bara SISTA
+  // ramen av en streakbar gava (tiktok-bridge/bridge.js:314, electron-app/tiktok-service.js:97) —
+  // annars hade en combo blivit ett triangeltal. Nar eventet nar hit motsvarar det en avslutad
+  // gava eller combo, och `coins` bar REDAN hela combons varde (coinsEach x repeatCount). Det
+  // laggs darfor till rakt av och multipliceras ALDRIG med count.
+  const TOPP_ANTAL = 5;
+  const givare = new Map();              // nyckel -> { namn, avatar, diamanter }
+  let total = 0;
 
-  const senaste = Object.create(null);   // stat -> tal, saknas = inget event an
+  // Nyckeln ar userId nar det finns, annars namnet. Tva tittare kan ha samma visningsnamn, och da
+  // ska de inte slas ihop till en rad som ser ut som en storgivare.
+  function nyckelFor(data) {
+    return String(data.userId || data.username || data.uniqueId || data.user || '').toLowerCase();
+  }
+
+  // Avataren ar en URL fran ett event, alltsa data utifran. Bara http/https slapps igenom: allt
+  // annat (data:, blob:, javascript:) har ingen legitim anvandning har, och en <img> ar inte ratt
+  // plats att lita pa en frammande strang.
+  function saker(url) {
+    const s = String(url || '');
+    return /^https?:\/\//i.test(s) ? s : '';
+  }
   let koad = false;
   let levande = true;
 
@@ -176,14 +174,68 @@ if (typeof view !== 'undefined' && view === 'home') render();
   function mala() {
     koad = false;
     if (!levande) return;
-    for (const kort of KORT) {
-      const varde = senaste[kort.stat];
-      if (varde === undefined) continue;
-      // Vyn kan vara en annan just nu (editor, overlay). Da finns inget kort, och det ar inte ett fel.
-      const nod = document.querySelector('[data-stat="' + kort.stat + '"] strong');
-      if (nod) nod.textContent = varde.toLocaleString('sv-SE');
-    }
+    malaToppgivare();
     malaPuls();
+  }
+
+  // Raderna bar ANVANDARDATA fran TikTok: visningsnamn och avatar-URL. Allt byggs darfor med
+  // createElement och textContent — aldrig innerHTML. Ett namn som ser ut som markup ska visas
+  // som text, inte tolkas.
+  function malaToppgivare() {
+    if (!givare.size) return;
+    // Vyn kan vara en annan just nu (editor, overlay). Da finns ingen rad, och det ar inte ett fel.
+    const rad = document.querySelector('[data-toppgivare]');
+    if (!rad) return;
+
+    const topp = [...givare.values()].sort((a, b) => b.diamanter - a.diamanter).slice(0, TOPP_ANTAL);
+    const ny = document.createElement('div');
+    ny.className = 'toppgivare-rad';
+
+    for (const g of topp) {
+      const kort = document.createElement('article');
+      kort.className = 'toppgivare-kort';
+
+      const bild = document.createElement('span');
+      bild.className = 'toppgivare-avatar';
+      if (g.avatar) {
+        const img = document.createElement('img');
+        img.src = g.avatar;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        bild.append(img);
+      }
+      kort.append(bild);
+
+      const text = document.createElement('div');
+      const namnrad = document.createElement('b');
+      namnrad.textContent = g.namn;
+      const varde = document.createElement('strong');
+      varde.textContent = kort9(g.diamanter) + ' 💎';
+      const andel = document.createElement('em');
+      // Andelen rundas av HELTAL. En rad som sager "0 %" for nagon som faktiskt gett nagot ser ut
+      // som ett fel, sa allt under en procent visas som "<1 %".
+      const procent = total > 0 ? (g.diamanter / total) * 100 : 0;
+      andel.textContent = '(' + (procent > 0 && procent < 1 ? '<1' : Math.round(procent)) + ' %)';
+      text.append(namnrad, varde, andel);
+      kort.append(text);
+      ny.append(kort);
+    }
+
+    const gammal = rad.querySelector('.toppgivare-rad');
+    if (gammal) gammal.replaceWith(ny); else rad.append(ny);
+    const tomtext = rad.querySelector('.toppgivare-tom');
+    if (tomtext) tomtext.hidden = true;
+  }
+
+  // 174200 -> "174.2 K", 15000 -> "15 K", 9600 -> "9.6 K". Raden rymmer fem kort, och fulla
+  // siffror bryter layouten vid stora tal. EN decimal genomgaende, och en avslutande ",0" stryks:
+  // "15,0 K" laser sig som falsk precision pa ett tal som ar jamnt.
+  function kort9(n) {
+    const skala = (v, suffix) => v.toFixed(1).replace(/\.0$/, '') + ' ' + suffix;
+    if (n >= 1e6) return skala(n / 1e6, 'M');
+    if (n >= 1e3) return skala(n / 1e3, 'K');
+    return String(Math.round(n));
   }
 
   // Raderna bar ANVANDARDATA fran TikTok. Listan byggs darfor med createElement och textContent —
@@ -224,37 +276,41 @@ if (typeof view !== 'undefined' && view === 'home') render();
       schemalagg();
     }
 
-    // filter, inte find: ETT event kan mata flera kort. En gava bar bade sitt antal (GAVOR) och
-    // sitt diamantvarde (DIAMANTER), och med find hade bara det forsta av dem uppdaterats.
-    const traffar = KORT.filter(k => k.typer.includes(typ));
-    if (!traffar.length) return;
-    let nagotAndrat = false;
-    for (const kort of traffar) {
-      const tal = (kort.las || kort.lagg)(data);
-      if (!Number.isFinite(tal) || tal < 0) continue;
-      // Ett trasigt event far inte oka en summa. `las` skriver over och ar darmed sjalvlakande —
-      // nasta korrekta event rattar den. En felaktig `lagg` sitter kvar hela sessionen.
-      if (kort.lagg && tal === 0) continue;
-      senaste[kort.stat] = kort.lagg
-        ? (senaste[kort.stat] || 0) + Math.round(tal)
-        : Math.round(tal);
-      nagotAndrat = true;
+    if (typ !== 'gift') return;
+    // Ett trasigt event far inte oka en summa. En felaktig addition sitter kvar hela sessionen —
+    // till skillnad fran ett vardet-skrivs-over-kort finns ingen sjalvlakning har.
+    const varde = Number(data.coins);
+    if (!Number.isFinite(varde) || varde <= 0) return;
+    const nyckel = nyckelFor(data);
+    if (!nyckel) return;
+
+    const forra = givare.get(nyckel);
+    const avatar = saker(data.profileImage || data.avatarUrl || data.profileUrl);
+    if (forra) {
+      forra.diamanter += Math.round(varde);
+      // Avataren kan komma forst i ett senare event. Den skrivs bara over av ett riktigt varde,
+      // aldrig tillbaka till tomt.
+      if (avatar) forra.avatar = avatar;
+      forra.namn = namn(data);
+    } else {
+      givare.set(nyckel, { namn: namn(data), avatar, diamanter: Math.round(varde) });
     }
-    if (nagotAndrat) schemalagg();
+    total += Math.round(varde);
+    schemalagg();
   });
 
   // render() bygger om #view fran grunden, sa korten ar nya noder varje gang. Utan den har skulle
   // vardena forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
   // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
   const observer = new MutationObserver(() => {
-    if (puls.length) { schemalagg(); return }
-    for (const kort of KORT) if (senaste[kort.stat] !== undefined) { schemalagg(); return }
+    if (puls.length || givare.size) schemalagg();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
   addEventListener('vyra-session-ended', () => {
     levande = false;
-    for (const kort of KORT) delete senaste[kort.stat];
+    givare.clear();
+    total = 0;
     puls.length = 0;
     observer.disconnect();
   });
