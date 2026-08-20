@@ -56,7 +56,8 @@
         "tests/browser/layout-format-status.browser.test.js",
         "tests/browser/layout-integritet.browser.test.js",
         "tests/browser/tomma-handlingar.browser.test.js",
-        "tests/browser/las-proportioner.browser.test.js"
+        "tests/browser/las-proportioner.browser.test.js",
+        "tests/browser/framsida-logo.browser.test.js"
       ],
       "matning": [],
       "risker": [
