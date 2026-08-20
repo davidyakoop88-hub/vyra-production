@@ -1,5 +1,9 @@
 # Att läsa av under nästa riktiga sändning
 
+> Den här sändningen är **punkt 2 av tre** på vägen till publik lansering — se
+> [](lansering.md).
+
+
 Fyra saker i battle-kedjan går **inte** att avgöra utan en riktig TikTok LIVE-match, och sedan
 2026-08-18 väntar Guardian Emblem (punkt 6) på samma sändning. De är byggda
 med tolerant kod och medvetna gissningar, och varje gissning står utskriven här tillsammans med
