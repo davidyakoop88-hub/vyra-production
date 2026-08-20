@@ -151,7 +151,16 @@ function makeDom(containers = []) {
   // Some sections do not build their own container — they attach to one an earlier bind() created.
   // Each family declares the containers it expects to already be there, so the dependency is stated
   // per family instead of every family silently getting every container.
-  containers.forEach(cls => { const el = make('div'); el.className = cls; catalog.append(el) });
+  // En post kan vara en NASTLAD kedja: 'prototype-section template-style-grid' bygger griden
+  // inuti sektionen. Platta syskon racker inte langre — media.js:129 slar upp sin grid som
+  // '.prototype-section .template-style-grid' just for att dokumentordningen inte far avgora
+  // vilken av de tre griderna den traffar. Fixturen maste kunna uttrycka agarskapet.
+  containers.forEach(kedja => {
+    let foralder = catalog;
+    for (const cls of String(kedja).trim().split(/\s+/)) {
+      const el = make('div'); el.className = cls; foralder.append(el); foralder = el;
+    }
+  });
   return {
     catalog,
     document: {
@@ -214,8 +223,8 @@ const HOISTED = [
     { rankingKinds: { templateTopCoins: { title: 'TOP COINS', icon: '●', label: 'Top Coins' },
       templateTopPoints: { title: 'TOP POINTS', icon: '◆', label: 'Top Points' } } }],
   ['Top Gift · tema', "catalogKey='catalog:topgift:'+theme", {}, ['prototype-section']],
-  ['Top Gift · extratema', "catalogKey='catalog:topgift:extra:'+theme", { GIFT_FRAMES: FRAMES('topgift.frame') }, ['template-style-grid']],
-  ['Top Gift · ram', "catalogKey='catalog:topgift:frame:'+fid", { GIFT_FRAMES: FRAMES('topgift.frame') }, ['template-style-grid']],
+  ['Top Gift · extratema', "catalogKey='catalog:topgift:extra:'+theme", { GIFT_FRAMES: FRAMES('topgift.frame') }, ['prototype-section template-style-grid']],
+  ['Top Gift · ram', "catalogKey='catalog:topgift:frame:'+fid", { GIFT_FRAMES: FRAMES('topgift.frame') }, ['prototype-section template-style-grid']],
   ['Top Streak · tema', "catalogKey='catalog:topstreak:'+theme", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Top Streak · ram', "catalogKey='catalog:topstreak:frame:'+fid", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Heart Goal', "catalogKey='catalog:heartgoal:'+t", { heartThemes: FRAMES('heartgoal.theme') }],
