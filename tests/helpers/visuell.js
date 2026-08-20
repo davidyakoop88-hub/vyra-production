@@ -329,7 +329,26 @@ const FYLLNAD = (async (b64) => {
 
    Vad tröskeln INTE döljer: en flyttad kant, en ändrad färg, text ovanpå text, en avklippt platta.
    Allt sådant ändrar kanaler med tiotal eller hundratal, inte med ett. */
-const KANALTROSKEL = 1;   // se kommentaren ovan: en 255-del är samma färg, 2 är en skillnad
+/* HÖJD FRÅN 1 TILL 6 DEN 2026-08-20, PÅ ÄGARENS BESLUT.
+   Uppmätt: första körningen av vakten mot de incheckade referenserna (CI-körning 692, commit
+   45070c5) föll på tre nycklar, alla mikroskopiska —
+
+     catalog:lastx:badge                    1 av 196500 px, 1×1 px vid (241,359), kanal 2 av 255
+     catalog:lastx:stack                    6 av 212925 px, 203×246 px vid (142,75),  kanal 6
+     catalog:topstreak:frame:crystal-spire  1 av 114600 px, 1×1 px vid (197,232),     kanal 5
+
+   Referensjobbet krävde att session 2 och 3 var EXAKT identiska, och det var de för alla 166. Men
+   en fjärde session — vakten i ett annat jobb, på en annan löpare — skiljer sig på enstaka pixlar.
+   Ettan kalibrerades på en enda observation och var för snäv; brusgolvet på CI är uppemot 6.
+
+   Alternativet var att undanta de tre nycklarna. Det valdes bort: hålen växer med tiden och
+   orsaken finns kvar, så nästa build kan ge tre nya.
+
+   DET HÄR ÄR FORTFARANDE INGEN PROCENTTOLERANS. Tröskeln säger att färger inom 6/255 är samma
+   färg — inte att en andel av bilden får skilja sig. Det finns ingen budget att gömma ett fel i:
+   EN pixel som skiljer 7 fäller provet. En flyttad kant, en ändrad färg, text ovanpå text eller
+   en avklippt platta flyttar kanaler med tiotal eller hundratal. */
+const KANALTROSKEL = 6;
 
 const JAMFOR = (async ([a, b, KANALTROSKEL]) => {
   const ld = u => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = 'data:image/png;base64,' + u });
