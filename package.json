@@ -13,6 +13,7 @@
     "domaner": "node scripts/domaner.js",
     "test:doman": "node scripts/domaner.js test",
     "test:visual": "node --test tests/visual/visuell-regression.browser.test.js",
+    "test:visual:rigg": "node --test tests/visual/jamforaren-muterad.browser.test.js tests/visual/css-andring-faller-ratt.browser.test.js",
     "test:visual:update": "node scripts/visuell-referens.js"
   },
   "devDependencies": {

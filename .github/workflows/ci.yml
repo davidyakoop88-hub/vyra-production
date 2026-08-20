@@ -185,6 +185,15 @@ jobs:
         timeout-minutes: 10
         run: npx playwright install chromium
 
+      - name: 'Visuell · riggproven (jamforaren muterad, CSS-andring)'
+        timeout-minutes: 15
+        run: npm run test:visual:rigg
+
+      # RIGGPROVEN FORST, VAKTEN SEDAN. Fas 3 och 4 kraver inga referensbilder och kor darfor
+      # aven nar referenserna ar for gamla eller binaren har bytts: de bevisar att jamforaren
+      # avgor utfallet (mutation at bada hallen) och att en CSS-andring faller exakt de nycklar
+      # som anvander regeln. Faller de, sager vaktens 166 grona nycklar ingenting — da ar det
+      # riggen som ar trasig, inte widgetarna, och ordningen har gor det synligt i loggen.
       - name: 'Visuell · alla katalognycklar mot referens'
         timeout-minutes: 30
         run: npm run test:visual
