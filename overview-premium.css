@@ -50,7 +50,12 @@
 
 /* Skenet ligger i #view, inte i body: da kan det aldrig hamna ovanpa sidomenyn eller sidhuvudet,
    och det foljer med nar vyn byts. #view far position:relative for att bli dess referensram. */
-#view{position:relative}
+/* SCOPAD MED :has(). Forsta versionen satte `#view{position:relative}` RAKT AV, och det ar en
+   global regel: #view ar samma nod i editorn och i overlay-vyn. En ny positioneringskontext dar
+   flyttar referensramen for varje absolut placerat barn — gifter-fas-risingtier foll pa det i
+   CI (trappans opaciteter), och provet gick igenom pa commiten fore. Regeln galler nu bara nar
+   skenet faktiskt ligger i vyn, alltsa bara pa Oversikten. */
+#view:has(>.oversikt-sken){position:relative}
 .oversikt-sken{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:24px}
 /* Opaciteten ar UPPMATT, inte vald pa kansla: vid .5 blev hela vyn ett lila falt och rubriken
    'Din live ar redo att glansa' stod i en ljus plamm — rorelse far aldrig kosta laslighet.
@@ -61,7 +66,7 @@
 .oversikt-sken i:nth-child(3){width:300px;height:300px;left:38%;bottom:-8%;background:#ec4899;opacity:.1;animation:skenC 27s ease-in-out infinite}
 /* Innehallet maste ligga OVANFOR skenet. .home-welcome och .home-grid ar premiumvyns tva block,
    .toppgivare och .stats basvyns — alla fyra namns, annars sjunker halva vyn ner i blurren. */
-#view>.home-welcome,#view>.home-grid,#view>.toppgivare,#view>.stats,#view>.card{position:relative;z-index:1}
+#view:has(>.oversikt-sken)>.home-welcome,#view:has(>.oversikt-sken)>.home-grid,#view:has(>.oversikt-sken)>.toppgivare,#view:has(>.oversikt-sken)>.stats,#view:has(>.oversikt-sken)>.card,#view:has(>.oversikt-sken)>.command-grid{position:relative;z-index:1}
 @keyframes skenA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(120px,70px) scale(1.18)}}
 @keyframes skenB{0%,100%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-140px,50px) scale(.9)}}
 @keyframes skenC{0%,100%{transform:translate(0,0) scale(.95)}50%{transform:translate(90px,-80px) scale(1.2)}}

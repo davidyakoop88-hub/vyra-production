@@ -130,7 +130,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-08-20 for liv i tomma laget: overview-premium.css/.js (skelett + sken) och
   // studio.js (basvyn bar samma skelett) andrades. media.js bar buntens URL:er och maste darfor
   // folja med — annars pekar en cachad media.js pa foregaende version av bada.
-  assert.match(studio, /[^-]media\.js\?v=20260820-7/);
+    // Bumpad 2026-08-20 for scopningen av skenet: BARA overview-premium.css andrades
+  // (#view -> #view:has(>.oversikt-sken)). media.js bar dess URL och maste folja med.
+  assert.match(studio, /[^-]media\.js\?v=20260820-8/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

@@ -69,3 +69,35 @@ test('bada vyerna bar samma toppgivarrad', () => {
       `${namn} bar en annan tomtext an den andra vyn`);
   }
 });
+
+test('oversiktens CSS ror aldrig #view globalt', () => {
+  // KOSTADE ETT MERGAT FEL 2026-08-20. Skenet bakom Oversikten behovde en positioneringskontext,
+  // och jag skrev `#view{position:relative}` rakt av. #view ar SAMMA nod i editorn och i
+  // overlay-vyn: en ny positioneringskontext dar flyttar referensramen for varje absolut placerat
+  // barn. gifter-fas-risingtier foll i CI pa trappans opaciteter, och gick igenom pa commiten fore
+  // — orsaken var alltsa min, inte en flackning.
+  //
+  // Regeln maste vara villkorad av att skenet faktiskt ligger i vyn. `:has()` gor det utan att
+  // nagon behover komma ihag att satta en klass pa #view nar vyn byts.
+  // Kommentarerna maste bort forst. Forsta versionen av den har vakten fallde pa sin EGEN
+  // forklaring: texten ovan namner `#view{position:relative}` som avskrackande exempel, och en
+  // ren textsokning kan inte skilja en regel fran ett resonemang om en regel.
+  const css = las('overview-premium.css').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Inte VARJE oscopad #view-regel ar farlig. `#view{padding:...}` har legat dar lange och ror
+  // ingenting utanfor sin egen ruta. Det farliga ar de egenskaper som etablerar en ny
+  // referensram eller stackningskontext for alla barn — det ar DE som flyttar saker i editorn.
+  const FARLIGA = /(^|[;{\s])(position\s*:\s*(?!static)|transform\s*:|perspective\s*:|filter\s*:|contain\s*:|z-index\s*:)/;
+
+  const brott = [];
+  for (const m of css.matchAll(/(^|[}])\s*([^{}]*#view[^{}]*)\{([^}]*)\}/g)) {
+    const valjare = m[2].trim();
+    if (valjare.includes(':has(')) continue;      // villkorad pa Oversikten — ofarlig
+    if (FARLIGA.test(m[3])) brott.push(`${valjare} { ${m[3].trim()} }`);
+  }
+
+  assert.deepEqual(brott, [],
+    'overview-premium.css ger #view en ny referensram utan att villkora pa Oversikten:\n  '
+    + `${brott.join('\n  ')}\n#view ar SAMMA nod i editorn och i overlay-vyn — en oscopad regel `
+    + 'dar flyttar varje absolut placerat barn i vyer den aldrig var tankt att rora.');
+});
