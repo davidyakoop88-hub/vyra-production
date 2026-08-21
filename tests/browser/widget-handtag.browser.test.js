@@ -82,7 +82,39 @@ async function editorMedWidget(skala = 1) {
     assert.equal(aktiv, skala, `kanvasskalan gick inte att satta till ${skala}, fick ${aktiv}`);
     await page.waitForTimeout(200);
   }
+  await lugnaKoreografin(page);
   return { page, id };
+}
+
+// GEOMETRI FAR INTE MATAS MITT I EN KOREOGRAFI.
+//
+// UPPMATT 2026-08-21, orsaken till att de har proven flackat i CI (−2, −4 och −8 px pa tre
+// korningar av samma commit, alltid gront lokalt):
+//
+//   vyraAppear       duration 3600 ms   iterations 1          <- entren
+//   vyraFlipSmooth   duration 10000 ms  iterations Infinity   <- Top Gifts flip
+//   pfFront/pfBack   duration 1300 ms   iterations 1
+//
+// Fixturen vantade 2500 + 600 = 3100 ms. Entren hade alltsa 500 ms kvar nar draget borjade, och
+// bade `fore`- och `efter`-matningen lastes ur en widget som rorde sig av EGEN kraft. Lokalt
+// landade faserna likadant bada gangerna; pa en langsammare CI-lopare gjorde de inte det, och
+// skillnaden dok upp som "overkanten flyttade sig N px".
+//
+// En langre waitForTimeout ar fel svar — den flyttar bara gransen till nasta langsammare maskin,
+// och `vyraFlipSmooth` tar ANDA aldrig slut. Vi vantar darfor ut de andliga animationerna och
+// FRYSER de eviga. Provet handlar om geometri, inte om rorelse.
+async function lugnaKoreografin(page) {
+  await page.evaluate(async () => {
+    const widget = document.querySelector('.widget.selected');
+    if (!widget) return;
+    const andliga = widget.getAnimations({ subtree: true })
+      .filter(a => a.effect?.getTiming?.().iterations !== Infinity);
+    // `.finished` avvisas om animationen avbryts av en omritning — det ar inte ett fel har.
+    await Promise.all(andliga.map(a => a.finished.catch(() => {})));
+    for (const a of widget.getAnimations({ subtree: true })) a.pause();
+  });
+  // En bildruta sa den frysta stallningen hunnit malas innan nagot mats.
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 }
 
 const box = (page, sel) => page.evaluate(s => {
@@ -102,6 +134,30 @@ async function dra(page, riktning, dx, dy) {
   await page.mouse.up();
   await page.waitForTimeout(350);
 }
+
+// VAKTEN FOR ALLA ANDRA PROV I FILEN. Tas lugnaKoreografin() bort, eller slutar den bita for en
+// ny widgettyp, borjar geometriproven mata en widget i rorelse igen — och de faller da inte har
+// och nu, utan slumpvis i CI om nagra veckor. Det ar exakt sa den har flackningen levde: tre
+// korningar av samma commit gav −2, −4 och −8 px, och alla var grona lokalt.
+test('inga animationer loper nar geometrin mats', { skip }, async () => {
+  const { page } = await editorMedWidget();
+  const kvar = await page.evaluate(() => {
+    const w = document.querySelector('.widget.selected');
+    if (!w) return { saknas: true };
+    const alla = w.getAnimations({ subtree: true });
+    return {
+      lopande: alla.filter(a => a.playState === 'running')
+        .map(a => (a.animationName || 'okand') + ':' + a.playState),
+      totalt: alla.length
+    };
+  });
+  await page.close();
+  assert.ok(!kvar.saknas, 'ingen vald widget att mata');
+  assert.deepEqual(kvar.lopande, [],
+    `${kvar.lopande.length} av ${kvar.totalt} animationer loper fortfarande nar proven mater `
+    + `geometri: ${kvar.lopande.join(', ')}. En widget som ror sig av egen kraft gor varje `
+    + 'kantmatning till en tidsfraga, och det syns bara som slumpvisa fall i CI.');
+});
 
 test('den valda widgeten har handtag i alla atta lagen plus rotationens', { skip }, async () => {
   // Kontraktet vaxte 2026-08-18: atta vaderstreck + rotationslollipopen ('rot') ur
