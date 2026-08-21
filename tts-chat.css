@@ -27,3 +27,20 @@
 .tts-log-row span{color:#d8c4dd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tts-save{margin-top:4px}
 @media(max-width:900px){.tts-chat-grid{grid-template-columns:1fr}.tts-special-row{grid-template-columns:1fr 1fr}}
+
+/* STATUSRADEN: sager om TTS faktiskt hor live-chatten (Davids fraga 2026-08-20).
+   Fargen bar betydelsen och prickens klass ar samma sprak som sidhuvudets anslutningslampa —
+   gron = det funkar, gul = vantar, rod = du maste gora nagot, gra = avstangd. */
+.tts-status{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid #322044;border-radius:9px;background:#150d1f;font-size:11px}
+.tts-status i{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#6b6474}
+.tts-status b{font-weight:600;color:#f0e8f6}
+.tts-status span{color:#948a9e}
+/* Namnet ar tittardata och far sin egen ton — sa raden gar att lasa utan att namnet forvaxlas
+   med var egen text. */
+.tts-status em{font-style:normal;color:#d9c6ea}
+.tts-status-lyssnar i{background:#5ddca4;box-shadow:0 0 9px #5ddca4}
+.tts-status-vantar i{background:#e8b955;box-shadow:0 0 9px #e8b95580}
+.tts-status-filtrerad i{background:#e8b955;box-shadow:0 0 9px #e8b95580}
+.tts-status-ingen i{background:#ff5f7a;box-shadow:0 0 9px #ff5f7a80}
+.tts-status-ingen{border-color:#5a2436}
+@media (prefers-reduced-motion:reduce){.tts-status i{box-shadow:none}}
