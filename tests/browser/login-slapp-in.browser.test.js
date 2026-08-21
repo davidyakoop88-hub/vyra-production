@@ -66,6 +66,11 @@ test.after(async () => {
 //
 // Att sanka provets krav vore fel svar: bada lagena ar riktiga och bada ska provas. De sags nu
 // bara ut i klartext i stallet for att arvas fran vilken maskin som rakar kora.
+//
+// RATTELSE, uppmatt i CI samma kvall: contextvalet `reducedMotion` i newPage() RACKTE INTE.
+// Dorren uteblev i tva varv till, och forst nar `page.emulateMedia()` sattes pa den oppnade sidan
+// spelade sekvensen i CI. Bada satts nu, och laget MATS efterat — ett antagande om vad en
+// riggflagga gor ar precis lika osakert som ett antagande om maskinen.
 async function loggaIn(opts = {}) {
   const page = await browser.newPage(Object.assign(
     { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
@@ -162,7 +167,11 @@ test('en lyckad inloggning fastnar ALDRIG i animationen', { skip, timeout: 60000
     // CI — det har har hittills bara ratt sig ur.
     await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 20000 });
+    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
+    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
+    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
+    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
+    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
     const ms = Date.now() - start;
     assert.ok(ms < 6000, `studion laddades forst efter ${ms} ms — sekvensen far inte bli en grind`);
   } finally { await page.close() }
@@ -178,7 +187,11 @@ test('prefers-reduced-motion: ingen dorr och ingen vantan', { skip, timeout: 600
     // CI — det har har hittills bara ratt sig ur.
     await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 20000 });
+    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
+    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
+    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
+    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
+    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
     const ms = Date.now() - start;
     assert.ok(ms < 1200,
       `studion laddades efter ${ms} ms trots reduced-motion — steget ska hoppas over helt, `
