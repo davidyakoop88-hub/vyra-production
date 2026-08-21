@@ -57,8 +57,18 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
+// `reducedMotion` sätts ALLTID explicit, aldrig underforstatt.
+//
+// UPPMATT i CI 2026-08-21: provet "sekvensen spelas" foll efter 32 sekunder — den vantade pa en
+// dorr som aldrig kom. Headless Chromium rapporterar `prefers-reduced-motion: reduce` som
+// standard, och da hoppar slappIn() over hela steget med flit. Provet antog tyst att rorelse var
+// tillaten; lokalt var den det, i CI inte.
+//
+// Att sanka provets krav vore fel svar: bada lagena ar riktiga och bada ska provas. De sags nu
+// bara ut i klartext i stallet for att arvas fran vilken maskin som rakar kora.
 async function loggaIn(opts = {}) {
-  const page = await browser.newPage(Object.assign({ viewport: { width: 1440, height: 900 } }, opts));
+  const page = await browser.newPage(Object.assign(
+    { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
   await page.fill('#loginEmail', 'prov@vyra.test');
