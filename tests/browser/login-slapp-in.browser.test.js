@@ -100,6 +100,41 @@ async function loggaIn(opts = {}) {
   page.__inloggningssvar = page
     .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 40000 })
     .catch(() => null);
+
+  // LAT SIDAN ANTECKNA SJALV, MEDAN DET HANDER.
+  //
+  // Dorren lever 1500 ms och forsvinner nar redirecten sker. Att leta efter den EFTERAT ar en
+  // kapplopning mot den egna riggen: uppmatt i CI 2026-08-21 tog en enda sidladdning over 20
+  // sekunder pa samma maskin, och da hinner hela sekvensen spelas fardigt innan provet ens
+  // borjar titta. Samma commit kordes tva ganger och fallde pa TVA OLIKA prov — kvittot pa att
+  // det ar miljon och inte koden.
+  //
+  // Observatoren installeras darfor FORE klicket och skriver sin iakttagelse till sessionStorage,
+  // som overlever navigeringen till studio.html (samma ursprung). Da spelar det ingen roll hur
+  // langsam maskinen ar: anteckningen finns kvar nar vi kommer fram.
+  page.__sekvens = page.evaluate(() => new Promise(klar => {
+    const NYCKEL = 'vyra-prov-slapp-in';
+    sessionStorage.removeItem(NYCKEL);
+    const las = () => {
+      const dorr = document.querySelector('.login-dorr');
+      if (!dorr) return false;
+      const kort = document.querySelector('.login-kort');
+      const ord = document.querySelector('.login-valkommen');
+      sessionStorage.setItem(NYCKEL, JSON.stringify({
+        gront: !!kort && kort.classList.contains('login-klar'),
+        gubbe: !!document.querySelector('.login-gubbe'),
+        dold: dorr.getAttribute('aria-hidden'),
+        besked: ord ? ord.textContent : null,
+        roll: ord ? ord.getAttribute('role') : null,
+      }));
+      return true;
+    };
+    if (las()) return klar(true);
+    const obs = new MutationObserver(() => { if (las()) { obs.disconnect(); klar(true) } });
+    obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+    setTimeout(() => { obs.disconnect(); klar(false) }, 30000);
+  })).catch(() => null);   // navigeringen river kontexten — anteckningen ar redan skriven
+
   await page.click('.login-knapp');
   return page;
 }
@@ -121,32 +156,23 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
       + 'steget med FLIT och det finns ingen dorr att vanta pa — felet ligger i riggen, inte i '
       + 'produkten.');
     const svar = await page.__inloggningssvar;
-    try {
-      await page.waitForSelector('.login-dorr', { timeout: 15000 });
-    } catch (_) {
-      // GOR TIMEOUTEN TILL EN MATNING. Tva CI-varv har nu fallit har och loggen har bara sagt
-      // "Timeout" — vilket utesluter ingenting. Las ut vad sidan faktiskt star i.
+    await page.__sekvens;
+    // Anteckningen, inte elementet. Den skrevs i samma ogonblick dorren fanns och ligger kvar i
+    // sessionStorage aven efter att redirecten tagit oss till studio.html.
+    const rad = await page.evaluate(() => sessionStorage.getItem('vyra-prov-slapp-in'));
+    if (!rad) {
+      // GOR TYSTNADEN TILL EN MATNING. Tre CI-varv har fallit har och loggen sa bara "Timeout",
+      // vilket utesluter ingenting.
       const lage = await page.evaluate(() => ({
         url: location.href,
-        kort: !!document.querySelector('.login-kort'),
-        klar: document.querySelector('.login-kort')?.classList.contains('login-klar') ?? null,
-        dorr: !!document.querySelector('.login-dorr'),
-        valkommen: !!document.querySelector('.login-valkommen'),
-        fel: document.querySelector('#loginError')?.textContent || null,
-        mfa: !document.querySelector('[data-login-mfa]')?.hidden,
         rorelse: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        fel: document.querySelector('#loginError')?.textContent || null,
       })).catch(e => ({ kunde_inte_lasa: String(e && e.message) }));
-      assert.fail('ingen .login-dorr inom 15 s efter inloggningssvaret ('
-        + (svar ? svar.status() : 'inget svar sett') + '). Sidans lage: '
-        + JSON.stringify(lage) + ' · ' + (page.__konsol.length ? page.__konsol.join(' ; ') : 'inga konsolfel'));
+      assert.fail('sekvensen antecknade aldrig nagon dorr (inloggningssvar '
+        + (svar ? svar.status() : 'uteblev') + '). Lage: ' + JSON.stringify(lage) + ' · '
+        + (page.__konsol.length ? page.__konsol.join(' ; ') : 'inga konsolfel'));
     }
-    const m = await page.evaluate(() => ({
-      gront: document.querySelector('.login-kort').classList.contains('login-klar'),
-      gubbe: !!document.querySelector('.login-gubbe'),
-      dold: document.querySelector('.login-dorr').getAttribute('aria-hidden'),
-      besked: document.querySelector('.login-valkommen')?.textContent || null,
-      roll: document.querySelector('.login-valkommen')?.getAttribute('role') || null
-    }));
+    const m = JSON.parse(rad);
     assert.equal(m.gront, true, 'kortet blev inte gront');
     assert.equal(m.gubbe, true, 'ingen gubbe att ga in genom dorren');
     assert.equal(m.dold, 'true',
