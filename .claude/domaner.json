@@ -537,7 +537,8 @@
         "server/tts.js"
       ],
       "tester": [
-        "server/test/tts.test.js"
+        "server/test/tts.test.js",
+        "tests/tts-livestatus.test.js"
       ],
       "matning": [],
       "risker": [

@@ -233,7 +233,12 @@
     // `??`, not `||` — a special user explicitly set to speed/pitch 0 must not fall back to the
     // global default just because 0 is falsy.
     const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: numOrFallback(special?.speed, settings.speed), pitch: numOrFallback(special?.pitch, settings.pitch), volume: settings.volume };
-    if (sandTal(spoken, opts, settings.maxQueueLength)) pushLog({ time: now, username, nickname, text: spoken });
+    if (sandTal(spoken, opts, settings.maxQueueLength)) {
+      pushLog({ time: now, username, nickname, text: spoken });
+      statusLage.upplasta++;
+      statusLage.senasteNamn = String(nickname || username);
+      malaTtsStatus();
+    }
   }
   // VEM BETALAR OCH VEM LATER AR TVA OLIKA FRAGOR (§14).
   //
@@ -259,6 +264,7 @@
     if (window.VyraRostMaster && !window.VyraRostMaster.farKora()) return;
     enqueueSpeech(bud.text, bud.opts || {}, bud.maxKo);
   }
+  const statusLage = { inkomna: 0, upplasta: 0, senasteNamn: '' };
   document.addEventListener('vyra:tal', e => taEmotTal(e.detail));
   addEventListener('storage', e => { if (e.key === TAL_KANAL && e.newValue) try { taEmotTal(JSON.parse(e.newValue)) } catch {} });
 
@@ -270,7 +276,80 @@
   addEventListener('vyra-live-event', e => {
     const ev = e.detail || {};
     const type = String(ev.type || ev.event || '').toLowerCase().replace(/[\s_-]/g, '');
-    if (type === 'chat' || type === 'comment') handleChat(ev);
+    if (type !== 'chat' && type !== 'comment') return;
+    // Rakna INNAN filtren. Skillnaden mellan inkommen och upplast chatt ar precis vad
+    // panelen behover kunna saga: "jag hor dig, men ingenting passerar dina filter" ar
+    // ett helt annat besked an "ingen chatt kommer in".
+    statusLage.inkomna++;
+    handleChat(ev);
+    malaTtsStatus();
+  });
+
+  // ---- STATUSRADEN -----------------------------------------------------------------
+  //
+  // Davids fraga: "hur vet man att den ar kopplad till live?" Svaret var tidigare att det
+  // inte gick att se. Kryssrutan "Aktiverad" sager att FUNKTIONEN ar pa, inte att det
+  // kommer in nagon chatt, och testknappen bevisar bara att rosten later.
+  //
+  // Anslutningslaget lases ur `.connection` — SAMMA element som sidhuvudet redan malar ur
+  // vyra-server-status (studio-live.js). En egen kalla hade blivit en andra sanning om
+  // samma sak, och tva vyer som sager emot varandra kostade en hel kvall tidigare.
+  function ttsAnsluten() {
+    return !!document.querySelector('.connection')?.classList.contains('connected');
+  }
+
+  function ttsStatusText() {
+    if (!getSettings().enabled) {
+      // Panelen sparar forst nar man trycker Spara, och det ar det SPARADE vardet som styr om
+      // chatten lases upp. Raden visar darfor sanningen — men sager rakt ut nar kryssrutan ar
+      // i och sparningen glomd, annars ser det ut som att kryssrutan inte fungerar.
+      const ikryssad = !!document.querySelector('#ttsEnabled')?.checked;
+      return { klass: 'av', text: 'Avstängd',
+        detalj: ikryssad ? 'Kryssrutan är i men inte sparad — tryck Spara inställningar.'
+                         : 'Kryssa i Aktiverad och tryck Spara för att läsa upp chatten.' };
+    }
+    if (!ttsAnsluten()) return { klass: 'ingen', text: 'Ingen live ansluten', detalj: 'Anslut TikTok i sidhuvudet — utan anslutning kommer ingen chatt hit.' };
+    if (statusLage.upplasta > 0) {
+      return { klass: 'lyssnar', text: 'Lyssnar',
+        detalj: statusLage.upplasta + (statusLage.upplasta === 1 ? ' uppläst' : ' upplästa')
+          + (statusLage.senasteNamn ? ' · senast ' : ''), namn: statusLage.senasteNamn };
+    }
+    // Chatt kommer in men inget passerar filtren — utan det har beskedet ser det ut som
+    // att TTS ar trasig, nar det i sjalva verket ar installningarna som ar for harda.
+    if (statusLage.inkomna > 0) {
+      return { klass: 'filtrerad', text: 'Hör chatten, men inget passerar filtren',
+        detalj: statusLage.inkomna + ' meddelanden in, 0 upplästa — se filter och målgrupp nedan.' };
+    }
+    return { klass: 'vantar', text: 'Väntar på chatt', detalj: 'Anslutningen är uppe. Nästa kommentar läses upp.' };
+  }
+
+  // Malar EN nod. Aldrig innerHTML: tittarnamnet kommer fran TikTok och ska visas som
+  // text, inte tolkas. Saknas raden ar en annan vy oppen, och det ar inte ett fel.
+  function malaTtsStatus() {
+    const rad = document.querySelector('[data-tts-status]');
+    if (!rad) return;
+    const s = ttsStatusText();
+    rad.className = 'tts-status tts-status-' + s.klass;
+    rad.textContent = '';
+    const prick = document.createElement('i');
+    const rubrik = document.createElement('b');
+    rubrik.textContent = s.text;
+    const detalj = document.createElement('span');
+    detalj.textContent = s.detalj;
+    if (s.namn) {
+      const namn = document.createElement('em');
+      namn.textContent = '@' + String(s.namn).replace(/^@/, '');
+      detalj.append(namn);
+    }
+    rad.append(prick, rubrik, detalj);
+  }
+
+  addEventListener('vyra-server-status', malaTtsStatus);
+  addEventListener('vyra-server-offline', malaTtsStatus);
+  // Foregaende kontos siffror far inte folja med in i nasta session.
+  addEventListener('vyra-session-ended', () => {
+    statusLage.inkomna = 0; statusLage.upplasta = 0; statusLage.senasteNamn = '';
+    malaTtsStatus();
   });
 
   // --- UI --------------------------------------------------------------------------------------
@@ -305,6 +384,7 @@
     <div class="tts-chat-grid">
       <section class="card tts-general">
         <header><h3>Allmänna inställningar</h3></header>
+        <div class="tts-status" data-tts-status></div>
         <label class="tts-enabled-row"><input type="checkbox" id="ttsEnabled" ${s.enabled ? 'checked' : ''}> Aktiverad</label>
         <div class="ae-grid">
           <label>Språk<input id="ttsLanguage" placeholder="t.ex. sv-SE" value="${s.language}"></label>
@@ -382,6 +462,12 @@
   function bindTtsChat() {
     const root = document.querySelector('#view');
     if (!root) return;
+    // Mala EN gang direkt. Utan den har raden ar statusraden TOM tills nasta event kommer in —
+    // och i det vanligaste laget (ingen live ansluten) kommer inget event alls, sa den hade
+    // statt tom precis nar den behovdes som mest. Uppmatt i riktig Chrome.
+    malaTtsStatus();
+    // Kryssrutan Aktiverad andrar laget direkt, inte forst nar nasta chattrad kommer.
+    root.querySelector('#ttsEnabled')?.addEventListener('change', () => setTimeout(malaTtsStatus, 0));
 
     async function refreshVoiceOptions() {
       const s = getSettings();
@@ -492,6 +578,10 @@
 
     root.querySelector('#ttsSaveSettings').onclick = () => {
       setSettings(readFormSettings());
+      // Mala om DIREKT. Utan detta stod raden kvar pa "inte sparad" anda tills nasta event kom in
+      // — och sparade man medan ingen live var ansluten kom inget event alls. Uppmatt i Chrome:
+      // raden lag kvar i fel lage i hela sekvensen till nasta vyra-server-status.
+      malaTtsStatus();
       window.toast?.('TTS-inställningar sparade');
     };
   }
