@@ -69,8 +69,17 @@ test.after(async () => {
 async function loggaIn(opts = {}) {
   const page = await browser.newPage(Object.assign(
     { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
+  // ANDRA VAGEN ATT SATTA LAGET. Contextvalet ovan RACKTE INTE i CI 2026-08-21: dorren kom
+  // aldrig, och slappIn() har bara en enda vag ut — `prefers-reduced-motion: reduce`. Att satta
+  // det pa sidan ocksa ar en annan kodvag i Playwright (Emulation.setEmulatedMedia mot en redan
+  // oppnad sida) och kostar ingenting nar contextvalet redan tagit.
+  await page.emulateMedia({ reducedMotion: opts.reducedMotion || 'no-preference' });
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
+  // MAT FORUTSATTNINGEN, ANTA DEN INTE. Nar den har inte holl vantade provet 50 sekunder pa en
+  // dorr som med flit aldrig byggdes, och loggen sa bara "timeout" — den dyraste sortens rott.
+  page.__rorelselage = await page.evaluate(
+    () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference');
   await page.fill('#loginEmail', 'prov@vyra.test');
   await page.fill('#loginPassword', 'ettlangtlosenord123');
   // Haka pa svaret INNAN klicket, annars kan det hinna komma medan vi staller oss i ko.
@@ -92,6 +101,11 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
     // Egenskapen som ska bevisas ar att dorren kommer NAR SVARET KOMMIT, inte inom en viss tid
     // fran klicket. Vi vantar darfor ut svaret forst och mater sedan dorren i ett eget fonster.
     // Att sekvensen inte far bli en grind mats av nasta prov, som klockar redirecten.
+    assert.equal(page.__rorelselage, 'no-preference',
+      'webblasaren rapporterar fortfarande prefers-reduced-motion: reduce trots att bade '
+      + 'contextvalet och page.emulateMedia sagt no-preference. Da hoppar slappIn() over hela '
+      + 'steget med FLIT och det finns ingen dorr att vanta pa — felet ligger i riggen, inte i '
+      + 'produkten.');
     await page.__inloggningssvar;
     await page.waitForSelector('.login-dorr', { timeout: 15000 });
     const m = await page.evaluate(() => ({
