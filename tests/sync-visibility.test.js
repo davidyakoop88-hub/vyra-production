@@ -217,7 +217,11 @@ test('lankraden har en synlig vag till tokenhanteraren', () => {
   // Las hela bind-wrappern. En gissad slice pa 2600 tecken slutade mitt i och gjorde testet rott
   // for korrekt kod — matfelet, inte koden.
   const start = media.indexOf('overlay-link-bar');
-  const slut = media.indexOf("bar.querySelector('#copyObsLink')", start);
+  // Ankaret var forut '#copyObsLink'. Den knappen finns inte langre: 2026-08-21 slogs "Kopiera
+  // OBS-lank" och "Kopiera TikTok-lank" ihop till EN "Kopiera lank" — det ar samma adress, och tva
+  // knappar for samma sak fick David att tro att han behovde valja ratt. Provet mater fortfarande
+  // samma sak; bara landmarket har flyttat.
+  const slut = media.indexOf("bar.querySelector('#copyOverlayLink')", start);
   assert.ok(slut > start, 'hittade inte slutet pa lankradens uppsattning');
   const markup = media.slice(start, slut);
   assert.match(markup, /id="manageObsLinks"/,

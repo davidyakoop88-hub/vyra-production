@@ -491,7 +491,7 @@ body:has(.editor-shell) .properties .range-label input{margin-top:6px}
 body:has(.editor-shell) .property-group.collapsible .pg-toggle{padding:8px 0}
 body:has(.editor-shell) .lf-motion-grid,
 body:has(.editor-shell) .lf-preset-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;height:68px!important;padding:9px 16px!important}
+body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;height:auto!important;min-height:68px!important;padding:9px 16px!important}
 @media(max-width:1100px){body:has(.editor-shell) .editor-shell{grid-template-columns:176px minmax(0,1fr) 260px}}
 
 /* Like Fountain is intentionally anonymous: no profile, username or Top Liker data. */
@@ -1433,4 +1433,80 @@ aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
   body:has(.editor-shell) .overlay-link-bar>button{flex:1 1 auto;min-width:0}
   /* Editorytan maste ge tillbaka exakt det raden tar, annars hamnar kanvasen under den. */
   body:has(.editor-shell) #view{height:calc(100vh - 58px - 84px)}
+}
+
+
+/* ================================================================================================
+   LANKRADENS HOJD FOLJER INNEHALLET (Davids skarmbild 2026-08-21).
+
+   UPPMATT i hans egen webblasare, 1920x919: raden var 68 px hog men innehallet krävde 80. Tolv
+   pixlar spillde ut NEDANFOR, och eftersom raden ar position:fixed med bottom:0 gick de inte att
+   rulla fram — valjaren och adressfaltet sags halva.
+
+   Faltet var alltsa inte klippt i SIDLED har (1007 av 1007 px); det var HOJDEN som inte rackte.
+   Mitt forra prov matte bara bredder och sag det inte.
+
+   `height:auto` med `min-height` i stallet for en fast hojd: raden far vara 68 px nar den racker
+   och vaxa nar den inte gor det. Editorytan raknar redan bort utrymmet via #view nedan.
+   ================================================================================================ */
+body:has(.editor-shell) #view{height:calc(100vh - 58px - 84px)}
+
+
+/* ================================================================================================
+   LANKEN FLYTTAR UPP I VERKTYGSRADEN, OCH WIDGETLISTAN FAR HELA PANELEN
+   (Davids beslut 2026-08-21, markerat pa en skarmbild).
+
+   FORE: lanken lag i en egen rad fastnitad langst ner (position:fixed, bottom:0) med fyra knappar
+   — Kopiera till OBS, Kopiera till TikTok och Forhandsvisa. Raden var 68 px hog medan innehallet
+   krävde 80, sa valjaren och adressfaltet syntes till halften och gick inte att rulla fram.
+
+   Tre saker foljde av Davids beslut:
+     · OBS- och TikTok-knapparna kopierade SAMMA lank (samma copy(), samma overlayShareUrl) —
+       skillnaden var bara bekraftelsetexten. De ar nu EN knapp.
+     · Forhandsvisa ar borta.
+     · Raden monteras i .editor-toolbar i stallet for i body, sa den ar inte langre fastnitad och
+       kan inte klippas av fonsterkanten.
+   ================================================================================================ */
+.workarea>.overlay-link-bar{position:static!important;left:auto!important;right:auto!important;
+  bottom:auto!important;width:auto!important;height:auto!important;min-height:0!important;
+  display:flex!important;align-items:center;gap:8px!important;min-width:0;margin:0 0 9px;
+  padding:7px 9px!important;border:1px solid #35203f!important;border-radius:7px;
+  background:#0e0814!important;box-shadow:none!important;z-index:auto!important}
+/* Etiketten hor till den gamla, hoga raden — i en tunn rad ar den bara brus. */
+.workarea>.overlay-link-bar>div>span{display:none!important}
+.workarea>.overlay-link-bar>div{display:flex!important;align-items:center;gap:8px;
+  flex:1 1 auto;min-width:0}
+.workarea>.overlay-link-bar select{flex:0 0 auto;max-width:150px}
+/* Adressen ar det viktigaste i raden och far all plats som blir over. */
+.workarea>.overlay-link-bar input{flex:1 1 auto;min-width:0}
+.workarea>.overlay-link-bar button{flex:0 0 auto;white-space:nowrap}
+/* Editorytan far tillbaka de 84 px som den gamla raden tog. */
+body:has(.editor-shell) #view{height:calc(100vh - 58px)}
+
+/* WIDGETLISTAN FYLLER PANELEN. Uppmatt i Davids vy: listan var en liten ruta hogst upp med egen
+   rullning, och darunder ett tomrum anda ner till "+ Lagg till widget".
+   Listan heter .live-layer-panel — mitt forsta forsok gissade pa .live-layer-list och traffade
+   ingenting, och regeln `*:not(:last-child){flex:0 0 auto}` HINDRADE den dessutom fran att vaxa.
+   Uppmatt efterat: panelen 771 px, listan 112 px, knappen 33 px — resten var tomrum. */
+body:has(.editor-shell) .elements{display:flex;flex-direction:column;min-height:0}
+body:has(.editor-shell) .elements>.live-layer-panel{flex:1 1 auto!important;min-height:0!important;
+  max-height:none!important;display:flex;flex-direction:column}
+body:has(.editor-shell) .elements>.live-layer-add{flex:0 0 auto;margin-top:10px}
+
+/* LANKEN LIGGER UNDER VERKTYGSRADEN, INTE I DEN.
+   Forsta forsoket la raden inuti .editor-toolbar med flex-wrap. UPPMATT UTFALL: arbetsytan ar
+   bara 538 px bred vid 1280 px fonster (sidomeny 210 + elementlista 230 + egenskaper 220 ater
+   resten), sa verktygsraden brot till FYRA rader och blev 229 px hog — den at mer av duken an
+   den gamla botten-raden gjorde. Zoomkontrollen hamnade dessutom pa rad tva, 42 px ner, och
+   fallde sin egen vakt.
+   Raden ar darfor en EGEN rad direkt under verktygsraden: fortfarande hogst upp som David bad
+   om, men den trangs inte med FORMAT, Angra/Gor om och Testevent. */
+body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
+.workarea>.overlay-link-bar{flex-wrap:wrap}
+/* Vid smala fonster racker inte EN rad heller: uppmatt vid 1280 px vy blev faltet 367 px medan
+   adressen krävde 389, for valjaren och de tva knapparna ater bredden. Da far adressen en egen
+   rad under dem. Den ar det man ska kopiera — den far aldrig vara den som klipps. */
+@media (max-width:1500px){
+  .workarea>.overlay-link-bar>div{flex-wrap:wrap;row-gap:8px}
+  .workarea>.overlay-link-bar input{flex:1 1 100%!important;order:5}
 }

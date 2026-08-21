@@ -66,13 +66,75 @@ test.after(async () => {
 //
 // Att sanka provets krav vore fel svar: bada lagena ar riktiga och bada ska provas. De sags nu
 // bara ut i klartext i stallet for att arvas fran vilken maskin som rakar kora.
+//
+// RATTELSE, uppmatt i CI samma kvall: contextvalet `reducedMotion` i newPage() RACKTE INTE.
+// Dorren uteblev i tva varv till, och forst nar `page.emulateMedia()` sattes pa den oppnade sidan
+// spelade sekvensen i CI. Bada satts nu, och laget MATS efterat — ett antagande om vad en
+// riggflagga gor ar precis lika osakert som ett antagande om maskinen.
 async function loggaIn(opts = {}) {
   const page = await browser.newPage(Object.assign(
     { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
+  // ANDRA VAGEN ATT SATTA LAGET. Contextvalet ovan RACKTE INTE i CI 2026-08-21: dorren kom
+  // aldrig, och slappIn() har bara en enda vag ut — `prefers-reduced-motion: reduce`. Att satta
+  // det pa sidan ocksa ar en annan kodvag i Playwright (Emulation.setEmulatedMedia mot en redan
+  // oppnad sida) och kostar ingenting nar contextvalet redan tagit.
+  await page.emulateMedia({ reducedMotion: opts.reducedMotion || 'no-preference' });
+  // Samla det sidan sjalv sager. En timeout i CI berattar bara att nagot INTE hande; ett
+  // konsolfel eller ett kastat undantag berattar varfor. slappIn() ar fail-open (try/catch ->
+  // ga vidare anda), sa ett kast dar ser utifran ut EXAKT som ett medvetet overhopp.
+  page.__konsol = [];
+  // Markt med VILKEN sida felet kom fran: efter ett fail-open-hopp star vi i studio.html, och
+  // dess egna fel sager ingenting om varfor dorren uteblev pa framsidan.
+  const var_ = () => (page.url().split('/').pop() || '?').split('?')[0];
+  page.on('console', m => { if (m.type() === 'error') page.__konsol.push(`konsol@${var_()}: ${m.text()}`) });
+  page.on('pageerror', e => page.__konsol.push(`sidfel@${var_()}: ${e && e.message}`));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
+  // MAT FORUTSATTNINGEN, ANTA DEN INTE. Nar den har inte holl vantade provet 50 sekunder pa en
+  // dorr som med flit aldrig byggdes, och loggen sa bara "timeout" — den dyraste sortens rott.
+  page.__rorelselage = await page.evaluate(
+    () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference');
   await page.fill('#loginEmail', 'prov@vyra.test');
   await page.fill('#loginPassword', 'ettlangtlosenord123');
+  // Haka pa svaret INNAN klicket, annars kan det hinna komma medan vi staller oss i ko.
+  page.__inloggningssvar = page
+    .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 40000 })
+    .catch(() => null);
+
+  // LAT SIDAN ANTECKNA SJALV, MEDAN DET HANDER.
+  //
+  // Dorren lever 1500 ms och forsvinner nar redirecten sker. Att leta efter den EFTERAT ar en
+  // kapplopning mot den egna riggen: uppmatt i CI 2026-08-21 tog en enda sidladdning over 20
+  // sekunder pa samma maskin, och da hinner hela sekvensen spelas fardigt innan provet ens
+  // borjar titta. Samma commit kordes tva ganger och fallde pa TVA OLIKA prov — kvittot pa att
+  // det ar miljon och inte koden.
+  //
+  // Observatoren installeras darfor FORE klicket och skriver sin iakttagelse till sessionStorage,
+  // som overlever navigeringen till studio.html (samma ursprung). Da spelar det ingen roll hur
+  // langsam maskinen ar: anteckningen finns kvar nar vi kommer fram.
+  page.__sekvens = page.evaluate(() => new Promise(klar => {
+    const NYCKEL = 'vyra-prov-slapp-in';
+    sessionStorage.removeItem(NYCKEL);
+    const las = () => {
+      const dorr = document.querySelector('.login-dorr');
+      if (!dorr) return false;
+      const kort = document.querySelector('.login-kort');
+      const ord = document.querySelector('.login-valkommen');
+      sessionStorage.setItem(NYCKEL, JSON.stringify({
+        gront: !!kort && kort.classList.contains('login-klar'),
+        gubbe: !!document.querySelector('.login-gubbe'),
+        dold: dorr.getAttribute('aria-hidden'),
+        besked: ord ? ord.textContent : null,
+        roll: ord ? ord.getAttribute('role') : null,
+      }));
+      return true;
+    };
+    if (las()) return klar(true);
+    const obs = new MutationObserver(() => { if (las()) { obs.disconnect(); klar(true) } });
+    obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+    setTimeout(() => { obs.disconnect(); klar(false) }, 30000);
+  })).catch(() => null);   // navigeringen river kontexten — anteckningen ar redan skriven
+
   await page.click('.login-knapp');
   return page;
 }
@@ -80,14 +142,37 @@ async function loggaIn(opts = {}) {
 test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60000 }, async () => {
   const page = await loggaIn();
   try {
-    await page.waitForSelector('.login-dorr', { timeout: 4000 });
-    const m = await page.evaluate(() => ({
-      gront: document.querySelector('.login-kort').classList.contains('login-klar'),
-      gubbe: !!document.querySelector('.login-gubbe'),
-      dold: document.querySelector('.login-dorr').getAttribute('aria-hidden'),
-      besked: document.querySelector('.login-valkommen')?.textContent || null,
-      roll: document.querySelector('.login-valkommen')?.getAttribute('role') || null
-    }));
+    // VANTAN MATER RATT SAK NU. Forut stod har `timeout: 4000` raknat fran klicket — en gissning
+    // om hur snabb maskinen ar, inte om hur produkten beter sig. UPPMATT I CI 2026-08-21: samma
+    // fils granntest tog 22 s dar mot 2,2 s lokalt, sa fyra sekunder rackte inte ens fram till
+    // inloggningssvaret och provet foll pa korrekt kod.
+    //
+    // Egenskapen som ska bevisas ar att dorren kommer NAR SVARET KOMMIT, inte inom en viss tid
+    // fran klicket. Vi vantar darfor ut svaret forst och mater sedan dorren i ett eget fonster.
+    // Att sekvensen inte far bli en grind mats av nasta prov, som klockar redirecten.
+    assert.equal(page.__rorelselage, 'no-preference',
+      'webblasaren rapporterar fortfarande prefers-reduced-motion: reduce trots att bade '
+      + 'contextvalet och page.emulateMedia sagt no-preference. Da hoppar slappIn() over hela '
+      + 'steget med FLIT och det finns ingen dorr att vanta pa — felet ligger i riggen, inte i '
+      + 'produkten.');
+    const svar = await page.__inloggningssvar;
+    await page.__sekvens;
+    // Anteckningen, inte elementet. Den skrevs i samma ogonblick dorren fanns och ligger kvar i
+    // sessionStorage aven efter att redirecten tagit oss till studio.html.
+    const rad = await page.evaluate(() => sessionStorage.getItem('vyra-prov-slapp-in'));
+    if (!rad) {
+      // GOR TYSTNADEN TILL EN MATNING. Tre CI-varv har fallit har och loggen sa bara "Timeout",
+      // vilket utesluter ingenting.
+      const lage = await page.evaluate(() => ({
+        url: location.href,
+        rorelse: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        fel: document.querySelector('#loginError')?.textContent || null,
+      })).catch(e => ({ kunde_inte_lasa: String(e && e.message) }));
+      assert.fail('sekvensen antecknade aldrig nagon dorr (inloggningssvar '
+        + (svar ? svar.status() : 'uteblev') + '). Lage: ' + JSON.stringify(lage) + ' · '
+        + (page.__konsol.length ? page.__konsol.join(' ; ') : 'inga konsolfel'));
+    }
+    const m = JSON.parse(rad);
     assert.equal(m.gront, true, 'kortet blev inte gront');
     assert.equal(m.gubbe, true, 'ingen gubbe att ga in genom dorren');
     assert.equal(m.dold, 'true',
@@ -103,8 +188,16 @@ test('en lyckad inloggning fastnar ALDRIG i animationen', { skip, timeout: 60000
   // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
   const page = await loggaIn();
   try {
+    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
+    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
+    // CI — det har har hittills bara ratt sig ur.
+    await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 8000 });
+    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
+    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
+    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
+    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
+    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
     const ms = Date.now() - start;
     assert.ok(ms < 6000, `studion laddades forst efter ${ms} ms — sekvensen far inte bli en grind`);
   } finally { await page.close() }
@@ -115,8 +208,16 @@ test('prefers-reduced-motion: ingen dorr och ingen vantan', { skip, timeout: 600
   // landing-login.js hoppar darfor over HELA steget, inte bara keyframes.
   const page = await loggaIn({ reducedMotion: 'reduce' });
   try {
+    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
+    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
+    // CI — det har har hittills bara ratt sig ur.
+    await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 8000 });
+    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
+    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
+    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
+    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
+    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
     const ms = Date.now() - start;
     assert.ok(ms < 1200,
       `studion laddades efter ${ms} ms trots reduced-motion — steget ska hoppas over helt, `
