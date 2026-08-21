@@ -538,7 +538,8 @@
       ],
       "tester": [
         "server/test/tts.test.js",
-        "tests/tts-livestatus.test.js"
+        "tests/tts-livestatus.test.js",
+        "tests/paus-indikator.test.js"
       ],
       "matning": [],
       "risker": [

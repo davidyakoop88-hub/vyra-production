@@ -796,7 +796,7 @@ document.addEventListener('load',e=>{
   vyraRebindKoad=true;
   queueMicrotask(()=>{vyraRebindKoad=false;try{if(typeof bind==='function')bind()}catch(err){console.error('[VYRA] ombindning efter skriptladdning misslyckades',err)}});
 },true);
-Promise.resolve().then(()=>{let live=document.createElement('script');live.src='live-client.js?v=20260802-3';live.onload=()=>{let ui=document.createElement('script');ui.src='studio-live.js?v=20260724-4';document.body.append(ui)};document.body.append(live)});
+Promise.resolve().then(()=>{let live=document.createElement('script');live.src='live-client.js?v=20260802-3';live.onload=()=>{let ui=document.createElement('script');ui.src='studio-live.js?v=20260821-1';document.body.append(ui)};document.body.append(live)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -838,7 +838,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260820-1';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260820-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260821-2';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260821-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20260731-1';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,

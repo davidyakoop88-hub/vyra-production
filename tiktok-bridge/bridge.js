@@ -151,6 +151,10 @@ if (require.main === module) {
     process.exit(1);
   }
 
+  // 'live' | 'paused' | 'suspended'. Aterstalls till 'live' vid ny anslutning och vid
+  // STREAM_END, sa ett pauslage aldrig kan folja med over en ateranslutning.
+  let sandningsLage = 'live';
+  const loggaLage = text => console.log(`[bridge][lage] ${text}`);
   let reconnectAttempt = 0;
   let reconnectTimer = null;
   let heartbeatTimer = null;
@@ -254,7 +258,9 @@ if (require.main === module) {
 
   function startHeartbeat(roomId) {
     clearInterval(heartbeatTimer);
-    const beat = () => postJson('/api/heartbeat', { username, roomId, reconnectAttempt, state: 'live' });
+    // Hjartslaget bar laget. Vid paus fortsatter det ticka — anslutningen star kvar — men med
+    // state 'paused', sa granssnittet kan saga sanningen utan att nagot ateransluts.
+    const beat = () => postJson('/api/heartbeat', { username, roomId, reconnectAttempt, state: sandningsLage });
     beat(); heartbeatTimer = setInterval(beat, HEARTBEAT_MS);
   }
 
@@ -405,7 +411,25 @@ if (require.main === module) {
       if (!handelse) { console.log(`[bridge][battle-sond] ${probeNamn} finns inte i biblioteket`); continue }
       connection.on(handelse, data => loggaBattleSond(probeNamn, data));
     }
-    connection.on(WebcastEvent.STREAM_END, () => scheduleReconnect('TikTok LIVE avslutades'));
+    // PAUS OCH ATERUPPTAGANDE (Davids fraga 2026-08-21).
+    //
+    // Biblioteket har INGEN egen pauhandelse — 68 typer och ingen heter nagot med pause.
+    // Pausen kommer som CONTROL_MESSAGE med ett action-falt; koderna star i
+    // tiktok-live-proto/v3, som biblioteket sjalvt bygger pa:
+    //   1 STREAM_PAUSED   2 STREAM_UNPAUSED   3 STREAM_ENDED   4 STREAM_SUSPENDED
+    //
+    // INGEN ATERANSLUTNING VID PAUS. scheduleReconnect() skulle riva och bygga upp
+    // anslutningen igen for nagot som inte ar ett fel — och under tiden ar overlayn dod.
+    // Bara laget byts; hjartslaget fortsatter och connected forblir sant.
+    connection.on(WebcastEvent.CONTROL_MESSAGE, data => {
+      const action = Number(data?.action);
+      if (action === 1) { sandningsLage = 'paused'; loggaLage('Sandningen pausad'); }
+      else if (action === 2) { sandningsLage = 'live'; loggaLage('Sandningen aterupptagen'); }
+      else if (action === 4) { sandningsLage = 'suspended'; loggaLage('Sandningen stoppad av TikTok'); }
+      // action 3 (ENDED) ags av STREAM_END nedan — en och samma sak ska inte stangas ner
+      // fran tva hall.
+    });
+    connection.on(WebcastEvent.STREAM_END, () => { sandningsLage = 'live'; scheduleReconnect('TikTok LIVE avslutades') });
     /* GUARDIAN — FORBEREDD, INTE AKTIVERAD.
        ===========================================================================================
        VANTAR PA EVENT-VERIFIERING. Se docs/live-verifiering.md punkt 6: vi vet inte vilken

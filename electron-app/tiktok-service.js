@@ -127,6 +127,26 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       scoreUs: number(data?.battleUsers?.[0]?.score || data?.scoreUs, 1e12),
       scoreThem: number(data?.battleUsers?.[1]?.score || data?.scoreThem, 1e12)
     }, data));
+    // PAUS OCH ATERUPPTAGANDE (Davids fraga 2026-08-21).
+    //
+    // Vart bibliotek har INGEN egen pauhandelse — 68 typer och ingen heter nagot med pause.
+    // Pausen kommer in som CONTROL_MESSAGE med ett action-falt, och koderna star i
+    // tiktok-live-proto/v3 som biblioteket sjalvt bygger pa:
+    //   1 STREAM_PAUSED   2 STREAM_UNPAUSED   3 STREAM_ENDED   4 STREAM_SUSPENDED
+    //
+    // ANSLUTNINGEN STAR KVAR VID PAUS. connected forblir true: en paus ar inte ett avbrott,
+    // hjartslaget fortsatter var 5:e sekund, och satter vi connected:false startar
+    // ateranslutningen och sidhuvudet sager "Anslut TikTok" mitt i en pagaende sandning.
+    // Bara `state` byts, sa gransnittet kan saga sanningen utan att nagot ateransluts.
+    connection.on(WebcastEvent.CONTROL_MESSAGE, data => {
+      if (activeConnection !== connection) return;
+      const action = Number(data?.action);
+      if (action === 1) onStatus({ connected: true, username, mode: 'live', state: 'paused', reason: 'Sandningen pausad' });
+      else if (action === 2) onStatus({ connected: true, username, mode: 'live', state: 'live', reason: '' });
+      else if (action === 4) onStatus({ connected: true, username, mode: 'live', state: 'suspended', reason: 'Sandningen stoppad av TikTok' });
+      // action 3 (ENDED) hanteras av STREAM_END nedan — en och samma sak ska inte stangas
+      // ner fran tva hall, da kan de tavla om vem som nollar activeConnection.
+    });
     connection.on(WebcastEvent.STREAM_END, () => {
       if (activeConnection === connection) {
         activeConnection = null;
