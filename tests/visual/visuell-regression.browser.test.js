@@ -82,6 +82,62 @@ test('vakten kör på den binär referenserna gjordes på', { skip }, () => {
   assert.equal(krock, null, krock || '');
 });
 
+// De typsnitt referensbilderna togs med. Vikterna ar de studio.css faktiskt begar pa rad 1.
+const TYPSNITT = ['400 13px Inter', '600 13px Inter', '700 16px Inter',
+  '600 16px Manrope', '700 16px Manrope'];
+
+test('typsnitten referenserna togs med finns pa plats', { skip, timeout: 60000 }, async () => {
+  // ANDRA KONTROLLMATNINGEN FOR HELA FILEN, av samma skal som binarkontrollen ovan.
+  //
+  // studio.css rad 1 hamtar Inter och Manrope fran fonts.googleapis.com med `display=swap`.
+  // Vakten hanger alltsa pa att en TREDJEPARTSHAMTNING lyckas inne i CI. Kommer den inte fram
+  // ritas all text i reservtypsnittet, och da faller widget efter widget pa nagot de sjalva inte
+  // gjort. UPPMATT 2026-08-21: 44 nycklar foll i tva korningar, och diffbilderna visade text
+  // markerad med full kanalskillnad 255 medan avatarer, plattor och gloria var pixelidentiska.
+  //
+  // `document.fonts.ready` racker INTE som vakt: den loser ut nar sidans BEGARDA typsnitt ar
+  // klara, och har @import:en aldrig kommit fram finns ingen @font-face att begara — da loser den
+  // ut direkt, pa reservtypsnittet. Darfor laddas de uttryckligen och kontrolleras med check().
+  // OCH check() DUGER INTE HELLER. Forsta versionen av det har provet anvande
+  // `document.fonts.check()`. Muterat med en pahittad familj blev det GRONT anda — check() svarar
+  // "kan den har texten ritas", inte "ar just den familjen laddad", sa ett reservtypsnitt racker
+  // for att fa ja. En vakt som mater fel sak ar samre an ingen vakt.
+  //
+  // Tva oberoende signaler i stallet:
+  //   1. FontFace-posterna: finns familjen alls i document.fonts, och ar den `loaded`?
+  //   2. BREDDEN: samma strang matt i familjen mot en pahittad familj med samma reserv. Ar de
+  //      lika pa pixeln anvands reserven — det ar beteendet som faktiskt paverkar fotot.
+  const m = await sida.evaluate(async (spec) => {
+    await Promise.all(spec.map(s => document.fonts.load(s).catch(() => null)));
+    try { await document.fonts.ready } catch (e) {}
+    const familjer = new Set([...document.fonts]
+      .filter(f => f.status === 'loaded').map(f => f.family.replace(/["']/g, '')));
+    const matt = (fam) => {
+      const c = document.createElement('canvas').getContext('2d');
+      c.font = `700 40px ${fam}, monospace`;
+      return c.measureText('Handgloves 12345 VYRA').width;
+    };
+    const reserv = matt("'IngenSadanFamiljFinnsHar'");
+    const namn = [...new Set(spec.map(s => s.split('px ')[1]))];
+    return {
+      saknas: namn.filter(n => !familjer.has(n)),
+      reserv,
+      bredder: Object.fromEntries(namn.map(n => [n, matt(`'${n}'`)])),
+      antal: document.fonts.size,
+    };
+  }, TYPSNITT);
+  assert.deepEqual(m.saknas, [],
+    `typsnitten nadde aldrig fram (${m.antal} laddade ansikten). Da ritas all text i `
+    + 'reservtypsnittet och jamforelsen nedan faller pa widgetar som inte andrats. Orsaken ligger '
+    + 'da i natet mot fonts.googleapis.com fran den har maskinen — inte i katalogen.');
+  for (const [namn, bredd] of Object.entries(m.bredder)) {
+    assert.notEqual(bredd, m.reserv,
+      `${namn} mater exakt lika brett som en pahittad familj (${bredd} px) — texten ritas alltsa `
+      + 'med reserven trots att FontFace-posten sager laddad. Fotona nedan visar da inte den '
+      + 'typografi referenserna togs med.');
+  }
+});
+
 test('katalogen har nycklar att fotografera', { skip }, () => {
   assert.ok(NYCKLAR.length >= 150, `bara ${NYCKLAR.length} katalognycklar`);
 });
