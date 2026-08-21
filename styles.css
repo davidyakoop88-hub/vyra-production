@@ -715,3 +715,129 @@ main,.mini-sidfot{position:relative;z-index:1}
   .social-proof{margin:0}
   .trust{margin-top:4px}
 }
+
+/* ================================================================================================
+   FRAMSIDAN: GLASKORT TILL VANSTER, BILDEN KVAR I MITTEN (Davids beslut 2026-08-21).
+
+   Forsta versionen centrerade kortet och la mobilen bakom det, efter en referens David visade.
+   Han valde sedan om: FORMEN pa kortet ska vara kvar — det halvgenomskinliga glaset — men kortet
+   star till vanster och mobilen med gavobanan ar synlig i mitten, som forut.
+
+   Reglerna ligger SIST i filen med flit, samma skal som prisradens hojdregler nedan: ett
+   intilliggande blockklipp far inte kunna radera dem tyst.
+   ================================================================================================ */
+
+/* BILDEN CENTRERAS I VYN, inte i "det som blir over". Lag kortet forst i floden hamnade mobilen
+   pa x=804 i en 1440-vy — alltsa 200 px hoger om mitten, for den centrerades i ytan bredvid
+   kortet. Uppmatt. Nu ar kortet lyft ur floden och scenen far hela raden att centrera sig i. */
+.hero-botten{justify-content:center;align-items:center;text-align:left;
+  margin-top:26px;position:relative}
+
+/* GLASET ar det enda som blev kvar av referensen. Halvgenomskinligt, kraftigt suddat bakom, och
+   en dov violett gloria sa kanten syns aven mot en mork bakgrund. */
+/* BREDDEN AR RAKNAD MOT GAVOBANAN, inte vald pa kansla. Gavorna kretsar kring mobilens fot med
+   radien --radie (upp till 268 px) och ar sjalva upp till 104 px breda, sa banans vanstra ytterlage
+   ligger runt x=400 i en 1440-vy. Med 400 px kort slutade det pa x=478 och tackte gavan (uppmatt:
+   gavans vanstra kant 445). 344 px med kortet narmare kanten slutar pa ~380 och gar fritt hela
+   varvet — inte bara i det ogonblick man rakar mata. */
+.hero-botten .login-kort{position:relative;z-index:2;width:min(344px,92vw);
+  background:linear-gradient(168deg,rgba(28,20,42,.72),rgba(12,8,20,.66));
+  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:24px 22px;
+  backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);
+  box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,
+             0 0 60px -20px rgba(168,58,239,.34)}
+
+/* Bilden ar SYNLIG igen — inte dekor bakom kortet. Ingen opacitet, ingen oskarpa. */
+.hero-botten .hero-mobil-scen{position:relative;z-index:1;margin:0 auto}
+
+/* Kortet lyfts ur floden sa det inte trycker bilden ur mitten. Vid smalare fonster far det ga
+   tillbaka i floden — annars lagger det sig OVANPA mobilen, och det ar samre an att vara osnyggt. */
+@media (min-width:1120px){
+  .hero-botten .login-kort{position:absolute;left:clamp(16px,2.5vw,44px);top:50%;
+    transform:translateY(-50%);margin:0}
+}
+
+/* Korta fonster: prisraden ar sidans sista rad och maste synas utan rullning. Uppmatt vid 768 px
+   slutade den pa y=780 forsta forsoket. Mobilen och kortet ger vika, aldrig raden. */
+@media (max-height:1000px){
+  .hero-botten{margin-top:12px}
+  .hero-botten .login-kort{padding:18px 20px;border-radius:18px}
+  .hero-botten .hero-mobil{width:min(196px,24vw)}
+}
+@media (max-height:820px){
+  .hero-botten{margin-top:6px}
+  .hero-botten .login-kort{padding:14px 18px}
+  .hero-botten .hero-mobil{width:min(168px,20vw)}
+}
+
+/* ================================================================================================
+   SLAPP IN — dorren oppnas, gubben gar in, kortet blir gront (Davids onskan 2026-08-21).
+
+   Spelas EN gang efter en LYCKAD inloggning, precis innan studion laddas. Allt ar dekor: sekvensen
+   far aldrig avgora nagot, och den som bett om mindre rorelse ser den inte alls — landing-login.js
+   hoppar over hela steget, inte bara animationerna.
+
+   GEOMETRIN AR OMGJORD efter ett foto. Forsta forsoket hade en 92x132 dorr mitt i kortet med
+   ljuset over hela ytan: det lastes som en gron platta ovanpa formularet, gubben stod redan INNE
+   nar sekvensen borjade, och "Välkommen in" hamnade ovanpa finstilten. Nu ar dorren mindre och
+   forskjuten at hoger, gubben startar UTANFOR den, och en dov slöja lagger formularet bakom.
+   ================================================================================================ */
+
+/* Kortet skiftar till gront. Bara farger — inga mattandringar, sa ingenting hoppar under bytet. */
+.login-kort.login-klar{border-color:rgba(93,220,164,.55)!important;
+  box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,
+             0 0 70px -18px rgba(45,200,140,.5)!important;
+  transition:border-color .45s ease,box-shadow .45s ease}
+.login-kort.login-klar .login-knapp{background:linear-gradient(105deg,#149c68,#2fd68f)!important;
+  border-color:#43df9f!important;transition:background .45s ease,border-color .45s ease}
+
+/* Slöjan gor att formularet slutar tavla med scenen utan att nagot flyttar sig. */
+.login-dorr{position:absolute;inset:0;z-index:3;pointer-events:none;perspective:600px;
+  border-radius:inherit;background:rgba(11,7,18,.62);backdrop-filter:blur(3px);
+  animation:slojaIn .35s ease forwards}
+
+.login-dorr-karm{position:absolute;left:58%;top:47%;display:block;width:62px;height:92px;
+  transform:translate(-50%,-50%);border-radius:6px 6px 2px 2px;
+  background:#0d0816;border:2px solid #3d2a52;overflow:hidden}
+/* Ljuset kommer INIFRAN oppningen och ar starkast vid trosken — inte en jamn gron yta. */
+.login-dorr-ljus{position:absolute;inset:0;display:block;opacity:0;
+  background:radial-gradient(120% 78% at 12% 100%,#8dffc9,#2fd68f 38%,#0c5c3c 76%,#07301f);
+  animation:dorrLjus 1.5s ease forwards}
+.login-dorr-blad{position:absolute;inset:0;display:block;transform-origin:left center;
+  background:linear-gradient(100deg,#2a1b3d,#1a1029);border-right:2px solid #4a3363;
+  animation:dorrBlad 1.5s cubic-bezier(.5,0,.3,1) forwards}
+.login-dorr-blad::after{content:'';position:absolute;right:6px;top:50%;width:5px;height:5px;
+  border-radius:50%;background:#c9a8de;transform:translateY(-50%)}
+
+/* Gubben startar UTANFOR karmen, gar fram och forsvinner in i oppningen. */
+.login-gubbe{position:absolute;left:calc(58% - 96px);top:47%;width:19px;height:32px;
+  color:#efe6f8;animation:gubbenGar 1.5s ease-in forwards}
+.login-ben{transform-origin:50% 0}
+.login-ben-a{animation:benA .32s linear infinite}
+.login-ben-b{animation:benB .32s linear infinite}
+.login-arm{transform-origin:50% 8%;animation:benB .32s linear infinite}
+
+/* Egen rad UNDER dorren, med luft — den ska aldrig hamna ovanpa finstilten. */
+.login-valkommen{position:absolute;left:0;right:0;top:calc(47% + 68px);z-index:4;margin:0;
+  text-align:center;color:#8dffc9;font:600 14px var(--font-body);letter-spacing:.01em;
+  opacity:0;animation:valkommenIn .5s .8s ease forwards}
+
+@keyframes slojaIn{from{opacity:0}to{opacity:1}}
+@keyframes dorrBlad{0%,18%{transform:rotateY(0)}70%,100%{transform:rotateY(-108deg)}}
+@keyframes dorrLjus{0%,22%{opacity:0}62%,100%{opacity:1}}
+/* Fram, in genom oppningen, bort i djupet. */
+@keyframes gubbenGar{
+  0%{transform:translateY(-50%) scale(1);opacity:0}
+  14%{opacity:1}
+  64%{transform:translate(74px,-50%) scale(.9);opacity:1}
+  100%{transform:translate(92px,-50%) scale(.4);opacity:0}
+}
+@keyframes benA{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-20deg)}}
+@keyframes benB{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+@keyframes valkommenIn{to{opacity:1}}
+
+/* Sista utvagen om nagon nar hit anda: ingen rorelse, men beskedet syns. */
+@media (prefers-reduced-motion:reduce){
+  .login-dorr{display:none}
+  .login-valkommen{animation:none;opacity:1;position:static;margin-top:10px}
+}

@@ -58,6 +58,7 @@
         "tests/browser/tomma-handlingar.browser.test.js",
         "tests/browser/las-proportioner.browser.test.js",
         "tests/browser/framsida-logo.browser.test.js",
+        "tests/browser/login-slapp-in.browser.test.js",
         "tests/oversikt-en-sanning.test.js"
       ],
       "matning": [],

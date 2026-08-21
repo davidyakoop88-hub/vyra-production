@@ -115,3 +115,82 @@ test('märket krymper i ett kort fönster i stället för att äta prisraden',
       + 'höjd som behövs måste tas från något annat på sidan');
   } finally { await stor.context.close(); await liten.context.close() }
 });
+
+test('kortet star till vanster och bilden i mitten', { skip, timeout: 60000 }, async () => {
+  // Formen andrades TVA ganger 2026-08-21 och provet foljer med, annars vaktar det ett beslut som
+  // inte galler: forst ett centrerat kort med mobilen bakom (efter en referens David visade), och
+  // sedan hans omval — glaset kvar, men kortet till VANSTER och bilden synlig i MITTEN.
+  //
+  // Bilden centreras i VYN, inte i "det som blir over". Lag kortet i floden hamnade mobilen 200 px
+  // hoger om mitten (uppmatt: x=804 i en 1440-vy), for den centrerades i ytan bredvid kortet.
+  // Kortet ar darfor lyft ur floden pa breda fonster.
+  const { context, page } = await sidan({ width: 1440, height: 900 });
+  try {
+    const m = await page.evaluate(`(() => {
+      const kort = document.querySelector('.login-kort');
+      const scen = document.querySelector('.hero-mobil-scen');
+      if (!kort || !scen) return { saknas: true };
+      const k = kort.getBoundingClientRect(), s2 = scen.getBoundingClientRect();
+      return {
+        kortMitt: k.left + k.width / 2,
+        bildMitt: s2.left + s2.width / 2,
+        vyMitt: innerWidth / 2,
+        overlapp: k.right > s2.left,
+        kortZ: Number(getComputedStyle(kort).zIndex) || 0,
+        scenZ: Number(getComputedStyle(scen).zIndex) || 0
+      };
+    })()`);
+    assert.ok(!m.saknas, 'kortet eller scenen saknas');
+    assert.ok(m.kortMitt < m.vyMitt - 100,
+      `kortet star pa ${Math.round(m.kortMitt)} i en ${Math.round(m.vyMitt * 2)} px vy — det ska `
+      + 'ligga tydligt till vanster');
+    assert.ok(Math.abs(m.bildMitt - m.vyMitt) <= 8,
+      `bilden har sin mitt pa ${Math.round(m.bildMitt)} men vyns mitt ar ${Math.round(m.vyMitt)} — `
+      + 'den ska centreras i VYN, inte i ytan som blir over bredvid kortet');
+    assert.equal(m.overlapp, false,
+      'kortet lapper over bilden; pa breda fonster ska de sta bredvid varandra utan att krocka');
+    // GAVORNA MATS OVER HELA VARVET, inte i det ogonblick provet rakar kora.
+    //
+    // Forsta versionen jamforde kortet mot scenens LAYOUTRUTA — som bara omsluter telefonen.
+    // Gavorna svavar langt utanfor den via transformer, sa vakten gav GRONT medan kortet i
+    // sjalva verket tackte en gava med 33 px (uppmatt: gavans vanstra kant 445, kortets hoger 478).
+    // David sag det pa en skarmbild som provet sa var i sin ordning.
+    //
+    // Banan ar en cirkel, sa dess ytterlage ar stabilt — men VILKEN gava som star dar vandrar.
+    // Darfor spolas animationerna igenom i 60 steg. Kontrollmatningen nedan bevisar att
+    // avspolningen faktiskt flyttar nagot; utan den kunde slingan mata samma bildruta 60 ganger.
+    const bana = await page.evaluate(`(() => {
+      const kort = document.querySelector('.login-kort').getBoundingClientRect();
+      const rot = document.querySelector('.hero-gavoring-rot');
+      const anims = rot ? rot.getAnimations({ subtree: true }) : [];
+      if (!anims.length) return { ingenBana: true };
+      const varv = anims[0].effect.getTiming().duration || 34000;
+      const forsta = document.querySelector('.hero-gava');
+      anims.forEach(a => { a.pause(); a.currentTime = 0 });
+      const vid0 = forsta.getBoundingClientRect().left;
+      anims.forEach(a => { a.currentTime = varv / 4 });
+      const vidKvart = forsta.getBoundingClientRect().left;
+      let minst = Infinity;
+      for (let i = 0; i < 60; i++) {
+        anims.forEach(a => { a.currentTime = varv * i / 60 });
+        for (const g of document.querySelectorAll('.hero-gava')) {
+          const l = g.getBoundingClientRect().left;
+          if (l < minst) minst = l;
+        }
+      }
+      anims.forEach(a => a.play());
+      return { kortHoger: kort.right, minstaGava: minst, rorSig: Math.round(vid0) !== Math.round(vidKvart) };
+    })()`);
+    assert.ok(!bana.ingenBana, 'hittar ingen gavobana att mata');
+    assert.equal(bana.rorSig, true,
+      'kontrollmatning: avspolningen flyttar inte gavorna, sa slingan mater samma bildruta 60 '
+      + 'ganger och sager ingenting om varvet');
+    assert.ok(bana.minstaGava > bana.kortHoger,
+      `kortet slutar pa x=${Math.round(bana.kortHoger)} men en gava nar x=${Math.round(bana.minstaGava)} `
+      + 'nagon gang under varvet — kortet tacker da bilden. Gor kortet smalare eller flytta det '
+      + 'narmare kanten.');
+    assert.ok(m.kortZ >= m.scenZ,
+      `kortet (z=${m.kortZ}) ligger under scenen (z=${m.scenZ}) — pa smalare fonster gar kortet `
+      + 'tillbaka i floden och maste anda ligga overst, annars stjal en gava klicket fran faltet');
+  } finally { await context.close() }
+});
