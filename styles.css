@@ -715,3 +715,57 @@ main,.mini-sidfot{position:relative;z-index:1}
   .social-proof{margin:0}
   .trust{margin-top:4px}
 }
+
+/* ================================================================================================
+   FRAMSIDAN SOM CENTRERAT GLASKORT (Davids beslut 2026-08-21, efter en referens han visade).
+   Reglerna ligger SIST med flit — samma skal som prisradens hojdregler nedan: ett intilliggande
+   blockklipp far inte kunna radera dem tyst.
+
+   Formen ar hamtad ur referensen, inte innehallet: ett centrerat, halvgenomskinligt kort over en
+   mork scen. Bakgrunden ar var EGEN — Tubes-strimman som redan foljer musen, plus ett djup av
+   toner. Mobilen och gavobanan ligger kvar men BAKOM kortet och dovare, sa rorelsen finns kvar
+   utan att slass med det man ska lasa.
+   ================================================================================================ */
+
+/* Heron blir ett staplingsrum: scenen ligger i botten, kortet ovanpa. */
+.hero-botten{justify-content:center;text-align:center;position:relative;margin-top:22px;
+  min-height:min(560px,58svh);align-items:center}
+
+/* Mobilen och gavorna: bakom, dovare, och utan att ta plats i floden. Pointer-events av — de ar
+   dekor, och ett klick pa en gava ska aldrig stjala fokus fran inloggningen. */
+/* Uppmatt: vid opacity .34 och scale 1.06 lastes nallen, lejonet och Zeus som FOREMAL utspridda
+   runt kortet — rorigt, inte stamning. Skalan ner samlar dem bakom kortet i stallet for att kasta
+   ut dem mot kanterna, och .16 med kraftigare oskarpa gor dem till ljus i djupet. */
+.hero-botten .hero-mobil-scen{position:absolute;inset:0;display:grid;place-items:center;
+  z-index:0;opacity:.16;filter:blur(5px) saturate(.7);pointer-events:none;
+  transform:scale(.82)}
+
+/* Kortet: glas, centrerat, over scenen. */
+.hero-botten .login-kort{position:relative;z-index:2;margin:0 auto;text-align:left;
+  width:min(408px,92vw);
+  background:linear-gradient(168deg,rgba(28,20,42,.72),rgba(12,8,20,.66));
+  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:30px 28px;
+  backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);
+  box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,
+             0 0 60px -20px rgba(168,58,239,.34)}
+
+/* En dov ljusgloria bakom kortet sa glaset har nagot att bryta mot aven pa en tom bakgrund. */
+.hero-botten::before{content:'';position:absolute;left:50%;top:50%;width:min(760px,96vw);
+  height:min(520px,64svh);transform:translate(-50%,-50%);z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(140,60,220,.22),transparent 68%);
+  filter:blur(28px)}
+
+@media (prefers-reduced-motion:reduce){.hero-botten .hero-mobil-scen{filter:none}}
+
+/* Korta fonster: kortet far krympa fore prisraden, precis som allt annat har uppe. */
+/* Korta fonster. Uppmatt vid 768 px: prisraden slutade pa y=769, alltsa EN pixel under vecket —
+   samma falla som slagit till tva ganger forut. Kortet och scenen ger vika, aldrig prisraden. */
+@media (max-height:1000px){
+  .hero-botten{min-height:min(430px,48svh);margin-top:10px}
+  .hero-botten .login-kort{padding:18px 20px;border-radius:16px}
+  .hero-botten::before{height:min(400px,52svh)}
+}
+@media (max-height:820px){
+  .hero-botten{min-height:min(380px,44svh);margin-top:6px}
+  .hero-botten .login-kort{padding:15px 18px}
+}

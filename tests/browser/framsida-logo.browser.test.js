@@ -115,3 +115,41 @@ test('märket krymper i ett kort fönster i stället för att äta prisraden',
       + 'höjd som behövs måste tas från något annat på sidan');
   } finally { await stor.context.close(); await liten.context.close() }
 });
+
+test('inloggningskortet ar centrerat och scenen ligger bakom det', { skip, timeout: 60000 },
+  async () => {
+  // Framsidan blev ett centrerat glaskort 2026-08-21 (Davids beslut, efter en referens han visade).
+  // Tva saker gor formen: kortet star i mitten, och mobilen med gavobanan ligger BAKOM det.
+  //
+  // Provet mater bada, for de gar sonder pa olika satt. Ett kort som glider ur mitten ser bara
+  // snett ut; en scen som hamnar FRAMFOR kortet gor faltet omojligt att klicka i — och det syns
+  // inte alls i en skarmbild dar gavorna anda ar nastan genomskinliga.
+  const { context, page } = await sidan({ width: 1440, height: 900 });
+  try {
+    const m = await page.evaluate(`(() => {
+      const kort = document.querySelector('.login-kort');
+      const scen = document.querySelector('.hero-mobil-scen');
+      if (!kort || !scen) return { saknas: true };
+      const k = kort.getBoundingClientRect();
+      const cs = getComputedStyle(scen), ck = getComputedStyle(kort);
+      return {
+        mittfel: Math.abs((k.left + k.width / 2) - innerWidth / 2),
+        scenZ: Number(cs.zIndex) || 0,
+        kortZ: Number(ck.zIndex) || 0,
+        scenKlick: cs.pointerEvents,
+        opacitet: Number(cs.opacity)
+      };
+    })()`);
+    assert.ok(!m.saknas, 'kortet eller scenen saknas');
+    assert.ok(m.mittfel <= 2,
+      `kortet star ${Math.round(m.mittfel)} px ur mitten — formen bygger pa att det ar centrerat`);
+    assert.ok(m.kortZ > m.scenZ,
+      `scenen (z=${m.scenZ}) ligger inte bakom kortet (z=${m.kortZ}) — da hamnar gavorna framfor `
+      + 'inloggningen');
+    assert.equal(m.scenKlick, 'none',
+      'scenen tar emot klick; en gava far aldrig stjala ett klick fran e-postfaltet');
+    assert.ok(m.opacitet < 0.35,
+      `scenen ligger pa opacitet ${m.opacitet} — over ~0.3 laser den sig som foremal bakom kortet `
+      + 'i stallet for som ljus i djupet (uppmatt vid .34: nallen och Zeus blev tydliga)');
+  } finally { await context.close() }
+});
