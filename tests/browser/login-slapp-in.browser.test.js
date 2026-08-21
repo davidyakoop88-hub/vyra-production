@@ -73,6 +73,10 @@ async function loggaIn(opts = {}) {
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
   await page.fill('#loginEmail', 'prov@vyra.test');
   await page.fill('#loginPassword', 'ettlangtlosenord123');
+  // Haka pa svaret INNAN klicket, annars kan det hinna komma medan vi staller oss i ko.
+  page.__inloggningssvar = page
+    .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 40000 })
+    .catch(() => null);
   await page.click('.login-knapp');
   return page;
 }
@@ -80,7 +84,16 @@ async function loggaIn(opts = {}) {
 test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60000 }, async () => {
   const page = await loggaIn();
   try {
-    await page.waitForSelector('.login-dorr', { timeout: 4000 });
+    // VANTAN MATER RATT SAK NU. Forut stod har `timeout: 4000` raknat fran klicket — en gissning
+    // om hur snabb maskinen ar, inte om hur produkten beter sig. UPPMATT I CI 2026-08-21: samma
+    // fils granntest tog 22 s dar mot 2,2 s lokalt, sa fyra sekunder rackte inte ens fram till
+    // inloggningssvaret och provet foll pa korrekt kod.
+    //
+    // Egenskapen som ska bevisas ar att dorren kommer NAR SVARET KOMMIT, inte inom en viss tid
+    // fran klicket. Vi vantar darfor ut svaret forst och mater sedan dorren i ett eget fonster.
+    // Att sekvensen inte far bli en grind mats av nasta prov, som klockar redirecten.
+    await page.__inloggningssvar;
+    await page.waitForSelector('.login-dorr', { timeout: 15000 });
     const m = await page.evaluate(() => ({
       gront: document.querySelector('.login-kort').classList.contains('login-klar'),
       gubbe: !!document.querySelector('.login-gubbe'),
@@ -103,8 +116,12 @@ test('en lyckad inloggning fastnar ALDRIG i animationen', { skip, timeout: 60000
   // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
   const page = await loggaIn();
   try {
+    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
+    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
+    // CI — det har har hittills bara ratt sig ur.
+    await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 8000 });
+    await page.waitForURL(/studio\.html/, { timeout: 20000 });
     const ms = Date.now() - start;
     assert.ok(ms < 6000, `studion laddades forst efter ${ms} ms — sekvensen far inte bli en grind`);
   } finally { await page.close() }
@@ -115,8 +132,12 @@ test('prefers-reduced-motion: ingen dorr och ingen vantan', { skip, timeout: 600
   // landing-login.js hoppar darfor over HELA steget, inte bara keyframes.
   const page = await loggaIn({ reducedMotion: 'reduce' });
   try {
+    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
+    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
+    // CI — det har har hittills bara ratt sig ur.
+    await page.__inloggningssvar;
     const start = Date.now();
-    await page.waitForURL(/studio\.html/, { timeout: 8000 });
+    await page.waitForURL(/studio\.html/, { timeout: 20000 });
     const ms = Date.now() - start;
     assert.ok(ms < 1200,
       `studion laddades efter ${ms} ms trots reduced-motion — steget ska hoppas over helt, `

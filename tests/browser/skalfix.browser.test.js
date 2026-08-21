@@ -97,7 +97,17 @@ async function dra(page, { valjare, skala, dx, dy, form }) {
   return page.evaluate(async ({ valjare, skala, dx, dy, form }) => {
     const canvas = document.querySelector('.canvas');
     if (skala !== 1) {
+      // SAG DET TILL AGAREN FORST. vyra-zoom.js ager dukens transform och sveper om den vid varje
+      // childList-andring i #view (MutationObserver -> applicera()). Det ar RATT beteende — zoomen
+      // ska laka sig sjalv — men det gor att en inline-skala som modulen inte kanner till skrivs
+      // over inom nagra hundra millisekunder. Uppmatt: skalan last som 1 i stallet for 0.5, och
+      // sparet pekade rakt pa vyra-zoom.js:84 via svep():133.
+      // Provet skrev forut bara transformen direkt. Det gick sa lange ingenting annat mutera-de
+      // #view under matningen; nar overlaylanken flyttade in i arbetsytan gjorde den det.
+      if (window.VyraZoom && typeof window.VyraZoom.satt === 'function') window.VyraZoom.satt(skala);
       canvas.style.transformOrigin = 'top left';
+      // Matrisformen sist: den ar sjalva poangen i prov 3, och nu ar den varde agaren ocksa star
+      // for, sa ett svep mitt i matningen ger samma skala i stallet for att nolla den.
       canvas.style.transform = form === 'matrix'
         ? `matrix(${skala},0,0,${skala},0,0)`
         : `scale(${skala})`;
