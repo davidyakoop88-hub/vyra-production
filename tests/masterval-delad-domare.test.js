@@ -91,15 +91,25 @@ test('en domare som slutar svara faller tillbaka på den lokala vägen', async (
 test('ett gammalt domarsvar slutar gälla — annars tystar en död domare automationen för evigt', async () => {
   // MUTATIONEN SOM ÖVERLEVDE FÖRST: `domarenGaller()` utan åldersgräns. Då lever domarens sista
   // "nej" vidare i all evighet, och en server som stängs mitt i en sändning tystar automationen
-  // helt — motsatsen till fail-open. Provet ger ttl 1 ms och låter svaret bli gammalt.
+  // helt — motsatsen till fail-open.
+  //
+  // TIDERNA ÄR ÄNDRADE 2026-08-21 för att provet flackade i CI, även på main. Med `ttl: 1` var
+  // fönstret kortare än schemaläggningens upplösning: på en belastad maskin hann svaret bli
+  // gammalt innan kontrollmätningen ens kördes, och då föll raden "färskt svar ska gälla" — alltså
+  // det motsatta felet mot det provet finns för.
+  //
+  // 40 ms är fortfarande långt under allt riktigt (den skarpa TTL:en är 6000 ms) men tillräckligt
+  // för att `farKora()` säkert ska hinna köras inom fönstret. Väntan efteråt är 3× TTL, så
+  // marginalen finns åt båda hållen.
+  const TTL = 40;
   const { w } = rymd({ svar: { ok: true, master: 'nagon-annan', jagArMaster: false } });
   const val = w.VyraMasterval.skapa({
-    nyckel: 'prov', minNiva: () => 1, domare: 'http://127.0.0.1:4173', ttl: 1,
+    nyckel: 'prov', minNiva: () => 1, domare: 'http://127.0.0.1:4173', ttl: TTL,
   });
   await val.pulsa();
   assert.equal(val.farKora(), false, 'kontrollmätning: färskt svar ska gälla');
-  await new Promise(r => setTimeout(r, 12));
+  await new Promise(r => setTimeout(r, TTL * 3));
   assert.equal(val.farKora(), true,
-    'domarens svar är 12 ms gammalt med ttl 1 ms och gäller fortfarande — en domare som tystnar '
-    + 'får aldrig lämna ett permanent nej efter sig');
+    `domarens svar är ${TTL * 3} ms gammalt med ttl ${TTL} ms och gäller fortfarande — en domare `
+    + 'som tystnar får aldrig lämna ett permanent nej efter sig');
 });
