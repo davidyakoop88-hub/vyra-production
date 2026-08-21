@@ -149,6 +149,46 @@ test('kortet star till vanster och bilden i mitten', { skip, timeout: 60000 }, a
       + 'den ska centreras i VYN, inte i ytan som blir over bredvid kortet');
     assert.equal(m.overlapp, false,
       'kortet lapper over bilden; pa breda fonster ska de sta bredvid varandra utan att krocka');
+    // GAVORNA MATS OVER HELA VARVET, inte i det ogonblick provet rakar kora.
+    //
+    // Forsta versionen jamforde kortet mot scenens LAYOUTRUTA — som bara omsluter telefonen.
+    // Gavorna svavar langt utanfor den via transformer, sa vakten gav GRONT medan kortet i
+    // sjalva verket tackte en gava med 33 px (uppmatt: gavans vanstra kant 445, kortets hoger 478).
+    // David sag det pa en skarmbild som provet sa var i sin ordning.
+    //
+    // Banan ar en cirkel, sa dess ytterlage ar stabilt — men VILKEN gava som star dar vandrar.
+    // Darfor spolas animationerna igenom i 60 steg. Kontrollmatningen nedan bevisar att
+    // avspolningen faktiskt flyttar nagot; utan den kunde slingan mata samma bildruta 60 ganger.
+    const bana = await page.evaluate(`(() => {
+      const kort = document.querySelector('.login-kort').getBoundingClientRect();
+      const rot = document.querySelector('.hero-gavoring-rot');
+      const anims = rot ? rot.getAnimations({ subtree: true }) : [];
+      if (!anims.length) return { ingenBana: true };
+      const varv = anims[0].effect.getTiming().duration || 34000;
+      const forsta = document.querySelector('.hero-gava');
+      anims.forEach(a => { a.pause(); a.currentTime = 0 });
+      const vid0 = forsta.getBoundingClientRect().left;
+      anims.forEach(a => { a.currentTime = varv / 4 });
+      const vidKvart = forsta.getBoundingClientRect().left;
+      let minst = Infinity;
+      for (let i = 0; i < 60; i++) {
+        anims.forEach(a => { a.currentTime = varv * i / 60 });
+        for (const g of document.querySelectorAll('.hero-gava')) {
+          const l = g.getBoundingClientRect().left;
+          if (l < minst) minst = l;
+        }
+      }
+      anims.forEach(a => a.play());
+      return { kortHoger: kort.right, minstaGava: minst, rorSig: Math.round(vid0) !== Math.round(vidKvart) };
+    })()`);
+    assert.ok(!bana.ingenBana, 'hittar ingen gavobana att mata');
+    assert.equal(bana.rorSig, true,
+      'kontrollmatning: avspolningen flyttar inte gavorna, sa slingan mater samma bildruta 60 '
+      + 'ganger och sager ingenting om varvet');
+    assert.ok(bana.minstaGava > bana.kortHoger,
+      `kortet slutar pa x=${Math.round(bana.kortHoger)} men en gava nar x=${Math.round(bana.minstaGava)} `
+      + 'nagon gang under varvet — kortet tacker da bilden. Gor kortet smalare eller flytta det '
+      + 'narmare kanten.');
     assert.ok(m.kortZ >= m.scenZ,
       `kortet (z=${m.kortZ}) ligger under scenen (z=${m.scenZ}) — pa smalare fonster gar kortet `
       + 'tillbaka i floden och maste anda ligga overst, annars stjal en gava klicket fran faltet');

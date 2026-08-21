@@ -735,9 +735,14 @@ main,.mini-sidfot{position:relative;z-index:1}
 
 /* GLASET ar det enda som blev kvar av referensen. Halvgenomskinligt, kraftigt suddat bakom, och
    en dov violett gloria sa kanten syns aven mot en mork bakgrund. */
-.hero-botten .login-kort{position:relative;z-index:2;width:min(400px,92vw);
+/* BREDDEN AR RAKNAD MOT GAVOBANAN, inte vald pa kansla. Gavorna kretsar kring mobilens fot med
+   radien --radie (upp till 268 px) och ar sjalva upp till 104 px breda, sa banans vanstra ytterlage
+   ligger runt x=400 i en 1440-vy. Med 400 px kort slutade det pa x=478 och tackte gavan (uppmatt:
+   gavans vanstra kant 445). 344 px med kortet narmare kanten slutar pa ~380 och gar fritt hela
+   varvet — inte bara i det ogonblick man rakar mata. */
+.hero-botten .login-kort{position:relative;z-index:2;width:min(344px,92vw);
   background:linear-gradient(168deg,rgba(28,20,42,.72),rgba(12,8,20,.66));
-  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:28px 26px;
+  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:24px 22px;
   backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);
   box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,
              0 0 60px -20px rgba(168,58,239,.34)}
@@ -748,7 +753,7 @@ main,.mini-sidfot{position:relative;z-index:1}
 /* Kortet lyfts ur floden sa det inte trycker bilden ur mitten. Vid smalare fonster far det ga
    tillbaka i floden — annars lagger det sig OVANPA mobilen, och det ar samre an att vara osnyggt. */
 @media (min-width:1120px){
-  .hero-botten .login-kort{position:absolute;left:clamp(20px,4vw,80px);top:50%;
+  .hero-botten .login-kort{position:absolute;left:clamp(16px,2.5vw,44px);top:50%;
     transform:translateY(-50%);margin:0}
 }
 
