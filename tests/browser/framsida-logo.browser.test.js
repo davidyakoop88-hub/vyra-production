@@ -116,40 +116,41 @@ test('märket krymper i ett kort fönster i stället för att äta prisraden',
   } finally { await stor.context.close(); await liten.context.close() }
 });
 
-test('inloggningskortet ar centrerat och scenen ligger bakom det', { skip, timeout: 60000 },
-  async () => {
-  // Framsidan blev ett centrerat glaskort 2026-08-21 (Davids beslut, efter en referens han visade).
-  // Tva saker gor formen: kortet star i mitten, och mobilen med gavobanan ligger BAKOM det.
+test('kortet star till vanster och bilden i mitten', { skip, timeout: 60000 }, async () => {
+  // Formen andrades TVA ganger 2026-08-21 och provet foljer med, annars vaktar det ett beslut som
+  // inte galler: forst ett centrerat kort med mobilen bakom (efter en referens David visade), och
+  // sedan hans omval — glaset kvar, men kortet till VANSTER och bilden synlig i MITTEN.
   //
-  // Provet mater bada, for de gar sonder pa olika satt. Ett kort som glider ur mitten ser bara
-  // snett ut; en scen som hamnar FRAMFOR kortet gor faltet omojligt att klicka i — och det syns
-  // inte alls i en skarmbild dar gavorna anda ar nastan genomskinliga.
+  // Bilden centreras i VYN, inte i "det som blir over". Lag kortet i floden hamnade mobilen 200 px
+  // hoger om mitten (uppmatt: x=804 i en 1440-vy), for den centrerades i ytan bredvid kortet.
+  // Kortet ar darfor lyft ur floden pa breda fonster.
   const { context, page } = await sidan({ width: 1440, height: 900 });
   try {
     const m = await page.evaluate(`(() => {
       const kort = document.querySelector('.login-kort');
       const scen = document.querySelector('.hero-mobil-scen');
       if (!kort || !scen) return { saknas: true };
-      const k = kort.getBoundingClientRect();
-      const cs = getComputedStyle(scen), ck = getComputedStyle(kort);
+      const k = kort.getBoundingClientRect(), s2 = scen.getBoundingClientRect();
       return {
-        mittfel: Math.abs((k.left + k.width / 2) - innerWidth / 2),
-        scenZ: Number(cs.zIndex) || 0,
-        kortZ: Number(ck.zIndex) || 0,
-        scenKlick: cs.pointerEvents,
-        opacitet: Number(cs.opacity)
+        kortMitt: k.left + k.width / 2,
+        bildMitt: s2.left + s2.width / 2,
+        vyMitt: innerWidth / 2,
+        overlapp: k.right > s2.left,
+        kortZ: Number(getComputedStyle(kort).zIndex) || 0,
+        scenZ: Number(getComputedStyle(scen).zIndex) || 0
       };
     })()`);
     assert.ok(!m.saknas, 'kortet eller scenen saknas');
-    assert.ok(m.mittfel <= 2,
-      `kortet star ${Math.round(m.mittfel)} px ur mitten — formen bygger pa att det ar centrerat`);
-    assert.ok(m.kortZ > m.scenZ,
-      `scenen (z=${m.scenZ}) ligger inte bakom kortet (z=${m.kortZ}) — da hamnar gavorna framfor `
-      + 'inloggningen');
-    assert.equal(m.scenKlick, 'none',
-      'scenen tar emot klick; en gava far aldrig stjala ett klick fran e-postfaltet');
-    assert.ok(m.opacitet < 0.35,
-      `scenen ligger pa opacitet ${m.opacitet} — over ~0.3 laser den sig som foremal bakom kortet `
-      + 'i stallet for som ljus i djupet (uppmatt vid .34: nallen och Zeus blev tydliga)');
+    assert.ok(m.kortMitt < m.vyMitt - 100,
+      `kortet star pa ${Math.round(m.kortMitt)} i en ${Math.round(m.vyMitt * 2)} px vy — det ska `
+      + 'ligga tydligt till vanster');
+    assert.ok(Math.abs(m.bildMitt - m.vyMitt) <= 8,
+      `bilden har sin mitt pa ${Math.round(m.bildMitt)} men vyns mitt ar ${Math.round(m.vyMitt)} — `
+      + 'den ska centreras i VYN, inte i ytan som blir over bredvid kortet');
+    assert.equal(m.overlapp, false,
+      'kortet lapper over bilden; pa breda fonster ska de sta bredvid varandra utan att krocka');
+    assert.ok(m.kortZ >= m.scenZ,
+      `kortet (z=${m.kortZ}) ligger under scenen (z=${m.scenZ}) — pa smalare fonster gar kortet `
+      + 'tillbaka i floden och maste anda ligga overst, annars stjal en gava klicket fran faltet');
   } finally { await context.close() }
 });

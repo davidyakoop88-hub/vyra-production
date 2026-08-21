@@ -717,55 +717,50 @@ main,.mini-sidfot{position:relative;z-index:1}
 }
 
 /* ================================================================================================
-   FRAMSIDAN SOM CENTRERAT GLASKORT (Davids beslut 2026-08-21, efter en referens han visade).
-   Reglerna ligger SIST med flit — samma skal som prisradens hojdregler nedan: ett intilliggande
-   blockklipp far inte kunna radera dem tyst.
+   FRAMSIDAN: GLASKORT TILL VANSTER, BILDEN KVAR I MITTEN (Davids beslut 2026-08-21).
 
-   Formen ar hamtad ur referensen, inte innehallet: ett centrerat, halvgenomskinligt kort over en
-   mork scen. Bakgrunden ar var EGEN — Tubes-strimman som redan foljer musen, plus ett djup av
-   toner. Mobilen och gavobanan ligger kvar men BAKOM kortet och dovare, sa rorelsen finns kvar
-   utan att slass med det man ska lasa.
+   Forsta versionen centrerade kortet och la mobilen bakom det, efter en referens David visade.
+   Han valde sedan om: FORMEN pa kortet ska vara kvar — det halvgenomskinliga glaset — men kortet
+   star till vanster och mobilen med gavobanan ar synlig i mitten, som forut.
+
+   Reglerna ligger SIST i filen med flit, samma skal som prisradens hojdregler nedan: ett
+   intilliggande blockklipp far inte kunna radera dem tyst.
    ================================================================================================ */
 
-/* Heron blir ett staplingsrum: scenen ligger i botten, kortet ovanpa. */
-.hero-botten{justify-content:center;text-align:center;position:relative;margin-top:22px;
-  min-height:min(560px,58svh);align-items:center}
+/* BILDEN CENTRERAS I VYN, inte i "det som blir over". Lag kortet forst i floden hamnade mobilen
+   pa x=804 i en 1440-vy — alltsa 200 px hoger om mitten, for den centrerades i ytan bredvid
+   kortet. Uppmatt. Nu ar kortet lyft ur floden och scenen far hela raden att centrera sig i. */
+.hero-botten{justify-content:center;align-items:center;text-align:left;
+  margin-top:26px;position:relative}
 
-/* Mobilen och gavorna: bakom, dovare, och utan att ta plats i floden. Pointer-events av — de ar
-   dekor, och ett klick pa en gava ska aldrig stjala fokus fran inloggningen. */
-/* Uppmatt: vid opacity .34 och scale 1.06 lastes nallen, lejonet och Zeus som FOREMAL utspridda
-   runt kortet — rorigt, inte stamning. Skalan ner samlar dem bakom kortet i stallet for att kasta
-   ut dem mot kanterna, och .16 med kraftigare oskarpa gor dem till ljus i djupet. */
-.hero-botten .hero-mobil-scen{position:absolute;inset:0;display:grid;place-items:center;
-  z-index:0;opacity:.16;filter:blur(5px) saturate(.7);pointer-events:none;
-  transform:scale(.82)}
-
-/* Kortet: glas, centrerat, over scenen. */
-.hero-botten .login-kort{position:relative;z-index:2;margin:0 auto;text-align:left;
-  width:min(408px,92vw);
+/* GLASET ar det enda som blev kvar av referensen. Halvgenomskinligt, kraftigt suddat bakom, och
+   en dov violett gloria sa kanten syns aven mot en mork bakgrund. */
+.hero-botten .login-kort{position:relative;z-index:2;width:min(400px,92vw);
   background:linear-gradient(168deg,rgba(28,20,42,.72),rgba(12,8,20,.66));
-  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:30px 28px;
+  border:1px solid rgba(255,255,255,.11);border-radius:22px;padding:28px 26px;
   backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);
   box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,
              0 0 60px -20px rgba(168,58,239,.34)}
 
-/* En dov ljusgloria bakom kortet sa glaset har nagot att bryta mot aven pa en tom bakgrund. */
-.hero-botten::before{content:'';position:absolute;left:50%;top:50%;width:min(760px,96vw);
-  height:min(520px,64svh);transform:translate(-50%,-50%);z-index:1;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(140,60,220,.22),transparent 68%);
-  filter:blur(28px)}
+/* Bilden ar SYNLIG igen — inte dekor bakom kortet. Ingen opacitet, ingen oskarpa. */
+.hero-botten .hero-mobil-scen{position:relative;z-index:1;margin:0 auto}
 
-@media (prefers-reduced-motion:reduce){.hero-botten .hero-mobil-scen{filter:none}}
+/* Kortet lyfts ur floden sa det inte trycker bilden ur mitten. Vid smalare fonster far det ga
+   tillbaka i floden — annars lagger det sig OVANPA mobilen, och det ar samre an att vara osnyggt. */
+@media (min-width:1120px){
+  .hero-botten .login-kort{position:absolute;left:clamp(20px,4vw,80px);top:50%;
+    transform:translateY(-50%);margin:0}
+}
 
-/* Korta fonster: kortet far krympa fore prisraden, precis som allt annat har uppe. */
-/* Korta fonster. Uppmatt vid 768 px: prisraden slutade pa y=769, alltsa EN pixel under vecket —
-   samma falla som slagit till tva ganger forut. Kortet och scenen ger vika, aldrig prisraden. */
+/* Korta fonster: prisraden ar sidans sista rad och maste synas utan rullning. Uppmatt vid 768 px
+   slutade den pa y=780 forsta forsoket. Mobilen och kortet ger vika, aldrig raden. */
 @media (max-height:1000px){
-  .hero-botten{min-height:min(430px,48svh);margin-top:10px}
-  .hero-botten .login-kort{padding:18px 20px;border-radius:16px}
-  .hero-botten::before{height:min(400px,52svh)}
+  .hero-botten{margin-top:12px}
+  .hero-botten .login-kort{padding:18px 20px;border-radius:18px}
+  .hero-botten .hero-mobil{width:min(196px,24vw)}
 }
 @media (max-height:820px){
-  .hero-botten{min-height:min(380px,44svh);margin-top:6px}
-  .hero-botten .login-kort{padding:15px 18px}
+  .hero-botten{margin-top:6px}
+  .hero-botten .login-kort{padding:14px 18px}
+  .hero-botten .hero-mobil{width:min(168px,20vw)}
 }
