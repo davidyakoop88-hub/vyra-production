@@ -51,7 +51,20 @@ typsnittsfamilj precis före fotograferingen och jämför de två utfallen. Hypo
 `@font-face` med `font-display: swap` hinner byta mellan mätningen och skärmdumpen — men det är en
 hypotes, inte en mätning, och den står som en sådan.
 
-## Flackningen i ranking:templateTopPoints — orsaken är hittad, fixen är inte gjord (2026-08-21)
+## Flackningen i ranking:templateTopPoints — LÖST 2026-08-21
+
+> **Rättelse.** Första versionen av det här avsnittet pekade ut `live-zero-state.js` som orsak.
+> Det var fel, och mätningen visade det: `rankingCycle` var redan `false`, och stackspårningen
+> pekade rakt på **`live-leaderboard.js:214`**. Den läste ikonen ur elementet och skrev
+> `ikon + ' 0'` tillbaka **utan att jämföra** — femton DOM-mutationer på tre sekunder utan att
+> något hänt. Widgetens text blev därför aldrig tyst, och fotot kunde landa före eller efter en
+> omskrivning. Med jämförelsen på plats: **0 mutationer på tre sekunder**, och riggens egna prov
+> tillbaka på 25 s. Vakten heter `tests/browser/nollrader-skrivloop.browser.test.js`.
+>
+> Analysen nedan står kvar för att den beskriver *hur* felet såg ut i bilderna — och som påminnelse
+> om att en trolig förklaring inte är en uppmätt.
+
+### Ursprunglig analys (delvis fel om orsaken)
 
 `neon` och `podium` har fallit slumpvis i CI. **Orsaken är nu bevisad**, med två bilder mot
 varandra:
