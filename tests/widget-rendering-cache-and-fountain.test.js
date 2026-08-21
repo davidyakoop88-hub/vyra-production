@@ -120,7 +120,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-08-20 for sidomenyn: BARA studio.css andrades (en bredd i en variabel, och
   // <nav> rullar i stallet for hela <aside>). media.js, widget-factory.js och premium-bundlens
   // version ar oforandrade och behaller sina strangar.
-  assert.match(studio, /studio\.css\?v=20260820-5/);
+    // Bumpad 2026-08-21: de nio reglerna som krympte sidomenyn i editorvyn ar borta, sa menyn
+  // ser likadan ut i alla vyer. BARA studio.css andrades.
+    // Bumpad 2026-08-21 for overlaylanken: raden bryts till tva rader under 1500 px sa hela
+  // adressen syns. BARA studio.css andrades.
+  assert.match(studio, /studio\.css\?v=20260821-2/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);

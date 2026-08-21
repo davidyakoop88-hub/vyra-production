@@ -101,7 +101,7 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 .like-neon .toplike-row,.like-clean .toplike-row,.like-podium .toplike-row{border:0!important;box-shadow:none!important}
 .editor-shell{position:relative;padding-bottom:58px}.overlay-link-bar{position:absolute;left:0;right:0;bottom:0;height:58px;z-index:60;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:7px;padding:8px 10px;background:#0c0711f5;border-top:1px solid #4b265c;box-shadow:0 -10px 28px #050207}.overlay-link-bar>div{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px}.overlay-link-bar span{grid-column:1/-1;font-size:6px;color:#b98ac7;letter-spacing:.08em}.overlay-link-bar span i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#55eaa1;box-shadow:0 0 8px #55eaa1}.overlay-link-bar input{width:100%;min-width:150px;background:#160c1d;border:1px solid #432352;color:#cbbbd0;border-radius:5px;padding:6px;font-size:7px}.overlay-link-bar button{border:1px solid #512765;background:#1a0c23;color:#e6d8ea;border-radius:5px;padding:7px 9px;font-size:7px}.overlay-link-bar button:hover{border-color:#d14eff;background:#351044}
 .editor-shell{padding-bottom:86px!important}.overlay-link-bar{height:86px!important;grid-template-columns:minmax(360px,1fr) auto auto auto auto!important;gap:11px!important;padding:12px 16px!important;background:linear-gradient(90deg,#12081a,#0b0711)!important;border-top:2px solid #773294!important}.overlay-link-bar>div{grid-template-columns:170px minmax(240px,1fr)!important;gap:7px!important}.overlay-link-bar span{font-size:9px!important;font-weight:800!important;color:#e0b5ee!important;letter-spacing:.12em!important}.overlay-link-bar span i{width:8px!important;height:8px!important;margin-right:5px!important}.overlay-link-bar input,.overlay-link-bar select{min-height:34px!important;padding:9px 11px!important;font-size:10px!important;border:1px solid #69407a!important;border-radius:5px!important;background:#1b0e24!important;color:#fff!important}.overlay-link-bar input{min-width:240px!important}.overlay-link-bar button{min-height:40px!important;padding:10px 15px!important;font-size:10px!important;font-weight:700!important;white-space:nowrap!important;border-color:#7a3993!important;background:#281034!important}.overlay-link-bar #copyObsLink{background:linear-gradient(110deg,#7126ae,#a53be0)!important;color:#fff!important}.overlay-link-bar #copyTikTokLink{background:linear-gradient(110deg,#a51b73,#d9369c)!important;color:#fff!important}.overlay-link-bar #previewOverlayLink{background:#18251f!important;border-color:#3b9668!important;color:#78efac!important}
-.overlay-link-bar{position:fixed!important;left:210px!important;right:0!important;bottom:0!important;top:auto!important;width:auto!important;z-index:1000!important}.editor-shell{padding-bottom:0!important}body:has(.overlay-link-bar) main{padding-bottom:95px}@media(max-width:800px){.overlay-link-bar{left:58px!important;grid-template-columns:1fr!important;height:auto!important}.overlay-link-bar button{display:none}}
+.overlay-link-bar{position:fixed!important;left:var(--meny-bredd,210px)!important;right:0!important;bottom:0!important;top:auto!important;width:auto!important;z-index:1000!important}.editor-shell{padding-bottom:0!important}body:has(.overlay-link-bar) main{padding-bottom:95px}@media(max-width:800px){.overlay-link-bar{left:58px!important;grid-template-columns:1fr!important;height:auto!important}.overlay-link-bar button{display:none}}
 .toplike-row>img{display:block!important;grid-column:2!important;grid-row:1/3!important}.profile-frame{border:0!important;outline:0!important;box-shadow:none!important}
 .pro-frame-picker{margin-top:12px;padding-top:10px;border-top:1px solid #4f285d}.pro-frame-picker>span{display:block;margin-bottom:8px;color:#e9a4ff;font-size:8px;font-weight:800;letter-spacing:.08em}.pro-frame-picker>div{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.properties .pro-frame-picker button{height:74px;padding:4px;border:1px solid #4b2b58;border-radius:7px;background:#100817;color:#cbb8d1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden}.properties .pro-frame-picker button.active{border-color:#e764ff;background:#2a1032;box-shadow:0 0 10px #c13de866}.pro-frame-picker button img{width:43px;height:43px;object-fit:contain}.pro-frame-picker button i{font-size:25px;font-style:normal;color:#a68bad}.pro-frame-picker button b{font-size:6px;white-space:nowrap}.pro-frame-picker select{display:none}.toplike-row>.pro-avatar-frame{position:relative;grid-column:2;grid-row:1/4;align-self:center;width:43px;height:43px;display:grid;place-items:center;overflow:visible}.pro-avatar-frame>img:first-child{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;border:0!important;box-shadow:none!important}.pro-avatar-frame>.pro-frame-art{position:absolute!important;inset:-3px!important;width:49px!important;height:49px!important;max-width:none!important;object-fit:contain!important;border:0!important;border-radius:0!important;box-shadow:none!important;pointer-events:none!important;z-index:3}.toplike-row:has(.pro-avatar-frame){grid-template-columns:27px 47px minmax(0,1fr)!important}.toplike-row:has(.pro-avatar-frame)>span:not(.pro-avatar-frame){grid-column:3!important}.toplike-row:has(.pro-avatar-frame)>em{grid-column:3!important}
 
@@ -1017,17 +1017,15 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 /* Kompakt meny i EDITORN. Full meny med etiketter tar 1241px i hojd, men editorn har ofta
    bara 768px. Raderna kortas dar — inte i ovriga Studion, dar hojden finns. Uppmatt: knapp
    57px -> 34px, sektionsetikett 34px -> 18px, sektionsavstand 22px -> 10px. */
-body:has(.editor-shell)>aside nav{gap:10px}
-body:has(.editor-shell)>aside .nav-section button,
-body:has(.editor-shell)>aside .nav-section a{padding:7px 9px;font-size:12px;gap:9px}
-body:has(.editor-shell)>aside nav button svg,
-body:has(.editor-shell)>aside nav a svg{width:16px;height:16px}
-body:has(.editor-shell)>aside .nav-section{gap:2px}
-body:has(.editor-shell)>aside .nav-section-label{padding:2px 9px;margin-bottom:1px;font-size:9px}
-body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px}
-body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
-body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
-body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+
+
+
+
+
+
+
+
 
 /* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
    translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
@@ -1383,3 +1381,56 @@ aside>nav::-webkit-scrollbar{display:none}
 /* flex-shrink:0 ar hela poangen: utan den kramas huvudet och botten ihop nar nav vill vaxa,
    och profilkortet blir en 3px hog rand i stallet for att trycka undan menyn. */
 aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
+
+
+/* ================================================================================================
+   SIDOMENYN SER LIKADAN UT I ALLA VYER (2026-08-21).
+
+   PR #253 enade BREDDEN och lat <nav> rulla i stallet for hela <aside>. Det loste halva problemet
+   — men NIO regler kvar krympte menyn enbart i editorvyn: padding 7px istallet for normalt,
+   teckenstorlek 12px, ikoner 16x16, radavstand 2px, egna matt pa etiketter, badgar och
+   profilraden. Davids ursprungliga ord var att "sidobar andras" nar man trycker Layout, och det
+   var DET har han sag. Jag lagade bredden och kallade det klart.
+
+   Krympningen fanns for att fa in innehallet lodratt i editorn, dar body ar height:100vh med
+   overflow:hidden. Den behovs inte langre: <nav> ar ett eget rullningsfalt och .aside-bottom har
+   flex-shrink:0, sa menyn rullar i stallet for att krympa. Det ar samma losning som redan galler
+   i alla andra vyer.
+   ================================================================================================ */
+
+
+/* ================================================================================================
+   OVERLAYLANKEN FAR PLATS ATT SYNAS (Davids buggrapport 2026-08-21).
+
+   UPPMATT i editorvyn med en riktig token-lank:
+     1920 px vy -> faltet 1009 px, innehallet 1007  -> ryms
+     1440 px vy -> faltet  529 px, innehallet  527  -> ryms med 2 px
+     1280 px vy -> faltet  369 px, innehallet  389  -> KLIPPT
+
+   Raden ar ett rutnat med fem kolumner: valjare + falt + fyra knappar. Knapparna tar 449 px, plus
+   gap och en 170 px valjare — under ~1500 px vy finns det helt enkelt inte plats for hela adressen.
+   Att bara krympa valjaren skjuter gransen nagra tiotal pixlar; det loser inte problemet, det
+   flyttar det.
+
+   Lanken ar det VIKTIGASTE pa raden — den ska klistras in i OBS. Under 1500 px far den darfor hela
+   bredden pa en egen rad, och knapparna flyttar ner. Raden blir hogre, sa bade .editor-shell och
+   main maste ge samma plats tillbaka, annars hamnar knapparna under vecket.
+   ================================================================================================ */
+@media (max-width:1500px){
+  /* SELEKTORN MASTE MATCHA. Forsta forsoket skrev `.overlay-link-bar{height:132px!important}` och
+     hojden tog inte: `body:has(.editor-shell) .overlay-link-bar{height:68px!important}` finns
+     redan och har hogre specificitet, sa den vann oavsett ordning. Raden blev 68 px hog medan
+     innehallet krävde 128 — knapparna hamnade pa y=962 i en 900 px vy, alltsa UTANFOR skarmen.
+     Uppmatt; det syns inte i koden och knappt i en skarmbild.
+
+     FLEX, inte grid. Ett forsok med grid-template-columns:1fr och knapparna pa rad 2 strackte den
+     forsta knappen over hela raden (uppmatt: 831 px). Flex med radbrytning later faltet ta hela
+     forsta raden och knapparna dela pa den andra, utan att nagon behover veta hur manga de ar. */
+  body:has(.editor-shell) .overlay-link-bar{display:flex!important;flex-wrap:wrap;
+    align-items:center;height:auto!important;min-height:132px;row-gap:9px!important}
+  body:has(.editor-shell) .overlay-link-bar>div{flex:1 1 100%;
+    grid-template-columns:minmax(120px,170px) minmax(0,1fr)!important}
+  body:has(.editor-shell) .overlay-link-bar>button{flex:1 1 auto;min-width:0}
+  /* Editorytan maste ge tillbaka exakt det raden tar, annars hamnar kanvasen under den. */
+  body:has(.editor-shell) #view{height:calc(100vh - 58px - 84px)}
+}
