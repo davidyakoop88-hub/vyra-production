@@ -294,8 +294,26 @@
   // Anslutningslaget lases ur `.connection` — SAMMA element som sidhuvudet redan malar ur
   // vyra-server-status (studio-live.js). En egen kalla hade blivit en andra sanning om
   // samma sak, och tva vyer som sager emot varandra kostade en hel kvall tidigare.
+  // Laget lases i FORSTA hand ur handelsen sjalv, i andra hand ur `.connection`.
+  //
+  // Uppmatt i Chrome: med bara DOM-avlasningen lag raden ETT STEG EFTER. Bade studio-live.js och
+  // den har filen lyssnar pa vyra-server-status, och ordningen mellan tva lyssnare pa samma
+  // handelse ar inte garanterad — sprang vi forst hade sidhuvudet inte hunnit satta klassen an,
+  // sa vi malade foregaende lage. Handelsen bar sanningen; DOM-klassen ar bara ett eko av den.
+  //
+  // Reserven behalls for forsta ritningen, da ingen handelse annu kommit in i den har fliken.
+  let sistaAnslutning = null;
+  function anslutningsLage() {
+    if (sistaAnslutning) return String(sistaAnslutning.state || (sistaAnslutning.connected ? 'live' : 'idle'));
+    const e = document.querySelector('.connection');
+    if (!e) return 'idle';
+    if (e.classList.contains('pausad')) return 'paused';
+    return e.classList.contains('connected') ? 'live' : 'idle';
+  }
+  function ttsPausad() { const l = anslutningsLage(); return l === 'paused' || l === 'suspended' }
   function ttsAnsluten() {
-    return !!document.querySelector('.connection')?.classList.contains('connected');
+    return ttsPausad() || anslutningsLage() === 'live'
+      || !!document.querySelector('.connection')?.classList.contains('connected');
   }
 
   function ttsStatusText() {
@@ -307,6 +325,13 @@
       return { klass: 'av', text: 'Avstängd',
         detalj: ikryssad ? 'Kryssrutan är i men inte sparad — tryck Spara inställningar.'
                          : 'Kryssa i Aktiverad och tryck Spara för att läsa upp chatten.' };
+    }
+    // Pausen far sitt EGET besked. "Väntar på chatt" vore ett lofte som inte kan hallas: under
+    // en paus kommer det ingen chatt, och det ar inte ett fel. Laget lases ur samma element som
+    // sidhuvudet malar, sa de tva kan inte saga emot varandra.
+    if (ttsPausad()) {
+      return { klass: 'vantar', text: 'Sändningen pausad',
+        detalj: 'Ingen chatt kommer in medan pausen varar. Upplasningen fortsätter när du kör igång igen.' };
     }
     if (!ttsAnsluten()) return { klass: 'ingen', text: 'Ingen live ansluten', detalj: 'Anslut TikTok i sidhuvudet — utan anslutning kommer ingen chatt hit.' };
     if (statusLage.upplasta > 0) {
@@ -344,8 +369,8 @@
     rad.append(prick, rubrik, detalj);
   }
 
-  addEventListener('vyra-server-status', malaTtsStatus);
-  addEventListener('vyra-server-offline', malaTtsStatus);
+  addEventListener('vyra-server-status', e => { sistaAnslutning = e.detail?.connection || null; malaTtsStatus() });
+  addEventListener('vyra-server-offline', () => { sistaAnslutning = null; malaTtsStatus() });
   // Foregaende kontos siffror far inte folja med in i nasta session.
   addEventListener('vyra-session-ended', () => {
     statusLage.inkomna = 0; statusLage.upplasta = 0; statusLage.senasteNamn = '';
