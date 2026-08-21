@@ -1017,17 +1017,15 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 /* Kompakt meny i EDITORN. Full meny med etiketter tar 1241px i hojd, men editorn har ofta
    bara 768px. Raderna kortas dar — inte i ovriga Studion, dar hojden finns. Uppmatt: knapp
    57px -> 34px, sektionsetikett 34px -> 18px, sektionsavstand 22px -> 10px. */
-body:has(.editor-shell)>aside nav{gap:10px}
-body:has(.editor-shell)>aside .nav-section button,
-body:has(.editor-shell)>aside .nav-section a{padding:7px 9px;font-size:12px;gap:9px}
-body:has(.editor-shell)>aside nav button svg,
-body:has(.editor-shell)>aside nav a svg{width:16px;height:16px}
-body:has(.editor-shell)>aside .nav-section{gap:2px}
-body:has(.editor-shell)>aside .nav-section-label{padding:2px 9px;margin-bottom:1px;font-size:9px}
-body:has(.editor-shell)>aside .sidebar-head{padding-bottom:8px;margin-bottom:4px}
-body:has(.editor-shell)>aside .aside-bottom>button{padding:7px 9px!important;font-size:12px}
-body:has(.editor-shell)>aside .aside-bottom .user{padding-top:8px;margin-top:4px}
-body:has(.editor-shell)>aside .nav-badge{font-size:8px;padding:1px 5px}
+
+
+
+
+
+
+
+
+
 
 /* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
    translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
@@ -1383,3 +1381,19 @@ aside>nav::-webkit-scrollbar{display:none}
 /* flex-shrink:0 ar hela poangen: utan den kramas huvudet och botten ihop nar nav vill vaxa,
    och profilkortet blir en 3px hog rand i stallet for att trycka undan menyn. */
 aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
+
+
+/* ================================================================================================
+   SIDOMENYN SER LIKADAN UT I ALLA VYER (2026-08-21).
+
+   PR #253 enade BREDDEN och lat <nav> rulla i stallet for hela <aside>. Det loste halva problemet
+   — men NIO regler kvar krympte menyn enbart i editorvyn: padding 7px istallet for normalt,
+   teckenstorlek 12px, ikoner 16x16, radavstand 2px, egna matt pa etiketter, badgar och
+   profilraden. Davids ursprungliga ord var att "sidobar andras" nar man trycker Layout, och det
+   var DET har han sag. Jag lagade bredden och kallade det klart.
+
+   Krympningen fanns for att fa in innehallet lodratt i editorn, dar body ar height:100vh med
+   overflow:hidden. Den behovs inte langre: <nav> ar ett eget rullningsfalt och .aside-bottom har
+   flex-shrink:0, sa menyn rullar i stallet for att krympa. Det ar samma losning som redan galler
+   i alla andra vyer.
+   ================================================================================================ */

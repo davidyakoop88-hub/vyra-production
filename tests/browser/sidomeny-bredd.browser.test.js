@@ -136,3 +136,56 @@ test('det ar NAV som rullar, inte hela menyn', { skip, timeout: 60000 }, async (
     'sjalva <aside> spiller over sin ruta; huvudet och .aside-bottom ska sta kvar och bara '
     + 'navigationen rulla');
 });
+
+test('menyposterna har samma form i alla vyer, inte bara samma bredd', { skip, timeout: 120000 },
+  async () => {
+  // DET HAR VAR DET DAVID FAKTISKT SAG. PR #253 enade bredden och lat <nav> rulla — och jag kallade
+  // det klart. Men NIO regler kvar krympte menyn enbart i editorvyn: padding 7px istallet for
+  // 12px 14px, teckenstorlek 12px istallet for 12.5, ikoner 16x16 istallet for 22x22, plus egna
+  // matt pa radavstand, etiketter, badgar och profilraden.
+  //
+  // Bredden var alltsa ratt medan menyn anda "andrade sig" vid varje vybyte, precis som han sa.
+  // En vakt som bara mater bredd godkanner det. Den har mater FORMEN pa en menypost.
+  //
+  // Krympningen fanns for att fa in innehallet lodratt i editorn. Den behovs inte langre: <nav>
+  // rullar och .aside-bottom har flex-shrink:0, sa menyn rullar i stallet for att krympa.
+  const FORM = () => {
+    const e = [...document.querySelectorAll('aside nav button, aside nav a')]
+      .find(x => (x.textContent || '').trim().startsWith('Sound'));
+    if (!e) return null;
+    const c = getComputedStyle(e);
+    const svg = e.querySelector('svg');
+    const ic = svg ? getComputedStyle(svg) : null;
+    const bot = document.querySelector('aside .aside-bottom');
+    return {
+      teckenstorlek: c.fontSize,
+      padding: c.padding,
+      ikon: ic ? ic.width + 'x' + ic.height : '-',
+      radhojd: Math.round(e.getBoundingClientRect().height),
+      bottenhojd: bot ? Math.round(bot.getBoundingClientRect().height) : -1
+    };
+  };
+
+  const former = {};
+  for (const vy of ['home', 'editor']) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
+    await page.waitForFunction(() => document.documentElement.dataset.ccReady === '1',
+      null, { timeout: 20000 });
+    await page.evaluate(v => { view = v; render() }, vy);
+    await page.evaluate(() => new Promise(r => setTimeout(r, 400)));
+    former[vy] = await page.evaluate(FORM);
+    // Kontrollmatning: mater vi verkligen editorn nar vi tror det?
+    if (vy === 'editor') {
+      const shell = await page.evaluate(() => !!document.querySelector('.editor-shell'));
+      assert.equal(shell, true, 'ingen .editor-shell i editorvyn — provet mater fel lage');
+    }
+    await page.close();
+  }
+
+  assert.ok(former.home && former.editor, 'hittade ingen menypost att mata');
+  assert.deepEqual(former.editor, former.home,
+    'menyposterna ser olika ut mellan vyerna. '
+    + 'Oversikt: ' + JSON.stringify(former.home) + ' — editor: ' + JSON.stringify(former.editor)
+    + '. Samma bredd racker inte: menyn far inte byta form nar man trycker Layout.');
+});
