@@ -124,7 +124,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ser likadan ut i alla vyer. BARA studio.css andrades.
     // Bumpad 2026-08-21 for overlaylanken: raden bryts till tva rader under 1500 px sa hela
   // adressen syns. BARA studio.css andrades.
-  assert.match(studio, /studio\.css\?v=20260821-2/);
+  assert.match(studio, /studio\.css\?v=20260821-3/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
@@ -151,7 +151,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // andring av den filen.
     // Bumpad 2026-08-21 for skrivloopen i tomma topplistor: live-leaderboard.js andrades och
   // media.js bar dess URL. Strangen 20260803-dedupe byts samtidigt mot en som bara sager nar.
-  assert.match(studio, /[^-]media\.js\?v=20260821-3/);
+  assert.match(studio, /[^-]media\.js\?v=20260821-4/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

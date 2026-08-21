@@ -127,6 +127,10 @@ test('knapparna hamnar inte utanfor skarmen nar raden blir hogre', { skip, timeo
     assert.deepEqual(m.utanfor, [],
       `knappar utanfor skarmen vid ${bredd} px: ${m.utanfor.join(', ')}. Raden ar ${m.barHojd} px `
       + `hog med ${m.innehall} px innehall och slutar pa y=${m.barBotten} i en ${m.vy} px vy.`);
+    // HOJDEN, inte bara bredden. Davids skarmbild 2026-08-21 visade valjaren och adressfaltet
+    // halva: raden var 68 px hog medan innehallet krävde 80, och de tolv pixlarna spillde ut
+    // NEDANFOR. Raden ar position:fixed med bottom:0, sa det gick inte att rulla fram dem.
+    // Faltet var inte klippt i sidled i det laget — provet ovan var gront hela tiden.
     assert.ok(m.barHojd + 1 >= m.innehall,
       `raden ar ${m.barHojd} px men innehallet kraver ${m.innehall} — nagot spiller ut nedanfor. `
       + 'Kontrollera att hojdregeln har minst lika hog specificitet som '
