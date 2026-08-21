@@ -141,7 +141,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-08-21 for pausindikatorn: studio-live.js (sidhuvudets pausgren) och tts-chat.js
   // (pauslaget + laget lases ur handelsen i stallet for DOM) andrades. media.js bar bada
   // URL:erna och maste folja med. Bryggorna ar serversidan och har ingen cachestrang.
-  assert.match(studio, /[^-]media\.js\?v=20260821-1/);
+    // SAMMANSLAGNINGEN 2026-08-21: media.js, tts-chat.js och studio.html rordes av BADA sidorna
+  // (TTS-statusraden pa main, pausindikatorn har). Det sammanslagna innehallet ar varken det
+  // ena eller det andra, sa alla tre far en NY strang — en sammanslagning som ror en fil AR en
+  // andring av den filen.
+  assert.match(studio, /[^-]media\.js\?v=20260821-2/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
