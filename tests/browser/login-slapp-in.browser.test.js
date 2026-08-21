@@ -74,6 +74,15 @@ async function loggaIn(opts = {}) {
   // det pa sidan ocksa ar en annan kodvag i Playwright (Emulation.setEmulatedMedia mot en redan
   // oppnad sida) och kostar ingenting nar contextvalet redan tagit.
   await page.emulateMedia({ reducedMotion: opts.reducedMotion || 'no-preference' });
+  // Samla det sidan sjalv sager. En timeout i CI berattar bara att nagot INTE hande; ett
+  // konsolfel eller ett kastat undantag berattar varfor. slappIn() ar fail-open (try/catch ->
+  // ga vidare anda), sa ett kast dar ser utifran ut EXAKT som ett medvetet overhopp.
+  page.__konsol = [];
+  // Markt med VILKEN sida felet kom fran: efter ett fail-open-hopp star vi i studio.html, och
+  // dess egna fel sager ingenting om varfor dorren uteblev pa framsidan.
+  const var_ = () => (page.url().split('/').pop() || '?').split('?')[0];
+  page.on('console', m => { if (m.type() === 'error') page.__konsol.push(`konsol@${var_()}: ${m.text()}`) });
+  page.on('pageerror', e => page.__konsol.push(`sidfel@${var_()}: ${e && e.message}`));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
   // MAT FORUTSATTNINGEN, ANTA DEN INTE. Nar den har inte holl vantade provet 50 sekunder pa en
@@ -106,8 +115,26 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
       + 'contextvalet och page.emulateMedia sagt no-preference. Da hoppar slappIn() over hela '
       + 'steget med FLIT och det finns ingen dorr att vanta pa — felet ligger i riggen, inte i '
       + 'produkten.');
-    await page.__inloggningssvar;
-    await page.waitForSelector('.login-dorr', { timeout: 15000 });
+    const svar = await page.__inloggningssvar;
+    try {
+      await page.waitForSelector('.login-dorr', { timeout: 15000 });
+    } catch (_) {
+      // GOR TIMEOUTEN TILL EN MATNING. Tva CI-varv har nu fallit har och loggen har bara sagt
+      // "Timeout" — vilket utesluter ingenting. Las ut vad sidan faktiskt star i.
+      const lage = await page.evaluate(() => ({
+        url: location.href,
+        kort: !!document.querySelector('.login-kort'),
+        klar: document.querySelector('.login-kort')?.classList.contains('login-klar') ?? null,
+        dorr: !!document.querySelector('.login-dorr'),
+        valkommen: !!document.querySelector('.login-valkommen'),
+        fel: document.querySelector('#loginError')?.textContent || null,
+        mfa: !document.querySelector('[data-login-mfa]')?.hidden,
+        rorelse: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      })).catch(e => ({ kunde_inte_lasa: String(e && e.message) }));
+      assert.fail('ingen .login-dorr inom 15 s efter inloggningssvaret ('
+        + (svar ? svar.status() : 'inget svar sett') + '). Sidans lage: '
+        + JSON.stringify(lage) + ' · ' + (page.__konsol.length ? page.__konsol.join(' ; ') : 'inga konsolfel'));
+    }
     const m = await page.evaluate(() => ({
       gront: document.querySelector('.login-kort').classList.contains('login-klar'),
       gubbe: !!document.querySelector('.login-gubbe'),
