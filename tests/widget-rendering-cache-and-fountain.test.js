@@ -145,7 +145,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // (TTS-statusraden pa main, pausindikatorn har). Det sammanslagna innehallet ar varken det
   // ena eller det andra, sa alla tre far en NY strang — en sammanslagning som ror en fil AR en
   // andring av den filen.
-  assert.match(studio, /[^-]media\.js\?v=20260821-2/);
+    // Bumpad 2026-08-21 for skrivloopen i tomma topplistor: live-leaderboard.js andrades och
+  // media.js bar dess URL. Strangen 20260803-dedupe byts samtidigt mot en som bara sager nar.
+  assert.match(studio, /[^-]media\.js\?v=20260821-3/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

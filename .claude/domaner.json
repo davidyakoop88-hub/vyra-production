@@ -151,7 +151,8 @@
         "tests/browser/fan-fas-loyalty.browser.test.js",
         "tests/browser/guardian-emblem.browser.test.js",
         "tests/browser/gifter-level-referens.browser.test.js",
-        "tests/browser/streak-katalog.browser.test.js"
+        "tests/browser/streak-katalog.browser.test.js",
+        "tests/browser/nollrader-skrivloop.browser.test.js"
       ],
       "matning": [
         { "namn": "Widgetsnapshot", "kommando": "node scripts/generate-widget-snapshot.js" },

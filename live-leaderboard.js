@@ -207,11 +207,27 @@
       // single entry, and the rows are never reached. Zero the rows instead of inventing anything.
       if (!top.length) {
         if (!VYRA_OVERLAY) return;
+        // SKRIV ALDRIG SAMMA VARDE TILLBAKA.
+        //
+        // UPPMATT 2026-08-21: den har slingan skrev om alla fem raderna till "◆ 0" var ~1000:e ms
+        // i evighet, aven nar de REDAN stod pa "◆ 0". Att satta textContent byter ut textnoden
+        // aven nar strangen ar identisk, sa varje varv blev en riktig DOM-mutation — som i sin tur
+        // vacker observatorer som kallar hit igen.
+        //
+        // Kostnaden ar dubbel. I OBS ar det fem onodiga DOM-skrivningar i sekunden sa lange
+        // overlayn ar uppe. Och i den visuella riggen betydde det att widgetens text ALDRIG blev
+        // tyst: ett forsok att fotografera "nar sidan star still" slog i sitt tak varje gang och
+        // tog sviten fran 25 s till 79 s per prov.
+        //
+        // live-zero-state.js har redan exakt den har vakten, med kommentaren "Writing the same
+        // value back still counts as a DOM mutation, which would wake the observer that called us
+        // and spin forever". Samma regel galler har.
+        const satt = (el, varde) => { if (el && el.textContent !== varde) el.textContent = varde };
         rows.forEach(row => {
           const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
-          if (strong) strong.textContent = '';
-          if (small) small.textContent = '';
-          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; em.textContent = icon + ' 0' }
+          satt(strong, '');
+          satt(small, '');
+          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; satt(em, icon + ' 0') }
         });
         return;
       }
