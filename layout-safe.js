@@ -57,7 +57,13 @@
   // sandning ska inte tappa sin trettioforsta widget for att redigeraren har ett tak.
   function dukensWidgetar() {
     if (!iOverlayLage()) return { widgets: layoutItems(), error: null };
-    if (!window.VyraWidgets) return { widgets: state.widgets, error: null };
+    // FAIL-CLOSED. Utan urvalsmotorn gar det inte att veta VILKEN widget lanken bad om, och
+    // ett fall tillbaka pa state.widgets vore exakt buggen ovan igen: en individuell widgetlank
+    // som visar hela layouten i sandningen. Ett tomt lager ar en omladdning; hela layouten i
+    // nagon annans strom gar inte att ta tillbaka. Tomt ar darfor ratt svar, inte det forsiktiga.
+    if (!window.VyraWidgets || typeof window.VyraWidgets.selectForRender !== 'function') {
+      return { widgets: [], error: 'ingen-widgetmotor' };
+    }
     var wanted = new URLSearchParams(location.search).get('widget') || '';
     return window.VyraWidgets.selectForRender(state.widgets, { widgetId: wanted });
   }
@@ -164,10 +170,11 @@
       else link.removeAttribute('aria-current');
     });
     var val = dukensWidgetar();
-    // EN DOD WIDGETLANK GER EN TOM TRANSPARENT OVERLAY — inget felmeddelande. Studions egen
-    // "Widgetlanken finns inte langre"-ruta hor hemma i Studio; i OBS-utdata hade den stat mitt
-    // i sandningen, synlig for tittarna. Samma klass av fel som lankraden i #264.
-    var items = val.error === 'missing-widget' ? [] : val.widgets;
+    // EN DOD WIDGETLANK GER EN TOM TRANSPARENT OVERLAY — och VARJE fel ger tom duk, inte bara
+    // 'missing-widget': ett fel utan namn ar fortfarande ett fel. Studions egen "Widgetlanken finns
+    // inte langre"-ruta hor hemma i Studio; i OBS-utdata hade den stat mitt i sandningen,
+    // synlig for tittarna. Samma klass av fel som lankraden i #264.
+    var items = val.error ? [] : val.widgets;
     document.querySelector('#view').innerHTML =
       '<div class="editor-shell">' +
         '<div class="elements"></div>' +

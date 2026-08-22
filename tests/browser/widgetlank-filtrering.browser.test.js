@@ -94,8 +94,19 @@ function sandHandelse(typ, data) {
   stromsvar.forEach(r => { try { r.write(rad); } catch (e) {} });
 }
 
-async function oppna(widgetId) {
+async function oppna(widgetId, utanMotor) {
   const sida = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  if (utanMotor) {
+    // Tar bort urvalsmotorn INNAN nagot sidskript kor. En no-op-settare gor att
+    // widget-factory.js:s `root.VyraWidgets = {...}` tyst inte biter — sa lasarna ser undefined
+    // precis som om filen aldrig laddats, utan att nagot annat i sidan slas ut.
+    // wh() bor i studio.js och paverkas darfor inte.
+    await sida.addInitScript(() => {
+      Object.defineProperty(window, 'VyraWidgets', {
+        configurable: false, get() { return undefined; }, set() {},
+      });
+    });
+  }
   const url = bas + '/studio.html?overlay=1&access=' + TOKEN
     + (widgetId == null ? '' : '&widget=' + encodeURIComponent(widgetId));
   await sida.goto(url, { waitUntil: 'load' });
@@ -192,6 +203,43 @@ test('live-handelse och repaint bryter inte filtret', async t => {
   await sida.waitForTimeout(1500);
   const m = await las(sida);
   assert.deepEqual(m.ider, ['w2'], 'live-handelsen aterinforde ovriga widgetar');
+  await sida.close();
+});
+
+// FAIL-CLOSED. Davids invandning 2026-08-22 mot forsta versionen av fixen: fallbacken nar
+// window.VyraWidgets saknas returnerade state.widgets. Det ar fail-open — laddas urvalsmotorn
+// inte (natverksglapp, blockerad fil, en framtida omdopning) faller en INDIVIDUELL widgetlank
+// tillbaka till hela layouten, mitt i sandningen. Precis den bugg fixen tog bort.
+//
+// Ett tomt lager ar en omladdning. Hela layouten i nagon annans strom gar inte att ta tillbaka.
+test('utan window.VyraWidgets visar en widgetlank NOLL widgetar — aldrig hela layouten', async t => {
+  if (skip) return t.skip(skip);
+  version = 1;
+  const sida = await oppna('w2', true);
+  const saknasMotorn = await sida.evaluate(() => window.VyraWidgets === undefined);
+  // Kontrollmatning: om motorn faktiskt fanns hade provet varit gront av fel skal.
+  assert.equal(saknasMotorn, true, 'riggen lyckades inte ta bort window.VyraWidgets');
+  const m = await las(sida);
+  assert.deepEqual(m.ider, [],
+    'fail-open: utan urvalsmotor ritades ' + JSON.stringify(m.ider));
+  assert.equal(m.domd, false, 'ett felmeddelande hamnade i OBS-utdata');
+  assert.equal(m.lankrad, false);
+  assert.equal(m.text.includes(TOKEN), false, 'token star i sidans text');
+  assert.equal(m.text.includes('access='), false, 'adressen star i sidans text');
+  assert.equal(m.transparent, true, 'bakgrunden ar inte transparent');
+  assert.equal(m.canvasTop, 0);
+  await sida.close();
+});
+
+test('utan window.VyraWidgets lacker inte heller HELA overlay-lanken', async t => {
+  if (skip) return t.skip(skip);
+  version = 1;
+  const sida = await oppna(null, true);
+  const m = await las(sida);
+  // Aven utan ?widget= ar tomt ratt svar i overlay-lage: utan motorn gar det inte att avgora
+  // vilka widgetar som ar standalone, och en standalone hor inte hemma i hela overlayn.
+  assert.deepEqual(m.ider, [], 'hela overlayn ritades utan urvalsmotor: ' + JSON.stringify(m.ider));
+  assert.equal(m.transparent, true);
   await sida.close();
 });
 
