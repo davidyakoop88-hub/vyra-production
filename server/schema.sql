@@ -324,3 +324,107 @@ CREATE TABLE IF NOT EXISTS slot_totals (
   likes           bigint   NOT NULL DEFAULT 0,
   PRIMARY KEY (workspace_id, tiktok_username, weekday, hour)
 );
+
+-- ================================================================================================
+-- SÄNDNINGSIDENTITET. Vilken LIVE ett event tillhör, och därmed vad som får nollställas.
+--
+-- Empirin (uppmätt 2026-08-22, skrivskyddad sond): två sändningar samma dag gav TVÅ roomId —
+-- 7676848357138664214 och 7676861956443147030. n = 2, en anslutning per sändning, så roomId:s
+-- stabilitet GENOM en återanslutning är omätt. Modellen lovar därför inte mer än mätningen bär.
+--
+-- All DDL här är IF NOT EXISTS och ingen sats beror på att en tidigare lyckats: migrate.js kör
+-- HELA schema.sql som en batch vid varje deploy, så en halvkörd migrering ska läkas av nästa.
+-- Ingenting nedan ändrar, flyttar eller raderar befintliga mål, overlays, tokens eller historik.
+-- ================================================================================================
+
+-- Serverägd generation per TikTok-konto. `seq` ordnar bara INOM en bryggkörning; generationen
+-- avgör VILKEN körning som får tala. Varken UUID-sortering eller klientklocka duger: den ena är
+-- oordnad, den andra är någon annans klocka.
+CREATE TABLE IF NOT EXISTS bridge_runs (
+  id            bigserial PRIMARY KEY,
+  account_key   text    NOT NULL,          -- normaliserad: lower(btrim(namn)) utan inledande @
+  bridge_run_id text    NOT NULL,
+  generation    bigint  NOT NULL,
+  current       boolean NOT NULL DEFAULT true,
+  max_seq       bigint  NOT NULL DEFAULT 0 CHECK (max_seq >= 0),
+  started_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (account_key, bridge_run_id)
+);
+-- Exakt EN aktuell körning per konto. Två samtidiga registreringar kan alltså inte båda vinna.
+CREATE UNIQUE INDEX IF NOT EXISTS bridge_runs_aktuell_idx ON bridge_runs(account_key) WHERE current;
+
+CREATE TABLE IF NOT EXISTS stream_sessions (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  room_id         text NOT NULL,
+  account_key     text NOT NULL,
+  bridge_run_id   text,
+  started_at      timestamptz NOT NULL DEFAULT now(),
+  ended_at        timestamptz,
+  end_reason      text CHECK (end_reason IN ('bridge','timeout','ersatt','manuell')),
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+-- KRAV: samma AKTIVA rum är alltid samma session. Partiell — INTE en global
+-- UNIQUE(workspace_id, room_id): två observationer räcker inte för att lova att TikTok aldrig
+-- återanvänder ett roomId, och en global nyckel hade gjort bryggan omstartsoduglig den dagen.
+CREATE UNIQUE INDEX IF NOT EXISTS stream_sessions_aktivt_rum_idx
+  ON stream_sessions(workspace_id, room_id) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS stream_sessions_ws_idx
+  ON stream_sessions(workspace_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS stream_sessions_konto_idx
+  ON stream_sessions(account_key, started_at DESC);
+
+-- Vad är live NU. En rad per workspace: både låsobjekt och den enda plats som svarar på frågan.
+CREATE TABLE IF NOT EXISTS stream_session_pointer (
+  workspace_id uuid PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  session_id   uuid REFERENCES stream_sessions(id) ON DELETE SET NULL,
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- Kvitto per (session, område). Skrivs i SAMMA transaktion som nollställningen: ett kvitto utan
+-- reset gör att målen aldrig nollas för den sändningen, en reset utan kvitto kan köra om mitt i.
+CREATE TABLE IF NOT EXISTS stream_session_reset (
+  session_id uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
+  scope      text NOT NULL,
+  done_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (session_id, scope)
+);
+
+-- Transactional outbox. Raden skrivs i samma transaktion som sessionen och publiceras EFTER
+-- commit. Aldrig inuti: en rollback hade då ljugit bort en händelse som redan skickats.
+CREATE TABLE IF NOT EXISTS stream_event_outbox (
+  id              bigserial PRIMARY KEY,
+  workspace_id    uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  event_id        text NOT NULL UNIQUE,
+  topic           text NOT NULL,
+  payload         jsonb NOT NULL DEFAULT '{}'::jsonb,
+  attempts        integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  next_attempt_at timestamptz NOT NULL DEFAULT now(),
+  published_at    timestamptz,
+  parked_at       timestamptz,
+  last_error      text,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS stream_outbox_pending_idx
+  ON stream_event_outbox(next_attempt_at) WHERE published_at IS NULL AND parked_at IS NULL;
+CREATE INDEX IF NOT EXISTS stream_outbox_parked_idx
+  ON stream_event_outbox(parked_at) WHERE parked_at IS NOT NULL;
+
+-- Engångsbiljett för administrativ återöppning av ett stängt rum. Fail-closed är regeln: ett
+-- stängt room_id öppnas ALDRIG automatiskt och det finns ingen karenstid. Skulle TikTok en dag
+-- återanvända ett rum är det ett medvetet, auditerat beslut av en människa — inte en tidsgräns
+-- som ingen mätt.
+--
+-- actor_user_id är ON DELETE SET NULL med flit: raderas användaren ska raden finnas kvar. En
+-- audithistorik som försvinner med sin upphovsperson är ingen audithistorik.
+CREATE TABLE IF NOT EXISTS stream_room_reopen (
+  workspace_id  uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  room_id       text NOT NULL,
+  actor_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  reason        text NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  consumed_at   timestamptz,
+  PRIMARY KEY (workspace_id, room_id, created_at)
+);
+CREATE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
+  ON stream_room_reopen(workspace_id, room_id) WHERE consumed_at IS NULL;
