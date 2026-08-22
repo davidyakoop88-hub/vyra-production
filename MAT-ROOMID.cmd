@@ -28,6 +28,10 @@ if errorlevel 1 (
 )
 
 REM ---- 2. INSPELNINGEN PA, MED EGEN KATALOG ------------------------------------------------------
+REM  PA-KNAPPEN. VYRA_INSPELNING_TYPER valjer bara VILKA typer - den slar inte pa nagot.
+REM  Forsta versionen av den har filen saknade raden nedan, och da blev katalogen tom aven
+REM  nar bryggan kordes: varje livscykel-rad var en no-op (bridge.js:53).
+set "VYRA_INSPELNING=1"
 set "VYRA_INSPELNING_TYPER=alla"
 set "VYRA_INSPELNING_KATALOG=%~dp0inspelningar-roomid"
 if not exist "%VYRA_INSPELNING_KATALOG%" mkdir "%VYRA_INSPELNING_KATALOG%"
