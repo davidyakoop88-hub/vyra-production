@@ -611,7 +611,9 @@
       "filer": [
         "tiktok-bridge/*",
         "ANSLUT-TIKTOK-LIVE.cmd",
-        "SPELA-IN-TIKTOK.cmd"
+        "SPELA-IN-TIKTOK.cmd",
+        "MAT-ROOMID.cmd",
+        "VISA-LIVSCYKEL.ps1"
       ],
       "tester": [
         "tiktok-bridge/test/*.test.js"

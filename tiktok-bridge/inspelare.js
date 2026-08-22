@@ -165,6 +165,18 @@ function skapa({ pa = false, katalog, anvandare = '', maxByte = 50 * 1024 * 1024
     // Forsta raden i varje fil sager vad filen ar. En inspelning som lases om sex manader ska
     // inte behova gissa om den ar maskerad eller vilket bibliotek som producerade den.
     metarad: extra => skrivRad({ typ: '_meta', vid: nu().toISOString(), maskad: true, ...extra }),
+    // LIVSCYKELN — anslutningar, ateranslutningar, paus och slut.
+    //
+    // FINNS FOR EN ENDA MATNING: ar TikToks roomId stabilt genom en ateranslutning, och byts det
+    // mellan tva sandningar? Hela sessionsmodellen vilar pa det svaret, och det gar inte att lasa
+    // sig till - biblioteket typar roomId som en vanlig string och hamtar det farskt vid varje
+    // connect. Utan raderna har spelar inspelningen in tittarhandelser men missar precis det som
+    // fragan galler.
+    //
+    // ANDRAR INGET PRODUKTIONSBETEENDE. Skriver bara en rad, via samma felskyddade skrivare som
+    // resten av filen: ett fel stanger av inspelningen, det faller aldrig bryggan.
+    livscykel: (handelse, falt = {}) =>
+      skrivRad({ typ: '_livscykel', handelse: String(handelse), vid: nu().toISOString(), ...falt }),
     // kalla skiljer de tva ursprungen at i filen: 'inspelad' ar en typ bryggan INTE skickar vidare
     // (den enda vagen att se LINK_MIC_ARMIES form), 'vidarebefordrad' ar en av de elva som redan
     // gar till molnet. Utan faltet gar det inte att rakna pa en inspelning utan att kanna

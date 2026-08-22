@@ -311,6 +311,7 @@ if (require.main === module) {
 
   function scheduleReconnect(reason) {
     if (stopping || reconnectTimer) return;
+    inspelare.livscykel('ateranslutning-planerad', { orsak: String(reason || ''), forsok: reconnectAttempt + 1 });
     clearInterval(heartbeatTimer); heartbeatTimer = null;
     const base = baseReconnectDelayMs(reconnectAttempt);
     const delay = jitteredDelayMs(base);
@@ -426,10 +427,14 @@ if (require.main === module) {
       if (action === 1) { sandningsLage = 'paused'; loggaLage('Sandningen pausad'); }
       else if (action === 2) { sandningsLage = 'live'; loggaLage('Sandningen aterupptagen'); }
       else if (action === 4) { sandningsLage = 'suspended'; loggaLage('Sandningen stoppad av TikTok'); }
+      inspelare.livscykel('kontrollmeddelande', { action, lage: sandningsLage });
       // action 3 (ENDED) ags av STREAM_END nedan — en och samma sak ska inte stangas ner
       // fran tva hall.
     });
-    connection.on(WebcastEvent.STREAM_END, () => { sandningsLage = 'live'; scheduleReconnect('TikTok LIVE avslutades') });
+    connection.on(WebcastEvent.STREAM_END, () => {
+      inspelare.livscykel('sandning-avslutad', {});
+      sandningsLage = 'live'; scheduleReconnect('TikTok LIVE avslutades');
+    });
     /* GUARDIAN — FORBEREDD, INTE AKTIVERAD.
        ===========================================================================================
        VANTAR PA EVENT-VERIFIERING. Se docs/live-verifiering.md punkt 6: vi vet inte vilken
@@ -523,6 +528,14 @@ if (require.main === module) {
         reconnectAttempt = 0;
         criticalAlertSent = false;
         console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}) via ${currentProxy || 'ingen proxy'}. Vidarebefordrar events till ${SERVER}. Proxy-status: ${JSON.stringify(proxyManager.stats())}`);
+        // DIAGNOSTIK (bakom inspelningsflaggan): matningen som avgor om roomId ar stabilt
+        // genom en ateranslutning och byts mellan tva sandningar. Skriver bara en rad.
+        inspelare.livscykel('ansluten', {
+          roomId: state.roomId, username,
+          moln: Boolean(CLOUD),
+          forsokInnan: attemptsBeforeSuccess,
+          viaProxy: Boolean(currentProxy),
+        });
         reportToParent('connected', { roomId: state.roomId });
         postJson('/api/connect', { username, roomId: state.roomId, source: 'tiktok-bridge' });
         if (shouldSendSuccessAlert(attemptsBeforeSuccess)) {
