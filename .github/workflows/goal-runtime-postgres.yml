@@ -187,3 +187,22 @@ jobs:
       - name: Lagringsalternativ — text vs sha256, btree vs BRIN
         run: node ../scripts/goal-storage.js
         working-directory: server
+
+      # ---- sändningsidentitet -------------------------------------------------------------------
+      # PERMANENT STEG. Sessionsproven ska ALLTID köras — de får aldrig tas bort igen.
+      #
+      # Sändningsidentiteten är den enda källan till vilken LIVE ett event tillhör, och därmed till
+      # vad som får nollställas. Går den sönder nollställs antingen ingenting (förra sändningens
+      # siffror följer med in i nästa) eller fel sak (siffror raderas mitt i en pågående sändning).
+      # Båda syns först i en riktig sändning, hos tittarna. Ett prov som körs varje gång är det enda
+      # som fångar det innan.
+      #
+      # Atomiciteten går inte att prova mot en attrapp: "två samtidiga statusbesked ger exakt EN
+      # session" är en garanti Postgres ger, inte koden. Därför just det här jobbet.
+      #
+      # VARNING TILL NÄSTA LÄSARE: listan ovan är explicita filnamn, inte ett svep över test/.
+      # En provfil som inte står med här körs ALDRIG mot Postgres, och jobbets gröna bock säger då
+      # ingenting om den. Det gav ett falskt grönt 2026-08-22 innan det här steget fanns.
+      - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
+        run: node --test test/stream-sessions.test.js
+        working-directory: server
