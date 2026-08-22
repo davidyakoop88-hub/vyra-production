@@ -340,9 +340,29 @@ CREATE TABLE IF NOT EXISTS slot_totals (
 -- Serverägd generation per TikTok-konto. `seq` ordnar bara INOM en bryggkörning; generationen
 -- avgör VILKEN körning som får tala. Varken UUID-sortering eller klientklocka duger: den ena är
 -- oordnad, den andra är någon annans klocka.
+-- SERIALISERINGSPUNKT för generationstilldelningen. En rad per konto som ALLTID finns, så att det
+-- går att ta ett radlås även vid den allra första registreringen.
+--
+-- UNIQUE(account_key, generation) ensamt räcker inte: två samtidiga registreringar läser båda
+-- MAX(generation)=N, båda skriver N+1, och den ena kraschar på unikhetsfelet. Det är en legitim
+-- registrering som förloras — bryggan har inte gjort något fel. Låset gör att den andra i stället
+-- VÄNTAR, läser om max och får N+2.
+--
+-- Varför inte pg_advisory_xact_lock: capacity-gate.js:29 använder redan ett advisory-lås på en
+-- FAST konstant, med en kommentar om att det bara håller så länge inget annat i databasen
+-- använder samma nyckel. En hashad nyckel bredvid den är precis den samordningsskuld den varnar
+-- för. En riktig rad är dessutom läsbar, felsökbar och syns i pg_locks med namn.
+--
+-- FOR NO KEY UPDATE, inte FOR UPDATE: krockar med sig självt (två registreringar serialiseras)
+-- men inte med FOR KEY SHARE, så bridge_runs-INSERTs som refererar raden inte blockeras i onödan.
+CREATE TABLE IF NOT EXISTS bridge_accounts (
+  account_key text PRIMARY KEY,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS bridge_runs (
   id            bigserial PRIMARY KEY,
-  account_key   text    NOT NULL,          -- normaliserad: lower(btrim(namn)) utan inledande @
+  account_key   text    NOT NULL REFERENCES bridge_accounts(account_key) ON DELETE CASCADE,
   bridge_run_id text    NOT NULL,
   -- Serverägd och strikt stigande per konto. Sätts som COALESCE(MAX(generation),0)+1 inne i
   -- transaktionen — ALDRIG härledd ur bridge_run_id (en sträng utan ordning), ur started_at
@@ -371,7 +391,10 @@ CREATE TABLE IF NOT EXISTS stream_sessions (
   started_at      timestamptz NOT NULL DEFAULT now(),
   ended_at        timestamptz,
   end_reason      text CHECK (end_reason IN ('bridge','timeout','ersatt','manuell')),
-  created_at      timestamptz NOT NULL DEFAULT now()
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  -- Refererbar för den sammansatta främmande nyckeln från pekaren nedan. Redundant mot PK i sig,
+  -- men en sammansatt FK kräver en unik constraint över exakt de kolumner den pekar på.
+  UNIQUE (id, workspace_id)
 );
 -- KRAV: samma AKTIVA rum är alltid samma session. Partiell — INTE en global
 -- UNIQUE(workspace_id, room_id): två observationer räcker inte för att lova att TikTok aldrig
@@ -384,10 +407,24 @@ CREATE INDEX IF NOT EXISTS stream_sessions_konto_idx
   ON stream_sessions(account_key, started_at DESC);
 
 -- Vad är live NU. En rad per workspace: både låsobjekt och den enda plats som svarar på frågan.
+-- SAMMANSATT FK, inte bara session_id. En enkel FK på session_id kontrollerar att sessionen
+-- FINNS, inte att den tillhör samma workspace som pekaren — pekaren för workspace A hade kunnat
+-- peka på en session i workspace B. Följden vore att nollställningen tittar på fel sändning:
+-- ena kontots mål nollställs när det andra går live. Det är inte en teoretisk risk, det är den
+-- enda sortens fel den här tabellen kan göra.
+--
+-- MATCH SIMPLE (standard) gör att FK:n är uppfylld så fort NÅGON kolumn är NULL, vilket är precis
+-- vad vi vill när pekaren är tom: workspace_id är NOT NULL, session_id är det inte.
+--
+-- ON DELETE SET NULL (session_id) — kolumnlistan kräver PostgreSQL 15+. Railway kör 18.4 och
+-- jobbet ovan avvisar allt som inte är major 18. Utan kolumnlistan hade Postgres försökt nolla
+-- ÄVEN workspace_id, som är primärnyckel och NOT NULL, och raderingen hade fallit.
 CREATE TABLE IF NOT EXISTS stream_session_pointer (
   workspace_id uuid PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
-  session_id   uuid REFERENCES stream_sessions(id) ON DELETE SET NULL,
-  updated_at   timestamptz NOT NULL DEFAULT now()
+  session_id   uuid,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (session_id, workspace_id) REFERENCES stream_sessions(id, workspace_id)
+    ON DELETE SET NULL (session_id)
 );
 
 -- Kvitto per (session, område). Skrivs i SAMMA transaktion som nollställningen: ett kvitto utan

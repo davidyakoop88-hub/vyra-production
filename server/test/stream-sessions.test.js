@@ -62,6 +62,9 @@ async function rigg() {
       "INSERT INTO workspaces(id,name,owner_user_id) VALUES($1,'sessionsprov',$2) "
       + 'ON CONFLICT (id) DO NOTHING', [ws, AGARE]);
   }
+  await pool.query("INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING",
+    [KONTO]);
+  await pool.query('DELETE FROM bridge_runs WHERE account_key=$1', [KONTO]);
   for (const ws of [WS_A, WS_B]) {
     await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [ws]);
@@ -663,4 +666,142 @@ prov('M1 · en parkerad händelse ger logg, metric OCH audit — den försvinner
   const audit = await pool.query(
     "SELECT action FROM audit_log WHERE workspace_id=$1 AND action='stream_outbox_poison'", [WS_A]);
   assert.equal(audit.rowCount, 1, 'parkeringen syns inte i audit_log');
+});
+
+// ================================================================================================
+// N · INTEGRITET I SCHEMAT SJÄLVT
+// De här proven kräver ingen sessionslogik — de mäter vad databasen tillåter. De är därför gröna
+// redan innan modulen finns, och det är meningen: de vaktar constraints, inte funktioner.
+// ================================================================================================
+
+prov('N1 · pekaren kan INTE peka på en session i ett annat workspace', async () => {
+  const { pool } = await rigg();
+  // En session i workspace B.
+  const sessionIB = (await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3) RETURNING id",
+    [WS_B, RUM_1, KONTO])).rows[0].id;
+  // Pekaren för workspace A försöker peka på den. En enkel FK på session_id hade sagt ja: sessionen
+  // FINNS. Följden vore att nollställningen tittar på fel sändning — ena kontots mål nollställs när
+  // det andra går live.
+  await assert.rejects(
+    () => pool.query(
+      'INSERT INTO stream_session_pointer(workspace_id,session_id) VALUES($1,$2)',
+      [WS_A, sessionIB]),
+    e => e.code === '23503',
+    'den korsade pekaren accepterades — den sammansatta främmande nyckeln saknas eller pekar fel');
+});
+
+prov('N2 · pekaren FÅR peka på en session i sitt EGET workspace', async () => {
+  const { pool } = await rigg();
+  const egen = (await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3) RETURNING id",
+    [WS_A, RUM_1, KONTO])).rows[0].id;
+  // Kontrollmätning: utan den bevisar N1 bara att INSERT misslyckas, inte att den misslyckas av
+  // rätt skäl. En FK som avvisar allt hade också fått N1 grönt.
+  await pool.query('INSERT INTO stream_session_pointer(workspace_id,session_id) VALUES($1,$2)',
+    [WS_A, egen]);
+  const r = await pool.query(
+    'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1', [WS_A]);
+  assert.equal(r.rows[0].session_id, egen);
+});
+
+prov('N3 · en tom pekare är tillåten', async () => {
+  const { pool } = await rigg();
+  // MATCH SIMPLE: FK:n är uppfylld så fort någon kolumn är NULL. Utan det hade en workspace utan
+  // pågående sändning inte kunnat ha någon rad alls.
+  await pool.query('INSERT INTO stream_session_pointer(workspace_id,session_id) VALUES($1,NULL)',
+    [WS_A]);
+  const r = await pool.query(
+    'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1', [WS_A]);
+  assert.equal(r.rows[0].session_id, null);
+});
+
+prov('N4 · en raderad session nollar pekaren utan att radera raden', async () => {
+  const { pool } = await rigg();
+  const egen = (await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3) RETURNING id",
+    [WS_A, RUM_1, KONTO])).rows[0].id;
+  await pool.query('INSERT INTO stream_session_pointer(workspace_id,session_id) VALUES($1,$2)',
+    [WS_A, egen]);
+  await pool.query('DELETE FROM stream_sessions WHERE id=$1', [egen]);
+  const r = await pool.query(
+    'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1', [WS_A]);
+  // ON DELETE SET NULL (session_id) — kolumnlistan. Utan den hade Postgres försökt nolla även
+  // workspace_id, som är primärnyckel och NOT NULL, och raderingen hade fallit.
+  assert.equal(r.rowCount, 1, 'pekarraden försvann i stället för att nollas');
+  assert.equal(r.rows[0].session_id, null);
+});
+
+prov('N5 · historiska sessioner får dela room_id — det partiella indexet är INTE globalt', async () => {
+  const { pool } = await rigg();
+  const ett = (await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge') RETURNING id", [WS_A, RUM_1, KONTO])).rows[0].id;
+  const tva = (await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge') RETURNING id", [WS_A, RUM_1, KONTO])).rows[0].id;
+  assert.notEqual(ett, tva, 'två avslutade sessioner på samma rum tilläts inte — indexet är globalt');
+  // Men bara EN får vara öppen.
+  await pool.query(
+    "INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3)",
+    [WS_A, RUM_1, KONTO]);
+  await assert.rejects(
+    () => pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3)",
+      [WS_A, RUM_1, KONTO]),
+    e => e.code === '23505',
+    'två SAMTIDIGT ÖPPNA sessioner på samma rum tilläts');
+});
+
+// ================================================================================================
+// O · GENERATIONEN UNDER SAMTIDIGHET
+// UNIQUE(account_key, generation) hindrar dubbletter men skapar inte ordning: utan serialisering
+// läser två samtidiga registreringar samma MAX och den ena kraschar på unikhetsfelet. Det är en
+// LEGITIM registrering som förloras — bryggan har inte gjort något fel.
+// ================================================================================================
+
+prov('O1 · två samtidiga registreringar ger två stigande generationer och EN aktuell', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const svar = await Promise.all([
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 }),
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 }),
+  ]);
+  // 1. BÅDA ska lyckas. Ett unikhetsfel som når anroparen är ett tappat besked, inte ett skydd.
+  assert.equal(svar.filter(s => s && s.generation).length, 2,
+    'en legitim registrering kraschade i stället för att serialiseras');
+  // 2. Två DISTINKTA generationer.
+  const gen = svar.map(s => Number(s.generation));
+  assert.equal(new Set(gen).size, 2, 'båda registreringarna fick generation ' + gen.join(' och '));
+  // 3. Stigande, utan hål i ordningen.
+  const sorterade = gen.slice().sort((a, b) => a - b);
+  assert.equal(sorterade[1], sorterade[0] + 1,
+    'generationerna är inte strikt stigande: ' + sorterade.join(', '));
+  // 4. Exakt EN aktuell körning.
+  const aktuella = await pool.query(
+    'SELECT bridge_run_id, generation FROM bridge_runs WHERE account_key=$1 AND current', [KONTO]);
+  assert.equal(aktuella.rowCount, 1,
+    aktuella.rowCount + ' aktuella körningar — då avgör slumpen vems status som gäller');
+  // 5. Den NYARE generationen är den aktuella.
+  assert.equal(Number(aktuella.rows[0].generation), sorterade[1],
+    'den äldre körningen blev aktuell — en omstartad brygga hade tystats av sin egen föregångare');
+});
+
+prov('O2 · status från den äldre generationen avvisas efter kapplöpningen', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const svar = await Promise.all([
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 }),
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 }),
+  ]);
+  const aldre = svar.reduce((a, b) => (Number(a.generation) < Number(b.generation) ? a : b));
+  const nyare = svar.reduce((a, b) => (Number(a.generation) > Number(b.generation) ? a : b));
+  const gammalt = await sessioner.startaLive({
+    konto: KONTO, roomId: RUM_1, bridgeRunId: aldre.bridgeRunId, seq: 1 });
+  assert.equal(gammalt.stale, true, 'den äldre generationen fick tala');
+  assert.deepEqual(gammalt.workspaces, [], 'den äldre generationen skapade sessioner');
+  // Kontrollmätning: den NYARE måste släppas igenom, annars bevisar provet bara att allt avvisas.
+  const nytt = await sessioner.startaLive({
+    konto: KONTO, roomId: RUM_1, bridgeRunId: nyare.bridgeRunId, seq: 1 });
+  assert.notEqual(nytt.stale, true, 'den aktuella generationen avvisades också');
+  assert.equal(nytt.workspaces.length, 1);
 });
