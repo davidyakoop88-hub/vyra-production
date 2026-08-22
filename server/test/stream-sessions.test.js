@@ -1,30 +1,28 @@
 'use strict';
-// SÄNDNINGSIDENTITET — en auktoritativ sessionsmodell på servern.
-//
-// PROBLEMET, uppmätt 2026-08-22: ingenting i systemet vet när en NY TikTok-sändning börjar.
-//   · bryggan har inget live:start — den postar /api/connect vid VARJE lyckad anslutning
-//     (bridge.js:527), alltså även vid varje återanslutning
-//   · den posten går till SERVER = http://127.0.0.1:4173 (bridge.js:39), desktopens lokala
-//     server — molnet får bara enskilda events
-//   · `roomId` finns inte i server/*.js och inte i cleanEvent:s vitlista (event-bus.js:13)
+// SÄNDNINGSIDENTITET v3 — en auktoritativ sessionsmodell på servern.
 //
 // EMPIRIN, uppmätt 2026-08-22 med en skrivskyddad sond (inga lyssnare, inga sparade händelser):
 //   LIVE 1  15:33:10–15:44:44 CEST   roomId 7676848357138664214
 //   LIVE 2  16:26:37                 roomId 7676861956443147030
-//   Samma konto, samma dag, samma deployment. Två sändningar gav TVÅ roomId.
+// Samma konto, dag och deployment. Två sändningar gav TVÅ roomId. n = 2, en anslutning per
+// sändning — roomId:s stabilitet GENOM en återanslutning är fortfarande omätt.
 //
-// VAD EMPIRIN INTE SÄGER. n = 2. Båda sändningarna hade EN anslutning var, så roomId:s stabilitet
-// GENOM en återanslutning är fortfarande omätt. Och ingenting i två observationer utesluter att
-// TikTok återanvänder ett roomId senare. Modellen får därför inte lova mer än mätningen bär:
-// den partiella unika nyckeln nedan gäller BARA öppna sessioner.
-//
-// DEN HÄR FILEN PROVAR IDENTITETEN OCH DESS GARANTIER, inte nollställningens innehåll.
-// En nollställning som utlöses av fel signal är värre än ingen alls — den raderar siffror mitt i
-// en pågående sändning.
+// MÄTNINGAR SOM STYR DEN HÄR FILEN (2026-08-22, mot koden på main):
+//   · tiktok_connections har workspace_id som PRIMARY KEY och INGEN unik nyckel på
+//     tiktok_username → samma TikTok-konto kan vara anslutet i FLERA workspaces. Ett statusbesked
+//     måste därför fan-outas, och fan-out får inte öppna fler TikTok-anslutningar.
+//   · ingest autentiseras med en global maskintoken: POST /api/events/tiktok/:workspaceId med
+//     Authorization: Bearer $TIKTOK_INGEST_TOKEN, konstanttidsjämförd, minst 32 tecken
+//     (server/index.js). Ingen workspace-membership är inblandad — bryggan HAR ingen användare.
+//   · goal_runtime bär baseline, progress, target, epoch, revision. Den visade siffran är
+//     baseline + progress, så en nollställning får aldrig röra baseline eller target.
+//   · `vyra-session-ended` betyder UTLOGGNING/kontobyte (session-state.js:449), inte slutet på en
+//     sändning. Ordet "session" är redan upptaget två gånger i kodbasen. Sändningsbegreppet heter
+//     därför stream_session och signalen `vyra-live-session` — att återanvända det gamla namnet
+//     hade rivit SSE-strömmen vid varje ny sändning.
 //
 // VARFÖR POSTGRES OCH INTE EN ATTRAPP: hela poängen är ATOMICITET. Två statusbesked som kommer
-// samtidigt ska ge exakt EN session, och det är en garanti databasen ger — inte koden. En attrapp
-// hade svarat ja på vad koden än gjorde, och provet hade blivit en spegel i stället för en vakt.
+// samtidigt ska ge exakt EN session, och det är en garanti databasen ger — inte koden.
 const test = require('node:test'), assert = require('node:assert/strict');
 
 const DB_URL = process.env.TEST_DATABASE_URL || '';
@@ -38,215 +36,391 @@ if (!BLOCKED) process.env.DATABASE_URL = DB_URL;
 let skapaStreamSessions = null;
 try { ({ skapaStreamSessions } = require('../stream-sessions.js')) } catch (_) {}
 
-const WS = '11111111-1111-4111-8111-111111111111';
-const RUM_1 = '7676848357138664214';   // LIVE 1, uppmätt
-const RUM_2 = '7676861956443147030';   // LIVE 2, uppmätt
+const WS_A = '11111111-1111-4111-8111-111111111111';
+const WS_B = '22222222-2222-4222-8222-222222222222';   // samma TikTok-konto, annat workspace
+const KONTO = 'jokero060';
+const RUM_1 = '7676848357138664214';
+const RUM_2 = '7676861956443147030';
 
 async function rigg() {
   assert.ok(skapaStreamSessions,
     'server/stream-sessions.js finns inte än — modulen som äger sessionsbeslutet');
   const { pool } = require('../db.js');
   const sessioner = skapaStreamSessions({ pool });
-  // Ordningen följer främmande nycklar: pekare och kvitton före sessionerna.
-  await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [WS]);
-  await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [WS]);
-  await pool.query(
-    'DELETE FROM stream_session_reset WHERE session_id IN (SELECT id FROM stream_sessions WHERE workspace_id=$1)',
-    [WS]);
-  await pool.query('DELETE FROM stream_sessions WHERE workspace_id=$1', [WS]);
+  for (const ws of [WS_A, WS_B]) {
+    await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
+    await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [ws]);
+    await pool.query('DELETE FROM stream_session_reset WHERE session_id IN '
+      + '(SELECT id FROM stream_sessions WHERE workspace_id=$1)', [ws]);
+    await pool.query('DELETE FROM stream_sessions WHERE workspace_id=$1', [ws]);
+  }
   return { sessioner, pool };
 }
 
-const pekaren = (pool) => pool.query(
-  'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1', [WS])
+const anslut = (pool, ws) => pool.query(
+  'INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) '
+  + 'ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=EXCLUDED.tiktok_username,active=true',
+  [ws, KONTO]);
+
+const pekaren = (pool, ws) => pool.query(
+  'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1', [ws])
   .then(r => r.rows[0] ? r.rows[0].session_id : null);
 
-const rader = (pool) => pool.query(
-  'SELECT id, room_id, started_at, ended_at, end_reason FROM stream_sessions '
-  + 'WHERE workspace_id=$1 ORDER BY started_at', [WS]).then(r => r.rows);
+const rader = (pool, ws) => pool.query(
+  'SELECT id, room_id, ended_at, end_reason FROM stream_sessions WHERE workspace_id=$1 '
+  + 'ORDER BY started_at', [ws]).then(r => r.rows);
 
-// ---- 1 · KRAV 2 --------------------------------------------------------------------------------
-prov('första roomId skapar en session och sätter pekaren', async () => {
+// ================================================================================================
+// A · IDENTITET OCH PEKARE
+// ================================================================================================
+
+prov('A1 · första roomId skapar en session och sätter pekaren', async () => {
   const { sessioner, pool } = await rigg();
-  const ut = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  assert.equal(ut.created, true, 'första sändningen ska skapa en session');
-  assert.equal(ut.session.roomId, RUM_1);
-  assert.equal(await pekaren(pool), ut.session.id,
+  await anslut(pool, WS_A);
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const min = ut.workspaces.find(w => w.workspaceId === WS_A);
+  assert.equal(min.created, true);
+  assert.equal(await pekaren(pool, WS_A), min.session.id,
     'pekaren ska peka på den nya sessionen — annars vet ingen vad som är live nu');
 });
 
-// ---- 2 · KRAV 1 --------------------------------------------------------------------------------
-prov('samma AKTIVA roomId är alltid en återanslutning, aldrig en ny session', async () => {
+prov('A2 · samma AKTIVA roomId är alltid återanslutning, aldrig ny session', async () => {
   const { sessioner, pool } = await rigg();
-  const forsta = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
+  await anslut(pool, WS_A);
+  const forsta = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const id = forsta.workspaces[0].session.id;
   // Bryggan postar vid VARJE lyckad anslutning. Fem återanslutningar är fem besked.
   for (let i = 0; i < 5; i++) {
-    const igen = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-    assert.equal(igen.created, false, 'återanslutning ' + (i + 1) + ' skapade en NY session');
-    assert.equal(igen.session.id, forsta.session.id, 'sessions-id bytte vid återanslutning');
+    const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+    assert.equal(igen.workspaces[0].created, false, 'återanslutning ' + (i + 1) + ' skapade ny session');
+    assert.equal(igen.workspaces[0].session.id, id, 'sessions-id bytte vid återanslutning');
   }
-  assert.equal((await rader(pool)).length, 1, 'fler än en rad för samma aktiva rum');
+  assert.equal((await rader(pool, WS_A)).length, 1);
 });
 
-// ---- 3 · KRAV 2 + 4 ----------------------------------------------------------------------------
-prov('nytt roomId skapar nästa session, stänger den förra och flyttar pekaren', async () => {
+prov('A3 · nytt roomId skapar nästa session, stänger den förra och flyttar pekaren', async () => {
   const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  const tva = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_2 });
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
   assert.equal(tva.created, true);
-  assert.notEqual(tva.session.id, ett.session.id);
-  const alla = await rader(pool);
-  assert.equal(alla.length, 2);
-  const gammal = alla.find(r => r.room_id === RUM_1);
-  assert.ok(gammal.ended_at, 'föregående session lämnades öppen — två öppna sändningar samtidigt');
+  const alla = await rader(pool, WS_A);
+  const gammal = alla.find(r => r.id === ett.session.id);
+  assert.ok(gammal.ended_at, 'två öppna sändningar samtidigt');
   assert.equal(gammal.end_reason, 'ersatt');
-  assert.equal(await pekaren(pool), tva.session.id, 'pekaren följde inte med till nya sessionen');
+  assert.equal(await pekaren(pool, WS_A), tva.session.id);
 });
 
-// ---- 4 · KRAV 3 --------------------------------------------------------------------------------
-prov('INGEN global unik nyckel: ett stängt rum får förekomma igen', async () => {
+prov('A4 · samtidiga besked om SAMMA rum ger exakt en session', async () => {
   const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  await sessioner.avslutaLive({ workspaceId: WS, sessionId: ett.session.id, reason: 'bridge' });
-  // Bortom karenstiden är ett återanvänt roomId en NY sändning, inte ett försenat besked.
-  // Två observationer räcker inte för att lova att TikTok aldrig återanvänder ett rum, så
-  // en permanent UNIQUE(workspace_id, room_id) hade gjort bryggan omstartsoduglig den dagen
-  // det händer. Den unika nyckeln gäller därför bara ÖPPNA sessioner.
-  const igen = await sessioner.startaLive({
-    workspaceId: WS, roomId: RUM_1, observedAt: new Date(Date.now() + 24 * 3600e3).toISOString() });
-  assert.equal(igen.created, true, 'ett återanvänt rum efter karenstiden måste kunna bli ny session');
-  assert.notEqual(igen.session.id, ett.session.id);
-  assert.equal((await rader(pool)).filter(r => r.room_id === RUM_1).length, 2);
-});
-
-// ---- 5 · KRAV 7 --------------------------------------------------------------------------------
-prov('ett försenat besked om ett AVSLUTAT rum återaktiverar det aldrig', async () => {
-  const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  const tva = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_2 });
-  // Bryggan hann posta en gång till för det gamla rummet innan den märkte bytet.
-  const sent = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  assert.equal(sent.created, false);
-  assert.equal(sent.stale, true, 'det försenade beskedet märktes inte som föråldrat');
-  assert.equal(sent.session.id, ett.session.id, 'fel session pekades ut');
-  const gammal = (await rader(pool)).find(r => r.id === ett.session.id);
-  assert.ok(gammal.ended_at, 'den avslutade sessionen öppnades igen');
-  assert.equal(await pekaren(pool), tva.session.id, 'pekaren rycktes tillbaka till förra sändningen');
-});
-
-// ---- 6 · KRAV 5 + 7 ----------------------------------------------------------------------------
-prov('två SAMTIDIGA besked för samma rum ger exakt en session', async () => {
-  const { sessioner, pool } = await rigg();
-  const svar = await Promise.all([
-    sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 }),
-    sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 }),
-    sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 }),
-  ]);
-  const ider = [...new Set(svar.map(s => s.session.id))];
+  await anslut(pool, WS_A);
+  const svar = await Promise.all([1, 2, 3].map(() =>
+    sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })));
+  const ider = [...new Set(svar.map(s => s.workspaces[0].session.id))];
   assert.equal(ider.length, 1, 'samtidiga besked gav ' + ider.length + ' sessioner');
-  assert.equal(svar.filter(s => s.created).length, 1, 'mer än ett svar påstod sig ha skapat sessionen');
-  assert.equal((await rader(pool)).length, 1);
+  assert.equal(svar.filter(s => s.workspaces[0].created).length, 1,
+    'mer än ett svar påstod sig ha skapat sessionen');
 });
 
-// ---- 7 · KRAV 5 --------------------------------------------------------------------------------
-prov('två SAMTIDIGA besked om OLIKA rum ger en enda vinnare och en enda pekare', async () => {
+prov('A5 · samtidiga besked om OLIKA rum ger en enda öppen session och en enda pekare', async () => {
   const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
   await Promise.all([
-    sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 }),
-    sessioner.startaLive({ workspaceId: WS, roomId: RUM_2 }),
+    sessioner.startaLive({ konto: KONTO, roomId: RUM_1 }),
+    sessioner.startaLive({ konto: KONTO, roomId: RUM_2 }),
   ]);
-  const alla = await rader(pool);
-  const oppna = alla.filter(r => !r.ended_at);
-  assert.equal(oppna.length, 1, 'sessionsbytet var inte låst: ' + oppna.length + ' öppna sessioner');
-  assert.equal(await pekaren(pool), oppna[0].id, 'pekaren pekar inte på den enda öppna sessionen');
+  const oppna = (await rader(pool, WS_A)).filter(r => !r.ended_at);
+  assert.equal(oppna.length, 1, 'sessionsbytet var inte låst: ' + oppna.length + ' öppna');
+  assert.equal(await pekaren(pool, WS_A), oppna[0].id);
 });
 
-// ---- 8 · KRAV 6 --------------------------------------------------------------------------------
-prov('nollställning är idempotent per internt session_id', async () => {
+// ================================================================================================
+// B · FAN-OUT ÖVER DELAD KONTOANSLUTNING
+// tiktok_connections har ingen unik nyckel på tiktok_username. Samma konto i två workspaces är
+// alltså tillåtet idag, och ETT statusbesked måste nå båda.
+// ================================================================================================
+
+prov('B1 · ett statusbesked ger en session per prenumererande workspace, samma room_id', async () => {
   const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  const a = await sessioner.markeraNollstalld({ sessionId: ett.session.id, scope: 'goals' });
-  const b = await sessioner.markeraNollstalld({ sessionId: ett.session.id, scope: 'goals' });
-  const c = await sessioner.markeraNollstalld({ sessionId: ett.session.id, scope: 'goals' });
-  assert.equal(a, true, 'första nollställningen ska rapportera att den utfördes');
-  assert.equal(b, false, 'andra försöket nollställde igen — mitt i sändningen');
-  assert.equal(c, false);
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(ut.workspaces.length, 2, 'fan-out nådde ' + ut.workspaces.length + ' workspaces');
+  for (const ws of [WS_A, WS_B]) {
+    const r = await rader(pool, ws);
+    assert.equal(r.length, 1, 'workspace ' + ws + ' fick ingen session');
+    assert.equal(r[0].room_id, RUM_1);
+    assert.equal(await pekaren(pool, ws), r[0].id);
+  }
+  // Sessionerna är SEPARATA rader: nollställning och mål är per workspace.
+  assert.notEqual(ut.workspaces[0].session.id, ut.workspaces[1].session.id);
+});
+
+prov('B2 · fan-out begär ingen ytterligare TikTok-anslutning', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  const begarda = [];
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1,
+    onAnslutningBegard: n => begarda.push(n) });
+  assert.deepEqual(begarda, [],
+    'fan-out öppnade ' + begarda.length + ' extra TikTok-anslutningar — kapacitetsporten '
+    + '(capacity-gate.js) räknar anslutningar, och en per workspace skalar inte');
+});
+
+prov('B3 · en inaktiv anslutning får inget statusbesked', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await pool.query('UPDATE tiktok_connections SET active=false WHERE workspace_id=$1', [WS_B]);
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.deepEqual(ut.workspaces.map(w => w.workspaceId), [WS_A]);
+  assert.equal(await pekaren(pool, WS_B), null);
+});
+
+// ================================================================================================
+// C · BEHÖRIGHET — MASKIN, INTE MEDLEMSKAP
+// Bryggan har ingen användare och kan inte vara owner/admin. Den bär maskintoken.
+// ================================================================================================
+
+prov('C1 · statusbeskedet kräver maskintoken — en inloggad sessionscookie räcker inte', async () => {
+  const { sessioner } = await rigg();
+  await assert.rejects(
+    () => sessioner.startaLiveViaHttp({ konto: KONTO, roomId: RUM_1, maskintoken: null,
+      anvandarSession: { user_id: 'nagon' } }),
+    e => e.status === 401,
+    'en användarsession accepterades som maskinautentisering');
+});
+
+prov('C2 · fel maskintoken ger 401 utan att avslöja längd eller innehåll', async () => {
+  const { sessioner } = await rigg();
+  await assert.rejects(
+    () => sessioner.startaLiveViaHttp({ konto: KONTO, roomId: RUM_1, maskintoken: 'fel'.repeat(20) }),
+    e => e.status === 401 && !/token=|längd|[0-9]{2,}/.test(String(e.message)));
+});
+
+prov('C3 · ett konto utan aktiv anslutning ger 404 — beskedet får inte skapa ett workspace', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('UPDATE tiktok_connections SET active=false WHERE tiktok_username=$1', [KONTO]);
+  const ut = await sessioner.startaLive({ konto: 'ett-konto-ingen-prenumererar-pa', roomId: RUM_1 });
+  assert.deepEqual(ut.workspaces, [], 'ett okänt konto skapade sessioner');
+});
+
+// ================================================================================================
+// D · AVSLUT
+// ================================================================================================
+
+prov('D1 · live:end med sessionId avslutar sessionen och nollar pekaren', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const ut = await sessioner.avslutaLive({ sessionId: ett.session.id, reason: 'bridge' });
+  assert.equal(ut.ended, true);
+  assert.ok((await rader(pool, WS_A))[0].ended_at);
+  assert.equal(await pekaren(pool, WS_A), null, 'pekaren pekar på en avslutad sändning');
+});
+
+prov('D2 · ett FÖRSENAT slutbesked för föregående session rör inte den aktuella', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
+  // Bryggans "slut" för RUM_1 kommer EFTER att RUM_2 redan börjat.
+  const ut = await sessioner.avslutaLive({ sessionId: ett.session.id, reason: 'bridge' });
+  assert.equal(ut.ended, false, 'ett redan stängt sessions-id rapporterades som nyss avslutat');
+  const aktuell = (await rader(pool, WS_A)).find(r => r.id === tva.session.id);
+  assert.equal(aktuell.ended_at, null, 'det försenade slutbeskedet dödade den PÅGÅENDE sändningen');
+  assert.equal(await pekaren(pool, WS_A), tva.session.id, 'pekaren rycktes bort från den aktuella');
+});
+
+prov('D3 · live:end är idempotent', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  assert.equal((await sessioner.avslutaLive({ sessionId: ett.session.id, reason: 'bridge' })).ended, true);
+  assert.equal((await sessioner.avslutaLive({ sessionId: ett.session.id, reason: 'bridge' })).ended, false);
+  assert.equal((await sessioner.avslutaLive({ sessionId: ett.session.id, reason: 'timeout' })).ended, false);
+});
+
+prov('D4 · live:end utan sessionId eller roomId avvisas — workspace ensamt räcker inte', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  await assert.rejects(() => sessioner.avslutaLive({ workspaceId: WS_A, reason: 'bridge' }),
+    e => e.status === 400,
+    'ett slutbesked utan identitet fick avsluta "det som råkar vara igång"');
+});
+
+// ================================================================================================
+// E · FÖRSENADE STARTBESKED
+// Karensgränsen är ETT ÖPPET BESLUT (se rapporten). Provet nedan låser den INTE till ett värde —
+// det läser policyn ur modulen, så gränsen kan bytas utan att provet blir en spegel.
+// ================================================================================================
+
+prov('E1 · ett försenat startbesked för ett AVSLUTAT rum återaktiverar det aldrig', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
+  const sent = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(sent.workspaces[0].stale, true, 'det försenade beskedet märktes inte som föråldrat');
+  assert.ok((await rader(pool, WS_A)).find(r => r.id === ett.session.id).ended_at,
+    'den avslutade sessionen öppnades igen');
+  assert.equal(await pekaren(pool, WS_A), tva.session.id);
+});
+
+// ================================================================================================
+// F · NOLLSTÄLLNING — ATOMÄR OCH IDEMPOTENT
+// ================================================================================================
+
+prov('F1 · kvitto och nollställning sker i SAMMA transaktion', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  // Nollställningen tvingas misslyckas EFTER att kvittot skrivits. Rullar transaktionen tillbaka
+  // ska VARKEN kvitto ELLER nollställning finnas kvar.
+  await assert.rejects(() => sessioner.nollstall({
+    sessionId: ett.session.id, scope: 'goals',
+    utfor: async () => { throw new Error('avsiktligt fel mitt i nollställningen') },
+  }));
   const kvitton = await pool.query(
-    'SELECT count(*)::int AS n FROM stream_session_reset WHERE session_id=$1 AND scope=$2',
-    [ett.session.id, 'goals']);
-  assert.equal(kvitton.rows[0].n, 1);
-  // Ett annat område för SAMMA session är en egen nollställning, inte en dubblett.
-  assert.equal(await sessioner.markeraNollstalld({ sessionId: ett.session.id, scope: 'leaderboard' }), true);
+    'SELECT count(*)::int AS n FROM stream_session_reset WHERE session_id=$1', [ett.session.id]);
+  assert.equal(kvitton.rows[0].n, 0,
+    'ett kvitto överlevde en misslyckad nollställning — nästa försök hoppar över den för alltid');
 });
 
-// ---- 9 · KRAV 8 --------------------------------------------------------------------------------
-prov('outbox-raden skrivs i SAMMA transaktion som sessionen', async () => {
+prov('F2 · nollställning är idempotent per session_id och scope', async () => {
   const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  let korningar = 0;
+  const utfor = async () => { korningar++ };
+  assert.equal(await sessioner.nollstall({ sessionId: ett.session.id, scope: 'goals', utfor }), true);
+  assert.equal(await sessioner.nollstall({ sessionId: ett.session.id, scope: 'goals', utfor }), false);
+  assert.equal(korningar, 1, 'nollställningen kördes ' + korningar + ' gånger mitt i en sändning');
+  // Ett annat område för SAMMA session är en egen nollställning, inte en dubblett.
+  assert.equal(await sessioner.nollstall({ sessionId: ett.session.id, scope: 'leaderboard', utfor }), true);
+});
+
+prov('F3 · goal_runtime behåller baseline och target, nollar progress och stegar epoch', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = (await pool.query(
+    "INSERT INTO overlays(workspace_id,name,state) VALUES($1,'prov','{}'::jsonb) RETURNING id",
+    [WS_A])).rows[0].id;
+  await pool.query(
+    'INSERT INTO goal_runtime(overlay_id,widget_id,metric,baseline,progress,target,epoch,revision) '
+    + "VALUES($1,'w1','likes',250,900,5000,3,77)", [overlay]);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  await sessioner.nollstallMal({ sessionId: ett.session.id, workspaceId: WS_A });
+  const r = (await pool.query(
+    'SELECT baseline,progress,target,epoch,revision FROM goal_runtime WHERE overlay_id=$1', [overlay])).rows[0];
+  // Den visade siffran är baseline + progress. Nollställs baseline försvinner startvärdet
+  // streamern skrev in — det är en annan sak än att nolla sändningens framsteg.
+  assert.equal(Number(r.baseline), 250, 'baseline nollställdes — startvärdet gick förlorat');
+  assert.equal(Number(r.target), 5000, 'målet skrevs över');
+  assert.equal(Number(r.progress), 0);
+  assert.equal(Number(r.epoch), 4, 'epoch stegades inte — klienter kan inte se att en ny omgång börjat');
+  assert.ok(Number(r.revision) > 77, 'revision stegades inte — SSE-ordningen bryts');
+});
+
+// ================================================================================================
+// G · OUTBOX
+// ================================================================================================
+
+prov('G1 · outbox-raden skrivs i samma transaktion och är opublicerad', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
   const ut = await pool.query(
-    'SELECT event_id, topic, payload, published_at FROM stream_event_outbox '
-    + 'WHERE workspace_id=$1 ORDER BY id', [WS]);
-  assert.equal(ut.rowCount, 1, 'sessionen skapades utan att någon händelse lades i utkorgen');
+    'SELECT event_id,topic,payload,published_at FROM stream_event_outbox WHERE workspace_id=$1', [WS_A]);
+  assert.equal(ut.rowCount, 1);
   assert.equal(ut.rows[0].topic, 'live:start');
   assert.equal(ut.rows[0].payload.sessionId, ett.session.id);
-  assert.equal(ut.rows[0].payload.roomId, RUM_1);
   assert.equal(ut.rows[0].published_at, null,
     'raden markerades publicerad inne i transaktionen — då kan en rollback ljuga bort en händelse');
 });
 
-// ---- 10 · KRAV 8 -------------------------------------------------------------------------------
-prov('en krasch mellan commit och publicering tappar ingen händelse', async () => {
+prov('G2 · krasch FÖRE publicering: händelsen skickas vid omstart, sedan aldrig igen', async () => {
   const { sessioner, pool } = await rigg();
-  const ett = await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  // Kraschen simuleras genom att INGEN publicerare kört: raden ligger opublicerad kvar.
-  const kvar = await pool.query(
-    'SELECT event_id FROM stream_event_outbox WHERE workspace_id=$1 AND published_at IS NULL', [WS]);
-  assert.equal(kvar.rowCount, 1, 'händelsen överlevde inte kraschen');
-  // Publiceraren startar om och tar hand om den.
-  const publicerade = [];
-  const n = await sessioner.publiceraUtkorg({ workspaceId: WS, sand: async e => { publicerade.push(e) } });
-  assert.equal(n, 1);
-  assert.equal(publicerade[0].payload.sessionId, ett.session.id);
-  // Andra varvet får inte skicka om den.
-  assert.equal(await sessioner.publiceraUtkorg({ workspaceId: WS, sand: async () => {} }), 0,
-    'en redan publicerad händelse skickades igen utan att konsumenten bad om det');
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const skickade = [];
+  assert.equal(await sessioner.publiceraUtkorg({ sand: async e => { skickade.push(e) } }), 1);
+  assert.equal(await sessioner.publiceraUtkorg({ sand: async () => {} }), 0);
+  assert.equal(skickade.length, 1);
 });
 
-// ---- 11 · KRAV 7 -------------------------------------------------------------------------------
-prov('dubblettleverans av samma händelse tillämpas bara en gång', async () => {
+prov('G3 · krasch EFTER publicering men före published_at ger en ofarlig dubblett', async () => {
   const { sessioner, pool } = await rigg();
-  await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  const rad = (await pool.query(
-    'SELECT event_id, payload FROM stream_event_outbox WHERE workspace_id=$1', [WS])).rows[0];
-  // Utkorgen är at-least-once. Konsumenten måste därför vara idempotent på event_id, precis
-  // som goal_event_apply redan är för målhändelser.
-  const forsta = await sessioner.tillampaEnGang({ workspaceId: WS, eventId: rad.event_id });
-  const andra = await sessioner.tillampaEnGang({ workspaceId: WS, eventId: rad.event_id });
-  assert.equal(forsta, true);
-  assert.equal(andra, false, 'samma händelse tillämpades två gånger — nollställning kan då köra om');
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  // Skickad, men processen dog innan published_at hann skrivas.
+  const skickade = [];
+  await assert.rejects(() => sessioner.publiceraUtkorg({
+    sand: async e => { skickade.push(e); throw Object.assign(new Error('krasch'), { efterSand: true }) } }));
+  // Omstart: samma händelse skickas igen — at-least-once.
+  await sessioner.publiceraUtkorg({ sand: async e => { skickade.push(e) } });
+  assert.equal(skickade.length, 2, 'dubbletten uteblev — då är provet inte det scenario det påstår');
+  assert.equal(skickade[0].event_id, skickade[1].event_id, 'event_id ändrades mellan försöken');
+  // Konsumenten gör den ofarlig.
+  assert.equal(await sessioner.tillampaEnGang({ workspaceId: WS_A, eventId: skickade[0].event_id }), true);
+  assert.equal(await sessioner.tillampaEnGang({ workspaceId: WS_A, eventId: skickade[1].event_id }), false);
 });
 
-// ---- 12 · KRAV 10 ------------------------------------------------------------------------------
-prov('ett sessionsbyte rör inte de tillstånd som ska bevaras', async () => {
+prov('G4 · två serverinstanser publicerar aldrig samma rad', async () => {
   const { sessioner, pool } = await rigg();
-  // Livstidssiffror och dygns-/tidsunderlag ska överleva varje sändningsbyte. Mätt 2026-08-22:
-  // viewer_levels, gifter_totals, daily_totals och slot_totals har alla workspace-nycklar UTAN
-  // sessionsbegrepp — de är per konto, dag respektive veckodag×timme, inte per sändning.
-  await pool.query(
-    'INSERT INTO viewer_levels(workspace_id,viewer_id,fan_level,gifter_level) VALUES($1,$2,7,9) '
-    + 'ON CONFLICT (workspace_id,viewer_id) DO UPDATE SET fan_level=7', [WS, 'tittare-1']);
-  await pool.query(
-    'INSERT INTO daily_totals(workspace_id,tiktok_username,day,gifts,diamonds,likes) '
-    + "VALUES($1,'jokero060',CURRENT_DATE,5,50,500) "
-    + 'ON CONFLICT (workspace_id,tiktok_username,day) DO UPDATE SET gifts=5', [WS]);
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });   // två rader, en per workspace
+  const a = [], b = [];
+  // FOR UPDATE SKIP LOCKED, samma mönster som goal-runtime.js:224 redan använder.
+  await Promise.all([
+    sessioner.publiceraUtkorg({ sand: async e => { a.push(e.event_id); await new Promise(r => setTimeout(r, 40)) } }),
+    sessioner.publiceraUtkorg({ sand: async e => { b.push(e.event_id); await new Promise(r => setTimeout(r, 40)) } }),
+  ]);
+  const alla = [...a, ...b];
+  assert.equal(new Set(alla).size, alla.length, 'samma rad publicerades av båda instanserna');
+});
 
-  await sessioner.startaLive({ workspaceId: WS, roomId: RUM_1 });
-  await sessioner.startaLive({ workspaceId: WS, roomId: RUM_2 });
+prov('G5 · en händelse som alltid misslyckas backar av och parkeras', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  for (let i = 0; i < 8; i++) {
+    await sessioner.publiceraUtkorg({ sand: async () => { throw new Error('mottagaren är nere') },
+      nu: () => new Date(Date.now() + i * 3600e3) });
+  }
+  const r = (await pool.query(
+    'SELECT attempts,next_attempt_at,last_error,published_at FROM stream_event_outbox '
+    + 'WHERE workspace_id=$1', [WS_A])).rows[0];
+  assert.equal(r.published_at, null);
+  assert.ok(r.attempts >= 5, 'försöken räknades inte — då syns aldrig en giftig händelse');
+  assert.ok(r.last_error, 'felet sparades inte, så ingen kan felsöka den');
+  assert.ok(new Date(r.next_attempt_at) > new Date(Date.now() + 60e3),
+    'ingen backoff — en trasig händelse skulle snurra i en tight loop');
+  assert.equal((await sessioner.giftigaHandelser()).length, 1,
+    'den parkerade händelsen syns inte någonstans');
+});
 
-  const niva = await pool.query(
-    'SELECT fan_level FROM viewer_levels WHERE workspace_id=$1 AND viewer_id=$2', [WS, 'tittare-1']);
-  assert.equal(niva.rows[0].fan_level, 7, 'tittarnivåerna nollställdes av ett sessionsbyte');
-  const dag = await pool.query(
-    'SELECT gifts FROM daily_totals WHERE workspace_id=$1 AND day=CURRENT_DATE', [WS]);
-  assert.equal(Number(dag.rows[0].gifts), 5, 'dygnssiffrorna nollställdes av ett sessionsbyte');
+// ================================================================================================
+// H · EVENTKONTRAKT MOT BEFINTLIG BUSS
+// ================================================================================================
+
+prov('H1 · live-händelsen bär sessionId genom cleanEvent', async () => {
+  const { cleanEvent } = require('../event-bus.js');
+  const ut = cleanEvent({ id: 'e1', type: 'gift', userId: 'u1', username: 'a',
+    sessionId: '33333333-3333-4333-8333-333333333333' });
+  assert.equal(ut.sessionId, '33333333-3333-4333-8333-333333333333',
+    'cleanEvent släpper inte igenom sessionId — då kan ingen konsument veta vilken sändning '
+    + 'ett event tillhör, vilket är hela poängen med modellen');
+});
+
+prov('H2 · sändningsbeskedet använder bussens egen ram, inte ett parallellt kontrakt', async () => {
+  const { sseChunk } = require('../goal-sse.js');
+  const ram = sseChunk({ typ: 'livesession', sessionId: '33333333-3333-4333-8333-333333333333',
+    workspaceId: WS_A, roomId: RUM_1, startedAt: '2026-08-22T13:33:10.000Z', streamId: '1-0' }, null);
+  assert.match(ram, /^id: 1-0\n/, 'ingen id:-rad — då kan Last-Event-ID inte spela upp beskedet');
+  assert.match(ram, /\nevent: live\n/,
+    'beskedet fick en egen event-typ i stället för bussens `live` — en ny typ kräver en ny '
+    + 'lyssnare i varje klient, och de som inte uppdateras missar sändningsbytet tyst');
+  const data = JSON.parse(ram.split('\ndata: ')[1]);
+  assert.equal(data.type, 'livesession');
+  assert.equal(data.sessionId, '33333333-3333-4333-8333-333333333333');
 });
