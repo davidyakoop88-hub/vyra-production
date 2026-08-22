@@ -175,8 +175,12 @@ function skapa({ pa = false, katalog, anvandare = '', maxByte = 50 * 1024 * 1024
     //
     // ANDRAR INGET PRODUKTIONSBETEENDE. Skriver bara en rad, via samma felskyddade skrivare som
     // resten av filen: ett fel stanger av inspelningen, det faller aldrig bryggan.
+    // ANROPARENS FALT FORST, strukturen SIST. Uppmatt 2026-08-22: sonden skickade ett eget falt
+    // som hette `typ` (felets konstruktornamn), och med spridningen sist skrev det over
+    // `typ: '_livscykel'`. Lasaren filtrerar pa just det faltet, sa atta felrader forsvann tyst -
+    // exakt de rader matningen handlade om. En logg som ater sina egna rader ar samre an ingen.
     livscykel: (handelse, falt = {}) =>
-      skrivRad({ typ: '_livscykel', handelse: String(handelse), vid: nu().toISOString(), ...falt }),
+      skrivRad({ ...falt, typ: '_livscykel', handelse: String(handelse), vid: nu().toISOString() }),
     // kalla skiljer de tva ursprungen at i filen: 'inspelad' ar en typ bryggan INTE skickar vidare
     // (den enda vagen att se LINK_MIC_ARMIES form), 'vidarebefordrad' ar en av de elva som redan
     // gar till molnet. Utan faltet gar det inte att rakna pa en inspelning utan att kanna

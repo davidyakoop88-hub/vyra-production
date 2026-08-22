@@ -63,7 +63,15 @@ Write-Host "LIVSCYKEL - $($rader.Count) rader i tidsordning" -ForegroundColor Cy
 $rader | Format-Table Tid, Handelse, RoomId, Forsok, Orsak, Action, Lage -AutoSize
 
 # ---- SVARET ------------------------------------------------------------------------------------
-$anslutningar = @($rader | Where-Object { $_.Handelse -eq 'ansluten' })
+$anslutningar = @($rader | Where-Object { $_.Handelse -eq 'ansluten' -or $_.Handelse -eq 'sond-roomid' })
+if ($anslutningar.Count -eq 0) {
+  # Inga lyckade anslutningar ar ett giltigt matresultat, inte ett skriptfel. Utan den har grenen
+  # slutade skriptet med kod 255 och sag ut att ha kraschat.
+  Write-Host "INGA LYCKADE ANSLUTNINGAR i materialet." -ForegroundColor Yellow
+  Write-Host "Se raderna ovan - en sond-fel-rad bar felet i klartext." -ForegroundColor Yellow
+  Write-Host ""
+  exit 0
+}
 Write-Host "ANSLUTNINGAR OCH DERAS RUM (i ordning)" -ForegroundColor Cyan
 $i = 0
 foreach ($a in $anslutningar) {
