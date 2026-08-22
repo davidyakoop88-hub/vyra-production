@@ -258,6 +258,18 @@
   }).catch(() => {});
   addEventListener('vyra-live-event', e => record(e.detail || {}));
   setInterval(updateLiveLeaderboards, 1000);
+  // MALA GENAST NAR NAGON RITAT OM WIDGETARNA.
+  //
+  // UPPMATT 2026-08-22: en widget som byggs pa nytt kommer upp med sina DEMOSIFFROR (Alex 98,7K,
+  // Mia 82,4K ...) och star sa tills tickern ovan gar. Fore konfigurationsuppdateringen hande det
+  // bara vid sidladdning, dar ingen sett nagot annat. Nu ritas widgetarna om mitt i en sandning,
+  // och da blev det en halv sekund med PAHITTADE siffror i OBS vid varje andring: uppmatt 439 ms
+  // demodata, live tillbaka forst vid 990 ms.
+  //
+  // Signalen ar generell med flit. Topplistan ar bara den forsta live-drivna ytan som far det har
+  // problemet - mal, streaks och koer star pa samma grund, och de ska kunna haka pa samma event
+  // i stallet for att var och en uppfinna sin egen vag.
+  addEventListener('vyra-live-repaint', () => { try { updateLiveLeaderboards() } catch (e) {} });
 
   window.VyraLeaderboard = {
     getTop: (metric = 'likes', count = 10) => sortedTop(metric).slice(0, count),

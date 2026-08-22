@@ -415,6 +415,16 @@ const out=await GoalRuntime.putOverlayWithGoals(pool,{overlayId,workspaceId,name
 if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});
 if(out.emptyBlocked)return send(res,409,{ok:false,error:'Layouten online har widgets men den här enheten försökte spara en tom layout — välj version i synkdialogen',emptyBlocked:true});
 if(out.conflict)return send(res,409,{ok:false,error:'Overlayn har ändrats i en annan session'});
+// KONFIGURATIONEN HAR ANDRATS — sag det till de OBS-kallor som star och tittar pa just den har
+// overlayn, sa slipper anvandaren uppdatera kallan for hand. Bara ett tecken gar ut
+// ({overlayId, revision}); widgeten hamtar sjalv fran den enda kallan.
+//
+// INTE await:at, och den sväljer sitt eget fel: sparningen ar redan gjord och committad nar vi
+// kommer hit. Ett Redis-hicka far aldrig gora om ett lyckat save till ett 500 for anvandaren —
+// da vore botemedlet varre an åkomman. Missas beskedet star OBS kvar pa den gamla designen tills
+// nasta sparning eller ateranslutning, vilket ar exakt laget vi hade fore den har funktionen.
+GoalSse.publishKonfig(eventBus,workspaceId,{overlayId,revision:out.overlay.version})
+  .catch(e=>console.warn('[vyra] kunde inte publicera konfigbesked:',e&&e.message));
 return send(res,200,{ok:true,overlay:out.overlay})}}
   return send(res,404,{ok:false,error:'Hittades inte'});
 }catch(e){

@@ -250,6 +250,7 @@
       "filer": [
         "overlay.html",
         "overlay-access.js",
+        "overlay-config-sync.js",
         "overlay-access.css",
         "overlay-diagnostics.js",
         "overlay-diagnostics.css",
