@@ -187,6 +187,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /gift-fireworks\.js\?v=20260818-panel-live/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
+
+  // WIDGETLANKENS FILTER 2026-08-22. layout-safe.js ager duken i overlay-utdata (overlay-lage
+  // kor med view === 'editor'), och dess renderare fragade aldrig ?widget= — en individuell
+  // widgetlank ritade hela overlayn, uppmatt i produktion. Filen laddas DIREKT fran studio.html,
+  // inte via media.js, sa strangen bor dar. Den sag inte ens tidigare till i det har provet;
+  // en andring utan bump hade betytt att varje cachad webblasare fortsatter lacka hela layouten
+  // in i sandningen.
+  assert.match(studio, /layout-safe\.js\?v=20260822-3/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {

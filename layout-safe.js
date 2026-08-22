@@ -33,6 +33,35 @@
     return state.widgets.slice(0, MAX_LAYOUT_ITEMS);
   }
 
+  // OVERLAY-UTDATA KOR MED view === 'editor', och traffar darfor den har renderaren — inte
+  // studio.js editor(). Det ar samma arkitekturfaktum som lat Studions lankrad hamna i en LIVE-
+  // sandning (#264). Har gav det en annan skada: layoutItems() ar `state.widgets.slice(0, 30)`
+  // och konsulterar aldrig ?widget=, sa en INDIVIDUELL widgetlank ritade hela overlayn.
+  // Uppmatt i produktion 2026-08-22: widget=<id> gav samma sex widgetar som hela overlayn.
+  //
+  // Filtret var aldrig trasigt — vyraRenderWidgets() gav ratt urval. Det blev overskrivet:
+  // overlay-access.js apply() avslutar med root.render(), som ar wrappad harnere, och varje
+  // konfigurationsuppdatering kor samma vag.
+  function iOverlayLage() {
+    // Samma kalla som studio.html:18 satter overlay-output pa. Las ur URL:en och inte ur en
+    // global fran en annan fil: det gor funktionen oberoende av laddningsordningen.
+    return new URLSearchParams(location.search).has('overlay');
+  }
+
+  // ETT urvalsbeslut i hela appen. VyraWidgets.selectForRender ager redan semantiken och ar
+  // provad i tests/widget-placement.test.js: hela overlayn utesluter standalone, en individuell
+  // lank hittar sin widget aven om den ar standalone eller dold, och ett okant id ger
+  // 'missing-widget'.
+  //
+  // 30-taket foljer INTE med hit. Det ar en redigeringsgrans pa Studios Layout-sida — en
+  // sandning ska inte tappa sin trettioforsta widget for att redigeraren har ett tak.
+  function dukensWidgetar() {
+    if (!iOverlayLage()) return { widgets: layoutItems(), error: null };
+    if (!window.VyraWidgets) return { widgets: state.widgets, error: null };
+    var wanted = new URLSearchParams(location.search).get('widget') || '';
+    return window.VyraWidgets.selectForRender(state.widgets, { widgetId: wanted });
+  }
+
   function labelFor(widget) {
     return widget.templateTitle || widget.title || widget.group || widget.type || 'Widget';
   }
@@ -134,7 +163,11 @@
       if (isLayout) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-    var items = layoutItems();
+    var val = dukensWidgetar();
+    // EN DOD WIDGETLANK GER EN TOM TRANSPARENT OVERLAY — inget felmeddelande. Studions egen
+    // "Widgetlanken finns inte langre"-ruta hor hemma i Studio; i OBS-utdata hade den stat mitt
+    // i sandningen, synlig for tittarna. Samma klass av fel som lankraden i #264.
+    var items = val.error === 'missing-widget' ? [] : val.widgets;
     document.querySelector('#view').innerHTML =
       '<div class="editor-shell">' +
         '<div class="elements"></div>' +
