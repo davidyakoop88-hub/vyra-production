@@ -71,7 +71,7 @@ test.after(async () => {
 // Dorren uteblev i tva varv till, och forst nar `page.emulateMedia()` sattes pa den oppnade sidan
 // spelade sekvensen i CI. Bada satts nu, och laget MATS efterat — ett antagande om vad en
 // riggflagga gor ar precis lika osakert som ett antagande om maskinen.
-async function loggaIn(opts = {}) {
+async function loggaIn(opts = {}, fore = null) {
   const page = await browser.newPage(Object.assign(
     { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
   // ANDRA VAGEN ATT SATTA LAGET. Contextvalet ovan RACKTE INTE i CI 2026-08-21: dorren kom
@@ -90,6 +90,8 @@ async function loggaIn(opts = {}) {
   page.on('pageerror', e => page.__konsol.push(`sidfel@${var_()}: ${e && e.message}`));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   await page.waitForSelector('#loginEmail', { timeout: 15000 });
+  // Hook for prov som behover andra sidan INNAN inloggningen (t.ex. sla av alla animationer).
+  if (fore) await fore(page);
   // MAT FORUTSATTNINGEN, ANTA DEN INTE. Nar den har inte holl vantade provet 50 sekunder pa en
   // dorr som med flit aldrig byggdes, och loggen sa bara "timeout" — den dyraste sortens rott.
   page.__rorelselage = await page.evaluate(
@@ -135,9 +137,77 @@ async function loggaIn(opts = {}) {
     setTimeout(() => { obs.disconnect(); klar(false) }, 30000);
   })).catch(() => null);   // navigeringen river kontexten — anteckningen ar redan skriven
 
+  // MAT DEN FORDROJNING APPLIKATIONEN BEGAR — inte den maskinen levererar.
+  //
+  // TVA MATT HAR REDAN MISSLYCKATS, bada for att de klockade vaggtid:
+  //   1. fran svaret tills nasta sida var uppe   -> CI gav 7222, 7769, 8592 ms (grans 6000)
+  //   2. fran svaret tills navigeringen INITIERAS -> CI gav 6173 och 9294 ms
+  // Det andra mattet var arligt: fordrojningen VAR sex sekunder dar. `setTimeout(fn, 1500)` fyrar
+  // fyra sekunder for sent nar huvudtraden ar utsvulten. Sekvensen ar alltsa inte 1500 ms i
+  // verkligheten, och inget vaggtidsmatt kan bli stabilt pa en delad larare.
+  //
+  // Darfor mats REGISTRERINGEN i stallet: vilken fordrojning slappIn() BER om. Den ar exakt 1500
+  // oavsett hur belastad maskinen ar, for den ar en konstant i koden. Att anvandaren sedan slapps
+  // vidare mats separat, och da bara som "det HANDER" - ett strandat lage ar oandligt, sa vilken
+  // generos grans som helst fangar det.
+  //
+  // landing-login.js har EN enda setTimeout (rad 60), sa registreringen ar entydig.
+  await page.evaluate(() => {
+    const NYCKEL = 'vyra-prov-navigering';
+    sessionStorage.removeItem(NYCKEL);
+    window.__prov = { svarVid: null, timrar: [] };
+
+    const origFetch = window.fetch;
+    window.fetch = async function (...a) {
+      const r = await origFetch.apply(this, a);
+      try {
+        const url = String((a[0] && a[0].url) || a[0] || '');
+        if (url.indexOf('/api/auth/login') >= 0 && r.ok) window.__prov.svarVid = performance.now();
+      } catch (e) {}
+      return r;
+    };
+
+    // Bara timrar som registreras EFTER det lyckade svaret raknas - allt fore hor till sidans
+    // vanliga liv och sager ingenting om sekvensen.
+    const origSetTimeout = window.setTimeout;
+    window.setTimeout = function (fn, ms, ...rest) {
+      try { if (window.__prov.svarVid != null) window.__prov.timrar.push(Number(ms) || 0) } catch (e) {}
+      return origSetTimeout.call(this, fn, ms, ...rest);
+    };
+
+    const notera = () => {
+      if (sessionStorage.getItem(NYCKEL) != null) return;   // forst till kvarn, aldrig skriv om
+      sessionStorage.setItem(NYCKEL, JSON.stringify({
+        timrar: window.__prov.timrar,
+        svarSett: window.__prov.svarVid != null,
+      }));
+    };
+    // pagehide ar den tillforlitliga i Chromium, beforeunload den som fyrar tidigast.
+    addEventListener('beforeunload', notera);
+    addEventListener('pagehide', notera);
+  });
+
   await page.click('.login-knapp');
   return page;
 }
+
+// Anteckningen som skrevs i det ogonblick navigeringen initierades. `null` betyder att den ALDRIG
+// initierades - alltsa att anvandaren blev kvar pa framsidan.
+//
+// 30 s ar generost med flit: det som ska fangas ar ett STRANDAT lage, och det ar oandligt. En snal
+// grans hade i stallet matt hur belastad lararen ar - felet som fallde de tva forra matten.
+async function navigeringsAnteckning(page) {
+  try {
+    await page.waitForURL(/studio\.html/, { timeout: 30000, waitUntil: 'commit' });
+  } catch (e) {
+    return null;
+  }
+  const rad = await page.evaluate(() => sessionStorage.getItem('vyra-prov-navigering'));
+  return rad == null ? null : JSON.parse(rad);
+}
+
+// Sekvensens avsedda langd, sa som koden ber om den.
+const SEKVENS_MS = 1500;
 
 test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60000 }, async () => {
   const page = await loggaIn();
@@ -183,44 +253,99 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
   } finally { await page.close() }
 });
 
-test('en lyckad inloggning fastnar ALDRIG i animationen', { skip, timeout: 60000 }, async () => {
-  // Hela poangen. Sessionen ar redan satt nar sekvensen borjar — blir den kvar har ar anvandaren
-  // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
+test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, timeout: 90000 },
+  async () => {
   const page = await loggaIn();
   try {
-    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
-    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
-    // CI — det har har hittills bara ratt sig ur.
-    await page.__inloggningssvar;
-    const start = Date.now();
-    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
-    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
-    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
-    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
-    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
-    const ms = Date.now() - start;
-    assert.ok(ms < 6000, `studion laddades forst efter ${ms} ms — sekvensen far inte bli en grind`);
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null, 'navigeringen initierades aldrig — anvandaren blev kvar');
+    assert.ok(a.svarSett, 'inloggningssvaret sags aldrig, sa matningen bevisar ingenting');
+    assert.ok(a.timrar.includes(SEKVENS_MS),
+      `slappIn() begarde ingen ${SEKVENS_MS} ms fordrojning. Registrerade timrar: `
+      + JSON.stringify(a.timrar) + '. Utan den slapps anvandaren igenom utan att sekvensen spelats');
   } finally { await page.close() }
 });
 
-test('prefers-reduced-motion: ingen dorr och ingen vantan', { skip, timeout: 60000 }, async () => {
+test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', { skip, timeout: 90000 },
+  async () => {
+  // HELA POANGEN. Sessionen ar redan satt nar sekvensen borjar — blir anvandaren kvar har ar hen
+  // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
+  //
+  // ALL rorelse slas av. Redirecten sker anda, for overlamningen hanger pa en TIMER och inte pa
+  // ett animationsevent. Ett prov som bara loggade in hade inte kunnat skilja de tva at.
+  const page = await loggaIn({}, async (sida) => {
+    await sida.addStyleTag({ content: '*,*::before,*::after{animation:none!important;'
+      + 'transition:none!important}' });
+  });
+  try {
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null,
+      'navigeringen initierades ALDRIG utan animationer. Da hanger redirecten pa ett '
+      + 'animationsevent, och en anvandare vars webblasare inte spelar animationen blir kvar '
+      + 'inloggad pa framsidan for alltid');
+    assert.ok(a.timrar.includes(SEKVENS_MS),
+      'sekvensen hoppades over helt utan animationer — den ska spelas, bara utan rorelse');
+  } finally { await page.close() }
+});
+
+test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 90000 }, async () => {
+  // Malsidan gors konstgjort langsam: tre extra sekunder innan studio.html ens svarar. Det som
+  // mats — vilken fordrojning koden BER om — ar oberoende av det, och ska sta orort.
+  //
+  // Det gamla mattet hade fallit har. Det nya kan inte falla av den anledningen, och det ar precis
+  // poangen med att sluta klocka vaggtid.
+  const page = await loggaIn({}, async (sida) => {
+    await sida.route(/studio\.html/, async (rutt) => {
+      await new Promise(r => setTimeout(r, 3000));
+      await rutt.continue();
+    });
+  });
+  try {
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null, 'navigeringen initierades aldrig');
+    assert.ok(a.timrar.includes(SEKVENS_MS),
+      `en fordrojd malsida andrade den begarda sekvensen till ${JSON.stringify(a.timrar)}`);
+  } finally { await page.close() }
+});
+
+test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout: 90000 },
+  async () => {
+  // slappIn() bygger dorren inne i try/catch och gar vidare i catch. Den grenen ar OSYNLIG i ett
+  // normalt prov — uppmatt: muterar man bort `return gaVidare()` i catch passerar alla ovriga prov
+  // anda, for ingenting kastar i lyckat lage. En fallback utan prov ar en fallback man inte vet
+  // om man har.
+  //
+  // Felet injiceras dar sekvensen faktiskt bygger: document.createElement.
+  const page = await loggaIn({}, async (sida) => {
+    await sida.evaluate(() => {
+      const orig = document.createElement.bind(document);
+      document.createElement = (namn, ...rest) => {
+        if (String(namn).toLowerCase() === 'div') throw new Error('PROV: festytan ar trasig');
+        return orig(namn, ...rest);
+      };
+    });
+  });
+  try {
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null,
+      'sekvensen kastade och anvandaren blev KVAR pa framsidan. Hen ar redan inloggad — sessionen '
+      + 'ar satt innan sekvensen borjar — sa en trasig dekoration far aldrig sta i vagen');
+    assert.ok(!a.timrar.includes(SEKVENS_MS),
+      'sekvensens timer registrerades trots att bygget kastade — da gick vi inte via fail-open '
+      + 'utan vantade ut en sekvens som inte finns');
+  } finally { await page.close() }
+});
+
+test('prefers-reduced-motion slapper igenom UTAN sekvensens fordrojning', { skip, timeout: 90000 },
+  async () => {
   // Den som bett om mindre rorelse ska inte betala 1,5 sekunder for en animation hen inte ser.
   // landing-login.js hoppar darfor over HELA steget, inte bara keyframes.
   const page = await loggaIn({ reducedMotion: 'reduce' });
   try {
-    // Klockan startar nar SVARET kommit, inte vid klicket: det ar dar sekvensen borjar, och
-    // en langsam server ar inte animationens fel. Samma matfel som fallde grannprovet ovan i
-    // CI — det har har hittills bara ratt sig ur.
-    await page.__inloggningssvar;
-    const start = Date.now();
-    // 'commit', inte 'load'. UPPMATT I CI 2026-08-21: 7769 ms, mot gransen 6000 — men de
-    // sekunderna gick at till att LADDA studio.html pa en langsam maskin, inte till att
-    // slappa ivag anvandaren. Egenskapen som ska bevisas ar nar vi LAMNAR framsidan; hur
-    // fort malsidan sedan ar uppe ar en annan fraga och matt av andra prov.
-    await page.waitForURL(/studio\.html/, { timeout: 20000, waitUntil: 'commit' });
-    const ms = Date.now() - start;
-    assert.ok(ms < 1200,
-      `studion laddades efter ${ms} ms trots reduced-motion — steget ska hoppas over helt, `
-      + 'inte bara animeras bort');
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null, 'navigeringen initierades aldrig');
+    assert.ok(!a.timrar.includes(SEKVENS_MS),
+      `sekvensens ${SEKVENS_MS} ms begardes trots reduced-motion. Registrerade timrar: `
+      + JSON.stringify(a.timrar) + '. Steget ska hoppas over HELT, inte bara animeras bort');
   } finally { await page.close() }
 });
