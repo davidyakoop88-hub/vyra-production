@@ -44,6 +44,11 @@ test('migrering: ett flersatsuttryck rullas tillbaka i sin helhet vid ett sent f
       'SELECT to_regclass($1) IS NOT NULL AS finns', ['public.' + TABELL]);
     const kvarstar = finns.rows[0].finns;
     await pool.query('DROP TABLE IF EXISTS ' + TABELL);
+    // Städningen ska BEVISAS, inte antas: ett prov som lämnar skräp efter sig gör nästa körning
+    // beroende av den förra.
+    const efterStadning = await pool.query(
+      'SELECT to_regclass($1) IS NOT NULL AS finns', ['public.' + TABELL]);
+    assert.equal(efterStadning.rows[0].finns, false, 'städningen lämnade tabellen kvar');
 
     assert.equal(kvarstar, false,
       'MIGRERINGEN ÄR INTE ATOMISK: tabellen från den första satsen överlevde felet i den andra. '

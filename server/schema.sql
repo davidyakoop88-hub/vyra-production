@@ -344,11 +344,20 @@ CREATE TABLE IF NOT EXISTS bridge_runs (
   id            bigserial PRIMARY KEY,
   account_key   text    NOT NULL,          -- normaliserad: lower(btrim(namn)) utan inledande @
   bridge_run_id text    NOT NULL,
-  generation    bigint  NOT NULL,
+  -- Serverägd och strikt stigande per konto. Sätts som COALESCE(MAX(generation),0)+1 inne i
+  -- transaktionen — ALDRIG härledd ur bridge_run_id (en sträng utan ordning), ur started_at
+  -- (klockor går isär och kan gå bakåt) eller ur id/insättningsordning (bigserial delas ut före
+  -- commit, så två samtidiga körningar kan committa i omvänd ordning mot sina id).
+  generation    bigint  NOT NULL CHECK (generation > 0),
   current       boolean NOT NULL DEFAULT true,
   max_seq       bigint  NOT NULL DEFAULT 0 CHECK (max_seq >= 0),
   started_at    timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (account_key, bridge_run_id)
+  UNIQUE (account_key, bridge_run_id),
+  -- UTAN DEN HÄR kan två samtidiga registreringar båda läsa MAX(generation)=N och båda skriva
+  -- N+1. Då är generationen inte längre strikt stigande, och "vilken körning är nyare" blir
+  -- obesvarbart — precis den ordningsfråga hela modellen finns för att undvika. Unikheten gör
+  -- att databasen avvisar den andra i stället för att koden hoppas slippa kapplöpningen.
+  UNIQUE (account_key, generation)
 );
 -- Exakt EN aktuell körning per konto. Två samtidiga registreringar kan alltså inte båda vinna.
 CREATE UNIQUE INDEX IF NOT EXISTS bridge_runs_aktuell_idx ON bridge_runs(account_key) WHERE current;
