@@ -39,6 +39,7 @@ try { ({ skapaStreamSessions } = require('../stream-sessions.js')) } catch (_) {
 const WS_A = '11111111-1111-4111-8111-111111111111';
 const WS_B = '22222222-2222-4222-8222-222222222222';   // samma TikTok-konto, annat workspace
 const KONTO = 'jokero060';
+const KOR_1 = 'kornings-id-1', KOR_2 = 'kornings-id-2';
 const RUM_1 = '7676848357138664214';
 const RUM_2 = '7676861956443147030';
 
@@ -423,4 +424,212 @@ prov('H2 · sändningsbeskedet använder bussens egen ram, inte ett parallellt k
   const data = JSON.parse(ram.split('\ndata: ')[1]);
   assert.equal(data.type, 'livesession');
   assert.equal(data.sessionId, '33333333-3333-4333-8333-333333333333');
+});
+
+// ================================================================================================
+// I · BRYGGKÖRNINGAR (generation + seq)
+// `seq` ordnar bara INOM en körning. Generationen äger servern: en ny bryggprocess registrerar sig,
+// blir aktuell generation för kontot, och allt från äldre körningar avvisas. Ingen UUID-sortering
+// och ingen klientklocka — båda är oordnade eller opålitliga.
+// ================================================================================================
+
+prov('I1 · en ny bryggkörning blir aktuell generation för kontot', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const a = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const b = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+  assert.ok(b.generation > a.generation, 'generationen stegade inte vid ny bryggkörning');
+  const rad = (await pool.query(
+    'SELECT bridge_run_id FROM bridge_runs WHERE account_key=$1 AND current', [KONTO])).rows;
+  assert.equal(rad.length, 1, 'fler än en aktuell körning för samma konto');
+  assert.equal(rad[0].bridge_run_id, KOR_2);
+});
+
+prov('I2 · status från en GAMMAL bridgeRunId avvisas efter generationsbytet', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+  assert.equal(ut.stale, true, 'ett besked från den avlösta körningen släpptes igenom');
+  assert.deepEqual(ut.workspaces, [], 'den gamla körningen skapade sessioner');
+  assert.equal((await rader(pool, WS_A)).length, 0);
+});
+
+prov('I3 · ett försenat SLUTbesked från föregående körning avslutar ingenting', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
+    .workspaces[0];
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+  const ut = await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2,
+    reason: 'bridge' });
+  assert.equal(ut.ended, false, 'den avlösta körningen fick avsluta en session');
+  assert.equal((await rader(pool, WS_A))[0].ended_at, null, 'sändningen dödades av ett gammalt besked');
+});
+
+prov('I4 · samma seq två gånger är idempotent', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const a = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 7 });
+  const b = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 7 });
+  assert.equal(a.workspaces[0].created, true);
+  assert.equal(b.workspaces[0].created, false, 'samma seq skapade en andra session');
+  assert.equal(b.workspaces[0].session.id, a.workspaces[0].session.id);
+  assert.equal((await rader(pool, WS_A)).length, 1);
+});
+
+prov('I5 · ett LÄGRE seq än det högsta sedda är stale', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_2, bridgeRunId: KOR_1, seq: 12 });
+  const sent = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 5 });
+  assert.equal(sent.stale, true, 'ett äldre seq släpptes igenom och kunde byta sändning');
+  const oppna = (await rader(pool, WS_A)).filter(r => !r.ended_at);
+  assert.equal(oppna.length, 1);
+  assert.equal(oppna[0].room_id, RUM_2, 'det äldre beskedet bytte tillbaka till fel rum');
+});
+
+prov('I6 · två SAMTIDIGA körningsregistreringar ger exakt en aktuell generation', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await Promise.all([
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 }),
+    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 }),
+  ]);
+  const aktuella = (await pool.query(
+    'SELECT bridge_run_id FROM bridge_runs WHERE account_key=$1 AND current', [KONTO])).rows;
+  assert.equal(aktuella.length, 1,
+    'kapplöpning gav ' + aktuella.length + ' aktuella körningar — då avgör slumpen vems status som gäller');
+});
+
+// ================================================================================================
+// J · ADMINISTRATIV ÅTERSTÄLLNING AV ETT STÄNGT RUM
+// Fail-closed: ett stängt room_id öppnas ALDRIG automatiskt. Skulle TikTok en dag återanvända ett
+// rum finns en manuell, auditerad väg — inte en tyst karenstid.
+// ================================================================================================
+
+prov('J1 · ett stängt rum förblir stängt utan administrativ åtgärd', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
+    .workspaces[0];
+  await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+  assert.equal(igen.stale, true, 'ett stängt rum öppnades automatiskt igen');
+  assert.equal((await rader(pool, WS_A)).filter(r => r.room_id === RUM_1).length, 1);
+});
+
+prov('J2 · administrativ återställning tillåter rummet igen och skrivs i audit_log', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
+    .workspaces[0];
+  await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
+  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: null, skal: 'prov' });
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 4 });
+  assert.equal(igen.workspaces[0].created, true, 'återställningen släppte inte igenom rummet');
+  const audit = await pool.query(
+    "SELECT action FROM audit_log WHERE workspace_id=$1 AND action='stream_room_reopened'", [WS_A]);
+  assert.equal(audit.rowCount, 1, 'återställningen lämnade inget spårbart avtryck');
+});
+
+prov('J3 · återställningen gäller EN gång, inte som permanent undantag', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
+    .workspaces[0];
+  await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
+  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: null, skal: 'prov' });
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 4 }))
+    .workspaces[0];
+  await sessioner.avslutaLive({ sessionId: tva.session.id, bridgeRunId: KOR_1, seq: 5, reason: 'bridge' });
+  const tredje = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 6 });
+  assert.equal(tredje.stale, true, 'återställningen blev ett permanent undantag');
+});
+
+// ================================================================================================
+// K · NORMALISERING AV KONTONAMN
+// Husregeln finns redan i capacity-gate.js:24 —
+//   regexp_replace(lower(btrim(tiktok_username)), '^@+', '')
+// Den återanvänds. En andra normaliseringsregel hade delat kontot i två och halverat fan-outen.
+// ================================================================================================
+
+prov('K1 · @, versaler och blanksteg pekar på samma konto', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await pool.query(
+    'INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) '
+    + 'ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=EXCLUDED.tiktok_username,active=true',
+    [WS_B, '  @JoKeRo060 ']);
+  await sessioner.registreraKorning({ konto: '@JOKERO060', bridgeRunId: KOR_1 });
+  const ut = await sessioner.startaLive({ konto: ' jokero060 ', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
+  assert.equal(ut.workspaces.length, 2,
+    'normaliseringen delade kontot: fan-out nådde ' + ut.workspaces.length + ' av 2 workspaces');
+});
+
+prov('K2 · registrering och status måste normalisera LIKA', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: '@Jokero060', bridgeRunId: KOR_1 });
+  const ut = await sessioner.startaLive({ konto: 'jokero060', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
+  assert.notEqual(ut.stale, true,
+    'körningen registrerades under en annan kontonyckel än statusbeskedet slog upp');
+});
+
+// ================================================================================================
+// L · GIFT CAMPAIGN ÄR EN RÄKNARE, INTE BARA KONFIGURATION
+// Uppmätt 2026-08-22: gift-event-images.js:236–237 räknar upp widget['giftCurrent'+i] vid VARJE
+// inkommande gåva, och media.js:362 läser tillbaka det som `current`. Fältet bor i overlay-state.
+// ================================================================================================
+
+prov('L1 · giftCurrent* nollställs centralt, övriga campaign-fält bevaras', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const state = { widgets: [{ id: 'c1', type: 'templateGiftCampaign', campaignTheme: 'neon',
+    campaignSubtitle: 'PUSH THE EVENT', giftTarget0: 50, giftCurrent0: 37, giftCurrent1: 9 }] };
+  const overlay = (await pool.query(
+    "INSERT INTO overlays(workspace_id,name,state) VALUES($1,'prov',$2::jsonb) RETURNING id",
+    [WS_A, JSON.stringify(state)])).rows[0].id;
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
+    .workspaces[0];
+  await sessioner.nollstallKampanjer({ sessionId: ett.session.id, workspaceId: WS_A });
+  const w = (await pool.query('SELECT state FROM overlays WHERE id=$1', [overlay]))
+    .rows[0].state.widgets[0];
+  assert.equal(w.giftCurrent0, 0, 'förra sändningens gåvoantal följde med in i nästa');
+  assert.equal(w.giftCurrent1, 0);
+  assert.equal(w.giftTarget0, 50, 'målet nollställdes — det är konfiguration');
+  assert.equal(w.campaignSubtitle, 'PUSH THE EVENT', 'rubriken nollställdes');
+  assert.equal(w.campaignTheme, 'neon');
+});
+
+// ================================================================================================
+// M · POISON SIGNALERAS
+// ================================================================================================
+
+prov('M1 · en parkerad händelse ger logg, metric OCH audit — den försvinner inte tyst', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+  const loggar = [], metrics = [];
+  for (let i = 0; i < 8; i++) {
+    await sessioner.publiceraUtkorg({
+      sand: async () => { throw new Error('mottagaren är nere') },
+      logg: m => loggar.push(m), metric: m => metrics.push(m),
+      nu: () => new Date(Date.now() + i * 3600e3),
+    });
+  }
+  assert.ok(loggar.some(m => /parkerad|poison/i.test(String(m))), 'ingen logg vid parkering');
+  assert.ok(metrics.some(m => /outbox_poison/.test(String(m))), 'ingen metric vid parkering');
+  const audit = await pool.query(
+    "SELECT action FROM audit_log WHERE workspace_id=$1 AND action='stream_outbox_poison'", [WS_A]);
+  assert.equal(audit.rowCount, 1, 'parkeringen syns inte i audit_log');
 });
