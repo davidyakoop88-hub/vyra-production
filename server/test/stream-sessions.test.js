@@ -174,8 +174,12 @@ prov('B2 · fan-out begär ingen ytterligare TikTok-anslutning', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A); await anslut(pool, WS_B);
   const begarda = [];
-  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1,
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1,
     onAnslutningBegard: n => begarda.push(n) });
+  // Positiv halva FÖRST: utan den går provet grönt mot en modul som inte gör någonting alls —
+  // noll fan-out begär förvisso noll anslutningar. Samma fälla som C3 föll i.
+  assert.equal(ut.workspaces.length, 2,
+    'fan-out nådde ' + ut.workspaces.length + ' workspaces — då säger anslutningsräkningen inget');
   assert.deepEqual(begarda, [],
     'fan-out öppnade ' + begarda.length + ' extra TikTok-anslutningar — kapacitetsporten '
     + '(capacity-gate.js) räknar anslutningar, och en per workspace skalar inte');
@@ -399,6 +403,11 @@ prov('G4 · två serverinstanser publicerar aldrig samma rad', async () => {
     sessioner.publiceraUtkorg({ sand: async e => { b.push(e.event_id); await new Promise(r => setTimeout(r, 40)) } }),
   ]);
   const alla = [...a, ...b];
+  // Positiv halva FÖRST, av samma skäl som B2 och C3: noll publicerade rader innehåller inga
+  // dubbletter. Båda raderna — en per workspace — ska ut, och exakt en gång var.
+  assert.equal(alla.length, 2,
+    'instanserna publicerade ' + alla.length + ' rader av 2 — provet kan inte se dubbletter '
+    + 'i en tom lista');
   assert.equal(new Set(alla).size, alla.length, 'samma rad publicerades av båda instanserna');
 });
 
