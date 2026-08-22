@@ -187,3 +187,14 @@ jobs:
       - name: Lagringsalternativ — text vs sha256, btree vs BRIN
         run: node ../scripts/goal-storage.js
         working-directory: server
+
+      # ---- sändningsidentitet -------------------------------------------------------------------
+      # UTKAST. Modulen server/stream-sessions.js finns inte än, så det här steget SKA falla — det
+      # är hela syftet: bevisa att de 39 proven är röda mot en riktig Postgres innan en rad
+      # produktionskod skrivs. Utan det här steget kördes filen aldrig, och jobbets gröna bock sa
+      # ingenting om den: listan ovan är explicita filnamn, inte ett svep över test/.
+      #
+      # Steget tas bort eller blir grönt när modellen implementeras. Grenen ska inte mergas.
+      - name: Sändningsidentitet — ska vara RÖD tills modellen finns
+        run: node --test test/stream-sessions.test.js
+        working-directory: server
