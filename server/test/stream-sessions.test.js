@@ -39,6 +39,7 @@ try { ({ skapaStreamSessions } = require('../stream-sessions.js')) } catch (_) {
 const WS_A = '11111111-1111-4111-8111-111111111111';
 const WS_B = '22222222-2222-4222-8222-222222222222';   // samma TikTok-konto, annat workspace
 const KONTO = 'jokero060';
+const AGARE = '33333333-3333-4333-8333-333333333333';
 const KOR_1 = 'kornings-id-1', KOR_2 = 'kornings-id-2';
 const RUM_1 = '7676848357138664214';
 const RUM_2 = '7676861956443147030';
@@ -48,6 +49,19 @@ async function rigg() {
     'server/stream-sessions.js finns inte än — modulen som äger sessionsbeslutet');
   const { pool } = require('../db.js');
   const sessioner = skapaStreamSessions({ pool });
+  // Förutsättningarna måste FINNAS, inte antas. tiktok_connections och stream_sessions har båda
+  // främmande nyckel mot workspaces, som i sin tur kräver en ägare — utan de här raderna faller
+  // varje prov på en FK-överträdelse i riggen i stället för på sin egen assertion. Uppmätt i CI
+  // 2026-08-22: 34 av 39 föll på tiktok_connections_workspace_id_fkey.
+  await pool.query(
+    "INSERT INTO users(id,email,password_hash,display_name) "
+    + "VALUES($1,'sessionsprov@exempel.invalid','x','Provägare') ON CONFLICT (id) DO NOTHING",
+    [AGARE]);
+  for (const ws of [WS_A, WS_B]) {
+    await pool.query(
+      "INSERT INTO workspaces(id,name,owner_user_id) VALUES($1,'sessionsprov',$2) "
+      + 'ON CONFLICT (id) DO NOTHING', [ws, AGARE]);
+  }
   for (const ws of [WS_A, WS_B]) {
     await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [ws]);
@@ -197,11 +211,19 @@ prov('C2 · fel maskintoken ger 401 utan att avslöja längd eller innehåll', a
     e => e.status === 401 && !/token=|längd|[0-9]{2,}/.test(String(e.message)));
 });
 
-prov('C3 · ett konto utan aktiv anslutning ger 404 — beskedet får inte skapa ett workspace', async () => {
+prov('C3 · ett okänt konto skapar inget — men ett känt gör det', async () => {
   const { sessioner, pool } = await rigg();
-  await pool.query('UPDATE tiktok_connections SET active=false WHERE tiktok_username=$1', [KONTO]);
-  const ut = await sessioner.startaLive({ konto: 'ett-konto-ingen-prenumererar-pa', roomId: RUM_1 });
-  assert.deepEqual(ut.workspaces, [], 'ett okänt konto skapade sessioner');
+  await anslut(pool, WS_A);
+  // BÅDA halvorna i samma prov, med flit. Uppmätt i CI 2026-08-22: med bara den negativa halvan
+  // gick provet GRÖNT mot en modulstomme som alltid returnerar en tom lista — det kunde inte
+  // skilja "avvisade det okända kontot" från "gör ingenting alls". Ett prov som passerar när
+  // funktionen saknas är värre än inget prov: det ser ut som täckning.
+  const okant = await sessioner.startaLive({ konto: 'ett-konto-ingen-prenumererar-pa', roomId: RUM_1 });
+  assert.deepEqual(okant.workspaces, [], 'ett okänt konto skapade sessioner');
+  const kant = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(kant.workspaces.length, 1,
+    'det KÄNDA kontot gav ' + kant.workspaces.length + ' workspaces — provet kan inte skilja '
+    + 'en korrekt avvisning från en modul som inte gör någonting');
 });
 
 // ================================================================================================
