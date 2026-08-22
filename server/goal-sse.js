@@ -154,11 +154,44 @@ function sseChunk(item, overlayId) {
     return `event: goal\ndata: ${JSON.stringify(frame)}\n\n`;
   }
 
+  // KONFIGURATIONEN HAR ANDRATS. Bara ett tecken — overlayns id och dess nya revision — sa att
+  // widgeten kan hamta om fran den enda kallan utan att kallan behover laddas om i OBS.
+  //
+  // Tre regler, alla tre provade:
+  //
+  //   Bara sin EGEN overlay. En OBS-lank ar publik for den som har den; ett overlay-id som lacker
+  //   till en annan lank ar en identitetslacka, och en omritning i fel scen ar ett synligt fel
+  //   mitt i nagon annans sandning. Samma regel som malramarna redan lyder under.
+  //
+  //   Bara ett tecken, aldrig konfigurationen. Skickades den ocksa har skulle den ha tva kallor,
+  //   och en gammal och en ny kopia kunde krocka i OBS.
+  //
+  //   INGEN `id:`-rad. Med en hamnar beskedet i Last-Event-ID-historiken: det skulle spelas upp
+  //   igen vid varje ateranslutning och dessutom flytta klientens aterupptagningspunkt till nagot
+  //   xRange inte hittar. Klienten fragar i stallet sjalv efter senaste revisionen nar den
+  //   ateransluter.
+  if (item.konfig && typeof item.konfig === 'object') {
+    const { overlayId: idet, revision } = item.konfig;
+    if (!idet || !Number.isFinite(Number(revision))) return null;
+    if (overlayId && idet !== overlayId) return null;
+    return `event: konfig\ndata: ${JSON.stringify({ overlayId: idet, revision: Number(revision) })}\n\n`;
+  }
+
   // Raw TikTok events, unchanged: workspace-scoped, replayable, same bytes for every overlay.
   if (item.event && typeof item.event === 'object' && item.streamId) {
     return `id: ${item.streamId}\nevent: live\ndata: ${JSON.stringify(item.event)}\n\n`;
   }
   return null;
+}
+
+// Publicerar konfigbeskedet pa workspace-kanalen — samma kanal som rateventen, sa en prenumeration
+// per anslutning bar bada. Pub/sub, aldrig xAdd: se regeln om `id:`-raden ovan.
+async function publishKonfig(eventBus, workspaceId, { overlayId, revision }) {
+  if (!overlayId || !Number.isFinite(Number(revision))) return false;
+  const client = await eventBus.connect();
+  await client.publish(eventBus.channel(workspaceId),
+    JSON.stringify({ konfig: { overlayId, revision: Number(revision) } }));
+  return true;
 }
 
 // Publishes on the workspace channel — the same one raw events use, so one subscription per
@@ -173,4 +206,5 @@ async function publish(eventBus, workspaceId, update) {
   return true;
 }
 
-module.exports = { FIELDS, buildFrame, visibleTo, isGoalMessage, frameEnvelope, sseChunk, publish };
+module.exports = { FIELDS, buildFrame, visibleTo, isGoalMessage, frameEnvelope, sseChunk, publish,
+  publishKonfig };

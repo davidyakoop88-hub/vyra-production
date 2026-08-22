@@ -291,6 +291,21 @@
 
     // The session's teardown is the runtime's teardown: owned stream closed, borrowed stream only
     // unsubscribed, store emptied, pending snapshot invalidated.
+    // MALA OM GENAST NAR WIDGETARNA BYGGTS PA NYTT.
+    //
+    // Samma skal som i live-leaderboard.js: en widget som ritas om kommer upp med det varde som
+    // ligger i KONFIGURATIONEN, inte det live-varde som star pa skarmen. Ramarna ar inte
+    // ateruppspelningsbara, sa nasta ram kan drojja lange - och till dess visar OBS ett gammalt
+    // eller nollstallt mal mitt i en sandning.
+    //
+    // `store` bar redan sista ramen per widget, sa omritningen kostar ingenting extra: vi ber bara
+    // lyssnarna rita om det de redan har.
+    root.addEventListener('vyra-live-repaint', () => {
+      try {
+        const ids = [...store.keys()];
+        if (ids.length) for (const listener of listeners) listener(ids);
+      } catch (e) {}
+    });
     root.addEventListener('vyra-session-ended', () => root.VyraGoals.close());
   }
 
