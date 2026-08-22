@@ -70,6 +70,20 @@ test.before(async () => {
     { timeout: 30000, polling: 100 });
   await sida.waitForTimeout(4500);
   await sida.evaluate(V.RIGG);
+
+  // ===========================================================================================
+  // TILLFALLIGT BEVIS — DEN HAR GRENEN SKA ALDRIG MERGAS.
+  //
+  // Fragan: andrar overlay-fixen nagot ANNAT an var duken borjar? De gamla referenserna ar
+  // gamla kodens utdata vid canvasTop 153, tagna pa EXAKT den har binaren, med samma typsnitt,
+  // samma data och samma renderogonblick. Tvingar vi tillbaka duken till 153 med fixen pa plats
+  // ska varje nyckel bli BYTEIDENTISK med sin befintliga referens.
+  //
+  // Passerar hela sviten har ar fixen bevisat positionellt neutral for ALLA 170 nycklar - inte
+  // bara de 57 som andrats, och inte bara pa min Windows-maskin.
+  await sida.addStyleTag({ content: '.canvas{position:absolute!important;top:153px!important}' });
+  await sida.waitForTimeout(400);
+  // ===========================================================================================
 });
 
 test.after(async () => {
@@ -188,9 +202,7 @@ test('overlayduken borjar pa canvasTop = 0', { skip, timeout: 30000 }, async () 
     const c = document.querySelector('.canvas');
     return c ? Math.round(c.getBoundingClientRect().top) : null;
   });
-  assert.equal(top, 0,
-    `duken borjar pa ${top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
-    + 'da faller 44 nycklar pa enbart rasterlaget.');
+  assert.equal(top, 153, `BEVISGREN: duken ska tvingas till 153 har, blev ${top}.`);
 });
 
 test('katalogen har nycklar att fotografera', { skip }, () => {
