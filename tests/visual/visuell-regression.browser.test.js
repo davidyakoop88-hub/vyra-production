@@ -60,6 +60,12 @@ test.before(async () => {
   sida.__kast = [];
   sida.on('pageerror', e => sida.__kast.push(String(e.message).slice(0, 120)));
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+  // VANTA UT OVERLAY-LAGET, anta det inte. Klassen satts av en inline-tagg i studio.html; kors
+  // riggen innan den hunnit fotograferas Studio-lage och varenda referens blir fel utan att nagot
+  // sager ifran.
+  await sida.waitForFunction(
+    () => document.documentElement.classList.contains('overlay-output'), null,
+    { timeout: 30000, polling: 100 });
   await sida.waitForFunction(() => typeof window.render === 'function', null,
     { timeout: 30000, polling: 100 });
   await sida.waitForTimeout(4500);
@@ -136,6 +142,55 @@ test('typsnitten referenserna togs med finns pa plats', { skip, timeout: 60000 }
       + 'med reserven trots att FontFace-posten sager laddad. Fotona nedan visar da inte den '
       + 'typografi referenserna togs med.');
   }
+});
+
+// TVA OLIKA KRAV, och de far inte blandas ihop.
+//
+// Lankraden ar den ENDA noden som bar access-adressen, och den ska inte FINNAS. De ovriga ar
+// strukturella och ligger kvar i DOM med display:none — for dem fungerar doljregeln, och att
+// kraeva bort dem hade varit en vakt som faller pa korrekt kod. Uppmatt: forsta versionen av det
+// har provet krevde att alla fyra saknades och foll direkt.
+const FAR_INTE_FINNAS = ['.overlay-link-bar'];
+const FAR_INTE_SYNAS = ['.editor-toolbar', '.properties', '.elements', 'aside', '.vy-kontroll'];
+
+test('riggen kor i overlay-lage utan synligt Studio-chrome', { skip, timeout: 30000 }, async () => {
+  // TREDJE KONTROLLMATNINGEN FOR FILEN, efter binaren och typsnitten. Skalet ar uppmatt:
+  // lankraden monterades i overlay-utdata och skot duken 153 px ner, vilket flyttade VARJE
+  // widgets rasterlage och fallde 44 nycklar — tva ganger, i bada riktningarna. Widgetarna var
+  // oforandrade bada gangerna. En vakt som inte kan skilja "chrome flyttade duken" fran "widgeten
+  // andrades" skickar lasaren at fel hall varje gang.
+  const fynd = await sida.evaluate(([finnasEj, synasEj]) => ({
+    overlay: document.documentElement.classList.contains('overlay-output'),
+    finns: finnasEj.filter(v => !!document.querySelector(v)),
+    syns: synasEj.filter(v => {
+      const el = document.querySelector(v);
+      if (!el) return false;
+      const cs = getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden'
+        && el.getBoundingClientRect().height > 0;
+    }),
+  }), [FAR_INTE_FINNAS, FAR_INTE_SYNAS]);
+
+  assert.equal(fynd.overlay, true, 'riggen kor INTE i overlay-lage');
+  assert.deepEqual(fynd.finns, [],
+    'lankraden finns i DOM i riggen: ' + JSON.stringify(fynd.finns)
+    + '. Den bar access-adressen och skjuter dessutom duken nedat.');
+  assert.deepEqual(fynd.syns, [],
+    'Studio-chrome ar SYNLIGT i riggen: ' + JSON.stringify(fynd.syns)
+    + '. Det flyttar duken och darmed varje widgets rasterlage.');
+});
+
+test('overlayduken borjar pa canvasTop = 0', { skip, timeout: 30000 }, async () => {
+  // STRUKTURELL VAKT, inte en bild. Referenserna ar tagna med duken pa 0; borjar den nagon
+  // annanstans ar varje jamforelse nedan meningslos, och da ska DEN HAR raden falla - inte 44
+  // widgetar som ingen rort.
+  const top = await sida.evaluate(() => {
+    const c = document.querySelector('.canvas');
+    return c ? Math.round(c.getBoundingClientRect().top) : null;
+  });
+  assert.equal(top, 0,
+    `duken borjar pa ${top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
+    + 'da faller 44 nycklar pa enbart rasterlaget.');
 });
 
 test('katalogen har nycklar att fotografera', { skip }, () => {
