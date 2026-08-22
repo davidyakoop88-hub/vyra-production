@@ -426,5 +426,11 @@ CREATE TABLE IF NOT EXISTS stream_room_reopen (
   consumed_at   timestamptz,
   PRIMARY KEY (workspace_id, room_id, created_at)
 );
-CREATE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
+-- HÖGST EN oanvänd biljett per (workspace, rum). Flera samtidiga hade varit osäkert på två sätt:
+-- två administratörer som båda återöppnar samma rum ger två biljetter, varav den andra blir en
+-- tyst extra öppning som ingen bad om — och konsumtionslogiken hade behövt välja vilken som
+-- gäller, alltså en ordningsfråga till utan svar. Unikheten flyttar problemet dit det hör hemma:
+-- den andra administratören får ett fel och ser att rummet redan är öppnat.
+-- Partiell: FÖRBRUKADE biljetter får finnas hur många som helst, det är historiken.
+CREATE UNIQUE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
   ON stream_room_reopen(workspace_id, room_id) WHERE consumed_at IS NULL;

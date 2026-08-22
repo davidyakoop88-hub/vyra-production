@@ -206,3 +206,11 @@ jobs:
       - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
         run: node --test test/stream-sessions.test.js
         working-directory: server
+
+      # Mäter Postgres eget beteende, inte vår kod: kör migrate.js hela schema.sql som ett
+      # allt-eller-inget? Provet kör ett eget flersatsuttryck mot en tillfällig tabell — schema.sql
+      # och produktionsdata rörs inte. Utan mätningen vore rollback ett antagande, och ett felaktigt
+      # antagande här betyder att en halvmigrerad databas kan gå obemärkt förbi.
+      - name: Migreringens atomicitet — mätt, inte antagen
+        run: node --test test/migrering-atomicitet.test.js
+        working-directory: server
