@@ -1,6 +1,7 @@
 (function(root){
   'use strict';
   const params=new URLSearchParams(location.search),access=params.get('access');
+  let viewerStartad=false;
   function api(path,options){return root.VyraAuth.api(path,options)}
   // The overlay writes whatever the payload carries into its own localStorage. Without a list,
   // a hostile or corrupted overlay state could set any key in this origin — cloud-sync.js has
@@ -20,6 +21,20 @@
    andra hamtning av nagot vi just hamtat. */let harTappat=false;source.onopen=()=>{document.documentElement.dataset.overlayConnection='connected';if(harTappat){harTappat=false;konfigSync?.ateranslot()}};source.onerror=()=>{harTappat=true;document.documentElement.dataset.overlayConnection='reconnecting'}}catch(error){document.body.innerHTML=`<div style="font:600 16px system-ui;color:#fff;background:#170b20;padding:18px;border:1px solid #8d3cff;border-radius:12px">${error.message}</div>`}}
   function modal(){let el=document.querySelector('.oa-modal');if(el)return el;el=document.createElement('div');el.className='oa-modal';el.innerHTML='<section><button class="oa-close">×</button><small>SÄKRA OBS-LÄNKAR</small><h2>Overlay-åtkomst</h2><p>Varje länk kan spärras direkt utan att ändra ditt lösenord.</p><div class="oa-create"><input class="oa-label" value="OBS huvuddator" maxlength="80"><select class="oa-days"><option value="30">30 dagar</option><option value="90">90 dagar</option><option value="365">1 år</option><option value="">Utan slutdatum</option></select><button class="primary oa-new">Skapa länk</button></div><div class="oa-result"></div><div class="oa-list"></div></section>';document.body.append(el);el.querySelector('.oa-close').onclick=()=>el.remove();return el}
   async function openManager(){const current=root.VyraCloudSync?.current?.(),workspace=current?.workspace,overlay=current?.overlay;if(!workspace||!overlay)return root.toast?.('Vänta tills cloud-synken är ansluten');const el=modal(),base=`/api/workspaces/${workspace.id}/overlays/${overlay.id}/access-tokens`;async function refresh(){try{const data=await api(base);el.querySelector('.oa-list').innerHTML=(data.tokens||[]).map(token=>`<article class="${token.revoked_at?'revoked':''}"><span><b>${token.label}</b><small>${token.revoked_at?'Spärrad':token.expires_at?'Gäller till '+new Date(token.expires_at).toLocaleDateString('sv-SE'):'Utan slutdatum'}</small></span>${token.revoked_at?'':'<button data-revoke="'+token.id+'">Spärra</button>'}</article>`).join('')||'<p>Inga OBS-länkar ännu.</p>';el.querySelectorAll('[data-revoke]').forEach(button=>button.onclick=async()=>{await api(base+'/'+button.dataset.revoke,{method:'DELETE'});refresh()})}catch(error){el.querySelector('.oa-list').textContent=error.message}}el.querySelector('.oa-new').onclick=async()=>{try{const days=el.querySelector('.oa-days').value,data=await api(base,{method:'POST',body:JSON.stringify({label:el.querySelector('.oa-label').value,expiresInDays:days?Number(days):null})});sessionStorage.setItem('vyra-overlay-access-url',data.overlayUrl);root.dispatchEvent(new CustomEvent('vyra-overlay-access-created',{detail:{overlayUrl:data.overlayUrl}}));el.querySelector('.oa-result').innerHTML='<input readonly><button>Kopiera</button><small>Länken visas nu även längst ner i Studio.</small>';const input=el.querySelector('.oa-result input');input.value=data.overlayUrl;el.querySelector('.oa-result button').onclick=async()=>{await navigator.clipboard.writeText(data.overlayUrl);root.toast?.('OBS-länken kopierad')};refresh()}catch(error){el.querySelector('.oa-result').textContent=error.message}};refresh()}
-  function mount(){if(access)return startViewer();if(document.querySelector('.oa-open'))return;const button=document.createElement('button');button.className='oa-open';button.hidden=true;button.onclick=openManager;document.body.append(button)}
-  if(document.readyState==='loading')addEventListener('DOMContentLoaded',mount);else mount();setTimeout(mount,1200);
+  /* EN VIEWER PER SIDA. UPPMATT PA SERVERSIDAN 2026-08-22: en enda OBS-kalla oppnade TVA
+     konfigurationshamtningar (490 och 1683 ms) och TVA SSE-anslutningar (819 och 1984 ms) som
+     bada stod kvar oppna. Vakten nedan for knappen fanns redan; token-vagen hade ingen alls.
+     Kostnaden var dubbla Redis-prenumerationer per kalla - tio widgetar i OBS gav tjugo strommar -
+     och filen bar redan en kommentar om att malruntimen LANAR strommen just for att undvika det.
+     Flaggan satts FORE anropet: startViewer ar async, sa tva synkrona anrop hinner annars bada
+     forbi en kontroll som laser ett varde som satts efter. */
+  function mount(){if(access){if(viewerStartad)return;viewerStartad=true;return startViewer()}if(document.querySelector('.oa-open'))return;const button=document.createElement('button');button.className='oa-open';button.hidden=true;button.onclick=openManager;document.body.append(button)}
+  /* Den fordrojda monteringen ar BORTTAGEN. Den kom in i forsta commiten utan motivering, och
+     matningen visar att den inte behovs i nagot lage:
+       Studio-laget      knappen finns anda, och overlever alla vybyten (uppmatt 1 st genom fyra byten)
+       OBS-laget         den skapade bara den andra anslutningen
+       misslyckad start  den raddar ingenting: felrutan skriver over <body>, sa omforsokets
+                         apply() har ingen DOM att rita i - 0 widgetar och 0 strommar bada vagarna
+     Behovs ett omforsok i framtiden ska det vara ett riktigt omforsok med skal, inte en timer. */
+  if(document.readyState==='loading')addEventListener('DOMContentLoaded',mount);else mount();
 })(typeof window!=='undefined'?window:globalThis);
