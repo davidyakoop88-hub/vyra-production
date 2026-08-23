@@ -274,8 +274,8 @@ function skapaStreamSessions({ pool }) {
   // tidsvillkoret far en worker som vaknar langt efter sin lease fortfarande kvittera, flytta
   // backoffen eller parkera raden — och den kan da skriva over arbete som en ny agare redan hunnit
   // gora, eller hinna fore den nya agaren och gora dess claim meningslos.
-  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND $3::timestamptz IS NOT NULL '
-    + 'AND published_at IS NULL AND parked_at IS NULL'; /*MUT4*/
+  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND lease_until > $3::timestamptz '
+    + 'AND published_at IS NULL AND parked_at IS NULL';
 
   // Publicerar en omgång. Ingen autostart: den här funktionen körs bara när någon anropar den.
   //
