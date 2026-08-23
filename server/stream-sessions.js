@@ -250,7 +250,7 @@ function skapaStreamSessions({ pool }) {
   // ---- transactional outbox ----------------------------------------------------------------------
   // Konfigurerbara konstanter. Inga magiska tal spridda i logiken.
   const LEASE_SEKUNDER = 30;      // hur länge en worker äger raden under publiceringen
-  const MAX_FORSOK = 100000; /*MUT3*/           // därefter parkeras raden
+  const MAX_FORSOK = 8;           // därefter parkeras raden
   const BACKOFF_BAS = 5;          // sekunder
   const BACKOFF_TAK = 900;        // 15 minuter
 
@@ -274,8 +274,8 @@ function skapaStreamSessions({ pool }) {
   // tidsvillkoret far en worker som vaknar langt efter sin lease fortfarande kvittera, flytta
   // backoffen eller parkera raden — och den kan da skriva over arbete som en ny agare redan hunnit
   // gora, eller hinna fore den nya agaren och gora dess claim meningslos.
-  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND lease_until > $3::timestamptz '
-    + 'AND published_at IS NULL AND parked_at IS NULL';
+  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND $3::timestamptz IS NOT NULL '
+    + 'AND published_at IS NULL AND parked_at IS NULL'; /*MUT4*/
 
   // Publicerar en omgång. Ingen autostart: den här funktionen körs bara när någon anropar den.
   //
