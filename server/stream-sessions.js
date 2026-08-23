@@ -424,6 +424,61 @@ function skapaStreamSessions({ pool }) {
     return q.rows;
   }
 
+  // Skalen den INTERNA vagen far anvanda. 'ersatt' satts bara av starttransaktionen nar ett nytt
+  // rum tar over; 'timeout' har ingen vag alls an och far darfor inte valjas av nagon.
+  const INTERNA_SKAL = new Set(['bridge', 'manuell']);
+
+  // End-raden i utkorgen. Skrivs BARA nar en session verkligen stangdes, och alltid med databasens
+  // egen sluttid - aldrig en applikationsklocka som kan ligga bredvid.
+  async function skrivEndOutbox(c, { workspaceId, sessionId, endedAt }) {
+    const eventId = 'live:end:' + sessionId;
+    await c.query(
+      'INSERT INTO stream_event_outbox(workspace_id, event_id, topic, payload) VALUES($1,$2,$3,$4)',
+      [workspaceId, eventId, 'live:end', JSON.stringify({
+        type: 'livesession', event: 'live:end', eventId, sessionId,
+        endedAt: new Date(endedAt).toISOString(),
+      })]);
+  }
+
+  // Avslutet for ETT workspace. Kors inne i transaktionen, efter att workspaceraden ar last.
+  // Identiteten kan vara ett rum (maskinvagen) eller ett sessionId (interna vagen) - men aldrig
+  // enbart ett workspace: ett slutbesked utan identitet far inte avsluta det som rakar vara igang.
+  async function avslutaForWorkspace(c, { workspaceId, rum, sessionId, reason }) {
+    await c.query('INSERT INTO stream_session_pointer(workspace_id) VALUES($1) ON CONFLICT DO NOTHING',
+      [workspaceId]);
+    const p = await c.query(
+      'SELECT session_id FROM stream_session_pointer WHERE workspace_id=$1 FOR UPDATE', [workspaceId]);
+    const pekare = p.rows[0] ? p.rows[0].session_id : null;
+    if (!pekare) return { workspaceId, ended: false, skal: 'ingen-aktiv' };
+
+    const a = await c.query(
+      'SELECT id, room_id FROM stream_sessions WHERE id=$1 AND ended_at IS NULL', [pekare]);
+    const aktiv = a.rows[0] || null;
+    if (!aktiv) return { workspaceId, ended: false, skal: 'ingen-aktiv' };
+    if (rum != null && aktiv.room_id !== rum) {
+      return { workspaceId, ended: false, skal: 'rum-matchar-inte' };
+    }
+    if (sessionId != null && aktiv.id !== sessionId) {
+      return { workspaceId, ended: false, skal: 'annan-session' };
+    }
+    if (!INTERNA_SKAL.has(reason)) throw fel(400, 'otillatet skal for avslut');
+
+    // RETURNING ended_at ger DATABASENS exakta sluttid, som gar rakt in i payloaden.
+    // `ended_at IS NULL` gor ett andra anrop till en ren no-op i stallet for en andra stangning.
+    const stangd = await c.query(
+      'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 AND ended_at IS NULL '
+      + 'RETURNING ended_at', [aktiv.id, reason]);
+    if (!stangd.rowCount) return { workspaceId, ended: false, skal: 'redan-stangd' };
+    const endedAt = stangd.rows[0].ended_at;
+
+    // `session_id=$2` gor ett forsenat slutbesked ofarligt: har pekaren redan flyttats till en
+    // nyare session matchar satsen inte, och den pagaende sandningen ror(d)s inte.
+    await c.query('UPDATE stream_session_pointer SET session_id=NULL, updated_at=now() '
+      + 'WHERE workspace_id=$1 AND session_id=$2', [workspaceId, aktiv.id]);
+    await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id, endedAt });
+    return { workspaceId, ended: true, session: { id: aktiv.id, roomId: aktiv.room_id }, endedAt };
+  }
+
   // ---- sessionsbeslut per workspace --------------------------------------------------------------
   // Körs INNE i statusbeskedets transaktion, efter att workspaceraden är låst. Varje workspace äger
   // sin EGEN historik och sin egen biljett: ett blockerat workspace får inte hindra ett annat, för
@@ -473,8 +528,17 @@ function skapaStreamSessions({ pool }) {
     // c) Byte: den föregående sändningen avslutas som ERSATT — inte 'bridge', för bryggan sa aldrig
     //    att den var slut; vi drog slutsatsen av att ett nytt rum dök upp.
     if (aktiv) {
-      await c.query("UPDATE stream_sessions SET ended_at=now(), end_reason='ersatt' WHERE id=$1",
-        [aktiv.id]);
+      const stangd = await c.query(
+        "UPDATE stream_sessions SET ended_at=now(), end_reason='ersatt' WHERE id=$1 "
+        + 'AND ended_at IS NULL RETURNING ended_at', [aktiv.id]);
+      // END FORE START, i samma transaktion. Utan end-raden skulle en ersatt session ligga stangd
+      // i databasen utan att nagon mottagare far veta att den tog slut - de skulle bara se en ny
+      // sandning borja. Ordningen bevaras hela vagen ut: utkorgen publicerar per workspace i
+      // id-ordning, och end far lagre id eftersom den skrivs forst.
+      if (stangd.rowCount) {
+        await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id,
+          endedAt: stangd.rows[0].ended_at });
+      }
     }
 
     // d) Skapa och peka. Faller INSERT (t.ex. på det partiella unika indexet) rullar hela
@@ -614,7 +678,79 @@ function skapaStreamSessions({ pool }) {
 
     startaLive,
 
-    async avslutaLive() { return { ended: false }; },
+    // INTERN, BETRODD VAG. Anvander serverns eget sessionId. Bara for prov och en framtida
+    // adminvag - den framtida maskinrutten far ALDRIG lita pa ett externt sessionId.
+    async avslutaLive({ sessionId, reason = 'bridge' } = {}) {
+      const sid = String(sessionId == null ? '' : sessionId).trim();
+      if (!sid) {
+        throw fel(400, 'sessionId saknas - ett slutbesked utan identitet far inte avsluta det som '
+          + 'rakar vara igang');
+      }
+      // Olast uppslagning ENBART for att veta vilka rader som ska lasas. Beslutet fattas om under
+      // laset; lasordningen bridge_accounts -> workspaces -> stream_* haller.
+      const f = await pool.query(
+        'SELECT workspace_id, account_key FROM stream_sessions WHERE id=$1', [sid]);
+      if (!f.rowCount) return { ended: false, skal: 'okand-session' };
+      const workspaceId = f.rows[0].workspace_id, nyckel = f.rows[0].account_key;
+
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        await c.query('SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE',
+          [nyckel]);
+        await c.query('SELECT id FROM workspaces WHERE id=$1 FOR NO KEY UPDATE', [workspaceId]);
+        const ut = await avslutaForWorkspace(c, { workspaceId, sessionId: sid, reason });
+        await c.query('COMMIT');
+        return ut;
+      } catch (error) {
+        try { await c.query('ROLLBACK'); } catch (_) {}
+        throw error;
+      } finally {
+        c.release();
+      }
+    },
+
+    // MASKINVAGEN. Bryggan kanner konto, rum, korning och sekvens - inte serverns sessionId.
+    // Servern loser sjalv fram sessionerna ur respektive pekare, och `reason` TVINGAS till
+    // 'bridge': en extern brygga far inte kunna skriva 'ersatt' eller 'manuell' i historiken.
+    async avslutaLiveFranBrygga({ tiktokUsername, roomId, bridgeRunId, seq } = {}) {
+      const nyckel = kontonyckel(tiktokUsername);
+      if (!nyckel) throw fel(400, 'kontonamn saknas');
+      const rum = String(roomId == null ? '' : roomId).trim();
+      if (!rum) throw fel(400, 'roomId saknas - workspace ensamt racker inte som identitet');
+
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        await c.query('SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE',
+          [nyckel]);
+        const ws = (await c.query(
+          'SELECT workspace_id FROM tiktok_connections WHERE active AND ' + KONTO_SQL + '=$1 '
+          + 'ORDER BY workspace_id', [nyckel])).rows.map(r => r.workspace_id);
+        if (ws.length) {
+          await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
+            + 'FOR NO KEY UPDATE', [ws]);
+        }
+        // Seq valideras EN gang for hela kontobeskedet, pa samma client.
+        const dom = await sekvensdom(c, { nyckel, bridgeRunId, seq });
+        if (dom.skal) { await c.query('ROLLBACK'); return { stale: true, skal: dom.skal, workspaces: [] }; }
+        if (dom.idempotent) {
+          await c.query('ROLLBACK');
+          return { stale: false, idempotent: true, workspaces: [] };
+        }
+        const resultat = [];
+        for (const w of ws) {
+          resultat.push(await avslutaForWorkspace(c, { workspaceId: w, rum, reason: 'bridge' }));
+        }
+        await c.query('COMMIT');
+        return { stale: false, workspaces: resultat };
+      } catch (error) {
+        try { await c.query('ROLLBACK'); } catch (_) {}
+        throw error;
+      } finally {
+        c.release();
+      }
+    },
     async startaLiveViaHttp() { return inteAn('startaLiveViaHttp'); },
     async tillatRumIgen() { return inteAn('tillatRumIgen'); },
     // TESTSEAM, inte en produktionsväg. `utfor` finns för att prov ska kunna framkalla ett fel

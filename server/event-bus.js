@@ -123,7 +123,11 @@ class EventBus{
 // stoppa publiceringen hogljutt — en halvgiltig ram som tyst tappas ar samma sak som en sandning
 // som aldrig byter session, och det gar inte att felsoka i efterhand.
 const INTERNA_TYPER=new Set(['livesession']);
-const INTERNA_HANDELSER=new Set(['live:start']);
+const INTERNA_HANDELSER=new Set(['live:start','live:end']);
+// Varje intern handelse har SITT tidsfalt: live:start bar startedAt, live:end bar endedAt.
+// Ett gemensamt 'at' hade gjort det omojligt att se om en ram beskriver en borjan eller ett
+// slut utan att lasa event-faltet, och en mottagare som missar det byter fel session.
+const INTERNA_TIDSFALT={'live:start':'startedAt','live:end':'endedAt'};
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function internfel(kod,meddelande){
@@ -143,12 +147,17 @@ function cleanInternalEvent(input){
   const eventId=String(input?.eventId||'');
   if(eventId!==handelse+':'+sessionId)
     throw internfel('eventid-matchar-inte','eventId maste vara '+handelse+':<sessionId>');
-  const startedAt=String(input?.startedAt||'');
-  if(!startedAt||Number.isNaN(Date.parse(startedAt)))
-    throw internfel('ogiltigt-startedat','startedAt ar inte en giltig tidpunkt');
+  const falt=INTERNA_TIDSFALT[handelse];
+  const tid=String(input?.[falt]||'');
+  if(!tid||Number.isNaN(Date.parse(tid)))
+    throw internfel('ogiltigt-'+falt.toLowerCase(),falt+' ar inte en giltig tidpunkt');
   // Explicit vitlista. workspaceId skickas ALDRIG: strommen vyra:live:<workspaceId> ar redan
   // avgransad, och routingen kommer fran databaskolumnen — inte fran nagot i payloaden.
-  return {type,event:handelse,eventId,sessionId,startedAt};
+  // reason ingar inte: den skiljer 'sandningen slutade' fran 'sandningen ersattes', men ingen
+  // mottagare behover den an. Faltet finns kvar i outboxraden som serverns egen anteckning.
+  const ut={type,event:handelse,eventId,sessionId};
+  ut[falt]=tid;
+  return ut;
 }
 
 module.exports={EventBus,cleanEvent,cleanInternalEvent,ALLOWED,INTERNA_TYPER};

@@ -65,6 +65,8 @@ async function rigg() {
   // Skyddsnat: ett avbrutet V1 skulle annars lamna en trigger som faller varje senare auditinsert.
   await pool.query('DROP TRIGGER IF EXISTS prov_poison_rollback_trg ON audit_log');
   await pool.query('DROP FUNCTION IF EXISTS prov_poison_rollback_fn()');
+  await pool.query('DROP TRIGGER IF EXISTS prov_start_stopp_trg ON stream_event_outbox');
+  await pool.query('DROP FUNCTION IF EXISTS prov_start_stopp_fn()');
   await pool.query("INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING",
     [KONTO]);
   await pool.query('DELETE FROM bridge_runs WHERE account_key=$1', [KONTO]);
@@ -2163,4 +2165,225 @@ prov('X5 · ett blockerat workspace hindrar inte ett annat', async () => {
     sand: async r => skickat.push(r.event_id) });
   assert.deepEqual(skickat, ['live:start:b'],
     'fel rader publicerades: ' + JSON.stringify(skickat) + ' — WS_A ska vara blockerat, WS_B fritt');
+});
+
+// ================================================================================================
+// Y · AVSLUT
+//
+// Tva vagar med olika fortroende: bryggan kanner konto, rum, korning och sekvens - aldrig serverns
+// sessionId. Den interna vagen anvander sessionId och ar bara till for prov och en framtida
+// adminvag.
+// ================================================================================================
+
+const endRader = (pool, ws) => pool.query(
+  "SELECT id, event_id, payload FROM stream_event_outbox WHERE topic='live:end'"
+  + (ws ? ' AND workspace_id=$1' : '') + ' ORDER BY id', ws ? [ws] : []).then(r => r.rows);
+
+prov('Y1 · fan-out stanger bada workspacen och ger varsin end-rad', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const start = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+  assert.equal(start.workspaces.length, 2);
+
+  const ut = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 });
+  assert.equal(ut.workspaces.length, 2, 'fan-out nadde ' + ut.workspaces.length + ' workspaces');
+  assert.ok(ut.workspaces.every(w => w.ended), 'alla workspaces stangdes inte');
+
+  for (const ws of [WS_A, WS_B]) {
+    assert.equal(await aktivSession(pool, ws), null, 'pekaren nollades inte for ' + ws);
+    const slut = await endRader(pool, ws);
+    assert.equal(slut.length, 1, ws + ' fick ' + slut.length + ' end-rader');
+    const sess = start.workspaces.find(w => w.workspaceId === ws).session.id;
+    assert.equal(slut[0].event_id, 'live:end:' + sess, 'event_id ar inte harlett ur sessionens id');
+    assert.equal(slut[0].payload.sessionId, sess);
+    assert.ok(slut[0].payload.endedAt, 'endedAt saknas');
+    // Publik payload: exakt fem falt.
+    assert.deepEqual(Object.keys(slut[0].payload).sort(),
+      ['endedAt', 'event', 'eventId', 'sessionId', 'type'],
+      'end-payloaden bar falt utanfor kontraktet: ' + Object.keys(slut[0].payload).join(', '));
+  }
+  // Sluttiden kommer fran DATABASEN, inte fran en applikationsklocka.
+  const db = await pool.query('SELECT ended_at FROM stream_sessions WHERE workspace_id=$1', [WS_A]);
+  assert.equal(new Date((await endRader(pool, WS_A))[0].payload.endedAt).getTime(),
+    new Date(db.rows[0].ended_at).getTime(), 'endedAt matchar inte databasens ended_at');
+});
+
+prov('Y2 · mismatch i A men match i B stanger bara B', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  // WS_A far en NYARE session i ett annat rum. Bryggans slutbesked galler det gamla rummet.
+  await pool.query("UPDATE stream_sessions SET ended_at=now(), end_reason='manuell' WHERE workspace_id=$1",
+    [WS_A]);
+  await pool.query('UPDATE stream_session_pointer SET session_id=NULL WHERE workspace_id=$1', [WS_A]);
+  const nyA = (await pool.query(
+    'INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3) RETURNING id',
+    [WS_A, RUM_2, KONTO])).rows[0].id;
+  await pool.query('UPDATE stream_session_pointer SET session_id=$2 WHERE workspace_id=$1', [WS_A, nyA]);
+
+  const ut = await sessioner.avslutaLiveFranBrygga({ tiktokUsername: KONTO, roomId: RUM_1 });
+  const a = ut.workspaces.find(w => w.workspaceId === WS_A);
+  const b = ut.workspaces.find(w => w.workspaceId === WS_B);
+  assert.equal(a.ended, false, 'WS_A stangdes trots att pekaren pekar pa ett annat rum');
+  assert.equal(a.skal, 'rum-matchar-inte');
+  assert.equal(b.ended, true, 'WS_B stangdes inte - ett workspace utan match blockerade ett annat');
+  assert.equal((await aktivSession(pool, WS_A)).id, nyA, 'WS_A:s pagaende sandning rordes');
+  assert.equal(await aktivSession(pool, WS_B), null);
+  assert.equal((await endRader(pool, WS_A)).length, 0, 'WS_A fick en end-rad utan att stangas');
+  assert.equal((await endRader(pool, WS_B)).length, 1);
+});
+
+prov('Y3 · ett pahittat externt sessionId paverkar ingenting pa maskinvagen', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const start = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  // Bryggan kanner inte serverns sessionId. Skickas ett anda ska det ignoreras helt - servern
+  // loser sessionen ur pekaren.
+  const ut = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1,
+    sessionId: '99999999-9999-4999-8999-999999999999' });
+  assert.equal(ut.workspaces[0].ended, true, 'avslutet gick inte igenom');
+  assert.equal(ut.workspaces[0].session.id, start.session.id,
+    'servern anvande det inskickade sessionId:t i stallet for pekarens');
+  const slut = await endRader(pool, WS_A);
+  assert.equal(slut[0].payload.sessionId, start.session.id, 'det pahittade id:t nadde payloaden');
+});
+
+prov('Y4 · maskininput kan inte valja reason', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, reason: 'manuell', end_reason: 'ersatt' });
+  const r = await pool.query('SELECT end_reason FROM stream_sessions WHERE workspace_id=$1', [WS_A]);
+  // 'ersatt' far bara satts av starttransaktionen, 'manuell' av en betrodd adminvag. En extern
+  // brygga som kan valja skal kan ocksa forfalska historiken.
+  assert.equal(r.rows[0].end_reason, 'bridge',
+    'maskininput fick satta end_reason=' + r.rows[0].end_reason);
+});
+
+prov('Y5 · avlost generation och lagre seq avslutar ingenting', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 5 });
+
+  const lagre = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+  assert.equal(lagre.stale, true, 'ett lagre seq fick avsluta');
+  assert.equal(lagre.skal, 'aldre-seq');
+
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+  const avlost = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 9 });
+  assert.equal(avlost.stale, true, 'en avlost korning fick avsluta');
+  assert.equal(avlost.skal, 'avlost-korning');
+
+  assert.ok(await aktivSession(pool, WS_A), 'sandningen avslutades av ett foraldrat besked');
+  assert.equal((await endRader(pool, WS_A)).length, 0, 'en end-rad skapades av ett foraldrat besked');
+});
+
+prov('Y6 · ett duplicerat slutbesked ar en ren no-op', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+
+  const ett = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 });
+  assert.equal(ett.workspaces[0].ended, true);
+  // Samma seq igen: fullstandig no-op, inga workspaces i svaret.
+  const igen = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 });
+  assert.equal(igen.idempotent, true, 'det upprepade beskedet markerades inte som idempotent');
+  assert.deepEqual(igen.workspaces, []);
+  // Hogre seq, men sessionen ar redan stangd.
+  const tredje = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+  assert.equal(tredje.workspaces[0].ended, false, 'en redan stangd session stangdes igen');
+  assert.equal(tredje.workspaces[0].skal, 'ingen-aktiv');
+  assert.equal((await endRader(pool, WS_A)).length, 1, 'fler an en end-rad skapades');
+});
+
+prov('Y7 · ersattning lagger end(old) FORE start(new)', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
+
+  const alla = await utkorg(pool, WS_A);
+  const ider = alla.map(r => r.event_id);
+  assert.deepEqual(ider,
+    ['live:start:' + ett.session.id, 'live:end:' + ett.session.id, 'live:start:' + tva.session.id],
+    'fel ordning i utkorgen: ' + JSON.stringify(ider));
+  const endRad = alla.find(r => r.event_id === 'live:end:' + ett.session.id);
+  const startRad = alla.find(r => r.event_id === 'live:start:' + tva.session.id);
+  // Utkorgen publicerar per workspace i id-ordning, sa lagre id = publiceras forst.
+  assert.ok(Number(endRad.id) < Number(startRad.id),
+    'end(old) fick hogre id an start(new) och skulle publicerats efter den');
+  const stangd = await pool.query(
+    'SELECT end_reason, ended_at FROM stream_sessions WHERE id=$1', [ett.session.id]);
+  assert.equal(stangd.rows[0].end_reason, 'ersatt');
+  assert.equal(new Date(endRad.payload.endedAt).getTime(),
+    new Date(stangd.rows[0].ended_at).getTime(), 'endedAt kommer inte fran databasen');
+});
+
+const Y8_FN = 'prov_start_stopp_fn', Y8_TRG = 'prov_start_stopp_trg';
+
+prov('Y8 · ett fel efter end(old) rullar tillbaka HELA sessionsbytet', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, KAMPANJ());
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  // Racknare som ska ticka igen efter forsta nollstallningen, sa rollbacken har nagot att bevara.
+  await pool.query("UPDATE overlays SET state=jsonb_set(state,'{widgets,0,giftCurrent0}','42') WHERE id=$1",
+    [overlay.id]);
+  const foreOutbox = (await utkorg(pool, WS_A)).length;
+  const foreKvitton = (await kvitton(pool, ett.session.id)).length;
+
+  try {
+    // Triggern kastar BARA for start-raden i just det har sessionsbytet: villkoret bar bade topic
+    // och det gamla sessionens id i previousSessionId. Inga andra outboxrader traffas.
+    await pool.query(
+      'CREATE OR REPLACE FUNCTION ' + Y8_FN + '() RETURNS trigger AS $fn$ BEGIN '
+      + "  IF NEW.topic = 'live:start' AND NEW.payload->>'previousSessionId' = "
+      + "'" + ett.session.id + "'" + ' THEN '
+      + "    RAISE EXCEPTION 'provtrigger stoppar just det har sessionsbytet'; "
+      + '  END IF; RETURN NEW; END; $fn$ LANGUAGE plpgsql');
+    await pool.query('CREATE TRIGGER ' + Y8_TRG + ' BEFORE INSERT ON stream_event_outbox '
+      + 'FOR EACH ROW EXECUTE FUNCTION ' + Y8_FN + '()');
+
+    await assert.rejects(() => sessioner.startaLive({ konto: KONTO, roomId: RUM_2 }),
+      e => /provtrigger stoppar/.test(String(e.message)), 'sessionsbytet foll inte pa triggern');
+  } finally {
+    await pool.query('DROP TRIGGER IF EXISTS ' + Y8_TRG + ' ON stream_event_outbox');
+    await pool.query('DROP FUNCTION IF EXISTS ' + Y8_FN + '()');
+  }
+  const kvar = await pool.query(
+    'SELECT (SELECT count(*) FROM pg_trigger WHERE tgname=$1)::int AS trg, '
+    + '(SELECT count(*) FROM pg_proc WHERE proname=$2)::int AS fn', [Y8_TRG, Y8_FN]);
+  assert.equal(kvar.rows[0].trg, 0, 'triggern ligger kvar');
+  assert.equal(kvar.rows[0].fn, 0, 'triggerfunktionen ligger kvar');
+
+  // ALLT ska vara som fore: gammal session oppen, ingen ny session, pekaren orord, resetkvitton
+  // och racknare oforandrade, och INGEN av de tva outboxraderna kvar.
+  const rad = (await rader(pool, WS_A));
+  assert.equal(rad.length, 1, 'en ny session overlevde rollbacken');
+  assert.equal(rad[0].ended_at, null, 'den gamla sessionen forblev stangd efter rollback');
+  assert.equal((await aktivSession(pool, WS_A)).id, ett.session.id, 'pekaren flyttades');
+  assert.equal((await utkorg(pool, WS_A)).length, foreOutbox, 'en outboxrad overlevde rollbacken');
+  assert.equal((await kvitton(pool, ett.session.id)).length, foreKvitton, 'ett kvitto andrades');
+  assert.equal((await overlayRad(pool, overlay.id)).state.widgets[0].giftCurrent0, 42,
+    'racknaren nollstalldes trots rollback');
+
+  // KONTROLLMATNING: samma flode UTAN triggern maste lyckas - annars bevisar provet bara att
+  // nagonting gar fel.
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
+  assert.equal(tva.created, true, 'sessionsbytet gick inte igenom utan triggern');
+  const efter = await utkorg(pool, WS_A);
+  assert.equal(efter.length, foreOutbox + 2, 'fel antal outboxrader efter det lyckade bytet');
+  assert.equal(efter[efter.length - 2].event_id, 'live:end:' + ett.session.id);
+  assert.equal(efter[efter.length - 1].event_id, 'live:start:' + tva.session.id);
 });
