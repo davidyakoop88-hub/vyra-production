@@ -314,12 +314,15 @@ prov('F1 · kvitto och nollställning sker i SAMMA transaktion', async () => {
   const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
   // Nollställningen tvingas misslyckas EFTER att kvittot skrivits. Rullar transaktionen tillbaka
   // ska VARKEN kvitto ELLER nollställning finnas kvar.
+  // EGET scope. Sessionsskapandet tar redan kvitton för gift_campaign och goal_runtime, så ett
+  // prov som räknar ALLA kvitton för sessionen mäter dem i stället för sitt eget fall.
   await assert.rejects(() => sessioner.nollstall({
-    sessionId: ett.session.id, scope: 'goals',
+    sessionId: ett.session.id, scope: 'provscope-f1',
     utfor: async () => { throw new Error('avsiktligt fel mitt i nollställningen') },
   }));
   const kvitton = await pool.query(
-    'SELECT count(*)::int AS n FROM stream_session_reset WHERE session_id=$1', [ett.session.id]);
+    'SELECT count(*)::int AS n FROM stream_session_reset WHERE session_id=$1 AND scope=$2',
+    [ett.session.id, 'provscope-f1']);
   assert.equal(kvitton.rows[0].n, 0,
     'ett kvitto överlevde en misslyckad nollställning — nästa försök hoppar över den för alltid');
 });
@@ -346,7 +349,14 @@ prov('F3 · goal_runtime behåller baseline och target, nollar progress och steg
   await pool.query(
     'INSERT INTO goal_runtime(overlay_id,widget_id,metric,baseline,progress,target,epoch,revision) '
     + "VALUES($1,'w1','likes',250,900,5000,3,77)", [overlay]);
+  // Sessionsskapandet nollställer redan en gång (epoch 3 -> 4). Den explicita anropet är den
+  // ANDRA (4 -> 5). Provet mäter att baseline/target överlever BÅDA.
   const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  const efterSession = await pool.query(
+    'SELECT epoch, progress FROM goal_runtime WHERE overlay_id=$1', [overlay]);
+  assert.equal(Number(efterSession.rows[0].epoch), 4,
+    'sessionsskapandet nollställde inte målen');
+  assert.equal(Number(efterSession.rows[0].progress), 0);
   await sessioner.nollstallMal({ sessionId: ett.session.id, workspaceId: WS_A });
   const r = (await pool.query(
     'SELECT baseline,progress,target,epoch,revision FROM goal_runtime WHERE overlay_id=$1', [overlay])).rows[0];
@@ -355,7 +365,7 @@ prov('F3 · goal_runtime behåller baseline och target, nollar progress och steg
   assert.equal(Number(r.baseline), 250, 'baseline nollställdes — startvärdet gick förlorat');
   assert.equal(Number(r.target), 5000, 'målet skrevs över');
   assert.equal(Number(r.progress), 0);
-  assert.equal(Number(r.epoch), 4, 'epoch stegades inte — klienter kan inte se att en ny omgång börjat');
+  assert.equal(Number(r.epoch), 5, 'epoch stegades inte — klienter kan inte se att en ny omgång börjat');
   assert.ok(Number(r.revision) > 77, 'revision stegades inte — SSE-ordningen bryts');
 });
 
@@ -1281,11 +1291,16 @@ prov('S2 · ett fel EFTER kvittot och en verklig skrivning rullar tillbaka båda
   await pool.query('INSERT INTO goal_runtime(overlay_id,widget_id,metric,baseline,progress,target) '
     + "VALUES($1,'w1','likes',250,900,5000)", [overlay.id]);
   const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  // Sessionsskapandet har redan nollat progress. Sätt tillbaka ett värde så provet har något att
+  // se försvinna — och komma tillbaka.
+  await pool.query('UPDATE goal_runtime SET progress=900 WHERE overlay_id=$1', [overlay.id]);
 
   // Kvitto tas, en RIKTIG nollställning skrivs, och sedan kastas felet. Utan gemensam transaktion
   // hade progress stått på 0 medan kvittot sa "gjort" — och nästa försök hade hoppat över den.
+  // EGET scope, av samma skäl som F1: sessionsskapandet har redan tagit goal_runtime-kvittot,
+  // och då hade nollstall() returnerat false utan att ens köra utfor.
   await assert.rejects(() => sessioner.nollstall({
-    sessionId: ett.session.id, scope: 'goal_runtime',
+    sessionId: ett.session.id, scope: 'provscope-s2',
     utfor: async c => {
       await c.query('UPDATE goal_runtime SET progress=0 WHERE overlay_id=$1', [overlay.id]);
       throw new Error('avsiktligt fel efter en verklig resetskrivning');
@@ -1294,7 +1309,7 @@ prov('S2 · ett fel EFTER kvittot och en verklig skrivning rullar tillbaka båda
   const g = await pool.query('SELECT progress FROM goal_runtime WHERE overlay_id=$1', [overlay.id]);
   assert.equal(Number(g.rows[0].progress), 900, 'resetskrivningen överlevde felet');
   assert.deepEqual(await kvitton(pool, ett.session.id), ['gift_campaign', 'goal_runtime'],
-    'kvittot från det misslyckade försöket lades till eller togs bort fel');
+    'det misslyckade försökets kvitto överlevde, eller sessionens egna försvann');
 });
 
 prov('S3 · en okänd framtida konfigurationsnyckel överlever nollställningen', async () => {
