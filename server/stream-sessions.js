@@ -535,10 +535,7 @@ function skapaStreamSessions({ pool }) {
       // i databasen utan att nagon mottagare far veta att den tog slut - de skulle bara se en ny
       // sandning borja. Ordningen bevaras hela vagen ut: utkorgen publicerar per workspace i
       // id-ordning, och end far lagre id eftersom den skrivs forst.
-      if (stangd.rowCount) {
-        await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id,
-          endedAt: stangd.rows[0].ended_at });
-      }
+      /*MUT5 end-raden vid ersattning bortmuterad*/
     }
 
     // d) Skapa och peka. Faller INSERT (t.ex. på det partiella unika indexet) rullar hela
@@ -713,7 +710,7 @@ function skapaStreamSessions({ pool }) {
     // MASKINVAGEN. Bryggan kanner konto, rum, korning och sekvens - inte serverns sessionId.
     // Servern loser sjalv fram sessionerna ur respektive pekare, och `reason` TVINGAS till
     // 'bridge': en extern brygga far inte kunna skriva 'ersatt' eller 'manuell' i historiken.
-    async avslutaLiveFranBrygga({ tiktokUsername, roomId, bridgeRunId, seq, reason } = {}) { /*MUT4*/
+    async avslutaLiveFranBrygga({ tiktokUsername, roomId, bridgeRunId, seq } = {}) {
       const nyckel = kontonyckel(tiktokUsername);
       if (!nyckel) throw fel(400, 'kontonamn saknas');
       const rum = String(roomId == null ? '' : roomId).trim();
@@ -740,7 +737,7 @@ function skapaStreamSessions({ pool }) {
         }
         const resultat = [];
         for (const w of ws) {
-          resultat.push(await avslutaForWorkspace(c, { workspaceId: w, rum, reason: reason || 'bridge' })); /*MUT4*/
+          resultat.push(await avslutaForWorkspace(c, { workspaceId: w, rum, reason: 'bridge' }));
         }
         await c.query('COMMIT');
         return { stale: false, workspaces: resultat };
