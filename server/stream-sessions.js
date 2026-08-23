@@ -83,11 +83,7 @@ function skapaStreamSessions({ pool }) {
             return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(generation),
               redanRegistrerad: true };
           }
-          /*MUT3*/ await c.query(
-            'UPDATE bridge_runs SET current=(bridge_run_id=$2) WHERE account_key=$1',
-            [nyckel, kornId]);
-          return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(generation),
-            redanRegistrerad: true };
+          throw fel(409, 'bryggkörningen är avlöst och kan inte återregistreras');
         }
 
         // MAX läses UNDER låset — det är hela poängen. Generationen härleds ALDRIG ur
