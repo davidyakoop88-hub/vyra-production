@@ -192,8 +192,8 @@ function skapaStreamSessions({ pool }) {
   async function taKvitto(c, sessionId, scope) {
     const r = await c.query(
       'INSERT INTO stream_session_reset(session_id, scope) VALUES($1,$2) '
-      + 'ON CONFLICT (session_id, scope) DO UPDATE SET done_at=now() RETURNING session_id', [sessionId, scope]);
-    return r.rowCount === 1; /*MUTA idempotensen bort*/
+      + 'ON CONFLICT DO NOTHING RETURNING session_id', [sessionId, scope]);
+    return r.rowCount === 1;
   }
 
   // GIFT CAMPAIGN. Räknaren bor i overlays.state, på widgetobjektet: gift-event-images.js:236 gör
@@ -217,7 +217,7 @@ function skapaStreamSessions({ pool }) {
       for (const w of state.widgets) {
         if (!w || w.type !== 'templateGiftCampaign') continue;
         for (const nyckel of Object.keys(w)) {
-          if (!/^giftCurrent\d+$/.test(nyckel)) continue;
+          if (!/^gift/.test(nyckel)) continue; /*MUTB konfig nollstalls*/
           if (Number(w[nyckel]) === 0) continue;      // redan noll: ingen skrivning, ingen version
           w[nyckel] = 0;
           rort = true;
