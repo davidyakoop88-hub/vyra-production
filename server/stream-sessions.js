@@ -61,7 +61,7 @@ function skapaStreamSessions({ pool }) {
         await c.query(
           'INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING', [nyckel]);
         const last = await c.query(
-          'SELECT account_key FROM bridge_accounts WHERE account_key=$1 /*MUT1*/', [nyckel]);
+          'SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE', [nyckel]);
         if (!last.rowCount) { await c.query('ROLLBACK'); continue; }
 
         // Härifrån är vi ensamma om kontot. Beslutet fattas EXPLICIT under låset — inte av en
@@ -124,7 +124,7 @@ function skapaStreamSessions({ pool }) {
     if (!q.rowCount) return 'okand-korning';
     // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
     // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
-    if (!q.rows[0].current) return 'avlost-korning';
+    /*MUT2*/ if (false) return null;
     if (seq == null) return null;
     const max = Number(q.rows[0].max_seq), n = Number(seq);
     if (!Number.isFinite(n)) return 'ogiltigt-seq';
