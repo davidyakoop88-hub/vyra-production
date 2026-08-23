@@ -1979,11 +1979,19 @@ bussprov('W6 · routingen kommer från databaskolumnen, inte från payloaden', a
 
   const buss = nyBuss();
   const mottaget = { [WS_A]: [], [WS_B]: [] };
-  await buss.subscribe(WS_A, m => mottaget[WS_A].push(m));
-  await buss.subscribe(WS_B, m => mottaget[WS_B].push(m));
-
-  await sessioner.publiceraTillBuss(buss, uppdaterad);
-  await new Promise(r => setTimeout(r, 400));
+  // subscribe() returnerar en avregistrering. Utan den lever prenumerantanslutningen kvar och
+  // haller nodeprocessen igang — provfilen blir aldrig klar och CI-steget hanger tills jobbet
+  // timear ut. Uppmatt 2026-08-23: korningen last i ~50 minuter av just detta.
+  const stang = [];
+  stang.push(await buss.subscribe(WS_A, m => mottaget[WS_A].push(m)));
+  stang.push(await buss.subscribe(WS_B, m => mottaget[WS_B].push(m)));
+  try {
+    await sessioner.publiceraTillBuss(buss, uppdaterad);
+    await new Promise(r => setTimeout(r, 400));
+  } finally {
+    for (const av of stang) { try { await av(); } catch (e) {} }
+    await buss.close().catch(() => {});
+  }
 
   assert.equal(mottaget[WS_A].length, 1, 'beskedet nådde inte kolumnens workspace');
   assert.equal(mottaget[WS_B].length, 0, 'beskedet läckte till workspacet i payloaden');
@@ -1999,8 +2007,11 @@ bussprov('W7 · två publiceringar ger olika SSE-id men SAMMA eventId', async ()
   const rad = (await utkorg(pool))[0];
   const buss = nyBuss();
 
-  const ett = await sessioner.publiceraTillBuss(buss, rad);
-  const tva = await sessioner.publiceraTillBuss(buss, rad);
+  let ett, tva;
+  try {
+    ett = await sessioner.publiceraTillBuss(buss, rad);
+    tva = await sessioner.publiceraTillBuss(buss, rad);
+  } finally { await buss.close().catch(() => {}); }
   // AT-LEAST-ONCE, uttryckligen tillåtet: en ompublicering efter krasch mellan leverans och
   // kvittens ger en andra bussram. Transportens id skiljer sig; den logiska identiteten gör det
   // inte. Mottagaren måste dedupa på eventId eller vara idempotent per sessionId.
@@ -2016,11 +2027,14 @@ bussprov('W8 · reconnect med Last-Event-ID återspelar rätt ram', async () => 
   const rad = (await utkorg(pool))[0];
   const buss = nyBuss();
 
-  const forsta = await sessioner.publiceraTillBuss(buss, rad);
-  const andra = await sessioner.publiceraTillBuss(buss, rad);
+  let forsta, andra, efter;
+  try {
+    forsta = await sessioner.publiceraTillBuss(buss, rad);
+    andra = await sessioner.publiceraTillBuss(buss, rad);
   // Klienten återansluter med sitt sista streamId. Replayen ska ge det som kom EFTER — inte om
   // det klienten redan sett, och inte tomt.
-  const efter = await buss.replay(WS_A, forsta.streamId);
+    efter = await buss.replay(WS_A, forsta.streamId);
+  } finally { await buss.close().catch(() => {}); }
   const ider = efter.map(x => x.streamId);
   assert.ok(ider.includes(andra.streamId), 'den andra ramen spelades inte upp');
   assert.equal(ider.includes(forsta.streamId), false, 'klienten fick om ramen den redan sett');
