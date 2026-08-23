@@ -466,15 +466,15 @@ function skapaStreamSessions({ pool }) {
     // RETURNING ended_at ger DATABASENS exakta sluttid, som gar rakt in i payloaden.
     // `ended_at IS NULL` gor ett andra anrop till en ren no-op i stallet for en andra stangning.
     const stangd = await c.query(
-      'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 AND ended_at IS NULL '
-      + 'RETURNING ended_at', [aktiv.id, reason]);
+      'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 '
+      + 'RETURNING ended_at' /*MUT2*/, [aktiv.id, reason]);
     if (!stangd.rowCount) return { workspaceId, ended: false, skal: 'redan-stangd' };
     const endedAt = stangd.rows[0].ended_at;
 
     // `session_id=$2` gor ett forsenat slutbesked ofarligt: har pekaren redan flyttats till en
     // nyare session matchar satsen inte, och den pagaende sandningen ror(d)s inte.
     await c.query('UPDATE stream_session_pointer SET session_id=NULL, updated_at=now() '
-      + 'WHERE workspace_id=$1 AND $2::uuid IS NOT NULL' /*MUT1*/, [workspaceId, aktiv.id]);
+      + 'WHERE workspace_id=$1 AND session_id=$2', [workspaceId, aktiv.id]);
     await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id, endedAt });
     return { workspaceId, ended: true, session: { id: aktiv.id, roomId: aktiv.room_id }, endedAt };
   }
