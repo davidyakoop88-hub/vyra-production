@@ -1,17 +1,13 @@
 'use strict';
-// SÄNDNINGSIDENTITET — modulstomme.
+// SÄNDNINGSIDENTITET — bryggkörningens generation.
 //
-// Ingen funktion är implementerad än. Stommen finns för ETT syfte: flytta de 39 provens fel från
-// en enda gemensam existenskontroll ("modulen finns inte") till var sitt eget beteendefel, så att
-// fördelningen går att läsa innan funktionerna byggs.
+// Den här filen äger EN sak i det här skedet: vilken bryggkörning som får tala för ett konto.
+// Sessionsskapande, sessionsbyte, nollställning, utkorg och HTTP-rutter är ännu inte skrivna och
+// står kvar som stommar — avsiktligt, så att varje beteende kan bevisas för sig.
 //
-// Varje metod returnerar det MINST hjälpsamma korrekta värdet — tomma listor, false — aldrig ett
-// gissat resultat. En stomme som råkar få ett prov grönt är värre än ingen stomme: den döljer
-// exakt det provet var byggt för att fånga.
-//
-// AKTIVERINGSFLAGGA (fail-closed): skrivvägen är avstängd om inte VYRA_SANDNINGSIDENTITET är
-// exakt strängen '1'. Allt annat — 'true', 'ja', 'on', tomt, osatt — är AV. Rutterna svarar 503
-// utan att röra databasen. Flaggan gäller HTTP-vägen; proven anropar modulen direkt.
+// AKTIVERINGSFLAGGA (fail-closed): skrivvägen över HTTP är avstängd om inte
+// VYRA_SANDNINGSIDENTITET är exakt strängen '1'. Allt annat — 'true', 'ja', 'on', tomt, osatt —
+// är AV. Flaggan gäller rutterna, som inte finns än; proven anropar modulen direkt.
 const AKTIVERAD = () => process.env.VYRA_SANDNINGSIDENTITET === '1';
 
 // Husregeln finns redan i capacity-gate.js:24 och återanvänds ordagrant. En andra
@@ -20,9 +16,13 @@ function kontonyckel(namn) {
   return String(namn == null ? '' : namn).trim().toLowerCase().replace(/^@+/, '');
 }
 
+// Samma uttryck som ovan, men i SQL — så att uppslagningen matchar redan lagrade namn oavsett
+// hur de skrevs in. `@Jokero060 ` och `jokero060` är samma konto.
+const KONTO_SQL = "regexp_replace(lower(btrim(tiktok_username)), '^@+', '')";
+
 function fel(status, meddelande) {
-  // Meddelandet går till klienten OCH loggen. Ingen token, ingen header, ingen hemlighet får
-  // någonsin hamna här — inte heller dess längd, som är en ledtråd i sig.
+  // Går till klienten OCH loggen. Ingen token, ingen header, ingen hemlighet — inte heller dess
+  // längd, som är en ledtråd i sig.
   return Object.assign(new Error(meddelande), { status });
 }
 
@@ -31,29 +31,125 @@ function skapaStreamSessions({ pool }) {
 
   const inteAn = namn => { throw fel(501, namn + ' är inte implementerad än'); };
 
+  // ---- generationstilldelning -------------------------------------------------------------------
+  // UNIQUE(account_key, generation) hindrar dubbletter men skapar INGEN ordning: utan lås läser två
+  // samtidiga registreringar samma MAX, båda skriver N+1, och den ena kraschar på unikhetsfelet.
+  // Det är en LEGITIM registrering som förloras — bryggan har inte gjort något fel.
+  //
+  // Låset ligger på bridge_accounts, en rad per konto som alltid finns. FOR NO KEY UPDATE, inte
+  // FOR UPDATE: krockar med sig självt så registreringar serialiseras, men inte med FOR KEY SHARE,
+  // så INSERT i bridge_runs (som refererar raden) inte blockeras i onödan.
+  //
+  // Inte pg_advisory_xact_lock: capacity-gate.js:29 har redan ett advisory-lås på en FAST konstant
+  // med en kommentar om att det bara håller så länge inget annat i databasen använder samma nyckel.
+  // En hashad nyckel bredvid den är precis den samordningsskulden. En riktig rad syns dessutom i
+  // pg_locks med namn.
+  async function registreraKorning({ konto, bridgeRunId } = {}) {
+    const nyckel = kontonyckel(konto);
+    const kornId = String(bridgeRunId == null ? '' : bridgeRunId).trim();
+    if (!nyckel) throw fel(400, 'kontonamn saknas');
+    if (!kornId) throw fel(400, 'bridgeRunId saknas');
+
+    // Två försök. INSERT ... ON CONFLICT DO NOTHING följt av SELECT ... FOR NO KEY UPDATE har ett
+    // smalt fönster: förlorar man kapplöpningen om INSERT blockerar man på unika indexet, får noll
+    // rader tillbaka, och om vinnaren sedan RULLAR TILLBAKA finns raden inte att låsa. Då gör vi
+    // om — en gång. Fler försök vore att dölja ett annat fel.
+    for (let forsok = 0; forsok < 2; forsok++) {
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        await c.query(
+          'INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING', [nyckel]);
+        const last = await c.query(
+          'SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE', [nyckel]);
+        if (!last.rowCount) { await c.query('ROLLBACK'); continue; }
+
+        // Härifrån är vi ensamma om kontot. MAX läses UNDER låset — det är hela poängen.
+        // Generationen härleds ALDRIG ur bridge_run_id (sträng utan ordning), started_at (klockor
+        // går isär och bakåt) eller id/bigserial (delas ut före commit, så två samtidiga kan
+        // committa i omvänd ordning mot sina id).
+        const nasta = await c.query(
+          'SELECT COALESCE(MAX(generation),0)+1 AS generation FROM bridge_runs WHERE account_key=$1',
+          [nyckel]);
+        const generation = Number(nasta.rows[0].generation);
+
+        await c.query('UPDATE bridge_runs SET current=false WHERE account_key=$1 AND current',
+          [nyckel]);
+        // Att registrera om SAMMA körnings-id är inte en ny generation — det är samma brygga som
+        // säger till igen. Den behåller sitt nummer och blir aktuell på nytt.
+        const rad = await c.query(
+          'INSERT INTO bridge_runs(account_key,bridge_run_id,generation,current) '
+          + 'VALUES($1,$2,$3,true) '
+          + 'ON CONFLICT (account_key,bridge_run_id) DO UPDATE SET current=true '
+          + 'RETURNING generation', [nyckel, kornId, generation]);
+        await c.query('COMMIT');
+        return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(rad.rows[0].generation) };
+      } catch (error) {
+        try { await c.query('ROLLBACK'); } catch (_) {}
+        throw error;
+      } finally {
+        c.release();
+      }
+    }
+    throw fel(409, 'kontoraden kunde inte låsas');
+  }
+
+  // Vilken körning får tala? Aktuell generation, och ett seq som inte är äldre än det högsta sedda.
+  // Returnerar null när beskedet ska accepteras, annars ett skäl.
+  async function foraldratBesked({ nyckel, bridgeRunId, seq }) {
+    if (bridgeRunId == null) return null;          // äldre bryggor utan körnings-id: eget beslut
+    const q = await pool.query(
+      'SELECT current, max_seq FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2',
+      [nyckel, String(bridgeRunId).trim()]);
+    if (!q.rowCount) return 'okand-korning';
+    // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
+    // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
+    if (!q.rows[0].current) return 'avlost-korning';
+    if (seq == null) return null;
+    const max = Number(q.rows[0].max_seq), n = Number(seq);
+    if (!Number.isFinite(n)) return 'ogiltigt-seq';
+    if (n < max) return 'aldre-seq';
+    if (n > max) {
+      await pool.query(
+        'UPDATE bridge_runs SET max_seq=$3 WHERE account_key=$1 AND bridge_run_id=$2 AND max_seq<$3',
+        [nyckel, String(bridgeRunId).trim(), n]);
+    }
+    return null;                                    // n === max är samma besked igen: idempotent
+  }
+
+  // De workspaces som prenumererar på kontot. Fan-out sker HÄR, i servern, på en enda
+  // TikTok-anslutning — capacity-gate.js räknar anslutningar, och en per workspace skalar inte.
+  async function prenumeranter(nyckel) {
+    const q = await pool.query(
+      'SELECT workspace_id FROM tiktok_connections WHERE active AND ' + KONTO_SQL + '=$1 '
+      + 'ORDER BY workspace_id', [nyckel]);
+    return q.rows.map(r => r.workspace_id);
+  }
+
   return {
     kontonyckel,
     aktiverad: AKTIVERAD,
+    registreraKorning,
 
-    // ---- bryggkörningar (fas 3) ----------------------------------------------------------------
-    async registreraKorning() { return inteAn('registreraKorning'); },
+    // Sessionsskapandet är ÄNNU INTE skrivet. Det här steget avgör bara vem som får tala och
+    // vilka workspaces beskedet gäller — inga sessionsrader skapas, ingen pekare flyttas.
+    async startaLive({ konto, bridgeRunId, seq } = {}) {
+      const nyckel = kontonyckel(konto);
+      if (!nyckel) throw fel(400, 'kontonamn saknas');
+      const skal = await foraldratBesked({ nyckel, bridgeRunId, seq });
+      if (skal) return { stale: true, skal, workspaces: [] };
+      return {
+        stale: false,
+        workspaces: (await prenumeranter(nyckel)).map(workspaceId => ({ workspaceId })),
+      };
+    },
 
-    // ---- sessionsbeslut (fas 4) ----------------------------------------------------------------
-    async startaLive() { return { stale: false, workspaces: [] }; },
     async avslutaLive() { return { ended: false }; },
-
-    // Maskinvägen. Fail-closed två gånger om: först flaggan, sedan token.
     async startaLiveViaHttp() { return inteAn('startaLiveViaHttp'); },
-
-    // ---- administrativ återöppning (fas 4) -----------------------------------------------------
     async tillatRumIgen() { return inteAn('tillatRumIgen'); },
-
-    // ---- nollställning (fas 6) -----------------------------------------------------------------
     async nollstall() { return false; },
     async nollstallMal() { return inteAn('nollstallMal'); },
     async nollstallKampanjer() { return inteAn('nollstallKampanjer'); },
-
-    // ---- utkorg (fas 7) ------------------------------------------------------------------------
     async publiceraUtkorg() { return 0; },
     async tillampaEnGang() { return false; },
     async giftigaHandelser() { return []; },

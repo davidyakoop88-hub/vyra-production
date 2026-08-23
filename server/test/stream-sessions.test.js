@@ -752,6 +752,29 @@ prov('N5 · historiska sessioner får dela room_id — det partiella indexet är
     'två SAMTIDIGT ÖPPNA sessioner på samma rum tilläts');
 });
 
+prov('N6 · bridge_runs kräver en föräldrarad i bridge_accounts', async () => {
+  const { pool } = await rigg();
+  // Utan FK:n vore bridge_accounts bara en tabell som råkar finnas — och låset på en rad som inte
+  // måste existera är inget lås alls. FK:n gör föräldraraden till databasens permanenta
+  // serialiseringspunkt: en körning kan inte registreras förbi den.
+  await assert.rejects(
+    () => pool.query(
+      'INSERT INTO bridge_runs(account_key,bridge_run_id,generation,current) '
+      + "VALUES('ett-konto-utan-foralderrad','k1',1,true)"),
+    e => e.code === '23503',
+    'en bryggkörning kunde skapas utan föräldrarad — serialiseringspunkten går att kringgå');
+  // Kontrollmätning: med föräldraraden på plats MÅSTE insättningen gå igenom, annars bevisar
+  // provet bara att tabellen avvisar allt.
+  await pool.query("INSERT INTO bridge_accounts(account_key) VALUES('ett-konto-utan-foralderrad') "
+    + 'ON CONFLICT DO NOTHING');
+  await pool.query('INSERT INTO bridge_runs(account_key,bridge_run_id,generation,current) '
+    + "VALUES('ett-konto-utan-foralderrad','k1',1,true)");
+  const n = await pool.query('SELECT count(*)::int AS n FROM bridge_runs WHERE account_key=$1',
+    ['ett-konto-utan-foralderrad']);
+  assert.equal(n.rows[0].n, 1);
+  await pool.query('DELETE FROM bridge_accounts WHERE account_key=$1', ['ett-konto-utan-foralderrad']);
+});
+
 // ================================================================================================
 // O · GENERATIONEN UNDER SAMTIDIGHET
 // UNIQUE(account_key, generation) hindrar dubbletter men skapar inte ordning: utan serialisering
