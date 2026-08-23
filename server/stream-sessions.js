@@ -216,7 +216,9 @@ function skapaStreamSessions({ pool }) {
         'SELECT 1 FROM stream_room_reopen '
         + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL FOR UPDATE LIMIT 1',
         [workspaceId, rum]);
-      /*MUT2 historiksparren bort*/ if (false) { return null; }
+      if (!b.rowCount) {
+        return { workspaceId, created: false, session: null, stale: true, skal: 'stangt-rum' };
+      }
       biljett = true;
     }
 
@@ -282,7 +284,8 @@ function skapaStreamSessions({ pool }) {
 
       // FÖRST NU seq/generation — inne i låset. Tas den före låsen kan två besked passera den och
       // sedan köa i godtycklig ordning, och då avgör låsordningen i stället för sekvensen.
-      const dom = await sekvensdom(c, { nyckel, bridgeRunId, seq });
+      /*MUT3 seq-kontrollen ut ur transaktionen*/
+      const dom = { skal: await foraldratBesked({ nyckel, bridgeRunId, seq }) || undefined };
       if (dom.skal) {
         await c.query('ROLLBACK');
         return { stale: true, skal: dom.skal, workspaces: [] };
