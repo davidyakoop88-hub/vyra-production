@@ -66,6 +66,11 @@ async function rigg() {
     [KONTO]);
   await pool.query('DELETE FROM bridge_runs WHERE account_key=$1', [KONTO]);
   for (const ws of [WS_A, WS_B]) {
+    // ORDNINGSOBEROENDE. tiktok_connections rensades inte tidigare, så ett prov som kopplade WS_B
+    // lämnade kopplingen kvar åt nästa. Uppmätt i CI 2026-08-23: O2 föll på "2 !== 1" — inte för
+    // att generationskontrollen var fel, utan för att K1 och B1-B3 hade kopplat WS_B till samma
+    // konto tidigare i filen. Varje prov ska deklarera sina EGNA anslutningar.
+    await pool.query('DELETE FROM tiktok_connections WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_session_reset WHERE session_id IN '
