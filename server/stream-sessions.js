@@ -118,23 +118,45 @@ function skapaStreamSessions({ pool }) {
   // Returnerar null när beskedet ska accepteras, annars ett skäl.
   async function foraldratBesked({ nyckel, bridgeRunId, seq }) {
     if (bridgeRunId == null) return null;          // äldre bryggor utan körnings-id: eget beslut
+    const kornId = String(bridgeRunId).trim();
+
+    if (seq == null) {
+      const q = await pool.query(
+        'SELECT current FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2',
+        [nyckel, kornId]);
+      if (!q.rowCount) return 'okand-korning';
+      // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
+      // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
+      return q.rows[0].current ? null : 'avlost-korning';
+    }
+
+    const n = Number(seq);
+    if (!Number.isFinite(n)) return 'ogiltigt-seq';
+
+    // ETT enda villkorat UPDATE avgör och skriver i samma sats. En SELECT följd av ett
+    // ovillkorligt UPDATE räcker inte: två samtidiga besked läser båda max_seq=1, båda tycker sig
+    // vara nyare, och ett försenat LÄGRE seq kan accepteras efter ett högre. Villkoret
+    // `max_seq < $3` gör dessutom att databasen aldrig KAN sänka värdet — inte ens om anroparen
+    // har fel.
+    const framflyttad = await pool.query(
+      'UPDATE bridge_runs SET max_seq=$3 '
+      + 'WHERE account_key=$1 AND bridge_run_id=$2 AND current AND max_seq<$3 '
+      + 'RETURNING max_seq', [nyckel, kornId, n]);
+    if (framflyttad.rowCount) return null;         // flyttade fram: beskedet är nytt och accepteras
+
+    // Ingen rad flyttades. Fyra skäl är möjliga och de får INTE slås ihop — ett okänt körnings-id
+    // är något helt annat än ett upprepat besked.
     const q = await pool.query(
       'SELECT current, max_seq FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2',
-      [nyckel, String(bridgeRunId).trim()]);
+      [nyckel, kornId]);
     if (!q.rowCount) return 'okand-korning';
-    // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
-    // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
     if (!q.rows[0].current) return 'avlost-korning';
-    if (seq == null) return null;
-    const max = Number(q.rows[0].max_seq), n = Number(seq);
-    if (!Number.isFinite(n)) return 'ogiltigt-seq';
-    if (n < max) return 'aldre-seq';
-    if (n > max) {
-      await pool.query(
-        'UPDATE bridge_runs SET max_seq=$3 WHERE account_key=$1 AND bridge_run_id=$2 AND max_seq<$3',
-        [nyckel, String(bridgeRunId).trim(), n]);
-    }
-    return null;                                    // n === max är samma besked igen: idempotent
+    const max = Number(q.rows[0].max_seq);
+    if (n === max) return null;                    // samma besked igen: idempotent
+    if (n < max) return 'aldre-seq';               // försenat, och ett högre har redan landat
+    // max < n men UPDATE tog ändå inte. Kan bara inträffa om raden ändrats mellan satserna på ett
+    // sätt modellen inte tillåter. Fail-closed: hellre ett tappat besked än ett felaktigt byte.
+    return 'kapplopning';
   }
 
   // De workspaces som prenumererar på kontot. Fan-out sker HÄR, i servern, på en enda

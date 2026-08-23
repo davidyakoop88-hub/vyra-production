@@ -912,3 +912,88 @@ prov('O4 · den AKTUELLA körningen får registrera om sig idempotent', async ()
   const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_2, seq: 1 });
   assert.notEqual(ut.stale, true, 'omregistreringen gjorde den aktuella körningen stale');
 });
+
+// ================================================================================================
+// P · SEKVENSVAKTEN UNDER SAMTIDIGHET
+// En SELECT följd av ett ovillkorligt UPDATE räcker inte: två samtidiga besked läser båda samma
+// max_seq, båda tycker sig vara nyare, och ett försenat LÄGRE seq kan accepteras efter ett högre.
+// Beslutet och skrivningen måste ske i EN sats.
+// ================================================================================================
+
+const maxSeq = (pool, kornId) => pool.query(
+  'SELECT max_seq FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2', [KONTO, kornId])
+  .then(r => Number(r.rows[0].max_seq));
+
+prov('P1 · samtidiga seq=2 och seq=3 från max_seq=1 landar på 3 och backar aldrig', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+  assert.equal(await maxSeq(pool, KOR_1), 1, 'utgångsläget är inte max_seq=1');
+
+  // Grinden: en tredje anslutning håller radlåset, så båda UPDATE:erna hinner fram och köar.
+  const grind = await pool.connect();
+  await grind.query('BEGIN');
+  await grind.query('SELECT 1 FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2 FOR UPDATE',
+    [KONTO, KOR_1]);
+
+  const lopp = Promise.all([
+    sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 }),
+    sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 }),
+  ]);
+  await new Promise(r => setTimeout(r, 200));
+  await grind.query('COMMIT');
+  grind.release();
+  const [tva, tre] = await lopp;
+
+  // 1. Slutligt värde MÅSTE vara 3, oavsett vem som hann först.
+  assert.equal(await maxSeq(pool, KOR_1), 3, 'max_seq landade inte på 3');
+  // 2. seq=3 är alltid nyare än utgångsläget och får aldrig avvisas.
+  assert.notEqual(tre.stale, true, 'det högsta seq:t avvisades');
+  // 3. Dokumenterad semantik för seq=2: antingen hann den före 3 och accepterades, eller så kom
+  //    den efter och är då aldre-seq. Vad den ALDRIG får vara är accepterad EFTER att 3 landat.
+  if (tva.stale) assert.equal(tva.skal, 'aldre-seq', 'fel skäl: ' + tva.skal);
+});
+
+prov('P2 · ett försenat LÄGRE seq avvisas och sänker inte max_seq', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const tre = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+  assert.notEqual(tre.stale, true, 'seq=3 accepterades inte ens som första besked');
+  assert.equal(await maxSeq(pool, KOR_1), 3);
+
+  const sent = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 });
+  assert.equal(sent.stale, true, 'ett försenat lägre seq accepterades efter ett högre');
+  assert.equal(sent.skal, 'aldre-seq', 'fel skäl: ' + sent.skal);
+  assert.equal(await maxSeq(pool, KOR_1), 3, 'max_seq BACKADE till ' + (await maxSeq(pool, KOR_1)));
+});
+
+prov('P3 · samma seq igen är idempotent och rör inte max_seq', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
+  // Ett upprepat besked är inte föråldrat — bryggan säger samma sak igen, och svaret ska vara
+  // detsamma som första gången. Att avvisa det hade gjort varje omsändning till ett tappat besked.
+  assert.notEqual(igen.stale, true, 'samma seq igen behandlades som föråldrat: ' + igen.skal);
+  assert.equal(igen.workspaces.length, 1, 'det idempotenta svaret tappade fan-outen');
+  assert.equal(await maxSeq(pool, KOR_1), 3, 'max_seq ändrades av ett upprepat besked');
+});
+
+prov('P4 · seq mot en AVLÖST körning avvisas utan att röra dess max_seq', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 5 });
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+
+  // Villkoret `AND current` i samma UPDATE gör att en avlöst körning varken kan tala eller
+  // flytta sin egen räknare. Utan det hade den kunnat skriva i tabellen efter sin död.
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 99 });
+  assert.equal(ut.stale, true, 'den avlösta körningen fick tala');
+  assert.equal(ut.skal, 'avlost-korning', 'fel skäl: ' + ut.skal);
+  assert.equal(await maxSeq(pool, KOR_1), 5, 'den avlösta körningen flyttade sin egen max_seq');
+});
