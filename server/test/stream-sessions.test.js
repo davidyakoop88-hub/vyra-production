@@ -1011,7 +1011,7 @@ prov('P3 · samma seq igen är idempotent och rör inte max_seq', async () => {
   // Ett upprepat besked är inte föråldrat — bryggan säger samma sak igen, och svaret ska vara
   // detsamma som första gången. Att avvisa det hade gjort varje omsändning till ett tappat besked.
   assert.notEqual(igen.stale, true, 'samma seq igen behandlades som föråldrat: ' + igen.skal);
-  assert.equal(igen.workspaces.length, 1, 'det idempotenta svaret tappade fan-outen');
+  assert.deepEqual(igen.workspaces, [], 'ett idempotent besked svarade om sessioner');
   assert.equal(await maxSeq(pool, KOR_1), 3, 'max_seq ändrades av ett upprepat besked');
 });
 
@@ -1102,7 +1102,10 @@ prov('R1 · samma seq med ETT ANNAT roomId är en fullständig no-op', async () 
   assert.equal(alla.rowCount, 1, 'en B-session skapades: ' + JSON.stringify(alla.rows));
   assert.equal(alla.rows[0].room_id, RUM_1);
   assert.equal(alla.rows[0].ended_at, null, 'A-sessionen stängdes av ett idempotent besked');
-  assert.equal(igen.workspaces[0].created, false, 'en session skapades för det nya rummet');
+  // REN NO-OP: inga workspaces i svaret. Tidigare last ett "nulage" har, men det lastes UTAN
+  // pekarlasen och kunde vara inaktuellt redan nar det returnerades - och ett svar som beskriver
+  // sessioner inbjuder anroparen att tro att beskedet gjorde nagot.
+  assert.deepEqual(igen.workspaces, [], 'ett idempotent besked svarade om sessioner');
   assert.equal(igen.idempotent, true, 'svaret markerades inte som idempotent');
 });
 
@@ -2041,4 +2044,101 @@ bussprov('W8 · reconnect med Last-Event-ID återspelar rätt ram', async () => 
   assert.equal(ider.includes(forsta.streamId), false, 'klienten fick om ramen den redan sett');
   const aterspelad = efter.find(x => x.streamId === andra.streamId);
   assert.equal(aterspelad.event.eventId, rad.payload.eventId, 'fel ram återspelades');
+});
+
+// ================================================================================================
+// X · ORDNING PER WORKSPACE I UTKORGEN
+//
+// Enbart ORDER BY id garanterar ingenting nar flera workers kor. Worker A kan claima den aldre
+// raden och bli langsam medan worker B claimar den nyare och publicerar den forst — och da ser
+// mottagaren en ny sandning borja innan den forra tog slut.
+//
+// Provfilen bygger raderna direkt i tabellen. Sessionsflodet skapar an sa lange bara live:start;
+// ordningsvillkoret ar en egenskap hos UTKORGEN och ska bevisas som en sadan, inte via en
+// avslutsvag som inte finns.
+// ================================================================================================
+
+const laggUtkorgsrad = (pool, ws, eventId, topic) => pool.query(
+  'INSERT INTO stream_event_outbox(workspace_id, event_id, topic, payload) '
+  + 'VALUES($1,$2,$3,$4) RETURNING id',
+  [ws, eventId, topic, JSON.stringify({ type: 'livesession', event: topic, eventId })])
+  .then(r => Number(r.rows[0].id));
+
+prov('X1 · bara den ALDRE raden kan claimas nar tva workers kor mot samma workspace', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('DELETE FROM stream_event_outbox');
+  const slutId = await laggUtkorgsrad(pool, WS_A, 'live:end:gammal', 'live:end');
+  const startId = await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
+  assert.ok(startId > slutId, 'provet byggde raderna i fel ordning');
+
+  const a = [], b = [];
+  const langsam = lista => async rad => { lista.push(rad.event_id); await new Promise(r => setTimeout(r, 120)); };
+  await Promise.all([
+    sessioner.publiceraUtkorg({ workerId: 'w-a', sand: langsam(a) }),
+    sessioner.publiceraUtkorg({ workerId: 'w-b', sand: langsam(b) }),
+  ]);
+  const alla = [...a, ...b];
+  assert.deepEqual(alla, ['live:end:gammal'],
+    'mer an den aldre raden publicerades: ' + JSON.stringify(alla));
+});
+
+prov('X2 · nar den aldre kvitterats kan den nyare claimas', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('DELETE FROM stream_event_outbox');
+  await laggUtkorgsrad(pool, WS_A, 'live:end:gammal', 'live:end');
+  await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
+
+  const skickat = [];
+  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  assert.deepEqual(skickat, ['live:end:gammal', 'live:start:ny'],
+    'ordningen holl inte over tva omgangar: ' + JSON.stringify(skickat));
+});
+
+prov('X3 · en UTGANGEN lease pa den aldre slapper anda inte fram den nyare', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('DELETE FROM stream_event_outbox');
+  const slutId = await laggUtkorgsrad(pool, WS_A, 'live:end:gammal', 'live:end');
+  await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
+  const T0 = new Date(Date.now() + 60000);
+  // En krashad worker: leasen har lopt ut men raden ar fortfarande OPUBLICERAD.
+  await pool.query("UPDATE stream_event_outbox SET lease_owner='krashad', lease_until=$1 WHERE id=$2",
+    [new Date(T0.getTime() - 30000), slutId]);
+
+  const skickat = [];
+  await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => T0,
+    sand: async r => skickat.push(r.event_id) });
+  // Den utgangna leasen ska ateras av den ALDRE raden, inte lata den nyare passera.
+  assert.deepEqual(skickat, ['live:end:gammal'],
+    'den nyare raden passerade en opublicerad aldre: ' + JSON.stringify(skickat));
+});
+
+prov('X4 · en POISON-PARKERAD aldre rad blockerar den nyare (fail-closed)', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('DELETE FROM stream_event_outbox');
+  const slutId = await laggUtkorgsrad(pool, WS_A, 'live:end:gammal', 'live:end');
+  await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
+  await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [slutId]);
+
+  const skickat = [];
+  const n = await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  // Alternativet vore att slappa forbi den parkerade och bryta ordningen tyst. Poisonlistan gor
+  // blockeringen synlig i stallet.
+  assert.equal(n, 0, 'nagot publicerades trots en parkerad aldre rad');
+  assert.deepEqual(skickat, [], 'den nyare passerade en poison-parkerad aldre');
+  assert.equal((await sessioner.giftigaHandelser()).length, 1, 'den parkerade raden syns inte');
+});
+
+prov('X5 · ett blockerat workspace hindrar inte ett annat', async () => {
+  const { sessioner, pool } = await rigg();
+  await pool.query('DELETE FROM stream_event_outbox');
+  const slutId = await laggUtkorgsrad(pool, WS_A, 'live:end:a-gammal', 'live:end');
+  await laggUtkorgsrad(pool, WS_A, 'live:start:a-ny', 'live:start');
+  await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [slutId]);
+  await laggUtkorgsrad(pool, WS_B, 'live:start:b', 'live:start');
+
+  const skickat = [];
+  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  assert.deepEqual(skickat, ['live:start:b'],
+    'fel rader publicerades: ' + JSON.stringify(skickat) + ' — WS_A ska vara blockerat, WS_B fritt');
 });

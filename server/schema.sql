@@ -462,6 +462,10 @@ CREATE INDEX IF NOT EXISTS stream_outbox_pending_idx
   ON stream_event_outbox(next_attempt_at) WHERE published_at IS NULL AND parked_at IS NULL;
 CREATE INDEX IF NOT EXISTS stream_outbox_parked_idx
   ON stream_event_outbox(parked_at) WHERE parked_at IS NOT NULL;
+-- Stodjer ordningskontrollen i claim-fragan: 'finns det en ALDRE opublicerad rad for samma
+-- workspace?'. Utan indexet blir den en seq scan per kandidat.
+CREATE INDEX IF NOT EXISTS stream_outbox_ordning_idx
+  ON stream_event_outbox(workspace_id, id) WHERE published_at IS NULL;
 
 -- Engångsbiljett för administrativ återöppning av ett stängt rum. Fail-closed är regeln: ett
 -- stängt room_id öppnas ALDRIG automatiskt och det finns ingen karenstid. Skulle TikTok en dag

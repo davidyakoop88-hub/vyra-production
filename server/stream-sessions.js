@@ -296,15 +296,33 @@ function skapaStreamSessions({ pool }) {
     let claimade = [];
     try {
       await c.query('BEGIN');
+      // ORDNING PER WORKSPACE. Enbart ORDER BY id garanterar ingenting nar flera workers kor:
+      // worker A kan claima live:end(old) och bli langsam medan worker B claimar live:start(new)
+      // och publicerar den forst. Da ser mottagaren en ny sandning borja innan den forra tog slut.
+      // NOT EXISTS-villkoret nedan slapper darfor bara fram en rad om ingen ALDRE opublicerad rad
+      // finns for samma workspace.
+      //
+      // FAIL-CLOSED aven for parkerade rader: villkoret ser bara pa published_at, och en
+      // poison-parkerad rad har published_at IS NULL. En parkerad live:end(old) blockerar alltsa
+      // live:start(new) for samma workspace tills nagon tar hand om den. Alternativet vore att
+      // slappa forbi och bryta ordningen tyst; poisonlistan och auditraden gor blockeringen
+      // synlig for drift i stallet.
+      //
+      // Andra workspaces paverkas inte - villkoret ar bundet till k.workspace_id.
       const q = await c.query(
         `UPDATE stream_event_outbox SET lease_owner=$1,
                 lease_until = $2::timestamptz + ($3 || ' seconds')::interval
           WHERE id IN (
-            SELECT id FROM stream_event_outbox
-             WHERE published_at IS NULL AND parked_at IS NULL
-               AND next_attempt_at <= $2::timestamptz
-               AND (lease_until IS NULL OR lease_until < $2::timestamptz)
-             ORDER BY id LIMIT $4 FOR UPDATE SKIP LOCKED)
+            SELECT k.id FROM stream_event_outbox k
+             WHERE k.published_at IS NULL AND k.parked_at IS NULL
+               AND k.next_attempt_at <= $2::timestamptz
+               AND (k.lease_until IS NULL OR k.lease_until < $2::timestamptz)
+               AND NOT EXISTS (
+                 SELECT 1 FROM stream_event_outbox aldre
+                  WHERE aldre.workspace_id = k.workspace_id
+                    AND aldre.id < k.id
+                    AND aldre.published_at IS NULL)
+             ORDER BY k.id LIMIT $4 FOR UPDATE SKIP LOCKED)
         RETURNING id, workspace_id, event_id, topic, payload, attempts`,
         [jag, tid(), LEASE_SEKUNDER, antal]);
       claimade = q.rows;
@@ -562,21 +580,15 @@ function skapaStreamSessions({ pool }) {
         return { stale: true, skal: dom.skal, workspaces: [] };
       }
       if (dom.idempotent) {
-        // SAMMA SEQ IGEN: fullständig no-op för sessionsdelen. Läser bara upp nuläget så svaret
-        // blir detsamma som första gången. Går man vidare till rumsbeslutet kan samma seq med ett
-        // ANNAT roomId flytta pekaren, trots att sekvensen inte är ny.
-        const nulage = [];
-        for (const w of ws) {
-          const p = await c.query(
-            'SELECT s.id, s.room_id FROM stream_session_pointer p '
-            + 'LEFT JOIN stream_sessions s ON s.id=p.session_id AND s.ended_at IS NULL '
-            + 'WHERE p.workspace_id=$1', [w]);
-          const rad = p.rows[0];
-          nulage.push({ workspaceId: w, created: false,
-            session: rad && rad.id ? { id: rad.id, roomId: rad.room_id } : null });
-        }
+        // SAMMA SEQ IGEN: fullstandig no-op. Ingenting las, ingenting skrivs, ingenting returneras
+        // om sessionerna.
+        //
+        // Tidigare lastes ett "nulage" har for att svaret skulle likna det forsta. Det var fel av
+        // tva skal: laget lastes UTAN pekarlasen, sa bilden kunde vara inaktuell redan nar den
+        // returnerades, och ett svar som beskriver sessioner inbjuder anroparen att tro att
+        // beskedet gjorde nagot. Ett upprepat besked ar inte en fraga om nulaget.
         await c.query('ROLLBACK');
-        return { stale: false, idempotent: true, workspaces: nulage };
+        return { stale: false, idempotent: true, workspaces: [] };
       }
 
       if (!rum) { await c.query('ROLLBACK'); throw fel(400, 'roomId saknas'); }
