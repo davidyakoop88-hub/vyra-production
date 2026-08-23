@@ -216,9 +216,7 @@ function skapaStreamSessions({ pool }) {
         'SELECT 1 FROM stream_room_reopen '
         + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL FOR UPDATE LIMIT 1',
         [workspaceId, rum]);
-      if (!b.rowCount) {
-        return { workspaceId, created: false, session: null, stale: true, skal: 'stangt-rum' };
-      }
+      /*MUT2 historiksparren bort*/ if (false) { return null; }
       biljett = true;
     }
 
@@ -278,7 +276,8 @@ function skapaStreamSessions({ pool }) {
       // Sorterad låsordning. Två besked som rör samma konto tar samma rader i samma ordning, så
       // de kan inte låsa varandra i motsatt riktning.
       if (ws.length) {
-        /*MUT1 workspacelaset bort*/
+        await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
+          + 'FOR NO KEY UPDATE', [ws]);
       }
 
       // FÖRST NU seq/generation — inne i låset. Tas den före låsen kan två besked passera den och
