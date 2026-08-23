@@ -83,7 +83,11 @@ function skapaStreamSessions({ pool }) {
             return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(generation),
               redanRegistrerad: true };
           }
-          throw fel(409, 'bryggkörningen är avlöst och kan inte återregistreras');
+          /*MUT3*/ await c.query(
+            'UPDATE bridge_runs SET current=(bridge_run_id=$2) WHERE account_key=$1',
+            [nyckel, kornId]);
+          return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(generation),
+            redanRegistrerad: true };
         }
 
         // MAX läses UNDER låset — det är hela poängen. Generationen härleds ALDRIG ur
@@ -124,7 +128,7 @@ function skapaStreamSessions({ pool }) {
     if (!q.rowCount) return 'okand-korning';
     // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
     // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
-    /*MUT2*/ if (false) return null;
+    if (!q.rows[0].current) return 'avlost-korning';
     if (seq == null) return null;
     const max = Number(q.rows[0].max_seq), n = Number(seq);
     if (!Number.isFinite(n)) return 'ogiltigt-seq';
