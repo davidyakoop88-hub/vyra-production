@@ -559,7 +559,11 @@ prov('J1 · ett stängt rum förblir stängt utan administrativ åtgärd', async
     .workspaces[0];
   await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
   const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 3 });
-  assert.equal(igen.stale, true, 'ett stängt rum öppnades automatiskt igen');
+  // PER WORKSPACE, inte på hela beskedet: statusbeskedet är giltigt för kontot, men historiken
+  // ägs av varje workspace för sig. Ett blockerat workspace får inte tysta ett annat.
+  assert.equal(igen.stale, false, 'hela beskedet avvisades i stället för det enskilda workspacet');
+  assert.equal(igen.workspaces[0].stale, true, 'ett stängt rum öppnades automatiskt igen');
+  assert.equal(igen.workspaces[0].skal, 'stangt-rum');
   assert.equal((await rader(pool, WS_A)).filter(r => r.room_id === RUM_1).length, 1);
 });
 
@@ -996,4 +1000,170 @@ prov('P4 · seq mot en AVLÖST körning avvisas utan att röra dess max_seq', as
   assert.equal(ut.stale, true, 'den avlösta körningen fick tala');
   assert.equal(ut.skal, 'avlost-korning', 'fel skäl: ' + ut.skal);
   assert.equal(await maxSeq(pool, KOR_1), 5, 'den avlösta körningen flyttade sin egen max_seq');
+});
+
+// ================================================================================================
+// Q · SLUTRESULTATET FÖLJER HÖGSTA ACCEPTERADE SEQ — inte låsordning, inte väggklocka
+// ================================================================================================
+
+const aktivSession = (pool, ws) => pool.query(
+  'SELECT s.id, s.room_id FROM stream_session_pointer p '
+  + 'LEFT JOIN stream_sessions s ON s.id=p.session_id AND s.ended_at IS NULL '
+  + 'WHERE p.workspace_id=$1', [ws]).then(r => (r.rows[0] && r.rows[0].id ? r.rows[0] : null));
+
+prov('Q1 · två olika roomId i omvänd slutförandeordning — högsta seq vinner', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
+
+  // Grinden håller kontoraden, som är transaktionens FÖRSTA lås. Båda beskeden köar där, och
+  // Postgres delar ut låset i ankomstordning — så slutförandeordningen är styrd, inte gissad.
+  const grind = await pool.connect();
+  await grind.query('BEGIN');
+  await grind.query('SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE',
+    [KONTO]);
+
+  // HÖGSTA seq ställer sig i kön FÖRST och slutförs alltså först. Det LÄGRE beskedet slutförs sist
+  // — den ordning som är farlig: det vaknar efter att pekaren redan flyttats.
+  const hogst = sessioner.startaLive({ konto: KONTO, roomId: RUM_2, bridgeRunId: KOR_1, seq: 9 });
+  await new Promise(r => setTimeout(r, 150));
+  const lagst = sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 4 });
+  await new Promise(r => setTimeout(r, 150));
+  await grind.query('COMMIT');
+  grind.release();
+
+  const [nio, fyra] = await Promise.all([hogst, lagst]);
+  assert.notEqual(nio.stale, true, 'det högsta seq:t avvisades');
+  assert.equal(fyra.stale, true, 'det lägre seq:t fick flytta pekaren efter det högre');
+  assert.equal(fyra.skal, 'aldre-seq', 'fel skäl: ' + fyra.skal);
+
+  const aktiv = await aktivSession(pool, WS_A);
+  assert.ok(aktiv, 'ingen aktiv session kvar');
+  assert.equal(aktiv.room_id, RUM_2,
+    'pekaren följde slutförandeordningen i stället för sekvensen — den pekar på ' + aktiv.room_id);
+  const oppna = await pool.query(
+    'SELECT count(*)::int AS n FROM stream_sessions WHERE workspace_id=$1 AND ended_at IS NULL',
+    [WS_A]);
+  assert.equal(oppna.rows[0].n, 1, oppna.rows[0].n + ' öppna sessioner');
+});
+
+// ================================================================================================
+// R · IDEMPOTENS, BILJETTER OCH PER-WORKSPACE-RESULTAT
+// ================================================================================================
+
+prov('R1 · samma seq med ETT ANNAT roomId är en fullständig no-op', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const forst = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 5 });
+  assert.equal(forst.workspaces[0].created, true);
+
+  // Samma seq, annat rum. Går beslutet vidare till rumsbeslutet kan vem som helst flytta pekaren
+  // genom att skicka om en sekvens som redan är förbrukad.
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_2, bridgeRunId: KOR_1, seq: 5 });
+  assert.equal(igen.idempotent, true, 'svaret markerades inte som idempotent');
+  assert.equal(igen.workspaces[0].created, false, 'en session skapades för det nya rummet');
+
+  const alla = await pool.query(
+    'SELECT room_id, ended_at FROM stream_sessions WHERE workspace_id=$1', [WS_A]);
+  assert.equal(alla.rowCount, 1, 'en B-session skapades: ' + JSON.stringify(alla.rows));
+  assert.equal(alla.rows[0].room_id, RUM_1);
+  assert.equal(alla.rows[0].ended_at, null, 'A-sessionen stängdes av ett idempotent besked');
+  const aktiv = await aktivSession(pool, WS_A);
+  assert.equal(aktiv.room_id, RUM_1, 'pekaren flyttades av ett idempotent besked');
+});
+
+prov('R2 · ett blockerat workspace hindrar inte ett berättigat', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  // WS_A har RUM_1 i stängd historik och INGEN biljett. WS_B har aldrig sett rummet.
+  await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge')", [WS_A, RUM_1, KONTO]);
+
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const a = ut.workspaces.find(w => w.workspaceId === WS_A);
+  const b = ut.workspaces.find(w => w.workspaceId === WS_B);
+  // Statusbeskedet är giltigt för KONTOT; historiken är per workspace. Att rulla tillbaka allt
+  // hade låtit ett workspaces historik tysta ett annats sändning.
+  assert.equal(a.stale, true, 'det blockerade workspacet öppnade rummet ändå');
+  assert.equal(a.skal, 'stangt-rum');
+  assert.equal(a.session, null);
+  assert.equal(b.created, true, 'det berättigade workspacet blockerades av det andra');
+  assert.ok(b.session && b.session.id);
+  assert.equal((await aktivSession(pool, WS_A)), null, 'WS_A fick en aktiv session');
+  assert.equal((await aktivSession(pool, WS_B)).room_id, RUM_1);
+});
+
+const laggBiljett = (pool, ws, rum) => pool.query(
+  "INSERT INTO stream_room_reopen(workspace_id,room_id,reason) VALUES($1,$2,'prov')", [ws, rum]);
+
+const obrukade = (pool, ws, rum) => pool.query(
+  'SELECT count(*)::int AS n FROM stream_room_reopen '
+  + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL', [ws, rum])
+  .then(r => r.rows[0].n);
+
+prov('R3 · en biljett öppnar rummet och konsumeras exakt en gång', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge')", [WS_A, RUM_1, KONTO]);
+  await laggBiljett(pool, WS_A, RUM_1);
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 1, 'biljetten lades inte in');
+
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(ut.workspaces[0].created, true, 'biljetten släppte inte igenom rummet');
+  assert.equal(ut.workspaces[0].biljettAnvand, true, 'svaret sa inte att biljetten användes');
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 0, 'biljetten konsumerades inte');
+  const kvitton = await pool.query(
+    'SELECT count(*)::int AS n FROM stream_room_reopen WHERE workspace_id=$1 AND room_id=$2 '
+    + 'AND consumed_at IS NOT NULL', [WS_A, RUM_1]);
+  assert.equal(kvitton.rows[0].n, 1, 'fel antal konsumerade biljetter');
+});
+
+prov('R4 · samma biljett kan inte öppna rummet en andra gång', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge')", [WS_A, RUM_1, KONTO]);
+  await laggBiljett(pool, WS_A, RUM_1);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });          // biljetten förbrukas
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 });          // RUM_1 stängs som ersatt
+
+  // Tredje besked om RUM_1: historiken finns, biljetten är förbrukad. Fail-closed igen.
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(igen.workspaces[0].stale, true, 'den förbrukade biljetten öppnade rummet igen');
+  assert.equal(igen.workspaces[0].skal, 'stangt-rum');
+  assert.equal((await aktivSession(pool, WS_A)).room_id, RUM_2, 'pekaren rycktes tillbaka');
+});
+
+prov('R5 · en misslyckad sessionsinsert lämnar biljetten OANVÄND', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  // Stängd historik för RUM_1 ...
+  await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge')", [WS_A, RUM_1, KONTO]);
+  // ... OCH en öppen session för samma rum som pekaren inte känner till. Beslutet ser därför
+  // "stängd historik + biljett" och försöker skapa — men det partiella unika indexet på ÖPPNA
+  // sessioner avvisar insättningen. Det är en riktig constraint, inte en attrapp.
+  await pool.query('INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3)',
+    [WS_A, RUM_1, KONTO]);
+  await laggBiljett(pool, WS_A, RUM_1);
+
+  await assert.rejects(() => sessioner.startaLive({ konto: KONTO, roomId: RUM_1 }),
+    e => e.code === '23505', 'insättningen avvisades inte av det partiella unika indexet');
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 1,
+    'biljetten konsumerades trots att sessionen aldrig blev till');
+});
+
+prov('R6 · en återanslutning konsumerar aldrig en biljett', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });          // aktiv session på RUM_1
+  await laggBiljett(pool, WS_A, RUM_1);                                 // en biljett som ligger kvar
+
+  const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(igen.workspaces[0].created, false, 'återanslutningen skapade en ny session');
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 1,
+    'återanslutningen åt upp en biljett som ingen bett den använda');
 });
