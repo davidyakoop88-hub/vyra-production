@@ -192,8 +192,8 @@ function skapaStreamSessions({ pool }) {
   async function taKvitto(c, sessionId, scope) {
     const r = await c.query(
       'INSERT INTO stream_session_reset(session_id, scope) VALUES($1,$2) '
-      + 'ON CONFLICT DO NOTHING RETURNING session_id', [sessionId, scope]);
-    return r.rowCount === 1;
+      + 'ON CONFLICT (session_id, scope) DO UPDATE SET done_at=now() RETURNING session_id', [sessionId, scope]);
+    return r.rowCount === 1; /*MUTA idempotensen bort*/
   }
 
   // GIFT CAMPAIGN. Räknaren bor i overlays.state, på widgetobjektet: gift-event-images.js:236 gör
