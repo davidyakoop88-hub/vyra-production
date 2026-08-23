@@ -317,7 +317,11 @@ function skapaStreamSessions({ pool }) {
              WHERE k.published_at IS NULL AND k.parked_at IS NULL
                AND k.next_attempt_at <= $2::timestamptz
                AND (k.lease_until IS NULL OR k.lease_until < $2::timestamptz)
-               /*MUTORD ordningsvillkoret bortmuterat*/
+               AND NOT EXISTS (
+                 SELECT 1 FROM stream_event_outbox aldre
+                  WHERE aldre.workspace_id = k.workspace_id
+                    AND aldre.id < k.id
+                    AND aldre.published_at IS NULL)
              ORDER BY k.id LIMIT $4 FOR UPDATE SKIP LOCKED)
         RETURNING id, workspace_id, event_id, topic, payload, attempts`,
         [jag, tid(), LEASE_SEKUNDER, antal]);
