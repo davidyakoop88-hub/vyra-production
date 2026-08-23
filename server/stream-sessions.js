@@ -278,8 +278,7 @@ function skapaStreamSessions({ pool }) {
       // Sorterad låsordning. Två besked som rör samma konto tar samma rader i samma ordning, så
       // de kan inte låsa varandra i motsatt riktning.
       if (ws.length) {
-        await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
-          + 'FOR NO KEY UPDATE', [ws]);
+        /*MUT1 workspacelaset bort*/
       }
 
       // FÖRST NU seq/generation — inne i låset. Tas den före låsen kan två besked passera den och
