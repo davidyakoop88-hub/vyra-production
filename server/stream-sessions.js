@@ -61,7 +61,7 @@ function skapaStreamSessions({ pool }) {
         await c.query(
           'INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING', [nyckel]);
         const last = await c.query(
-          'SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE', [nyckel]);
+          'SELECT account_key FROM bridge_accounts WHERE account_key=$1 /* MUTATION: lasat bortmuterat */', [nyckel]);
         if (!last.rowCount) { await c.query('ROLLBACK'); continue; }
 
         // Härifrån är vi ensamma om kontot. MAX läses UNDER låset — det är hela poängen.
