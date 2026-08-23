@@ -392,7 +392,7 @@ function skapaStreamSessions({ pool }) {
   // skapades. Laser man routing ur payloaden racker det att nagon andrar ett falt for att skicka
   // en annan streamers sandningsbesked in i fel overlay.
   async function publiceraTillBuss(eventBus, rad) {
-    const workspaceId = (rad && rad.payload && rad.payload.workspaceId) || (rad && rad.workspace_id); /*MUT3*/
+    const workspaceId = rad && rad.workspace_id;
     if (!workspaceId) throw fel(500, 'outboxraden saknar workspace_id');
     // cleanInternalEvent ar fail-closed: ett korrumperat payload kastar i stallet for att bli en
     // halvgiltig ram.
