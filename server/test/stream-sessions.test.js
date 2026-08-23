@@ -1465,7 +1465,8 @@ prov('S8 · återanslutning ger inget nytt kvitto; en NY session får sitt eget'
 // ================================================================================================
 
 const utkorg = (pool, ws) => pool.query(
-  'SELECT id, event_id, topic, payload, attempts, next_attempt_at, published_at, parked_at, '
+  // workspace_id MASTE med: adaptern routar pa kolumnen och vagrar publicera utan den.
+  'SELECT id, workspace_id, event_id, topic, payload, attempts, next_attempt_at, published_at, parked_at, '
   + 'lease_owner, lease_until, last_error FROM stream_event_outbox '
   + (ws ? 'WHERE workspace_id=$1 ' : '') + 'ORDER BY id', ws ? [ws] : []).then(r => r.rows);
 
