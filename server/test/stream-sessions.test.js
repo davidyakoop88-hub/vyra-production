@@ -1142,7 +1142,10 @@ prov('R4 · samma biljett kan inte öppna rummet en andra gång', async () => {
   assert.equal((await aktivSession(pool, WS_A)).room_id, RUM_2, 'pekaren rycktes tillbaka');
 });
 
-prov('R5 · en misslyckad sessionsinsert lämnar biljetten OANVÄND', async () => {
+// OBS om R5:s räckvidd: här faller insättningen INNAN `UPDATE ... SET consumed_at`, så provet visar
+// att konsumtionen aldrig påbörjades. Att en rollback tar tillbaka en REDAN skriven konsumtion
+// bevisas av R7, där felet inträffar i ett annat workspace efter att det första hunnit konsumera.
+prov('R5 · ett fel FÖRE konsumtionen lämnar biljetten OANVÄND', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   // Stängd historik för RUM_1 ...
@@ -1172,3 +1175,63 @@ prov('R6 · en återanslutning konsumerar aldrig en biljett', async () => {
   assert.equal(await obrukade(pool, WS_A, RUM_1), 1,
     'återanslutningen åt upp en biljett som ingen bett den använda');
 });
+
+prov('R7 · en rollback ÅTERSTÄLLER en biljett som redan hunnit konsumeras', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+
+  // R5 visar att biljetten är orörd när insättningen faller FÖRE konsumtionen. Det bevisar bara att
+  // konsumtionen aldrig påbörjades — inte att transaktionen tar tillbaka en konsumtion som redan
+  // skrivits. För det måste felet inträffa EFTER `UPDATE ... SET consumed_at`.
+  //
+  // Konstruktionen: fan-out till två workspaces. De behandlas i sorterad id-ordning, så WS_A
+  // (1111…) hinner konsumera sin biljett och skapa sin session INNAN WS_B (2222…) faller. Då är
+  // consumed_at redan satt när felet kommer, och bara en rollback kan ta tillbaka det.
+  for (const ws of [WS_A, WS_B]) {
+    await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+      + "VALUES($1,$2,$3,now(),'bridge')", [ws, RUM_1, KONTO]);
+    await laggBiljett(pool, ws, RUM_1);
+  }
+  // WS_B får dessutom en ÖPPEN session för samma rum, utanför pekaren. Dess INSERT faller därför
+  // på det partiella unika indexet — en riktig constraint, ingen injicerad krasch.
+  await pool.query('INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3)',
+    [WS_B, RUM_1, KONTO]);
+
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 1);
+  assert.equal(await obrukade(pool, WS_B, RUM_1), 1);
+
+  await assert.rejects(() => sessioner.startaLive({ konto: KONTO, roomId: RUM_1 }),
+    e => e.code === '23505', 'WS_B:s insättning avvisades inte av det partiella unika indexet');
+
+  // BÅDA biljetterna ska vara oanvända. WS_A:s consumed_at var satt när felet kom — att den är
+  // NULL igen är beviset på att hela beskedet rullades tillbaka, inte bara den del som föll.
+  assert.equal(await obrukade(pool, WS_A, RUM_1), 1,
+    'WS_A:s biljett förblev konsumerad efter rollback — konsumtionen och sessionen ligger inte i '
+    + 'samma transaktion');
+  assert.equal(await obrukade(pool, WS_B, RUM_1), 1);
+  // Och ingen session ska ha överlevt.
+  const skapade = await pool.query(
+    'SELECT count(*)::int AS n FROM stream_sessions WHERE workspace_id=$1 AND ended_at IS NULL',
+    [WS_A]);
+  assert.equal(skapade.rows[0].n, 0, 'WS_A:s session överlevde rollbacken');
+  assert.equal(await aktivSession(pool, WS_A), null, 'WS_A:s pekare flyttades trots rollback');
+});
+
+prov('R8 · kontrollmätning: utan WS_B:s krock går samma besked igenom och konsumerar biljetten',
+  async () => {
+    const { sessioner, pool } = await rigg();
+    await anslut(pool, WS_A); await anslut(pool, WS_B);
+    // Identiskt upplägg som R7 MINUS den öppna sessionen som får WS_B att falla. Utan den här
+    // mätningen kunde R7 vara grönt för att beskedet aldrig gjorde något alls.
+    for (const ws of [WS_A, WS_B]) {
+      await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+        + "VALUES($1,$2,$3,now(),'bridge')", [ws, RUM_1, KONTO]);
+      await laggBiljett(pool, ws, RUM_1);
+    }
+    const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+    assert.equal(ut.workspaces.length, 2);
+    assert.ok(ut.workspaces.every(w => w.created && w.biljettAnvand),
+      'båda workspacen skulle ha öppnat rummet med sin biljett');
+    assert.equal(await obrukade(pool, WS_A, RUM_1), 0, 'WS_A:s biljett konsumerades inte');
+    assert.equal(await obrukade(pool, WS_B, RUM_1), 0, 'WS_B:s biljett konsumerades inte');
+  });
