@@ -140,7 +140,7 @@ function skapaStreamSessions({ pool }) {
     // har fel.
     const framflyttad = await pool.query(
       'UPDATE bridge_runs SET max_seq=$3 '
-      + 'WHERE account_key=$1 AND bridge_run_id=$2 AND current AND max_seq<$3 '
+      + 'WHERE account_key=$1 AND bridge_run_id=$2 AND current /*MUTSEQ*/ '
       + 'RETURNING max_seq', [nyckel, kornId, n]);
     if (framflyttad.rowCount) return null;         // flyttade fram: beskedet är nytt och accepteras
 
