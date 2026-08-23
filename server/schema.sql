@@ -449,7 +449,14 @@ CREATE TABLE IF NOT EXISTS stream_event_outbox (
   published_at    timestamptz,
   parked_at       timestamptz,
   last_error      text,
-  created_at      timestamptz NOT NULL DEFAULT now()
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  -- LEASE. FOR UPDATE SKIP LOCKED racker inte: radlaset slapps vid COMMIT, och publiceringen sker
+  -- EFTER commit — annars gors ett natverksanrop inne i en oppen transaktion. Leasen ar det som
+  -- ager raden under sjalva publiceringen, och den overlever att transaktionen stangs.
+  -- En krashad worker slapper aldrig sin lease; den LOPER UT, och claim-fragan tar da tillbaka
+  -- raden utan att nagon stadare behover finnas.
+  lease_owner     text,
+  lease_until     timestamptz
 );
 CREATE INDEX IF NOT EXISTS stream_outbox_pending_idx
   ON stream_event_outbox(next_attempt_at) WHERE published_at IS NULL AND parked_at IS NULL;

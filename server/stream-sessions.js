@@ -246,6 +246,143 @@ function skapaStreamSessions({ pool }) {
     return gjort;
   }
 
+
+  // ---- transactional outbox ----------------------------------------------------------------------
+  // Konfigurerbara konstanter. Inga magiska tal spridda i logiken.
+  const LEASE_SEKUNDER = 30;      // hur länge en worker äger raden under publiceringen
+  const MAX_FORSOK = 8;           // därefter parkeras raden
+  const BACKOFF_BAS = 5;          // sekunder
+  const BACKOFF_TAK = 900;        // 15 minuter
+
+  // DETERMINISTISKT JITTER, härlett ur (id, attempts). Ingen Math.random() i beslutslogiken:
+  // ett prov ska kunna kräva ett EXAKT värde i stället för ett intervall, och en flackande
+  // backoff går inte att skilja från en trasig.
+  function backoffSekunder(id, attempts, { bas = BACKOFF_BAS, tak = BACKOFF_TAK } = {}) {
+    const rakt = Math.min(tak, bas * Math.pow(2, attempts));
+    const fro = ((Number(id) * 2654435761) + (attempts * 40503)) >>> 0;
+    const jitter = (fro % 1000) / 1000;                     // [0,1)
+    return Math.round(Math.min(tak, rakt * (1 + 0.25 * jitter)));
+  }
+
+  // ÄGARVILLKORET. Varje skrivning som följer av ett publiceringsförsök — kvittens, retry OCH
+  // parkering — måste bära det. En gammal worker vars lease tagits över får inte öka attempts,
+  // flytta backoffen eller parkera den NYA workerns rad; den har inget att säga om raden längre.
+  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND published_at IS NULL AND parked_at IS NULL';
+
+  // Publicerar en omgång. Ingen autostart: den här funktionen körs bara när någon anropar den.
+  //
+  // Klockan injiceras (`nu`) så att prov kan hoppa förbi backoff utan att sova, och så att
+  // tidsjämförelserna blir en parameter i stället för databasens now(). Alla tidsvillkor använder
+  // samma $nu — annars kunde ett prov få två olika "nu" i samma omgång.
+  async function publiceraUtkorg({ sand, workerId, nu, logg, metric, antal = 10 } = {}) {
+    const jag = String(workerId || ('worker-' + process.pid + '-' + Math.floor(Date.now() / 1000)));
+    const tid = () => (nu ? nu() : new Date());
+    const skriv = logg || (() => {});
+    const matvarde = metric || (() => {});
+
+    // 1. CLAIM i en KORT transaktion. FOR UPDATE SKIP LOCKED gör att två workers plockar olika
+    //    rader; leasen är det som äger raden efter att transaktionen stängts.
+    //    `lease_until < $nu` är också återtagandet: en krashad worker släpper aldrig sin lease,
+    //    den LÖPER UT, och då plockas raden av nästa omgång utan att någon städare behöver finnas.
+    const c = await pool.connect();
+    let claimade = [];
+    try {
+      await c.query('BEGIN');
+      const q = await c.query(
+        `UPDATE stream_event_outbox SET lease_owner=$1,
+                lease_until = $2::timestamptz + ($3 || ' seconds')::interval
+          WHERE id IN (
+            SELECT id FROM stream_event_outbox
+             WHERE published_at IS NULL AND parked_at IS NULL
+               AND next_attempt_at <= $2::timestamptz
+               AND (lease_until IS NULL OR lease_until < $2::timestamptz)
+             ORDER BY id LIMIT $4 FOR UPDATE SKIP LOCKED)
+        RETURNING id, workspace_id, event_id, topic, payload, attempts`,
+        [jag, tid(), LEASE_SEKUNDER, antal]);
+      claimade = q.rows;
+      await c.query('COMMIT');
+    } catch (error) {
+      try { await c.query('ROLLBACK'); } catch (_) {}
+      throw error;
+    } finally {
+      c.release();
+    }
+
+    // 2. PUBLICERA UTANFÖR TRANSAKTIONEN. Ett nätverksanrop inne i en öppen transaktion håller
+    //    lås och anslutning under någon annans svarstid — och en långsam buss blir då en
+    //    databasincident.
+    let publicerade = 0;
+    for (const rad of claimade) {
+      try {
+        await sand(rad);
+        // 3. KVITTENS, ägarskyddad. rowCount 0 = leasen är övertagen; då skriver vi ingenting.
+        const ok = await pool.query(
+          `UPDATE stream_event_outbox SET published_at=$3, lease_owner=NULL, lease_until=NULL
+            WHERE ${AGARVILLKOR} AND lease_until > $3::timestamptz RETURNING id`,
+          [rad.id, jag, tid()]);
+        if (ok.rowCount) publicerade++;
+        else skriv('[vyra] utkorg: leasen övertagen innan kvittens, rad ' + rad.id);
+      } catch (fel_) {
+        await hanteraMisslyckande({ rad, jag, tid, fel: fel_, skriv, matvarde });
+      }
+    }
+    return publicerade;
+  }
+
+  // Retry, backoff och parkering — allt bakom SAMMA ägarvillkor som kvittensen.
+  async function hanteraMisslyckande({ rad, jag, tid, fel, skriv, matvarde }) {
+    const nastaForsok = Number(rad.attempts) + 1;
+    const parkera = nastaForsok >= MAX_FORSOK;
+    const dröj = backoffSekunder(rad.id, Number(rad.attempts));
+    const text = String((fel && fel.message) || fel).slice(0, 500);
+
+    if (!parkera) {
+      await pool.query(
+        `UPDATE stream_event_outbox
+            SET attempts=attempts+1, last_error=$4, lease_owner=NULL, lease_until=NULL,
+                next_attempt_at = $3::timestamptz + ($5 || ' seconds')::interval
+          WHERE ${AGARVILLKOR}`, [rad.id, jag, tid(), text, dröj]);
+      return;
+    }
+
+    // PARKERING OCH AUDIT I SAMMA KORTA TRANSAKTION. Faller auditinserten ska parkeringen rullas
+    // tillbaka — en tyst parkerad rad är precis det som gör en giftig händelse osynlig.
+    // Ägarvillkoret gör dessutom att ett upprepat felresultat från samma eller en gammal worker
+    // inte kan skapa en andra poison-auditrad: efter första parkeringen är parked_at satt och
+    // villkoret matchar aldrig igen.
+    const c = await pool.connect();
+    try {
+      await c.query('BEGIN');
+      const p = await c.query(
+        `UPDATE stream_event_outbox
+            SET attempts=attempts+1, last_error=$4, parked_at=$3, lease_owner=NULL, lease_until=NULL,
+                next_attempt_at = $3::timestamptz + ($5 || ' seconds')::interval
+          WHERE ${AGARVILLKOR} RETURNING event_id, workspace_id`,
+        [rad.id, jag, tid(), text, dröj]);
+      if (!p.rowCount) { await c.query('ROLLBACK'); return; }
+      await c.query(
+        `INSERT INTO audit_log(workspace_id, actor_user_id, action, target_type, target_id, metadata)
+         VALUES($1, NULL, 'stream_outbox_poison', 'stream_event_outbox', $2, $3)`,
+        [p.rows[0].workspace_id, String(rad.id),
+          JSON.stringify({ eventId: p.rows[0].event_id, attempts: nastaForsok, lastError: text })]);
+      await c.query('COMMIT');
+      skriv('[vyra] utkorg: händelse parkerad efter ' + nastaForsok + ' försök, rad ' + rad.id);
+      matvarde('vyra_outbox_poison_total');
+    } catch (error) {
+      try { await c.query('ROLLBACK'); } catch (_) {}
+      throw error;
+    } finally {
+      c.release();
+    }
+  }
+
+  async function giftigaHandelser() {
+    const q = await pool.query(
+      'SELECT id, workspace_id, event_id, topic, attempts, last_error, parked_at '
+      + 'FROM stream_event_outbox WHERE parked_at IS NOT NULL ORDER BY parked_at');
+    return q.rows;
+  }
+
   // ---- sessionsbeslut per workspace --------------------------------------------------------------
   // Körs INNE i statusbeskedets transaktion, efter att workspaceraden är låst. Varje workspace äger
   // sin EGEN historik och sin egen biljett: ett blockerat workspace får inte hindra ett annat, för
@@ -313,6 +450,29 @@ function skapaStreamSessions({ pool }) {
     // sändningens siffror. Bara den här grenen når hit: en återanslutning returnerar långt
     // tidigare och kan varken skapa kvitto eller nollställa.
     await nollstallForNySession(c, { sessionId, workspaceId });
+
+    // OUTBOXRADEN, i samma transaktion. Skrivs BARA här: återanslutning, idempotent seq, stale och
+    // stangt-rum returnerar alla tidigare. Faller nollställningen ovan rullar raden tillbaka med
+    // allt annat — en händelse om en sändning vars mål aldrig nollställdes får inte lämna huset.
+    //
+    // event_id härleds ur det interna session_id:t. Det gör det stabilt och deterministiskt: samma
+    // session ger samma id hur många gånger raden än publiceras. UNIQUE(event_id) är sista försvar.
+    //
+    // PAYLOADEN ÄR MINIMAL. accountKey och bridgeRunId hör hemma i serverns beslut, inte hos en
+    // overlaymottagare — skickas de med riskerar de att vitlistas ut till klienten av misstag.
+    // roomId utelämnas tills en konkret mottagare behöver det.
+    const eventId = 'live:start:' + sessionId;
+    await c.query(
+      'INSERT INTO stream_event_outbox(workspace_id, event_id, topic, payload) VALUES($1,$2,$3,$4)',
+      [workspaceId, eventId, 'live:start', JSON.stringify({
+        type: 'livesession',
+        event: 'live:start',
+        eventId,
+        sessionId,
+        workspaceId,
+        startedAt: new Date().toISOString(),
+        previousSessionId: aktiv ? aktiv.id : null,
+      })]);
 
     if (biljett) {
       // Matchar på `consumed_at IS NULL`, INTE på created_at. Postgres timestamptz har
@@ -457,9 +617,10 @@ function skapaStreamSessions({ pool }) {
         return n;
       } catch (e) { try { await c.query('ROLLBACK'); } catch (_) {} throw e; } finally { c.release(); }
     },
-    async publiceraUtkorg() { return 0; },
+    publiceraUtkorg,
     async tillampaEnGang() { return false; },
-    async giftigaHandelser() { return []; },
+    giftigaHandelser,
+    backoffSekunder,
   };
 }
 

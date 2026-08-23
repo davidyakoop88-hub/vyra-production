@@ -76,6 +76,7 @@ async function rigg() {
     await pool.query('DELETE FROM tiktok_connections WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_event_outbox WHERE workspace_id=$1', [ws]);
+    await pool.query("DELETE FROM audit_log WHERE action='stream_outbox_poison'");
     await pool.query('DELETE FROM stream_session_reset WHERE session_id IN '
       + '(SELECT id FROM stream_sessions WHERE workspace_id=$1)', [ws]);
     await pool.query('DELETE FROM stream_sessions WHERE workspace_id=$1', [ws]);
@@ -396,21 +397,26 @@ prov('G2 · krasch FÖRE publicering: händelsen skickas vid omstart, sedan aldr
   assert.equal(skickade.length, 1);
 });
 
-prov('G3 · krasch EFTER publicering men före published_at ger en ofarlig dubblett', async () => {
+prov('G3 · krasch EFTER leverans men före kvittens ger en ofarlig dubblett', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  // Skickad, men processen dog innan published_at hann skrivas.
+  const T0 = new Date('2026-08-23T09:00:00.000Z');
   const skickade = [];
-  await assert.rejects(() => sessioner.publiceraUtkorg({
-    sand: async e => { skickade.push(e); throw Object.assign(new Error('krasch'), { efterSand: true }) } }));
-  // Omstart: samma händelse skickas igen — at-least-once.
-  await sessioner.publiceraUtkorg({ sand: async e => { skickade.push(e) } });
-  assert.equal(skickade.length, 2, 'dubbletten uteblev — då är provet inte det scenario det påstår');
-  assert.equal(skickade[0].event_id, skickade[1].event_id, 'event_id ändrades mellan försöken');
-  // Konsumenten gör den ofarlig.
-  assert.equal(await sessioner.tillampaEnGang({ workspaceId: WS_A, eventId: skickade[0].event_id }), true);
-  assert.equal(await sessioner.tillampaEnGang({ workspaceId: WS_A, eventId: skickade[1].event_id }), false);
+  // Provet krävde tidigare att publiceraUtkorg KASTAR vid leveransfel. Det är fel beteende för en
+  // utkorgsworker: en enskild misslyckad leverans ska registreras och omgången fortsätta, annars
+  // stoppar en trasig mottagare hela kön. Scenariot "levererad men inte kvitterad" mäts i stället
+  // genom att leasen tas över mitt i — samma sak som att processen dör före published_at.
+  await sessioner.publiceraUtkorg({ workerId: 'gammal', nu: () => T0, sand: async r => {
+    skickade.push(r.event_id);
+    await pool.query("UPDATE stream_event_outbox SET lease_owner='spoke', lease_until=$1",
+      [new Date(T0.getTime() + 30000)]);
+  } });
+  const senare = new Date(T0.getTime() + 31000);
+  await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => senare,
+    sand: async r => skickade.push(r.event_id) });
+  assert.equal(skickade.length, 2, 'dubbletten uteblev');
+  assert.equal(skickade[0], skickade[1], 'event_id ändrades mellan försöken');
 });
 
 prov('G4 · två serverinstanser publicerar aldrig samma rad', async () => {
@@ -1443,4 +1449,208 @@ prov('S8 · återanslutning ger inget nytt kvitto; en NY session får sitt eget'
   assert.equal((await overlayRad(pool, overlay.id)).state.widgets[0].giftCurrent0, 0,
     'den nya sessionen nollställde inte');
   assert.ok(Number((await overlayRad(pool, overlay.id)).version) > versionEfterForsta);
+});
+
+// ================================================================================================
+// T · UTKORGEN
+// ================================================================================================
+
+const utkorg = (pool, ws) => pool.query(
+  'SELECT id, event_id, topic, payload, attempts, next_attempt_at, published_at, parked_at, '
+  + 'lease_owner, lease_until, last_error FROM stream_event_outbox '
+  + (ws ? 'WHERE workspace_id=$1 ' : '') + 'ORDER BY id', ws ? [ws] : []).then(r => r.rows);
+
+const poisonAudit = pool => pool.query(
+  "SELECT count(*)::int AS n FROM audit_log WHERE action='stream_outbox_poison'")
+  .then(r => r.rows[0].n);
+
+prov('T1 · en rollback lämnar INGEN outboxrad', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  // WS_A går igenom helt — inklusive outboxraden. WS_B faller sedan på det partiella unika
+  // indexet. Raden skrivs alltså och rullas tillbaka, den uteblir inte.
+  await pool.query('INSERT INTO stream_sessions(workspace_id,room_id,account_key) VALUES($1,$2,$3)',
+    [WS_B, RUM_1, KONTO]);
+  await pool.query("INSERT INTO stream_sessions(workspace_id,room_id,account_key,ended_at,end_reason) "
+    + "VALUES($1,$2,$3,now(),'bridge')", [WS_B, RUM_1, KONTO]);
+  await laggBiljett(pool, WS_B, RUM_1);
+
+  await assert.rejects(() => sessioner.startaLive({ konto: KONTO, roomId: RUM_1 }),
+    e => e.code === '23505');
+  assert.equal((await utkorg(pool)).length, 0, 'en outboxrad överlevde rollbacken');
+});
+
+prov('T2 · exakt EN rad; reconnect och duplicerad seq lämnar den på en', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 5 }))
+    .workspaces[0];
+  const forsta = await utkorg(pool, WS_A);
+  assert.equal(forsta.length, 1, 'sessionsskapandet gav ' + forsta.length + ' rader');
+  assert.equal(forsta[0].event_id, 'live:start:' + ett.session.id, 'event_id är inte härlett ur session_id');
+  assert.equal(forsta[0].payload.eventId, forsta[0].event_id, 'eventId saknas i payloaden');
+  assert.equal(forsta[0].payload.sessionId, ett.session.id);
+  assert.equal(forsta[0].payload.workspaceId, WS_A);
+  assert.equal(forsta[0].payload.type, 'livesession');
+  assert.equal(forsta[0].payload.previousSessionId, null);
+  // Minimal payload: inget kontonamn, inget körnings-id, inget rum.
+  assert.equal(forsta[0].payload.accountKey, undefined, 'accountKey läcker till bussen');
+  assert.equal(forsta[0].payload.bridgeRunId, undefined, 'bridgeRunId läcker till bussen');
+  assert.equal(forsta[0].payload.roomId, undefined, 'roomId skickas utan känd mottagare');
+
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 6 }); // reconnect
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 6 }); // samma seq
+  assert.equal((await utkorg(pool, WS_A)).length, 1, 'reconnect eller duplicerad seq gav en extra rad');
+});
+
+prov('T3 · två workers claimar olika rader, aldrig samma', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });      // en rad per workspace
+  assert.equal((await utkorg(pool)).length, 2);
+
+  const a = [], b = [];
+  const langsam = lista => async rad => { lista.push(rad.event_id); await new Promise(r => setTimeout(r, 80)); };
+  await Promise.all([
+    sessioner.publiceraUtkorg({ workerId: 'w-a', sand: langsam(a) }),
+    sessioner.publiceraUtkorg({ workerId: 'w-b', sand: langsam(b) }),
+  ]);
+  const alla = [...a, ...b];
+  assert.equal(alla.length, 2, 'instanserna publicerade ' + alla.length + ' av 2');
+  assert.equal(new Set(alla).size, 2, 'samma rad togs av båda workers');
+  assert.ok((await utkorg(pool)).every(r => r.published_at), 'alla rader markerades inte');
+});
+
+prov('T4 · en utgången lease återtas, en levande gör det inte', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  // En krashad worker släpper aldrig sin lease. Den ligger kvar tills den LÖPER UT.
+  await pool.query("UPDATE stream_event_outbox SET lease_owner='krashad', lease_until=$1",
+    [new Date(T0.getTime() + 30000)]);
+
+  const skickat = [];
+  const n1 = await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => T0,
+    sand: async r => skickat.push(r.event_id) });
+  assert.equal(n1, 0, 'en LEVANDE lease togs över');
+  assert.equal(skickat.length, 0);
+
+  // 31 sekunder senare har den löpt ut. Ingen städare behövs — claim-frågans egen predikat tar den.
+  const senare = new Date(T0.getTime() + 31000);
+  const n2 = await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => senare,
+    sand: async r => skickat.push(r.event_id) });
+  assert.equal(n2, 1, 'en UTGÅNGEN lease återtogs inte');
+  assert.equal(skickat.length, 1);
+});
+
+prov('T5 · en gammal worker kan inte kvittera efter att leasen tagits över', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date('2026-08-23T12:00:00.000Z');
+
+  // Mitt i publiceringen tar en annan worker över raden. Den gamla har levererat, men äger inte
+  // längre raden — och får därför inte skriva published_at.
+  const n = await sessioner.publiceraUtkorg({ workerId: 'gammal', nu: () => T0, sand: async () => {
+    await pool.query("UPDATE stream_event_outbox SET lease_owner='ny', lease_until=$1",
+      [new Date(T0.getTime() + 30000)]);
+  } });
+  assert.equal(n, 0, 'den gamla workern kvitterade en rad den inte längre ägde');
+  const rad = (await utkorg(pool))[0];
+  assert.equal(rad.published_at, null, 'raden markerades publicerad av fel ägare');
+  assert.equal(rad.lease_owner, 'ny', 'den nya ägaren skrevs över');
+});
+
+prov('T6 · ett misslyckande ökar attempts och skjuter fram nästa försök EXAKT', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const id = (await utkorg(pool))[0].id;
+
+  await sessioner.publiceraUtkorg({ workerId: 'w', nu: () => T0,
+    sand: async () => { throw new Error('mottagaren är nere'); } });
+  const rad = (await utkorg(pool))[0];
+  assert.equal(Number(rad.attempts), 1, 'attempts räknades inte upp');
+  assert.match(String(rad.last_error), /mottagaren är nere/, 'felet sparades inte');
+  assert.equal(rad.lease_owner, null, 'leasen släpptes inte');
+  assert.equal(rad.published_at, null);
+  // Deterministiskt jitter: exakt värde, inte ett intervall. Ett flackande prov går inte att
+  // skilja från en trasig backoff.
+  const vantat = sessioner.backoffSekunder(id, 0);
+  assert.equal(new Date(rad.next_attempt_at).getTime(), T0.getTime() + vantat * 1000,
+    'backoffen är inte deterministisk: väntade +' + vantat + 's');
+  assert.ok(vantat >= 5 && vantat <= 7, 'första backoffen ska ligga runt basvärdet, fick ' + vantat);
+});
+
+prov('T7 · poison parkeras exakt en gång och auditeras', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const trasig = async () => { throw new Error('mottagaren är nere'); };
+
+  for (let i = 0; i < 10; i++) {
+    await sessioner.publiceraUtkorg({ workerId: 'w', sand: trasig,
+      nu: () => new Date(T0.getTime() + i * 3600e3) });
+  }
+  const rad = (await utkorg(pool))[0];
+  assert.ok(rad.parked_at, 'raden parkerades aldrig');
+  assert.equal(Number(rad.attempts), 8, 'parkerades vid fel antal försök: ' + rad.attempts);
+  assert.equal(rad.published_at, null);
+  assert.equal(await poisonAudit(pool), 1, 'fel antal poison-auditrader: ' + await poisonAudit(pool));
+  const giftiga = await sessioner.giftigaHandelser();
+  assert.equal(giftiga.length, 1, 'den parkerade händelsen syns inte');
+  // En parkerad rad faller ur claim-predikatet och kan aldrig auditeras en andra gång.
+  await sessioner.publiceraUtkorg({ workerId: 'w', sand: trasig,
+    nu: () => new Date(T0.getTime() + 99 * 3600e3) });
+  assert.equal(await poisonAudit(pool), 1, 'en andra poison-auditrad skapades');
+});
+
+prov('T8 · en lyckad publicering markerar EXAKT rätt rad', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A); await anslut(pool, WS_B);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const fore = await utkorg(pool);
+  assert.equal(fore.length, 2);
+
+  const n = await sessioner.publiceraUtkorg({ workerId: 'w', antal: 1, sand: async () => {} });
+  assert.equal(n, 1);
+  const efter = await utkorg(pool);
+  assert.ok(efter[0].published_at, 'den första raden markerades inte');
+  assert.equal(efter[1].published_at, null, 'en rad som aldrig publicerades markerades');
+  assert.equal(efter[0].lease_owner, null, 'leasen städades inte vid kvittens');
+});
+
+prov('T9 · krasch efter leverans ger ompublicering med SAMMA event_id', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const levererat = [];
+
+  // Första omgången: leveransen lyckas, men leasen tas över innan kvittensen hinner skrivas —
+  // samma sak som att processen dör mellan publicering och published_at.
+  await sessioner.publiceraUtkorg({ workerId: 'gammal', nu: () => T0, sand: async r => {
+    levererat.push(r.event_id);
+    await pool.query("UPDATE stream_event_outbox SET lease_owner='spöke', lease_until=$1",
+      [new Date(T0.getTime() + 30000)]);
+  } });
+  assert.equal((await utkorg(pool))[0].published_at, null);
+
+  // Spöket kommer aldrig tillbaka. Leasen löper ut och raden publiceras IGEN.
+  const senare = new Date(T0.getTime() + 31000);
+  const n = await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => senare,
+    sand: async r => levererat.push(r.event_id) });
+  assert.equal(n, 1);
+  assert.equal(levererat.length, 2, 'dubbletten uteblev — då är provet inte det scenario det påstår');
+  assert.equal(levererat[0], levererat[1],
+    'event_id ändrades mellan leveranserna — då kan ingen mottagare deduplicera');
+  // AT-LEAST-ONCE, uttryckligen. Serverresetten kördes FÖRE publiceringen och körs inte om av
+  // dubbletten, så det är inte resetkvittot som gör ompubliceringen ofarlig. Skyddet måste ligga
+  // hos mottagaren: dedup på stabilt eventId, eller idempotens per sessionId. Det kontraktet
+  // provas i event-/klientblocket.
+  assert.match(levererat[0], /^live:start:/);
 });
