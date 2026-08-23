@@ -401,7 +401,10 @@ prov('G3 · krasch EFTER leverans men före kvittens ger en ofarlig dubblett', a
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T09:00:00.000Z');
+  // Klockan injiceras, men den maste ligga EFTER att raden skapades: next_attempt_at far
+  // DEFAULT now(), och ett fast datum i det forflutna gor att claim-predikatet
+  // `next_attempt_at <= $nu` aldrig blir sant. Uppmatt i CI 2026-08-23: sex prov foll pa det.
+  const T0 = new Date(Date.now() + 60000);
   const skickade = [];
   // Provet krävde tidigare att publiceraUtkorg KASTAR vid leveransfel. Det är fel beteende för en
   // utkorgsworker: en enskild misslyckad leverans ska registreras och omgången fortsätta, annars
@@ -1526,7 +1529,7 @@ prov('T4 · en utgången lease återtas, en levande gör det inte', async () => 
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const T0 = new Date(Date.now() + 60000);
   // En krashad worker släpper aldrig sin lease. Den ligger kvar tills den LÖPER UT.
   await pool.query("UPDATE stream_event_outbox SET lease_owner='krashad', lease_until=$1",
     [new Date(T0.getTime() + 30000)]);
@@ -1549,7 +1552,7 @@ prov('T5 · en gammal worker kan inte kvittera efter att leasen tagits över', a
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const T0 = new Date(Date.now() + 60000);
 
   // Mitt i publiceringen tar en annan worker över raden. Den gamla har levererat, men äger inte
   // längre raden — och får därför inte skriva published_at.
@@ -1567,7 +1570,7 @@ prov('T6 · ett misslyckande ökar attempts och skjuter fram nästa försök EXA
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const T0 = new Date(Date.now() + 60000);
   const id = (await utkorg(pool))[0].id;
 
   await sessioner.publiceraUtkorg({ workerId: 'w', nu: () => T0,
@@ -1589,7 +1592,7 @@ prov('T7 · poison parkeras exakt en gång och auditeras', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const T0 = new Date(Date.now() + 60000);
   const trasig = async () => { throw new Error('mottagaren är nere'); };
 
   for (let i = 0; i < 10; i++) {
@@ -1628,7 +1631,7 @@ prov('T9 · krasch efter leverans ger ompublicering med SAMMA event_id', async (
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
-  const T0 = new Date('2026-08-23T12:00:00.000Z');
+  const T0 = new Date(Date.now() + 60000);
   const levererat = [];
 
   // Första omgången: leveransen lyckas, men leasen tas över innan kvittensen hinner skrivas —
