@@ -1063,16 +1063,20 @@ prov('R1 · samma seq med ETT ANNAT roomId är en fullständig no-op', async () 
   // Samma seq, annat rum. Går beslutet vidare till rumsbeslutet kan vem som helst flytta pekaren
   // genom att skicka om en sekvens som redan är förbrukad.
   const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_2, bridgeRunId: KOR_1, seq: 5 });
-  assert.equal(igen.idempotent, true, 'svaret markerades inte som idempotent');
-  assert.equal(igen.workspaces[0].created, false, 'en session skapades för det nya rummet');
 
+  // SKADAN FÖRST, flaggan sist. Uppmätt 2026-08-23: med seq-kontrollen utanför transaktionen föll
+  // provet på flaggan innan det hann mäta att pekaren faktiskt flyttats — ett mutationsbevis som
+  // pekar på fel sak. Det som gör ont är att en B-session skapas och pekaren rycks; att svaret
+  // saknar en etikett är bara symtomet.
+  const aktiv = await aktivSession(pool, WS_A);
+  assert.equal(aktiv && aktiv.room_id, RUM_1, 'PEKAREN FLYTTADES av ett besked med förbrukad seq');
   const alla = await pool.query(
     'SELECT room_id, ended_at FROM stream_sessions WHERE workspace_id=$1', [WS_A]);
   assert.equal(alla.rowCount, 1, 'en B-session skapades: ' + JSON.stringify(alla.rows));
   assert.equal(alla.rows[0].room_id, RUM_1);
   assert.equal(alla.rows[0].ended_at, null, 'A-sessionen stängdes av ett idempotent besked');
-  const aktiv = await aktivSession(pool, WS_A);
-  assert.equal(aktiv.room_id, RUM_1, 'pekaren flyttades av ett idempotent besked');
+  assert.equal(igen.workspaces[0].created, false, 'en session skapades för det nya rummet');
+  assert.equal(igen.idempotent, true, 'svaret markerades inte som idempotent');
 });
 
 prov('R2 · ett blockerat workspace hindrar inte ett berättigat', async () => {
