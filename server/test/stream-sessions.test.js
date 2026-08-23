@@ -787,31 +787,37 @@ prov('N6 · bridge_runs kräver en föräldrarad i bridge_accounts', async () =>
 // LEGITIM registrering som förloras — bryggan har inte gjort något fel.
 // ================================================================================================
 
-prov('O1 · två samtidiga registreringar ger två stigande generationer och EN aktuell', async () => {
+prov('O1 · samtidiga registreringar ger stigande generationer och EN aktuell', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
-  const svar = await Promise.all([
-    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 }),
-    sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 }),
-  ]);
-  // 1. BÅDA ska lyckas. Ett unikhetsfel som når anroparen är ett tappat besked, inte ett skydd.
-  assert.equal(svar.filter(s => s && s.generation).length, 2,
-    'en legitim registrering kraschade i stället för att serialiseras');
-  // 2. Två DISTINKTA generationer.
-  const gen = svar.map(s => Number(s.generation));
-  assert.equal(new Set(gen).size, 2, 'båda registreringarna fick generation ' + gen.join(' och '));
-  // 3. Stigande, utan hål i ordningen.
-  const sorterade = gen.slice().sort((a, b) => a - b);
-  assert.equal(sorterade[1], sorterade[0] + 1,
-    'generationerna är inte strikt stigande: ' + sorterade.join(', '));
-  // 4. Exakt EN aktuell körning.
-  const aktuella = await pool.query(
-    'SELECT bridge_run_id, generation FROM bridge_runs WHERE account_key=$1 AND current', [KONTO]);
-  assert.equal(aktuella.rowCount, 1,
-    aktuella.rowCount + ' aktuella körningar — då avgör slumpen vems status som gäller');
-  // 5. Den NYARE generationen är den aktuella.
-  assert.equal(Number(aktuella.rows[0].generation), sorterade[1],
-    'den äldre körningen blev aktuell — en omstartad brygga hade tystats av sin egen föregångare');
+  // EN kapplöpning räcker inte som vakt. Uppmätt 2026-08-23: med låset bortmuterat föll O2 i
+  // stället för O1, för att vem som hinner först varierar mellan körningar. En vakt som fångar
+  // sitt eget fel bara ibland är sämre än ingen — den ger falskt lugn. Sex omgångar gör fönstret
+  // praktiskt taget säkert utan att provet blir långsamt.
+  const RUNDOR = 6;
+  let hogsta = 0;
+  for (let i = 0; i < RUNDOR; i++) {
+    const svar = await Promise.all([
+      sessioner.registreraKorning({ konto: KONTO, bridgeRunId: 'race-' + i + '-a' }),
+      sessioner.registreraKorning({ konto: KONTO, bridgeRunId: 'race-' + i + '-b' }),
+    ]);
+    // 1. BÅDA ska lyckas. Ett unikhetsfel som når anroparen är ett tappat besked, inte ett skydd.
+    assert.equal(svar.filter(x => x && x.generation).length, 2,
+      'omgång ' + i + ': en legitim registrering kraschade i stället för att serialiseras');
+    const gen = svar.map(x => Number(x.generation)).sort((x, y) => x - y);
+    // 2. Två DISTINKTA generationer, 3. strikt stigande utan hål.
+    assert.equal(new Set(gen).size, 2, 'omgång ' + i + ': samma generation två gånger');
+    assert.equal(gen[1], gen[0] + 1, 'omgång ' + i + ': generationerna hoppar: ' + gen.join(', '));
+    assert.ok(gen[0] > hogsta, 'omgång ' + i + ': generationen gick inte framåt');
+    hogsta = gen[1];
+    // 4. Exakt EN aktuell, 5. och det är den nyare.
+    const aktuella = await pool.query(
+      'SELECT bridge_run_id, generation FROM bridge_runs WHERE account_key=$1 AND current', [KONTO]);
+    assert.equal(aktuella.rowCount, 1,
+      'omgång ' + i + ': ' + aktuella.rowCount + ' aktuella körningar — då avgör slumpen vems status som gäller');
+    assert.equal(Number(aktuella.rows[0].generation), gen[1],
+      'omgång ' + i + ': den äldre körningen blev aktuell');
+  }
 });
 
 prov('O2 · status från den äldre generationen avvisas efter kapplöpningen', async () => {
