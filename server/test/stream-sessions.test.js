@@ -525,17 +525,24 @@ prov('I2 · status från en GAMMAL bridgeRunId avvisas efter generationsbytet', 
   assert.equal((await rader(pool, WS_A)).length, 0);
 });
 
-prov('I3 · ett försenat SLUTbesked från föregående körning avslutar ingenting', async () => {
+prov('I3 - ett forsenat SLUTbesked fran foregaende korning avslutar ingenting', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
   await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
-  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
-    .workspaces[0];
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 });
   await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
-  const ut = await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2,
-    reason: 'bridge' });
-  assert.equal(ut.ended, false, 'den avlösta körningen fick avsluta en session');
-  assert.equal((await rader(pool, WS_A))[0].ended_at, null, 'sändningen dödades av ett gammalt besked');
+
+  // Provet gick tidigare genom avslutaLive({sessionId}). Det ar den INTERNA vagen, som med flit
+  // inte validerar generation: den bar serverns eget sessionId och anvands av prov och en framtida
+  // adminvag. Generationsfragan hor hemma pa MASKINVAGEN, dar bryggan talar - och det ar dar den
+  // provas nu.
+  const ut = await sessioner.avslutaLiveFranBrygga({
+    tiktokUsername: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 2 });
+  assert.equal(ut.stale, true, 'den avlosta korningen fick avsluta en session');
+  assert.equal(ut.skal, 'avlost-korning');
+  assert.deepEqual(ut.workspaces, []);
+  assert.equal((await rader(pool, WS_A))[0].ended_at, null, 'sandningen dodades av ett gammalt besked');
+  assert.ok(await aktivSession(pool, WS_A), 'pekaren nollades av ett gammalt besked');
 });
 
 prov('I4 · samma seq två gånger är idempotent', async () => {
@@ -1926,10 +1933,15 @@ prov('W2 · interna vägen är FAIL-CLOSED och kastar namngivet fel', async () =
   const fall = [
     ['otillaten-intern-typ', { type: 'gift' }],
     ['otillaten-intern-typ', { type: '' }],
-    ['ogiltig-intern-handelse', { event: 'live:end' }],
+    // 'live:end' var exemplet har tidigare. Den ar en giltig intern handelse nu, sa exemplet
+    // maste vara nagot som fortfarande INTE finns - annars provar raden ingenting.
+    ['ogiltig-intern-handelse', { event: 'live:paus' }],
     ['ogiltigt-sessionid', { sessionId: 'inte-ett-uuid' }],
     ['eventid-matchar-inte', { eventId: 'live:start:nagot-annat' }],
     ['ogiltigt-startedat', { startedAt: 'i tisdags' }],
+    // live:end bar endedAt i stallet for startedAt - samma validering, eget falt.
+    ['ogiltigt-endedat', { event: 'live:end',
+      eventId: 'live:end:33333333-3333-4333-8333-333333333333', endedAt: 'i tisdags' }],
   ];
   for (const [kod, over] of fall) {
     // Namngivet fel, inte null. Ett korrumperat payload som tyst tappas ser ut som en sändning
