@@ -74,6 +74,22 @@ class EventBus{
     await c.publish(this.channel(workspaceId),JSON.stringify({streamId,event}));
     return{duplicate:false,streamId,event};
   }
+  // Betrodd publicering av en SERVERAGD handelse. Samma strom, samma kanal och samma ramform som
+  // publish() ovan, sa sseChunk kan bara den genom sin befintliga live-gren och `id:` blir samma
+  // ordnade streamId som allt annat.
+  //
+  // INGEN dedupe-nyckel, till skillnad fran publish(). En ompublicering efter en krasch mellan
+  // leverans och kvittens SKA na bussen igen — systemet ar at-least-once, och dedupen hor hemma
+  // hos mottagaren pa det stabila eventId:t. En Redis-dedupe har hade tyst atit upp den andra
+  // ramen och gjort kontraktet till nagot annat an det ar.
+  async publishInternal(workspaceId,input){
+    if(!workspaceId)throw Object.assign(new Error('workspaceId saknas'),{status:500});
+    const event=cleanInternalEvent(input),c=await this.connect();
+    const streamId=await c.xAdd(this.stream(workspaceId),'*',{event:JSON.stringify(event)},
+      {TRIM:{strategy:'MAXLEN',strategyModifier:'~',threshold:Number(process.env.EVENT_RETENTION||10000)}});
+    await c.publish(this.channel(workspaceId),JSON.stringify({streamId,event}));
+    return{streamId,event};
+  }
   // No lastId (a client's very first connection has nothing to resume from) or a malformed one
   // (garbage/corrupted Last-Event-ID) both mean "nothing to replay" — return [] without even
   // touching Redis, rather than silently guessing '0-0' (which would dump the whole stream
@@ -95,4 +111,44 @@ class EventBus{
   async ping(){return(await this.connect()).ping()}
   async close(){if(this.client?.isOpen)await this.client.quit();this.client=null}
 }
-module.exports={EventBus,cleanEvent,ALLOWED};
+
+// ---- BETRODD INTERN VAG -------------------------------------------------------------------------
+// `sessionId` ar SERVERAGT. cleanEvent ovan bygger en explicit vitlista och kopierar aldrig faltet,
+// sa ett externt event med pahittat sessionId tappar det redan dar — och ALLOWED innehaller inte
+// 'livesession', sa ingestvagen kan inte publicera en sandningshandelse alls.
+//
+// Den har vagen ar den ENDA som far bara sessionId, och den anvands aldrig pa ingestvagen.
+//
+// FAIL-CLOSED MED NAMNGIVET FEL, inte null. Ett korrumperat eller handredigerat outboxpayload ska
+// stoppa publiceringen hogljutt — en halvgiltig ram som tyst tappas ar samma sak som en sandning
+// som aldrig byter session, och det gar inte att felsoka i efterhand.
+const INTERNA_TYPER=new Set(['livesession']);
+const INTERNA_HANDELSER=new Set(['live:start']);
+const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function internfel(kod,meddelande){
+  return Object.assign(new Error(meddelande),{status:400,kod});
+}
+
+function cleanInternalEvent(input){
+  const type=String(input?.type||'').toLowerCase();
+  if(!INTERNA_TYPER.has(type))
+    throw internfel('otillaten-intern-typ','Otillaten intern eventtyp: '+(type||'(saknas)'));
+  const handelse=String(input?.event||'');
+  if(!INTERNA_HANDELSER.has(handelse))
+    throw internfel('ogiltig-intern-handelse','Ogiltig intern handelse: '+(handelse||'(saknas)'));
+  const sessionId=String(input?.sessionId||'');
+  if(!UUID_RE.test(sessionId))
+    throw internfel('ogiltigt-sessionid','Internt sessionId ar inte ett giltigt uuid');
+  const eventId=String(input?.eventId||'');
+  if(eventId!==handelse+':'+sessionId)
+    throw internfel('eventid-matchar-inte','eventId maste vara '+handelse+':<sessionId>');
+  const startedAt=String(input?.startedAt||'');
+  if(!startedAt||Number.isNaN(Date.parse(startedAt)))
+    throw internfel('ogiltigt-startedat','startedAt ar inte en giltig tidpunkt');
+  // Explicit vitlista. workspaceId skickas ALDRIG: strommen vyra:live:<workspaceId> ar redan
+  // avgransad, och routingen kommer fran databaskolumnen — inte fran nagot i payloaden.
+  return {type,event:handelse,eventId,sessionId,startedAt};
+}
+
+module.exports={EventBus,cleanEvent,cleanInternalEvent,ALLOWED,INTERNA_TYPER};

@@ -384,6 +384,21 @@ function skapaStreamSessions({ pool }) {
     }
   }
 
+  // ADAPTERN: fran claimad outboxrad till bussen. Den verkliga vagen, men fortfarande MANUELLT
+  // anropad — ingen worker startas av sig sjalv.
+  //
+  // ROUTINGEN KOMMER FRAN DATABASKOLUMNEN, aldrig fran payloaden. Ett payload ar data som passerat
+  // genom en tabell och kan ha handredigerats; kolumnen ar det servern sjalv skrev nar sessionen
+  // skapades. Laser man routing ur payloaden racker det att nagon andrar ett falt for att skicka
+  // en annan streamers sandningsbesked in i fel overlay.
+  async function publiceraTillBuss(eventBus, rad) {
+    const workspaceId = rad && rad.workspace_id;
+    if (!workspaceId) throw fel(500, 'outboxraden saknar workspace_id');
+    // cleanInternalEvent ar fail-closed: ett korrumperat payload kastar i stallet for att bli en
+    // halvgiltig ram.
+    return eventBus.publishInternal(workspaceId, rad.payload);
+  }
+
   async function giftigaHandelser() {
     const q = await pool.query(
       'SELECT id, workspace_id, event_id, topic, attempts, last_error, parked_at '
@@ -629,6 +644,7 @@ function skapaStreamSessions({ pool }) {
     async tillampaEnGang() { return false; },
     giftigaHandelser,
     backoffSekunder,
+    publiceraTillBuss,
   };
 }
 

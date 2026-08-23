@@ -468,19 +468,29 @@ prov('G5 · en händelse som alltid misslyckas backar av och parkeras', async ()
 // H · EVENTKONTRAKT MOT BEFINTLIG BUSS
 // ================================================================================================
 
-prov('H1 · live-händelsen bär sessionId genom cleanEvent', async () => {
+prov('H1 · sessionId är SERVERÄGT — ett externt event kan inte sätta det', async () => {
   const { cleanEvent } = require('../event-bus.js');
+  // Provet krävde tidigare MOTSATSEN: att cleanEvent skulle bevara ett inskickat sessionId. Det
+  // var fel kontrakt. Fältet är serverägt; kan en ingest-klient sätta det kan vem som helst påstå
+  // vilken sändning ett event tillhör, och hela modellen blir en gissning.
   const ut = cleanEvent({ id: 'e1', type: 'gift', userId: 'u1', username: 'a',
     sessionId: '33333333-3333-4333-8333-333333333333' });
-  assert.equal(ut.sessionId, '33333333-3333-4333-8333-333333333333',
-    'cleanEvent släpper inte igenom sessionId — då kan ingen konsument veta vilken sändning '
-    + 'ett event tillhör, vilket är hela poängen med modellen');
+  assert.equal(ut.sessionId, undefined, 'ett externt event fick sätta sessionId');
+  // Kontrollmätning: eventet ska i övrigt komma igenom oförändrat.
+  assert.equal(ut.type, 'gift');
+  assert.equal(ut.username, 'a');
 });
 
 prov('H2 · sändningsbeskedet använder bussens egen ram, inte ett parallellt kontrakt', async () => {
   const { sseChunk } = require('../goal-sse.js');
-  const ram = sseChunk({ typ: 'livesession', sessionId: '33333333-3333-4333-8333-333333333333',
-    workspaceId: WS_A, roomId: RUM_1, startedAt: '2026-08-22T13:33:10.000Z', streamId: '1-0' }, null);
+  const { cleanInternalEvent } = require('../event-bus.js');
+  // Bussens riktiga form är {streamId, event} — provet anropade tidigare sseChunk med ett platt
+  // objekt och krävde fält som inte ska nå klienten.
+  const ram = sseChunk({ streamId: '1-0', event: cleanInternalEvent({
+    type: 'livesession', event: 'live:start',
+    eventId: 'live:start:33333333-3333-4333-8333-333333333333',
+    sessionId: '33333333-3333-4333-8333-333333333333',
+    startedAt: '2026-08-22T13:33:10.000Z' }) }, null);
   assert.match(ram, /^id: 1-0\n/, 'ingen id:-rad — då kan Last-Event-ID inte spela upp beskedet');
   assert.match(ram, /\nevent: live\n/,
     'beskedet fick en egen event-typ i stället för bussens `live` — en ny typ kräver en ny '
@@ -489,13 +499,6 @@ prov('H2 · sändningsbeskedet använder bussens egen ram, inte ett parallellt k
   assert.equal(data.type, 'livesession');
   assert.equal(data.sessionId, '33333333-3333-4333-8333-333333333333');
 });
-
-// ================================================================================================
-// I · BRYGGKÖRNINGAR (generation + seq)
-// `seq` ordnar bara INOM en körning. Generationen äger servern: en ny bryggprocess registrerar sig,
-// blir aktuell generation för kontot, och allt från äldre körningar avvisas. Ingen UUID-sortering
-// och ingen klientklocka — båda är oordnade eller opålitliga.
-// ================================================================================================
 
 prov('I1 · en ny bryggkörning blir aktuell generation för kontot', async () => {
   const { sessioner, pool } = await rigg();
@@ -1858,4 +1861,169 @@ prov('V1 · en misslyckad auditinsert rullar tillbaka HELA parkeringen', async (
   assert.equal(Number(slutlig.attempts), 8);
   assert.equal(await poisonAudit(pool), 1, 'fel antal auditrader efter lyckad parkering');
   assert.equal((await sessioner.giftigaHandelser()).length, 1);
+});
+
+// ================================================================================================
+// W · EVENTKONTRAKTET MOT BUSSEN
+//
+// Två skilda id-begrepp som ALDRIG får ersätta varandra:
+//   SSE `id:`  = bussens streamId från xAdd — ordning och Last-Event-ID-replay
+//   eventId    = 'live:start:<sessionId>' i JSON — logisk dedup, stabil över ompublicering
+// ================================================================================================
+
+// LAT laddning: event-bus.js kraver 'redis', som inte finns i alla miljoer. Ett require pa
+// toppnivan hade fallit hela provfilen dar — och en fil som inte ens laddas rapporterar noll prov,
+// vilket ser ut som att allt ar bra.
+const nyBuss = () => new (require('../event-bus.js').EventBus)(REDIS);
+const REDIS = process.env.REDIS_URL || '';
+
+const internProv = (over = {}) => Object.assign({
+  type: 'livesession', event: 'live:start',
+  eventId: 'live:start:33333333-3333-4333-8333-333333333333',
+  sessionId: '33333333-3333-4333-8333-333333333333',
+  startedAt: '2026-08-23T13:33:10.000Z',
+}, over);
+
+prov('W1 · interna vägen bevarar sessionId och släpper bara vitlistade fält', async () => {
+  const { cleanInternalEvent } = require('../event-bus.js');
+  const ut = cleanInternalEvent(internProv({ workspaceId: WS_B, roomId: RUM_1,
+    accountKey: KONTO, bridgeRunId: KOR_1, previousSessionId: 'x' }));
+  assert.equal(ut.sessionId, '33333333-3333-4333-8333-333333333333');
+  assert.equal(ut.eventId, 'live:start:33333333-3333-4333-8333-333333333333');
+  assert.equal(ut.type, 'livesession');
+  assert.equal(ut.event, 'live:start');
+  assert.ok(ut.startedAt);
+  // Ingenting utanför vitlistan får följa med — inte ens fält som fanns i råpayloadet.
+  assert.deepEqual(Object.keys(ut).sort(),
+    ['event', 'eventId', 'sessionId', 'startedAt', 'type'],
+    'interna vägen bar fält utanför vitlistan: ' + Object.keys(ut).join(', '));
+});
+
+prov('W2 · interna vägen är FAIL-CLOSED och kastar namngivet fel', async () => {
+  const { cleanInternalEvent } = require('../event-bus.js');
+  const fall = [
+    ['otillaten-intern-typ', { type: 'gift' }],
+    ['otillaten-intern-typ', { type: '' }],
+    ['ogiltig-intern-handelse', { event: 'live:end' }],
+    ['ogiltigt-sessionid', { sessionId: 'inte-ett-uuid' }],
+    ['eventid-matchar-inte', { eventId: 'live:start:nagot-annat' }],
+    ['ogiltigt-startedat', { startedAt: 'i tisdags' }],
+  ];
+  for (const [kod, over] of fall) {
+    // Namngivet fel, inte null. Ett korrumperat payload som tyst tappas ser ut som en sändning
+    // som aldrig bytte session, och det går inte att felsöka i efterhand.
+    assert.throws(() => cleanInternalEvent(internProv(over)), e => e.kod === kod,
+      'fel eller inget kod-värde för ' + JSON.stringify(over));
+  }
+});
+
+prov('W3 · ingestvägen kan varken bära sessionId eller publicera livesession', async () => {
+  const { cleanEvent, ALLOWED } = require('../event-bus.js');
+  // Externt event med PÅHITTAT sessionId: fältet finns inte i cleanEvents vitlista och försvinner.
+  const ut = cleanEvent({ id: 'e1', type: 'gift', userId: 'u1', username: 'a',
+    sessionId: '33333333-3333-4333-8333-333333333333' });
+  assert.equal(ut.sessionId, undefined,
+    'ett externt event fick sätta sessionId — då kan vem som helst påstå vilken sändning ett '
+    + 'event tillhör, och sessionId är serverägt');
+  assert.equal(ALLOWED.has('livesession'), false,
+    'livesession finns i ALLOWED — då kan ingestvägen publicera ett sändningsbesked');
+  assert.throws(() => cleanEvent({ id: 'e2', type: 'livesession' }),
+    e => e.status === 400, 'ingestvägen accepterade typen livesession');
+});
+
+prov('W4 · SSE-ramen bär id: från streamId och minimal JSON', async () => {
+  const { sseChunk } = require('../goal-sse.js');
+  const { cleanInternalEvent } = require('../event-bus.js');
+  // Bussens RIKTIGA form: {streamId, event}. Ingen ny gren i sseChunk behövs — livesession går
+  // genom den befintliga live-grenen, och därmed genom samma replayhistorik som allt annat.
+  const ram = sseChunk({ streamId: '1755950000000-0', event: cleanInternalEvent(internProv()) }, null);
+  assert.match(ram, /^id: 1755950000000-0\n/, 'ingen id:-rad — då kan Last-Event-ID inte spela upp den');
+  assert.match(ram, /\nevent: live\n/, 'egen event-typ i stället för bussens live');
+  const data = JSON.parse(ram.split('\ndata: ')[1]);
+  assert.equal(data.type, 'livesession');
+  assert.equal(data.eventId, 'live:start:33333333-3333-4333-8333-333333333333');
+  assert.equal(data.workspaceId, undefined, 'workspaceId nådde klienten — strömmen är redan avgränsad');
+  assert.equal(data.roomId, undefined, 'roomId nådde klienten utan känd mottagare');
+  assert.equal(data.accountKey, undefined, 'accountKey nådde klienten');
+  assert.equal(data.bridgeRunId, undefined, 'bridgeRunId nådde klienten');
+  assert.equal(data.previousSessionId, undefined, 'previousSessionId nådde klienten');
+});
+
+prov('W5 · befintliga eventkontrakt är oförändrade', async () => {
+  const { sseChunk } = require('../goal-sse.js');
+  // Konfigbeskedet: fortfarande UTAN id:-rad, annars hamnar det i replayhistoriken.
+  const konfig = sseChunk({ konfig: { overlayId: 'OV-1', revision: 7 } }, 'OV-1');
+  assert.match(konfig, /^event: konfig\n/, 'konfigbeskedet fick en id:-rad eller bytte form');
+  assert.equal(/\bid: /.test(konfig), false, 'konfigbeskedet hamnar nu i Last-Event-ID-historiken');
+  // Ratt TikTok-event: samma bytes som förut.
+  const live = sseChunk({ streamId: '9-0', event: { id: 'e9', type: 'gift', count: 3 } }, null);
+  assert.equal(live, 'id: 9-0\nevent: live\ndata: {"id":"e9","type":"gift","count":3}\n\n',
+    'råeventets ram ändrades');
+});
+
+// ---- Redis-beroende prov: routing, replay och at-least-once ------------------------------------
+const utanRedis = REDIS ? false : 'BLOCKERAT: ingen REDIS_URL — routing och replay går inte att '
+  + 'prova mot en attrapp, det är bussens eget beteende som är frågan.';
+const bussprov = (namn, fn) => test('session: ' + namn, { timeout: 30000, skip: BLOCKED || utanRedis }, fn);
+
+bussprov('W6 · routingen kommer från databaskolumnen, inte från payloaden', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const rad = (await utkorg(pool))[0];
+  // FALSKT workspaceId i råpayloadet. Läses routingen därifrån hamnar beskedet i fel overlay.
+  await pool.query("UPDATE stream_event_outbox SET payload = payload || $1::jsonb WHERE id=$2",
+    [JSON.stringify({ workspaceId: WS_B, roomId: RUM_1 }), rad.id]);
+  const uppdaterad = (await utkorg(pool))[0];
+  assert.equal(uppdaterad.payload.workspaceId, WS_B, 'provet lyckades inte plantera fältet');
+
+  const buss = nyBuss();
+  const mottaget = { [WS_A]: [], [WS_B]: [] };
+  await buss.subscribe(WS_A, m => mottaget[WS_A].push(m));
+  await buss.subscribe(WS_B, m => mottaget[WS_B].push(m));
+
+  await sessioner.publiceraTillBuss(buss, uppdaterad);
+  await new Promise(r => setTimeout(r, 400));
+
+  assert.equal(mottaget[WS_A].length, 1, 'beskedet nådde inte kolumnens workspace');
+  assert.equal(mottaget[WS_B].length, 0, 'beskedet läckte till workspacet i payloaden');
+  assert.equal(mottaget[WS_A][0].event.workspaceId, undefined, 'workspaceId följde med till SSE');
+  assert.equal(mottaget[WS_A][0].event.roomId, undefined, 'roomId följde med till SSE');
+  assert.ok(mottaget[WS_A][0].streamId, 'ramen saknar streamId');
+});
+
+bussprov('W7 · två publiceringar ger olika SSE-id men SAMMA eventId', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const rad = (await utkorg(pool))[0];
+  const buss = nyBuss();
+
+  const ett = await sessioner.publiceraTillBuss(buss, rad);
+  const tva = await sessioner.publiceraTillBuss(buss, rad);
+  // AT-LEAST-ONCE, uttryckligen tillåtet: en ompublicering efter krasch mellan leverans och
+  // kvittens ger en andra bussram. Transportens id skiljer sig; den logiska identiteten gör det
+  // inte. Mottagaren måste dedupa på eventId eller vara idempotent per sessionId.
+  assert.notEqual(ett.streamId, tva.streamId, 'ompubliceringen fick samma SSE-id');
+  assert.equal(ett.event.eventId, tva.event.eventId, 'eventId ändrades vid ompublicering');
+  assert.equal(ett.event.sessionId, tva.event.sessionId);
+});
+
+bussprov('W8 · reconnect med Last-Event-ID återspelar rätt ram', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const rad = (await utkorg(pool))[0];
+  const buss = nyBuss();
+
+  const forsta = await sessioner.publiceraTillBuss(buss, rad);
+  const andra = await sessioner.publiceraTillBuss(buss, rad);
+  // Klienten återansluter med sitt sista streamId. Replayen ska ge det som kom EFTER — inte om
+  // det klienten redan sett, och inte tomt.
+  const efter = await buss.replay(WS_A, forsta.streamId);
+  const ider = efter.map(x => x.streamId);
+  assert.ok(ider.includes(andra.streamId), 'den andra ramen spelades inte upp');
+  assert.equal(ider.includes(forsta.streamId), false, 'klienten fick om ramen den redan sett');
+  const aterspelad = efter.find(x => x.streamId === andra.streamId);
+  assert.equal(aterspelad.event.eventId, rad.payload.eventId, 'fel ram återspelades');
 });
