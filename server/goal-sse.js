@@ -179,7 +179,7 @@ function sseChunk(item, overlayId) {
 
   // Raw TikTok events, unchanged: workspace-scoped, replayable, same bytes for every overlay.
   if (item.event && typeof item.event === 'object' && item.streamId) {
-    return `id: ${item.streamId}\nevent: live\ndata: ${JSON.stringify(item.event)}\n\n`;
+    return `event: live\ndata: ${JSON.stringify(item.event)}\n\n`; /*MUT2*/
   }
   return null;
 }

@@ -37,8 +37,7 @@ const event={
     // Gifter-badgens niva, fran user.payGrade.level i bryggan. Ett ANNAT tal an fanClubLevel ovan:
     // fan club-nivan galler mot en enskild streamer, gifter-nivan ar tittarens globala grad. Samma
     // klampning 0-50, dar 0 betyder "ingen niva rapporterad".
-    gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0))),
-    sessionId:String(input?.sessionId||'')||undefined /*MUT1*/
+    gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0)))
   };
   // Nivahojningen, konstaterad av viewer-levels.js FORE publish. Utan de har tva raderna droppar
   // vitlistan stampeln igen i publish(), som kor cleanEvent en gang till - och widgeten far tillbaka
