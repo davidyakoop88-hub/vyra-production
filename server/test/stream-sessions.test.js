@@ -790,27 +790,47 @@ prov('N6 · bridge_runs kräver en föräldrarad i bridge_accounts', async () =>
 prov('O1 · samtidiga registreringar ger stigande generationer och EN aktuell', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
-  // EN kapplöpning räcker inte som vakt. Uppmätt 2026-08-23: med låset bortmuterat föll O2 i
-  // stället för O1, för att vem som hinner först varierar mellan körningar. En vakt som fångar
-  // sitt eget fel bara ibland är sämre än ingen — den ger falskt lugn. Sex omgångar gör fönstret
-  // praktiskt taget säkert utan att provet blir långsamt.
+  // KONTROLLERAD BARRIÄR, inte tur. Uppmätt 2026-08-23: med kontolåset bortmuterat föll O2 första
+  // gången och O1 andra gången — vem som hinner först varierar, och ett probabilistiskt
+  // mutationsbevis är inget bevis.
+  //
+  // Grinden: en TREDJE anslutning skriver kontoraden i en ÖPPEN transaktion. Båda registreringarna
+  // börjar med `INSERT INTO bridge_accounts ... ON CONFLICT DO NOTHING` och blockerar därför båda
+  // på det unika indexet. När grinden committar släpps de i samma ögonblick — och först DÅ når de
+  // generationsläsningen.
+  //   MED låset:   den ena tar radlåset, den andra väntar → serialiserat, N och N+1.
+  //   UTAN låset:  båda läser MAX samtidigt → båda skriver N+1 → unikhetsfel.
+  // Sex omgångar ovanpå barriären, så ett enstaka gynnsamt utfall inte kan bära beviset.
   const RUNDOR = 6;
   let hogsta = 0;
   for (let i = 0; i < RUNDOR; i++) {
-    const svar = await Promise.all([
+    // Kontoraden bort, så grinden är den som skapar den. CASCADE tar bridge_runs med sig.
+    await pool.query('DELETE FROM bridge_accounts WHERE account_key=$1', [KONTO]);
+
+    const grind = await pool.connect();
+    await grind.query('BEGIN');
+    await grind.query('INSERT INTO bridge_accounts(account_key) VALUES($1)', [KONTO]);
+
+    const lopp = Promise.all([
       sessioner.registreraKorning({ konto: KONTO, bridgeRunId: 'race-' + i + '-a' }),
       sessioner.registreraKorning({ konto: KONTO, bridgeRunId: 'race-' + i + '-b' }),
     ]);
+    // Båda hinner fram till grinden och blockerar där.
+    await new Promise(r => setTimeout(r, 200));
+    await grind.query('COMMIT');
+    grind.release();
+
+    const svar = await lopp;
     // 1. BÅDA ska lyckas. Ett unikhetsfel som når anroparen är ett tappat besked, inte ett skydd.
     assert.equal(svar.filter(x => x && x.generation).length, 2,
       'omgång ' + i + ': en legitim registrering kraschade i stället för att serialiseras');
     const gen = svar.map(x => Number(x.generation)).sort((x, y) => x - y);
-    // 2. Två DISTINKTA generationer, 3. strikt stigande utan hål.
+    // 2. Två DISTINKTA generationer. 3. Strikt stigande utan hål.
     assert.equal(new Set(gen).size, 2, 'omgång ' + i + ': samma generation två gånger');
     assert.equal(gen[1], gen[0] + 1, 'omgång ' + i + ': generationerna hoppar: ' + gen.join(', '));
-    assert.ok(gen[0] > hogsta, 'omgång ' + i + ': generationen gick inte framåt');
+    assert.equal(gen[0], 1, 'omgång ' + i + ': räkningen börjar inte om efter att kontoraden nollats');
     hogsta = gen[1];
-    // 4. Exakt EN aktuell, 5. och det är den nyare.
+    // 4. Exakt EN aktuell. 5. Och det är den nyare.
     const aktuella = await pool.query(
       'SELECT bridge_run_id, generation FROM bridge_runs WHERE account_key=$1 AND current', [KONTO]);
     assert.equal(aktuella.rowCount, 1,
@@ -818,6 +838,7 @@ prov('O1 · samtidiga registreringar ger stigande generationer och EN aktuell', 
     assert.equal(Number(aktuella.rows[0].generation), gen[1],
       'omgång ' + i + ': den äldre körningen blev aktuell');
   }
+  assert.equal(hogsta, 2, 'barriären körde inte som avsett');
 });
 
 prov('O2 · status från den äldre generationen avvisas efter kapplöpningen', async () => {
