@@ -833,3 +833,55 @@ prov('O2 · status från den äldre generationen avvisas efter kapplöpningen', 
   assert.notEqual(nytt.stale, true, 'den aktuella generationen avvisades också');
   assert.equal(nytt.workspaces.length, 1);
 });
+
+prov('O3 · en AVLÖST körning kan inte återregistrera sig till aktuell', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const a = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const b = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+
+  // A säger till igen — en brygga som tappade nätet, hängde sig eller startade om utan att mynta
+  // ett nytt körnings-id. Släpps den igenom rycker en död process tillbaka sändningen från den
+  // som faktiskt kör.
+  await assert.rejects(
+    () => sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 }),
+    e => e.status === 409,
+    'den avlösta körningen fick registrera sig igen');
+
+  // INGENTING fick ändras av försöket.
+  const rader = await pool.query(
+    'SELECT bridge_run_id, generation, current FROM bridge_runs WHERE account_key=$1 '
+    + 'ORDER BY generation', [KONTO]);
+  assert.equal(rader.rowCount, 2, 'försöket skapade eller tog bort rader');
+  assert.deepEqual(rader.rows.map(r => Number(r.generation)),
+    [Number(a.generation), Number(b.generation)], 'generationerna ändrades');
+  const aktuella = rader.rows.filter(r => r.current);
+  assert.equal(aktuella.length, 1, aktuella.length + ' aktuella körningar efter försöket');
+  assert.equal(aktuella[0].bridge_run_id, KOR_2, 'den avlösta körningen blev aktuell igen');
+});
+
+prov('O4 · den AKTUELLA körningen får registrera om sig idempotent', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_1 });
+  const b = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+
+  // Samma aktuella brygga säger till igen — en återanslutning, inte en ny körning. Den ska INTE
+  // få en ny generation: då hade varje nätverksglapp stegat räknaren och gjort "vilken är nyare"
+  // till en fråga om hur ostabilt nätet är.
+  const igen = await sessioner.registreraKorning({ konto: KONTO, bridgeRunId: KOR_2 });
+  assert.equal(Number(igen.generation), Number(b.generation),
+    'omregistreringen gav en ny generation: ' + igen.generation + ' mot ' + b.generation);
+  assert.equal(igen.redanRegistrerad, true, 'svaret markerade inte att körningen redan fanns');
+
+  const rader = await pool.query(
+    'SELECT bridge_run_id, current FROM bridge_runs WHERE account_key=$1', [KONTO]);
+  assert.equal(rader.rowCount, 2, 'omregistreringen skapade en ny rad');
+  const aktuella = rader.rows.filter(r => r.current);
+  assert.equal(aktuella.length, 1, aktuella.length + ' aktuella körningar');
+  assert.equal(aktuella[0].bridge_run_id, KOR_2);
+
+  // Kontrollmätning: den aktuella körningen ska fortfarande få tala efter omregistreringen.
+  const ut = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_2, seq: 1 });
+  assert.notEqual(ut.stale, true, 'omregistreringen gjorde den aktuella körningen stale');
+});

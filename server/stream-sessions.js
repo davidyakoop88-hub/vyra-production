@@ -64,10 +64,32 @@ function skapaStreamSessions({ pool }) {
           'SELECT account_key FROM bridge_accounts WHERE account_key=$1 FOR NO KEY UPDATE', [nyckel]);
         if (!last.rowCount) { await c.query('ROLLBACK'); continue; }
 
-        // Härifrån är vi ensamma om kontot. MAX läses UNDER låset — det är hela poängen.
-        // Generationen härleds ALDRIG ur bridge_run_id (sträng utan ordning), started_at (klockor
-        // går isär och bakåt) eller id/bigserial (delas ut före commit, så två samtidiga kan
-        // committa i omvänd ordning mot sina id).
+        // Härifrån är vi ensamma om kontot. Beslutet fattas EXPLICIT under låset — inte av en
+        // ON CONFLICT-klausul, som inte kan skilja de tre fallen åt.
+        //
+        // EN AVLÖST KÖRNING FÅR ALDRIG ÅTERUPPSTÅ. `ON CONFLICT ... DO UPDATE SET current=true`
+        // gjorde precis det: A registrerar sig, B avlöser A, A registrerar sig igen och blev
+        // aktuell på nytt. En död eller nätverkstappad brygga hade då kunnat rycka tillbaka
+        // sändningen från den som faktiskt kör. En omstartad brygga ska mynta ett NYTT körnings-id.
+        const befintlig = await c.query(
+          'SELECT generation, current FROM bridge_runs WHERE account_key=$1 AND bridge_run_id=$2',
+          [nyckel, kornId]);
+        if (befintlig.rowCount) {
+          const { generation, current } = befintlig.rows[0];
+          await c.query('COMMIT');
+          if (current) {
+            // Samma AKTUELLA brygga säger till igen. Idempotent: samma generation, ingen ny rad,
+            // inget byte.
+            return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(generation),
+              redanRegistrerad: true };
+          }
+          throw fel(409, 'bryggkörningen är avlöst och kan inte återregistreras');
+        }
+
+        // MAX läses UNDER låset — det är hela poängen. Generationen härleds ALDRIG ur
+        // bridge_run_id (sträng utan ordning), started_at (klockor går isär och bakåt) eller
+        // id/bigserial (delas ut före commit, så två samtidiga kan committa i omvänd ordning mot
+        // sina id).
         const nasta = await c.query(
           'SELECT COALESCE(MAX(generation),0)+1 AS generation FROM bridge_runs WHERE account_key=$1',
           [nyckel]);
@@ -75,13 +97,11 @@ function skapaStreamSessions({ pool }) {
 
         await c.query('UPDATE bridge_runs SET current=false WHERE account_key=$1 AND current',
           [nyckel]);
-        // Att registrera om SAMMA körnings-id är inte en ny generation — det är samma brygga som
-        // säger till igen. Den behåller sitt nummer och blir aktuell på nytt.
+        // Rak INSERT. UNIQUE(account_key,bridge_run_id) och UNIQUE(account_key,generation) står
+        // kvar som SISTA försvar — men beslutet är redan fattat ovan, under låset.
         const rad = await c.query(
           'INSERT INTO bridge_runs(account_key,bridge_run_id,generation,current) '
-          + 'VALUES($1,$2,$3,true) '
-          + 'ON CONFLICT (account_key,bridge_run_id) DO UPDATE SET current=true '
-          + 'RETURNING generation', [nyckel, kornId, generation]);
+          + 'VALUES($1,$2,$3,true) RETURNING generation', [nyckel, kornId, generation]);
         await c.query('COMMIT');
         return { accountKey: nyckel, bridgeRunId: kornId, generation: Number(rad.rows[0].generation) };
       } catch (error) {
