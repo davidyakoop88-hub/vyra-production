@@ -318,7 +318,7 @@ function skapaStreamSessions({ pool }) {
         // 3. KVITTENS, ägarskyddad. rowCount 0 = leasen är övertagen; då skriver vi ingenting.
         const ok = await pool.query(
           `UPDATE stream_event_outbox SET published_at=$3, lease_owner=NULL, lease_until=NULL
-            WHERE ${AGARVILLKOR} AND lease_until > $3::timestamptz RETURNING id`,
+            WHERE id=$1 AND published_at IS NULL /*MUT2 agarkontroll bort pa kvittensen*/ RETURNING id`,
           [rad.id, jag, tid()]);
         if (ok.rowCount) publicerade++;
         else skriv('[vyra] utkorg: leasen övertagen innan kvittens, rad ' + rad.id);
@@ -341,7 +341,7 @@ function skapaStreamSessions({ pool }) {
         `UPDATE stream_event_outbox
             SET attempts=attempts+1, last_error=$4, lease_owner=NULL, lease_until=NULL,
                 next_attempt_at = $3::timestamptz + ($5 || ' seconds')::interval
-          WHERE id=$1 /*MUT1 agarkontroll bort pa fel-vagen*/`, [rad.id, jag, tid(), text, dröj]);
+          WHERE ${AGARVILLKOR}`, [rad.id, jag, tid(), text, dröj]);
       return;
     }
 
