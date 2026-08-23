@@ -812,6 +812,20 @@ prov('N6 · bridge_runs kräver en föräldrarad i bridge_accounts', async () =>
   await pool.query('DELETE FROM bridge_accounts WHERE account_key=$1', ['ett-konto-utan-foralderrad']);
 });
 
+prov('N7 · ordningsindexet finns efter migreringen', async () => {
+  const { pool } = await rigg();
+  // Ordningsvillkoret i claim-fragan gor en NOT EXISTS per kandidat. Utan det partiella indexet
+  // blir det en seq scan over hela utkorgen varje gang en worker plockar arbete — korrekt men
+  // dyrt, och dyrt pa ett satt som forst syns nar tabellen vuxit i produktion.
+  const q = await pool.query(
+    "SELECT indexdef FROM pg_indexes WHERE tablename='stream_event_outbox' AND indexname=$1",
+    ['stream_outbox_ordning_idx']);
+  assert.equal(q.rowCount, 1, 'stream_outbox_ordning_idx saknas efter migreringen');
+  const def = q.rows[0].indexdef;
+  assert.match(def, /\(workspace_id, id\)/, 'fel kolumner i ordningsindexet: ' + def);
+  assert.match(def, /WHERE \(published_at IS NULL\)/, 'indexet ar inte partiellt: ' + def);
+});
+
 // ================================================================================================
 // O · GENERATIONEN UNDER SAMTIDIGHET
 // UNIQUE(account_key, generation) hindrar dubbletter men skapar inte ordning: utan serialisering
