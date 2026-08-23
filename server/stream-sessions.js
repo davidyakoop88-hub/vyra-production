@@ -535,7 +535,10 @@ function skapaStreamSessions({ pool }) {
       // i databasen utan att nagon mottagare far veta att den tog slut - de skulle bara se en ny
       // sandning borja. Ordningen bevaras hela vagen ut: utkorgen publicerar per workspace i
       // id-ordning, och end far lagre id eftersom den skrivs forst.
-      /*MUT5 end-raden vid ersattning bortmuterad*/
+      if (stangd.rowCount) {
+        await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id,
+          endedAt: stangd.rows[0].ended_at });
+      }
     }
 
     // d) Skapa och peka. Faller INSERT (t.ex. på det partiella unika indexet) rullar hela
