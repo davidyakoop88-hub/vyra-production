@@ -464,15 +464,28 @@ function skapaStreamSessions({ pool }) {
     if (!INTERNA_SKAL.has(reason)) throw fel(400, 'otillatet skal for avslut');
 
     // RETURNING ended_at ger DATABASENS exakta sluttid, som gar rakt in i payloaden.
-    // `ended_at IS NULL` gor ett andra anrop till en ren no-op i stallet for en andra stangning.
+    //
+    // BEVAKNINGSPUNKT for `ended_at IS NULL` - ocksa UPPSKJUTET. Uppmatt 2026-08-24: bortmuterat
+    // foll inget prov. Uppslagningen av `aktiv` filtrerar redan pa `ended_at IS NULL`, och
+    // pekarraden ar last, sa ingen samtidig stangning kan hinna emellan via nuvarande vagar.
+    // Villkoret skyddar mot en framtida vag som stanger utan pekarlaset. Samma regel som ovan:
+    // provet ska laggas nar en sadan vag byggs.
     const stangd = await c.query(
       'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 AND ended_at IS NULL '
       + 'RETURNING ended_at', [aktiv.id, reason]);
     if (!stangd.rowCount) return { workspaceId, ended: false, skal: 'redan-stangd' };
     const endedAt = stangd.rows[0].ended_at;
 
-    // `session_id=$2` gor ett forsenat slutbesked ofarligt: har pekaren redan flyttats till en
-    // nyare session matchar satsen inte, och den pagaende sandningen ror(d)s inte.
+    // BEVAKNINGSPUNKT - det har villkorets mutationsbevis ar UPPSKJUTET, inte godkant.
+    // Uppmatt 2026-08-24: med `session_id=$2` bortmuterat foll INGET prov. Forklaringen ar att
+    // kontrollen `aktiv.id !== sessionId` ovan redan har returnerat 'annan-session' nar pekaren
+    // flyttats, sa den har satsen nas aldrig i det fallet. Villkoret ar alltsa forsvar pa djupet
+    // mot en FRAMTIDA kodvag som stanger en session utan att halla pekarlaset - inte den primara
+    // sparren, som ligger ovan.
+    //
+    // NAR en sadan vag byggs (adminrutten, en timeout-stadare, eller nagot som stanger via
+    // roomId utan att lasa pekaren) ska ett deterministiskt prov visa att borttaget villkor faller
+    // ratt prov. Ta inte bort det innan dess: fransvaron av ett prov ar inte fransvaron av ett behov.
     await c.query('UPDATE stream_session_pointer SET session_id=NULL, updated_at=now() '
       + 'WHERE workspace_id=$1 AND session_id=$2', [workspaceId, aktiv.id]);
     await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id, endedAt });
