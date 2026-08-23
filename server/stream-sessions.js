@@ -713,7 +713,7 @@ function skapaStreamSessions({ pool }) {
     // MASKINVAGEN. Bryggan kanner konto, rum, korning och sekvens - inte serverns sessionId.
     // Servern loser sjalv fram sessionerna ur respektive pekare, och `reason` TVINGAS till
     // 'bridge': en extern brygga far inte kunna skriva 'ersatt' eller 'manuell' i historiken.
-    async avslutaLiveFranBrygga({ tiktokUsername, roomId, bridgeRunId, seq } = {}) {
+    async avslutaLiveFranBrygga({ tiktokUsername, roomId, bridgeRunId, seq, reason } = {}) { /*MUT4*/
       const nyckel = kontonyckel(tiktokUsername);
       if (!nyckel) throw fel(400, 'kontonamn saknas');
       const rum = String(roomId == null ? '' : roomId).trim();
@@ -731,7 +731,8 @@ function skapaStreamSessions({ pool }) {
           await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
             + 'FOR NO KEY UPDATE', [ws]);
         }
-        const dom = {}; /*MUT3 seq-kontrollen bortmuterad*/
+        // Seq valideras EN gang for hela kontobeskedet, pa samma client.
+        const dom = await sekvensdom(c, { nyckel, bridgeRunId, seq });
         if (dom.skal) { await c.query('ROLLBACK'); return { stale: true, skal: dom.skal, workspaces: [] }; }
         if (dom.idempotent) {
           await c.query('ROLLBACK');
@@ -739,7 +740,7 @@ function skapaStreamSessions({ pool }) {
         }
         const resultat = [];
         for (const w of ws) {
-          resultat.push(await avslutaForWorkspace(c, { workspaceId: w, rum, reason: 'bridge' }));
+          resultat.push(await avslutaForWorkspace(c, { workspaceId: w, rum, reason: reason || 'bridge' })); /*MUT4*/
         }
         await c.query('COMMIT');
         return { stale: false, workspaces: resultat };
