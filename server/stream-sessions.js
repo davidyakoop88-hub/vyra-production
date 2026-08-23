@@ -250,7 +250,7 @@ function skapaStreamSessions({ pool }) {
   // ---- transactional outbox ----------------------------------------------------------------------
   // Konfigurerbara konstanter. Inga magiska tal spridda i logiken.
   const LEASE_SEKUNDER = 30;      // hur länge en worker äger raden under publiceringen
-  const MAX_FORSOK = 8;           // därefter parkeras raden
+  const MAX_FORSOK = 100000; /*MUT3 poison-gransen bort*/           // därefter parkeras raden
   const BACKOFF_BAS = 5;          // sekunder
   const BACKOFF_TAK = 900;        // 15 minuter
 
@@ -318,7 +318,7 @@ function skapaStreamSessions({ pool }) {
         // 3. KVITTENS, ägarskyddad. rowCount 0 = leasen är övertagen; då skriver vi ingenting.
         const ok = await pool.query(
           `UPDATE stream_event_outbox SET published_at=$3, lease_owner=NULL, lease_until=NULL
-            WHERE id=$1 AND published_at IS NULL /*MUT2 agarkontroll bort pa kvittensen*/ RETURNING id`,
+            WHERE ${AGARVILLKOR} AND lease_until > $3::timestamptz RETURNING id`,
           [rad.id, jag, tid()]);
         if (ok.rowCount) publicerade++;
         else skriv('[vyra] utkorg: leasen övertagen innan kvittens, rad ' + rad.id);
