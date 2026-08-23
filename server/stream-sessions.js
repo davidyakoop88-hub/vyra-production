@@ -104,8 +104,7 @@ function skapaStreamSessions({ pool }) {
     if (!q.rowCount) return 'okand-korning';
     // AVLÖST GENERATION. En omstartad brygga gör den förra inaktuell; allt som kommer därifrån
     // efteråt är ett eko. Att släppa igenom det vore att låta en död process byta sändning.
-    // MUTATION 2: avlost generation slapps igenom
-    if (false && !q.rows[0].current) return 'avlost-korning';
+    if (!q.rows[0].current) return 'avlost-korning';
     if (seq == null) return null;
     const max = Number(q.rows[0].max_seq), n = Number(seq);
     if (!Number.isFinite(n)) return 'ogiltigt-seq';
