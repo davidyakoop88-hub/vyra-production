@@ -1560,8 +1560,10 @@ prov('T5 · en gammal worker kan inte kvittera efter att leasen tagits över', a
     await pool.query("UPDATE stream_event_outbox SET lease_owner='ny', lease_until=$1",
       [new Date(T0.getTime() + 30000)]);
   } });
-  assert.equal(n, 0, 'den gamla workern kvitterade en rad den inte längre ägde');
   const rad = (await utkorg(pool))[0];
+  console.log('[T5-DIAG] n=' + n + ' published_at=' + rad.published_at
+    + ' lease_owner=' + rad.lease_owner + ' attempts=' + rad.attempts);
+  assert.equal(n, 0, 'den gamla workern kvitterade en rad den inte längre ägde');
   assert.equal(rad.published_at, null, 'raden markerades publicerad av fel ägare');
   assert.equal(rad.lease_owner, 'ny', 'den nya ägaren skrevs över');
 });
