@@ -543,8 +543,10 @@ prov('I4 · samma seq två gånger är idempotent', async () => {
   const a = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 7 });
   const b = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 7 });
   assert.equal(a.workspaces[0].created, true);
-  assert.equal(b.workspaces[0].created, false, 'samma seq skapade en andra session');
-  assert.equal(b.workspaces[0].session.id, a.workspaces[0].session.id);
+  // Idempotent besked ar en REN no-op: inga workspaces i svaret. Samma kontraktsandring som
+  // R1 och P3 foljer. Att sessionen ar ORORD mats nedan, mot databasen.
+  assert.deepEqual(b.workspaces, [], 'ett idempotent besked svarade om sessioner');
+  assert.equal(b.idempotent, true, 'svaret markerades inte som idempotent');
   assert.equal((await rader(pool, WS_A)).length, 1);
 });
 
@@ -2150,6 +2152,16 @@ prov('X5 · ett blockerat workspace hindrar inte ett annat', async () => {
   await laggUtkorgsrad(pool, WS_A, 'live:start:a-ny', 'live:start');
   await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [slutId]);
   await laggUtkorgsrad(pool, WS_B, 'live:start:b', 'live:start');
+
+  const diag = await pool.query(
+    'SELECT k.id, k.workspace_id, k.event_id, k.published_at, k.parked_at, k.next_attempt_at, '
+    + '  (k.next_attempt_at <= now()) AS i_tid, '
+    + '  NOT EXISTS (SELECT 1 FROM stream_event_outbox a WHERE a.workspace_id=k.workspace_id '
+    + '     AND a.id<k.id AND a.published_at IS NULL) AS ordning_ok '
+    + 'FROM stream_event_outbox k ORDER BY k.id');
+  console.log('[X5-DIAG] ' + JSON.stringify(diag.rows.map(r => ({
+    id: Number(r.id), ws: r.workspace_id === WS_A ? 'A' : 'B', ev: r.event_id,
+    parkerad: !!r.parked_at, i_tid: r.i_tid, ordning_ok: r.ordning_ok }))));
 
   const skickat = [];
   await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
