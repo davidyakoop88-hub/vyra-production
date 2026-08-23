@@ -1657,3 +1657,29 @@ prov('T9 · krasch efter leverans ger ompublicering med SAMMA event_id', async (
   // provas i event-/klientblocket.
   assert.match(levererat[0], /^live:start:/);
 });
+
+prov('T10 · en gammal worker som MISSLYCKAS efter övertagandet rör inte raden', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date(Date.now() + 60000);
+  const fore = (await utkorg(pool))[0];
+
+  // Leasen tas över mitt i, och DÄREFTER misslyckas leveransen. Utan ägarvillkoret på fel-vägen
+  // skulle den gamla workern öka attempts, flytta backoffen och kunna parkera en rad som numera
+  // tillhör någon annan — ett skydd som bara sitter på kvittensen räcker inte.
+  await sessioner.publiceraUtkorg({ workerId: 'gammal', nu: () => T0, sand: async () => {
+    await pool.query("UPDATE stream_event_outbox SET lease_owner='ny', lease_until=$1",
+      [new Date(T0.getTime() + 30000)]);
+    throw new Error('leveransen föll efter övertagandet');
+  } });
+
+  const efter = (await utkorg(pool))[0];
+  assert.equal(Number(efter.attempts), Number(fore.attempts),
+    'den gamla workern räknade upp attempts på någon annans rad');
+  assert.equal(efter.last_error, fore.last_error, 'den gamla workern skrev sitt fel på annans rad');
+  assert.equal(new Date(efter.next_attempt_at).getTime(),
+    new Date(fore.next_attempt_at).getTime(), 'den gamla workern flyttade backoffen');
+  assert.equal(efter.parked_at, null, 'den gamla workern parkerade någon annans rad');
+  assert.equal(efter.lease_owner, 'ny', 'den nya ägaren skrevs över');
+});
