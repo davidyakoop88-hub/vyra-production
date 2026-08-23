@@ -2087,11 +2087,14 @@ prov('X1 · bara den ALDRE raden kan claimas nar tva workers kor mot samma works
   const startId = await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
   assert.ok(startId > slutId, 'provet byggde raderna i fel ordning');
 
+  // Injicerad klocka som ligger EFTER radernas skapande. Utan den jamfors databasens now() mot
+  // nodeklockan, och en hårsmåns skillnad gor att ingen rad ar claimbar.
+  const NU = () => new Date(Date.now() + 60000);
   const a = [], b = [];
   const langsam = lista => async rad => { lista.push(rad.event_id); await new Promise(r => setTimeout(r, 120)); };
   await Promise.all([
-    sessioner.publiceraUtkorg({ workerId: 'w-a', sand: langsam(a) }),
-    sessioner.publiceraUtkorg({ workerId: 'w-b', sand: langsam(b) }),
+    sessioner.publiceraUtkorg({ workerId: 'w-a', nu: NU, sand: langsam(a) }),
+    sessioner.publiceraUtkorg({ workerId: 'w-b', nu: NU, sand: langsam(b) }),
   ]);
   const alla = [...a, ...b];
   assert.deepEqual(alla, ['live:end:gammal'],
@@ -2104,9 +2107,10 @@ prov('X2 · nar den aldre kvitterats kan den nyare claimas', async () => {
   await laggUtkorgsrad(pool, WS_A, 'live:end:gammal', 'live:end');
   await laggUtkorgsrad(pool, WS_A, 'live:start:ny', 'live:start');
 
+  const NU = () => new Date(Date.now() + 60000);
   const skickat = [];
-  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
-  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  await sessioner.publiceraUtkorg({ workerId: 'w', nu: NU, sand: async r => skickat.push(r.event_id) });
+  await sessioner.publiceraUtkorg({ workerId: 'w', nu: NU, sand: async r => skickat.push(r.event_id) });
   assert.deepEqual(skickat, ['live:end:gammal', 'live:start:ny'],
     'ordningen holl inte over tva omgangar: ' + JSON.stringify(skickat));
 });
@@ -2137,7 +2141,8 @@ prov('X4 · en POISON-PARKERAD aldre rad blockerar den nyare (fail-closed)', asy
   await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [slutId]);
 
   const skickat = [];
-  const n = await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  const n = await sessioner.publiceraUtkorg({ workerId: 'w', nu: () => new Date(Date.now() + 60000),
+    sand: async r => skickat.push(r.event_id) });
   // Alternativet vore att slappa forbi den parkerade och bryta ordningen tyst. Poisonlistan gor
   // blockeringen synlig i stallet.
   assert.equal(n, 0, 'nagot publicerades trots en parkerad aldre rad');
@@ -2153,18 +2158,9 @@ prov('X5 · ett blockerat workspace hindrar inte ett annat', async () => {
   await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [slutId]);
   await laggUtkorgsrad(pool, WS_B, 'live:start:b', 'live:start');
 
-  const diag = await pool.query(
-    'SELECT k.id, k.workspace_id, k.event_id, k.published_at, k.parked_at, k.next_attempt_at, '
-    + '  (k.next_attempt_at <= now()) AS i_tid, '
-    + '  NOT EXISTS (SELECT 1 FROM stream_event_outbox a WHERE a.workspace_id=k.workspace_id '
-    + '     AND a.id<k.id AND a.published_at IS NULL) AS ordning_ok '
-    + 'FROM stream_event_outbox k ORDER BY k.id');
-  console.log('[X5-DIAG] ' + JSON.stringify(diag.rows.map(r => ({
-    id: Number(r.id), ws: r.workspace_id === WS_A ? 'A' : 'B', ev: r.event_id,
-    parkerad: !!r.parked_at, i_tid: r.i_tid, ordning_ok: r.ordning_ok }))));
-
   const skickat = [];
-  await sessioner.publiceraUtkorg({ workerId: 'w', sand: async r => skickat.push(r.event_id) });
+  await sessioner.publiceraUtkorg({ workerId: 'w', nu: () => new Date(Date.now() + 60000),
+    sand: async r => skickat.push(r.event_id) });
   assert.deepEqual(skickat, ['live:start:b'],
     'fel rader publicerades: ' + JSON.stringify(skickat) + ' — WS_A ska vara blockerat, WS_B fritt');
 });
