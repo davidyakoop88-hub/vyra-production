@@ -62,6 +62,9 @@ async function rigg() {
       "INSERT INTO workspaces(id,name,owner_user_id) VALUES($1,'sessionsprov',$2) "
       + 'ON CONFLICT (id) DO NOTHING', [ws, AGARE]);
   }
+  // Skyddsnat: ett avbrutet V1 skulle annars lamna en trigger som faller varje senare auditinsert.
+  await pool.query('DROP TRIGGER IF EXISTS prov_poison_rollback_trg ON audit_log');
+  await pool.query('DROP FUNCTION IF EXISTS prov_poison_rollback_fn()');
   await pool.query("INSERT INTO bridge_accounts(account_key) VALUES($1) ON CONFLICT DO NOTHING",
     [KONTO]);
   await pool.query('DELETE FROM bridge_runs WHERE account_key=$1', [KONTO]);
@@ -1767,4 +1770,92 @@ prov('U4 · efter utgången lease kan en NY worker claima och behandla raden nor
   const rad = (await utkorg(pool))[0];
   assert.ok(rad.published_at, 'raden markerades inte av den nya ägaren');
   assert.equal(rad.lease_owner, null, 'leasen städades inte vid kvittens');
+});
+
+// ================================================================================================
+// V · POISON OCH AUDIT I SAMMA TRANSAKTION
+//
+// Koden lovar att en misslyckad auditinsert rullar tillbaka parkeringen. Det var ett PÅSTÅENDE:
+// konstruktionen ser rätt ut, men ingenting mätte den. En tyst parkerad rad utan auditspår är
+// precis det som gör en giftig händelse osynlig, så löftet måste bevisas.
+//
+// Felet kommer från riktig Postgres-mekanik — en trigger — inte från en injicerad JS-krasch eller
+// en produktionsseam. Triggern är villkorad på BÅDE action och det unika eventId:t i
+// auditdetaljerna, så parallella eller framtida auditprov inte påverkas.
+// ================================================================================================
+
+const TRIGGERFUNKTION = 'prov_poison_rollback_fn';
+const TRIGGERNAMN = 'prov_poison_rollback_trg';
+
+const triggerFinns = pool => pool.query(
+  'SELECT (SELECT count(*) FROM pg_trigger WHERE tgname=$1)::int AS trg, '
+  + '(SELECT count(*) FROM pg_proc WHERE proname=$2)::int AS fn', [TRIGGERNAMN, TRIGGERFUNKTION])
+  .then(r => r.rows[0]);
+
+prov('V1 · en misslyckad auditinsert rullar tillbaka HELA parkeringen', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+
+  // 1. Raden står ett försök från gränsen: nästa misslyckande SKA parkera den.
+  await pool.query('UPDATE stream_event_outbox SET attempts=7');
+  const fore = (await utkorg(pool))[0];
+  assert.equal(Number(fore.attempts), 7, 'utgångsläget är inte attempts=7');
+  assert.equal(fore.parked_at, null);
+  const eventId = fore.event_id;
+
+  const T0 = new Date(Date.now() + 60000);
+  const trasig = async () => { throw new Error('mottagaren är nere'); };
+
+  try {
+    // Triggern kastar BARA för den här händelsen. Villkoret bär både action och eventId, så
+    // ingen annan auditrad — nu eller senare — kan träffas av den.
+    await pool.query(
+      'CREATE OR REPLACE FUNCTION ' + TRIGGERFUNKTION + '() RETURNS trigger AS $fn$ '
+      + 'BEGIN '
+      + "  IF NEW.action = 'stream_outbox_poison' AND NEW.metadata->>'eventId' = "
+      + "     " + "'" + eventId + "'" + ' THEN '
+      + "    RAISE EXCEPTION 'provtrigger stoppar just den har poisonhandelsen'; "
+      + '  END IF; '
+      + '  RETURN NEW; '
+      + 'END; $fn$ LANGUAGE plpgsql');
+    await pool.query('CREATE TRIGGER ' + TRIGGERNAMN + ' BEFORE INSERT ON audit_log '
+      + 'FOR EACH ROW EXECUTE FUNCTION ' + TRIGGERFUNKTION + '()');
+
+    // 2-4. Poisonvägen sätter parked_at, auditinserten kastar EFTER den uppdateringen, och hela
+    //      transaktionen rullas tillbaka. Felet propagerar ut ur publiceraUtkorg.
+    await assert.rejects(
+      () => sessioner.publiceraUtkorg({ workerId: 'w', nu: () => T0, sand: trasig }),
+      e => /provtrigger stoppar/.test(String(e.message)),
+      'poisonvägen kastade inte det fel triggern reste');
+  } finally {
+    // 8. Städningen sker oavsett utfall — ett prov som lämnar en trigger kvar förgiftar hela sviten.
+    await pool.query('DROP TRIGGER IF EXISTS ' + TRIGGERNAMN + ' ON audit_log');
+    await pool.query('DROP FUNCTION IF EXISTS ' + TRIGGERFUNKTION + '()');
+  }
+
+  // 9. Städningen KONTROLLERAS, inte antas.
+  const kvar = await triggerFinns(pool);
+  assert.equal(kvar.trg, 0, 'triggern ligger kvar efter provet');
+  assert.equal(kvar.fn, 0, 'triggerfunktionen ligger kvar efter provet');
+
+  // 5-7. Ingenting fick förändras delvis.
+  const efter = (await utkorg(pool))[0];
+  assert.equal(efter.parked_at, null, 'parkeringen överlevde den misslyckade auditinserten');
+  assert.equal(Number(efter.attempts), 7, 'attempts ändrades trots rollback: ' + efter.attempts);
+  assert.equal(efter.last_error, fore.last_error, 'last_error skrevs trots rollback');
+  assert.equal(new Date(efter.next_attempt_at).getTime(),
+    new Date(fore.next_attempt_at).getTime(), 'backoffen flyttades trots rollback');
+  assert.equal(efter.published_at, null);
+  assert.equal(efter.lease_owner, 'w', 'leasen städades trots rollback — då är UPDATE:n inte atomisk');
+  assert.equal(await poisonAudit(pool), 0, 'en poison-auditrad överlevde rollbacken');
+
+  // 10. Samma väg UTAN trigger måste lyckas — annars bevisar provet bara att någonting går fel.
+  const T1 = new Date(T0.getTime() + 31000);          // leasen från förra försöket har löpt ut
+  await sessioner.publiceraUtkorg({ workerId: 'w2', nu: () => T1, sand: trasig });
+  const slutlig = (await utkorg(pool))[0];
+  assert.ok(slutlig.parked_at, 'raden parkerades inte när auditen fick gå igenom');
+  assert.equal(Number(slutlig.attempts), 8);
+  assert.equal(await poisonAudit(pool), 1, 'fel antal auditrader efter lyckad parkering');
+  assert.equal((await sessioner.giftigaHandelser()).length, 1);
 });
