@@ -466,8 +466,8 @@ function skapaStreamSessions({ pool }) {
     // RETURNING ended_at ger DATABASENS exakta sluttid, som gar rakt in i payloaden.
     // `ended_at IS NULL` gor ett andra anrop till en ren no-op i stallet for en andra stangning.
     const stangd = await c.query(
-      'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 '
-      + 'RETURNING ended_at' /*MUT2*/, [aktiv.id, reason]);
+      'UPDATE stream_sessions SET ended_at=now(), end_reason=$2 WHERE id=$1 AND ended_at IS NULL '
+      + 'RETURNING ended_at', [aktiv.id, reason]);
     if (!stangd.rowCount) return { workspaceId, ended: false, skal: 'redan-stangd' };
     const endedAt = stangd.rows[0].ended_at;
 
@@ -731,8 +731,7 @@ function skapaStreamSessions({ pool }) {
           await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
             + 'FOR NO KEY UPDATE', [ws]);
         }
-        // Seq valideras EN gang for hela kontobeskedet, pa samma client.
-        const dom = await sekvensdom(c, { nyckel, bridgeRunId, seq });
+        const dom = {}; /*MUT3 seq-kontrollen bortmuterad*/
         if (dom.skal) { await c.query('ROLLBACK'); return { stale: true, skal: dom.skal, workspaces: [] }; }
         if (dom.idempotent) {
           await c.query('ROLLBACK');
