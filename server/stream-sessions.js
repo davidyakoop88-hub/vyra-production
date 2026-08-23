@@ -474,7 +474,7 @@ function skapaStreamSessions({ pool }) {
     // `session_id=$2` gor ett forsenat slutbesked ofarligt: har pekaren redan flyttats till en
     // nyare session matchar satsen inte, och den pagaende sandningen ror(d)s inte.
     await c.query('UPDATE stream_session_pointer SET session_id=NULL, updated_at=now() '
-      + 'WHERE workspace_id=$1 AND session_id=$2', [workspaceId, aktiv.id]);
+      + 'WHERE workspace_id=$1 AND $2::uuid IS NOT NULL' /*MUT1*/, [workspaceId, aktiv.id]);
     await skrivEndOutbox(c, { workspaceId, sessionId: aktiv.id, endedAt });
     return { workspaceId, ended: true, session: { id: aktiv.id, roomId: aktiv.room_id }, endedAt };
   }
