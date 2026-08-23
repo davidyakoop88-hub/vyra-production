@@ -250,7 +250,7 @@ function skapaStreamSessions({ pool }) {
   // ---- transactional outbox ----------------------------------------------------------------------
   // Konfigurerbara konstanter. Inga magiska tal spridda i logiken.
   const LEASE_SEKUNDER = 30;      // hur länge en worker äger raden under publiceringen
-  const MAX_FORSOK = 100000; /*MUT3 poison-gransen bort*/           // därefter parkeras raden
+  const MAX_FORSOK = 8;           // därefter parkeras raden
   const BACKOFF_BAS = 5;          // sekunder
   const BACKOFF_TAK = 900;        // 15 minuter
 
