@@ -217,7 +217,7 @@ function skapaStreamSessions({ pool }) {
       for (const w of state.widgets) {
         if (!w || w.type !== 'templateGiftCampaign') continue;
         for (const nyckel of Object.keys(w)) {
-          if (!/^gift/.test(nyckel)) continue; /*MUTB konfig nollstalls*/
+          if (!/^giftCurrent\d+$/.test(nyckel)) continue;
           if (Number(w[nyckel]) === 0) continue;      // redan noll: ingen skrivning, ingen version
           w[nyckel] = 0;
           rort = true;
