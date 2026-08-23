@@ -213,13 +213,13 @@ function skapaStreamSessions({ pool }) {
       // FOR UPDATE låser biljetten så två samtidiga besked inte kan konsumera samma. Det partiella
       // unika indexet garanterar att det finns högst en obrukad.
       const b = await c.query(
-        'SELECT created_at FROM stream_room_reopen '
+        'SELECT 1 FROM stream_room_reopen '
         + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL FOR UPDATE LIMIT 1',
         [workspaceId, rum]);
       if (!b.rowCount) {
         return { workspaceId, created: false, session: null, stale: true, skal: 'stangt-rum' };
       }
-      biljett = b.rows[0].created_at;
+      biljett = true;
     }
 
     // c) Byte: den föregående sändningen avslutas som ERSATT — inte 'bridge', för bryggan sa aldrig
@@ -239,8 +239,14 @@ function skapaStreamSessions({ pool }) {
     await c.query('UPDATE stream_session_pointer SET session_id=$2, updated_at=now() '
       + 'WHERE workspace_id=$1', [workspaceId, sessionId]);
     if (biljett) {
+      // Matchar på `consumed_at IS NULL`, INTE på created_at. Postgres timestamptz har
+      // mikrosekundsupplösning och JS Date bara millisekunder — ett värde som läses ut och skickas
+      // tillbaka som parameter tappar precision och matchar då INGEN rad. Uppmätt i CI 2026-08-23:
+      // biljetten konsumerades aldrig, och nästa prov föll på det unika indexet i stället.
+      // Det partiella unika indexet garanterar att det finns högst en obrukad, och raden är låst
+      // med FOR UPDATE ovan — så villkoret är exakt.
       await c.query('UPDATE stream_room_reopen SET consumed_at=now() '
-        + 'WHERE workspace_id=$1 AND room_id=$2 AND created_at=$3', [workspaceId, rum, biljett]);
+        + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL', [workspaceId, rum]);
     }
     return { workspaceId, created: true, session: { id: sessionId, roomId: rum },
       ersatte: aktiv ? aktiv.id : null, biljettAnvand: !!biljett };
