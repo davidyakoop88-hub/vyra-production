@@ -70,6 +70,8 @@ async function rigg() {
     // lämnade kopplingen kvar åt nästa. Uppmätt i CI 2026-08-23: O2 föll på "2 !== 1" — inte för
     // att generationskontrollen var fel, utan för att K1 och B1-B3 hade kopplat WS_B till samma
     // konto tidigare i filen. Varje prov ska deklarera sina EGNA anslutningar.
+    await pool.query('DELETE FROM goal_runtime WHERE overlay_id IN (SELECT id FROM overlays WHERE workspace_id=$1)', [ws]);
+    await pool.query('DELETE FROM overlays WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_room_reopen WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM tiktok_connections WHERE workspace_id=$1', [ws]);
     await pool.query('DELETE FROM stream_session_pointer WHERE workspace_id=$1', [ws]);
@@ -1235,3 +1237,195 @@ prov('R8 · kontrollmätning: utan WS_B:s krock går samma besked igenom och kon
     assert.equal(await obrukade(pool, WS_A, RUM_1), 0, 'WS_A:s biljett konsumerades inte');
     assert.equal(await obrukade(pool, WS_B, RUM_1), 0, 'WS_B:s biljett konsumerades inte');
   });
+
+// ================================================================================================
+// S · NOLLSTÄLLNINGEN
+// ================================================================================================
+
+const skapaOverlay = (pool, ws, state) => pool.query(
+  "INSERT INTO overlays(workspace_id,name,state) VALUES($1,'prov',$2::jsonb) RETURNING id, version",
+  [ws, JSON.stringify(state)]).then(r => r.rows[0]);
+
+const overlayRad = (pool, id) => pool.query(
+  'SELECT state, version FROM overlays WHERE id=$1', [id]).then(r => r.rows[0]);
+
+const kvitton = (pool, sessionId) => pool.query(
+  'SELECT scope FROM stream_session_reset WHERE session_id=$1 ORDER BY scope', [sessionId])
+  .then(r => r.rows.map(x => x.scope));
+
+const KAMPANJ = () => ({ widgets: [{
+  id: 'c1', type: 'templateGiftCampaign',
+  giftCurrent0: 37, giftCurrent1: 9, giftTarget0: 50, giftName0: 'Rose',
+  campaignTheme: 'neon', campaignSubtitle: 'PUSH THE EVENT',
+}] });
+
+prov('S1 · två samtidiga nollställningar av samma session — bara en kör', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  let korningar = 0;
+  const utfor = async () => { korningar++; await new Promise(r => setTimeout(r, 60)); };
+  // Kvittot ÄR låset: primärnyckeln (session_id, scope) avgör tävlingen, inte koden.
+  const svar = await Promise.all([
+    sessioner.nollstall({ sessionId: ett.session.id, scope: 'egen-scope', utfor }),
+    sessioner.nollstall({ sessionId: ett.session.id, scope: 'egen-scope', utfor }),
+  ]);
+  assert.equal(svar.filter(Boolean).length, 1, 'båda transaktionerna trodde sig ha vunnit kvittot');
+  assert.equal(korningar, 1, 'nollställningen kördes ' + korningar + ' gånger');
+});
+
+prov('S2 · ett fel EFTER kvittot och en verklig skrivning rullar tillbaka båda', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, {});
+  await pool.query('INSERT INTO goal_runtime(overlay_id,widget_id,metric,baseline,progress,target) '
+    + "VALUES($1,'w1','likes',250,900,5000)", [overlay.id]);
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+
+  // Kvitto tas, en RIKTIG nollställning skrivs, och sedan kastas felet. Utan gemensam transaktion
+  // hade progress stått på 0 medan kvittot sa "gjort" — och nästa försök hade hoppat över den.
+  await assert.rejects(() => sessioner.nollstall({
+    sessionId: ett.session.id, scope: 'goal_runtime',
+    utfor: async c => {
+      await c.query('UPDATE goal_runtime SET progress=0 WHERE overlay_id=$1', [overlay.id]);
+      throw new Error('avsiktligt fel efter en verklig resetskrivning');
+    },
+  }));
+  const g = await pool.query('SELECT progress FROM goal_runtime WHERE overlay_id=$1', [overlay.id]);
+  assert.equal(Number(g.rows[0].progress), 900, 'resetskrivningen överlevde felet');
+  assert.deepEqual(await kvitton(pool, ett.session.id), ['gift_campaign', 'goal_runtime'],
+    'kvittot från det misslyckade försöket lades till eller togs bort fel');
+});
+
+prov('S3 · en okänd framtida konfigurationsnyckel överlever nollställningen', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const state = KAMPANJ();
+  // En nyckel som inte fanns när resetkoden skrevs. En generell JSON-rensning hade tagit den.
+  state.widgets[0].nyFramtidaInstallning = { lage: 'oktober', ton: 42 };
+  state.widgets[0].giftCurrent7 = 12;
+  const overlay = await skapaOverlay(pool, WS_A, state);
+
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const w = (await overlayRad(pool, overlay.id)).state.widgets[0];
+  assert.equal(w.giftCurrent0, 0);
+  assert.equal(w.giftCurrent7, 0, 'högre index nollställdes inte');
+  assert.deepEqual(w.nyFramtidaInstallning, { lage: 'oktober', ton: 42 },
+    'en okänd konfigurationsnyckel försvann i nollställningen');
+  assert.equal(w.giftTarget0, 50);
+  assert.equal(w.campaignSubtitle, 'PUSH THE EVENT');
+  assert.equal(w.giftName0, 'Rose');
+});
+
+prov('S4 · en samtidig Studio-skrivning tappas inte av nollställningen', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, KAMPANJ());
+
+  // Grinden håller overlayraden. Nollställningen blockerar på FOR UPDATE och kan alltså inte
+  // läsa state förrän Studio committat — det är hela poängen med att låsa FÖRE läsningen.
+  const grind = await pool.connect();
+  await grind.query('BEGIN');
+  await grind.query('SELECT id FROM overlays WHERE id=$1 FOR UPDATE', [overlay.id]);
+
+  const reset = sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  await new Promise(r => setTimeout(r, 200));
+  // Studio lägger till en ny konfigurationsnyckel medan nollställningen väntar.
+  await grind.query(
+    "UPDATE overlays SET state = jsonb_set(state,'{widgets,0,studioNyckel}','\"skrevs-under-tiden\"'), "
+    + 'version=version+1 WHERE id=$1', [overlay.id]);
+  await grind.query('COMMIT');
+  grind.release();
+  await reset;
+
+  const w = (await overlayRad(pool, overlay.id)).state.widgets[0];
+  assert.equal(w.studioNyckel, 'skrevs-under-tiden',
+    'nollställningen skrev tillbaka en gammal kopia och åt upp Studios ändring');
+  assert.equal(w.giftCurrent0, 0, 'nollställningen utfördes inte');
+  assert.equal(w.campaignSubtitle, 'PUSH THE EVENT');
+});
+
+prov('S5 · overlayns version höjs exakt en gång när campaign-state ändras', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, KAMPANJ());
+  const fore = Number(overlay.version);
+
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const efter = await overlayRad(pool, overlay.id);
+  assert.equal(Number(efter.version), fore + 1,
+    'versionen gick från ' + fore + ' till ' + efter.version + ' — förväntat exakt +1');
+  assert.equal(efter.state.widgets[0].giftCurrent0, 0);
+});
+
+prov('S6 · versionen ändras inte när det inte finns något att nollställa', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  // Redan nollade räknare, plus en overlay helt utan campaign-widget.
+  const nollad = KAMPANJ();
+  nollad.widgets[0].giftCurrent0 = 0; nollad.widgets[0].giftCurrent1 = 0;
+  const a = await skapaOverlay(pool, WS_A, nollad);
+  const b = await skapaOverlay(pool, WS_A, { widgets: [{ id: 'x', type: 'templateTopLike' }] });
+
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  assert.equal(Number((await overlayRad(pool, a.id)).version), Number(a.version),
+    'versionen bumpades trots att inget värde ändrades');
+  assert.equal(Number((await overlayRad(pool, b.id)).version), Number(b.version),
+    'en overlay utan campaign-widget fick sin version bumpad');
+});
+
+prov('S7 · fel i det ANDRA scopet rullar tillbaka det förstas kvitto OCH skrivningar', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, KAMPANJ());
+  // epoch är integer. Sätts den till maxvärdet spränger epoch+1 kolumnen — ett riktigt fel i
+  // goal_runtime-scopet, som körs EFTER gift_campaign. Ingen injicerad krasch.
+  await pool.query('INSERT INTO goal_runtime(overlay_id,widget_id,metric,baseline,progress,target,epoch) '
+    + "VALUES($1,'w1','likes',250,900,5000,2147483647)", [overlay.id]);
+
+  await assert.rejects(() => sessioner.startaLive({ konto: KONTO, roomId: RUM_1 }),
+    e => /out of range|overflow/i.test(String(e.message)),
+    'goal_runtime-scopet föll inte som avsett');
+
+  // Det FÖRSTA scopet hann både ta sitt kvitto och skriva. Båda ska vara borta.
+  const w = (await overlayRad(pool, overlay.id)).state.widgets[0];
+  assert.equal(w.giftCurrent0, 37, 'gift_campaign-skrivningen överlevde felet i nästa scope');
+  assert.equal(Number((await overlayRad(pool, overlay.id)).version), Number(overlay.version),
+    'versionen bumpades trots rollback');
+  const kvar = await pool.query('SELECT count(*)::int AS n FROM stream_session_reset');
+  assert.equal(kvar.rows[0].n, 0, 'ett kvitto överlevde rollbacken');
+  const sessioner_kvar = await pool.query(
+    'SELECT count(*)::int AS n FROM stream_sessions WHERE workspace_id=$1', [WS_A]);
+  assert.equal(sessioner_kvar.rows[0].n, 0, 'sessionen överlevde rollbacken');
+});
+
+prov('S8 · återanslutning ger inget nytt kvitto; en NY session får sitt eget', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  const overlay = await skapaOverlay(pool, WS_A, KAMPANJ());
+
+  const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  assert.deepEqual(await kvitton(pool, ett.session.id), ['gift_campaign', 'goal_runtime']);
+  const versionEfterForsta = Number((await overlayRad(pool, overlay.id)).version);
+
+  // Räknaren tickar upp igen under sändningen.
+  await pool.query("UPDATE overlays SET state=jsonb_set(state,'{widgets,0,giftCurrent0}','5') "
+    + 'WHERE id=$1', [overlay.id]);
+
+  // ÅTERANSLUTNING: samma aktiva rum. Inget nytt kvitto, ingen ny nollställning — annars hade
+  // varje nätverksglapp raderat siffrorna mitt i sändningen.
+  const igen = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 })).workspaces[0];
+  assert.equal(igen.created, false);
+  assert.deepEqual(await kvitton(pool, ett.session.id), ['gift_campaign', 'goal_runtime'],
+    'återanslutningen skapade fler kvitton');
+  assert.equal((await overlayRad(pool, overlay.id)).state.widgets[0].giftCurrent0, 5,
+    'återanslutningen nollställde mitt i sändningen');
+
+  // NY session: eget kvitto, nollställd exakt en gång.
+  const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_2 })).workspaces[0];
+  assert.notEqual(tva.session.id, ett.session.id);
+  assert.deepEqual(await kvitton(pool, tva.session.id), ['gift_campaign', 'goal_runtime']);
+  assert.equal((await overlayRad(pool, overlay.id)).state.widgets[0].giftCurrent0, 0,
+    'den nya sessionen nollställde inte');
+  assert.ok(Number((await overlayRad(pool, overlay.id)).version) > versionEfterForsta);
+});

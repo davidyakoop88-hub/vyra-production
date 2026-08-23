@@ -8,6 +8,8 @@
 // AKTIVERINGSFLAGGA (fail-closed): skrivvägen över HTTP är avstängd om inte
 // VYRA_SANDNINGSIDENTITET är exakt strängen '1'. Allt annat — 'true', 'ja', 'on', tomt, osatt —
 // är AV. Flaggan gäller rutterna, som inte finns än; proven anropar modulen direkt.
+const GoalRuntime = require('./goal-runtime.js');
+
 const AKTIVERAD = () => process.env.VYRA_SANDNINGSIDENTITET === '1';
 
 // Husregeln finns redan i capacity-gate.js:24 och återanvänds ordagrant. En andra
@@ -176,6 +178,74 @@ function skapaStreamSessions({ pool }) {
   }
 
 
+
+  // ---- nollställning ---------------------------------------------------------------------------
+  // SCOPES. Stabila strängar, ett kvitto per scope. Ordningen är fast och godtycklig i sak, men
+  // FIXERAD med flit: samma ordning varje gång gör felbilder reproducerbara. Faller ett senare
+  // scope rullar hela transaktionen tillbaka, inklusive tidigare scopes kvitton och skrivningar —
+  // en session vars mål aldrig nollställdes är värre än ett sessionsbyte som inte blev av.
+  const SCOPES = ['gift_campaign', 'goal_runtime'];
+
+  // Kvittot ÄR låset. INSERT ... ON CONFLICT DO NOTHING RETURNING gör tävlingen avgjord av
+  // primärnyckeln (session_id, scope) och inte av kod: exakt en transaktion får tillbaka en rad,
+  // och bara den får nollställa.
+  async function taKvitto(c, sessionId, scope) {
+    const r = await c.query(
+      'INSERT INTO stream_session_reset(session_id, scope) VALUES($1,$2) '
+      + 'ON CONFLICT DO NOTHING RETURNING session_id', [sessionId, scope]);
+    return r.rowCount === 1;
+  }
+
+  // GIFT CAMPAIGN. Räknaren bor i overlays.state, på widgetobjektet: gift-event-images.js:236 gör
+  // widget['giftCurrent'+i] += count vid varje gåva och media.js:362 läser tillbaka det.
+  //
+  // Raderna LÅSES och läses i samma sats. Att läsa state utan lås och skriva tillbaka senare hade
+  // skrivit över en samtidig Studio-ändring med en gammal kopia — hela JSON-dokumentet byts ju ut.
+  // Ordningen på id gör att två samtidiga nollställningar tar raderna i samma ordning.
+  //
+  // Bara nycklar som matchar ^giftCurrent\d+$ på widgetar av typen templateGiftCampaign rörs. Ingen
+  // generell JSON-rensning: allt annat i dokumentet är konfiguration, inklusive nycklar som inte
+  // fanns när den här koden skrevs.
+  async function nollstallKampanjerPa(c, workspaceId) {
+    const rader = await c.query(
+      'SELECT id, state FROM overlays WHERE workspace_id=$1 ORDER BY id FOR UPDATE', [workspaceId]);
+    let andrade = 0;
+    for (const rad of rader.rows) {
+      const state = rad.state;
+      if (!state || !Array.isArray(state.widgets)) continue;
+      let rort = false;
+      for (const w of state.widgets) {
+        if (!w || w.type !== 'templateGiftCampaign') continue;
+        for (const nyckel of Object.keys(w)) {
+          if (!/^giftCurrent\d+$/.test(nyckel)) continue;
+          if (Number(w[nyckel]) === 0) continue;      // redan noll: ingen skrivning, ingen version
+          w[nyckel] = 0;
+          rort = true;
+        }
+      }
+      if (!rort) continue;
+      // Versionen är overlayns auktoritativa räknare och höjs BARA när något faktiskt ändrades.
+      // En bump utan ändring hade fått varje klient att hämta om en identisk konfiguration.
+      await c.query('UPDATE overlays SET state=$2::jsonb, version=version+1, updated_at=now() '
+        + 'WHERE id=$1', [rad.id, JSON.stringify(state)]);
+      andrade++;
+    }
+    return andrade;
+  }
+
+  // Produktionsvägen. Namngivna resetfunktioner, allt databasarbete på samma client — inga
+  // nätverksanrop, ingen eventpublicering, inga icke-transaktionella sidoeffekter. Utkorgen är ett
+  // eget block och rör inte den här.
+  async function nollstallForNySession(c, { sessionId, workspaceId }) {
+    const gjort = {};
+    for (const scope of SCOPES) {
+      if (!await taKvitto(c, sessionId, scope)) continue;   // någon annan hann först: no-op
+      if (scope === 'gift_campaign') gjort[scope] = await nollstallKampanjerPa(c, workspaceId);
+      if (scope === 'goal_runtime') gjort[scope] = await GoalRuntime.resetWorkspaceGoals(c, workspaceId);
+    }
+    return gjort;
+  }
+
   // ---- sessionsbeslut per workspace --------------------------------------------------------------
   // Körs INNE i statusbeskedets transaktion, efter att workspaceraden är låst. Varje workspace äger
   // sin EGEN historik och sin egen biljett: ett blockerat workspace får inte hindra ett annat, för
@@ -238,6 +308,12 @@ function skapaStreamSessions({ pool }) {
     const sessionId = ny.rows[0].id;
     await c.query('UPDATE stream_session_pointer SET session_id=$2, updated_at=now() '
       + 'WHERE workspace_id=$1', [workspaceId, sessionId]);
+    // NOLLSTÄLLNINGEN LIGGER I SAMMA TRANSAKTION som sessionen och pekarflytten. Faller den
+    // rullar sessionsbytet tillbaka i sin helhet — hellre det än en sändning vars mål bär förra
+    // sändningens siffror. Bara den här grenen når hit: en återanslutning returnerar långt
+    // tidigare och kan varken skapa kvitto eller nollställa.
+    await nollstallForNySession(c, { sessionId, workspaceId });
+
     if (biljett) {
       // Matchar på `consumed_at IS NULL`, INTE på created_at. Postgres timestamptz har
       // mikrosekundsupplösning och JS Date bara millisekunder — ett värde som läses ut och skickas
@@ -346,9 +422,41 @@ function skapaStreamSessions({ pool }) {
     async avslutaLive() { return { ended: false }; },
     async startaLiveViaHttp() { return inteAn('startaLiveViaHttp'); },
     async tillatRumIgen() { return inteAn('tillatRumIgen'); },
-    async nollstall() { return false; },
-    async nollstallMal() { return inteAn('nollstallMal'); },
-    async nollstallKampanjer() { return inteAn('nollstallKampanjer'); },
+    // TESTSEAM, inte en produktionsväg. `utfor` finns för att prov ska kunna framkalla ett fel
+    // mitt i nollställningen och för att räkna hur många gånger den kördes. Produktionen använder
+    // nollstallForNySession() med NAMNGIVNA resetfunktioner — en generell callback hade öppnat
+    // för nätverksanrop och andra icke-transaktionella sidoeffekter inne i transaktionen.
+    async nollstall({ sessionId, scope, utfor } = {}) {
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        const vann = await taKvitto(c, sessionId, scope);
+        if (!vann) { await c.query('ROLLBACK'); return false; }
+        if (utfor) await utfor(c);
+        await c.query('COMMIT');
+        return true;
+      } catch (e) { try { await c.query('ROLLBACK'); } catch (_) {} throw e; } finally { c.release(); }
+    },
+    // Fristående primitiver, en transaktion var. De tar INGET kvitto — kvittot ägs av
+    // sessionsflödet, som är det enda som vet vilken sändning nollställningen hör till.
+    async nollstallMal({ workspaceId } = {}) {
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        const n = await GoalRuntime.resetWorkspaceGoals(c, workspaceId);
+        await c.query('COMMIT');
+        return n;
+      } catch (e) { try { await c.query('ROLLBACK'); } catch (_) {} throw e; } finally { c.release(); }
+    },
+    async nollstallKampanjer({ workspaceId } = {}) {
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        const n = await nollstallKampanjerPa(c, workspaceId);
+        await c.query('COMMIT');
+        return n;
+      } catch (e) { try { await c.query('ROLLBACK'); } catch (_) {} throw e; } finally { c.release(); }
+    },
     async publiceraUtkorg() { return 0; },
     async tillampaEnGang() { return false; },
     async giftigaHandelser() { return []; },

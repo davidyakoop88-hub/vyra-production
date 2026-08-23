@@ -304,6 +304,27 @@ const MAX_GOAL_VALUE = 1_000_000_000_000;
 // progress comes from events, epoch from reset, metric from the widget in the layout.
 const PATCH_FIELDS = ['baseline', 'target'];
 
+
+// CENTRAL NOLLSTALLNING FOR EN HEL WORKSPACE, pa en BEFINTLIG transaktionsklient.
+//
+// Epoch-, revision- och resetsemantiken har EN agare, och det ar den har filen. Sandningsmodellen
+// (server/stream-sessions.js) anropar hit med sin egen client sa att nollstallningen ligger i samma
+// transaktion som sessionsskapandet — dupliceras UPDATE:n dar borta drar de tva kopiorna isar sa
+// fort nagon andrar reglerna pa ett stalle.
+//
+// Reset betyder "borja rakna om", inte "glom siffrorna": progress gar till noll och epoch flyttas,
+// medan baseline och target star kvar exakt som streamern satte dem. Den visade siffran ar
+// baseline + progress, sa en nollstallad baseline hade tagit bort startvardet.
+async function resetWorkspaceGoals(client, workspaceId) {
+  const q = await client.query(
+    `UPDATE goal_runtime
+        SET progress = 0, epoch = epoch + 1, revision = revision + 1,
+            reset_at = now(), updated_at = now()
+      WHERE overlay_id IN (SELECT id FROM overlays WHERE workspace_id = $1)
+      RETURNING overlay_id, widget_id`, [workspaceId]);
+  return q.rowCount;
+}
+
 module.exports = {
   METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
@@ -311,7 +332,7 @@ module.exports = {
   SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain,
   syncGoalsFromState, putOverlayWithGoals,
   MAX_GOAL_VALUE, PATCH_FIELDS, validateGoalPatch, goalItem,
-  listGoals, patchGoal, resetGoalWidget
+  listGoals, patchGoal, resetGoalWidget, resetWorkspaceGoals
 };
 
 // ---- overlay save and goal sync, in one transaction ----------------------------------------------
