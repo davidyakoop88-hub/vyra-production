@@ -277,6 +277,19 @@ function skapaStreamSessions({ pool }) {
 
       // Sorterad låsordning. Två besked som rör samma konto tar samma rader i samma ordning, så
       // de kan inte låsa varandra i motsatt riktning.
+      //
+      // ⚠ BEVAKNINGSPUNKT — det här låsets mutationsbevis är UPPSKJUTET, inte godkänt.
+      // Uppmätt 2026-08-23: med låset bortmuterat föll INGET prov. Förklaringen är att
+      // transaktionen tar bridge_accounts först och att tiktok_connections har workspace_id som
+      // primärnyckel — ett workspace har alltså bara ETT konto, så kontolåset serialiserar redan
+      // allt som rör workspacet. Låset är därför försvar på djupet, inte den primära
+      // serialiseraren, och det finns i dag inget prov som kan fälla dess borttagande.
+      //
+      // NÄR admin-återöppningen (tillatRumIgen) eller någon ANNAN oberoende skrivväg mot
+      // stream_sessions/stream_session_pointer byggs — alltså en väg som INTE går via kontolåset —
+      // ska ett deterministiskt samtidighetsprov läggas som visar att borttaget workspacelås fäller
+      // rätt prov. Först då är låset bevisat. Ta inte bort det innan dess: frånvaron av ett prov är
+      // inte frånvaron av ett behov.
       if (ws.length) {
         await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
           + 'FOR NO KEY UPDATE', [ws]);
