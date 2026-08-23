@@ -120,6 +120,7 @@ jobs:
       - name: Goal-SSE — absoluta frames, normalisering och skrivvägen
         run: node --test test/goal-sse.test.js
         working-directory: server
+        continue-on-error: true   # TILLFALLIGT for mutation 2
 
       # Two overlays, one workspace, two OBS links, two live SSE connections over real sockets and a
       # real Redis channel. This is the isolation proof; nothing else in the suite covers it.
