@@ -284,8 +284,7 @@ function skapaStreamSessions({ pool }) {
 
       // FÖRST NU seq/generation — inne i låset. Tas den före låsen kan två besked passera den och
       // sedan köa i godtycklig ordning, och då avgör låsordningen i stället för sekvensen.
-      /*MUT3 seq-kontrollen ut ur transaktionen*/
-      const dom = { skal: await foraldratBesked({ nyckel, bridgeRunId, seq }) || undefined };
+      const dom = await sekvensdom(c, { nyckel, bridgeRunId, seq });
       if (dom.skal) {
         await c.query('ROLLBACK');
         return { stale: true, skal: dom.skal, workspaces: [] };
