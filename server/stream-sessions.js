@@ -267,7 +267,15 @@ function skapaStreamSessions({ pool }) {
   // ÄGARVILLKORET. Varje skrivning som följer av ett publiceringsförsök — kvittens, retry OCH
   // parkering — måste bära det. En gammal worker vars lease tagits över får inte öka attempts,
   // flytta backoffen eller parkera den NYA workerns rad; den har inget att säga om raden längre.
-  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND published_at IS NULL AND parked_at IS NULL';
+  // $3 ar ALLTID den injicerade tiden i alla tre satserna nedan, sa villkoret kan vara gemensamt.
+  //
+  // `lease_until > $3` ar inte samma sak som `lease_owner = $2`. Ett OVERTAGANDE byter agare; en
+  // UTGANGEN lease lamnar det gamla agarnamnet kvar men gor det tidsmassigt ogiltigt. Utan
+  // tidsvillkoret far en worker som vaknar langt efter sin lease fortfarande kvittera, flytta
+  // backoffen eller parkera raden — och den kan da skriva over arbete som en ny agare redan hunnit
+  // gora, eller hinna fore den nya agaren och gora dess claim meningslos.
+  const AGARVILLKOR = 'id=$1 AND lease_owner=$2 AND lease_until > $3::timestamptz '
+    + 'AND published_at IS NULL AND parked_at IS NULL';
 
   // Publicerar en omgång. Ingen autostart: den här funktionen körs bara när någon anropar den.
   //
@@ -318,7 +326,7 @@ function skapaStreamSessions({ pool }) {
         // 3. KVITTENS, ägarskyddad. rowCount 0 = leasen är övertagen; då skriver vi ingenting.
         const ok = await pool.query(
           `UPDATE stream_event_outbox SET published_at=$3, lease_owner=NULL, lease_until=NULL
-            WHERE ${AGARVILLKOR} AND lease_until > $3::timestamptz RETURNING id`,
+            WHERE ${AGARVILLKOR} RETURNING id`,
           [rad.id, jag, tid()]);
         if (ok.rowCount) publicerade++;
         else skriv('[vyra] utkorg: leasen övertagen innan kvittens, rad ' + rad.id);

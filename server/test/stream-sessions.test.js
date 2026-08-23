@@ -1683,3 +1683,88 @@ prov('T10 · en gammal worker som MISSLYCKAS efter övertagandet rör inte raden
   assert.equal(efter.parked_at, null, 'den gamla workern parkerade någon annans rad');
   assert.equal(efter.lease_owner, 'ny', 'den nya ägaren skrevs över');
 });
+
+// ================================================================================================
+// U · UTGÅNGEN LEASE — ett annat fall än övertagande
+//
+// T5 mäter ÖVERTAGANDE: lease_owner byter värde. Här står det GAMLA ägarnamnet kvar, men leasen är
+// tidsmässigt ogiltig. `lease_owner=$2` är då fortfarande sant, och utan `lease_until > $nu` får en
+// worker som vaknar långt efter sin lease ändå kvittera, flytta backoffen eller parkera raden.
+//
+// Klockan är injicerad och stegar EN gång: första anropet (claimet) ser T0, alla senare ser T0+31s.
+// Samma injicerade tid används genom hela beslutet — ingen väggklocka och ingen SQL-now() blandas in.
+// ================================================================================================
+
+const stegandeKlocka = (...tider) => {
+  let i = 0;
+  return () => tider[Math.min(i++, tider.length - 1)];
+};
+
+// Bygger en rad, claimar den vid T0 och låter leasen löpa ut innan workerns resultat skrivs.
+async function utgangenLease(sessioner, pool, { sand }) {
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  const T0 = new Date(Date.now() + 60000);
+  const efterUtgang = new Date(T0.getTime() + 31000);     // leasen är 30 s
+  const fore = (await utkorg(pool))[0];
+  const n = await sessioner.publiceraUtkorg({
+    workerId: 'gammal', nu: stegandeKlocka(T0, efterUtgang), sand,
+  });
+  return { n, fore, T0, efterUtgang };
+}
+
+prov('U1 · kvittens efter att leasen gått ut skriver ingenting', async () => {
+  const { sessioner, pool } = await rigg();
+  const { n } = await utgangenLease(sessioner, pool, { sand: async () => {} });
+  assert.equal(n, 0, 'en worker kvitterade med en utgången lease');
+  const rad = (await utkorg(pool))[0];
+  assert.equal(rad.published_at, null, 'raden markerades publicerad av en utgången lease');
+  assert.equal(rad.lease_owner, 'gammal', 'lease_owner ändrades — provet mäter fel fall');
+});
+
+prov('U2 · fel efter att leasen gått ut rör inte attempts, last_error eller backoff', async () => {
+  const { sessioner, pool } = await rigg();
+  const { fore } = await utgangenLease(sessioner, pool, {
+    sand: async () => { throw new Error('mottagaren är nere'); },
+  });
+  const efter = (await utkorg(pool))[0];
+  assert.equal(Number(efter.attempts), Number(fore.attempts), 'attempts räknades upp trots utgången lease');
+  assert.equal(efter.last_error, fore.last_error, 'last_error skrevs trots utgången lease');
+  assert.equal(new Date(efter.next_attempt_at).getTime(), new Date(fore.next_attempt_at).getTime(),
+    'backoffen flyttades trots utgången lease');
+  assert.equal(efter.parked_at, null);
+});
+
+prov('U3 · parkering efter att leasen gått ut ger varken poison eller audit', async () => {
+  const { sessioner, pool } = await rigg();
+  await anslut(pool, WS_A);
+  await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });
+  // Ett försök kvar till gränsen: nästa misslyckande SKULLE parkera raden.
+  await pool.query('UPDATE stream_event_outbox SET attempts=7');
+  const T0 = new Date(Date.now() + 60000);
+  const n = await sessioner.publiceraUtkorg({
+    workerId: 'gammal', nu: stegandeKlocka(T0, new Date(T0.getTime() + 31000)),
+    sand: async () => { throw new Error('mottagaren är nere'); },
+  });
+  assert.equal(n, 0);
+  const rad = (await utkorg(pool))[0];
+  assert.equal(rad.parked_at, null, 'raden parkerades av en worker med utgången lease');
+  assert.equal(Number(rad.attempts), 7, 'attempts rördes trots utgången lease');
+  assert.equal(await poisonAudit(pool), 0, 'en poison-auditrad skrevs utan giltig lease');
+  assert.equal((await sessioner.giftigaHandelser()).length, 0);
+});
+
+prov('U4 · efter utgången lease kan en NY worker claima och behandla raden normalt', async () => {
+  const { sessioner, pool } = await rigg();
+  const { efterUtgang } = await utgangenLease(sessioner, pool, { sand: async () => {} });
+  // Kontrollmätning: utan den här halvan bevisar U1–U3 bara att ingenting händer — inte att det
+  // är leasen som stoppar dem. Raden ska vara fullt behandlingsbar för nästa ägare.
+  const skickat = [];
+  const n = await sessioner.publiceraUtkorg({ workerId: 'ny', nu: () => efterUtgang,
+    sand: async r => skickat.push(r.event_id) });
+  assert.equal(n, 1, 'den nya workern kunde inte behandla raden');
+  assert.equal(skickat.length, 1);
+  const rad = (await utkorg(pool))[0];
+  assert.ok(rad.published_at, 'raden markerades inte av den nya ägaren');
+  assert.equal(rad.lease_owner, null, 'leasen städades inte vid kvittens');
+});
