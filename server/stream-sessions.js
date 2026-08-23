@@ -349,7 +349,7 @@ function skapaStreamSessions({ pool }) {
         `UPDATE stream_event_outbox
             SET attempts=attempts+1, last_error=$4, lease_owner=NULL, lease_until=NULL,
                 next_attempt_at = $3::timestamptz + ($5 || ' seconds')::interval
-          WHERE ${AGARVILLKOR}`, [rad.id, jag, tid(), text, dröj]);
+          WHERE id=$1 AND $2::text IS NOT NULL AND lease_until > $3::timestamptz AND published_at IS NULL AND parked_at IS NULL /*MUT1*/`, [rad.id, jag, tid(), text, dröj]);
       return;
     }
 
