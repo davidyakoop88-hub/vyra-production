@@ -77,10 +77,20 @@ function fangare() {
   return { rader, log: (...a) => rader.push(a.join(' ')), error: (...a) => rader.push('ERROR ' + a.join(' ')) };
 }
 
-function rigg(over = {}) {
+// VARJE startad worker registreras och stoppas i afterEach — ett prov som faller mitt i far
+// annars kvar en ZOMBIE som polla vidare och forgiftar nasta provs rader (CI-laxan fran forsta
+// grona forsoket: en ostoppad fallFor('alla')-worker at upp nasta provs rad med vaxande backoff).
+const startade = [];
+function starta(opts) {
   finns();
+  const w = W.startStreamWorker(opts);
+  startade.push(w);
+  return w;
+}
+
+function rigg(over = {}) {
   const buss = fejkBuss(), logg = fangare(), metrics = {};
-  const w = W.startStreamWorker({
+  const w = starta({
     pool, eventBus: buss, metrics, logg,
     intervallMs: 10, antal: 20, workerId: over.workerId || 'provworker-1',
     stoppVantanMs: over.stoppVantanMs || 5000,
@@ -88,6 +98,14 @@ function rigg(over = {}) {
   });
   return { w, buss, logg, metrics };
 }
+
+test.afterEach(async () => {
+  if (BLOCKED || !pool) return;
+  while (startade.length) { try { await startade.pop().stop(); } catch (_) {} }
+  // Rent utkorgslage per prov: en oclaimad rad fran ett fallet prov blockerar annars hela
+  // workspacet via den fail-closed NOT EXISTS-ordningen.
+  await pool.query('DELETE FROM stream_event_outbox');
+});
 
 test.before(async () => {
   if (BLOCKED) return;
@@ -150,8 +168,8 @@ prov('två workers publicerar aldrig samma rad', async () => {
   const rader = [];
   for (let i = 0; i < 12; i++) rader.push(await rad(i % 2 ? WS_A : WS_B));
   const buss = fejkBuss(), logg = fangare();
-  const w1 = W.startStreamWorker({ pool, eventBus: buss, metrics: {}, logg, intervallMs: 5, antal: 3, workerId: 'w1' });
-  const w2 = W.startStreamWorker({ pool, eventBus: buss, metrics: {}, logg, intervallMs: 5, antal: 3, workerId: 'w2' });
+  const w1 = starta({ pool, eventBus: buss, metrics: {}, logg, intervallMs: 5, antal: 3, workerId: 'w1' });
+  const w2 = starta({ pool, eventBus: buss, metrics: {}, logg, intervallMs: 5, antal: 3, workerId: 'w2' });
   await tills(() => buss.publicerade.length >= rader.length, 'alla tolv publicerade');
   await w1.stop(); await w2.stop();
   const perEvent = new Map();
@@ -179,10 +197,13 @@ prov('shutdown mitt i publicering: varvet görs klart, inga nya claims, stop lö
 });
 
 prov('hängd publicering: stop ger upp inom stoppVantanMs och raden återtas efter lease-utgång', async () => {
-  const r1 = await rad(WS_A);
+  // KLOCKFALLAN (O1/X5-laxan): DB:ns now() kan ligga fore en frusen injicerad klocka och gora
+  // raden aldrig due. Rader i klockstyrda prov far darfor explicit next_attempt_at i det
+  // forflutna i stallet for DB-default.
   let klocka = Date.now();
+  const r1 = await rad(WS_A, { nextAttemptAt: new Date(0).toISOString() });
   const buss = fejkBuss(), logg = fangare();
-  const w = W.startStreamWorker({ pool, eventBus: buss, metrics: {}, logg,
+  const w = starta({ pool, eventBus: buss, metrics: {}, logg,
     intervallMs: 10, antal: 20, workerId: 'hangd', stoppVantanMs: 150, nu: () => klocka });
   buss.langsam.add(r1.event_id);
   await tills(() => buss.slappta.has(r1.event_id), 'publiceringen påbörjad');
@@ -191,7 +212,7 @@ prov('hängd publicering: stop ger upp inom stoppVantanMs och raden återtas eft
   assert.ok(Date.now() - t0 < 2000, 'stop() väntade långt över budgeten');
   // Raden står kvar leasad av den övergivna publiceringen — och återtas när leasen gått ut.
   klocka += 31_000;
-  const buss2 = fejkBuss(), w2 = W.startStreamWorker({ pool, eventBus: buss2, metrics: {}, logg,
+  const buss2 = fejkBuss(), w2 = starta({ pool, eventBus: buss2, metrics: {}, logg,
     intervallMs: 10, antal: 20, workerId: 'levande', nu: () => klocka });
   await tills(() => buss2.publicerade.length >= 1, 'återtag efter lease-utgång');
   await w2.stop();
@@ -224,7 +245,7 @@ prov('trasig claim-fråga (Postgres-fel) kraschar inte loopen', async () => {
   const trasig = { connect: () => { trasig.anrop++; return trasig.anrop <= 2 ? Promise.reject(new Error('PG borta (prov)')) : pool.connect(); }, query: (...a) => pool.query(...a), anrop: 0 };
   const r1 = await rad(WS_A);
   const buss = fejkBuss(), logg = fangare();
-  const w = W.startStreamWorker({ pool: trasig, eventBus: buss, metrics: {}, logg, intervallMs: 10, antal: 20, workerId: 'pg-fel' });
+  const w = starta({ pool: trasig, eventBus: buss, metrics: {}, logg, intervallMs: 10, antal: 20, workerId: 'pg-fel' });
   await tills(() => buss.publicerade.length >= 1, 'publicering trots två PG-fel');
   await w.stop();
   assert.ok(logg.rader.some(r => r.includes('ERROR')), 'PG-felen loggades inte');
