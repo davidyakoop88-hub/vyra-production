@@ -211,6 +211,14 @@ jobs:
       # VARNING TILL NÄSTA LÄSARE: listan ovan är explicita filnamn, inte ett svep över test/.
       # En provfil som inte står med här körs ALDRIG mot Postgres, och jobbets gröna bock säger då
       # ingenting om den. Det gav ett falskt grönt 2026-08-22 innan det här steget fanns.
+      # Adminateroppningen: rutt, behorighet, atomicitet och lasbeviset. Ligger FORE
+      # sessionssteget med flit - det ar rott sa lange maskinrutterna inte ar byggda, och ett steg
+      # efter ett fallande steg kors aldrig. Jobbet kor en explicit filnamnslista: en provfil som
+      # inte star har kors ALDRIG mot Postgres.
+      - name: Adminåteröppning — rutt, transaktion och workspacelåset
+        run: node --test test/stream-room-reopen.test.js
+        working-directory: server
+
       - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
         run: node --test test/stream-sessions.test.js
         working-directory: server

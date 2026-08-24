@@ -61,6 +61,11 @@ async function rigg() {
     await pool.query(
       "INSERT INTO workspaces(id,name,owner_user_id) VALUES($1,'sessionsprov',$2) "
       + 'ON CONFLICT (id) DO NOTHING', [ws, AGARE]);
+    // tillatRumIgen kontrollerar behorigheten I transaktionen, mot workspace_members - agarskap
+    // i workspaces-tabellen racker inte. Samma modell som husets membership().
+    await pool.query(
+      "INSERT INTO workspace_members(workspace_id,user_id,role) VALUES($1,$2,'owner') "
+      + 'ON CONFLICT (workspace_id,user_id) DO NOTHING', [ws, AGARE]);
   }
   // Skyddsnat: ett avbrutet V1 skulle annars lamna en trigger som faller varje senare auditinsert.
   await pool.query('DROP TRIGGER IF EXISTS prov_poison_rollback_trg ON audit_log');
@@ -613,7 +618,7 @@ prov('J2 · administrativ återställning tillåter rummet igen och skrivs i aud
   const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
     .workspaces[0];
   await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
-  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: null, skal: 'prov' });
+  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: AGARE, skal: 'prov' });
   const igen = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 4 });
   assert.equal(igen.workspaces[0].created, true, 'återställningen släppte inte igenom rummet');
   const audit = await pool.query(
@@ -628,7 +633,7 @@ prov('J3 · återställningen gäller EN gång, inte som permanent undantag', as
   const ett = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 1 }))
     .workspaces[0];
   await sessioner.avslutaLive({ sessionId: ett.session.id, bridgeRunId: KOR_1, seq: 2, reason: 'bridge' });
-  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: null, skal: 'prov' });
+  await sessioner.tillatRumIgen({ workspaceId: WS_A, roomId: RUM_1, actorUserId: AGARE, skal: 'prov' });
   const tva = (await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 4 }))
     .workspaces[0];
   await sessioner.avslutaLive({ sessionId: tva.session.id, bridgeRunId: KOR_1, seq: 5, reason: 'bridge' });

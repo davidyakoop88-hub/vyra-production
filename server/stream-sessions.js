@@ -632,7 +632,12 @@ function skapaStreamSessions({ pool }) {
       // Sorterad låsordning. Två besked som rör samma konto tar samma rader i samma ordning, så
       // de kan inte låsa varandra i motsatt riktning.
       //
-      // ⚠ BEVAKNINGSPUNKT — det här låsets mutationsbevis är UPPSKJUTET, inte godkänt.
+      // BEVAKNINGSPUNKTEN INLÖST 2026-08-24. Den oberoende skrivvägen finns nu — adminåter-
+      // öppningen (tillatRumIgen) skriver biljetter under samma workspacelås — och beviset är
+      // deterministiskt: provet 'startbeskedet BLOCKERAR på workspacelåset' i
+      // test/stream-room-reopen.test.js verifierar blockeringen via pg_blocking_pids, inte via en
+      // tidsgräns, och dess mutationskörning visar att borttaget lås låter starten läsa förbi en
+      // ocommittad biljett. Historiken nedan behålls som förklaring av varför beviset dröjde.
       // Uppmätt 2026-08-23: med låset bortmuterat föll INGET prov. Förklaringen är att
       // transaktionen tar bridge_accounts först och att tiktok_connections har workspace_id som
       // primärnyckel — ett workspace har alltså bara ETT konto, så kontolåset serialiserar redan
@@ -765,7 +770,73 @@ function skapaStreamSessions({ pool }) {
       }
     },
     async startaLiveViaHttp() { return inteAn('startaLiveViaHttp'); },
-    async tillatRumIgen() { return inteAn('tillatRumIgen'); },
+    // ADMINISTRATIV ATEROPPNING. Biljetten oppnar INTE rummet - den konsumeras forst av nasta
+    // giltiga, nyare startbesked for samma workspace och rum (beslutForWorkspace ager den logiken).
+    //
+    // Behorigheten kontrolleras HAR IGEN, pa transaktionens egen client, EFTER workspacelaset.
+    // Ruttens yttre membership-kontroll ger det icke-enumererande 403-svaret, men den laser mot
+    // poolen fore transaktionen - en roll som aterkallas daremellan hade annars fatt skriva anda.
+    // Behorigheten ska vara sann NAR skrivningen sker, inte nar fragan stalldes.
+    async tillatRumIgen({ workspaceId, roomId, actorUserId, skal } = {}) {
+      const rum = String(roomId == null ? '' : roomId).trim();
+      // TikToks rums-id ar numeriska. Ett monster i stallet for en langdgrans ensam: ett id som
+      // inte ens ser ut som ett rum ska aldrig na databasen.
+      if (!/^[0-9]{1,32}$/.test(rum)) throw fel(400, 'ogiltigt roomId');
+      const reason = String(skal == null ? '' : skal).trim();
+      if (!reason || reason.length > 200) {
+        throw fel(400, 'reason kravs och far vara hogst 200 tecken');
+      }
+      // Aktoren ar SERVERAGD: rutten satter den ur sessionen, aldrig ur klientens body. Utan
+      // aktor finns ingen att skriva i auditraden - och en aterppning utan sparbar manniska
+      // ar precis det biljettmodellen finns for att undvika.
+      if (!actorUserId) throw fel(401, 'aktor saknas');
+
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        const w = await c.query('SELECT id FROM workspaces WHERE id=$1 FOR NO KEY UPDATE',
+          [workspaceId]);
+        if (!w.rowCount) throw fel(403, 'Behörighet saknas');
+        const roll = await c.query(
+          'SELECT role FROM workspace_members WHERE user_id=$1 AND workspace_id=$2',
+          [actorUserId, workspaceId]);
+        if (!roll.rowCount || !['owner', 'admin'].includes(roll.rows[0].role)) {
+          throw fel(403, 'Behörighet saknas');
+        }
+
+        const stangd = await c.query(
+          'SELECT 1 FROM stream_sessions WHERE workspace_id=$1 AND room_id=$2 '
+          + 'AND ended_at IS NOT NULL LIMIT 1', [workspaceId, rum]);
+        if (!stangd.rowCount) throw fel(404, 'rummet finns inte i stängd historik');
+        const aktivt = await c.query(
+          'SELECT 1 FROM stream_sessions WHERE workspace_id=$1 AND room_id=$2 '
+          + 'AND ended_at IS NULL LIMIT 1', [workspaceId, rum]);
+        if (aktivt.rowCount) throw fel(409, 'rummet är aktivt');
+        // Hogst EN obrukad biljett. Workspacelaset serialiserar tva samtidiga utfardanden, sa den
+        // andra ser den forstas biljett har; det partiella unika indexet ar sista forsvar.
+        const biljett = await c.query(
+          'SELECT 1 FROM stream_room_reopen WHERE workspace_id=$1 AND room_id=$2 '
+          + 'AND consumed_at IS NULL FOR UPDATE', [workspaceId, rum]);
+        if (biljett.rowCount) throw fel(409, 'en obrukad biljett finns redan');
+
+        await c.query(
+          'INSERT INTO stream_room_reopen(workspace_id, room_id, actor_user_id, reason) '
+          + 'VALUES($1,$2,$3,$4)', [workspaceId, rum, actorUserId, reason]);
+        // Audit i SAMMA transaktion: faller den rullar biljetten tillbaka. En ateroppning utan
+        // auditspar ar en tyst bakdorr.
+        await c.query(
+          'INSERT INTO audit_log(workspace_id, actor_user_id, action, target_type, target_id, metadata) '
+          + "VALUES($1,$2,'stream_room_reopened','stream_room',$3,$4)",
+          [workspaceId, actorUserId, rum, JSON.stringify({ roomId: rum, reason })]);
+        await c.query('COMMIT');
+        return { created: true, workspaceId, roomId: rum };
+      } catch (error) {
+        try { await c.query('ROLLBACK'); } catch (_) {}
+        throw error;
+      } finally {
+        c.release();
+      }
+    },
     // TESTSEAM, inte en produktionsväg. `utfor` finns för att prov ska kunna framkalla ett fel
     // mitt i nollställningen och för att räkna hur många gånger den kördes. Produktionen använder
     // nollstallForNySession() med NAMNGIVNA resetfunktioner — en generell callback hade öppnat
