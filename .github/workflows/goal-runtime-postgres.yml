@@ -83,6 +83,14 @@ jobs:
           DATABASE_URL="$TEST_DATABASE_URL" node migrate.js
         working-directory: server
 
+      # Mäter Postgres eget beteende, inte vår kod: kör migrate.js hela schema.sql som ett
+      # allt-eller-inget? Provet kör ett eget flersatsuttryck mot en tillfällig tabell — schema.sql
+      # och produktionsdata rörs inte. Utan mätningen vore rollback ett antagande, och ett felaktigt
+      # antagande här betyder att en halvmigrerad databas kan gå obemärkt förbi.
+      - name: Migreringens atomicitet — mätt, inte antagen
+        run: node --test test/migrering-atomicitet.test.js
+        working-directory: server
+
       # The 21 contracts that are blocked without a real database. If any of these is red the job
       # fails and the run stops here — the test is not adjusted to match the implementation.
       - name: Goal runtime-kontrakten
@@ -186,4 +194,48 @@ jobs:
 
       - name: Lagringsalternativ — text vs sha256, btree vs BRIN
         run: node ../scripts/goal-storage.js
+        working-directory: server
+
+      # ---- sändningsidentitet -------------------------------------------------------------------
+      # PERMANENT STEG. Sessionsproven ska ALLTID köras — de får aldrig tas bort igen.
+      #
+      # Sändningsidentiteten är den enda källan till vilken LIVE ett event tillhör, och därmed till
+      # vad som får nollställas. Går den sönder nollställs antingen ingenting (förra sändningens
+      # siffror följer med in i nästa) eller fel sak (siffror raderas mitt i en pågående sändning).
+      # Båda syns först i en riktig sändning, hos tittarna. Ett prov som körs varje gång är det enda
+      # som fångar det innan.
+      #
+      # Atomiciteten går inte att prova mot en attrapp: "två samtidiga statusbesked ger exakt EN
+      # session" är en garanti Postgres ger, inte koden. Därför just det här jobbet.
+      #
+      # VARNING TILL NÄSTA LÄSARE: listan ovan är explicita filnamn, inte ett svep över test/.
+      # En provfil som inte står med här körs ALDRIG mot Postgres, och jobbets gröna bock säger då
+      # ingenting om den. Det gav ett falskt grönt 2026-08-22 innan det här steget fanns.
+      # Adminateroppningen: rutt, behorighet, atomicitet och lasbeviset. Ligger FORE
+      # sessionssteget med flit - det ar rott sa lange maskinrutterna inte ar byggda, och ett steg
+      # efter ett fallande steg kors aldrig. Jobbet kor en explicit filnamnslista: en provfil som
+      # inte star har kors ALDRIG mot Postgres.
+      - name: Adminåteröppning — rutt, transaktion och workspacelåset
+        run: node --test test/stream-room-reopen.test.js
+        working-directory: server
+
+      # Maskinrutterna: auth vid HTTP-gransen, forbjudna falt, minimala svar. Explicit filnamnslista
+      # - en fil som inte star har kors aldrig mot Postgres.
+      - name: Maskinrutterna — bearer-auth, kontrakt och minimala svar
+        run: node --test test/stream-machine-routes.test.js
+        working-directory: server
+
+      - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
+        run: node --test test/stream-sessions.test.js
+        working-directory: server
+
+      # Slutrevisionens två bevis. Fixturprovet kör i en EGEN databas (CREATE DATABASE) och rör
+      # aldrig jobbets delade — smoken däremot startar den verkliga servern MOT den delade och
+      # mäter globala differenser, så den ligger sist i listan.
+      - name: Migrering mot fixturer — två extra körningar ändrar ingenting
+        run: node --test test/migrering-fixturer.test.js
+        working-directory: server
+
+      - name: Flagga-av-smoke — verkliga servern utan VYRA_SANDNINGSIDENTITET
+        run: node --test test/flagga-av-smoke.test.js
         working-directory: server

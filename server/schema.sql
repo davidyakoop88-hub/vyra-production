@@ -324,3 +324,170 @@ CREATE TABLE IF NOT EXISTS slot_totals (
   likes           bigint   NOT NULL DEFAULT 0,
   PRIMARY KEY (workspace_id, tiktok_username, weekday, hour)
 );
+
+-- ================================================================================================
+-- SÄNDNINGSIDENTITET. Vilken LIVE ett event tillhör, och därmed vad som får nollställas.
+--
+-- Empirin (uppmätt 2026-08-22, skrivskyddad sond): två separata LIVE på samma konto, samma dag
+-- och samma deployment gav två OLIKA roomId. n = 2, en anslutning per sändning, så roomId:s
+-- stabilitet GENOM en återanslutning är omätt. Modellen lovar därför inte mer än mätningen bär.
+--
+-- All DDL här är IF NOT EXISTS och ingen sats beror på att en tidigare lyckats: migrate.js kör
+-- HELA schema.sql som en batch vid varje deploy, så en halvkörd migrering ska läkas av nästa.
+-- Ingenting nedan ändrar, flyttar eller raderar befintliga mål, overlays, tokens eller historik.
+-- ================================================================================================
+
+-- Serverägd generation per TikTok-konto. `seq` ordnar bara INOM en bryggkörning; generationen
+-- avgör VILKEN körning som får tala. Varken UUID-sortering eller klientklocka duger: den ena är
+-- oordnad, den andra är någon annans klocka.
+-- SERIALISERINGSPUNKT för generationstilldelningen. En rad per konto som ALLTID finns, så att det
+-- går att ta ett radlås även vid den allra första registreringen.
+--
+-- UNIQUE(account_key, generation) ensamt räcker inte: två samtidiga registreringar läser båda
+-- MAX(generation)=N, båda skriver N+1, och den ena kraschar på unikhetsfelet. Det är en legitim
+-- registrering som förloras — bryggan har inte gjort något fel. Låset gör att den andra i stället
+-- VÄNTAR, läser om max och får N+2.
+--
+-- Varför inte pg_advisory_xact_lock: capacity-gate.js:29 använder redan ett advisory-lås på en
+-- FAST konstant, med en kommentar om att det bara håller så länge inget annat i databasen
+-- använder samma nyckel. En hashad nyckel bredvid den är precis den samordningsskuld den varnar
+-- för. En riktig rad är dessutom läsbar, felsökbar och syns i pg_locks med namn.
+--
+-- FOR NO KEY UPDATE, inte FOR UPDATE: krockar med sig självt (två registreringar serialiseras)
+-- men inte med FOR KEY SHARE, så bridge_runs-INSERTs som refererar raden inte blockeras i onödan.
+CREATE TABLE IF NOT EXISTS bridge_accounts (
+  account_key text PRIMARY KEY,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS bridge_runs (
+  id            bigserial PRIMARY KEY,
+  account_key   text    NOT NULL REFERENCES bridge_accounts(account_key) ON DELETE CASCADE,
+  bridge_run_id text    NOT NULL,
+  -- Serverägd och strikt stigande per konto. Sätts som COALESCE(MAX(generation),0)+1 inne i
+  -- transaktionen — ALDRIG härledd ur bridge_run_id (en sträng utan ordning), ur started_at
+  -- (klockor går isär och kan gå bakåt) eller ur id/insättningsordning (bigserial delas ut före
+  -- commit, så två samtidiga körningar kan committa i omvänd ordning mot sina id).
+  generation    bigint  NOT NULL CHECK (generation > 0),
+  current       boolean NOT NULL DEFAULT true,
+  max_seq       bigint  NOT NULL DEFAULT 0 CHECK (max_seq >= 0),
+  started_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (account_key, bridge_run_id),
+  -- UTAN DEN HÄR kan två samtidiga registreringar båda läsa MAX(generation)=N och båda skriva
+  -- N+1. Då är generationen inte längre strikt stigande, och "vilken körning är nyare" blir
+  -- obesvarbart — precis den ordningsfråga hela modellen finns för att undvika. Unikheten gör
+  -- att databasen avvisar den andra i stället för att koden hoppas slippa kapplöpningen.
+  UNIQUE (account_key, generation)
+);
+-- Exakt EN aktuell körning per konto. Två samtidiga registreringar kan alltså inte båda vinna.
+CREATE UNIQUE INDEX IF NOT EXISTS bridge_runs_aktuell_idx ON bridge_runs(account_key) WHERE current;
+
+CREATE TABLE IF NOT EXISTS stream_sessions (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id    uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  room_id         text NOT NULL,
+  account_key     text NOT NULL,
+  bridge_run_id   text,
+  started_at      timestamptz NOT NULL DEFAULT now(),
+  ended_at        timestamptz,
+  end_reason      text CHECK (end_reason IN ('bridge','timeout','ersatt','manuell')),
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  -- Refererbar för den sammansatta främmande nyckeln från pekaren nedan. Redundant mot PK i sig,
+  -- men en sammansatt FK kräver en unik constraint över exakt de kolumner den pekar på.
+  UNIQUE (id, workspace_id)
+);
+-- KRAV: samma AKTIVA rum är alltid samma session. Partiell — INTE en global
+-- UNIQUE(workspace_id, room_id): två observationer räcker inte för att lova att TikTok aldrig
+-- återanvänder ett roomId, och en global nyckel hade gjort bryggan omstartsoduglig den dagen.
+CREATE UNIQUE INDEX IF NOT EXISTS stream_sessions_aktivt_rum_idx
+  ON stream_sessions(workspace_id, room_id) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS stream_sessions_ws_idx
+  ON stream_sessions(workspace_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS stream_sessions_konto_idx
+  ON stream_sessions(account_key, started_at DESC);
+
+-- Vad är live NU. En rad per workspace: både låsobjekt och den enda plats som svarar på frågan.
+-- SAMMANSATT FK, inte bara session_id. En enkel FK på session_id kontrollerar att sessionen
+-- FINNS, inte att den tillhör samma workspace som pekaren — pekaren för workspace A hade kunnat
+-- peka på en session i workspace B. Följden vore att nollställningen tittar på fel sändning:
+-- ena kontots mål nollställs när det andra går live. Det är inte en teoretisk risk, det är den
+-- enda sortens fel den här tabellen kan göra.
+--
+-- MATCH SIMPLE (standard) gör att FK:n är uppfylld så fort NÅGON kolumn är NULL, vilket är precis
+-- vad vi vill när pekaren är tom: workspace_id är NOT NULL, session_id är det inte.
+--
+-- ON DELETE SET NULL (session_id) — kolumnlistan kräver PostgreSQL 15+. Railway kör 18.4 och
+-- jobbet ovan avvisar allt som inte är major 18. Utan kolumnlistan hade Postgres försökt nolla
+-- ÄVEN workspace_id, som är primärnyckel och NOT NULL, och raderingen hade fallit.
+CREATE TABLE IF NOT EXISTS stream_session_pointer (
+  workspace_id uuid PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  session_id   uuid,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (session_id, workspace_id) REFERENCES stream_sessions(id, workspace_id)
+    ON DELETE SET NULL (session_id)
+);
+
+-- Kvitto per (session, område). Skrivs i SAMMA transaktion som nollställningen: ett kvitto utan
+-- reset gör att målen aldrig nollas för den sändningen, en reset utan kvitto kan köra om mitt i.
+CREATE TABLE IF NOT EXISTS stream_session_reset (
+  session_id uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
+  scope      text NOT NULL,
+  done_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (session_id, scope)
+);
+
+-- Transactional outbox. Raden skrivs i samma transaktion som sessionen och publiceras EFTER
+-- commit. Aldrig inuti: en rollback hade då ljugit bort en händelse som redan skickats.
+CREATE TABLE IF NOT EXISTS stream_event_outbox (
+  id              bigserial PRIMARY KEY,
+  workspace_id    uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  event_id        text NOT NULL UNIQUE,
+  topic           text NOT NULL,
+  payload         jsonb NOT NULL DEFAULT '{}'::jsonb,
+  attempts        integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  next_attempt_at timestamptz NOT NULL DEFAULT now(),
+  published_at    timestamptz,
+  parked_at       timestamptz,
+  last_error      text,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  -- LEASE. FOR UPDATE SKIP LOCKED racker inte: radlaset slapps vid COMMIT, och publiceringen sker
+  -- EFTER commit — annars gors ett natverksanrop inne i en oppen transaktion. Leasen ar det som
+  -- ager raden under sjalva publiceringen, och den overlever att transaktionen stangs.
+  -- En krashad worker slapper aldrig sin lease; den LOPER UT, och claim-fragan tar da tillbaka
+  -- raden utan att nagon stadare behover finnas.
+  lease_owner     text,
+  lease_until     timestamptz
+);
+CREATE INDEX IF NOT EXISTS stream_outbox_pending_idx
+  ON stream_event_outbox(next_attempt_at) WHERE published_at IS NULL AND parked_at IS NULL;
+CREATE INDEX IF NOT EXISTS stream_outbox_parked_idx
+  ON stream_event_outbox(parked_at) WHERE parked_at IS NOT NULL;
+-- Stodjer ordningskontrollen i claim-fragan: 'finns det en ALDRE opublicerad rad for samma
+-- workspace?'. Utan indexet blir den en seq scan per kandidat.
+CREATE INDEX IF NOT EXISTS stream_outbox_ordning_idx
+  ON stream_event_outbox(workspace_id, id) WHERE published_at IS NULL;
+
+-- Engångsbiljett för administrativ återöppning av ett stängt rum. Fail-closed är regeln: ett
+-- stängt room_id öppnas ALDRIG automatiskt och det finns ingen karenstid. Skulle TikTok en dag
+-- återanvända ett rum är det ett medvetet, auditerat beslut av en människa — inte en tidsgräns
+-- som ingen mätt.
+--
+-- actor_user_id är ON DELETE SET NULL med flit: raderas användaren ska raden finnas kvar. En
+-- audithistorik som försvinner med sin upphovsperson är ingen audithistorik.
+CREATE TABLE IF NOT EXISTS stream_room_reopen (
+  workspace_id  uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  room_id       text NOT NULL,
+  actor_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  reason        text NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  consumed_at   timestamptz,
+  PRIMARY KEY (workspace_id, room_id, created_at)
+);
+-- HÖGST EN oanvänd biljett per (workspace, rum). Flera samtidiga hade varit osäkert på två sätt:
+-- två administratörer som båda återöppnar samma rum ger två biljetter, varav den andra blir en
+-- tyst extra öppning som ingen bad om — och konsumtionslogiken hade behövt välja vilken som
+-- gäller, alltså en ordningsfråga till utan svar. Unikheten flyttar problemet dit det hör hemma:
+-- den andra administratören får ett fel och ser att rummet redan är öppnat.
+-- Partiell: FÖRBRUKADE biljetter får finnas hur många som helst, det är historiken.
+CREATE UNIQUE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
+  ON stream_room_reopen(workspace_id, room_id) WHERE consumed_at IS NULL;
