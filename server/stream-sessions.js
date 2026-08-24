@@ -804,14 +804,18 @@ function skapaStreamSessions({ pool }) {
           throw fel(403, 'Behörighet saknas');
         }
 
-        const stangd = await c.query(
-          'SELECT 1 FROM stream_sessions WHERE workspace_id=$1 AND room_id=$2 '
-          + 'AND ended_at IS NOT NULL LIMIT 1', [workspaceId, rum]);
-        if (!stangd.rowCount) throw fel(404, 'rummet finns inte i stängd historik');
+        // AKTIVT FORE HISTORIK. Ett rum som sander JUST NU ska ge 409 oavsett om det nagonsin
+        // varit stangt - "det ar igang" ar viktigare information an "det har aldrig avslutats",
+        // och en biljett for ett aktivt rum ar meningslos i bada fallen. Med omvand ordning fick
+        // ett aktivt forstagangsrum 404, vilket lat som att det inte fanns.
         const aktivt = await c.query(
           'SELECT 1 FROM stream_sessions WHERE workspace_id=$1 AND room_id=$2 '
           + 'AND ended_at IS NULL LIMIT 1', [workspaceId, rum]);
         if (aktivt.rowCount) throw fel(409, 'rummet är aktivt');
+        const stangd = await c.query(
+          'SELECT 1 FROM stream_sessions WHERE workspace_id=$1 AND room_id=$2 '
+          + 'AND ended_at IS NOT NULL LIMIT 1', [workspaceId, rum]);
+        if (!stangd.rowCount) throw fel(404, 'rummet finns inte i stängd historik');
         // Hogst EN obrukad biljett. Workspacelaset serialiserar tva samtidiga utfardanden, sa den
         // andra ser den forstas biljett har; det partiella unika indexet ar sista forsvar.
         const biljett = await c.query(
