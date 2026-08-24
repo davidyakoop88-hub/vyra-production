@@ -38,9 +38,18 @@ förblir osatt. Servermodellen (#268) och bryggan (#269) ligger dormant på main
 - **Shutdown:** `stop()` sätter stoppflaggan (inga nya varv/claims), väntar **begränsat**
   (min(5 s, kvarvarande shutdownbudget)) på pågående varv, och kopplas in i shutdown-kedjan FÖRE
   `pool.end()`/`eventBus.close()` i `server.close`-callbacken.
-- **Metrics/logg:** räknare i `metrics.utkorg = {publicerade, forsok, parkerade, senastPublicerad}`
-  — exponeras via `/api/internal/metrics` (bakom token). En parkering loggas som
-  `[utkorg-worker][error] rad parkerad workspace=<id> eventId=<id> forsok=8` — id:n, aldrig payload.
+- **Exakta tal (Davids punkt 6):** pollintervall **1000 ms**, batch **20 rader/varv**
+  (`antal`-parametern till `publiceraUtkorg`). Max shutdown-väntan **5 s** — hälften av serverns
+  hårda 10 s-utgång (`SHUTDOWN_TIMEOUT_MS`), så pool/eventBus alltid hinner stängas efteråt; ett
+  varv som ändå överges lämnar sin rad bakom leasen (30 s) och återtas av nästa instans via
+  claim-frågan — övergivande är förlustfritt per #268-bevisen.
+- **Metrics:** `metrics.utkorg = {publicerade, forsok, parkerade, senastPublicerad}` (räknare) +
+  mätarna `{pending, leased, parked}` uppdaterade per varv ur claim-frågans sidoräkning (en
+  `count(*) FILTER`-fråga per poll). Allt via `/api/internal/metrics` bakom `METRICS_TOKEN`.
+  **En parkerad rad är en synlig driftindikering**: `parked > 0` i metrics + loggrad
+  `[utkorg-worker][error] rad parkerad workspace=<id> eventId=<id> forsok=8` — id:n, aldrig
+  payload eller token — och den blockerar per den bevisade ordningsregeln ENDAST sitt eget
+  workspace (X4-provet körs genom workern).
 
 ### Prov (`server/test/stream-worker.test.js` — **eget steg i Postgres-jobbets explicita filnamnslista**)
 
@@ -90,56 +99,87 @@ förblir osatt. Servermodellen (#268) och bryggan (#269) ligger dormant på main
 | event-dedupe.js | id-lista + localStorage | **lämnas** — eventId:n är globalt unika; en ny session skapar inga kollisioner |
 | **VyraPoints/viewer-levels (localStorage)** | poängliggare | **orörd** tills separat produktbeslut — uttryckligen utanför |
 
-### Uppstartsluckan — auktoritativt snapshot
+### Uppstartsluckan — auktoritativt snapshot, flaggmedvetet (Davids punkt 2)
 
-`GET /api/overlay-access/<token>` får ett nytt fält:
+`GET /api/overlay-access/<token>` får ett nytt fält — **endast när flaggan är på**:
 
 ```json
 { "overlay": { … }, "session": { "sessionId": "<uuid>", "startedAt": "<iso>" } }
 ```
 
-- `session` är `null` när ingen aktiv session finns (= alltid med flaggan av: tabellerna är tomma,
-  fältet kostar en indexslagning mot pekaren).
+- **Flaggan av ⇒ fältet UTELÄMNAS helt** och ingen sessionsfråga körs — svaret är byteidentiskt
+  med dagens. Dormant klientkod kan därmed skilja "funktionen av" (fältet saknas) från
+  "funktionen på men ingen LIVE" (`session: null`, auktoritativt).
+- Flaggan på: `session: null` = auktoritativt ingen aktiv LIVE; `{sessionId, startedAt}` = aktiv.
 - Härledning: token → overlay → workspace → `stream_session_pointer` ⋈ `stream_sessions`
-  (`ended_at IS NULL`). **Endast `sessionId` + `startedAt` exponeras — aldrig workspaceId,
-  accountKey, bridgeRunId, roomId eller token.** Samma fält i Studio-canvasens motsvarande
-  bootstrap (cloud-sync-vägen) i en senare fas om det behövs; overlayn är den kritiska.
+  (`ended_at IS NULL`). **Endast `sessionId` + `startedAt` — aldrig workspaceId, accountKey,
+  bridgeRunId, roomId eller token.** Dormant-provet körs mot HELA bootstrapvägen: flagga av ⇒
+  fältet frånvarande, inga sessionStorage-skrivningar, ingen signal, inget rensat state.
 
 ### Ny klientmodul: `live-session-client.js`
 
-Äger EN sak: *vilken session har jag senast behandlat* — i **sessionStorage**
-(`vyra-live-session-behandlad`), aldrig localStorage. sessionStorage är per browserkälla, så
-olika OBS-källor och Studio-flikar kan aldrig blockera varandras reset.
+**Dedupe och aktiv session är två olika saker (Davids punkt 1):**
 
-Kontraktet (allt provat):
+- **Dedupen är per logisk händelse via `eventId`**: `live:start:<sessionId>` och
+  `live:end:<sessionId>` är två olika händelser och behandlas var för sig — hade dedupen legat på
+  `sessionId` ensamt hade endet ignorerats eftersom samma id redan setts vid starten.
+- **`activeSessionId` är ett separat fält**: vilken session som är aktiv just nu (eller null).
+- Snapshotet saknar eventId och behandlas som den **syntetiska logiska händelsen
+  `live:start:<sessionId>`** — därmed går snapshot och SSE-ram genom exakt samma dedupe.
 
-1. Bootstrap-snapshot **och** `live:start`-ram går genom samma funktion `behandla({sessionId,
-   startedAt})`: nytt sessionId ⇒ (a) skriv sessionStorage, (b) `dispatchEvent(new CustomEvent(
-   'vyra-live-session', {detail:{sessionId, startedAt}}))` — modulerna ovan lyssnar och nollställer
-   sitt eget state, (c) konfig-omhämtning + `vyra-live-repaint`.
-2. Samma sessionId igen (retry, SSE-replay, återanslutning till samma LIVE) ⇒ idempotent no-op.
-3. Två SSE-ramar med olika transport-id (`id:`-raden) men samma `eventId` ⇒ en logisk behandling
-   — dedupen är `sessionId`/`eventId`, aldrig streamId.
-4. Reload efter start ⇒ snapshotet i bootstrap-svaret ger samma `behandla`-väg — eventet behövs
-   inte.
-5. `live:end` markerar bara "aktiv session avslutad" **om** dess sessionId matchar den behandlade
-   — ett end(old) som anländer efter start(new) är en no-op (sessionId skiljer).
-6. Ingen sidomladdning någonsin; transparent overlay och individuella `?widget=`-länkar berörs
-   inte (signalen bär inget DOM; `VYRA_OVERLAY`-vakten och widgetfiltret är orörda — inga
-   Studio-chrome- eller accessfält i overlay-output).
-7. Utan snapshot-fält och utan livesession-ramar (= flaggan av) är modulen helt inert.
+**sessionStorage-layout (Davids punkt 5):** två nycklar, aldrig localStorage:
+`vyra-live-session-aktiv` (activeSessionId | '') och `vyra-live-session-hanterade` (JSON-lista av
+eventId, **tak 16**, äldsta faller först — en sessionscykel är 2 eventId så taket rymmer åtta
+cykler). sessionStorage är per browserkälla; provet kör TVÅ riggade källor på samma origin och
+visar att den enas behandling aldrig blockerar den andras reset.
 
-### Prov (körs i `npm test`-sviten + browserriggen)
+**Bootstrap/SSE-racet (Davids punkt 3) — uppmätt ordning:** overlay-access.js:16 hämtar och
+`await`-applicerar bootstrapsvaret **innan** `new EventSource(...)` skapas — vid första laddning
+är snapshotet strukturellt före varje ram. Racet finns i **återanslutnings-refetchen** (samma
+GET körs om medan strömmen redan lever). Regeln som stänger det:
 
-- live-session-client enhetsprov: kontraktspunkterna 1–5 och 7 med fejkad sessionStorage/eventyta.
-- Modullyssnarna: per modul ett prov att `vyra-live-session` tömmer exakt rätt state och inte rör
-  inställningar/VyraPoints (mutationsbart: ta bort lyssnaren ⇒ provet faller).
-- Snapshotrutten (Postgres-jobbet): fältets form, null-fallet, tokenfel exponerar inget,
-  fältsvepning (aldrig workspaceId/roomId/accountKey/bridgeRunId), och att transparent
-  overlay-/widgetlänk-render är byteidentisk utan aktiv session.
-- Overlayläckagevakten (#264-metoden): `vyra-live-session` får inte montera något i DOM.
+- Snapshot med `sessionId` ⇒ syntetiskt `live:start:<id>` genom dedupen (idempotent).
+- **`session: null` är nedgraderande och accepteras ENDAST vid den initiala bootstrappen**
+  (innan första ram behandlats). En senare refetch som svarar null ignoreras — endet ägs av
+  `live:end`-ramen, och ett äldre null-snapshot kan därmed aldrig skriva över ett nyare start.
+- Deterministiska prov: (a) snapshot null läses, därefter start-ram ⇒ aktiv; (b) start-ram
+  anländer medan refetch väntar och refetchen svarar null ⇒ aktiv består; (c) snapshot visar ny
+  session och replayen bär end(old)+start(new) ⇒ slutresultat new aktiv; (d) alla tre vägarna
+  landar i samma `activeSessionId`.
 
----
+**Kontraktet i övrigt** (oförändrat från förra varvet, nu uttryckt i eventId-termer):
+`live:start:<ny>` ⇒ signalen `vyra-live-session` + konfig-omhämtning + `vyra-live-repaint`;
+samma eventId igen (retry/replay/återanslutning till samma LIVE) ⇒ no-op; olika transport-id
+(`id:`-raden) men samma eventId ⇒ en behandling; `live:end:<X>` nollar `activeSessionId` endast
+om X === aktivt id — end(old) efter start(new) är en no-op; ingen omladdning; transparent
+overlay och `?widget=`-länkar orörda; inga Studio-chrome-/accessfält i overlay-output.
+
+### Målwidgeten — uppmätt och åtgärdad (Davids punkt 4)
+
+Mätningen bekräftar luckan: goal-clientens `store` (Map widgetId→ram, goal-client.js:46) håller
+sista ramen i minnet; **`vyra-live-repaint` ritar bara om den gamla ramen** (:303 — "rita om det
+de redan har", ingen hämtning); serverresetten publicerar ingen ram, så en öppen widget behåller
+föregående sessions progress tills nästa liveevent råkar knuffa den.
+
+Åtgärden använder de två sakerna som redan finns och är bevisade:
+
+- `resetWorkspaceGoals` bumpar `revision = revision + 1` (goal-runtime.js:321) — resetraden är
+  strikt nyare i det enda ordningsbegrepp klienten lyder under.
+- `loadSnapshot()` (goal-client.js:99) hämtar `/api/overlay-access/<token>/goals` och filtrerar
+  mot `store` per revision — resetens rad vinner, och en förlorad kapplöpning är ofarlig
+  (revision avgör).
+
+**Design:** goal-client får en lyssnare på `vyra-live-session` som anropar `loadSnapshot()` —
+den auktoritativa refetchen. Ingen ny mekanik: samma väg som varje SSE-reopen redan tar.
+**Browserprov:** målwidget visar värde > 0 före start; `live:start`-ramen anländer; widgeten
+visar serverns resetvärde (baseline/target kvar, progress 0, nya epoch/revision) **utan reload**.
+
+### Statinventering per modul (oförändrad tabell från förra varvet)
+
+goal-client **hämtas om** (refetch ovan — inte "lämnas": mätningen visade att repaint inte
+räcker); gift campaign **hämtas om** (konfig-omhämtningen); leaderboard/last-X/battle-MVP/
+TTS-kön/recognition-köerna/streaks **nollställs i minnet** via `vyra-live-session` (inställningar
+lämnas); event-dedupe **lämnas**; **VyraPoints/localStorage orört** tills separat produktbeslut.
 
 ## Planerade filer
 
