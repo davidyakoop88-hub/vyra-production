@@ -266,7 +266,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // bara accepterat/foraldrat/upprepat.
   if((p==='/api/live-runs'||p==='/api/live-sessions'||p==='/api/live-sessions/end')&&req.method==='POST'){
     if(!maskinAuth(req))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});
-    /*MUTB flaggan bortmuterad*/
+    if(process.env.VYRA_SANDNINGSIDENTITET!=='1')return send(res,503,{ok:false,error:'Sändningsidentiteten är inte aktiverad'});
     const d=await body(req)||{};
     for(const falt of ['workspaceId','sessionId','generation','reason','actor','actor_user_id','eventId','startedAt','endedAt']){
       if(falt in d)return send(res,400,{ok:false,error:`Fältet "${falt}" får inte skickas`});
@@ -287,7 +287,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       :await StreamSessions.avslutaLiveFranBrygga({tiktokUsername:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq});
     if(ut.stale)return send(res,200,{ok:true,stale:true,skal:ut.skal});
     if(ut.idempotent)return send(res,200,{ok:true,idempotent:true});
-    return send(res,200,{ok:true,accepted:true});
+    return send(res,200,{ok:true,accepted:true,workspaces:ut.workspaces}); /*MUTC*/
   }
   const ingest=p.match(/^\/api\/events\/tiktok\/([0-9a-f-]+)$/i);if(ingest&&req.method==='POST'){if(!maskinAuth(req))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});const d=await body(req,64*1024),out=await ingestTikTokEvent(ingest[1],d);return send(res,out.duplicate?200:202,{ok:true,...out})}
   if(p==='/api/internal/metrics'&&req.method==='GET'){const expected=String(process.env.METRICS_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig metrics-token'});const text=metrics.render();res.writeHead(200,{'content-type':'text/plain; version=0.0.4; charset=utf-8','content-length':Buffer.byteLength(text),'cache-control':'no-store'});return res.end(text)}
