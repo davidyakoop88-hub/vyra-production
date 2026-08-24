@@ -160,3 +160,99 @@ test('manager: utan exit 86 är beteendet exakt som före ändringen — flagga-
   assert.ok(!JSON.stringify(s).includes('stale-generation'),
     'ingen stale-markering ska finnas när ingen kod 86 setts');
 });
+
+
+// ---- Alla tre fatala koderna ar fail-stop (Davids krav 2026-08-24) ------------------------------
+// 86 = stale generation, 65 = servern avvisar kontraktet (400), 78 = auth-stopp efter bounded
+// 401-policy. Aterstallningsvagen for 78 ar en NY serviceprocess: en andrad Railway-token/-konfig
+// deployar om tjansten, och den nya managerinstansen har tom sparr.
+
+function fatalRigg(rows) {
+  const spawns = [];
+  const barn = [];
+  let klocka = 0;
+  const manager = createConnectionManager({
+    pool: fakePool(rows),
+    spawnBridge: (ws, u) => { spawns.push(u); const c = fakeChild(); barn.push(c); return c; },
+    sleepFn: async () => {},
+    nowFn: () => klocka,
+  });
+  return { manager, spawns, barn, fram: ms => { klocka += ms; } };
+}
+
+test('manager: exit 65 (kontraktsdefekt) är fail-stop för kontot i samma managerlivstid', async () => {
+  const { manager, spawns, barn, fram } = fatalRigg([{ workspace_id: 'ws-1', tiktok_username: 'alice' }]);
+  await manager.syncOnce();
+  barn[0].emit('exit', 65);
+  fram(6 * 60_000);
+  await manager.syncOnce();
+  assert.equal(spawns.length, 1, 'exit 65 ska inte respawnas — kontraktet läks bara av en ny deploy');
+  const vantar = manager.stats().waiting;
+  assert.equal(vantar[0]?.reason, 'kontraktsdefekt',
+    'blockeringsorsaken ska synas i stats: ' + JSON.stringify(vantar));
+});
+
+test('manager: exit 78 (auth-stopp) är fail-stop — återställningsvägen är en ny deployment', async () => {
+  const { manager, spawns, barn, fram } = fatalRigg([
+    { workspace_id: 'ws-1', tiktok_username: 'alice' },
+    { workspace_id: 'ws-2', tiktok_username: 'bob' },
+  ]);
+  await manager.syncOnce();
+  barn[0].emit('exit', 78);
+  fram(6 * 60_000);
+  await manager.syncOnce();
+  assert.equal(spawns.filter(u => u === 'alice').length, 1, 'exit 78 ska inte respawnas — fel token kräver konfigurationsändring');
+  assert.equal(manager.stats().waiting.find(w => w.username === 'alice')?.reason, 'auth-stopp');
+  // Andra konton fortsätter — bob är kvar och opåverkad.
+  assert.equal(manager.stats().totalBridges, 1);
+  // En NY managerinstans (= ny deployment efter konfigändringen) får försöka igen.
+  const andra = fatalRigg([{ workspace_id: 'ws-1', tiktok_username: 'alice' }]);
+  await andra.manager.syncOnce();
+  assert.deepEqual(andra.spawns, ['alice'], 'en ny serviceprocess är den avsedda återställningsvägen');
+});
+
+test('manager: fatal exit loggas strukturerat — exitkod och orsak, aldrig token eller body', async () => {
+  const { manager, barn } = fatalRigg([{ workspace_id: 'ws-1', tiktok_username: 'alice' }]);
+  await manager.syncOnce();
+  const rader = [];
+  const gammalError = console.error, gammalWarn = console.warn;
+  console.error = (...a) => rader.push(a.join(' '));
+  console.warn = (...a) => rader.push(a.join(' '));
+  try { barn[0].emit('exit', 86); } finally { console.error = gammalError; console.warn = gammalWarn; }
+  const rad = rader.find(r => r.includes('86'));
+  assert.ok(rad, 'ingen strukturerad loggrad om den fatala exitkoden: ' + JSON.stringify(rader));
+  assert.ok(rad.includes('stale-generation'), 'orsaken ska stå i loggraden: ' + rad);
+  assert.ok(!/bearer|token=/i.test(rader.join(' ')), 'loggen får inte bära hemligheter');
+});
+
+test('manager: borttagning och återläggning av workspacet häver INTE spärren i samma manager', async () => {
+  const rows = [{ workspace_id: 'ws-1', tiktok_username: 'alice' }];
+  let raderNu = rows;
+  const spawns = [];
+  const barn = [];
+  let klocka = 0;
+  const manager = createConnectionManager({
+    pool: { query: async () => ({ rows: raderNu }) },
+    spawnBridge: (ws, u) => { spawns.push(u); const c = fakeChild(); barn.push(c); return c; },
+    sleepFn: async () => {},
+    nowFn: () => klocka,
+  });
+  await manager.syncOnce();
+  barn[0].emit('exit', 86);
+  raderNu = [];                              // kopplingen tas bort i Studio...
+  await manager.syncOnce();
+  raderNu = rows;                            // ...och läggs tillbaka
+  klocka += 6 * 60_000;
+  await manager.syncOnce();
+  assert.equal(spawns.length, 1, 'av/på i tiktok_connections får inte tvätta bort stale-spärren');
+  assert.equal(manager.stats().waiting[0]?.reason, 'stale-generation');
+});
+
+test('manager: gate-drop-meddelanden från bryggan räknas i stats', async () => {
+  const { manager, barn } = fatalRigg([{ workspace_id: 'ws-1', tiktok_username: 'alice' }]);
+  await manager.syncOnce();
+  barn[0].emit('message', { type: 'gate-drop', n: 2 });
+  barn[0].emit('message', { type: 'gate-drop' });
+  assert.equal(manager.stats().gateDrops, 3,
+    'overflow-räknaren ska exponeras som ett TAL i stats (ingen kontolista)');
+});

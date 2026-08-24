@@ -163,7 +163,7 @@ test('livscykel: seq 1, 2, 3 över start → end → start, exakta bodies', asyn
 });
 
 test('livscykel: retry efter nätfel återanvänder exakt samma seq och body', async () => {
-  const { lc, moln, vantader } = rigg();
+  const { lc, moln, vantader, exits } = rigg();
   moln.skript.push({ match: '/api/live-sessions', svar: new Error('ECONNRESET') });
   lc.startad('760000000000000001');
   await moln.tills(2, '/api/live-sessions');
@@ -172,6 +172,7 @@ test('livscykel: retry efter nätfel återanvänder exakt samma seq och body', a
   assert.equal(JSON.parse(forsok[1].body).seq, 1, 'seq ökades för att ett svar saknades');
   assert.ok(vantader.length >= 1, 'retryn väntade inte (backoff saknas)');
   assert.ok(vantader.every(ms => ms >= 1000 && ms <= 60000), 'backoff utanför 1s–60s: ' + vantader);
+  assert.deepEqual(exits, [], 'ett nätfel är aldrig fatalt — bara bounded backoff');
 });
 
 test('livscykel: 503 ger bounded backoff-retry på samma besked', async () => {
