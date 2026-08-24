@@ -274,7 +274,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     const namn=String(d.tiktokUsername||'');
     if(namn.length>64||!StreamSessions.kontonyckel(namn))return send(res,400,{ok:false,error:'Ogiltigt tiktokUsername'});
     const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if(!UUID_RE.test(String(d.bridgeRunId||'')))return send(res,400,{ok:false,error:'bridgeRunId måste vara ett uuid'});
+    if(d.bridgeRunId!=null&&!UUID_RE.test(String(d.bridgeRunId)))return send(res,400,{ok:false,error:'bridgeRunId måste vara ett uuid'}); /*MUTD*/
     if(p==='/api/live-runs'){
       await StreamSessions.registreraKorning({konto:namn,bridgeRunId:d.bridgeRunId});
       return send(res,200,{ok:true});
@@ -287,7 +287,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       :await StreamSessions.avslutaLiveFranBrygga({tiktokUsername:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq});
     if(ut.stale)return send(res,200,{ok:true,stale:true,skal:ut.skal});
     if(ut.idempotent)return send(res,200,{ok:true,idempotent:true});
-    return send(res,200,{ok:true,accepted:true,workspaces:ut.workspaces}); /*MUTC*/
+    return send(res,200,{ok:true,accepted:true});
   }
   const ingest=p.match(/^\/api\/events\/tiktok\/([0-9a-f-]+)$/i);if(ingest&&req.method==='POST'){if(!maskinAuth(req))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});const d=await body(req,64*1024),out=await ingestTikTokEvent(ingest[1],d);return send(res,out.duplicate?200:202,{ok:true,...out})}
   if(p==='/api/internal/metrics'&&req.method==='GET'){const expected=String(process.env.METRICS_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig metrics-token'});const text=metrics.render();res.writeHead(200,{'content-type':'text/plain; version=0.0.4; charset=utf-8','content-length':Buffer.byteLength(text),'cache-control':'no-store'});return res.end(text)}
