@@ -141,6 +141,19 @@ test.after(async () => {
   });
   const { eventBus } = require('../index');
   if (eventBus) await eventBus.close().catch(() => {});
+  // RIV ALLT FILEN SKAPAT. Provfilerna delar databas i samma CI-jobb, och nasta fil raknar
+  // delvis GLOBALT (T1 raknar hela utkorgen, S7 alla kvitton) och publiceraUtkorg claimar rader
+  // oavsett workspace. Uppmatt 2026-08-24: lasprovets kvarlamnade sessioner, kvitton och
+  // outboxrader fallde 13 prov i stream-sessions-sviten. Femte gangen samma familj:
+  // forutsattningar skapas OCH rivs av riggen - aven mellan FILER, inte bara mellan prov.
+  for (const t of ['stream_room_reopen', 'stream_event_outbox', 'stream_session_pointer']) {
+    await pool.query(`DELETE FROM ${t} WHERE workspace_id = ANY($1::uuid[])`, [[WS1, WS2]]);
+  }
+  await pool.query('DELETE FROM stream_session_reset WHERE session_id IN '
+    + '(SELECT id FROM stream_sessions WHERE workspace_id = ANY($1::uuid[]))', [[WS1, WS2]]);
+  await pool.query('DELETE FROM stream_sessions WHERE workspace_id = ANY($1::uuid[])', [[WS1, WS2]]);
+  await pool.query("DELETE FROM audit_log WHERE action='stream_room_reopened'");
+  await pool.query('DELETE FROM bridge_runs WHERE account_key=$1', [KONTO]);
   await pool.query('DELETE FROM sessions WHERE user_id = ANY($1::uuid[])',
     [[OWNER, ADMIN, VIEWER, OUTSIDER]]);
   await pool.end();

@@ -638,7 +638,11 @@ prov('J3 · återställningen gäller EN gång, inte som permanent undantag', as
     .workspaces[0];
   await sessioner.avslutaLive({ sessionId: tva.session.id, bridgeRunId: KOR_1, seq: 5, reason: 'bridge' });
   const tredje = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1, bridgeRunId: KOR_1, seq: 6 });
-  assert.equal(tredje.stale, true, 'återställningen blev ett permanent undantag');
+  // PER WORKSPACE, samma kontraktsandring som J1 fick: stangt-rum ligger pa workspacet, inte pa
+  // hela beskedet. Toppnivans stale ar reserverat for generation/seq.
+  assert.equal(tredje.stale, false, 'hela beskedet avvisades i stället för det enskilda workspacet');
+  assert.equal(tredje.workspaces[0].stale, true, 'återställningen blev ett permanent undantag');
+  assert.equal(tredje.workspaces[0].skal, 'stangt-rum');
 });
 
 // ================================================================================================
