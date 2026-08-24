@@ -142,7 +142,8 @@ const StreamSessions=skapaStreamSessions({pool});
 function maskinAuth(req){
   const expected=String(process.env.TIKTOK_INGEST_TOKEN||''),
         supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
-  return expected.length>=32; /*MUTA auth forsvagad*/
+  return expected.length>=32&&supplied.length===expected.length
+    &&crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected));
 }
 
 async function membership(userId,workspaceId,roles){const q=await pool.query('SELECT role FROM workspace_members WHERE user_id=$1 AND workspace_id=$2',[userId,workspaceId]);return q.rows[0]&&roles.includes(q.rows[0].role)}
