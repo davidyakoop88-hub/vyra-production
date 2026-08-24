@@ -90,9 +90,11 @@ test.before(async () => {
 
   await pool.query(
     `INSERT INTO users (id,email,password_hash,display_name,email_verified_at) VALUES
-       ($1,$1||'@t.invalid','x','ro-owner',now()),($2,$2||'@t.invalid','x','ro-admin',now()),
-       ($3,$3||'@t.invalid','x','ro-viewer',now()),($4,$4||'@t.invalid','x','ro-out',now())
-     ON CONFLICT (id) DO NOTHING`, [OWNER, ADMIN, VIEWER, OUTSIDER]);
+       ($1,$5,'x','ro-owner',now()),($2,$6,'x','ro-admin',now()),
+       ($3,$7,'x','ro-viewer',now()),($4,$8,'x','ro-out',now())
+     ON CONFLICT (id) DO NOTHING`,
+    [OWNER, ADMIN, VIEWER, OUTSIDER,
+     OWNER + '@t.invalid', ADMIN + '@t.invalid', VIEWER + '@t.invalid', OUTSIDER + '@t.invalid']);
   await pool.query(
     `INSERT INTO workspaces (id,name,owner_user_id) VALUES ($1,'ro-1',$3),($2,'ro-2',$4)
      ON CONFLICT (id) DO NOTHING`, [WS1, WS2, OWNER, OUTSIDER]);
@@ -255,8 +257,8 @@ prov('en roll som återkallats FÖRE skrivningen stoppas av transaktionens egen 
   // client som skriver, efter workspacelåset. Här anropas den direkt med en aktör vars roll just
   // tagits bort — motsvarande att rollen återkallades mellan ruttens kontroll och transaktionen.
   await pool.query("INSERT INTO users(id,email,password_hash,display_name) "
-    + "VALUES($1,$1||'@t.invalid','x','ro-fd') ON CONFLICT (id) DO NOTHING",
-    ['cccccccc-0000-4000-8000-00000000000f']);
+    + "VALUES($1,$2,'x','ro-fd') ON CONFLICT (id) DO NOTHING",
+    ['cccccccc-0000-4000-8000-00000000000f', 'ro-fd@t.invalid']);
   const FD = 'cccccccc-0000-4000-8000-00000000000f';
   await pool.query("INSERT INTO workspace_members(workspace_id,user_id,role) VALUES($1,$2,'admin') "
     + 'ON CONFLICT (workspace_id,user_id) DO UPDATE SET role=EXCLUDED.role', [WS1, FD]);
