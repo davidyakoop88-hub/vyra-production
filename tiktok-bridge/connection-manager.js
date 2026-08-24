@@ -27,6 +27,17 @@ const crypto = require('crypto');
 const START_STAGGER_MS = 500; // wait between each bridge start — avoids TikTok rate-limiting a burst of connects
 const DEFAULT_MAX_BRIDGES = 5;
 
+// Fatala exitkoder fran bryggprocessen (kontraktet agd av livscykel.js). Alla tre ar FAIL-STOP
+// for KONTOT under resten av managerns livstid: ingen respawn, ingen backofftimer. En vanlig
+// restart hade gjort ont varre — 86 flip-floppar generationerna mellan tva deployments, 65
+// aterkommer identiskt tills en deploy rattar kontraktet, och 78 kraver en konfigurationsandring
+// som anda skapar en NY serviceprocess (Railway deployar om vid env-andring) med tom sparr.
+const FATALA_EXITKODER = new Map([
+  [86, 'stale-generation'],   // en nyare korning ager kontot (409/stale fran servern)
+  [65, 'kontraktsdefekt'],    // servern avvisade kontraktet med 400
+  [78, 'auth-stopp'],         // bounded 401-policy uttomd — fel ingest-nyckel
+]);
+
 // Restart backoff. A bridge whose connection is permanently broken (banned account, deleted user,
 // a stream that never goes live) exits immediately, and syncOnce() would otherwise start it again
 // on the very next tick — forever, burning CPU and hammering TikTok. Each consecutive failure
@@ -73,7 +84,9 @@ function createConnectionManager({
   const bridges = new Map();  // workspaceId -> { child, username, isConnected, reconnectAttempts, lastEventTime, startedAt }
   const waiting = new Map();  // workspaceId -> { username, reason, since } — wanted but not running
   const backoff = new Map();  // workspaceId -> { failures, notBefore } — survives the bridge entry itself
+  const blockerade = new Map(); // accountKey -> orsak — fatala exitkoder, haller managerlivstiden ut
   let restarts = 0;           // total bridge exits that were NOT a deliberate stop
+  let gateDrops = 0;          // summerade gate-drop-besked fran bryggorna — ett TAL, ingen kontolista
 
   function markWaiting(workspaceId, username, reason) {
     const existing = waiting.get(workspaceId);
@@ -95,6 +108,15 @@ function createConnectionManager({
   function startBridge(workspaceId, username) {
     const existing = bridges.get(workspaceId);
     if (existing) return existing;
+
+    // Ett konto vars process dog med en fatal exitkod ar blockerat sa lange DENNA manager lever
+    // — oavsett vilket workspace som pekar pa det, och oavsett om raden hunnit tas bort och
+    // laggas tillbaka i tiktok_connections. En ny managerprocess (= ny deployment) borjar tom.
+    const blockOrsak = blockerade.get(accountKey(username));
+    if (blockOrsak) {
+      markWaiting(workspaceId, username, blockOrsak);
+      return null;
+    }
 
     const duplicateOf = activeAccount(username, workspaceId);
     if (duplicateOf) {
@@ -146,6 +168,8 @@ function createConnectionManager({
         entry.reconnectAttempts = Number(msg.attempt) || entry.reconnectAttempts + 1;
       } else if (msg.type === 'event') {
         entry.lastEventTime = Number(msg.at) || nowFn();
+      } else if (msg.type === 'gate-drop') {
+        gateDrops += Number(msg.n) || 1;
       }
     });
 
@@ -156,10 +180,19 @@ function createConnectionManager({
     // A bridge exiting (crash, or its own graceful shutdown) must never affect other bridges — just
     // drop it from the map so its capacity slot is freed immediately. A deliberate stop carries no
     // penalty; anything else is a failure and earns backoff before syncOnce() tries again.
-    child.on('exit', () => {
+    child.on('exit', code => {
       if (bridges.get(workspaceId) !== entry) return;
       bridges.delete(workspaceId);
       if (entry.stopping) return;
+      const fatalOrsak = FATALA_EXITKODER.get(Number(code));
+      if (fatalOrsak) {
+        restarts++;
+        blockerade.set(accountKey(entry.username), fatalOrsak);
+        backoff.delete(workspaceId);   // ingen timer: kontot ska inte in i nagon respawnvag alls
+        markWaiting(workspaceId, entry.username, fatalOrsak);
+        console.error(`[connection-manager] Bridge för workspace ${workspaceId} (@${entry.username}) avslutades med exitkod ${code} (${fatalOrsak}) — kontot blockeras för resten av managerns livstid; en ny deployment/serviceprocess får försöka igen.`);
+        return;
+      }
       restarts++;
       const ranFor = nowFn() - entry.startedAt;
       if (ranFor >= STABLE_MS) backoff.delete(workspaceId);   // it was healthy; this is a fresh incident
@@ -269,6 +302,7 @@ function createConnectionManager({
     return {
       totalBridges: bridges.size,
       maxBridges: limit,
+      gateDrops,
       atCapacity: bridges.size >= limit,
       waitingCount: waiting.size,
       restarts,

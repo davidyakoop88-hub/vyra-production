@@ -29,6 +29,7 @@ const path = require('path');
 const N = require('./normalizer');
 const Inspelare = require('./inspelare');
 const { createProxyManager } = require('./proxy-manager');
+const { skapaLivscykel } = require('./livscykel');
 
 // The local server only exists in the desktop build (server.ps1 on 127.0.0.1:4173). In the cloud
 // there is nothing listening there, so defaulting to it made every event, heartbeat, connect and
@@ -161,6 +162,7 @@ if (require.main === module) {
   let activeConnection = null;
   let stopping = false;
   let criticalAlertSent = false;
+  let aktuelltRum = null;
   const recentEventKeys = new Map();
   const proxyManager = createProxyManager();
   let currentProxy = null;
@@ -213,6 +215,19 @@ if (require.main === module) {
   }, FLODE_INTERVALL_MS);
   if (typeof flodeTimer.unref === 'function') flodeTimer.unref();
 
+  // SANDNINGSIDENTITETEN (PR #268/#269). Fail-closed: av utan VYRA_SANDNINGSIDENTITET='1' och
+  // full molnkonfiguration — da ar detta en noop vars moln() ar exakt den gamla fetch-raden i
+  // sendEvent. Pa: korningsidentitet, livscykel-FIFO och grinden, se livscykel.js. Fatala svar
+  // avslutar processen med kontraktets exitkoder (86/65/78) som connection-manager laser.
+  const livscykel = skapaLivscykel({
+    pa: process.env.VYRA_SANDNINGSIDENTITET === '1' && !!(CLOUD && WORKSPACE && INGEST_TOKEN),
+    tiktokUsername: username, cloud: CLOUD, workspace: WORKSPACE, token: INGEST_TOKEN,
+    raknad: nyckel => {
+      flodeRaknare.set(nyckel, (flodeRaknare.get(nyckel) || 0) + 1);
+      if (nyckel === 'gate-drop') reportToParent('gate-drop');
+    },
+  });
+
   function eventKey(type, data, fields) {
     const nativeId = N.sourceId(data);
     return nativeId ? `${type}:${nativeId}` : `${type}:${fields.username || ''}:${fields.giftName || ''}:${fields.count || ''}:${Math.floor(Date.now() / 1000)}`;
@@ -252,7 +267,10 @@ if (require.main === module) {
     const jobs = [postJson('/api/events', local)];
     // N.tillMolnet: vitlista, se normalizer.js. Gäller BARA molnpostningen — den lokala raden ovan
     // matar overlayen och får inte filtreras, annars tystnar chattwidgetarna i OBS.
-    if (CLOUD && WORKSPACE && INGEST_TOKEN && N.tillMolnet(type)) jobs.push(fetch(`${CLOUD}/api/events/tiktok/${WORKSPACE}`, { method: 'POST', headers: { 'content-type': 'application/json', 'authorization': `Bearer ${INGEST_TOKEN}` }, body: JSON.stringify(N.cloudEvent(key, type, fields)) }).then(r => { if (!r.ok) throw new Error(`Cloud HTTP ${r.status}`) }).catch(err => console.error('[bridge] Cloud-event misslyckades:', err.message)));
+    // Sjalva posten (url ${CLOUD}/api/events/tiktok/${WORKSPACE}, huvuden, N.cloudEvent-bodyn och
+    // felraden) bor numera i livscykel.js och ar med flaggan av byte for byte densamma som den
+    // gamla inline-raden har — bevisat i test/livscykel.test.js flagga-av-provet.
+    if (CLOUD && WORKSPACE && INGEST_TOKEN && N.tillMolnet(type)) jobs.push(livscykel.moln(key, type, fields));
     return Promise.all(jobs);
   }
 
@@ -429,7 +447,7 @@ if (require.main === module) {
       // action 3 (ENDED) ags av STREAM_END nedan — en och samma sak ska inte stangas ner
       // fran tva hall.
     });
-    connection.on(WebcastEvent.STREAM_END, () => { sandningsLage = 'live'; scheduleReconnect('TikTok LIVE avslutades') });
+    connection.on(WebcastEvent.STREAM_END, () => { sandningsLage = 'live'; if (aktuelltRum) livscykel.slut(aktuelltRum); scheduleReconnect('TikTok LIVE avslutades') });
     /* GUARDIAN — FORBEREDD, INTE AKTIVERAD.
        ===========================================================================================
        VANTAR PA EVENT-VERIFIERING. Se docs/live-verifiering.md punkt 6: vi vet inte vilken
@@ -524,6 +542,8 @@ if (require.main === module) {
         criticalAlertSent = false;
         console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}) via ${currentProxy || 'ingen proxy'}. Vidarebefordrar events till ${SERVER}. Proxy-status: ${JSON.stringify(proxyManager.stats())}`);
         reportToParent('connected', { roomId: state.roomId });
+        aktuelltRum = String(state.roomId);
+        livscykel.startad(aktuelltRum);
         postJson('/api/connect', { username, roomId: state.roomId, source: 'tiktok-bridge' });
         if (shouldSendSuccessAlert(attemptsBeforeSuccess)) {
           postDiscordAlert(reconnectSuccessAlertPayload(username, state.roomId, attemptsBeforeSuccess));

@@ -354,7 +354,9 @@ test('livscykel: bridge.js kopplar slut() ENDAST i STREAM_END — paus/disconnec
   const slutAnrop = [...src.matchAll(/\.slut\(/g)];
   assert.equal(slutAnrop.length, 1, 'slut() ska anropas från exakt ETT ställe');
   const rad = src.slice(0, slutAnrop[0].index).split('\n').length;
-  const streamEndRad = src.slice(0, src.indexOf('STREAM_END,')).split('\n').length;
+  // Ankra på WebcastEvent.STREAM_END — den nakna strängen 'STREAM_END,' förekommer även i en
+  // äldre kommentar (sandningsLage) och i inspelarens typlista, långt från hanteraren.
+  const streamEndRad = src.slice(0, src.indexOf('WebcastEvent.STREAM_END')).split('\n').length;
   assert.ok(Math.abs(rad - streamEndRad) <= 2,
     `slut() (rad ${rad}) sitter inte i STREAM_END-hanteraren (rad ${streamEndRad})`);
   assert.ok(!/DISCONNECTED[\s\S]{0,200}\.slut\(/.test(src), 'slut() nås från DISCONNECTED');

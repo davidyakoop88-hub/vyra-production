@@ -130,8 +130,10 @@ test('stats() exposes the capacity picture the /status endpoint and Railway rely
   const manager=createConnectionManager({spawnBridge:()=>fakeChild()});
   manager.startBridge('ws-1','alice');
   const stats=manager.stats();
+  // gateDrops (PR #269) är en avsiktlig RÄKNARE — grindens uttryckliga dataförlust ska synas i
+  // stats utan att någon kontolista följer med. Nya fält läggs i listan MEDVETET, aldrig via spread.
   assert.deepEqual(Object.keys(stats).sort(),
-    ['atCapacity','bridges','lastEventTime','maxBridges','restarts','totalBridges','waiting','waitingCount']);
+    ['atCapacity','bridges','gateDrops','lastEventTime','maxBridges','restarts','totalBridges','waiting','waitingCount']);
   assert.deepEqual(Object.keys(stats.bridges[0]).sort(),['isConnected','lastEventTime','reconnectAttempts','username','workspaceId']);
 });
 
