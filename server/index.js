@@ -280,7 +280,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       return send(res,200,{ok:true});
     }
     if(!/^[0-9]{1,32}$/.test(String(d.roomId||'')))return send(res,400,{ok:false,error:'Ogiltigt roomId'});
-    if(!Number.isSafeInteger(d.seq)||d.seq<0)return send(res,400,{ok:false,error:'seq måste vara ett heltal från 1'}); /*MUTE seq=0 slapps*/
+    if(!Number.isSafeInteger(d.seq)||d.seq<1)return send(res,400,{ok:false,error:'seq måste vara ett heltal från 1'});
     const arg={konto:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq};
     const ut=p==='/api/live-sessions'
       ?await StreamSessions.startaLive(arg)
