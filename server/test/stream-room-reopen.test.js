@@ -45,7 +45,11 @@ async function makeSession(userId) {
 }
 
 let rumNr = 100;
-const nyttRum = () => String(700000000000000000 + (rumNr++));
+// STRANGKONKATENERING, inte aritmetik. 7e17 ligger langt over 2^53, dar doubles har steg om 128 -
+// `700000000000000000 + rumNr` andrar inte ens vardet, och varje prov fick SAMMA rum. Uppmatt i CI
+// 2026-08-24: alla atta fallen var rumkollisioner. goal-api.test.js varnar for exakt den har
+// gransen i sin MAX-kommentar.
+const nyttRum = () => '76' + String(rumNr++).padStart(16, '0');
 
 // Ett stängt rum i historiken — förutsättningen för att en biljett alls ska kunna utfärdas.
 async function stangtRum(ws = WS1) {
