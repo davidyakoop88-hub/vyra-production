@@ -328,8 +328,8 @@ CREATE TABLE IF NOT EXISTS slot_totals (
 -- ================================================================================================
 -- SÄNDNINGSIDENTITET. Vilken LIVE ett event tillhör, och därmed vad som får nollställas.
 --
--- Empirin (uppmätt 2026-08-22, skrivskyddad sond): två sändningar samma dag gav TVÅ roomId —
--- 7676848357138664214 och 7676861956443147030. n = 2, en anslutning per sändning, så roomId:s
+-- Empirin (uppmätt 2026-08-22, skrivskyddad sond): två separata LIVE på samma konto, samma dag
+-- och samma deployment gav två OLIKA roomId. n = 2, en anslutning per sändning, så roomId:s
 -- stabilitet GENOM en återanslutning är omätt. Modellen lovar därför inte mer än mätningen bär.
 --
 -- All DDL här är IF NOT EXISTS och ingen sats beror på att en tidigare lyckats: migrate.js kör

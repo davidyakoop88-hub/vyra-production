@@ -2,10 +2,10 @@
 // SÄNDNINGSIDENTITET v3 — en auktoritativ sessionsmodell på servern.
 //
 // EMPIRIN, uppmätt 2026-08-22 med en skrivskyddad sond (inga lyssnare, inga sparade händelser):
-//   LIVE 1  15:33:10–15:44:44 CEST   roomId 7676848357138664214
-//   LIVE 2  16:26:37                 roomId 7676861956443147030
-// Samma konto, dag och deployment. Två sändningar gav TVÅ roomId. n = 2, en anslutning per
-// sändning — roomId:s stabilitet GENOM en återanslutning är fortfarande omätt.
+// två separata LIVE på samma konto, samma dag och samma deployment gav två OLIKA roomId.
+// n = 2, en anslutning per sändning — roomId:s stabilitet GENOM en återanslutning är
+// fortfarande omätt. Konto och roomId nedan är SYNTETISKA med de verkliga värdenas format:
+// 19-siffriga numeriska roomId, kontonamn med blandade skiftlägesvarianter.
 //
 // MÄTNINGAR SOM STYR DEN HÄR FILEN (2026-08-22, mot koden på main):
 //   · tiktok_connections har workspace_id som PRIMARY KEY och INGEN unik nyckel på
@@ -38,11 +38,11 @@ try { ({ skapaStreamSessions } = require('../stream-sessions.js')) } catch (_) {
 
 const WS_A = '11111111-1111-4111-8111-111111111111';
 const WS_B = '22222222-2222-4222-8222-222222222222';   // samma TikTok-konto, annat workspace
-const KONTO = 'jokero060';
+const KONTO = 'provkonto060';
 const AGARE = '33333333-3333-4333-8333-333333333333';
 const KOR_1 = 'kornings-id-1', KOR_2 = 'kornings-id-2';
-const RUM_1 = '7676848357138664214';
-const RUM_2 = '7676861956443147030';
+const RUM_1 = '7600000000000000001';
+const RUM_2 = '7600000000000000002';
 
 async function rigg() {
   assert.ok(skapaStreamSessions,
@@ -647,9 +647,9 @@ prov('K1 · @, versaler och blanksteg pekar på samma konto', async () => {
   await pool.query(
     'INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) '
     + 'ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=EXCLUDED.tiktok_username,active=true',
-    [WS_B, '  @JoKeRo060 ']);
-  await sessioner.registreraKorning({ konto: '@JOKERO060', bridgeRunId: KOR_1 });
-  const ut = await sessioner.startaLive({ konto: ' jokero060 ', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
+    [WS_B, '  @ProvKonto060 ']);
+  await sessioner.registreraKorning({ konto: '@PROVKONTO060', bridgeRunId: KOR_1 });
+  const ut = await sessioner.startaLive({ konto: ' provkonto060 ', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
   assert.equal(ut.workspaces.length, 2,
     'normaliseringen delade kontot: fan-out nådde ' + ut.workspaces.length + ' av 2 workspaces');
 });
@@ -657,8 +657,8 @@ prov('K1 · @, versaler och blanksteg pekar på samma konto', async () => {
 prov('K2 · registrering och status måste normalisera LIKA', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
-  await sessioner.registreraKorning({ konto: '@Jokero060', bridgeRunId: KOR_1 });
-  const ut = await sessioner.startaLive({ konto: 'jokero060', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
+  await sessioner.registreraKorning({ konto: '@Provkonto060', bridgeRunId: KOR_1 });
+  const ut = await sessioner.startaLive({ konto: 'provkonto060', bridgeRunId: KOR_1, seq: 1, roomId: RUM_1 });
   assert.notEqual(ut.stale, true,
     'körningen registrerades under en annan kontonyckel än statusbeskedet slog upp');
 });

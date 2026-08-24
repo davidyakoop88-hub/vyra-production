@@ -19,7 +19,7 @@ function kontonyckel(namn) {
 }
 
 // Samma uttryck som ovan, men i SQL — så att uppslagningen matchar redan lagrade namn oavsett
-// hur de skrevs in. `@Jokero060 ` och `jokero060` är samma konto.
+// hur de skrevs in. `@Provkonto060 ` och `provkonto060` är samma konto.
 const KONTO_SQL = "regexp_replace(lower(btrim(tiktok_username)), '^@+', '')";
 
 function fel(status, meddelande) {
