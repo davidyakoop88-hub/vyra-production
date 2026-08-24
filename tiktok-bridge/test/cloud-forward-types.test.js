@@ -67,11 +67,22 @@ const fs = require('fs'), path = require('path');
 const bridgeKod = fs.readFileSync(path.join(__dirname, '..', 'bridge.js'), 'utf8')
   .split(/\r?\n/).map(r => r.replace(/\/\/[^\r\n]*/, '')).join('\n');
 
-test('bridge.js filtrerar molnpostningen genom regeln', () => {
-  const rad = bridgeKod.split('\n').find(l => /\/api\/events\/tiktok\//.test(l));
-  assert.ok(rad, 'hittade ingen molnpostning i bridge.js');
+// PR #269: själva fetchen (url + huvuden + N.cloudEvent-bodyn) bor numera i livscykel.js —
+// grinden behöver äga posten för att kunna buffra och ordna den. FILTRET ska dock sitta kvar på
+// ANROPSPLATSEN i bridge.js: en typ som inte passerar tillMolnet får aldrig ens nå livscykeln,
+// annars hade grindbufferten fyllts med typer som molnet ändå avvisar. Vakten följer båda halvorna.
+test('bridge.js filtrerar molnanropet genom regeln på anropsplatsen', () => {
+  const rad = bridgeKod.split('\n').find(l => /livscykel\.moln\(/.test(l));
+  assert.ok(rad, 'hittade inget livscykel.moln-anrop i bridge.js');
   assert.match(rad, /tillMolnet\(/,
-    `molnpostningen filtrerar inte: ${rad.trim().slice(0, 160)}`);
+    `molnanropet filtrerar inte: ${rad.trim().slice(0, 160)}`);
+});
+
+test('livscykel.js äger molnpostningens url', () => {
+  const livscykelKod = fs.readFileSync(path.join(__dirname, '..', 'livscykel.js'), 'utf8')
+    .split(/\r?\n/).map(r => r.replace(/\/\/[^\r\n]*/, '')).join('\n');
+  const rad = livscykelKod.split('\n').find(l => /\/api\/events\/tiktok\//.test(l));
+  assert.ok(rad, 'hittade ingen molnpostnings-url i livscykel.js');
 });
 
 // Den LOKALA postningen ska vara oförändrad. Overlayen läser den, och den har inga typbegränsningar
