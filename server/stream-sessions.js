@@ -649,10 +649,7 @@ function skapaStreamSessions({ pool }) {
       // ska ett deterministiskt samtidighetsprov läggas som visar att borttaget workspacelås fäller
       // rätt prov. Först då är låset bevisat. Ta inte bort det innan dess: frånvaron av ett prov är
       // inte frånvaron av ett behov.
-      if (ws.length) {
-        await c.query('SELECT id FROM workspaces WHERE id = ANY($1::uuid[]) ORDER BY id '
-          + 'FOR NO KEY UPDATE', [ws]);
-      }
+      /*MUTWS workspacelaset i startvagen bortmuterat*/
 
       // FÖRST NU seq/generation — inne i låset. Tas den före låsen kan två besked passera den och
       // sedan köa i godtycklig ordning, och då avgör låsordningen i stället för sekvensen.
