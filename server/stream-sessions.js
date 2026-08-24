@@ -31,8 +31,6 @@ function fel(status, meddelande) {
 function skapaStreamSessions({ pool }) {
   if (!pool) throw new Error('stream-sessions kräver en pool');
 
-  const inteAn = namn => { throw fel(501, namn + ' är inte implementerad än'); };
-
   // ---- generationstilldelning -------------------------------------------------------------------
   // UNIQUE(account_key, generation) hindrar dubbletter men skapar INGEN ordning: utan lås läser två
   // samtidiga registreringar samma MAX, båda skriver N+1, och den ena kraschar på unikhetsfelet.
@@ -769,7 +767,6 @@ function skapaStreamSessions({ pool }) {
         c.release();
       }
     },
-    async startaLiveViaHttp() { return inteAn('startaLiveViaHttp'); },
     // ADMINISTRATIV ATEROPPNING. Biljetten oppnar INTE rummet - den konsumeras forst av nasta
     // giltiga, nyare startbesked for samma workspace och rum (beslutForWorkspace ager den logiken).
     //

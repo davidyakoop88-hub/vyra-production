@@ -135,6 +135,17 @@ async function session(req,{csrf=false}={}){const raw=S.parseCookies(req.headers
 // Sandningsidentiteten. Modulen ager hela sessionsbeslutet; rutterna har ar tunna skal.
 const {skapaStreamSessions}=require('./stream-sessions');
 const StreamSessions=skapaStreamSessions({pool});
+// MASKIN-AUTH VID HTTP-FORTROENDEGRANSEN. Husets enda ingestkontroll, extraherad ur den gamla
+// ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
+// inget), langdkontroll fore timingSafeEqual (kravet for konstant tid), och ett felmeddelande
+// utan siffror, langd eller token. Domanfunktionerna ser aldrig ravarden - de ar rena.
+function maskinAuth(req){
+  const expected=String(process.env.TIKTOK_INGEST_TOKEN||''),
+        supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+  return expected.length>=32&&supplied.length===expected.length
+    &&crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected));
+}
+
 async function membership(userId,workspaceId,roles){const q=await pool.query('SELECT role FROM workspace_members WHERE user_id=$1 AND workspace_id=$2',[userId,workspaceId]);return q.rows[0]&&roles.includes(q.rows[0].role)}
 async function overlayAccess(raw){if(!raw||raw.length<32)return null;const q=await pool.query("SELECT t.id token_id,t.overlay_id,o.workspace_id,o.name,o.state,o.version,o.updated_at FROM overlay_access_tokens t JOIN overlays o ON o.id=t.overlay_id WHERE t.token_hash=$1 AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at>now())",[S.digest(raw)]);if(!q.rows[0])return null;pool.query('UPDATE overlay_access_tokens SET last_used_at=now() WHERE id=$1',[q.rows[0].token_id]).catch(()=>{});return q.rows[0]}
 // overlayId scopes the goal frames on this connection and nothing else: raw TikTok events stay
@@ -239,7 +250,46 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
     if(!rest)return send(res,200,{ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}});
     return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${req.socket.remoteAddress||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
-  const ingest=p.match(/^\/api\/events\/tiktok\/([0-9a-f-]+)$/i);if(ingest&&req.method==='POST'){const expected=String(process.env.TIKTOK_INGEST_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});const d=await body(req,64*1024),out=await ingestTikTokEvent(ingest[1],d);return send(res,out.duplicate?200:202,{ok:true,...out})}
+  // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
+  // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
+  // anropare far inte ens veta om funktionen ar paslagen.
+  //
+  // INGEN bakatkompatibilitet: bridgeRunId (kanoniskt uuid, crypto.randomUUID i den framtida
+  // bryggan) kravs pa alla tre, seq (safe integer >= 1) pa start och end. seq 0 avvisas:
+  // max_seq borjar pa 0, och ett seq=0 hade blivit en idempotent no-op - forsta beskedet hade
+  // forsvunnit tyst. Aldre bryggor anvander den gamla vagen tills nya bryggversionen ar utrullad.
+  //
+  // FORBJUDNA FALT ger 400, inte tyst ignorering: en brygga som skickar sessionId eller reason
+  // ar felkonfigurerad eller gammal, och det ska synas - inte doljas.
+  //
+  // Svaren ar MINIMALA: inga workspaces, inga sessions-id, inga generationer. Bryggan behover
+  // bara accepterat/foraldrat/upprepat.
+  if((p==='/api/live-runs'||p==='/api/live-sessions'||p==='/api/live-sessions/end')&&req.method==='POST'){
+    if(!maskinAuth(req))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});
+    if(process.env.VYRA_SANDNINGSIDENTITET!=='1')return send(res,503,{ok:false,error:'Sändningsidentiteten är inte aktiverad'});
+    const d=await body(req)||{};
+    for(const falt of ['workspaceId','sessionId','generation','reason','actor','actor_user_id','eventId','startedAt','endedAt']){
+      if(falt in d)return send(res,400,{ok:false,error:`Fältet "${falt}" får inte skickas`});
+    }
+    const namn=String(d.tiktokUsername||'');
+    if(namn.length>64||!StreamSessions.kontonyckel(namn))return send(res,400,{ok:false,error:'Ogiltigt tiktokUsername'});
+    const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if(!UUID_RE.test(String(d.bridgeRunId||'')))return send(res,400,{ok:false,error:'bridgeRunId måste vara ett uuid'});
+    if(p==='/api/live-runs'){
+      await StreamSessions.registreraKorning({konto:namn,bridgeRunId:d.bridgeRunId});
+      return send(res,200,{ok:true});
+    }
+    if(!/^[0-9]{1,32}$/.test(String(d.roomId||'')))return send(res,400,{ok:false,error:'Ogiltigt roomId'});
+    if(!Number.isSafeInteger(d.seq)||d.seq<1)return send(res,400,{ok:false,error:'seq måste vara ett heltal från 1'});
+    const arg={konto:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq};
+    const ut=p==='/api/live-sessions'
+      ?await StreamSessions.startaLive(arg)
+      :await StreamSessions.avslutaLiveFranBrygga({tiktokUsername:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq});
+    if(ut.stale)return send(res,200,{ok:true,stale:true,skal:ut.skal});
+    if(ut.idempotent)return send(res,200,{ok:true,idempotent:true});
+    return send(res,200,{ok:true,accepted:true});
+  }
+  const ingest=p.match(/^\/api\/events\/tiktok\/([0-9a-f-]+)$/i);if(ingest&&req.method==='POST'){if(!maskinAuth(req))return send(res,401,{ok:false,error:'Ogiltig ingest-token'});const d=await body(req,64*1024),out=await ingestTikTokEvent(ingest[1],d);return send(res,out.duplicate?200:202,{ok:true,...out})}
   if(p==='/api/internal/metrics'&&req.method==='GET'){const expected=String(process.env.METRICS_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig metrics-token'});const text=metrics.render();res.writeHead(200,{'content-type':'text/plain; version=0.0.4; charset=utf-8','content-length':Buffer.byteLength(text),'cache-control':'no-store'});return res.end(text)}
   if(p==='/api/internal/capacity'&&req.method==='GET'){const expected=String(process.env.METRICS_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig metrics-token'});return send(res,200,{ok:true,...await capacitySnapshot({pool,eventBus,metrics})})}
   const scanRoute=p.match(/^\/api\/internal\/media-scan\/([0-9a-f-]+)$/i);if(scanRoute&&req.method==='POST'){const expected=String(process.env.MEDIA_SCAN_TOKEN||''),supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(expected.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return send(res,401,{ok:false,error:'Ogiltig scan-token'});const d=await body(req),q=await pool.query("SELECT * FROM media_assets WHERE id=$1 AND status='quarantined'",[scanRoute[1]]),asset=q.rows[0];if(!asset)return send(res,404,{ok:false,error:'Karantänfil saknas'});if(d.clean===true&&safeEqualHex(String(d.sha256||'').toLowerCase(),asset.sha256)){await pool.query("UPDATE media_assets SET status='ready',ready_at=now() WHERE id=$1",[asset.id]);return send(res,200,{ok:true,status:'ready'})}await mediaStorage.remove(asset.object_key).catch(()=>{});await pool.query("UPDATE media_assets SET status='deleted',deleted_at=now() WHERE id=$1",[asset.id]);await webhookAlert('media_rejected',{assetId:asset.id,workspaceId:asset.workspace_id});return send(res,200,{ok:true,status:'rejected'})}

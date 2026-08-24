@@ -221,29 +221,18 @@ prov('B3 · en inaktiv anslutning får inget statusbesked', async () => {
 // Bryggan har ingen användare och kan inte vara owner/admin. Den bär maskintoken.
 // ================================================================================================
 
-prov('C1 · statusbeskedet kräver maskintoken — en inloggad sessionscookie räcker inte', async () => {
-  const { sessioner } = await rigg();
-  await assert.rejects(
-    () => sessioner.startaLiveViaHttp({ konto: KONTO, roomId: RUM_1, maskintoken: null,
-      anvandarSession: { user_id: 'nagon' } }),
-    e => e.status === 401,
-    'en användarsession accepterades som maskinautentisering');
-});
-
-prov('C2 · fel maskintoken ger 401 utan att avslöja längd eller innehåll', async () => {
-  const { sessioner } = await rigg();
-  await assert.rejects(
-    () => sessioner.startaLiveViaHttp({ konto: KONTO, roomId: RUM_1, maskintoken: 'fel'.repeat(20) }),
-    e => e.status === 401 && !/token=|längd|[0-9]{2,}/.test(String(e.message)));
-});
+// C1 och C2 provade tidigare en modulstub (startaLiveViaHttp). Davids beslut: auth hor hemma vid
+// HTTP-FORTROENDEGRANSEN, inte i domanen - domanfunktionerna ser aldrig tokens eller
+// anvandarsessioner. Proven ar darfor omskrivna mot den verkliga HTTP-gransen och bor i
+// test/stream-machine-routes.test.js (maskin: cookie utan bearer ger 401, fel token ger 401 utan
+// lackage, auth fore flagga).
 
 prov('C3 · ett okänt konto skapar inget — men ett känt gör det', async () => {
   const { sessioner, pool } = await rigg();
   await anslut(pool, WS_A);
-  // BÅDA halvorna i samma prov, med flit. Uppmätt i CI 2026-08-22: med bara den negativa halvan
-  // gick provet GRÖNT mot en modulstomme som alltid returnerar en tom lista — det kunde inte
-  // skilja "avvisade det okända kontot" från "gör ingenting alls". Ett prov som passerar när
-  // funktionen saknas är värre än inget prov: det ser ut som täckning.
+  // BÅDA halvorna i samma prov, med flit: med bara den negativa halvan gick provet GRÖNT mot en
+  // modulstomme som alltid returnerade en tom lista — det kunde inte skilja "avvisade det okända
+  // kontot" från "gör ingenting alls".
   const okant = await sessioner.startaLive({ konto: 'ett-konto-ingen-prenumererar-pa', roomId: RUM_1 });
   assert.deepEqual(okant.workspaces, [], 'ett okänt konto skapade sessioner');
   const kant = await sessioner.startaLive({ konto: KONTO, roomId: RUM_1 });

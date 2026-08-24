@@ -219,6 +219,12 @@ jobs:
         run: node --test test/stream-room-reopen.test.js
         working-directory: server
 
+      # Maskinrutterna: auth vid HTTP-gransen, forbjudna falt, minimala svar. Explicit filnamnslista
+      # - en fil som inte star har kors aldrig mot Postgres.
+      - name: Maskinrutterna — bearer-auth, kontrakt och minimala svar
+        run: node --test test/stream-machine-routes.test.js
+        working-directory: server
+
       - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
         run: node --test test/stream-sessions.test.js
         working-directory: server
