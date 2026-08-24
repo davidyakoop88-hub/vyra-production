@@ -228,3 +228,14 @@ jobs:
       - name: Sändningsidentitet — sessionsmodellen mot riktig Postgres
         run: node --test test/stream-sessions.test.js
         working-directory: server
+
+      # Slutrevisionens två bevis. Fixturprovet kör i en EGEN databas (CREATE DATABASE) och rör
+      # aldrig jobbets delade — smoken däremot startar den verkliga servern MOT den delade och
+      # mäter globala differenser, så den ligger sist i listan.
+      - name: Migrering mot fixturer — två extra körningar ändrar ingenting
+        run: node --test test/migrering-fixturer.test.js
+        working-directory: server
+
+      - name: Flagga-av-smoke — verkliga servern utan VYRA_SANDNINGSIDENTITET
+        run: node --test test/flagga-av-smoke.test.js
+        working-directory: server

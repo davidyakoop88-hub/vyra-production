@@ -563,6 +563,7 @@
         "server/event-bus.js",
         "server/rate-limit.js",
         "server/capacity-gate.js",
+        "server/stream-sessions.js",
         "server/stream-stats.js",
         "server/stats-read.js",
         "server/viewer-levels.js",
@@ -593,7 +594,13 @@
         "server/test/tiktok-connection.test.js",
         "tests/security-headers.test.js",
         "tests/static-cache-headers.test.js",
-        "tests/sse-not-compressed.test.js"
+        "tests/sse-not-compressed.test.js",
+        "server/test/stream-sessions.test.js",
+        "server/test/stream-room-reopen.test.js",
+        "server/test/stream-machine-routes.test.js",
+        "server/test/migrering-atomicitet.test.js",
+        "server/test/migrering-fixturer.test.js",
+        "server/test/flagga-av-smoke.test.js"
       ],
       "matning": [
         { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" }
