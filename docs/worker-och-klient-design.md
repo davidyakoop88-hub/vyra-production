@@ -88,7 +88,7 @@ förblir osatt. Servermodellen (#268) och bryggan (#269) ligger dormant på main
 
 | Modul | Uppmätt state | Beslut vid ny session |
 |---|---|---|
-| goal-client.js | serverägd (epoch/revision; absoluta frames; snapshot vid SSE-reopen) | **lämnas** — serverresetten (#268) äger detta; provet verifierar att epoch-bytet målar om |
+| goal-client.js | serverägd men sista ramen bor i minnet (store, :46); repaint ritar bara om det gamla | **hämtas om** — loadSnapshot() på vyra-live-session; revision avgör (se Målwidgeten nedan) |
 | media.js gift campaign (`templateGiftCampaign`) | overlay-state på servern (`giftCurrentN`) | **hämtas om**: serverresetten har redan nollat på servern; klientens `live:start`-hanterare gör konfig-omhämtning + `vyra-live-repaint` |
 | live-leaderboard.js | minnesräknare + 4 localStorage-poster | **nollställs i minnet**; periodval/inställningar i localStorage lämnas |
 | last-x-alerts.js | rullande lista i minnet (0 storage) | **nollställs** |
