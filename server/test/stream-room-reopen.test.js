@@ -125,7 +125,22 @@ test.before(async () => {
   base = `http://127.0.0.1:${server.address().port}`;
 });
 
-test.after(() => { if (!BLOCKED && server) server.close(); });
+test.after(async () => {
+  if (BLOCKED) return;
+  // HELA goal-api-monstret, inte halva. server.close() ensamt racker inte: poolen och eventBus
+  // haller nodeprocessen vid liv, och steget hanger tills jobbet timear ut. Uppmatt 2026-08-24:
+  // 90 minuter lasta pa exakt det - andra gangen samma resursklass (Redis-prenumeranterna var
+  // forsta). Regeln: den som harmar en rigg harmar aven dess stadning.
+  await new Promise(resolve => {
+    server.close(resolve);
+    if (typeof server.closeAllConnections === 'function') server.closeAllConnections();
+  });
+  const { eventBus } = require('../index');
+  if (eventBus) await eventBus.close().catch(() => {});
+  await pool.query('DELETE FROM sessions WHERE user_id = ANY($1::uuid[])',
+    [[OWNER, ADMIN, VIEWER, OUTSIDER]]);
+  await pool.end();
+});
 
 const vagen = (rum, ws = WS1) => `/api/workspaces/${ws}/stream-rooms/${rum}/reopen`;
 
