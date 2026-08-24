@@ -239,3 +239,8 @@ jobs:
       - name: Flagga-av-smoke — verkliga servern utan VYRA_SANDNINGSIDENTITET
         run: node --test test/flagga-av-smoke.test.js
         working-directory: server
+
+      # PR #270 fas 1: utkorgsworkerns puls. RODA MED FLIT tills stream-worker.js finns.
+      - name: Utkorgsworkern — puls, shutdown, backoff och parked-indikering
+        run: node --test test/stream-worker.test.js
+        working-directory: server

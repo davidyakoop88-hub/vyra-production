@@ -600,7 +600,8 @@
         "server/test/stream-machine-routes.test.js",
         "server/test/migrering-atomicitet.test.js",
         "server/test/migrering-fixturer.test.js",
-        "server/test/flagga-av-smoke.test.js"
+        "server/test/flagga-av-smoke.test.js",
+        "server/test/stream-worker.test.js"
       ],
       "matning": [
         { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" }
