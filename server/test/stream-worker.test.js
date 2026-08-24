@@ -219,7 +219,9 @@ prov('Redis nere: retry med backoff, loopen lever, och publicering när bussen f
 });
 
 prov('trasig claim-fråga (Postgres-fel) kraschar inte loopen', async () => {
-  const trasig = { query: (...a) => { trasig.anrop++; return trasig.anrop <= 2 ? Promise.reject(new Error('PG borta (prov)')) : pool.query(...a); }, anrop: 0 };
+  // Claimen gar via pool.connect() — det ar den som falls. Ovriga fragor delegeras till den
+  // riktiga poolen sa matare/parkeringslasning fungerar.
+  const trasig = { connect: () => { trasig.anrop++; return trasig.anrop <= 2 ? Promise.reject(new Error('PG borta (prov)')) : pool.connect(); }, query: (...a) => pool.query(...a), anrop: 0 };
   const r1 = await rad(WS_A);
   const buss = fejkBuss(), logg = fangare();
   const w = W.startStreamWorker({ pool: trasig, eventBus: buss, metrics: {}, logg, intervallMs: 10, antal: 20, workerId: 'pg-fel' });
@@ -260,10 +262,13 @@ prov('parkerad rad blockerar ENDAST sitt workspace, syns i metrics och driftlogg
   assert.ok(driftRad, 'ingen synlig driftindikering för parkeringen');
   assert.ok(driftRad.includes(WS_A) && driftRad.includes(gift.event_id), 'driftraden pekar inte ut workspace+eventId');
   assert.ok(!driftRad.includes('sessionId'), 'driftraden bär payload');
+  // Stada: en kvarlamnad parkerad rad blockerar ALLA senare WS_A-rader (fail-closed-ordningen),
+  // vilket hade fallt nasta prov av fel skal.
+  await pool.query('DELETE FROM stream_event_outbox WHERE id IN ($1,$2)', [gift.id, bakom.id]);
 });
 
 prov('metrics bär pending, leased och parked som mätare', async () => {
-  await rad(WS_A);
+  await rad(WS_B);
   const { w, buss, metrics } = rigg();
   await tills(() => buss.publicerade.length >= 1, 'publicerad');
   await tills(() => metrics.utkorg && metrics.utkorg.pending !== undefined, 'mätarna satta');
