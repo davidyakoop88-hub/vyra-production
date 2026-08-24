@@ -253,8 +253,13 @@ prov('en avlöst körning som återregistrerar sig får 409', async () => {
   await call('/api/live-runs', { body: { tiktokUsername: KONTO, bridgeRunId: nyKorning() } });
   const r = await call('/api/live-runs', { body: { tiktokUsername: KONTO, bridgeRunId: gammal } });
   assert.equal(r.status, 409);
-  assert.equal(/[0-9a-f]{8}-[0-9a-f]{4}/i.test(JSON.stringify(r.body)), false,
-    'ett uuid läckte i felsvaret');
+  // requestId är husets korrelations-id — slumpat per anrop av den globala felhanteraren och
+  // redan synligt i x-request-id-headern. Det är INTE en intern identitet och undantas från
+  // svepningen; allt annat i felsvaret måste vara uuid-fritt.
+  const { requestId, ...utanKorrelation } = r.body || {};
+  assert.ok(requestId, 'felhanteraren tappade sitt korrelations-id');
+  assert.equal(/[0-9a-f]{8}-[0-9a-f]{4}/i.test(JSON.stringify(utanKorrelation)), false,
+    'ett uuid läckte i felsvaret: ' + JSON.stringify(utanKorrelation));
 });
 
 prov('status från en avlöst körning är stale över gränsen', async () => {
