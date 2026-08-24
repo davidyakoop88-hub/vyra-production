@@ -274,13 +274,13 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     const namn=String(d.tiktokUsername||'');
     if(namn.length>64||!StreamSessions.kontonyckel(namn))return send(res,400,{ok:false,error:'Ogiltigt tiktokUsername'});
     const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if(d.bridgeRunId!=null&&!UUID_RE.test(String(d.bridgeRunId)))return send(res,400,{ok:false,error:'bridgeRunId måste vara ett uuid'}); /*MUTD*/
+    if(!UUID_RE.test(String(d.bridgeRunId||'')))return send(res,400,{ok:false,error:'bridgeRunId måste vara ett uuid'});
     if(p==='/api/live-runs'){
       await StreamSessions.registreraKorning({konto:namn,bridgeRunId:d.bridgeRunId});
       return send(res,200,{ok:true});
     }
     if(!/^[0-9]{1,32}$/.test(String(d.roomId||'')))return send(res,400,{ok:false,error:'Ogiltigt roomId'});
-    if(!Number.isSafeInteger(d.seq)||d.seq<1)return send(res,400,{ok:false,error:'seq måste vara ett heltal från 1'});
+    if(!Number.isSafeInteger(d.seq)||d.seq<0)return send(res,400,{ok:false,error:'seq måste vara ett heltal från 1'}); /*MUTE seq=0 slapps*/
     const arg={konto:namn,roomId:String(d.roomId),bridgeRunId:d.bridgeRunId,seq:d.seq};
     const ut=p==='/api/live-sessions'
       ?await StreamSessions.startaLive(arg)
