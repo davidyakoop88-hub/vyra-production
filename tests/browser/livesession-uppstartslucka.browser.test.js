@@ -1,0 +1,217 @@
+'use strict';
+// UPPSTARTSLUCKAN OCH DEDUPEN — mätt i en riktig Chrome, genom hela den verkliga kedjan.
+//
+// Riggen serverar repot och härmar de två slutpunkter en OBS-länk lever på:
+// `/api/overlay-access/{token}` (bootstrap + konfiguration) och `.../events/stream` (SSE).
+// Allt däremellan är PRODUKTIONSKOD: overlay-access.js, live-session-client.js, live-client.js,
+// overlay-config-sync.js och render().
+//
+// FYRA FRÅGOR SOM BARA GÅR ATT SVARA PÅ HÄR:
+//   1. En källa som öppnas MITT i en sändning — vet den om det? (`live:start` kom och gick innan
+//      källan fanns; snapshotet är det enda som kan berätta.)
+//   2. Kommer samma sändning två gånger när snapshotet OCH ramen båda bär den?
+//   3. Byter en ny sändning bilden utan omladdning?
+//   4. Med flaggan av: skriver klienten något alls?
+//
+// Konfig-omhämtningen mäts som ANTAL bootstrap-GET:ar på serversidan. Det är den enda mätpunkt
+// som är oberoende av klientens egen bokföring — frågar klienten inte om ny konfiguration står
+// widgeten kvar med förra sändningens siffror, och det är precis felet det här ska fånga.
+const test = require('node:test'), assert = require('node:assert/strict');
+const path = require('path'), http = require('http'), fs = require('fs');
+
+const ROOT = path.join(__dirname, '..', '..');
+const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
+
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png',
+  '.svg': 'image/svg+xml', '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2',
+  '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.gif': 'image/gif' };
+
+const TOKEN = 'provtoken-livesession';
+const OVERLAY_ID = 'OV-LS';
+const S1 = '11111111-1111-4111-8111-111111111111';
+const S2 = '22222222-2222-4222-8222-222222222222';
+
+const widget = () => ({ id: 'w1', type: 'templateTopLike', x: 40, y: 40, width: 320, height: 240 });
+
+function rigg() {
+  // `session: undefined` = flaggan av (fältet utelämnas helt vid serialiseringen). Det är exakt
+  // den skillnad servern gör, och den skillnaden är hela dormant-kontraktet.
+  const lada = { version: 1, state: { widgets: [widget()] }, session: undefined, hamtningar: 0 };
+  const strommar = [];
+
+  const server = http.createServer((req, res) => {
+    const u = String(req.url || '').split('?')[0];
+    if (u === `/api/overlay-access/${TOKEN}`) {
+      lada.hamtningar += 1;
+      const kropp = { ok: true, overlay: { id: OVERLAY_ID, version: lada.version, state: lada.state } };
+      if (lada.session !== undefined) kropp.session = lada.session;
+      res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify(kropp));
+      return;
+    }
+    if (u === `/api/overlay-access/${TOKEN}/events/stream`) {
+      res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache, no-transform', connection: 'keep-alive' });
+      res.write(': hej\n\n');
+      strommar.push(res);
+      return;
+    }
+    const rel = decodeURIComponent(u).replace(/^\/+/, '') || 'index.html';
+    const fil = path.join(ROOT, rel);
+    if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
+      res.writeHead(404); res.end('nej'); return;
+    }
+    res.writeHead(200, { 'content-type': MIME[path.extname(fil)] || 'application/octet-stream' });
+    fs.createReadStream(fil).pipe(res);
+  });
+
+  // Exakt den ram servern publicerar (event-bus.js cleanInternalEvent): inget workspaceId, inget
+  // roomId — bara type, event, eventId, sessionId och sitt eget tidsfält.
+  const ram = (handelse, sessionId) => ({ type: 'livesession', event: handelse,
+    eventId: handelse + ':' + sessionId, sessionId,
+    [handelse === 'live:start' ? 'startedAt' : 'endedAt']: '2026-08-25T09:00:00.000Z' });
+  let strom = 0;
+  const skicka = (handelse, sessionId) => {
+    strom += 1;
+    for (const s of strommar) {
+      s.write(`id: ${strom}-0\nevent: live\ndata: ${JSON.stringify(ram(handelse, sessionId))}\n\n`);
+    }
+  };
+  return { server, lada, skicka, strommar };
+}
+
+let browser, r, bas;
+let skip = hoppaOver();
+
+test.before(async () => {
+  if (skip) return;
+  browser = await startaWebblasare();
+  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den');
+  r = rigg();
+  await new Promise(res => r.server.listen(0, '127.0.0.1', res));
+  bas = `http://127.0.0.1:${r.server.address().port}`;
+});
+test.after(async () => {
+  if (browser) await browser.close();
+  if (r) {
+    for (const s of r.strommar) { try { s.end() } catch (e) {} }
+    await new Promise(res => r.server.close(res));
+  }
+});
+
+async function oppna() {
+  const sida = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  sida.__fel = [];
+  sida.on('pageerror', e => sida.__fel.push(String(e && e.message).slice(0, 160)));
+  await sida.goto(`${bas}/studio.html?overlay=1&access=${TOKEN}`, { waitUntil: 'load' });
+  await sida.waitForFunction(() => !!document.querySelector('[data-id]'), null, { timeout: 30000 });
+  await sida.waitForFunction(
+    () => document.documentElement.dataset.overlayConnection === 'connected', null, { timeout: 30000 });
+  // En markör som INTE överlever en omladdning. Varje prov nedan kräver att den står kvar:
+  // "utan omladdning" är annars bara en förhoppning.
+  await sida.evaluate(() => { window.__markor = 'star-kvar' });
+  return sida;
+}
+
+const aktiv = sida => sida.evaluate(() => sessionStorage.getItem('vyra-live-session-aktiv'));
+const hanterade = sida => sida.evaluate(() => sessionStorage.getItem('vyra-live-session-hanterade'));
+
+const prov = (namn, fn) => test('livesession: ' + namn, { skip, timeout: 90000 }, fn);
+
+prov('en kalla som oppnas MITT i en sandning far den ur snapshotet', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    assert.equal(await aktiv(sida), S1, 'uppstartsluckan star oppen: kallan vet inte om sandningen');
+    assert.equal(JSON.parse(await hanterade(sida))[0], 'live:start:' + S1,
+      'snapshotet gick inte genom dedupen');
+    assert.deepEqual(sida.__fel, []);
+  } finally { await sida.close() }
+});
+
+prov('snapshot + SSE-ram for SAMMA sandning ger EN behandling', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    // Signalen raknas INNE i sidan, inte som GET:ar pa servern. Uppmatt: bootstrap-GET:en gors
+    // ocksa av konfig-synken vid varje ateranslutning av strommen, sa antalet hamtningar ar inget
+    // matt pa hur manga sandningsbesked som behandlats — 7 mot vantade 4 i forsta korningen.
+    await sida.evaluate(() => {
+      window.__signaler = 0;
+      addEventListener('vyra-live-session', () => { window.__signaler += 1 });
+    });
+    r.skicka('live:start', S1);                     // samma sandning igen, over strommen
+    await sida.waitForTimeout(1500);
+    assert.equal(await sida.evaluate(() => window.__signaler), 0,
+      'ramen behandlades trots att snapshotet redan burit samma sandning');
+    assert.equal(await aktiv(sida), S1);
+    assert.equal(JSON.parse(await hanterade(sida)).length, 1);
+  } finally { await sida.close() }
+});
+
+prov('en NY sandning byter bild utan omladdning och hamtar om konfigurationen', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    const fore = r.lada.hamtningar;
+    r.lada.version += 1;                            // serverns nollstallning ar redan committad
+    r.skicka('live:start', S2);
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S2, { timeout: 15000 });
+    assert.ok(r.lada.hamtningar > fore, 'den nya sandningen hamtade aldrig om konfigurationen');
+    assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
+    assert.deepEqual(sida.__fel, []);
+  } finally { await sida.close() }
+});
+
+prov('live:end nollar den aktiva sandningen, ett gammalt end gor det inte', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    r.skicka('live:start', S2);
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S2, { timeout: 15000 });
+    r.skicka('live:end', S1);                       // sen ram fran den forra sandningen
+    await sida.waitForTimeout(800);
+    assert.equal(await aktiv(sida), S2, 'ett gammalt end backade den aktiva sandningen');
+    r.skicka('live:end', S2);
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv') === '',
+      null, { timeout: 15000 });
+    assert.equal(await aktiv(sida), '');
+  } finally { await sida.close() }
+});
+
+prov('sandningsramar lacker aldrig ut i den vanliga eventvagen', async () => {
+  r.lada.session = null;
+  const sida = await oppna();
+  try {
+    await sida.evaluate(() => localStorage.removeItem('vyra-live-event'));
+    r.skicka('live:start', S1);
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S1, { timeout: 15000 });
+    const sista = await sida.evaluate(() => localStorage.getItem('vyra-live-event'));
+    assert.equal(sista, null,
+      'en livesession-ram behandlades som ett vanligt liveevent och nadde widgetarna');
+  } finally { await sida.close() }
+});
+
+prov('flaggan av: faltet saknas — ingen nyckel skrivs och ingen omhamtning sker', async () => {
+  r.lada.session = undefined;
+  const sida = await oppna();
+  try {
+    const fore = r.lada.hamtningar;
+    await sida.waitForTimeout(1500);
+    assert.equal(await aktiv(sida), null, 'dormant klient skrev aktiv-nyckeln');
+    assert.equal(await hanterade(sida), null, 'dormant klient skrev listan over behandlade');
+    assert.equal(r.lada.hamtningar, fore, 'dormant klient hamtade om konfigurationen');
+    assert.deepEqual(sida.__fel, []);
+  } finally { await sida.close() }
+});

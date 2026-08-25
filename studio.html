@@ -148,6 +148,9 @@
        jamfor nodens text exakt. Se filens huvudkommentar. -->
   <script src="vyra-tomma-handlingar.js?v=1"></script>
   <script src="overlay-config-sync.js?v=20260822-1"></script>
+  <!-- FORE overlay-access.js: den ropar pa VyraLiveSession.runtime() redan i sin bootstrap, och
+       en kalla som oppnas mitt i en sandning maste fa snapshotet fore forsta SSE-ramen. -->
+  <script src="live-session-client.js?v=20260825-1"></script>
   <script src="overlay-access.js?v=20260822-2"></script>
   <!-- Sist: exporterar/importerar hela Studio-state som JSON mellan datorer. Ritar inget i
        overlay-läge, och rör ingen annan fil. -->

@@ -377,6 +377,17 @@
     malaTtsStatus();
   });
 
+  // NY SANDNING => kon toms. En kommentar fran den FORRA sandningen som fortfarande ligger och
+  // vantar ska aldrig lasas upp i den nya — den ar da bade inaktuell och forvirrande for tittarna
+  // som just kom in. Rost, volym och ovriga installningar (localStorage) lamnas ororda: de ar
+  // streamerns val, inte sandningens tillstand.
+  addEventListener('vyra-live-session', event => {
+    if (!event || !event.detail || event.detail.event !== 'live:start') return;
+    queue.length = 0;
+    statusLage.inkomna = 0; statusLage.upplasta = 0; statusLage.senasteNamn = '';
+    try { malaTtsStatus() } catch (e) {}
+  });
+
   // --- UI --------------------------------------------------------------------------------------
   function voiceOptionsHtml(localVoices, cloudVoices, selected) {
     const local = localVoices.map(v => `<option value="${v.name}"${v.name === selected ? ' selected' : ''}>${v.name} (${v.lang})</option>`).join('');

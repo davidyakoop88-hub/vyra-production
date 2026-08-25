@@ -873,6 +873,32 @@ function skapaStreamSessions({ pool }) {
         return n;
       } catch (e) { try { await c.query('ROLLBACK'); } catch (_) {} throw e; } finally { c.release(); }
     },
+    // SNAPSHOTET FOR EN NYOPPNAD KALLA. `live:start` ar en HANDELSE, och en OBS-kalla som oppnas
+    // mitt i en sandning har missat den — den kommer aldrig igen. Den har fragan ar darfor det
+    // enda auktoritativa svaret pa "pagar en sandning just nu, och vilken?".
+    //
+    // Pekaren ar den enda platsen som svarar pa vad som ar live NU (schema.sql:409). JOIN mot
+    // sessionsraden pa BADE id och workspace_id: den sammansatta frammande nyckeln finns just for
+    // att en pekare aldrig ska kunna peka pa ett annat workspaces session, och en join som bara
+    // matchar id hade tappat den garantin har.
+    //
+    // `ended_at IS NULL` aven om pekaren ar satt: avslutet nollar pekaren i samma transaktion som
+    // det stanger sessionen, men villkoret star kvar som andra grind — ett snapshot som visar en
+    // avslutad sandning hade fatt varje nyoppnad kalla att tro att den var mitt i en LIVE.
+    //
+    // MINIMALT: sessionId och startedAt. Ingen accountKey, ingen bridgeRunId, inget roomId och
+    // inget workspaceId — samma vitlista som payloaden i utkorgen, av samma skal: en OBS-lank ar
+    // en publik URL, och allt som ligger i svaret ar allt en tittare kan lasa ur den.
+    async aktivSession({ workspaceId } = {}) {
+      if (!workspaceId) return null;
+      const q = await pool.query(
+        'SELECT s.id, s.started_at FROM stream_session_pointer p '
+        + 'JOIN stream_sessions s ON s.id = p.session_id AND s.workspace_id = p.workspace_id '
+        + 'WHERE p.workspace_id = $1 AND s.ended_at IS NULL', [workspaceId]);
+      const rad = q.rows[0];
+      if (!rad) return null;
+      return { sessionId: rad.id, startedAt: new Date(rad.started_at).toISOString() };
+    },
     publiceraUtkorg,
     async tillampaEnGang() { return false; },
     giftigaHandelser,

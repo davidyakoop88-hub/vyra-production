@@ -225,4 +225,13 @@
       try { root.localStorage && root.localStorage.removeItem(LAGER) } catch (_) {}
     }
   };
+
+  // NY SANDNING => ingen match pagar. En battle kan inte overleva att sandningen tog slut, och en
+  // kvarliggande `session` hade fatt nasta sandnings forsta gava att raknas in i den forra matchens
+  // MVP-lista. Anteckningen om observerade battleStatus-varden (localStorage) ar en MATNING och
+  // rors inte — den ar hela poangen med filen.
+  root.addEventListener('vyra-live-session', event => {
+    if (!event || !event.detail || event.detail.event !== 'live:start') return;
+    session = null;
+  });
 })(window);

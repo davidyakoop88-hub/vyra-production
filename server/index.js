@@ -248,7 +248,17 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
-    if(!rest)return send(res,200,{ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}});
+    // UPPSTARTSLUCKAN. Bootstrapsvaret ar den enda konfigurationskallan klienten hamtar fran vid
+    // start OCH vid varje ateranslutning — darfor bar det sessionssnapshotet ocksa, i stallet for
+    // en andra rutt med en andra sanning.
+    //
+    // FLAGGMEDVETET, TRE LAGEN: faltet SAKNAS = funktionen ar av (svaret ar byteidentiskt med
+    // dagens och fragan kors aldrig); `null` = pa men ingen LIVE, auktoritativt; ett objekt = den
+    // sandningen pagar. En dormant klient kan darmed skilja "av" fran "pa men tyst" — och den som
+    // far null vet att det ar ett SVAR, inte en avsaknad.
+    if(!rest){const svar={ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}};
+      if(process.env.VYRA_SANDNINGSIDENTITET==='1')svar.session=await StreamSessions.aktivSession({workspaceId:access.workspace_id});
+      return send(res,200,svar)}
     return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${req.socket.remoteAddress||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
   // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
   // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
