@@ -67,14 +67,10 @@ function startStreamWorker({
   }
 
   async function varv() {
-    const n = await S.publiceraUtkorg({
-      sand: rad => S.publiceraTillBuss(eventBus, rad),
-      workerId,
-      antal,
-      nu: () => new Date(nu()),
-      logg: text => logg.log(text),
-      metric: () => { m.forsok++; },
-    });
+    /*MUTE claim-skyddet forbi: naiv publicering utan lease*/
+    const q = await pool.query('SELECT id, workspace_id, event_id, topic, payload, attempts FROM stream_event_outbox WHERE published_at IS NULL AND parked_at IS NULL ORDER BY id LIMIT $1', [antal]);
+    for (const rad of q.rows) { try { await S.publiceraTillBuss(eventBus, rad); await pool.query('UPDATE stream_event_outbox SET published_at=$2 WHERE id=$1', [rad.id, new Date(nu())]); } catch (_) {} }
+    const n = q.rows.length;
     if (n > 0) {
       m.publicerade += n;
       m.senastPublicerad = new Date(nu()).toISOString();
@@ -100,8 +96,10 @@ function startStreamWorker({
         boka(intervallMs);
       } catch (error) {
         // Redis/Postgres nere får ALDRIG döda servern: logga och backa 1→30 s.
-        /*MUTD felen tystas, ingen backoff*/
-        boka(intervallMs);
+        felIRad++;
+        const backoffMs = Math.min(30_000, 1_000 * (2 ** Math.min(felIRad - 1, 5)));
+        logg.error(`[utkorg-worker][error] varvet föll (${String((error && error.message) || error).slice(0, 200)}) — nytt försök om ${Math.round(backoffMs / 1000)}s`);
+        boka(backoffMs);
       } finally {
         pagaende = null;
       }
