@@ -104,7 +104,7 @@
       // TRANSPORT-ID:T RAKNAS INTE. Samma logiska handelse kommer med olika `id:`-rad efter en
       // ateranslutning (ny stromposition) och utan id alls fran snapshotet. Dedupen ser bara
       // eventId — det ar det enda som ar samma i alla tre fallen.
-      if (hanterade.indexOf(g.eventId) !== -1) return { atgard: 'redan-behandlad', sessionId: g.sessionId };
+      // MUTATION F: dedupen bortmuterad
       orort = false;
       minns(g.eventId);
       if (g.handelse === 'live:start') {
