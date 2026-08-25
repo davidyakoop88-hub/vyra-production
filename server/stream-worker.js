@@ -84,7 +84,7 @@ function startStreamWorker({
   }
 
   function boka(ms) {
-    /*MUTC stoppad ignoreras*/
+    if (stoppad) return;
     timer = setTimeout(kor, ms);
     if (typeof timer.unref === 'function') timer.unref();
   }
@@ -100,10 +100,8 @@ function startStreamWorker({
         boka(intervallMs);
       } catch (error) {
         // Redis/Postgres nere får ALDRIG döda servern: logga och backa 1→30 s.
-        felIRad++;
-        const backoffMs = Math.min(30_000, 1_000 * (2 ** Math.min(felIRad - 1, 5)));
-        logg.error(`[utkorg-worker][error] varvet föll (${String((error && error.message) || error).slice(0, 200)}) — nytt försök om ${Math.round(backoffMs / 1000)}s`);
-        boka(backoffMs);
+        /*MUTD felen tystas, ingen backoff*/
+        boka(intervallMs);
       } finally {
         pagaende = null;
       }
