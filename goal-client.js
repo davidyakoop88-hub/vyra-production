@@ -250,6 +250,28 @@
       });
     }
 
+    // NY SANDNING => AUKTORITATIV OMHAMTNING, inte en omritning.
+    //
+    // Uppmatt: `store` haller sista ramen per widget i minnet och `vyra-live-repaint` ritar bara om
+    // DEN. Serverns nollstallning publicerar ingen malram, sa en oppen malwidget stod kvar med
+    // foregaende sandnings progress tills nasta liveevent rakade knuffa den.
+    //
+    // Ingen ny mekanik: `resetWorkspaceGoals` bumpar `revision`, och loadSnapshot filtrerar mot
+    // store per revision. Resetraden ar strikt nyare i det enda ordningsbegrepp klienten lyder
+    // under, och en forlorad kapplopning ar darfor ofarlig.
+    //
+    // BARA `live:start`. Ett avslut ska INTE hamta om: sandningen tog slut, och den sista siffran
+    // ska sta kvar pa skarmen tills nagon stanger kallan.
+    const handelser = opts.events
+      || (root && typeof root.addEventListener === 'function' ? root : null);
+    if (handelser) {
+      handelser.addEventListener('vyra-live-session', event => {
+        const detalj = event && event.detail;
+        if (!detalj || detalj.event !== 'live:start') return;
+        try { loadSnapshot() } catch (e) {}
+      });
+    }
+
     return {
       MAX_GOAL_VALUE,
       attachSource, openOwnSource, close,

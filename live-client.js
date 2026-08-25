@@ -120,6 +120,14 @@ function gateFor(){
   return eventGate;
 }
 function ingest(e,frameId){
+  // SANDNINGSBESKED AR INTE LIVEEVENT. `live:start`/`live:end` kommer pa samma kanal som gavor och
+  // likes (publishInternal lagger dem i samma strom), men de ar KONTROLLbesked: de ska aldrig
+  // skrivas till `vyra-live-event`, aldrig trigga en Action och aldrig na en widget som ett event.
+  //
+  // De gar heller inte genom eventgrinden ovan: den dedupar pa TRANSPORT-id, och samma logiska
+  // sandningsbesked kommer med olika id efter en ateranslutning och helt utan id fran snapshotet.
+  // Dedupen for de har beskeden ligger pa eventId i live-session-client.js.
+  if(e&&e.type==='livesession'){window.VyraLiveSession?.runtime?.().behandla(e);return}
   if(!gateFor().accept(frameId||e?.id))return;
   normalizeCloudFields(e);
   normalizeUserFlags(e);

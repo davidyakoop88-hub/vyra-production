@@ -92,9 +92,14 @@
     return ko.length;
   }
 
+  // Den post som TALAR just nu. Behovs for att kunna avbryta ett pagaende yttrande — ett tomt
+  // ko racker inte nar meningen ar "sluta prata om forra sandningen NU".
+  let pagaendePost = null;
+
   function nasta() {
     if (talarNu || !ko.length) return;
     const post = ko.shift();
+    pagaendePost = post;
     publicera();
     talarNu = true;
     meddela();
@@ -103,6 +108,7 @@
       if (klar) return;
       klar = true;
       talarNu = false;
+      if (pagaendePost === post) pagaendePost = null;
       meddela();
       nasta();
     };
@@ -118,17 +124,41 @@
 
   // maxKo speglar samma "släng nyanlända när det är fullt"-mönster som action-runtime.js redan
   // använder för scenernas köer, och som tts-chat.js hade internt.
-  function koa({ kalla = 'okand', spela, maxKo = 5, maxMs = 0 } = {}) {
+  function koa({ kalla = 'okand', spela, avbryt = null, maxKo = 5, maxMs = 0 } = {}) {
     if (typeof spela !== 'function') return false;
     if (ko.length >= Math.max(1, Number(maxKo) || 5)) return false;
-    ko.push({ kalla, spela, maxMs });
+    ko.push({ kalla, spela, avbryt, maxMs });
     publicera();
     nasta();
     return true;
   }
 
+  // TOM KON — och tysta det som redan talar.
+  //
+  // En NY SANDNING ska inte inledas med forra sandningens kommentarer. Att bara toma kon racker
+  // inte: yttrandet som redan pagar kan vara flera sekunder langt, och det ar det tittarna hor
+  // forst i den nya sandningen. `avbrytPagaende` ber darfor den talande posten sjalv sluta — den
+  // vet hur, vi vet det inte (lokal rost och molnrost stoppas pa olika satt).
+  //
+  // `kalla` filtrerar: en sandningsreset ska tomma chattens ko, inte en actions ljudlarm.
+  function tomKo({ avbrytPagaende = false, kalla = null } = {}) {
+    const kvar = kalla ? ko.filter(p => p.kalla !== kalla) : [];
+    const bort = ko.length - kvar.length;
+    ko.length = 0;
+    for (const p of kvar) ko.push(p);
+    publicera();
+    if (avbrytPagaende && talarNu && pagaendePost
+      && (!kalla || pagaendePost.kalla === kalla)
+      && typeof pagaendePost.avbryt === 'function') {
+      // Avbrytaren far INTE anses vara "klart" harifran: post.spela()-loftet loser sig sjalvt nar
+      // rosten faktiskt tystnat, och det ar den vagen som satter talarNu = false.
+      try { pagaendePost.avbryt() } catch (e) { console.warn('[VYRA] avbryt kastade', e) }
+    }
+    return bort;
+  }
+
   window.VyraTal = {
-    koa, lyssna, volymfaktor, duckaLjud,
+    koa, tomKo, lyssna, volymfaktor, duckaLjud,
     talar: () => talarNu,
     koLangd: () => ko.length,
     koLangdDelad,

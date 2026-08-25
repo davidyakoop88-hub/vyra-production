@@ -418,5 +418,19 @@
       if (t.includes('subscribe')) showLastX('subscriber', event); // "member" intentionally excluded
     };
   }
+  // NY SANDNING => de vantande korten kastas. `slots` bar den forra sandningens senaste gavor och
+  // foljare per typ, och `order` deras tur att visas — visades de efter bytet skulle den nya
+  // sandningen inledas med namn fran den gamla. Ett kort som redan star pa skarmen far spela klart:
+  // dess fasmaskin ager sin egen utgang, och att rycka bort det mitt i vore en synlig glitch.
+  addEventListener('vyra-live-session', event => {
+    if (!event || !event.detail || event.detail.event !== 'live:start') return;
+    document.querySelectorAll('[data-id]').forEach(box => {
+      const s = box._lx;
+      if (!s) return;
+      s.order.length = 0;
+      s.slots = Object.create(null);
+    });
+  });
+
   if (new URLSearchParams(location.search).has('overlay') && typeof render === 'function') render();
 })();

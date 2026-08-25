@@ -87,6 +87,16 @@
     const langd = tal ? tal.koLangdDelad() : queue.length;
     return langd < Math.max(1, Number(maxQueueLength) || 5);
   }
+  // Det <audio>-element molnrosten spelar just nu, sa att ett pagaende yttrande gar att tysta.
+  let pagaendeLjud = null;
+  function tystaPagaende() {
+    try { window.speechSynthesis && window.speechSynthesis.cancel() } catch (e) {}
+    if (pagaendeLjud) {
+      try { pagaendeLjud.pause(); pagaendeLjud.src = '' } catch (e) {}
+      pagaendeLjud = null;
+    }
+  }
+
   // Ett löfte som håller tills rösten faktiskt tystnat — det är kontraktet VyraTal.koa vilar på.
   function spelaUpp(text, opts) {
     if (isCloudVoice(opts.voice)) {
@@ -130,11 +140,17 @@
     });
     const audio = new Audio('data:audio/mpeg;base64,' + result.audioContent);
     audio.volume = (Number(opts.volume) ?? 80) / 100;
-    await new Promise((resolve, reject) => {
-      audio.onended = resolve;
-      audio.onerror = () => reject(new Error('Uppspelning misslyckades'));
-      audio.play().catch(reject);
-    });
+    pagaendeLjud = audio;
+    try {
+      await new Promise((resolve, reject) => {
+        audio.onended = resolve;
+        // En PAUS raknas som klart, inte som fel: det ar sa ett avbrutet yttrande slutar, och ett
+        // kast dar hade bara blivit en varning i loggen om nagot vi sjalva bad om.
+        audio.onpause = resolve;
+        audio.onerror = () => reject(new Error('Uppspelning misslyckades'));
+        audio.play().catch(reject);
+      });
+    } finally { if (pagaendeLjud === audio) pagaendeLjud = null }
   }
   function enqueueSpeech(text, opts, maxQueueLength) {
     if (!text) return false;
@@ -142,7 +158,10 @@
     if (!hasQueueRoom(maxQueueLength)) return false;
     const tal = window.VyraTal;
     if (tal?.koa) return tal.koa({ kalla: 'tts-chat', maxKo: maxQueueLength, maxMs: text.length * 120,
-      spela: () => spelaUpp(text, opts) });
+      spela: () => spelaUpp(text, opts),
+      // Hur just DEN har posten tystas. Lokal rost stoppas av speechSynthesis.cancel(); molnrosten
+      // ar ett <audio>-element som pausas. Loftet i spela() loser sig da av sig sjalvt.
+      avbryt: () => tystaPagaende() });
     queue.push({ text, opts });
     playNext();
     return true;
@@ -375,6 +394,22 @@
   addEventListener('vyra-session-ended', () => {
     statusLage.inkomna = 0; statusLage.upplasta = 0; statusLage.senasteNamn = '';
     malaTtsStatus();
+  });
+
+  // NY SANDNING => kon toms. En kommentar fran den FORRA sandningen som fortfarande ligger och
+  // vantar ska aldrig lasas upp i den nya — den ar da bade inaktuell och forvirrande for tittarna
+  // som just kom in. Rost, volym och ovriga installningar (localStorage) lamnas ororda: de ar
+  // streamerns val, inte sandningens tillstand.
+  addEventListener('vyra-live-session', event => {
+    if (!event || !event.detail || event.detail.event !== 'live:start') return;
+    queue.length = 0;
+    // DEN DELADE kon ar den som faktiskt talar (vyra-tal.js). Att bara toma den lokala listan
+    // lamnade bade den kon och det PAGAENDE yttrandet orort — och ett pagaende yttrande ar flera
+    // sekunder langt, alltsa det forsta tittarna hor i den nya sandningen.
+    try { window.VyraTal?.tomKo?.({ avbrytPagaende: true, kalla: 'tts-chat' }) } catch (e) {}
+    tystaPagaende();
+    statusLage.inkomna = 0; statusLage.upplasta = 0; statusLage.senasteNamn = '';
+    try { malaTtsStatus() } catch (e) {}
   });
 
   // --- UI --------------------------------------------------------------------------------------

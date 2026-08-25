@@ -239,3 +239,15 @@ jobs:
       - name: Flagga-av-smoke — verkliga servern utan VYRA_SANDNINGSIDENTITET
         run: node --test test/flagga-av-smoke.test.js
         working-directory: server
+
+      # PR #270 fas 1: utkorgsworkerns puls. RODA MED FLIT tills stream-worker.js finns.
+      - name: Utkorgsworkern — puls, shutdown, backoff och parked-indikering
+        run: node --test test/stream-worker.test.js
+        working-directory: server
+
+      # PR #270 fas 2: uppstartsluckan. Provet startar den VERKLIGA servern och vaxlar flaggan per
+      # anrop — bada lagen i samma process, eftersom rutten laser flaggan vid varje anrop. Explicit
+      # filnamnslista: en fil som inte star har kors ALDRIG mot Postgres.
+      - name: Sessionssnapshotet — bootstrapsvarets flaggmedvetna session-falt
+        run: node --test test/overlay-session-snapshot.test.js
+        working-directory: server

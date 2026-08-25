@@ -271,6 +271,19 @@
   // i stallet for att var och en uppfinna sin egen vag.
   addEventListener('vyra-live-repaint', () => { try { updateLiveLeaderboards() } catch (e) {} });
 
+  // NY SANDNING => "Denna stream" borjar om. `totals` ar sessionsraknaren och ingenting annat;
+  // dailyTotals (localStorage) ar historiken bakom periodvalen Idag/Vecka/Manad/Ar och ska INTE
+  // roras — den forra sandningens siffror hor hemma i gar, inte i den nya sandningens topplista.
+  // Bara live:start: nar sandningen tar slut ska den sista listan sta kvar pa skarmen.
+  addEventListener('vyra-live-session', event => {
+    if (!event || !event.detail || event.detail.event !== 'live:start') return;
+    try {
+      saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
+      for (const key of Object.keys(totals)) delete totals[key];
+      updateLiveLeaderboards();
+    } catch (e) {}
+  });
+
   window.VyraLeaderboard = {
     getTop: (metric = 'likes', count = 10) => sortedTop(metric).slice(0, count),
     remove: username => { if (totals[username]) totals[username].present = false; },

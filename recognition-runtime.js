@@ -679,4 +679,14 @@
     getStats: getStats,
     subscribe: subscribe
   });
+
+  // NY SANDNING => koerna toms. clear() ar redan pipelinens egen nollstallning (controller, merge
+  // och queue i den ordningen) och raknas i `stats.cleared` — inget nytt maskineri behovs. Ett kort
+  // som byggts av den forra sandningens handelser far aldrig visas i den nya.
+  if (root && typeof root.addEventListener === 'function') {
+    root.addEventListener('vyra-live-session', function (event) {
+      if (!event || !event.detail || event.detail.event !== 'live:start') return;
+      try { clear() } catch (err) {}
+    });
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -287,6 +287,7 @@
       "syfte": "Handelsflodet in i appen: polling, dedupe, routing, leaderboards, kontrollpanel och streamstatistik.",
       "filer": [
         "live-client.js",
+        "live-session-client.js",
         "live-control.js",
         "live-control.css",
         "live-leaderboard.js",
@@ -298,6 +299,9 @@
       ],
       "tester": [
         "tests/event-contract.test.js",
+        "tests/live-session-client.test.js",
+        "tests/tal-avbryt-vid-ny-sandning.test.js",
+        "tests/browser/livesession-uppstartslucka.browser.test.js",
         "tests/event-dedupe.test.js",
         "tests/event-dedupe-hardening.test.js",
         "tests/live-fuzz.test.js",
@@ -394,6 +398,7 @@
       ],
       "tester": [
         "tests/goal-client.test.js",
+        "tests/goal-mal-vid-ny-sandning.test.js",
         "tests/goal-contract.test.js",
         "tests/goal-dom.test.js",
         "tests/goal-wiring.test.js",
@@ -596,11 +601,13 @@
         "tests/static-cache-headers.test.js",
         "tests/sse-not-compressed.test.js",
         "server/test/stream-sessions.test.js",
+        "server/test/overlay-session-snapshot.test.js",
         "server/test/stream-room-reopen.test.js",
         "server/test/stream-machine-routes.test.js",
         "server/test/migrering-atomicitet.test.js",
         "server/test/migrering-fixturer.test.js",
-        "server/test/flagga-av-smoke.test.js"
+        "server/test/flagga-av-smoke.test.js",
+        "server/test/stream-worker.test.js"
       ],
       "matning": [
         { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" }
