@@ -164,7 +164,13 @@ prov('en rad publiceras via adaptern och markeras publicerad', async () => {
   assert.equal(metrics.utkorg.publicerade, 1);
 });
 
-prov('två workers publicerar aldrig samma rad', async () => {
+// AT-LEAST-ONCE, INTE EXAKT EN GANG. Det har provet visar att tva SAMTIDIGA workers inte trampar
+// pa varandra: claimen (FOR UPDATE SKIP LOCKED + lease) ger raden till exakt en av dem, sa ingen
+// rad publiceras tva ganger PARALLELLT. Det ar inte samma sak som exakt-en-gang-leverans: Redis-
+// publiceringen och databaskvittensen ar tva steg, och en krasch eller deployvaxling daremellan
+// ger en publicering utan kvittens som nasta varv gor om. Se provet om leasen nedan, och
+// klientens dedupe pa stabilt eventId — det ar dar dubbletten blir ofarlig.
+prov('tva samtidiga workers publicerar aldrig samma rad parallellt', async () => {
   const rader = [];
   for (let i = 0; i < 12; i++) rader.push(await rad(i % 2 ? WS_A : WS_B));
   const buss = fejkBuss(), logg = fangare();
@@ -217,6 +223,86 @@ prov('hängd publicering: stop ger upp inom stoppVantanMs och raden återtas eft
   await tills(() => buss2.publicerade.length >= 1, 'återtag efter lease-utgång');
   await w2.stop();
   assert.equal(buss2.publicerade[0].eventId, r1.event_id);
+});
+
+// LANGSAM BATCH SOM PASSERAR LEASEN. Batchen ar 20 rader och leasen 30 s. Tar den samlade
+// behandlingen langre tid an sa loper leasen ut MEDAN raden fortfarande behandlas, och nasta
+// instans tar tillbaka den och publicerar igen. Det ar utkorgens at-least-once i sin renaste form.
+//
+// Det som gor det ofarligt ar att `event_id` byggs ur radens EGEN data (`live:start:<sessionId>`)
+// och darfor ar identiskt over ompubliceringar. Provet mater just det: samma eventId, samma
+// payload — och da ar klientens dedupe (tests/live-session-client.test.js) en no-op.
+prov('langsam batch passerar leasen: ompubliceringen bar SAMMA eventId och payload', async () => {
+  let klocka = Date.now();
+  const r1 = await rad(WS_A, { nextAttemptAt: new Date(0).toISOString() });
+  const buss = fejkBuss(), logg = fangare();
+  const w = starta({ pool, eventBus: buss, metrics: {}, logg,
+    intervallMs: 10, antal: 20, workerId: 'langsam', stoppVantanMs: 100, nu: () => klocka });
+  buss.langsam.add(r1.event_id);
+  await tills(() => buss.slappta.has(r1.event_id), 'forsta publiceringen paborjad');
+  await w.stop();                       // varvet overges mitt i — kvittensen skrivs aldrig
+
+  const forePublicerad = await pool.query(
+    'SELECT published_at FROM stream_event_outbox WHERE id=$1', [r1.id]);
+  assert.equal(forePublicerad.rows[0].published_at, null,
+    'riggen kvitterade anda — da mater provet inte det den ska');
+
+  klocka += 31_000;                     // leasen har lopt ut
+  const buss2 = fejkBuss();
+  const w2 = starta({ pool, eventBus: buss2, metrics: {}, logg,
+    intervallMs: 10, antal: 20, workerId: 'nasta', nu: () => klocka });
+  await tills(() => buss2.publicerade.length >= 1, 'ompublicering efter lease-utgang');
+  await w2.stop();
+
+  assert.equal(buss2.publicerade[0].eventId, r1.event_id,
+    'ompubliceringen bar ett ANNAT eventId — da hade klientens dedupe inte kunnat fanga den');
+  assert.equal(buss2.publicerade[0].workspaceId, WS_A);
+});
+
+// ---- Driftindikeringen larmar en gång, inte vid varje omstart ---------------------------------
+
+prov('en GAMMAL parkerad rad larmar inte om igen vid omstart eller deployoverlapp', async () => {
+  const gammal = await rad(WS_B);
+  await pool.query(
+    "UPDATE stream_event_outbox SET parked_at=now() - interval '1 hour', attempts=8 WHERE id=$1",
+    [gammal.id]);
+  const logg1 = fangare(), logg2 = fangare();
+  // Tva processer samtidigt = deployoverlapp. Ingen av dem far larma om den gamla raden.
+  const w1 = starta({ pool, eventBus: fejkBuss(), metrics: {}, logg: logg1, intervallMs: 10, workerId: 'omstart-1' });
+  const w2 = starta({ pool, eventBus: fejkBuss(), metrics: {}, logg: logg2, intervallMs: 10, workerId: 'omstart-2' });
+  await new Promise(r => setTimeout(r, 150));
+  const larm = [...logg1.rader, ...logg2.rader].filter(t => t.includes('rad parkerad'));
+  assert.deepEqual(larm, [], 'gamla parkerade rader larmade om vid uppstart');
+
+  // En NY parkering ska daremot synas — indikeringen far inte tystas helt.
+  const ny = await rad(WS_B);
+  await pool.query('UPDATE stream_event_outbox SET parked_at=now(), attempts=8 WHERE id=$1', [ny.id]);
+  await tills(() => [...logg1.rader, ...logg2.rader].some(t => t.includes(ny.event_id)),
+    'en nyparkerad rad larmade aldrig');
+  await w1.stop(); await w2.stop();
+  await pool.query('DELETE FROM stream_event_outbox WHERE id=ANY($1)', [[gammal.id, ny.id]]);
+});
+
+// ---- Felloggen far aldrig bara hemligheten ----------------------------------------------------
+
+prov('uppkopplingsstrangen i ett felmeddelande saneras fore loggning', async () => {
+  await rad(WS_A);
+  const buss = fejkBuss(), logg = fangare();
+  const HEMLIS = 'sup3rhemligt';
+  // VARV-niva, inte radniva: ett fel i sand() fangas av publiceraUtkorg och blir backoff pa raden.
+  // Det som nar varvets catch — och alltsa driftloggen — ar ett trasigt POOL-anrop, precis som nar
+  // Postgres eller Redis inte gar att na alls. Poolen lanas ut med ett kast och lamnas tillbaka.
+  const riktig = pool.query.bind(pool);
+  pool.query = async () => {
+    throw new Error(`connect ECONNREFUSED redis://default:${HEMLIS}@redis.internal:6379 token=${HEMLIS}`);
+  };
+  const w = starta({ pool, eventBus: buss, metrics: {}, logg, intervallMs: 10, workerId: 'sanering' });
+  try {
+    await tills(() => logg.rader.some(t => t.includes('[utkorg-worker][error]')), 'ingen felrad loggades');
+  } finally { pool.query = riktig; await w.stop() }
+  const text = logg.rader.join(' ');
+  assert.equal(text.includes(HEMLIS), false, 'losenordet skrevs rakt ut i driftloggen');
+  assert.ok(text.includes('<uppkoppling>@') || text.includes('<dolt>'), 'saneringen syns inte i texten');
 });
 
 // ---- Fel är backoff, aldrig krasch --------------------------------------------------------------

@@ -52,9 +52,17 @@
       if (Array.isArray(ratt)) hanterade = ratt.filter(x => typeof x === 'string').slice(-TAK);
     } catch (e) { hanterade = [] }
 
-    // Sant tills nagot faktiskt behandlats. Nedgraderingen (`session: null`) galler bara sa lange
-    // det ar sant — se nedgraderingsregeln ovan.
-    let orort = true;
+    // LIVE-EVENTGENERATIONEN. Stegas varje gang en livesession-ram FAKTISKT behandlas. En ram som
+    // dedupas bort bar ingen ny information och stegar darfor inte — annars hade en replay gjort
+    // ett fullt giltigt snapshot obrukbart.
+    //
+    // Generationen ar hela racelosningen: den domer pa ALDER, inte pa innehall. Ett snapshot som
+    // var fart nar det landade appliceras oavsett om det bar en session eller null; ett som hann
+    // bli gammalt kastas oavsett innehall. Den gamla regeln domde pa innehall ("null ar
+    // nedgraderande, ignorera alltid") och lamnade darfor en verklig lucka: missas `live:end`
+    // under ett SSE-avbrott kommer ramen aldrig igen, och klienten hade statt kvar i en sandning
+    // som tagit slut. Snapshotet MASTE kunna avsluta.
+    let generation = 0;
 
     function minns(eventId) {
       hanterade.push(eventId);
@@ -105,7 +113,9 @@
       // ateranslutning (ny stromposition) och utan id alls fran snapshotet. Dedupen ser bara
       // eventId — det ar det enda som ar samma i alla tre fallen.
       if (hanterade.indexOf(g.eventId) !== -1) return { atgard: 'redan-behandlad', sessionId: g.sessionId };
-      orort = false;
+      // NY INFORMATION => ny generation. Ett snapshot som var i luften nar det har hande ar nu
+      // gammalt, och far inte langre skriva over det den har ramen sade.
+      generation += 1;
       minns(g.eventId);
       if (g.handelse === 'live:start') {
         satt(g.sessionId);
@@ -121,39 +131,49 @@
       return { atgard: 'behandlad', sessionId: g.sessionId, backade: true };
     }
 
+    // Tas FORE forfragan gar ivag. Biljetten ar generationen vid den tidpunkten, och den avgor
+    // sedan om svaret hann bli gammalt medan det var i luften.
+    function borjaHamtning() { return generation; }
+
     // Bootstrapsvaret i sin helhet, inte bara faltet: skillnaden mellan ett SAKNAT `session` och
     // ett `null` ar hela flaggkontraktet, och den skillnaden finns bara i objektet.
-    function bootstrap(svar) {
+    //
+    // `biljett` ar varde fran borjaHamtning(). Utelamnas den tas generationen har och nu — alltsa
+    // "ingenting kan ha hunnit emellan"; det ar bara for prov och bakatkompatibla anropare.
+    function bootstrap(svar, biljett) {
       if (!svar || typeof svar !== 'object'
         || !Object.prototype.hasOwnProperty.call(svar, 'session')) {
         // Flaggan ar av. Ingen skrivning, ingen signal, ingen omhamtning — dormant betyder att
         // klienten inte gor NAGOT, inte att den gor ingenting synligt.
         return { atgard: 'dormant' };
       }
+      // ALDERSKONTROLLEN, fore allt annat och oberoende av innehallet. Hann en ram behandlas
+      // medan svaret var i luften ar svaret gammalt — bade ett null och ett start(gammal).
+      const forvantad = biljett === undefined || biljett === null ? generation : biljett;
+      if (forvantad !== generation) return { atgard: 'ignorerad-gammal', sessionId: aktiv };
+
       const s = svar.session;
       if (s && typeof s === 'object' && UUID_RE.test(String(s.sessionId || ''))) {
-        const ut = behandla({ type: 'livesession', event: 'live:start',
+        return behandla({ type: 'livesession', event: 'live:start',
           eventId: 'live:start:' + s.sessionId, sessionId: s.sessionId, startedAt: s.startedAt });
-        orort = false;
-        return ut;
       }
-      // `null` = auktoritativt ingen LIVE. Nedgraderande, och darfor bara giltig sa lange
-      // ingenting nyare redan behandlats.
-      if (!orort) return { atgard: 'ignorerad-nedgradering', sessionId: aktiv };
-      orort = false;
+      // `null` = auktoritativt ingen LIVE, och snapshotet ar fart. Det AVSLUTAR darfor en aktiv
+      // session: det ar den enda vagen tillbaka nar `live:end` missats under ett stromavbrott.
       if (!aktiv) return { atgard: 'behandlad', sessionId: null };
       const gammal = aktiv;
+      generation += 1;
       satt(null);
       signal('live:end', gammal, null);
       return { atgard: 'behandlad', sessionId: null, backade: true };
     }
 
     return {
+      borjaHamtning,
       bootstrap,
       behandla,
       aktivSession: () => aktiv || null,
       // For prov och felsokning.
-      lage: () => ({ aktiv, hanterade: hanterade.slice(), orort }),
+      lage: () => ({ aktiv, hanterade: hanterade.slice(), generation }),
     };
   }
 

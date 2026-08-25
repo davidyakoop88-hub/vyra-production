@@ -40,23 +40,64 @@ function startStreamWorker({
   let felIRad = 0;
   let senastParkerad = null;
 
-  // Mätarna läses per varv — en fråga, tre tal, inga payloads.
+  // Mätarna läses per varv — tre tal, inga payloads.
+  //
+  // TRE DELFRÅGOR, INTE EN `count(*) FILTER`. Uppmätt 2026-08-25 mot Postgres 16 med 50 003 rader
+  // i utkorgen (50 000 publicerade, 3 väntande):
+  //     count(*) FILTER över hela tabellen   Seq Scan, 50 003 rader, 715 buffers, 14,9 ms
+  //     tre delfrågor mot de partiella index  Index Only Scan, 8 buffers, 0,10 ms
+  // Skillnaden är att en enda aggregatsökning bara kan välja EN åtkomstväg, och då blir det hela
+  // tabellen. Varje delfråga nedan matchar däremot exakt predikatet i ett partiellt index
+  // (`stream_outbox_pending_idx` respektive `stream_outbox_parked_idx`) och rör bara de rader som
+  // faktiskt är intressanta.
+  //
+  // Det spelar roll för att frågan körs VARJE SEKUND och publicerade rader aldrig städas bort:
+  // kostnaden för den gamla formen växer linjärt med allt som någonsin publicerats.
   async function matare() {
     const q = await pool.query(
-      `SELECT count(*) FILTER (WHERE published_at IS NULL AND parked_at IS NULL)::int AS pending,
-              count(*) FILTER (WHERE published_at IS NULL AND parked_at IS NULL AND lease_until > $1::timestamptz)::int AS leased,
-              count(*) FILTER (WHERE parked_at IS NOT NULL)::int AS parked
-         FROM stream_event_outbox`, [new Date(nu())]);
+      `SELECT (SELECT count(*) FROM stream_event_outbox
+                WHERE published_at IS NULL AND parked_at IS NULL)::int AS pending,
+              (SELECT count(*) FROM stream_event_outbox
+                WHERE published_at IS NULL AND parked_at IS NULL
+                  AND lease_until > $1::timestamptz)::int AS leased,
+              (SELECT count(*) FROM stream_event_outbox
+                WHERE parked_at IS NOT NULL)::int AS parked`, [new Date(nu())]);
     m.pending = q.rows[0].pending;
     m.leased = q.rows[0].leased;
     m.parked = q.rows[0].parked;
   }
 
-  // PARKED ÄR EN DRIFTINDIKERING: varje nyparkerad rad får en egen error-rad med workspace och
+  // PARKED ÄR EN DRIFTINDIKERING: varje NYparkerad rad får en egen error-rad med workspace och
   // eventId — id:n, aldrig payload, aldrig token — så driften ser blockeringen utan att gräva.
+  // NYparkerad, inte "alla parkerade som någonsin funnits".
+  //
+  // Vattenmärket `senastParkerad` startade som null, och den första frågan efter VARJE omstart
+  // returnerade därför hela poisonlistan och larmade om varenda rad igen. Vid en deployväxling
+  // gjorde dessutom båda processerna det samtidigt, så samma gamla rad gav två larm. Ett larm som
+  // upprepas vid varje omstart slutar man läsa — och då är indikeringen värdelös just när den
+  // behövs.
+  //
+  // Första varvet SÄTTER därför bara vattenmärket till det som redan fanns, utan att logga. Att en
+  // gammal parkerad rad finns kvar syns ändå: mätaren `parked` räknar dem varje varv.
+  // Vattenmärket sätts FÖRE första varvet, inte efter. Sätts det efteråt sväljs en rad som
+  // parkerades UNDER det varvet — och det är precis de raderna indikeringen finns för.
+  let vattenmarkeSatt = false;
+  //
+  // VATTENMÄRKET ÄR TEXT, INTE ETT Date. Uppmätt 2026-08-25: Postgres timestamptz har
+  // MIKROsekunder, JS Date har millisekunder. Läses märket som ett Date trunkeras 11:45:50.693456
+  // till 11:45:50.693, och nästa varv är `parked_at > märket` sant för RADEN SJÄLV — samma rad
+  // larmade om varje sekund i evighet. Precisionen får aldrig gå genom JS: `::text` behåller den
+  // hela vägen, och jämförelsen görs av databasen.
+  async function sattVattenmarke() {
+    if (vattenmarkeSatt) return;
+    const q0 = await pool.query(
+      'SELECT max(parked_at)::text AS senast FROM stream_event_outbox WHERE parked_at IS NOT NULL');
+    senastParkerad = q0.rows[0].senast || null;
+    vattenmarkeSatt = true;
+  }
   async function loggaNyparkerade() {
     const q = await pool.query(
-      `SELECT workspace_id, event_id, attempts, parked_at FROM stream_event_outbox
+      `SELECT workspace_id, event_id, attempts, parked_at::text AS parked_at FROM stream_event_outbox
         WHERE parked_at IS NOT NULL AND ($1::timestamptz IS NULL OR parked_at > $1::timestamptz)
         ORDER BY parked_at`, [senastParkerad]);
     for (const rad of q.rows) {
@@ -67,6 +108,7 @@ function startStreamWorker({
   }
 
   async function varv() {
+    await sattVattenmarke();
     const n = await S.publiceraUtkorg({
       sand: rad => S.publiceraTillBuss(eventBus, rad),
       workerId,
@@ -81,6 +123,19 @@ function startStreamWorker({
     }
     await loggaNyparkerade();
     await matare();
+  }
+
+  // FELTEXTEN SANERAS FÖRE LOGGNING. `error.message` är inte vår text: den kommer från pg eller
+  // node-redis och bär regelbundet en HEL uppkopplingssträng — `redis://default:<lösenord>@host` —
+  // när anslutningen faller. Ett driftlarm får aldrig vara det som skriver ut hemligheten.
+  // Regeln är därför en vitlista i praktiken: allt som ser ut som en URL med användarinfo klipps,
+  // och texten kortas. Payloads har aldrig varit med här och ska inte bli det.
+  function sanera(error) {
+    const text = String((error && error.message) || error || 'okänt fel');
+    return text
+      .replace(/[a-z][a-z0-9+.-]*:\/\/[^\s@/]*@/gi, '<uppkoppling>@')   // user:pass@host
+      .replace(/\b(password|pwd|token|secret|auth)\s*[=:]\s*\S+/gi, '$1=<dolt>')
+      .slice(0, 200);
   }
 
   function boka(ms) {
@@ -102,7 +157,7 @@ function startStreamWorker({
         // Redis/Postgres nere får ALDRIG döda servern: logga och backa 1→30 s.
         felIRad++;
         const backoffMs = Math.min(30_000, 1_000 * (2 ** Math.min(felIRad - 1, 5)));
-        logg.error(`[utkorg-worker][error] varvet föll (${String((error && error.message) || error).slice(0, 200)}) — nytt försök om ${Math.round(backoffMs / 1000)}s`);
+        logg.error(`[utkorg-worker][error] varvet föll (${sanera(error)}) — nytt försök om ${Math.round(backoffMs / 1000)}s`);
         boka(backoffMs);
       } finally {
         pagaende = null;

@@ -146,9 +146,10 @@ test('B8 · (a) snapshot null forst, sedan start-ram => aktiv', () => {
 
 test('B9 · (b) start-ram medan refetch pagar, refetchen svarar null => aktiv bestar', () => {
   const r = rigg();
+  const biljett = r.session.borjaHamtning();               // refetchen gar ivag
   r.session.behandla(startram(S1));                        // ramen hann fore svaret
-  const ut = r.session.bootstrap({ session: null });        // det gamla svaret landar
-  assert.equal(ut.atgard, 'ignorerad-nedgradering');
+  const ut = r.session.bootstrap({ session: null }, biljett);
+  assert.equal(ut.atgard, 'ignorerad-gammal');
   assert.equal(r.session.aktivSession(), S1, 'ett aldre null-snapshot skrev over en nyare start');
 });
 
@@ -172,13 +173,41 @@ test('B11 · (d) alla tre vagarna landar i samma aktiva session', () => {
   assert.deepEqual(via, [S2, S2, S2]);
 });
 
-test('B12 · en senare refetch som svarar null ignoreras — endet ags av live:end', () => {
+// OMSKRIVET 2026-08-25. Provet beskrev den GAMLA regeln ("en senare null ignoreras alltid"), och
+// den regeln lamnade en verklig lucka oppen: missas `live:end` under ett SSE-avbrott kommer ramen
+// aldrig igen, och klienten stod kvar i den avslutade sandningen for alltid. Snapshotet MASTE
+// kunna avsluta. Det som skyddar mot racet ar nu generationen, inte innehallet.
+test('B12 · MISSAT live:end: reconnect-snapshot med null avslutar den gamla sessionen', () => {
   const r = rigg();
-  r.session.bootstrap({ session: { sessionId: S1, startedAt: 'x' } });
-  r.session.bootstrap({ session: null });                  // ateranslutningens refetch
+  r.session.behandla(startram(S1));
   assert.equal(r.session.aktivSession(), S1);
-  r.session.behandla(endram(S1));
-  assert.equal(r.session.aktivSession(), null, 'live:end ska aga avslutet');
+  // Stromtappet: `live:end:S1` publiceras men klienten ar inte dar. Vid ateranslutningen hamtas
+  // bootstrappen om, och ingen ram har behandlats under tiden.
+  const biljett = r.session.borjaHamtning();
+  const ut = r.session.bootstrap({ session: null }, biljett);
+  assert.equal(ut.atgard, 'behandlad');
+  assert.equal(r.session.aktivSession(), null, 'klienten star kvar i en sandning som tog slut');
+  assert.deepEqual(r.signaler.map(s => s.detalj.event), ['live:start', 'live:end']);
+});
+
+test('B12b · ett GAMMALT start(old)-snapshot skriver inte over en nyare start(new)', () => {
+  const r = rigg();
+  const biljett = r.session.borjaHamtning();               // refetchen gar ivag under sandning S1
+  r.session.behandla(startram(S2));                        // ny sandning hinner fore svaret
+  const ut = r.session.bootstrap({ session: { sessionId: S1, startedAt: 'x' } }, biljett);
+  assert.equal(ut.atgard, 'ignorerad-gammal');
+  assert.equal(r.session.aktivSession(), S2, 'ett gammalt start-snapshot backade sessionen');
+});
+
+test('B12c · en dedupad ram stegar INTE generationen — snapshotet ar fortfarande fart', () => {
+  const r = rigg();
+  r.session.behandla(startram(S1));
+  const biljett = r.session.borjaHamtning();
+  r.session.behandla(startram(S1));                        // replay, redan behandlad => no-op
+  const ut = r.session.bootstrap({ session: null }, biljett);
+  assert.equal(ut.atgard, 'behandlad',
+    'en ram utan ny information gjorde snapshotet gammalt');
+  assert.equal(r.session.aktivSession(), null);
 });
 
 test('B13 · initialt snapshot null nedgraderar en sparad aktiv session', () => {
@@ -211,6 +240,24 @@ test('B15 · listan av behandlade eventId har taket 16 och aldst faller forst', 
   assert.equal(lista.length, 16, 'taket 16 holls inte');
   assert.equal(lista[0], 'live:start:00000002-0000-4000-8000-000000000000', 'fel ande foll bort');
   assert.equal(lista[15], 'live:end:00000009-0000-4000-8000-000000000000');
+});
+
+// UTKORGEN AR AT-LEAST-ONCE. Redis-publiceringen och databaskvittensen ar tva steg; en krasch,
+// en timeout eller en deployvaxling daremellan ger en publicering UTAN kvittens, och nasta varv
+// publicerar raden igen (bevisat serversidan i server/test/stream-worker.test.js, provet om den
+// langsamma batchen). Ramen ar da byte for byte densamma — samma eventId, samma payload.
+//
+// Det ar HAR den blir ofarlig. Utan dedupen hade varje ompublicering nollstallt mal, kampanjer
+// och topplistor mitt i sandningen.
+test('B16a · ompublicerat event (kvittensen uteblev) ger INGEN andra reset', () => {
+  const r = rigg();
+  const ram = startram(S1);
+  r.session.behandla(ram);
+  r.session.behandla(JSON.parse(JSON.stringify(ram)));      // samma rad, nytt varv, ny publicering
+  r.session.behandla(JSON.parse(JSON.stringify(ram)));
+  assert.equal(r.signaler.length, 1, 'en ompublicering nollstallde sandningen igen');
+  assert.equal(r.omhamtningar.length, 1, 'en ompublicering hamtade om konfigurationen igen');
+  assert.equal(r.session.aktivSession(), S1);
 });
 
 test('B16 · tva browserkallor pa samma origin blockerar inte varandra', () => {

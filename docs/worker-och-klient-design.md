@@ -181,6 +181,61 @@ räcker); gift campaign **hämtas om** (konfig-omhämtningen); leaderboard/last-
 TTS-kön/recognition-köerna/streaks **nollställs i minnet** via `vyra-live-session` (inställningar
 lämnas); event-dedupe **lämnas**; **VyraPoints/localStorage orört** tills separat produktbeslut.
 
+## KORRIGERING 2026-08-25 · nedgraderingsregeln var fel — generationsskydd i stället
+
+Den ursprungliga regeln ("`session: null` accepteras ENDAST vid den initiala bootstrappen") stänger
+racet, men den stänger också något som måste vara öppet. **Uppmätt lucka:**
+
+1. En sändning pågår, klienten har `activeSessionId = X`.
+2. SSE-strömmen tappas (nätglapp, OBS-källa i bakgrunden, serverdeploy).
+3. Sändningen tar slut under avbrottet. `live:end:X` publiceras — men klienten är inte där, och
+   ramen kommer **aldrig igen**: SSE-replayen kräver ett `Last-Event-ID` som en tappad källa i
+   praktiken inte kan lita på, och internramarna trimmas ur strömmen som allt annat.
+4. Klienten återansluter och hämtar om bootstrappen. Servern svarar auktoritativt `session: null`.
+5. Den gamla regeln **ignorerar** det svaret. Klienten står kvar i sändning X för alltid — exakt
+   det uppstartsluckan skulle laga, fast åt andra hållet.
+
+`live:end` kan alltså inte äga avslutet ensamt. Snapshotet måste kunna avsluta.
+
+### Regeln som ersätter den: LIVE-EVENTGENERATION
+
+En räknare `generation` som stegas **varje gång en livesession-ram faktiskt behandlas** (en ram som
+dedupas bort är ingen ny information och stegar inte).
+
+- `borjaHamtning()` returnerar generationen **när förfrågan startar**. Anroparen skickar tillbaka
+  den till `bootstrap(svar, biljett)`.
+- Har generationen INTE ändrats när svaret landar är snapshotet fortfarande färskt och appliceras
+  **oavsett innehåll** — `null` avslutar då den gamla sessionen (punkt 5 ovan).
+- Har generationen ändrats hann en nyare SSE-ram före svaret. Snapshotet är gammalt och kastas
+  **oavsett innehåll** — det stänger både `null` över `start(new)` och `start(old)` över
+  `start(new)` med samma mekanism.
+
+Skillnaden mot den gamla regeln: den gamla dömde på *innehåll* (null = nedgradering = ignorera),
+den nya dömer på *ålder*. Innehållet är serverns sak; klientens sak är att veta om svaret hann bli
+gammalt medan det var i luften.
+
+Utan biljett (`bootstrap(svar)` ensamt) tas generationen vid anropet, alltså "ingenting kan ha
+hunnit emellan" — bara för prov och bakåtkompatibla anropare.
+
+### Vad detta gör med proven
+
+`B12` (senare refetch med null ignoreras) beskrev den gamla regeln och är **omskriven**: en senare
+refetch med null och ingen mellanliggande ram SKA avsluta sessionen. `B9` behåller sitt påstående
+men måste ta biljetten FÖRE ramen — det är just det en pågående refetch gör.
+
+## KORRIGERING 2026-08-25 · utkorgen är at-least-once, inte exakt en gång
+
+Publiceringen skriver till Redis och kvitterar i databasen i **två steg**. En krasch, en timeout
+eller en deployväxling mellan stegen ger en Redis-publicering utan kvittens, och nästa varv
+publicerar raden igen. Det är at-least-once, och dokumentation och provtexter som antyder något
+annat är fel.
+
+Det är ofarligt — men bara tack vare en egenskap som måste stå utskriven: **`eventId` är stabilt
+över ompubliceringar** (`live:start:<sessionId>` byggs ur radens egen data, inte ur klockan eller
+ett försöksnummer), och klientens dedupe ligger på just `eventId`. En dubbelpublicerad ram är
+därför en no-op hos varje mottagare. Säkerheten kommer alltså från de två tillsammans, inte från
+publiceringen ensam.
+
 ## Planerade filer
 
 | Fil | Ändring |

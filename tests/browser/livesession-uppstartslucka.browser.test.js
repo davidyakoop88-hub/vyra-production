@@ -208,6 +208,32 @@ prov('sandningsramar lacker aldrig ut i den vanliga eventvagen', async () => {
   } finally { await sida.close() }
 });
 
+// ---- MISSAT live:end UNDER ETT STROMAVBROTT --------------------------------------------------
+// Den enda vagen tillbaka. `live:end` ar en handelse: tappas strommen medan sandningen slutar
+// kommer ramen ALDRIG igen. Utan ett auktoritativt snapshot vid ateranslutningen star kallan kvar
+// i en sandning som tog slut — for alltid. Provet river strommen pa serversidan, later sandningen
+// ta slut i det dolda, och later klientens egen ateranslutning gora jobbet.
+prov('missat live:end: ateranslutningens snapshot avslutar den gamla sandningen', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S1, { timeout: 15000 });
+
+    // Sandningen tar slut MEDAN strommen ar nere: servern svarar nu null, men ingen ram gar ut.
+    r.lada.session = null;
+    for (const strom of r.strommar) { try { strom.end() } catch (e) {} }
+    r.strommar.length = 0;
+
+    // Klientens egen ateranslutning hamtar om bootstrappen. Ingen ram har behandlats under tiden,
+    // sa snapshotet ar fart och far avsluta.
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv') === '',
+      null, { timeout: 45000 });
+    assert.equal(await aktiv(sida), '', 'kallan star kvar i en sandning som tog slut');
+    assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
+  } finally { await sida.close() }
+});
+
 // ---- SANDNINGSREKORDEN (gift-event-images.js) -------------------------------------------------
 // Designen pekade ut extras.js/action-event.js for "streak-raknare". Mätningen visar att den
 // raknaren inte finns dar — extras.js ar katalog och chatbot-UI, action-event.js har en regex och
