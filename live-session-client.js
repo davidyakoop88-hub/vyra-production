@@ -125,7 +125,7 @@
     // ett `null` ar hela flaggkontraktet, och den skillnaden finns bara i objektet.
     function bootstrap(svar) {
       if (!svar || typeof svar !== 'object'
-        || false) {   // MUTATION I: dormant-kontraktet bortmuterat
+        || !Object.prototype.hasOwnProperty.call(svar, 'session')) {
         // Flaggan ar av. Ingen skrivning, ingen signal, ingen omhamtning — dormant betyder att
         // klienten inte gor NAGOT, inte att den gor ingenting synligt.
         return { atgard: 'dormant' };

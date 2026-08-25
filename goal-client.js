@@ -267,7 +267,7 @@
     if (handelser) {
       handelser.addEventListener('vyra-live-session', event => {
         const detalj = event && event.detail;
-        if (!detalj || detalj.event !== 'live:start') return;
+        if (!detalj) return;   // MUTATION K: hamtar om aven vid live:end
         try { loadSnapshot() } catch (e) {}
       });
     }
