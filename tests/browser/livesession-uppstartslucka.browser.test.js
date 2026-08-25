@@ -266,6 +266,42 @@ prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
   } finally { await sida.close() }
 });
 
+// ---- EN GAVA I SAMMA TICK SOM SANDNINGSBYTET -------------------------------------------------
+// UPPMATT, inte antaget: gift-event-images.js batchar genom en rAF, men det som ligger i den kon
+// ar bara DOM-MALNINGEN. Sjalva tillstandet — `records` och widgetens `dataValue`/`giftCurrent<i>`
+// — skrivs SYNKRONT i eventhanteraren, alltsa fore sessionssignalen om de kommer i samma tick.
+// Nagon sessionsgeneration behovs darfor inte i den har kedjan: den fordrojda delen kan inte
+// aterfylla tillstand, bara mala en ruta som nasta omritning ratar.
+//
+// Provet star kvar for att BEVAKA just det: skulle nagon flytta tillstandsskrivningen in i flush()
+// blir den har invarianten falsk direkt. Gavan och bytet skickas i samma synkrona block, sa ingen
+// bildruta hinner emellan.
+prov('en gava i samma tick som sandningsbytet lamnar inga spar i de nya rekorden', async () => {
+  r.lada.version = 1;
+  r.lada.state = { widgets: [widget(), kampanj(0)] };
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S1, { timeout: 15000 });
+    r.lada.version += 1;
+    r.lada.state = { widgets: [widget(), kampanj(0)] };
+
+    // Gavan och sessionssignalen i samma tick — gavan hinner aldrig ut ur rAF-kon.
+    await sida.evaluate(() => {
+      dispatchEvent(new CustomEvent('vyra-live-event', {
+        detail: { type: 'gift', giftName: 'Rose', username: '@sen', coins: 10, count: 9 } }));
+      dispatchEvent(new CustomEvent('vyra-live-session', {
+        detail: { event: 'live:start', sessionId: '22222222-2222-4222-8222-222222222222' } }));
+    });
+    await sida.evaluate(() => new Promise(r2 => requestAnimationFrame(() => requestAnimationFrame(r2))));
+
+    const rekord = await sida.evaluate(() => ({ ...window.VyraGiftRecords }));
+    assert.equal(rekord.streakCount, 0, 'gavan overlevde sessionsbytet i rekordhallaren');
+    assert.equal(rekord.giftCoins, 0);
+  } finally { await sida.close() }
+});
+
 // ---- GIFT CAMPAIGN (Davids punkt: mat, tro inte) ----------------------------------------------
 prov('gift campaign-raknaren foljer serverns nollstallning via konfig-omhamtningen', async () => {
   r.lada.version = 1;
