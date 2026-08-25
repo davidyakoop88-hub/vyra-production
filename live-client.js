@@ -127,7 +127,7 @@ function ingest(e,frameId){
   // De gar heller inte genom eventgrinden ovan: den dedupar pa TRANSPORT-id, och samma logiska
   // sandningsbesked kommer med olika id efter en ateranslutning och helt utan id fran snapshotet.
   // Dedupen for de har beskeden ligger pa eventId i live-session-client.js.
-  if(e&&e.type==='livesession'){window.VyraLiveSession?.runtime?.().behandla(e);return}
+  if(e&&e.type==='livesession'){window.VyraLiveSession?.runtime?.().behandla(e)}  /* MUTATION J: ramen fortsatter ut i den vanliga eventvagen */
   if(!gateFor().accept(frameId||e?.id))return;
   normalizeCloudFields(e);
   normalizeUserFlags(e);
