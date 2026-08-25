@@ -16,11 +16,9 @@
 // som den syntetiska handelsen `live:start:<sessionId>`. Darmed kan snapshotet och ramen aldrig
 // behandla samma sandning tva ganger, oavsett vilken som kommer forst.
 //
-// NEDGRADERINGSREGELN (Davids punkt 3). `session: null` betyder auktoritativt "ingen LIVE" — men
-// bara vid den INITIALA bootstrappen. Samma GET kors om vid varje ateranslutning, och ett svar
-// som var sant nar fragan stalldes kan vara gammalt nar det landar. En senare null ignoreras
-// darfor: avslutet ags av `live:end`-ramen, och ett aldre null-snapshot far aldrig skriva over en
-// nyare start.
+// SNAPSHOTETS ALDER (Davids punkt 3). `session: null` betyder auktoritativt "ingen LIVE" nar
+// svaret fortfarande ar farskt. Samma GET kors om vid varje ateranslutning, sa biljetten fran
+// `borjaHamtning()` gor att ett svar som blivit gammalt aldrig skriver over en nyare SSE-ram.
 //
 // ALLT AR INJICERAT — lagring, signal och konfig-omhamtning — sa hela kontraktet gar att prova
 // utan webblasare, utan server och utan klocka som far ta tid.
@@ -157,6 +155,11 @@
         return behandla({ type: 'livesession', event: 'live:start',
           eventId: 'live:start:' + s.sessionId, sessionId: s.sessionId, startedAt: s.startedAt });
       }
+      // Bara EXAKT null betyder "ingen LIVE". Ett objekt med saknat/trasigt sessionId ar ett
+      // kontraktsbrott, inte ett auktoritativt avslut. Fail-closed har ar extra viktigt nar en
+      // aktiv session redan finns: annars skulle ett delvis serialiserat svar tanda ett falskt
+      // `live:end` och nolla hela klienten.
+      if (s !== null) return { atgard: 'ignorerad', sessionId: aktiv };
       // `null` = auktoritativt ingen LIVE, och snapshotet ar fart. Det AVSLUTAR darfor en aktiv
       // session: det ar den enda vagen tillbaka nar `live:end` missats under ett stromavbrott.
       if (!aktiv) return { atgard: 'behandlad', sessionId: null };

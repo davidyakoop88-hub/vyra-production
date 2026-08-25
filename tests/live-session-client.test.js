@@ -94,6 +94,21 @@ test('B3 · flaggan av — session-faltet saknas helt: ingen skrivning, ingen si
   assert.equal(r.session.aktivSession(), null);
 });
 
+test('B3b · trasigt icke-null-snapshot ar ingen auktoritativ live:end', () => {
+  const r = rigg();
+  r.session.behandla(startram(S1));
+  const skrivningarFore = r.lag.spar.skrivningar;
+  const signalerFore = r.signaler.length;
+
+  for (const session of [{}, { sessionId: '' }, { sessionId: 'inte-uuid' }, 'trasig', 17, false]) {
+    const ut = r.session.bootstrap({ session });
+    assert.equal(ut.atgard, 'ignorerad', `snapshotet ${JSON.stringify(session)} behandlades`);
+    assert.equal(r.session.aktivSession(), S1, 'ett trasigt snapshot avslutade den aktiva sessionen');
+  }
+  assert.equal(r.signaler.length, signalerFore, 'ett trasigt snapshot signalerade live:end');
+  assert.equal(r.lag.spar.skrivningar, skrivningarFore, 'ett trasigt snapshot skrev i lagringen');
+});
+
 // ---- 2 · DEDUPEN ------------------------------------------------------------------------------
 test('B4 · samma eventId igen ar en no-op oavsett transport-id', () => {
   const r = rigg();

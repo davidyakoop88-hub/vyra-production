@@ -139,6 +139,28 @@ test('en ny start utan sett slut avslutar den föregående matchen först', () =
   assert.equal(traffar()[0].name, 'lisa');
 });
 
+test('ny LIVE kastar en oppen battle och dess bidrag utan att kora MVP', () => {
+  const { h, skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('gammal', 5000));
+  assert.equal(h.window.VyraBattleMvp.aktiv(), true, 'positiv kontroll: battlen oppnades aldrig');
+  assert.equal(h.window.VyraBattleMvp.bidrag().length, 1,
+    'positiv kontroll: gavan raknades aldrig');
+
+  h.window.dispatchEvent(new h.window.CustomEvent('vyra-live-session', {
+    detail: { event: 'live:start', sessionId: '22222222-2222-4222-8222-222222222222' }
+  }));
+  assert.equal(h.window.VyraBattleMvp.aktiv(), false, 'forra sandningens battle overlevde');
+  skicka(battle('battle_end'));
+  assert.equal(traffar().length, 0, 'sessionsbytet korade eller bevarade den gamla MVP:n');
+
+  skicka(battle('battle_start'));
+  skicka(gava('ny', 100));
+  skicka(battle('battle_end'));
+  assert.equal(traffar().length, 1, 'positiv kontroll: en ny battle fungerar inte efter reset');
+  assert.equal(traffar()[0].name, 'ny');
+});
+
 // ---- 5. tie-breaker ---------------------------------------------------------------------------
 
 test('vid lika coins vinner den som bidrog först', () => {
