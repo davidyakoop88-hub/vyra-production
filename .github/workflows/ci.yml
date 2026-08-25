@@ -355,7 +355,18 @@ jobs:
     permissions:
       contents: write
     steps:
+      # fetch-depth: 0 — HELA historiken, inte defaultens enda commit.
+      #
+      # Kartans kolumner "Senast andrad" och "PR" kommer ur `git log -S <katalognyckel>`. I en grund
+      # checkout finns bara den nyaste commiten, sa VARJE post traffar den och kartan tillskriver
+      # hela katalogen den senaste PR:en. Uppmatt 2026-08-25 pa main: 293 av 293 PR-hanvisningar
+      # pekade pa #270. Kartan sag komplett ut och var systematiskt fel.
+      #
+      # Generatorn avbryter numera pa en grund klon i stallet for att bara varna, sa den har raden
+      # ar inte en optimering — utan den faller jobbet.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
