@@ -10,7 +10,12 @@ Planen är inte utförd. Den kräver Davids uttryckliga godkännande per steg.
 
 Flaggan läses som **exakt strängen `'1'`**. Allt annat — `true`, `ja`, `on`, tomt, osatt — är AV.
 
-**vyra-production (servern)** — fyra lässiten:
+**Ingen ny kodversion deployas** — main är redan utrullad, och aktiveringen sätter bara en miljövariabel.
+Men **en ändrad miljövariabel utlöser ändå en service-redeploy i Railway**: processen startas om, och det
+är omstarten som gör flaggan verksam. Räkna alltså med ett kort avbrott per tjänst och per ändring —
+både vid aktivering och vid rollback.
+
+**vyra-production (servern)** — fem lässiten:
 
 | Plats | Beteende med flaggan AV | Med flaggan PÅ |
 |---|---|---|
@@ -70,9 +75,13 @@ bufferten, inte en krasch.
    Det är `400`-mot-`503` som skiljer lägena. Med tom body faller anropet på
    `Ogiltigt tiktokUsername` (`kontonyckel('')` → `""`) och returnerar **innan någon skrivning sker**.
 
-   **c) Kontrollera att sonden inte skrev något.** Via Railway **Database → Data** → SELECT:
-   `bridge_runs`, `bridge_accounts`, `stream_sessions`, `stream_session_pointer`, `stream_event_outbox`
-   ska alla ha **0 rader**. En rad här betyder att sonden gick längre än avsett — stoppa.
+   **c) Kontrollera att sonden inte skrev något.** Via Railway **Database → Data** → SELECT.
+   **Samtliga sju tabeller** i sessionsmodellen ska ha **0 rader**:
+
+   `bridge_accounts`, `bridge_runs`, `stream_sessions`, `stream_session_pointer`,
+   `stream_session_reset`, `stream_event_outbox`, `stream_room_reopen`
+
+   En rad i någon av dem betyder att sonden gick längre än avsett — stoppa.
 
    **d) Workern.** **Vänta inte på någon startrad i loggen — den finns inte.** En frisk, tom worker
    loggar ingenting: enda `[utkorg-worker]`-raderna är `[error]`-rader (parkerad rad, fallet varv), och
@@ -88,7 +97,14 @@ bufferten, inte en krasch.
    satta — annars är grinden fail-closed och flaggan gör ingenting, tyst.
 2. Sätt `VYRA_SANDNINGSIDENTITET=1` på **tiktok-manager**.
 3. Mät under **en riktig LIVE**:
-   - bryggloggen: `live-runs` och `live-sessions` får träffar; `randomUUID`-körningsid satt.
+   - **bryggloggen — de faktiska raderna.** Formatet är
+     `[livscykel] <typ>[ seq=<n>] accepterad|idempotent` (`livscykel.js:164`), så leta efter:
+     `reg accepterad` (registreringen gick igenom) och `start seq=1 accepterad` (startbeskedet).
+     `idempotent` i stället för `accepterad` är också godkänt — det betyder replay, inte fel.
+     Sök **inte** efter `live-runs`, `live-sessions` eller `randomUUID`: det är ruttnamn respektive
+     ett internt anrop, och de skrivs inte till loggen.
+   - **`bridgeRunId` verifieras i databasen**, inte i loggen: `SELECT id, account_key, generation,
+     current FROM bridge_runs` ska visa körningen som `current`.
    - `bridge_runs` och `stream_sessions` får rader; `stream_session_pointer` pekar på den nya sessionen.
    - **Workerbeviset:** `live:start`-raden i `stream_event_outbox` får `published_at` satt.
    - En OBS-källa som öppnas **mitt i** sändningen får `session: {sessionId,startedAt}` i
@@ -119,14 +135,33 @@ Kör hellre två LIVE efter varandra — en enda bevisar inte att nästa session
 Vid omstart: `session`-fältet försvinner ur bootstrapsvaret, maskinrutterna går till `503`, workern
 startar inte. Klienten faller tillbaka till dormant av sig själv.
 
-**R2 — bryggan.** Ta bort flaggan på tiktok-manager. Bryggan återgår till exakt gamla
-reconnect/backoff-beteendet (5-8-18-59 s). Verifierat vid #269-mergen.
+**R2 — bryggan.** Ta bort flaggan på tiktok-manager. Bryggan återgår till sitt tidigare
+reconnect/backoff-beteende. (Skriv inte ut någon konkret sekundserie här: backoffen är
+`min(60000, 1000·2^min(attempt,6))` med ±20 % jitter, `bridge.js:58-70` — en observerad serie är
+jittrade värden, inte ett kontrakt.)
 
 **R3 — kontospärr efter exit 65/78 (eller 86 på den aktiva instansen).** En flaggändring räcker inte:
 managern håller kontot blockerat för sin livstid → **omdeploy av tiktok-manager** krävs.
 
 **Rollbackordningen är omvänd mot aktiveringen: bryggan av först, sedan servern.** Servern av med
 bryggan på ger `503` → inte fatalt, men bryggan buffrar och tappar äldsta event vid tak.
+
+### Rollback-barriär mellan R2 och R1 — vänta, mät, gå sedan vidare
+
+Att ta bort flaggan på bryggan är **inte** samma sak som att bryggan kör utan den. Ändringen utlöser en
+redeploy, och under växlingen lever den **gamla** processen kvar en stund med flaggan fortfarande på.
+Tas serverflaggan bort i det fönstret möter den gamla bryggan `503` och börjar buffra — precis det vi
+ville undvika.
+
+**Passera inte till R1 förrän allt tre är uppmätt på tiktok-manager:**
+
+1. Den **nya** deploymenten är `ACTIVE` i Railway (inte "deploying", inte "removing").
+2. Den gamla deploymenten är **borta** — ingen överlappande process kvar.
+3. Den nya processen kör **verifierat utan flaggan**: inga nya `[livscykel]`-rader alls
+   (`reg`/`start`/`end` upphör helt när grinden är stängd), och inga nya rader i `bridge_runs`.
+
+Först därefter R1 på servern. Barriären gäller åt båda hållen: samma väntan gör ingen skada vid
+aktivering, och den är obligatorisk vid rollback.
 
 **Schemat rullas INTE tillbaka.** Migreringen är additiv och bevisat allt-eller-inget
 (`migrering-atomicitet.test.js`); den får ligga kvar även vid kodrollback.
