@@ -115,7 +115,7 @@
       }
       // ETT END NOLLAR BARA SIN EGEN SESSION. En sen `live:end(gammal)` efter `live:start(ny)`
       // ar en no-op — annars hade en fordrojd ram fran den forra sandningen slackt den nya.
-      if (g.sessionId !== aktiv) return { atgard: 'behandlad', sessionId: g.sessionId, backade: false };
+      // MUTATION H: end nollar oavsett vilken session det galler
       satt(null);
       signal('live:end', g.sessionId, g.tid);
       return { atgard: 'behandlad', sessionId: g.sessionId, backade: true };
@@ -139,7 +139,7 @@
       }
       // `null` = auktoritativt ingen LIVE. Nedgraderande, och darfor bara giltig sa lange
       // ingenting nyare redan behandlats.
-      // MUTATION G: nedgraderingsregeln bortmuterad
+      if (!orort) return { atgard: 'ignorerad-nedgradering', sessionId: aktiv };
       orort = false;
       if (!aktiv) return { atgard: 'behandlad', sessionId: null };
       const gammal = aktiv;
