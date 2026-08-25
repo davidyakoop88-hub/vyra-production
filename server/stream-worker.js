@@ -67,10 +67,14 @@ function startStreamWorker({
   }
 
   async function varv() {
-    /*MUTE claim-skyddet forbi: naiv publicering utan lease*/
-    const q = await pool.query('SELECT id, workspace_id, event_id, topic, payload, attempts FROM stream_event_outbox WHERE published_at IS NULL AND parked_at IS NULL ORDER BY id LIMIT $1', [antal]);
-    for (const rad of q.rows) { try { await S.publiceraTillBuss(eventBus, rad); await pool.query('UPDATE stream_event_outbox SET published_at=$2 WHERE id=$1', [rad.id, new Date(nu())]); } catch (_) {} }
-    const n = q.rows.length;
+    const n = await S.publiceraUtkorg({
+      sand: rad => S.publiceraTillBuss(eventBus, rad),
+      workerId,
+      antal,
+      nu: () => new Date(nu()),
+      logg: text => logg.log(text),
+      metric: () => { m.forsok++; },
+    });
     if (n > 0) {
       m.publicerade += n;
       m.senastPublicerad = new Date(nu()).toISOString();
