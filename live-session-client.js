@@ -115,7 +115,7 @@
       }
       // ETT END NOLLAR BARA SIN EGEN SESSION. En sen `live:end(gammal)` efter `live:start(ny)`
       // ar en no-op — annars hade en fordrojd ram fran den forra sandningen slackt den nya.
-      // MUTATION H: end nollar oavsett vilken session det galler
+      if (g.sessionId !== aktiv) return { atgard: 'behandlad', sessionId: g.sessionId, backade: false };
       satt(null);
       signal('live:end', g.sessionId, g.tid);
       return { atgard: 'behandlad', sessionId: g.sessionId, backade: true };
@@ -125,7 +125,7 @@
     // ett `null` ar hela flaggkontraktet, och den skillnaden finns bara i objektet.
     function bootstrap(svar) {
       if (!svar || typeof svar !== 'object'
-        || !Object.prototype.hasOwnProperty.call(svar, 'session')) {
+        || false) {   // MUTATION I: dormant-kontraktet bortmuterat
         // Flaggan ar av. Ingen skrivning, ingen signal, ingen omhamtning — dormant betyder att
         // klienten inte gor NAGOT, inte att den gor ingenting synligt.
         return { atgard: 'dormant' };
