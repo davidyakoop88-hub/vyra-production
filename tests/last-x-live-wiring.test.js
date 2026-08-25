@@ -69,6 +69,33 @@ test('like, share och subscribe når också fram', () => {
   }
 });
 
+test('ny LIVE later synligt kort spela klart men kastar vantande gamla kort', () => {
+  const { h, box } = boot();
+  const timers = [];
+  h.window.setTimeout = fn => { timers.push(fn); return timers.length };
+  h.window.clearTimeout = () => {};
+
+  h.window.routeLiveBattleEvent({ type: 'gift', username: 'synlig-gammal', coins: 500 });
+  h.window.routeLiveBattleEvent({ type: 'like', username: 'vantande-gammal' });
+  assert.equal(nameIn(box), 'synlig-gammal', 'positiv kontroll: inget kort visades');
+  assert.ok(box.classList.contains('last-x-active'));
+  assert.deepEqual([...box._lx.order], ['liker'], 'positiv kontroll: inget gammalt kort vantade');
+
+  h.window.dispatchEvent(new h.window.CustomEvent('vyra-live-session', {
+    detail: { event: 'live:start', sessionId: '22222222-2222-4222-8222-222222222222' }
+  }));
+  assert.equal(nameIn(box), 'synlig-gammal', 'det synliga kortet rycktes bort vid sessionsbytet');
+  assert.ok(box.classList.contains('last-x-active'), 'det synliga kortets animation avbröts');
+  assert.deepEqual([...box._lx.order], [], 'den gamla kön tömdes inte');
+  assert.equal(Object.keys(box._lx.slots).length, 0, 'gamla slots tömdes inte');
+
+  // Spela fasmaskinens riktiga callbacks till slut utan att vanta fem sekunder. Om det vantande
+  // like-kortet overlevde sessionsbytet skulle advanceLX() byta namnet till "vantande-gammal".
+  while (timers.length) timers.shift()();
+  assert.equal(nameIn(box), 'synlig-gammal', 'ett väntande kort fran forra LIVE:n visades efterat');
+  assert.ok(!box.classList.contains('last-x-active'), 'det synliga kortet fick inte spela klart');
+});
+
 test('den ursprungliga battle-routingen körs fortfarande', () => {
   // Omskrivningen anropar den sparade funktionen först. Gjorde den inte det skulle Glove Snipe
   // sluta fungera från battle-UI:t, som är dess enda kvarvarande väg.
