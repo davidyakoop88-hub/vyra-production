@@ -397,6 +397,7 @@
         "server/gavoidentitet.js",
         "server/regelnycklar.js",
         "gift-identity-larlage.js",
+        "server/heart-me-goal.js",
         "scripts/goal-*.js"
       ],
       "tester": [
@@ -415,7 +416,8 @@
         "server/test/studio-goal-stream.test.js",
         "server/test/gavoidentitet.test.js",
         "server/test/regelnycklar.test.js",
-        "tests/gift-identity-larlage.test.js"
+        "tests/gift-identity-larlage.test.js",
+        "server/test/heart-me-unika-avsandare.test.js"
       ],
       "matning": [
         { "namn": "Genomstromning", "kommando": "node scripts/goal-throughput.js" },
