@@ -84,7 +84,7 @@ function startStreamWorker({
   }
 
   function boka(ms) {
-    if (stoppad) return;
+    /*MUTC stoppad ignoreras*/
     timer = setTimeout(kor, ms);
     if (typeof timer.unref === 'function') timer.unref();
   }
@@ -117,7 +117,9 @@ function startStreamWorker({
   async function stop() {
     stoppad = true;
     clearTimeout(timer);
-    /*MUTB stop vantar inte pa pagaende varv*/
+    if (pagaende) {
+      await Promise.race([pagaende, new Promise(r => { const t = setTimeout(r, stoppVantanMs); if (typeof t.unref === 'function') t.unref(); })]);
+    }
   }
 
   return { stop };
