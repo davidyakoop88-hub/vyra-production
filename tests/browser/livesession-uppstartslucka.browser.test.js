@@ -32,11 +32,16 @@ const S1 = '11111111-1111-4111-8111-111111111111';
 const S2 = '22222222-2222-4222-8222-222222222222';
 
 const widget = () => ({ id: 'w1', type: 'templateTopLike', x: 40, y: 40, width: 320, height: 240 });
+// Gift Campaign raknar i WIDGETENS EGNA falt (`giftCurrent<i>` i state.widgets), inte i en modul-
+// variabel. Designen pastar att serverns nollstallning darfor racker via konfig-omhamtningen.
+// Den har widgeten finns for att MATA det pastaendet i stallet for att tro pa det.
+const kampanj = (current) => ({ id: 'k1', type: 'templateGiftCampaign', x: 420, y: 40,
+  width: 320, height: 240, giftName0: 'Rose', giftCurrent0: current, giftTarget0: 10 });
 
 function rigg() {
   // `session: undefined` = flaggan av (fältet utelämnas helt vid serialiseringen). Det är exakt
   // den skillnad servern gör, och den skillnaden är hela dormant-kontraktet.
-  const lada = { version: 1, state: { widgets: [widget()] }, session: undefined, hamtningar: 0 };
+  const lada = { version: 1, state: { widgets: [widget(), kampanj(0)] }, session: undefined, hamtningar: 0 };
   const strommar = [];
 
   const server = http.createServer((req, res) => {
@@ -200,6 +205,72 @@ prov('sandningsramar lacker aldrig ut i den vanliga eventvagen', async () => {
     const sista = await sida.evaluate(() => localStorage.getItem('vyra-live-event'));
     assert.equal(sista, null,
       'en livesession-ram behandlades som ett vanligt liveevent och nadde widgetarna');
+  } finally { await sida.close() }
+});
+
+// ---- SANDNINGSREKORDEN (gift-event-images.js) -------------------------------------------------
+// Designen pekade ut extras.js/action-event.js for "streak-raknare". Mätningen visar att den
+// raknaren inte finns dar — extras.js ar katalog och chatbot-UI, action-event.js har en regex och
+// en kommentar. Den VERKLIGA raknaren bor i gift-event-images.js: `records = {giftCoins,
+// streakCount}`, med filens egen kommentar "Rekorden galler SANDNINGEN, inte layouten — de
+// nollstalls vid omladdning". Utan omladdning nollstalldes de aldrig, och Top Gift / Top Streak
+// bar da forra sandningens rekord in i den nya.
+prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    // Samma ingang som den riktiga vagen tar ett steg efter ingest().
+    await sida.evaluate(() => dispatchEvent(new CustomEvent('vyra-live-event', {
+      detail: { type: 'gift', giftName: 'Rose', username: '@provgivare', coins: 500, count: 25 } })));
+    await sida.waitForFunction(() => window.VyraGiftRecords
+      && window.VyraGiftRecords.streakCount > 0, null, { timeout: 10000 });
+    const fore = await sida.evaluate(() => ({ ...window.VyraGiftRecords }));
+    assert.equal(fore.streakCount, 25, 'riggens gava naddes aldrig fram till rekordhallaren');
+    assert.ok(fore.giftCoins > 0);
+
+    r.skicka('live:start', S2);
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S2, { timeout: 15000 });
+    const efter = await sida.evaluate(() => ({
+      streakCount: window.VyraGiftRecords.streakCount, giftCoins: window.VyraGiftRecords.giftCoins }));
+    assert.deepEqual(efter, { streakCount: 0, giftCoins: 0 },
+      'forra sandningens rekord foljde med in i den nya');
+  } finally { await sida.close() }
+});
+
+// ---- GIFT CAMPAIGN (Davids punkt: mat, tro inte) ----------------------------------------------
+prov('gift campaign-raknaren foljer serverns nollstallning via konfig-omhamtningen', async () => {
+  r.lada.version = 1;
+  r.lada.state = { widgets: [widget(), kampanj(0)] };
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    await sida.evaluate(() => dispatchEvent(new CustomEvent('vyra-live-event', {
+      detail: { type: 'gift', giftName: 'Rose', username: '@provgivare', coins: 10, count: 3 } })));
+    await sida.waitForFunction(() => state.widgets.some(w => w.giftCurrent0 === 3),
+      null, { timeout: 10000 });
+
+    // Serverns nollstallning ar redan committad nar startbeskedet gar ut: den nya konfigurationen
+    // bar giftCurrent0 = 0 och en hogre revision. Klienten ska hamta den utan omladdning.
+    r.lada.version += 1;
+    r.lada.state = { widgets: [widget(), kampanj(0)] };
+    r.skicka('live:start', S2);
+
+    await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
+      S2, { timeout: 15000 });
+    await sida.waitForFunction(() => state.widgets.some(w => w.type === 'templateGiftCampaign'
+      && Number(w.giftCurrent0 || 0) === 0), null, { timeout: 15000 });
+    assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
+    const text = await sida.evaluate(() => {
+      const box = [...document.querySelectorAll('[data-id]')].find(el => el.dataset.id === 'k1');
+      return box ? box.innerText.replace(/\n/g, ' ') : '';
+    });
+    assert.ok(/Rose\s*\|?\s*0\s*\|?\s*\/\s*10/.test(text.replace(/\s+/g, ' ')) || /0 \/ 10/.test(text),
+      'widgeten visar fortfarande forra sandningens siffra: ' + text.slice(0, 120));
   } finally { await sida.close() }
 });
 

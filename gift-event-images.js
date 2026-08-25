@@ -172,6 +172,19 @@
     frame = window.requestAnimationFrame(flush);
   }
 
+  // NY SANDNING => rekorden borjar om. Filens egen regel ovan sager att rekorden galler SANDNINGEN
+  // och "nollstalls vid omladdning" — men en OBS-kalla laddas inte om nar en ny LIVE borjar, sa
+  // utan den har raden bar Top Gift och Top Streak forra sandningens rekord in i den nya. Widgetens
+  // synliga tal kommer med konfig-omhamtningen; det ar TROSKELN har som annars stod kvar och
+  // hindrade den nya sandningens forsta gavor fran att rakans som rekord alls.
+  //
+  // Bara live:start. Ett avslut ska lamna sista rekordet kvar pa skarmen.
+  window.addEventListener('vyra-live-session', function (event) {
+    var detalj = event && event.detail;
+    if (!detalj || detalj.event !== 'live:start') return;
+    /* MUTATION M: sandningsrekorden nollstalls inte */
+  });
+
   window.addEventListener('vyra-live-event', function (event) {
     var detail = event.detail || {};
     var type = String(detail.type || detail.event || '').toLowerCase();
