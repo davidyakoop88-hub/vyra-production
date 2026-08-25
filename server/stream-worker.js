@@ -84,7 +84,7 @@ function startStreamWorker({
   }
 
   function boka(ms) {
-    /*MUTC2 stoppad ignoreras i BADA lagren*/
+    if (stoppad) return;
     timer = setTimeout(kor, ms);
     if (typeof timer.unref === 'function') timer.unref();
   }
@@ -92,7 +92,7 @@ function startStreamWorker({
   // setTimeout-KEDJA, inte setInterval: nästa varv bokas först när det förra är klart, så två
   // varv kan aldrig överlappa i samma process. `pagaende` är hängslen ovanpå.
   function kor() {
-    if (pagaende) return; /*MUTC2*/
+    if (stoppad || pagaende) return;
     pagaende = (async () => {
       try {
         await varv();
