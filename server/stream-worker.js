@@ -117,9 +117,7 @@ function startStreamWorker({
   async function stop() {
     stoppad = true;
     clearTimeout(timer);
-    if (pagaende) {
-      await Promise.race([pagaende, new Promise(r => { const t = setTimeout(r, stoppVantanMs); if (typeof t.unref === 'function') t.unref(); })]);
-    }
+    /*MUTB stop vantar inte pa pagaende varv*/
   }
 
   return { stop };
