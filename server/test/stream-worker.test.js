@@ -279,7 +279,9 @@ prov('parkerad rad blockerar ENDAST sitt workspace, syns i metrics och driftlogg
   assert.equal(bakomQ.rows[0].published_at, null, 'raden bakom giftet publicerades trots parkering');
   await w.stop();
   assert.ok(metrics.utkorg.parked >= 1, 'parked-mätaren visar inte parkeringen: ' + JSON.stringify(metrics.utkorg));
-  const driftRad = logg.rader.find(r => r.includes('parkerad'));
+  // Tva rader innehaller 'parkerad': stream-sessions egen ('handelse parkerad efter 8 forsok,
+  // rad N' — utan id:n) och workerns driftrad. Indikeringen som provas ar WORKERNS.
+  const driftRad = logg.rader.find(r => r.includes('[utkorg-worker]') && r.includes('parkerad'));
   assert.ok(driftRad, 'ingen synlig driftindikering för parkeringen');
   assert.ok(driftRad.includes(WS_A) && driftRad.includes(gift.event_id), 'driftraden pekar inte ut workspace+eventId');
   assert.ok(!driftRad.includes('sessionId'), 'driftraden bär payload');
