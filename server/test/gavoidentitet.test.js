@@ -1,67 +1,73 @@
 'use strict';
-// GÅVOIDENTITET — RÖDA PROV FÖRE IMPLEMENTATION.
+// GÅVOIDENTITET — MANUELLT LÄRLÄGE. RÖDA PROV FÖRE IMPLEMENTATION.
 //
-// Syftet (docs/gavoidentitet-inlarning.md): lära in paret (giftId, giftName) ur de gåvoevent som
-// redan passerar ingest-kedjan, BEKRÄFTA mappningen innan den får användas, och därefter matcha
-// regler på giftId — aldrig på namnet.
+// Flödet (docs/gavoidentitet-inlarning.md): välj regel → armera → NÄSTA giltiga, icke-dubblerade
+// gåvoevent fångas → Studio visar namn och bild → Bekräfta eller Avbryt → först vid Bekräfta
+// sparas giftId för just den regeln och det workspacet.
 //
-// Bakgrunden är uppmätt, inte antagen: repots katalog saknar giftId helt, och rummets katalog
-// kräver en betald Business-plan (docs/gavokatalog-matresultat.md, uppmätt i produktion
-// 2026-08-26). Gåvoeventen är den enda kvarvarande källan som varken kostar eller kräver signering.
+// INGEN observationströskel, INGA avsändarlistor, INGEN automatisk namn→id-katalog. Människan i
+// mitten ÄR bekräftelsen. Proven vaktar särskilt att fångsten inte i sig sparar något, och att
+// ingenting om avsändaren någonsin lagras.
 //
-// BEKRÄFTELSEN ÄR HELA POÄNGEN. Tre gåvor från samma person är en observation upprepad, inte tre
-// oberoende. Därför krävs BÅDE ≥3 observationer OCH ≥2 distinkta avsändare, och avsändaren räknas
-// med husets serverägda identitet (identitet() i stream-stats.js) så att '@Anna' och 'anna' är
-// samma person.
+// SLUTFRAMES: en streak levererar många frames för samma gåva, men bryggan filtrerar bort
+// mellanframes redan vid källan (bridge.js:374). Varje gåvoevent som når servern ÄR därför en
+// slutframe. Det är en tyst invariant, så den har ett eget vaktprov längst ned — försvinner raden
+// i bryggan skulle lärläget börja fånga mellanframes utan att någon märkte det.
 //
-// Alla värden är syntetiska. Inga verkliga konto-, rums- eller gåvo-id.
+// Alla värden är syntetiska.
 const test = require('node:test'), assert = require('node:assert/strict');
 const { Pool } = require('pg');
 
 const DB_URL = process.env.TEST_DATABASE_URL || '';
 const BLOCKED = DB_URL ? false
-  : 'BLOCKERAT: ingen isolerad Postgres. Räkning av distinkta avsändare går inte att prova mot en attrapp.';
+  : 'BLOCKERAT: ingen isolerad Postgres. Armering med utgångstid går inte att prova mot en attrapp.';
 
 let G = null;
 try { G = require('../gavoidentitet'); } catch {}
 
-const finns = () => assert.ok(G && typeof G.laraFranEvent === 'function' && typeof G.slaUppGiftId === 'function',
-  'server/gavoidentitet.js finns inte än — modulen som äger inlärning och uppslag');
+const finns = () => assert.ok(G
+  && typeof G.armera === 'function' && typeof G.fangaFranEvent === 'function'
+  && typeof G.bekrafta === 'function' && typeof G.avbryt === 'function'
+  && typeof G.slaUppGiftId === 'function',
+  'server/gavoidentitet.js finns inte än — modulen som äger lärläget');
 
 const AGARE = 'aaaaaaaa-0000-4000-8000-000000000001';
 const WS = 'aaaaaaaa-1111-4000-8000-000000000001';
 const WS2 = 'aaaaaaaa-2222-4000-8000-000000000002';
 
-// Syntetiska gåvo-id. HEART_ME är den vi bygger för först.
-const HEART_ME = '9101';
-const HEART_ME_ANNAN_REGION = '9102';
-const ROSE = '9103';
+const REGEL = 'heart-me';
+const REGEL_2 = 'rose';
 
-const A = 'provgivare_a', B = 'provgivare_b', C = 'provgivare_c';
+// Syntetiska gåvo-id och en syntetisk bild-URL.
+const HEART_ME = '9101';
+const ANNAN_GAVA = '9102';
+const BILD = 'https://exempel.invalid/prov-gava.png';
 
 let pool;
-const prov = (namn, fn) => test('gavoidentitet: ' + namn, { timeout: 30000, skip: BLOCKED }, fn);
+const prov = (namn, fn) => test('larlage: ' + namn, { timeout: 30000, skip: BLOCKED }, fn);
 
 let nr = 0;
-const gava = (avsandare, giftId = HEART_ME, giftName = 'Heart Me', over = {}) => ({
-  id: over.id || `gprov:${++nr}:${avsandare}`,
+const gava = (giftId = HEART_ME, giftName = 'Heart Me', over = {}) => ({
+  id: over.id || `lprov:${++nr}`,
   type: 'gift', giftId, giftName,
-  userId: over.userId !== undefined ? over.userId : avsandare,
-  username: over.username !== undefined ? over.username : avsandare,
+  giftImage: over.giftImage !== undefined ? over.giftImage : BILD,
+  userId: 'provgivare_a', username: 'provgivare_a',
   count: 1, value: 5
 });
 
-const rader = async (ws = WS) => (await pool.query(
-  'SELECT gift_id, gift_name, observationer, avsandare, bekraftad_at FROM gift_identity WHERE workspace_id=$1 ORDER BY gift_id, gift_name',
-  [ws])).rows;
+const armRad = async (ws = WS, regel = REGEL) => (await pool.query(
+  'SELECT * FROM gift_learn_arm WHERE workspace_id=$1 AND regel=$2', [ws, regel])).rows[0] || null;
+
+const identitet = async (ws = WS, regel = REGEL) => (await pool.query(
+  'SELECT * FROM gift_rule_identity WHERE workspace_id=$1 AND regel=$2', [ws, regel])).rows[0] || null;
 
 test.before(async () => {
   if (BLOCKED) return;
   pool = new Pool({ connectionString: DB_URL });
   await pool.query(
     `INSERT INTO users (id,email,password_hash,display_name,email_verified_at)
-     VALUES ($1,$2,'x','gavoidentitet-agare',now()) ON CONFLICT (id) DO NOTHING`, [AGARE, AGARE + '@t.invalid']);
-  for (const [ws, namn] of [[WS, 'gid-a'], [WS2, 'gid-b']]) {
+     VALUES ($1,$2,'x','larlage-agare',now()) ON CONFLICT (id) DO NOTHING`, [AGARE, AGARE + '@t.invalid']);
+  for (const [ws, namn] of [[WS, 'larlage-a'], [WS2, 'larlage-b']]) {
     await pool.query(`INSERT INTO workspaces (id,name,owner_user_id) VALUES ($1,$2,$3)
       ON CONFLICT (id) DO NOTHING`, [ws, namn, AGARE]);
   }
@@ -69,204 +75,289 @@ test.before(async () => {
 
 test.beforeEach(async () => {
   if (BLOCKED) return;
-  await pool.query('DELETE FROM gift_identity WHERE workspace_id IN ($1,$2)', [WS, WS2]);
+  await pool.query('DELETE FROM gift_learn_arm WHERE workspace_id IN ($1,$2)', [WS, WS2]);
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id IN ($1,$2)', [WS, WS2]);
 });
 
 test.after(async () => {
   if (BLOCKED) return;
-  await pool.query('DELETE FROM gift_identity WHERE workspace_id IN ($1,$2)', [WS, WS2]);
+  await pool.query('DELETE FROM gift_learn_arm WHERE workspace_id IN ($1,$2)', [WS, WS2]);
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id IN ($1,$2)', [WS, WS2]);
   await pool.end();
 });
 
-// ---- INLÄRNINGEN ------------------------------------------------------------------------------
+// ---- UTAN ARMERING HÄNDER INGENTING -----------------------------------------------------------
 
-prov('en gåva skapar en oberäknad rad — men bekräftar ingenting', async () => {
+prov('ej armerad: gåvoevent ändrar ingenting', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, gava(A));
-  const r = await rader();
-  assert.equal(r.length, 1);
-  assert.equal(r[0].gift_id, HEART_ME);
-  assert.equal(r[0].gift_name, 'Heart Me');
-  assert.equal(Number(r[0].observationer), 1);
-  assert.equal(Number(r[0].avsandare), 1);
-  assert.equal(r[0].bekraftad_at, null, 'en enda observation får aldrig bekräfta');
+  await G.fangaFranEvent(pool, WS, gava());
+  assert.equal(await armRad(), null, 'ingen armering ⇒ ingen fångst');
+  assert.equal(await identitet(), null, 'och absolut ingen sparad identitet');
 });
 
-prov('tre gåvor från SAMMA person bekräftar inte', async () => {
-  finns();
-  for (let i = 0; i < 3; i++) await G.laraFranEvent(pool, WS, gava(A));
-  const r = await rader();
-  assert.equal(Number(r[0].observationer), 3);
-  assert.equal(Number(r[0].avsandare), 1, 'samma person är en avsändare, oavsett antal gåvor');
-  assert.equal(r[0].bekraftad_at, null, 'en ensam person får inte lära systemet på egen hand');
+// ---- FÅNGSTEN ---------------------------------------------------------------------------------
 
-  // KONTROLLMÄTNING: en andra avsändare tippar över den och bekräftar.
-  await G.laraFranEvent(pool, WS, gava(B));
-  const r2 = await rader();
-  assert.ok(r2[0].bekraftad_at, 'med 4 observationer och 2 avsändare ska den vara bekräftad');
+prov('armerad: nästa gåva fångas — men sparar INGENTING än', async () => {
+  finns();
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava());
+
+  const arm = await armRad();
+  assert.ok(arm, 'armeringen ska finnas kvar med fångsten');
+  assert.equal(arm.fangad_gift_id, HEART_ME);
+  assert.equal(arm.fangad_gift_name, 'Heart Me');
+  assert.equal(arm.fangad_gift_image, BILD, 'bilden behövs för kontrollen i Studio');
+  assert.ok(arm.fangad_at);
+
+  assert.equal(await identitet(), null,
+    'FÅNGST ÄR INTE SPARANDE — bara Bekräfta får skriva identiteten');
 });
 
-prov('tröskeln är BÅDE 3 observationer OCH 2 avsändare', async () => {
+prov('bara NÄSTA gåva fångas — en andra skriver inte över', async () => {
   finns();
-  // Två avsändare men bara två observationer — inte nog.
-  await G.laraFranEvent(pool, WS, gava(A));
-  await G.laraFranEvent(pool, WS, gava(B));
-  let r = await rader();
-  assert.equal(Number(r[0].observationer), 2);
-  assert.equal(Number(r[0].avsandare), 2);
-  assert.equal(r[0].bekraftad_at, null, '2 observationer räcker inte, även med 2 avsändare');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me'));
+  await G.fangaFranEvent(pool, WS, gava(ANNAN_GAVA, 'Rose'));
 
-  // Tredje observationen tippar över.
-  await G.laraFranEvent(pool, WS, gava(C));
-  r = await rader();
-  assert.ok(r[0].bekraftad_at);
+  const arm = await armRad();
+  assert.equal(arm.fangad_gift_id, HEART_ME,
+    'annars vore "nästa gåva" i praktiken "senaste gåva" och du bekräftar något du inte såg');
 });
 
-prov('avsändarnyckeln kanoniseras — @Namn och namn är samma person', async () => {
+prov('dubblett fångas inte', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me', { username: '@Provgivare_A', userId: '@Provgivare_A' }));
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me', { username: 'provgivare_a', userId: 'provgivare_a' }));
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me', { username: 'PROVGIVARE_A', userId: 'PROVGIVARE_A' }));
-  const r = await rader();
-  assert.equal(Number(r[0].observationer), 3);
-  assert.equal(Number(r[0].avsandare), 1, 'samma person i tre skiftlägen är EN avsändare');
-  assert.equal(r[0].bekraftad_at, null);
+  await G.armera(pool, WS, REGEL);
+  const e = gava();
+  await G.fangaFranEvent(pool, WS, e, { duplicate: true });
+  assert.equal((await armRad()).fangad_gift_id, null, 'en replay är inte fångsten');
+
+  // KONTROLLMÄTNING: samma event som icke-dubblett fångas.
+  await G.fangaFranEvent(pool, WS, e);
+  assert.equal((await armRad()).fangad_gift_id, HEART_ME);
 });
 
-prov('event utan giftId lär ingenting', async () => {
+prov('gåva utan giftId fångas inte — armeringen står kvar', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, gava(A, '', 'Heart Me'));
-  assert.equal((await rader()).length, 0, 'utan id finns ingen identitet att lära');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava('', 'Heart Me'));
+  const arm = await armRad();
+  assert.ok(arm, 'armeringen ska INTE förbrukas av ett oanvändbart event');
+  assert.equal(arm.fangad_gift_id, null);
 
   // KONTROLLMÄTNING.
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me'));
-  assert.equal((await rader()).length, 1);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME));
+  assert.equal((await armRad()).fangad_gift_id, HEART_ME);
 });
 
-prov('event utan användbar avsändare räknas inte som avsändare', async () => {
+prov('likes och follows fångas inte', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, gava('', HEART_ME, 'Heart Me', { userId: '', username: '' }));
-  const r = await rader();
-  if (r.length) assert.equal(Number(r[0].avsandare), 0, 'tom nyckel är ingen avsändare');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, { id: 'lprov:like', type: 'like', count: 100 });
+  await G.fangaFranEvent(pool, WS, { id: 'lprov:follow', type: 'follow' });
+  assert.equal((await armRad()).fangad_gift_id, null);
 });
 
-prov('likes och andra icke-gåvor lär ingenting', async () => {
+// ---- BEKRÄFTA OCH AVBRYT ----------------------------------------------------------------------
+
+prov('Bekräfta sparar identiteten och rensar armeringen', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, { id: 'gprov:like', type: 'like', userId: A, username: A, count: 100 });
-  await G.laraFranEvent(pool, WS, { id: 'gprov:follow', type: 'follow', userId: A, username: A });
-  assert.equal((await rader()).length, 0);
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava());
+  const ut = await G.bekrafta(pool, WS, REGEL);
+
+  assert.equal(ut.ok, true);
+  const id = await identitet();
+  assert.equal(id.gift_id, HEART_ME);
+  assert.equal(id.gift_name, 'Heart Me');
+  assert.ok(id.bekraftad_at);
+  assert.equal(await armRad(), null, 'armeringen ska vara förbrukad');
 });
 
-prov('workspaces lär var för sig', async () => {
+prov('Bekräfta utan fångst sparar ingenting', async () => {
   finns();
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av));
-  assert.ok((await rader(WS))[0].bekraftad_at);
-  assert.equal((await rader(WS2)).length, 0, 'ett annat workspace ärver ingenting');
+  await G.armera(pool, WS, REGEL);
+  const ut = await G.bekrafta(pool, WS, REGEL);
+  assert.equal(ut.ok, false);
+  assert.equal(await identitet(), null);
 });
 
-// ---- UPPSLAGET — BARA BEKRÄFTADE ID -----------------------------------------------------------
-
-prov('obekräftad mappning ger INGEN träff', async () => {
+prov('Avbryt rensar armeringen utan att spara', async () => {
   finns();
-  await G.laraFranEvent(pool, WS, gava(A));
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart Me'), null,
-    'en obekräftad mappning får aldrig användas för matchning');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava());
+  await G.avbryt(pool, WS, REGEL);
 
-  // KONTROLLMÄTNING: bekräfta den, då ska uppslaget svara.
-  await G.laraFranEvent(pool, WS, gava(B));
-  await G.laraFranEvent(pool, WS, gava(C));
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart Me'), HEART_ME);
+  assert.equal(await armRad(), null);
+  assert.equal(await identitet(), null, 'Avbryt får aldrig lämna något sparat');
 });
 
-prov('exakt namnmatchning vid uppslag — Heart Me Flex är en annan gåva', async () => {
+prov('fel gåva fångad: avbryt, armera om, fånga rätt', async () => {
   finns();
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, HEART_ME, 'Heart Me'));
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, '9199', 'Heart Me Flex'));
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(ANNAN_GAVA, 'Rose'));
+  assert.equal((await armRad()).fangad_gift_id, ANNAN_GAVA);
 
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart Me'), HEART_ME);
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart Me Flex'), '9199');
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart'), null, 'delsträng får aldrig matcha');
+  await G.avbryt(pool, WS, REGEL);
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me'));
+  await G.bekrafta(pool, WS, REGEL);
+
+  assert.equal((await identitet()).gift_id, HEART_ME, 'omstart ska ge rätt gåva');
 });
 
-prov('TVETYDIGT: samma namn med två bekräftade id ger ingen träff', async () => {
+prov('Bekräfta skriver över en tidigare inlärd identitet', async () => {
   finns();
-  // Regional variation är strukturellt verklig — katalogroutens webcastLanguage visar att TikTok
-  // självt behandlar gåvor som språkberoende.
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, HEART_ME, 'Heart Me'));
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, HEART_ME_ANNAN_REGION, 'Heart Me'));
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(ANNAN_GAVA, 'Rose'));
+  await G.bekrafta(pool, WS, REGEL);
+  assert.equal((await identitet()).gift_id, ANNAN_GAVA);
 
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Heart Me'), null,
-    'två bekräftade id för samma namn är tvetydigt — hellre noll än fel gåva');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me'));
+  await G.bekrafta(pool, WS, REGEL);
+  assert.equal((await identitet()).gift_id, HEART_ME, 'en ominlärning ska ersätta, inte dubblera');
+
+  const antal = await pool.query(
+    'SELECT count(*)::int AS n FROM gift_rule_identity WHERE workspace_id=$1 AND regel=$2', [WS, REGEL]);
+  assert.equal(antal.rows[0].n, 1, 'EN rad per regel — det här är ingen katalog');
 });
 
-prov('tvetydigheten går att RAPPORTERA, inte bara tystna', async () => {
-  finns();
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, HEART_ME, 'Heart Me'));
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av, HEART_ME_ANNAN_REGION, 'Heart Me'));
+// ---- UTGÅNGSTID -------------------------------------------------------------------------------
 
-  const ut = await G.status(pool, WS, 'Heart Me');
-  assert.equal(ut.tvetydig, true);
-  assert.equal(ut.bekraftade, 2, 'antalet ska gå att se — annars är läget osynligt för drift');
+prov('utgången armering fångar ingenting', async () => {
+  finns();
+  const nu = Date.now();
+  await G.armera(pool, WS, REGEL, { nu: () => nu });
+  // 121 s senare — default är 120 s.
+  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 121000 });
+  const arm = await armRad();
+  assert.ok(!arm || arm.fangad_gift_id === null, 'en utgången armering får inte fånga');
 });
 
-prov('okänt namn och tomt namn ger null', async () => {
+prov('utgången FÅNGST går inte att bekräfta', async () => {
   finns();
-  assert.equal(await G.slaUppGiftId(pool, WS, 'Finns Inte'), null);
+  const nu = Date.now();
+  await G.armera(pool, WS, REGEL, { nu: () => nu });
+  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 10000 });
+  const ut = await G.bekrafta(pool, WS, REGEL, { nu: () => nu + 121000 });
+
+  assert.equal(ut.ok, false, 'hann du inte trycka Bekräfta måste du armera om');
+  assert.equal(await identitet(), null);
+});
+
+prov('utgångstiden är 120 s som default', async () => {
+  finns();
+  const nu = Date.now();
+  await G.armera(pool, WS, REGEL, { nu: () => nu });
+  // 119 s: fortfarande giltig.
+  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 119000 });
+  assert.equal((await armRad()).fangad_gift_id, HEART_ME,
+    'ändras defaulten ska det här provet falla — det är meningen');
+});
+
+// ---- ISOLERING --------------------------------------------------------------------------------
+
+prov('regler och workspaces är isolerade', async () => {
+  finns();
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me'));
+  await G.bekrafta(pool, WS, REGEL);
+
+  assert.equal(await identitet(WS, REGEL_2), null, 'en annan regel ärver ingenting');
+  assert.equal(await identitet(WS2, REGEL), null, 'ett annat workspace ärver ingenting');
+});
+
+prov('armering i ett workspace fångar inte ett annats gåvor', async () => {
+  finns();
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS2, gava());
+  assert.equal((await armRad(WS)).fangad_gift_id, null);
+});
+
+// ---- SAMTIDIGHET ------------------------------------------------------------------------------
+
+prov('två samtidiga gåvor — sex omgångar, exakt en fångas', async () => {
+  finns();
+  // En kapplöpning räcker inte som samtidighetsvakt: vem som hinner först varierar.
+  for (let omgang = 0; omgang < 6; omgang++) {
+    await pool.query('DELETE FROM gift_learn_arm WHERE workspace_id=$1', [WS]);
+    await G.armera(pool, WS, REGEL);
+    await Promise.all([
+      G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me', { id: `lprov:race:${omgang}:a` })),
+      G.fangaFranEvent(pool, WS, gava(ANNAN_GAVA, 'Rose', { id: `lprov:race:${omgang}:b` }))
+    ]);
+    const arm = await armRad();
+    assert.ok([HEART_ME, ANNAN_GAVA].includes(arm.fangad_gift_id),
+      `omgång ${omgang}: en av dem ska ha fångats`);
+    const antal = await pool.query(
+      'SELECT count(*)::int AS n FROM gift_learn_arm WHERE workspace_id=$1 AND regel=$2', [WS, REGEL]);
+    assert.equal(antal.rows[0].n, 1, `omgång ${omgang}: en armering, inte två`);
+  }
+});
+
+// ---- MATCHNING --------------------------------------------------------------------------------
+
+prov('matchning sker bara på sparat giftId — namnet aldrig', async () => {
+  finns();
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava(HEART_ME, 'Heart Me'));
+  await G.bekrafta(pool, WS, REGEL);
+
+  assert.equal(await G.slaUppGiftId(pool, WS, REGEL), HEART_ME);
+  assert.equal(await G.slaUppGiftId(pool, WS, REGEL_2), null, 'oinlärd regel matchar ingenting');
+});
+
+prov('oinlärd regel är fail-closed', async () => {
+  finns();
+  assert.equal(await G.slaUppGiftId(pool, WS, REGEL), null);
   assert.equal(await G.slaUppGiftId(pool, WS, ''), null);
   assert.equal(await G.slaUppGiftId(pool, WS, null), null);
 });
 
-// ---- REPLAY OCH SAMTIDIGHET -------------------------------------------------------------------
+// ---- INTEGRITET: INGEN AVSÄNDARDATA -----------------------------------------------------------
 
-prov('samma eventId räknas en gång', async () => {
+prov('ingenting om avsändaren lagras någonsin', async () => {
   finns();
-  const e = gava(A);
-  await G.laraFranEvent(pool, WS, e);
-  await G.laraFranEvent(pool, WS, e);
-  await G.laraFranEvent(pool, WS, e);
-  const r = await rader();
-  assert.equal(Number(r[0].observationer), 1, 'en replay är inte en ny observation');
-});
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava());
+  await G.bekrafta(pool, WS, REGEL);
 
-prov('samtidiga observationer — sex omgångar, alltid rätt räkning', async () => {
-  finns();
-  // En kapplöpning räcker inte som samtidighetsvakt: vem som hinner först varierar.
-  for (let omgang = 0; omgang < 6; omgang++) {
-    await pool.query('DELETE FROM gift_identity WHERE workspace_id=$1', [WS]);
-    await Promise.all([
-      G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me', { id: `gprov:race:${omgang}:a` })),
-      G.laraFranEvent(pool, WS, gava(B, HEART_ME, 'Heart Me', { id: `gprov:race:${omgang}:b` })),
-      G.laraFranEvent(pool, WS, gava(C, HEART_ME, 'Heart Me', { id: `gprov:race:${omgang}:c` }))
-    ]);
-    const r = await rader();
-    assert.equal(r.length, 1, `omgång ${omgang}: en rad, inte tre`);
-    assert.equal(Number(r[0].observationer), 3, `omgång ${omgang}: alla tre ska räknas`);
-    assert.equal(Number(r[0].avsandare), 3, `omgång ${omgang}: tre distinkta avsändare`);
-    assert.ok(r[0].bekraftad_at, `omgång ${omgang}: ska vara bekräftad`);
+  // Kolumnnivå, inte bara värden: fältet ska inte ens finnas att fylla.
+  for (const tabell of ['gift_learn_arm', 'gift_rule_identity']) {
+    const kol = await pool.query(
+      'SELECT column_name FROM information_schema.columns WHERE table_name=$1', [tabell]);
+    const namn = kol.rows.map(r => r.column_name).join(',');
+    for (const forbjudet of ['user', 'sender', 'avsandare', 'viewer', 'username']) {
+      assert.ok(!namn.includes(forbjudet),
+        `${tabell} har en kolumn som liknar avsändardata (${forbjudet}) — lärläget ska veta VILKEN gåva, aldrig VEM`);
+    }
   }
-});
-
-// ---- SAMMA ID, OLIKA NAMN ---------------------------------------------------------------------
-
-prov('samma id med två namn blir två rader — inget skrivs över tyst', async () => {
-  finns();
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Heart Me'));
-  await G.laraFranEvent(pool, WS, gava(A, HEART_ME, 'Hjärta Mig'));
-  const r = await rader();
-  assert.equal(r.length, 2, 'ett id som dyker upp med två namn är information, inte en dubblett');
 });
 
 // ---- ICKE-REGRESSION --------------------------------------------------------------------------
 
-prov('inlärningen rör inte mål, statistik eller presentationssystem', async () => {
+prov('lärläget rör inte mål eller statistik', async () => {
   finns();
-  // Modulen får äga exakt en tabell. Ett prov som bara säger "inget annat hände" går grönt när
-  // ingenting alls händer — därför kontrollmätningen först.
-  for (const av of [A, B, C]) await G.laraFranEvent(pool, WS, gava(av));
-  assert.ok((await rader())[0].bekraftad_at, 'kontrollmätning: inlärningen gjorde något');
+  await G.armera(pool, WS, REGEL);
+  await G.fangaFranEvent(pool, WS, gava());
+  await G.bekrafta(pool, WS, REGEL);
+  assert.ok(await identitet(), 'kontrollmätning: lärläget gjorde något');
 
   const goal = await pool.query('SELECT count(*)::int AS n FROM goal_runtime');
   const gifter = await pool.query('SELECT count(*)::int AS n FROM gifter_totals WHERE workspace_id=$1', [WS]);
-  assert.equal(goal.rows[0].n, 0, 'inlärningen får inte skapa målrader');
-  assert.equal(gifter.rows[0].n, 0, 'och inte statistikrader — det ägs av stream-stats');
+  assert.equal(goal.rows[0].n, 0, 'inga målrader');
+  assert.equal(gifter.rows[0].n, 0, 'inga statistikrader — det ägs av stream-stats');
+});
+
+// ---- VAKT: SLUTFRAME-INVARIANTEN I BRYGGAN ----------------------------------------------------
+
+test('vakt: bryggan filtrerar fortfarande bort mellanframes i en streak', () => {
+  // Lärläget FÖRUTSÄTTER att varje gåvoevent som når servern är en slutframe. Den garantin ligger
+  // inte här utan i bryggan, och är därför en tyst invariant. Försvinner raden skulle lärläget
+  // börja fånga mellanframes utan att något prov här märkte det.
+  const fs = require('node:fs'), path = require('node:path');
+  const bridge = path.join(__dirname, '..', '..', 'tiktok-bridge', 'bridge.js');
+  const kall = fs.readFileSync(bridge, 'utf8');
+  assert.ok(/isStreakable\(data\)\s*&&\s*!\s*N?\.?isFinalFrame\(data\)/.test(kall.replace(/N\./g, '')),
+    'bridge.js:374-filtret är borta — lärläget kan då fånga en mellanframe i en streak');
 });
