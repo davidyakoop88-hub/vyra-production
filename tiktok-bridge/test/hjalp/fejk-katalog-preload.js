@@ -20,6 +20,9 @@ const { EventEmitter } = require('events');
 
 const LAGE = String(process.env.PROV_KATALOG_LAGE || 'kast');
 const LIVSTID = Number(process.env.PROV_LIVSTID_MS || 2600);
+// > 0 = fejken kopplar fran EN gang efter forsta anslutningen, sa bryggans riktiga
+// scheduleReconnect-vag kors. Backoffen ar 1000 ms +-20 % jitter for forsta forsoket.
+const FRANKOPPLA_EFTER = Number(process.env.PROV_FRANKOPPLA_MS || 0);
 
 const WebcastEvent = {
   CHAT: 'f-chat', GIFT: 'f-gift', LIKE: 'f-like', FOLLOW: 'f-follow', SHARE: 'f-share',
@@ -36,6 +39,8 @@ const FEJK_FOLLOW = { userId: '42', uniqueId: 'givare', nickname: 'Givaren' };
 const FEJK_KATALOG = { gifts: [{ id: 5487, name: 'Rose' }, { id: 6247, name: 'Heart Me' }] };
 
 let katalogAnrop = 0;
+let anslutningar = 0;
+let harFrankopplat = false;
 
 class TikTokLiveConnection extends EventEmitter {
   constructor(username, options) {
@@ -45,7 +50,15 @@ class TikTokLiveConnection extends EventEmitter {
     console.log(`[fejk] connOptionsKeys=${nycklar.join(',')}`);
   }
   connect() {
+    anslutningar++;
+    // Varje anslutning fyrar ett follow-event, sa provet kan bevisa att eventflodet lever.
     setTimeout(() => this.emit(WebcastEvent.FOLLOW, FEJK_FOLLOW), 400);
+    // ... och EN gang, efter forsta anslutningen, en frankoppling som tvingar bryggan genom sin
+    // riktiga scheduleReconnect-vag.
+    if (FRANKOPPLA_EFTER > 0 && !harFrankopplat) {
+      harFrankopplat = true;
+      setTimeout(() => this.emit(ControlEvent.DISCONNECTED), FRANKOPPLA_EFTER);
+    }
     return Promise.resolve({ roomId: FEJK_RUM });
   }
   fetchAvailableGifts() {
@@ -59,7 +72,10 @@ class TikTokLiveConnection extends EventEmitter {
   disconnect() {}
 }
 
-process.on('exit', () => console.log(`[fejk] katalogAnrop=${katalogAnrop}`));
+process.on('exit', () => {
+  console.log(`[fejk] katalogAnrop=${katalogAnrop}`);
+  console.log(`[fejk] anslutningar=${anslutningar}`);
+});
 
 const origLoad = Module._load;
 Module._load = function (request, ...rest) {

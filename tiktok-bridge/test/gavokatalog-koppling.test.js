@@ -25,7 +25,7 @@ const WS = 'ws-kopplingsprov';
 const KONTO = 'provkonto060';
 
 // Startar mock-molnet, kör den verkliga bryggan i en fork och returnerar allt som observerades.
-async function korBrygga({ lage, livstidMs = 2600, timeout = 30000, proxyLista = '' }) {
+async function korBrygga({ lage, livstidMs = 2600, timeout = 30000, proxyLista = '', frankopplaMs = 0 }) {
   const requests = [];
   const server = http.createServer((req, res) => {
     let body = '';
@@ -47,6 +47,7 @@ async function korBrygga({ lage, livstidMs = 2600, timeout = 30000, proxyLista =
     PROV_KATALOG_LAGE: lage,
     PROV_LIVSTID_MS: String(livstidMs),
     PROXY_LIST: proxyLista,
+    PROV_FRANKOPPLA_MS: String(frankopplaMs),
   };
   delete env.VYRA_SERVER_URL;            // molnläge
 
@@ -68,6 +69,9 @@ async function korBrygga({ lage, livstidMs = 2600, timeout = 30000, proxyLista =
     kod, stdout, stderr, requests,
     liveRuns: requests.filter(r => r.url.includes('/api/live-runs')),
     liveSessions: requests.filter(r => r.url.includes('/api/live-sessions')),
+    // Eventflodet: follow-eventet fran fejken gar den vanliga molnvagen, inte livscykelns.
+    eventTraffar: requests.filter(r => r.url.includes(`/api/events/tiktok/${WS}`)),
+    anslutningar: Number((rad('[fejk] anslutningar=').split('=')[1] || '0')),
     katalogAnrop: Number((rad('[fejk] katalogAnrop=').split('=')[1] || '0')),
     connOptionsKeys: (rad('[fejk] connOptionsKeys=').split('=')[1] || '').split(',').filter(Boolean),
     katalogRad: rad('[gavokatalog]'),
@@ -86,6 +90,12 @@ test('403 från katalogen: registrering och live:start går igenom ändå', { ti
   // Felet ska ha loggats som KATEGORI — och observationen ska ha kört, inte hoppats över.
   assert.ok(r.katalogRad.includes('http_403'), 'katalograden ska bära kategorin, inte meddelandet');
   assert.ok(!r.katalogRad.includes('nekades'), 'meddelandetexten får aldrig loggas');
+
+  // EVENTFLODET. Fejken fyrar ett follow-event 400 ms efter anslutning. Utan den har
+  // assertionen bevisar provet bara att livscykelrutterna anropades — inte att den vanliga
+  // eventvagen overlevde katalogfelet.
+  assert.ok(r.eventTraffar.length >= 1,
+    'minst ett /api/events/tiktok-anrop ska ha natt molnet trots katalogfelet');
 });
 
 test('en katalog som ALDRIG svarar blockerar inte livscykeln', { timeout: 40000 }, async () => {
@@ -97,6 +107,8 @@ test('en katalog som ALDRIG svarar blockerar inte livscykeln', { timeout: 40000 
   assert.ok(r.liveRuns.length >= 1, 'registreringen får inte vänta på katalogen');
   assert.ok(r.liveSessions.length >= 1, 'live:start får inte vänta på katalogen');
   assert.equal(r.katalogRad, '', 'inget svar hann komma — och ingen rad ska ha skrivits i förtid');
+  assert.ok(r.eventTraffar.length >= 1,
+    'eventflodet ska leva vidare aven medan kataloganropet hanger');
 });
 
 test('hängande katalog: timeouten slår till och loggas, livscykeln redan klar', { timeout: 40000 }, async () => {
@@ -177,4 +189,45 @@ test('KALLKODSVAKT: ingen signeringsnyckel konfigureras nagonstans i bryggan', (
   // annars vaktar den ingenting.
   assert.ok(/signApiKey\s*[:=]/.test('const o = { signApiKey: "x" };'), 'monstret maste kunna traffa');
   assert.ok(!/signApiKey\s*[:=]/.test('// namner signApiKey i prosa'), 'prosa ska inte traffa');
+});
+
+// ---- 4. RECONNECT GENOM DEN VERKLIGA VÄGEN ----------------------------------------------------
+
+test('DISCONNECTED: andra anslutningen ger andra katalogobservation och fortsatt live:start',
+  { timeout: 45000 }, async () => {
+  // Fejken kopplar från EN gång, 800 ms efter första anslutningen. Bryggan går då genom sin
+  // riktiga scheduleReconnect: backoff min(60000, 1000·2^0) = 1000 ms med ±20 % jitter, alltså
+  // en ny connect() vid ~1,6–2,0 s. Processen lever 6 s, med god marginal för follow-eventet
+  // 400 ms efter den andra anslutningen.
+  const r = await korBrygga({ lage: 'ok', frankopplaMs: 800, livstidMs: 6000 });
+
+  assert.equal(r.kod, 0, `bryggan dog med kod ${r.kod}. stderr: ${r.stderr.slice(0, 400)}`);
+
+  // 1. Reconnect skedde faktiskt — annars mäter resten ingenting.
+  assert.equal(r.anslutningar, 2, 'exakt två anslutningar: den första och en efter frånkopplingen');
+  assert.ok(r.stdout.includes('Frånkopplad från TikTok LIVE'),
+    'bryggans egen reconnect-rad ska finnas — beviset att den riktiga vägen kördes');
+
+  // 2. EN observation PER ANSLUTNING — inte en per process, och inte noll vid reconnect.
+  assert.equal(r.katalogAnrop, 2, 'varje ny anslutning ska ge en ny katalogobservation');
+
+  // 3. Livscykeln fortsatte normalt över frånkopplingen.
+  assert.ok(r.liveRuns.length >= 1, 'registreringen ska ha skett');
+  assert.ok(r.liveSessions.length >= 1, 'live:start ska ha skett');
+  assert.ok(r.eventTraffar.length >= 2,
+    'ett follow-event per anslutning ska ha nått molnet — eventflödet överlever reconnect');
+
+  // 4. Redigeringen håller även i den andra observationen.
+  assert.ok(!r.stdout.includes('"name":"Heart Me"'), 'gåvonamn får aldrig loggas');
+  assert.ok(!/\[gavokatalog\].*6247/.test(r.stdout), 'giftId får aldrig loggas');
+});
+
+test('KONTROLLMATNING: utan frånkoppling sker exakt EN anslutning och EN observation',
+  { timeout: 40000 }, async () => {
+  // Utan den här halvan bevisar provet ovan inte att det var frånkopplingen som gav den andra
+  // anslutningen — en brygga som återansluter av sig själv skulle ge samma siffror.
+  const r = await korBrygga({ lage: 'ok', livstidMs: 6000 });
+  assert.equal(r.anslutningar, 1, 'ingen frånkoppling ⇒ ingen reconnect');
+  assert.equal(r.katalogAnrop, 1);
+  assert.ok(!r.stdout.includes('Frånkopplad från TikTok LIVE'));
 });
