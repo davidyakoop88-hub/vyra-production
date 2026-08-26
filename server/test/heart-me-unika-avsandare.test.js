@@ -299,3 +299,85 @@ prov('ett templateSocialGoal med goalKind likes påverkas inte', async () => {
     [OVERLAY, LIKE_WIDGET]);
   assert.equal(Number(q.rows[0].progress), 0, 'en gåva får aldrig knuffa ett like-mål');
 });
+
+// ---- GÅVOUPPLÖSNING MOT RUMMETS KATALOG -------------------------------------------------------
+//
+// Id:t hårdkodas inte. `Heart Me` löses mot det aktuella rummets auktoritativa katalog via
+// TikTokLiveConnection.fetchAvailableGifts() (finns i tiktok-live-connector@2.4.0). Exakt en
+// träff krävs; allt annat är fail closed. Proven nedan matar in katalogen som data — inga
+// nätanrop, inga verkliga rum.
+
+const losFinns = () => assert.ok(H && typeof H.losGiftId === 'function',
+  'server/heart-me-goal.js saknar losGiftId(katalog) — upplösningen mot rummets katalog');
+
+const KATALOG_NORMAL = [
+  { id: '5487', name: 'Rose' },
+  { id: '6247', name: 'Heart Me' },
+  { id: '7487', name: 'Heart Me Flex' }
+];
+
+prov('katalogen ger exakt ett id for Heart Me', async () => {
+  losFinns();
+  assert.equal(H.losGiftId(KATALOG_NORMAL), '6247');
+});
+
+prov('Heart Me Flex far ALDRIG matcha', async () => {
+  losFinns();
+  // Bara Flex i katalogen: ingen traff alls, inte en prefixtraff.
+  assert.equal(H.losGiftId([{ id: '7487', name: 'Heart Me Flex' }]), null,
+    '"Heart Me Flex" ar en annan gava — prefix- eller delstrangsmatchning ar forbjuden');
+});
+
+prov('exakt namnmatchning: trimmat och skiftlagesokansligt', async () => {
+  losFinns();
+  assert.equal(H.losGiftId([{ id: '6247', name: '  heart me  ' }]), '6247');
+});
+
+prov('fail closed: noll traffar, flera traffar, tom eller saknad katalog', async () => {
+  losFinns();
+  assert.equal(H.losGiftId([{ id: '5487', name: 'Rose' }]), null, 'noll traffar');
+  assert.equal(H.losGiftId([{ id: '6247', name: 'Heart Me' }, { id: '9999', name: 'Heart Me' }]), null,
+    'tva traffar ar tvetydigt — hellre noll an fel gava');
+  assert.equal(H.losGiftId([]), null, 'tom katalog');
+  assert.equal(H.losGiftId(null), null, 'saknad katalog (403, natfel, osignerat svar)');
+
+  // KONTROLLMATNING: den normala katalogen loser fortfarande.
+  assert.equal(H.losGiftId(KATALOG_NORMAL), '6247');
+});
+
+prov('post utan id raknas inte som traff', async () => {
+  losFinns();
+  assert.equal(H.losGiftId([{ name: 'Heart Me' }]), null, 'namn utan id ar inget id');
+});
+
+prov('olika rum kan ge olika id for samma gava utan felrakning', async () => {
+  finns(); losFinns();
+  // Rum 1: Heart Me har id 6247. En avsandare skickar den.
+  const id1 = H.losGiftId(KATALOG_NORMAL);
+  await nySession(RUM_1);
+  await H.applyGiftSenderEvent(pool, WS, gava(A, id1, { id: 'hprov:rum1:1' }));
+  assert.equal((await malvarde()).visat, 1);
+
+  // Rum 2: SAMMA gava, ANNAT id. Samma person ska rakas pa nytt — och det gamla id:t far inte
+  // langre rakna, eftersom cachen ar per anslutning och lostes om vid ny LIVE.
+  const KATALOG_RUM_2 = [{ id: '8123', name: 'Heart Me' }, { id: '7487', name: 'Heart Me Flex' }];
+  const id2 = H.losGiftId(KATALOG_RUM_2);
+  assert.notEqual(id2, id1, 'provet forutsatter att id:na skiljer sig');
+
+  await nySession(RUM_2);
+  await H.applyGiftSenderEvent(pool, WS, gava(A, id2, { id: 'hprov:rum2:1' }));
+  assert.equal((await malvarde()).visat, 1, 'ny sandning raknar A pa nytt mot det nya id:t');
+
+  // Det GAMLA id:t ar inte langre den losta gavan i rum 2 och far inte rakna B.
+  await H.applyGiftSenderEvent(pool, WS, gava(B, id1, { id: 'hprov:rum2:2' }));
+  assert.equal((await malvarde()).visat, 1, 'fororadat id fran ett annat rum far aldrig rakna');
+});
+
+prov('eventets giftName ignoreras aven nar det losta id:t saknas i eventet', async () => {
+  finns(); losFinns();
+  await nySession(RUM_1);
+  // Ratt namn i eventet, men inget giftId alls. Ingen fallback pa namn — alltsa +0.
+  await H.applyGiftSenderEvent(pool, WS, gava(A, '', { giftName: 'Heart Me', id: 'hprov:namnfall:1' }));
+  const efter = await malvarde();
+  assert.equal(efter ? efter.visat : 0, 0, 'utan giftId raknas ingenting — aldrig namnfallback');
+});

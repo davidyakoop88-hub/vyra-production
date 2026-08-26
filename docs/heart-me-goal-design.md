@@ -26,7 +26,53 @@ Fälten finns redan hela vägen. Ingenting behöver läggas till i transportlagr
 `cleanEvent` (`server/event-bus.js:13-27`) bär `userId` (160), `username` (120), `giftId` (160),
 `giftName` (160), `count`, `value`.
 
-### Gåvoidentitet — `giftId`, aldrig `giftName`
+### Gåvoidentitet — löses per rum mot TikToks egen katalog
+
+**Produktbeslut 2026-08-26:** widgeten är låst till Heart Me. Ingen gåvoväljare, ingen ny
+inställning i UI. Befintliga `templateHeartGoal`-widgets får den nya betydelsen automatiskt.
+
+**Id:t hårdkodas inte.** Repots katalog (`assets/gifts/gifts-manifest.js`, 1148 poster) har bara
+`name` och `file` — inget `giftId`. Filnamnsprefixen är en lokal löpnumrering (`0001_Rose`,
+`0002_…`, `0036_Heart_Me`), inte TikToks id. Att låsa produkten vid `0036` vore ett obevisat
+magiskt tal.
+
+I stället löses `Heart Me` **mot det aktuella rummets auktoritativa gåvokatalog** vid anslutning:
+
+- `TikTokLiveConnection.fetchAvailableGifts()` finns i installerad `tiktok-live-connector@2.4.0`
+  (deklarerad `^2`), tillsammans med getter:n `availableGifts`. Bryggan instansierar just den
+  klassen (`bridge.js:354`).
+- Namnet `Heart Me` matchas **exakt**, skiftlägesokänsligt och trimmat. `Heart Me Flex` får inte
+  matcha — katalogen innehåller båda.
+- **Exakt en träff krävs.** Noll träffar, flera träffar, saknad katalog, 403 eller nätfel ⇒
+  **fail closed**: Heart Me Goal räknar ingenting den sändningen. Hellre noll än fel siffra.
+- Det lösta id:t **cachas endast för aktuell anslutning/session** och löses om vid nästa LIVE.
+  Olika rum får ge olika id för samma gåva utan att räkningen blir fel — nyckeln är ändå
+  `(session_id, widget_id, sender_key)`.
+- **Eventmatchning sker därefter uteslutande mot det lösta `giftId`.** Aldrig mot eventets
+  `giftName`, inte ens som reserv.
+
+Konstanten är **ett enda namngivet ställe** — gåvans kanoniska namn, inte ett id:
+
+```js
+const HEART_ME_GIFT_NAME = 'Heart Me';   // löses mot rummets katalog vid varje anslutning
+```
+
+#### Tre obevisade punkter som måste mätas innan implementationen litar på katalogen
+
+1. **Signering.** Biblioteket dokumenterar att `gift/list/`-anropet *"must be signed for TikTok to
+   return data"*. Bryggan sätter **inget `signApiKey`** (default `undefined`) — om osignerade anrop
+   returnerar data, tomt eller 403 är omätt.
+2. **Svarets form är otypad.** `type RoomGiftInfo = any` och `type RoomGiftsResponse = any` i
+   `dist/index-DunqMzGX.d.ts:246,966`. Fältnamnen för id och namn i varje post är inte kända ur
+   typerna och måste observeras en gång.
+3. **Katalogen är språkparameteriserad.** Euler-routen tar `webcastLanguage`
+   (`fetch-room-gifts-euler.d.ts`), och den vägen beskrivs som *premium*. Regional variation är
+   alltså strukturellt verklig, åtminstone för presentation.
+
+Fail-closed-regeln gör alla tre ofarliga: kan katalogen inte läsas eller tolkas entydigt räknar
+widgeten noll, och ingen felaktig siffra visas.
+
+### Varför inte `giftName` — bevisat
 
 `tiktok-bridge/normalizer.js:68`:
 
@@ -37,7 +83,7 @@ giftName: text(data?.giftDetails?.giftName || data?.giftName || data?.gift?.name
 
 `giftName` faller tillbaka på strängen **`'Gift'`** när namnet saknas, och är dessutom språkberoende.
 Att matcha på namn skulle räkna vilken namnlös gåva som helst som Heart Me. **`giftId` är den stabila
-nyckeln.** `giftName` får bara användas som läsbar etikett i inställningen.
+nyckeln** — och den löses per rum, aldrig ur namnet i eventet.
 
 ### Avsändarnyckel — kanoniserat användarnamn, serverägt
 
@@ -135,10 +181,9 @@ stå i widgetens hjälptext.
   det som skyddar mot replay från utkorgen.
 - Inga flaggändringar, ingen produktionsåtgärd.
 
-## Öppen punkt för David
+## Beslutat — ingen öppen punkt kvar
 
-Ska gåvan vara **konfigurerbar i widgeten** (en gåvoväljare som sparar `giftId`) eller **hårdkodad**
-till Heart Me? `templateHeartGoal` har i dag bara `heartCurrent` och `heartTarget`
-(`widget-factory.js:245-246`) — en väljare kräver ett nytt fält i widgetfabriken.
-
-Designen förutsätter tills vidare ett fält `heartGiftId`, med `heartGiftName` som enbart etikett.
+Gåvan är **låst till Heart Me**. Ingen gåvoväljare, inget `heartGiftId`-fält, ingen ny inställning.
+`templateHeartGoal` behåller `heartCurrent` och `heartTarget` precis som i dag, så användarens
+`target = 50` och övrig målkonfiguration bevaras oförändrad och befintliga widgets får den nya
+betydelsen utan omkonfiguration.
