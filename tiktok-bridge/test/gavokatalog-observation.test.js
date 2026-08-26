@@ -186,27 +186,9 @@ test('ett SENT svar efter timeout loggar inte en andra gång', async () => {
   assert.ok(logg.rader[0].includes('timeout'));
 });
 
-test('livscykeln rörs inte av något utfall', async () => {
-  // Livscykeln representeras av spioner. Observationen får inte anropa NÅGON av dem, oavsett
-  // utfall — den ligger efter registrering och live:start i bridge.js och äger inget av dem.
-  const rord = [];
-  const livscykel = {
-    startad: () => rord.push('startad'),
-    slut: () => rord.push('slut'),
-    moln: () => rord.push('moln')
-  };
-  const utfall = [
-    async () => KATALOG,
-    async () => { throw Object.assign(new Error('nekad'), { status: 403 }); },
-    async () => ({ gifts: [] }),
-    async () => null
-  ];
-  for (const hamta of utfall) {
-    await skapaObservator({ hamta, logg: fejkLogg() }).observera();
-  }
-  assert.deepEqual(rord, [], 'observationen får aldrig röra livscykeln');
-  assert.ok(typeof livscykel.startad === 'function');
-});
+// Det som stod har — en lokal livscykelspion som observatorn aldrig fick — var en tautologi och
+// inget integrationsbevis. Den riktiga kopplingen provas i gavokatalog-koppling.test.js, som kor
+// `node bridge.js` i en fork och mater livscykeln pa mock-molnets traffar.
 
 // ---- KOPPLINGEN I BRIDGE.JS -------------------------------------------------------------------
 
