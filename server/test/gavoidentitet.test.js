@@ -9,10 +9,13 @@
 // mitten ÄR bekräftelsen. Proven vaktar särskilt att fångsten inte i sig sparar något, och att
 // ingenting om avsändaren någonsin lagras.
 //
-// SLUTFRAMES: en streak levererar många frames för samma gåva, men bryggan filtrerar bort
-// mellanframes redan vid källan (bridge.js:374). Varje gåvoevent som når servern ÄR därför en
-// slutframe. Det är en tyst invariant, så den har ett eget vaktprov längst ned — försvinner raden
-// i bryggan skulle lärläget börja fånga mellanframes utan att någon märkte det.
+// SLUTFRAMES: en streak levererar många frames för samma gåva, men mellanframes filtreras bort
+// redan vid källan. Varje gåvoevent som når servern ÄR därför en slutframe.
+//
+// KÄLLAN ÄR TVÅ, INTE EN. Molnbryggan (tiktok-bridge/bridge.js) och Electron-appen
+// (electron-app/tiktok-service.js) har VAR SIN egen kopia av regeln — appen har den inline, inte
+// via normalizer.js. En vakt över bara bryggan bevisar ingenting om Windows-appen, och en
+// användare på desktop hade fått mellanframes utan att något prov märkte det. Båda vaktas nedan.
 //
 // Alla värden är syntetiska.
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -35,7 +38,9 @@ const AGARE = 'aaaaaaaa-0000-4000-8000-000000000001';
 const WS = 'aaaaaaaa-1111-4000-8000-000000000001';
 const WS2 = 'aaaaaaaa-2222-4000-8000-000000000002';
 
-const REGEL = 'heart-me';
+// STABIL TEKNISK NYCKEL, inte den synliga texten. Gavans visningsnamn ar regionaliserat och
+// kan andras av TikTok; en primarnyckel som byter varde med sprak ar ingen primarnyckel.
+const REGEL = 'heart_me';
 const REGEL_2 = 'rose';
 
 // Syntetiska gåvo-id och en syntetisk bild-URL.
@@ -56,10 +61,10 @@ const gava = (giftId = HEART_ME, giftName = 'Heart Me', over = {}) => ({
 });
 
 const armRad = async (ws = WS, regel = REGEL) => (await pool.query(
-  'SELECT * FROM gift_learn_arm WHERE workspace_id=$1 AND regel=$2', [ws, regel])).rows[0] || null;
+  'SELECT * FROM gift_learn_arm WHERE workspace_id=$1 AND rule_key=$2', [ws, regel])).rows[0] || null;
 
 const identitet = async (ws = WS, regel = REGEL) => (await pool.query(
-  'SELECT * FROM gift_rule_identity WHERE workspace_id=$1 AND regel=$2', [ws, regel])).rows[0] || null;
+  'SELECT * FROM gift_rule_identity WHERE workspace_id=$1 AND rule_key=$2', [ws, regel])).rows[0] || null;
 
 test.before(async () => {
   if (BLOCKED) return;
@@ -218,7 +223,7 @@ prov('Bekräfta skriver över en tidigare inlärd identitet', async () => {
   assert.equal((await identitet()).gift_id, HEART_ME, 'en ominlärning ska ersätta, inte dubblera');
 
   const antal = await pool.query(
-    'SELECT count(*)::int AS n FROM gift_rule_identity WHERE workspace_id=$1 AND regel=$2', [WS, REGEL]);
+    'SELECT count(*)::int AS n FROM gift_rule_identity WHERE workspace_id=$1 AND rule_key=$2', [WS, REGEL]);
   assert.equal(antal.rows[0].n, 1, 'EN rad per regel — det här är ingen katalog');
 });
 
@@ -228,8 +233,8 @@ prov('utgången armering fångar ingenting', async () => {
   finns();
   const nu = Date.now();
   await G.armera(pool, WS, REGEL, { nu: () => nu });
-  // 121 s senare — default är 120 s.
-  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 121000 });
+  // 301 s senare — default är 300 s.
+  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 301000 });
   const arm = await armRad();
   assert.ok(!arm || arm.fangad_gift_id === null, 'en utgången armering får inte fånga');
 });
@@ -239,18 +244,18 @@ prov('utgången FÅNGST går inte att bekräfta', async () => {
   const nu = Date.now();
   await G.armera(pool, WS, REGEL, { nu: () => nu });
   await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 10000 });
-  const ut = await G.bekrafta(pool, WS, REGEL, { nu: () => nu + 121000 });
+  const ut = await G.bekrafta(pool, WS, REGEL, { nu: () => nu + 301000 });
 
   assert.equal(ut.ok, false, 'hann du inte trycka Bekräfta måste du armera om');
   assert.equal(await identitet(), null);
 });
 
-prov('utgångstiden är 120 s som default', async () => {
+prov('utgångstiden är 300 s som default', async () => {
   finns();
   const nu = Date.now();
   await G.armera(pool, WS, REGEL, { nu: () => nu });
-  // 119 s: fortfarande giltig.
-  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 119000 });
+  // 299 s: fortfarande giltig.
+  await G.fangaFranEvent(pool, WS, gava(), { nu: () => nu + 299000 });
   assert.equal((await armRad()).fangad_gift_id, HEART_ME,
     'ändras defaulten ska det här provet falla — det är meningen');
 });
@@ -290,7 +295,7 @@ prov('två samtidiga gåvor — sex omgångar, exakt en fångas', async () => {
     assert.ok([HEART_ME, ANNAN_GAVA].includes(arm.fangad_gift_id),
       `omgång ${omgang}: en av dem ska ha fångats`);
     const antal = await pool.query(
-      'SELECT count(*)::int AS n FROM gift_learn_arm WHERE workspace_id=$1 AND regel=$2', [WS, REGEL]);
+      'SELECT count(*)::int AS n FROM gift_learn_arm WHERE workspace_id=$1 AND rule_key=$2', [WS, REGEL]);
     assert.equal(antal.rows[0].n, 1, `omgång ${omgang}: en armering, inte två`);
   }
 });
@@ -351,13 +356,21 @@ prov('lärläget rör inte mål eller statistik', async () => {
 
 // ---- VAKT: SLUTFRAME-INVARIANTEN I BRYGGAN ----------------------------------------------------
 
-test('vakt: bryggan filtrerar fortfarande bort mellanframes i en streak', () => {
-  // Lärläget FÖRUTSÄTTER att varje gåvoevent som når servern är en slutframe. Den garantin ligger
-  // inte här utan i bryggan, och är därför en tyst invariant. Försvinner raden skulle lärläget
-  // börja fånga mellanframes utan att något prov här märkte det.
+test('vakt: MOLNBRYGGAN filtrerar bort mellanframes i en streak', () => {
   const fs = require('node:fs'), path = require('node:path');
-  const bridge = path.join(__dirname, '..', '..', 'tiktok-bridge', 'bridge.js');
-  const kall = fs.readFileSync(bridge, 'utf8');
-  assert.ok(/isStreakable\(data\)\s*&&\s*!\s*N?\.?isFinalFrame\(data\)/.test(kall.replace(/N\./g, '')),
-    'bridge.js:374-filtret är borta — lärläget kan då fånga en mellanframe i en streak');
+  const kall = fs.readFileSync(path.join(__dirname, '..', '..', 'tiktok-bridge', 'bridge.js'), 'utf8');
+  assert.ok(/isStreakable\(data\)\s*&&\s*!\s*isFinalFrame\(data\)/.test(kall.replace(/N\./g, '')),
+    'bridge.js-filtret är borta — lärläget kan då fånga en mellanframe i molnvägen');
+});
+
+test('vakt: ELECTRON-APPEN filtrerar bort mellanframes i en streak', () => {
+  // Windows-appen har sin EGEN inline-kopia av regeln (electron-app/tiktok-service.js), inte ett
+  // anrop till normalizer.js. Bryggvakten ovan säger därför ingenting om den här vägen.
+  const fs = require('node:fs'), path = require('node:path');
+  const kall = fs.readFileSync(path.join(__dirname, '..', '..', 'electron-app', 'tiktok-service.js'), 'utf8');
+  assert.ok(/streakable\s*&&\s*!\s*finalFrame/.test(kall),
+    'tiktok-service.js-filtret är borta — lärläget kan då fånga en mellanframe i desktopvägen');
+  // Och att regeln faktiskt är den vi tror: repeatEnd avgör, och saknad repeatEnd = komplett.
+  assert.ok(/repeatEnd\s*===\s*undefined\s*\?\s*true/.test(kall),
+    'saknad repeatEnd måste behandlas som en komplett gåva, annars tappas enskilda gåvor');
 });

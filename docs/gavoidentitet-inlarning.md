@@ -39,11 +39,26 @@ Gåvoeventen bär redan både `giftId`, `giftName` och `giftImage` genom `cleanE
 
 En streak levererar många frames för samma gåva. Att fånga en mellanframe vore fel.
 
-**Filtreringen sker redan i bryggan.** `tiktok-bridge/bridge.js:374`:
+**Filtreringen sker redan vid källan — men källan är TVÅ, inte en.**
+
+Molnbryggan, `tiktok-bridge/bridge.js:374`:
 
 ```js
 if (N.isStreakable(data) && !N.isFinalFrame(data)) return;
 ```
+
+Electron-appen, `electron-app/tiktok-service.js:97` — en **egen inline-kopia**, inte ett anrop till
+`normalizer.js`:
+
+```js
+const streakable = (data?.gift?.type ?? data?.giftType ?? data?.giftDetails?.giftType) === 1;
+const finalFrame = data?.repeatEnd === undefined ? true : !!Number(data.repeatEnd);
+if (streakable && !finalFrame) return;
+```
+
+En vakt över bara bryggan bevisar ingenting om Windows-appen: en desktopanvändare hade fått
+mellanframes utan att något prov märkte det. **Båda vägarna har därför var sitt vaktprov**, och båda
+är mutationsbevisade — filtret bortmuterat fäller sin egen vakt och lämnar den andra grön.
 
 `isFinalFrame` (`normalizer.js:60`) behandlar dessutom en gåva **utan** `repeatEnd` som komplett vid
 ankomst — annars hade den tappats. Semantiken är fastnaglad mot verklig trafik i
@@ -55,36 +70,50 @@ saker till för att uppfylla kravet:
 - **`!raw.duplicate`** — en replay av samma event får inte räknas som fångsten.
 - **`giftId` måste finnas** — utan id finns ingen identitet att spara.
 
-Det här beroendet är en tyst invariant, och därför vaktat av ett eget prov: försvinner raden i
-bryggan skulle lärläget börja fånga mellanframes utan att någon märkte det.
+Beroendet är en tyst invariant i två andra moduler, och därför vaktat av två egna prov som kör
+utan databas.
 
 ## Modellen
 
 ### Två tabeller, ingen avsändardata
 
 ```
-gift_rule_identity(workspace_id, regel, gift_id, gift_name, gift_image, bekraftad_at)
-PRIMARY KEY (workspace_id, regel)          -- EN rad per regel, inte en katalog
+gift_rule_identity(workspace_id, rule_key, gift_id, gift_name, gift_image, bekraftad_at)
+PRIMARY KEY (workspace_id, rule_key)       -- EN rad per regel, inte en katalog
 
-gift_learn_arm(workspace_id, regel, armerad_at, gar_ut_at,
+gift_learn_arm(workspace_id, rule_key, armerad_at, gar_ut_at,
                fangad_gift_id, fangad_gift_name, fangad_gift_image, fangad_at)
-PRIMARY KEY (workspace_id, regel)          -- högst ett armerat läge per regel
+PRIMARY KEY (workspace_id, rule_key)       -- högst ett armerat läge per regel
 ```
+
+### `rule_key` är teknisk, inte synlig
+
+Nyckeln är en **stabil teknisk sträng** — `heart_me`, inte `Heart Me`. Den synliga texten är
+regionaliserad och kan ändras av TikTok; en primärnyckel som byter värde med språk är ingen
+primärnyckel. `gift_name` lagras separat, enbart för att Studio ska kunna visa vad som är inlärt.
 
 **Ingenting om avsändaren lagras.** Inga användarnamn, inga id, inga räknare. Det är inte bara en
 förenkling utan en avsiktlig begränsning: lärläget behöver veta *vilken gåva*, aldrig *vem*.
 
 ### Armering och utgångstid
 
-Armeringen har en kort livstid — **default 120 sekunder**, konfigurerbar. Värdet står i ett prov, så
+Armeringen har en kort livstid — **default 300 sekunder (5 minuter)**, konfigurerbar. Värdet står i ett prov, så
 en ändring fäller provet med flit.
 
 - **Utgången armering fångar ingenting.** Kommer gåvan för sent händer inget alls.
 - **En utgången fångst går inte att bekräfta.** Hann du inte trycka Bekräfta måste du armera om.
 - **Avbryt** rensar armeringen direkt, med eller utan fångst.
 
-Kort livstid är ett medvetet val: ett lärläge som ligger armerat i timmar fångar förr eller senare
-fel gåva.
+Fem minuter är avvägt: två blir stressigt när du ska växla mellan Studio och TikTok, eller be någon
+annan skicka gåvan. Det är fortfarande säkert, eftersom ingenting sparas automatiskt och du kan
+avbryta när som helst. Ett lärläge som däremot ligger armerat i timmar fångar förr eller senare fel
+gåva.
+
+### Studio visar nedräkning och Avbryt
+
+Medan armeringen är aktiv visar Studio en **synlig nedräkning** av återstående tid och en
+**Avbryt-knapp**. Utan nedräkning vet du inte om läget fortfarande lyssnar när gåvan kommer, och
+utan Avbryt är enda vägen ur ett felaktigt läge att vänta ut det.
 
 ### Fångsten är inte ett sparande
 
