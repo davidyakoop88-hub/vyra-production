@@ -8,7 +8,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -S vyra && adduser -S -G vyra vyra
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json bridge.js normalizer.js livscykel.js proxy-manager.js connection-manager.js inspelare.js ./
+COPY package.json package-lock.json bridge.js normalizer.js livscykel.js gavokatalog-observation.js proxy-manager.js connection-manager.js inspelare.js ./
 USER vyra
 # The manager serves /health and /status so a platform health check has something to hit —
 # without a listener Railway can restart (or refuse to route to) the very process running the

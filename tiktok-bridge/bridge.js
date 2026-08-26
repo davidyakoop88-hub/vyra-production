@@ -30,6 +30,7 @@ const N = require('./normalizer');
 const Inspelare = require('./inspelare');
 const { createProxyManager } = require('./proxy-manager');
 const { skapaLivscykel } = require('./livscykel');
+const { skapaObservator } = require('./gavokatalog-observation');
 
 // The local server only exists in the desktop build (server.ps1 on 127.0.0.1:4173). In the cloud
 // there is nothing listening there, so defaulting to it made every event, heartbeat, connect and
@@ -549,6 +550,13 @@ if (require.main === module) {
           postDiscordAlert(reconnectSuccessAlertPayload(username, state.roomId, attemptsBeforeSuccess));
         }
         startHeartbeat(state.roomId);
+        // ENGÅNGSOBSERVATION AV GÅVOKATALOGEN — ren diagnostik inför Heart Me Goal (PR #275).
+        // FIRE-AND-FORGET MED FLIT: ingen await, ingen .then som rör sändningen, och promisen
+        // rejectar aldrig. Registrering, live:start, eventflödet och reconnect ligger alla ovanför
+        // den här raden och är redan gjorda — ett katalogfel kan därför inte påverka något av dem.
+        // Högst ett anrop per anslutning; observatorn skapas per connection och håller sin egen
+        // gjord-flagga.
+        skapaObservator({ hamta: () => connection.fetchAvailableGifts() }).observera();
       })
       .catch(err => {
         if (activeConnection === connection) activeConnection = null;
