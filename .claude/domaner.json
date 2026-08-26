@@ -394,7 +394,6 @@
         "server/goal-ingest.js",
         "server/goal-sse.js",
         "server/goal-metrics.js",
-        "server/gavoidentitet.js",
         "scripts/goal-*.js"
       ],
       "tester": [
