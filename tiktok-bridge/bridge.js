@@ -30,6 +30,7 @@ const N = require('./normalizer');
 const Inspelare = require('./inspelare');
 const { createProxyManager } = require('./proxy-manager');
 const { skapaLivscykel } = require('./livscykel');
+const { sanera, saneraUrl } = require('./sanera');
 const { skapaObservator } = require('./gavokatalog-observation');
 
 // The local server only exists in the desktop build (server.ps1 on 127.0.0.1:4173). In the cloud
@@ -498,7 +499,10 @@ if (require.main === module) {
     });
 
     connection.on(ControlEvent.ERROR, err => {
-      console.error('[bridge] Anslutningsfel:', err?.message || err);
+      // ALDRIG raa felobjekt. `err?.message || err` skrev ut HELA objektet nar message saknades
+      // — uppmatt 2026-08-26 med gavokatalogens SignatureMissingTokensError, som bar stackspar
+      // och alla falt. sanera() ger typnamn i stallet for innehall.
+      console.error('[bridge] Anslutningsfel:', sanera(err));
     });
 
     // ---- ra-inspelning: EN EGEN PRENUMERATIONSYTA, HELT SKILD FRAN sendEvent ------------------
@@ -565,7 +569,10 @@ if (require.main === module) {
         // normal stream-end/disconnect (handled above) is NOT a proxy failure and never reaches
         // here, so only genuine connect failures affect proxy health.
         if (currentProxy) proxyManager.markFailed(currentProxy);
-        console.error(`[bridge] Kunde inte ansluta till @${username}${currentProxy ? ` via ${currentProxy}` : ''}:`, err?.message || err);
+        // PROXY_LIST dokumenteras som "http://user:pass@ip:port" (proxy-manager.js:6), och den
+        // har raden skrev ut adressen ORDAGRANT vid varje misslyckat forsok — inloggningsuppgifter
+        // rakt in i Railways logg. Vard och port behalls, uppgifterna slangs.
+        console.error(`[bridge] Kunde inte ansluta till @${username}${currentProxy ? ` via ${saneraUrl(currentProxy)}` : ''}:`, sanera(err));
         scheduleReconnect(`@${username} är kanske inte live`);
       });
   }
