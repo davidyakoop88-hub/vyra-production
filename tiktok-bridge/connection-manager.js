@@ -21,6 +21,7 @@
 'use strict';
 
 const { fork } = require('child_process');
+const { sanera } = require('./sanera');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -174,7 +175,7 @@ function createConnectionManager({
     });
 
     child.on('error', err => {
-      console.error(`[connection-manager] Bridge-fel för workspace ${workspaceId} (@${username}):`, err.message);
+      console.error(`[connection-manager] Bridge-fel för workspace ${workspaceId} (@${username}):`, sanera(err));
     });
 
     // A bridge exiting (crash, or its own graceful shutdown) must never affect other bridges — just
@@ -417,7 +418,9 @@ if (require.main === module) {
       }
     } catch (err) {
       lastSyncError = err.message;
-      console.error('[connection-manager] Kunde inte hämta aktiva workspaces från Postgres:', err.message);
+      // Postgres-fel bar ofta hela DSN:en med losenord. Samma fynd som en gang rattades i
+      // utkorgsworkern.
+      console.error('[connection-manager] Kunde inte hämta aktiva workspaces från Postgres:', sanera(err));
     } finally {
       syncing = false;
     }
