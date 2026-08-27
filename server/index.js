@@ -125,6 +125,13 @@ async function ingestTikTokEvent(workspaceId,payload){
   // overlayet, och da slutar sandningen fungera for att en analysskrivning strulade. .catch() ar
   // andå kvar: en avvisad promise utan hanterare faller hela processen i Node.
   if(!raw.duplicate)streamStats.record(workspaceId,raw.event).catch(()=>{});
+  // GAVOIDENTITETENS LARLAGE (docs/gavoidentitet-inlarning.md). Exakt samma monster och samma skal
+  // som raden ovan: inte await:at, sväljer sina egna fel, bara pa !duplicate, och anda .catch() —
+  // en avvisad promise utan hanterare faller hela processen i Node. En fangstskrivning far aldrig
+  // hindra eventet fran att na overlayet.
+  //
+  // !duplicate bar dubbel vikt har: en replay av samma event far inte vara "nasta gava".
+  if(!raw.duplicate)Gavoidentitet.fangaFranEvent(pool,workspaceId,raw.event).catch(()=>{});
   return raw;
 }
 function send(res,status,data,headers={}){const body=Buffer.from(JSON.stringify(data));res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':body.length,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; frame-ancestors 'none'",...headers});res.end(body)}
@@ -133,7 +140,7 @@ function rawBody(req,max=1024*1024){return new Promise((resolve,reject)=>{let si
 function sameOrigin(req){const origin=req.headers.origin;return !origin||origin===ORIGIN}
 async function session(req,{csrf=false}={}){const raw=S.parseCookies(req.headers.cookie).vyra_session;if(!raw)return null;const q=await pool.query('SELECT s.*,u.email,u.display_name,u.disabled_at,u.email_verified_at,u.mfa_secret_enc,u.mfa_enabled_at,u.mfa_recovery_hashes,u.deletion_requested_at,u.is_platform_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()',[S.digest(raw)]);const row=q.rows[0];if(!row||row.disabled_at)return null;if(csrf&&S.digest(req.headers['x-vyra-csrf']||'')!==row.csrf_hash)return null;return row}
 // Sandningsidentiteten. Modulen ager hela sessionsbeslutet; rutterna har ar tunna skal.
-const {skapaStreamSessions}=require('./stream-sessions');const {startStreamWorker}=require('./stream-worker');
+const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const {startStreamWorker}=require('./stream-worker');
 const StreamSessions=skapaStreamSessions({pool});
 // MASKIN-AUTH VID HTTP-FORTROENDEGRANSEN. Husets enda ingestkontroll, extraherad ur den gamla
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
@@ -458,6 +465,23 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // WITH that workspace, so an overlay id from somewhere else is a 404 rather than a way in. The
   // widget is then resolved inside that overlay's own layout state — a widget id belonging to
   // another overlay does not exist here, whichever overlay id it is paired with.
+  // GAVOIDENTITETENS LARLAGE. Att armera, bekrafta eller avbryta ar att ANDRA hur en regel
+  // beter sig — darfor samma roller som en redigering, inte som en lasning.
+  const larRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/gift-identity\/([A-Za-z0-9_-]{1,120})(?:\/(armera|bekrafta|avbryt))?$/i);
+  if(larRoute){const[,workspaceId,ruleKey,handling]=larRoute;
+    const roles=req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor'];
+    if(!await membership(s.user_id,workspaceId,roles))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(req.method==='GET'&&!handling)return send(res,200,{ok:true,...await Gavoidentitet.status(pool,workspaceId,ruleKey)});
+    if(req.method==='POST'&&handling==='armera'){const ut=await Gavoidentitet.armera(pool,workspaceId,ruleKey);
+      return send(res,ut.ok?201:400,{ok:ut.ok,...ut})}
+    if(req.method==='POST'&&handling==='bekrafta'){const ut=await Gavoidentitet.bekrafta(pool,workspaceId,ruleKey);
+      // 409 nar det inte gar att bekrafta: ingen fangst, utgangen, eller aldrig armerad. Det ar ett
+      // LAGE, inte ett trasigt anrop — klienten ska visa "armera om", inte "nagot gick fel".
+      return send(res,ut.ok?200:409,{ok:ut.ok,...ut})}
+    if(req.method==='POST'&&handling==='avbryt'){await Gavoidentitet.avbryt(pool,workspaceId,ruleKey);
+      return send(res,200,{ok:true})}
+    return send(res,405,{ok:false,error:'Metod stöds inte'});
+  }
   const goalRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays\/([0-9a-f-]+)\/goals(?:\/([^/]+)(\/reset)?)?$/i);
   if(goalRoute){const[,workspaceId,overlayId,rawWidgetId,isReset]=goalRoute;
     // Reading a goal is part of seeing the layout; changing one is editing it.

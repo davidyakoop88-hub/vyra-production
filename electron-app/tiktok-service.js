@@ -97,6 +97,10 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       if (streakable && !finalFrame) return;
       emit('gift', {
         ...baseUser(data),
+        // PARITET MED MOLNVÄGEN. Desktop skickade tidigare inget giftId alls, bara namnet — så
+        // lärläget (docs/gavoidentitet-inlarning.md) hade varit omöjligt över den här vägen: utan
+        // id finns ingen identitet att lära in. Samma precedens som tiktok-bridge/normalizer.js:68.
+        giftId: text(data?.giftId || data?.giftDetails?.giftId || data?.gift?.id, 160),
         giftName: text(data?.giftName || data?.gift?.name, 160),
         giftImage: text(data?.giftPictureUrl || data?.gift?.image?.url_list?.[0], 2048),
         // Total diamond cost of the forwarded event, identical to the cloud path. Reading only

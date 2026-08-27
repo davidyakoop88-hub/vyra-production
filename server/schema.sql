@@ -491,3 +491,45 @@ CREATE TABLE IF NOT EXISTS stream_room_reopen (
 -- Partiell: FÖRBRUKADE biljetter får finnas hur många som helst, det är historiken.
 CREATE UNIQUE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
   ON stream_room_reopen(workspace_id, room_id) WHERE consumed_at IS NULL;
+
+-- ============================================================================================
+-- GÅVOIDENTITET · manuellt lärläge (docs/gavoidentitet-inlarning.md)
+--
+-- Regler som ska gälla EN bestämd gåva behöver ett stabilt giftId. Repots katalog saknar id helt,
+-- och rummets katalog kräver en betald Business-plan (uppmätt i produktion 2026-08-26,
+-- docs/gavokatalog-matresultat.md). Kvar finns gåvoeventen själva: de bär redan giftId, giftName
+-- och giftImage genom cleanEvent.
+--
+-- rule_key är en STABIL TEKNISK STRÄNG ('heart_me'), aldrig den synliga texten. Gåvans
+-- visningsnamn är regionaliserat och kan ändras av TikTok; en primärnyckel som byter värde med
+-- språk är ingen primärnyckel. gift_name lagras separat, enbart för att Studio ska kunna visa
+-- vad som är inlärt.
+--
+-- INGENTING OM AVSÄNDAREN LAGRAS. Inga användarnamn, inga id, inga räknare. Lärläget behöver
+-- veta VILKEN gåva, aldrig VEM — och det som inte finns som kolumn kan inte fyllas i av misstag.
+CREATE TABLE IF NOT EXISTS gift_rule_identity (
+  workspace_id uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  rule_key     text        NOT NULL,
+  gift_id      text        NOT NULL,
+  gift_name    text        NOT NULL DEFAULT '',
+  gift_image   text        NOT NULL DEFAULT '',
+  bekraftad_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, rule_key)          -- EN rad per regel. Det här är ingen katalog.
+);
+
+-- Armeringen. Högst ett väntande lärläge per regel, med kort utgångstid: ett läge som ligger
+-- armerat i timmar fångar förr eller senare fel gåva.
+--
+-- Fångsten skriver BARA hit. gift_rule_identity rörs inte förrän Bekräfta — människan i mitten är
+-- bekräftelsen, inte en tröskel.
+CREATE TABLE IF NOT EXISTS gift_learn_arm (
+  workspace_id      uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  rule_key          text        NOT NULL,
+  armerad_at        timestamptz NOT NULL DEFAULT now(),
+  gar_ut_at         timestamptz NOT NULL,
+  fangad_gift_id    text,
+  fangad_gift_name  text,
+  fangad_gift_image text,
+  fangad_at         timestamptz,
+  PRIMARY KEY (workspace_id, rule_key)
+);

@@ -251,3 +251,11 @@ jobs:
       - name: Sessionssnapshotet — bootstrapsvarets flaggmedvetna session-falt
         run: node --test test/overlay-session-snapshot.test.js
         working-directory: server
+
+      # GAVOIDENTITET — RÖTT MED AVSIKT tills server/gavoidentitet.js finns.
+      #
+      # Sist i jobbet, av samma skäl som Heart Me-provet i PR #275: ett steg som placeras efter ett
+      # fallande steg körs ALDRIG (status skipped), så alla mätsteg ovanför måste hinna klart.
+      - name: Gåvoidentitet — bekräftad inlärning och exakt giftId (RÖTT tills implementerat)
+        run: node --test test/gavoidentitet.test.js
+        working-directory: server
