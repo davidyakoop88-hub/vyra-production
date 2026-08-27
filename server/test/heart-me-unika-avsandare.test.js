@@ -99,7 +99,9 @@ const larIn = giftId => pool.query(
 
 const malrad = async (widgetId = WIDGET) => {
   const q = await pool.query(
-    `SELECT baseline + progress AS visat, baseline, progress, target, metric, revision
+    // SELECT *, inte en handplockad kolumnlista. En kolumn som glöms bort ger `undefined`, och
+    // `Number(undefined) > 1` är tyst falskt — precis så föll epoch-påståendet i CI en gång.
+    `SELECT *, baseline + progress AS visat
        FROM goal_runtime WHERE overlay_id=$1 AND widget_id=$2`, [OVERLAY, widgetId]);
   return q.rows[0] || null;
 };
