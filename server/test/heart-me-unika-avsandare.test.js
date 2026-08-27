@@ -34,9 +34,9 @@ const BLOCKED = DB_URL ? false
 const H = require('../heart-me-goal');
 const Regelnycklar = require('../regelnycklar');
 
-const AGARE = 'hhhhhhhh-0000-4000-8000-000000000001';
-const WS = 'hhhhhhhh-1111-4000-8000-000000000001';
-const OVERLAY = 'hhhhhhhh-2222-4000-8000-000000000002';
+const AGARE = 'd0000000-0000-4000-8000-000000000001';
+const WS = 'd0000000-1111-4000-8000-000000000001';
+const OVERLAY = 'd0000000-2222-4000-8000-000000000002';
 const WIDGET = 'templateHeartGoal-prov-0001';
 
 // Syntetiska gåvo-id:n. HEART_ME är den inlärda gåvan; ROSE och OKAND ska aldrig räknas.
@@ -70,9 +70,15 @@ const like = avsandare => ({
 
 // En sändning i taget. Skapar sessionen och pekar pekaren på den — samma väg som startaLive()
 // använder, men riggen äger raderna och river dem själv.
+const SESSION_BAS = 'd0000000-3333-4000-8000-';
+// padStart, inte konkatenering: 'd0000000-3333-4000-8000-00000000000' + 10 hade gett en 13 tecken
+// lång sista grupp och ett ogiltigt uuid vid tionde sessionen. Ett tak som beror på hur många prov
+// filen råkar ha är inget tak man vill upptäcka i CI.
+const sessionId = nr => SESSION_BAS + String(nr).padStart(12, '0');
+
 let sessionNr = 0;
 async function nySession(roomId) {
-  const id = 'hhhhhhhh-3333-4000-8000-00000000000' + (++sessionNr);
+  const id = sessionId(++sessionNr);
   await pool.query(
     `INSERT INTO stream_sessions (id, workspace_id, room_id, account_key, started_at)
      VALUES ($1,$2,$3,'prov-konto', now()) ON CONFLICT (id) DO NOTHING`, [id, WS, roomId]);
@@ -302,7 +308,7 @@ prov('tom avsändarnyckel räknas inte', async () => {
 
 prov('ett annat workspace kan inte knuffa målet', async () => {
   await nySession(RUM_1);
-  const ANNAT_WS = 'hhhhhhhh-1111-4000-8000-000000000009';
+  const ANNAT_WS = 'd0000000-1111-4000-8000-000000000009';
   await H.applyHeartMeEvent(pool, ANNAT_WS, gava(ANNA));
   assert.equal(await visat(), 0, 'målet är scopat till sitt eget workspace');
 });
@@ -475,6 +481,24 @@ prov('liggaren kaskaderar från stream_sessions', async () => {
 });
 
 // ---- KÄLLVAKTER (kräver ingen databas) --------------------------------------------------------
+
+test('vakt: riggens uuid-konstanter är giltiga uuid', () => {
+  // Filen är BLOCKERAD utan databas, så konstanterna parsades aldrig lokalt. Den första versionen
+  // bar `hhhhhhhh-0000-...` — det SER ut som ett uuid, men h är ingen hex-siffra. Felet syntes
+  // först efter ett fullt CI-varv, där alla 29 prov föll i test.before på
+  // "invalid input syntax for type uuid". Det här provet kör utan databas och kostar ingenting.
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  for (const [namn, varde] of [['AGARE', AGARE], ['WS', WS], ['OVERLAY', OVERLAY]]) {
+    assert.match(varde, UUID, namn + ' är inget giltigt uuid');
+  }
+  // Sessionsid:t byggs ihop, så både basen och löpnumret måste hålla — även förbi nio.
+  for (const nr of [1, 2, 9, 10, 123]) {
+    assert.match(sessionId(nr), UUID, 'sessionsid ' + nr + ' är inget giltigt uuid');
+  }
+  // KONTROLLMÄTNING: mönstret nekar precis det som föll i CI.
+  assert.ok(!UUID.test('hhhhhhhh-0000-4000-8000-000000000001'),
+    'vakten måste avvisa icke-hex — annars mäter den ingenting');
+});
 
 test('vakt: den generella motorn kan inte ens räkna fram unique_gift_senders', () => {
   const GoalRuntime = require('../goal-runtime');

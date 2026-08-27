@@ -266,11 +266,13 @@ jobs:
         run: node --test test/regelnycklar.test.js
         working-directory: server
 
-      # HEART ME GOAL — RÖTT MED AVSIKT tills server/heart-me-goal.js finns.
+      # HEART ME GOAL — unika personer som skickar gåvan Heart Me under aktuell LIVE.
       #
-      # Steget ligger SIST i jobbet med flit. Ett steg som placeras efter ett fallande steg körs
-      # ALDRIG (status skipped), och alla mätsteg ovanför måste hinna köras klart. Flytta aldrig
-      # upp det här före implementationen är grön.
-      - name: Heart Me Goal — unika avsändare per sändning (RÖTT tills implementerat)
+      # Steget ligger SIST i jobbet. Ett steg som placeras efter ett fallande steg körs ALDRIG
+      # (status skipped), så alla mätsteg ovanför måste hinna klart först.
+      #
+      # working-directory: server är INTE valfritt — utan den körs steget från repotroten och faller
+      # på "Could not find". tests/goal-postgres-flode.test.js vaktar att varje provsteg har den.
+      - name: Heart Me Goal — unika avsändare per sändning
         run: node --test test/heart-me-unika-avsandare.test.js
         working-directory: server
