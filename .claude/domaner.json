@@ -397,7 +397,6 @@
         "server/gavoidentitet.js",
         "server/regelnycklar.js",
         "gift-identity-larlage.js",
-        "server/heart-me-goal.js",
         "scripts/goal-*.js"
       ],
       "tester": [
