@@ -606,13 +606,24 @@ CREATE TABLE IF NOT EXISTS gift_learn_arm (
 -- sandning ger en ny session och darmed en tom nyckelrymd. Ingen stadrutin behovs — raderna
 -- forsvinner med sessionen via ON DELETE CASCADE.
 --
--- avsandarnyckel ar husets NORMALISERADE tittaridentitet (identitet() i stream-stats.js: strip @,
--- trim, lowercase) — samma varde som gifter_totals.viewer_id. Den ar INGEN hash: namnet gar att
--- lasa ur den. Det som galler ar att tabellen bara bar nyckeln — inget visningsnamn, ingen avatar,
--- inget giftId, ingen payload, ingen tidsstampel — och att raden forsvinner med sandningen.
+-- avsandarnyckel ar HMAC-SHA256(harledd nyckel, workspace + session + normaliserad identitet),
+-- 64 hex-tecken. Se heart-me-goal.js. Namnet gar INTE att lasa ur den, och samma person far en helt
+-- annan nyckel i nasta sandning — raderna ar alltsa inte lankbara over tid.
+--
+-- CHECK-VILLKORET AR SJALVA SKYDDET, inte en formalitet. Databasen vagrar ta emot nagot som inte ar
+-- 64 hex-tecken, sa ett klartextnamn kan FYSISKT inte hamna i kolumnen aven om en framtida bugg
+-- skickar dit ett. Ett prov skriver ett namn rakt mot tabellen och kraver att den sager nej.
+--
+-- Tabellen bar ingenting annat: inget visningsnamn, ingen avatar, inget giftId, ingen payload,
+-- ingen tidsstampel. Raden forsvinner med sandningen via ON DELETE CASCADE.
+--
+-- INGEN MIGRATION BEHOVS. Tabellen har aldrig funnits i produktion — hela heart_me_bidrag kommer
+-- med samma opublicerade PR som hashningen, sa det finns inga gamla klartextrader att konvertera.
+-- Hade det funnits sadana hade CREATE TABLE IF NOT EXISTS inte rort dem, och en egen ALTER hade
+-- kravts (samma falla som goal_runtime.metric ovan).
 CREATE TABLE IF NOT EXISTS heart_me_bidrag (
   session_id      uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
   widget_id       text NOT NULL,
-  avsandarnyckel  text NOT NULL,
+  avsandarnyckel  text NOT NULL CHECK (avsandarnyckel ~ '^[0-9a-f]{64}$'),
   PRIMARY KEY (session_id, widget_id, avsandarnyckel)
 );

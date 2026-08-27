@@ -22,14 +22,21 @@
 // nyckeln `heart_me` — riggen skriver den raden som lärläget skulle ha gjort. Ingen katalog, ingen
 // namnmatchning.
 //
-// AVSÄNDARNYCKELN ÄR INGEN HASH. Den är användarnamnet i gemener utan '@' — samma värde som
-// gifter_totals.viewer_id. Proven mäter därför det som FAKTISKT gäller: liggaren bär bara nyckeln,
-// tabellen har exakt tre kolumner, och varken modulen eller kopplingen loggar något.
+// AVSÄNDARNYCKELN ÄR EN HMAC över (workspace, session, normaliserad identitet). Proven kräver att
+// namnet inte går att läsa ur den, att den är stabil inom en sändning men ANNORLUNDA i nästa, att
+// databasen fysiskt vägrar ta emot något som inte är 64 hex, och att en saknad hemlighet ger
+// fail-closed utan att kasta.
 //
 // SYNTETISKA VÄRDEN ÖVERALLT. Inga verkliga konto-, rums- eller användarnamn. Rums-id:n har samma
 // 19-siffriga form som TikToks men är påhittade.
 const test = require('node:test'), assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const { Pool } = require('pg');
+
+// Syntetisk hemlighet, satt FÖRE modulen laddas. Postgres-jobbet sätter ingen APP_ENCRYPTION_KEY,
+// och den riktiga produktionshemligheten ska självklart aldrig finnas i ett prov. 32 bytes
+// base64url är samma form som token-vault.js kräver.
+process.env.APP_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64url');
 
 const DB_URL = process.env.TEST_DATABASE_URL || '';
 const BLOCKED = DB_URL ? false
@@ -319,25 +326,116 @@ prov('ett annat workspace kan inte knuffa målet', async () => {
   assert.equal(await visat(), 0, 'målet är scopat till sitt eget workspace');
 });
 
-// ---- AVSÄNDARNYCKELN ÄR PSEUDONYM -------------------------------------------------------------
+// ---- AVSÄNDARNYCKELN ÄR EN HMAC ---------------------------------------------------------------
+//
+// Produktbeslut 2026-08-27: det ska inte gå att läsa ett tittarnamn ur liggaren. Nyckeln är
+// HMAC-SHA256(härledd nyckel, workspace + session + normaliserad identitet).
 
-prov('nyckeln är kanoniserad — @Anna och anna är samma person', async () => {
+const nyckelrader = sessionId => pool.query(
+  'SELECT avsandarnyckel FROM heart_me_bidrag WHERE session_id=$1 AND widget_id=$2',
+  [sessionId, WIDGET]).then(q => q.rows.map(r => r.avsandarnyckel));
+
+prov('normaliseringen sker FÖRST — @Anna och anna är samma person', async () => {
   await nySession(RUM_1);
   await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { username: '@Provgivare_Anna', userId: '@Provgivare_Anna' }));
   await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { username: ANNA, userId: ANNA, id: 'hprov:kanon:2' }));
   assert.equal(await visat(), 1,
-    'samma regel som identitet() i stream-stats.js: strip @, trim, lowercase');
+    'hashas namnet före normaliseringen blir @Anna och anna två personer och räknas två gånger');
 });
 
-prov('liggaren lagrar ingen synlig form av namnet', async () => {
+prov('nyckeln är en HMAC — 64 hex, och namnet går inte att läsa ur den', async () => {
   const sessionId = await nySession(RUM_1);
   await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { username: '@Provgivare_ANNA', userId: '@Provgivare_ANNA' }));
 
-  const q = await pool.query(
-    'SELECT avsandarnyckel FROM heart_me_bidrag WHERE session_id=$1 AND widget_id=$2', [sessionId, WIDGET]);
-  assert.equal(q.rowCount, 1);
-  assert.equal(q.rows[0].avsandarnyckel, ANNA, 'bara den normaliserade nyckeln, aldrig visningsnamnet');
-  assert.ok(!/[@A-ZÅÄÖ]/.test(q.rows[0].avsandarnyckel), 'ingen versal och inget @ ska ha överlevt');
+  const nycklar = await nyckelrader(sessionId);
+  assert.equal(nycklar.length, 1);
+  assert.match(nycklar[0], /^[0-9a-f]{64}$/, 'ska vara 64 hex-tecken');
+  assert.ok(!nycklar[0].includes(ANNA), 'det normaliserade namnet får inte finnas i nyckeln');
+  assert.ok(!nycklar[0].includes('provgivare'), 'inte ens en del av namnet');
+});
+
+prov('SAMMA person i SAMMA sändning ger samma nyckel', async () => {
+  const sessionId = await nySession(RUM_1);
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { id: 'hprov:stabil:1' }));
+  const forsta = (await nyckelrader(sessionId))[0];
+
+  // Andra gåvan från samma person: nyckeln måste kollidera med den befintliga raden, annars vore
+  // hela engångsräkningen bruten — det är just kollisionen som gör att målet inte ökas igen.
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { id: 'hprov:stabil:2' }));
+  const nycklar = await nyckelrader(sessionId);
+  assert.equal(nycklar.length, 1, 'en instabil nyckel hade gett en andra rad');
+  assert.equal(nycklar[0], forsta, 'nyckeln måste vara identisk inom sändningen');
+  assert.equal(await visat(), 1);
+});
+
+prov('SAMMA person i NÄSTA sändning ger en ANNAN nyckel', async () => {
+  // Hela poängen med att binda sessionen. Att session_id står i primärnyckeln gör raderna
+  // ÅTSKILDA — men med samma nyckelvärde hade man ändå sett att samma person återkom sändning
+  // efter sändning. Olänkbarhet kräver att värdet självt skiljer sig.
+  const sess1 = await nySession(RUM_1);
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { id: 'hprov:sess1' }));
+  const nyckel1 = (await nyckelrader(sess1))[0];
+
+  const sess2 = await nySession(RUM_2);
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { id: 'hprov:sess2' }));
+  const nyckel2 = (await nyckelrader(sess2))[0];
+
+  assert.ok(nyckel1 && nyckel2);
+  assert.notEqual(nyckel2, nyckel1, 'samma nyckel i två sändningar gör raderna länkbara över tid');
+  assert.match(nyckel2, /^[0-9a-f]{64}$/);
+});
+
+prov('databasen VÄGRAR ta emot något som inte är en hash', async () => {
+  // Skyddet ska sitta i databasen, inte bara i koden. Skickar en framtida bugg dit ett klartextnamn
+  // ska skrivningen falla — inte lyckas tyst.
+  const sessionId = await nySession(RUM_1);
+  await assert.rejects(() => pool.query(
+    `INSERT INTO heart_me_bidrag (session_id, widget_id, avsandarnyckel) VALUES ($1,$2,$3)`,
+    [sessionId, WIDGET, ANNA]), /avsandarnyckel/i, 'ett klartextnamn accepterades');
+
+  // Även nästan-rätt form ska nekas: fel längd och versaler.
+  await assert.rejects(() => pool.query(
+    `INSERT INTO heart_me_bidrag (session_id, widget_id, avsandarnyckel) VALUES ($1,$2,$3)`,
+    [sessionId, WIDGET, 'a'.repeat(63)]), /avsandarnyckel/i, 'fel längd accepterades');
+  await assert.rejects(() => pool.query(
+    `INSERT INTO heart_me_bidrag (session_id, widget_id, avsandarnyckel) VALUES ($1,$2,$3)`,
+    [sessionId, WIDGET, 'A'.repeat(64)]), /avsandarnyckel/i, 'versaler accepterades');
+
+  // KONTROLLMÄTNING: en riktig hash släpps igenom.
+  await pool.query(
+    `INSERT INTO heart_me_bidrag (session_id, widget_id, avsandarnyckel) VALUES ($1,$2,$3)`,
+    [sessionId, WIDGET, 'b'.repeat(64)]);
+});
+
+prov('utan hemlighet: ingen ökning, ingen rad, inget kastat fel', async () => {
+  // Fail-closed. Liveflödet får inte märka något — anropet ska returnera tyst, inte kasta.
+  const sessionId = await nySession(RUM_1);
+  const sparad = process.env.APP_ENCRYPTION_KEY;
+  delete process.env.APP_ENCRYPTION_KEY;
+  try {
+    const ut = await H.applyHeartMeEvent(pool, WS, gava(ANNA));
+    assert.equal(ut.okade, 0, 'ingen ökning utan hemlighet');
+    assert.equal(await visat(), 0);
+    assert.deepEqual(await nyckelrader(sessionId), [], 'ingen rad får skrivas');
+  } finally {
+    process.env.APP_ENCRYPTION_KEY = sparad;
+  }
+
+  // KONTROLLMÄTNING: med hemligheten tillbaka räknas samma person.
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME, { id: 'hprov:hemlig:2' }));
+  assert.equal(await visat(), 1);
+});
+
+prov('en felformad hemlighet duger inte heller', async () => {
+  const sparad = process.env.APP_ENCRYPTION_KEY;
+  process.env.APP_ENCRYPTION_KEY = 'for-kort';        // inte 32 bytes base64url
+  try {
+    await nySession(RUM_1);
+    await H.applyHeartMeEvent(pool, WS, gava(ANNA));
+    assert.equal(await visat(), 0, 'en hemlighet med fel form ska behandlas som ingen hemlighet');
+  } finally {
+    process.env.APP_ENCRYPTION_KEY = sparad;
+  }
 });
 
 prov('liggaren städas med sändningen — ingen egen rutin behövs', async () => {
@@ -545,7 +643,7 @@ prov('liggaren har exakt tre kolumner — ingen plats för namn, gåva eller pay
     'liggaren ska bära nyckeln och ingenting annat — ingen payload, ingen gåva, inget visningsnamn');
 });
 
-prov('liggaren bär varken giftId eller rått visningsnamn efter en riktig gåva', async () => {
+prov('liggaren bär varken giftId, namn eller payload efter en riktig gåva', async () => {
   const sessionId = await nySession(RUM_1);
   await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME,
     { username: '@Provgivare_ANNA', userId: '@Provgivare_ANNA' }));
@@ -556,7 +654,23 @@ prov('liggaren bär varken giftId eller rått visningsnamn efter en riktig gåva
   assert.ok(!varden.includes(HEART_ME), 'gåvans id får inte lagras i liggaren');
   assert.ok(!varden.includes('@'), 'ingen @-form av namnet får ha överlevt');
   assert.ok(!varden.includes('Provgivare_ANNA'), 'det råa visningsnamnet får inte lagras');
-  assert.ok(varden.includes(ANNA), 'nyckeln själv ska finnas — annars mäter provet ingenting');
+  assert.ok(!varden.includes(ANNA), 'inte heller den normaliserade formen — nyckeln är en HMAC');
+  assert.ok(!varden.includes('Heart Me'), 'inget gåvonamn');
+
+  // KONTROLLMÄTNING: raden finns och bär faktiskt en hash — annars mäter negationerna ingenting.
+  assert.match(q.rows[0].avsandarnyckel, /^[0-9a-f]{64}$/);
+});
+
+prov('målraden som går ut på SSE bär ingen avsändarnyckel', async () => {
+  // Det som publiceras är goal_runtime-raden. Skulle nyckeln någonsin följa med dit vore den ute på
+  // en publik overlay-ström.
+  await nySession(RUM_1);
+  const ut = await H.applyHeartMeEvent(pool, WS, gava(ANNA));
+  assert.equal(ut.rader.length, 1, 'en rad ska ha publicerats');
+  const text = JSON.stringify(ut.rader[0]);
+  assert.ok(!/avsandarnyckel/i.test(text), 'ramen får inte ens ha fältet');
+  assert.ok(!text.includes(ANNA), 'och inget namn');
+  assert.ok(!text.includes(HEART_ME), 'och inget giftId');
 });
 
 prov('liggaren kaskaderar från stream_sessions', async () => {
@@ -617,6 +731,37 @@ test('vakt: den generella motorn kan inte ens räkna fram unique_gift_senders', 
 
   // KONTROLLMÄTNING: svepet kan hitta något alls — annars bevisar slingan ingenting.
   assert.ok(GoalRuntime.contributionsFor({ type: 'gift', count: 3, value: 15 }).length > 0);
+});
+
+test('nyckeln är domänseparerad — inte APP_ENCRYPTION_KEY rakt av', () => {
+  // Kräver ingen databas. token-vault.js använder SAMMA hemlighet som AES-nyckel; att återanvända
+  // exakt de bytesen till en HMAC vore nyckelåteranvändning över två primitiver. Provet räknar fram
+  // vad en oseparerad HMAC HADE gett och kräver att modulen inte ger det.
+  const hemlig = Buffer.from(process.env.APP_ENCRYPTION_KEY, 'base64url');
+  const SEP = String.fromCharCode(31);
+  const indata = 'ws' + SEP + 'sess' + SEP + 'anna';
+
+  const utan = crypto.createHmac('sha256', hemlig).update(indata).digest('hex');
+  const med = H.avsandarnyckel('ws', 'sess', 'anna');
+  assert.notEqual(med, utan, 'nyckeln härleds inte — hemligheten används rakt av');
+
+  // Och separationen sker med den versionerade etiketten, så nyckeln kan roteras utan formatbyte.
+  const harledd = crypto.createHmac('sha256', hemlig).update(H.ETIKETT).digest();
+  assert.equal(med, crypto.createHmac('sha256', harledd).update(indata).digest('hex'),
+    'nyckeln ska vara HMAC med en undernyckel härledd ur etiketten');
+  assert.match(H.ETIKETT, /:v\d+$/, 'etiketten måste bära en version');
+});
+
+test('vakt: identiteten normaliseras före hashning, och kontrolltecken nekas', () => {
+  assert.equal(H.normaliseraIdentitet({ username: '@Anna' }), 'anna');
+  assert.equal(H.normaliseraIdentitet({ username: '  ANNA  ' }), 'anna');
+  assert.equal(H.normaliseraIdentitet({ username: '' }), '', 'tomt är ingen identitet');
+  assert.equal(H.normaliseraIdentitet({ username: 'a'.repeat(81) }), '', 'för långt nekas');
+  // Separatorn får inte kunna smugglas in — annars kan två olika (ws, session, namn) ge samma
+  // sträng att hasha, och två personer kollapsa till en.
+  assert.equal(H.normaliseraIdentitet({ username: 'an' + String.fromCharCode(31) + 'na' }), '',
+    'separatorn i namnet måste nekas');
+  assert.equal(H.avsandarnyckel('ws', 'sess', ''), '', 'utan identitet finns ingen nyckel');
 });
 
 test('vakt: modulen loggar ingenting alls, och kopplingen sväljer felet tyst', () => {
