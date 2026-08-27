@@ -1,189 +1,154 @@
 # Heart Me Goal · unika avsändare per sändning
 
-**Status: design + röda prov. Ingen produktionskod skriven, inget mergat, inga flaggor rörda.**
+**Status: implementerad på grenen `feat/heart-me-unika-avsandare` (PR #275). Inget mergat, inga
+flaggor rörda.**
 
 ## Produktkravet
 
-`templateHeartGoal` ska räkna **unika personer som skickar gåvan Heart Me under aktuell LIVE**.
+`templateHeartGoal` räknar **unika personer som skickar gåvan Heart Me under aktuell LIVE**.
 
 - Endast gåvan Heart Me räknas.
-- Varje unik avsändare ger högst `+1` per `sessionId`, oavsett hur många Heart Me de skickar.
+- Varje unik avsändare ger högst `+1` per sändning, oavsett hur många Heart Me hen skickar.
 - Likes och alla andra gåvor ger `+0`.
 - Samma person får räknas igen i nästa LIVE.
 - Dedupen måste tåla processomstart och samtidiga event.
 - Generella Like Goal-widgets (`templateSocialGoal`) får inte ändras.
 
-Dagens beteende är fel mot kravet: `goal-metrics.js:29` mappar `templateHeartGoal` → `likes`, med kommentaren
-*"a heart is a like; product decision"*. Uppmätt i test-LIVE 2: två unika Heart Me-avsändare, men widgeten
-visade `48/50` och slutade på `progress = 433` — allt från TikTok-likes.
+Dagens beteende är fel mot kravet: `goal-metrics.js` mappade `templateHeartGoal` → `likes`, med
+kommentaren *"a heart is a like; product decision"*. Uppmätt i test-LIVE 2: två unika Heart
+Me-avsändare, men widgeten visade `48/50` — allt från TikTok-likes.
 
 ---
 
-## Uppmätt payload
-
-Fälten finns redan hela vägen. Ingenting behöver läggas till i transportlagret.
-
-`cleanEvent` (`server/event-bus.js:13-27`) bär `userId` (160), `username` (120), `giftId` (160),
-`giftName` (160), `count`, `value`.
-
-### Gåvoidentitet — löses per rum mot TikToks egen katalog
+## Gåvoidentiteten ägs inte av den här modulen
 
 **Produktbeslut 2026-08-26:** widgeten är låst till Heart Me. Ingen gåvoväljare, ingen ny
 inställning i UI. Befintliga `templateHeartGoal`-widgets får den nya betydelsen automatiskt.
 
-**Id:t hårdkodas inte.** Repots katalog (`assets/gifts/gifts-manifest.js`, 1148 poster) har bara
-`name` och `file` — inget `giftId`. Filnamnsprefixen är en lokal löpnumrering (`0001_Rose`,
-`0002_…`, `0036_Heart_Me`), inte TikToks id. Att låsa produkten vid `0036` vore ett obevisat
-magiskt tal.
+Vilken gåva som ÄR Heart Me kommer från **lärläget** (`server/gavoidentitet.js`,
+`docs/gavoidentitet-inlarning.md`): man väljer regeln i Studio, trycker *Lär in nästa gåva*,
+skickar en Heart Me, kontrollerar namn och bild, och bekräftar. Först då skrivs `giftId` till
+`gift_rule_identity`.
 
-I stället löses `Heart Me` **mot det aktuella rummets auktoritativa gåvokatalog** vid anslutning:
+Uppslaget sker på den fasta nyckeln **`heart_me`** från `server/regelnycklar.js` — servern äger
+nyckelformatet, webbläsaren väljer det inte fritt.
 
-- `TikTokLiveConnection.fetchAvailableGifts()` finns i installerad `tiktok-live-connector@2.4.0`
-  (deklarerad `^2`), tillsammans med getter:n `availableGifts`. Bryggan instansierar just den
-  klassen (`bridge.js:354`).
-- Namnet `Heart Me` matchas **exakt**, skiftlägesokänsligt och trimmat. `Heart Me Flex` får inte
-  matcha — katalogen innehåller båda.
-- **Exakt en träff krävs.** Noll träffar, flera träffar, saknad katalog, 403 eller nätfel ⇒
-  **fail closed**: Heart Me Goal räknar ingenting den sändningen. Hellre noll än fel siffra.
-- Det lösta id:t **cachas endast för aktuell anslutning/session** och löses om vid nästa LIVE.
-  Olika rum får ge olika id för samma gåva utan att räkningen blir fel — nyckeln är ändå
-  `(session_id, widget_id, sender_key)`.
-- **Eventmatchning sker därefter uteslutande mot det lösta `giftId`.** Aldrig mot eventets
-  `giftName`, inte ens som reserv.
+Två vägar som *inte* används, och varför:
 
-Konstanten är **ett enda namngivet ställe** — gåvans kanoniska namn, inte ett id:
+| Väg | Varför inte |
+|---|---|
+| Repots katalog (`assets/gifts/gifts-manifest.js`) | 1148 poster med bara `name` och `file`. Filnamnsprefixen (`0036_Heart_Me`) är en lokal löpnumrering, inte TikToks id. |
+| Rummets katalog via `fetchAvailableGifts()` | Uppmätt i produktion: kräver betald Business-plan (`docs/gavokatalog-matresultat.md`). |
 
-```js
-const HEART_ME_GIFT_NAME = 'Heart Me';   // löses mot rummets katalog vid varje anslutning
-```
+**Matchningen sker uteslutande mot `giftId`.** Aldrig mot `giftName`, inte ens som reserv:
+`normalizer.js:68` defaultar `giftName` till strängen `'Gift'` när namnet saknas, och namnet är
+språkberoende.
 
-#### Tre obevisade punkter som måste mätas innan implementationen litar på katalogen
-
-1. **Signering.** Biblioteket dokumenterar att `gift/list/`-anropet *"must be signed for TikTok to
-   return data"*. Bryggan sätter **inget `signApiKey`** (default `undefined`) — om osignerade anrop
-   returnerar data, tomt eller 403 är omätt.
-2. **Svarets form är otypad.** `type RoomGiftInfo = any` och `type RoomGiftsResponse = any` i
-   `dist/index-DunqMzGX.d.ts:246,966`. Fältnamnen för id och namn i varje post är inte kända ur
-   typerna och måste observeras en gång.
-3. **Katalogen är språkparameteriserad.** Euler-routen tar `webcastLanguage`
-   (`fetch-room-gifts-euler.d.ts`), och den vägen beskrivs som *premium*. Regional variation är
-   alltså strukturellt verklig, åtminstone för presentation.
-
-Fail-closed-regeln gör alla tre ofarliga: kan katalogen inte läsas eller tolkas entydigt räknar
-widgeten noll, och ingen felaktig siffra visas.
-
-### Varför inte `giftName` — bevisat
-
-`tiktok-bridge/normalizer.js:68`:
-
-```js
-giftId:   text(data?.giftId || data?.giftDetails?.giftId || data?.gift?.id, 160)
-giftName: text(data?.giftDetails?.giftName || data?.giftName || data?.gift?.name || 'Gift', 160)
-```
-
-`giftName` faller tillbaka på strängen **`'Gift'`** när namnet saknas, och är dessutom språkberoende.
-Att matcha på namn skulle räkna vilken namnlös gåva som helst som Heart Me. **`giftId` är den stabila
-nyckeln** — och den löses per rum, aldrig ur namnet i eventet.
-
-### Avsändarnyckel — kanoniserat användarnamn, serverägt
-
-`normalizer.js:33` och `:135`:
-
-```js
-userId: text(user?.userId || user?.id || user?.secUid || user?.uniqueId, 160)   // bas
-userId: text(fields.userId || fields.username, 160)                            // utgående
-```
-
-**`userId` faller tyst tillbaka på användarnamnet** när TikTok inte skickar något id. Samma person kan
-därmed komma in som numeriskt id i ett event och som användarnamn i nästa — två nycklar, dubbelräkning.
-
-Huset har redan en serverägd identitet, `identitet()` i `server/stream-stats.js:38-42`, som fyller
-`gifter_totals.viewer_id`:
-
-```js
-// Samma person far inte bli tva rader for att TikTok skickar '@Anna' en gang och 'anna' nasta.
-const raw = data.username || data.uniqueId || data.user || '';
-const id = String(raw).replace(/^@/, '').trim().toLowerCase();
-return id.length >= 1 && id.length <= 80 ? id : '';
-```
-
-**Beslut: Heart Me Goal använder samma kanoniserade nyckel.** Skäl: den är serverägd och normaliserad,
-den är oberoende av bryggans `userId`-fallback, och den gör att målet och `gifter_totals` är överens om
-vem som är samma person. Ett event utan användbart namn ger tom nyckel och räknas inte alls
-(fail-closed).
-
-**Känd avvägning:** byter någon användarnamn mitt i en sändning räknas de som två personer. Ett
-numeriskt id vore stabilare i det fallet, men bara när det faktiskt finns — och fallbacken ovan gör att
-det inte går att lita på. Avvägningen är medveten och bör omprövas om bryggan slutar falla tillbaka.
+Utan en bekräftad `heart_me`-identitet räknar målet **ingenting**. Hellre noll än fel siffra.
 
 ---
 
-## Modellen
+## Metriken `unique_gift_senders`
 
-### Ny metrik `gift_senders` — Like Goal orörd
+Metriken är ny och **additivt** tillagd i `goal_runtime.metric`-villkoret — de fem befintliga
+(`follows`, `likes`, `shares`, `gifts`, `diamonds`) står kvar orörda.
 
-`templateSocialGoal` och dess `goalKind: likes` ändras **inte**. Enda mappningsändringen är
-`templateHeartGoal` → `gift_senders`, i både `server/goal-metrics.js` och `widget-factory.js`.
-`tests/goal-metric-parity.test.js` tvingar de två filerna att ändras i samma PR.
+Varför en egen metrik i stället för att återanvända `gifts`: alla fem befintliga metriker matas av
+`contributionsFor()` i `goal-runtime.js`, som mappar *varje* gåva till `gifts` + `diamonds`. Hade
+Heart Me Goal pekat på `gifts` hade varje Rose i rummet knuffat det. Den nya metriken finns just
+för att stå **utanför** den vägen.
 
-`goal_runtime.metric` har `CHECK (metric IN ('follows','likes','shares','gifts','diamonds'))` —
-metriken kräver en **additiv** migrering som utökar villkoret.
+`contributionsFor()` får aldrig producera `unique_gift_senders`. Ett vaktprov läser
+`goal-runtime.js` och faller om namnet dyker upp där.
 
-### Dedupeliggare per session
+I Studio heter metriken **Unika givare**.
 
-Ny tabell, en rad per (sändning, widget, avsändare):
+---
 
-```
-stream_gift_sender_apply(session_id, widget_id, sender_key, first_seen_at)
-PRIMARY KEY (session_id, widget_id, sender_key)
-FOREIGN KEY (session_id) REFERENCES stream_sessions(id) ON DELETE CASCADE
-```
+## De två skydden — lätt att blanda ihop
 
-`session_id` som nyckeldel ger tre av kraven gratis:
+| Skydd | Vad det stoppar | Var det bor |
+|---|---|---|
+| `raw.duplicate` / `goal_event_apply` | Samma **event** levererat flera gånger (retry, replay, reconnect) | ingest-kedjan |
+| `heart_me_bidrag`-raden | Samma **person** bidrar flera gånger | den här modulen |
 
-- **Högst +1 per sessionId** — primärnyckeln är låset, inte koden.
-- **Samma person räknas igen nästa LIVE** — ny session, ny nyckelrymd. Ingen nollställning behövs.
-- **Tål processomstart** — liggaren bor i Postgres, inte i minnet.
+Båda behövs. Det första skyddar inte mot att Anna skickar tre olika Heart Me; det andra skyddar
+inte mot att ett och samma event levereras två gånger.
 
-Sessionen slås upp ur `stream_session_pointer` för workspacet, i **samma transaktion** som
-måluppdateringen.
-
-### Räknelogiken
-
-Vid ett `gift`-event vars `giftId` matchar widgetens konfigurerade gåva:
+### Engångsliggaren
 
 ```sql
-INSERT INTO stream_gift_sender_apply (session_id, widget_id, sender_key)
-VALUES ($1, $2, $3)
-ON CONFLICT DO NOTHING
-RETURNING sender_key
+CREATE TABLE heart_me_bidrag (
+  session_id      uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
+  widget_id       text NOT NULL,
+  avsandarnyckel  text NOT NULL,
+  PRIMARY KEY (session_id, widget_id, avsandarnyckel)
+);
 ```
 
-Målet ökas med **exakt +1 endast när insert:en skapade en rad**. Samma mönster som
-nollställningskvittona (`INSERT ... ON CONFLICT DO NOTHING RETURNING`) — ingen läsning följd av
-skrivning, så två samtidiga gåvor från samma person kan inte båda räknas.
+- **`session_id` i nyckeln ger "samma person räknas igen nästa LIVE" gratis.** En ny sändning är en
+  ny session och därmed en tom nyckelrymd. Ingen nollställningsrutin behövs.
+- **`ON DELETE CASCADE` är städningen.** Raderna försvinner med sessionen; ingen cron, inget TTL.
+- **`widget_id` i nyckeln** gör att två Heart Me Goal-widgets i samma overlay räknar oberoende.
+- **Pseudonym.** `avsandarnyckel` är husets serverägda identitet — samma regel som `identitet()` i
+  `stream-stats.js` (strip `@`, trim, lowercase), alltså samma nyckel som `gifter_totals.viewer_id`.
+  Inget synligt användarnamn lagras, och nyckeln loggas aldrig.
 
-`like`-event bidrar aldrig. Gåvor med annat `giftId` bidrar aldrig.
+### Dedupen är en primärnyckel, inte kod
 
-### Fail-closed utan session
+```sql
+INSERT INTO heart_me_bidrag (session_id, widget_id, avsandarnyckel)
+VALUES ($1,$2,$3) ON CONFLICT DO NOTHING RETURNING avsandarnyckel
+```
 
-Finns ingen aktiv session (pekaren är `NULL`, eller flaggan `VYRA_SANDNINGSIDENTITET` är av) finns
-ingen nyckelrymd att dedupa i. Då räknas **ingenting** — hellre noll än dubbelräkning. Det innebär att
-Heart Me Goal är inaktiv medan sändningsidentiteten är dormant, vilket är ett medvetet val och måste
-stå i widgetens hjälptext.
+Målet ökas **bara** när insert:en skapade en rad. Ingen läsning följd av skrivning, så två samtidiga
+gåvor från samma person kan inte båda räknas, och en processomstart ändrar ingenting eftersom
+liggaren bor i Postgres.
 
 ---
 
-## Vad som INTE ingår
+## Flödet, fem steg
 
-- Ingen ändring av `templateSocialGoal`, `goalKind`, eller like-vägen.
-- Ingen ändring av `goal_event_apply` — den per-event-idempotensen står kvar oförändrad och är
-  det som skyddar mot replay från utkorgen.
-- Inga flaggändringar, ingen produktionsåtgärd.
+1. **Giltigt, deduplicerat slutframe-event.** `duplicate` är falskt, typen är `gift`, `giftId` finns.
+   Mellanframes i en streak är redan bortfiltrerade vid källan — i BÅDA vägarna
+   (`tiktok-bridge/bridge.js:374` och `electron-app/tiktok-service.js:97`).
+2. **Slå upp den inlärda regeln** `heart_me` via `Gavoidentitet.slaUppGiftId()`.
+3. **Matcha exakt `giftId`.** Ingen prefix-, delsträngs- eller namnmatchning.
+4. **Atomisk engångsinsättning** på `(session_id, widget_id, avsandarnyckel)`.
+5. **Öka målet endast om insättningen skapade en ny rad** — `progress + 1`, `revision + 1`.
 
-## Beslutat — ingen öppen punkt kvar
+Varje steg är fail-closed: saknas något händer ingenting alls. Ingen aktiv session, ingen inlärd
+identitet, tom avsändarnyckel, fel `giftId` ⇒ `+0`.
 
-Gåvan är **låst till Heart Me**. Ingen gåvoväljare, inget `heartGiftId`-fält, ingen ny inställning.
-`templateHeartGoal` behåller `heartCurrent` och `heartTarget` precis som i dag, så användarens
-`target = 50` och övrig målkonfiguration bevaras oförändrad och befintliga widgets får den nya
-betydelsen utan omkonfiguration.
+### Kopplingen i ingest-kedjan
+
+Samma fire-and-forget-mönster som `streamStats.record()` och `Gavoidentitet.fangaFranEvent()`: inte
+`await`:at, bara på `!raw.duplicate`, och med `.catch()` — en avvisad promise utan hanterare fäller
+hela processen i Node. En målskrivning får aldrig hindra eventet från att nå overlayet.
+
+---
+
+## Vad som INTE ändras
+
+- `templateSocialGoal` med `goalKind: 'likes'` fortsätter räkna likes precis som förut.
+- `contributionsFor()` är orörd.
+- `baseline`, `target` och `epoch` ägs av konfigurationen, inte av räknaren.
+- Transportlagret. `cleanEvent` (`server/event-bus.js:13-27`) bär redan `userId`, `username` och
+  `giftId` — ingenting behövde läggas till.
+- Paritetsprovet `tests/goal-metric-parity.test.js` jämför `goalKind()`, inte `metricForWidget()`,
+  så mappningen kunde ändras utan att klient och server drev isär.
+
+## Bevisen
+
+`server/test/heart-me-unika-avsandare.test.js` kräver isolerad Postgres (`TEST_DATABASE_URL`) — en
+unikhetsnyckel går inte att prova mot en attrapp. Provfilen körs i CI-jobbet *Goal runtime ·
+Postgres 18*, som listar sina filer explicit; den måste stå i listan för att köras alls.
+
+Slutbeviset, med syntetiska namn:
+
+| Scenario | Förväntat |
+|---|---|
+| Anna skickar tre Heart Me | `+1` |
+| Anna och Bo skickar en var | `+2` |
+| Rose, okänd gåva och likes | `+0` |
+| Ny livesession, Anna skickar igen | `+1` till |

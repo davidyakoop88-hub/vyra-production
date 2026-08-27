@@ -396,6 +396,7 @@
         "server/goal-metrics.js",
         "server/gavoidentitet.js",
         "server/regelnycklar.js",
+        "server/heart-me-goal.js",
         "gift-identity-larlage.js",
         "scripts/goal-*.js"
       ],

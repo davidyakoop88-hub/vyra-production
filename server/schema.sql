@@ -156,7 +156,14 @@ CREATE INDEX IF NOT EXISTS tiktok_connections_active_idx ON tiktok_connections(w
 CREATE TABLE IF NOT EXISTS goal_runtime (
   overlay_id  uuid    NOT NULL REFERENCES overlays(id) ON DELETE CASCADE,
   widget_id   text    NOT NULL,
-  metric      text    NOT NULL CHECK (metric IN ('follows','likes','shares','gifts','diamonds')),
+  metric      text    NOT NULL CHECK (metric IN ('follows','likes','shares','gifts','diamonds',
+                                                   -- ADDITIVT TILLAGG. unique_gift_senders matas
+                                                   -- ALDRIG av contributionsFor() — den finns just
+                                                   -- for att den generella "varje gava raknas"-vagen
+                                                   -- inte ska rora Heart Me Goal. Endast
+                                                   -- heart-me-goal.js okar den, och bara nar
+                                                   -- engangsliggaren skapade en ny rad.
+                                                   'unique_gift_senders')),
   baseline    bigint  NOT NULL DEFAULT 0 CHECK (baseline >= 0),
   progress    bigint  NOT NULL DEFAULT 0 CHECK (progress >= 0),
   target      bigint  NOT NULL DEFAULT 1000 CHECK (target > 0),
@@ -182,6 +189,34 @@ CREATE INDEX IF NOT EXISTS goal_runtime_metric_idx ON goal_runtime(overlay_id,me
 -- and every production row predates this column. DEFAULT 0 starts them all at the same place; the
 -- first write after the migration is 1 and every client sees it as newer.
 ALTER TABLE goal_runtime ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0;
+-- ADDITIV UTOKNING AV METRIKVILLKORET (unique_gift_senders, Heart Me Goal).
+--
+-- EXAKT SAMMA FALLA som revision-kolumnen ovan och trial_end nedan: CREATE TABLE IF NOT EXISTS gor
+-- ingenting alls med en tabell som redan finns, sa den utokade CHECK-listan i definitionen ovan
+-- nar ALDRIG en befintlig databas. Utan det har blocket hade varje overlay-sparning med en Heart
+-- Me Goal kraschat pa "violates check constraint goal_runtime_metric_check" i produktion.
+--
+-- Villkoret sokes pa sin DEFINITION, inte pa sitt namn: en tabell som en gang skapats med ett annat
+-- constraint-namn hade annars behallit det gamla villkoret tyst. Blocket ar idempotent — kanner
+-- villkoret redan metriken gors ingenting, sa en omkorning av schema.sql (varje deploy) ar en no-op.
+DO $$
+DECLARE gammalt text;
+BEGIN
+  SELECT conname INTO gammalt FROM pg_constraint
+   WHERE conrelid = 'goal_runtime'::regclass AND contype = 'c'
+     AND pg_get_constraintdef(oid) LIKE '%diamonds%'
+     AND pg_get_constraintdef(oid) NOT LIKE '%unique_gift_senders%'
+   LIMIT 1;
+  IF gammalt IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE goal_runtime DROP CONSTRAINT %I', gammalt);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'goal_runtime'::regclass AND contype = 'c'
+                    AND pg_get_constraintdef(oid) LIKE '%unique_gift_senders%') THEN
+    ALTER TABLE goal_runtime ADD CONSTRAINT goal_runtime_metric_check
+      CHECK (metric IN ('follows','likes','shares','gifts','diamonds','unique_gift_senders'));
+  END IF;
+END $$;
 -- CREATE TABLE IF NOT EXISTS hoppas over for en tabell som redan finns, sa en ny kolumn nar
 -- ALDRIG en befintlig databas utan den har raden. Utan den hade webhookens INSERT kraschat pa
 -- "column trial_end does not exist" i produktion, och varje prenumerationshandelse gatt forlorad.
@@ -532,4 +567,25 @@ CREATE TABLE IF NOT EXISTS gift_learn_arm (
   fangad_gift_image text,
   fangad_at         timestamptz,
   PRIMARY KEY (workspace_id, rule_key)
+);
+
+-- ============================================================================================
+-- HEART ME GOAL · engangsliggare per person och sandning (docs/heart-me-goal-design.md)
+--
+-- Tva OLIKA skydd, latt att blanda ihop:
+--   raw.duplicate / goal_event_apply  skyddar mot samma EVENT levererat flera ganger
+--   den har raden                     skyddar mot att samma PERSON bidrar flera ganger
+--
+-- Nyckeln bar session_id, sa "samma person raknas igen nasta LIVE" faller ut gratis: en ny
+-- sandning ger en ny session och darmed en tom nyckelrymd. Ingen stadrutin behovs — raderna
+-- forsvinner med sessionen via ON DELETE CASCADE.
+--
+-- avsandarnyckel ar husets PSEUDONYMA serverago identitet (identitet() i stream-stats.js:
+-- strip @, trim, lowercase) — samma som gifter_totals.viewer_id. Inget synligt anvandarnamn
+-- lagras, och nyckeln loggas aldrig.
+CREATE TABLE IF NOT EXISTS heart_me_bidrag (
+  session_id      uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
+  widget_id       text NOT NULL,
+  avsandarnyckel  text NOT NULL,
+  PRIMARY KEY (session_id, widget_id, avsandarnyckel)
 );

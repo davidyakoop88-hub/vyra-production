@@ -283,7 +283,8 @@ api('en GET på en gammal overlay skapar raderna och listar dem i samma svar', a
   assert.equal(byId['w-a2'].baseline, 10);
   assert.equal(byId['w-a1'].target, 1000);
   assert.equal(byId['w-a3'].target, 50);
-  assert.equal(byId['w-a3'].metric, 'likes');
+  // PRODUKTBESLUT 2026-08-26: Heart Me Goal raknar unika Heart Me-avsandare, inte TikTok-likes.
+  assert.equal(byId['w-a3'].metric, 'unique_gift_senders');
   assert.equal(byId['w-a1'].metric, 'follows');
 
   // A non-goal widget never becomes a row, whatever id it carries.
