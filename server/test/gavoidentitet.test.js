@@ -343,15 +343,18 @@ prov('ingenting om avsändaren lagras någonsin', async () => {
 
 prov('lärläget rör inte mål eller statistik', async () => {
   finns();
+  // FÖRE-mätning, inte "= 0". Provfiler DELAR databas i CI-jobbet, så goal_runtime kan redan bära
+  // rader från en annan fil — ett absolut noll mäter deras städning, inte vår invariant.
+  const malFore = (await pool.query('SELECT count(*)::int AS n FROM goal_runtime')).rows[0].n;
   await G.armera(pool, WS, REGEL);
   await G.fangaFranEvent(pool, WS, gava());
   await G.bekrafta(pool, WS, REGEL);
   assert.ok(await identitet(), 'kontrollmätning: lärläget gjorde något');
 
-  const goal = await pool.query('SELECT count(*)::int AS n FROM goal_runtime');
   const gifter = await pool.query('SELECT count(*)::int AS n FROM gifter_totals WHERE workspace_id=$1', [WS]);
-  assert.equal(goal.rows[0].n, 0, 'inga målrader');
   assert.equal(gifter.rows[0].n, 0, 'inga statistikrader — det ägs av stream-stats');
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM goal_runtime')).rows[0].n, malFore,
+    'lärläget får inte skapa eller röra målrader');
 });
 
 // ---- VAKT: SLUTFRAME-INVARIANTEN I BRYGGAN ----------------------------------------------------
