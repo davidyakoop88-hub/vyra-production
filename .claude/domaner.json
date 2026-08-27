@@ -417,7 +417,8 @@
         "server/test/gavoidentitet.test.js",
         "server/test/regelnycklar.test.js",
         "tests/gift-identity-larlage.test.js",
-        "server/test/heart-me-unika-avsandare.test.js"
+        "server/test/heart-me-unika-avsandare.test.js",
+        "tests/goal-postgres-flode.test.js"
       ],
       "matning": [
         { "namn": "Genomstromning", "kommando": "node scripts/goal-throughput.js" },
