@@ -208,3 +208,60 @@ Slutbeviset, med syntetiska namn:
 | Anna och Bo skickar en var | `+2` |
 | Rose, okänd gåva och likes | `+0` |
 | Ny livesession, Anna skickar igen | `+1` till |
+
+---
+
+## ⚠️ Rotera aldrig `APP_ENCRYPTION_KEY` under en aktiv livesändning
+
+Nyckeln till liggaren härleds ur `APP_ENCRYPTION_KEY`. Byts hemligheten byts därför **varje**
+avsändarnyckel i samma ögonblick.
+
+**Vad som händer mitt i en sändning:** en person som redan bidragit får en ny nyckel. Nästa Heart Me
+från samma person träffar inte längre den befintliga raden i `heart_me_bidrag`, utan skapar en ny —
+och målet **ökas en gång till**. Taket är `+1` extra per person och rotation, men siffran blir fel
+och går inte att skilja från en riktig ny givare i efterhand.
+
+Gamla rader blir samtidigt oanvändbara: de matchar ingen framtida nyckel. De är ofarliga och
+försvinner ändå med sändningen via `ON DELETE CASCADE`.
+
+**Regeln:** rotera bara när ingen sändning pågår. Efter en avslutad sändning finns inga rader kvar
+att bli fel, så en rotation mellan sändningar är riskfri för det här målet.
+
+### Rotation är redan en tung operation av ett större skäl
+
+Det här målet är **inte** den dyraste konsekvensen av en rotation. Samma hemlighet förseglar
+**lagrade MFA-hemligheter** (`server/mfa.js` via `server/token-vault.js`, AES-256-GCM). En rotation
+gör varje lagrad MFA-hemlighet omöjlig att dekryptera, alltså **utelåsning av varje användare med
+tvåfaktor påslagen** tills de registrerar om sin autentiserare. Samma nyckel förseglar även
+åtgärds-URL:er i `notification_outbox`, men de är kortlivade.
+
+En rotation kräver därför en egen plan oavsett Heart Me Goal. Punkten här är att lägga till ett
+villkor till den planen: **inte under en aktiv LIVE**.
+
+### Om bara Heart Me-nycklarna behöver bytas
+
+`ETIKETT` i `server/heart-me-goal.js` bär en version (`vyra:heart-me-bidrag:v1`). Att höja den till
+`v2` byter enbart det här målets nycklar och rör varken MFA eller något annat — men samma
+sändningsvillkor gäller: gör det mellan sändningar, inte under en.
+
+---
+
+## Kvar: verifiering i verklig LIVE
+
+Postgres-proven täcker logiken. Det som återstår är att se kedjan gå hela vägen i drift, med riktiga
+gåvor från riktiga konton.
+
+| Steg | Förväntat |
+|---|---|
+| 1. Lär in och **bekräfta** Heart Me i Studio | `gift_rule_identity` får en rad på nyckeln `heart_me` |
+| 2. Anna skickar tre Heart Me | målet visar `+1` |
+| 3. Bo skickar en Heart Me | målet visar `+2` |
+| 4. Rose och likes | målet står still — `+0` |
+| 5. Avsluta och starta en **ny** LIVE, Anna skickar igen | målet visar `+1` |
+
+Steg 1 är en förutsättning för alla övriga: utan bekräftad identitet räknar målet med flit
+ingenting, och steg 2–5 skulle då se ut som en bugg utan att vara det.
+
+**Kontrollera också** att `APP_ENCRYPTION_KEY` är satt på `Api`-tjänsten. Är den inte det räknar
+målet ingenting alls — fail-closed är avsiktligt, men det är tyst, så det syns bara som en widget
+som står på noll.
