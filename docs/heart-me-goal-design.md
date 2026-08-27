@@ -90,9 +90,30 @@ CREATE TABLE heart_me_bidrag (
   ny session och därmed en tom nyckelrymd. Ingen nollställningsrutin behövs.
 - **`ON DELETE CASCADE` är städningen.** Raderna försvinner med sessionen; ingen cron, inget TTL.
 - **`widget_id` i nyckeln** gör att två Heart Me Goal-widgets i samma overlay räknar oberoende.
-- **Pseudonym.** `avsandarnyckel` är husets serverägda identitet — samma regel som `identitet()` i
-  `stream-stats.js` (strip `@`, trim, lowercase), alltså samma nyckel som `gifter_totals.viewer_id`.
-  Inget synligt användarnamn lagras, och nyckeln loggas aldrig.
+- **`avsandarnyckel` är husets normaliserade tittaridentitet** — samma regel som `identitet()` i
+  `stream-stats.js` (strip `@`, trim, lowercase), alltså samma värde som `gifter_totals.viewer_id`.
+
+### Vad avsändarnyckeln är, och vad den inte är
+
+Var precis här, för det är lätt att lova för mycket.
+
+**Den är ingen hash.** Nyckeln *är* användarnamnet — gemener, utan `@`. `@Anna` blir `anna`, och
+namnet går trivialt att läsa ur nyckeln. Att kalla den *pseudonym* i betydelsen "identiteten är
+skyddad" vore fel.
+
+Det som faktiskt gäller, och som proven mäter:
+
+| Påstående | Status |
+|---|---|
+| Liggaren bär bara nyckeln — inget visningsnamn, ingen avatar, inget `giftId`, ingen payload, ingen tidsstämpel | mätt strukturellt (tabellen har exakt tre kolumner) och innehållsligt |
+| Ingen NY kategori av personuppgift tillkommer — samma värde finns redan i `gifter_totals.viewer_id`, som dessutom lagrar `display_name` och `avatar_url` | sant |
+| Raden försvinner med sändningen | mätt (`ON DELETE CASCADE`) |
+| Varken modulen eller ingest-kopplingen loggar något | mätt via källvakt |
+
+**Om starkare skydd önskas** finns en enkel väg: lagra `HMAC-SHA256(serverhemlighet, viewer_id)` i
+stället. Nyckeln behöver aldrig join:as mot `gifter_totals` — den jämförs bara med sig själv inom en
+sändning — så bytet kostar ungefär fem rader. Priset är att en rad inte längre går att felsöka mot
+en verklig tittare. **Det är Davids beslut, inte ett tekniskt hinder.**
 
 ### Dedupen är en primärnyckel, inte kod
 

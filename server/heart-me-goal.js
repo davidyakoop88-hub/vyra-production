@@ -19,9 +19,16 @@
 const Regelnycklar = require('./regelnycklar');
 const Gavoidentitet = require('./gavoidentitet');
 
-// Husets pseudonyma serverägda avsändarnyckel. Samma regel som identitet() i stream-stats.js, så
-// målet och gifter_totals är överens om vem som är samma person: '@Anna' och 'anna' är en person.
-// Inget synligt användarnamn lagras och nyckeln loggas aldrig.
+// Husets NORMALISERADE tittaridentitet. Samma regel som identitet() i stream-stats.js, så målet och
+// gifter_totals är överens om vem som är samma person: '@Anna' och 'anna' är en person.
+//
+// VAD DEN INTE ÄR: den är ingen hash. Nyckeln ÄR användarnamnet, gemener och utan '@' — namnet går
+// trivialt att läsa ur den. Att kalla den pseudonym vore att lova mer än den håller.
+//
+// Vad som däremot gäller: liggaren lagrar bara nyckeln — inget visningsnamn, ingen avatar, inget
+// giftId, ingen payload, ingen tidsstämpel. Det är samma nyckel huset redan lagrar i
+// gifter_totals.viewer_id, så ingen NY kategori av personuppgift tillkommer, och raden försvinner
+// med sändningen. Modulen loggar ingenting alls.
 function avsandarnyckel(event) {
   const raw = (event && (event.username || event.uniqueId || event.userId)) || '';
   const id = String(raw).replace(/^@/, '').trim().toLowerCase();

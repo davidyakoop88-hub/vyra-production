@@ -22,6 +22,10 @@
 // nyckeln `heart_me` — riggen skriver den raden som lärläget skulle ha gjort. Ingen katalog, ingen
 // namnmatchning.
 //
+// AVSÄNDARNYCKELN ÄR INGEN HASH. Den är användarnamnet i gemener utan '@' — samma värde som
+// gifter_totals.viewer_id. Proven mäter därför det som FAKTISKT gäller: liggaren bär bara nyckeln,
+// tabellen har exakt tre kolumner, och varken modulen eller kopplingen loggar något.
+//
 // SYNTETISKA VÄRDEN ÖVERALLT. Inga verkliga konto-, rums- eller användarnamn. Rums-id:n har samma
 // 19-siffriga form som TikToks men är påhittade.
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -332,7 +336,7 @@ prov('liggaren lagrar ingen synlig form av namnet', async () => {
   const q = await pool.query(
     'SELECT avsandarnyckel FROM heart_me_bidrag WHERE session_id=$1 AND widget_id=$2', [sessionId, WIDGET]);
   assert.equal(q.rowCount, 1);
-  assert.equal(q.rows[0].avsandarnyckel, ANNA, 'bara den pseudonyma nyckeln, aldrig visningsnamnet');
+  assert.equal(q.rows[0].avsandarnyckel, ANNA, 'bara den normaliserade nyckeln, aldrig visningsnamnet');
   assert.ok(!/[@A-ZÅÄÖ]/.test(q.rows[0].avsandarnyckel), 'ingen versal och inget @ ska ha överlevt');
 });
 
@@ -428,49 +432,131 @@ prov('schema.sql är idempotent — en omkörning är en no-op', async () => {
   assert.match(q.rows[0].def, /unique_gift_senders/, 'och det ska känna den nya metriken');
 });
 
-prov('engångsrättningen flyttar ett BEFINTLIGT Heart Me-mål bort från likes', async () => {
-  // Det här är hela poängen med migrationen. Backfillen och syncGoalsFromState är båda
-  // ON CONFLICT DO NOTHING, så en rad som REDAN finns rörs av ingen av dem. Utan rättningen hade
-  // varje Heart Me Goal som skapades före det här släppet fortsatt räkna TikTok-likes i produktion.
-  const fs = require('node:fs'), path = require('node:path');
-  const sql = fs.readFileSync(path.join(__dirname, '..', 'schema.sql'), 'utf8');
+// ---- ENGÅNGSRÄTTNINGEN, PUNKT FÖR PUNKT -------------------------------------------------------
+//
+// Migrationens hela poäng: backfillen och syncGoalsFromState är BÅDA ON CONFLICT DO NOTHING, så en
+// rad som redan finns rörs av ingen av dem. Utan rättningen hade varje Heart Me Goal som skapades
+// före det här släppet fortsatt räkna TikTok-likes i produktion.
+//
+// Fem påståenden, fem prov. Att slå ihop dem DÖLJER den farligaste varianten: så länge progress
+// redan är noll kan ett prov inte skilja "rättningen rörde ingenting" från "rättningen nollställde
+// en gång till". Därför har både den redan rättade raden och idempotensen egna prov med en siffra
+// som INTE är noll.
 
-  // En overlay-state som gör widgeten till ett Heart Me Goal, och en runtime-rad som ser ut som
-  // produktion såg ut i test-LIVE 2: metric likes, en hög ackumulerad likessiffra.
-  await pool.query(`UPDATE overlays SET state = $2 WHERE id = $1`,
-    [OVERLAY, JSON.stringify({ widgets: [{ id: WIDGET, type: 'templateHeartGoal' }] })]);
-  await pool.query('DELETE FROM goal_runtime WHERE overlay_id=$1', [OVERLAY]);
-  await pool.query(
-    `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, progress, target, epoch)
-     VALUES ($1,$2,'likes',5,433,50,1)`, [OVERLAY, WIDGET]);
+const SCHEMA = () => require('node:fs')
+  .readFileSync(require('node:path').join(__dirname, '..', 'schema.sql'), 'utf8');
+const deploy = () => pool.query(SCHEMA());          // exakt vad migrate.js gör vid varje deploy
 
-  await pool.query(sql);
+const medState = widgets => pool.query(
+  'UPDATE overlays SET state = $2 WHERE id = $1', [OVERLAY, JSON.stringify({ widgets })]);
+
+const medRad = (widgetId, metric, baseline, progress, target = 50, epoch = 1) => pool.query(
+  `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, progress, target, epoch)
+   VALUES ($1,$2,$3,$4,$5,$6,$7)
+   ON CONFLICT (overlay_id, widget_id) DO UPDATE
+     SET metric = EXCLUDED.metric, baseline = EXCLUDED.baseline, progress = EXCLUDED.progress,
+         target = EXCLUDED.target, epoch = EXCLUDED.epoch`,
+  [OVERLAY, widgetId, metric, baseline, progress, target, epoch]);
+
+const HEART_WIDGET = { id: WIDGET, type: 'templateHeartGoal' };
+const LIKE_WIDGET = { id: 'likemal-prov', type: 'templateSocialGoal', goalKind: 'likes' };
+
+prov('rättningen · ett GAMMALT Heart Me-mål flyttas bort från likes', async () => {
+  // Raden ser ut som produktionen såg ut i test-LIVE 2: metric likes, hög ackumulerad likessiffra.
+  await medState([HEART_WIDGET]);
+  await medRad(WIDGET, 'likes', 5, 433, 50, 1);
+
+  await deploy();
   const efter = await malrad();
   assert.equal(efter.metric, 'unique_gift_senders', 'metriken måste rättas');
   assert.equal(Number(efter.progress), 0, '433 var likes och betyder ingenting för unika givare');
-  assert.equal(Number(efter.baseline), 5, 'baseline är streamerns eget startvärde och rörs inte');
-  assert.equal(Number(efter.target), 50, 'målet rörs inte');
   assert.ok(Number(efter.epoch) > 1, 'epoch måste stiga — klienten ska se det som en nollställning');
+});
 
-  // KONTROLLMÄTNING: rättningen är riktad. Ett äkta like-mål i samma overlay rörs inte.
-  await pool.query(`UPDATE overlays SET state = $2 WHERE id = $1`,
-    [OVERLAY, JSON.stringify({ widgets: [
-      { id: WIDGET, type: 'templateHeartGoal' },
-      { id: 'likemal', type: 'templateSocialGoal', goalKind: 'likes' }] })]);
-  await pool.query(
-    `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, progress, target)
-     VALUES ($1,'likemal','likes',0,120,1000)`, [OVERLAY]);
-  await pool.query(sql);
-  const like = await malrad('likemal');
+prov('rättningen · baseline och target överlever orörda', async () => {
+  await medState([HEART_WIDGET]);
+  await medRad(WIDGET, 'likes', 5, 433, 77, 1);
+
+  await deploy();
+  const efter = await malrad();
+  assert.equal(Number(efter.baseline), 5, 'baseline är startvärdet streamern skrev in — en annan sak');
+  assert.equal(Number(efter.target), 77, 'målet ägs av konfigurationen och rörs aldrig av en migration');
+});
+
+prov('rättningen · ett vanligt Like Goal rörs inte', async () => {
+  await medState([HEART_WIDGET, LIKE_WIDGET]);
+  await medRad(WIDGET, 'likes', 0, 433, 50, 1);
+  await medRad(LIKE_WIDGET.id, 'likes', 0, 120, 1000, 3);
+
+  await deploy();
+  const like = await malrad(LIKE_WIDGET.id);
   assert.equal(like.metric, 'likes', 'ett riktigt like-mål får inte dras med');
   assert.equal(Number(like.progress), 120, 'och dess siffra får inte nollställas');
+  assert.equal(Number(like.epoch), 3, 'inte heller dess epoch — det var ingen nollställning för den');
 
-  // Och idempotent: en andra körning rör ingenting mer.
-  await pool.query(sql);
-  assert.equal(Number((await malrad()).progress), 0);
-  assert.equal(Number((await malrad('likemal')).progress), 120);
+  // KONTROLLMÄTNING: rättningen gjorde ändå sitt jobb på hjärtmålet i samma overlay.
+  assert.equal((await malrad()).metric, 'unique_gift_senders');
+});
 
-  await pool.query(`UPDATE overlays SET state = '{}'::jsonb WHERE id = $1`, [OVERLAY]);
+prov('rättningen · ett REDAN RÄTT Heart Me-mål nollställs inte vid nästa deploy', async () => {
+  // DET FARLIGASTE PROVET. Om villkoret hade matchat på widgettyp i stället för på fel metrik hade
+  // varje deploy nollställt ett fungerande mål mitt i sändningen — och ett prov där progress redan
+  // är noll hade inte märkt något. Därför står siffran här på sju.
+  await medState([HEART_WIDGET]);
+  await medRad(WIDGET, 'unique_gift_senders', 2, 7, 50, 4);
+
+  await deploy();
+  const efter = await malrad();
+  assert.equal(Number(efter.progress), 7, 'sju unika givare får inte försvinna vid en deploy');
+  assert.equal(Number(efter.epoch), 4, 'och epoch får inte stiga — ingen nollställning skedde');
+  assert.equal(Number(efter.baseline), 2);
+  assert.equal(efter.metric, 'unique_gift_senders');
+});
+
+prov('rättningen · är idempotent, epoch stiger exakt EN gång över tre deploys', async () => {
+  await medState([HEART_WIDGET]);
+  await medRad(WIDGET, 'likes', 5, 433, 50, 1);
+
+  await deploy();
+  const forsta = await malrad();
+  assert.equal(Number(forsta.progress), 0, 'första deployen rättar');
+  const epokEfterRattning = Number(forsta.epoch);
+  assert.ok(epokEfterRattning > 1);
+
+  // Två deploys till. En rättning som körde om hade synts som en epoch till.
+  await deploy();
+  await deploy();
+  const efter = await malrad();
+  assert.equal(Number(efter.epoch), epokEfterRattning,
+    'rättningen körde om — då nollställs målet vid varje deploy för all framtid');
+  assert.equal(Number(efter.progress), 0);
+  assert.equal(Number(efter.baseline), 5);
+});
+
+prov('liggaren har exakt tre kolumner — ingen plats för namn, gåva eller payload', async () => {
+  // Strukturellt, inte innehållsligt. Ett prov som bara läser raderna hade gått grönt dagen någon
+  // lade till en `username`- eller `gift_id`-kolumn "för felsökning". En ny kolumn i liggaren är en
+  // ny personuppgift och ska kräva ett medvetet beslut, inte glida in.
+  const q = await pool.query(
+    `SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'heart_me_bidrag' ORDER BY column_name`);
+  assert.deepEqual(q.rows.map(r => r.column_name),
+    ['avsandarnyckel', 'session_id', 'widget_id'],
+    'liggaren ska bära nyckeln och ingenting annat — ingen payload, ingen gåva, inget visningsnamn');
+});
+
+prov('liggaren bär varken giftId eller rått visningsnamn efter en riktig gåva', async () => {
+  const sessionId = await nySession(RUM_1);
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME,
+    { username: '@Provgivare_ANNA', userId: '@Provgivare_ANNA' }));
+
+  const q = await pool.query('SELECT * FROM heart_me_bidrag WHERE session_id=$1', [sessionId]);
+  assert.equal(q.rowCount, 1);
+  const varden = Object.values(q.rows[0]).map(String).join(' | ');
+  assert.ok(!varden.includes(HEART_ME), 'gåvans id får inte lagras i liggaren');
+  assert.ok(!varden.includes('@'), 'ingen @-form av namnet får ha överlevt');
+  assert.ok(!varden.includes('Provgivare_ANNA'), 'det råa visningsnamnet får inte lagras');
+  assert.ok(varden.includes(ANNA), 'nyckeln själv ska finnas — annars mäter provet ingenting');
 });
 
 prov('liggaren kaskaderar från stream_sessions', async () => {
@@ -479,7 +565,7 @@ prov('liggaren kaskaderar från stream_sessions', async () => {
       WHERE conrelid = 'heart_me_bidrag'::regclass AND contype = 'f'`);
   assert.equal(q.rowCount, 1, 'liggaren ska ha exakt en främmande nyckel');
   assert.equal(q.rows[0].confdeltype, 'c',
-    'utan ON DELETE CASCADE blir liggaren en pseudonym personuppgift som aldrig städas');
+    'utan ON DELETE CASCADE blir liggaren en personuppgift som aldrig städas');
 });
 
 // ---- KÄLLVAKTER (kräver ingen databas) --------------------------------------------------------
@@ -531,6 +617,31 @@ test('vakt: den generella motorn kan inte ens räkna fram unique_gift_senders', 
 
   // KONTROLLMÄTNING: svepet kan hitta något alls — annars bevisar slingan ingenting.
   assert.ok(GoalRuntime.contributionsFor({ type: 'gift', count: 3, value: 15 }).length > 0);
+});
+
+test('vakt: modulen loggar ingenting alls, och kopplingen sväljer felet tyst', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const modul = fs.readFileSync(path.join(__dirname, '..', 'heart-me-goal.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split(/\r?\n/).map(r => r.replace(/\/\/.*$/, '')).join('\n');
+
+  // Ingen loggning alls är det enda som säkert håller: en loggrad som bär eventet eller nyckeln är
+  // en läcka, och "logga bara vid fel" är precis när payloaden är som mest intressant att skriva ut.
+  assert.ok(!/console\./.test(modul), 'modulen får inte logga — den ser varje gåva som passerar');
+  assert.ok(!/\blog\s*\(/.test(modul), 'ingen injicerad logger heller');
+
+  // Kopplingen i ingest-kedjan måste svälja felet utan att skriva ut det anrop som bar eventet.
+  const rad = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8')
+    .split(/\r?\n/).find(r => r.includes('HeartMeGoal.applyOchPublicera'));
+  assert.ok(rad, 'kopplingen i ingest-kedjan hittades inte');
+  assert.ok(rad.trimEnd().endsWith('.catch(()=>{});'),
+    'anropet måste sluta i en tom catch — en avvisad promise utan hanterare fäller processen, ' +
+    'och en catch som loggar skulle skriva ut eventet');
+  assert.ok(!/console\./.test(rad), 'kopplingsraden får inte logga');
+
+  // KONTROLLMÄTNING: mönstren kan träffa.
+  assert.ok(/console\./.test('console.warn(x)'));
+  assert.ok(!'foo.catch(e=>console.log(e));'.trimEnd().endsWith('.catch(()=>{});'));
 });
 
 test('vakt: heart-me-goal.js matchar aldrig på giftName', () => {

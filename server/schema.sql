@@ -606,9 +606,10 @@ CREATE TABLE IF NOT EXISTS gift_learn_arm (
 -- sandning ger en ny session och darmed en tom nyckelrymd. Ingen stadrutin behovs — raderna
 -- forsvinner med sessionen via ON DELETE CASCADE.
 --
--- avsandarnyckel ar husets PSEUDONYMA serverago identitet (identitet() i stream-stats.js:
--- strip @, trim, lowercase) — samma som gifter_totals.viewer_id. Inget synligt anvandarnamn
--- lagras, och nyckeln loggas aldrig.
+-- avsandarnyckel ar husets NORMALISERADE tittaridentitet (identitet() i stream-stats.js: strip @,
+-- trim, lowercase) — samma varde som gifter_totals.viewer_id. Den ar INGEN hash: namnet gar att
+-- lasa ur den. Det som galler ar att tabellen bara bar nyckeln — inget visningsnamn, ingen avatar,
+-- inget giftId, ingen payload, ingen tidsstampel — och att raden forsvinner med sandningen.
 CREATE TABLE IF NOT EXISTS heart_me_bidrag (
   session_id      uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
   widget_id       text NOT NULL,
