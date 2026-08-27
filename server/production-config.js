@@ -1,4 +1,5 @@
 'use strict';
+const Nyckelformat=require('./krypteringsnyckel');
 const PLACEHOLDER=/example\.com|change-me|replace-with|localhost|127\.0\.0\.1/i;
 function httpsUrl(value,name){let url;try{url=new URL(String(value||''));if(url.protocol!=='https:'||url.username||url.password||PLACEHOLDER.test(url.hostname))throw Error()}catch{throw new Error(`${name} måste vara en riktig HTTPS-adress`)}return url}
 function secret(value,name,min=32){const raw=String(value||'');if(raw.length<min||PLACEHOLDER.test(raw)||/^(.)(\1)+$/.test(raw))throw new Error(`${name} är för svag eller saknas`);return raw}
@@ -51,6 +52,13 @@ function validateProductionEnv(env=process.env){
 });
   check(()=>{let url;try{url=new URL(String(env.REDIS_URL||''))}catch{}const privateRailway=url&&url.protocol==='redis:'&&/\.railway\.internal$/i.test(url.hostname);if(!url||(!privateRailway&&url.protocol!=='rediss:')||PLACEHOLDER.test(url.hostname))throw new Error('REDIS_URL måste vara rediss:// eller privat Railway redis://')});
   ['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].forEach(name=>check(()=>secret(env[name],name)));
+  // APP_ENCRYPTION_KEY har ETT KRAV TILL, och det ar hardare: exakt 32 bytes kanonisk base64url.
+  // secret() ovan kraver bara 32 TECKEN, och glappet mellan de tva var tyst — en nyckel som klarade
+  // secret() men inte formen lat servern starta och se frisk ut, medan token-vault kastade forst vid
+  // anvandning (MFA) och heart-me-goal.js rakade NOLL i tysthet. Bada kontrollerna behovs: den har
+  // sager INGENTING om platshallare eller upprepade tecken, och 43 likadana tecken ar en kanonisk
+  // nyckel men en usel hemlighet.
+  check(()=>{ if(!Nyckelformat.arGiltig(env.APP_ENCRYPTION_KEY)) throw new Error(`APP_ENCRYPTION_KEY ${Nyckelformat.KRAV}`) });
   check(()=>{const values=['APP_ENCRYPTION_KEY','TIKTOK_INGEST_TOKEN','METRICS_TOKEN','MEDIA_SCAN_TOKEN'].map(name=>env[name]);if(new Set(values).size!==values.length)throw new Error('Produktionshemligheter måste vara unika')});
   check(()=>httpsUrl(env.OBJECT_ENDPOINT,'OBJECT_ENDPOINT'));if(env.CDN_ORIGIN)check(()=>httpsUrl(env.CDN_ORIGIN,'CDN_ORIGIN'));
   check(()=>secret(env.OBJECT_ACCESS_KEY,'OBJECT_ACCESS_KEY',16));check(()=>secret(env.OBJECT_SECRET_KEY,'OBJECT_SECRET_KEY'));

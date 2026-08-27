@@ -21,6 +21,7 @@
 // intressant att skriva ut. Ett vaktprov faller om ett `console.` dyker upp här.
 
 const crypto = require('node:crypto');
+const Nyckel = require('./krypteringsnyckel');
 const Regelnycklar = require('./regelnycklar');
 const Gavoidentitet = require('./gavoidentitet');
 
@@ -41,7 +42,6 @@ const Gavoidentitet = require('./gavoidentitet');
 //     person gett två nycklar och räknats som två personer.
 const ETIKETT = 'vyra:heart-me-bidrag:v1';
 const SEP = String.fromCharCode(31);   // unit separator — kan inte förekomma i något av fälten
-const NYCKELLANGD = 32;                // samma krav som token-vault.js ställer på hemligheten
 
 let cachadRa = null, cachadNyckel = null;
 
@@ -61,8 +61,8 @@ function harledNyckel() {
   const ra = process.env.APP_ENCRYPTION_KEY || '';
   if (!ra) return null;
   if (ra === cachadRa) return cachadNyckel;
-  const bytes = Buffer.from(ra, 'base64url');
-  if (bytes.length !== NYCKELLANGD) return null;
+  const bytes = Nyckel.las(ra);          // samma strikta tolkning som uppstarten och token-vault
+  if (!bytes) return null;
   cachadRa = ra;
   cachadNyckel = crypto.createHmac('sha256', bytes).update(ETIKETT).digest();
   return cachadNyckel;
