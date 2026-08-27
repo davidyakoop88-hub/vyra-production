@@ -125,6 +125,9 @@ async function rensa() {
   await pool.query('DELETE FROM stream_sessions WHERE workspace_id=$1', [WS]);  // liggaren cascadar
   await pool.query('DELETE FROM goal_runtime WHERE overlay_id=$1', [OVERLAY]);
   await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  // Tom state: migrationsprovet nedan fyller den, och en kvarlämnad widget skulle låta schema.sql:s
+  // backfill skapa rader mitt i ett annat prov.
+  await pool.query(`UPDATE overlays SET state = '{}'::jsonb WHERE id = $1`, [OVERLAY]);
 }
 
 test.beforeEach(async () => {
@@ -415,6 +418,51 @@ prov('schema.sql är idempotent — en omkörning är en no-op', async () => {
         AND pg_get_constraintdef(oid) LIKE '%diamonds%'`);
   assert.equal(q.rowCount, 1, 'exakt ett metrikvillkor ska finnas — inte noll, inte två');
   assert.match(q.rows[0].def, /unique_gift_senders/, 'och det ska känna den nya metriken');
+});
+
+prov('engångsrättningen flyttar ett BEFINTLIGT Heart Me-mål bort från likes', async () => {
+  // Det här är hela poängen med migrationen. Backfillen och syncGoalsFromState är båda
+  // ON CONFLICT DO NOTHING, så en rad som REDAN finns rörs av ingen av dem. Utan rättningen hade
+  // varje Heart Me Goal som skapades före det här släppet fortsatt räkna TikTok-likes i produktion.
+  const fs = require('node:fs'), path = require('node:path');
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'schema.sql'), 'utf8');
+
+  // En overlay-state som gör widgeten till ett Heart Me Goal, och en runtime-rad som ser ut som
+  // produktion såg ut i test-LIVE 2: metric likes, en hög ackumulerad likessiffra.
+  await pool.query(`UPDATE overlays SET state = $2 WHERE id = $1`,
+    [OVERLAY, JSON.stringify({ widgets: [{ id: WIDGET, type: 'templateHeartGoal' }] })]);
+  await pool.query('DELETE FROM goal_runtime WHERE overlay_id=$1', [OVERLAY]);
+  await pool.query(
+    `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, progress, target, epoch)
+     VALUES ($1,$2,'likes',5,433,50,1)`, [OVERLAY, WIDGET]);
+
+  await pool.query(sql);
+  const efter = await malrad();
+  assert.equal(efter.metric, 'unique_gift_senders', 'metriken måste rättas');
+  assert.equal(Number(efter.progress), 0, '433 var likes och betyder ingenting för unika givare');
+  assert.equal(Number(efter.baseline), 5, 'baseline är streamerns eget startvärde och rörs inte');
+  assert.equal(Number(efter.target), 50, 'målet rörs inte');
+  assert.ok(Number(efter.epoch) > 1, 'epoch måste stiga — klienten ska se det som en nollställning');
+
+  // KONTROLLMÄTNING: rättningen är riktad. Ett äkta like-mål i samma overlay rörs inte.
+  await pool.query(`UPDATE overlays SET state = $2 WHERE id = $1`,
+    [OVERLAY, JSON.stringify({ widgets: [
+      { id: WIDGET, type: 'templateHeartGoal' },
+      { id: 'likemal', type: 'templateSocialGoal', goalKind: 'likes' }] })]);
+  await pool.query(
+    `INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, progress, target)
+     VALUES ($1,'likemal','likes',0,120,1000)`, [OVERLAY]);
+  await pool.query(sql);
+  const like = await malrad('likemal');
+  assert.equal(like.metric, 'likes', 'ett riktigt like-mål får inte dras med');
+  assert.equal(Number(like.progress), 120, 'och dess siffra får inte nollställas');
+
+  // Och idempotent: en andra körning rör ingenting mer.
+  await pool.query(sql);
+  assert.equal(Number((await malrad()).progress), 0);
+  assert.equal(Number((await malrad('likemal')).progress), 120);
+
+  await pool.query(`UPDATE overlays SET state = '{}'::jsonb WHERE id = $1`, [OVERLAY]);
 });
 
 prov('liggaren kaskaderar från stream_sessions', async () => {
