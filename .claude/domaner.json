@@ -394,6 +394,8 @@
         "server/goal-ingest.js",
         "server/goal-sse.js",
         "server/goal-metrics.js",
+        "server/gavoidentitet.js",
+        "gift-identity-larlage.js",
         "scripts/goal-*.js"
       ],
       "tester": [
@@ -410,7 +412,8 @@
         "tests/browser/goal-modell3-bredd.browser.test.js",
         "server/test/goal-*.test.js",
         "server/test/studio-goal-stream.test.js",
-        "server/test/gavoidentitet.test.js"
+        "server/test/gavoidentitet.test.js",
+        "tests/gift-identity-larlage.test.js"
       ],
       "matning": [
         { "namn": "Genomstromning", "kommando": "node scripts/goal-throughput.js" },
