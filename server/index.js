@@ -140,7 +140,7 @@ function rawBody(req,max=1024*1024){return new Promise((resolve,reject)=>{let si
 function sameOrigin(req){const origin=req.headers.origin;return !origin||origin===ORIGIN}
 async function session(req,{csrf=false}={}){const raw=S.parseCookies(req.headers.cookie).vyra_session;if(!raw)return null;const q=await pool.query('SELECT s.*,u.email,u.display_name,u.disabled_at,u.email_verified_at,u.mfa_secret_enc,u.mfa_enabled_at,u.mfa_recovery_hashes,u.deletion_requested_at,u.is_platform_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()',[S.digest(raw)]);const row=q.rows[0];if(!row||row.disabled_at)return null;if(csrf&&S.digest(req.headers['x-vyra-csrf']||'')!==row.csrf_hash)return null;return row}
 // Sandningsidentiteten. Modulen ager hela sessionsbeslutet; rutterna har ar tunna skal.
-const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const {startStreamWorker}=require('./stream-worker');
+const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const Regelnycklar=require('./regelnycklar');const {startStreamWorker}=require('./stream-worker');
 const StreamSessions=skapaStreamSessions({pool});
 // MASKIN-AUTH VID HTTP-FORTROENDEGRANSEN. Husets enda ingestkontroll, extraherad ur den gamla
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
@@ -467,8 +467,14 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // another overlay does not exist here, whichever overlay id it is paired with.
   // GAVOIDENTITETENS LARLAGE. Att armera, bekrafta eller avbryta ar att ANDRA hur en regel
   // beter sig — darfor samma roller som en redigering, inte som en lasning.
-  const larRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/gift-identity\/([A-Za-z0-9_-]{1,120})(?:\/(armera|bekrafta|avbryt))?$/i);
-  if(larRoute){const[,workspaceId,ruleKey,handling]=larRoute;
+  const larRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/gift-identity\/([A-Za-z0-9_:-]{1,160})(?:\/(armera|bekrafta|avbryt))?$/i);
+  if(larRoute){const[,workspaceId,raNyckel,handling]=larRoute;
+    // SERVERN AGER NYCKELN. Regexen slapper igenom tecknen; formen avgors av Regelnycklar.validera,
+    // som bara kanner igen 'heart_me' och 'gift_campaign:<widgetId>:<slot>'. En fritt vald strang
+    // fran webblasaren skulle skapa en EGEN lada: Studio larde in i en, regeln fragade en annan,
+    // och widgeten stod pa noll utan felkod. 400 ar ratt svar - det ar ett trasigt anrop.
+    const ruleKey=Regelnycklar.validera(decodeURIComponent(raNyckel));
+    if(!ruleKey)return send(res,400,{ok:false,error:'Okänd regelnyckel'});
     const roles=req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor'];
     if(!await membership(s.user_id,workspaceId,roles))return send(res,403,{ok:false,error:'Behörighet saknas'});
     if(req.method==='GET'&&!handling)return send(res,200,{ok:true,...await Gavoidentitet.status(pool,workspaceId,ruleKey)});

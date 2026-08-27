@@ -259,3 +259,9 @@ jobs:
       - name: Gåvoidentitet — bekräftad inlärning och exakt giftId (RÖTT tills implementerat)
         run: node --test test/gavoidentitet.test.js
         working-directory: server
+
+      # Regelnycklarna. Kräver ingen databas men hör till samma domän — och en ny form som läggs
+      # till utan validering ska falla här, inte upptäckas som en tom widget i produktion.
+      - name: Regelnycklar — fasta former, serverägd validering
+        run: node --test test/regelnycklar.test.js
+        working-directory: server

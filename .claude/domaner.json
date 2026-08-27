@@ -395,6 +395,7 @@
         "server/goal-sse.js",
         "server/goal-metrics.js",
         "server/gavoidentitet.js",
+        "server/regelnycklar.js",
         "gift-identity-larlage.js",
         "scripts/goal-*.js"
       ],
@@ -413,6 +414,7 @@
         "server/test/goal-*.test.js",
         "server/test/studio-goal-stream.test.js",
         "server/test/gavoidentitet.test.js",
+        "server/test/regelnycklar.test.js",
         "tests/gift-identity-larlage.test.js"
       ],
       "matning": [
