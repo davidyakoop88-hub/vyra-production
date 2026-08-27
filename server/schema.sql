@@ -156,7 +156,14 @@ CREATE INDEX IF NOT EXISTS tiktok_connections_active_idx ON tiktok_connections(w
 CREATE TABLE IF NOT EXISTS goal_runtime (
   overlay_id  uuid    NOT NULL REFERENCES overlays(id) ON DELETE CASCADE,
   widget_id   text    NOT NULL,
-  metric      text    NOT NULL CHECK (metric IN ('follows','likes','shares','gifts','diamonds')),
+  metric      text    NOT NULL CHECK (metric IN ('follows','likes','shares','gifts','diamonds',
+                                                   -- ADDITIVT TILLAGG. unique_gift_senders matas
+                                                   -- ALDRIG av contributionsFor() — den finns just
+                                                   -- for att den generella "varje gava raknas"-vagen
+                                                   -- inte ska rora Heart Me Goal. Endast
+                                                   -- heart-me-goal.js okar den, och bara nar
+                                                   -- engangsliggaren skapade en ny rad.
+                                                   'unique_gift_senders')),
   baseline    bigint  NOT NULL DEFAULT 0 CHECK (baseline >= 0),
   progress    bigint  NOT NULL DEFAULT 0 CHECK (progress >= 0),
   target      bigint  NOT NULL DEFAULT 1000 CHECK (target > 0),
@@ -182,6 +189,34 @@ CREATE INDEX IF NOT EXISTS goal_runtime_metric_idx ON goal_runtime(overlay_id,me
 -- and every production row predates this column. DEFAULT 0 starts them all at the same place; the
 -- first write after the migration is 1 and every client sees it as newer.
 ALTER TABLE goal_runtime ADD COLUMN IF NOT EXISTS revision bigint NOT NULL DEFAULT 0;
+-- ADDITIV UTOKNING AV METRIKVILLKORET (unique_gift_senders, Heart Me Goal).
+--
+-- EXAKT SAMMA FALLA som revision-kolumnen ovan och trial_end nedan: CREATE TABLE IF NOT EXISTS gor
+-- ingenting alls med en tabell som redan finns, sa den utokade CHECK-listan i definitionen ovan
+-- nar ALDRIG en befintlig databas. Utan det har blocket hade varje overlay-sparning med en Heart
+-- Me Goal kraschat pa "violates check constraint goal_runtime_metric_check" i produktion.
+--
+-- Villkoret sokes pa sin DEFINITION, inte pa sitt namn: en tabell som en gang skapats med ett annat
+-- constraint-namn hade annars behallit det gamla villkoret tyst. Blocket ar idempotent — kanner
+-- villkoret redan metriken gors ingenting, sa en omkorning av schema.sql (varje deploy) ar en no-op.
+DO $$
+DECLARE gammalt text;
+BEGIN
+  SELECT conname INTO gammalt FROM pg_constraint
+   WHERE conrelid = 'goal_runtime'::regclass AND contype = 'c'
+     AND pg_get_constraintdef(oid) LIKE '%diamonds%'
+     AND pg_get_constraintdef(oid) NOT LIKE '%unique_gift_senders%'
+   LIMIT 1;
+  IF gammalt IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE goal_runtime DROP CONSTRAINT %I', gammalt);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                  WHERE conrelid = 'goal_runtime'::regclass AND contype = 'c'
+                    AND pg_get_constraintdef(oid) LIKE '%unique_gift_senders%') THEN
+    ALTER TABLE goal_runtime ADD CONSTRAINT goal_runtime_metric_check
+      CHECK (metric IN ('follows','likes','shares','gifts','diamonds','unique_gift_senders'));
+  END IF;
+END $$;
 -- CREATE TABLE IF NOT EXISTS hoppas over for en tabell som redan finns, sa en ny kolumn nar
 -- ALDRIG en befintlig databas utan den har raden. Utan den hade webhookens INSERT kraschat pa
 -- "column trial_end does not exist" i produktion, och varje prenumerationshandelse gatt forlorad.
@@ -205,7 +240,7 @@ CREATE INDEX IF NOT EXISTS goal_event_apply_sweep_idx ON goal_event_apply(applie
 -- goal without a runtime row can never break.
 INSERT INTO goal_runtime (overlay_id, widget_id, metric, baseline, target)
 SELECT o.id, w->>'id',
-       CASE WHEN w->>'type' = 'templateHeartGoal' THEN 'likes'
+       CASE WHEN w->>'type' = 'templateHeartGoal' THEN 'unique_gift_senders'
             WHEN w->>'goalKind' = 'likes' THEN 'likes' ELSE 'follows' END,
        GREATEST(0, COALESCE((w->>'goalCurrent')::bigint, (w->>'heartCurrent')::bigint, 0)),
        GREATEST(1, COALESCE((w->>'goalTarget')::bigint, (w->>'heartTarget')::bigint, 1000))
@@ -213,6 +248,32 @@ SELECT o.id, w->>'id',
  WHERE w->>'type' IN ('templateSocialGoal','templateHeartGoal')
    AND w->>'id' IS NOT NULL
 ON CONFLICT (overlay_id, widget_id) DO NOTHING;
+
+-- ENGANGSRATTNING AV BEFINTLIGA HEART ME GOAL-RADER.
+--
+-- Backfillen ovan ar ON CONFLICT DO NOTHING, och det ar syncGoalsFromState (goal-runtime.js:365)
+-- ocksa. En rad som redan finns rors alltsa av INGEN av dem — sa varje Heart Me Goal som skapades
+-- fore det har slappet hade behallit metric='likes' for alltid, och widgeten hade fortsatt rakna
+-- TikTok-likes i produktion precis som i test-LIVE 2. Rattningen maste vara sin egen sats.
+--
+-- progress NOLLSTALLS: det ackumulerade talet ar likes och betyder ingenting for unika givare.
+-- baseline star kvar — det ar startvardet streamern sjalv skrev in, och det ar en annan sak.
+-- epoch okas, precis som resetGoal gor, sa klienten behandlar det som en nollstallning och inte som
+-- att siffran hoppade bakat.
+--
+-- Idempotent: efter forsta korningen ar metric inte langre 'likes' for de raderna, sa WHERE traffar
+-- ingenting. jsonb_typeof-vakten finns for att jsonb_array_elements kastar pa en state dar widgets
+-- inte ar en array.
+UPDATE goal_runtime g
+   SET metric = 'unique_gift_senders', progress = 0, epoch = epoch + 1,
+       revision = revision + 1, reset_at = now(), updated_at = now()
+ WHERE g.metric = 'likes'
+   AND EXISTS (
+     SELECT 1 FROM overlays o, jsonb_array_elements(o.state->'widgets') w
+      WHERE o.id = g.overlay_id
+        AND jsonb_typeof(o.state->'widgets') = 'array'
+        AND w->>'id' = g.widget_id
+        AND w->>'type' = 'templateHeartGoal');
 
 -- BRIN on applied_at instead of B-tree. Measured at 1 000 000 rows: 162,7 B/row against 175,4 with
 -- the B-tree, a 7% saving, and the sweep's own selection is unaffected because the table is written
@@ -532,4 +593,37 @@ CREATE TABLE IF NOT EXISTS gift_learn_arm (
   fangad_gift_image text,
   fangad_at         timestamptz,
   PRIMARY KEY (workspace_id, rule_key)
+);
+
+-- ============================================================================================
+-- HEART ME GOAL · engangsliggare per person och sandning (docs/heart-me-goal-design.md)
+--
+-- Tva OLIKA skydd, latt att blanda ihop:
+--   raw.duplicate / goal_event_apply  skyddar mot samma EVENT levererat flera ganger
+--   den har raden                     skyddar mot att samma PERSON bidrar flera ganger
+--
+-- Nyckeln bar session_id, sa "samma person raknas igen nasta LIVE" faller ut gratis: en ny
+-- sandning ger en ny session och darmed en tom nyckelrymd. Ingen stadrutin behovs — raderna
+-- forsvinner med sessionen via ON DELETE CASCADE.
+--
+-- avsandarnyckel ar HMAC-SHA256(harledd nyckel, workspace + session + normaliserad identitet),
+-- 64 hex-tecken. Se heart-me-goal.js. Namnet gar INTE att lasa ur den, och samma person far en helt
+-- annan nyckel i nasta sandning — raderna ar alltsa inte lankbara over tid.
+--
+-- CHECK-VILLKORET AR SJALVA SKYDDET, inte en formalitet. Databasen vagrar ta emot nagot som inte ar
+-- 64 hex-tecken, sa ett klartextnamn kan FYSISKT inte hamna i kolumnen aven om en framtida bugg
+-- skickar dit ett. Ett prov skriver ett namn rakt mot tabellen och kraver att den sager nej.
+--
+-- Tabellen bar ingenting annat: inget visningsnamn, ingen avatar, inget giftId, ingen payload,
+-- ingen tidsstampel. Raden forsvinner med sandningen via ON DELETE CASCADE.
+--
+-- INGEN MIGRATION BEHOVS. Tabellen har aldrig funnits i produktion — hela heart_me_bidrag kommer
+-- med samma opublicerade PR som hashningen, sa det finns inga gamla klartextrader att konvertera.
+-- Hade det funnits sadana hade CREATE TABLE IF NOT EXISTS inte rort dem, och en egen ALTER hade
+-- kravts (samma falla som goal_runtime.metric ovan).
+CREATE TABLE IF NOT EXISTS heart_me_bidrag (
+  session_id      uuid NOT NULL REFERENCES stream_sessions(id) ON DELETE CASCADE,
+  widget_id       text NOT NULL,
+  avsandarnyckel  text NOT NULL CHECK (avsandarnyckel ~ '^[0-9a-f]{64}$'),
+  PRIMARY KEY (session_id, widget_id, avsandarnyckel)
 );

@@ -32,8 +32,11 @@ test('okänt värde kastar i stället för att tyst bli follows', { timeout: 500
 });
 
 test('metriken för en målwidget följer widgettypen', { timeout: 5000 }, () => {
-  // templateHeartGoal has no kind field of its own — the product decision is that a heart is a like.
-  assert.equal(M.metricForWidget({ type: 'templateHeartGoal' }), 'likes');
+  // PRODUKTBESLUT 2026-08-26: templateHeartGoal har inget eget kind-falt, och den GAMLA regeln
+  // "ett hjarta ar en like" ar upphavd. Uppmatt i test-LIVE 2: tva unika Heart Me-avsandare, men
+  // widgeten visade 48/50 — allt fran TikTok-likes. Malet raknar numera unika personer som skickar
+  // gavan Heart Me, och metriken matas ALDRIG av contributionsFor().
+  assert.equal(M.metricForWidget({ type: 'templateHeartGoal' }), 'unique_gift_senders');
   assert.equal(M.metricForWidget({ type: 'templateSocialGoal', goalKind: 'followers' }), 'follows');
   assert.equal(M.metricForWidget({ type: 'templateSocialGoal', goalKind: 'likes' }), 'likes');
   // A social goal that never had the field saved defaults the same way the renderer does.
@@ -80,7 +83,7 @@ test('målwidgetarna i en overlay-state plockas ut, inga andra', { timeout: 5000
   assert.deepEqual(goals.map(g => g.widgetId), ['a', 'b', 'd'], 'fel widgetar räknades som mål');
   assert.equal(goals[0].metric, 'follows');
   assert.equal(goals[0].baseline, 10);
-  assert.equal(goals[1].metric, 'likes');
+  assert.equal(goals[1].metric, 'unique_gift_senders', 'Heart Me Goal bar den egna metriken');
   // A standalone goal is treated exactly like a layout one — placement decides rendering, not counting.
   assert.equal(goals[2].metric, 'likes');
   assert.equal(goals[2].baseline, 0);

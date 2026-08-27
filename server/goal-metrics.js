@@ -27,7 +27,9 @@ function goalKind(value) {
 // arbitrary widget id from ever creating a runtime row.
 function metricForWidget(widget) {
   const type = widget && widget.type;
-  if (type === 'templateHeartGoal') return 'likes';       // a heart is a like; product decision
+  // PRODUKTBESLUT 2026-08-26: Heart Me Goal raknar UNIKA PERSONER som skickar gavan Heart Me,
+  // inte TikTok-likes. Metriken matas aldrig av contributionsFor() — se heart-me-goal.js.
+  if (type === 'templateHeartGoal') return 'unique_gift_senders';
   if (type === 'templateSocialGoal') return goalKind(widget.goalKind);
   return null;
 }

@@ -117,7 +117,8 @@ prov('körning 3 mot fixturer: varje befintlig affärsrad är byteidentisk efter
         `körning 3 ändrade eller tappade en befintlig rad i ${tab}: ${rad.slice(0, 120)}`);
     }
   }
-  // Backfillen är additiv och exakt: w2 fick sin rad (likes, baseline 3, target 50), w1 behöll 42/500.
+  // Backfillen är additiv och exakt: w2 fick sin rad (unika givare, baseline 3, target 50), och
+  // w1 behöll 42/500.
   assert.equal(efter.goal_runtime.length, fore.goal_runtime.length + 1,
     'backfillen skulle lägga till exakt en goal_runtime-rad (w2)');
   const w1 = await db.query(
@@ -127,7 +128,8 @@ prov('körning 3 mot fixturer: varje befintlig affärsrad är byteidentisk efter
   const w2 = await db.query(
     `SELECT metric, baseline::int AS b, target::int AS t FROM goal_runtime WHERE overlay_id=$1 AND widget_id='w2'`,
     [OVERLAY]);
-  assert.deepEqual(w2.rows[0], { metric: 'likes', b: 3, t: 50 }, 'backfillens w2-rad har fel innehåll');
+  assert.deepEqual(w2.rows[0], { metric: 'unique_gift_senders', b: 3, t: 50 },
+    'backfillens w2-rad har fel innehåll');
 });
 
 prov('körning 4 är helt idempotent: inte en byte skiljer mot körning 3', async () => {

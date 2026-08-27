@@ -25,6 +25,12 @@ const Metrics = require('./goal-metrics');
 // total and `value` is diamondCount x count. See tiktok-bridge/normalizer.js.
 const METRICS = ['follows', 'likes', 'shares', 'gifts', 'diamonds'];
 
+// Metriker som far FARDAS over SSE, till skillnad fran METRICS som ar de metriker den har motorn
+// MATAR. Heart Me Goals unika-givare-metrik okas uteslutande av heart-me-goal.js — CONTRIBUTIONS
+// nedan far aldrig producera den, annars hade varje Rose i rummet knuffat Heart Me Goal. Men dess
+// ram maste anda na widgeten, och goal-sse.js slapper bara igenom metriker den kanner igen.
+const TRANSPORT_METRICS = [...METRICS, 'unique_gift_senders'];
+
 // One row per metric an event of this type feeds. A gift feeds two; everything else feeds one.
 // `value` appears here only for diamonds — for a like it is TikTok's running room-wide total, and
 // counting it would credit a goal with the whole room on every tap.
@@ -326,7 +332,7 @@ async function resetWorkspaceGoals(client, workspaceId) {
 }
 
 module.exports = {
-  METRICS, CLAIM_SQL, incrementSql,
+  METRICS, TRANSPORT_METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
   applyEvent, resetGoal, upsertGoal, readGoal,
   SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain,

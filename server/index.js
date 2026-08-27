@@ -132,6 +132,12 @@ async function ingestTikTokEvent(workspaceId,payload){
   //
   // !duplicate bar dubbel vikt har: en replay av samma event far inte vara "nasta gava".
   if(!raw.duplicate)Gavoidentitet.fangaFranEvent(pool,workspaceId,raw.event).catch(()=>{});
+  // HEART ME GOAL — unika personer som skickar gavan Heart Me (docs/heart-me-goal-design.md).
+  // Tredje anropet i samma monster, av samma skal. Modulen ar avsiktligt EGEN och inte en metrik i
+  // contributionsFor(): den generella "varje gava raknas"-vagen skulle annars lata varje Rose oka
+  // Heart Me Goal. Bara den har raden okar unique_gift_senders, och bara nar engangsliggaren
+  // (session_id, widget_id, avsandarnyckel) faktiskt skapade en ny rad.
+  if(!raw.duplicate)HeartMeGoal.applyOchPublicera(pool,workspaceId,raw.event,{publicera:rad=>GoalSse.publish(eventBus,workspaceId,{...rad,at:raw.event.at})}).catch(()=>{});
   return raw;
 }
 function send(res,status,data,headers={}){const body=Buffer.from(JSON.stringify(data));res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':body.length,'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; frame-ancestors 'none'",...headers});res.end(body)}
@@ -140,7 +146,7 @@ function rawBody(req,max=1024*1024){return new Promise((resolve,reject)=>{let si
 function sameOrigin(req){const origin=req.headers.origin;return !origin||origin===ORIGIN}
 async function session(req,{csrf=false}={}){const raw=S.parseCookies(req.headers.cookie).vyra_session;if(!raw)return null;const q=await pool.query('SELECT s.*,u.email,u.display_name,u.disabled_at,u.email_verified_at,u.mfa_secret_enc,u.mfa_enabled_at,u.mfa_recovery_hashes,u.deletion_requested_at,u.is_platform_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()',[S.digest(raw)]);const row=q.rows[0];if(!row||row.disabled_at)return null;if(csrf&&S.digest(req.headers['x-vyra-csrf']||'')!==row.csrf_hash)return null;return row}
 // Sandningsidentiteten. Modulen ager hela sessionsbeslutet; rutterna har ar tunna skal.
-const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const Regelnycklar=require('./regelnycklar');const {startStreamWorker}=require('./stream-worker');
+const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const Regelnycklar=require('./regelnycklar');const HeartMeGoal=require('./heart-me-goal');const {startStreamWorker}=require('./stream-worker');
 const StreamSessions=skapaStreamSessions({pool});
 // MASKIN-AUTH VID HTTP-FORTROENDEGRANSEN. Husets enda ingestkontroll, extraherad ur den gamla
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar

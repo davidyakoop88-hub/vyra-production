@@ -24,7 +24,7 @@
 //
 // Nothing here logs. This module sees overlay ids, widget ids and per-link values on every event;
 // the cheapest guarantee that none of it lands in a log line is to have no logging at all.
-const { METRICS } = require('./goal-runtime');
+const { TRANSPORT_METRICS } = require('./goal-runtime');
 
 // The frame, in full. Exactly these eight fields reach the browser — no workspace id, no user, no
 // token, no event id. A widget needs the value, the target, which epoch it belongs to and which
@@ -100,7 +100,7 @@ function buildFrame(update) {
     const overlayId = idOf(pick(update, 'overlayId', 'overlay_id'));
     const widgetId = idOf(pick(update, 'widgetId', 'widget_id'));
     const metric = pick(update, 'metric');
-    if (!overlayId || !widgetId || !METRICS.includes(metric)) return null;
+    if (!overlayId || !widgetId || !TRANSPORT_METRICS.includes(metric)) return null;
 
     const value = valueOf(update);
     const target = intOf(pick(update, 'target'));
