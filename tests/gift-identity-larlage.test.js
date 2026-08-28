@@ -178,3 +178,89 @@ test('ingen regellogik och ingen matchning bor i klienten', () => {
   // KONTROLLMÄTNING: mönstren kan träffa.
   assert.ok(/giftName\s*===/.test("if (e.giftName === 'x') {}"));
 });
+
+// ---- OFFLINE: SKRIVBORDSAPPENS RESERVLÄGE -----------------------------------------------------
+//
+// Skrivbordsappen serverar Studion genom sin lokala server, som proxar statiskt innehåll till
+// vyralive.app med 5 s timeout. Når den inte fram faller den tillbaka på kopian i .exe:n — och där
+// kan lärläget ändå INTE fungera: armera, bekräfta och statusläsningen är alla molnrutter, och
+// fångsten kräver ett gåvoevent genom molnets ingest.
+//
+// Att paketera gränssnittet i reservkopian hade alltså gett knappar som inte kan slutföra något.
+// Kravet är i stället att läget stängs av med ETT tydligt skäl och inte gör anrop som måste falla.
+
+const natfel = () => new Error('fetch failed');
+
+test('offline: läget stängs av med ett skäl användaren förstår', async () => {
+  const r = rigg([natfel()]);
+  await r.lar.hamta(REGEL);
+
+  assert.equal(r.lar.lage().otillganglig, true);
+  assert.equal(r.lar.lage().meddelande, 'Lär in gåva kräver anslutning till VYRA.',
+    'exakt den text som ska stå i gränssnittet');
+  assert.equal(r.lar.lage().armerad, false, 'inget halvstartat läge får stå kvar');
+});
+
+test('offline: armera gör INGET anrop', async () => {
+  const r = rigg([natfel()]);
+  await r.lar.hamta(REGEL);
+  const efterHamta = r.anrop.length;
+
+  await r.lar.armera(REGEL);
+  assert.equal(r.anrop.length, efterHamta,
+    'ett armeringsanrop som ändå måste misslyckas ger bara en tyst timeout');
+  assert.equal(r.lar.lage().armerad, false);
+  assert.equal(r.lar.lage().meddelande, 'Lär in gåva kräver anslutning till VYRA.');
+});
+
+test('offline: bekräfta gör INGET anrop', async () => {
+  const r = rigg([natfel()]);
+  await r.lar.hamta(REGEL);
+  const efterHamta = r.anrop.length;
+
+  await r.lar.bekrafta(REGEL);
+  assert.equal(r.anrop.length, efterHamta, 'inget bekräftelseanrop utan anslutning');
+  assert.equal(r.lar.lage().inlard, null, 'och ingenting sparas');
+});
+
+test('offline: inga timers lever kvar', async () => {
+  const r = rigg([natfel()]);
+  await r.lar.hamta(REGEL);
+  assert.equal(r.antalTimers(), 0,
+    'en pollslinga mot ett moln som inte svarar är bara brus');
+});
+
+test('offline läker av sig självt när anslutningen kommer tillbaka', async () => {
+  const r = rigg([natfel(), svar({ inlard: { giftId: '9101', giftName: 'Heart Me' } })]);
+  await r.lar.hamta(REGEL);
+  assert.equal(r.lar.lage().otillganglig, true);
+
+  await r.lar.hamta(REGEL);
+  assert.equal(r.lar.lage().otillganglig, false, 'ett lyckat svar ska öppna läget igen');
+  assert.equal(r.lar.lage().meddelande, null);
+  assert.equal(r.lar.lage().inlard.giftId, '9101');
+
+  // KONTROLLMÄTNING: nu ska armera faktiskt anropa igen.
+  const fore = r.anrop.length;
+  await r.lar.armera(REGEL);
+  assert.ok(r.anrop.length > fore, 'efter läkningen måste armera nå servern');
+});
+
+test('ett tappat pollsvar MITT i en armering stänger inte av läget', async () => {
+  // Skillnaden mot offline: en armering som redan är igång ska tåla en blipp. Bara den INLEDANDE
+  // läsningen — den som avgör om lärläget alls går att använda — sätter otillganglig.
+  const r = rigg([svar(), svar({ armerad: true, sekunderKvar: 300 }), natfel()]);
+  await r.lar.armera(REGEL);
+  assert.equal(r.lar.lage().armerad, true);
+
+  r.kor(2000);
+  await new Promise(klar => setImmediate(klar));
+  assert.equal(r.lar.lage().otillganglig, false,
+    'en enstaka tappad poll är inte samma sak som ingen anslutning');
+  assert.equal(r.lar.lage().armerad, true);
+});
+
+test('meddelandet är exporterat, så Studio och provet inte kan driva isär', () => {
+  assert.equal(globalThis.VyraGiftIdentityLarlage.OFFLINE_MEDDELANDE,
+    'Lär in gåva kräver anslutning till VYRA.');
+});
