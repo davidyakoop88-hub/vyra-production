@@ -37,10 +37,7 @@
       "icon.ico"
     ],
     "win": {
-      "target": [
-        "nsis",
-        "appx"
-      ],
+      "target": "nsis",
       "icon": "icon.ico"
     },
     "nsis": {
@@ -118,8 +115,7 @@
         "sv-SE",
         "en-US"
       ],
-      "artifactName": "VYRA-Store-${version}.appx",
-      "setBuildNumber": false
+      "artifactName": "VYRA-Store-${version}.appx"
     }
   },
   "overrides": {

@@ -85,13 +85,19 @@ jobs:
             throw "Store kraver att fjarde versionssiffran ar 0, fick $($identity.Version)"
           }
 
+      # Samma princip som for den osignerade installern nedan: bygget kor pa
+      # varje PR for att validera konfigurationen, men artefakten laddas bara
+      # upp nar nagon ska hamta den. En appx pa varje PR ar hundratals MB som
+      # ingen laser.
       - name: Upload Store package
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: VYRA-Store-Package
           path: electron-app/dist2/*.appx
           if-no-files-found: error
           retention-days: 14
+
       - name: Validate SignPath configuration
         shell: pwsh
         env:

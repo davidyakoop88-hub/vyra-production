@@ -89,3 +89,14 @@ logotypen.
 `build/` är ignorerad i `.gitignore` som byggutdata. Appx-resurserna är
 källfiler och måste versionshanteras, så `directories.buildResources` pekar
 på `build-resources` i stället för att göra undantag i ignore-regeln.
+
+## Varför `win.target` är orörd
+
+Store-paketet byggs med en explicit CLI-flagga (`--win appx`) i stället för
+att läggas till i `win.target`. electron-builders CLI-target åsidosätter
+konfigurationen, så `appx`-blocket används ändå.
+
+Skälet är att `npm run build` utan flaggor då hade byggt appx också — och
+appx kräver Windows SDK (`makeappx.exe`). Det kommandot står i
+`CLAUDE-HANDOFF.md` och `.claude/agents/vyra-desktop.md`, och skulle ha
+börjat fela på varje utvecklarmaskin utan SDK installerad.
