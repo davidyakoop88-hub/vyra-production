@@ -47,6 +47,51 @@ jobs:
       - run: npm test
       - name: Build NSIS installer
         run: npm run build -- --win nsis --x64
+
+      # Store-paketet ar en separat kanal fran NSIS-installern. Det signeras av
+      # Microsoft vid certifieringen och ror darfor aldrig SignPath.
+      - name: Build Store package (MSIX/appx)
+        run: npm run build -- --win appx --x64
+
+      - name: Verify Store package identity
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem 'dist2' -Filter '*.appx' | Select-Object -First 1
+          if (-not $pkg) { throw 'Inget appx-paket byggdes.' }
+          Write-Host "Byggde $($pkg.Name) ($([math]::Round($pkg.Length/1MB,1)) MB)"
+          # Partner Center avvisar fel identitet och fel versionsformat forst efter
+          # uppladdning. Billigare att fanga det har.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          try {
+            $entry = $zip.Entries | Where-Object { $_.FullName -eq 'AppxManifest.xml' }
+            if (-not $entry) { throw 'AppxManifest.xml saknas i paketet.' }
+            $reader = New-Object System.IO.StreamReader($entry.Open())
+            $xml = [xml]$reader.ReadToEnd()
+            $reader.Dispose()
+          } finally { $zip.Dispose() }
+          $identity = $xml.Package.Identity
+          Write-Host "Name:      $($identity.Name)"
+          Write-Host "Publisher: $($identity.Publisher)"
+          Write-Host "Version:   $($identity.Version)"
+          if ($identity.Name -ne 'vyralive.app.VYRAStudio') {
+            throw "Fel Identity/Name: $($identity.Name)"
+          }
+          if ($identity.Publisher -ne 'CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7') {
+            throw "Fel Identity/Publisher: $($identity.Publisher)"
+          }
+          # Store kraver att fjarde versionssiffran ar 0.
+          if (-not $identity.Version.EndsWith('.0')) {
+            throw "Store kraver att fjarde versionssiffran ar 0, fick $($identity.Version)"
+          }
+
+      - name: Upload Store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: VYRA-Store-Package
+          path: electron-app/dist2/*.appx
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate SignPath configuration
         shell: pwsh
         env:

@@ -23,6 +23,7 @@
     "compression": "maximum",
     "asar": true,
     "directories": {
+      "buildResources": "build-resources",
       "output": "dist2"
     },
     "files": [
@@ -36,7 +37,10 @@
       "icon.ico"
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        "nsis",
+        "appx"
+      ],
       "icon": "icon.ico"
     },
     "nsis": {
@@ -101,7 +105,22 @@
           "!tests/**"
         ]
       }
-    ]
+    ],
+    "appx": {
+      "identityName": "vyralive.app.VYRAStudio",
+      "publisher": "CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7",
+      "publisherDisplayName": "vyralive.app",
+      "applicationId": "VYRAStudio",
+      "displayName": "VYRA Studio",
+      "backgroundColor": "#0B0B10",
+      "showNameOnTiles": true,
+      "languages": [
+        "sv-SE",
+        "en-US"
+      ],
+      "artifactName": "VYRA-Store-${version}.appx",
+      "setBuildNumber": false
+    }
   },
   "overrides": {
     "brace-expansion": "^5.0.8",

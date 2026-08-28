@@ -216,7 +216,12 @@ async function createMainWindow() {
 }
 
 async function checkForUpdates(){
-  if(!app.isPackaged||updateCheckRunning)return;updateCheckRunning=true;
+  // Store-bygget uppdateras av Microsoft Store. Att ladda ner och kora
+  // installationsfilen harifran bryter mot Store-policy 10.1.1 (appar far
+  // inte installera annan mjukvara) och underkanns vid certifieringen.
+  // Electron satter process.windowsStore i appx-paket, sa samma kodbas
+  // fungerar i bada kanalerna.
+  if(!app.isPackaged||process.windowsStore||updateCheckRunning)return;updateCheckRunning=true;
   try{
     const config=Updater.readConfig(path.join(__dirname,'update-config.json'));if(!config||config.apiOrigin.includes('example.com'))return;
     const release=await Updater.fetchRelease(config.apiOrigin);if(!Updater.isNewer(release.version,app.getVersion()))return;
