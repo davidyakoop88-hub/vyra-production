@@ -97,3 +97,49 @@ test('varje databasberoende provfil står i flödets lista', () => {
   assert.deepEqual(saknas, [],
     'filerna ovan kräver Postgres men körs aldrig av Postgres-jobbet, så de är blockerade i alla lägen');
 });
+
+// ---- HTTP-PROV MÅSTE RIVA NER ALLT DE STARTAR -------------------------------------------------
+//
+// 2026-08-29 hängde Postgres-jobbet på ett nytt provsteg. Orsaken var inte ett fallande påstående
+// utan en TEARDOWN som aldrig blev klar: filen gjorde `server.close()` men inte
+// `closeAllConnections()`, och keep-alive-anslutningarna från dess egna fetch-anrop höll servern
+// öppen — så callbacken löste aldrig ut. Redis-prenumerationen och Postgres-poolen håller dessutom
+// händelseloopen vid liv efter sista provet.
+//
+// Felet kan INTE upptäckas lokalt: utan databas hoppar filen över sig själv, och då körs ingen
+// teardown alls. Därför en källvakt i stället — den kostar ingenting och mäter rätt sak.
+test('varje HTTP-prov som startar servern river ner den helt', () => {
+  const dir = path.join(ROT, 'server', 'test');
+  const brister = [];
+
+  for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+    const kalla = fs.readFileSync(path.join(dir, fil), 'utf8');
+    // Bara filer som faktiskt startar den riktiga servern.
+    if (!/require\('\.\.\/index'\)/.test(kalla) || !/server\.listen\(/.test(kalla)) continue;
+
+    if (!/closeAllConnections/.test(kalla)) {
+      brister.push(`${fil}: saknar closeAllConnections — server.close() löser aldrig ut`);
+    }
+    if (!/eventBus\.close\(\)/.test(kalla)) {
+      brister.push(`${fil}: stänger inte eventBus — Redis håller händelseloopen vid liv`);
+    }
+    if (!/pool\.end\(\)/.test(kalla)) {
+      brister.push(`${fil}: stänger inte poolen — Postgres håller händelseloopen vid liv`);
+    }
+  }
+
+  assert.deepEqual(brister, [], 'ett prov kan hänga hela CI-jobbet i stället för att falla');
+});
+
+test('KONTROLLMÄTNING: vakten hittar faktiskt HTTP-proven', () => {
+  // Utan den här halvan går provet ovan grönt även om mönstret slutat träffa någon fil alls.
+  const dir = path.join(ROT, 'server', 'test');
+  const httpProv = fs.readdirSync(dir)
+    .filter(f => f.endsWith('.test.js'))
+    .filter(f => {
+      const k = fs.readFileSync(path.join(dir, f), 'utf8');
+      return /require\('\.\.\/index'\)/.test(k) && /server\.listen\(/.test(k);
+    });
+  assert.ok(httpProv.length >= 2,
+    `hittade bara ${httpProv.length} HTTP-prov — mönstret mäter inte längre rätt`);
+});

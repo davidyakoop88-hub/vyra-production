@@ -36,7 +36,7 @@ async function blockerad() {
   return BLOCKED;
 }
 
-let server = null, pool = null, S = null, bas = '';
+let server = null, eventBus = null, pool = null, S = null, bas = '';
 const ADMIN = 'cafe0000-0000-4000-8000-000000000001';
 const VANLIG = 'cafe0000-0000-4000-8000-000000000002';
 const auth = {};
@@ -73,7 +73,7 @@ test.before(async () => {
   if (await blockerad()) return;
   S = require('../security');
   ({ pool } = require('../db'));
-  ({ server } = require('../index'));
+  ({ server, eventBus } = require('../index'));
 
   for (const [id, admin] of [[ADMIN, true], [VANLIG, false]]) {
     await pool.query(
@@ -98,7 +98,17 @@ test.after(async () => {
   if (await blockerad()) return;
   await rensa();
   await pool.query('DELETE FROM sessions WHERE user_id = ANY($1::uuid[])', [[ADMIN, VANLIG]]);
-  await new Promise(klar => server.close(klar));
+
+  // TEARDOWN I TRE DELAR, och alla tre behovs. Forsta versionen gjorde bara server.close() och
+  // HANGDE CI: keep-alive-anslutningarna fran fetch-anropen haller servern oppen, sa callbacken
+  // loser aldrig ut. Redis-prenumerationen och Postgres-poolen haller dessutom handelseloopen vid
+  // liv efter att provet ar klart.
+  await new Promise(klar => {
+    server.close(klar);
+    if (typeof server.closeAllConnections === 'function') server.closeAllConnections();
+  });
+  await eventBus.close().catch(() => {});
+  await pool.end();
 });
 
 // ---- 1 · BEHÖRIGHETEN --------------------------------------------------------------------------
