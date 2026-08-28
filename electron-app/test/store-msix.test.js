@@ -1,5 +1,5 @@
 'use strict';
-// MICROSOFT STORE-PAKETET — identiteten gissas aldrig, och uppdateraren är av.
+// MICROSOFT STORE-PAKETET — identiteten är versionshanterad, och uppdateraren är av.
 //
 // Två saker skiljer Store-versionen från .exe-versionen, och båda kan gå fel tyst:
 //
@@ -11,7 +11,12 @@
 //      en app som laddar ner och kör en .exe förbi butiken bryter mot certifieringskraven.
 //      Installationskatalogen är dessutom skrivskyddad, så försöket hade fallit ändå — bara senare.
 //
-// Proven kräver ingen Windows-SDK och bygger inget paket. Det som faktiskt kräver en installerad
+// Värdena ligger INCHECKADE i store-identitet.json. De är offentliga och stabila, och poängen är
+// reproducerbarhet: samma commit ska ge samma identitet, utan att någon behöver komma ihåg att sätta
+// tre miljövariabler rätt.
+//
+// Proven kräver ingen Windows-SDK och bygger inget paket. Det faktiska AppX-bygget och
+// manifestkontrollen körs som ett eget steg i VYRA Windows release; det som kräver en INSTALLERAD
 // app står i docs/store-msix.md som en mätlista för människa.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -21,79 +26,110 @@ const path = require('node:path');
 const Identitet = require('../store-identitet');
 
 // Syntetiska värden i Partner Centers form — inga riktiga konto- eller organisationsuppgifter.
-const GILTIG = {
-  VYRA_STORE_IDENTITY_NAME: '55555ProvUtgivare.VYRA',
-  VYRA_STORE_PUBLISHER: 'CN=00000000-1111-2222-3333-444444444444',
-  VYRA_STORE_PUBLISHER_DISPLAY_NAME: 'Provutgivaren'
+// Proven matar `fil` och `env` INJICERAT: den riktiga store-identitet.json ligger numera incheckad,
+// och utan injektion hade dess värden smugit in i prov som tror sig mäta något annat.
+const GILTIG_FIL = {
+  identityName: '55555ProvUtgivare.VYRA',
+  publisher: 'CN=00000000-1111-2222-3333-444444444444',
+  publisherDisplayName: 'Provutgivaren'
 };
+const TOM_ENV = {};
+const bara = fil => ({ env: TOM_ENV, fil });
 
 // ---- IDENTITETEN --------------------------------------------------------------------------------
 
 test('en komplett identitet accepteras', () => {
-  const i = Identitet.las(GILTIG);
-  assert.deepEqual(Identitet.brister(i), []);
-  assert.equal(i.identityName, '55555ProvUtgivare.VYRA');
-  assert.equal(i.publisher, 'CN=00000000-1111-2222-3333-444444444444');
+  const o = bara(GILTIG_FIL);
+  assert.deepEqual(Identitet.brister(Identitet.las(o), o), []);
+  assert.equal(Identitet.las(o).identityName, '55555ProvUtgivare.VYRA');
 });
 
 test('varje saknat fält nekas, och felet säger var värdet hämtas', () => {
-  for (const utelamnad of Object.keys(GILTIG)) {
-    const env = { ...GILTIG };
-    delete env[utelamnad];
-    const fel = Identitet.brister(Identitet.las(env));
-    assert.equal(fel.length, 1, `${utelamnad} skulle ha gett exakt en brist`);
+  for (const utelamnad of Object.keys(GILTIG_FIL)) {
+    const fil = { ...GILTIG_FIL };
+    delete fil[utelamnad];
+    const o = bara(fil);
+    const fel = Identitet.brister(Identitet.las(o), o);
+    assert.equal(fel.length, 1, utelamnad + ' skulle ha gett exakt en brist');
     assert.match(fel[0], /Partner Center/, 'felet måste peka ut var värdet finns');
-    assert.match(fel[0], new RegExp(utelamnad), 'och namnge miljövariabeln');
+    assert.match(fel[0], /9PPKZN2SCJM2/, 'och vilken Store-post det gäller');
   }
 });
 
 test('platshållare räknas som saknade — inte som ifyllda', () => {
-  // Det farliga fallet: ett kvarglömt exempelvärde bygger, signeras och skickas in, och först
-  // certifieringen säger ifrån.
+  // Det farliga fallet: ett kvarglömt exempelvärde bygger och skickas in, och först certifieringen
+  // säger ifrån.
   for (const platshallare of ['<ange>', 'TODO', 'xxxx', 'placeholder', 'ANGE']) {
-    const env = { ...GILTIG, VYRA_STORE_PUBLISHER_DISPLAY_NAME: platshallare };
-    assert.equal(Identitet.arGiltig(Identitet.las(env)), false, `"${platshallare}" släpptes igenom`);
+    const o = bara({ ...GILTIG_FIL, publisherDisplayName: platshallare });
+    assert.equal(Identitet.arGiltig(Identitet.las(o), o), false, platshallare + ' släpptes igenom');
   }
-  // Och exempelutgivare i X.500-form.
-  assert.equal(Identitet.arGiltig(Identitet.las({ ...GILTIG, VYRA_STORE_PUBLISHER: 'CN=Example' })), false);
+  const ex = bara({ ...GILTIG_FIL, publisher: 'CN=Example' });
+  assert.equal(Identitet.arGiltig(Identitet.las(ex), ex), false);
 });
 
 test('publisher måste vara hela X.500-strängen', () => {
-  const env = { ...GILTIG, VYRA_STORE_PUBLISHER: 'Provutgivaren AB' };
-  const fel = Identitet.brister(Identitet.las(env));
+  const o = bara({ ...GILTIG_FIL, publisher: 'Provutgivaren AB' });
+  const fel = Identitet.brister(Identitet.las(o), o);
   assert.equal(fel.length, 1);
   assert.match(fel[0], /CN=/, 'felet ska säga vilken form som krävs');
 });
 
 test('identityName med fel tecken nekas', () => {
   for (const fel of ['har mellanslag', 'har/snedstreck', '', 'a']) {
-    assert.equal(Identitet.arGiltig(Identitet.las({ ...GILTIG, VYRA_STORE_IDENTITY_NAME: fel })), false,
-      `"${fel}" släpptes igenom`);
+    const o = bara({ ...GILTIG_FIL, identityName: fel });
+    assert.equal(Identitet.arGiltig(Identitet.las(o), o), false, fel + ' släpptes igenom');
   }
 });
 
 test('krav() kastar med instruktion i stället för att gissa', () => {
-  assert.throws(() => Identitet.krav({}), fel => {
+  assert.throws(() => Identitet.krav({ env: TOM_ENV, fil: {} }), fel => {
     assert.match(fel.message, /får inte gissas/);
-    for (const f of Identitet.FALT) {
-      assert.match(fel.message, new RegExp(f.partnerCenter.replace(/[/]/g, '.')),
-        `${f.partnerCenter} ska namnges i felet`);
-    }
+    assert.match(fel.message, /9PPKZN2SCJM2/, 'felet ska namnge Store-posten');
     return true;
   });
   // KONTROLLMÄTNING: med värden kastar den inte.
-  assert.ok(Identitet.krav(GILTIG).identityName);
+  assert.ok(Identitet.krav(bara(GILTIG_FIL)).identityName);
 });
 
-test('env vinner över filen, så CI slipper committa värdena', () => {
-  const i = Identitet.las(GILTIG);
-  assert.equal(i.publisherDisplayName, 'Provutgivaren');
+// ---- REPRODUCERBARHETEN -------------------------------------------------------------------------
+
+test('FILEN vinner över env — annars vore bygget inte reproducerbart', () => {
+  const o = { fil: GILTIG_FIL, env: { VYRA_STORE_PUBLISHER_DISPLAY_NAME: 'nagot-annat' } };
+  assert.equal(Identitet.las(o).publisherDisplayName, 'Provutgivaren');
 });
 
-test('identiteten finns INTE committad — den ska hämtas, inte ärvas', () => {
-  // Skulle någon checka in en riktig identitet blir den svår att skilja från en gissning senare.
-  assert.equal(fs.existsSync(Identitet.FIL), false,
-    'store-identitet.json ska inte ligga i repot — mata in värdena via miljön');
+test('en miljövariabel som SÄGER EMOT filen är ett fel, inte en override', () => {
+  // Ett bygge som kan byta identitet genom en kvarglömd variabel är inte reproducerbart, och fel
+  // identitet kan i värsta fall gå igenom certifieringen som en ANNAN produkt.
+  const o = { fil: GILTIG_FIL, env: { VYRA_STORE_PUBLISHER: 'CN=11111111-1111-1111-1111-111111111111' } };
+  const fel = Identitet.brister(Identitet.las(o), o);
+  assert.equal(fel.length, 1);
+  assert.match(fel[0], /säger något annat än den incheckade filen/);
+
+  // KONTROLLMÄTNING: samma värde i båda är inget fel.
+  const lika = { fil: GILTIG_FIL, env: { VYRA_STORE_PUBLISHER: GILTIG_FIL.publisher } };
+  assert.deepEqual(Identitet.brister(Identitet.las(lika), lika), []);
+});
+
+test('env får fylla i det filen SAKNAR', () => {
+  const o = { fil: { identityName: GILTIG_FIL.identityName, publisher: GILTIG_FIL.publisher },
+              env: { VYRA_STORE_PUBLISHER_DISPLAY_NAME: 'Provutgivaren' } };
+  assert.deepEqual(Identitet.brister(Identitet.las(o), o), []);
+});
+
+test('DEN INCHECKADE identiteten är komplett och giltig', () => {
+  // Kärnpåståendet efter beslutet att versionshantera värdena: repot ensamt ska räcka för att bygga
+  // ett paket med rätt identitet. Faller det här provet går bygget inte att reproducera.
+  assert.ok(fs.existsSync(Identitet.FIL), 'store-identitet.json ska ligga i repot');
+  const fil = Identitet.franFil();
+  const o = { env: TOM_ENV, fil };
+  assert.deepEqual(Identitet.brister(Identitet.las(o), o), [],
+    'den incheckade identiteten validerar inte');
+
+  assert.equal(fil.identityName, 'vyralive.app.VYRAStudio');
+  assert.equal(fil.publisher, 'CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7');
+  assert.equal(fil.publisherDisplayName, 'vyralive.app');
+  assert.match(fil._kalla, /9PPKZN2SCJM2/, 'filen ska peka ut Store-posten den kommer från');
 });
 
 // ---- BYGGKONFIGURATIONEN ------------------------------------------------------------------------
@@ -105,10 +141,12 @@ test('appx-blocket bär allt UTOM identiteten', () => {
   assert.ok(appx, 'appx-konfigurationen saknas');
   assert.equal(appx.electronUpdaterAware, false, 'Store äger uppdateringarna');
   assert.ok(Array.isArray(appx.languages) && appx.languages.includes('sv-SE'));
+  assert.equal(appx.artifactName, 'VYRA-Store-${version}.appx',
+    'standardnamnet innehöll ett mellanslag — en onödig fotängel för automation');
 
-  // Identiteten får ALDRIG stå här — den matas in vid bygget, från Partner Center.
+  // Identiteten hör hemma i store-identitet.json, inte här — ett värde på två ställen driver isär.
   for (const falt of ['identityName', 'publisher', 'publisherDisplayName']) {
-    assert.equal(appx[falt], undefined, `${falt} ligger hårdkodad i package.json`);
+    assert.equal(appx[falt], undefined, falt + ' ligger hårdkodad i package.json');
   }
 });
 
@@ -123,8 +161,8 @@ test('NSIS-vägen är orörd — Store-arbetet får inte ta med sig .exe-bygget'
 test('byggverktygen följer INTE med in i appen', () => {
   // bygg-store.js och store-identitet.js kör på byggmaskinen. Hamnar de i `files` skickas de med i
   // varje installation utan att göra nytta där.
-  for (const verktyg of ['bygg-store.js', 'store-identitet.js']) {
-    assert.ok(!pkg.build.files.includes(verktyg), `${verktyg} ska inte paketeras`);
+  for (const verktyg of ['bygg-store.js', 'store-identitet.js', 'store-identitet.json']) {
+    assert.ok(!pkg.build.files.includes(verktyg), verktyg + ' ska inte paketeras');
   }
 });
 
@@ -166,4 +204,21 @@ test('avstängningen gäller BARA Store-versionen', () => {
   assert.match(kalla, /if\(!app\.isPackaged\|\|updateCheckRunning\)return;/,
     'de befintliga villkoren ska stå kvar oförändrade');
   assert.match(kalla, /Updater\.fetchRelease/, 'uppdateringsvägen finns kvar för .exe-versionen');
+});
+
+// ---- CI BYGGER FAKTISKT PAKETET -----------------------------------------------------------------
+
+test('CI bygger AppX och kontrollerar manifestet — utan att distribuera det', () => {
+  const flode = fs.readFileSync(
+    path.join(__dirname, '..', '..', '.github/workflows/desktop-release.yml'), 'utf8');
+
+  assert.match(flode, /npm run build:store/, 'AppX-bygget saknas i CI');
+  assert.match(flode, /AppxManifest\.xml/, 'manifestet kontrolleras inte');
+
+  // Paketet får ALDRIG laddas upp på en PR. Det är dels ~314 MB mot artefaktkvoten
+  // (se tests/ci-artifact-budget.test.js), dels ska en testartefakt inte kunna distribueras.
+  const steg = flode.split(/\n(?=      - )/);
+  const uppladdning = steg.filter(s => /upload-artifact/.test(s) && /appx/i.test(s));
+  assert.deepEqual(uppladdning, [],
+    'Store-paketet laddas upp — det ska stanna på körningen, inte bli hämtbart');
 });

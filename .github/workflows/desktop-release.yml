@@ -47,6 +47,54 @@ jobs:
       - run: npm test
       - name: Build NSIS installer
         run: npm run build -- --win nsis --x64
+      # STORE-PAKETET BYGGS PA VARJE PR, precis som NSIS-installern — bygget ar beviset.
+      #
+      # Paketet laddas ALDRIG upp. Dels ar det ~314 MB mot artefaktkvoten, som 2026-08-06 borjade
+      # FALLA PR:er som inte hade med desktop-appen att gora (tests/ci-artifact-budget.test.js
+      # vaktar det). Dels ar det en TESTARTEFAKT: den ska inte ga att hamta och installera som om
+      # den vore en release. Manifestkontrollen nedan gor bygget bevisande utan att nagot lamnar
+      # korningen.
+      #
+      # Identiteten kommer ur den incheckade store-identitet.json, sa steget kraver inga
+      # miljovariabler och ger samma paket for samma commit.
+      - name: Build Store package (AppX, testartefakt — publiceras inte)
+        run: npm run build:store
+      - name: Verify AppX manifest identity
+        shell: pwsh
+        run: |
+          $paket = Get-ChildItem 'dist2' -Filter '*.appx' | Select-Object -First 1
+          if (-not $paket) { throw 'Inget AppX-paket byggdes.' }
+
+          $vantad = Get-Content 'store-identitet.json' -Raw | ConvertFrom-Json
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $arkiv = [System.IO.Compression.ZipFile]::OpenRead($paket.FullName)
+          try {
+            $post = $arkiv.GetEntry('AppxManifest.xml')
+            if (-not $post) { throw 'AppxManifest.xml saknas i paketet.' }
+            $lasare = New-Object System.IO.StreamReader($post.Open())
+            $manifest = $lasare.ReadToEnd()
+            $lasare.Dispose()
+          } finally { $arkiv.Dispose() }
+
+          # Manifestet ar det som Store faktiskt laser. Att konfigurationen SER ratt ut i
+          # package.json bevisar inte att vardena hamnade i paketet.
+          $xml = [xml]$manifest
+          $identity = $xml.Package.Identity
+          $visningsnamn = $xml.Package.Properties.PublisherDisplayName
+
+          $fel = @()
+          if ($identity.Name -ne $vantad.identityName) {
+            $fel += "Identity/Name ar '$($identity.Name)', vantade '$($vantad.identityName)'"
+          }
+          if ($identity.Publisher -ne $vantad.publisher) {
+            $fel += "Identity/Publisher matchar inte store-identitet.json"
+          }
+          if ($visningsnamn -ne $vantad.publisherDisplayName) {
+            $fel += "PublisherDisplayName ar '$visningsnamn', vantade '$($vantad.publisherDisplayName)'"
+          }
+          if ($fel.Count -gt 0) { throw ($fel -join '; ') }
+
+          Write-Host "AppX-manifestet bar ratt Store-identitet. Version: $($identity.Version)"
       - name: Validate SignPath configuration
         shell: pwsh
         env:

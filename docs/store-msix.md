@@ -21,8 +21,21 @@ identitetssida 2026-08-28:
 | `Package/Properties/PublisherDisplayName` | `vyralive.app` | `appx.publisherDisplayName` | `VYRA_STORE_PUBLISHER_DISPLAY_NAME` |
 
 Värdena är **inte hemligheter** — de står i klartext i varje publicerat pakets manifest och produkten
-är nåbar på `https://apps.microsoft.com/detail/9PPKZN2SCJM2`. De står här som referens, men matas
-till bygget via miljön så att en ändrad Store-post inte tyst blir fel i ett committat värde.
+är nåbar på `https://apps.microsoft.com/detail/9PPKZN2SCJM2`.
+
+### De ligger versionshanterade, med flit
+
+`electron-app/store-identitet.json` är **incheckad**. Skälet är reproducerbarhet: samma commit ska ge
+samma identitet, utan att någon behöver komma ihåg att sätta tre miljövariabler rätt. Repot ensamt
+räcker för att bygga ett paket med rätt identitet, och ett prov faller om den incheckade filen
+någonsin slutar validera.
+
+**Filen är auktoritativ.** Miljövariablerna finns kvar men får bara fylla i det filen saknar. Säger en
+variabel något *annat* än filen är det ett **fel**, inte en override — ett bygge som kan byta identitet
+genom en kvarglömd variabel är inte reproducerbart, och fel identitet kan i värsta fall gå igenom
+certifieringen som en annan produkt.
+
+Ändra filen **endast** mot Partner Center-posten, aldrig för hand.
 
 **Varför de inte får gissas.** Identiteten binder paketet till Store-posten. Fel `Publisher` avvisas
 i certifieringen; fel `identityName` kan i värsta fall gå igenom som en **annan** produkt. Ett
@@ -83,8 +96,10 @@ först i certifieringen. `.exe`-versionen uppdaterar sig som förut.
 
 `electron-app/test/store-msix.test.js` (kör på varje PR via `windows-installer`-jobbet):
 
+- den **incheckade** identiteten är komplett och validerar — annars går bygget inte att reproducera
 - varje saknat eller platshållarfyllt fält nekas, och felet namnger både Partner Center-fältet och
-  miljövariabeln
+  Store-posten `9PPKZN2SCJM2`
+- filen vinner över miljön, och en variabel som säger emot filen är ett fel
 - `publisher` måste vara hela X.500-strängen
 - identiteten ligger inte hårdkodad i `package.json` och inte committad i repot
 - NSIS-målet och appens paketlista är oförändrade
@@ -92,6 +107,15 @@ först i certifieringen. `.exe`-versionen uppdaterar sig som förut.
 - bygget skriver aldrig ut identiteten i loggen
 - `checkForUpdates` avbryts **först i funktionen** när `process.windowsStore` är sant, och de
   befintliga villkoren står kvar för `.exe`-versionen
+
+**AppX byggs dessutom på riktigt i CI.** Steget *Build Store package* kör `npm run build:store` på
+`windows-latest`, och *Verify AppX manifest identity* packar upp paketet och jämför
+`AppxManifest.xml` mot `store-identitet.json`. Att konfigurationen ser rätt ut i `package.json`
+bevisar inte att värdena hamnade i paketet — manifestet är det Store faktiskt läser.
+
+Paketet **laddas aldrig upp**. Det är dels ~314 MB mot artefaktkvoten, som 2026-08-06 började fälla
+orelaterade PR:er, dels en **testartefakt** som inte ska gå att hämta och installera som om den vore
+en release. Manifestkontrollen gör bygget bevisande utan att något lämnar körningen.
 
 `electron-app/test/larlage-paritet.test.js` täcker redan lokalservern, molnproxyn, reservläget,
 `giftId` i alla tre formerna och slutframe-regeln. De proven är byggoberoende och gäller båda
