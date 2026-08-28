@@ -556,10 +556,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS stream_room_reopen_obrukad_idx
 -- ============================================================================================
 -- GÅVOIDENTITET · manuellt lärläge (docs/gavoidentitet-inlarning.md)
 --
--- Regler som ska gälla EN bestämd gåva behöver ett stabilt giftId. Repots katalog saknar id helt,
--- och rummets katalog kräver en betald Business-plan (uppmätt i produktion 2026-08-26,
--- docs/gavokatalog-matresultat.md). Kvar finns gåvoeventen själva: de bär redan giftId, giftName
--- och giftImage genom cleanEvent.
+-- Regler som ska gälla EN bestämd gåva behöver ett stabilt giftId. Repots katalog saknar id helt.
+--
+-- RÄTTAT 2026-08-28: rummets katalog kräver INTE en betald Business-plan. Mätningen 2026-08-26
+-- träffade signeringstjänsten, inte gåvorutten — frågad från en INLOGGAD session svarar
+-- webcast/gift/list/ med 783 gåvor, alla med id, namn och bild. Se gavokatalog nedan.
+--
+-- Lärläget är därför inte längre produktens väg till identiteten, utan ett internt reservverktyg
+-- för gåvor katalogen inte täcker. Gåvoeventen bär ändå redan giftId, giftName och giftImage
+-- genom cleanEvent, och matar katalogen passivt.
 --
 -- rule_key är en STABIL TEKNISK STRÄNG ('heart_me'), aldrig den synliga texten. Gåvans
 -- visningsnamn är regionaliserat och kan ändras av TikTok; en primärnyckel som byter värde med
@@ -626,4 +631,70 @@ CREATE TABLE IF NOT EXISTS heart_me_bidrag (
   widget_id       text NOT NULL,
   avsandarnyckel  text NOT NULL CHECK (avsandarnyckel ~ '^[0-9a-f]{64}$'),
   PRIMARY KEY (session_id, widget_id, avsandarnyckel)
+);
+
+-- ============================================================================================
+-- GÅVOKATALOGEN · gift_id -> namn och bild, GEMENSAM FÖR ALLA WORKSPACES
+--
+-- Varför den finns. Fram till 2026-08-28 kunde VYRA bara lära sig en gåva i taget, genom att någon
+-- faktiskt skickade den. 783 gåvor en och en är ingen produkt.
+--
+-- KATALOGEN ÄR REN ETIKETTERING. Den avgör ALDRIG vad som får räknas mot ett mål — det gör
+-- gavoregel nedan. Skillnaden är hela poängen: namn och bild är för människor, gift_id för
+-- maskiner. 49 av 783 gåvonamn är dessutom dubbletter i TikToks EGEN katalog, så ett namn pekar
+-- inte ens där alltid ut en unik gåva.
+--
+-- TVÅ KÄLLOR, OCH BÅDA BEHÖVS. TikToks lista är KONTEXTUELL: den svarar `is_full_gift_data: false`
+-- och dess exklusiva sida är TOM utan rumskontext. Det finns alltså ingen fråga som ger "allt".
+--   'katalog'  ett bulkanrop per rum — snabbt, men bara det rummet ser
+--   'handelse' passivt från riktiga gåvoevent — långsamt, men täcker exklusiva gåvor ingen lista
+--              räknar upp, och håller sig aktuell när TikTok släpper nya
+-- Unionen över alla anslutna rum blir därför större än vad något enskilt konto kan se.
+CREATE TABLE IF NOT EXISTS gavokatalog (
+  gift_id     text        PRIMARY KEY,
+  gift_name   text        NOT NULL DEFAULT '',
+  gift_image  text        NOT NULL DEFAULT '',
+  diamanter   integer     NOT NULL DEFAULT 0 CHECK (diamanter >= 0),
+  kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
+  forsta_sedd timestamptz NOT NULL DEFAULT now(),
+  senast_sedd timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS gavokatalog_namn_idx ON gavokatalog(lower(gift_name));
+
+-- ============================================================================================
+-- GÅVOREGELN · rule_key -> verifierat gift_id, SERVERÄGD OCH GLOBAL
+--
+-- Tabellen som avgör vad som RÄKNAS. Liten med flit: en handplockad, verifierad bindning per
+-- regel — inte en katalog.
+--
+-- SKILLNADEN MOT gift_rule_identity: den är PER WORKSPACE och fylls av lärläget, vilket betydde att
+-- varje kund måste lära in Heart Me själv. Kundvänt lärläge är avvisat som produkt. Den här är
+-- GLOBAL: en verifiering räcker för alla.
+--
+-- FLERA ID PER REGEL ÄR TILLÅTET. Samma gåva kan ha olika id i olika regioner eller appversioner.
+-- Visar det sig ska regeln kunna bäras av flera verifierade id:n — aldrig av namnet.
+--
+-- bekraftelser räknar DISTINKTA KÄLLOR, inte händelser. Ett rum som skickar samma gåva hundra
+-- gånger bekräftar ingenting; två olika kreatörer gör det.
+CREATE TABLE IF NOT EXISTS gavoregel (
+  rule_key      text        NOT NULL,
+  gift_id       text        NOT NULL REFERENCES gavokatalog(gift_id) ON DELETE RESTRICT,
+  status        text        NOT NULL DEFAULT 'kandidat' CHECK (status IN ('kandidat','verifierad')),
+  bekraftelser  integer     NOT NULL DEFAULT 0 CHECK (bekraftelser >= 0),
+  noterat_at    timestamptz NOT NULL DEFAULT now(),
+  verifierad_at timestamptz,
+  PRIMARY KEY (rule_key, gift_id)
+);
+CREATE INDEX IF NOT EXISTS gavoregel_verifierad_idx
+  ON gavoregel(rule_key) WHERE status = 'verifierad';
+
+-- Distinkta källor bakom varje bekräftelse. Källan är HASHAD av samma skäl som
+-- heart_me_bidrag.avsandarnyckel: vi behöver veta ATT två olika kreatörer sett gåvan, aldrig VILKA.
+CREATE TABLE IF NOT EXISTS gavoregel_kalla (
+  rule_key   text NOT NULL,
+  gift_id    text NOT NULL,
+  kallnyckel text NOT NULL CHECK (kallnyckel ~ '^[0-9a-f]{64}$'),
+  sedd_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (rule_key, gift_id, kallnyckel),
+  FOREIGN KEY (rule_key, gift_id) REFERENCES gavoregel(rule_key, gift_id) ON DELETE CASCADE
 );

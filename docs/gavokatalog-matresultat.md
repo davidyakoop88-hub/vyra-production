@@ -63,3 +63,66 @@ Tre vägar, ingen påbörjad:
 
 Designen, de 23 röda proven och avvägningarna finns kvar i PR #275, som är stoppad men inte
 förkastad.
+
+---
+
+# RÄTTELSE 2026-08-28: katalogen kräver INTE en betald plan
+
+Mätningen ovan var korrekt men slutsatsen för bred. `fetchAvailableGifts()` föll på
+**signeringstjänsten**, inte på gåvorutten.
+
+`tiktok-live-connector` har **två** vägar till samma katalog:
+
+| Rutt | Väg |
+|---|---|
+| `fetchRoomGiftsFromEulerRoute` | via Euler Stream — den betalda |
+| `fetchRoomGiftsRoute` | direkt mot TikToks `webcast/gift/list/` |
+
+`RouteConfig.fetchRoomGifts` pekar på den **direkta** rutten. Det som kostar är att *signera*
+webcast-anrop, inte att fråga efter gåvor.
+
+## Uppmätt från en inloggad session
+
+Frågad från en inloggad TikTok-flik svarar `webcast/gift/list/?aid=1988` med `HTTP 200` och
+**3,28 MB**:
+
+| Mätning | Värde |
+|---|---|
+| Gåvor i `gifts` | **783** |
+| Med både id och namn | 783 |
+| Med bild | 783 |
+| Unika namn | **734** — alltså **49 dubbletter** |
+| `Heart Me` | 2 poster, **samma id** |
+
+Ingen Euler Stream. Ingen Business-plan. Ingen signering.
+
+**De 49 dubblettnamnen är det hårda beviset för `giftId`-regeln:** ett namn pekar inte ens i TikToks
+egen katalog alltid ut en unik gåva.
+
+## Men det finns ingen "hela katalogen"
+
+Tre mätningar visar att listan är **kontextuell med flit**:
+
+- `is_full_gift_data: false` — TikTok säger själv att svaret är ofullständigt
+- sidan `Exclusive` är **tom** när man frågar utan rumskontext
+- 783 mot repots 1 148 gåvonamn
+
+Försök att tvinga fram mer med parametrar gav ingenting: `is_full_gift_data=1`, `gift_page_type=1`
+och `need_all_gift=1` ändrade inte antalet, och `fetch_giftlist_from=1` **sänkte** det till 517.
+
+## Följden för arkitekturen
+
+Katalogen är en **vy per konto och rum**. Därför två källor i `gavokatalog`:
+
+- `'katalog'` — bulkanrop per rum. Snabbt, men bara det rummet ser.
+- `'handelse'` — passivt från riktiga gåvoevent. Täcker exklusiva gåvor ingen lista räknar upp, och
+  håller sig aktuell när TikTok släpper nya.
+
+**Unionen över alla anslutna rum blir större än vad något enskilt konto kan se.** Det är skillnaden
+mot en statiskt skrapad lista, som är låst vid vad ett konto såg den dag den skrapades.
+
+## Verifierat mot verkligheten
+
+Heart Me-id:t i katalogen är **samma** som det VYRA lärde in från en riktig gåva under LIVE-provet
+samma kväll. Jämförelsen gjordes med ett kort, icke-reversibelt fingeravtryck på båda sidor — inget
+råt id passerade någonstans.

@@ -266,6 +266,12 @@ jobs:
         run: node --test test/regelnycklar.test.js
         working-directory: server
 
+      # GÅVOKATALOGEN OCH DEN GLOBALA REGELN. Före Heart Me-steget, eftersom målet numera slår upp
+      # sin identitet i registret — faller katalogen är Heart Me-resultatet inte tolkbart.
+      - name: Gåvokatalogen — etikettering skild från identitet
+        run: node --test test/gavokatalog.test.js
+        working-directory: server
+
       # HEART ME GOAL — unika personer som skickar gåvan Heart Me under aktuell LIVE.
       #
       # Steget ligger SIST i jobbet. Ett steg som placeras efter ett fallande steg körs ALDRIG
