@@ -420,6 +420,7 @@
         "tests/gift-identity-larlage.test.js",
         "server/test/heart-me-unika-avsandare.test.js",
         "server/test/gavokatalog.test.js",
+        "server/test/gavokatalog-http.test.js",
         "tests/goal-postgres-flode.test.js"
       ],
       "matning": [

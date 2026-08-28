@@ -48,7 +48,9 @@ async function rensa() {
   await pool.query("DELETE FROM gavoregel WHERE gift_id LIKE 'prov-%'");
   await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'prov-%'");
 }
-test.beforeEach(async () => { if (!BLOCKED) await rensa(); });
+// Cachen tomms mellan prov. Utan det kan en lista fran ett tidigare prov leva vidare over en
+// rensning — en isoleringsbugg som cachen sjalv skapade.
+test.beforeEach(async () => { if (!BLOCKED) { await rensa(); K.tomCache(); } });
 test.after(async () => { if (BLOCKED) return; await rensa(); await pool.end(); });
 
 const katalograd = async id => (await pool.query(
@@ -191,6 +193,43 @@ prov('manuell verifiering kräver att gåvan finns i katalogen', async () => {
   assert.equal(ut.ok, false);
   assert.equal(ut.skal, 'okand-gava');
   assert.deepEqual(await K.verifieradeId(pool, REGEL), []);
+});
+
+// ---- CACHEN ------------------------------------------------------------------------------------
+
+prov('cachen svarar utan att fraga databasen igen', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  await K.verifiera(pool, REGEL, G1);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1]);
+
+  // Raden tas bort BAKOM ryggen pa cachen. Svaret ska anda komma fran cachen inom TTL:en — det ar
+  // beviset for att uppslaget inte gar till databasen for varje gava.
+  await pool.query('DELETE FROM gavoregel WHERE gift_id=$1', [G1]);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'uppslaget gick till databasen anda');
+
+  // Och efter TTL:en hamtas sanningen pa nytt.
+  const senare = () => Date.now() + K.CACHE_MS + 1;
+  assert.deepEqual(await K.verifieradeId(pool, REGEL, { nu: senare }), [],
+    'cachen slapper aldrig — en borttagen regel skulle rakna for alltid');
+});
+
+prov('verifiering slar igenom direkt, utan att vanta pa TTL', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [], 'cachar en tom lista');
+
+  await K.verifiera(pool, REGEL, G1);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1],
+    'den tomma listan lag kvar — en nyss verifierad gava hade inte raknats');
+});
+
+prov('befordran slar igenom direkt', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), []);
+
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-b');
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-c');
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'befordran tomde inte cachen');
 });
 
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------

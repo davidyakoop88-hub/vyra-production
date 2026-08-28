@@ -91,10 +91,32 @@ async function noteraKatalog(pool, poster) {
 //
 // Returnerar en lista, inte ett värde: samma gåva kan bära olika id i olika regioner, och regeln
 // ska kunna växa utan att koden ändras.
-async function verifieradeId(pool, ruleKey) {
+//
+// CACHAD, och det är inte en optimering utan en rättelse. Uppslaget ligger på gåvovägen, som är
+// husets hetaste: varje Rose i varje rum passerar här. Utan cache blev en tidigare enda fråga per
+// gåva till TVÅ, eftersom reservuppslaget körs när globalt inte matchar — alltså för varje gåva som
+// INTE är Heart Me, vilket är de allra flesta.
+//
+// PRISET ÄR INAKTUALITET, och det är medvetet: efter en verifiering kan det dröja upp till
+// CACHE_MS innan den slår igenom i alla processer. Registret ändras kanske en gång i månaden, en
+// gåva som räknas några sekunder för sent är ofarlig, och alternativet — att fråga databasen för
+// varje Rose — är det inte. Skrivvägarna tömmer dessutom cachen direkt i sin egen process.
+const CACHE_MS = 30 * 1000;
+const cache = new Map();          // rule_key -> { ids, tid }
+
+function tomCache(ruleKey) {
+  if (ruleKey) cache.delete(ruleKey); else cache.clear();
+}
+
+async function verifieradeId(pool, ruleKey, { nu = Date.now } = {}) {
+  const traff = cache.get(ruleKey);
+  if (traff && nu() - traff.tid < CACHE_MS) return traff.ids;
+
   const q = await pool.query(
     `SELECT gift_id FROM gavoregel WHERE rule_key = $1 AND status = 'verifierad'`, [ruleKey]);
-  return q.rows.map(r => r.gift_id);
+  const ids = q.rows.map(r => r.gift_id);
+  cache.set(ruleKey, { ids, tid: nu() });
+  return ids;
 }
 
 // Noterar att en källa sett ett id för en regel, och befordrar när tillräckligt många DISTINKTA
@@ -139,6 +161,7 @@ async function noteraKandidat(pool, ruleKey, giftId, raKalla) {
       [ruleKey, giftId, KRAV_BEKRAFTELSER]);
 
     await client.query('COMMIT');
+    if (q.rowCount) tomCache(ruleKey);      // befordran ska synas direkt i den har processen
     return { noterad: true, nyKalla: ny.rowCount > 0, befordrad: q.rowCount > 0 };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
@@ -161,10 +184,11 @@ async function verifiera(pool, ruleKey, giftId) {
      ON CONFLICT (rule_key, gift_id) DO UPDATE
        SET status = 'verifierad', verifierad_at = COALESCE(gavoregel.verifierad_at, now())`,
     [ruleKey, giftId]);
+  tomCache(ruleKey);
   return { ok: true };
 }
 
 module.exports = {
   noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
-  kallnyckel, KRAV_BEKRAFTELSER, ETIKETT
+  kallnyckel, tomCache, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
 };
