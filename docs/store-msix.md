@@ -11,11 +11,18 @@ uppdateringskedja är orörda, och ett prov faller om Store-arbetet råkar dra m
 
 Tre värden står på VYRA-postens identitetssida i Partner Center:
 
-| Partner Center | electron-builder | Miljövariabel |
-|---|---|---|
-| `Package/Identity/Name` | `appx.identityName` | `VYRA_STORE_IDENTITY_NAME` |
-| `Publisher` | `appx.publisher` | `VYRA_STORE_PUBLISHER` |
-| `Publisher display name` | `appx.publisherDisplayName` | `VYRA_STORE_PUBLISHER_DISPLAY_NAME` |
+Store-posten heter **VYRA Studio**, Store ID `9PPKZN2SCJM2`, och värdena är hämtade från dess
+identitetssida 2026-08-28:
+
+| Partner Center | Värde | electron-builder | Miljövariabel |
+|---|---|---|---|
+| `Package/Identity/Name` | `vyralive.app.VYRAStudio` | `appx.identityName` | `VYRA_STORE_IDENTITY_NAME` |
+| `Package/Identity/Publisher` | `CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7` | `appx.publisher` | `VYRA_STORE_PUBLISHER` |
+| `Package/Properties/PublisherDisplayName` | `vyralive.app` | `appx.publisherDisplayName` | `VYRA_STORE_PUBLISHER_DISPLAY_NAME` |
+
+Värdena är **inte hemligheter** — de står i klartext i varje publicerat pakets manifest och produkten
+är nåbar på `https://apps.microsoft.com/detail/9PPKZN2SCJM2`. De står här som referens, men matas
+till bygget via miljön så att en ändrad Store-post inte tyst blir fel i ett committat värde.
 
 **Varför de inte får gissas.** Identiteten binder paketet till Store-posten. Fel `Publisher` avvisas
 i certifieringen; fel `identityName` kan i värsta fall gå igenom som en **annan** produkt. Ett
@@ -42,6 +49,23 @@ overrides, och ett prov vaktar att filen inte finns.
 **Formatet.** electron-builder 26 har målet `appx` och producerar en `.appx`. Partner Center tar emot
 `.appx` likaväl som `.msix` — samma paketfamilj. Krävs en strikt `.msix` är det `makeappxArgs` som
 ska ändras.
+
+**Uppmätt 2026-08-28:** bygget går igenom och paketet bär rätt identitet:
+
+```
+<Identity Name="vyralive.app.VYRAStudio"
+          Publisher='CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7'
+          Version="1.2.3.0" />
+<PublisherDisplayName>vyralive.app</PublisherDisplayName>
+```
+
+Versionen blir 1.2.4 när #285 mergas — den ligger som draft enligt beslutad ordning.
+
+### SignPath behövs INTE för Store-vägen
+
+electron-builder loggar `AppX is not signed — reason=Windows Store only build`. Store-paket signeras
+av **Microsoft** vid publicering, inte av oss. Store-vägen är därför helt oberoende av SignPath, och
+går alltså runt de 503-svar som blockerat `.exe`-releasen. Det är ett eget skäl att prioritera den.
 
 ## 3. Uppdateraren är av — men bara i Store-versionen
 

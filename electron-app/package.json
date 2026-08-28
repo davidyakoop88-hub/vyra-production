@@ -112,7 +112,8 @@
         "en-US"
       ],
       "electronUpdaterAware": false,
-      "showNameOnTiles": true
+      "showNameOnTiles": true,
+      "artifactName": "VYRA-Store-${version}.appx"
     }
   },
   "overrides": {
