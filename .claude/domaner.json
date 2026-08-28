@@ -417,6 +417,7 @@
         "server/test/gavoidentitet.test.js",
         "server/test/regelnycklar.test.js",
         "tests/gift-identity-larlage.test.js",
+        "tests/studio-larlage-montering.test.js",
         "server/test/heart-me-unika-avsandare.test.js",
         "tests/goal-postgres-flode.test.js"
       ],

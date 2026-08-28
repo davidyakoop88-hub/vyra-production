@@ -1510,3 +1510,11 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
   .workarea>.overlay-link-bar>div{flex-wrap:wrap;row-gap:8px}
   .workarea>.overlay-link-bar input{flex:1 1 100%!important;order:5}
 }
+
+/* Larlaget i Heart Me Goals panel. Bilden ar liten med flit: den ar en igenkanningshjalp,
+   inte ett bevis — matchningen sker pa teknisk identitet i servern. */
+.heart-lar-hint{font-size:8px;line-height:1.5;color:#a98cb8;margin:0 0 9px}
+.heart-lar-status{font-size:8px;color:#dcb3f0;margin-bottom:8px;min-height:11px}
+.heart-lar-forhands{display:flex;align-items:center;gap:8px;border:1px solid #452656;background:#190d22;border-radius:6px;padding:7px;margin-bottom:8px}
+.heart-lar-forhands img{width:34px;height:34px;object-fit:contain;border-radius:5px}
+.heart-lar-forhands span{font-size:9px;font-weight:700;color:#fff}

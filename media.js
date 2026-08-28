@@ -374,7 +374,7 @@ const campaignOrientationProps=props;props=function(){let html=campaignOrientati
 const heartThemes={classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']};
 function heartGoalHtml(w){let live=goalLiveFor(w),current=live?live.value:+ph(w.heartCurrent,43),target=live?live.target:Math.max(1,+(w.heartTarget||50)),progress=Math.min(100,Math.round(current/target*100)),colors=heartThemes[w.heartTheme||'neon'],icon=(w.heartIcon||'♥').trim()||'♥';return `<div data-goal="heart" class="widget vyra-heart-goal heart-${w.heartTheme||'neon'}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||230}px;--heart:${bk(w,w.heartColor,'highlight',colors[0])};--heart-text:${bk(w,w.heartTextColor,'text',colors[1])};--heart-number:${bk(w,w.heartNumberColor,'secondaryText',colors[0])};zoom:${w.widgetScale||1}"><div class="heart-fill-wrap"><img class="reference-heart-character heart-empty" src="assets/images/heart-character.png?v=1" alt=""><img data-goal-clip class="reference-heart-character heart-filled" src="assets/images/heart-character.png?v=1" alt="Heart" style="clip-path:inset(${100-progress}% 0 0 0)"><div data-goal-clip class="heart-tint" style="clip-path:inset(${100-progress}% 0 0 0)"></div></div><div class="heart-goal-copy"><h3>${icon} ${w.templateTitle||'HEART ME GOAL'}</h3><div class="heart-numbers"><b data-goal-value>${current}</b><span>/</span><strong data-goal-target>${target}</strong></div><em><u data-goal-fill style="width:${progress}%"></u></em><small data-goal-pct>${progress}% KLART</small></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`}
 const heartGoalWh=wh;wh=function(w){return w.type==='templateHeartGoal'?heartGoalHtml(w):heartGoalWh(w)};
-const heartGoalProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateHeartGoal')return heartGoalProps();let colors=heartThemes[w.heartTheme||'neon'];return `<h3>HEART ME GOAL</h3><div class="template-badge">VIDEO-INSPIRERAD · REDIGERBAR</div><div hidden><input id="pt" value="${w.title||''}"><input id="pv" value=""></div><div class="property-group"><h4>INNEHÅLL</h4><label>Rubrik<input id="heartTitle" value="${w.templateTitle||'HEART ME GOAL'}"></label><label>Hjärtsymbol<input id="heartIcon" value="${w.heartIcon||'♥'}" maxlength="3"></label><div class="property-grid"><label>Nuvarande<input id="heartCurrent" type="number" min="0" value="${w.heartCurrent??43}"></label><label>Mål<input id="heartTarget" type="number" min="1" value="${w.heartTarget||50}"></label></div></div><div class="property-group"><h4>DESIGN FRÅN VIDEORNA</h4><label>Tema<select id="heartTheme">${Object.keys(heartThemes).map(t=>`<option value="${t}">${t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><div class="color-grid"><label>Hjärta<input id="heartColor" type="color" value="${w.heartColor||colors[0]}" ${w.inheritBrandKit?'disabled':''}></label><label>Text<input id="heartTextColor" type="color" value="${w.heartTextColor||colors[1]}" ${w.inheritBrandKit?'disabled':''}></label><label>Antal<input id="heartNumberColor" type="color" value="${w.heartNumberColor||colors[0]}" ${w.inheritBrandKit?'disabled':''}></label></div>${bkCheckbox(w)}</div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width||310}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
+const heartGoalProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateHeartGoal')return heartGoalProps();let colors=heartThemes[w.heartTheme||'neon'];return `<h3>HEART ME GOAL</h3><div class="template-badge">VIDEO-INSPIRERAD · REDIGERBAR</div><div hidden><input id="pt" value="${w.title||''}"><input id="pv" value=""></div><div class="property-group"><h4>INNEHÅLL</h4><label>Rubrik<input id="heartTitle" value="${w.templateTitle||'HEART ME GOAL'}"></label><label>Hjärtsymbol<input id="heartIcon" value="${w.heartIcon||'♥'}" maxlength="3"></label><div class="property-grid"><label>Nuvarande<input id="heartCurrent" type="number" min="0" value="${w.heartCurrent??43}"></label><label>Mål<input id="heartTarget" type="number" min="1" value="${w.heartTarget||50}"></label></div></div><div class="property-group" id="heartLarGrupp"><h4>GÅVOIDENTITET</h4><p class="heart-lar-hint">Heart Me-figuren kan se olika ut beroende på medlemmens nivå, kläder och tillbehör. Bilden är bara till för din kontroll — målet matchar alltid på gåvans tekniska identitet.</p><div id="heartLarStatus" class="heart-lar-status"></div><div id="heartLarForhands" class="heart-lar-forhands" hidden><img id="heartLarBild" alt="" referrerpolicy="no-referrer"><span id="heartLarNamn"></span></div><div class="property-actions"><button id="heartLarArmera" type="button">Lär in nästa gåva</button><button id="heartLarAvbryt" type="button" hidden>Avbryt</button></div><div class="property-actions"><button id="heartLarBekrafta" type="button" hidden>Bekräfta</button></div></div><div class="property-group"><h4>DESIGN FRÅN VIDEORNA</h4><label>Tema<select id="heartTheme">${Object.keys(heartThemes).map(t=>`<option value="${t}">${t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><div class="color-grid"><label>Hjärta<input id="heartColor" type="color" value="${w.heartColor||colors[0]}" ${w.inheritBrandKit?'disabled':''}></label><label>Text<input id="heartTextColor" type="color" value="${w.heartTextColor||colors[1]}" ${w.inheritBrandKit?'disabled':''}></label><label>Antal<input id="heartNumberColor" type="color" value="${w.heartNumberColor||colors[0]}" ${w.inheritBrandKit?'disabled':''}></label></div>${bkCheckbox(w)}</div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width||310}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
 const heartGoalBind=bind;bind=function(){heartGoalBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateHeartGoal')return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};set('#heartTitle','templateTitle');set('#heartIcon','heartIcon');set('#heartCurrent','heartCurrent',true);set('#heartTarget','heartTarget',true);set('#heartColor','heartColor');set('#heartTextColor','heartTextColor');set('#heartNumberColor','heartNumberColor');bkBind(w);let theme=document.querySelector('#heartTheme');if(theme){theme.value=w.heartTheme||'neon';theme.onchange=e=>{w.heartTheme=e.target.value;let c=heartThemes[w.heartTheme];w.heartColor=c[0];w.heartTextColor=c[1];w.heartNumberColor=c[0];save();render();toast('Heart-tema uppdaterat')}}};
 const heartGoalCatalog=bind;bind=function(){heartGoalCatalog();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-heart-goal-template]'))return;let section=document.createElement('section');section.dataset.heartGoalTemplate='1';section.className='heart-goal-template-section';let hgThemes=[['classic','Classic'],['dark','Dark'],['emerald','Emerald'],['galaxy','Galaxy'],['golden','Golden'],['ice','Ice'],['neon','Neon'],['ocean','Ocean'],['sakura','Sakura'],['frost','Frost'],['midnight','Midnight'],['citrus','Citrus']];section.innerHTML='<h4>HEART ME GOAL · VARJE TEMA SEPARAT</h4>'+hgThemes.map(([t,label])=>`<button data-heart-theme="${t}"><i>♥</i><span><b>Heart Me Goal · ${label}</b><small>Videotema · valbara färger</small></span></button>`).join('');catalog.prepend(section);section.querySelectorAll('button').forEach(b=>{const t=b.dataset.heartTheme,c=heartThemes[t]||heartThemes.neon,catalogKey='catalog:heartgoal:'+t;b.dataset.catalogKey=catalogKey;b.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets.push(created);selected=id;save();render();toast('Heart Me Goal · '+t+' skapad')}})};
 
@@ -1148,3 +1148,117 @@ const giftJarWh=wh;wh=function(w){return w.type==='templateGiftJar'?giftJarHtml(
 const giftJarProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateGiftJar')return giftJarProps();return '<h3>GIFT JAR</h3><div class="template-badge">7 MODELLER \u00b7 LIVE GIFTS</div><div hidden><input id="pt" value="'+VyraSafe.text(w.title||'Gift Jar')+'"><input id="pv" value=""></div><div class="property-group"><h4>ALLM\u00c4NT</h4><label>Modell<select id="jarModel">'+Object.entries(GIFT_JAR_MODELS).map(([id,m])=>'<option value="'+id+'" '+(w.jarModel===id?'selected':'')+'>'+VyraSafe.text(m.label)+'</option>').join('')+'</select></label><div class="switch-row one"><label><input id="jarShowCounter" type="checkbox" '+(w.jarShowCounter===false?'':'checked')+'> Visa r\u00e4knare</label></div><div class="property-grid"><label>Full vid<input id="jarCapacity" type="number" min="1" max="9999" value="'+(w.jarCapacity||50)+'"></label><label>Auto-reset, ms<input id="jarAutoReset" type="number" min="0" max="60000" step="500" value="'+(w.jarAutoResetMs||0)+'"></label></div></div><div class="property-group"><h4>F\u00c4RGER</h4><div class="color-grid"><label>Huvudf\u00e4rg<input id="jarAccent" type="color" value="'+VyraSafe.text(w.jarAccent||'#b98cff')+'"></label><label>Ljus<input id="jarLight" type="color" value="'+VyraSafe.text(w.jarLight||'#76e7ff')+'"></label></div></div><div class="property-group"><h4>TEST OCH RESET</h4><div class="property-actions"><button id="jarDropTest" type="button">Sl\u00e4pp 5 testg\u00e5vor</button><button id="jarReset" type="button">T\u00f6m burken</button></div><button id="jarDefaults" type="button">\u00c5terst\u00e4ll till standard</button></div><div class="property-group"><h4>POSITION OCH STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="'+(w.x||0)+'"></label><label>Y<input id="propY" type="number" value="'+(w.y||0)+'"></label><label>Bredd<input id="propWidth" type="number" min="100" max="700" value="'+(w.width||250)+'"></label><label>Lager<input id="propLayer" type="number" min="0" max="99" value="'+(w.layer||1)+'"></label></div></div><button class="delete" id="del">Ta bort</button>'};
 const giftJarBind=bind;bind=function(){giftJarBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftJar')return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(el)el.onchange=e=>{w[key]=num?+e.target.value:e.target.value;save();render()}};set('#jarCapacity','jarCapacity',true);set('#jarAutoReset','jarAutoResetMs',true);set('#jarAccent','jarAccent');set('#jarLight','jarLight');document.querySelector('#jarShowCounter')?.addEventListener('change',e=>{w.jarShowCounter=e.target.checked;save();render()});document.querySelector('#jarModel')?.addEventListener('change',e=>{let m=GIFT_JAR_MODELS[e.target.value];w.jarModel=e.target.value;w.jarAccent=m.accent;w.jarLight=m.light;w.jarSymbol=m.symbol;save();render()});document.querySelector('#jarDropTest')?.addEventListener('click',()=>triggerGiftJarDrop({type:'gift',giftName:'Rose',giftImage:'assets/gifts/events/0001_Rose.png',__amount:5}));document.querySelector('#jarReset')?.addEventListener('click',()=>resetGiftJar(w));document.querySelector('#jarDefaults')?.addEventListener('click',()=>{let m=GIFT_JAR_MODELS.crystal;Object.assign(w,{jarModel:'crystal',jarAccent:m.accent,jarLight:m.light,jarSymbol:m.symbol,jarCapacity:50,jarShowCounter:true,jarAutoResetMs:0});resetGiftJar(w);save();render()})};
 const giftJarCatalogBind=bind;bind=function(){giftJarCatalogBind();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-gift-jar]'))return;let section=document.createElement('section');section.dataset.giftJar='1';section.className='gift-jar-template-section';let rubrik=document.createElement('h4');rubrik.textContent='GIFT JAR \u00b7 VARJE MODELL SEPARAT';section.append(rubrik);Object.entries(GIFT_JAR_MODELS).forEach(([model,m])=>{let button=document.createElement('button');button.style.setProperty('--swatch',m.accent);let ikon=document.createElement('i');ikon.textContent=m.symbol;let text=document.createElement('span'),namn=document.createElement('b'),under=document.createElement('small');namn.textContent=m.label;under.textContent='Live gifts \u00b7 transparent';text.append(namn,under);button.append(ikon,text);button.dataset.jarModel=model;button.dataset.catalogKey='catalog:giftjar:'+model;/* Nyckeln skrivs EN gang och lases tillbaka ur knappen. Att upprepa strangen i create() gor att den publicerade nyckeln och den anvanda kan sara sig — ett prov vaktar just det. */button.onclick=()=>{let created=VyraWidgets.create(button.dataset.catalogKey);state.widgets.push(created);selected=created.id;save();render();toast(m.label+' skapad')};section.append(button)});catalog.prepend(section)};
+
+// ---- LÄRLÄGETS MONTERING I HEART ME GOAL -------------------------------------------------------
+//
+// Modulen gift-identity-larlage.js fanns färdig och provad från #280 men var ALDRIG monterad: den
+// laddades inte av studio.html och ingenting anropade den. Färdig kod utan monteringspunkt är
+// husets återkommande fel, och här kostade det ett halvt LIVE-prov innan det upptäcktes.
+//
+// Monteringen äger INGEN regellogik. Den visar serverns läge och skickar tre kommandon. All
+// matchning sker på gåvans tekniska identitet i servern — namn och bild finns här BARA för att en
+// människa ska kunna känna igen gåvan innan den sparas.
+//
+// giftId RÖR ALDRIG DOM:EN. Läget bär det, men bara giftName och giftImage renderas. Ett prov
+// faller om ett id skulle börja skrivas ut.
+let heartLarInstans = null;
+
+const heartLarBind = bind;
+bind = function () {
+  heartLarBind();
+  const w = liveWidget(selected);
+  if (view !== 'editor' || !w || w.type !== 'templateHeartGoal') {
+    // Teardown: en pollslinga som lever vidare efter vybyte är samma fel huset redan lärt sig.
+    if (heartLarInstans) { heartLarInstans.stang(); heartLarInstans = null; }
+    return;
+  }
+  monteraHeartLarlage();
+};
+
+function monteraHeartLarlage() {
+  const grupp = document.querySelector('#heartLarGrupp');
+  if (!grupp) return;
+
+  const detalj = window.VyraAuth && window.VyraAuth.lastDetail && window.VyraAuth.lastDetail();
+  const workspaceId = detalj && detalj.workspaces && detalj.workspaces[0] && detalj.workspaces[0].id;
+  const fabrik = window.VyraGiftIdentityLarlage;
+
+  const status = grupp.querySelector('#heartLarStatus');
+  const forhands = grupp.querySelector('#heartLarForhands');
+  const bild = grupp.querySelector('#heartLarBild');
+  const namn = grupp.querySelector('#heartLarNamn');
+  const armeraKnapp = grupp.querySelector('#heartLarArmera');
+  const bekraftaKnapp = grupp.querySelector('#heartLarBekrafta');
+  const avbrytKnapp = grupp.querySelector('#heartLarAvbryt');
+
+  // Utan inloggning eller modul finns inget att montera. Panelen säger varför i stället för att
+  // visa knappar som inte kan göra något.
+  if (!fabrik || !workspaceId) {
+    status.textContent = 'Lär in gåva kräver anslutning till VYRA.';
+    armeraKnapp.disabled = true;
+    return;
+  }
+
+  if (heartLarInstans) { heartLarInstans.stang(); heartLarInstans = null; }
+
+  function rita(lage) {
+    // OFFLINE-LÄGET FRÅN #284: modulen stänger av sig själv och bär ett skäl. Knappen ska då inte
+    // gå att trycka på — ett anrop som ändå måste misslyckas ger bara en tyst timeout.
+    if (lage.otillganglig) {
+      status.textContent = lage.meddelande;
+      armeraKnapp.disabled = true;
+      bekraftaKnapp.hidden = true;
+      avbrytKnapp.hidden = true;
+      forhands.hidden = true;
+      return;
+    }
+    armeraKnapp.disabled = false;
+
+    if (lage.armerad) {
+      status.textContent = lage.fangst
+        ? 'Gåva fångad — kontrollera namn och bild, tryck sedan Bekräfta.'
+        : 'Väntar på nästa gåva … ' + lage.sekunderKvar + ' s kvar';
+    } else if (lage.inlard) {
+      status.textContent = 'Inlärd gåva: ' + lage.inlard.giftName;
+    } else {
+      status.textContent = 'Ingen gåva inlärd än. Målet räknar ingenting förrän en är bekräftad.';
+    }
+
+    // ENDAST namn och bild. lage.fangst.giftId renderas aldrig.
+    if (lage.fangst) {
+      namn.textContent = lage.fangst.giftName || '';
+      // VyraSafe.src, inte rakt av. Bild-URL:en kommer fran TikTok genom servern, och en oskyddad
+      // .src-tilldelning slapper igenom javascript:- och data:-URI:er om faltet nagonsin kan
+      // spoofas. Huset har en egen vakt for just det monstret, och den fangade mig har.
+      const saker = window.VyraSafe ? window.VyraSafe.src(lage.fangst.giftImage) : '';
+      if (saker) { bild.src = saker; bild.hidden = false; }
+      else { bild.removeAttribute('src'); bild.hidden = true; }
+      forhands.hidden = false;
+    } else {
+      forhands.hidden = true;
+      bild.removeAttribute('src');
+      namn.textContent = '';
+    }
+
+    armeraKnapp.textContent = lage.armerad ? 'Lär in en annan gåva' : 'Lär in nästa gåva';
+    bekraftaKnapp.hidden = !lage.fangst;
+    avbrytKnapp.hidden = !lage.armerad;
+  }
+
+  heartLarInstans = fabrik.skapaLarlage({
+    workspaceId,
+    // Samma autentiserade väg som resten av Studio. Ingen egen fetch, ingen egen CSRF-hantering.
+    api: (path, options) => window.VyraAuth.api(path, options || {}),
+    rita
+  });
+
+  // rule_key ÄR serverns. Servern validerar den och avvisar allt annat (server/regelnycklar.js),
+  // så webbläsaren väljer aldrig vilken låda en inlärning hamnar i.
+  const REGEL = 'heart_me';
+
+  armeraKnapp.onclick = () => heartLarInstans.armera(REGEL);
+  bekraftaKnapp.onclick = () => heartLarInstans.bekrafta(REGEL);
+  avbrytKnapp.onclick = () => heartLarInstans.avbryt(REGEL);
+
+  heartLarInstans.hamta(REGEL);
+}
