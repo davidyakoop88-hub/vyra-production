@@ -76,3 +76,7 @@ tiktok-bridge/inspelningar/
 # referens. De ar en felsokningsartefakt for den korningen — referensen och det faktiska fotot
 # finns redan, och en incheckad diff hade bara varit en gammal sanning om ett fel som ar fixat.
 tests/visual/diff/
+
+# Store-identiteten hamtas fran Partner Center vid bygget och far aldrig committas —
+# en incheckad identitet gar inte att skilja fran en gissning i efterhand.
+electron-app/store-identitet.json

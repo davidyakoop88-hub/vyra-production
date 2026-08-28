@@ -215,7 +215,18 @@ async function createMainWindow() {
   main.on('closed', () => { clearInterval(desktopAuthTimer); log('main closed'); main = null; app.quit(); });
 }
 
+// STORE-VERSIONEN UPPDATERAR SIG INTE SJALV. Microsoft Store ager uppdateringarna for ett
+// MSIX/AppX-paket, och en app som laddar ner och kor en .exe forbi butiken bryter mot
+// certifieringskraven — dessutom ar installationskatalogen skrivskyddad, sa forsoket hade anda
+// fallit, bara senare och otydligare.
+//
+// Villkoret ar RUNTIME, inte en byggflagga: process.windowsStore ar sant exakt nar appen kor ur ett
+// Store-paket och odefinierat annars. En byggflagga hade kunnat sattas fel eller glommas, och felet
+// hade da synts forst i certifieringen.
+const arStoreversion = () => process.windowsStore === true;
+
 async function checkForUpdates(){
+  if(arStoreversion())return;
   if(!app.isPackaged||updateCheckRunning)return;updateCheckRunning=true;
   try{
     const config=Updater.readConfig(path.join(__dirname,'update-config.json'));if(!config||config.apiOrigin.includes('example.com'))return;
