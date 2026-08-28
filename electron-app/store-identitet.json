@@ -1,0 +1,9 @@
+{
+  "_kalla": "Partner Center · produkt VYRA Studio · Store ID 9PPKZN2SCJM2",
+  "_sida": "https://partner.microsoft.com/dashboard/products/9PPKZN2SCJM2/identity",
+  "_hamtad": "2026-08-28",
+  "_obs": "Offentliga och stabila varden — de star i klartext i varje publicerat pakets manifest. De ar incheckade for att bygget ska vara REPRODUCERBART ur repot. Andra dem ENDAST mot Partner Center-posten ovan, aldrig for hand.",
+  "identityName": "vyralive.app.VYRAStudio",
+  "publisher": "CN=A1F38F6A-C85F-42A3-AFCE-019E5D6FF4B7",
+  "publisherDisplayName": "vyralive.app"
+}
