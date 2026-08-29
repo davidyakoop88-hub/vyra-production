@@ -794,6 +794,95 @@ prov('regionala värden · is_global_gift sparas som den fakta den är', async (
 });
 
 
+// ---- KONTROLLTALEN KOMMER FRÅN ETT GRANSKAT KONTRAKT, INTE FRÅN ANROPET ------------------------
+//
+// Förra rundan gjorde kontrolltalen obligatoriska, men de reste i SAMMA payload som gåvolistan.
+// Då är de inte oberoende: den som skickar en trunkerad lista kan skicka matchande sänkta tal och
+// få den markerad `klar`. Ett kontrolltal som följer med det den ska kontrollera kontrollerar
+// ingenting.
+//
+// Talen bor nu i `server/seedningskontrakt.js` — en fil som går genom kodgranskning och CI. Rutten
+// slår upp dem på region och läser dem ALDRIG ur kroppen.
+
+prov('kontrakt · SE-kontraktet är exakt 783/779/0, granskat och daterat', async () => {
+  const Kontrakt = require('../seedningskontrakt');
+  const se = Kontrakt.for('SE');
+  assert.ok(se, 'inget granskat kontrakt för SE');
+  assert.equal(se.poster, 783);
+  assert.equal(se.unikaId, 779);
+  assert.equal(se.utanId, 0);
+  assert.ok(se.matt_at, 'kontraktet saknar mätdatum — då går det inte att granska');
+  assert.ok(se.kalla, 'kontraktet saknar källa');
+});
+
+prov('kontrakt · en region utan granskat kontrakt kan inte seedas', async () => {
+  const Kontrakt = require('../seedningskontrakt');
+  assert.equal(Kontrakt.for('JP'), null, 'en ogranskad region hade ett kontrakt');
+  assert.equal(Kontrakt.for('ZZ'), null);
+  assert.equal(Kontrakt.for('se'), null, 'kontraktsuppslaget normaliserade i smyg');
+});
+
+
+// ---- KONTROLLEN SKER INOM DET ATOMISKA FLÖDET --------------------------------------------------
+//
+// Förkontrollen jämför den MOTTAGNA listan mot kontraktet, före transaktionen — bra, för då
+// skrivs ingenting alls vid avvikelse. Men den säger inget om vad som FAKTISKT hamnade i
+// databasen. En rad som tyst inte landade hade gett en `klar`-markering på en ofullständig
+// seedning, vilket är exakt det färdigmarkeringen finns för att omöjliggöra.
+//
+// Därför räknas de verkligt skrivna raderna INNE i transaktionen, före `status='klar'`.
+
+prov('atomiskt · en rad som inte landar rullar tillbaka HELA seedningen', async () => {
+  const poster = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  // `_provTappa` hoppar över skrivningen av post 2 utan att kasta — precis som en tyst förlust.
+  // Förkontrollen ser fortfarande 3 mottagna poster och släpper igenom.
+  const ut = await K.noteraKatalog(pool, poster, {
+    region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provTappa: n => n === 2
+  });
+
+  assert.equal(ut.ok, false, 'en seedning med en tappad rad markerades som komplett');
+  assert.equal(ut.fel, 'skrivna-stammer-inte');
+  assert.equal((await K.seedningStatus(pool, 'SE')).klar, false);
+  for (const id of [G1, G2, G3])
+    assert.deepEqual(await K.observationer(pool, id), [], id + ' överlevde en tillbakarullad seedning');
+});
+
+prov('atomiskt · räkningen sker mot databasen, inte mot en lokal räknare', async () => {
+  // Kontrollmätning: utan tappade rader ska allt gå igenom och antalen stämma med DATABASEN.
+  const poster = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  const ut = await K.noteraKatalog(pool, poster,
+    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 } });
+  assert.equal(ut.ok, true);
+
+  const rader = await pool.query(
+    "SELECT count(*)::int n FROM gavoobservation WHERE region='SE' AND gift_id LIKE 'prov-%'");
+  const st = await K.seedningStatus(pool, 'SE');
+  assert.equal(rader.rows[0].n, st.senaste.antal_unika,
+    'färdigmarkeringens antal stämmer inte med antalet rader som faktiskt finns');
+});
+
+// ---- KANDIDATLISTAN LÄSER OBSERVATIONEN, INTE DEN KANONISKA RADEN ------------------------------
+//
+// Den kanoniska tabellen är "senast sett någonstans" och får inte användas som global sanning för
+// regionala attribut — `is_global_gift` är falskt för 266 av 783 gåvor.
+
+prov('kandidatlistan visar REGIONENS namn och pris, inte den kanoniska radens', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose', { diamond_count: 1 })],
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+  // En senare US-seedning skriver den KANONISKA raden sist. Kandidatlistan för SE får inte visa
+  // US-värdena.
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Rosa', { diamond_count: 99 })],
+    { region: 'US', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+  await K.verifiera(pool, REGEL, G1);
+
+  const lista = await K.kandidater(pool, REGEL, { region: 'SE' });
+  const rad = lista.find(r => r.gift_id === G1);
+  assert.equal(rad.gift_name, 'Rose', 'kandidatlistan visade den kanoniska radens namn — alltså US:s');
+  assert.equal(Number(rad.diamanter), 1, 'kandidatlistan visade US:s pris för en SE-granskning');
+  assert.deepEqual(rad.regioner, ['SE', 'US']);
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------
 
 test('vakt: namnet används aldrig för att välja ett id', () => {

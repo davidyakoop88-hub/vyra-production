@@ -349,6 +349,61 @@ prov('status räknar, men lämnar aldrig ut vilka id som finns', async () => {
 
 
 
+
+// ---- KONTRAKTET, INTE KROPPEN ------------------------------------------------------------------
+
+prov('kontrakt · en trunkerad lista med SNÄLLA egna kontrolltal avvisas ändå', async () => {
+  // DET HÄR ÄR HELA POÄNGEN. Anroparen skickar en lista på en post OCH kontrolltal som matchar den
+  // listan perfekt. Med tal ur payloaden hade det markerats `klar`. Rutten ska i stället använda
+  // det granskade SE-kontraktet — 783/779/0 — och avvisa.
+  const r = await anrop('POST', '/api/admin/gavokatalog', {
+    som: 'admin',
+    kropp: { region: REGION, gifts: [post(G1, 'Rose')], forvantat: { poster: 1, unikaId: 1, utanId: 0 } }
+  });
+  assert.notEqual(r.status, 200, 'egna kontrolltal i kroppen godkände en trunkerad seedning');
+  assert.equal(r.body.ok, false);
+  const q = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
+  assert.equal(q.rows[0].n, 0, 'en avvisad seedning lämnade rader');
+});
+
+prov('kontrakt · en kropp som bär forvantat avvisas med 400', async () => {
+  // Gränsen ska vara uttrycklig. Att tyst ignorera fältet hade fått anroparen att tro att talen
+  // gällde.
+  const r = await anrop('POST', '/api/admin/gavokatalog', {
+    som: 'admin',
+    kropp: { region: REGION, gifts: [post(G1, 'Rose')], forvantat: { poster: 783, unikaId: 779, utanId: 0 } }
+  });
+  assert.equal(r.status, 400, 'kroppen fick bära kontrolltal');
+  assert.equal(r.body.ok, false);
+});
+
+prov('kontrakt · en region utan granskat kontrakt ger 400 och skriver inget', async () => {
+  const r = await anrop('POST', '/api/admin/gavokatalog', {
+    som: 'admin', kropp: { region: 'JP', gifts: [post(G1, 'Rose')] }
+  });
+  assert.equal(r.status, 400, 'en region utan granskat kontrakt kunde seedas');
+  assert.equal(r.body.ok, false);
+  const q = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
+  assert.equal(q.rows[0].n, 0);
+});
+
+prov('kontrakt · rutten läser kontrolltalen ur kontraktet — bevisat med SE:s egna tal', async () => {
+  // En lista som möter SE-kontraktet exakt SKA gå igenom. Utan den här kontrollmätningen bevisar
+  // avslagen ovan bara att rutten är trasig.
+  const Kontrakt = require('../seedningskontrakt');
+  const se = Kontrakt.for(REGION);
+  const gifts = [];
+  for (let i = 0; i < se.unikaId; i++) gifts.push(post('httprov-' + (20000 + i), 'G' + i));
+  for (let i = 0; i < se.poster - se.unikaId; i++) gifts.push(post('httprov-' + (20000 + i), 'G' + i));
+
+  const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { region: REGION, gifts } });
+  assert.equal(r.status, 200, 'en lista som möter kontraktet avvisades');
+  assert.equal(r.body.ok, true);
+  assert.equal(r.body.status, 'klar');
+  assert.equal(r.body.forvantat.poster, 783, 'svaret visar inte vilket kontrakt som användes');
+});
+
+
 // ---- ADMINSPÄRREN PÅ ÅTERKALLNING, RADERING OCH KANDIDATLISTAN ---------------------------------
 //
 // Facitlistan avgör vad som får trigga Gift Campaign, Gift Fireworks och Goals hos ALLA kunder.
