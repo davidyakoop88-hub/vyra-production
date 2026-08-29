@@ -250,6 +250,35 @@ test('varje noteraKatalog-anrop i proven anger en observerad region', () => {
     'ett anrop utan region avvisas tyst, och provet blir grönt utan att ha mätt något');
 });
 
+// ---- SAMMA FALLA, ANDRA FALTET ---------------------------------------------------------------
+//
+// `noteraKatalog` kraver numera ocksa FORVANTADE KONTROLLTAL och avvisar anropet INNAN
+// transaktionen om de saknas. Ett prov som mater nagot langre in — atomiciteten, till exempel —
+// slutar da tyst mata det det heter.
+//
+// Det hande pa riktigt: atomicitetsprovet kom aldrig in i transaktionen, sa `_provFel` utloste
+// aldrig. Bara `assert.rejects` rojde det. Hade provet i stallet bara kollat "inga rader efterat"
+// vore det GRONT utan att ha matt nagonting.
+test('varje noteraKatalog-anrop i proven anger forvantade kontrolltal', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const rader = fs.readFileSync(path.join(dir, fil), 'utf8').split(String.fromCharCode(10));
+      rader.forEach((rad, i) => {
+        const kod = rad.trim();
+        if (kod.indexOf('//') === 0 || kod.indexOf('*') === 0) return;
+        if (!/noteraKatalog\s*\(/.test(rad)) return;
+        const block = rader.slice(i, i + 6).join(' ');
+        if (!/forvantat/.test(block)) brister.push(fil + ':' + (i + 1) + ' — noteraKatalog utan forvantat');
+      });
+    }
+  }
+  assert.deepEqual(brister, [],
+    'ett anrop utan kontrolltal avvisas fore transaktionen, sa provet slutar tyst mata det det heter');
+});
+
+
 // ---- gavoseedning KASKADERAR INTE ------------------------------------------------------------
 //
 // `gavoobservation` har ON DELETE CASCADE mot `gavokatalog`, så observationer städas när riggen

@@ -578,8 +578,12 @@ prov('ett avbrott mitt i bulken lämnar INGEN delvis seedning', async () => {
   // Utan transaktion hade ett databasfel vid post 400 av 783 lämnat 399 rader som ser
   // exakt ut som en komplett seedning. Det är den farligaste sortens fel: tyst och trovärdigt.
   const poster = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  // Kontrolltalen MÅSTE stämma här, annars avvisas anropet innan transaktionen ens börjar och
+  // provet mäter inte längre atomiciteten. Precis så föll det i CI: `_provFel` hann aldrig
+  // utlösas, och bara `assert.rejects` avslöjade att provet slutat mäta något.
   await assert.rejects(
-    () => K.noteraKatalog(pool, poster, { region: 'SE', _provFel: n => n === 2 }),
+    () => K.noteraKatalog(pool, poster,
+      { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provFel: n => n === 2 }),
     'bulken svalde felet i stället för att kasta');
 
   for (const id of [G1, G2, G3])
