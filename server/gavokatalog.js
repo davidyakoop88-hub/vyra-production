@@ -30,10 +30,45 @@ const text = (v, max) => String(v === null || v === undefined ? '' : v).slice(0,
 // 2 147 483 647) medan normalizer.js slapper igenom varden upp till 1e12. Utan ovre klamp kastar
 // INSERT:en "integer out of range" — och eftersom anropet ar fire-and-forget med .catch(() => {})
 // hade felet blivit helt tyst.
-// REGIONEN GISSAS ALDRIG. ISO 3166-1 alpha-2, versaler. Allt annat avvisas — ett fält som tyst
-// faller tillbaka på ett default hade gjort provenienesen värdelös precis när den behövs.
-const REGION_FORM = /^[A-Z]{2}$/;
-const lasRegion = v => (typeof v === 'string' && REGION_FORM.test(v.trim()) ? v.trim() : null);
+// ISO 3166-1 alpha-2, de FAKTISKT TILLDELADE koderna. 249 stycken.
+//
+// `^[A-Z]{2}$` är inte den här listan: det mönstret släpper igenom ZZ, XX, QM–QZ och AA — koder
+// som är användartilldelade eller oanvända. De betyder inte "land", de betyder "ingen sa något",
+// och en observation märkt ZZ är en observation utan proveniens som ser ut att ha en.
+const ISO_3166_1_ALPHA_2 = new Set([
+  'AD','AE','AF','AG','AI','AL','AM','AO','AQ','AR','AS','AT','AU','AW','AX','AZ',
+  'BA','BB','BD','BE','BF','BG','BH','BI','BJ','BL','BM','BN','BO','BQ','BR','BS','BT','BV','BW','BY','BZ',
+  'CA','CC','CD','CF','CG','CH','CI','CK','CL','CM','CN','CO','CR','CU','CV','CW','CX','CY','CZ',
+  'DE','DJ','DK','DM','DO','DZ',
+  'EC','EE','EG','EH','ER','ES','ET',
+  'FI','FJ','FK','FM','FO','FR',
+  'GA','GB','GD','GE','GF','GG','GH','GI','GL','GM','GN','GP','GQ','GR','GS','GT','GU','GW','GY',
+  'HK','HM','HN','HR','HT','HU',
+  'ID','IE','IL','IM','IN','IO','IQ','IR','IS','IT',
+  'JE','JM','JO','JP',
+  'KE','KG','KH','KI','KM','KN','KP','KR','KW','KY','KZ',
+  'LA','LB','LC','LI','LK','LR','LS','LT','LU','LV','LY',
+  'MA','MC','MD','ME','MF','MG','MH','MK','ML','MM','MN','MO','MP','MQ','MR','MS','MT','MU','MV','MW','MX','MY','MZ',
+  'NA','NC','NE','NF','NG','NI','NL','NO','NP','NR','NU','NZ',
+  'OM',
+  'PA','PE','PF','PG','PH','PK','PL','PM','PN','PR','PS','PT','PW','PY',
+  'QA',
+  'RE','RO','RS','RU','RW',
+  'SA','SB','SC','SD','SE','SG','SH','SI','SJ','SK','SL','SM','SN','SO','SR','SS','ST','SV','SX','SY','SZ',
+  'TC','TD','TF','TG','TH','TJ','TK','TL','TM','TN','TO','TR','TT','TV','TW','TZ',
+  'UA','UG','UM','US','UY','UZ',
+  'VA','VC','VE','VG','VI','VN','VU',
+  'WF','WS',
+  'YE','YT',
+  'ZA','ZM','ZW'
+]);
+
+// REGIONEN GISSAS ALDRIG, och normaliseras inte heller. Versaler krävs — `se` avvisas i stället
+// för att tyst bli `SE`, för en anropare som skickar fel form har troligen fel källa också.
+const giltigRegion = v => {
+  const k = typeof v === 'string' ? v.trim() : '';
+  return /^[A-Z]{2}$/.test(k) && ISO_3166_1_ALPHA_2.has(k) ? k : null;
+};
 
 const INT4_MAX = 2147483647;
 const heltal = v => {
@@ -74,10 +109,10 @@ function kallnyckel(ra) {
 //      (seedning EFTER event). I drift seedas katalogen en gång och sedan strömmar miljontals
 //      event — alltså exakt den riktning som saknade skydd.
 //
-//   3. `region` SKRIVS INTE HÄRIFRÅN, varken vid insättning eller konflikt. Ett gåvoevent bär
-//      ingen region över huvud taget. En rad som seedats från SE ska inte tappa sin proveniens för
-//      att någon skickade gåvan i ett annat rum, och en ny rad från ett event är ärligt talat av
-//      okänd region — tomt betyder just det.
+//   3. INGEN REGIONAL OBSERVATION SKRIVS HÄRIFRÅN. Ett gåvoevent bär ingen region över huvud
+//      taget, så händelsevägen rör bara den kanoniska tabellen. Skrev den i `gavoobservation`
+//      hade `forsta_sedd` där betytt "först sedd någonstans" i stället för "först sedd i DEN HÄR
+//      regionen" — vilket var precis felet granskningen fällde #290 på.
 //
 //   4. `diamanter` SKRIVS INTE HÄRIFRÅN. Kolumnen bär TikToks STYCKPRIS, men ett event bär
 //      `value = coinsEach * repeatCount` (normalizer.js:68) — hela kombots summa. Att skriva in
@@ -106,47 +141,105 @@ async function noteraFranEvent(pool, event) {
   return { noterad: true };
 }
 
-// Bulkinläggning från TikToks gåvolista. Posterna kommer utifrån, så varje fält saneras här —
-// inget av det får gå vidare orört.
+// Bulkinläggning från TikToks gåvolista, för EN observerad region.
 //
-// Katalogkällan vinner över händelsekällan för namn och bild — i BÅDA riktningarna: bulkvägen
-// skriver över en händelsesatt rad, och `noteraFranEvent` vägrar skriva över en katalogsatt.
-// TikToks egen lista är mer korrekt än ett enstaka event, som kan sakna fält.
+// HELA BULKEN KÖR I EN TRANSAKTION, och det är inte en optimering. Utan den hade ett databasfel
+// vid post 400 av 783 lämnat 399 rader som ser exakt ut som en komplett seedning — tyst,
+// trovärdigt och omöjligt att upptäcka i efterhand. Nu landar antingen allt eller ingenting.
 //
-// Men den vinner inte med ett TOMT värde. Om listan saknar namn eller bild för en post behålls det
-// som redan står — samma regel som händelsevägen. Annars kunde en halvtom lista tömma poster som
-// var korrekt ifyllda.
-async function noteraKatalog(pool, poster, { region } = {}) {
-  // REGIONEN ÄR OBLIGATORISK. En seedning utan proveniens är inte en seedning — den är en global
-  // sanning vi inte har täckning för. Hellre ett avslag än en rad som ljuger om var den kom ifrån.
-  const reg = lasRegion(region);
-  if (!reg) return { skrivna: 0, hoppade: 0, fel: 'okand-region' };
-  if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, hoppade: 0, region: reg };
-  let skrivna = 0, hoppade = 0;
+// FÄRDIGMARKERINGEN skrivs i SAMMA transaktion. En seedning som inte gick i mål lämnar därför
+// varken rader eller markering, och `seedningStatus()` kan svara på frågan "är den här regionen
+// verkligen färdigseedad?" i stället för att någon räknar rader och gissar.
+//
+// TVÅ TABELLER SKRIVS: `gavokatalog` (kanonisk — vad gåvan ÄR) och `gavoobservation` (var och när
+// den setts). Posterna kommer utifrån, så varje fält saneras här.
+//
+// `forsta_sedd` på observationen sätts BARA vid insättning. En andra SE-seedning flyttar
+// `senast_sedd` men aldrig `forsta_sedd` — annars vore "först sedd i SE" inte sant.
+async function noteraKatalog(pool, poster, { region, _provFel = null } = {}) {
+  // REGIONEN ÄR OBLIGATORISK OCH VERKLIG. En seedning utan proveniens är inte en seedning, och en
+  // observation märkt ZZ är en observation utan proveniens som ser ut att ha en.
+  const reg = giltigRegion(region);
+  if (!reg) return { skrivna: 0, unikaId: 0, fel: 'okand-region' };
+  if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, unikaId: 0, region: reg, fel: 'tom-lista' };
 
-  for (const p of poster) {
-    const giftId = text(p && (p.id ?? p.gift_id), 160);
-    if (!giftId) { hoppade += 1; continue; }
-    const bild = text((p.image && Array.isArray(p.image.url_list) && p.image.url_list[0]) || p.icon_url || '', 1200);
-    await pool.query(
-      `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla, region)
-       VALUES ($1,$2,$3,$4,'katalog',$5)
-       ON CONFLICT (gift_id) DO UPDATE
-         SET gift_name = CASE WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name
-                              ELSE gavokatalog.gift_name END,
-             gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
-                               ELSE gavokatalog.gift_image END,
-             diamanter = EXCLUDED.diamanter, kalla = 'katalog',
-             region = EXCLUDED.region, senast_sedd = now()`,
-      [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count), reg]);
-    skrivna += 1;
-  }
-  // `skrivna` raknar POSTER, `unikaId` raknar RADER. TikToks lista innehaller samma id flera
-  // ganger — uppmatt 2026-08-29: 783 poster, 779 distinkta id. Att rapportera bara den ena hade
-  // latit som om fyra poster forsvann.
   const unika = new Set();
   for (const p of poster) { const id = text(p && (p.id ?? p.gift_id), 160); if (id) unika.add(id); }
-  return { skrivna, hoppade, region: reg, unikaId: unika.size };
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const seed = await client.query(
+      `INSERT INTO gavoseedning (region, status) VALUES ($1,'pagaende') RETURNING id`, [reg]);
+    const seedningId = seed.rows[0].id;
+
+    let skrivna = 0, hoppade = 0, n = 0;
+    for (const p of poster) {
+      n += 1;
+      // TESTSÖM, och den är MED FLIT en funktion: en JSON-kropp kan inte bära en funktion, så
+      // felinjektionen är fysiskt onåbar från HTTP-rutten — inte bara onåbar av artighet.
+      if (typeof _provFel === 'function' && _provFel(n)) throw new Error('provframkallat fel vid post ' + n);
+
+      const giftId = text(p && (p.id ?? p.gift_id), 160);
+      if (!giftId) { hoppade += 1; continue; }
+      const bild = text((p.image && Array.isArray(p.image.url_list) && p.image.url_list[0]) || p.icon_url || '', 1200);
+
+      await client.query(
+        `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla)
+         VALUES ($1,$2,$3,$4,'katalog')
+         ON CONFLICT (gift_id) DO UPDATE
+           SET gift_name = CASE WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name
+                                ELSE gavokatalog.gift_name END,
+               gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
+                                 ELSE gavokatalog.gift_image END,
+               diamanter = EXCLUDED.diamanter, kalla = 'katalog', senast_sedd = now()`,
+        [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count)]);
+
+      await client.query(
+        `INSERT INTO gavoobservation (gift_id, region, kalla, seedning_id)
+         VALUES ($1,$2,'katalog',$3)
+         ON CONFLICT (gift_id, region) DO UPDATE
+           SET kalla = 'katalog', seedning_id = EXCLUDED.seedning_id, senast_sedd = now()`,
+        [giftId, reg, seedningId]);
+      skrivna += 1;
+    }
+
+    await client.query(
+      `UPDATE gavoseedning SET status='klar', antal_poster=$2, antal_unika=$3, klar_at=now()
+        WHERE id=$1`, [seedningId, skrivna, unika.size]);
+    await client.query('COMMIT');
+
+    // `skrivna` räknar OBSERVERADE POSTER, `unikaId` räknar RADER. TikToks lista bär samma id
+    // flera gånger — uppmätt 2026-08-29: 783 poster, 779 distinkta id. Att rapportera bara det
+    // ena hade fått fyra rader att se ut som om de försvann.
+    return { skrivna, hoppade, unikaId: unika.size, region: reg, seedningId, status: 'klar' };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Var och när en gåva observerats. Ingen region kan skriva över en annan — primärnyckeln är
+// (gift_id, region), så SE och US är två rader.
+async function observationer(pool, giftId) {
+  if (!giftId) return [];
+  const q = await pool.query(
+    `SELECT region, kalla, forsta_sedd, senast_sedd FROM gavoobservation
+      WHERE gift_id = $1 ORDER BY region`, [giftId]);
+  return q.rows;
+}
+
+// Är den här regionen VERKLIGEN färdigseedad? En räkning av rader kan inte svara på det — en
+// avbruten bulk hade sett likadan ut. Bara en seedning som nådde 'klar' räknas.
+async function seedningStatus(pool, region) {
+  const reg = giltigRegion(region);
+  if (!reg) return { klar: false, senaste: null, fel: 'okand-region' };
+  const q = await pool.query(
+    `SELECT id, antal_poster, antal_unika, startad_at, klar_at FROM gavoseedning
+      WHERE region=$1 AND status='klar' ORDER BY klar_at DESC LIMIT 1`, [reg]);
+  return { klar: q.rowCount > 0, region: reg, senaste: q.rows[0] || null };
 }
 
 // ---- REGELN ------------------------------------------------------------------------------------
@@ -306,7 +399,9 @@ async function kandidater(pool, ruleKey) {
   const q = await pool.query(
     // REGIONEN FOLJER MED. Utan den gar "exakt en verifierad post for den observerade regionen"
     // bara att sluta sig till, och en slutsats ar inte en matning.
-    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter, k.region
+    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter,
+            COALESCE(ARRAY(SELECT o.region FROM gavoobservation o
+                            WHERE o.gift_id = r.gift_id ORDER BY o.region), '{}') AS regioner
        FROM gavoregel r JOIN gavokatalog k ON k.gift_id = r.gift_id
       WHERE r.rule_key = $1 ORDER BY r.bekraftelser DESC, r.gift_id`, [ruleKey]);
   return q.rows.map(r => ({ ...r, mogen: Number(r.bekraftelser) >= KRAV_BEKRAFTELSER }));
@@ -315,5 +410,6 @@ async function kandidater(pool, ruleKey) {
 module.exports = {
   noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
   inaktivera, taBort, kandidater,
-  kallnyckel, tomCache, lasRegion, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
+  observationer, seedningStatus,
+  kallnyckel, tomCache, giltigRegion, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
 };

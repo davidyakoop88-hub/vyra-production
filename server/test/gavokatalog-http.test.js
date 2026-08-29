@@ -108,6 +108,7 @@ async function rensa() {
   await pool.query("DELETE FROM gavoregel_kalla WHERE gift_id LIKE 'httprov-%'");
   await pool.query("DELETE FROM gavoregel WHERE gift_id LIKE 'httprov-%'");
   await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
+  await pool.query('DELETE FROM gavoseedning');   // kaskaderar inte — annars lacker 'klar' mellan prov
 }
 // CACHEN TOMMS MELLAN PROV. rensa() raderar rader, men verifieradeId har en 30-sekunderscache i
 // processen — och proven kor i SAMMA process som servern. Utan tomningen lever en verifiering fran

@@ -47,7 +47,10 @@ test.before(async () => { if (!BLOCKED) pool = new Pool({ connectionString: DB_U
 async function rensa() {
   await pool.query("DELETE FROM gavoregel_kalla WHERE rule_key LIKE '%' AND gift_id LIKE 'prov-%'");
   await pool.query("DELETE FROM gavoregel WHERE gift_id LIKE 'prov-%'");
-  await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'prov-%'");
+  await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'prov-%'");   // observationer kaskaderar
+  // gavoseedning KASKADERAR INTE — den har ingen gift_id. Utan den här raden svarar
+  // seedningStatus('SE') 'klar' från ett TIDIGARE prov, och atomicitetsprovet blir falskt grönt.
+  await pool.query('DELETE FROM gavoseedning');
 }
 // Cachen tomms mellan prov. Utan det kan en lista fran ett tidigare prov leva vidare over en
 // rensning — en isoleringsbugg som cachen sjalv skapade.
@@ -456,11 +459,18 @@ test('vakt: regionen gissas aldrig i modulen', () => {
   // Inget default, ingen reserv, ingen hardkodad region.
   assert.ok(!/region\s*=\s*['"][A-Z]{2}['"]/.test(kall), 'en region hardkodad som reserv');
   assert.ok(!/region\s*\|\|\s*['"]/.test(kall), 'en region med tyst fallback');
-  assert.equal(K.lasRegion('SE'), 'SE');
+  assert.equal(K.giltigRegion('SE'), 'SE');
   for (const v of ['se', 'SWE', '', null, undefined, 'S', 12, ' SE ']) {
-    if (v === ' SE ') { assert.equal(K.lasRegion(v), 'SE', 'blanksteg ska trimmas'); continue; }
-    assert.equal(K.lasRegion(v), null, JSON.stringify(v) + ' accepterades som region');
+    if (v === ' SE ') { assert.equal(K.giltigRegion(v), 'SE', 'blanksteg ska trimmas'); continue; }
+    assert.equal(K.giltigRegion(v), null, JSON.stringify(v) + ' accepterades som region');
   }
+
+  // ISO-LISTAN ÄR HELA POÄNGEN, inte formen. `^[A-Z]{2}$` släpper igenom ZZ.
+  assert.ok(/ISO_3166_1_ALPHA_2/.test(kall), 'ingen ISO-lista i modulen — bara ett formmönster');
+  for (const v of ['ZZ', 'XX', 'QZ', 'AA', 'OO'])
+    assert.equal(K.giltigRegion(v), null, v + ' är inte en tilldelad ISO-kod men accepterades');
+  for (const v of ['SE', 'US', 'GB', 'JP', 'BR'])
+    assert.equal(K.giltigRegion(v), v, v + ' är en riktig ISO-kod men avvisades');
 });
 
 // ---- REGIONALA OBSERVATIONER -------------------------------------------------------------------

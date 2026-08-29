@@ -245,3 +245,27 @@ test('varje noteraKatalog-anrop i proven anger en observerad region', () => {
   assert.deepEqual(brister, [],
     'ett anrop utan region avvisas tyst, och provet blir grönt utan att ha mätt något');
 });
+
+// ---- gavoseedning KASKADERAR INTE ------------------------------------------------------------
+//
+// `gavoobservation` har ON DELETE CASCADE mot `gavokatalog`, så observationer städas när riggen
+// rensar gåvorna. `gavoseedning` gör INTE det — den har ingen gift_id att hänga på.
+//
+// Följden om den lämnas kvar: `seedningStatus('SE')` svarar `klar: true` från ett TIDIGARE prov,
+// och atomicitetsprovet — som påstår att en avbruten bulk INTE lämnar en komplett seedning — blir
+// falskt grönt. Samma familj som cachen som läckte mellan ruttproven.
+test('varje provfil som seedar tömmer också gavoseedning', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const kalla = fs.readFileSync(path.join(dir, fil), 'utf8');
+      if (!/noteraKatalog\s*\(/.test(kalla)) continue;          // bara filer som faktiskt seedar
+      if (!/DELETE FROM gavoseedning/.test(kalla)) {
+        brister.push(fil + ' seedar men rensar aldrig gavoseedning');
+      }
+    }
+  }
+  assert.deepEqual(brister, [],
+    'en kvarlämnad seedning gör seedningStatus() sann i nästa prov, och atomicitetsprovet grönt utan grund');
+});

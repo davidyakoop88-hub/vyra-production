@@ -153,6 +153,7 @@ async function rensa() {
   // och överlever en DELETE bakom ryggen på sig — precis så blev ett 403-prov falskt godkänt.
   await pool.query('DELETE FROM gavoregel WHERE gift_id = ANY($1)', [[HEART_ME, ROSE, OKAND]]);
   await pool.query('DELETE FROM gavokatalog WHERE gift_id = ANY($1)', [[HEART_ME, ROSE, OKAND]]);
+  await pool.query('DELETE FROM gavoseedning');   // kaskaderar inte
   Gavokatalog.tomCache();
 
   // Tom state: migrationsprovet nedan fyller den, och en kvarlämnad widget skulle låta schema.sql:s

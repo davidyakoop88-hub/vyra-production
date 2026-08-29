@@ -151,7 +151,36 @@ x-vyra-csrf: <token>
 
 Kräver `is_platform_admin`. Kroppen tas emot upp till 8 MB (783 gåvor är cirka 0,4 MB).
 
-**`region` är obligatorisk och gissas aldrig.** Utan den svarar rutten 400 och skriver ingenting.
+**`region` är obligatorisk och gissas aldrig.** Den måste vara en verkligt tilldelad ISO 3166-1
+alpha-2-kod i versaler — `^[A-Z]{2}$` räcker inte, det mönstret släpper igenom `ZZ`, `XX` och
+`QM`–`QZ`, som är användartilldelade och betyder "ingen sa något". Utan giltig kod svarar rutten
+400 och skriver ingenting.
+
+## Datamodellen: kanonisk gåva, regional observation
+
+Granskningen av #290 gav no-go, och hade rätt: regionen låg först som en kolumn på `gavokatalog`,
+vars primärnyckel är `gift_id` ensam. `ON CONFLICT` skrev därför över fältet, och **en senare
+US-seedning raderade SE-observationen**. Tre tabeller i stället:
+
+| Tabell | Vad den svarar på |
+|---|---|
+| `gavokatalog` | Vad gåvan **är** — namn, bild, diamanter. En rad per `gift_id`. |
+| `gavoobservation` | **Var och när** den setts. PK `(gift_id, region)` — SE och US är två rader. |
+| `gavoseedning` | Om en region är **verkligt färdigseedad**, med antal och tidpunkt. |
+
+`forsta_sedd` på observationen betyder därför "först sedd i **den här** regionen", inte "först sedd
+någonstans". Ett gåvoevent bär ingen region alls och skriver därför **aldrig** i
+`gavoobservation` — bara i den kanoniska tabellen.
+
+## Bulken är atomisk
+
+Hela seedningen kör i **en transaktion**, och färdigmarkeringen skrivs i samma transaktion. Utan
+det hade ett databasfel vid post 400 av 783 lämnat 399 rader som ser exakt ut som en komplett
+seedning — tyst, trovärdigt och omöjligt att upptäcka i efterhand.
+
+`GET /api/admin/gavokatalog/status` svarar därför inte bara med radantal utan med
+`seedningar: [{ region, klar, antal_poster, antal_unika, klar_at }]`. Frågan "är SE färdigseedad?"
+besvaras av markeringen, inte av att någon räknar rader och gissar.
 
 ## Vad mätningen 2026-08-29 visade om regionen
 

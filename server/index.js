@@ -396,11 +396,11 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // en global sanning vi inte har tackning for, och da ar 400 ratt svar. Svaret bar RAKNEVERK och
   // regionen, aldrig id:n eller namn.
   if(p==='/api/admin/gavokatalog'&&req.method==='POST'){const d=await body(req,8*1024*1024);
-    if(!Gavokatalog.lasRegion(d&&d.region))return send(res,400,{ok:false,error:'Observerad region kravs (ISO 3166-1 alpha-2, versaler)'});
+    if(!Gavokatalog.giltigRegion(d&&d.region))return send(res,400,{ok:false,error:'Observerad region kravs (verklig ISO 3166-1 alpha-2-kod i versaler)'});
     const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region});
     return send(res,200,{ok:true,...ut})}
   // Rakneverk, aldrig id:n. Svaret sager HUR MANGA som finns, inte VILKA.
-  if(p==='/api/admin/gavokatalog/status'&&req.method==='GET'){const k=await pool.query("SELECT kalla,region,count(*)::int n FROM gavokatalog GROUP BY kalla,region ORDER BY kalla,region");const r=await pool.query("SELECT rule_key,status,count(*)::int n FROM gavoregel GROUP BY rule_key,status");return send(res,200,{ok:true,katalog:k.rows,regler:r.rows})}
+  if(p==='/api/admin/gavokatalog/status'&&req.method==='GET'){const k=await pool.query("SELECT kalla,count(*)::int n FROM gavokatalog GROUP BY kalla");const g=await pool.query("SELECT region,kalla,count(*)::int n FROM gavoobservation GROUP BY region,kalla ORDER BY region,kalla");const sd=await pool.query("SELECT DISTINCT ON (region) region,status='klar' AS klar,antal_poster,antal_unika,klar_at FROM gavoseedning ORDER BY region,klar_at DESC NULLS LAST");const r=await pool.query("SELECT rule_key,status,count(*)::int n FROM gavoregel GROUP BY rule_key,status");return send(res,200,{ok:true,katalog:k.rows,regioner:g.rows,seedningar:sd.rows,regler:r.rows})}
   // Manuell befordran for en identitet som bevisats pa annat satt. Kraver att gavan finns i
   // katalogen — ett id vi aldrig sett kan inte pekas ut som verifierat.
   const verifieraRegel=p.match(/^\/api\/admin\/gavoregel\/([A-Za-z0-9_:-]{1,160})\/verifiera$/i);

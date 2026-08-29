@@ -656,40 +656,59 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
   gift_image  text        NOT NULL DEFAULT '',
   diamanter   integer     NOT NULL DEFAULT 0 CHECK (diamanter >= 0),
   kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
-  -- OBSERVERAD REGION, och tomt betyder OKÄND — aldrig gissad.
-  --
-  -- Uppmätt 2026-08-29: webcast/gift/list/ bär INGET regionfält alls. Ingen `region`, inget
-  -- `country`, ingen `locale`, ingen `currency`. Regionen kommer därför från kontexten som gjorde
-  -- observationen (kontots `appContext.region`) och skrivs av bulkvägen, som får den som ett
-  -- uttryckligt argument.
-  --
-  -- Gåvoevent bär ingen region över huvud taget, så händelsevägen lämnar fältet tomt och rör det
-  -- ALDRIG vid en konflikt: en rad som seedats från SE ska inte tappa sin proveniens för att någon
-  -- skickade gåvan i ett annat rum.
-  --
-  -- DÄRFÖR ÄR EN RAD INTE "GLOBAL". Den är en OBSERVATION: den här gåvan sågs i den här regionen
-  -- vid den här tidpunkten, av den här källan. Gåvo-id:t i sig är detsamma överallt — det är mätt —
-  -- men listan man får se är en vy per konto och rum, och raden ska säga vilken vy den kom ur.
-  region      text        NOT NULL DEFAULT '' CHECK (region = '' OR region ~ '^[A-Z]{2}$'),
   forsta_sedd timestamptz NOT NULL DEFAULT now(),
   senast_sedd timestamptz NOT NULL DEFAULT now()
 );
 
--- gavokatalog skapades i #289 UTAN region, och tabellen finns redan i drift. CREATE TABLE IF NOT
--- EXISTS ror den inte — husets dyraste inlarda lardom — sa kolumnen maste laggas till separat.
-ALTER TABLE gavokatalog ADD COLUMN IF NOT EXISTS region text NOT NULL DEFAULT '';
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conrelid = 'gavokatalog'::regclass AND contype = 'c'
-       AND pg_get_constraintdef(oid) LIKE '%region%'
-  ) THEN
-    ALTER TABLE gavokatalog
-      ADD CONSTRAINT gavokatalog_region_check
-      CHECK (region = '' OR region ~ '^[A-Z]{2}$');
-  END IF;
-END $$;
+-- REGIONEN BOR INTE HAR, och det ar en rattelse. #290 lade den forst som en kolumn pa den har
+-- tabellen, men `gift_id` ar ensam primarnyckel — sa ON CONFLICT skrev over falten, och en
+-- US-seedning raderade SE-observationen. En regional observation maste kunna bevaras separat.
+-- Se gavoobservation nedan.
+
+-- ---------------------------------------------------------------------------------------------
+-- SEEDNINGAR. En bulkinlaggning av EN region, med fardigmarkering.
+--
+-- Utan den har tabellen hade ett databasfel vid post 400 av 783 lamnat 399 rader som ser exakt ut
+-- som en komplett seedning — tyst och trovardigt fel. Hela bulken kor i EN transaktion och
+-- markeras 'klar' i samma transaktion, sa en avbruten seedning lamnar varken rader eller markering.
+CREATE TABLE IF NOT EXISTS gavoseedning (
+  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  region       text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
+  status       text        NOT NULL DEFAULT 'pagaende' CHECK (status IN ('pagaende','klar')),
+  antal_poster integer     NOT NULL DEFAULT 0 CHECK (antal_poster >= 0),
+  antal_unika  integer     NOT NULL DEFAULT 0 CHECK (antal_unika >= 0),
+  startad_at   timestamptz NOT NULL DEFAULT now(),
+  klar_at      timestamptz
+);
+CREATE INDEX IF NOT EXISTS gavoseedning_klar_idx
+  ON gavoseedning(region, klar_at DESC) WHERE status = 'klar';
+
+-- ---------------------------------------------------------------------------------------------
+-- REGIONALA OBSERVATIONER. En rad per (gava, region) — VAR och NAR gavan setts.
+--
+-- gavokatalog sager vad gavan AR. Den har tabellen sager var den observerats, med EGEN kalla och
+-- EGNA tider. Primarnyckeln (gift_id, region) ar hela poangen: SE och US ar tva rader, och ingen
+-- av dem kan skriva over den andra.
+--
+-- ETT GAVOEVENT SKRIVER ALDRIG HAR. Ett event bar ingen region, sa det fyller bara den kanoniska
+-- tabellen. `forsta_sedd` har betyder darfor verkligen "forst sedd i DEN HAR regionen" — inte
+-- "forst sedd nagonstans", vilket var felet i #290.
+CREATE TABLE IF NOT EXISTS gavoobservation (
+  gift_id     text        NOT NULL REFERENCES gavokatalog(gift_id) ON DELETE CASCADE,
+  region      text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
+  kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
+  seedning_id uuid        REFERENCES gavoseedning(id) ON DELETE SET NULL,
+  forsta_sedd timestamptz NOT NULL DEFAULT now(),
+  senast_sedd timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (gift_id, region)
+);
+CREATE INDEX IF NOT EXISTS gavoobservation_region_idx ON gavoobservation(region);
+
+-- gavokatalog skapades i #289 utan region, och #290:s kolumn ar aldrig utrullad. Skulle nagon anda
+-- ha kort en mellanversion mot en bestaende databas star kolumnen kvar och ar oanvand — den tas
+-- bort har, sa att ingen kan tro att den betyder nagot.
+ALTER TABLE gavokatalog DROP COLUMN IF EXISTS region;
+
 -- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
 -- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
 -- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.
