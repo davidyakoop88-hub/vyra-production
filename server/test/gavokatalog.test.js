@@ -383,6 +383,10 @@ prov('kandidatlistan visar mognad, aldrig källor', async () => {
   assert.equal(g1.status, 'kandidat', 'listan visade en kandidat som godkänd');
   assert.equal(g2.mogen, false, 'en källa räckte för att se mogen ut');
 
+  // Regionen följer med, så "exakt en verifierad post för den observerade regionen" går att LÄSA
+  // i stället för att slutas sig till.
+  assert.equal(g1.region, REGION, 'kandidatlistan säger inte vilken region posten observerades i');
+
   // Namn och bild är till för människans blick — men aldrig VILKA källorna var.
   assert.equal(g1.gift_name, 'Heart Me');
   const text = JSON.stringify(lista);

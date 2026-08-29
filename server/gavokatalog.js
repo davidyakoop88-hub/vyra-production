@@ -304,7 +304,9 @@ async function taBort(pool, ruleKey, giftId) {
 // en plattformsadministratör — utan den kan ingen människa se vad som väntar på godkännande.
 async function kandidater(pool, ruleKey) {
   const q = await pool.query(
-    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter
+    // REGIONEN FOLJER MED. Utan den gar "exakt en verifierad post for den observerade regionen"
+    // bara att sluta sig till, och en slutsats ar inte en matning.
+    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter, k.region
        FROM gavoregel r JOIN gavokatalog k ON k.gift_id = r.gift_id
       WHERE r.rule_key = $1 ORDER BY r.bekraftelser DESC, r.gift_id`, [ruleKey]);
   return q.rows.map(r => ({ ...r, mogen: Number(r.bekraftelser) >= KRAV_BEKRAFTELSER }));
