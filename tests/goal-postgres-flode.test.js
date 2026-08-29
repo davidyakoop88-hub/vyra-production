@@ -235,6 +235,10 @@ test('varje noteraKatalog-anrop i proven anger en observerad region', () => {
     for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
       const rader = fs.readFileSync(path.join(dir, fil), 'utf8').split('\n');
       rader.forEach((rad, i) => {
+        // KOMMENTARER AR INTE KOD. Vakten fallde en gang pa en kommentar som NAMNDE
+        // noteraKatalog() - en vakt som laser prosa mater fel sak.
+        const kod = rad.trim();
+        if (kod.indexOf('//') === 0 || kod.indexOf('*') === 0) return;
         if (!/noteraKatalog\s*\(/.test(rad)) return;
         // Anropen är ofta flerradiga — regionen kan ligga på någon av de följande raderna.
         const block = rader.slice(i, i + 4).join(' ');
@@ -260,7 +264,12 @@ test('varje provfil som seedar tömmer också gavoseedning', () => {
     if (!fs.existsSync(dir)) continue;
     for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
       const kalla = fs.readFileSync(path.join(dir, fil), 'utf8');
-      if (!/noteraKatalog\s*\(/.test(kalla)) continue;          // bara filer som faktiskt seedar
+      // Kommentarer bort innan vi avgor om filen FAKTISKT seedar.
+      const utanKommentar = kalla.split(String.fromCharCode(10)).filter(function (r) {
+        var t = r.trim();
+        return !(t.indexOf('//') === 0 || t.indexOf('*') === 0);
+      }).join(String.fromCharCode(10));
+      if (!/noteraKatalog\s*\(/.test(utanKommentar)) continue;          // bara filer som faktiskt seedar
       if (!/DELETE FROM gavoseedning/.test(kalla)) {
         brister.push(fil + ' seedar men rensar aldrig gavoseedning');
       }

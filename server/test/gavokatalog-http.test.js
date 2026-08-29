@@ -43,6 +43,8 @@ const VANLIG = 'cafe0000-0000-4000-8000-000000000002';
 const auth = {};
 
 const REGION = 'SE';   // observerad region — rutten vagrar utan
+// Kontrolltal for ruttprovens sma listor. Deklarerade, inte harledda ur svaret.
+const KT = (poster, unikaId, utanId = 0) => ({ poster, unikaId, utanId });
 const G1 = 'httprov-9001', G2 = 'httprov-9002';
 const post = (id, namn) => ({ id, name: namn, diamond_count: 1,
   image: { url_list: ['https://p16.example.invalid/' + id + '.png'] } });
@@ -58,6 +60,19 @@ async function session(userId) {
 
 async function anrop(metod, vag, { som = null, kropp = null } = {}) {
   const vem = som ? auth[som] : null;
+  // KONTROLLTAL FÖR PROV SOM INTE HANDLAR OM FULLSTÄNDIGHET. Räknas fram ur listan, vilket är
+  // exakt det som är förbjudet i produktion — men de proven mäter något annat. Sätt
+  // `utanForvantat: true` för att medvetet utelämna dem, eller ange egna literaler i kroppen.
+  if (kropp && Array.isArray(kropp.gifts) && !kropp.forvantat && !kropp.utanForvantat) {
+    const unika = new Set();
+    let utanId = 0;
+    for (const p of kropp.gifts) {
+      const id = String((p && (p.id ?? p.gift_id)) || '');
+      if (id) unika.add(id); else utanId += 1;
+    }
+    kropp = { ...kropp, forvantat: { poster: kropp.gifts.length, unikaId: unika.size, utanId } };
+  }
+  if (kropp && kropp.utanForvantat) { kropp = { ...kropp }; delete kropp.utanForvantat; }
   const res = await fetch(bas + vag, {
     method: metod,
     headers: { ...(kropp ? { 'content-type': 'application/json' } : {}),
@@ -181,13 +196,41 @@ prov('en trasig post fäller inte hela bulken', async () => {
   assert.equal(r.body.hoppade, 1);
 });
 
-prov('en tom eller felformad kropp skriver ingenting', async () => {
+prov('en tom eller felformad lista ger 422 och ok:false — inte 200 och ok:true', async () => {
+  // Ett 200/ok:true på en tom lista är en tyst lögn: anroparen får "det gick bra" av något som
+  // inte hände. Statuskoden är det enda de flesta klienter tittar på.
   for (const gifts of [undefined, null, 'inte en lista', []]) {
-    const kropp = { region: REGION, ...(gifts === undefined ? {} : { gifts }) };
+    const kropp = { region: REGION, forvantat: { poster: 783, unikaId: 779, utanId: 0 },
+                    ...(gifts === undefined ? {} : { gifts }) };
     const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp });
-    assert.equal(r.status, 200, JSON.stringify(kropp) + ' gav fel status');
-    assert.equal(r.body.skrivna, 0);
+    assert.equal(r.status, 422, JSON.stringify(gifts) + ' gav fel status');
+    assert.equal(r.body.ok, false, JSON.stringify(gifts) + ' rapporterades som lyckat');
   }
+});
+
+prov('utan förväntade kontrolltal avvisas anropet med 400', async () => {
+  const r = await anrop('POST', '/api/admin/gavokatalog', {
+    som: 'admin', kropp: { region: REGION, gifts: [post(G1, 'Rose')], utanForvantat: true }
+  });
+  assert.equal(r.status, 400, 'en seedning utan kontrolltal accepterades');
+  assert.equal(r.body.ok, false);
+  const q = await pool.query('SELECT count(*)::int n FROM gavokatalog WHERE gift_id=$1', [G1]);
+  assert.equal(q.rows[0].n, 0, 'ett avvisat anrop hann ändå skriva');
+});
+
+prov('en trunkerad lista mot riktiga kontrolltal ger 422 och skriver ingenting', async () => {
+  // Precis fallet granskningen fällde: en lista som ser komplett ut men inte är det.
+  const r = await anrop('POST', '/api/admin/gavokatalog', {
+    som: 'admin',
+    kropp: { region: REGION, gifts: [post(G1, 'Rose')], forvantat: { poster: 783, unikaId: 779, utanId: 0 } }
+  });
+  assert.equal(r.status, 422, 'en trunkerad seedning accepterades');
+  assert.equal(r.body.ok, false);
+  const q = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
+  assert.equal(q.rows[0].n, 0, 'en avvisad seedning lämnade rader');
+  const st = await anrop('GET', '/api/admin/gavokatalog/status', { som: 'admin' });
+  assert.ok(!(st.body.seedningar || []).some(x => x.region === REGION && x.klar),
+    'en trunkerad seedning markerades som färdig');
 });
 
 prov('utan observerad region skrivs ingenting — 400, inte ett tyst default', async () => {
