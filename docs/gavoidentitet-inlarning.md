@@ -20,7 +20,7 @@ stängda:
 | Väg | Utfall |
 |---|---|
 | Repots katalog (`gifts-manifest.js`, 1148 poster) | Bara `name` och `file` — **inget `giftId`** |
-| Rummets katalog (`fetchAvailableGifts()`) | Kräver signering → Euler Stream → **betald Business-plan** (uppmätt i produktion 2026-08-26, `docs/gavokatalog-matresultat.md`) |
+| Rummets katalog (`fetchAvailableGifts()`) | **RÄTTAT 2026-08-28: kräver INTE en Business-plan.** Mätningen 2026-08-26 träffade signeringstjänsten, inte gåvorutten. Från en INLOGGAD session svarar `webcast/gift/list/` med 783 gåvor — id, namn och bild. Se `docs/gavokatalog-matresultat.md`. Den vägen seedar numera det globala registret (`server/gavokatalog.js`); lärläget här är reserv. |
 
 Gåvoeventen bär redan både `giftId`, `giftName` och `giftImage` genom `cleanEvent`
 (`server/event-bus.js:13-27`). Ingen signering, ingen kostnad.

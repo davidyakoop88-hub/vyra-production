@@ -232,6 +232,68 @@ prov('befordran slar igenom direkt', async () => {
   assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'befordran tomde inte cachen');
 });
 
+// ---- TENANTSTYRD INDATA MOT ETT GLOBALT BORD ---------------------------------------------------
+//
+// `gavokatalog` har ingen workspace-kolumn, och händelsevägen matas av POST /api/workspaces/:id/
+// events — en rutt vilken editor som helst når i sitt EGET workspace, där bara `type` och
+// `username` valideras. Proven nedan mäter de tre skydden som följde av den insikten.
+
+prov('en katalogsatt rad kan INTE skrivas om av ett event', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')]);
+
+  // Riktningen som faktiskt inträffar i drift: seedning EN gång, sedan miljontals event. Det gamla
+  // provet mätte bara den motsatta riktningen (event, sedan seedning) och gick därför grönt.
+  await K.noteraFranEvent(pool, gava(G1, {
+    giftName: 'Heart Me', giftImage: 'https://angripare.invalid/x.png'
+  }));
+
+  const rad = await katalograd(G1);
+  assert.equal(rad.gift_name, 'Rose', 'ett event döpte om en auktoritativ katalogpost');
+  assert.ok(!rad.gift_image.includes('angripare'), 'ett event bytte bild på en auktoritativ post');
+  assert.equal(rad.kalla, 'katalog', 'källan ska fortsätta säga var värdet kom ifrån');
+});
+
+prov('ett event som inte är en gåva skriver ingen katalograd', async () => {
+  await K.noteraFranEvent(pool, { type: 'chat', giftId: G2, giftName: 'Heart Me', comment: 'hej' });
+  assert.equal(await katalograd(G2), null,
+    'ett chattmeddelande med påhittat giftId hamnade i den globala katalogen');
+
+  // KONTROLLMÄTNING: samma indata som en gåva SKA skrivas, annars mäter provet ingenting.
+  await K.noteraFranEvent(pool, gava(G2));
+  assert.ok(await katalograd(G2), 'typkontrollen stoppade även riktiga gåvor');
+});
+
+prov('diamanter skrivs aldrig från ett event — kombototalen är fel storhet', async () => {
+  // event.value = coinsEach * repeatCount (normalizer.js:68). Kolumnen bär STYCKPRIS.
+  await K.noteraFranEvent(pool, gava(G3, { value: 2500 }));
+  assert.equal((await katalograd(G3)).diamanter, 0,
+    'kombots totalsumma lagrades som styckpris, globalt för alla workspaces');
+
+  // Bulkvägen är den enda som vet det riktiga styckpriset.
+  await K.noteraKatalog(pool, [katalogpost(G3, 'Rose', { diamond_count: 1 })]);
+  assert.equal((await katalograd(G3)).diamanter, 1, 'bulkvägen rättade inte det okända värdet');
+
+  // Och ett senare event får inte förstöra det igen.
+  await K.noteraFranEvent(pool, gava(G3, { value: 2500 }));
+  assert.equal((await katalograd(G3)).diamanter, 1, 'ett event skrev över styckpriset');
+});
+
+prov('ett orimligt stort värde spränger inte int4 tyst', async () => {
+  // `diamanter` är int4 (max 2 147 483 647); normalizer.js släpper igenom upp till 1e12. Anropet
+  // är fire-and-forget med .catch(() => {}), så "integer out of range" hade blivit helt tyst.
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Stor', { diamond_count: 1e12 })]);
+  assert.equal((await katalograd(G1)).diamanter, 2147483647, 'värdet klampades inte uppåt');
+});
+
+prov('en halvtom lista tömmer inte poster som redan är ifyllda', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')]);
+  await K.noteraKatalog(pool, [{ id: G1, name: '', diamond_count: 1, image: { url_list: [''] } }]);
+  const rad = await katalograd(G1);
+  assert.equal(rad.gift_name, 'Rose', 'en tom post i listan raderade ett korrekt namn');
+  assert.ok(rad.gift_image, 'en tom post i listan raderade en korrekt bild');
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------
 
 test('vakt: namnet används aldrig för att välja ett id', () => {

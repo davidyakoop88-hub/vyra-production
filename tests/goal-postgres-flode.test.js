@@ -146,12 +146,17 @@ test('KONTROLLMÄTNING: vakten hittar faktiskt HTTP-proven', () => {
 
 // ---- skip: FÅR ALDRIG FÅ ETT ICKE-BOOLESKT VÄRDE ----------------------------------------------
 //
-// Uppmätt i Node 2026-08-29: `skip:` tittar INTE på sanningsvärdet. Allt utom `false` markerar
-// provet som överhoppat MEN KÖR KROPPEN ÄNDÅ, och kastar resultatet:
+// Uppmätt i Node 24.18 den 2026-08-29 — hela sanningstabellen, för den är inte den man gissar:
 //
-//   skip: null   -> kroppen körs, rapporteras SKIP
-//   skip: ''     -> kroppen körs, rapporteras SKIP
-//   skip: false  -> kroppen körs, rapporteras PASS
+//   skip: false   -> kroppen KÖRS, rapporteras PASS      (rätt)
+//   skip: 'skäl'  -> kroppen körs inte, rapporteras SKIP (rätt)
+//   skip: true    -> kroppen körs inte, rapporteras SKIP (rätt)
+//   skip: null    -> kroppen KÖRS, rapporteras SKIP      ← resultatet kastas
+//   skip: ''      -> kroppen KÖRS, rapporteras SKIP      ← resultatet kastas
+//
+// Fällan är alltså FALSKA värden som inte är `false`, inte "allt utom false". Skillnaden spelar
+// roll: `skip: BLOCKED` där BLOCKED är `false` eller en textsträng — mönstret i
+// server/test/gavokatalog.test.js — är HELT KORREKT och ska inte skrivas om.
 //
 // Det bet i CI: tolv nyskrivna prov körde sina påståenden mot riktig Postgres och fick resultaten
 // kastade. Steget blev grönt. Ett fallande påstående hade varit osynligt — den dyraste sortens

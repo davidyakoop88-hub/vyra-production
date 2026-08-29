@@ -26,7 +26,16 @@ const Nyckel = require('./krypteringsnyckel');
 const KRAV_BEKRAFTELSER = 3;
 
 const text = (v, max) => String(v === null || v === undefined ? '' : v).slice(0, max);
-const heltal = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0; };
+// Klampar at BADA hall. Nedat ar sjalvklart; uppat ar inte det: `diamanter` ar en int4 (max
+// 2 147 483 647) medan normalizer.js slapper igenom varden upp till 1e12. Utan ovre klamp kastar
+// INSERT:en "integer out of range" — och eftersom anropet ar fire-and-forget med .catch(() => {})
+// hade felet blivit helt tyst.
+const INT4_MAX = 2147483647;
+const heltal = v => {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(Math.floor(n), INT4_MAX);
+};
 
 // Källan hashas av samma skäl som heart_me_bidrag.avsandarnyckel: vi behöver veta ATT två olika
 // kreatörer sett gåvan, aldrig VILKA. Samma domänseparerade härledning som Heart Me-nyckeln.
@@ -43,28 +52,60 @@ function kallnyckel(ra) {
 
 // En gåva sedd i ett event. Anropas fire-and-forget från ingest-kedjan.
 //
+// TRE SKYDD, och alla tre finns för att indatan här är TENANTSTYRD. `gavokatalog` är
+// PLATTFORMSGLOBAL — den har ingen workspace-kolumn — medan varje annan skrivning på ingest-vägen
+// är scopad till ett workspace. Vem som helst med editor-roll i sitt EGET workspace kan posta ett
+// gåvoevent med valfritt `giftId`, `giftName` och `giftImage`; `validateTikTokIngestPayload` tittar
+// bara på `type` och `username`, och `cleanEvent` längdkapar bara.
+//
+//   1. TYPKONTROLL. Varje annan konsument på samma väg kontrollerar `type === 'gift'`. Utan den
+//      skrev ett chattmeddelande med ett påhittat `giftId` en katalograd.
+//
+//   2. KATALOGKÄLLAN SKYDDAS. En rad med `kalla = 'katalog'` kommer från TikToks EGEN lista och är
+//      auktoritativ. Ett event får aldrig skriva om dess namn eller bild — annars kan en hyresgäst
+//      döpa om en verklig gåvas id till 'Heart Me' i en rad som ser auktoritativ ut, och `kalla`
+//      står kvar och ljuger om var värdet kom ifrån. Kommentaren nedanför påstod den här
+//      invarianten redan; koden höll den bara i den riktning som ALDRIG inträffar i drift
+//      (seedning EFTER event). I drift seedas katalogen en gång och sedan strömmar miljontals
+//      event — alltså exakt den riktning som saknade skydd.
+//
+//   3. `diamanter` SKRIVS INTE HÄRIFRÅN. Kolumnen bär TikToks STYCKPRIS, men ett event bär
+//      `value = coinsEach * repeatCount` (normalizer.js:68) — hela kombots summa. Att skriva in
+//      det hade lagt två oförenliga storheter i samma kolumn, och eftersom ON CONFLICT inte rör
+//      fältet hade det FÖRSTA kombot låst värdet för alltid, globalt för alla workspaces. Noll
+//      betyder "okänt" och rättas av bulkvägen; ett trovärdigt fel gör det inte.
+//
 // `senast_sedd` uppdateras alltid, men namn och bild skrivs bara om vi FAKTISKT fick något — annars
 // hade ett event utan namn kunnat tömma en post som bulkanropet fyllt korrekt.
 async function noteraFranEvent(pool, event) {
-  const giftId = text(event && event.giftId, 160);
-  if (!giftId) return { noterad: false };
+  if (!event || event.type !== 'gift') return { noterad: false, skal: 'inte-gava' };
+  const giftId = text(event.giftId, 160);
+  if (!giftId) return { noterad: false, skal: 'saknar-id' };
   await pool.query(
     `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla)
-     VALUES ($1,$2,$3,$4,'handelse')
+     VALUES ($1,$2,$3,0,'handelse')
      ON CONFLICT (gift_id) DO UPDATE
-       SET gift_name = CASE WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name ELSE gavokatalog.gift_name END,
-           gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image ELSE gavokatalog.gift_image END,
+       SET gift_name = CASE WHEN gavokatalog.kalla = 'katalog' THEN gavokatalog.gift_name
+                            WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name
+                            ELSE gavokatalog.gift_name END,
+           gift_image = CASE WHEN gavokatalog.kalla = 'katalog' THEN gavokatalog.gift_image
+                             WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
+                             ELSE gavokatalog.gift_image END,
            senast_sedd = now()`,
-    [giftId, text(event.giftName, 160), text(event.giftImage || event.giftPictureUrl, 1200),
-     heltal(event.value)]);
+    [giftId, text(event.giftName, 160), text(event.giftImage || event.giftPictureUrl, 1200)]);
   return { noterad: true };
 }
 
 // Bulkinläggning från TikToks gåvolista. Posterna kommer utifrån, så varje fält saneras här —
 // inget av det får gå vidare orört.
 //
-// Katalogkällan vinner över händelsekällan för namn och bild: TikToks egen lista är mer korrekt än
-// ett enstaka event, som kan sakna fält.
+// Katalogkällan vinner över händelsekällan för namn och bild — i BÅDA riktningarna: bulkvägen
+// skriver över en händelsesatt rad, och `noteraFranEvent` vägrar skriva över en katalogsatt.
+// TikToks egen lista är mer korrekt än ett enstaka event, som kan sakna fält.
+//
+// Men den vinner inte med ett TOMT värde. Om listan saknar namn eller bild för en post behålls det
+// som redan står — samma regel som händelsevägen. Annars kunde en halvtom lista tömma poster som
+// var korrekt ifyllda.
 async function noteraKatalog(pool, poster) {
   if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, hoppade: 0 };
   let skrivna = 0, hoppade = 0;
@@ -77,7 +118,10 @@ async function noteraKatalog(pool, poster) {
       `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla)
        VALUES ($1,$2,$3,$4,'katalog')
        ON CONFLICT (gift_id) DO UPDATE
-         SET gift_name = EXCLUDED.gift_name, gift_image = EXCLUDED.gift_image,
+         SET gift_name = CASE WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name
+                              ELSE gavokatalog.gift_name END,
+             gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
+                               ELSE gavokatalog.gift_image END,
              diamanter = EXCLUDED.diamanter, kalla = 'katalog', senast_sedd = now()`,
       [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count)]);
     skrivna += 1;
@@ -119,6 +163,16 @@ async function verifieradeId(pool, ruleKey, { nu = Date.now } = {}) {
   return ids;
 }
 
+// VILANDE I DRIFT — LÄS DET HÄR INNAN DU TROR ATT MEKANISMEN KÖR.
+//
+// Funktionen anropas INTE från någon produktionskod, bara från proven. `gavoregel_kalla` är därför
+// tom i drift, `bekraftelser` står kvar på 0, och status 'kandidat' uppstår aldrig — enda skrivaren
+// är den manuella `verifiera()`. Schemakommentarerna beskriver alltså en väg produktionen inte kör.
+//
+// Det är ett medvetet stopp: så länge ingen automatik kan befordra ett id kan inget mål börja
+// räkna en ny gåva utan att en människa sagt ja. Att koppla in den är ett produktbeslut.
+// Se docs/gavokatalog-matresultat.md, avsnittet "Vilande med flit".
+//
 // Noterar att en källa sett ett id för en regel, och befordrar när tillräckligt många DISTINKTA
 // källor gjort det.
 //

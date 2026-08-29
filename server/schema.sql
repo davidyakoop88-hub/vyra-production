@@ -659,7 +659,9 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
   forsta_sedd timestamptz NOT NULL DEFAULT now(),
   senast_sedd timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS gavokatalog_namn_idx ON gavokatalog(lower(gift_name));
+-- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
+-- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
+-- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.
 
 -- ============================================================================================
 -- GÅVOREGELN · rule_key -> verifierat gift_id, SERVERÄGD OCH GLOBAL

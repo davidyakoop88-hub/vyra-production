@@ -126,3 +126,62 @@ mot en statiskt skrapad lista, som är låst vid vad ett konto såg den dag den 
 Heart Me-id:t i katalogen är **samma** som det VYRA lärde in från en riktig gåva under LIVE-provet
 samma kväll. Jämförelsen gjordes med ett kort, icke-reversibelt fingeravtryck på båda sidor — inget
 råt id passerade någonstans.
+
+---
+
+# Driftsteg efter merge — REGISTRET ÄR TOMT TILLS NÅGON SEEDAR DET
+
+`npm run migrate` skapar `gavokatalog`, `gavoregel` och `gavoregel_kalla` **tomma**. Ingen kod i
+repot postar till adminrutterna, och det är med flit: en människa avgör vilket `giftId` som får öka
+ett mål. Men det betyder också att PR:n **inte ändrar något beteende alls** förrän stegen nedan är
+körda — CI är grön hela vägen eftersom proven bygger sin egen data.
+
+Tills dess faller `heart-me-goal.js` alltid ned i lärlägesreserven, precis som före PR:n.
+
+## 1. Seeda katalogen
+
+Från en **inloggad** TikTok-flik, hämta `webcast/gift/list/` och posta listan vidare:
+
+```
+POST /api/admin/gavokatalog
+Cookie: vyra_session=<plattformsadministratörens session>
+x-vyra-csrf: <token>
+{ "gifts": [ ... ] }
+```
+
+Kräver `is_platform_admin`. Kroppen tas emot upp till 8 MB (783 gåvor är cirka 0,4 MB).
+
+## 2. Verifiera Heart Me
+
+```
+POST /api/admin/gavoregel/heart_me/verifiera
+{ "giftId": "<id:t ur katalogen>" }
+```
+
+Id:t står **inte nedskrivet i repot** — det hämtas ur katalogen i steg 1 och jämförs mot det VYRA
+lärde in under LIVE-provet 2026-08-28. Rutten vägrar ett id som inte finns i katalogen.
+
+## 3. Kontrollmät
+
+```
+GET /api/admin/gavokatalog/status
+```
+
+Svarar med **antal**, aldrig med id:n eller namn. Förvänta `kalla: katalog` ≈ 783 och
+`heart_me/verifierad: 1`.
+
+Först därefter gäller "en verifiering räcker för alla workspaces".
+
+## Vilande med flit: den automatiska befordran
+
+`noteraKandidat()` — tre distinkta källor bekräftar ett id, sedan befordras det automatiskt till
+`verifierad` — är **byggd, provad och ANROPAS INTE från någon produktionskod**. `gavoregel_kalla`
+förblir tom och `bekraftelser` står kvar på 0 i drift; den enda skrivaren är den manuella
+`verifiera()`.
+
+Det är ett medvetet stopp, inte ett förbiseende: så länge ingen automatik kan befordra ett id kan
+inget mål börja räkna en ny gåva utan att en människa sagt ja. Priset är att en regional variant av
+Heart Me inte upptäcks av sig själv — den måste verifieras för hand.
+
+**Att koppla in den är ett produktbeslut, inte en kodändring.** Vägen in är ett anrop i
+ingest-kedjan; tröskeln (`KRAV_BEKRAFTELSER = 3`) och hela maskineriet finns redan.

@@ -44,6 +44,7 @@ const BLOCKED = DB_URL ? false
 
 const H = require('../heart-me-goal');
 const Regelnycklar = require('../regelnycklar');
+const Gavokatalog = require('../gavokatalog');
 
 const AGARE = 'd0000000-0000-4000-8000-000000000001';
 const WS = 'd0000000-1111-4000-8000-000000000001';
@@ -144,6 +145,15 @@ async function rensa() {
   await pool.query('DELETE FROM stream_sessions WHERE workspace_id=$1', [WS]);  // liggaren cascadar
   await pool.query('DELETE FROM goal_runtime WHERE overlay_id=$1', [OVERLAY]);
   await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+
+  // DET GLOBALA REGISTRET HAR INGEN WORKSPACE-KOLUMN, och Postgres-jobbet kör alla provfiler mot
+  // SAMMA databas. En verifierad rad som gavokatalog.test.js lämnat efter sig hade därför gjort en
+  // gåva matchbar mitt i ett prov här. Cachen måste tömmas i samma andetag: den lever i processen
+  // och överlever en DELETE bakom ryggen på sig — precis så blev ett 403-prov falskt godkänt.
+  await pool.query('DELETE FROM gavoregel WHERE gift_id = ANY($1)', [[HEART_ME, ROSE, OKAND]]);
+  await pool.query('DELETE FROM gavokatalog WHERE gift_id = ANY($1)', [[HEART_ME, ROSE, OKAND]]);
+  Gavokatalog.tomCache();
+
   // Tom state: migrationsprovet nedan fyller den, och en kvarlämnad widget skulle låta schema.sql:s
   // backfill skapa rader mitt i ett annat prov.
   await pool.query(`UPDATE overlays SET state = '{}'::jsonb WHERE id = $1`, [OVERLAY]);
@@ -682,6 +692,89 @@ prov('liggaren kaskaderar från stream_sessions', async () => {
     'utan ON DELETE CASCADE blir liggaren en personuppgift som aldrig städas');
 });
 
+// ---- DET GLOBALA REGISTRET ---------------------------------------------------------------------
+//
+// Det här blocket saknades helt, och det var PR #289:s hela poäng. Mutationsmätt 2026-08-29: med
+// `Gavokatalog.verifieradeId` bortklippt ur heart-me-goal.js gick alla 44 prov och alla 7 vakter
+// gröna. Inget prov band målet till registret; källvakten intygade RESERVEN.
+//
+// Proven nedan använder INTE lärläget. `beforeEach` lär visserligen in HEART_ME, så varje prov
+// river den raden först — annars kan reserven svara och dölja att registret aldrig lästes.
+
+// Det en plattformsadministratör gör via POST /api/admin/gavokatalog + .../verifiera.
+const verifieraGlobalt = async giftId => {
+  await Gavokatalog.noteraKatalog(pool, [{ id: giftId, name: 'Heart Me', diamond_count: 1 }]);
+  const ut = await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, giftId);
+  assert.equal(ut.ok, true, 'riggen kunde inte verifiera — provet nedan hade blivit meningslöst');
+};
+
+prov('registret · en globalt verifierad gåva räknas UTAN att lärläget använts', async () => {
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await nySession(RUM_1);
+
+  // KONTROLLMÄTNING FÖRST: utan registret och utan lärläge ska ingenting hända. Annars bevisar
+  // provet nedan bara att någonting råkade räknas.
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 0, 'varken register eller lärläge ⇒ ingen ökning');
+
+  await verifieraGlobalt(HEART_ME);
+  await H.applyHeartMeEvent(pool, WS, gava(BO, HEART_ME));
+  assert.equal(await visat(), 1, 'en globalt verifierad gåva måste räknas i ett workspace som aldrig lärt in');
+});
+
+prov('registret · EN verifiering räcker för ALLA workspaces', async () => {
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await verifieraGlobalt(HEART_ME);
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 1);
+
+  // Samma register, ett ANNAT workspace som aldrig rört lärläget. Registret har ingen
+  // workspace-kolumn, och det är precis det som gör en verifiering global.
+  const q = await pool.query(
+    `SELECT gift_id FROM gavoregel WHERE rule_key=$1 AND status='verifierad'`, [Regelnycklar.HEART_ME]);
+  assert.deepEqual(q.rows.map(r => r.gift_id), [HEART_ME]);
+  const kolumner = await pool.query(
+    `SELECT column_name FROM information_schema.columns WHERE table_name='gavoregel'`);
+  assert.ok(!kolumner.rows.some(r => r.column_name.includes('workspace')),
+    'en workspace-kolumn hade gjort registret per konto igen');
+});
+
+prov('registret · en gåva som BARA ligger i katalogen räknas inte', async () => {
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await nySession(RUM_1);
+
+  // Katalogen är etikettering. Att stå i den får aldrig räcka — det är hela skälet till att
+  // identiteten bor i en egen tabell.
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 0, 'katalogpost utan verifierad regel ökade målet');
+});
+
+prov('registret · en verifierad gåva räknar inte NÅGON ANNAN gåva', async () => {
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await verifieraGlobalt(HEART_ME);
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, ROSE));
+  await H.applyHeartMeEvent(pool, WS, gava(BO, OKAND));
+  assert.equal(await visat(), 0, 'fel gåva ökade målet — husets värsta utfall');
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 1, 'rätt gåva räknades inte');
+});
+
+prov('registret · lärläget är kvar som RESERV för en gåva registret inte täcker', async () => {
+  await verifieraGlobalt(ROSE);          // registret täcker en ANNAN gåva
+  await larIn(HEART_ME);                 // lärläget täcker den vi skickar
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 1, 'reserven slutade fungera när registret infördes');
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) --------------------------------------------------------
 
 test('vakt: riggens uuid-konstanter är giltiga uuid', () => {
@@ -797,7 +890,16 @@ test('vakt: heart-me-goal.js matchar aldrig på giftName', () => {
 
   assert.ok(!/giftName/.test(kall), 'ingen namnmatchning, inte ens som reserv');
   assert.ok(!/'Heart Me'/.test(kall), 'inget hårdkodat gåvonamn');
-  assert.ok(/slaUppGiftId/.test(kall), 'identiteten måste komma från lärläget');
+
+  // BÅDA vägarna, och den GLOBALA först. Vakten krävde länge bara `slaUppGiftId` — alltså RESERVEN.
+  // Mutationsmätt 2026-08-29: med hela det globala uppslaget borttaget gick alla sju vakter gröna
+  // och inget av de 44 proven rörde registret. Hela poängen med det serverägda registret var
+  // obunden av prov. En vakt som mäter fel väg är sämre än ingen.
+  assert.ok(/Gavokatalog\.verifieradeId/.test(kall),
+    'den PRIMÄRA identiteten måste komma från det globala registret');
+  assert.ok(/slaUppGiftId/.test(kall), 'lärläget måste finnas kvar som reserv');
+  assert.ok(kall.indexOf('verifieradeId') < kall.indexOf('slaUppGiftId'),
+    'registret ska slås upp FÖRE reserven — annars är global verifiering verkningslös');
 });
 
 test('vakt: klient och server är överens om Heart Me-metriken', () => {

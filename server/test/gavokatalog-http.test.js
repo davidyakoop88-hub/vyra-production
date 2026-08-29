@@ -70,8 +70,9 @@ async function anrop(metod, vag, { som = null, kropp = null } = {}) {
 
 // SKIP AVGORS INUTI KROPPEN, inte i optionsobjektet — och det ar inte en stilfraga.
 //
-// Uppmatt i Node: `skip:` tittar INTE pa sanningsvardet. Allt utom `false` markerar provet som
-// overhoppat MEN KOR KROPPEN ANDA, och kastar resultatet. Med `skip: null` — vilket det blir har
+// Uppmatt i Node: ett FALSKT varde som inte ar `false` — `null` eller tom strang — markerar provet
+// som overhoppat MEN KOR KROPPEN ANDA, och kastar resultatet. (Sanna varden hoppar over korrekt;
+// hela tabellen star i tests/goal-postgres-flode.test.js.) Med `skip: null` — vilket det blir har
 // eftersom BLOCKED anvander null som "inte matt an" — kordes alla tolv proven i CI och
 // rapporterades som SKIP. Ett fallande pastaende hade varit osynligt.
 //
@@ -193,9 +194,15 @@ prov('fält utifrån saneras — inget går orört in i databasen', async () => 
     som: 'admin',
     kropp: { gifts: [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }] }
   });
-  const q = await pool.query('SELECT gift_name,diamanter FROM gavokatalog WHERE gift_id=$1', [G1]);
+  const q = await pool.query(
+    'SELECT gift_name,gift_image,diamanter FROM gavokatalog WHERE gift_id=$1', [G1]);
   assert.ok(q.rows[0].gift_name.length <= 160, 'namnet kapades inte');
   assert.equal(q.rows[0].diamanter, 0, 'ett negativt antal diamanter slapp igenom');
+  // BILDEN ÄR DET ENDA FÄLTET SOM BÄR EN ANGRIPARSTYRD URL, och provet hette redan "fält utifrån
+  // saneras" utan att röra den: `langUrl` byggdes på 2019 tecken och kastades sedan bort.
+  // Mutationsmätt: ta bort `, 1200` ur text(...) i gavokatalog.js och provet var fortfarande grönt.
+  assert.ok(q.rows[0].gift_image.length <= 1200, 'en 2019 tecken lång URL gick orörd in i databasen');
+  assert.ok(q.rows[0].gift_image.startsWith('https://x.invalid/'), 'fel fält hamnade i gift_image');
 });
 
 // ---- 3 · VERIFIERINGEN -------------------------------------------------------------------------
