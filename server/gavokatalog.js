@@ -141,48 +141,79 @@ async function noteraFranEvent(pool, event) {
   return { noterad: true };
 }
 
+// KONTROLLTALEN. Vad anroparen SÄGER att listan innehåller, uppmätt i preflighten.
+//
+// De får ALDRIG härledas ur listan som ska bevisas komplett — då bevisar de ingenting. `783` måste
+// komma från mätningen av TikToks svar, inte från `poster.length`. Hela poängen är att de två kan
+// skilja sig, och att en skillnad ska stoppa seedningen.
+const heltalExakt = v => (typeof v === 'number' && Number.isInteger(v) && v >= 0 ? v : null);
+function lasKontrolltal(f) {
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return null;
+  const poster = heltalExakt(f.poster), unikaId = heltalExakt(f.unikaId), utanId = heltalExakt(f.utanId);
+  if (poster === null || unikaId === null || utanId === null) return null;
+  if (poster < 1 || unikaId < 1) return null;              // en tom seedning är ingen seedning
+  if (unikaId > poster) return null;                       // fler unika än poster är omöjligt
+  if (utanId > poster) return null;
+  return { poster, unikaId, utanId };
+}
+
 // Bulkinläggning från TikToks gåvolista, för EN observerad region.
 //
-// HELA BULKEN KÖR I EN TRANSAKTION, och det är inte en optimering. Utan den hade ett databasfel
-// vid post 400 av 783 lämnat 399 rader som ser exakt ut som en komplett seedning — tyst,
-// trovärdigt och omöjligt att upptäcka i efterhand. Nu landar antingen allt eller ingenting.
+// TVÅ SPÄRRAR, och de svarar på olika frågor:
 //
-// FÄRDIGMARKERINGEN skrivs i SAMMA transaktion. En seedning som inte gick i mål lämnar därför
-// varken rader eller markering, och `seedningStatus()` kan svara på frågan "är den här regionen
-// verkligen färdigseedad?" i stället för att någon räknar rader och gissar.
+//   TRANSAKTIONEN svarar på "skrevs allt som togs emot?" — ett databasfel vid post 400 av 783
+//   lämnar inga rader alls i stället för 399 som ser kompletta ut.
 //
-// TVÅ TABELLER SKRIVS: `gavokatalog` (kanonisk — vad gåvan ÄR) och `gavoobservation` (var och när
-// den setts). Posterna kommer utifrån, så varje fält saneras här.
+//   KONTROLLTALEN svarar på "togs allt emot?" — och det kan transaktionen inte veta. En trunkerad
+//   lista med 1 av 783 poster skrivs helt och hållet korrekt. Utan kontrolltal markerades den
+//   `klar`, alltså "verkligt färdigseedad". Det var felet granskningen fällde #290 på.
 //
-// `forsta_sedd` på observationen sätts BARA vid insättning. En andra SE-seedning flyttar
-// `senast_sedd` men aldrig `forsta_sedd` — annars vore "först sedd i SE" inte sant.
-async function noteraKatalog(pool, poster, { region, _provFel = null } = {}) {
-  // REGIONEN ÄR OBLIGATORISK OCH VERKLIG. En seedning utan proveniens är inte en seedning, och en
-  // observation märkt ZZ är en observation utan proveniens som ser ut att ha en.
+// En avvikelse rullar tillbaka HELA transaktionen: ingen katalograd, ingen observation, ingen
+// färdigmarkering. En avvisad seedning ska inte gå att förväxla med en delvis genomförd.
+async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null } = {}) {
   const reg = giltigRegion(region);
-  if (!reg) return { skrivna: 0, unikaId: 0, fel: 'okand-region' };
-  if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, unikaId: 0, region: reg, fel: 'tom-lista' };
+  if (!reg) return { ok: false, skrivna: 0, unikaId: 0, fel: 'okand-region' };
 
+  const kt = lasKontrolltal(forvantat);
+  if (!kt) return { ok: false, skrivna: 0, unikaId: 0, region: reg, fel: 'ogiltiga-kontrolltal' };
+
+  if (!Array.isArray(poster) || !poster.length)
+    return { ok: false, skrivna: 0, unikaId: 0, region: reg, fel: 'tom-lista' };
+
+  // MOTTAGET räknas ur listan — det är rätt håll. FÖRVÄNTAT kommer utifrån.
   const unika = new Set();
-  for (const p of poster) { const id = text(p && (p.id ?? p.gift_id), 160); if (id) unika.add(id); }
+  let utanId = 0;
+  for (const p of poster) {
+    const id = text(p && (p.id ?? p.gift_id), 160);
+    if (id) unika.add(id); else utanId += 1;
+  }
+  const mottaget = { poster: poster.length, unikaId: unika.size, utanId };
+
+  if (mottaget.poster !== kt.poster || mottaget.unikaId !== kt.unikaId || mottaget.utanId !== kt.utanId)
+    return { ok: false, skrivna: 0, unikaId: mottaget.unikaId, region: reg,
+             fel: 'kontrolltal-stammer-inte', mottaget, forvantat: kt };
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const seed = await client.query(
-      `INSERT INTO gavoseedning (region, status) VALUES ($1,'pagaende') RETURNING id`, [reg]);
+      `INSERT INTO gavoseedning (region, status, forv_poster, forv_unika, forv_utan_id)
+       VALUES ($1,'pagaende',$2,$3,$4) RETURNING id`, [reg, kt.poster, kt.unikaId, kt.utanId]);
     const seedningId = seed.rows[0].id;
 
     let skrivna = 0, hoppade = 0, n = 0;
     for (const p of poster) {
       n += 1;
-      // TESTSÖM, och den är MED FLIT en funktion: en JSON-kropp kan inte bära en funktion, så
-      // felinjektionen är fysiskt onåbar från HTTP-rutten — inte bara onåbar av artighet.
+      // TESTSÖM, MED FLIT EN FUNKTION: en JSON-kropp kan inte bära en funktion, så felinjektionen
+      // är fysiskt onåbar från HTTP-rutten — inte bara onåbar av artighet.
       if (typeof _provFel === 'function' && _provFel(n)) throw new Error('provframkallat fel vid post ' + n);
 
       const giftId = text(p && (p.id ?? p.gift_id), 160);
       if (!giftId) { hoppade += 1; continue; }
+      const namn = text(p.name, 160);
       const bild = text((p.image && Array.isArray(p.image.url_list) && p.image.url_list[0]) || p.icon_url || '', 1200);
+      const dm = heltal(p.diamond_count);
+      const global = typeof p.is_global_gift === 'boolean' ? p.is_global_gift : null;
 
       await client.query(
         `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla)
@@ -193,26 +224,29 @@ async function noteraKatalog(pool, poster, { region, _provFel = null } = {}) {
                gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
                                  ELSE gavokatalog.gift_image END,
                diamanter = EXCLUDED.diamanter, kalla = 'katalog', senast_sedd = now()`,
-        [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count)]);
+        [giftId, namn, bild, dm]);
 
+      // Observationen bär regionens EGNA värden. Ingen annan region kan röra dem.
       await client.query(
-        `INSERT INTO gavoobservation (gift_id, region, kalla, seedning_id)
-         VALUES ($1,$2,'katalog',$3)
+        `INSERT INTO gavoobservation
+           (gift_id, region, kalla, seedning_id, gift_name, gift_image, diamanter, ar_global)
+         VALUES ($1,$2,'katalog',$3,$4,$5,$6,$7)
          ON CONFLICT (gift_id, region) DO UPDATE
-           SET kalla = 'katalog', seedning_id = EXCLUDED.seedning_id, senast_sedd = now()`,
-        [giftId, reg, seedningId]);
+           SET kalla = 'katalog', seedning_id = EXCLUDED.seedning_id,
+               gift_name = EXCLUDED.gift_name, gift_image = EXCLUDED.gift_image,
+               diamanter = EXCLUDED.diamanter, ar_global = EXCLUDED.ar_global,
+               senast_sedd = now()`,
+        [giftId, reg, seedningId, namn, bild, dm, global]);
       skrivna += 1;
     }
 
     await client.query(
       `UPDATE gavoseedning SET status='klar', antal_poster=$2, antal_unika=$3, klar_at=now()
-        WHERE id=$1`, [seedningId, skrivna, unika.size]);
+        WHERE id=$1`, [seedningId, skrivna, mottaget.unikaId]);
     await client.query('COMMIT');
 
-    // `skrivna` räknar OBSERVERADE POSTER, `unikaId` räknar RADER. TikToks lista bär samma id
-    // flera gånger — uppmätt 2026-08-29: 783 poster, 779 distinkta id. Att rapportera bara det
-    // ena hade fått fyra rader att se ut som om de försvann.
-    return { skrivna, hoppade, unikaId: unika.size, region: reg, seedningId, status: 'klar' };
+    return { ok: true, skrivna, hoppade, unikaId: mottaget.unikaId, region: reg,
+             seedningId, status: 'klar', mottaget, forvantat: kt };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
     throw error;
@@ -221,24 +255,24 @@ async function noteraKatalog(pool, poster, { region, _provFel = null } = {}) {
   }
 }
 
-// Var och när en gåva observerats. Ingen region kan skriva över en annan — primärnyckeln är
-// (gift_id, region), så SE och US är två rader.
+// Var och när en gåva observerats, med regionens EGNA värden. PK är (gift_id, region), så SE och
+// US är två rader och ingen kan skriva över den andra.
 async function observationer(pool, giftId) {
   if (!giftId) return [];
   const q = await pool.query(
-    `SELECT region, kalla, forsta_sedd, senast_sedd FROM gavoobservation
-      WHERE gift_id = $1 ORDER BY region`, [giftId]);
+    `SELECT region, kalla, gift_name, gift_image, diamanter, ar_global, forsta_sedd, senast_sedd
+       FROM gavoobservation WHERE gift_id = $1 ORDER BY region`, [giftId]);
   return q.rows;
 }
 
-// Är den här regionen VERKLIGEN färdigseedad? En räkning av rader kan inte svara på det — en
-// avbruten bulk hade sett likadan ut. Bara en seedning som nådde 'klar' räknas.
+// Är regionen VERKLIGEN färdigseedad? En räkning av rader kan inte svara — en trunkerad lista
+// skriver sina rader korrekt. Bara en seedning vars mottagna tal mötte de förväntade når 'klar'.
 async function seedningStatus(pool, region) {
   const reg = giltigRegion(region);
   if (!reg) return { klar: false, senaste: null, fel: 'okand-region' };
   const q = await pool.query(
-    `SELECT id, antal_poster, antal_unika, startad_at, klar_at FROM gavoseedning
-      WHERE region=$1 AND status='klar' ORDER BY klar_at DESC LIMIT 1`, [reg]);
+    `SELECT id, antal_poster, antal_unika, forv_poster, forv_unika, forv_utan_id, startad_at, klar_at
+       FROM gavoseedning WHERE region=$1 AND status='klar' ORDER BY klar_at DESC LIMIT 1`, [reg]);
   return { klar: q.rowCount > 0, region: reg, senaste: q.rows[0] || null };
 }
 

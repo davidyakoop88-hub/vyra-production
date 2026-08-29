@@ -395,10 +395,17 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // 2026-08-29 — sa den maste komma fran den kontext som gjorde observationen. Utan den blir raden
   // en global sanning vi inte har tackning for, och da ar 400 ratt svar. Svaret bar RAKNEVERK och
   // regionen, aldrig id:n eller namn.
+  // FYRA UTFALL, och statuskoden ska saga vilket. Ett 200/ok:true pa nagot som inte hande ar en
+  // tyst logn — de flesta klienter tittar bara pa statuskoden.
+  //   400  regionen eller kontrolltalen ar ogiltiga (anroparens fel, innan nagot mats)
+  //   422  listan ar tom eller stammer inte med de forvantade kontrolltalen (datat duger inte)
+  //   200  seedningen ar komplett och markerad klar
   if(p==='/api/admin/gavokatalog'&&req.method==='POST'){const d=await body(req,8*1024*1024);
     if(!Gavokatalog.giltigRegion(d&&d.region))return send(res,400,{ok:false,error:'Observerad region kravs (verklig ISO 3166-1 alpha-2-kod i versaler)'});
-    const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region});
-    return send(res,200,{ok:true,...ut})}
+    const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region,forvantat:d&&d.forvantat});
+    if(ut.ok)return send(res,200,{ok:true,...ut});
+    if(ut.fel==='ogiltiga-kontrolltal')return send(res,400,{ok:false,error:'Forvantade kontrolltal kravs: heltal poster, unikaId och utanId fran den uppmatta preflighten',...ut});
+    return send(res,422,{ok:false,error:ut.fel==='tom-lista'?'Listan ar tom eller felformad':'Mottagna poster stammer inte med de forvantade kontrolltalen',...ut})}
   // Rakneverk, aldrig id:n. Svaret sager HUR MANGA som finns, inte VILKA.
   if(p==='/api/admin/gavokatalog/status'&&req.method==='GET'){const k=await pool.query("SELECT kalla,count(*)::int n FROM gavokatalog GROUP BY kalla");const g=await pool.query("SELECT region,kalla,count(*)::int n FROM gavoobservation GROUP BY region,kalla ORDER BY region,kalla");const sd=await pool.query("SELECT DISTINCT ON (region) region,status='klar' AS klar,antal_poster,antal_unika,klar_at FROM gavoseedning ORDER BY region,klar_at DESC NULLS LAST");const r=await pool.query("SELECT rule_key,status,count(*)::int n FROM gavoregel GROUP BY rule_key,status");return send(res,200,{ok:true,katalog:k.rows,regioner:g.rows,seedningar:sd.rows,regler:r.rows})}
   // Manuell befordran for en identitet som bevisats pa annat satt. Kraver att gavan finns i

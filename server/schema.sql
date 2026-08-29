@@ -671,12 +671,23 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
 -- Utan den har tabellen hade ett databasfel vid post 400 av 783 lamnat 399 rader som ser exakt ut
 -- som en komplett seedning — tyst och trovardigt fel. Hela bulken kor i EN transaktion och
 -- markeras 'klar' i samma transaktion, sa en avbruten seedning lamnar varken rader eller markering.
+--
+-- MEN TRANSAKTIONEN RACKER INTE. Den bevisar bara att alla MOTTAGNA poster skrevs — aldrig att
+-- hela den FORVANTADE katalogen togs emot. En trunkerad lista med 1 av 783 poster skrevs helt och
+-- markerades klar. Darfor bar tabellen ocksa de FORVANTADE talen: 'klar' satts bara nar mottaget
+-- och forvantat stammer exakt, och de forvantade talen kommer utifran — fran den uppmatta
+-- preflighten — aldrig fran listan som ska bevisas komplett.
 CREATE TABLE IF NOT EXISTS gavoseedning (
   id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   region       text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
   status       text        NOT NULL DEFAULT 'pagaende' CHECK (status IN ('pagaende','klar')),
   antal_poster integer     NOT NULL DEFAULT 0 CHECK (antal_poster >= 0),
   antal_unika  integer     NOT NULL DEFAULT 0 CHECK (antal_unika >= 0),
+  -- Vad anroparen SA att den skulle leverera. Sparas sa att en fardigmarkering gar att granska i
+  -- efterhand: "klar" utan de har talen ar bara ett pastaende.
+  forv_poster  integer     NOT NULL DEFAULT 0 CHECK (forv_poster >= 0),
+  forv_unika   integer     NOT NULL DEFAULT 0 CHECK (forv_unika >= 0),
+  forv_utan_id integer     NOT NULL DEFAULT 0 CHECK (forv_utan_id >= 0),
   startad_at   timestamptz NOT NULL DEFAULT now(),
   klar_at      timestamptz
 );
@@ -698,10 +709,27 @@ CREATE TABLE IF NOT EXISTS gavoobservation (
   region      text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
   kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
   seedning_id uuid        REFERENCES gavoseedning(id) ON DELETE SET NULL,
+  -- NAMN, BILD OCH DIAMANTER BOR HAR OCKSA, och det ar inte dubbellagring for sakerhets skull.
+  --
+  -- UPPMATT 2026-08-29 i den riktiga katalogen: `is_global_gift` ar FALSKT for 266 av 783 gavor.
+  -- TikTok sager alltsa sjalv att en tredjedel av katalogen inte ar global. Da far de har falten
+  -- inte bo enbart pa den kanoniska raden, dar sista skrivningen vinner mellan regioner: en
+  -- US-seedning hade tyst skrivit om vad SE ser.
+  --
+  -- Den kanoniska raden behalls som "senast sett nagonstans" for uppslag som inte bryr sig om
+  -- region. Sanningen per region star har.
+  gift_name   text        NOT NULL DEFAULT '',
+  gift_image  text        NOT NULL DEFAULT '',
+  diamanter   integer     NOT NULL DEFAULT 0 CHECK (diamanter >= 0),
+  ar_global   boolean,    -- TikToks egen is_global_gift. NULL = uppgiften saknades.
   forsta_sedd timestamptz NOT NULL DEFAULT now(),
   senast_sedd timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (gift_id, region)
 );
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_name  text    NOT NULL DEFAULT '';
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_image text    NOT NULL DEFAULT '';
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS diamanter  integer NOT NULL DEFAULT 0;
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS ar_global  boolean;
 CREATE INDEX IF NOT EXISTS gavoobservation_region_idx ON gavoobservation(region);
 
 -- gavokatalog skapades i #289 utan region, och #290:s kolumn ar aldrig utrullad. Skulle nagon anda

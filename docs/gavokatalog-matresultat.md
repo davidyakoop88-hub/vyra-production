@@ -146,8 +146,26 @@ Från en **inloggad** TikTok-flik, hämta `webcast/gift/list/` och posta listan 
 POST /api/admin/gavokatalog
 Cookie: vyra_session=<plattformsadministratörens session>
 x-vyra-csrf: <token>
-{ "region": "SE", "gifts": [ ... ] }
+{
+  "region": "SE",
+  "forvantat": { "poster": 783, "unikaId": 779, "utanId": 0 },
+  "gifts": [ ... ]
+}
 ```
+
+**`forvantat` kommer från preflighten, aldrig från listan.** Talen mäts genom att läsa
+`webcast/gift/list/` och räkna — och skickas sedan in som ett påstående som seedningen måste möta.
+Härleds de ur samma lista de ska bevisa komplett bevisar de ingenting: en trunkerad lista med 1 av
+783 poster skrivs helt korrekt och skulle markeras `klar`.
+
+| Utfall | Svar |
+|---|---|
+| Region eller kontrolltal ogiltiga | **400**, `ok:false` |
+| Listan tom, felformad, eller stämmer inte med kontrolltalen | **422**, `ok:false` |
+| Komplett seedning | **200**, `ok:true`, `status: "klar"` |
+
+En avvikelse rullar tillbaka hela transaktionen: ingen katalograd, ingen observation, ingen
+färdigmarkering. En avvisad seedning ska inte gå att förväxla med en delvis genomförd.
 
 Kräver `is_platform_admin`. Kroppen tas emot upp till 8 MB (783 gåvor är cirka 0,4 MB).
 
@@ -165,7 +183,7 @@ US-seedning raderade SE-observationen**. Tre tabeller i stället:
 | Tabell | Vad den svarar på |
 |---|---|
 | `gavokatalog` | Vad gåvan **är** — namn, bild, diamanter. En rad per `gift_id`. |
-| `gavoobservation` | **Var och när** den setts. PK `(gift_id, region)` — SE och US är två rader. |
+| `gavoobservation` | **Var och när** den setts, med regionens **egna** namn, bild och diamanter. PK `(gift_id, region)`. |
 | `gavoseedning` | Om en region är **verkligt färdigseedad**, med antal och tidpunkt. |
 
 `forsta_sedd` på observationen betyder därför "först sedd i **den här** regionen", inte "först sedd
@@ -241,3 +259,22 @@ Heart Me inte upptäcks av sig själv — den måste verifieras för hand.
 
 **Att koppla in den är ett produktbeslut, inte en kodändring.** Vägen in är ett anrop i
 ingest-kedjan; tröskeln (`KRAV_BEKRAFTELSER = 3`) och hela maskineriet finns redan.
+
+
+## Är namn, bild och diamanter globala? Nej — mätt
+
+`webcast/gift/list/` bär ett fält `is_global_gift` på varje gåva. Uppmätt 2026-08-29 i SE:
+
+| `is_global_gift` | Antal |
+|---|---|
+| `true` | 517 |
+| **`false`** | **266** |
+| saknas | 0 |
+
+**TikTok säger alltså själv att en tredjedel av katalogen inte är global.** Namn, bild och diamanter
+är därmed inte bevisat globala, och lagras därför också på observationen — per region. Den
+kanoniska raden behålls som "senast sett någonstans" för uppslag som inte bryr sig om region.
+
+`is_global_gift` sparas som `gavoobservation.ar_global`. `NULL` betyder att uppgiften saknades.
+
+Sidofynd: **`name_en` finns inte** i svaret. En reserv som läste det fältet var död kod.
