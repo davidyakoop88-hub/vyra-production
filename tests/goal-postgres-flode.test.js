@@ -216,3 +216,32 @@ test('varje prov som raderar ur gavoregel tömmer också cachen', () => {
   assert.deepEqual(brister, [],
     'ett prov läser ett cachat svar för rader som inte längre finns');
 });
+
+// ---- ETT ANROP SOM AVVISAS SKRIVER INGET, OCH BLIR ÄNDÅ GRÖNT ---------------------------------
+//
+// `noteraKatalog` kräver en observerad region och returnerar `{ skrivna: 0, fel: 'okand-region' }`
+// utan den. Ett prov som bara läser tillbaka raden EFTERÅT går då grönt av fel skäl: raden är
+// oförändrad, vilket är precis vad de flesta av de proven påstår.
+//
+// Det hände på riktigt 2026-08-29. En automatisk ändring skulle lägga region på alla anrop, men
+// det reguljära uttrycket stannade på en nästlad hakparentes (`image: { url_list: [''] }`) och
+// hoppade över ett anrop. CI fångade det INTE — provet var grönt och mätte ingenting.
+//
+// Vakten kräver därför att varje anrop till noteraKatalog i provfilerna bär en region.
+test('varje noteraKatalog-anrop i proven anger en observerad region', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const rader = fs.readFileSync(path.join(dir, fil), 'utf8').split('\n');
+      rader.forEach((rad, i) => {
+        if (!/noteraKatalog\s*\(/.test(rad)) return;
+        // Anropen är ofta flerradiga — regionen kan ligga på någon av de följande raderna.
+        const block = rader.slice(i, i + 4).join(' ');
+        if (!/region/.test(block)) brister.push(fil + ':' + (i + 1) + ' — noteraKatalog utan region');
+      });
+    }
+  }
+  assert.deepEqual(brister, [],
+    'ett anrop utan region avvisas tyst, och provet blir grönt utan att ha mätt något');
+});

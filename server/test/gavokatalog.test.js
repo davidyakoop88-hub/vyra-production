@@ -301,7 +301,12 @@ prov('ett orimligt stort värde spränger inte int4 tyst', async () => {
 
 prov('en halvtom lista tömmer inte poster som redan är ifyllda', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: REGION });
-  await K.noteraKatalog(pool, [{ id: G1, name: '', diamond_count: 1, image: { url_list: [''] } }]);
+  const ut = await K.noteraKatalog(pool,
+    [{ id: G1, name: '', diamond_count: 1, image: { url_list: [''] } }], { region: REGION });
+  // KONTROLLMÄTNING: anropet måste faktiskt ha SKRIVIT. Utan den här raden blir provet grönt även
+  // när ingenting hände — och det var precis vad som hände när region blev obligatorisk och det
+  // här anropet råkade sakna den.
+  assert.equal(ut.skrivna, 1, 'anropet skrev inget alls — provet mäter ingenting');
   const rad = await katalograd(G1);
   assert.equal(rad.gift_name, 'Rose', 'en tom post i listan raderade ett korrekt namn');
   assert.ok(rad.gift_image, 'en tom post i listan raderade en korrekt bild');

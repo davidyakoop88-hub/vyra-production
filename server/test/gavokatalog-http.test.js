@@ -238,7 +238,7 @@ prov('fält utifrån saneras — inget går orört in i databasen', async () => 
   const langUrl = 'https://x.invalid/' + 'b'.repeat(2000);
   await anrop('POST', '/api/admin/gavokatalog', {
     som: 'admin',
-    kropp: { gifts: [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] , region: REGION } }] }
+    kropp: { region: REGION, gifts: [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }] }
   });
   const q = await pool.query(
     'SELECT gift_name,gift_image,diamanter FROM gavokatalog WHERE gift_id=$1', [G1]);
