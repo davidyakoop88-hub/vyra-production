@@ -397,6 +397,7 @@
         "server/gavoidentitet.js",
         "server/regelnycklar.js",
         "server/heart-me-goal.js",
+        "server/gavokatalog.js",
         "gift-identity-larlage.js",
         "scripts/goal-*.js"
       ],
@@ -418,6 +419,8 @@
         "server/test/regelnycklar.test.js",
         "tests/gift-identity-larlage.test.js",
         "server/test/heart-me-unika-avsandare.test.js",
+        "server/test/gavokatalog.test.js",
+        "server/test/gavokatalog-http.test.js",
         "tests/goal-postgres-flode.test.js"
       ],
       "matning": [

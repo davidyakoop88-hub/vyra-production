@@ -38,7 +38,7 @@ Två vägar som *inte* används, och varför:
 | Väg | Varför inte |
 |---|---|
 | Repots katalog (`assets/gifts/gifts-manifest.js`) | 1148 poster med bara `name` och `file`. Filnamnsprefixen (`0036_Heart_Me`) är en lokal löpnumrering, inte TikToks id. |
-| Rummets katalog via `fetchAvailableGifts()` | Uppmätt i produktion: kräver betald Business-plan (`docs/gavokatalog-matresultat.md`). |
+| Rummets katalog via `fetchAvailableGifts()` | **RÄTTAT 2026-08-28: ingen Business-plan krävs.** Den ursprungliga mätningen träffade signeringstjänsten, inte gåvorutten (`docs/gavokatalog-matresultat.md`). Katalogen är numera KÄLLAN till det globala registret — identiteten läses i första hand ur `gavoregel` via `Gavokatalog.verifieradeId`, och ur `gift_rule_identity` bara som reserv. |
 
 **Matchningen sker uteslutande mot `giftId`.** Aldrig mot `giftName`, inte ens som reserv:
 `normalizer.js:68` defaultar `giftName` till strängen `'Gift'` när namnet saknas, och namnet är

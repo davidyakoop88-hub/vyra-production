@@ -16,6 +16,8 @@
 // Modulen äger exakt två tabeller och rör ingenting annat: inte mål, inte statistik, inte de två
 // presentationssystemen (recognition-*.js och premium-gift-widget.js).
 
+const Gavokatalog = require('./gavokatalog');
+
 const UTGANG_MS = 300 * 1000;   // 5 minuter. Två blir stressigt när man växlar Studio↔TikTok.
 
 // Samma transaktionsmönster som resten av servern.
@@ -134,6 +136,35 @@ async function bekrafta(pool, workspaceId, rule_key, { nu = Date.now } = {}) {
       [workspaceId, k, rad.fangad_gift_id, rad.fangad_gift_name || '', rad.fangad_gift_image || '', new Date(nu())]);
 
     await client.query('DELETE FROM gift_learn_arm WHERE workspace_id=$1 AND rule_key=$2', [workspaceId, k]);
+
+    // KANDIDATINSAMLING FRÅN ETT RIKTIGT LIVE-EVENT.
+    //
+    // Det här är den enda platsen i huset där en människa säger "just den här gåvan ÄR heart_me",
+    // och fångsten kom från en verklig gåva under sändning. Att notera det globalt är gratis
+    // sanning: när tre OLIKA kreatörer oberoende pekat ut samma id blir det en KANDIDAT värd en
+    // granskning — en regional variant hittar sig själv i stället för att någon måste upptäcka den.
+    //
+    // ALDRIG TILL FACIT. `noteraKandidat` kan inte längre befordra; enda vägen till 'verifierad' är
+    // en plattformsadministratörs eget anrop. Tre kreatörer räcker för UPPMÄRKSAMHET, aldrig för
+    // aktivering.
+    //
+    // INGEN AVSÄNDARE, INGEN PAYLOAD. Källan är workspace-id:t, och det lagras som en HMAC — vi
+    // behöver veta ATT källorna var olika, aldrig VILKA. Ingen användare, inget rum och inget råt
+    // källvärde lämnar den här raden.
+    //
+    // Fire-and-forget med sväljt fel, och UTANFÖR transaktionen: en bekräftelse kunden redan sett
+    // lyckas får inte falla för att den globala noteringen krånglade. Katalograden krävs av
+    // främmande nyckeln, så gåvan skrivs dit först.
+    const globaltGiftId = rad.fangad_gift_id;
+    const globaltNamn = rad.fangad_gift_name || '', globaltBild = rad.fangad_gift_image || '';
+    setImmediate(() => {
+      Gavokatalog.noteraFranEvent(pool, {
+        type: 'gift', giftId: globaltGiftId, giftName: globaltNamn, giftImage: globaltBild
+      })
+        .then(() => Gavokatalog.noteraKandidat(pool, k, globaltGiftId, workspaceId))
+        .catch(() => {});
+    });
+
     return { ok: true, giftId: rad.fangad_gift_id, giftName: rad.fangad_gift_name || '' };
   });
 }

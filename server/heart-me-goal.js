@@ -24,6 +24,7 @@ const crypto = require('node:crypto');
 const Nyckel = require('./krypteringsnyckel');
 const Regelnycklar = require('./regelnycklar');
 const Gavoidentitet = require('./gavoidentitet');
+const Gavokatalog = require('./gavokatalog');
 
 // ---- AVSÄNDARNYCKELN --------------------------------------------------------------------------
 //
@@ -118,9 +119,24 @@ async function applyHeartMeEvent(pool, workspaceId, event, { duplicate = false }
   // inte märka något: vi returnerar tyst, kastar inte, och loggar inte.
   if (!harledNyckel()) return { okade: 0, rader: [] };
 
-  // 2 + 3. Identiteten kommer från lärläget. Ingen inlärd gåva ⇒ målet räknar ingenting.
-  const heartMeId = await Gavoidentitet.slaUppGiftId(pool, workspaceId, Regelnycklar.HEART_ME);
-  if (!heartMeId || heartMeId !== giftId) return { okade: 0, rader: [] };
+  // 2 + 3. IDENTITETEN KOMMER FRÅN DET GLOBALA REGISTRET FÖRST.
+  //
+  // Tidigare låg den bara i lärläget, per workspace — vilket betydde att varje kund måste lära in
+  // Heart Me själv. Kundvänt lärläge är avvisat som produkt: VYRA ska känna igen gåvan direkt.
+  //
+  // gavoregel är serverägd och global, så EN verifiering räcker för alla. Den bär en LISTA, inte
+  // ett värde: samma gåva kan ha olika id i olika regioner, och regeln ska kunna växa utan
+  // kodändring.
+  //
+  // Lärläget är kvar som RESERV och internt verktyg — för en gåva registret ännu inte täcker, och
+  // för att kunna prova identiteten i drift utan att röra det globala registret.
+  const globala = await Gavokatalog.verifieradeId(pool, Regelnycklar.HEART_ME);
+  let traff = globala.includes(giftId);
+  if (!traff) {
+    const inlard = await Gavoidentitet.slaUppGiftId(pool, workspaceId, Regelnycklar.HEART_ME);
+    traff = !!inlard && inlard === giftId;
+  }
+  if (!traff) return { okade: 0, rader: [] };
 
   const client = await pool.connect();
   try {
