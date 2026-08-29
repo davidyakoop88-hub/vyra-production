@@ -383,9 +383,11 @@ prov('kandidatlistan visar mognad, aldrig källor', async () => {
   assert.equal(g1.status, 'kandidat', 'listan visade en kandidat som godkänd');
   assert.equal(g2.mogen, false, 'en källa räckte för att se mogen ut');
 
-  // Regionen följer med, så "exakt en verifierad post för den observerade regionen" går att LÄSA
-  // i stället för att slutas sig till.
-  assert.equal(g1.region, REGION, 'kandidatlistan säger inte vilken region posten observerades i');
+  // REGIONERNA följer med — plural, för en gåva kan vara observerad i flera. Utan dem går "exakt
+  // en verifierad post för den observerade regionen" bara att sluta sig till, och en slutsats är
+  // ingen mätning.
+  assert.deepEqual(g1.regioner, [REGION],
+    'kandidatlistan säger inte vilka regioner posten observerats i');
 
   // Namn och bild är till för människans blick — men aldrig VILKA källorna var.
   assert.equal(g1.gift_name, 'Heart Me');
@@ -401,16 +403,20 @@ prov('kandidatlistan visar mognad, aldrig källor', async () => {
 // regionen, vid den här tidpunkten, av den här källan. Uppmätt 2026-08-29: webcast/gift/list/ bär
 // inget regionfält alls, så regionen måste komma utifrån — och får därför aldrig gissas.
 
-prov('bulkvägen sparar källa, region och tidpunkt', async () => {
+prov('bulkvägen sparar källa, region och tidpunkt — på OBSERVATIONEN', async () => {
   const fore = Date.now();
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: REGION });
-  const q = await pool.query(
-    'SELECT kalla, region, forsta_sedd, senast_sedd FROM gavokatalog WHERE gift_id=$1', [G1]);
-  const rad = q.rows[0];
-  assert.equal(rad.kalla, 'katalog', 'källan sparades inte');
-  assert.equal(rad.region, REGION, 'regionen sparades inte');
-  assert.ok(new Date(rad.forsta_sedd).getTime() >= fore - 60000, 'tidpunkten sparades inte');
-  assert.ok(rad.senast_sedd, 'senast sedd saknas');
+  const obs = (await K.observationer(pool, G1)).find(o => o.region === REGION);
+  assert.ok(obs, 'ingen regional observation skrevs');
+  assert.equal(obs.kalla, 'katalog', 'källan sparades inte på observationen');
+  assert.ok(new Date(obs.forsta_sedd).getTime() >= fore - 60000, 'tidpunkten sparades inte');
+  assert.ok(obs.senast_sedd, 'senast sedd saknas');
+
+  // Kanoniska raden bär VAD gåvan är — aldrig var den sågs.
+  const kol = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_name='gavokatalog'");
+  assert.ok(!kol.rows.some(r => r.column_name === 'region'),
+    'region ligger kvar på den kanoniska tabellen — då kan en region skriva över en annan');
 });
 
 prov('utan giltig region skrivs INGENTING — inget tyst default', async () => {
@@ -422,24 +428,11 @@ prov('utan giltig region skrivs INGENTING — inget tyst default', async () => {
   assert.equal(await katalograd(G1), null, 'ett avvisat anrop hann ändå skriva');
 });
 
-prov('ett gåvoevent skriver ALDRIG en region, och tar aldrig bort en', async () => {
-  // Ett event bär ingen region över huvud taget. En rad som seedats från SE ska inte tappa sin
-  // proveniens för att någon skickade gåvan i ett annat rum.
+prov('ett gåvoevent skapar ingen regional observation alls', async () => {
   await K.noteraFranEvent(pool, gava(G2));
-  const nyRad = await pool.query('SELECT region FROM gavokatalog WHERE gift_id=$1', [G2]);
-  assert.equal(nyRad.rows[0].region, '', 'händelsevägen hittade på en region');
-
-  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: REGION });
-  await K.noteraFranEvent(pool, gava(G1));
-  const seedad = await pool.query('SELECT region FROM gavokatalog WHERE gift_id=$1', [G1]);
-  assert.equal(seedad.rows[0].region, REGION, 'ett event raderade en seedad rads proveniens');
-});
-
-prov('en ny seedning från en ANNAN region skriver om provenienesen', async () => {
-  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: 'SE' });
-  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: 'US' });
-  assert.equal((await pool.query('SELECT region FROM gavokatalog WHERE gift_id=$1', [G1])).rows[0].region, 'US',
-    'raden påstår fortfarande att den sågs i SE');
+  assert.ok(await katalograd(G2), 'eventet nådde inte den kanoniska tabellen');
+  assert.deepEqual(await K.observationer(pool, G2), [],
+    'händelsevägen hittade på en region den inte kan känna till');
 });
 
 prov('svaret skiljer på antal poster och antal distinkta id', async () => {
@@ -453,7 +446,7 @@ prov('svaret skiljer på antal poster och antal distinkta id', async () => {
 prov('databasen vägrar en region som inte är två versaler', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: REGION });
   await assert.rejects(
-    () => pool.query("UPDATE gavokatalog SET region='sverige' WHERE gift_id=$1", [G1]),
+    () => pool.query("UPDATE gavoobservation SET region='sverige' WHERE gift_id=$1", [G1]),
     /check|constraint/i, 'CHECK-villkoret på region saknas i databasen');
 });
 
@@ -469,6 +462,146 @@ test('vakt: regionen gissas aldrig i modulen', () => {
     assert.equal(K.lasRegion(v), null, JSON.stringify(v) + ' accepterades som region');
   }
 });
+
+// ---- REGIONALA OBSERVATIONER -------------------------------------------------------------------
+//
+// Granskningen av #290 gav no-go, och den hade rätt: `gavokatalog` hade `gift_id` som ensam nyckel
+// och `ON CONFLICT` skrev över `region`. En senare US-seedning raderade alltså SE-observationen —
+// och provet nedanför krävde den överskrivningen, alltså bevisade det fel modell.
+//
+// RÄTT MODELL: `gavokatalog` är KANONISK (vad gåvan ÄR — namn, bild, diamanter). Var och när den
+// setts bor i `gavoobservation`, en rad per (gåva, region), med EGEN källa och EGNA
+// observationstider. En region kan aldrig radera en annan.
+
+prov('samma gift_id kan observeras i BÅDE SE och US', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'SE' });
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'US' });
+
+  const obs = await K.observationer(pool, G1);
+  const regioner = obs.map(o => o.region).sort();
+  assert.deepEqual(regioner, ['SE', 'US'], 'en region skrev över den andra');
+
+  // Katalogen har fortfarande EN rad — gåvo-id:t är detsamma överallt, det är mätt.
+  const rader = await pool.query('SELECT count(*)::int n FROM gavokatalog WHERE gift_id=$1', [G1]);
+  assert.equal(rader.rows[0].n, 1, 'kanonisk tabell fick en rad per region');
+});
+
+prov('en US-seedning rör ALDRIG SE-observationens tider', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'SE' });
+  const fore = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
+
+  await new Promise(k => setTimeout(k, 25));
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'US' });
+
+  const efter = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
+  assert.ok(efter, 'SE-observationen raderades av en US-seedning');
+  assert.equal(new Date(efter.forsta_sedd).getTime(), new Date(fore.forsta_sedd).getTime(),
+    'US flyttade SE:s första observation');
+  assert.equal(new Date(efter.senast_sedd).getTime(), new Date(fore.senast_sedd).getTime(),
+    'US flyttade SE:s senaste observation');
+});
+
+prov('en ny SE-seedning flyttar senast_sedd men ALDRIG forsta_sedd', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'SE' });
+  const fore = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
+
+  await new Promise(k => setTimeout(k, 25));
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'SE' });
+  const efter = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
+
+  assert.equal(new Date(efter.forsta_sedd).getTime(), new Date(fore.forsta_sedd).getTime(),
+    'första observationen skrevs om');
+  assert.ok(new Date(efter.senast_sedd).getTime() > new Date(fore.senast_sedd).getTime(),
+    'senaste observationen uppdaterades inte');
+});
+
+prov('ett event med OKÄND region rör inga regionala observationstider', async () => {
+  // Ett gåvoevent bär ingen region. Det får därför fylla den kanoniska tabellen, men aldrig
+  // påverka frågan "när sågs gåvan i SE?" — annars blir observationstiden en lögn.
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')], { region: 'SE' });
+  const fore = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
+
+  await new Promise(k => setTimeout(k, 25));
+  await K.noteraFranEvent(pool, gava(G1));
+
+  const obs = await K.observationer(pool, G1);
+  assert.equal(obs.length, 1, 'händelsevägen skapade en regional observation utan att veta regionen');
+  assert.equal(new Date(obs[0].senast_sedd).getTime(), new Date(fore.senast_sedd).getTime(),
+    'ett event flyttade en regional observationstid');
+
+  // Kontrollmätning: eventet SKA ha rört den kanoniska raden — annars mäter provet ingenting.
+  const kanon = await pool.query('SELECT senast_sedd FROM gavokatalog WHERE gift_id=$1', [G1]);
+  assert.ok(new Date(kanon.rows[0].senast_sedd).getTime() > new Date(fore.forsta_sedd).getTime(),
+    'eventet nådde inte ens den kanoniska tabellen');
+});
+
+prov('ZZ och andra icke-tilldelade koder avvisas', async () => {
+  // ^[A-Z]{2}$ är inte ISO 3166-1 alpha-2. ZZ, XX och QM–QZ är användartilldelade eller
+  // oanvända — de betyder inte "land", de betyder "ingen sa något".
+  for (const kod of ['ZZ', 'XX', 'QZ', 'AA', 'OO', 'ZY']) {
+    const ut = await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: kod });
+    assert.equal(ut.skrivna, 0, kod + ' accepterades som region');
+    assert.equal(ut.fel, 'okand-region');
+    assert.equal(K.giltigRegion(kod), null, kod + ' passerade valideringen');
+  }
+  // KONTROLLMÄTNING: verkliga koder SKA passera.
+  for (const kod of ['SE', 'US', 'GB', 'DE', 'JP', 'BR', 'AE'])
+    assert.equal(K.giltigRegion(kod), kod, kod + ' avvisades trots att den är en riktig ISO-kod');
+  assert.equal(await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')], { region: 'SE' })
+    .then(r => r.skrivna), 1, 'en giltig region blockerades');
+});
+
+prov('ett avbrott mitt i bulken lämnar INGEN delvis seedning', async () => {
+  // Utan transaktion hade ett databasfel vid post 400 av 783 lämnat 399 rader som ser
+  // exakt ut som en komplett seedning. Det är den farligaste sortens fel: tyst och trovärdigt.
+  const poster = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  await assert.rejects(
+    () => K.noteraKatalog(pool, poster, { region: 'SE', _provFel: n => n === 2 }),
+    'bulken svalde felet i stället för att kasta');
+
+  for (const id of [G1, G2, G3])
+    assert.deepEqual(await K.observationer(pool, id), [], id + ' överlevde ett avbrutet bulkanrop');
+
+  const st = await K.seedningStatus(pool, 'SE');
+  assert.equal(st.klar, false, 'en avbruten seedning markerades som komplett');
+});
+
+prov('en komplett bulk markeras som klar, med bägge antalen', async () => {
+  const ut = await K.noteraKatalog(pool,
+    [katalogpost(G1, 'A'), katalogpost(G1, 'A'), katalogpost(G2, 'B')], { region: 'SE' });
+
+  assert.equal(ut.skrivna, 3, 'antalet OBSERVERADE poster stämmer inte');
+  assert.equal(ut.unikaId, 2, 'antalet UNIKA id stämmer inte');
+  assert.equal(ut.region, 'SE');
+  assert.equal(ut.status, 'klar');
+
+  const st = await K.seedningStatus(pool, 'SE');
+  assert.equal(st.klar, true, 'en komplett seedning markerades inte som klar');
+  assert.equal(st.senaste.antal_poster, 3);
+  assert.equal(st.senaste.antal_unika, 2);
+  assert.ok(st.senaste.klar_at, 'klar_at sattes inte');
+});
+
+prov('en avbruten seedning gör inte en TIDIGARE komplett seedning ogiltig', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'A')], { region: 'SE' });
+  assert.equal((await K.seedningStatus(pool, 'SE')).klar, true);
+
+  await assert.rejects(() => K.noteraKatalog(pool,
+    [katalogpost(G2, 'B'), katalogpost(G3, 'C')], { region: 'SE', _provFel: n => n === 2 }));
+
+  assert.equal((await K.seedningStatus(pool, 'SE')).klar, true,
+    'ett misslyckat försök raderade beviset på att regionen en gång seedats komplett');
+  assert.deepEqual((await K.observationer(pool, G1)).map(o => o.region), ['SE'],
+    'den tidigare seedningens rader försvann');
+});
+
+prov('regionen kan inte smugglas in via HTTP-kroppen som en funktion', async () => {
+  // `_provFel` är MED FLIT en funktion. En JSON-kropp kan inte bära en funktion, så
+  // felinjektionen är fysiskt onåbar från rutten — inte bara onåbar av artighet.
+  const kropp = JSON.parse(JSON.stringify({ region: 'SE', _provFel: () => true, gifts: [] }));
+  assert.equal(kropp._provFel, undefined, 'en funktion överlevde JSON-serialisering');
+});
+
 
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------
 

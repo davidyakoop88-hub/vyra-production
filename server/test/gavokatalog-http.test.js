@@ -226,8 +226,10 @@ prov('statussvaret bär regionen, men fortfarande inga id', async () => {
     { som: 'admin', kropp: { gifts: [post(G1, 'Rose')], region: REGION } });
   const r = await anrop('GET', '/api/admin/gavokatalog/status', { som: 'admin' });
   assert.equal(r.status, 200);
-  const rad = r.body.katalog.find(x => x.region === REGION);
+  const rad = (r.body.regioner || []).find(x => x.region === REGION);
   assert.ok(rad && rad.n >= 1, 'status visade ingen region');
+  assert.ok(r.body.seedningar && r.body.seedningar.some(x => x.region === REGION && x.klar),
+    'status sa inte att regionen faktiskt är färdigseedad');
   const text = JSON.stringify(r.body);
   assert.ok(!text.includes(G1), 'statussvaret bär råa gåvo-id');
   assert.ok(!text.includes('Rose'), 'statussvaret bär gåvonamn');
