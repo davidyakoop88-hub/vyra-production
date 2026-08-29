@@ -187,3 +187,27 @@ test('KONTROLLMÄTNING: vakten hittar de filer som använder skip:', () => {
     .filter(f => /\bskip:\s*[A-Za-z_$]/.test(fs.readFileSync(path.join(dir, f), 'utf8')));
   assert.ok(medSkip.length >= 2, `hittade bara ${medSkip.length} filer med skip: — mönstret mäter fel`);
 });
+
+// ---- CACHADE UPPSLAG KRÄVER CACHETÖMNING I PROVEN ---------------------------------------------
+//
+// `verifieradeId` har en 30-sekunderscache i processen, och proven kör i SAMMA process som servern.
+// Ett prov som raderar rader ur `gavoregel` utan att tömma cachen läser sedan ett svar som inte
+// längre stämmer — en verifiering från ett tidigare prov lever vidare över rensningen.
+//
+// Det föll i CI direkt efter att skip-buggen rättats: provet "en vanlig användare kan inte
+// verifiera" fick tillbaka ett id som just raderats. Spärren fungerade; påståendet läste cachen.
+test('varje prov som raderar ur gavoregel tömmer också cachen', () => {
+  const dir = path.join(ROT, 'server', 'test');
+  const brister = [];
+
+  for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+    const kalla = fs.readFileSync(path.join(dir, fil), 'utf8');
+    if (!/DELETE FROM gavoregel\b/.test(kalla)) continue;
+    if (!/tomCache\(\)/.test(kalla)) {
+      brister.push(`${fil}: raderar ur gavoregel men tömmer aldrig cachen`);
+    }
+  }
+
+  assert.deepEqual(brister, [],
+    'ett prov läser ett cachat svar för rader som inte längre finns');
+});

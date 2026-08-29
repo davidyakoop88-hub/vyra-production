@@ -37,6 +37,7 @@ async function blockerad() {
 }
 
 let server = null, eventBus = null, pool = null, S = null, bas = '';
+const K = require('../gavokatalog');
 const ADMIN = 'cafe0000-0000-4000-8000-000000000001';
 const VANLIG = 'cafe0000-0000-4000-8000-000000000002';
 const auth = {};
@@ -106,7 +107,11 @@ async function rensa() {
   await pool.query("DELETE FROM gavoregel WHERE gift_id LIKE 'httprov-%'");
   await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
 }
-test.beforeEach(async () => { if (!(await blockerad())) await rensa(); });
+// CACHEN TOMMS MELLAN PROV. rensa() raderar rader, men verifieradeId har en 30-sekunderscache i
+// processen — och proven kor i SAMMA process som servern. Utan tomningen lever en verifiering fran
+// ett tidigare prov vidare over rensningen, och nasta prov laser ett svar som inte langre stammer.
+// Precis det fallet foll i CI.
+test.beforeEach(async () => { if (!(await blockerad())) { await rensa(); K.tomCache(); } });
 test.after(async () => {
   if (await blockerad()) return;
   await rensa();
@@ -204,7 +209,6 @@ prov('verifiering gör ett katalog-id matchbart', async () => {
   const r = await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'admin', kropp: { giftId: G2 } });
   assert.equal(r.status, 200);
 
-  const K = require('../gavokatalog');
   assert.ok((await K.verifieradeId(pool, 'heart_me')).includes(G2));
 });
 
@@ -226,7 +230,6 @@ prov('en vanlig användare kan inte verifiera', async () => {
   await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G2, 'Heart Me')] } });
   const r = await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'vanlig', kropp: { giftId: G2 } });
   assert.equal(r.status, 403);
-  const K = require('../gavokatalog');
   assert.ok(!(await K.verifieradeId(pool, 'heart_me')).includes(G2));
 });
 
