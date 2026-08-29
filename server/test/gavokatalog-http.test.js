@@ -67,7 +67,20 @@ async function anrop(metod, vag, { som = null, kropp = null } = {}) {
   return { status: res.status, body: d };
 }
 
-const prov = (namn, fn) => test('katalog-http: ' + namn, { timeout: 30000, skip: BLOCKED }, fn);
+// SKIP AVGORS INUTI KROPPEN, inte i optionsobjektet — och det ar inte en stilfraga.
+//
+// Uppmatt i Node: `skip:` tittar INTE pa sanningsvardet. Allt utom `false` markerar provet som
+// overhoppat MEN KOR KROPPEN ANDA, och kastar resultatet. Med `skip: null` — vilket det blir har
+// eftersom BLOCKED anvander null som "inte matt an" — kordes alla tolv proven i CI och
+// rapporterades som SKIP. Ett fallande pastaende hade varit osynligt.
+//
+// Redis-kontrollen ar dessutom asynkron och kan inte hinna klart innan proven REGISTRERAS. Darfor
+// samma monster som goal-ingest-http.test.js: vanta ut kontrollen i kroppen och anropa t.skip().
+const prov = (namn, fn) => test('katalog-http: ' + namn, { timeout: 30000 }, async t => {
+  const skal = await blockerad();
+  if (skal) { t.skip(skal); return; }
+  await fn();
+});
 
 test.before(async () => {
   if (await blockerad()) return;

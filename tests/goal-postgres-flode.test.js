@@ -143,3 +143,47 @@ test('KONTROLLMÄTNING: vakten hittar faktiskt HTTP-proven', () => {
   assert.ok(httpProv.length >= 2,
     `hittade bara ${httpProv.length} HTTP-prov — mönstret mäter inte längre rätt`);
 });
+
+// ---- skip: FÅR ALDRIG FÅ ETT ICKE-BOOLESKT VÄRDE ----------------------------------------------
+//
+// Uppmätt i Node 2026-08-29: `skip:` tittar INTE på sanningsvärdet. Allt utom `false` markerar
+// provet som överhoppat MEN KÖR KROPPEN ÄNDÅ, och kastar resultatet:
+//
+//   skip: null   -> kroppen körs, rapporteras SKIP
+//   skip: ''     -> kroppen körs, rapporteras SKIP
+//   skip: false  -> kroppen körs, rapporteras PASS
+//
+// Det bet i CI: tolv nyskrivna prov körde sina påståenden mot riktig Postgres och fick resultaten
+// kastade. Steget blev grönt. Ett fallande påstående hade varit osynligt — den dyraste sortens
+// grönt, eftersom det ser ut som bevis.
+//
+// Vakten letar efter kombinationen som orsakar det: en fil som både använder `skip:` och
+// initierar sin grind med `null` eller tom sträng.
+test('ingen provfil ger skip: ett värde som varken är true eller false', () => {
+  const dir = path.join(ROT, 'server', 'test');
+  const brister = [];
+
+  for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+    const kalla = fs.readFileSync(path.join(dir, fil), 'utf8')
+      .split(/\r?\n/).map(r => r.replace(/^\s*\/\/.*$/, '')).join('\n');
+    if (!/\bskip:\s*[A-Za-z_$]/.test(kalla)) continue;      // bara filer som skickar en variabel
+
+    if (/\?\s*null\s*:/.test(kalla)) {
+      brister.push(`${fil}: grinden initieras med null — skip: null kör kroppen men kastar resultatet`);
+    }
+    if (/\?\s*''\s*:/.test(kalla) || /\?\s*""\s*:/.test(kalla)) {
+      brister.push(`${fil}: grinden initieras med tom sträng — samma fälla som null`);
+    }
+  }
+
+  assert.deepEqual(brister, [],
+    'proven körs men resultatet kastas, och steget blir grönt utan att ha bevisat något');
+});
+
+test('KONTROLLMÄTNING: vakten hittar de filer som använder skip:', () => {
+  const dir = path.join(ROT, 'server', 'test');
+  const medSkip = fs.readdirSync(dir)
+    .filter(f => f.endsWith('.test.js'))
+    .filter(f => /\bskip:\s*[A-Za-z_$]/.test(fs.readFileSync(path.join(dir, f), 'utf8')));
+  assert.ok(medSkip.length >= 2, `hittade bara ${medSkip.length} filer med skip: — mönstret mäter fel`);
+});
