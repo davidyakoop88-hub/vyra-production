@@ -156,6 +156,9 @@ async function verifieradeId(pool, ruleKey, { nu = Date.now } = {}) {
   const traff = cache.get(ruleKey);
   if (traff && nu() - traff.tid < CACHE_MS) return traff.ids;
 
+  // status='verifierad' ar det ENDA som far matcha. 'kandidat' har ingen manniska godkant, och
+  // 'inaktiverad' ar en post en administrator aterkallat — historiken star kvar, men den slutar
+  // trigga i samma andetag.
   const q = await pool.query(
     `SELECT gift_id FROM gavoregel WHERE rule_key = $1 AND status = 'verifierad'`, [ruleKey]);
   const ids = q.rows.map(r => r.gift_id);
@@ -207,16 +210,26 @@ async function noteraKandidat(pool, ruleKey, giftId, raKalla) {
         [ruleKey, giftId]);
     }
 
-    const q = await client.query(
-      `UPDATE gavoregel
-          SET status = 'verifierad', verifierad_at = COALESCE(verifierad_at, now())
-        WHERE rule_key=$1 AND gift_id=$2 AND status <> 'verifierad' AND bekraftelser >= $3
-        RETURNING bekraftelser`,
-      [ruleKey, giftId, KRAV_BEKRAFTELSER]);
+    // INGEN AUTOMATISK BEFORDRAN. Funktionen skrev tidigare status='verifierad' så snart
+    // KRAV_BEKRAFTELSER var uppnått — alltså kunde tre rum tillsammans göra en gåva till FACIT och
+    // därmed börja trigga Gift Campaign, Gift Fireworks och Goals hos alla kunder, utan att en
+    // människa sett den. Det är precis det utfallet registret finns för att omöjliggöra.
+    //
+    // Tröskeln lever kvar, men bara som en MARKERING: `mogen` säger att kandidaten är värd en
+    // människas blick. Enda vägen till 'verifierad' är `verifiera()`, som bara en
+    // plattformsadministratör når.
+    const rad = await client.query(
+      'SELECT status, bekraftelser FROM gavoregel WHERE rule_key=$1 AND gift_id=$2', [ruleKey, giftId]);
 
     await client.query('COMMIT');
-    if (q.rowCount) tomCache(ruleKey);      // befordran ska synas direkt i den har processen
-    return { noterad: true, nyKalla: ny.rowCount > 0, befordrad: q.rowCount > 0 };
+    const b = rad.rows[0] ? Number(rad.rows[0].bekraftelser) : 0;
+    return {
+      noterad: true,
+      nyKalla: ny.rowCount > 0,
+      bekraftelser: b,
+      mogen: b >= KRAV_BEKRAFTELSER,        // redo för mänsklig granskning — INTE aktiverad
+      status: rad.rows[0] ? rad.rows[0].status : 'kandidat'
+    };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => {});
     throw error;
@@ -242,7 +255,43 @@ async function verifiera(pool, ruleKey, giftId) {
   return { ok: true };
 }
 
+// Återkallar en godkänd post. Statusen 'inaktiverad' i stället för DELETE: historiken om vad som
+// en gång godkändes, av vem och när, är själva poängen med en mänsklig grind. En återkallad post
+// slutar matcha omedelbart — `verifieradeId` filtrerar på 'verifierad'.
+async function inaktivera(pool, ruleKey, giftId) {
+  if (!ruleKey || !giftId) return { ok: false, skal: 'ofullstandig' };
+  const q = await pool.query(
+    `UPDATE gavoregel SET status = 'inaktiverad'
+      WHERE rule_key=$1 AND gift_id=$2 AND status = 'verifierad' RETURNING gift_id`,
+    [ruleKey, giftId]);
+  if (!q.rowCount) return { ok: false, skal: 'ingen-verifierad-post' };
+  tomCache(ruleKey);
+  return { ok: true };
+}
+
+// Raderar en post helt — inklusive dess källräkning. För en felaktigt inlagd rad som inte ska
+// finnas i historiken alls. Kaskaden på gavoregel_kalla tar källorna.
+async function taBort(pool, ruleKey, giftId) {
+  if (!ruleKey || !giftId) return { ok: false, skal: 'ofullstandig' };
+  const q = await pool.query(
+    'DELETE FROM gavoregel WHERE rule_key=$1 AND gift_id=$2 RETURNING gift_id', [ruleKey, giftId]);
+  if (!q.rowCount) return { ok: false, skal: 'saknas' };
+  tomCache(ruleKey);
+  return { ok: true };
+}
+
+// Kandidatlistan för mänsklig granskning. Det ENDA stället där id:n lämnar servern, och bara till
+// en plattformsadministratör — utan den kan ingen människa se vad som väntar på godkännande.
+async function kandidater(pool, ruleKey) {
+  const q = await pool.query(
+    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter
+       FROM gavoregel r JOIN gavokatalog k ON k.gift_id = r.gift_id
+      WHERE r.rule_key = $1 ORDER BY r.bekraftelser DESC, r.gift_id`, [ruleKey]);
+  return q.rows.map(r => ({ ...r, mogen: Number(r.bekraftelser) >= KRAV_BEKRAFTELSER }));
+}
+
 module.exports = {
   noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
+  inaktivera, taBort, kandidater,
   kallnyckel, tomCache, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
 };

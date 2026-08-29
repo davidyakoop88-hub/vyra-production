@@ -775,6 +775,70 @@ prov('registret · lärläget är kvar som RESERV för en gåva registret inte t
 });
 
 
+prov('registret · FLERA REGIONALA ID för samma regel räknas alla', async () => {
+  // Samma gåva bär olika id i olika regioner. Uppslaget måste vara en LISTA hela vägen fram till
+  // målet — inte bara i modulen. Faller det här provet matchar bara ett av id:na, och kunder i
+  // fel region ser en widget som aldrig rör sig.
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await Gavokatalog.noteraKatalog(pool, [
+    { id: HEART_ME, name: 'Heart Me', diamond_count: 1 },
+    { id: ROSE, name: 'Heart Me', diamond_count: 1 }      // regional variant, ANNAT id
+  ]);
+  await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, HEART_ME);
+  await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, ROSE);
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 1, 'det första regionala id:t räknades inte');
+
+  await H.applyHeartMeEvent(pool, WS, gava(BO, ROSE));
+  assert.equal(await visat(), 2, 'det ANDRA regionala id:t räknades inte — uppslaget bär bara ett');
+
+  // Och unikheten gäller PERSONEN, inte id:t: samma person via den andra varianten ger +0.
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, ROSE));
+  assert.equal(await visat(), 2, 'samma person räknades två gånger via ett annat regionalt id');
+
+  const rader = await pool.query('SELECT count(*)::int n FROM heart_me_bidrag');
+  assert.equal(rader.rows[0].n, 2, 'liggaren fick en rad per gåvo-id i stället för per person');
+});
+
+prov('registret · en INAKTIVERAD post slutar räkna omedelbart', async () => {
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, HEART_ME);
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 1);
+
+  // Administratören återkallar. Widgeten ska sluta trigga i samma andetag — det är hela poängen
+  // med att kunna ändra facit när något visar sig vara fel.
+  const ut = await Gavokatalog.inaktivera(pool, Regelnycklar.HEART_ME, HEART_ME);
+  assert.equal(ut.ok, true);
+
+  await H.applyHeartMeEvent(pool, WS, gava(BO, HEART_ME));
+  assert.equal(await visat(), 1, 'en återkallad gåva fortsatte öka målet');
+});
+
+prov('registret · en KANDIDAT räknar aldrig, hur många källor den än har', async () => {
+  // Tre kreatörer gör en gåva till kandidat. Den får synas för en människa — aldrig trigga.
+  await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  for (const k of ['kreator-a', 'kreator-b', 'kreator-c', 'kreator-d']) {
+    await Gavokatalog.noteraKandidat(pool, Regelnycklar.HEART_ME, HEART_ME, k);
+  }
+  await nySession(RUM_1);
+
+  await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
+  assert.equal(await visat(), 0, 'en kandidat triggade utan mänskligt godkännande');
+
+  // KONTROLLMÄTNING: efter godkännandet SKA den räkna — annars mäter provet ingenting.
+  await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, HEART_ME);
+  await H.applyHeartMeEvent(pool, WS, gava(BO, HEART_ME));
+  assert.equal(await visat(), 1, 'godkännandet slog inte igenom');
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) --------------------------------------------------------
 
 test('vakt: riggens uuid-konstanter är giltiga uuid', () => {

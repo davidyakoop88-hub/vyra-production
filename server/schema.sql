@@ -681,7 +681,7 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
 CREATE TABLE IF NOT EXISTS gavoregel (
   rule_key      text        NOT NULL,
   gift_id       text        NOT NULL REFERENCES gavokatalog(gift_id) ON DELETE RESTRICT,
-  status        text        NOT NULL DEFAULT 'kandidat' CHECK (status IN ('kandidat','verifierad')),
+  status        text        NOT NULL DEFAULT 'kandidat' CHECK (status IN ('kandidat','verifierad','inaktiverad')),
   bekraftelser  integer     NOT NULL DEFAULT 0 CHECK (bekraftelser >= 0),
   noterat_at    timestamptz NOT NULL DEFAULT now(),
   verifierad_at timestamptz,
@@ -700,3 +700,28 @@ CREATE TABLE IF NOT EXISTS gavoregel_kalla (
   PRIMARY KEY (rule_key, gift_id, kallnyckel),
   FOREIGN KEY (rule_key, gift_id) REFERENCES gavoregel(rule_key, gift_id) ON DELETE CASCADE
 );
+
+-- Vidgar status-villkoret additivt for en databas som redan hunnit skapa tabellen med den aldre
+-- tvavardesmangden. CREATE TABLE IF NOT EXISTS ror inte en befintlig tabell — det ar husets
+-- dyraste inlarda lardom, och 'inaktiverad' ar hela aterkallningsvagen.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'gavoregel'::regclass AND contype = 'c'
+       AND pg_get_constraintdef(oid) LIKE '%kandidat%'
+       AND pg_get_constraintdef(oid) NOT LIKE '%inaktiverad%'
+  ) THEN
+    EXECUTE (
+      SELECT 'ALTER TABLE gavoregel DROP CONSTRAINT ' || quote_ident(conname)
+        FROM pg_constraint
+       WHERE conrelid = 'gavoregel'::regclass AND contype = 'c'
+         AND pg_get_constraintdef(oid) LIKE '%kandidat%'
+         AND pg_get_constraintdef(oid) NOT LIKE '%inaktiverad%'
+       LIMIT 1);
+    ALTER TABLE gavoregel
+      ADD CONSTRAINT gavoregel_status_check
+      CHECK (status IN ('kandidat','verifierad','inaktiverad'));
+  END IF;
+END $$;
+

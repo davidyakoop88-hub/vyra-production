@@ -137,16 +137,26 @@ prov('SAMMA källa hundra gånger befordrar ingenting', async () => {
   assert.deepEqual(await K.verifieradeId(pool, REGEL), []);
 });
 
-prov('tre OLIKA källor befordrar till verifierad', async () => {
+prov('tre OLIKA källor gör en KANDIDAT — aldrig facit', async () => {
+  // DEN HÄR REGELN ÄR HELA SÄKERHETSMODELLEN. Funktionen skrev tidigare status='verifierad' vid
+  // tröskeln, alltså kunde tre rum tillsammans få en gåva att börja trigga Gift Campaign, Gift
+  // Fireworks och Goals hos ALLA kunder utan att en människa sett den.
   await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-b');
-  assert.equal((await regelrad(REGEL, G1)).status, 'kandidat', 'två räcker inte');
+  assert.equal((await regelrad(REGEL, G1)).mogen, undefined);
 
   const ut = await K.noteraKandidat(pool, REGEL, G1, 'kreator-c');
-  assert.equal(ut.befordrad, true);
-  assert.equal((await regelrad(REGEL, G1)).status, 'verifierad');
-  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1]);
+  assert.equal(ut.bekraftelser, 3, 'tre distinkta källor räknades inte');
+  assert.equal(ut.mogen, true, 'tröskeln ska märka kandidaten som redo för granskning');
+  assert.equal(ut.status, 'kandidat', 'AUTOMATISK AKTIVERING — tre rum aktiverade en gåva själva');
+  assert.equal((await regelrad(REGEL, G1)).status, 'kandidat');
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [],
+    'en kandidat fick matcha utan mänskligt godkännande');
+
+  // Och hundra källor till ändrar ingenting. Ingen mängd maskinell enighet blir ett godkännande.
+  for (let i = 0; i < 20; i++) await K.noteraKandidat(pool, REGEL, G1, 'kreator-' + i);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [], 'tröskeln blev en bakväg till facit');
 });
 
 prov('källan lagras hashad, aldrig i klartext', async () => {
@@ -222,14 +232,17 @@ prov('verifiering slar igenom direkt, utan att vanta pa TTL', async () => {
     'den tomma listan lag kvar — en nyss verifierad gava hade inte raknats');
 });
 
-prov('befordran slar igenom direkt', async () => {
+prov('mänskligt godkännande slar igenom direkt, utan att vanta pa cachen', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
   assert.deepEqual(await K.verifieradeId(pool, REGEL), []);
 
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-b');
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-c');
-  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'befordran tomde inte cachen');
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [], 'kandidaten matchade av sig sjalv');
+
+  await K.verifiera(pool, REGEL, G1);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'godkannandet tomde inte cachen');
 });
 
 // ---- TENANTSTYRD INDATA MOT ETT GLOBALT BORD ---------------------------------------------------
@@ -291,6 +304,84 @@ prov('en halvtom lista tömmer inte poster som redan är ifyllda', async () => {
   const rad = await katalograd(G1);
   assert.equal(rad.gift_name, 'Rose', 'en tom post i listan raderade ett korrekt namn');
   assert.ok(rad.gift_image, 'en tom post i listan raderade en korrekt bild');
+});
+
+
+// ---- ÅTERKALLA OCH TA BORT ---------------------------------------------------------------------
+
+prov('en inaktiverad post slutar matcha omedelbart', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  await K.verifiera(pool, REGEL, G1);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1]);
+
+  const ut = await K.inaktivera(pool, REGEL, G1);
+  assert.equal(ut.ok, true);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [],
+    'en återkallad post matchade vidare — cachen tömdes inte');
+
+  // Historiken står kvar. Det är hela skälet till 'inaktiverad' i stället för DELETE.
+  assert.equal((await regelrad(REGEL, G1)).status, 'inaktiverad');
+});
+
+prov('en inaktiverad post kan godkännas igen', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  await K.verifiera(pool, REGEL, G1);
+  await K.inaktivera(pool, REGEL, G1);
+  await K.verifiera(pool, REGEL, G1);
+  assert.deepEqual(await K.verifieradeId(pool, REGEL), [G1], 'återaktivering fungerade inte');
+});
+
+prov('inaktivera rör inte en kandidat — bara godkända poster kan återkallas', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
+  const ut = await K.inaktivera(pool, REGEL, G1);
+  assert.equal(ut.ok, false);
+  assert.equal(ut.skal, 'ingen-verifierad-post');
+  assert.equal((await regelrad(REGEL, G1)).status, 'kandidat', 'kandidaten ändrades');
+});
+
+prov('ta bort raderar posten OCH dess källräkning', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me')]);
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-b');
+
+  const ut = await K.taBort(pool, REGEL, G1);
+  assert.equal(ut.ok, true);
+  assert.equal(await regelrad(REGEL, G1), null);
+  const kallor = await pool.query(
+    'SELECT count(*)::int n FROM gavoregel_kalla WHERE rule_key=$1 AND gift_id=$2', [REGEL, G1]);
+  assert.equal(kallor.rows[0].n, 0, 'källorna kaskaderade inte — en ny post ärver gamla bekräftelser');
+
+  // Katalogen är etikettering och ska INTE följa med. Främmande nyckeln är ON DELETE RESTRICT åt
+  // andra hållet, så gåvan finns kvar och kan pekas ut igen.
+  assert.ok(await katalograd(G1), 'katalogposten försvann med regeln');
+});
+
+prov('ta bort en post som inte finns är inte tyst lyckat', async () => {
+  const ut = await K.taBort(pool, REGEL, 'prov-finns-inte');
+  assert.equal(ut.ok, false);
+  assert.equal(ut.skal, 'saknas');
+});
+
+prov('kandidatlistan visar mognad, aldrig källor', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Heart Me'), katalogpost(G2, 'Heart Me')]);
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-a');
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-b');
+  await K.noteraKandidat(pool, REGEL, G1, 'kreator-c');
+  await K.noteraKandidat(pool, REGEL, G2, 'kreator-a');
+
+  const lista = await K.kandidater(pool, REGEL);
+  const g1 = lista.find(r => r.gift_id === G1), g2 = lista.find(r => r.gift_id === G2);
+  assert.equal(g1.bekraftelser, 3);
+  assert.equal(g1.mogen, true, 'tre källor markerades inte som redo för granskning');
+  assert.equal(g1.status, 'kandidat', 'listan visade en kandidat som godkänd');
+  assert.equal(g2.mogen, false, 'en källa räckte för att se mogen ut');
+
+  // Namn och bild är till för människans blick — men aldrig VILKA källorna var.
+  assert.equal(g1.gift_name, 'Heart Me');
+  const text = JSON.stringify(lista);
+  assert.ok(!text.includes('kreator'), 'en källa läckte ut i kandidatlistan');
+  assert.ok(!/[0-9a-f]{64}/.test(text), 'en källnyckel läckte ut i kandidatlistan');
 });
 
 

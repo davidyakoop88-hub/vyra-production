@@ -254,3 +254,96 @@ prov('status räknar, men lämnar aldrig ut vilka id som finns', async () => {
   // KONTROLLMÄTNING: det ska ändå säga något — annars bevisar negationerna ingenting.
   assert.ok(Array.isArray(r.body.katalog) && r.body.katalog.length > 0, 'status svarade tomt');
 });
+
+
+
+// ---- ADMINSPÄRREN PÅ ÅTERKALLNING, RADERING OCH KANDIDATLISTAN ---------------------------------
+//
+// Facitlistan avgör vad som får trigga Gift Campaign, Gift Fireworks och Goals hos ALLA kunder.
+// Att godkänna, ändra och ta bort måste därför ligga bakom samma spärr — och alla tre rutterna är
+// nya, alltså är detta första gången någon mäter dem.
+
+const rustaVerifierad = async id => {
+  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(id, 'Heart Me')] } });
+  await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'admin', kropp: { giftId: id } });
+  K.tomCache();
+  assert.ok((await K.verifieradeId(pool, 'heart_me')).includes(id), 'riggen kunde inte godkänna');
+};
+
+prov('en vanlig användare kan inte INAKTIVERA en godkänd post', async () => {
+  await rustaVerifierad(G1);
+  const r = await anrop('POST', '/api/admin/gavoregel/heart_me/inaktivera',
+    { som: 'vanlig', kropp: { giftId: G1 } });
+  assert.equal(r.status, 403);
+  K.tomCache();
+  assert.ok((await K.verifieradeId(pool, 'heart_me')).includes(G1), 'en kund stängde av en godkänd gåva');
+});
+
+prov('en vanlig användare kan inte TA BORT en post', async () => {
+  await rustaVerifierad(G1);
+  const r = await anrop('DELETE', '/api/admin/gavoregel/heart_me/' + encodeURIComponent(G1),
+    { som: 'vanlig' });
+  assert.equal(r.status, 403);
+  K.tomCache();
+  assert.ok((await K.verifieradeId(pool, 'heart_me')).includes(G1), 'en kund raderade en godkänd gåva');
+});
+
+prov('en vanlig användare kan inte se kandidatlistan', async () => {
+  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater', { som: 'vanlig' });
+  assert.equal(r.status, 403);
+});
+
+prov('utan inloggning nås ingen av de tre nya rutterna', async () => {
+  for (const [metod, vag] of [
+    ['POST', '/api/admin/gavoregel/heart_me/inaktivera'],
+    ['DELETE', '/api/admin/gavoregel/heart_me/prov-1'],
+    ['GET', '/api/admin/gavoregel/heart_me/kandidater']
+  ]) {
+    const r = await anrop(metod, vag, { kropp: metod === 'GET' ? null : { giftId: G1 } });
+    assert.ok(r.status === 401 || r.status === 403, `${metod} ${vag} gav ${r.status}`);
+  }
+});
+
+prov('administratören kan inaktivera, och gåvan slutar matcha', async () => {
+  await rustaVerifierad(G1);
+  const r = await anrop('POST', '/api/admin/gavoregel/heart_me/inaktivera',
+    { som: 'admin', kropp: { giftId: G1 } });
+  assert.equal(r.status, 200);
+  K.tomCache();
+  assert.deepEqual(await K.verifieradeId(pool, 'heart_me'), [], 'gåvan matchade efter återkallning');
+});
+
+prov('administratören kan ta bort, och rutten skiljer på saknad och lyckad', async () => {
+  await rustaVerifierad(G1);
+  const ok = await anrop('DELETE', '/api/admin/gavoregel/heart_me/' + encodeURIComponent(G1), { som: 'admin' });
+  assert.equal(ok.status, 200);
+
+  const igen = await anrop('DELETE', '/api/admin/gavoregel/heart_me/' + encodeURIComponent(G1), { som: 'admin' });
+  assert.equal(igen.status, 404, 'en radering av något som inte finns rapporterades som lyckad');
+});
+
+prov('kandidatlistan lämnar ut id till administratören — men aldrig en källa', async () => {
+  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G1, 'Heart Me')] } });
+  await K.noteraKandidat(pool, 'heart_me', G1, 'kreator-a');
+
+  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater', { som: 'admin' });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.kandidater[0].gift_id, G1);
+  assert.equal(r.body.kandidater[0].status, 'kandidat');
+
+  const text = JSON.stringify(r.body);
+  assert.ok(!text.includes('kreator'), 'en källa läckte ut');
+  assert.ok(!/[0-9a-f]{64}/.test(text), 'en hashad källnyckel läckte ut');
+});
+
+prov('en påhittad regelnyckel avvisas på alla tre rutterna', async () => {
+  for (const [metod, vag] of [
+    ['POST', '/api/admin/gavoregel/hittepa/inaktivera'],
+    ['DELETE', '/api/admin/gavoregel/hittepa/prov-1'],
+    ['GET', '/api/admin/gavoregel/hittepa/kandidater']
+  ]) {
+    const r = await anrop(metod, vag, { som: 'admin', kropp: metod === 'GET' ? null : { giftId: G1 } });
+    assert.equal(r.status, 400, `${metod} ${vag} accepterade en okänd regelnyckel`);
+  }
+});
+
