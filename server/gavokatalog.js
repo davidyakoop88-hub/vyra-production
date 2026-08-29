@@ -30,6 +30,11 @@ const text = (v, max) => String(v === null || v === undefined ? '' : v).slice(0,
 // 2 147 483 647) medan normalizer.js slapper igenom varden upp till 1e12. Utan ovre klamp kastar
 // INSERT:en "integer out of range" — och eftersom anropet ar fire-and-forget med .catch(() => {})
 // hade felet blivit helt tyst.
+// REGIONEN GISSAS ALDRIG. ISO 3166-1 alpha-2, versaler. Allt annat avvisas — ett fält som tyst
+// faller tillbaka på ett default hade gjort provenienesen värdelös precis när den behövs.
+const REGION_FORM = /^[A-Z]{2}$/;
+const lasRegion = v => (typeof v === 'string' && REGION_FORM.test(v.trim()) ? v.trim() : null);
+
 const INT4_MAX = 2147483647;
 const heltal = v => {
   const n = Number(v);
@@ -53,7 +58,7 @@ function kallnyckel(ra) {
 // En gåva sedd i ett event. Anropas fire-and-forget från ingest-kedjan.
 //
 // TRE SKYDD, och alla tre finns för att indatan här är TENANTSTYRD. `gavokatalog` är
-// PLATTFORMSGLOBAL — den har ingen workspace-kolumn — medan varje annan skrivning på ingest-vägen
+// DELAD ÖVER ALLA WORKSPACES — den har ingen workspace-kolumn — medan varje annan skrivning på ingest-vägen
 // är scopad till ett workspace. Vem som helst med editor-roll i sitt EGET workspace kan posta ett
 // gåvoevent med valfritt `giftId`, `giftName` och `giftImage`; `validateTikTokIngestPayload` tittar
 // bara på `type` och `username`, och `cleanEvent` längdkapar bara.
@@ -69,7 +74,12 @@ function kallnyckel(ra) {
 //      (seedning EFTER event). I drift seedas katalogen en gång och sedan strömmar miljontals
 //      event — alltså exakt den riktning som saknade skydd.
 //
-//   3. `diamanter` SKRIVS INTE HÄRIFRÅN. Kolumnen bär TikToks STYCKPRIS, men ett event bär
+//   3. `region` SKRIVS INTE HÄRIFRÅN, varken vid insättning eller konflikt. Ett gåvoevent bär
+//      ingen region över huvud taget. En rad som seedats från SE ska inte tappa sin proveniens för
+//      att någon skickade gåvan i ett annat rum, och en ny rad från ett event är ärligt talat av
+//      okänd region — tomt betyder just det.
+//
+//   4. `diamanter` SKRIVS INTE HÄRIFRÅN. Kolumnen bär TikToks STYCKPRIS, men ett event bär
 //      `value = coinsEach * repeatCount` (normalizer.js:68) — hela kombots summa. Att skriva in
 //      det hade lagt två oförenliga storheter i samma kolumn, och eftersom ON CONFLICT inte rör
 //      fältet hade det FÖRSTA kombot låst värdet för alltid, globalt för alla workspaces. Noll
@@ -106,8 +116,12 @@ async function noteraFranEvent(pool, event) {
 // Men den vinner inte med ett TOMT värde. Om listan saknar namn eller bild för en post behålls det
 // som redan står — samma regel som händelsevägen. Annars kunde en halvtom lista tömma poster som
 // var korrekt ifyllda.
-async function noteraKatalog(pool, poster) {
-  if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, hoppade: 0 };
+async function noteraKatalog(pool, poster, { region } = {}) {
+  // REGIONEN ÄR OBLIGATORISK. En seedning utan proveniens är inte en seedning — den är en global
+  // sanning vi inte har täckning för. Hellre ett avslag än en rad som ljuger om var den kom ifrån.
+  const reg = lasRegion(region);
+  if (!reg) return { skrivna: 0, hoppade: 0, fel: 'okand-region' };
+  if (!Array.isArray(poster) || !poster.length) return { skrivna: 0, hoppade: 0, region: reg };
   let skrivna = 0, hoppade = 0;
 
   for (const p of poster) {
@@ -115,18 +129,24 @@ async function noteraKatalog(pool, poster) {
     if (!giftId) { hoppade += 1; continue; }
     const bild = text((p.image && Array.isArray(p.image.url_list) && p.image.url_list[0]) || p.icon_url || '', 1200);
     await pool.query(
-      `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla)
-       VALUES ($1,$2,$3,$4,'katalog')
+      `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla, region)
+       VALUES ($1,$2,$3,$4,'katalog',$5)
        ON CONFLICT (gift_id) DO UPDATE
          SET gift_name = CASE WHEN EXCLUDED.gift_name <> '' THEN EXCLUDED.gift_name
                               ELSE gavokatalog.gift_name END,
              gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
                                ELSE gavokatalog.gift_image END,
-             diamanter = EXCLUDED.diamanter, kalla = 'katalog', senast_sedd = now()`,
-      [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count)]);
+             diamanter = EXCLUDED.diamanter, kalla = 'katalog',
+             region = EXCLUDED.region, senast_sedd = now()`,
+      [giftId, text(p.name ?? p.name_en, 160), bild, heltal(p.diamond_count), reg]);
     skrivna += 1;
   }
-  return { skrivna, hoppade };
+  // `skrivna` raknar POSTER, `unikaId` raknar RADER. TikToks lista innehaller samma id flera
+  // ganger — uppmatt 2026-08-29: 783 poster, 779 distinkta id. Att rapportera bara den ena hade
+  // latit som om fyra poster forsvann.
+  const unika = new Set();
+  for (const p of poster) { const id = text(p && (p.id ?? p.gift_id), 160); if (id) unika.add(id); }
+  return { skrivna, hoppade, region: reg, unikaId: unika.size };
 }
 
 // ---- REGELN ------------------------------------------------------------------------------------
@@ -293,5 +313,5 @@ async function kandidater(pool, ruleKey) {
 module.exports = {
   noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
   inaktivera, taBort, kandidater,
-  kallnyckel, tomCache, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
+  kallnyckel, tomCache, lasRegion, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
 };

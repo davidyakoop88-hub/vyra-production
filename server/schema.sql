@@ -656,9 +656,40 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
   gift_image  text        NOT NULL DEFAULT '',
   diamanter   integer     NOT NULL DEFAULT 0 CHECK (diamanter >= 0),
   kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
+  -- OBSERVERAD REGION, och tomt betyder OKÄND — aldrig gissad.
+  --
+  -- Uppmätt 2026-08-29: webcast/gift/list/ bär INGET regionfält alls. Ingen `region`, inget
+  -- `country`, ingen `locale`, ingen `currency`. Regionen kommer därför från kontexten som gjorde
+  -- observationen (kontots `appContext.region`) och skrivs av bulkvägen, som får den som ett
+  -- uttryckligt argument.
+  --
+  -- Gåvoevent bär ingen region över huvud taget, så händelsevägen lämnar fältet tomt och rör det
+  -- ALDRIG vid en konflikt: en rad som seedats från SE ska inte tappa sin proveniens för att någon
+  -- skickade gåvan i ett annat rum.
+  --
+  -- DÄRFÖR ÄR EN RAD INTE "GLOBAL". Den är en OBSERVATION: den här gåvan sågs i den här regionen
+  -- vid den här tidpunkten, av den här källan. Gåvo-id:t i sig är detsamma överallt — det är mätt —
+  -- men listan man får se är en vy per konto och rum, och raden ska säga vilken vy den kom ur.
+  region      text        NOT NULL DEFAULT '' CHECK (region = '' OR region ~ '^[A-Z]{2}$'),
   forsta_sedd timestamptz NOT NULL DEFAULT now(),
   senast_sedd timestamptz NOT NULL DEFAULT now()
 );
+
+-- gavokatalog skapades i #289 UTAN region, och tabellen finns redan i drift. CREATE TABLE IF NOT
+-- EXISTS ror den inte — husets dyraste inlarda lardom — sa kolumnen maste laggas till separat.
+ALTER TABLE gavokatalog ADD COLUMN IF NOT EXISTS region text NOT NULL DEFAULT '';
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conrelid = 'gavokatalog'::regclass AND contype = 'c'
+       AND pg_get_constraintdef(oid) LIKE '%region%'
+  ) THEN
+    ALTER TABLE gavokatalog
+      ADD CONSTRAINT gavokatalog_region_check
+      CHECK (region = '' OR region ~ '^[A-Z]{2}$');
+  END IF;
+END $$;
 -- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
 -- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
 -- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.

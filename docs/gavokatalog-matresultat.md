@@ -146,10 +146,37 @@ Från en **inloggad** TikTok-flik, hämta `webcast/gift/list/` och posta listan 
 POST /api/admin/gavokatalog
 Cookie: vyra_session=<plattformsadministratörens session>
 x-vyra-csrf: <token>
-{ "gifts": [ ... ] }
+{ "region": "SE", "gifts": [ ... ] }
 ```
 
 Kräver `is_platform_admin`. Kroppen tas emot upp till 8 MB (783 gåvor är cirka 0,4 MB).
+
+**`region` är obligatorisk och gissas aldrig.** Utan den svarar rutten 400 och skriver ingenting.
+
+## Vad mätningen 2026-08-29 visade om regionen
+
+`webcast/gift/list/` bär **inget regionfält alls**. Svarets `data` har tjugo nycklar — `gifts`,
+`gift_configs`, `pages`, `tags` och så vidare — men ingen `region`, ingen `country`, ingen
+`locale`, ingen `currency`. Regionen finns alltså inte i katalogen och kan inte läsas ur den.
+
+Den kommer i stället från **kontexten som gjorde observationen**: sidans egen
+`__UNIVERSAL_DATA_FOR_REHYDRATION__` → `webapp.app-context.region`. Uppmätt `SE`, språk `sv-SE`.
+
+Det är därför en katalograd **inte är en global sanning utan en OBSERVATION**: den här gåvan sågs i
+den här regionen, vid den här tidpunkten, av den här källan. Gåvo-id:t i sig är detsamma överallt —
+det är mätt — men listan man får se är en vy per konto och rum.
+
+Ett gåvoevent bär ingen region över huvud taget. Händelsevägen skriver därför aldrig fältet och
+raderar aldrig en seedad rads proveniens; tomt betyder **okänd**, aldrig gissad.
+
+## 783 poster blir 779 rader
+
+TikToks egen lista bär samma id flera gånger: **783 poster, 779 distinkta id** — fyra id
+förekommer två gånger. Svaret skiljer därför på `skrivna` (poster) och `unikaId` (rader), så att
+fyra rader inte ser ut att ha försvunnit.
+
+Samma mätning: **0 poster saknar id**, och **47 namn är dubbletter**. Namnet används aldrig för att
+välja ett id — ett vaktprov faller om det någonsin görs.
 
 ## 2. Verifiera Heart Me
 

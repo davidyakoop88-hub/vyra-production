@@ -29,6 +29,7 @@
 //
 // SYNTETISKA VÄRDEN ÖVERALLT. Inga verkliga konto-, rums- eller användarnamn. Rums-id:n har samma
 // 19-siffriga form som TikToks men är påhittade.
+const REGION = 'SE';   // observerad region i riggen — aldrig gissad i produktion
 const test = require('node:test'), assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { Pool } = require('pg');
@@ -703,7 +704,7 @@ prov('liggaren kaskaderar från stream_sessions', async () => {
 
 // Det en plattformsadministratör gör via POST /api/admin/gavokatalog + .../verifiera.
 const verifieraGlobalt = async giftId => {
-  await Gavokatalog.noteraKatalog(pool, [{ id: giftId, name: 'Heart Me', diamond_count: 1 }]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: giftId, name: 'Heart Me', diamond_count: 1 }], { region: REGION });
   const ut = await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, giftId);
   assert.equal(ut.ok, true, 'riggen kunde inte verifiera — provet nedan hade blivit meningslöst');
 };
@@ -747,7 +748,7 @@ prov('registret · en gåva som BARA ligger i katalogen räknas inte', async () 
 
   // Katalogen är etikettering. Att stå i den får aldrig räcka — det är hela skälet till att
   // identiteten bor i en egen tabell.
-  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }], { region: REGION });
   await H.applyHeartMeEvent(pool, WS, gava(ANNA, HEART_ME));
   assert.equal(await visat(), 0, 'katalogpost utan verifierad regel ökade målet');
 });
@@ -783,7 +784,7 @@ prov('registret · FLERA REGIONALA ID för samma regel räknas alla', async () =
   await Gavokatalog.noteraKatalog(pool, [
     { id: HEART_ME, name: 'Heart Me', diamond_count: 1 },
     { id: ROSE, name: 'Heart Me', diamond_count: 1 }      // regional variant, ANNAT id
-  ]);
+  ], { region: REGION });
   await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, HEART_ME);
   await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, ROSE);
   await nySession(RUM_1);
@@ -804,7 +805,7 @@ prov('registret · FLERA REGIONALA ID för samma regel räknas alla', async () =
 
 prov('registret · en INAKTIVERAD post slutar räkna omedelbart', async () => {
   await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
-  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }], { region: REGION });
   await Gavokatalog.verifiera(pool, Regelnycklar.HEART_ME, HEART_ME);
   await nySession(RUM_1);
 
@@ -823,7 +824,7 @@ prov('registret · en INAKTIVERAD post slutar räkna omedelbart', async () => {
 prov('registret · en KANDIDAT räknar aldrig, hur många källor den än har', async () => {
   // Tre kreatörer gör en gåva till kandidat. Den får synas för en människa — aldrig trigga.
   await pool.query('DELETE FROM gift_rule_identity WHERE workspace_id=$1', [WS]);
-  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }]);
+  await Gavokatalog.noteraKatalog(pool, [{ id: HEART_ME, name: 'Heart Me', diamond_count: 1 }], { region: REGION });
   for (const k of ['kreator-a', 'kreator-b', 'kreator-c', 'kreator-d']) {
     await Gavokatalog.noteraKandidat(pool, Regelnycklar.HEART_ME, HEART_ME, k);
   }
