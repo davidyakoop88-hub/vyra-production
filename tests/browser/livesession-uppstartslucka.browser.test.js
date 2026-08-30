@@ -121,6 +121,32 @@ async function oppna() {
 const aktiv = sida => sida.evaluate(() => sessionStorage.getItem('vyra-live-session-aktiv'));
 const hanterade = sida => sida.evaluate(() => sessionStorage.getItem('vyra-live-session-hanterade'));
 
+// VANTA UT DET DU MATER — mat inte mitt i kedjan.
+//
+// `hamtningar` raknas pa NODE-sidan, i attrappservern. Sessionsnyckeln skrivs i SIDAN. Att vanta
+// pa nyckeln och sedan direkt lasa raknaren ar att synkronisera mot ena anden av kedjan och mata
+// den andra: konfigurationshamtningen ar en separat asynkron foljd av samma handelse, och
+// ingenting garanterar att den hunnit fram nar nyckeln vander.
+//
+// Det floh provet i CI 2026-08-30 pa en commit som bara rorde serverns seedningskontrakt — alltsa
+// kod provet inte ens laddar. Omkorning av SAMMA commit gav gront.
+//
+// Losningen ar inte en langre timeout. Den ar att vanta pa VILLKORET, med en ovre grans: provet
+// faller fortfarande om omhamtningen aldrig sker, men inte langre for att den kom en tiondels
+// sekund efter att nyckeln vande.
+//
+// Galler bara POSITIVA pastaenden. Ett franvaropastaende ("ingen omhamtning skedde") kan inte
+// vanta pa en icke-handelse och maste ha en fast paus — se provet med `waitForTimeout(1500)`.
+async function vantaPa(villkor, meddelande, { timeout = 15000, intervall = 50 } = {}) {
+  const slut = Date.now() + timeout;
+  while (Date.now() < slut) {
+    if (villkor()) return;
+    await new Promise(r => setTimeout(r, intervall));
+  }
+  throw new assert.AssertionError({ message: meddelande + ' (inom ' + timeout + ' ms)',
+    actual: false, expected: true, operator: '==' });
+}
+
 const prov = (namn, fn) => test('livesession: ' + namn, { skip, timeout: 90000 }, fn);
 
 prov('en kalla som oppnas MITT i en sandning far den ur snapshotet', async () => {
@@ -169,7 +195,8 @@ prov('en NY sandning byter bild utan omladdning och hamtar om konfigurationen', 
     r.skicka('live:start', S2);
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
       S2, { timeout: 15000 });
-    assert.ok(r.lada.hamtningar > fore, 'den nya sandningen hamtade aldrig om konfigurationen');
+    await vantaPa(() => r.lada.hamtningar > fore,
+      'den nya sandningen hamtade aldrig om konfigurationen');
     assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
     assert.deepEqual(sida.__fel, []);
   } finally { await sida.close() }
