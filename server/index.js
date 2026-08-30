@@ -153,7 +153,7 @@ function rawBody(req,max=1024*1024){return new Promise((resolve,reject)=>{let si
 function sameOrigin(req){const origin=req.headers.origin;return !origin||origin===ORIGIN}
 async function session(req,{csrf=false}={}){const raw=S.parseCookies(req.headers.cookie).vyra_session;if(!raw)return null;const q=await pool.query('SELECT s.*,u.email,u.display_name,u.disabled_at,u.email_verified_at,u.mfa_secret_enc,u.mfa_enabled_at,u.mfa_recovery_hashes,u.deletion_requested_at,u.is_platform_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()',[S.digest(raw)]);const row=q.rows[0];if(!row||row.disabled_at)return null;if(csrf&&S.digest(req.headers['x-vyra-csrf']||'')!==row.csrf_hash)return null;return row}
 // Sandningsidentiteten. Modulen ager hela sessionsbeslutet; rutterna har ar tunna skal.
-const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const Regelnycklar=require('./regelnycklar');const HeartMeGoal=require('./heart-me-goal');const Gavokatalog=require('./gavokatalog');const {startStreamWorker}=require('./stream-worker');
+const {skapaStreamSessions}=require('./stream-sessions');const Gavoidentitet=require('./gavoidentitet');const Seedningskontrakt=require('./seedningskontrakt');const Regelnycklar=require('./regelnycklar');const HeartMeGoal=require('./heart-me-goal');const Gavokatalog=require('./gavokatalog');const {startStreamWorker}=require('./stream-worker');
 const StreamSessions=skapaStreamSessions({pool});
 // MASKIN-AUTH VID HTTP-FORTROENDEGRANSEN. Husets enda ingestkontroll, extraherad ur den gamla
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
@@ -402,9 +402,16 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   //   200  seedningen ar komplett och markerad klar
   if(p==='/api/admin/gavokatalog'&&req.method==='POST'){const d=await body(req,8*1024*1024);
     if(!Gavokatalog.giltigRegion(d&&d.region))return send(res,400,{ok:false,error:'Observerad region kravs (verklig ISO 3166-1 alpha-2-kod i versaler)'});
-    const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region,forvantat:d&&d.forvantat});
+    // KONTROLLTALEN KOMMER ALDRIG UR KROPPEN. Ett falt som foljer med det den ska kontrollera
+    // kontrollerar ingenting — en trunkerad lista hade skickats med matchande sankta tal. Att tyst
+    // ignorera faltet hade dessutom fatt anroparen att tro att dess tal gallde, sa granslinjen ar
+    // uttrycklig: bar kroppen `forvantat` ar anropet fel byggt och avvisas.
+    if(d&&Object.prototype.hasOwnProperty.call(d,'forvantat'))return send(res,400,{ok:false,error:'Kontrolltal far inte skickas i kroppen. De kommer fran det granskade seedningskontraktet i server/seedningskontrakt.js'});
+    const kontrakt=Seedningskontrakt.for(d.region);
+    if(!kontrakt)return send(res,400,{ok:false,error:'Ingen granskad kontrolltalsuppsattning for regionen. Lagg till den i server/seedningskontrakt.js via granskad PR.',regioner:Seedningskontrakt.regioner()});
+    const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region,forvantat:kontrakt});
     if(ut.ok)return send(res,200,{ok:true,...ut});
-    if(ut.fel==='ogiltiga-kontrolltal')return send(res,400,{ok:false,error:'Forvantade kontrolltal kravs: heltal poster, unikaId och utanId fran den uppmatta preflighten',...ut});
+    if(ut.fel==='ogiltiga-kontrolltal')return send(res,400,{ok:false,error:'Det granskade kontraktet ar felformat',...ut});
     return send(res,422,{ok:false,error:ut.fel==='tom-lista'?'Listan ar tom eller felformad':'Mottagna poster stammer inte med de forvantade kontrolltalen',...ut})}
   // Rakneverk, aldrig id:n. Svaret sager HUR MANGA som finns, inte VILKA.
   if(p==='/api/admin/gavokatalog/status'&&req.method==='GET'){const k=await pool.query("SELECT kalla,count(*)::int n FROM gavokatalog GROUP BY kalla");const g=await pool.query("SELECT region,kalla,count(*)::int n FROM gavoobservation GROUP BY region,kalla ORDER BY region,kalla");const sd=await pool.query("SELECT DISTINCT ON (region) region,status='klar' AS klar,antal_poster,antal_unika,klar_at FROM gavoseedning ORDER BY region,klar_at DESC NULLS LAST");const r=await pool.query("SELECT rule_key,status,count(*)::int n FROM gavoregel GROUP BY rule_key,status");return send(res,200,{ok:true,katalog:k.rows,regioner:g.rows,seedningar:sd.rows,regler:r.rows})}
@@ -420,7 +427,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // vantar pa godkannande. Bara plattformsadministrator nar hit; blocket ovan har redan 403:at alla
   // andra. Bar aldrig avsandare: kallorna ar hashade och raknas bara.
   const kandidatLista=p.match(/^\/api\/admin\/gavoregel\/([A-Za-z0-9_:-]{1,160})\/kandidater$/i);
-  if(kandidatLista&&req.method==='GET'){const ruleKey=Regelnycklar.validera(decodeURIComponent(kandidatLista[1]));if(!ruleKey)return send(res,400,{ok:false,error:'Okänd regelnyckel'});return send(res,200,{ok:true,kandidater:await Gavokatalog.kandidater(pool,ruleKey)})}
+  if(kandidatLista&&req.method==='GET'){const ruleKey=Regelnycklar.validera(decodeURIComponent(kandidatLista[1]));if(!ruleKey)return send(res,400,{ok:false,error:'Okänd regelnyckel'});const reg=Gavokatalog.giltigRegion(u.searchParams.get('region'));if(!reg)return send(res,400,{ok:false,error:'?region kravs — attributen skiljer sig mellan regioner'});return send(res,200,{ok:true,region:reg,kandidater:await Gavokatalog.kandidater(pool,ruleKey,{region:reg})})}
   // TA BORT HELT, for en rad som inte ska finnas i historiken alls. Kallorna kaskaderar med.
   const taBortRegel=p.match(/^\/api\/admin\/gavoregel\/([A-Za-z0-9_:-]{1,160})\/([^/]{1,160})$/i);
   if(taBortRegel&&req.method==='DELETE'&&!['verifiera','inaktivera','kandidater'].includes(taBortRegel[2].toLowerCase())){const ruleKey=Regelnycklar.validera(decodeURIComponent(taBortRegel[1]));if(!ruleKey)return send(res,400,{ok:false,error:'Okänd regelnyckel'});const ut=await Gavokatalog.taBort(pool,ruleKey,decodeURIComponent(taBortRegel[2]));return ut.ok?send(res,200,{ok:true}):send(res,404,{ok:false,skal:ut.skal})}

@@ -392,7 +392,7 @@ prov('kandidatlistan visar mognad, aldrig källor', async () => {
   await K.noteraKandidat(pool, REGEL, G1, 'kreator-c');
   await K.noteraKandidat(pool, REGEL, G2, 'kreator-a');
 
-  const lista = await K.kandidater(pool, REGEL);
+  const lista = await K.kandidater(pool, REGEL, { region: REGION });
   const g1 = lista.find(r => r.gift_id === G1), g2 = lista.find(r => r.gift_id === G2);
   assert.equal(g1.bekraftelser, 3);
   assert.equal(g1.mogen, true, 'tre källor markerades inte som redo för granskning');

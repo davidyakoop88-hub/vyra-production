@@ -45,6 +45,18 @@ const auth = {};
 const REGION = 'SE';   // observerad region — rutten vagrar utan
 // Kontrolltal for ruttprovens sma listor. Deklarerade, inte harledda ur svaret.
 const KT = (poster, unikaId, utanId = 0) => ({ poster, unikaId, utanId });
+
+// ARRANGERA VIA MODULEN, ALDRIG VIA RUTTEN. Rutten kräver numera att listan möter det granskade
+// SE-kontraktet (783/779/0), och det är precis vad flera prov nedan ska PROVA. Att låta riggen gå
+// samma väg hade tvingat varje prov att bygga 783 poster för att komma åt något helt annat.
+const rigga = async (...gifts) => {
+  const unika = new Set(gifts.map(g => String(g.id)));
+  const ut = await K.noteraKatalog(pool, gifts,
+    { region: REGION, forvantat: { poster: gifts.length, unikaId: unika.size, utanId: 0 } });
+  assert.equal(ut.ok, true, 'riggen kunde inte lägga in gåvorna');
+  K.tomCache();
+  return ut;
+};
 const G1 = 'httprov-9001', G2 = 'httprov-9002';
 const post = (id, namn) => ({ id, name: namn, diamond_count: 1,
   image: { url_list: ['https://p16.example.invalid/' + id + '.png'] } });
@@ -63,16 +75,8 @@ async function anrop(metod, vag, { som = null, kropp = null } = {}) {
   // KONTROLLTAL FÖR PROV SOM INTE HANDLAR OM FULLSTÄNDIGHET. Räknas fram ur listan, vilket är
   // exakt det som är förbjudet i produktion — men de proven mäter något annat. Sätt
   // `utanForvantat: true` för att medvetet utelämna dem, eller ange egna literaler i kroppen.
-  if (kropp && Array.isArray(kropp.gifts) && !kropp.forvantat && !kropp.utanForvantat) {
-    const unika = new Set();
-    let utanId = 0;
-    for (const p of kropp.gifts) {
-      const id = String((p && (p.id ?? p.gift_id)) || '');
-      if (id) unika.add(id); else utanId += 1;
-    }
-    kropp = { ...kropp, forvantat: { poster: kropp.gifts.length, unikaId: unika.size, utanId } };
-  }
-  if (kropp && kropp.utanForvantat) { kropp = { ...kropp }; delete kropp.utanForvantat; }
+  // KROPPEN BÄR ALDRIG KONTROLLTAL. Rutten hämtar dem ur det granskade seedningskontraktet och
+  // avvisar uttryckligen en kropp som bär `forvantat`.
   const res = await fetch(bas + vag, {
     method: metod,
     headers: { ...(kropp ? { 'content-type': 'application/json' } : {}),
@@ -176,10 +180,18 @@ prov('utan CSRF-huvud nekas även en administratör', async () => {
 // ---- 2 · BULKVÄGEN -----------------------------------------------------------------------------
 
 prov('administratören seedar hela listan i ETT anrop', async () => {
-  const r = await anrop('POST', '/api/admin/gavokatalog',
-    { som: 'admin', kropp: { gifts: [post(G1, 'Rose'), post(G2, 'Heart Me')] , region: REGION } });
+  // "Hela listan" betyder numera bokstavligen hela: rutten kräver att den möter det granskade
+  // SE-kontraktet. En liten lista är inte längre en giltig seedning, och det är hela poängen.
+  const se = require('../seedningskontrakt').for(REGION);
+  const gifts = [];
+  for (let i = 0; i < se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
+  for (let i = 0; i < se.poster - se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
+
+  const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { region: REGION, gifts } });
   assert.equal(r.status, 200);
-  assert.equal(r.body.skrivna, 2);
+  assert.equal(r.body.skrivna, se.poster);
+  assert.equal(r.body.unikaId, se.unikaId, 'dubbletterna räknades som skilda id');
+  await rigga(post(G2, 'Heart Me'));
 
   const q = await pool.query(
     "SELECT gift_name,kalla FROM gavokatalog WHERE gift_id=$1", [G2]);
@@ -188,41 +200,32 @@ prov('administratören seedar hela listan i ETT anrop', async () => {
 });
 
 prov('en trasig post fäller inte hela bulken', async () => {
-  // En enda dålig post bland 783 får inte kosta katalogen.
-  const r = await anrop('POST', '/api/admin/gavokatalog',
-    { som: 'admin', kropp: { gifts: [post(G1, 'Rose'), { name: 'utan id' }, post(G2, 'X')] , region: REGION } });
-  assert.equal(r.status, 200);
-  assert.equal(r.body.skrivna, 2);
-  assert.equal(r.body.hoppade, 1);
+  // En enda dålig post bland 783 får inte kosta katalogen. Provas mot MODULEN: SE-kontraktet har
+  // utanId: 0, så en lista med en post utan id kan per definition inte seedas via rutten — den
+  // möter inte kontraktet, och ska inte göra det.
+  const ut = await K.noteraKatalog(pool, [post(G1, 'Rose'), { name: 'utan id' }, post(G2, 'X')],
+    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 1 } });
+  assert.equal(ut.ok, true, 'en lista vars kontrolltal ERKÄNNER den trasiga posten avvisades');
+  assert.equal(ut.skrivna, 2);
+  assert.equal(ut.hoppade, 1);
 });
 
 prov('en tom eller felformad lista ger 422 och ok:false — inte 200 och ok:true', async () => {
   // Ett 200/ok:true på en tom lista är en tyst lögn: anroparen får "det gick bra" av något som
   // inte hände. Statuskoden är det enda de flesta klienter tittar på.
   for (const gifts of [undefined, null, 'inte en lista', []]) {
-    const kropp = { region: REGION, forvantat: { poster: 783, unikaId: 779, utanId: 0 },
-                    ...(gifts === undefined ? {} : { gifts }) };
+    const kropp = { region: REGION, ...(gifts === undefined ? {} : { gifts }) };
     const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp });
     assert.equal(r.status, 422, JSON.stringify(gifts) + ' gav fel status');
     assert.equal(r.body.ok, false, JSON.stringify(gifts) + ' rapporterades som lyckat');
   }
 });
 
-prov('utan förväntade kontrolltal avvisas anropet med 400', async () => {
-  const r = await anrop('POST', '/api/admin/gavokatalog', {
-    som: 'admin', kropp: { region: REGION, gifts: [post(G1, 'Rose')], utanForvantat: true }
-  });
-  assert.equal(r.status, 400, 'en seedning utan kontrolltal accepterades');
-  assert.equal(r.body.ok, false);
-  const q = await pool.query('SELECT count(*)::int n FROM gavokatalog WHERE gift_id=$1', [G1]);
-  assert.equal(q.rows[0].n, 0, 'ett avvisat anrop hann ändå skriva');
-});
-
 prov('en trunkerad lista mot riktiga kontrolltal ger 422 och skriver ingenting', async () => {
   // Precis fallet granskningen fällde: en lista som ser komplett ut men inte är det.
   const r = await anrop('POST', '/api/admin/gavokatalog', {
     som: 'admin',
-    kropp: { region: REGION, gifts: [post(G1, 'Rose')], forvantat: { poster: 783, unikaId: 779, utanId: 0 } }
+    kropp: { region: REGION, gifts: [post(G1, 'Rose')] }
   });
   assert.equal(r.status, 422, 'en trunkerad seedning accepterades');
   assert.equal(r.body.ok, false);
@@ -246,8 +249,7 @@ prov('utan observerad region skrivs ingenting — 400, inte ett tyst default', a
 
   // KONTROLLMÄTNING: med en giltig region SKA det gå igenom — annars mäter provet bara att rutten
   // är trasig.
-  const ok = await anrop('POST', '/api/admin/gavokatalog',
-    { som: 'admin', kropp: { gifts: [post(G1, 'Rose')], region: REGION } });
+  const ok = await rigga(post(G1, 'Rose'));
   assert.equal(ok.status, 200);
   assert.equal(ok.body.region, REGION, 'svaret sa inte vilken region som seedades');
 });
@@ -255,19 +257,17 @@ prov('utan observerad region skrivs ingenting — 400, inte ett tyst default', a
 prov('svaret skiljer på ANTAL POSTER och ANTAL ID', async () => {
   // TikToks egen lista bär samma id flera gånger — uppmätt 2026-08-29: 783 poster, 779 distinkta
   // id. Att bara rapportera det ena hade fått fyra rader att se ut som om de försvann.
-  const r = await anrop('POST', '/api/admin/gavokatalog', {
-    som: 'admin', kropp: { region: REGION, gifts: [post(G1, 'Rose'), post(G1, 'Rose'), post(G2, 'Heart Me')] }
-  });
-  assert.equal(r.status, 200);
-  assert.equal(r.body.skrivna, 3, 'antalet poster stämmer inte');
-  assert.equal(r.body.unikaId, 2, 'antalet distinkta id stämmer inte');
+  const ut = await K.noteraKatalog(pool, [post(G1, 'Rose'), post(G1, 'Rose'), post(G2, 'Heart Me')],
+    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 0 } });
+  assert.equal(ut.ok, true);
+  assert.equal(ut.skrivna, 3, 'antalet poster stämmer inte');
+  assert.equal(ut.unikaId, 2, 'antalet distinkta id stämmer inte');
   const q = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
   assert.equal(q.rows[0].n, 2, 'dubbletten blev två rader');
 });
 
 prov('statussvaret bär regionen, men fortfarande inga id', async () => {
-  await anrop('POST', '/api/admin/gavokatalog',
-    { som: 'admin', kropp: { gifts: [post(G1, 'Rose')], region: REGION } });
+  await rigga(post(G1, 'Rose'));
   const r = await anrop('GET', '/api/admin/gavokatalog/status', { som: 'admin' });
   assert.equal(r.status, 200);
   const rad = (r.body.regioner || []).find(x => x.region === REGION);
@@ -300,7 +300,7 @@ prov('fält utifrån saneras — inget går orört in i databasen', async () => 
 // ---- 3 · VERIFIERINGEN -------------------------------------------------------------------------
 
 prov('verifiering gör ett katalog-id matchbart', async () => {
-  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G2, 'Heart Me')] , region: REGION } });
+  await rigga(post(G2, 'Heart Me'));
 
   const fore = await pool.query("SELECT count(*)::int n FROM gavoregel WHERE status='verifierad' AND gift_id=$1", [G2]);
   assert.equal(fore.rows[0].n, 0, 'ett katalog-id var matchbart innan någon verifierat det');
@@ -326,7 +326,7 @@ prov('en påhittad regelnyckel avvisas', async () => {
 });
 
 prov('en vanlig användare kan inte verifiera', async () => {
-  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G2, 'Heart Me')] , region: REGION } });
+  await rigga(post(G2, 'Heart Me'));
   const r = await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'vanlig', kropp: { giftId: G2 } });
   assert.equal(r.status, 403);
   assert.ok(!(await K.verifieradeId(pool, 'heart_me')).includes(G2));
@@ -335,7 +335,7 @@ prov('en vanlig användare kan inte verifiera', async () => {
 // ---- 4 · STATUSSVARET AVSLÖJAR INGA ID ---------------------------------------------------------
 
 prov('status räknar, men lämnar aldrig ut vilka id som finns', async () => {
-  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G1, 'Rose'), post(G2, 'Heart Me')] , region: REGION } });
+  await rigga(post(G1, 'Rose'), post(G2, 'Heart Me'));
   await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'admin', kropp: { giftId: G2 } });
 
   const r = await anrop('GET', '/api/admin/gavokatalog/status', { som: 'admin' });
@@ -411,7 +411,7 @@ prov('kontrakt · rutten läser kontrolltalen ur kontraktet — bevisat med SE:s
 // nya, alltså är detta första gången någon mäter dem.
 
 const rustaVerifierad = async id => {
-  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(id, 'Heart Me')] , region: REGION } });
+  await rigga(post(id, 'Heart Me'));
   await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'admin', kropp: { giftId: id } });
   K.tomCache();
   assert.ok((await K.verifieradeId(pool, 'heart_me')).includes(id), 'riggen kunde inte godkänna');
@@ -436,7 +436,7 @@ prov('en vanlig användare kan inte TA BORT en post', async () => {
 });
 
 prov('en vanlig användare kan inte se kandidatlistan', async () => {
-  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater', { som: 'vanlig' });
+  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater?region=' + REGION, { som: 'vanlig' });
   assert.equal(r.status, 403);
 });
 
@@ -444,7 +444,7 @@ prov('utan inloggning nås ingen av de tre nya rutterna', async () => {
   for (const [metod, vag] of [
     ['POST', '/api/admin/gavoregel/heart_me/inaktivera'],
     ['DELETE', '/api/admin/gavoregel/heart_me/prov-1'],
-    ['GET', '/api/admin/gavoregel/heart_me/kandidater']
+    ['GET', '/api/admin/gavoregel/heart_me/kandidater?region=' + REGION]
   ]) {
     const r = await anrop(metod, vag, { kropp: metod === 'GET' ? null : { giftId: G1 } });
     assert.ok(r.status === 401 || r.status === 403, `${metod} ${vag} gav ${r.status}`);
@@ -470,10 +470,10 @@ prov('administratören kan ta bort, och rutten skiljer på saknad och lyckad', a
 });
 
 prov('kandidatlistan lämnar ut id till administratören — men aldrig en källa', async () => {
-  await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { gifts: [post(G1, 'Heart Me')] , region: REGION } });
+  await rigga(post(G1, 'Heart Me'));
   await K.noteraKandidat(pool, 'heart_me', G1, 'kreator-a');
 
-  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater', { som: 'admin' });
+  const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater?region=' + REGION, { som: 'admin' });
   assert.equal(r.status, 200);
   assert.equal(r.body.kandidater[0].gift_id, G1);
   assert.equal(r.body.kandidater[0].status, 'kandidat');
@@ -487,7 +487,7 @@ prov('en påhittad regelnyckel avvisas på alla tre rutterna', async () => {
   for (const [metod, vag] of [
     ['POST', '/api/admin/gavoregel/hittepa/inaktivera'],
     ['DELETE', '/api/admin/gavoregel/hittepa/prov-1'],
-    ['GET', '/api/admin/gavoregel/hittepa/kandidater']
+    ['GET', '/api/admin/gavoregel/hittepa/kandidater?region=SE']
   ]) {
     const r = await anrop(metod, vag, { som: 'admin', kropp: metod === 'GET' ? null : { giftId: G1 } });
     assert.equal(r.status, 400, `${metod} ${vag} accepterade en okänd regelnyckel`);

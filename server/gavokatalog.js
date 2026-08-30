@@ -170,7 +170,7 @@ function lasKontrolltal(f) {
 //
 // En avvikelse rullar tillbaka HELA transaktionen: ingen katalograd, ingen observation, ingen
 // färdigmarkering. En avvisad seedning ska inte gå att förväxla med en delvis genomförd.
-async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null } = {}) {
+async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null, _provTappa = null } = {}) {
   const reg = giltigRegion(region);
   if (!reg) return { ok: false, skrivna: 0, unikaId: 0, fel: 'okand-region' };
 
@@ -210,6 +210,10 @@ async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null 
 
       const giftId = text(p && (p.id ?? p.gift_id), 160);
       if (!giftId) { hoppade += 1; continue; }
+      // TESTSÖM, också en funktion: hoppar över skrivningen UTAN att kasta — en tyst förlust.
+      // Förkontrollen ser fortfarande rätt antal MOTTAGNA poster och släpper igenom, så bara
+      // räkningen mot databasen nedan kan fånga det.
+      if (typeof _provTappa === 'function' && _provTappa(n)) { skrivna += 1; continue; }
       const namn = text(p.name, 160);
       const bild = text((p.image && Array.isArray(p.image.url_list) && p.image.url_list[0]) || p.icon_url || '', 1200);
       const dm = heltal(p.diamond_count);
@@ -238,6 +242,24 @@ async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null 
                senast_sedd = now()`,
         [giftId, reg, seedningId, namn, bild, dm, global]);
       skrivna += 1;
+    }
+
+    // RÄKNINGEN SKER MOT DATABASEN, INNE I TRANSAKTIONEN, FÖRE FÄRDIGMARKERINGEN.
+    //
+    // Förkontrollen ovan jämförde den MOTTAGNA listan mot kontraktet — den säger inget om vad som
+    // faktiskt hamnade i databasen. En rad som tyst inte landade hade gett en `klar`-markering på
+    // en ofullständig seedning, vilket är precis det färdigmarkeringen finns för att omöjliggöra.
+    //
+    // En lokal räknare duger inte: den räknar vad koden TROR att den skrev. Frågan nedan räknar
+    // vad som står där, och gör det innan COMMIT — så en avvikelse rullar tillbaka allt.
+    const faktiskt = await client.query(
+      `SELECT count(*)::int n FROM gavoobservation WHERE region=$1 AND seedning_id=$2`,
+      [reg, seedningId]);
+    if (faktiskt.rows[0].n !== mottaget.unikaId) {
+      await client.query('ROLLBACK');
+      return { ok: false, skrivna: 0, unikaId: mottaget.unikaId, region: reg,
+               fel: 'skrivna-stammer-inte',
+               mottaget, forvantat: kt, faktisktSkrivna: faktiskt.rows[0].n };
     }
 
     await client.query(
@@ -429,15 +451,24 @@ async function taBort(pool, ruleKey, giftId) {
 
 // Kandidatlistan för mänsklig granskning. Det ENDA stället där id:n lämnar servern, och bara till
 // en plattformsadministratör — utan den kan ingen människa se vad som väntar på godkännande.
-async function kandidater(pool, ruleKey) {
+async function kandidater(pool, ruleKey, { region } = {}) {
+  // REGIONEN ÄR OBLIGATORISK. Attributen skiljer sig mellan regioner — `is_global_gift` är falskt
+  // för 266 av 783 gåvor — så en kandidatlista utan region skulle behöva läsa den kanoniska raden,
+  // alltså "senast sett någonstans". En människa som granskar SE ska se SE:s namn och pris.
+  const reg = giltigRegion(region);
+  if (!reg) return [];
   const q = await pool.query(
     // REGIONEN FOLJER MED. Utan den gar "exakt en verifierad post for den observerade regionen"
     // bara att sluta sig till, och en slutsats ar inte en matning.
-    `SELECT r.gift_id, r.bekraftelser, r.status, k.gift_name, k.gift_image, k.diamanter,
-            COALESCE(ARRAY(SELECT o.region FROM gavoobservation o
-                            WHERE o.gift_id = r.gift_id ORDER BY o.region), '{}') AS regioner
-       FROM gavoregel r JOIN gavokatalog k ON k.gift_id = r.gift_id
-      WHERE r.rule_key = $1 ORDER BY r.bekraftelser DESC, r.gift_id`, [ruleKey]);
+    // Attributen kommer ur OBSERVATIONEN för den efterfrågade regionen — aldrig ur den kanoniska
+    // raden, som bara är "senast sett någonstans" och därför kan bära en annan regions värden.
+    `SELECT r.gift_id, r.bekraftelser, r.status,
+            o.gift_name, o.gift_image, o.diamanter, o.ar_global, o.forsta_sedd, o.senast_sedd,
+            COALESCE(ARRAY(SELECT o2.region FROM gavoobservation o2
+                            WHERE o2.gift_id = r.gift_id ORDER BY o2.region), '{}') AS regioner
+       FROM gavoregel r
+       JOIN gavoobservation o ON o.gift_id = r.gift_id AND o.region = $2
+      WHERE r.rule_key = $1 ORDER BY r.bekraftelser DESC, r.gift_id`, [ruleKey, reg]);
   return q.rows.map(r => ({ ...r, mogen: Number(r.bekraftelser) >= KRAV_BEKRAFTELSER }));
 }
 
