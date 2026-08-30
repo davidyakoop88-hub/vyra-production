@@ -688,6 +688,11 @@ CREATE TABLE IF NOT EXISTS gavoseedning (
   forv_poster  integer     NOT NULL DEFAULT 0 CHECK (forv_poster >= 0),
   forv_unika   integer     NOT NULL DEFAULT 0 CHECK (forv_unika >= 0),
   forv_utan_id integer     NOT NULL DEFAULT 0 CHECK (forv_utan_id >= 0),
+  -- KONTRAKTETS MEDLEMSKAPSBEVIS. Kontrolltalen bevisar bara antal; digesten bevisar VILKA id.
+  -- Sparas har sa att en fardigmarkering gar att granska i efterhand: vilket kontrakt godkandes,
+  -- och nar var det uppmatt. Digesten ar inte reversibel och bar inga raa giftId.
+  kontrakt_digest  text CHECK (kontrakt_digest IS NULL OR kontrakt_digest ~ '^[0-9a-f]{64}$'),
+  kontrakt_matt_at text,
   startad_at   timestamptz NOT NULL DEFAULT now(),
   klar_at      timestamptz
 );
@@ -730,6 +735,8 @@ ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_name  text    NOT NULL
 ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_image text    NOT NULL DEFAULT '';
 ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS diamanter  integer NOT NULL DEFAULT 0;
 ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS ar_global  boolean;
+ALTER TABLE gavoseedning ADD COLUMN IF NOT EXISTS kontrakt_digest  text;
+ALTER TABLE gavoseedning ADD COLUMN IF NOT EXISTS kontrakt_matt_at text;
 CREATE INDEX IF NOT EXISTS gavoobservation_region_idx ON gavoobservation(region);
 
 -- gavokatalog skapades i #289 utan region, och #290:s kolumn ar aldrig utrullad. Skulle nagon anda

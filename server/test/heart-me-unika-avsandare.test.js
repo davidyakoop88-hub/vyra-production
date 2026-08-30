@@ -35,7 +35,7 @@ const kt = poster => {
   const unika = new Set();
   let utanId = 0;
   for (const p of poster) { const id = String((p && p.id) || ''); if (id) unika.add(id); else utanId += 1; }
-  return { poster: poster.length, unikaId: unika.size, utanId };
+  return { poster: poster.length, unikaId: unika.size, utanId, digest: Gavokatalog.digestAvPoster(poster) };
 };   // observerad region i riggen — aldrig gissad i produktion
 const test = require('node:test'), assert = require('node:assert/strict');
 const crypto = require('node:crypto');

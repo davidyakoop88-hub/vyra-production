@@ -22,6 +22,18 @@ const KONTRAKT = {
     poster: 783,
     unikaId: 779,
     utanId: 0,
+    // MEDLEMSKAPSBEVIS — SHA-256 over en sorterad multimangd av alla 783 normaliserade id.
+    //
+    // ANNU OMATT, och det ar med FLIT null i stallet for ett pahittat varde. Kontrolltalen bevisar
+    // bara ANTAL: en lista kan ha 783/779/0 och anda sakna ett id ur den observerade katalogen och
+    // bara ett annat i stallet. Utan digest kan SE darfor inte seedas alls — modulen avvisar ett
+    // kontrakt utan medlemskapsbevis.
+    //
+    // SA HAR MATER MAN DEN: hamta webcast/gift/list/ fran en INLOGGAD SE-session, plocka ut
+    // gifts[].id, normalisera med samma regel som servern (String, kapad till 160 tecken), sortera
+    // ALLA 783 inklusive dubbletter, sla ihop med radbrytning, SHA-256, hex. Samma varde ska falla
+    // ut ur Gavokatalog.digestAvPoster(gifts). Skriv in det har via granskad PR.
+    digest: null,
     matt_at: '2026-08-29',
     kalla: 'webcast/gift/list/ fran inloggad SE-session (appContext.region=SE)'
   }
@@ -34,7 +46,8 @@ function forRegion(region) {
   if (typeof region !== 'string' || !/^[A-Z]{2}$/.test(region)) return null;
   const k = KONTRAKT[region];
   if (!k) return null;
-  return { poster: k.poster, unikaId: k.unikaId, utanId: k.utanId, matt_at: k.matt_at, kalla: k.kalla };
+  return { poster: k.poster, unikaId: k.unikaId, utanId: k.utanId,
+           digest: k.digest, matt_at: k.matt_at, kalla: k.kalla };
 }
 
 const regioner = () => Object.keys(KONTRAKT).sort();

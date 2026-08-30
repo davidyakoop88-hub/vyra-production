@@ -52,7 +52,8 @@ const KT = (poster, unikaId, utanId = 0) => ({ poster, unikaId, utanId });
 const rigga = async (...gifts) => {
   const unika = new Set(gifts.map(g => String(g.id)));
   const ut = await K.noteraKatalog(pool, gifts,
-    { region: REGION, forvantat: { poster: gifts.length, unikaId: unika.size, utanId: 0 } });
+    { region: REGION, forvantat: { poster: gifts.length, unikaId: unika.size, utanId: 0,
+                                   digest: K.digestAvPoster(gifts) } });
   assert.equal(ut.ok, true, 'riggen kunde inte lägga in gåvorna');
   K.tomCache();
   return ut;
@@ -179,22 +180,28 @@ prov('utan CSRF-huvud nekas även en administratör', async () => {
 
 // ---- 2 · BULKVÄGEN -----------------------------------------------------------------------------
 
-prov('administratören seedar hela listan i ETT anrop', async () => {
-  // "Hela listan" betyder numera bokstavligen hela: rutten kräver att den möter det granskade
-  // SE-kontraktet. En liten lista är inte längre en giltig seedning, och det är hela poängen.
+prov('rutten kan INTE seeda förrän kontraktet har ett medlemskapsbevis', async () => {
+  // SE-kontraktets digest är ännu omätt (null). Kontrolltalen bevisar bara ANTAL, så ett kontrakt
+  // utan medlemskapsbevis får inte seeda — fail-closed hellre än att godkänna rätt siffror med
+  // fel innehåll. När digesten är mätt och införd via granskad PR öppnas den här vägen, och då
+  // ska provet vändas till att kräva 200.
   const se = require('../seedningskontrakt').for(REGION);
+  assert.equal(se.digest, null, 'digesten är mätt — vänd det här provet till att kräva 200');
+
   const gifts = [];
   for (let i = 0; i < se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
   for (let i = 0; i < se.poster - se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
 
   const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { region: REGION, gifts } });
-  assert.equal(r.status, 200);
-  assert.equal(r.body.skrivna, se.poster);
-  assert.equal(r.body.unikaId, se.unikaId, 'dubbletterna räknades som skilda id');
-  await rigga(post(G2, 'Heart Me'));
+  assert.equal(r.status, 400, 'ett kontrakt utan medlemskapsbevis fick seeda');
+  assert.equal(r.body.ok, false);
+  const avvisad = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-3%'");
+  assert.equal(avvisad.rows[0].n, 0, 'ett avvisat anrop hann ändå skriva');
 
-  const q = await pool.query(
-    "SELECT gift_name,kalla FROM gavokatalog WHERE gift_id=$1", [G2]);
+  // KONTROLLMÄTNING: modulvägen med ett riktigt medlemskapsbevis SKA skriva. Annars bevisar
+  // avslaget ovan bara att ingenting fungerar.
+  await rigga(post(G2, 'Heart Me'));
+  const q = await pool.query("SELECT gift_name,kalla FROM gavokatalog WHERE gift_id=$1", [G2]);
   assert.equal(q.rows[0].gift_name, 'Heart Me');
   assert.equal(q.rows[0].kalla, 'katalog');
 });
@@ -204,7 +211,7 @@ prov('en trasig post fäller inte hela bulken', async () => {
   // utanId: 0, så en lista med en post utan id kan per definition inte seedas via rutten — den
   // möter inte kontraktet, och ska inte göra det.
   const ut = await K.noteraKatalog(pool, [post(G1, 'Rose'), { name: 'utan id' }, post(G2, 'X')],
-    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 1 } });
+    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 1, digest: K.digestAvPoster([post(G1, 'Rose'), { name: 'utan id' }, post(G2, 'X')]) } });
   assert.equal(ut.ok, true, 'en lista vars kontrolltal ERKÄNNER den trasiga posten avvisades');
   assert.equal(ut.skrivna, 2);
   assert.equal(ut.hoppade, 1);
@@ -258,7 +265,7 @@ prov('svaret skiljer på ANTAL POSTER och ANTAL ID', async () => {
   // TikToks egen lista bär samma id flera gånger — uppmätt 2026-08-29: 783 poster, 779 distinkta
   // id. Att bara rapportera det ena hade fått fyra rader att se ut som om de försvann.
   const ut = await K.noteraKatalog(pool, [post(G1, 'Rose'), post(G1, 'Rose'), post(G2, 'Heart Me')],
-    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 0 } });
+    { region: REGION, forvantat: { poster: 3, unikaId: 2, utanId: 0, digest: K.digestAvPoster([post(G1, 'Rose'), post(G1, 'Rose'), post(G2, 'Heart Me')]) } });
   assert.equal(ut.ok, true);
   assert.equal(ut.skrivna, 3, 'antalet poster stämmer inte');
   assert.equal(ut.unikaId, 2, 'antalet distinkta id stämmer inte');
@@ -285,7 +292,7 @@ prov('fält utifrån saneras — inget går orört in i databasen', async () => 
   // Går via MODULEN: rutten kräver numera att listan möter hela SE-kontraktet, och saneringen är
   // det som provas här — inte kontraktet.
   await K.noteraKatalog(pool, [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }],
-    { region: REGION, forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: REGION, forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }]) } });
   const q = await pool.query(
     'SELECT gift_name,gift_image,diamanter FROM gavokatalog WHERE gift_id=$1', [G1]);
   assert.ok(q.rows[0].gift_name.length <= 160, 'namnet kapades inte');
@@ -387,20 +394,20 @@ prov('kontrakt · en region utan granskat kontrakt ger 400 och skriver inget', a
   assert.equal(q.rows[0].n, 0);
 });
 
-prov('kontrakt · rutten läser kontrolltalen ur kontraktet — bevisat med SE:s egna tal', async () => {
-  // En lista som möter SE-kontraktet exakt SKA gå igenom. Utan den här kontrollmätningen bevisar
-  // avslagen ovan bara att rutten är trasig.
+prov('kontrakt · rutten läser SE:s tal ur kontraktet, inte ur anropet', async () => {
+  // Att rutten HÄMTAR talen ur kontraktet syns på felmeddelandet: en lista på en post avvisas mot
+  // SE:s 783, inte mot sin egen längd. Den lyckade vägen kan inte provas här förrän digesten är
+  // mätt — den bevisas på modulnivå, där provet anger ett riktigt medlemskapsbevis.
   const Kontrakt = require('../seedningskontrakt');
   const se = Kontrakt.for(REGION);
-  const gifts = [];
-  for (let i = 0; i < se.unikaId; i++) gifts.push(post('httprov-' + (20000 + i), 'G' + i));
-  for (let i = 0; i < se.poster - se.unikaId; i++) gifts.push(post('httprov-' + (20000 + i), 'G' + i));
+  assert.equal(se.poster, 783);
+  assert.equal(se.unikaId, 779);
+  assert.equal(se.utanId, 0);
 
-  const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { region: REGION, gifts } });
-  assert.equal(r.status, 200, 'en lista som möter kontraktet avvisades');
-  assert.equal(r.body.ok, true);
-  assert.equal(r.body.status, 'klar');
-  assert.equal(r.body.forvantat.poster, 783, 'svaret visar inte vilket kontrakt som användes');
+  const r = await anrop('POST', '/api/admin/gavokatalog',
+    { som: 'admin', kropp: { region: REGION, gifts: [post(G1, 'Rose')] } });
+  assert.notEqual(r.status, 200, 'en enposterslista godkändes mot SE-kontraktet');
+  assert.equal(r.body.ok, false);
 });
 
 

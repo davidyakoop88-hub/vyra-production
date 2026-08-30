@@ -48,7 +48,7 @@ const kontrolltal = poster => {
     const id = String((p && (p.id ?? p.gift_id)) || '');
     if (id) unika.add(id); else utanId += 1;
   }
-  return { poster: poster.length, unikaId: unika.size, utanId };
+  return { poster: poster.length, unikaId: unika.size, utanId, digest: K.digestAvPoster(poster) };
 };
 
 const gava = (id, over = {}) => Object.assign({
@@ -583,7 +583,7 @@ prov('ett avbrott mitt i bulken lämnar INGEN delvis seedning', async () => {
   // utlösas, och bara `assert.rejects` avslöjade att provet slutat mäta något.
   await assert.rejects(
     () => K.noteraKatalog(pool, poster,
-      { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provFel: n => n === 2 }),
+      { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(poster) }, _provFel: n => n === 2 }),
     'bulken svalde felet i stället för att kasta');
 
   for (const id of [G1, G2, G3])
@@ -599,7 +599,7 @@ prov('en bulk markeras klar bara mot DEKLARERADE kontrolltal', async () => {
   // aldrig upptäcka att en trunkerad lista markerades klar.
   const ut = await K.noteraKatalog(pool,
     [katalogpost(G1, 'A'), katalogpost(G1, 'A'), katalogpost(G2, 'B')],
-    { region: 'SE', forvantat: { poster: 3, unikaId: 2, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 3, unikaId: 2, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'A'), katalogpost(G1, 'A'), katalogpost(G2, 'B')]) } });
 
   assert.equal(ut.skrivna, 3, 'antalet OBSERVERADE poster stämmer inte');
   assert.equal(ut.unikaId, 2, 'antalet UNIKA id stämmer inte');
@@ -768,9 +768,9 @@ prov('kontrolltal · en TIDIGARE komplett seedning överlever ett senare avvisat
 
 prov('regionala värden · namn, bild och diamanter lagras PER observation', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose', { diamond_count: 1 })],
-    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rose', { diamond_count: 1 })]) } });
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rosa', { diamond_count: 5 })],
-    { region: 'US', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'US', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rosa', { diamond_count: 5 })]) } });
 
   const obs = await K.observationer(pool, G1);
   const se = obs.find(o => o.region === 'SE'), us = obs.find(o => o.region === 'US');
@@ -783,13 +783,13 @@ prov('regionala värden · namn, bild och diamanter lagras PER observation', asy
 
 prov('regionala värden · is_global_gift sparas som den fakta den är', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose', { is_global_gift: false })],
-    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rose', { is_global_gift: false })]) } });
   const se = (await K.observationer(pool, G1)).find(o => o.region === 'SE');
   assert.equal(se.ar_global, false,
     'TikToks egen uppgift om att gåvan inte är global slängdes bort');
 
   await K.noteraKatalog(pool, [katalogpost(G2, 'Global', { is_global_gift: true })],
-    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G2, 'Global', { is_global_gift: true })]) } });
   assert.equal((await K.observationer(pool, G2))[0].ar_global, true);
 });
 
@@ -837,7 +837,7 @@ prov('atomiskt · en rad som inte landar rullar tillbaka HELA seedningen', async
   // `_provTappa` hoppar över skrivningen av post 2 utan att kasta — precis som en tyst förlust.
   // Förkontrollen ser fortfarande 3 mottagna poster och släpper igenom.
   const ut = await K.noteraKatalog(pool, poster, {
-    region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provTappa: n => n === 2
+    region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(poster) }, _provTappa: n => n === 2
   });
 
   assert.equal(ut.ok, false, 'en seedning med en tappad rad markerades som komplett');
@@ -851,7 +851,7 @@ prov('atomiskt · räkningen sker mot databasen, inte mot en lokal räknare', as
   // Kontrollmätning: utan tappade rader ska allt gå igenom och antalen stämma med DATABASEN.
   const poster = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
   const ut = await K.noteraKatalog(pool, poster,
-    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(poster) } });
   assert.equal(ut.ok, true);
 
   const rader = await pool.query(
@@ -868,11 +868,11 @@ prov('atomiskt · räkningen sker mot databasen, inte mot en lokal räknare', as
 
 prov('kandidatlistan visar REGIONENS namn och pris, inte den kanoniska radens', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose', { diamond_count: 1 })],
-    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rose', { diamond_count: 1 })]) } });
   // En senare US-seedning skriver den KANONISKA raden sist. Kandidatlistan för SE får inte visa
   // US-värdena.
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rosa', { diamond_count: 99 })],
-    { region: 'US', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'US', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rosa', { diamond_count: 99 })]) } });
   await K.verifiera(pool, REGEL, G1);
 
   const lista = await K.kandidater(pool, REGEL, { region: 'SE' });
@@ -919,11 +919,11 @@ prov('scopad räkning · gamla observationsrader räddar INTE en ofullständig n
 
 prov('scopad räkning · en annan REGIONS rader räknas aldrig med', async () => {
   const lista = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
-  await K.noteraKatalog(pool, lista, { region: 'US', forvantat: { poster: 3, unikaId: 3, utanId: 0 } });
+  await K.noteraKatalog(pool, lista, { region: 'US', forvantat: { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(lista) } });
 
   // Tre US-rader finns. En SE-seedning som tappar en rad får inte låna dem.
   const ut = await K.noteraKatalog(pool, lista,
-    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provTappa: n => n === 3 });
+    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(lista) }, _provTappa: n => n === 3 });
   assert.equal(ut.ok, false, 'US-rader räknades in i en SE-seedning');
   assert.equal(ut.faktisktSkrivna, 2);
   assert.equal((await K.seedningStatus(pool, 'SE')).klar, false);
@@ -937,7 +937,7 @@ prov('scopad räkning · en annan REGIONS rader räknas aldrig med', async () =>
 
 prov('kandidatvägen · saknad eller ogiltig region ger TOMT, aldrig kanoniska värden', async () => {
   await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')],
-    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0, digest: K.digestAvPoster([katalogpost(G1, 'Rose')]) } });
   await K.verifiera(pool, REGEL, G1);
 
   // KONTROLLMÄTNING FÖRST: med giltig region SKA listan innehålla något.

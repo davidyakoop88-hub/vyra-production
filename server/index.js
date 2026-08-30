@@ -409,6 +409,10 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(d&&Object.prototype.hasOwnProperty.call(d,'forvantat'))return send(res,400,{ok:false,error:'Kontrolltal far inte skickas i kroppen. De kommer fran det granskade seedningskontraktet i server/seedningskontrakt.js'});
     const kontrakt=Seedningskontrakt.for(d.region);
     if(!kontrakt)return send(res,400,{ok:false,error:'Ingen granskad kontrolltalsuppsattning for regionen. Lagg till den i server/seedningskontrakt.js via granskad PR.',regioner:Seedningskontrakt.regioner()});
+    // MEDLEMSKAPSBEVISET AR OBLIGATORISKT. Kontrolltalen bevisar bara ANTAL — en lista kan uppfylla
+    // 783/779/0 och anda sakna ett id ur den observerade katalogen och bara ett annat i stallet.
+    // Ett kontrakt utan digest kan darfor inte seeda alls. Fail-closed, inte "gott nog".
+    if(!kontrakt.digest)return send(res,400,{ok:false,error:'Det granskade kontraktet saknar medlemskapsbevis (digest). Mat det och skriv in det i server/seedningskontrakt.js via granskad PR.',region:d.region,matt_at:kontrakt.matt_at});
     const ut=await Gavokatalog.noteraKatalog(pool,d&&d.gifts,{region:d.region,forvantat:kontrakt});
     if(ut.ok)return send(res,200,{ok:true,...ut});
     if(ut.fel==='ogiltiga-kontrolltal')return send(res,400,{ok:false,error:'Det granskade kontraktet ar felformat',...ut});

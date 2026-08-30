@@ -278,3 +278,44 @@ kanoniska raden behålls som "senast sett någonstans" för uppslag som inte bry
 `is_global_gift` sparas som `gavoobservation.ar_global`. `NULL` betyder att uppgiften saknades.
 
 Sidofynd: **`name_en` finns inte** i svaret. En reserv som läste det fältet var död kod.
+
+
+## Kontrolltalen bevisar ANTAL — digesten bevisar MEDLEMSKAP
+
+Kontrolltalen `783/779/0` säger hur *många* poster listan har. De säger ingenting om *vilka*. En
+lista kan uppfylla alla tre talen och ändå sakna ett id ur den observerade katalogen och bära ett
+annat i stället — och den hade markerats `klar`.
+
+Det är särskilt relevant här: kontraktet är daterat **2026-08-29** medan seedningen hämtar ett
+**färskt** TikTok-svar. Antalen kan stämma medan innehållet har glidit.
+
+Därför bär kontraktet också ett **medlemskapsbevis**: SHA-256 över en deterministiskt sorterad
+**multimängd** av alla normaliserade id.
+
+- **Multimängd, inte mängd** — fyra id förekommer två gånger, och en ändrad dubblettfördelning ska
+  fällas. En vanlig mängd hade sett `{a,a,b}` och `{a,b,b}` som identiska.
+- **Sorterad** — TikTok garanterar ingen ordning, och ordningen betyder ingenting.
+- **Samma normalisering som skrivvägen** — annars beskriver digesten inte det som faktiskt skrivs.
+
+Digesten är inte reversibel, bär inga råa `giftId`, och loggas eller returneras aldrig. Den sparas
+på `gavoseedning.kontrakt_digest` tillsammans med kontraktets mätdatum, så att en färdigmarkering
+går att granska i efterhand.
+
+Jämförelsen sker **före** transaktionen: en avvikelse ger 422 och lämnar varken rader eller
+färdigmarkering.
+
+### SE:s digest är ännu OMÄTT
+
+`digest: null` i kontraktet, med flit. **Utan den kan SE inte seedas alls** — modulen och rutten
+avvisar ett kontrakt utan medlemskapsbevis. Det är fail-closed, inte ett förbiseende.
+
+Så här mäts den, från en **inloggad** SE-session:
+
+```js
+const ids = gifts.map(g => String(g.id).slice(0, 160)).filter(Boolean).sort();
+// SHA-256 över ids.join('
+'), hex
+```
+
+Samma värde ska falla ut ur `Gavokatalog.digestAvPoster(gifts)`. Skriv in det i
+`server/seedningskontrakt.js` via granskad PR — aldrig via ett anrop.

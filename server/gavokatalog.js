@@ -141,6 +141,33 @@ async function noteraFranEvent(pool, event) {
   return { noterad: true };
 }
 
+// MEDLEMSKAPSBEVIS. Kontrolltalen bevisar KARDINALITET — antal poster, antal unika, antal utan id.
+// De säger ingenting om VILKA id listan innehåller. En lista kan uppfylla 783/779/0 och ändå sakna
+// ett id ur den observerade katalogen och bära ett annat i stället.
+//
+// Digesten är SHA-256 över en deterministiskt sorterad MULTIMÄNGD av alla normaliserade id.
+//
+//   MULTIMÄNGD, inte mängd: fyra id förekommer två gånger i TikToks lista, och en ändrad
+//   dubblettfördelning ska fällas. En vanlig mängd hade sett {a,a,b} och {a,b,b} som identiska.
+//
+//   SORTERAD: TikTok garanterar ingen ordning, och ordningen betyder ingenting. En korrekt lista
+//   får inte fällas för att svaret kom i annan följd.
+//
+//   NORMALISERAD MED SAMMA `text()` SOM SKRIVVÄGEN. Två olika normaliseringar hade gett en digest
+//   som inte beskriver det som faktiskt skrivs.
+//
+// Digesten avslöjar inga råa giftId, är inte reversibel, och loggas eller returneras aldrig.
+const SEP_DIGEST = String.fromCharCode(10);
+function digestAvPoster(poster) {
+  const ids = [];
+  for (const p of poster || []) {
+    const id = text(p && (p.id ?? p.gift_id), 160);
+    if (id) ids.push(id);
+  }
+  ids.sort();
+  return crypto.createHash('sha256').update(ids.join(SEP_DIGEST), 'utf8').digest('hex');
+}
+
 // KONTROLLTALEN. Vad anroparen SÄGER att listan innehåller, uppmätt i preflighten.
 //
 // De får ALDRIG härledas ur listan som ska bevisas komplett — då bevisar de ingenting. `783` måste
@@ -154,7 +181,11 @@ function lasKontrolltal(f) {
   if (poster < 1 || unikaId < 1) return null;              // en tom seedning är ingen seedning
   if (unikaId > poster) return null;                       // fler unika än poster är omöjligt
   if (utanId > poster) return null;
-  return { poster, unikaId, utanId };
+  // DIGESTEN ÄR OBLIGATORISK. Ett kontrakt utan medlemskapsbevis kan bara intyga antal, och det
+  // var precis luckan: rätt siffror, fel innehåll. Fail-closed hellre än att seeda på halva bevis.
+  const digest = typeof f.digest === 'string' && /^[0-9a-f]{64}$/.test(f.digest) ? f.digest : null;
+  if (!digest) return null;
+  return { poster, unikaId, utanId, digest, matt_at: f.matt_at || null };
 }
 
 // Bulkinläggning från TikToks gåvolista, för EN observerad region.
@@ -193,12 +224,22 @@ async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null,
     return { ok: false, skrivna: 0, unikaId: mottaget.unikaId, region: reg,
              fel: 'kontrolltal-stammer-inte', mottaget, forvantat: kt };
 
+  // MEDLEMSKAPET, efter kardinaliteten. Här faller en lista som har rätt SIFFROR men fel INNEHÅLL.
+  // Jämförelsen sker före transaktionen, så en avvikelse lämnar varken rader eller markering.
+  // Digesterna jämförs, aldrig id:na — ingenting råt passerar den här raden.
+  const mottagenDigest = digestAvPoster(poster);
+  if (mottagenDigest !== kt.digest)
+    return { ok: false, skrivna: 0, unikaId: mottaget.unikaId, region: reg,
+             fel: 'digest-stammer-inte', mottaget, forvantat: { ...kt } };
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const seed = await client.query(
-      `INSERT INTO gavoseedning (region, status, forv_poster, forv_unika, forv_utan_id)
-       VALUES ($1,'pagaende',$2,$3,$4) RETURNING id`, [reg, kt.poster, kt.unikaId, kt.utanId]);
+      `INSERT INTO gavoseedning
+         (region, status, forv_poster, forv_unika, forv_utan_id, kontrakt_digest, kontrakt_matt_at)
+       VALUES ($1,'pagaende',$2,$3,$4,$5,$6) RETURNING id`,
+      [reg, kt.poster, kt.unikaId, kt.utanId, kt.digest, kt.matt_at]);
     const seedningId = seed.rows[0].id;
 
     let skrivna = 0, hoppade = 0, n = 0;
@@ -475,6 +516,6 @@ async function kandidater(pool, ruleKey, { region } = {}) {
 module.exports = {
   noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
   inaktivera, taBort, kandidater,
-  observationer, seedningStatus,
+  observationer, seedningStatus, digestAvPoster,
   kallnyckel, tomCache, giltigRegion, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS
 };
