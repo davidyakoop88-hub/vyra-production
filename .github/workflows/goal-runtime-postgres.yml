@@ -288,3 +288,11 @@ jobs:
       - name: Heart Me Goal — unika avsändare per sändning
         run: node --test test/heart-me-unika-avsandare.test.js
         working-directory: server
+
+      # TVÅFAKTOR ÖVER HTTP. mfa.js är provad sedan länge och har alltid varit korrekt — felet låg i
+      # RUTTERNA, som var helt obevisade: /mfa/confirm band en JS-array mot en jsonb-kolumn, vilket
+      # node-pg serialiserar till arraylitteral. Resultatet var 500 på en RÄTT kod ända sedan
+      # 8bb0cdf. Provet kräver riktig Postgres — en attrapp kan inte skilja {"a"} från ["a"].
+      - name: Tvåfaktor över HTTP — setup, confirm och återställningskoderna
+        run: node --test test/mfa-http.test.js
+        working-directory: server
