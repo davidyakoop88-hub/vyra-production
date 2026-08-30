@@ -109,7 +109,26 @@ union all select 'gavoobservation', count(*) from gavoobservation
 union all select 'gavoseedning',    count(*) from gavoseedning;
 ```
 
-Förväntat: `0 / 0 / 0`.
+Förväntat i STAGING: `0 / 0 / 0`.
+
+**I produktion gäller inte den siffran, och det är inte ett fel.** `gavokatalog` fylls också
+organiskt: etiketter lärs in ur gåvor som faktiskt dyker upp i riktiga sändningar. Mätt i
+produktionen 2026-08-30, före all seedning: `katalog=21`, `observation=0`, `seedning=0`,
+`regel=0`.
+
+⛔ **Töm inte katalogen för att nå noll.** Det raderar organiskt inlärda rader utan att göra
+seedningen mer korrekt. Tre mätta skäl till att befintliga rader är ofarliga:
+
+1. Katalogen upsertar — `ON CONFLICT (gift_id) DO UPDATE`. Befintliga rader uppdateras med de
+   officiellt uppmätta värdena i stället för att krocka.
+2. Kontrollräkningen som avgör `status='klar'` går mot **`gavoobservation`**, inte katalogen:
+   `SELECT count(*) FROM gavoobservation WHERE region=$1 AND seedning_id=$2`. Bara rader från
+   den här körningen räknas, så en icke-tom katalog kan aldrig förvränga antalet.
+3. Seedningen raderar ingenting. Enda `DELETE` i `server/gavokatalog.js` ligger i borttagningen
+   av en enskild godkänd regel — en annan rutt.
+
+Det som FAKTISKT måste vara noll före ett körprov är `gavoseedning`, så att ett `klar` från en
+tidigare körning inte läses som den här körningens facit.
 
 ### Plattformsadmin i stagings databas
 
