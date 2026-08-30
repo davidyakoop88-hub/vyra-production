@@ -883,6 +883,89 @@ prov('kandidatlistan visar REGIONENS namn och pris, inte den kanoniska radens', 
 });
 
 
+
+// ---- RÄKNINGEN MÅSTE VARA BUNDEN TILL EXAKT DENNA SEEDNING ------------------------------------
+//
+// Granskningens scenario: om databasräkningen bara filtrerade på region skulle ÄLDRE
+// observationsrader kunna få en ofullständig NY seedning att nå 779. Raderna finns ju redan.
+//
+// Därför är frågan bunden till `seedning_id` — ett uuid som skapas i just den här transaktionen.
+// En rad som inte rördes av den här seedningen bär ett annat id och kan inte räknas med.
+
+prov('scopad räkning · gamla observationsrader räddar INTE en ofullständig ny seedning', async () => {
+  const lista = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  const kt = { poster: 3, unikaId: 3, utanId: 0 };
+
+  // Första seedningen är komplett. Nu FINNS tre SE-rader i databasen.
+  const forst = await K.noteraKatalog(pool, lista, { region: 'SE', forvantat: kt });
+  assert.equal(forst.ok, true);
+  const fore = await pool.query("SELECT count(*)::int n FROM gavoobservation WHERE region='SE'");
+  assert.equal(fore.rows[0].n, 3, 'riggen la inte in de gamla raderna');
+
+  // Andra seedningen tappar en rad tyst. En oscopad räkning hade sett tre SE-rader — två nya plus
+  // den gamla som inte rördes — och markerat seedningen komplett.
+  const igen = await K.noteraKatalog(pool, lista,
+    { region: 'SE', forvantat: kt, _provTappa: n => n === 2 });
+
+  assert.equal(igen.ok, false, 'gamla rader fick en ofullständig seedning att se komplett ut');
+  assert.equal(igen.fel, 'skrivna-stammer-inte');
+  assert.equal(igen.faktisktSkrivna, 2, 'räkningen var inte bunden till den här seedningen');
+
+  // Den FÖRSTA seedningen står kvar — den var komplett och ska inte straffas.
+  const st = await K.seedningStatus(pool, 'SE');
+  assert.equal(st.klar, true, 'ett misslyckat andra försök ogiltigförklarade den första');
+  assert.equal(st.senaste.id, forst.seedningId, 'färdigmarkeringen pekar på fel seedning');
+});
+
+prov('scopad räkning · en annan REGIONS rader räknas aldrig med', async () => {
+  const lista = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
+  await K.noteraKatalog(pool, lista, { region: 'US', forvantat: { poster: 3, unikaId: 3, utanId: 0 } });
+
+  // Tre US-rader finns. En SE-seedning som tappar en rad får inte låna dem.
+  const ut = await K.noteraKatalog(pool, lista,
+    { region: 'SE', forvantat: { poster: 3, unikaId: 3, utanId: 0 }, _provTappa: n => n === 3 });
+  assert.equal(ut.ok, false, 'US-rader räknades in i en SE-seedning');
+  assert.equal(ut.faktisktSkrivna, 2);
+  assert.equal((await K.seedningStatus(pool, 'SE')).klar, false);
+  assert.equal((await K.seedningStatus(pool, 'US')).klar, true, 'US-seedningen skadades');
+});
+
+// ---- KANDIDATVÄGEN ÄR FAIL-CLOSED --------------------------------------------------------------
+//
+// Attributen skiljer sig mellan regioner. En kandidatlista utan giltig region får därför inte
+// falla tillbaka på den kanoniska raden — "senast sett någonstans" är en annan regions värden.
+
+prov('kandidatvägen · saknad eller ogiltig region ger TOMT, aldrig kanoniska värden', async () => {
+  await K.noteraKatalog(pool, [katalogpost(G1, 'Rose')],
+    { region: 'SE', forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
+  await K.verifiera(pool, REGEL, G1);
+
+  // KONTROLLMÄTNING FÖRST: med giltig region SKA listan innehålla något.
+  assert.equal((await K.kandidater(pool, REGEL, { region: 'SE' })).length, 1,
+    'kandidatlistan är tom även med giltig region — då bevisar tomheten nedan ingenting');
+
+  for (const region of [undefined, null, '', 'se', 'ZZ', 'SWE', 'S', 12, {}]) {
+    const lista = await K.kandidater(pool, REGEL, { region });
+    assert.deepEqual(lista, [], JSON.stringify(region) + ' gav en lista i stället för att fallera stängt');
+  }
+  assert.deepEqual(await K.kandidater(pool, REGEL), [], 'utan region alls gavs en lista');
+});
+
+test('vakt: kandidatfrågan läser aldrig attribut ur den kanoniska tabellen', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const kall = fs.readFileSync(path.join(__dirname, '..', 'gavokatalog.js'), 'utf8');
+  const fraga = kall.slice(kall.indexOf('async function kandidater'));
+  const kropp = fraga.slice(0, fraga.indexOf('\n}'));
+
+  // gavokatalog får inte alls förekomma i kandidatfrågan: attributen bor på observationen.
+  assert.ok(!/FROM gavokatalog|JOIN gavokatalog/.test(kropp),
+    'kandidatfrågan rör den kanoniska tabellen — då kan den visa en annan regions namn och pris');
+  assert.ok(/JOIN gavoobservation/.test(kropp), 'kandidatfrågan läser inte observationen');
+  assert.ok(/o\.gift_name/.test(kropp) && /o\.diamanter/.test(kropp),
+    'attributen hämtas inte ur observationen');
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------
 
 test('vakt: namnet används aldrig för att välja ett id', () => {

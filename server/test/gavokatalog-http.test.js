@@ -404,6 +404,27 @@ prov('kontrakt · rutten läser kontrolltalen ur kontraktet — bevisat med SE:s
 });
 
 
+
+prov('kandidatrutten · saknad eller ogiltig region ger 400 och ingen lista', async () => {
+  await rigga(post(G1, 'Rose'));
+  await anrop('POST', '/api/admin/gavoregel/heart_me/verifiera', { som: 'admin', kropp: { giftId: G1 } });
+
+  // KONTROLLMÄTNING: med giltig region SKA rutten svara med en lista.
+  const ok = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater?region=' + REGION, { som: 'admin' });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.region, REGION, 'svaret sa inte vilken region listan gäller');
+  assert.ok(ok.body.kandidater.length >= 1, 'listan var tom även med giltig region');
+
+  for (const q of ['', '?region=', '?region=se', '?region=ZZ', '?region=SWE', '?region=S']) {
+    const r = await anrop('GET', '/api/admin/gavoregel/heart_me/kandidater' + q, { som: 'admin' });
+    assert.equal(r.status, 400, JSON.stringify(q) + ' accepterades i stället för att fallera stängt');
+    assert.equal(r.body.ok, false);
+    assert.equal(r.body.kandidater, undefined,
+      JSON.stringify(q) + ' lämnade ändå ut en lista — fail-closed betyder ingen data alls');
+  }
+});
+
+
 // ---- ADMINSPÄRREN PÅ ÅTERKALLNING, RADERING OCH KANDIDATLISTAN ---------------------------------
 //
 // Facitlistan avgör vad som får trigga Gift Campaign, Gift Fireworks och Goals hos ALLA kunder.
