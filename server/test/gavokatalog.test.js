@@ -966,6 +966,128 @@ test('vakt: kandidatfrågan läser aldrig attribut ur den kanoniska tabellen', (
 });
 
 
+
+// ---- MEDLEMSKAP, INTE BARA ANTAL ---------------------------------------------------------------
+//
+// Kontrolltalen bevisar KARDINALITET. En lista kan ha 783 poster, 779 unika id och 0 utan id — och
+// ändå sakna ett id ur den observerade katalogen och bära ett annat i stället. Den uppfyller
+// 783/779/0 och markeras `klar`, trots att den inte är samma regionala snapshot som kontraktet
+// beskriver.
+//
+// Extra relevant eftersom kontraktet är daterat 2026-08-29 medan seedningen hämtar ett FÄRSKT
+// TikTok-svar. Antalen kan stämma medan innehållet har glidit.
+//
+// Därför ett icke-reversibelt kontrollvärde: SHA-256 över en deterministiskt sorterad MULTIMÄNGD
+// av alla normaliserade id. Multimängd — inte mängd — eftersom fyra id förekommer två gånger, och
+// en ändrad dubblettfördelning ska fällas. Digesten avslöjar inga råa giftId och behöver aldrig
+// loggas eller returneras.
+
+const idLista = (n, prefix = 'prov-2') => {
+  const ut = [];
+  for (let i = 0; i < n; i++) ut.push(katalogpost(prefix + (1000 + i), 'G' + i));
+  return ut;
+};
+
+prov('digest · ett utbytt id fälls trots att 783/779/0 stämmer', async () => {
+  const original = idLista(5);
+  const kt = { poster: 5, unikaId: 5, utanId: 0, digest: K.digestAvPoster(original) };
+
+  // Samma antal poster, samma antal unika, samma antal utan id — men EN annan gåva.
+  const bytt = idLista(5);
+  bytt[3] = katalogpost('prov-2999', 'Inkräktare');
+
+  const ut = await K.noteraKatalog(pool, bytt, { region: 'SE', forvantat: kt });
+  assert.equal(ut.ok, false, 'ett utbytt id passerade — kontrolltalen bevisar bara antal');
+  assert.equal(ut.fel, 'digest-stammer-inte');
+
+  // KONTROLLMÄTNING: originalet SKA passera, annars mäter provet bara att koden är trasig.
+  assert.equal((await K.noteraKatalog(pool, original, { region: 'SE', forvantat: kt })).ok, true,
+    'den korrekta listan avvisades också');
+});
+
+prov('digest · samma id-mängd i ANNAN ORDNING accepteras', async () => {
+  const original = idLista(5);
+  const kt = { poster: 5, unikaId: 5, utanId: 0, digest: K.digestAvPoster(original) };
+
+  const omkastad = original.slice().reverse();
+  assert.notDeepEqual(omkastad.map(p => p.id), original.map(p => p.id), 'riggen kastade inte om något');
+
+  const ut = await K.noteraKatalog(pool, omkastad, { region: 'SE', forvantat: kt });
+  assert.equal(ut.ok, true, 'ordningen på TikToks svar fick fälla en korrekt lista');
+  assert.equal(ut.status, 'klar');
+});
+
+prov('digest · ändrad DUBBLETTFÖRDELNING med samma totalsiffror fälls', async () => {
+  // Det är därför det är en MULTIMÄNGD och inte en mängd: 6 poster, 5 unika i båda fallen — men
+  // dubbletten sitter på olika id. En vanlig mängd hade sett dem som identiska.
+  const a = idLista(5); a.push(katalogpost('prov-21000', 'G0'));   // dubblett på det FÖRSTA id:t
+  const b = idLista(5); b.push(katalogpost('prov-21004', 'G4'));   // dubblett på det SISTA id:t
+
+  const kt = { poster: 6, unikaId: 5, utanId: 0, digest: K.digestAvPoster(a) };
+  assert.equal(a.length, b.length);
+  assert.equal(new Set(a.map(p => p.id)).size, new Set(b.map(p => p.id)).size);
+
+  const ut = await K.noteraKatalog(pool, b, { region: 'SE', forvantat: kt });
+  assert.equal(ut.ok, false, 'en annan dubblettfördelning passerade — digesten är en mängd, inte en multimängd');
+  assert.equal(ut.fel, 'digest-stammer-inte');
+
+  assert.equal((await K.noteraKatalog(pool, a, { region: 'SE', forvantat: kt })).ok, true,
+    'kontrollmätningen: rätt fördelning ska passera');
+});
+
+prov('digest · en avvikelse lämnar INGA rader och ingen färdigmarkering', async () => {
+  const original = idLista(5);
+  const kt = { poster: 5, unikaId: 5, utanId: 0, digest: K.digestAvPoster(original) };
+  const bytt = idLista(5); bytt[0] = katalogpost('prov-2999', 'Inkräktare');
+
+  await K.noteraKatalog(pool, bytt, { region: 'SE', forvantat: kt });
+
+  const rader = await pool.query("SELECT count(*)::int n FROM gavoobservation WHERE gift_id LIKE 'prov-2%'");
+  assert.equal(rader.rows[0].n, 0, 'en digestavvikelse lämnade observationsrader');
+  const kat = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'prov-2%'");
+  assert.equal(kat.rows[0].n, 0, 'en digestavvikelse lämnade katalograder');
+  assert.equal((await K.seedningStatus(pool, 'SE')).klar, false, 'en digestavvikelse markerades klar');
+});
+
+prov('digest · ett kontrakt UTAN digest kan inte seeda — fail-closed', async () => {
+  const original = idLista(5);
+  const ut = await K.noteraKatalog(pool, original,
+    { region: 'SE', forvantat: { poster: 5, unikaId: 5, utanId: 0 } });
+  assert.equal(ut.ok, false, 'ett kontrakt utan medlemskapsbevis fick seeda');
+  assert.equal(ut.fel, 'ogiltiga-kontrolltal');
+  assert.deepEqual(await K.observationer(pool, 'prov-21000'), []);
+});
+
+prov('digest · seedningen sparar kontraktets digest för efterhandsgranskning', async () => {
+  const original = idLista(5);
+  const d = K.digestAvPoster(original);
+  const ut = await K.noteraKatalog(pool, original,
+    { region: 'SE', forvantat: { poster: 5, unikaId: 5, utanId: 0, digest: d, matt_at: '2026-08-29' } });
+  assert.equal(ut.ok, true);
+
+  const q = await pool.query('SELECT kontrakt_digest, kontrakt_matt_at FROM gavoseedning WHERE id=$1',
+    [ut.seedningId]);
+  assert.equal(q.rows[0].kontrakt_digest, d, 'digesten sparades inte — då går färdigmarkeringen inte att granska');
+  assert.ok(q.rows[0].kontrakt_matt_at, 'kontraktets mätdatum sparades inte');
+});
+
+test('vakt: digesten är en multimängd över normaliserade id, och läcker aldrig', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const kall = fs.readFileSync(path.join(__dirname, '..', 'gavokatalog.js'), 'utf8');
+
+  // Samma normalisering som skrivvägen: text(...) med samma längdgräns.
+  const a = [{ id: 'b' }, { id: 'a' }, { id: 'b' }];
+  const b = [{ id: 'b' }, { id: 'b' }, { id: 'a' }];
+  const c = [{ id: 'a' }, { id: 'a' }, { id: 'b' }];
+  assert.equal(K.digestAvPoster(a), K.digestAvPoster(b), 'ordningen ska inte spela roll');
+  assert.notEqual(K.digestAvPoster(a), K.digestAvPoster(c), 'dubblettfördelningen MÅSTE spela roll');
+  assert.match(K.digestAvPoster(a), /^[0-9a-f]{64}$/);
+
+  // Digesten får aldrig loggas eller skickas ut som råa id.
+  assert.ok(!/console\.|logger\./.test(kall), 'modulen loggar');
+});
+
+
 // ---- KÄLLVAKTER (kräver ingen databas) ---------------------------------------------------------
 
 test('vakt: namnet används aldrig för att välja ett id', () => {
