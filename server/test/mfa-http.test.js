@@ -172,6 +172,39 @@ prov('setup lagrar en jsonb-ARRAY, inte ett objekt', async () => {
   assert.equal(rad.antal, 0);
 });
 
+// QR-KODEN OVER RUTTEN. mfa.test.js provar att modulen kodar ratt; det har provet stanger luckan
+// mellan modulen och RUTTEN — att `qrModuler` faktiskt matas med `uri` och inte med `secret`,
+// `email` eller nagot annat som ger en giltig QR som ingen autentiseringsapp forstar.
+const jsQR = require('jsqr');
+function qrTillBild(qr, skala = 4, tyst = 4) {
+  const n = qr.storlek, sid = (n + tyst * 2) * skala;
+  const d = new Uint8ClampedArray(sid * sid * 4).fill(255);
+  for (let y = 0; y < sid; y++) for (let x = 0; x < sid; x++) {
+    const r = Math.floor(y / skala) - tyst, c = Math.floor(x / skala) - tyst;
+    if (r >= 0 && c >= 0 && r < n && c < n && qr.moduler.charCodeAt(r * n + c) === 49) {
+      const i = (y * sid + x) * 4; d[i] = d[i + 1] = d[i + 2] = 0;
+    }
+  }
+  return { data: d, sid };
+}
+
+prov('setup levererar en QR-kod som avkodas till samma uri som svaret bär', async () => {
+  const vem = await session();
+  const r = await anrop('/api/auth/mfa/setup', {}, vem);
+  assert.equal(r.status, 200);
+  assert.ok(r.body.qr && r.body.qr.storlek, 'setup-svaret bar ingen QR-kod');
+  assert.equal(r.body.qr.moduler.length, r.body.qr.storlek * r.body.qr.storlek,
+    'moduldatan ar inte kvadratisk');
+
+  const b = qrTillBild(r.body.qr);
+  const avkodat = jsQR(b.data, b.sid, b.sid);
+  assert.ok(avkodat, 'QR-koden gick inte att avkoda alls');
+  // Det harda pastaendet: koden bar EXAKT den uri rutten sjalv returnerade.
+  assert.equal(avkodat.data, r.body.uri, 'QR-koden och `uri` i svaret ar inte samma strang');
+  assert.ok(avkodat.data.includes('secret=' + r.body.secret),
+    'QR-koden bar inte den hemlighet som just utfardades');
+});
+
 // ---- 2 · CONFIRM -----------------------------------------------------------------------------
 
 prov('confirm med RÄTT kod ger 200 — inte 500', async () => {

@@ -11,7 +11,49 @@
 function verifieringStangd(){try{return sessionStorage.getItem(VERIFIERING_STANGD)==='1'}catch(_){return false}}
 function verificationBanner(detail){document.querySelector('.verification-banner')?.remove();if(detail?.user?.emailVerified!==false)return;if(verifieringStangd())return;const el=document.createElement('div');el.className='verification-banner';el.setAttribute('data-verifieringsbanner','');el.setAttribute('role','status');el.innerHTML='<span><b>Kolla din e-post.</b> Vi skickade en verifieringslänk till <em></em>. Klicka på den när du vill aktivera Premium eller ladda ner VYRA Desktop — allt annat fungerar redan.</span><button>Skicka igen</button><button data-stang aria-label="Stäng påminnelsen">×</button>';el.querySelector('em').textContent=detail?.user?.email||'din adress';el.querySelector('[data-stang]').onclick=()=>{try{sessionStorage.setItem(VERIFIERING_STANGD,'1')}catch(_){}el.remove()};el.querySelector('button').onclick=async()=>{const button=el.querySelector('button');button.disabled=true;try{await root.VyraAuth.api('/api/auth/email/send-verification',{method:'POST',body:'{}'});button.textContent='Mejlet är skickat'}catch(err){button.disabled=false;root.toast?.(err.message)}};document.body.prepend(el)}
   function showCodes(codes){const el=modal('Spara dina återställningskoder',`<p>Varje kod kan användas en gång. Förvara dem utanför VYRA.</p><pre class="recovery-codes">${codes.join('\n')}</pre><button class="primary">Jag har sparat koderna</button>`);el.querySelector('button').onclick=()=>el.remove()}
-  async function setupMfa(){try{const start=await root.VyraAuth.api('/api/auth/mfa/setup',{method:'POST',body:'{}'}),el=modal('Aktivera tvåstegsverifiering',`<p>Lägg till kontot i Google Authenticator, Microsoft Authenticator, 1Password eller liknande.</p><a class="open-authenticator" href="${start.uri}">Öppna autentiseringsappen</a><label>Hemlig nyckel<input readonly value="${start.secret}"></label><button class="secondary copy-secret" type="button">Kopiera nyckeln</button><form><label>Sexsiffrig kod<input inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label><p class="security-error" role="alert"></p><button class="primary">Aktivera MFA</button></form>`);el.querySelector('.copy-secret').onclick=async()=>{await navigator.clipboard.writeText(start.secret);root.toast?.('Nyckeln kopierad')};el.querySelector('form').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('.primary');button.disabled=true;try{const out=await root.VyraAuth.api('/api/auth/mfa/confirm',{method:'POST',body:JSON.stringify({code:e.currentTarget.querySelector('input').value})});el.remove();const detail=root.VyraAuth.lastDetail();if(detail?.user)detail.user.mfaEnabled=true;showCodes(out.recoveryCodes)}catch(err){el.querySelector('.security-error').textContent=err.message;button.disabled=false}}}catch(err){root.toast?.(err.message)}}
+  // RITAR QR-KODEN UR SERVERNS MODULDATA. Servern skickar radata ('0'/'1' radvis plus storlek),
+  // aldrig markup — sa ingen serverproducerad HTML nar DOM:en.
+  //
+  // TVA SAKER AVGOR OM KODEN GAR ATT SKANNA, och bada ar latta att missa:
+  //   1. TYST ZON. Standarden kraver fyra moduler marginal. Utan den hittar manga lasare inte
+  //      hornmarkorerna alls.
+  //   2. EXPLICIT VIT BAKGRUND. Rutan ar mork. En genomskinlig canvas ger morkt pa morkt och
+  //      koden blir oläsbar — den SYNS men gar inte att lasa, vilket ar varre an att den saknas.
+  //
+  // Canvasen ritas i modulupplosning (1 pixel per modul) och skalas upp med CSS. Med
+  // `image-rendering: pixelated` blir kanterna knivskarpa i stallet for suddiga, vilket lasare
+  // klarar battre an interpolerade kanter.
+  function ritaQrKod(canvas, qr) {
+    if (!canvas) return false;
+    if (!qr || !qr.storlek || typeof qr.moduler !== 'string' ||
+        qr.moduler.length !== qr.storlek * qr.storlek) { canvas.remove(); return false }
+    const TYST = 4, n = qr.storlek, sid = n + TYST * 2;
+    canvas.width = sid; canvas.height = sid;
+    const g = canvas.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, sid, sid);
+    g.fillStyle = '#000000';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+      if (qr.moduler.charCodeAt(r * n + c) === 49) g.fillRect(c + TYST, r + TYST, 1, 1);
+    return true;
+  }
+
+  async function setupMfa(){try{const start=await root.VyraAuth.api('/api/auth/mfa/setup',{method:'POST',body:'{}'}),el=modal('Aktivera tvåstegsverifiering',`<p>Skanna QR-koden med Google Authenticator, Microsoft Authenticator, 1Password eller liknande.</p><canvas class="mfa-qr" role="img" aria-label="QR-kod för tvåstegsverifiering"></canvas><a class="open-authenticator" href="${start.uri}">Öppna autentiseringsappen</a><label>Hemlig nyckel<input readonly value="${start.secret}"></label><button class="secondary copy-secret" type="button">Kopiera nyckeln</button><form><label>Sexsiffrig kod<input class="mfa-kod" inputmode="numeric" autocomplete="one-time-code" required></label><p class="security-error" role="alert"></p><button class="primary">Aktivera MFA</button></form>`);ritaQrKod(el.querySelector('.mfa-qr'),start.qr);
+    // MELLANSLAG FAR INTE HUGGA AV KODEN.
+    //
+    // Faltet hade `maxlength="6"`. Google Authenticator visar koden som "318 516" — klistrar man
+    // in den kapar WEBBLASAREN till sex TECKEN, alltsa "318 51", innan nagon handlare ser vardet.
+    // Servern strippar visserligen blanksteg (`verify()` gor replace(/\s/g,'')), men da aterstar
+    // fem siffror och `/^\d{6}$/` faller. Anvandaren far "Fel kod" pa en HELT RATT kod.
+    //
+    // Darfor bort med maxlength — inte hojd, utan bort — och stadning i JS i stallet. Ordningen ar
+    // hela poangen: kapning i webblasaren sker fore `input`-handelsen och gar inte att angra.
+    //
+    // Bara siffror behalls. Det ar sakert HAR eftersom setup-bekraftelsen enbart tar TOTP; de
+    // andra kodfalten i filen tar aven aterstallningskoder (bokstaver och bindestreck) och ska
+    // darfor INTE stadas pa samma satt. De har inget maxlength och behover ingen fix.
+    const kodfalt=el.querySelector('.mfa-kod');
+    kodfalt.addEventListener('input',()=>{const rent=kodfalt.value.replace(/\D/g,'').slice(0,6);if(rent!==kodfalt.value)kodfalt.value=rent});
+    el.querySelector('.copy-secret').onclick=async()=>{await navigator.clipboard.writeText(start.secret);root.toast?.('Nyckeln kopierad')};el.querySelector('form').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('.primary');button.disabled=true;try{const out=await root.VyraAuth.api('/api/auth/mfa/confirm',{method:'POST',body:JSON.stringify({code:e.currentTarget.querySelector('input').value.replace(/\D/g,'').slice(0,6)})});el.remove();const detail=root.VyraAuth.lastDetail();if(detail?.user)detail.user.mfaEnabled=true;showCodes(out.recoveryCodes)}catch(err){el.querySelector('.security-error').textContent=err.message;button.disabled=false}}}catch(err){root.toast?.(err.message)}}
   async function disableMfa(){const el=modal('Stäng av tvåstegsverifiering','<p>Bekräfta med lösenord och säkerhetskod.</p><form><label>Lösenord<input type="password" autocomplete="current-password" required></label><label>Säkerhetskod<input autocomplete="one-time-code" required></label><p class="security-error" role="alert"></p><button class="primary">Stäng av MFA</button></form>');el.querySelector('form').onsubmit=async e=>{e.preventDefault();const fields=e.currentTarget.querySelectorAll('input'),button=e.currentTarget.querySelector('button');button.disabled=true;try{await root.VyraAuth.api('/api/auth/mfa/disable',{method:'POST',body:JSON.stringify({password:fields[0].value,code:fields[1].value})});el.remove();const detail=root.VyraAuth.lastDetail();if(detail?.user)detail.user.mfaEnabled=false;root.toast?.('Tvåstegsverifiering avstängd')}catch(err){el.querySelector('.security-error').textContent=err.message;button.disabled=false}}}
   async function regenerateCodes(){const el=modal('Skapa nya återställningskoder','<p>Dina gamla koder slutar fungera direkt.</p><form><label>Lösenord<input type="password" autocomplete="current-password" required></label><p class="security-error" role="alert"></p><button class="primary">Skapa nya koder</button></form>');el.querySelector('form').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('button');button.disabled=true;try{const out=await root.VyraAuth.api('/api/auth/mfa/recovery-codes',{method:'POST',body:JSON.stringify({password:e.currentTarget.querySelector('input').value})});el.remove();showCodes(out.recoveryCodes)}catch(err){el.querySelector('.security-error').textContent=err.message;button.disabled=false}}}
   function addMfaSettings(){const page=document.querySelector('.settings-page');if(!page||page.querySelector('.mfa-settings'))return;const enabled=!!root.VyraAuth.lastDetail()?.user?.mfaEnabled,box=document.createElement('section');box.className='mfa-settings';box.innerHTML=`<div><b>Tvåstegsverifiering</b><small>${enabled?'Aktiv – kontot kräver en säkerhetskod vid inloggning.':'Skydda kontot med en autentiseringsapp.'}</small></div><span class="mfa-actions">${enabled?'<button class="secondary codes">Nya reservkoder</button>':''}<button class="${enabled?'secondary disable':'primary enable'}">${enabled?'Stäng av':'Aktivera'}</button></span>`;if(enabled){box.querySelector('.codes').onclick=regenerateCodes;box.querySelector('.disable').onclick=disableMfa}else box.querySelector('.enable').onclick=setupMfa;page.append(box)}

@@ -6,3 +6,18 @@
 .security-events{display:grid;gap:14px;margin-top:16px;padding:18px;border:1px solid #432451;border-radius:14px;background:#0d0612}.security-events header{display:grid;gap:4px}.security-events small{color:#a996b3}.security-events article{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #2d1837}.security-events article i{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#163526;color:#73e6a5;font-style:normal;font-weight:900}.security-events article.warning i{background:#3a1722;color:#ff8aa5}.security-events article span{display:grid;gap:3px;flex:1}.security-events time{color:#9f8daa;font-size:12px}
 .privacy-settings{display:grid;gap:15px;margin-top:16px;padding:18px;border:1px solid #432451;border-radius:14px;background:#0d0612}.privacy-settings header div{display:grid;gap:4px}.privacy-settings small{color:#a996b3}.privacy-actions{display:flex;gap:9px}.privacy-actions a,.privacy-actions button{padding:10px 14px;border:0;border-radius:9px;background:#2a1633;color:#eadfee;text-decoration:none;font:750 13px inherit;cursor:pointer}.privacy-actions .delete-account{color:#ff9cb2}.privacy-actions .cancel-delete{background:#21422f;color:#9bf0b8}.privacy-settings nav{display:flex;gap:16px}.privacy-settings nav a{color:#c766ea;font-size:12px}.security-modal .danger{background:#b72850;color:#fff}.delete-confirm{display:flex!important;grid-template-columns:18px 1fr!important;align-items:start}.delete-confirm input{width:auto!important;margin-top:3px}
 @media(max-width:600px){.verification-banner{gap:10px;font-size:11px}.mfa-settings{align-items:stretch;flex-direction:column}}
+
+/* QR-KODEN. Ritas i modulupplosning (en pixel per modul) och skalas upp har.
+   `pixelated` ar inte kosmetik: interpolerade kanter suddar ut modulgranserna och gor koden
+   svarare att lasa. Vit bakgrund satts aven i canvasen sjalv — den har regeln racker inte, for
+   canvasens egna pixlar ar genomskinliga tills nagon fyller dem. */
+.security-modal .mfa-qr {
+  display: block;
+  width: 208px;
+  height: 208px;
+  margin: 4px auto 14px;
+  background: #fff;
+  border-radius: 10px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
