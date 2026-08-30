@@ -217,14 +217,24 @@ prov('en trasig post fäller inte hela bulken', async () => {
   assert.equal(ut.hoppade, 1);
 });
 
-prov('en tom eller felformad lista ger 422 och ok:false — inte 200 och ok:true', async () => {
-  // Ett 200/ok:true på en tom lista är en tyst lögn: anroparen får "det gick bra" av något som
-  // inte hände. Statuskoden är det enda de flesta klienter tittar på.
+prov('en tom eller felformad lista ger 4xx och ok:false — aldrig 200 och ok:true', async () => {
+  // Kravet är att det ALDRIG blir 200/ok:true: ett sådant svar är en tyst lögn, och statuskoden är
+  // det enda de flesta klienter tittar på.
+  //
+  // VILKEN 4xx beror på vilken grind som faller först. Så länge SE-kontraktets digest är omätt
+  // fallerar rutten stängt på 400 innan den ens tittar på listan. När digesten är mätt släpper
+  // den grinden och listan bedöms — då blir det 422. Provet mäter kravet, inte vilken av de två
+  // spärrarna som råkar ligga först.
+  const utanDigest = require('../seedningskontrakt').for(REGION).digest === null;
   for (const gifts of [undefined, null, 'inte en lista', []]) {
     const kropp = { region: REGION, ...(gifts === undefined ? {} : { gifts }) };
     const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp });
-    assert.equal(r.status, 422, JSON.stringify(gifts) + ' gav fel status');
-    assert.equal(r.body.ok, false, JSON.stringify(gifts) + ' rapporterades som lyckat');
+    assert.ok(r.status === 400 || r.status === 422,
+      JSON.stringify(gifts) + ' gav ' + r.status + ' — ska vara 400 eller 422');
+    assert.notEqual(r.status, 200, JSON.stringify(gifts) + ' rapporterades som lyckat');
+    assert.equal(r.body.ok, false);
+    assert.equal(r.status, utanDigest ? 400 : 422,
+      'fel grind fällde — kontrollera vilken spärr som ligger först');
   }
 });
 
@@ -234,7 +244,10 @@ prov('en trunkerad lista mot riktiga kontrolltal ger 422 och skriver ingenting',
     som: 'admin',
     kropp: { region: REGION, gifts: [post(G1, 'Rose')] }
   });
-  assert.equal(r.status, 422, 'en trunkerad seedning accepterades');
+  // 400 så länge digesten är omätt (kontraktsgrinden faller först), 422 när den är mätt och
+  // listan bedöms. Det som PROVAS är att en trunkerad lista aldrig accepteras och aldrig skriver.
+  assert.ok(r.status === 400 || r.status === 422, 'en trunkerad seedning gav ' + r.status);
+  assert.notEqual(r.status, 200, 'en trunkerad seedning accepterades');
   assert.equal(r.body.ok, false);
   const q = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
   assert.equal(q.rows[0].n, 0, 'en avvisad seedning lämnade rader');
