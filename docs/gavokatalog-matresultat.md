@@ -148,15 +148,28 @@ Cookie: vyra_session=<plattformsadministratörens session>
 x-vyra-csrf: <token>
 {
   "region": "SE",
-  "forvantat": { "poster": 783, "unikaId": 779, "utanId": 0 },
   "gifts": [ ... ]
 }
 ```
 
-**`forvantat` kommer från preflighten, aldrig från listan.** Talen mäts genom att läsa
-`webcast/gift/list/` och räkna — och skickas sedan in som ett påstående som seedningen måste möta.
-Härleds de ur samma lista de ska bevisa komplett bevisar de ingenting: en trunkerad lista med 1 av
-783 poster skrivs helt korrekt och skulle markeras `klar`.
+⛔ **Kroppen bär BARA `region` och `gifts`.** Skickar du med `forvantat` avvisas anropet med
+`400 · "Kontrolltal får inte skickas i kroppen."` Så var det inte förr — PR #290 flyttade
+kontrolltalen ut ur anropet, och det här dokumentet visade den gamla formen till 2026-08-30.
+
+Skälet är att ett kontrolltal som reser i samma payload som listan det ska kontrollera inte
+kontrollerar någonting. Härleds talen ur samma lista de ska bevisa komplett bevisar de ingenting:
+en trunkerad lista med 1 av 783 poster skrivs helt korrekt och skulle markeras `klar`. Därför
+hämtar servern dem ur det granskade `server/seedningskontrakt.js`:
+
+```js
+SE: { poster: 783, unikaId: 779, utanId: 0,
+      digest: '7f5b53a1…', matt_at: '2026-08-30' }
+```
+
+Kardinalitet räcker inte heller. `783/779/0` bevisar hur MÅNGA poster listan har, aldrig VILKA —
+en lista med 783 helt andra id:n möter alla tre talen. Därför bär kontraktet även en SHA-256 över
+den sorterade multimängden av normaliserade id:n, och den jämförs före `BEGIN`. Multimängd, inte
+mängd: fyra id förekommer två gånger var.
 
 | Utfall | Svar |
 |---|---|
