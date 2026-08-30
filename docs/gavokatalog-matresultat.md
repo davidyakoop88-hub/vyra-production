@@ -146,10 +146,84 @@ Från en **inloggad** TikTok-flik, hämta `webcast/gift/list/` och posta listan 
 POST /api/admin/gavokatalog
 Cookie: vyra_session=<plattformsadministratörens session>
 x-vyra-csrf: <token>
-{ "gifts": [ ... ] }
+{
+  "region": "SE",
+  "forvantat": { "poster": 783, "unikaId": 779, "utanId": 0 },
+  "gifts": [ ... ]
+}
 ```
 
+**`forvantat` kommer från preflighten, aldrig från listan.** Talen mäts genom att läsa
+`webcast/gift/list/` och räkna — och skickas sedan in som ett påstående som seedningen måste möta.
+Härleds de ur samma lista de ska bevisa komplett bevisar de ingenting: en trunkerad lista med 1 av
+783 poster skrivs helt korrekt och skulle markeras `klar`.
+
+| Utfall | Svar |
+|---|---|
+| Region eller kontrolltal ogiltiga | **400**, `ok:false` |
+| Listan tom, felformad, eller stämmer inte med kontrolltalen | **422**, `ok:false` |
+| Komplett seedning | **200**, `ok:true`, `status: "klar"` |
+
+En avvikelse rullar tillbaka hela transaktionen: ingen katalograd, ingen observation, ingen
+färdigmarkering. En avvisad seedning ska inte gå att förväxla med en delvis genomförd.
+
 Kräver `is_platform_admin`. Kroppen tas emot upp till 8 MB (783 gåvor är cirka 0,4 MB).
+
+**`region` är obligatorisk och gissas aldrig.** Den måste vara en verkligt tilldelad ISO 3166-1
+alpha-2-kod i versaler — `^[A-Z]{2}$` räcker inte, det mönstret släpper igenom `ZZ`, `XX` och
+`QM`–`QZ`, som är användartilldelade och betyder "ingen sa något". Utan giltig kod svarar rutten
+400 och skriver ingenting.
+
+## Datamodellen: kanonisk gåva, regional observation
+
+Granskningen av #290 gav no-go, och hade rätt: regionen låg först som en kolumn på `gavokatalog`,
+vars primärnyckel är `gift_id` ensam. `ON CONFLICT` skrev därför över fältet, och **en senare
+US-seedning raderade SE-observationen**. Tre tabeller i stället:
+
+| Tabell | Vad den svarar på |
+|---|---|
+| `gavokatalog` | Vad gåvan **är** — namn, bild, diamanter. En rad per `gift_id`. |
+| `gavoobservation` | **Var och när** den setts, med regionens **egna** namn, bild och diamanter. PK `(gift_id, region)`. |
+| `gavoseedning` | Om en region är **verkligt färdigseedad**, med antal och tidpunkt. |
+
+`forsta_sedd` på observationen betyder därför "först sedd i **den här** regionen", inte "först sedd
+någonstans". Ett gåvoevent bär ingen region alls och skriver därför **aldrig** i
+`gavoobservation` — bara i den kanoniska tabellen.
+
+## Bulken är atomisk
+
+Hela seedningen kör i **en transaktion**, och färdigmarkeringen skrivs i samma transaktion. Utan
+det hade ett databasfel vid post 400 av 783 lämnat 399 rader som ser exakt ut som en komplett
+seedning — tyst, trovärdigt och omöjligt att upptäcka i efterhand.
+
+`GET /api/admin/gavokatalog/status` svarar därför inte bara med radantal utan med
+`seedningar: [{ region, klar, antal_poster, antal_unika, klar_at }]`. Frågan "är SE färdigseedad?"
+besvaras av markeringen, inte av att någon räknar rader och gissar.
+
+## Vad mätningen 2026-08-29 visade om regionen
+
+`webcast/gift/list/` bär **inget regionfält alls**. Svarets `data` har tjugo nycklar — `gifts`,
+`gift_configs`, `pages`, `tags` och så vidare — men ingen `region`, ingen `country`, ingen
+`locale`, ingen `currency`. Regionen finns alltså inte i katalogen och kan inte läsas ur den.
+
+Den kommer i stället från **kontexten som gjorde observationen**: sidans egen
+`__UNIVERSAL_DATA_FOR_REHYDRATION__` → `webapp.app-context.region`. Uppmätt `SE`, språk `sv-SE`.
+
+Det är därför en katalograd **inte är en global sanning utan en OBSERVATION**: den här gåvan sågs i
+den här regionen, vid den här tidpunkten, av den här källan. Gåvo-id:t i sig är detsamma överallt —
+det är mätt — men listan man får se är en vy per konto och rum.
+
+Ett gåvoevent bär ingen region över huvud taget. Händelsevägen skriver därför aldrig fältet och
+raderar aldrig en seedad rads proveniens; tomt betyder **okänd**, aldrig gissad.
+
+## 783 poster blir 779 rader
+
+TikToks egen lista bär samma id flera gånger: **783 poster, 779 distinkta id** — fyra id
+förekommer två gånger. Svaret skiljer därför på `skrivna` (poster) och `unikaId` (rader), så att
+fyra rader inte ser ut att ha försvunnit.
+
+Samma mätning: **0 poster saknar id**, och **47 namn är dubbletter**. Namnet används aldrig för att
+välja ett id — ett vaktprov faller om det någonsin görs.
 
 ## 2. Verifiera Heart Me
 
@@ -185,3 +259,69 @@ Heart Me inte upptäcks av sig själv — den måste verifieras för hand.
 
 **Att koppla in den är ett produktbeslut, inte en kodändring.** Vägen in är ett anrop i
 ingest-kedjan; tröskeln (`KRAV_BEKRAFTELSER = 3`) och hela maskineriet finns redan.
+
+
+## Är namn, bild och diamanter globala? Nej — mätt
+
+`webcast/gift/list/` bär ett fält `is_global_gift` på varje gåva. Uppmätt 2026-08-29 i SE:
+
+| `is_global_gift` | Antal |
+|---|---|
+| `true` | 517 |
+| **`false`** | **266** |
+| saknas | 0 |
+
+**TikTok säger alltså själv att en tredjedel av katalogen inte är global.** Namn, bild och diamanter
+är därmed inte bevisat globala, och lagras därför också på observationen — per region. Den
+kanoniska raden behålls som "senast sett någonstans" för uppslag som inte bryr sig om region.
+
+`is_global_gift` sparas som `gavoobservation.ar_global`. `NULL` betyder att uppgiften saknades.
+
+Sidofynd: **`name_en` finns inte** i svaret. En reserv som läste det fältet var död kod.
+
+
+## Kontrolltalen bevisar ANTAL — digesten bevisar MEDLEMSKAP
+
+Kontrolltalen `783/779/0` säger hur *många* poster listan har. De säger ingenting om *vilka*. En
+lista kan uppfylla alla tre talen och ändå sakna ett id ur den observerade katalogen och bära ett
+annat i stället — och den hade markerats `klar`.
+
+Det är särskilt relevant här: kontraktet är daterat **2026-08-29** medan seedningen hämtar ett
+**färskt** TikTok-svar. Antalen kan stämma medan innehållet har glidit.
+
+Därför bär kontraktet också ett **medlemskapsbevis**: SHA-256 över en deterministiskt sorterad
+**multimängd** av alla normaliserade id.
+
+- **Multimängd, inte mängd** — fyra id förekommer två gånger, och en ändrad dubblettfördelning ska
+  fällas. En vanlig mängd hade sett `{a,a,b}` och `{a,b,b}` som identiska.
+- **Sorterad** — TikTok garanterar ingen ordning, och ordningen betyder ingenting.
+- **Samma normalisering som skrivvägen** — annars beskriver digesten inte det som faktiskt skrivs.
+
+Digesten är inte reversibel, bär inga råa `giftId`, och loggas eller returneras aldrig. Den sparas
+på `gavoseedning.kontrakt_digest` tillsammans med kontraktets mätdatum, så att en färdigmarkering
+går att granska i efterhand.
+
+Jämförelsen sker **före** transaktionen: en avvikelse ger 422 och lämnar varken rader eller
+färdigmarkering.
+
+### SE:s digest — uppmätt 2026-08-30
+
+Mätt från en inloggad SE-session: **783 poster, 779 unika id, 0 utan id**, `appContext.region = SE`
+— samma siffror som kontrolltalen. Digesten står i `server/seedningskontrakt.js`.
+
+**Korskontrollerad samma dag:** webbläsarens uträkning och serverns `Gavokatalog.digestAvPoster`
+gav samma värde för samma lista. Utan den kontrollen hade den riktiga seedningen kunnat falla på
+ett medlemskapsbevis som var korrekt uträknat på fel sätt.
+
+Kontrollmätning: en enda ändrad post ger ett helt annat värde.
+
+Så här mäts den, från en **inloggad** SE-session:
+
+```js
+const ids = gifts.map(g => String(g.id).slice(0, 160)).filter(Boolean).sort();
+// SHA-256 över ids.join('
+'), hex
+```
+
+Samma värde ska falla ut ur `Gavokatalog.digestAvPoster(gifts)`. Skriv in det i
+`server/seedningskontrakt.js` via granskad PR — aldrig via ett anrop.

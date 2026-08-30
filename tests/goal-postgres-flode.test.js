@@ -216,3 +216,94 @@ test('varje prov som raderar ur gavoregel tömmer också cachen', () => {
   assert.deepEqual(brister, [],
     'ett prov läser ett cachat svar för rader som inte längre finns');
 });
+
+// ---- ETT ANROP SOM AVVISAS SKRIVER INGET, OCH BLIR ÄNDÅ GRÖNT ---------------------------------
+//
+// `noteraKatalog` kräver en observerad region och returnerar `{ skrivna: 0, fel: 'okand-region' }`
+// utan den. Ett prov som bara läser tillbaka raden EFTERÅT går då grönt av fel skäl: raden är
+// oförändrad, vilket är precis vad de flesta av de proven påstår.
+//
+// Det hände på riktigt 2026-08-29. En automatisk ändring skulle lägga region på alla anrop, men
+// det reguljära uttrycket stannade på en nästlad hakparentes (`image: { url_list: [''] }`) och
+// hoppade över ett anrop. CI fångade det INTE — provet var grönt och mätte ingenting.
+//
+// Vakten kräver därför att varje anrop till noteraKatalog i provfilerna bär en region.
+test('varje noteraKatalog-anrop i proven anger en observerad region', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const rader = fs.readFileSync(path.join(dir, fil), 'utf8').split('\n');
+      rader.forEach((rad, i) => {
+        // KOMMENTARER AR INTE KOD. Vakten fallde en gang pa en kommentar som NAMNDE
+        // noteraKatalog() - en vakt som laser prosa mater fel sak.
+        const kod = rad.trim();
+        if (kod.indexOf('//') === 0 || kod.indexOf('*') === 0) return;
+        if (!/noteraKatalog\s*\(/.test(rad)) return;
+        // Anropen är ofta flerradiga — regionen kan ligga på någon av de följande raderna.
+        const block = rader.slice(i, i + 4).join(' ');
+        if (!/region/.test(block)) brister.push(fil + ':' + (i + 1) + ' — noteraKatalog utan region');
+      });
+    }
+  }
+  assert.deepEqual(brister, [],
+    'ett anrop utan region avvisas tyst, och provet blir grönt utan att ha mätt något');
+});
+
+// ---- SAMMA FALLA, ANDRA FALTET ---------------------------------------------------------------
+//
+// `noteraKatalog` kraver numera ocksa FORVANTADE KONTROLLTAL och avvisar anropet INNAN
+// transaktionen om de saknas. Ett prov som mater nagot langre in — atomiciteten, till exempel —
+// slutar da tyst mata det det heter.
+//
+// Det hande pa riktigt: atomicitetsprovet kom aldrig in i transaktionen, sa `_provFel` utloste
+// aldrig. Bara `assert.rejects` rojde det. Hade provet i stallet bara kollat "inga rader efterat"
+// vore det GRONT utan att ha matt nagonting.
+test('varje noteraKatalog-anrop i proven anger forvantade kontrolltal', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const rader = fs.readFileSync(path.join(dir, fil), 'utf8').split(String.fromCharCode(10));
+      rader.forEach((rad, i) => {
+        const kod = rad.trim();
+        if (kod.indexOf('//') === 0 || kod.indexOf('*') === 0) return;
+        if (!/noteraKatalog\s*\(/.test(rad)) return;
+        const block = rader.slice(i, i + 6).join(' ');
+        if (!/forvantat/.test(block)) brister.push(fil + ':' + (i + 1) + ' — noteraKatalog utan forvantat');
+      });
+    }
+  }
+  assert.deepEqual(brister, [],
+    'ett anrop utan kontrolltal avvisas fore transaktionen, sa provet slutar tyst mata det det heter');
+});
+
+
+// ---- gavoseedning KASKADERAR INTE ------------------------------------------------------------
+//
+// `gavoobservation` har ON DELETE CASCADE mot `gavokatalog`, så observationer städas när riggen
+// rensar gåvorna. `gavoseedning` gör INTE det — den har ingen gift_id att hänga på.
+//
+// Följden om den lämnas kvar: `seedningStatus('SE')` svarar `klar: true` från ett TIDIGARE prov,
+// och atomicitetsprovet — som påstår att en avbruten bulk INTE lämnar en komplett seedning — blir
+// falskt grönt. Samma familj som cachen som läckte mellan ruttproven.
+test('varje provfil som seedar tömmer också gavoseedning', () => {
+  const brister = [];
+  for (const dir of [path.join(ROT, 'server', 'test'), path.join(ROT, 'tests')]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const fil of fs.readdirSync(dir).filter(f => f.endsWith('.test.js'))) {
+      const kalla = fs.readFileSync(path.join(dir, fil), 'utf8');
+      // Kommentarer bort innan vi avgor om filen FAKTISKT seedar.
+      const utanKommentar = kalla.split(String.fromCharCode(10)).filter(function (r) {
+        var t = r.trim();
+        return !(t.indexOf('//') === 0 || t.indexOf('*') === 0);
+      }).join(String.fromCharCode(10));
+      if (!/noteraKatalog\s*\(/.test(utanKommentar)) continue;          // bara filer som faktiskt seedar
+      if (!/DELETE FROM gavoseedning/.test(kalla)) {
+        brister.push(fil + ' seedar men rensar aldrig gavoseedning');
+      }
+    }
+  }
+  assert.deepEqual(brister, [],
+    'en kvarlämnad seedning gör seedningStatus() sann i nästa prov, och atomicitetsprovet grönt utan grund');
+});

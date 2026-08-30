@@ -659,6 +659,91 @@ CREATE TABLE IF NOT EXISTS gavokatalog (
   forsta_sedd timestamptz NOT NULL DEFAULT now(),
   senast_sedd timestamptz NOT NULL DEFAULT now()
 );
+
+-- REGIONEN BOR INTE HAR, och det ar en rattelse. #290 lade den forst som en kolumn pa den har
+-- tabellen, men `gift_id` ar ensam primarnyckel — sa ON CONFLICT skrev over falten, och en
+-- US-seedning raderade SE-observationen. En regional observation maste kunna bevaras separat.
+-- Se gavoobservation nedan.
+
+-- ---------------------------------------------------------------------------------------------
+-- SEEDNINGAR. En bulkinlaggning av EN region, med fardigmarkering.
+--
+-- Utan den har tabellen hade ett databasfel vid post 400 av 783 lamnat 399 rader som ser exakt ut
+-- som en komplett seedning — tyst och trovardigt fel. Hela bulken kor i EN transaktion och
+-- markeras 'klar' i samma transaktion, sa en avbruten seedning lamnar varken rader eller markering.
+--
+-- MEN TRANSAKTIONEN RACKER INTE. Den bevisar bara att alla MOTTAGNA poster skrevs — aldrig att
+-- hela den FORVANTADE katalogen togs emot. En trunkerad lista med 1 av 783 poster skrevs helt och
+-- markerades klar. Darfor bar tabellen ocksa de FORVANTADE talen: 'klar' satts bara nar mottaget
+-- och forvantat stammer exakt, och de forvantade talen kommer utifran — fran den uppmatta
+-- preflighten — aldrig fran listan som ska bevisas komplett.
+CREATE TABLE IF NOT EXISTS gavoseedning (
+  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  region       text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
+  status       text        NOT NULL DEFAULT 'pagaende' CHECK (status IN ('pagaende','klar')),
+  antal_poster integer     NOT NULL DEFAULT 0 CHECK (antal_poster >= 0),
+  antal_unika  integer     NOT NULL DEFAULT 0 CHECK (antal_unika >= 0),
+  -- Vad anroparen SA att den skulle leverera. Sparas sa att en fardigmarkering gar att granska i
+  -- efterhand: "klar" utan de har talen ar bara ett pastaende.
+  forv_poster  integer     NOT NULL DEFAULT 0 CHECK (forv_poster >= 0),
+  forv_unika   integer     NOT NULL DEFAULT 0 CHECK (forv_unika >= 0),
+  forv_utan_id integer     NOT NULL DEFAULT 0 CHECK (forv_utan_id >= 0),
+  -- KONTRAKTETS MEDLEMSKAPSBEVIS. Kontrolltalen bevisar bara antal; digesten bevisar VILKA id.
+  -- Sparas har sa att en fardigmarkering gar att granska i efterhand: vilket kontrakt godkandes,
+  -- och nar var det uppmatt. Digesten ar inte reversibel och bar inga raa giftId.
+  kontrakt_digest  text CHECK (kontrakt_digest IS NULL OR kontrakt_digest ~ '^[0-9a-f]{64}$'),
+  kontrakt_matt_at text,
+  startad_at   timestamptz NOT NULL DEFAULT now(),
+  klar_at      timestamptz
+);
+CREATE INDEX IF NOT EXISTS gavoseedning_klar_idx
+  ON gavoseedning(region, klar_at DESC) WHERE status = 'klar';
+
+-- ---------------------------------------------------------------------------------------------
+-- REGIONALA OBSERVATIONER. En rad per (gava, region) — VAR och NAR gavan setts.
+--
+-- gavokatalog sager vad gavan AR. Den har tabellen sager var den observerats, med EGEN kalla och
+-- EGNA tider. Primarnyckeln (gift_id, region) ar hela poangen: SE och US ar tva rader, och ingen
+-- av dem kan skriva over den andra.
+--
+-- ETT GAVOEVENT SKRIVER ALDRIG HAR. Ett event bar ingen region, sa det fyller bara den kanoniska
+-- tabellen. `forsta_sedd` har betyder darfor verkligen "forst sedd i DEN HAR regionen" — inte
+-- "forst sedd nagonstans", vilket var felet i #290.
+CREATE TABLE IF NOT EXISTS gavoobservation (
+  gift_id     text        NOT NULL REFERENCES gavokatalog(gift_id) ON DELETE CASCADE,
+  region      text        NOT NULL CHECK (region ~ '^[A-Z]{2}$'),
+  kalla       text        NOT NULL CHECK (kalla IN ('katalog','handelse')),
+  seedning_id uuid        REFERENCES gavoseedning(id) ON DELETE SET NULL,
+  -- NAMN, BILD OCH DIAMANTER BOR HAR OCKSA, och det ar inte dubbellagring for sakerhets skull.
+  --
+  -- UPPMATT 2026-08-29 i den riktiga katalogen: `is_global_gift` ar FALSKT for 266 av 783 gavor.
+  -- TikTok sager alltsa sjalv att en tredjedel av katalogen inte ar global. Da far de har falten
+  -- inte bo enbart pa den kanoniska raden, dar sista skrivningen vinner mellan regioner: en
+  -- US-seedning hade tyst skrivit om vad SE ser.
+  --
+  -- Den kanoniska raden behalls som "senast sett nagonstans" for uppslag som inte bryr sig om
+  -- region. Sanningen per region star har.
+  gift_name   text        NOT NULL DEFAULT '',
+  gift_image  text        NOT NULL DEFAULT '',
+  diamanter   integer     NOT NULL DEFAULT 0 CHECK (diamanter >= 0),
+  ar_global   boolean,    -- TikToks egen is_global_gift. NULL = uppgiften saknades.
+  forsta_sedd timestamptz NOT NULL DEFAULT now(),
+  senast_sedd timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (gift_id, region)
+);
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_name  text    NOT NULL DEFAULT '';
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS gift_image text    NOT NULL DEFAULT '';
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS diamanter  integer NOT NULL DEFAULT 0;
+ALTER TABLE gavoobservation ADD COLUMN IF NOT EXISTS ar_global  boolean;
+ALTER TABLE gavoseedning ADD COLUMN IF NOT EXISTS kontrakt_digest  text;
+ALTER TABLE gavoseedning ADD COLUMN IF NOT EXISTS kontrakt_matt_at text;
+CREATE INDEX IF NOT EXISTS gavoobservation_region_idx ON gavoobservation(region);
+
+-- gavokatalog skapades i #289 utan region, och #290:s kolumn ar aldrig utrullad. Skulle nagon anda
+-- ha kort en mellanversion mot en bestaende databas star kolumnen kvar och ar oanvand — den tas
+-- bort har, sa att ingen kan tro att den betyder nagot.
+ALTER TABLE gavokatalog DROP COLUMN IF EXISTS region;
+
 -- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
 -- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
 -- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.
