@@ -250,8 +250,8 @@ prov('utan observerad region skrivs ingenting — 400, inte ett tyst default', a
   // KONTROLLMÄTNING: med en giltig region SKA det gå igenom — annars mäter provet bara att rutten
   // är trasig.
   const ok = await rigga(post(G1, 'Rose'));
-  assert.equal(ok.status, 200);
-  assert.equal(ok.body.region, REGION, 'svaret sa inte vilken region som seedades');
+  assert.equal(ok.status, 'klar', 'en giltig region gick inte igenom');
+  assert.equal(ok.region, REGION, 'svaret sa inte vilken region som seedades');
 });
 
 prov('svaret skiljer på ANTAL POSTER och ANTAL ID', async () => {
@@ -282,10 +282,10 @@ prov('statussvaret bär regionen, men fortfarande inga id', async () => {
 prov('fält utifrån saneras — inget går orört in i databasen', async () => {
   const langt = 'A'.repeat(500);
   const langUrl = 'https://x.invalid/' + 'b'.repeat(2000);
-  await anrop('POST', '/api/admin/gavokatalog', {
-    som: 'admin',
-    kropp: { region: REGION, gifts: [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }] }
-  });
+  // Går via MODULEN: rutten kräver numera att listan möter hela SE-kontraktet, och saneringen är
+  // det som provas här — inte kontraktet.
+  await K.noteraKatalog(pool, [{ id: G1, name: langt, diamond_count: -5, image: { url_list: [langUrl] } }],
+    { region: REGION, forvantat: { poster: 1, unikaId: 1, utanId: 0 } });
   const q = await pool.query(
     'SELECT gift_name,gift_image,diamanter FROM gavokatalog WHERE gift_id=$1', [G1]);
   assert.ok(q.rows[0].gift_name.length <= 160, 'namnet kapades inte');
