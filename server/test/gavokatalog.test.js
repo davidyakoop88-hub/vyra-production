@@ -658,7 +658,11 @@ const riktigLista = (antalUnika = SE_UNIKA, dubbletter = 4) => {
   for (let i = 0; i < dubbletter; i++) ut.push(katalogpost('prov-' + (10000 + i), 'Gåva ' + i));
   return ut;
 };
-const FULL = { poster: SE_POSTER, unikaId: SE_UNIKA, utanId: SE_UTAN_ID };
+// Kontrakt for den uppmatta SE-listan. Talen ar LITERALER — de far aldrig harledas ur listan
+// som ska bevisas komplett. Digesten daremot MASTE beskriva just den korrekta listan; det ar
+// hela medlemskapsbeviset, och riktigLista() ar deterministisk.
+const FULL = { poster: SE_POSTER, unikaId: SE_UNIKA, utanId: SE_UTAN_ID,
+               digest: K.digestAvPoster(riktigLista()), matt_at: '2026-08-29' };
 const antalRader = async () => ({
   katalog: (await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'prov-%'")).rows[0].n,
   obs: (await pool.query("SELECT count(*)::int n FROM gavoobservation WHERE gift_id LIKE 'prov-%'")).rows[0].n
@@ -894,7 +898,7 @@ prov('kandidatlistan visar REGIONENS namn och pris, inte den kanoniska radens', 
 
 prov('scopad räkning · gamla observationsrader räddar INTE en ofullständig ny seedning', async () => {
   const lista = [katalogpost(G1, 'A'), katalogpost(G2, 'B'), katalogpost(G3, 'C')];
-  const kt = { poster: 3, unikaId: 3, utanId: 0 };
+  const kt = { poster: 3, unikaId: 3, utanId: 0, digest: K.digestAvPoster(lista) };
 
   // Första seedningen är komplett. Nu FINNS tre SE-rader i databasen.
   const forst = await K.noteraKatalog(pool, lista, { region: 'SE', forvantat: kt });
