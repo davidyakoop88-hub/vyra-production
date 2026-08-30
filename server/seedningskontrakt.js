@@ -24,17 +24,21 @@ const KONTRAKT = {
     utanId: 0,
     // MEDLEMSKAPSBEVIS — SHA-256 over en sorterad multimangd av alla 783 normaliserade id.
     //
-    // ANNU OMATT, och det ar med FLIT null i stallet for ett pahittat varde. Kontrolltalen bevisar
-    // bara ANTAL: en lista kan ha 783/779/0 och anda sakna ett id ur den observerade katalogen och
-    // bara ett annat i stallet. Utan digest kan SE darfor inte seedas alls — modulen avvisar ett
-    // kontrakt utan medlemskapsbevis.
+    // UPPMATT 2026-08-30 fran en INLOGGAD SE-session: 783 poster, 779 unika id, 0 utan id,
+    // appContext.region = SE. Samma siffror som kontrolltalen ovan.
     //
-    // SA HAR MATER MAN DEN: hamta webcast/gift/list/ fran en INLOGGAD SE-session, plocka ut
-    // gifts[].id, normalisera med samma regel som servern (String, kapad till 160 tecken), sortera
-    // ALLA 783 inklusive dubbletter, sla ihop med radbrytning, SHA-256, hex. Samma varde ska falla
-    // ut ur Gavokatalog.digestAvPoster(gifts). Skriv in det har via granskad PR.
-    digest: null,
-    matt_at: '2026-08-29',
+    // Kontrolltalen bevisar bara ANTAL. En lista kan ha 783/779/0 och anda sakna ett id ur den
+    // observerade katalogen och bara ett annat i stallet — digesten ar det som fangar det.
+    //
+    // BERAKNINGEN, identisk pa bada sidor: normalisera varje id med samma regel som servern
+    // (String, kapad till 160 tecken), sortera ALLA 783 inklusive dubbletter, sla ihop med
+    // radbrytning, SHA-256, hex. Korskontrollerad 2026-08-30: webblasarens och serverns
+    // Gavokatalog.digestAvPoster gav samma varde for samma lista.
+    //
+    // Att andra det har vardet ar att andra vad som raknas som en komplett SE-katalog. Det kraver
+    // en granskad PR — aldrig ett anrop.
+    digest: '7f5b53a17079709f8f625ee49b59c155e8a34b81af7b36c2dfeb380e8084fdff',
+    matt_at: '2026-08-30',
     kalla: 'webcast/gift/list/ fran inloggad SE-session (appContext.region=SE)'
   }
 };

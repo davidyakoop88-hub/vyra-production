@@ -817,6 +817,9 @@ prov('kontrakt · SE-kontraktet är exakt 783/779/0, granskat och daterat', asyn
   assert.equal(se.utanId, 0);
   assert.ok(se.matt_at, 'kontraktet saknar mätdatum — då går det inte att granska');
   assert.ok(se.kalla, 'kontraktet saknar källa');
+  // MEDLEMSKAPSBEVISET. Utan det intygar kontraktet bara antal, och en lista med rätt siffror men
+  // fel innehåll hade markerats klar.
+  assert.match(se.digest, /^[0-9a-f]{64}$/, 'SE-kontraktet saknar medlemskapsbevis');
 });
 
 prov('kontrakt · en region utan granskat kontrakt kan inte seedas', async () => {

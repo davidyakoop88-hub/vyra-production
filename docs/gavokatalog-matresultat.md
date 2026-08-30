@@ -304,10 +304,16 @@ går att granska i efterhand.
 Jämförelsen sker **före** transaktionen: en avvikelse ger 422 och lämnar varken rader eller
 färdigmarkering.
 
-### SE:s digest är ännu OMÄTT
+### SE:s digest — uppmätt 2026-08-30
 
-`digest: null` i kontraktet, med flit. **Utan den kan SE inte seedas alls** — modulen och rutten
-avvisar ett kontrakt utan medlemskapsbevis. Det är fail-closed, inte ett förbiseende.
+Mätt från en inloggad SE-session: **783 poster, 779 unika id, 0 utan id**, `appContext.region = SE`
+— samma siffror som kontrolltalen. Digesten står i `server/seedningskontrakt.js`.
+
+**Korskontrollerad samma dag:** webbläsarens uträkning och serverns `Gavokatalog.digestAvPoster`
+gav samma värde för samma lista. Utan den kontrollen hade den riktiga seedningen kunnat falla på
+ett medlemskapsbevis som var korrekt uträknat på fel sätt.
+
+Kontrollmätning: en enda ändrad post ger ett helt annat värde.
 
 Så här mäts den, från en **inloggad** SE-session:
 

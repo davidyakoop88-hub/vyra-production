@@ -180,26 +180,27 @@ prov('utan CSRF-huvud nekas även en administratör', async () => {
 
 // ---- 2 · BULKVÄGEN -----------------------------------------------------------------------------
 
-prov('rutten kan INTE seeda förrän kontraktet har ett medlemskapsbevis', async () => {
-  // SE-kontraktets digest är ännu omätt (null). Kontrolltalen bevisar bara ANTAL, så ett kontrakt
-  // utan medlemskapsbevis får inte seeda — fail-closed hellre än att godkänna rätt siffror med
-  // fel innehåll. När digesten är mätt och införd via granskad PR öppnas den här vägen, och då
-  // ska provet vändas till att kräva 200.
+prov('rutten fäller en lista med PERFEKTA kontrolltal men fel medlemskap', async () => {
+  // Precis granskningens scenario, hela vägen genom rutten: 783 poster, 779 unika id, 0 utan id —
+  // men det är inte den observerade katalogen. Kontrolltalen släpper igenom, digesten fäller.
   const se = require('../seedningskontrakt').for(REGION);
-  assert.equal(se.digest, null, 'digesten är mätt — vänd det här provet till att kräva 200');
+  assert.match(se.digest, /^[0-9a-f]{64}$/, 'SE-kontraktet saknar medlemskapsbevis');
 
   const gifts = [];
   for (let i = 0; i < se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
   for (let i = 0; i < se.poster - se.unikaId; i++) gifts.push(post('httprov-' + (30000 + i), 'G' + i));
+  assert.equal(gifts.length, se.poster, 'riggen byggde fel antal poster');
+  assert.equal(new Set(gifts.map(g => g.id)).size, se.unikaId, 'riggen byggde fel antal unika id');
 
   const r = await anrop('POST', '/api/admin/gavokatalog', { som: 'admin', kropp: { region: REGION, gifts } });
-  assert.equal(r.status, 400, 'ett kontrakt utan medlemskapsbevis fick seeda');
+  assert.equal(r.status, 422, 'en lista med rätt siffror men fel innehåll accepterades');
   assert.equal(r.body.ok, false);
-  const avvisad = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-3%'");
-  assert.equal(avvisad.rows[0].n, 0, 'ett avvisat anrop hann ändå skriva');
+  assert.equal(r.body.fel, 'digest-stammer-inte');
 
-  // KONTROLLMÄTNING: modulvägen med ett riktigt medlemskapsbevis SKA skriva. Annars bevisar
-  // avslaget ovan bara att ingenting fungerar.
+  const avvisad = await pool.query("SELECT count(*)::int n FROM gavokatalog WHERE gift_id LIKE 'httprov-3%'");
+  assert.equal(avvisad.rows[0].n, 0, 'en avvisad seedning lämnade rader');
+
+  // KONTROLLMÄTNING: modulvägen med ett riktigt medlemskapsbevis SKA skriva.
   await rigga(post(G2, 'Heart Me'));
   const q = await pool.query("SELECT gift_name,kalla FROM gavokatalog WHERE gift_id=$1", [G2]);
   assert.equal(q.rows[0].gift_name, 'Heart Me');
