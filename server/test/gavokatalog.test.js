@@ -808,14 +808,29 @@ prov('regionala värden · is_global_gift sparas som den fakta den är', async (
 // Talen bor nu i `server/seedningskontrakt.js` — en fil som går genom kodgranskning och CI. Rutten
 // slår upp dem på region och läser dem ALDRIG ur kroppen.
 
-prov('kontrakt · SE-kontraktet är exakt 783/779/0, granskat och daterat', async () => {
+// TALEN PINNAS INTE. En kopia av kontraktets siffror i ett prov bevisar ingenting om att de är
+// RÄTT — bara att två filer säger samma sak, och den som ändrar den ena ändrar den andra. Värre:
+// den kopian gör en legitim ommätning till ett rött prov, vilket lär en att uppdatera siffran
+// reflexmässigt. Det är precis fel vana för just den här filen.
+//
+// Skyddet mot ett felaktigt tal ligger någon annanstans, och det är starkare: digesten fäller en
+// lista som inte är den mätta, och antalen kontrolleras mot den FAKTISKA listan vid seedning —
+// med noll skrivningar vid avvikelse. Uppmätt i produktion 2026-08-30: listan hade drivit från
+// 783 till 775 inom ett dygn, och spärren fångade det.
+//
+// Här provas i stället det som måste gälla för VARJE giltig mätning, oavsett vilken dag den gjordes.
+prov('kontrakt · SE-kontraktet är internt konsistent, granskat och daterat', async () => {
   const Kontrakt = require('../seedningskontrakt');
   const se = Kontrakt.for('SE');
   assert.ok(se, 'inget granskat kontrakt för SE');
-  assert.equal(se.poster, 783);
-  assert.equal(se.unikaId, 779);
-  assert.equal(se.utanId, 0);
-  assert.ok(se.matt_at, 'kontraktet saknar mätdatum — då går det inte att granska');
+  assert.ok(Number.isInteger(se.poster) && se.poster > 0, 'poster är inte ett positivt heltal');
+  assert.ok(Number.isInteger(se.unikaId) && se.unikaId > 0, 'unikaId är inte ett positivt heltal');
+  // Dubbletter kan bara MINSKA antalet distinkta id. Fler unika än poster är omöjligt och betyder
+  // att talen kommer från två olika mätningar.
+  assert.ok(se.unikaId <= se.poster, 'fler unika id än poster — talen är inkonsistenta');
+  // En katalogmätning med poster utan id är inte en katalogmätning; de posterna kan aldrig seedas.
+  assert.equal(se.utanId, 0, 'kontraktet accepterar poster utan id');
+  assert.match(se.matt_at, /^\d{4}-\d{2}-\d{2}$/, 'mätdatum saknas eller har fel form');
   assert.ok(se.kalla, 'kontraktet saknar källa');
   // MEDLEMSKAPSBEVISET. Utan det intygar kontraktet bara antal, och en lista med rätt siffror men
   // fel innehåll hade markerats klar.
