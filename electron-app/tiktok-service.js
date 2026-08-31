@@ -105,6 +105,9 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         giftImage: text(data?.giftPictureUrl || data?.gift?.image?.url_list?.[0], 2048),
         // Total diamond cost of the forwarded event, identical to the cloud path. Reading only
         // diamondCount made the same gift worth repeatCount times less over the desktop connection.
+        // Talet ar DIAMANTER (kallfaltet heter diamondCount). `diamonds` ar det riktiga namnet;
+        // `coins` bevaras som alias sa lange en publicerad .exe och cachad widgetkod laser det. #133
+        diamonds: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         coins: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         count: number(data?.repeatCount || 1, 1e7)
       }, data);

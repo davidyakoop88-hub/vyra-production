@@ -66,10 +66,32 @@ const RENAMES = [
   ['value', 'coins']
 ];
 
+function cleanEventShape() {
+  // EXAKT objektlitteralen `const event={...}` — klammermatchad, inte ett teckenfonster.
+  //
+  // Bada de naiva varianterna ar fel, och bada har provats har:
+  //   FOR SMALT  ett fast fonster pa 1600 tecken. Funktionen ar 8298 tecken pa main, sa vakten
+  //              last en femtedel och lat resten ograskad. Faltet `at` foll ut ur fonstret sa
+  //              fort en kommentar pa sex rader lades till ovanfor det.
+  //   FOR BRETT  fram till nasta toppnivadeklaration. Nasta `function` ligger langt efter
+  //              cleanEvent, sa fonstret svalde en redis-felhanterare — och en borttagen falt-
+  //              rad kunde da 'hittas' i orelaterad kod. Mutationen overlevde.
+  //
+  // Klammermatchning har ingen sadan glidning: den slutar dar litteralen slutar.
+  const start = BUS.indexOf('const event={', BUS.indexOf('function cleanEvent'));
+  assert.ok(start > -1, 'hittade ingen cleanEvent-litteral i server/event-bus.js');
+  let djup = 0;
+  for (let k = BUS.indexOf('{', start); k < BUS.length; k++) {
+    if (BUS[k] === '{') djup++;
+    else if (BUS[k] === '}' && --djup === 0) return BUS.slice(start, k + 1);
+  }
+  assert.fail('cleanEvent-litteralen ar inte balanserad');
+}
+
 test('cleanEvent bar de falt widgetarna behover', () => {
-  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 1600);
+  const shape = cleanEventShape();
   for (const field of ['id', 'type', 'username', 'comment', 'profileUrl', 'giftName', 'giftImage',
-                       'count', 'value', 'at']) {
+                       'count', 'value', 'diamonds', 'at']) {
     assert.match(shape, new RegExp(`\\b${field}\\s*:`), `cleanEvent tappar faltet ${field}`);
   }
 });
@@ -109,13 +131,13 @@ test('inget falt tappas mellan bryggans gava och molnets event', () => {
 // och Fan Level Up-widgetens eget gate, (w.fanLevel||0) < (w.minLevel||1), gjorde da att den aldrig
 // visades ens om den triggades. Samma sorts tyst falt-tapp som chattexten en gang hade.
 test('cleanEvent bar fan-nivan', () => {
-  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  const shape = cleanEventShape();
   assert.match(shape, /\bfanClubLevel\s*:/,
     'molnet tappar fanClubLevel — Fan Level Up blir dod for alla molnanvandare');
 });
 
 test('molnets fan-niva accepterar bade bryggans och klientens namn', () => {
-  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  const shape = cleanEventShape();
   const rad = shape.split('\n').find(l => /fanClubLevel\s*:/.test(l)) || '';
   assert.match(rad, /teamLevel/,
     'teamLevel ar namnet klienten redan anvander och maste tas emot ocksa');
@@ -129,7 +151,7 @@ test('bryggan skickar fan-nivan', () => {
 test('fan-nivan klamps till spannet 1-50', () => {
   // Widgeten, panelen och triggern arbetar alla i 1-50. Slapper molnet igenom 9999 far widgeten ett
   // varde den inte kan visa, och en trasig strom kan skicka vad som helst.
-  const shape = BUS.slice(BUS.indexOf('function cleanEvent'), BUS.indexOf('function cleanEvent') + 2000);
+  const shape = cleanEventShape();
   const rad = shape.split('\n').find(l => /fanClubLevel\s*:/.test(l)) || '';
   assert.match(rad, /50/, `ingen ovre grans pa fan-nivan: ${rad.trim()}`);
 });

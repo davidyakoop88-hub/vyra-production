@@ -25,6 +25,12 @@ const event={
     giftImage:String(input?.giftImage||'').slice(0,1200),
     count:Math.max(0,Math.min(1e9,Number(input?.count)||0)),
     value:Math.max(0,Math.min(1e12,Number(input?.value??input?.coins??input?.points)||0)),
+    // `value` ovan ar ENHETSLOST med flit — samma falt bar gavans varde, poang och score. Enheten
+    // maste darfor baras separat, annars gar den forlorad pa molnvagen och mottagaren kan bara
+    // gissa. For gavor ar enheten DIAMANTER (kallfaltet heter diamondCount i bada bryggorna).
+    // Utan den har raden strok vitlistan faltet daremellan — precis som den en gang strok
+    // chattexten och fanClubLevel. 0 = ingen diamantuppgift i eventet. #133
+    diamonds:Math.max(0,Math.min(1e12,Number(input?.diamonds??input?.coins)||0)),
     scoreUs:Math.max(0,Math.min(1e12,Number(input?.scoreUs)||0)),
     scoreThem:Math.max(0,Math.min(1e12,Number(input?.scoreThem)||0)),
     multiplier:Math.max(0,Math.min(100,Number(input?.multiplier)||0)),
