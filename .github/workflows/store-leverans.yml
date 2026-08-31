@@ -1,0 +1,116 @@
+name: VYRA Store-leverans (manuell)
+# MANUELL LEVERANS TILL PARTNER CENTER.
+#
+# Flödet BYGGER och VERIFIERAR ett Store-paket och lämnar det som en privat Actions-artefakt. Det
+# publicerar ingenting: ingen tagg, ingen GitHub-release, inget SignPath-anrop. Paketet laddas upp
+# till Partner Center för hand, och Microsoft signerar det först efter godkänd certifiering — det är
+# den mänskliga grinden.
+#
+# ENDAST workflow_dispatch. Flödet får inte kunna trigga på push eller pull_request: en 314 MB
+# artefakt per körning är precis det som 2026-08-06 fyllde artefaktkvoten och började fälla PR:er
+# som inte hade med desktop-appen att göra.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-package:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: electron-app
+    steps:
+      # BARA FRÅN MAIN. workflow_dispatch låter den som startar välja gren, och ett Store-paket
+      # byggt ur en feature-gren ser identiskt ut men innehåller kod som ingen granskat. Villkoret
+      # är det enda som skiljer dem åt efteråt.
+      - name: Kräv main
+        shell: pwsh
+        run: |
+          if ('${{ github.ref }}' -ne 'refs/heads/main') {
+            throw "Store-leverans får bara köras från main. Kördes från: ${{ github.ref }}"
+          }
+        working-directory: .
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: electron-app/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+      # Versionen kommer ur package.json — den höjs i en PR, inte här. Ett flöde som själv sätter
+      # versionen kan leverera ett paket vars version inte finns i historiken.
+      - name: Läs version
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if (-not $version) { throw 'package.json saknar version.' }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Bygger Store-paket for version $version"
+
+      - name: Bygg Store-paket
+        run: npm run build:store
+
+      # MANIFESTET ÄR DET STORE LÄSER. Att konfigurationen ser rätt ut bevisar inte att värdena
+      # hamnade i paketet, och ett paket med fel identitet kan i värsta fall gå igenom som en ANNAN
+      # produkt. Kontrollen sker FÖRE uppladdningen, så en felaktig artefakt aldrig blir hämtbar.
+      - name: Verifiera AppX-manifestet
+        shell: pwsh
+        run: |
+          $paket = Get-ChildItem 'dist2' -Filter '*.appx' | Select-Object -First 1
+          if (-not $paket) { throw 'Inget AppX-paket byggdes.' }
+
+          $vantad = Get-Content 'store-identitet.json' -Raw | ConvertFrom-Json
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $arkiv = [System.IO.Compression.ZipFile]::OpenRead($paket.FullName)
+          try {
+            $post = $arkiv.GetEntry('AppxManifest.xml')
+            if (-not $post) { throw 'AppxManifest.xml saknas i paketet.' }
+            $lasare = New-Object System.IO.StreamReader($post.Open())
+            $manifest = $lasare.ReadToEnd()
+            $lasare.Dispose()
+          } finally { $arkiv.Dispose() }
+
+          $xml = [xml]$manifest
+          $identity = $xml.Package.Identity
+          $fel = @()
+          if ($identity.Name -ne $vantad.identityName) { $fel += "Identity/Name matchar inte store-identitet.json" }
+          if ($identity.Publisher -ne $vantad.publisher) { $fel += "Identity/Publisher matchar inte store-identitet.json" }
+          if ($xml.Package.Properties.PublisherDisplayName -ne $vantad.publisherDisplayName) {
+            $fel += "PublisherDisplayName matchar inte store-identitet.json"
+          }
+          # Versionen i manifestet ar fyrdelad (x.y.z.0) — jamfor de tre forsta mot package.json.
+          $manifestVersion = ($identity.Version -split '\.')[0..2] -join '.'
+          if ($manifestVersion -ne '${{ steps.version.outputs.version }}') {
+            $fel += "Manifestets version ar $($identity.Version), vantade ${{ steps.version.outputs.version }}.x"
+          }
+          if ($fel.Count -gt 0) { throw ($fel -join '; ') }
+          Write-Host "Manifestet bar ratt identitet och version $($identity.Version)"
+
+      # Checksumman gor det mojligt att verifiera att filen som laddas upp till Partner Center ar
+      # exakt den CI byggde — nedladdning genom webblasare och vidare uppladdning ar annars ett
+      # steg utan kvitto.
+      - name: Skapa SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          $paket = Get-ChildItem 'dist2' -Filter '*.appx' | Select-Object -First 1
+          $hash = (Get-FileHash $paket.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($paket.Name)" | Set-Content 'dist2/SHA256SUMS.txt' -Encoding ascii
+          Get-Content 'dist2/SHA256SUMS.txt'
+
+      # PRIVAT ARTEFAKT, ETT DYGN. Actions-artefakter ar bara atkomliga for den som har tillgang till
+      # repot — de blir aldrig en publik nedladdning. Retention pa 1 dygn racker for en manuell
+      # uppladdning samma dag och haller artefaktkvoten nere.
+      - name: Ladda upp Store-paketet (privat, for manuell uppladdning)
+        uses: actions/upload-artifact@v4
+        with:
+          name: VYRA-Store-${{ steps.version.outputs.version }}
+          path: |
+            electron-app/dist2/VYRA-Store-${{ steps.version.outputs.version }}.appx
+            electron-app/dist2/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
