@@ -26,25 +26,23 @@
 .follower-spotlight{cursor:grab!important;user-select:none!important;touch-action:none!important}.follower-spotlight img{user-select:none!important;-webkit-user-drag:none!important;pointer-events:none!important}.follower-spotlight.is-dragging{cursor:grabbing!important;filter:drop-shadow(0 0 14px #d94cff)}
 [data-view="flows"],[data-go="flows"]{display:none!important}
 
-/* Raketens flip: avsandaren pa vag upp, gavan i vandpunkten.
+/* RAKETENS FLIP — avsandaren pa vag upp, gavan i vandpunkten.
+   Skrivet ur slutsatserna, inte ur forsokens ordning (#146). De tre matningarna som styr allt
+   harnere star vid den regel de faktiskt bestammer.
+
    Behallaren arver .fw-rocket-gift:s gamla plats (spetsen, top:-24px) sa raketen ser likadan ut
-   som forut — det ar bara innehallet som far tva sidor. --gift-scale flyttas hit fran gavan, annars
-   skalas bara ena sidan.
-   Flippen sitter pa 62-78% av stigningen: fw-rocket nar sitt hogsta lage vid 100%, sa vandningen
-   hinner bli klar precis innan explosionen tar over blicken. */
+   som forut — det ar bara innehallet som far tva sidor. --gift-scale hor hemma HAR och inte pa
+   gavan, annars skalas bara ena sidan. */
 .fw-rocket-flip{position:absolute!important;left:50%!important;top:-24px!important;
   width:34px!important;height:34px!important;translate:-50% 0!important;
   scale:var(--gift-scale,1)!important;
-  animation:fwRocketFlip var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
-/* 80-88%%: uppmatt att raketen ar UTANFOR widgeten till ~60%% av stigningen — den kommer in i
-   bild forst da. Med flippen pa 62%% syntes avsandaren i tva procent av animationen, alltsa aldrig.
-   Nu: avsandaren fran 60%% till 80%%, gavan resten. */
-@keyframes fwRocketFlip{0%,100%{transform:none}}
-
-/* Spåret tonar bort (fw-rocket gar till opacity 0), men NYTTOLASTEN ska inte folja med — uppmatt
-   opacitet 0.30 vid 87%% och 0.09 vid 97%%, sa gavan var nastan osynlig precis nar den avslojades.
-   Egen opacitet har haller bilden lasbar hela vagen och lamnar over till explosionen. */
-.fw-rocket-flip,.fw-rocket>.fw-rocket-gift{animation-name:fwRocketFlip,fwPayloadHold!important}
+  /* MATNING 2 — OPACITET ARVS MULTIPLIKATIVT. Sparet tonar bort, och ett barn kan inte hava det
+     med egen opacity:1: barnets 1 gangras med foralderns 0.09 vid 97%, sa gavan var nastan
+     osynlig precis nar den avslojades. Losningen ar tvadelad — .fw-rocket slutar tona och lamnar
+     gradienten till sitt ::before (langst ner i filen), och behallaren har tonar IN for egen
+     maskin i stallet for att arva. */
+  animation:fwPayloadHold var(--speed) ease-in both!important;
+  animation-delay:var(--delay,0s)!important}
 @keyframes fwPayloadHold{0%{opacity:0}18%{opacity:1}100%{opacity:1}}
 
 /* Bada sidorna fyller behallaren och doljer sin bakre yta, annars lyser de igenom varandra. */
@@ -53,14 +51,32 @@
   object-fit:contain!important}
 .fw-rocket-flip .fw-rocket-avatar{border-radius:50%!important;
   filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #ff4fa3)!important}
-/* VAXLING PA OPACITET, inte rotateY. 3D-vandningen fungerade i teorin — behallaren stod pa 180,
-   backface-visibility rapporterade hidden — men avsandaren syntes ANDA, for att filter pa bilderna
-   plattar ut 3D-kontexten. Uppmatt i riktig Chrome, osynligt i alla computed-styles-kontroller.
-   Tva staplade bilder som byter opacitet gor samma sak utan att bero pa 3D alls. */
+
+/* MATNING 3 — `filter` PLATTAR UT 3D. Vandningen var forst en rotateY: behallaren stod pa 180 och
+   backface-visibility rapporterade hidden, men avsandaren syntes ANDA. Orsaken ar drop-shadow pa
+   bilderna ovan: ett filter pa ett barn i en preserve-3d-kontext upphaver backface-visibility.
+   Bade transform och backface-visibility rapporterar ratt varden i computed styles — felet syns
+   bara i en zoomad skarmbild. Tva staplade bilder som byter OPACITET gor samma sak utan att bero
+   pa 3D alls.
+   GALLER VARJE WIDGET som vill kombinera .vyra-flip-idiomet med glod.
+
+   MATNING 1 — raketen ar UTANFOR widgeten till ~60% av stigningen (hojd 109% vid 33%, 102% vid
+   47%, 94% vid 60%). Allt som ska SYNAS maste ligga efter det. Med vandningen pa 62% syntes
+   avsandaren i tva procent av animationen, alltsa aldrig. Darav 80-88%. */
 .fw-rocket-flip .fw-rocket-avatar{animation:fwFaceOut var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
 .fw-rocket-flip .fw-rocket-gift{animation:fwFaceIn var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
 @keyframes fwFaceOut{0%,80%{opacity:1}88%,100%{opacity:0}}
 @keyframes fwFaceIn{0%,80%{opacity:0}88%,100%{opacity:1}}
+
+/* BORTTAGET HAR, och varfor det inte var en smaksak:
+   * @keyframes fwRocketFlip{0%,100%{transform:none}} — tomma keyframes, rest fran 3D-forsoket.
+     Upptog en animationsplats och gjorde ingenting.
+   * regeln `.fw-rocket-flip,.fw-rocket>.fw-rocket-gift{animation-name:fwRocketFlip,fwPayloadHold}`
+     — dess ANDRA selektor var redan dod: `.gift-fireworks-fx .fw-rocket>.fw-rocket-gift` hogre upp
+     i filen satter `animation:none!important` med tre klasser mot tva, sa den vann pa specificitet.
+     UPPMATT i riktig Chrome: den gaven hade animationName "none" och NOLL animationer. Regelns
+     forsta halva levde daremot — fwPayloadHold ar darfor flyttad in i shorthanden ovan i stallet
+     for att ligga i en andra regel som motsager den forsta. */
 
 /* SPARET tonar bort, inte hela raketen.
    Forsta forsoket gav nyttolasten en egen opacity:1 — verkningslost, eftersom opacitet arvs
