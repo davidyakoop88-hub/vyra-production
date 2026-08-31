@@ -64,8 +64,17 @@ function sourceId(data){return text(data?.common?.msgId||data?.msgId||data?.mess
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
 function giftFields(data){
   const repeatCount=Math.max(1,number(data?.repeatCount||data?.repeat_count||1,1e7));
-  const coinsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
-  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};
+  // ENHETEN AR DIAMANTER, INTE COINS. Kallfaltet heter `diamondCount` i varenda variant nedan.
+  // Coins ar vad TITTAREN betalar; diamanter ar vad KREATOREN far — grovt halften — och det ar
+  // diamanter TikToks utbetalning bygger pa. De skiljer sig med ungefar faktor tva.
+  //
+  // `coins` nedan ar darfor felnamngivet, men bevaras: en publicerad .exe i drift skickar det
+  // namnet, OBS-kallor kor cachad widgetkod, och live-leaderboard.js har redan `coins` som nyckel
+  // i sparad localStorage-state. `diamonds` ar det RIKTIGA namnet och tillkommer vid sidan av.
+  // `coins` far ga bort forst nar inget laser det (#133).
+  const diamantsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
+  const coinsEach=diamantsEach;
+  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};
 }
 // tiktok-live-proto renamed the like fields in v3, which is the version tiktok-live-connector 2.4.0
 // imports: likeCount -> count, totalLikeCount -> total, and total is now a STRING rather than a
