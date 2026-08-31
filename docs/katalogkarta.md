@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6c04f96`
+Commit: `07564a3`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -43,9 +43,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-19 | — |
+| GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-25 | — |
 | GUARDIAN EMBLEM · 4 PRAKTSTEG | 4 | 4/4 | 4/4 | 4/4 | 2026-08-18 | — |
-| GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-03 | — |
+| GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-25 | — |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-03 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
@@ -95,13 +95,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Crystal Jar | `catalog:giftjar:crystal` | ✓ | ✓ | 2026-08-19 | — |
-| Royal Jar | `catalog:giftjar:royal` | ✓ | ✓ | 2026-08-19 | — |
-| Neon Jar | `catalog:giftjar:neon` | ✓ | ✓ | 2026-08-19 | — |
-| Fire Jar | `catalog:giftjar:fire` | ✓ | ✓ | 2026-08-19 | — |
-| Ice Jar | `catalog:giftjar:ice` | ✓ | ✓ | 2026-08-19 | — |
-| Heart Jar | `catalog:giftjar:heart` | ✓ | ✓ | 2026-08-19 | — |
-| Galaxy Jar | `catalog:giftjar:galaxy` | ✓ | ✓ | 2026-08-19 | — |
+| Crystal Jar | `catalog:giftjar:crystal` | ✓ | ✓ | 2026-08-25 | — |
+| Royal Jar | `catalog:giftjar:royal` | ✓ | ✓ | 2026-08-25 | — |
+| Neon Jar | `catalog:giftjar:neon` | ✓ | ✓ | 2026-08-25 | — |
+| Fire Jar | `catalog:giftjar:fire` | ✓ | ✓ | 2026-08-25 | — |
+| Ice Jar | `catalog:giftjar:ice` | ✓ | ✓ | 2026-08-25 | — |
+| Heart Jar | `catalog:giftjar:heart` | ✓ | ✓ | 2026-08-25 | — |
+| Galaxy Jar | `catalog:giftjar:galaxy` | ✓ | ✓ | 2026-08-25 | — |
 
 ### GUARDIAN EMBLEM · 4 PRAKTSTEG
 
@@ -116,22 +116,22 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Neon Event | `catalog:giftcampaign:neon:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Neon Event | `catalog:giftcampaign:neon:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Gold | `catalog:giftcampaign:royal:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Gold | `catalog:giftcampaign:royal:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Glass | `catalog:giftcampaign:glass:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Glass | `catalog:giftcampaign:glass:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Minimal | `catalog:giftcampaign:minimal:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Minimal | `catalog:giftcampaign:minimal:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Aurora | `catalog:giftcampaign:aurora:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Aurora | `catalog:giftcampaign:aurora:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Retro Arcade | `catalog:giftcampaign:retro:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Retro Arcade | `catalog:giftcampaign:retro:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Gold Rush | `catalog:giftcampaign:goldrush:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Gold Rush | `catalog:giftcampaign:goldrush:portrait` | ✓ | ✓ | 2026-08-03 | — |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:landscape` | ✓ | ✓ | 2026-08-03 | — |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:portrait` | ✓ | ✓ | 2026-08-03 | — |
+| Neon Event | `catalog:giftcampaign:neon:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Neon Event | `catalog:giftcampaign:neon:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Royal Gold | `catalog:giftcampaign:royal:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Royal Gold | `catalog:giftcampaign:royal:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Glass | `catalog:giftcampaign:glass:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Glass | `catalog:giftcampaign:glass:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Minimal | `catalog:giftcampaign:minimal:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Minimal | `catalog:giftcampaign:minimal:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Aurora | `catalog:giftcampaign:aurora:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Aurora | `catalog:giftcampaign:aurora:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Retro Arcade | `catalog:giftcampaign:retro:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Retro Arcade | `catalog:giftcampaign:retro:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Gold Rush | `catalog:giftcampaign:goldrush:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Gold Rush | `catalog:giftcampaign:goldrush:portrait` | ✓ | ✓ | 2026-08-25 | — |
+| Crystal Garden | `catalog:giftcampaign:crystal-garden:landscape` | ✓ | ✓ | 2026-08-25 | — |
+| Crystal Garden | `catalog:giftcampaign:crystal-garden:portrait` | ✓ | ✓ | 2026-08-25 | — |
 
 ### LIKE FOUNTAIN
 
