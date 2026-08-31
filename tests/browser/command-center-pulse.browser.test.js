@@ -89,6 +89,50 @@ test('en händelse dyker upp i pulsen', { skip }, async () => {
   assert.match(lista[0], /streamqueen/, `raden saknar avsändaren: "${lista[0]}"`);
 });
 
+// ---- VARFOR overview-premium LADDAS IVRIGT OCH INTE VID BEHOV (#135) ------------------------
+//
+// Issue #135 foreslog att paketet skulle laddas forst nar nagon oppnar Oversikt, eftersom
+// `ensureHomePremiumBundle()` fanns som en lat laddare. Det HADE varit en regression, och det ar
+// den har matningen som visar varfor.
+//
+// Lyssnaren pa `vyra-live-event` sitter pa MODULNIVA i overview-premium.js (rad 275). Bufferten
+// borjar alltsa fyllas i det ogonblick skriptet laddas — inte nar kortet ritas. Laddas paketet
+// forst vid besok pa Oversikt finns ingen lyssnare innan dess, och varenda handelse som kom medan
+// anvandaren stod i editorn ar borta for alltid. Anvandaren skulle se en TOM puls efter en timmes
+// sandning och rimligen tro att funktionen ar trasig.
+//
+// Provet gor precis det: skickar handelsen fran en ANNAN vy och krever att den finns kvar nar
+// Oversikt oppnas. Blir laddningen lat igen faller det har.
+test('en händelse som kom medan användaren var i editorn finns kvar', { skip }, async () => {
+  const page = await framsidan();
+  await kravKort(page);
+  // Lamna framsidan HELT: kortet plockas ur DOM:en nar en annan vy ritas.
+  await page.evaluate(() => { view = 'editor'; render() });
+  await page.waitForFunction(() => !document.querySelector('[data-pulse]'), null, { timeout: 10000 });
+  await page.evaluate(SKICKA(), ['gift', { username: 'borta_fran_hemvyn', giftName: 'Rose', count: 1 }]);
+  // Tillbaka till Oversikt. Bufferten ska ha fangat handelsen anda.
+  await page.evaluate(() => { view = 'home'; render() });
+  await page.waitForSelector('.home-welcome', { timeout: 10000 });
+  await kravKort(page);
+  // VANTA UT MALNINGEN — las inte mitt i kedjan. Observern (overview-premium.js:312) fangar att
+  // korten ar nya noder och anropar schemalagg(), som malar i ett requestAnimationFrame. Att lasa
+  // direkt efter waitForSelector ar att synkronisera mot ena anden och mata den andra: forsta
+  // versionen av det har provet gjorde precis det och rapporterade [] — ett fel som inte fanns.
+  const lista = await page.evaluate(() => new Promise(klar => {
+    const slut = Date.now() + 5000;
+    (function kolla() {
+      const rader = [...document.querySelectorAll('[data-pulse] li')].map(li => li.textContent);
+      if (rader.length || Date.now() > slut) return klar(rader);
+      requestAnimationFrame(kolla);
+    })();
+  }));
+  await page.close();
+  assert.ok(lista.some(r => /borta_fran_hemvyn/.test(r)),
+    'handelsen som kom medan anvandaren stod i editorn saknas i pulsen — lyssnaren fanns inte da, '
+    + 'vilket ar precis vad en LAT laddning av overview-premium skulle orsaka. Raderna: '
+    + JSON.stringify(lista));
+});
+
 test('nyaste händelsen ligger överst', { skip }, async () => {
   const page = await framsidan();
   await kravKort(page);
