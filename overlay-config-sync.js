@@ -38,6 +38,27 @@
     let vantande = null;
     let hamtar = false;
     let omforsok = FORSTA_OMFORSOK_MS;
+    // ATERANSLUTNINGENS EGEN FRAGA: "jag vet inte vilken revision som ar senast — ge mig den som
+    // finns NU". Den avsikten gar INTE att uttrycka som ett revisionsnummer. Ett tal som ar hogt
+    // nog att alltid sla igenom ar ocksa for hogt for att nagonsin uppnas av ett svar, och da tar
+    // onskemalet aldrig slut.
+    //
+    // Sa var det: `ateranslot()` skrev sentinelvardet Number.MAX_SAFE_INTEGER i `onskad`. Nar
+    // `visad` sedan blev serverns riktiga version (1, 2, 3 ...) stod villkoret `onskad > visad` i
+    // finally-grenen kvar som sant FOR ALLTID, och varje avslutad hamtning planerade nasta.
+    // UPPMATT 2026-08-26 i riktig Chrome genom hela kedjan, foto mot foto pa samma binar med bara
+    // appfilerna utbytta: 78 bootstrap-hamtningar och 78 FULLSTANDIGA overlay-omritningar pa 32
+    // sekunder — 2,4 Hz, resten av sandningen — mot 4 efter fixen. Utlosaren i drift ar
+    // uppstartsluckan: det ar bootstrapsvarets `session`-falt som staller den forsta fragan, sa
+    // varje OBS-kalla som oppnades under en pagaende sandning hamnade i slingan.
+    //
+    // TVA TAL I STALLET FOR ETT. `fragor` stegas nar nagon fragar; `besvarad` satts till den fraga
+    // som var stalld nar hamtningen GICK IVAG. En fraga som kom medan ett svar redan var i luften
+    // kan darmed inte bli besvarad av det svaret — det gick ju ivag innan den ens stalldes. Att
+    // rakna dem sa ar ocksa hela skillnaden mot "sluta planera i finally", som hade dodat slingan
+    // men lamnat en revision som kom in mitt under en hamtning oupphamtad till nasta sparning.
+    let fragor = 0;
+    let besvarad = 0;
 
     const planera = (ms) => {
       // En redan planerad hamtning ersatts — det ar sjalva hopslagningen. Tio sparningar i rad
@@ -49,7 +70,11 @@
     async function kor() {
       vantande = null;
       if (hamtar) return;              // en pagaende hamtning fangar upp det som hunnit andras
-      if (onskad <= visad) return;     // ingenting nytt att hamta
+      // Ingenting nytt att hamta: ingen obesvarad fraga OCH ingen revision vi inte redan visar.
+      if (fragor <= besvarad && onskad <= visad) return;
+      // Biljetten tas FORE forfragan, av samma skal som i live-session-client.js: den avgor sedan
+      // vilken fraga svaret faktiskt besvarar.
+      const biljett = fragor;
       hamtar = true;
       try {
         const konfig = await hamta();
@@ -61,11 +86,13 @@
           // Kan handa om tva hamtningar korsar varandra. Att applicera den aldre hade rullat
           // tillbaka designen till nagot agaren redan andrat bort.
           logg(`hoppar over revision ${nyRev}: visar redan ${visad}`);
+          besvarad = biljett;          // ett svar kom hem, aven om det var for gammalt att anvanda
           return;
         }
         applicera(konfig);
         visad = nyRev;
         if (onskad < visad) onskad = visad;
+        besvarad = biljett;
         omforsok = FORSTA_OMFORSOK_MS;
       } catch (err) {
         // DEN GAMLA DESIGNEN STAR KVAR. Ingenting slacks, ingenting toms.
@@ -74,8 +101,9 @@
         omforsok = Math.min(omforsok * 2, LANGSTA_OMFORSOK_MS);
       } finally {
         hamtar = false;
-        // Hann det komma en nyare revision medan vi hamtade? Ta den nu.
-        if (!vantande && onskad > visad) planera(HOPSLAGNING_MS);
+        // Hann det komma en nyare revision — eller en ny fraga — medan vi hamtade? Ta den nu.
+        // Bada leden MASTE kunna bli falska igen, annars ar det en slinga och inte en uppfoljning.
+        if (!vantande && (fragor > besvarad || onskad > visad)) planera(HOPSLAGNING_MS);
       }
     }
 
@@ -92,11 +120,11 @@
       // Efter ett avbrott: handelser som missades kommer aldrig igen som handelser, sa
       // ateranslutningen maste sjalv fraga efter det senaste.
       async ateranslot() {
-        onskad = Number.MAX_SAFE_INTEGER;
+        fragor += 1;
         planera(0);
       },
       // For prov och felsokning.
-      lage: () => ({ visad, onskad, hamtar }),
+      lage: () => ({ visad, onskad, hamtar, obesvarade: fragor - besvarad }),
     };
   }
 

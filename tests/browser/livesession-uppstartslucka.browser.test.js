@@ -135,6 +135,14 @@ const hanterade = sida => sida.evaluate(() => sessionStorage.getItem('vyra-live-
 // faller fortfarande om omhamtningen aldrig sker, men inte langre for att den kom en tiondels
 // sekund efter att nyckeln vande.
 //
+// KEDJAN HAR FYRA STEG, och det ar darfor detta inte kan losas med en langre timeout:
+// sessionStorage skrivs SYNKRONT (1), signalen gar (2), omhamtningen planeras med setTimeout 0 (3),
+// och forst darefter gar forfragan over natet (4). Provet vantade pa steg 1 och matte steg 4 i
+// samma andetag. UPPMATT 2026-08-26: marginalen var 0,2-3,0 ms pa en tom maskin — och den
+// marginalen ar CDP-rundturens langd, inte nagon garanti i koden. Under 20x CPU-strypning
+// (CDP Emulation.setCPUThrottlingRate) vande tecknet och provet foll med exakt det felmeddelande
+// CI visade.
+//
 // Galler bara POSITIVA pastaenden. Ett franvaropastaende ("ingen omhamtning skedde") kan inte
 // vanta pa en icke-handelse och maste ha en fast paus — se provet med `waitForTimeout(1500)`.
 async function vantaPa(villkor, meddelande, { timeout = 15000, intervall = 50 } = {}) {
@@ -148,6 +156,10 @@ async function vantaPa(villkor, meddelande, { timeout = 15000, intervall = 50 } 
 }
 
 const prov = (namn, fn) => test('livesession: ' + namn, { skip, timeout: 90000 }, fn);
+
+// Hopslagningsfonstret i overlay-config-sync.js. Namngivet har for att matfonstret nedan ska
+// uttryckas i FILENS egen takt och inte i ett tal som rakar stamma i dag.
+const HOPSLAGNING_MS = 400;
 
 prov('en kalla som oppnas MITT i en sandning far den ur snapshotet', async () => {
   r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
@@ -198,6 +210,48 @@ prov('en NY sandning byter bild utan omladdning och hamtar om konfigurationen', 
     await vantaPa(() => r.lada.hamtningar > fore,
       'den nya sandningen hamtade aldrig om konfigurationen');
     assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
+    assert.deepEqual(sida.__fel, []);
+  } finally { await sida.close() }
+});
+
+// ---- OMHAMTNINGEN AR EN HANDELSE, INTE EN TAKT ------------------------------------------------
+// Den har vakten kom till for att flackningen ovan visade sig ha en produktionsbugg bakom sig.
+//
+// UPPMATT 2026-08-26 i riktig Chrome, foto mot foto pa samma binar med bara appfilerna utbytta:
+// en OBS-kalla som oppnades medan en sandning pagick gjorde 78 bootstrap-hamtningar pa 32 sekunder
+// — 2,4 Hz — och lika manga FULLSTANDIGA overlay-omritningar, resten av sandningen. Efter fixen: 4
+// hamtningar pa samma 32 sekunder, en per verklig utlosare.
+//
+// Orsaken lag i overlay-config-sync.js: `ateranslot()` uttryckte "hamta det som finns nu" som
+// `onskad = Number.MAX_SAFE_INTEGER`, och eftersom `visad` sedan blev serverns riktiga version stod
+// `onskad > visad` kvar som sant for alltid. Utlosaren i drift ar just uppstartsluckan: det ar
+// bootstrapsvarets `session`-falt som staller den forsta fragan.
+//
+// Enhetsprov 7 i tests/konfig-utan-omladdning.test.js mater samma sak pa en injicerad klocka och
+// gar pa millisekunder. Den HAR matningen finns for att den gar genom hela den verkliga kedjan —
+// overlay-access.js kopplar ihop de tva filerna, och det ar den kopplingen som gor slingan
+// verklig i OBS.
+prov('en kalla i en pagaende sandning hamtar EN gang — inte i en slinga', async () => {
+  r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
+  const sida = await oppna();
+  try {
+    await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
+      null, { timeout: 15000 });
+    // TVA FONSTER, inte ett. Det forsta svaljer uppstartens egna hamtningar oavsett NAR de kommer
+    // — att i stallet vanta ut dem forst kraver att man vet hur manga de ar, och det ar precis vad
+    // provet inte ska anta. Det andra fonstret mater vilan, och det ska vara HELT stilla.
+    //
+    // Tre hopslagningsfonster racker: slingan lag pa ett varv per fonster, sa den hade gett tre
+    // hamtningar har. Ett eller tva varv hade kunnat vara tystnad av en slump.
+    const FONSTER = HOPSLAGNING_MS * 3;
+    await sida.waitForTimeout(FONSTER);
+    const efterStart = r.lada.hamtningar;
+    await sida.waitForTimeout(FONSTER);
+    const extra = r.lada.hamtningar - efterStart;
+    assert.equal(extra, 0,
+      `en vilande kalla gjorde ${extra} hamtningar pa ${FONSTER} ms — det ar `
+      + `${(extra / (FONSTER / 1000)).toFixed(1)} Hz mot servern och lika manga fullstandiga `
+      + 'omritningar i OBS, sa lange sandningen varar');
     assert.deepEqual(sida.__fel, []);
   } finally { await sida.close() }
 });

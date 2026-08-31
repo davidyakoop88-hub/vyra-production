@@ -24,6 +24,10 @@ const path = require('node:path');
 
 const { skapaKonfigSync } = require(path.join(__dirname, '..', 'overlay-config-sync.js'));
 
+// Hopslagningsfonstret i overlay-config-sync.js. Namngivet har for att proven nedan ska stega
+// klockan i FILENS egen takt och inte i ett tal som rakar stamma i dag.
+const HOPSLAGNING = 400;
+
 // En rigg dar tiden ar en variabel, inte en vantan. Prov som sover blir langsamma prov, och
 // langsamma prov kors inte fore push — det ar hela poangen med att halla dem har.
 function rigg({ hamtSvar } = {}) {
@@ -36,7 +40,7 @@ function rigg({ hamtSvar } = {}) {
     overlayId: 'A',
     hamta: async () => {
       spar.hamtningar.push(nu);
-      const r = svar(spar.hamtningar.length);
+      const r = await svar(spar.hamtningar.length);
       if (r instanceof Error) throw r;
       return r;
     },
@@ -183,4 +187,108 @@ test('6 · samma revision en gång till ritar inte om i onödan', async () => {
   await sync.taEmot({ overlayId: 'A', revision: 8 });
   await stega(5000);
   assert.equal(spar.hamtningar.length, 1, 'samma revision hamtades om utan att nagot andrats');
+});
+
+// ---- ATERANSLUTNINGEN FAR INTE BLI EN SLINGA -------------------------------------------------
+// Prov 5 ovan matte att `ateranslot()` hamtar om — men bara EN stegning framat, och `stega()` kor
+// aldrig det som schemalaggs inuti korningen. Det som lag kvar i kon efterat matte ingen. Prov 3
+// bar redan laxan i sin egen kommentar ("MAT KON FORE stegningen ... ratt utfall av fel skal ar
+// inte ett bevis"); prov 5 hade den inte, och darfor kunde en oandlig slinga ligga bakom ett gront
+// prov.
+//
+// UPPMATT 2026-08-26 i riktig Chrome mot hela kedjan: en OBS-kalla som oppnades under en pagaende
+// sandning gjorde 2,5 bootstrap-hamtningar OCH 2,5 fullstandiga overlay-omritningar i SEKUNDEN,
+// resten av sandningen. Orsaken lag i `finally`-grenen: `ateranslot()` skrev
+// Number.MAX_SAFE_INTEGER i `onskad`, och eftersom `visad` sedan blev serverns riktiga version
+// (1, 2, 3 ...) stod villkoret `onskad > visad` kvar som sant for alltid.
+test('7 · återanslutningen hämtar EN gång och lämnar inget i kön', async () => {
+  const { sync, spar, stega, kolagda } = rigg({ hamtSvar: () => ({ revision: 30, widgets: [] }) });
+  await sync.ateranslot();
+  await stega(0);
+  assert.equal(spar.hamtningar.length, 1, 'ateranslutningen hamtade inte om');
+
+  // KON MATS EFTERAT, precis som prov 3 mater den innan. Ett svar har kommit hem och ingen har
+  // sagt oss nagot nytt — da ska ingenting sta pa tur.
+  assert.equal(kolagda.length, 0,
+    `ateranslutningen lamnade ${kolagda.length} planerade hamtningar i kon efter att svaret kommit `
+    + 'hem — det ar en slinga, inte en hamtning');
+
+  // Och den ska sta stilla. Tjugo fonster a 400 ms ar atta sekunder av en sandning som pagar i
+  // timmar; hamtar den har hamrar den servern och ritar om OBS lika lange som sandningen varar.
+  for (let i = 0; i < 20; i++) await stega(HOPSLAGNING);
+  assert.equal(spar.hamtningar.length, 1,
+    `en vilande kalla gjorde ${spar.hamtningar.length} hamtningar pa atta sekunder — `
+    + `${(spar.hamtningar.length / 8).toFixed(1)} Hz mot servern, och lika manga omritningar i OBS`);
+  assert.equal(spar.applicerade.length, 1, 'och lika manga omritningar');
+});
+
+test('8 · en sparning MEDAN en hämtning pågår hämtas ändå', async () => {
+  // Motprovet till 7. Slingan gick att doda genom att bara sluta planera i `finally` — och da hade
+  // en revision som kom in medan svaret var i luften blivit liggande tills nasta sparning. Kravet
+  // ar "hamta en gang till, inte for alltid", inte "sluta hamta".
+  const { sync, spar, stega } = rigg({ hamtSvar: (n) => ({ revision: n === 1 ? 5 : 9, widgets: [] }) });
+  await sync.taEmot({ overlayId: 'A', revision: 5 });
+  await stega(HOPSLAGNING);
+  assert.equal(spar.hamtningar.length, 1);
+
+  // Revision 9 sags oss; hamtningen ovan bar bara 5. Den maste hamtas.
+  await sync.taEmot({ overlayId: 'A', revision: 9 });
+  await stega(HOPSLAGNING);
+  assert.equal(spar.hamtningar.length, 2, 'en nyare revision blev liggande — OBS star kvar med den gamla designen');
+  assert.equal(spar.applicerade.length, 2);
+});
+
+test('9 · en återanslutning MEDAN en hämtning pågår ger en ny hämtning', async () => {
+  // Den har var orsaken till att bytet av sandning ibland drojde 400 ms extra: `ateranslot()` kom
+  // medan en hamtning redan var i luften, och det svar som var pa vag hade gatt ivag FORE fragan.
+  // Det svaret kan inte rakna som svar pa den — annars star kallan kvar med en konfiguration som
+  // ar aldre an ateranslutningen sjalv.
+  //
+  // Hamtning 1 halls hangande med ett lofte provet sjalv slapper. `stega()` VANTAR IN det den kor,
+  // sa steget far inte awaitas har — annars laser sig provet i stallet for att mata.
+  let slapp;
+  const vantan = new Promise(r => { slapp = r });
+  const { sync, spar, stega } = rigg({
+    hamtSvar: (n) => (n === 1 ? vantan.then(() => ({ revision: 5, widgets: [] })) : { revision: 9, widgets: [] }),
+  });
+  const nolla = () => new Promise(r => setImmediate(r));
+
+  await sync.taEmot({ overlayId: 'A', revision: 5 });
+  const steg = stega(HOPSLAGNING);          // startar hamtning 1 — som hanger
+  await nolla();
+  assert.equal(spar.hamtningar.length, 1, 'forsta hamtningen gick aldrig ivag');
+
+  await sync.ateranslot();                  // fragan stalls MEDAN hamtning 1 ar i luften
+  slapp();
+  await steg;                               // nu far hamtning 1 komma hem
+  await stega(0);
+  await stega(HOPSLAGNING);
+  assert.equal(spar.hamtningar.length, 2,
+    'ateranslutningen fick nojja sig med ett svar som gick ivag innan den ens fragade');
+});
+
+test('10 · ett svar UTAN revision låser inte fast overlayn för all framtid', async () => {
+  // Sentinelen bar en andra bugg som ingen hade sett. `nyRev` faller tillbaka pa `onskad` nar
+  // svaret saknar revisionsfalt — och efter en `ateranslot()` VAR `onskad` MAX_SAFE_INTEGER. Da
+  // blev `visad` MAX_SAFE_INTEGER, och varenda framtida sparning avvisades darefter av `taEmot`
+  // som "gammal eller redan pa vag". Overlayen hade slutat ta emot andringar helt, resten av
+  // sandningen, utan ett enda felmeddelande.
+  //
+  // Falt kan saknas pa riktigt: overlay-access.js skickar `Number(d.overlay?.version)`, och en
+  // overlay utan `version` ger NaN.
+  let varv = 0;
+  const { sync, spar, stega } = rigg({
+    hamtSvar: () => { varv++; return varv === 1 ? { widgets: [] } : { revision: 4, widgets: [] } },
+  });
+  await sync.ateranslot();
+  await stega(0);
+  assert.equal(spar.applicerade.length, 1, 'svaret utan revision applicerades inte');
+
+  // En helt vanlig sparning efterat MASTE fortfarande na fram.
+  await sync.taEmot({ overlayId: 'A', revision: 4 });
+  await stega(HOPSLAGNING);
+  assert.equal(spar.hamtningar.length, 2,
+    'en sparning efter ett svar utan revision natt aldrig fram — overlayn ar last vid den design '
+    + 'den rakade ha nar faltet saknades');
+  assert.equal(spar.applicerade.length, 2);
 });
