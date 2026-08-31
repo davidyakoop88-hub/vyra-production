@@ -29,14 +29,43 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 const git = (...a) => { try { return execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 32e6 }).trim() } catch { return '' } };
 
 // Vilken commit rorde senast den har katalognyckeln? -S soker i DIFFAR, sa traffen ar den commit
-// som faktiskt lade till eller andrade nyckeln — inte varje commit som rakade rora filen.
+// som faktiskt lade till eller andrade nyckeln - inte varje commit som rakade rora filen.
+//
+// SOKOMRADET AR INTE HELA REPOT. Nyckeln `catalog:giftjar` namns ocksa i DAVID.md, i tech-debt.md
+// och - varst av allt - i kartan sjalv. En obegransad `-S ... -- .` valde darfor den nyaste
+// PROSA-commiten som rakade namna nyckeln, i stallet for koden som definierar den. Uppmatt
+// 2026-08-25 pa full historik: `catalog:giftjar` tillskrevs commit 6de7d29 "DAVID.md:
+// overlamningen samlad pa ett stalle" - en dokumentationscommit utan PR-nummer - medan den
+// riktiga definitionen i media.js inte rorts sedan augusti. Att kartan namner sina egna nycklar
+// gor det dessutom sjalvrefererande: varje karta-commit hade blivit nasta kartas svar.
+const HISTORIK_OMRADE = [':(exclude)docs', ':(exclude)tests', ':(exclude)*.md'];
+
+// Alla nycklar finns inte som literaler. Gift Campaign bygger sin nyckel av delar i media.js -
+// `'catalog:giftcampaign:' + tema + ':' + orientering` - sa `-S catalog:giftcampaign:neon` traffar
+// ingenting alls, och bada kolumnerna blev tomma. Darfor kortas prefixet av ett led i taget tills
+// nagot traffar: catalog:a:b:c -> catalog:a:b: -> catalog:a:. Kolonet pa slutet halls kvar sa att
+// en avkortning inte kan trilla over till en grannyckel med samma inledning.
+function prefixkandidater(prefix) {
+  const d = String(prefix || '').split(':');
+  const ut = [prefix];
+  for (let i = d.length - 1; i >= 2; i--) ut.push(d.slice(0, i).join(':') + ':');
+  return ut;
+}
+
+// PR-numret ur en squash-merge: "Amne (#123)". En commit utan (#N) ar en direktpush till main och
+// har ingen PR - kolumnen far sta tom hellre an att ljuga.
+const prUrAmne = amne => { const m = String(amne || '').match(/\(#(\d+)\)\s*$/); return m ? m[1] : null };
+
 const historikCache = new Map();
 function historik(prefix) {
   if (historikCache.has(prefix)) return historikCache.get(prefix);
-  const rad = git('log', '-1', '--format=%ad%x09%s', '--date=short', '-S', prefix, '--', '.');
+  let rad = '';
+  for (const kandidat of prefixkandidater(prefix)) {
+    rad = git('log', '-1', '--format=%ad%x09%s', '--date=short', '-S', kandidat, '--', ...HISTORIK_OMRADE);
+    if (rad) break;
+  }
   const [datum, amne] = rad ? rad.split('\t') : ['', ''];
-  const pr = (amne || '').match(/\(#(\d+)\)\s*$/);
-  const svar = { datum: datum || '—', pr: pr ? pr[1] : null, amne: (amne || '').replace(/\s*\(#\d+\)\s*$/, '') };
+  const svar = { datum: datum || '—', pr: prUrAmne(amne), amne: (amne || '').replace(/\s*\(#\d+\)\s*$/, '') };
   historikCache.set(prefix, svar);
   return svar;
 }
@@ -46,6 +75,10 @@ const familj = nyckel => {
   const d = String(nyckel || '').split(':');
   return d.length > 2 ? d.slice(0, d.length - 1).join(':') : nyckel;
 };
+
+// Provbart utan webblasare: harledningen ar rena funktioner. Genereringen nedan kor bara som
+// huvudmodul.
+module.exports = { familj, prefixkandidater, prUrAmne, HISTORIK_OMRADE };
 
 function servera() {
   const server = http.createServer((req, res) => {
@@ -58,15 +91,24 @@ function servera() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
+if (require.main !== module) return;
+
 (async () => {
   // EN GRUND KLON GER FEL PROVENIENS. Datum- och PR-kolumnerna kommer ur `git log` for varje fil.
   // I en shallow clone finns bara de senaste commitarna, sa VARJE sektion tillskrivs den nyaste
   // commit som rakar vara synlig — kartan ser komplett ut och ar systematiskt fel. Uppmatt
   // 2026-08-18: hela 20 sektioner stod som andrade den dagen i PR #221 nar de i sjalva verket inte
-  // rorts sedan augusti 5 och PR #92. Genereringen fortsatter, men den sager ifran.
+  // rorts sedan augusti 5 och PR #92.
+  //
+  // Det stannade vid en varning, och varningen gick att missa — precis som den blev missad. Kartan
+  // pa main 2026-08-25 hade 293 av 293 PR-hanvisningar pekande pa #270, den senaste PR:en, for att
+  // CI-checkouten aldrig fick nagot djup. En karta som ar systematiskt fel ar samre an ingen karta
+  // alls, eftersom den lases som facit. Darfor avbryts genereringen numera.
   if (fs.existsSync(path.join(ROOT, '.git', 'shallow'))) {
-    console.error('VARNING: grund klon — datum- och PR-kolumnerna blir fel. Kor '
-      + '`git fetch --unshallow` forst om kartan ska committas.');
+    console.error('grund klon — datum- och PR-kolumnerna blir systematiskt fel: varje post '
+      + 'tillskrivs den nyaste synliga commiten. Kor `git fetch --unshallow` forst. '
+      + 'I CI: satt `fetch-depth: 0` pa actions/checkout.');
+    process.exit(1);
   }
   let browser = null;
   // Samma krok som tests/helpers/webblasare.js: en miljo dar Chromium ligger pa en kand sokvag men
@@ -163,6 +205,10 @@ function servera() {
   rader.push('> ett annat antal val. Kartan genereras i CI, dar ingen inloggning finns, sa siffrorna');
   rader.push('> nedan ar den utloggade vyn. Kolumnerna Nyckel / Shadow / Ritar galler alla kort som');
   rader.push('> faktiskt byggdes, och det ar de kolumnerna som ar vaktarna.', '');
+  rader.push('**Senast andrad / PR** letas med `git log -S` pa katalognyckeln, i koden — `docs/`,');
+  rader.push('`tests/` och `*.md` ar uteslutna, sa en fil som bara *namner* nyckeln kan inte vinna.');
+  rader.push('Ett tomt PR-falt betyder att andringen gick som en direktpush till main, inte att');
+  rader.push('proveniensen saknas: datumet bredvid ar anda matt.', '');
   rader.push('## Sammanfattning', '');
   rader.push('| | |', '|---|---|');
   rader.push(`| Kort totalt | **${total}** |`);

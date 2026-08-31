@@ -352,10 +352,64 @@ jobs:
       group: katalogkarta
       cancel-in-progress: true
     runs-on: ubuntu-latest
+    # contents: read, inte write. Jobbet pushar inte langre med GITHUB_TOKEN utan med en deploy
+    # key (se checkout-steget), och da ska token inte ha skrivratt kvar "for sakerhets skull" —
+    # en behorighet som inte anvands ar en behorighet som kan missbrukas av ett komprometterat
+    # beroende. Deploy key:n ar dessutom bunden till DET HAR repot och till ingen anvandare.
     permissions:
-      contents: write
+      contents: read
     steps:
+      # DEPLOY KEY, INTE GITHUB_TOKEN. Nar main far obligatoriska statuskontroller kan
+      # GITHUB_TOKEN inte langre pusha dit — och kartjobbet, som pushar EFTER att kontrollerna
+      # redan kort, hade dott. Alternativen var PR-stapling (kraver PAT, ger auto-merge och en ny
+      # fraga om [skip ci]) eller en egen gren for kartan (kraver att den lamnar main).
+      #
+      # Deploy key:n ar bypass-aktor i rulesetet — INTE rollen Write. David bypassar alltsa inte
+      # sitt eget krav: nyckeln ar en credential han inte har i fickan, till ett enda repo, utan
+      # koppling till hans konto. `actor_type: "DeployKey"` ar provat mot API:t och accepteras.
+      #
+      # FOLJD ATT KANNA TILL: en deploy-key-push TRIGGAR workflows, till skillnad fran en
+      # GITHUB_TOKEN-push. Darmed gar `[skip ci]` i commitmeddelandet nedan fran barsele till
+      # barande — utan den startar varje kartpush ett nytt CI-varv. Inget kretslopp (andra varvet
+      # ser "kartan ar oforandrad"), men slosat. Ett prov later den inte forsvinna.
+      - name: 'Krav: deploy key finns'
+        # Utan den har grinden faller jobbet langre ner med ett obegripligt SSH-fel. Hellre en
+        # mening som sager exakt vad som saknas och vem som kan atgarda det.
+        #
+        # KONTROLLEN GORS I SKALET, INTE I `if:`. Forsta forsoket skrev
+        # `if: ${{ secrets.KATALOGKARTA_DEPLOY_KEY == '' }}` — och `secrets` gar inte att lasa i ett
+        # steg-villkor. GitHub kunde da inte tolka filen, och foljden var inte ett felmeddelande om
+        # raden: HELA workflowen forsvann. Alla fem jobb i VYRA CI slutade rapportera, och PR:en sag
+        # ut att ha tre gronna checkar i stallet for atta. Ett trasigt villkor i en vakt tog bort
+        # vakterna. Sekreten nar ett steg via `env`, och `env` gar att lasa i `run`.
+        env:
+          NYCKEL: ${{ secrets.KATALOGKARTA_DEPLOY_KEY }}
+        run: |
+          if [ -n "$NYCKEL" ]; then
+            echo 'deploy key finns'
+            exit 0
+          fi
+          echo '::error::Secret KATALOGKARTA_DEPLOY_KEY saknas. Kartjobbet kan inte pusha till main.'
+          echo 'Atgard: skapa en deploy key MED skrivratt pa repot och lagg den privata nyckeln'
+          echo 'som repository secret KATALOGKARTA_DEPLOY_KEY. Se docs/katalogkarta-deploykey.md.'
+          exit 1
+
+      # fetch-depth: 0 — HELA historiken, inte defaultens enda commit.
+      #
+      # Kartans kolumner "Senast andrad" och "PR" kommer ur `git log -S <katalognyckel>`. I en grund
+      # checkout finns bara den nyaste commiten, sa VARJE post traffar den och kartan tillskriver
+      # hela katalogen den senaste PR:en. Uppmatt 2026-08-25 pa main: 293 av 293 PR-hanvisningar
+      # pekade pa #270. Kartan sag komplett ut och var systematiskt fel.
+      #
+      # Generatorn avbryter numera pa en grund klon i stallet for att bara varna, sa den har raden
+      # ar inte en optimering — utan den faller jobbet.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Satter origin till SSH och konfigurerar nyckeln, sa att `git push` langre ner gar via
+          # deploy key:n i stallet for GITHUB_TOKEN. persist-credentials maste vara kvar (default
+          # true) — annars finns ingen credential nar pushen ska ske.
+          ssh-key: ${{ secrets.KATALOGKARTA_DEPLOY_KEY }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
