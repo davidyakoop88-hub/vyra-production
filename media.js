@@ -880,6 +880,16 @@ Promise.resolve().then(()=>{let motor=document.createElement('script');motor.src
    Felrapporteringen sitter pa modulnivan i filen, sa den aktiveras av att skriptet laddas — den
    ska fanga fel aven for nagon som aldrig oppnar supportvyn. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='support-client.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='support-client.js?v=20260806-1';document.body.append(js)});
+/* LIVE Control Center. Filen och dess CSS fanns i repot sedan forsta produktionsreleasen
+   (`8bb0cdf`) och serverades i produktion (200) — men INGENTING laddade dem, sa
+   `window.VyraLiveControl` definierades aldrig i korningen. Det ar samma mekanism som en gang
+   dolde supportsystemet ovan, och det kostade redan en gang: Command Centers LIVE PULSE fick
+   halla en EGEN buffert (overview-premium.js) for att getSnapshot() inte fanns att fraga.
+
+   Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
+   den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
+   ligger darfor i studio.html, under Insikter. */
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20260831-1';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20260831-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260807-levels';document.body.append(js)});
 /* Gift Fireworks trigger, samma monster som fan-level-session.js. Widgeten hade ingen livevag alls:

@@ -298,14 +298,29 @@ test('A10: alla synliga navval gar att na vid 1440x900', { skip, timeout: 90000 
   try {
     await tillAutomatik(page);
     const fel = await page.evaluate(() => {
+      // VAKTEN MATTE FEL ELEMENT. Den fragade <aside> om overflowY, men aside ar `overflow:hidden`
+      // MED FLIT (studio.css): sedan profilfixen rullar BARA <aside>>nav, sa att huvudet och
+      // .aside-bottom star kvar och profilkortet syns vid varje fonsterhojd. CSS-kommentaren lovar
+      // rakt ut att det ska halla "oavsett hur manga menyposter som tillkommer".
+      //
+      // Med aside som matpunkt blev svaret alltid "gar inte att skrolla", och den forsta menypost
+      // som trangde forbi vikningen foll som ett LAYOUTFEL — fast rullningen fanns och fungerade.
+      // Fraga i stallet knappens verkliga rullningsforalder.
+      const rullbar = el => {
+        for (let n = el.parentElement; n; n = n.parentElement) {
+          const o = getComputedStyle(n).overflowY;
+          if ((o === 'auto' || o === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+        }
+        return null;
+      };
       const aside = document.querySelector('aside');
       const cs = getComputedStyle(aside);
-      const kanSkrolla = ['auto', 'scroll'].includes(cs.overflowY);
       const ut = [];
       for (const b of document.querySelectorAll('[data-view],[data-extra]')) {
         if (b.getBoundingClientRect().width === 0) continue; // dolda (Automationer) raknas inte
         let r = b.getBoundingClientRect();
         if (r.bottom <= window.innerHeight && r.top >= 0) continue;
+        const kanSkrolla = !!rullbar(b);
         if (kanSkrolla) {
           b.scrollIntoView({ block: 'nearest' });
           r = b.getBoundingClientRect();
@@ -313,7 +328,8 @@ test('A10: alla synliga navval gar att na vid 1440x900', { skip, timeout: 90000 
         }
         const namn = b.dataset.view || b.dataset.extra;
         ut.push(`${namn}: bottom=${Math.round(r.bottom)} i ${window.innerHeight}px fonster` +
-          (kanSkrolla ? ' (aven efter skroll)' : ' — och aside har overflow-y:' + cs.overflowY + ', gar inte att skrolla'));
+          (kanSkrolla ? ' (aven efter skroll)' : ' — ingen rullningsforalder alls (aside: overflow-y:'
+            + cs.overflowY + '), gar inte att skrolla'));
       }
       return ut;
     });
