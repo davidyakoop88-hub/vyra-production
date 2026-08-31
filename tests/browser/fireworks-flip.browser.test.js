@@ -11,88 +11,73 @@
 //     specificitet.
 //
 // DET GAR INTE ATT SE I KALLKODEN. Bada reglerna ser verksamma ut; det ar kaskaden som avgor.
-// Darfor mater det har provet vad webblasaren FAKTISKT kor, inte vad filen sager.
+// Darfor mater provet vad webblasaren FAKTISKT kor, inte vad filen sager.
 //
 // Omskrivningen ar bevisad beteendebevarande: opaciteten spardes vid 0/10/18/50/80/84/88/100 %
 // for alla fyra ytor, fore och efter, och varje varde var identiskt.
+//
+// EN BILLIG FIL MED FLIT. Browsersviten kor 62 filer parallellt och varje fil startar en EGEN
+// webblasare; pa CI:s fa karnor ar den redan pa grasen. Forsta versionen av den har filen la till
+// bade en webblasare OCH en HTTP-server, och da foll test-client TVA ganger pa samma commit — pa
+// tva OLIKA prov (livesession respektive gifter-fas Bc), medan main var gron elva korningar i rad.
+// Tva olika prov pekar pa trangsel, inte pa en defekt, och min fil var det som tippade den.
+// Darav: CSS:en lases fran disk och injiceras inline (ingen server), och alla pastaenden delar EN
+// sida i ETT prov (en sidladdning i stallet for tre).
 const test = require('node:test'), assert = require('node:assert/strict');
-const path = require('path'), http = require('http'), fs = require('fs');
+const path = require('path'), fs = require('fs');
 
-const ROOT = path.join(__dirname, '..', '..');
+const CSS = fs.readFileSync(path.join(__dirname, '..', '..', 'gift-fireworks.css'), 'utf8');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 
-let browser, server, bas;
+let browser;
 let skip = hoppaOver();
 
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den');
-  server = http.createServer((req, res) => {
-    const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '');
-    const fil = path.join(ROOT, rel);
-    if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
-      res.writeHead(404); res.end('nej'); return;
-    }
-    res.writeHead(200, { 'content-type': 'text/css' });
-    fs.createReadStream(fil).pipe(res);
-  });
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  bas = 'http://127.0.0.1:' + server.address().port;
 });
-
-test.after(async () => {
-  if (browser) await browser.close();
-  if (server) await new Promise(r => server.close(r));
-});
+test.after(async () => { if (browser) await browser.close() });
 
 // Bada DOM-formerna som gift-fireworks.js faktiskt bygger (rad 69-70): MED avatar blir gavan ett
 // BARNBARN till .fw-rocket, utan avatar ett direktbarn. Skillnaden ar hela poangen med den doda
 // selektorn — den siktade pa det andra fallet.
-const SIDA = () => `<link rel="stylesheet" href="${bas}/gift-fireworks.css">
+const SIDA = `<style>${CSS}</style>
   <div class="widget templateGiftFireworks"><div class="gift-fireworks-fx" style="--speed:.6s">
     <div class="fw-rocket" id="med"><div class="fw-rocket-flip">
       <img class="fw-rocket-avatar"><img class="fw-rocket-gift"></div></div>
     <div class="fw-rocket" id="utan"><img class="fw-rocket-gift"></div>
   </div></div>`;
 
-async function mat() {
+test('flippen kor ratt animationer och inga kvarglomda', { skip }, async () => {
   const page = await browser.newPage();
-  await page.setContent(SIDA(), { waitUntil: 'load' });
-  const ut = await page.evaluate(() => {
-    const namn = sel => {
-      const el = document.querySelector(sel);
-      return el ? el.getAnimations().map(a => a.animationName) : null;
-    };
-    return {
-      flip: namn('.fw-rocket-flip'),
-      avatar: namn('.fw-rocket-flip .fw-rocket-avatar'),
-      gift: namn('.fw-rocket-flip .fw-rocket-gift'),
-      utanAvatar: namn('#utan > .fw-rocket-gift'),
-    };
-  });
-  await page.close();
-  return ut;
-}
+  let m;
+  try {
+    await page.setContent(SIDA, { waitUntil: 'load' });
+    m = await page.evaluate(() => {
+      const namn = sel => {
+        const el = document.querySelector(sel);
+        return el ? el.getAnimations().map(a => a.animationName) : null;
+      };
+      return {
+        flip: namn('.fw-rocket-flip'),
+        avatar: namn('.fw-rocket-flip .fw-rocket-avatar'),
+        gift: namn('.fw-rocket-flip .fw-rocket-gift'),
+        utanAvatar: namn('#utan > .fw-rocket-gift'),
+      };
+    });
+  } finally { await page.close() }
 
-test('behallaren kor EN animation, inte en tom plus en verksam', { skip }, async () => {
-  const m = await mat();
-  assert.deepEqual(m.flip, ['fwPayloadHold'],
-    'behallaren kor ' + JSON.stringify(m.flip) + '. En tom keyframe som fwRocketFlip ar inte '
-    + 'harmlos: den ser ut som mekanismen for nasta lasare.');
-});
+  // En tom keyframe som fwRocketFlip ar inte harmlos: den ser ut som mekanismen for nasta lasare.
+  assert.deepEqual(m.flip, ['fwPayloadHold'], 'behallaren kor ' + JSON.stringify(m.flip));
 
-test('de tva sidorna vaxlar pa opacitet, en animation var', { skip }, async () => {
-  const m = await mat();
+  // De tva sidorna vaxlar pa OPACITET, inte rotateY — filter pa bilderna plattar ut 3D.
   assert.deepEqual(m.avatar, ['fwFaceOut'], 'avsandarsidan: ' + JSON.stringify(m.avatar));
   assert.deepEqual(m.gift, ['fwFaceIn'], 'gavosidan: ' + JSON.stringify(m.gift));
-});
 
-test('gavan utan avatar animeras inte — kaskaden stanger av den', { skip }, async () => {
   // UPPMATT pa main FORE omskrivningen: animationName "none", noll animationer. Regeln som pekade
-  // hit var alltsa redan dod. Skulle nagon "aterstalla" den faller det har provet i stallet for
-  // att en dod rad smyger tillbaka och ser levande ut.
-  const m = await mat();
+  // hit var alltsa redan dod. Skulle nagon "aterstalla" den faller det har i stallet for att en
+  // dod rad smyger tillbaka och ser levande ut.
   assert.deepEqual(m.utanAvatar, [],
     'gavan utan avatar kor nu ' + JSON.stringify(m.utanAvatar) + ' — tidigare noll. Antingen har '
     + 'den doda regeln atervant, eller sa har `animation:none` hogre upp tappat sin specificitet.');
