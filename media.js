@@ -825,16 +825,26 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
 // these on click would create duplicate <script>/<link> tags and double-execute that code
 // (duplicate SSE connections, duplicate event bindings, etc). Kept here so a future change
 // can adopt click-gated lazy loading deliberately, after auditing which eager loads below to retire.
-const vyraLoadedAssets={};
-function vyraLoadStyleOnce(href){if(vyraLoadedAssets[href])return vyraLoadedAssets[href];vyraLoadedAssets[href]=new Promise((resolve,reject)=>{let existing=document.querySelector(`link[data-vyra-asset="${href}"]`);if(existing)return resolve(existing);let css=document.createElement('link');css.rel='stylesheet';css.href=href;css.dataset.vyraAsset=href;css.onload=()=>resolve(css);css.onerror=()=>reject(new Error('Kunde inte ladda '+href));document.head.append(css)});return vyraLoadedAssets[href]}
-function vyraLoadScriptOnce(src){if(vyraLoadedAssets[src])return vyraLoadedAssets[src];vyraLoadedAssets[src]=new Promise((resolve,reject)=>{let existing=document.querySelector(`script[data-vyra-asset="${src}"]`);if(existing)return resolve(existing);let js=document.createElement('script');js.src=src;js.dataset.vyraAsset=src;js.onload=()=>resolve(js);js.onerror=()=>reject(new Error('Kunde inte ladda '+src));document.body.append(js)});return vyraLoadedAssets[src]}
-function vyraLoadBundle(name,assets){let key='bundle:'+name;if(vyraLoadedAssets[key])return vyraLoadedAssets[key];vyraLoadedAssets[key]=assets.reduce((p,asset)=>p.then(()=>asset.endsWith('.css')||asset.includes('.css?')?vyraLoadStyleOnce(asset):vyraLoadScriptOnce(asset)),Promise.resolve()).catch(err=>{delete vyraLoadedAssets[key];throw err});return vyraLoadedAssets[key]}
-function refreshIfVisible(match){if(match()&&typeof render==='function')setTimeout(()=>render(),0)}
-function ensureEditorOverlayBundle(){return vyraLoadBundle('editor-overlay',['toplike-studio.css?v=1','toplike-studio.js?v=20260807-panel','last-x-alerts.css?v=20260806-animation','last-x-alerts.js?v=20260806-animation','gift-alert-frames.css?v=1','gift-alert-frames.js?v=1','gift-alert-chrome.js?v=20260807-frameless','live-leaderboard.js?v=20260822-1','live-zero-state.js?v=20260802-1','widget-background.js?v=1','custom-widgets.js?v=20260818-panel-live','profile-frames-premium.css?v=8']).then(()=>refreshIfVisible(()=>view==='editor'||view==='overlay')).catch(err=>console.warn('[VYRA] editor bundle misslyckades',err))}
-function ensurePackagesBundle(){return vyraLoadBundle('packages-view',['overlay-packages.js?v=1']).then(()=>refreshIfVisible(()=>view==='packages')).catch(err=>console.warn('[VYRA] packages bundle misslyckades',err))}
-function ensureActionsBundle(){return vyraLoadBundle('actions-ui',['action-media.js','action-scenes.js','action-options.js','action-event-advanced.js']).then(()=>window.VyraActionEvent?.refresh?.()).catch(err=>console.warn('[VYRA] actions bundle misslyckades',err))}
-function ensureSoundAlertsBundle(){return vyraLoadBundle('sound-alerts-ui',['sound-alerts.js?v=20260817-duckning']).catch(err=>console.warn('[VYRA] sound alerts bundle misslyckades',err))}
-function ensureHomePremiumBundle(){return vyraLoadBundle('home-premium',['overview-premium.css?v=20260820-3','overview-premium.js?v=20260820-2']).then(()=>refreshIfVisible(()=>view==='home')).catch(err=>console.warn('[VYRA] home premium bundle misslyckades',err))}
+/* DEN LATA LADDAREN AR BORTTAGEN, INTE INKOPPLAD (#135).
+
+   Har lag `vyraLoadedAssets`, `vyraLoadStyleOnce`, `vyraLoadScriptOnce`, `vyraLoadBundle`,
+   `refreshIfVisible` och FEM `ensure*Bundle()` — tio rader lat laddning som ingen anropade.
+   Raknat i hela repot hade var och en av de fem exakt EN forekomst: sin egen definition. Allt
+   laddas ivrigt i stallet, och alla filer de fem namnde laddas pa annat hall — inget gick
+   forlorat med raderingen.
+
+   FOR home-premium AR DEN IVRIGA LADDNINGEN RATT, och det ar matt, inte antaget. Lyssnaren pa
+   `vyra-live-event` sitter pa MODULNIVA i overview-premium.js, sa LIVE PULSE-bufferten borjar
+   fyllas nar skriptet laddas — inte nar kortet ritas. Laddades paketet forst vid besok pa
+   Oversikt fanns ingen lyssnare dessforinnan, och varje handelse som kom medan anvandaren stod i
+   editorn vore borta for alltid. Uppmatt i riktig Chrome: en gava skickad fran editorvyn finns
+   kvar i pulsen nar Oversikt oppnas. Provet
+   `tests/browser/command-center-pulse.browser.test.js` -> "en handelse som kom medan anvandaren
+   var i editorn finns kvar" faller om nagon gor laddningen lat igen.
+
+   Kostnaden ar 34 kB (21 kB JS + 13 kB CSS) for en studioanvandare som gar rakt till editorn.
+   Issuet trodde att aven OBS-overlays betalade den — det stammer inte: overlay.html laddar inte
+   media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
 Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['gift-fireworks.js?v=20260818-panel-live','vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260817-duckning','action-media.js?v=20260807-panel','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260817-retur','action-runtime.js?v=20260817-duckning'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
