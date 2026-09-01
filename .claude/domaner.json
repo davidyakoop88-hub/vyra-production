@@ -302,6 +302,7 @@
       "tester": [
         "tests/event-contract.test.js",
         "tests/live-session-client.test.js",
+        "tests/live-ingest-isolering.test.js",
         "tests/tal-avbryt-vid-ny-sandning.test.js",
         "tests/browser/livesession-uppstartslucka.browser.test.js",
         "tests/event-dedupe.test.js",
