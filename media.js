@@ -902,6 +902,12 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20260831-1';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20260831-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260807-levels';document.body.append(js)});
+/* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
+   alls: enda anroparna av triggern var panelens testknapp har i media.js och kowrappern i
+   runtime-controls.js. Kommentaren i tiktok-bridge/bridge.js pastod att klientsidan redan var klar
+   for att triggern FANNS - men ingenting anropade den. Laddas efter media.js sa
+   routeLiveBattleEvent finns att skriva om, och den slar upp triggerGuardianEmblem vid ANROPET. */
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guardian-session.js?v=20260901-1';document.body.append(js)});
 /* Gift Fireworks trigger, samma monster som fan-level-session.js. Widgeten hade ingen livevag alls:
    enda anroparen var action-runtime.js:62, som bara kors for den som SJALV lagt upp en Action med
    "firework" i widgetnamnet. Uppmatt 2026-08-06 mot deployad kod - en gava genom VyraLive.ingest
