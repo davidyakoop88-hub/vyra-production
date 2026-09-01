@@ -143,9 +143,36 @@ test('molnets fan-niva accepterar bade bryggans och klientens namn', () => {
     'teamLevel ar namnet klienten redan anvander och maste tas emot ocksa');
 });
 
-test('bryggan skickar fan-nivan', () => {
-  const norm = read('tiktok-bridge/normalizer.js');
-  assert.match(norm, /fanClubLevel\s*:/, 'bryggan slutade skicka fanClubLevel');
+// BETEENDE, INTE STRANGSOKNING. Provet har lod tidigare sa har:
+//
+//   assert.match(read('tiktok-bridge/normalizer.js'), /fanClubLevel\s*:/)
+//
+// Den sokningen traffade baseUser() pa rad 42 och var gron medan cloudEvent() pa rad 144 slangde
+// faltet hundra rader senare. En strangsokning kan inte se en kaskad — den vet att raden star
+// skriven, inte att vardet overlever. Uppmatt 2026-09-01 pa oandrad kod:
+//
+//   baseUser   fanClubLevel = 7          gifterLevel = 12
+//   cloudEvent fanClubLevel = undefined  gifterLevel = undefined
+//
+// Provet kor darfor hela kedjan bryggan faktiskt kor: raa payload -> baseUser -> cloudEvent.
+test('nivaerna overlever hela vagen fran raa payload till molnevent', () => {
+  const normalizer = require(path.join(__dirname, '..', 'tiktok-bridge/normalizer.js'));
+  const ra = { user: { uniqueId: 'mia', nickname: 'Mia',
+    fansClub: { data: { level: 7 } }, payGrade: { level: 12 } } };
+  const moln = normalizer.cloudEvent('e1', 'member', normalizer.baseUser(ra));
+
+  assert.equal(moln.fanClubLevel, 7,
+    'fanClubLevel overlevde inte cloudEvent — Fan Level Up blir dod pa molnvagen');
+  assert.equal(moln.gifterLevel, 12,
+    'gifterLevel overlevde inte cloudEvent — Gifter Level Up blir dod pa molnvagen');
+});
+
+test('nivaerna klamps till 50 redan i molneventet', () => {
+  const normalizer = require(path.join(__dirname, '..', 'tiktok-bridge/normalizer.js'));
+  const moln = normalizer.cloudEvent('e2', 'member', { fanClubLevel: 9999, gifterLevel: 9999 });
+
+  assert.equal(moln.fanClubLevel, 50, 'ingen ovre grans pa fan-nivan i cloudEvent');
+  assert.equal(moln.gifterLevel, 50, 'ingen ovre grans pa gifter-nivan i cloudEvent');
 });
 
 test('fan-nivan klamps till spannet 1-50', () => {
