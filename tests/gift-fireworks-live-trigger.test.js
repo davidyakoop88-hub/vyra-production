@@ -108,8 +108,14 @@ test('allt som inte ar en gava lamnas i fred', () => {
 test('ingest ar den kedja filen hanger i', () => {
   // Filen hakar i routeLiveBattleEvent. Slutar ingest() anropa den ar allt ovan gront medan
   // widgeten ar dod i sandning — precis det lage den har PR:en stanger.
+  // REGEXET PINNADE FORST EXAKT SYNTAX: `==='function')routeLiveBattleEvent(e)`, utan klammer.
+  // Det ar mer an vakten behover veta. Nar anropet omslots av try/catch (sa att en kastande
+  // widgetsession inte langre tystar Actions & Events) foll provet trots att livevagen var intakt
+  // — vakten matte FORMEN, inte forhallandet. Den slapper nu in mellanliggande tecken men kraver
+  // fortfarande bada delarna: typkontrollen OCH anropet. Mutationsprovat — stryks anropet faller
+  // den, och den faller aven om try-blocket lamnas tomt.
   const kalla = las('live-client.js');
-  assert.match(kalla, /routeLiveBattleEvent\s*===\s*'function'\s*\)\s*routeLiveBattleEvent\(e\)/,
+  assert.match(kalla, /routeLiveBattleEvent\s*===\s*'function'[\s\S]{0,40}routeLiveBattleEvent\(e\)/,
     'ingest() anropar inte langre routeLiveBattleEvent — livevagen ar bruten igen');
 });
 

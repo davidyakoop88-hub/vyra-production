@@ -135,7 +135,16 @@ function ingest(e,frameId){
   emit('vyra-live-event',e);
   recordSeenEmote(e);
   recordSeenUser(e);
-  if(typeof routeLiveBattleEvent==='function')routeLiveBattleEvent(e);
+  // ISOLERAD MED FLIT. routeLiveBattleEvent ar inte en funktion utan en KEDJA: battle-mvp-,
+  // fan-level-, gifter-level-, gift-fireworks- och guardian-session lindar alla samma namn, var och
+  // en runt den forra. Kastade nagon av dem gick undantaget rakt igenom ingest och raden nedanfor
+  // kordes aldrig — hela Actions & Events tystnade for det eventet, utan att nagot i panelen sa
+  // varfor. En trasig widget far ta med sig sin egen widget, inte anvandarens Actions.
+  // Triggeranropen sjalva ligger redan i VyraAlertQueue:s try/catch, men FORST efter att
+  // runtime-controls.js bytt ut funktionerna (500 ms / 2200 ms / load) — och det skyddar inget av
+  // det en session gor utanfor sjalva triggern.
+  // Fangsten loggar: en tyst catch hade bara bytt en synlig bugg mot en osynlig.
+  if(typeof routeLiveBattleEvent==='function'){try{routeLiveBattleEvent(e)}catch(err){console.error('[VYRA live] widgetkedjan kastade, Actions kors anda',err)}}
   if(window.VyraActionEvent)liveEventTriggers(e).forEach(([trigger,payload])=>window.VyraActionEvent.handleEvent(trigger,payload));
 }
 // Webblaget (ingen VYRA Desktop): anslutningen registreras i molnet istallet for att oppnas harifran.
