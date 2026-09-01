@@ -89,6 +89,56 @@ test('en händelse dyker upp i pulsen', { skip }, async () => {
   assert.match(lista[0], /streamqueen/, `raden saknar avsändaren: "${lista[0]}"`);
 });
 
+// ---- SKELETTET MASTE FORSVINNA, INTE BARA FA ETT ATTRIBUT --------------------------------------
+//
+// UPPMATT I PRODUKTION 2026-09-01, i en sandning med riktig trafik: de fyra gra platshallarstrecken
+// lag kvar OVANFOR atta riktiga handelser. malaPuls() gor sitt jobb — attributet sattes — men det
+// fick ingen verkan:
+//
+//   skelett.hidden          true      <- koden satte det ratt
+//   getComputedStyle.display "grid"   <- och ingenting hande
+//   tomtextens display       "none"   <- medan <p> bredvid doldes korrekt
+//
+// ORSAKEN. `.puls-skelett{display:grid}` i overview-premium.css slar ut webblasarens egen
+// `[hidden]{display:none}`, som ar en UA-regel med lagst prioritet. Den globala
+// `[hidden]{display:none!important}` finns i styles.css — men studio.html laddar INTE styles.css.
+// Enda [hidden]-regeln bland de elva laddade filerna ar scopad till .scenbakgrund-kontroll.
+// Texten bredvid doldes darfor att den saknar en egen display-regel, inte for att skyddet fanns.
+//
+// PROVET MATER computed display, inte attributet. Ett prov som last `.hidden` hade varit gront
+// hela tiden — attributet var ju satt. Det ar exakt samma blinda flack som lat fyra widgetar se
+// friska ut medan de var doda: att mata att koden KORDES i stallet for att den VERKADE.
+test('skelettstrecken försvinner visuellt när riktiga händelser kommit', { skip }, async () => {
+  const page = await framsidan();
+  await kravKort(page);
+
+  const fore = await page.evaluate(() => {
+    const s = document.querySelector('.puls-skelett');
+    return s ? getComputedStyle(s).display : null;
+  });
+  assert.notEqual(fore, null, 'skelettet finns inte i markupen — provet mäter inget');
+  assert.notEqual(fore, 'none',
+    'skelettet var redan dolt innan någon händelse — provet kan inte visa att det försvinner');
+
+  await page.evaluate(SKICKA(), ['gift', { username: 'streamqueen', giftName: 'Rose', count: 1 }]);
+
+  const efter = await page.evaluate(() => {
+    const s = document.querySelector('.puls-skelett');
+    const p = document.querySelector('[data-pulse] p');
+    const li = document.querySelectorAll('[data-pulse] li').length;
+    return { attribut: s ? s.hidden : null, display: s ? getComputedStyle(s).display : null,
+      tomtext: p ? getComputedStyle(p).display : null, rader: li };
+  });
+  await page.close();
+
+  assert.equal(efter.rader, 1, 'ingen händelse målades — resten av provet mäter fel sak');
+  assert.equal(efter.attribut, true, 'malaPuls() satte inte hidden på skelettet');
+  assert.equal(efter.display, 'none',
+    `skelettet har hidden=true men display=${efter.display} — de grå strecken ligger kvar `
+    + 'ovanför riktiga händelser, precis som i produktion 2026-09-01');
+  assert.equal(efter.tomtext, 'none', 'tomtexten ligger kvar under de riktiga händelserna');
+});
+
 // ---- VARFOR overview-premium LADDAS IVRIGT OCH INTE VID BEHOV (#135) ------------------------
 //
 // Issue #135 foreslog att paketet skulle laddas forst nar nagon oppnar Oversikt, eftersom

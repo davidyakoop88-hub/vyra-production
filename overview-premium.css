@@ -41,6 +41,14 @@
    Skelettet ar dekoration, inte en lista, och ska inte se ut som en for var sig prov eller
    skarmlasare. */
 .puls-skelett{margin:14px 0 0;padding:0;display:grid;gap:9px}
+/* hidden MASTE aterstallas har. `display:grid` ovan slar ut webblasarens egen
+   `[hidden]{display:none}` — en UA-regel med lagst prioritet — och den globala
+   `[hidden]{display:none!important}` bor i styles.css, som studio.html INTE laddar. Resultatet
+   var att malaPuls() satte attributet utan verkan: uppmatt i produktion 2026-09-01 lag de fyra
+   gra strecken kvar OVANFOR atta riktiga handelser, med hidden=true och display=grid.
+   Tomtexten bredvid doldes korrekt — men bara for att den saknar en egen display-regel, alltsa
+   av tur och inte av skydd. Regeln galler darfor just den har komponenten, dar krocken finns. */
+.puls-skelett[hidden]{display:none}
 .puls-skelett span{display:block;height:13px;border-radius:7px;background:linear-gradient(100deg,#161120 30%,#211a2d 50%,#161120 70%);background-size:300% 100%;animation:toppSkelett 2.6s ease-in-out infinite}
 /* Fallande bredd: en lista med lika langa streck laser sig som en tabell, inte som handelser. */
 .puls-skelett span:nth-child(1){width:86%}
