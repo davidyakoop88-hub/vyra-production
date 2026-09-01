@@ -27,6 +27,44 @@ function identityOf(data){
   const id=data?.userIdentity;
   return{isModerator:!!id?.isModeratorOfAnchor,isFollower:!!id?.isFollowerOfAnchor,isSubscriber:!!id?.isSubscriberOfAnchor};
 }
+
+// NIVAERNA BOR I badgeList — uppmatt i skarp sandning 2026-09-01, inte gissat.
+//
+// De tva falt koden lasta forut finns inte i verklig trafik:
+//   fansClub         0 forekomster i hela inspelningen (3710 rader)
+//   payGrade.level   0 i ALLA 1226 forekomster
+// Alltsa var fanClubLevel och gifterLevel konstant 0, och Fan Level Up + Gifter Level Up kunde
+// aldrig tanda. PR #301 lagade transporten; det har ar kallan.
+//
+// sceneType skiljer badgarna at. Uppmatta forekomster samma kvall:
+//   10  fanklubbsniva   1269 st, ALLA med privilegeLogExtra.level, spann 1-50
+//    8  niva ("Lv.")     938 st, ALLA med privilegeLogExtra.level, spann 1-34
+//   16  guardian          27 st, level "0"
+//    6  top gifter       367 st
+//    1  moderator        123 st, level "0"
+//
+// sceneType valdes framfor ikonens filnamn med flit: filnamnet ar ett CDN-namn som kan bytas, och
+// det ar dessutom en HINK — grade_badge_icon_lite_lv30 bars av nagon pa niva 34, lv20 av nagon pa
+// 21. Filnamn och verklig niva skiljer sig i 1646 fall.
+//
+// combine.str duger inte heller: for nivabadgen ar den nivan ("34"), for fanklubbsbadgen klubbens
+// NAMN ("YOLO"). Samma falt, tva betydelser.
+//
+// Kravet niva > 0 haller en nolla fran att rapporteras som en niva. AR INTE LASTBARANDE I DAG och
+// ett mutationsprov overlever det: sceneType-filtret plockar redan bort moderator- och
+// guardian-badgarna, och en nolla hade dessutom fallit igenom `||` till reservfaltet med samma
+// slutresultat. Uppmatt: 0 av 1378 anvandarobjekt hade tva badges av samma sceneType, alltsa finns
+// inget fall dar en nolla skymmer en riktig niva bredvid. Raden star kvar som en billig skiljelinje
+// mellan "ingen niva rapporterad" och niva 0 — inte som en vakt, och den utges inte for att vara en.
+const BADGE_FANKLUBB = 10, BADGE_NIVA = 8;
+function nivaFranBadge(user, sceneType){
+  for(const b of user?.badgeList||[]){
+    if(Number(b?.sceneType)!==sceneType) continue;
+    const n=Number(b?.privilegeLogExtra?.level);
+    if(n>0) return n;   // NaN>0 ar false, sa Number.isFinite behovs inte
+  }
+  return 0;
+}
 function baseUser(data){
   const user=userOf(data);
   return{
@@ -39,12 +77,12 @@ function baseUser(data){
     isAnonymous:!!(user?.enigmaInfo?.isEnigmaMaskOn||data?.enigmaInfo?.isEnigmaMaskOn),
     ...identityOf(data),
     // "Team" level in TikTok's own UI = the viewer's Fan Club level with this streamer specifically.
-    fanClubLevel:number(user?.fansClub?.data?.level),
+    fanClubLevel:number(nivaFranBadge(user,BADGE_FANKLUBB)||user?.fansClub?.data?.level),
     // The gifter badge level — TikTok's own "Gifter Lv." next to a name. It lives on payGrade, which
     // is a UserHonor in tiktok-live-proto v3, and is a DIFFERENT number from fanClubLevel above:
     // fan club level is per-streamer, gifter level is the viewer's global spending grade. Nothing
     // read this field before, so the gifter level did not exist anywhere in the pipeline.
-    gifterLevel:number(user?.payGrade?.level)
+    gifterLevel:number(nivaFranBadge(user,BADGE_NIVA)||user?.payGrade?.level)
   };
 }
 // Measured on staging 2026-08-03: WebcastGiftMessage in tiktok-live-proto v3 carries no giftType at
