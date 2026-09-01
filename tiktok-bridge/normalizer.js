@@ -141,7 +141,7 @@ function arBoostFonster(f){
   return !!f && f.multiplier>=2 && (f.steg===0 || (f.steg===2&&(f.resultat===0||f.resultat===2)));
 }
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
