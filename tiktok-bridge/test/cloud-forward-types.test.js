@@ -24,7 +24,7 @@ const N = require('../normalizer.js');
 // Molnets egen lista, server/index.js:72. Kopierad med flit: bryts kontraktet ska det här provet
 // falla, inte tyst följa med.
 const MOLNETS_TYPER = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member', 'subscribe',
-  'viewer', 'battle', 'guardian'];
+  'viewer', 'battle', 'guardian', 'subscriberemote'];
 
 test('regeln finns och är en funktion', () => {
   assert.equal(typeof N.tillMolnet, 'function', 'normalizer.js exporterar ingen tillMolnet-regel');

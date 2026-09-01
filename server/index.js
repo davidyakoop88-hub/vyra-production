@@ -72,7 +72,7 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
 // en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
 // kommer utan username och far inte krava ett.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
