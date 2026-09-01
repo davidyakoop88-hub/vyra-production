@@ -197,7 +197,24 @@ function battleProbe(data){
 // Galler BARA molnpostningen. Den lokala vagen (/api/events) matar overlayen och far inte
 // filtreras — chattwidgetar i OBS lever pa den.
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove']);
+// 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
+// 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian']);
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET};
+// GUARDIAN — UPPMATT, INTE GISSAD (2026-09-01, inspelning med VYRA_INSPELNING_TYPER=alla).
+//
+// TikTok annonserar en Guardians entré som ett BARRAGE med subType 'guardian_entrance'. Samma
+// sandning bar tre andra BARRAGE-subTypes — fans_entrance (16), user_level_entrance (5) och
+// fans_upgrade (3) — sa jamforelsen maste vara EXAKT, aldrig en delstrangssokning: TikTok saljer
+// dessutom en gava som heter "Guardian Wings", och en ordsokning i payloaden hade tant emblemet
+// for varje sald sadan gava.
+//
+// `scene` bar samma varde som `subType` i varje uppmatt exemplar och lases som reserv — men bara
+// den, aldrig hela payloaden.
+function arGuardianEntrance(data){
+  return String(data?.subType||data?.scene||'').trim().toLowerCase()==='guardian_entrance';
+}
+
+
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance};

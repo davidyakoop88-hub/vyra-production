@@ -449,45 +449,32 @@ if (require.main === module) {
       // fran tva hall.
     });
     connection.on(WebcastEvent.STREAM_END, () => { sandningsLage = 'live'; if (aktuelltRum) livscykel.slut(aktuelltRum); scheduleReconnect('TikTok LIVE avslutades') });
-    /* GUARDIAN — FORBEREDD, INTE AKTIVERAD.
+    /* GUARDIAN — AKTIVERAD 2026-09-01, uppmatt i skarp sandning.
        ===========================================================================================
-       VANTAR PA EVENT-VERIFIERING. Se docs/live-verifiering.md punkt 6: vi vet inte vilken
-       WebcastEvent-typ som bar Guardian-status, eller vilket falt som skiljer en Guardian fran en
-       vanlig medlem. Sannolika kandidater, lasta ur tiktok-live-proto/v3:
-         · MEMBER med ett rollfalt (guardianType / userRole / badgeList)
-         · USER_NAVIGATION_EVENT med isGuardian
-         · en egen typ vi inte prenumererar pa an
+       Kommentaren som stod har listade tre kandidater (MEMBER med rollfalt, USER_NAVIGATION_EVENT
+       med isGuardian, eller en typ vi inte prenumererade pa). INGEN var ratt — och
+       USER_NAVIGATION_EVENT finns inte ens bland de 67 typerna i tiktok-live-connector 2.4.0.
+       Svaret var en fjarde: BARRAGE med subType 'guardian_entrance'.
 
-       ATT GISSA HAR SKULLE KOSTA MER AN DET SMAKAR. En typ som namnges i molnets fyra listor men
-       som ingen kod nagonsin skickar ar en dod kontraktspost — precis den sortens logn tech-debt.md
-       varnar for. Listorna (bryggans TILL_MOLNET, TIKTOK_INGEST_TYPES, TIKTOK_ROOM_TYPES och
-       event-bussens ALLOWED) rors darfor INTE forran payloaden ar verifierad; tests/event-contract
-       .test.js skulle dessutom falla direkt pa en typ som inte gar hela vagen.
+       MATNINGEN (inspelning 2026-09-01T2130, 3710 rader): atta guardian_entrance, ALLA fran samma
+       person, av ~59 tittare i rummet. Streamern bekraftade personen vid namn under sandningen.
+       Noll falska positiva bland de ovriga 58.
 
-       NAR FALTET AR VERIFIERAT: avkommentera, byt ut FALT_TBD, och lagg 'guardian' i alla fyra
-       listorna i SAMMA andring. Klientsidan ar redan klar — window.triggerGuardianEmblem finns,
-       ar koad i runtime-controls.js, och vantar bara pa ett event.
+       EVENTET FYRAR VID VARJE ENTRE, inte en gang per sandning: personen gick in och ut atta
+       ganger. Spärren som avgor hur ofta emblemet spelar hor darfor hemma i klienten
+       (guardian-session.js, en gang per tittare per sandning) — bryggan rapporterar vad som hande,
+       klienten bestammer vad som visas.
 
-       PRAKTSTEGET ar ett STUDIOVAL, inte ett faltvarde. Bryggan ska darfor INTE skicka nagot steg:
-       streamern valjer sin praktniva i panelen, och ett steg som kom utifran hade tyst skrivit over
-       den. Det enda eventet behover bara bara ar VEM som kom in.
+       STEGET SKICKAS INTE. Praktsteget 1-4 ar ett studioval i panelen; ett steg utifran hade tyst
+       skrivit over streamerns val. Eventet bar bara VEM som kom in.
 
-       TYPEN SKRIVS UT SOM `TYP` OCH INTE SOM STRANGEN NEDAN, med flit.
-       tests/event-contract.test.js skannar RA kallkod efter `sendEvent('<typ>'` och kraver att varje
-       traff finns i molnets fyra listor. En utkommenterad rad raknas — provet laser text, inte
-       beteende. Att gora vakten kommentarsblind hade gjort den svagare for allas skull; att skriva
-       exemplet med en variabel kostar ingenting och lamnar vakten exakt lika strang.
-
-       // const TYP = 'guardian';                      <- lagg samtidigt till i de fyra listorna
-       // connection.on(WebcastEvent.FALT_TBD_TYP, data => {
-       //   if (!data?.FALT_TBD) return;
-       //   sendEvent(TYP, { ...N.baseUser(data) }, data);
-       // });
-
-       INSPELAREN SER DEN REDAN. `set VYRA_INSPELNING_TYPER=alla` fore start spelar in varje
-       WebcastEvent till fil, aven de bryggan inte prenumererar pa — och en inspelad typ nar
-       aldrig molnet. Det ar den vagen fram: spela in en sandning dar en Guardian gar in, och las
-       diffen mellan raden `kalla:"vidarebefordrad"` och `_utgaende`. */
+       ANVANDARNAMNET KOMMER FRAN displayId. BARRAGE-payloaden saknar uniqueId — uppmatt 0 av 1333
+       event — och baseUser faller redan tillbaka pa displayId. Utan det namnet avvisar molnets
+       validateTikTokIngestPayload eventet med 400. */
+    connection.on(WebcastEvent.BARRAGE, data => {
+      if (!N.arGuardianEntrance(data)) return;
+      sendEvent('guardian', { ...N.baseUser(data) }, data);
+    });
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
     // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
@@ -520,7 +507,10 @@ if (require.main === module) {
     if (inspelare.aktiv) {
       const onskade = inspelare.typer();
       const redanLyssnade = new Set(['CHAT', 'GIFT', 'LIKE', 'FOLLOW', 'SHARE', 'MEMBER',
-        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK']);
+        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK',
+        // BARRAGE tillkom med guardian_entrance: utan raden lagger inspelaren en ANDRA lyssnare
+        // pa en typ bryggan redan prenumererar pa, och varje BARRAGE hamnar dubbelt i filen.
+        'BARRAGE']);
       const spelaIn = Object.keys(WebcastEvent)
         .filter(namn => onskade === null || onskade.has(namn))
         .filter(namn => !redanLyssnade.has(namn));
