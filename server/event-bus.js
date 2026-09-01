@@ -6,7 +6,10 @@ const {CircuitBreaker}=require('./observability');
 // rewardConfig.rewardMultiple). Fyra listor maste namna en typ for att den ska na en widget —
 // bryggans TILL_MOLNET, index.js TIKTOK_INGEST_TYPES, TIKTOK_ROOM_TYPES och den har. Missas en
 // enda tystnar typen nagonstans pa vagen; tests/event-contract.test.js vaktar att de moter varandra.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove']);
+// 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
+// sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
+// TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian']);
 const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 
