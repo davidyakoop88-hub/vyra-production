@@ -7,9 +7,9 @@
  },
  "antal": 170,
  "senaste": {
-  "motiv": "Overlay-fixen (PR 264) tar bort lankraden ur OBS-utdata. Riggen laddar studio.html?overlay=1, sa duken gar fran canvasTop 153 till 0 och varje widgets rasterlage flyttas. UPPMATT: sex nycklar fotograferade med gamla koden och med fixen plus duken tvingad tillbaka till 153 blev BYTEIDENTISKA, 6 av 6 - fixen andrar alltsa varken farg, storlek, text eller geometri, bara var duken borjar. KANDIDATGREN: skriver INTE over referenserna i PR 264.",
-  "nycklar": 170,
-  "tid": "2026-08-22T16:35:05.159Z"
+  "motiv": "Battle MVP-ramarna visade TOM namnplatta: riggen triggar med {username} och gamla triggerBattleMvp laste bara event.name, sa namnet slangdes tyst. #313 laser bada faltnamnen, och de sju ramarna visar nu vinnarens namn i stallet for en tom platta. A/B pa samma binar: exakt 1064 pixlar i 54x32 vid (124,254) - bara namnraden, inget annat. De tio designstilarna ar byteidentiska; de doljer namnet som standard.",
+  "nycklar": 7,
+  "tid": "2026-09-02T22:55:37.548Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {

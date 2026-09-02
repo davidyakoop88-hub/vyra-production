@@ -31,3 +31,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Overlay-fixen (PR 264) tar bort lankraden ur OBS-utdata. Riggen laddar studio.html?overlay=1, sa duken gar fran canvasTop 153 till 0 och varje widgets rasterlage flyttas. UPPMATT: sex nycklar fotograferade med gamla koden och med fixen plus duken tvingad tillbaka till 153 blev BYTEIDENTISKA, 6 av 6 - fixen andrar alltsa varken farg, storlek, text eller geometri, bara var duken borjar. KANDIDATGREN: skriver INTE over referenserna i PR 264.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-02 — 7 referenser skrivna
+
+- **Motiv:** Battle MVP-ramarna visade TOM namnplatta: riggen triggar med {username} och gamla triggerBattleMvp laste bara event.name, sa namnet slangdes tyst. #313 laser bada faltnamnen, och de sju ramarna visar nu vinnarens namn i stallet for en tom platta. A/B pa samma binar: exakt 1064 pixlar i 54x32 vid (124,254) - bara namnraden, inget annat. De tio designstilarna ar byteidentiska; de doljer namnet som standard.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
