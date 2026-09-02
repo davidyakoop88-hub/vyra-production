@@ -119,9 +119,14 @@ const KORS_PAKET_TILLATNA = new Map([
 ]);
 
 test('inget prov i tiktok-bridge/test laddar kod med obetalda beroenden', () => {
+  // `[^\n]*` OCH INTE `.*$` — det ar skillnaden mellan att fungera pa bada plattformarna och pa en.
+  // Forsta versionen kordes per rad med /\/\/.*$/. Pa Linux (LF) stripper den kommentaren; pa
+  // Windows slutar raden med \r, och `.` matchar inte \r — sa `$` nas aldrig, matchningen
+  // misslyckas och kommentaren star kvar. Vakten var alltsa GRON I CI och rod lokalt, for exakt
+  // samma kod. En vakt som beror pa radslut mater operativsystemet, inte koden.
   const utanKommentarer = k => k
     .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n').map(r => r.replace(/\/\/.*$/, '')).join('\n');
+    .replace(/\/\/[^\n]*/g, '');
 
   const trasiga = [];
   for (const fil of fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js'))) {

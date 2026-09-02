@@ -128,9 +128,38 @@ function likeFields(data){
     count:number(data?.count??data?.likeCount,1e9),
     points:number(data?.total??data?.totalLikeCount,1e12)};
 }
+// BATTLE-STATUS — uppmatt i skarp sandning 2026-09-02, inte gissad.
+//
+// battleFields lasta `data.status`. Det faltet FINNS INTE. Statusen ligger en niva djupare, pa
+// `data.battleSettings.status`, och transitionen pa `data.action`. battleStatus blev darfor alltid
+// tom strang — och battle-mvp-session.js klassar tom strang som 'okänd' och gor da INGENTING.
+// Sessionen oppnades aldrig, stangdes aldrig, och Battle MVP kunde inte tanda oavsett hur manga
+// gavor som kom in. Uppmatt: fem battle-event, action 4 (x3) och 5 (x2).
+//
+// ENUM-VARDENA kommer ur bibliotekets egna typer (tiktok-live-proto/v3):
+//   LinkMicBattleBattleAction   INVITE=1 REJECT=2 CANCEL=3 OPEN=4 FINISH=5 CUT_SHORT=6
+//   BattleSettingsBattleStatus  NOT_STARTED=0 STARTED=1 FINISHED=2 PUNISH_STARTED=3
+//                               PUNISH_FINISHED=4
+//
+// ORD, INTE SIFFROR. Klientens klassa() kor en ORDSOKNING (/(end|finish|...)/ mot
+// /(start|begin|...)/) — en siffra matchar ingenting. Bryggan oversatter darfor till ord klienten
+// redan kanner igen, sa klientsidan inte behover roras alls.
+//
+// NOT_STARTED GER TOM STRANG med flit: ordet "not_started" innehaller "start" och hade oppnat en
+// session for en match som inte borjat. Samma sort av falla som "Guardian Wings".
+//
+// ACTION GAR FORE STATUS: transitionen ar farskare an tillstandet. Ett FINISH-event kan bara en
+// settings-status som fortfarande sager STARTED, och vinner tillstandet stangs matchen aldrig.
+const BATTLE_ACTION={4:'battle_started',5:'battle_finished',6:'battle_finished'};
+const BATTLE_STATUS={1:'battle_started',2:'battle_finished',3:'battle_punish_started',4:'battle_punish_finished'};
+function battleStatusAv(data,battle){
+  return BATTLE_ACTION[Number(data?.action)]
+    || BATTLE_STATUS[Number(data?.battleSettings?.status)]
+    || text(battle?.status||battle?.battleStatus||'',64);
+}
 function battleFields(data){
   const battle=data?.battleInfo||data?.battle||data||{};
-  return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battle?.status||battle?.battleStatus||'',64)};
+  return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64)};
 }
 // Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
 //
