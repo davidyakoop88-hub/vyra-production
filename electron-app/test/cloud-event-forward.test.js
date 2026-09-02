@@ -301,8 +301,16 @@ test('ingen global ingest-token finns i desktopkoden', () => {
 // Ratt form ar en VITLISTA: en okand typ ska stanna hemma, inte skickas och avvisas.
 //
 // ROTT NU: bada.
-const TIKTOK_INGEST_TYPES = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member',
-  'subscribe', 'viewer', 'battle'];
+// MOLNETS LISTA LASES UR KALLAN, inte kopierad hit. Den handskrivna kopian slutade stamma sa fort
+// molnet fick nya typer: 'glove' (2026-08-14), 'guardian' (#304) och 'subscriberemote' (#307) hade
+// alla drivit isar, och provet foll pa typer som molnet FAKTISKT accepterar. Filen lases med
+// readFileSync — ingen require, alltsa inga beroenden att installera i electron-app:s CI-jobb.
+const TIKTOK_INGEST_TYPES = (() => {
+  const kalla = fs.readFileSync(path.join(__dirname, '..', '..', 'server', 'index.js'), 'utf8');
+  const m = kalla.match(/TIKTOK_INGEST_TYPES\s*=\s*new Set\(\[([^\]]*)\]/);
+  if (!m) throw new Error('hittade ingen TIKTOK_INGEST_TYPES i server/index.js');
+  return [...m[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]);
+})();
 
 // Typerna lases ur kallan, inte ur en handskriven lista: laggs en ny till i tiktok-service.js ska
 // det har provet upptacka den, inte en manniska som rakar minnas att uppdatera bada stallena.
