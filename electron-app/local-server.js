@@ -168,8 +168,12 @@ function startLocalServer(root, port = 4173, options = {}) {
   // Listan ar molnets egna tillatna typer minus `chat`, som utesluts pa volym: den ar den
   // frekventaste typen under en aktiv sandning, ingest-takten ar 100 event/s per workspace, och
   // server/stream-stats.js raknar inte chatt overhuvudtaget.
+  // Vidgad 2026-09-02: listan hade drivit isar fran regeln i kommentaren ovan. `glove` lades till
+  // i molnet 2026-08-14 och nadde aldrig hit; `guardian` (#304) och `subscriberemote` (#307) kom i
+  // natt. tests/desktop-paritet.test.js provar numera REGELN — molnets typer minus chat — i
+  // stallet for att jamfora mot en hardkodad kopia som kan glida igen.
   const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
-    'viewer', 'battle']);
+    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
