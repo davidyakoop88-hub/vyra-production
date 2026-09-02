@@ -101,5 +101,27 @@ function arGuardianEntrance(data) {
   return String(data?.subType || data?.scene || '').trim().toLowerCase() === 'guardian_entrance';
 }
 
-module.exports = { text, number, avatarOf, identityOf, baseUser, nivaFranBadge, arGuardianEntrance,
+// FANS_UPGRADE — TikToks EGEN nivahojning. Uppmatt 2026-09-01: fem exemplar, nivaer 32/18/10/19/11.
+//
+//   subType  'fans_upgrade'
+//   pieces[0].stringValue = NYA nivan
+//
+// KOPIERAD FRAN normalizer.fansUppgradering AV SAMMA SKAL SOM arGuardianEntrance: electron-builder
+// paketerar en explicit filnamnslista, och en require utanfor electron-app/ hade saknats i .exe:n.
+// Priset betalas av tests/desktop-paritet.test.js, som kor bada implementationerna mot samma
+// tabell och kraver identiskt svar.
+//
+// fran = till-1 ar ett ANTAGANDE: TikTok sager bara vilken niva som natts. Samma standard som
+// klientens trigger redan anvander. Niva 1 ger ingen stampel — molnets hojning() kraver fran >= 1.
+function fansUppgradering(data) {
+  if (String(data?.subType || data?.scene || '').trim().toLowerCase() !== 'fans_upgrade') return null;
+  const raa = data?.content?.pieces?.[0]?.stringValue;
+  const till = Number(raa);
+  if (!Number.isInteger(till) || till < 2 || till > 50) return null;
+  if (String(raa).trim() === '') return null;
+  return { ...baseUser(data), fanClubLevel: till, fanLevelUp: { from: till - 1, to: till } };
+}
+
+module.exports = { text, number, avatarOf, identityOf, baseUser, nivaFranBadge,
+  arGuardianEntrance, fansUppgradering,
   BADGE_FANKLUBB, BADGE_NIVA };
