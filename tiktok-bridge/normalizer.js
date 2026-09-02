@@ -327,6 +327,43 @@ function fansUppgradering(data){
   if(String(raa).trim()==='') return null;
   return{...baseUser(data),fanClubLevel:till,fanLevelUp:{from:till-1,to:till}};
 }
+// TIKTOKS EGEN BIDRAGSLISTA VID BATTLE-SLUT — uppmatt 2026-09-02, tva battle-slut.
+//
+// LINK_MIC_ARMIES med triggerReason 2 (BATTLE_END) bar hela rankingen fardigraknad:
+//   teamArmies[].teamUser[].userIdStr   ankarna (streamarna) i laget
+//   teamArmies[].userArmies.userArmies[] { userId, score, nickname, avatarThumb }  bidragsgivarna
+//
+// VARFOR DEN AR BATTRE AN ATT RAKNA SJALV. battle-mvp-session.js summerar coins ur gift-event som
+// nar klienten. Det missar allt som hant innan overlayen oppnades, tappar ett bidrag om ett event
+// tappas — och framfor allt: RAW COINS AR INTE BATTLE-POANG. Boosting Glove multiplicerar poangen
+// i matchen, sa siffran TikTok visar pa skarmen ar inte summan av gavornas diamanter.
+//
+// VILKET LAG AR VART. Listan bar BADA sidorna, och fel val hyllar motstandarens tittare i var egen
+// overlay. Regeln ar uppmatt: rummets agare (fetchRoomInfo -> data.owner.id_str) aterfinns i
+// teamUser[].userIdStr for vart lag. I den uppmatta sandningen: 7276185677820527649 (jokero060)
+// lag i team 1.
+//
+// UTAN ANKAR-ID GORS INGENTING. Att anta "team 1 ar alltid vart" hade fungerat i BADA de uppmatta
+// matcherna och varit fel sa fort streamern bjuds IN i stallet for att bjuda. Hellre tyst an fel
+// person pa skarmen.
+//
+// NOLL POANG VINNER INTE: en match dar ingen gav nagot ska inte visa nagon MVP alls.
+// LIKA POANG avgors pa namn, sa svaret aldrig beror pa inmatningsordningen.
+function armeMvp(data, mittAnkarId){
+  const ankare=String(mittAnkarId||'').trim();
+  if(!ankare) return null;
+  if(Number(data?.triggerReason)!==2) return null;
+  const vart=(data?.teamArmies||[]).find(t=>
+    (t?.teamUser||[]).some(u=>String(u?.userIdStr||'').trim()===ankare));
+  if(!vart) return null;
+  const lista=(vart?.userArmies?.userArmies||[])
+    .map(b=>({name:text(b?.nickname,120),score:number(b?.score,1e12),
+      profileImage:text(b?.avatarThumb?.urlList?.[0]||'',1200)}))
+    .filter(b=>b.score>0&&b.name);
+  if(!lista.length) return null;
+  lista.sort((a,b)=>b.score-a.score||(a.name<b.name?-1:a.name>b.name?1:0));
+  return lista[0];
+}
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
 // GUARDIAN — UPPMATT, INTE GISSAD (2026-09-01, inspelning med VYRA_INSPELNING_TYPER=alla).
@@ -344,4 +381,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering};
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp};
