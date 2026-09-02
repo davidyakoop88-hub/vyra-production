@@ -9,7 +9,7 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian']);
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian','subscriberemote']);
 const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 
@@ -38,6 +38,11 @@ const event={
     scoreThem:Math.max(0,Math.min(1e12,Number(input?.scoreThem)||0)),
     multiplier:Math.max(0,Math.min(100,Number(input?.multiplier)||0)),
     battleStatus:String(input?.battleStatus||'').slice(0,64),
+    // Emote-id:t. Utan den har raden strok vitlistan faltet och Actions & Events emote-valjare
+    // forblev tom for alltid — samma tysta forlust som en gang drabbade chattexten och
+    // fanClubLevel. Bilden aker redan med i giftImage ovan; faltnamnen ar klientens
+    // (live-client.js recordSeenEmote laser e.emote och e.giftImage).
+    emote:String(input?.emote||'').slice(0,160),
     at:Number(input?.at)||Date.now(),
     // Avsandarens fan-klubbsniva. Utan den var Fan Level Up dod pa molnvagen: bryggan raknar
     // fram den och klienten laser den, men cleanEvent strok faltet daremellan. Bada namnen tas

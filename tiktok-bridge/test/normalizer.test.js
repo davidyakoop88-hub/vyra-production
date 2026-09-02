@@ -13,7 +13,7 @@ test('cloud event preserves canonical identity and bounded values',()=>{
   // fixturen har — och det ar meningen, for da tvingas andringen vara medveten.
   // fanClubLevel/gifterLevel ar 0 har eftersom anropet inte skickar in dem; nollan betyder
   // "ingen niva rapporterad" hela vagen genom event-bus.js och viewer-levels.js.
-  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',comment:'',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',fanClubLevel:0,gifterLevel:0,at:123});
+  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',comment:'',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',emote:'',fanClubLevel:0,gifterLevel:0,at:123});
 });
 test('avatar picks the largest variant TikTok offers, not the 100x100 thumb',()=>{
   const all=N.giftFields({user:{userId:'u1',uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']},avatarMedium:{urlList:['https://img/medium.jpg']},avatarLarger:{urlList:['https://img/larger.jpg']}}});

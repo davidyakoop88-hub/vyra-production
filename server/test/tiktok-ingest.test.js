@@ -29,7 +29,7 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // sandning (atta event, alla fran samma person, av ~59 tittare). Widgeten och klientsessionen
   // fanns redan — det var bara kallan som saknades, precis som med 'glove'.
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','chat','follow','gift','glove','guardian','like','likes','member','share','subscribe','viewer']);
+    ['battle','chat','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','viewer']);
 });
 
 test('validateTikTokIngestPayload accepterar guardian med anvandare och avvisar utan',()=>{

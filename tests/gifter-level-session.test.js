@@ -197,8 +197,19 @@ test('bryggan skickar gifterLevel', () => {
 });
 
 test('molnkontraktet bevarar gifterLevel', () => {
+  // FONSTRET VAR FAST PA 2600 TECKEN och foll 2026-09-02 nar ett nytt falt (`emote`) med
+  // kommentar lades till OVANFOR gifterLevel och sköt det utanfor fonstret — trots att faltet
+  // fanns kvar. Exakt den falla event-contract.test.js redan dokumenterar: ett teckenfonster
+  // glider sa fort nagon skriver en rad till. Klammermatchning slutar dar litteralen slutar.
   const bus = las('server/event-bus.js');
-  const form = bus.slice(bus.indexOf('function cleanEvent'), bus.indexOf('function cleanEvent') + 2600);
+  const start = bus.indexOf('const event={');
+  assert.ok(start > 0, 'hittade ingen cleanEvent-litteral');
+  let djup = 0, slut = start;
+  for (let i = bus.indexOf('{', start); i < bus.length; i++) {
+    if (bus[i] === '{') djup++;
+    else if (bus[i] === '}') { djup--; if (!djup) { slut = i; break } }
+  }
+  const form = bus.slice(start, slut);
   assert.match(form, /gifterLevel\s*:/, 'molnet tappar gifterLevel — widgeten blir död i molnvägen');
 });
 

@@ -477,6 +477,22 @@ if (require.main === module) {
     });
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
     // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.
+    /* EMOTES — subscriber- och fanklubbsemotes till Actions & Events valjare.
+       Valjaren fanns redan (action-event-advanced.js renderEmotePickerHtml) och fylls av
+       live-client.js recordSeenEmote(), men den vagen var avklippt HAR: bryggan prenumererade
+       aldrig pa EMOTE. Valjaren visade darfor alltid "Inga emotes har setts live an".
+
+       DET FINNS INGEN LISTA ATT HAMTA. fetchRoomInfo() gav tomma sticker_list/room_sticker_list/
+       biz_sticker_list, och biblioteket har ingen fetchAvailableEmotes() — bara
+       fetchAvailableGifts() for gavor. TikFinity (byggt av zerody, samma person som skrev
+       tiktok-live-connector) har samma atkomst och gor samma sak: fanga-nar-den-anvands.
+
+       INGEN FILTRERING pa emoteScene — se emoteFields i normalizer.js for skalet. */
+    connection.on(WebcastEvent.EMOTE, data => {
+      const f = N.emoteFields(data);
+      if (!f.emote) return;          // utan id finns inget att lagga i valjaren
+      sendEvent('subscriberemote', f, data);
+    });
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
 
     connection.on(ControlEvent.DISCONNECTED, () => {
@@ -507,7 +523,7 @@ if (require.main === module) {
     if (inspelare.aktiv) {
       const onskade = inspelare.typer();
       const redanLyssnade = new Set(['CHAT', 'GIFT', 'LIKE', 'FOLLOW', 'SHARE', 'MEMBER',
-        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK',
+        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK', 'EMOTE',
         // BARRAGE tillkom med guardian_entrance: utan raden lagger inspelaren en ANDRA lyssnare
         // pa en typ bryggan redan prenumererar pa, och varje BARRAGE hamnar dubbelt i filen.
         'BARRAGE']);
