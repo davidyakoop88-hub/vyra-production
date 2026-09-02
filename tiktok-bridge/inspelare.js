@@ -34,6 +34,18 @@ const NAMN_FALT = new Set(['nickname', 'name', 'username', 'displayname']);
 const URL_FALT = new Set(['avatar', 'avatarthumb', 'avatarmedium', 'avatarlarge', 'avatarlarger',
   'profilepicture', 'profilepictureurl', 'avatarurl']);
 const TEXT_FALT = new Set(['comment', 'content', 'text', 'message']);
+// stringValue ar TVETYDIGT och behandlas darfor efter INNEHALL, inte efter namn. Samma falt bar
+// bade ett visningsnamn och ett tal, pa samma niva i payloaden:
+//
+//   guardian_shield_card_used  content.pieces[0].stringValue = "• PiiikaboOom ♛"   <- PII
+//   fans_upgrade               content.pieces[0].stringValue = "32"                <- nivan
+//
+// Att maskera hela faltet hade forstort exakt den matning som gav oss fans_upgrade; att lamna det
+// orort lamnar namn i klartext i en fil som ar tankt att kunna delas. Regeln ar darfor smal: ett
+// RENT tal slipper undan, allt annat hashas som ett namn. Tal, antal och raknare overlever;
+// namn, texter och emoji-dekorerade smeknamn gor det inte.
+const RENT_TAL = /^\d+$/;
+const INNEHALLSFALT = new Set(['stringvalue']);
 
 // Kort och stabil: samma tittare ger samma hash inom OCH mellan filer, sa en armé-lista gar att
 // aggregera i efterhand. Det ar hela poangen med LINK_MIC_ARMIES — utan stabiliteten blir varje
@@ -62,6 +74,9 @@ function maskera(varde, nyckel = '') {
   if (ID_FALT.has(k)) return `id#${hash(varde)}`;
   if (NAMN_FALT.has(k)) return `namn#${hash(varde)}`;
   if (TEXT_FALT.has(k)) return `<text ${varde.length} tecken>`;
+  // Hashas som ett NAMN med flit: star samma person bade i nickname och i stringValue ska de fa
+  // samma hash, sa korshanvisningen genom filen finns kvar.
+  if (INNEHALLSFALT.has(k) && !RENT_TAL.test(varde)) return `namn#${hash(varde)}`;
   if (URL_FALT.has(k) || /^https?:\/\//i.test(varde)) {
     try { return `${new URL(varde).origin}/…` } catch { return '<url>' }
   }
