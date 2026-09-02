@@ -110,31 +110,15 @@ test('nivå 50 släpps igenom, 51 gör det inte', () => {
 
 // ---- 3. molnets befintliga kontrakt --------------------------------------------------------------
 
-test('stämpeln passerar molnets RIKTIGA cleanEvent, inte en kopia av reglerna', () => {
-  // Provet anropar molnets egen cleanEvent i stallet for att kopiera dess regler eller eval:a
-  // utbruten kallkod. Andras kontraktet i server/event-bus.js faller det har direkt, och det ar
-  // hela poangen: bryggan och molnet maste vara oense om ingenting.
-  const { cleanEvent } = require(path.join(ROT, 'server/event-bus.js'));
-  for (const niva of UPPMATTA_NIVAER) {
-    const kropp = N.cloudEvent('e' + niva, 'fanlevelup', N.fansUppgradering(uppgradering(niva)));
-    const ut = cleanEvent(kropp);
-    assert.deepEqual(ut.fanLevelUp, { from: niva - 1, to: niva },
-      `molnet kastade stämpeln för nivå ${niva}`);
-    assert.equal(ut.fanClubLevel, niva, 'molnet tappade fanClubLevel — klienten läser aldrig stämpeln');
-    assert.equal(ut.type, 'fanlevelup', 'typen överlevde inte cleanEvent');
-  }
-});
-
-test('molnet kastar en stämpel som inte är en höjning', () => {
-  // Vakten at andra hallet: skickar bryggan nagon gang skrap ska molnet slanga det, inte vidare-
-  // befordra en falsk hojning till widgeten.
-  const { cleanEvent } = require(path.join(ROT, 'server/event-bus.js'));
-  const kropp = N.cloudEvent('e0', 'fanlevelup', N.fansUppgradering(uppgradering(32)));
-  for (const trasig of [{ from: 5, to: 5 }, { from: 9, to: 3 }, { from: 0, to: 1 }, null]) {
-    const ut = cleanEvent({ ...kropp, fanLevelUp: trasig });
-    assert.equal(ut.fanLevelUp, undefined, `molnet slapp igenom ${JSON.stringify(trasig)}`);
-  }
-});
+// MOLNSIDANS KONTRAKTSPROV LIGGER I server/test/fanlevelup-kontrakt.test.js, INTE HAR.
+//
+// Forsta versionen anropade cleanEvent harifran och foll i CI aven nar logiken var ratt:
+// jobbet test-tiktok-bridge kor `npm ci` BARA i tiktok-bridge/, sa server/node_modules finns
+// inte och require('../../server/event-bus.js') drar in redis som inte ar installerat. Lokalt
+// gick det for att beroendena lag pa plats. Samma falla som electron-app/tiktok-service.js i
+// #308 — ett prov far bara ladda det dess EGET jobb installerar.
+//
+// Faltlogiken provas har (inga beroenden), molnkontraktet dar (har server-beroendena).
 
 test('fanLevelUp överlever cloudEvent', () => {
   // Samma bugg som fanClubLevel och emote: faltet raknas fram, ser ratt ut, och stryks i molnbodyn.
