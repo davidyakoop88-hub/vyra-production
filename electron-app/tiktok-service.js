@@ -2,53 +2,7 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
-function text(value, max = 500) {
-  return String(value ?? '').slice(0, max);
-}
-
-function number(value, max = Number.MAX_SAFE_INTEGER) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, Math.min(max, parsed)) : 0;
-}
-
-// Mirrors tiktok-bridge/normalizer.js's profileImageOf: take the largest avatar TikTok offers
-// (avatarLarger 1080, avatarMedium 720) before falling back to profilePictureUrl, whose variant is
-// unspecified, and to avatarThumb, which is only 100x100. Keeping web and desktop identical here
-// matters because both feed the same widgets.
-function avatarOf(data) {
-  const user = data?.user || data;
-  return text(
-    user?.avatarLarge?.urlList?.[0] || user?.avatarLarge?.urlListList?.[0]
-    || user?.avatarLarger?.urlList?.[0] || user?.avatarLarger?.urlListList?.[0]
-    || user?.avatarMedium?.urlList?.[0] || user?.avatarMedium?.urlListList?.[0]
-    || data?.profilePictureUrl || user?.profilePictureUrl
-    || user?.avatarThumb?.urlList?.[0] || user?.avatarThumb?.urlListList?.[0]
-    || '', 2048);
-}
-
-// userIdentity (isModeratorOfAnchor/isSubscriberOfAnchor/isFollowerOfAnchor) only exists on chat,
-// gift and emote messages in TikTok's protocol — join/like/follow/share/member messages don't carry
-// it, so those event types always report false here regardless of the viewer's real status. Mirrors
-// tiktok-bridge/normalizer.js's identityOf.
-function identityOf(data) {
-  const id = data?.userIdentity;
-  return { isModerator: !!id?.isModeratorOfAnchor, isFollower: !!id?.isFollowerOfAnchor, isSubscriber: !!id?.isSubscriberOfAnchor };
-}
-
-function baseUser(data) {
-  const user = data?.user || data;
-  return {
-    username: text(data?.uniqueId || data?.user?.uniqueId, 100),
-    name: text(data?.nickname || data?.user?.nickname || data?.uniqueId, 500),
-    profileImage: avatarOf(data),
-    // TikTok's "Enigma" mode lets a viewer browse/gift anonymously (mask on). Surfacing this lets
-    // Events optionally exclude them, same as tiktok-live-proto exposes it on every User struct.
-    isAnonymous: !!(data?.user?.enigmaInfo?.isEnigmaMaskOn || data?.enigmaInfo?.isEnigmaMaskOn),
-    ...identityOf(data),
-    // "Team" level in TikTok's own UI = the viewer's Fan Club level with this streamer specifically.
-    fanClubLevel: number(user?.fansClub?.data?.level)
-  };
-}
+const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance } = require('./tiktok-fields');
 
 function eventKey(type, data, fields) {
   const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
@@ -129,6 +83,15 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         emote: text(emote?.emoteId, 160),
         giftImage: text(emote?.image?.urlList?.[0], 2048)
       }, data);
+    });
+    // GUARDIAN. Uppmatt i skarp sandning 2026-09-01: BARRAGE med subType 'guardian_entrance',
+    // atta event, alla fran samma person av ~59 tittare. Regeln delas MED BRYGGAN
+    // (normalizer.arGuardianEntrance) i stallet for att kopieras: tva kopior av "vad ar ett
+    // guardian-event" glider isar, och en delstrangssokning hade tant emblemet for TikToks gava
+    // "Guardian Wings". Molnvagen fick den i #304; utan raden nedan ar emblemet dott pa desktop.
+    connection.on(WebcastEvent.BARRAGE, data => {
+      if (!arGuardianEntrance(data)) return;
+      emit('guardian', baseUser(data), data);
     });
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => emit('battle', {
       scoreUs: number(data?.battleUsers?.[0]?.score || data?.scoreUs, 1e12),
