@@ -164,6 +164,8 @@ if (require.main === module) {
   let stopping = false;
   let criticalAlertSent = false;
   let aktuelltRum = null;
+  // Streamerns eget userId, hamtat med fetchRoomInfo vid connect. Se blocket dar det satts.
+  let mittAnkarId = '';
   const recentEventKeys = new Map();
   const proxyManager = createProxyManager();
   let currentProxy = null;
@@ -507,6 +509,13 @@ if (require.main === module) {
       if (!f.emote) return;          // utan id finns inget att lagga i valjaren
       sendEvent('subscriberemote', f, data);
     });
+    // TIKTOKS EGEN MVP-LISTA. LINK_MIC_ARMIES med triggerReason 2 (BATTLE_END) bar hela rankingen
+    // fardigraknad — med Boosting Glove inraknad, vilket klientens egen coin-summering inte kan
+    // veta. mvpFields returnerar null for allt annat an ett battle-slut med ett kant ankar-id.
+    connection.on(WebcastEvent.LINK_MIC_ARMIES, data => {
+      const mvp = N.mvpFields(data, mittAnkarId);
+      if (mvp) sendEvent('battle_mvp', mvp, data);
+    });
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
 
     connection.on(ControlEvent.DISCONNECTED, () => {
@@ -537,7 +546,7 @@ if (require.main === module) {
     if (inspelare.aktiv) {
       const onskade = inspelare.typer();
       const redanLyssnade = new Set(['CHAT', 'GIFT', 'LIKE', 'FOLLOW', 'SHARE', 'MEMBER',
-        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK', 'EMOTE',
+        'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK', 'EMOTE', 'LINK_MIC_ARMIES',
         // BARRAGE tillkom med guardian_entrance: utan raden lagger inspelaren en ANDRA lyssnare
         // pa en typ bryggan redan prenumererar pa, och varje BARRAGE hamnar dubbelt i filen.
         'BARRAGE']);
@@ -567,6 +576,25 @@ if (require.main === module) {
         console.log(`[bridge] Ansluten till @${username} (room ${state.roomId}) via ${currentProxy || 'ingen proxy'}. Vidarebefordrar events till ${SERVER}. Proxy-status: ${JSON.stringify(proxyManager.stats())}`);
         reportToParent('connected', { roomId: state.roomId });
         aktuelltRum = String(state.roomId);
+        // ANKAR-ID FOR BATTLE MVP. normalizer.armeMvp kan inte avgora vilket lag som ar VART utan
+        // streamerns eget userId — och det finns INTE i nagot event. Listan i LINK_MIC_ARMIES bar
+        // BADA sidorna, och fel val hyllar motstandarens tittare i var egen overlay. Uppmatt
+        // 2026-09-02: fetchRoomInfo().data.owner.id_str lag i teamUser[].userIdStr for vart lag.
+        //
+        // Hamtas EN gang per anslutning och cachas. Misslyckas den blir mittAnkarId tomt, och da
+        // returnerar armeMvp null — widgeten ar TYST i stallet for att gissa fel person.
+        // Promise.resolve().then() OCH INTE ett rakt anrop: ett bibliotek utan fetchRoomInfo (eller
+        // en synkron krasch i den) hade annars kastat MITT I connect-callbacken, brutit resten av
+        // uppstarten och utlost en ateranslutning. Uppmatt i tiktok-bridge/test/flagga-av-entry.js:
+        // bryggan skickade da TVA event i stallet for ett, eftersom den anslot om och sande igen.
+        // En extraupplysning far aldrig kunna sanka anslutningen.
+        Promise.resolve()
+          .then(() => connection.fetchRoomInfo?.())
+          .then(info => {
+            mittAnkarId = String(info?.data?.owner?.id_str || info?.data?.owner?.id || '');
+            if (!mittAnkarId) console.log('[bridge] Kunde inte lasa ankar-id — Battle MVP blir tyst.');
+          })
+          .catch(err => console.log(`[bridge] fetchRoomInfo misslyckades (${err.message}) — Battle MVP blir tyst.`));
         livscykel.startad(aktuelltRum);
         postJson('/api/connect', { username, roomId: state.roomId, source: 'tiktok-bridge' });
         if (shouldSendSuccessAlert(attemptsBeforeSuccess)) {
