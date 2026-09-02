@@ -152,9 +152,16 @@ test('appx-blocket bär allt UTOM identiteten', () => {
 
 test('NSIS-vägen är orörd — Store-arbetet får inte ta med sig .exe-bygget', () => {
   assert.equal(pkg.build.win.target, 'nsis', 'det befintliga .exe-målet ska stå kvar');
+  // tiktok-fields.js tillkom 2026-09-02 (#308): faltlogiken bruten ur tiktok-service.js for att
+  // kunna provas utan tiktok-live-connector. Den MASTE sta i build.files — en require till en fil
+  // som inte packas in kraschar appen vid START, inte i ett prov.
+  //
+  // Listan ar hardkodad MED FLIT har: vakten finns for att fanga att Store-arbetet av misstag rors
+  // vid NSIS-vagen, och da ar en handskriven forvantan hela poangen. Priset ar att den maste
+  // uppdateras nar paketlistan avsiktligt andras — som nu.
   assert.deepEqual(pkg.build.files,
-    ['main.js', 'local-server.js', 'tiktok-service.js', 'obs-service.js', 'updater.js',
-     'update-config.json', 'splash.html', 'icon.ico'],
+    ['main.js', 'local-server.js', 'tiktok-service.js', 'tiktok-fields.js', 'obs-service.js',
+     'updater.js', 'update-config.json', 'splash.html', 'icon.ico'],
     'paketlistan för appen ska vara oförändrad');
 });
 
