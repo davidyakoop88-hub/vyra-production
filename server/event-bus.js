@@ -9,7 +9,7 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian','subscriberemote']);
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian','subscriberemote','fanlevelup']);
 const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 

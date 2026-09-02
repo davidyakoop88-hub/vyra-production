@@ -179,7 +179,7 @@ function arBoostFonster(f){
   return !!f && f.multiplier>=2 && (f.steg===0 || (f.steg===2&&(f.resultat===0||f.resultat===2)));
 }
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),emote:text(fields.emote,160),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -237,7 +237,7 @@ function battleProbe(data){
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote']);
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup']);
 
 // EMOTES — formen kommer ur bibliotekets egna typer, inte ur en gissning
 // (tiktok-live-proto/dist/node/v3.d.ts):
@@ -267,6 +267,37 @@ function emoteFields(data){
     giftImage:text(bild?.urlList?.[0]||bild?.imageUrl||'',1200)
   };
 }
+// FANS_UPGRADE — TikToks EGEN nivahojning, uppmatt 2026-09-01 (fem exemplar, nivaer 32/18/10/19/11).
+//
+//   subType  'fans_upgrade'
+//   key      pm_mt_fan_live_upgrade_bullet
+//   pattern  "reached member Lv.{0:string}"
+//   pieces[0].stringValue = NYA nivan
+//
+// VARFOR DEN AR BATTRE AN SERVERNS JAMFORELSE. server/viewer-levels.js stamplar en hojning genom
+// att jamfora mot senast sedda niva i Postgres, och kraver darfor att personen setts TVA ganger.
+// Ses nagon forsta gangen pa sin nya niva lars den bara in och hojningen forsvinner tyst — det ar
+// exakt det som hande natten 2026-09-01: fem hojningar intraffade, noll alerts.
+//
+// FRAN-NIVAN AR till-1, OCH DET AR EN ANTAGANDE. TikTok sager bara vilken niva som natts, aldrig
+// varifran. till-1 ar samma standard som klientens egen trigger redan anvander
+// (media.js triggerFanLevelUp: `fran && fran<till ? fran : Math.max(1,till-1)`), sa animationen
+// blir densamma som forut. En hojning over flera nivaer visas alltsa som ett steg.
+//
+// NIVA 1 GER INGEN STAMPEL. Molnets hojning() kraver fran >= 1, och for niva 1 blir fran 0. Battre
+// att inte skicka an att skicka nagot molnet tyst slanger.
+//
+// fanClubLevel SATTS OCKSA, och det ar inte overflodigt: fan-level-session.js hantera() borjar med
+// `const niva = nivaAv(e); if (!niva) return;` och lamnar alltsa direkt om eventet saknar niva —
+// utan faltet hade stampeln aldrig lasts.
+function fansUppgradering(data){
+  if(String(data?.subType||data?.scene||'').trim().toLowerCase()!=='fans_upgrade') return null;
+  const raa=data?.content?.pieces?.[0]?.stringValue;
+  const till=Number(raa);
+  if(!Number.isInteger(till)||till<2||till>50) return null;
+  if(String(raa).trim()==='') return null;
+  return{...baseUser(data),fanClubLevel:till,fanLevelUp:{from:till-1,to:till}};
+}
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
 // GUARDIAN — UPPMATT, INTE GISSAD (2026-09-01, inspelning med VYRA_INSPELNING_TYPER=alla).
@@ -284,4 +315,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields};
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering};
