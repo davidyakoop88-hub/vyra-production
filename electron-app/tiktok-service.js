@@ -2,7 +2,7 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
-const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance } = require('./tiktok-fields');
+const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering } = require('./tiktok-fields');
 
 function eventKey(type, data, fields) {
   const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
@@ -89,9 +89,16 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     // (normalizer.arGuardianEntrance) i stallet for att kopieras: tva kopior av "vad ar ett
     // guardian-event" glider isar, och en delstrangssokning hade tant emblemet for TikToks gava
     // "Guardian Wings". Molnvagen fick den i #304; utan raden nedan ar emblemet dott pa desktop.
+    // EN lyssnare pa BARRAGE som grenar pa subType — samma form som bryggan (tiktok-bridge/
+    // bridge.js). guardian_shield_card_used ar medvetet utelamnad: annan handelse, och dess
+    // user-objekt ar tomt.
     connection.on(WebcastEvent.BARRAGE, data => {
-      if (!arGuardianEntrance(data)) return;
-      emit('guardian', baseUser(data), data);
+      if (arGuardianEntrance(data)) {
+        emit('guardian', baseUser(data), data);
+        return;
+      }
+      const upp = fansUppgradering(data);
+      if (upp) emit('fanlevelup', upp, data);
     });
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => emit('battle', {
       scoreUs: number(data?.battleUsers?.[0]?.score || data?.scoreUs, 1e12),

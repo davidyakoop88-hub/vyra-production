@@ -231,3 +231,82 @@ test('varje typ desktop skickar tas emot av molnet', () => {
   assert.deepEqual(foraldralosa, [],
     `desktop skickar typer molnet kastar: ${foraldralosa.join(', ')}`);
 });
+
+// ---- 7. fans_upgrade: samma regel, samma svar --------------------------------------------------
+
+test('desktops fansUppgradering ger samma svar som bryggans, indata för indata', () => {
+  // Andra kopierade regeln (efter arGuardianEntrance), av samma paketeringsskal. Provet ar priset:
+  // bada implementationerna korda mot samma tabell, inklusive de fem UPPMATTA nivaerna.
+  const upp = (niva, over = {}) => Object.assign({
+    subType: 'fans_upgrade',
+    content: { key: 'pm_mt_fan_live_upgrade_bullet', pieces: [{ type: 1, stringValue: String(niva) }] },
+    user: { displayId: 'lisa', nickname: 'Lisa' }
+  }, over);
+
+  const fall = [
+    ...[32, 18, 10, 19, 11].map(n => upp(n)),          // de fem uppmatta
+    upp(1), upp(2), upp(50), upp(51), upp(0),
+    upp(32, { subType: 'guardian_entrance' }),
+    upp(32, { subType: 'fans_entrance' }),
+    upp(32, { subType: 'guardian_shield_card_used' }),
+    { subType: 'fans_upgrade', content: {} },
+    {}, null, undefined
+  ];
+  // JAMFOR REGELNS BESLUT, inte hela objektet. De tva baseUser-implementationerna skiljer sig pa
+  // en punkt som ar ALDRE an den har andringen: bryggan satter `userId`, desktop gor det inte.
+  // Den skillnaden provas separat nedan sa den ar dokumenterad i stallet for dold — en deepEqual
+  // over hela objektet hade blandat ihop "reglerna ar oense" med "baseUser skiljer sig sedan forut".
+  const beslut = r => r && { fanClubLevel: r.fanClubLevel, fanLevelUp: r.fanLevelUp,
+    username: r.username, name: r.name };
+  for (const f of fall) {
+    assert.deepEqual(beslut(T.fansUppgradering(f)), beslut(N.fansUppgradering(f)),
+      `desktop och bryggan är oense om ${JSON.stringify(f && f.subType)} / ${JSON.stringify(f && f.content?.pieces?.[0]?.stringValue)}`);
+  }
+  // Och regeln maste saga JA nagon gang — annars ar likheten meningslos.
+  assert.equal(T.fansUppgradering(upp(32)).fanLevelUp.to, 32);
+  assert.equal(T.fansUppgradering(upp(1)), null, 'nivå 1 gav en stämpel molnet ändå kastar');
+});
+
+// ---- 8. paritet åt BÅDA hållen -----------------------------------------------------------------
+
+test('desktop har ALLA molnets persontyper — inte bara typer molnet accepterar', () => {
+  // Provet ovan ("varje typ desktop skickar tas emot av molnet") mater bara ENA riktningen. Den
+  // missar det omvanda felet: molnet far en ny typ och desktop halkar efter. Det hande direkt —
+  // #309 la till 'fanlevelup' i molnet, och utan den har vakten hade desktopvagen tigit om
+  // nivahojningar medan molnvagen visade dem, utan att nagot prov sagt ifran.
+  //
+  // RUMSTYPER UNDANTAS med flit: viewer/battle/glove beskriver RUMMET och har ingen avsandare.
+  // Desktop skickar dem redan pa annat satt, och de hor inte till den har jamforelsen.
+  const index = las('server/index.js');
+  const alla = new Set([...index.match(/TIKTOK_INGEST_TYPES\s*=\s*new Set\(\[([^\]]*)\]/)[1]
+    .matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+  const rum = new Set([...index.match(/TIKTOK_ROOM_TYPES\s*=\s*new Set\(\[([^\]]*)\]/)[1]
+    .matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+
+  const skickade = new Set([...DESKTOP.matchAll(/emit\('([a-z_]+)'/g)].map(x => x[1]));
+  // Molnets alias: bryggan/desktop skickar 'likes' och 'member', molnet lagrar dem som
+  // 'like'/'viewer'. En typ som desktop skickar under sitt raa namn raknas som tackt.
+  const bus = las('server/event-bus.js');
+  const alias = Object.fromEntries([...bus.match(/TYPE_ALIASES\s*=\s*\{([^}]*)\}/)[1]
+    .matchAll(/([a-z]+)\s*:\s*'([a-z]+)'/g)].map(x => [x[1], x[2]]));
+  for (const t of [...skickade]) if (alias[t]) skickade.add(alias[t]);
+
+  const saknas = [...alla].filter(t => !rum.has(t) && t !== 'chat' && !skickade.has(t)).sort();
+  assert.deepEqual(saknas, [],
+    `molnet tar emot dessa persontyper men desktop skickar dem aldrig: ${saknas.join(', ')} `
+    + '— widgeten fungerar på molnvägen och är tyst på desktopvägen');
+});
+
+test('känd och dokumenterad skillnad: desktop sätter inte userId', () => {
+  // AKTUELL AVVIKELSE, inte ett fel som infors har — den fanns fore #309. Molnets cleanEvent laser
+  // `userId`, sa desktopvagens event saknar det faltet. Provet finns for att skillnaden ska vara
+  // SYNLIG och inte vaxa: forsvinner den (desktop borjar satta userId) faller provet och nagon far
+  // ta bort det medvetet. Blir det fler skillnader syns de har.
+  const p = { subType: 'fans_upgrade', content: { pieces: [{ stringValue: '32' }] },
+    user: { displayId: 'lisa', nickname: 'Lisa' } };
+  const d = T.fansUppgradering(p), m = N.fansUppgradering(p);
+  const bara = (a, b) => Object.keys(b).filter(k => !(k in a));
+  assert.deepEqual(bara(d, m), ['userId'],
+    `oväntade fält skiljer desktop från bryggan: ${bara(d, m).join(', ')}`);
+  assert.deepEqual(bara(m, d), [], 'desktop har fält bryggan saknar');
+});

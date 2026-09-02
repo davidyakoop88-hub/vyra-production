@@ -20,11 +20,12 @@
 // ROTT NU: normalizer.js exporterar ingen sådan regel.
 const test = require('node:test'), assert = require('node:assert/strict');
 const N = require('../normalizer.js');
+const fs = require('fs'), path = require('path');
 
 // Molnets egen lista, server/index.js:72. Kopierad med flit: bryts kontraktet ska det här provet
 // falla, inte tyst följa med.
 const MOLNETS_TYPER = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member', 'subscribe',
-  'viewer', 'battle', 'guardian', 'subscriberemote'];
+  'viewer', 'battle', 'guardian', 'subscriberemote', 'fanlevelup'];
 
 test('regeln finns och är en funktion', () => {
   assert.equal(typeof N.tillMolnet, 'function', 'normalizer.js exporterar ingen tillMolnet-regel');
@@ -63,7 +64,6 @@ test('en okänd typ stannar hemma', () => {
 
 // Vitlistan är värdelös om bridge.js inte använder den. Källkodskontroll: bridge.js ansluter till
 // TikTok och går inte att köra i en testprocess.
-const fs = require('fs'), path = require('path');
 const bridgeKod = fs.readFileSync(path.join(__dirname, '..', 'bridge.js'), 'utf8')
   .split(/\r?\n/).map(r => r.replace(/\/\/[^\r\n]*/, '')).join('\n');
 
@@ -92,4 +92,61 @@ test('den lokala postningen filtreras inte', () => {
   assert.ok(rad, 'hittade ingen lokal postning');
   assert.equal(/tillMolnet/.test(rad), false,
     'filtret hamnade på den lokala vägen — chattwidgetar i OBS hade slutat få händelser');
+});
+
+// ---- vakt: ett prov far bara ladda det dess EGET CI-jobb installerar -----------------------------
+//
+// Jobbet `test-tiktok-bridge` kor `npm ci` BARA i tiktok-bridge/ (ci.yml:314-328). Ett prov harifran
+// som require:ar nagot utanfor katalogen far alltsa inte MALETS beroenden installerade, och faller i
+// CI aven nar logiken ar ratt — det varsta slaget av rott: det ser ut som en bugg i koden och ar en
+// bugg i provet.
+//
+// Uppmatt TVA ganger natten 2026-09-01→02: electron-app/tiktok-service.js (#308, drar in
+// tiktok-live-connector) och server/event-bus.js (#309, drar in redis). Bada passerade lokalt
+// eftersom beroendena lag pa plats dar.
+//
+// REGELN AR EN ALLOWLIST, INTE ETT FORBUD. Ett kors-paket-require gar bra om malet ar BEROENDEFRITT
+// — server/security.js drar bara in node:crypto och har fungerat i CI hela tiden. Varje nytt
+// undantag ska darfor vara ett medvetet beslut med ett skal, inte nagot som glider in.
+//
+// KOMMENTARER RAKNAS INTE. Forsta versionen av den har vakten foll pa sin egen dokumentation: en
+// kommentar som NAMNDE ett forbjudet require lastes som ett require. En vakt som inte skiljer kod
+// fran text mater fel sak.
+//
+// readFileSync ar OK och traffas inte: att LASA en fil kraver inga beroenden.
+const KORS_PAKET_TILLATNA = new Map([
+  ['../../server/security', 'drar bara in node:crypto — beroendefri']
+]);
+
+test('inget prov i tiktok-bridge/test laddar kod med obetalda beroenden', () => {
+  const utanKommentarer = k => k
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n').map(r => r.replace(/\/\/.*$/, '')).join('\n');
+
+  const trasiga = [];
+  for (const fil of fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js'))) {
+    const kod = utanKommentarer(fs.readFileSync(path.join(__dirname, fil), 'utf8'));
+    for (const [, vag] of kod.matchAll(/require\(\s*['"](\.\.\/\.\.\/[^'"]+)['"]\s*\)/g)) {
+      const nyckel = vag.replace(/\.js$/, '');
+      if (!KORS_PAKET_TILLATNA.has(nyckel)) trasiga.push(`${fil} -> ${vag}`);
+    }
+  }
+  assert.deepEqual(trasiga, [],
+    'dessa require:ar når utanför tiktok-bridge/ utan att stå i allowlistan:\n  ' + trasiga.join('\n  '));
+});
+
+test('allowlistans undantag är fortfarande beroendefria', () => {
+  // Ett undantag som SLUTAR vara beroendefritt ar en tickande bomb: provet gar gront lokalt och
+  // faller i CI nasta gang nagon ror filen. Vakten laser malet och kraver att varje require dar
+  // ar en node-inbyggd modul.
+  for (const [vag, skal] of KORS_PAKET_TILLATNA) {
+    const fil = path.join(__dirname, vag + '.js');
+    assert.ok(fs.existsSync(fil), `allowlistan pekar på en fil som inte finns: ${vag}`);
+    const kod = fs.readFileSync(fil, 'utf8');
+    const beroenden = [...kod.matchAll(/require\(\s*['"]([^'".][^'"]*)['"]\s*\)/g)]
+      .map(m => m[1])
+      .filter(m => !require('module').isBuiltin(m.replace(/^node:/, '')));
+    assert.deepEqual(beroenden, [],
+      `${vag} är inte längre beroendefri (${skal}) — den drar in: ${beroenden.join(', ')}`);
+  }
 });

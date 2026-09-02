@@ -471,9 +471,23 @@ if (require.main === module) {
        ANVANDARNAMNET KOMMER FRAN displayId. BARRAGE-payloaden saknar uniqueId — uppmatt 0 av 1333
        event — och baseUser faller redan tillbaka pa displayId. Utan det namnet avvisar molnets
        validateTikTokIngestPayload eventet med 400. */
+    // EN lyssnare pa BARRAGE som grenar pa subType — inte en per subtyp. Uppmatta subtyper
+    // 2026-09-01: fans_entrance 34, guardian_entrance 17, user_level_entrance 11, fans_upgrade 5,
+    // guardian_shield_card_used 1.
+    //
+    // guardian_shield_card_used ar MEDVETET UTELAMNAD: den ar en annan handelse (skold aktiverad,
+    // inte en entre), och dess `user`-objekt ar TOMT — nickname hashar till sha256(''). Personens
+    // namn finns bara som fritext i content.pieces[0]. Ett event darifran hade avvisats av molnet
+    // med 400 for saknat username.
     connection.on(WebcastEvent.BARRAGE, data => {
-      if (!N.arGuardianEntrance(data)) return;
-      sendEvent('guardian', { ...N.baseUser(data) }, data);
+      if (N.arGuardianEntrance(data)) {
+        sendEvent('guardian', { ...N.baseUser(data) }, data);
+        return;
+      }
+      // TikToks EGEN nivahojning. Bar molnets befintliga fanLevelUp-stampel {from,to}, som
+      // event-bus.js redan validerar och fan-level-session.js redan laser — klienten rors inte.
+      const upp = N.fansUppgradering(data);
+      if (upp) sendEvent('fanlevelup', upp, data);
     });
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
     // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.

@@ -173,7 +173,7 @@ function startLocalServer(root, port = 4173, options = {}) {
   // natt. tests/desktop-paritet.test.js provar numera REGELN — molnets typer minus chat — i
   // stallet for att jamfora mot en hardkodad kopia som kan glida igen.
   const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
-    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote']);
+    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote', 'fanlevelup']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
