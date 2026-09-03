@@ -136,3 +136,76 @@ test('ett uttryckligt mvpShowName:false doljer fortfarande namnet', { skip }, as
   assert.ok(!m.namn || !m.namn.synlig,
     'en sparad layout som medvetet stangt av namnet ska inte fa det patvingat tillbaka');
 });
+
+// ---- ALLA SJUTTON DESIGNERNA: namnet far aldrig spilla ut ur widgeten -------------------------
+//
+// Filen hette fran borjan bara "ramar", men fran 2026-09-03 visar ALLA sjutton Battle MVP-designer
+// vinnarens namn, och da galler klippkravet alla. Provet ligger kvar HAR i stallet for i en ny fil
+// med flit: browsersviten kor 62 filer parallellt med varsin webblasare och ligger pa gransen — en
+// ny fil kan tippa den (se tests/browser/README eller CI-historiken for #300).
+//
+// VARFOR PROVET FINNS. Ramgrenen klippte redan namnet (.mvpf-row strong: nowrap/hidden/ellipsis
+// inuti en .mvpf-plate med overflow:hidden). Stilmodellerna gjorde det INTE. Sa lange namnet var
+// slackt for dem spelade det ingen roll; nar det tandes blev asymmetrin ett fel pa skarmen.
+//
+// UPPMATT 2026-09-03 i riktig Chromium, fore fixen: ett obrutet nickname pa 48 tecken gav ett h2
+// pa 475 px i en 192 px lada — 111 px ut at vanster och 171 px ut at hoger, rakt over sandningen.
+//
+// NAMNET MASTE VARA OBRUTET. Ett testnamn med mellanslag radbryter i stallet for att spilla, och
+// da ar provet gront pa trasig CSS — forsta versionen av det har provet gjorde precis det misstaget.
+// Riktiga TikTok-nick ar ofta ett enda ord, och bryggan slapper igenom 120 tecken
+// (tiktok-bridge/normalizer.js: text(b?.nickname,120)).
+const LANGT_NAMN = 'Karleksbomben_MegaGifterXOXO_2026_bastasupportern';
+
+test('inget Battle MVP-namn spiller ut ur sin widget', { skip, timeout: 180000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+
+  const matt = await page.evaluate((namn) => {
+    const V = window.VyraWidgets;
+    const nycklar = [
+      ...Object.keys(V.variants('battlemvp.style')).map(s => ['catalog:battlemvp:' + s, '.mvp-copy h2']),
+      ...Object.keys(V.variants('battlemvp.frame')).map(f => ['catalog:battlemvp:frame:' + f, '.mvpf-row strong']),
+    ];
+    const ut = [];
+    for (const [key, valj] of nycklar) {
+      state.widgets.length = 0;
+      const w = V.create(key);
+      w.x = 24; w.y = 60; w.mvpName = namn;
+      state.widgets.push(w); selected = w.id; render();
+      const box = document.querySelector(`[data-id="${w.id}"]`);
+      const el = box && box.querySelector(valj);
+      if (!el) { ut.push({ key, fel: 'namnelementet finns inte i DOM' }); continue }
+      const bb = box.getBoundingClientRect(), eb = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      ut.push({ key,
+        // Positivt tal = texten sticker ut utanfor widgetens egen låda.
+        spillVanster: Math.round(bb.left - eb.left),
+        spillHoger: Math.round(eb.right - bb.right),
+        klipp: `${cs.whiteSpace}/${cs.overflow}/${cs.textOverflow}`,
+        synlig: eb.width > 0 && eb.height > 0 && cs.display !== 'none' });
+    }
+    return ut;
+  }, LANGT_NAMN);
+  await page.close();
+
+  assert.equal(matt.length, 17, `matte ${matt.length} designer, inte 17`);
+  assert.deepEqual(matt.filter(m => m.fel), [], 'namnelement saknas: ' + JSON.stringify(matt.filter(m => m.fel)));
+
+  const spiller = matt.filter(m => m.spillVanster > 1 || m.spillHoger > 1);
+  assert.deepEqual(spiller, [],
+    'namnet spiller ut ur widgeten pa ' + spiller.length + ' design(er): '
+    + spiller.map(m => `${m.key} (${m.spillVanster} px vanster, ${m.spillHoger} px hoger)`).join(', ')
+    + '. Ett langt nickname maste klippas med ellips, inte ritas over sandningen.');
+
+  const oklippta = matt.filter(m => m.klipp !== 'nowrap/hidden/ellipsis');
+  assert.deepEqual(oklippta, [],
+    'dessa designer klipper inte namnet: '
+    + oklippta.map(m => `${m.key} [${m.klipp}]`).join(', '));
+
+  assert.deepEqual(matt.filter(m => !m.synlig), [],
+    'namnet ar inte synligt pa: ' + matt.filter(m => !m.synlig).map(m => m.key).join(', '));
+});
