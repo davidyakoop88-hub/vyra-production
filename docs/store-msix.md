@@ -49,6 +49,14 @@ invändning.
 Värdena är inte hemligheter — de står i klartext i varje publicerat pakets manifest — men de är
 miljöberoende, så de matas via miljön och `store-identitet.json` är gitignorerad.
 
+### Paketets visningsnamn måste vara ett reserverat namn
+
+Partner Center avvisade det första paketet 2026-09-03: *"This package's manifest
+(Package/Properties/DisplayName) uses a display name that you have not reserved: VYRA"*. Namnet
+**VYRA** är upptaget av någon annan — det reserverade namnet är **VYRA Studio**. Därför står
+`appx.displayName: "VYRA Studio"` i `electron-app/package.json`, medan `productName` (NSIS/.exe) är
+orört. Reserveras fler namn i Partner Center → *Manage app names* får värdet bytas, annars inte.
+
 ## 2. Bygget
 
 ```bash
