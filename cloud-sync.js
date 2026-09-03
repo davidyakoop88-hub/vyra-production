@@ -7,6 +7,20 @@
     metaKey=id=>`vyra-cloud-sync-meta:${id}`,queueKey=id=>`vyra-cloud-sync-queue:${id}`,
     backupKey=id=>`vyra-session-backup:${id}`,EXTRA=['vyra-extras','vyra-action-event-v2','vyra-favorite-widgets','vyra-overlay-resolution','vyra-scene-settings-v1'];
   let workspace=null,overlay=null,lastLocal=localStorage.getItem('vyra-state'),timer=null,syncing=false,status='local',initialized=false;
+  /* koadLokal = den ögonblicksbild som ligger i kön eller är på väg upp. lastLocal = den servern
+     BEKRÄFTAT. Tidigare fanns bara lastLocal, och tickern satte den när en ändring UPPTÄCKTES —
+     alltså innan något skickats. Två fel följde av det:
+       1. Ändrade användaren något medan en push var i luften läste success-grenen om localStorage
+          och kallade den nya layouten "skickad", fast den aldrig skickats. Nästa tick såg ingen
+          skillnad, och ändringen var borta utan ett ljud. En dragning sparar många gånger i följd,
+          så det som svaldes var oftast SLUTPOSITIONEN — den enda som betyder något.
+       2. Misslyckades pushen var lastLocal redan framflyttad, så tickern kunde aldrig hitta
+          ändringen igen. Den låg kvar i kön och väntade på en räddning som bara kom vid nästa
+          initialize().
+     Uppmätt i produktion 2026-09-03: flytt av en widget gav version 1938 -> 1939 på under sex
+     sekunder; nästa sparning en stund senare gav INGENTING på sju sekunder med status 'synced',
+     och en explicit push() fick fram den direkt (1939 -> 1940). */
+  let koadLokal=null;
   // Sessionsgeneration: varje async operation fangar den fore sitt await och avbryter tyst om den
   // hunnit bytas. Utan den kan en PUT som startade som A landa - och skriva state - som B.
   let session=0,pendingChoice=null,tickTimer=null;
@@ -69,7 +83,7 @@
   // i den här sessionen (flaggas av layer-delete i media.js). En tom layout från t.ex. en
   // nyinloggad enhet utan lokal historik stoppas annars av serverns 409 emptyBlocked och
   // hamnar i den vanliga konfliktdialogen istället för att tyst nolla molnet.
-  async function push(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true&&data.widgets.length===0;
+  async function push(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const skickad=localStorage.getItem('vyra-state');const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true&&data.widgets.length===0;
       // Har anvandaren lagt tillbaka widgets ar avsikten "jag tomde layouten" inaktuell och
       // raderas direkt. Annars kunde en gammal avsikt ligga kvar och tillata en senare tomning
       // som ingen bett om.
@@ -77,7 +91,7 @@
       // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
       // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
       // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
-      if(emptied)delete root.__vyraUserEmptiedWidgets;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);const r=await push();
@@ -209,7 +223,7 @@
     const d=root.VyraAuth?.lastDetail?.();
     if(d?.workspaces?.length)initialize(d);
   },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>setStatus('offline'));
-  function startTicker(){if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal){lastLocal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
+  function startTicker(){if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
   // Mountningen far INTE hanga pa initialize() eller startTicker(): bada kraver ett workspace, och
