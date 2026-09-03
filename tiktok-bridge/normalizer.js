@@ -196,8 +196,47 @@ function battleTaskFields(data){
     steg:number(rot.taskMessageType,10),
     resultat:number(slut.result,10),
     battleId:text(rot.battleId||rot.battle_id||'',64),
-    fromUserId:text(uppdatering.fromUserId||'',160)
+    fromUserId:text(uppdatering.fromUserId||'',160),
+    // MEDDELANDETS EGEN TIDSSTAMPEL, i TikToks klocka. Utan den gar fordrojningen till
+    // fonstret bara att rakna mot Date.now() — och den lokala klockan lag 223 SEKUNDER fel i
+    // den uppmatta sandningen (median over 3798 handelser). Se boostFordrojningMs nedan.
+    skickatAt:number(rot.common?.createTime,Number.MAX_SAFE_INTEGER)
   };
+}
+
+/* HUR LANGE BRYGGAN SKA VANTA INNAN GLOVE-EVENTET SKICKAS.
+ *
+ * START-meddelandet bar bara KONFIGURATIONEN for multiplikatorfonstret; fonstret oppnar
+ * senare. UPPMATT 2026-09-02, tre battles i samma sandning: 150 734, 105 987 och 110 881 ms
+ * senare. Bryggan skickade boost-eventet i SAMMA millisekund som den tog emot START alla tre
+ * gangerna, sa overlayn lyste under hela upptakten och var redan forbrukad nar multiplikatorn
+ * borjade galla.
+ *
+ * RAKNAT INOM TIKTOKS EGEN KLOCKA — bada talen kommer ur SAMMA meddelande:
+ *
+ *     rewardStartTimestamp * 1000 - common.createTime
+ *
+ * Aldrig mot Date.now(). Inspelarens lokala klocka lag 222,8-231,5 s efter common.createTime
+ * over samtliga 3798 handelser, med liten spridning: en klockforskjutning, inte
+ * leveransfordrojning. Analysatorn gor precis det felet i dag och svarar darfor med fel TECKEN
+ * och fel storlek.
+ *
+ * SENTINELVARDET FANGAS FORST. battleTaskFields satter fonsterStart till MAX_SAFE_INTEGER nar
+ * faltet saknas; rakt in i en utrakning blir vantetiden ~285 miljoner ar — och en setTimeout
+ * med ett sa stort tal fyrar dessutom OMEDELBART i Node, alltsa samma bugg fast tyst.
+ *
+ * TAKET pa tio minuter gor skillnad pa "vanta lange" och "vanta for alltid". En battle ar ~5
+ * minuter; ett fonster som pastar sig oppna om ett dygn ar trasig data. */
+const BOOST_TAK_MS = 600000;
+
+function boostFordrojningMs(f){
+  if(!f||typeof f!=='object')return 0;
+  const start=Number(f.fonsterStart),skickat=Number(f.skickatAt);
+  if(!Number.isFinite(start)||start<=0||start>=Number.MAX_SAFE_INTEGER)return 0;
+  if(!Number.isFinite(skickat)||skickat<=0)return 0;
+  const ms=start*1000-skickat;
+  if(!Number.isFinite(ms)||ms<=0)return 0;
+  return Math.min(ms,BOOST_TAK_MS);
 }
 // Ett boost-event ska bara skickas nar det finns ett riktigt fonster att visa.
 //
@@ -393,4 +432,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
