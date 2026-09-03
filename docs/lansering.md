@@ -1,6 +1,6 @@
 # Vägen till publik lansering
 
-Tre saker skiljer VYRA från att öppnas för publik. **Alla tre kräver David** — ingen av dem går att
+**Läget 2026-09-03: punkt 1 är avklarad.** Två saker återstår. **Båda kräver David** — ingen av dem går att
 koda fram. Allt annat i backloggen är förbättringar som inte blockerar.
 
 Listan är kort med flit. En lanseringschecklista som växer till trettio punkter är en lista ingen
@@ -26,7 +26,30 @@ saker; den första säger att rören är kopplade, den andra att vatten kommer u
 
 **Vem:** David betalar, Claude läser av kedjan i produktion.
 
-**Status:** ⬜ inte gjord
+**Status:** ✅ **KLAR — avläst i produktion 2026-09-03**
+
+| Kontroll | Utfall |
+|---|---|
+| `plan` | `premium` |
+| `subscription.status` | `active` |
+| Skrivbordsgrinden (`main.js`) | villkoret släpper in kontot |
+| `trial_end` | `2026-07-27` — tre dagar efter start, stämmer med `trialDays: 3` |
+| `cancel_at_period_end` | `false` |
+
+TVÅ OBEROENDE KÄLLOR SÄGER SAMMA SAK. Appens `/api/workspaces/<id>/billing` och Stripes egen
+instrumentpanel: prenumerationen "VYRA Premium" är **Aktiv**, månadsvis, och två betalningar à
+**15,00 USD har lyckats** — 27 juli och 27 augusti. Nästa faktura 27 september.
+
+Det är starkare än checklistan krävde: webhook-kedjan har inte bara tagit emot en första
+betalning, den har behandlat **två förnyelser** i produktion.
+
+Avläst på Davids eget konto (workspace `8826f6d1`). Kontot är `isPlatformAdmin`, men det
+påverkar inte planen: `planFromPrice()` härleder `premium` ur att prenumerationens pris matchar
+`STRIPE_PRICE_MONTHLY`, och `isPlatformAdmin` förekommer inte i någon billing-logik.
+
+⚠️ **Vad detta INTE bevisar:** prenumerationen började i juli, så vägen *registrering →
+checkout → premium* för en helt ny kund är fortfarande oprövad. Steady state fungerar; första
+gången är inte mätt. Det var därför checklistan bad om ett nytt konto.
 
 ---
 
