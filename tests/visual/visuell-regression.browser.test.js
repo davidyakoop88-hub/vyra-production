@@ -50,12 +50,73 @@ const NYCKLAR = ALLA.filter(k => !utanReferens(k));
 let server, browser, sida;
 let skip = hoppaOver();
 
+// KVITTOT PÅ ATT UPPVÄRMNINGEN KÖRDES. Provet 'uppvärmningssessionen kördes' längst ned läser den
+// här — utan det kvittot går hela varmUpp() att ta bort utan att någonting faller, och då är
+// uppvärmningen en kommentar och inte en vakt.
+let uppvarmning = null;
+
+/* DEN FÖRSTA SESSIONEN KASTAS — SAMMA DISCIPLIN SOM REFERENSSKRIPTET REDAN HAR.
+ *
+ * UPPMÄTT 2026-08-19 (står i scripts/visuell-referens.js): den FÖRSTA webbläsarsessionen på en
+ * maskin skiljer sig systematiskt från alla senare. Två CI-körningar gav IDENTISKT utfall —
+ * `catalog:giftjar:heart` skilde exakt 115 av 87000 pixlar, inom exakt 232x34 px vid (13,254), med
+ * exakt kanalskillnad 18. Samma siffror två gånger är inte brus. En kall fontconfig-cache passar
+ * både fyndet och det avgränsade textbandet. Referensskriptet kör därför TRE sessioner och kastar
+ * den första.
+ *
+ * VAKTEN HADE INGEN SÅDAN. Motiveringen som stod i referensskriptet var att vakten "aldrig är det
+ * första som startar en webbläsare på maskinen" — men det är ett ANTAGANDE, och `npm run
+ * test:browser` kör 62 provfiler parallellt där VARJE fil startar sin egen webbläsare. Vilken som
+ * hinner först är inte bestämt någonstans.
+ *
+ * UPPMÄTT 2026-09-03, PR #313, tre körningar av test-client:
+ *   1. commit 0fc0e9b: 7 nycklar `battlemvp:frame:*` föll — ÄKTA, referenserna var föråldrade.
+ *   2. commit ce165c0 (samma kod, bara nya referensbilder): fyra HELT ANDRA nycklar föll —
+ *      `battlemvp:samurai` (1711 px i 51x58) och `socialgoal:followers:{1,2,4}:landscape`
+ *      (80-88 px i ~11x14). Alla fyra var GRÖNA i körning 1.
+ *   3. omkörning av EXAKT samma commit: grön.
+ * Lokalt fotograferades alla fyra byteidentiskt två körningar i rad. Samma form som giftjar-fyndet:
+ * liten lokal rand, bara i CI, inte reproducerbar lokalt — för lokalt är maskinen redan varm.
+ *
+ * EN ALTERNATIV FÖRKLARING PRÖVADES OCH FÖLL. fotografera() har två strategier ('fryst' och
+ * 'levande'), och en flipp mellan dem hade kunnat ge just den här sortens lilla skillnad. Prövat
+ * med CDP `Emulation.setCPUThrottlingRate {rate:20}`: alla fyra nycklarna stannade på 'fryst' och
+ * gav byteidentiska bilder i båda varven. Strategiflippen är alltså INTE orsaken.
+ *
+ * Uppvärmningen fotograferar en riktig nyckel, inte bara sidan: den ska värma SAMMA kodväg som
+ * mätningen sedan går igenom, annars värms inte det som räknas. */
+async function varmUpp(bas) {
+  const b = await startaWebblasare();
+  if (!b) return { kord: false, skal: 'ingen webblasare gick att starta' };
+  try {
+    const s = await b.newPage({ viewport: { width: 1400, height: 1000 } });
+    await s.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    await s.waitForFunction(() => typeof window.render === 'function', null,
+      { timeout: 30000, polling: 100 });
+    await s.waitForTimeout(4500);
+    await s.evaluate(V.RIGG);
+    const nyckel = NYCKLAR[0] || null;
+    const foto = nyckel ? await V.fotografera(s, nyckel, ALERTS) : null;
+    return { kord: true, nyckel,
+      fyllnad: foto && foto.fyllnad ? foto.fyllnad.procent : null,
+      fel: foto && foto.fel ? foto.fel : null };
+  } catch (e) {
+    return { kord: false, skal: String(e.message).slice(0, 160) };
+  } finally {
+    await b.close().catch(() => {});
+  }
+}
+
 test.before(async () => {
   if (skip) return;
+  // Servern först: uppvärmningen behöver samma sidor som mätningen.
+  server = await servera();
+  const basAdress = `http://127.0.0.1:${server.address().port}`;
+  uppvarmning = await varmUpp(basAdress);
+
   browser = await startaWebblasare();
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
-  server = await servera();
-  const bas = `http://127.0.0.1:${server.address().port}`;
+  const bas = basAdress;
   sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   sida.__kast = [];
   sida.on('pageerror', e => sida.__kast.push(String(e.message).slice(0, 120)));
@@ -86,6 +147,19 @@ test('vakten kör på den binär referenserna gjordes på', { skip }, () => {
   // själva verket är webbläsaren som bytts, och 181 röda prov pekar åt fel håll samtidigt.
   const krock = V.motorKrock();
   assert.equal(krock, null, krock || '');
+});
+
+test('uppvärmningssessionen kördes före mätningen', { skip }, () => {
+  // KVITTOT. Utan det här provet går varmUpp() att ta bort — eller att tyst falla på ett kast —
+  // utan att någonting säger ifrån, och då är uppvärmningen en kommentar i stället för en vakt.
+  // Uppmätt varför den finns: se resonemanget vid varmUpp().
+  assert.ok(uppvarmning, 'test.before körde aldrig uppvärmningen');
+  assert.equal(uppvarmning.kord, true,
+    `uppvärmningssessionen startade aldrig (${uppvarmning.skal || 'okänt skäl'}). Då mäts allt `
+    + 'nedan i maskinens FÖRSTA webbläsarsession, som är känt systematiskt annorlunda.');
+  assert.equal(uppvarmning.fel, null,
+    `uppvärmningen kunde inte fotografera ${uppvarmning.nyckel}: ${uppvarmning.fel}. Kodvägen som `
+    + 'mätningen går igenom blev då aldrig varm.');
 });
 
 // De typsnitt referensbilderna togs med. Vikterna ar de studio.css faktiskt begar pa rad 1.
@@ -256,7 +330,7 @@ test('tröskeln släpper igenom 6 av 255 och fäller 7 — på en enda pixel', {
 
 test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
   fs.mkdirSync(V.DIFFKAT, { recursive: true });
-  const saknas = [], avviker = [], trasiga = [], tomma = [];
+  const saknas = [], avviker = [], trasiga = [], tomma = [], oreproducerade = [];
 
   for (const nyckel of NYCKLAR) {
     const foto = await fotografera(nyckel);
@@ -277,6 +351,33 @@ test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
       [fs.readFileSync(ref).toString('base64'), foto.b64, V.KANALTROSKEL]);
     if (r.matt) { avviker.push(`${nyckel}: måtten ändrades, referens ${r.ref} mot ny ${r.ny}`); continue }
     if (r.olika) {
+      /* OMFOTOGRAFERA FÖRE DOMEN — en skillnad som inte kommer igen är inte en skillnad.
+       *
+       * Uppvärmningen ovan tar bort den kända orsaken till engångsavvikelser, men den bygger på en
+       * förklaring som bara är den bästa vi har. Det här steget kräver ingen förklaring alls: det
+       * frågar om skillnaden REPRODUCERAR.
+       *
+       * DET GÖMMER INGEN REGRESSION. En widget som faktiskt ritats om skiljer sig i BÅDA fotona —
+       * andra fotot jämförs mot samma referens, så en äkta ändring rapporteras precis som förut.
+       * Bara den som försvinner vid omtagning tystas, och den skrivs ut med sina siffror så att en
+       * stigande flackighet syns i loggen i stället för att glida undan.
+       *
+       * KOSTAR BARA FÖR DE NYCKLAR SOM FALLER. Gröna nycklar fotograferas fortfarande en gång, så
+       * en grön körning tar exakt lika lång tid som förut. */
+      const foto2 = await fotografera(nyckel);
+      const r2 = foto2.fel ? null
+        : await sida.evaluate(V.JAMFOR,
+          [fs.readFileSync(ref).toString('base64'), foto2.b64, V.KANALTROSKEL]);
+      if (r2 && !r2.matt && !r2.olika) {
+        const ruta1 = r.ruta ? `${r.ruta[2]}×${r.ruta[3]} px vid (${r.ruta[0]},${r.ruta[1]})` : 'okänd';
+        oreproducerade.push(`${nyckel}: skilde ${r.olika} px (inom ${ruta1}, största kanalskillnad `
+          + `${r.storsta}) i första fotot men var IDENTISK med referensen i det andra`);
+        continue;
+      }
+      // Andra fotot skilde också: då är det siffrorna DÄRIFRÅN som gäller, för det är den mätning
+      // som reproducerat. Föll omfotograferingen helt behåller vi den första.
+      if (r2 && !r2.matt) { r.olika = r2.olika; r.total = r2.total; r.ruta = r2.ruta;
+        r.storsta = r2.storsta; r.diff = r2.diff }
       const diffil = path.join(V.DIFFKAT, V.filnamn(nyckel));
       fs.writeFileSync(diffil, Buffer.from(r.diff, 'base64'));
       // Siffrorna före filnamnet, inte efter: diffbilden ligger på en löpare som försvinner, och i
@@ -288,6 +389,15 @@ test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
         + `(${(r.olika / r.total * 100).toFixed(2)} %), inom ${ruta}, största kanalskillnad `
         + `${r.storsta} av 255 — se ${path.relative(ROOT, diffil)}`);
     }
+  }
+
+  // SKRIVS ALLTID UT, ÄVEN NÄR PROVET ÄR GRÖNT. En tystad avvikelse som ingen ser är en vakt som
+  // slutat vakta utan att säga till. Står det noll här är sviten stabil; stiger siffran över tid
+  // är det ett fynd i sig, och då finns nycklarna och talen redan i loggen.
+  if (oreproducerade.length) {
+    console.log(`\n${oreproducerade.length} nyckel/nycklar skilde i FÖRSTA fotot men inte i det `
+      + `andra — behandlas som flackning, inte som skillnad:`);
+    oreproducerade.forEach(o => console.log('   ~ ' + o));
   }
 
   assert.deepEqual(trasiga, [], `kunde inte fotograferas:\n  ${trasiga.join('\n  ')}`);

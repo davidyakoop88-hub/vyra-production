@@ -302,7 +302,12 @@
       type: 'templateBattleMvp', x: 100, y: 90,
       width: PREMIUM_MVP_STYLES.has(v.style) ? 300 : 240, title: 'Battle MVP',
       mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpStyle: v.style,
-      mvpShowLabel: true, mvpShowName: false, mvpShowCoins: false,
+      // NAMNET PA, som for ramarna. Fram till 2026-09-03 stod det `false` har, och de tio
+      // stilmodellerna visade darfor bara ordet MVP — aldrig vem som faktiskt vann. Skillnaden
+      // mot ramarna (som star `true` sedan 195fc8a) var inte ett renderarfel utan just den har
+      // raden: vardet ar UTTRYCKLIGT, sa ett andrat standardvarde i media.js hade inte gjort
+      // nagon skillnad alls. Coins ar kvar avstangda — det ar en annan fraga.
+      mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
       mvpColor: v.color,
       mvpColor2: v.style === 'neon-cyber' ? '#ff3fd0' : v.style === 'diamond-elite' ? '#8d96a2' : '#ffe239',
       mvpDuration: PREMIUM_MVP_STYLES.has(v.style) ? 5 : 7

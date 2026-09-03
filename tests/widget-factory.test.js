@@ -23,7 +23,13 @@ const VOLATILE = ['id', 'placement', 'createdFrom'];
 // and it must not change. A newly created goal is a different question: it starts at zero, because
 // 658 followers and 43 hearts were demo figures that looked like real progress before anything had
 // happened. So these two fields are compared by the dedicated test below, not against the snapshot.
-const DELIBERATELY_CHANGED = ['goalCurrent', 'heartCurrent'];
+// mvpShowName joined this list on 2026-09-03. The snapshot records `false` for the ten Battle MVP
+// style models, because that is what the pre-factory literals produced — and the snapshot is
+// history, so it stays. What changed is the product decision: from 2026-09-03 every Battle MVP
+// design shows the winner's name, not just the seven frames. Measured under PR #313: the ten style
+// models rendered only the word MVP and never who actually won. Proven by name in the test below
+// and, at the render level, in tests/battle-mvp-display.test.js.
+const DELIBERATELY_CHANGED = ['goalCurrent', 'heartCurrent', 'mvpShowName'];
 const stripVolatile = w => {
   const copy = Object.assign({}, w);
   VOLATILE.concat(DELIBERATELY_CHANGED).forEach(k => delete copy[k]);
@@ -44,6 +50,23 @@ for (const row of CONTRACT) {
       'fältuppsättningen skiljer sig');
   });
 }
+
+// The dedicated test that pays for mvpShowName's seat in DELIBERATELY_CHANGED. Excluding a field
+// from the snapshot comparison removes a guard; this puts an equivalent one back, keyed to the
+// decision rather than to history. Without it the factory could stop setting the flag entirely and
+// nothing here would notice.
+test('varje Battle MVP-design visar vinnarens namn som standard', () => {
+  const battlemvp = CONTRACT.filter(r => r.key.startsWith('catalog:battlemvp:'));
+  assert.ok(battlemvp.length >= 4, `bara ${battlemvp.length} Battle MVP-kontrakt att prova`);
+  for (const row of battlemvp) {
+    const w = VyraWidgets.create(row.key, { values: row.values });
+    assert.equal(w.mvpShowName, true,
+      `${row.key} skapas med mvpShowName=${JSON.stringify(w.mvpShowName)} — den designen visar `
+      + 'aldrig vem som vann');
+    // Coins är en annan fråga och ska INTE ha följt med: den vore en tyst utvidgning av beslutet.
+    assert.equal(w.mvpShowCoins, false, `${row.key} slog på coins på köpet`);
+  }
+});
 
 test('snapshot och kontrakt beskriver samma katalog', () => {
   assert.deepEqual(Object.keys(SNAPSHOT).sort(), CONTRACT.map(r => r.key).sort());
