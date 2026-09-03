@@ -140,3 +140,71 @@ test('zoomknapparna fungerar fortfarande efter flytten', { skip }, async () => {
   assert.notEqual(efter, fore,
     `zoomnivan stod kvar pa ${fore} efter klick pa minus — knappen tappade sin bindning i flytten`);
 });
+
+// ---- widgetlistan far inte rulla i en liten ruta -----------------------------------------------
+//
+// "den hanger pa liten jag vill alla ska synas" — Davids skarmbild visade tre av fyra rader i en
+// hop hogst upp, med rullningslist, och darunder tomrum anda ner till "+ Lagg till widget".
+//
+// EN TIDIGARE FIX RACKTE INTE. Kommentaren i studio.css lat .live-layer-panel vaxa och panelen
+// blev full hojd — men listan INUTI bar kvar sitt eget tak (`.live-layer-list{max-height:112px}`).
+// Tomrummet flyttade alltsa bara in i panelen. UPPMATT 2026-09-03: panel 710 px, lista 112 px,
+// innehall 230 px (5 rader a 42). Provet nedan mater LISTAN, inte panelen, just darfor.
+//
+// ANDRA HALVAN AV KRAVET: raderna far inte strackas ut for att fylla ytan. Utan
+// `align-content:start` fordelar griden overskottet pa raderna — uppmatt 124 px per rad i stallet
+// for 42, alltsa fem utdragna kort. Bada halvorna provas: alla syns OCH ingen ar uppsvalld.
+async function medFemWidgets() {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+  await page.evaluate(() => {
+    state.widgets.length = 0;
+    // RIKTIGA katalognycklar, hamtade ur kravNycklar(). Forsta versionen gissade pa
+    // 'catalog:heartgoal' m.fl. — create() kastar pa en okand nyckel, och ett try/catch svalde det:
+    // bara tva av fem rader byggdes och provet matte nastan ingenting. Darfor kastar det nu vidare.
+    for (const nyckel of ['catalog:toplike:center', 'catalog:heartgoal:citrus',
+                          'catalog:giftfireworks:bloom', 'catalog:guardianemblem:1',
+                          'catalog:fanlevel:layout:badgereveal'])
+      state.widgets.push(window.VyraWidgets.create(nyckel));
+    render();
+  });
+  await page.waitForTimeout(900);
+  return page;
+}
+
+test('alla widgets i live-lagret syns utan att listan rullar', { skip, timeout: 120000 }, async () => {
+  const page = await medFemWidgets();
+  const m = await page.evaluate(() => {
+    const lista = document.querySelector('.live-layer-list');
+    const panel = document.querySelector('.live-layer-panel');
+    if (!lista || !panel) return { fel: 'live-lagerlistan eller panelen saknas' };
+    const rader = [...lista.querySelectorAll('article')];
+    const l = lista.getBoundingClientRect();
+    return {
+      antal: rader.length,
+      rullar: lista.scrollHeight > lista.clientHeight + 1,
+      utanfor: rader.filter(r => { const b = r.getBoundingClientRect();
+        return b.top < l.top - 1 || b.bottom > l.bottom + 1 }).length,
+      radhojder: rader.map(r => Math.round(r.getBoundingClientRect().height)),
+      listaHojd: Math.round(l.height),
+      panelHojd: Math.round(panel.getBoundingClientRect().height),
+    };
+  });
+  await page.close();
+  assert.ok(!m.fel, m.fel);
+  assert.ok(m.antal >= 4, `bara ${m.antal} rader byggdes — provet mater ingenting`);
+
+  assert.equal(m.rullar, false,
+    `listan rullar: ${m.listaHojd} px synligt i en panel pa ${m.panelHojd} px. Utrymmet finns — `
+    + 'det ar listans eget max-height som klammer den.');
+  assert.equal(m.utanfor, 0, `${m.utanfor} av ${m.antal} rader ligger utanfor listans synliga yta`);
+
+  // Uppsvallda rader "loser" ocksa rullningen — men ser fel ut. Naturlig radhojd ar ~42 px.
+  const svallda = m.radhojder.filter(h => h > 70);
+  assert.deepEqual(svallda, [],
+    `${svallda.length} rader ar utdragna (${m.radhojder.join(', ')} px). Griden fordelar `
+    + 'overskottet pa raderna — det kraver align-content:start.');
+});

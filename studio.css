@@ -1503,6 +1503,21 @@ body:has(.editor-shell) .elements{display:flex;flex-direction:column;min-height:
 body:has(.editor-shell) .elements>.live-layer-panel{flex:1 1 auto!important;min-height:0!important;
   max-height:none!important;display:flex;flex-direction:column}
 body:has(.editor-shell) .elements>.live-layer-add{flex:0 0 auto;margin-top:10px}
+/* ...OCH LISTAN MASTE FYLLA PANELEN, inte bara panelen fylla sidofaltet.
+   Fixen ovan lat .live-layer-panel vaxa, men listan inuti bar kvar sitt EGET tak pa rad 497
+   (`body:has(.editor-shell) .live-layer-list{max-height:112px}`). Panelen vaxte alltsa till
+   full hojd medan listan stod kvar pa 112 px — tomrummet flyttade bara in i panelen.
+   UPPMATT i Davids vy 2026-09-03: panel 710 px, lista 112 px, innehall 230 px (5 rader a 42 px).
+   Tre av fem rader syntes; resten kravde rullning i en ruta med 556 px oanvand yta under sig.
+
+   align-content:start ar inte kosmetik. Utan den fordelar griden overskottet pa RADERNA: uppmatt
+   124 px per rad i stallet for 42, alltsa fem utdragna kort som fyller sidofaltet. Med den ligger
+   raderna kvar i sin naturliga hojd och tomrummet hamnar sist, dar det hor hemma.
+
+   Specificiteten ar vald med flit: `.live-layer-panel>.live-layer-list` (0,3,1) slar rad 497:s
+   `.live-layer-list` (0,2,1) utan !important. */
+body:has(.editor-shell) .live-layer-panel>.live-layer-list{flex:1 1 auto;min-height:0;
+  max-height:none;align-content:start}
 
 /* LANKEN LIGGER UNDER VERKTYGSRADEN, INTE I DEN.
    Forsta forsoket la raden inuti .editor-toolbar med flex-wrap. UPPMATT UTFALL: arbetsytan ar
