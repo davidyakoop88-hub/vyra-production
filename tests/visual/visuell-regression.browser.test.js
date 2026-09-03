@@ -254,6 +254,47 @@ test('typsnitten referenserna togs med finns pa plats', { skip, timeout: 60000 }
   }
 });
 
+// TREDJE TYPSNITTSKONTROLLEN, och den kom av ett fel som kostade tva blockerade PR:er.
+//
+// Inter och Manrope laddas av sidan och gar att kontrollera med document.fonts. De tva tecken som
+// ligger UTANFOR dem ritas av ett SYSTEMTYPSNITT, och systemtypsnitt syns inte i document.fonts
+// alls — de kommer med runner-avbildningen.
+//
+// UPPMATT 2026-09-03: fyra nycklar foll med identiska pixelsiffror i tre korningar utan att en rad
+// kod rort dem. Skillnaden var maskinen: grona korningar hade Runner Image 20260819.586, roda hade
+// 20260828.587. De fyra ar de enda widgetar som ritar U+5200 (samuraiemblemet) respektive U+FF0B
+// (folj armalets ikon). Syskonet socialgoal:likes anvander U+2665 och foll INTE.
+//
+// Felet last som "dina widgetar gick sonder". Det har provet gor att det i stallet lases som
+// "typsnittet saknas", vilket ar vad det ar. ci.yml och visuell-referenser.yml installerar numera
+// fonts-noto-cjk explicit i bada floden.
+//
+// METODEN ar sjalvkalibrerande: ett tecken ur privatanvandningsomradet (U+E000) finns i INGET
+// typsnitt och ritas darfor alltid som en tofu-ruta. Finns CJK-typsnittet ar `刀` en riktig glyf i
+// helbredd och matter ANNORLUNDA an tofun. Saknas det blir bada tofu — och da ar bredderna lika.
+// Ingen hardkodad pixelsiffra behovs, och provet foljer med nar typsnittet byts.
+const CJK_TECKEN = [['U+5200 刀 (samuraiemblemet)', '刀'], ['U+FF0B ＋ (foljarmalet)', '＋']];
+
+test('systemtypsnittet for CJK-tecknen finns pa maskinen', { skip, timeout: 60000 }, async () => {
+  const m = await sida.evaluate((tecken) => {
+    const c = document.createElement('canvas').getContext('2d');
+    const matt = t => { c.font = '40px sans-serif'; return c.measureText(t).width };
+    // U+E000 ligger i privatanvandningsomradet och finns i INGET typsnitt — den ritas
+    // darfor garanterat som tofu och ger matningens nollpunkt. Skriven som KODPUNKT: en
+    // bokstavlig privatanvandningsglyf i kallkoden ar osynlig i diffar och overlever inte
+    // varje verktygskedja.
+    return { tofu: matt(String.fromCodePoint(0xE000)), bredder: tecken.map(([namn, t]) => [namn, matt(t)]) };
+  }, CJK_TECKEN);
+
+  for (const [namn, bredd] of m.bredder) {
+    assert.notEqual(bredd, m.tofu,
+      `${namn} mater exakt lika brett som en tom platshallarglyf (${bredd} px) — tecknet ritas `
+      + 'alltsa som en tofu-ruta, inte med ett riktigt CJK-typsnitt. Da faller '
+      + 'battlemvp:samurai och socialgoal:followers:* pa nagot de inte gjort sjalva. '
+      + 'Kontrollera steget "Visuell · pinnat CJK-typsnitt" i ci.yml.');
+  }
+});
+
 // TVA OLIKA KRAV, och de far inte blandas ihop.
 //
 // Lankraden ar den ENDA noden som bar access-adressen, och den ska inte FINNAS. De ovriga ar
