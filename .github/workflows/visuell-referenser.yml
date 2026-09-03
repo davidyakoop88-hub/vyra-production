@@ -132,9 +132,23 @@ jobs:
           # inte göra ett väntat hack till ett rött bygge.
           for i in 1 2 3; do
             if sudo apt-get install -y --no-install-recommends fonts-noto-cjk; then
-              fc-cache -f > /dev/null
+              # ATT INSTALLERA TYPSNITTET RACKER INTE. `playwright install-deps` drar redan in
+              # fonts-wqy-zenhei, fonts-ipafont-gothic och fonts-unifont — alla med CJK-tackning.
+              # Noto blir alltsa en FJARDE kandidat, och det ar fontconfig som avgor vilken som
+              # vinner. UPPMATT 2026-09-03: i tva korningar var typsnittet installerat och listat
+              # av fc-list, men Chromium ritade anda tofu — sa cachen maste kastas, inte bara
+              # byggas pa.
+              rm -rf "$HOME/.cache/fontconfig"
+              sudo fc-cache -f -r > /dev/null
+              fc-cache -f -r > /dev/null
               echo "CJK-typsnitt på plats:"
               fc-list | grep -i "noto sans cjk" | head -3
+              # MATNINGEN SOM GOR NASTA FEL SJALVFORKLARANDE: vilket typsnitt skulle faktiskt
+              # serva de tva tecken widgetarna anvander? Star det nagot annat an Noto CJK har,
+              # och vakten senare faller, ar orsaken utskriven i samma logg.
+              echo "fc-match for U+5200 och U+FF0B:"
+              fc-match "sans-serif:charset=5200" || true
+              fc-match "sans-serif:charset=ff0b" || true
               exit 0
             fi
             echo "Forsok $i gav upp — provar igen om 20 s"
