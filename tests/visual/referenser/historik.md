@@ -43,3 +43,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** De tio Battle MVP-stilmodellerna visar nu vinnarens namn, klippt med ellips som ramarna redan gjorde. Aterstaller det d0a7156 slackte 2026-08-11 (vid forsta releasen visades namnet alltid; 195fc8a aterstallde det bara for de sju ramarna). Uppmatt i riktig Chromium: sju av tio stilnycklar byter mått, tre (inferno, cyber, samurai) byter bara pixlar.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-03 — 1 referenser skrivna
+
+- **Motiv:** Tas om med fonts-noto-cjk explicit installerat i badaflodena, sa bilderna slutar bero pa vilken runner-avbildning GitHub tilldelar. Uppmatt: gron korning hade image 20260819.586, rod hade 20260828.587, och de fyra nycklar som foll ritar de enda tva tecknen utanfor Inter och Manrope (U+5200 och U+FF0B).
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
