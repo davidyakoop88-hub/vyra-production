@@ -25,7 +25,7 @@ const fs = require('fs'), path = require('path');
 // Molnets egen lista, server/index.js:72. Kopierad med flit: bryts kontraktet ska det här provet
 // falla, inte tyst följa med.
 const MOLNETS_TYPER = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member', 'subscribe',
-  'viewer', 'battle', 'guardian', 'subscriberemote', 'fanlevelup'];
+  'viewer', 'battle', 'guardian', 'subscriberemote', 'fanlevelup', 'battle_mvp'];
 
 test('regeln finns och är en funktion', () => {
   assert.equal(typeof N.tillMolnet, 'function', 'normalizer.js exporterar ingen tillMolnet-regel');

@@ -37,7 +37,10 @@ function bridgeTypes() {
 function cloudAllowed() {
   const m = BUS.match(/ALLOWED\s*=\s*new Set\(\[([^\]]*)\]/);
   assert.ok(m, 'hittade ingen ALLOWED-lista i server/event-bus.js');
-  return new Set([...m[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+  // [a-z_] OCH INTE [a-z]: typen 'battle_mvp' innehaller ett understreck och foll ur listan
+  // helt. Provet rapporterade da att molnet KASTAR en typ som stod i ALLOWED tio rader bort —
+  // ett fel i vaktens egen parser som ser ut som ett fel i koden.
+  return new Set([...m[1].matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
 }
 function aliases() {
   const m = BUS.match(/TYPE_ALIASES\s*=\s*\{([^}]*)\}/);

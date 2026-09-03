@@ -141,8 +141,10 @@
     } catch (_) {}
   }
 
-  function oppna() {
-    session = { bidrag: new Map(), oppnadAt: Date.now() };
+  // battleId foljer med sessionen sa den EGNA fyrningen kan dedupas mot TikToks officiella
+  // lista. Utan det tands widgeten tva ganger per match — se dedupen i media.js.
+  function oppna(battleId) {
+    session = { bidrag: new Map(), oppnadAt: Date.now(), battleId: battleId || '' };
   }
 
   // Stänger sessionen och tänder MVP — men bara om någon faktiskt gav något. En tom match ska inte
@@ -156,7 +158,8 @@
     // Slås upp vid anropet, inte vid laddning: media.js kan ha laddats efter den här filen, och
     // runtime-controls.js byter dessutom ut funktionen mot en köad variant en stund efter start.
     if (typeof root.triggerBattleMvp === 'function') {
-      root.triggerBattleMvp({ name: mvp.username, score: mvp.coins, profileImage: mvp.profileImage || '' });
+      root.triggerBattleMvp({ name: mvp.username, score: mvp.coins,
+        profileImage: mvp.profileImage || '', battleId: öppen.battleId || '' });
     }
     spelaFanfar();
     return mvp;
@@ -198,9 +201,35 @@
       // En ny match kan inte börja medan en gammal är öppen. Säkerhetsnätet: den föregående stängs
       // och tänder sin MVP nu, i stället för att tyst tappas.
       if (session) stang();
-      oppna();
+      oppna(e.battleId);
     }
     // 'okänd': ingenting händer. Se filhuvudet.
+  }
+
+  // DEDUP PER battleId — EN alert per match, oavsett hur manga kallor som vill tanda.
+  //
+  // Tva kallor finns sedan #312 och #313: TikToks OFFICIELLA lista (bryggan skickar 'battle_mvp'
+  // fran LINK_MIC_ARMIES, och media.js routeLiveBattleEvent tander pa den) och den egna
+  // coin-rakningen i stang() nedan. Utan sparren tands widgeten TVA ganger per match — och de kan
+  // ge OLIKA svar: var summa ar raa coins, TikToks siffra ar battle-poang med Boosting Glove
+  // inraknad.
+  //
+  // LINDNINGEN, inte en egen kontroll pa varje anropsplats: bada kallorna gar genom
+  // triggerBattleMvp, sa det ar den enda punkt som ser bada. Samma monster som runtime-controls.js
+  // anvander for alertkon — och den lindar i sin tur DEN har, en stund efter start.
+  //
+  // NYCKELN AR battleId, INTE TID. Tva matcher kan ligga sekunder isar; en tidsbaserad sparr hade
+  // tystat den andra. Ett event UTAN battleId slapps alltid fram: hellre en alert for mycket an
+  // ingen alls.
+  const annonserade = new Set();
+  {
+    const original = root.triggerBattleMvp;
+    root.triggerBattleMvp = function (event = {}) {
+      const bid = event && event.battleId ? String(event.battleId) : '';
+      if (bid && annonserade.has(bid)) return;
+      if (bid) annonserade.add(bid);
+      if (typeof original === 'function') return original.apply(this, arguments);
+    };
   }
 
   const tidigareRoute = root.routeLiveBattleEvent;
@@ -210,6 +239,8 @@
     if (typ === 'battle' || typ.includes('battle')) { hanteraBattle(event); return }
     if (typ === 'gift' || typ.includes('gift')) rakna(event);
   };
+
+  addEventListener('vyra-session-ended', () => annonserade.clear());
 
   root.VyraBattleMvp = {
     klassa, valjMvp, seenStatuses,

@@ -120,11 +120,23 @@ test('6: en enbart inspelad typ når aldrig vidarebefordran', () => {
   assert.doesNotMatch(block, /reportToParent\s*\(/, 'inspelningen rapporterar till managern');
   assert.doesNotMatch(block, /postJson|fetch\s*\(/, 'inspelningen gör ett nätverksanrop');
 
-  // Och att den bredare ytan verkligen är bredare: LINK_MIC_ARMIES prenumereras inte av bryggan
-  // själv, vilket är hela anledningen till att vi inte vet dess form.
-  const utanInspelning = kalla.slice(0, start);
-  assert.doesNotMatch(utanInspelning, /WebcastEvent\.LINK_MIC_ARMIES/,
-    'bryggan prenumererar redan på LINK_MIC_ARMIES — då mäter provet fel sak');
+  // DET GAMLA PASTAENDET AR BORTA, och varfor spelar roll. Har stod tidigare att bryggan INTE
+  // prenumererar pa LINK_MIC_ARMIES — "vilket ar hela anledningen till att vi inte vet dess form".
+  // Formen ar uppmatt sedan 2026-09-02 och bryggan prenumererar numera: typen bar TikToks egen
+  // MVP-lista vid battle-slut. Ett prov som kodar in "det har har vi inte gjort an" som en REGEL
+  // faller nar arbetet blir gjort, och sager da ingenting om huruvida koden ar riktig.
+  //
+  // ERSATTNINGEN AR SMAL MED FLIT. Forsta forsoket generaliserade till "varje typ bryggan
+  // prenumererar pa maste sta i redanLyssnade" — och det ar FEL: bryggan lyssnar pa
+  // CONTROL_MESSAGE utan att vidarebefordra den, sa ingen sendEvent spelar in den och inspelaren
+  // SKA lagga en egen lyssnare. Regeln som verkligen galler ar "varje typ bryggan VIDAREBEFORDRAR",
+  // och den gar inte att harleda ur kallan utan att spara lyssnare till sendEvent. Hellre ett smalt
+  // pastaende som ar sant an ett brett som ger falsklarm.
+  const redan = kalla.match(/redanLyssnade\s*=\s*new Set\(\[([\s\S]*?)\]\)/);
+  assert.ok(redan, 'hittade ingen redanLyssnade-lista i bridge.js');
+  assert.match(redan[1], /'LINK_MIC_ARMIES'/,
+    'bryggan vidarebefordrar LINK_MIC_ARMIES men typen saknas i redanLyssnade — inspelaren lagger '
+    + 'en andra lyssnare och alla 305 arme-event per sandning hamnar dubbelt i filen');
   assert.ok(I.TYPER_DEFAULT.includes('LINK_MIC_ARMIES'), 'default-uppsättningen saknar den typ vi bygger för');
 });
 

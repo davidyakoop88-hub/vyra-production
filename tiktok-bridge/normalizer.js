@@ -208,7 +208,7 @@ function arBoostFonster(f){
   return !!f && f.multiplier>=2 && (f.steg===0 || (f.steg===2&&(f.resultat===0||f.resultat===2)));
 }
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -266,7 +266,7 @@ function battleProbe(data){
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup']);
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
 
 // EMOTES — formen kommer ur bibliotekets egna typer, inte ur en gissning
 // (tiktok-live-proto/dist/node/v3.d.ts):
@@ -327,6 +327,55 @@ function fansUppgradering(data){
   if(String(raa).trim()==='') return null;
   return{...baseUser(data),fanClubLevel:till,fanLevelUp:{from:till-1,to:till}};
 }
+// TIKTOKS EGEN BIDRAGSLISTA VID BATTLE-SLUT — uppmatt 2026-09-02, tva battle-slut.
+//
+// LINK_MIC_ARMIES med triggerReason 2 (BATTLE_END) bar hela rankingen fardigraknad:
+//   teamArmies[].teamUser[].userIdStr   ankarna (streamarna) i laget
+//   teamArmies[].userArmies.userArmies[] { userId, score, nickname, avatarThumb }  bidragsgivarna
+//
+// VARFOR DEN AR BATTRE AN ATT RAKNA SJALV. battle-mvp-session.js summerar coins ur gift-event som
+// nar klienten. Det missar allt som hant innan overlayen oppnades, tappar ett bidrag om ett event
+// tappas — och framfor allt: RAW COINS AR INTE BATTLE-POANG. Boosting Glove multiplicerar poangen
+// i matchen, sa siffran TikTok visar pa skarmen ar inte summan av gavornas diamanter.
+//
+// VILKET LAG AR VART. Listan bar BADA sidorna, och fel val hyllar motstandarens tittare i var egen
+// overlay. Regeln ar uppmatt: rummets agare (fetchRoomInfo -> data.owner.id_str) aterfinns i
+// teamUser[].userIdStr for vart lag. I den uppmatta sandningen: 7276185677820527649 (jokero060)
+// lag i team 1.
+//
+// UTAN ANKAR-ID GORS INGENTING. Att anta "team 1 ar alltid vart" hade fungerat i BADA de uppmatta
+// matcherna och varit fel sa fort streamern bjuds IN i stallet for att bjuda. Hellre tyst an fel
+// person pa skarmen.
+//
+// NOLL POANG VINNER INTE: en match dar ingen gav nagot ska inte visa nagon MVP alls.
+// LIKA POANG avgors pa namn, sa svaret aldrig beror pa inmatningsordningen.
+function armeMvp(data, mittAnkarId){
+  const ankare=String(mittAnkarId||'').trim();
+  if(!ankare) return null;
+  if(Number(data?.triggerReason)!==2) return null;
+  const vart=(data?.teamArmies||[]).find(t=>
+    (t?.teamUser||[]).some(u=>String(u?.userIdStr||'').trim()===ankare));
+  if(!vart) return null;
+  const lista=(vart?.userArmies?.userArmies||[])
+    .map(b=>({name:text(b?.nickname,120),score:number(b?.score,1e12),
+      profileImage:text(b?.avatarThumb?.urlList?.[0]||'',1200)}))
+    .filter(b=>b.score>0&&b.name);
+  if(!lista.length) return null;
+  lista.sort((a,b)=>b.score-a.score||(a.name<b.name?-1:a.name>b.name?1:0));
+  return lista[0];
+}
+// MVP-EVENTET som bryggan skickar. Bygger pa armeMvp ovan och fyller BADA faltnamnen:
+//   name/score       las av media.js triggerBattleMvp
+//   username/coins   ar det cloudEvent faktiskt bar (username, value)
+// Utan bada tappas namnet eller poangen beroende pa vilken ande som laser. battleId foljer med
+// for att klienten ska kunna deduplicera per match — utan det kan widgeten tandas tva ganger,
+// en gang av TikToks lista och en gang av battle-mvp-session.js egen rakning.
+function mvpFields(data, mittAnkarId){
+  const mvp=armeMvp(data, mittAnkarId);
+  if(!mvp) return null;
+  return{name:mvp.name,username:mvp.name,score:mvp.score,coins:mvp.score,
+    profileImage:mvp.profileImage,battleId:text(data?.battleId,160)};
+}
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
 // GUARDIAN — UPPMATT, INTE GISSAD (2026-09-01, inspelning med VYRA_INSPELNING_TYPER=alla).
@@ -344,4 +393,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering};
+module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
