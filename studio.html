@@ -144,7 +144,7 @@
   <script src="vyra-rotation.js?v=20260820-1"></script>
   <!-- Vagen till skrivbordsappen. Delegerad lyssnare pa document, sa aven vyer som ritas om
        och tomma tillstand kan bara [data-ladda-desktop]. Se filens huvudkommentar. -->
-  <script src="vyra-desktop.js?v=1"></script>
+  <script src="vyra-desktop.js?v=20260903-butik"></script>
   <!-- Handlingar i de tomma tillstanden. Syskon till [data-tom], aldrig barn — rostvakten
        jamfor nodens text exakt. Se filens huvudkommentar. -->
   <script src="vyra-tomma-handlingar.js?v=1"></script>
@@ -161,8 +161,16 @@
       const params = new URLSearchParams(location.search);
       if (params.get('intent') !== 'download') return;
       addEventListener('vyra-entitlement-ok', function () {
-        window.toast && window.toast('Nedladdningen startar — öppna VYRA-Setup.exe när den är klar.');
-        location.href = '/api/downloads/windows';
+        // Butiken forst: bar servern en storeUrl (DESKTOP_STORE_URL) ar det dit anvandaren ska —
+        // det ar den signerade vagen. Annars 302-rutten som forut. Se vyra-desktop.js.
+        const D = window.VyraDesktop;
+        const hamta = D && D.hamtaMetadata ? D.hamtaMetadata() : Promise.resolve(null);
+        hamta.then(function (data) {
+          const butik = D && D.butiken ? D.butiken(data) : null;
+          if (butik) { location.href = butik; return }
+          window.toast && window.toast('Nedladdningen startar — öppna VYRA-Setup.exe när den är klar.');
+          location.href = '/api/downloads/windows';
+        });
         // Drop ?intent=download from the address bar right after firing it once — otherwise a
         // plain page refresh keeps the same URL, re-runs this script, and silently re-triggers
         // the download every single reload (a reload must never resubmit a one-time side effect).

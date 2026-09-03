@@ -1,6 +1,9 @@
 # VYRA i Microsoft Store · MSIX/AppX
 
-**Status: förberedelse. Ingen tagg, ingen release, ingenting uppladdat till Partner Center.**
+**Status 2026-09-03: leverans påbörjad.** `VYRA Store-leverans (manuell)` kördes första gången
+från `main` (5f0f92d) för version 1.2.4. Paketet laddas upp till Partner Center för hand — grinden
+i §6. Hemsidans knappar byts till butiken med `DESKTOP_STORE_URL` när posten är publicerad, se
+`docs/DESKTOP_RELEASE.md` → *Microsoft Store som nedladdningsmål*. Ingen tagg, ingen release.
 
 Store-vägen ersätter inte `.exe`-vägen — den lägger sig bredvid. NSIS-bygget och dess
 uppdateringskedja är orörda, och ett prov faller om Store-arbetet råkar dra med sig dem.

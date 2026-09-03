@@ -87,6 +87,9 @@ function validateProductionEnv(env=process.env){
   if(env.ALERT_WEBHOOK_URL)check(()=>httpsUrl(env.ALERT_WEBHOOK_URL,'ALERT_WEBHOOK_URL'));
 if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(env.ALERT_EMAIL_TO||'')))errors.push('ALERT_EMAIL_TO är ogiltig');
   check(()=>httpsUrl(env.DESKTOP_DOWNLOAD_URL,'DESKTOP_DOWNLOAD_URL'));
+  // Frivillig, men satt ska den vara Microsofts produktsida — samma regel som vid körning, sa en
+  // felskriven butikslank stoppar deployen i stallet for att skickas ut till alla anvandare.
+  if(String(env.DESKTOP_STORE_URL||'').trim())check(()=>require('./desktop-release').storeUrl(env.DESKTOP_STORE_URL));
   if(!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(String(env.DESKTOP_VERSION||'')))errors.push('DESKTOP_VERSION är ogiltig');
   if(!/^[a-f0-9]{64}$/.test(String(env.DESKTOP_SHA256||'')))errors.push('DESKTOP_SHA256 är ogiltig');
   if(!(Number(env.DESKTOP_SIZE_BYTES)>=1024))errors.push('DESKTOP_SIZE_BYTES är ogiltig');

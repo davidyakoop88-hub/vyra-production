@@ -24,6 +24,28 @@ DESKTOP_SHA256=<64 lowercase hex characters from VYRA-Setup.exe.sha256>
 DESKTOP_SIZE_BYTES=<installer size in bytes>
 ```
 
+## Microsoft Store som nedladdningsmål
+
+Den publicerade `.exe`-filen är osignerad (v1.2.3 släpptes med `UNSIGNED_RELEASE`), och Windows
+SmartScreen varnar för den på varje dator. Store-paketet signeras av Microsoft vid certifieringen
+(se `docs/store-msix.md`). När Store-posten är publicerad byts hemsidans knappar till butiken med
+**en** miljövariabel i produktionen:
+
+```env
+DESKTOP_STORE_URL=https://apps.microsoft.com/detail/9PPKZN2SCJM2
+```
+
+- Är den satt följer den med som `storeUrl` i `/api/downloads/windows?meta=1`, och
+  `vyra-desktop.js` pekar varje `[data-ladda-desktop]` — raden i Inställningar, sidhuvudet,
+  guidens OBS-kort, `studio.html?intent=download` — på butiken. Butikssidan är publik, så de tre
+  grindarna (session, verifierad e-post, premium) gäller inte den.
+- Bara `https://apps.microsoft.com/detail/<Store-ID>` godtas. Allt annat stoppar
+  produktionskonfigurationen (`server/production-config.js`) och ger 503 från rutten — en
+  felskriven butikslänk ska aldrig nå användarna.
+- `.exe`-rutten (302) och uppdateraren i `.exe`-versionen är oförändrade. Utan variabeln är
+  allt exakt som förut. Prov: `server/test/desktop-release.test.js`,
+  `tests/browser/desktop-nedladdning.browser.test.js` (prov 11–12).
+
 The website calls `/api/downloads/windows`. The API refuses to redirect unless the configured URL is HTTPS and the optional checksum is valid. This prevents a broken link from pretending a missing file was downloaded.
 
 Public tagged releases are never optional-signing: the workflow fails unless the Windows

@@ -365,3 +365,80 @@ test('metadata hamtas en gang och ateranvands', { skip, timeout: 120000 }, async
       `${anrop.length} anrop till nedladdningsmetadata — versionen andras inte mellan vybyten`);
   } finally { await s.stang() }
 });
+
+// ---- Prov 11 · butiken: nar servern bar en storeUrl pekar ALLT pa Microsoft Store ------------------
+// Uppmatt 2026-09-03: den publicerade .exe-filen (v1.2.3) ar helt osignerad, och SmartScreen
+// varnar for den pa varje dator. Store-paketet signeras av Microsoft. Nar produktionen far
+// DESKTOP_STORE_URL ska knapparna darfor leda dit — utan grind, for butikssidan ar publik — och
+// .exe-rutten ska sta kvar orord for den som inte har storeUrl (proven ovan).
+const BUTIK = 'https://apps.microsoft.com/detail/9PPKZN2SCJM2';
+const META_BUTIK = { status: 200, kropp: Object.assign({}, META.kropp, { storeUrl: BUTIK }) };
+
+test('med storeUrl pekar raden, sidhuvudet och senare skapade handlingar pa Microsoft Store', { skip, timeout: 90000 }, async () => {
+  // Overifierad med flit: .exe-grinden hade stoppat klicket. Butiken far den inte stoppa.
+  const s = await studion({ verifierad: false, fel: { 'GET /api/downloads/windows': META_BUTIK } });
+  try {
+    await tillVy(s.page, 'settings');
+    const m = await s.page.evaluate(async () => {
+      const rad = document.querySelector('[data-desktop-nedladdning]');
+      const knapp = rad && rad.querySelector('[data-ladda-desktop]');
+      const huvud = document.querySelector('header .head-actions [data-ladda-desktop]');
+      // En nod skapad EFTER laddningen, med 302-rutten som href — sa som guidens OBS-kort gor.
+      const ny = document.createElement('a');
+      ny.setAttribute('data-ladda-desktop', '');
+      ny.setAttribute('href', '/api/downloads/windows');
+      ny.textContent = 'Ladda ner';
+      document.body.append(ny);
+      await new Promise(r => setTimeout(r, 300));
+      const handelse = new MouseEvent('click', { bubbles: true, cancelable: true });
+      // Sidans lyssnare sitter pa document i bubbelfas och registrerades vid laddningen. En
+      // lyssnare som registreras NU pa samma nod kor efter den — dar lases svaret av, och forst
+      // DAREFTER stoppas klicket sa att provet inte navigerar. Ett preventDefault pa noden sjalv
+      // hade kort i malfasen, fore document, och gjort matningen meningslos.
+      const stoppadAvSidan = (() => {
+        let stoppad = null;
+        const koll = e => { stoppad = e.defaultPrevented; e.preventDefault() };
+        document.addEventListener('click', koll, { once: true });
+        ny.dispatchEvent(handelse);
+        document.removeEventListener('click', koll);
+        return stoppad;
+      })();
+      const ut = {
+        radHref: knapp && knapp.getAttribute('href'),
+        radText: knapp && knapp.textContent.trim(),
+        radInaktiv: knapp && knapp.getAttribute('aria-disabled'),
+        info: rad && (rad.querySelector('[data-desktop-info]') || {}).textContent,
+        huvudHref: huvud && huvud.getAttribute('href'),
+        huvudTitel: huvud && huvud.title,
+        nyHref: ny.getAttribute('href'),
+        stoppadAvSidan,
+        toast: (document.querySelector('.toast') || {}).textContent || '',
+      };
+      ny.remove();
+      return ut;
+    });
+    assert.equal(m.radHref, BUTIK, 'raden i Installningar ska leda till butiken');
+    assert.match(m.radText, /Microsoft Store/, `knappen ska saga vart den leder — fick "${m.radText}"`);
+    assert.equal(m.radInaktiv, null, 'butikslanken ar aktiv sa fort metadata kommit');
+    assert.match(m.info, /Microsoft Store/, `versionsraden ska namna butiken — fick "${m.info}"`);
+    assert.equal(m.huvudHref, BUTIK, 'sidhuvudets knapp ska leda till butiken');
+    assert.match(m.huvudTitel, /Microsoft Store/, `verktygstipset ska namna butiken — fick "${m.huvudTitel}"`);
+    assert.equal(m.nyHref, BUTIK, 'en handling skapad efter laddningen ska ocksa pekas om');
+    assert.equal(m.stoppadAvSidan, false,
+      `butikssidan ar publik — sidans lyssnare far inte stoppa klicket (toast: "${m.toast}")`);
+  } finally { await s.stang() }
+});
+
+test('utan storeUrl ar ingenting ompekat — .exe-vagen ar exakt som forut', { skip, timeout: 90000 }, async () => {
+  const s = await studion();
+  try {
+    await tillVy(s.page, 'settings');
+    const m = await s.page.evaluate(() => [...document.querySelectorAll('[data-ladda-desktop]')]
+      .map(el => ({ href: el.getAttribute('href'), butik: el.hasAttribute('data-butik') })));
+    assert.ok(m.length >= 2, 'kontrollmatning: raden och sidhuvudet ska finnas');
+    for (const el of m) {
+      assert.equal(el.href, '/api/downloads/windows');
+      assert.equal(el.butik, false);
+    }
+  } finally { await s.stang() }
+});

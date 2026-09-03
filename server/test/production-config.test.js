@@ -133,3 +133,12 @@ test('secrets must be independent',()=>{
   const env=good();env.METRICS_TOKEN=env.TIKTOK_INGEST_TOKEN;
   assert.throws(()=>validateProductionEnv(env),/unika/);
 });
+
+// Store-lanken ar frivillig: utan den passerar konfigurationen som forut. Satt maste den vara
+// Microsofts produktsida — en felskriven lank ar en blockerad deploy, inte en variant.
+test('DESKTOP_STORE_URL ar frivillig men valideras nar den ar satt',()=>{
+  assert.equal(validateProductionEnv({...good(),DESKTOP_STORE_URL:'https://apps.microsoft.com/detail/9PPKZN2SCJM2'}).ok,true);
+  assert.equal(validateProductionEnv({...good(),DESKTOP_STORE_URL:''}).ok,true);
+  fails({...good(),DESKTOP_STORE_URL:'https://example.com/detail/9PPKZN2SCJM2'},/DESKTOP_STORE_URL/);
+  fails({...good(),DESKTOP_STORE_URL:'http://apps.microsoft.com/detail/9PPKZN2SCJM2'},/DESKTOP_STORE_URL/);
+});

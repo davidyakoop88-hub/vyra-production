@@ -15,6 +15,13 @@
 // VARFOR <a href> OCH INTE <button>: rutten svarar 302 till filen. En riktig lank gar att
 // hogerklicka och spara, visar malet i statusraden, och fungerar om JavaScript fallerar. Den
 // delegerade lyssnaren stoppar klicket bara nar anvandaren anda hade fatt 401/402/403.
+//
+// BUTIKSVAGEN (2026-09-03): den publicerade .exe-filen ar osignerad, och Windows SmartScreen
+// varnar for den pa varje dator. Store-paketet signeras av Microsoft. Nar servern bar en
+// storeUrl i metadatan (miljovariabeln DESKTOP_STORE_URL) pekar DARFOR varje [data-ladda-desktop]
+// pa Microsofts produktsida i stallet for pa 302-rutten. Butikssidan ar publik, sa de tre
+// grindarna (401/402/403) galler inte den — de galler .exe-rutten, som star kvar orord bredvid.
+// Utan storeUrl ar allt exakt som forut.
 (function () {
   'use strict';
   const root = window;
@@ -91,11 +98,30 @@
       besked((metadata && metadata.fel) || 'Windows-installationen publiceras snart');
       return;
     }
+    if (el.hasAttribute('data-butik')) return;   // publik butikssida — ingen grind
     const svar = kanLaddaNer();
     if (svar.ok) return;             // lat lanken gora sitt jobb
     e.preventDefault();
     besked(svar.skal);
   });
+
+  // ---- butiken: alla handlingar pekas om nar servern sager att den finns ---------------------
+  // Guidens OBS-kort och de tomma tillstanden skapar egna [data-ladda-desktop] med 302-rutten som
+  // href. De ska inte behova kanna till butiken — MutationObservern nedan kor rita() vid varje
+  // omritning, och rita() pekar om det som fatt fel mal. Idempotent: en redan ompekad nod hoppas.
+  function butiken(data) {
+    return data && !data.fel && typeof data.storeUrl === 'string' &&
+      /^https:\/\/apps\.microsoft\.com\//.test(data.storeUrl) ? data.storeUrl : null;
+  }
+  function pekaOm() {
+    const mal = butiken(metadata);
+    if (!mal) return;
+    document.querySelectorAll('[data-ladda-desktop]:not([data-butik])').forEach(el => {
+      el.setAttribute('href', mal);
+      el.setAttribute('data-butik', '');
+      el.removeAttribute('aria-disabled');
+    });
+  }
 
   // ---- raden i Installningar ---------------------------------------------------------------
   // Samma monster som auth-security.js addPrivacySettings(): MutationObserver pa
@@ -130,6 +156,13 @@
         return;
       }
       const storlek = megabyte(data.sizeBytes);
+      if (butiken(data)) {
+        info.textContent = 'Version ' + data.version + ' · ' + (data.platform || 'Windows 10/11') +
+          ' · Microsoft Store · signerad av Microsoft · behövs för OBS-scenstyrning';
+        knapp.textContent = 'Hämta i Microsoft Store';
+        pekaOm();
+        return;
+      }
       info.textContent = 'Version ' + data.version + ' · ' + (data.platform || 'Windows 10/11') +
         (storlek ? ' · ' + storlek : '') + ' · behövs för OBS-scenstyrning';
       knapp.removeAttribute('aria-disabled');
@@ -164,17 +197,22 @@
       if (data.fel) { knapp.title = data.fel; return }
       const storlek = megabyte(data.sizeBytes);
       // Versionen far inte plats i sidhuvudet men ska ga att se — den bor i verktygstipset.
+      if (butiken(data)) {
+        knapp.title = 'VYRA Desktop ' + data.version + ' · Microsoft Store · signerad av Microsoft';
+        pekaOm();
+        return;
+      }
       knapp.title = 'VYRA Desktop ' + data.version + (storlek ? ' · ' + storlek : '') +
         ' · behövs för OBS-scenstyrning';
       knapp.removeAttribute('aria-disabled');
     });
   }
 
-  function rita() { ritaInstallningsrad(); ritaSidhuvud() }
+  function rita() { ritaInstallningsrad(); ritaSidhuvud(); pekaOm() }
 
   new MutationObserver(rita).observe(document.documentElement,
     { childList: true, subtree: true });
   rita();
 
-  root.VyraDesktop = { kanLaddaNer, hamtaMetadata, RUTT };
+  root.VyraDesktop = { kanLaddaNer, hamtaMetadata, butiken, RUTT };
 })();
