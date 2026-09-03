@@ -85,28 +85,56 @@ let uppvarmning = null;
  *
  * Uppvärmningen fotograferar en riktig nyckel, inte bara sidan: den ska värma SAMMA kodväg som
  * mätningen sedan går igenom, annars värms inte det som räknas. */
+// NYCKELN ÄR PINNAD, inte NYCKLAR[0]. Ordningen kommer ur docs/katalogkarta.md, som CI genererar
+// om vid varje deploy — den första nyckeln kan alltså byta identitet utan att någon rör den här
+// filen, och uppvärmningen skulle då värma något annat än man tror. En vanlig, stillastående widget
+// utan alert-trigger är rätt val: den mäter ingenting och behöver bara rendera text.
+const UPPVARMNINGSNYCKEL = 'catalog:topgift:neon';
+
 async function varmUpp(bas) {
   const b = await startaWebblasare();
   if (!b) return { kord: false, skal: 'ingen webblasare gick att starta' };
+  let resultat = { kord: false, skal: 'uppvärmningen nådde aldrig fram till ett resultat' };
   try {
     const s = await b.newPage({ viewport: { width: 1400, height: 1000 } });
     await s.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    // SAMMA VÄNTAN SOM DEN RIKTIGA SESSIONEN. Utan overlay-kontrollen kan uppvärmningen hinna
+    // rendera Studio-läget i stället, och då värms fel layout och fel typsnittsuppsättning.
+    await s.waitForFunction(
+      () => document.documentElement.classList.contains('overlay-output'), null,
+      { timeout: 30000, polling: 100 });
     await s.waitForFunction(() => typeof window.render === 'function', null,
       { timeout: 30000, polling: 100 });
     await s.waitForTimeout(4500);
     await s.evaluate(V.RIGG);
-    const nyckel = NYCKLAR[0] || null;
+    const finns = NYCKLAR.includes(UPPVARMNINGSNYCKEL);
+    const nyckel = finns ? UPPVARMNINGSNYCKEL : NYCKLAR[0] || null;
     const foto = nyckel ? await V.fotografera(s, nyckel, ALERTS) : null;
-    return { kord: true, nyckel,
+    resultat = { kord: true, nyckel, pinnad: finns,
       fyllnad: foto && foto.fyllnad ? foto.fyllnad.procent : null,
       fel: foto && foto.fel ? foto.fel : null };
   } catch (e) {
-    return { kord: false, skal: String(e.message).slice(0, 160) };
-  } finally {
-    await b.close().catch(() => {});
+    resultat = { kord: false, skal: String(e.message).slice(0, 160) };
   }
+  // STÄNGS ALLTID, OCH STÄNGNINGEN MÄTS. Poängen är att KASTA sessionen: en som lever vidare är
+  // ingen uppvärmning utan en andra webbläsare som konkurrerar om maskinen under hela mätningen.
+  // Kvittot nedan läser `stangd`, så en refaktor som återanvänder huvudsessionen i stället för att
+  // starta en egen faller i stället för att tyst förstöra sidans tillstånd (V.fotografera nollar
+  // state.widgets och tömmer alertkön).
+  await b.close().catch(() => {});
+  resultat.stangd = typeof b.isConnected === 'function' ? !b.isConnected() : null;
+  return resultat;
 }
 
+// TIDSGRÄNS PÅ HOOKEN. node:test låter hookar ärva Infinity, och `npm run test:visual` skickar
+// inget --test-timeout. Utan gränsen hänger en uppvärmning som fastnat HELA körningen tyst — och
+// ett hängande jobb är dyrare att läsa än ett rött (samma läxa som webblasare.js bär i sitt
+// filhuvud). Två sessioner à ~20 s med marginal för en kall CI-maskin.
+//
+// ⚠️ ORDNINGEN ÄR `before(fn, options)` — INTE `before(options, fn)`. Uppmätt 2026-09-03: med
+// optionsobjektet först körde hooken ALDRIG, hela filen tog 262 ms, och det enda som sa ifrån var
+// att uppvärmningskvittot var null. Ingen varning, inget kast. Med den ordningen hade varje prov i
+// filen mätt mot en webbläsare som aldrig startat.
 test.before(async () => {
   if (skip) return;
   // Servern först: uppvärmningen behöver samma sidor som mätningen.
@@ -131,7 +159,7 @@ test.before(async () => {
     { timeout: 30000, polling: 100 });
   await sida.waitForTimeout(4500);
   await sida.evaluate(V.RIGG);
-});
+}, { timeout: 180000 });
 
 test.after(async () => {
   if (browser) await browser.close();
@@ -160,6 +188,14 @@ test('uppvärmningssessionen kördes före mätningen', { skip }, () => {
   assert.equal(uppvarmning.fel, null,
     `uppvärmningen kunde inte fotografera ${uppvarmning.nyckel}: ${uppvarmning.fel}. Kodvägen som `
     + 'mätningen går igenom blev då aldrig varm.');
+  assert.equal(uppvarmning.pinnad, true,
+    `uppvärmningen föll tillbaka på ${uppvarmning.nyckel} — den pinnade nyckeln `
+    + `${UPPVARMNINGSNYCKEL} finns inte längre i katalogen. Välj en ny och skriv in den, så att `
+    + 'uppvärmningen inte byter innehåll när docs/katalogkarta.md genereras om.');
+  assert.equal(uppvarmning.stangd, true,
+    'uppvärmningens webbläsare stängdes inte. Den ska KASTAS — annars konkurrerar den om maskinen '
+    + 'under hela mätningen, och om den råkar vara samma session som mätningen använder har '
+    + 'V.fotografera dessutom redan nollat state.widgets och tömt alertkön.');
 });
 
 // De typsnitt referensbilderna togs med. Vikterna ar de studio.css faktiskt begar pa rad 1.
@@ -399,6 +435,20 @@ test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
       + `andra — behandlas som flackning, inte som skillnad:`);
     oreproducerade.forEach(o => console.log('   ~ ' + o));
   }
+  // OCH DET FINNS ETT TAK. Utan taket är omfotograferingen precis den sortens vakt som fortsätter
+  // passera men slutar mäta: blir sviten genuint icke-deterministisk kan VARJE nyckel hamna i
+  // listan och provet vore fortfarande grönt.
+  //
+  // Taket är satt efter det uppmätta: den värsta observerade körningen (2026-09-03, PR #313) hade
+  // FYRA nycklar som inte reproducerade. Tre är alltså under det som faktiskt hänt och skulle ha
+  // fallit då; åtta är dubbelt så mycket som värsta fallet. Slår taket är svaret inte att höja
+  // det — det är att sviten blivit instabil på ett nytt sätt, och då ska någon titta.
+  const TAK = 8;
+  assert.ok(oreproducerade.length <= TAK,
+    `${oreproducerade.length} nycklar avvek i första fotot men inte i det andra — taket är ${TAK}.\n  `
+    + oreproducerade.join('\n  ')
+    + `\n  Så många icke-reproducerande nycklar är inte flackning i marginalen längre. Höj inte `
+    + `taket: leta efter vad som gjort fotograferingen instabil.`);
 
   assert.deepEqual(trasiga, [], `kunde inte fotograferas:\n  ${trasiga.join('\n  ')}`);
   assert.deepEqual(tomma, [], `fotograferades som i praktiken tomma:\n  ${tomma.join('\n  ')}`);
