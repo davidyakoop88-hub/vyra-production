@@ -8,8 +8,8 @@
  "antal": 170,
  "senaste": {
   "motiv": "Tas om med fonts-noto-cjk explicit installerat i badaflodena, sa bilderna slutar bero pa vilken runner-avbildning GitHub tilldelar. Uppmatt: gron korning hade image 20260819.586, rod hade 20260828.587, och de fyra nycklar som foll ritar de enda tva tecknen utanfor Inter och Manrope (U+5200 och U+FF0B).",
-  "nycklar": 1,
-  "tid": "2026-09-03T20:26:59.220Z"
+  "nycklar": 8,
+  "tid": "2026-09-03T20:35:22.009Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
