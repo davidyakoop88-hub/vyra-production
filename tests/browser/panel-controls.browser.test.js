@@ -128,10 +128,18 @@ const FALL = [
   { namn: 'TOP LIKES · Bredd', typ: 'templateTopLike', kontroll: 'propWidth', nyckel: 'width' },
   // Femte bindaren: num() i media.js, en tredje parametervariant av samma kropp. Reglagen byggs
   // bara nar en MVP-ram ar vald, sa utan `extra` finns kontrollen inte och testet blir tyst gront.
-  { namn: 'Battle MVP', typ: 'templateBattleMvp', kontroll: 'mvpScoreSize', nyckel: 'mvpScoreSize',
-    extra: { mvpFrame: 'royal-purple' } },
+  //
+  // `mvpScoreSize` STOD HAR FORR och togs bort 2026-09-03: ramgrenen bygger inget poangelement alls
+  // (Davids spec 2026-08-13), sa reglaget storleksandrade ingenting. Det ar numera `disabled`, och
+  // en avstangd kontroll kan varken ta fokus eller dras — provet skulle falla pa korrekt kod.
+  // `mvpNameSize` tacker samma bindare (num()) och ar en LEVANDE kontroll, sa bevisvardet star kvar.
+  //
+  // RAMEN MASTE VARA EN RIKTIG RAM. Har stod 'royal-purple', som ar en STIL och inte en ram:
+  // MVP_FRAMES['royal-purple'] ar undefined, sa renderaren tog basvagen medan panelen byggde
+  // ramreglagen anda (media.js kollar bara `!w.mvpFrame`, aldrig att ramen finns). Provet matte da
+  // en kontroll pa en widget som ritades av fel renderare.
   { namn: 'Battle MVP · namn', typ: 'templateBattleMvp', kontroll: 'mvpNameSize', nyckel: 'mvpNameSize',
-    extra: { mvpFrame: 'royal-purple' } }
+    extra: { mvpFrame: 'gold-crown' } }
 ];
 
 for (const fall of FALL) {

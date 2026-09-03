@@ -127,6 +127,32 @@ test('ingen kod i media.js kraver ett uttryckligt true for att visa namnet', () 
     'synken som satter kryssrutan efter ombindning saknas eller har bytt form');
 });
 
+// RAMPANELENS POANGKONTROLLER AR DODA — och ska darfor inte gå att röra.
+//
+// Ramgrenen bygger inget coins-element ALLS (Davids spec 2026-08-13: MVP-etikett, profilbild och
+// namn, inget annat). tests/browser/battle-mvp-ramar.browser.test.js bevisar att `.mvpf-plate b`
+// inte finns i DOM. Anda satt det bade en kryssruta "Poang" och ett reglage "Poangstorlek" i
+// rampanelen: kryssrutan skrev `mvpShowCoins` som ramrenderaren aldrig laser, och reglaget skrev
+// `mvpScoreSize` som ingen ram anvander. Tva kontroller som gjorde exakt ingenting nar man drog i
+// dem — och en kontroll som inte gor nagot ar samre an ingen kontroll, for anvandaren tror att den
+// verkar.
+//
+// De ar avstangda i stallet for bortplockade: en tom lucka forklarar ingenting, medan en avstangd
+// ruta med sin motivering i title sager BADE att alternativet finns for andra designer och varfor
+// det inte galler har.
+test('rampanelens döda poängkontroller är avstängda', () => {
+  const ruta = MEDIA.match(/mvpShowCoinsF"[^>]*>/);
+  assert.ok(ruta, 'hittade inte kryssrutan #mvpShowCoinsF');
+  assert.match(ruta[0], /\sdisabled\b/,
+    'kryssrutan "Poang" i rampanelen gar att klicka fast ramarna aldrig visar poang');
+  assert.match(ruta[0], /title="[^"]{20,}"/, 'den avstängda rutan saknar en motivering i title');
+
+  const reglage = MEDIA.match(/mvpScoreSize" type="range"[^>]*>/);
+  assert.ok(reglage, 'hittade inte reglaget #mvpScoreSize');
+  assert.match(reglage[0], /\sdisabled\b/,
+    'reglaget "Poangstorlek" gar att dra fast inget poangelement finns att storleksandra');
+});
+
 test('panelkontroller kan slå på namn och coins', () => {
   for (const id of ['mvpShowLabelMain','mvpShowNameMain','mvpShowCoins']) assert.match(MEDIA, new RegExp(`id="${id}"`));
   assert.match(MEDIA, /\['#mvpShowNameMain','mvpShowName'\]/);

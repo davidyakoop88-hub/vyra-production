@@ -242,6 +242,55 @@
 
   addEventListener('vyra-session-ended', () => annonserade.clear());
 
+  /* FORRA SANDNINGENS VINNARE FAR INTE STA KVAR PA SCENEN.
+   *
+   * triggerBattleMvp skriver in den VERKLIGA vinnarens namn pa widgetobjektet (`w.mvpName = namn`)
+   * och anropar save(). Ingenting nollstallde det. En streamer som kort en battle fick darfor forra
+   * sandningens riktiga tittarnamn synligt fran den sekund overlayen laddades — innan en enda ny
+   * battle borjat. Fram till 2026-09-03 syntes det bara pa de sju ram-designerna; nu visar alla
+   * sjutton namnet, sa det galler dem alla.
+   *
+   * VARDENA AR FABRIKENS, inte tomma strangar. `VyraSafe.text` faller tillbaka pa sitt reservvarde
+   * for '', null OCH undefined — men ramgrenen anropar den med ETT argument
+   * (`VyraSafe.text(w.mvpName??'TestAlpha')`), sa dar blir '' en TOM rad medan stilmodellerna visar
+   * 'TestAlpha'. Att satta tillbaka exakt det fabriken skapar widgeten med ger samma bild i alla tre
+   * renderarvagarna, och i en LIVE-overlay blankar live-zero-state.js 'TestAlpha' eftersom det star
+   * i DEMO_NAMES. Provet nedan later fabriken vara facit, sa varden som glider isar faller.
+   *
+   * BARA live:start — INTE live:end. Huset har redan bestamt det: live-leaderboard.js och
+   * last-x-alerts.js nollstaller ocksa enbart vid start, med motiveringen "nar sandningen tar slut
+   * ska den sista listan sta kvar pa skarmen". Att nolla vid live:end hade raderat vinnaren i samma
+   * sekund som sandningen slutade — precis nar tittarna ska se den. Kravet "gammalt namn overlever
+   * inte mellan tva sandningar" ar uppfyllt anda, for nasta sandning MASTE passera live:start.
+   *
+   * ETT HANDSKRIVET NAMN OVERLEVER INTE HELLER, och det ar medvetet: vilken MVP-alert som helst
+   * skriver redan over det, sa faltet ar live-drivet i praktiken. Vinsten — att ingen tittares namn
+   * ligger kvar mellan sandningar — vager tyngre.
+   *
+   * save() KAN MISSLYCKAS, och det ar okej. I en OBS-kalla ar laget 'overlay-token-readonly' och
+   * writeActive svarar not-writable. Nollstallningen i minnet plus render() gor anda ratt sak pa
+   * skarmen; Studion ar den som persisterar. */
+  const TOM_MVP = { mvpName: 'TestAlpha', mvpScore: 1500 };
+
+  function nollstallMvpText() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return 0;
+    let rorda = 0;
+    for (const w of state.widgets) {
+      if (!w || w.type !== 'templateBattleMvp') continue;
+      if (w.mvpName === TOM_MVP.mvpName && w.mvpScore === TOM_MVP.mvpScore) continue;
+      w.mvpName = TOM_MVP.mvpName;
+      // Poangen visas inte i nagon design i dag (mvpShowCoins ar av overallt), men den skrivs av
+      // triggerBattleMvp och sparas. Stada bort den ocksa — ett falt som inte syns i dag kan tandas
+      // i morgon, och da ska det inte bara forra sandningens siffra.
+      w.mvpScore = TOM_MVP.mvpScore;
+      rorda++;
+    }
+    if (!rorda) return 0;
+    try { if (typeof save === 'function') save() } catch (_) {}
+    try { if (typeof render === 'function') render() } catch (_) {}
+    return rorda;
+  }
+
   root.VyraBattleMvp = {
     klassa, valjMvp, seenStatuses,
     aktiv: () => !!session,
@@ -254,7 +303,11 @@
     glomStatusar: () => {
       seenStatuses.length = 0;
       try { root.localStorage && root.localStorage.removeItem(LAGER) } catch (_) {}
-    }
+    },
+    // Exponerad for provet — och som break-glass om en gammal MVP nagon gang star kvar och ingen
+    // ny sandning ar pa vag. Returnerar antalet widgetar som faktiskt stadades.
+    nollstallText: () => nollstallMvpText(),
+    TOM_MVP
   };
 
   // NY SANDNING => ingen match pagar. En battle kan inte overleva att sandningen tog slut, och en
@@ -264,5 +317,6 @@
   root.addEventListener('vyra-live-session', event => {
     if (!event || !event.detail || event.detail.event !== 'live:start') return;
     session = null;
+    nollstallMvpText();
   });
 })(window);
