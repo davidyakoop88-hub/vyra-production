@@ -7,21 +7,21 @@
  },
  "antal": 170,
  "senaste": {
-  "motiv": "Battle MVP-ramarna visade TOM namnplatta: riggen triggar med {username} och gamla triggerBattleMvp laste bara event.name, sa namnet slangdes tyst. #313 laser bada faltnamnen, och de sju ramarna visar nu vinnarens namn i stallet for en tom platta. A/B pa samma binar: exakt 1064 pixlar i 54x32 vid (124,254) - bara namnraden, inget annat. De tio designstilarna ar byteidentiska; de doljer namnet som standard.",
-  "nycklar": 7,
-  "tid": "2026-09-02T22:55:37.548Z"
+  "motiv": "De tio Battle MVP-stilmodellerna visar nu vinnarens namn, klippt med ellips som ramarna redan gjorde. Aterstaller det d0a7156 slackte 2026-08-11 (vid forsta releasen visades namnet alltid; 195fc8a aterstallde det bara for de sju ramarna). Uppmatt i riktig Chromium: sju av tio stilnycklar byter mått, tre (inferno, cyber, samurai) byter bara pixlar.",
+  "nycklar": 17,
+  "tid": "2026-09-03T07:11:46.000Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
-   "matt": "240x146",
-   "fyllnad": 55.16
+   "matt": "240x177",
+   "fyllnad": 48.94
   },
   "catalog:battlemvp:cyber": {
    "matt": "240x125",
-   "fyllnad": 32.07
+   "fyllnad": 43.61
   },
   "catalog:battlemvp:diamond-elite": {
-   "matt": "300x153",
+   "matt": "300x188",
    "fyllnad": 100
   },
   "catalog:battlemvp:frame:dark-wings": {
@@ -53,32 +53,32 @@
    "fyllnad": 70.5
   },
   "catalog:battlemvp:ice": {
-   "matt": "240x146",
-   "fyllnad": 23.25
+   "matt": "240x177",
+   "fyllnad": 22.7
   },
   "catalog:battlemvp:inferno": {
    "matt": "240x125",
-   "fyllnad": 41.86
+   "fyllnad": 46.72
   },
   "catalog:battlemvp:neon-cyber": {
-   "matt": "300x135",
-   "fyllnad": 99.67
+   "matt": "300x167",
+   "fyllnad": 99.71
   },
   "catalog:battlemvp:royal": {
-   "matt": "240x132",
-   "fyllnad": 34.52
+   "matt": "240x158",
+   "fyllnad": 32.78
   },
   "catalog:battlemvp:royal-purple": {
-   "matt": "300x135",
+   "matt": "300x168",
    "fyllnad": 100
   },
   "catalog:battlemvp:samurai": {
    "matt": "240x125",
-   "fyllnad": 28.47
+   "fyllnad": 33.63
   },
   "catalog:battlemvp:storm": {
-   "matt": "240x146",
-   "fyllnad": 25.88
+   "matt": "240x177",
+   "fyllnad": 24.87
   },
   "catalog:custom:text": {
    "matt": "420x90",

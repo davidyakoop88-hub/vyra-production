@@ -37,3 +37,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Battle MVP-ramarna visade TOM namnplatta: riggen triggar med {username} och gamla triggerBattleMvp laste bara event.name, sa namnet slangdes tyst. #313 laser bada faltnamnen, och de sju ramarna visar nu vinnarens namn i stallet for en tom platta. A/B pa samma binar: exakt 1064 pixlar i 54x32 vid (124,254) - bara namnraden, inget annat. De tio designstilarna ar byteidentiska; de doljer namnet som standard.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-03 — 17 referenser skrivna
+
+- **Motiv:** De tio Battle MVP-stilmodellerna visar nu vinnarens namn, klippt med ellips som ramarna redan gjorde. Aterstaller det d0a7156 slackte 2026-08-11 (vid forsta releasen visades namnet alltid; 195fc8a aterstallde det bara for de sju ramarna). Uppmatt i riktig Chromium: sju av tio stilnycklar byter mått, tre (inferno, cyber, samurai) byter bara pixlar.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
