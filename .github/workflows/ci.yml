@@ -181,6 +181,51 @@ jobs:
           done
           exit 1
 
+
+      # TYPSNITTEN FÅR INTE KOMMA FRÅN RUNNER-AVBILDNINGEN.
+      #
+      # UPPMÄTT 2026-09-03: fyra nycklar föll med IDENTISKA pixelsiffror i tre olika körningar —
+      # `battlemvp:samurai` (1712 px) och `socialgoal:followers:{1,2,4}:landscape` (88/88/80 px).
+      # Ingen kod rörde dem. Skillnaden satt i maskinen:
+      #
+      #     grön körning 8a92869   Runner Image Provisioner  20260819.586
+      #     röd körning  1bbfce1   Runner Image Provisioner  20260828.587
+      #
+      # De fyra widgetarna ritar de enda två tecknen i hela klienten som ligger utanför Inter och
+      # Manrope: U+5200 (samuraiemblemet, studio.css) och U+FF0B (följarmålets ikon, media.js).
+      # Syskonet socialgoal:likes använder U+2665 och föll INTE — det är kontrollfallet som gör
+      # förklaringen till mer än en gissning.
+      #
+      # VÄRRE ÄN EN ENGÅNGSHÄNDELSE: poolen är BLANDAD under utrullningen. Uppmätt samma kväll fick
+      # referensjobbet 20260819.586 medan CI fick 20260828.587 — att ta om bilderna hjälpte
+      # därför ingenting, för nästa körning kunde landa på den andra avbildningen igen.
+      #
+      # `playwright install-deps` drar in en typsnittsuppsättning, men CJK-täckningen kommer från
+      # basavbildningen och följer alltså med när GitHub rullar en ny. Den installeras explicit här,
+      # i BÅDA flödena, så att bilderna skrivs och jämförs under samma förutsättningar.
+      # Samma resonemang som den pinnade Chromium-binären strax intill: vakten har nolltolerans och
+      # kan inte skilja "widgeten ändrades" från "rastreraren ändrades".
+      - name: 'Visuell · pinnat CJK-typsnitt'
+        timeout-minutes: 15
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -eu
+          # Samma omförsöksmönster som steget ovanför, och av samma skäl: spegelns dagsform får
+          # inte göra ett väntat hack till ett rött bygge.
+          for i in 1 2 3; do
+            if sudo apt-get install -y --no-install-recommends fonts-noto-cjk; then
+              fc-cache -f > /dev/null
+              echo "CJK-typsnitt på plats:"
+              fc-list | grep -i "noto sans cjk" | head -3
+              exit 0
+            fi
+            echo "Forsok $i gav upp — provar igen om 20 s"
+            sudo apt-get update || true
+            sleep 20
+          done
+          exit 1
+
       - name: 'Visuell · pinnad Chromium'
         timeout-minutes: 10
         run: npx playwright install chromium
