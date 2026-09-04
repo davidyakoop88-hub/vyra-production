@@ -63,7 +63,12 @@ function servera() {
   // utfall och får inte se ut som ett fel.
   const alla = kravNycklar();
   const undantagna = alla.filter(utanReferens);
-  const nycklar = alla.filter(k => !utanReferens(k)).filter(k => !BARA || k.includes(BARA));
+  // Kommaseparerad lista, for en andring pavarkar sallan nycklar med gemensam delstrang.
+  // Efterkontrollen kor HELA vakten, sa en nyckel som utelamnas ur filtret men pavarkas av
+  // andringen faller korningen och ingenting committas.
+  const termer = BARA.split(',').map(t => t.trim()).filter(Boolean);
+  const nycklar = alla.filter(k => !utanReferens(k))
+    .filter(k => !termer.length || termer.some(t => k.includes(t)));
   const motor = V.motorn();
   console.log(`Motor: ${motor.version}  (${motor.binar})`);
   console.log(`Skriver ${nycklar.length} av ${alla.length} referenser${BARA ? ` (filter: ${BARA})` : ''}`);

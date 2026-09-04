@@ -256,26 +256,31 @@ test('typsnitten referenserna togs med finns pa plats', { skip, timeout: 60000 }
 
 // TREDJE TYPSNITTSKONTROLLEN, och den kom av ett fel som kostade tva blockerade PR:er.
 //
-// Inter och Manrope laddas av sidan och gar att kontrollera med document.fonts. De tva tecken som
-// ligger UTANFOR dem ritas av ett SYSTEMTYPSNITT, och systemtypsnitt syns inte i document.fonts
-// alls — de kommer med runner-avbildningen.
+// Inter och Manrope laddas av sidan och gar att kontrollera med document.fonts. Tecken som ligger
+// UTANFOR dem ritas av ett SYSTEMTYPSNITT, och systemtypsnitt syns inte i document.fonts alls —
+// de kommer med runner-avbildningen.
 //
-// UPPMATT 2026-09-03: fyra nycklar foll med identiska pixelsiffror i tre korningar utan att en rad
-// kod rort dem. Skillnaden var maskinen: grona korningar hade Runner Image 20260819.586, roda hade
-// 20260828.587. De fyra ar de enda widgetar som ritar U+5200 (samuraiemblemet) respektive U+FF0B
-// (folj armalets ikon). Syskonet socialgoal:likes anvander U+2665 och foll INTE.
+// UPPMATT 2026-09-03: fyra nycklar foll med identiska pixelsiffror i flera korningar utan att en
+// rad kod rort dem. Skillnaden var maskinen: grona korningar hade Runner Image 20260819.586, roda
+// hade 20260828.587. De fyra var de enda widgetar som ritade U+5200 (samuraiemblemet) respektive
+// U+FF0B (foljarmalets ikon).
 //
-// Felet last som "dina widgetar gick sonder". Det har provet gor att det i stallet lases som
-// "typsnittet saknas", vilket ar vad det ar. ci.yml och visuell-referenser.yml installerar numera
-// fonts-noto-cjk explicit i bada floden.
+// ATT INSTALLERA ETT TYPSNITT LOSTE DET INTE. `playwright install-deps` drar redan in tre
+// CJK-typsnitt, sa fonts-noto-cjk blev en fjarde kandidat och fontconfig avgjorde vem som vann.
+// I tva korningar var Noto installerat OCH listat av fc-list medan Chromium anda ritade tofu.
+//
+// DARFOR RITAS DE TVA MARKENA NUMERA AV OSS, som inline-SVG. Vakten nedan bevakar inte langre
+// dem — det gor `de tva marken ritas av oss` — utan U+2665, som fortfarande ar TEXT i 27 nycklar
+// (heartgoal, toplike, fanlevel, socialgoal:likes). Kvarstar den flackar i CI ar det samma sorts
+// fel, och da sager provet det rakt ut i stallet for att skylla pa widgetarna.
 //
 // METODEN ar sjalvkalibrerande: ett tecken ur privatanvandningsomradet (U+E000) finns i INGET
-// typsnitt och ritas darfor alltid som en tofu-ruta. Finns CJK-typsnittet ar `刀` en riktig glyf i
-// helbredd och matter ANNORLUNDA an tofun. Saknas det blir bada tofu — och da ar bredderna lika.
-// Ingen hardkodad pixelsiffra behovs, och provet foljer med nar typsnittet byts.
-const CJK_TECKEN = [['U+5200 刀 (samuraiemblemet)', '刀'], ['U+FF0B ＋ (foljarmalet)', '＋']];
+// typsnitt och ritas darfor alltid som en tofu-ruta. Finns hjartat i nagot typsnitt matter det
+// ANNORLUNDA an tofun. Saknas det blir bada tofu — och da ar bredderna lika. Ingen hardkodad
+// pixelsiffra behovs, och provet foljer med nar typsnittet byts.
+const CJK_TECKEN = [['U+2665 ♥ (hjartat i heartgoal, toplike, fanlevel, socialgoal:likes)', '♥']];
 
-test('systemtypsnittet for CJK-tecknen finns pa maskinen', { skip, timeout: 60000 }, async () => {
+test('systemtypsnittet for de textritade symbolerna finns pa maskinen', { skip, timeout: 60000 }, async () => {
   const m = await sida.evaluate((tecken) => {
     const c = document.createElement('canvas').getContext('2d');
     const matt = t => { c.font = '40px sans-serif'; return c.measureText(t).width };
@@ -289,10 +294,66 @@ test('systemtypsnittet for CJK-tecknen finns pa maskinen', { skip, timeout: 6000
   for (const [namn, bredd] of m.bredder) {
     assert.notEqual(bredd, m.tofu,
       `${namn} mater exakt lika brett som en tom platshallarglyf (${bredd} px) — tecknet ritas `
-      + 'alltsa som en tofu-ruta, inte med ett riktigt CJK-typsnitt. Da faller '
-      + 'battlemvp:samurai och socialgoal:followers:* pa nagot de inte gjort sjalva. '
-      + 'Kontrollera steget "Visuell · pinnat CJK-typsnitt" i ci.yml.');
+      + 'alltsa som en tofu-ruta och inte med en riktig glyf. Da faller de 27 nycklar som ritar '
+      + 'symbolen som TEXT pa nagot de inte gjort sjalva. Ratt atgard ar densamma som for U+5200 '
+      + 'och U+FF0B: rita market som inline-SVG i stallet for att lita pa maskinens typsnitt.');
   }
+});
+
+// DEN VAKT SOM HOR TILL FIXEN: ritas markena av oss, eller av maskinens typsnitt?
+//
+// EN KALLTEXTSVAKT DUGER INTE HAR. Provet "bryggan skickar glove efter fordrojningen" letade
+// tidigare i natt efter ett funktionsnamn i bridge.js och forblev GRONT nar funktionen muterats
+// bort — ordet fanns kvar i en kommentar intill. Samma falla galler har: ett prov som letar efter
+// strangen "vyra-glyf" i studio.css uppfylls av den har kommentaren.
+//
+// Provet fragar darfor den RENDERADE widgeten. Tva krav, och bada behovs:
+//   1. ingen CJK-kodpunkt far na skarmen — varken som text eller som ::before-content
+//   2. market maste anda RITAS — annars gar hela emblemet att radera och provet forblir gront
+const MARKEN = [
+  { nyckel: 'catalog:battlemvp:samurai', valjare: '.mvp-emblem', sort: 'mask' },
+  { nyckel: 'catalog:socialgoal:followers:1:landscape', valjare: '.goal-icon', sort: 'svg' },
+];
+
+test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 120000 }, async () => {
+  const brister = [];
+  for (const { nyckel, valjare, sort } of MARKEN) {
+    const foto = await fotografera(nyckel);
+    if (foto.fel) { brister.push(`${nyckel}: kunde inte byggas — ${foto.fel}`); continue }
+    const m = await sida.evaluate(([v, s]) => {
+      const box = document.querySelector('[data-id]');
+      if (!box) return { fel: 'ingen widget' };
+      const el = box.matches(v) ? box : box.querySelector(v);
+      if (!el) return { fel: 'hittade ingen ' + v };
+      const fore = getComputedStyle(el, '::before');
+      // Hela widgetens text, inte bara elementets — ett tecken som smugit in i en syskonnod ar
+      // lika mycket typsnittsberoende.
+      const cjk = [];
+      const sok = (txt, var_) => { for (const ch of txt || '') {
+        const k = ch.codePointAt(0);
+        if (k >= 0x2e80 && k <= 0xfaff || k >= 0xff01 && k <= 0xff60) cjk.push(var_ + ' U+' + k.toString(16).toUpperCase());
+      } };
+      sok(box.textContent, 'text');
+      for (const n of [box, ...box.querySelectorAll('*')]) {
+        for (const p of ['::before', '::after']) sok(getComputedStyle(n, p).content, p);
+      }
+      return {
+        cjk: [...new Set(cjk)],
+        ritas: s === 'mask'
+          ? (fore.maskImage || fore.webkitMaskImage || 'none')
+          : (el.querySelector('svg') ? 'svg' : 'ingen'),
+      };
+    }, [valjare, sort]);
+    if (m.fel) { brister.push(`${nyckel}: ${m.fel}`); continue }
+    if (m.cjk.length) brister.push(`${nyckel}: CJK-kodpunkt nar fortfarande skarmen — ${m.cjk.join(
+)}`);
+    if (sort === 'mask' && !/^url\(/.test(m.ritas)) brister.push(`${nyckel}: ${valjare}::before har ingen mask-image (${m.ritas}) — market ritas inte alls`);
+    if (sort === 'svg' && m.ritas !== 'svg') brister.push(`${nyckel}: ${valjare} innehaller ingen <svg> — market ritas inte alls`);
+  }
+  assert.deepEqual(brister, [],
+    'Marken i Battle MVP · Samurai och Follower Goal ska ritas av oss som inline-SVG. Hamtas de '
+    + 'ur ett systemtypsnitt igen blir de tofu-rutor pa varje maskin utan CJK-tackning — bade i '
+    + 'CI och i en streamers OBS-kalla — och referensbilderna borjar flacka igen.');
 });
 
 // TVA OLIKA KRAV, och de far inte blandas ihop.
