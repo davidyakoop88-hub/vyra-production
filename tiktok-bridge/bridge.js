@@ -538,9 +538,26 @@ if (require.main === module) {
     // TIKTOKS EGEN MVP-LISTA. LINK_MIC_ARMIES med triggerReason 2 (BATTLE_END) bar hela rankingen
     // fardigraknad — med Boosting Glove inraknad, vilket klientens egen coin-summering inte kan
     // veta. mvpFields returnerar null for allt annat an ett battle-slut med ett kant ankar-id.
+    // EN BATTLE SOM TAR SLUT UTAN MVP SKA INTE VARA TYST.
+    //
+    // Uppmatt 2026-09-04: fyra battle-slut i rad gav noll battle_mvp, och det gick bara att se
+    // genom att lasa 450 rader ur en inspelning i efterhand. Tva orsaker ser likadana ut
+    // utifran — ankar-id saknas, eller sa hittades inte vart lag i nyttolasten — och de kraver
+    // helt olika atgarder. Raden nedan skiljer dem at i loggen, en gang per battle.
+    let tystBattle = '';
     connection.on(WebcastEvent.LINK_MIC_ARMIES, data => {
       const mvp = N.mvpFields(data, mittAnkarId);
-      if (mvp) sendEvent('battle_mvp', mvp, data);
+      if (mvp) { sendEvent('battle_mvp', mvp, data); return }
+      // Bara vid matchens SLUT. LINK_MIC_ARMIES fyrar hundratals ganger under en match, och en
+      // rad per gang hade dränkt loggen den finns for att gora lasbar.
+      if (Number(data && data.triggerReason) !== 2) return;
+      const battleId = String((data && data.battleId) || '');
+      if (battleId && battleId === tystBattle) return;
+      tystBattle = battleId;
+      const skal = !mittAnkarId
+        ? 'ankar-id saknas (rumsuppslagningen misslyckades vid anslutning)'
+        : 'vart lag hittades inte i nyttolasten — kontrollera armies/teamArmies mot ankar-id';
+      console.log(`[bridge][battle-mvp] match ${battleId || 'okand'} tog slut utan MVP: ${skal}`);
     });
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
 
