@@ -70,6 +70,9 @@ const avFamilj = (rader, tikTokNamn) => rader.filter(r => arEvent(r)
 // raden kommer via sendEvent("glove", ...) — alltsa med det UTGAENDE namnet. Bada accepteras: om
 // redanLyssnade nagon gang andras ska analysatorn inte tystna.
 const BOOSTTYPER = new Set(['glove', 'LINK_MIC_BATTLE_TASK']);
+// De typer bryggan SKJUTER UPP innan de skickas. For dem ar radens `vid` avfyrningstid, inte
+// mottagningstid — se klockdriftsberakningen i punkt1.
+const FORDROJDA = new Set(['glove']);
 
 // Ett boostfonster oppnar tiotals sekunder till nagra minuter efter START — uppmatt 106, 111 och
 // 151 s. Den gamla gransen lag pa 120 s och hade avfardat tva av tre UPPMATTA varden som trasig
@@ -91,28 +94,44 @@ function punkt1(rader) {
     if (!Number.isFinite(fonster) || fonster <= 0 || fonster >= Number.MAX_SAFE_INTEGER) return null;
     if (!Number.isFinite(skickat) || skickat <= 0 || skickat >= Number.MAX_SAFE_INTEGER) return null;
     const fonsterMs = fonster < 1e12 ? fonster * 1000 : fonster;
-    const lokalt = Date.parse(r.vid);
     return {
       avstandSekunder: Math.round((fonsterMs - skickat) / 1000),
       // Vad bryggan FAKTISKT vantar. Samma funktion som bridge.js kallar, sa analysen kan inte
       // saga en sak medan bryggan gor en annan.
       bryggansFordrojningMs: N.boostFordrojningMs(f),
-      // Driften mats for sig — den ar inte brus, det ar den som gjorde det gamla svaret fel.
-      driftSekunder: Number.isFinite(lokalt) ? (lokalt - skickat) / 1000 : null,
+
       multiplikator: f.multiplier || null,
       sekunder: f.fonsterSekunder || null,
     };
   }).filter(Boolean);
   if (!matningar.length) return { svar: INGET, skal: 'boost-handelserna saknade rewardStartTimestamp eller common.createTime' };
 
-  const drifter = matningar.map(m => m.driftSekunder).filter(d => d !== null);
+  // KLOCKDRIFTEN MATS ALDRIG PA EN GLOVE-RAD.
+  //
+  // `inspelare.raa()` ligger INUTI `sendEvent()`, och sedan boost-fordrojningen mergades skjuts
+  // `sendEvent('glove', ...)` upp till dess fonstret oppnar. Glove-radens `vid` ar alltsa
+  // AVFYRNINGSTIDEN, inte mottagningstiden, och `vid - createTime` blir dar drift PLUS
+  // fordrojning — 223 + 151 = 374 s for den uppmatta sandningen i stallet for 223.
+  //
+  // Varje annan vidarebefordrad handelse skickas direkt, sa dar bar `vid` bara driften. Finns
+  // ingen sadan rad gar drift och fordrojning inte att skilja at, och da sags det rakt ut
+  // i stallet for att gissa — samma regel som resten av filen.
+  const drifter = [];
+  for (const r of rader) {
+    if (!arEvent(r) || FORDROJDA.has(r.typ)) continue;
+    const t = Number(r.nyttolast?.common?.createTime), lokalt = Date.parse(r.vid);
+    if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(lokalt)) continue;
+    drifter.push((lokalt - t) / 1000);
+  }
   const klockdriftSekunder = drifter.length
     ? Math.round(drifter.reduce((a, b) => a + b, 0) / drifter.length * 10) / 10
     : null;
+  const driftSkal = drifter.length ? null
+    : 'ingen ofordrojd handelse med common.createTime i inspelningen — glove-raden skrivs nar eventet fyrar, sa dess `vid` bar bade drift och fordrojning och gar inte att dela upp';
   const varsta = matningar.reduce((a, b) => Math.abs(b.avstandSekunder) > Math.abs(a.avstandSekunder) ? b : a);
   const d = varsta.avstandSekunder;
   const gemensamt = {
-    avstandSekunder: d, matningar: matningar.length, klockdriftSekunder,
+    avstandSekunder: d, matningar: matningar.length, klockdriftSekunder, driftSkal,
     bryggansFordrojningMs: varsta.bryggansFordrojningMs,
   };
 

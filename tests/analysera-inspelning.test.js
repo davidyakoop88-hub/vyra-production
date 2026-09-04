@@ -64,10 +64,24 @@ const UPPMATTA = [
 // Inspelarens `vid` ligger ~223 s EFTER TikToks klocka. Raden byggs med den driften inbakad, sa
 // filen ser ut som en riktig inspelning och inte som en tillrattalagd.
 const DRIFT_MS = 223000;
+// FORDROJNINGEN AR INBAKAD I `vid`, for det ar vad inspelaren skriver: raa() ligger inuti
+// sendEvent(), och glove-eventet skjuts upp till dess fonstret oppnar. En fixtur utan den
+// fordrojningen motsager fixen som redan ligger pa main.
+const fordrojningFor = n => {
+  const f = Number(n.start.config.rewardConfig.rewardStartTimestamp) * 1000
+    - Number(n.common.createTime);
+  return f > 0 ? f : 0;
+};
 const gloveRad = (nyttolast, extraDriftMs = 0) => ({
   typ: 'glove', kalla: 'vidarebefordrad',
-  vid: new Date(Number(nyttolast.common.createTime) + DRIFT_MS + extraDriftMs).toISOString(),
+  vid: new Date(Number(nyttolast.common.createTime) + DRIFT_MS + fordrojningFor(nyttolast) + extraDriftMs).toISOString(),
   nyttolast,
+});
+// En handelse som INTE fordrojs — dar bar `vid` den aktuella driften och inget annat.
+const annanRad = (createTime, extraDriftMs = 0) => ({
+  typ: 'gift', kalla: 'vidarebefordrad',
+  vid: new Date(Number(createTime) + DRIFT_MS + extraDriftMs).toISOString(),
+  nyttolast: { common: { createTime }, giftId: 1 },
 });
 
 test('punkt 1: hittar boosten i den form inspelaren faktiskt skriver', () => {
@@ -130,9 +144,55 @@ test('punkt 1: rapporterar vad bryggan FAKTISKT vantar, inte bara vad den borde'
     'slutsatsen ska saga att bryggan fordrojer eventet, inte bara att START ligger fore');
 });
 
+// GLOVE-RADENS `vid` AR AVFYRNINGSTIDEN, INTE MOTTAGNINGSTIDEN.
+//
+// `inspelare.raa()` ligger INUTI `sendEvent()`, och sedan boost-fordrojningen mergades (#321)
+// skjuts `sendEvent('glove', ...)` upp med upp till tio minuter. Raden skrivs alltsa nar
+// eventet FYRAR, inte nar payloaden kom in.
+//
+// Foljden: `vid - createTime` pa en glove-rad ar drift PLUS fordrojning. For den uppmatta
+// sandningen 223 + 151 = 374 s, inte 223. Driften maste darfor matas pa rader som INTE fordrojs.
+//
+// Det har provet skrevs efter att jag upptackt att mitt EGET forsta driftprov satte `vid` utan
+// fordrojning — alltsa en fixtur som motsade den fix som redan lag pa main.
+test('punkt 1: klockdriften mats inte pa den fordrojda glove-raden', () => {
+  // Glove-raden bar hela fordrojningen i sitt `vid`, precis som i drift. Dessutom en vanlig
+  // gift-rad, som INTE fordrojs och darfor bar den aktuella driften.
+  const fordrojd = {
+    typ: 'glove', kalla: 'vidarebefordrad',
+    vid: new Date(Number(UPPMATTA[0].p.common.createTime) + DRIFT_MS + 150734).toISOString(),
+    nyttolast: UPPMATTA[0].p,
+  };
+  const gava = {
+    typ: 'gift', kalla: 'vidarebefordrad',
+    vid: new Date(Number(UPPMATTA[0].p.common.createTime) + DRIFT_MS).toISOString(),
+    nyttolast: { common: { createTime: UPPMATTA[0].p.common.createTime }, giftId: 1 },
+  };
+  const r = analysera(skrivFil([fordrojd, gava]));
+  assert.notEqual(r.punkt1.svar, 'inget underlag', 'boosten ska hittas');
+  assert.equal(Math.round(r.punkt1.klockdriftSekunder), Math.round(DRIFT_MS / 1000),
+    `driften ar ${DRIFT_MS / 1000} s. Fick ${r.punkt1.klockdriftSekunder} — ett varde nara `
+    + `${Math.round((DRIFT_MS + 150734) / 1000)} betyder att fordrojningen raknats in.`);
+});
+
+test('punkt 1: utan en ofordrojd rad rapporteras driften som okand, aldrig gissad', () => {
+  // Bara glove-rader i filen: da GAR det inte att skilja drift fran fordrojning. Filens egen
+  // regel galler — hellre "inget underlag" an ett tal som ser ratt ut.
+  const bara = UPPMATTA.map(u => ({
+    typ: 'glove', kalla: 'vidarebefordrad',
+    vid: new Date(Number(u.p.common.createTime) + DRIFT_MS + u.vantadMs).toISOString(),
+    nyttolast: u.p,
+  }));
+  const r = analysera(skrivFil(bara));
+  assert.equal(r.punkt1.klockdriftSekunder, null,
+    `utan en ofordrojd rad ska driften vara null, fick ${r.punkt1.klockdriftSekunder}`);
+  assert.match(String(r.punkt1.driftSkal || ''), /fordroj|ofordrojd/i,
+    'analysatorn ska saga VARFOR driften inte gar att mata');
+});
+
 test('punkt 1: klockdriften mellan maskinen och TikTok rapporteras for sig', () => {
   // Driften ar inte brus — det ar den som gjorde det gamla svaret fel, och den ar vard att se.
-  const fil = skrivFil(UPPMATTA.map(u => gloveRad(u.p)));
+  const fil = skrivFil([...UPPMATTA.map(u => gloveRad(u.p)), annanRad(UPPMATTA[0].p.common.createTime)]);
   const r = analysera(fil);
   assert.ok(r.punkt1.klockdriftSekunder !== undefined,
     'analysatorn ska rapportera hur langt maskinens klocka ligger fran TikToks');
