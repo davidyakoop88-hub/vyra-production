@@ -1,5 +1,28 @@
 (function(){const localRuntime=['127.0.0.1','localhost'].includes(location.hostname);const listeners=new Set(),activeUsers=new Set();
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
+// KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
+// vinner nar bada finns. ~20 filer nedstroms laser det interna `coins` utan att veta nagot
+// om tradformatet — de behover alltsa inte roras nar tradfaltet till slut forsvinner.
+//
+// Beteendet bevakas av tests/browser/diamanter-vid-gransen.browser.test.js. Kalltextsvakten
+// i tests/diamanter-faltnamn.test.js pinnar uttrycket nedan och ar blind for allt som skriver
+// over resultatet EFTERAT — bada behovs.
+//
+// TODO(#133): ta bort `coins` — BLOCKERAT tills v1.2.3 ar ersatt i produktion.
+//
+// Villkoret ar inte "nagon gang" utan tva matbara saker:
+//   1. Den PUBLICERADE .exe:n ar inte langre 1.2.3. Den skickar bara `coins` — `diamonds` kom
+//      i #280 (1.2.4), som ar mergad men ALDRIG TAGGAD. Leveransen gar via Microsoft Store.
+//      Kontroll: jamfor senaste release-taggen mot electron-app/package.json.
+//   2. Ingen kvarvarande installation kor 1.2.3. En .exe uppdateras inte retroaktivt, sa det
+//      racker inte att en ny version finns — den maste vara utrullad.
+//
+// Tas `coins` bort innan bada galler blir varje gava fran en gammal klient vard NOLL — tyst,
+// och bara for de anvandarna. Ingen widget kraschar, inga prov faller, summorna blir bara fel.
+//
+// Nar det ar dags: `coins` finns pa tre stallen i skrivvagen (den har filen, den andra bryggan,
+// och normaliseringen i live-client.js) och som nyckel i sparad localStorage-state i
+// live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
 function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,''),username=e.username||e.uniqueId||e.user,first=!!username&&!activeUsers.has(String(username).toLowerCase()),payload={username,name:e.name||username,gift:e.giftName||e.gift,giftname:e.giftName||e.gift,giftImage:e.giftImage||'',profileImage:e.profileImage||e.avatarUrl,coins:Number(e.diamonds??e.coins??e.diamondCount??0),diamonds:Number(e.diamonds??e.coins??e.diamondCount??0),count:Number(e.count||e.repeatCount||1),repeatcount:Number(e.count||e.repeatCount||1),combo:Number(e.count||e.repeatCount||1),teamLevel:Number(e.teamLevel||e.fanClubLevel||0),isFollower:!!e.isFollower,isSubscriber:!!(e.isSubscriber||e.isMember),isModerator:!!e.isModerator,isTopGifter:!!e.isTopGifter,isAnonymous:!!e.isAnonymous,value:e.value??e.name??e.giftName??e.gift??username};let out=[];
   if(first){activeUsers.add(String(username).toLowerCase());out.push(['firstActivity',payload])}
   if(t==='gift'||t==='giftcombo'){const giftPayload={...payload,value:payload.gift};out.push(['gift',giftPayload],['giftCoins',giftPayload]);if(payload.count>1||t==='giftcombo')out.push(['giftCombo',giftPayload])}
