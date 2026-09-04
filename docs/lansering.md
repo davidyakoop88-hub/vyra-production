@@ -64,8 +64,12 @@ läsas av. Punkt 5 och 7 är redan **stängda** — uppmätta i riktig OBS 2026-
 1. Starta med `SPELA-IN-TIKTOK.cmd` i stället för `ANSLUT-TIKTOK-LIVE.cmd`.
 2. Sätt `VYRA_INSPELNING_TYPER=alla` **före** start — annars spelas bara elva av TikToks 67
    händelser in, och Guardian-eventet kan vara bland de övriga 56.
-3. Sänd som vanligt. Helst med en battle, annars kan punkt 1–4 inte svaras på.
-4. Skicka filen ur `tiktok-bridge/inspelningar/`.
+3. Sätt `VYRA_INSPELNING_MAX_MB=400` i samma veva. Standardtaket är **50 MB**, och med `alla`
+   fylls det långt före sändningens slut — inspelaren slutar då skriva mitt i. Battlen ligger
+   nästan alltid efter den punkten, och utan den går punkt 1–4 inte att svara på. Ett avbrutet
+   band ser dessutom ut som en komplett fil: den enda skillnaden är att slutet saknas.
+4. Sänd som vanligt. Helst med en battle, annars kan punkt 1–4 inte svaras på.
+5. Skicka filen ur `tiktok-bridge/inspelningar/`.
 
 Sedan kör Claude:
 
