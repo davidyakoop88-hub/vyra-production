@@ -404,14 +404,53 @@ function fansUppgradering(data){
 //
 // NOLL POANG VINNER INTE: en match dar ingen gav nagot ska inte visa nagon MVP alls.
 // LIKA POANG avgors pa namn, sa svaret aldrig beror pa inmatningsordningen.
+/* VART LAGS GIVARLISTA — ur den form TikTok FAKTISKT skickade.
+ *
+ * TVA FORMER, BADA UPPMATTA i skarpa sandningar med samma konto tva dygn isar:
+ *
+ *   inspelning   LINK_MIC_ARMIES   teamArmies fylld   armies-objekt
+ *   2026-09-02              305           305 av 305             305
+ *   2026-09-04              450             0 av 450             450
+ *
+ * Den 4:e var `teamArmies` en TOM ARRAY i varenda rad. `armies` — ett OBJEKT nycklat pa
+ * ankar-id — fanns i BADA, i varenda rad. Den lases darfor forst.
+ *
+ * FALLAN: `teamArmies: []` ar TRUTHY. En ||-kedja som borjar dar faller aldrig igenom till
+ * `armies` — den stannar pa den tomma listan och rapporterar "ingen arme".
+ *
+ * STRUKTURSKILLNADEN, ordagrant ur inspelningarna:
+ *   teamArmies[i] = { teamId, teamUser:[{userIdStr}], userArmies:{ userArmies:[…] } }
+ *   armies[ankarId] = { userArmies:[…], hostscore, anchorIdStr }
+ * Alltsa: i den ena BAR `userArmies` listan, i den andra AR den listan.
+ *
+ * LAGET AVGORS ALLTID AV ANKAR-ID, aldrig av ordning eller hogsta poang. Att gissa "forsta
+ * laget ar vart" hade fungerat i varje uppmatt match och varit fel sa fort streamern blir
+ * INBJUDEN i stallet for att bjuda — och da hyllar overlayn motstandarens tittare. */
+function vartLagsGivare(data,ankare){
+  const armies=data&&data.armies;
+  if(armies&&typeof armies==='object'&&!Array.isArray(armies)){
+    for(const nyckel of Object.keys(armies)){
+      const lag=armies[nyckel];
+      if(String(nyckel).trim()!==ankare&&String(lag&&lag.anchorIdStr||'').trim()!==ankare) continue;
+      if(Array.isArray(lag&&lag.userArmies)) return lag.userArmies;
+      if(Array.isArray(lag&&lag.userArmies&&lag.userArmies.userArmies)) return lag.userArmies.userArmies;
+      return null;
+    }
+  }
+  const vart=(data&&data.teamArmies||[]).find(t=>
+    (t&&t.teamUser||[]).some(u=>String(u&&u.userIdStr||'').trim()===ankare));
+  if(!vart) return null;
+  if(Array.isArray(vart.userArmies&&vart.userArmies.userArmies)) return vart.userArmies.userArmies;
+  if(Array.isArray(vart.userArmies)) return vart.userArmies;
+  return null;
+}
 function armeMvp(data, mittAnkarId){
   const ankare=String(mittAnkarId||'').trim();
   if(!ankare) return null;
   if(Number(data?.triggerReason)!==2) return null;
-  const vart=(data?.teamArmies||[]).find(t=>
-    (t?.teamUser||[]).some(u=>String(u?.userIdStr||'').trim()===ankare));
-  if(!vart) return null;
-  const lista=(vart?.userArmies?.userArmies||[])
+  const givare=vartLagsGivare(data,ankare);
+  if(!givare) return null;
+  const lista=givare
     .map(b=>({name:text(b?.nickname,120),score:number(b?.score,1e12),
       profileImage:text(b?.avatarThumb?.urlList?.[0]||'',1200)}))
     .filter(b=>b.score>0&&b.name);
