@@ -190,6 +190,25 @@ test('punkt 1: utan en ofordrojd rad rapporteras driften som okand, aldrig gissa
     'analysatorn ska saga VARFOR driften inte gar att mata');
 });
 
+test('klockdriften ar en MEDIAN — tva avvikande rader far inte forstora den', () => {
+  // UPPMATT 2026-09-04 i en riktig inspelning: 2375 matningar med median 226,6 s, men MEDEL
+  // 1 504 875 s. Tva ROOM_MESSAGE-rader bar createTime i sekundskala i stallet for millisekunder,
+  // och tva rader av 2375 racker for att gora svaret meningslost.
+  //
+  // Kallmatningen sa uttryckligen 'median over 3798 handelser'. Forsta versionen av den har
+  // koden raknade medel anda — kommentaren sa median, koden gjorde nagot annat.
+  const bra = [];
+  for (let i = 0; i < 20; i++) bra.push(annanRad(String(1788377980266 + i * 1000)));
+  const trasig = {
+    typ: 'ROOM_MESSAGE', kalla: 'inspelad', vid: new Date(1788377980266 + DRIFT_MS).toISOString(),
+    nyttolast: { common: { createTime: '1900000000' } },   // sekundskala, inte ms
+  };
+  const r = analysera(skrivFil([...UPPMATTA.map(u => gloveRad(u.p)), ...bra, trasig, trasig]));
+  assert.equal(Math.round(r.punkt1.klockdriftSekunder), Math.round(DRIFT_MS / 1000),
+    `driften ska vara medianen (${DRIFT_MS / 1000} s), fick ${r.punkt1.klockdriftSekunder}. `
+    + 'Ett medelvarde dras isar av en enda rad med fel enhet.');
+});
+
 test('punkt 1: klockdriften mellan maskinen och TikTok rapporteras for sig', () => {
   // Driften ar inte brus — det ar den som gjorde det gamla svaret fel, och den ar vard att se.
   const fil = skrivFil([...UPPMATTA.map(u => gloveRad(u.p)), annanRad(UPPMATTA[0].p.common.createTime)]);

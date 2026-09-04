@@ -123,8 +123,13 @@ function punkt1(rader) {
     if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(lokalt)) continue;
     drifter.push((lokalt - t) / 1000);
   }
+  // MEDIAN, ALDRIG MEDEL. Uppmatt 2026-09-04: 2375 matningar med median 226,6 s och MEDEL
+  // 1 504 875 s — tva ROOM_MESSAGE-rader bar createTime i sekundskala i stallet for millisekunder.
+  // Tva rader av 2375 racker for att gora ett medelvarde meningslost, och kallmatningen sa
+  // uttryckligen "median over 3798 handelser". Forsta versionen har raknade medel anda.
+  drifter.sort((a, b) => a - b);
   const klockdriftSekunder = drifter.length
-    ? Math.round(drifter.reduce((a, b) => a + b, 0) / drifter.length * 10) / 10
+    ? Math.round(drifter[Math.floor(drifter.length / 2)] * 10) / 10
     : null;
   const driftSkal = drifter.length ? null
     : 'ingen ofordrojd handelse med common.createTime i inspelningen — glove-raden skrivs nar eventet fyrar, sa dess `vid` bar bade drift och fordrojning och gar inte att dela upp';
