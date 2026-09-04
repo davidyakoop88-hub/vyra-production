@@ -66,9 +66,25 @@ jobs:
       # further down still runs the migration twice on top of this one.
       - run: npm run migrate
       - run: npm test
-      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
-      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
-      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      # OMFORSOKET AR SELEKTIVT, OCH DET FAR INTE FORENKLAS BORT.
+      #
+      # `npm audit` returnerar 1 for BADA sakerna: en sarbarhet OCH ett natverksfel mot
+      # advisory-endpointen. Uppmatt 2026-09-04: endpointen svarade 1 gang av 3 under flera timmar
+      # och fallde 12 jobb pa tre PR:er, medan npm:s statussida pastod "All Systems Operational".
+      #
+      # Skillnaden gors pa UTSKRIFTEN: bara natverksfelet skriver "audit endpoint returned an
+      # error". En sarbarhet faller darfor pa forsta forsoket, precis som forut.
+      #
+      # EN BLIND LOOP AR EN SAKERHETSREGRESSION, inte en forenkling:
+      #
+      #     for i in 1 2 3; do npm audit ... && exit 0; sleep 20; done    # GOR INTE SA
+      #
+      # Den kor om aven vid en verklig sarbarhet. Grinden svarar da langsammare nar den faktiskt
+      # har nagot att saga — och en langsammare sakerhetsgrind ar en samre sakerhetsgrind. Vardet
+      # ligger i att skilja de tva felen at, inte i sjalva omforsoket.
+      #
+      # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
+      # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
       - name: npm audit (omforsok bara vid natverksfel)
         run: |
           for i in 1 2 3; do
@@ -280,9 +296,25 @@ jobs:
         continue-on-error: true
         run: npm run test:coverage 2>&1 | sed -n '/start of coverage/,/end of coverage/p'
 
-      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
-      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
-      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      # OMFORSOKET AR SELEKTIVT, OCH DET FAR INTE FORENKLAS BORT.
+      #
+      # `npm audit` returnerar 1 for BADA sakerna: en sarbarhet OCH ett natverksfel mot
+      # advisory-endpointen. Uppmatt 2026-09-04: endpointen svarade 1 gang av 3 under flera timmar
+      # och fallde 12 jobb pa tre PR:er, medan npm:s statussida pastod "All Systems Operational".
+      #
+      # Skillnaden gors pa UTSKRIFTEN: bara natverksfelet skriver "audit endpoint returned an
+      # error". En sarbarhet faller darfor pa forsta forsoket, precis som forut.
+      #
+      # EN BLIND LOOP AR EN SAKERHETSREGRESSION, inte en forenkling:
+      #
+      #     for i in 1 2 3; do npm audit ... && exit 0; sleep 20; done    # GOR INTE SA
+      #
+      # Den kor om aven vid en verklig sarbarhet. Grinden svarar da langsammare nar den faktiskt
+      # har nagot att saga — och en langsammare sakerhetsgrind ar en samre sakerhetsgrind. Vardet
+      # ligger i att skilja de tva felen at, inte i sjalva omforsoket.
+      #
+      # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
+      # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
       - name: npm audit (omforsok bara vid natverksfel)
         run: |
           for i in 1 2 3; do
@@ -402,9 +434,25 @@ jobs:
           cache-dependency-path: tiktok-bridge/package-lock.json
       - run: npm ci
       - run: npm test
-      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
-      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
-      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      # OMFORSOKET AR SELEKTIVT, OCH DET FAR INTE FORENKLAS BORT.
+      #
+      # `npm audit` returnerar 1 for BADA sakerna: en sarbarhet OCH ett natverksfel mot
+      # advisory-endpointen. Uppmatt 2026-09-04: endpointen svarade 1 gang av 3 under flera timmar
+      # och fallde 12 jobb pa tre PR:er, medan npm:s statussida pastod "All Systems Operational".
+      #
+      # Skillnaden gors pa UTSKRIFTEN: bara natverksfelet skriver "audit endpoint returned an
+      # error". En sarbarhet faller darfor pa forsta forsoket, precis som forut.
+      #
+      # EN BLIND LOOP AR EN SAKERHETSREGRESSION, inte en forenkling:
+      #
+      #     for i in 1 2 3; do npm audit ... && exit 0; sleep 20; done    # GOR INTE SA
+      #
+      # Den kor om aven vid en verklig sarbarhet. Grinden svarar da langsammare nar den faktiskt
+      # har nagot att saga — och en langsammare sakerhetsgrind ar en samre sakerhetsgrind. Vardet
+      # ligger i att skilja de tva felen at, inte i sjalva omforsoket.
+      #
+      # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
+      # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
       - name: npm audit (omforsok bara vid natverksfel)
         run: |
           for i in 1 2 3; do
