@@ -12,6 +12,10 @@
 //
 // Kör:  node tiktok-bridge/analysera-inspelning.js <fil.jsonl>
 const fs = require('fs');
+// SAMMA FALTUTVINNARE SOM BRYGGAN. Faltvagarna dubblerades tidigare har (`nyttolast.rewardConfig`,
+// `rewardDuration`) och matchade inte det TikTok faktiskt skickar — analysatorn svarade darfor
+// "inget underlag" pa varje riktig inspelning. En kopia av en faltvag ar en kopia som glider isar.
+const N = require('./normalizer.js');
 
 const INGET = 'inget underlag';
 
@@ -28,45 +32,113 @@ const arEvent = r => r && r.typ && !String(r.typ).startsWith('_');
 const avTyp = (rader, typ) => rader.filter(r => arEvent(r) && r.typ === typ);
 const nycklar = o => (o && typeof o === 'object' && !Array.isArray(o)) ? Object.keys(o) : [];
 
+// INSPELAREN SKRIVER BRYGGANS UTGAENDE NAMN, INTE TIKTOKS.
+//
+// Varje rad kommer ur `inspelare.raa(type, data)` inuti sendEvent(), dar `type` ar det bryggan
+// skickar VIDARE. Analysatorn letade efter TikToks handelsenamn och hittade darfor ingenting i
+// en riktig inspelning — punkt 3 och 4 svarade "inget underlag" varje gang.
+//
+// Nyttolasten daremot ar RA: inspelare.raa sparar payloaden orord, sa faltnamnen ar TikToks.
+//
+// LINK_MIC_BATTLE_PUNISH_FINISH har INGEN vag till filen: dess enda lyssnare ar battle-sonden,
+// som bara console.loggar, och typen star i inspelarens `redanLyssnade` sa inspelaren lagger
+// ingen egen lyssnare. Den redovisas darfor som omojlig i stallet for att tigas ihjal.
+const INSPELAT_SOM = {
+  LINK_MIC_BATTLE: ['battle'],
+  LINK_MIC_ARMIES: ['battle_mvp'],
+  LINK_MIC_BATTLE_TASK: ['glove'],
+  LINK_MIC_BATTLE_PUNISH_FINISH: [],
+};
+const avFamilj = (rader, tikTokNamn) => rader.filter(r => arEvent(r)
+  && (r.typ === tikTokNamn || (INSPELAT_SOM[tikTokNamn] || []).includes(r.typ)));
+
 // ---- 1. Tänder handsken vid rätt ögonblick? -----------------------------------------------------
-// Bryggan skickar boosten på taskMessageType=START. Samma payload bär rewardStartTimestamp — när
-// fönstret FAKTISKT öppnar. Ligger START före är overlayn tidig, och då ska sändningen fördröjas
-// till tidsstämpeln i stället.
+//
+// TVA KLOCKOR SOM INTE FAR BLANDAS. `rewardStartTimestamp` och `common.createTime` kommer bada ur
+// TikToks klocka och ligger i SAMMA nyttolast. Inspelningens `vid` kommer ur maskinens.
+//
+// UPPMATT 2026-09-02 over samtliga 3798 handelser i en riktig sandning: maskinens klocka lag
+// 222,8-231,5 SEKUNDER efter `common.createTime` — liten spridning, stor forskjutning, alltsa en
+// klockforskjutning och inte leveransfordrojning. Den forra versionen rade `fonsterMs -
+// Date.parse(r.vid)` och matte darfor drift; drivet ar tva storleksordningar storre an det som
+// ska matas, sa svaret var brus med tva decimaler.
+//
+// REGELN: lokalt mot lokalt gar bra, TikTok mot TikTok gar bra, blandat gar aldrig.
+
+// Inspelaren skriver typ `glove`, inte `LINK_MIC_BATTLE_TASK`: bryggan prenumererar redan pa den
+// senare (se redanLyssnade i bridge.js) sa inspelaren lagger ingen egen lyssnare, och den enda
+// raden kommer via sendEvent("glove", ...) — alltsa med det UTGAENDE namnet. Bada accepteras: om
+// redanLyssnade nagon gang andras ska analysatorn inte tystna.
+const BOOSTTYPER = new Set(['glove', 'LINK_MIC_BATTLE_TASK']);
+
+// Ett boostfonster oppnar tiotals sekunder till nagra minuter efter START — uppmatt 106, 111 och
+// 151 s. Den gamla gransen lag pa 120 s och hade avfardat tva av tre UPPMATTA varden som trasig
+// data. Taket foljer nu normalizer.js BOOST_TAK_MS: tio minuter skiljer "vanta lange" fran
+// "vanta for alltid", och en battle ar ~5 minuter.
+const TAK_SEKUNDER = 600;
+
 function punkt1(rader) {
-  const start = avTyp(rader, 'LINK_MIC_BATTLE_TASK')
-    .filter(r => Number(r.nyttolast?.taskMessageType) === 0 && r.nyttolast?.rewardConfig);
-  if (!start.length) return { svar: INGET, skal: 'ingen LINK_MIC_BATTLE_TASK med taskMessageType=0 och rewardConfig' };
+  const start = rader.filter(r => arEvent(r) && BOOSTTYPER.has(r.typ))
+    .filter(r => Number(r.nyttolast?.taskMessageType) === 0);
+  if (!start.length) {
+    return { svar: INGET, skal: 'ingen boost-handelse (glove eller LINK_MIC_BATTLE_TASK) med taskMessageType=0' };
+  }
   const matningar = start.map(r => {
-    const k = r.nyttolast.rewardConfig;
-    const fonster = Number(k.rewardStartTimestamp ?? k.rewardStartTime);
-    if (!Number.isFinite(fonster) || !fonster) return null;
-    // Tidsstämpeln kommer i sekunder; raden i ISO. Avståndet är det enda som mäts.
+    const f = N.battleTaskFields(r.nyttolast);
+    // battleTaskFields satter saknade tal till 0 eller till sitt TAK (MAX_SAFE_INTEGER) — bada
+    // maste bort innan de nar en subtraktion. Se boostFordrojningMs for samma grind.
+    const fonster = Number(f.fonsterStart), skickat = Number(f.skickatAt);
+    if (!Number.isFinite(fonster) || fonster <= 0 || fonster >= Number.MAX_SAFE_INTEGER) return null;
+    if (!Number.isFinite(skickat) || skickat <= 0 || skickat >= Number.MAX_SAFE_INTEGER) return null;
     const fonsterMs = fonster < 1e12 ? fonster * 1000 : fonster;
-    return { avstandSekunder: Math.round((fonsterMs - Date.parse(r.vid)) / 1000),
-      multiplikator: Number(k.rewardMultiple) || null, sekunder: Number(k.rewardDuration) || null };
+    const lokalt = Date.parse(r.vid);
+    return {
+      avstandSekunder: Math.round((fonsterMs - skickat) / 1000),
+      // Vad bryggan FAKTISKT vantar. Samma funktion som bridge.js kallar, sa analysen kan inte
+      // saga en sak medan bryggan gor en annan.
+      bryggansFordrojningMs: N.boostFordrojningMs(f),
+      // Driften mats for sig — den ar inte brus, det ar den som gjorde det gamla svaret fel.
+      driftSekunder: Number.isFinite(lokalt) ? (lokalt - skickat) / 1000 : null,
+      multiplikator: f.multiplier || null,
+      sekunder: f.fonsterSekunder || null,
+    };
   }).filter(Boolean);
-  if (!matningar.length) return { svar: INGET, skal: 'rewardConfig saknade rewardStartTimestamp' };
+  if (!matningar.length) return { svar: INGET, skal: 'boost-handelserna saknade rewardStartTimestamp eller common.createTime' };
+
+  const drifter = matningar.map(m => m.driftSekunder).filter(d => d !== null);
+  const klockdriftSekunder = drifter.length
+    ? Math.round(drifter.reduce((a, b) => a + b, 0) / drifter.length * 10) / 10
+    : null;
   const varsta = matningar.reduce((a, b) => Math.abs(b.avstandSekunder) > Math.abs(a.avstandSekunder) ? b : a);
   const d = varsta.avstandSekunder;
-  // RIMLIGHETSGRÄNSEN. Ett boostfönster varar tiotals sekunder; ett avstånd på minuter eller
-  // timmar är inte en timing-fråga utan trasig data — sekunder mot millisekunder, eller lokal
-  // tid mot UTC. Uppmätt under bygget: ett provdata med fel tidszon gav -7196 s, och verktyget
-  // svarade "overlayn tänds 7196 s för sent". Ett råd på ett sådant tal är värre än tystnad.
-  if (Math.abs(d) > 120) {
-    return { svar: 'orimligt avstånd', avstandSekunder: d, matningar: matningar.length,
-      slutsats: `${d} s mellan START och rewardStartTimestamp är inte en timing-avvikelse. `
-        + 'Kontrollera enheten (sekunder mot millisekunder) och tidszonen (lokal tid mot UTC) '
-        + 'i både inspelningens `vid` och rewardConfig innan siffran tolkas.' };
+  const gemensamt = {
+    avstandSekunder: d, matningar: matningar.length, klockdriftSekunder,
+    bryggansFordrojningMs: varsta.bryggansFordrojningMs,
+  };
+
+  // RIMLIGHETSGRANSEN, nu i ratt klocka. Med `vid` inblandat var ett stort tal oftast bara
+  // driften; nu ar ett stort POSITIVT tal ett verkligt forsprang. Kvar att fanga ar det som
+  // ingen sandning kan producera: ett fonster som pastar sig oppna over tio minuter bort, eller
+  // fore sitt eget meddelande.
+  if (Math.abs(d) > TAK_SEKUNDER) {
+    return { ...gemensamt, svar: 'orimligt avstånd',
+      slutsats: `${d} s mellan START och rewardStartTimestamp ar inte en timing-avvikelse. `
+        + 'Bada talen ska komma ur samma nyttolast — kontrollera enheten (sekunder mot '
+        + 'millisekunder) i rewardStartTimestamp och att common.createTime finns kvar efter '
+        + 'maskeringen.' };
   }
   return {
+    ...gemensamt,
     svar: d > 1 ? 'START ligger före fönstret' : d < -1 ? 'START ligger EFTER fönstret' : 'START och fönstret sammanfaller',
-    avstandSekunder: d,
-    matningar: matningar.length,
     slutsats: d > 1
-      ? `overlayn tänds ${d} s för tidigt — fördröj sändningen till rewardStartTimestamp (fonsterStart finns redan uträknat i normalizer.js)`
+      ? (varsta.bryggansFordrojningMs > 0
+        ? `START ligger ${d} s fore fonstret, och bryggan fordrojer glove-eventet `
+          + `${varsta.bryggansFordrojningMs} ms — overlayn tands nar multiplikatorn borjar galla`
+        : `overlayn tands ${d} s for tidigt — fordroj sandningen till rewardStartTimestamp `
+          + '(boostFordrojningMs finns redan i normalizer.js)')
       : d < -1
-        ? `overlayn tänds ${Math.abs(d)} s för sent — multiplikatorn gäller redan när handsken syns`
-        : 'ingen åtgärd: START och rewardStartTimestamp ligger inom en sekund',
+        ? `overlayn tands ${Math.abs(d)} s for sent — multiplikatorn galler redan nar handsken syns`
+        : 'ingen atgard: START och rewardStartTimestamp ligger inom en sekund',
   };
 }
 
@@ -91,10 +163,13 @@ function punkt2(rader) {
 // i den sista raden är signalen. Uppmätt facit sedan tidigare: LINK_MIC_ARMIES, triggerReason 2,
 // battleSettings borta. Verktyget mäter om igen i stället för att lita på minnet.
 const BATTLEFAMILJ = ['LINK_MIC_BATTLE', 'LINK_MIC_ARMIES', 'LINK_MIC_BATTLE_PUNISH_FINISH', 'LINK_MIC_BATTLE_TASK'];
+// De familjer som inte har nagon vag till filen alls. Redovisas i svaret sa tystnaden inte
+// lases som "matchen tog aldrig slut".
+const OMOJLIGA = BATTLEFAMILJ.filter(t => !(INSPELAT_SOM[t] || []).length);
 function punkt3(rader) {
   const kandidater = [];
   for (const typ of BATTLEFAMILJ) {
-    const r = avTyp(rader, typ);
+    const r = avFamilj(rader, typ);
     if (r.length < 2) continue;
     const sista = nycklar(r[r.length - 1].nyttolast);
     const fore = new Set(r.slice(0, -1).flatMap(x => nycklar(x.nyttolast)));
@@ -106,34 +181,40 @@ function punkt3(rader) {
     }
   }
   if (!kandidater.length) {
-    return { svar: INGET, skal: 'ingen battle-familj hade två rader med olika fältuppsättning — matchen kanske aldrig tog slut i inspelningen' };
+    return { svar: INGET, spelasAldrigIn: OMOJLIGA,
+      skal: 'ingen battle-familj hade två rader med olika fältuppsättning — matchen kanske aldrig '
+        + 'tog slut i inspelningen' };
   }
   // Den med flest skiljande fält är den tydligaste signalen.
   const b = kandidater.reduce((a, c) => (c.skiljer.length + c.borta.length) > (a.skiljer.length + a.borta.length) ? c : a);
-  return { svar: `${b.handelse} skiljer sig i sista raden`, ...b, allaKandidater: kandidater };
+  return { svar: `${b.handelse} skiljer sig i sista raden`, ...b, allaKandidater: kandidater, spelasAldrigIn: OMOJLIGA };
 }
 
 // ---- 4. Vad innehåller LINK_MIC_ARMIES per sida? ------------------------------------------------
 // Stämmer formen blir MVP exakt i stället för uträknad. Alla fältnamn samlas — även sådana bara
 // vissa användare bär, för det är precis de som kan göra skillnaden.
 function punkt4(rader) {
-  const armeer = avTyp(rader, 'LINK_MIC_ARMIES');
-  if (!armeer.length) return { svar: INGET, skal: 'ingen LINK_MIC_ARMIES i inspelningen' };
+  const armeer = avFamilj(rader, 'LINK_MIC_ARMIES');
+  if (!armeer.length) return { svar: INGET, skal: 'ingen LINK_MIC_ARMIES i inspelningen (den skrivs som battle_mvp, och bara nar mvpFields ger traff)' };
   let lag = 0; const faltLag = new Set(), faltAnv = new Set(); let anvandare = 0;
   for (const r of armeer) {
-    const lista = r.nyttolast?.battleArmies || r.nyttolast?.armies;
+    // FALTNAMNEN UR PRODUKTIONSKOD. normalizer.js armeMvp() laser `teamArmies`, `teamUser` och
+    // `userArmies.userArmies` — och den funktionen har gett en verklig MVP i drift.
+    // `battleArmies`/`battleUsers` fanns aldrig i payloaden; de gamla namnen star kvar sist som
+    // reserv ifall TikTok byter tillbaka, men de ar inte det som matas.
+    const lista = r.nyttolast?.teamArmies || r.nyttolast?.battleArmies || r.nyttolast?.armies;
     if (!Array.isArray(lista)) continue;
     lag = Math.max(lag, lista.length);
     for (const l of lista) {
       nycklar(l).forEach(k => faltLag.add(k));
-      const anv = l.battleUsers || l.users || [];
+      const anv = l.userArmies?.userArmies || l.teamUser || l.battleUsers || l.users || [];
       if (Array.isArray(anv)) {
         anvandare = Math.max(anvandare, anv.length);
         anv.forEach(u => nycklar(u).forEach(k => faltAnv.add(k)));
       }
     }
   }
-  if (!lag) return { svar: INGET, skal: 'LINK_MIC_ARMIES saknade battleArmies-listan' };
+  if (!lag) return { svar: INGET, skal: 'LINK_MIC_ARMIES (inspelad som battle_mvp) saknade teamArmies-listan' };
   return { svar: `${lag} lag`, lag, faltPerLag: [...faltLag], faltPerAnvandare: [...faltAnv],
     storstaLag: anvandare,
     slutsats: faltAnv.has('score') || faltAnv.has('diamondScore')
