@@ -7,9 +7,9 @@
  },
  "antal": 170,
  "senaste": {
-  "motiv": "Tas om med fonts-noto-cjk explicit installerat i badaflodena, sa bilderna slutar bero pa vilken runner-avbildning GitHub tilldelar. Uppmatt: gron korning hade image 20260819.586, rod hade 20260828.587, och de fyra nycklar som foll ritar de enda tva tecknen utanfor Inter och Manrope (U+5200 och U+FF0B).",
-  "nycklar": 8,
-  "tid": "2026-09-03T20:35:22.009Z"
+  "motiv": "Samuraiemblemet och foljarmalets ikon ritas numera som inline-SVG i stallet for U+5200 och U+FF0B ur ett systemtypsnitt. Uppmatt i #322: fc-match valde WenQuanYi Zen Hei, inte det Noto vi installerade, sa glyferna berodde pa runner-avbildningen — och pa varje anvandarmaskin utan CJK-tackning blev de tofu. Nu beror de inte pa nagot typsnitt alls.",
+  "nycklar": 9,
+  "tid": "2026-09-04T09:33:34.213Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -74,7 +74,7 @@
   },
   "catalog:battlemvp:samurai": {
    "matt": "240x125",
-   "fyllnad": 33.63
+   "fyllnad": 31.36
   },
   "catalog:battlemvp:storm": {
    "matt": "240x177",

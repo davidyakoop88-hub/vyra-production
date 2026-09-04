@@ -55,3 +55,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Tas om med fonts-noto-cjk explicit installerat i badaflodena, sa bilderna slutar bero pa vilken runner-avbildning GitHub tilldelar. Uppmatt: gron korning hade image 20260819.586, rod hade 20260828.587, och de fyra nycklar som foll ritar de enda tva tecknen utanfor Inter och Manrope (U+5200 och U+FF0B).
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-04 — 9 referenser skrivna
+
+- **Motiv:** Samuraiemblemet och foljarmalets ikon ritas numera som inline-SVG i stallet for U+5200 och U+FF0B ur ett systemtypsnitt. Uppmatt i #322: fc-match valde WenQuanYi Zen Hei, inte det Noto vi installerade, sa glyferna berodde pa runner-avbildningen — och pa varje anvandarmaskin utan CJK-tackning blev de tofu. Nu beror de inte pa nagot typsnitt alls.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
