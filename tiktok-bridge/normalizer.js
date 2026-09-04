@@ -110,6 +110,22 @@ function giftFields(data){
   // namnet, OBS-kallor kor cachad widgetkod, och live-leaderboard.js har redan `coins` som nyckel
   // i sparad localStorage-state. `diamonds` ar det RIKTIGA namnet och tillkommer vid sidan av.
   // `coins` far ga bort forst nar inget laser det (#133).
+  //
+  // TODO(#133): ta bort `coins` — BLOCKERAT tills v1.2.3 ar ersatt i produktion.
+  //
+  // Villkoret ar inte "nagon gang" utan tva matbara saker:
+  //   1. Den PUBLICERADE .exe:n ar inte langre 1.2.3. Den skickar bara `coins` — `diamonds` kom
+  //      i #280 (1.2.4), som ar mergad men ALDRIG TAGGAD. Leveransen gar via Microsoft Store.
+  //      Kontroll: jamfor senaste release-taggen mot electron-app/package.json.
+  //   2. Ingen kvarvarande installation kor 1.2.3. En .exe uppdateras inte retroaktivt, sa det
+  //      racker inte att en ny version finns — den maste vara utrullad.
+  //
+  // Tas `coins` bort innan bada galler blir varje gava fran en gammal klient vard NOLL — tyst,
+  // och bara for de anvandarna. Ingen widget kraschar, inga prov faller, summorna blir bara fel.
+  //
+  // Nar det ar dags: `coins` finns pa tre stallen i skrivvagen (den har filen, den andra bryggan,
+  // och normaliseringen i live-client.js) och som nyckel i sparad localStorage-state i
+  // live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
   const diamantsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
   const coinsEach=diamantsEach;
   return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};

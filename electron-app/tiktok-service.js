@@ -61,6 +61,22 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         // diamondCount made the same gift worth repeatCount times less over the desktop connection.
         // Talet ar DIAMANTER (kallfaltet heter diamondCount). `diamonds` ar det riktiga namnet;
         // `coins` bevaras som alias sa lange en publicerad .exe och cachad widgetkod laser det. #133
+        //
+        // TODO(#133): ta bort `coins` — BLOCKERAT tills v1.2.3 ar ersatt i produktion.
+        //
+        // Villkoret ar inte "nagon gang" utan tva matbara saker:
+        //   1. Den PUBLICERADE .exe:n ar inte langre 1.2.3. Den skickar bara `coins` — `diamonds` kom
+        //      i #280 (1.2.4), som ar mergad men ALDRIG TAGGAD. Leveransen gar via Microsoft Store.
+        //      Kontroll: jamfor senaste release-taggen mot electron-app/package.json.
+        //   2. Ingen kvarvarande installation kor 1.2.3. En .exe uppdateras inte retroaktivt, sa det
+        //      racker inte att en ny version finns — den maste vara utrullad.
+        //
+        // Tas `coins` bort innan bada galler blir varje gava fran en gammal klient vard NOLL — tyst,
+        // och bara for de anvandarna. Ingen widget kraschar, inga prov faller, summorna blir bara fel.
+        //
+        // Nar det ar dags: `coins` finns pa tre stallen i skrivvagen (den har filen, den andra bryggan,
+        // och normaliseringen i live-client.js) och som nyckel i sparad localStorage-state i
+        // live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
         diamonds: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         coins: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         count: number(data?.repeatCount || 1, 1e7)
