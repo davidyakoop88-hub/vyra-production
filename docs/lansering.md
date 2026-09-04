@@ -106,6 +106,40 @@ Bakgrunden står i [`SIGNPATH_SIGNING.md`](SIGNPATH_SIGNING.md) och
 
 ---
 
+## 4. Gåvoregistret — mergat, testat, och verkningslöst tills det seedas
+
+**Blockerar inte lanseringen.** Utan seedning faller `heart-me-goal.js` tillbaka i
+lärlägesreserven, precis som före PR #289 — produkten fungerar. Punkten står här för att den
+annars är osynlig: den ser klar ut i varje statuslista, för allt är mergat och CI är grön.
+**Proven bygger sin egen data, så de säger ingenting om produktionens tomma tabeller.**
+
+**Tre steg, inte två.** De står i sin helhet i
+[`gavokatalog-matresultat.md`](gavokatalog-matresultat.md); här är ordningen:
+
+1. **Mät listan lokalt först.** Hämta `webcast/gift/list/?aid=1988` ur en inloggad SE-flik
+   (utan `room_id` — rumskontext ger en annan mängd), spara svaret, och kör:
+   ```bash
+   node scripts/gavokatalog-matning.js <sparad-lista.json> SE
+   ```
+   Säger den `STÄMMER` går seedningen igenom. Säger den något annat ska kontraktet mätas om
+   via granskad PR **innan** något postas — verktyget skriver ut blocket.
+2. **Seeda:** `POST /api/admin/gavokatalog` med `{ region, gifts }`. Kroppen bär BARA de två
+   fälten; skickas kontrolltal med avvisas anropet. Kräver `is_platform_admin`.
+3. **Verifiera Heart Me:** `POST /api/admin/gavoregel/heart_me/verifiera` med `giftId` ur
+   katalogen, och läs av `GET /api/admin/gavokatalog/status`.
+
+⚠️ **Kontraktet har kort hållbarhet.** Listan drev **åtta poster på ett dygn** (PR #294). Är
+kontraktet äldre än något dygn avvisas seedningen med 422 — inte för att något är trasigt,
+utan för att kontraktet beskriver en lista som inte finns längre. Steg 1 finns just för att
+upptäcka det på en sekund i stället för efter ett produktionsanrop.
+
+**Vem:** David hämtar listan ur sin inloggade session och kör anropen — ingen kod i repot
+postar till adminrutterna, med flit: en människa ska avgöra vilket `giftId` som får öka ett mål.
+
+**Status:** ⬜ inte gjord — staging godkänd 2026-08-30, produktionen är **inte** seedad
+
+---
+
 ## Vad som INTE står här, och varför
 
 Följande är känt, uppmätt och värt att göra — men inget av det hindrar en lansering:

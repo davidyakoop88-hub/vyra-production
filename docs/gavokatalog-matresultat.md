@@ -129,6 +129,38 @@ råt id passerade någonstans.
 
 ---
 
+# RÄTTELSE 2026-09-04: kontraktet säger 775/771, inte 783/779 — och listan DRIVER
+
+Talen nedan i det här dokumentet var `783/779/0` med digest `7f5b53a1…`. Det gäller inte
+längre. PR #294 mätte om SE **dagen efter** den första mätningen och fick `775/771/0` med
+digest `b869f261…` — listan hade drivit **åtta poster på ett dygn**.
+
+`server/seedningskontrakt.js` är alltid facit. Dokumentet är det inte.
+
+## Följden: seedningen är ett kapplöpningsmoment, inte ett engångssteg
+
+Digesten måste stämma exakt, och den mäts på ett **levande** TikTok-svar. Kontraktet ändras
+bara via granskad PR — med flit, för ett kontrakt som kan skrivas av ett anrop bevisar
+ingenting. Alltså finns alltid ett glapp mellan mätning och seedning, och i det glappet kan
+listan glida.
+
+Är kontraktet äldre än något dygn kommer seedningen med största sannolikhet att avvisas med
+**422**. Det är inte ett fel i koden — det är kontraktet som beskriver en lista som inte
+finns längre.
+
+**Mät därför alltid lokalt först:**
+
+```bash
+node scripts/gavokatalog-matning.js <sparad-lista.json> SE
+```
+
+Verktyget rör varken nät eller databas. Det räknar med serverns **egen** `digestAvPoster`,
+säger om listan skulle godkännas, och skriver ut det kontraktsblock som ska in i PR:en om den
+inte gör det. Det skiljer också "antalen stämmer men innehållet har glidit" från "antalen
+stämmer inte" — den första är osynlig i kontrolltalen och är precis vad digesten finns för.
+
+---
+
 # Driftsteg efter merge — REGISTRET ÄR TOMT TILLS NÅGON SEEDAR DET
 
 `npm run migrate` skapar `gavokatalog`, `gavoregel` och `gavoregel_kalla` **tomma**. Ingen kod i
@@ -162,8 +194,10 @@ en trunkerad lista med 1 av 783 poster skrivs helt korrekt och skulle markeras `
 hämtar servern dem ur det granskade `server/seedningskontrakt.js`:
 
 ```js
-SE: { poster: 783, unikaId: 779, utanId: 0,
-      digest: '7f5b53a1…', matt_at: '2026-08-30' }
+// GALLANDE VARDEN, uppdaterade av PR #294. Se rattelsen hogst upp i driftavsnittet:
+// listan drev atta poster pa ett dygn, sa de har talen har en kort hallbarhet.
+SE: { poster: 775, unikaId: 771, utanId: 0,
+      digest: 'b869f261…', matt_at: '2026-08-30' }
 ```
 
 Kardinalitet räcker inte heller. `783/779/0` bevisar hur MÅNGA poster listan har, aldrig VILKA —
@@ -254,7 +288,8 @@ lärde in under LIVE-provet 2026-08-28. Rutten vägrar ett id som inte finns i k
 GET /api/admin/gavokatalog/status
 ```
 
-Svarar med **antal**, aldrig med id:n eller namn. Förvänta `kalla: katalog` ≈ 783 och
+Svarar med **antal**, aldrig med id:n eller namn. Förvänta `kalla: katalog` = det `poster`-tal
+som står i `server/seedningskontrakt.js` för regionen (SE: **775** när detta skrivs), och
 `heart_me/verifierad: 1`.
 
 Först därefter gäller "en verifiering räcker för alla workspaces".
