@@ -66,7 +66,23 @@ jobs:
       # further down still runs the migration twice on top of this one.
       - run: npm run migrate
       - run: npm test
-      - run: npm audit --omit=dev --audit-level=high
+      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
+      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
+      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      - name: npm audit (omforsok bara vid natverksfel)
+        run: |
+          for i in 1 2 3; do
+            ut=$(npm audit --omit=dev --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
+            echo "$ut"
+            echo "$ut" | grep -q "audit endpoint returned an error" || {
+              echo "::error::npm audit hittade en sarbarhet — inte ett natverksfel, inget omforsok"
+              exit 1
+            }
+            echo "::warning::npm:s advisory-endpoint svarade inte (forsok $i av 3) — provar igen"
+            sleep $((i * 20))
+          done
+          echo "::error::npm:s advisory-endpoint svarade inte pa tre forsok"
+          exit 1
       - name: Validate JavaScript syntax
         run: find .. -maxdepth 2 -name '*.js' -not -path '*/node_modules/*' -print0 | xargs -0 -n1 node --check
       - name: Apply database schema twice
@@ -264,7 +280,23 @@ jobs:
         continue-on-error: true
         run: npm run test:coverage 2>&1 | sed -n '/start of coverage/,/end of coverage/p'
 
-      - run: npm audit --audit-level=high
+      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
+      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
+      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      - name: npm audit (omforsok bara vid natverksfel)
+        run: |
+          for i in 1 2 3; do
+            ut=$(npm audit --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
+            echo "$ut"
+            echo "$ut" | grep -q "audit endpoint returned an error" || {
+              echo "::error::npm audit hittade en sarbarhet — inte ett natverksfel, inget omforsok"
+              exit 1
+            }
+            echo "::warning::npm:s advisory-endpoint svarade inte (forsok $i av 3) — provar igen"
+            sleep $((i * 20))
+          done
+          echo "::error::npm:s advisory-endpoint svarade inte pa tre forsok"
+          exit 1
 
   # Caddyfilen ar det enda i repot som kan ta ner HELA sajten utan att nagot test marker det:
   # den kopieras rakt in i imagen av Dockerfile:55 och las forst av Caddy vid start. Ett syntaxfel
@@ -370,7 +402,23 @@ jobs:
           cache-dependency-path: tiktok-bridge/package-lock.json
       - run: npm ci
       - run: npm test
-      - run: npm audit --omit=dev --audit-level=high
+      # npm audit faller pa natverksfel lika garna som pa en sarbarhet — och endpointen har
+      # dagsform. Omforsoket galler DARFOR bara natverksfelet: en sarbarhet faller direkt, sa
+      # grinden svarar lika snabbt som forut nar den har nagot att saga.
+      - name: npm audit (omforsok bara vid natverksfel)
+        run: |
+          for i in 1 2 3; do
+            ut=$(npm audit --omit=dev --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
+            echo "$ut"
+            echo "$ut" | grep -q "audit endpoint returned an error" || {
+              echo "::error::npm audit hittade en sarbarhet — inte ett natverksfel, inget omforsok"
+              exit 1
+            }
+            echo "::warning::npm:s advisory-endpoint svarade inte (forsok $i av 3) — provar igen"
+            sleep $((i * 20))
+          done
+          echo "::error::npm:s advisory-endpoint svarade inte pa tre forsok"
+          exit 1
 
   # Sanningens karta over widgetkatalogen, regenererad vid varje push till main — alltsa vid varje
   # deploy, eftersom Railway bygger pa main.
