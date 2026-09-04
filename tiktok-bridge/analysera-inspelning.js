@@ -123,8 +123,13 @@ function punkt1(rader) {
     if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(lokalt)) continue;
     drifter.push((lokalt - t) / 1000);
   }
+  // MEDIAN, ALDRIG MEDEL. Uppmatt 2026-09-04: 2375 matningar med median 226,6 s och MEDEL
+  // 1 504 875 s — tva ROOM_MESSAGE-rader bar createTime i sekundskala i stallet for millisekunder.
+  // Tva rader av 2375 racker for att gora ett medelvarde meningslost, och kallmatningen sa
+  // uttryckligen "median over 3798 handelser". Forsta versionen har raknade medel anda.
+  drifter.sort((a, b) => a - b);
   const klockdriftSekunder = drifter.length
-    ? Math.round(drifter.reduce((a, b) => a + b, 0) / drifter.length * 10) / 10
+    ? Math.round(drifter[Math.floor(drifter.length / 2)] * 10) / 10
     : null;
   const driftSkal = drifter.length ? null
     : 'ingen ofordrojd handelse med common.createTime i inspelningen — glove-raden skrivs nar eventet fyrar, sa dess `vid` bar bade drift och fordrojning och gar inte att dela upp';
@@ -212,6 +217,30 @@ function punkt3(rader) {
 // ---- 4. Vad innehåller LINK_MIC_ARMIES per sida? ------------------------------------------------
 // Stämmer formen blir MVP exakt i stället för uträknad. Alla fältnamn samlas — även sådana bara
 // vissa användare bär, för det är precis de som kan göra skillnaden.
+// LAGEN UR DEN FORM TIKTOK FAKTISKT SKICKADE.
+//
+// UPPMATT over tre skarpa sandningar — formen VAXLAR, aven inom samma kvall:
+//   2026-09-02 21:28   teamArmies fylld i 305 av 305
+//   2026-09-04 21:58   teamArmies TOM   i 450 av 450
+//   2026-09-04 23:29   teamArmies fylld i  27 av 27
+// `armies` (objekt nycklat pa ankar-id) fanns i ALLA tre.
+//
+// FALLAN: `teamArmies: []` ar TRUTHY, sa den gamla ||-kedjan stannade dar och svarade
+// "inget underlag" pa en inspelning som bar hela strukturen. Ratt svar, fel skal — och det
+// gar inte att skilja fran "battlen saknades".
+//
+// Samma tva former som normalizer.js vartLagsGivare hanterar; se den for strukturen.
+// BADA FORMERNA BESKRIVER SAMMA LAG. Falten samlas ur bada — det ar hela poangen med punkt 4 —
+// men ANTALET far inte summeras: tva lag i teamArmies och samma tva i armies ar inte fyra lag.
+// Forsta versionen av den har fixen svarade "4 lag" pa en match med tva, vilket ar exakt den
+// sorts tal som glider forbi en lasare.
+function lagenUr(nyttolast) {
+  const t = Array.isArray(nyttolast && nyttolast.teamArmies) ? nyttolast.teamArmies : [];
+  const a = nyttolast && nyttolast.armies;
+  const arm = (a && typeof a === 'object' && !Array.isArray(a)) ? Object.values(a) : [];
+  const b = Array.isArray(nyttolast && nyttolast.battleArmies) ? nyttolast.battleArmies : [];
+  return { falt: [...t, ...arm, ...b], antal: Math.max(t.length, arm.length, b.length) };
+}
 function punkt4(rader) {
   const armeer = avFamilj(rader, 'LINK_MIC_ARMIES');
   if (!armeer.length) return { svar: INGET, skal: 'ingen LINK_MIC_ARMIES i inspelningen (den skrivs som battle_mvp, och bara nar mvpFields ger traff)' };
@@ -221,19 +250,21 @@ function punkt4(rader) {
     // `userArmies.userArmies` — och den funktionen har gett en verklig MVP i drift.
     // `battleArmies`/`battleUsers` fanns aldrig i payloaden; de gamla namnen star kvar sist som
     // reserv ifall TikTok byter tillbaka, men de ar inte det som matas.
-    const lista = r.nyttolast?.teamArmies || r.nyttolast?.battleArmies || r.nyttolast?.armies;
-    if (!Array.isArray(lista)) continue;
-    lag = Math.max(lag, lista.length);
+    const { falt: lista, antal } = lagenUr(r.nyttolast);
+    if (!lista.length) continue;
+    lag = Math.max(lag, antal);
     for (const l of lista) {
       nycklar(l).forEach(k => faltLag.add(k));
-      const anv = l.userArmies?.userArmies || l.teamUser || l.battleUsers || l.users || [];
+      // I armies-formen AR `userArmies` listan; i teamArmies-formen BAR den listan.
+      const anv = (Array.isArray(l?.userArmies) ? l.userArmies : null)
+        || l?.userArmies?.userArmies || l?.teamUser || l?.battleUsers || l?.users || [];
       if (Array.isArray(anv)) {
         anvandare = Math.max(anvandare, anv.length);
         anv.forEach(u => nycklar(u).forEach(k => faltAnv.add(k)));
       }
     }
   }
-  if (!lag) return { svar: INGET, skal: 'LINK_MIC_ARMIES (inspelad som battle_mvp) saknade teamArmies-listan' };
+  if (!lag) return { svar: INGET, skal: 'varken teamArmies eller armies bar nagot lag' };
   return { svar: `${lag} lag`, lag, faltPerLag: [...faltLag], faltPerAnvandare: [...faltAnv],
     storstaLag: anvandare,
     slutsats: faltAnv.has('score') || faltAnv.has('diamondScore')

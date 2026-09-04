@@ -190,6 +190,25 @@ test('punkt 1: utan en ofordrojd rad rapporteras driften som okand, aldrig gissa
     'analysatorn ska saga VARFOR driften inte gar att mata');
 });
 
+test('klockdriften ar en MEDIAN — tva avvikande rader far inte forstora den', () => {
+  // UPPMATT 2026-09-04 i en riktig inspelning: 2375 matningar med median 226,6 s, men MEDEL
+  // 1 504 875 s. Tva ROOM_MESSAGE-rader bar createTime i sekundskala i stallet for millisekunder,
+  // och tva rader av 2375 racker for att gora svaret meningslost.
+  //
+  // Kallmatningen sa uttryckligen 'median over 3798 handelser'. Forsta versionen av den har
+  // koden raknade medel anda — kommentaren sa median, koden gjorde nagot annat.
+  const bra = [];
+  for (let i = 0; i < 20; i++) bra.push(annanRad(String(1788377980266 + i * 1000)));
+  const trasig = {
+    typ: 'ROOM_MESSAGE', kalla: 'inspelad', vid: new Date(1788377980266 + DRIFT_MS).toISOString(),
+    nyttolast: { common: { createTime: '1900000000' } },   // sekundskala, inte ms
+  };
+  const r = analysera(skrivFil([...UPPMATTA.map(u => gloveRad(u.p)), ...bra, trasig, trasig]));
+  assert.equal(Math.round(r.punkt1.klockdriftSekunder), Math.round(DRIFT_MS / 1000),
+    `driften ska vara medianen (${DRIFT_MS / 1000} s), fick ${r.punkt1.klockdriftSekunder}. `
+    + 'Ett medelvarde dras isar av en enda rad med fel enhet.');
+});
+
 test('punkt 1: klockdriften mellan maskinen och TikTok rapporteras for sig', () => {
   // Driften ar inte brus — det ar den som gjorde det gamla svaret fel, och den ar vard att se.
   const fil = skrivFil([...UPPMATTA.map(u => gloveRad(u.p)), annanRad(UPPMATTA[0].p.common.createTime)]);
@@ -238,6 +257,60 @@ test('punkt 3: pekar ut vilken händelse som bär matchens slut', () => {
     'de omojliga familjerna ska redovisas aven nar punkt 3 hittar ett svar');
   assert.ok(r.punkt3.borta.includes('battleSettings'),
     `fält som FÖRSVANN i sista raden ska också rapporteras, fick ${JSON.stringify(r.punkt3.borta)}`);
+});
+
+test('punkt 4: laser armies-objektet nar teamArmies ar TOM', () => {
+  // UPPMATT over tre skarpa sandningar: formen VAXLAR.
+  //
+  //   2026-09-02 21:28   teamArmies fylld i 305 av 305
+  //   2026-09-04 21:58   teamArmies TOM   i 450 av 450
+  //   2026-09-04 23:29   teamArmies fylld i  27 av 27
+  //
+  // `armies` — ett OBJEKT nycklat pa ankar-id — fanns i ALLA tre. Punkt 4 maste lasa den,
+  // annars svarar den "inget underlag" pa en inspelning som bar hela strukturen.
+  //
+  // FALLAN: `teamArmies: []` ar TRUTHY. En ||-kedja som borjar dar faller aldrig igenom.
+  const fil = skrivFil([
+    { typ: 'battle_mvp', kalla: 'vidarebefordrad', vid: vid(50), nyttolast: {
+      triggerReason: 2, teamArmies: [], armies: {
+        '7018482564693771270': { anchorIdStr: '7018482564693771270', hostscore: '7762',
+          userArmies: [{ nickname: 'namn#a', score: '7500', diamondScore: '0' }] },
+        '7276185677820527649': { anchorIdStr: '7276185677820527649', hostscore: '3120',
+          userArmies: [{ nickname: 'namn#b', score: '2100' }] },
+      } } },
+  ]);
+  const r = analysera(fil);
+  assert.notEqual(r.punkt4.svar, 'inget underlag',
+    `punkt 4 sag ingen armelista trots att armies bar tva lag — skal: ${r.punkt4.skal}`);
+  assert.equal(r.punkt4.lag, 2, `tva lag i armies, fick ${r.punkt4.lag}`);
+  assert.ok(r.punkt4.faltPerAnvandare.includes('score'),
+    `falten per givare ska listas, fick ${JSON.stringify(r.punkt4.faltPerAnvandare)}`);
+  assert.ok(r.punkt4.faltPerAnvandare.includes('diamondScore'),
+    'ett falt som bara vissa givare bar ska anda med — det ar det som gor MVP exakt');
+});
+
+test('punkt 4: bada formerna samtidigt raknas inte som dubbelt sa manga lag', () => {
+  // Bada formerna beskriver SAMMA lag. Falten ska samlas ur bada — det ar hela poangen med
+  // punkt 4 — men antalet far inte summeras. Forsta versionen av fixen svarade '4 lag' pa alla
+  // tre verkliga inspelningarna, som var och en bar tva.
+  const lag = (id, score) => ({ anchorIdStr: id, hostscore: String(score),
+    userArmies: [{ nickname: 'namn#' + id, score: String(score) }] });
+  const fil = skrivFil([
+    { typ: 'battle_mvp', kalla: 'vidarebefordrad', vid: vid(50), nyttolast: {
+      triggerReason: 2,
+      teamArmies: [
+        { teamId: '1', teamUser: [{ userIdStr: 'a' }], userArmies: { userArmies: [{ nickname: 'n', score: '1' }] } },
+        { teamId: '2', teamUser: [{ userIdStr: 'b' }], userArmies: { userArmies: [{ nickname: 'm', score: '2' }] } },
+      ],
+      armies: { a: lag('a', 1), b: lag('b', 2) },
+    } },
+  ]);
+  const r = analysera(fil);
+  assert.equal(r.punkt4.lag, 2,
+    `tva lag i vardera formen ar fortfarande TVA lag, fick ${r.punkt4.lag}`);
+  // Falten ur BADA formerna ska anda med — teamId finns bara i den ena, anchorIdStr bara i den andra.
+  assert.ok(r.punkt4.faltPerLag.includes('teamId'), 'teamArmies-falten tappades');
+  assert.ok(r.punkt4.faltPerLag.includes('anchorIdStr'), 'armies-falten tappades');
 });
 
 test('punkt 4: beskriver arméernas form per lag', () => {
