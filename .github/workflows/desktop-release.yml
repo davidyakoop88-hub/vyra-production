@@ -42,6 +42,10 @@ jobs:
       # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
       # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
       - name: npm audit (omforsok bara vid natverksfel)
+        # JOBBET KOR PA WINDOWS, dar standardskalet ar PowerShell — `for i in 1 2 3; do` ger da
+        # "Missing opening '(' after keyword 'for'" och steget faller innan npm ens startar.
+        # Uppmatt har 2026-09-04. Git Bash finns pa windows-runnern, sa en implementation racker.
+        shell: bash
         run: |
           for i in 1 2 3; do
             ut=$(npm audit --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
