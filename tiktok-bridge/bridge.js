@@ -399,6 +399,13 @@ if (require.main === module) {
     // EN GANG PER FONSTER. START kan komma flera ganger for samma fonster; nyckeln ar matchen plus
     // fonstrets starttid, sa ett omsant meddelande inte later overlayn blinka.
     const settaBoostFonster = new Map();
+    // Pagaende boost-timers. En timer som overlever anslutningen tander Glove Snipe i nasta
+    // sandning — rivBoostTimers anropas darfor nar anslutningen tas ner.
+    const boostTimers = new Set();
+    function rivBoostTimers() {
+      for (const t of boostTimers) clearTimeout(t);
+      boostTimers.clear();
+    }
     connection.on(WebcastEvent.LINK_MIC_BATTLE_TASK, data => {
       let f;
       try { f = N.battleTaskFields(data) } catch (err) {
@@ -409,8 +416,27 @@ if (require.main === module) {
       if (settaBoostFonster.has(nyckel)) return;
       for (const [gammalNyckel, at] of settaBoostFonster) if (Date.now() - at > 600_000) settaBoostFonster.delete(gammalNyckel);
       settaBoostFonster.set(nyckel, Date.now());
-      console.log(`[bridge] boost-fonster x${f.multiplier} i match ${f.battleId || 'okand'}, ${f.fonsterSekunder || '?'}s`);
-      sendEvent('glove', { multiplier: f.multiplier }, data);
+
+      // VANTA UT FONSTRET. START bar bara konfigurationen; multiplikatorn borjar galla senare.
+      // Uppmatt 2026-09-02: 150,7 / 106,0 / 110,9 sekunder senare i tre battles — och bryggan
+      // skickade i samma millisekund som den tog emot meddelandet alla tre gangerna. Overlayn
+      // lyste alltsa hela upptakten och var forbrukad nar den skulle betyda nagot.
+      //
+      // Fordrojningen raknas INOM TikToks klocka (se boostFordrojningMs). Ar den 0 — inget
+      // fonster i payloaden, tiden redan passerad, eller trasiga varden — skickas eventet
+      // direkt, precis som forut.
+      const fordrojning = N.boostFordrojningMs(f);
+      console.log(`[bridge] boost-fonster x${f.multiplier} i match ${f.battleId || 'okand'}, ${f.fonsterSekunder || '?'}s`
+        + (fordrojning ? ` — skickas om ${Math.round(fordrojning / 1000)}s` : ' — skickas nu'));
+
+      if (!fordrojning) { sendEvent('glove', { multiplier: f.multiplier }, data); return }
+      // TIMERN SPARAS FOR ATT KUNNA RIVAS. En som overlever nedkopplingen tander Glove Snipe
+      // i NASTA sandning, tva minuter in i ingenting.
+      const boostTimer = setTimeout(() => {
+        boostTimers.delete(boostTimer);
+        sendEvent('glove', { multiplier: f.multiplier }, data);
+      }, fordrojning);
+      boostTimers.add(boostTimer);
     });
 
     // ---- battle-sond -------------------------------------------------------------------------
@@ -520,6 +546,10 @@ if (require.main === module) {
 
     connection.on(ControlEvent.DISCONNECTED, () => {
       if (activeConnection === connection) activeConnection = null;
+      // En boost-timer kan ha upp till tio minuter kvar. Overlever den nedkopplingen tands Glove
+      // Snipe mitt i NASTA sandning, tva minuter in i ingenting — med en multiplikator som gallde
+      // en match som redan ar slut.
+      rivBoostTimers();
       scheduleReconnect('Frånkopplad från TikTok LIVE');
     });
 
