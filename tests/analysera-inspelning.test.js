@@ -240,6 +240,60 @@ test('punkt 3: pekar ut vilken händelse som bär matchens slut', () => {
     `fält som FÖRSVANN i sista raden ska också rapporteras, fick ${JSON.stringify(r.punkt3.borta)}`);
 });
 
+test('punkt 4: laser armies-objektet nar teamArmies ar TOM', () => {
+  // UPPMATT over tre skarpa sandningar: formen VAXLAR.
+  //
+  //   2026-09-02 21:28   teamArmies fylld i 305 av 305
+  //   2026-09-04 21:58   teamArmies TOM   i 450 av 450
+  //   2026-09-04 23:29   teamArmies fylld i  27 av 27
+  //
+  // `armies` — ett OBJEKT nycklat pa ankar-id — fanns i ALLA tre. Punkt 4 maste lasa den,
+  // annars svarar den "inget underlag" pa en inspelning som bar hela strukturen.
+  //
+  // FALLAN: `teamArmies: []` ar TRUTHY. En ||-kedja som borjar dar faller aldrig igenom.
+  const fil = skrivFil([
+    { typ: 'battle_mvp', kalla: 'vidarebefordrad', vid: vid(50), nyttolast: {
+      triggerReason: 2, teamArmies: [], armies: {
+        '7018482564693771270': { anchorIdStr: '7018482564693771270', hostscore: '7762',
+          userArmies: [{ nickname: 'namn#a', score: '7500', diamondScore: '0' }] },
+        '7276185677820527649': { anchorIdStr: '7276185677820527649', hostscore: '3120',
+          userArmies: [{ nickname: 'namn#b', score: '2100' }] },
+      } } },
+  ]);
+  const r = analysera(fil);
+  assert.notEqual(r.punkt4.svar, 'inget underlag',
+    `punkt 4 sag ingen armelista trots att armies bar tva lag — skal: ${r.punkt4.skal}`);
+  assert.equal(r.punkt4.lag, 2, `tva lag i armies, fick ${r.punkt4.lag}`);
+  assert.ok(r.punkt4.faltPerAnvandare.includes('score'),
+    `falten per givare ska listas, fick ${JSON.stringify(r.punkt4.faltPerAnvandare)}`);
+  assert.ok(r.punkt4.faltPerAnvandare.includes('diamondScore'),
+    'ett falt som bara vissa givare bar ska anda med — det ar det som gor MVP exakt');
+});
+
+test('punkt 4: bada formerna samtidigt raknas inte som dubbelt sa manga lag', () => {
+  // Bada formerna beskriver SAMMA lag. Falten ska samlas ur bada — det ar hela poangen med
+  // punkt 4 — men antalet far inte summeras. Forsta versionen av fixen svarade '4 lag' pa alla
+  // tre verkliga inspelningarna, som var och en bar tva.
+  const lag = (id, score) => ({ anchorIdStr: id, hostscore: String(score),
+    userArmies: [{ nickname: 'namn#' + id, score: String(score) }] });
+  const fil = skrivFil([
+    { typ: 'battle_mvp', kalla: 'vidarebefordrad', vid: vid(50), nyttolast: {
+      triggerReason: 2,
+      teamArmies: [
+        { teamId: '1', teamUser: [{ userIdStr: 'a' }], userArmies: { userArmies: [{ nickname: 'n', score: '1' }] } },
+        { teamId: '2', teamUser: [{ userIdStr: 'b' }], userArmies: { userArmies: [{ nickname: 'm', score: '2' }] } },
+      ],
+      armies: { a: lag('a', 1), b: lag('b', 2) },
+    } },
+  ]);
+  const r = analysera(fil);
+  assert.equal(r.punkt4.lag, 2,
+    `tva lag i vardera formen ar fortfarande TVA lag, fick ${r.punkt4.lag}`);
+  // Falten ur BADA formerna ska anda med — teamId finns bara i den ena, anchorIdStr bara i den andra.
+  assert.ok(r.punkt4.faltPerLag.includes('teamId'), 'teamArmies-falten tappades');
+  assert.ok(r.punkt4.faltPerLag.includes('anchorIdStr'), 'armies-falten tappades');
+});
+
 test('punkt 4: beskriver arméernas form per lag', () => {
   // FALTNAMNEN UR PRODUKTIONSKOD, inte ur gissning: normalizer.js armeMvp() laser `teamArmies`,
   // `teamUser` och `userArmies.userArmies` — och den funktionen har gett Davids verkliga MVP i
