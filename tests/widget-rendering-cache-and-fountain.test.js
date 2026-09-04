@@ -124,7 +124,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ser likadan ut i alla vyer. BARA studio.css andrades.
     // Bumpad 2026-08-21 for overlaylanken: raden bryts till tva rader under 1500 px sa hela
   // adressen syns. BARA studio.css andrades.
-  assert.match(studio, /studio\.css\?v=20260821-3/);
+    // Bumpad 2026-09-04 for de ritade markena: samuraiemblemets ::before ritar numera en
+  // inline-SVG-mask i stallet for U+5200, och .vyra-glyf-regeln ar ny. BARA studio.css
+  // andrades av den delen.
+  assert.match(studio, /studio\.css\?v=20260904-svg/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
@@ -151,7 +154,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // andring av den filen.
     // Bumpad 2026-08-21 for skrivloopen i tomma topplistor: live-leaderboard.js andrades och
   // media.js bar dess URL. Strangen 20260803-dedupe byts samtidigt mot en som bara sager nar.
-  assert.match(studio, /[^-]media\.js\?v=20260822-2/);
+    // Bumpad 2026-09-04: media.js bar bade foljarmalets klassiska renderare, katalogknappen
+  // for Samurai och premiumbuntens version-konstant — alla tre andrades.
+  assert.match(studio, /[^-]media\.js\?v=20260904-svg/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -170,7 +175,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
   assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
   assert.match(media, /profile-frames-premium\.css\?v=8/);
-  assert.match(media, /const version='20260820-5'/);
+    // Bumpad 2026-09-04: premium-final.js AR den levande renderaren for social goals — den
+  // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
+  // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
+  assert.match(media, /const version='20260904-svg'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
