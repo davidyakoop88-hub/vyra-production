@@ -266,3 +266,46 @@ test('rapporten visar hur varje värde tolkades', () => {
     ['battle_start=aktiv', 'helt_okant=okänd'],
     'utan tolkningen går det inte att se VILKET värde som behöver pinnas');
 });
+
+// ---- VISNINGSNAMN kontra HANDTAG ---------------------------------------------------------------
+//
+// UPPMÄTT I SKARP SÄNDNING 2026-09-05: David såg MVP-widgeten skriva ut ett @-handtag där resten av
+// VYRA skriver ut ett namn. Orsaken var att bidragen nycklas på `username` — vilket är RÄTT, en
+// stabil identitet — men att `stang()` sedan skickade samma sträng vidare som `name`.
+//
+// Inkonsekvensen syntes bara ibland, och det gjorde den svår att tro på: när TikToks EGEN armélista
+// avgör MVP kommer namnet från bryggan (`nickname`, alltså rätt), och när den här räkningen avgör
+// kom handtaget. Samma widget, två olika namn, beroende på vilken källa som hann först.
+
+test('MVP visar VISNINGSNAMNET, inte @-handtaget som bidragen nycklas på', () => {
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar_98', 1200, { name: 'Omar' }));
+  skicka(gava('lisa_x', 500, { name: 'Lisa' }));
+  skicka(battle('battle_end'));
+  assert.equal(traffar()[0].name, 'Omar',
+    'widgeten ska visa visningsnamnet — handtaget "omar_98" ar en nyckel, inte ett namn');
+});
+
+test('handtaget anvands som reserv nar gavan aldrig bar nagot namn', () => {
+  // Hellre ett handtag an en tom ruta. Molnets aldre event bar inte alltid `name`.
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar_98', 1200));
+  skicka(battle('battle_end'));
+  assert.equal(traffar()[0].name, 'omar_98');
+});
+
+test('bidragen slas ihop pa HANDTAGET aven nar visningsnamnet andras mitt i matchen', () => {
+  // Identiteten far inte folja namnet: byter nagon namn mitt i en match ar det fortfarande samma
+  // person, och de tva gavorna ska summeras. Nycklade vi pa visningsnamnet blev det tva personer
+  // med halva poangen var — och da kan fel person vinna.
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar_98', 700, { name: 'Omar' }));
+  skicka(gava('omar_98', 700, { name: 'Omar 🔥' }));
+  skicka(gava('lisa_x', 1000, { name: 'Lisa' }));
+  skicka(battle('battle_end'));
+  assert.equal(traffar()[0].score, 1400, 'de tva gavorna ar samma person och ska summeras');
+  assert.equal(traffar()[0].name, 'Omar 🔥', 'det SENAST kanda namnet ar det tittarna ser');
+});
