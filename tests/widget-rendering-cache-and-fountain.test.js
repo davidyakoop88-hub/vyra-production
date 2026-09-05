@@ -184,7 +184,21 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ändringen levererades under en sträng som redan var utrullad, och just den halvan hade aldrig
   // nått en cachad webbläsare. Samma resonemang som sammanslagningen 2026-08-19: en sammanslagning
   // som rör en fil är en ändring av den filen.
-  assert.match(studio, /[^-]media\.js\?v=20260905-3/);
+  //
+  // Bumpad 2026-09-05 för Top Likes-modellen: live-leaderboard.js visar hela sändningens total i
+  // stället för ett rullande tiominutersfönster, och media.js:s updateRankingCycles läste
+  // `person.activeLikes` — ett fält som inte längre finns. Båda filerna ändrades, och media.js bär
+  // dessutom live-leaderboard.js:s versionssträng.
+  //
+  // studio.css, widget-factory.js och premium-bundlens version är OFÖRÄNDRADE.
+  //
+  // ANDRA SAMMANSLAGNINGEN SAMMA KVÄLL, av samma skäl som den ovan: namnfixen och Top Likes-modellen
+  // låg på var sin gren och båda bumpade media.js — till `-3` respektive `-4`. Det sammanslagna
+  // innehållet är varken det ena eller det andra, så det får en FEMTE sträng. Fyra ändringar rörde
+  // media.js på ett dygn (emblemets bild, namnen, Top Likes, och de två sammanslagningarna), och
+  // varje gång gäller samma regel: strängen följer FILEN, och en sammanslagning som rör en fil är
+  // en ändring av den filen.
+  assert.match(studio, /[^-]media\.js\?v=20260905-5/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

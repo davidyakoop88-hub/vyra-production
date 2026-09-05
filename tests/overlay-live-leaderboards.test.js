@@ -409,10 +409,13 @@ test('the persisted daily bucket is not inflated by the room total either', () =
 // `present !== false` för likes-listan. Den som gick ur rummet försvann alltså ur toppen i samma
 // sekund — mitt i sina egna aktiva likes.
 //
-// Fel modell för vad listan visar: likes-toppen mäter vad folk GJORT den senaste stunden
-// (LIKE_IDLE_MS), inte vem som råkar stå i rummet just nu. Den som gav femhundra likes och stängde
-// appen har fortfarande gett dem. TikToks leave-event är dessutom inte pålitliga nog att radera
-// någon på — en tittare som tappar nätet ett ögonblick ska inte tömmas ur listan.
+// Fel modell för vad listan visar: den mäter vad folk GETT, inte vem som råkar stå i rummet. Den
+// som gav femhundra likes och stängde appen har fortfarande gett dem. TikToks leave-event är
+// dessutom inte pålitliga nog att radera någon på — en tittare som tappar nätet ett ögonblick ska
+// inte tömmas ur listan.
+//
+// UPPMÄTT 2026-09-05 över två sändningar: 511 member-event, ALLA med action=1 ("kommer in"). Inte
+// ett enda lämna-event. Raden reagerade på något som knappt förekommer.
 
 test('den som lämnar sändningen ligger kvar i Top Likes', () => {
   const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
@@ -446,4 +449,65 @@ test('UTTRYCKLIG borttagning fungerar fortfarande — skillnaden är att det kr�
   assert.equal(likeTotals(env)?.likes, 12);
   env.sandbox.window.VyraLeaderboard.remove('jokero');
   assert.equal(likeTotals(env), undefined, 'remove() ska fortfarande ta bort personen');
+});
+
+// ---- listan visar HELA SÄNDNINGENS TOTAL ---------------------------------------------------------
+//
+// DAVID 2026-09-05: "listan uppdaterar sig själv om personen lämnar live eller slutar tappa — den
+// ska inte göra det."
+//
+// Likes räknades i ett rullande tiominutersfönster (`LIKE_IDLE_MS`): bara likes yngre än tio minuter
+// räknades, resten åldrades bort. Följden var att folk föll ur listan för att de slutat tappa, inte
+// för att någon annan gett mer. Det gick inte att skilja från en bugg när man tittade på widgeten.
+//
+// Det var ett BYTE AV MODELL, inte av ett tal: ett fönster gör listan till en tävling om vem som är
+// aktiv just nu, totalen gör den till en ställning över hela sändningen. Toppen rör sig därför
+// mindre ju längre sändningen går, och det är avsikten.
+
+test('den som slutar tappa ligger kvar med sin total — aven en timme senare', () => {
+  // KLOCKAN MASTE STYRAS, annars bevisar provet ingenting. Alla event i ett prov sker inom
+  // millisekunder, sa ett tiominutersfonster hade uteslutit exakt noll personer och mutationen
+  // "ater till ett rullande fonster" hade overlevt gron. Provet maste flytta tiden FORBI fonstret
+  // for att kunna se skillnad pa en total och ett fonster.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  let nu = 1_000_000;
+  // En UNDERKLASS, inte ett objekt: filen gor bade `Date.now()` och `new Date()` (todayKey), och en
+  // attrapp som bara bar `now` faller pa "Date is not a constructor" — uppmatt.
+  env.sandbox.Date = class extends Date { static now() { return nu } };
+  env.run('live-leaderboard.js');
+
+  env.live({ type: 'like', username: 'lisa', name: 'Lisa', count: 500 });
+
+  nu += 60 * 60 * 1000;                 // en timme senare — langt bortom det gamla fonstret
+  for (let i = 0; i < 6; i++) env.live({ type: 'like', username: 'omar', name: 'Omar', count: 20 });
+
+  const topp = env.sandbox.window.VyraLeaderboard.getTop('likes', 10);
+  assert.equal(topp.length, 2, 'Lisa foll ur listan for att hon slutade tappa');
+  assert.equal(topp[0].name, 'Lisa', 'den som gett mest ska ligga overst aven en timme efterat');
+  assert.equal(topp[0].likes, 500);
+  assert.equal(topp[1].name, 'Omar');
+  assert.equal(topp[1].likes, 120);
+});
+
+test('summan ar hela sandningens, inte ett fonster', () => {
+  // Provet mater att INGET rullande falt styr ordningen. Fanns ett fonster kvar skulle den forsta
+  // giveren tappa sin poang over tid; har ar talet detsamma som allt hen gett.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  for (let i = 0; i < 10; i++) env.live({ type: 'like', username: 'lisa', name: 'Lisa', count: 7 });
+  assert.equal(likeTotals(env, 'lisa').likes, 70, 'totalen ska vara summan av allt, oavsett nar det gavs');
+});
+
+test('remove() galler nu ALLA tre matten, inte bara likes', () => {
+  // Tidigare kollade bara likes-listan `present`. En borttagen person forsvann ur Top Likes men lag
+  // kvar i Top Coins, vilket ar omojligt att forsta som en regel. Nu betyder borttagning borttagning.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'lisa', name: 'Lisa', count: 30 });
+  env.live({ type: 'gift', username: 'lisa', name: 'Lisa', coins: 400 });
+  assert.equal(env.sandbox.window.VyraLeaderboard.getTop('coins', 10).length, 1);
+
+  env.sandbox.window.VyraLeaderboard.remove('lisa');
+  assert.equal(env.sandbox.window.VyraLeaderboard.getTop('likes', 10).length, 0, 'kvar i likes');
+  assert.equal(env.sandbox.window.VyraLeaderboard.getTop('coins', 10).length, 0, 'kvar i coins');
 });
