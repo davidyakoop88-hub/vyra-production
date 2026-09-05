@@ -156,7 +156,19 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // media.js bar dess URL. Strangen 20260803-dedupe byts samtidigt mot en som bara sager nar.
     // Bumpad 2026-09-04: media.js bar bade foljarmalets klassiska renderare, katalogknappen
   // for Samurai och premiumbuntens version-konstant — alla tre andrades.
-  assert.match(studio, /[^-]media\.js\?v=20260904-svg/);
+  // Bumpad 2026-09-05 för Guardian-emblemets bild: triggerGuardianEmblem i media.js satte namnet
+  // men aldrig avataren, så emblemet visade fel person eller ingen alls. media.js BÄR dessutom
+  // guardian-session.js:s versionssträng, och den filen ändrades i samma veva (en Guardian som
+  // kommer tillbaka firas nu igen) — utan en ny sträng på media.js fortsätter en cachad media.js
+  // peka på den GAMLA guardian-session.js och båda fixarna uteblir hos användaren.
+  //
+  // studio.css, widget-factory.js och premium-bundlens version är OFÖRÄNDRADE och behåller sina
+  // strängar: de följer filerna, inte varandra.
+  //
+  // Strängen säger NÄR, inte VAD. Första utkastet hette '20260905-guardian' och föll på vakten
+  // ovan — med rätta: exemplet i dess egen kommentar är '20260818-guardian', en sträng som
+  // överlevde sin widgetfamilj med noll minuter.
+  assert.match(studio, /[^-]media\.js\?v=20260905-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

@@ -920,7 +920,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
    runtime-controls.js. Kommentaren i tiktok-bridge/bridge.js pastod att klientsidan redan var klar
    for att triggern FANNS - men ingenting anropade den. Laddas efter media.js sa
    routeLiveBattleEvent finns att skriva om, och den slar upp triggerGuardianEmblem vid ANROPET. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guardian-session.js?v=20260901-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guardian-session.js?v=20260905-1';document.body.append(js)});
 /* Gift Fireworks trigger, samma monster som fan-level-session.js. Widgeten hade ingen livevag alls:
    enda anroparen var action-runtime.js:62, som bara kors for den som SJALV lagt upp en Action med
    "firework" i widgetnamnet. Uppmatt 2026-08-06 mot deployad kod - en gava genom VyraLive.ingest
@@ -1114,6 +1114,24 @@ function triggerGuardianEmblem(event={}){
     let box=document.querySelector(`[data-id="${w.id}"]`);
     if(!box)return;
     if(event.username){let namn=box.querySelector('.ge-namn');if(namn)namn.textContent=String(event.username)}
+    // BILDEN SATTES ALDRIG. Namnet ovan skrevs over vid varje traff, men avataren lamnades kvar pa
+    // studions egen `guardianAvatar` — sa emblemet visade fel person, eller ingen alls.
+    //
+    // Uppmatt 2026-09-05: bryggan skickar en giltig profileImage (vidarebefordrad 2 ms efter
+    // BARRAGE), guardian-session.js skickar den vidare, och provet "avsandarens profilbild foljer
+    // med" ar gront — hela kedjan bar bilden anda hit, och har slangdes den.
+    //
+    // Halet kan vara TOMT: geDel('avatar') ritar bara ett <img> nar w.guardianAvatar ar satt. Utan
+    // ett element att uppdatera hade en ren `img.src`-tilldelning tigit i just det vanligaste
+    // fallet — en widget dar streamern aldrig valt nagon bild.
+    if(event.profileImage){
+      let hal=box.querySelector('.ge-avatar');
+      if(hal){
+        let img=hal.querySelector('img');
+        if(!img){img=document.createElement('img');img.alt='';hal.append(img)}
+        img.src=VyraSafe.src(event.profileImage);
+      }
+    }
     box.classList.remove('ge-active');void box.offsetWidth;box.classList.add('ge-active');
     clearTimeout(box._geTimer);
     let F=window.VyraGuardianEmblemFas;
