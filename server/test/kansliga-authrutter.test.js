@@ -28,7 +28,7 @@ test('monstret gar att lasa ur index.js', () => {
     + 'som ar kansligt och far da inte pasta att allt ar bra');
 });
 
-test('varje rutt som skickar mejl eller provar hemligheter ligger pa det stranga taket', () => {
+test('varje rutt som provar hemligheter ligger pa det stranga taket', () => {
   const re = kansligMonster();
   const KANSLIGA = [
     '/api/auth/login',
@@ -36,12 +36,27 @@ test('varje rutt som skickar mejl eller provar hemligheter ligger pa det stranga
     '/api/auth/password/request',
     '/api/auth/password/reset',
     '/api/auth/email/verify',
-    '/api/auth/email/send-verification',   // SKICKAR MEJL — den som saknades
     '/api/auth/mfa/challenge',
   ];
   const saknas = KANSLIGA.filter(p => !re.test(p));
   assert.deepEqual(saknas, [], 'dessa rutter far det VIDLYFTIGA taket (120 i stallet for 10): '
     + saknas.join(', '));
+});
+
+test('send-verification ligger MEDVETET utanfor den delade hinken', () => {
+  // Den las forst hit, och det var fel. Hinken nycklas pa `req.socket.remoteAddress`, vilket bakom
+  // Caddy ar PROXYNS adress — samma strang for varje besokare. Den ar alltsa GLOBAL, inte per
+  // klient. En otalig kund som klickade "Skicka igen" elva ganger hade last ute alla andra fran
+  // inloggning och verifiering under resten av fonstret.
+  //
+  // Varre for den bugg andringen skulle laga: anvandarens EGET klick pa verifieringslanken gar mot
+  // samma hink (`email/verify` star kvar dar, med ratt), och klienten ritar varje fel som "Lanken
+  // fungerar inte" — exakt symtomet, med en ny orsak.
+  //
+  // Rutten har i stallet ett EGET tak nycklat pa anvandar-id i index.js, sa ett konto kan bara
+  // sparra sig sjalvt.
+  assert.equal(kansligMonster().test('/api/auth/email/send-verification'), false,
+    'send-verification hor inte i den DELADE hinken — den har ett eget tak per anvandare');
 });
 
 test('vanliga rutter dras INTE in i det stranga taket', () => {

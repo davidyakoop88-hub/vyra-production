@@ -22,6 +22,11 @@ const SSE_HEARTBEAT_MS=30000;
 // through one socket is otherwise indistinguishable from an attack, and would be throttled halfway
 // through for reasons that have nothing to do with what it is proving.
 const AUTH_RATE_LIMIT=Number(process.env.AUTH_RATE_LIMIT||10),API_RATE_LIMIT=Number(process.env.API_RATE_LIMIT||120);
+// Verifieringsmejl per KONTO och timme. Fem räcker vida för en människa som väntar på ett mejl, och
+// hindrar att ett konto används för att skicka post i någon annans namn. Taket är avsiktligt större
+// än antalet länkar som får leva samtidigt (LEVANDE_TAK i auth-flow.js) — de mäter olika saker:
+// det här begränsar UTSKICKEN, det andra hur många av dem som fortfarande går att klicka på.
+const VERIFIERINGSMEJL_TAK=Number(process.env.VERIFIERINGSMEJL_TAK||5),VERIFIERINGSMEJL_FONSTER=3600;
 const eventBus=new EventBus(process.env.REDIS_URL||'redis://127.0.0.1:6379'),rateLimiter=new RateLimiter(eventBus);
 const metrics=new Metrics(),dbBreaker=new CircuitBreaker(),redisBreaker=new CircuitBreaker();
 const mediaStorage=new MediaStorage(),objectBreaker=new CircuitBreaker({threshold:3,cooldownMs:30000});
@@ -279,7 +284,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!rest){const svar={ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}};
       if(process.env.VYRA_SANDNINGSIDENTITET==='1')svar.session=await StreamSessions.aktivSession({workspaceId:access.workspace_id});
       return send(res,200,svar)}
-    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|email\/send-verification|mfa\/challenge)$/.test(p),rateKey=`${req.socket.remoteAddress||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
+    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${req.socket.remoteAddress||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
   // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
   // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
   // anropare far inte ens veta om funktionen ar paslagen.
@@ -370,7 +375,13 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
   if(p==='/api/auth/mfa/challenge'&&req.method==='POST'){if(!s.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(s.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[s.user_id]),user={...q.rows[0],user_id:s.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[s.id]);await notifyLogin(c,s.email,s.id,s.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[s.user_id,s.id,{device:describeDevice(s.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});
-  if(p==='/api/auth/email/send-verification'&&req.method==='POST'){if(s.email_verified_at)return send(res,200,{ok:true,verified:true});await AuthFlow.issue(pool,{id:s.user_id,email:s.email},'verify_email',1440);return send(res,202,{ok:true,message:'Verifieringsmejlet är skickat.'})}
+  // EGET TAK, NYCKLAT PÅ ANVÄNDAREN. Rutten skickar mejl, så den måste begränsas — men INTE i den
+  // delade auth-hinken. Den nycklas på `req.socket.remoteAddress`, vilket bakom Caddy är proxyns
+  // adress och alltså samma sträng för alla besökare: en otålig kund hade låst ute alla andra från
+  // inloggning och verifiering. Här kan varje konto bara spärra sig självt.
+  if(p==='/api/auth/email/send-verification'&&req.method==='POST'){if(s.email_verified_at)return send(res,200,{ok:true,verified:true});
+    if(await rateLimiter.exceeded(`verifieringsmejl:${s.user_id}`,VERIFIERINGSMEJL_TAK,VERIFIERINGSMEJL_FONSTER))
+      return send(res,429,{ok:false,error:'Du har begärt många verifieringsmejl. Vänta en stund — de tidigare länkarna fungerar fortfarande.'});await AuthFlow.issue(pool,{id:s.user_id,email:s.email},'verify_email',1440);return send(res,202,{ok:true,message:'Verifieringsmejlet är skickat.'})}
   if(req.method!=='GET'&&!s.email_verified_at&&!p.startsWith('/api/auth/sessions')&&!p.startsWith('/api/auth/account/'))return send(res,403,{ok:false,error:'Verifiera din e-postadress innan du sparar eller publicerar.'});
   if(p==='/api/auth/mfa/setup'&&req.method==='POST'){if(s.mfa_enabled_at)return send(res,409,{ok:false,error:'MFA är redan aktiverat'});const secret=MFA.newSecret(),uri=MFA.uri(secret,s.email);await pool.query("UPDATE users SET mfa_secret_enc=$1,mfa_recovery_hashes='[]'::jsonb WHERE id=$2",[MFA.encryptedSecret(secret),s.user_id]);return send(res,200,{ok:true,secret,uri,qr:MFA.qrModuler(uri)})}
   if(p==='/api/auth/mfa/confirm'&&req.method==='POST'){const d=await body(req),q=await pool.query('SELECT mfa_secret_enc,mfa_enabled_at FROM users WHERE id=$1',[s.user_id]);if(q.rows[0]?.mfa_enabled_at)return send(res,409,{ok:false,error:'MFA är redan aktiverat'});if(!q.rows[0]?.mfa_secret_enc||!MFA.verify(MFA.openSecret(q.rows[0].mfa_secret_enc),d.code))return send(res,401,{ok:false,error:'Fel kod'});const codes=MFA.recoveryCodes();await tx(async c=>{await c.query('UPDATE users SET mfa_enabled_at=now(),mfa_recovery_hashes=$1 WHERE id=$2',[JSON.stringify(codes.map(MFA.hashRecovery)),s.user_id]);await c.query('UPDATE sessions SET mfa_verified_at=NULL WHERE user_id=$1',[s.user_id]);await c.query('UPDATE sessions SET mfa_verified_at=now() WHERE id=$1',[s.id])});return send(res,200,{ok:true,recoveryCodes:codes})}

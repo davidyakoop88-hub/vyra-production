@@ -296,3 +296,15 @@ jobs:
       - name: Tvåfaktor över HTTP — setup, confirm och återställningskoderna
         run: node --test test/mfa-http.test.js
         working-directory: server
+
+      # VERIFIERINGSLÄNKARNA. Påståendet som ska bevisas är att länken i det FÖRSTA mejlet
+      # fortfarande fungerar efter ett nytt utskick — och det går inte att mäta mot en attrapp-pool
+      # som aldrig håller några rader. Attrapp-provet (auth-flow-token.test.js) kan bara se vilka
+      # SQL-strängar som skickas; om `id NOT IN (SELECT ... LIMIT $3)` vore fel på minsta punkt vore
+      # det ändå grönt medan kundens länk fortsatte dö.
+      #
+      # Provet går hela vägen: issue() skriver, utkorgens förseglade adress låses upp precis som
+      # mejlutskicket gör, och den råa token matas in i verifyEmail(). Samma resa som en människa.
+      - name: Verifieringslänkar — överlever den gamla ett nytt utskick?
+        run: node --test test/auth-flow-postgres.test.js
+        working-directory: server
