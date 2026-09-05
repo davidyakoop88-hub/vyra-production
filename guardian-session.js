@@ -46,7 +46,23 @@
     return String((e && (e.type || e.event)) || '').trim().toLowerCase() === TYP;
   }
 
-  const sedda = new Set();       // username -> redan firad denna sändning. Bara i minnet.
+  // username -> när personen senast firades. Bara i minnet, nollas med glom().
+  //
+  // VAR EN Set, alltså "en gång per tittare per sändning". Den spärren var en GARDERING mot något
+  // ingen visste då: om Guardian-statusen bars av VARJE event från tittaren hade en Guardian som
+  // skrev fyrtio chattrader gett fyrtio alerts. Kommentaren överst sa själv att spärren "kostar
+  // ingenting" om det i stället visade sig vara en engångshändelse.
+  //
+  // NU ÄR DET UPPMÄTT, och garderingen kostade något: den svalde riktiga återkomster.
+  // Inspelning 2026-09-05T2111 (28 minuter, 176 chattrader, 373 member-event) bar exakt TVÅ
+  // guardian-händelser — samma person, 19:14:28 och 19:23:50, nio minuter isär, båda med
+  // scene='guardian_entrance'. Vore statusen ett rollfält på varje meddelande hade vi sett
+  // hundratals. Bryggan fyrar bara på BARRAGE med subType 'guardian_entrance': en entré, inte en
+  // egenskap.
+  //
+  // Kvar finns bara den risk mätningen INTE utesluter: att samma entré levereras två gånger tätt
+  // inpå. Därför ett kort fönster i stället för ett evigt — se hantera().
+  const sedda = new Map();
   const ko = [];
   let spelar = false;
   let kastade = 0;
@@ -88,8 +104,14 @@
     if (!arGuardian(e)) return;
     const namn = String((e && (e.username || e.name || e.userId)) || '').trim();
     if (!namn) return;                 // utan avsändare finns inget att visa
-    if (sedda.has(namn)) return;       // redan firad denna sändning — se spärren ovan
-    sedda.add(namn);
+    // FÖNSTRET ÄR VISNINGSTIDEN, inte ett påhittat tal. Kommer samma person tillbaka medan hens
+    // eget emblem fortfarande är på skärmen är det en dubblettleverans, inte en återkomst — och två
+    // identiska emblem i rad ser ut som ett fel. Är emblemet färdigspelat är det en riktig entré och
+    // ska firas igen. Fönstret följer koreografin automatiskt om den ändras.
+    const nu = Date.now();
+    const forra = sedda.get(namn);
+    if (forra != null && nu - forra < visningsMs()) return;
+    sedda.set(namn, nu);
     koa({
       username: namn,
       profileImage: String((e && (e.profileImage || e.avatar)) || '')
