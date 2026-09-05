@@ -145,7 +145,16 @@ jobs:
 
       - name: 'Den pinnade Chromium'
         timeout-minutes: 10
-        run: npx playwright install chromium
+        # DEN LOKALA CLI:N, INTE npx.
+        #
+        # Repot beror pa `playwright-core`. `npx playwright` hittar inget lokalt paket med det
+        # namnet och hamtar darfor SENASTE fran registret — uppmatt 2026-09-05: revision 1243
+        # medan package-lock.json pinnar 1234. Den pinnade laddades aldrig ner, och riggen foll
+        # igenom till runnerns system-Chrome. En pinning som beror pa vad registret rakar ha ar
+        # ingen pinning.
+        #
+        # cli.js i node_modules kanner sin egen browsers.json och laddar ner ratt revision.
+        run: node node_modules/playwright-core/cli.js install chromium
 
       - name: 'Fotografera alla katalognycklar'
         timeout-minutes: 30

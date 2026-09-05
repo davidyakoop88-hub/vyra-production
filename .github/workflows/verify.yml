@@ -34,7 +34,10 @@ jobs:
         with: { node-version: 24, cache: npm, cache-dependency-path: package-lock.json }
       - run: npm ci
       - run: npm i -D @playwright/test
-      - run: npx playwright install --with-deps chromium
+      # Systemberoendena via npx (de ar inte versionspinnade av oss), men SJALVA BINAREN via
+      # den lokala cli:n — annars hamtar npx en annan revision an package-lock.json pinnar.
+      - run: npx playwright install-deps chromium
+      - run: node node_modules/playwright-core/cli.js install chromium
       - run: npx playwright test --config tests/e2e/playwright.config.js --project=web
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -57,7 +60,10 @@ jobs:
         working-directory: electron-app
         run: npm ci
       - run: npm i -D @playwright/test
-      - run: npx playwright install --with-deps chromium
+      # Systemberoendena via npx (de ar inte versionspinnade av oss), men SJALVA BINAREN via
+      # den lokala cli:n — annars hamtar npx en annan revision an package-lock.json pinnar.
+      - run: npx playwright install-deps chromium
+      - run: node node_modules/playwright-core/cli.js install chromium
       # Electron ritar inget utan display pa Linux. xvfb ger den en, sa "headless" betyder har
       # "ingen skarm" — inte "ingen rendering". Utan det syns inga CSS- eller layoutfel.
       - run: xvfb-run --auto-servernum npx playwright test --config tests/e2e/playwright.config.js --project=desktop
