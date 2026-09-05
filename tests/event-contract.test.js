@@ -185,3 +185,36 @@ test('fan-nivan klamps till spannet 1-50', () => {
   const rad = shape.split('\n').find(l => /fanClubLevel\s*:/.test(l)) || '';
   assert.match(rad, /50/, `ingen ovre grans pa fan-nivan: ${rad.trim()}`);
 });
+
+// ---- battleId måste överleva HELA vägen ---------------------------------------------------------
+//
+// DAVID I DRIFT 2026-09-05: två MVP-alerts per match.
+//
+// Dedupen fanns och var korrekt — battle-mvp-session.js håller en `annonserade`-mängd nycklad på
+// battleId, provad i tests/battle-mvp-dedup.test.js med nio gröna prov. Men den fick aldrig någon
+// nyckel från klientens egen räkning: `battleFields` i normalizer.js satte inte fältet, så
+// `oppna(e.battleId)` fick undefined och sessionens id var alltid tomt. Dedupen släpper med flit
+// igenom ett event utan id, så den egna fyrningen kom alltid fram.
+//
+// INGET PROV FÅNGADE DET, och det är hela skälet till att den här vakten finns. Klientprovets
+// fixtur skickar `{ type: 'battle', battleId, ... }` — ett battle-event MED battleId, ett fält
+// bryggan aldrig satte. Provet var grönt mot en payload som inte existerade i verkligheten.
+//
+// Vakten mäter därför inte en omdöpning som RENAMES ovan, utan att fältet finns i VARJE led.
+// Försvinner det ur ett av dem faller provet här, i stället för att synas som en dubbel alert i en
+// sändning tre veckor senare.
+const NORMALIZER = read('tiktok-bridge/normalizer.js');
+const MVP_SESSION = read('battle-mvp-session.js');
+
+test('battleId överlever bryggan, molnet och klienten', () => {
+  const led = [
+    ['tiktok-bridge/normalizer.js battleFields', /function battleFields[\s\S]{0,900}?battleId:/, NORMALIZER],
+    ['tiktok-bridge/normalizer.js mvpFields', /function mvpFields[\s\S]{0,600}?battleId:/, NORMALIZER],
+    ['server/event-bus.js cleanEvent', /battleId/, BUS],
+    ['battle-mvp-session.js läser det', /oppna\(e\.battleId\)/, MVP_SESSION],
+    ['battle-mvp-session.js dedupar på det', /annonserade\.(has|add)\(bid\)/, MVP_SESSION],
+  ];
+  const saknas = led.filter(([, m, kalla]) => !m.test(kalla)).map(([namn]) => namn);
+  assert.deepEqual(saknas, [],
+    'dessa led tappar battleId — MVP tänds då två gånger per match: ' + saknas.join(', '));
+});
