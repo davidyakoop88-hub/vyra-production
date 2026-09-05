@@ -90,9 +90,7 @@ test('ett guardian-event utan avsändare tänder inte emblemet', () => {
 
 // ---- 3. spärren ---------------------------------------------------------------------------------
 
-test('samma Guardian firas en gång per sändning', () => {
-  // Bryggans främsta kandidat är MEMBER med ett rollfält — då bär VARJE event från tittaren
-  // statusen, och utan spärren hade fyrtio chattrader gett fyrtio alerts.
+test('en skur av samma guardian ger EN alert — det är dubblettleverans, inte återkomst', () => {
   // KÖN MÅSTE MÄTAS, INTE BARA SPELNINGARNA. Ett första utkast av det här provet läste bara
   // traffar().length — och det är 1 även utan spärr, eftersom de trettionio andra då ligger och
   // väntar i kön i stället för att ha spelats. Mutationsprovet (spärren borttagen) förblev grönt.
@@ -102,6 +100,31 @@ test('samma Guardian firas en gång per sändning', () => {
   assert.equal(traffar().length, 1, 'fler än en alert spelades för samma guardian');
   assert.equal(h.window.VyraGuardian.koLangd(), 0,
     'spärren släppte igenom upprepningar — de ligger i kön och spelas efter varandra');
+});
+
+test('samma Guardian som kommer TILLBAKA senare firas igen', () => {
+  // DET HÄR ÄR BUGGEN DAVID SÅG I SKARP SÄNDNING 2026-09-05.
+  //
+  // Spärren var tidigare evig — en Set med "redan firad denna sändning". Den byggdes som en
+  // gardering: om Guardian-statusen bars av VARJE event från tittaren hade fyrtio chattrader gett
+  // fyrtio alerts. Filens egen kommentar sa att spärren "kostar ingenting" om det i stället visade
+  // sig vara en engångshändelse.
+  //
+  // Den kostade något. Inspelning 2026-09-05T2111 (28 minuter, 176 chattrader, 373 member-event)
+  // bar exakt TVÅ guardian-händelser: samma person, 19:14:28 och 19:23:50, nio minuter isär, båda
+  // med scene='guardian_entrance'. Vore statusen ett rollfält hade vi sett hundratals. Den andra
+  // entrén tändes aldrig.
+  const { skicka, traffar, h } = boot();
+  let nu = 1_000_000;
+  h.window.Date.now = () => nu;
+
+  skicka(guardian('lisa'));
+  assert.equal(traffar().length, 1, 'första entrén ska tända');
+
+  nu += 9 * 60 * 1000;                 // nio minuter, som i den uppmätta sändningen
+  skicka(guardian('lisa'));
+  assert.equal(traffar().length + h.window.VyraGuardian.koLangd(), 2,
+    'återkomsten svaldes — det är exakt buggen: en Guardian som kommer in igen ska firas igen');
 });
 
 test('olika Guardians firas var för sig', () => {
