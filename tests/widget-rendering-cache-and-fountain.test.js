@@ -168,7 +168,23 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Strängen säger NÄR, inte VAD. Första utkastet hette '20260905-guardian' och föll på vakten
   // ovan — med rätta: exemplet i dess egen kommentar är '20260818-guardian', en sträng som
   // överlevde sin widgetfamilj med noll minuter.
-  assert.match(studio, /[^-]media\.js\?v=20260905-1/);
+  //
+  // Bumpad 2026-09-05 för namnnormaliseringen: live-client.js ändrades (dekorativa Unicode-alfabet
+  // i tittarnas namn viks tillbaka till läsbara bokstäver, annars ritar webbläsaren rutor).
+  // media.js BÄR live-client.js:s versionssträng, så media.js själv måste bumpas — annars fortsätter
+  // en cachad media.js peka på den gamla live-client.js och fixen når ingen. Samma skäl som
+  // duckningen 2026-08-17.
+  //
+  // studio.css, widget-factory.js och premium-bundlens version är OFÖRÄNDRADE och behåller sina
+  // strängar: de följer filerna, inte varandra.
+  //
+  // SAMMANSLAGNINGEN: de två ändringarna ovan låg på var sin gren och båda bumpade media.js —
+  // emblemgrenen till `-1`, namngrenen till `-2`. Det sammanslagna innehållet är varken det ena
+  // eller det andra, så det får en TREDJE sträng. Att behålla någondera hade betytt att halva
+  // ändringen levererades under en sträng som redan var utrullad, och just den halvan hade aldrig
+  // nått en cachad webbläsare. Samma resonemang som sammanslagningen 2026-08-19: en sammanslagning
+  // som rör en fil är en ändring av den filen.
+  assert.match(studio, /[^-]media\.js\?v=20260905-3/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
