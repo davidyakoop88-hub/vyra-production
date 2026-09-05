@@ -87,22 +87,32 @@ Analysatorn svarar på punkt 1, 2, 3, 4 och 6 — och säger `inget underlag` he
 
 ## 3. Signeringen — annars möts varje ny användare av en varning
 
-**Varför den blockerar:** senaste releasen heter bokstavligen `v1.2.3 (unsigned)`. Windows
+**Varför den blockerar:** publicerad release heter bokstavligen `v1.2.3 (unsigned)`. Windows
 SmartScreen varnar för osignerade installationsprogram, och en varning i det allra första
 ögonblicket kostar kunder som aldrig hör av sig. Tekniskt hindrar den ingen lansering — men den
 är dyrast av de tre i förlorade användare per dag.
 
-**Läget:** SignPath svarade 503 (bevisat: `signingRequestId: null`, alltså inte policyn som
-stoppade). `UNSIGNED_RELEASE` är avstängd, så nästa tagg **faller** i stället för att släppa
-något osignerat. Ett testcertifikat tar inte bort varningen — det krävs ett riktigt
-kodsigneringscertifikat med identitetsverifiering, vilket kostar pengar och tar tid.
+**Läget:** SignPath är inte längre en väg. Provperioden tog slut, och fortsättning kräver ett
+betalt abonnemang. **Leveransen sker därför via Microsoft Store, som signerar själv** — det
+beslutet är fattat och genomfört (PR #287, issue #127 stängd 2026-08-31).
 
-Bakgrunden står i [`SIGNPATH_SIGNING.md`](SIGNPATH_SIGNING.md) och
-[`DESKTOP_RELEASE.md`](DESKTOP_RELEASE.md).
+⚠️ **En rättelse värd att bära med sig:** vi antecknade tidigare att SignPath svarade 503 och att
+`signingRequestId: null` bevisade att "policyn inte var orsaken". Det ledde fel. Felkoden var
+inte ett tekniskt fel hos SignPath — den var att provperioden var över. **En avläst felkod är
+inte en orsak**, och den diagnosen kostade oss ett antagande om att problemet gick att felsöka.
 
-**Vem:** David — det kräver ett köp och en identitetsverifiering.
+**Kvar att göra:** släppa via Store. Publicerad `.exe` är fortfarande **v1.2.3** (2026-08-04) och
+saknar `giftId` i `tiktok-service.js` — det kom i #280. v1.2.4 är mergad men **inte taggad**.
 
-**Status:** ⬜ parkerad på Davids beslut (2026-08-20)
+⚠️ GitHub-release-vägen kräver fortfarande SignPath och `UNSIGNED_RELEASE` är avstängd, så en
+`v*`-tagg **faller**. Det spelar ingen roll så länge leveransen går via Store — men den som taggar
+utan att veta det får ett rött bygge utan uppenbar orsak.
+
+Bakgrunden står i [`DESKTOP_RELEASE.md`](DESKTOP_RELEASE.md).
+
+**Vem:** David — Store-släppet.
+
+**Status:** ⬜ Store-släppet kvar; SignPath-spåret är stängt (2026-09-05)
 
 ---
 
