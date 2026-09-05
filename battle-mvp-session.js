@@ -158,7 +158,9 @@
     // Slås upp vid anropet, inte vid laddning: media.js kan ha laddats efter den här filen, och
     // runtime-controls.js byter dessutom ut funktionen mot en köad variant en stund efter start.
     if (typeof root.triggerBattleMvp === 'function') {
-      root.triggerBattleMvp({ name: mvp.username, score: mvp.coins,
+      // VISNINGSNAMNET, inte nyckeln. `username` är kvar som reserv för det fall gåvan aldrig bar
+      // något namn — då är handtaget det enda vi har, och ett handtag är bättre än en tom ruta.
+      root.triggerBattleMvp({ name: mvp.namn || mvp.username, score: mvp.coins,
         profileImage: mvp.profileImage || '', battleId: öppen.battleId || '' });
     }
     spelaFanfar();
@@ -182,12 +184,25 @@
     if (!session) return;
     const coins = coinsAv(e);
     if (!coins) return;
+    // IDENTITET OCH VISNING ÄR OLIKA SAKER, och det var hela felet här. Nyckeln ska vara stabil —
+    // därför `username` (TikToks handle) först. Men handtaget är INTE det folk känner igen; de
+    // känner igen visningsnamnet. Tidigare sparades bara nyckeln, och stang() skickade den vidare
+    // som `name`, så widgeten skrev ut ett @-handtag där resten av VYRA skriver ut ett namn.
+    //
+    // Inkonsekvensen syntes bara ibland, vilket gjorde den svår att tro på: när TikToks EGEN
+    // armélista avgjorde MVP kom namnet från bryggan (nickname, alltså rätt), och när den här
+    // räkningen avgjorde kom handtaget. Samma widget, två olika namn, beroende på vilken källa som
+    // hann först.
     const username = String(e.username || e.name || e.userId || '').trim();
     if (!username) return;             // anonymt utan namn går inte att kora fram som MVP
     const nu = Date.now();
     const post = session.bidrag.get(username)
-      || { username, coins: 0, forstAt: nu, profileImage: '' };
+      || { username, namn: '', coins: 0, forstAt: nu, profileImage: '' };
     post.coins += coins;
+    // Senast kända visningsnamn vinner: en person kan byta namn mitt i en match, och då är det nya
+    // det tittarna ser i chatten.
+    const visning = String(e.name || '').trim();
+    if (visning) post.namn = visning;
     if (e.profileImage || e.avatar) post.profileImage = String(e.profileImage || e.avatar);
     session.bidrag.set(username, post);
   }
