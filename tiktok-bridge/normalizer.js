@@ -173,9 +173,26 @@ function battleStatusAv(data,battle){
     || BATTLE_STATUS[Number(data?.battleSettings?.status)]
     || text(battle?.status||battle?.battleStatus||'',64);
 }
+// `battleId` FOLJER MED, och utan den bits inte MVP-dedupen.
+//
+// DEDUPEN FINNS REDAN och ar korrekt: battle-mvp-session.js lindar triggerBattleMvp och haller en
+// `annonserade`-mangd nycklad pa battleId, sa en match kan bara tanda widgeten en gang. Den ar
+// provad i tests/battle-mvp-dedup.test.js, nio prov, alla grona.
+//
+// MEN DEN FICK ALDRIG NAGON NYCKEL FRAN KLIENTENS EGEN RANING. MVP tands fran tva hall — TikToks
+// armelista (battle_mvp, som BAR battleId) och sessionens egen summering (som reserv nar TikTok
+// inte skickar nagon lista). Sessionen hamtar sitt id ur `battle`-eventet via oppna(e.battleId),
+// och battleFields skickade det inte. Sessionens id var alltsa alltid tomt, och dedupens egen
+// regel slapper med FLIT igenom ett event utan id: "hellre en alert for mycket an ingen alls".
+//
+// Foljden i drift, uppmatt av David 2026-09-05: TVA MVP-alerts per match. TikToks dedupades, den
+// egna slapptes alltid fram. Nyckeln saknades pa exakt den sida som behovde den.
+//
+// Id:t finns i BADA payloaderna och ar samma strang: uppmatt 7682152221400681249 i bade
+// LINK_MIC_BATTLE och LINK_MIC_ARMIES for samma match. Bara vidarebefordran saknades.
 function battleFields(data){
   const battle=data?.battleInfo||data?.battle||data||{};
-  return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64)};
+  return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
 }
 // Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
 //
