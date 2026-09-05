@@ -83,7 +83,19 @@
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;
-    if (type === 'leave' || type.includes('viewer_leave') || type.includes('member_leave') || type.includes('exit')) t.present = false;
+    // ATT LÄMNA SÄNDNINGEN TAR INTE BORT NÅGON. Raden här satte `present = false` på leave/exit, och
+    // filtret i sortedTop() släpper bara igenom `present !== false` för likes-listan — så den som
+    // gick ur rummet FÖRSVANN ur toppen i samma sekund, mitt i sina egna aktiva likes.
+    //
+    // Det är fel modell för vad listan visar. Likes-toppen mäter vad folk GJORT den senaste
+    // stunden (LIKE_IDLE_MS), inte vem som råkar stå i rummet just nu — den som gav femhundra
+    // likes och stängde appen har fortfarande gett dem. Dessutom är TikToks leave-event inte
+    // pålitliga nog att radera någon på: en tittare som tappar nätet ett ögonblick ska inte
+    // straffas med att tömmas ur listan.
+    //
+    // `present` och VyraLeaderboard.remove() finns kvar för UTTRYCKLIG borttagning. Skillnaden är
+    // att det nu krävs ett beslut, inte bara att någon lämnar.
+
     if (type === 'likes' || type === 'like' || type.includes('tap')) {
       // Increment fields only. cloudEvent() fills `value` from coins ?? points ?? score, and a like
       // has no coins — so `value` is TikTok's running room-wide like total, the same number the

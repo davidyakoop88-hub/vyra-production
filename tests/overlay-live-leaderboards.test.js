@@ -400,3 +400,50 @@ test('the persisted daily bucket is not inflated by the room total either', () =
   const likes = days.flatMap(day => Object.values(day)).reduce((sum, t) => sum + (t.likes || 0), 0);
   assert.equal(likes, 0, 'rumstotalen skrevs till den persistenta dagsbudgeten');
 });
+
+// ---- att lämna sändningen tar inte bort någon ---------------------------------------------------
+//
+// UPPMÄTT AV DAVID I DRIFT 2026-09-05: personer försvann ur Top Likes när de lämnade liven.
+//
+// record() satte `present = false` på leave/exit, och sortedTop() släpper bara igenom
+// `present !== false` för likes-listan. Den som gick ur rummet försvann alltså ur toppen i samma
+// sekund — mitt i sina egna aktiva likes.
+//
+// Fel modell för vad listan visar: likes-toppen mäter vad folk GJORT den senaste stunden
+// (LIKE_IDLE_MS), inte vem som råkar stå i rummet just nu. Den som gav femhundra likes och stängde
+// appen har fortfarande gett dem. TikToks leave-event är dessutom inte pålitliga nog att radera
+// någon på — en tittare som tappar nätet ett ögonblick ska inte tömmas ur listan.
+
+test('den som lämnar sändningen ligger kvar i Top Likes', () => {
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 40 });
+  assert.equal(likeTotals(env)?.likes, 40, 'forutsattningen: personen finns i listan');
+
+  env.live({ type: 'leave', username: 'jokero', name: 'Jokero' });
+  assert.equal(likeTotals(env)?.likes, 40,
+    'personen forsvann ur Top Likes nar hen lamnade liven — likesen ar fortfarande givna');
+});
+
+test('varken member_leave eller exit tar bort någon', () => {
+  // Tre stavningar traffar samma spar i record(). Provet maste tacka alla tre, annars kan en av dem
+  // lamnas kvar vid en framtida andring och buggen ateruppsta for just den varianten.
+  for (const typ of ['leave', 'member_leave', 'viewer_leave', 'exit']) {
+    const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+    env.run('live-leaderboard.js');
+    env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 7 });
+    env.live({ type: typ, username: 'jokero', name: 'Jokero' });
+    assert.equal(likeTotals(env)?.likes, 7, `"${typ}" tog bort personen ur listan`);
+  }
+});
+
+test('UTTRYCKLIG borttagning fungerar fortfarande — skillnaden är att det krävs ett beslut', () => {
+  // `present` och VyraLeaderboard.remove() ar kvar med flit. Fixen ska inte gora det OMOJLIGT att
+  // ta bort nagon, bara sluta gora det automatiskt nar nagon lamnar rummet.
+  const env = makeSandbox({ search: '?overlay=1', state: { widgets: [] } });
+  env.run('live-leaderboard.js');
+  env.live({ type: 'like', username: 'jokero', name: 'Jokero', count: 12 });
+  assert.equal(likeTotals(env)?.likes, 12);
+  env.sandbox.window.VyraLeaderboard.remove('jokero');
+  assert.equal(likeTotals(env), undefined, 'remove() ska fortfarande ta bort personen');
+});
