@@ -91,6 +91,46 @@ jobs:
           if ($fel.Count -gt 0) { throw ($fel -join '; ') }
           Write-Host "Manifestet bar ratt identitet och version $($identity.Version)"
 
+      # BRICKORNA I DET FARDIGA PAKETET MASTE VARA VARA.
+      #
+      # Steget ovan verifierar identiteten men inte bilderna, och det var den luckan som lat
+      # electron-builders SampleAppx-exempelbilder na Microsoft. Saknas en bricka i build/appx/
+      # lagger app-builder-lib in en exempelbild UTAN ETT ORD I LOGGEN (se
+      # vendorAssetsForDefaultAssets i out/targets/AppxTarget.js), och certifieringen faller pa
+      # policy 10.1.1.11 On Device Tiles — en vecka senare, med ett gront bygge bakom sig.
+      #
+      # Jamforelsen ar BYTEIDENTITET mot kallfilerna, inte "filen finns": en exempelbild har
+      # ratt namn och ratt matt. Bara innehallet skiljer dem at.
+      - name: Verifiera brickorna i paketet
+        shell: pwsh
+        run: |
+          $paket = Get-ChildItem 'dist2' -Filter '*.appx' | Select-Object -First 1
+          if (-not $paket) { throw 'Inget AppX-paket byggdes.' }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $arkiv = [System.IO.Compression.ZipFile]::OpenRead($paket.FullName)
+          $fel = @()
+          try {
+            $kallor = Get-ChildItem 'build/appx' -Filter '*.png'
+            if ($kallor.Count -eq 0) { throw 'build/appx/ ar tom — paketet skulle fyllas med exempelbilder.' }
+            foreach ($k in $kallor) {
+              $post = $arkiv.Entries | Where-Object { $_.Name -eq $k.Name } | Select-Object -First 1
+              if (-not $post) { $fel += "$($k.Name): finns inte i paketet"; continue }
+              $strom = $post.Open()
+              $minne = New-Object System.IO.MemoryStream
+              $strom.CopyTo($minne); $strom.Dispose()
+              $iPaket = [System.BitConverter]::ToString(
+                [System.Security.Cryptography.SHA256]::Create().ComputeHash($minne.ToArray()))
+              $minne.Dispose()
+              $iKallan = [System.BitConverter]::ToString(
+                [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.IO.File]::ReadAllBytes($k.FullName)))
+              if ($iPaket -ne $iKallan) {
+                $fel += "$($k.Name): innehallet i paketet skiljer sig fran build/appx/ — sannolikt en SampleAppx-exempelbild"
+              }
+            }
+            Write-Host "Kontrollerade $($kallor.Count) brickor mot paketet."
+          } finally { $arkiv.Dispose() }
+          if ($fel.Count -gt 0) { throw ($fel -join "`n") }
+
       # Checksumman gor det mojligt att verifiera att filen som laddas upp till Partner Center ar
       # exakt den CI byggde — nedladdning genom webblasare och vidare uppladdning ar annars ett
       # steg utan kvitto.

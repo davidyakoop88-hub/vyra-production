@@ -15,6 +15,17 @@ node_modules/
 dump.rdb
 dist/
 build/
+
+# UNDANTAG: for electron-builder ar build/ KALLKOD, inte utdata — det ar dess buildResources.
+# Butiksbrickorna bor dar, och regeln "build/" ovan gjorde att de ALDRIG kunde checkas in. Foljden
+# blev att electron-builder tyst la in sina SampleAppx-exempelbilder i stallet, och Store-
+# certifieringen foll 2026-09-04 pa policy 10.1.1.11 (On Device Tiles).
+#
+# Kataloglederna maste undantas var for sig: git gar inte in i en ignorerad katalog, sa ett
+# ensamt undantag for filerna hade inte natt dem.
+!electron-app/build/
+!electron-app/build/appx/
+!electron-app/build/appx/*.png
 .cache/
 __pycache__/
 *.pyc
