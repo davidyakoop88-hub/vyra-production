@@ -14,7 +14,6 @@
   const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
 
   const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
-  const LIKE_IDLE_MS = 10 * 60 * 1000;
 
   // Day-bucketed persistence so a widget's "Period" (Today/Week/Month/Year/Alltid) means something —
   // `totals` above is session-only (resets on reload), which is exactly "Denna stream" and nothing
@@ -79,19 +78,20 @@
     const username = e.username || e.uniqueId || e.userId || e.name;
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
-    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, activeLikes: 0, likeEvents: [], coins: 0, lastLikeAt: 0, present: true });
+    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, coins: 0, lastLikeAt: 0, present: true });
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;
-    // ATT LÄMNA SÄNDNINGEN TAR INTE BORT NÅGON. Raden här satte `present = false` på leave/exit, och
-    // filtret i sortedTop() släpper bara igenom `present !== false` för likes-listan — så den som
-    // gick ur rummet FÖRSVANN ur toppen i samma sekund, mitt i sina egna aktiva likes.
+    // ATT LÄMNA SÄNDNINGEN TAR INTE BORT NÅGON. Här satte en rad `present = false` på leave/exit,
+    // och filtret i sortedTop() släpper bara igenom `present !== false` — så den som gick ur rummet
+    // FÖRSVANN ur toppen i samma sekund, mitt i sina egna likes.
     //
-    // Det är fel modell för vad listan visar. Likes-toppen mäter vad folk GJORT den senaste
-    // stunden (LIKE_IDLE_MS), inte vem som råkar stå i rummet just nu — den som gav femhundra
-    // likes och stängde appen har fortfarande gett dem. Dessutom är TikToks leave-event inte
-    // pålitliga nog att radera någon på: en tittare som tappar nätet ett ögonblick ska inte
-    // straffas med att tömmas ur listan.
+    // Listan visar vad folk GETT, inte vem som råkar stå i rummet. Den som gav femhundra likes och
+    // stängde appen har fortfarande gett dem. TikToks leave-event är dessutom inte pålitliga nog
+    // att radera någon på: en tittare som tappar nätet ett ögonblick ska inte tömmas ur listan.
+    //
+    // (Uppmätt 2026-09-05 över två sändningar: TikTok skickade 511 member-event, ALLA med action=1,
+    // alltså "kommer in". Inte ett enda lämna-event. Raden reagerade på något som knappt händer.)
     //
     // `present` och VyraLeaderboard.remove() finns kvar för UTTRYCKLIG borttagning. Skillnaden är
     // att det nu krävs ett beslut, inte bara att någon lämnar.
@@ -104,7 +104,6 @@
       // count of 0 stays 0 instead of reaching for the next field.
       const count = Number(e.count ?? e.likes) || 0;
       t.likes += count;
-      t.likeEvents.push([Date.now(), count]);
       t.lastLikeAt = Date.now();
       t.present = true;
       recordDaily(username, t.name, t.profileImage, count, 0);
@@ -118,13 +117,30 @@
     }
   }
 
+  // TOPPLISTAN VISAR HELA SÄNDNINGENS TOTAL, inte de senaste tio minuterna.
+  //
+  // Likes räknades tidigare i ett rullande fönster (`LIKE_IDLE_MS`): bara likes yngre än tio
+  // minuter räknades, resten åldrades bort. Följden i drift var att folk föll ur listan för att de
+  // slutat tappa — inte för att någon gett mer. David bad 2026-09-05 om totalen: den som gav
+  // femhundra likes har gett dem, och ska ligga kvar.
+  //
+  // BYTET AV MODELL, inte bara av tal. Ett fönster gör listan till en tävling om vem som är aktiv
+  // just nu; totalen gör den till en ställning över hela sändningen. Toppen rör sig därför mindre
+  // ju längre sändningen går, och det är meningen.
+  //
+  // `likeEvents` och `activeLikes` är borta med samma ändring. De var en array per person som växte
+  // med varje like och filtrerades om vid VARJE sortering — i OBS flera gånger i sekunden, hela
+  // sändningen. Att låta den ligga kvar oanvänd hade varit en kostnad utan syfte i just den fil som
+  // en gång bar en 5 Hz-loop.
+  //
+  // NÄRVAROKRAVET GÄLLER NU ALLA TRE måtten, inte bara likes. Sedan 2026-09-05 sätts `present` bara
+  // av VyraLeaderboard.remove(), alltså ett uttryckligt beslut — och då ska det gälla överallt. Att
+  // en borttagen person försvann ur Top Likes men låg kvar i Top Coins var svårt att förstå som en
+  // regel.
   function sortedTop(metric) {
-    const now = Date.now();
-    if (metric === 'likes') Object.values(totals).forEach(t => {
-      t.likeEvents = (t.likeEvents || []).filter(([at]) => now - at < LIKE_IDLE_MS);
-      t.activeLikes = t.likeEvents.reduce((sum, [, count]) => sum + count, 0);
-    });
-    return Object.values(totals).filter(t => metric === 'likes' ? (t.present !== false && t.activeLikes > 0) : t[metric] > 0).sort((a, b) => metric === 'likes' ? b.activeLikes - a.activeLikes : b[metric] - a[metric]);
+    return Object.values(totals)
+      .filter(t => t.present !== false && t[metric] > 0)
+      .sort((a, b) => b[metric] - a[metric]);
   }
 
   // A gift landing while the flip is still running must update the name, value and both pictures
@@ -215,7 +231,7 @@
       // An empty tally used to mean "leave the DOM alone", which in the editor is right — the demo
       // rows are what the streamer is designing against. In the overlay it meant a live audience
       // saw shipped placeholder people with invented totals, and kept seeing them: sortedTop
-      // filters on activeLikes > 0, so a like stream whose events carry count 0 never produces a
+      // filters on likes > 0, so a like stream whose events carry count 0 never produces a
       // single entry, and the rows are never reached. Zero the rows instead of inventing anything.
       if (!top.length) {
         if (!VYRA_OVERLAY) return;
@@ -250,7 +266,7 @@
         const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
         if (strong) strong.textContent = person.name;
         if (small) small.textContent = '@' + person.name.toLowerCase().replace(/\s+/g, '');
-        if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; const displayValue = range === 'stream' && metric === 'likes' ? person.activeLikes : person[metric]; em.textContent = icon + ' ' + formatNum(displayValue); }
+        if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; const displayValue = person[metric]; em.textContent = icon + ' ' + formatNum(displayValue); }
         const img = row.querySelector('img:not(.pro-frame-art)');
         if (img && person.profileImage) img.src = VyraSafe.src(person.profileImage);
       });
@@ -298,7 +314,6 @@
 
   window.VyraLeaderboard = {
     getTop: (metric = 'likes', count = 10) => sortedTop(metric).slice(0, count),
-    remove: username => { if (totals[username]) totals[username].present = false; },
-    LIKE_IDLE_MS
+    remove: username => { if (totals[username]) totals[username].present = false; }
   };
 })();
