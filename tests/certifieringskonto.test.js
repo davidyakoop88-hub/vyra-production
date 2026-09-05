@@ -18,7 +18,7 @@
 // "betalt abonnemang rors aldrig" åt båda hållen. Tas `if (!forsta)` bort faller
 // "utan arbetsyta stannar skriptet".
 const test = require('node:test'), assert = require('node:assert/strict');
-const { beslut, hinderForTestare, parseArgs } = require('../scripts/certifieringskonto.js');
+const { beslut, hinderForTestare, parseArgs } = require('../scripts/certifieringskonto-beslut.js');
 
 const ARBETSYTA = { id: 'w-1', name: 'Testytan', created_at: new Date('2026-01-01') };
 const ANVANDARE = {
