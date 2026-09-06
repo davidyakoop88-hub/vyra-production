@@ -62,14 +62,20 @@ läsas av. Punkt 5 och 7 är redan **stängda** — uppmätta i riktig OBS 2026-
 **Vad som ska hända:**
 
 1. Starta med `SPELA-IN-TIKTOK.cmd` i stället för `ANSLUT-TIKTOK-LIVE.cmd`.
-2. Sätt `VYRA_INSPELNING_TYPER=alla` **före** start — annars spelas bara elva av TikToks 67
-   händelser in, och Guardian-eventet kan vara bland de övriga 56.
-3. Sätt `VYRA_INSPELNING_MAX_MB=400` i samma veva. Standardtaket är **50 MB**, och med `alla`
-   fylls det långt före sändningens slut — inspelaren slutar då skriva mitt i. Battlen ligger
-   nästan alltid efter den punkten, och utan den går punkt 1–4 inte att svara på. Ett avbrutet
-   band ser dessutom ut som en komplett fil: den enda skillnaden är att slutet saknas.
-4. Sänd som vanligt. Helst med en battle, annars kan punkt 1–4 inte svaras på.
-5. Skicka filen ur `tiktok-bridge/inspelningar/`.
+2. **Skriptet sätter numera `VYRA_INSPELNING_TYPER=alla` och `VYRA_INSPELNING_MAX_MB=400` själv**,
+   och skriver ut båda när det startar. Kontrollera den raden — det är den enda gången värdena går
+   att se innan bandet är skrivet.
+
+   Punkterna stod som manuella steg här fram till 2026-09-05, och glömdes: **tre inspelningar i
+   rad** (2026-09-02 och 2026-09-04) slog i standardtaket 50 MB och kapades mitt i. Ett avbrutet
+   band ser ut som en komplett fil — den enda skillnaden är att slutet saknas, och battlen ligger
+   nästan alltid efter den punkten. Utan `alla` spelas dessutom bara elva av TikToks 67 händelser
+   in, och `guardian_entrance` är bland de övriga 56.
+
+   Ett värde satt i miljön vinner fortfarande över skriptets: `set VYRA_INSPELNING_MAX_MB=100`
+   före anropet gäller.
+3. Sänd som vanligt. Helst med en battle, annars kan punkt 1–4 inte svaras på.
+4. Skicka filen ur `tiktok-bridge/inspelningar/`.
 
 Sedan kör Claude:
 
