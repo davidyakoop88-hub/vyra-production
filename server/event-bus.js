@@ -9,8 +9,16 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
-const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
+// `member` STOD HAR fram till 2026-09-06 och doptes om till 'viewer'. Foljden: klientens
+// liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och 'viewer' matchar
+// INGEN av dem, sa varken member- eller join-triggern kunde fyra pa molnvagen. Uppmatt i en skarp
+// sandning: 281 personer gick in i rummet, noll medlems-Actions fyrade; pa desktopvagen (som inte
+// aliasar) fyrade alla 281.
+//
+// De ar dessutom tva olika saker: `member` bar en PERSON, `viewer` bar ett ANTAL. Aliaset lade
+// 281 intraden och 548 rumsuppdateringar under en enda klienttyp.
+const TYPE_ALIASES={likes:'like',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 
 function cleanEvent(input){

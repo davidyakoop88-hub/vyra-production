@@ -41,7 +41,8 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     onStatus({ connected: false, username, mode: 'live', state: 'connecting', roomId: '' });
 
     connection.on(WebcastEvent.CHAT, data => {
-      const comment = text(data?.comment, 500);
+      // `content` ar faltet TikTok faktiskt skickar; `comment` finns inte. Se bridge.js.
+      const comment = text(data?.content ?? data?.comment, 500);
       emit(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', { ...baseUser(data), name: comment }, data);
     });
     connection.on(WebcastEvent.GIFT, data => {
@@ -86,7 +87,8 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     connection.on(WebcastEvent.SHARE, data => emit('share', baseUser(data), data));
     connection.on(WebcastEvent.MEMBER, data => emit('member', baseUser(data), data));
     connection.on(WebcastEvent.SUB_NOTIFY, data => emit('subscribe', baseUser(data), data));
-    connection.on(WebcastEvent.ROOM_USER, data => emit('viewer', { count: number(data?.viewerCount || data?.userCount, 1e9) }, data));
+    // `total` = samtidiga tittare. Se bridge.js — `viewerCount`/`userCount` finns inte.
+    connection.on(WebcastEvent.ROOM_USER, data => emit('viewer', { count: number(data?.total ?? data?.viewerCount ?? data?.userCount, 1e9) }, data));
     connection.on(WebcastEvent.LIKE, data => emit('likes', {
       ...baseUser(data),
       count: number(data?.likeCount, 1e9),

@@ -1,0 +1,628 @@
+{
+  "_om": {
+    "kalla": "8 inspelningar fran skarpa sandningar 2026-09-01 -- 2026-09-06",
+    "bibliotek": "tiktok-live-connector 2.4.0",
+    "handelser": 21039,
+    "regel": "nycklar som forekom i minst 90% av handelserna av sin typ; VARDEN ar med flit inte med"
+  },
+  "typer": {
+    "LIVE_INTRO": {
+      "antal": 16,
+      "nycklar": [
+        "auditStatus",
+        "badges",
+        "common",
+        "content",
+        "contentLanguage",
+        "id",
+        "introMode",
+        "user"
+      ]
+    },
+    "GIFT_DYNAMIC_RESTRICTION": {
+      "antal": 23,
+      "nycklar": [
+        "common",
+        "dynamicRestriction"
+      ]
+    },
+    "viewer": {
+      "antal": 4187,
+      "nycklar": [
+        "anonymous",
+        "common",
+        "popStr",
+        "popularity",
+        "ranks",
+        "seats",
+        "total",
+        "totalUser"
+      ]
+    },
+    "member": {
+      "antal": 2250,
+      "nycklar": [
+        "action",
+        "actionDescription",
+        "actionDuration",
+        "adminPermissions",
+        "allowPreviewTime",
+        "anchorDisplayText",
+        "clientEnterSource",
+        "clientEnterType",
+        "clientLiveReason",
+        "common",
+        "displayStyle",
+        "ecStreamerKey",
+        "effectConfig",
+        "enterType",
+        "hitAbStatus",
+        "isSetToAdmin",
+        "isTopUser",
+        "kickSource",
+        "lastSubscriptionAction",
+        "liveSubOnlyMonth",
+        "liveSubOnlyTier",
+        "memberCount",
+        "popStr",
+        "publicAreaMessageCommon",
+        "rankScore",
+        "showWave",
+        "topUserNo",
+        "user",
+        "userId",
+        "userShareType"
+      ]
+    },
+    "BARRAGE": {
+      "antal": 176,
+      "nycklar": [
+        "background",
+        "common",
+        "commonBarrageContent",
+        "content",
+        "control",
+        "displayConfig",
+        "duration",
+        "galleryGiftId",
+        "hybridUrl",
+        "icon",
+        "leftIconDisplayType",
+        "msgType",
+        "privilegeLogExtra",
+        "renderType",
+        "scene",
+        "schema",
+        "showType",
+        "subType",
+        "useMarquee",
+        "user"
+      ]
+    },
+    "likes": {
+      "antal": 9112,
+      "nycklar": [
+        "color",
+        "common",
+        "count",
+        "effectCnt",
+        "icon",
+        "icons",
+        "likeEffect",
+        "publicAreaMessageCommon",
+        "roomMessageHeatLevel",
+        "specifiedDisplayText",
+        "total",
+        "user"
+      ]
+    },
+    "RANK_TEXT": {
+      "antal": 3,
+      "nycklar": [
+        "common",
+        "curUserId",
+        "otherGetBadgeMsg",
+        "ownerIdxAfterUpdate",
+        "ownerIdxBeforeUpdate",
+        "rankType",
+        "scene",
+        "selfGetBadgeMsg",
+        "userEnigmaInfo"
+      ]
+    },
+    "LINK_MIC_METHOD": {
+      "antal": 250,
+      "nycklar": [
+        "accessKey",
+        "anchorLinkmicId",
+        "anchorLinkmicIdStr",
+        "answer",
+        "appId",
+        "appSign",
+        "channelId",
+        "common",
+        "confluenceType",
+        "dimension",
+        "duration",
+        "fanTicket",
+        "fanTicketIconType",
+        "fromRoomId",
+        "fromUserId",
+        "inviteType",
+        "inviteUid",
+        "invitorInfo",
+        "layout",
+        "linkedUsers",
+        "linkmicLayout",
+        "matchType",
+        "messageType",
+        "prompts",
+        "replyPrompts",
+        "replyType",
+        "rivalAnchorId",
+        "rivalLinkmicId",
+        "rivalLinkmicIdStr",
+        "rtcAppId",
+        "rtcAppSign",
+        "rtcExtInfo",
+        "rtcJoinChannel",
+        "scene",
+        "secApplyUid",
+        "secFromUserId",
+        "secInviteUid",
+        "secToUserId",
+        "showPopup",
+        "startTime",
+        "startTimeMs",
+        "subType",
+        "theme",
+        "tips",
+        "toUserId",
+        "totalLinkmicFanTicket",
+        "userId",
+        "userScores",
+        "vendor",
+        "win"
+      ]
+    },
+    "GOAL_UPDATE": {
+      "antal": 247,
+      "nycklar": [
+        "common",
+        "contributeCount",
+        "contributeScore",
+        "contributeSubgoal",
+        "contributorAvatar",
+        "contributorDisplayId",
+        "contributorId",
+        "contributorIdStr",
+        "giftRepeatCount",
+        "goal",
+        "goalExtra",
+        "indicator",
+        "updateSource"
+      ]
+    },
+    "gift": {
+      "antal": 432,
+      "nycklar": [
+        "bannedDisplayEffects",
+        "colorId",
+        "comboCount",
+        "common",
+        "disableGiftTracking",
+        "displayDurationMs",
+        "effectExtra",
+        "fanTicketCount",
+        "gift",
+        "giftId",
+        "groupCount",
+        "groupId",
+        "incomeTaskgifts",
+        "isAssetBundleGift",
+        "isFirstSent",
+        "linkmicGiftExpressionStrategy",
+        "logId",
+        "lynxExtra",
+        "monitorExtra",
+        "monitorInfo",
+        "multiGenerateMessage",
+        "orderId",
+        "priority",
+        "publicAreaMessageCommon",
+        "repeatCount",
+        "repeatEnd",
+        "roomFanTicketCount",
+        "sendType",
+        "signature",
+        "signatureVersion",
+        "sponsorshipInfo",
+        "toMemberId",
+        "toMemberIdInt",
+        "toMemberNickname",
+        "trayDisplayText",
+        "user",
+        "userIdentity",
+        "version"
+      ]
+    },
+    "LINK_MIC_FAN_TICKET_METHOD": {
+      "antal": 249,
+      "nycklar": [
+        "common",
+        "fanTicketRoomNotice"
+      ]
+    },
+    "GIFT_PANEL_UPDATE": {
+      "antal": 459,
+      "nycklar": [
+        "common",
+        "galleryData",
+        "goalData",
+        "roomBasedGiftData",
+        "roomId",
+        "strategyContext",
+        "timestamp"
+      ]
+    },
+    "chat": {
+      "antal": 997,
+      "nycklar": [
+        "commentLabelScores",
+        "commentQualityScores",
+        "commentTag",
+        "common",
+        "communityFlaggedStatus",
+        "content",
+        "contentLanguage",
+        "ecStreamerKey",
+        "emotes",
+        "fullScreenTextColor",
+        "inputType",
+        "isOnCommentTray",
+        "mentionUserList",
+        "mentionUsers",
+        "publicAreaMessageCommon",
+        "quickChatScene",
+        "screenTime",
+        "signature",
+        "signatureVersion",
+        "user",
+        "userIdentity",
+        "visibleToSender"
+      ]
+    },
+    "SUPER_FAN_JOIN": {
+      "antal": 17,
+      "nycklar": [
+        "background",
+        "badge",
+        "common",
+        "commonBarrageContent",
+        "content",
+        "control",
+        "displayConfig",
+        "duration",
+        "fansLevelParam",
+        "galleryGiftId",
+        "hybridUrl",
+        "icon",
+        "leftIconDisplayType",
+        "msgType",
+        "privilegeLogExtra",
+        "renderType",
+        "ribbonAnimation",
+        "scene",
+        "schema",
+        "showType",
+        "subType",
+        "useMarquee",
+        "user"
+      ]
+    },
+    "ENVELOPE": {
+      "antal": 57,
+      "nycklar": [
+        "common",
+        "display",
+        "envelopeInfo"
+      ]
+    },
+    "ROOM_MESSAGE": {
+      "antal": 24,
+      "nycklar": [
+        "common",
+        "content",
+        "isWelcome",
+        "scene",
+        "schema",
+        "showDurationMs",
+        "signature",
+        "signatureVersion",
+        "source",
+        "subScene",
+        "supprotLandscape"
+      ]
+    },
+    "LINK_LAYER": {
+      "antal": 83,
+      "nycklar": [
+        "centerizedIdc",
+        "channelId",
+        "common",
+        "linkerMode",
+        "messageType",
+        "rtcRoomId",
+        "scene",
+        "source",
+        "version",
+        "waitCrossData"
+      ]
+    },
+    "ROOM_PIN": {
+      "antal": 2,
+      "nycklar": [
+        "action",
+        "chatMessage",
+        "common",
+        "displayDuration",
+        "ecStreamerKey",
+        "method",
+        "operator",
+        "pinMsgId",
+        "pinTime"
+      ]
+    },
+    "share": {
+      "antal": 1044,
+      "nycklar": [
+        "action",
+        "common",
+        "followCount",
+        "followType",
+        "publicAreaMessageCommon",
+        "scene",
+        "shareCount",
+        "shareDisplayStyle",
+        "shareTarget",
+        "shareType",
+        "showDurationMs",
+        "signature",
+        "signatureVersion",
+        "targetUserId",
+        "user"
+      ]
+    },
+    "CONTROL_MESSAGE": {
+      "antal": 4,
+      "nycklar": [
+        "action",
+        "common",
+        "floatStyle",
+        "tips"
+      ]
+    },
+    "LINK_MESSAGE": {
+      "antal": 48,
+      "nycklar": [
+        "common",
+        "expireTimestamp",
+        "extra",
+        "linkerId",
+        "messageType",
+        "scene",
+        "transferExtra",
+        "version"
+      ]
+    },
+    "IN_ROOM_BANNER": {
+      "antal": 194,
+      "nycklar": [
+        "common"
+      ]
+    },
+    "ACCESS_RECALL": {
+      "antal": 1,
+      "nycklar": [
+        "common",
+        "content",
+        "duration",
+        "endTime",
+        "scene",
+        "status"
+      ]
+    },
+    "SOCIAL": {
+      "antal": 9,
+      "nycklar": [
+        "action",
+        "common",
+        "followCount",
+        "followType",
+        "publicAreaMessageCommon",
+        "scene",
+        "shareCount",
+        "shareDisplayStyle",
+        "shareTarget",
+        "shareType",
+        "showDurationMs",
+        "signature",
+        "signatureVersion",
+        "targetUserId",
+        "user"
+      ]
+    },
+    "battle": {
+      "antal": 32,
+      "nycklar": [
+        "abTestSetting",
+        "action",
+        "actionByUserId",
+        "anchorMatchSettings",
+        "anchorsInfo",
+        "armies",
+        "battleComboV2",
+        "battleId",
+        "battleResult",
+        "battleSettings",
+        "bubbleText",
+        "common",
+        "inviteeGiftPermissionType",
+        "inviteesGiftPermissionType",
+        "leagueInfoMap",
+        "leagueScoreInfoMap",
+        "supportedActions",
+        "teamArmies",
+        "teamBattleResult",
+        "teamMember"
+      ]
+    },
+    "LINK_MIC_ARMIES": {
+      "antal": 1074,
+      "nycklar": [
+        "armies",
+        "battleId",
+        "battleSettings",
+        "channelId",
+        "common",
+        "enigmaBattleExtraInfo",
+        "fromUserId",
+        "giftCount",
+        "giftId",
+        "hasTeamMatchMvpSfx",
+        "logId",
+        "repeatCount",
+        "sendGiftSuccessTime",
+        "teamArmies",
+        "totalDiamondCount",
+        "triggerCriticalStrike",
+        "triggerReason",
+        "updateBattleScoreTime"
+      ]
+    },
+    "glove": {
+      "antal": 14,
+      "nycklar": [
+        "battleId",
+        "common",
+        "start",
+        "taskMessageType"
+      ]
+    },
+    "follow": {
+      "antal": 8,
+      "nycklar": [
+        "action",
+        "common",
+        "followCount",
+        "followType",
+        "publicAreaMessageCommon",
+        "scene",
+        "shareCount",
+        "shareDisplayStyle",
+        "shareTarget",
+        "shareType",
+        "showDurationMs",
+        "signature",
+        "signatureVersion",
+        "targetUserId",
+        "user"
+      ]
+    },
+    "LINK_MIC_BATTLE_PUNISH_FINISH": {
+      "antal": 5,
+      "nycklar": [
+        "battleId",
+        "battleSettings",
+        "channelId",
+        "common",
+        "opUid",
+        "reason"
+      ]
+    },
+    "IM_DELETE": {
+      "antal": 1,
+      "nycklar": [
+        "common",
+        "deleteMsgIds",
+        "deleteUserIds"
+      ]
+    },
+    "guardian": {
+      "antal": 13,
+      "nycklar": [
+        "animationData",
+        "background",
+        "common",
+        "commonBarrageContent",
+        "content",
+        "control",
+        "displayConfig",
+        "duration",
+        "galleryGiftId",
+        "hybridUrl",
+        "icon",
+        "leftIconDisplayType",
+        "msgType",
+        "privilegeLogExtra",
+        "renderType",
+        "scene",
+        "schema",
+        "showType",
+        "subType",
+        "useMarquee",
+        "user"
+      ]
+    },
+    "battle_mvp": {
+      "antal": 5,
+      "nycklar": [
+        "armies",
+        "battleId",
+        "channelId",
+        "common",
+        "enigmaBattleExtraInfo",
+        "fromUserId",
+        "giftCount",
+        "giftId",
+        "hasTeamMatchMvpSfx",
+        "logId",
+        "repeatCount",
+        "sendGiftSuccessTime",
+        "teamArmies",
+        "totalDiamondCount",
+        "triggerCriticalStrike",
+        "triggerReason",
+        "updateBattleScoreTime"
+      ]
+    },
+    "fanlevelup": {
+      "antal": 3,
+      "nycklar": [
+        "background",
+        "common",
+        "commonBarrageContent",
+        "content",
+        "control",
+        "displayConfig",
+        "duration",
+        "fansLevelParam",
+        "galleryGiftId",
+        "hybridUrl",
+        "icon",
+        "leftIconDisplayType",
+        "msgType",
+        "privilegeLogExtra",
+        "renderType",
+        "ribbonAnimation",
+        "rightIcon",
+        "scene",
+        "schema",
+        "showType",
+        "subType",
+        "useMarquee",
+        "user"
+      ]
+    }
+  }
+}
