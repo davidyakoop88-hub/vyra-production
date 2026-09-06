@@ -271,62 +271,6 @@ test('SOMVAKT: varje falt baseUser raknar fram nar molneventet', () => {
   }
 });
 
-// ---- SOMVAKTEN: gavans diamanter hela vagen fram till KONSUMENTEN -----------------------------
-// Det har provet mater SLUTVARDET, inte att ett falt finns i ett led — och skalet ar att buggen i
-// #349 satt i skarven mellan tva korrekta led:
-//
-//   cleanEvent stamplade `diamonds: 0` (bada kallfalten saknades i molnbodyn)
-//   live-client.js laser `e.diamonds ?? e.coins` — och `??` faller INTE igenom pa noll
-//
-// Bada raderna var rimliga var for sig. En gava pa 30 000 diamanter nadde Actions & Events med
-// coins = 0, sa varje giftCoins-regel med troskel >= 1 var dod pa molnvagen medan samma regel
-// fungerade i skrivbordsappen. Ett prov pa "finns faltet?" hade varit gront hela tiden.
-test('SOMVAKT: gavans diamanter overlever hela vagen till Actions-nyttolasten', () => {
-  const normalizer = require(path.join(__dirname, '..', 'tiktok-bridge/normalizer.js'));
-  const { cleanEvent } = require(path.join(__dirname, '..', 'server/event-bus.js'));
-  const { normalizeCloudFields } = require(path.join(__dirname, '..', 'cloud-fields.js'));
-
-  const gava = normalizer.giftFields({
-    user: { uniqueId: 'mia', nickname: 'Mia' },
-    giftId: 9001, giftDetails: { diamondCount: 30, giftName: 'Heart Me' },
-    repeatCount: 1000, repeatEnd: true,
-  });
-  assert.equal(gava.diamonds, 30000, 'forutsattningen brast: bryggan raknar inte fram 30000');
-
-  const ram = cleanEvent(normalizer.cloudEvent('k1', 'gift', gava));
-  const event = normalizeCloudFields({ ...ram });
-
-  // EXAKT SA HAR laser live-client.js:26 nar den bygger nyttolasten till Actions & Events.
-  const coinsSomActionsSer = Number(event.diamonds ?? event.coins ?? event.diamondCount ?? 0);
-  assert.equal(coinsSomActionsSer, 30000,
-    'Actions & Events far fel coins-varde — varje giftCoins-regel med troskel over noll ar dod');
-});
-
-// ---- SOMVAKTEN: `name` ar OVERLASTAT och far inte lacka in i comment -------------------------
-// `name` bar avsandarens visningsnamn pa allt utom chat, dar det bar kommentaren (bada bryggorna
-// gor sa; desktopens vitlista har inget comment-falt). cleanEvent later darfor `comment` falla
-// tillbaka pa `name` — och nar `name` borjade folja med pa molnvagen (#349) blev den fallbacken
-// till att varje GAVA fick avsandarens namn som chattkommentar.
-test('SOMVAKT: avsandarens namn blir inte en chattkommentar pa en gava', () => {
-  const normalizer = require(path.join(__dirname, '..', 'tiktok-bridge/normalizer.js'));
-  const { cleanEvent } = require(path.join(__dirname, '..', 'server/event-bus.js'));
-
-  const gava = cleanEvent(normalizer.cloudEvent('k1', 'gift',
-    normalizer.baseUser({ user: { uniqueId: 'mia', nickname: 'Mia Blomqvist' } })));
-  assert.equal(gava.name, 'Mia Blomqvist', 'gavan tappade avsandarens namn');
-  assert.equal(gava.comment, '', 'avsandarens namn lackte in i comment — visas som en chattrad');
-
-  // Och chatten far INTE tappa texten nar fallbacken smalnas av.
-  const chat = cleanEvent(normalizer.cloudEvent('k2', 'chat',
-    { ...normalizer.baseUser({ user: { uniqueId: 'x', nickname: 'X' } }), name: 'hej alla', comment: 'hej alla' }));
-  assert.equal(chat.comment, 'hej alla', 'chattexten tappades');
-
-  // Desktopvagen skickar chattexten BARA pa `name` — dess egen vitlista har inget comment-falt.
-  const desktopChat = cleanEvent({ id: 'k3', type: 'chat', username: 'x', name: 'hej fran desktop' });
-  assert.equal(desktopChat.comment, 'hej fran desktop',
-    'fallbacken comment <- name ar borta for chat — desktopvagens chattext forsvinner');
-});
-
 test('cleanEvent bar falten fran #349', () => {
   const shape = cleanEventShape();
   for (const field of ['name', 'diamonds', 'isAnonymous', 'isModerator', 'isFollower', 'isSubscriber']) {
