@@ -1,7 +1,10 @@
 # Vägen till publik lansering
 
-**Läget 2026-09-03: punkt 1 är avklarad.** Två saker återstår. **Båda kräver David** — ingen av dem går att
-koda fram. Allt annat i backloggen är förbättringar som inte blockerar.
+**Läget 2026-09-06: punkt 1 och 2 är avklarade.** **En sak återstår** — Store-släppet, och det
+kräver David. Allt annat i backloggen är förbättringar som inte blockerar.
+
+Punkt 2 stängdes av en sändning på 109 minuter med elva battles. Den hade väntat sedan augusti och
+vilade på en enda observation; nu är alla fem frågorna mätta.
 
 Listan är kort med flit. En lanseringschecklista som växer till trettio punkter är en lista ingen
 bockar av, och då blir "vad är kvar?" en fråga som ställs om och om igen.
@@ -87,7 +90,29 @@ Analysatorn svarar på punkt 1, 2, 3, 4 och 6 — och säger `inget underlag` he
 
 **Vem:** David sänder, Claude läser av.
 
-**Status:** ⬜ inte gjord — verktyget är byggt och mergat (PR #243)
+**Status:** ✅ **KLAR — sänd och avläst 2026-09-06**
+
+Sändningen: 109 minuter, 10 135 händelser, **11 battles**, 4 651 likes, 143 gåvor, topp 81
+tittare. Bandet blev 140 MB och kapades inte — skriptets standardvärden höll.
+
+| Punkt | Svar |
+|---|---|
+| **1. Tänder handsken vid rätt ögonblick?** | **Ja.** 13 mätningar. START ligger 130 s före fönstret, och bryggan fördröjer glove-eventet lika länge. A/B mot händelser utan fördröjning: gåvor och chatt låg 229 s efter TikToks klocka, glove 335 s — skillnaden 106 s, exakt den beräknade fördröjningen. |
+| **2. Vilka värden bär `battleStatus`?** | `battle_started` och `battle_finished`. ⚠️ Fältet finns **inte** i TikToks payload — bryggan härleder det. Analysatorn svarar därför `inget underlag` på den här punkten, vilket är korrekt men missvisande. |
+| **3. Vilken händelse bär matchens slut?** | Vår härledning ur `LINK_MIC_BATTLE` stämmer (28 observationer; sista raden saknar `enigmaBattleSetting`, `battleFeatureFlags`, `matchPunishExtraInfo`). `LINK_MIC_BATTLE_PUNISH_FINISH` finns men kommer **efter** — den markerar strafffasens slut, inte matchens. |
+| **4. Vad innehåller `LINK_MIC_ARMIES` per sida?** | **2 lag.** Per lag: `userArmies, hostscore, teamTotalScore, hostRank, teamId, teamUser, anchorIdStr, hostEnigmaScore …`. Per person: `userId, score, nickname, avatarThumb, diamondScore, userIdStr, enigmaScore`. Största laget: 3. |
+| **6. Vilket event bär Guardian-status?** | Bekräftat: `BARRAGE` med `scene: guardian_entrance`. 345 rader nämner guardian. |
+
+Punkterna hade fram till nu vilat på **n=1** — en enda observation från augusti. Nu är de mätta
+över elva matcher.
+
+⚠️ **Två fynd som mätningen gav på köpet**, båda sedda av David i overlayen samma kväll och sedan
+reproducerade i bandet: Battle MVP visar fel person i 2 av 13 matcher (#368 — vi rankar på råa
+diamanter, TikTok viktar boost-fönstret), och Like Fountain glappar (#369 — animationens timer på
+900 ms ligger på medianavståndet mellan likes, 857 ms).
+
+Sändningen gav också den första mätningen av **protokolluckan** (#361), och bekräftade i skarpt
+läge att chatt-, tittarräknar- och member-fixarna i #364 fungerar.
 
 ---
 

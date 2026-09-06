@@ -68,7 +68,29 @@ något annat än `inget underlag` på en inspelning utan battle-händelser.
 
 ---
 
-## 1. Tänder handsken vid rätt ögonblick?
+## 1. Tänder handsken vid rätt ögonblick? — **MÄTT 2026-09-06: JA**
+
+**Svaret är JA.** Uppmätt över **13 boost-fönster** i elva battles.
+
+START ligger **130 sekunder** före fönstret, och bryggan fördröjer glove-eventet lika länge.
+Beviset är en A/B mot händelsetyper *utan* fördröjning, eftersom inspelningen skriver råposten och
+`_utgaende` i samma anrop och därför aldrig kan visa fördröjningen direkt:
+
+| Händelsetyp | Sekunder mellan TikToks `createTime` och att raden skrevs |
+|---|---|
+| `gift` | 229, 229, 230, 230, 229, 229, 229, 229 — median **229** |
+| `chat` | 230, 230, 229, 230, 230, 229, 230, 229 — median **230** |
+| `glove` | 335, 336, 329, 360, 330, 326, 340, 347 … — median **335** |
+
+Skillnaden **106 s** är exakt medianen av `boostFordrojningMs` över samma tolv händelser.
+Klockdriften mot TikTok (229 s) syns lika i alla typer och stör inte jämförelsen.
+
+⚠️ **Mätfällan:** en jämförelse av råposten mot `_utgaende` ger alltid "+0 s". Båda skrivs av
+samma `sendEvent`-anrop, efter fördröjningen. Två rader från samma anrop kan aldrig skilja sig i
+tid — mät mot en annan händelsetyp i stället.
+
+<details><summary>Ursprunglig fråga (besvarad ovan)</summary>
+
 
 **Antagandet:** bryggan skickar boost-eventet på `taskMessageType = START`, eftersom det är det enda
 steget som bär `rewardConfig`. Men samma config innehåller `rewardStartTimestamp` — tiden då
@@ -87,7 +109,20 @@ någon sekund ska sändningen fördröjas till `rewardStartTimestamp` i stället
 Koden: `tiktok-bridge/normalizer.js` → `battleTaskFields`, fältet `fonsterStart` finns redan uträknat
 men används inte till timing än.
 
-## 2. Vilka värden bär `battleStatus`?
+</details>
+
+## 2. Vilka värden bär `battleStatus`? — **MÄTT 2026-09-06**
+
+**Två värden: `battle_started` och `battle_finished`.** Sju övergångar över elva matcher, alla
+korrekta.
+
+⚠️ **Fältet finns inte i TikToks payload.** Bryggan härleder det i `battleStatusAv()`. Därför
+svarar `analysera-inspelning.js` `inget underlag` på den här punkten — analysatorn letar i
+payloaden, och där finns det inte. Svaret är korrekt men missvisande, och värdena syns i stället i
+bryggans `_utgaende`.
+
+<details><summary>Ursprunglig fråga (besvarad ovan)</summary>
+
 
 **Antagandet:** `battle-mvp-session.js` klassar råa statusvärden som `aktiv`, `slut` eller `okänd`.
 Klassificeringen är tolerant med flit — **inget riktigt värde är uppmätt.** Det enda värdet i hela
@@ -103,7 +138,19 @@ VyraBattleMvp.aktiv()           // står en session fortfarande öppen?
 Listan sparas i localStorage och överlever en omladdning. Känns slutvärdet inte igen stängs
 sessionen aldrig, och MVP-overlayn tänds aldrig — då finns `VyraBattleMvp.avsluta()` som break-glass.
 
-## 3. Vilken LINK_MIC-händelse bär matchens slut?
+</details>
+
+## 3. Vilken LINK_MIC-händelse bär matchens slut? — **MÄTT 2026-09-06**
+
+**Vår härledning ur `LINK_MIC_BATTLE` stämmer.** 28 observationer; sista raden i en match saknar
+`enigmaBattleSetting`, `battleFeatureFlags` och `matchPunishExtraInfo`.
+
+`LINK_MIC_BATTLE_PUNISH_FINISH` **finns** — den stod tidigare som "spelas aldrig in" — men den
+kommer **efter** `battle_finished` (uppmätt: 19:47:40 mot 19:47:14). Den markerar strafffasens
+slut, inte matchens.
+
+<details><summary>Ursprunglig fråga (besvarad ovan)</summary>
+
 
 **Antagandet:** ingen. Bryggan har en sond som **bara loggar** fyra kandidater:
 `LINK_MIC_BATTLE`, `LINK_MIC_ARMIES`, `LINK_MIC_BATTLE_PUNISH_FINISH`, `LINK_MIC_BATTLE_TASK`.
@@ -120,7 +167,30 @@ slog i innan slutet hann loggas. Taket är per match sedan dess.
 **Det som behövs:** raderna från matchens sista sekunder. Vilken av de fyra som fyrar när matchen
 tar slut, och vilket fält som skiljer den från raderna mitt i matchen.
 
-## 4. Vad innehåller `LINK_MIC_ARMIES` per sida?
+</details>
+
+## 4. Vad innehåller `LINK_MIC_ARMIES` per sida? — **MÄTT 2026-09-06**
+
+**Två lag.** Fält per lag:
+
+```
+userArmies, hostscore, anchorIdStr, hostEnigmaScore, hostEnigmaUv, teamId,
+teamUser, teamTotalScore, hostRank, teamTotalEnigmaScore, teamTotalEnigmaUv,
+hostVisibleRankFromTeamId
+```
+
+Per person: `userId, score, nickname, avatarThumb, diamondScore, userIdStr, enigmaScore`.
+Största laget: 3 personer.
+
+⚠️ **`score` är TikToks VIKTADE poäng, `diamondScore` de råa diamanterna.** Att räkna MVP själv
+ur gåvor ger fel person — uppmätt i 2 av 13 matcher, se #368. Poängen är strukturen dubbelnästlad:
+`teamArmies[].value.userArmies.userArmies[]`.
+
+⚠️ Posterna bär **bara `nickname`**, inget `uniqueId` eller `displayId`. MVP-eventet kan därför
+inte jämföras med gåvor på `username` — bara på visningsnamn.
+
+<details><summary>Ursprunglig fråga (besvarad ovan)</summary>
+
 
 **Antagandet:** att `BattleUserArmy { userId, nickname, score, diamondScore }` finns per lag, enligt
 `tiktok-live-proto/v3`. Ingen har sett formen i verkligheten.
@@ -130,6 +200,8 @@ per användare själv mellan start och slut, medan TikTok redan skickar sin egen
 Samma data ger dessutom en armé-leaderboard per sida, vilket ingen konkurrent har.
 
 **Läs samma sondrader som punkt 3** — `LINK_MIC_ARMIES` loggar sina nycklar och skalärer.
+
+</details>
 
 ## 5. Delar OBS browser source samma `localStorage` som webbläsaren? — **MÄTT 2026-08-20: NEJ**
 
