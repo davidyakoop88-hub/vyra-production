@@ -104,6 +104,17 @@ const event={
   const fanUpp=hojning(input?.fanLevelUp),gifterUpp=hojning(input?.gifterLevelUp);
   if(fanUpp)event.fanLevelUp=fanUpp;
   if(gifterUpp)event.gifterLevelUp=gifterUpp;
+  // VINSTSVITEN i en battle — `battleComboV2[<id>].comboCount` hos TikTok, det tal streamern ser
+  // som "0-2". Bars VILLKORLIGT av samma skal som nivahojningen ovan: TikToks karta ar tom i
+  // 8 av 28 payloads, och en nolla dar hade nollstallt en korrekt visad svit i varje sadan ram.
+  // Ett falt som saknas later mottagaren behalla sitt varde; en nolla ljuger. #366
+  // `v==null` FORST: Number(null) ar 0, inte NaN. Utan raden hade ett uttryckligt null stamplats
+  // som en nolla och nollstallt sviten — precis det den villkorliga formen finns for att hindra.
+  // Uppmatt av provet i somvakt-molnfalt.test.js innan det nadde main.
+  const svit=v=>{if(v==null)return null;const n=Math.round(Number(v));return Number.isInteger(n)&&n>=0&&n<=999?n:null};
+  const vinstUs=svit(input?.winsUs),vinstThem=svit(input?.winsThem);
+  if(vinstUs!=null)event.winsUs=vinstUs;
+  if(vinstThem!=null)event.winsThem=vinstThem;
   if(!event.id||!ALLOWED.has(event.type))throw Object.assign(new Error('Ogiltigt live-event'),{status:400});
   if(Buffer.byteLength(JSON.stringify(event))>MAX_EVENT_BYTES)throw Object.assign(new Error('Event för stort'),{status:413});
   return event;

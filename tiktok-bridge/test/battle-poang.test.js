@@ -131,3 +131,59 @@ test('och till mvpFields, som redan krävde det', () => {
   assert.match(src, /N\.mvpFields\(\s*data\s*,\s*mittAnkarId\s*\)/,
     'mvpFields anropas utan ankar-id — MVP:n blir tyst');
 });
+
+// ---- VINSTSVITEN (#366, andra halvan) ----------------------------------------------------------
+// Det tal streamern ser som "0-2" i TikToks eget gränssnitt är INTE poängen utan
+// `battleComboV2[<användar-id>].comboCount` — en svit som NOLLSTÄLLS när motståndaren vinner.
+//
+// UPPMÄTT över 28 payloads 2026-09-06: värden 0–3, alltid som STRÄNG, och de växlar sida när en
+// match avgörs (vi=0/de=1 → vi=1/de=0). Kartan SAKNAS aldrig men är TOM i 8 av 28.
+const medCombo = (oss, dem) => ({
+  battleId: 'b-1',
+  armies: { [OSS]: { hostscore: '10' }, [DEM]: { hostscore: '20' } },
+  battleComboV2: { [OSS]: { comboCount: String(oss), userId: 'x' },
+                   [DEM]: { comboCount: String(dem), userId: 'y' } },
+});
+
+test('vinstsviten läses ur battleComboV2[].comboCount', () => {
+  const f = N.battleFields(medCombo(0, 2), OSS);
+  assert.equal(f.winsUs, 0);
+  assert.equal(f.winsThem, 2, 'motståndarens svit lästes inte');
+});
+
+test('vinstsviten kastas inte om mellan sidorna', () => {
+  const de = N.battleFields(medCombo(0, 2), DEM);
+  assert.equal(de.winsUs, 2, 'motståndarens egen vy gav fel sida');
+  assert.equal(de.winsThem, 0);
+});
+
+test('TOM combo-karta ger INGA fält — inte nollor', () => {
+  // Det här är hela poängen med den villkorliga formen. TikToks karta är tom i 8 av 28 payloads,
+  // och en nolla där hade nollställt en korrekt visad svit i var tredje ram. Ett fält som saknas
+  // låter mottagaren behålla sitt värde; en nolla ljuger.
+  const f = N.battleFields({ battleId: 'b-1', battleComboV2: {} }, OSS);
+  assert.ok(!('winsUs' in f), 'winsUs sattes trots tom karta — då nollställs sviten var tredje ram');
+  assert.ok(!('winsThem' in f), 'winsThem sattes trots tom karta');
+});
+
+test('utan ankar-id gissar den inte heller här', () => {
+  const f = N.battleFields(medCombo(0, 2), '');
+  assert.ok(!('winsUs' in f) && !('winsThem' in f),
+    'vinsterna sattes utan ankar-id — då kan motståndarens svit visas som vår');
+});
+
+test('sviten överlever cloudEvent, och utelämnas när den saknas', () => {
+  const med = N.cloudEvent('e1', 'battle', N.battleFields(medCombo(1, 0), OSS));
+  assert.equal(med.winsUs, 1);
+  assert.equal(med.winsThem, 0, 'en NOLLA ska bäras när den är uppmätt — det är tomheten som utelämnas');
+
+  const utan = N.cloudEvent('e2', 'battle', N.battleFields({ battleId: 'b', battleComboV2: {} }, OSS));
+  assert.ok(!('winsUs' in utan), 'cloudEvent bar ett fält som aldrig mättes');
+});
+
+test('karta() normaliserar battleComboV2 precis som armies', () => {
+  const somObj = { [OSS]: { comboCount: '1' } };
+  const somArr = [{ key: OSS, value: { comboCount: '1' } }];
+  assert.deepEqual(N.karta(somObj).map(p => p.id), N.karta(somArr).map(p => p.id));
+  assert.deepEqual(N.karta(null), [], 'saknad karta ska ge tom lista, inte kasta');
+});

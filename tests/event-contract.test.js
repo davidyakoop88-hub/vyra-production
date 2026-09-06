@@ -218,10 +218,29 @@ test('fan-nivan klamps till spannet 1-50', () => {
 const NORMALIZER = read('tiktok-bridge/normalizer.js');
 const MVP_SESSION = read('battle-mvp-session.js');
 
+// KROPPEN, INTE ETT TECKENFONSTER. De tva forsta leden mattes med /{0,900}?/ och /{0,600}?/ fram
+// till 2026-09-07 — och da foll vakten, inte for att battleId forsvunnit utan for att en ny
+// KOMMENTAR ovanfor sköt faltet utanfor fonstret. Det ar samma fel som cleanEventShape() hogre upp
+// i filen redan beskriver: "ett fast fonster ... foll ut sa fort en kommentar pa sex rader lades
+// till ovanfor det". Losningen finns alltsa redan i filen; den var bara inte tillampad har.
+//
+// Klammermatchning har ingen sadan glidning: den slutar dar funktionen slutar, oavsett hur mycket
+// text som star framfor faltet.
+function funktionskropp(src, namn) {
+  const start = src.indexOf('function ' + namn);
+  if (start < 0) return '';
+  let djup = 0;
+  for (let k = src.indexOf('{', start); k < src.length; k++) {
+    if (src[k] === '{') djup++;
+    else if (src[k] === '}' && --djup === 0) return src.slice(start, k + 1);
+  }
+  return '';
+}
+
 test('battleId överlever bryggan, molnet och klienten', () => {
   const led = [
-    ['tiktok-bridge/normalizer.js battleFields', /function battleFields[\s\S]{0,900}?battleId:/, NORMALIZER],
-    ['tiktok-bridge/normalizer.js mvpFields', /function mvpFields[\s\S]{0,600}?battleId:/, NORMALIZER],
+    ['tiktok-bridge/normalizer.js battleFields', /battleId:/, funktionskropp(NORMALIZER, 'battleFields')],
+    ['tiktok-bridge/normalizer.js mvpFields', /battleId:/, funktionskropp(NORMALIZER, 'mvpFields')],
     ['server/event-bus.js cleanEvent', /battleId/, BUS],
     ['battle-mvp-session.js läser det', /oppna\(e\.battleId\)/, MVP_SESSION],
     ['battle-mvp-session.js dedupar på det', /annonserade\.(has|add)\(bid\)/, MVP_SESSION],

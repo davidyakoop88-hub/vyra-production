@@ -193,12 +193,15 @@ function battleStatusAv(data,battle){
 // ARMEERNA, OAVSETT FORM. Payloadens `armies` har setts som bade ett objekt nycklat pa anvandar-id
 // och en array av {key,value}. vartLagsGivare hanterar redan bada for MVP:n; det har ar samma sak
 // for poangen, samlat pa ett stalle.
-function armelag(data){
-  const a=data&&data.armies;
-  if(!a||typeof a!=='object')return[];
-  if(Array.isArray(a))return a.map(t=>({id:text(t&&t.key,64),lag:(t&&t.value)||t||{}}));
-  return Object.keys(a).map(k=>({id:text(k,64),lag:a[k]||{}}));
+// TikToks kartor kommer i TVA former — ett objekt nycklat pa anvandar-id, och en array av
+// {key,value}. Bada har setts i drift, och bade `armies` och `battleComboV2` bar dem. Darfor en
+// gemensam normalisering i stallet for tva kopior som kan glida isar.
+function karta(v){
+  if(!v||typeof v!=='object')return[];
+  if(Array.isArray(v))return v.map(t=>({id:text(t&&t.key,64),varde:(t&&t.value)||t||{}}));
+  return Object.keys(v).map(k=>({id:text(k,64),varde:v[k]||{}}));
 }
+function armelag(data){return karta(data&&data.armies).map(p=>({id:p.id,lag:p.varde}))}
 // POANGEN LAG ALDRIG DAR KODEN LETADE. Fram till 2026-09-06 last battleFields
 // `data.battleInfo.hostScore` — men payloaden har INGET `battleInfo`, och `hostScore` med versalt S
 // finns inte heller. `number(undefined)` blev 0, sa scoreUs/scoreThem var ALLTID noll och
@@ -221,9 +224,22 @@ function battleFields(data, mittAnkarId){
   const lagen=ankare?armelag(data):[];
   const vart=ankare?lagen.find(l=>l.id===ankare):null;
   const deras=vart?lagen.find(l=>l!==vart):null;
+  // VINSTSVITEN. Det tal streamern ser som "0-2" i TikToks eget granssnitt ar INTE poangen utan
+  // `battleComboV2[<anvandar-id>].comboCount` — en svit som NOLLSTALLS nar motstandaren vinner.
+  // Uppmatt over 28 payloads: varden 0-3, alltid som STRANG, och de vaxlar sida nar en match
+  // avgors (vi=0/de=1 -> vi=1/de=0).
+  //
+  // KARTAN AR TOM I 8 AV 28 payloads — den saknas aldrig, men kan sakna innehall. Da skickas
+  // falten INTE alls, i stallet for som nollor: en nolla hade nollstallt en korrekt visad svit
+  // varje gang TikTok rakade utelamna den. Samma villkorliga form som battleId och fanLevelUp.
+  const combo=ankare?karta(data&&data.battleComboV2):[];
+  const vartCombo=ankare?combo.find(c=>c.id===ankare):null;
+  const derasCombo=vartCombo?combo.find(c=>c!==vartCombo):null;
   return{...baseUser(data),
     scoreUs:number(vart?vart.lag?.hostscore:(battle?.hostScore??battle?.scoreUs??battle?.team1Score),1e12),
     scoreThem:number(deras?deras.lag?.hostscore:(battle?.guestScore??battle?.scoreThem??battle?.team2Score),1e12),
+    ...(vartCombo?{winsUs:number(vartCombo.varde?.comboCount,999)}:{}),
+    ...(derasCombo?{winsThem:number(derasCombo.varde?.comboCount,999)}:{}),
     multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
 }
 // Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
@@ -325,6 +341,10 @@ function arBoostFonster(f){
 //                   redan i cleanEvent sedan #133; det var HAR halet satt.
 //   isAnonymous  -> "Exkludera anonyma tittare" var en kryssruta som inte gjorde nagot.
 //   isModerator  -> publikvalet "Moderator" i Actions kunde aldrig matcha.
+// VINSTSVITEN (winsUs/winsThem) bars villkorligt, inte alltid. TikToks battleComboV2 ar tom i
+// 8 av 28 payloads, och en nolla dar hade nollstallt en korrekt visad svit. Samma form som
+// battleId och fanLevelUp: hellre inget falt an ett falskt varde. #366
+//
 //   isFollower/  -> samma familj, hittat av completeness-vakten nedan: klienten HARLEDER dem ur
 //   isSubscriber    handelsetypen (`isFollower || t==='follow'`), sa publikvalet "Follower"
 //                   matchade bara pa sjalva follow-eventet — aldrig nar en foljare skickade en
@@ -343,7 +363,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -567,4 +587,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,armelag,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,armelag,karta,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
