@@ -13,7 +13,15 @@ test('cloud event preserves canonical identity and bounded values',()=>{
   // fixturen har — och det ar meningen, for da tvingas andringen vara medveten.
   // fanClubLevel/gifterLevel ar 0 har eftersom anropet inte skickar in dem; nollan betyder
   // "ingen niva rapporterad" hela vagen genom event-bus.js och viewer-levels.js.
-  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',comment:'',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',emote:'',fanClubLevel:0,gifterLevel:0,at:123});
+  //
+  // 2026-09-06 (#349): name, diamonds, isAnonymous och isModerator tillkom. Provet foll da, och
+  // det ar precis vad helformen ar till for — fyra falt som raknades fram vid kallan men aldrig
+  // nadde molnet gick inte att lagga till utan att den har raden andrades medvetet. Provet fallde
+  // en andra gang samma dag nar isFollower/isSubscriber tillkom — ocksa da med flit.
+  // `diamonds` ar 5 och inte 0 fastan anropet bara skickar `coins`: reserven i cloudEvent finns
+  // for att litteralens alltid-narvarande falt annars blir en explicit nolla, och serverns egen
+  // `diamonds ?? coins` faller inte igenom pa noll.
+  assert.deepEqual(out,{id:'evt-1',type:'gift',userId:'u1',username:'alex',name:'',comment:'',profileUrl:'',giftId:'g1',giftName:'Rose',giftImage:'https://img/g.png',count:5,value:5,diamonds:5,scoreUs:0,scoreThem:0,multiplier:0,battleStatus:'',emote:'',fanClubLevel:0,gifterLevel:0,isAnonymous:false,isModerator:false,isFollower:false,isSubscriber:false,at:123});
 });
 test('avatar picks the largest variant TikTok offers, not the 100x100 thumb',()=>{
   const all=N.giftFields({user:{userId:'u1',uniqueId:'alex',avatarThumb:{urlList:['https://img/thumb.jpg']},avatarMedium:{urlList:['https://img/medium.jpg']},avatarLarger:{urlList:['https://img/larger.jpg']}}});

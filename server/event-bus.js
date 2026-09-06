@@ -14,14 +14,30 @@ const TYPE_ALIASES={likes:'like',member:'viewer',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 
 function cleanEvent(input){
+  // Typen raknas fram FORE litteralen, for tva falt beror pa den. Stod den bara inne i objektet
+  // gick den inte att lasa dar den behovs.
+  const typ=TYPE_ALIASES[String(input?.type||'').toLowerCase()]||String(input?.type||'').toLowerCase();
+  const arChatt=typ==='chat';
 const event={
     id:String(input?.id||'').slice(0,160),
-    type:TYPE_ALIASES[String(input?.type||'').toLowerCase()]||String(input?.type||'').toLowerCase(),
+    type:typ,
     userId:String(input?.userId||'').slice(0,160),
     username:String(input?.username||'').slice(0,120),
+    // Avsandarens VISNINGSNAMN. Utan det har faltet skrev New Follower Alert bara avataren och
+    // lat namnet sta kvar pa forra foljaren — media.js:694 gor `if(event.name)` och sedan save(),
+    // sa den gamla texten persisterades ocksa. Desktopvagen bar faltet redan; molnvagen gjorde
+    // det inte, sa samma widget betedde sig olika beroende pa hur streamern anslutit. #349
+    //
+    // 500 och inte 120 for att faltet ar OVERLASTAT: pa chattyper bar det kommentaren (se nedan).
+    name:String(input?.name||'').slice(0,500),
     // The chat message itself. Without this field the bridge's comment never reached a browser:
     // it arrives on `name`, which cleanEvent does not carry, so every chat consumer got ''.
-    comment:String(input?.comment||input?.name||'').slice(0,500),
+    //
+    // FALLBACKEN GALLER BARA CHATTYPER sedan 2026-09-06. `name` bar kommentaren pa chat och
+    // avsandarens namn pa allt annat (bridge.js:360 satter bada; desktopens vitlista har inget
+    // comment-falt, sa dar ar `name` enda vagen). Nar `name` borjade folja med pa molnvagen blev
+    // en obegransad fallback till att varje GAVA fick avsandarens namn som chattkommentar.
+    comment:String(input?.comment||(arChatt?input?.name:'')||'').slice(0,500),
     profileUrl:String(input?.profileUrl||input?.profileImage||'').slice(0,1200),
     giftId:String(input?.giftId||'').slice(0,160),
     giftName:String(input?.giftName||'').slice(0,160),
@@ -55,7 +71,19 @@ const event={
     // Gifter-badgens niva, fran user.payGrade.level i bryggan. Ett ANNAT tal an fanClubLevel ovan:
     // fan club-nivan galler mot en enskild streamer, gifter-nivan ar tittarens globala grad. Samma
     // klampning 0-50, dar 0 betyder "ingen niva rapporterad".
-    gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0)))
+    gifterLevel:Math.max(0,Math.min(50,Math.round(Number(input?.gifterLevel)||0))),
+    // Tva flaggor som raknas fram i BADA bryggorna och lastes av tva publicerade filter, men som
+    // ingen vitlista bar. Foljden var att bada filtren var placebo: "Exkludera anonyma tittare"
+    // (gift-fireworks.js:86) slappte igenom varje anonym gava, och publikvalet "Moderator"
+    // (action-event-advanced.js:56) kunde aldrig matcha. Klienten har ingen harledningsreserv —
+    // live-client.js gor bara `!!e.isAnonymous`. #349
+    isAnonymous:!!input?.isAnonymous,
+    isModerator:!!input?.isModerator,
+    // Klienten harleder de har tva ur handelsetypen (live-client.js normalizeUserFlags), vilket
+    // racker for follow- och member-eventet sjalvt men inte for nagot annat: en FOLJARE som
+    // skickar en gava sag ut som en frammande. Det riktiga vardet OR:as med harledningen.
+    isFollower:!!input?.isFollower,
+    isSubscriber:!!input?.isSubscriber
   };
   // Nivahojningen, konstaterad av viewer-levels.js FORE publish. Utan de har tva raderna droppar
   // vitlistan stampeln igen i publish(), som kor cleanEvent en gang till - och widgeten far tillbaka

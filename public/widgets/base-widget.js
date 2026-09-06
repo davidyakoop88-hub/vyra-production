@@ -18,12 +18,18 @@
   // without this every OBS widget rendered its placeholder avatar on live data. Mirrors
   // normalizeCloudFields() in live-client.js; the two consumer families each need their own copy
   // because the standalone widgets never load live-client.js.
+  // Sedan 2026-09-06 ligger oversattningen i cloud-fields.js, som sidorna laddar FORE den har
+  // filen. Kopian som stod har gjorde tva av tre omskrivningar: NFKC-fixen (#342) fanns bara i
+  // live-client.js, sa de fristaende OBS-sidorna visade rutor i stallet for namn i tre veckor
+  // efter att buggen var "lagad". Tva kopior som ska halla varandra i synk utan att nagot
+  // kontrollerar det glider isar; darav en fil, och tests/molnfalt-en-kalla.test.js.
+  //
+  // Ingen tyst reserv med flit: en halv normalisering ar precis den bugg filen finns for att ta
+  // bort, och en reserv hade gjort ett deployfel osynligt i stallet for hogljutt.
   function normalizeCloudFields(event){
-    if(event&&typeof event==='object'){
-      if(event.profileImage==null&&event.profileUrl)event.profileImage=event.profileUrl;
-      if(event.coins==null&&event.value!=null)event.coins=event.value;
-    }
-    return event;
+    const m=(typeof window!=='undefined'?window:globalThis).VyraCloudFields;
+    if(!m)throw new Error('cloud-fields.js ar inte laddad - ladda den fore base-widget.js');
+    return m.normalizeCloudFields(event);
   }
 
   function get(name,fallback=''){
