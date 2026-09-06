@@ -98,15 +98,41 @@ test('ordningen spelar ingen roll — officiell MVP efter slutsignalen dedupas o
 
 // ---- 2. reserven finns kvar --------------------------------------------------------------------------
 
-test('utan officiell lista tänder den egna räkningen som förut', () => {
+test('utan officiell lista tänder den egna räkningen som förut', async () => {
   // Desktopvagen skickar ingen battle_mvp, och en match kan sakna officiell lista. Reserven far
   // inte forsvinna bara for att den auktoritativa kallan finns.
+  //
+  // Den VANTAR numera FACIT_NADTID_MS pa facit innan den tands — se racet nedan. Provet maste
+  // darfor vanta ut nadtiden; en synkron kontroll hade sett noll traffar och sett ut som en
+  // regression.
   const { skicka, traffar } = boot();
   skicka(battleStart('b1'));
   skicka(gava('lisa', 900));
   skicka(battleSlut('b1'));
+  assert.equal(traffar().length, 0, 'den harledda tande direkt — da hinner facit aldrig fore');
+  await new Promise(r => setTimeout(r, 1400));
   assert.equal(traffar().length, 1, 'reserven slutade fungera');
   assert.equal(traffar()[0].name, 'lisa');
+});
+
+test('FACIT VINNER aven nar det kommer EFTER den egna rakningen', async () => {
+  // KAPPLOPNINGEN. Uppmatt over 13 matcher i en skarp sandning 2026-09-06: TikToks battle_mvp kom
+  // mellan 809 ms FORE och 3 ms EFTER klientens egen stang(), median 1 ms fore. Vem som vann
+  // avgjordes alltsa av slumpen — och i 2 av 13 matcher pekade kallorna pa OLIKA person, med
+  // TikToks MVP pa plats 2 hos oss. Det ar #368.
+  //
+  // Orsaken till att de skiljer sig: TikTok viktar gavor i boost-fonstret. Uppmatta kvoter mellan
+  // var summa och deras poang lag mellan 1,17 och 5,00 — ingen konstant vi kan rakna oss till.
+  const { skicka, traffar } = boot();
+  skicka(battleStart('b1'));
+  skicka(gava('lisa', 900));      // var rakning skulle valja lisa
+  skicka(battleSlut('b1'));       // ... och kor nu i vanteläge
+  skicka(officiell('b1', 'mira', 4200));   // facit sager mira
+  assert.equal(traffar().length, 1, 'facit tande inte direkt');
+  assert.equal(traffar()[0].name, 'mira', 'den egna rakningen vann over facit');
+  await new Promise(r => setTimeout(r, 1400));
+  assert.equal(traffar().length, 1, 'den harledda tande efterat — widgeten blinkar tva ganger');
+  assert.equal(traffar()[0].name, 'mira');
 });
 
 // ---- 3. dedupen nycklas på battleId ------------------------------------------------------------------
@@ -161,4 +187,41 @@ test('teardown: dedupen glöms vid sessionsslut', () => {
   h.window.dispatchEvent(new h.window.Event('vyra-session-ended'));
   skicka(officiell('b1', 'namn#topp', 100));
   assert.equal(traffar().length, 2, 'dedupen överlevde sessionens slut');
+});
+
+// ---- 4. Like Fountain: pulsen och nivan far inte dela timer -------------------------------------
+// Inte samma widget, men samma sandning och samma slags fel: en tidsgrans satt sa nara verkligheten
+// att den slog om hela tiden. Provet bor har for att bada fynden kommer ur samma inspelning och ska
+// hittas tillsammans om nagon backar ut dem.
+//
+// UPPMATT 2026-09-06, 4 651 likes over 109 minuter:
+//   avstand mellan likes-handelser  p25 805 ms   median 857 ms   p75 1 672 ms   p90 2 491 ms
+//   timern var 900 ms  ->  2 198 av 4 650 luckor (47,3 %) var LANGRE an timern
+// Widgeten slocknade och tandes igen nastan varannan like. #369
+test('Like Fountain: nivans halltid ligger over det uppmatta p90-avstandet', () => {
+  const src = las('media.js');
+  const m = src.match(/const LF_PULS_MS=(\d+),LF_HALL_MS=(\d+);/);
+  assert.ok(m, 'LF_PULS_MS/LF_HALL_MS hittades inte i media.js — har wrappern skrivits om?');
+  const puls = Number(m[1]), hall = Number(m[2]);
+
+  const P90_UPPMATT_MS = 2491;
+  assert.ok(hall > P90_UPPMATT_MS,
+    `halltiden ${hall} ms ligger inte over uppmatt p90 (${P90_UPPMATT_MS} ms) — nivan slocknar ` +
+    'mellan normala likes och widgeten glappar igen');
+  assert.ok(hall > puls * 2,
+    `halltiden ${hall} ms ar inte mycket langre an pulsen ${puls} ms — da gor de samma jobb igen`);
+});
+
+test('Like Fountain: pulsen river bara react-klassen, inte nivaklasserna', () => {
+  // Den tvingade reflowen (`void root.offsetWidth`) behovs for att starta om CSS-animationen, men
+  // den ska galla ETT tillstand. Rivs nivaklasserna med varje like ar man tillbaka i glappet aven
+  // med ratt halltid.
+  const src = las('media.js');
+  const i = src.indexOf('triggerLikeFountainPop=function');
+  assert.ok(i > -1, 'wrappern hittades inte');
+  const fn = src.slice(i, i + 1600);
+  assert.match(fn, /classList\.remove\('lf-live-react'\)/,
+    'pulsen river inte react-klassen — animationen startar inte om');
+  assert.doesNotMatch(fn, /classList\.remove\('lf-live-low','lf-live-mid','lf-live-high','lf-live-react'\)/,
+    'pulsen river fortfarande nivaklasserna tillsammans med react — det var buggen');
 });

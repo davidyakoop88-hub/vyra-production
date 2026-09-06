@@ -160,8 +160,10 @@
     if (typeof root.triggerBattleMvp === 'function') {
       // VISNINGSNAMNET, inte nyckeln. `username` är kvar som reserv för det fall gåvan aldrig bar
       // något namn — då är handtaget det enda vi har, och ett handtag är bättre än en tom ruta.
+      // `harledd` markerar att det HAR ar var egen coin-rakning, inte TikToks facit. Sparren
+      // nedan later da facit ga fore om det kommer — se kommentaren vid `annonserade`.
       root.triggerBattleMvp({ name: mvp.namn || mvp.username, score: mvp.coins,
-        profileImage: mvp.profileImage || '', battleId: öppen.battleId || '' });
+        profileImage: mvp.profileImage || '', battleId: öppen.battleId || '', harledd: true });
     }
     spelaFanfar();
     return mvp;
@@ -236,14 +238,52 @@
   // NYCKELN AR battleId, INTE TID. Tva matcher kan ligga sekunder isar; en tidsbaserad sparr hade
   // tystat den andra. Ett event UTAN battleId slapps alltid fram: hellre en alert for mycket an
   // ingen alls.
+  //
+  // FACIT VINNER, INTE FORST. Fram till 2026-09-06 var sparren "forst till kvarn", och eftersom de
+  // tva kallorna kommer i PRAKTIKEN SAMTIDIGT var det en kapplopning. Uppmatt over 13 matcher i en
+  // skarp sandning: TikToks battle_mvp kom mellan 809 ms FORE och 3 ms EFTER var egen stang(),
+  // median 1 ms fore. Vem som vann avgjordes alltsa av slumpen.
+  //
+  // Och svaren skiljer sig: i 2 av 13 matcher pekade var rakning pa en ANNAN person an TikTok — och
+  // TikToks MVP lag da pa plats 2 hos oss. Det var precis vad David sag i overlayen. Orsaken ar att
+  // TikTok VIKTAR gavor som skickas i boost-fonstret; uppmatta kvoter mellan var summa och deras
+  // poang lag mellan 1,17 och 5,00, alltsa ingen konstant vi kan rakna oss till. #368
+  //
+  // Darfor: en HARLEDD MVP vantar en kort stund pa facit. Kommer det, vinner det och den harledda
+  // kastas. Kommer det inte — ingen LINK_MIC_ARMIES i matchen — tands den harledda som forut.
+  // Fordrojningen ar osynlig i sammanhanget och ger gott om marginal over de 3 ms som uppmatts.
   const annonserade = new Set();
+  const vantande = new Map();
+  const FACIT_NADTID_MS = 1200;
   {
     const original = root.triggerBattleMvp;
+    const tand = (self, args) => {
+      if (typeof original === 'function') return original.apply(self, args);
+    };
     root.triggerBattleMvp = function (event = {}) {
       const bid = event && event.battleId ? String(event.battleId) : '';
       if (bid && annonserade.has(bid)) return;
-      if (bid) annonserade.add(bid);
-      if (typeof original === 'function') return original.apply(this, arguments);
+
+      // Utan battleId gar det inte att para ihop kallorna — slapp fram direkt, som forut.
+      if (!bid) return tand(this, arguments);
+
+      if (event.harledd) {
+        if (vantande.has(bid)) return;                    // redan en harledd i kon
+        const args = arguments, self = this;
+        vantande.set(bid, setTimeout(() => {
+          vantande.delete(bid);
+          if (annonserade.has(bid)) return;               // facit hann emellan
+          annonserade.add(bid);
+          tand(self, args);
+        }, FACIT_NADTID_MS));
+        return;
+      }
+
+      // FACIT. Riv en vantande harledd for samma match och tand direkt.
+      const t = vantande.get(bid);
+      if (t) { clearTimeout(t); vantande.delete(bid) }
+      annonserade.add(bid);
+      return tand(this, arguments);
     };
   }
 

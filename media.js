@@ -393,6 +393,23 @@ const fountainLikeAccum={};const fountainLikerPool={};function lfPushLiker(widge
 function lfUpdateLiveLabel(w){let el=document.querySelector(`[data-id="${w.id}"]`);if(!el)return;let userEl=el.querySelector('.lf-label-user'),countEl=el.querySelector('.lf-label-count'),avatarEl=el.querySelector('.lf-avatar');if(userEl)userEl.textContent='@'+(w.fountainUser||'Alex');if(countEl)countEl.textContent=lfFormatCount(w.fountainLikeCount??98700);if(avatarEl&&w.profileImage)avatarEl.src=VyraSafe.src(w.profileImage)}
 function triggerLikeFountainPop(event={}){let amount=+(event.count||event.points||event.value||1);state.widgets.filter(w=>w.type==='templateLikeFountain').forEach(w=>{if(event.__id&&event.__id!==w.id)return;if(!event.__test&&(event.username||event.profileImage)){w.fountainUser=event.username||w.fountainUser;w.profileImage=event.profileImage||w.profileImage;w.fountainLikeCount=(+w.fountainLikeCount||0)+amount;lfPushLiker(w.id,event.profileImage);save();lfUpdateLiveLabel(w)}let min=Math.max(1,w.fountainMinLikes||1);if(!event.__test){fountainLikeAccum[w.id]=(fountainLikeAccum[w.id]||0)+amount;if(fountainLikeAccum[w.id]<min)return;fountainLikeAccum[w.id]-=min}let el=document.querySelector(`[data-id="${w.id}"] .fountain-pop`);if(!el)return;let allTypes=[['fountainPopBurst','♥','#ff3c88'],['fountainPopSparkle','✦','#ffe14d'],['fountainPopMiniHearts','♥','#ff86bd'],['fountainPopStars','★','#ffd23c'],['fountainPopConfetti','▮','#4fd8ff'],['fountainPopFirework','✺','#b94cff']],types=allTypes.filter(([key])=>w[key]!==false),showRing=w.fountainPopRing!==false,count=Math.max(4,Math.min(40,w.fountainParticleCount||10)),size=w.fountainParticleSize||18,speed=w.fountainParticleSpeed||200,parts=[];if(showRing)parts.push(`<b class="fp-ring" style="--c:#ffffff"></b>`);types.forEach(([key,glyph,color],ti)=>{for(let i=0;i<count;i++){let a=(i/count)*360+ti*11;parts.push(`<i style="--a:${a}deg;--d:${(60+i%6*10)*(speed/200)}px;--c:${color};--size:${size}px">${glyph}</i>`)}});el.innerHTML=parts.join('');el.classList.remove('play');void el.offsetWidth;el.className='fountain-pop play ws-anim-'+(w.fountainPopEntrance||'pop');clearTimeout(el._fpTimer);el._fpTimer=setTimeout(()=>el.classList.remove('play'),(w.fountainPopDuration||1.6)*1000)})}
 const lfBaseTriggerLikeFountainPop=triggerLikeFountainPop;
+// PULSEN OCH NIVAN AR TVA OLIKA SAKER — och en enda timer skotte bada fram till 2026-09-06.
+//
+// `lf-live-react` driver lfLiveBreath (0,9 s i studio.css) och ska starta om vid VARJE like.
+// `lf-live-low/mid/high` sager hur intensiv strommen ar just nu och ska leva sa lange strommen
+// gor det. Bada slacktes av samma setTimeout pa 900 ms.
+//
+// UPPMATT i en skarp sandning 2026-09-06 (4 651 likes over 109 minuter): medianavstandet mellan
+// tva likes-handelser ar 857 ms. Timern lag pa 900 ms. De ligger inom 5 % av varandra, sa
+// 2 198 av 4 650 luckor (47,3 %) var LANGRE an timern — widgeten slocknade och tandes igen
+// nastan varannan like. Det ar den "glapp"-effekt David sag i overlayen. #369
+//
+// Ett prov hittar den inte: den kraver att takten ligger NARA timern. Tatare likes (p10 = 2 ms)
+// ger konstant sken, glesare ger mest slackt. Just den publikstorleken ramnade mitt i.
+//
+// HALLTIDEN ligger over p90 (2 491 ms) med marginal. Da faller andelen slackta luckor fran
+// 47 % till under 10 %, och nivan overlever en normal paus utan att overleva en riktig tystnad.
+const LF_PULS_MS=900,LF_HALL_MS=3000;
 triggerLikeFountainPop=function(event={}){
   let amount=Math.max(1,+(event.count||event.points||event.value||1));
   state.widgets.filter(w=>w.type==='templateLikeFountain').forEach(w=>{
@@ -400,12 +417,21 @@ triggerLikeFountainPop=function(event={}){
     let root=document.querySelector(`[data-id="${w.id}"]`);
     if(!root)return;
     let level=amount>=100?'high':amount>=20?'mid':'low';
-    root.classList.remove('lf-live-low','lf-live-mid','lf-live-high','lf-live-react');
+    // PULSEN: bara react-klassen rivs och satts om. Den tvingade reflowen behovs for att
+    // starta om CSS-animationen, men den galler nu ETT element-tillstand, inte fyra.
+    root.classList.remove('lf-live-react');
     void root.offsetWidth;
     root.style.setProperty('--lf-live-boost',String(Math.min(2.4,1+Math.log10(amount+1)*.42)));
-    root.classList.add('lf-live-'+level,'lf-live-react');
+    root.classList.add('lf-live-react');
+    clearTimeout(root._lfPulsTimer);
+    root._lfPulsTimer=setTimeout(()=>root.classList.remove('lf-live-react'),LF_PULS_MS);
+    // NIVAN: rors bara nar den faktiskt andras, sa en jamn strom inte byter klass i onodan.
+    if(!root.classList.contains('lf-live-'+level)){
+      root.classList.remove('lf-live-low','lf-live-mid','lf-live-high');
+      root.classList.add('lf-live-'+level);
+    }
     clearTimeout(root._lfLiveTimer);
-    root._lfLiveTimer=setTimeout(()=>root.classList.remove('lf-live-low','lf-live-mid','lf-live-high','lf-live-react'),level==='high'?1250:900);
+    root._lfLiveTimer=setTimeout(()=>root.classList.remove('lf-live-low','lf-live-mid','lf-live-high'),LF_HALL_MS);
   });
   return lfBaseTriggerLikeFountainPop(event);
 };
@@ -929,7 +955,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260817-duckning';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20260906-1';document.body.append(js)});
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */

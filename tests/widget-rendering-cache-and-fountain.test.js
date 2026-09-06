@@ -198,7 +198,19 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // media.js på ett dygn (emblemets bild, namnen, Top Likes, och de två sammanslagningarna), och
   // varje gång gäller samma regel: strängen följer FILEN, och en sammanslagning som rör en fil är
   // en ändring av den filen.
-  assert.match(studio, /[^-]media\.js\?v=20260905-5/);
+  // Bumpad 2026-09-06 för de två buggar David såg i overlayen under en riktig sändning och som
+  // sedan reproducerades i bandet. BÅDA ändringarna ligger i filer vars versionssträng media.js
+  // BÄR, så media.js själv måste bumpas — annars pekar en cachad media.js på de gamla URL:erna.
+  //
+  //   Like Fountain (#369): wrappern i media.js delade en timer mellan pulsen och nivån. Uppmätt
+  //   över 4 651 likes: medianavståndet mellan händelser var 857 ms mot en timer på 900 ms, så
+  //   47,3 % av luckorna var längre än timern och widgeten slocknade nästan varannan like.
+  //
+  //   Battle MVP (#368): battle-mvp-session.js lät "först till kvarn" avgöra mellan TikToks facit
+  //   och vår egen räkning. Uppmätt: de kommer inom ±3 ms av varandra, och i 2 av 13 matcher
+  //   pekade de på olika person. Filens strang gar fran `20260817-duckning` till en som bara
+  //   sager NAR — den gamla namngav sitt innehall, vilket provet ovan forbjuder.
+  assert.match(studio, /[^-]media\.js\?v=20260906-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -224,10 +236,16 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
-  // De sex filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
+  // De filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
   // anvandare; en andring utan bump ar en tyst gammal fil. Bada ar fel, sa listan ar explicit.
-  for (const fil of ['vyra-tal', 'action-event', 'action-runtime',
-                     'battle-mvp-session', 'sound-alerts']) {
+  //
+  // battle-mvp-session.js LAMNADE listan 2026-09-06: filen andrades (facit vinner over den egna
+  // rakningen, #368), sa dess strang foljer numera den andringen och inte duckningen. Den fick
+  // samtidigt en strang som bara sager NAR — `20260817-duckning` namngav sitt innehall, vilket
+  // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
+  assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
+    'battle-mvp-session.js cachebustades inte for #368');
+  for (const fil of ['vyra-tal', 'action-event', 'action-runtime', 'sound-alerts']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
