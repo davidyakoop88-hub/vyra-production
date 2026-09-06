@@ -358,7 +358,15 @@ if (require.main === module) {
     activeConnection = connection;
 
     connection.on(WebcastEvent.CHAT, data => {
-      const comment = data.comment || '';
+      // TikToks chattmeddelande bar texten i `content`. Fram till 2026-09-06 last vi `comment`,
+      // ett falt payloaden inte har — sa VARJE chattrad gick ut tom. Uppmatt over atta
+      // inspelningar: 997 meddelanden, 997 med `content`, NOLL med `comment`. Foljden var att
+      // TTS Chat, chat-triggade Actions och chatbotens kommandon alla fick tom strang, och att
+      // typen `chatcommand` aldrig skickades (''.startsWith('!') ar alltid falskt).
+      //
+      // `comment` behalls som reserv: beroendet star som `^2` i package.json, sa biblioteket kan
+      // byta namn at bada hallen vid nasta npm install. Att lasa bada kostar ingenting.
+      const comment = data.content || data.comment || '';
       // `name` carries the comment for the desktop runtime, which has always read it there.
       // `comment` is the field that survives server/event-bus.js's cleanEvent() — it has no `name`,
       // so on the cloud path the chat text was dropped outright and TTS Chat, chat-triggered
@@ -383,7 +391,12 @@ if (require.main === module) {
 
     connection.on(WebcastEvent.MEMBER, data => sendEvent('member', N.baseUser(data), data));
     connection.on(WebcastEvent.SUB_NOTIFY, data => sendEvent('subscribe', N.baseUser(data), data));
-    connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.viewerCount || data?.userCount, 1e9) }, data));
+    // ROOM_USER bar `total` (samtidiga tittare) och `totalUser` (kumulativt unika). Varken
+    // `viewerCount` eller `userCount` finns i payloaden — de last har fram till 2026-09-06, och
+    // number() gjorde undefined till 0, sa ALLA viewer-handelser bar count: 0. Uppmatt i en skarp
+    // sandning: 548 av 548 nollor, medan `total` toppade pa 38 och `totalUser` slutade pa 332.
+    // De gamla namnen star kvar som reserv av samma skal som chattexten ovan.
+    connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.total ?? data?.viewerCount ?? data?.userCount, 1e9) }, data));
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
 
     // ---- multiplikatorfonstret (Boosting Glove) ------------------------------------------------

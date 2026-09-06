@@ -30,7 +30,7 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
   else if(t==='member'||t==='subscribe'||t==='subscription')out.push(['member',{...payload,isSubscriber:true}]);
   else if(t==='join'||t==='roomuser')out.push(['join',payload]);
   else if(t==='share')out.push(['share',payload]);
-  else if(t==='likes'||t==='like')out.push(['likes',{...payload,value:payload.count,likecount:payload.count,totallikecount:e.totalLikes||e.totalLikeCount||0}]);
+  else if(t==='likes'||t==='like')out.push(['likes',{...payload,value:payload.count,likecount:payload.count,totallikecount:e.points??e.totalLikes??e.totalLikeCount??0}]);
   else if(t==='chatcommand'||t==='command')out.push(['chatCommand',{...payload,command:e.command||e.name,value:e.command||e.name}]);
   else if(t==='chat'||t==='comment'){const text=String(e.comment||e.name||'');out.push(['chat',{...payload,comment:text,value:text}]);if(text.trim().startsWith('!'))out.push(['chatCommand',{...payload,command:text.trim().split(/\s+/)[0],value:text.trim().split(/\s+/)[0],comment:text}])}
   else if(t==='subscriberemote')out.push(['subscriberEmote',{...payload,value:e.emote||e.name}]);

@@ -65,3 +65,22 @@ test('SOMVAKT: avsandarens namn blir inte en chattkommentar pa en gava', () => {
   assert.equal(desktopChat.comment, 'hej fran desktop',
     'fallbacken comment <- name ar borta for chat — desktopvagens chattext forsvinner');
 });
+
+// ---- typen far inte dopas om sa att klientens grenar slutar matcha ---------------------------
+// `member` doptes om till `viewer` i TYPE_ALIASES fram till 2026-09-06. Klientens
+// liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och `viewer` matchar
+// INGEN av dem. Foljden: 281 personer gick in i rummet under en skarp sandning och noll
+// medlems-Actions fyrade, medan desktopvagen (utan alias) fyrade alla 281.
+//
+// De ar dessutom tva olika saker: `member` bar en PERSON, `viewer` bar ett ANTAL.
+test('SOMVAKT: member behaller sin typ hela vagen till klienten', () => {
+  const e = cleanEvent({ id: 'm1', type: 'member', username: 'lisa' });
+  assert.equal(e.type, 'member',
+    'member dops om — klientens member-gren kan da aldrig matcha, och join-grenen inte heller');
+});
+
+test('de alias som ar KVAR ar de som klienten faktiskt grenar pa', () => {
+  // likes -> like och chatcommand -> chat ar riktiga alias: klienten har grenar for bada malen.
+  assert.equal(cleanEvent({ id: 'l1', type: 'likes' }).type, 'like');
+  assert.equal(cleanEvent({ id: 'c1', type: 'chatcommand', username: 'x' }).type, 'chat');
+});
