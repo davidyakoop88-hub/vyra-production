@@ -288,6 +288,7 @@
       "agent": "vyra-live",
       "syfte": "Handelsflodet in i appen: polling, dedupe, routing, leaderboards, kontrollpanel och streamstatistik.",
       "filer": [
+        "cloud-fields.js",
         "live-client.js",
         "live-session-client.js",
         "live-control.js",

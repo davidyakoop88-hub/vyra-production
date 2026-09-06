@@ -279,8 +279,39 @@ function boostFordrojningMs(f){
 function arBoostFonster(f){
   return !!f && f.multiplier>=2 && (f.steg===0 || (f.steg===2&&(f.resultat===0||f.resultat===2)));
 }
+// FALTEN HAR AR ALLT MOLNVAGEN KAN BARA. Ett falt som baseUser eller giftFields raknar fram men
+// som inte star i litteralen nedan finns inte for nagon molnanvandare — och eftersom desktopvagen
+// har en EGEN vitlista (electron-app/local-server.js) fungerar samma widget olika beroende pa hur
+// streamern anslutit. Fyra falt saknades fram till 2026-09-06 (#349):
+//
+//   name         -> New Follower Alert skrev bara avataren och lat namnet sta kvar pa forra
+//                   foljaren, eftersom media.js:694 gor `if(event.name)` och sedan save().
+//   diamonds     -> cleanEvent raknar `diamonds` ur diamonds??coins. Bada saknades, sa den
+//                   stamplade 0 i ramen — och klientens `e.diamonds ?? e.coins` faller INTE
+//                   igenom pa noll. En gava pa 30 000 diamanter nadde Actions med coins=0, sa
+//                   varje giftCoins-regel med troskel >=1 var dod pa molnvagen. Faltet fanns
+//                   redan i cleanEvent sedan #133; det var HAR halet satt.
+//   isAnonymous  -> "Exkludera anonyma tittare" var en kryssruta som inte gjorde nagot.
+//   isModerator  -> publikvalet "Moderator" i Actions kunde aldrig matcha.
+//   isFollower/  -> samma familj, hittat av completeness-vakten nedan: klienten HARLEDER dem ur
+//   isSubscriber    handelsetypen (`isFollower || t==='follow'`), sa publikvalet "Follower"
+//                   matchade bara pa sjalva follow-eventet — aldrig nar en foljare skickade en
+//                   gava. Harledningen finns kvar och OR:as med det riktiga vardet.
+//
+// `name` AR OVERLASTAT MED FLIT och det maste man veta: pa chat/chatcommand bar det KOMMENTAREN,
+// inte avsandarens namn (bridge.js:360 satter bade name och comment; desktopens vitlista har
+// inget comment-falt, sa dar ar `name` enda vagen for chattexten). Darav 500 tecken och inte 120.
+// server/event-bus.js later darfor `comment` falla tillbaka pa `name` BARA for chattyper — utan
+// den avgransningen blev avsandarens namn en chattkommentar pa varje gava.
+//
+// `diamonds` har sin egen reserv (`?? fields.coins`) HAR och inte bara i cleanEvent. Skalet ar
+// subtilt: sa fort litteralen alltid skickar ett `diamonds`-falt blir det en explicit NOLLA for
+// producenter som bara satter `coins`, och serverns `input?.diamonds ?? input?.coins` faller inte
+// igenom pa noll. Utan raden hade fixen alltsa flyttat exakt samma bugg ett steg nedstroms.
+// I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
+// dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //

@@ -35,6 +35,10 @@ function boot({ kastar = false } = {}) {
   const browser = createBrowser({ hostname: 'vyralive.app' });
   browser.load('session-state.js');
   browser.sandbox.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: WS }] }) };
+  // cloud-fields.js FORE live-client.js: normaliseringen bor dar sedan 2026-09-06, och
+  // live-client.js kastar med flit om modulen saknas i stallet for att tyst gora halva jobbet.
+  // Ordningen har speglar media.js injektionskedja.
+  browser.load('cloud-fields.js');
   browser.load('live-client.js');
 
   const sett = { live: [], actions: [], route: 0 };

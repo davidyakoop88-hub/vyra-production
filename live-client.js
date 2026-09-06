@@ -102,35 +102,19 @@ function normalizeUserFlags(e){
 //
 // Normalizing once here rather than at ~15 call sites keeps the widgets' shape as the single one
 // they were built for, and is a no-op on desktop where the fields already arrive named this way.
-// DEKORATIVA BOKSTÄVER FÄLLS TILLBAKA TILL VANLIGA.
+// Normaliseringen bor i cloud-fields.js sedan 2026-09-06. Den laddas av media.js FORE den har
+// filen, och av de fristaende widgetsidorna fore base-widget.js.
 //
-// TikTok-namn med "fina" bokstäver — 𝕜𝕠𝕠𝕝, 𝒻𝒶𝓃𝒸𝓎, 𝔇𝔞𝔳𝔦𝔡, ⒿⓄⓀⒺⓇⓄ — är inte formaterad text. Det är
-// egna Unicode-tecken i de matematiska alfabeten (U+1D400–1D7FF) och liknande block, och få
-// gränssnittstypsnitt täcker dem. Resultatet i overlayen är rutor: namnet blir oläsligt.
+// SKALET ar en riktig bugg: den har filen hade en egen kopia och base-widget.js en annan, och
+// NFKC-fixen (#342) landade bara i den ena. De fristaende OBS-lankarna visade darfor rutor i
+// stallet for namn i tre veckor efter att buggen var "lagad".
 //
-// NFKC är gjort för precis det här och viker ihop kompatibilitetsvarianter till sina vanliga
-// bokstäver. UPPMÄTT över sjutton stilar från de vanliga "fancy text"-generatorerna: femton faller
-// tillbaka till vanlig text. Kvar blir små kapitäler (ᴀ) och upp-och-ner (ɐ), som ligger i Latin
-// Extended och som de flesta typsnitt faktiskt HAR — de var alltså aldrig rutorna.
-//
-// TRE SAKER DEN INTE GÖR, och alla tre är skälet till att den är säker att köra på allt:
-//   * ett vanligt namn är oförändrat — 'Jokero' in, 'Jokero' ut
-//   * arabiska, thai, japanska och emoji lämnas i fred; det är riktiga skriftspråk, inte dekoration
-//   * BARA visningsnamnet rörs, aldrig `username`. Handtaget är IDENTITETEN — allt nycklas på det,
-//     och normaliserade man det skulle två personer vars namn viks lika bli en enda. Den skillnaden
-//     gjordes uttrycklig i battle-mvp-session.js 2026-09-05 och gäller här av samma skäl.
-function plattaNamn(v){
-  const s=String(v==null?'':v);
-  if(!s)return s;
-  const platt=s.normalize('NFKC');
-  // NFKC tar aldrig bort tecken, men en tom rad tillbaka vore värre än ett oläsligt namn.
-  return platt.trim()?platt:s;
-}
+// Saknas modulen ar det ett laddningsfel, inte ett lage att tacka over: en tyst reserv har hade
+// aterinfort exakt den halva leverans som fixen skulle ta bort.
 function normalizeCloudFields(e){
-  if(e.profileImage==null&&e.profileUrl)e.profileImage=e.profileUrl;
-  if(e.coins==null&&e.value!=null)e.coins=e.value;
-  if(e.name!=null)e.name=plattaNamn(e.name);
-  return e;
+  const m=(typeof window!=='undefined'?window:globalThis).VyraCloudFields;
+  if(!m)throw new Error('cloud-fields.js ar inte laddad - normaliseringen kan inte koras');
+  return m.normalizeCloudFields(e);
 }
 // Every way an event can reach a consumer funnels through ingest(): the SSE stream, the desktop
 // poll loop, and live-leaderboard.js's history fetch. The gate therefore belongs here and nowhere
