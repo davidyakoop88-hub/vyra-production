@@ -190,9 +190,41 @@ function battleStatusAv(data,battle){
 //
 // Id:t finns i BADA payloaderna och ar samma strang: uppmatt 7682152221400681249 i bade
 // LINK_MIC_BATTLE och LINK_MIC_ARMIES for samma match. Bara vidarebefordran saknades.
-function battleFields(data){
+// ARMEERNA, OAVSETT FORM. Payloadens `armies` har setts som bade ett objekt nycklat pa anvandar-id
+// och en array av {key,value}. vartLagsGivare hanterar redan bada for MVP:n; det har ar samma sak
+// for poangen, samlat pa ett stalle.
+function armelag(data){
+  const a=data&&data.armies;
+  if(!a||typeof a!=='object')return[];
+  if(Array.isArray(a))return a.map(t=>({id:text(t&&t.key,64),lag:(t&&t.value)||t||{}}));
+  return Object.keys(a).map(k=>({id:text(k,64),lag:a[k]||{}}));
+}
+// POANGEN LAG ALDRIG DAR KODEN LETADE. Fram till 2026-09-06 last battleFields
+// `data.battleInfo.hostScore` — men payloaden har INGET `battleInfo`, och `hostScore` med versalt S
+// finns inte heller. `number(undefined)` blev 0, sa scoreUs/scoreThem var ALLTID noll och
+// battle-widgeten visade 0–0 i varje match.
+//
+// UPPMATT i en skarp sandning 2026-09-06, elva matcher: poangen ligger i
+// `armies[<anvandar-id>].hostscore` — GEMENT s. Vart eget id gick att hitta som armies-nyckel i
+// 13 av 13 payloads.
+//
+// VILKEN SIDA SOM AR VAR gar INTE att lasa ur payloaden: `armies[0]` var var sida i bara 8 av 13
+// matcher, `anchorIdStr` bytte betydelse mellan payloads (ibland anvandar-id, ibland "1"/"2"), och
+// anchorsInfo[].tags var tomma. Darfor kravs `mittAnkarId` — samma varde som armeMvp redan far,
+// hamtat en gang per anslutning ur fetchRoomInfo().data.owner.id_str.
+//
+// UTAN ankar-id behalls de gamla reserverna. De ger 0 pa den har payloadformen, precis som forut —
+// hellre en nolla an motstandarens poang i var egen overlay. Samma regel som armeMvp: gissa inte.
+function battleFields(data, mittAnkarId){
   const battle=data?.battleInfo||data?.battle||data||{};
-  return{...baseUser(data),scoreUs:number(battle?.hostScore??battle?.scoreUs??battle?.team1Score),scoreThem:number(battle?.guestScore??battle?.scoreThem??battle?.team2Score),multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
+  const ankare=String(mittAnkarId||'').trim();
+  const lagen=ankare?armelag(data):[];
+  const vart=ankare?lagen.find(l=>l.id===ankare):null;
+  const deras=vart?lagen.find(l=>l!==vart):null;
+  return{...baseUser(data),
+    scoreUs:number(vart?vart.lag?.hostscore:(battle?.hostScore??battle?.scoreUs??battle?.team1Score),1e12),
+    scoreThem:number(deras?deras.lag?.hostscore:(battle?.guestScore??battle?.scoreThem??battle?.team2Score),1e12),
+    multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
 }
 // Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
 //
@@ -535,4 +567,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,armelag,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
