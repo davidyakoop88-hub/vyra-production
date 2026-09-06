@@ -397,7 +397,11 @@ if (require.main === module) {
     // sandning: 548 av 548 nollor, medan `total` toppade pa 38 och `totalUser` slutade pa 332.
     // De gamla namnen star kvar som reserv av samma skal som chattexten ovan.
     connection.on(WebcastEvent.ROOM_USER, data => sendEvent('viewer', { count: N.number(data?.total ?? data?.viewerCount ?? data?.userCount, 1e9) }, data));
-    connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data), data));
+    // mittAnkarId behovs for POANGEN ocksa, inte bara for MVP:n: payloaden sager inte vilken sida
+    // som ar var, sa utan id:t gar det inte att skilja var hostscore fran motstandarens. Se
+    // battleFields. Ar det tomt behalls de gamla reserverna och poangen blir 0 som forut — hellre
+    // en nolla an motstandarens siffra i var egen overlay.
+    connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data, mittAnkarId), data));
 
     // ---- multiplikatorfonstret (Boosting Glove) ------------------------------------------------
     // Klientsidan har redan hela vagen: media.js tander Glove Snipe pa `glove` i typen och laser
