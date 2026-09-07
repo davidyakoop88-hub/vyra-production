@@ -122,7 +122,10 @@
   // legacy alias and normalised, so one variant can never produce two standalone instances with two
   // different links. Exported because whatever reads a saved widget later — the goal runtime — has
   // to agree with the catalog about what it means.
-  const GOAL_KINDS = { follows: 'follows', followers: 'follows', likes: 'likes' };
+  // diamonds tillkom 2026-09-07 (#367): motorn matade redan metriken, men ingen widget kunde
+  // valja den. Andras den har raden maste server/goal-metrics.js andras i SAMMA commit —
+  // tests/goal-metric-parity.test.js ar det som gor det omojligt att glomma.
+  const GOAL_KINDS = { follows: 'follows', followers: 'follows', likes: 'likes', diamonds: 'diamonds' };
   function goalKind(value) {
     const raw = value === undefined || value === null || value === '' ? 'follows' : String(value);
     const canonical = GOAL_KINDS[raw];
@@ -249,8 +252,8 @@
     'socialgoal.kind': v => ({
       type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
       width: v.orientation === 'portrait' ? 220 : 440,
-      title: v.kind === 'likes' ? 'Like Goal' : 'Follower Goal',
-      goalTitle: v.kind === 'likes' ? 'LIKE GOAL' : 'FOLLOWERS GOAL',
+      title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
+      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff','rose-frame':'#ff70b7','heart-frame':'#ff4d9a','sapphire-frame':'#46cbff','azure-frame':'#3a9cff'})[v.model] || '#ff4f9f',
       goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff','rose-frame':'#ffd0e7','heart-frame':'#ffe1ef','sapphire-frame':'#8cceff','azure-frame':'#b7e6ff'})[v.model] || '#ffb1dc'

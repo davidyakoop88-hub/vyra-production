@@ -215,8 +215,17 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // TikToks eget gränssnitt. media.js BÄR båda strängarna, så media.js själv måste bumpas.
   // Bumpad igen 2026-09-07 för medvärdsgåvorna (#360): live-leaderboard.js filtrerar numera bort
   // gåvor som gick till en medvärd. media.js BÄR dess sträng, så media.js själv måste följa med.
-  assert.match(studio, /[^-]media\.js\?v=20260907-2/);
-  assert.match(studio, /widget-factory\.js\?v=20260818-2/);
+  //
+  // Och en TREDJE gång samma dygn för diamantmålet (#367 del 1), där tre filer ändrades och alla
+  // tre bär egna strängar: widget-factory.js (måltypstabellen), premium-final.js (renderaren,
+  // versionerad via konstanten längre ner) och media.js själv (katalogsektionen).
+  //
+  // SAMMANSLAGNINGEN ÄR SKÄLET TILL `-3`. #360 tog `-2` och #367 låg på en parallell gren. Det
+  // rebasade innehållet är VARKEN det ena eller det andra utan båda, och en sammanslagning som
+  // rör en fil är en ändring av den filen — precis som de två sammanslagningarna 2026-08-20 här
+  // ovanför. Därför en egen sträng i stället för att ärva någonderas.
+  assert.match(studio, /[^-]media\.js\?v=20260907-3/);
+  assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
@@ -237,7 +246,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-09-04: premium-final.js AR den levande renderaren for social goals — den
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
   // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
-  assert.match(media, /const version='20260904-svg'/);
+  // Bumpad 2026-09-07 (#367): premium-final.js erbjuder numera diamantmålet bland ramdesignerna.
+  assert.match(media, /const version='20260907-1'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 

@@ -418,6 +418,7 @@
         "tests/browser/goal-geometri.browser.test.js",
         "tests/browser/goal-modell3-bredd.browser.test.js",
         "server/test/goal-*.test.js",
+        "server/test/diamantmal.test.js",
         "server/test/studio-goal-stream.test.js",
         "server/test/gavoidentitet.test.js",
         "server/test/regelnycklar.test.js",

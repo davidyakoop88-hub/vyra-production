@@ -10,7 +10,11 @@
 // Anything that changes here has to change in VyraWidgets.goalKind() too, and the parity test is
 // what makes that impossible to forget.
 
-const GOAL_KINDS = { follows: 'follows', followers: 'follows', likes: 'likes' };
+// diamonds tillkom 2026-09-07 (#367). Metriken fanns REDAN hela vagen genom motorn — METRICS,
+// CONTRIBUTIONS, TRANSPORT_METRICS, goal-sse.js och CHECK-villkoret i schema.sql namner den alla
+// — men ingen widget kunde valja den, for den saknades i just den har tabellen. Det som byggdes
+// var en ratt pa ett system som redan snurrade, inte ett nytt system.
+const GOAL_KINDS = { follows: 'follows', followers: 'follows', likes: 'likes', diamonds: 'diamonds' };
 
 // followers is the legacy spelling of the same goal. Normalising it is what stops one variant
 // producing two runtime rows with two different links.

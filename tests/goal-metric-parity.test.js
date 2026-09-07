@@ -12,7 +12,7 @@ const ROOT = path.join(__dirname, '..');
 const VyraWidgets = require(path.join(ROOT, 'widget-factory.js'));
 const ServerMetrics = require(path.join(ROOT, 'server', 'goal-metrics.js'));
 
-const AGREED = ['followers', 'follows', 'likes', undefined, null, ''];
+const AGREED = ['followers', 'follows', 'likes', 'diamonds', undefined, null, ''];
 
 for (const value of AGREED) {
   test(`goalKind(${JSON.stringify(value)}) betyder samma sak i servern och i registret`,
@@ -23,6 +23,10 @@ for (const value of AGREED) {
 }
 
 test('båda avvisar okända värden, ingen faller tyst tillbaka', { timeout: 5000 }, () => {
+  // `coins` star kvar bland de ogiltiga MED FLIT aven efter att diamonds blev en maltyp: coins ar
+  // vad TITTAREN betalar, diamanter ar vad KREATOREN far — grovt halften. Att acceptera bada hade
+  // gett tva namn for tva OLIKA tal och en stapel som visar fel siffra beroende pa vilket ord
+  // streamern rakade valja.
   for (const value of ['subscribers', 'coins', 'shares']) {
     assert.throws(() => ServerMetrics.goalKind(value), /måltyp/i,
       `servern accepterade ${value}`);
@@ -35,7 +39,7 @@ test('de känner till exakt samma uppsättning måltyper', { timeout: 5000 }, ()
   // Catches a value added to one side only, which the fixed list above would not.
   const registry = Object.keys(VyraWidgets.variants ? {} : {});   // registry has no public table
   const server = Object.keys(ServerMetrics.GOAL_KINDS).sort();
-  assert.deepEqual(server, ['followers', 'follows', 'likes'],
+  assert.deepEqual(server, ['diamonds', 'followers', 'follows', 'likes'],
     'serverns lista har ändrats — uppdatera registret och detta test i samma commit');
   // And every one of them round-trips identically through both.
   for (const key of server) {
