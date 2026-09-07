@@ -127,7 +127,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-09-04 for de ritade markena: samuraiemblemets ::before ritar numera en
   // inline-SVG-mask i stallet for U+5200, och .vyra-glyf-regeln ar ny. BARA studio.css
   // andrades av den delen.
-  assert.match(studio, /studio\.css\?v=20260904-svg/);
+  assert.match(studio, /studio\.css\?v=20260907-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
@@ -230,7 +230,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // bada strangarna, sa media.js sjalv maste folja med.
   // Bumpad en FEMTE gang samma dygn: ligabrickan gjorde headern till en trekolumnslayout och
   // MATCH AKTIV-chippet flyttade 436 px in mot mitten. Bade live-control.js och .css andrades igen.
-  assert.match(studio, /[^-]media\.js\?v=20260907-5/);
+  assert.match(studio, /[^-]media\.js\?v=20260907-6/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

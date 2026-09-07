@@ -239,3 +239,43 @@ test('lankraden har en synlig vag till tokenhanteraren', () => {
   assert.match(markup, /fortsätter gälla|gäller tills/,
     'inget som forklarar att den befintliga lanken fortsatter gälla');
 });
+
+// ---- kallans matt i overlaylankraden -----------------------------------------------------------
+// Overlayn ritas i layoutens EGNA pixlar och skalas INTE till kallans storlek. Uppmatt i skarp
+// Chrome: en kalla pa 1080x1920 far canvasen att tacka 40 % x 40 % av ytan och en pa 1920x1080
+// 23 % x 71 % — widgetarna hamnar i ovre vanstra hornet med tom yta runt om. Med EXAKT ratt matt
+// tacker den 100 % x 100 % i position 0,0.
+//
+// Darfor star matten bredvid kopieringsknappen. Talen far inte hardkodas: det finns tva format,
+// och den som byter till Dator 16:9 ska se 768 x 432.
+const fsMatt = require('fs'), pathMatt = require('path');
+const MEDIA_MATT = fsMatt.readFileSync(pathMatt.join(__dirname, '..', 'media.js'), 'utf8');
+
+test('overlaylankraden visar kallans matt', () => {
+  assert.match(MEDIA_MATT, /<b id="overlayLinkMatt"><\/b>/,
+    'matten saknas i raden — anvandaren far gissa kallans storlek');
+  // Som ett EGET barn i raden, inte i etikettspannet: det spannet ar dolt i nuvarande design
+  // (uppmatt bredd och hojd 0), sa en text dar hade varit osynlig.
+  assert.match(MEDIA_MATT, /<\/div><b id="overlayLinkMatt"><\/b><button id="manageObsLinks">/,
+    'matten ligger inte som ett eget barn i raden — i etikettspannet ar de osynliga');
+});
+
+test('matten foljer VALT format och hardkodas inte', () => {
+  assert.match(MEDIA_MATT, /OVERLAY_FORMAT=\{mobile:\[432,768\],widescreen:\[768,432\]\}/,
+    'formattabellen saknas eller har andra matt an layout-format.js');
+  assert.match(MEDIA_MATT, /OVERLAY_FORMAT\[state\.layoutFormat\]\|\|OVERLAY_FORMAT\.mobile/,
+    'matten laser inte valt format — den som valjer Dator 16:9 far fel siffror');
+  // Formatknapparna ritas om vid varje render, sa lyssnaren maste sitta pa dokumentet.
+  assert.match(MEDIA_MATT, /document\.addEventListener\('click',e=>\{if\(e\.target\.closest\('\[data-format\]'\)\)/,
+    'texten uppdateras inte nar formatet byts');
+});
+
+test('och de forklarar VARFOR, inte bara vad', () => {
+  // Ett tal utan skal ser ut som en rekommendation. Titeln maste saga att overlayn inte skalas,
+  // annars provar man 1080x1920 igen nasta gang.
+  const titel = (MEDIA_MATT.match(/m\.title=`[^`]*`[^;]*/) || [''])[0];
+  assert.match(titel, /skalas inte|skalar inte/i,
+    'titeln sager inte att overlayn inte skalas till kallan — da ser matten ut som ett tips');
+  assert.match(titel, /\$\{bredd\} × \$\{hojd\}/,
+    'titeln upprepar inte de faktiska matten');
+});
