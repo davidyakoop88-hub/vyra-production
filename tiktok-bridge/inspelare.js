@@ -53,8 +53,16 @@ const crypto = require('crypto');
 // (31 132 unika). Bada hade forsvunnit. Ett person-id och en battle-poang har SAMMA form — bara
 // faltnamnet skiljer dem at, och darfor maste person-listan ga pa namn.
 //
-// Av samma skal gar allowlisten pa FALTNAMN och aldrig pa monster: "john_doe" och "gift_streak"
-// gar inte att skilja at pa form.
+// Av samma skal gar allowlisten pa FALTNAMN i forsta hand: "john_doe" och "gift_streak" gar inte
+// att skilja at pa form. Men namnet ar inte NOG — se SLAPP_IGENOM_SKAL nedan, dar varje post
+// dessutom bar sin uppmatta teckenrepertoar. Namn OCH form, aldrig form ensamt.
+//
+// ⚠️ EN LAXA OM UNDERLAGET, inte om koden. Foraldralistorna i den forsta genomgangen var
+// FELAKTIGA: matskriptet registrerade foraldrar med `if (nyckel && foralder)`, och ett falt i
+// payloadens rot har foralder === '' — alltsa falsy. Rotfalten foll bort tyst. `scene` fick
+// darfor "foraldrar: [battleSettings]", som ser ut som en komplett enfaltslista, medan 2 838 av
+// 3 973 forekomster i sjalva verket ligger i roten. Ett aggregat som TYST utelamnar ett fall ar
+// farligare an ett som saknas, for det ser komplett ut. Foraldrarna nedan ar ommatta.
 
 // Pekar ut en MANNISKA -> id#hash. Hashen ar stabil, sa samma person gar att folja genom filen.
 //
@@ -206,19 +214,45 @@ const ICKE_ASCII = /[^\x00-\x7F]/;
 //
 // Laxan ar att kapade sammanfattningar foder rimliga men felaktiga slutsatser. Nar en post ar
 // omstridd: rakna upp ALLA varden for just det faltet i stallet for att lita pa aggregatet.
+// VARJE POST BAR SIN UPPMATTA TECKENREPERTOAR, inte bara ett skal — och bada kraven maste vara
+// uppfyllda. Namnet racker alltsa inte: vardet maste ocksa ha den form faltet bevisligen har.
+//
+// Det stanger granskningens tyngsta invandning. En namnbaserad post slapper annars igenom faltet
+// under ALLA foraldrar, aven de TikTok lagger till i morgon — och `scene` visade sig ligga i
+// payloadens rot i 71 % av fallen, inte bara under battleSettings som jag forst skrev. Med en
+// repertoar spelar foraldern mindre roll: ett varde som inte ser ut som det matta slapps inte
+// igenom oavsett var det dyker upp.
+//
+// REPERTOARERNA AR MATTA TECKEN FOR TECKEN over alla nio inspelningarna, inte gissade. Ingen av
+// dem innehaller `/`, `.`, `:` eller icke-ASCII — alltsa kan inget av falten bara en sokvag, en
+// URL, ett filnamn med anding eller ett emoji-dekorerat visningsnamn. Langdtaken ar de uppmatta
+// med lite luft; ett langre varde maskeras, vilket ar at ratt hall.
+//
+// giftname ar det enda undantaget dar formen INTE ensam skiljer: ` '-Aa` ar ocksa formen for ett
+// manniskonamn. Den vilar pa att gavor ar TikToks produktkatalog — 44 unika over nio sandningar.
 const SLAPP_IGENOM_SKAL = {
-  method: 'Protokollets meddelandetyp under EN foralder (common). 28 unika, 0-36 tecken, ren ASCII.',
-  subtype: 'Handelsens diskriminator i payloadens ROT (fans_upgrade m.fl.). 7 unika, ren ASCII, max 29 tecken.',
-  scene: 'Lagesvarde i payloadens ROT. 8 unika totalt: 2 304 tomma, 280 ensiffriga, sex snake_case-enum.',
-  showvalue: 'Sprakresursnyckel under portraitTag i snake_case. 13 unika, inga siffror eller emoji.',
-  promptkey: 'Uppslagsnyckel for UI-text under prompt/clickPrompt. 10 unika, ren ASCII.',
-  namestarlingkey: 'i18n-nyckel (Starling) for ramens etikett under border/borderList. 1 unikt varde.',
-  effectstarlingkey: 'i18n-nyckel for en effekt under assetExtra. 1 unikt varde, alltid 24 tecken.',
-  geckochannelname: 'Namn pa TikToks assetbunt under animationData. 4 unika, ren ASCII.',
-  filename: 'Filnamn pa en animationstillgang under animationData. 4 unika, ren ASCII.',
-  giftname: 'Gavans katalognamn, forfattat av TikTok. 44 unika over nio inspelningar, 0 % icke-ASCII.',
+  method: { form: /^[A-Za-z]{1,48}$/,
+    skal: 'Protokollets meddelandetyp under EN foralder (common). 28 unika, bara bokstaver.' },
+  subtype: { form: /^[a-z0-9_]{1,40}$/,
+    skal: 'Handelsens diskriminator, alla 505 forekomster i payloadens ROT. 7 unika, gemener/siffror/understreck.' },
+  scene: { form: /^[A-Za-z0-9_]{1,40}$/,
+    skal: 'Lagesvarde. ROT 2 838 forekomster OCH battleSettings 1 135 — bada uppmatta. 7 unika icke-tomma.' },
+  showvalue: { form: /^[A-Za-z_]{1,56}$/,
+    skal: 'Sprakresursnyckel under portraitTag. 13 unika, bara bokstaver och understreck.' },
+  promptkey: { form: /^[A-Za-z0-9_]{1,48}$/,
+    skal: 'Uppslagsnyckel for UI-text under prompt, clickPrompt, rewardPreparePrompt, rewardingPrompt. 10 unika.' },
+  namestarlingkey: { form: /^[A-Za-z_]{1,48}$/,
+    skal: 'i18n-nyckel (Starling) under border och borderList. 1 unikt varde, bokstaver och understreck.' },
+  effectstarlingkey: { form: /^[A-Za-z_]{1,40}$/,
+    skal: 'i18n-nyckel for en effekt under assetExtra. 1 unikt varde, alltid 24 tecken.' },
+  geckochannelname: { form: /^[a-z0-9_]{1,64}$/,
+    skal: 'Namn pa TikToks assetbunt under animationData. 4 unika, gemener/siffror/understreck.' },
+  filename: { form: /^[a-z0-9_]{1,72}$/,
+    skal: 'Namn pa en animationstillgang under animationData. 4 unika, ingen punkt och ingen anding.' },
+  giftname: { form: /^[A-Za-z' -]{1,32}$/,
+    skal: 'Gavans katalognamn ur TikToks produktkatalog. 44 unika over nio sandningar, 0 % icke-ASCII.' },
 };
-const SLAPP_IGENOM = new Set(Object.keys(SLAPP_IGENOM_SKAL));
+const SLAPP_IGENOM = new Map(Object.entries(SLAPP_IGENOM_SKAL).map(([k, v]) => [k, v.form]));
 
 // Kort och stabil: samma tittare ger samma hash inom OCH mellan filer, sa en armé-lista gar att
 // aggregera i efterhand. Det ar hela poangen med LINK_MIC_ARMIES — utan stabiliteten blir varje
@@ -317,7 +351,10 @@ function maskera(varde, nyckel = '') {
   if (RENT_TAL.test(varde)) {
     return !LANGT_TAL.test(varde) || LANGA_TAL_OK.has(k) ? varde : `id#${hash(varde)}`;
   }
-  if (SLAPP_IGENOM.has(k)) return varde;
+  // Allowlisten kraver BADE ratt faltnamn OCH ratt form. Ett varde som inte ser ut som det
+  // uppmatta faller vidare till forvalet och maskeras, aven om faltnamnet star i listan.
+  const form = SLAPP_IGENOM.get(k);
+  if (form && form.test(varde)) return varde;
   // FORVALET. Fritext (blanksteg eller icke-ASCII) ar dar namn bor — dar lamnas inte ens formen,
   // eftersom ett skelett av ett namn rojer emoji och interpunktion. Allt annat behaller sin form.
   if (/\s/.test(varde) || ICKE_ASCII.test(varde)) return `<okant text ${varde.length}t>`;

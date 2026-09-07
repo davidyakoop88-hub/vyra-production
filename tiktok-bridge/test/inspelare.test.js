@@ -322,18 +322,26 @@ test('17: skelettet bar formen men aldrig innehallet', () => {
   assert.ok(!sk.includes('S') && !sk.includes('hemlig'), 'skelettet lackte tecken ur vardet');
 });
 
-test('18: varje post i allowlisten bar ETT SKAL — annars ar det inte en granskning', () => {
-  // Listan ar data med motivering. Utan det kravet blir "granska och befordra" en vana igen: nagon
-  // lagger till ett faltnamn for att det ser ofarligt ut, och ingen kan i efterhand se om nagon
-  // faktiskt tittat pa vardena.
-  for (const [namn, skal] of Object.entries(I.SLAPP_IGENOM_SKAL)) {
-    assert.equal(typeof skal, 'string', `${namn} saknar skal`);
-    assert.ok(skal.trim().length >= 20,
-      `${namn} har ett skal pa ${skal.trim().length} tecken — skriv vad faltet ER, inte att det ` +
-      'ser ofarligt ut. Ett anvandarnamn och ett enum har samma form.');
+test('18: varje post i allowlisten bar ETT SKAL OCH EN UPPMATT FORM', () => {
+  // Listan ar data med motivering. Utan skal-kravet blir "granska och befordra" en vana igen.
+  // Form-kravet tillkom efter den adversariella granskningen: en post pa enbart NAMN slapper
+  // igenom faltet under ALLA foraldrar, aven de TikTok lagger till i morgon. Med en uppmatt
+  // teckenrepertoar racker inte namnet — vardet maste ocksa se ut som det matta.
+  for (const [namn, post] of Object.entries(I.SLAPP_IGENOM_SKAL)) {
+    assert.equal(typeof post.skal, 'string', `${namn} saknar skal`);
+    assert.ok(post.skal.trim().length >= 20,
+      `${namn} har ett skal pa ${post.skal.trim().length} tecken — skriv vad faltet ER.`);
+    assert.ok(post.form instanceof RegExp, `${namn} saknar en uppmatt form`);
+    // Formen far ALDRIG tillata tecken som gor vardet till en sokvag, en URL eller ett
+    // emoji-dekorerat namn. Det ar det som gor att foraldern spelar mindre roll.
+    for (const farligt of ['a/b', 'a.b', 'a:b', 'Anna ✨', 'a b c d e']) {
+      if (farligt === 'a b c d e' && namn === 'giftname') continue;   // gavonamn har blanksteg
+      assert.ok(!post.form.test(farligt),
+        `${namn}:s form slapper igenom ${JSON.stringify(farligt)} — da kan den bara en sokvag, ` +
+        'en lank eller ett visningsnamn');
+    }
   }
-  // Och listan far aldrig innehalla ett falt som ocksa star som person/namn/text — da beror
-  // resultatet pa skiktordningen i stallet for pa ett beslut.
+  // Och listan far aldrig innehalla ett falt som ocksa star som person/namn/text.
   for (const namn of Object.keys(I.SLAPP_IGENOM_SKAL)) {
     const k = namn.toLowerCase();
     assert.ok(!I.PERSON_FALT.has(k) && !I.NAMN_FALT.has(k) && !I.TEXT_FALT.has(k) && !I.URL_FALT.has(k),
@@ -476,21 +484,33 @@ test('26: ingen post i allowlisten far vara INERT — den vore ren risk utan nyt
   //
   // `sourceType` stod har och andrade NOLL uppmatta varden: alla dess 1 354 forekomster ar tal
   // eller 1-2-siffriga strangar, som slapps igenom av skikt 1 och 6 — FORE allowlisten. Postens
-  // enda verkan lag alltsa pa framtida, omatta varden. En sadan post ger ingen nytta och bara risk.
+  // enda verkan lag alltsa pa framtida, omatta varden. Ingen nytta, bara risk.
   //
-  // Provet mater det pa den enda form som gar att kontrollera utan inspelningarna: en post vars
-  // varden ALLTID skulle passera pa form kan inte forsvaras. Ett rent tal eller en tom strang
-  // slipper igenom oavsett, sa en post vars enda tankta varden ar sadana ar per definition inert.
+  // Provet anvander 'a': det matchar varje posts form, och det ar INTE ett rent tal, sa det
+  // maskeras utan posten. Slapps det igenom gor posten alltsa nagot.
   for (const namn of Object.keys(I.SLAPP_IGENOM_SKAL)) {
-    const orort = I.maskera({ [namn]: 'ett_ord_som_inte_ar_ett_tal' })[namn];
-    assert.equal(orort, 'ett_ord_som_inte_ar_ett_tal',
-      `${namn} star i allowlisten men slapper inte igenom ett icke-numeriskt varde — ` +
-      'da gor posten ingenting och ska bort');
-    // Kontrollmatning: utan posten hade samma varde maskerats. Om det INTE hade maskerats ar
-    // posten inert, och provet ovan hade varit gront av fel skal.
-    const utanPost = I.maskera({ ettFaltSomInteStarIListan: 'ett_ord_som_inte_ar_ett_tal' });
-    assert.match(utanPost.ettFaltSomInteStarIListan, /^<okant /,
-      'ett falt utanfor listan maskerades inte — da bevisar provet ovan ingenting');
+    assert.equal(I.maskera({ [namn]: 'a' })[namn], 'a',
+      `${namn} star i allowlisten men slapper inte igenom ens ett bokstavsvarde — posten ar inert`);
+  }
+  // Kontrollmatning: samma varde i ett falt UTANFOR listan maste maskeras, annars bevisar
+  // slingan ovan ingenting.
+  assert.match(I.maskera({ ettFaltSomInteStarIListan: 'a' }).ettFaltSomInteStarIListan, /^<okant /,
+    'ett falt utanfor listan maskerades inte — da ar provet ovan gront av fel skal');
+});
+
+test('26b: allowlisten kraver BADE ratt namn och ratt FORM', () => {
+  // Granskningens tyngsta invandning: en namnpost slapper igenom faltet under ALLA foraldrar,
+  // aven framtida. Uppmatt exempel pa varfor det ar en verklig risk: `scene` ligger i payloadens
+  // ROT i 2 838 av 3 973 forekomster — inte bara under battleSettings, som jag forst skrev.
+  //
+  // Med en uppmatt teckenrepertoar spelar foraldern mindre roll. Ett varde som inte ser ut som
+  // det matta faller vidare till forvalet, aven om faltnamnet star i listan.
+  assert.equal(I.maskera({ method: 'WebcastGiftMessage' }).method, 'WebcastGiftMessage');
+  for (const [falt, framtida] of [['method', 'Anna ✨ Svensson'],
+                                  ['scene', 'p16-sign.tiktokcdn.com/aweme/x.jpeg'],
+                                  ['giftName', 'nagon@exempel.se']]) {
+    assert.match(I.maskera({ [falt]: framtida })[falt], /^<okant /,
+      `${falt} slapptes igenom med ett varde som inte liknar det uppmatta — da skyddar formen inte`);
   }
 });
 
