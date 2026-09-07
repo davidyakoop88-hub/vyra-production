@@ -32,7 +32,23 @@ saker; den första säger att rören är kopplade, den andra att vatten kommer u
 
 **Vem:** David betalar, Claude läser av kedjan i produktion.
 
-**Status:** ✅ **KLAR — avläst i produktion 2026-09-03**
+**Status:** ⛔ **ÅTERÖPPNAD 2026-09-07** — avläsningen ovan gjordes mot **Stripe**, som inte finns
+kvar. Betalkedjan bytte leverantör till PayPal Subscriptions (PR #378), och ingen betalning har
+gått igenom den nya kedjan.
+
+Statusraden stod kvar som KLAR i ett dygn efter bytet, trots noteringen högst upp i avsnittet. Den
+som bara läste statusen hade dragit slutsatsen att punkten var avklarad — därför står skälet nu i
+själva raden och inte bara i en not ovanför.
+
+**Vad som är gjort av PR #378:s fem förberedelser:**
+
+| Steg | Läge |
+|---|---|
+| 1. Sätt de sex `PAYPAL_*` i Railway | ✅ **bevisat** — `server/index.js:2` validerar dem vid start i produktion, och `/api/health` svarar `ok`, alltså startade servern |
+| 2. Avsluta Stripe-prenumerationen på workspace `8826f6d1` och kompa om raden | ⬜ kräver Stripes panel |
+| 3. `npm run migrate` mot produktion | ⬜ går inte att avläsa utifrån |
+| 4. **Gör om den här punkten med ett PayPal-köp** | ⬜ **det är själva blockeraren** |
+| 5. Ta bort `STRIPE_*` ur Railway | ⬜ koden är redan ren — noll träffar i `server/` |
 
 | Kontroll | Utfall |
 |---|---|
