@@ -938,7 +938,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20260831-1';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20260831-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20260907-1';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20260907-1';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260807-levels';document.body.append(js)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag

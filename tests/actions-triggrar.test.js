@@ -75,3 +75,25 @@ test('gavans coins nar Actions-nyttolasten', () => {
   assert.equal(giftCoins[1].coins, 30000,
     'giftCoins bar fel varde — varje regel med troskel over noll ar dod');
 });
+
+// ---- Match Monitor far inte nollstalla vinstsviten -------------------------------------------
+// `live-control.js` visar sviten (battleComboV2.comboCount) bredvid poangen. Falten bars
+// VILLKORLIGT genom kedjan — de saknas i var tredje ram, eftersom TikToks karta ar tom da.
+//
+// Uppdaterar panelen pa ett saknat falt blir siffran noll i var tredje ram, och det ser ut som ett
+// riktigt resultat i stallet for ett tapp. Darfor maste tilldelningen vara villkorad, precis som
+// scoreUs/scoreThem redan ar.
+const fs2 = require('fs'), path2 = require('path');
+test('Match Monitor skriver bara vinsterna nar faltet faktiskt finns', () => {
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /if\(event\.winsUs!=null\)battle\.winsUs=/,
+    'winsUs skrivs ovillkorligt — sviten nollstalls i var tredje ram');
+  assert.match(src, /if\(event\.winsThem!=null\)battle\.winsThem=/,
+    'winsThem skrivs ovillkorligt');
+});
+
+test('och den visar dem', () => {
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /battle\.winsUs\}[^]{0,40}vinster/,
+    'Match Monitor renderar inte vinsterna — falten reser hela vagen och visas ingenstans');
+});

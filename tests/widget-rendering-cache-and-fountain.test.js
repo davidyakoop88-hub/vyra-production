@@ -210,7 +210,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   //   och vår egen räkning. Uppmätt: de kommer inom ±3 ms av varandra, och i 2 av 13 matcher
   //   pekade de på olika person. Filens strang gar fran `20260817-duckning` till en som bara
   //   sager NAR — den gamla namngav sitt innehall, vilket provet ovan forbjuder.
-  assert.match(studio, /[^-]media\.js\?v=20260906-1/);
+  // Bumpad 2026-09-07 för vinstsviten (#366): live-control.js och live-control.css ändrades båda
+  // — Match Monitor visar numera `battleComboV2.comboCount`, det tal streamern ser som "0-2" i
+  // TikToks eget gränssnitt. media.js BÄR båda strängarna, så media.js själv måste bumpas.
+  assert.match(studio, /[^-]media\.js\?v=20260907-1/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

@@ -84,3 +84,34 @@ test('de alias som ar KVAR ar de som klienten faktiskt grenar pa', () => {
   assert.equal(cleanEvent({ id: 'l1', type: 'likes' }).type, 'like');
   assert.equal(cleanEvent({ id: 'c1', type: 'chatcommand', username: 'x' }).type, 'chat');
 });
+
+// ---- vinstsviten hela vagen, och tomheten som INTE blir en nolla -------------------------------
+// `battleComboV2[<id>].comboCount` ar det tal streamern ser som "0-2". Kartan ar TOM i 8 av 28
+// uppmatta payloads, sa falten bars VILLKORLIGT genom hela kedjan. En nolla dar hade nollstallt
+// en korrekt visad svit i var tredje ram — och det ar ett fel som ser ut som ett riktigt resultat.
+test('SOMVAKT: vinstsviten overlever bryggan och molnet', () => {
+  const falt = normalizer.battleFields({
+    battleId: 'b1',
+    battleComboV2: { '7100000000000000001': { comboCount: '0' },
+                     '7100000000000000002': { comboCount: '2' } },
+  }, '7100000000000000001');
+  const ram = cleanEvent(normalizer.cloudEvent('e1', 'battle', falt));
+  assert.equal(ram.winsUs, 0, 'en uppmatt NOLLA ska baras — det ar tomheten som utelamnas');
+  assert.equal(ram.winsThem, 2, 'motstandarens svit nadde inte klienten');
+});
+
+test('SOMVAKT: en tom combo-karta lamnar falten borta hela vagen', () => {
+  const falt = normalizer.battleFields({ battleId: 'b2', battleComboV2: {} }, '7100000000000000001');
+  const ram = cleanEvent(normalizer.cloudEvent('e2', 'battle', falt));
+  assert.ok(!('winsUs' in ram), 'cleanEvent stamplade en nolla dar ingen svit var uppmatt');
+  assert.ok(!('winsThem' in ram));
+});
+
+test('SOMVAKT: cleanEvent slapper inte igenom skrap som en svit', () => {
+  // Ett falt som reser genom fyra vitlistor ska klampas dar det tas emot, inte dar det visas.
+  for (const skrap of ['abc', -1, 1e9, null, undefined, {}]) {
+    const ram = cleanEvent({ id: 'x', type: 'battle', winsUs: skrap });
+    assert.ok(!('winsUs' in ram), `varde ${JSON.stringify(skrap)} slapptes igenom som en svit`);
+  }
+  assert.equal(cleanEvent({ id: 'x', type: 'battle', winsUs: 3 }).winsUs, 3, 'ett giltigt varde tappades');
+});
