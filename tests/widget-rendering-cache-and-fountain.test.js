@@ -213,7 +213,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-07 för vinstsviten (#366): live-control.js och live-control.css ändrades båda
   // — Match Monitor visar numera `battleComboV2.comboCount`, det tal streamern ser som "0-2" i
   // TikToks eget gränssnitt. media.js BÄR båda strängarna, så media.js själv måste bumpas.
-  assert.match(studio, /[^-]media\.js\?v=20260907-1/);
+  // Bumpad igen 2026-09-07 för medvärdsgåvorna (#360): live-leaderboard.js filtrerar numera bort
+  // gåvor som gick till en medvärd. media.js BÄR dess sträng, så media.js själv måste följa med.
+  assert.match(studio, /[^-]media\.js\?v=20260907-2/);
   assert.match(studio, /widget-factory\.js\?v=20260818-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

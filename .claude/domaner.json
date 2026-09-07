@@ -606,6 +606,7 @@
         "server/test/capacity-gate.test.js",
         "server/test/capacity-race.test.js",
         "server/test/stream-stats.test.js",
+        "server/test/medvardsgavor.test.js",
         "server/test/stats-read.test.js",
         "server/test/viewer-levels.test.js",
         "server/test/notifications.test.js",

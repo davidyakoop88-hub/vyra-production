@@ -48,6 +48,14 @@ const event={
     comment:String(input?.comment||(arChatt?input?.name:'')||'').slice(0,500),
     profileUrl:String(input?.profileUrl||input?.profileImage||'').slice(0,1200),
     giftId:String(input?.giftId||'').slice(0,160),
+    // MOTTAGAREN i ett flervardsrum. `tillVarden` ar HARLEDD av bryggan — servern vet inte
+    // streamerns TikTok-id och kan darfor inte rakna ut det sjalv. Forvalet ar TRUE: en aldre
+    // brygga som inte skickar faltet ska raknas precis som i dag, inte filtreras bort. #360
+    //
+    // `toUserId` bars vidare aven nar gavan ar vardens — det ar det som gor en medvardstavla
+    // mojlig senare utan att rora bryggan igen.
+    toUserId:String(input?.toUserId||'').slice(0,160),
+    tillVarden:input?.tillVarden!==false,
     giftName:String(input?.giftName||'').slice(0,160),
     giftImage:String(input?.giftImage||'').slice(0,1200),
     count:Math.max(0,Math.min(1e9,Number(input?.count)||0)),

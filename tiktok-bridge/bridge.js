@@ -382,7 +382,9 @@ if (require.main === module) {
     connection.on(WebcastEvent.GIFT, data => {
       // Cumulative frames: forward only the last one, or the streak is counted as a triangular number.
       if (N.isStreakable(data) && !N.isFinalFrame(data)) return;
-      sendEvent('gift', N.giftFields(data), data);
+      // mittAnkarId aven har: i ett flervardsrum gar en del gavor till en MEDVARD, och bara
+      // bryggan vet vem varden ar. Se giftFields. #360
+      sendEvent('gift', N.giftFields(data, mittAnkarId), data);
     });
 
     connection.on(WebcastEvent.FOLLOW, data => sendEvent('follow', N.baseUser(data), data));

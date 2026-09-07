@@ -100,7 +100,35 @@ function isFinalFrame(data){return data?.repeatEnd===undefined?true:!!Number(dat
 // from the message, never minted per retry. v3 nests msgId under common; the rest are older shapes.
 function sourceId(data){return text(data?.common?.msgId||data?.msgId||data?.messageId||data?.logId||data?.id,160)}
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
-function giftFields(data){
+// MOTTAGAREN. I ett flervardsrum (link mic) gar en del gavor till en MEDVARD, inte till varden —
+// TikTok markerar dem med `toUser`. Fram till 2026-09-07 laste vi det inte, sa de raknades som
+// vardens egna. Uppmatt i en skarp sandning 2026-09-06: 16 av 71 gavor bar `toUser`, och de bar
+// 604 av 887 diamanter — 68 % av kvallens varde tillhorde nagon annan. #360
+//
+// GALLER INTE BATTLES. Da sitter motstandaren i sitt EGET rum och deras gavor passerar aldrig var
+// anslutning; uppmatt: 0 av 95 gavor bar toUser i battle-sandningen. Det ar multi-guest som blandar.
+//
+// SERVERN KAN INTE AVGORA DET SJALV — den vet inte streamerns TikTok-id. Bara bryggan gor det, via
+// `mittAnkarId` ur fetchRoomInfo(). Darfor HARLEDS svaret har och bars som en flagga, i stallet for
+// att varje konsument jamfor id:n den inte har. Tre konsumenter pa servern (goal-runtime.js,
+// stream-stats.js, heart-me-goal.js) plus klientens live-leaderboard.js laser samma flagga.
+//
+// gavokatalog.js och gavoidentitet.js filtrerar MED FLIT INTE: de lar sig vilka GAVOR som finns,
+// vilket ar oberoende av vem som fick dem. En Rose till en medvard ar fortfarande en Rose.
+//
+// FORVALET AR "TILL VARDEN". Bara ett `toUser` som ar UTTRYCKLIGEN olikt vart id markerar en gava
+// som nagon annans. Saknas toUser, saknas ankar-id, eller ar id-rymderna mot formodan olika, sa
+// filtreras ingenting bort och vi star kvar dar vi ar i dag. Ett filter som ror intaktssiffror ska
+// ha fel at det forsiktiga hallet.
+// true = gavan tillhor varden (eller vi vet inte, se forvalet ovan). false BARA nar TikTok sagt
+// uttryckligen att den gick till nagon annan.
+function tillVardenAv(data,mittAnkarId){
+  const ankare=String(mittAnkarId||'').trim();
+  const till=text(data?.toUser?.id??data?.toUserId,160);
+  if(!ankare||!till)return true;
+  return till===ankare;
+}
+function giftFields(data, mittAnkarId){
   const repeatCount=Math.max(1,number(data?.repeatCount||data?.repeat_count||1,1e7));
   // ENHETEN AR DIAMANTER, INTE COINS. Kallfaltet heter `diamondCount` i varenda variant nedan.
   // Coins ar vad TITTAREN betalar; diamanter ar vad KREATOREN far — grovt halften — och det ar
@@ -128,7 +156,7 @@ function giftFields(data){
   // live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
   const diamantsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
   const coinsEach=diamantsEach;
-  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false};
+  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false,toUserId:text(data?.toUser?.id??data?.toUserId,160),tillVarden:tillVardenAv(data,mittAnkarId)};
 }
 // tiktok-live-proto renamed the like fields in v3, which is the version tiktok-live-connector 2.4.0
 // imports: likeCount -> count, totalLikeCount -> total, and total is now a STRING rather than a
@@ -363,7 +391,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -587,4 +615,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,armelag,karta,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};

@@ -97,3 +97,38 @@ test('och den visar dem', () => {
   assert.match(src, /battle\.winsUs\}[^]{0,40}vinster/,
     'Match Monitor renderar inte vinsterna — falten reser hela vagen och visas ingenstans');
 });
+
+// ---- klientens toppgivare far inte rakna medvardsgavor -----------------------------------------
+// Uppmatt 2026-09-06: 604 av 887 diamanter i en multi-guest-sandning gick till en medvard, och
+// Top Gifters visade dem som streamerns egna. Bryggan markerar dem med `tillVarden: false`;
+// servern kan inte harleda det sjalv eftersom den inte vet streamerns TikTok-id. #360
+test('Top Gifters raknar inte en gava till en medvard', () => {
+  const browser = createBrowser({ hostname: 'vyralive.app' });
+  browser.load('session-state.js');
+  browser.sandbox.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: 'ws-A' }] }) };
+  browser.load('live-leaderboard.js');
+  const lb = browser.sandbox.VyraLeaderboard;
+  assert.ok(lb && typeof lb.getTop === 'function', 'VyraLeaderboard saknas — riggen ar fel');
+  // Liggaren tar emot via handelsen, inte via ett API — samma vag som i drift.
+  const skicka = d => browser.sandbox.dispatchEvent(
+    new browser.sandbox.CustomEvent('vyra-live-event', { detail: d }));
+
+  skicka({ type: 'gift', username: 'lisa', coins: 100 });
+  skicka({ type: 'gift', username: 'lisa', coins: 500, tillVarden: false });
+  const topp = lb.getTop('coins', 5).find(t => String(t.username).toLowerCase() === 'lisa');
+  assert.ok(topp, 'givaren hamnade inte i listan alls');
+  assert.equal(topp.coins, 100,
+    'medvardsgavan raknades — Top Gifters visar da diamanter streamern aldrig fick');
+});
+
+test('och en aldre brygga utan faltet raknas som i dag', () => {
+  const browser = createBrowser({ hostname: 'vyralive.app' });
+  browser.load('session-state.js');
+  browser.sandbox.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: 'ws-B' }] }) };
+  browser.load('live-leaderboard.js');
+  const lb = browser.sandbox.VyraLeaderboard;
+  browser.sandbox.dispatchEvent(new browser.sandbox.CustomEvent(
+    'vyra-live-event', { detail: { type: 'gift', username: 'mira', coins: 250 } }));
+  const topp = lb.getTop('coins', 5).find(t => String(t.username).toLowerCase() === 'mira');
+  assert.equal(topp && topp.coins, 250, 'en gava utan faltet filtrerades bort — forvalet ar fel');
+});

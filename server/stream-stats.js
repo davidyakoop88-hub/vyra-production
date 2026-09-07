@@ -52,7 +52,11 @@ function bidragFranEvent(event, nu = new Date()) {
 
   // `coins` bar redan hela combons varde (coinsEach x repeatCount i normalizer.js) — att
   // multiplicera med count igen hade kvadrerat varje combo.
-  const gifts = arGava ? heltal(data.count) : 0;
+  // MEDVARDSGAVOR RAKNAS INTE i statistiken — se goal-runtime.js for matningen och skalet.
+  // Filtret sitter pa `arGava` sa att BADE gifts och diamonds faller bort i ett svep; hade det
+  // bara suttit pa den ena hade summorna blivit inbordes motsagelsefulla.
+  const arVardensGava = arGava && data.tillVarden !== false;
+  const gifts = arVardensGava ? heltal(data.count) : 0;
   // `coins` ELLER `value` — de tva vagarna doper faltet olika.
   //
   //   desktop (electron-app/tiktok-service.js)      coins
@@ -64,7 +68,7 @@ function bidragFranEvent(event, nu = new Date()) {
   //
   // BARA FOR GAVOR. `value` bar coins ?? points ?? score i cloudEvent, sa en like skulle annars
   // bidra med TikToks rumstotal som diamanter.
-  const diamonds = arGava ? heltal(data.coins ?? data.value) : 0;
+  const diamonds = arVardensGava ? heltal(data.coins ?? data.value) : 0;
   // `points` ar TikToks lopande rumstotal. Den visas rakt av pa ett kort, men att ADDERA den en
   // gang per event multiplicerar summan med antalet event. Bara `count` far ackumuleras.
   const likes = arLike ? heltal(data.count) : 0;
