@@ -2,7 +2,7 @@
 
 Staging finns redan. Den ska inte skapas på nytt, och den ska **aldrig** skapas med Railways
 "Duplicate Environment": den kopierar produktionens variabler, alltså `APP_ENCRYPTION_KEY`, live
-Stripe-nycklar och prods `DATABASE_URL`. En sådan "staging" är produktionen med ett annat namn.
+PayPal-uppgifter och prods `DATABASE_URL`. En sådan "staging" är produktionen med ett annat namn.
 
 | | |
 |---|---|

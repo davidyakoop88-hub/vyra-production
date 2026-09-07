@@ -9,7 +9,7 @@ A production release is blocked unless every gate passes:
 5. PostgreSQL and Redis readiness returns HTTP 200.
 6. A fresh database backup restores into an empty database with the same table count.
 7. The k6 smoke profile stays below 1% errors, 300 ms p95 and 800 ms p99 at 500 virtual users.
-8. A staging Stripe Test Clock run covers trial, renewal, payment failure, cancellation and resume.
+8. A PayPal sandbox run covers trial, renewal, payment failure, cancellation and resume.
 9. A human verifies OBS transparency, media playback and the primary TikTok event flow.
 10. `node scripts/production-preflight.js` passes with secret-manager values.
 11. The production web artifact contains `index.html`, `studio.html` and live assets but no
@@ -28,7 +28,7 @@ node scripts/release-gate.js
 The command writes `.deploy/release-gate-report.json`. Exit code `0` means every gate has
 evidence and the release is ready. Exit code `1` means a local check failed. Exit code `2`
 means the local build passed but the release is intentionally blocked until production,
-Stripe, signed Windows and real OBS/TikTok LIVE evidence has been collected. A blocked
+PayPal, signed Windows and real OBS/TikTok LIVE evidence has been collected. A blocked
 result must never be treated as a successful public release.
 
 Run the load profile against staging, never the public production URL:

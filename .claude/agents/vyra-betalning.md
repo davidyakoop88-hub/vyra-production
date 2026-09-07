@@ -1,6 +1,6 @@
 ---
 name: vyra-betalning
-description: Betalning och entitlements i VYRA - Stripe, prenumerationsfalt, priser och loften, trial-onboarding och lasen som slapper fram premiuminnehall. Anvand for allt som kostar pengar eller kraver en plan.
+description: Betalning och entitlements i VYRA - PayPal Subscriptions, prenumerationsfalt, priser och loften, trial-onboarding och lasen som slapper fram premiuminnehall. Anvand for allt som kostar pengar eller kraver en plan.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---
@@ -16,9 +16,9 @@ Du ager plangranser och betalflode.
 
 - En las ar en las: `entitlement-gate.js` ar den enda platsen som avgor om nagot ar upplast.
   Widgetar och vyer fragar - de bestammer inte sjalva.
-- Priser och loften i UI maste stamma med Stripe-produkterna
+- Priser och loften i UI maste stamma med PayPal-planerna
   (`tests/pris-och-loften.test.js`). Text som lovar en funktion binder oss.
-- Stripe-nycklar finns bara pa servern. Klienten ser aldrig en hemlig nyckel.
+- PayPal-hemligheten finns bara pa servern (PAYPAL_CLIENT_SECRET). Klienten ser aldrig den; client-id ar publikt.
 - Trial-onboardingen ar forsta motet med produkten - andra den varsamt och kor
   browsertesterna.
 

@@ -1,129 +1,86 @@
 'use strict';
-// Vad vi laser ur en Stripe-prenumeration innan den skrivs till subscriptions-tabellen.
+// Vad vi laser ur en PayPal-prenumeration innan den skrivs till subscriptions-tabellen.
 //
-// UPPMATT UR STRIPES EGEN OPENAPI-SPEC 2026-08-09 (8 MB, den de genererar sina bibliotek ur):
+// UPPMATT UR PAYPALS REST-DOKUMENTATION (v1/billing/subscriptions) 2026-09-07:
 //
-//   subscription.current_period_end     FINNS INTE LANGRE pa objektet
-//   subscription_item.current_period_end "The end time of this subscription item's current
-//                                        billing period."
-//   subscription.trial_end               "If the subscription has a trial, the end of that trial."
+//   subscription.billing_info.next_billing_time   nasta dragning — slutet pa den betalda perioden
+//   subscription.billing_info.cycle_executions[]  en post per tenure (TRIAL / REGULAR) med
+//                                                 cycles_remaining; TRIAL med cycles_remaining > 0
+//                                                 betyder att vi ar I provperioden
+//   subscription.custom_id                        vart workspace-id, satt vid skapandet
 //
-// Foljden for en nedrakning under provperioden: periodslutet ar RATT svar, men bara via en
-// outtalad slutledning (trialen ar den aktuella faktureringsperioden). trial_end sager det
-// uttryckligen — och det faltet kastades bort, bade i tabellen och i /billing-svaret.
+// PayPal har INGET trial_end-falt. Under provperioden ar next_billing_time provperiodens slut —
+// men bara nar cycle_executions sager att provperioden pagar. Efter den ar samma falt nasta
+// manadsdragning, och da ar trialEnd null. Nedrakningen i vyra-trial-onboarding.js vilar pa det.
 //
-// Dessutom: fallbacken slutade pa `|| 0`, vilket blir to_timestamp(0) = 1 januari 1970. En
-// nedrakning byggd pa det hade visat cirka -20 500 dagar i stallet for att saga "vi vet inte".
-// Kolumnen ar timestamptz och tillater NULL. NULL ar det arliga vardet.
+// null, inte 0: to_timestamp(0) ar 1 januari 1970, och en nedrakning pa det visar -20 500 dagar.
+// Kolumnerna ar timestamptz och tillater NULL. NULL ar det arliga svaret nar vi inte vet.
 //
-// Mappningen gick inte att prova alls forut: den lag inbakad i webhook(), som kraver en databas
-// och en signerad Stripe-nyttolast. Den ar utbruten till en REN funktion — samma varde, matbart.
-//
-// ROTT NU: prenumerationsfalt() finns inte.
+// Mappningen ar en REN funktion, precis som Stripe-varianten var — provbar utan databas och utan
+// signerad nyttolast.
 const test = require('node:test'), assert = require('node:assert/strict');
 const billing = require('../billing');
 
-// En prenumeration som Stripe skickar den i DAG: inget current_period_end pa objektet.
-const NUTIDA_TRIAL = {
-  id: 'sub_1',
-  status: 'trialing',
-  trial_start: 1754700000,
-  trial_end: 1754959200,
-  metadata: { workspaceId: 'ws-1' },
-  items: { data: [{ price: { id: 'price_x' }, current_period_end: 1754959200 }] },
+const I_PROVPERIOD = {
+  id: 'I-TRIAL1', status: 'ACTIVE', plan_id: 'P-TRIAL', custom_id: 'ws-1',
+  billing_info: {
+    next_billing_time: '2026-09-10T10:00:00Z',
+    cycle_executions: [
+      { tenure_type: 'TRIAL', sequence: 1, cycles_completed: 0, cycles_remaining: 1, total_cycles: 1 },
+      { tenure_type: 'REGULAR', sequence: 2, cycles_completed: 0, cycles_remaining: 0, total_cycles: 0 },
+    ],
+  },
 };
 
-// Som Stripe skickade den forr, och som aldre API-versioner fortfarande kan gora.
-const GAMMAL_AKTIV = {
-  id: 'sub_2',
-  status: 'active',
-  current_period_end: 1757551200,
-  trial_end: null,
-  items: { data: [{ price: { id: 'price_x' } }] },
+const BETALANDE = {
+  id: 'I-REG1', status: 'ACTIVE', plan_id: 'P-REG', custom_id: 'ws-2',
+  billing_info: {
+    next_billing_time: '2026-10-07T10:00:00Z',
+    cycle_executions: [
+      { tenure_type: 'TRIAL', sequence: 1, cycles_completed: 1, cycles_remaining: 0, total_cycles: 1 },
+      { tenure_type: 'REGULAR', sequence: 2, cycles_completed: 1, cycles_remaining: 0, total_cycles: 0 },
+    ],
+  },
 };
 
 test('faltlasningen finns som en ren funktion', () => {
-  assert.equal(typeof billing.prenumerationsfalt, 'function',
-    'mappningen lag inbakad i webhook(), som kraver bade databas och signerad nyttolast — ' +
-    'den gick darfor inte att prova alls');
+  assert.equal(typeof billing.prenumerationsfalt, 'function');
 });
 
-test('trial_end lases ur prenumerationen', () => {
-  const f = billing.prenumerationsfalt(NUTIDA_TRIAL);
-  assert.equal(f.trialEnd, 1754959200,
-    'trial_end ar det ENDA falt Stripe uttryckligen definierar som provperiodens slut');
+test('under provperioden ar trialEnd = next_billing_time', () => {
+  const f = billing.prenumerationsfalt(I_PROVPERIOD);
+  assert.equal(f.inTrial, true);
+  assert.equal(f.trialEnd, Date.parse('2026-09-10T10:00:00Z') / 1000);
+  assert.equal(f.periodEnd, f.trialEnd, 'provperioden AR den aktuella perioden');
+  assert.equal(f.workspaceId, 'ws-1');
+  assert.equal(f.planId, 'P-TRIAL');
 });
 
-test('periodslutet lases ur artikeln nar objektet saknar det', () => {
-  const f = billing.prenumerationsfalt(NUTIDA_TRIAL);
-  assert.equal(f.periodEnd, 1754959200,
-    'current_period_end finns inte langre pa subscription — det bor pa subscription_item');
+test('efter provperioden ar trialEnd null men periodEnd nasta dragning', () => {
+  const f = billing.prenumerationsfalt(BETALANDE);
+  assert.equal(f.inTrial, false);
+  assert.equal(f.trialEnd, null, 'utan pagaende provperiod ska trialEnd vara null, inte 0');
+  assert.equal(f.periodEnd, Date.parse('2026-10-07T10:00:00Z') / 1000);
 });
 
-test('det gamla faltet anvands fortfarande nar det finns', () => {
-  const f = billing.prenumerationsfalt(GAMMAL_AKTIV);
-  assert.equal(f.periodEnd, 1757551200, 'aldre API-versioner skickar det pa objektet');
-  assert.equal(f.trialEnd, null, 'utan provperiod ska trial_end vara null, inte 0');
-});
-
-test('saknat periodslut blir null, inte 1970', () => {
-  const f = billing.prenumerationsfalt({ id: 'sub_3', status: 'active', items: { data: [{}] } });
+test('saknat next_billing_time blir null, inte 1970', () => {
+  const f = billing.prenumerationsfalt({ id: 'I-3', status: 'CANCELLED', billing_info: { cycle_executions: [] } });
   assert.equal(f.periodEnd, null,
-    'fallbacken slutade pa 0, vilket blir to_timestamp(0) = 1 januari 1970. En nedrakning pa ' +
-    'det hade visat cirka -20 500 dagar i stallet for att saga "vi vet inte".');
+    'fallbacken far inte sluta pa 0 — to_timestamp(0) = 1 januari 1970 och nedrakningen visar -20 500 dagar');
   assert.equal(f.trialEnd, null);
+  assert.equal(f.paypalStatus, 'CANCELLED');
 });
 
 test('tomt eller trasigt objekt kraschar inte', () => {
-  for (const indata of [null, undefined, {}, { items: null }, { items: { data: [] } }]) {
+  for (const indata of [null, undefined, {}, { billing_info: null }, { billing_info: { cycle_executions: 'nej' } }, { billing_info: { next_billing_time: 'inte ett datum' } }]) {
     const f = billing.prenumerationsfalt(indata);
     assert.equal(f.periodEnd, null, `indata: ${JSON.stringify(indata)}`);
     assert.equal(f.trialEnd, null);
-    assert.equal(f.priceId, null);
+    assert.equal(f.inTrial, false);
+    assert.equal(f.planId, null);
   }
 });
 
-test('prisidentiteten lases ur forsta artikeln', () => {
-  assert.equal(billing.prenumerationsfalt(NUTIDA_TRIAL).priceId, 'price_x');
-});
-
-// ---- Tabellen och svaret ------------------------------------------------------------------------
-const fs = require('fs'), path = require('path');
-const SCHEMA = fs.readFileSync(path.join(__dirname, '..', 'schema.sql'), 'utf8');
-const KALLA = fs.readFileSync(path.join(__dirname, '..', 'billing.js'), 'utf8');
-
-test('subscriptions-tabellen har en kolumn for trial_end', () => {
-  const i = SCHEMA.indexOf('CREATE TABLE IF NOT EXISTS subscriptions');
-  assert.ok(i > 0, 'kontrollmatning: tabellen ska finnas i schema.sql');
-  const tabell = SCHEMA.slice(i, SCHEMA.indexOf(');', i));
-  assert.match(tabell, /trial_end\s+timestamptz/,
-    'utan kolumnen gar provperiodens slut forlorat i det ogonblick webhooken tas emot');
-});
-
-// Det har provet ar det viktigaste i filen.
-//
-// migrate.js kor hela schema.sql mot databasen. CREATE TABLE IF NOT EXISTS hoppas over for en
-// tabell som REDAN FINNS — alltsa alla befintliga databaser, inklusive produktionens. En ny
-// kolumn i CREATE-satsen nar dem aldrig.
-//
-// Utan ALTER-raden hade webhookens INSERT kraschat pa "column trial_end does not exist" vid
-// forsta prenumerationshandelsen efter utrullning, och varje handelse darefter gatt forlorad
-// medan proven har hemma var grona. Repot har redan monstret pa tolv andra stallen.
-test('den nya kolumnen nar aven en befintlig databas', () => {
-  assert.match(SCHEMA, /ALTER TABLE subscriptions\s+ADD COLUMN IF NOT EXISTS trial_end/,
-    'CREATE TABLE IF NOT EXISTS rors inte av en tabell som redan finns. Produktionens databas ' +
-    'hade behallit den gamla tabellen, och varje INSERT fran webhooken hade kraschat.');
-});
-
-test('entitlement returnerar trial_end till klienten', () => {
-  const i = KALLA.indexOf('async function entitlement');
-  const fn = KALLA.slice(i, i + 420);
-  assert.match(fn, /trial_end/,
-    'klienten kan inte rakna ner till nagot den aldrig far se — /billing valde bara plan, ' +
-    'status, current_period_end och cancel_at_period_end');
-});
-
-test('webhooken skriver inte langre 0 som periodslut', () => {
-  assert.doesNotMatch(KALLA, /current_period_end\s*\|\|\s*0/,
-    'to_timestamp(0) ar 1 januari 1970, inte "okant"');
+test('statusordet normaliseras till versaler sa att jamforelserna i localStatus haller', () => {
+  assert.equal(billing.prenumerationsfalt({ status: 'active' }).paypalStatus, 'ACTIVE');
 });

@@ -83,7 +83,7 @@ Rotating this key invalidates queued verification and recovery links, so drain t
 
 ## Privacy lifecycle
 
-- Account export streams portable JSON without password hashes, session/token hashes, encrypted MFA secrets, object-storage keys or Stripe identifiers.
+- Account export streams portable JSON without password hashes, session/token hashes, encrypted MFA secrets, object-storage keys or payment-provider identifiers.
 - Account deletion requires the password and, when enabled, MFA. Active subscriptions are set to cancel before deletion is accepted.
 - A 7-day grace period allows accidental deletion to be cancelled; cancelled subscriptions are never silently reactivated.
 - At expiry, owned media objects are removed before database deletion. Owned workspaces cascade, shared uploads are detached from the deleted user, and account audit rows and queued email records are erased.

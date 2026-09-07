@@ -13,6 +13,9 @@ bockar av, och då blir "vad är kvar?" en fråga som ställs om och om igen.
 
 ## 1. Betalningen — en riktig transaktion hela vägen
 
+> **2026-09-07:** betalningen bytte leverantör till PayPal Subscriptions (server/billing.js). Avläsningen nedan
+> gäller Stripe-kedjan och måste göras om för PayPal: nytt konto, 15 USD via PayPal, samma fem kontroller.
+
 **Varför den blockerar:** Stripe-konfigurationen är bevisad i produktion, men **ingen riktig
 betalning har någonsin gått igenom kedjan**. Konfiguration och genomförd betalning är två olika
 saker; den första säger att rören är kopplade, den andra att vatten kommer ut.

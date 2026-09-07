@@ -2,7 +2,7 @@ VYRA PREMIUM-WIDGETUPPDATERING
 ================================
 
 Detta paket innehaller endast frontend-, widget- och designfiler.
-Produktionsbackend, Railway, Stripe, GitHub Actions och Electron-installern
+Produktionsbackend, Railway, PayPal, GitHub Actions och Electron-installern
 har inte skrivits over.
 
 INSTALLERA VIA GITHUB DESKTOP

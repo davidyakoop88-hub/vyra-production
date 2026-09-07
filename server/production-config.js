@@ -68,20 +68,25 @@ function validateProductionEnv(env=process.env){
   // a separate OBJECT_BUCKET satisfies it too.
   if(appEnv==='staging'&&!String(env.OBJECT_KEY_PREFIX||'').trim()&&!String(env.OBJECT_BUCKET||'').trim())
     errors.push('APP_ENV=staging kräver OBJECT_KEY_PREFIX (t.ex. staging/) eller en egen OBJECT_BUCKET, så stagingfiler aldrig hamnar bland produktionens');
-  check(()=>secret(env.STRIPE_SECRET_KEY,'STRIPE_SECRET_KEY'));
-  // Refused in BOTH directions, not just "must start with the right prefix". A live key on staging
-  // charges real cards from a test box; a test key in production silently takes no money at all and
-  // looks like it worked. Each is named explicitly so the error says which mistake was made.
-  {const key=String(env.STRIPE_SECRET_KEY||'');
+  // PayPal (ersatte Stripe 2026-09-07). Samma princip som förr, nekat i BÅDA riktningarna: sandbox i
+  // produktion tar inga pengar alls och ser ut att fungera; live på staging drar riktiga pengar från
+  // en testlåda. PAYPAL_ENV är därför bunden till APP_ENV, inte bara "måste vara ett giltigt värde".
+  check(()=>secret(env.PAYPAL_CLIENT_ID,'PAYPAL_CLIENT_ID'));
+  check(()=>secret(env.PAYPAL_CLIENT_SECRET,'PAYPAL_CLIENT_SECRET'));
+  {const mode=String(env.PAYPAL_ENV||'').trim().toLowerCase();
    if(appEnv==='production'){
-     if(key.startsWith('sk_test_'))errors.push('STRIPE_SECRET_KEY är en TESTnyckel men APP_ENV=production — produktion får inte köra Stripe i testläge');
-     else if(!key.startsWith('sk_live_'))errors.push('STRIPE_SECRET_KEY måste vara en live-nyckel (sk_live_) när APP_ENV=production');
+     if(mode==='sandbox')errors.push('PAYPAL_ENV är sandbox men APP_ENV=production — produktion får inte köra PayPal i sandbox');
+     else if(mode!=='live')errors.push('PAYPAL_ENV måste vara live när APP_ENV=production');
    }else if(appEnv==='staging'){
-     if(key.startsWith('sk_live_'))errors.push('STRIPE_SECRET_KEY är en LIVEnyckel men APP_ENV=staging — staging får aldrig röra riktiga betalningar');
-     else if(!key.startsWith('sk_test_'))errors.push('STRIPE_SECRET_KEY måste vara en testnyckel (sk_test_) när APP_ENV=staging');
+     if(mode==='live')errors.push('PAYPAL_ENV är live men APP_ENV=staging — staging får aldrig röra riktiga betalningar');
+     else if(mode!=='sandbox')errors.push('PAYPAL_ENV måste vara sandbox när APP_ENV=staging');
    }}
-  check(()=>secret(env.STRIPE_WEBHOOK_SECRET,'STRIPE_WEBHOOK_SECRET'));if(!String(env.STRIPE_WEBHOOK_SECRET||'').startsWith('whsec_'))errors.push('STRIPE_WEBHOOK_SECRET är ogiltig');
-  if(!/^price_[A-Za-z0-9]+$/.test(String(env.STRIPE_PRICE_MONTHLY||'')))errors.push('STRIPE_PRICE_MONTHLY är ogiltigt');
+  // Webhook-id:t är det PayPal själva verifierar varje leverans mot; utan det tas ingen händelse emot.
+  if(!/^[0-9A-Z]{17}$/.test(String(env.PAYPAL_WEBHOOK_ID||'')))errors.push('PAYPAL_WEBHOOK_ID är ogiltigt');
+  // Två planer på samma produkt: med och utan 3 dagars provperiod. Samma id på båda hade gett
+  // varje återkommande kund en ny gratisperiod — eller ingen kund någon.
+  for(const name of ['PAYPAL_PLAN_MONTHLY','PAYPAL_PLAN_MONTHLY_TRIAL'])if(!/^P-[A-Z0-9]{20,}$/.test(String(env[name]||'')))errors.push(`${name} är ogiltigt`);
+  if(env.PAYPAL_PLAN_MONTHLY&&env.PAYPAL_PLAN_MONTHLY===env.PAYPAL_PLAN_MONTHLY_TRIAL)errors.push('PAYPAL_PLAN_MONTHLY och PAYPAL_PLAN_MONTHLY_TRIAL måste vara två olika planer');
   check(()=>secret(env.RESEND_API_KEY,'RESEND_API_KEY'));if(!/^re_/.test(String(env.RESEND_API_KEY||'')))errors.push('RESEND_API_KEY är ogiltig');
   if(!/@(?!example\.com)[A-Za-z0-9.-]+\.[A-Za-z]{2,}>?$/.test(String(env.EMAIL_FROM||'')))errors.push('EMAIL_FROM måste använda en verifierad domän');
   if(env.ALERT_WEBHOOK_URL)check(()=>httpsUrl(env.ALERT_WEBHOOK_URL,'ALERT_WEBHOOK_URL'));

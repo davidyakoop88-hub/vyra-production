@@ -32,15 +32,15 @@ const konto = (over = {}) => ({
   sub: 'sub' in over ? over.sub : null,
 });
 
-test('ett betalt Stripe-abonnemang ror skriptet aldrig — at bada hallen', () => {
-  const betalt = { plan: 'premium', status: 'active', stripe_subscription_id: 'sub_1ABC' };
+test('ett betalt abonnemang hos leverantoren ror skriptet aldrig — at bada hallen', () => {
+  const betalt = { plan: 'premium', status: 'active', stripe_subscription_id: 'I-1ABC' };
 
   for (const flaggor of [{ pa: true }, { av: true }]) {
     const vad = beslut(konto({ sub: betalt }), flaggor);
     assert.equal(vad.atgard, 'stopp',
-      `${JSON.stringify(flaggor)} pa ett Stripe-abonnemang maste stanna, blev "${vad.atgard}"`);
+      `${JSON.stringify(flaggor)} pa ett betalt abonnemang maste stanna, blev "${vad.atgard}"`);
     assert.equal(vad.kod, 3);
-    assert.match(vad.text, /Stripe-abonnemang/);
+    assert.match(vad.text, /betalt abonnemang/);
   }
 
   // Samma rad UTAN stripe-id ska daremot ga igenom — annars ar spärren bara "gor aldrig nagot".

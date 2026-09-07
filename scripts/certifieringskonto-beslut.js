@@ -78,15 +78,15 @@ function beslut(konto, flags) {
     return { atgard: 'stopp', kod: 1, text: 'Avbryter: utan arbetsyta finns ingen rad att sätta abonnemanget på.' };
   }
 
-  // RÖR ALDRIG ETT RIKTIGT STRIPE-ABONNEMANG. Att skriva över det skulle få databasen att säga en
-  // sak medan Stripe fortsätter fakturera — och nästa webhook skriver ändå tillbaka Stripes bild, så
+  // RÖR ALDRIG ETT RIKTIGT BETALT ABONNEMANG. Att skriva över det skulle få databasen att säga en
+  // sak medan leverantören (PayPal) fortsätter fakturera — och nästa webhook skriver ändå tillbaka dess bild, så
   // ändringen vore både farlig och verkningslös. Spärren gäller ÅT BÅDA HÅLLEN: `--av` på ett betalt
   // abonnemang skulle stänga av en kund som betalar.
   if (sub && sub.stripe_subscription_id) {
     return {
       atgard: 'stopp', kod: 3,
-      text: `Avbryter: arbetsytan har ett RIKTIGT Stripe-abonnemang (${sub.stripe_subscription_id}).\n`
-        + 'Det här skriptet rör bara kompade rader. Hantera betalda abonnemang i Stripe.',
+      text: `Avbryter: arbetsytan har ett RIKTIGT betalt abonnemang hos leverantören (${sub.stripe_subscription_id}).\n`
+        + 'Det här skriptet rör bara kompade rader. Hantera betalda abonnemang hos PayPal.',
     };
   }
 
