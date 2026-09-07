@@ -123,6 +123,23 @@ const event={
   const vinstUs=svit(input?.winsUs),vinstThem=svit(input?.winsThem);
   if(vinstUs!=null)event.winsUs=vinstUs;
   if(vinstThem!=null)event.winsThem=vinstThem;
+  // LIGABRICKAN (#367 del 3). Villkorlig av ett starkare skal an vinstsviten: brickan kommer BARA i
+  // battle-payloaden — uppmatt 60 ganger over nio sandningar, mot 6 347 for tittarlistan — och
+  // klienten MINNS darfor senaste vardet mellan matcher. Ett tomt falt i varje annan handelse hade
+  // raderat en korrekt visad bricka tusentals ganger per sandning.
+  //
+  // Falten foljs at: utan text finns ingen bricka, sa resten bars bara nar texten finns.
+  const ligaText=String(input?.ligaText||'').slice(0,32);
+  if(ligaText){
+    event.ligaText=ligaText;
+    event.ligaIkon=String(input?.ligaIkon||'').slice(0,1200);
+    event.ligaFarg=String(input?.ligaFarg||'').slice(0,32);
+    event.ligaBakgrund=String(input?.ligaBakgrund||'').slice(0,32);
+    // `!==false` sa att en brygga som inte skickar faltet visar brickan i stallet for att dolja den.
+    event.ligaVisa=input?.ligaVisa!==false;
+  }
+  const ligaPoang=svit(input?.ligaPoang);
+  if(ligaPoang!=null)event.ligaPoang=ligaPoang;
   if(!event.id||!ALLOWED.has(event.type))throw Object.assign(new Error('Ogiltigt live-event'),{status:400});
   if(Buffer.byteLength(JSON.stringify(event))>MAX_EVENT_BYTES)throw Object.assign(new Error('Event för stort'),{status:413});
   return event;

@@ -132,3 +132,41 @@ test('och en aldre brygga utan faltet raknas som i dag', () => {
   const topp = lb.getTop('coins', 5).find(t => String(t.username).toLowerCase() === 'mira');
   assert.equal(topp && topp.coins, 250, 'en gava utan faltet filtrerades bort — forvalet ar fel');
 });
+
+// ---- ligabrickan i Match Monitor (#367 del 3) --------------------------------------------------
+// Brickan bars BARA i battle-payloaden — uppmatt 60 ganger over nio sandningar, mot 6 347 for
+// tittarlistan. Panelen minns darfor senaste vardet mellan matcher, och skrivningen maste vara
+// villkorad: varje gava, like och chattrad hade annars raderat en korrekt visad bricka.
+test('Match Monitor skriver ligan bara nar faltet faktiskt finns', () => {
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /if\(event\.ligaText\)\{battle\.liga=/,
+    'ligan skrivs ovillkorligt — brickan raderas av varje handelse som inte bar den');
+  assert.match(src, /if\(event\.ligaPoang!=null\)battle\.ligaPoang=/,
+    'ligapoangen skrivs ovillkorligt');
+});
+
+test('ligans farger och ikon VALIDERAS pa form — safe() racker inte i ett style-attribut', () => {
+  // Vardena kommer fran TikTok och gar in i ett style-attribut respektive ett src. Ett
+  // style-attribut ar en egen injektionsyta: `#fff;background:url(...)` innehaller inte ett enda
+  // tecken som safe() ror, sa escapning skyddar inte. Darfor form-validering: en farg som inte ar
+  // en hexkod och en ikon som inte ar http(s) ritas inte alls.
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /function hexFarg\(v\)\{return \/\^#\[0-9a-fA-F\]\{3,8\}\$\/\.test/,
+    'fargerna valideras inte som hexkoder innan de skrivs i ett style-attribut');
+  assert.match(src, /function bildUrl\(v\)\{return \/\^https\?/,
+    'ikonens URL valideras inte innan den skrivs i ett src');
+  // Och de MASTE anvandas pa vagen in, inte bara finnas.
+  assert.match(src, /battle\.ligaFarg=hexFarg\(event\.ligaFarg\)/, 'ligaFarg lagras ovaliderad');
+  assert.match(src, /battle\.ligaBakgrund=hexFarg\(event\.ligaBakgrund\)/, 'ligaBakgrund lagras ovaliderad');
+  assert.match(src, /battle\.ligaIkon=bildUrl\(event\.ligaIkon\)/, 'ligaIkon lagras ovaliderad');
+});
+
+test('och brickan renderas — med texten escapad', () => {
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /battle\.liga&&battle\.ligaVisa\?/,
+    'brickan ritas utan att fraga om shouldShow — TikToks egen "visa inte" ignoreras da');
+  assert.match(src, /<b>\$\{safe\(battle\.liga\)\}<\/b>/,
+    'ligatexten skrivs oescapad');
+  const css = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.css'), 'utf8');
+  assert.match(css, /\.lc-liga\{/, 'brickan har ingen CSS — den ritas oformaterad');
+});

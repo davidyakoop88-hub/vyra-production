@@ -403,7 +403,12 @@ if (require.main === module) {
     // som ar var, sa utan id:t gar det inte att skilja var hostscore fran motstandarens. Se
     // battleFields. Ar det tomt behalls de gamla reserverna och poangen blir 0 som forut — hellre
     // en nolla an motstandarens siffra i var egen overlay.
-    connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle', N.battleFields(data, mittAnkarId), data));
+    // LIGABRICKAN reser med samma handelse. Den kommer BARA i battle-payloaden — uppmatt 60 ganger
+    // over nio sandningar, noll ganger nagon annanstans — sa det finns ingen annan vag in for den.
+    // ligaFields ger ett TOMT objekt nar kartan saknas, sa spridningen lagger inga falt de flesta
+    // gangerna. Se ligaFields i normalizer.js. #367
+    connection.on(WebcastEvent.LINK_MIC_BATTLE, data => sendEvent('battle',
+      { ...N.battleFields(data, mittAnkarId), ...N.ligaFields(data, mittAnkarId) }, data));
 
     // ---- multiplikatorfonstret (Boosting Glove) ------------------------------------------------
     // Klientsidan har redan hela vagen: media.js tander Glove Snipe pa `glove` i typen och laser

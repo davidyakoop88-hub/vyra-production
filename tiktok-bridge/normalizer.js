@@ -270,6 +270,53 @@ function battleFields(data, mittAnkarId){
     ...(derasCombo?{winsThem:number(derasCombo.varde?.comboCount,999)}:{}),
     multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
 }
+// LIGABRICKAN — den enda plats i TikToks strom som sager VAR VARDEN LIGGER. #367 del 3
+//
+// Streamern fragade "vilken nr ar jag i rankning". Det gick INTE att svara pa ur `ranks`, som ar
+// en TITTARLISTA (noll av atta ankar-id star nagonsin i den) och vars `delta` dessutom ar "0" i
+// 30 910 av 30 910 forekomster. Ligabrickan ar det narmaste svaret som faktiskt finns i datan.
+//
+// UPPMATT over nio inspelningar (58 876 rader):
+//
+//   60 forekomster, UTESLUTANDE pa `battle`-rader     — mot `ranks` 6 347 ganger
+//   leagueInfoMap och leagueScoreInfoMap delar NYCKELRYMD (12 av 12 nycklar i bada)
+//   8 av kartans 12 nycklar ar kanda ankare, och ETT aterkommer i varje sandning: vardens eget
+//   ligorna som setts: league_A / league_B / league_C, med tre bakgrundsfarger
+//
+// ⚠️ `leagueName` AR ALLTID TOM — "" i samtliga 69 poster. Ligans identitet finns bara i
+// `displayText.content` ("C1") och i ikonens filnamn. Den som letar efter ett namnfalt hittar ett
+// som ser ratt ut och alltid ar tomt.
+//
+// ⚠️ STRUKTUREN LIGGER ETT STEG DJUPARE an issuen angav: displayText, icon och shouldShow sitter
+// inuti `leagueInfo`, inte direkt under kartans post. backgroundColor gor det daremot.
+//
+// SAKNAS NAGOT SKICKAS INGET. Falten ar villkorliga, precis som battleId och winsUs: brickan kommer
+// 60 ganger per nio sandningar, och klienten MINNS senaste vardet mellan matcher. Ett tomt falt
+// hade da raderat en riktig bricka varje gang TikTok utelamnade kartan.
+function ligaFields(data, mittAnkarId){
+  const ankare=String(mittAnkarId||'').trim();
+  if(!ankare)return{};
+  const vart=karta(data&&data.leagueInfoMap).find(p=>p.id===ankare);
+  // Posten kan finnas utan innehall — kartan ar da en tom skal, och `leagueInfo` saknas.
+  const info=vart&&vart.varde&&vart.varde.leagueInfo;
+  if(!info)return{};
+  const txt=text(info.displayText&&info.displayText.content,32);
+  if(!txt)return{};                       // utan text finns ingen bricka att visa
+  const poang=karta(data&&data.leagueScoreInfoMap).find(p=>p.id===ankare);
+  const rap=poang&&poang.varde&&poang.varde.estimatedScore;
+  return{
+    ligaText:txt,
+    ligaIkon:text(info.icon&&info.icon.urlList&&info.icon.urlList[0],1200),
+    ligaFarg:text(info.displayText&&info.displayText.color,32),
+    ligaBakgrund:text(vart.varde.backgroundColor,32),
+    // shouldShow ar TikToks egen "visa inte den har brickan". `!==false` sa att en payload utan
+    // faltet visar brickan i stallet for att dolja den.
+    ligaVisa:info.shouldShow!==false,
+    // Villkorligt av samma skal som winsUs: `number(undefined)` ar 0, och en nolla hade sett ut
+    // som en riktig poang pa noll.
+    ...(rap==null||rap===''?{}:{ligaPoang:number(rap,1e9)}),
+  };
+}
 // Multiplikatorfonstret i en battle — det som pa svenska heter Boosting Glove.
 //
 // VARFOR DEN HAR FUNKTIONEN FINNS. Klienten har hela vagen redan byggd: media.js
@@ -391,7 +438,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -615,4 +662,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};

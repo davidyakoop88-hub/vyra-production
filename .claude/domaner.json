@@ -301,6 +301,7 @@
         "stream-time-analytics.js"
       ],
       "tester": [
+        "server/test/ligabricka.test.js",
         "tests/event-contract.test.js",
         "tests/live-session-client.test.js",
         "tests/live-ingest-isolering.test.js",
