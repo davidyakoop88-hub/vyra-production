@@ -224,7 +224,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // rebasade innehållet är VARKEN det ena eller det andra utan båda, och en sammanslagning som
   // rör en fil är en ändring av den filen — precis som de två sammanslagningarna 2026-08-20 här
   // ovanför. Därför en egen sträng i stället för att ärva någonderas.
-  assert.match(studio, /[^-]media\.js\?v=20260907-3/);
+  // Bumpad en FJARDE gang samma dygn for ligabrickan (#367 del 3): live-control.js och
+  // live-control.css andrades bada — Match Monitor visar numera vardens liga (A/B/C) med poang,
+  // det narmaste svaret pa "vilken nr ar jag" som faktiskt finns i TikToks strom. media.js BAR
+  // bada strangarna, sa media.js sjalv maste folja med.
+  assert.match(studio, /[^-]media\.js\?v=20260907-4/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
