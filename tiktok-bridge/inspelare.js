@@ -108,6 +108,38 @@ const RENT_TAL = /^\d+$/;
 // Bara for OBJEKTNYCKLAR. Se kommentaren i maskera() om varfor samma form ar saker dar och
 // oanvandbar pa varden.
 const ID_NYCKEL = /^\d{15,22}$/;
+
+// ---- DEN LANGA SIFFERSTRANGEN, som forsta versionen av den har fixen slappte igenom ------------
+//
+// Att lata ALLA rena siffror passera var fel, och matningen visade varfor: 91 varden i faltet
+// `score` och 13 i `key` ar samma strangar som star som `userId`/`uid` nagon annanstans i samma
+// inspelning. Ett tittarid slapptes alltsa igenom for att det lag i ett falt som inte heter
+// nagot med "id".
+//
+// DET AR "ett faltnamn ar inte ett falt" igen, den har gangen i sifferregeln. `score` bar TVA
+// olika saker: en poang och nagot id-format.
+//
+// GRANSEN AR MATT, inte vald. Varje akta poangfalt ryms i fem siffror:
+//
+//   hostscore  max 5     teamTotalScore  max 5     diamondScore   max 1
+//   totalScore max 5     enigmaScore     max 1     estimatedScore max 1
+//
+// Bara `score` har 19-siffriga varden — och det ar just de som ar id. Ett tal pa 15 siffror eller
+// mer har darfor SAMMA form som ett TikTok-id och hashas, om inte faltet ar granskat.
+const LANGT_TAL = /^\d{15,}$/;
+// Falt dar en lang sifferstrang bevisligen ar ett OBJEKT eller en TIDPUNKT, aldrig en person.
+// Kontrollerat mot de nio inspelningarna: noll av dessa faltens varden sammanfaller med nagot
+// varde ur ett entydigt personfalt (userId, uid, secUid, toUserId, fromUserId, sendUserId ...).
+//
+// roomId, channelId, rtcRoomId och groupChannelId star med FLIT INTE har: de identifierar rummet
+// och darmed sandningen, de behovs inte for nagon analys, och en stabil hash grupperar lika bra.
+const LANGA_TAL_OK = new Set([
+  'msgid', 'pinmsgid',            // meddelandets id — idempotensnyckeln analysen dedupar pa
+  'battleid', 'matchid', 'playid', // matchens identitet, uttryckligen kritisk
+  'envelopeid', 'emoteid', 'privilegeid', 'tagid', 'packageid', // katalog-/handelseobjekt
+  'linkedtime', 'linkedtimenano', 'jointime',                   // nanosekundstamplar
+  'version',
+]);
 const ICKE_ASCII = /[^\x00-\x7F]/;
 
 // Falt vars ICKE-numeriska strangvarden slapps igenom ORORDA.
@@ -145,12 +177,39 @@ const ICKE_ASCII = /[^\x00-\x7F]/;
 //
 // Varje post nedan bar sitt uppmatta underlag. Foraldrarna ar kontrollerade, eftersom en post
 // slapper igenom faltnamnet under ALLA foraldrar.
+// TVA POSTER TOGS BORT EFTER EN ADVERSARIELL GRANSKNING, och skalen ar vardare an listan:
+//
+//   sourceType  INERT. Alla 1 354 forekomster ar tal eller 1-2-siffriga strangar, som slapps
+//               igenom av skikt 1 och 6 — FORE allowlisten. Posten andrade NOLL uppmatta varden;
+//               dess enda verkan lag pa framtida, omatta. Ren risk utan nytta.
+//               ⚠️ EN POST SOM AR INERT PA ALLT UPPMATT MATERIAL SKA BORT. Det ar regeln, och
+//               tiktok-bridge/test/inspelare.test.js provar den. Granskningen gav ocksa
+//               motbilden: `bestTeammateUid` har IDENTISK signatur — 147 forekomster, 1 unikt
+//               varde, langd [1,1], skelettet "9" — och ar obestridligt ett person-id.
+//               Formen sager ingenting.
+//   key         STORSTA YTAN. Faltet star under 20+ olika foraldrar. Vardena visade sig vid full
+//               uppraakning vara i18n-nycklar aven under `nameRef` (formen a{4}_a{4}_9{4}), men
+//               ytan ar for bred for att forsvaras post for post, och dess 15+-siffriga varden
+//               var anvandar-id. De 111 nycklarna gar forlorade; Guardian-analysen overlever anda
+//               via nameStarlingKey (1 736 forekomster), geckoChannelName och fileName.
+//
+// ⚠️ TVA INVANDNINGAR FOLL PA EN FULL UPPRAKNING, och det ar vart att minnas hur:
+//
+//   subType     Granskningen sa att inventarieraden slar ihop tva olika falt, eftersom
+//               `foraldrar` var tom. En uppraakning av SAMTLIGA varden visar 7 unika, alla i
+//               payloadens ROT, alla ren ASCII, max 29 tecken. Slutsatsen var rimlig av
+//               underlaget men faktiskt fel.
+//   scene       Granskningen sa "okarakteriserad svans": inventariets skelettlista ar kapad till
+//               fyra former, och for scene tackte de 2 631 av 2 635 forekomster. Uppraakningen
+//               visar att det bara FINNS 8 unika varden — 2 304 tomma, 280 ensiffriga och sex
+//               snake_case-enum. Det fanns ingen svans; kapningen dolde bara att den saknades.
+//
+// Laxan ar att kapade sammanfattningar foder rimliga men felaktiga slutsatser. Nar en post ar
+// omstridd: rakna upp ALLA varden for just det faltet i stallet for att lita pa aggregatet.
 const SLAPP_IGENOM_SKAL = {
-  method: 'Protokollets meddelandetyp under common. 28 unika, 0-36 tecken, ingen icke-ASCII.',
-  scene: 'Lagesvarde under battleSettings. 8 unika, ingen icke-ASCII eller blanksteg.',
-  subtype: 'Payloadens undertypsdiskriminator som analysen grenar pa. 7 unika, ren ASCII.',
-  sourcetype: 'Ensiffrigt enum, 1 unikt varde i hela materialet. Kan fysiskt inte bara ett namn.',
-  key: 'i18n-nyckel som valjer meddelandemall, under text/displayText/content. 125 unika, ren ASCII.',
+  method: 'Protokollets meddelandetyp under EN foralder (common). 28 unika, 0-36 tecken, ren ASCII.',
+  subtype: 'Handelsens diskriminator i payloadens ROT (fans_upgrade m.fl.). 7 unika, ren ASCII, max 29 tecken.',
+  scene: 'Lagesvarde i payloadens ROT. 8 unika totalt: 2 304 tomma, 280 ensiffriga, sex snake_case-enum.',
   showvalue: 'Sprakresursnyckel under portraitTag i snake_case. 13 unika, inga siffror eller emoji.',
   promptkey: 'Uppslagsnyckel for UI-text under prompt/clickPrompt. 10 unika, ren ASCII.',
   namestarlingkey: 'i18n-nyckel (Starling) for ramens etikett under border/borderList. 1 unikt varde.',
@@ -253,7 +312,11 @@ function maskera(varde, nyckel = '') {
     }
     return `id#${hash(varde)}`;
   }
-  if (RENT_TAL.test(varde)) return varde;           // score, msgId, battleId, tidsstamplar
+  // Rena siffror: poang, raknare, nivaer och tidsstamplar. Men ett tal pa 15+ siffror har samma
+  // form som ett person-id, sa det slapps bara igenom fran ett granskat falt. Se LANGT_TAL ovan.
+  if (RENT_TAL.test(varde)) {
+    return !LANGT_TAL.test(varde) || LANGA_TAL_OK.has(k) ? varde : `id#${hash(varde)}`;
+  }
   if (SLAPP_IGENOM.has(k)) return varde;
   // FORVALET. Fritext (blanksteg eller icke-ASCII) ar dar namn bor — dar lamnas inte ens formen,
   // eftersom ett skelett av ett namn rojer emoji och interpunktion. Allt annat behaller sin form.

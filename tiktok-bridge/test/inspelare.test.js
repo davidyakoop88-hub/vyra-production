@@ -298,15 +298,16 @@ test('16: BATTLE-DATAN OVERLEVER — sifferstrangar rors inte', () => {
   // maskera varje \d{15,22} oavsett faltnamn — det hade raderat bada, alltsa exakt den data
   // inspelaren finns for. Ett person-id och en poang har SAMMA form; bara namnet skiljer dem at.
   const ut = I.maskera({
-    score: '9905123456789012345', msgId: '7546541354546545455', battleId: '7123456789',
-    roomId: '7100000000000000009', hostscore: 41200, timestamp: 1723900000000,
+    score: '41200', msgId: '7546541354546545455', battleId: '7123456789',
+    hostscore: 41200, timestamp: 1723900000000, teamTotalScore: '39000', diamondScore: 8,
   });
-  assert.equal(ut.score, '9905123456789012345', 'score maskerades — battle-matningen ar borta');
+  assert.equal(ut.score, '41200', 'score maskerades — battle-matningen ar borta');
   assert.equal(ut.msgId, '7546541354546545455', 'msgId maskerades — idempotensnyckeln ar borta');
   assert.equal(ut.battleId, '7123456789');
-  assert.equal(ut.roomId, '7100000000000000009');
+  assert.equal(ut.teamTotalScore, '39000');
   assert.equal(ut.hostscore, 41200, 'ett TAL fick inte ens rundas om');
   assert.equal(ut.timestamp, 1723900000000);
+  assert.equal(ut.diamondScore, 8);
 });
 
 test('17: skelettet bar formen men aldrig innehallet', () => {
@@ -432,4 +433,83 @@ test('23: metaraden bar maskeringens VERSION — annars gar gamla filer inte att
   // Och LAS-MIG maste saga hur man laser versionen, annars hjalper den ingen som hittar en gammal fil.
   assert.match(I.LAS_MIG, /maskeringVersion/,
     'LAS-MIG namner inte versionen — den som hittar en gammal fil far ingen varning');
+});
+
+test('24: en 15+ siffrig strang hashas aven i ett falt som INTE heter nagot med id', () => {
+  // DET HAR VAR EN VERKLIG LACKA I FORSTA VERSIONEN AV INVERSIONEN, och den overlevde bade
+  // provsviten och acceptansprovet mot de nio inspelningarna.
+  //
+  // Sifferregeln slappte igenom ALLA rena tal. Uppmatt: 91 varden i faltet `score` och 13 i `key`
+  // ar samma strangar som star som userId/uid nagon annanstans i samma inspelning. Ett tittarid
+  // slapptes alltsa igenom for att det lag i ett falt som inte heter nagot med "id".
+  //
+  // Det ar "ett faltnamn ar inte ett falt" en tredje gang — den har gangen i SIFFERREGELN.
+  // `score` bar tva olika saker.
+  //
+  // GRANSEN AR MATT: varje akta poangfalt ryms i fem siffror (hostscore max 5, teamTotalScore
+  // max 5, diamondScore max 1). Bara `score` hade 19-siffriga varden, och det var just de som
+  // var id.
+  const ut = I.maskera({ score: '6812345678901234567', key: '7100000000000000001' });
+  assert.match(ut.score, /^id#[0-9a-f]{8}$/,
+    'ett 19-siffrigt varde i `score` slapptes igenom — 91 sadana var tittares user-id');
+  assert.match(ut.key, /^id#[0-9a-f]{8}$/, 'samma sak i `key`, dar alla 13 langa varden var id');
+  // Och ett akta poangvarde ska fortfarande vara orort.
+  assert.equal(I.maskera({ score: '41200' }).score, '41200');
+});
+
+test('25: langa tal fran GRANSKADE falt slapps igenom — annars dor analysen', () => {
+  // Motsatt riktning. msgId ar idempotensnyckeln och battleId knyter ihop en match; bada ar
+  // 19-siffriga och maste overleva. Listan ar kontrollerad mot inspelningarna: noll av dessa
+  // faltens varden sammanfaller med nagot varde ur ett entydigt personfalt.
+  for (const [falt, varde] of [['msgId', '7546541354546545455'], ['battleId', '7546541354546545455'],
+    ['linkedTimeNano', '1725600000000000000'], ['envelopeId', '7546541354546545455']]) {
+    assert.equal(I.maskera({ [falt]: varde })[falt], varde, `${falt} maskerades — analysen tappar den`);
+  }
+  // Rums-id star med FLIT INTE pa listan: det identifierar sandningen, behovs inte for analysen,
+  // och en stabil hash grupperar lika bra.
+  assert.match(I.maskera({ roomId: '7100000000000000009' }).roomId, /^id#/,
+    'roomId slapptes igenom — det identifierar sandningen och behovs inte omaskerat');
+});
+
+test('26: ingen post i allowlisten far vara INERT — den vore ren risk utan nytta', () => {
+  // Regeln kom ur den adversariella granskningen 2026-09-07, och den ar listans viktigaste.
+  //
+  // `sourceType` stod har och andrade NOLL uppmatta varden: alla dess 1 354 forekomster ar tal
+  // eller 1-2-siffriga strangar, som slapps igenom av skikt 1 och 6 — FORE allowlisten. Postens
+  // enda verkan lag alltsa pa framtida, omatta varden. En sadan post ger ingen nytta och bara risk.
+  //
+  // Provet mater det pa den enda form som gar att kontrollera utan inspelningarna: en post vars
+  // varden ALLTID skulle passera pa form kan inte forsvaras. Ett rent tal eller en tom strang
+  // slipper igenom oavsett, sa en post vars enda tankta varden ar sadana ar per definition inert.
+  for (const namn of Object.keys(I.SLAPP_IGENOM_SKAL)) {
+    const orort = I.maskera({ [namn]: 'ett_ord_som_inte_ar_ett_tal' })[namn];
+    assert.equal(orort, 'ett_ord_som_inte_ar_ett_tal',
+      `${namn} star i allowlisten men slapper inte igenom ett icke-numeriskt varde — ` +
+      'da gor posten ingenting och ska bort');
+    // Kontrollmatning: utan posten hade samma varde maskerats. Om det INTE hade maskerats ar
+    // posten inert, och provet ovan hade varit gront av fel skal.
+    const utanPost = I.maskera({ ettFaltSomInteStarIListan: 'ett_ord_som_inte_ar_ett_tal' });
+    assert.match(utanPost.ettFaltSomInteStarIListan, /^<okant /,
+      'ett falt utanfor listan maskerades inte — da bevisar provet ovan ingenting');
+  }
+});
+
+test('27: de tva falt granskningen falde star INTE kvar', () => {
+  // sourceType (INERT — andrade noll uppmatta varden) och key (20+ foraldrar, for bred yta).
+  // Skalen star i inspelare.js.
+  //
+  // subType och scene stod ocksa har en stund. Granskningen falde bada — subType for att
+  // inventarieraden sags sla ihop tva falt, scene for en "okarakteriserad svans" — men en
+  // uppraakning av SAMTLIGA varden visade att bada slutsatserna var fel: subType har 7 unika i
+  // payloadens rot, scene har 8 totalt. Kapade sammanfattningar foder rimliga men felaktiga
+  // slutsatser, och darfor star de kvar i listan.
+  for (const namn of ['sourceType', 'key']) {
+    assert.ok(!(namn.toLowerCase() in I.SLAPP_IGENOM_SKAL),
+      `${namn} har lagts tillbaka i allowlisten — las skalet i inspelare.js innan du gor det`);
+  }
+  // Och Guardian-analysen maste fortfarande fungera UTAN dem.
+  const nyttolast = I.maskera({ nameStarlingKey: 'pm_mt_guardian_entrance_v2',
+    animationData: { geckoChannelName: 'webcast_gift_guardian_shield_anim' } });
+  assert.match(JSON.stringify(nyttolast), /guardian/i,
+    'utan key och scene hittar analysatorn inte langre Guardian — da var borttagningen for dyr');
 });
