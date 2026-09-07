@@ -170,3 +170,27 @@ test('och brickan renderas — med texten escapad', () => {
   const css = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.css'), 'utf8');
   assert.match(css, /\.lc-liga\{/, 'brickan har ingen CSS — den ritas oformaterad');
 });
+
+test('ligabrickan far inte gora headern till en TREKOLUMNSLAYOUT', () => {
+  // UPPMATT BUGG, inte en farhaga. `.lc-battle header` ar `display:flex` med
+  // `justify-content:space-between`. Brickan lades forst som ett TREDJE barn, och da flyttade sig
+  // MATCH AKTIV-chippet fran headerns hogerkant till mitten:
+  //
+  //   utan liga   chippets hogerkant 1016 px = headerns bredd, alltsa 0 px fran kanten
+  //   med liga    chippets hogerkant  580 px, alltsa 436 px in mot mitten
+  //
+  // Varre an att det ser fel ut: brickan kommer FORST nar en battle borjar, sa chippet hoppade
+  // 436 px mitt i sandningen. Chip och bricka bor darfor i en egen behallare, och headern har
+  // tva barn precis som forut.
+  const src = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.js'), 'utf8');
+  assert.match(src, /<div class="lc-battle-status"><span class="lc-match-state/,
+    'chippet ligger inte i lc-battle-status — headern far tre barn och chippet flyttar sig');
+  assert.match(src, /<\/span>`:''\}<\/div><\/header>/,
+    'behallaren stangs inte fore </header>');
+  const css = fs2.readFileSync(path2.join(__dirname, '..', 'live-control.css'), 'utf8');
+  assert.match(css, /\.lc-battle-status\{display:flex/,
+    'behallaren saknar egen layout — da staplas chip och bricka i stallet for att sta bredvid');
+  assert.doesNotMatch(css, /\.lc-liga\{[^}]*margin-left/,
+    'brickan har kvar sin margin-left — avstandet ska komma fran behallarens gap, annars far den ' +
+    'ett dubbelt mellanrum');
+});
