@@ -221,3 +221,215 @@ test('typvalet: tomt ger battle-familjen, "alla" ger allt, en lista ger exakt de
   assert.equal(inspelare.vill('LINK_MIC_ARMIES'), false);
   await vanta(0);
 });
+
+// ---- 11-18. INVERSIONEN (#357) -----------------------------------------------------------------
+// Fram till 2026-09-07 var forvalet att SLAPPA IGENOM: en lista raknade upp falten som skulle
+// maskeras, allt annat gick rakt ut. Uppmatt over nio inspelningar (58 876 rader, 417 MB) i filer
+// vars filhuvud sager `"maskad":true`: 416 unika person-id, ~3 130 `uri` (varav 76 332
+// forekomster avatarsokvagar), 363 `describe` med visningsnamn, 87 `contributorDisplayId`.
+//
+// Proven nedan matar bada halvorna av bytet: att det som ska bort forsvinner, OCH att det som
+// inspelaren finns for overlever. Den andra halvan ar den lattaste att tappa — ett tidigare
+// forslag hade maskerat varje \d{15,22} och darmed raderat `score` och `msgId`.
+
+test('11: FORVALET ar att maskera — ett falt ingen har granskat slapps inte igenom', () => {
+  const ut = I.maskera({ ettHeltNyttFaltTikTokLadeTill: 'PiiikaboOom', nyFritext: 'hej pa dig' });
+  assert.notEqual(ut.ettHeltNyttFaltTikTokLadeTill, 'PiiikaboOom',
+    'ett okant falt slapptes igenom — da ar forvalet fortfarande fel hall och nasta falt TikTok ' +
+    'lagger till lacker precis som describe gjorde');
+  assert.match(ut.ettHeltNyttFaltTikTokLadeTill, /^<okant /);
+  assert.equal(ut.nyFritext, '<okant text 10t>',
+    'fritext ska inte ens behalla sin form — ett skelett av ett namn rojer emoji och interpunktion');
+});
+
+test('12: de tio faltnamn som lackte person-id i produktion hashas nu', () => {
+  // Listan ar uppmatt, inte gissad: det har ar exakt de falt som bar raa id i inspelningarna.
+  const falt = ['fromUserId', 'idStr', 'userIdStr', 'contributorId', 'contributorIdStr',
+    'currentSponsorId', 'toUserId', 'uid', 'anchorId', 'sendUserId'];
+  for (const namn of falt) {
+    const ut = I.maskera({ [namn]: '6812345678901234567' });
+    assert.match(ut[namn], /^id#[0-9a-f]{8}$/, `${namn} lamnades omaskerat`);
+  }
+});
+
+test('13: describe och contributorDisplayId — de tva som bar namn i klartext', () => {
+  const ut = I.maskera({
+    common: { describe: 'NAGON: gifted the host 1 Rose' },
+    contributorDisplayId: 'nagon_anvandare',
+  });
+  assert.equal(ut.common.describe, '<text 29 tecken>', 'describe bar tva visningsnamn per strang');
+  assert.match(ut.contributorDisplayId, /^id#[0-9a-f]{8}$/,
+    'display-id AR anvandarnamnet — 83 % av vardena var icke-ASCII, ofta med emoji');
+});
+
+test('14: avatarsokvagar UTAN https hashas — URL-regeln sag dem aldrig', () => {
+  // Det var den storsta enskilda lackan, och den syntes inte i URL-matningen: 76 332 forekomster
+  // av `uri` var avatarsokvagar, men de saknar schema sa /^https?:\/\// matchade dem inte.
+  const ut = I.maskera({ uri: 'tos-useast5/avt-0068-tx_abc_def_ghi_1.jpeg' });
+  assert.match(ut.uri, /^id#[0-9a-f]{8}$/, 'avatarsokvagen beholls — den pekar ut en person');
+  // Med schema racker origin: CDN-varianten gar att kanna igen och pekar inte ut nagon.
+  const medSchema = I.maskera({ avatarThumb: 'https://p16-sign.tiktokcdn.com/aweme/100x100/a.jpeg' });
+  assert.equal(medSchema.avatarThumb, 'https://p16-sign.tiktokcdn.com/…');
+});
+
+test('15: OBJEKTNYCKLAR som ar person-id hashas — och matchningen overlever', () => {
+  // TikTok nycklar sina per-anvandarkartor pa ankar-id. Uppmatt: 24 unika raa id lag som NYCKLAR
+  // i 9 foraldrafalt. Den forsta matningen av lackaget missade dem helt, eftersom den letade i
+  // varden — vilket ar precis varfor provet finns.
+  const ut = I.maskera({
+    anchorId: '7100000000000000001',
+    armies: { '7100000000000000001': { hostscore: 41200 }, '7100000000000000002': { hostscore: 39000 } },
+    battleComboV2: { '7100000000000000001': { comboCount: 2 } },
+  });
+  for (const nyckel of Object.keys(ut.armies)) {
+    assert.match(nyckel, /^id#[0-9a-f]{8}$/, 'ett raa ankar-id lag kvar som nyckel');
+  }
+  // MATCHNINGEN ar hela skalet till att nycklarna hashas i stallet for att strykas: offline-
+  // analysen avgor vilken sida som ar var genom att jamfora armies-nyckeln mot anchorId.
+  assert.ok(Object.keys(ut.armies).includes(ut.anchorId),
+    'armies-nyckeln och anchorId fick olika hash — da gar det inte langre att avgora vilken sida ' +
+    'som ar var, och hela battle-analysen dor');
+  assert.equal(Object.keys(ut.battleComboV2)[0], ut.anchorId, 'vinstsviten tappade sin koppling');
+});
+
+test('16: BATTLE-DATAN OVERLEVER — sifferstrangar rors inte', () => {
+  // Den halvan som var narmast att ga forlorad. `score` levereras som en STRANG med upp till 19
+  // siffror (8 596 unika uppmatta) och `msgId` som exakt 19 (31 132 unika). Ett forslag var att
+  // maskera varje \d{15,22} oavsett faltnamn — det hade raderat bada, alltsa exakt den data
+  // inspelaren finns for. Ett person-id och en poang har SAMMA form; bara namnet skiljer dem at.
+  const ut = I.maskera({
+    score: '9905123456789012345', msgId: '7546541354546545455', battleId: '7123456789',
+    roomId: '7100000000000000009', hostscore: 41200, timestamp: 1723900000000,
+  });
+  assert.equal(ut.score, '9905123456789012345', 'score maskerades — battle-matningen ar borta');
+  assert.equal(ut.msgId, '7546541354546545455', 'msgId maskerades — idempotensnyckeln ar borta');
+  assert.equal(ut.battleId, '7123456789');
+  assert.equal(ut.roomId, '7100000000000000009');
+  assert.equal(ut.hostscore, 41200, 'ett TAL fick inte ens rundas om');
+  assert.equal(ut.timestamp, 1723900000000);
+});
+
+test('17: skelettet bar formen men aldrig innehallet', () => {
+  // Skelettet ar det som gor inversionen mojlig utan att doda verktyget: ett okant falt gar
+  // fortfarande att kanna igen som sokvag, enum eller JSON, sa man vet om det ar vart att titta
+  // narmare pa. Men det far inte ga att lasa ut vad som stod dar.
+  assert.equal(I.skelett('abc_123'), 'a{3}_9{3}');
+  assert.equal(I.skelett('tos-useast5/abc.jpeg'), 'a{3}-a{6}9/a{3}.a{4}');
+  const hemligt = 'Superhemligt';
+  const sk = I.skelett(hemligt);
+  assert.equal(sk, 'a{12}');
+  assert.ok(!sk.includes('S') && !sk.includes('hemlig'), 'skelettet lackte tecken ur vardet');
+});
+
+test('18: varje post i allowlisten bar ETT SKAL — annars ar det inte en granskning', () => {
+  // Listan ar data med motivering. Utan det kravet blir "granska och befordra" en vana igen: nagon
+  // lagger till ett faltnamn for att det ser ofarligt ut, och ingen kan i efterhand se om nagon
+  // faktiskt tittat pa vardena.
+  for (const [namn, skal] of Object.entries(I.SLAPP_IGENOM_SKAL)) {
+    assert.equal(typeof skal, 'string', `${namn} saknar skal`);
+    assert.ok(skal.trim().length >= 20,
+      `${namn} har ett skal pa ${skal.trim().length} tecken — skriv vad faltet ER, inte att det ` +
+      'ser ofarligt ut. Ett anvandarnamn och ett enum har samma form.');
+  }
+  // Och listan far aldrig innehalla ett falt som ocksa star som person/namn/text — da beror
+  // resultatet pa skiktordningen i stallet for pa ett beslut.
+  for (const namn of Object.keys(I.SLAPP_IGENOM_SKAL)) {
+    const k = namn.toLowerCase();
+    assert.ok(!I.PERSON_FALT.has(k) && !I.NAMN_FALT.has(k) && !I.TEXT_FALT.has(k) && !I.URL_FALT.has(k),
+      `${namn} star bade i allowlisten och i en maskeringslista`);
+  }
+});
+
+test('19: stringValue avgors av INNEHALLET — nivan overlever, namnet gor det inte', () => {
+  // Samma falt bar bada, pa samma niva i payloaden:
+  //   guardian_shield_card_used  stringValue = "• <visningsnamn> ♛"   <- PII
+  //   fans_upgrade               stringValue = "32"                   <- nivan
+  //
+  // Genomgangen av alla 384 faltnamn 2026-09-07 klassade stringValue som PERSON rakt av. Hade det
+  // foljts hade faltet hamnat i PERSON_FALT, som ligger FORE sifferregeln i skiktordningen — och
+  // da hade "32" blivit id#hash. Nivamatningen som gav oss fans_upgrade hade tystnat utan att ett
+  // enda prov fallit. Provet finns for att den ordningen inte ska ga att andra av misstag.
+  const ut = I.maskera({ content: { pieces: [
+    { stringValue: '32' },
+    { stringValue: '• NagonAnvandare ♛' },
+  ] } });
+  assert.equal(ut.content.pieces[0].stringValue, '32',
+    'nivan hashades — matningen som gav oss fans_upgrade ar borta');
+  assert.match(ut.content.pieces[1].stringValue, /^namn#[0-9a-f]{8}$/,
+    'ett emoji-dekorerat visningsnamn slapptes igenom');
+});
+
+test('20: person-listan ar den UPPMATTA, inte den handskrivna', () => {
+  // Den handskrivna listan hade 25 poster. En genomgang av samtliga 384 strangbarande faltnamn i
+  // de nio inspelningarna hittade 54. Skillnaden ar hela argumentet for inversionen: en lista over
+  // farliga falt blir aldrig klar, eftersom TikTok fortsatter lagga till dem.
+  //
+  // Provet listar de falt genomgangen hittade och som den handskrivna listan INTE hade. De ar
+  // uppmatta i verklig trafik, sa ett borttaget namn har ar ett verkligt lackage — inte en
+  // stramare lista.
+  const tillkomna = ['specialId', 'channelId', 'shareTarget', 'targetUserId', 'anchorLinkmicIdStr',
+    'rivalAnchorId', 'rivalLinkmicIdStr', 'secInviteUid', 'secApplyUid', 'secFromUserId',
+    'secToUserId', 'uidList', 'toMemberId', 'toMemberIdInt', 'inviteUid', 'ownerLinkMicId',
+    'primaryId', 'curUserId', 'deleteUserIds', 'linkmicId', 'linkmicIdStr', 'groupLinkmicId',
+    'bestTeammateUid'];
+  for (const namn of tillkomna) {
+    const ut = I.maskera({ [namn]: '6812345678901234567' });
+    assert.match(ut[namn], /^id#[0-9a-f]{8}$/,
+      `${namn} slapptes igenom — det bar person-id i uppmatt trafik`);
+  }
+  // Och namnvarianterna, som ska ha namn-prefixet sa att en namn-hash gar att skilja fran ett id.
+  for (const namn of ['toMemberNickname', 'sendUserName']) {
+    assert.match(I.maskera({ [namn]: 'Nagon' })[namn], /^namn#[0-9a-f]{8}$/, `${namn} slapptes igenom`);
+  }
+});
+
+test('21: analysatorns Guardian-sokning overlever inversionen', () => {
+  // analysera-inspelning.js punkt 6 hittar Guardian genom att soka efter ordet i payloadens
+  // STRANGVARDEN. Med allt maskerat forsvann traffarna — och Guardian Del A ar oppet arbete som
+  // vantar pa exakt den analysen. Det var inversionens dyraste bieffekt, och den upptacktes inte
+  // av ett prov utan av att lasa vad analysatorn faktiskt gor.
+  //
+  // Uppmatt: ordet star i tolv falt. Elva ar TikTok-forfattade resurs-/enumnamn med noll
+  // icke-ASCII; det tolfte, defaultPattern, ar renderad text och star kvar maskerat.
+  const nyttolast = I.maskera({
+    common: { method: 'WebcastRoomNotifyMessage' },
+    nameStarlingKey: 'pm_mt_guardian_entrance_v2',
+    scene: 'guardian_shield',
+  });
+  // MATER NYTTOLASTEN, INTE HELA RADEN. Forsta versionen av det har provet stringifierade raden
+  // inklusive `typ: 'guardian'`, som ligger UTANFOR nyttolast och aldrig maskeras — sa provet var
+  // gront aven med allowlisten helt urkopplad. Mutationsriggen avslojade det: vakten matte inte
+  // det den pastod. Punkt 6 soker i `r.nyttolast`, sa det ar nyttolasten som maste bara ordet.
+  assert.match(JSON.stringify(nyttolast), /guardian/i,
+    'analysatorns punkt 6 hittar inte langre Guardian — inversionen tog bort de enum-varden ' +
+    'sokningen bygger pa');
+  // Och rad-typen ar den andra vagen in, oberoende av allowlisten.
+  assert.equal({ typ: 'guardian', nyttolast }.typ, 'guardian');
+});
+
+test('22: defaultPattern star kvar maskerat — det ar renderad text, inte ett enum', () => {
+  // Gransfallet i samma matning: 20 % av vardena bar icke-ASCII och 85 % blanksteg. Det ar
+  // meningar, inte nycklar, och en mening som byggs av ett visningsnamn ar det describe redan
+  // visat att den blir.
+  const ut = I.maskera({ defaultPattern: '{0:user} skickade {1:gift} till varden' });
+  assert.match(ut.defaultPattern, /^<okant text \d+t>$/,
+    'defaultPattern slapptes igenom — det ar den enda av de tolv falten som bar renderad text');
+});
+
+test('23: metaraden bar maskeringens VERSION — annars gar gamla filer inte att skilja ut', async () => {
+  // Fram till 2026-09-07 skrev inspelaren `maskad: true` i filer som anda lackte 416 person-id.
+  // En fil fran fore fixen ser i filhuvudet exakt likadan ut som en efter, sa utan ett
+  // versionsnummer hade den enda sakra slutsatsen varit att misstro bada.
+  const katalog = nyKatalog();
+  const inspelare = I.skapa({ pa: true, katalog, anvandare: 'x' });
+  inspelare.metarad({ bibliotek: 'prov' });
+  await inspelare.stang();
+  const meta = raderna(inspelare.vag)[0];
+  assert.equal(meta.maskad, true);
+  assert.equal(meta.maskeringVersion, I.MASKERING_VERSION,
+    'metaraden saknar maskeringVersion — da gar en lackande gammal fil inte att skilja fran en ny');
+  assert.ok(I.MASKERING_VERSION >= 2, 'versionen ska ha hojts nar maskeringen bytte forval');
+  // Och LAS-MIG maste saga hur man laser versionen, annars hjalper den ingen som hittar en gammal fil.
+  assert.match(I.LAS_MIG, /maskeringVersion/,
+    'LAS-MIG namner inte versionen — den som hittar en gammal fil far ingen varning');
+});
