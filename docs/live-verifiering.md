@@ -27,10 +27,18 @@ tiktok-bridge\inspelningar\2026-08-17T2014-a3f2.jsonl
 
 En rad per händelse, JSON Lines. Fyra saker att veta:
 
-- **Filerna är maskerade.** Användar-id, smeknamn, avatar-länkar och kommentarer ersätts av hashar
-  och platshållare. Hasharna är stabila, så samma tittare går att följa genom hela filen — det är
-  det som gör en armé-lista läsbar i efterhand. **Tal, tidsstämplar och fältnamn är orörda**, och
-  det är dem inspelningen finns för.
+- **Filerna är maskerade, och förvalet är att maskera.** Allt som inte är ett rent tal, en granskad
+  fältnamnspost eller en URL:s origin ersätts. Användar-id och avatarsökvägar blir stabila hashar —
+  stabila så att samma tittare går att följa genom hela filen, vilket är det som gör en armé-lista
+  läsbar i efterhand. Människoskriven text blir sin längd. Allt **okänt** blir sin FORM:
+  `<okant a{3}-a{6}9/a{3}.a{4}>` för något sökvägsliknande, `<okant text 14t>` för fritext, där
+  formen också hålls tillbaka. **Tal, tidsstämplar, poäng och fältnamn är orörda**, och det är dem
+  inspelningen finns för.
+
+  ⚠️ **Kontrollera `maskeringVersion` i filens metarad innan du delar en inspelning.** Är den 1
+  eller saknas den är filen inspelad före 2026-09-07 (#357) och läcker person-id, avatarsökvägar
+  och visningsnamn trots att den säger `maskad: true`. Uppmätt över nio sådana filer: 416 unika
+  person-id, ~3 130 avatarsökvägar och 363 meningar med visningsnamn. **Radera dem, dela dem inte.**
 - **Både rått och normaliserat loggas.** En vidarebefordrad händelse ger två rader: `kalla:
   "vidarebefordrad"` med TikToks payload, och `_utgaende` med det bryggan faktiskt skickade. Diffen
   mellan dem pekar ut var ett fält tappas — vilket är precis vad fyra-listor-problemet kräver.

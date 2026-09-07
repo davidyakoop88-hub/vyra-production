@@ -66,13 +66,28 @@ test('hela guardian_shield-payloaden får inte längre bära namnet', () => {
 
 test('bara RENA tal slipper undan', () => {
   const rent = ['0', '7', '32', '999999'];
-  const inte = ['32 ', ' 32', '3.5', '-4', '1e3', '32a', 'Lv.32', '', 'abc', '♛'];
+  // Det NÄSTAN numeriska är poängen: en siffra med ett mellanslag, en decimal eller ett "Lv."
+  // framför är inte ett tal, och flyktvägen får inte vidgas till dem.
+  const inte = ['32 ', ' 32', '3.5', '-4', '1e3', '32a', 'Lv.32', 'abc', '♛'];
   for (const v of rent) {
     assert.equal(I.maskera({ stringValue: v }, '').stringValue, v, `${JSON.stringify(v)} maskerades`);
   }
   for (const v of inte) {
     assert.match(I.maskera({ stringValue: v }, '').stringValue, /^namn#/,
       `${JSON.stringify(v)} slapp igenom omaskerad`);
+  }
+});
+
+test('den TOMMA strängen maskeras inte — den bär ingenting', () => {
+  // ÄNDRAT 2026-09-07 (#357), medvetet. Tidigare stod '' i listan ovan och blev `namn#<hash av
+  // tomma strängen>`. Det är fel på två sätt: en tom sträng kan inte röja någon, och en hash där
+  // SER ut som ett riktigt id eller namn på en plats där det aldrig fanns ett. I inspelningarna
+  // är 31 524 av `describe`-värdena tomma — de hade alla blivit brus som ser ut som data.
+  //
+  // Regeln gäller alla fält, inte bara stringValue, och ligger som en tidig retur i maskera().
+  for (const falt of ['stringValue', 'nickname', 'userId', 'describe', 'nyttOkantFalt']) {
+    assert.equal(I.maskera({ [falt]: '' }, '')[falt], '',
+      `en tom ${falt} blev ett värde — då ser payloaden ut att bära något den inte bär`);
   }
 });
 
