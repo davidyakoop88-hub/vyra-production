@@ -61,3 +61,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Samuraiemblemet och foljarmalets ikon ritas numera som inline-SVG i stallet for U+5200 och U+FF0B ur ett systemtypsnitt. Uppmatt i #322: fc-match valde WenQuanYi Zen Hei, inte det Noto vi installerade, sa glyferna berodde pa runner-avbildningen — och pa varje anvandarmaskin utan CJK-tackning blev de tofu. Nu beror de inte pa nagot typsnitt alls.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-07 — 8 referenser skrivna
+
+- **Motiv:** Diamantmalet (#367 del 1, PR #375) lade till atta katalognycklar utan referensbilder, sa vakten gjorde main rod vid mergen. Forsta forsoket fotograferade noll: generatorn laser nycklarna ur docs/katalogkarta.md, och kartan hade annu inte regenererats. Grenen star nu pa 84272fb dar boten lagt in dem. Bara nya bilder, inga befintliga byts.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla

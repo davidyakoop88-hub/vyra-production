@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 170,
+ "antal": 178,
  "senaste": {
-  "motiv": "Samuraiemblemet och foljarmalets ikon ritas numera som inline-SVG i stallet for U+5200 och U+FF0B ur ett systemtypsnitt. Uppmatt i #322: fc-match valde WenQuanYi Zen Hei, inte det Noto vi installerade, sa glyferna berodde pa runner-avbildningen — och pa varje anvandarmaskin utan CJK-tackning blev de tofu. Nu beror de inte pa nagot typsnitt alls.",
-  "nycklar": 9,
-  "tid": "2026-09-04T09:33:34.213Z"
+  "motiv": "Diamantmalet (#367 del 1, PR #375) lade till atta katalognycklar utan referensbilder, sa vakten gjorde main rod vid mergen. Forsta forsoket fotograferade noll: generatorn laser nycklarna ur docs/katalogkarta.md, och kartan hade annu inte regenererats. Grenen star nu pa 84272fb dar boten lagt in dem. Bara nya bilder, inga befintliga byts.",
+  "nycklar": 8,
+  "tid": "2026-09-07T08:38:07.366Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -691,6 +691,38 @@
   "catalog:topgift:royal": {
    "matt": "280x260",
    "fyllnad": 15.42
+  },
+  "catalog:socialgoal:diamonds:1:landscape": {
+   "matt": "440x121",
+   "fyllnad": 34.53
+  },
+  "catalog:socialgoal:diamonds:2:landscape": {
+   "matt": "440x121",
+   "fyllnad": 49.28
+  },
+  "catalog:socialgoal:diamonds:3:landscape": {
+   "matt": "440x97",
+   "fyllnad": 18.78
+  },
+  "catalog:socialgoal:diamonds:4:landscape": {
+   "matt": "440x121",
+   "fyllnad": 52.86
+  },
+  "catalog:socialgoal:diamonds:azure-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 64.37
+  },
+  "catalog:socialgoal:diamonds:heart-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 61.15
+  },
+  "catalog:socialgoal:diamonds:rose-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 53.53
+  },
+  "catalog:socialgoal:diamonds:sapphire-frame:landscape": {
+   "matt": "440x250",
+   "fyllnad": 75.72
   }
  }
 }
