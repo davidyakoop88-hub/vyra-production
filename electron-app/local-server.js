@@ -116,7 +116,33 @@ function startLocalServer(root, port = 4173, options = {}) {
   function text(v, max) { return String(v ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F<>]/g, '').slice(0, max); }
   function imageUrl(v) { const value = text(v, 2048); return /^(https?:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(value) ? value : ''; }
   function number(v, min = 0, max = Number.MAX_SAFE_INTEGER) { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : 0; }
-  function cleanEvent(d) { return { type: text(d.type, 64).replace(/[^a-z0-9_:-]/gi, ''), username: text(d.username, 100), name: text(d.name, 500), profileImage: imageUrl(d.profileImage), giftName: text(d.giftName, 160), giftImage: imageUrl(d.giftImage), emote: text(d.emote, 160), isAnonymous: !!d.isAnonymous, diamonds: number(d.diamonds ?? d.coins, 0, 1e9), coins: number(d.coins, 0, 1e9), count: number(d.count, 0, 1e7), multiplier: number(d.multiplier, 0, 100), points: number(d.points, 0, 1e12), level: number(d.level, 0, 10000), score: number(d.score, 0, 1e12), scoreUs: number(d.scoreUs, 0, 1e12), scoreThem: number(d.scoreThem, 0, 1e12), ourScore: number(d.ourScore, 0, 1e12), opponentScore: number(d.opponentScore, 0, 1e12), eventKey: text(d.eventKey, 200), source: text(d.source, 64) }; }
+  function cleanEvent(d) { return { type: text(d.type, 64).replace(/[^a-z0-9_:-]/gi, ''), username: text(d.username, 100), name: text(d.name, 500), profileImage: imageUrl(d.profileImage), giftName: text(d.giftName, 160), giftImage: imageUrl(d.giftImage), emote: text(d.emote, 160), isAnonymous: !!d.isAnonymous, diamonds: number(d.diamonds ?? d.coins, 0, 1e9), coins: number(d.coins, 0, 1e9), count: number(d.count, 0, 1e7), multiplier: number(d.multiplier, 0, 100), points: number(d.points, 0, 1e12), level: number(d.level, 0, 10000), score: number(d.score, 0, 1e12), scoreUs: number(d.scoreUs, 0, 1e12), scoreThem: number(d.scoreThem, 0, 1e12), ourScore: number(d.ourScore, 0, 1e12), opponentScore: number(d.opponentScore, 0, 1e12), eventKey: text(d.eventKey, 200), source: text(d.source, 64),
+    // SJU FALT SOM SKRIVBORDSAPPEN RAKNAR FRAM OCH SOM VITLISTAN STROK (#350).
+    //
+    // baseUser() i tiktok-fields.js producerar isModerator/isFollower/isSubscriber/fanClubLevel/
+    // gifterLevel, gavohanteraren i tiktok-service.js:58 producerar giftId, och
+    // fansUppgradering() producerar fanLevelUp. Alla sju rensades bort HAR, ett led senare.
+    //
+    // Foljden var fyra widgetar som aldrig kunde tandas via appens EGEN TikTok-anslutning:
+    // Heart Me Goal (kraver giftId), Fan Level Up (fanClubLevel 1-50), Gifter Level Up
+    // (gifterLevel) och publikvalet Moderator i Actions.
+    //
+    // giftId ar tydligast: det lades till med kommentaren PARITET MED MOLNVAGEN i #280 och stroks
+    // ett led senare. Provet som skulle vakta det matte tjanstens onEvent — ett steg FORE
+    // strykningen. Ratt namn, fel led.
+    //
+    // battleStatus star INTE har, till skillnad fran vad #350 pastod: skrivbordsappen raknar
+    // aldrig fram det. Battle MVP kraver att faltet BERAKNAS forst, vilket ar en annan andring.
+    giftId: text(d.giftId, 160),
+    fanClubLevel: number(d.fanClubLevel, 0, 50),
+    gifterLevel: number(d.gifterLevel, 0, 50),
+    isModerator: !!d.isModerator, isFollower: !!d.isFollower, isSubscriber: !!d.isSubscriber,
+    // Nivahojningen ar ett OBJEKT och bars villkorligt: ett tomt {from:0,to:0} hade sett ut som
+    // en riktig hojning till niva 0.
+    ...(d.fanLevelUp && Number(d.fanLevelUp.to) > 0
+      ? { fanLevelUp: { from: number(d.fanLevelUp.from, 0, 50), to: number(d.fanLevelUp.to, 0, 50) } }
+      : {}),
+  }; }
   function setConnection(next) {
     Object.assign(connection, next, { updated: Date.now() });
     if (connection.connected) connection.heartbeat = Date.now();
@@ -173,7 +199,18 @@ function startLocalServer(root, port = 4173, options = {}) {
   // natt. tests/desktop-paritet.test.js provar numera REGELN — molnets typer minus chat — i
   // stallet for att jamfora mot en hardkodad kopia som kan glida igen.
   const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
-    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote', 'fanlevelup']);
+    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote', 'fanlevelup',
+    // battle_mvp tillkom 2026-09-07 (#350). Skrivbordsappen SANDER den inte an — tiktok-service.js
+    // emitterar elva typer och battle_mvp ar inte en av dem — men listan sager vad som FAR speglas,
+    // och en post for en typ vi annu inte producerar ar ofarlig. Utan den holl inte regeln
+    // "molnets typer minus chat", och det gapet var OSYNLIGT: paritetsprovets teckenklass saknade
+    // understreck, sa den kunde inte matcha battle_mvp. Tre prov rapporterade paritet utan att ha
+    // jamfort typen.
+    //
+    // OBS: skriv ALDRIG en hakparentes i den har kommentaren. Provet plockar ut listan med ett
+    // monster som slutar vid forsta hakparentesen, sa ett exempel med en teckenklass i klartext
+    // kapar listan har och far provet att falla pa nasta typ.
+    'battle_mvp']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
