@@ -201,12 +201,15 @@ test('local-server speglar molnets typer minus chat', () => {
   const index = las('server/index.js');
   const m = index.match(/TIKTOK_INGEST_TYPES\s*=\s*new Set\(\[([^\]]*)\]/);
   assert.ok(m, 'hittade ingen TIKTOK_INGEST_TYPES');
-  const moln = new Set([...m[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+  // ⚠️ TECKENKLASSEN MASTE INNEHALLA UNDERSTRECK. Den var `[a-z]+`, som inte kan matcha
+  // `battle_mvp` — typen var alltsa OSYNLIG for alla tre paritetsproven, och de rapporterade
+  // paritet utan att ha jamfort den. Uppmatt och rattat i #350.
+  const moln = new Set([...m[1].matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
   moln.delete('chat');
 
   const l = LOKAL.match(/TILL_MOLNET\s*=\s*new Set\(\[([^\]]*)\]/);
   assert.ok(l, 'hittade ingen TILL_MOLNET i local-server.js');
-  const lokal = new Set([...l[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+  const lokal = new Set([...l[1].matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
 
   const saknas = [...moln].filter(t => !lokal.has(t)).sort();
   const extra = [...lokal].filter(t => !moln.has(t)).sort();
@@ -222,9 +225,9 @@ test('varje typ desktop skickar tas emot av molnet', () => {
   // Samma vakt som tests/event-contract.test.js har for bryggan, men for den andra vagen in.
   const bus = las('server/event-bus.js');
   const a = bus.match(/ALLOWED\s*=\s*new Set\(\[([^\]]*)\]/);
-  const allowed = new Set([...a[1].matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+  const allowed = new Set([...a[1].matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
   const al = bus.match(/TYPE_ALIASES\s*=\s*\{([^}]*)\}/);
-  const alias = Object.fromEntries([...al[1].matchAll(/([a-z]+)\s*:\s*'([a-z]+)'/g)].map(x => [x[1], x[2]]));
+  const alias = Object.fromEntries([...al[1].matchAll(/([a-z_]+)\s*:\s*'([a-z_]+)'/g)].map(x => [x[1], x[2]]));
 
   const skickade = [...DESKTOP.matchAll(/emit\('([a-z_]+)'/g)].map(x => x[1]);
   const foraldralosa = [...new Set(skickade)].filter(t => !allowed.has(alias[t] || t));
@@ -279,19 +282,36 @@ test('desktop har ALLA molnets persontyper — inte bara typer molnet accepterar
   // Desktop skickar dem redan pa annat satt, och de hor inte till den har jamforelsen.
   const index = las('server/index.js');
   const alla = new Set([...index.match(/TIKTOK_INGEST_TYPES\s*=\s*new Set\(\[([^\]]*)\]/)[1]
-    .matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+    .matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
   const rum = new Set([...index.match(/TIKTOK_ROOM_TYPES\s*=\s*new Set\(\[([^\]]*)\]/)[1]
-    .matchAll(/'([a-z]+)'/g)].map(x => x[1]));
+    .matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
 
   const skickade = new Set([...DESKTOP.matchAll(/emit\('([a-z_]+)'/g)].map(x => x[1]));
   // Molnets alias: bryggan/desktop skickar 'likes' och 'member', molnet lagrar dem som
   // 'like'/'viewer'. En typ som desktop skickar under sitt raa namn raknas som tackt.
   const bus = las('server/event-bus.js');
   const alias = Object.fromEntries([...bus.match(/TYPE_ALIASES\s*=\s*\{([^}]*)\}/)[1]
-    .matchAll(/([a-z]+)\s*:\s*'([a-z]+)'/g)].map(x => [x[1], x[2]]));
+    .matchAll(/([a-z_]+)\s*:\s*'([a-z_]+)'/g)].map(x => [x[1], x[2]]));
   for (const t of [...skickade]) if (alias[t]) skickade.add(alias[t]);
 
-  const saknas = [...alla].filter(t => !rum.has(t) && t !== 'chat' && !skickade.has(t)).sort();
+  // ⚠️ EN NAMNGIVEN LUCKA, INTE ETT TYST UNDANTAG. battle_mvp tas emot av molnet men sands aldrig
+  // av skrivbordsappen: tiktok-service.js emitterar elva typer och den ar inte en av dem, och
+  // battleStatus — grinden som oppnar en MVP-session — raknas inte fram dar heller.
+  //
+  // Luckan var OSYNLIG till 2026-09-07: teckenklassen som plockar typerna saknade understreck, sa
+  // battle_mvp kunde aldrig matchas och tre paritetsprov rapporterade paritet utan att ha jamfort
+  // den. Att lata den sta kvar tyst hade varit att aterinfora samma blindhet med andra medel.
+  //
+  // Posten ska BORT nar desktop far Battle MVP — se #381. Den ar ett kvitto pa en kand skuld, inte
+  // ett godkannande.
+  const KAND_LUCKA = new Set(['battle_mvp']);
+  const saknas = [...alla].filter(t => !rum.has(t) && t !== 'chat' && !KAND_LUCKA.has(t) && !skickade.has(t)).sort();
+  // Och luckan far inte bli evig utan att nagon markt det: star typen kvar i listan MEN desktop
+  // har borjat sanda den, ska posten tas bort — annars slutar vakten mata.
+  for (const t of KAND_LUCKA) {
+    assert.ok(!skickade.has(t),
+      `${t} star som kand lucka men desktop SANDER den numera — ta bort posten ur KAND_LUCKA`);
+  }
   assert.deepEqual(saknas, [],
     `molnet tar emot dessa persontyper men desktop skickar dem aldrig: ${saknas.join(', ')} `
     + '— widgeten fungerar på molnvägen och är tyst på desktopvägen');
