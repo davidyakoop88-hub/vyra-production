@@ -38,7 +38,14 @@ const CONTRIBUTIONS = {
   follow: () => [['follows', 1]],
   share: () => [['shares', 1]],
   like: event => [['likes', num(event.count)]],
-  gift: event => [['gifts', num(event.count)], ['diamonds', num(event.value)]]
+  // MEDVARDSGAVOR RAKNAS INTE. I ett flervardsrum gar en del gavor till en medvard; bryggan
+  // markerar dem med `tillVarden: false` (den ar ensam om att veta vem varden ar). Uppmatt
+  // 2026-09-06: 604 av 887 diamanter i en sandning tillhorde nagon annan. Ett mal som rakar med
+  // dem visar ett resultat streamern inte tjanat. #360
+  //
+  // `!== false` och inte `=== true`: en aldre brygga skickar inte faltet alls, och da ska gavan
+  // raknas precis som i dag.
+  gift: event => event.tillVarden === false ? [] : [['gifts', num(event.count)], ['diamonds', num(event.value)]]
 };
 
 function num(value) {

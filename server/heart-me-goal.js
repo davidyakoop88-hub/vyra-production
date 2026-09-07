@@ -108,7 +108,10 @@ const arGava = event => !!event && String(event.type || '').toLowerCase() === 'g
 async function applyHeartMeEvent(pool, workspaceId, event, { duplicate = false } = {}) {
   // 1. Slutframes är redan filtrerade vid källan (bridge.js:374 och
   //    electron-app/tiktok-service.js:97), så det som återstår här är dubblettskyddet.
-  if (!workspaceId || duplicate || !arGava(event)) return { okade: 0, rader: [] };
+  // MEDVARDSGAVOR RAKNAS INTE. En Heart Me som skickas till en medvard i ett flervardsrum ar inte
+  // en gava till varden, och far darfor inte oka varden mal. `tillVarden` harleds av bryggan —
+  // servern vet inte streamerns TikTok-id. `!== false` sa att en aldre brygga raknas som i dag. #360
+  if (!workspaceId || duplicate || !arGava(event) || event.tillVarden === false) return { okade: 0, rader: [] };
 
   const giftId = String(event.giftId || '');
   const identitet = normaliseraIdentitet(event);

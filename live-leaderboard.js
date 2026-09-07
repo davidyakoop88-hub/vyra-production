@@ -109,6 +109,14 @@
       recordDaily(username, t.name, t.profileImage, count, 0);
     }
     if (type === 'gift' || type === 'gift_combo' || type === 'giftcombo') {
+      // MEDVARDSGAVOR RAKNAS INTE. I ett flervardsrum gar en del gavor till en medvard, och de ar
+      // inte streamerns. Bryggan markerar dem med `tillVarden: false` — den ar ensam om att veta vem
+      // varden ar, servern kan inte harleda det. Uppmatt 2026-09-06: 604 av 887 diamanter i en
+      // sandning tillhorde nagon annan, och Top Gifters visade dem som streamerns egna. #360
+      //
+      // `=== false` och inte `!== true`: en aldre brygga skickar inte faltet, och da ska gavan
+      // raknas precis som i dag. Filtret far bara utesluta det vi ar SAKRA pa.
+      if (e.tillVarden === false) return;
       const coins = Number(e.coins || e.diamondCount || e.value) || 0;
       t.coins += coins;
       t.present = true;
