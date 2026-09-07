@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `270f8ac`
+Commit: `b9b8bae`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **271** |
+| Kort totalt | **279** |
 | Sektioner | 22 |
-| Med katalognyckel | 271 / 271 |
-| Med shadow DOM-miniatyr | 271 / 271 |
-| Ritar sin design | 271 / 271 |
+| Med katalognyckel | 279 / 279 |
+| Med shadow DOM-miniatyr | 279 / 279 |
+| Ritar sin design | 279 / 279 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -51,7 +51,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
-| FOLLOWERS & LIKE GOALS · 4 LIGGANDE DESIGNER | 16 | 16/16 | 16/16 | 16/16 | 2026-08-12 | — |
+| FOLLOWERS, LIKE & DIAMOND GOALS · 4 LIGGANDE DESIGNER | 24 | 24/24 | 24/24 | 24/24 | 2026-08-12 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
@@ -185,7 +185,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Follower Spotlight | `catalog:followeralert` | ✓ | ✓ | 2026-08-03 | — |
 
-### FOLLOWERS & LIKE GOALS · 4 LIGGANDE DESIGNER
+### FOLLOWERS, LIKE & DIAMOND GOALS · 4 LIGGANDE DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -197,6 +197,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Like Goal · Pink Crown | `catalog:socialgoal:likes:2:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Like Goal · Blue Ice | `catalog:socialgoal:likes:3:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Like Goal · Royal Blue | `catalog:socialgoal:likes:4:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond Goal · Rose Crystal | `catalog:socialgoal:diamonds:1:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond Goal · Pink Crown | `catalog:socialgoal:diamonds:2:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond Goal · Blue Ice | `catalog:socialgoal:diamonds:3:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond Goal · Royal Blue | `catalog:socialgoal:diamonds:4:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Follower · Rose Crystal Frame | `catalog:socialgoal:followers:rose-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Follower · Royal Heart Frame | `catalog:socialgoal:followers:heart-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Follower · Sapphire Dragon Frame | `catalog:socialgoal:followers:sapphire-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
@@ -205,6 +209,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Like · Royal Heart Frame | `catalog:socialgoal:likes:heart-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Like · Sapphire Dragon Frame | `catalog:socialgoal:likes:sapphire-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
 | Like · Azure Crown Frame | `catalog:socialgoal:likes:azure-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond · Rose Crystal Frame | `catalog:socialgoal:diamonds:rose-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond · Royal Heart Frame | `catalog:socialgoal:diamonds:heart-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond · Sapphire Dragon Frame | `catalog:socialgoal:diamonds:sapphire-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
+| Diamond · Azure Crown Frame | `catalog:socialgoal:diamonds:azure-frame:landscape` | ✓ | ✓ | 2026-08-12 | — |
 
 ### GIFTER LEVEL UP · VARJE MODELL SEPARAT
 
