@@ -25,7 +25,7 @@ node scripts/domaner.js visa widgets        # allt om en doman
 | `vfx` | `vyra-vfx` | Partikelmotorn pa Pixi/GSAP, fontaner, Gift Fireworks |
 | `goals` | `vyra-goals` | Mal fran widget till databas: klient, runtime, ingest, SSE, metrik |
 | `konto` | `vyra-konto` | Inloggning, MFA, sessionsisolering, tokenvalv, support |
-| `betalning` | `vyra-betalning` | Stripe, prenumerationer, entitlements, trial |
+| `betalning` | `vyra-betalning` | PayPal Subscriptions, prenumerationer, entitlements, trial |
 | `moln` | `vyra-moln` | Molnsynk, konflikter, media, backup, export mellan datorer |
 | `integrationer` | `vyra-integrationer` | TTS, ljud, Spotify, OBS, chatbot |
 | `server-api` | `vyra-server` | Node-API:t: rutter, handelsebuss, SSE, kapacitet, statistik |

@@ -4,11 +4,11 @@
 
 Use `docker-compose.production.yml`, not the local development compose file. Production requires
 immutable API/web images, managed PostgreSQL, managed Redis over `rediss://`, external object
-storage, malware scanning, live Stripe credentials and complete signed desktop-release metadata.
+storage, malware scanning, live PayPal credentials and complete signed desktop-release metadata.
 
 Copy `.env.production.example` into the hosting platform's secret manager. Do not commit the
 filled file. `NODE_ENV=production` makes the API run `production-config.js` before it opens a
-network port; any placeholder, weak/reused secret, HTTP endpoint, test Stripe key, disabled media
+network port; any placeholder, weak/reused secret, HTTP endpoint, PayPal sandbox in production, disabled media
 scanner or incomplete installer metadata blocks startup.
 
 The production web image copies only browser assets. Server source, scripts, documentation,
@@ -145,7 +145,7 @@ box must not become a development box just because it needs test payment keys. `
 separate axis that says which real deployment this is: `staging` or `production`, nothing else.
 
 It is required and never defaulted. Both guesses are bad — default to production and a staging
-deploy demands live Stripe keys; default to staging and a production deploy would accept a test key
+deploy demands live PayPal credentials; default to staging and a production deploy would accept sandbox
 and quietly take no money at all while looking like it worked. A missing `APP_ENV` fails the boot.
 
 **Nothing is relaxed for staging.** Every secret, URL and token check applies identically in both,
@@ -154,13 +154,13 @@ and the test suite asserts that for each check individually — if one ever stop
 
 | | production | staging |
 |---|---|---|
-| Stripe secret key | must be `sk_live_`; `sk_test_` refused | must be `sk_test_`; `sk_live_` refused |
-| Stripe price + webhook secret | live mode | test mode, from the same test-mode account |
+| `PAYPAL_ENV` | must be `live`; `sandbox` refused | must be `sandbox`; `live` refused |
+| PayPal plan ids + webhook id | from the live app | from the same sandbox app |
 | `OBJECT_KEY_PREFIX` or own `OBJECT_BUCKET` | optional | **required** |
 | every other check | applies | applies identically |
 
-Stripe is refused in both directions rather than only checked for the right prefix: a live key on
-staging charges real cards from a test box, and a test key in production silently takes no money.
+PayPal is refused in both directions rather than only checked for a valid value: live credentials on
+staging charge real accounts from a test box, and sandbox in production silently takes no money.
 The error names which of the two mistakes was made.
 
 `OBJECT_KEY_PREFIX` is prepended to every media key (`staging/workspaces/<id>/<asset>.<ext>`), so a
@@ -304,23 +304,30 @@ customer uploads.
 ## Billing
 
 VYRA has one offer: **VYRA Premium for USD 15 per month with a three-day free
-trial**. Create that recurring monthly Price in Stripe and set its id as
-`STRIPE_PRICE_MONTHLY`. Checkout receives `trial_period_days: 3`; a database
-lock ensures each workspace can consume the trial only once. Subscription
-webhooks are verified against the untouched raw request body and processed in
-an idempotent database transaction. Quotas are checked by the server, not by
-hidden buttons in the browser. The customer portal handles cancellation and
-payment-method changes.
+trial**. Billing runs on PayPal Subscriptions (`server/billing.js`, since
+2026-09-07). Two plans exist on the product `vyra-premium`: one with the
+three-day trial (`PAYPAL_PLAN_MONTHLY_TRIAL`) and one without
+(`PAYPAL_PLAN_MONTHLY`). Which plan a workspace gets is decided locally by
+`billing_customers.trial_started_at`, so each workspace can consume the trial
+only once. Checkout creates the subscription with `custom_id` = workspace id and
+sends the owner to PayPal's approve link; PayPal returns to
+`studio.html?billing=success`. Webhooks are verified through PayPal's
+verify-webhook-signature call against the untouched raw body and
+`PAYPAL_WEBHOOK_ID`, then processed in an idempotent database transaction.
+Quotas are checked by the server, not by hidden buttons in the browser.
 
 The offer renews automatically every month unless the owner cancels it. Studio
 shows this next to the price and provides a direct **Säg upp abonnemang** button.
-Cancellation sets `cancel_at_period_end=true`, so access remains until the end
-of the trial or paid month and no later monthly renewal is collected. The owner
-can undo the cancellation before that date. Stripe Checkout also validates at
-runtime that the configured Price is exactly USD 15 with a one-month interval.
+Cancellation suspends the subscription at PayPal and sets
+`cancel_at_period_end=true`, so access remains until the end of the trial or
+paid month and no later monthly renewal is collected. The owner can undo the
+cancellation before that date (the subscription is re-activated at PayPal);
+after the date `entitlement()` closes the door locally and asks PayPal to cancel
+for good. **Fakturor & betalmetod** links to the customer's own PayPal
+autopay page, since PayPal has no merchant-hosted portal.
 
 Billing emails are written to a transactional outbox in the same database
-transaction as each Stripe event. A background worker sends them through
+transaction as each PayPal event. A background worker sends them through
 Resend with an idempotency key and exponential retry. Messages cover trial
 start/end, successful and failed payment, scheduled cancellation, resumed
 renewal and final termination. Set `RESEND_API_KEY` and a verified `EMAIL_FROM`

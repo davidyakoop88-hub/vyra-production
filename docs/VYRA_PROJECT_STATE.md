@@ -1,5 +1,47 @@
 # VYRA Project State
 
+## Checkpoint 42 — Betalningen bytte till PayPal Subscriptions (2026-09-07)
+
+Beslut: PayPal ersätter Stripe. Skälet är ägarformen, inte tekniken: PayPal öppnar företagskonto för en
+enskild näringsidkare utan organisationsnummer, med billing@vyralive.app som handlaradress, och kunderna
+kan betala med PayPal-saldo. Stripe-kedjan **fungerade** (två riktiga betalningar, se docs/lansering.md);
+bytet är ett val.
+
+### Vad som är gjort utanför repot
+
+- PayPal-företagskonto (enskild firma, offentligt namn VYRA). Produkt `vyra-premium`.
+- Två aktiva planer: `P-7UY349153P1818424NKPKG2A` (0 USD i 3 dagar, sedan 15 USD/månad) och
+  `P-1N359441EG117004VNKPKILY` (15 USD/månad utan provperiod).
+- Live-webhook `7VL31387MH8558935` → `https://vyralive.app/api/billing/webhook`, elva händelser.
+- Client-ID i Default App (publikt). Hemligheten sätts av David på Railway-tjänsten Api.
+
+### Vad som är ändrat i repot
+
+| Del | Ändring |
+|---|---|
+| `server/billing.js` | Omskriven mot PayPals REST-API utan SDK. Samma fem endpoints och samma svarsform utåt. "Säg upp" = suspend hos PayPal + `cancel_at_period_end`; "Ångra" = activate. `entitlement()` synkar en `pending`-rad mot PayPal (återkomst före webhook) och stänger en uppsagd rad när perioden passerat. |
+| `server/index.js` | Webhook-rutten skickar hela `req.headers` i stället för ett Stripe-huvud. Enda ändringen. |
+| `server/schema.sql` | `subscriptions.provider` ('stripe' | 'paypal'), `billing_customers.stripe_customer_id` får vara NULL. Kolumnnamnen `stripe_*` behålls som arv och bär PayPals id:n — ett namnbyte hade dragit in tre andra domäner. |
+| `server/production-config.js` | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENV` (live/sandbox bundet till APP_ENV, nekat åt båda håll), `PAYPAL_WEBHOOK_ID`, `PAYPAL_PLAN_MONTHLY`, `PAYPAL_PLAN_MONTHLY_TRIAL` (måste vara två olika). STRIPE_* borta. |
+| Prov | `server/test/billing.test.js`, `prenumerationsfalt.test.js`, `production-config.test.js` omskrivna; `webhookHeaders()` och `localStatus()` är rena funktioner och provas utan nätverk. 397 gröna i server/, 1648 i roten. |
+| Text | terms.html, privacy.html, .env-exempel, docker-compose, docs, release-gate: Stripe → PayPal. |
+
+### Vad som INTE finns, med flit
+
+- Inget `trial_ending`-mejl: PayPal har ingen händelse för "provperioden slutar snart". Nedräkningen i
+  Studion (`vyra-trial-onboarding.js`) bär den varningen.
+- Ingen kundportal: PayPal saknar handlarhostad portal. "Fakturor & betalmetod" länkar till kundens
+  egen autopay-sida hos PayPal.
+
+### Före deploy — i ordning
+
+1. Railway Api: sätt de sex PAYPAL_*-variablerna. Starten faller annars på production-config.
+2. Avsluta den Stripe-prenumeration som finns på Davids workspace `8826f6d1` i Stripes panel och kompa
+   om raden (`scripts/certifieringskonto.js`). Annars fortsätter Stripe dra medan webhooken nekas.
+3. Kör migreringen (`npm run migrate` mot produktion) — den är idempotent.
+4. Gör om gate 1 i docs/lansering.md för PayPal: nytt konto, 15 USD, samma fem kontroller.
+5. Ta bort STRIPE_*-variablerna först när PayPal-köpet är avläst i produktion.
+
 ## Checkpoint 41 — Visuell regressionsvakt: 167 nycklar fotograferade pixel för pixel (2026-08-19)
 
 Checkpoint 40 skrev ut den största kvarvarande luckan i klartext: **"målas" är inte "är korrekt"**.

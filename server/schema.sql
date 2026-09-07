@@ -810,3 +810,13 @@ BEGIN
   END IF;
 END $$;
 
+
+-- PayPal ersatte Stripe 2026-09-07 (server/billing.js). Kolumnnamnen stripe_* behålls som arv och bär
+-- leverantörens id:n; `provider` säger vilken. PayPal har inget kundobjekt, så billing_customers
+-- finns kvar enbart för trial_started_at och får sakna stripe_customer_id.
+ALTER TABLE billing_customers ALTER COLUMN stripe_customer_id DROP NOT NULL;
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAULT 'stripe'
+  CHECK(provider IN ('stripe','paypal'));
+COMMENT ON COLUMN subscriptions.stripe_subscription_id IS 'Leverantörens abonnemangs-id (PayPal I-… eller Stripe sub_…); se kolumnen provider';
+COMMENT ON COLUMN subscriptions.stripe_price_id IS 'Leverantörens plan-/pris-id (PayPal P-… eller Stripe price_…)';
+COMMENT ON COLUMN billing_events.stripe_event_id IS 'Leverantörens händelse-id (PayPal WH-… eller Stripe evt_…)';

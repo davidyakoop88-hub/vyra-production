@@ -4,12 +4,12 @@ const crypto=require('crypto');
 
 // A complete, valid configuration for either deployment. APP_ENV is a separate axis from NODE_ENV:
 // staging and production BOTH run NODE_ENV=production, and APP_ENV only says which real deployment
-// this is. Nothing here is relaxed for staging — the only differences are the Stripe key mode and
+// this is. Nothing here is relaxed for staging — the only differences are the PayPal mode and
 // the object-storage isolation that staging additionally requires.
 function good(appEnv='production'){
-  const env={APP_ENV:appEnv,APP_ORIGIN:'https://app.vyra.test',DATABASE_URL:'postgresql://vyra:secret@db.vyra.test/vyra',DATABASE_SSL:'require',REDIS_URL:'rediss://redis.vyra.test:6380',APP_ENCRYPTION_KEY:crypto.randomBytes(32).toString('base64url'),TIKTOK_INGEST_TOKEN:'ing_'+crypto.randomUUID(),METRICS_TOKEN:'met_'+crypto.randomUUID(),MEDIA_SCAN_TOKEN:'scan_'+crypto.randomUUID(),OBJECT_ENDPOINT:'https://objects.vyra.test',CDN_ORIGIN:'https://cdn.vyra.test',OBJECT_ACCESS_KEY:'access_'+crypto.randomUUID(),OBJECT_SECRET_KEY:'object_'+crypto.randomUUID(),MEDIA_SCAN_REQUIRED:'true',STRIPE_SECRET_KEY:'sk_live_'+crypto.randomUUID(),STRIPE_WEBHOOK_SECRET:'whsec_'+crypto.randomUUID(),STRIPE_PRICE_MONTHLY:'price_123ABC',RESEND_API_KEY:'re_'+crypto.randomUUID(),EMAIL_FROM:'VYRA <billing@vyra.test>',ALERT_EMAIL_TO:'alerts@vyra.test',ALERT_WEBHOOK_URL:'https://alerts.vyra.test/hook',DESKTOP_DOWNLOAD_URL:'https://downloads.vyra.test/VYRA-Setup.exe',DESKTOP_VERSION:'1.0.0',DESKTOP_SHA256:'a'.repeat(64),DESKTOP_SIZE_BYTES:'2048'};
+  const env={APP_ENV:appEnv,APP_ORIGIN:'https://app.vyra.test',DATABASE_URL:'postgresql://vyra:secret@db.vyra.test/vyra',DATABASE_SSL:'require',REDIS_URL:'rediss://redis.vyra.test:6380',APP_ENCRYPTION_KEY:crypto.randomBytes(32).toString('base64url'),TIKTOK_INGEST_TOKEN:'ing_'+crypto.randomUUID(),METRICS_TOKEN:'met_'+crypto.randomUUID(),MEDIA_SCAN_TOKEN:'scan_'+crypto.randomUUID(),OBJECT_ENDPOINT:'https://objects.vyra.test',CDN_ORIGIN:'https://cdn.vyra.test',OBJECT_ACCESS_KEY:'access_'+crypto.randomUUID(),OBJECT_SECRET_KEY:'object_'+crypto.randomUUID(),MEDIA_SCAN_REQUIRED:'true',PAYPAL_CLIENT_ID:'A'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_CLIENT_SECRET:'E'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_ENV:'live',PAYPAL_WEBHOOK_ID:'7VL31387MH8558935',PAYPAL_PLAN_MONTHLY:'P-1N359441EG117004VNKPKILY',PAYPAL_PLAN_MONTHLY_TRIAL:'P-7UY349153P1818424NKPKG2A',RESEND_API_KEY:'re_'+crypto.randomUUID(),EMAIL_FROM:'VYRA <billing@vyra.test>',ALERT_EMAIL_TO:'alerts@vyra.test',ALERT_WEBHOOK_URL:'https://alerts.vyra.test/hook',DESKTOP_DOWNLOAD_URL:'https://downloads.vyra.test/VYRA-Setup.exe',DESKTOP_VERSION:'1.0.0',DESKTOP_SHA256:'a'.repeat(64),DESKTOP_SIZE_BYTES:'2048'};
   if(appEnv==='staging'){
-    env.STRIPE_SECRET_KEY='sk_test_'+crypto.randomUUID();
+    env.PAYPAL_ENV='sandbox';
     env.OBJECT_KEY_PREFIX='staging/';
   }
   return env;
@@ -40,37 +40,41 @@ test('APP_ENV tolerates surrounding space and casing for the two valid values',(
   assert.equal(validateProductionEnv(env).appEnv,'production');
 });
 
-// ---- Stripe: refused in BOTH directions --------------------------------------------------------
-test('production refuses a Stripe TEST key',()=>{
-  const env=good('production');env.STRIPE_SECRET_KEY='sk_test_'+crypto.randomUUID();
-  fails(env,/TESTnyckel men APP_ENV=production/);
+// ---- PayPal: refused in BOTH directions -------------------------------------------------------
+test('production refuses PayPal sandbox',()=>{
+  const env=good('production');env.PAYPAL_ENV='sandbox';
+  fails(env,/sandbox men APP_ENV=production/);
 });
-test('staging refuses a Stripe LIVE key',()=>{
-  const env=good('staging');env.STRIPE_SECRET_KEY='sk_live_'+crypto.randomUUID();
-  fails(env,/LIVEnyckel men APP_ENV=staging/);
+test('staging refuses PayPal live',()=>{
+  const env=good('staging');env.PAYPAL_ENV='live';
+  fails(env,/live men APP_ENV=staging/);
 });
-test('neither environment accepts a key with no recognised mode',()=>{
+test('neither environment accepts an unknown PayPal mode',()=>{
   for(const appEnv of ['production','staging']){
-    const env=good(appEnv);env.STRIPE_SECRET_KEY='sk_'+crypto.randomUUID().repeat(2);
-    fails(env,appEnv==='production'?/måste vara en live-nyckel/:/måste vara en testnyckel/);
+    const env=good(appEnv);env.PAYPAL_ENV='test';
+    fails(env,appEnv==='production'?/måste vara live/:/måste vara sandbox/);
   }
 });
-test('a weak Stripe key is still rejected in both environments',()=>{
+test('weak PayPal credentials are rejected in both environments',()=>{
   for(const appEnv of ['production','staging']){
-    const env=good(appEnv);env.STRIPE_SECRET_KEY=appEnv==='staging'?'sk_test_x':'sk_live_x';
-    fails(env,/STRIPE_SECRET_KEY är för svag/,appEnv);
+    const env=good(appEnv);env.PAYPAL_CLIENT_SECRET='x';
+    fails(env,/PAYPAL_CLIENT_SECRET är för svag/,appEnv);
+    const env2=good(appEnv);env2.PAYPAL_CLIENT_ID='change-me';
+    fails(env2,/PAYPAL_CLIENT_ID är för svag/,appEnv);
   }
 });
-test('the webhook secret is required in both environments',()=>{
+test("the webhook id is required and must look like PayPal's",()=>{
   for(const appEnv of ['production','staging']){
-    const env=good(appEnv);env.STRIPE_WEBHOOK_SECRET='pk_'+crypto.randomUUID();
-    fails(env,/STRIPE_WEBHOOK_SECRET är ogiltig/,appEnv);
+    const env=good(appEnv);env.PAYPAL_WEBHOOK_ID='whsec_'+crypto.randomUUID();
+    fails(env,/PAYPAL_WEBHOOK_ID är ogiltigt/,appEnv);
   }
 });
-test('the price id is validated in both environments',()=>{
+test('both plan ids are validated and must differ',()=>{
   for(const appEnv of ['production','staging']){
-    const env=good(appEnv);env.STRIPE_PRICE_MONTHLY='prod_123';
-    fails(env,/STRIPE_PRICE_MONTHLY är ogiltigt/,appEnv);
+    const env=good(appEnv);env.PAYPAL_PLAN_MONTHLY='price_123';
+    fails(env,/PAYPAL_PLAN_MONTHLY är ogiltigt/,appEnv);
+    const env2=good(appEnv);env2.PAYPAL_PLAN_MONTHLY_TRIAL=env2.PAYPAL_PLAN_MONTHLY;
+    fails(env2,/två olika planer/,appEnv);
   }
 });
 
@@ -125,7 +129,7 @@ for(const appEnv of ['production','staging']){
 
 // ---- the original assertions, kept -------------------------------------------------------------
 test('weak secrets, test payments and HTTP are blocked',()=>{
-  const env=good();env.APP_ORIGIN='http://localhost';env.TIKTOK_INGEST_TOKEN='short';env.STRIPE_SECRET_KEY='sk_test_bad';
+  const env=good();env.APP_ORIGIN='http://localhost';env.TIKTOK_INGEST_TOKEN='short';env.PAYPAL_ENV='sandbox';
   assert.throws(()=>validateProductionEnv(env),
     error=>error.code==='VYRA_PRODUCTION_CONFIG'&&/APP_ORIGIN/.test(error.message)&&/TIKTOK/.test(error.message)&&/APP_ENV=production/.test(error.message));
 });

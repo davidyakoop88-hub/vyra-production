@@ -103,8 +103,8 @@ function externalChecks(env = process.env) {
     result('staging-readiness-and-load', baseUrl ? 'pending' : 'blocked',
       baseUrl ? `Run readiness and k6 profiles against ${baseUrl}.`
         : 'Requires VYRA_BASE_URL for the staging deployment.'),
-    result('stripe-lifecycle', 'blocked',
-      'Requires Stripe staging Test Clock: trial, renewal, failed payment, cancellation and resume.'),
+    result('paypal-lifecycle', 'blocked',
+      'Requires a PayPal sandbox run: trial, renewal, failed payment, cancellation and resume.'),
     result('obs-tiktok-live', 'blocked',
       'Requires a real OBS/TikTok LIVE Studio session for transparency, media and live events.'),
     result('signed-windows-installer', 'blocked',

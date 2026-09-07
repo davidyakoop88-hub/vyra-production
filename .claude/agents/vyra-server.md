@@ -37,5 +37,5 @@ CI anvander.)
 
 ## Granser
 
-Mal-runtime -> `vyra-goals`. Auth/MFA/token -> `vyra-konto`. Stripe -> `vyra-betalning`.
+Mal-runtime -> `vyra-goals`. Auth/MFA/token -> `vyra-konto`. PayPal -> `vyra-betalning`.
 Docker, Caddy och utrullning -> `vyra-drift`. TikTok-ingest fran bryggan -> `vyra-bridge`.
