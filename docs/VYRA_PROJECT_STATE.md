@@ -45,6 +45,14 @@ Båda från 578e85b (2026-08-02), trasiga från dag ett och osynliga eftersom de
 - `.vyra-gift-face>img{width:var(--gift-size)!important}` utan `--gift-size` (gåvoramarna sätter ingen)
   blir `width:auto` → gåvobilden i naturlig storlek, 195 px i ett 100 px-fönster. Gåvoramarnas egna
   64 %/70 %-regler har fått `!important` så de vinner.
+- Namnplattan (`.tgf-plate`, 94–131 px bred) hade namn och värde på en rad med `gap:8px`; namnet
+  avkortades till "@…". Nu två rader, och namnet skalas efter plattans bredd och namnets längd
+  (`min(dataSize, max(8px, 150/len cqw))`, plattan är `container-type:inline-size`). Värdet får mörk
+  färg på de ljusa plattorna (`tf-dark-name`: angel-heart, rose-garden) — accentrosa på rosa syntes inte.
+
+**Visuella referenser:** gåvoramarnas referensbilder togs på det trasiga läget (0×0-flip, naturlig
+gåvobild). De regenereras av workflowen "Visuella referenser" (push med `[referenser]` till
+`visuell-referenser/**`, eller Run workflow), aldrig lokalt — se `.github/workflows/visuell-referenser.yml`.
 
 ## Checkpoint 42 — Betalningen bytte till PayPal Subscriptions (2026-09-07)
 

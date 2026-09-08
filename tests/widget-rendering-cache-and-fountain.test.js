@@ -127,7 +127,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     // Bumpad 2026-09-04 for de ritade markena: samuraiemblemets ::before ritar numera en
   // inline-SVG-mask i stallet for U+5200, och .vyra-glyf-regeln ar ny. BARA studio.css
   // andrades av den delen.
-  assert.match(studio, /studio\.css\?v=20260907-1/);
+  // Bumpad 2026-09-08 (bildmatt): gavoramarnas flip var 0×0, gavobilden i naturlig storlek och
+  // namnplattan pa en rad. BARA studio.css andrades av den delen.
+  assert.match(studio, /studio\.css\?v=20260908-bildmatt/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);

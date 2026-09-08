@@ -785,11 +785,11 @@ html.overlay-output .widget{
 .topgift-framed .vyra-profile-face img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .topgift-framed .tgf-title{position:absolute;z-index:4;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:900;letter-spacing:3px;color:#ffe6a4;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;overflow:hidden;white-space:nowrap}
 .topgift-framed.tf-dark-title .tgf-title{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.5)}
-.topgift-framed .tgf-plate{position:absolute;z-index:4;display:flex;align-items:baseline;justify-content:center;gap:8px;text-align:center;pointer-events:none;overflow:hidden;line-height:1.1}
-.topgift-framed .tgf-plate strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topgift-framed .tgf-plate{container-type:inline-size;position:absolute;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;pointer-events:none;overflow:hidden;line-height:1.1}
+.topgift-framed .tgf-plate strong{display:block!important;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topgift-framed .tgf-plate em{display:block!important}
 .topgift-framed .tgf-plate em{font-style:normal;font-weight:800;color:var(--accent);text-shadow:0 0 12px var(--accent);white-space:nowrap;font-size:13px}
 .topgift-framed.tf-dark-name .tgf-plate strong{color:#5e2c46!important;text-shadow:0 1px 2px rgba(255,255,255,.5)}
-.topgift-framed.tf-dark-name .tgf-plate em{text-shadow:none}
+.topgift-framed.tf-dark-name .tgf-plate em{color:#5e2c46!important;text-shadow:none}
 /* Ingen egen längd längre. Med en engångsflipp var 3,8 s bara en annan hastighet; med en evig loop
    hade den ramade varianten bytt bild var 1,9:e sekund medan alla andra bytte var 5:e. */
 

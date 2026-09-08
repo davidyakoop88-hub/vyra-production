@@ -115,6 +115,7 @@ const FALL = [
   ['catalog:topgift:premium:royal',          'topgift'],
   ['catalog:topgift:extra:coronation',       'topgift'],
   ['catalog:topgift:frame:royal-wings',      'topgift', UTAN_RAM],
+  ['catalog:topgift:frame:angel-heart',      'topgift', UTAN_RAM],
   ['catalog:topstreak',                      'topstreak'],
   ['catalog:topstreak:premium:liquid',       'topstreak'],
   ['catalog:topstreak:frame:amethyst-heart', 'topstreak', UTAN_RAM],
@@ -189,6 +190,22 @@ for (const [nyckel, familj, extra] of FALL) {
         const fonster = await matt(page, id, sel.flip);
         assert.ok(efter.gava.w <= fonster.w + 0.5 && efter.gava.h <= fonster.h + 0.5,
           `${nyckel}: gåvobilden (${efter.gava.w.toFixed(0)}×${efter.gava.h.toFixed(0)}) ryms inte i fönstret (${fonster.w.toFixed(0)}×${fonster.h.toFixed(0)})`);
+        // Namnplattan (Top Gift): namn och värde på var sin rad, namnet oavkortat och skalat efter
+        // plattans bredd — plattorna är 94–131 px breda och rymde inte "@StreamQueen ◉ 44 999" på
+        // en rad (avkortat till "@..." fram till 2026-09-08).
+        if (familj === 'topgift') {
+          const platta = await page.evaluate(wid => {
+            const p = document.querySelector(`.canvas [data-id="${wid}"] .tgf-plate`); if (!p) return null;
+            const s = p.querySelector('strong'), e = p.querySelector('em'), r = p.getBoundingClientRect(), a = s.getBoundingClientRect(), b = e.getBoundingClientRect();
+            return { avkortat: s.scrollWidth > s.clientWidth + 1, tvaRader: b.top >= a.bottom - 1,
+              inuti: a.top >= r.top - 1 && b.bottom <= r.bottom + 1 && a.left >= r.left - 1 && a.right <= r.right + 1 && b.left >= r.left - 1 && b.right <= r.right + 1,
+              namn: s.textContent, fs: getComputedStyle(s).fontSize };
+          }, id);
+          assert.ok(platta, `${nyckel}: ingen namnplatta`);
+          assert.equal(platta.avkortat, false, `${nyckel}: namnet "${platta.namn}" avkortas i plattan (font ${platta.fs})`);
+          assert.equal(platta.tvaRader, true, `${nyckel}: namn och värde ligger inte på var sin rad`);
+          assert.equal(platta.inuti, true, `${nyckel}: namn eller värde sticker ut ur plattan`);
+        }
         continue;
       }
 
