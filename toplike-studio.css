@@ -403,11 +403,11 @@
   border:0!important;background:none!important;box-shadow:none!important;text-align:center!important;
   transform:translateX(-50%)!important;overflow:visible!important;grid-column:auto!important;grid-row:auto!important;
 }
-.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1{--px:50%;--py:26px;--pz:5;--pf:72px;--rk:#ffc93f}
-.widget.vyra-toplike.like-center.like-center .toplike-row.rank-2{--px:28%;--py:80px;--pz:4;--pf:58px;--rk:#5aa9ff}
-.widget.vyra-toplike.like-center.like-center .toplike-row.rank-3{--px:72%;--py:80px;--pz:4;--pf:58px;--rk:#ff8a3d}
-.widget.vyra-toplike.like-center.like-center .toplike-row.rank-4{--px:9%;--py:124px;--pz:3;--pf:48px;--rk:#c9c9d6}
-.widget.vyra-toplike.like-center.like-center .toplike-row.rank-5{--px:91%;--py:124px;--pz:3;--pf:48px;--rk:#c9c9d6}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1{--px:50%;--py:26px;--pz:5;--pf:72px;--rk:var(--ram-accent,#ffc93f)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-2{--px:28%;--py:80px;--pz:4;--pf:58px;--rk:var(--ram-accent,#5aa9ff)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-3{--px:72%;--py:80px;--pz:4;--pf:58px;--rk:var(--ram-accent,#ff8a3d)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-4{--px:9%;--py:124px;--pz:3;--pf:48px;--rk:var(--ram-accent,#c9c9d6)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-5{--px:91%;--py:124px;--pz:3;--pf:48px;--rk:var(--ram-accent,#c9c9d6)}
 .widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(n+6){display:none!important}
 /* Porträttet: fast mått per plats. Ramkonsten (img.tl-frame-art) är ett absolut syskon och rörs inte. */
 .widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>img:not(.pro-frame-art),
@@ -440,4 +440,14 @@
   order:3!important;display:block!important;width:100%!important;margin:0!important;padding:0!important;
   font-size:10px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
   text-align:center!important;color:var(--rk)!important;
+}
+
+/* ---- Rangbrickan tar ramens färg (2026-09-08) ------------------------------------------------
+   När en profilram är vald sätter media.js --ram-accent (mätt ur ramens PNG) och klassen har-ram på
+   widgetroten. Brickan i ALLA layouter tar färgen; i bågpodiet går den via --rk och färgar även
+   värdet. Utan ram: skinnets/rangens färg som förut. Sist i filen: skinnens brickregler ovan bär
+   !important och samma specificitet, källordning avgör. */
+.widget.vyra-toplike.har-ram .toplike-row>b{
+  background:var(--ram-accent)!important;color:#160f02!important;
+  box-shadow:0 0 8px color-mix(in srgb,var(--ram-accent),transparent 55%)!important;
 }

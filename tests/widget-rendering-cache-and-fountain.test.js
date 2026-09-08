@@ -251,7 +251,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
   assert.match(media, /toplike-studio\.css\?v=20260908-bagpodiet/);  // bagpodiet 2026-09-08: bara .css andrades, .js behaller -ramstad
-  assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
+  assert.match(media, /toplike-studio\.js\?v=20260908-ramaccent/);  // ramens accent pa brickan 2026-09-08
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);

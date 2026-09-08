@@ -198,6 +198,37 @@ async function podium(page) {
 }
 const kors = (a, b) => a.left < b.right - 0.5 && a.right > b.left + 0.5 && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
 
+// ---- "Siffror matchar ramarna" (David 2026-09-08): med en ram vald tar rangbrickan ramens accent,
+// mätt ur PNG:n (window.vyraFrameAccent), i ALLA layouter. Utan ram: skinnets/rangens färg som förut.
+async function brickfarger(page) {
+  return page.evaluate(() => {
+    const w = document.querySelector('.canvas .widget.vyra-toplike');
+    const rader = [...w.querySelectorAll('.toplike-row')].filter(r => getComputedStyle(r).display !== 'none');
+    // Accenten resolvad till samma rgb-form som brickans bakgrund, via ett hjälp-element.
+    const acc = getComputedStyle(w).getPropertyValue('--ram-accent').trim();
+    let accRgb = null;
+    if (acc) { const t = document.createElement('i'); t.style.background = acc; document.body.append(t); accRgb = getComputedStyle(t).backgroundColor; t.remove(); }
+    return { harRam: w.classList.contains('har-ram'), accRgb, brickor: rader.map(r => getComputedStyle(r.querySelector('b')).backgroundColor) };
+  });
+}
+for (const tema of ['clean', 'center']) {
+  test(`like-${tema}: med ruby-velvet tar alla brickor ramens accent, utan ram behåller de sin färg`, { skip }, async () => {
+    const utan = await editorMedToplike(tema, 'none');
+    const f0 = await brickfarger(utan);
+    await utan.close();
+    const med = await editorMedToplike(tema, 'ruby-velvet');
+    const f1 = await brickfarger(med);
+    await med.close();
+    assert.ok(!f0.harRam && !f0.accRgb, 'utan ram: ingen accent på roten');
+    assert.ok(f1.harRam && f1.accRgb, 'med ram: har-ram och --ram-accent på roten');
+    f1.brickor.forEach((b, i) => assert.equal(b, f1.accRgb, `like-${tema} bricka ${i + 1}: ${b} är inte ramens accent ${f1.accRgb}`));
+    assert.notEqual(f1.brickor[0], f0.brickor[0], 'accenten skiljer sig från färgen utan ram');
+    // ruby-velvet är röd: accenten ska ligga i det röda hörnet, inte på guldkanten (mätfällan 253° före).
+    const [r, g, b] = f1.accRgb.match(/\d+/g).map(Number);
+    assert.ok(r > g + 60 && r > b + 60, `ruby-velvets accent ${f1.accRgb} är inte röd`);
+  });
+}
+
 for (const ram of ['none', 'amethyst-oracle']) {
   test(`bågpodiet ${ram === 'none' ? 'utan ram' : '+ amethyst-oracle'}: fem platser i båge, inga namn eller värden i varandra, stabilt över pass`, { skip }, async () => {
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
