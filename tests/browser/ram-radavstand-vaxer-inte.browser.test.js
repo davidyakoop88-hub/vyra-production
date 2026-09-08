@@ -281,10 +281,18 @@ test('cykelbytet: uttoning (.tl-byt) före bytet, intoning (.tl-in) efter, rubri
     w.rankingCycle = true; w.cycleLikes = true; w.cycleCoins = true; w.cyclePoints = false; w.cycleSeconds = 2;
     state.widgets.push(w); selected = w.id; render();
   });
-  // Entrén: roten bär .tl-in direkt efter första rendern, och den är borta inom 2 s.
-  assert.ok(await page.evaluate(() => document.querySelector('.canvas .widget.vyra-toplike').classList.contains('tl-in')), 'första rendern startar intoningen (.tl-in)');
-  await page.waitForTimeout(2000);
-  assert.ok(!(await page.evaluate(() => document.querySelector('.canvas .widget.vyra-toplike').classList.contains('tl-in'))), 'intoningen är avslutad inom 2 s');
+  // Entrén: roten bär .tl-in efter första rendern, och den försvinner igen. POLLA, inte fasta väntetider:
+  // DOM:en byts asynkront efter render() (bind-kedjan), och på CI:s långsamma runner kom den ombyggda
+  // noden — och därmed entrén — senare än 0,7 s, så en fast 2 s-gräns föll där (main 2026-09-08) fast
+  // beteendet var rätt. Och när ett prov kastar mitt i lämnas sidan öppen och sviten hänger (40 min),
+  // därför try/finally runt sidan.
+  try {
+  const harKlass = () => page.evaluate(() => !!document.querySelector('.canvas .widget.vyra-toplike')?.classList.contains('tl-in'));
+  await page.waitForFunction(() => !!document.querySelector('.canvas .widget.vyra-toplike')?.classList.contains('tl-in'), null, { timeout: 4000, polling: 50 })
+    .catch(() => { throw new assert.AssertionError({ message: 'första rendern startar intoningen (.tl-in) — sågs inte inom 4 s' }); });
+  await page.waitForFunction(() => !document.querySelector('.canvas .widget.vyra-toplike')?.classList.contains('tl-in'), null, { timeout: 4000, polling: 50 })
+    .catch(() => { throw new assert.AssertionError({ message: 'intoningen är inte avslutad inom 4 s efter att den börjat' }); });
+  assert.ok(!(await harKlass()), 'intoningen är avslutad');
   // Följ klasser och rubrik i 50 ms-steg över tre cykelsteg.
   const logg = await page.evaluate(async () => {
     const box = document.querySelector('.canvas .widget.vyra-toplike'), ut = [];
@@ -313,7 +321,7 @@ test('cykelbytet: uttoning (.tl-byt) före bytet, intoning (.tl-in) efter, rubri
   const bytSlut = logg.findIndex((l, i) => i > forstaByt && !l.byt);
   const bytLangd = logg[bytSlut].t - logg[forstaByt].t;
   assert.ok(bytLangd >= 1000 && bytLangd <= 1500, `uttoning + gap tog ${bytLangd} ms, förväntat 1200 ± 250`);
-  await page.close();
+  } finally { await page.close(); }
 });
 
 for (const ram of ['none', 'amethyst-oracle']) {
