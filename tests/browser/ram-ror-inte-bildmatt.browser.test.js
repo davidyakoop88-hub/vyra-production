@@ -93,6 +93,10 @@ const FAMILJER = {
   topgift:   { profil: '.vyra-profile-face img:not(.pro-frame-art)', gava: '.vyra-gift-face img:not(.pro-frame-art)', flip: '.vyra-flip' },
   topstreak: { profil: '.streak-profile-face img:not(.pro-frame-art)', gava: '.streak-gift-face img:not(.pro-frame-art)', flip: '.streak-flip' },
   toplike:   { profil: '.toplike-row:first-child img:not(.pro-frame-art)' },
+  // Fasta fotorutor utan flip: omslaget fyller rutan, fotot fyller omslaget, konsten skalas utåt.
+  follower:  { profil: '.follow-avatar img:not(.pro-frame-art)' },
+  fanlevel:  { profil: '.fan-profile img:not(.pro-frame-art)' },
+  gifter:    { profil: '.gifter-orbit img:not(.pro-frame-art):not(.gifter-diamond)' },
 };
 
 // Ett brett tvärsnitt av katalogen: klassiskt tema, premium, extratema med egen konst (coronation
@@ -124,6 +128,13 @@ const FALL = [
   ['catalog:toplike:podium',                 'toplike'],
   ['catalog:toplike:neon',                   'toplike'],
   ['catalog:toplike:clean',                  'toplike', { widgetScale: 1.5 }],
+  // De fasta fotorutorna i Gift & Alert-familjen. Last-X saknas med flit: de fyra gamla typerna
+  // (templateLastGifter m.fl.) är ersatta av templateLastX, som inte ingår i ramfamiljen.
+  ['catalog:followeralert',                  'follower'],
+  ['catalog:fanlevel:gold',                  'fanlevel'],
+  ['catalog:gifterlevel:orbitlevel',         'gifter'],
+  // number-layouten visar inte orbitfotot (bara det lilla .gifter-bottom-profile, som lämnas oramat).
+  ['catalog:gifterlevel:profile',            'gifter'],
 ];
 
 function matt(page, id, sel) {

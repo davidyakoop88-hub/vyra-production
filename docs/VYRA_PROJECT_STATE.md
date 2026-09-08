@@ -23,12 +23,13 @@ Fotot ligger kvar på 100 % av sin ruta med och utan ram. Ramkonsten skalas i st
 |---|---|
 | Top Gift / Top Streak | `gift-alert-frames.js` lägger ramen runt **hela flippen**: ett omslag med flippens klass + inline-stil tar flippens plats i alla teman, flippen fyller omslaget med `inset:0`, konsten ligger sist och står stilla medan profil/gåva byter plats. |
 | Top Like | `media.js` renderar konsten som **syskon** till fotot (`img.tl-frame-art`) så raden matchar exakt samma regler som utan ram. Läget mäts efter render (`vyraPlaceraTopLikeRamar`, MutationObserver + ResizeObserver) och sätts i procent av raden. Raden får **marginaler** så att ramen ryms i dess marginalbox; ramar som ändå kolliderar (like-center: plats 1 ligger diagonalt över 2 och 3, i samma grid-spår med `align-items:end`) knuffar nästa rad nedåt sedan den tidigare radens höjd frysts och fästs i spårets start. Rangbricka, namn och värde lyfts över konsten. Fotot står stilla i sin rad. |
-| Fasta fotorutor (Follower, Fan/Gifter Level, Last-X) | samma formel i `gift-alert-frames.css`; fotot är 100 %, oskalat. |
+| Fasta fotorutor (Follower, Fan Level, Gifter Level) | samma formel i `gift-alert-frames.css`; fotot är 100 %, oskalat. Omslaget ligger **i flödet**, inte absolut: rutorna har 3–4 px padding och ett `inset:0`-omslag la sig över paddingen så fotot växte (137→145, 46→52 px). Uppmätt och rättat i uppföljningen samma dag. Last-X har ingen profilram alls — de fyra gamla typerna i `ANCHORS` (templateLastGifter m.fl.) är ersatta av `templateLastX`, som inte ingår i ramfamiljen. |
 | Gåvoramsvarianterna (`topgift:frame:*`, `topstreak:frame:*`) | får **ingen** profilram: gåvoramens konst ligger på z 3 ovanpå flippen (z 2), så en profilram hamnade bakom den och syntes aldrig. Pickern visas inte där. |
 | Medaljringar (autoMedal) | oförändrade — den gamla scale-regeln gäller nu bara dem. |
 
-Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter tolv katalogfall (fyra Top Gift,
-tre Top Streak, fyra Top Like-layouter, Top Like med `widgetScale` 1,5) med de två ramarna i ändarna
+Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter sjutton katalogfall (fem Top Gift,
+tre Top Streak, fyra Top Like-layouter, Top Like med `widgetScale` 1,5, Follower, Fan Level, två
+Gifter Level-layouter) med de två ramarna i ändarna
 av öppningsspannet: bildens bredd, höjd och läge oförändrade inom 0,5 px, konsten = ruta/fit,
 öppningen på bildens mitt, ingen förfader klipper konsten, ramen utanför profilsidan, ramen i radens
 marginalbox, inga två ramar i varandra, och bilden tillbaka exakt när ramen tas bort. Animationer
