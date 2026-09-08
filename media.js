@@ -413,7 +413,8 @@ function vyraPlaceraTopLikeRamar(omobservera){
       if(Math.abs(ex)>=Math.abs(ey))behov.push({el,rikt:ex>=0?'x+':'x-',v:!skar?0:ex>=0?A.right+LUFT-r.left:r.right-(A.left-LUFT)});
       else behov.push({el,rikt:ey>=0?'y+':'y-',v:!skar?0:ey>=0?A.bottom+LUFT-r.top:r.bottom-(A.top-LUFT)})}
     const mest={};behov.forEach(b=>{mest[b.rikt]=Math.max(mest[b.rikt]||0,b.v)});
-    behov.forEach(({el,rikt})=>{const v=mest[rikt];if(v<=.5)return;const t=(v/k).toFixed(2)+'px';
+    /* Hela CSS-px: en text flyttad 30,01 px ligger mellan pixelraderna och rastreras mjuk. */
+    behov.forEach(({el,rikt})=>{const v=mest[rikt];if(v<=.5)return;const t=Math.ceil(v/k)+'px';
       el.style.setProperty('translate',rikt==='x+'?`${t} 0px`:rikt==='x-'?`-${t} 0px`:rikt==='y+'?`0px ${t}`:`0px -${t}`,'important');el.dataset.tlKnuff='translate'})});
   /* Radens fotavtryck: konsten plus det som knuffats ut ur den (steg 0). Steg 2 och 3 mater mot det, inte
      bara mot konsten, sa att en text som knuffats under ramen far plats mellan raderna. */
