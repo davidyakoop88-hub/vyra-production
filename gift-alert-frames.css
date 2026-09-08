@@ -46,10 +46,13 @@
 .widget .gaf-flip-frame:before, .widget .gaf-flip-frame:after { content: none !important; display: none !important; }
 
 /* ---- 2. Fasta fotorutor (Follower Spotlight, Fan Level Up, Gifter Level Up, Last-X) ----
-   Omslaget fyller fotots befintliga ruta; fotot fyller omslaget. */
+   Omslaget fyller fotots befintliga ruta; fotot fyller omslaget. I FLÖDET, inte absolut: rutorna har
+   padding (.follow-avatar 4 px, .fan-profile 3 px) och ett absolut omslag med inset:0 la sig över
+   hela paddingrutan, så fotot växte 137→145 respektive 46→52 px när ramen lades på (uppmätt
+   2026-09-08). Ett block i flödet håller sig till innehållsrutan, precis som den ursprungliga bilden. */
 .follow-avatar .pro-avatar-frame,
 .last-x-avatar .pro-avatar-frame {
-  position: absolute; inset: 0; display: grid; place-items: center; overflow: visible;
+  position: relative; width: 100%; height: 100%; display: grid; place-items: center; overflow: visible;
 }
 
 .fan-profile { position: relative; }
@@ -61,7 +64,7 @@
    (Gifter Level's 86px, Fan Level's 52px) until last-x-card gets its own real stylesheet. */
 .last-x-avatar { position: relative; width: 72px; height: 72px; }
 .fan-profile .pro-avatar-frame {
-  position: absolute; inset: 0; display: grid; place-items: center; overflow: visible;
+  position: relative; width: 100%; height: 100%; display: grid; place-items: center; overflow: visible;
 }
 
 .gifter-orbit .pro-avatar-frame {

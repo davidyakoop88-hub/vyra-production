@@ -233,7 +233,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad en FEMTE gang samma dygn: ligabrickan gjorde headern till en trekolumnslayout och
   // MATCH AKTIV-chippet flyttade 436 px in mot mitten. Bade live-control.js och .css andrades igen.
   // Bumpad 2026-09-08: Top Like-ramen renderas som syskon till fotot och placeras efter mätning.
-  assert.match(studio, /[^-]media\.js\?v=20260908-bildmatt/);
+  // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
+  // och media.js bar dess versionsstrang.
+  assert.match(studio, /[^-]media\.js\?v=20260908-bildmatt-2/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -253,7 +255,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);
-  assert.match(media, /gift-alert-frames\.css\?v=2/);
+  assert.match(media, /gift-alert-frames\.css\?v=3/);
   assert.match(media, /profile-frames-premium\.css\?v=9/);
     // Bumpad 2026-09-04: premium-final.js AR den levande renderaren for social goals — den
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
