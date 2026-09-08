@@ -359,6 +359,44 @@ function vyraPlaceraTopLikeRamar(omobservera){
   const P=vyraPlaceraTopLikeRamar;if(!P.obs&&'ResizeObserver' in window)P.obs=new ResizeObserver(()=>P(false));if(omobservera&&P.obs)P.obs.disconnect();
   const px=el=>el.getBoundingClientRect(),marg=(rad,sida)=>parseFloat(rad.style.getPropertyValue('margin-'+sida))||0,
         satt=(rad,sida,v)=>rad.style.setProperty('margin-'+sida,v.toFixed(2)+'px','important');
+  /* Steg 0: rangbricka, namn och varde ur vagen for konsten. Davids skarmbild 2026-09-08: brickan satt
+     20 px in pa vanstra vingen och namnet 28 px in pa den hogra, i alla atta listlayouter; i like-center
+     lag namnet under fotot mitt i ramens nedre del. Konstens ruta FORUTSES ur fotot — bredd foto/fit,
+     mitt = fotomitt − dx/dy·bredd — innan konsten placeras, for placeringen raknas i procent av raden
+     och raden kan vaxa av knuffen. Varje element som skar rutan knuffas bort fran fotot langs den axel
+     det redan ligger pa. Knuffen ar CSS-egenskapen `translate` — inte margin: en marginal pa ett
+     centrerat rutnatselement flyttar det bara HALVA vagen (uppmatt like-right: brickan 11 av 22 px),
+     pa ett absolut placerat inte alls, och `transform` bar redan namnets/vardets egna offset fran
+     state. translate flyttar exakt, oavsett justering, position och transform. SATT idempotent: forra
+     passets knuff tas bort fore matningen, sa passet kan koras hur manga ganger som helst. */
+  const LUFT=6;
+  arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;
+    for(const el of rad.children)if(el.dataset.tlKnuff){el.style.removeProperty(el.dataset.tlKnuff);delete el.dataset.tlKnuff}
+    const f=px(foto),k=px(rad).width/(rad.offsetWidth||1);if(!f.width)return;
+    const g=n=>parseFloat(art.style.getPropertyValue(n))||0,fit=g('--frame-fit')||.62,aw=f.width/fit,
+          cx=f.left+f.width/2-g('--frame-dx')*aw,cy=f.top+f.height/2-g('--frame-dy')*aw,A={left:cx-aw/2,right:cx+aw/2,top:cy-aw/2,bottom:cy+aw/2};
+    /* Alltid translate, aven lodratt (like-center: namnet under fotot). En marginal hade fatt raden att
+       vaxa, och i like-center ar fotot bottenjusterat i raden — det flyttade 36 px nar raden vaxte 49
+       (kontraktet i ram-ror-inte-bildmatt). Det knuffade raknas i stallet in i radens FOTAVTRYCK i
+       steg 2–3, sa att grannraderna halls undan lika mycket som for konsten.
+       Alla element at samma hall knuffas LIKA langt (gruppens storsta behov): namn och varde under fotot
+       hade annars fatt var sin knuff till samma kant och ritats ovanpa varandra (uppmatt like-center). */
+    const behov=[];
+    for(const el of rad.children){if(el===art||el===foto)continue;const r=px(el);if(!r.width||!r.height)continue;
+      if(!(r.left<A.right&&r.right>A.left&&r.top<A.bottom&&r.bottom>A.top))continue;
+      const ex=(r.left+r.width/2-(f.left+f.width/2))/f.width,ey=(r.top+r.height/2-(f.top+f.height/2))/f.height;
+      if(Math.abs(ex)>=Math.abs(ey))behov.push({el,rikt:ex>=0?'x+':'x-',v:ex>=0?A.right+LUFT-r.left:r.right-(A.left-LUFT)});
+      else behov.push({el,rikt:ey>=0?'y+':'y-',v:ey>=0?A.bottom+LUFT-r.top:r.bottom-(A.top-LUFT)})}
+    const mest={};behov.forEach(b=>{mest[b.rikt]=Math.max(mest[b.rikt]||0,b.v)});
+    behov.forEach(({el,rikt})=>{const v=mest[rikt];if(v<=.5)return;const t=(v/k).toFixed(2)+'px';
+      el.style.setProperty('translate',rikt==='x+'?`${t} 0px`:rikt==='x-'?`-${t} 0px`:rikt==='y+'?`0px ${t}`:`0px -${t}`,'important');el.dataset.tlKnuff='translate'})});
+  /* Radens fotavtryck: konsten plus det som knuffats ut ur den (steg 0). Steg 2 och 3 mater mot det, inte
+     bara mot konsten, sa att en text som knuffats under ramen far plats mellan raderna. */
+  const fot=art=>{let a=px(art);for(const el of art.parentElement.children){if(!el.dataset.tlKnuff)continue;const r=px(el);if(!r.width)continue;
+    a={left:Math.min(a.left,r.left),right:Math.max(a.right,r.right),top:Math.min(a.top,r.top),bottom:Math.max(a.bottom,r.bottom)}}return a};
+  /* Ingen vaxning av widgeten: kontraktet fran #384 (ram-ror-inte-bildmatt) ar att ramen inte andrar
+     widgetens bredd — provet foll pa 242 mot 220 nar rutan fick vaxa. Bricka och text far darfor hanga
+     utanfor rutan at sidorna, som konsten redan gor (28/34 px), men aldrig ovanpa konsten. */
   // Steg 1: lagg konsten pa fotot, i procent av raden sa att zoom/skala/transform tar ut varandra.
   arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;const f=px(foto),r=px(rad);
     if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}
@@ -380,14 +418,14 @@ function vyraPlaceraTopLikeRamar(omobservera){
      125,7, och +52 px for varje pass till. Utan utstick tas var egen marginal bort, sa att en
      stilmallsmarginal inte skrivs over med 0. Steg 3 laggs ovanpa i samma pass och blir darmed ocksa
      idempotent: knuffen raknas om fran utsticket varje gang, inte fran forra passets summa. */
-  arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;const a=px(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
+  arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;const a=fot(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
     if(a.top<r.top-.5)satt(rad,'top',(r.top-a.top)/k);else rad.style.removeProperty('margin-top');
     if(a.bottom>r.bottom+.5)satt(rad,'bottom',(a.bottom-r.bottom)/k);else rad.style.removeProperty('margin-bottom')});
   /* Steg 3: rader som overlappar varandra med flit (like-center: plats 1 ligger diagonalt over 2 och 3)
      far anda inte ramar som gar in i varandra. Kolliderar konst j med en tidigare konst i, knuffas
      j:s rad ner precis sa langt att de gar fria. Matt om efter varje knuff — nasta par ser det nya laget. */
   arter.forEach((art,j)=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;
-    for(let i=0;i<j;i++){const b=arter[i];if(b.style.display==='none'||b.parentElement===rad)continue;const p=px(b),a=px(art);
+    for(let i=0;i<j;i++){const b=arter[i];if(b.style.display==='none'||b.parentElement===rad)continue;const p=fot(b),a=fot(art);
       const kors=a.left<p.right&&a.right>p.left&&a.top<p.bottom&&a.bottom>p.top;if(!kors)continue;
       const k=px(rad).width/(rad.offsetWidth||1),radI=b.parentElement;
       /* Frys den tidigare radens hojd forst: ligger den i samma grid-spar strecks den annars med sparet

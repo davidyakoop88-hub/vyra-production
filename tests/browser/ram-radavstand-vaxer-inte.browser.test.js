@@ -121,6 +121,62 @@ test('like-clean + amethyst-oracle: tre extra placeringspass flyttar inte en end
   await page.close();
 });
 
+// ---- Davids andra krav samma kväll: "namn och nr ska inte vara klistrade på listan". Uppmätt före:
+// brickan 20–22 px in på vänstra vingen och namn/värde 28 px in på den högra i alla åtta listlayouter;
+// i like-center låg namnet under fotot mitt i ramens nedre del (64 px). Kontraktet: ingen bricka, inget
+// namn och inget värde skär ramkonsten; namn och värde skär inte varandra; och knuffen är idempotent.
+const LAYOUTER = ['clean', 'list', 'right', 'row', 'studio', 'skin', 'crown', 'neon', 'center'];
+
+const matRader = page => page.evaluate(() => {
+  const px = el => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
+  const kors = (a, b) => a.left < b.right - 0.5 && a.right > b.left + 0.5 && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
+  return [...document.querySelectorAll('.canvas .widget.vyra-toplike .toplike-row')].map(rad => {
+    const art = rad.querySelector('img.tl-frame-art');
+    const a = art && px(art);
+    const delar = {};
+    for (const el of rad.children) {
+      if (el === art || el === art?.previousElementSibling) continue;
+      const r = px(el); if (!r.width || !r.height) continue;
+      delar[el.tagName.toLowerCase()] = { ...r, text: (el.textContent || '').trim().slice(0, 12), skarArt: !!a && kors(r, a) };
+    }
+    return { art: a, delar };
+  });
+});
+
+for (const tema of LAYOUTER) {
+  test(`like-${tema} + amethyst-oracle: bricka, namn och värde skär inte ramen, namn och värde skär inte varandra, och tre extra pass flyttar inget`, { skip }, async () => {
+    const page = await editorMedToplike(tema, 'amethyst-oracle');
+    const rader = await matRader(page);
+    assert.equal(rader.length, 3, 'tre rader');
+    rader.forEach((rad, i) => {
+      assert.ok(rad.art, `rad ${i + 1} har ramkonst`);
+      for (const [namn, d] of Object.entries(rad.delar)) {
+        assert.ok(!d.skarArt, `like-${tema} rad ${i + 1}: <${namn}> "${d.text}" ligger på ramkonsten`);
+      }
+      const s = rad.delar.span, e = rad.delar.em;
+      if (s && e) {
+        const kors = s.left < e.right - 0.5 && s.right > e.left + 0.5 && s.top < e.bottom - 0.5 && s.bottom > e.top + 0.5;
+        assert.ok(!kors, `like-${tema} rad ${i + 1}: namnet "${s.text}" och värdet "${e.text}" ritas ovanpå varandra`);
+      }
+    });
+    for (let i = 0; i < 3; i++) {
+      await page.evaluate(() => vyraPlaceraTopLikeRamar(false));
+      await page.waitForTimeout(100);
+    }
+    const efter = await matRader(page);
+    rader.forEach((rad, i) => {
+      assert.ok(Math.abs(efter[i].art.top - rad.art.top) <= 0.5 && Math.abs(efter[i].art.left - rad.art.left) <= 0.5,
+        `like-${tema} rad ${i + 1}: ramkonsten flyttade (${(efter[i].art.left - rad.art.left).toFixed(1)}, ${(efter[i].art.top - rad.art.top).toFixed(1)}) px efter tre extra pass`);
+      for (const [namn, d] of Object.entries(rad.delar)) {
+        const e2 = efter[i].delar[namn];
+        assert.ok(e2 && Math.abs(e2.left - d.left) <= 0.5 && Math.abs(e2.top - d.top) <= 0.5,
+          `like-${tema} rad ${i + 1}: <${namn}> flyttade efter tre extra pass`);
+      }
+    });
+    await page.close();
+  });
+}
+
 test('like-center + amethyst-oracle: kollisionsknuffen är också stabil över pass, och ramarna går inte in i varandra', { skip }, async () => {
   const page = await editorMedToplike('center', 'amethyst-oracle');
   const fore = await mat(page);
