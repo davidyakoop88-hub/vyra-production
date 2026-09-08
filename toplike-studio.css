@@ -378,3 +378,66 @@
 .vyra-toplike.vyra-toplike{background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .vyra-toplike .toplike-row{background:none!important}
 .vyra-toplike.like-center .toplike-row:nth-child(-n+3){background:none!important}
+
+/* ---- Bågpodiet (2026-09-08, Davids referensbild) ----------------------------------------------
+   Fem platser i en båge: ettan högst upp i mitten och störst, tvåan och trean ett steg ned åt var
+   sida, fyran och femman ytterst och lägst. Rangbrickan sitter nere till vänster på porträttet,
+   namnet under porträttet och värdet under namnet. Varje plats är en fast SLOT (56 px) med
+   ellipsis — det är slotten, inte namnets längd, som avgör att namn aldrig går in i varandra.
+   Platserna är absolut placerade i en scen: raderna knuffar därför inte varandra, och
+   vyraPlaceraTopLikeRamar (media.js) hoppar över steg 2–3 (radmarginaler, kollisionsknuff) för
+   absoluta rader — i bågen får ramarna överlappa, ettan ligger överst (z-index). Sist i filen av
+   samma källordningsskäl som podiet ovan. Dubbla klasser för att slå tidigare !important-lager. */
+/* 340 px: fem porträtt (72/58/48) med 8 px luft mellan namnslottarna — i 302 px gick porträtten in i varandra (uppmätt). */
+.widget.vyra-toplike.like-center.like-center{width:340px!important;min-width:340px!important;max-width:340px!important}
+.widget.vyra-toplike.like-center.like-center>.toplike-list{
+  display:block!important;position:relative!important;width:100%!important;
+  height:232px!important;min-height:0!important;padding:0!important;margin:0!important;
+  overflow:visible!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5){
+  position:absolute!important;left:var(--px)!important;top:var(--py)!important;z-index:var(--pz)!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  gap:2px!important;width:56px!important;min-width:0!important;max-width:none!important;
+  height:auto!important;min-height:0!important;padding:0!important;margin:0!important;
+  border:0!important;background:none!important;box-shadow:none!important;text-align:center!important;
+  transform:translateX(-50%)!important;overflow:visible!important;grid-column:auto!important;grid-row:auto!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1{--px:50%;--py:26px;--pz:5;--pf:72px;--rk:#ffc93f}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-2{--px:28%;--py:80px;--pz:4;--pf:58px;--rk:#5aa9ff}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-3{--px:72%;--py:80px;--pz:4;--pf:58px;--rk:#ff8a3d}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-4{--px:9%;--py:124px;--pz:3;--pf:48px;--rk:#c9c9d6}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-5{--px:91%;--py:124px;--pz:3;--pf:48px;--rk:#c9c9d6}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(n+6){display:none!important}
+/* Porträttet: fast mått per plats. Ramkonsten (img.tl-frame-art) är ett absolut syskon och rörs inte. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>img:not(.pro-frame-art),
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>.pro-avatar-frame{
+  order:1!important;flex:none!important;width:var(--pf)!important;height:var(--pf)!important;
+  min-width:0!important;max-width:none!important;margin:0!important;border-radius:50%!important;
+  object-fit:cover!important;justify-self:auto!important;align-self:auto!important;transform:none!important;
+}
+/* Rangbrickan nere till vänster på porträttet, som medaljen i referensen. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>b{
+  display:grid!important;place-items:center!important;position:absolute!important;
+  left:calc(50% - var(--pf) / 2 - 5px)!important;top:calc(var(--pf) - 15px)!important;
+  width:18px!important;height:18px!important;min-width:18px!important;border-radius:50%!important;
+  margin:0!important;padding:0!important;transform:none!important;font-size:9px!important;
+  background:var(--rk)!important;color:#160f02!important;box-shadow:0 0 8px color-mix(in srgb,var(--rk),transparent 55%)!important;
+  z-index:8!important;order:0!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1::before{top:-22px!important}
+/* Namn och värde: slotten är 58 px, namnet klipps med ellipsis, handtaget visas inte. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame){
+  order:2!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+  width:100%!important;min-height:0!important;margin:2px 0 0!important;padding:0!important;text-align:center!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame)>strong{
+  display:block!important;width:100%!important;font-size:10px!important;line-height:1.15!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:center!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame)>small{display:none!important}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>em{
+  order:3!important;display:block!important;width:100%!important;margin:0!important;padding:0!important;
+  font-size:10px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  text-align:center!important;color:var(--rk)!important;
+}

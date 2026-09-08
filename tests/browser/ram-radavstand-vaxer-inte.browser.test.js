@@ -151,6 +151,9 @@ for (const tema of LAYOUTER) {
     rader.forEach((rad, i) => {
       assert.ok(rad.art, `rad ${i + 1} har ramkonst`);
       for (const [namn, d] of Object.entries(rad.delar)) {
+        // Bågpodiet (center): rangbrickan sitter MED FLIT nere till vänster på ramen, som medaljen i
+        // Davids referensbild. Namn och värde ska däremot ligga under ramen även där.
+        if (tema === 'center' && namn === 'b') continue;
         assert.ok(!d.skarArt, `like-${tema} rad ${i + 1}: <${namn}> "${d.text}" ligger på ramkonsten`);
       }
       const s = rad.delar.span, e = rad.delar.em;
@@ -177,25 +180,71 @@ for (const tema of LAYOUTER) {
   });
 }
 
-test('like-center + amethyst-oracle: kollisionsknuffen är också stabil över pass, och ramarna går inte in i varandra', { skip }, async () => {
-  const page = await editorMedToplike('center', 'amethyst-oracle');
-  const fore = await mat(page);
-  for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => vyraPlaceraTopLikeRamar(false));
-    await page.waitForTimeout(100);
-  }
-  const efter = await mat(page);
-  fore.forEach((r, i) => {
-    assert.ok(Math.abs(efter[i].top - r.top) <= 0.5,
-      `like-center rad ${i + 1} flyttade ${(efter[i].top - r.top).toFixed(1)} px efter tre extra pass`);
+// ---- Bågpodiet (like-center), Davids referensbild 2026-09-08: fem platser i en båge, ettan högst
+// och i mitten, tvåan/trean ett steg ned åt var sida, fyran/femman ytterst och lägst. Ramarna FÅR
+// överlappa där (ettan överst), men namn och värde från olika platser får aldrig gå in i varandra —
+// varken med eller utan ram — och placeringen ska stå stilla över extra pass.
+async function podium(page) {
+  return page.evaluate(() => {
+    const px = el => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, cx: r.left + r.width / 2 }; };
+    const w = document.querySelector('.canvas .widget.vyra-toplike');
+    const wb = px(w);
+    return [...w.querySelectorAll('.toplike-row')].map(rad => {
+      const foto = rad.querySelector('img:not(.pro-frame-art)'), s = rad.querySelector('span:not(.pro-avatar-frame)'), e = rad.querySelector('em');
+      const synlig = getComputedStyle(rad).display !== 'none';
+      return { synlig, foto: foto && px(foto), namn: s && px(s), varde: e && px(e), widget: wb };
+    });
   });
-  // Ingen ramkonst får ligga vertikalt inne i en tidigare rads konst när de överlappar i sidled.
-  const arter = await page.evaluate(() => [...document.querySelectorAll('.canvas .widget.vyra-toplike img.tl-frame-art')]
-    .map(a => { const r = a.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; }));
-  for (let j = 1; j < arter.length; j++) for (let i = 0; i < j; i++) {
-    const a = arter[j], b = arter[i];
-    const kors = a.left < b.right && a.right > b.left && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
-    assert.ok(!kors, `ram ${i + 1} och ${j + 1} går in i varandra`);
-  }
-  await page.close();
-});
+}
+const kors = (a, b) => a.left < b.right - 0.5 && a.right > b.left + 0.5 && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
+
+for (const ram of ['none', 'amethyst-oracle']) {
+  test(`bågpodiet ${ram === 'none' ? 'utan ram' : '+ amethyst-oracle'}: fem platser i båge, inga namn eller värden i varandra, stabilt över pass`, { skip }, async () => {
+    const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.addStyleTag({ content: '.canvas .widget, .canvas .widget *, .canvas .widget *:before, .canvas .widget *:after { animation: none !important; transition: none !important; }' });
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await page.waitForTimeout(400);
+    await page.evaluate(ram => {
+      state.widgets.length = 0;
+      const w = window.VyraWidgets.create('catalog:toplike:center');
+      w.x = 100; w.y = 60; w.likeCount = 7;
+      if (ram !== 'none') w.profileFrame = ram;
+      state.widgets.push(w); selected = w.id; render();
+    }, ram);
+    await page.waitForTimeout(1500);
+    const p = await podium(page);
+    const synliga = p.filter(r => r.synlig);
+    assert.equal(synliga.length, 5, `fem platser visas i bågen (likeCount 7 → fem), inte ${synliga.length}`);
+    const [p1, p2, p3, p4, p5] = synliga;
+    const mitt = p1.widget.left + (p1.widget.right - p1.widget.left) / 2;
+    assert.ok(Math.abs(p1.foto.cx - mitt) <= 1.5, `ettan står i mitten (${(p1.foto.cx - mitt).toFixed(1)} px från mitten)`);
+    assert.ok(p1.foto.top < p2.foto.top - 20 && p2.foto.top < p4.foto.top - 20, 'ettan högst, tvåan/trean ett steg ned, fyran/femman lägst');
+    assert.ok(Math.abs((mitt - p2.foto.cx) - (p3.foto.cx - mitt)) <= 1.5, 'tvåan och trean speglade kring mitten');
+    assert.ok(Math.abs((mitt - p4.foto.cx) - (p5.foto.cx - mitt)) <= 1.5, 'fyran och femman speglade kring mitten');
+    assert.ok(p4.foto.cx < p2.foto.cx && p5.foto.cx > p3.foto.cx, 'fyran och femman ytterst');
+    // Namn och värde: ingen text från en plats går in i någon text från en annan plats.
+    const texter = synliga.flatMap((r, i) => [['namn', r.namn, i + 1], ['värde', r.varde, i + 1]]).filter(t => t[1]);
+    for (let a = 0; a < texter.length; a++) for (let b = a + 1; b < texter.length; b++) {
+      if (texter[a][2] === texter[b][2]) continue;
+      assert.ok(!kors(texter[a][1], texter[b][1]), `${texter[a][0]} på plats ${texter[a][2]} går in i ${texter[b][0]} på plats ${texter[b][2]}`);
+    }
+    // Porträtten utan ram får inte gå in i varandra (med ram får RAMARNA överlappa, det är referensens form).
+    if (ram === 'none') for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) {
+      const fa = synliga[a].foto, fb = synliga[b].foto;
+      assert.ok(!kors(fa, fb), `porträtt ${a + 1} (${fa.left.toFixed(1)}–${fa.right.toFixed(1)} × ${fa.top.toFixed(1)}–${fa.bottom.toFixed(1)}) och ${b + 1} (${fb.left.toFixed(1)}–${fb.right.toFixed(1)} × ${fb.top.toFixed(1)}–${fb.bottom.toFixed(1)}) går in i varandra`);
+    }
+    for (let i = 0; i < 3; i++) {
+      await page.evaluate(() => vyraPlaceraTopLikeRamar(false));
+      await page.waitForTimeout(100);
+    }
+    const efter = (await podium(page)).filter(r => r.synlig);
+    synliga.forEach((r, i) => {
+      assert.ok(Math.abs(efter[i].foto.top - r.foto.top) <= 0.5 && Math.abs(efter[i].namn.top - r.namn.top) <= 0.5,
+        `plats ${i + 1} flyttade efter tre extra pass`);
+    });
+    await page.close();
+  });
+}

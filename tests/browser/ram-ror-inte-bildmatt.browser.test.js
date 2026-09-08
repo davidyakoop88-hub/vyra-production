@@ -262,7 +262,11 @@ for (const [nyckel, familj, extra] of FALL) {
         nara(rad.w, fore.rad.w, 0.5, `${nyckel} + ${ram}: Top Like-radens bredd ändrades av ramen`);
         const brott = await page.evaluate(wid => {
           const rot = document.querySelector(`.canvas [data-id="${wid}"]`), ut = [];
-          const arter = [...rot.querySelectorAll('img.pro-frame-art')].filter(a => getComputedStyle(a).display !== 'none');
+          // Bågpodiet (like-center sedan 2026-09-08, Davids referensbild): platserna är absolut
+          // placerade i en scen och ramarna FÅR överlappa varandra där, ettan överst — det är
+          // referensens form. Marginalbox- och kollisionskontrakten gäller raderna i flödet.
+          const arter = [...rot.querySelectorAll('img.pro-frame-art')].filter(a => getComputedStyle(a).display !== 'none'
+            && getComputedStyle(a.parentElement).position !== 'absolute');
           arter.forEach((art, j) => {
             const a = art.getBoundingClientRect(), rad = art.parentElement, r = rad.getBoundingClientRect();
             const k = r.width / (rad.offsetWidth || 1), cs = getComputedStyle(rad);
