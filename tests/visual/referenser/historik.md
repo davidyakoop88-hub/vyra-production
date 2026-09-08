@@ -79,3 +79,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Bågpodiet (PR #387): like-center är fem platser i en båge vars scen skalas efter ramen — 340 px utan ram. Gäller alla tre :center-nycklar (toplike, TopCoins, TopPoints delar layouten).
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-08 — 12 referenser skrivna
+
+- **Motiv:** Entrén vid första rendern (#387) ändrar 20–57 kantpixlar deterministiskt på tolv rankingnycklar utan ram (identiska tal i två CI-körningar, lokal A/B på annan Chrome gav 0). Alla tolv i EN körning: toplike + ranking:templateTop, så efterkontrollen går grön.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
