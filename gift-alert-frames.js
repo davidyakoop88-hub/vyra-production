@@ -14,8 +14,6 @@
   // (.gifter-bottom-profile, only shown in the "number" layout) that is intentionally left unframed
   // to avoid double-framing a single widget.
   const ANCHORS = {
-    templateTopGift: 'vyra-profile-face',
-    templateTopStreak: 'streak-profile-face',
     templateFollowerAlert: 'follow-avatar',
     templateFanLevel: 'fan-profile',
     templateGifterLevel: 'gifter-orbit',
@@ -24,6 +22,43 @@
     templateLastSharer: 'last-x-avatar',
     templateLastSubscriber: 'last-x-avatar',
   };
+
+  // Top Gift och Top Streak flippar mellan profil och gåva. Ramen ankrades förr INUTI profilsidan
+  // (.vyra-profile-face) — sidan har backface-visibility:hidden och roterar bort, så ramen försvann
+  // varje gång gåvan visades. Nu läggs ramen runt HELA flippen: omslaget bär flippens klass och
+  // inline-stil och tar därmed exakt flippens plats och mått i varje tema (fast px, grid-cell,
+  // absolut i procent — samtliga 17 storleksregler i studio.css gäller omslaget oförändrade), medan
+  // den riktiga flippen fyller omslaget med inset:0 och fortsätter rotera inuti. Ramkonsten ligger
+  // sist i omslaget, utanför rotationen, och står stilla medan profil och gåva byter plats.
+  const FLIPPAR = { templateTopGift: 'vyra-flip', templateTopStreak: 'streak-flip' };
+
+  function ramaInFlippen(html, klass, g, file) {
+    const start = html.search(new RegExp(`<div class="${klass}[ "]`));
+    if (start < 0) return html;
+    const tagSlut = html.indexOf('>', start);
+    const tagg = html.slice(start, tagSlut + 1);
+    const klasser = /class="([^"]*)"/.exec(tagg)[1];
+    const inline = (/style="([^"]*)"/.exec(tagg) || [, ''])[1];
+    // Flippens slut är den </div> som balanserar öppningstaggen — sidorna är egna div:ar inuti.
+    const re = /<div\b|<\/div>/g;
+    re.lastIndex = tagSlut + 1;
+    let djup = 0, slut = -1, m;
+    while ((m = re.exec(html))) {
+      if (m[0] !== '</div>') { djup++; continue }
+      if (djup === 0) { slut = m.index; break }
+      djup--;
+    }
+    if (slut < 0) return html;
+    const inre = html.slice(tagSlut + 1, slut);
+    // Inline-!important på den inre flippen slår temats egna !important (position:relative,
+    // width:var(--gift-size)) — det är det enda som vinner över en stilmall med !important.
+    return html.slice(0, start)
+      + `<span class="${klasser} gaf-flip-frame" style="${inline};--frame-fit:${g.fit};--frame-dx:${g.dx};--frame-dy:${g.dy}">`
+      + `<div class="${klasser}" style="position:absolute!important;inset:0!important;width:auto!important;height:auto!important;margin:0!important;display:block!important">${inre}</div>`
+      + `<img class="pro-frame-art" src="assets/images/profile-frames/${file}" alt="">`
+      + '</span>'
+      + html.slice(slut + '</div>'.length);
+  }
 
   // ---- Render: composite the chosen avatar frame onto the profile photo + apply entrance animation ----
   const gafWh = wh;
@@ -38,11 +73,20 @@
     }
 
     if (w.profileFrame && w.profileFrame !== 'none') {
-      const anchor = ANCHORS[w.type];
       // window.VYRA_FRAME_FILES is set by toplike-studio.js — read lazily here (not at this file's own
       // top-level scope) since dynamically injected scripts don't have a guaranteed load order.
       const files = window.VYRA_FRAME_FILES || {};
       const file = files[w.profileFrame] || `${w.profileFrame}.png`;
+      // Geometry of the frame's transparent opening (measured per asset in toplike-studio.js):
+      // --frame-fit is its diameter as a fraction of the frame's width, --frame-dx/dy its centre
+      // offset. CSS scales the ART up by 1/fit and shifts it so the opening lands exactly on the
+      // photo — the photo itself keeps 100 % of its box, with or without a frame (kravet 2026-09-08).
+      // Read through window at render time — load order between injected files isn't guaranteed.
+      const g = window.vyraFrameGeom ? window.vyraFrameGeom(w.profileFrame) : { fit: 0.62, dx: 0, dy: 0 };
+
+      if (FLIPPAR[w.type]) return ramaInFlippen(html, FLIPPAR[w.type], g, file);
+
+      const anchor = ANCHORS[w.type];
       // [^"]* after the anchor class (not just [^>]*) because other wrappers in the chain (e.g.
       // profileFrameWh in media.js) append extra classes to the same div, like
       // class="vyra-profile-face profile-frame frame-none" — matching only an exact single-class
@@ -50,12 +94,6 @@
       // Non-greedy so it tolerates sibling markup inside the anchor div (e.g. gifter-orbit's three
       // decoy <i> rings before the actual photo <img>) without matching too far.
       const re = new RegExp(`(<div class="${anchor}[^"]*"[^>]*>[\\s\\S]*?)(<img[^>]*src="[^"]*"[^>]*>)`);
-      // Geometry of the frame's transparent opening (measured per asset in toplike-studio.js):
-      // --frame-fit is its diameter as a fraction of the frame's width, --frame-dx/dy its centre
-      // offset. CSS scales the art by 1/fit and shifts it so the opening lands on the photo, putting
-      // the ring OUTSIDE the photo instead of over it.
-      // Read through window at render time — load order between injected files isn't guaranteed.
-      const g = window.vyraFrameGeom ? window.vyraFrameGeom(w.profileFrame) : { fit: 0.62, dx: 0, dy: 0 };
       html = html.replace(re, (match, prefix, img) =>
         `${prefix}<span class="pro-avatar-frame" style="--frame-fit:${g.fit};--frame-dx:${g.dx};--frame-dy:${g.dy}">${img}<img class="pro-frame-art" src="assets/images/profile-frames/${file}" alt=""></span>`
       );

@@ -31,7 +31,10 @@
    added later. Sizing via width/height would instead need a hand-written pixel value per layout,
    which is the same hardcoding that broke these frames to begin with.
    translate percentages resolve against the element's own box, which equals the frame box, so the
-   offsets are used as-is — and must come before scale in the list. */
+   offsets are used as-is — and must come before scale in the list.
+   SEDAN 2026-09-08 gäller regeln bara medaljringarna (autoMedal, toplike-studio.js): de valda
+   profilramarna renderas som syskon (img.tl-frame-art, längst ner i filen) respektive med utåtskalad
+   konst (gift-alert-frames.css), och fotot lämnas på 100 % — kravet att fotot inte får ändra mått. */
 .pro-avatar-frame>img:first-child{
   transform:
     translate(calc(var(--frame-dx,0) * 100%),calc(var(--frame-dy,0) * 100%))
@@ -55,3 +58,29 @@
 .vyra-toplike.like-clean .toplike-row>img{width:58px!important;height:58px!important}
 .vyra-toplike.like-clean .toplike-row strong{font-size:9px!important}
 .vyra-toplike.like-clean .toplike-row em{font-size:8px!important}
+
+/* ---- Top Like: ramen är ett SYSKON till fotot, inte ett omslag (2026-09-08) ----
+   Kravet: fotot får inte ändra mått när ramen läggs på. Omslaget .pro-avatar-frame tände ett fyrtiotal
+   !important-regler ovan och i studio.css/toplike-studio.css som byggde om hela raden (like-clean:
+   raden 68→54 px, fotot 58→25 px). Med konsten som syskon (img.tl-frame-art direkt efter fotot) matchar
+   raden EXAKT samma regler som utan ram. Läget och storleken sätts av vyraPlaceraTopLikeRamar (media.js)
+   efter mätning, i procent av raden och med !important — det enda som slår layouternas
+   `.toplike-row>img{width:58px!important}`-regler som annars även träffar konsten.
+   Här: konsten tas ur rutnätet, får formeln för öppningens läge, och raden blir dess referens.
+   Text och rangsiffra lyfts över konsten så att ornament aldrig täcker namnet. */
+.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) { position: relative !important; overflow: visible !important; }
+.widget.vyra-toplike .toplike-row > img.pro-frame-art.tl-frame-art {
+  position: absolute !important; inset: auto !important;
+  grid-column: auto !important; grid-row: auto !important; place-self: auto !important;
+  justify-self: auto !important; align-self: auto !important; order: 0 !important;
+  margin: 0 !important; padding: 0 !important;
+  max-width: none !important; max-height: none !important; min-width: 0 !important; min-height: 0 !important;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: none !important;
+  object-fit: contain !important; clip-path: none !important; filter: none !important; opacity: 1 !important;
+  transform: translate(calc(-50% - var(--frame-dx, 0) * 100%), calc(-50% - var(--frame-dy, 0) * 100%)) !important;
+  transform-origin: 50% 50% !important; pointer-events: none !important; z-index: 6 !important;
+}
+.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > b,
+.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > span,
+.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > em,
+.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > i { position: relative !important; z-index: 9 !important; }

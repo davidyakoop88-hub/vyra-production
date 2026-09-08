@@ -1,5 +1,47 @@
 # VYRA Project State
 
+## Checkpoint 43 — Profilramen rör inte bildens mått (2026-09-08)
+
+Kravet från David, ordagrant: "jag vill inte bildstorlek och gift storlek ska ändras när man lägger
+ramen runtom" — och det gäller Top Gift, Top Streak och Top Like-listan.
+
+### Vad som var fel, uppmätt i riktig webbläsare
+
+| Widget | Utan ram | Med ram (Ocean Oracle, fit 0,47) | Orsak |
+|---|---|---|---|
+| Top Gift (tema) profil | 106 px | 50 px | `profile-frames-premium.css` skalade fotot med `scale(fit)` — regeln var skriven för Top Likes rader men saknade prefix |
+| Top Gift gåva | 110 px | 110 px | rördes inte → profil och gåva olika stora, hoppade vid varje flip |
+| Top Like (clean) foto | 58 px | 25 px | samma regel, plus ett fyrtiotal `:has(>.pro-avatar-frame)`-regler som byggde om raden (68→54 px) |
+| Top Gift, ramens plats | — | inuti profilsidan | sidan har `backface-visibility:hidden`, ramen flippade bort när gåvan visades |
+
+### Kontraktet nu
+
+Fotot ligger kvar på 100 % av sin ruta med och utan ram. Ramkonsten skalas i stället **utåt** med
+`1/fit` (kvadratisk, styrd av bredden) och flyttas `−dx/−dy` så att öppningen hamnar exakt runt fotot.
+
+| Del | Hur |
+|---|---|
+| Top Gift / Top Streak | `gift-alert-frames.js` lägger ramen runt **hela flippen**: ett omslag med flippens klass + inline-stil tar flippens plats i alla teman, flippen fyller omslaget med `inset:0`, konsten ligger sist och står stilla medan profil/gåva byter plats. |
+| Top Like | `media.js` renderar konsten som **syskon** till fotot (`img.tl-frame-art`) så raden matchar exakt samma regler som utan ram. Läget mäts efter render (`vyraPlaceraTopLikeRamar`, MutationObserver + ResizeObserver) och sätts i procent av raden. Raden får `min-height` = ramens höjd så att ramar inte går in i varandra; fotot står stilla. |
+| Fasta fotorutor (Follower, Fan/Gifter Level, Last-X) | samma formel i `gift-alert-frames.css`; fotot är 100 %, oskalat. |
+| Medaljringar (autoMedal) | oförändrade — den gamla scale-regeln gäller nu bara dem. |
+
+Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter tio katalogfall (fyra Top Gift, tre
+Top Streak, fyra Top Like-layouter) med de två ramarna i ändarna av öppningsspannet: bildens bredd,
+höjd och mittpunkt oförändrade inom 0,5 px, konsten = ruta/fit, öppningen på bildens mitt, ingen
+förfader klipper konsten, ramen utanför profilsidan, och bilden tillbaka exakt när ramen tas bort.
+Animationer stängs av i provsidan — premium-streaken flippar oavbrutet och en bredd mätt mitt i en
+`rotateY` är godtycklig.
+
+### Känt, med flit inte rört
+
+- **Gåvoramsvarianten av Top Gift (`catalog:topgift:frame:*`) ritar flippen 0×0 px** redan utan
+  profilram: `studio.css:781` `.topgift-framed .vyra-flip{width:auto!important;height:auto!important}`
+  slår ut flippens inline-procent från `media.js:121`. Varken profil eller gåva syns. Studio Core
+  äger regeln; fallet står som hoppat i vakten och tänds när den är rättad.
+- I `like-center`/`podium` ligger de tre översta fotona sida vid sida; ramar på 2–3× fotot går in i
+  varandra **i sidled**. Det är priset för att fotot aldrig rörs — alternativet är mindre foto.
+
 ## Checkpoint 42 — Betalningen bytte till PayPal Subscriptions (2026-09-07)
 
 Beslut: PayPal ersätter Stripe. Skälet är ägarformen, inte tekniken: PayPal öppnar företagskonto för en

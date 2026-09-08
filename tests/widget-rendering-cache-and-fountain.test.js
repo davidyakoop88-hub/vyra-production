@@ -230,7 +230,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // bada strangarna, sa media.js sjalv maste folja med.
   // Bumpad en FEMTE gang samma dygn: ligabrickan gjorde headern till en trekolumnslayout och
   // MATCH AKTIV-chippet flyttade 436 px in mot mitten. Bade live-control.js och .css andrades igen.
-  assert.match(studio, /[^-]media\.js\?v=20260907-6/);
+  // Bumpad 2026-09-08: Top Like-ramen renderas som syskon till fotot och placeras efter mätning.
+  assert.match(studio, /[^-]media\.js\?v=20260908-bildmatt/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -247,8 +248,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
   assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
   assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
-  assert.match(media, /gift-alert-frames\.js\?v=20260818-ramstad/);
-  assert.match(media, /profile-frames-premium\.css\?v=8/);
+  // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
+  // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
+  assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);
+  assert.match(media, /gift-alert-frames\.css\?v=2/);
+  assert.match(media, /profile-frames-premium\.css\?v=9/);
     // Bumpad 2026-09-04: premium-final.js AR den levande renderaren for social goals — den
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
   // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
