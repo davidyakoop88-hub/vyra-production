@@ -464,10 +464,15 @@
    3. Podiets ETTA får en långsamt roterande gloria (conic-gradient) ovanpå glöden.
    Bara med ram (.har-ram): utan ram är widgeten stilla som förut, och katalogens referensbilder
    (utan ram) påverkas inte. Av helt vid prefers-reduced-motion. Sist i filen: källordning. */
-@keyframes tl-ram-andas{0%,100%{scale:1;translate:0 0}50%{scale:1.028;translate:0 -1.5px}}
+@keyframes tl-ram-andas{0%,100%{scale:1;translate:0 0}50%{scale:1.02;translate:0 -1px}}
 @keyframes tl-ram-glod{0%,100%{opacity:.3}50%{opacity:.65}}
 @keyframes tl-ram-gloria{to{rotate:360deg}}
-.widget.vyra-toplike.har-ram img.tl-frame-art{
+/* Konsten OCH fotot andas TILLSAMMANS, samma keyframes och samma fas: annars glider ringen av fotot under
+   andningen — uppmätt i riktig OBS 2026-09-09 (David: "nr 1 ser bra ut, resten ser man glapp mellan"):
+   tvåan/trean mättes 1,4/2,7 px fel mitt i andningen, femman i fas 0 exakt rätt. Amplituden 1,02/1 px:
+   fotot är en bitmapp och tål skalningen, men mindre är lugnare. */
+.widget.vyra-toplike.har-ram img.tl-frame-art,
+.widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)>img:not(.pro-frame-art){
   animation:tl-ram-andas 5.6s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-1.15s);
 }
 .widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after{
@@ -513,6 +518,7 @@
 }
 @media (prefers-reduced-motion:reduce){
   .widget.vyra-toplike.har-ram img.tl-frame-art,
+  .widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)>img:not(.pro-frame-art),
   .widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after,
   .widget.vyra-toplike.har-ram .toplike-row>span:not(.pro-avatar-frame)>strong,
   .widget.vyra-toplike.har-ram .toplike-row>em{animation:none!important}
