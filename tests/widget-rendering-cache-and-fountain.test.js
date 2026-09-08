@@ -235,7 +235,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-08: Top Like-ramen renderas som syskon till fotot och placeras efter mätning.
   // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
   // och media.js bar dess versionsstrang.
-  assert.match(studio, /[^-]media\.js\?v=20260908-bildmatt-2/);
+  assert.match(studio, /[^-]media\.js\?v=20260908-radavstand/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

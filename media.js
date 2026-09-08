@@ -373,9 +373,16 @@ function vyraPlaceraTopLikeRamar(omobservera){
      som konsten sticker ut; grannraderna knuffas undan och fotot star kvar dar det stod i sin rad.
      (min-height dog har: i like-center ligger fotot mot radens nederkant, sa en hogre rad flyttade fotot
      lika mycket som den vaxte och ramen stack ut lika mycket som forut.) k = skarm-px per CSS-px. */
+  /* SATT, inte adderad. Konstens lage i raden beror inte pa radens marginal, sa varje pass mater samma
+     utstick — adderat vaxte marginalen med ett helt utstick per pass, och passet kors minst tva ganger
+     per render (render() + observerns forsta anrop vid observe()). Uppmatt 2026-09-08, like-clean +
+     amethyst-oracle: utstick 40,8/11,0 px men marginal 81,5/21,9, radavstand 177,5 px i stallet for
+     125,7, och +52 px for varje pass till. Utan utstick tas var egen marginal bort, sa att en
+     stilmallsmarginal inte skrivs over med 0. Steg 3 laggs ovanpa i samma pass och blir darmed ocksa
+     idempotent: knuffen raknas om fran utsticket varje gang, inte fran forra passets summa. */
   arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;const a=px(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
-    if(a.top<r.top-.5)satt(rad,'top',marg(rad,'top')+(r.top-a.top)/k);
-    if(a.bottom>r.bottom+.5)satt(rad,'bottom',marg(rad,'bottom')+(a.bottom-r.bottom)/k)});
+    if(a.top<r.top-.5)satt(rad,'top',(r.top-a.top)/k);else rad.style.removeProperty('margin-top');
+    if(a.bottom>r.bottom+.5)satt(rad,'bottom',(a.bottom-r.bottom)/k);else rad.style.removeProperty('margin-bottom')});
   /* Steg 3: rader som overlappar varandra med flit (like-center: plats 1 ligger diagonalt over 2 och 3)
      far anda inte ramar som gar in i varandra. Kolliderar konst j med en tidigare konst i, knuffas
      j:s rad ner precis sa langt att de gar fria. Matt om efter varje knuff — nasta par ser det nya laget. */
