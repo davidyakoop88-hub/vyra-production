@@ -229,6 +229,58 @@ for (const tema of ['clean', 'center']) {
   });
 }
 
+// ---- Cykelbytet som koreografi (Davids video IMG_1300.MOV, 2026-09-08): listan tonar ut från mitten och
+// utåt, står tom en stund, nästa lista tonar in. Klasserna .tl-byt och .tl-in på roten bär faserna;
+// rubriken får bara byta text INUTI ett byte. Och varje rankingwidget tonar in en gång vid första rendern.
+test('cykelbytet: uttoning (.tl-byt) före bytet, intoning (.tl-in) efter, rubriken byter bara inuti bytet', { skip }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+  await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    state.widgets.length = 0;
+    const w = window.VyraWidgets.create('catalog:toplike:center');
+    w.x = 100; w.y = 60; w.likeCount = 5;
+    w.rankingCycle = true; w.cycleLikes = true; w.cycleCoins = true; w.cyclePoints = false; w.cycleSeconds = 2;
+    state.widgets.push(w); selected = w.id; render();
+  });
+  // Entrén: roten bär .tl-in direkt efter första rendern, och den är borta inom 2 s.
+  assert.ok(await page.evaluate(() => document.querySelector('.canvas .widget.vyra-toplike').classList.contains('tl-in')), 'första rendern startar intoningen (.tl-in)');
+  await page.waitForTimeout(2000);
+  assert.ok(!(await page.evaluate(() => document.querySelector('.canvas .widget.vyra-toplike').classList.contains('tl-in'))), 'intoningen är avslutad inom 2 s');
+  // Följ klasser och rubrik i 50 ms-steg över tre cykelsteg.
+  const logg = await page.evaluate(async () => {
+    const box = document.querySelector('.canvas .widget.vyra-toplike'), ut = [];
+    const t0 = performance.now();
+    while (performance.now() - t0 < 6500) {
+      ut.push({ t: Math.round(performance.now() - t0), byt: box.classList.contains('tl-byt'), in_: box.classList.contains('tl-in'), rubrik: box.querySelector(':scope>h3').textContent });
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return ut;
+  });
+  const rubriker = [...new Set(logg.map(l => l.rubrik))];
+  assert.ok(rubriker.length >= 2, `rubriken bytte aldrig under 6,5 s med 2 s-steg: ${rubriker.join(' / ')}`);
+  assert.ok(logg.some(l => l.byt), 'uttoningsfasen (.tl-byt) sågs aldrig');
+  assert.ok(logg.some(l => l.in_), 'intoningsfasen (.tl-in) sågs aldrig');
+  // Varje rubrikbyte sker medan .tl-in (bytet är just gjort) eller .tl-byt är på — aldrig som ett hugg.
+  for (let i = 1; i < logg.length; i++) {
+    if (logg[i].rubrik !== logg[i - 1].rubrik) {
+      assert.ok(logg[i].in_ || logg[i].byt, `rubriken bytte som ett hugg vid ${logg[i].t} ms utan pågående byte`);
+    }
+  }
+  // Uttoningen kommer före intoningen i samma byte. Mät från en STIGANDE flank: stegen är klockstyrda,
+  // så ett byte kan redan pågå när loggen börjar, och en fas som fångas mitt i mäter för kort (116 ms).
+  const forstaByt = logg.findIndex((l, i) => i > 0 && l.byt && !logg[i - 1].byt), forstaIn = logg.findIndex((l, i) => i > forstaByt && l.in_);
+  assert.ok(forstaByt >= 0 && forstaIn > forstaByt, 'uttoning ska föregå intoning');
+  // Uttoningen varar ungefär TL_BYT_MS + TL_GAP_MS (900 + 300): mellan 1,0 och 1,5 s.
+  const bytSlut = logg.findIndex((l, i) => i > forstaByt && !l.byt);
+  const bytLangd = logg[bytSlut].t - logg[forstaByt].t;
+  assert.ok(bytLangd >= 1000 && bytLangd <= 1500, `uttoning + gap tog ${bytLangd} ms, förväntat 1200 ± 250`);
+  await page.close();
+});
+
 for (const ram of ['none', 'amethyst-oracle']) {
   test(`bågpodiet ${ram === 'none' ? 'utan ram' : '+ amethyst-oracle'}: fem platser i båge, inga namn eller värden i varandra, stabilt över pass`, { skip }, async () => {
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });

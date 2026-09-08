@@ -517,3 +517,32 @@
   .widget.vyra-toplike.har-ram .toplike-row>em{animation:none!important}
   .widget.vyra-toplike.har-ram .toplike-row>span:not(.pro-avatar-frame)>strong{background-image:none;-webkit-text-fill-color:currentColor}
 }
+
+/* ---- Cykelbytet och entrén (2026-09-08, Davids video IMG_1300.MOV) --------------------------------
+   Ren opacity, som i videon: uttoning 0,35 s och intoning 0,4 s per rad, med stagger per rang.
+   Podiet (like-center): från mitten och utåt — ettan 0, tvåan/trean 0,15 s, fyran/femman 0,35 s.
+   Listorna: uppifrån och ned, 0,08 s per rad. Rubriken följer ettan. Klasserna .tl-byt/.tl-in sätts
+   av media.js (updateRankingCycles och entrén vid första rendern). Av vid prefers-reduced-motion: då
+   blir bytet ett hugg som förut. Sist i filen: källordning. */
+@keyframes tl-ton-ut{to{opacity:0}}
+@keyframes tl-ton-in{from{opacity:0}to{opacity:1}}
+.widget.vyra-toplike.tl-byt .toplike-row,.widget.vyra-toplike.tl-byt>h3{animation:tl-ton-ut .35s ease-out both;animation-delay:var(--tl-steg,0s)}
+.widget.vyra-toplike.tl-in .toplike-row,.widget.vyra-toplike.tl-in>h3{animation:tl-ton-in .4s ease-out both;animation-delay:var(--tl-steg,0s)}
+.widget.vyra-toplike>h3{--tl-steg:0s}
+.widget.vyra-toplike .toplike-row:nth-child(1){--tl-steg:0s}
+.widget.vyra-toplike .toplike-row:nth-child(2){--tl-steg:.08s}
+.widget.vyra-toplike .toplike-row:nth-child(3){--tl-steg:.16s}
+.widget.vyra-toplike .toplike-row:nth-child(4){--tl-steg:.24s}
+.widget.vyra-toplike .toplike-row:nth-child(5){--tl-steg:.32s}
+.widget.vyra-toplike .toplike-row:nth-child(6){--tl-steg:.4s}
+.widget.vyra-toplike .toplike-row:nth-child(7){--tl-steg:.48s}
+.widget.vyra-toplike .toplike-row:nth-child(8){--tl-steg:.56s}
+.widget.vyra-toplike .toplike-row:nth-child(9){--tl-steg:.64s}
+.widget.vyra-toplike .toplike-row:nth-child(10){--tl-steg:.72s}
+.widget.vyra-toplike.like-center .toplike-row.rank-1{--tl-steg:0s}
+.widget.vyra-toplike.like-center .toplike-row.rank-2,.widget.vyra-toplike.like-center .toplike-row.rank-3{--tl-steg:.15s}
+.widget.vyra-toplike.like-center .toplike-row.rank-4,.widget.vyra-toplike.like-center .toplike-row.rank-5{--tl-steg:.35s}
+@media (prefers-reduced-motion:reduce){
+  .widget.vyra-toplike.tl-byt .toplike-row,.widget.vyra-toplike.tl-byt>h3,
+  .widget.vyra-toplike.tl-in .toplike-row,.widget.vyra-toplike.tl-in>h3{animation:none!important}
+}
