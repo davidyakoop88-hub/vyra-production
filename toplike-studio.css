@@ -451,3 +451,41 @@
   background:var(--ram-accent)!important;color:#160f02!important;
   box-shadow:0 0 8px color-mix(in srgb,var(--ram-accent),transparent 55%)!important;
 }
+
+/* ---- Liv i ramarna (2026-09-08, David: "lite mer kärlek till de ramarna att de ser lite levande") ----
+   Tre diskreta rörelser, alla på transform/opacity så att OBS inte belastas:
+   1. Konsten ANDAS: scale 1→1,028 och 1,5 px svävning över 5,6 s, med egen fas per plats (--tl-i från
+      media.js) så att fem ramar inte pulserar i takt. Egenskaperna scale/translate används, inte
+      transform: konstens transform är satt !important av profile-frames-premium.css, och en animation
+      på transform hade förlorat mot den — de fristående egenskaperna komponeras ovanpå.
+   2. En GLÖD i ramens egen färg (--ram-accent) bakom porträttet, som pulserar i opacity. Ritad som
+      radens ::after på det läge steg 1 mäter fram (--tl-cx/--tl-cy/--tl-w/--tl-h), z-index −1 så den
+      ligger bakom foto och konst men över scenen — raderna har ingen egen bakgrund.
+   3. Podiets ETTA får en långsamt roterande gloria (conic-gradient) ovanpå glöden.
+   Bara med ram (.har-ram): utan ram är widgeten stilla som förut, och katalogens referensbilder
+   (utan ram) påverkas inte. Av helt vid prefers-reduced-motion. Sist i filen: källordning. */
+@keyframes tl-ram-andas{0%,100%{scale:1;translate:0 0}50%{scale:1.028;translate:0 -1.5px}}
+@keyframes tl-ram-glod{0%,100%{opacity:.3}50%{opacity:.65}}
+@keyframes tl-ram-gloria{to{rotate:360deg}}
+.widget.vyra-toplike.har-ram img.tl-frame-art{
+  animation:tl-ram-andas 5.6s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-1.15s);
+}
+.widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after{
+  /* Placerad med left/top raknat fran mitten — INTE translate(-50%,-50%): rotate-egenskapen laggs
+     utanpa transform och hade da roterat rutan runt en punkt en halv ruta bort (glorian orbitade). */
+  content:"";position:absolute;left:calc(var(--tl-cx,50%) - var(--tl-w,100%)*.59);top:calc(var(--tl-cy,50%) - var(--tl-h,100%)*.59);
+  width:calc(var(--tl-w,100%)*1.18);height:calc(var(--tl-h,100%)*1.18);
+  border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,color-mix(in srgb,var(--ram-accent),transparent 30%) 0%,color-mix(in srgb,var(--ram-accent),transparent 72%) 42%,transparent 70%);
+  animation:tl-ram-glod 4.2s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-.9s);
+}
+.widget.vyra-toplike.har-ram.like-center .toplike-row.rank-1::after{
+  background:
+    conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--ram-accent),transparent 45%) 78%,transparent 92%),
+    radial-gradient(circle,color-mix(in srgb,var(--ram-accent),transparent 30%) 0%,color-mix(in srgb,var(--ram-accent),transparent 72%) 42%,transparent 70%);
+  animation:tl-ram-glod 4.2s ease-in-out infinite,tl-ram-gloria 11s linear infinite;
+}
+@media (prefers-reduced-motion:reduce){
+  .widget.vyra-toplike.har-ram img.tl-frame-art,
+  .widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after{animation:none!important}
+}

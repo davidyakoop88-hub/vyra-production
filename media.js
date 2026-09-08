@@ -427,6 +427,12 @@ function vyraPlaceraTopLikeRamar(omobservera){
     if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}
     art.style.setProperty('display','block','important');const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62,s=(k,v)=>art.style.setProperty(k,v.toFixed(3)+'%','important');
     s('left',(f.left+f.width/2-r.left)/r.width*100);s('top',(f.top+f.height/2-r.top)/r.height*100);s('width',f.width/fit/r.width*100);s('height',f.width/fit/r.height*100);
+    /* Konstens MITT och matt som variabler pa raden (i % av raden, med dx/dy-forskjutningen inraknad) —
+       gloden bakom portrattet (toplike-studio.css, .har-ram ...::after) foljer dem; --tl-i ger var plats
+       sin egen fas i andningen sa att fem ramar inte pulserar i takt. */
+    {const g=n=>parseFloat(art.style.getPropertyValue(n))||0,lp=(f.left+f.width/2-r.left)/r.width*100,tp=(f.top+f.height/2-r.top)/r.height*100,wp=f.width/fit/r.width*100,hp=f.width/fit/r.height*100;
+      rad.style.setProperty('--tl-cx',(lp-g('--frame-dx')*wp).toFixed(3)+'%');rad.style.setProperty('--tl-cy',(tp-g('--frame-dy')*hp).toFixed(3)+'%');
+      rad.style.setProperty('--tl-w',wp.toFixed(3)+'%');rad.style.setProperty('--tl-h',hp.toFixed(3)+'%');rad.style.setProperty('--tl-i',String(arter.indexOf(art)))}
     /* Rangbricka, namn, varde och krona lyfts OVER konsten sa att ornament aldrig tacker dem. Bara
        static-element far position:relative — like-centers bricka ar absolut placerad och skulle
        annars hamna mitt pa fotot (uppmatt nar regeln lag som !important i CSS). */
