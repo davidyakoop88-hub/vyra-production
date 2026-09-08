@@ -229,6 +229,41 @@ for (const tema of ['clean', 'center']) {
   });
 }
 
+// ---- Dukens gräns (riktig OBS 32.2.1, 2026-09-08): overlayn ritas i layoutens egna pixlar (432x768 för
+// Mobil) och skalas inte till källan. Bågens scen får därför aldrig växa förbi duken — amethyst-oracle gav
+// 512 px på en 432 px bred duk och fyran/femman hamnade utanför bild. Kontraktet: med vilken ram som
+// helst ligger widgetens ruta inom duken (4 px luft), och de fem porträtten ryms i den.
+for (const [ram, x] of [['amethyst-oracle', 46], ['amethyst-oracle', 0], ['amethyst-oracle', 92], ['ice-crystal', 46]]) {
+  test(`bågpodiet + ${ram} vid x=${x}: scenen håller sig inom dukens 432 px`, { skip }, async () => {
+    const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.addStyleTag({ content: '.canvas .widget, .canvas .widget *, .canvas .widget *:before, .canvas .widget *:after { animation: none !important; transition: none !important; }' });
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await page.waitForTimeout(400);
+    await page.evaluate(([ram, x]) => {
+      state.widgets.length = 0;
+      const w = window.VyraWidgets.create('catalog:toplike:center');
+      w.x = x; w.y = 60; w.likeCount = 5; w.profileFrame = ram;
+      state.widgets.push(w); selected = w.id; render();
+    }, [ram, x]);
+    await page.waitForTimeout(1500);
+    const m = await page.evaluate(() => {
+      const px = el => el.getBoundingClientRect();
+      const duk = px(document.querySelector('.canvas')), w = document.querySelector('.canvas .widget.vyra-toplike'), wb = px(w);
+      const fotos = [...w.querySelectorAll('.toplike-row')].filter(r => getComputedStyle(r).display !== 'none').map(r => px(r.querySelector('img:not(.pro-frame-art)')));
+      return { duk: { left: duk.left, right: duk.right, width: duk.width }, widget: { left: wb.left, right: wb.right, width: wb.width },
+        fotoMin: Math.min(...fotos.map(f => f.left)), fotoMax: Math.max(...fotos.map(f => f.right)) };
+    });
+    assert.ok(Math.abs(m.duk.width - 432) <= 1, `duken är ${m.duk.width.toFixed(0)} px, riggen förväntar 432`);
+    assert.ok(m.widget.left >= m.duk.left - 0.5 && m.widget.right <= m.duk.right + 0.5,
+      `${ram} x=${x}: widgeten ${m.widget.left.toFixed(0)}–${m.widget.right.toFixed(0)} ligger utanför duken ${m.duk.left.toFixed(0)}–${m.duk.right.toFixed(0)} (bredd ${m.widget.width.toFixed(0)})`);
+    assert.ok(m.fotoMin >= m.duk.left && m.fotoMax <= m.duk.right, `${ram} x=${x}: ett porträtt ligger utanför duken`);
+    await page.close();
+  });
+}
+
 // ---- Cykelbytet som koreografi (Davids video IMG_1300.MOV, 2026-09-08): listan tonar ut från mitten och
 // utåt, står tom en stund, nästa lista tonar in. Klasserna .tl-byt och .tl-in på roten bär faserna;
 // rubriken får bara byta text INUTI ett byte. Och varje rankingwidget tonar in en gång vid första rendern.
