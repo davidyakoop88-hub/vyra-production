@@ -62,7 +62,7 @@ test.after(async () => {
 
 // Samma rigg som ramvaljare-doda-vagar: `?open=layout` går direkt till editorn, 2500 ms låter de
 // injicerade ramfilerna landa, projektionen av sessionen måste landa före seedningen.
-async function editorMedWidget(katalognyckel) {
+async function editorMedWidget(katalognyckel, extra) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
@@ -74,15 +74,16 @@ async function editorMedWidget(katalognyckel) {
   await page.addStyleTag({ content: '.canvas .widget, .canvas .widget *, .canvas .widget *:before, .canvas .widget *:after { animation: none !important; transition: none !important; }' });
   await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
   await page.waitForTimeout(400);
-  const id = await page.evaluate(nyckel => {
+  const id = await page.evaluate(([nyckel, extra]) => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create(nyckel);
     w.x = 200; w.y = 200;
+    Object.assign(w, extra || {});
     state.widgets.push(w);
     selected = w.id;
     render();
     return w.id;
-  }, katalognyckel);
+  }, [katalognyckel, extra || null]);
   await page.waitForTimeout(600);
   return { page, id };
 }
@@ -97,24 +98,31 @@ const FAMILJER = {
 // Ett brett tvärsnitt av katalogen: klassiskt tema, premium, extratema med egen konst (coronation
 // positionerar flippen absolut), gåvoram (flippen absolut i procent av ramen) och alla fyra
 // Top Like-layouterna.
-// KÄND BUGG, utanför den här ändringen: gåvoramsvarianten (catalog:topgift:frame:*) ritar flippen med
-// 0×0 px redan UTAN profilram — studio.css:781 `.topgift-framed .vyra-flip{width:auto!important;
-// height:auto!important}` slår ut flippens inline-procent (media.js:121), så varken profil eller gåva
-// syns. Studio Core äger regeln. Fallet står kvar här som markör och tänds när den är rättad.
-const GAVORAM_BUGG = 'topgift-framed: flippen är 0×0 utan ram — studio.css:781, Studio Core';
-
+// GÅVORAMSVARIANTERNA (catalog:topgift:frame:*, catalog:topstreak:frame:*) bär redan en ram och får
+// INGEN profilram: gåvoramens konst ligger på z-index 3 ovanpå flippen (z 2), så en profilram hamnade
+// bakom den och syntes aldrig. De provas här för tre saker som var trasiga fram till 2026-09-08:
+//   * Top Gift-flippen var 0×0 px (studio.css `.topgift-framed .vyra-flip{width:auto!important}` slog ut
+//     inline-procenten från media.js — samma commit, 578e85b, trasigt från dag ett);
+//   * gåvobilden ritades i naturlig storlek (195 px i ett 100 px-fönster) eftersom
+//     `.vyra-gift-face>img{width:var(--gift-size)!important}` utan --gift-size blev width:auto;
+//   * en vald profilram får inte rendera någon konst alls, och fotot ska stå kvar.
+//
+// Sista fallet kör Top Like med widgetScale 1,5 (CSS zoom): ramens läge sätts i procent av raden och
+// marginalerna räknas om från skärm-px till CSS-px — båda måste hålla när widgeten är zoomad.
+const UTAN_RAM = { utanRam: true };
 const FALL = [
   ['catalog:topgift',                        'topgift'],
   ['catalog:topgift:premium:royal',          'topgift'],
   ['catalog:topgift:extra:coronation',       'topgift'],
-  ['catalog:topgift:frame:royal-wings',      'topgift', GAVORAM_BUGG],
+  ['catalog:topgift:frame:royal-wings',      'topgift', UTAN_RAM],
   ['catalog:topstreak',                      'topstreak'],
   ['catalog:topstreak:premium:liquid',       'topstreak'],
-  ['catalog:topstreak:frame:amethyst-heart', 'topstreak'],
+  ['catalog:topstreak:frame:amethyst-heart', 'topstreak', UTAN_RAM],
   ['catalog:toplike:clean',                  'toplike'],
   ['catalog:toplike:center',                 'toplike'],
   ['catalog:toplike:podium',                 'toplike'],
   ['catalog:toplike:neon',                   'toplike'],
+  ['catalog:toplike:clean',                  'toplike', { widgetScale: 1.5 }],
 ];
 
 function matt(page, id, sel) {
@@ -129,9 +137,10 @@ function matt(page, id, sel) {
 
 const nara = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a.toFixed(1)} mot ${b.toFixed(1)}`);
 
-for (const [nyckel, familj, bugg] of FALL) {
-  test(`${nyckel}: ramen ändrar varken profilbildens eller gåvobildens mått`, { skip: skip || bugg }, async () => {
-    const { page, id } = await editorMedWidget(nyckel);
+for (const [nyckel, familj, extra] of FALL) {
+  const namn = nyckel + (extra ? ' ' + JSON.stringify(extra) : '');
+  test(`${namn}: ramen ändrar varken profilbildens eller gåvobildens mått`, { skip }, async () => {
+    const { page, id } = await editorMedWidget(nyckel, extra);
     const sel = FAMILJER[familj];
     try {
 
@@ -170,6 +179,19 @@ for (const [nyckel, familj, bugg] of FALL) {
       };
 
       assert.ok(efter.profil, `${nyckel} + ${ram}: profilbilden försvann när ramen lades på`);
+
+      if (extra && extra.utanRam) {
+        // Gåvoramsvariant: ingen profilram alls, och bilderna orörda. Gåvobilden ska dessutom rymmas
+        // i fönstret — den ritades förr i naturlig storlek när --gift-size saknades.
+        assert.equal(efter.konst, null, `${nyckel} + ${ram}: en profilram renderades ovanpå gåvoramen`);
+        nara(efter.profil.w, fore.profil.w, 0.5, `${nyckel} + ${ram}: profilbildens bredd ändrades`);
+        nara(efter.gava.w, fore.gava.w, 0.5, `${nyckel} + ${ram}: gåvobildens bredd ändrades`);
+        const fonster = await matt(page, id, sel.flip);
+        assert.ok(efter.gava.w <= fonster.w + 0.5 && efter.gava.h <= fonster.h + 0.5,
+          `${nyckel}: gåvobilden (${efter.gava.w.toFixed(0)}×${efter.gava.h.toFixed(0)}) ryms inte i fönstret (${fonster.w.toFixed(0)}×${fonster.h.toFixed(0)})`);
+        continue;
+      }
+
       assert.ok(efter.konst, `${nyckel} + ${ram}: ingen ramkonst renderades`);
 
       // 1. Bilden får inte röra sig en pixel — varken storlek eller mittpunkt.
@@ -200,14 +222,32 @@ for (const [nyckel, familj, bugg] of FALL) {
       }
 
       // 2. Widgetens egen ruta står stilla. Ramen får ta plats utanför bilden, aldrig trycka ihop den.
-      //    I Top Like byggdes raden förr om (68→54 px) så fort ett omslag fanns. Nu får raden bara
-      //    VÄXA, och exakt så mycket att ramen ryms — den krymper aldrig, och bredden står stilla.
+      //    I Top Like byggdes raden förr om (68→54 px) så fort ett omslag fanns. Nu står raden kvar i
+      //    samma mått; ramen ryms i radens MARGINALBOX (marginalen knuffar grannarna), och ingen ram i
+      //    widgeten går in i en annan — inte ens i like-center där rad 1 ligger diagonalt över 2 och 3.
       nara(efter.widget.w, fore.widget.w, 0.5, `${nyckel} + ${ram}: widgetens bredd ändrades av ramen`);
       if (fore.rad) {
         const rad = await matt(page, id, '.toplike-row:first-child');
+        // Raden får växa (i like-center sträcks rad 1 i sitt grid-spår när rad 2–3 knuffas ned) men
+        // aldrig krympa — krympningen var det gamla felet (68→54).
         assert.ok(rad.h >= fore.rad.h - 0.5, `${nyckel} + ${ram}: Top Like-raden krympte av ramen: ${rad.h.toFixed(1)} mot ${fore.rad.h.toFixed(1)}`);
-        assert.ok(rad.h >= efter.konst.h - 0.5, `${nyckel} + ${ram}: ramen (${efter.konst.h.toFixed(1)}) ryms inte i raden (${rad.h.toFixed(1)}) — ramarna går in i varandra`);
         nara(rad.w, fore.rad.w, 0.5, `${nyckel} + ${ram}: Top Like-radens bredd ändrades av ramen`);
+        const brott = await page.evaluate(wid => {
+          const rot = document.querySelector(`.canvas [data-id="${wid}"]`), ut = [];
+          const arter = [...rot.querySelectorAll('img.pro-frame-art')].filter(a => getComputedStyle(a).display !== 'none');
+          arter.forEach((art, j) => {
+            const a = art.getBoundingClientRect(), rad = art.parentElement, r = rad.getBoundingClientRect();
+            const k = r.width / (rad.offsetWidth || 1), cs = getComputedStyle(rad);
+            const topp = r.top - parseFloat(cs.marginTop) * k, botten = r.bottom + parseFloat(cs.marginBottom) * k;
+            if (a.top < topp - 1 || a.bottom > botten + 1) ut.push(`rad ${j + 1}: konsten ${a.top.toFixed(0)}–${a.bottom.toFixed(0)} utanför marginalboxen ${topp.toFixed(0)}–${botten.toFixed(0)}`);
+            for (let i = 0; i < j; i++) {
+              const p = arter[i].getBoundingClientRect();
+              if (a.left < p.right - 1 && a.right > p.left + 1 && a.top < p.bottom - 1 && a.bottom > p.top + 1) ut.push(`rad ${j + 1} går in i rad ${i + 1}`);
+            }
+          });
+          return ut;
+        }, id);
+        assert.deepEqual(brott, [], `${nyckel} + ${ram}: ${brott.join('; ')}`);
       }
 
       // 2b. Ramen måste också SYNAS: getBoundingClientRect bryr sig inte om klippning, så varje

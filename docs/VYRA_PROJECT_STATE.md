@@ -22,25 +22,29 @@ Fotot ligger kvar på 100 % av sin ruta med och utan ram. Ramkonsten skalas i st
 | Del | Hur |
 |---|---|
 | Top Gift / Top Streak | `gift-alert-frames.js` lägger ramen runt **hela flippen**: ett omslag med flippens klass + inline-stil tar flippens plats i alla teman, flippen fyller omslaget med `inset:0`, konsten ligger sist och står stilla medan profil/gåva byter plats. |
-| Top Like | `media.js` renderar konsten som **syskon** till fotot (`img.tl-frame-art`) så raden matchar exakt samma regler som utan ram. Läget mäts efter render (`vyraPlaceraTopLikeRamar`, MutationObserver + ResizeObserver) och sätts i procent av raden. Raden får `min-height` = ramens höjd så att ramar inte går in i varandra; fotot står stilla. |
+| Top Like | `media.js` renderar konsten som **syskon** till fotot (`img.tl-frame-art`) så raden matchar exakt samma regler som utan ram. Läget mäts efter render (`vyraPlaceraTopLikeRamar`, MutationObserver + ResizeObserver) och sätts i procent av raden. Raden får **marginaler** så att ramen ryms i dess marginalbox; ramar som ändå kolliderar (like-center: plats 1 ligger diagonalt över 2 och 3, i samma grid-spår med `align-items:end`) knuffar nästa rad nedåt sedan den tidigare radens höjd frysts och fästs i spårets start. Rangbricka, namn och värde lyfts över konsten. Fotot står stilla i sin rad. |
 | Fasta fotorutor (Follower, Fan/Gifter Level, Last-X) | samma formel i `gift-alert-frames.css`; fotot är 100 %, oskalat. |
+| Gåvoramsvarianterna (`topgift:frame:*`, `topstreak:frame:*`) | får **ingen** profilram: gåvoramens konst ligger på z 3 ovanpå flippen (z 2), så en profilram hamnade bakom den och syntes aldrig. Pickern visas inte där. |
 | Medaljringar (autoMedal) | oförändrade — den gamla scale-regeln gäller nu bara dem. |
 
-Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter tio katalogfall (fyra Top Gift, tre
-Top Streak, fyra Top Like-layouter) med de två ramarna i ändarna av öppningsspannet: bildens bredd,
-höjd och mittpunkt oförändrade inom 0,5 px, konsten = ruta/fit, öppningen på bildens mitt, ingen
-förfader klipper konsten, ramen utanför profilsidan, och bilden tillbaka exakt när ramen tas bort.
-Animationer stängs av i provsidan — premium-streaken flippar oavbrutet och en bredd mätt mitt i en
-`rotateY` är godtycklig.
+Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter tolv katalogfall (fyra Top Gift,
+tre Top Streak, fyra Top Like-layouter, Top Like med `widgetScale` 1,5) med de två ramarna i ändarna
+av öppningsspannet: bildens bredd, höjd och läge oförändrade inom 0,5 px, konsten = ruta/fit,
+öppningen på bildens mitt, ingen förfader klipper konsten, ramen utanför profilsidan, ramen i radens
+marginalbox, inga två ramar i varandra, och bilden tillbaka exakt när ramen tas bort. Animationer
+stängs av i provsidan — premium-streaken flippar oavbrutet och en bredd mätt mitt i en `rotateY` är
+godtycklig.
 
-### Känt, med flit inte rört
+### Två latenta fel i gåvoramsvarianterna, rättade på köpet (studio.css)
 
-- **Gåvoramsvarianten av Top Gift (`catalog:topgift:frame:*`) ritar flippen 0×0 px** redan utan
-  profilram: `studio.css:781` `.topgift-framed .vyra-flip{width:auto!important;height:auto!important}`
-  slår ut flippens inline-procent från `media.js:121`. Varken profil eller gåva syns. Studio Core
-  äger regeln; fallet står som hoppat i vakten och tänds när den är rättad.
-- I `like-center`/`podium` ligger de tre översta fotona sida vid sida; ramar på 2–3× fotot går in i
-  varandra **i sidled**. Det är priset för att fotot aldrig rörs — alternativet är mindre foto.
+Båda från 578e85b (2026-08-02), trasiga från dag ett och osynliga eftersom det första dolde det andra:
+
+- `.topgift-framed .vyra-flip{width:auto!important;height:auto!important}` slog ut flippens
+  inline-procent från `media.js:121` → flippen 0×0, varken profil eller gåva syntes. `width/height`
+  borttagna ur regeln.
+- `.vyra-gift-face>img{width:var(--gift-size)!important}` utan `--gift-size` (gåvoramarna sätter ingen)
+  blir `width:auto` → gåvobilden i naturlig storlek, 195 px i ett 100 px-fönster. Gåvoramarnas egna
+  64 %/70 %-regler har fått `!important` så de vinner.
 
 ## Checkpoint 42 — Betalningen bytte till PayPal Subscriptions (2026-09-07)
 

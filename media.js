@@ -354,10 +354,44 @@ const proTopLikeFrameWh=wh;wh=function(w){let html=proTopLikeFrameWh(w);if(w.typ
    CSS inte kan placera ett syskon ovanpa ett foto vars lage varierar per layout — darfor MATS fotot efter
    varje render och konsten laggs dar, i procent av raden sa att zoom/skala/transform tar ut varandra.
    ResizeObservern tacker breddragning mellan tva render-pass. Fotot dolt (showProfile=false) → ingen ram. */
-function vyraPlaceraTopLikeRamar(omobservera){const arter=document.querySelectorAll('img.tl-frame-art');if(!arter.length)return;const P=vyraPlaceraTopLikeRamar;if(!P.obs&&'ResizeObserver' in window)P.obs=new ResizeObserver(()=>P(false));if(omobservera&&P.obs)P.obs.disconnect();arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;const f=foto.getBoundingClientRect(),r=rad.getBoundingClientRect();if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}art.style.setProperty('display','block','important');const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62,s=(k,v)=>art.style.setProperty(k,v.toFixed(3)+'%','important');s('left',(f.left+f.width/2-r.left)/r.width*100);s('top',(f.top+f.height/2-r.top)/r.height*100);s('width',f.width/fit/r.width*100);s('height',f.width/fit/r.height*100);rad.style.setProperty('min-height',(f.width/fit).toFixed(2)+'px','important');if(omobservera&&P.obs)P.obs.observe(rad)})}
-/* min-height: raden far vaxa sa att ramen ryms — annars gar ramarna (2–3× fotot) in i varandra och i
-   rubriken (uppmatt like-clean + ocean-oracle: 123 px ram i 68 px rad). Fotot ror sig inte; raden blir
-   hogre och observern raknar om procenten nar den vaxer. Sidled (like-center/podium) lamnas orord. */
+function vyraPlaceraTopLikeRamar(omobservera){
+  const arter=[...document.querySelectorAll('img.tl-frame-art')];if(!arter.length)return;
+  const P=vyraPlaceraTopLikeRamar;if(!P.obs&&'ResizeObserver' in window)P.obs=new ResizeObserver(()=>P(false));if(omobservera&&P.obs)P.obs.disconnect();
+  const px=el=>el.getBoundingClientRect(),marg=(rad,sida)=>parseFloat(rad.style.getPropertyValue('margin-'+sida))||0,
+        satt=(rad,sida,v)=>rad.style.setProperty('margin-'+sida,v.toFixed(2)+'px','important');
+  // Steg 1: lagg konsten pa fotot, i procent av raden sa att zoom/skala/transform tar ut varandra.
+  arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;const f=px(foto),r=px(rad);
+    if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}
+    art.style.setProperty('display','block','important');const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62,s=(k,v)=>art.style.setProperty(k,v.toFixed(3)+'%','important');
+    s('left',(f.left+f.width/2-r.left)/r.width*100);s('top',(f.top+f.height/2-r.top)/r.height*100);s('width',f.width/fit/r.width*100);s('height',f.width/fit/r.height*100);
+    /* Rangbricka, namn, varde och krona lyfts OVER konsten sa att ornament aldrig tacker dem. Bara
+       static-element far position:relative — like-centers bricka ar absolut placerad och skulle
+       annars hamna mitt pa fotot (uppmatt nar regeln lag som !important i CSS). */
+    for(const el of rad.children){if(el===art||el===foto)continue;if(getComputedStyle(el).position==='static')el.style.setProperty('position','relative','important');el.style.setProperty('z-index','9','important')}
+    if(omobservera&&P.obs)P.obs.observe(rad)});
+  /* Steg 2: ramen ska rymmas i radens MARGINALBOX. Raden far marginal upptill/nedtill precis sa mycket
+     som konsten sticker ut; grannraderna knuffas undan och fotot star kvar dar det stod i sin rad.
+     (min-height dog har: i like-center ligger fotot mot radens nederkant, sa en hogre rad flyttade fotot
+     lika mycket som den vaxte och ramen stack ut lika mycket som forut.) k = skarm-px per CSS-px. */
+  arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;const a=px(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
+    if(a.top<r.top-.5)satt(rad,'top',marg(rad,'top')+(r.top-a.top)/k);
+    if(a.bottom>r.bottom+.5)satt(rad,'bottom',marg(rad,'bottom')+(a.bottom-r.bottom)/k)});
+  /* Steg 3: rader som overlappar varandra med flit (like-center: plats 1 ligger diagonalt over 2 och 3)
+     far anda inte ramar som gar in i varandra. Kolliderar konst j med en tidigare konst i, knuffas
+     j:s rad ner precis sa langt att de gar fria. Matt om efter varje knuff — nasta par ser det nya laget. */
+  arter.forEach((art,j)=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;
+    for(let i=0;i<j;i++){const b=arter[i];if(b.style.display==='none'||b.parentElement===rad)continue;const p=px(b),a=px(art);
+      const kors=a.left<p.right&&a.right>p.left&&a.top<p.bottom&&a.bottom>p.top;if(!kors)continue;
+      const k=px(rad).width/(rad.offsetWidth||1),radI=b.parentElement;
+      /* Frys den tidigare radens hojd forst: ligger den i samma grid-spar strecks den annars med sparet
+         nar j knuffas, dess bottenjusterade foto foljer med ner och ramarna forblir i varandra
+         (uppmatt like-center: rad 1 vaxte 101→116 utan att gå fri). */
+      if(!radI.style.getPropertyValue('height')){radI.style.setProperty('height',(px(radI).height/k).toFixed(2)+'px','important');
+        /* ...och fast den i sparets START: listan i like-center ar align-items:end, sa nar sparet vaxer
+           av knuffen gled rad 1 ner lika langt som rad 2 (uppmatt: bada +152 px, ramarna kvar i varandra). */
+        radI.style.setProperty('align-self','start','important')}
+      satt(rad,'top',marg(rad,'top')+(p.bottom-a.top)/k)}});
+}
 const tlRamRender=render;render=function(){const ut=tlRamRender.apply(this,arguments);vyraPlaceraTopLikeRamar(true);return ut};
 /* Uppmatt 2026-09-08: efter render() byts widgetens DOM ut IGEN asynkront (bind-kedjan schemalagger en
    ny ritning), sa en placering direkt efter render landar pa noder som strax kastas. Observern placerar

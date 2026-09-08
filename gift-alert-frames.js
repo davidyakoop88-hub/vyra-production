@@ -72,7 +72,10 @@
       html = html.replace('style="', `style="--ws-anim-duration:${w.entranceDuration || 600}ms;`);
     }
 
-    if (w.profileFrame && w.profileFrame !== 'none') {
+    // Gåvoramsvarianterna (giftFrame/streakFrame) bär redan en ram: gåvoramens konst ligger på z-index 3
+    // ovanpå flippen (z 2), så en profilram där hamnade BAKOM gåvoramen och syntes aldrig (uppmätt
+    // 2026-09-08). Ingen profilram på dem — pickern visas inte heller (se bind nedan).
+    if (w.profileFrame && w.profileFrame !== 'none' && !w.giftFrame && !w.streakFrame) {
       // window.VYRA_FRAME_FILES is set by toplike-studio.js — read lazily here (not at this file's own
       // top-level scope) since dynamically injected scripts don't have a guaranteed load order.
       const files = window.VYRA_FRAME_FILES || {};
@@ -115,7 +118,7 @@
 
     // Avatar frame picker — reuses toplike-studio.js's shared builder, same swatch/gender-tab markup
     // and events as Top Like's own picker.
-    if (typeof window.vyraBuildFramePicker === 'function' && !panel.querySelector('.gaf-frame-group')) {
+    if (typeof window.vyraBuildFramePicker === 'function' && !panel.querySelector('.gaf-frame-group') && !w.giftFrame && !w.streakFrame) {
       const frameGroup = document.createElement('div');
       frameGroup.className = 'property-group gaf-frame-group';
       frameGroup.innerHTML = '<h4>AVATAR-RAM</h4><div class="pro-frame-picker"></div>';

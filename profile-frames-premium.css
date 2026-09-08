@@ -67,7 +67,9 @@
    efter mätning, i procent av raden och med !important — det enda som slår layouternas
    `.toplike-row>img{width:58px!important}`-regler som annars även träffar konsten.
    Här: konsten tas ur rutnätet, får formeln för öppningens läge, och raden blir dess referens.
-   Text och rangsiffra lyfts över konsten så att ornament aldrig täcker namnet. */
+   Text och rangsiffra lyfts över konsten (z-index) av placeringen i media.js — inte här: en
+   position:relative!important i CSS slog ut like-centers absolut placerade rangbricka och la den
+   mitt på fotot. JS ger bara static-element position:relative, resten behåller sin. */
 .widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) { position: relative !important; overflow: visible !important; }
 .widget.vyra-toplike .toplike-row > img.pro-frame-art.tl-frame-art {
   position: absolute !important; inset: auto !important;
@@ -80,7 +82,3 @@
   transform: translate(calc(-50% - var(--frame-dx, 0) * 100%), calc(-50% - var(--frame-dy, 0) * 100%)) !important;
   transform-origin: 50% 50% !important; pointer-events: none !important; z-index: 6 !important;
 }
-.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > b,
-.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > span,
-.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > em,
-.widget.vyra-toplike .toplike-row:has(> img.tl-frame-art) > i { position: relative !important; z-index: 9 !important; }
