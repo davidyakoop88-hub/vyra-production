@@ -235,7 +235,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-08: Top Like-ramen renderas som syskon till fotot och placeras efter mätning.
   // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
   // och media.js bar dess versionsstrang.
-  assert.match(studio, /[^-]media\.js\?v=20260908-bildmatt-2/);
+  assert.match(studio, /[^-]media\.js\?v=20260908-radavstand/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
@@ -250,8 +250,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // SAMMANSLAGNINGEN 2026-08-20 (Rise & Pop mot main): media.js andrades av bada
   // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
-  assert.match(media, /toplike-studio\.css\?v=20260818-ramstad/);
-  assert.match(media, /toplike-studio\.js\?v=20260818-ramstad/);
+  assert.match(media, /toplike-studio\.css\?v=20260908-bagpodiet/);  // bagpodiet 2026-09-08: bara .css andrades, .js behaller -ramstad
+  assert.match(media, /toplike-studio\.js\?v=20260908-ramaccent/);  // ramens accent pa brickan 2026-09-08
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);

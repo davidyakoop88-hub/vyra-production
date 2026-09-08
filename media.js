@@ -346,7 +346,7 @@ const professionalFrameResetWh=wh;wh=function(w){return professionalFrameResetWh
 // in toplike-studio.js). CSS scales the art by 1/fit so the ring lands OUTSIDE the photo instead of
 // on top of it. Read through window at render time, not at load time — toplike-studio.js loads after
 // this file.
-const proTopLikeFrameWh=wh;wh=function(w){let html=proTopLikeFrameWh(w);if(w.type==='templateTopLike'&&w.profileFrame&&w.profileFrame!=='none'){let frame=w.profileFrame;const g=(window.vyraFrameGeom?window.vyraFrameGeom(frame):{fit:0.62,dx:0,dy:0});html=html.replace(/<img class="profile-frame frame-none"([^>]*)>/g,`<img class="profile-frame frame-none"$1><img class="pro-frame-art tl-frame-art" src="assets/images/profile-frames/${frame}.png?v=2" alt="" style="--frame-fit:${g.fit};--frame-dx:${g.dx};--frame-dy:${g.dy}">`)}return html};
+const proTopLikeFrameWh=wh;wh=function(w){let html=proTopLikeFrameWh(w);if(w.type==='templateTopLike'&&w.profileFrame&&w.profileFrame!=='none'){let frame=w.profileFrame;const g=(window.vyraFrameGeom?window.vyraFrameGeom(frame):{fit:0.62,dx:0,dy:0});html=html.replace(/<img class="profile-frame frame-none"([^>]*)>/g,`<img class="profile-frame frame-none"$1><img class="pro-frame-art tl-frame-art" src="assets/images/profile-frames/${frame}.png?v=2" alt="" style="--frame-fit:${g.fit};--frame-dx:${g.dx};--frame-dy:${g.dy}">`);/* Ramens accent pa roten: rangbrickan (alla layouter) och podiets varde tar den — Davids onskan 2026-09-08. */const acc=window.vyraFrameAccent?window.vyraFrameAccent(frame):null;if(acc){html=html.replace('class="widget vyra-toplike ','class="widget vyra-toplike har-ram ').replace('style="',`style="--ram-accent:${acc};`)}}return html};
 /* Ramkonsten i Top Like ar ett SYSKON till fotot, inte ett omslag runt det (2026-09-08, kravet: fotot far
    inte andra matt nar ramen laggs pa). Omslaget .pro-avatar-frame tande ett fyrtiotal !important-regler i
    studio.css/toplike-studio.css som byggde om hela raden — uppmatt i like-clean: raden 68→54 px, fotot
@@ -359,28 +359,114 @@ function vyraPlaceraTopLikeRamar(omobservera){
   const P=vyraPlaceraTopLikeRamar;if(!P.obs&&'ResizeObserver' in window)P.obs=new ResizeObserver(()=>P(false));if(omobservera&&P.obs)P.obs.disconnect();
   const px=el=>el.getBoundingClientRect(),marg=(rad,sida)=>parseFloat(rad.style.getPropertyValue('margin-'+sida))||0,
         satt=(rad,sida,v)=>rad.style.setProperty('margin-'+sida,v.toFixed(2)+'px','important');
+  /* Steg 0: rangbricka, namn och varde ur vagen for konsten. Davids skarmbild 2026-09-08: brickan satt
+     20 px in pa vanstra vingen och namnet 28 px in pa den hogra, i alla atta listlayouter; i like-center
+     lag namnet under fotot mitt i ramens nedre del. Konstens ruta FORUTSES ur fotot — bredd foto/fit,
+     mitt = fotomitt − dx/dy·bredd — innan konsten placeras, for placeringen raknas i procent av raden
+     och raden kan vaxa av knuffen. Varje element som skar rutan knuffas bort fran fotot langs den axel
+     det redan ligger pa. Knuffen ar CSS-egenskapen `translate` — inte margin: en marginal pa ett
+     centrerat rutnatselement flyttar det bara HALVA vagen (uppmatt like-right: brickan 11 av 22 px),
+     pa ett absolut placerat inte alls, och `transform` bar redan namnets/vardets egna offset fran
+     state. translate flyttar exakt, oavsett justering, position och transform. SATT idempotent: forra
+     passets knuff tas bort fore matningen, sa passet kan koras hur manga ganger som helst. */
+  const LUFT=6;
+  /* Bagsteg (like-center): scenen skalas efter ramen. Platserna ligger pa fasta procent av scenen
+     (9/28/50/72/91, --px i toplike-studio.css), sa det enda som kan ge ramarna plats ar scenens bredd:
+     tva grannramar far overlappa hogst 20 % av sin medelbredd (referensbilden: kanterna nuddar), aldrig
+     mer. Uppmatt fore: amethyst-oracle (fit 0,48) i 340 px gav ettan 66 px in i tvaan och ettans namn
+     mellan tvaans och treans ramar. Bredden raknas ur fotona och fit — FORE konsten placeras, for
+     placeringen raknas i procent av raden. Widgeten vaxer symmetriskt (negativ vanstermarginal) sa att
+     mitten star kvar, och bara nar en ram kraver det: utan ram ar scenen 340 px som forut. Widgetens
+     egna inline-matt (w.width fran state) sparas och aterstalls fore varje matning — idempotent. */
+  const bagar=[...new Set(arter.map(a=>a.parentElement).filter(r=>getComputedStyle(r).position==='absolute').map(r=>r.closest('.widget')).filter(Boolean))];
+  bagar.forEach(wg=>{
+    if(wg.dataset.tlBage){const s=JSON.parse(wg.dataset.tlBage);for(const q in s)s[q]?wg.style.setProperty(q,s[q]):wg.style.removeProperty(q);delete wg.dataset.tlBage}
+    const lista=wg.querySelector('.toplike-list');if(!lista)return;if(lista.dataset.tlBage){lista.style.removeProperty('height');delete lista.dataset.tlBage}
+    const rader=[...lista.querySelectorAll('.toplike-row')].filter(r=>{const c=getComputedStyle(r);return c.display!=='none'&&c.position==='absolute'});
+    const aw=rader.map(r=>{const art=r.querySelector('img.tl-frame-art'),foto=art&&art.previousElementSibling;if(!foto)return 0;const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62;return px(foto).width/fit});
+    const pos=rader.map(r=>parseFloat(getComputedStyle(r).getPropertyValue('--px'))/100);
+    let behovL=0;for(let i=0;i<rader.length;i++)for(let j=0;j<i;j++){const d=Math.abs(pos[i]-pos[j]);if(!(d>0)||!aw[i]||!aw[j])continue;behovL=Math.max(behovL,((aw[i]+aw[j])/2*.8)/d)}
+    const wb=px(wg),lb=px(lista),k=wb.width/(wg.offsetWidth||1);if(!(behovL>lb.width+.5))return;
+    const vaxt=behovL-lb.width;
+    wg.dataset.tlBage=JSON.stringify({width:wg.style.getPropertyValue('width'),'max-width':wg.style.getPropertyValue('max-width'),'min-width':wg.style.getPropertyValue('min-width'),'margin-left':wg.style.getPropertyValue('margin-left')});
+    wg.style.setProperty('width',((wb.width+vaxt)/k).toFixed(2)+'px','important');wg.style.setProperty('max-width','none','important');wg.style.setProperty('min-width','0','important');
+    wg.style.setProperty('margin-left',(-vaxt/2/k).toFixed(2)+'px','important')});
+  arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;
+    for(const el of rad.children)if(el.dataset.tlKnuff){el.style.removeProperty(el.dataset.tlKnuff);delete el.dataset.tlKnuff}
+    const f=px(foto),k=px(rad).width/(rad.offsetWidth||1);if(!f.width)return;
+    const g=n=>parseFloat(art.style.getPropertyValue(n))||0,fit=g('--frame-fit')||.62,aw=f.width/fit,
+          cx=f.left+f.width/2-g('--frame-dx')*aw,cy=f.top+f.height/2-g('--frame-dy')*aw,A={left:cx-aw/2,right:cx+aw/2,top:cy-aw/2,bottom:cy+aw/2};
+    /* Alltid translate, aven lodratt (like-center: namnet under fotot). En marginal hade fatt raden att
+       vaxa, och i like-center ar fotot bottenjusterat i raden — det flyttade 36 px nar raden vaxte 49
+       (kontraktet i ram-ror-inte-bildmatt). Det knuffade raknas i stallet in i radens FOTAVTRYCK i
+       steg 2–3, sa att grannraderna halls undan lika mycket som for konsten.
+       Alla element at samma hall knuffas LIKA langt (gruppens storsta behov): namn och varde under fotot
+       hade annars fatt var sin knuff till samma kant och ritats ovanpa varandra (uppmatt like-center). */
+    /* ALLA element at ett hall ingar i gruppen, aven de som inte skar konsten: med en tunn ram skar
+       namnet ringens nederkant men inte vardet under, och ett knuffat namn landade da ovanpa vardet
+       (uppmatt ice-crystal i bagpodiet). Behovet ar 0 for det som gar fritt; gruppens storsta galler. */
+    const behov=[];
+    const bage=getComputedStyle(rad).position==='absolute';  // bagpodiet (like-center): brickan sitter pa ramen som medaljen i referensen
+    for(const el of rad.children){if(el===art||el===foto||(bage&&el.tagName==='B'))continue;const r=px(el);if(!r.width||!r.height)continue;
+      const skar=r.left<A.right&&r.right>A.left&&r.top<A.bottom&&r.bottom>A.top;
+      const ex=(r.left+r.width/2-(f.left+f.width/2))/f.width,ey=(r.top+r.height/2-(f.top+f.height/2))/f.height;
+      if(Math.abs(ex)>=Math.abs(ey))behov.push({el,rikt:ex>=0?'x+':'x-',v:!skar?0:ex>=0?A.right+LUFT-r.left:r.right-(A.left-LUFT)});
+      else behov.push({el,rikt:ey>=0?'y+':'y-',v:!skar?0:ey>=0?A.bottom+LUFT-r.top:r.bottom-(A.top-LUFT)})}
+    const mest={};behov.forEach(b=>{mest[b.rikt]=Math.max(mest[b.rikt]||0,b.v)});
+    /* Hela CSS-px: en text flyttad 30,01 px ligger mellan pixelraderna och rastreras mjuk. */
+    behov.forEach(({el,rikt})=>{const v=mest[rikt];if(v<=.5)return;const t=Math.ceil(v/k)+'px';
+      el.style.setProperty('translate',rikt==='x+'?`${t} 0px`:rikt==='x-'?`-${t} 0px`:rikt==='y+'?`0px ${t}`:`0px -${t}`,'important');el.dataset.tlKnuff='translate'})});
+  /* Radens fotavtryck: konsten plus det som knuffats ut ur den (steg 0). Steg 2 och 3 mater mot det, inte
+     bara mot konsten, sa att en text som knuffats under ramen far plats mellan raderna. */
+  const fot=art=>{let a=px(art);for(const el of art.parentElement.children){if(!el.dataset.tlKnuff)continue;const r=px(el);if(!r.width)continue;
+    a={left:Math.min(a.left,r.left),right:Math.max(a.right,r.right),top:Math.min(a.top,r.top),bottom:Math.max(a.bottom,r.bottom)}}return a};
+  /* Ingen vaxning av widgeten: kontraktet fran #384 (ram-ror-inte-bildmatt) ar att ramen inte andrar
+     widgetens bredd — provet foll pa 242 mot 220 nar rutan fick vaxa. Bricka och text far darfor hanga
+     utanfor rutan at sidorna, som konsten redan gor (28/34 px), men aldrig ovanpa konsten. */
   // Steg 1: lagg konsten pa fotot, i procent av raden sa att zoom/skala/transform tar ut varandra.
   arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;const f=px(foto),r=px(rad);
     if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}
     art.style.setProperty('display','block','important');const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62,s=(k,v)=>art.style.setProperty(k,v.toFixed(3)+'%','important');
     s('left',(f.left+f.width/2-r.left)/r.width*100);s('top',(f.top+f.height/2-r.top)/r.height*100);s('width',f.width/fit/r.width*100);s('height',f.width/fit/r.height*100);
+    /* Konstens MITT och matt som variabler pa raden (i % av raden, med dx/dy-forskjutningen inraknad) —
+       gloden bakom portrattet (toplike-studio.css, .har-ram ...::after) foljer dem; --tl-i ger var plats
+       sin egen fas i andningen sa att fem ramar inte pulserar i takt. */
+    {const g=n=>parseFloat(art.style.getPropertyValue(n))||0,lp=(f.left+f.width/2-r.left)/r.width*100,tp=(f.top+f.height/2-r.top)/r.height*100,wp=f.width/fit/r.width*100,hp=f.width/fit/r.height*100;
+      rad.style.setProperty('--tl-cx',(lp-g('--frame-dx')*wp).toFixed(3)+'%');rad.style.setProperty('--tl-cy',(tp-g('--frame-dy')*hp).toFixed(3)+'%');
+      rad.style.setProperty('--tl-w',wp.toFixed(3)+'%');rad.style.setProperty('--tl-h',hp.toFixed(3)+'%');rad.style.setProperty('--tl-i',String(arter.indexOf(art)))}
     /* Rangbricka, namn, varde och krona lyfts OVER konsten sa att ornament aldrig tacker dem. Bara
        static-element far position:relative — like-centers bricka ar absolut placerad och skulle
        annars hamna mitt pa fotot (uppmatt nar regeln lag som !important i CSS). */
     for(const el of rad.children){if(el===art||el===foto)continue;if(getComputedStyle(el).position==='static')el.style.setProperty('position','relative','important');el.style.setProperty('z-index','9','important')}
     if(omobservera&&P.obs)P.obs.observe(rad)});
+  /* Bagsteg, hojden: scenen slutar dar det lagsta fotavtrycket slutar (konst eller knuffad text), sa att
+     fyran och femman med namn och varde inte hamnar under widgetens ruta. Bara uppat fran CSS-hojden. */
+  bagar.forEach(wg=>{const lista=wg.querySelector('.toplike-list');if(!lista)return;const lb=px(lista),k=lb.width/(lista.offsetWidth||1);let botten=-Infinity;
+    lista.querySelectorAll('.toplike-row').forEach(rad=>{if(getComputedStyle(rad).display==='none')return;const art=rad.querySelector('img.tl-frame-art');const f=art&&art.style.display!=='none'?fot(art):px(rad);botten=Math.max(botten,f.bottom);
+      for(const el of rad.children){if(el===art)continue;const r=px(el);if(r.width)botten=Math.max(botten,r.bottom)}});
+    if(botten>lb.bottom+.5){lista.style.setProperty('height',((botten-lb.top)/k+4).toFixed(2)+'px','important');lista.dataset.tlBage='1'}});
   /* Steg 2: ramen ska rymmas i radens MARGINALBOX. Raden far marginal upptill/nedtill precis sa mycket
      som konsten sticker ut; grannraderna knuffas undan och fotot star kvar dar det stod i sin rad.
      (min-height dog har: i like-center ligger fotot mot radens nederkant, sa en hogre rad flyttade fotot
      lika mycket som den vaxte och ramen stack ut lika mycket som forut.) k = skarm-px per CSS-px. */
-  arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;const a=px(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
-    if(a.top<r.top-.5)satt(rad,'top',marg(rad,'top')+(r.top-a.top)/k);
-    if(a.bottom>r.bottom+.5)satt(rad,'bottom',marg(rad,'bottom')+(a.bottom-r.bottom)/k)});
+  /* SATT, inte adderad. Konstens lage i raden beror inte pa radens marginal, sa varje pass mater samma
+     utstick — adderat vaxte marginalen med ett helt utstick per pass, och passet kors minst tva ganger
+     per render (render() + observerns forsta anrop vid observe()). Uppmatt 2026-09-08, like-clean +
+     amethyst-oracle: utstick 40,8/11,0 px men marginal 81,5/21,9, radavstand 177,5 px i stallet for
+     125,7, och +52 px for varje pass till. Utan utstick tas var egen marginal bort, sa att en
+     stilmallsmarginal inte skrivs over med 0. Steg 3 laggs ovanpa i samma pass och blir darmed ocksa
+     idempotent: knuffen raknas om fran utsticket varje gang, inte fran forra passets summa. */
+  arter.forEach(art=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;
+    /* Bagpodiet: raderna ar absolut placerade i en scen — en marginal hade flyttat raden i stallet for grannen, och grannarna star fast anda. */
+    if(getComputedStyle(rad).position==='absolute'){rad.style.removeProperty('margin-top');rad.style.removeProperty('margin-bottom');return}
+    const a=fot(art),r=px(rad),k=r.width/(rad.offsetWidth||1);
+    if(a.top<r.top-.5)satt(rad,'top',(r.top-a.top)/k);else rad.style.removeProperty('margin-top');
+    if(a.bottom>r.bottom+.5)satt(rad,'bottom',(a.bottom-r.bottom)/k);else rad.style.removeProperty('margin-bottom')});
   /* Steg 3: rader som overlappar varandra med flit (like-center: plats 1 ligger diagonalt over 2 och 3)
      far anda inte ramar som gar in i varandra. Kolliderar konst j med en tidigare konst i, knuffas
      j:s rad ner precis sa langt att de gar fria. Matt om efter varje knuff — nasta par ser det nya laget. */
-  arter.forEach((art,j)=>{const rad=art.parentElement;if(!rad||art.style.display==='none')return;
-    for(let i=0;i<j;i++){const b=arter[i];if(b.style.display==='none'||b.parentElement===rad)continue;const p=px(b),a=px(art);
+  arter.forEach((art,j)=>{const rad=art.parentElement;if(!rad||art.style.display==='none'||getComputedStyle(rad).position==='absolute')return;  // bagpodiet: ramarna far overlappa, ettan overst
+    for(let i=0;i<j;i++){const b=arter[i];if(b.style.display==='none'||b.parentElement===rad)continue;const p=fot(b),a=fot(art);
       const kors=a.left<p.right&&a.right>p.left&&a.top<p.bottom&&a.bottom>p.top;if(!kors)continue;
       const k=px(rad).width/(rad.offsetWidth||1),radI=b.parentElement;
       /* Frys den tidigare radens hojd forst: ligger den i samma grid-spar strecks den annars med sparet
@@ -409,7 +495,7 @@ const extraRankingWh=wh;wh=function(w){let kind=rankingKinds[w.type];if(!kind)re
 const extraRankingProps=props;props=function(){let w=liveWidget(selected),kind=w&&rankingKinds[w.type];if(!kind)return extraRankingProps();return `<h3>${kind.label.toUpperCase()}</h3><div class="template-badge">1–10 PROFILBILDER</div><div hidden><input id="pt" value="${w.title||''}"><input id="pv" value="${w.value||''}"></div><div class="property-group"><h4>LISTA</h4><label class="range-label">Antal profiler <b>${w.likeCount||5}</b><input id="likeCount" type="range" min="1" max="10" value="${w.likeCount||5}"></label><label>Rubrik<input id="likeTitle" value="${w.templateTitle||kind.title}"></label><div class="switch-row two"><label><input id="likeShowAvatar" type="checkbox" ${w.showProfile===false?'':'checked'}> Bilder</label><label><input id="likeShowName" type="checkbox" ${w.showDataName===false?'':'checked'}> Namn</label><label><input id="likeShowValue" type="checkbox" ${w.showDataValue===false?'':'checked'}> Värde</label><label><input id="likeShowTitle" type="checkbox" ${w.showTitle===false?'':'checked'}> Rubrik</label></div></div><div class="property-group"><h4>DESIGN</h4><label>Stil<select id="likeTheme"><option value="clean">Stil 1 · Lista</option><option value="center">Stil 2 · Tre i mitten</option><option value="podium">Stil 3 · Podium</option><option value="neon">Stil 4 · Neon</option></select></label><label>Accent<input id="likeAccent" type="color" value="${w.accent||'#a95cff'}"></label></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width||300}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
 const extraRankingBind=bind;bind=function(){extraRankingBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||!rankingKinds[w.type])return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};set('#likeCount','likeCount',true);set('#likeTitle','templateTitle');set('#likeTheme','likeTheme');set('#likeAccent','accent');let theme=document.querySelector('#likeTheme');if(theme)theme.value=w.likeTheme||'clean';[['#likeShowAvatar','showProfile'],['#likeShowName','showDataName'],['#likeShowValue','showDataValue'],['#likeShowTitle','showTitle']].forEach(([id,key])=>{let el=document.querySelector(id);if(el)el.onchange=e=>{w[key]=e.target.checked;save();render()}})};
 const extraRankingCatalog=bind;bind=function(){extraRankingCatalog();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-extra-rankings]'))return;let section=document.createElement('section');section.dataset.extraRankings='1';section.className='toplike-template-section';let trStyles=[['clean','Stil 1 · Lista'],['center','Stil 2 · Tre i mitten'],['podium','Stil 3 · Podium'],['neon','Stil 4 · Neon']];section.innerHTML='<h4>VYRA TOP RANKING · VARJE DESIGN SEPARAT</h4>'+['templateTopCoins','templateTopPoints'].map(type=>trStyles.map(([t,label])=>`<button data-ranking="${type}" data-ranking-theme="${t}"><i>${type==='templateTopCoins'?'●':'◆'}</i><span><b>${rankingKinds[type].label} · ${label}</b><small>1–10 profiler</small></span></button>`).join('')).join('');catalog.prepend(section);section.querySelectorAll('button').forEach(button=>{const type=button.dataset.ranking,theme=button.dataset.rankingTheme,kind=rankingKinds[type],catalogKey='catalog:ranking:'+type+':'+theme;button.dataset.catalogKey=catalogKey;button.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets.push(created);selected=id;save();render();toast(kind.label+' skapad')}})};
-const centerThreeBind=bind;bind=function(){centerThreeBind();if(view!=='editor')return;let w=liveWidget(selected),theme=document.querySelector('#likeTheme');if(!w||!['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type)||!theme)return;theme.onchange=e=>{w.likeTheme=e.target.value;if(w.likeTheme==='center')w.likeCount=3;save();render();toast(w.likeTheme==='center'?'Tre profiler visas i mitten':'Stil uppdaterad')}};
+const centerThreeBind=bind;bind=function(){centerThreeBind();if(view!=='editor')return;let w=liveWidget(selected),theme=document.querySelector('#likeTheme');if(!w||!['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type)||!theme)return;theme.onchange=e=>{w.likeTheme=e.target.value;if(w.likeTheme==='center')w.likeCount=Math.max(w.likeCount||0,5);save();render();toast(w.likeTheme==='center'?'Fem profiler i bågen':'Stil uppdaterad')}};
 
 const cycleRankingProps=props;props=function(){let html=cycleRankingProps(),w=liveWidget(selected);if(!w||!['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type))return html;let cycle=`<div class="property-group ranking-cycle-editor"><h4>CYKEL · ALLA TRE I SAMMA WIDGET</h4><div class="switch-row one"><label><input id="rankingCycle" type="checkbox" ${w.rankingCycle?'checked':''}> Automatisk cykel</label></div><span class="cycle-label">Växla mellan</span><div class="switch-row one"><label><input id="cycleLikes" type="checkbox" ${w.cycleLikes===false?'':'checked'}> Likes</label><label><input id="cycleCoins" type="checkbox" ${w.cycleCoins===false?'':'checked'}> Coins</label><label><input id="cyclePoints" type="checkbox" ${w.cyclePoints===false?'':'checked'}> Points</label></div><label class="range-label">Tid per lista <b>${w.cycleSeconds||4} sek</b><input id="cycleSeconds" type="range" min="2" max="15" value="${w.cycleSeconds||4}"></label></div>`;return html.replace('<button class="delete" id="del">',cycle+'<button class="delete" id="del">')};
 const cycleRankingBind=bind;bind=function(){cycleRankingBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||!['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type))return;[['#rankingCycle','rankingCycle'],['#cycleLikes','cycleLikes'],['#cycleCoins','cycleCoins'],['#cyclePoints','cyclePoints']].forEach(([id,key])=>{let el=document.querySelector(id);if(el)el.onchange=e=>{w[key]=e.target.checked;save();render()}});let seconds=document.querySelector('#cycleSeconds');if(seconds)seconds.onchange=e=>{w.cycleSeconds=+e.target.value;save();render()}};
@@ -419,7 +505,24 @@ const cycleRankingBind=bind;bind=function(){cycleRankingBind();if(view!=='editor
 // to do — the fake numbers would otherwise race against live-leaderboard.js's own 1s repaint of the
 // same rows and cycle-flip between real and fake on every tick. Any step falls back to the demo
 // roster only when its real source has no data yet (e.g. before the first gift/point of a stream).
-function updateRankingCycles(){state.widgets.filter(w=>w.rankingCycle&&['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type)).forEach(w=>{let choices=[];if(w.cycleLikes!==false)choices.push(['likes','TOP LIKES','♥']);if(w.cycleCoins!==false)choices.push(['coins','TOP COINS','●']);if(w.cyclePoints!==false)choices.push(['points','TOP POINTS','◆']);if(!choices.length)return;let step=Math.floor(Date.now()/((w.cycleSeconds||4)*1000))%choices.length,[metric,title,icon]=choices[step],box=document.querySelector(`[data-id="${w.id}"]`);if(!box)return;let heading=box.querySelector(':scope>h3');if(heading)heading.textContent=title;let rows=[...box.querySelectorAll('.toplike-row')],live=null;if(w.useLiveData!==false){if(metric==='points')live=window.VyraPoints?.getTop(rows.length)||null;else if(window.VyraLeaderboard)live=window.VyraLeaderboard.getTop(metric,rows.length)}if(live&&!live.length)live=null;rows.forEach((row,i)=>{let strong=row.querySelector('strong'),em=row.querySelector('em'),small=row.querySelector('small'),img=row.querySelector('img:not(.pro-frame-art)');if(live){let person=live[i];row.style.display=person?'':'none';if(!person)return;if(strong)strong.textContent=person.name;if(small)small.textContent='@'+person.name.toLowerCase().replace(/\s+/g,'');if(em)em.textContent=icon+' '+lfFormatCount(metric==='points'?person.points:metric==="likes"?person.likes:person.coins);if(img&&person.profileImage)img.src=VyraSafe.src(person.profileImage)}else{row.style.display='';let demoName=topLikePeople[i]?.[0]||'';if(strong)strong.textContent=demoName;if(small)small.textContent='@'+demoName.toLowerCase();if(em)em.textContent=icon+' '+(topLikePeople[i]?.[1]||'');if(img)img.src=VyraSafe.src(w.profileImage,'assets/images/test-profile.svg')}});box.dataset.cycleMode=title.toLowerCase().replace('top ','')})}
+/* Cykelbytet ar en KOREOGRAFI, inte ett hugg (Davids video 2026-09-08, IMG_1300.MOV, uppmatt ur 35
+   bildrutor): listan tonar UT fran mitten och utat pa ~1 s (ettan forst, fyran/femman sist), star tom
+   ~0,3 s, och nasta lista tonar IN fran mitten och utat pa ~1 s. Inget glider eller skalas — ren
+   opacity. Steget raknas fortfarande ur klockan; bytet spelas i tre faser pa widgetroten:
+   .tl-byt (uttoning, stagger per rang i toplike-studio.css) -> innehallet byts -> .tl-in (intoning).
+   Under ett byte uppdateras inte raderna; samma steg uppdateras som forut (livedata var 500 ms). */
+const TL_BYT_MS=900,TL_GAP_MS=300,TL_IN_MS=1300;
+function visaRankingSteg(w,box,metric,title,icon){let heading=box.querySelector(':scope>h3');if(heading)heading.textContent=title;let rows=[...box.querySelectorAll('.toplike-row')],live=null;if(w.useLiveData!==false){if(metric==='points')live=window.VyraPoints?.getTop(rows.length)||null;else if(window.VyraLeaderboard)live=window.VyraLeaderboard.getTop(metric,rows.length)}if(live&&!live.length)live=null;rows.forEach((row,i)=>{let strong=row.querySelector('strong'),em=row.querySelector('em'),small=row.querySelector('small'),img=row.querySelector('img:not(.pro-frame-art)');if(live){let person=live[i];row.style.display=person?'':'none';if(!person)return;if(strong)strong.textContent=person.name;if(small)small.textContent='@'+person.name.toLowerCase().replace(/\s+/g,'');if(em)em.textContent=icon+' '+lfFormatCount(metric==='points'?person.points:metric==="likes"?person.likes:person.coins);if(img&&person.profileImage)img.src=VyraSafe.src(person.profileImage)}else{row.style.display='';let demoName=topLikePeople[i]?.[0]||'';if(strong)strong.textContent=demoName;if(small)small.textContent='@'+demoName.toLowerCase();if(em)em.textContent=icon+' '+(topLikePeople[i]?.[1]||'');if(img)img.src=VyraSafe.src(w.profileImage,'assets/images/test-profile.svg')}});box.dataset.cycleMode=title.toLowerCase().replace('top ','')}
+function updateRankingCycles(){state.widgets.filter(w=>w.rankingCycle&&['templateTopLike','templateTopCoins','templateTopPoints'].includes(w.type)).forEach(w=>{let choices=[];if(w.cycleLikes!==false)choices.push(['likes','TOP LIKES','♥']);if(w.cycleCoins!==false)choices.push(['coins','TOP COINS','●']);if(w.cyclePoints!==false)choices.push(['points','TOP POINTS','◆']);if(!choices.length)return;let step=Math.floor(Date.now()/((w.cycleSeconds||4)*1000))%choices.length,[metric,title,icon]=choices[step],box=document.querySelector(`[data-id="${w.id}"]`);if(!box)return;const forra=box.dataset.tlSteg;if(forra===undefined||forra===String(step)){box.dataset.tlSteg=String(step);visaRankingSteg(w,box,metric,title,icon);return}if(box.dataset.tlByter)return;box.dataset.tlByter='1';box.classList.add('tl-byt');const mal=String(step);setTimeout(()=>{if(!box.isConnected)return;setTimeout(()=>{if(!box.isConnected)return;box.dataset.tlSteg=mal;visaRankingSteg(w,box,metric,title,icon);box.classList.remove('tl-byt');box.classList.add('tl-in');setTimeout(()=>{box.classList.remove('tl-in');delete box.dataset.tlByter},TL_IN_MS)},TL_GAP_MS)},TL_BYT_MS)})}
+/* Entre vid FORSTA rendern av varje rankingwidget (OBS-laddning): samma intoning fran mitten och utat
+   som i videon. En gang per widget-id — render() bygger om DOM:en vid varje andring i editorn, och
+   en entre per drag hade blinkat. Bara duken (.canvas): katalogens miniatyrer rors inte. */
+const tlEntrade=new Set();
+/* Via MutationObserver, inte en render-wrapper: efter render() byts widgetens DOM ut IGEN asynkront (bind-kedjan
+   schemalagger en ny ritning), sa en klass satt direkt efter render landade pa noder som strax kastades —
+   samma falla som placeringen (vyraPlaceraTopLikeRamar) redan gatt i. Observern ser den nod som faktiskt blir kvar. */
+function tlEntre(box){const id=box.dataset.id;if(!id||tlEntrade.has(id)||!box.closest('.canvas'))return;tlEntrade.add(id);box.classList.add('tl-in');setTimeout(()=>box.classList.remove('tl-in'),TL_IN_MS)}
+new MutationObserver(muts=>{for(const m of muts)for(const n of m.addedNodes){if(n.nodeType!==1)continue;if(n.matches?.('.widget.vyra-toplike[data-id]'))tlEntre(n);n.querySelectorAll?.('.widget.vyra-toplike[data-id]').forEach(tlEntre)}}).observe(document.body,{childList:true,subtree:true});
 setInterval(updateRankingCycles,500);setTimeout(updateRankingCycles,100);
 
 // Editable four-gift event campaign.
@@ -956,7 +1059,7 @@ Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-eve
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260820-2';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260818-ramstad';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260818-ramstad';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260908-bagpodiet';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260908-ramaccent';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20260806-animation';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20260908-bildmatt';document.body.append(js)});

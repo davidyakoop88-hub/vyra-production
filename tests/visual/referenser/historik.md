@@ -73,3 +73,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Namnplattan i gåvoramen: två rader, namnet skalat efter plattan [referenser]
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-08 — 3 referenser skrivna
+
+- **Motiv:** Bågpodiet (PR #387): like-center är fem platser i en båge vars scen skalas efter ramen — 340 px utan ram. Gäller alla tre :center-nycklar (toplike, TopCoins, TopPoints delar layouten).
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla

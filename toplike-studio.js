@@ -140,6 +140,33 @@
   }
   window.VYRA_FRAME_GEOM = FRAME_GEOM;
   window.vyraFrameGeom = frameGeom;
+
+  // Ramens accentfärg, MÄTT per PNG (scratch: ram_accent.py): toppfacket i ett saturationsviktat
+  // nyanshistogram bland ogenomskinliga, mättade pixlar, som hsl(h 85% 64%) — ljus nog för mörk text
+  // på brickan. Keyat på FILNAMN (som FRAME_FILES ger), inte id: flera id kan dela fil. Rangbrickan
+  // och podiets värde tar den här färgen när en ram är vald (Davids önskan 2026-09-08: "siffror
+  // matchar ramarna"). Gråa/vita ramar ger en neutral ljus accent. Saknad ram → null → skinnets färg.
+  const FRAME_ACCENT = {
+    'amethyst-oracle': 'hsl(273 85% 64%)', 'arctic-couture': 'hsl(203 85% 64%)', 'aurora-diamond': 'hsl(28 85% 64%)',
+    'celestial-serpent': 'hsl(221 85% 64%)', 'champagne-crown': 'hsl(34 85% 64%)', 'cosmic-tiger': 'hsl(35 85% 64%)',
+    'crimson-dynasty': 'hsl(35 85% 64%)', 'cyber-blue': 'hsl(185 85% 64%)', 'emerald-elan': 'hsl(35 85% 64%)',
+    'emerald': 'hsl(63 85% 64%)', 'enchanted-ivy': 'hsl(47 85% 64%)', 'frostfire-crown': 'hsl(32 85% 64%)',
+    'galaxy': 'hsl(255 85% 64%)', 'gilded-lion': 'hsl(34 85% 64%)', 'golden-king': 'hsl(51 85% 64%)',
+    'ice-crystal': 'hsl(187 85% 64%)', 'midnight-amethyst': 'hsl(276 85% 64%)', 'minimal-glow': 'hsl(206 85% 64%)',
+    'moonlit-sakura': 'hsl(35 85% 64%)', 'neon-purple': 'hsl(286 85% 64%)', 'neon-valkyrie': 'hsl(314 85% 64%)',
+    'ocean-oracle': 'hsl(191 85% 64%)', 'opal-dream': 'hsl(206 85% 64%)', 'pearl-lumiere': 'hsl(26 85% 64%)',
+    'pearl-tempest': 'hsl(188 85% 64%)', 'pink-angel': 'hsl(326 85% 64%)', 'quantum-lotus': 'hsl(263 85% 64%)',
+    'rose-atelier': 'hsl(22 85% 64%)', 'ruby-velvet': 'hsl(355 85% 64%)', 'samurai': 'hsl(7 85% 64%)',
+    'sapphire-nocturne': 'hsl(234 85% 64%)', 'stellar-emperor': 'hsl(34 85% 64%)', 'thunder-warden': 'hsl(205 85% 64%)',
+    'velvet-nocturne': 'hsl(34 85% 64%)',
+  };
+  function frameAccent(id) {
+    if (!id || id === 'none') return null;
+    const fil = (FRAME_FILES[id] || `${id}.png`).replace(/\.[a-z0-9]+$/i, '');
+    return FRAME_ACCENT[fil] || null;
+  }
+  window.VYRA_FRAME_ACCENT = FRAME_ACCENT;
+  window.vyraFrameAccent = frameAccent;
   window.vyraFrameFit = id => frameGeom(id).fit;
 
   window.VYRA_FRAMES = FRAMES;

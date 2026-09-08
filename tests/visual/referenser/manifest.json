@@ -7,9 +7,9 @@
  },
  "antal": 178,
  "senaste": {
-  "motiv": "Namnplattan i gåvoramen: två rader, namnet skalat efter plattan [referenser]",
-  "nycklar": 178,
-  "tid": "2026-09-08T13:32:06.975Z"
+  "motiv": "Bågpodiet (PR #387): like-center är fem platser i en båge vars scen skalas efter ramen — 340 px utan ram. Gäller alla tre :center-nycklar (toplike, TopCoins, TopPoints delar layouten).",
+  "nycklar": 3,
+  "tid": "2026-09-08T19:31:11.134Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -329,8 +329,8 @@
    "fyllnad": 27.01
   },
   "catalog:ranking:templateTopCoins:center": {
-   "matt": "302x264",
-   "fyllnad": 20.32
+   "matt": "340x263",
+   "fyllnad": 18.12
   },
   "catalog:ranking:templateTopCoins:clean": {
    "matt": "220x388",
@@ -345,8 +345,8 @@
    "fyllnad": 13.75
   },
   "catalog:ranking:templateTopPoints:center": {
-   "matt": "302x264",
-   "fyllnad": 20.45
+   "matt": "340x263",
+   "fyllnad": 18.27
   },
   "catalog:ranking:templateTopPoints:clean": {
    "matt": "220x388",
@@ -569,8 +569,8 @@
    "fyllnad": 15.06
   },
   "catalog:toplike:center": {
-   "matt": "302x264",
-   "fyllnad": 20.32
+   "matt": "340x263",
+   "fyllnad": 18.14
   },
   "catalog:toplike:clean": {
    "matt": "220x388",

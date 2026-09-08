@@ -253,7 +253,12 @@ for (const [nyckel, familj, extra] of FALL) {
       //    I Top Like byggdes raden förr om (68→54 px) så fort ett omslag fanns. Nu står raden kvar i
       //    samma mått; ramen ryms i radens MARGINALBOX (marginalen knuffar grannarna), och ingen ram i
       //    widgeten går in i en annan — inte ens i like-center där rad 1 ligger diagonalt över 2 och 3.
-      nara(efter.widget.w, fore.widget.w, 0.5, `${nyckel} + ${ram}: widgetens bredd ändrades av ramen`);
+      // Bågpodiet (like-center sedan 2026-09-08): scenen SKALAS efter ramen så att ramarna får plats utan
+      // att gå in i varandra (Davids referensbild: kanterna nuddar). Bilden är oförändrad — det är
+      // scenen som växer, symmetriskt kring mitten. Övriga layouter: widgeten står stilla.
+      const bage = await page.evaluate(wid => [...document.querySelectorAll(`.canvas [data-id="${wid}"] .toplike-row`)].some(r => getComputedStyle(r).position === 'absolute'), id);
+      if (!bage) nara(efter.widget.w, fore.widget.w, 0.5, `${nyckel} + ${ram}: widgetens bredd ändrades av ramen`);
+      else assert.ok(efter.widget.w >= fore.widget.w - 0.5, `${nyckel} + ${ram}: bågpodiets scen krympte av ramen`);
       if (fore.rad) {
         const rad = await matt(page, id, '.toplike-row:first-child');
         // Raden får växa (i like-center sträcks rad 1 i sitt grid-spår när rad 2–3 knuffas ned) men
@@ -262,7 +267,11 @@ for (const [nyckel, familj, extra] of FALL) {
         nara(rad.w, fore.rad.w, 0.5, `${nyckel} + ${ram}: Top Like-radens bredd ändrades av ramen`);
         const brott = await page.evaluate(wid => {
           const rot = document.querySelector(`.canvas [data-id="${wid}"]`), ut = [];
-          const arter = [...rot.querySelectorAll('img.pro-frame-art')].filter(a => getComputedStyle(a).display !== 'none');
+          // Bågpodiet (like-center sedan 2026-09-08, Davids referensbild): platserna är absolut
+          // placerade i en scen och ramarna FÅR överlappa varandra där, ettan överst — det är
+          // referensens form. Marginalbox- och kollisionskontrakten gäller raderna i flödet.
+          const arter = [...rot.querySelectorAll('img.pro-frame-art')].filter(a => getComputedStyle(a).display !== 'none'
+            && getComputedStyle(a.parentElement).position !== 'absolute');
           arter.forEach((art, j) => {
             const a = art.getBoundingClientRect(), rad = art.parentElement, r = rad.getBoundingClientRect();
             const k = r.width / (rad.offsetWidth || 1), cs = getComputedStyle(rad);

@@ -378,3 +378,172 @@
 .vyra-toplike.vyra-toplike{background:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .vyra-toplike .toplike-row{background:none!important}
 .vyra-toplike.like-center .toplike-row:nth-child(-n+3){background:none!important}
+
+/* ---- Bågpodiet (2026-09-08, Davids referensbild) ----------------------------------------------
+   Fem platser i en båge: ettan högst upp i mitten och störst, tvåan och trean ett steg ned åt var
+   sida, fyran och femman ytterst och lägst. Rangbrickan sitter nere till vänster på porträttet,
+   namnet under porträttet och värdet under namnet. Varje plats är en fast SLOT (56 px) med
+   ellipsis — det är slotten, inte namnets längd, som avgör att namn aldrig går in i varandra.
+   Platserna är absolut placerade i en scen: raderna knuffar därför inte varandra, och
+   vyraPlaceraTopLikeRamar (media.js) hoppar över steg 2–3 (radmarginaler, kollisionsknuff) för
+   absoluta rader — i bågen får ramarna överlappa, ettan ligger överst (z-index). Sist i filen av
+   samma källordningsskäl som podiet ovan. Dubbla klasser för att slå tidigare !important-lager. */
+/* 340 px: fem porträtt (72/58/48) med 8 px luft mellan namnslottarna — i 302 px gick porträtten in i varandra (uppmätt). */
+.widget.vyra-toplike.like-center.like-center{width:340px!important;min-width:340px!important;max-width:340px!important}
+.widget.vyra-toplike.like-center.like-center>.toplike-list{
+  display:block!important;position:relative!important;width:100%!important;
+  height:232px!important;min-height:0!important;padding:0!important;margin:0!important;
+  overflow:visible!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5){
+  position:absolute!important;left:var(--px)!important;top:var(--py)!important;z-index:var(--pz)!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  gap:2px!important;width:56px!important;min-width:0!important;max-width:none!important;
+  height:auto!important;min-height:0!important;padding:0!important;margin:0!important;
+  border:0!important;background:none!important;box-shadow:none!important;text-align:center!important;
+  transform:translateX(-50%)!important;overflow:visible!important;grid-column:auto!important;grid-row:auto!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1{--px:50%;--py:26px;--pz:5;--pf:72px;--rk:var(--ram-accent,#ffc93f)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-2{--px:28%;--py:80px;--pz:4;--pf:58px;--rk:var(--ram-accent,#5aa9ff)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-3{--px:72%;--py:80px;--pz:4;--pf:58px;--rk:var(--ram-accent,#ff8a3d)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-4{--px:9%;--py:124px;--pz:3;--pf:48px;--rk:var(--ram-accent,#c9c9d6)}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-5{--px:91%;--py:124px;--pz:3;--pf:48px;--rk:var(--ram-accent,#c9c9d6)}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(n+6){display:none!important}
+/* Porträttet: fast mått per plats. Ramkonsten (img.tl-frame-art) är ett absolut syskon och rörs inte. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>img:not(.pro-frame-art),
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>.pro-avatar-frame{
+  order:1!important;flex:none!important;width:var(--pf)!important;height:var(--pf)!important;
+  min-width:0!important;max-width:none!important;margin:0!important;border-radius:50%!important;
+  object-fit:cover!important;justify-self:auto!important;align-self:auto!important;transform:none!important;
+}
+/* Rangbrickan nere till vänster på porträttet, som medaljen i referensen. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>b{
+  display:grid!important;place-items:center!important;position:absolute!important;
+  left:calc(50% - var(--pf) / 2 - 5px)!important;top:calc(var(--pf) - 15px)!important;
+  width:18px!important;height:18px!important;min-width:18px!important;border-radius:50%!important;
+  margin:0!important;padding:0!important;transform:none!important;font-size:9px!important;
+  background:var(--rk)!important;color:#160f02!important;box-shadow:0 0 8px color-mix(in srgb,var(--rk),transparent 55%)!important;
+  z-index:8!important;order:0!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row.rank-1::before{top:-22px!important}
+/* Namn och värde: slotten är 58 px, namnet klipps med ellipsis, handtaget visas inte. */
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame){
+  order:2!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+  width:100%!important;min-height:0!important;margin:2px 0 0!important;padding:0!important;text-align:center!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame)>strong{
+  display:block!important;width:100%!important;font-size:10px!important;line-height:1.15!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:center!important;
+}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>span:not(.pro-avatar-frame)>small{display:none!important}
+.widget.vyra-toplike.like-center.like-center .toplike-row:nth-child(-n+5)>em{
+  order:3!important;display:block!important;width:100%!important;margin:0!important;padding:0!important;
+  font-size:10px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  text-align:center!important;color:var(--rk)!important;
+}
+
+/* ---- Rangbrickan tar ramens färg (2026-09-08) ------------------------------------------------
+   När en profilram är vald sätter media.js --ram-accent (mätt ur ramens PNG) och klassen har-ram på
+   widgetroten. Brickan i ALLA layouter tar färgen; i bågpodiet går den via --rk och färgar även
+   värdet. Utan ram: skinnets/rangens färg som förut. Sist i filen: skinnens brickregler ovan bär
+   !important och samma specificitet, källordning avgör. */
+.widget.vyra-toplike.har-ram .toplike-row>b{
+  background:var(--ram-accent)!important;color:#160f02!important;
+  box-shadow:0 0 8px color-mix(in srgb,var(--ram-accent),transparent 55%)!important;
+}
+
+/* ---- Liv i ramarna (2026-09-08, David: "lite mer kärlek till de ramarna att de ser lite levande") ----
+   Tre diskreta rörelser, alla på transform/opacity så att OBS inte belastas:
+   1. Konsten ANDAS: scale 1→1,028 och 1,5 px svävning över 5,6 s, med egen fas per plats (--tl-i från
+      media.js) så att fem ramar inte pulserar i takt. Egenskaperna scale/translate används, inte
+      transform: konstens transform är satt !important av profile-frames-premium.css, och en animation
+      på transform hade förlorat mot den — de fristående egenskaperna komponeras ovanpå.
+   2. En GLÖD i ramens egen färg (--ram-accent) bakom porträttet, som pulserar i opacity. Ritad som
+      radens ::after på det läge steg 1 mäter fram (--tl-cx/--tl-cy/--tl-w/--tl-h), z-index −1 så den
+      ligger bakom foto och konst men över scenen — raderna har ingen egen bakgrund.
+   3. Podiets ETTA får en långsamt roterande gloria (conic-gradient) ovanpå glöden.
+   Bara med ram (.har-ram): utan ram är widgeten stilla som förut, och katalogens referensbilder
+   (utan ram) påverkas inte. Av helt vid prefers-reduced-motion. Sist i filen: källordning. */
+@keyframes tl-ram-andas{0%,100%{scale:1;translate:0 0}50%{scale:1.028;translate:0 -1.5px}}
+@keyframes tl-ram-glod{0%,100%{opacity:.3}50%{opacity:.65}}
+@keyframes tl-ram-gloria{to{rotate:360deg}}
+.widget.vyra-toplike.har-ram img.tl-frame-art{
+  animation:tl-ram-andas 5.6s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-1.15s);
+}
+.widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after{
+  /* Placerad med left/top raknat fran mitten — INTE translate(-50%,-50%): rotate-egenskapen laggs
+     utanpa transform och hade da roterat rutan runt en punkt en halv ruta bort (glorian orbitade). */
+  content:"";position:absolute;left:calc(var(--tl-cx,50%) - var(--tl-w,100%)*.59);top:calc(var(--tl-cy,50%) - var(--tl-h,100%)*.59);
+  width:calc(var(--tl-w,100%)*1.18);height:calc(var(--tl-h,100%)*1.18);
+  border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,color-mix(in srgb,var(--ram-accent),transparent 30%) 0%,color-mix(in srgb,var(--ram-accent),transparent 72%) 42%,transparent 70%);
+  animation:tl-ram-glod 4.2s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-.9s);
+}
+.widget.vyra-toplike.har-ram.like-center .toplike-row.rank-1::after{
+  background:
+    conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--ram-accent),transparent 45%) 78%,transparent 92%),
+    radial-gradient(circle,color-mix(in srgb,var(--ram-accent),transparent 30%) 0%,color-mix(in srgb,var(--ram-accent),transparent 72%) 42%,transparent 70%);
+  animation:tl-ram-glod 4.2s ease-in-out infinite,tl-ram-gloria 11s linear infinite;
+}
+/* Text och gillningar (David: "lägga till nått till texten och liks också"):
+   4. NAMNET får ett skimmer: en smal ljusning i ramens färg glider över texten var sjunde sekund.
+      Gradient som text-fyllning (background-clip:text) med textens egen färg som bas — currentColor
+      är skinnets färg eftersom bara fyllningen görs genomskinlig, inte color. Bara background-position
+      animeras.
+   5. GILLNINGARNA slår ett dubbelt hjärtslag som GLÖD i ramens färg (två toppar i text-shadow) —
+      ingen skalning, den gjorde siffran suddig. Egen fas per rad via --tl-i. */
+@keyframes tl-namn-skimmer{0%{background-position:130% 0}100%{background-position:-130% 0}}
+/* Hjartslaget ar BARA glod (text-shadow), ingen scale: en skalad text rastreras pa ett GPU-lager och blir
+   suddig — uppmatt 2026-09-08 vid 4x, siffran tydligt mjukare med rorelsen pa an fryst. Dubbelslaget ligger i
+   glodens tva toppar. */
+@keyframes tl-varde-glod{0%,50%,100%{text-shadow:0 0 0 transparent}12%{text-shadow:0 0 10px color-mix(in srgb,var(--ram-accent),transparent 20%)}24%{text-shadow:0 0 2px color-mix(in srgb,var(--ram-accent),transparent 60%)}34%{text-shadow:0 0 9px color-mix(in srgb,var(--ram-accent),transparent 30%)}}
+.widget.vyra-toplike.har-ram .toplike-row>span:not(.pro-avatar-frame)>strong{
+  /* Grunden ar textens egen farg som background-COLOR (fyller hela rutan, klipps till texten); skimret
+     ar bara ljusbandet ovanpa. Utan grunden blev texten genomskinlig dar den glidande bilden inte
+     tackte rutan (uppmatt: "Leo" och "Sara" borta en del av cykeln). */
+  background-color:currentColor;
+  background-image:linear-gradient(100deg,transparent 0 40%,var(--ram-accent) 49%,#fff 54%,transparent 63% 100%);
+  background-size:260% 100%;background-repeat:no-repeat;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:tl-namn-skimmer 7s ease-in-out infinite;animation-delay:calc(var(--tl-i,0)*-1.7s);
+}
+.widget.vyra-toplike.har-ram .toplike-row>em{
+  animation:tl-varde-glod 3.4s ease-in-out infinite;
+  animation-delay:calc(var(--tl-i,0)*-.85s);
+}
+@media (prefers-reduced-motion:reduce){
+  .widget.vyra-toplike.har-ram img.tl-frame-art,
+  .widget.vyra-toplike.har-ram .toplike-row:has(>img.tl-frame-art)::after,
+  .widget.vyra-toplike.har-ram .toplike-row>span:not(.pro-avatar-frame)>strong,
+  .widget.vyra-toplike.har-ram .toplike-row>em{animation:none!important}
+  .widget.vyra-toplike.har-ram .toplike-row>span:not(.pro-avatar-frame)>strong{background-image:none;-webkit-text-fill-color:currentColor}
+}
+
+/* ---- Cykelbytet och entrén (2026-09-08, Davids video IMG_1300.MOV) --------------------------------
+   Ren opacity, som i videon: uttoning 0,35 s och intoning 0,4 s per rad, med stagger per rang.
+   Podiet (like-center): från mitten och utåt — ettan 0, tvåan/trean 0,15 s, fyran/femman 0,35 s.
+   Listorna: uppifrån och ned, 0,08 s per rad. Rubriken följer ettan. Klasserna .tl-byt/.tl-in sätts
+   av media.js (updateRankingCycles och entrén vid första rendern). Av vid prefers-reduced-motion: då
+   blir bytet ett hugg som förut. Sist i filen: källordning. */
+@keyframes tl-ton-ut{to{opacity:0}}
+@keyframes tl-ton-in{from{opacity:0}to{opacity:1}}
+.widget.vyra-toplike.tl-byt .toplike-row,.widget.vyra-toplike.tl-byt>h3{animation:tl-ton-ut .35s ease-out both;animation-delay:var(--tl-steg,0s)}
+.widget.vyra-toplike.tl-in .toplike-row,.widget.vyra-toplike.tl-in>h3{animation:tl-ton-in .4s ease-out both;animation-delay:var(--tl-steg,0s)}
+.widget.vyra-toplike>h3{--tl-steg:0s}
+.widget.vyra-toplike .toplike-row:nth-child(1){--tl-steg:0s}
+.widget.vyra-toplike .toplike-row:nth-child(2){--tl-steg:.08s}
+.widget.vyra-toplike .toplike-row:nth-child(3){--tl-steg:.16s}
+.widget.vyra-toplike .toplike-row:nth-child(4){--tl-steg:.24s}
+.widget.vyra-toplike .toplike-row:nth-child(5){--tl-steg:.32s}
+.widget.vyra-toplike .toplike-row:nth-child(6){--tl-steg:.4s}
+.widget.vyra-toplike .toplike-row:nth-child(7){--tl-steg:.48s}
+.widget.vyra-toplike .toplike-row:nth-child(8){--tl-steg:.56s}
+.widget.vyra-toplike .toplike-row:nth-child(9){--tl-steg:.64s}
+.widget.vyra-toplike .toplike-row:nth-child(10){--tl-steg:.72s}
+.widget.vyra-toplike.like-center .toplike-row.rank-1{--tl-steg:0s}
+.widget.vyra-toplike.like-center .toplike-row.rank-2,.widget.vyra-toplike.like-center .toplike-row.rank-3{--tl-steg:.15s}
+.widget.vyra-toplike.like-center .toplike-row.rank-4,.widget.vyra-toplike.like-center .toplike-row.rank-5{--tl-steg:.35s}
+@media (prefers-reduced-motion:reduce){
+  .widget.vyra-toplike.tl-byt .toplike-row,.widget.vyra-toplike.tl-byt>h3,
+  .widget.vyra-toplike.tl-in .toplike-row,.widget.vyra-toplike.tl-in>h3{animation:none!important}
+}
