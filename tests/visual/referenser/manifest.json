@@ -7,9 +7,9 @@
  },
  "antal": 178,
  "senaste": {
-  "motiv": "Diamantmalet (#367 del 1, PR #375) lade till atta katalognycklar utan referensbilder, sa vakten gjorde main rod vid mergen. Forsta forsoket fotograferade noll: generatorn laser nycklarna ur docs/katalogkarta.md, och kartan hade annu inte regenererats. Grenen star nu pa 84272fb dar boten lagt in dem. Bara nya bilder, inga befintliga byts.",
-  "nycklar": 8,
-  "tid": "2026-09-07T08:38:07.366Z"
+  "motiv": "Namnplattan i gåvoramen: två rader, namnet skalat efter plattan [referenser]",
+  "nycklar": 178,
+  "tid": "2026-09-08T13:32:06.975Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -458,31 +458,31 @@
   },
   "catalog:topgift:frame:angel-heart": {
    "matt": "300x444",
-   "fyllnad": 50.34
+   "fyllnad": 57.73
   },
   "catalog:topgift:frame:crystal-spire": {
    "matt": "300x510",
-   "fyllnad": 54.62
+   "fyllnad": 63.9
   },
   "catalog:topgift:frame:dark-raven": {
    "matt": "300x479",
-   "fyllnad": 55.49
+   "fyllnad": 65.29
   },
   "catalog:topgift:frame:frost-crystal": {
    "matt": "300x435",
-   "fyllnad": 48.19
+   "fyllnad": 56.77
   },
   "catalog:topgift:frame:luna-mist": {
    "matt": "300x449",
-   "fyllnad": 49.2
+   "fyllnad": 58.88
   },
   "catalog:topgift:frame:rose-garden": {
    "matt": "300x432",
-   "fyllnad": 49.98
+   "fyllnad": 58.41
   },
   "catalog:topgift:frame:royal-wings": {
    "matt": "300x361",
-   "fyllnad": 48.4
+   "fyllnad": 56.15
   },
   "catalog:topgift:premium:arch": {
    "matt": "340x260",
