@@ -592,8 +592,8 @@ main,.mini-sidfot{position:relative;z-index:1}
   box-shadow:0 0 20px -2px #a855f7b3,0 4px 14px -6px #ff5da280,0 0 0 1px #ffffff26 inset;
   text-shadow:0 1px 6px #00000055}
 .login-glomt-rad{display:flex;justify-content:flex-end;margin-top:-8px}
-.login-glomt-rad a{font-size:11.5px;font-weight:600;color:#c3a8e8;text-decoration:none}
-.login-glomt-rad a:hover{color:#fff;text-decoration:underline}
+.login-glomt-rad button{background:none;border:0;padding:0;cursor:pointer;font:inherit;font-size:11.5px;font-weight:600;color:#c3a8e8;text-decoration:none}
+.login-glomt-rad button:hover{color:#fff;text-decoration:underline}
 .login-tillbaka{margin-top:14px;width:100%;background:none;border:0;color:var(--muted);
   font:600 12px var(--font-body);cursor:pointer}
 .login-tillbaka:hover{color:#fff}
