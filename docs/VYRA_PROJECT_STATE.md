@@ -1,5 +1,59 @@
 # VYRA Project State
 
+## Checkpoint 43 — Profilramen rör inte bildens mått (2026-09-08)
+
+Kravet från David, ordagrant: "jag vill inte bildstorlek och gift storlek ska ändras när man lägger
+ramen runtom" — och det gäller Top Gift, Top Streak och Top Like-listan.
+
+### Vad som var fel, uppmätt i riktig webbläsare
+
+| Widget | Utan ram | Med ram (Ocean Oracle, fit 0,47) | Orsak |
+|---|---|---|---|
+| Top Gift (tema) profil | 106 px | 50 px | `profile-frames-premium.css` skalade fotot med `scale(fit)` — regeln var skriven för Top Likes rader men saknade prefix |
+| Top Gift gåva | 110 px | 110 px | rördes inte → profil och gåva olika stora, hoppade vid varje flip |
+| Top Like (clean) foto | 58 px | 25 px | samma regel, plus ett fyrtiotal `:has(>.pro-avatar-frame)`-regler som byggde om raden (68→54 px) |
+| Top Gift, ramens plats | — | inuti profilsidan | sidan har `backface-visibility:hidden`, ramen flippade bort när gåvan visades |
+
+### Kontraktet nu
+
+Fotot ligger kvar på 100 % av sin ruta med och utan ram. Ramkonsten skalas i stället **utåt** med
+`1/fit` (kvadratisk, styrd av bredden) och flyttas `−dx/−dy` så att öppningen hamnar exakt runt fotot.
+
+| Del | Hur |
+|---|---|
+| Top Gift / Top Streak | `gift-alert-frames.js` lägger ramen runt **hela flippen**: ett omslag med flippens klass + inline-stil tar flippens plats i alla teman, flippen fyller omslaget med `inset:0`, konsten ligger sist och står stilla medan profil/gåva byter plats. |
+| Top Like | `media.js` renderar konsten som **syskon** till fotot (`img.tl-frame-art`) så raden matchar exakt samma regler som utan ram. Läget mäts efter render (`vyraPlaceraTopLikeRamar`, MutationObserver + ResizeObserver) och sätts i procent av raden. Raden får **marginaler** så att ramen ryms i dess marginalbox; ramar som ändå kolliderar (like-center: plats 1 ligger diagonalt över 2 och 3, i samma grid-spår med `align-items:end`) knuffar nästa rad nedåt sedan den tidigare radens höjd frysts och fästs i spårets start. Rangbricka, namn och värde lyfts över konsten. Fotot står stilla i sin rad. |
+| Fasta fotorutor (Follower, Fan/Gifter Level, Last-X) | samma formel i `gift-alert-frames.css`; fotot är 100 %, oskalat. |
+| Gåvoramsvarianterna (`topgift:frame:*`, `topstreak:frame:*`) | får **ingen** profilram: gåvoramens konst ligger på z 3 ovanpå flippen (z 2), så en profilram hamnade bakom den och syntes aldrig. Pickern visas inte där. |
+| Medaljringar (autoMedal) | oförändrade — den gamla scale-regeln gäller nu bara dem. |
+
+Vakt: `tests/browser/ram-ror-inte-bildmatt.browser.test.js` mäter tolv katalogfall (fyra Top Gift,
+tre Top Streak, fyra Top Like-layouter, Top Like med `widgetScale` 1,5) med de två ramarna i ändarna
+av öppningsspannet: bildens bredd, höjd och läge oförändrade inom 0,5 px, konsten = ruta/fit,
+öppningen på bildens mitt, ingen förfader klipper konsten, ramen utanför profilsidan, ramen i radens
+marginalbox, inga två ramar i varandra, och bilden tillbaka exakt när ramen tas bort. Animationer
+stängs av i provsidan — premium-streaken flippar oavbrutet och en bredd mätt mitt i en `rotateY` är
+godtycklig.
+
+### Två latenta fel i gåvoramsvarianterna, rättade på köpet (studio.css)
+
+Båda från 578e85b (2026-08-02), trasiga från dag ett och osynliga eftersom det första dolde det andra:
+
+- `.topgift-framed .vyra-flip{width:auto!important;height:auto!important}` slog ut flippens
+  inline-procent från `media.js:121` → flippen 0×0, varken profil eller gåva syntes. `width/height`
+  borttagna ur regeln.
+- `.vyra-gift-face>img{width:var(--gift-size)!important}` utan `--gift-size` (gåvoramarna sätter ingen)
+  blir `width:auto` → gåvobilden i naturlig storlek, 195 px i ett 100 px-fönster. Gåvoramarnas egna
+  64 %/70 %-regler har fått `!important` så de vinner.
+- Namnplattan (`.tgf-plate`, 94–131 px bred) hade namn och värde på en rad med `gap:8px`; namnet
+  avkortades till "@…". Nu två rader, och namnet skalas efter plattans bredd och namnets längd
+  (`min(dataSize, max(8px, 150/len cqw))`, plattan är `container-type:inline-size`). Värdet får mörk
+  färg på de ljusa plattorna (`tf-dark-name`: angel-heart, rose-garden) — accentrosa på rosa syntes inte.
+
+**Visuella referenser:** gåvoramarnas referensbilder togs på det trasiga läget (0×0-flip, naturlig
+gåvobild). De regenereras av workflowen "Visuella referenser" (push med `[referenser]` till
+`visuell-referenser/**`, eller Run workflow), aldrig lokalt — se `.github/workflows/visuell-referenser.yml`.
+
 ## Checkpoint 42 — Betalningen bytte till PayPal Subscriptions (2026-09-07)
 
 Beslut: PayPal ersätter Stripe. Skälet är ägarformen, inte tekniken: PayPal öppnar företagskonto för en

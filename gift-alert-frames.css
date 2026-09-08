@@ -1,15 +1,55 @@
-/* Gift & Alert avatar-frame sizing — mirrors Top Like's .pro-avatar-frame/.pro-frame-art pattern:
-   the wrapper matches the widget's existing photo-container size, the photo shrinks slightly inside
-   it, and the frame art fills the full wrapper so a decorative ring shows around the smaller photo —
-   same idea as Top Like's medal rings (46px wrapper around a 31px photo), re-sized per widget instead
-   of reusing Top Like's hardcoded pixel values. The frame-picker grid itself (.ws-frame-*) reuses
-   toplike-studio.css as-is since gift-alert-frames.js renders the exact same markup. */
+/* Gift & Alert avatar-frame sizing.
 
-.vyra-profile-face .pro-avatar-frame,
-.streak-profile-face .pro-avatar-frame,
+   KRAVET (2026-09-08): fotot får inte ändra mått när ramen läggs på. Fotot ligger kvar på 100 % av sin
+   ruta; ramkonsten skalas i stället UTÅT med 1/fit så att ramens genomskinliga öppning hamnar exakt
+   runt fotot. fit är öppningens diameter som andel av ramens bredd (0,33–0,79, uppmätt per ram i
+   toplike-studio.js), dx/dy öppningens mittförskjutning som andel av ramens bredd. Konsten centreras
+   på fotot och flyttas −dx/−dy så att öppningen — inte konstens ram — hamnar mitt på fotot.
+
+   FÖRE lästes fotot ner med scale(fit) av en oscopad regel i profile-frames-premium.css (skriven för
+   Top Likes rader, men utan prefix) medan konsten låg kvar i fotots ruta: fotot krympte till 33–79 %
+   och ornament som stack utanför rutan klipptes bort. Den regeln finns kvar för medaljringarna
+   (autoMedal) och neutraliseras här med högre specificitet för varje ankare i den här familjen. */
+
+/* ---- Ramkonstens formel — samma för flippar och fasta fotorutor ---- */
+.widget .gaf-flip-frame > img.pro-frame-art,
+.follow-avatar .pro-avatar-frame > .pro-frame-art,
+.fan-profile .pro-avatar-frame > .pro-frame-art,
+.gifter-orbit .pro-avatar-frame > .pro-frame-art,
+.last-x-avatar .pro-avatar-frame > .pro-frame-art {
+  position: absolute !important; inset: auto !important; left: 50% !important; top: 50% !important;
+  /* Alltid kvadratisk, styrd av BREDDEN: fit/dx/dy är uppmätta i andelar av ramens bredd, och
+     gåvoramarnas flipruta är inte kvadratisk (amethyst-heart: 126,6 × 119,4 px) — en höjd räknad
+     för sig hade gett en letterboxad ram vars öppning hamnar 3–4 px fel i höjdled. */
+  width: calc(100% / var(--frame-fit, .62)) !important; height: auto !important; aspect-ratio: 1 / 1 !important;
+  max-width: none !important; max-height: none !important; margin: 0 !important;
+  transform: translate(calc(-50% - var(--frame-dx, 0) * 100%), calc(-50% - var(--frame-dy, 0) * 100%)) !important;
+  transform-origin: 50% 50% !important;
+  object-fit: contain !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  background: none !important; clip-path: none !important; filter: none !important;
+  pointer-events: none !important; z-index: 5 !important; display: block !important;
+}
+
+/* ---- 1. Flippande widgets (Top Gift, Top Streak) ----
+   Omslaget .gaf-flip-frame bär flippens egen klass (vyra-flip/streak-flip) och inline-stil, så det tar
+   exakt flippens plats och mått i varje tema. Här stängs allt som annars skulle ritas DUBBELT eller
+   rotera med: animation, transform, clip-path (hexagon-teman), :before-dekor, skugga. Kanten behålls
+   men görs osynlig — border:0 hade krympt rutan och därmed flippen inuti. overflow:visible låter
+   kronor och vingar sticka ut utanför cirkeln. */
+.widget .gaf-flip-frame {
+  display: block;
+  animation: none !important; transform: none !important; transition: none !important;
+  clip-path: none !important; overflow: visible !important;
+  background: none !important; box-shadow: none !important; filter: none !important;
+  border-color: transparent !important; outline: 0 !important;
+}
+.widget .gaf-flip-frame:before, .widget .gaf-flip-frame:after { content: none !important; display: none !important; }
+
+/* ---- 2. Fasta fotorutor (Follower Spotlight, Fan Level Up, Gifter Level Up, Last-X) ----
+   Omslaget fyller fotots befintliga ruta; fotot fyller omslaget. */
 .follow-avatar .pro-avatar-frame,
 .last-x-avatar .pro-avatar-frame {
-  position: absolute; inset: 0; display: grid; place-items: center;
+  position: absolute; inset: 0; display: grid; place-items: center; overflow: visible;
 }
 
 .fan-profile { position: relative; }
@@ -21,34 +61,24 @@
    (Gifter Level's 86px, Fan Level's 52px) until last-x-card gets its own real stylesheet. */
 .last-x-avatar { position: relative; width: 72px; height: 72px; }
 .fan-profile .pro-avatar-frame {
-  position: absolute; inset: 0; display: grid; place-items: center;
+  position: absolute; inset: 0; display: grid; place-items: center; overflow: visible;
 }
 
 .gifter-orbit .pro-avatar-frame {
-  position: relative; width: 86px; height: 86px; z-index: 3; display: grid; place-items: center;
+  position: relative; width: 86px; height: 86px; z-index: 3; display: grid; place-items: center; overflow: visible;
 }
 
-/* !important + these longer, widget-scoped selectors are required to beat an existing UNSCOPED rule in
-   studio.css (`.pro-avatar-frame>img:first-child{width:29px!important...}`, meant only for Top Like's
-   list-row layout but written without a `.toplike-row`/`.vyra-toplike` prefix, so it leaks onto any
-   `.pro-avatar-frame` anywhere on the page, including these 5 widgets). Higher specificity here wins
-   the !important-vs-!important tie-break. */
-.vyra-profile-face .pro-avatar-frame > img:first-child,
-.streak-profile-face .pro-avatar-frame > img:first-child,
+/* !important + these longer, widget-scoped selectors are required to beat two UNSCOPED rules:
+   studio.css (`.pro-avatar-frame>img:first-child{width:29px!important...}`, meant for Top Like's
+   list-row layout) and profile-frames-premium.css (`.pro-avatar-frame>img:first-child{transform:
+   scale(var(--frame-fit))}`, meant for medaljringarna). Both leak onto any `.pro-avatar-frame` on the
+   page. Higher specificity here wins the !important-vs-!important tie-break: fotot är 100 %, oskalat. */
 .follow-avatar .pro-avatar-frame > img:first-child,
 .fan-profile .pro-avatar-frame > img:first-child,
 .gifter-orbit .pro-avatar-frame > img:first-child,
 .last-x-avatar .pro-avatar-frame > img:first-child {
   position: relative !important; width: 100% !important; height: 100% !important; border-radius: 50% !important; object-fit: cover !important; z-index: 1 !important;
-}
-
-.vyra-profile-face .pro-avatar-frame > .pro-frame-art,
-.streak-profile-face .pro-avatar-frame > .pro-frame-art,
-.follow-avatar .pro-avatar-frame > .pro-frame-art,
-.fan-profile .pro-avatar-frame > .pro-frame-art,
-.gifter-orbit .pro-avatar-frame > .pro-frame-art,
-.last-x-avatar .pro-avatar-frame > .pro-frame-art {
-  position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: contain !important; z-index: 2 !important; pointer-events: none !important;
+  transform: none !important;
 }
 
 .gaf-frame-group .pro-frame-picker { margin-top: 4px; }

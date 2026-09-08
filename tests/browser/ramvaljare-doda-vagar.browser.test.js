@@ -187,13 +187,17 @@ test('ramval via swatch når save-tratten och rendern bär .pro-avatar-frame', {
       iState: state.widgets.find(x => x.id === wid)?.profileFrame,
       sparat: (JSON.parse(localStorage.getItem('vyra-state') || '{}').widgets || [])
         .find(x => x.id === wid)?.profileFrame,
-      ramINoden: !!document.querySelector('.canvas .pro-avatar-frame'),
-      ramBild: document.querySelector('.canvas .pro-avatar-frame img.pro-frame-art')?.getAttribute('src') || '',
+      // Sedan 2026-09-08 är ramkonsten (img.pro-frame-art) det bärande beviset, inte omslaget:
+      // Top Like renderar konsten som syskon till fotot och Top Gift lägger den runt hela flippen
+      // (tests/browser/ram-ror-inte-bildmatt). Omslaget .pro-avatar-frame finns bara kvar för
+      // medaljringarna och de fasta fotorutorna.
+      ramINoden: !!document.querySelector(`.canvas [data-id="${wid}"] img.pro-frame-art`),
+      ramBild: document.querySelector(`.canvas [data-id="${wid}"] img.pro-frame-art`)?.getAttribute('src') || '',
     }), id);
     await page.close();
     assert.equal(resultat.iState, vald.ram, `${nyckel}: klicket skrev inte w.profileFrame`);
     assert.equal(resultat.sparat, vald.ram, `${nyckel}: valet gick inte genom save()-tratten till localStorage`);
-    assert.ok(resultat.ramINoden, `${nyckel}: rendern bär ingen .pro-avatar-frame`);
+    assert.ok(resultat.ramINoden, `${nyckel}: rendern bär ingen ramkonst (img.pro-frame-art)`);
     assert.match(resultat.ramBild, /profile-frames\//, `${nyckel}: ramkonsten pekar fel: "${resultat.ramBild}"`);
   }
 });

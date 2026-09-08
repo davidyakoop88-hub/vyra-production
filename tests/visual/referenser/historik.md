@@ -67,3 +67,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Diamantmalet (#367 del 1, PR #375) lade till atta katalognycklar utan referensbilder, sa vakten gjorde main rod vid mergen. Forsta forsoket fotograferade noll: generatorn laser nycklarna ur docs/katalogkarta.md, och kartan hade annu inte regenererats. Grenen star nu pa 84272fb dar boten lagt in dem. Bara nya bilder, inga befintliga byts.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-08 — 178 referenser skrivna
+
+- **Motiv:** Namnplattan i gåvoramen: två rader, namnet skalat efter plattan [referenser]
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
