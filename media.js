@@ -370,6 +370,27 @@ function vyraPlaceraTopLikeRamar(omobservera){
      state. translate flyttar exakt, oavsett justering, position och transform. SATT idempotent: forra
      passets knuff tas bort fore matningen, sa passet kan koras hur manga ganger som helst. */
   const LUFT=6;
+  /* Bagsteg (like-center): scenen skalas efter ramen. Platserna ligger pa fasta procent av scenen
+     (9/28/50/72/91, --px i toplike-studio.css), sa det enda som kan ge ramarna plats ar scenens bredd:
+     tva grannramar far overlappa hogst 20 % av sin medelbredd (referensbilden: kanterna nuddar), aldrig
+     mer. Uppmatt fore: amethyst-oracle (fit 0,48) i 340 px gav ettan 66 px in i tvaan och ettans namn
+     mellan tvaans och treans ramar. Bredden raknas ur fotona och fit — FORE konsten placeras, for
+     placeringen raknas i procent av raden. Widgeten vaxer symmetriskt (negativ vanstermarginal) sa att
+     mitten star kvar, och bara nar en ram kraver det: utan ram ar scenen 340 px som forut. Widgetens
+     egna inline-matt (w.width fran state) sparas och aterstalls fore varje matning — idempotent. */
+  const bagar=[...new Set(arter.map(a=>a.parentElement).filter(r=>getComputedStyle(r).position==='absolute').map(r=>r.closest('.widget')).filter(Boolean))];
+  bagar.forEach(wg=>{
+    if(wg.dataset.tlBage){const s=JSON.parse(wg.dataset.tlBage);for(const q in s)s[q]?wg.style.setProperty(q,s[q]):wg.style.removeProperty(q);delete wg.dataset.tlBage}
+    const lista=wg.querySelector('.toplike-list');if(!lista)return;if(lista.dataset.tlBage){lista.style.removeProperty('height');delete lista.dataset.tlBage}
+    const rader=[...lista.querySelectorAll('.toplike-row')].filter(r=>{const c=getComputedStyle(r);return c.display!=='none'&&c.position==='absolute'});
+    const aw=rader.map(r=>{const art=r.querySelector('img.tl-frame-art'),foto=art&&art.previousElementSibling;if(!foto)return 0;const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62;return px(foto).width/fit});
+    const pos=rader.map(r=>parseFloat(getComputedStyle(r).getPropertyValue('--px'))/100);
+    let behovL=0;for(let i=0;i<rader.length;i++)for(let j=0;j<i;j++){const d=Math.abs(pos[i]-pos[j]);if(!(d>0)||!aw[i]||!aw[j])continue;behovL=Math.max(behovL,((aw[i]+aw[j])/2*.8)/d)}
+    const wb=px(wg),lb=px(lista),k=wb.width/(wg.offsetWidth||1);if(!(behovL>lb.width+.5))return;
+    const vaxt=behovL-lb.width;
+    wg.dataset.tlBage=JSON.stringify({width:wg.style.getPropertyValue('width'),'max-width':wg.style.getPropertyValue('max-width'),'min-width':wg.style.getPropertyValue('min-width'),'margin-left':wg.style.getPropertyValue('margin-left')});
+    wg.style.setProperty('width',((wb.width+vaxt)/k).toFixed(2)+'px','important');wg.style.setProperty('max-width','none','important');wg.style.setProperty('min-width','0','important');
+    wg.style.setProperty('margin-left',(-vaxt/2/k).toFixed(2)+'px','important')});
   arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;
     for(const el of rad.children)if(el.dataset.tlKnuff){el.style.removeProperty(el.dataset.tlKnuff);delete el.dataset.tlKnuff}
     const f=px(foto),k=px(rad).width/(rad.offsetWidth||1);if(!f.width)return;
@@ -381,13 +402,16 @@ function vyraPlaceraTopLikeRamar(omobservera){
        steg 2–3, sa att grannraderna halls undan lika mycket som for konsten.
        Alla element at samma hall knuffas LIKA langt (gruppens storsta behov): namn och varde under fotot
        hade annars fatt var sin knuff till samma kant och ritats ovanpa varandra (uppmatt like-center). */
+    /* ALLA element at ett hall ingar i gruppen, aven de som inte skar konsten: med en tunn ram skar
+       namnet ringens nederkant men inte vardet under, och ett knuffat namn landade da ovanpa vardet
+       (uppmatt ice-crystal i bagpodiet). Behovet ar 0 for det som gar fritt; gruppens storsta galler. */
     const behov=[];
     const bage=getComputedStyle(rad).position==='absolute';  // bagpodiet (like-center): brickan sitter pa ramen som medaljen i referensen
     for(const el of rad.children){if(el===art||el===foto||(bage&&el.tagName==='B'))continue;const r=px(el);if(!r.width||!r.height)continue;
-      if(!(r.left<A.right&&r.right>A.left&&r.top<A.bottom&&r.bottom>A.top))continue;
+      const skar=r.left<A.right&&r.right>A.left&&r.top<A.bottom&&r.bottom>A.top;
       const ex=(r.left+r.width/2-(f.left+f.width/2))/f.width,ey=(r.top+r.height/2-(f.top+f.height/2))/f.height;
-      if(Math.abs(ex)>=Math.abs(ey))behov.push({el,rikt:ex>=0?'x+':'x-',v:ex>=0?A.right+LUFT-r.left:r.right-(A.left-LUFT)});
-      else behov.push({el,rikt:ey>=0?'y+':'y-',v:ey>=0?A.bottom+LUFT-r.top:r.bottom-(A.top-LUFT)})}
+      if(Math.abs(ex)>=Math.abs(ey))behov.push({el,rikt:ex>=0?'x+':'x-',v:!skar?0:ex>=0?A.right+LUFT-r.left:r.right-(A.left-LUFT)});
+      else behov.push({el,rikt:ey>=0?'y+':'y-',v:!skar?0:ey>=0?A.bottom+LUFT-r.top:r.bottom-(A.top-LUFT)})}
     const mest={};behov.forEach(b=>{mest[b.rikt]=Math.max(mest[b.rikt]||0,b.v)});
     behov.forEach(({el,rikt})=>{const v=mest[rikt];if(v<=.5)return;const t=(v/k).toFixed(2)+'px';
       el.style.setProperty('translate',rikt==='x+'?`${t} 0px`:rikt==='x-'?`-${t} 0px`:rikt==='y+'?`0px ${t}`:`0px -${t}`,'important');el.dataset.tlKnuff='translate'})});
@@ -408,6 +432,12 @@ function vyraPlaceraTopLikeRamar(omobservera){
        annars hamna mitt pa fotot (uppmatt nar regeln lag som !important i CSS). */
     for(const el of rad.children){if(el===art||el===foto)continue;if(getComputedStyle(el).position==='static')el.style.setProperty('position','relative','important');el.style.setProperty('z-index','9','important')}
     if(omobservera&&P.obs)P.obs.observe(rad)});
+  /* Bagsteg, hojden: scenen slutar dar det lagsta fotavtrycket slutar (konst eller knuffad text), sa att
+     fyran och femman med namn och varde inte hamnar under widgetens ruta. Bara uppat fran CSS-hojden. */
+  bagar.forEach(wg=>{const lista=wg.querySelector('.toplike-list');if(!lista)return;const lb=px(lista),k=lb.width/(lista.offsetWidth||1);let botten=-Infinity;
+    lista.querySelectorAll('.toplike-row').forEach(rad=>{if(getComputedStyle(rad).display==='none')return;const art=rad.querySelector('img.tl-frame-art');const f=art&&art.style.display!=='none'?fot(art):px(rad);botten=Math.max(botten,f.bottom);
+      for(const el of rad.children){if(el===art)continue;const r=px(el);if(r.width)botten=Math.max(botten,r.bottom)}});
+    if(botten>lb.bottom+.5){lista.style.setProperty('height',((botten-lb.top)/k+4).toFixed(2)+'px','important');lista.dataset.tlBage='1'}});
   /* Steg 2: ramen ska rymmas i radens MARGINALBOX. Raden far marginal upptill/nedtill precis sa mycket
      som konsten sticker ut; grannraderna knuffas undan och fotot star kvar dar det stod i sin rad.
      (min-height dog har: i like-center ligger fotot mot radens nederkant, sa en hogre rad flyttade fotot
