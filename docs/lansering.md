@@ -75,10 +75,10 @@ upp i avsnittet. Därför står skälet numera i själva statusraden och inte ba
 | Steg | Läge |
 |---|---|
 | 1. Sätt de sex `PAYPAL_*` i Railway | ✅ **bevisat** — `server/index.js:2` validerar dem vid start i produktion, och `/api/health` svarar `ok`, alltså startade servern |
-| 2. Avsluta Stripe-prenumerationen på workspace `8826f6d1` och kompa om raden | ⬜ kräver Stripes panel |
-| 3. `npm run migrate` mot produktion | ⬜ går inte att avläsa utifrån |
+| 2. Avsluta Stripe-prenumerationen på workspace `8826f6d1` och kompa om raden | ⬜ David i Stripes panel (beslutat 2026-09-09) — tills dess svarar checkouten 409 på hans egen workspace |
+| 3. `npm run migrate` mot produktion | ✅ **sker automatiskt vid varje deploy** — `server/railway.json` har `preDeployCommand: npm run migrate`; deployloggen 2026-09-09 18:13 visar `migration_complete` |
 | 4. **Gör om den här punkten med ett PayPal-köp** | ✅ **gjort 2026-09-09** — hela kedjan bevisad, se ovan |
-| 5. Ta bort `STRIPE_*` ur Railway | ⬜ koden är redan ren — noll träffar i `server/` |
+| 5. Ta bort `STRIPE_*` ur Railway | ✅ **gjort 2026-09-09 21:03** — `STRIPE_PRICE_MONTHLY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` borttagna från tjänsten Api; omstarten svarade `ok` på `/api/health` med Postgres och Redis uppe |
 
 | Kontroll | Utfall |
 |---|---|
