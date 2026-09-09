@@ -67,6 +67,20 @@ på den gamla koden).
 **Kvar från köpet:** kunden på `c6439ecb` fick inga gratisdagar — Davids beslut om nästa dragning
 ska skjutas fram tre dagar i PayPals panel.
 
+**Andra köpet 2026-09-09 21:36 UTC — provplanen, efter fixen ovan (workspace `b88d17ab`, David
+med Gmail-alias):** checkout 21:34:53 → `CREATED` 21:35:01 → `ACTIVATED` 21:36:28, **ingen**
+`PAYMENT.SALE.COMPLETED`, nästa dragning 2026-09-12 10:00 — alltså exakt tre gratisdagar hos
+PayPal. Provplanen var i kraft. Men avläsningen gav `status: active` och `trial_end: null`.
+
+PayPals nyttolast (utvecklarpanelen, händelse `WH-4GU30990D79292050-1SN49004ES011905Y`):
+`cycle_executions` = TRIAL `cycles_completed 1, cycles_remaining 0, total_cycles 1` + REGULAR
+`cycles_completed 0`, `current_cycle_sequence 2`. PayPal räknar provcykeln som UTFÖRD vid
+aktiveringen, så regeln "TRIAL med `cycles_remaining > 0`" matchade aldrig. Fixen: prov = det finns
+en provtenure OCH ingen reguljär cykel är utförd än; fixturen i
+`server/test/billing-provperiod.test.js` är den riktiga nyttolasten fält för fält. Raden för
+`b88d17ab` förblir `active` utan `trial_end` (webhooken är deduplicerad, en omsändning avvisas) —
+kosmetiskt, och överspelat 2026-09-12 när den första dragningen ändå gör den `active`.
+
 Statusraden stod 2026-09-07 kvar som KLAR i ett dygn efter leverantörsbytet, trots noteringen högst
 upp i avsnittet. Därför står skälet numera i själva statusraden och inte bara i en not ovanför.
 

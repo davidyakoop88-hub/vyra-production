@@ -62,9 +62,10 @@ function medMiljo(fn){
   };
 }
 
+// cycle_executions här är PayPals riktiga form (se VERKLIG_PROVAKTIVERING nedan), inte en gissning.
 function aktiveradHandelse(id,{prov,subId='I-1'}){
   return JSON.stringify({id,event_type:'BILLING.SUBSCRIPTION.ACTIVATED',resource:{id:subId,custom_id:'w-1',plan_id:prov?'P-PROV':'P-REGULJAR',status:'ACTIVE',
-    billing_info:{next_billing_time:'2026-09-12T10:00:00Z',cycle_executions:prov?[{tenure_type:'TRIAL',cycles_remaining:1},{tenure_type:'REGULAR',cycles_remaining:0}]:[{tenure_type:'REGULAR',cycles_remaining:0}]}}});
+    billing_info:{next_billing_time:'2026-09-12T10:00:00Z',cycle_executions:prov?[{tenure_type:'TRIAL',sequence:1,cycles_completed:1,cycles_remaining:0,total_cycles:1},{tenure_type:'REGULAR',sequence:2,cycles_completed:0,cycles_remaining:0,total_cycles:0}]:[{tenure_type:'REGULAR',sequence:1,cycles_completed:1,cycles_remaining:0,total_cycles:0}]}}});
 }
 
 test('ett avbrutet första försök bränner inte provet — andra checkouten får fortfarande provplanen',medMiljo(async f=>{
@@ -107,3 +108,48 @@ test('spärrens datum bevaras vid förnyelser — COALESCE, inte now()',medMiljo
   await webhook(p,aktiveradHandelse('WH-EVT-3',{prov:false}),HUVUDEN);
   assert.equal(p.st.kund.trial_started_at,forsta);
 }));
+
+// ANDRA KÖPET 2026-09-09 21:36 (workspace b88d17ab, provplanen, inget drogs): PayPals ACTIVATED-
+// nyttolast (avläst i utvecklarpanelen, händelse WH-4GU30990D79292050-1SN49004ES011905Y) bar
+// TRIAL med cycles_completed 1 / cycles_remaining 0 och REGULAR med cycles_completed 0, och
+// current_cycle_sequence 2. Regeln "TRIAL med cycles_remaining > 0" gav 'active' utan trial_end
+// fast nästa dragning låg tre dagar fram. Fixturen nedan ÄR den nyttolasten, fältnamn för fältnamn.
+const {prenumerationsfalt,localStatus}=require('../billing');
+const VERKLIG_PROVAKTIVERING={plan_id:'P-7UY349153P1818424NKPKG2A',custom_id:'b88d17ab-6da5-44f6-bf93-9f8036f6b400',status:'ACTIVE',
+  billing_info:{outstanding_balance:{currency_code:'USD',value:'0.0'},current_cycle_sequence:2,
+    cycle_executions:[{tenure_type:'TRIAL',sequence:1,cycles_completed:1,cycles_remaining:0,current_pricing_scheme_version:1,total_cycles:1},
+                      {tenure_type:'REGULAR',sequence:2,cycles_completed:0,cycles_remaining:0,current_pricing_scheme_version:1,total_cycles:0}],
+    next_billing_time:'2026-09-12T10:00:00Z',failed_payments_count:0}};
+
+test('PayPals riktiga aktivering av provplanen ÄR en provperiod: trialing, och trial_end = nästa dragning',()=>{
+  const f=prenumerationsfalt(VERKLIG_PROVAKTIVERING);
+  assert.equal(f.inTrial,true);
+  assert.equal(localStatus(f,false),'trialing');
+  assert.equal(f.trialEnd,Math.floor(Date.parse('2026-09-12T10:00:00Z')/1000));
+  assert.equal(f.periodEnd,f.trialEnd,'under provperioden är periodens slut och provets slut samma tidpunkt');
+});
+
+test('den första reguljära dragningen avslutar provperioden',()=>{
+  const efter={...VERKLIG_PROVAKTIVERING,billing_info:{...VERKLIG_PROVAKTIVERING.billing_info,
+    cycle_executions:[VERKLIG_PROVAKTIVERING.billing_info.cycle_executions[0],{tenure_type:'REGULAR',sequence:2,cycles_completed:1,cycles_remaining:0,current_pricing_scheme_version:1,total_cycles:0}],
+    next_billing_time:'2026-10-12T10:00:00Z'}};
+  const f=prenumerationsfalt(efter);
+  assert.equal(f.inTrial,false);
+  assert.equal(localStatus(f,false),'active');
+  assert.equal(f.trialEnd,null);
+});
+
+test('den reguljära planen (första köpet, I-VRMYASWS3R6L) har ingen provtenure och är active',()=>{
+  const f=prenumerationsfalt({plan_id:'P-REGULJAR',status:'ACTIVE',billing_info:{cycle_executions:[{tenure_type:'REGULAR',sequence:1,cycles_completed:1,cycles_remaining:0,total_cycles:0}],next_billing_time:'2026-10-09T10:00:00Z'}});
+  assert.equal(f.inTrial,false);assert.equal(f.trialEnd,null);assert.equal(localStatus(f,false),'active');
+});
+
+test('en flercyklig provperiod är prov tills den reguljära cykeln utförts — inte bara medan varv återstår',()=>{
+  const mitt={plan_id:'P-PROV',status:'ACTIVE',billing_info:{cycle_executions:[{tenure_type:'TRIAL',sequence:1,cycles_completed:3,cycles_remaining:0,total_cycles:3},{tenure_type:'REGULAR',sequence:2,cycles_completed:0,cycles_remaining:0,total_cycles:0}],next_billing_time:'2026-09-30T10:00:00Z'}};
+  assert.equal(prenumerationsfalt(mitt).inTrial,true);
+});
+
+test('utan cycle_executions alls är det inte en provperiod',()=>{
+  const f=prenumerationsfalt({plan_id:'P-PROV',status:'ACTIVE',billing_info:{next_billing_time:'2026-09-12T10:00:00Z'}});
+  assert.equal(f.inTrial,false);assert.equal(f.trialEnd,null);
+});
