@@ -162,7 +162,23 @@ Bakgrunden står i [`DESKTOP_RELEASE.md`](DESKTOP_RELEASE.md).
 
 **Vem:** David — Store-släppet.
 
-**Status:** ⬜ Store-släppet kvar; SignPath-spåret är stängt (2026-09-05)
+**Avläst 2026-09-09 i Partner Center och i Store (Claude i Davids Chrome):**
+
+| Kontroll | Utfall |
+|---|---|
+| Partner Center → Appar och spel | **VYRA Studio**, MSIX/PWA, 240 marknader, status **"I Microsoft Store"** |
+| Insändning | Submission 1, senast ändrad 2026-09-08 — certifieringen från 2026-09-05 gick igenom |
+| Publik sida | `https://apps.microsoft.com/detail/9PPKZN2SCJM2` svarar med posten: utgivare vyralive.app, Verktyg, PEGI 3, "Hämta" |
+| Skärmbilder | rutan "Skärmbilder" renderade tom vid avläsningen — kontrollera i Partner Center att bilder finns i Store-posten |
+| Hemsidans knappar | pekar FORTFARANDE på GitHub-releasen `v1.2.3/VYRA-Setup.exe` (osignerad): `DESKTOP_STORE_URL` är **inte** satt på tjänsten Api i Railway |
+
+**Kvar:** en miljövariabel på tjänsten Api, `DESKTOP_STORE_URL=https://apps.microsoft.com/detail/9PPKZN2SCJM2`
+(DESKTOP_RELEASE.md), så byter alla `[data-ladda-desktop]`-knappar till butiken. Sedan Store-versionens
+åtta handkontroller i store-msix.md §5 — punkt 7 (`giftId` över appens egen anslutning) är hela skälet
+till 1.2.4.
+
+**Status:** 🟡 **PUBLICERAD I STORE 2026-09-08** — men hemsidan skickar fortfarande kunder till den
+osignerade `.exe`:n tills `DESKTOP_STORE_URL` sätts (David, Railway)
 
 ---
 
