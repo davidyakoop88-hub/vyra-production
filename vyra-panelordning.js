@@ -148,10 +148,23 @@
     const markering = fokus && typeof fokus.selectionStart === 'number'
       ? [fokus.selectionStart, fokus.selectionEnd] : null;
 
+    // OCH VYN STÅR STILLA. Att bara bevara scrollTop räcker inte — samma tal pekar på en annan plats
+    // när grupperna bytt ordning. Det som ska stå still är kontrollen man håller i, så dess läge i
+    // fönstret mäts före flytten och scrollen justeras efteråt tills den ligger där igen.
+    //
+    // Uppmätt 2026-09-09: när textgruppen tillkom lades den sist och flyttades hit upp till design,
+    // vilket sköt ned allt under den. Sex browserprov föll med "panelen hoppade från 1345 till 749
+    // när kontrollen släpptes" — reglaget man just dragit i hamnade utanför skärmen.
+    const yFore = fokus ? fokus.getBoundingClientRect().top : null;
+
     for (const el of onskad) panel.append(el);
 
     if (fokus && fokus.isConnected) {
-      fokus.focus();
+      if (yFore !== null) {
+        const yEfter = fokus.getBoundingClientRect().top;
+        if (yEfter !== yFore) panel.scrollTop += yEfter - yFore;
+      }
+      fokus.focus({ preventScroll: true });
       if (markering) try { fokus.setSelectionRange(markering[0], markering[1]) } catch (_) {}
     }
   }
@@ -169,7 +182,19 @@
 
   if (typeof bind === 'function') {
     const foregaende = bind;
-    bind = function () { const ut = foregaende.apply(this, arguments); schemalagg(); return ut };
+    bind = function () {
+      const ut = foregaende.apply(this, arguments);
+      // SYNKRONT FÖRST, mikrotasken bara som skyddsnät. Att enbart skjuta upp gav en panel som
+      // ritades utfälld och osorterad och ändrade sig i efterhand: uppmätt 2026-09-09 gick den från
+      // 3815 px till 2576 när hopfällningen slog till en mikrotask senare, och webbläsaren klippte
+      // då scrollpositionen — sex browserprov föll med "panelen hoppade från 1345 till 749 när
+      // kontrollen släpptes". Synkront här sker allt före måling, så användaren ser aldrig
+      // mellanläget. Mikrotasken tar hand om grupper som en YTTRE bindare lägger till efter oss;
+      // vakten "ordningen stämmer redan" gör den till en no-op när ingen gjorde det.
+      sortera();
+      schemalagg();
+      return ut;
+    };
   }
 
   window.vyraSorteraPanelen = sortera;   // provens ingång

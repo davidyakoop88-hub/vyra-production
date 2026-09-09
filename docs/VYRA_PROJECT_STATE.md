@@ -1,5 +1,61 @@
 # VYRA Project State
 
+## Checkpoint 46 — En textgrupp och en bakgrundsgrupp för alla widgets (2026-09-09)
+
+David, efter att ha jämfört med Tiktory: *"vi har mer men ändå ser kaos ut"*. Konkurrenten har
+SAMMA TEXT-grupp i varje widget. VYRA hade en annan i varje — av 21 familjer kunde 8 byta typsnitt,
+8 textstorlek, 3 skugga, 2 kontur och 1 regnbåge. Kan man byta typsnitt i Top Like men inte i
+Top Gift går systemet inte att lära sig.
+
+### Vad grupperna styr, och vad de medvetet låter bli
+
+Förekomsterna i CSS avgjorde vad som var säkert att göra gemensamt:
+
+| | Regler i CSS | Beslut |
+|---|---|---|
+| `-webkit-text-stroke` | 8 | kontur — gemensam |
+| `font-family` | 21 | typsnitt — gemensamt |
+| `text-shadow` | 136 | skugga — gemensam, den är additiv |
+| `font-size` | 646 | **multiplikator**, inte absolut tal — de bär varje widgets proportioner |
+| `color` | 935 | **lämnad hos familjerna** — guld för värdet, vitt för namnet; en gemensam färg hade suddat ut designen i alla 21 på en gång |
+
+Bakgrundsgruppen fanns redan men kunde bara välja hur SVART plattan skulle vara. Den har nu färg,
+hörnradie och innerkant. `bgStrength` betyder fortfarande samma sak och sparade layouter påverkas
+inte: utan `bgColor` blir plattan svart precis som förut.
+
+### Fem fällor, alla uppmätta
+
+**props()-kedjan bryts.** Textgruppen låg först sist i props()-strängen och kom aldrig fram i
+Top Gift: `premium-final.js` returnerar sin egen HTML för den typen och anropar aldrig kedjan under
+sig. Grupperna byggs nu i DOM i bind(), som widget-background.js redan gjorde.
+
+**Grundstorleken låstes för tidigt.** Textskalan cachade elementets storlek — men media.js injicerar
+premium-final.css asynkront, så ett namn CSS:en säger 13 px mättes till 20 innan stilmallen kommit
+fram. Storleken läses nu om varje gång, med inline-värdet nollat först.
+
+**Främmande inline-stilar nollades.** Bakgrundens första version körde villkorslöst
+`removeProperty('padding')` och tog då bort den padding widgetarnas egna renderare sätter. Gåvoramen
+tappade sina mått. En markör på elementet säger nu vem som äger värdet.
+
+**Panelen hoppade.** Sorteringen från checkpoint 44 låg i en mikrotask, så panelen ritades utfälld
+(3815 px) och krympte efteråt (2576) — webbläsaren klippte scrollen däremellan. Felet fanns redan då
+men syntes först när textgruppen la till en grupp som faktiskt flyttades. Sorteringen sker nu
+synkront i samma pass som bygget, och `vyra-panelordning.js` laddas sist av de tre.
+
+**Prestanda.** Textgruppen gick igenom varje textelement i varje widget vid varje bind(). Ett
+browserprov drog iväg till 432 sekunder. Den har nu en snabb utgång för det normala fallet, där
+inget är inställt.
+
+Vakter: `text-grupp.browser.test.js` (35 prov, 7 familjer) och `bakgrundsgrupp.browser.test.js`
+(21 prov, 5 familjer).
+
+### Om maskinen, inte om koden
+
+Hela `npm run test:browser` gick inte att lita på lokalt under det här arbetet: 2,2 GB ledigt RAM av
+7,9, med 22 Chrome- och 14 node-processer igång. Nio prov föll på 30-sekunders timeout, och en
+omkörning fällde *andra* prov i samma filer. Panelens egna 65 prov och hela node-sviten är
+deterministiskt gröna; helhetsbedömningen får CI göra på en ren maskin.
+
 ## Checkpoint 45 — Töm widget, och en tom widget syns inte i sändningen (2026-09-09)
 
 David: *"vi ska ha töma widget och profilbild och använder namn kommer när första giften kommer."*
