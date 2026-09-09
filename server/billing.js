@@ -68,8 +68,18 @@ function planFromPlanId(planId){const p=planIds();return planId&&(planId===p.tri
 //
 // PayPal har inget current_period_end. Närmaste sanning är billing_info.next_billing_time: nästa
 // dragning, alltså slutet på den period kunden redan betalat för. Under provperioden är det samma
-// tidpunkt som provperiodens slut, och det är cycle_executions som säger om vi ÄR i provperioden:
-// en TRIAL-tenure med cycles_remaining > 0.
+// tidpunkt som provperiodens slut, och det är cycle_executions som säger om vi ÄR i provperioden.
+//
+// UPPMÄTT 2026-09-09 (webhooken BILLING.SUBSCRIPTION.ACTIVATED för I-BMF7N4NDC4L5, provplanen):
+//   cycle_executions: [ {TRIAL, sequence 1, cycles_completed 1, cycles_remaining 0, total_cycles 1},
+//                       {REGULAR, sequence 2, cycles_completed 0, cycles_remaining 0, total_cycles 0} ]
+//   current_cycle_sequence: 2, next_billing_time: tre dagar fram, ingen PAYMENT.SALE.COMPLETED.
+// PayPal räknar alltså provcykeln som UTFÖRD i samma ögonblick som abonnemanget aktiveras, och pekar
+// redan på den reguljära cykeln som "nuvarande" — fast dragningen ligger tre dagar fram. Den gamla
+// regeln "TRIAL med cycles_remaining > 0" matchade därför aldrig en provperiod på en cykel, och det
+// riktiga provköpet lästes som 'active' utan trial_end. Regeln som stämmer med datan: det FINNS en
+// provtenure, och ingen reguljär cykel har utförts än — den första riktiga dragningen är det som
+// avslutar provperioden.
 //
 // null, inte 0, när vi inte vet. to_timestamp(0) är 1 januari 1970 och en nedräkning på det visar
 // -20 500 dagar. Kolumnerna tillåter NULL.
@@ -77,7 +87,10 @@ function prenumerationsfalt(sub){
   const s=sub||{},info=s.billing_info||{},cycles=Array.isArray(info.cycle_executions)?info.cycle_executions:[];
   const epoch=v=>{const t=Date.parse(v||'');return Number.isFinite(t)&&t>0?Math.floor(t/1000):null};
   const nextBilling=epoch(info.next_billing_time);
-  const inTrial=cycles.some(c=>c&&c.tenure_type==='TRIAL'&&Number(c.cycles_remaining||0)>0);
+  const n=v=>Number(v||0);
+  const trial=cycles.find(c=>c&&c.tenure_type==='TRIAL'),regular=cycles.find(c=>c&&c.tenure_type==='REGULAR');
+  const harProv=!!trial&&(n(trial.total_cycles)>0||n(trial.cycles_completed)>0||n(trial.cycles_remaining)>0);
+  const inTrial=harProv&&!(regular&&n(regular.cycles_completed)>0);
   return{
     planId:s.plan_id||null,
     workspaceId:s.custom_id||null,
