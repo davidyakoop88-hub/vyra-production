@@ -36,6 +36,13 @@ const CSS = fs.readdirSync(ROOT).filter(f => f.endsWith('.css'))
   .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 const PREMIUM_JS = fs.readFileSync(path.join(ROOT, 'premium-final.js'), 'utf8');
 
+// SEDAN 2026-09-09 ar menyn EN, inte tva. Bindaren i media.js byggde forr en egen <select
+// id="streakTheme"> bredvid premium-panelens "Stil" (#pfStreakStyle) — tva menyer med samma
+// etikett, samma falt och olika listor. Nu FYLLS premium-panelens meny i stallet, och bararen far
+// markoren data-vyra-stilar. Proven slar darfor upp menyn pa markoren, inte pa ett id som bytt
+// agare; #streakTheme star kvar som reserv for den vag dar premium-panelen inte byggt nagon meny.
+const MENY = '[data-vyra-stilar],#streakTheme';
+
 const KLASSISKA = ['inferno', 'neon', 'ice', 'royal', 'sakura-rail', 'cyber-grid', 'storm'];
 const PREMIUM = ['liquid', 'momentum', 'tier', 'thread', 'chrono', 'chain', 'thermo'];
 const ALLA = [...PREMIUM, ...KLASSISKA];
@@ -54,7 +61,7 @@ function panel(streakTheme) {
   run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(w)});selected='s1';view='editor';`);
   run(`document.querySelector('#view').innerHTML='<div class="editor-shell"><div class="canvas">'
     +wh(state.widgets[0])+'</div><div class="properties">'+props()+'</div></div>';bind();`);
-  return { h, run, meny: () => h.document.querySelector('#streakTheme') };
+  return { h, run, meny: () => h.document.querySelector(MENY) };
 }
 
 // ---- menyn maste kanna till allt som gar att satta -------------------------------------------------
@@ -100,7 +107,7 @@ test('att valja en premium-design kastar inte', () => {
     window.__v = {};
     window.render = () => {};
     try {
-      const m = document.querySelector('#streakTheme');
+      const m = document.querySelector('[data-vyra-stilar],#streakTheme');
       m.value = 'thermo'; m.onchange({ target: m });
       __v.tema = state.widgets[0].streakTheme;
       __v.accent = state.widgets[0].accent;
@@ -118,7 +125,7 @@ test('att valja en klassisk design fungerar fortfarande', () => {
   run(`
     window.__k = {};
     window.render = () => {};
-    const m = document.querySelector('#streakTheme');
+    const m = document.querySelector('[data-vyra-stilar],#streakTheme');
     m.value = 'royal'; m.onchange({ target: m });
     __k.tema = state.widgets[0].streakTheme; __k.accent = state.widgets[0].accent;
   `);

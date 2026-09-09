@@ -40,6 +40,7 @@
         "vyra-snapp.js",
         "vyra-historik.js",
         "vyra-proportioner.js",
+        "vyra-panelordning.js",
         "vyra-tomma-handlingar.js",
         "widget-handles.js"
       ],
@@ -158,8 +159,14 @@
         "tests/browser/nollrader-skrivloop.browser.test.js"
       ],
       "matning": [
-        { "namn": "Widgetsnapshot", "kommando": "node scripts/generate-widget-snapshot.js" },
-        { "namn": "Katalogkarta", "kommando": "npm run karta" }
+        {
+          "namn": "Widgetsnapshot",
+          "kommando": "node scripts/generate-widget-snapshot.js"
+        },
+        {
+          "namn": "Katalogkarta",
+          "kommando": "npm run karta"
+        }
       ],
       "risker": [
         "media.js ar storst i repot - lagg nya renderare i egen syskonfil i stallet for att vaxa den.",
@@ -275,7 +282,10 @@
         "tests/browser/synlighet.browser.test.js"
       ],
       "matning": [
-        { "namn": "Overlaystrom under last", "kommando": "node tests/load/overlay-stream.js" }
+        {
+          "namn": "Overlaystrom under last",
+          "kommando": "node tests/load/overlay-stream.js"
+        }
       ],
       "risker": [
         "Overlay-output ska ha transparent bakgrund - inget studio-chrome far synas i OBS-lanken.",
@@ -318,9 +328,14 @@
         "tests/browser/command-center-*.browser.test.js",
         "server/test/tiktok-event-adapter.test.js"
       ],
-      "e2e": ["tests/e2e/live-scenarios.spec.js"],
+      "e2e": [
+        "tests/e2e/live-scenarios.spec.js"
+      ],
       "matning": [
-        { "namn": "Ingest under last", "kommando": "node tests/load/live-ingest.js" }
+        {
+          "namn": "Ingest under last",
+          "kommando": "node tests/load/live-ingest.js"
+        }
       ],
       "risker": [
         "Handelskontraktet ar delat med tiktok-bridge och server - andra aldrig faltnamn ensidigt.",
@@ -381,7 +396,10 @@
         "tests/gift-fireworks-sound.test.js"
       ],
       "matning": [
-        { "namn": "FPS/partikelbudget", "kommando": "node -e \"console.log('Oppna studio.html?vfxdemo=1 och las vfx-debug-overlay')\"" }
+        {
+          "namn": "FPS/partikelbudget",
+          "kommando": "node -e \"console.log('Oppna studio.html?vfxdemo=1 och las vfx-debug-overlay')\""
+        }
       ],
       "risker": [
         "Exakt en agande ticker (vfx-ticker.js) - inget andra rAF-varv far introduceras.",
@@ -430,11 +448,26 @@
         "tests/goal-postgres-flode.test.js"
       ],
       "matning": [
-        { "namn": "Genomstromning", "kommando": "node scripts/goal-throughput.js" },
-        { "namn": "Skalning", "kommando": "node scripts/goal-scale.js" },
-        { "namn": "Lagring", "kommando": "node scripts/goal-storage.js" },
-        { "namn": "Churn", "kommando": "node scripts/goal-churn.js" },
-        { "namn": "Storlek", "kommando": "node scripts/goal-size.js" }
+        {
+          "namn": "Genomstromning",
+          "kommando": "node scripts/goal-throughput.js"
+        },
+        {
+          "namn": "Skalning",
+          "kommando": "node scripts/goal-scale.js"
+        },
+        {
+          "namn": "Lagring",
+          "kommando": "node scripts/goal-storage.js"
+        },
+        {
+          "namn": "Churn",
+          "kommando": "node scripts/goal-churn.js"
+        },
+        {
+          "namn": "Storlek",
+          "kommando": "node scripts/goal-size.js"
+        }
       ],
       "risker": [
         "Malmetriken maste vara identisk i klient och server - goal-metric-parity vaktar det.",
@@ -631,7 +664,10 @@
         "server/test/stream-worker.test.js"
       ],
       "matning": [
-        { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" }
+        {
+          "namn": "API-smoke",
+          "kommando": "node tests/load/api-smoke.js"
+        }
       ],
       "risker": [
         "server.ps1 (lokalt) och server/ (moln) ar tva skilda servrar med samma kontrakt.",
@@ -652,7 +688,10 @@
         "tiktok-bridge/test/*.test.js"
       ],
       "matning": [
-        { "namn": "Minne over tid", "kommando": "bash scripts/measure-bridge-memory.sh" }
+        {
+          "namn": "Minne over tid",
+          "kommando": "bash scripts/measure-bridge-memory.sh"
+        }
       ],
       "risker": [
         "Bygger pa det ooficiella tiktok-live-connector - faltnamn kan andras utan forvarning.",
@@ -679,7 +718,9 @@
         "tests/browser/desktop-nedladdning.browser.test.js",
         "server/test/desktop-release.test.js"
       ],
-      "e2e": ["tests/e2e/desktop.spec.js"],
+      "e2e": [
+        "tests/e2e/desktop.spec.js"
+      ],
       "matning": [],
       "risker": [
         "Installerarens version maste folja slapptaggen - workflowet vaktar det.",
@@ -755,9 +796,18 @@
         "tests/browser/laddningskapplopning.browser.test.js"
       ],
       "matning": [
-        { "namn": "API-smoke", "kommando": "node tests/load/api-smoke.js" },
-        { "namn": "Live-ingest", "kommando": "node tests/load/live-ingest.js" },
-        { "namn": "Overlaystrom", "kommando": "node tests/load/overlay-stream.js" }
+        {
+          "namn": "API-smoke",
+          "kommando": "node tests/load/api-smoke.js"
+        },
+        {
+          "namn": "Live-ingest",
+          "kommando": "node tests/load/live-ingest.js"
+        },
+        {
+          "namn": "Overlaystrom",
+          "kommando": "node tests/load/overlay-stream.js"
+        }
       ],
       "risker": [
         "Matning utan baslinje sager ingenting - notera alltid vad som jamfors mot."
@@ -826,7 +876,10 @@
         "tests/domankarta.test.js"
       ],
       "matning": [
-        { "namn": "Uppdatera katalogkarta", "kommando": "npm run karta" }
+        {
+          "namn": "Uppdatera katalogkarta",
+          "kommando": "npm run karta"
+        }
       ],
       "risker": [
         "Kartan far aldrig beskriva onskelaget - bara det som verkligen finns i koden."
