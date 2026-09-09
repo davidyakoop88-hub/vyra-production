@@ -1,5 +1,43 @@
 # VYRA Project State
 
+## Checkpoint 51 — Emoji i textfälten, och panelplanen är slut (2026-09-09)
+
+David: *"lägga till emoji som man skriver på sms"*. Windows-tangenten och punkt öppnar redan
+systemets emoji-väljare i vilket textfält som helst — men det vet nästan ingen, och en funktion som
+kräver ett okänt kortkommando finns i praktiken inte.
+
+### Vilka fält, och varför inte alla
+
+Uppmätt över fem widgets bär panelerna tre sorters textfält:
+
+| | Exempel | Knapp? |
+|---|---|---|
+| text tittarna ser | `ctwText`, `heartTitle`, `followLabel`, `followName`, `followMessage` | ja |
+| sökvägar till bilder | `pfTopGiftProfile`, `pfTopGiftGift`, `followProfile` | nej — en emoji ger en trasig bild |
+| interna namn | `runtimePresetName`, de dolda `pt`/`pv` | nej — ett filnamn ingen kan söka på |
+
+Regeln läser **etiketten**, inte fält-id. En vitlista över id hade blivit fel så fort någon lägger
+till ett fält, och den nya widgeten är just den som skulle sakna knappen utan att någon märker det.
+Etiketten säger vad fältet *är*, och den skriver panelbyggaren ändå.
+
+Tre av de tio proven mäter frånvaron — att sökvägar och interna namn INTE får knappen.
+
+### Markören, igen
+
+Emojin infogas vid markören, inte sist; att alltid lägga sist hade gjort knappen oanvändbar mitt i
+en mening, vilket är precis där man vill ha en emoji. Uppmätt: markören hamnade ändå på 0, eftersom
+`change` får flera panelbyggare att rita om och noden vi just skrev i är utbytt. Fältet slås därför
+upp på nytt via sitt id, och en gång till i en mikrotask.
+
+Samma familj av fel som checkpoint 46–47: **efter en händelse som ritar om panelen är referensen du
+höll i inte längre den nod som visas.**
+
+### Panelplanen, nio steg
+
+Ordning och hopfällning · töm widget · gemensam textgrupp · gemensam bakgrundsgrupp · dra texter ·
+enhetliga namn · prestanda ur panelen · ramväljarens rubrik · emoji. Top Gift gick från **3,6
+skärmar till 2,8**, med 41 kontroller mot 31 — tio fler funktioner på mindre plats.
+
 ## Checkpoint 50 — Ramväljaren får en rubrik och en plats (2026-09-09)
 
 Steg 8 hette "avatar-ramen blir en knapp som öppnar väljaren". **Mätningen sa att det inte behövdes.**
