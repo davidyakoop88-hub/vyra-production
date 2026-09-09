@@ -56,7 +56,38 @@
 
   function presets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY)||'{}')}catch{return{}}}
   function savePresets(x){localStorage.setItem(PRESET_KEY,JSON.stringify(x))}
+
+  /* PRESTANDALÄGET HÖR TILL STUDION, INTE TILL WIDGETEN (2026-09-09).
+     Väljaren låg i PRESET & PRESTANDA i VARJE widgets panel, fast den skriver ett enda värde för
+     hela studion: `data-performance` på dokumentroten och `vyra-performance-mode` i localStorage.
+     Samma globala inställning, upprepad 271 gånger. Den bor nu i Inställningar.
+
+     De tre andra kontrollerna i gruppen stannade — de gäller widgeten: "Spara preset" tar en kopia
+     av den, "Ladda senaste" hämtar tillbaka den och "Återställ widget" nollställer dess skala,
+     opacitet, dolt-läge och lager. Presetnamnet skriver inte till widgeten men LÄSES när presetet
+     sparas, vilket är varför det såg oanvänt ut i mätningen. Gruppen heter numera bara PRESET.
+
+     DOM-PATCH, inte en ändring i studio.js: den filen är minifierad handkod och rörs aldrig.
+     `settings()` bygger sin sida vid varje render, så raden läggs till efteråt, en gång per vy. */
+  const settingsBind=bind;
+  bind=function(){
+    settingsBind();
+    if(typeof view==='undefined'||view!=='settings')return;
+    const sida=document.querySelector('.settings-page');
+    if(!sida||sida.querySelector('#runtimePerformance'))return;
+    const rad=document.createElement('label');
+    rad.innerHTML='<span>Prestandaläge</span><select id="runtimePerformance">'
+      +'<option value="low">Låg</option><option value="standard">Standard</option>'
+      +'<option value="ultra">Ultra</option></select>';
+    const valjare=rad.querySelector('select');
+    valjare.value=mode;
+    valjare.onchange=e=>{mode=e.target.value;applyPerformance();
+      if(typeof toast==='function')toast('Prestandaläge: '+mode)};
+    /* Före spara-knappen, så sidans avslutande åtgärd förblir den sista raden. */
+    const spara=sida.querySelector('#ss');
+    if(spara)spara.before(rad); else sida.append(rad);
+  };
   const oldBind=bind;
-  bind=function(){oldBind();if(view!=='editor')return;let w=liveWidget(selected),panel=document.querySelector('.properties');if(!w||!panel||panel.querySelector('.runtime-controls'))return;let box=document.createElement('div');box.className='property-group runtime-controls';box.innerHTML=`<h4>PRESET & PRESTANDA</h4><label>Presetnamn<input id="runtimePresetName" value="${w.title||w.type||'Min preset'}"></label><div class="property-actions"><button id="runtimeSavePreset">Spara preset</button><button id="runtimeLoadPreset">Ladda senaste</button></div><label>Prestanda<select id="runtimePerformance"><option value="low">Låg</option><option value="standard">Standard</option><option value="ultra">Ultra</option></select></label><button id="runtimeResetWidget">Återställ widget</button>`;let del=panel.querySelector('#del');panel.insertBefore(box,del||null);box.querySelector('#runtimePerformance').value=mode;box.querySelector('#runtimePerformance').onchange=e=>{mode=e.target.value;applyPerformance();toast('Prestanda: '+mode)};box.querySelector('#runtimeSavePreset').onclick=()=>{let all=presets(),key=w.type,copy=JSON.parse(JSON.stringify(w));delete copy.id;delete copy.x;delete copy.y;all[key]={name:box.querySelector('#runtimePresetName').value,data:copy};savePresets(all);toast('Preset sparad')};box.querySelector('#runtimeLoadPreset').onclick=()=>{let p=presets()[w.type];if(!p)return toast('Ingen sparad preset');let keep={id:w.id,x:w.x,y:w.y};Object.keys(w).forEach(k=>delete w[k]);Object.assign(w,p.data,keep);save();render();toast(p.name+' laddad')};box.querySelector('#runtimeResetWidget').onclick=()=>{['widgetScale','opacity','hidden','layer'].forEach(k=>delete w[k]);w.widgetScale=1;save();render();toast('Widget återställd')}
+  bind=function(){oldBind();if(view!=='editor')return;let w=liveWidget(selected),panel=document.querySelector('.properties');if(!w||!panel||panel.querySelector('.runtime-controls'))return;let box=document.createElement('div');box.className='property-group runtime-controls';box.innerHTML=`<h4>PRESET</h4><label>Presetnamn<input id="runtimePresetName" value="${w.title||w.type||'Min preset'}"></label><div class="property-actions"><button id="runtimeSavePreset">Spara preset</button><button id="runtimeLoadPreset">Ladda senaste</button></div><button id="runtimeResetWidget">Återställ widget</button>`;let del=panel.querySelector('#del');panel.insertBefore(box,del||null);box.querySelector('#runtimeSavePreset').onclick=()=>{let all=presets(),key=w.type,copy=JSON.parse(JSON.stringify(w));delete copy.id;delete copy.x;delete copy.y;all[key]={name:box.querySelector('#runtimePresetName').value,data:copy};savePresets(all);toast('Preset sparad')};box.querySelector('#runtimeLoadPreset').onclick=()=>{let p=presets()[w.type];if(!p)return toast('Ingen sparad preset');let keep={id:w.id,x:w.x,y:w.y};Object.keys(w).forEach(k=>delete w[k]);Object.assign(w,p.data,keep);save();render();toast(p.name+' laddad')};box.querySelector('#runtimeResetWidget').onclick=()=>{['widgetScale','opacity','hidden','layer'].forEach(k=>delete w[k]);w.widgetScale=1;save();render();toast('Widget återställd')}
   };
 })();

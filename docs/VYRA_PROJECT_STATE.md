@@ -1,5 +1,36 @@
 # VYRA Project State
 
+## Checkpoint 49 — Prestandaläget hör till studion, inte till widgeten (2026-09-09)
+
+Steg 7 i Davids plan hette "flytta ut preset och prestanda ur panelen". **Bara hälften av det var
+rätt, och den mätning som låg bakom var för grov.**
+
+Mätningen i checkpoint 44 visade att gruppens kontroller inte skrev något till widgeten, och jag drog
+slutsatsen att hela gruppen gällde scenen. En närläsning av `runtime-controls.js` visar något annat:
+
+| Kontroll | Vad den gör | Var den hör hemma |
+|---|---|---|
+| Prestanda | `data-performance` på roten + `vyra-performance-mode` i localStorage | **studion** — ett värde, upprepat i 271 widgetpaneler |
+| Spara preset | tar en kopia av widgeten, lagrad under `w.type` | widgeten |
+| Ladda senaste | hämtar tillbaka den | widgeten |
+| Återställ widget | nollställer skala, opacitet, dolt-läge, lager | widgeten |
+| Presetnamn | skriver inte till `w`, men **läses** när presetet sparas | widgeten |
+
+Presetnamnet är förklaringen till varför mätningen blev fel: ett fält som bara läses vid en knapptryck
+ser dött ut för ett prov som skriver i det och tittar på `w`. Bara prestandaväljaren flyttade;
+gruppen heter numera **PRESET**.
+
+Väljaren bor nu i Inställningar, tillagd med en **DOM-patch** — `settings()` ligger i studio.js, som
+är minifierad handkod och aldrig får ändras. `runtime-controls.js` äger både gruppen och
+prestandaläget, så patchen ligger i samma fil som allt annat den gör.
+
+Vakt: `tests/browser/prestanda-ur-panelen.browser.test.js`, 7 prov. Tre av dem mäter **motsatsen** —
+att preset och Återställ widget står kvar i panelen. En utflyttning som tar med sig fel saker är lika
+mycket ett fel som ingen utflyttning alls.
+
+Panelordningens mönster bär både `^PRESET$` och det gamla `PRESET & PRESTANDA`, så en layout som
+ännu inte laddats om hamnar rätt.
+
 ## Checkpoint 48 — Samma sak heter samma sak i panelen (2026-09-09)
 
 Sista delen av Davids *"vi har mer men ändå ser kaos ut"*: panelens grupper hette olika saker i

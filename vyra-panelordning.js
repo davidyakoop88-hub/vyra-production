@@ -23,8 +23,10 @@
   // till widgeten alls — de gäller scenen. De ska inte ligga mitt bland widgetens egna inställningar.
 
   const VIKT = [
-    // Verktyg som INTE gäller widgeten — alltid sist.
-    [/PRESET\s*&\s*PRESTANDA/, 90],
+    // Spara, ladda och återställ — alltid sist. Gruppen hette PRESET & PRESTANDA fram till
+    // 2026-09-09, då prestandaläget flyttade till Inställningar (det gäller studion, inte
+    // widgeten). Det gamla namnet står kvar i mönstret för layouter som ännu inte laddats om.
+    [/^PRESET$|PRESET\s*&\s*PRESTANDA/, 90],
     // Tillägg: yta och rörelse, samma svans för alla widgets.
     [/^BAKGRUND/, 80],
     [/^ANIMATION|RÖRELSESTIL|PREMIUM RÖRELSE/, 70],
