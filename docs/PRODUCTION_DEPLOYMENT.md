@@ -309,7 +309,10 @@ trial**. Billing runs on PayPal Subscriptions (`server/billing.js`, since
 three-day trial (`PAYPAL_PLAN_MONTHLY_TRIAL`) and one without
 (`PAYPAL_PLAN_MONTHLY`). Which plan a workspace gets is decided locally by
 `billing_customers.trial_started_at`, so each workspace can consume the trial
-only once. Checkout creates the subscription with `custom_id` = workspace id and
+only once. That marker is written when PayPal **activates** the subscription
+(`upsertFromPaypal`), never when checkout merely starts — an abandoned PayPal
+popup must not burn the trial (that is exactly what happened in the first real
+purchase on 2026-09-09). Checkout creates the subscription with `custom_id` = workspace id and
 sends the owner to PayPal's approve link; PayPal returns to
 `studio.html?billing=success`. Webhooks are verified through PayPal's
 verify-webhook-signature call against the untouched raw body and

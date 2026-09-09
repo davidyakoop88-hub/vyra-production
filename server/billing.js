@@ -109,6 +109,12 @@ async function upsertFromPaypal(c,workspaceId,sub,{cancelAtPeriodEnd}={}){
   const status=localStatus(f,cape);
   await c.query("INSERT INTO subscriptions(workspace_id,provider,stripe_subscription_id,stripe_price_id,plan,status,current_period_end,trial_end,cancel_at_period_end,updated_at) VALUES($1,'paypal',$2,$3,$4,$5,to_timestamp($6),to_timestamp($7),$8,now()) ON CONFLICT(workspace_id) DO UPDATE SET provider='paypal',stripe_subscription_id=EXCLUDED.stripe_subscription_id,stripe_price_id=EXCLUDED.stripe_price_id,plan=EXCLUDED.plan,status=EXCLUDED.status,current_period_end=COALESCE(EXCLUDED.current_period_end,subscriptions.current_period_end),trial_end=EXCLUDED.trial_end,cancel_at_period_end=EXCLUDED.cancel_at_period_end,updated_at=now()",
     [workspaceId,sub.id,f.planId,status==='canceled'?'free':planFromPlanId(f.planId),status,f.periodEnd,f.trialEnd,status==='canceled'?false:cape]);
+  // Gratisperioden är förbrukad först när Premium FAKTISKT blivit aktivt — oavsett om det skedde
+  // via provplanen eller den reguljära. COALESCE bevarar det första datumet vid förnyelser.
+  if(status==='active'||status==='trialing'){
+    await c.query('INSERT INTO billing_customers(workspace_id) VALUES($1) ON CONFLICT(workspace_id) DO NOTHING',[workspaceId]);
+    await c.query('UPDATE billing_customers SET trial_started_at=COALESCE(trial_started_at,now()) WHERE workspace_id=$1',[workspaceId]);
+  }
   return{status,fields:f};
 }
 
@@ -139,6 +145,13 @@ async function usage(pool,workspaceId){const q=await pool.query("SELECT (SELECT 
 
 // PayPal har inget kundobjekt att skapa i förväg. billing_customers finns kvar för EN sak:
 // trial_started_at, spärren mot en andra gratisperiod.
+//
+// SPÄRREN SÄTTS VID AKTIVERINGEN, INTE HÄR. Fram till 2026-09-09 skrevs trial_started_at redan när
+// checkouten STARTADE, så en kund som stängde PayPal-rutan och tryckte igen räknades som förbrukad
+// och fick den reguljära planen — 15 USD drogs direkt trots löftet om tre gratisdagar. Det var
+// exakt det som hände i det första skarpa köpet (workspace c6439ecb: checkout 19:43, avbrott,
+// checkout 19:46, PAYMENT.SALE.COMPLETED). Nu läser checkouten bara spärren; det är
+// upsertFromPaypal som sätter den, när PayPal säger att abonnemanget är aktivt.
 async function checkout(pool,{workspaceId,email,name,origin}){
   const plans=planIds();
   if(!plans.trial||!plans.regular)throw Object.assign(new Error('Abonnemangsplanerna saknas i serverkonfigurationen'),{status:503});
@@ -159,7 +172,6 @@ async function checkout(pool,{workspaceId,email,name,origin}){
     const approve=(sub.links||[]).find(l=>l.rel==='approve')?.href;
     if(!sub.id||!approve)throw Object.assign(new Error('PayPal gav ingen godkännandelänk'),{status:502});
     await c.query("INSERT INTO subscriptions(workspace_id,provider,stripe_subscription_id,stripe_price_id,plan,status,cancel_at_period_end,updated_at) VALUES($1,'paypal',$2,$3,'free','pending',false,now()) ON CONFLICT(workspace_id) DO UPDATE SET provider='paypal',stripe_subscription_id=EXCLUDED.stripe_subscription_id,stripe_price_id=EXCLUDED.stripe_price_id,plan='free',status='pending',current_period_end=NULL,trial_end=NULL,cancel_at_period_end=false,updated_at=now()",[workspaceId,sub.id,planId]);
-    if(trialEligible)await c.query('UPDATE billing_customers SET trial_started_at=now() WHERE workspace_id=$1',[workspaceId]);
     await c.query('COMMIT');
     return approve;
   }catch(error){await c.query('ROLLBACK');throw error}finally{c.release()}
