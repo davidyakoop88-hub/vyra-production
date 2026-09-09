@@ -129,7 +129,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // andrades av den delen.
   // Bumpad 2026-09-08 (bildmatt): gavoramarnas flip var 0×0, gavobilden i naturlig storlek och
   // namnplattan pa en rad. BARA studio.css andrades av den delen.
-  assert.match(studio, /studio\.css\?v=20260908-bildmatt/);
+  // Bumpad 2026-09-09 (panelordningen): studio.css bar regeln for en oppnad hopfalld grupp.
+  assert.match(studio, /studio\.css\?v=20260909-panel/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
@@ -235,7 +236,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-08: Top Like-ramen renderas som syskon till fotot och placeras efter mätning.
   // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
   // och media.js bar dess versionsstrang.
-  assert.match(studio, /[^-]media\.js\?v=20260908-radavstand/);
+  assert.match(studio, /[^-]media\.js\?v=20260909-panel/);
   assert.match(studio, /widget-factory\.js\?v=20260907-1/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —

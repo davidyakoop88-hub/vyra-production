@@ -1,5 +1,74 @@
 # VYRA Project State
 
+## Checkpoint 44 — Egenskapspanelen har en ordning (2026-09-09)
+
+David: *"just nu hur jag ser layout EGENSKAPER gör mig förvirrad och vet inte om allt funkar."*
+
+### Först mättes "vet inte om allt funkar"
+
+Varje kontroll i panelen ändrades och widgetens state lästes av, i sex widgets. **187 av 196 skriver
+till widgeten.** De nio som inte gör det är avsiktliga: Presetnamn och Prestanda gäller scenen, och
+`propHeight` är skrivskyddad för aspect-styrda widgets. Panelen *fungerar* alltså. Förvirringen kom
+från något annat.
+
+### Tre inställningar hade två kontroller var
+
+| Fält | Kontroll A | Kontroll B | Följd |
+|---|---|---|---|
+| `streakSpeed` | "Rörelse" 0,5–2 **gånger** (`#pfStreakSpeed`) | "Animation" 1,5–7 **sekunder** (`#streakSpeed`) | Olika enhet för samma fält. Renderarna räknar också olika: klassisk sätter `--speed:3.8s`, premium `--speed:1` som delare i `calc(1.1s / var(--speed))`. |
+| `streakTheme` | "Stil" (`#pfStreakStyle`), 7 premiumdesigner | "Stil" (`#streakTheme`), 14 designer + skrev över accenten | Två menyer med **samma etikett** som drog åt olika håll. |
+| `giftSize` | "Profil/gåva" 48–220 / 36–130 | "Giftstorlek" 24–140 | Drog man premiumreglaget till 170 stod det 140 i det andra — det slog i sitt eget tak och visade en siffra som inte var widgetens. |
+
+Rättat så att **premium-panelens kontroll vinner** (den matchar den renderare som faktiskt ritar), och
+media.js bygger sin bara när premiums saknas. Stilmenyn slogs ihop: premium-panelens meny *fylls* nu
+med alla fjorton designerna i stället för att en andra meny byggs bredvid. Bäraren märks
+`data-vyra-stilar`, och `tests/streak-style-menu.test.js` slår upp menyn på den markören.
+
+### Sedan ordningen: ett ställe äger den
+
+`vyra-panelordning.js` (Studio Core) sorterar panelen **efter** att alla elva panelbyggare kört, i en
+mikrotask så att den inte beror på laddordning. Trappan: innehåll → widgetens egen grupp → design →
+live/test → position → ram → animation → bakgrund → verktyg. En rubrik som inte står i listan får
+vikten mellan innehåll och design, så en ny grupp hamnar rätt utan att listan rörs.
+
+Grupper från och med *live/test* och nedåt fälls ihop — **utom grundpositionen**. Strukturen
+(`.collapsible` + `.pg-toggle` + `.pg-body`) fanns redan i studio.css och användes av `pgSection()` —
+den återanvänds i stället för att en andra sorts hopfällbar grupp uppfinns. Vad användaren öppnat
+minns per rubrik, annars hade varje klick i studion fällt ihop det man just öppnade.
+
+**Varför POSITION & STORLEK står öppen.** Första försöket fällde allt från live/test och nedåt. Då
+föll nio browserprov i CI: "TOP GIFT · Bredd: fokus stannar på kontrollen", "Egen text · Bredd:
+fältet finns och tar emot fokus", "kedjelaset visas for lasbara widgets" och sex till. Alla nio
+letade efter breddfältet, som ligger i den gruppen. Proven hade rätt: bredd, höjd och
+proportionslåset hör till det man ändrar ofta, och det får inte kräva ett klick först. De sex
+offsetfälten under `POSITION · TEXTELEMENT` är däremot finjustering och fälls (vikt 45).
+
+Lärdomen är metodisk, inte teknisk: fyra browserprov kördes lokalt före den första pushen, inte hela
+sviten. Hela `npm run test:browser` tar ~45 min lokalt och lika länge i CI, men den är enda sättet
+att se en regression i en panel elva filer bygger.
+
+| Widget | Panelhöjd före | Efter |
+|---|---|---|
+| Top Streak premium | 3620 px (4,2 skärmar) | 2400 px (2,8) |
+| Top Like | 3428 px (4,0) | 2643 px (3,1) |
+| Fan Level | 3129 px (3,7) | 1877 px (2,2) |
+| Top Gift premium | 3041 px (3,6) | 1980 px (2,3) |
+
+"POSITION & STORLEK" låg förut på plats 3, 4 eller 8 beroende på widget. Nu står den på samma plats
+i alla.
+
+### Fällan som muteringen hittade
+
+Första sorteringen flyttade bara grupperna, med `append()`. Då hamnade de sist av panelens alla barn
+och den **röda Ta bort-knappen sköts upp till toppen** — precis där handen är på väg när man byter
+inställning. Hela barnlistan byggs nu om: rubrik/märke/flikrad överst, grupper i mitten, radera och
+åtgärdsrad sist. Provet vaktar det.
+
+Vakter: `tests/browser/panel-inga-dubbletter.browser.test.js` (10 widgets, en dubblett är två
+kontroller med identisk fältmängd, eller delmängd av samma sort — kryssrutor undantagna eftersom
+Last-X flerval är rätt mönster) och `tests/browser/panel-ordning.browser.test.js` (9 widgets).
+Ordningsprovet muterades: med sorteringen avstängd faller det på exakt den röran som mättes upp.
+
 ## Checkpoint 43 — Profilramen rör inte bildens mått (2026-09-08)
 
 Kravet från David, ordagrant: "jag vill inte bildstorlek och gift storlek ska ändras när man lägger

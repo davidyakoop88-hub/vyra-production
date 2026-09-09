@@ -180,6 +180,12 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 .like-fountain.fountain-landscape{min-width:420px!important}.like-fountain.fountain-portrait{width:190px!important;min-width:120px!important;max-width:260px!important}.property-group.collapsible{padding-top:0}.property-group.collapsible .pg-toggle{width:100%;background:transparent;border:0;color:#dcb3f0;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:11px 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-align:left}
 .property-group.collapsible .pg-toggle:hover{color:#f3d9ff}
 .property-group.collapsible.open .pg-toggle{color:#fff}.property-group.collapsible .pg-chevron{font-style:normal;transition:transform .15s;font-size:10px}.property-group.collapsible.open .pg-chevron{transform:rotate(90deg)}.property-group.collapsible .pg-body{display:none;padding-bottom:4px}.property-group.collapsible.open .pg-body{display:block}
+/* En hopfalld grupp som oppnas ska se ut som en vanlig grupp. .properties .property-group ar
+   flex-column med 10px gap (toplike-studio.css, oscopad och gallande alla paneler), och den layouten
+   gar forlorad nar innehallet flyttas in i en .pg-body med display:block — etiketterna hade da lagt
+   sig tatt utan luft. Samma flex-column aterskapas darfor pa body:n. Hogre specificitet an regeln
+   ovan, sa den vinner utan !important. */
+.properties .property-group.collapsible.open>.pg-body{display:flex;flex-direction:column;gap:10px}
 .fountain-pop{position:absolute;left:50%;bottom:14px;width:0;height:0;pointer-events:none}.fountain-pop i{position:absolute;left:0;top:0;font-size:var(--size,18px);font-style:normal;line-height:1;color:var(--c);text-shadow:0 0 6px var(--c);opacity:0}.fountain-pop .fp-ring{position:absolute;left:-30px;top:-30px;width:60px;height:60px;border:2px solid var(--c);border-radius:50%;opacity:0}.fountain-pop.play i{animation:lf-pop-particle .9s ease-out both}.fountain-pop.play .fp-ring{animation:lf-pop-ring 1s ease-out both}
 @keyframes lf-pop-particle{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}100%{transform:translate(calc(-50% + cos(var(--a)) * var(--d)),calc(-50% + sin(var(--a)) * var(--d))) scale(1) rotate(200deg);opacity:0}}
 @keyframes lf-pop-ring{0%{transform:scale(.2);opacity:.9}100%{transform:scale(3);opacity:0}}
