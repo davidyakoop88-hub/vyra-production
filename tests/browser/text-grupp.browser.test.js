@@ -141,7 +141,7 @@ for (const nyckel of WIDGETS) {
   test(`${nyckel}: konturen slår igenom`, { skip }, async () => {
     const page = await editorn();
     try {
-      await seeda(page, nyckel, { textOutline: 2, textOutlineColor: '#ff0000' });
+      await seeda(page, nyckel, { textOutlineWidth: 2, textOutlineColor: '#ff0000' });
       const blad = await textBlad(page);
       assert.ok(blad && blad.length, `${nyckel}: hittade inga textbärande element`);
       const utan = blad.filter(b => !(parseFloat(b.kontur) >= 2));

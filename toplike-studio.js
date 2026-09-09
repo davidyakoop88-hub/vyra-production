@@ -250,7 +250,7 @@
     const skin = w.skin || 'royal-gold';
     const skinGroup = `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
     const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
-    const textFxGroup = `<div class="property-group"><h4>TEXTEFFEKTER</h4><label class="range-label">Skugga · blur <b>${w.textShadowBlur || 0}px</b><input id="wsShadowBlur" type="range" min="0" max="20" value="${w.textShadowBlur || 0}"></label><div class="property-grid"><label>Skugga X<input id="wsShadowX" type="number" min="-20" max="20" value="${w.textShadowX || 0}"></label><label>Skugga Y<input id="wsShadowY" type="number" min="-20" max="20" value="${w.textShadowY || 0}"></label></div><label>Skuggfärg<input id="wsShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label><label class="range-label">Konturbredd <b>${w.textOutlineWidth || 0}px</b><input id="wsOutlineWidth" type="range" min="0" max="4" step="0.5" value="${w.textOutlineWidth || 0}"></label><label>Konturfärg<input id="wsOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
+    const textFxGroup = `<div class="property-group"><h4>EGET TYPSNITT</h4><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
     const nudge = (label, xId, yId, xVal, yVal) => `<div class="property-grid"><label>${label} X<input id="${xId}" type="number" min="-200" max="200" value="${xVal}"></label><label>${label} Y<input id="${yId}" type="number" min="-200" max="200" value="${yVal}"></label></div>`;
     const positionOffsetGroup = `<div class="property-group"><h4>POSITION · TEXTELEMENT</h4><small>Flytta rubrik, namn och värde oberoende av varandra, utan att ändra själva layouten.</small>${nudge('Rubrik', 'wsTitleOffX', 'wsTitleOffY', w.titleOffsetX || 0, w.titleOffsetY || 0)}${nudge('Namn', 'wsNameOffX', 'wsNameOffY', w.nameOffsetX || 0, w.nameOffsetY || 0)}${nudge('Värde', 'wsValueOffX', 'wsValueOffY', w.valueOffsetX || 0, w.valueOffsetY || 0)}</div>`;
@@ -295,18 +295,10 @@
     const opacity = document.querySelector('#wsOpacity');
     if (opacity) opacity.onchange = e => { w.opacity = (+e.target.value) / 100; save(); render(); };
 
-    const shadowBlur = document.querySelector('#wsShadowBlur');
-    if (shadowBlur) { shadowBlur.oninput = e => vyraLivePatch(w, shadowBlur, 'textShadowBlur', +e.target.value); shadowBlur.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
-    const shadowX = document.querySelector('#wsShadowX');
-    if (shadowX) shadowX.onchange = e => { w.textShadowX = +e.target.value; save(); render(); };
-    const shadowY = document.querySelector('#wsShadowY');
-    if (shadowY) shadowY.onchange = e => { w.textShadowY = +e.target.value; save(); render(); };
-    const shadowColor = document.querySelector('#wsShadowColor');
-    if (shadowColor) { shadowColor.oninput = e => vyraLivePatch(w, shadowColor, 'textShadowColor', e.target.value); shadowColor.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
-    const outlineWidth = document.querySelector('#wsOutlineWidth');
-    if (outlineWidth) { outlineWidth.oninput = e => vyraLivePatch(w, outlineWidth, 'textOutlineWidth', +e.target.value); outlineWidth.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
-    const outlineColor = document.querySelector('#wsOutlineColor');
-    if (outlineColor) { outlineColor.oninput = e => vyraLivePatch(w, outlineColor, 'textOutlineColor', e.target.value); outlineColor.onchange = () => { save(); vyraRenderKeepingPanel(); }; }
+    // Skuggan och konturen flyttade till den gemensamma TEXT-gruppen 2026-09-09
+    // (vyra-textgrupp.js). Fälten är desamma — textShadowBlur/X/Y/Color och
+    // textOutlineWidth/Color — så sparade layouter ser likadana ut; det är kontrollerna
+    // som slogs ihop, efter att panel-inga-dubbletter-provet fällde dem som dubbletter.
 
     const customFont = document.querySelector('#wsCustomFont');
     if (customFont) customFont.onchange = async e => {

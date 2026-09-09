@@ -39,20 +39,43 @@
     return ut;
   }
 
-  // GRUNDSTORLEKEN LÄSES OM VARJE GÅNG, den sparas inte. Första försöket cachade den på elementet
-  // för att slippa läsa om — och låste då fast fel värde: media.js injicerar premium-final.css
-  // asynkront, så en widget vars namn CSS:en säger 13 px mättes till 20 px innan stilmallen kommit
-  // fram. Skalan 1,5 räknades sedan mot 20 och gav 2,31x mot vad man såg på skärmen.
+  // TVÅ KÄLLOR TILL GRUNDSTORLEKEN, och valet mellan dem är hela funktionen.
   //
-  // Att nolla inline-värdet före läsningen är det som gör funktionen idempotent: den läser alltid
-  // CSS:ens egen storlek, aldrig sin egen förra uträkning, hur många gånger den än körs.
+  // Ett CSS-VÄRDE får aldrig cachas: media.js injicerar premium-final.css asynkront, så en widget
+  // vars namn CSS:en säger 13 px mättes till 20 innan stilmallen kommit fram, och skalan 1,5 gav
+  // 2,31x mot vad man såg. Ett sådant värde läses därför om varje gång, med inline-stilen nollad
+  // först så att läsningen inte träffar vår egen förra uträkning.
+  //
+  // RENDERARENS EGEN INLINE-STORLEK ÄR HELIG. Flera renderare skriver font-size direkt i markupen
+  // (`.ctw-text` sätter `font-size:${w.textFontSize||32}px`, premiumpanelerna gör detsamma). Ett
+  // villkorslöst removeProperty raderade den och lämnade elementet med en ärvd storlek: uppmätt
+  // 2026-09-09 blev "Skriv din text" 32 px -> 12 px av en skala på 1,5, eftersom 8 px lästes som
+  // grund. Samma fälla som bakgrundens padding, och svaret är detsamma — vi måste veta vem som
+  // äger värdet.
+  //
+  // `data-vyra-storlek` sparar vad renderaren satte, INNAN vi rör något. Den är trygg att cacha
+  // till skillnad från ett CSS-värde: en inline-stil ändras inte av att en stilmall laddas senare,
+  // vilket var precis det som gjorde den förra cachningen fel.
   function skala(el, faktor) {
     if (!faktor || faktor === 1) {
-      // Rör inte elementet i onödan. Ett removeProperty på något som inte är satt kostar ingenting
-      // i sig, men det invaliderar layouten och nästa getComputedStyle blir en tvingad omräkning.
-      if (el.style.fontSize) el.style.removeProperty('font-size');
+      if (el.dataset.vyraStorlek !== undefined) {
+        const eget = el.dataset.vyraStorlek;
+        if (eget) el.style.setProperty('font-size', eget);   // lämna tillbaka renderarens värde
+        else el.style.removeProperty('font-size');
+        delete el.dataset.vyraStorlek;
+      }
       return;
     }
+
+    if (el.dataset.vyraStorlek === undefined) el.dataset.vyraStorlek = el.style.fontSize || '';
+    const eget = el.dataset.vyraStorlek;
+
+    if (eget) {
+      const grund = parseFloat(eget) || 0;
+      if (grund) el.style.setProperty('font-size', (grund * faktor) + 'px', 'important');
+      return;
+    }
+    // Ingen inline-storlek att skydda: då är CSS:ens värde det rätta att räkna från.
     el.style.removeProperty('font-size');
     const grund = parseFloat(getComputedStyle(el).fontSize) || 0;
     if (grund) el.style.setProperty('font-size', (grund * faktor) + 'px', 'important');
@@ -65,14 +88,14 @@
     //
     // `data-vyra-text` minns att vi HAR rört elementet, så en widget vars inställningar nollas
     // fortfarande städas en sista gång innan snabbutgången tar över.
-    const rorNagot = w.textFont || Number(w.textOutline) > 0 || Number(w.textShadowBlur) > 0
+    const rorNagot = w.textFont || Number(w.textOutlineWidth) > 0 || Number(w.textShadowBlur) > 0
       || Number(w.textShadowX) || Number(w.textShadowY) || (Number(w.textScale) || 1) !== 1;
     if (!rorNagot && !rot.dataset.vyraText) return;
     if (rorNagot) rot.dataset.vyraText = '1'; else delete rot.dataset.vyraText;
 
     const blad = textblad(rot);
     const font = w.textFont;
-    const kontur = Number(w.textOutline) || 0;
+    const kontur = Number(w.textOutlineWidth) || 0;
     const konturFarg = w.textOutlineColor || '#000000';
     const blur = Number(w.textShadowBlur) || 0;
     const skuggX = Number(w.textShadowX) || 0;
@@ -133,8 +156,8 @@
       + `<label>Y<input id="vtShadowY" type="number" value="${Number(w.textShadowY) || 0}"></label>`
       + `</div>`
       + `<label><span>Skuggfärg</span><input id="vtShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label>`
-      + `<label class="range-label">Kontur <b>${Number(w.textOutline) || 0}px</b>`
-      + `<input id="vtOutline" type="range" min="0" max="6" step="0.5" value="${Number(w.textOutline) || 0}"></label>`
+      + `<label class="range-label">Kontur <b>${Number(w.textOutlineWidth) || 0}px</b>`
+      + `<input id="vtOutline" type="range" min="0" max="6" step="0.5" value="${Number(w.textOutlineWidth) || 0}"></label>`
       + `<label><span>Konturfärg</span><input id="vtOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label>`
       + `</div>`;
   }
@@ -190,7 +213,7 @@
       koppla('vtShadowX', 'textShadowX', v => Number(v) || 0);
       koppla('vtShadowY', 'textShadowY', v => Number(v) || 0);
       koppla('vtShadowColor', 'textShadowColor', v => v);
-      koppla('vtOutline', 'textOutline', v => Number(v) || 0);
+      koppla('vtOutline', 'textOutlineWidth', v => Number(v) || 0);
       koppla('vtOutlineColor', 'textOutlineColor', v => v);
       return ut;
     };

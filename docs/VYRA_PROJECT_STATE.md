@@ -1,5 +1,56 @@
 # VYRA Project State
 
+## Checkpoint 47 — Rubrik, namn och värde dras på duken (2026-09-09)
+
+David om Top Likes sex nummerfält: *"det jag tycker om man göra bättre"*, och efter demon:
+*"jag tycker om känslan jag vill den ska funka på top liks och top strake också"*.
+
+Top Like kunde flytta sina tre textdelar, men bara genom att skriva sex tal i en grupp på 285 px
+utan att se resultatet förrän efteråt. Top Gift och Top Streak kunde inte flytta något alls.
+
+**Samma fält som nummerrutorna.** Draget skriver till `titleOffsetX/Y`, `nameOffsetX/Y` och
+`valueOffsetX/Y` — precis de fält Top Likes panel redan använder. Därför fungerar ångra, därför
+visar nummerrutorna rätt värde, och därför behövde ingen renderare skrivas om.
+
+Selektorerna är uppmätta i webbläsaren, en tabell per familj, eftersom markupen skiljer sig helt:
+
+| | rubrik | namn | värde |
+|---|---|---|---|
+| Top Gift | `.vyra-gift-title` | `.topgift-copy > strong` | `.topgift-copy > em` |
+| Top Streak | `.streak-copy > small` | `.streak-copy > strong` | `.streak-score` |
+| Top Like | `h3` | `.toplike-row > span` | `.toplike-row > em` |
+
+Top Like är en **lista**: namn och värde matchar fem element, ett per rad, och offseten gäller alla
+fem samtidigt — precis vad nummerrutorna gör i dag.
+
+Två saker som draget måste göra rätt: det får **inte** starta förrän widgeten är vald (annars flyttar
+man text i en widget man inte tittar på), och det måste stoppa dukens egen dragning med
+`stopPropagation` (annars rör sig widgeten och texten samtidigt). Skift stänger av snappen mot
+mittlinjen, samma tangent som vid vanligt drag.
+
+### Dubbletten som provet fångade
+
+Den gemensamma TEXT-gruppen från checkpoint 46 och Top Likes egen TEXTEFFEKTER styrde **samma fem
+fält** — skugga, skugg-XY, skuggfärg och konturfärg. Alltså exakt det problem grupperna byggdes för
+att lösa, återskapat en nivå upp. `panel-inga-dubbletter.browser.test.js` fällde det.
+
+Rättat genom att TEXT-gruppen bytte `textOutline` mot Top Likes `textOutlineWidth` och de fem
+dubblerade kontrollerna togs bort ur toplike-studio.js. Kvar där är bara uppladdning av eget
+typsnitt, och gruppen heter nu EGET TYPSNITT. Fälten är oförändrade, så sparade layouter ser
+likadana ut.
+
+### En tredje inline-ägarfälla
+
+Textskalan nollade elementets `font-size` för att läsa CSS-värdet — och raderade då den inline-
+storlek renderarna själva skriver (`.ctw-text` sätter `font-size:${w.textFontSize||32}px`). "Skriv
+din text" gick 32 px → 12 av en skala på 1,5, eftersom 8 px lästes som grund. Tredje gången samma
+mönster i det här arbetet: **man måste veta vem som äger en inline-stil innan man tar bort den.**
+
+Skillnaden mot den cachning som var fel i checkpoint 46: ett CSS-värde ändras när en stilmall laddas
+senare och får aldrig cachas, medan en inline-stil från renderaren är stabil och ska sparas.
+
+Vakt: `dra-textdelar.browser.test.js`, 15 prov över tre familjer. Muterat — utan filen faller alla 15.
+
 ## Checkpoint 46 — En textgrupp och en bakgrundsgrupp för alla widgets (2026-09-09)
 
 David, efter att ha jämfört med Tiktory: *"vi har mer men ändå ser kaos ut"*. Konkurrenten har
