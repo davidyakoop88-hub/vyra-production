@@ -1,5 +1,49 @@
 # VYRA Project State
 
+## Checkpoint 45 — Töm widget, och en tom widget syns inte i sändningen (2026-09-09)
+
+David: *"vi ska ha töma widget och profilbild och använder namn kommer när första giften kommer."*
+På följdfrågan valde han: töm automatiskt när en ny sändning startar, och en tom widget ska vara
+**helt osynlig** i OBS.
+
+### Hålet som täpptes
+
+Två skrivare fyller Top Gift och Top Streak med riktiga tittare — `live-leaderboard.js`
+(`w.dataName = person.name`) och `gift-event-images.js` (samma för streaken) — och båda kallar
+sedan `save()`. Efter en sändning stod alltså en riktig persons namn och avatar kvar i layouten.
+Nästa gång studion öppnades stod deras namn i panelen i stället för "@StreamQueen".
+
+Gåvorekordet (`records.giftCoins`, `records.streakCount`) nollställdes redan vid `live:start`, just
+för att en ny sändnings första gåva ska räknas som rekord. **Widgetens data hade ingen sådan
+nollställare alls.** `vyra-tom-widget.js` är den saknade halvan av samma regel.
+
+Fälten som töms: `dataName`, `dataValue`, `profileImage`, `giftImage`, `giftName`. Bara för
+`templateTopGift` och `templateTopStreak` — en widget vars innehåll streamern själv skrivit
+(Egen text, Heart Goal) får aldrig tömmas av en sändningsstart.
+
+`live:start` men aldrig `live:end`, samma regel som gift-event-images.js och goal-client.js redan
+följer: ett avslut ska lämna sista resultatet kvar på skärmen.
+
+### Två fällor som mätningen visade
+
+**`view` är "editor" även i overlayen.** Första villkoret var `view === 'overlay'` och slog aldrig
+till: den globalen följer studions vy-knappar, inte hur sidan öppnades. `layout-safe.js`
+`iOverlayLage()` hade redan löst samma sak genom att läsa URL:en, med motiveringen "det gor
+funktionen oberoende av laddningsordningen". Samma väg används nu.
+
+**Inline `display:none` förlorar mot temaklasserna.** Stilen hamnade rätt i style-attributet men
+datorn räknade ändå fram `display:flex`, eftersom `.premium-topgift{display:flex!important}` och
+`.topgift-cyber{display:grid!important}` deklarerar sin layout med `!important`. Döljningen skriver
+därför `display:none!important`.
+
+**Elementet stannar i DOM**, det döljs bara. `live-leaderboard.js` uppdaterar widgeten genom att slå
+upp `[data-id]` och returnerar tyst när noden saknas — hade widgeten inte renderats alls skulle
+första gåvan skriva till state men aldrig nå skärmen, och widgeten förbli borta hela sändningen.
+
+Vakt: `tests/browser/tom-widget.browser.test.js`, sex prov över två familjer. Det tredje provet
+mäter åt båda hållen i samma test — osynlig i overlay, **synlig i editorn**, eftersom en widget man
+inte ser inte går att placera.
+
 ## Checkpoint 44 — Egenskapspanelen har en ordning (2026-09-09)
 
 David: *"just nu hur jag ser layout EGENSKAPER gör mig förvirrad och vet inte om allt funkar."*
