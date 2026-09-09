@@ -29,7 +29,9 @@
     [/^BAKGRUND/, 80],
     [/^ANIMATION|RÖRELSESTIL|PREMIUM RÖRELSE/, 70],
     [/AVATAR-RAM|PROFILRAM/, 60],
-    // Var widgeten ligger.
+    // Var widgeten ligger. Grundpositionen (bredd, höjd, lås) står öppen; de sex offsetfälten för
+    // rubrik, namn och värde är finjustering och fälls ihop strax före den.
+    [/POSITION\s*·\s*TEXTELEMENT|^FINJUSTERING/, 45],
     [/^POSITION/, 50],
     // Live och test — läses sällan, ändras sällan.
     [/^TRIGGER|LIVE-DATA|VISNINGSTID|^TESTA|TEST OCH RESET|WEBHOOK/, 40],
@@ -67,7 +69,13 @@
   // användes av pgSection() i media.js för Gift Campaign och Like Fountain. Den återanvänds här i
   // stället för att en andra sort hopfällbar grupp uppfinns. Grupper som redan är hopfällbara rörs
   // inte alls.
-  const FALL_FRAN = 40;
+  // POSITION (50) fälls INTE, till skillnad från allt annat i svansen. Uppmätt 2026-09-09: nio
+  // browserprov föll när den var hopfälld — "TOP GIFT · Bredd: fokus stannar på kontrollen",
+  // "Egen text · Bredd: fältet finns och tar emot fokus", "kedjelaset visas for lasbara widgets"
+  // och sex till. Alla nio letade efter breddfältet, som ligger där. Det är inte provens fel:
+  // bredd, höjd och proportionslåset hör till det man ändrar ofta, och en inställning man ändrar
+  // ofta får inte kräva ett klick först. Live/test (40) och allt från ram (60) och nedåt fälls.
+  const FALLS = new Set([40, 45, 60, 70, 80, 90]);
 
   // Vad användaren har öppnat, per rubrik. Panelen byggs om från grunden vid varje render(), så utan
   // det här minnet hade varje klick i studion fällt ihop det man just öppnat.
@@ -109,7 +117,7 @@
 
     for (const g of grupper) {
       const r = rubrikFor(g);
-      if (vikt(r) >= FALL_FRAN) gorFallbar(g, r);
+      if (FALLS.has(vikt(r))) gorFallbar(g, r);
     }
 
     // Stabil sortering: lika vikt behåller inbördes ordning, så en familj som bygger två grupper

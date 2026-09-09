@@ -31,17 +31,28 @@ mikrotask så att den inte beror på laddordning. Trappan: innehåll → widgete
 live/test → position → ram → animation → bakgrund → verktyg. En rubrik som inte står i listan får
 vikten mellan innehåll och design, så en ny grupp hamnar rätt utan att listan rörs.
 
-Grupper från och med *live/test* och nedåt fälls ihop. Strukturen (`.collapsible` + `.pg-toggle` +
-`.pg-body`) fanns redan i studio.css och användes av `pgSection()` — den återanvänds i stället för att
-en andra sorts hopfällbar grupp uppfinns. Vad användaren öppnat minns per rubrik, annars hade varje
-klick i studion fällt ihop det man just öppnade.
+Grupper från och med *live/test* och nedåt fälls ihop — **utom grundpositionen**. Strukturen
+(`.collapsible` + `.pg-toggle` + `.pg-body`) fanns redan i studio.css och användes av `pgSection()` —
+den återanvänds i stället för att en andra sorts hopfällbar grupp uppfinns. Vad användaren öppnat
+minns per rubrik, annars hade varje klick i studion fällt ihop det man just öppnade.
+
+**Varför POSITION & STORLEK står öppen.** Första försöket fällde allt från live/test och nedåt. Då
+föll nio browserprov i CI: "TOP GIFT · Bredd: fokus stannar på kontrollen", "Egen text · Bredd:
+fältet finns och tar emot fokus", "kedjelaset visas for lasbara widgets" och sex till. Alla nio
+letade efter breddfältet, som ligger i den gruppen. Proven hade rätt: bredd, höjd och
+proportionslåset hör till det man ändrar ofta, och det får inte kräva ett klick först. De sex
+offsetfälten under `POSITION · TEXTELEMENT` är däremot finjustering och fälls (vikt 45).
+
+Lärdomen är metodisk, inte teknisk: fyra browserprov kördes lokalt före den första pushen, inte hela
+sviten. Hela `npm run test:browser` tar ~45 min lokalt och lika länge i CI, men den är enda sättet
+att se en regression i en panel elva filer bygger.
 
 | Widget | Panelhöjd före | Efter |
 |---|---|---|
-| Top Streak premium | 3620 px (4,2 skärmar) | 2144 px (2,5) |
-| Top Like | 3428 px (4,0) | 2383 px (2,8) |
-| Fan Level | 3129 px (3,7) | 1617 px (1,9) |
-| Top Gift premium | 3041 px (3,6) | 1792 px (2,1) |
+| Top Streak premium | 3620 px (4,2 skärmar) | 2400 px (2,8) |
+| Top Like | 3428 px (4,0) | 2643 px (3,1) |
+| Fan Level | 3129 px (3,7) | 1877 px (2,2) |
+| Top Gift premium | 3041 px (3,6) | 1980 px (2,3) |
 
 "POSITION & STORLEK" låg förut på plats 3, 4 eller 8 beroende på widget. Nu står den på samma plats
 i alla.
