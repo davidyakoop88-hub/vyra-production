@@ -32,13 +32,43 @@ saker; den första säger att rören är kopplade, den andra att vatten kommer u
 
 **Vem:** David betalar, Claude läser av kedjan i produktion.
 
-**Status:** ⛔ **ÅTERÖPPNAD 2026-09-07** — avläsningen ovan gjordes mot **Stripe**, som inte finns
-kvar. Betalkedjan bytte leverantör till PayPal Subscriptions (PR #378), och ingen betalning har
-gått igenom den nya kedjan.
+**Status:** ✅ **KLAR — ett riktigt PayPal-köp gick genom hela kedjan 2026-09-09 19:50 UTC**, på ett
+nytt konto (workspace `c6439ecb`, en väns kort). Fyra av fem kontroller gröna; den femte
+(`trial_end`) avslöjade en bugg som är lagad i samma PR som den här raden — se "Avläst 2026-09-09"
+nedan. Ingen omkörning krävs: buggen låg i vilken PLAN checkouten begärde, inte i webhook-kedjan.
 
-Statusraden stod kvar som KLAR i ett dygn efter bytet, trots noteringen högst upp i avsnittet. Den
-som bara läste statusen hade dragit slutsatsen att punkten var avklarad — därför står skälet nu i
-själva raden och inte bara i en not ovanför.
+**Avläst 2026-09-09 (PayPal), loggvakt på tjänsten Api + `/api/workspaces/c6439ecb…/billing` i kundens session:**
+
+| Steg i kedjan | Tid (UTC) | Utfall |
+|---|---|---|
+| `POST …/billing/checkout` | 19:43:59 | 200 — kunden gick tillbaka utan att godkänna |
+| `POST …/billing/checkout` (andra försöket) | 19:46:24 | 200 |
+| Webhook `BILLING.SUBSCRIPTION.CREATED` | 19:46:33 | 200, signatur verifierad |
+| Kunden tillbaka före webhooken | 19:50:40 | första avläsningen hämtade från PayPal (440 ms), nästa läste tabellen (14 ms) — pending-vägen fungerar |
+| Webhook `BILLING.SUBSCRIPTION.ACTIVATED` | 19:50:48 | 200 |
+| Webhook `PAYMENT.SALE.COMPLETED` | 19:50:49 | 200 — **15 USD drogs direkt** |
+
+| Kontroll | Utfall |
+|---|---|
+| `plan` | `premium` ✅ |
+| `subscription.status` | `active` ✅ |
+| Skrivbordsgrinden | `/api/downloads/windows` svarar 302 för kontot ✅ |
+| `cancel_at_period_end` | `false` ✅ |
+| `trial_end` | ❌ `null` — inga tre gratisdagar, nästa dragning 2026-10-09 |
+
+**Varför provperioden uteblev — och fixen:** `checkout()` skrev `trial_started_at` redan när
+checkouten STARTADE. Första försöket 19:43 fick provplanen men godkändes aldrig; vid andra försöket
+19:46 räknades kunden som förbrukad och fick den reguljära planen. Varje kund som stänger
+PayPal-rutan och trycker igen hade drabbats, mot löftet "3 dagar gratis". Fixen flyttar spärren
+till `upsertFromPaypal` — den sätts först när PayPal säger att abonnemanget är aktivt — med
+`server/test/billing-provperiod.test.js` som spelar upp exakt sekvensen (tre av fyra prov faller
+på den gamla koden).
+
+**Kvar från köpet:** kunden på `c6439ecb` fick inga gratisdagar — Davids beslut om nästa dragning
+ska skjutas fram tre dagar i PayPals panel.
+
+Statusraden stod 2026-09-07 kvar som KLAR i ett dygn efter leverantörsbytet, trots noteringen högst
+upp i avsnittet. Därför står skälet numera i själva statusraden och inte bara i en not ovanför.
 
 **Vad som är gjort av PR #378:s fem förberedelser:**
 
@@ -47,7 +77,7 @@ själva raden och inte bara i en not ovanför.
 | 1. Sätt de sex `PAYPAL_*` i Railway | ✅ **bevisat** — `server/index.js:2` validerar dem vid start i produktion, och `/api/health` svarar `ok`, alltså startade servern |
 | 2. Avsluta Stripe-prenumerationen på workspace `8826f6d1` och kompa om raden | ⬜ kräver Stripes panel |
 | 3. `npm run migrate` mot produktion | ⬜ går inte att avläsa utifrån |
-| 4. **Gör om den här punkten med ett PayPal-köp** | ⬜ **det är själva blockeraren** |
+| 4. **Gör om den här punkten med ett PayPal-köp** | ✅ **gjort 2026-09-09** — hela kedjan bevisad, se ovan |
 | 5. Ta bort `STRIPE_*` ur Railway | ⬜ koden är redan ren — noll träffar i `server/` |
 
 | Kontroll | Utfall |
@@ -169,16 +199,15 @@ Bakgrunden står i [`DESKTOP_RELEASE.md`](DESKTOP_RELEASE.md).
 | Partner Center → Appar och spel | **VYRA Studio**, MSIX/PWA, 240 marknader, status **"I Microsoft Store"** |
 | Insändning | Submission 1, senast ändrad 2026-09-08 — certifieringen från 2026-09-05 gick igenom |
 | Publik sida | `https://apps.microsoft.com/detail/9PPKZN2SCJM2` svarar med posten: utgivare vyralive.app, Verktyg, PEGI 3, "Hämta" |
-| Skärmbilder | rutan "Skärmbilder" renderade tom vid avläsningen — kontrollera i Partner Center att bilder finns i Store-posten |
-| Hemsidans knappar | pekar FORTFARANDE på GitHub-releasen `v1.2.3/VYRA-Setup.exe` (osignerad): `DESKTOP_STORE_URL` är **inte** satt på tjänsten Api i Railway |
+| Skärmbilder | ✅ finns — den svenska listningen i Partner Center visar "Dator (5), Xbox (0)"; den tomma rutan på den publika sidan var renderingsfördröjning |
+| Hemsidans knappar | ✅ `DESKTOP_STORE_URL` satt på tjänsten Api 2026-09-09 18:12 UTC; `/api/downloads/windows?meta=1` svarar med `storeUrl` = Store-sidan, så alla `[data-ladda-desktop]`-knappar pekar på butiken |
+| Paketet | `VYRA-Store-1.2.4.appx` (1.2.4.0, x64) med varningen att `runFullTrust` är en begränsad kapacitet som kräver godkännande — insändningen publicerades ändå, men räkna med frågan vid nästa insändning |
 
-**Kvar:** en miljövariabel på tjänsten Api, `DESKTOP_STORE_URL=https://apps.microsoft.com/detail/9PPKZN2SCJM2`
-(DESKTOP_RELEASE.md), så byter alla `[data-ladda-desktop]`-knappar till butiken. Sedan Store-versionens
-åtta handkontroller i store-msix.md §5 — punkt 7 (`giftId` över appens egen anslutning) är hela skälet
-till 1.2.4.
+**Kvar:** Store-versionens åtta handkontroller i store-msix.md §5 — punkt 7 (`giftId` över appens
+egen anslutning) är hela skälet till 1.2.4.
 
-**Status:** 🟡 **PUBLICERAD I STORE 2026-09-08** — men hemsidan skickar fortfarande kunder till den
-osignerade `.exe`:n tills `DESKTOP_STORE_URL` sätts (David, Railway)
+**Status:** ✅ **PUBLICERAD I STORE 2026-09-08 OCH LÄNKAD FRÅN HEMSIDAN 2026-09-09** — kunder får
+Microsofts signerade paket; de åtta handkontrollerna i store-msix.md §5 återstår
 
 ---
 
