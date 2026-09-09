@@ -95,6 +95,11 @@ Väljaren bor nu i Inställningar, tillagd med en **DOM-patch** — `settings()`
 är minifierad handkod och aldrig får ändras. `runtime-controls.js` äger både gruppen och
 prestandaläget, så patchen ligger i samma fil som allt annat den gör.
 
+**CI fångade en sak lokala prov missade.** Väljaren saknade `flex:1`, som sidans `input` har,
+så raden slutade vid x=440 medan dess hårlinje gick till 915 — `layout-integritet` provet
+"A9: harlinjen slutar dar formraden slutar" föll på det. Ett prov som fanns hela tiden, i en fil jag
+inte körde lokalt. Det är precis vad hela sviten är till för.
+
 Vakt: `tests/browser/prestanda-ur-panelen.browser.test.js`, 7 prov. Tre av dem mäter **motsatsen** —
 att preset och Återställ widget står kvar i panelen. En utflyttning som tar med sig fel saker är lika
 mycket ett fel som ingen utflyttning alls.

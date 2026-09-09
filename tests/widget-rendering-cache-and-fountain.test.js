@@ -133,7 +133,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-09 for emoji-knappen: studio.css bar reglerna for knappen och dess valjare.
   // media.js ar OFORANDRAD av den andringen och behaller sin strang — de foljer filerna, inte
   // varandra.
-  assert.match(studio, /studio\.css\?v=20260909-emoji/);
+  // Bumpad 2026-09-10: prestandavaljaren i Installningar saknade `flex:1` som sidans input har, sa
+  // radens harlinje gick 475 px forbi innehallet. BARA studio.css andrades.
+  assert.match(studio, /studio\.css\?v=20260910-installningar/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);

@@ -6,6 +6,7 @@ aside{border-right:1px solid var(--line);padding:14px 11px;display:flex;flex-dir
    Spara-knappen klistrades mot raden ovan. padding-x ar 0 med flit: da slutar border-bottom
    exakt dar faltet slutar. */
 .settings-page label{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding:16px 0}.settings-page input{flex:1;background:#151821;border:1px solid #292d38;color:white;padding:7px}
+.settings-page select{flex:1;background:#190d22;border:1px solid #452656;color:#fff;padding:7px}
 /* Status ar TEXT, inte ett falt. Den gamla <input disabled> var visuellt identisk med det
    redigerbara faltet ovanfor och sag darfor redigerbar ut. Pricken bar anslutningslaget. */
 .settings-status{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding:16px 0}
