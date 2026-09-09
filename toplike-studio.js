@@ -364,8 +364,12 @@
     const gender = w.frameGenderTab === 'girls' ? 'girls' : 'boys';
     const current = w.profileFrame || 'none';
     const swatch = ([id, name, file, ext]) => `<button type="button" data-ws-frame="${id}" class="ws-frame-swatch${current === id ? ' active' : ''}${ext === 'svg' ? ' placeholder' : ''}"><img src="assets/images/profile-frames/${file}.${ext}" alt=""><b>${name}</b>${ext === 'svg' ? '<small>platshållare</small>' : ''}</button>`;
+    // INGEN EGEN RUBRIK HÄR (2026-09-09). Väljaren bodde tidigare i ett `<span>AVATAR-RAMAR · VÄLJ
+    // RAM</span>`, som blev en dubblett i gift-alert-frames.js:s grupp — den har redan
+    // `<h4>AVATAR-RAM</h4>`. Spannet fanns för den andra monteringsvägen (media.js), som la väljaren
+    // i panelens första grupp utan egen rubrik; den vägen bygger nu en egen AVATAR-RAM-grupp i
+    // stället. Rubriken ägs alltså av gruppen, inte av väljaren, oavsett väg in.
     return `
-      <span>AVATAR-RAMAR · VÄLJ RAM</span>
       <div class="ws-frame-gender-tabs">
         <button type="button" data-ws-gender="boys" class="${gender === 'boys' ? 'active' : ''}">KOLLEKTION 1</button>
         <button type="button" data-ws-gender="girls" class="${gender === 'girls' ? 'active' : ''}">KOLLEKTION 2</button>

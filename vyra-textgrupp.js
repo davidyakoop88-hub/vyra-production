@@ -141,25 +141,30 @@
   // ---- panelen ------------------------------------------------------------------------------
   const TYPSNITT = ['Inter', 'Arial', 'Georgia', 'Impact', 'Verdana', 'Courier New', 'monospace'];
 
+  // KOMPAKT MED FLIT. Första versionen gav varje kontroll en egen rad och blev 586 px — panelens
+  // STÖRSTA post, och därmed samma sorts svällning som gruppen byggdes för att råda bot på. Uppmätt
+  // 2026-09-09: Top Gift gick från 1980 px till 2576 när gruppen tillkom.
+  //
+  // Skuggan och konturen är par av tal som hör ihop och läses tillsammans; de får dela rad i
+  // `.property-grid`, precis som Tiktory gör med sin "Text Shadow: X, Y, BLUR, Color". Typsnitt och
+  // textstorlek behåller sina egna rader — de ändras oftast, och ett reglage behöver bredden.
   function grupp(w) {
     const alt = TYPSNITT.map(t =>
       `<option value="${t}" ${w.textFont === t ? 'selected' : ''}>${t}</option>`).join('');
+    const skala = Math.round((Number(w.textScale) || 1) * 100);
     return `<div class="property-group vyra-textgrupp"><h4>TEXT</h4>`
       + `<label><span>Typsnitt</span><select id="vtFont">`
       + `<option value="" ${!w.textFont ? 'selected' : ''}>Widgetens eget</option>${alt}</select></label>`
-      + `<label class="range-label">Textstorlek <b>${Math.round((Number(w.textScale) || 1) * 100)}%</b>`
-      + `<input id="vtScale" type="range" min="50" max="200" step="5" value="${Math.round((Number(w.textScale) || 1) * 100)}"></label>`
-      + `<label class="range-label">Skugga <b>${Number(w.textShadowBlur) || 0}px</b>`
-      + `<input id="vtShadowBlur" type="range" min="0" max="24" value="${Number(w.textShadowBlur) || 0}"></label>`
+      + `<label class="range-label">Textstorlek <b>${skala}%</b>`
+      + `<input id="vtScale" type="range" min="50" max="200" step="5" value="${skala}"></label>`
       + `<div class="property-grid">`
-      + `<label>X<input id="vtShadowX" type="number" value="${Number(w.textShadowX) || 0}"></label>`
-      + `<label>Y<input id="vtShadowY" type="number" value="${Number(w.textShadowY) || 0}"></label>`
-      + `</div>`
-      + `<label><span>Skuggfärg</span><input id="vtShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label>`
-      + `<label class="range-label">Kontur <b>${Number(w.textOutlineWidth) || 0}px</b>`
-      + `<input id="vtOutline" type="range" min="0" max="6" step="0.5" value="${Number(w.textOutlineWidth) || 0}"></label>`
-      + `<label><span>Konturfärg</span><input id="vtOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label>`
-      + `</div>`;
+      + `<label>Skugga<input id="vtShadowBlur" type="number" min="0" max="24" value="${Number(w.textShadowBlur) || 0}"></label>`
+      + `<label>Skuggfärg<input id="vtShadowColor" type="color" value="${w.textShadowColor || '#000000'}"></label>`
+      + `<label>Skugga X<input id="vtShadowX" type="number" min="-20" max="20" value="${Number(w.textShadowX) || 0}"></label>`
+      + `<label>Skugga Y<input id="vtShadowY" type="number" min="-20" max="20" value="${Number(w.textShadowY) || 0}"></label>`
+      + `<label>Kontur<input id="vtOutline" type="number" min="0" max="6" step="0.5" value="${Number(w.textOutlineWidth) || 0}"></label>`
+      + `<label>Konturfärg<input id="vtOutlineColor" type="color" value="${w.textOutlineColor || '#000000'}"></label>`
+      + `</div></div>`;
   }
 
   // GRUPPEN LÄGGS I DOM, INTE I props()-STRÄNGEN. Första försöket patchade props() och la
@@ -200,9 +205,10 @@
         el.oninput = e => {
           w[falt] = las(e);
           appliceraAlla();
+          // Bara textstorleken har kvar en siffra i etiketten; resten är talfält som visar sitt
+          // eget värde sedan gruppen blev kompakt.
           const b = el.closest('.range-label')?.querySelector('b');
-          if (b) b.textContent = id === 'vtScale' ? Math.round(Number(el.value)) + '%'
-            : (Number(el.value) || 0) + 'px';
+          if (b) b.textContent = Math.round(Number(el.value)) + '%';
         };
         el.onchange = e => { w[falt] = las(e); if (typeof save === 'function') save(); appliceraAlla(); };
       };

@@ -1,5 +1,38 @@
 # VYRA Project State
 
+## Checkpoint 50 — Ramväljaren får en rubrik och en plats (2026-09-09)
+
+Steg 8 hette "avatar-ramen blir en knapp som öppnar väljaren". **Mätningen sa att det inte behövdes.**
+Gruppen fälldes redan ihop i checkpoint 44 och är 57 px i panelen; en knapp hade sparat noll. Öppnad
+är den 540 px med 30 ramar i rutnät, vilket är rimligt för en väljare man faktiskt tittar i.
+
+Samma mätning pekade i stället ut tre saker som var värda att göra.
+
+### Den dubbla rubriken, från den allra första granskningen
+
+Gruppen bar `<h4>AVATAR-RAM</h4>` och direkt under den `<span>AVATAR-RAMAR · VÄLJ RAM</span>`.
+Orsaken var **två monteringsvägar** för samma väljare: `gift-alert-frames.js` bygger en egen grupp
+med rubrik, medan `media.js:499` la väljaren i panelens FÖRSTA property-group utan någon. Spannet
+fanns för den andra vägens skull.
+
+Att bara ta bort spannet hade lämnat rankingens väljare helt utan rubrik, inne i en grupp om något
+annat. Båda vägarna bygger nu en egen AVATAR-RAM-grupp, så rubriken ägs av gruppen.
+
+### Rankingens ramväljare låg fel
+
+Inbakad i första gruppen låg 30 ramar alltid synliga, mitt bland innehållsfälten. Nu är den en egen
+grupp på vikt 60 — bland tilläggen, hopfälld som de andra. Top Coins gick från 2344 px till 2272.
+
+### Min egen textgrupp hade blivit panelens största post
+
+TEXT från checkpoint 46 var 586 px, alltså samma sorts svällning som grupperna byggdes för att råda
+bot på: Top Gift gick 1980 → 2576 när den tillkom. Skugga och kontur är par av tal som läses
+tillsammans och delar nu rad i `.property-grid`, som Tiktory gör med sin "Text Shadow: X, Y, BLUR,
+Color". Typsnitt och textstorlek behåller egna rader — de ändras oftast och ett reglage behöver
+bredden. **586 px → 404 px**, och panelen 2576 → 2394.
+
+Vakt: `tests/browser/ramvaljarens-rubrik.browser.test.js`, 6 prov över de två monteringsvägarna.
+
 ## Checkpoint 49 — Prestandaläget hör till studion, inte till widgeten (2026-09-09)
 
 Steg 7 i Davids plan hette "flytta ut preset och prestanda ur panelen". **Bara hälften av det var
