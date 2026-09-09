@@ -387,7 +387,17 @@ function vyraPlaceraTopLikeRamar(omobservera){
     const pos=rader.map(r=>parseFloat(getComputedStyle(r).getPropertyValue('--px'))/100);
     let behovL=0;for(let i=0;i<rader.length;i++)for(let j=0;j<i;j++){const d=Math.abs(pos[i]-pos[j]);if(!(d>0)||!aw[i]||!aw[j])continue;behovL=Math.max(behovL,((aw[i]+aw[j])/2*.8)/d)}
     const wb=px(wg),lb=px(lista),k=wb.width/(wg.offsetWidth||1);if(!(behovL>lb.width+.5))return;
-    const vaxt=behovL-lb.width;
+    /* DUKENS GRANS. Overlayn ritas i layoutens egna pixlar (432x768 for Mobil, se OVERLAY_FORMAT) och skalas
+       inte till kallan — en scen som vaxer forbi duken klipps i OBS. Uppmatt i riktig OBS 32.2.1 2026-09-08:
+       amethyst-oracle gav 512 px pa en 432 px bred duk, fyran och femman utanfor bild. Vaxten begransas
+       darfor till dukens bredd med 4 px luft, och widgeten skjuts sa att den ryms; ramarna far da
+       overlappa mer an 20 % — hellre det an utanfor scenen. */
+    /* SYMMETRISKT, aldrig skjutet: vaxten begransas av det MINSTA utrymmet at nagon sida (4 px luft), sa att
+       mitten — och darmed fotona — star kvar exakt dar de stod. Att skjuta widgeten for att fa plats hade
+       flyttat fotot 154 px i sidled (kontraktet i ram-ror-inte-bildmatt: ramen ror inte fotot). */
+    const duk=wg.closest('.canvas'),db=duk?px(duk):null;let vaxt=behovL-lb.width;
+    if(db)vaxt=Math.min(vaxt,2*Math.max(0,Math.min(wb.left-db.left-4,db.right-4-wb.right)));
+    if(vaxt<.5)return;
     wg.dataset.tlBage=JSON.stringify({width:wg.style.getPropertyValue('width'),'max-width':wg.style.getPropertyValue('max-width'),'min-width':wg.style.getPropertyValue('min-width'),'margin-left':wg.style.getPropertyValue('margin-left')});
     wg.style.setProperty('width',((wb.width+vaxt)/k).toFixed(2)+'px','important');wg.style.setProperty('max-width','none','important');wg.style.setProperty('min-width','0','important');
     wg.style.setProperty('margin-left',(-vaxt/2/k).toFixed(2)+'px','important')});
@@ -1059,7 +1069,7 @@ Promise.resolve().then(()=>{['gift-fireworks.css?v=20260806-trigger','action-eve
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260820-2';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260908-bagpodiet';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260908-ramaccent';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260908-bagpodiet';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260909-oppning';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20260806-animation';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20260908-bildmatt';document.body.append(js)});

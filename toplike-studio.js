@@ -90,24 +90,29 @@
   // The offsets matter: 32 of these 53 frames have an off-centre opening, because an ornament on top
   // (crown, moon, antlers) pushes the usable hole downwards. Measuring rays from the image centre
   // cannot detect that and leaves the photo visibly off inside the ring.
+  // OMMÄTT 2026-09-09 för de 34 PNG-ramarna (scratch ram_oppning.py): den VISUELLA öppningen — alfa-hålet
+  // PLUS det mörka, omättade skuggbandet innanför metallringen — som största inskrivna cirkel med tät
+  // sampling. De gamla värdena låg 2–6 % för lågt i fit och 1–3 % fel i dx/dy (amethyst-oracle: .4844/
+  // -.0273 mot .520/-.005), så fotot satt något för litet och uppe till vänster i ringen med ett mörkt
+  // band synligt nere till höger — uppmätt i riktig OBS 32.2.1. SVG-ramarna behåller sina värden.
   const FRAME_GEOM = {
-    'ocean-oracle': [.4706, .0039, -.0078], 'neon-valkyrie': [.4270, -.0547, .0195],
-    'moonlit-sakura': [.4449, -.0273, -.0078], 'celestial-serpent': [.5110, -.0313, .0156],
-    'stellar-emperor': [.5423, .0352, .0508], 'opal-dream': [.5156, .0078, .0078],
-    'thunder-warden': [.4830, -.0508, .0391], 'velvet-nocturne': [.5533, -.0195, .0391],
-    'gilded-lion': [.4680, -.0273, .0898], 'amethyst-oracle': [.4844, -.0273, .0703],
-    'frostfire-crown': [.4453, -.0664, .0586], 'quantum-lotus': [.4882, -.0742, .0742],
-    'crimson-dynasty': [.5050, -.0078, .0391], 'pearl-tempest': [.4861, -.0273, 0],
-    'cosmic-tiger': [.5299, -.0469, .0273], 'enchanted-ivy': [.5221, -.0195, .0742],
-    'arctic-couture': [.4674, .0117, .0430], 'aurora-diamond': [.6094, -.0039, -.0039],
-    'champagne-crown': [.6484, -.0078, .0664], 'emerald-elan': [.6519, -.0039, .0039],
-    'midnight-amethyst': [.5551, -.0195, -.0039], 'pearl-lumiere': [.5896, .0078, .0117],
-    'pink-angel': [.6862, -.0078, .0430], 'rose-atelier': [.5823, 0, .0156],
-    'ruby-velvet': [.5414, -.0508, -.0117], 'sapphire-nocturne': [.5781, .0039, .0195],
-    'ice-crystal': [.6191, -.0156, .0313], 'samurai': [.6035, .0039, .0273],
-    'golden-king': [.6282, -.0039, .0664], 'galaxy': [.6033, .0117, .0156],
-    'emerald': [.6439, -.0039, .0039], 'cyber-blue': [.7294, .0039, 0],
-    'neon-purple': [.7327, -.0039, -.0078], 'minimal-glow': [.7890, 0, 0],
+    'ocean-oracle': [.4878, .0122, .0041], 'neon-valkyrie': [.4585, -.0375, .0257],
+    'moonlit-sakura': [.4281, -.0368, -.0053], 'celestial-serpent': [.5058, -.0292, .0214],
+    'stellar-emperor': [.5652, .0362, .0326], 'opal-dream': [.5233, .0090, .0018],
+    'thunder-warden': [.5123, -.0439, .0333], 'velvet-nocturne': [.5660, -.0245, .0434],
+    'gilded-lion': [.4842, .0018, .0930], 'amethyst-oracle': [.5201, -.0055, .0678],
+    'frostfire-crown': [.4702, -.0474, .0579], 'quantum-lotus': [.5224, -.0522, .0634],
+    'crimson-dynasty': [.5128, .0055, .0348], 'pearl-tempest': [.4924, -.0152, -.0076],
+    'cosmic-tiger': [.5348, -.0531, .0128], 'enchanted-ivy': [.5123, -.0298, .0544],
+    'arctic-couture': [.4988, .0035, .0459], 'aurora-diamond': [.5953, -.0070, -.0047],
+    'champagne-crown': [.6395, .0043, .0665], 'emerald-elan': [.6393, -.0046, .0023],
+    'midnight-amethyst': [.5492, -.0217, -.0034], 'pearl-lumiere': [.5789, -.0263, -.0287],
+    'pink-angel': [.7048, .0048, .0429], 'rose-atelier': [.5687, .0095, .0213],
+    'ruby-velvet': [.5689, -.0361, .0055], 'sapphire-nocturne': [.5751, .0021, .0279],
+    'ice-crystal': [.6324, .0143, .0352], 'samurai': [.6057, -.0162, .0390],
+    'golden-king': [.6362, -.0067, .0676], 'galaxy': [.6400, .0010, .0105],
+    'emerald': [.6705, -.0029, .0219], 'cyber-blue': [.7276, -.0086, -.0048],
+    'neon-purple': [.7200, .0048, -.0067], 'minimal-glow': [.7810, .0010, .0010],
     // svg placeholders
     'bronze': [.6850, -.0039, -.0039], 'silver': [.6850, -.0039, -.0039],
     'flame': [.6484, -.0039, -.0039], 'heroic': [.6040, -.0352, .0703],
@@ -127,7 +132,7 @@
   // Honouring those literally would scale the ring 3x and shove it sideways, wrecking the row for
   // everyone. They are clamped instead: their decoration overlaps the photo, which is how the art
   // is drawn.
-  const FIT_FLOOR = .45, OFFSET_CAP = .07;
+  const FIT_FLOOR = .45, OFFSET_CAP = .10;  // .10: gilded-lion har uppmätt dy .093 — taket är ett skydd mot dålig data, inte mot mätta värden
   const FRAME_GEOM_DEFAULT = [.62, 0, 0]; // catalog median, for an asset added without measuring
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   function frameGeom(id) {
