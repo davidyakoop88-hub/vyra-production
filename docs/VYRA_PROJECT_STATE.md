@@ -1,5 +1,34 @@
 # VYRA Project State
 
+## Checkpoint 48 — Samma sak heter samma sak i panelen (2026-09-09)
+
+Sista delen av Davids *"vi har mer men ändå ser kaos ut"*: panelens grupper hette olika saker i
+olika widgets, så ett block man känner igen bar ett namn man inte kände igen.
+
+| Var | Hette | Heter | Varför |
+|---|---|---|---|
+| media.js (Gift Jar) | POSITION OCH STORLEK | POSITION & STORLEK | 23 filer mot en; samma fält |
+| layout-standalone.js | POSITION + STORLEK, två grupper | POSITION & STORLEK, en | X/Y och bredd/höjd hör ihop överallt annars |
+| media.js (Like Fountain) | GENERAL | INNEHÅLL | engelska i ett svenskt gränssnitt |
+| gift-fireworks.js | STORLEK | SKALA | gruppen bär ETT reglage för hela widgetens skala — namnet sa fel sak, och filen har redan en riktig POSITION & STORLEK |
+
+Det sista fallet är det intressanta: provet hittade det som en namnavvikelse, men rätt åtgärd var inte
+att döpa om det till POSITION & STORLEK utan att ge det ett namn som stämmer. **En namnregel får inte
+tvinga fram en lögn.** SKALA lades samtidigt in i panelordningens trappa bredvid positionen, dit den
+hör.
+
+Widgetspecifika rubriker rörs inte. "VIDEO PER NIVÅ (1-50)" och "GIFT EDITOR · VISA / TA BORT" säger
+något eget om just den widgeten; att tvinga in dem under ett gemensamt ord hade gjort panelen
+fattigare, inte tydligare.
+
+Vakt: `tests/panelgruppernas-namn.test.js` — ett **källkodsprov**, inte ett browserprov. En rubrik är
+en sträng i en fil, så att starta en webbläsare för att läsa den hade tagit fyrtio minuter och inte
+mätt mer. Den engelska listan är dessutom snäv med flit: en allmän ordlista hade fällt "TOP GIFTER",
+"LIVE-DATA" och "PRESET", som alla är etablerade i produkten.
+
+`panel-controls.browser.test.js` pekar nu på `vtOutline` i stället för `wsOutlineWidth` — samma fält
+`textOutlineWidth`, bara den kontroll som blev kvar efter att dubbletten från checkpoint 47 togs bort.
+
 ## Checkpoint 47 — Rubrik, namn och värde dras på duken (2026-09-09)
 
 David om Top Likes sex nummerfält: *"det jag tycker om man göra bättre"*, och efter demon:

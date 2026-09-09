@@ -32,7 +32,7 @@
     // Var widgeten ligger. Grundpositionen (bredd, höjd, lås) står öppen; de sex offsetfälten för
     // rubrik, namn och värde är finjustering och fälls ihop strax före den.
     [/POSITION\s*·\s*TEXTELEMENT|^FINJUSTERING/, 45],
-    [/^POSITION/, 50],
+    [/^POSITION|^SKALA/, 50],
     // Live och test — läses sällan, ändras sällan.
     [/^TRIGGER|LIVE-DATA|VISNINGSTID|^TESTA|TEST OCH RESET|WEBHOOK/, 40],
     // Hur den ser ut.
