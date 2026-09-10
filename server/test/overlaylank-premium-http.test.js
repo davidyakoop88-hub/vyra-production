@@ -50,8 +50,9 @@ test.before(async () => {
 
   RATOKEN = S.token();
   await pool.query(
-    `INSERT INTO overlay_access_tokens (overlay_id,token_hash) VALUES ($1,$2)`,
-    [OVERLAY, S.digest(RATOKEN)]);
+    `INSERT INTO overlay_access_tokens (overlay_id,token_hash,label,created_by)
+     VALUES ($1,$2,'prov',$3)`,
+    [OVERLAY, S.digest(RATOKEN), OWNER]);
 
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${server.address().port}`;
