@@ -664,25 +664,35 @@ var grön i sin egen PR. På en snabb maskin landar projektionen utanför fönst
 | Mätning | Antal |
 |---|---|
 | Browser-/visuella prov som seedar via `state.widgets.length = 0` | 31 |
-| …av dem som sparar seedningen | 1 (`dra-textdelar`, efter PR #397) |
+| …av dem som sparar seedningen | 3 (`dra-textdelar` #397, `tom-widget` och `editor-ui-placering` #399) |
 | …som seedar om mer än en gång i samma prov (riskfönstret är störst där) | 6 |
 
-**Ordningen att migrera i — och varför den inte är antalet omseedningar.** Att räkna
-`state.widgets.length = 0` i källan är en trubbig mätare: fyra förekomster i olika hjälpare med var
-sin egen sida är ofarligare än två i samma prov. Det som ÖPPNAR fönstret är en åtgärd som SPARAR
-följd av en omseedning — sparningen är i luften när seedningen landar, och projektionen skriver
-tillbaka det gamla läget.
+**MÄTT EFTERÅT, och det ändrar hur brådskande resten är.** Försöket att bevisa vinsten i ett andra
+prov (`tom-widget`) misslyckades — och det är ett resultat:
 
-| Ordning | Prov | Varför |
-|---|---|---|
-| 1 | `tom-widget` | klickar en knapp som sparar (rad 117) och seedar sedan om två gånger (rad 148, 168) — exakt samma form som felet vi just lagade |
-| 2 | `editor-ui-placering` | klickar zoom (rad 136), seedar i två uppställningar |
-| 3 | `dra-textdelar` | ✅ redan migrerad i PR #397 — mallen att kopiera |
-| 4 | `ram-radavstand-vaxer-inte` | fyra seedningar men i skilda hjälpare med var sin sida, inga klick och ingen sparning emellan; högt trafikerad, så den är värd att härda ändå |
-| 5–6 | `battle-mvp-ramar`, `fan-level-referens` | seedar två gånger, ingen sparande åtgärd emellan |
+| Mätning | Utfall |
+|---|---|
+| `tom-widget`-formen (seeda → klicka en sparande knapp → läs av) med gammal seedning, 10x strypning | 0 av 5 föll |
+| Samma med hjälparen | 0 av 5 |
+| Projektioner under 4 s stillastående, med och utan `projectLocalSession()` | 0 |
 
-Resten av de 31 seedar en gång per sida och har inget fönster att tala om, men vinner ändå på samma
-hjälpare den dagen någon lägger till ett klick.
+Skälet: `cloud-sync.js` pushar bara när `workspace` OCH `overlay` finns, alltså aldrig i ett
+browserprov utan inloggning. **Tickaren som `studio.js:30` beskriver går i produktion, inte i
+proven.** I ett prov är den enda projektionen den som provets EGEN sparning utlöser.
+
+Fönstret öppnas därför bara i en form: **en sparning i luften följd av en NY mutation av `state`.**
+Bland de sex hade bara `dra-textdelar` den formen. En tidigare version av den här punkten
+rangordnade proven efter antal seedningar och efter "gör provet något som sparar" — båda måtten var
+fel, och den ordningen ska ingen följa.
+
+**Vad som faktiskt återstår är alltså inte brådskande:** ingen av de kvarvarande fem är uppmätt
+flakig, och att migrera dem ger inte färre röda körningar. Det de vinner är detsamma som
+`editor-ui-placering` vann: fasta pauser byts mot `waitForFunction`, och en icke skrivbar session
+blir ett hörbart fel i stället för en tyst nolla. Ta dem när någon ändå är i filen.
+
+**Den regel som INTE är förhandlingsbar** gäller oavsett prioritet: muterar ett prov `state` efter
+något som sparar, ska seedningen gå via hjälparen — och ingen läsning får ske via en fångad
+widgetreferens över ett `await`.
 
 **Åtgärden:** en gemensam `seedaStudioState()` i `tests/helpers/` som (1) muterar, (2) anropar
 `save()`, och (3) väntar med `waitForFunction` tills BÅDE `state` och duken visar widgeten — aldrig
