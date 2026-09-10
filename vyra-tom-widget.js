@@ -49,30 +49,48 @@
   // Läggs i PRESET & PRESTANDA-gruppen, bredvid "Återställ widget". De två gör olika saker och det
   // ska synas: "Återställ widget" nollställer skala, genomskinlighet, dolt och lager — alltså hur
   // widgeten VISAS. Den här nollställer vem den visar.
+  // KNAPPEN LÄGGS ALDRIG LÖST I PANELEN. Första versionen föll tillbaka på panel.append() när
+  // "Återställ widget" ännu inte fanns — runtime-controls.js bygger sin grupp i en senare bindare,
+  // och laddordningen varierar. Ett löst element räknas av vyra-panelordning.js som "huvud" och
+  // hamnade därför ÖVERST i panelen, bredvid rubriken och märket. David: "detta gillade inte jag".
+  //
+  // Widgeten töms dessutom automatiskt vid varje sändningsstart, så knappen är en nödutgång man
+  // sällan behöver. Den hör hemma INNE i PRESET-gruppen, som är hopfälld — den finns, men ligger
+  // inte framme.
+  function laggTill() {
+    if (typeof view !== 'undefined' && view !== 'editor') return;
+    const panel = document.querySelector('.properties');
+    const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
+    if (!panel || !arLivewidget(w) || panel.querySelector('#vyraTomWidget')) return;
+
+    const granne = panel.querySelector('#runtimeResetWidget');
+    if (!granne || !granne.parentNode) return;
+
+    const knapp = document.createElement('button');
+    knapp.id = 'vyraTomWidget';
+    knapp.type = 'button';
+    knapp.className = 'vyra-tom-widget';
+    knapp.textContent = 'Töm widget';
+    knapp.title = 'Nollställer namn, profilbild, gåva och värde. Nästa gåva fyller widgeten igen.';
+    granne.parentNode.insertBefore(knapp, granne.nextSibling);
+
+    knapp.onclick = () => {
+      if (!tom(liveWidget(selected))) return;
+      if (typeof save === 'function') save();
+      if (typeof render === 'function') render();
+    };
+  }
+
   if (typeof bind === 'function') {
     const foregaende = bind;
     bind = function () {
       const ut = foregaende.apply(this, arguments);
-      if (typeof view !== 'undefined' && view !== 'editor') return ut;
-      const panel = document.querySelector('.properties');
-      const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
-      if (!panel || !arLivewidget(w) || panel.querySelector('#vyraTomWidget')) return ut;
-
-      const granne = panel.querySelector('#runtimeResetWidget');
-      const knapp = document.createElement('button');
-      knapp.id = 'vyraTomWidget';
-      knapp.type = 'button';
-      knapp.className = 'vyra-tom-widget';
-      knapp.textContent = 'Töm widget';
-      knapp.title = 'Nollställer namn, profilbild, gåva och värde. Nästa gåva fyller widgeten igen.';
-      if (granne && granne.parentNode) granne.parentNode.insertBefore(knapp, granne.nextSibling);
-      else panel.append(knapp);
-
-      knapp.onclick = () => {
-        if (!tom(liveWidget(selected))) return;
-        if (typeof save === 'function') save();
-        if (typeof render === 'function') render();
-      };
+      // Två försök: ett direkt, och ett i en mikrotask efter att alla bindare kört. Grannen byggs
+      // av runtime-controls.js, som kan ligga senare i kedjan — utan andra försöket försvann
+      // knappen helt de gångerna. Samma mönster som vyra-panelordning.js använder, och av exakt
+      // samma skäl.
+      laggTill();
+      Promise.resolve().then(laggTill);
       return ut;
     };
   }

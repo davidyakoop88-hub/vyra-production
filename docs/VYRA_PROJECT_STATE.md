@@ -1,5 +1,47 @@
 # VYRA Project State
 
+## Checkpoint 52 — Två saker David sa nej till (2026-09-10)
+
+Panelen såg annorlunda ut i verkligheten än i mätningarna, och David tittade på den: *"detta gillade
+inte jag när jag sa att widget startar som töm det behövs inte synas samt de andra tiktory de har
+inte de i inställningar som syns"*.
+
+### "Töm widget" hamnade överst i panelen
+
+Knappen skulle ligga bredvid "Återställ widget" i PRESET-gruppen. Den föll tillbaka på
+`panel.append()` när grannen ännu inte fanns — runtime-controls.js bygger sin grupp i en **senare**
+bindare, och laddordningen varierar. Ett löst element räknas av vyra-panelordning.js som "huvud" och
+hamnade därför högst upp, bredvid rubriken och märket.
+
+Rättat: knappen läggs aldrig löst. Två försök, ett direkt och ett i en mikrotask efter att alla
+bindare kört — samma mönster som panelordningen använder, och av exakt samma skäl. Utan det andra
+försöket försvann knappen helt de gånger grannen kom sent.
+
+**Widgeten töms automatiskt vid varje sändningsstart**, så knappen är en nödutgång man sällan
+behöver. Den bor nu inne i den hopfällda gruppen: den finns, men ligger inte framme.
+
+### Prestandavalet är borttaget
+
+Det låg först i varje widgets panel, flyttade till Inställningar i checkpoint 49, och togs nu bort
+helt. Davids skäl: konkurrenten har inget sådant val. Tre lägen som ingen ställer in är tre lägen som
+bara kan bli fel.
+
+**Läget låses till standard och den sparade nyckeln rensas.** Utan den raden hade den som en gång
+valde "Låg" suttit fast i ett läge som släcker skuggor och partiklar, utan något sätt att ta sig ur
+det. `runtime-controls.css` behåller sina `[data-performance]`-regler — de är ofarliga när inget
+matchar, och sparar arbetet om läget någon gång behövs igen.
+
+Provet `prestanda-ur-panelen` vaktar nu frånvaron i **båda** vyerna, plus att ett gammalt lågläge
+inte låser in någon. Hälften av proven mäter fortfarande att preset och Återställ widget står kvar —
+en bortstädning som tar med sig fel saker är lika mycket ett fel som ingen bortstädning alls.
+
+### Lärdomen
+
+Två av nio steg såg rätt ut i mätningarna och fel på skärmen. Panelhöjd och gruppordning fångar inte
+allt: **en knapp kan ligga på rätt plats i DOM-trädet och ändå se malplacerad ut**, och en funktion
+kan fungera perfekt och ändå vara en funktion ingen vill ha. Det är därför David tittar på resultatet
+innan något räknas som klart.
+
 ## Checkpoint 51 — Emoji i textfälten, och panelplanen är slut (2026-09-09)
 
 David: *"lägga till emoji som man skriver på sms"*. Windows-tangenten och punkt öppnar redan

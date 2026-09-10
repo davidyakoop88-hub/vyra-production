@@ -1,22 +1,18 @@
 'use strict';
-// PRESTANDALÄGET HÖR TILL STUDION, INTE TILL WIDGETEN — RÖTT FÖRST (2026-09-09).
+// PRESTANDAVALET FINNS INTE LÄNGRE — och preset står kvar (2026-09-10).
 //
-// Steg 7 i Davids plan. Ursprungsformuleringen var "flytta ut preset och prestanda ur panelen",
-// byggd på en mätning som visade att gruppens två kontroller inte skrev något till widgeten.
+// Steg 7 flyttade prestandaväljaren från varje widgets panel till Inställningar. David tittade på
+// resultatet och sa nej: konkurrenten har inget sådant val, och tre lägen som ingen ställer in är
+// tre lägen som bara kan bli fel. Valet är borttaget helt.
 //
-// DEN MÄTNINGEN VAR FÖR GROV, och det är värt att skriva ut: bara PRESTANDA är global. Den skriver
-// `localStorage['vyra-performance-mode']` och sätter `data-performance` på dokumentroten — ett läge
-// för hela studion, upprepat i varje widgets panel. De tre andra kontrollerna är widgetspecifika:
-//   * "Spara preset" tar en kopia av widgeten och lägger den under `w.type`
+// MEN FLYTTEN FICK INTE TA MED SIG NÅGOT ANNAT. Den ursprungliga mätningen sa att hela gruppen
+// "PRESET & PRESTANDA" var scen-global; en närläsning visade att bara prestandaväljaren var det:
+//   * "Spara preset" tar en kopia av widgeten, lagrad under w.type
 //   * "Ladda senaste" hämtar tillbaka den
 //   * "Återställ widget" nollställer widgetens skala, opacitet, dolt-läge och lager
-// Presetnamnet skriver inte till `w` men LÄSES när presetet sparas — det var därför det såg dött ut
-// i mätningen. Alla fyra stannar därför i panelen; bara prestandaväljaren flyttar.
-//
-// KONTRAKTET:
-//   1. Ingen prestandaväljare i widgetpanelen.
-//   2. Den finns i Inställningar, och ändrar där både `data-performance` och localStorage.
-//   3. Preset och Återställ widget står kvar i panelen — de gäller widgeten.
+//   * Presetnamnet skriver inte till w, men LÄSES när presetet sparas — därför såg det dött ut
+// Alla fyra ska stå kvar i panelen. En bortstädning som tar med sig fel saker är lika mycket ett
+// fel som ingen bortstädning alls, och hälften av proven här mäter just det.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
 
@@ -121,30 +117,41 @@ for (const nyckel of WIDGETS) {
   });
 }
 
-test('prestandaläget finns i Inställningar och fungerar där', { skip }, async () => {
+test('prestandavalet finns ingenstans i gränssnittet', { skip }, async () => {
   const page = await studion();
   try {
+    // Båda vyerna, eftersom väljaren bott i båda: först i widgetpanelen, sedan i Inställningar.
+    await seeda(page, 'catalog:topgift:premium:royal');
+    const iPanelen = await page.evaluate(() => !!document.querySelector('#runtimePerformance'));
+    assert.equal(iPanelen, false, 'prestandaväljaren finns kvar i widgetpanelen');
+
     await page.evaluate(() => { view = 'settings'; render(); });
     await page.waitForTimeout(800);
+    const iInstallningar = await page.evaluate(() => !!document.querySelector('#runtimePerformance'));
+    assert.equal(iInstallningar, false, 'prestandaväljaren finns kvar i Inställningar');
+  } finally { await page.close(); }
+});
 
-    const fanns = await page.evaluate(() => !!document.querySelector('#runtimePerformance'));
-    assert.ok(fanns, 'ingen prestandaväljare i Inställningar');
-
-    const ut = await page.evaluate(() => {
-      const el = document.querySelector('#runtimePerformance');
-      const fore = document.documentElement.dataset.performance;
-      const nytt = [...el.options].map(o => o.value).find(v => v !== el.value);
-      el.value = nytt;
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return {
-        fore, valt: nytt,
-        attribut: document.documentElement.dataset.performance,
-        sparat: localStorage.getItem('vyra-performance-mode'),
-      };
-    });
-    assert.equal(ut.attribut, ut.valt,
-      `data-performance blev "${ut.attribut}", väntade "${ut.valt}" (var "${ut.fore}")`);
-    assert.equal(ut.sparat, ut.valt,
-      `localStorage blev "${ut.sparat}", väntade "${ut.valt}"`);
+test('ett gammalt sparat lågläge låser inte in någon', { skip }, async () => {
+  // Utan den här raden hade den som en gång valde "Låg" suttit fast i ett läge som släcker skuggor
+  // och partiklar, utan något sätt att ta sig ur det när väljaren försvann.
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.goto(bas + '/studio.html', { waitUntil: 'domcontentloaded' });
+    await page.evaluate(() => localStorage.setItem('vyra-performance-mode', 'low'));
+    await page.goto(bas + '/studio.html?open=layout', { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+      { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(1200);
+    const ut = await page.evaluate(() => ({
+      attribut: document.documentElement.dataset.performance,
+      sparat: localStorage.getItem('vyra-performance-mode'),
+    }));
+    assert.notEqual(ut.attribut, 'low',
+      'data-performance står kvar på "low" — widgetarna ritas utan skuggor och partiklar');
+    // Nyckeln raderas och skrivs direkt tillbaka som "standard" av applyPerformance(). Det som
+    // spelar roll är att det gamla lågläget är borta, inte att raden i localStorage försvinner —
+    // en nyckel med värdet "standard" matchar ingen CSS-regel och gör ingenting.
+    assert.notEqual(ut.sparat, 'low', 'det gamla lågläget ligger kvar i localStorage');
   } finally { await page.close(); }
 });
