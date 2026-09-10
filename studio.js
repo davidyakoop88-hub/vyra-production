@@ -119,7 +119,21 @@ function editor(){let currentWidget=liveWidget(selected);return `<div class="edi
 function flows(){return `<div class="flow-head"><h2>Automationer</h2><button class="primary" id="newFlow">＋ Ny automation</button></div><div class="flows">${state.flows.map((f,i)=>`<article class="card flow-row"><div class="node"><b>◇ ${f.trigger}</b><small>TRIGGER</small></div><div class="arrow">→</div><div class="node"><b>▶ ${f.action}</b><small>ACTION</small></div><button data-toggle="${i}">${f.on?'Aktiv':'Pausad'}</button></article>`).join('')}</div>`}
 function events(){return `<article class="card" style="padding:20px"><h2>Eventhistorik</h2><p data-tom="handelser-tom">Inga händelser ännu. Anslut TikTok LIVE så fylls historiken på här i realtid.</p><div class="tom-lista" aria-hidden="true"><i></i><i></i><i></i><i></i></div></article>`}
 function analytics(){return `<div class="analytics-grid"><article class="card big-chart"><h2>Tillväxt senaste 30 dagarna</h2><p data-tom="statistik-tillvaxt">Ingen livedata ännu. Gå live med VYRA Desktop så ritas din tillväxt här dag för dag.</p><div class="tom-diagram" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article><article class="card rank"><h2>Toppsupportrar</h2><p data-tom="statistik-topp">Inga supportrar att visa ännu. Efter din första livesändning listas dina största gåvogivare här.</p><div class="tom-lista" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></article></div>`}
-function settings(){return `<article class="card settings-page"><h2>Kontoinställningar</h2><label>Visningsnamn<input id="dn" value="${state.user}"></label><div class="settings-status" data-rad="tiktok">TikTok<b class="settings-status-value${state.tiktok?' online':''}"><i></i>${state.tiktok||'Inte anslutet'}</b></div><button class="primary" id="ss">Spara</button></article>`}
+// ABONNEMANGET MÅSTE GÅ ATT NÅ HÄRIFRÅN. Panelen i billing-client.js bar redan knapparna
+// "Säg upp abonnemang", "Ångra uppsägning" och "Fakturor & betalmetod" — men dess egen
+// öppningsknapp skapas med `hidden=true`, och det ENDA stället som anropade VyraBilling.open()
+// var provperiodens onboarding. En betalande kund hade alltså ingen synlig väg till sin egen
+// prenumeration: uppsägning krävde antingen kontoborttagning (som raderar allt) eller PayPals
+// egen sida. David sökte efter den i inställningarna 2026-09-10 och hittade ingenting.
+//
+// Raden ligger DIREKT efter Spara, i samma kort och med samma form (.vb-settings) som
+// tvåstegsverifieringen och backupen. Först låg den i ett eget kort sist på sidan — under
+// vikningen, bakom fyra inskjutna block, alltså samma osynlighet en gång till.
+//
+// Texten säger "säg upp" i klartext med flit — det är ordet en kund letar efter, och en
+// prenumeration som är lätt att teckna men svår att säga upp är dessutom illa sedd i EU:s
+// konsumentskydd.
+function settings(){return `<article class="card settings-page"><h2>Kontoinställningar</h2><label>Visningsnamn<input id="dn" value="${state.user}"></label><div class="settings-status" data-rad="tiktok">TikTok<b class="settings-status-value${state.tiktok?' online':''}"><i></i>${state.tiktok||'Inte anslutet'}</b></div><button class="primary" id="ss">Spara</button><div class="vb-settings" data-sektion="abonnemang"><span><b>Abonnemang</b><small>Se fakturor, byt betalmetod eller <b>säg upp</b> VYRA Premium. Uppsägningen gäller från periodens slut.</small></span><button id="hanteraAbonnemang" data-oppna-abonnemang>Hantera abonnemang</button></div></article>`}
 // EDITOR-VYN: layout-safe.js ager #view och returnerar utan render-kedja.
 // Nya moduler som behover reagera pa editor-rendering maste anvanda
 // MutationObserver pa #view (se layout-format.js, vyra-historik.js).
@@ -241,7 +255,17 @@ function bind(){
     document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{state.flows[+b.dataset.toggle].on=!state.flows[+b.dataset.toggle].on;saveThenRender()});
     $('#newFlow').onclick=()=>{state.flows.push({trigger:'Chatt !hype',action:'Visa animation',on:true});saveThenRender()};
   }
-  if(view==='settings')$('#ss').onclick=()=>{state.user=$('#dn').value;save();$('#userName').textContent=state.user;render();toast('Sparat')};
+  if(view==='settings'){
+    $('#ss').onclick=()=>{state.user=$('#dn').value;save();$('#userName').textContent=state.user;render();toast('Sparat')};
+    // Betalvägen ägs av billing-client.js. Att duplicera anropen här hade gett två ställen som
+    // kan komma isär — samma skäl som vyra-trial-onboarding.js anger. Reserven klickar panelens
+    // egen (dolda) knapp om modulen inte hunnit registrera sig.
+    const abonnemang=$('[data-oppna-abonnemang]');
+    if(abonnemang)abonnemang.onclick=()=>{
+      if(window.VyraBilling&&typeof window.VyraBilling.open==='function')window.VyraBilling.open();
+      else document.querySelector('.billing-open')?.click();
+    };
+  }
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>go(b.dataset.view));
 // Brodsmulan foljde aldrig med. #crumb skrevs pa ETT stalle i hela kodbasen (live-control.js:42)
