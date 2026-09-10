@@ -128,7 +128,32 @@ async function upsertFromPaypal(c,workspaceId,sub,{cancelAtPeriodEnd}={}){
     await c.query('INSERT INTO billing_customers(workspace_id) VALUES($1) ON CONFLICT(workspace_id) DO NOTHING',[workspaceId]);
     await c.query('UPDATE billing_customers SET trial_started_at=COALESCE(trial_started_at,now()) WHERE workspace_id=$1',[workspaceId]);
   }
+  glomOverlayPlan(workspaceId);
   return{status,fields:f};
+}
+
+// PLANEN FÖR EN PUBLIK VÄG (OBS-länken).
+//
+// entitlement() nedan får ha sidoeffekter: den hämtar från PayPal när raden är 'pending' och
+// stänger prenumerationen när en uppsägning löpt ut. Ingetdera hör hemma på en väg som en OBS-källa
+// träffar vid varje omkoppling — ett PayPal-anrop i den kedjan gör en overlay långsam av skäl som
+// inte har med overlayen att göra.
+//
+// Den här läser bara raden, tillämpar samma regel om utlöpt uppsägning, och cachar en minut.
+// Cachen töms när abonnemanget ändras (upsertFromPaypal, setCancellation), så en uppsägning
+// slår igenom direkt och inte om en minut.
+const OVERLAY_PLAN_TTL=60000;
+const overlayPlanCache=new Map();
+function glomOverlayPlan(workspaceId){overlayPlanCache.delete(workspaceId)}
+async function overlayPlan(pool,workspaceId){
+  const nu=Date.now(),cachad=overlayPlanCache.get(workspaceId);
+  if(cachad&&nu-cachad.at<OVERLAY_PLAN_TTL)return cachad.plan;
+  const q=await pool.query("SELECT plan,status,current_period_end,cancel_at_period_end FROM subscriptions WHERE workspace_id=$1",[workspaceId]),sub=q.rows[0];
+  const utlopt=!!(sub&&sub.cancel_at_period_end&&sub.current_period_end&&new Date(sub.current_period_end).getTime()<nu);
+  const aktiv=!!(sub&&['active','trialing','past_due'].includes(sub.status))&&!utlopt;
+  const plan=aktiv&&sub.plan&&PLANS[sub.plan]?sub.plan:'free';
+  overlayPlanCache.set(workspaceId,{at:nu,plan});
+  return plan;
 }
 
 // Läser BARA tabellen — utom i två lägen där tabellen inte kan veta bättre själv:
@@ -222,6 +247,7 @@ async function setCancellation(pool,workspaceId,cancel){
   }
   await pool.query('UPDATE subscriptions SET cancel_at_period_end=$1,updated_at=now() WHERE workspace_id=$2',[!!cancel,workspaceId]);
   if(rad.stripe_subscription_id)await queueNotification(pool,workspaceId,cancel?'cancellation_scheduled':'cancellation_reversed',`${rad.stripe_subscription_id}:${cancel?'cancel':'resume'}:${Math.floor(Date.now()/60000)}`).catch(()=>{});
+  glomOverlayPlan(workspaceId);
   return{cancelAtPeriodEnd:!!cancel,currentPeriodEnd:rad.current_period_end||null};
 }
 
@@ -278,4 +304,4 @@ async function webhook(pool,raw,headers){
   }catch(error){await c.query('ROLLBACK');throw error}finally{c.release()}
 }
 
-module.exports={PLANS,entitlement,usage,checkout,portal,setCancellation,webhook,planFromPlanId,prenumerationsfalt,localStatus,webhookHeaders};
+module.exports={PLANS,entitlement,usage,checkout,portal,setCancellation,webhook,planFromPlanId,prenumerationsfalt,localStatus,webhookHeaders,overlayPlan,glomOverlayPlan};
