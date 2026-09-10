@@ -667,8 +667,22 @@ var grön i sin egen PR. På en snabb maskin landar projektionen utanför fönst
 | …av dem som sparar seedningen | 1 (`dra-textdelar`, efter PR #397) |
 | …som seedar om mer än en gång i samma prov (riskfönstret är störst där) | 6 |
 
-De sex: `battle-mvp-ramar`, `dra-textdelar`, `editor-ui-placering`, `fan-level-referens`,
-`ram-radavstand-vaxer-inte`, `tom-widget`.
+**Ordningen att migrera i — och varför den inte är antalet omseedningar.** Att räkna
+`state.widgets.length = 0` i källan är en trubbig mätare: fyra förekomster i olika hjälpare med var
+sin egen sida är ofarligare än två i samma prov. Det som ÖPPNAR fönstret är en åtgärd som SPARAR
+följd av en omseedning — sparningen är i luften när seedningen landar, och projektionen skriver
+tillbaka det gamla läget.
+
+| Ordning | Prov | Varför |
+|---|---|---|
+| 1 | `tom-widget` | klickar en knapp som sparar (rad 117) och seedar sedan om två gånger (rad 148, 168) — exakt samma form som felet vi just lagade |
+| 2 | `editor-ui-placering` | klickar zoom (rad 136), seedar i två uppställningar |
+| 3 | `dra-textdelar` | ✅ redan migrerad i PR #397 — mallen att kopiera |
+| 4 | `ram-radavstand-vaxer-inte` | fyra seedningar men i skilda hjälpare med var sin sida, inga klick och ingen sparning emellan; högt trafikerad, så den är värd att härda ändå |
+| 5–6 | `battle-mvp-ramar`, `fan-level-referens` | seedar två gånger, ingen sparande åtgärd emellan |
+
+Resten av de 31 seedar en gång per sida och har inget fönster att tala om, men vinner ändå på samma
+hjälpare den dagen någon lägger till ett klick.
 
 **Åtgärden:** en gemensam `seedaStudioState()` i `tests/helpers/` som (1) muterar, (2) anropar
 `save()`, och (3) väntar med `waitForFunction` tills BÅDE `state` och duken visar widgeten — aldrig
