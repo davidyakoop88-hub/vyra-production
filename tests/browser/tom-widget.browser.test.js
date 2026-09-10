@@ -25,6 +25,7 @@ const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
+const { seedaStudioState, widgetPaId } = require('../helpers/seed-studio-state.js');
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -76,28 +77,26 @@ async function studion(vy) {
 }
 
 // Seedar en widget som om en sändning just fyllt den med en riktig tittare.
+//
+// Seedningen SPARAR och väntar in duken (docs/tech-debt.md §16). Båda proven nedan gör något som
+// sparar — knappen "Töm widget" respektive live:start — och läser sedan av `state`. En oseedad
+// projektion emellan hade skrivit tillbaka det förra läget, och avläsningen hade mätt fel widget.
 async function seedaFylld(page, nyckel) {
-  await page.evaluate(n => {
-    state.widgets.length = 0;
-    const w = window.VyraWidgets.create(n);
-    w.x = 200; w.y = 200;
-    w.dataName = '@EnRiktigTittare';
-    w.dataValue = 12345;
-    w.profileImage = 'assets/images/test/test-profile.png';
-    w.giftImage = 'assets/gifts/events/0001_Rose.png';
-    w.giftName = 'Rose';
-    state.widgets.push(w);
-    selected = w.id;
-    render();
-  }, nyckel);
-  await page.waitForTimeout(700);
+  const [id] = await seedaStudioState(page, nyckel, {
+    placering: { x: 200, y: 200 },
+    falt: {
+      dataName: '@EnRiktigTittare',
+      dataValue: 12345,
+      profileImage: 'assets/images/test/test-profile.png',
+      giftImage: 'assets/gifts/events/0001_Rose.png',
+      giftName: 'Rose',
+    },
+  });
+  return id;
 }
 
-const las = page => page.evaluate(f => {
-  const w = state.widgets[0], ut = {};
-  for (const k of f) ut[k] = w[k] === undefined ? null : w[k];
-  return ut;
-}, FALT);
+// Slår upp på id, aldrig via en fångad referens: projektionen byter ut varje widgetobjekt.
+const las = (page, id) => widgetPaId(page, id, FALT);
 
 const kvarstaende = efter =>
   FALT.filter(f => efter[f] !== null && efter[f] !== '' && efter[f] !== 0);
@@ -106,8 +105,8 @@ for (const nyckel of WIDGETS) {
   test(`${nyckel}: knappen "Töm widget" nollställer tittarens data`, { skip }, async () => {
     const page = await studion('editor');
     try {
-      await seedaFylld(page, nyckel);
-      const fore = await las(page);
+      const id = await seedaFylld(page, nyckel);
+      const fore = await las(page, id);
       assert.equal(fore.dataName, '@EnRiktigTittare', 'seedningen tog inte');
 
       const knapp = await page.evaluate(() => {
@@ -120,7 +119,7 @@ for (const nyckel of WIDGETS) {
       assert.ok(knapp, `${nyckel}: hittade ingen knapp "Töm widget" i panelen`);
       await page.waitForTimeout(600);
 
-      const kvar = kvarstaende(await las(page));
+      const kvar = kvarstaende(await las(page, id));
       assert.deepEqual(kvar, [], `${nyckel}: dessa fält stod kvar efter tömningen: ${kvar.join(', ')}`);
     } finally { await page.close(); }
   });
@@ -128,18 +127,21 @@ for (const nyckel of WIDGETS) {
   test(`${nyckel}: en ny sändning tömmer widgeten automatiskt`, { skip }, async () => {
     const page = await studion('editor');
     try {
-      await seedaFylld(page, nyckel);
+      const id = await seedaFylld(page, nyckel);
       await page.evaluate(() => window.dispatchEvent(new CustomEvent('vyra-live-session',
         { detail: { event: 'live:start' } })));
       await page.waitForTimeout(700);
 
-      const kvar = kvarstaende(await las(page));
+      const kvar = kvarstaende(await las(page, id));
       assert.deepEqual(kvar, [],
         `${nyckel}: live:start lämnade kvar ${kvar.join(', ')} — gåvorekordet nollställs där, `
         + 'widgetens data måste följa med');
     } finally { await page.close(); }
   });
 
+  // SEEDAS MED FLIT UTAN HJÄLPAREN: seedningen och avläsningen ligger i SAMMA synkrona
+  // page.evaluate, utan något await emellan — då finns inget fönster där en projektion kan hinna
+  // emellan, och en sparning hade dessutom varit fel i overlay-vyn.
   test(`${nyckel}: tom widget syns inte i overlay men syns i editorn`, { skip }, async () => {
     // I EDITORN måste en tom widget synas, annars går den inte att placera.
     const editorn = await studion('editor');

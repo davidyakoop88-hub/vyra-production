@@ -19,6 +19,7 @@ const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
+const { seedaStudioState } = require('../helpers/seed-studio-state.js');
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -59,12 +60,10 @@ async function editorn() {
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
   await page.waitForTimeout(2500);
-  await page.evaluate(() => {
-    state.widgets.length = 0;
-    const w = window.VyraWidgets.create('catalog:topgift');
-    w.x = 40; w.y = 60; state.widgets.push(w); selected = w.id; render();
-  });
-  await page.waitForTimeout(900);
+  // projectLocalSession() FÖRE seedningen: utan skrivbar session svarar save() 'not-writable' och
+  // gör ingenting, och seedningen kan skrivas över av nästa projektion (docs/tech-debt.md §16).
+  await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+  await seedaStudioState(page, 'catalog:topgift', { placering: { x: 40, y: 60 } });
   return page;
 }
 
@@ -160,18 +159,14 @@ async function medFemWidgets() {
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
   await page.waitForTimeout(2500);
-  await page.evaluate(() => {
-    state.widgets.length = 0;
-    // RIKTIGA katalognycklar, hamtade ur kravNycklar(). Forsta versionen gissade pa
-    // 'catalog:heartgoal' m.fl. — create() kastar pa en okand nyckel, och ett try/catch svalde det:
-    // bara tva av fem rader byggdes och provet matte nastan ingenting. Darfor kastar det nu vidare.
-    for (const nyckel of ['catalog:toplike:center', 'catalog:heartgoal:citrus',
-                          'catalog:giftfireworks:bloom', 'catalog:guardianemblem:1',
-                          'catalog:fanlevel:layout:badgereveal'])
-      state.widgets.push(window.VyraWidgets.create(nyckel));
-    render();
-  });
-  await page.waitForTimeout(900);
+  await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+  // RIKTIGA katalognycklar, hamtade ur kravNycklar(). Forsta versionen gissade pa
+  // 'catalog:heartgoal' m.fl. — create() kastar pa en okand nyckel, och ett try/catch svalde det:
+  // bara tva av fem rader byggdes och provet matte nastan ingenting. Hjalparen later kastet ga
+  // vidare, och vantar dessutom in att alla FEM ligger bade i state och i duken.
+  await seedaStudioState(page, ['catalog:toplike:center', 'catalog:heartgoal:citrus',
+                                'catalog:giftfireworks:bloom', 'catalog:guardianemblem:1',
+                                'catalog:fanlevel:layout:badgereveal']);
   return page;
 }
 
