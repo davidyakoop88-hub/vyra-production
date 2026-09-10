@@ -90,7 +90,7 @@ test.before(async () => {
   // utan den svarar hela /api/overlay-access-grenen 402 och provet mäter en betalvägg i stället.
   for (const __ws of [WS1, WS2]) await pool.query(
     `INSERT INTO subscriptions (workspace_id,provider,stripe_subscription_id,plan,status,current_period_end,cancel_at_period_end)
-     VALUES ($1,'paypal','I-PROV-'||$1,'premium','active',now() + interval '30 days',false)
+     VALUES ($1::uuid,'paypal','I-PROV-'||$1::text,'premium','active',now() + interval '30 days',false)
      ON CONFLICT (workspace_id) DO UPDATE SET status='active',plan='premium',
        current_period_end=EXCLUDED.current_period_end,cancel_at_period_end=false`, [__ws]);
   await pool.query(
