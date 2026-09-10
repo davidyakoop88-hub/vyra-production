@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `c7ea0c0`
+Commit: `06f4851`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
