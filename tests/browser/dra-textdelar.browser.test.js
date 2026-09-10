@@ -73,16 +73,33 @@ async function editorn() {
   return page;
 }
 
+// Seedningen SPARAR, och väntar tills duken faktiskt visar den seedade widgeten.
+//
+// VARFÖR: `state` är en permanent referens som töms och fylls på vid varje projektion
+// (session-state.js: `Object.keys(...).forEach(delete)` + `Object.assign(clone(next))`), och
+// cloud-syncs tickare sparar varje sekund — fönstret är alltid öppet, står det i studio.js:30.
+// En seedning som bara muterar `state` utan att spara kan därför skrivas över av en projektion
+// av det FÖRRA sparade läget: state pekar då på den gamla widgeten medan duken visar den nya.
+// Provet föll på det i CI två körningar i rad (2026-09-10, main), och `blev undefined` var den
+// gamla widgetens saknade fält. `save()` stänger fönstret; väntan ersätter en fast paus som
+// bara råkade räcka på en snabb maskin.
 async function seeda(page, nyckel) {
-  await page.evaluate(n => {
+  const id = await page.evaluate(async n => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create(n);
     w.x = 320; w.y = 260;
     state.widgets.push(w);
     selected = w.id;
     render();
+    await save();
+    return w.id;
   }, nyckel);
-  await page.waitForTimeout(700);
+  await page.waitForFunction(wid => {
+    const iState = state.widgets.length === 1 && state.widgets[0] && state.widgets[0].id === wid;
+    const iDuken = !!document.querySelector(`.canvas [data-id="${wid}"] [data-textdel]`);
+    return iState && iDuken;
+  }, id, { timeout: 30000, polling: 100 });
+  return id;
 }
 
 // Drar en av widgetens textdelar med riktiga pekarhändelser och returnerar vad som hände.
@@ -93,8 +110,12 @@ async function dra(page, roll, dx, dy, skift) {
     const del = rot.querySelector(`[data-textdel="${r}"]`);
     if (!del) return { fel: `ingen [data-textdel="${r}"] i widgeten` };
 
-    const w = state.widgets[0];
-    const wFore = { x: w.x, y: w.y };
+    // Slå upp på id vid VARJE åtkomst — aldrig en fångad referens. En projektion byter ut
+    // varje widgetobjekt mot en klon, och en fångad referens pekar sedan på något som inte
+    // längre ligger i layouten (studio.js:31 och liveWidget()-proxyn där).
+    const id = state.widgets[0].id;
+    const nu = () => state.widgets.find(x => x && x.id === id) || null;
+    const wFore = { x: nu().x, y: nu().y };
     const box = del.getBoundingClientRect();
     const start = { x: Math.round(box.left + box.width / 2), y: Math.round(box.top + box.height / 2) };
     const ny = (typ, p, extra) => new PointerEvent(typ, Object.assign({
@@ -112,11 +133,13 @@ async function dra(page, roll, dx, dy, skift) {
     del.dispatchEvent(ny('pointerup', slut));
 
     const falt = { title: 'title', name: 'name', value: 'value' }[r];
+    const efter = nu();
+    if (!efter) return { fel: `widgeten ${id} finns inte kvar i state efter draget` };
     return {
-      offsetX: w[falt + 'OffsetX'] || 0,
-      offsetY: w[falt + 'OffsetY'] || 0,
-      widgetFlyttad: w.x !== wFore.x || w.y !== wFore.y,
-      widgetFore: wFore, widgetEfter: { x: w.x, y: w.y },
+      offsetX: efter[falt + 'OffsetX'] || 0,
+      offsetY: efter[falt + 'OffsetY'] || 0,
+      widgetFlyttad: efter.x !== wFore.x || efter.y !== wFore.y,
+      widgetFore: wFore, widgetEfter: { x: efter.x, y: efter.y },
     };
   }, [roll, dx, dy, skift]);
 }
@@ -168,6 +191,9 @@ for (const nyckel of WIDGETS) {
 
       await seeda(page, nyckel);
       const utanSnapp = await dra(page, 'name', 4, 0, true);
+      // Skyddet fanns bara på första dragningen. Utan det här blev CI-felet "blev undefined"
+      // i stället för orsaken, och den kostade en felsökning.
+      assert.ok(!utanSnapp.fel, `${nyckel}: ${utanSnapp.fel}`);
       assert.ok(Math.abs(utanSnapp.offsetX - 4) <= 1,
         `${nyckel}: Skift stängde inte av snappen (blev ${utanSnapp.offsetX}, väntade 4)`);
     } finally { await page.close(); }
