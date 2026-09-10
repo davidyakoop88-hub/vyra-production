@@ -1,5 +1,43 @@
 # VYRA Project State
 
+## Checkpoint 53 — Reservbilderna ligger inte framme (2026-09-10)
+
+David, om Profilbild och Gåvobild i INNEHÅLL: *"måste de vara synliga?"*
+
+Nej, och mätningen säger varför:
+
+| | |
+|---|---|
+| Vid första gåvan | TikTok skriver över båda — `person.profileImage \|\| w.profileImage` |
+| Med tomma fält | Widgeten renderar **exakt samma bilder**: `safeImg(w.profileImage, fallbackProfile)` |
+| I studion | Bilderna visas ändå, utan att fälten är ifyllda |
+
+Kvar finns ett enda syfte: att välja en EGEN reservbild som visas innan första gåvan. Sällsynt, men
+inte värdelöst — därför göms fälten i en hopfälld **BILDER**-grupp i stället för att tas bort. Samma
+val som "Töm widget" fick i checkpoint 52.
+
+### Regeln är snävare än den först såg ut
+
+Första utkastet läste "bild" eller "url" i etiketten och fångade tre fält som måste stanna:
+
+- **Egen bild-widgetens "Bild"** — widgetens *hela innehåll*, inte en reserv
+- **"Video-URL"** under VIDEO PER NIVÅ — en egen funktion i en egen grupp
+- **kryssrutan "Profil"** och **reglaget "Profil/gåva"** — de visar och skalar, de pekar inte ut
+  någon sökväg alls
+
+Regeln kräver därför att etiketten **börjar med** "Profilbild" eller "Gåvobild", och att fältet är en
+textinmatning. Tre av provets nio fall mäter just att de skyddade fälten INTE flyttas.
+
+Ett fjärde prov mäter grunden för hela beslutet: att en tom profilbild ger samma renderade bilder som
+en ifylld. Skulle renderarens fallback försvinna vore det rätt att visa fälten igen, och då faller
+det provet.
+
+### Minnesbristen är tillbaka
+
+Tre browserprovfiler i samma körning gav `FATAL ERROR: Zone Allocation failed - process out of
+memory` efter 25 minuter. Var för sig tar de under en minut och är gröna. Datorn har 2,3 GB ledigt
+RAM av 7,9. **En provfil i taget** gäller fortfarande, och CI är den som dömer hela sviten.
+
 ## Checkpoint 52 — Två saker David sa nej till (2026-09-10)
 
 Panelen såg annorlunda ut i verkligheten än i mätningarna, och David tittade på den: *"detta gillade

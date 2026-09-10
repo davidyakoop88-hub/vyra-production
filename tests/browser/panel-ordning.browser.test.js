@@ -67,6 +67,7 @@ const TRAPPA = [
   [/^TRIGGER|LIVE-DATA|VISNINGSTID|^TESTA|TEST OCH RESET|WEBHOOK/, 40, 'live/test'],
   [/POSITION\s*·\s*TEXTELEMENT|^FINJUSTERING/, 45, 'finjustering'],
   [/^POSITION|^SKALA/, 50, 'position'],
+  [/^BILDER/, 58, 'reservbilder'],
   [/AVATAR-RAM|PROFILRAM/, 60, 'ram'],
   [/^ANIMATION|RÖRELSESTIL|PREMIUM RÖRELSE/, 70, 'animation'],
   [/^BAKGRUND/, 80, 'bakgrund'],

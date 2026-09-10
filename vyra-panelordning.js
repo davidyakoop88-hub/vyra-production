@@ -31,6 +31,10 @@
     [/^BAKGRUND/, 80],
     [/^ANIMATION|RÖRELSESTIL|PREMIUM RÖRELSE/, 70],
     [/AVATAR-RAM|PROFILRAM/, 60],
+    // Reservbilderna (profil, gåva) — sökvägar som live skriver över vid första gåvan, och som
+    // renderaren dessutom har egna fallbacks för. De hör till samma sorts sällanjusterade tillägg
+    // som ramen, och fälls ihop av samma skäl.
+    [/^BILDER/, 58],
     // Var widgeten ligger. Grundpositionen (bredd, höjd, lås) står öppen; de sex offsetfälten för
     // rubrik, namn och värde är finjustering och fälls ihop strax före den.
     [/POSITION\s*·\s*TEXTELEMENT|^FINJUSTERING/, 45],
@@ -77,7 +81,7 @@
   // och sex till. Alla nio letade efter breddfältet, som ligger där. Det är inte provens fel:
   // bredd, höjd och proportionslåset hör till det man ändrar ofta, och en inställning man ändrar
   // ofta får inte kräva ett klick först. Live/test (40) och allt från ram (60) och nedåt fälls.
-  const FALLS = new Set([40, 45, 60, 70, 80, 90]);
+  const FALLS = new Set([40, 45, 58, 60, 70, 80, 90]);
 
   // Vad användaren har öppnat, per rubrik. Panelen byggs om från grunden vid varje render(), så utan
   // det här minnet hade varje klick i studion fällt ihop det man just öppnat.
