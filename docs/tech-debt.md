@@ -638,6 +638,54 @@ bara körs när ljudfilen saknas.
 
 Vaktat av prov 9–14 i `tests/action-talutrymme.test.js`.
 
+## 16. Browserprov seedar `state` utan att spara — projektionen kan skriva tillbaka det gamla läget
+
+**Uppmätt 2026-09-10**, efter tre röda körningar på `main` (0877395, 6d6a542, c7ea0c0).
+
+`state` i `studio.js` är en permanent referens som TÖMS och FYLLS PÅ vid varje projektion:
+
+```js
+Object.keys(activeStateObject).forEach(k => { delete activeStateObject[k] });
+Object.assign(activeStateObject, clone(next));
+```
+
+Cloud-syncs tickare sparar varje sekund, så fönstret är alltid öppet — det står redan i
+`studio.js:30`, och `liveWidget()`-proxyn därunder finns just för att appkoden ska slippa fällan.
+**Proven har inget motsvarande skydd.** Ett prov som seedar genom att mutera `state` utan att spara
+kan få det FÖRRA sparade läget tillbakaskrivet över sig: `state` pekar på den gamla widgeten medan
+duken visar den nya.
+
+**Så här ser det ut när det slår till:** `dra-textdelar` föll två körningar i rad på main med
+`Skift stängde av snappen (blev undefined, väntade 4)`, på olika katalognycklar — medan samma commit
+var grön i sin egen PR. På en snabb maskin landar projektionen utanför fönstret.
+
+**Läget i sviten:**
+
+| Mätning | Antal |
+|---|---|
+| Browser-/visuella prov som seedar via `state.widgets.length = 0` | 31 |
+| …av dem som sparar seedningen | 1 (`dra-textdelar`, efter PR #397) |
+| …som seedar om mer än en gång i samma prov (riskfönstret är störst där) | 6 |
+
+De sex: `battle-mvp-ramar`, `dra-textdelar`, `editor-ui-placering`, `fan-level-referens`,
+`ram-radavstand-vaxer-inte`, `tom-widget`.
+
+**Åtgärden:** en gemensam `seedaStudioState()` i `tests/helpers/` som (1) muterar, (2) anropar
+`save()`, och (3) väntar med `waitForFunction` tills BÅDE `state` och duken visar widgeten — aldrig
+en fast paus. Plus regeln att aldrig läsa via en fångad widgetreferens: slå upp på id vid varje
+åtkomst. PR #397 gör exakt detta i ett prov och kan kopieras rakt av.
+
+**Så bevisar du den:** strypa processorn via CDP (`Emulation.setCPUThrottlingRate`, 8–12x) tills
+felet går att framkalla på begäran, och fånga skrivningarna till `state.widgets` med en Proxy plus
+stackspår. Två fällor i mätningen: `Object.defineProperty` går inte att använda på en arrays
+`length`, och `state`-objektets IDENTITET överlever projektionen — det är innehållet som byts, så en
+identitetskontroll säger ingenting.
+
+**Varför den inte är löst här:** att migrera 31 provfiler hör inte hemma i en fix vars enda uppgift
+är att göra `main` grön igen.
+
+---
+
 # Regler som kostat oss något
 
 §5 är skuld: en namngiven plats i koden som väntar på en fix. §7–§11 är av en annan sort —
