@@ -165,6 +165,16 @@ jobs:
         env:
           API_RATE_LIMIT: "100000"
 
+      # OBS-länken mot en arbetsyta vars abonnemang tagit slut. Token kontrollerade bara att den
+      # fanns, inte var återkallad och inte utgången — planen kontrollerades ingenstans, så en
+      # utgången kund behöll sin overlay i sändningen med livedata (uppmätt 2026-09-10). Provet går
+      # över HTTP just för att hålet satt i RUTTEN, inte i regeln.
+      - name: OBS-länken kräver ett aktivt abonnemang
+        run: node --test test/overlaylank-premium-http.test.js
+        working-directory: server
+        env:
+          API_RATE_LIMIT: "100000"
+
       - name: Cleanup-kapacitet — dränering, SKIP LOCKED och schemaläggare
         run: node --test test/goal-cleanup.test.js
         working-directory: server

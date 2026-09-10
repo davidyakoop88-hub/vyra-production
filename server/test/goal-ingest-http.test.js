@@ -77,6 +77,14 @@ test.before(async () => {
      VALUES ($1,$2,'x','chain',now()) ON CONFLICT (id) DO NOTHING`, [USER, `${USER}@test.invalid`]);
   await pool.query(`INSERT INTO workspaces (id,name,owner_user_id) VALUES ($1,'chain',$2)
      ON CONFLICT (id) DO NOTHING`, [WS, USER]);
+  // En OBS-länk kräver ett aktivt abonnemang sedan 2026-09-10 (billing.js overlayPlan): en utgången
+  // kund ska inte behålla sin overlay i sändningen. Fixturen måste därför bära en prenumeration —
+  // utan den svarar hela /api/overlay-access-grenen 402 och provet mäter en betalvägg i stället.
+  for (const __ws of [WS]) await pool.query(
+    `INSERT INTO subscriptions (workspace_id,provider,stripe_subscription_id,plan,status,current_period_end,cancel_at_period_end)
+     VALUES ($1::uuid,'paypal','I-PROV-'||$1::text,'premium','active',now() + interval '30 days',false)
+     ON CONFLICT (workspace_id) DO UPDATE SET status='active',plan='premium',
+       current_period_end=EXCLUDED.current_period_end,cancel_at_period_end=false`, [__ws]);
   for (const id of [A, B]) {
     await pool.query(
       `INSERT INTO overlays (id,workspace_id,name,state) VALUES ($1,$2,'chain','{"widgets":[]}'::jsonb)

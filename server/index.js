@@ -204,7 +204,20 @@ async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=
   // tomgångstimers är också Timeouts: öppnar man två strömmar samtidigt kan poolen växa med en
   // klient som lever kvar, och provet rapporterade det som en läckt hjärtslagstimer. Den här
   // räknaren mäter det påståendet handlar om.
-  const heartbeat=setInterval(async()=>{if(accessToken&&!await overlayAccess(accessToken)){res.end();return}res.write(': heartbeat\n\n')},SSE_HEARTBEAT_MS);
+  // Hjärtslaget kontrollerar redan att token lever. Planen måste kontrolleras HÄR också: en
+  // ström som öppnades dagen före förfallodagen hade annars fortsatt i evighet, eftersom
+  // grinden ovan bara körs när uppkopplingen görs. Kostnaden är en cachad läsning var 30:e s.
+  const heartbeat=setInterval(async()=>{
+    if(accessToken){
+      const kvar=await overlayAccess(accessToken);
+      if(!kvar){res.end();return}
+      if(await Billing.overlayPlan(pool,kvar.workspace_id)!=='premium'){
+        console.log(JSON.stringify({level:'info',event:'overlay_stream_closed',reason:'plan',workspaceId:kvar.workspace_id,at:new Date().toISOString()}));
+        res.end();return;
+      }
+    }
+    res.write(': heartbeat\n\n')
+  },SSE_HEARTBEAT_MS);
   openHeartbeats+=1;
   let stangd=false;
   req.once('close',()=>{if(stangd)return;stangd=true;openHeartbeats-=1;clearInterval(heartbeat);unsubscribe().catch(()=>{})});
@@ -268,7 +281,21 @@ const server=http.createServer(async(req,res)=>{const started=Date.now(),request
 // fall through to the session gate, where it would come back as "Inte inloggad" and read as if the
 // link were the wrong kind of thing. The method is refused before any of it is looked at: a link is
 // read-only, whatever it names.
-const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(publicAccess){const access=await overlayAccess(publicAccess[1]);if(!access)return send(res,401,{ok:false,error:'Overlay-länken är ogiltig eller har gått ut'});if(req.method!=='GET')return send(res,405,{ok:false,error:'Metoden stöds inte'});const rest=publicAccess[2]||'';
+const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(publicAccess){const access=await overlayAccess(publicAccess[1]);if(!access)return send(res,401,{ok:false,error:'Overlay-länken är ogiltig eller har gått ut'});if(req.method!=='GET')return send(res,405,{ok:false,error:'Metoden stöds inte'});
+  // OBS-LÄNKEN KRÄVER ETT AKTIVT ABONNEMANG. Token kontrollerade bara att den fanns, inte var
+  // återkallad och inte utgången — ingen plankontroll fanns någonstans i den här grenen, och inte
+  // heller i strömmen eller i bryggan som matar den. Uppmätt 2026-09-10: en kund som sa upp och
+  // lät perioden löpa ut behöll sin overlay i sändningen, med livedata, för alltid. Studion låste
+  // sig korrekt och nedladdningen stoppades korrekt — det enda som fortsatte var det som faktiskt
+  // syns för tittarna.
+  //
+  // 402 och inte 401: länken ÄR giltig, det är abonnemanget som tagit slut. Skillnaden syns i
+  // loggen, så att en utgången kund inte ser ut som en trasig länk.
+  if(await Billing.overlayPlan(pool,access.workspace_id)!=='premium'){
+    console.log(JSON.stringify({level:'info',event:'overlay_access_denied',reason:'plan',workspaceId:access.workspace_id,overlayId:access.overlay_id,at:new Date().toISOString()}));
+    return send(res,402,{ok:false,error:'Overlay-länken kräver ett aktivt VYRA Premium',entitlementRequired:true});
+  }
+  const rest=publicAccess[2]||'';
     if(rest==='events/stream'){await openEventStream(req,res,u,access.workspace_id,null,access.overlay_id);return}
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
