@@ -1,5 +1,292 @@
 # VYRA Project State
 
+## Checkpoint 51 — Emoji i textfälten, och panelplanen är slut (2026-09-09)
+
+David: *"lägga till emoji som man skriver på sms"*. Windows-tangenten och punkt öppnar redan
+systemets emoji-väljare i vilket textfält som helst — men det vet nästan ingen, och en funktion som
+kräver ett okänt kortkommando finns i praktiken inte.
+
+### Vilka fält, och varför inte alla
+
+Uppmätt över fem widgets bär panelerna tre sorters textfält:
+
+| | Exempel | Knapp? |
+|---|---|---|
+| text tittarna ser | `ctwText`, `heartTitle`, `followLabel`, `followName`, `followMessage` | ja |
+| sökvägar till bilder | `pfTopGiftProfile`, `pfTopGiftGift`, `followProfile` | nej — en emoji ger en trasig bild |
+| interna namn | `runtimePresetName`, de dolda `pt`/`pv` | nej — ett filnamn ingen kan söka på |
+
+Regeln läser **etiketten**, inte fält-id. En vitlista över id hade blivit fel så fort någon lägger
+till ett fält, och den nya widgeten är just den som skulle sakna knappen utan att någon märker det.
+Etiketten säger vad fältet *är*, och den skriver panelbyggaren ändå.
+
+Tre av de tio proven mäter frånvaron — att sökvägar och interna namn INTE får knappen.
+
+### Markören, igen
+
+Emojin infogas vid markören, inte sist; att alltid lägga sist hade gjort knappen oanvändbar mitt i
+en mening, vilket är precis där man vill ha en emoji. Uppmätt: markören hamnade ändå på 0, eftersom
+`change` får flera panelbyggare att rita om och noden vi just skrev i är utbytt. Fältet slås därför
+upp på nytt via sitt id, och en gång till i en mikrotask.
+
+Samma familj av fel som checkpoint 46–47: **efter en händelse som ritar om panelen är referensen du
+höll i inte längre den nod som visas.**
+
+### Panelplanen, nio steg
+
+Ordning och hopfällning · töm widget · gemensam textgrupp · gemensam bakgrundsgrupp · dra texter ·
+enhetliga namn · prestanda ur panelen · ramväljarens rubrik · emoji. Top Gift gick från **3,6
+skärmar till 2,8**, med 41 kontroller mot 31 — tio fler funktioner på mindre plats.
+
+## Checkpoint 50 — Ramväljaren får en rubrik och en plats (2026-09-09)
+
+Steg 8 hette "avatar-ramen blir en knapp som öppnar väljaren". **Mätningen sa att det inte behövdes.**
+Gruppen fälldes redan ihop i checkpoint 44 och är 57 px i panelen; en knapp hade sparat noll. Öppnad
+är den 540 px med 30 ramar i rutnät, vilket är rimligt för en väljare man faktiskt tittar i.
+
+Samma mätning pekade i stället ut tre saker som var värda att göra.
+
+### Den dubbla rubriken, från den allra första granskningen
+
+Gruppen bar `<h4>AVATAR-RAM</h4>` och direkt under den `<span>AVATAR-RAMAR · VÄLJ RAM</span>`.
+Orsaken var **två monteringsvägar** för samma väljare: `gift-alert-frames.js` bygger en egen grupp
+med rubrik, medan `media.js:499` la väljaren i panelens FÖRSTA property-group utan någon. Spannet
+fanns för den andra vägens skull.
+
+Att bara ta bort spannet hade lämnat rankingens väljare helt utan rubrik, inne i en grupp om något
+annat. Båda vägarna bygger nu en egen AVATAR-RAM-grupp, så rubriken ägs av gruppen.
+
+### Rankingens ramväljare låg fel
+
+Inbakad i första gruppen låg 30 ramar alltid synliga, mitt bland innehållsfälten. Nu är den en egen
+grupp på vikt 60 — bland tilläggen, hopfälld som de andra. Top Coins gick från 2344 px till 2272.
+
+### Min egen textgrupp hade blivit panelens största post
+
+TEXT från checkpoint 46 var 586 px, alltså samma sorts svällning som grupperna byggdes för att råda
+bot på: Top Gift gick 1980 → 2576 när den tillkom. Skugga och kontur är par av tal som läses
+tillsammans och delar nu rad i `.property-grid`, som Tiktory gör med sin "Text Shadow: X, Y, BLUR,
+Color". Typsnitt och textstorlek behåller egna rader — de ändras oftast och ett reglage behöver
+bredden. **586 px → 404 px**, och panelen 2576 → 2394.
+
+Vakt: `tests/browser/ramvaljarens-rubrik.browser.test.js`, 6 prov över de två monteringsvägarna.
+
+## Checkpoint 49 — Prestandaläget hör till studion, inte till widgeten (2026-09-09)
+
+Steg 7 i Davids plan hette "flytta ut preset och prestanda ur panelen". **Bara hälften av det var
+rätt, och den mätning som låg bakom var för grov.**
+
+Mätningen i checkpoint 44 visade att gruppens kontroller inte skrev något till widgeten, och jag drog
+slutsatsen att hela gruppen gällde scenen. En närläsning av `runtime-controls.js` visar något annat:
+
+| Kontroll | Vad den gör | Var den hör hemma |
+|---|---|---|
+| Prestanda | `data-performance` på roten + `vyra-performance-mode` i localStorage | **studion** — ett värde, upprepat i 271 widgetpaneler |
+| Spara preset | tar en kopia av widgeten, lagrad under `w.type` | widgeten |
+| Ladda senaste | hämtar tillbaka den | widgeten |
+| Återställ widget | nollställer skala, opacitet, dolt-läge, lager | widgeten |
+| Presetnamn | skriver inte till `w`, men **läses** när presetet sparas | widgeten |
+
+Presetnamnet är förklaringen till varför mätningen blev fel: ett fält som bara läses vid en knapptryck
+ser dött ut för ett prov som skriver i det och tittar på `w`. Bara prestandaväljaren flyttade;
+gruppen heter numera **PRESET**.
+
+Väljaren bor nu i Inställningar, tillagd med en **DOM-patch** — `settings()` ligger i studio.js, som
+är minifierad handkod och aldrig får ändras. `runtime-controls.js` äger både gruppen och
+prestandaläget, så patchen ligger i samma fil som allt annat den gör.
+
+**CI fångade en sak lokala prov missade.** Väljaren saknade `flex:1`, som sidans `input` har,
+så raden slutade vid x=440 medan dess hårlinje gick till 915 — `layout-integritet` provet
+"A9: harlinjen slutar dar formraden slutar" föll på det. Ett prov som fanns hela tiden, i en fil jag
+inte körde lokalt. Det är precis vad hela sviten är till för.
+
+Vakt: `tests/browser/prestanda-ur-panelen.browser.test.js`, 7 prov. Tre av dem mäter **motsatsen** —
+att preset och Återställ widget står kvar i panelen. En utflyttning som tar med sig fel saker är lika
+mycket ett fel som ingen utflyttning alls.
+
+Panelordningens mönster bär både `^PRESET$` och det gamla `PRESET & PRESTANDA`, så en layout som
+ännu inte laddats om hamnar rätt.
+
+## Checkpoint 48 — Samma sak heter samma sak i panelen (2026-09-09)
+
+Sista delen av Davids *"vi har mer men ändå ser kaos ut"*: panelens grupper hette olika saker i
+olika widgets, så ett block man känner igen bar ett namn man inte kände igen.
+
+| Var | Hette | Heter | Varför |
+|---|---|---|---|
+| media.js (Gift Jar) | POSITION OCH STORLEK | POSITION & STORLEK | 23 filer mot en; samma fält |
+| layout-standalone.js | POSITION + STORLEK, två grupper | POSITION & STORLEK, en | X/Y och bredd/höjd hör ihop överallt annars |
+| media.js (Like Fountain) | GENERAL | INNEHÅLL | engelska i ett svenskt gränssnitt |
+| gift-fireworks.js | STORLEK | SKALA | gruppen bär ETT reglage för hela widgetens skala — namnet sa fel sak, och filen har redan en riktig POSITION & STORLEK |
+
+Det sista fallet är det intressanta: provet hittade det som en namnavvikelse, men rätt åtgärd var inte
+att döpa om det till POSITION & STORLEK utan att ge det ett namn som stämmer. **En namnregel får inte
+tvinga fram en lögn.** SKALA lades samtidigt in i panelordningens trappa bredvid positionen, dit den
+hör.
+
+Widgetspecifika rubriker rörs inte. "VIDEO PER NIVÅ (1-50)" och "GIFT EDITOR · VISA / TA BORT" säger
+något eget om just den widgeten; att tvinga in dem under ett gemensamt ord hade gjort panelen
+fattigare, inte tydligare.
+
+Vakt: `tests/panelgruppernas-namn.test.js` — ett **källkodsprov**, inte ett browserprov. En rubrik är
+en sträng i en fil, så att starta en webbläsare för att läsa den hade tagit fyrtio minuter och inte
+mätt mer. Den engelska listan är dessutom snäv med flit: en allmän ordlista hade fällt "TOP GIFTER",
+"LIVE-DATA" och "PRESET", som alla är etablerade i produkten.
+
+`panel-controls.browser.test.js` pekar nu på `vtOutline` i stället för `wsOutlineWidth` — samma fält
+`textOutlineWidth`, bara den kontroll som blev kvar efter att dubbletten från checkpoint 47 togs bort.
+
+## Checkpoint 47 — Rubrik, namn och värde dras på duken (2026-09-09)
+
+David om Top Likes sex nummerfält: *"det jag tycker om man göra bättre"*, och efter demon:
+*"jag tycker om känslan jag vill den ska funka på top liks och top strake också"*.
+
+Top Like kunde flytta sina tre textdelar, men bara genom att skriva sex tal i en grupp på 285 px
+utan att se resultatet förrän efteråt. Top Gift och Top Streak kunde inte flytta något alls.
+
+**Samma fält som nummerrutorna.** Draget skriver till `titleOffsetX/Y`, `nameOffsetX/Y` och
+`valueOffsetX/Y` — precis de fält Top Likes panel redan använder. Därför fungerar ångra, därför
+visar nummerrutorna rätt värde, och därför behövde ingen renderare skrivas om.
+
+Selektorerna är uppmätta i webbläsaren, en tabell per familj, eftersom markupen skiljer sig helt:
+
+| | rubrik | namn | värde |
+|---|---|---|---|
+| Top Gift | `.vyra-gift-title` | `.topgift-copy > strong` | `.topgift-copy > em` |
+| Top Streak | `.streak-copy > small` | `.streak-copy > strong` | `.streak-score` |
+| Top Like | `h3` | `.toplike-row > span` | `.toplike-row > em` |
+
+Top Like är en **lista**: namn och värde matchar fem element, ett per rad, och offseten gäller alla
+fem samtidigt — precis vad nummerrutorna gör i dag.
+
+Två saker som draget måste göra rätt: det får **inte** starta förrän widgeten är vald (annars flyttar
+man text i en widget man inte tittar på), och det måste stoppa dukens egen dragning med
+`stopPropagation` (annars rör sig widgeten och texten samtidigt). Skift stänger av snappen mot
+mittlinjen, samma tangent som vid vanligt drag.
+
+### Dubbletten som provet fångade
+
+Den gemensamma TEXT-gruppen från checkpoint 46 och Top Likes egen TEXTEFFEKTER styrde **samma fem
+fält** — skugga, skugg-XY, skuggfärg och konturfärg. Alltså exakt det problem grupperna byggdes för
+att lösa, återskapat en nivå upp. `panel-inga-dubbletter.browser.test.js` fällde det.
+
+Rättat genom att TEXT-gruppen bytte `textOutline` mot Top Likes `textOutlineWidth` och de fem
+dubblerade kontrollerna togs bort ur toplike-studio.js. Kvar där är bara uppladdning av eget
+typsnitt, och gruppen heter nu EGET TYPSNITT. Fälten är oförändrade, så sparade layouter ser
+likadana ut.
+
+### En tredje inline-ägarfälla
+
+Textskalan nollade elementets `font-size` för att läsa CSS-värdet — och raderade då den inline-
+storlek renderarna själva skriver (`.ctw-text` sätter `font-size:${w.textFontSize||32}px`). "Skriv
+din text" gick 32 px → 12 av en skala på 1,5, eftersom 8 px lästes som grund. Tredje gången samma
+mönster i det här arbetet: **man måste veta vem som äger en inline-stil innan man tar bort den.**
+
+Skillnaden mot den cachning som var fel i checkpoint 46: ett CSS-värde ändras när en stilmall laddas
+senare och får aldrig cachas, medan en inline-stil från renderaren är stabil och ska sparas.
+
+Vakt: `dra-textdelar.browser.test.js`, 15 prov över tre familjer. Muterat — utan filen faller alla 15.
+
+## Checkpoint 46 — En textgrupp och en bakgrundsgrupp för alla widgets (2026-09-09)
+
+David, efter att ha jämfört med Tiktory: *"vi har mer men ändå ser kaos ut"*. Konkurrenten har
+SAMMA TEXT-grupp i varje widget. VYRA hade en annan i varje — av 21 familjer kunde 8 byta typsnitt,
+8 textstorlek, 3 skugga, 2 kontur och 1 regnbåge. Kan man byta typsnitt i Top Like men inte i
+Top Gift går systemet inte att lära sig.
+
+### Vad grupperna styr, och vad de medvetet låter bli
+
+Förekomsterna i CSS avgjorde vad som var säkert att göra gemensamt:
+
+| | Regler i CSS | Beslut |
+|---|---|---|
+| `-webkit-text-stroke` | 8 | kontur — gemensam |
+| `font-family` | 21 | typsnitt — gemensamt |
+| `text-shadow` | 136 | skugga — gemensam, den är additiv |
+| `font-size` | 646 | **multiplikator**, inte absolut tal — de bär varje widgets proportioner |
+| `color` | 935 | **lämnad hos familjerna** — guld för värdet, vitt för namnet; en gemensam färg hade suddat ut designen i alla 21 på en gång |
+
+Bakgrundsgruppen fanns redan men kunde bara välja hur SVART plattan skulle vara. Den har nu färg,
+hörnradie och innerkant. `bgStrength` betyder fortfarande samma sak och sparade layouter påverkas
+inte: utan `bgColor` blir plattan svart precis som förut.
+
+### Fem fällor, alla uppmätta
+
+**props()-kedjan bryts.** Textgruppen låg först sist i props()-strängen och kom aldrig fram i
+Top Gift: `premium-final.js` returnerar sin egen HTML för den typen och anropar aldrig kedjan under
+sig. Grupperna byggs nu i DOM i bind(), som widget-background.js redan gjorde.
+
+**Grundstorleken låstes för tidigt.** Textskalan cachade elementets storlek — men media.js injicerar
+premium-final.css asynkront, så ett namn CSS:en säger 13 px mättes till 20 innan stilmallen kommit
+fram. Storleken läses nu om varje gång, med inline-värdet nollat först.
+
+**Främmande inline-stilar nollades.** Bakgrundens första version körde villkorslöst
+`removeProperty('padding')` och tog då bort den padding widgetarnas egna renderare sätter. Gåvoramen
+tappade sina mått. En markör på elementet säger nu vem som äger värdet.
+
+**Panelen hoppade.** Sorteringen från checkpoint 44 låg i en mikrotask, så panelen ritades utfälld
+(3815 px) och krympte efteråt (2576) — webbläsaren klippte scrollen däremellan. Felet fanns redan då
+men syntes först när textgruppen la till en grupp som faktiskt flyttades. Sorteringen sker nu
+synkront i samma pass som bygget, och `vyra-panelordning.js` laddas sist av de tre.
+
+**Prestanda.** Textgruppen gick igenom varje textelement i varje widget vid varje bind(). Ett
+browserprov drog iväg till 432 sekunder. Den har nu en snabb utgång för det normala fallet, där
+inget är inställt.
+
+Vakter: `text-grupp.browser.test.js` (35 prov, 7 familjer) och `bakgrundsgrupp.browser.test.js`
+(21 prov, 5 familjer).
+
+### Om maskinen, inte om koden
+
+Hela `npm run test:browser` gick inte att lita på lokalt under det här arbetet: 2,2 GB ledigt RAM av
+7,9, med 22 Chrome- och 14 node-processer igång. Nio prov föll på 30-sekunders timeout, och en
+omkörning fällde *andra* prov i samma filer. Panelens egna 65 prov och hela node-sviten är
+deterministiskt gröna; helhetsbedömningen får CI göra på en ren maskin.
+
+## Checkpoint 45 — Töm widget, och en tom widget syns inte i sändningen (2026-09-09)
+
+David: *"vi ska ha töma widget och profilbild och använder namn kommer när första giften kommer."*
+På följdfrågan valde han: töm automatiskt när en ny sändning startar, och en tom widget ska vara
+**helt osynlig** i OBS.
+
+### Hålet som täpptes
+
+Två skrivare fyller Top Gift och Top Streak med riktiga tittare — `live-leaderboard.js`
+(`w.dataName = person.name`) och `gift-event-images.js` (samma för streaken) — och båda kallar
+sedan `save()`. Efter en sändning stod alltså en riktig persons namn och avatar kvar i layouten.
+Nästa gång studion öppnades stod deras namn i panelen i stället för "@StreamQueen".
+
+Gåvorekordet (`records.giftCoins`, `records.streakCount`) nollställdes redan vid `live:start`, just
+för att en ny sändnings första gåva ska räknas som rekord. **Widgetens data hade ingen sådan
+nollställare alls.** `vyra-tom-widget.js` är den saknade halvan av samma regel.
+
+Fälten som töms: `dataName`, `dataValue`, `profileImage`, `giftImage`, `giftName`. Bara för
+`templateTopGift` och `templateTopStreak` — en widget vars innehåll streamern själv skrivit
+(Egen text, Heart Goal) får aldrig tömmas av en sändningsstart.
+
+`live:start` men aldrig `live:end`, samma regel som gift-event-images.js och goal-client.js redan
+följer: ett avslut ska lämna sista resultatet kvar på skärmen.
+
+### Två fällor som mätningen visade
+
+**`view` är "editor" även i overlayen.** Första villkoret var `view === 'overlay'` och slog aldrig
+till: den globalen följer studions vy-knappar, inte hur sidan öppnades. `layout-safe.js`
+`iOverlayLage()` hade redan löst samma sak genom att läsa URL:en, med motiveringen "det gor
+funktionen oberoende av laddningsordningen". Samma väg används nu.
+
+**Inline `display:none` förlorar mot temaklasserna.** Stilen hamnade rätt i style-attributet men
+datorn räknade ändå fram `display:flex`, eftersom `.premium-topgift{display:flex!important}` och
+`.topgift-cyber{display:grid!important}` deklarerar sin layout med `!important`. Döljningen skriver
+därför `display:none!important`.
+
+**Elementet stannar i DOM**, det döljs bara. `live-leaderboard.js` uppdaterar widgeten genom att slå
+upp `[data-id]` och returnerar tyst när noden saknas — hade widgeten inte renderats alls skulle
+första gåvan skriva till state men aldrig nå skärmen, och widgeten förbli borta hela sändningen.
+
+Vakt: `tests/browser/tom-widget.browser.test.js`, sex prov över två familjer. Det tredje provet
+mäter åt båda hållen i samma test — osynlig i overlay, **synlig i editorn**, eftersom en widget man
+inte ser inte går att placera.
+
 ## Checkpoint 44 — Egenskapspanelen har en ordning (2026-09-09)
 
 David: *"just nu hur jag ser layout EGENSKAPER gör mig förvirrad och vet inte om allt funkar."*

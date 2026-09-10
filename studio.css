@@ -6,6 +6,7 @@ aside{border-right:1px solid var(--line);padding:14px 11px;display:flex;flex-dir
    Spara-knappen klistrades mot raden ovan. padding-x ar 0 med flit: da slutar border-bottom
    exakt dar faltet slutar. */
 .settings-page label{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding:16px 0}.settings-page input{flex:1;background:#151821;border:1px solid #292d38;color:white;padding:7px}
+.settings-page select{flex:1;background:#190d22;border:1px solid #452656;color:#fff;padding:7px}
 /* Status ar TEXT, inte ett falt. Den gamla <input disabled> var visuellt identisk med det
    redigerbara faltet ovanfor och sag darfor redigerbar ut. Pricken bar anslutningslaget. */
 .settings-status{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding:16px 0}
@@ -1542,3 +1543,13 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
   .workarea>.overlay-link-bar>div{flex-wrap:wrap;row-gap:8px}
   .workarea>.overlay-link-bar input{flex:1 1 100%!important;order:5}
 }
+
+/* Emoji-knappen och dess väljare (2026-09-09). Knappen sitter i fältets egen label, så den
+   följer med när panelen scrollar; väljaren likaså, i stället för i body med uträknad position. */
+.properties .vyra-emoji-knapp{background:#1c1226;border:1px solid #3d2450;color:#dcb3f0;border-radius:6px;width:26px;height:24px;padding:0;font-size:13px;line-height:1;cursor:pointer;align-self:flex-end;margin-top:4px}
+.properties .vyra-emoji-knapp:hover{background:#2a1838;border-color:#b13cff}
+.properties .vyra-emoji-knapp:focus-visible{outline:2px solid #b13cff;outline-offset:1px}
+.properties .vyra-emoji-val{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin-top:6px;padding:7px;background:#150c20;border:1px solid #452656;border-radius:8px}
+.properties .vyra-emoji-val button{background:transparent;border:0;font-size:16px;line-height:1;padding:4px 0;cursor:pointer;border-radius:5px}
+.properties .vyra-emoji-val button:hover{background:#2a1838}
+.properties .vyra-emoji-val button:focus-visible{outline:2px solid #b13cff;outline-offset:-2px}

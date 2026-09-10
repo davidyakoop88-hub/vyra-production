@@ -130,7 +130,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-08 (bildmatt): gavoramarnas flip var 0×0, gavobilden i naturlig storlek och
   // namnplattan pa en rad. BARA studio.css andrades av den delen.
   // Bumpad 2026-09-09 (panelordningen): studio.css bar regeln for en oppnad hopfalld grupp.
-  assert.match(studio, /studio\.css\?v=20260909-panel/);
+  // Bumpad 2026-09-09 for emoji-knappen: studio.css bar reglerna for knappen och dess valjare.
+  // media.js ar OFORANDRAD av den andringen och behaller sin strang — de foljer filerna, inte
+  // varandra.
+  // Bumpad 2026-09-10: prestandavaljaren i Installningar saknade `flex:1` som sidans input har, sa
+  // radens harlinje gick 475 px forbi innehallet. BARA studio.css andrades.
+  assert.match(studio, /studio\.css\?v=20260910-installningar/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);

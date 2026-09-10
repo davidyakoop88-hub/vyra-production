@@ -122,7 +122,12 @@ const DRAGSTEG = ([id, nyckel]) => {
 // urvalet som ar ett talfalt utan px-etikett, sa live-provet maste kunna mata state i stallet.
 const FALL = [
   { namn: 'TOP GIFT', typ: 'templateTopGift', kontroll: 'pfTopGiftSize', nyckel: 'giftSize' },
-  { namn: 'TOP LIKES', typ: 'templateTopLike', kontroll: 'wsOutlineWidth', nyckel: 'textOutlineWidth' },
+  // Konturbredden flyttade 2026-09-09 fran toplike-studio.js:s egen TEXTEFFEKTER till den
+  // gemensamma TEXT-gruppen (vyra-textgrupp.js). FALTET ar detsamma — textOutlineWidth — sa fallet
+  // mater fortfarande exakt samma sak; det ar bara kontrollens id som bytt, fran wsOutlineWidth
+  // till vtOutline. De tva grupperna styrde samma falt parallellt, vilket
+  // panel-inga-dubbletter-provet fallde som en dubblett.
+  { namn: 'TOP LIKES', typ: 'templateTopLike', kontroll: 'vtOutline', nyckel: 'textOutlineWidth' },
   { namn: 'LikeFountain', typ: 'templateLikeFountain', kontroll: 'fountainSize', nyckel: 'fountainSize' },
   { namn: 'TOP GIFT · Bredd', typ: 'templateTopGift', kontroll: 'propWidth', nyckel: 'width' },
   { namn: 'TOP LIKES · Bredd', typ: 'templateTopLike', kontroll: 'propWidth', nyckel: 'width' },

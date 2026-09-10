@@ -10,7 +10,9 @@
 // ska inte falla på det) utan att den RELATIVA ordningen håller: allt som hör till en tidigare
 // kategori kommer före allt som hör till en senare, i varje widget.
 //
-// PRESET & PRESTANDA ligger sist med flit. Dess två kontroller skriver inte till widgeten alls
+// PRESET ligger sist med flit. Gruppen hette PRESET & PRESTANDA fram till 2026-09-09, då
+// prestandaläget flyttade till Inställningar — det gäller studion, inte widgeten. Kvar är spara,
+// ladda och återställ, som alla gäller widgeten men hör till slutet ändå.
 // (mätt: de gäller scenen), så de hör inte hemma bland widgetens egna inställningar.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
@@ -64,11 +66,11 @@ const TRAPPA = [
   [/^DESIGN|^TEMA|FÄRG|^UTSEENDE|TEXTEFFEKT|^PRAKT|PRESET-TEMAN|^LISTA/, 30, 'design'],
   [/^TRIGGER|LIVE-DATA|VISNINGSTID|^TESTA|TEST OCH RESET|WEBHOOK/, 40, 'live/test'],
   [/POSITION\s*·\s*TEXTELEMENT|^FINJUSTERING/, 45, 'finjustering'],
-  [/^POSITION/, 50, 'position'],
+  [/^POSITION|^SKALA/, 50, 'position'],
   [/AVATAR-RAM|PROFILRAM/, 60, 'ram'],
   [/^ANIMATION|RÖRELSESTIL|PREMIUM RÖRELSE/, 70, 'animation'],
   [/^BAKGRUND/, 80, 'bakgrund'],
-  [/PRESET\s*&\s*PRESTANDA/, 90, 'verktyg'],
+  [/^PRESET$|PRESET\s*&\s*PRESTANDA/, 90, 'verktyg'],
 ];
 
 function kategori(rubrik) {
@@ -115,10 +117,10 @@ for (const nyckel of WIDGETS) {
       assert.deepEqual(fel, [], `${nyckel} har grupper i fel ordning:\n  - ${fel.join('\n  - ')}\n  panelen: ${rubriker.join(' → ')}`);
 
       // Verktygsgruppen gäller scenen, inte widgeten, och ska alltid ligga sist av grupperna.
-      const preset = rubriker.findIndex(r => /PRESET\s*&\s*PRESTANDA/i.test(r));
+      const preset = rubriker.findIndex(r => /^PRESET$|PRESET\s*&\s*PRESTANDA/i.test(r));
       if (preset >= 0) {
         assert.equal(preset, rubriker.length - 1,
-          `${nyckel}: "PRESET & PRESTANDA" ligger på plats ${preset + 1} av ${rubriker.length}, inte sist`);
+          `${nyckel}: "${rubriker[preset]}" ligger på plats ${preset + 1} av ${rubriker.length}, inte sist`);
       }
 
       // "TA BORT" LIGGER NEDERST. Sorteringen flyttar noder, och första försöket flyttade grupperna

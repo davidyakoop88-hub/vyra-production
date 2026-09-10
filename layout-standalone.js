@@ -103,11 +103,12 @@
       '<label>Rubrik<input id="propertyTitle" value="' + escapeHtml(widget.title || '') + '"></label>' +
       '<label>Värde<input id="propertyValue" value="' + escapeHtml(widget.value || '') + '"></label>' +
       '<label class="visibility-setting">Synlig i overlay<input id="propertyVisible" type="checkbox" ' + (widget.hidden ? '' : 'checked') + '></label>' +
-      '<div class="property-group"><h4>POSITION</h4><div class="property-grid">' +
+      // EN GRUPP, INTE TVÅ (2026-09-09). X/Y låg under "POSITION" och bredd/höjd under "STORLEK",
+      // medan resten av studion samlar alla fyra under "POSITION & STORLEK" — 23 filer mot den här
+      // enda. Fälten och deras id är oförändrade; det är rubriken som slutar avvika.
+      '<div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid">' +
         '<label>X<input id="propertyX" type="number" value="' + (Number(widget.x) || 0) + '"></label>' +
         '<label>Y<input id="propertyY" type="number" value="' + (Number(widget.y) || 0) + '"></label>' +
-      '</div></div>' +
-      '<div class="property-group"><h4>STORLEK</h4><div class="property-grid">' +
         '<label>Bredd<input id="propertyWidth" type="number" min="60" max="1000" value="' + (Number(widget.width) || 150) + '"></label>' +
         '<label>Höjd<input id="propertyHeight" type="number" min="40" max="1000" value="' + (Number(widget.height) || 70) + '"></label>' +
       '</div></div>' +
