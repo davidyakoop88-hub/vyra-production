@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `dad645f`
+Commit: `6db2bb8`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -47,7 +47,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
-| BATTLE MVP · 23 DESIGNER | 23 | 23/23 | 23/23 | 23/23 | 2026-08-03 | — |
+| BATTLE MVP · 23 DESIGNER | 23 | 23/23 | 23/23 | 23/23 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
@@ -145,16 +145,16 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-08-03 | — |
-| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-08-03 | — |
-| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-08-03 | — |
-| Ice | `catalog:battlemvp:ice` | ✓ | ✓ | 2026-08-03 | — |
-| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-08-03 | — |
-| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-08-03 | — |
-| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Purple | `catalog:battlemvp:royal-purple` | ✓ | ✓ | 2026-08-03 | — |
-| Neon Cyber | `catalog:battlemvp:neon-cyber` | ✓ | ✓ | 2026-08-03 | — |
-| Diamond Elite | `catalog:battlemvp:diamond-elite` | ✓ | ✓ | 2026-08-03 | — |
+| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-09-11 | — |
+| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-09-11 | — |
+| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-09-11 | — |
+| Ice | `catalog:battlemvp:ice` | ✓ | ✓ | 2026-09-11 | — |
+| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-09-11 | — |
+| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-09-11 | — |
+| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-09-11 | — |
+| Royal Purple | `catalog:battlemvp:royal-purple` | ✓ | ✓ | 2026-09-11 | — |
+| Neon Cyber | `catalog:battlemvp:neon-cyber` | ✓ | ✓ | 2026-09-11 | — |
+| Diamond Elite | `catalog:battlemvp:diamond-elite` | ✓ | ✓ | 2026-09-11 | — |
 | Gold Crown | `catalog:battlemvp:frame:gold-crown` | ✓ | ✓ | 2026-08-03 | — |
 | Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-08-03 | — |
 | Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-08-03 | — |
@@ -162,12 +162,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-03 | — |
 | Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-03 | — |
 | Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-03 | — |
-| Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
-| Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
-| Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
-| Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
-| Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
-| Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
+| Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
+| Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |
+| Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-09-11 | — |
+| Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-09-11 | — |
+| Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-09-11 | — |
 
 ### Koi Pearl Lagoon · VIDEO FX
 
@@ -462,5 +462,3 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
-
-> Validering 2026-09-11: katalogens nycklar, antal och miniatyrer uppmätta i Chrome. Tidigare historikkolumner bevarade; sex nya MVP-val kopplade till PR #406. Historikskanning avbröts för att begränsa hämtning av gamla filer.
