@@ -265,3 +265,32 @@ test('combofaltet skriver sitt varde till widgeten', () => {
   falt.dispatchEvent(new h.window.Event('change', { bubbles: true }));
   assert.equal(sparadCombo(h, run), 7, 'faltet skrev inte combon till widgeten');
 });
+
+test('rörelsekorten visar sparat val och byter widgetens rörelse', () => {
+  const { h, d, run } = panel({ fwMotion: 'spiral' });
+  assert.equal(d.querySelector('[data-fw-choice="spiral"]').getAttribute('aria-pressed'), 'true');
+  d.querySelector('[data-fw-choice="bloom"]').click();
+  run('window.__motion = state.widgets[0].fwMotion');
+  assert.equal(h.window.__motion, 'bloom');
+  assert.equal(d.querySelector('[data-fw-choice="bloom"]').getAttribute('aria-pressed'), 'true');
+});
+
+test('förinställningen följer värdena även efter omritning och egen justering', () => {
+  const { h, d, run } = panel();
+  const preset = d.querySelector('#fwPreset');
+  preset.value = 'slowmo';
+  preset.dispatchEvent(new h.window.Event('change', { bubbles: true }));
+  assert.equal(d.querySelector('#fwPreset').value, 'slowmo');
+  run("const density=document.querySelector('#fwDensityNum');density.value='60';density.onchange({target:density})");
+  assert.equal(d.querySelector('#fwPreset').value, '');
+});
+
+test('avstängd text döljer textvalen men behåller sparad mall när den slås på', () => {
+  const { h, d } = panel({ fwTextOn: false, fwText: '{user} tack!' });
+  assert.equal(d.querySelector('.fw-text-options').hidden, true);
+  const toggle = d.querySelector('#fwTextOn');
+  toggle.checked = true;
+  toggle.dispatchEvent(new h.window.Event('change', { bubbles: true }));
+  assert.equal(d.querySelector('.fw-text-options').hidden, false);
+  assert.equal(d.querySelector('#fwText').value, '{user} tack!');
+});
