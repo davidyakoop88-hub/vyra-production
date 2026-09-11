@@ -28,7 +28,7 @@ const ROOT = path.join(__dirname, '..');
 const ACTION_RUNTIME = fs.readFileSync(path.join(ROOT, 'action-runtime.js'), 'utf8');
 const RUNTIME_CONTROLS = fs.readFileSync(path.join(ROOT, 'runtime-controls.js'), 'utf8');
 
-test.after(closeAll);
+test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
 const fw = (id, extra = {}) => Object.assign({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360, title: 'Gift Fireworks',
@@ -95,9 +95,10 @@ test('action-runtime skickar eventet vidare, inte bara ett tal', () => {
 
 // ---- 3. kön reserverar widgetens egen tid ------------------------------------------------------
 
-test('alertkön läser fyrverkeriets egen visningstid', () => {
-  assert.match(RUNTIME_CONTROLS, /triggerGiftFireworks'\)[^;]*fwDuration/,
-    'kön kör fortfarande på hårdkodade 6000 ms — vid 10 s överlappar nästa alert');
+test('fireworks pacing belongs to its session queue rather than the shared alert wrapper', () => {
+  assert.doesNotMatch(RUNTIME_CONTROLS, /triggerGiftFireworks:\[/);
+  const session = fs.readFileSync(path.join(ROOT, 'gift-fireworks-session.js'), 'utf8');
+  assert.match(session, /durationFor\(jobb\)/);
 });
 
 // ---- 4. flera fyrverkerier får finnas ----------------------------------------------------------
@@ -170,14 +171,16 @@ test('outrot erbjuder tona bort och klipp bort direkt', () => {
 test('intro- och outrotiderna ligger på elementet, inte i procent av speltiden', () => {
   // Fore fixen satt upp- och nedtoningen inbakad i fw-scene som 8% och 12% av --duration, sa en
   // kort effekt fick en kort intro vare sig man ville eller inte.
-  const { d } = boot([fw('fw1')]);
+  const { h, d } = boot([fw('fw1')]);
+  h.window.triggerGiftFireworks({combo:1});
   const style = d.querySelector('[data-id="fw1"] .gift-fireworks-fx').getAttribute('style');
   assert.match(style, /--fw-in:\s*\d+ms/, '--fw-in saknas');
   assert.match(style, /--fw-out:\s*\d+ms/, '--fw-out saknas');
 });
 
 test('direkt intro och klippt outro ger noll millisekunder', () => {
-  const { d } = boot([fw('fw1', { fwIntro: 'instant', fwOutro: 'cut' })]);
+  const { h, d } = boot([fw('fw1', { fwIntro: 'instant', fwOutro: 'cut' })]);
+  h.window.triggerGiftFireworks({combo:1});
   const style = d.querySelector('[data-id="fw1"] .gift-fireworks-fx').getAttribute('style');
   assert.match(style, /--fw-in:\s*0ms/, 'direkt intro tonar fortfarande in');
   assert.match(style, /--fw-out:\s*0ms/, 'klippt outro tonar fortfarande bort');
