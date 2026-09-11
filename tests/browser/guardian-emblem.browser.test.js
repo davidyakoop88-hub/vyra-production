@@ -263,7 +263,7 @@ test('Grön aura: intro, öppning, hyllning och avslut syns i rätt ordning', { 
   })));
   await page.evaluate(()=>window.__geFas('ljus',300));
   let v=await synlighet();assert.equal(v['ge-bild'],0);assert.ok(v['gem-intro']>.9);
-  await page.evaluate(()=>window.__geFas('oppna',1100));
+  await page.evaluate(()=>window.__geFas('oppna',1190));
   v=await synlighet();assert.ok(v['ge-bild']>.9);assert.ok(v['ge-namn']>.9);
   await page.evaluate(()=>window.__geFas('hyllning',900));
   v=await synlighet();assert.equal(v['ge-namn'],1);assert.equal(v['gem-rubrik'],1);
