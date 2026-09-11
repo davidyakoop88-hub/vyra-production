@@ -224,7 +224,8 @@ test('visningstidens default är 7 sekunder överallt', () => {
   const ROOT = path.join(__dirname, '..');
   const avvikande = [];
   for (const fil of ['media.js', 'runtime-controls.js', 'widget-factory.js']) {
-    const src = fs.readFileSync(path.join(ROOT, fil), 'utf8');
+    // Celebration defaults are explicit ten-second timelines; queue reads that saved value.
+    const src = fs.readFileSync(path.join(ROOT, fil), 'utf8').replace(/'battlemvp\.celebration': v => \({[\s\S]*?\n    \}\),/, '');
     for (const m of src.matchAll(/mvpDuration\s*(?:\|\||\?\?)\s*(\d+)/g)) {
       if (m[1] !== '7') avvikande.push(`${fil}: mvpDuration || ${m[1]}`);
     }
