@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {startaWebblasare,hoppaOver}=require('../helpers/webblasare.js');
-const ROOT=path.join(__dirname,'../..');let browser;const skip=hoppaOver();
+const ROOT=path.join(__dirname,'../..');let browser;let skip = hoppaOver();
 test.before(async()=>{if(!skip)browser=await startaWebblasare()});
 test.after(async()=>{if(browser)await browser.close()});
 async function fixture(){
