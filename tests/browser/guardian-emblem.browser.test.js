@@ -148,6 +148,12 @@ async function sida(steg) {
 const matt = page => page.evaluate(() => window.__geMatt());
 const pixel = (page, u, v) => page.evaluate(([u, v]) => window.__gePixel(u, v), [u, v]);
 
+async function skarmbild(page,namn) {
+  if(!process.env.VYRA_GUARDIAN_QA_DIR)return;
+  fs.mkdirSync(process.env.VYRA_GUARDIAN_QA_DIR,{recursive:true});
+  await page.locator('.gem-model').screenshot({path:path.join(process.env.VYRA_GUARDIAN_QA_DIR,namn+'.png')});
+}
+
 async function allaSteg() {
   const ut = {};
   for (const s of STEG) {
@@ -242,42 +248,148 @@ test('G-STEG-HÖJD: avatarhålet är runt i renderad form', { skip }, async () =
   }
 });
 
-test('Grön aura: bilden laddas, har riktig alfa och ett runt avatarhål', { skip }, async () => {
-  const {page,fel}=await sida('model:emerald');
+for (const model of ['emerald','sapphire']) {
+test(model + ': bilden laddas, har riktig alfa och ett runt avatarhål', { skip }, async () => {
+  const {page,fel}=await sida('model:' + model);
   assert.ok(!fel,fel);
   const m=await matt(page);
   assert.ok(m.laddad,'den nya bildfilen måste följa med webbplatsen');
-  assert.match(m.src,/guardian-emblem\/emerald\.png$/);
+  assert.ok(m.src.endsWith('/guardian-emblem/' + model + '.png'));
   assert.ok(Math.abs(m.halBredd-m.halHojd)<1,'profilbilden ska vara rund');
   for(const [u,v] of [[.02,.02],[.98,.02],[.02,.98],[.98,.98],[m.halMittX,m.halMittY]]) {
     assert.ok((await pixel(page,u,v)).a<8,'bakgrund och avatarhål ska vara genomskinliga');
   }
   assert.ok((await pixel(page,.5,.32)).a>240,'kontroll: hjorthuvudet ska vara kvar');
+  if(model==='sapphire') {
+    const minAlpha=await page.evaluate(()=>{
+      const b=document.querySelector('.gem-sapphire'),img=b.querySelector('.ge-bild>img'),avatar=b.querySelector('.ge-avatar');
+      const r=img.getBoundingClientRect(),h=avatar.getBoundingClientRect(),s=img.naturalWidth/r.width;
+      const cx=(h.left+h.width/2-r.left)*s,cy=(h.top+h.height/2-r.top)*s,radius=h.width*s/2;
+      const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+      const g=c.getContext('2d');g.drawImage(img,0,0);const d=g.getImageData(0,0,c.width,c.height).data;
+      let min=255;
+      for(let i=0;i<720;i++){
+        const a=i*Math.PI/360,x=Math.round(cx+Math.cos(a)*radius),y=Math.round(cy+Math.sin(a)*radius);
+        min=Math.min(min,d[(y*c.width+x)*4+3]);
+      }
+      return min;
+    });
+    assert.ok(minAlpha>240,'profilcirkelns ytterkant måste täckas av guldringen, utan läckande fotokanter');
+  }
 });
 
-test('Grön aura: intro, öppning, hyllning och avslut syns i rätt ordning', { skip }, async () => {
-  const {page}=await sida('model:emerald');
+test(model + ': intro, öppning, hyllning och avslut syns i rätt ordning', { skip }, async () => {
+  const {page}=await sida('model:' + model);
+  await page.evaluate(()=>{
+    Object.assign(state.widgets[0],{height:570,guardianAvatar:'assets/images/test/test-profile.png',guardianUsername:'@David_Yakoop88',guardianCustomText:'Tack för ditt beskydd 💙'});
+    render();
+  });
+  await page.evaluate(()=>Promise.all([...document.querySelectorAll('.gem-model img')].map(i=>i.decode())));
   const synlighet=()=>page.evaluate(()=>Object.fromEntries(['ge-bild','gem-intro','gem-rubrik','ge-namn','gem-aura'].map(klass=>{
-    const el=document.querySelector('.gem-emerald .'+klass);
+    const el=document.querySelector('.gem-model .'+klass);
     return [klass,Number(getComputedStyle(el).opacity)];
   })));
   await page.evaluate(()=>window.__geFas('ljus',300));
   let v=await synlighet();assert.equal(v['ge-bild'],0);assert.ok(v['gem-intro']>.9);
+  await skarmbild(page,model+'-1-intro');
   await page.evaluate(()=>window.__geFas('oppna',1190));
   v=await synlighet();assert.ok(v['ge-bild']>.9);assert.ok(v['ge-namn']>.9);
+  await skarmbild(page,model+'-2-oppning');
   await page.evaluate(()=>window.__geFas('hyllning',900));
   v=await synlighet();assert.equal(v['ge-namn'],1);assert.equal(v['gem-rubrik'],1);
+  await skarmbild(page,model+'-3-hyllning');
+  await page.evaluate(()=>window.__geFas('upplosning',400));
+  await skarmbild(page,model+'-4-avslut');
   await page.evaluate(()=>window.__geFas('upplosning',800));
   v=await synlighet();for(const k of ['ge-bild','gem-rubrik','ge-namn','gem-aura'])assert.equal(v[k],0,k+' ska ha tonat ut');
 });
 
-test('Grön aura: reducerad rörelse stänger av samtliga animationer', { skip }, async () => {
-  const {page}=await sida('model:emerald');
+test(model + ': reducerad rörelse stänger av samtliga animationer', { skip }, async () => {
+  const {page}=await sida('model:' + model);
   await page.emulateMedia({reducedMotion:'reduce'});
   for(const fas of ['ljus','oppna','hyllning','upplosning']) {
     await page.evaluate(f=>window.__geFas(f,300),fas);
-    const n=await page.evaluate(()=>document.querySelector('.gem-emerald').getAnimations({subtree:true}).length);
+    const n=await page.evaluate(()=>document.querySelector('.gem-model').getAnimations({subtree:true}).length);
     assert.equal(n,0,'rörelse kvar i '+fas);
   }
   await page.emulateMedia({reducedMotion:'no-preference'});
+});
+
+test(model + ': profilbilden följer ramen i flera storlekar och texten ryms under den', { skip }, async () => {
+  const {page}=await sida('model:' + model);
+  for (const width of [280,400,560]) {
+    await page.evaluate(w => {
+      Object.assign(state.widgets[0],{width:w,height:Math.round(w*570/400),guardianAvatar:'assets/images/test/test-profile.png',
+        guardianUsername:'@David_Yakoop88',guardianCustomText:'Tack för ditt beskydd 💙'});
+      render();
+    },width);
+    await page.evaluate(()=>Promise.all([...document.querySelectorAll('.gem-model img')].map(i=>i.decode())));
+    const m=await page.evaluate(()=>{
+      const box=document.querySelector('.gem-model'),art=box.querySelector('.ge-bild>img'),avatar=box.querySelector('.ge-avatar'),photo=avatar.querySelector('img');
+      const b=box.getBoundingClientRect(),a=art.getBoundingClientRect(),h=avatar.getBoundingClientRect(),p=photo.getBoundingClientRect();
+      const name=box.querySelector('.ge-namn'),title=box.querySelector('.gem-rubrik'),text=box.querySelector('.ge-undertext');
+      const n=name.getBoundingClientRect(),t=title.getBoundingClientRect(),u=text.getBoundingClientRect();
+      return {round:Math.abs(h.width-h.height),fill:Math.abs(p.width-h.width)+Math.abs(p.height-h.height),fit:getComputedStyle(photo).objectFit,
+        radius:getComputedStyle(avatar).borderRadius,clip:getComputedStyle(avatar).overflow,
+        layer:Number(getComputedStyle(art).zIndex)>Number(getComputedStyle(avatar).zIndex),
+        inside:h.left>=a.left&&h.right<=a.right&&h.top>=a.top&&h.bottom<=a.bottom,
+        name:name.textContent,text:text.textContent,ordered:a.bottom<=t.top+1&&t.bottom<=n.top+1&&n.bottom<=u.top+1,
+        fits:[n,t,u].every(r=>r.left>=b.left-1&&r.right<=b.right+1&&r.bottom<=b.bottom+1),
+        nameFits:name.scrollWidth<=name.clientWidth+1};
+    });
+    assert.ok(m.round<1,width+' px: profilen är oval');
+    assert.ok(m.fill<1,width+' px: fotot fyller inte profilcirkeln');
+    assert.equal(m.fit,'cover');assert.equal(m.radius,'50%');assert.equal(m.clip,'hidden');
+    assert.ok(m.layer&&m.inside,'ringen ska ligga framför fotot och hålet inom konstverket');
+    assert.equal(m.name,'@David_Yakoop88');assert.equal(m.text,'Tack för ditt beskydd 💙');
+    assert.ok(m.ordered&&m.fits&&m.nameFits,width+' px: rubrik, namn eller text överlappar/klipps');
+  }
+});
+}
+
+test('Blå kristall: en Guardian-entré genom livevägen visar rätt person och avslutas helt', { skip }, async () => {
+  const page=await browser.newPage({viewport:{width:1400,height:1000},locale:'sv-SE'});
+  const fel=[];page.on('pageerror',e=>fel.push(e.message));
+  try {
+    await page.goto(`${bas}/studio.html?overlay=1`,{waitUntil:'load'});
+    await page.waitForFunction(()=>!!window.VyraGuardianModels&&!!window.VyraGuardian&&!!window.VyraAlertQueue,null,{timeout:30000});
+    await page.evaluate(()=>{
+      const w=VyraWidgets.create('catalog:guardianemblem:model:sapphire');
+      Object.assign(w,{x:40,y:30,guardianLang:'sv',guardianCustomText:'Tack för ditt beskydd 💙',guardianUsername:'@Reserv',guardianAvatar:'assets/images/test-profile.svg'});
+      state.widgets=[w];selected=null;render();
+      window.__guardianFaser=[];
+      const box=document.querySelector('.gem-sapphire');
+      new MutationObserver(()=>{
+        const f=[...box.classList].find(c=>c.startsWith('ge-fas-'));
+        if(f&&window.__guardianFaser.at(-1)!==f)window.__guardianFaser.push(f);
+      }).observe(box,{attributes:true,attributeFilter:['class']});
+    });
+    await page.evaluate(()=>Promise.all([...document.querySelectorAll('.gem-sapphire img')].map(i=>i.decode())));
+    const vila=await page.evaluate(()=>({overlay:document.documentElement.classList.contains('overlay-output'),
+      bakgrund:getComputedStyle(document.body).backgroundColor,opacity:getComputedStyle(document.querySelector('.gem-sapphire')).opacity}));
+    assert.ok(vila.overlay);assert.equal(vila.opacity,'0');assert.match(vila.bakgrund,/rgba\(0, 0, 0, 0\)|transparent/);
+    await page.evaluate(()=>window.routeLiveBattleEvent({type:'guardian',username:'@David_Yakoop88',profileImage:location.origin+'/assets/images/test/test-profile.png'}));
+    await page.waitForFunction(()=>document.querySelector('.gem-sapphire').classList.contains('ge-fas-hyllning'),null,{timeout:10000,polling:50});
+    await page.evaluate(()=>document.querySelector('.gem-sapphire .ge-avatar img').decode());
+    const live=await page.evaluate(()=>{
+      const b=document.querySelector('.gem-sapphire');
+      const effective=el=>{let o=1;for(let n=el;n;n=n.parentElement){const c=getComputedStyle(n);if(c.display==='none'||c.visibility==='hidden')return 0;o*=Number(c.opacity)}return o};
+      return {namn:b.querySelector('.ge-namn').textContent,text:b.querySelector('.ge-undertext').textContent,
+        foto:b.querySelector('.ge-avatar img').src,synliga:['.ge-bild','.ge-avatar img','.ge-namn','.ge-undertext'].map(s=>effective(b.querySelector(s)))};
+    });
+    assert.equal(live.namn,'@David_Yakoop88');assert.equal(live.text,'Tack för ditt beskydd 💙');
+    assert.ok(live.foto.endsWith('/assets/images/test/test-profile.png'));
+    assert.ok(live.synliga.every(o=>o>.95),'profilbild, namn och egen text ska verkligen synas i sändningen');
+    if(process.env.VYRA_GUARDIAN_QA_DIR){
+      fs.mkdirSync(process.env.VYRA_GUARDIAN_QA_DIR,{recursive:true});
+      await page.locator('.gem-sapphire').screenshot({path:path.join(process.env.VYRA_GUARDIAN_QA_DIR,'sapphire-live.png')});
+    }
+    await page.waitForFunction(()=>!document.querySelector('.gem-sapphire').classList.contains('ge-active'),null,{timeout:10000,polling:50});
+    assert.deepEqual(await page.evaluate(()=>window.__guardianFaser),['ge-fas-ljus','ge-fas-oppna','ge-fas-hyllning','ge-fas-upplosning']);
+    assert.equal(await page.locator('.gem-sapphire').evaluate(e=>getComputedStyle(e).opacity),'0');
+    await page.evaluate(()=>window.routeLiveBattleEvent({type:'guardian',username:'@Mira',profileImage:location.origin+'/assets/images/test-profile.svg'}));
+    await page.waitForFunction(()=>document.querySelector('.gem-sapphire .ge-namn').textContent==='@Mira',null,{timeout:10000,polling:50});
+    assert.ok((await page.locator('.gem-sapphire .ge-avatar img').getAttribute('src')).endsWith('/assets/images/test-profile.svg'),'nästa besökare får sin egen profilbild');
+    assert.deepEqual(fel,[],'runtimefel i den riktiga overlay-sidan');
+  } finally {await page.close()}
 });
