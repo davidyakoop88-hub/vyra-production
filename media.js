@@ -1331,12 +1331,16 @@ function triggerGuardianEmblem(event={}){
     // Halet kan vara TOMT: geDel('avatar') ritar bara ett <img> nar w.guardianAvatar ar satt. Utan
     // ett element att uppdatera hade en ren `img.src`-tilldelning tigit i just det vanligaste
     // fallet — en widget dar streamern aldrig valt nagon bild.
-    if(event.profileImage){
+    {
       let hal=box.querySelector('.ge-avatar');
       if(hal){
         let img=hal.querySelector('img');
-        if(!img){img=document.createElement('img');img.alt='';hal.append(img)}
-        img.src=VyraSafe.src(event.profileImage);
+        // Varje entré väljer sitt eget foto. Utan bild används reservbilden, aldrig förra tittaren.
+        const bild=String(event.profileImage||w.guardianAvatar||'').trim();
+        if(bild){
+          if(!img){img=document.createElement('img');img.alt='';hal.append(img)}
+          img.src=VyraSafe.src(bild);
+        }else if(img)img.remove();
       }
     }
     box.classList.remove('ge-active');void box.offsetWidth;box.classList.add('ge-active');
@@ -1354,7 +1358,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260911-1';
+  const version='20260911-2';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

@@ -242,8 +242,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
   // och media.js bar dess versionsstrang.
   // Ny Guardian-modell: fabriken, media.js och dess syskonmodul laddas som samma version.
-  assert.match(studio, /[^-]media\.js\?v=20260911-1/);
-  assert.match(studio, /widget-factory\.js\?v=20260911-1/);
+  assert.match(studio, /[^-]media\.js\?v=20260911-2/);
+  assert.match(studio, /widget-factory\.js\?v=20260911-2/);
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
@@ -268,7 +268,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
   // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
   // Bumpad 2026-09-07 (#367): premium-final.js erbjuder numera diamantmålet bland ramdesignerna.
-  assert.match(media, /const version='20260911-1'/);
+  assert.match(media, /const version='20260911-2'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
