@@ -11,17 +11,18 @@ Saknat eller okänt modellvärde behåller guldmodellen.
 - Samma fasklocka: ljus 600 ms, öppning 1200 ms, hyllning 3500 ms, utgång 800 ms.
 - Rörelserna begränsas när besökaren valt reducerad rörelse.
 
-## Kvar före leverans
+## Bild och avatar
 
-**Utkast – inte redo att publicera.** Bilden måste friläggas och sparas med riktig
-alfa som `assets/guardian-emblem/emerald.png`. Bildverktygets två försök gav en
-inritad rutig bakgrund i en RGB-fil. Den filen är inte ett godkänt overlay-material
-och har därför inte lagts in i repot. Geometrin i `VyraGuardianModels.EMERALD` är
-preliminär och ska mätas mot den färdiga bilden.
+`assets/guardian-emblem/emerald.png` är en 1024 × 1024 PNG med riktig alfa.
+Bildgenereringens inritade rutbakgrund frilades med rembg och ImageMagick;
+omgivningen och avatarhålet har kontrollerats mot ljus och mörk bakgrund.
+Guld, vita fjädrar och de gröna kristallerna behåller den godkända formen.
+Den rörliga auran ritas separat i CSS och följer samma fasklocka som emblemet.
 
-Kontrollera sedan avatarens placering och alla fyra faser mot ljus och mörk
-bakgrund. Uppdatera katalogkartan och visuella referenser med repots ordinarie
-verktyg när bilden är färdig. Befintlig produktion har inte ändrats.
+Avataren ligger bakom konstverket. Dess cirkel mäts mot bildens proportioner i
+`VyraGuardianModels.EMERALD` och går något under ringens kant, så en besökares foto
+fyller hålet utan att täcka guld eller kristaller. Namn och text är dynamiska och
+är inte inbakade i bilden.
 
 ## Kod och verifiering
 
@@ -30,5 +31,7 @@ i motsvarande syskonfil. Båda laddas genom `media.js`. Inga ändringar i
 `studio.js`, eventkontraktet eller Guardian-sessionens kö krävs.
 
 `tests/guardian-emblem-models.test.js` provar modellbyte, äldre sparade widgetar,
-katalogens riktiga miniatyr, live-avatar/namn och fasordning. Dessa DOM-prov
-ersätter inte kontrollen av bildens alfa och visuella placering.
+katalogens riktiga miniatyr, live-avatar/namn och fasordning. Browserproven i
+`tests/browser/guardian-emblem.browser.test.js` kontrollerar att bilden laddas,
+att avatarhålet är runt och transparent, att alla fyra faser syns i rätt ordning
+och att reducerad rörelse verkligen stänger av animationerna.

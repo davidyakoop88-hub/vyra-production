@@ -36,13 +36,7 @@ html.overlay-output .guardian-emblem.gem-emerald.ge-active:not([class*="ge-fas-"
 @keyframes gemAndas{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
 
 @media(prefers-reduced-motion:reduce){
-  .guardian-emblem.gem-emerald .ge-bild,
-  .guardian-emblem.gem-emerald .ge-bild>img,
-  .guardian-emblem.gem-emerald .ge-namn,
-  .guardian-emblem.gem-emerald .ge-undertext,
-  .guardian-emblem.gem-emerald .gem-rubrik,
-  .guardian-emblem.gem-emerald .gem-intro,
-  .guardian-emblem.gem-emerald .gem-aura{animation:none}
+  .guardian-emblem.gem-emerald[class*="ge-fas-"] :is(.ge-bild,.ge-bild>img,.ge-namn,.ge-undertext,.gem-rubrik,.gem-intro,.gem-aura){animation:none}
   .guardian-emblem.gem-emerald.ge-fas-ljus .gem-intro{opacity:1}
   html.overlay-output .guardian-emblem.gem-emerald.ge-fas-upplosning{opacity:0}
 }
