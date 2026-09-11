@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `a5e0d62`
+Commit: `026c26e`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -44,7 +44,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| GUARDIAN EMBLEM | 5 | 5/5 | 5/5 | 5/5 | 2026-09-11 | — |
+| GUARDIAN EMBLEM | 5 | 5/5 | 5/5 | 5/5 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-03 | — |
@@ -107,11 +107,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Ram | `catalog:guardianemblem:1` | ✓ | ✓ | 2026-09-11 | — |
-| Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-09-11 | — |
-| Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-09-11 | — |
-| Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-09-11 | — |
-| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | — |
+| Ram | `catalog:guardianemblem:1` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 
 ### GIFT CAMPAIGN · VARJE TEMA SEPARAT
 
