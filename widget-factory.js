@@ -92,6 +92,7 @@
     // prov ser det. Namnen ar desamma som STEG-registret i guardian-emblem-fas.js bar.
     'guardianemblem.matt': GE_MATT,
     'guardianemblem.step': {1:'Ram',2:'Hjort',3:'Krona',4:'Kungakrona'},
+    'guardianemblem.model': {classic:'Guld',emerald:'Grön aura'},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
@@ -281,6 +282,10 @@
       guardianLang: 'auto', guardianShowUsername: true, guardianCustomText: '',
       guardianUsername: '@Guardian'
     }),
+    'guardianemblem.model': v => Object.assign(BUILD['guardianemblem.step']({step:4}), {
+      guardianModel: v.model,
+      title: v.model === 'emerald' ? 'Guardian · Grön aura' : 'Guardian Emblem'
+    }),
     'gifterlevel.layout': v => ({
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
@@ -394,6 +399,10 @@
       return ['fanlevel.theme', { theme: parts[0], color: c[0], light: c[1] }];
     },
     'guardianemblem': parts => {
+      if (parts[0] === 'model') {
+        pick('guardianemblem.model', parts[1], 'Guardian-modell');
+        return ['guardianemblem.model', { model: parts[1] }];
+      }
       if (!parts[0]) throw new Error('catalog:guardianemblem kraver ett praktsteg');
       pick('guardianemblem.step', parts[0], 'Guardian-praktsteg');
       return ['guardianemblem.step', { step: parts[0] }];

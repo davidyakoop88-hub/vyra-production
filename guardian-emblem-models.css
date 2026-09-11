@@ -1,0 +1,48 @@
+/* Grön aura använder samma fyra fasklasser som guldmodellen. Allt är transparent i overlay. */
+.guardian-emblem.gem-emerald{
+  --gem-green:#46e29b;
+  --gem-deep:#08754d;
+  --gem-light:#dcffe9;
+  --ge-diamond:#b7f8d7;
+  isolation:isolate;
+}
+.guardian-emblem.gem-emerald .ge-bild>img{z-index:2;filter:drop-shadow(0 0 14px #28b87855)}
+.guardian-emblem.gem-emerald .ge-avatar{z-index:1;background:radial-gradient(circle at 45% 30%,#153f32,#061b15)}
+.guardian-emblem.gem-emerald .ge-avatar:empty::after{content:'✦';position:absolute;inset:0;display:grid;place-items:center;color:var(--ge-gold-light);font-size:36px}
+.guardian-emblem.gem-emerald .ge-namn{margin-top:0;font-size:22px;text-shadow:0 2px 5px #000,0 0 14px #46e29b55}
+.guardian-emblem.gem-emerald .ge-undertext{color:var(--gem-light);text-shadow:0 2px 5px #000}
+.guardian-emblem.gem-emerald .gem-rubrik{position:relative;z-index:2;flex:none;font-size:28px;letter-spacing:.14em;font-weight:700;color:var(--ge-gold-light);text-shadow:0 2px 6px #000}
+.guardian-emblem.gem-emerald .gem-intro{position:absolute;top:42%;left:4%;width:92%;z-index:3;opacity:0;font-size:16px;letter-spacing:.16em;color:var(--gem-light);text-shadow:0 0 12px var(--gem-green)}
+.guardian-emblem.gem-emerald .gem-aura{position:absolute;inset:12% 0 14%;z-index:0;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse,#46e29b24 5%,#08754d40 38%,transparent 68%);opacity:.8}
+
+.guardian-emblem.gem-emerald.ge-fas-ljus{animation:none}
+.guardian-emblem.gem-emerald.ge-fas-ljus .gem-rubrik{opacity:0}
+.guardian-emblem.gem-emerald.ge-fas-ljus .gem-intro{animation:gemIntro 600ms ease-out both}
+.guardian-emblem.gem-emerald.ge-fas-ljus .gem-aura{animation:gemSamlas 600ms ease-out both}
+.guardian-emblem.gem-emerald.ge-fas-oppna .gem-rubrik{animation:geResning 450ms 650ms ease-out both}
+.guardian-emblem.gem-emerald.ge-fas-oppna .gem-aura{animation:gemOppna 1200ms ease-out both}
+.guardian-emblem.gem-emerald.ge-fas-oppna .ge-undertext{animation:geResning 340ms 860ms ease-out both}
+.guardian-emblem.gem-emerald.ge-fas-hyllning .ge-bild>img{animation:gemGlod 2800ms ease-in-out infinite}
+.guardian-emblem.gem-emerald.ge-fas-hyllning .gem-aura{animation:gemAndas 3500ms ease-in-out both}
+.guardian-emblem.gem-emerald.ge-fas-upplosning .gem-rubrik{animation:geUttoning 420ms ease-in both}
+.guardian-emblem.gem-emerald.ge-fas-upplosning .gem-aura{animation:geUttoning 800ms ease-in both}
+/* Fasdrivrutinen städar efter 6100 ms, alerten tas ned efter 6500 ms. Hindra ett sista blink. */
+html.overlay-output .guardian-emblem.gem-emerald.ge-active:not([class*="ge-fas-"]){opacity:0}
+
+@keyframes gemIntro{0%{opacity:0;transform:translateY(6px)}30%,75%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-4px)}}
+@keyframes gemSamlas{from{opacity:0;transform:scale(.35)}to{opacity:1;transform:scale(.9)}}
+@keyframes gemOppna{0%{opacity:1;transform:scale(.9)}40%{opacity:1;transform:scale(1.12)}100%{opacity:.8;transform:scale(1)}}
+@keyframes gemGlod{0%,100%{filter:drop-shadow(0 0 14px #28b87855) brightness(1)}50%{filter:drop-shadow(0 0 22px #46e29b88) brightness(1.07)}}
+@keyframes gemAndas{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+
+@media(prefers-reduced-motion:reduce){
+  .guardian-emblem.gem-emerald .ge-bild,
+  .guardian-emblem.gem-emerald .ge-bild>img,
+  .guardian-emblem.gem-emerald .ge-namn,
+  .guardian-emblem.gem-emerald .ge-undertext,
+  .guardian-emblem.gem-emerald .gem-rubrik,
+  .guardian-emblem.gem-emerald .gem-intro,
+  .guardian-emblem.gem-emerald .gem-aura{animation:none}
+  .guardian-emblem.gem-emerald.ge-fas-ljus .gem-intro{opacity:1}
+  html.overlay-output .guardian-emblem.gem-emerald.ge-fas-upplosning{opacity:0}
+}

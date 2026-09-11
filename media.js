@@ -1354,8 +1354,8 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260907-1';
-  ['premium-final.css','runtime-controls.css'].forEach(href=>{
+  const version='20260911-guardian';
+  ['premium-final.css','runtime-controls.css','guardian-emblem-models.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
     css.rel='stylesheet';
@@ -1363,7 +1363,7 @@ Promise.resolve().then(()=>{
     css.dataset.vyraWidgetBundle='premium';
     document.head.append(css);
   });
-  const scripts=['premium-final.js','runtime-controls.js','chatbot-controls.js'];
+  const scripts=['guardian-emblem-models.js','premium-final.js','runtime-controls.js','chatbot-controls.js'];
   const loadNext=index=>{
     if(index>=scripts.length)return;
     const src=scripts[index];
