@@ -1,104 +1,88 @@
-.templateGiftFireworks{height:300px!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}.gift-fireworks-fx{position:relative;width:100%;height:100%;opacity:.32;pointer-events:none}.gift-fireworks-fx.play{animation:fw-in var(--fw-in,400ms) ease both,fw-out var(--fw-out,600ms) ease calc(var(--duration) - var(--fw-out,600ms)) forwards}.gift-fireworks-fx img{position:absolute;left:50%;top:48%;width:var(--gift);height:var(--gift);object-fit:contain;translate:-50% -50%;filter:drop-shadow(0 0 18px #fff) drop-shadow(0 0 28px #ff4fa3);opacity:0}.play img{animation:fw-gift var(--duration) ease both}.gift-fireworks-fx strong{position:absolute;left:50%;top:72%;translate:-50%;color:#fff;font-size:11px;letter-spacing:2px;text-shadow:0 0 10px #ff4fa3;opacity:0}.play strong{animation:fw-label var(--duration) ease both}.fw-rocket{position:absolute;left:50%;bottom:5%;width:4px;height:75px;background:linear-gradient(transparent,#fff,#ff4fa3);filter:drop-shadow(0 0 8px #ff4fa3);opacity:0}.play .fw-rocket{animation:fw-rocket var(--speed) ease-in both}.fw-burst{position:absolute;left:50%;top:46%}.fw-burst i{position:absolute;width:7px;height:7px;border-radius:2px;background:var(--c);box-shadow:0 0 9px var(--c);opacity:0}.play .fw-burst i{animation:fw-particle 1.4s var(--speed) ease-out both}.fw-ring{position:absolute;left:50%;top:46%;width:80px;height:80px;border:5px solid #ffd45b;border-radius:50%;translate:-50% -50%;opacity:0}.play .fw-ring{animation:fw-ring 1.1s var(--speed) ease-out both}@keyframes fw-rocket{0%{translate:0 150px;opacity:0}25%{opacity:1}100%{translate:0 0;opacity:0}}@keyframes fw-particle{0%{translate:0 0;scale:.3;opacity:1}100%{translate:calc(cos(var(--a))*var(--d)*var(--blast)) calc(sin(var(--a))*var(--d)*var(--blast));rotate:220deg;opacity:0}}@keyframes fw-ring{0%{scale:.2;opacity:1}100%{scale:3.2;opacity:0}}@keyframes fw-gift{0%,10%{scale:.2;opacity:0}20%,78%{scale:1;opacity:1}100%{scale:.8;opacity:0}}@keyframes fw-label{0%,24%{opacity:0}32%,78%{opacity:1}100%{opacity:0}}@keyframes fw-scene{0%{opacity:0}8%,88%{opacity:1}100%{opacity:0}}
+/* GAVA -> SMALL -> PROFIL. Alla faser delar raketens landningstid.
+   Tva separata ansikten byter synlighet vid 90 grader: filter far annars baksidan
+   att lysa igenom en preserve-3d-kontext (tidigare uppmatt i Chrome). */
+.templateGiftFireworks{height:300px!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+.gift-fireworks-fx{position:relative;width:100%;height:100%;pointer-events:none;--fw-primary:#ff4fa3;--fw-secondary:#ffd45b}
 .gift-fireworks-fx:not(.play){opacity:0!important}
-/* Introt och outrot ar tva egna animationer i stallet for fw-scenes inbakade 8%/88%-stopp, sa
-   deras langd inte langre skalar med speltiden. fw-out har `forwards`, inte `both`: med `both`
-   hade dess bakatfyllning gallt under hela fordrojningen och slagit ut introt, eftersom den ligger
-   sist i listan och bada ror opacity. --fw-in/--fw-out sitter pa elementet, satta av panelen;
-   "direkt" och "klipps bort" ar helt enkelt 0ms. */
+.gift-fireworks-fx.play{animation:fw-in var(--fw-in,400ms) ease both,fw-out var(--fw-out,600ms) ease calc(var(--duration) - var(--fw-out,600ms)) forwards}
+.gift-fireworks-fx.fw-intro-pop.play{animation-name:fw-in-pop,fw-out}
 @keyframes fw-in{from{opacity:0}to{opacity:1}}
 @keyframes fw-out{from{opacity:1}to{opacity:0}}
 @keyframes fw-in-pop{from{opacity:0;scale:.6}to{opacity:1;scale:1}}
-.gift-fireworks-fx.fw-intro-pop.play{animation-name:fw-in-pop,fw-out}
-.fw-combo-control{display:flex!important;align-items:center;justify-content:space-between;gap:8px}.properties .fw-combo-control input{width:64px!important}.fw-rocket{left:var(--x,50%)!important;filter:hue-rotate(var(--hue,0deg)) drop-shadow(0 0 8px #ff4fa3)!important}.play .fw-rocket{animation-delay:var(--delay,0s)!important}
-.gift-fireworks-fx .fw-rocket>.fw-rocket-gift{display:block!important;position:absolute!important;left:50%!important;top:-24px!important;width:34px!important;height:34px!important;translate:-50% 0!important;scale:var(--gift-scale,1)!important;object-fit:contain!important;opacity:1!important;filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #ff4fa3)!important;animation:none!important}
 .gift-fireworks-fx>strong{display:none!important}
 
-/* Premium explode → recall → gift reveal sequence. */
-.gift-fireworks-fx.play .fw-burst i{animation:fw-particle-return calc(var(--duration) - var(--speed)) var(--speed) cubic-bezier(.2,.68,.22,1) both!important}.gift-fireworks-fx.play>img{animation:fw-gift-reform var(--duration) cubic-bezier(.2,.75,.2,1) both!important}.gift-fireworks-fx.play .fw-ring{animation:fw-ring-return calc(var(--duration) * .72) var(--speed) ease-in-out both!important}.fw-motion-spiral.play .fw-burst i{animation-name:fw-particle-spiral!important}.fw-motion-bloom.play .fw-burst i{animation-name:fw-particle-bloom!important}.fw-premium-motion p{margin:8px 0 0;color:#ad96b6;font-size:7px;line-height:1.45}.fw-premium-motion select{width:130px!important}
-@keyframes fw-particle-return{0%{translate:0 0;scale:.25;rotate:0;opacity:1}36%{translate:calc(cos(var(--a))*var(--d)*var(--blast)) calc(sin(var(--a))*var(--d)*var(--blast));scale:1;rotate:190deg;opacity:1}55%{translate:calc(cos(var(--a))*var(--d)*var(--blast)*1.04) calc(sin(var(--a))*var(--d)*var(--blast)*1.04);scale:.9;rotate:235deg;opacity:.9}86%{translate:calc(cos(var(--a))*var(--d)*(1 - var(--return-strength))) calc(sin(var(--a))*var(--d)*(1 - var(--return-strength)));scale:.35;rotate:430deg;opacity:.85}100%{translate:0 0;scale:.05;rotate:520deg;opacity:0}}
-@keyframes fw-particle-spiral{0%{translate:0 0;scale:.2;opacity:1}38%{translate:calc(cos(var(--a))*var(--d)*var(--blast)) calc(sin(var(--a))*var(--d)*var(--blast));rotate:220deg;scale:1;opacity:1}58%{translate:calc(cos(var(--a) + 80deg)*var(--d)*var(--blast)*.9) calc(sin(var(--a) + 80deg)*var(--d)*var(--blast)*.9);rotate:420deg;opacity:1}82%{translate:calc(cos(var(--a) + 190deg)*var(--d)*.34) calc(sin(var(--a) + 190deg)*var(--d)*.34);rotate:720deg;scale:.45;opacity:.9}100%{translate:0 0;rotate:920deg;scale:.04;opacity:0}}
-@keyframes fw-particle-bloom{0%{translate:0 0;scale:.15;opacity:1}34%{translate:calc(cos(var(--a))*var(--d)*var(--blast)*.8) calc(sin(var(--a))*var(--d)*var(--blast)*.8);scale:1.25;rotate:90deg;opacity:1}55%{translate:calc(cos(var(--a))*var(--d)*var(--blast)) calc(sin(var(--a))*var(--d)*var(--blast));scale:.85;rotate:150deg;opacity:.9}84%{translate:calc(cos(var(--a))*22px) calc(sin(var(--a))*22px);scale:.4;rotate:300deg;opacity:.8}100%{translate:0 0;scale:.05;rotate:360deg;opacity:0}}
-@keyframes fw-ring-return{0%{scale:.2;opacity:1}48%{scale:3.2;opacity:.75}72%{scale:3.25;opacity:.25}100%{scale:.18;opacity:0}}
-@keyframes fw-gift-reform{0%,12%{scale:.55;opacity:.9;filter:drop-shadow(0 0 10px #fff)}22%,60%{scale:.1;opacity:0;filter:blur(8px) drop-shadow(0 0 25px #ff4fa3)}72%{scale:.45;opacity:.25;filter:blur(5px) drop-shadow(0 0 35px #fff)}84%{scale:1.12;opacity:1;filter:blur(0) drop-shadow(0 0 22px #fff) drop-shadow(0 0 38px #ff4fa3)}92%{scale:.97;opacity:1}100%{scale:1;opacity:0}}
-@media(prefers-reduced-motion:reduce){.gift-fireworks-fx.play .fw-burst i{animation-name:fw-particle-return!important}.gift-fireworks-fx.play>img{animation-name:fw-gift-reform!important}}
-.gift-fireworks-fx.play .fw-ring{animation-duration:var(--duration)!important}
+/* Raketerna bar gavan, och alla landar pa samma punkt vid samma small. */
+.fw-rocket{position:absolute;left:50%;top:46%;width:4px;height:68px;opacity:0;transform-origin:50% 0}
+.gift-fireworks-fx.play .fw-rocket{animation:fw-launch calc(var(--fw-flight) - var(--delay,0s)) cubic-bezier(.3,0,.7,1) var(--delay,0s) both}
+.fw-rocket::before{content:'';position:absolute;inset:0;background:linear-gradient(#fff,var(--fw-secondary) 30%,transparent);border-radius:50%;filter:drop-shadow(0 0 7px var(--fw-primary))}
+.gift-fireworks-fx .fw-rocket>.fw-rocket-gift{position:absolute;left:50%;top:0;width:clamp(34px,calc(var(--gift)*.55),80px);height:clamp(34px,calc(var(--gift)*.55),80px);translate:-50% -70%;scale:var(--gift-scale,1);object-fit:contain;filter:drop-shadow(0 0 7px var(--fw-secondary));opacity:1;animation:none!important}
+@keyframes fw-launch{0%{transform:translate(var(--launch-x,0px),165px) scale(.5);opacity:0}15%{opacity:1}85%{opacity:1}99%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(0,0) scale(1);opacity:0}}
+
+/* En enda begransad blixt och en tryckvag, aldrig en helskarmsblinkning. */
+.fw-flash,.fw-ring{position:absolute;left:50%;top:46%;translate:-50% -50%;pointer-events:none;opacity:0}
+.fw-flash{width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,#fff 0%,var(--fw-secondary) 10%,var(--fw-primary) 28%,transparent 65%)}
+.fw-ring{width:90px;height:90px;border:1px solid var(--fw-secondary);border-radius:50%;box-shadow:0 0 18px var(--fw-primary),inset 0 0 14px var(--fw-primary)}
+.gift-fireworks-fx.play .fw-flash{animation:fw-impact var(--fw-reveal) linear var(--fw-flight) both}
+.gift-fireworks-fx.play .fw-ring{animation:fw-shock var(--fw-reveal) cubic-bezier(.1,.7,.3,1) var(--fw-flight) both}
+@keyframes fw-impact{0%{scale:.25;opacity:.95}4%{scale:1.1;opacity:.8}12%,100%{scale:1.7;opacity:0}}
+@keyframes fw-shock{0%{scale:.15;opacity:1}18%{scale:calc(3.2*var(--blast));opacity:.55}36%,100%{scale:calc(4*var(--blast));opacity:0}}
+
+/* Befintlig tathetsbudget (18-50 partiklar), inga objekt skapas per bildruta. */
+.fw-burst{position:absolute;left:50%;top:46%}
+.fw-burst i{position:absolute;width:3px;height:25px;border-radius:50%;background:linear-gradient(#fff,var(--c),transparent);box-shadow:0 0 8px var(--c);opacity:0;--radius:calc(var(--d)*var(--blast)*1.45)}
+.fw-burst i:nth-child(3n){width:6px;height:6px;border-radius:1px}
+.gift-fireworks-fx.play .fw-burst i{animation:fw-explode var(--fw-reveal) cubic-bezier(.12,.65,.25,1) var(--fw-flight) both}
+.fw-motion-spiral.play .fw-burst i{animation-name:fw-explode-spiral}
+.fw-motion-bloom.play .fw-burst i{animation-name:fw-explode-bloom}
+@keyframes fw-explode{
+  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:1}
+  12%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius));rotate:calc(var(--a) + 90deg);scale:1;opacity:1}
+  35%{translate:calc(cos(var(--a))*var(--radius)*1.08) calc(sin(var(--a))*var(--radius)*1.08 + 25px);scale:.6;opacity:.7}
+  62%,100%{translate:calc(cos(var(--a))*var(--radius)*(1 - var(--return-strength)*.3)) calc(sin(var(--a))*var(--radius)*.9 + 55px);scale:0;opacity:0}
+}
+@keyframes fw-explode-spiral{
+  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:1}
+  12%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius));scale:1;opacity:1}
+  35%{translate:calc(cos(var(--a) + 65deg)*var(--radius)*.85) calc(sin(var(--a) + 65deg)*var(--radius)*.85);rotate:250deg;scale:.7;opacity:.7}
+  62%,100%{translate:calc(cos(var(--a) + 120deg)*22px) calc(sin(var(--a) + 120deg)*22px);rotate:400deg;scale:0;opacity:0}
+}
+@keyframes fw-explode-bloom{
+  0%{translate:0 0;rotate:0deg;scale:.2;opacity:1}
+  12%{translate:calc(cos(var(--a))*var(--radius)*.8) calc(sin(var(--a))*var(--radius)*.8);rotate:90deg;scale:1.4;opacity:1}
+  35%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius) + 10px);rotate:180deg;scale:.8;opacity:.65}
+  62%,100%{translate:calc(cos(var(--a))*32px) calc(sin(var(--a))*32px);rotate:270deg;scale:0;opacity:0}
+}
+
+.gift-fireworks-fx>.fw-central-gift,.gift-fireworks-fx>.fw-sender{position:absolute;left:50%;top:46%;width:var(--gift);height:var(--gift);translate:-50% -50%;opacity:0;transform-origin:center}
+.gift-fireworks-fx>.fw-central-gift{object-fit:contain;filter:drop-shadow(0 0 12px var(--fw-secondary))}
+.fw-sender{border:3px solid var(--fw-secondary);border-radius:50%;background:radial-gradient(circle at 30% 20%,var(--fw-primary),#241132 75%);box-shadow:0 0 24px var(--fw-primary),0 0 45px #0008;box-sizing:border-box;overflow:hidden}
+.gift-fireworks-fx .fw-sender-avatar{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;animation:none!important;filter:none;translate:none;opacity:1}
+.gift-fireworks-fx .fw-sender-avatar[hidden]{display:none!important}
+.gift-fireworks-fx .fw-sender-initial{display:grid;place-items:center;width:100%;height:100%;font:700 calc(var(--gift)*.4)/1 sans-serif;color:#fff}
+.gift-fireworks-fx.play>.fw-central-gift{animation:fw-gift-to-sender var(--fw-reveal) linear var(--fw-flight) both}
+.gift-fireworks-fx.play>.fw-sender{animation:fw-sender-reveal var(--fw-reveal) linear var(--fw-flight) both}
+@keyframes fw-gift-to-sender{0%{transform:perspective(600px) rotateY(0) scale(.7);opacity:1}9%{transform:perspective(600px) rotateY(0) scale(1.16);opacity:1}18%,23%{transform:perspective(600px) rotateY(0) scale(1);opacity:1}31%,100%{transform:perspective(600px) rotateY(90deg) scale(1);opacity:0}}
+@keyframes fw-sender-reveal{0%,31%{transform:perspective(600px) rotateY(-90deg) scale(1);opacity:0}41%{transform:perspective(600px) rotateY(0) scale(1.08);opacity:1}48%,100%{transform:perspective(600px) rotateY(0) scale(1);opacity:1}}
+.gift-fireworks-fx>.fw-sender-caption{position:absolute;left:50%;top:calc(46% + var(--gift)/2 + 16px);translate:-50% 0;width:calc(100% - 24px);text-align:center;opacity:0;text-shadow:0 2px 10px #000,0 0 18px #000}
+.gift-fireworks-fx .fw-sender-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;color:#fff;font:800 22px/1.2 sans-serif;letter-spacing:.2px}
+.gift-fireworks-fx .fw-sender-gift{display:block;margin-top:5px;color:var(--fw-secondary);font:600 13px/1.3 sans-serif;overflow-wrap:anywhere}
+.gift-fireworks-fx.play>.fw-sender-caption,.gift-fireworks-fx.play>.fw-text{animation:fw-sender-caption var(--fw-reveal) ease var(--fw-flight) both}
+@keyframes fw-sender-caption{0%,36%{opacity:0;transform:translateY(10px)}46%,100%{opacity:1;transform:translateY(0)}}
+
+@media(prefers-reduced-motion:reduce){
+ .gift-fireworks-fx.play .fw-rocket,.gift-fireworks-fx.play .fw-burst,.gift-fireworks-fx.play .fw-flash,.gift-fireworks-fx.play .fw-ring{display:none}
+ .gift-fireworks-fx.play>.fw-central-gift{animation-name:fw-gift-reduced}
+ .gift-fireworks-fx.play>.fw-sender{animation-name:fw-sender-reduced}
+ .gift-fireworks-fx.play>.fw-sender-caption,.gift-fireworks-fx.play>.fw-text{transform:none!important}
+ .gift-fireworks-fx.fw-intro-pop.play{animation-name:fw-in,fw-out}
+}
+@keyframes fw-gift-reduced{0%,23%{opacity:1}31%,100%{opacity:0}}
+@keyframes fw-sender-reduced{0%,31%{opacity:0}41%,100%{opacity:1}}
+.fw-combo-control{display:flex!important;align-items:center;justify-content:space-between;gap:8px}.properties .fw-combo-control input{width:64px!important}
+
 .follower-spotlight.selected{outline:1px dashed #ec72ff!important;outline-offset:8px!important}.follower-spotlight.selected>.resize-handle{display:grid!important;place-items:center!important;position:absolute!important;right:-20px!important;bottom:-20px!important;width:32px!important;height:32px!important;border:2px solid #fff!important;border-radius:50%!important;background:linear-gradient(135deg,#d62fff,#713cff)!important;color:#fff!important;font-size:15px!important;cursor:nwse-resize!important;box-shadow:0 0 16px #c43cff,0 4px 12px #000!important;z-index:50!important;touch-action:none!important}.follower-size-editor:after{content:'Du kan också dra det lila handtaget nere till höger på widgeten.';display:block;margin-top:8px;color:#bca2c5;font-size:7px;line-height:1.5}
 .follower-spotlight{cursor:grab!important;user-select:none!important;touch-action:none!important}.follower-spotlight img{user-select:none!important;-webkit-user-drag:none!important;pointer-events:none!important}.follower-spotlight.is-dragging{cursor:grabbing!important;filter:drop-shadow(0 0 14px #d94cff)}
 [data-view="flows"],[data-go="flows"]{display:none!important}
-
-/* RAKETENS FLIP — avsandaren pa vag upp, gavan i vandpunkten.
-   Skrivet ur slutsatserna, inte ur forsokens ordning (#146). De tre matningarna som styr allt
-   harnere star vid den regel de faktiskt bestammer.
-
-   Behallaren arver .fw-rocket-gift:s gamla plats (spetsen, top:-24px) sa raketen ser likadan ut
-   som forut — det ar bara innehallet som far tva sidor. --gift-scale hor hemma HAR och inte pa
-   gavan, annars skalas bara ena sidan. */
-.fw-rocket-flip{position:absolute!important;left:50%!important;top:-24px!important;
-  width:34px!important;height:34px!important;translate:-50% 0!important;
-  scale:var(--gift-scale,1)!important;
-  /* MATNING 2 — OPACITET ARVS MULTIPLIKATIVT. Sparet tonar bort, och ett barn kan inte hava det
-     med egen opacity:1: barnets 1 gangras med foralderns 0.09 vid 97%, sa gavan var nastan
-     osynlig precis nar den avslojades. Losningen ar tvadelad — .fw-rocket slutar tona och lamnar
-     gradienten till sitt ::before (langst ner i filen), och behallaren har tonar IN for egen
-     maskin i stallet for att arva. */
-  animation:fwPayloadHold var(--speed) ease-in both!important;
-  animation-delay:var(--delay,0s)!important}
-@keyframes fwPayloadHold{0%{opacity:0}18%{opacity:1}100%{opacity:1}}
-
-/* Bada sidorna fyller behallaren och doljer sin bakre yta, annars lyser de igenom varandra. */
-.fw-rocket-flip>img{position:absolute!important;left:0!important;top:0!important;
-  width:100%!important;height:100%!important;translate:none!important;scale:1!important;
-  object-fit:contain!important}
-.fw-rocket-flip .fw-rocket-avatar{border-radius:50%!important;
-  filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #ff4fa3)!important}
-
-/* MATNING 3 — `filter` PLATTAR UT 3D. Vandningen var forst en rotateY: behallaren stod pa 180 och
-   backface-visibility rapporterade hidden, men avsandaren syntes ANDA. Orsaken ar drop-shadow pa
-   bilderna ovan: ett filter pa ett barn i en preserve-3d-kontext upphaver backface-visibility.
-   Bade transform och backface-visibility rapporterar ratt varden i computed styles — felet syns
-   bara i en zoomad skarmbild. Tva staplade bilder som byter OPACITET gor samma sak utan att bero
-   pa 3D alls.
-   GALLER VARJE WIDGET som vill kombinera .vyra-flip-idiomet med glod.
-
-   MATNING 1 — raketen ar UTANFOR widgeten till ~60% av stigningen (hojd 109% vid 33%, 102% vid
-   47%, 94% vid 60%). Allt som ska SYNAS maste ligga efter det. Med vandningen pa 62% syntes
-   avsandaren i tva procent av animationen, alltsa aldrig. Darav 80-88%. */
-.fw-rocket-flip .fw-rocket-avatar{animation:fwFaceOut var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
-.fw-rocket-flip .fw-rocket-gift{animation:fwFaceIn var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
-@keyframes fwFaceOut{0%,80%{opacity:1}88%,100%{opacity:0}}
-@keyframes fwFaceIn{0%,80%{opacity:0}88%,100%{opacity:1}}
-
-/* BORTTAGET HAR, och varfor det inte var en smaksak:
-   * @keyframes fwRocketFlip{0%,100%{transform:none}} — tomma keyframes, rest fran 3D-forsoket.
-     Upptog en animationsplats och gjorde ingenting.
-   * regeln `.fw-rocket-flip,.fw-rocket>.fw-rocket-gift{animation-name:fwRocketFlip,fwPayloadHold}`
-     — dess ANDRA selektor var redan dod: `.gift-fireworks-fx .fw-rocket>.fw-rocket-gift` hogre upp
-     i filen satter `animation:none!important` med tre klasser mot tva, sa den vann pa specificitet.
-     UPPMATT i riktig Chrome: den gaven hade animationName "none" och NOLL animationer. Regelns
-     forsta halva levde daremot — fwPayloadHold ar darfor flyttad in i shorthanden ovan i stallet
-     for att ligga i en andra regel som motsager den forsta. */
-
-/* SPARET tonar bort, inte hela raketen.
-   Forsta forsoket gav nyttolasten en egen opacity:1 — verkningslost, eftersom opacitet arvs
-   MULTIPLIKATIVT: barnets 1 gangras med forlaldrarns 0.09 vid 97%, sa gavan var nastan osynlig
-   precis nar den avslojades (uppmatt i riktig Chrome, syntes inte i nagot prov).
-   Losningen: .fw-rocket behaller sin rorelse men slutar tona, och den lysande gradienten flyttas
-   till ett pseudoelement som tonar for sig. Spåret ser likadant ut; nyttolasten slipper folja med. */
-.fw-rocket{background:none!important;opacity:1!important;
-  animation:fw-rocket-move var(--speed) ease-in both!important;animation-delay:var(--delay,0s)!important}
-@keyframes fw-rocket-move{0%{translate:0 150px}100%{translate:0 0}}
-.fw-rocket::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(transparent,#fff,#ff4fa3);
-  animation:fw-rocket-trail var(--speed) ease-in both;animation-delay:var(--delay,0s)}
-@keyframes fw-rocket-trail{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
-
-/* INGEN FILTER PA SIDORNA. `filter` plattar ut 3D-kontexten — med drop-shadow pa bilderna slutade
-   backface-visibility galla och avsandaren syntes ANDA efter flippen, trots att behallaren stod pa
-   rotateY(180). Mattes i riktig Chrome; ingen av computed-styles-kontrollerna avslojade det,
-   eftersom bade transform och backface-visibility rapporterade ratt varden.
-   Glodet flyttas till .fw-rocket, som ligger utanfor det 3D-lagret. */
-
-
 
 /* Gift Fireworks: panelens kontroller delar samma kompakta layout.
    Allt ar avgransat till den valda widgetens panel; overlayen far inga editorkontroller. */
@@ -127,7 +111,7 @@
 .properties:has(#fwMin) .fw-combo-control{font-size:11px}
 .properties:has(#fwMin) .fw-combo-control input{height:34px!important}
 /* Avsandartexten maste ha en egen plats under gavan, aven for langa namn. */
-.gift-fireworks-fx>.fw-text{position:absolute;left:50%;top:80%;translate:-50% 0;width:calc(100% - 24px);text-align:center;line-height:1.3;font-weight:600;overflow-wrap:anywhere;text-shadow:0 2px 8px #000,0 0 16px #000;pointer-events:none}
+.gift-fireworks-fx>.fw-text{position:absolute;left:50%;top:calc(46% + var(--gift)/2 + 76px);translate:-50% 0;width:calc(100% - 24px);text-align:center;line-height:1.3;font-weight:600;overflow-wrap:anywhere;text-shadow:0 2px 8px #000,0 0 16px #000;pointer-events:none}
 .properties:has(#fwMin) label:has(>input[type="checkbox"]),
 .properties:has(#fwMin) .fw-combo-control{flex-direction:row!important;justify-content:space-between}
 .properties:has(#fwMin) label:has(>input[type="checkbox"]){justify-content:flex-start;font-size:11px}

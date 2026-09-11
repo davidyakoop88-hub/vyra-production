@@ -293,66 +293,67 @@ test('fyrverkeriets bilder raknas som gavor i fallback-selektorn', () => {
     'en gavobild som inte gar att ladda i Gift Fireworks byts mot ett PROFILFOTO i stallet for en gava');
 });
 
-// ---- 6. raketen visar avsandaren och flippar till gavan -----------------------------------------
-//
-// Davids avsikt, ordagrant: "nar raketen nar toppen visar profilbilden sen flipar gift bild".
-//
-// Raketen hade EN bild. Nu tva sidor: avsandarens profilbild pa framsidan, gavan pa baksidan, och
-// en rotateY i vandpunkten. Samma 3D-idiom som TOP GIFT redan anvander (.vyra-flip i studio.css) —
-// widgetarna ska rora sig som slaktingar, inte som framlingar.
-//
-// PROFILBILDEN BAR TVA NAMN: `profileImage` pa desktopvagen, `profileUrl` fran molnet
-// (server/event-bus.js cleanEvent doper om det). Bada lases — samma faltglapp som en gang gjorde
-// alla diamanter till noll.
-//
-// UTAN AVSANDARBILD SKA DET INTE FLIPPA. En tom framsida ar samre an ingen flip alls.
-//
-// ROTT NU.
+// ---- 6. Gavan exploderar och flippar TILL avsandaren (Davids nya riktning) ---------------------
 const AVATAR = 'https://p16.tiktokcdn.com/img/anna.png';
-const framsidor = (d, id = 'fw1') =>
-  [...fx(d, id).querySelectorAll('.fw-rocket .fw-rocket-avatar')].map(i => i.getAttribute('src'));
+const sender = d => fx(d).querySelector('.fw-sender-avatar');
 
-test('raketen bar avsandarens profilbild pa framsidan', () => {
+test('gåvan finns på raketerna och avsändaren har ett eget centralt ansikte', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1,
-    giftImage: LION, profileImage: AVATAR });
-  assert.deepEqual(framsidor(d), [AVATAR],
-    'raketen har ingen avsandarsida — det finns inget att flippa fran');
-  assert.deepEqual(bilder(d), [LION], 'gavosidan forsvann nar framsidan lades till');
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 3, giftImage: LION, profileImage: AVATAR });
+  assert.equal(raketer(d), 3);
+  assert.deepEqual(bilder(d), [LION, LION, LION]);
+  assert.equal(sender(d).getAttribute('src'), AVATAR);
+  assert.equal(sender(d).hidden, false);
+  assert.equal(fx(d).querySelectorAll('.fw-sender-avatar').length, 1);
+  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, 'anna');
 });
 
-test('molnets profileUrl duger lika bra som desktops profileImage', () => {
+test('molnets profileUrl fungerar för det centrala profilansiktet', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1,
-    giftImage: LION, profileUrl: AVATAR });
-  assert.deepEqual(framsidor(d), [AVATAR],
-    'bara ett av de tva faltnamnen lases — halva anvandarna far ingen avsandarbild');
+  h.window.triggerGiftFireworks({ username: 'anna', giftImage: LION, profileUrl: AVATAR });
+  assert.equal(sender(d).getAttribute('src'), AVATAR);
 });
 
-// BARA FORSTA RAKETEN bar avsandaren. Davids beslut: samma ansikte pa tjugo raketer blir brus —
-// den forsta racker for att saga VEM, resten sager VAD.
-test('bara forsta raketen bar avsandaren, resten ar ren gava', () => {
-  const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 3,
-    giftImage: LION, profileImage: AVATAR });
-  assert.equal(raketer(d), 3, 'antalet foljer inte gavans count');
-  assert.deepEqual(framsidor(d), [AVATAR], 'fler an en raket bar avsandarbilden');
-  assert.deepEqual(bilder(d), [LION, LION, LION], 'alla tre ska anda visa gavan');
+test('nästa gåva utan profilbild eller gåvobild behåller inte förra avsändarens bilder', () => {
+  const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
+  h.window.triggerGiftFireworks({ username: 'anna', giftImage: LION, profileImage: AVATAR });
+  h.window.triggerGiftFireworks({ username: '@bea' });
+  assert.equal(sender(d).hidden, true);
+  assert.equal(sender(d).hasAttribute('src'), false);
+  assert.equal(fx(d).querySelector('.fw-sender-initial').textContent, 'B');
+  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, '@bea');
+  assert.equal(mittbild(d), 'assets/gifts/events/0001_Rose.png');
 });
 
-// Utan avsandarbild ska raketen se ut precis som fore: en gava, ingen tom framsida.
-test('utan profilbild finns ingen avsandarsida alls', () => {
+test('en trasig profilbild visar initialen, inte den globala gåvoreserven', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 1, giftImage: LION });
-  assert.deepEqual(framsidor(d), [], 'en tom <img> lades till som framsida');
-  assert.deepEqual(bilder(d), [LION], 'gavan forsvann nar avsandaren saknades');
+  h.window.triggerGiftFireworks({ username: 'anna', profileImage: AVATAR });
+  sender(d).dispatchEvent(new h.window.Event('error'));
+  assert.equal(sender(d).hidden, true);
+  assert.equal(sender(d).dataset.fallbackApplied, '1');
+  assert.equal(fx(d).querySelector('.fw-sender-initial').textContent, 'A');
 });
 
-// Flippen ska vara CSS-driven pa en behallare, inte en JS-timer per raket: en timer per raket vid
-// hundra raketer ar hundra timers, och de overlever inte att widgeten rivs.
-test('flippen ar CSS-driven, inte en JS-timer', () => {
-  assert.equal(/setTimeout\([^)]*flip/i.test(KALLA), false,
-    'flippen drivs av en timer i JS — den overlever inte att noden byts ut');
-  assert.match(KALLA, /fw-rocket-flip|fw-rocket-avatar/,
-    'ingen flipstruktur byggs alls');
+test('avsändare och gåvonamn blir text och bildadresser valideras', () => {
+  const { h, d } = boot();
+  const name='<img src=x onerror=alert(1)>';
+  h.window.triggerGiftFireworks({ username:name, giftName:name, profileImage:'javascript:alert(1)', giftImage:'x" onerror="alert(1)' });
+  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, name);
+  assert.equal(fx(d).querySelector('.fw-sender-name').children.length, 0);
+  assert.equal(fx(d).querySelector('.fw-sender-gift').children.length, 0);
+  assert.equal(sender(d).hidden, true);
+  assert.equal(mittbild(d), 'assets/gifts/events/0001_Rose.png');
+});
+
+test('en kort visning reserverar tid för flip och namn även med långsam raket', () => {
+  const { d } = boot([fw('fw1',{fwDuration:2,fwSpeed:1.5})]);
+  assert.equal(Number.parseFloat(fx(d).style.getPropertyValue('--fw-flight')), .44);
+  assert.equal(Number.parseFloat(fx(d).style.getPropertyValue('--fw-reveal')), 1.56);
+});
+
+test('profil och gåvonamn är tillfälliga och skrivs inte till layouten', () => {
+  const { h, las } = boot();
+  const before=JSON.stringify(las('state.widgets[0]'));
+  h.window.triggerGiftFireworks({ username:'anna', giftName:'Lion', giftImage:LION, profileImage:AVATAR });
+  assert.equal(JSON.stringify(las('state.widgets[0]')), before);
 });

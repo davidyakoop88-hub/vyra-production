@@ -1,84 +1,44 @@
 'use strict';
-// Raketens flip: EN animation per yta, och ingen kvarglomd (#146).
-//
-// Blocket i gift-fireworks.css bar spar av tre forsok. Tva av dem levde kvar utan att gora nagot:
-//
-//   * `@keyframes fwRocketFlip{0%,100%{transform:none}}` — tomma keyframes fran 3D-forsoket. De
-//     upptog en animationsplats pa behallaren och gjorde ingenting.
-//   * `.fw-rocket-flip,.fw-rocket>.fw-rocket-gift{animation-name:fwRocketFlip,fwPayloadHold}` —
-//     dess ANDRA selektor var redan overkord: `.gift-fireworks-fx .fw-rocket>.fw-rocket-gift`
-//     hogre upp satter `animation:none!important` med tre klasser mot tva och vinner pa
-//     specificitet.
-//
-// DET GAR INTE ATT SE I KALLKODEN. Bada reglerna ser verksamma ut; det ar kaskaden som avgor.
-// Darfor mater provet vad webblasaren FAKTISKT kor, inte vad filen sager.
-//
-// Omskrivningen ar bevisad beteendebevarande: opaciteten spardes vid 0/10/18/50/80/84/88/100 %
-// for alla fyra ytor, fore och efter, och varje varde var identiskt.
-//
-// EN BILLIG FIL MED FLIT. Browsersviten kor 62 filer parallellt och varje fil startar en EGEN
-// webblasare; pa CI:s fa karnor ar den redan pa grasen. Forsta versionen av den har filen la till
-// bade en webblasare OCH en HTTP-server, och da foll test-client TVA ganger pa samma commit — pa
-// tva OLIKA prov (livesession respektive gifter-fas Bc), medan main var gron elva korningar i rad.
-// Tva olika prov pekar pa trangsel, inte pa en defekt, och min fil var det som tippade den.
-// Darav: CSS:en lases fran disk och injiceras inline (ingen server), och alla pastaenden delar EN
-// sida i ETT prov (en sidladdning i stallet for tre).
-const test = require('node:test'), assert = require('node:assert/strict');
-const path = require('path'), fs = require('fs');
+const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const {startaWebblasare,hoppaOver}=require('../helpers/webblasare.js');
+const ROOT=path.join(__dirname,'../..');let browser;const skip=hoppaOver();
+test.before(async()=>{if(!skip)browser=await startaWebblasare()});
+test.after(async()=>{if(browser)await browser.close()});
 
-const CSS = fs.readFileSync(path.join(__dirname, '..', '..', 'gift-fireworks.css'), 'utf8');
-const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
-
-let browser;
-let skip = hoppaOver();
-
-test.before(async () => {
-  if (skip) return;
-  browser = await startaWebblasare();
-  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den');
-});
-test.after(async () => { if (browser) await browser.close() });
-
-// Bada DOM-formerna som gift-fireworks.js faktiskt bygger (rad 69-70): MED avatar blir gavan ett
-// BARNBARN till .fw-rocket, utan avatar ett direktbarn. Skillnaden ar hela poangen med den doda
-// selektorn — den siktade pa det andra fallet.
-const SIDA = `<style>${CSS}</style>
-  <div class="widget templateGiftFireworks"><div class="gift-fireworks-fx" style="--speed:.6s">
-    <div class="fw-rocket" id="med"><div class="fw-rocket-flip">
-      <img class="fw-rocket-avatar"><img class="fw-rocket-gift"></div></div>
-    <div class="fw-rocket" id="utan"><img class="fw-rocket-gift"></div>
-  </div></div>`;
-
-test('flippen kor ratt animationer och inga kvarglomda', { skip }, async () => {
-  const page = await browser.newPage();
-  let m;
-  try {
-    await page.setContent(SIDA, { waitUntil: 'load' });
-    m = await page.evaluate(() => {
-      const namn = sel => {
-        const el = document.querySelector(sel);
-        return el ? el.getAnimations().map(a => a.animationName) : null;
-      };
-      return {
-        flip: namn('.fw-rocket-flip'),
-        avatar: namn('.fw-rocket-flip .fw-rocket-avatar'),
-        gift: namn('.fw-rocket-flip .fw-rocket-gift'),
-        utanAvatar: namn('#utan > .fw-rocket-gift'),
-      };
-    });
-  } finally { await page.close() }
-
-  // En tom keyframe som fwRocketFlip ar inte harmlos: den ser ut som mekanismen for nasta lasare.
-  assert.deepEqual(m.flip, ['fwPayloadHold'], 'behallaren kor ' + JSON.stringify(m.flip));
-
-  // De tva sidorna vaxlar pa OPACITET, inte rotateY — filter pa bilderna plattar ut 3D.
-  assert.deepEqual(m.avatar, ['fwFaceOut'], 'avsandarsidan: ' + JSON.stringify(m.avatar));
-  assert.deepEqual(m.gift, ['fwFaceIn'], 'gavosidan: ' + JSON.stringify(m.gift));
-
-  // UPPMATT pa main FORE omskrivningen: animationName "none", noll animationer. Regeln som pekade
-  // hit var alltsa redan dod. Skulle nagon "aterstalla" den faller det har i stallet for att en
-  // dod rad smyger tillbaka och ser levande ut.
-  assert.deepEqual(m.utanAvatar, [],
-    'gavan utan avatar kor nu ' + JSON.stringify(m.utanAvatar) + ' — tidigare noll. Antingen har '
-    + 'den doda regeln atervant, eller sa har `animation:none` hogre upp tappat sin specificitet.');
+// Riktig renderer + CSS. Synligheten mats fore smallen, fore/efter flippen och vid slutet.
+// Inte bara animationName: det var just computed-style utan synlighetsprov som missade
+// den gamla 3D/filters-kollisionen. Alla ansikten maste ha var sin exklusiv fas.
+test('gåvan exploderar före profilflippen, för alla rörelser och kort/lång speltid', {skip}, async()=>{
+ const page=await browser.newPage();
+ try{
+  await page.setContent('<style>'+fs.readFileSync(path.join(ROOT,'gift-fireworks.css'),'utf8')+'</style><div class="canvas"></div>');
+  await page.addScriptTag({content:`var state={widgets:[]},selected=null,view='overlay';function wh(){return ''}function props(){return ''}function bind(){}function save(){}function render(){}function liveWidget(){return null}function bk(w,v,k,f){return v||f}function campaignGiftList(){return []}`});
+  await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'overlay-sanitize.js'),'utf8')});
+  await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'gift-fireworks.js'),'utf8')});
+  for(const motion of ['magnetic','spiral','bloom'])for(const duration of [2,5,10]){
+   const result=await page.evaluate(([motion,duration])=>{
+    const w={id:'fw',type:'templateGiftFireworks',x:0,y:0,width:360,fwMotion:motion,fwDuration:duration,fwSpeed:1.5,fwDensity:100,fwSound:false};
+    state.widgets=[w];document.querySelector('.canvas').innerHTML=wh(w);
+    triggerGiftFireworks({username:'@Anna',giftName:'Rose',combo:3});
+    const fx=document.querySelector('.gift-fireworks-fx'),flight=parseFloat(fx.style.getPropertyValue('--fw-flight'))*1000,reveal=duration*1000-flight;
+    const animations=fx.getAnimations({subtree:true});
+    const at=t=>{animations.forEach(a=>{a.pause();a.currentTime=t});const opacity=sel=>+getComputedStyle(fx.querySelector(sel)).opacity;return {gift:opacity('.fw-central-gift'),sender:opacity('.fw-sender'),caption:opacity('.fw-sender-caption'),ring:opacity('.fw-ring'),flash:opacity('.fw-flash')}};
+    const stages={launch:at(flight*.5),impact:at(flight+reveal*.05),gift:at(flight+reveal*.2),sender:at(flight+reveal*.52),hold:at(duration*1000-650)};
+    // Samma nod maste starta om animationen vid nasta event, inte bara fa en ny sluttimer.
+    triggerGiftFireworks({username:'@Bea',combo:100});
+    return {stages,particles:fx.querySelectorAll('.fw-burst i').length,rockets:fx.querySelectorAll('.fw-rocket').length,name:fx.querySelector('.fw-sender-name').textContent,restarted:fx.getAnimations({subtree:true}).every(a=>(a.currentTime||0)<50)};
+   },[motion,duration]);
+   const context=motion+' '+duration+'s';
+   assert.equal(result.stages.launch.sender,0,context);
+   assert.ok(result.stages.impact.flash>.5&&result.stages.impact.ring>.2,context+' small');
+   assert.equal(result.stages.gift.gift,1,context+' gava');assert.equal(result.stages.gift.sender,0,context);
+   assert.equal(result.stages.sender.gift,0,context);assert.equal(result.stages.sender.sender,1,context+' profil');assert.equal(result.stages.sender.caption,1,context+' namn');
+   assert.equal(result.stages.hold.sender,1,context+' lasbar sluttid');
+   assert.equal(result.particles,50);assert.equal(result.rockets,100);assert.equal(result.name,'@Bea');assert.equal(result.restarted,true,context+' startar om');
+  }
+  await page.emulateMedia({reducedMotion:'reduce'});
+  const reduced=await page.evaluate(()=>({flash:getComputedStyle(document.querySelector('.fw-flash')).display,ring:getComputedStyle(document.querySelector('.fw-ring')).display,particles:getComputedStyle(document.querySelector('.fw-burst')).display,sender:getComputedStyle(document.querySelector('.fw-sender')).animationName}));
+  assert.equal(reduced.flash,'none');assert.equal(reduced.ring,'none');assert.equal(reduced.particles,'none');assert.equal(reduced.sender,'fw-sender-reduced');
+ }finally{await page.close()}
 });
