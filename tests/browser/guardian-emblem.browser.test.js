@@ -241,3 +241,43 @@ test('G-STEG-HÖJD: avatarhålet är runt i renderad form', { skip }, async () =
       `steg ${s}: hålet renderas ${m[s].halBredd}×${m[s].halHojd} px — det är ingen cirkel`);
   }
 });
+
+test('Grön aura: bilden laddas, har riktig alfa och ett runt avatarhål', { skip }, async () => {
+  const {page,fel}=await sida('model:emerald');
+  assert.ok(!fel,fel);
+  const m=await matt(page);
+  assert.ok(m.laddad,'den nya bildfilen måste följa med webbplatsen');
+  assert.match(m.src,/guardian-emblem\/emerald\.png$/);
+  assert.ok(Math.abs(m.halBredd-m.halHojd)<1,'profilbilden ska vara rund');
+  for(const [u,v] of [[.02,.02],[.98,.02],[.02,.98],[.98,.98],[m.halMittX,m.halMittY]]) {
+    assert.ok((await pixel(page,u,v)).a<8,'bakgrund och avatarhål ska vara genomskinliga');
+  }
+  assert.ok((await pixel(page,.5,.32)).a>240,'kontroll: hjorthuvudet ska vara kvar');
+});
+
+test('Grön aura: intro, öppning, hyllning och avslut syns i rätt ordning', { skip }, async () => {
+  const {page}=await sida('model:emerald');
+  const synlighet=()=>page.evaluate(()=>Object.fromEntries(['ge-bild','gem-intro','gem-rubrik','ge-namn','gem-aura'].map(klass=>{
+    const el=document.querySelector('.gem-emerald .'+klass);
+    return [klass,Number(getComputedStyle(el).opacity)];
+  })));
+  await page.evaluate(()=>window.__geFas('ljus',300));
+  let v=await synlighet();assert.equal(v['ge-bild'],0);assert.ok(v['gem-intro']>.9);
+  await page.evaluate(()=>window.__geFas('oppna',1190));
+  v=await synlighet();assert.ok(v['ge-bild']>.9);assert.ok(v['ge-namn']>.9);
+  await page.evaluate(()=>window.__geFas('hyllning',900));
+  v=await synlighet();assert.equal(v['ge-namn'],1);assert.equal(v['gem-rubrik'],1);
+  await page.evaluate(()=>window.__geFas('upplosning',800));
+  v=await synlighet();for(const k of ['ge-bild','gem-rubrik','ge-namn','gem-aura'])assert.equal(v[k],0,k+' ska ha tonat ut');
+});
+
+test('Grön aura: reducerad rörelse stänger av samtliga animationer', { skip }, async () => {
+  const {page}=await sida('model:emerald');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  for(const fas of ['ljus','oppna','hyllning','upplosning']) {
+    await page.evaluate(f=>window.__geFas(f,300),fas);
+    const n=await page.evaluate(()=>document.querySelector('.gem-emerald').getAnimations({subtree:true}).length);
+    assert.equal(n,0,'rörelse kvar i '+fas);
+  }
+  await page.emulateMedia({reducedMotion:'no-preference'});
+});

@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 178,
+ "antal": 179,
  "senaste": {
-  "motiv": "Entrén vid första rendern (#387) ändrar 20–57 kantpixlar deterministiskt på tolv rankingnycklar utan ram (identiska tal i två CI-körningar, lokal A/B på annan Chrome gav 0). Alla tolv i EN körning: toplike + ranking:templateTop, så efterkontrollen går grön.",
-  "nycklar": 12,
-  "tid": "2026-09-08T22:34:56.628Z"
+  "motiv": "Lägg till godkänd grön Guardian-ram med transparent avatarhål",
+  "nycklar": 1,
+  "tid": "2026-09-11T14:08:05.952Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -723,6 +723,10 @@
   "catalog:socialgoal:diamonds:sapphire-frame:landscape": {
    "matt": "440x250",
    "fyllnad": 75.72
+  },
+  "catalog:guardianemblem:model:emerald": {
+   "matt": "400x570",
+   "fyllnad": 59.83
   }
  }
 }

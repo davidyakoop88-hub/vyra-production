@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `e065713`
+Commit: `a5e0d62`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **279** |
+| Kort totalt | **280** |
 | Sektioner | 22 |
-| Med katalognyckel | 279 / 279 |
-| Med shadow DOM-miniatyr | 279 / 279 |
-| Ritar sin design | 279 / 279 |
+| Med katalognyckel | 280 / 280 |
+| Med shadow DOM-miniatyr | 280 / 280 |
+| Ritar sin design | 280 / 280 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,7 +44,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| GUARDIAN EMBLEM · 4 PRAKTSTEG | 4 | 4/4 | 4/4 | 4/4 | 2026-08-18 | — |
+| GUARDIAN EMBLEM | 5 | 5/5 | 5/5 | 5/5 | 2026-09-11 | — |
 | GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-03 | — |
@@ -103,14 +103,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Heart Jar | `catalog:giftjar:heart` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | Galaxy Jar | `catalog:giftjar:galaxy` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 
-### GUARDIAN EMBLEM · 4 PRAKTSTEG
+### GUARDIAN EMBLEM
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Ram | `catalog:guardianemblem:1` | ✓ | ✓ | 2026-08-18 | — |
-| Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-08-18 | — |
-| Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-08-18 | — |
-| Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-08-18 | — |
+| Ram | `catalog:guardianemblem:1` | ✓ | ✓ | 2026-09-11 | — |
+| Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-09-11 | — |
+| Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-09-11 | — |
+| Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-09-11 | — |
+| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | — |
 
 ### GIFT CAMPAIGN · VARJE TEMA SEPARAT
 

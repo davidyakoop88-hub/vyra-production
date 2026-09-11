@@ -85,3 +85,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Entrén vid första rendern (#387) ändrar 20–57 kantpixlar deterministiskt på tolv rankingnycklar utan ram (identiska tal i två CI-körningar, lokal A/B på annan Chrome gav 0). Alla tolv i EN körning: toplike + ranking:templateTop, så efterkontrollen går grön.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-11 — 1 referenser skrivna
+
+- **Motiv:** Lägg till godkänd grön Guardian-ram med transparent avatarhål
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
