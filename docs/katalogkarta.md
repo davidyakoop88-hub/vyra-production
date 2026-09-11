@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `aa5f041`
+Commit: `dad645f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **281** |
+| Kort totalt | **287** |
 | Sektioner | 22 |
-| Med katalognyckel | 281 / 281 |
-| Med shadow DOM-miniatyr | 281 / 281 |
-| Ritar sin design | 281 / 281 |
+| Med katalognyckel | 287 / 287 |
+| Med shadow DOM-miniatyr | 287 / 287 |
+| Ritar sin design | 287 / 287 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -47,7 +47,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
-| BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-08-03 | — |
+| BATTLE MVP · 23 DESIGNER | 23 | 23/23 | 23/23 | 23/23 | 2026-08-03 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
@@ -141,7 +141,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-03 | — |
 
-### BATTLE MVP · 17 DESIGNER
+### BATTLE MVP · 23 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -162,6 +162,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-03 | — |
 | Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-03 | — |
 | Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-03 | — |
+| Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
+| Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-09-11 | [#406](https://github.com/davidyakoop88-hub/vyra-production/pull/406) |
 
 ### Koi Pearl Lagoon · VIDEO FX
 
@@ -456,3 +462,5 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
+
+> Validering 2026-09-11: katalogens nycklar, antal och miniatyrer uppmätta i Chrome. Tidigare historikkolumner bevarade; sex nya MVP-val kopplade till PR #406. Historikskanning avbröts för att begränsa hämtning av gamla filer.
