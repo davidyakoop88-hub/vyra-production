@@ -93,6 +93,7 @@
     'guardianemblem.matt': GE_MATT,
     'guardianemblem.step': {1:'Ram',2:'Hjort',3:'Krona',4:'Kungakrona'},
     'guardianemblem.model': {classic:'Guld',sapphire:'Blå kristall',emerald:'Grön aura'},
+    'battlemvp.celebration': {coronation:{photo:{left:24.085,top:28.305,width:51.83,height:47.05},label:'Kröningen',accent:'#f5ce70'},wings:{photo:{left:21.93,top:20.815,width:56.14,height:54.23},label:'Vingar',accent:'#cbb4ff'},portal:{photo:{left:24.32,top:20.5,width:51.36,height:49.6},label:'Energiportalen',accent:'#67eff0'},rosegold:{photo:{left:12.44,top:10.29,width:74.16,height:67.94},label:'Roséguld',accent:'#efb6ae'},pearl:{photo:{left:17.705,top:14.75,width:64.59,height:61.4},label:'Pärlvingar',accent:'#f2dcdb'},moon:{photo:{left:16.905,top:13.395,width:72.57,height:65.39},label:'Lavendelmåne',accent:'#c4b4ff'}},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
     'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
     'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
@@ -320,6 +321,12 @@
       mvpColor2: v.style === 'neon-cyber' ? '#ff3fd0' : v.style === 'diamond-elite' ? '#8d96a2' : '#ffe239',
       mvpDuration: PREMIUM_MVP_STYLES.has(v.style) ? 5 : 7
     }),
+    'battlemvp.celebration': v => ({
+      type: 'templateBattleMvp', x: 100, y: 90, width: 400, title: 'MVP · '+v.label,
+      mvpStyle: v.style, mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
+      mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
+      mvpColor: v.accent, mvpColor2: '#ffffff', mvpDuration: 10
+    }),
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
       mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
@@ -429,6 +436,7 @@
       }];
     },
     'battlemvp': parts => {
+      if (parts[0] === 'celebration') return ['battlemvp.celebration', {style:parts[1], ...pick('battlemvp.celebration', parts[1], 'MVP-firande')}];
       if (parts[0] === 'frame') return ['battlemvp.frame', { frame: parts[1], accent: pick('battlemvp.frame', parts[1], 'MVP-ram').accent }];
       return ['battlemvp.style', { style: parts[0], color: pick('battlemvp.style', parts[0], 'MVP-stil') }];
     },

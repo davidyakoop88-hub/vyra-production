@@ -1,0 +1,111 @@
+{
+  "generator": "OpenAI builtin image_gen.imagegen",
+  "generatedAt": "2026-09-11",
+  "description": "Original frame-only generated artwork. Prompt summaries below are approximate, not verbatim. No portrait, name or MVP text is baked into the assets.",
+  "rendering": "Self-contained SVG embeds the unmodified source PNG. A color matrix maps near-black to transparent at display time and preserves RGB. No raster pixels were edited. Use as an image, with the live portrait beneath it.",
+  "geometryNote": "Visually measured ellipse center and full width/height in source pixels. Portrait overlaps ring slightly so no gaps show. All sources are 1254 by 1254.",
+  "assets": [
+    {
+      "id": "coronation",
+      "file": "coronation.svg",
+      "sourceFile": "exec-e4d46209-18d3-4c35-b563-f441f98cdbc7.png",
+      "sourceSha256": "d9e7495b824d871dd3297eebf1dcaf66b90ce4be99e6b73aab28770d68c17651",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 627,
+        "cy": 650,
+        "width": 650,
+        "height": 590
+      },
+      "promptSummary": "Gold crown, purple gemstones and gold laurel framing an empty oval portrait opening. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    },
+    {
+      "id": "wings",
+      "file": "wings.svg",
+      "sourceFile": "exec-d847bcd0-8c91-47eb-b569-dc93446736a5.png",
+      "sourceSha256": "63b61db014d81eae76b2e168f5254378c3f84e3ef471aa88225c5e07435eb0b1",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 627,
+        "cy": 601,
+        "width": 704,
+        "height": 680
+      },
+      "promptSummary": "Silver and purple oval frame with restrained small wings and violet crystals. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    },
+    {
+      "id": "portal",
+      "file": "portal.svg",
+      "sourceFile": "exec-67fd711e-490f-4c36-91e9-e7ae0dad026b.png",
+      "sourceSha256": "cd1ee4108e2606db531885d9b100328984911dd23acd1ec0123ba8a12efb0e53",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 627,
+        "cy": 568,
+        "width": 644,
+        "height": 622
+      },
+      "promptSummary": "Turquoise and coral energy portal with metallic oval ring and orbiting crystal streaks. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    },
+    {
+      "id": "rosegold",
+      "file": "rosegold.svg",
+      "sourceFile": "exec-dc077119-c64f-49b8-8c9f-db9d639bcf91.png",
+      "sourceSha256": "4ab3e136f7a2735bb7047518303a6a93bdad913a7eb8fd272625ee09a885808e",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 621,
+        "cy": 555,
+        "width": 930,
+        "height": 852
+      },
+      "promptSummary": "Rose gold oval frame with pink roses, leaves and delicate sparkles. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    },
+    {
+      "id": "pearl",
+      "file": "pearl.svg",
+      "sourceFile": "exec-7d47d899-4607-40e9-ab2a-264e58a08071.png",
+      "sourceSha256": "0b4c65a5a5ed1a11a1a024c87226097de10104c633f536289210f07ed68d67d1",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 627,
+        "cy": 570,
+        "width": 810,
+        "height": 770
+      },
+      "promptSummary": "Ivory pearl oval frame with small blush wings and warm gold details. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    },
+    {
+      "id": "moon",
+      "file": "moon.svg",
+      "sourceFile": "exec-80873651-a400-4351-8fc6-9effeb638dd2.png",
+      "sourceSha256": "d5c26fef9294e7220618ed462b0467c6e5c44cab9953ef6e3d7abd44f69d0415",
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "portrait": {
+        "cx": 667,
+        "cy": 578,
+        "width": 910,
+        "height": 820
+      },
+      "promptSummary": "Silver lavender crescent moon portrait frame with dangling star charms and pearl details. Isolated frame only, empty opening, no text or people, on black suitable for display-time alpha extraction."
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+﻿/* Six finite MVP celebrations. Static editor state is the completed emblem.
+   The existing session owns activation and duration; no ticker or JS particles. */
+.battle-mvp.mvp-celebration{--mvc-a:#f5ce76;--mvc-b:#fff3c5;display:block!important;padding:0!important;isolation:isolate}
+.mvp-celebration .mvc-stage{position:relative;width:100%;height:auto;aspect-ratio:1;isolation:isolate;overflow:visible;container-type:inline-size}
+.mvp-celebration .mvc-art{position:absolute;inset:0;z-index:3;pointer-events:none;transform-origin:50% 50%;backface-visibility:hidden;display:block;width:100%;height:100%;object-fit:contain}
+.mvp-celebration .mvc-art img{display:block;width:100%;height:100%;object-fit:contain}
+.mvp-celebration .mvc-art-left{clip-path:inset(0 50% 0 0)}
+.mvp-celebration .mvc-art-right{clip-path:inset(0 0 0 50%)}
+.mvp-celebration .mvc-portrait{position:absolute;left:calc(var(--mvc-photo-left,29%) + var(--mvc-photo-width,42%)/2);top:calc(var(--mvc-photo-top,24%) + var(--mvc-photo-height,42%)/2);width:var(--mvc-photo-width,42%);height:var(--mvc-photo-height,42%);transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;z-index:2;background:radial-gradient(circle,#292236,#0b0912)}
+.mvp-celebration .mvc-portrait img{width:100%;height:100%;object-fit:cover;display:block}
+.mvp-celebration .mvc-copy{position:absolute;left:12%;right:12%;top:var(--mvc-copy-y,86%);z-index:5;text-align:center;color:var(--mvc-b);text-shadow:0 2px 5px #000,0 0 12px #000}
+.mvp-celebration .mvc-copy small{display:block;font:700 clamp(10px,5cqw,26px)/1.2 Georgia,serif;letter-spacing:.3em;padding-left:.3em}
+.mvp-celebration .mvc-copy h2{font:600 clamp(12px,6cqw,30px)/1.2 Georgia,serif;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3% 0 0;color:#fff}
+.mvp-celebration .mvc-charge{position:absolute;inset:16%;border-radius:50%;opacity:0;z-index:1;pointer-events:none;background:radial-gradient(circle,transparent 48%,var(--mvc-a) 49%,transparent 51%);box-shadow:0 0 28px color-mix(in srgb,var(--mvc-a),transparent 65%)}
+.mvp-celebration .mvc-charge:before,.mvp-celebration .mvc-charge:after{content:'';position:absolute;inset:-12%;border-radius:50%;border:1px solid var(--mvc-a);opacity:.5}
+.mvp-celebration .mvc-charge:after{inset:9%;border-color:var(--mvc-b)}
+.mvp-celebration .mvc-finale{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:visible}
+.mvp-celebration .mvc-finale i{position:absolute;left:var(--x,50%);top:14%;width:1%;height:2%;border-radius:50%;background:var(--mvc-a);opacity:0;box-shadow:0 0 6px var(--mvc-a)}
+.mvp-celebration.mvp-active .mvc-stage{animation:mvc-show var(--mvc-duration,10s) linear both}
+.mvp-celebration.mvp-active .mvc-charge{animation:mvc-charge var(--mvc-duration,10s) ease-out both}
+.mvp-celebration.mvp-active .mvc-portrait{animation:mvc-face var(--mvc-duration,10s) ease-out both}
+.mvp-celebration.mvp-active .mvc-copy{animation:mvc-copy var(--mvc-duration,10s) ease-out both}
+.mvp-celebration.mvp-active .mvc-art{animation-duration:var(--mvc-duration,10s);animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.mvp-celebration.mvp-active .mvc-finale i{animation:mvc-rain var(--mvc-duration,10s) linear both;animation-delay:calc(var(--i,0)*18ms)}
+/* Gold crown descends into a fan of warm rays, then a vertical gold shower. */
+.mvc-coronation .mvc-charge{background:repeating-conic-gradient(from 0deg,transparent 0deg 18deg,#f5ce7666 20deg,transparent 22deg 40deg);border-radius:0;box-shadow:none;mask-image:radial-gradient(circle,transparent 23%,#000 40%,transparent 70%)}
+.mvc-coronation.mvp-active .mvc-art{animation-name:mvc-crown}
+.mvc-coronation .mvc-finale i{width:.7%;height:4%;border-radius:1px}
+/* Two compact wings unfold independently. Feather sparks lift away. */
+.mvc-wings{--mvc-a:#bda0f1;--mvc-b:#e9e0ff}
+.mvc-wings .mvc-art-left{transform-origin:48% 55%}
+.mvc-wings .mvc-art-right{transform-origin:52% 55%}
+.mvc-wings.mvp-active .mvc-art-left{animation-name:mvc-wing-left}
+.mvc-wings.mvp-active .mvc-art-right{animation-name:mvc-wing-right}
+.mvc-wings .mvc-finale i{top:75%;width:1.4%;height:4%;border-radius:100% 0 100% 0;background:linear-gradient(135deg,#fff,var(--mvc-a))}
+.mvc-wings.mvp-active .mvc-finale i{animation-name:mvc-feathers}
+/* The cyan and coral portal has opposing arcs and an outward final burst. */
+.mvc-portal{--mvc-a:#53edec;--mvc-b:#ffb9b4}
+.mvc-portal .mvc-charge{background:none;box-shadow:none}
+.mvc-portal .mvc-charge:before{border:3px solid transparent;border-top-color:var(--mvc-a);border-left-color:var(--mvc-a);opacity:1}
+.mvc-portal .mvc-charge:after{border:3px solid transparent;border-bottom-color:#ff888b;border-right-color:#ff888b;opacity:1}
+.mvc-portal.mvp-active .mvc-charge:before{animation:mvc-orbit var(--mvc-duration,10s) ease-out both}
+.mvc-portal.mvp-active .mvc-charge:after{animation:mvc-orbit-reverse var(--mvc-duration,10s) ease-out both}
+.mvc-portal.mvp-active .mvc-art-left{animation-name:mvc-portal-left}
+.mvc-portal.mvp-active .mvc-art-right{animation-name:mvc-portal-right}
+.mvc-portal .mvc-finale i{top:45%;left:50%;width:1%;height:3%;transform:rotate(calc(var(--i)*18deg))}
+.mvc-portal.mvp-active .mvc-finale i{animation-name:mvc-burst}
+.mvc-portal .mvc-finale i:nth-child(even){background:#ff9293;box-shadow:0 0 6px #ff9293}
+/* Roses bloom from their stems and loose petals drift sideways. */
+.mvc-rosegold{--mvc-a:#e8adab;--mvc-b:#ffe5d3}
+.mvc-rosegold .mvc-art-left{transform-origin:32% 72%}
+.mvc-rosegold .mvc-art-right{transform-origin:68% 30%}
+.mvc-rosegold.mvp-active .mvc-art-left{animation-name:mvc-bloom-left}
+.mvc-rosegold.mvp-active .mvc-art-right{animation-name:mvc-bloom-right}
+.mvc-rosegold .mvc-finale i{width:2.5%;height:3.4%;border-radius:65% 15% 65% 35%;background:linear-gradient(135deg,#ffe3dc,#c8778e);box-shadow:none}
+.mvc-rosegold.mvp-active .mvc-finale i{animation-name:mvc-petals}
+/* Pearlescent wings float upward; rounded pearls rise gently in the finale. */
+.mvc-pearl{--mvc-a:#f3d8e4;--mvc-b:#fff5ed}
+.mvc-pearl .mvc-art-left{transform-origin:49% 64%}
+.mvc-pearl .mvc-art-right{transform-origin:51% 64%}
+.mvc-pearl.mvp-active .mvc-art-left{animation-name:mvc-pearl-left}
+.mvc-pearl.mvp-active .mvc-art-right{animation-name:mvc-pearl-right}
+.mvc-pearl .mvc-finale i{top:83%;width:2%;height:2%;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff 10%,#edd5e0 50%,#ac8da2);box-shadow:0 0 5px #fff8}
+.mvc-pearl.mvp-active .mvc-finale i{animation-name:mvc-pearls}
+/* A lunar arc sweeps around the reveal and a sparse diagonal star shower follows. */
+.mvc-moon{--mvc-a:#c4b3fa;--mvc-b:#f3edff}
+.mvc-moon .mvc-charge{border:2px solid transparent;border-left-color:var(--mvc-b);background:none;box-shadow:none}
+.mvc-moon .mvc-charge:before{border:none;background:radial-gradient(circle at 12% 28%,#fff 0 1%,transparent 2%)}
+.mvc-moon.mvp-active .mvc-charge{animation-name:mvc-moon-arc}
+.mvc-moon.mvp-active .mvc-art-left{animation-name:mvc-moon-left}
+.mvc-moon.mvp-active .mvc-art-right{animation-name:mvc-moon-right}
+.mvc-moon .mvc-finale i{top:6%;width:10%;height:.5%;border-radius:50%;background:linear-gradient(90deg,transparent,#e6dcff);box-shadow:none}
+.mvc-moon.mvp-active .mvc-finale i{animation-name:mvc-stars}
+@keyframes mvc-show{0%,96%{opacity:1}100%{opacity:0}}
+@keyframes mvc-charge{0%{opacity:0;transform:scale(1.4) rotate(-50deg)}8%{opacity:.8}18%{opacity:1;transform:scale(.85) rotate(0)}35%{opacity:.5;transform:scale(1.12) rotate(25deg)}48%,100%{opacity:0;transform:scale(1.25) rotate(40deg)}}
+@keyframes mvc-face{0%,40%{opacity:0;transform:translate(-50%,-50%) scale(.86)}48%{opacity:1;transform:translate(-50%,-50%) scale(1.03)}54%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes mvc-copy{0%,44%{opacity:0;transform:translateY(15%)}54%,100%{opacity:1;transform:translateY(0)}}
+@keyframes mvc-crown{0%,18%{opacity:0;transform:translateY(-24%) scale(1.08)}30%{opacity:1;transform:translateY(2%) scale(.98)}40%,100%{opacity:1;transform:none}}
+@keyframes mvc-wing-left{0%,18%{opacity:0;transform:perspective(600px) rotateY(78deg) rotate(16deg)}29%{opacity:1;transform:perspective(600px) rotateY(-12deg) rotate(-5deg)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-wing-right{0%,18%{opacity:0;transform:perspective(600px) rotateY(-78deg) rotate(-16deg)}29%{opacity:1;transform:perspective(600px) rotateY(12deg) rotate(5deg)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-portal-left{0%,18%{opacity:0;transform:rotate(-65deg) scale(.45)}30%{opacity:1;transform:rotate(8deg) scale(1.07)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-portal-right{0%,18%{opacity:0;transform:rotate(65deg) scale(.45)}30%{opacity:1;transform:rotate(-8deg) scale(1.07)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-orbit{0%{transform:rotate(-180deg)}42%,100%{transform:rotate(180deg)}}
+@keyframes mvc-orbit-reverse{0%{transform:rotate(180deg)}42%,100%{transform:rotate(-180deg)}}
+@keyframes mvc-bloom-left{0%,18%{opacity:0;transform:scale(.3) rotate(-28deg)}31%{opacity:1;transform:scale(1.04) rotate(3deg)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-bloom-right{0%,21%{opacity:0;transform:scale(.3) rotate(28deg)}34%{opacity:1;transform:scale(1.04) rotate(-3deg)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-pearl-left{0%,18%{opacity:0;transform:translateY(20%) rotate(22deg) scale(.7)}33%{opacity:1;transform:translateY(-3%) rotate(-4deg) scale(1.02)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-pearl-right{0%,18%{opacity:0;transform:translateY(20%) rotate(-22deg) scale(.7)}33%{opacity:1;transform:translateY(-3%) rotate(4deg) scale(1.02)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-moon-arc{0%{opacity:0;transform:rotate(-160deg) scale(.7)}12%{opacity:1}30%{opacity:1;transform:rotate(90deg) scale(1.1)}45%,100%{opacity:0;transform:rotate(190deg) scale(1.15)}}
+@keyframes mvc-moon-left{0%,18%{opacity:0;transform:rotate(-70deg) scale(.75)}35%{opacity:1;transform:rotate(4deg) scale(1.01)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-moon-right{0%,24%{opacity:0;transform:translate(8%,-10%) scale(.9)}42%,100%{opacity:1;transform:none}}
+@keyframes mvc-rain{0%,70%{opacity:0;transform:translateY(0)}73%{opacity:.9}94%{opacity:.5}100%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(100deg)}}
+@keyframes mvc-feathers{0%,70%{opacity:0;transform:translateY(0) rotate(-20deg)}76%{opacity:.9}100%{opacity:0;transform:translate(var(--drift,0px),-160px) rotate(100deg)}}
+@keyframes mvc-burst{0%,70%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-35px)}74%{opacity:1}92%,100%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-180px) scale(.4)}}
+@keyframes mvc-petals{0%,70%{opacity:0;transform:translate(0,0) rotate(0)}75%{opacity:.9}85%{transform:translate(calc(var(--drift,0px)*.4),70px) rotate(90deg)}100%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(200deg)}}
+@keyframes mvc-pearls{0%,70%{opacity:0;transform:translateY(0) scale(.5)}77%{opacity:.9;transform:translateY(-30px) scale(1)}100%{opacity:0;transform:translate(calc(var(--drift,0px)*.5),-145px) scale(.65)}}
+@keyframes mvc-stars{0%,70%{opacity:0;transform:translate(0,0) rotate(-35deg) scaleX(.3)}76%{opacity:.9;transform:translate(-20px,15px) rotate(-35deg) scaleX(1)}94%,100%{opacity:0;transform:translate(-160px,125px) rotate(-35deg) scaleX(.2)}}
+/* Bound simultaneous decoration cost. Hosts may opt into low quality explicitly. */
+.mvp-celebration[data-mvc-quality="low"] .mvc-finale i:nth-child(n+9){display:none}
+.mvp-celebration[data-mvc-quality="low"] .mvc-charge{box-shadow:none}
+@media(prefers-reduced-motion:reduce){
+ .mvp-celebration.mvp-active .mvc-stage,.mvp-celebration.mvp-active .mvc-art,.mvp-celebration.mvp-active .mvc-portrait,.mvp-celebration.mvp-active .mvc-copy{animation:none!important}
+ .mvp-celebration .mvc-charge,.mvp-celebration .mvc-finale{display:none!important}
+}
+
+
+/* Idle overlays and explicitly hidden layers always stay invisible, even selected. */
+html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
+.overlay-mode .battle-mvp.mvp-celebration:not(.mvp-active),
+.battle-mvp.mvp-celebration.widget-hidden,
+.battle-mvp.mvp-celebration[hidden]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
