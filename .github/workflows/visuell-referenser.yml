@@ -47,6 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -156,6 +157,25 @@ jobs:
         # cli.js i node_modules kanner sin egen browsers.json och laddar ner ratt revision.
         run: node node_modules/playwright-core/cli.js install chromium
 
+      - name: 'Guardian · verklig profilbild, namn, storlekar och hela liveentrén'
+        timeout-minutes: 10
+        env:
+          VYRA_GUARDIAN_QA_DIR: tests/visual/diff/guardian-qa
+        run: node --test tests/browser/guardian-emblem.browser.test.js
+
+      - name: 'Guardian · bilder från webbläsartesterna'
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardian-blue-qa
+          path: tests/visual/diff/guardian-qa/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: 'Mät katalogen med originalmodellen'
+        timeout-minutes: 10
+        run: npm run karta
+
       - name: 'Fotografera alla katalognycklar'
         timeout-minutes: 30
         env:
@@ -165,7 +185,7 @@ jobs:
           # Bara FORSTA raden, och utan markoren: historik.md ska bara en mening om varfor bilderna
           # byttes, inte ett helt commitmeddelande med medforfattare och sessionslank.
           MOTIV_RAA: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
-          VYRA_VISUELL_BARA: ${{ github.event.inputs.bara }}
+          VYRA_VISUELL_BARA: ${{ github.event.inputs.bara || 'catalog:guardianemblem:model:sapphire' }}
         run: |
           set -eu
           MOTIV=$(printf '%s' "$MOTIV_RAA" | head -1 | sed 's/^\[referenser\] *//')
@@ -197,7 +217,7 @@ jobs:
           set -eu
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tests/visual/referenser
+          git add tests/visual/referenser docs/katalogkarta.md
           if git diff --cached --quiet; then
             echo 'Inga bilder andrades — inget att committa.'
             exit 0
