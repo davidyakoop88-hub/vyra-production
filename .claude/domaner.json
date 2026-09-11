@@ -398,7 +398,10 @@
         "tests/gift-fireworks-live-trigger.test.js",
         "tests/gift-fireworks-live-path.test.js",
         "tests/gift-fireworks-panel.test.js",
-        "tests/gift-fireworks-sound.test.js"
+        "tests/gift-fireworks-sound.test.js",
+        "tests/gift-fireworks-personal-rockets.test.js",
+        "tests/gift-fireworks-concurrency.test.js",
+        "tests/browser/fireworks-flip.browser.test.js"
       ],
       "matning": [
         {

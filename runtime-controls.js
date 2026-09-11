@@ -4,13 +4,9 @@
   function applyPerformance(){document.documentElement.dataset.performance=mode;localStorage.setItem(PERF_KEY,mode)}
   applyPerformance();
 
-  // Fem alerts delar den har kon: Battle MVP, Gifter Level Up, Fan Level Up, Gift Fireworks och
-  // New Follower. En i taget ar avsiktligt - de skulle rita over varandra annars.
-  //
-  // Taket och maxaldern ar det inte. Kon hade varken, och clear() anropades fran ingenstans: hundra
-  // gavor koade hundra fyrverkerier, cirka tio minuter som fortsatte spela langt efter att gavorna
-  // slutade. Uppmatt: forsta fyrverkeriet pa 54 ms, andra pa 7 000 ms. En alert som ar en halv minut
-  // gammal beskriver inte langre det som hander pa skarmen.
+  // Battle MVP, Gifter/Fan Level Up, New Follower and Guardian Emblem share
+  // this bounded serial queue. Personal fireworks use their own concurrent
+  // sender lanes in gift-fireworks-session.js.
   const queue=[],wrapped=new Set();let busy=false,kastade=0;
   const MAX_VANTANDE=10,MAX_ALDER=30000;
   // Kastet tar de LAGST prioriterade forst, och bland dem den aldsta. Kon ar sorterad fallande pa
@@ -45,13 +41,13 @@
   function riv(){queue.length=0;busy=false;kastade=0}
   window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
   addEventListener('vyra-session-ended',riv);
-    const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGiftFireworks:[6000,6],triggerGuardianEmblem:[8000,5]};
-  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;if(name==='triggerGiftFireworks')d=(state.widgets.find(w=>w.type==='templateGiftFireworks')?.fwDuration||5)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
+    const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGuardianEmblem:[8000,5]};
+  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
 
   /* .gift-fireworks-fx star med sedan raketerna borjade visa den RIKTIGA gavan: deras src ar numera
      en TikTok-CDN-URL som kan fallera, och utan den har traffen bytte de till profilplatshallaren —
-     ett ansiktsfoto flygande i ett fyrverkeri. Alla bilder inuti effekten ar gavor. */
+     ett ansiktsfoto flygande i ett fyrverkeri. Profilbilder markerar fallbackApplied och hanterar egna bildfel. */
   document.addEventListener('error',e=>{let img=e.target;if(!(img instanceof HTMLImageElement)||img.dataset.fallbackApplied)return;img.dataset.fallbackApplied='1';img.src=img.closest('.vyra-gift-face,.streak-gift-face,.campaign-gift-image,.gift-fireworks-fx')?'assets/gifts/events/0001_Rose.png':'assets/images/test/test-profile.png'},true);
 
   function presets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY)||'{}')}catch{return{}}}

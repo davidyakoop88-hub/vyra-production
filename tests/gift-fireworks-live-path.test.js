@@ -27,7 +27,7 @@ const { createDom, closeAll } = require('./helpers/dom-harness.js');
 const ROOT = path.join(__dirname, '..');
 const KALLA = fs.readFileSync(path.join(ROOT, 'gift-fireworks.js'), 'utf8');
 
-test.after(closeAll);
+test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
 const fw = (id = 'fw1', over = {}) => Object.assign({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360, title: 'Gift Fireworks',
@@ -94,17 +94,17 @@ test('livevagen gor inga writes i kallan heller', () => {
 
 // ---- 2. combon hanteras ratt -------------------------------------------------------------------
 
-test('en combo pa fem bygger fem raketer', () => {
+test('en combo pa fem visar en personlig raket', () => {
   const { h, d } = boot();
   h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, combo: 5 });
-  assert.equal(raketer(d), 5);
+  assert.equal(raketer(d), 1);
 });
 
 test('combon lases aven som count och repeatcount', () => {
   for (const [falt, varde] of [['count', 4], ['repeatcount', 6]]) {
     const { h, d } = boot();
     h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, [falt]: varde });
-    assert.equal(raketer(d), varde, `${falt} nadde inte fram`);
+    assert.equal(raketer(d), 1, `${falt} nadde inte fram`);
   }
 });
 
@@ -115,7 +115,7 @@ test('en gava utan combo ger en raket', () => {
 });
 
 test('combon klamps till 1-100', () => {
-  for (const [in_, ut] of [[0, 1], [-5, 1], [500, 100], ['tolv', 1]]) {
+  for (const [in_, ut] of [[0, 1], [-5, 1], [500, 7], ['tolv', 1]]) {
     const { h, d } = boot();
     h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, combo: in_ });
     assert.equal(raketer(d), ut, `combo ${JSON.stringify(in_)} gav ${raketer(d)} raketer`);
@@ -157,7 +157,8 @@ test('den andra gavans raketer bygger pa, de ersatter inte', () => {
   const { h, d } = boot();
   h.window.triggerGiftFireworks({ username: 'a', coins: 100, combo: 2 });
   h.window.triggerGiftFireworks({ username: 'b', coins: 100, combo: 3 });
-  assert.equal(raketer(d), 3, 'den senaste gavans combo ska styra antalet raketer');
+  assert.equal(raketer(d), 2, 'both senders retain one personal rocket');
+  assert.equal(fx(d).querySelectorAll('.fw-event').length,2);
 });
 
 test('timern satts om vid varje ny gava', () => {
@@ -214,11 +215,11 @@ test('raketen visar gavan ur eventet, inte panelbilden', () => {
 });
 
 // Antalet fungerade redan; provet halls kvar sa en fix av bilden inte rakar ta sonder det.
-test('tva lion ger tva raketer, bada med lejonbilden', () => {
+test('tva lion delar en personlig raket med lejonbilden', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
   h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 2, giftName: 'Lion', giftImage: LION });
-  assert.equal(raketer(d), 2, 'antalet foljer inte gavans count');
-  assert.deepEqual(bilder(d), [LION, LION], 'bara nagra av raketerna fick ratt bild');
+  assert.equal(raketer(d), 1, 'small combos share one showcase rocket');
+  assert.deepEqual(bilder(d), [LION], 'bara nagra av raketerna fick ratt bild');
 });
 
 // Panelinstallningen far inte bli meningslos: editorns testknapp har ingen gava alls, och ett event
@@ -236,7 +237,7 @@ test('en ny gava byter bild pa raketerna', () => {
   assert.deepEqual(bilder(d), [LION]);
   const ros = 'https://p16.tiktokcdn.com/img/rose.png';
   h.window.triggerGiftFireworks({ username: 'b', coins: 5, count: 1, giftImage: ros });
-  assert.deepEqual(bilder(d), [ros], 'bilden fastnade pa den forra gavan');
+  assert.deepEqual(bilder(d), [LION, ros], 'bilden fastnade pa den forra gavan');
 });
 
 // DEN CENTRALA GAVAN — den som faktiskt syns storst.
@@ -252,18 +253,18 @@ test('en ny gava byter bild pa raketerna', () => {
 //
 // ROTT NU.
 const mittbild = (d, id = 'fw1') => {
-  const nod = [...fx(d, id).children].find(n => n.tagName === 'IMG');
+  const nod = fx(d, id).querySelector('.fw-event:last-child .fw-rocket-gift');
   return nod ? nod.getAttribute('src') : '(ingen central bild)';
 };
 
-test('den centrala gavan byts till den som skickades', () => {
+test('raketens flippbara gava visar den skickade bilden', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
   h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Lion', giftImage: LION });
   assert.equal(mittbild(d), LION,
     'mittbilden visar fortfarande panelbilden — det ar den storsta grafiken i widgeten');
 });
 
-test('utan bild i eventet star den centrala kvar pa panelbilden', () => {
+test('raketens flippbara gava anvander panelens reservbild', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0042_Galaxy.png' })]);
   h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Galaxy' });
   assert.equal(mittbild(d), 'assets/gifts/events/0042_Galaxy.png');
@@ -295,20 +296,21 @@ test('fyrverkeriets bilder raknas som gavor i fallback-selektorn', () => {
 
 // ---- 6. Gavan exploderar och flippar TILL avsandaren (Davids nya riktning) ---------------------
 const AVATAR = 'https://p16.tiktokcdn.com/img/anna.png';
-const sender = d => fx(d).querySelector('.fw-sender-avatar');
+const latest = d => fx(d).querySelector('.fw-event:last-child');
+const sender = d => latest(d).querySelector('.fw-rocket-avatar');
 
-test('gåvan finns på raketerna och avsändaren har ett eget centralt ansikte', () => {
+test('gåvan finns på raketerna och avsändaren har ett eget raketansikte', () => {
   const { h, d } = boot();
   h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 3, giftImage: LION, profileImage: AVATAR });
-  assert.equal(raketer(d), 3);
-  assert.deepEqual(bilder(d), [LION, LION, LION]);
+  assert.equal(raketer(d), 1);
+  assert.deepEqual(bilder(d), [LION]);
   assert.equal(sender(d).getAttribute('src'), AVATAR);
   assert.equal(sender(d).hidden, false);
-  assert.equal(fx(d).querySelectorAll('.fw-sender-avatar').length, 1);
-  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, 'anna');
+  assert.equal(fx(d).querySelectorAll('.fw-rocket-avatar').length, 1);
+  assert.equal(fx(d).querySelector('.fw-sender-name'), null);
 });
 
-test('molnets profileUrl fungerar för det centrala profilansiktet', () => {
+test('molnets profileUrl fungerar för raketens profilansikte', () => {
   const { h, d } = boot();
   h.window.triggerGiftFireworks({ username: 'anna', giftImage: LION, profileUrl: AVATAR });
   assert.equal(sender(d).getAttribute('src'), AVATAR);
@@ -320,33 +322,33 @@ test('nästa gåva utan profilbild eller gåvobild behåller inte förra avsänd
   h.window.triggerGiftFireworks({ username: '@bea' });
   assert.equal(sender(d).hidden, true);
   assert.equal(sender(d).hasAttribute('src'), false);
-  assert.equal(fx(d).querySelector('.fw-sender-initial').textContent, 'B');
-  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, '@bea');
+  assert.equal(latest(d).querySelector('.fw-rocket-fallback').hidden, false);
+  assert.doesNotMatch(latest(d).textContent, /bea/);
   assert.equal(mittbild(d), 'assets/gifts/events/0001_Rose.png');
 });
 
-test('en trasig profilbild visar initialen, inte den globala gåvoreserven', () => {
+test('en trasig profilbild visar en ikon, inte den globala gåvoreserven', () => {
   const { h, d } = boot();
   h.window.triggerGiftFireworks({ username: 'anna', profileImage: AVATAR });
   sender(d).dispatchEvent(new h.window.Event('error'));
   assert.equal(sender(d).hidden, true);
   assert.equal(sender(d).dataset.fallbackApplied, '1');
-  assert.equal(fx(d).querySelector('.fw-sender-initial').textContent, 'A');
+  assert.equal(latest(d).querySelector('.fw-rocket-fallback').hidden, false);
 });
 
-test('avsändare och gåvonamn blir text och bildadresser valideras', () => {
+test('avsändare och gåvonamn utelamnas och bildadresser valideras', () => {
   const { h, d } = boot();
   const name='<img src=x onerror=alert(1)>';
   h.window.triggerGiftFireworks({ username:name, giftName:name, profileImage:'javascript:alert(1)', giftImage:'x" onerror="alert(1)' });
-  assert.equal(fx(d).querySelector('.fw-sender-name').textContent, name);
-  assert.equal(fx(d).querySelector('.fw-sender-name').children.length, 0);
-  assert.equal(fx(d).querySelector('.fw-sender-gift').children.length, 0);
+  assert.equal(fx(d).querySelector('.fw-sender-name,.fw-sender-gift'), null);
+  assert.equal(fx(d).querySelector('[onerror]'), null);
   assert.equal(sender(d).hidden, true);
   assert.equal(mittbild(d), 'assets/gifts/events/0001_Rose.png');
 });
 
-test('en kort visning reserverar tid för flip och namn även med långsam raket', () => {
-  const { d } = boot([fw('fw1',{fwDuration:2,fwSpeed:1.5})]);
+test('en kort visning reserverar tid för flip och profil även med långsam raket', () => {
+  const { h, d } = boot([fw('fw1',{fwDuration:2,fwSpeed:1.5})]);
+  h.window.triggerGiftFireworks({combo:1});
   assert.equal(Number.parseFloat(fx(d).style.getPropertyValue('--fw-flight')), .44);
   assert.equal(Number.parseFloat(fx(d).style.getPropertyValue('--fw-reveal')), 1.56);
 });
@@ -356,4 +358,37 @@ test('profil och gåvonamn är tillfälliga och skrivs inte till layouten', () =
   const before=JSON.stringify(las('state.widgets[0]'));
   h.window.triggerGiftFireworks({ username:'anna', giftName:'Lion', giftImage:LION, profileImage:AVATAR });
   assert.equal(JSON.stringify(las('state.widgets[0]')), before);
+});
+
+
+test('antalet gåvor väljer rätt nivå vid gränserna', () => {
+  for (const [count,level,waves,duration] of [[1,'single',0,5],[9,'single',0,5],[10,'burst',2,5.9],[99,'burst',2,5.9],[100,'show',6,9.2]]) {
+    const {h,d}=boot();h.window.triggerGiftFireworks({count,username:'anna',coins:1});
+    assert.equal(fx(d).dataset.fwLevel,level);
+    assert.equal(fx(d).querySelectorAll('.fw-personal-rocket').length,waves+1);
+    assert.equal(parseFloat(fx(d).style.getPropertyValue('--duration')),duration);
+    assert.equal(h.window.VyraFireworks.durationFor({count}),duration*1000);
+    assert.equal(fx(d).querySelector('.fw-combo-badge'),null);
+
+  }
+});
+test('nivån följer combo och inte myntvärdet',()=>{
+  const {h,d}=boot();h.window.triggerGiftFireworks({count:1,coins:10000});assert.equal(fx(d).dataset.fwLevel,'single');
+  h.window.triggerGiftFireworks({repeatcount:100,coins:1});assert.equal(fx(d).dataset.fwLevel,'show');
+});
+test('show particles are bounded and later gifts keep their own independent layer',()=>{
+  const {h,d}=boot([fw('fw1',{fwDensity:100,fwColor:'#22ccff'})]);
+  h.window.triggerGiftFireworks({combo:100});
+  const show=latest(d);
+  assert.ok(show.querySelectorAll('.fw-burst i').length<=280);
+  assert.equal(show.querySelectorAll('.fw-rocket').length,7);
+  h.window.triggerGiftFireworks({combo:1});
+  assert.equal(latest(d).querySelectorAll('.fw-rocket').length,1);
+  assert.equal(show.querySelectorAll('.fw-rocket').length,7);
+  assert.equal(h.window.VyraFireworks.timers(),1);
+});
+test('kötiden följer den längsta synliga widgeten',()=>{
+  const {h}=boot([fw('a',{fwDuration:3}),fw('b',{fwDuration:8}),fw('c',{fwDuration:10,hidden:true})]);
+  assert.equal(h.window.VyraFireworks.durationFor({combo:100}),12200);
+  assert.equal(h.window.VyraFireworks.durationFor({combo:10}),8900);
 });

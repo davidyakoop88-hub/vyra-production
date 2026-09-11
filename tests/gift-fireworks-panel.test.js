@@ -19,7 +19,7 @@ const { createDom, closeAll } = require('./helpers/dom-harness.js');
 
 const ROOT = path.join(__dirname, '..');
 
-test.after(closeAll);
+test.afterEach(closeAll);
 
 function panel(extra = {}) {
   const w = Object.assign({ id: 'fw1', type: 'templateGiftFireworks', x: 10, y: 10, width: 360,
@@ -133,51 +133,20 @@ test('ett rent tal fungerar fortfarande som argument', () => {
   run(`window.__d = { svar: triggerGiftFireworks(4), combo: state.widgets[0].fwCombo }`);
 
   assert.equal(h.window.__d.svar, true, 'den gamla anropsformen slutade fungera');
-  assert.equal(d.querySelectorAll('[data-id="fw1"] .fw-rocket').length, 4,
+  assert.equal(d.querySelectorAll('[data-id="fw1"] .fw-rocket').length, 1,
     'combon lastes inte ur talet');
   assert.equal(h.window.__d.combo, undefined,
     'livevagen skrev combon pa widgeten igen — den blir da persistent mellan sandningar');
 });
 
-// ---- 3. TEXT-sektionen ---------------------------------------------------------------------------
-test('panelen har en egen TEXT-sektion', () => {
-  const { d } = panel();
-  const rubriker = [...d.querySelectorAll('.properties h4')].map(h => h.textContent.trim());
-
-  assert.ok(rubriker.includes('TEXT'), `sektionerna ar ${rubriker.join(', ')}`);
-});
-
-test('TEXT-sektionen har pa/av, mall, storlek och farg', () => {
-  const { d } = panel();
-  const saknas = ['fwTextOn', 'fwText', 'fwTextSize', 'fwTextColor'].filter(id => !d.querySelector('#' + id));
-
-  assert.deepEqual(saknas, [], `dessa falt saknas: ${saknas.join(', ')}`);
-});
-
-test('ar texten av ritas ingen text i widgeten', () => {
-  const { d } = panel({ fwTextOn: false });
-
-  assert.equal(d.querySelector('.canvas .fw-text'), null, 'texten ritades trots att den ar av');
-});
-
-test('ar texten pa ritas mallen, med platshallarna utbytta', () => {
-  const { h, run } = panel({ fwTextOn: true, fwText: '{user} skickade {gift}' });
-  run(`triggerGiftFireworks({ combo: 2, username: 'wpwer17', giftName: 'Lion' });
-       window.__t = { text: document.querySelector('.canvas .fw-text')?.textContent }`);
-
-  assert.equal(h.window.__t.text, 'wpwer17 skickade Lion',
-    'platshallarna byttes inte ut mot eventets varden');
-});
-
-test('texten skrivs som text, inte som HTML', () => {
-  // Ett anvandarnamn kommer fran TikTok och gar genom molnet. Det ar inte betrott innehall.
-  const { h, run } = panel({ fwTextOn: true, fwText: '{user}' });
-  run(`triggerGiftFireworks({ combo: 1, username: '<img src=x onerror=alert(1)>' });
-       const el = document.querySelector('.canvas .fw-text');
-       window.__x = { html: el?.innerHTML, barn: el?.children.length }`);
-
-  assert.equal(h.window.__x.barn, 0,
-    'anvandarnamnet tolkades som HTML — ett namn fran TikTok far aldrig bli markup');
+test('personliga raketer saknar textkontroller även med äldre sparad text', () => {
+ const {d,h,run}=panel({fwTextOn:true,fwText:'{user} skickade {gift}'});
+ assert.equal(d.querySelector('#fwTextOn,#fwText,#fwTextSize,#fwTextColor'),null);
+ run(`triggerGiftFireworks({combo:10,username:'<img src=x onerror=alert(1)>',giftName:'Lion'})`);
+ assert.equal(d.querySelector('.canvas .fw-text,.canvas .fw-sender-caption'),null);
+ assert.doesNotMatch(d.querySelector('.gift-fireworks-fx').textContent,/Lion|onerror|skickade/);
+ run('window.__text=state.widgets[0].fwText');
+ assert.equal(h.window.__text,'{user} skickade {gift}');
 });
 
 // ---- testknappen gar genom triggern, inte forbi den --------------------------------------------
@@ -268,11 +237,11 @@ test('combofaltet skriver sitt varde till widgeten', () => {
 
 test('rörelsekorten visar sparat val och byter widgetens rörelse', () => {
   const { h, d, run } = panel({ fwMotion: 'spiral' });
-  assert.equal(d.querySelector('[data-fw-choice="spiral"]').getAttribute('aria-pressed'), 'true');
-  d.querySelector('[data-fw-choice="bloom"]').click();
+  assert.equal(d.querySelector('[data-fw-theme-choice="comet"]').getAttribute('aria-pressed'), 'true');
+  d.querySelector('[data-fw-theme-choice="ice"]').click();
   run('window.__motion = state.widgets[0].fwMotion');
   assert.equal(h.window.__motion, 'bloom');
-  assert.equal(d.querySelector('[data-fw-choice="bloom"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(d.querySelector('[data-fw-theme-choice="ice"]').getAttribute('aria-pressed'), 'true');
 });
 
 test('förinställningen följer värdena även efter omritning och egen justering', () => {
@@ -285,12 +254,13 @@ test('förinställningen följer värdena även efter omritning och egen justeri
   assert.equal(d.querySelector('#fwPreset').value, '');
 });
 
-test('avstängd text döljer textvalen men behåller sparad mall när den slås på', () => {
-  const { h, d } = panel({ fwTextOn: false, fwText: '{user} tack!' });
-  assert.equal(d.querySelector('.fw-text-options').hidden, true);
-  const toggle = d.querySelector('#fwTextOn');
-  toggle.checked = true;
-  toggle.dispatchEvent(new h.window.Event('change', { bubbles: true }));
-  assert.equal(d.querySelector('.fw-text-options').hidden, false);
-  assert.equal(d.querySelector('#fwText').value, '{user} tack!');
+test('alla fyra designerna kan väljas och sparas',()=>{
+ const {h,d,run}=panel();
+ assert.equal(d.querySelectorAll('[data-fw-theme-choice]').length,4);
+ for(const theme of ['royal','ice','rose','comet']){
+  d.querySelector('[data-fw-theme-choice="'+theme+'"]').click();
+  run('window.__theme=state.widgets[0].fwTheme');
+  assert.equal(h.window.__theme,theme);
+  assert.equal(d.querySelector('[data-fw-theme-choice="'+theme+'"]').getAttribute('aria-pressed'),'true');
+ }
 });

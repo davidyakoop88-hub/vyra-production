@@ -1,23 +1,7 @@
 'use strict';
-// Fem alerts delar EN ko i runtime-controls.js:7 — Battle MVP, Gifter Level Up, Fan Level Up,
-// Gift Fireworks och New Follower. En array, en busy-flagga, en slot i taget:
-//
-//   const queue=[]; let busy=false;
-//   function next(){ if(busy||!queue.length)return; busy=true; queue.shift().run();
-//     setTimeout(()=>{busy=false;next()}, Math.max(800, job.duration||5000)) }
-//
-// Serialiseringen ar avsiktlig och ska vara kvar. Tva saker runt den ar det inte:
-//
-// 1. Kon har inget tak och ingen maxalder. clear() och size() finns men anropas fran ingenstans.
-//    Hundra gavor koar hundra fyrverkerier — cirka tio minuter som fortsatter spela langt efter
-//    att gavorna slutade. Uppmatt: forsta pa 54 ms, andra pa 7 000 ms.
-//
-// 2. Kon rivs inte nar sessionen tar slut. runtime-controls.js registrerar ingen teardown och
-//    lyssnar inte pa vyra-session-ended, till skillnad fran cloud-sync.js, goal-client.js,
-//    live-client.js och session-state.js. Loggar man ut mitt i en gavostorm ligger kon kvar och
-//    spelar alerts fran forra sessionen.
-//
-// ROTT NU for bada.
+// Shared alerts remain serial, bounded, prioritized and session-local.
+// Personal fireworks deliberately bypass this queue; their own pacing is
+// tested in gift-fireworks-concurrency.test.js.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
@@ -114,7 +98,7 @@ test('de fem alerts spelar en i taget, aldrig overlappande', () => {
 test('hogre prioritet gar fore i den vantande kon', () => {
   const env = makeEnv();
   env.sandbox.triggerNewFollower({ i: 'upptar-sloten' });
-  env.sandbox.triggerGiftFireworks({ i: 'fyrverkeri' });   // prioritet 6
+  env.sandbox.triggerFanLevelUp({ i: 'fyrverkeri' });   // prioritet 6
   env.sandbox.triggerBattleMvp({ i: 'battle' });           // prioritet 10
   env.klocka.fram(60000);
 
@@ -129,7 +113,7 @@ test('hogre prioritet gar fore i den vantande kon', () => {
 // varianterna stod har forst och passerade mot ofixad kod.
 test('en gavostorm kastas, den bara kas inte upp', () => {
   const env = makeEnv();
-  for (let i = 0; i < 100; i += 1) env.sandbox.triggerGiftFireworks({ i });
+  for (let i = 0; i < 100; i += 1) env.sandbox.triggerFanLevelUp({ i });
   env.klocka.fram(1800000);   // en halvtimme: allt som nagonsin ska spela har spelat
 
   assert.ok(env.spelade.length < 100,
@@ -140,7 +124,7 @@ test('en gavostorm kastas, den bara kas inte upp', () => {
 test('taket kastar de lagst prioriterade forst, sa en Battle MVP overlever en gavostorm', () => {
   const env = makeEnv();
   env.sandbox.triggerNewFollower({ i: 'upptar-sloten' });
-  for (let i = 0; i < 100; i += 1) env.sandbox.triggerGiftFireworks({ i });
+  for (let i = 0; i < 100; i += 1) env.sandbox.triggerFanLevelUp({ i });
   env.sandbox.triggerBattleMvp({ i: 'battle' });
   env.klocka.fram(1800000);
 
@@ -156,7 +140,7 @@ test('en alert som vantat for lange spelas inte, den kastas', () => {
   // En lang Battle MVP blockerar kon. Fyrverkeriet bakom hinner bli inaktuellt.
   env.sandbox.state.widgets.push({ type: 'templateBattleMvp', mvpDuration: 120 });
   env.sandbox.triggerBattleMvp({ i: 'lang' });
-  env.sandbox.triggerGiftFireworks({ i: 'gammal' });
+  env.sandbox.triggerFanLevelUp({ i: 'gammal' });
   env.klocka.fram(300000);
 
   assert.ok(!env.spelade.some(s => s.event.i === 'gammal'),
@@ -167,7 +151,7 @@ test('en alert som vantat for lange spelas inte, den kastas', () => {
 test('en alert som vantat kort spelas fortfarande', () => {
   const env = makeEnv();
   env.sandbox.triggerNewFollower({ i: 'forst' });
-  env.sandbox.triggerGiftFireworks({ i: 'strax-efter' });
+  env.sandbox.triggerFanLevelUp({ i: 'strax-efter' });
   env.klocka.fram(60000);
 
   assert.ok(env.spelade.some(s => s.event.i === 'strax-efter'),
@@ -178,7 +162,7 @@ test('en alert som vantat kort spelas fortfarande', () => {
 test('kon rivs nar sessionen tar slut', () => {
   const env = makeEnv();
   env.sandbox.triggerNewFollower({ i: 'upptar-sloten' });
-  env.sandbox.triggerGiftFireworks({ i: 'fran-forra-sessionen' });
+  env.sandbox.triggerFanLevelUp({ i: 'fran-forra-sessionen' });
   env.klocka.fram(100);
   assert.equal(env.spelade.length, 1);
 
@@ -205,24 +189,14 @@ test('runtime-controls registrerar en teardown, som ovriga sessionsbundna module
 // hamnar det i kon och far vanta pa sin slot. Den DOM-nara halvan — att klicket verkligen anropar
 // triggern och inte ror `.play` — provas i tests/gift-fireworks-panel.test.js, dar riggen har en
 // riktig widget och en riktig panel.
-test('ett testfyrverkeri vantar ut en pagaende Fan Level Up', () => {
+test('fireworks can play alongside the separate serial alert queue', () => {
   const env = makeEnv();
-  env.sandbox.state.widgets = [{ type: 'templateFanLevel', fanDuration: 6 },
-                               { type: 'templateGiftFireworks', fwDuration: 5 }];
   env.sandbox.triggerFanLevelUp({ i: 'fan' });
-  env.klocka.fram(50);
-  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan'], 'fan-alerten tog inte sloten');
-
-  // Knappen trycks mitt under alerten.
   env.sandbox.triggerGiftFireworks({ i: 'testknapp', __test: true });
-  env.klocka.fram(50);
-  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan'],
-    'fyrverkeriet spelade mitt i fan-alerten — testknappen gick forbi kon');
-
-  // Fan Level Ups slot ar 6 s (fanDuration). Nar den slapper ska fyrverkeriet fa sin tur.
+  env.sandbox.triggerNewFollower({ i: 'follower' });
+  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan', 'testknapp']);
   env.klocka.fram(6000);
-  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan', 'testknapp'],
-    'fyrverkeriet fick aldrig sin tur efter att fan-alerten slappt sloten');
+  assert.deepEqual(env.spelade.map(s => s.event.i), ['fan', 'testknapp', 'follower']);
 });
 
 test('testknappen applicerar inte .play direkt langre', () => {
@@ -255,4 +229,13 @@ test('testknappen applicerar inte .play direkt langre', () => {
     'klicklyssnaren skriver till den sparade layouten — combon ska sparas av faltet, inte av klicket');
   assert.doesNotMatch(FW, /#testFw'\)[^\n]*onclick\s*=/,
     'nagon satter onclick pa #testFw igen — capture-lyssnaren ager knappen, tva hanterare blir tva vagar');
+});
+
+test('fireworks event bypasses the shared serial queue', () => {
+  const env = makeEnv(), event = { combo: 100 };
+  env.sandbox.triggerGiftFireworks(event);
+  env.sandbox.triggerNewFollower({ name: 'next' });
+  assert.equal(env.spelade.length, 2);
+  assert.equal(env.spelade[0].event, event);
+  assert.equal(env.spelade[0].vid, env.spelade[1].vid);
 });

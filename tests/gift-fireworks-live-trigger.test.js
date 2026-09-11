@@ -34,7 +34,7 @@ const { createDom, closeAll } = require('./helpers/dom-harness.js');
 const ROOT = path.join(__dirname, '..');
 const las = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-test.after(closeAll);
+test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
 const fw = (id = 'fw1', over = {}) => Object.assign({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360, title: 'Gift Fireworks',
@@ -150,11 +150,11 @@ test('filen duplicerar inte triggerns filter', () => {
 
 // ---- 3. kon ------------------------------------------------------------------------------------
 
-test('flera gavor koas och spelas efter varandra', () => {
+test('three senders start together and the fourth waits', () => {
   const { gava, traffar, h } = boot();
   for (let i = 0; i < 4; i++) gava();
-  assert.equal(traffar().length, 1, 'alla spelades samtidigt');
-  assert.equal(h.window.VyraGiftFireworks.koLangd(), 3);
+  assert.equal(traffar().length, 3, 'three independent senders should start');
+  assert.equal(h.window.VyraGiftFireworks.koLangd(), 1);
 });
 
 test('kon toms i ankomstordning', () => {
@@ -168,7 +168,7 @@ test('kon toms i ankomstordning', () => {
 test('en skur pa tjugo tappar ingenting', () => {
   const { gava, h } = boot();
   for (let i = 0; i < 20; i++) gava();
-  assert.equal(h.window.VyraGiftFireworks.koLangd(), 19);
+  assert.equal(h.window.VyraGiftFireworks.koLangd(), 17);
   assert.equal(h.window.VyraGiftFireworks.kastade(), 0);
 });
 
@@ -249,4 +249,9 @@ test('en avslutad session tommer kon', () => {
   h.window.dispatchEvent(new h.window.Event('vyra-session-ended'));
   assert.equal(h.window.VyraGiftFireworks.koLangd(), 0);
   assert.equal(h.window.VyraGiftFireworks.spelar(), false);
+});
+
+test('livekön väntar hela showen plus marginal',()=>{
+  const {h,gava}=boot();const waits=[];h.window.setTimeout=(fn,ms)=>{waits.push(ms);return waits.length};
+  gava({count:100});assert.ok(waits.some(ms=>ms>9100&&ms<=9200));assert.ok(waits.includes(9400));
 });

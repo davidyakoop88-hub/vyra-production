@@ -13,10 +13,10 @@
 
 /* Raketerna bar gavan, och alla landar pa samma punkt vid samma small. */
 .fw-rocket{position:absolute;left:50%;top:46%;width:4px;height:68px;opacity:0;transform-origin:50% 0}
-.gift-fireworks-fx.play .fw-rocket{animation:fw-launch calc(var(--fw-flight) - var(--delay,0s)) cubic-bezier(.3,0,.7,1) var(--delay,0s) both}
+.gift-fireworks-fx.play .fw-rocket{animation:fw-launch calc(var(--rocket-flight,var(--fw-flight)) - var(--rocket-stagger,0s)) cubic-bezier(.3,0,.7,1) var(--delay,0s) both}
 .fw-rocket::before{content:'';position:absolute;inset:0;background:linear-gradient(#fff,var(--fw-secondary) 30%,transparent);border-radius:50%;filter:drop-shadow(0 0 7px var(--fw-primary))}
 .gift-fireworks-fx .fw-rocket>.fw-rocket-gift{position:absolute;left:50%;top:0;width:clamp(34px,calc(var(--gift)*.55),80px);height:clamp(34px,calc(var(--gift)*.55),80px);translate:-50% -70%;scale:var(--gift-scale,1);object-fit:contain;filter:drop-shadow(0 0 7px var(--fw-secondary));opacity:1;animation:none!important}
-@keyframes fw-launch{0%{transform:translate(var(--launch-x,0px),165px) scale(.5);opacity:0}15%{opacity:1}85%{opacity:1}99%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(0,0) scale(1);opacity:0}}
+@keyframes fw-launch{0%{transform:translate(var(--launch-x,0px),165px) scale(.5);opacity:0}15%{opacity:1}85%{opacity:1}99%{transform:translate(var(--target-x,0px),var(--target-y,0px)) scale(1);opacity:1}100%{transform:translate(var(--target-x,0px),var(--target-y,0px)) scale(1);opacity:0}}
 
 /* En enda begransad blixt och en tryckvag, aldrig en helskarmsblinkning. */
 .fw-flash,.fw-ring{position:absolute;left:50%;top:46%;translate:-50% -50%;pointer-events:none;opacity:0}
@@ -24,8 +24,8 @@
 .fw-ring{width:90px;height:90px;border:1px solid var(--fw-secondary);border-radius:50%;box-shadow:0 0 18px var(--fw-primary),inset 0 0 14px var(--fw-primary)}
 .gift-fireworks-fx.play .fw-flash{animation:fw-impact var(--fw-reveal) linear var(--fw-flight) both}
 .gift-fireworks-fx.play .fw-ring{animation:fw-shock var(--fw-reveal) cubic-bezier(.1,.7,.3,1) var(--fw-flight) both}
-@keyframes fw-impact{0%{scale:.25;opacity:.95}4%{scale:1.1;opacity:.8}12%,100%{scale:1.7;opacity:0}}
-@keyframes fw-shock{0%{scale:.15;opacity:1}18%{scale:calc(3.2*var(--blast));opacity:.55}36%,100%{scale:calc(4*var(--blast));opacity:0}}
+@keyframes fw-impact{0%{scale:.25;opacity:0}1%{scale:.4;opacity:.95}4%{scale:1.1;opacity:.8}12%,100%{scale:1.7;opacity:0}}
+@keyframes fw-shock{0%{scale:.15;opacity:0}1%{scale:.3;opacity:1}18%{scale:calc(3.2*var(--blast));opacity:.55}36%,100%{scale:calc(4*var(--blast));opacity:0}}
 
 /* Befintlig tathetsbudget (18-50 partiklar), inga objekt skapas per bildruta. */
 .fw-burst{position:absolute;left:50%;top:46%}
@@ -35,19 +35,22 @@
 .fw-motion-spiral.play .fw-burst i{animation-name:fw-explode-spiral}
 .fw-motion-bloom.play .fw-burst i{animation-name:fw-explode-bloom}
 @keyframes fw-explode{
-  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:1}
+  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:0}
+  1%{opacity:1}
   12%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius));rotate:calc(var(--a) + 90deg);scale:1;opacity:1}
   35%{translate:calc(cos(var(--a))*var(--radius)*1.08) calc(sin(var(--a))*var(--radius)*1.08 + 25px);scale:.6;opacity:.7}
   62%,100%{translate:calc(cos(var(--a))*var(--radius)*(1 - var(--return-strength)*.3)) calc(sin(var(--a))*var(--radius)*.9 + 55px);scale:0;opacity:0}
 }
 @keyframes fw-explode-spiral{
-  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:1}
+  0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:0}
+  1%{opacity:1}
   12%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius));scale:1;opacity:1}
   35%{translate:calc(cos(var(--a) + 65deg)*var(--radius)*.85) calc(sin(var(--a) + 65deg)*var(--radius)*.85);rotate:250deg;scale:.7;opacity:.7}
   62%,100%{translate:calc(cos(var(--a) + 120deg)*22px) calc(sin(var(--a) + 120deg)*22px);rotate:400deg;scale:0;opacity:0}
 }
 @keyframes fw-explode-bloom{
-  0%{translate:0 0;rotate:0deg;scale:.2;opacity:1}
+  0%{translate:0 0;rotate:0deg;scale:.2;opacity:0}
+  1%{opacity:1}
   12%{translate:calc(cos(var(--a))*var(--radius)*.8) calc(sin(var(--a))*var(--radius)*.8);rotate:90deg;scale:1.4;opacity:1}
   35%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius) + 10px);rotate:180deg;scale:.8;opacity:.65}
   62%,100%{translate:calc(cos(var(--a))*32px) calc(sin(var(--a))*32px);rotate:270deg;scale:0;opacity:0}
@@ -61,7 +64,7 @@
 .gift-fireworks-fx .fw-sender-initial{display:grid;place-items:center;width:100%;height:100%;font:700 calc(var(--gift)*.4)/1 sans-serif;color:#fff}
 .gift-fireworks-fx.play>.fw-central-gift{animation:fw-gift-to-sender var(--fw-reveal) linear var(--fw-flight) both}
 .gift-fireworks-fx.play>.fw-sender{animation:fw-sender-reveal var(--fw-reveal) linear var(--fw-flight) both}
-@keyframes fw-gift-to-sender{0%{transform:perspective(600px) rotateY(0) scale(.7);opacity:1}9%{transform:perspective(600px) rotateY(0) scale(1.16);opacity:1}18%,23%{transform:perspective(600px) rotateY(0) scale(1);opacity:1}31%,100%{transform:perspective(600px) rotateY(90deg) scale(1);opacity:0}}
+@keyframes fw-gift-to-sender{0%{transform:perspective(600px) rotateY(0) scale(.7);opacity:0}1%{opacity:1}9%{transform:perspective(600px) rotateY(0) scale(1.16);opacity:1}18%,23%{transform:perspective(600px) rotateY(0) scale(1);opacity:1}31%,100%{transform:perspective(600px) rotateY(90deg) scale(1);opacity:0}}
 @keyframes fw-sender-reveal{0%,31%{transform:perspective(600px) rotateY(-90deg) scale(1);opacity:0}41%{transform:perspective(600px) rotateY(0) scale(1.08);opacity:1}48%,100%{transform:perspective(600px) rotateY(0) scale(1);opacity:1}}
 .gift-fireworks-fx>.fw-sender-caption{position:absolute;left:50%;top:calc(46% + var(--gift)/2 + 16px);translate:-50% 0;width:calc(100% - 24px);text-align:center;opacity:0;text-shadow:0 2px 10px #000,0 0 18px #000}
 .gift-fireworks-fx .fw-sender-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;color:#fff;font:800 22px/1.2 sans-serif;letter-spacing:.2px}
@@ -76,7 +79,7 @@
  .gift-fireworks-fx.play>.fw-sender-caption,.gift-fireworks-fx.play>.fw-text{transform:none!important}
  .gift-fireworks-fx.fw-intro-pop.play{animation-name:fw-in,fw-out}
 }
-@keyframes fw-gift-reduced{0%,23%{opacity:1}31%,100%{opacity:0}}
+@keyframes fw-gift-reduced{0%{opacity:0}1%,23%{opacity:1}31%,100%{opacity:0}}
 @keyframes fw-sender-reduced{0%,31%{opacity:0}41%,100%{opacity:1}}
 .fw-combo-control{display:flex!important;align-items:center;justify-content:space-between;gap:8px}.properties .fw-combo-control input{width:64px!important}
 
@@ -117,3 +120,82 @@
 .properties:has(#fwMin) label:has(>input[type="checkbox"]){justify-content:flex-start;font-size:11px}
 .properties:has(#fwMin) .fw-combo-control input{flex:0 0 64px;width:64px!important}
 .properties:has(#fwMin) .fw-preview>small{display:block}
+
+/* Sma separata burster bygger upp till den stora finalen. */
+.fw-wave{position:absolute;left:50%;top:46%;translate:var(--wave-x) var(--wave-y);width:0;height:0;pointer-events:none}
+.fw-wave>.fw-burst,.fw-wave>.fw-ring{left:0;top:0}
+.fw-wave>.fw-ring{width:50px;height:50px;border-color:var(--fw-primary);box-shadow:0 0 12px var(--fw-secondary)}
+.gift-fireworks-fx>.fw-combo-badge{position:absolute;left:50%;top:calc(46% - var(--gift)/2 - 48px);translate:-50% 0;white-space:nowrap;color:var(--fw-secondary);font:900 23px/1.2 sans-serif;letter-spacing:2px;text-shadow:0 0 18px var(--fw-primary),0 2px 10px #000;opacity:0}
+.gift-fireworks-fx>.fw-combo-badge[hidden]{display:none!important}
+.gift-fireworks-fx.play>.fw-combo-badge{animation:fw-sender-caption var(--fw-reveal) ease var(--fw-flight) both}
+.gift-fireworks-fx[data-fw-level="show"]>.fw-combo-badge{font-size:30px;color:#ffe7a5;letter-spacing:3px}
+.gift-fireworks-fx[data-fw-level="show"]>.fw-sender{border-color:#ffe7a5;box-shadow:0 0 12px #ffe7a5,0 0 40px var(--fw-primary)}
+.gift-fireworks-fx[data-fw-level="show"] .fw-sender-name{font-size:26px}
+/* Guldregnet kommer sist. 48 gnistor, aldrig en emitter eller ny ticker per gava. */
+.fw-gold-rain{position:absolute;left:50%;top:46%;pointer-events:none}
+.fw-gold-rain i{position:absolute;width:3px;height:13px;border-radius:50%;background:linear-gradient(#fff8d6,#ffcb57,transparent);box-shadow:0 0 6px #ffe5a1;opacity:0;rotate:calc(var(--a) + 90deg)}
+.gift-fireworks-fx.play .fw-gold-rain i{animation:fw-gold-willow 3s cubic-bezier(.14,.5,.3,1) var(--rain-delay) both}
+@keyframes fw-gold-willow{
+  0%{translate:0 0;scale:.1;opacity:0}2%{opacity:1}
+  18%{translate:calc(cos(var(--a))*var(--rain-d)*1.3) calc(sin(var(--a))*var(--rain-d)*1.3);scale:1;opacity:1}
+  40%{translate:calc(cos(var(--a))*var(--rain-d)*1.4) calc(sin(var(--a))*var(--rain-d)*1.1 + 25px);scale:.8;opacity:.9}
+  75%{translate:calc(cos(var(--a))*var(--rain-d)*1.45) calc(sin(var(--a))*var(--rain-d)*.8 + 90px);scale:.6;opacity:.65}
+  100%{translate:calc(cos(var(--a))*var(--rain-d)*1.5) calc(sin(var(--a))*var(--rain-d)*.6 + 160px);scale:.1;opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.gift-fireworks-fx.play .fw-wave,.gift-fireworks-fx.play .fw-gold-rain{display:none}.gift-fireworks-fx.play>.fw-combo-badge{transform:none!important}}
+
+/* Personal rockets: one bounded CSS timeline per sender, never a second ticker. */
+.gift-fireworks-fx.play{animation:none;opacity:1}
+.fw-event{position:absolute;inset:0;translate:var(--lane-x,0px) 0;animation:fw-in var(--fw-in) ease both,fw-out var(--fw-out) ease calc(var(--duration) - var(--fw-out)) forwards}
+.gift-fireworks-fx.play .fw-personal-rocket{width:0;height:0;opacity:1;animation:none;transform:none;left:50%;top:46%}
+.fw-personal-rocket::before{display:none}
+.fw-personal-rocket .fw-carrier{position:absolute;width:var(--gift);height:var(--gift);margin:calc(var(--gift)/-2);opacity:0}
+.gift-fireworks-fx.play .fw-carrier{animation:fw-personal-launch var(--rocket-flight) cubic-bezier(.15,.45,.32,1) var(--delay) both}
+.fw-carrier::after{content:'';position:absolute;left:44%;top:70%;width:12%;height:100px;z-index:-1;background:linear-gradient(var(--fw-secondary),var(--fw-primary),transparent);filter:drop-shadow(0 0 6px var(--fw-primary));transform-origin:top;animation:fw-tail-out .25s linear var(--arrival) both}
+@keyframes fw-tail-out{0%{opacity:1}100%{opacity:0}}
+@keyframes fw-personal-launch{0%{transform:translate(var(--launch-x),180px) scale(.6);opacity:0}12%{opacity:1}100%{transform:translate(var(--target-x),var(--target-y));opacity:1}}
+.fw-personal-rocket .fw-rocket-gift,.fw-personal-rocket .fw-rocket-profile{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;transform-origin:center;border:2px solid var(--fw-secondary);border-radius:50%;box-shadow:0 0 14px var(--fw-primary);background:radial-gradient(circle at 30% 20%,#45243f,#1e1129 80%);overflow:hidden}
+.fw-personal-rocket .fw-rocket-gift{object-fit:contain;padding:5px;animation:fw-personal-gift .65s linear var(--arrival) both}
+.fw-personal-rocket .fw-rocket-profile{animation:fw-personal-profile .65s linear var(--arrival) both,fw-personal-expire .4s ease calc(var(--arrival) + var(--hold)) forwards}
+@keyframes fw-personal-expire{from{opacity:1}to{opacity:0}}
+.fw-personal-rocket .fw-rocket-avatar{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:none;animation:none;opacity:1}
+.fw-personal-rocket [hidden]{display:none!important}
+.fw-rocket-fallback{display:block;position:absolute;inset:0}
+.fw-rocket-fallback::before{content:'';position:absolute;left:35%;top:16%;width:30%;height:30%;border-radius:50%;background:var(--fw-secondary)}
+.fw-rocket-fallback::after{content:'';position:absolute;left:17%;bottom:-8%;width:66%;height:54%;border-radius:50% 50% 0 0;background:var(--fw-secondary)}
+@keyframes fw-personal-gift{0%,10%{transform:perspective(600px) rotateY(0);opacity:1}50%,100%{transform:perspective(600px) rotateY(90deg);opacity:0}}
+@keyframes fw-personal-profile{0%,50%{transform:perspective(600px) rotateY(-90deg);opacity:0}100%{transform:perspective(600px) rotateY(0);opacity:1}}
+.fw-personal-rocket>.fw-burst,.fw-personal-rocket>.fw-ring,.fw-personal-rocket>.fw-flash{left:var(--target-x);top:var(--target-y)}
+.fw-personal-rocket>.fw-burst{translate:0 0}
+.fw-personal-rocket .fw-burst i{width:2px;height:30px;--radius:calc(var(--d)*var(--blast));box-shadow:0 0 7px var(--c)}
+.fw-event[data-fw-theme="royal"] .fw-burst i{animation-name:fw-personal-willow}
+.fw-event[data-fw-theme="ice"] .fw-carrier{animation-name:fw-personal-cross}
+.fw-event[data-fw-theme="ice"] .fw-burst i{animation-name:fw-explode-bloom}
+.fw-event[data-fw-theme="rose"] .fw-carrier{animation-name:fw-personal-fan}
+.fw-event[data-fw-theme="rose"] .fw-burst i{animation-name:fw-personal-fan-burst}
+.fw-event[data-fw-theme="comet"] .fw-carrier{animation-name:fw-personal-orbit}
+.fw-event[data-fw-theme="comet"] .fw-burst i{animation-name:fw-explode-spiral}
+.fw-event[data-fw-theme="comet"] .fw-carrier::before{content:'';position:absolute;inset:-20px;border:2px solid transparent;border-top-color:var(--fw-primary);border-bottom-color:var(--fw-secondary);border-radius:50%;filter:drop-shadow(0 0 6px var(--fw-primary));animation:fw-personal-orbit-ring var(--rocket-flight) linear var(--delay) both}
+@keyframes fw-personal-orbit-ring{0%{transform:rotate(0deg) scale(.5);opacity:0}20%{opacity:1}90%{opacity:1}100%{transform:rotate(540deg) scale(1.8);opacity:0}}
+@keyframes fw-personal-cross{0%{transform:translate(calc(var(--launch-x)*-1),180px) scale(.6);opacity:0}12%{opacity:1}55%{transform:translate(calc(var(--target-x)*.3),30px) rotate(-15deg)}100%{transform:translate(var(--target-x),var(--target-y));opacity:1}}
+@keyframes fw-personal-fan{0%{transform:translate(0,180px) scale(.6);opacity:0}12%{opacity:1}50%{transform:translate(calc(var(--target-x)*1.3),60px) rotate(12deg)}100%{transform:translate(var(--target-x),var(--target-y));opacity:1}}
+@keyframes fw-personal-orbit{0%{transform:translate(var(--launch-x),180px) scale(.6);opacity:0}12%{opacity:1}35%{transform:translate(calc(var(--target-x) + 35px),90px) rotate(-15deg)}65%{transform:translate(calc(var(--target-x) - 30px),20px) rotate(15deg)}100%{transform:translate(var(--target-x),var(--target-y));opacity:1}}
+@keyframes fw-personal-willow{0%{translate:0 0;rotate:calc(var(--a) + 90deg);scale:.2;opacity:0}1%{opacity:1}20%{translate:calc(cos(var(--a))*var(--radius)) calc(sin(var(--a))*var(--radius));scale:1;opacity:1}55%{translate:calc(cos(var(--a))*var(--radius)*1.1) calc(sin(var(--a))*var(--radius)*.8 + 50px);scale:.7;opacity:.8}100%{translate:calc(cos(var(--a))*var(--radius)*1.15) calc(sin(var(--a))*var(--radius)*.65 + 150px);scale:.1;opacity:0}}
+@keyframes fw-personal-fan-burst{0%{translate:0 0;rotate:var(--a);scale:.2;opacity:0}1%{opacity:1}20%{translate:calc(cos(var(--a))*var(--radius)*1.3) calc(sin(var(--a))*var(--radius)*.6 - 25px);scale:1.2;opacity:1}100%{translate:calc(cos(var(--a))*var(--radius)*1.4) calc(sin(var(--a))*var(--radius)*.4 + 120px);scale:0;opacity:0}}
+@media(prefers-reduced-motion:reduce){
+ .gift-fireworks-fx.play .fw-personal-rocket{display:block}
+ .gift-fireworks-fx.play .fw-carrier{animation:fw-personal-still var(--rocket-flight) linear var(--delay) both}
+ .fw-carrier::before,.fw-carrier::after{display:none!important}
+ .fw-personal-rocket .fw-rocket-gift{animation-name:fw-personal-gift-still}
+ .fw-personal-rocket .fw-rocket-profile{animation-name:fw-personal-profile-still,fw-personal-expire}
+}
+@keyframes fw-personal-still{0%{transform:translate(var(--target-x),var(--target-y));opacity:0}100%{transform:translate(var(--target-x),var(--target-y));opacity:1}}
+@keyframes fw-personal-gift-still{0%,30%{opacity:1}50%,100%{opacity:0}}
+@keyframes fw-personal-profile-still{0%,50%{opacity:0}100%{opacity:1}}
+/* Concurrent shows keep every sender while reducing expensive glow layers. */
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-burst i{box-shadow:none;width:2px;height:19px}
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-carrier::before,
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-carrier::after{filter:none}
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-ring{display:none}
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-rocket-gift,
+.gift-fireworks-fx[data-fw-quality="busy"] .fw-rocket-profile{box-shadow:none}
