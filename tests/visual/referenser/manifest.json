@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 179,
+ "antal": 180,
  "senaste": {
-  "motiv": "Lägg till godkänd grön Guardian-ram med transparent avatarhål",
+  "motiv": "Lägg till godkända originalet Blå kristall efter kontroll av profilbild och liveentré",
   "nycklar": 1,
-  "tid": "2026-09-11T14:08:05.952Z"
+  "tid": "2026-09-11T14:48:56.124Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -727,6 +727,10 @@
   "catalog:guardianemblem:model:emerald": {
    "matt": "400x570",
    "fyllnad": 59.83
+  },
+  "catalog:guardianemblem:model:sapphire": {
+   "matt": "400x570",
+   "fyllnad": 60.44
   }
  }
 }
