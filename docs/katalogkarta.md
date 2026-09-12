@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `34a2830`
+Commit: `c46e14f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -73,7 +73,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Isblå & silver | `catalog:giftfireworks:ice` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Roséguld | `catalog:giftfireworks:rose` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Kometspiral | `catalog:giftfireworks:comet` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-09-12 | — |
+| Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 
 ### EGET INNEHÅLL
 
@@ -464,5 +464,3 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
-
-> Validering: katalogens nycklar, antal och miniatyrer uppmätta i Chrome. Tidigare historikkolumner bevarade. Supernovas faktiska canvas kontrollerad för ritade pixlar. Ingen bred historikskanning gjordes.
