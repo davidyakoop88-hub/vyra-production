@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `c46e14f`
+Commit: `be534d4`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -464,3 +464,5 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
+
+> Validering: katalogens nycklar, antal och miniatyrer uppmätta i Chrome. Tidigare historikkolumner bevarade. Alla fyra klassiska fyrverkeriers canvas kontrollerade för ritade pixlar. Ingen bred historikskanning gjordes.

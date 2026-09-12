@@ -3,8 +3,8 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {createDom,closeAll}=require('./helpers/dom-harness.js');
 const factory=require('../widget-factory.js');
 test.after(closeAll);
-function setup(){
- const w=factory.create('catalog:giftfireworks:supernova');w.id='nova';
+function setup(theme='supernova',overrides={}){
+ const w=factory.create('catalog:giftfireworks:'+theme);Object.assign(w,overrides);w.id='nova';
  const h=createDom({state:{widgets:[w],projectName:'nova'}});
  h.load('overlay-sanitize.js');h.load('gift-fireworks.js');h.load('gift-supernova-panel.js');
  h.window.eval("view='editor';selected='nova';render();bind()");
@@ -17,7 +17,7 @@ test('Supernova factory and standalone use approved defaults without changing ol
   const w=factory.create('catalog:giftfireworks:supernova',placement==='standalone'?{placement}:{});
   assert.equal(w.fwTheme,'supernova');assert.equal(w.fwNovaStyle,'classic');assert.equal(w.fwColor,'#ffd06b');assert.equal(w.fwColor2,'#a764ff');assert.equal(w.width,540);
  }
- for(const key of ['royal','ice','rose','comet']){const w=factory.create('catalog:giftfireworks:'+key);assert.equal(w.width,360);assert.equal(w.fwNovaStyle,undefined);}
+ for(const key of ['royal','ice','rose','comet']){const w=factory.create('catalog:giftfireworks:'+key);assert.equal(w.width,540);assert.equal(w.fwNovaStyle,undefined);}
 });
 test('Supernova panel exposes three styles and only supported animation controls',()=>{
  const h=setup();assert.equal(h.document.querySelectorAll('#fwNovaStyle option').length,3);assert.equal(h.document.querySelectorAll('#fwNovaPalette option').length,5);
@@ -33,5 +33,30 @@ test('style, palettes, custom colors, and reset update the real selected widget'
 });
 test('test count and volume are clamped and legacy panel stays available',()=>{
  const h=setup();change(h,'fwCombo','1000');assert.equal(state(h).fwCombo,100);change(h,'fwVolume','20');assert.equal(state(h).fwVolume,20);
- h.window.eval("state.widgets[0].fwTheme='royal';render();bind()");assert.ok(h.document.getElementById('fwDuration'));assert.equal(h.document.getElementById('fwNovaStyle'),null);
+ h.window.eval("delete state.widgets[0].fwTheme;state.widgets[0].fwMotion='magnetic';render();bind()");assert.ok(h.document.getElementById('fwDuration'));assert.equal(h.document.getElementById('fwNovaStyle'),null);
+});
+
+test('explicit classic themes expose their own motions and preserve saved placement and colors',()=>{
+ const h=setup('ice',{x:321,y:456,width:377,fwColor:'#112233',fwColor2:'#445566'});
+ assert.equal(state(h).width,377);assert.equal(state(h).x,321);assert.equal(state(h).y,456);
+ assert.equal(state(h).fwColor,'#112233');assert.equal(state(h).fwColor2,'#445566');
+ assert.equal(h.document.getElementById('fwNovaPalette').value,'custom');
+ assert.equal(h.document.getElementById('fwNovaStyle'),null);
+ for(const key of ['royal','ice','rose','comet']){
+  change(h,'fwCanvasTheme',key);assert.equal(state(h).fwTheme,key);
+  for(const id of ['fwDuration','fwSpeed','fwDensity','fwExplosion','fwReturn'])assert.equal(h.document.getElementById(id),null);
+  change(h,'fwColor','#123456');h.document.getElementById('fwNovaReset').click();
+  const original=factory.create('catalog:giftfireworks:'+key);
+  assert.equal(state(h).fwColor,original.fwColor);assert.equal(state(h).fwColor2,original.fwColor2);
+  assert.equal(state(h).width,377);assert.equal(state(h).x,321);assert.equal(state(h).y,456);
+ }
+ change(h,'fwCanvasTheme','supernova');assert.ok(h.document.getElementById('fwNovaStyle'));
+});
+
+test('saved Brand Kit inheritance remains until an explicit palette or reset choice',()=>{
+ const h=setup('rose',{inheritBrandKit:true});
+ assert.equal(state(h).inheritBrandKit,true);assert.equal(h.document.getElementById('fwColor').disabled,true);
+ change(h,'fwNovaPalette','ice');assert.equal(state(h).inheritBrandKit,false);assert.equal(state(h).fwColor,'#dcecff');assert.equal(h.document.getElementById('fwColor').disabled,false);
+ h.window.eval("state.widgets[0].inheritBrandKit=true;render();bind()");
+ h.document.getElementById('fwNovaReset').click();assert.equal(state(h).inheritBrandKit,false);assert.equal(state(h).fwColor,'#edb98b');
 });

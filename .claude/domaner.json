@@ -400,7 +400,8 @@
         "gift-fireworks-session.js",
         "validate_fx_theme.py",
         "battle-mvp-celebrations.css",
-        "gift-supernova-engine.js"
+        "gift-supernova-engine.js",
+        "gift-classics-engine.js"
       ],
       "tester": [
         "tests/gift-fireworks-trigger.test.js",
@@ -412,7 +413,8 @@
         "tests/gift-fireworks-concurrency.test.js",
         "tests/browser/fireworks-flip.browser.test.js",
         "tests/vfx-shared-ticker.test.js",
-        "tests/gift-supernova-engine.test.js"
+        "tests/gift-supernova-engine.test.js",
+        "tests/gift-classics-engine.test.js"
       ],
       "matning": [
         {
