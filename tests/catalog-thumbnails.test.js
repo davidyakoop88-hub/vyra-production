@@ -27,7 +27,7 @@ const ROOT = path.join(__dirname, '..');
 
 test.after(closeAll);
 
-function katalogMedMiniatyrer() {
+function katalogMedMiniatyrer({ classics = false } = {}) {
   const h = createDom({ url: 'https://vyralive.app/studio.html', state: { widgets: [], projectName: 'thumb' } });
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
 
@@ -40,6 +40,21 @@ function katalogMedMiniatyrer() {
   h.load('overlay-sanitize.js');
   h.load('custom-widgets.js');
   h.load('last-x-alerts.js');
+  if (classics) {
+    // jsdom has no canvas rasterizer. Record actual production drawing commands;
+    // native visual parity is tested separately, never inferred from DOM existence.
+    h.window.HTMLCanvasElement.prototype.getContext = function () {
+      if (this.__paint) return this.__paint;
+      const counts = this.__draws = { stroke: 0, fill: 0 };
+      return this.__paint = new Proxy({}, { get(target, key) {
+        if (key in target) return target[key];
+        if (key === 'createRadialGradient') return () => ({ addColorStop() {} });
+        return (...args) => { if (key in counts) counts[key]++; };
+      }, set(target, key, value) { target[key] = value; return true; } });
+    };
+    h.load('gift-classics-engine.js');
+    h.load('gift-supernova-engine.js');
+  }
   h.load('gift-fireworks.js');
   h.load('premium-final.js');
   h.load('overlay-preview.js');
@@ -102,17 +117,21 @@ test('att rita miniatyrerna ror inte anvandarens layout', () => {
     'katalogen la widgets i layouten nar miniatyrerna ritades');
 });
 
-test('fyrverkerikorten har riktiga raketer och explosioner utan live-timers', () => {
-  const h = katalogMedMiniatyrer();
+test('fyrverkerikorten ritar den frysta canvasfinalen utan live-timers', () => {
+  const h = katalogMedMiniatyrer({ classics: true });
   for (const theme of ['royal','ice','rose','comet']) {
     const button=h.document.querySelector(`[data-catalog-key="catalog:giftfireworks:${theme}"]`);
     const thumb=button.querySelector('.owg-thumb');
     const root=thumb.shadowRoot||thumb;
-    assert.equal(root.querySelectorAll('.fw-personal-rocket').length,3,theme+' saknar raketer');
-    assert.ok(root.querySelectorAll('.fw-burst i').length>=36,theme+' saknar explosion');
-    assert.equal(root.querySelector('.gift-fireworks-fx').dataset.fwTheme,theme);
+    const canvas = root.querySelector('.gift-fireworks-fx canvas');
+    assert.ok(canvas,theme+' saknar fryst canvas');
+    assert.equal(canvas.width,960);assert.equal(canvas.height,800);
+    assert.ok(canvas.__draws.stroke>36,theme+' ritar inte fyrverkeriets partikelspår');
+    assert.ok(canvas.__draws.fill>0,theme+' ritar inte ljuspunkter/profil');
+    assert.equal(root.querySelector('.gift-fireworks-fx').dataset.fwPreview,'1');
   }
   assert.equal(h.window.VyraFireworks.timers(),0);
   assert.equal(h.window.VyraFireworks.pending(),0);
+  assert.equal(h.window.VyraSupernova.active(),0);
   assert.equal(h.window.eval('state.widgets.length'),0);
 });
