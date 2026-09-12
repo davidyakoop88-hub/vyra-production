@@ -11,6 +11,7 @@ async function fixture(){
  await page.setContent('<style>body{background:#101018}.canvas{position:absolute;left:250px;top:250px;width:360px}.resize-handle{display:none}'+fs.readFileSync(path.join(ROOT,'gift-fireworks.css'),'utf8')+'</style><div class="canvas"></div>');
  await page.addScriptTag({content:`var state={widgets:[]},selected=null,view='overlay';function wh(){return ''}function props(){return ''}function bind(){}function save(){}function render(){}function liveWidget(){return null}function bk(w,v,k,f){return v||f}function campaignGiftList(){return []}`});
  await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'overlay-sanitize.js'),'utf8')});
+ await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'widget-factory.js'),'utf8')});
  await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'gift-fireworks.js'),'utf8')});
  await page.addScriptTag({content:`
  window.startFireworks=(theme,duration,combo)=>{

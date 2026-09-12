@@ -64,6 +64,12 @@
       video: 'templateCustomVideo' },
     'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
       bloom: 'Crystal Bloom' },
+    'giftfireworks.theme': {
+      royal: {label:'Lila & guld',primary:'#b46cff',secondary:'#ffd36b',motion:'magnetic'},
+      ice: {label:'Isblå & silver',primary:'#46cfff',secondary:'#edfaff',motion:'bloom'},
+      rose: {label:'Roséguld',primary:'#ff91b8',secondary:'#ffd5a0',motion:'bloom'},
+      comet: {label:'Kometspiral',primary:'#55efff',secondary:'#ff7d96',motion:'spiral'}
+    },
     'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
       glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
       galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
@@ -188,6 +194,11 @@
       type: 'templateGiftFireworks', x: 80, y: 950, width: 360, title: 'Gift Fireworks',
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
+    }),
+    'giftfireworks.theme': v => ({
+      type: 'templateGiftFireworks', x: 80, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
+      fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
+      fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true
     }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
@@ -447,6 +458,8 @@
     },
     'custom': parts => ['custom.kind', { kind: parts[0], type: pick('custom.kind', parts[0], 'innehållstyp') }],
     'giftfireworks': parts => {
+      if (Object.hasOwn(TABLES['giftfireworks.theme'], parts[0]))
+        return ['giftfireworks.theme', {theme:parts[0], ...pick('giftfireworks.theme', parts[0], 'fyrverkeridesign')}];
       pick('giftfireworks.motion', parts[0], 'fyrverkerirörelse');
       return ['giftfireworks.motion', { motion: parts[0] }];
     },

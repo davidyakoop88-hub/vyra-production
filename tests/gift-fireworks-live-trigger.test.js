@@ -252,6 +252,6 @@ test('en avslutad session tommer kon', () => {
 });
 
 test('livekön väntar hela showen plus marginal',()=>{
-  const {h,gava}=boot();const waits=[];h.window.setTimeout=(fn,ms)=>{waits.push(ms);return waits.length};
-  gava({count:100});assert.ok(waits.some(ms=>ms>9100&&ms<=9200));assert.ok(waits.includes(9400));
+  const {h,gava}=boot();const waits=[];h.window.Date.now=()=>1000;h.window.setTimeout=(fn,ms)=>{waits.push(ms);return waits.length};
+  gava({count:100});assert.ok(waits.includes(9200));assert.ok(waits.includes(9400));
 });

@@ -101,3 +101,18 @@ test('att rita miniatyrerna ror inte anvandarens layout', () => {
   assert.deepEqual({ ...h.window.__l }, { minnet: 0, lagring: 0 },
     'katalogen la widgets i layouten nar miniatyrerna ritades');
 });
+
+test('fyrverkerikorten har riktiga raketer och explosioner utan live-timers', () => {
+  const h = katalogMedMiniatyrer();
+  for (const theme of ['royal','ice','rose','comet']) {
+    const button=h.document.querySelector(`[data-catalog-key="catalog:giftfireworks:${theme}"]`);
+    const thumb=button.querySelector('.owg-thumb');
+    const root=thumb.shadowRoot||thumb;
+    assert.equal(root.querySelectorAll('.fw-personal-rocket').length,3,theme+' saknar raketer');
+    assert.ok(root.querySelectorAll('.fw-burst i').length>=36,theme+' saknar explosion');
+    assert.equal(root.querySelector('.gift-fireworks-fx').dataset.fwTheme,theme);
+  }
+  assert.equal(h.window.VyraFireworks.timers(),0);
+  assert.equal(h.window.VyraFireworks.pending(),0);
+  assert.equal(h.window.eval('state.widgets.length'),0);
+});

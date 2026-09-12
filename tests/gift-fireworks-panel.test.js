@@ -264,3 +264,40 @@ test('alla fyra designerna kan väljas och sparas',()=>{
   assert.equal(d.querySelector('[data-fw-theme-choice="'+theme+'"]').getAttribute('aria-pressed'),'true');
  }
 });
+
+test('catalog exposes four themes and each card creates its matching personal rockets', () => {
+  const { h, run, d } = panel();
+  run(`document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
+  const keys=['royal','ice','rose','comet'];
+  const cards=[...d.querySelectorAll('[data-fw] [data-fw-theme]')];
+  assert.deepEqual(cards.map(b=>b.dataset.fwTheme),keys);
+  assert.equal(d.querySelectorAll('[data-fw] [data-fw-motion]').length,0);
+  for(const key of keys){
+    run(`document.querySelector('[data-fw-theme="${key}"]').click(); window.__createdFw=state.widgets[state.widgets.length-1];`);
+    const w=h.window.__createdFw;
+    assert.equal(w.fwTheme,key);
+    assert.equal(w.type,'templateGiftFireworks');
+    assert.equal(d.querySelector('.gift-fireworks-fx[data-fw-theme="'+key+'"]')!==null,true);
+    assert.ok(d.querySelector('#testFw'),'new card keeps the test control accessible');
+    // Reinstall catalog only if render has replaced the editor shell.
+    run(`if(!document.querySelector('.widget-catalog'))document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
+    assert.equal(d.querySelectorAll('[data-fw] [data-fw-theme]').length,4);
+  }
+});
+
+test('catalog snapshot renders personal rockets without scheduling live work',()=>{
+ const {h}=panel();
+ const before=h.window.VyraFireworks.timers(),pending=h.window.VyraFireworks.pending();
+ const effect=h.document.createElement('div');effect.className='gift-fireworks-fx';
+ for(const theme of ['royal','ice','rose','comet']){
+  h.window.VyraFireworks.renderPreview(effect,{fwTheme:theme,fwDuration:5,fwSpeed:.6});
+  assert.equal(effect.querySelectorAll('.fw-personal-rocket').length,3);
+  assert.equal(effect.querySelectorAll('.fw-burst i').length,36);
+  assert.equal(effect.dataset.fwTheme,theme);
+  assert.equal(effect.classList.contains('play'),false,'catalog snapshots must not become live effects');
+  assert.equal(effect.querySelector('[data-expires]'),null);
+  assert.equal(effect.querySelectorAll('.fw-carrier[style*="opacity: 1"]').length,3);
+ }
+ assert.equal(h.window.VyraFireworks.timers(),before);
+ assert.equal(h.window.VyraFireworks.pending(),pending);
+});

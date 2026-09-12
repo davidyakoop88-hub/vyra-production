@@ -269,6 +269,19 @@ function owgRenderCardThumb(btn) {
   }
   btn.prepend(thumb);
 
+  // Live fireworks deliberately render an empty host until an event arrives. Catalog cards
+  // use the effect's pure, frozen preview builder inside their own root instead of firing an event.
+  if (preview?.type === 'templateGiftFireworks' && window.VyraFireworks?.renderPreview) {
+    const root = owgThumbRot(thumb), inner = root.querySelector('.owg-thumb-inner');
+    // Document selectors cannot cross the shadow boundary. Center this static scene locally.
+    inner.style.position='absolute';inner.style.left='50%';inner.style.top='50%';
+    const widget=inner.firstElementChild;
+    widget.style.setProperty('position','relative','important');
+    widget.style.setProperty('left','0','important');widget.style.setProperty('top','0','important');
+    const fx = root.querySelector('.gift-fireworks-fx');
+    if (fx) window.VyraFireworks.renderPreview(fx, preview);
+  }
+
   // En VIDEO FX-widget ar ett <video> med autoplay, loop, muted och playsinline. Den laddar klart
   // (readyState 4) men Chrome pausar video-only bakgrundsmedia for att spara strom: play() avbryts,
   // currentTime star kvar pa 0, och utan poster malas ingen bildruta alls. Kortet blev tomt.
