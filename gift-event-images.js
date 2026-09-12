@@ -121,11 +121,14 @@
   }
 
   function patchCampaignWidget(widget) {
+    // Aura owns its animated counters. Patching those midway through a reaction would jump.
+    if (window.VyraCampaignAuraSession) window.VyraCampaignAuraSession.sync();
     var slots = typeof window.VyraCampaignItems === 'function'
       ? window.VyraCampaignItems(widget)
       : [];
     if (!slots.length) return;
     nodesFor(widget, '.vyra-campaign').forEach(function (node) {
+      if (node.classList && node.classList.contains('vyra-campaign-aura')) return;
       var articles = node.querySelectorAll('article');
       for (var i = 0; i < articles.length && i < slots.length; i += 1) {
         var slot = slots[i];
@@ -246,9 +249,15 @@
         var incoming = key(giftName);
         for (var index = 0; incoming && index < slots.length; index += 1) {
           if (key(slots[index].name) !== incoming) continue;
+          var amount = Number(detail.count == null ? 1 : detail.count);
+          if (!Number.isFinite(amount) || amount <= 0) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];
           widget['giftCurrent' + index] =
-            Number(widget['giftCurrent' + index] || 0) + Number(detail.count || 1);
+            Number(widget['giftCurrent' + index] || 0) + amount;
+          // Same accepted event and same quantity as the counter; no second listener/dedupe.
+          if (window.VyraCampaignAuraSession) {
+            window.VyraCampaignAuraSession.receive(widget, index, amount, widget['giftCurrent' + index]);
+          }
           schedule(widget);
         }
       }

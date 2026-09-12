@@ -83,6 +83,9 @@
         "gift-alert-frames.css",
         "gift-alert-frames.js",
         "gift-event-images.js",
+        "gift-campaign-aura.js",
+        "gift-campaign-aura.css",
+        "gift-campaign-aura-session.js",
         "gifter-fas.js",
         "gifter-level-session.js",
         "guardian-emblem-fas.js",
@@ -145,6 +148,8 @@
         "tests/gift-image-paths.test.js",
         "tests/gift-images-live-patch.test.js",
         "tests/campaign-gift-picker.test.js",
+        "tests/gift-campaign-aura-widget.test.js",
+        "tests/gift-campaign-aura-live.test.js",
         "tests/campaign-gift-picker-single.test.js",
         "tests/crystal-garden-campaign.test.js",
         "tests/gift-campaign-fountain-motion.test.js",
@@ -401,6 +406,7 @@
         "validate_fx_theme.py",
         "battle-mvp-celebrations.css",
         "gift-supernova-engine.js",
+        "gift-campaign-aura-engine.js",
         "gift-classics-engine.js"
       ],
       "tester": [
@@ -414,6 +420,7 @@
         "tests/browser/fireworks-flip.browser.test.js",
         "tests/vfx-shared-ticker.test.js",
         "tests/gift-supernova-engine.test.js",
+        "tests/gift-campaign-aura-engine.test.js",
         "tests/gift-classics-engine.test.js"
       ],
       "matning": [

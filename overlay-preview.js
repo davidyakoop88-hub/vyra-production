@@ -269,6 +269,13 @@ function owgRenderCardThumb(btn) {
   }
   btn.prepend(thumb);
 
+  // Frozen campaign lighting stays inside the card, including its shadow root.
+  // still() paints once without registering a live widget, ticker or audio session.
+  if (preview?.type === 'templateGiftCampaign' && window.VyraCampaignAuraEngine?.still) {
+    const campaign = owgThumbRot(thumb).querySelector('.vyra-campaign-aura');
+    if (campaign) window.VyraCampaignAuraEngine.still(campaign, preview);
+  }
+
   // Live fireworks deliberately render an empty host until an event arrives. Catalog cards
   // use the effect's pure, frozen preview builder inside their own root instead of firing an event.
   if (preview?.type === 'templateGiftFireworks' && window.VyraFireworks?.renderPreview) {

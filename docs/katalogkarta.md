@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `05bd77a`
+Commit: `170ed38`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **289** |
+| Kort totalt | **279** |
 | Sektioner | 22 |
-| Med katalognyckel | 289 / 289 |
-| Med shadow DOM-miniatyr | 289 / 289 |
-| Ritar sin design | 289 / 289 |
+| Med katalognyckel | 279 / 279 |
+| Med shadow DOM-miniatyr | 279 / 279 |
+| Ritar sin design | 279 / 279 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -45,7 +45,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
-| GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
+| GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | BATTLE MVP · 23 DESIGNER | 23 | 23/23 | 23/23 | 23/23 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
@@ -116,26 +116,16 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Blå kristall | `catalog:guardianemblem:model:sapphire` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 
-### GIFT CAMPAIGN · VARJE TEMA SEPARAT
+### GIFT CAMPAIGN · LJUS OCH RÖRELSE
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Neon Event | `catalog:giftcampaign:neon:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Neon Event | `catalog:giftcampaign:neon:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Royal Gold | `catalog:giftcampaign:royal:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Royal Gold | `catalog:giftcampaign:royal:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Glass | `catalog:giftcampaign:glass:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Glass | `catalog:giftcampaign:glass:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Minimal | `catalog:giftcampaign:minimal:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Minimal | `catalog:giftcampaign:minimal:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Aurora | `catalog:giftcampaign:aurora:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Aurora | `catalog:giftcampaign:aurora:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Retro Arcade | `catalog:giftcampaign:retro:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Retro Arcade | `catalog:giftcampaign:retro:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Gold Rush | `catalog:giftcampaign:goldrush:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Gold Rush | `catalog:giftcampaign:goldrush:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:landscape` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Crystal Garden | `catalog:giftcampaign:crystal-garden:portrait` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
+| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-09-12 | — |
+| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-09-12 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-09-12 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-09-12 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-09-12 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-09-12 | — |
 
 ### LIKE FOUNTAIN
 
@@ -464,3 +454,5 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
+
+> Lokal körning 2026-09-12: antal, katalognycklar och rendering är ommätta i Chrome. Historik för oförändrade familjer är bevarad från föregående genererade karta; nya aurafamiljer är daterade till denna ändring. Full historiksökning avbröts eftersom den partiella klonen hämtade äldre objekt. CI kan regenerera historikkolumnerna med full klon.
