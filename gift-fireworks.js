@@ -81,7 +81,30 @@ function fwSpela(w,e,combo,gavobild,avatarbild){
  e.append(group);e.classList.add('play');fwSchedule(e);
 }
 
+// Pure catalog snapshot: build the same rocket DOM without registering a live event.
+function fwRenderPreview(e,w){
+ if(!e)return;
+ const theme=fwThemeOf(w),palette=FW_THEMES[theme],group=document.createElement('div');
+ e.replaceChildren();e.classList.add('play');e.dataset.fwPreview='1';e.dataset.fwTheme=theme;
+ e.style.cssText+=';position:relative;width:100%;height:260px;--gift:60px;--blast:.65;--fw-primary:'+palette.primary+';--fw-secondary:'+palette.secondary;
+ group.className='fw-event';group.dataset.fwTheme=theme;group.style.cssText='position:absolute;inset:0;animation:none';
+ buildComboRockets({...w,fwDensity:24},group,10,FW_GIFT,fwSequence(w,10),'assets/images/test-profile.svg');
+ const freeze=document.createElement('style');freeze.textContent='[data-fw-preview] .fw-carrier:after{display:none}';
+ e.append(freeze,group);
+ group.querySelectorAll('*').forEach(n=>n.style.setProperty('animation','none','important'));
+ group.querySelectorAll('.fw-personal-rocket').forEach((rocket,i)=>{
+  rocket.style.cssText+=';position:absolute;left:50%;top:46%;width:0;height:0;opacity:1';const carrier=rocket.querySelector('.fw-carrier');carrier.style.cssText+=';position:absolute;width:60px;height:60px;margin:-30px';carrier.style.opacity='1';carrier.style.transform='translate(var(--target-x),var(--target-y))';
+  rocket.querySelectorAll('.fw-rocket-gift,.fw-rocket-profile').forEach(face=>face.style.cssText+=';position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;border:2px solid var(--fw-secondary);border-radius:50%;object-fit:contain;overflow:hidden');rocket.querySelector('.fw-rocket-gift').style.cssText+=';opacity:'+(i===1?'0':'1')+';transform:none;display:'+(i===1?'none':'block');
+  rocket.querySelector('.fw-rocket-profile').style.cssText+=';opacity:'+(i===1?'1':'0')+';transform:none;display:'+(i===1?'block':'none');
+  rocket.querySelector('.fw-flash').style.display='none';rocket.querySelector('.fw-ring').style.display='none';
+  rocket.querySelectorAll('.fw-burst i').forEach((spark,j)=>{
+   const angle=j*Math.PI*2/12,radius=45+j%3*12;
+   spark.style.cssText+=';opacity:.85;translate:'+Math.cos(angle)*radius+'px '+Math.sin(angle)*radius+'px;rotate:'+angle+'rad;scale:1;transform:none';
+  });
+ });
+}
 window.VyraFireworks={
+  renderPreview:fwRenderPreview,
   capacityFor:fwCapacity,
   pending:()=>fwPending.length,
   // Renderaren och bada koerna anvander exakt samma langsta synliga speltid.

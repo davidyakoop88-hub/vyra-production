@@ -284,3 +284,19 @@ test('catalog exposes four themes and each card creates its matching personal ro
     assert.equal(d.querySelectorAll('[data-fw] [data-fw-theme]').length,4);
   }
 });
+
+test('catalog snapshot renders personal rockets without scheduling live work',()=>{
+ const {h}=panel();
+ const before=h.window.VyraFireworks.timers(),pending=h.window.VyraFireworks.pending();
+ const effect=h.document.createElement('div');effect.className='gift-fireworks-fx';
+ for(const theme of ['royal','ice','rose','comet']){
+  h.window.VyraFireworks.renderPreview(effect,{fwTheme:theme,fwDuration:5,fwSpeed:.6});
+  assert.equal(effect.querySelectorAll('.fw-personal-rocket').length,3);
+  assert.equal(effect.querySelectorAll('.fw-burst i').length,36);
+  assert.equal(effect.dataset.fwTheme,theme);
+  assert.equal(effect.querySelector('[data-expires]'),null);
+  assert.equal(effect.querySelectorAll('.fw-carrier[style*="opacity: 1"]').length,3);
+ }
+ assert.equal(h.window.VyraFireworks.timers(),before);
+ assert.equal(h.window.VyraFireworks.pending(),pending);
+});
