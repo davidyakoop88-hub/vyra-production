@@ -356,9 +356,10 @@
     // kristallträdgården växer i stället för att pushas, och namnger det själv.
     'giftcampaign.theme': v => ({
       type: 'templateGiftCampaign', x: 70, y: 110,
-      width: v.orientation === 'portrait' ? 260 : 430, title: 'Gift Campaign',
+      width: ['gold','platinum','emerald'].includes(v.theme) ? (v.orientation === 'portrait' ? 245 : 608) : (v.orientation === 'portrait' ? 260 : 430), title: 'Gift Campaign',
       templateTitle: 'GIFT CAMPAIGN',
-      campaignSubtitle: v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT',
+      campaignSubtitle: ['gold','platinum','emerald'].includes(v.theme) ? 'Hjälp oss nå kvällens mål' : v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT',
+      ...(['gold','platinum','emerald'].includes(v.theme) ? { campaignMotion: 'lift', campaignDirection: -1, campaignSound: false, campaignVolume: 30 } : {}),
       campaignTheme: v.theme,
       campaignOrientation: v.orientation,
       accent: v.theme === 'crystal-garden' ? '#ff6ec7' : '#ff3fa4'

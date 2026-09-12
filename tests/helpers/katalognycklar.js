@@ -107,6 +107,20 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  templateGiftCampaign: {
+    fas: 'stilla aura', ms: 4000,
+    varfor: 'canvas och perspektiv drivs av gemensam JS-ticker; katalogens frysta renderare ger en reproducerbar bild',
+    regi: ([fas, ms]) => {
+      const box = document.querySelector('.vyra-campaign-aura');
+      const w = state.widgets.find(w => w.id === box?.dataset.id);
+      if (!box || !w || !window.VyraCampaignAuraEngine) return { fel: 'kampanjens renderare saknas' };
+      window.VyraCampaignAuraSession.clear();
+      window.VyraCampaignAuraEngine.still(box, w);
+      const alla = [...box.getAnimations({subtree:true})];
+      alla.forEach(a => { a.pause(); a.currentTime = ms; });
+      return {fas, ms, animationer: alla.length};
+    },
+  },
   templateGuardianEmblem: {
     // `hyllning` är hållfasen (3500 ms av totalt 6100) — det är den bilden tittaren minns.
     fas: 'hyllning',

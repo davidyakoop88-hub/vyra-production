@@ -1146,7 +1146,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260817-duckning';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260912-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260912-4';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 if(new URLSearchParams(location.search).get('vfxdemo')==='2'){Promise.resolve().then(()=>{let files=['pixi.min.js','gsap.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-fountain-types.js','vfx-rng.js','vfx-crystal-heart-particle.js','vfx-sparkle-particle.js','vfx-trail-pool.js','vfx-fountain-source.js','vfx-fountain-emitter.js','vfx-fountain-debug.js','vfx-fountain-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1432,4 +1432,11 @@ Promise.resolve().then(()=>{
   const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','gift-supernova-engine.js?v=20260912-3','gift-fireworks.js?v=20260912-3','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
+});
+
+// Approved Campaign Aura replaces the old campaign presentation; session binds live roots only.
+Promise.resolve().then(()=>{
+ const css=document.createElement('link');css.rel='stylesheet';css.href='gift-campaign-aura.css?v=20260912-1';document.head.append(css);
+ const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','vfx-performance-monitor.js?v=20260912-1','vfx-quality-manager.js?v=20260912-1','gift-campaign-aura-engine.js?v=20260912-1','gift-campaign-aura.js?v=20260912-1','gift-campaign-aura-session.js?v=20260912-1'];
+ const next=i=>{if(i>=files.length){if(typeof render==='function')render();return}const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0);
 });
