@@ -53,6 +53,26 @@ const GAMLA = {
 
 const utanId = w => { const k = { ...w }; delete k.id; delete k.createdFrom; return k };
 
+for (const [theme, label, motion, primary, secondary] of [
+  ['royal','Lila & guld','magnetic','#b46cff','#ffd36b'],
+  ['ice','Isblå & silver','bloom','#46cfff','#edfaff'],
+  ['rose','Roséguld','bloom','#ff91b8','#ffd5a0'],
+  ['comet','Kometspiral','spiral','#55efff','#ff7d96']
+]) test('fyrverkeridesign '+theme+' behåller tema och färger även som fristående widget', () => {
+  const key='catalog:giftfireworks:'+theme;
+  const w=VyraWidgets.create(key);
+  assert.equal(w.fwTheme,theme);
+  assert.equal(w.y,120);
+  assert.equal(w.fwMotion,motion);
+  assert.equal(w.fwColor,primary);
+  assert.equal(w.fwColor2,secondary);
+  assert.equal(w.title,'Gift Fireworks · '+label);
+  assert.equal(w.createdFrom,key);
+  const standalone=VyraWidgets.create(key,{placement:'standalone'});
+  assert.equal(VyraWidgets.isStandalone(standalone),true);
+  for (const field of ['fwTheme','fwMotion','fwColor','fwColor2']) assert.equal(standalone[field],w[field]);
+});
+
 test('alla elva nycklar gar att skapa', () => {
   const fel = [];
   for (const nyckel of Object.keys(GAMLA)) {

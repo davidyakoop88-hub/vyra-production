@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6db2bb8`
+Commit: `08e3a55`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **287** |
+| Kort totalt | **288** |
 | Sektioner | 22 |
-| Med katalognyckel | 287 / 287 |
-| Med shadow DOM-miniatyr | 287 / 287 |
-| Ritar sin design | 287 / 287 |
+| Med katalognyckel | 288 / 288 |
+| Med shadow DOM-miniatyr | 288 / 288 |
+| Ritar sin design | 288 / 288 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -42,7 +42,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|---|
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| GIFT FIREWORKS | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| GIFT FIREWORKS · 4 DESIGNER | 4 | 4/4 | 4/4 | 4/4 | 2026-09-12 | — |
 | GIFT JAR · VARJE MODELL SEPARAT | 7 | 7/7 | 7/7 | 7/7 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · VARJE TEMA SEPARAT | 16 | 16/16 | 16/16 | 16/16 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
@@ -83,13 +83,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 
-### GIFT FIREWORKS
+### GIFT FIREWORKS · 4 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fireworks · Magnetic Return | `catalog:giftfireworks:magnetic` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| Fireworks · Spiral Recall | `catalog:giftfireworks:spiral` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| Fireworks · Crystal Bloom | `catalog:giftfireworks:bloom` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Lila & guld | `catalog:giftfireworks:royal` | ✓ | ✓ | 2026-09-12 | — |
+| Isblå & silver | `catalog:giftfireworks:ice` | ✓ | ✓ | 2026-09-12 | — |
+| Roséguld | `catalog:giftfireworks:rose` | ✓ | ✓ | 2026-09-12 | — |
+| Kometspiral | `catalog:giftfireworks:comet` | ✓ | ✓ | 2026-09-12 | — |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 
@@ -462,3 +463,5 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Crystal Bloom | `catalog:topgift:premium:bloom` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Royal Comet | `catalog:topgift:premium:comet` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
+
+> Validering 2026-09-12: katalogens nycklar, antal och miniatyrer uppmätta i Chrome. Tidigare historikkolumner bevarade; fyra fyrverkeridesigner tillagda som egna katalogval. Ingen bred historikskanning gjordes.
