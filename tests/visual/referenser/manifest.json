@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 180,
+ "antal": 192,
  "senaste": {
-  "motiv": "Lägg till godkända originalet Blå kristall efter kontroll av profilbild och liveentré",
-  "nycklar": 1,
-  "tid": "2026-09-11T14:48:56.124Z"
+  "motiv": "Record approved campaign aura designs and add missing references for existing approved MVP designs; no runtime changes.",
+  "nycklar": 12,
+  "tid": "2026-09-12T21:58:15.050Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -731,6 +731,54 @@
   "catalog:guardianemblem:model:sapphire": {
    "matt": "400x570",
    "fyllnad": 60.44
+  },
+  "catalog:battlemvp:celebration:coronation": {
+   "matt": "400x400",
+   "fyllnad": 50.15
+  },
+  "catalog:battlemvp:celebration:moon": {
+   "matt": "400x400",
+   "fyllnad": 66.45
+  },
+  "catalog:battlemvp:celebration:pearl": {
+   "matt": "400x400",
+   "fyllnad": 52.74
+  },
+  "catalog:battlemvp:celebration:portal": {
+   "matt": "400x400",
+   "fyllnad": 60.15
+  },
+  "catalog:battlemvp:celebration:rosegold": {
+   "matt": "400x400",
+   "fyllnad": 57.09
+  },
+  "catalog:battlemvp:celebration:wings": {
+   "matt": "400x400",
+   "fyllnad": 39.93
+  },
+  "catalog:giftcampaign:emerald:landscape": {
+   "matt": "608x406",
+   "fyllnad": 10.7
+  },
+  "catalog:giftcampaign:emerald:portrait": {
+   "matt": "245x560",
+   "fyllnad": 17.03
+  },
+  "catalog:giftcampaign:gold:landscape": {
+   "matt": "608x406",
+   "fyllnad": 10.75
+  },
+  "catalog:giftcampaign:gold:portrait": {
+   "matt": "245x560",
+   "fyllnad": 17.51
+  },
+  "catalog:giftcampaign:platinum:landscape": {
+   "matt": "608x406",
+   "fyllnad": 10.5
+  },
+  "catalog:giftcampaign:platinum:portrait": {
+   "matt": "245x560",
+   "fyllnad": 17.18
   }
  }
 }
