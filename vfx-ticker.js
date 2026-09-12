@@ -6,6 +6,7 @@
 // to "catch up" with hundreds of steps at once — it just drops the excess time).
 window.VFX = window.VFX || {};
 
+if (!VFX.Ticker?.subscribe) {
 VFX.Ticker = class Ticker {
   /**
    * @param {(fixedDt: number) => void} onFixedUpdate - simulation step
@@ -29,12 +30,8 @@ VFX.Ticker = class Ticker {
     this.running = true;
     this._lastTime = null;
     this._accumulator = 0;
-    const loop = now => {
-      if (!this.running) return;
-      this._raf = requestAnimationFrame(loop);
-      this._frame(now);
-    };
-    this._raf = requestAnimationFrame(loop);
+    VFX.Ticker._instances.add(this);
+    VFX.Ticker._ensureFrame();
   }
 
   _frame(now) {
@@ -57,9 +54,35 @@ VFX.Ticker = class Ticker {
 
   stop() {
     this.running = false;
-    if (this._raf != null) cancelAnimationFrame(this._raf);
+    VFX.Ticker._instances.delete(this);
+    VFX.Ticker._idle();
     this._raf = null;
   }
 
   destroy() { this.stop(); }
 };
+
+// All engine tickers and lightweight overlay subscriptions share one browser clock.
+VFX.Ticker._instances = new Set();
+VFX.Ticker._listeners = new Set();
+VFX.Ticker._sharedRaf = null;
+VFX.Ticker._ensureFrame = function () {
+  if (this._sharedRaf !== null) return;
+  this._sharedRaf = requestAnimationFrame(now => {
+    this._sharedRaf = null;
+    for (const ticker of this._instances) if (ticker.running) { try { ticker._frame(now); } catch (error) { console.error('[VFX] ticker frame failed',error); ticker.stop(); } }
+    for (const render of this._listeners) { try { render(now); } catch (error) { console.error('[VFX] overlay frame failed',error); this._listeners.delete(render); } }
+    if (this._instances.size || this._listeners.size) this._ensureFrame();
+  });
+};
+VFX.Ticker._idle = function () {
+  if (!this._instances.size && !this._listeners.size && this._sharedRaf !== null) {
+    cancelAnimationFrame(this._sharedRaf); this._sharedRaf = null;
+  }
+};
+VFX.Ticker.subscribe = function (render) {
+  this._listeners.add(render); this._ensureFrame();
+  return () => { this._listeners.delete(render); this._idle(); };
+};
+
+}

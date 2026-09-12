@@ -270,7 +270,7 @@ test('catalog exposes four themes and each card creates its matching personal ro
   run(`document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
   const keys=['royal','ice','rose','comet'];
   const cards=[...d.querySelectorAll('[data-fw] [data-fw-theme]')];
-  assert.deepEqual(cards.map(b=>b.dataset.fwTheme),keys);
+  assert.deepEqual(cards.map(b=>b.dataset.fwTheme),[...keys,'supernova']);
   assert.equal(d.querySelectorAll('[data-fw] [data-fw-motion]').length,0);
   for(const key of keys){
     run(`document.querySelector('[data-fw-theme="${key}"]').click(); window.__createdFw=state.widgets[state.widgets.length-1];`);
@@ -281,7 +281,7 @@ test('catalog exposes four themes and each card creates its matching personal ro
     assert.ok(d.querySelector('#testFw'),'new card keeps the test control accessible');
     // Reinstall catalog only if render has replaced the editor shell.
     run(`if(!document.querySelector('.widget-catalog'))document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
-    assert.equal(d.querySelectorAll('[data-fw] [data-fw-theme]').length,4);
+    assert.equal(d.querySelectorAll('[data-fw] [data-fw-theme]').length,5);
   }
 });
 

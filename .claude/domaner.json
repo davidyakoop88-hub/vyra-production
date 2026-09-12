@@ -112,7 +112,8 @@
         "widget-background.js",
         "widget-factory.js",
         "widget-fas.js",
-        "battle-mvp-celebrations.js"
+        "battle-mvp-celebrations.js",
+        "gift-supernova-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -166,7 +167,8 @@
         "tests/browser/gifter-level-referens.browser.test.js",
         "tests/browser/streak-katalog.browser.test.js",
         "tests/browser/nollrader-skrivloop.browser.test.js",
-        "tests/battle-mvp-celebrations.test.js"
+        "tests/battle-mvp-celebrations.test.js",
+        "tests/gift-supernova-panel.test.js"
       ],
       "matning": [
         {
@@ -397,7 +399,8 @@
         "gift-fireworks.css",
         "gift-fireworks-session.js",
         "validate_fx_theme.py",
-        "battle-mvp-celebrations.css"
+        "battle-mvp-celebrations.css",
+        "gift-supernova-engine.js"
       ],
       "tester": [
         "tests/gift-fireworks-trigger.test.js",
@@ -407,7 +410,9 @@
         "tests/gift-fireworks-sound.test.js",
         "tests/gift-fireworks-personal-rockets.test.js",
         "tests/gift-fireworks-concurrency.test.js",
-        "tests/browser/fireworks-flip.browser.test.js"
+        "tests/browser/fireworks-flip.browser.test.js",
+        "tests/vfx-shared-ticker.test.js",
+        "tests/gift-supernova-engine.test.js"
       ],
       "matning": [
         {
