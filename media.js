@@ -1132,7 +1132,6 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guar
    enda anroparen var action-runtime.js:62, som bara kors for den som SJALV lagt upp en Action med
    "firework" i widgetnamnet. Uppmatt 2026-08-06 mot deployad kod - en gava genom VyraLive.ingest
    anropade triggern noll ganger medan Top Gift flippade som den skulle. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-fireworks-session.js?v=20260806-1';document.body.append(js)});
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
@@ -1430,7 +1429,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-supernova-engine.js?v=20260912-2','gift-fireworks.js?v=20260912-2','gift-supernova-panel.js?v=20260912-2'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-supernova-engine.js?v=20260912-2','gift-fireworks.js?v=20260912-2','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-2'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });

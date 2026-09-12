@@ -254,10 +254,10 @@ test('förinställningen följer värdena även efter omritning och egen justeri
   assert.equal(d.querySelector('#fwPreset').value, '');
 });
 
-test('alla fyra designerna kan väljas och sparas',()=>{
+test('alla fem designerna kan väljas och sparas',()=>{
  const {h,d,run}=panel();
- assert.equal(d.querySelectorAll('[data-fw-theme-choice]').length,4);
- for(const theme of ['royal','ice','rose','comet']){
+ assert.equal(d.querySelectorAll('[data-fw-theme-choice]').length,5);
+ for(const theme of ['royal','ice','rose','comet','supernova']){
   d.querySelector('[data-fw-theme-choice="'+theme+'"]').click();
   run('window.__theme=state.widgets[0].fwTheme');
   assert.equal(h.window.__theme,theme);
