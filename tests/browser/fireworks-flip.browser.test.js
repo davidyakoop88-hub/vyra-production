@@ -6,89 +6,38 @@ const ROOT=path.join(__dirname,'../..');let browser;let skip = hoppaOver();
 test.before(async()=>{if(!skip)browser=await startaWebblasare()});
 test.after(async()=>{if(browser)await browser.close()});
 async function fixture(){
- const page=await browser.newPage({viewport:{width:900,height:800}});
- await page.route('https://fireworks.test/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#ffd36b"/><circle cx="40" cy="30" r="15" fill="#7e3cac"/></svg>'}));
- await page.setContent('<style>body{background:#101018}.canvas{position:absolute;left:250px;top:250px;width:360px}.resize-handle{display:none}'+fs.readFileSync(path.join(ROOT,'gift-fireworks.css'),'utf8')+'</style><div class="canvas"></div>');
+ const page=await browser.newPage({viewport:{width:1000,height:850}});
+ await page.route('https://fireworks.test/**',route=>route.request().url().endsWith('/index.html')?route.fulfill({contentType:'text/html',body:'<!doctype html><html><body></body></html>'}):route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="'+(route.request().url().includes('profile')?'#2255ee':'#ee2244')+'"/></svg>'}));
+ await page.goto('https://fireworks.test/index.html');
+ await page.setContent('<style>'+fs.readFileSync(path.join(ROOT,'gift-fireworks.css'),'utf8')+'</style><div class="canvas"></div>');
  await page.addScriptTag({content:`var state={widgets:[]},selected=null,view='overlay';function wh(){return ''}function props(){return ''}function bind(){}function save(){}function render(){}function liveWidget(){return null}function bk(w,v,k,f){return v||f}function campaignGiftList(){return []}`});
- await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'overlay-sanitize.js'),'utf8')});
- await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'widget-factory.js'),'utf8')});
- await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,'gift-fireworks.js'),'utf8')});
- await page.addScriptTag({content:`
- window.startFireworks=(theme,duration,combo)=>{
-  dispatchEvent(new Event('vyra-session-ended'));
-  const w={id:'fw',type:'templateGiftFireworks',x:0,y:0,width:360,fwTheme:theme,fwDuration:duration,fwSpeed:1.5,fwDensity:100,fwSound:false};
-  state.widgets=[w];document.querySelector('.canvas').innerHTML=wh(w);
-  window.sendFireworks=()=>triggerGiftFireworks({username:'@Anna',giftName:'Rose',giftImage:'https://fireworks.test/gift.png',profileImage:'https://fireworks.test/profile.png',combo});sendFireworks();
- };
- window.seekFireworks=t=>document.querySelector('.gift-fireworks-fx').getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=t});
- `});
+ for(const file of ['overlay-sanitize.js','widget-factory.js','vfx-types.js','vfx-ticker.js','gift-classics-engine.js','gift-supernova-engine.js','gift-fireworks.js'])await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,file),'utf8')});
+ await page.addScriptTag({content:`window.startFireworks=(theme,combo)=>{dispatchEvent(new Event('vyra-session-ended'));state.widgets=[{id:'fw',type:'templateGiftFireworks',x:0,y:0,width:540,fwTheme:theme,fwSound:false}];document.querySelector('.canvas').innerHTML=wh(state.widgets[0]);window.sendFireworks=()=>triggerGiftFireworks({username:'Anna',giftImage:'https://fireworks.test/gift.svg',profileImage:'https://fireworks.test/profile.svg',coins:100,combo});sendFireworks()};`});
  return page;
 }
-// Sample actual visible faces and transforms, not just keyframe names: a previous
-// filter/backface collision passed animation-name checks while displaying both faces.
-test('all four designs land and flip each personal rocket at 2, 5 and 10 seconds',{skip},async()=>{
- const page=await fixture();
- try{
-  for(const theme of ['royal','ice','rose','comet'])for(const duration of [2,5,10])for(const combo of [1,100]){
-   const result=await page.evaluate(([theme,duration,combo])=>{
-    startFireworks(theme,duration,combo);
-    const fx=document.querySelector('.gift-fireworks-fx'),event=fx.querySelector('.fw-event');
-    const rockets=[...event.querySelectorAll('.fw-personal-rocket')];
-    const stages=rockets.map(r=>{
-     const arrival=parseFloat(r.style.getPropertyValue('--arrival'))*1000,delay=parseFloat(r.style.getPropertyValue('--delay'))*1000;
-     const gift=r.querySelector('.fw-rocket-gift'),profile=r.querySelector('.fw-rocket-profile'),carrier=r.querySelector('.fw-carrier'),burst=r.querySelector('.fw-burst');
-     const opacity=n=>+getComputedStyle(n).opacity;
-     const at=t=>{seekFireworks(t);return {gift:opacity(gift),profile:opacity(profile),flash:opacity(r.querySelector('.fw-flash')),spark:opacity(burst.firstChild)}};
-     const before=at(arrival-1),firstHalf=at(arrival+160),secondHalf=at(arrival+490),after=at(arrival+651);
-     const center=n=>{const b=n.getBoundingClientRect();return [b.x+b.width/2,b.y+b.height/2]};
-     const centerAfter=center(profile),target=burst.getBoundingClientRect(),matrix=new DOMMatrixReadOnly(getComputedStyle(carrier).transform);
-     seekFireworks(arrival);const centerBefore=center(gift);
-     const flightStart=at(delay+(arrival-delay)*.25),flash=at(arrival+40);
-     return {before,firstHalf,secondHalf,after,flash,flightStart,centerBefore,centerAfter,target:[target.x,target.y],landing:[matrix.m41,matrix.m42],expected:[parseFloat(r.style.getPropertyValue('--target-x')),parseFloat(r.style.getPropertyValue('--target-y'))],faceDuration:getComputedStyle(gift).animationDuration,faceDelay:getComputedStyle(gift).animationDelay,arrival,carrierName:getComputedStyle(carrier).animationName,burstName:getComputedStyle(burst.firstChild).animationName};
+test('four approved canvas designs flip real image faces at a fixed arrival center for all tiers',{skip},async()=>{
+ const page=await fixture();try{
+  for(const theme of ['royal','ice','rose','comet'])for(const combo of [1,10,100]){
+   const r=await page.evaluate(async([theme,combo])=>{
+    startFireworks(theme,combo);const renderer=VyraClassics.create({theme,giftImage:'https://fireworks.test/gift.svg',profileImage:'https://fireworks.test/profile.svg'});await renderer.ready;
+    const c=document.createElement('canvas');c.width=960;c.height=800;const ctx=c.getContext('2d');
+    const stages=renderer.inspect(combo,0).map(rocket=>{
+     const at=t=>{renderer.render(ctx,960,800,t,combo);return Array.from(ctx.getImageData(Math.round(rocket.target.x),Math.round(rocket.target.y),1,1).data)};
+     const front=at(rocket.arrival-.001),back=at(rocket.arrival+.95);
+     const arrived=renderer.inspect(combo,rocket.arrival)[rocket.index],held=renderer.inspect(combo,rocket.arrival+1)[rocket.index];
+     return{front,back,arrived:[arrived.x,arrived.y,arrived.radius],held:[held.x,held.y,held.radius],target:[rocket.target.x,rocket.target.y]};
     });
-    return {stages,count:rockets.length,text:event.textContent};
-   },[theme,duration,combo]);
-   const label=theme+' '+duration+'s x'+combo;
-   assert.equal(result.count,combo===100?7:1,label);assert.equal(result.text,'',label+' no names or labels');
-   for(const s of result.stages){
-    assert.equal(s.before.gift,1,label);assert.equal(s.before.profile,0,label);assert.equal(s.before.flash,0,label+' no premature explosion');
-    assert.ok(s.firstHalf.gift>0,label);assert.equal(s.firstHalf.profile,0,label+' exclusive front');
-    assert.equal(s.secondHalf.gift,0,label+' exclusive back');assert.ok(s.secondHalf.profile>0,label);
-    assert.equal(s.after.gift,0,label);assert.equal(s.after.profile,1,label);assert.ok(s.flash.flash>0,label+' explosion at arrival');assert.ok(s.flash.spark>0,label+' sparks at arrival');
-    assert.equal(s.faceDuration,'0.65s',label);assert.ok(Math.abs(parseFloat(s.faceDelay)*1000-s.arrival)<.1,label);
-    s.centerBefore.forEach((n,i)=>assert.ok(Math.abs(n-s.centerAfter[i])<.2,label+' same flip center'));
-    s.centerAfter.forEach((n,i)=>assert.ok(Math.abs(n-s.target[i])<.2,label+' own explosion center'));
-    s.landing.forEach((n,i)=>assert.ok(Math.abs(n-s.expected[i])<.2,label+' exact landing'));
-    assert.equal(s.carrierName,{royal:'fw-personal-launch',ice:'fw-personal-cross',rose:'fw-personal-fan',comet:'fw-personal-orbit'}[theme]);
-    assert.equal(s.burstName,{royal:'fw-personal-willow',ice:'fw-explode-bloom',rose:'fw-personal-fan-burst',comet:'fw-explode-spiral'}[theme]);
-   }
+    renderer.render(ctx,960,800,renderer.duration(combo),combo);const pixels=ctx.getImageData(0,0,960,800).data;let finalAlpha=0;for(let i=3;i<pixels.length;i+=4)finalAlpha+=pixels[i];
+    return{stages,finalAlpha,duration:VyraFireworks.durationFor({combo}),canvas:!!document.querySelector('.fw-classics-canvas'),text:document.querySelector('.gift-fireworks-fx').textContent};
+   },[theme,combo]);
+   assert.equal(r.canvas,true);assert.equal(r.text,'');assert.equal(r.duration,combo===100?18000:combo===10?9000:6000);assert.equal(r.stages.length,combo===100?14:combo===10?3:1);assert.equal(r.finalAlpha,0);
+   for(const s of r.stages){assert.ok(s.front[0]>s.front[2],theme+' gift front');assert.ok(s.back[2]>s.back[0],theme+' profile back');assert.deepEqual(s.arrived,s.held);assert.deepEqual(s.arrived.slice(0,2),s.target)}
   }
  }finally{await page.close()}
 });
-test('three senders keep independent running timelines; a fourth waits',{skip},async()=>{
- const page=await fixture();
- try{
-  const result=await page.evaluate(()=>{
-   startFireworks('royal',5,100);seekFireworks(1500);
-   const fx=document.querySelector('.gift-fireworks-fx'),first=fx.firstElementChild,original=first.getAnimations({subtree:true}).filter(a=>a.effect.target.matches('.fw-event,.fw-carrier,.fw-rocket-gift,.fw-rocket-profile'));
-   sendFireworks();sendFireworks();sendFireworks();
-   return {quality:fx.dataset.fwQuality,rockets:fx.querySelectorAll('.fw-rocket').length,sparks:fx.querySelectorAll('.fw-burst i').length,sparksPerBurst:[...fx.querySelectorAll('.fw-burst')].map(n=>n.children.length),cheap:[...fx.querySelectorAll('.fw-burst i,.fw-rocket-gift,.fw-rocket-profile')].every(n=>getComputedStyle(n).boxShadow==='none'),rings:[...fx.querySelectorAll('.fw-ring')].every(n=>getComputedStyle(n).display==='none'),trailFilters:[...fx.querySelectorAll('.fw-carrier')].every(n=>getComputedStyle(n,'::after').filter==='none'),layers:fx.children.length,pending:VyraFireworks.pending(),same:fx.firstElementChild===first,preserved:original.every(a=>first.getAnimations({subtree:true}).includes(a)&&a.currentTime===1500),lanes:[...fx.children].map(n=>n.dataset.lane),newTimes:[...fx.children].slice(1).flatMap(n=>n.getAnimations({subtree:true}).map(a=>a.currentTime||0))};
-  });
-  assert.equal(result.quality,'busy');assert.equal(result.rockets,21);assert.equal(result.sparks,252);assert.ok(result.sparksPerBurst.every(n=>n<=12));assert.equal(result.cheap,true);assert.equal(result.rings,true);assert.equal(result.trailFilters,true);assert.equal(result.layers,3);assert.equal(result.pending,1);assert.equal(result.same,true);assert.equal(result.preserved,true);assert.equal(new Set(result.lanes).size,3);assert.ok(result.newTimes.every(n=>n<100));
- }finally{await page.close()}
+test('three sender canvases persist independently, fourth queues, and session reset stops the clock',{skip},async()=>{
+ const page=await fixture();try{const r=await page.evaluate(()=>{startFireworks('royal',100);const first=document.querySelector('.fw-event');sendFireworks();sendFireworks();sendFireworks();const before={canvases:document.querySelectorAll('.fw-classics-canvas').length,pending:VyraFireworks.pending(),same:first===document.querySelector('.fw-event'),active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size};dispatchEvent(new Event('vyra-session-ended'));return{before,after:{active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size,canvases:document.querySelectorAll('canvas').length}}});assert.deepEqual(r.before,{canvases:3,pending:1,same:true,active:3,listeners:3});assert.deepEqual(r.after,{active:0,listeners:0,canvases:0})}finally{await page.close()}
 });
-test('reduced motion hides explosions and shows the stationary gift/profile exchange',{skip},async()=>{
- const page=await fixture();
- try{
-  await page.emulateMedia({reducedMotion:'reduce'});
-  for(const theme of ['royal','ice','rose','comet']){
-   const result=await page.evaluate(theme=>{
-    startFireworks(theme,5,1);const r=document.querySelector('.fw-personal-rocket'),c=r.querySelector('.fw-carrier');
-    const at=t=>{seekFireworks(t);return {transform:getComputedStyle(c).transform,gift:+getComputedStyle(r.querySelector('.fw-rocket-gift')).opacity,profile:+getComputedStyle(r.querySelector('.fw-rocket-profile')).opacity}};
-    const arrival=parseFloat(r.style.getPropertyValue('--arrival'))*1000;
-    return {early:at(arrival*.25),late:at(arrival+700),name:getComputedStyle(c).animationName,hidden:['.fw-burst','.fw-ring','.fw-flash'].map(s=>getComputedStyle(r.querySelector(s)).display),display:getComputedStyle(r).display};
-   },theme);
-   assert.equal(result.name,'fw-personal-still');assert.equal(result.early.transform,result.late.transform);assert.equal(result.early.gift,1);assert.equal(result.early.profile,0);assert.equal(result.late.gift,0);assert.equal(result.late.profile,1);assert.equal(result.display,'block');assert.deepEqual(result.hidden,['none','none','none']);
-  }
- }finally{await page.close()}
+test('reduced motion is one stationary badge and hidden widgets clear their bitmap',{skip},async()=>{
+ const page=await fixture();try{await page.emulateMedia({reducedMotion:'reduce'});for(const theme of ['royal','ice','rose','comet']){await page.evaluate(theme=>startFireworks(theme,100),theme);await page.waitForTimeout(100);const r=await page.evaluate(async()=>{const c=document.querySelector('canvas'),ctx=c.getContext('2d');const pixels=()=>{const d=ctx.getImageData(0,0,c.width,c.height).data;let count=0;for(let i=3;i<d.length;i+=4)if(d[i])count++;return count};const before=pixels(),image=c.toDataURL();await new Promise(resolve=>setTimeout(resolve,50));const same=image===c.toDataURL();state.widgets[0].hidden=true;await new Promise(resolve=>setTimeout(resolve,50));return{before,same,after:pixels(),active:VyraSupernova.active()}});assert.ok(r.before>1000&&r.before<40000);assert.equal(r.same,true);assert.equal(r.after,0);assert.equal(r.active,0)}}finally{await page.close()}
 });

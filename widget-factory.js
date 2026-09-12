@@ -65,10 +65,10 @@
     'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
       bloom: 'Crystal Bloom' },
     'giftfireworks.theme': {
-      royal: {label:'Lila & guld',primary:'#b46cff',secondary:'#ffd36b',motion:'magnetic'},
-      ice: {label:'Isblå & silver',primary:'#46cfff',secondary:'#edfaff',motion:'bloom'},
-      rose: {label:'Roséguld',primary:'#ff91b8',secondary:'#ffd5a0',motion:'bloom'},
-      comet: {label:'Kometspiral',primary:'#55efff',secondary:'#ff7d96',motion:'spiral'},
+      royal: {label:'Lila & guld',primary:'#ffd06b',secondary:'#a764ff',motion:'magnetic'},
+      ice: {label:'Isblå & silver',primary:'#dcecff',secondary:'#49cfff',motion:'bloom'},
+      rose: {label:'Roséguld',primary:'#edb98b',secondary:'#ff7cc8',motion:'bloom'},
+      comet: {label:'Kometspiral',primary:'#45e1d1',secondary:'#ff806c',motion:'spiral'},
       supernova: {label:'Supernova',primary:'#ffd06b',secondary:'#a764ff',motion:'supernova'}
     },
     'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
@@ -197,7 +197,7 @@
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
     'giftfireworks.theme': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 120, width: v.theme==='supernova'?540:360, title: 'Gift Fireworks · '+v.label,
+      type: 'templateGiftFireworks', x: 80, y: 120, width: 540, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})

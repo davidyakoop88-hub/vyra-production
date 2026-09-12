@@ -1067,7 +1067,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20260912-2','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260817-duckning','action-media.js?v=20260807-panel','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260817-retur','action-runtime.js?v=20260817-duckning'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20260912-3','action-event.css'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260817-duckning','action-media.js?v=20260807-panel','action-scenes.js?v=20260807-scene','action-options.js?v=1','action-event-advanced.js?v=20260817-retur','action-runtime.js?v=20260817-duckning'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260820-2';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1429,7 +1429,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-supernova-engine.js?v=20260912-2','gift-fireworks.js?v=20260912-2','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-2'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','gift-supernova-engine.js?v=20260912-3','gift-fireworks.js?v=20260912-3','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });

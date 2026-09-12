@@ -54,10 +54,10 @@ const GAMLA = {
 const utanId = w => { const k = { ...w }; delete k.id; delete k.createdFrom; return k };
 
 for (const [theme, label, motion, primary, secondary] of [
-  ['royal','Lila & guld','magnetic','#b46cff','#ffd36b'],
-  ['ice','Isblå & silver','bloom','#46cfff','#edfaff'],
-  ['rose','Roséguld','bloom','#ff91b8','#ffd5a0'],
-  ['comet','Kometspiral','spiral','#55efff','#ff7d96']
+  ['royal','Lila & guld','magnetic','#ffd06b','#a764ff'],
+  ['ice','Isblå & silver','bloom','#dcecff','#49cfff'],
+  ['rose','Roséguld','bloom','#edb98b','#ff7cc8'],
+  ['comet','Kometspiral','spiral','#45e1d1','#ff806c']
 ]) test('fyrverkeridesign '+theme+' behåller tema och färger även som fristående widget', () => {
   const key='catalog:giftfireworks:'+theme;
   const w=VyraWidgets.create(key);

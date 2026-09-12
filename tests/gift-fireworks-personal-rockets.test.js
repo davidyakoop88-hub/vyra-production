@@ -8,7 +8,7 @@ test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
 const widget = (id = 'fw1', extra = {}) => ({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360,
-  fwTheme: 'royal', fwMin: 1, fwSpeed: .6, fwDuration: 5,
+  fwMotion: 'magnetic', fwMin: 1, fwSpeed: .6, fwDuration: 5,
   fwGiftSize: 110, fwExplosion: 100, fwDensity: 70, fwSound: false, ...extra
 });
 function boot(widgets = [widget()]) {
@@ -30,14 +30,14 @@ const event = extra => ({ username: 'Alice', giftName: 'Rose', coins: 100,
 const latest = fx => fx.querySelector('.fw-event:last-child');
 const rockets = fx => [...fx.querySelectorAll('.fw-personal-rocket')];
 
-test('all four themes support the 1 / 10 / 100 showcase tiers with bounded rocket counts', () => {
-  const h = boot(['royal', 'ice', 'rose', 'comet'].map(theme => widget(theme, { fwTheme: theme })));
+test('legacy implicit motion widgets retain their 1 / 10 / 100 DOM rockets', () => {
+  const h = boot(['magnetic', 'bloom', 'spiral'].map(motion => widget(motion, { fwMotion: motion })));
   for (const [combo, expected] of [[1, 1], [9, 1], [10, 3], [99, 3], [100, 7], [10000, 7]]) {
     h.window.dispatchEvent(new h.window.Event('vyra-session-ended'));
     h.window.triggerGiftFireworks(event({ combo }));
-    for (const theme of ['royal', 'ice', 'rose', 'comet']) {
+    for (const theme of ['magnetic', 'bloom', 'spiral']) {
       assert.equal(rockets(h.fx(theme)).length, expected, `${theme}, combo ${combo}`);
-      assert.equal(h.fx(theme).dataset.fwTheme, theme);
+      assert.equal(h.fx(theme).dataset.fwTheme, {magnetic:'royal',bloom:'ice',spiral:'comet'}[theme]);
     }
   }
 });

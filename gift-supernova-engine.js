@@ -118,9 +118,10 @@ const mounted=new Map();
 const mode=combo=>Number(combo)>=100?'100':Number(combo)>=10?'10':'1';
 const duration=combo=>({1:6,10:9,100:18})[mode(combo)];
 function dispose(group){const item=mounted.get(group);if(!item)return;item.unsubscribe?.();item.canvas.getContext('2d')?.clearRect(0,0,item.canvas.width,item.canvas.height);mounted.delete(group)}
-function mount(group,w,combo,giftImage,profileImage){
- const renderer=create({style:w.fwNovaStyle||'classic',primary:w.fwColor,secondary:w.fwColor2,giftImage,profileImage});
- const canvas=document.createElement('canvas');canvas.width=960;canvas.height=800;canvas.className='fw-supernova-canvas';canvas.style.cssText='display:block;width:100%;height:100%;pointer-events:none';group.append(canvas);
+function rendererFor(w,giftImage,profileImage,palette={}){const options={theme:w.fwTheme,style:w.fwNovaStyle||'classic',primary:palette.primary||w.fwColor,secondary:palette.secondary||w.fwColor2,giftImage,profileImage};return ['royal','ice','rose','comet'].includes(w.fwTheme)?root.VyraClassics.create(options):create(options)}
+function mount(group,w,combo,giftImage,profileImage,palette){
+ const renderer=rendererFor(w,giftImage,profileImage,palette);
+ const canvas=document.createElement('canvas');canvas.width=960;canvas.height=800;canvas.className=w.fwTheme==='supernova'?'fw-supernova-canvas':'fw-classics-canvas';canvas.style.cssText='display:block;width:100%;height:100%;pointer-events:none';group.append(canvas);
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const started=performance.now(),item={renderer,canvas,unsubscribe:null};mounted.set(group,item);
  const reduced=root.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -133,8 +134,8 @@ function mount(group,w,combo,giftImage,profileImage){
  if(reduced){renderer.renderStill(ctx,960,800);renderer.ready.then(()=>{if(mounted.has(group)&&group.isConnected&&!w.hidden&&!group.closest('.widget-hidden'))renderer.renderStill(ctx,960,800)})}
  item.unsubscribe=root.VFX.Ticker.subscribe(paint);
 }
-function preview(e,w){
- const renderer=create({style:w.fwNovaStyle||'classic',primary:w.fwColor,secondary:w.fwColor2});
+function preview(e,w,palette){
+ const renderer=rendererFor(w,undefined,undefined,palette);
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=800;canvas.style.cssText='display:block;width:100%;height:auto';e.replaceChildren(canvas);e.dataset.fwPreview='1';e.style.setProperty('opacity','1','important');e.style.height='auto';
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const draw=()=>renderer.render(ctx,960,800,14.5,'100');draw();renderer.ready.then(draw);
