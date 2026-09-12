@@ -294,6 +294,7 @@ test('catalog snapshot renders personal rockets without scheduling live work',()
   assert.equal(effect.querySelectorAll('.fw-personal-rocket').length,3);
   assert.equal(effect.querySelectorAll('.fw-burst i').length,36);
   assert.equal(effect.dataset.fwTheme,theme);
+  assert.equal(effect.classList.contains('play'),false,'catalog snapshots must not become live effects');
   assert.equal(effect.querySelector('[data-expires]'),null);
   assert.equal(effect.querySelectorAll('.fw-carrier[style*="opacity: 1"]').length,3);
  }

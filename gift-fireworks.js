@@ -85,7 +85,7 @@ function fwSpela(w,e,combo,gavobild,avatarbild){
 function fwRenderPreview(e,w){
  if(!e)return;
  const theme=fwThemeOf(w),palette=FW_THEMES[theme],group=document.createElement('div');
- e.replaceChildren();e.classList.add('play');e.dataset.fwPreview='1';e.dataset.fwTheme=theme;
+ e.replaceChildren();e.dataset.fwPreview='1';e.style.setProperty('opacity','1','important');e.dataset.fwTheme=theme;
  e.style.cssText+=';position:relative;width:100%;height:260px;--gift:60px;--blast:.65;--fw-primary:'+palette.primary+';--fw-secondary:'+palette.secondary;
  group.className='fw-event';group.dataset.fwTheme=theme;group.style.cssText='position:absolute;inset:0;animation:none';
  buildComboRockets({...w,fwDensity:24},group,10,FW_GIFT,fwSequence(w,10),'assets/images/test-profile.svg');
