@@ -70,11 +70,15 @@ test('catalog preview and replay animate a draft without touching a real overlay
   const page=await open('overlay');try{
     const card=page.locator('[data-catalog-key="catalog:battlemvp:celebration:portal"]');
     await card.locator('.owg-preview').waitFor();
-    const before=await page.evaluate(()=>({widgets:JSON.stringify(state.widgets),storage:JSON.stringify(localStorage)}));
+    // The two master leases renew their heartbeat timestamp independently of
+    // previews. Compare all other storage, including every saved layout key.
+    const snapshot=()=>({widgets:JSON.stringify(state.widgets),storage:JSON.stringify(Object.fromEntries(Object.keys(localStorage).filter(k=>!['vyra-automation-master','vyra-rost-master'].includes(k)).sort().map(k=>[k,localStorage.getItem(k)])))});
+    const before=await page.evaluate(snapshot);
     await card.locator('.owg-preview').click();
     await page.waitForFunction(()=>!!document.querySelector('.overlay-live-preview-stage .mvc-preview.mvp-active'));
-    const after=await page.evaluate(()=>({widgets:JSON.stringify(state.widgets),storage:JSON.stringify(localStorage),outside:[...document.querySelectorAll('.mvp-active')].filter(e=>!e.closest('.overlay-live-preview-stage')).length}));
-    assert.equal(after.widgets,before.widgets);assert.equal(after.storage,before.storage);assert.equal(after.outside,0);
+    const after=await page.evaluate(snapshot);
+    assert.equal(after.widgets,before.widgets);assert.equal(after.storage,before.storage);
+    assert.equal(await page.evaluate(()=>[...document.querySelectorAll('.mvp-active')].filter(e=>!e.closest('.overlay-live-preview-stage')).length),0);
     await page.locator('[data-mvp-replay]').click();
     await page.waitForFunction(()=>document.querySelector('.overlay-live-preview-stage .mvc-preview')?.getAnimations({subtree:true}).some(a=>a.currentTime<2000));
     assert.equal(await page.locator('[data-mvp-replay]').count(),1);

@@ -898,7 +898,8 @@
         "VYRA_VFX_ENGINE_M2_VISUAL_QA.md",
         "scripts/generate-catalog-map.js",
         "scripts/generate-widget-snapshot.js",
-        ".claude/*"
+        ".claude/*",
+        "design-qa.md"
       ],
       "tester": [
         "tests/tech-debt-aktuell.test.js",
