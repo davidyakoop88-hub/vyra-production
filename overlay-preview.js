@@ -403,6 +403,14 @@ function styleOverlayCatalogCards() {
       overlayDraftPreviewName = utkast ? liveLayerName(utkast) : null;
       overlayPreviewWidgetId = null;
       render();
+      const stage=document.querySelector('.overlay-live-preview-stage');
+      if(window.VyraMvpCelebrations?.preview(stage)){
+        const replay=document.createElement('button');
+        replay.type='button';replay.className='btn btn-secondary btn-sm';
+        replay.textContent='Spela igen';replay.dataset.mvpReplay='1';
+        replay.onclick=()=>window.VyraMvpCelebrations.preview(stage);
+        stage.parentElement.append(replay);
+      }
     };
 
     const linkBtn = document.createElement('span');

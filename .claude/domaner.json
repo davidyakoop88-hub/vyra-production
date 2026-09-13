@@ -173,7 +173,8 @@
         "tests/browser/streak-katalog.browser.test.js",
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
-        "tests/gift-supernova-panel.test.js"
+        "tests/gift-supernova-panel.test.js",
+        "tests/browser/mvp-celebrations-motion.browser.test.js"
       ],
       "matning": [
         {
