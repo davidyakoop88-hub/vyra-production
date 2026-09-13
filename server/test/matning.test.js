@@ -181,6 +181,27 @@ test('samma webhook tva ganger ger EN handelse', medMiljo(async r => {
     'servern kan inte deduplicera nedstroms — idempotensen MASTE halla har');
 }));
 
+// privacy.html LOVAR: "Ingen av handelserna bar konto-, workspace- eller enhetsidentifierare, och
+// de kan inte kopplas till en enskild anvandare." Ett loste i en policy som ingen vakt bevakar ar
+// sant tills nasta andring, och blir da tyst osant. handelse() TAR emot props — det ar just darfor
+// den har vakten behovs: den dag nagon lagger till workspaceId "for felsokning" ska CI saga ifran,
+// inte en anvandare.
+test('ingen handelse bar identifierare — policyn ar maskinkontrollerad', medMiljo(async r => {
+  const { webhook } = require('../billing');
+  await webhook(fejkpool(), aktiverad('EV-p', { prov: true }), HUVUDEN);
+  await webhook(fejkpool(), salj('EV-s', '15.00'), HUVUDEN);
+  await drant();
+  assert.equal(r.matta.length, 2);
+  for (const m of r.matta) {
+    assert.equal('props' in m.kropp, false, 'handelsen ' + m.kropp.name + ' bar props');
+    const platt = JSON.stringify(m.kropp);
+    for (const forbjudet of ['w-1', 'I-1', 'S-1', 'workspace', 'user', 'email', 'custom_id']) {
+      assert.equal(platt.includes(forbjudet), false,
+        'handelsen ' + m.kropp.name + ' lackte ' + forbjudet + ' till Plausible');
+    }
+  }
+}));
+
 test('ar Plausible nere lyckas webhooken anda', medMiljo(async () => {
   const { webhook } = require('../billing');
   const ut = await webhook(fejkpool(), salj('EV-nere', '15.00'), HUVUDEN);
