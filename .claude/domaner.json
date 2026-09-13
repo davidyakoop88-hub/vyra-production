@@ -19,7 +19,7 @@
         "studio.html",
         "studio.js",
         "studio.css",
-        "app.js",
+        "landing-hamta.js",
         "layout.html",
         "layout-format.js",
         "layout-safe.js",
@@ -212,7 +212,8 @@
         "performance-guard.css",
         "legal.css",
         "terms.html",
-        "privacy.html"
+        "privacy.html",
+        "favicon.ico"
       ],
       "tester": [
         "tests/css-struktur.test.js",
