@@ -42,13 +42,15 @@ if(active===2)for(let k=0;k<2;k++){let side=k?-1:1,p=(s*.55)%1;spark(cx+side*Mat
 if(active===3){let p=(s*.4)%1;spark(210+p*350,810,25,-35,1.5,1.5,m[3])}
 if(active===4&&s>1.6&&s<5){let k=Math.floor(Math.random()*11),a=-Math.PI+.18+k*(Math.PI-.36)/10;spark(cx+Math.cos(a)*330,680+Math.sin(a)*530,Math.cos(a)*15,15,1.7,1.7,k%2?'#ffd994':'#8bbdff')}
 }if(s>=2.2&&s-dt<2.2){burst(cx,my-25,active===3?45:110,active===3?120:220);void 0}}
-function frame(now){if(!cv.isConnected)return;if(w.hidden)return;sync();let dt=Math.min(.033,(now-last)/1000||.016);last=now;if(!paused){t+=dt;while(queue.length&&queue[0].at<=t){let e=queue.shift();e.finale?begin():spawn(e.icon)}}ctx.clearRect(0,0,800,1000);if(ready){let m=models[active];ctx.drawImage(art[active],0,0,800,1000);
+function frame(now){if(!cv.isConnected||cv.dataset.jarFrozen)return;if(w.hidden)return;sync();let dt=Math.min(.033,(now-last)/1000||.016);last=now;if(!paused){t+=dt;while(queue.length&&queue[0].at<=t){let e=queue.shift();e.finale?begin():spawn(e.icon)}}ctx.clearRect(0,0,800,1000);if(ready){let m=models[active];ctx.drawImage(art[active],0,0,800,1000);
 for(let g of items){if(t<g.release)continue;if(!paused&&!g.done){g.vy+=700*dt;g.y+=g.vy*dt;g.x+=(g.tx-g.x)*dt*(g.y>m[5]*1000?3:0.3);g.a+=g.spin*dt;if(g.y>=g.floor){g.y=g.floor;g.vy=-g.vy*.27;g.spin*=.3;g.bounce++;if(g.bounce===1){rings.push({x:g.x,y:g.floor+18,at:t});burst(g.x,g.y,7,38)}if(g.bounce>2||Math.abs(g.vy)<24)g.done=true}}ctx.save();ctx.translate(g.x,g.y);ctx.rotate(g.a);ctx.globalAlpha=g.y>m[5]*1000?.86:1;if(g.icon&&g.icon.complete&&g.icon.naturalWidth)ctx.drawImage(g.icon,-25,-25,50,50);ctx.restore()}
 ctx.save();ctx.beginPath();ctx.rect(m[7]*800-25,m[5]*1000+42,(m[8]-m[7])*800+50,(m[6]-m[5])*1000-15);ctx.clip();ctx.globalAlpha=.12;ctx.drawImage(art[active],0,0,800,1000);ctx.restore();effects(dt);
 for(let i=rings.length-1;i>=0;i--){let r=rings[i],age=t-r.at;if(age>1.2){rings.splice(i,1);continue}ring(r.x,r.y,15+age*70,m[3],(1-age/1.2)*.55)}
 ctx.save();ctx.globalCompositeOperation='lighter';for(let i=particles.length-1;i>=0;i--){let p=particles[i];if(!paused){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=28*dt}if(p.life<=0){particles.splice(i,1);continue}ctx.globalAlpha=Math.min(1,p.life/.5)*.8;ctx.fillStyle=p.color;ctx.shadowColor=p.color;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill()}ctx.restore();if(t-start>=7&&start>=0){start=-100;void 0}
 }requestAnimationFrame(frame)}
 
+ // Capture existing contents before texture IO so gifts arriving during loading still fall.
+ sync();
  window.VyraGiftJarTextures.load(models[active][0]).then(texture=>{if(!cv.isConnected)return;art[active]=texture;ready=true;requestAnimationFrame(frame)}).catch(()=>{cv.setAttribute('aria-label','Bilden kunde inte laddas')});
 }
 
