@@ -82,7 +82,7 @@ const AVSIKTLIG_DRIFT = {
   'catalog:gifterlevel:profile': { falt: ['gifterMessage'], beslut: '058badb' },
   // 23ece1d porterade Gift Jar till dagens kodbas. Widgeten fanns inte i media.js före
   // fabriken, så det finns ingen literal att jämföra mot — inte en glidning, en tillkomst.
-  'catalog:giftjar:crystal': { falt: '*', beslut: '23ece1d', tillkommen: true },
+  'catalog:giftjar:lion': { falt: '*', beslut: 'David approved animal jars 2026-09-13', tillkommen: true },
 };
 
 test('varje avvikelse från de ursprungliga katalogliteralerna är beslutad', { skip }, () => {

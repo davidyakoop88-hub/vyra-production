@@ -116,7 +116,10 @@
         "widget-factory.js",
         "widget-fas.js",
         "battle-mvp-celebrations.js",
-        "gift-supernova-panel.js"
+        "gift-supernova-panel.js",
+        "gift-jar-animals.js",
+        "gift-jar-animals.css",
+        "gift-jar-textures.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",

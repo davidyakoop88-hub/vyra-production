@@ -24,7 +24,7 @@ const CSS = fs.readFileSync(path.join(ROT, 'studio.css'), 'utf8');
 // widgets. Ovriga katalogprov gor bara require, och det ar ratt.
 const VyraWidgets = require(path.join(ROT, 'widget-factory.js'));
 
-const MODELLER = ['crystal', 'royal', 'neon', 'fire', 'ice', 'heart', 'galaxy'];
+const MODELLER = ['lion', 'dragon', 'phoenix', 'panther', 'peacock'];
 
 // ---- Katalogkontraktet -------------------------------------------------------------------------
 test('varje modell bygger en giltig widget ur sin katalognyckel', () => {
@@ -46,9 +46,9 @@ test('en okand modell kastar med giltiga alternativ i texten', () => {
 
 test('burken fods tom', () => {
   // En burk som fods halvfull ljuger om vad tittarna har gett.
-  const w = VyraWidgets.create('catalog:giftjar:crystal');
+  const w = VyraWidgets.create('catalog:giftjar:lion');
   assert.equal(w.jarCount, 0);
-  assert.equal(w.jarShowCounter, true);
+  assert.equal(w.jarShowCounter, false);
 });
 
 // ---- Alla gavor, inte en ------------------------------------------------------------------------
@@ -56,7 +56,7 @@ test('burken fods tom', () => {
 // referensgrenen utan att nagon fragade om det horde hemma — en burk som bara tar emot en
 // gavosort ar ingen gavoburk.
 test('inga filterfalt finns kvar i defaults', () => {
-  const w = VyraWidgets.create('catalog:giftjar:crystal');
+  const w = VyraWidgets.create('catalog:giftjar:lion');
   for (const falt of ['jarFilterMode', 'jarGiftName', 'jarMinCoins']) {
     assert.ok(!(falt in w), `${falt} finns kvar i katalogens defaults`);
   }
@@ -204,12 +204,11 @@ test('ingen modellsymbol ar en emoji', () => {
   assert.deepEqual(fel, [], 'modeller med emoji i stallet for monokrom glyf: ' + fel.join(', '));
 });
 
-test('varje modell utom grundutforandet har en egen CSS-regel', () => {
-  // crystal ar GRUNDUTFORANDET och styrs av .gift-jar-widget sjalv — en tom .jar-crystal hade
-  // bara varit en regel som sager "som vanligt". De sex ovriga ar avvikelser och maste synas.
-  assert.ok(!CSS.includes('.jar-crystal'),
-    'crystal har fatt en egen regel — da ar den inte langre grundutforandet, och vilken av de tva ' +
-    'som vinner beror pa ordningen i filen');
-  const utan = MODELLER.filter(m => m !== 'crystal' && !CSS.includes('.jar-' + m));
-  assert.deepEqual(utan, [], 'modeller utan egen styling: ' + utan.join(', '));
+test('animalmodeller har godkänd rörelse och inga gamla katalogval', () => {
+ const source=fs.readFileSync(path.join(ROT,'gift-jar-animals.js'),'utf8');
+ assert.deepEqual(Object.keys(VyraWidgets.variants('giftjar.model')),MODELLER);
+ for(const model of MODELLER)assert.ok(source.includes("'"+model+"'"));
+ assert.ok(!source.includes("addEventListener('vyra-live-event'"));
+ assert.ok(source.includes('giftJarState(w)'));
+ assert.ok(source.includes('ctx.clearRect(0,0,800,1000)'));
 });
