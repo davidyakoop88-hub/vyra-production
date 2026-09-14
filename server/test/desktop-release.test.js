@@ -22,9 +22,19 @@ test('uppdateraren känns igen: ett anrop utan webbläsarhuvuden är inte en web
   assert.equal(fromBrowser({origin:'   '}),false,'tomt huvud räknas inte');
 });
 test('varje webbläsarhuvud för sig räcker för att grinden ska gälla',()=>{
-  for(const namn of ['origin','referer','sec-fetch-site','sec-fetch-mode','sec-fetch-dest','sec-ch-ua'])
+  for(const namn of ['origin','referer','sec-fetch-site','sec-fetch-dest','sec-ch-ua'])
     assert.equal(fromBrowser({[namn]:'x'}),true,`${namn} ensamt skulle räknats som webbläsare`);
 });
+// FACIT, UPPMATT mot postman-echo 2026-09-14: exakt detta skickar Node:s fetch — alltsa exakt
+// vad uppdateraren i den installerade appen skickar. Provet fanns inte forst, och da slank
+// 'sec-fetch-mode' in i webblasarlistan: uppdateraren fick 401 anda, och curl (som inte skickar
+// nagot sec-fetch-huvud) visade gront. Ett prov med RATT klient hade fallit direkt.
+test('Node:s fetch — uppdateraren — klassas ALDRIG som webbläsare',()=>{
+  assert.equal(fromBrowser({'accept':'*/*','accept-encoding':'gzip, br','accept-language':'*','host':'api.example','sec-fetch-mode':'cors','user-agent':'node'}),false,'sec-fetch-mode:cors kommer fran Node:s fetch och far inte rakna som webbläsare');
+  assert.equal(fromBrowser({'sec-fetch-mode':'cors'}),false);
+  assert.equal(fromBrowser({'user-agent':'node'}),false);
+});
+
 test('ett riktigt webbläsaranrop från hemsidan möter grinden',()=>{
   assert.equal(fromBrowser({origin:'https://vyralive.app',referer:'https://vyralive.app/','sec-fetch-site':'same-origin','sec-fetch-mode':'navigate','sec-fetch-dest':'document',cookie:'vyra=1'}),true);
 });
