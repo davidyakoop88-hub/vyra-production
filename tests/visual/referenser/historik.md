@@ -109,3 +109,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Referensbilder for de fem djurburkarna efter regenererad katalogkarta (PR #413)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-14 — 6 referenser skrivna
+
+- **Motiv:** REGI-stilla for battlemvp-celebration (#418, 6 nycklar)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
