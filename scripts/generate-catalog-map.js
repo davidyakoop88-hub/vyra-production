@@ -38,7 +38,12 @@ const git = (...a) => { try { return execFileSync('git', a, { cwd: ROOT, encodin
 // overlamningen samlad pa ett stalle" - en dokumentationscommit utan PR-nummer - medan den
 // riktiga definitionen i media.js inte rorts sedan augusti. Att kartan namner sina egna nycklar
 // gor det dessutom sjalvrefererande: varje karta-commit hade blivit nasta kartas svar.
-const HISTORIK_OMRADE = [':(exclude)docs', ':(exclude)tests', ':(exclude)*.md'];
+// Positive text-source paths also keep -S from reading historical media blobs. In a partial
+// clone even a failed literal lookup otherwise downloads every old image/video before fallback.
+const HISTORIK_OMRADE = [
+  ...['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'html', 'css', 'json'].map(ext => ':(glob)**/*.' + ext),
+  ':(exclude)docs', ':(exclude)tests', ':(exclude)*.md'
+];
 
 // Alla nycklar finns inte som literaler. Gift Campaign bygger sin nyckel av delar i media.js -
 // `'catalog:giftcampaign:' + tema + ':' + orientering` - sa `-S catalog:giftcampaign:neon` traffar

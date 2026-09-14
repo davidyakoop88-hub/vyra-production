@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 192,
+ "antal": 197,
  "senaste": {
-  "motiv": "Record approved campaign aura designs and add missing references for existing approved MVP designs; no runtime changes.",
-  "nycklar": 12,
-  "tid": "2026-09-12T21:58:15.050Z"
+  "motiv": "Referensbilder for de fem djurburkarna efter regenererad katalogkarta (PR #413)",
+  "nycklar": 5,
+  "tid": "2026-09-14T14:28:47.549Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -779,6 +779,26 @@
   "catalog:giftcampaign:platinum:portrait": {
    "matt": "245x560",
    "fyllnad": 17.18
+  },
+  "catalog:giftjar:dragon": {
+   "matt": "250x313",
+   "fyllnad": 59.3
+  },
+  "catalog:giftjar:lion": {
+   "matt": "250x313",
+   "fyllnad": 55.86
+  },
+  "catalog:giftjar:panther": {
+   "matt": "250x313",
+   "fyllnad": 60.69
+  },
+  "catalog:giftjar:peacock": {
+   "matt": "250x313",
+   "fyllnad": 59.48
+  },
+  "catalog:giftjar:phoenix": {
+   "matt": "250x313",
+   "fyllnad": 63.8
   }
  }
 }

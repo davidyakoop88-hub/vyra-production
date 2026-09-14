@@ -109,8 +109,8 @@ const CONTRACT = [
     marker: "type:'templateLikeFountain'", bindings: { id: 'x' } },
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',
     marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } },
-  { name: 'Gift Jar · Crystal', key: 'catalog:giftjar:crystal',
-    marker: "type:'templateGiftJar'", bindings: { id: 'x', model: 'crystal' } },
+  { name: 'Gift Jar · Royal Lion', key: 'catalog:giftjar:lion',
+    marker: "type:'templateGiftJar'", bindings: { id: 'x', model: 'lion' } },
   // Guardian Emblem ar en NY familj, inte en migrerad — den har aldrig funnits som en literal i
   // media.js. Alla fyra praktstegen star med, for det ar matten och praktnivan som skiljer dem at
   // och ett kontrakt pa bara ett steg hade latit de andra tre glida.

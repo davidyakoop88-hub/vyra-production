@@ -27,7 +27,7 @@ const ROOT = path.join(__dirname, '..');
 
 test.after(closeAll);
 
-function katalogMedMiniatyrer({ classics = false } = {}) {
+function katalogMedMiniatyrer({ classics = false, jars = false } = {}) {
   const h = createDom({ url: 'https://vyralive.app/studio.html', state: { widgets: [], projectName: 'thumb' } });
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
 
@@ -57,6 +57,15 @@ function katalogMedMiniatyrer({ classics = false } = {}) {
   }
   h.load('gift-fireworks.js');
   h.load('premium-final.js');
+  if (jars) {
+    h.window.VyraGiftJarTextures = { load: () => new Promise(() => {}) };
+    h.load('gift-jar-animals.js');
+    h.window.__jarStills = [];
+    h.window.VyraAnimalGiftJars.still = (canvas, widget) => {
+      h.window.__jarStills.push({ canvas, widget });
+      return Promise.resolve();
+    };
+  }
   h.load('overlay-preview.js');
   // OVERLAY-vyn: styleOverlayCatalogCards() letar efter .overlay-widget-gallery .widget-catalog
   // och gor ingenting i editorvyn. Med view='editor' ritades noll miniatyrer oavsett kod.
@@ -134,4 +143,18 @@ test('fyrverkerikorten ritar den frysta canvasfinalen utan live-timers', () => {
   assert.equal(h.window.VyraFireworks.pending(),0);
   assert.equal(h.window.VyraSupernova.active(),0);
   assert.equal(h.window.eval('state.widgets.length'),0);
+});
+
+test('animal jar thumbnails paint the canvas inside each card without adding live widgets', () => {
+  const h = katalogMedMiniatyrer({ jars: true });
+  for (const model of ['lion', 'dragon', 'phoenix', 'panther', 'peacock']) {
+    const paint = h.window.__jarStills.find(p => p.widget.jarModel === model);
+    assert.ok(paint, model + ' did not request a static thumbnail');
+    assert.equal(paint.canvas.width, 800);
+    assert.equal(paint.canvas.height, 1000);
+    const root = paint.canvas.getRootNode();
+    assert.ok(root.host?.classList.contains('owg-thumb') || paint.canvas.closest('.owg-thumb'),
+      model + ' canvas escaped its thumbnail root');
+  }
+  assert.equal(h.window.eval('state.widgets.length'), 0);
 });

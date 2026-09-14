@@ -242,8 +242,13 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad igen samma dag: gift-alert-frames.css fick omslaget i flodet (Follower/Fan Level),
   // och media.js bar dess versionsstrang.
   // Ny Guardian-modell: fabriken, media.js och dess syskonmodul laddas som samma version.
-  assert.match(studio, /[^-]media\.js\?v=20260912-[4-9]/);
-  assert.match(studio, /widget-factory\.js\?v=20260912-[4-9]/);
+  for (const file of ['media.js', 'widget-factory.js']) {
+    const version = studio.match(new RegExp('src=["\']' + file.replace('.', '\\.') + '\\?v=(\\d{8})-(\\d+)["\']'));
+    assert.ok(version, file + ' must have a dated cache version');
+    const date = Number(version[1]), revision = Number(version[2]);
+    assert.ok(date > 20260912 || (date === 20260912 && revision >= 4),
+      file + ' must retain cache freshness from 20260912-4 or later');
+  }
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
