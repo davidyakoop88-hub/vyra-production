@@ -9,3 +9,22 @@ const GRUND={DESKTOP_DOWNLOAD_URL:'https://downloads.example/VYRA-Setup.exe',DES
 test('utan DESKTOP_STORE_URL saknas storeUrl helt — .exe-vägen är oförändrad',()=>{const out=release(GRUND);assert.equal('storeUrl' in out,false);assert.equal(out.url,'https://downloads.example/VYRA-Setup.exe');assert.equal(release({...GRUND,DESKTOP_STORE_URL:'   '}).storeUrl,undefined)});
 test('DESKTOP_STORE_URL följer med som storeUrl när den pekar på apps.microsoft.com',()=>{const out=release({...GRUND,DESKTOP_STORE_URL:'https://apps.microsoft.com/detail/9PPKZN2SCJM2'});assert.equal(out.storeUrl,'https://apps.microsoft.com/detail/9PPKZN2SCJM2');assert.equal(out.url,'https://downloads.example/VYRA-Setup.exe','302-målet får inte bytas — det är .exe-kanalen');assert.equal(release({...GRUND,DESKTOP_STORE_URL:'https://apps.microsoft.com/detail/9PPKZN2SCJM2?hl=sv-SE&gl=SE'}).storeUrl,'https://apps.microsoft.com/detail/9PPKZN2SCJM2?hl=sv-SE&gl=SE')});
 test('en Store-länk som inte är Microsofts produktsida stoppas',()=>{for(const fel of['http://apps.microsoft.com/detail/9PPKZN2SCJM2','https://apps.microsoft.com/','https://apps.microsoft.com/store/detail/9PPKZN2SCJM2','https://example.com/detail/9PPKZN2SCJM2','https://user:pw@apps.microsoft.com/detail/9PPKZN2SCJM2','ms-windows-store://pdp/?productid=9PPKZN2SCJM2','inte en url'])assert.throws(()=>release({...GRUND,DESKTOP_STORE_URL:fel}),error=>error.status===503&&/DESKTOP_STORE_URL/.test(error.message),`skulle stoppats: ${fel}`)});
+
+// UPPDATERARENS VÄG. Grinden i 5b05da7 dödade självuppdateringen tyst: uppdateraren skickar ingen
+// cookie och fick 401. Proven låser fast BÅDA sidorna — att uppdateraren släpps igenom, och att
+// hemsidans webbläsaranrop fortfarande möter grinden. Faller det ena är fixen verkningslös; faller
+// det andra är premiumgrinden borta.
+const {fromBrowser}=require('../desktop-release');
+test('uppdateraren känns igen: ett anrop utan webbläsarhuvuden är inte en webbläsare',()=>{
+  assert.equal(fromBrowser({}),false,'ren Node-fetch — uppdateraren');
+  assert.equal(fromBrowser({accept:'application/json','user-agent':'node'}),false,'accept och user-agent gör det inte till en webbläsare');
+  assert.equal(fromBrowser(undefined),false);
+  assert.equal(fromBrowser({origin:'   '}),false,'tomt huvud räknas inte');
+});
+test('varje webbläsarhuvud för sig räcker för att grinden ska gälla',()=>{
+  for(const namn of ['origin','referer','sec-fetch-site','sec-fetch-mode','sec-fetch-dest','sec-ch-ua'])
+    assert.equal(fromBrowser({[namn]:'x'}),true,`${namn} ensamt skulle räknats som webbläsare`);
+});
+test('ett riktigt webbläsaranrop från hemsidan möter grinden',()=>{
+  assert.equal(fromBrowser({origin:'https://vyralive.app',referer:'https://vyralive.app/','sec-fetch-site':'same-origin','sec-fetch-mode':'navigate','sec-fetch-dest':'document',cookie:'vyra=1'}),true);
+});
