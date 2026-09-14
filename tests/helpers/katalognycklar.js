@@ -75,6 +75,15 @@ const UTAN_REFERENS = {
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
+  'catalog:battlemvp:celebration:':
+    'sex firanden i ständig rörelse. Uppmätt 2026-09-14 i referensjobbet (run 34865429397): '
+    + '40–44 olika bildrutor på ~14 s och ingen kom igen, i ingen av de sex varianterna. '
+    + 'Bilderna är INTE tomma — 42,33 % (wings) till 65,72 % (moon) är målat — så det är inte '
+    + 'en släckt widget utan en som aldrig står still. REGI-posten för templateBattleMvp når '
+    + 'inte den rörelse #414 lade till. En post med prefixmatchning täcker alla sex nycklarna; '
+    + 'sex separata poster hade sprängt taket. Hålet ska stängas genom att REGI får en '
+    + 'stilla-variant, motsvarande VyraAnimalGiftJars.still() som #413 gav giftjar — se '
+    + 'uppföljningsissuen, inte genom att höja taket.',
 };
 
 const utanReferens = nyckel =>
