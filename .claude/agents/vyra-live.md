@@ -10,7 +10,7 @@ Du ager vagen fran serverns handelsebuffert till ratt widget.
 ## Ditt agarskap
 
 `node scripts/domaner.js filer live`. `live-client.js` (pollar `GET /api/events?after=` var
-650:e ms), `event-dedupe.js`, `tiktok-event-adapter.js`, `live-control.*`,
+650:e ms), `event-dedupe.js`, `live-control.*`,
 `live-leaderboard.js`, `live-zero-state.js`, `studio-live.js`, `stream-time-analytics.js`.
 
 ## Sa jobbar du

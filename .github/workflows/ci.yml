@@ -147,6 +147,14 @@ jobs:
       - name: 'Hela klientsviten'
         run: npm test
 
+      # `npm test` ar `node --test tests/*.test.js` och tacker alltsa INTE scripts/test/. De sex
+      # filerna dar kordes av ingenting alls fram till #352 — varken ett npm-skript eller CI. Ett
+      # prov som inte kors ar samre an inget prov, for det svarar "ja" pa fragan om tackning utan
+      # att ge nagon. Nar de val kordes foll web-assets.test.js direkt: den resolvade rotabsoluta
+      # referenser som "/favicon.ico" mot filsystemets rot i stallet for repotroten. Kostar ~0,6 s.
+      - name: 'Skriptsviten (scripts/test)'
+        run: npm run test:skript
+
       # Lackagevakten kors i en RIKTIG webblasare, inte i jsdom.
       #
       # jsdom har ingen Web Locks-implementation, sa session-state faller tillbaka pa read-only och
