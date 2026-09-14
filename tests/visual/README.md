@@ -1,6 +1,28 @@
 # Visuell regressionsvakt
 
 
+## Vad vakten INTE täcker för battlemvp-firandena (2026-09-14, #418)
+
+De sex nycklarna under `catalog:battlemvp:celebration:` fotograferas genom en egen REGI-post
+(`tests/helpers/katalognycklar.js`). Den tar bort `.mvc-charge` och `.mvc-finale` innan bilden tas.
+
+**Följden: partiklarna och laddningsglödet vaktas inte.** `.mvc-finale` är 20 element med egna
+fördröjningar och drift, `.mvc-charge` är ett pulserande glöd — båda icke-deterministiska. Mätt i
+referensjobbet innan REGI-posten fanns: 40–44 olika bildrutor på ~14 sekunder, och ingen kom igen,
+i någon av de sex varianterna.
+
+Valet är inte en genväg utan produktens eget: `@media(prefers-reduced-motion:reduce)` i
+`battle-mvp-celebrations.css` döljer exakt samma två lager för användare som bett om mindre
+rörelse. REGI-posten replikerar den regeln i stället för att hitta på en egen.
+
+**Vakten täcker alltså komposition, konstverk, porträtt och text — inte partikeleffekten.** Går
+partiklarna sönder säger inget prov ifrån. Det är smalare än full täckning, och medvetet valt
+framför alternativet: sex nycklar helt utan vakt.
+
+Frystiden 7500 ms är vald ur keyframes, inte på känsla — se motiveringen i REGI-posten.
+Slutbilden duger inte: `mvc-show` håller opacity 1 till 96 % och släcker sedan till 0.
+
+
 ## Fas 3 och 4 — bevisen att vakten faktiskt vaktar (2026-08-20)
 
 Vakten jämför mot incheckade referensbilder, och de gäller **bara** på den Chromium-build de togs
