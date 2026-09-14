@@ -177,6 +177,10 @@ nav a:hover{color:#fff}
 
 .trust{display:flex;justify-content:center;gap:26px;color:var(--muted-dim);font-size:11.5px}
 .trust span:before{content:'✓';color:#a877e0;margin-right:7px;font-weight:700}
+/* Hamta-lanken i trust-raden. Egen markor: .trust span:before traffar bara <span>, aldrig <a>. */
+.trust-hamta{color:#c9a9f5;font-weight:700;text-decoration:none;border-bottom:1px solid #a855f766;transition:.15s}
+.trust-hamta:before{content:'⭳';color:#a877e0;margin-right:7px;font-weight:700}
+.trust-hamta:hover,.trust-hamta:focus-visible{color:#fff;border-bottom-color:#fff}
 
 /* ---------- product mockup ---------- */
 .product{max-width:1160px;height:650px;margin:80px auto 0;border:1px solid #3a2848;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
@@ -551,7 +555,19 @@ nav a:hover{color:#fff}
 /* Prisbadge i heron. Priset lag i en egen sektion langre ner; nar den sektionen togs bort maste
    priset folja med hit — det ar det enda av landningssidans innehall som bar ett loften.
    Kvalificeringen behaller klassen .price-fineprint sa WCAG-vakten fran PR 171 mater samma sak. */
-.hero-pris{display:flex;flex-direction:column;align-items:center;gap:6px;margin:22px auto 0;max-width:520px;text-align:center}
+/* BARANDE YTA pa .hero-prisrad ovan (2026-09-13, uppmatt — inte gissat).
+   Lagerordningen var ALDRIG fel: elementsFromPoint mitt i varje prisrad ger textnoden overst och
+   INGEN gava i stacken (.hero-prisrad och .hero-mobil-scen har bada z-index:1, och prisraden
+   kommer senare i DOM:en). Felet ar LASBARHET. Gavoringen ar 3D-transformerad och svammar 120 px
+   UNDER sin egen box — scenen slutar pa y 554, understa gavan pa y 674 vid 1366 px — sa Zeus,
+   Phoenix och Leon_and_Lion malas bakom texten vid 1280-1400 px, de vanligaste laptopbredderna.
+   Texten lag overst, men mot hogkontrastgrafik utan egen botten.
+   Kortet bar ALLA TRE raderna: priset, social-proof och trust. Forsta fixen platade bara priset,
+   och da stod en gava kvar bakom social-proof vid 1366 (uppmatt 1 fore, 1 efter).
+   Materialet ar .login-kort:s, sa kortet laser som formsprak och inte som plaster.
+   HOJDEN STAR STILLA med flit — uppmatt radbotten far inte flytta sig pa 1280/1366/1550. Raden
+   har hamnat under vecket TVA ganger forut och mats av framsida-logo.browser.test.js. */
+.hero-pris{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto;max-width:520px;text-align:center}
 .hero-pris b{font:800 20px/1 var(--font-display);color:var(--text);letter-spacing:-.01em}
 .hero-pris b span{font:600 12px/1 inherit;color:var(--muted);margin-left:3px}
 
@@ -620,7 +636,11 @@ main,.mini-sidfot{position:relative;z-index:1}
 /* Prisraden bor langst ner i mitten (Davids skiss 2026-08-20): heron ar flex-kolumn, sa
    margin-top:auto trycker raden mot sidfoten och friligger mitten for bilden som kommer.
    Huvudbudskapet ar avsiktligt provperioden, inte beloppet. */
-.hero-prisrad{margin-top:auto;position:relative;z-index:1;text-align:center;padding:24px 0 20px}
+.hero-prisrad{margin:auto auto 0;position:relative;z-index:1;text-align:center;
+  width:fit-content;max-width:min(560px,92vw);
+  padding:15px 30px 16px;border-radius:20px;background:linear-gradient(165deg,#171022f2,#0d0815e6);
+  border:1px solid #3a284899;backdrop-filter:blur(12px);
+  box-shadow:0 20px 56px -28px #000,0 0 0 1px #ffffff0a inset}
 .pris-fri{display:block;font:700 21px/1.3 var(--font-display);color:#fff;letter-spacing:.01em;
   text-shadow:0 0 20px #a78bfa80,0 0 44px #ec489940;margin-bottom:4px}
 
@@ -710,7 +730,8 @@ main,.mini-sidfot{position:relative;z-index:1}
   .login-knapp{padding:11px 0}
   .login-fin{margin-top:10px}
   .hero-mobil{width:min(232px,28vw)}
-  .hero-prisrad{padding:8px 0 10px}
+  .hero-prisrad{padding:9px 22px 10px;border-radius:16px}
+  .hero-pris{gap:3px}
   .pris-fri{font-size:18px}
   .social-proof{margin:0}
   .trust{margin-top:4px}

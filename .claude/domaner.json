@@ -19,7 +19,8 @@
         "studio.html",
         "studio.js",
         "studio.css",
-        "app.js",
+        "landing-hamta.js",
+        "vyra-matning.js",
         "layout.html",
         "layout-format.js",
         "layout-safe.js",
@@ -116,7 +117,10 @@
         "widget-factory.js",
         "widget-fas.js",
         "battle-mvp-celebrations.js",
-        "gift-supernova-panel.js"
+        "gift-supernova-panel.js",
+        "gift-jar-animals.js",
+        "gift-jar-animals.css",
+        "gift-jar-textures.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -213,7 +217,8 @@
         "performance-guard.css",
         "legal.css",
         "terms.html",
-        "privacy.html"
+        "privacy.html",
+        "favicon.ico"
       ],
       "tester": [
         "tests/css-struktur.test.js",
@@ -325,7 +330,6 @@
         "live-zero-state.js",
         "studio-live.js",
         "event-dedupe.js",
-        "tiktok-event-adapter.js",
         "stream-time-analytics.js"
       ],
       "tester": [
@@ -343,8 +347,7 @@
         "tests/panel-live-path.test.js",
         "tests/leaderboard-like-count.test.js",
         "tests/browser/likecount-en-kontroll.browser.test.js",
-        "tests/browser/command-center-*.browser.test.js",
-        "server/test/tiktok-event-adapter.test.js"
+        "tests/browser/command-center-*.browser.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"

@@ -6,7 +6,7 @@
 2. `tiktok-bridge/normalizer.js` gör användare, gifts, likes, prenumerationer, tittare och matchdata till säkra VYRA-fält.
 3. Eventet skickas till lokal server och, när molnvariabler finns, till det autentiserade molningestet.
 4. Redis deduplicerar och distribuerar eventet till Studio/OBS via SSE.
-5. `tiktok-event-adapter.js` aktiverar premium-gåvan och meddelar övriga live-widgets.
+5. Klienten dirigerar eventet till widgetarna via `live-client.js` och `event-dedupe.js`.
 
 ## Stödda event
 

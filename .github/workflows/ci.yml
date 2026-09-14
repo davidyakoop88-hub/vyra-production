@@ -126,6 +126,18 @@ jobs:
   # executes on this CI runner, which is exactly where a vulnerability in it would matter.
   test-client:
     runs-on: ubuntu-latest
+    # TAK MOT HANGNING, inte mot langsamhet. Utan detta galler GitHubs standard pa 360 min, och
+    # det ar just det har jobbet som historiskt haft tva eviga loopar gomda bakom grona prov — en
+    # hangning hade brunnit sex timmars runner-tid innan nagon markte nagot.
+    #
+    # 120 ar valt ur MATNINGEN, inte pa kansla. 29 avslutade korningar 2026-09-14, de sju lyckade:
+    #   67, 67, 68, 68, 69, 71, 72 min  (median 68,0, max 72,5)
+    # Tyngsta steget ar "Visuell · alla katalognycklar mot referens" och sviten vaxer over tid.
+    # 90 min hade bara varit 1,24x det uppmatta maxet — en trog runner hade tippat over det och
+    # gett ett dott jobb utan att nagot var fel. Den sortens flackning ar dyrast i det har repot,
+    # for den lar en att sluta lita pa rott. 120 ar 1,65x maxet och fangar anda en hangning pa en
+    # tredjedel av standardens tid.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -146,6 +158,14 @@ jobs:
 
       - name: 'Hela klientsviten'
         run: npm test
+
+      # `npm test` ar `node --test tests/*.test.js` och tacker alltsa INTE scripts/test/. De sex
+      # filerna dar kordes av ingenting alls fram till #352 — varken ett npm-skript eller CI. Ett
+      # prov som inte kors ar samre an inget prov, for det svarar "ja" pa fragan om tackning utan
+      # att ge nagon. Nar de val kordes foll web-assets.test.js direkt: den resolvade rotabsoluta
+      # referenser som "/favicon.ico" mot filsystemets rot i stallet for repotroten. Kostar ~0,6 s.
+      - name: 'Skriptsviten (scripts/test)'
+        run: npm run test:skript
 
       # Lackagevakten kors i en RIKTIG webblasare, inte i jsdom.
       #

@@ -107,13 +107,11 @@
     // Gift Jar. Till skillnad fran temaregistren ovan bar varje modell bade farg OCH symbol:
     // burken ritas ur dem — accent ar glaset, light ar innehallet, symbol ar markningen.
     'giftjar.model': {
-      crystal:{label:'Crystal Jar',accent:'#b98cff',light:'#76e7ff',symbol:'◆'},
-      royal:{label:'Royal Jar',accent:'#e7b85b',light:'#fff0a8',symbol:'♛'},
-      neon:{label:'Neon Jar',accent:'#ff3bd4',light:'#36e8ff',symbol:'◉'},
-      fire:{label:'Fire Jar',accent:'#ff4b24',light:'#ffc13b',symbol:'▲'},
-      ice:{label:'Ice Jar',accent:'#42cfff',light:'#dcfbff',symbol:'❄'},
-      heart:{label:'Heart Jar',accent:'#ff4f9c',light:'#ffd0e5',symbol:'♥'},
-      galaxy:{label:'Galaxy Jar',accent:'#8a5cff',light:'#54d8ff',symbol:'✦'}
+      lion:{label:'Royal Lion',accent:'#f4c971',light:'#fff0a8',symbol:'♛'},
+      dragon:{label:'Ember Dragon',accent:'#ff9c58',light:'#ffd896',symbol:'◆'},
+      phoenix:{label:'Phoenix Rise',accent:'#ffc4a1',light:'#ffe1ba',symbol:'✦'},
+      panther:{label:'Midnight Panther',accent:'#a0f2d1',light:'#dcfbff',symbol:'◆'},
+      peacock:{label:'Sapphire Peacock',accent:'#8fdded',light:'#f4cb7e',symbol:'✦'}
     },
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
     // they are geometry as much as colour, and one copy is the whole point.
@@ -370,7 +368,7 @@
     'giftjar.model': v => ({
       type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
       jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
-      jarCount: 0, jarCapacity: 50, jarShowCounter: true, jarAutoResetMs: 0
+      jarCount: 0, jarCapacity: 50, jarShowCounter: false, jarAutoResetMs: 0
     })
   };
 

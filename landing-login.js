@@ -160,6 +160,10 @@
     try {
       const d = await api('/api/auth/' + lage, payload);
       if (d.csrfToken) sessionStorage.setItem('vyra-csrf', d.csrfToken);
+      // Tratthandelsen FORE mfaSteg() och FORE slappIn(): bada lamnar den har grenen, och slappIn
+      // navigerar dessutom bort. Skickas den senare hinner sidan bytas och handelsen tappas.
+      // Villkoret ar `lage === 'register'` — en inloggning ar inte en registrering.
+      if (lage === 'register') window.VyraMat && window.VyraMat.handelse('registrering');
       if (d.mfaRequired) return mfaSteg();
       return slappIn(() => { location.href = 'studio.html' });
     } catch (err) {

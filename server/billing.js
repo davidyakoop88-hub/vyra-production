@@ -22,6 +22,7 @@
 // INGEN SDK. PayPals REST-API är fyra anrop (token, skapa, hämta, verifiera) plus tre
 // tillståndsbyten. `fetch` finns i Node ≥ 18. Ett npm-paket för det hade bara varit en till
 // versionsdrift att vakta.
+const Matning=require('./matning');
 const PLANS={free:{overlays:0,widgets:0,mediaBytes:0,members:1},premium:{overlays:50,widgets:500,mediaBytes:50*1024**3,members:10}};
 const API={live:'https://api-m.paypal.com',sandbox:'https://api-m.sandbox.paypal.com'};
 
@@ -285,21 +286,35 @@ async function webhook(pool,raw,headers){
     const inserted=await c.query('INSERT INTO billing_events(stripe_event_id,event_type) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING stripe_event_id',[event.id,event.event_type]);
     if(!inserted.rowCount){await c.query('COMMIT');return{duplicate:true,type:event.event_type}}
     const type=String(event.event_type||''),resource=event.resource||{};
+    // Tratthandelser samlas HAR och skickas EFTER commit. Aldrig i transaktionen: en matning far
+    // inte kunna rulla tillbaka en betalning, och natverkslatens far inte halla raden last.
+    // Duplikatgrenen ovan har redan returnerat, sa allt harifran kors exakt en gang per handelse.
+    const tratt=[];
     let workspaceId=null;
     if(type.startsWith('BILLING.SUBSCRIPTION.')){
       workspaceId=resource.custom_id||await workspaceForSubscription(c,resource.id);
       if(workspaceId&&resource.id){
         const{status,fields}=await upsertFromPaypal(c,workspaceId,resource,type==='BILLING.SUBSCRIPTION.RE-ACTIVATED'?{cancelAtPeriodEnd:false}:{});
-        if(type==='BILLING.SUBSCRIPTION.ACTIVATED'&&fields.inTrial)await queueNotification(c,workspaceId,'trial_started',`${event.id}:trial_started`,{paypalEventId:event.id});
+        // PROVPERIOD ar INTE BETALD. ACTIVATED fyrar aven nar gratisperioden borjar, och da har
+        // ingen pengar bytt hander — uppmatt 2026-09-09: provkopet drog 0 USD men rapporterades
+        // som active. Lag bada under namnet 'betald' sag intaktskonverteringen systematiskt battre
+        // ut an den ar. Pengarna kommer i PAYMENT.SALE.COMPLETED nedan.
+        if(type==='BILLING.SUBSCRIPTION.ACTIVATED'&&fields.inTrial){await queueNotification(c,workspaceId,'trial_started',`${event.id}:trial_started`,{paypalEventId:event.id});tratt.push('provperiod')}
         if(type==='BILLING.SUBSCRIPTION.PAYMENT.FAILED')await queueNotification(c,workspaceId,'payment_failed',`${event.id}:payment_failed`,{paypalEventId:event.id});
         if(status==='canceled')await queueNotification(c,workspaceId,'subscription_ended',`${event.id}:subscription_ended`,{paypalEventId:event.id});
       }
     }else if(type==='PAYMENT.SALE.COMPLETED'){
       workspaceId=await workspaceForSubscription(c,resource.billing_agreement_id);
       const amount=Number(resource.amount?.total||0);
-      if(workspaceId&&amount>0)await queueNotification(c,workspaceId,'payment_success',`${event.id}:payment_success`,{paypalEventId:event.id,amount});
+      // FORST HAR har nagon faktiskt betalat. Galler bade forsta dragningen efter provperioden
+      // och varje fornyelse — Plausible skiljer dem inte at, sa 'betald' ar antal DRAGNINGAR.
+      if(workspaceId&&amount>0){await queueNotification(c,workspaceId,'payment_success',`${event.id}:payment_success`,{paypalEventId:event.id,amount});tratt.push('betald')}
     }
     await c.query('COMMIT');
+    // Efter commit, utan await: PayPal ska inte behova vanta pa var matning, och en langsam
+    // webhook gors om. Matning.handelse() kastar aldrig; .catch() star som sista forsvar mot en
+    // ohanterad rejection vid en framtida andring.
+    for(const namn of tratt)Matning.handelse(namn).catch(()=>{});
     return{duplicate:false,type};
   }catch(error){await c.query('ROLLBACK');throw error}finally{c.release()}
 }

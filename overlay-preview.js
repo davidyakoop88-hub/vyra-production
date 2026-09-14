@@ -276,6 +276,12 @@ function owgRenderCardThumb(btn) {
     if (campaign) window.VyraCampaignAuraEngine.still(campaign, preview);
   }
 
+  // Animal jars paint their catalog canvas once, without starting a live gift simulation.
+  if (preview?.type === 'templateGiftJar' && window.VyraAnimalGiftJars?.still) {
+    const jar = owgThumbRot(thumb).querySelector('.animal-gift-jar canvas');
+    if (jar) window.VyraAnimalGiftJars.still(jar, preview);
+  }
+
   // Live fireworks deliberately render an empty host until an event arrives. Catalog cards
   // use the effect's pure, frozen preview builder inside their own root instead of firing an event.
   if (preview?.type === 'templateGiftFireworks' && window.VyraFireworks?.renderPreview) {

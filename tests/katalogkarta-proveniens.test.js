@@ -7,6 +7,8 @@
 // sa ifran. Provet nedan bevakar de tre orsakerna var for sig.
 const { describe, it } = require('node:test'), assert = require('node:assert/strict');
 const { familj, prefixkandidater, prUrAmne, HISTORIK_OMRADE } = require('../scripts/generate-catalog-map.js');
+const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
 describe('katalogkarta · proveniens', () => {
   // Att bara krava require() ar inte trivialt: generatorn startade forr en webblasare direkt vid
@@ -21,7 +23,34 @@ describe('katalogkarta · proveniens', () => {
     // docs/tech-debt.md och i kartan sjalv, sa den nyaste dokumentationscommiten vann over koden
     // som definierar nyckeln. Att kartan namner sina egna nycklar gjorde det sjalvrefererande.
     it('utesluter docs, tests och all markdown', () => {
-      assert.deepStrictEqual(HISTORIK_OMRADE, [':(exclude)docs', ':(exclude)tests', ':(exclude)*.md']);
+      for (const excluded of [':(exclude)docs', ':(exclude)tests', ':(exclude)*.md']) {
+        assert.ok(HISTORIK_OMRADE.includes(excluded), excluded + ' must remain excluded');
+      }
+    });
+
+    it('Git selects text source at the root and in subdirectories, never binary assets', () => {
+      const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'vyra-provenance-'));
+      try {
+        execFileSync('git', ['init', '--quiet', temp]);
+        const source = ['media.js', 'studio.html', 'widget.css', 'catalog.json', 'src/widget.ts',
+          'src/widget.tsx', 'src/widget.jsx', 'src/loader.mjs', 'src/loader.cjs'];
+        const excluded = ['assets/jar.png', 'assets/show.mp4', 'assets/audio.mp3', 'assets/font.woff2',
+          'docs/example.js', 'tests/example.js', 'DAVID.md'];
+        for (const file of [...source, ...excluded]) {
+          const full = path.join(temp, file);
+          fs.mkdirSync(path.dirname(full), { recursive: true });
+          fs.writeFileSync(full, 'catalog:giftjar');
+        }
+        const selected = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '--', ...HISTORIK_OMRADE],
+          { cwd: temp, encoding: 'utf8' }).trim().split(/\r?\n/).sort();
+        assert.deepStrictEqual(selected, source.sort());
+      } finally {
+        const target = path.resolve(temp), parent = path.resolve(os.tmpdir());
+        if (path.dirname(target) !== parent || !path.basename(target).startsWith('vyra-provenance-')) {
+          throw new Error('Unexpected provenance fixture directory');
+        }
+        fs.rmSync(target, { recursive: true, force: true });
+      }
     });
 
     it('utesluter kartan sjalv, annars blir varje karta-commit nasta kartas svar', () => {
