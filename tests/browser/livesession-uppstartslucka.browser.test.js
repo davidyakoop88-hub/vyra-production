@@ -157,6 +157,13 @@ async function vantaPa(villkor, meddelande, { timeout = 15000, intervall = 50 } 
 
 const prov = (namn, fn) => test('livesession: ' + namn, { skip, timeout: 90000 }, fn);
 
+// GRANSEN AR DET YTTRE PROVET, inte de inre waitForFunction-anropen. De inre stod pa 15 s och
+// foll tva ganger natten till 2026-09-06 (#348) — bada gangerna flackning, bevisat av att en
+// SENARE commit som innehaller den misstankta ar gron. Sviten sjalv mattes till 36, 36 och 46
+// minuter for samma kod: den har ingen stabil langd att kalibrera en 15-sekundersgrans mot.
+// Talet beskrev alltsa runnerns trangsel, inte produkten. 60 s ligger under det yttre 90 s-provet,
+// sa provet faller fortfarande — men pa sin egen grans, inte pa maskinens dagsform.
+
 // Hopslagningsfonstret i overlay-config-sync.js. Namngivet har for att matfonstret nedan ska
 // uttryckas i FILENS egen takt och inte i ett tal som rakar stamma i dag.
 const HOPSLAGNING_MS = 400;
@@ -166,7 +173,7 @@ prov('en kalla som oppnas MITT i en sandning far den ur snapshotet', async () =>
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     assert.equal(await aktiv(sida), S1, 'uppstartsluckan star oppen: kallan vet inte om sandningen');
     assert.equal(JSON.parse(await hanterade(sida))[0], 'live:start:' + S1,
       'snapshotet gick inte genom dedupen');
@@ -179,7 +186,7 @@ prov('snapshot + SSE-ram for SAMMA sandning ger EN behandling', async () => {
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     // Signalen raknas INNE i sidan, inte som GET:ar pa servern. Uppmatt: bootstrap-GET:en gors
     // ocksa av konfig-synken vid varje ateranslutning av strommen, sa antalet hamtningar ar inget
     // matt pa hur manga sandningsbesked som behandlats — 7 mot vantade 4 i forsta korningen.
@@ -201,12 +208,12 @@ prov('en NY sandning byter bild utan omladdning och hamtar om konfigurationen', 
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     const fore = r.lada.hamtningar;
     r.lada.version += 1;                            // serverns nollstallning ar redan committad
     r.skicka('live:start', S2);
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S2, { timeout: 15000 });
+      S2, { timeout: 60000 });
     await vantaPa(() => r.lada.hamtningar > fore,
       'den nya sandningen hamtade aldrig om konfigurationen');
     assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
@@ -236,7 +243,7 @@ prov('en kalla i en pagaende sandning hamtar EN gang — inte i en slinga', asyn
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     // TVA FONSTER, inte ett. Det forsta svaljer uppstartens egna hamtningar oavsett NAR de kommer
     // — att i stallet vanta ut dem forst kraver att man vet hur manga de ar, och det ar precis vad
     // provet inte ska anta. Det andra fonstret mater vilan, och det ska vara HELT stilla.
@@ -261,16 +268,16 @@ prov('live:end nollar den aktiva sandningen, ett gammalt end gor det inte', asyn
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     r.skicka('live:start', S2);
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S2, { timeout: 15000 });
+      S2, { timeout: 60000 });
     r.skicka('live:end', S1);                       // sen ram fran den forra sandningen
     await sida.waitForTimeout(800);
     assert.equal(await aktiv(sida), S2, 'ett gammalt end backade den aktiva sandningen');
     r.skicka('live:end', S2);
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv') === '',
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     assert.equal(await aktiv(sida), '');
   } finally { await sida.close() }
 });
@@ -282,7 +289,7 @@ prov('sandningsramar lacker aldrig ut i den vanliga eventvagen', async () => {
     await sida.evaluate(() => localStorage.removeItem('vyra-live-event'));
     r.skicka('live:start', S1);
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S1, { timeout: 15000 });
+      S1, { timeout: 60000 });
     const sista = await sida.evaluate(() => localStorage.getItem('vyra-live-event'));
     assert.equal(sista, null,
       'en livesession-ram behandlades som ett vanligt liveevent och nadde widgetarna');
@@ -299,7 +306,7 @@ prov('missat live:end: ateranslutningens snapshot avslutar den gamla sandningen'
   const sida = await oppna();
   try {
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S1, { timeout: 15000 });
+      S1, { timeout: 60000 });
 
     // Sandningen tar slut MEDAN strommen ar nere: servern svarar nu null, men ingen ram gar ut.
     r.lada.session = null;
@@ -327,7 +334,7 @@ prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     // Samma ingang som den riktiga vagen tar ett steg efter ingest().
     await sida.evaluate(() => dispatchEvent(new CustomEvent('vyra-live-event', {
       detail: { type: 'gift', giftName: 'Rose', username: '@provgivare', coins: 500, count: 25 } })));
@@ -339,7 +346,7 @@ prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
 
     r.skicka('live:start', S2);
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S2, { timeout: 15000 });
+      S2, { timeout: 60000 });
     const efter = await sida.evaluate(() => ({
       streakCount: window.VyraGiftRecords.streakCount, giftCoins: window.VyraGiftRecords.giftCoins }));
     assert.deepEqual(efter, { streakCount: 0, giftCoins: 0 },
@@ -364,7 +371,7 @@ prov('en gava i samma tick som sandningsbytet lamnar inga spar i de nya rekorden
   const sida = await oppna();
   try {
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S1, { timeout: 15000 });
+      S1, { timeout: 60000 });
     r.lada.version += 1;
     r.lada.state = { widgets: [widget(), kampanj(0)] };
 
@@ -391,7 +398,7 @@ prov('gift campaign-raknaren foljer serverns nollstallning via konfig-omhamtning
   const sida = await oppna();
   try {
     await sida.waitForFunction(() => sessionStorage.getItem('vyra-live-session-aktiv'),
-      null, { timeout: 15000 });
+      null, { timeout: 60000 });
     await sida.evaluate(() => dispatchEvent(new CustomEvent('vyra-live-event', {
       detail: { type: 'gift', giftName: 'Rose', username: '@provgivare', coins: 10, count: 3 } })));
     await sida.waitForFunction(() => state.widgets.some(w => w.giftCurrent0 === 3),
@@ -404,9 +411,9 @@ prov('gift campaign-raknaren foljer serverns nollstallning via konfig-omhamtning
     r.skicka('live:start', S2);
 
     await sida.waitForFunction(id => sessionStorage.getItem('vyra-live-session-aktiv') === id,
-      S2, { timeout: 15000 });
+      S2, { timeout: 60000 });
     await sida.waitForFunction(() => state.widgets.some(w => w.type === 'templateGiftCampaign'
-      && Number(w.giftCurrent0 || 0) === 0), null, { timeout: 15000 });
+      && Number(w.giftCurrent0 || 0) === 0), null, { timeout: 60000 });
     assert.equal(await sida.evaluate(() => window.__markor), 'star-kvar', 'sidan laddades om');
     const text = await sida.evaluate(() => {
       const box = [...document.querySelectorAll('[data-id]')].find(el => el.dataset.id === 'k1');

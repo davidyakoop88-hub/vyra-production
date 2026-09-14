@@ -24,16 +24,33 @@ function localReferences(file) {
     .filter((value) => !/^(?:https?:|mailto:|data:|\/api\/)/i.test(value));
 }
 
+// En referens som borjar med "/" ar rotabsolut MOT WEBBROTEN, alltsa mot repotroten — inte mot
+// filsystemets rot. path.resolve() kastar bort alla tidigare segment sa fort ett argument ar
+// absolut, sa "/favicon.ico" blev C:\favicon.ico (respektive /favicon.ico pa POSIX) och provet
+// rapporterade tre filer som saknade fast de ligger i repot. Felet var osynligt eftersom ingenting
+// korde den har filen — se #352. Darfor ankras rotabsoluta referenser uttryckligen mot ROOT.
+function resolveReference(file, reference) {
+  return reference.startsWith('/')
+    ? path.join(ROOT, reference)
+    : path.resolve(ROOT, path.dirname(file), reference);
+}
+
 test('all browser entry-point resources exist', () => {
   const missing = [];
   for (const file of ENTRY_POINTS) {
     assert.equal(fs.existsSync(path.join(ROOT, file)), true, `${file} is missing`);
     for (const reference of localReferences(file)) {
-      const target = path.resolve(ROOT, path.dirname(file), reference);
-      if (!fs.existsSync(target)) missing.push(`${file} -> ${reference}`);
+      if (!fs.existsSync(resolveReference(file, reference))) missing.push(`${file} -> ${reference}`);
     }
   }
   assert.deepEqual(missing, []);
+});
+
+test('rotabsoluta referenser ankras mot repotroten, inte filsystemets rot', () => {
+  // Vakten mot att felet ovan smyger tillbaka: utan ankringen pekar den forsta ut C:\favicon.ico.
+  assert.equal(resolveReference('index.html', '/favicon.ico'), path.join(ROOT, 'favicon.ico'));
+  assert.equal(resolveReference('index.html', 'assets/logo/vl-ikon.svg'),
+    path.join(ROOT, 'assets', 'logo', 'vl-ikon.svg'));
 });
 
 test('widget fallbacks and gift manifest are packaged', () => {

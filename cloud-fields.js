@@ -14,8 +14,8 @@
 // REGELN HÄRIFRÅN: en ändring av hur ett molnfält översätts görs HÄR, aldrig i en konsument.
 // tests/molnfalt-en-kalla.test.js faller om någon återinför en egen kopia.
 //
-// Filen laddas som ett vanligt skript (repot har inget byggsteg) och följer samma UMD-form som
-// tiktok-event-adapter.js: en global för webbläsaren, module.exports för proven.
+// Filen laddas som ett vanligt skript (repot har inget byggsteg) i UMD-form: en global för
+// webbläsaren, module.exports för proven.
 (function (root) {
   // Dekorativa Unicode-alfabet ("𝓙𝓸𝓴𝓮𝓻𝓸", "𝕁𝕠𝕜𝕖𝕣𝕠") är egna Unicode-tecken i de matematiska
   // alfabeten (U+1D400–1D7FF) och liknande block, och få gränssnittstypsnitt täcker dem.

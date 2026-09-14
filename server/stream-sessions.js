@@ -28,6 +28,8 @@ function fel(status, meddelande) {
   return Object.assign(new Error(meddelande), { status });
 }
 
+const Matning = require('./matning');
+
 function skapaStreamSessions({ pool }) {
   if (!pool) throw new Error('stream-sessions kräver en pool');
 
@@ -555,6 +557,16 @@ function skapaStreamSessions({ pool }) {
     // d) Skapa och peka. Faller INSERT (t.ex. på det partiella unika indexet) rullar hela
     //    transaktionen tillbaka och biljetten förblir oanvänd — den får bara konsumeras om
     //    sessionen verkligen blev till.
+    // Ar det workspacets FORSTA sandning nagonsin? Fragan stalls FORE insert och i SAMMA
+    // transaktion — efterat finns raden och svaret vore alltid nej.
+    //
+    // VARFOR EXAKT HAR OCH INTE I PLAUSIBLE: server/matning.js kan inte skilja besokare at (alla
+    // handelser darifran bar samma server-IP, sa "unique visitors" rullas ihop till 1). Svaret
+    // maste darfor vara exakt redan nar handelsen skickas, och det ar bara databasen som vet.
+    const tidigare = await c.query(
+      'SELECT EXISTS(SELECT 1 FROM stream_sessions WHERE workspace_id=$1) AS fanns', [workspaceId]);
+    const forstaSandningen = !tidigare.rows[0].fanns;
+
     const ny = await c.query(
       'INSERT INTO stream_sessions(workspace_id,room_id,account_key,bridge_run_id) '
       + 'VALUES($1,$2,$3,$4) RETURNING id', [workspaceId, rum, nyckel, kornId]);
@@ -601,7 +613,7 @@ function skapaStreamSessions({ pool }) {
         + 'WHERE workspace_id=$1 AND room_id=$2 AND consumed_at IS NULL', [workspaceId, rum]);
     }
     return { workspaceId, created: true, session: { id: sessionId, roomId: rum },
-      ersatte: aktiv ? aktiv.id : null, biljettAnvand: !!biljett };
+      ersatte: aktiv ? aktiv.id : null, biljettAnvand: !!biljett, forstaSandningen };
   }
 
   // ETT statusbesked = EN transaktion. Generation, seq, workspacelås, sessionsbeslut och pekarflytt
@@ -678,6 +690,16 @@ function skapaStreamSessions({ pool }) {
         resultat.push(await beslutForWorkspace(c, { workspaceId: w, rum, nyckel, kornId }));
       }
       await c.query('COMMIT');
+
+      // EFTER COMMIT, med flit. En matning far aldrig kunna falla en sandningsstart: ligger
+      // anropet i transaktionen haller natverkslatensen den oppen, och ar Plausible nere rullar
+      // HELA sessionsbytet tillbaka. Handelsen ar heller inte vard att vanta pa — darfor inget
+      // await. matning.handelse() kastar aldrig, men .catch() star kvar som sista forsvar sa en
+      // framtida andring dar inte kan ge en ohanterad rejection som faller processen.
+      for (const r of resultat) {
+        if (r && r.created && r.forstaSandningen) Matning.handelse('forsta_sandning').catch(() => {});
+      }
+
       return { stale: false, workspaces: resultat };
     } catch (error) {
       try { await c.query('ROLLBACK'); } catch (_) {}
