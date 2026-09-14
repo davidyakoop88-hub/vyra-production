@@ -898,7 +898,50 @@ function followerAlertHtml(w){return `<div class="widget follower-spotlight${sel
 const followerAlertWh=wh;wh=function(w){return w.type==='templateFollowerAlert'?followerAlertHtml(w):followerAlertWh(w)};
 const followerAlertProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateFollowerAlert')return followerAlertProps();return `<h3>NEW FOLLOWER ALERT</h3><div class="template-badge">SPOTLIGHT</div><div hidden><input id="pt" value="${w.title||''}"><input id="pv" value=""></div><div class="property-group"><h4>INNEHÅLL</h4><label>Rubrik<input id="followLabel" value="${w.followLabel||'NEW FOLLOWER'}"></label><label>Namn<input id="followName" value="${VyraSafe.text(w.followName,'Aurora Vale')}"></label><label>Text under<input id="followMessage" value="${VyraSafe.text(w.followMessage,'TAKES THE STAGE')}"></label><label>Profilbild<input id="followProfile" value="${VyraSafe.url(w.profileImage,'assets/images/test-profile.svg')}"></label></div><div class="property-group"><h4>DESIGN</h4><label>Tema<select id="followTheme">${Object.keys(followerAlertThemes).map(t=>`<option value="${t}">${t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><label>Accentfärg<input id="followColor" type="color" value="${w.followColor||'#ffd35d'}" ${w.inheritBrandKit?'disabled':''}></label>${bkCheckbox(w)}</div><div class="property-group follow-trigger-editor"><h4>TRIGGER</h4><label class="range-label">Visningstid <b>${w.followDuration||6} sek</b><input id="followDuration" type="range" min="2" max="15" value="${w.followDuration||6}"></label><button id="testFollowerAlert" type="button">▶ Testa ny följare</button></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width||300}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
 const followerAlertBind=bind;bind=function(){followerAlertBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateFollowerAlert')return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};set('#followLabel','followLabel');set('#followName','followName');set('#followMessage','followMessage');set('#followProfile','profileImage');set('#followColor','followColor');set('#followDuration','followDuration',true);bkBind(w);let theme=document.querySelector('#followTheme');if(theme){theme.value=w.followTheme||'gold';theme.onchange=e=>{w.followTheme=e.target.value;w.followColor=followerAlertThemes[w.followTheme];save();render()}}let test=document.querySelector('#testFollowerAlert');if(test)test.onclick=()=>triggerNewFollower({name:w.followName,profileImage:w.profileImage})};
-function triggerNewFollower(event={}){let widgets=state.widgets.filter(w=>w.type==='templateFollowerAlert');widgets.forEach(w=>{if(event.name)w.followName=event.name;if(event.profileImage)w.profileImage=event.profileImage});if(!widgets.length)return;save();render();widgets.forEach(w=>{let box=document.querySelector(`[data-id="${w.id}"]`);box?.classList.add('follow-active');setTimeout(()=>box?.classList.remove('follow-active'),(w.followDuration||6)*1000)});toast('New Follower Alert triggas')}
+/* EVENTDATA SKRIVS INTE LANGRE IN I WIDGETEN. Samma monster som triggerGuardianEmblem (#353).
+ *
+ * Triggern skrev tidigare `w.followName = event.name` och `w.profileImage = event.profileImage`,
+ * anropade save() och sedan render(). Tva foljder, och den andra ar den som gjorde testknappen
+ * opalitlig:
+ *
+ *   1. Streamerns KONFIGURATION skrevs over av varje skarp foljare, och sparades. Texten hen
+ *      skrivit in fanns darefter inte kvar nagonstans.
+ *   2. Testknappen bygger sin nyttolast ur `w` (`{name: w.followName, ...}`). Efter ett skarpt
+ *      event bar de falten alltsa residyn, och knappen visade FORRA foljaren under testnamnet —
+ *      precis nar man vill anvanda den for att se att widgeten ser ratt ut.
+ *
+ * ISSUENS FORESLAGNA FIX — en else-gren — loser inte (2). Falten ar SANNA nar knappen trycks,
+ * eftersom eventet redan skrivit dit dem, sa en else-gren kors aldrig. Residy mellan tva event ar
+ * ett TILLSTAND, inte ett falt.
+ *
+ * RESERVVARDENA AR RENDERARENS EGNA, inte tom strang. followerAlertHtml ritar
+ * `VyraSafe.text(w.followName,'Aurora Vale')` och `VyraSafe.url(w.profileImage,'assets/images/
+ * test-profile.svg')`. Malas det med '' hade en tom rubrik och en bildlos ruta visats i stallet
+ * for det renderaren sjalv hade valt — alltsa en ny avvikelse i stallet for den vi tar bort.
+ * Guardian tar bort sitt <img> vid tomt varde, men dess hal ar valfritt; followeralerten ritar
+ * alltid en avatar.
+ *
+ * render() AR BORTA MED FLIT. Den fanns bara for att fa ut det nyss skrivna varder pa skarmen.
+ * Foljden ar ett arv fran guardian: en render() som utloses av nagot ANNAT medan alerten visas
+ * bygger om noden ur `w` och raderar malningen. Accepterat har av samma skal som dar. */
+function triggerNewFollower(event={}){
+  let widgets=state.widgets.filter(w=>w.type==='templateFollowerAlert');
+  if(!widgets.length)return;
+  widgets.forEach(w=>{
+    let box=document.querySelector(`[data-id="${w.id}"]`);
+    if(!box)return;
+    let h2=box.querySelector('h2');
+    if(h2)h2.textContent=VyraSafe.text(event.name||w.followName,'Aurora Vale');
+    // VyraSafe.src, inte .url: renderaren bygger ett HTML-attribut, men har tilldelas .src direkt.
+    // tests/overlay-sanitize.test.js kraver src-varianten for varje .src-tilldelning som kan bara
+    // eventdata, och fallde pa .url. Reservvardet ar detsamma som followerAlertHtml anvander.
+    let img=box.querySelector('.follow-avatar img');
+    if(img)img.src=VyraSafe.src(event.profileImage||w.profileImage,'assets/images/test-profile.svg');
+    box.classList.add('follow-active');
+    setTimeout(()=>box?.classList.remove('follow-active'),(w.followDuration||6)*1000);
+  });
+  toast('New Follower Alert triggas')
+}
 window.triggerNewFollower=triggerNewFollower;
 const followerAlertCatalog=bind;bind=function(){followerAlertCatalog();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-follower-alert]'))return;let section=document.createElement('section');section.dataset.followerAlert='1';section.className='follower-alert-template-section';section.innerHTML='<h4>NEW FOLLOWER ALERT</h4><button><i>✦</i><span><b>Follower Spotlight</b><small>Profil · namn · spotlight</small></span></button>';catalog.prepend(section);const followerBtn=section.querySelector('button');const catalogKey='catalog:followeralert';followerBtn.dataset.catalogKey=catalogKey;followerBtn.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateFollowerAlert');state.widgets.push(created);selected=id;save();render();toast('Follower Spotlight skapad')}};
 {let alerts=state.widgets.filter(w=>w.type==='templateFollowerAlert');if(alerts.length>1){let keep=alerts[alerts.length-1];state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateFollowerAlert'||w.id===keep.id);selected=keep.id;save()}}
