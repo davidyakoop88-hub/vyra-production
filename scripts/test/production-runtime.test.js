@@ -79,7 +79,10 @@ test('Layout uses the full Studio widget renderer instead of the standalone prot
 
 test('the desktop installer redirect requires login, a verified email, and an active Premium plan', () => {
   const src = read('server/index.js');
-  const route = src.match(/if\(p==='\/api\/downloads\/windows'&&req\.method==='GET'\)\{[\s\S]*?return res\.end\(\)\}/);
+  // Rutten innehaller NU tva `return res.end()}` — uppdaterarens 302 och grindens 302. Ett
+  // icke-girigt slut pa det FORSTA klippte bort hela grinden ur `body`, sa vakten matte inte
+  // langre det den tror. Ruttens SISTA res.end() ar den som foljs av nasta rutts if(p===.
+  const route = src.match(/if\(p==='\/api\/downloads\/windows'&&req\.method==='GET'\)\{[\s\S]*?return res\.end\(\)\}(?=if\(p===)/);
   assert.ok(route, 'download route not found in server/index.js');
   const body = route[0];
   // meta=1 (landing-page version/size blurb) stays public — only the real .exe handoff is gated
@@ -88,5 +91,10 @@ test('the desktop installer redirect requires login, a verified email, and an ac
   assert.match(body, /if\(!dls\.email_verified_at\)return send\(res,403,/);
   assert.match(body, /Billing\.entitlement\(pool,dlWorkspaceId\)/);
   assert.match(body, /if\(dlEnt\.plan!=='premium'\)return send\(res,402,/);
+  // UPPDATERAREN SLAPPS IGENOM — lika svart att ta bort som grinden sjalv.
+  // Den installerade appen anropar rutten med ren fetch utan cookie. Utan den har vagen far den
+  // 401 och kan ALDRIG hamta en uppdatering. Vagen maste ligga FORE grinden for att verka.
+  assert.match(body, /if\(!desktopFromBrowser\(req\.headers\)\)\{res\.writeHead\(302,/, 'uppdaterarens vag forbi grinden ar borta — appen kan da inte uppdatera sig');
+  assert.ok(body.indexOf('desktopFromBrowser') < body.indexOf('await session(req)'), 'uppdaterarens vag maste ligga fore sessionsgrinden');
 });
 
