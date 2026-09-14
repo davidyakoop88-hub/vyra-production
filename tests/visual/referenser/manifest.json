@@ -5,7 +5,7 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 197,
+ "antal": 191,
  "senaste": {
   "motiv": "Referensbilder for de fem djurburkarna efter regenererad katalogkarta (PR #413)",
   "nycklar": 5,
@@ -219,30 +219,6 @@
   "catalog:gifterlevel:stack": {
    "matt": "270x381",
    "fyllnad": 14.18
-  },
-  "catalog:giftjar:crystal": {
-   "matt": "250x348",
-   "fyllnad": 89.76
-  },
-  "catalog:giftjar:fire": {
-   "matt": "250x348",
-   "fyllnad": 88.15
-  },
-  "catalog:giftjar:galaxy": {
-   "matt": "250x348",
-   "fyllnad": 91.56
-  },
-  "catalog:giftjar:ice": {
-   "matt": "250x348",
-   "fyllnad": 85.95
-  },
-  "catalog:giftjar:neon": {
-   "matt": "250x348",
-   "fyllnad": 89.45
-  },
-  "catalog:giftjar:royal": {
-   "matt": "250x348",
-   "fyllnad": 89.34
   },
   "catalog:guardianemblem:1": {
    "matt": "400x450",

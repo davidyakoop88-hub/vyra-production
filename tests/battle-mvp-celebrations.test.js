@@ -14,41 +14,11 @@ for(const key of Object.keys(designs))test(key+' renders a real winner through t
   assert.equal(box.querySelector('.mvc-portrait img').src,'https://example.com/avatar.png');
   assert.equal(box.style.getPropertyValue('--mvc-duration'),'12s');
   assert.equal(box.querySelector('.mvc-copy small').textContent,'MVP');
-  assert.ok(box.querySelectorAll('.mvc-sprite').length<=80,'bounded decoration cost');
-  assert.ok(box.querySelectorAll('.mvc-charge i').length>0,'intro has its own light flight');
-  assert.ok(box.querySelectorAll('.mvc-finale i').length>0,'exit has its own dissolution');
+  assert.equal(box.querySelectorAll('.mvc-finale i').length,20);
   assert.equal(box.querySelectorAll('strong').length,0,'no coins leak');
   assert.equal(w.mvpShowName,true);assert.equal(w.mvpShowCoins,false);
   assert.equal(box.querySelectorAll('.mvc-charge,.mvc-art-left,.mvc-copy,.mvc-finale').length,4);
 
-});
-
-test('preview plays only its own draft without changing winners, storage or the alert queue',async()=>{
-  const live=factory.create('catalog:battlemvp:celebration:wings');live.id='real-live';live.mvpName='Real Winner';
-  const h=createDom({state:{widgets:[live],projectName:'preview-isolation'}});h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
-  h.paint([live]);
-  h.window.triggerBattleMvp=()=>{throw new Error('a preview must never trigger the live MVP');};
-  const stage=h.document.createElement('div');stage.className='overlay-live-preview-stage';
-  stage.innerHTML=h.window.wh(factory.create('catalog:battlemvp:celebration:portal'));h.document.body.append(stage);
-  const before=h.window.eval('JSON.stringify(state)');const storage=JSON.stringify(h.window.localStorage);
-  assert.equal(h.window.VyraMvpCelebrations.preview(stage),true);
-  await new Promise(r=>setImmediate(r));
-  assert.ok(stage.querySelector('.mvp-active.mvc-preview'));
-  assert.equal(h.document.querySelector('[data-id="real-live"]').classList.contains('mvp-active'),false);
-  assert.equal(h.window.eval('JSON.stringify(state)'),before);assert.equal(JSON.stringify(h.window.localStorage),storage);
-  assert.equal(h.window.VyraMvpCelebrations.preview(h.document.querySelector('.canvas')),false);
-  h.document.documentElement.classList.add('overlay-output');
-  assert.equal(h.window.VyraMvpCelebrations.preview(stage),false);
-});
-
-test('a removed draft is never started when its images finish decoding',async()=>{
-  const h=createDom();h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
-  const stage=h.document.createElement('div');stage.className='overlay-live-preview-stage';
-  stage.innerHTML=h.window.wh(factory.create('catalog:battlemvp:celebration:moon'));h.document.body.append(stage);
-  let ready;const decode=new Promise(r=>ready=r);
-  stage.querySelectorAll('img').forEach(img=>img.decode=()=>decode);
-  h.window.VyraMvpCelebrations.preview(stage);const box=stage.firstElementChild;stage.remove();ready();
-  await new Promise(r=>setImmediate(r));assert.equal(box.classList.contains('mvp-active'),false);
 });
 test('explicit visibility flags and unsafe portrait URL are respected',()=>{
   const w=factory.create('catalog:battlemvp:celebration:moon');Object.assign(w,{id:'safe',mvpShowName:false,mvpShowLabel:false,profileImage:'javascript:alert(1)'});

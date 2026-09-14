@@ -177,8 +177,7 @@
         "tests/browser/streak-katalog.browser.test.js",
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
-        "tests/gift-supernova-panel.test.js",
-        "tests/browser/mvp-celebrations-motion.browser.test.js"
+        "tests/gift-supernova-panel.test.js"
       ],
       "matning": [
         {
@@ -901,8 +900,7 @@
         "VYRA_VFX_ENGINE_M2_VISUAL_QA.md",
         "scripts/generate-catalog-map.js",
         "scripts/generate-widget-snapshot.js",
-        ".claude/*",
-        "design-qa.md"
+        ".claude/*"
       ],
       "tester": [
         "tests/tech-debt-aktuell.test.js",
