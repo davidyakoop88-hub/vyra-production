@@ -75,15 +75,6 @@ const UTAN_REFERENS = {
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
-  'catalog:battlemvp:celebration:':
-    'sex firanden i ständig rörelse. Uppmätt 2026-09-14 i referensjobbet (run 34865429397): '
-    + '40–44 olika bildrutor på ~14 s och ingen kom igen, i ingen av de sex varianterna. '
-    + 'Bilderna är INTE tomma — 42,33 % (wings) till 65,72 % (moon) är målat — så det är inte '
-    + 'en släckt widget utan en som aldrig står still. REGI-posten för templateBattleMvp når '
-    + 'inte den rörelse #414 lade till. En post med prefixmatchning täcker alla sex nycklarna; '
-    + 'sex separata poster hade sprängt taket. Hålet ska stängas genom att REGI får en '
-    + 'stilla-variant, motsvarande VyraAnimalGiftJars.still() som #413 gav giftjar — se '
-    + 'uppföljningsissuen, inte genom att höja taket.',
 };
 
 const utanReferens = nyckel =>
@@ -106,6 +97,49 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  // EN POST PA NYCKELNIVA, inte pa typ. Alla 23 battlemvp-nycklar har typen templateBattleMvp,
+  // men bara de sex firandena ar CSS-koreografier. De ovriga 17 fotograferas korrekt av den
+  // generella frysningen — prefixet haller dem utanfor. Se uppslaget i tests/helpers/visuell.js.
+  //
+  // FORLAGAN AR GUARDIAN, INTE GIFTJAR. Giftjar-posten anropar VyraAnimalGiftJars.still() for att
+  // en canvas maste ritas om av kod. Firandena har varken canvas, requestAnimationFrame eller
+  // renderarobjekt: de ar 24 @keyframes i battle-mvp-celebrations.css, alla bundna till
+  // .mvp-active och alla andliga. Det finns alltsa inget still() att anropa — tillstandet maste
+  // stallas, precis som guardian stallen sin fas.
+  //
+  // MS AR VALT UR KEYFRAMES, inte pa kansla. Durationen ar 10 s for katalognycklarna
+  // (widget-factory satter mvpDuration: 10, CSS laser var(--mvc-duration,10s)):
+  //
+  //   mvc-face (portrattet)  osynligt till 40 %, pa plats 48 %  -> 4800 ms
+  //   mvc-copy (texten)      osynlig till 44 %, satt fran 54 %  -> 5400 ms
+  //   mvc-show (hela scenen) opacity 1 till 96 %, DARIFRAN till 0 -> 9600 ms
+  //
+  // Hallfonstret ar alltsa 5400-9600 ms. 7500 ar mitten, med 2,1 s marginal at bada hallen.
+  // Att frysa pa SLUTBILDEN hade gett opacity 0 och en tom referens — och en tom referens matchar
+  // allt, vilket ar tystare an att sakna en.
+  //
+  // PARTIKLARNA TAS BORT, de vaktas inte. .mvc-finale ar 20 element med egna fordrojningar och
+  // drift, och .mvc-charge ar ett laddningsglod — bada icke-deterministiska. Produkten doljer dem
+  // redan sjalv for anvandare med prefers-reduced-motion, sa regin nedan replikerar exakt den
+  // regeln i stallet for att hitta pa en egen. Vakten tacker komposition, konstverk, portratt och
+  // text; inte partikeleffekten. Smalare an full tackning, men matbart och arligt.
+  'catalog:battlemvp:celebration:': {
+    fas: 'firande-stilla', ms: 7500,
+    varfor: 'CSS/DOM-koreografi utan canvas eller ticker; produkten har redan ett stilla lage for reducerad rorelse',
+    regi: ([fas, ms]) => {
+      const box = document.querySelector('.battle-mvp.mvp-celebration');
+      if (!box) return { fel: 'firandet renderades inte — saknas .battle-mvp.mvp-celebration' };
+      if (!box.classList.contains('mvp-active')) {
+        return { fel: 'firandet tandes aldrig — .mvp-active saknas, kordes triggerBattleMvp?' };
+      }
+      // Samma tva val som @media(prefers-reduced-motion:reduce) gor i battle-mvp-celebrations.css.
+      box.querySelectorAll('.mvc-charge, .mvc-finale').forEach(n => n.remove());
+      const alla = [...box.getAnimations({ subtree: true })];
+      alla.forEach(a => { a.pause(); a.currentTime = ms });
+      void box.offsetWidth;
+      return { fas, ms, animationer: alla.length };
+    },
+  },
   templateGiftJar: {
     fas: 'tom djurburk', ms: 0,
     varfor: 'godkänd djurkonst fotograferas stilla; fallande gåvor verifieras separat i liveprovet',

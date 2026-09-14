@@ -7,9 +7,9 @@
  },
  "antal": 191,
  "senaste": {
-  "motiv": "Referensbilder for de fem djurburkarna efter regenererad katalogkarta (PR #413)",
-  "nycklar": 5,
-  "tid": "2026-09-14T14:28:47.549Z"
+  "motiv": "REGI-stilla for battlemvp-celebration (#418, 6 nycklar)",
+  "nycklar": 6,
+  "tid": "2026-09-14T19:43:53.950Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -710,27 +710,27 @@
   },
   "catalog:battlemvp:celebration:coronation": {
    "matt": "400x400",
-   "fyllnad": 50.15
+   "fyllnad": 49.49
   },
   "catalog:battlemvp:celebration:moon": {
    "matt": "400x400",
-   "fyllnad": 66.45
+   "fyllnad": 66.46
   },
   "catalog:battlemvp:celebration:pearl": {
    "matt": "400x400",
-   "fyllnad": 52.74
+   "fyllnad": 52.65
   },
   "catalog:battlemvp:celebration:portal": {
    "matt": "400x400",
-   "fyllnad": 60.15
+   "fyllnad": 59.13
   },
   "catalog:battlemvp:celebration:rosegold": {
    "matt": "400x400",
-   "fyllnad": 57.09
+   "fyllnad": 57.02
   },
   "catalog:battlemvp:celebration:wings": {
    "matt": "400x400",
-   "fyllnad": 39.93
+   "fyllnad": 39.96
   },
   "catalog:giftcampaign:emerald:landscape": {
    "matt": "608x406",

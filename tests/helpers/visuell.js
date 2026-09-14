@@ -494,7 +494,20 @@ async function bygg(sida, nyckel, ALERTS) {
 
   // EGEN REGI om familjen har en — se REGI i katalognycklar.js. Den ersätter den generella
   // frysningen helt: en widget vars förlopp drivs av klasser måste ställas av kod, inte spolas.
-  const regi = REGI[byggd.typ];
+  // UPPSLAG PA NYCKEL FORE TYP, med prefix — samma form som UTAN_REFERENS redan anvander.
+  //
+  // REGI slogs tidigare bara upp pa widgettyp, och det racker sa lange en hel familj delar
+  // forlopp. Battle MVP gor inte det: alla 23 nycklarna har typen templateBattleMvp, men bara de
+  // sex under catalog:battlemvp:celebration: ar CSS-koreografier som inte gar att frysa utifran.
+  // De ovriga 17 — aurora, cyber, samurai och de sju frame:*-ramarna — fotograferas korrekt av den
+  // generella frysningen och har giltiga referensbilder.
+  //
+  // En post pa typnivan hade darfor tyst bytt fotograferingssatt for de 17 och ogiltigforklarat
+  // deras referenser, utan att nagot prov sagt ifran forran nasta PR foll pa nycklar ingen rort.
+  // Prefixet gor traffbilden exakt: 6 traffar, 17 oberorda.
+  const regi = REGI[nyckel]
+    || Object.entries(REGI).find(([k]) => k.endsWith(':') && nyckel.startsWith(k))?.[1]
+    || REGI[byggd.typ];
   if (regi) {
     const r = await sida.evaluate(regi.regi, [regi.fas, regi.ms]);
     if (r && r.fel) return { fel: `regin för ${byggd.typ} klarade inte att ställa scenen — ${r.fel}` };
