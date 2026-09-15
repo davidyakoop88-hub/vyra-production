@@ -50,6 +50,11 @@ const BLOCKED = DB_URL ? false
     + 'engångsdatabas — källäsningen ovan bevisar ordningen, inte beteendet.';
 const http = (namn, fn) => test(`http: ${namn}`, { timeout: 30000, skip: BLOCKED }, fn);
 
+// Nyckeln måste stå INNAN token-vault laddas, precis som i mfa-http.test.js: seal() läser
+// process.env vid anrop och CI sätter ingen nyckel för det här jobbet. Utan raden kastar
+// before()-haken — och en trasig before fäller HELA filen, även källäsningarna ovan som inte
+// rör databasen alls. Det var precis så det såg ut i första CI-körningen.
+process.env.APP_ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY || Buffer.alloc(32, 13).toString('base64url');
 if (!BLOCKED) process.env.DATABASE_URL = DB_URL;
 
 let server = null, eventBus = null, pool = null, S = null, MFA = null, base = '';
