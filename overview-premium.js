@@ -46,7 +46,16 @@ home = function () {
     </div>
     <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
-  <section class="card streamdeck-card">
+  <!-- DOLD TILLS PLUGINET FAKTISKT FOLJER MED VYRA DESKTOP.
+       Steg 2 sager "pluginet foljer med appen och laggs pa plats automatiskt vid start". Det ar
+       ratt formulering for slutlaget, men det ar INTE sant an: paketeringen (uppstartskopian mot
+       Elgatos plugin-katalog, build.files och provet som vaktar att mappen packas med) ar inte
+       byggd. En guide som beskriver ett steg som inte gar att utfora ar samma tysta osanning som
+       sex provfiler ingen kor.
+       Samma greppet som AGENCYPORTAL i index.html: dolt tills det ar sant, inte omskrivet till
+       nagot vagare. Ta bort attributet hidden i samma andring som paketeringen landar — det ar ETT ord,
+       och da ar hela guiden sann fran forsta sekunden. -->
+  <section class="card streamdeck-card" hidden>
     <div class="sd-head">
       <div><span class="eyebrow">HÅRDVARA</span><h2>Styr din LIVE utan att röra musen</h2></div>
       <span class="sd-badge">Stream Deck &middot; eller din telefon</span>
@@ -76,10 +85,10 @@ home = function () {
       </article>
       <article>
         <b class="sd-nr">2</b>
-        <h4>Lägg in VYRA-pluginet</h4>
-        <p>Kopiera mappen <code>se.vyra.live.sdPlugin</code> till
-           <code>%APPDATA%\\Elgato\\StreamDeck\\Plugins\\</code> och starta om Stream Deck.
-           VYRA dyker då upp bland åtgärderna.</p>
+        <h4>Öppna VYRA Desktop</h4>
+        <p>Pluginet följer med appen och läggs på plats automatiskt vid start — även om du
+           installerade Stream Deck efteråt. Starta om Stream Deck en gång, så dyker
+           <b>VYRA</b> upp bland åtgärderna.</p>
       </article>
       <article>
         <b class="sd-nr">3</b>
