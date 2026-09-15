@@ -50,6 +50,52 @@ test('chatt stoppas på volym, inte på giltighet', () => {
   assert.ok(MOLNETS_TYPER.includes('chat'), 'kontrollprov: chatt ÄR giltig för molnet');
 });
 
+// SKÄLET SKA MÄTAS, INTE MINNAS — och vakten ska inte överleva sitt eget skäl (#365).
+//
+// De två proven ovan säger att chatt och chatcommand stoppas. De säger inte VARFÖR, och en flat
+// `=== false` är exakt den sortens assertion nästa person raderar när hen medvetet vill öppna
+// chatten: provet faller, raden ser godtycklig ut, och resonemanget försvinner med den.
+//
+// Skälet är mätbart och står i server/index.js: takkontrollen körs FÖRE valideringen (rad 117 före
+// 119), så hinken vet inte vilken typ den räknar. Nyckeln bär bara workspace. En chattstorm äter
+// därför samma budget som gåvorna, och ett event som avvisas med 429 finns inte i historiken
+// efteråt — felet är tyst och irreparabelt.
+//
+// UPPMÄTT (#365, åtta sändningar, 18 097 utgående händelser): topp 21/s mot ett tak på 100/s,
+// chatt ensam 16/s, båda tillsammans 21/s — topparna sammanfaller alltså inte. Noll sekunder över
+// taket. MEN: som mest 38 samtidiga tittare. Chatt växer med publiken på ett annat sätt än gåvor,
+// så siffran säger vad som gäller för den här streamern i dag, ingenting om tusen tittare.
+//
+// AVSTÅNDET TILL "ÖPPNAD" ÄR EN RAD. Uppmätt 2026-09-15: `chat` står redan i server/index.js
+// TIKTOK_INGEST_TYPES och i server/event-bus.js ALLOWED. Två av tre vitlistor släpper alltså redan
+// igenom den — bara TILL_MOLNET håller emot. (`chatcommand` saknas i alla tre, se provet ovan.)
+//
+// Vakten är därför villkorad på hinken, inte på ett minne: blir hinken typmedveten faller den här
+// och tvingar fram ett nytt beslut i stället för att tyst fortsätta blockera något vars skäl är
+// borta. Samma form som KAND_LUCKA i tests/desktop-paritet.test.js — en känd skuld ska vara
+// synlig tills den är stängd, inte tyst undantagen.
+const HINK_LUCKA = new Set(['chat', 'chatcommand']);
+const SERVER_INDEX = path.join(__dirname, '..', '..', 'server', 'index.js');
+// Typblind = nyckeln bär bara workspace. Får den ett typled är hinken inte längre blind.
+const hinkenArTypblind = () =>
+  /rateLimiter\.exceeded\(`tiktok-ingest:\$\{workspaceId\}`/.test(fs.readFileSync(SERVER_INDEX, 'utf8'));
+
+test('chatt öppnas inte mot molnet så länge ingest-hinken är typblind (#365)', () => {
+  if (!hinkenArTypblind()) {
+    assert.fail('ingest-hinken i server/index.js är inte längre nycklad enbart på workspace — '
+      + 'skälet att stoppa chatt (en typblind hink som inte kan prioritera gåvor) kan vara borta. '
+      + 'Ta ställning i #365 och uppdatera eller ta bort den här vakten; lämna den inte kvar som '
+      + 'ett blockerande prov vars motivering inte längre gäller.');
+  }
+  const inslappta = [...HINK_LUCKA].filter(typ => N.tillMolnet(typ));
+  assert.deepEqual(inslappta, [],
+    `${inslappta.join(', ')} släpps nu till molnet, men hinken på server/index.js:117 är typblind `
+    + '(räknar före valideringen). Att släppa in dem utan att göra hinken typmedveten riskerar att '
+    + 'svälta ut gåvor och fan-level-ups med 429 — och ett avvisat event finns inte i historiken. '
+    + 'Se #365 för mätningen (topp 21/s mot tak 100/s, men bara 38 tittare) och för de tre vägarna: '
+    + 'egen hink för chatt, typmedveten hink, eller vänta tills volymen finns.');
+});
+
 test('gåvor och likes släpps alltid fram', () => {
   for (const typ of ['gift', 'likes', 'like', 'follow', 'share', 'subscribe', 'member']) {
     assert.equal(N.tillMolnet(typ), true, `${typ} stoppades — statistiken blir ofullständig`);
