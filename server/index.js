@@ -371,7 +371,9 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   if(p==='/api/auth/password/reset'&&req.method==='POST'){const d=await body(req);await AuthFlow.resetPassword(pool,d.token,d.password);return send(res,200,{ok:true,message:'Lösenordet är ändrat. Logga in igen.'},{'set-cookie':S.clearCookie()})}
   if(p==='/api/auth/email/verify'&&req.method==='POST'){const d=await body(req);await AuthFlow.verifyEmail(pool,d.token);return send(res,200,{ok:true,message:'Din e-postadress är verifierad.'})}
   if(p==='/api/auth/me'&&req.method==='GET'){const s=await session(req);if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});const csrf=S.token();await pool.query('UPDATE sessions SET csrf_hash=$1,last_seen_at=now() WHERE id=$2',[S.digest(csrf),s.id]);if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'MFA krävs',mfaRequired:true,csrfToken:csrf});const w=await pool.query('SELECT w.id,w.name,m.role FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at',[s.user_id]);return send(res,200,{ok:true,user:{id:s.user_id,email:s.email,displayName:s.display_name,emailVerified:!!s.email_verified_at,mfaEnabled:!!s.mfa_enabled_at,isPlatformAdmin:!!s.is_platform_admin},workspaces:w.rows,csrfToken:csrf})}
-  if(p==='/api/auth/logout'&&req.method==='POST'){const s=await session(req,{csrf:true});if(!s)return send(res,401,{ok:false,error:'Ogiltig session'});await pool.query('DELETE FROM sessions WHERE id=$1',[s.id]);return send(res,200,{ok:true},{'set-cookie':S.clearCookie()})}
+  // Samma vakt, samma orsak: utloggningsknappen i appens tvastegsruta dog ocksa pa den roterade
+  // token. En pahittad utloggning ar dessutom den minst skadliga CSRF som finns.
+  if(p==='/api/auth/logout'&&req.method==='POST'){if(!sameOrigin(req))return send(res,403,{ok:false,error:'Fel ursprung'});const s=await session(req);if(!s)return send(res,401,{ok:false,error:'Ogiltig session'});await pool.query('DELETE FROM sessions WHERE id=$1',[s.id]);return send(res,200,{ok:true},{'set-cookie':S.clearCookie()})}
   // TikTok-event fran VYRA Desktop, postade som den INLOGGADE ANVANDAREN.
   //
   // Den befintliga /api/events/tiktok/:workspace tar en global serverhemlighet (TIKTOK_INGEST_TOKEN,
@@ -399,8 +401,29 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     const d=await body(req,64*1024),out=await ingestTikTokEvent(workspaceId,d);
     return send(res,out.duplicate?200:202,{ok:true,...out});
   }
+  // TVASTEGSUTMANINGEN KAN INTE BARA EN DELAD CSRF-TOKEN — AV EXAKT SAMMA SKAL SOM INGEST-RUTTEN
+  // OVAN, och den har rutten last ute varje skrivbordskund med 2FA tills detta skrevs.
+  //
+  // GET /api/auth/me ROTERAR csrf_hash vid varje anrop (raden ovan). Skrivbordsappens huvudprocess
+  // pollar den rutten EN GANG I SEKUNDEN medan inloggningsfonstret star oppet (electron-app/main.js,
+  // desktopAuthTimer). Sidan sparade sin token nar losenordet gick igenom — och medan kunden laser
+  // sexsiffriga koden fran sin telefon roteras den bort. Vid Bekrafta returnerar session() null och
+  // svaret blir 401 'Inte inloggad', UTAN att koden ens lases.
+  //
+  // Det ar inte en kapplopning utan ett GARANTERAT fel: pollningen gar varje sekund och ingen hinner
+  // knappa in en kod snabbare an sa. Tvastegsinloggning i appen kunde darfor ALDRIG lyckas, medan
+  // hemsidan — som inte pollar — fungerade. Aterstallningskoden hjalpte inte: samma rutt, samma vakt.
+  //
+  // Skyddet blir sameOrigin, precis som for ingest: en webblasare skickar ALLTID Origin over
+  // sajtgrans, och en JSON-POST kraver dessutom preflight som servern inte besvarar. Att tappa
+  // token-kravet kostar lite har — en angripare som kan tvinga fram anropet vet anda inte koden.
+  //
+  // Rutten maste ligga FORE den delade session-raden nedan for att fa sitt egna csrf-beslut.
+  if(p==='/api/auth/mfa/challenge'&&req.method==='POST'){
+    if(!sameOrigin(req))return send(res,403,{ok:false,error:'Fel ursprung'});
+    const sm=await session(req);if(!sm)return send(res,401,{ok:false,error:'Inte inloggad'});
+   if(!sm.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(sm.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[sm.user_id]),user={...q.rows[0],user_id:sm.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[sm.id]);await notifyLogin(c,sm.email,sm.id,sm.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[sm.user_id,sm.id,{device:describeDevice(sm.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
-  if(p==='/api/auth/mfa/challenge'&&req.method==='POST'){if(!s.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(s.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[s.user_id]),user={...q.rows[0],user_id:s.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[s.id]);await notifyLogin(c,s.email,s.id,s.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[s.user_id,s.id,{device:describeDevice(s.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});
   // EGET TAK, NYCKLAT PÅ ANVÄNDAREN. Rutten skickar mejl, så den måste begränsas — men INTE i den
   // delade auth-hinken. Den nycklas på `req.socket.remoteAddress`, vilket bakom Caddy är proxyns
