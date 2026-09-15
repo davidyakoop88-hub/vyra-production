@@ -318,3 +318,12 @@ jobs:
       - name: Verifieringslänkar — överlever den gamla ett nytt utskick?
         run: node --test test/auth-flow-postgres.test.js
         working-directory: server
+
+      # TVÅSTEGSUTMANINGEN MOT EN INAKTUELL CSRF-TOKEN. Skrivbordsappen pollar /api/auth/me varje
+      # sekund, och den rutten roterar csrf_hash vid varje anrop — så sidans sparade token var
+      # ALLTID inaktuell när kunden hann knappa in koden. Varje skrivbordskund med 2FA var utelåst,
+      # medan hemsidan fungerade. Attrapp duger inte: påståendet är att rutten släpper igenom en
+      # session vars token roterats bort, och det syns bara mot riktiga rader.
+      - name: Tvåsteg i skrivbordsappen — inaktuell token får inte sänka utmaningen
+        run: node --test test/mfa-csrf-rotation.test.js
+        working-directory: server
