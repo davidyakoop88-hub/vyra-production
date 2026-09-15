@@ -177,15 +177,34 @@
   window.VYRA_FRAMES = FRAMES;
   window.VYRA_FRAME_FILES = FRAME_FILES;
 
-  // One-time replacement of the retired frame collection on all ranking widgets.
-  const signatureIds = new Set(Object.keys(FRAME_FILES));
-  if (!localStorage.getItem('vyra-signature-ranking-frames-v1')) {
-    state.widgets.filter(w => RANKING_TYPES.includes(w.type)).forEach(w => {
-      if (!signatureIds.has(w.profileFrame)) w.profileFrame = 'ocean-oracle';
-    });
-    save();
-    localStorage.setItem('vyra-signature-ranking-frames-v1', '1');
-  }
+  // HAR LAG EN ENGANGSMIGRERING SOM SKREV OVER KUNDENS EGET RAMVAL. Borttagen 2026-09-15.
+  //
+  // Den skulle ersatta en pensionerad ramkollektion och sag ut sa har:
+  //
+  //   if (!localStorage.getItem('vyra-signature-ranking-frames-v1')) {
+  //     state.widgets.filter(w => RANKING_TYPES.includes(w.type)).forEach(w => {
+  //       if (!signatureIds.has(w.profileFrame)) w.profileFrame = 'ocean-oracle'; });
+  //     save(); localStorage.setItem('vyra-signature-ranking-frames-v1', '1'); }
+  //
+  // TRE FEL I SJU RADER, uppmatta i produktion:
+  //
+  // 1. `undefined` behandlades som ett trasigt varde. Franvaro betyder "ingen ram vald" och ar ett
+  //    legitimt tillstand — men foll utanfor `signatureIds` och skrevs om till ocean-oracle. Davids
+  //    Top Like fick sa ocean-oracle i stallet for det opal-dream han klickat pa, och OBS visade
+  //    fel ram.
+  // 2. `save()` kordes VILLKORSLOST, aven nar ingen widget andrats. En ren inlasning av Studion
+  //    muterade alltsa molntillstandet utan en enda anvandarinteraktion.
+  // 3. Flaggan bodde i `localStorage` — per klient — medan tillstandet bor i Postgres, per overlay.
+  //    Varje ny enhet, rensad cache eller ominstallation korde darfor om migreringen mot samma data.
+  //
+  // BORTTAGEN I STALLET FOR LAGAD, for den hade inget jobb kvar: en matning mot produktionens alla
+  // overlayer 2026-09-15 gav 4 av 4 rankingwidgetar med giltiga ram-id och NOLL pensionerade varden.
+  // Kvar fanns bara formagan att forstora.
+  //
+  // Lagg ALDRIG tillbaka en klientdriven migrering som skriver till molnet vid mount. Behovs en
+  // sadan igen: mappa bara KANDA pensionerade id:n, ror aldrig undefined/none, spara bara om nagot
+  // faktiskt andrats, och markera att den kort i MOLNTILLSTANDET — aldrig i localStorage.
+  // Vakten star i tests/browser/ren-inlasning-skriver-inte.browser.test.js.
 
   // ---- Render: skin class, entrance-animation class, opacity, crown on #1 ----
   const wsRenderWh = wh;
