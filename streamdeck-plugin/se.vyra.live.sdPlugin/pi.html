@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body{font:13px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#d8d8d8;background:#2d2d2d;margin:0;padding:14px}
+  label{display:block;margin-bottom:6px;color:#9a9a9a}
+  input{width:100%;box-sizing:border-box;padding:7px 9px;border-radius:5px;border:1px solid #4a4a4a;background:#3d3d3d;color:#fff;font:inherit}
+  p{color:#8a8a8a;margin:10px 0 0}
+  code{background:#3d3d3d;padding:1px 5px;border-radius:3px;color:#c9a9ff}
+</style></head>
+<body>
+  <label for="nyckel">Knappens nyckel</label>
+  <input id="nyckel" placeholder="t.ex. scen-1" maxlength="200">
+  <p>Peka ett Event i <b>Action &amp; Event</b> på triggern <code>Manuell knapp</code> och matcha
+     mot samma nyckel. Lämnas fältet tomt matchar knappen Event utan nyckelkrav.</p>
+  <p>Actions spelas i <b>OBS-utgången</b>, inte i Studion — ha overlay-källan öppen när du provar.</p>
+
+<script>
+// Property Inspector pratar BARA med Stream Deck-appen, aldrig med VYRA. All HTTP mot 127.0.0.1
+// sker i plugin.js (Node), just för att en webview skickar ett Origin-huvud som local-server.js
+// avvisar med 403. Uppmätt 2026-09-15 — se kommentaren i plugin.js.
+let ws, ctx;
+const falt = document.getElementById('nyckel');
+
+function connectElgatoStreamDeckSocket(port, uuid, registerEvent, info, actionInfo) {
+  ctx = uuid;
+  ws = new WebSocket('ws://127.0.0.1:' + port);
+  ws.onopen = () => ws.send(JSON.stringify({ event: registerEvent, uuid }));
+  try { falt.value = (JSON.parse(actionInfo).payload.settings || {}).nyckel || '' } catch (e) {}
+}
+
+const spara = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({
+  event: 'setSettings', context: ctx, payload: { nyckel: falt.value.trim() }
+}));
+falt.addEventListener('change', spara);
+falt.addEventListener('blur', spara);
+</script>
+</body></html>

@@ -1,0 +1,29 @@
+{
+  "SDKVersion": 2,
+  "Name": "VYRA Live",
+  "Version": "0.1.0",
+  "Author": "VYRA",
+  "URL": "https://vyralive.app",
+  "Description": "Kör dina Actions i VYRA från en fysisk knapp. Kräver att VYRA Desktop är igång.",
+  "Category": "VYRA",
+  "CategoryIcon": "icon",
+  "Icon": "icon",
+  "CodePath": "plugin.js",
+  "Nodejs": { "Version": "20" },
+  "Software": { "MinimumVersion": "6.5" },
+  "OS": [
+    { "Platform": "windows", "MinimumVersion": "10" },
+    { "Platform": "mac", "MinimumVersion": "11" }
+  ],
+  "Actions": [
+    {
+      "UUID": "se.vyra.live.knapp",
+      "Name": "Kör Action",
+      "Icon": "action",
+      "Tooltip": "Skickar en knapp-händelse till VYRA. Peka ett Event på triggern \"Manuell knapp\".",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": ["Keypad"],
+      "States": [{ "Image": "key", "TitleAlignment": "bottom" }]
+    }
+  ]
+}

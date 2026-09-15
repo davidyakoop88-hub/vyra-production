@@ -3,7 +3,7 @@
   // Se action-event.js: i tokenlaget lever actionlistan bara i minnet.
   const readExtra=key=>{try{return window.VyraSessionState?.readExtra?.(key)??localStorage.getItem(key)}catch{return null}};
   const audiences=[['everyone','Alla'],['follower','Alla följare'],['subscriber','Alla prenumeranter'],['moderator','Alla moderatorer'],['topGifter','Top Gifter'],['specificUser','En specifik användare']];
-  const triggers=[['join','Går med i liven'],['firstActivity','Första aktiviteten'],['share','Delar liven'],['follow','Börjar följa'],['member','Prenumererar'],['likes','Skickar likes (taps)'],['chat','Skriver en kommentar'],['chatCommand','Skriver ett kommando'],['giftCoins','Skickar gåva med minsta coin-värde'],['gift','Skickar en specifik gåva'],['subscriberEmote','Skickar subscriber-emote'],['fanSticker','Skickar Fan Club-sticker'],['shopPurchase','Köper en produkt från TikTok Shop']];
+  const triggers=[['join','Går med i liven'],['firstActivity','Första aktiviteten'],['share','Delar liven'],['follow','Börjar följa'],['member','Prenumererar'],['likes','Skickar likes (taps)'],['chat','Skriver en kommentar'],['chatCommand','Skriver ett kommando'],['giftCoins','Skickar gåva med minsta coin-värde'],['gift','Skickar en specifik gåva'],['subscriberEmote','Skickar subscriber-emote'],['fanSticker','Skickar Fan Club-sticker'],['shopPurchase','Köper en produkt från TikTok Shop'],['knapp','Manuell knapp (Stream Deck)']];
   const opts=a=>a.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
   function openTriggerGiftPicker(input){
     document.querySelector('.gift-picker-modal')?.remove();
