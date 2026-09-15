@@ -46,6 +46,77 @@ home = function () {
     </div>
     <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
+  <!-- DOLD TILLS PLUGINET FAKTISKT FOLJER MED VYRA DESKTOP.
+       Steg 2 sager "pluginet foljer med appen och laggs pa plats automatiskt vid start". Det ar
+       ratt formulering for slutlaget, men det ar INTE sant an: paketeringen (uppstartskopian mot
+       Elgatos plugin-katalog, build.files och provet som vaktar att mappen packas med) ar inte
+       byggd. En guide som beskriver ett steg som inte gar att utfora ar samma tysta osanning som
+       sex provfiler ingen kor.
+       Samma greppet som AGENCYPORTAL i index.html: dolt tills det ar sant, inte omskrivet till
+       nagot vagare. Ta bort attributet hidden i samma andring som paketeringen landar — det ar ETT ord,
+       och da ar hela guiden sann fran forsta sekunden. -->
+  <section class="card streamdeck-card" hidden>
+    <div class="sd-head">
+      <div><span class="eyebrow">HÅRDVARA</span><h2>Styr din LIVE utan att röra musen</h2></div>
+      <span class="sd-badge">Stream Deck &middot; eller din telefon</span>
+    </div>
+    <div class="sd-topp">
+      <div>
+        <p class="sd-intro">
+          Under en sändning sitter du i bild. Med en fysisk knapp kör du dina Actions utan att växla
+          fönster. Har du ingen Stream Deck fungerar telefonen som en — <b>Stream Deck Mobile</b>.
+        </p>
+        <p class="sd-intro sd-intro-2">
+          Varje knapp får en <b>nyckel</b>. Ett Event i Action &amp; Event lyssnar på samma nyckel
+          och bestämmer vad som spelas — och i vilken scen.
+        </p>
+      </div>
+      <img class="sd-bild" src="assets/images/streamdeck-knappar.svg" width="260" height="176"
+           loading="lazy" decoding="async"
+           alt="En knappenhet med femton knappar. Fyra är VYRA-knappar märkta scen-1, scen-2, fyrverkeri och paus.">
+    </div>
+
+    <div class="sd-steg">
+      <article>
+        <b class="sd-nr">1</b>
+        <h4>Installera Stream Deck</h4>
+        <p>Ladda ner Elgatos program till datorn. Kör du från telefonen behövs programmet ändå —
+           knapparna visas på telefonen men körs på datorn.</p>
+      </article>
+      <article>
+        <b class="sd-nr">2</b>
+        <h4>Öppna VYRA Desktop</h4>
+        <p>Pluginet följer med appen och läggs på plats automatiskt vid start — även om du
+           installerade Stream Deck efteråt. Starta om Stream Deck en gång, så dyker
+           <b>VYRA</b> upp bland åtgärderna.</p>
+      </article>
+      <article>
+        <b class="sd-nr">3</b>
+        <h4>Ge knappen en nyckel</h4>
+        <p>Dra in <b>Kör Action</b> på en knapp och skriv en nyckel, t.ex. <code>scen-1</code>.
+           Nyckeln är knappens namn — en egen per knapp.</p>
+      </article>
+      <article>
+        <b class="sd-nr">4</b>
+        <h4>Peka ett Event på knappen</h4>
+        <p>Skapa ett Event i <b>Action &amp; Event</b>, välj triggern <b>Manuell knapp</b> och
+           matcha mot samma nyckel. Eventet väljer sedan vilken Action som spelas och i vilken scen.</p>
+      </article>
+    </div>
+
+    <div class="sd-krav">
+      <h4>Tre saker måste vara på plats när du trycker</h4>
+      <ul>
+        <li><b>VYRA Desktop igång.</b> Knappen pratar med appen på din egen dator — inget går via internet.</li>
+        <li><b>OBS-källan öppen</b> för scenen. Actions spelas i overlay-utgången, inte i Studion.
+            Trycker du med bara Studion framme händer ingenting, och det är med flit.</li>
+        <li><b>Eventet aktivt.</b> Av/på sitter på Eventet, inte på Actionen — samma Action kan
+            återanvändas av flera Events.</li>
+      </ul>
+      <p class="sd-not">Knappen visar själv om det gick: <b>✓</b> när VYRA tog emot trycket,
+         <b>✗</b> när appen inte svarade.</p>
+    </div>
+  </section>
   <div class="command-grid">
     <article class="card live-preview-card">
       <div class="preview-top">

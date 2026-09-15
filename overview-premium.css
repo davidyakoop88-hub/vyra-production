@@ -83,3 +83,78 @@
   .toppgivare-skelett span,.puls-skelett span,.oversikt-sken i{animation:none}
   .toppgivare-skelett span,.puls-skelett span{display:block;background-position:50% 0}
 }
+
+/* HARDVARUGUIDEN. Ligger FORE .command-grid sa "Din scen" hamnar under — guiden ar det forsta en
+   ny anvandare behover, scenen ar det man atervander till. Aterbruker .card, .eyebrow och paletten
+   ovan i stallet for att infora en egen. */
+.streamdeck-card{padding:19px;position:relative;overflow:hidden;
+  background:linear-gradient(158deg,#1d1129 0%,#160d21 46%,#110a19 100%)}
+/* AMBIENT SKEN, inte en ram. Ligger bakom innehallet och ar pointer-events:none sa den aldrig
+   stjal ett klick. Radialen sitter dar illustrationen star — ljuset ska komma FRAN enheten. */
+.streamdeck-card::before{content:'';position:absolute;right:-8%;top:-32%;width:58%;height:116%;
+  pointer-events:none;background:radial-gradient(closest-side,rgba(124,45,190,.30),transparent 72%)}
+.streamdeck-card::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.streamdeck-card>*{position:relative}
+.sd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sd-head h2{font:700 16px Manrope;margin:3px 0 0}
+.sd-badge{border:1px solid #3a2349;background:#170d20;color:#d6c8dc;border-radius:999px;
+  padding:5px 10px;font-size:8px;letter-spacing:.04em;white-space:nowrap}
+.sd-intro{color:#b9a8c4;font-size:11px;line-height:1.65;margin:9px 0 0;max-width:62ch}
+.sd-intro b{color:#e8dcf0}
+.sd-intro-2{margin-top:7px}
+
+/* BILDEN ÄR EN ILLUSTRATION, INTE ETT PRODUKTFOTO. Elgatos egna bilder är deras och hör inte
+   hemma på en publik sida. Den här är ritad i samma palett och visar det streamern faktiskt
+   fyller i — knapparnas NYCKLAR. Den bär alltså information, inte bara dekor.
+   Krymper bort först på smal skärm: stegen under är det som måste läsas. */
+.sd-topp{display:flex;align-items:center;gap:20px;justify-content:space-between}
+.sd-bild{width:246px;height:auto;flex:0 0 auto;
+  transform:perspective(880px) rotateY(-15deg) rotateX(7deg) translateZ(0);
+  filter:drop-shadow(0 18px 34px rgba(0,0,0,.55)) drop-shadow(0 6px 26px rgba(124,45,190,.34));
+  transition:transform .55s cubic-bezier(.22,.61,.36,1),filter .55s}
+/* Enheten rattar upp sig nar man narmar sig kortet — rorelsen sager "den gar att ta i" utan att
+   nagot blinkar eller loopar. En animation som ALLTID rullar drar blicken fran texten. */
+.streamdeck-card:hover .sd-bild{transform:perspective(880px) rotateY(-6deg) rotateX(2deg) translateY(-4px);
+  filter:drop-shadow(0 22px 40px rgba(0,0,0,.6)) drop-shadow(0 8px 30px rgba(124,45,190,.46))}
+@media(max-width:860px){.sd-bild{width:180px}}
+@media(max-width:640px){.sd-topp{flex-direction:column;align-items:flex-start}.sd-bild{display:none}}
+
+.sd-steg{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:9px;margin-top:14px}
+.sd-steg article{border:1px solid #2c1b3a;border-radius:10px;padding:13px 14px;position:relative;
+  background:linear-gradient(180deg,#1c1129 0%,#140b1d 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 16px rgba(0,0,0,.34);
+  transition:transform .28s cubic-bezier(.22,.61,.36,1),box-shadow .28s,border-color .28s}
+.sd-steg article:hover{transform:translateY(-3px);border-color:#4a2c63;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 26px rgba(124,45,190,.26)}
+.sd-steg .sd-nr{position:absolute;top:-8px;left:12px;width:19px;height:19px;border-radius:50%;
+  background:linear-gradient(145deg,#d98bef,#a044d6);color:#12081a;font:700 10px Manrope;
+  display:grid;place-items:center;box-shadow:0 3px 10px rgba(164,68,214,.5),inset 0 1px 0 rgba(255,255,255,.45)}
+/* ELEMENTVALJAREN VAR FEL. `.sd-steg b` traffade aven <b> i BRODTEXTEN — "Kor Action" och
+   "Manuell knapp" blev absolutpositionerade cirklar ovanpa varandra i hornet, och rubrikerna gick
+   inte att lasa. Siffran har darfor en egen klass, och fetstil i texten sin egen regel. */
+.sd-steg p b{color:#e8dcf0;font-weight:700}
+.sd-steg h4{font:700 11px Manrope;margin:5px 0 5px;color:#f0e6f5}
+.sd-steg p{font-size:10px;line-height:1.6;color:#a695b2;margin:0}
+.sd-steg code{background:#20122c;border:1px solid #332043;border-radius:4px;padding:1px 4px;
+  font-size:9px;color:#d9b8f0;word-break:break-all}
+
+/* KRAVEN STAR FOR SIG. De tre ar den vanligaste orsaken till att ett tryck "inte gor nagot" —
+   sarskilt scengrinden: allowed() i action-runtime.js kraver VYRA_OVERLAY_SCENE, som saknas i
+   Studion. Utan den forklaringen ser pluginet trasigt ut nar det fungerar. */
+.sd-krav{margin-top:14px;border-top:1px solid #2c1b3a;padding-top:12px}
+.sd-krav h4{font:700 10px Manrope;letter-spacing:.06em;color:#c467df;margin:0 0 7px}
+.sd-krav ul{margin:0;padding-left:16px;display:grid;gap:5px}
+.sd-krav li{font-size:10px;line-height:1.6;color:#a695b2}
+.sd-krav li b{color:#e8dcf0}
+.sd-not{font-size:9px;color:#8b7a97;margin:9px 0 0}
+.sd-not b{color:#c467df}
+
+@media(max-width:720px){.sd-head{flex-direction:column}.sd-steg{grid-template-columns:1fr}}
+
+/* REDUCERAD RORELSE: lutningen ar dekor, inte information. Den som bett om mindre rorelse far
+   bilden rakt framifran och kort som inte lyfter — allt innehall star kvar. */
+@media(prefers-reduced-motion:reduce){
+  .sd-bild,.streamdeck-card:hover .sd-bild{transform:none;transition:none}
+  .sd-steg article,.sd-steg article:hover{transform:none;transition:none}
+}
