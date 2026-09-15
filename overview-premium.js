@@ -46,16 +46,12 @@ home = function () {
     </div>
     <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
-  <!-- DOLD TILLS PLUGINET FAKTISKT FOLJER MED VYRA DESKTOP.
-       Steg 2 sager "pluginet foljer med appen och laggs pa plats automatiskt vid start". Det ar
-       ratt formulering for slutlaget, men det ar INTE sant an: paketeringen (uppstartskopian mot
-       Elgatos plugin-katalog, build.files och provet som vaktar att mappen packas med) ar inte
-       byggd. En guide som beskriver ett steg som inte gar att utfora ar samma tysta osanning som
-       sex provfiler ingen kor.
-       Samma greppet som AGENCYPORTAL i index.html: dolt tills det ar sant, inte omskrivet till
-       nagot vagare. Ta bort attributet hidden i samma andring som paketeringen landar — det ar ETT ord,
-       och da ar hela guiden sann fran forsta sekunden. -->
-  <section class="card streamdeck-card" hidden>
+  <!-- SYNLIG FRAN OCH MED #428. Guiden var dold sa lange steg 2 beskrev nagot som inte gick
+       att utfora: pluginet foljde inte med appen. Nu gor det det — electron-app/streamdeck-sync.js
+       lagger det pa plats vid varje appstart, och tva prov vaktar att mappen faktiskt packas med.
+       Blir guiden osann igen ar det attributet hidden som ska tillbaka, inte texten som ska
+       skrivas om till nagot vagare. -->
+  <section class="card streamdeck-card">
     <div class="sd-head">
       <div><span class="eyebrow">HÅRDVARA</span><h2>Styr din LIVE utan att röra musen</h2></div>
       <span class="sd-badge">Stream Deck &middot; eller din telefon</span>
