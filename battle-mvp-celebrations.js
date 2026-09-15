@@ -16,8 +16,7 @@
       <div class="mvc-stage"><div class="mvc-charge" aria-hidden="true"></div>
       <div class="mvc-portrait"><img src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt=""></div>
       <img class="mvc-art mvc-art-left" src="${art}" alt=""><img class="mvc-art mvc-art-right" src="${art}" alt="">
-      <div class="mvc-copy"><small style="display:${w.mvpShowLabel===false?'none':'block'}">${safe.text(battleMvpLabel(w),'MVP')}</small><h2 style="display:${w.mvpShowName===false?'none':'block'}">${safe.text(w.mvpName,'TestAlpha')}</h2></div>
-      <div class="mvc-finale" aria-hidden="true">${particles}</div></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+      <div class="mvc-finale" aria-hidden="true">${particles}</div></div><div class="mvc-copy"><small style="display:${w.mvpShowLabel===false?'none':'block'}">${safe.text(battleMvpLabel(w),'MVP')}</small><h2 style="display:${w.mvpShowName===false?'none':'block'}">${safe.text(w.mvpName,'TestAlpha')}</h2></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   };
   const oldProps=props;
   props=function(){
@@ -46,7 +45,7 @@
     });
   };
   if(!document.querySelector('link[data-mvp-celebrations]')){
-    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20260911-1';css.dataset.mvpCelebrations='1';document.head.append(css);
+    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20260915-2';css.dataset.mvpCelebrations='1';document.head.append(css);
   }
   root.VyraMvpCelebrations={designs};
   // The sibling arrives after the first render; refresh existing widgets and catalog once.
