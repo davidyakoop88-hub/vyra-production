@@ -5,6 +5,7 @@ const { startLocalServer } = require('./local-server');
 const { createTikTokService } = require('./tiktok-service');
 const { createObsService } = require('./obs-service');
 const Updater = require('./updater');
+const { synkaPlugin, elgatoKatalogWindows } = require('./streamdeck-sync');
 
 const BRYT = String.fromCharCode(10);
 const PORT = 4173;
@@ -265,6 +266,22 @@ app.whenReady().then(async () => {
   }
   await createMainWindow();
   setTimeout(checkForUpdates,15000).unref();
+  // STREAM DECK-PLUGINET LAGGS PA PLATS VID VARJE START, inte vid installationen (#428).
+  //
+  // Ordningen spelar roll: installeras Stream Deck EFTER VYRA hade en installationstidskopia
+  // missat helt, tyst, och anvandaren hade undrat varfor VYRA inte syns bland atgarderna. En
+  // kontroll vid varje start tacker bade forsta gangen och versionsuppdateringar.
+  //
+  // Samma monster som checkForUpdates ovan: deferrad och unref():ad, sa den varken fordrojer att
+  // fonstret syns eller haller processen vid liv. synkaPlugin kastar aldrig — allt som gar fel
+  // kommer tillbaka som ett utfall, for en filkopia far inte kunna falla uppstarten.
+  //
+  // Tyst nar Stream Deck saknas: de flesta anvandare har ingen, och ett fel for det vore brus.
+  setTimeout(() => {
+    const r = synkaPlugin(path.join(appRoot(),'streamdeck-plugin','se.vyra.live.sdPlugin'),
+      elgatoKatalogWindows());
+    if (r.status !== 'ingen-streamdeck') log('streamdeck-plugin:', r.status, r.version || '', r.fel || '');
+  },20000).unref();
 }).catch(err => log('app.whenReady chain threw:', err.stack || err.message));
 
 function stopServer() {
