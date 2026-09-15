@@ -194,3 +194,48 @@ test('ligabrickan far inte gora headern till en TREKOLUMNSLAYOUT', () => {
     'brickan har kvar sin margin-left — avstandet ska komma fran behallarens gap, annars far den ' +
     'ett dubbelt mellanrum');
 });
+
+// DEN MANUELLA KNAPPEN (Stream Deck). Tillagd 2026-09-15 efter mätning mot den verkliga
+// local-server.js — se kommentaren vid grenen i live-client.js.
+//
+// Poängen med en egen typ är att knappen INTE ska påstå att en tittare gjorde något. Ett falskt
+// `gift` hade räknat upp mål, topplistor och sändningshistorik; i en mätsändning hade det förstört
+// själva underlaget. Proven nedan vaktar båda halvorna: att knappen fungerar, och att den inte
+// smittar av sig på något annat.
+test('en manuell knapp ger triggern "knapp" och bär sin identitet i value', () => {
+  const mapEvent = boot();
+  // eventKey, inte value: `value` stryks av cleanEvent:s vitlista i electron-app/local-server.js,
+  // eventKey överlever. Uppmätt, inte antaget.
+  const t = triggrarFor(mapEvent, { type: 'knapp', eventKey: 'scen-1' });
+  assert.ok(t.includes('knapp'),
+    'knapp-triggern fyrar inte — en Stream Deck-knapp kor da ingen Action alls. Fick: ' + t.join(', '));
+  assert.equal(t.length, 1, 'knappen fyrade fler triggrar an sin egen: ' + t.join(', '));
+  const [[, payload]] = mapEvent({ type: 'knapp', eventKey: 'scen-1' });
+  assert.equal(payload.value, 'scen-1',
+    'knappens identitet nådde inte value — Action & Event kan då inte skilja två knappar åt');
+});
+
+test('en knapp utan username fyrar INTE firstActivity', () => {
+  const mapEvent = boot();
+  // `first` högst upp i liveEventTriggers är sant för ett namn som inte setts förut. Skickar
+  // knappen ett username fyras firstActivity OCKSÅ, och en Action bunden dit kör vid varje tryck
+  // med ett nytt namn. Vakten finns för att den bieffekten är tyst och tar en kväll att hitta.
+  const utan = triggrarFor(mapEvent, { type: 'knapp', eventKey: 'scen-1' });
+  assert.ok(!utan.includes('firstActivity'),
+    'knappen fyrade firstActivity utan username — da skulle varje tryck rakna som en ny besokare');
+  // Kontrollprov: MED username fyrar den, alltsa mater vakten ratt sak.
+  const med = triggrarFor(mapEvent, { type: 'knapp', eventKey: 'scen-1', username: 'ny-person' });
+  assert.ok(med.includes('firstActivity'),
+    'kontrollprovet gick inte igenom — da bevisar provet ovan ingenting');
+});
+
+test('knappen är valbar i Action & Event — annars går den inte att binda', () => {
+  // Grenen i live-client.js räcker inte: syns triggern inte i listan kan streamern aldrig peka ett
+  // Event på den, och knappen blir en död kodväg. Samma mönster som färdig grafik utan live-trigger.
+  const kod = fs2.readFileSync(path2.join(__dirname, '..', 'action-event-advanced.js'), 'utf8');
+  const lista = kod.match(/const triggers=\[(.*?)\];/s);
+  assert.ok(lista, 'hittade ingen triggerlista i action-event-advanced.js');
+  const namn = [...lista[1].matchAll(/\['([a-zA-Z]+)','[^']+'\]/g)].map(m => m[1]);
+  assert.ok(namn.includes('knapp'),
+    `knapp saknas bland de ${namn.length} valbara triggrarna: ${namn.join(', ')}`);
+});

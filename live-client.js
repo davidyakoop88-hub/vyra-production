@@ -36,6 +36,26 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
   else if(t==='subscriberemote')out.push(['subscriberEmote',{...payload,value:e.emote||e.name}]);
   else if(t==='fanclubsticker'||t==='fansticker')out.push(['fanSticker',{...payload,value:e.sticker||e.name}]);
   else if(t==='shoppurchase'||t==='purchase')out.push(['shopPurchase',{...payload,value:e.productName||e.name}]);
+  // EN MANUELL KNAPP (Stream Deck och liknande). Den ska kunna kora en Action utan att PASTA att
+  // en tittare gjorde nagot: ett falskt `gift` hade rakat upp mal, topplistor och sandnings-
+  // historik, och i en matsandning forstort sjalva underlaget.
+  //
+  // MATT 2026-09-15 mot den verkliga local-server.js, inte antaget:
+  //   - typen 'knapp' overlever cleanEvent (200, typen ordagrant tillbaka)
+  //   - `value` STRYKS av den vitlistan, men `eventKey` overlever — darfor bar knappen sin
+  //     identitet i eventKey och packas upp till `value` har, dit Action & Event laser den
+  //   - eventet speglas ALDRIG till molnet: local-server.js:215 grenar pa TILL_MOLNET och
+  //     'knapp' star inte dar. Ingen ingest-budget, ingen molnstatistik, ingen 400-spam
+  //   - topplistan ar inert: live-leaderboard.js:111 grenar bara pa gift/giftcombo
+  //
+  // SKICKA INGET `username` FRAN KNAPPEN. `first` hogst upp ar sant for ett namn som inte setts
+  // forut, och da fyras firstActivity OCKSA — en Action bunden dit hade kort vid varje tryck med
+  // ett nytt namn. Utan username ar `first` falskt och bara 'knapp' gar ut.
+  //
+  // Actions spelas bara i OBS-utgangen: allowed() i action-runtime.js kraver
+  // window.VYRA_OVERLAY_SCENE. Ett tryck gor darfor ingenting synligt i Studion, och det ar
+  // avsiktligt — se provet "i studion spelas ingen action alls" i action-event-kedjan.test.js.
+  else if(t==='knapp')out.push(['knapp',{...payload,value:e.eventKey||payload.value}]);
   return out}
 // Single entry point for one live event, regardless of transport — the local poll loop below
 // calls this for every polled event, and overlay-access.js's cloud SSE handler calls

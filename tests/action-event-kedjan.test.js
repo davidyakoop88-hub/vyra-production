@@ -132,3 +132,82 @@ test('overlay.html för vidare både scene och access i vidarekopplingen', () =>
   assert.match(redirect, /scene/, 'scene faller bort i redirecten');
   assert.match(redirect, /access/, 'access faller bort i redirecten');
 });
+
+// DEN MANUELLA KNAPPEN, hela vägen (#365-arbetet, 2026-09-15).
+//
+// tests/actions-triggrar.test.js bevisar att ett knapp-event ger TRIGGERN 'knapp'. Det är inte
+// samma sak som att en Action körs — mellan dem ligger regelmatchningen, scengrinden och
+// executeNow. Precis den fogen var otestad för gåvor fram till den här filen skrevs, och den ska
+// inte vara otestad för knappen heller.
+//
+// NYCKELN LIGGER I `value`. liveEventTriggers packar upp eventKey dit, och Event-regeln matchar
+// mot triggerValue precis som en gåva matchar på gåvonamn. Det är därför en knapp kan skiljas
+// från en annan utan att något nytt matchningsbegrepp behövde införas.
+const knapphandelse = (over = {}) => handelse({ id: 'e-knapp', name: 'Knapp scen-1 ger fyrverkeri',
+  trigger: 'knapp', triggerValue: 'scen-1', ...over });
+
+test('en manuell knapp kör sin Action — hela vägen till spelad widget', async () => {
+  const w = studio({ events: [knapphandelse()] });
+  w.VyraActionEvent.handleEvent('knapp', { value: 'scen-1', username: '' });
+  await vanta(250);
+  assert.equal(w.__traffar.length, 1,
+    'knappen matchade regeln men ingenting spelade — kedjan är bruten mellan triggern och Actionen');
+});
+
+test('en knapp med FEL nyckel spelar ingenting', async () => {
+  // Utan den här vakten kunde varje knapp köra varje Action, och nycklarna vore dekoration.
+  const w = studio({ events: [knapphandelse()] });
+  w.VyraActionEvent.handleEvent('knapp', { value: 'scen-2' });
+  await vanta(250);
+  assert.equal(w.__traffar.length, 0, 'fel nyckel spelade ändå — knapparna går då inte att skilja åt');
+});
+
+test('en knapp spelar inte i en annan scen, och inte alls i studion', async () => {
+  // Samma två grindar som gäller gåvor. Knappen får inga undantag: scenen på Actionen avgör,
+  // och i studion (VYRA_OVERLAY_SCENE odefinierad) spelas ingenting alls.
+  const annanScen = studio({ scen: 2, events: [knapphandelse()] });
+  annanScen.VyraActionEvent.handleEvent('knapp', { value: 'scen-1' });
+  const iStudion = studio({ scen: null, events: [knapphandelse()] });
+  iStudion.VyraActionEvent.handleEvent('knapp', { value: 'scen-1' });
+  await vanta(250);
+  assert.equal(annanScen.__traffar.length, 0, 'knappen spelade i fel scen');
+  assert.equal(iStudion.__traffar.length, 0, 'knappen spelade i studion — actions hör hemma i OBS-utgången');
+});
+
+test('ett pausat knapp-Event triggar inte', async () => {
+  const w = studio({ events: [knapphandelse({ enabled: false })] });
+  w.VyraActionEvent.handleEvent('knapp', { value: 'scen-1' });
+  await vanta(250);
+  assert.equal(w.__traffar.length, 0, 'pausat Event körde ändå');
+});
+
+// HELA BÅGEN I ETT FÖNSTER — från rått event till spelad widget.
+//
+// Proven ovan anropar handleEvent() DIREKT och hoppar därmed över live-client.js. De bevisar
+// alltså Action & Event-halvan. tests/actions-triggrar.test.js bevisar den andra halvan: att ett
+// knapp-event blir triggern 'knapp'. Ingen av dem bevisar FOGEN.
+//
+// Det är precis mönstret #354 finns för: "varje sida är provad mot sitt eget antagande och fogen
+// är oprovad. Båda sviterna gröna. Buggen syns först i en sändning." Och det var verkligt här —
+// under bygget visade sig klienten släppa knapp-eventet på golvet medan servern tog emot det.
+//
+// Det här provet laddar live-client.js i SAMMA fönster som Action & Event och matar in eventet
+// där en riktig poll hade lämnat det. Faller grenen i live-client.js bort faller provet.
+test('hela kedjan: ett rått knapp-event spelar Actionen', async () => {
+  const w = studio({ events: [knapphandelse()] });
+  w.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: 'ws-A' }] }) };
+  for (const f of ['cloud-fields.js', 'live-client.js']) {
+    const s = w.document.createElement('script');
+    s.textContent = las(f);
+    w.document.body.append(s);
+  }
+  assert.equal(typeof w.VyraLive, 'object', 'live-client laddades inte — provet mäter då ingenting');
+
+  // Formen är exakt den local-server.js lämnar ifrån sig: typen och eventKey, inget username.
+  w.VyraLive.ingest({ type: 'knapp', eventKey: 'scen-1' });
+  await vanta(400);
+
+  assert.equal(w.__traffar.length, 1,
+    'det råa eventet nådde aldrig fram till Actionen — fogen mellan live-client.js och '
+    + 'Action & Event är bruten, och det syns inte i någon av halvornas egna prov');
+});
