@@ -164,9 +164,17 @@ test('varje singleton-filter i media.js skyddar standalone', () => {
   // Golvet är en kontrollmätning: det ska fånga att mönstret slutat matcha, inte låsa antalet.
   // Sänkt från 18 till 17 den 2026-08-13, när vyra-video-only-migration togs bort — den behöll
   // bara video och motsade vyra-remove-old-video-widgets, så tillsammans tömde de layouten.
-  // Se docs/tech-debt.md och tests/laddningsstadning.test.js. Sänk aldrig golvet för att tysta
+  // Se docs/tech-debt.md och tests/inga-mount-migreringar.test.js. Sänk aldrig golvet för att tysta
   // provet: ett filter som försvinner ska ha ett skäl som går att peka på.
-  assert.ok(guarded >= 17, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
+  //
+  // Sankt fran 17 till 16 den 2026-09-15 (#433), nar de tva sista RADERANDE engangsmigreringarna
+  // togs bort: vyra-remove-old-video-widgets och vyra-remove-retired-battle-fx. Skalet gar att
+  // peka pa - de raderade INTE pensionerade typer. Bade video och templateGloveSnipe har renderare
+  // och egenskapspanel i media.js i dag, och skapas av medielistan respektive addBoostPack. Ingen
+  // av de tva anroparna satter placement (widget-factory.js:505), sa widgetarna blev LAYOUT-widgetar
+  // och isStandalone-undantaget skyddade dem inte. Varje ny dator med tom localStorage raderade dem
+  // ur kundens overlay. tests/inga-mount-migreringar.test.js vaktar nu att de inte kommer tillbaka.
+  assert.ok(guarded >= 16, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
 });
 
 // ---- hidden and placement stay separate ---------------------------------------------------------

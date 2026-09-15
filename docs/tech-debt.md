@@ -959,8 +959,11 @@ Verifierad: 2026-08-19.
   import som avbryts efter att "ersätt allt" redan raderat dem. Den föråldrade halvan togs bort
   2026-08-13; villkoret i dess egen kommentar, *"until each live-data widget has a proper event
   connection"*, hade slutat gälla. **Lärdomen är inte "ta bort gammal kod" utan att en engångsstädning
-  aldrig får anta att den kör ensam.** Vaktat av `tests/laddningsstadning.test.js`, som läser de
+  aldrig får anta att den kör ensam.** Vaktat av `tests/inga-mount-migreringar.test.js`, som läser de
   riktiga filtren ur `media.js` och faller om de tillsammans tömmer en layout.
+  Den ersatte 2026-09-15 (#433) `laddningsstadning.test.js`, som mätte att städningarna inte
+  *tillsammans* tömde en layout. När alla sex var borttagna mätte det provet ingenting — den nya
+  vakten förbjuder i stället mönstret helt, och är mutationsbevisad.
 - **Ett event som `count`, `combo` eller `repeatcount`.** Combostorleken nådde en gång aldrig fram
   till fyrverkeriet eftersom `action-runtime.js` letade efter fältnamn eventet inte bar. Löst i
   PR #94 genom att skicka hela payloaden i stället för ett enda tal.
