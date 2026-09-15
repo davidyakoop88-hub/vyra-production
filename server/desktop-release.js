@@ -19,6 +19,11 @@ function release(env=process.env){const raw=String(env.DESKTOP_DOWNLOAD_URL||'')
 //
 // Att huvudena gar att forfalska sanker inget skydd: DESKTOP_DOWNLOAD_URL pekar pa en PUBLIK
 // GitHub-release. Grinden doljer en adress, den skyddar ingen fil.
-const BROWSER_HEADERS=['origin','referer','sec-fetch-site','sec-fetch-mode','sec-fetch-dest','sec-ch-ua'];
+// MATT, INTE GISSAT: Node:s fetch skickar 'sec-fetch-mode: cors' och 'user-agent: node' — inget
+// annat av huvudena nedan. Sec-Fetch-Mode far DARFOR inte sta i listan; med den dar klassades
+// uppdateraren som webblasare och fick 401, vilket ar precis felet som skulle lagas. curl skickar
+// inga sec-fetch-huvuden alls och dolde det — prova alltid med den KLIENT som ska fungera.
+// Kvar star huvuden som bara en webblasare satter: navigering och sidanrop bar alltid minst ett.
+const BROWSER_HEADERS=['origin','referer','sec-fetch-site','sec-fetch-dest','sec-ch-ua'];
 function fromBrowser(headers){const h=headers||{};return BROWSER_HEADERS.some(name=>{const value=h[name];return typeof value==='string'&&value.trim()!==''})}
 module.exports={release,safeVersion,storeUrl,fromBrowser,BROWSER_HEADERS};
