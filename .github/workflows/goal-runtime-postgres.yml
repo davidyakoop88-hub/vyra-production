@@ -307,6 +307,16 @@ jobs:
         run: node --test test/mfa-http.test.js
         working-directory: server
 
+      # TAKET FOR VERIFIERINGSMEJL, och att det inte delar hink med inloggningen (#346). Sparren
+      # nycklas pa user_id och hade inget prov: den kunde tas bort och hela sviten forblev gron.
+      # Det vardefulla steget ar det ANDRA - att login fortfarande svarar 200 efter att taket
+      # slagit i. Den delade auth-hinken nycklas pa proxyns adress och ar darfor gemensam for hela
+      # sajten; slas hinkarna ihop igen laser ETT otaligt konto ute alla andra. Kraver riktig Redis
+      # (taket raknas dar) och riktig Postgres (sessionen).
+      - name: Verifieringsmejl — taket biter, och inloggningen lever kvar
+        run: node --test test/verifieringsmejl-tak.test.js
+        working-directory: server
+
       # VERIFIERINGSLÄNKARNA. Påståendet som ska bevisas är att länken i det FÖRSTA mejlet
       # fortfarande fungerar efter ett nytt utskick — och det går inte att mäta mot en attrapp-pool
       # som aldrig håller några rader. Attrapp-provet (auth-flow-token.test.js) kan bara se vilka
