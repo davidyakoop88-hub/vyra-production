@@ -49,20 +49,35 @@ bryggan prenumererar på:        10
 ```
 
 De tio är CHAT, FOLLOW, GIFT, LIKE, LINK_MIC_BATTLE, MEMBER, ROOM_USER, SHARE, STREAM_END och
-SUB_NOTIFY. Sedan dess även LINK_MIC_BATTLE_TASK (multiplikatorfönstret). Fältnamnen nedan är lästa
-ur `tiktok-live-proto/v3`, inte ur dokumentation.
+SUB_NOTIFY. Sedan dess även LINK_MIC_BATTLE_TASK (multiplikatorfönstret).
 
-| Händelse | Vad den låser upp | Bärande fält |
-|---|---|---|
-| `LINK_MIC_ARMIES` | **Nästa steg.** Gör Battle MVP exakt i stället för uträknad, och ger en armé-leaderboard per sida | `BattleUserArmy { userId, nickname, score, diamondScore, avatarThumb }`, `hostscore` |
-| `ENVELOPE` | Skattkistan — en nedräkning på overlayen är det starkaste "stanna kvar"-verktyget TikTok har | `TreasureBoxData { coins, canOpen }` |
-| `RANK_UPDATE`, `HOURLY_RANK` | Egen placering i timrankingen. "Vi är #4 — 200 diamanter till #3" driver gåvor hårdare än ett eget mål | `updatesList { rankType, ownerRank }` |
-| `GOAL_UPDATE` | TikToks **egna** mål. Vi bygger egna; här kan plattformens speglas | `contributeCount`, `contributeScore` |
-| `SUPER_FAN`, `SUPER_FAN_JOIN`, `SUPER_FAN_BOX` | Super Fan är TikToks eget statusbegrepp — riktiga entré-alerts | `envelopeInfo` |
-| `EMOTE` | Emote-vägg. Konkurrenterna har den, vi inte | `emoteList` |
-| `QUESTION_NEW`, `POLL_MESSAGE` | Q&A och omröstningar på overlayen | `questionText` |
-| `GIFT_BROADCAST` | Stora gåvor som sänds över rum — gratis räckvidd att visa | — |
-| `SUB_PIN_EVENT`, `ROOM_PIN` | Fäst meddelande på overlayen | `pinnedMessage` |
+⚠️ **KOLUMNEN "KÄLLA" TILLKOM 2026-09-16 (#361), OCH DEN ÄR TABELLENS VIKTIGASTE.** Fältnamnen var
+lästa ur `tiktok-live-proto/v3` och beskrevs som auktoritativa. En komplett inspelning 2026-09-06
+(28 minuter, 3697 rader, 2046 händelser) visade att **alla tre typer som faktiskt fyrade bar andra
+fält än tabellen påstod**. Protofilen säger vad ett fält *heter om det finns*, inte vad TikTok
+skickar i en riktig sändning — och skillnaden är hela avståndet mellan en plan och en funktion.
+
+Sex av raderna fyrade inte alls i den sändningen. Deras fält är därför fortfarande **antagna**, och
+en rad som är antagen får aldrig planeras som om den vore mätt.
+
+| Händelse | Källa | Vad den låser upp | Bärande fält |
+|---|---|---|---|
+| `LINK_MIC_ARMIES` | **MÄTT** 2026-09-04 | Gör Battle MVP exakt i stället för uträknad. **Byggd** — se #381, speglad till desktopvägen 2026-09-16 | `BattleUserArmy { userId, nickname, score, diamondScore, avatarThumb }`, `hostscore`. ⚠️ Kommer i TVÅ former: `armies{}` nycklad på ankar-id, och `teamArmies[]`. I 450 uppmätta rader var `teamArmies` tom — läs båda |
+| `ENVELOPE` | **MÄTT** 2026-09-06, 14 rader | Skattkistan — en nedräkning på overlayen är det starkaste "stanna kvar"-verktyget TikTok har. 100 diamanter delades ut, ingen widget såg dem | ~~`TreasureBoxData { coins, canOpen }`~~ → `envelopeInfo { envelopeId, businessType, sendUserId, diamondCount, peopleCount, unpackAt }` |
+| `GOAL_UPDATE` | **MÄTT** 2026-09-06, 25 rader | TikToks **egna** mål — och `contributors[]` är samma unika givare som Heart Me Goal räknar fram själv, här per person med score | ~~`contributeCount`, `contributeScore`~~ → `goal.subGoals[].progress/target`, `goal.contributors[] { userIdStr, score, avatar, … }`, `goal.contributorsLength` |
+| `SUPER_FAN`, `SUPER_FAN_JOIN`, `SUPER_FAN_BOX` | **MÄTT** 2026-09-06, 5 rader | Super Fan är TikToks eget statusbegrepp — riktiga entré-alerts. Kommer som BARRAGE, alltså **en gren till i en hanterare bryggan redan har** | ~~`envelopeInfo`~~ → BarrageMessage med `content.key`, `fansLevelParam { currentGrade }`, `badge` |
+| `LINK_LAYER`, `LINK_MESSAGE` | **MÄTT** 2026-09-06, 24+24 rader | Medvärdslistan i realtid — förutsättningen för en medvärdstavla och för #360 | `linkedList`, `invitedList`, `appliedList`, `readyList`, `linkerMode`. ⚠️ `gift.forLinkmic` är INTE signalen: den var `true` på 15 av 18 gåvor som kom före första LINK_LAYER |
+| `GIFT_PANEL_UPDATE` | **MÄTT** 2026-09-06, 61 rader | Rummets gåvokatalog **med pris**, var ~15:e sekund. Samma data som gåvoregistret hämtas manuellt för, och som blir inaktuell efter ett dygn | gåvolista med pris per gåva |
+| `RANK_UPDATE`, `HOURLY_RANK` | *antagen* | Egen placering i timrankingen. "Vi är #4 — 200 diamanter till #3" driver gåvor hårdare än ett eget mål | `updatesList { rankType, ownerRank }` |
+| `EMOTE` | *antagen* | Emote-vägg. Konkurrenterna har den, vi inte | `emoteList` |
+| `QUESTION_NEW`, `POLL_MESSAGE` | *antagen* | Q&A och omröstningar på overlayen | `questionText` |
+| `GIFT_BROADCAST` | *antagen* | Stora gåvor som sänds över rum — gratis räckvidd att visa | — |
+| `SUB_PIN_EVENT`, `ROOM_PIN` | *antagen* | Fäst meddelande på overlayen | `pinnedMessage` |
+
+**Vad mätningen inte kunde svara på:** sändningen hade ingen battle. Sex LINK/BATTLE-typer gav noll
+rader, och de 231 `LINK_MIC_METHOD`-raderna bar matchfält med värdet noll — vilket är exakt vad man
+förväntar sig när ingen match pågår och därför **inte bevisar något om deras betydelse**. De kräver
+en sändning med battle. Se `docs/live-verifiering.md`.
 
 **Innan något av detta byggs:** en händelse måste namnges i **fyra** listor för att nå en widget —
 bryggans `TILL_MOLNET`, `TIKTOK_INGEST_TYPES`, `TIKTOK_ROOM_TYPES` och event-bussens `ALLOWED`.
