@@ -304,6 +304,86 @@ function punkt6(rader) {
     slutsats: 'skriv in fältet i GUARDIAN — FORBEREDD i bridge.js och lägg typen i ALLA fyra listorna (bryggan, TIKTOK_INGEST_TYPES, TIKTOK_ROOM_TYPES, event-bussens ALLOWED)' };
 }
 
+
+// ---- KONTROLL: TIKTOKS EGET GIVARANTAL MOT VART ------------------------------------------------
+//
+// #361 matte att GOAL_UPDATE bar `goal.contributors[]` med score per person och
+// `goal.contributorsLength` — samma sorts tal som Heart Me Goal raknar fram sjalvt. Det talet kom
+// dyrt: #289/#290 kravde sex granskningsrundor, ett kontrolltal som inte fick resa i samma payload
+// som listan, och till slut SHA-256 over en sorterad multimangd av id for att bevisa MEDLEMSKAP och
+// inte bara kardinalitet. TikTok skickar det redan, och bryggan kastar det.
+//
+// VARFOR KONTROLLEN LIGGER HAR OCH INTE I PRODUKTIONSKEDJAN.
+//
+// Att fora talet till servern hade kravt en ny typ i FYRA listor (bryggans TILL_MOLNET, index.js
+// TIKTOK_INGEST_TYPES och TIKTOK_ROOM_TYPES, event-bussens ALLOWED) — en permanent vag genom hela
+// systemet for en engangskontroll av att var rakning stammer. Inspelningen bar redan bada talen,
+// och hashen ar STABIL genom filen, sa samma person gar att folja. Kontrollen hor alltsa hemma i
+// analysatorn.
+//
+// ⚠️ TVA TAL SOM LIKNAR VARANDRA AR INTE SAMMA TAL. TikToks mal ar det mal STREAMERN satt upp i
+// TikTok, och Heart Me Goal raknar VAR gava. Sammanfaller de ar TikToks siffra ett facit; gor de
+// inte det ar en skillnad helt vantad. Verktyget redovisar darfor BADA talen och pastar aldrig att
+// de ska vara lika — samma regel som resten av filen: hellre "inget underlag" an ett svar.
+function heartMeKontroll(rader) {
+  const mal = avTyp(rader, 'GOAL_UPDATE');
+  const gavor = avTyp(rader, 'gift');
+
+  // VART TAL, per gava: unika avsandare. Identiteten hamtas ur bryggans egen giftFields — en kopia
+  // av faltvagen hade glidit isar, vilket ar precis vad som hande punkt 3 och 4 en gang.
+  const perGava = new Map();
+  for (const r of gavor) {
+    const f = N.giftFields(r.nyttolast || {}, '');
+    const vem = String(f.userId || f.username || '').trim();
+    const namn = String(f.giftName || '(namnlos)').trim();
+    if (!vem) continue;
+    if (!perGava.has(namn)) perGava.set(namn, new Set());
+    perGava.get(namn).add(vem);
+  }
+  const vartTal = [...perGava.entries()]
+    .map(([namn, set]) => [namn, set.size])
+    .sort((a, b) => b[1] - a[1]);
+
+  if (!mal.length) {
+    return {
+      svar: INGET,
+      skal: 'ingen GOAL_UPDATE i filen — kor inspelningen med VYRA_INSPELNING_TYPER=alla, och notera '
+        + 'att typen bara kommer nar streamern faktiskt har ett mal igang i TikTok',
+      'vart tal (unika avsandare per gava)': vartTal.slice(0, 8),
+    };
+  }
+
+  const forlopp = [];
+  const unika = new Set();
+  let sistaLangd = null, delmal = null;
+  for (const r of mal) {
+    const g = (r.nyttolast && r.nyttolast.goal) || r.nyttolast || {};
+    const langd = Number(g.contributorsLength);
+    if (Number.isFinite(langd)) { if (langd !== sistaLangd) forlopp.push(langd); sistaLangd = langd }
+    for (const c of Array.isArray(g.contributors) ? g.contributors : []) {
+      const id = String((c && (c.userIdStr || c.userId)) || '').trim();
+      if (id) unika.add(id);
+    }
+    if (Array.isArray(g.subGoals) && g.subGoals.length) {
+      delmal = g.subGoals.map(s => `${s && s.progress}/${s && s.target}`);
+    }
+  }
+
+  return {
+    svar: sistaLangd === null
+      ? 'GOAL_UPDATE finns men bar ingen contributorsLength'
+      : `TikTok sager ${sistaLangd} unika givare pa sitt mal`,
+    'GOAL_UPDATE-rader': mal.length,
+    'contributorsLength, forlopp': forlopp,
+    'unika id i contributors[]': unika.size,
+    'delmal (progress/target)': delmal || INGET,
+    'vart tal (unika avsandare per gava)': vartTal.slice(0, 8),
+    jamforelse: 'TikToks mal och Heart Me Goal ar inte nodvandigtvis samma mal. Talen jamfors av en '
+      + 'MANNISKA, inte av verktyget: sammanfaller malen ar TikToks siffra ett facit, annars ar en '
+      + 'skillnad vantad.',
+  };
+}
+
 function analysera(fil) {
   const rader = lasRader(fil);
   const handelser = rader.filter(arEvent);
@@ -319,6 +399,7 @@ function analysera(fil) {
       baraInspelade: handelser.filter(r => r.kalla === 'inspelad').length,
       vidarebefordrade: handelser.filter(r => r.kalla === 'vidarebefordrad').length,
     },
+    heartMeKontroll: heartMeKontroll(rader),
     punkt1: punkt1(rader),
     punkt2: punkt2(rader),
     punkt3: punkt3(rader),
@@ -343,6 +424,7 @@ function skrivUt(r) {
     punkt5: '5. Delar OBS localStorage med webbläsaren?',
     punkt6: '6. Vilket event bär Guardian-status?',
     punkt7: '7. Spelar Glove Snipes videor i OBS?',
+    heartMeKontroll: 'KONTROLL: TikToks eget givarantal mot vart (#361)',
   };
   for (const [nyckel, rubrik] of Object.entries(rubriker)) {
     const p = r[nyckel];
