@@ -115,15 +115,19 @@
     this.profile = PROFILES[key] || FALLBACK;
   };
 
+  // Assigning canvas.width reallocates the backing store even when the number is
+  // unchanged, so this has to be a real no-op once the size already matches --
+  // otherwise moving creation earlier buys nothing and the activation frame pays
+  // for two fresh bitmaps anyway.
   Engine.prototype.resize = function () {
     var r = this.stage.getBoundingClientRect();
     if (!r.width || !r.height) return false;
     var dpr = Math.min(2, root.devicePixelRatio || 1);
+    var W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
     this.w = r.width; this.h = r.height;
-    [this.back, this.front].forEach(function (cv) {
-      cv.width = Math.round(r.width * dpr);
-      cv.height = Math.round(r.height * dpr);
-    });
+    if (this.back.width === W && this.back.height === H) return true;
+    this.back.width = this.front.width = W;
+    this.back.height = this.front.height = H;
     this.bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return true;
@@ -309,7 +313,16 @@
     if (!raf) { last = 0; raf = requestAnimationFrame(tick); }
   }
 
+  // Build and size the two canvases as soon as the widget exists, not on the frame
+  // the alert fires. Allocating two backing stores on the activation frame cost a
+  // single 83 ms hitch in the measurement -- right at the entrance, where it shows.
+  function prewarm(box) {
+    var e = engineFor(box);
+    if (e) e.resize();
+  }
+
   function scan() {
+    document.querySelectorAll('.mvp-celebration').forEach(prewarm);
     document.querySelectorAll('.mvp-celebration.mvp-active').forEach(start);
   }
 

@@ -57,14 +57,17 @@ const FASER = [
   { namn: '4 · Avslut',    fran: 0.90, till: 1.00 }
 ];
 
-async function mat({ intensitet = 100, design = 'coronation' } = {}) {
+async function mat({ intensitet = 100, design = 'coronation', utanMotor = false } = {}) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  // Baslinje: samma widget, samma trigger, samma render() - men ingen motor alls.
+  // Utan den gar det inte att veta hur mycket av en spik som ens ar vart.
+  if (utanMotor) await page.route('**/battle-mvp-particles.js*', r => r.abort());
   // Utan den här raden mäter provet en tom duk och rapporterar perfekta 60 FPS.
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
-  await page.waitForFunction(() => !!window.VyraMvpParticles, null, { timeout: 30000, polling: 100 });
+  if (!utanMotor) await page.waitForFunction(() => !!window.VyraMvpParticles, null, { timeout: 30000, polling: 100 });
   await page.waitForTimeout(1200);
 
   const resultat = await page.evaluate(async ({ design, intensitet, sekunder, faser }) => {
@@ -79,7 +82,7 @@ async function mat({ intensitet = 100, design = 'coronation' } = {}) {
     const ticka = t => {
       if (!kor) return;
       rutor.push(t);
-      partiklar.push(window.VyraMvpParticles.count());
+      partiklar.push(window.VyraMvpParticles ? window.VyraMvpParticles.count() : 0);
       requestAnimationFrame(ticka);
     };
     requestAnimationFrame(ticka);
@@ -128,9 +131,11 @@ async function mat({ intensitet = 100, design = 'coronation' } = {}) {
       reservenDold: !!(scen && scen.classList.contains('mvc-fx-on')),
       toppPartiklar: Math.max(0, ...partiklar),
       totaltRutor: rutor.length,
-      reducerad: matchMedia('(prefers-reduced-motion: reduce)').matches
+      reducerad: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      motorFinns: !!window.VyraMvpParticles
     };
   }, { design, intensitet, sekunder: SEKUNDER, faser: FASER });
+  if (utanMotor) resultat.dukar = 0;
 
   await page.close();
   return resultat;
@@ -193,4 +198,31 @@ test('matningen reagerar pa belastning - annars mater den ingenting', { skip }, 
   for (const f of hog.faser) {
     assert.ok(f.fps >= 45, '250 %: ' + f.namn + ' snittade ' + f.fps + ' FPS (golv 45)');
   }
+});
+
+// Entrerutan ar brusig: triggerBattleMvp kor save() och ett fullt render() pa samma
+// bildruta som alerten tands, och den kostnaden finns med eller utan motor. Samma
+// konfiguration matte 83,2 / 66,7 / 33,4 / 16,8 ms i fyra korningar i rad. Ett rakt
+// tak pa varsta bildrutan hade darfor varit en flackig vakt fran forsta dagen.
+//
+// Det som GAR att mata stabilt ar motorns egen ANDEL: bada matningarna gors i samma
+// session under samma forutsattningar, sa det gemensamma bruset tar ut sig. Fore
+// forvarmningen allokerades tva backing stores pa aktiveringsrutan. Vaxer andelen
+// igen har nagon lagt tillbaka arbete pa entrerutan.
+test('motorn lagger inget arbete pa entrerutan', { skip }, async () => {
+  const utan = await mat({ utanMotor: true });
+  const med = await mat({ intensitet: 100 });
+  rapportera('baslinje \u00b7 UTAN partikelmotor', utan);
+  rapportera('med motor \u00b7 100 %', med);
+
+  assert.equal(utan.motorFinns, false, 'baslinjen laddade motorn anda - da mater den inget');
+  assert.equal(utan.dukar, 0, 'baslinjen ska inte ha nagra dukar');
+  assert.ok(med.toppPartiklar > 40, 'matningen med motor sag ingen last');
+
+  const andel = med.faser[0].varst - utan.faser[0].varst;
+  console.log('\n    entreruta utan motor: ' + utan.faser[0].varst + ' ms' +
+              '   med motor: ' + med.faser[0].varst + ' ms' +
+              '   motorns andel: ' + andel.toFixed(1) + ' ms\n');
+  assert.ok(andel <= 8,
+    'motorn lade ' + andel.toFixed(1) + ' ms pa entrerutan (tak 8) - forvarmningen ar trasig');
 });
