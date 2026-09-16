@@ -158,3 +158,31 @@
   .sd-bild,.streamdeck-card:hover .sd-bild{transform:none;transition:none}
   .sd-steg article,.sd-steg article:hover{transform:none;transition:none}
 }
+
+/* TOPPGIVARNA UR HISTORIKEN (#361).
+   Egen lista, aldrig samma nod som den levande toppgivarraden hogst upp — den ena svarar pa "vem
+   ger just nu", den har pa "vem har gett mig mest". Rubrikens <span> bar "sedan start" och ar
+   medvetet lagmald men lasbar: listan foljer INTE periodknapparna, och det far inte vara en
+   hemlighet. */
+.historikgivare { margin-top: 18px; border-top: 1px solid var(--linje, rgba(255,255,255,.08)); padding-top: 14px }
+.historikgivare h4 { margin: 0 0 10px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; opacity: .75 }
+.historikgivare h4 span { text-transform: none; letter-spacing: 0; opacity: .6; font-weight: 400 }
+.historikgivare-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: plats }
+.historikgivare-lista li {
+  display: grid; grid-template-columns: 22px 28px 1fr auto auto; align-items: center; gap: 10px;
+  padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.03);
+}
+/* Placeringen ar ett rakneverk, inte data i markupen: listan ar en <ol> och numret foljer da alltid
+   den faktiska ordningen aven om nagon later ordningen. */
+.historikgivare-lista li::before {
+  counter-increment: plats; content: counter(plats); opacity: .45; font-variant-numeric: tabular-nums; text-align: right;
+}
+.historikgivare-avatar { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,.08) }
+.historikgivare-avatar img { width: 100%; height: 100%; object-fit: cover; display: block }
+.historikgivare-lista b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.historikgivare-lista strong { font-variant-numeric: tabular-nums }
+.historikgivare-lista em { font-style: normal; opacity: .55; font-size: 12px; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+@media (max-width: 560px) {
+  .historikgivare-lista li { grid-template-columns: 18px 24px 1fr auto }
+  .historikgivare-lista em { display: none }
+}

@@ -201,3 +201,92 @@ test('ett serverfel fäller inte sidan', { skip }, async () => {
   await page.close();
   assert.equal(kvar, true, 'framsidan försvann när historik-anropet kastade');
 });
+
+// ---- TOPPGIVARNA UR HISTORIKEN (#361) ----------------------------------------------------------
+//
+// Servern har returnerat `toppGivare` sedan #136/#137 — topp 50 med namn, avatar, gavor, diamanter
+// och basta gava. INGEN klient ritade dem: datan raknades, skickades och kastades.
+//
+// Listan hogst upp pa sidan ar en ANNAN lista. Den matas av liveflodet och star tom sa fort man inte
+// sander; den svarar pa "vem ger just nu". Den har svarar pa "vem har gett mig mest" och overlever
+// en omladdning. Proven nedan vaktar att de aldrig blandas ihop.
+const GIVARSVAR = {
+  ...SVAR,
+  toppGivare: [
+    { id: 'anna', namn: 'Anna', avatar: 'https://cdn.example/a.jpg', gifts: 40, diamonds: 20000, likes: 0,
+      bastaGava: { namn: 'Universe', diamanter: 15000 } },
+    { id: 'bo', namn: 'Bo', avatar: '', gifts: 7, diamonds: 900, likes: 0, bastaGava: null },
+    { id: 'c', namn: '<img src=x onerror=1>', avatar: 'javascript:alert(1)', gifts: 1, diamonds: 5, likes: 0, bastaGava: null }
+  ]
+};
+
+test('toppgivarna ur historiken ritas ut', { skip }, async () => {
+  const page = await framsidan(GIVARSVAR);
+  const rader = await page.$$eval('.historikgivare-lista li', noder =>
+    noder.map(n => ({
+      namn: n.querySelector('b')?.textContent || '',
+      varde: n.querySelector('strong')?.textContent || '',
+      extra: n.querySelector('em')?.textContent || ''
+    })));
+
+  assert.equal(rader.length, 3, 'alla tre givarna skulle ritats');
+  assert.equal(rader[0].namn, 'Anna');
+  assert.equal(siffror(rader[0].varde), '20000', 'diamanterna skrevs inte ut');
+});
+
+test('bästa gåvan skrivs som NAMN, inte som [object Object]', { skip }, async () => {
+  // bastaGava ar ett OBJEKT {namn, diamanter}. Ett String() pa den ger "[object Object]" — och det
+  // hade INTE fallit ett prov som bara kollar att raden finns. Felet fanns i forsta utkastet.
+  const page = await framsidan(GIVARSVAR);
+  const extra = await page.$$eval('.historikgivare-lista em', n => n.map(x => x.textContent));
+
+  assert.equal(extra[0], 'Universe', 'bästa gåvans namn skulle stått här');
+  assert.ok(!extra.join(' ').includes('object Object'), 'ett objekt skrevs ut rått i gränssnittet');
+  // Utan basta gava visas antalet gavor — aldrig en tom rad som ser ut som att nagot inte laddat.
+  assert.match(extra[1], /7/, 'utan bästa gåva skulle antalet gåvor visats');
+});
+
+test('ett namn som ser ut som markup visas som TEXT', { skip }, async () => {
+  // Raderna bar anvandardata fran TikTok. Samma regel som den levande listan: createElement och
+  // textContent, aldrig innerHTML.
+  const page = await framsidan(GIVARSVAR);
+  const html = await page.$eval('.historikgivare-lista', n => n.innerHTML);
+  const namn = await page.$$eval('.historikgivare-lista b', n => n.map(x => x.textContent));
+
+  assert.ok(namn.includes('<img src=x onerror=1>'), 'namnet skulle visats som text');
+  assert.ok(!html.includes('onerror=1>'), 'namnet tolkades som markup');
+});
+
+test('en avatar som inte är http(s) blir aldrig en <img>', { skip }, async () => {
+  // MATT PA ANTALET, INTE PA VARDET. Forsta utkastet jamforde src mot den URL provet skickade in
+  // och foll — for runtime-controls.js:51 har en global error-lyssnare som byter en bild som inte
+  // gar att ladda mot en platshallare, och cdn.example finns inte i provmiljon. Beteendet ar ratt;
+  // provet var fel. Det som ska matas ar att en javascript:-URL aldrig blir en <img> ALLS.
+  const page = await framsidan(GIVARSVAR);
+  const bilder = await page.$$eval('.historikgivare-lista img', n => n.map(x => x.getAttribute('src') || ''));
+
+  assert.equal(bilder.length, 1,
+    'exakt en <img> skulle skapats: Anna har en https-avatar, Bo har ingen, och den tredje har en '
+    + 'javascript:-URL som aldrig far na en src');
+  assert.ok(!bilder.some(src => /^s*javascript:/i.test(src)), 'en javascript:-URL hamnade i en src');
+});
+
+test('utan givare döljs hela rutan — ingen rubrik över ingenting', { skip }, async () => {
+  // Ett tomt avsnitt med rubrik laser sig som "du har noll givare". For ett nytt konto ar sanningen
+  // att inspelningen inte borjat, och den texten star redan i notraden under.
+  const page = await framsidan({ ...SVAR, toppGivare: [] });
+  const dold = await page.$eval('[data-historikgivare]', n => n.hidden);
+  assert.equal(dold, true, 'rutan skulle varit dold');
+});
+
+test('historiklistan är en EGEN nod, aldrig den levande toppgivarraden', { skip }, async () => {
+  // Sidans egen regel: "NU" och "TOTALT" ar skilda matningar och far aldrig dela nod. Skriver de
+  // over varandra betyder listan olika saker beroende pa nar man tittar.
+  const page = await framsidan(GIVARSVAR);
+  const delad = await page.evaluate(() => {
+    const historik = document.querySelector('[data-historikgivare]');
+    const live = document.querySelector('[data-toppgivare]');
+    return !!(historik && live && (historik === live || live.contains(historik) || historik.contains(live)));
+  });
+  assert.equal(delad, false, 'historiken och liveflödet delar nod — de skriver över varandra');
+});
