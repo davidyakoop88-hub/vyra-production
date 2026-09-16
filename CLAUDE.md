@@ -71,6 +71,7 @@ antas vara ett fel i koden.
 ```bash
 npm test                    # alla node-tester i roten            (~4 min)
 npm run test:browser        # jsdom/browser-tester                (~70 min, se nedan)
+npm run test:skript         # scripts/test/ — källvakter mot server/index.js m.fl.
 npm run test:ci             # kontrakt + fuzz + allt
 npm run karta               # regenerera docs/katalogkarta.md
 node scripts/domaner.js test <domän>   # bara en domän
@@ -78,6 +79,12 @@ cd server && npm test           # moln-API:t; utan Postgres + Redis hoppas ~460 
 cd tiktok-bridge && npm test    # bryggan
 cd electron-app && npm test     # skrivbordsappen
 ```
+
+⚠️ **`npm test` täcker bara `tests/`.** `scripts/test/` körs av `test:skript` och innehåller
+källvakter som läser `server/index.js` och andra filer och pinnar exakta rader — de faller alltså av
+en omdöpning som inte ändrar något beteende. De körs i CI (`test-client`), så en ändring i en
+vaktad fil kan vara grön lokalt och röd i CI utan att något är fel i koden. `npm run test:ci` kör
+allt: kontrakt, fuzz, `tests/`, `scripts/test/` och browser-sviten.
 
 ⏱ **`test:browser` tar över en timme och är TYST under tiden.** 67–72 min uppmätt över 29 körningar
 (median 68), och tyngsta steget — *"Visuell · alla katalognycklar mot referens"* — fotograferar
