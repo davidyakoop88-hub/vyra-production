@@ -2,7 +2,8 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
-const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering } = require('./tiktok-fields');
+const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering,
+  battleStatusAv, mvpFields } = require('./tiktok-fields');
 
 function eventKey(type, data, fields) {
   const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
@@ -15,6 +16,11 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
   let activeConnection = null;
   let activeUsername = '';
   let connectToken = 0;
+
+  // VART EGET ANKAR-ID. Utan det gar det inte att veta vilken sida i en battle som ar var, och en
+  // MVP fran MOTSTANDARENS lag i var egen overlay ar varre an ingen MVP alls. Samma varde som
+  // bryggan laser (bridge.js:665), ur fetchRoomInfo().data.owner.
+  let mittAnkarId = '';
 
   function emit(type, fields, data) {
     onEvent({ type, eventKey: eventKey(type, data, fields), source: 'tiktok-live', ...fields });
@@ -120,8 +126,22 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     });
     connection.on(WebcastEvent.LINK_MIC_BATTLE, data => emit('battle', {
       scoreUs: number(data?.battleUsers?.[0]?.score || data?.scoreUs, 1e12),
-      scoreThem: number(data?.battleUsers?.[1]?.score || data?.scoreThem, 1e12)
+      scoreThem: number(data?.battleUsers?.[1]?.score || data?.scoreThem, 1e12),
+      // GRINDEN SOM OPPNAR EN MVP-SESSION (battle-mvp-session.js). Ordet fanns inte en enda gang
+      // i electron-app/ fore #381, sa sessionen kunde aldrig oppnas pa desktopvagen — aven om
+      // typen hade sants. #350 pastod att faltet STRYKS AV VITLISTAN; det stamde inte, det
+      // producerades aldrig. Att lagga det i vitlistan hade sett ut som en fix utan att vara en.
+      battleStatus: text(battleStatusAv(data, data?.battleSettings), 64)
     }, data));
+
+    // BATTLE MVP — typen molnet redan tar emot och som battle-mvp-session.js redan tander
+    // widgeten pa (#381). Listan ar slutgiltig forst vid triggerReason 2; mvpFields svarar null
+    // fore dess och da skickas ingenting. Tyst ar ratt: ett halvfardigt resultat mitt i en match
+    // ar fel MVP, inte en tidig MVP.
+    connection.on(WebcastEvent.LINK_MIC_ARMIES, data => {
+      const mvp = mvpFields(data, mittAnkarId);
+      if (mvp) emit('battle_mvp', mvp, data);
+    });
     // PAUS OCH ATERUPPTAGANDE (Davids fraga 2026-08-21).
     //
     // Vart bibliotek har INGEN egen pauhandelse — 68 typer och ingen heter nagot med pause.
@@ -163,6 +183,19 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         throw new Error('TikTok-anslutningen avbröts');
       }
       const roomId = text(state?.roomId, 100);
+
+      // EN EXTRAUPPLYSNING FAR ALDRIG SANKA ANSLUTNINGEN. Samma regel som bryggan foljer
+      // (bridge.js:658): fetchRoomInfo korrs vid sidan av, och bade ett avslag och en synkron
+      // krasch i den svaljs. Utan ankar-id blir Battle MVP tyst — allt annat fortsatter opaverkat.
+      mittAnkarId = '';
+      Promise.resolve()
+        .then(() => connection.fetchRoomInfo?.())
+        .then(info => {
+          if (activeConnection !== connection) return;
+          mittAnkarId = String(info?.data?.owner?.id_str || info?.data?.owner?.id || '');
+          if (!mittAnkarId) log('Kunde inte lasa ankar-id — Battle MVP blir tyst.');
+        })
+        .catch(err => log('fetchRoomInfo misslyckades (' + (err?.message || err) + ') — Battle MVP blir tyst.'));
       onStatus({ connected: true, username, mode: 'live', state: 'live', roomId });
       return { username, roomId };
     } catch (error) {
