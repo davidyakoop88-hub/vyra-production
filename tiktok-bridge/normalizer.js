@@ -438,7 +438,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -518,12 +518,37 @@ const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subs
 // FORSTA EMOTEN TAS. emoteList ar en array — en chattrad kan bara flera. Ett event per emote hade
 // dubblerat trafiken mot ingest-taket for en ren valjarfunktion.
 function emoteFields(data){
-  const forsta=data?.emoteList?.[0]||data?.emote||{};
+  // EMOTES KOMMER I PRAKTIKEN PA CHATTKANALEN, INTE PA EMOTE-KANALEN.
+  //
+  // UPPMATT 2026-09-16 mot tre skarpa inspelningar (2026-09-01/02): 48 av 48 meddelanden som bar
+  // en emote var `typ:'chat'` med emoten i `emotes[]` — formen `{index, emote:{...}}`. NOLL kom som
+  // WebcastEmoteChatMessage med `emoteList`. Det ar hela forklaringen till varfor filen tidigare
+  // sa "Vi har annu inte sett ett enda skarpt EMOTE-event": de har aldrig kommit den vagen.
+  //
+  // `emoteList` last forst anda — biblioteket kan skicka bada formerna, och en installation som
+  // FAR riktiga EMOTE-handelser ska fortsatta fungera oforandrat.
+  const forsta=data?.emoteList?.[0]||data?.emotes?.[0]?.emote||data?.emotes?.[0]||data?.emote||{};
   const bild=forsta?.image||{};
   return{
     ...baseUser(data),
     emote:text(forsta?.emoteId,160),
-    giftImage:text(bild?.urlList?.[0]||bild?.imageUrl||'',1200)
+    giftImage:text(bild?.urlList?.[0]||bild?.imageUrl||'',1200),
+    // `packageId` SKILJER EN FAN CLUB-STICKER FRAN EN PRENUMERATIONSEMOTE — INTE `emoteScene`.
+    //
+    // Forsta forsoket klassade pa scenen, eftersom proto-enumet sager SUBSCRIPTION=0, GAME=1,
+    // FANS_CLUB=2. UPPMATT 2026-09-16 mot 156 emotes i tre SKARPA inspelningar (2026-09-01/02):
+    //
+    //   packageId 'fansclub' + emoteScene 2 ..... 53
+    //   packageId 'fansclub' + emoteScene 3 ..... 97      <- enumet har inget 3 alls
+    //   packageId ''         + emoteScene 2 ...... 6
+    //
+    // Scen 3 finns alltsa i verkligheten men inte i enumet, och den ar MAJORITETEN. En
+    // klassificering pa scenen hade stamplat 97 fanklubbs-stickers som prenumerationsemotes.
+    // `packageId` ar entydigt i samma data: 150 av 156 sager 'fansclub'.
+    //
+    // Scenen foljer anda med — den ar uppmatt data och kan behovas — men den AVGOR ingenting.
+    emoteScene:number(forsta?.emoteScene,99),
+    emotePaket:text(forsta?.packageId,64)
   };
 }
 // FANS_UPGRADE — TikToks EGEN nivahojning, uppmatt 2026-09-01 (fem exemplar, nivaer 32/18/10/19/11).

@@ -4,7 +4,11 @@
     try { return window.VyraSessionState?.readExtra?.(key) ?? localStorage.getItem(key) }
     catch { return null }
   };
-  const getState = () => JSON.parse(readExtra(KEY) || '{"actions":[],"events":[]}');
+  // SAMMA NORMALISERING SOM action-event.js read(). Forvalet i `||` galler bara nar NYCKELN
+  // saknas — ett tillstand som finns men saknar `actions` slapp forbi och fallde vyn med
+  // "Cannot read properties of undefined". Formen garanteras har i stallet for att gissas
+  // vid varje lasning.
+  const getState = () => { const o = (() => { try { return JSON.parse(readExtra(KEY) || '{}') } catch { return {} } })(); return { ...o, actions: Array.isArray(o.actions) ? o.actions : [], events: Array.isArray(o.events) ? o.events : [], timers: Array.isArray(o.timers) ? o.timers : [] } };
   // Scenlanken byggdes tidigare ur `location` och bar darfor ingen access-token. Den fungerade i
   // David egen inloggade webblasare och gav inloggningssidan i OBS, som varken har session eller
   // kakor. Den enda giltiga basen ar overlayns egen token-lank — samma kalla som overlaylankraden
@@ -30,30 +34,44 @@
   // skrivningen — annars gar den forbi laset, markoren och generationsvakten.
   const setSceneMaxQueue = (number, value) => { const s = getSceneSettings(); s[number] = { ...(s[number] || {}), maxQueue: Math.max(0, Number(value) || 0) }; window.VyraSessionState.writeActive(SETTINGS_KEY, JSON.stringify(s)).catch(() => window.toast?.('Kunde inte spara koinstallningen')) };
 
-  function addSceneSettings() {
-    const modal = document.querySelector('.ae-modal');
-    const grid = modal?.querySelector('.ae-grid');
-    if (!grid || modal.querySelector('.ae-scene-settings')) return;
+  // SCENPANELEN SOM FÄLTLEVERANTÖR.
+  //
+  // Den sparade förr genom att räkna actions före klicket och sedan polla localStorage var 100:e ms
+  // i fyra sekunder tills listan vuxit, för att skriva scenen på `state.actions.at(-1)`. Två fel i
+  // ett: en långsam mediasparning tappade scenen tyst, och vid REDIGERING är "den sista i listan"
+  // fel action. Nu lämnas scenen i `collect` som vilket annat fält som helst.
+  const presets = {top:[160,80,760],center:[160,690,760],bottom:[160,1450,760],fullscreen:[0,0,1080]};
+  function addSceneSettings(modal, befintlig) {
+    const vard = modal?.querySelector('.ae-extra-slot');
+    if (!vard || vard.querySelector('.ae-scene-settings')) return;
+    const scene = befintlig?.scene || {};
+    const nummer = Number(scene.number) || 1, placering = scene.placement || 'bottom';
     const box = document.createElement('div');
     box.className = 'ae-scene-settings';
-    box.innerHTML = `<h4>OVERLAY-SCEN & PLACERING</h4><div class="ae-scene-row"><label>Scen<select id="aeScene">${Array.from({length:10},(_,i)=>`<option value="${i+1}">Scen ${i+1}</option>`).join('')}</select></label><label>Placering<select id="aePlacement"><option value="custom">Egen placering</option><option value="top">Överst</option><option value="center">Mitten</option><option value="bottom" selected>Längst ner</option><option value="fullscreen">Helskärm</option></select></label></div><div class="ae-position-grid"><label>X<input id="aePosX" type="number" value="160"></label><label>Y<input id="aePosY" type="number" value="1450"></label><label>Bredd<input id="aePosWidth" type="number" min="80" max="1080" value="760"></label><label>Lager<input id="aeLayer" type="number" min="1" max="99" value="10"></label></div><small>Varje scen har egen länk och sparar egen placering. Actions på samma scen spelas i kö.</small>`;
-    grid.before(box);
-    const presets = {top:[160,80,760],center:[160,690,760],bottom:[160,1450,760],fullscreen:[0,0,1080]};
+    box.innerHTML = `<h4>OVERLAY-SCEN & PLACERING</h4><div class="ae-scene-row"><label>Scen<select id="aeScene">${Array.from({length:10},(_,i)=>`<option value="${i+1}"${i+1===nummer?' selected':''}>Scen ${i+1}</option>`).join('')}</select></label><label>Placering<select id="aePlacement">${[['custom','Egen placering'],['top','Överst'],['center','Mitten'],['bottom','Längst ner'],['fullscreen','Helskärm']].map(([v,l])=>`<option value="${v}"${v===placering?' selected':''}>${l}</option>`).join('')}</select></label></div><div class="ae-position-grid"><label>X<input id="aePosX" type="number" value="${Number(scene.x)||160}"></label><label>Y<input id="aePosY" type="number" value="${Number(scene.y)||1450}"></label><label>Bredd<input id="aePosWidth" type="number" min="80" max="1080" value="${Number(scene.width)||760}"></label><label>Lager<input id="aeLayer" type="number" min="1" max="99" value="${Number(scene.layer)||10}"></label></div><small>Varje scen har egen länk och sparar egen placering. Actions på samma scen spelas i kö.</small>`;
+    vard.append(box);
     box.querySelector('#aePlacement').onchange = event => {
       const value = presets[event.target.value];
       if (!value) return;
       box.querySelector('#aePosX').value=value[0]; box.querySelector('#aePosY').value=value[1]; box.querySelector('#aePosWidth').value=value[2];
     };
-    modal.querySelector('#saveAeAction').addEventListener('click', () => {
-      const before = getState().actions.length;
-      const scene = {number:+box.querySelector('#aeScene').value,placement:box.querySelector('#aePlacement').value,x:+box.querySelector('#aePosX').value,y:+box.querySelector('#aePosY').value,width:+box.querySelector('#aePosWidth').value,layer:+box.querySelector('#aeLayer').value};
-      let attempts=0, timer=setInterval(()=>{const state=getState();if(state.actions.length>before){state.actions.at(-1).scene=scene;window.VyraSessionState.writeActive(KEY,JSON.stringify(state));clearInterval(timer)}else if(++attempts>40)clearInterval(timer)},100);
-    }, true);
   }
+  (window.VyraActionFields=window.VyraActionFields||{_providers:[],register(p){if(p)this._providers.push(p)}}).register({
+    mount: addSceneSettings,
+    collect(modal) {
+      const box = modal.querySelector('.ae-scene-settings');
+      if (!box) return {};
+      return { scene: {number:+box.querySelector('#aeScene').value,placement:box.querySelector('#aePlacement').value,x:+box.querySelector('#aePosX').value,y:+box.querySelector('#aePosY').value,width:+box.querySelector('#aePosWidth').value,layer:+box.querySelector('#aeLayer').value} };
+    }
+  });
 
+  // PLACERINGEN ÄR FACITS (2026-09-16). Panelen låg efter `.ae-steps`, alltså FÖRE listorna, och
+  // tio scenkort plus tio länkkort fyllde hela första skärmen — Action-tabellen hamnade under
+  // vikningen och syntes inte utan att scrolla. I facit är "Overlay Screen Settings" en egen panel
+  // längst ned, efter både Actions och Events. Den hänger därför på `.ae-columns` i stället.
   function renderScenes() {
-    const steps = document.querySelector('.ae-steps');
-    if (!steps || document.querySelector('.ae-scenes-overview')) return;
+    const ankare = document.querySelector('.ae-columns') || document.querySelector('.ae-steps');
+    if (!ankare || document.querySelector('.ae-scenes-overview')) return;
     const state = getState();
     const section = document.createElement('section');
     section.className = 'ae-scenes-overview';
@@ -65,8 +83,11 @@
       if (!url) return `<small class="ae-scene-needs-token" data-tom="automatik-scenlank">Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.</small><button type="button" data-create-scene-link>Skapa säker OBS-länk</button>`;
       return `<input readonly value="${url}"><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button>`;
     };
-    section.innerHTML = `<header><b>10 OVERLAY-SCENER</b><span>Varje scen har en egen OBS/TikTok-länk</span></header><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;
-    steps.after(section);
+    // Facit §4 förklarar VARFÖR en scen behövs innan den listar dem. Rubriken "10 OVERLAY-SCENER"
+    // svarar på vad som finns, inte på vad streamern ska göra med det — och en tom lista med tio
+    // länkar säger ingenting till någon som aldrig satt upp en overlay förut.
+    section.innerHTML = `<header><b>OVERLAY-SKÄRMAR</b><span>Varje skärm har en egen OBS/TikTok-länk och en egen kö</span></header><p class="ae-scenes-intro">För att dina actions ska synas i OBS eller Live Studio måste du lägga in minst en overlay-skärm. Du kopplar varje action till en skärm, och varje skärm har sin egen kö. Här kopierar du länkarna och ställer in hur lång kön får bli. När du lagt in länken i OBS byter skärmen status till Online.</p><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;
+    ankare.after(section);
     updateSceneStatuses();
     section.querySelectorAll('[data-scene-max-queue]').forEach(input => input.onchange = () => setSceneMaxQueue(input.dataset.sceneMaxQueue, input.value));
   }
@@ -87,7 +108,9 @@
   (window.VyraActionsExtras = window.VyraActionsExtras || []).push(renderScenes);
 
   document.addEventListener('click', async event => {
-    if (event.target.closest('#newAeAction')) setTimeout(addSceneSettings,70);
+    // Panelen monteras numera av fältregistrets `mount`, inte av en tidsfördröjning efter klicket.
+    // Den gamla raden här sköt 70 ms i blindo och fyrade dessutom bara på "Ny Action" — aldrig på
+    // pennan, så en redigerad action hade ingen scenpanel alls.
     if (event.target.closest('[data-extra=actions]')) setTimeout(renderScenes,120);
     const show = event.target.closest('[data-show-scene]');
     if (show) document.querySelector(`[data-scene-link="${show.dataset.showScene}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});

@@ -377,6 +377,18 @@ if (require.main === module) {
         name: comment,
         comment,
       }, data);
+      // EN CHATTRAD KAN BARA EN EMOTE, och i praktiken ar det SA de kommer.
+      // Uppmatt mot tre skarpa inspelningar: 48 av 48 emotes lag i ett chattmeddelandes `emotes[]`,
+      // noll kom som WebcastEmoteChatMessage. Utan raden nedan kan `subscriberEmote` och
+      // `fanSticker` aldrig fyra hos en streamer vars tittare anvander emotes i kommentarer — och
+      // valjaren i Actions & Events forblir tom for alltid.
+      //
+      // Skickas SOM EGET EVENT, inte som ett falt pa chatten: bada triggrarna ska kunna fyra
+      // oberoende av varandra, och chattens egen nyttolast ar redan slapp igenom vitlistan.
+      if (Array.isArray(data?.emotes) && data.emotes.length) {
+        const f = N.emoteFields(data);
+        if (f.emote) sendEvent('subscriberemote', f, data);
+      }
     });
 
     connection.on(WebcastEvent.GIFT, data => {

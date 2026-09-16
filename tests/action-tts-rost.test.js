@@ -41,16 +41,32 @@ function panel({ roster = ROSTER } = {}) {
     fyra: namn => lyssnare.filter(([n]) => n === namn).forEach(([, fn]) => fn())
   };
   window.__roster = roster;
+
+  // FÄLTREGISTRET, INTE EN MUTATIONOBSERVER (2026-09-16, TikFinity-facit).
+  //
+  // Riggen byggde förr en tom `.ae-modal` med en `.ae-grid` och väntade på att action-options.js
+  // egen MutationObserver skulle hitta den. Sedan ombyggnaden äger action-event.js modalen och
+  // ritar varje funktions fält i sin egen lucka; action-options.js registrerar sig i stället som
+  // fältleverantör. Riggen härmar därför action-event.js: den tar emot registreringen och ber
+  // leverantören rita TTS-luckan — samma anrop den riktiga modalen gör.
+  const leverantorer = [];
+  window.VyraActionFields = { register: p => leverantorer.push(p) };
+
   const s = window.document.createElement('script');
   s.textContent = las('action-options.js');
   window.document.body.append(s);
 
-  // Panelen byggs av en MutationObserver när modalen dyker upp.
   const modal = window.document.createElement('div');
-  modal.className = 'ae-modal';
-  modal.innerHTML = '<div class="ae-grid"></div><button id="saveAeAction"></button>';
+  modal.className = 'ae-modal ae-modal-action';
+  modal.innerHTML = '<fieldset class="ae-fns"><div class="ae-fn" data-fn="tts">'
+    + '<label class="ae-check"><input type="checkbox" value="tts" checked> TTS</label>'
+    + '<div class="ae-fn-slot" data-slot="tts"></div></div></fieldset>'
+    + '<button id="saveAeAction"></button>';
   window.document.body.append(modal);
-  return { window, modal };
+  const slot = modal.querySelector('.ae-fn-slot[data-slot=tts]');
+  leverantorer.filter(p => (p.slots || []).includes('tts'))
+    .forEach(p => p.render(slot, 'tts', null));
+  return { window, modal, leverantorer };
 }
 const vanta = ms => new Promise(r => setTimeout(r, ms));
 

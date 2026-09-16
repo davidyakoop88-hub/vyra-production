@@ -33,8 +33,18 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
   else if(t==='likes'||t==='like')out.push(['likes',{...payload,value:payload.count,likecount:payload.count,totallikecount:e.points??e.totalLikes??e.totalLikeCount??0}]);
   else if(t==='chatcommand'||t==='command')out.push(['chatCommand',{...payload,command:e.command||e.name,value:e.command||e.name}]);
   else if(t==='chat'||t==='comment'){const text=String(e.comment||e.name||'');out.push(['chat',{...payload,comment:text,value:text}]);if(text.trim().startsWith('!'))out.push(['chatCommand',{...payload,command:text.trim().split(/\s+/)[0],value:text.trim().split(/\s+/)[0],comment:text}])}
-  else if(t==='subscriberemote')out.push(['subscriberEmote',{...payload,value:e.emote||e.name}]);
-  else if(t==='fanclubsticker'||t==='fansticker')out.push(['fanSticker',{...payload,value:e.sticker||e.name}]);
+  // EN FAN CLUB-STICKER AR EN EMOTE MED emoteScene 2 (FANS_CLUB). Bada kommer i TikToks
+  // WebcastEmoteChatMessage och bryggan skickar dem som samma typ, `subscriberemote`.
+  //
+  // `fanclubsticker` nedan var DOD KOD: uppmatt 2026-09-16 emitterar ingenting i hela kedjan den
+  // typen — varken normalizer.js, bridge.js eller tiktok-service.js — sa `fanSticker` var en
+  // trigger som fysiskt aldrig kunde fyra. Den star kvar som reservvag ifall en framtida kalla
+  // skickar en egen typ, men den riktiga vagen ar scenen.
+  else if(t==='subscriberemote'||t==='fanclubsticker'||t==='fansticker'){
+    const id=e.emote||e.sticker||e.name;
+    const arSticker=arFanklubb(e)||t==='fanclubsticker'||t==='fansticker';
+    out.push([arSticker?'fanSticker':'subscriberEmote',{...payload,value:id,emote:id,emoteScene:e.emoteScene}]);
+  }
   else if(t==='shoppurchase'||t==='purchase')out.push(['shopPurchase',{...payload,value:e.productName||e.name}]);
   // EN MANUELL KNAPP (Stream Deck och liknande). Den ska kunna kora en Action utan att PASTA att
   // en tittare gjorde nagot: ett falskt `gift` hade rakat upp mal, topplistor och sandnings-
@@ -65,13 +75,29 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
 // Subscriber emotes have no human-readable name (TikTok only gives an opaque emoteId), so the
 // Events picker can't ship with a fixed catalog like gifts have. Instead it offers whatever emotes
 // have actually appeared live, most-recent-first, capped so a long session doesn't grow forever.
+// EN FAN CLUB-STICKER KANNS PA `packageId`, INTE PA `emoteScene`.
+//
+// UPPMATT 2026-09-16 mot 156 emotes i tre skarpa inspelningar: `packageId` sade 'fansclub' i 150
+// av dem, medan scenen var 2 i 59 fall och 3 i 97 — och 3 finns inte ens i TikToks eget
+// proto-enum (SUBSCRIPTION=0, GAME=1, FANS_CLUB=2). Ett forsta forsok klassade pa scenen och hade
+// darmed stamplat 97 fanklubbs-stickers som prenumerationsemotes.
+//
+// EN agare av fragan: bade triggern och inlarningen fragar harifran, sa de kan inte glida isar.
+function arFanklubb(e){
+  return String(e?.emotePaket||e?.packageId||'').toLowerCase()==='fansclub';
+}
 function recordSeenEmote(e){
   const type=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
-  if(type!=='subscriberemote'||!e.emote)return;
+  const id=e.emote||e.sticker;
+  if(!['subscriberemote','fanclubsticker','fansticker'].includes(type)||!id)return;
   try{
-    const KEY='vyra-seen-emotes-v1';
-    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.id!==e.emote);
-    list.unshift({id:e.emote,image:e.giftImage||'',lastSeen:Date.now()});
+    // TVA LISTOR, INTE EN. Valjaren for Fan Club-stickers visade forr subscriber-emotes, for bada
+    // hamtades ur samma nyckel. Facit har dem som tva skilda val med varsin bildlista, och
+    // emoteScene 2 (FANS_CLUB) ar det enda som skiljer dem at i TikToks data.
+    const arSticker=arFanklubb(e)||type!=='subscriberemote';
+    const KEY=arSticker?'vyra-seen-stickers-v1':'vyra-seen-emotes-v1';
+    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.id!==id);
+    list.unshift({id,image:e.giftImage||'',lastSeen:Date.now()});
     localStorage.setItem(KEY,JSON.stringify(list.slice(0,40)));
   }catch{}
 }
@@ -80,6 +106,38 @@ function recordSeenEmote(e){
 // tiktok-live-connector), so the Events "specific user" picker can't ship with a real follower
 // list either. Every live event already carries a real username, so capture-as-seen is the only
 // technically honest way to offer a picker instead of free text.
+// GAVOKATALOGEN LARS IN LIVE, av exakt samma skal som emotes (se bridge.js:553): det finns ingen
+// lista att hamta fran webblasaren. Serverns `gavokatalog` ar ADMIN-ONLY (/api/admin/gavokatalog)
+// och nas inte harifran, och den statiska assets/gifts/gifts-manifest.js bar bara ENGELSKA namn
+// utan coin-varde — medan TikTok levererar katalogen pa streamerns eget sprak.
+//
+// UPPMATT MOT FACIT: TikFinity visar `Basketboll`, `Kor hart!`, `Morgonblommor` och `1 Coins` per
+// rad. Vart manifest sager `Basketball` och inget varde alls. Ett inlart namn ar darfor ALLTID
+// battre an manifestets: det kommer fran samma kalla som sjalva gavan.
+//
+// Vardet skrivs bara over nar vi faktiskt har ett — en combo-post utan coins ska inte nolla ett
+// varde vi redan lart oss.
+function recordSeenGift(e){
+  const type=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
+  if(type!=='gift'&&type!=='giftcombo')return;
+  const namn=e.giftName||e.gift;
+  if(!namn)return;
+  try{
+    const KEY='vyra-seen-gifts-v1';
+    const lista=JSON.parse(localStorage.getItem(KEY)||'[]');
+    const gammal=lista.find(x=>x.name===namn)||{};
+    const kvar=lista.filter(x=>x.name!==namn);
+    const coins=Number(e.diamonds??e.coins??e.diamondCount??0)||0;
+    kvar.unshift({
+      name:namn,
+      image:e.giftImage||gammal.image||'',
+      coins:coins||gammal.coins||0,
+      giftId:e.giftId||gammal.giftId||'',
+      lastSeen:Date.now()
+    });
+    localStorage.setItem(KEY,JSON.stringify(kvar.slice(0,200)));
+  }catch{}
+}
 function recordSeenUser(e){
   const username=e.username||e.uniqueId||e.user;
   if(!username)return;
@@ -185,8 +243,24 @@ function ingest(e,frameId){
   normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
-  recordSeenEmote(e);
-  recordSeenUser(e);
+  // SIMULERADE EVENT FAR INTE LARAS IN.
+  //
+  // Simulatorn skickar sina event genom ingest() med flit — hela poangen ar att de ska ga samma
+  // vag som ett riktigt event. Men inlarningen ar en PASTAENDE om verkligheten: en gava i
+  // valjaren markt som inlard sager "den har gavan har skickats i din sandning", och en
+  // anvandare i valjaren sager "den har personen har varit har".
+  //
+  // Uppmatt 2026-09-16: `TestFollower`, `TestSharer`, `TestSubscriber`, `TestLiker` och
+  // `TestGifter` lag redan i anvandarvaljaren hos alla som nagonsin tryckt pa en simuleringsknapp,
+  // eftersom recordSeenUser aldrig skilde pa riktigt och simulerat. Med gavokatalogen hade samma
+  // hal gett en falsk `Rose / 1 coins` markt som inlard.
+  //
+  // Triggrarna kors fortfarande — bara minnet lamnas i fred.
+  if(!e||!e.__simulerad){
+    recordSeenEmote(e);
+    recordSeenGift(e);
+    recordSeenUser(e);
+  }
   // ISOLERAD MED FLIT. routeLiveBattleEvent ar inte en funktion utan en KEDJA: battle-mvp-,
   // fan-level-, gifter-level-, gift-fireworks- och guardian-session lindar alla samma namn, var och
   // en runt den forra. Kastade nagon av dem gick undantaget rakt igenom ingest och raden nedanfor

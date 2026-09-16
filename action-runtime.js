@@ -110,7 +110,40 @@
   // 'Gifter Level Up' innehåller 'level'. Med bara level-grenen nådde en regel som pekade på fan-
   // widgeten alltid gifter-widgeten, och streamern såg fel widget spela utan någon ledtråd om varför.
   function runWidget(action,payload){const name=String(action.config?.widget||'').toLowerCase();if(name.includes('firework'))return window.triggerGiftFireworks?.(payload);if(name.includes('follower'))return window.triggerNewFollower?.(payload);if(name.includes('top like'))return window.triggerLikeFountainPop?.(payload);if(name.includes('battle mvp'))return window.triggerBattleMvp?.(payload);if(name.includes('fan level'))return window.triggerFanLevelUp?.(payload);if(name.includes('level'))return window.triggerGifterLevelUp?.(payload);const aliases={'gift campaign':'campaign','heart me goal':'goal'},needle=aliases[name]||name;let liveState;try{liveState=JSON.parse(localStorage.getItem('vyra-state')||'{}')}catch{liveState={}}let widget=liveState?.widgets?.find(w=>String(w.type+' '+(w.title||'')).toLowerCase().includes(needle));let el=widget&&document.querySelector(`[data-id="${CSS.escape(String(widget.id))}"]`);if(el){el.classList.remove('vyra-action-widget-active');void el.offsetWidth;el.classList.add('vyra-action-widget-active');setTimeout(()=>el.classList.remove('vyra-action-widget-active'),Math.max(1,Number(action.duration)||6)*1000);return true}document.dispatchEvent(new CustomEvent('vyra:runtime-widget',{detail:{action,payload}}));return false}
-  async function executeNow(detail){const {action,payload={}}=detail,types=action.types||[],c=action.config||{};if(types.includes('picture'))playMedia(action,'picture',action.pictureMedia);if(types.includes('video'))playMedia(action,'video',action.videoMedia);if(types.includes('audio'))playMedia(action,'audio',action.audioMedia);if(types.includes('alert'))document.dispatchEvent(new CustomEvent('vyra:runtime-alert',{detail:{action,payload}}));if(types.includes('tts'))tts(action,payload);if(types.includes('overlay')||types.includes('animation'))runWidget(action,payload);if(types.includes('chat'))document.dispatchEvent(new CustomEvent('vyra:chatbot-send',{detail:{message:fill(c.chatText,payload),action,payload}}));if(types.includes('spotify'))document.dispatchEvent(new CustomEvent('vyra:spotify-play',{detail:{query:c.spotify,action,payload}}));if(types.includes('obsScene'))document.dispatchEvent(new CustomEvent('vyra:obs-scene',{detail:{scene:c.obsScene,action}}));if(types.includes('obsSource'))document.dispatchEvent(new CustomEvent('vyra:obs-source',{detail:{source:c.obsSource,action}}));if(types.includes('webhook')&&c.webhook)fetch(c.webhook,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>window.toast?.('Webhook kunde inte nås'));if(types.includes('addPoints'))window.VyraPoints.add(payload.username,c.addPointsAmount||10);if(types.includes('removePoints'))window.VyraPoints.remove(payload.username,c.removePointsAmount||10)}
+  // STYR ETT MAL (facits funktion 14). VyraGoals ager malen och talar med servern; vi far inte
+  // rora malwidgetens varden direkt harifran, for da skulle overlayn och servern saga olika saker.
+  //
+  // `tyst:true` pa reset: bekraftelsedialogen i goal-client.js finns for en MANNISKA som klickar.
+  // En action streamern sjalv konfigurerat ar redan bekraftelsen, och en dialog mitt i en sandning
+  // vore dessutom osynlig i OBS — den hade bara last actionen i en tyst vantan.
+  function styrMal(c){
+    const g=window.VyraGoals,id=c&&c.goalWidget;
+    if(!g||!id)return;
+    const varde=Math.max(0,Number(c.goalValue)||0);
+    try{
+      if(c.goalAction==='target')g.patchTarget(id,varde);
+      else if(c.goalAction==='baseline')g.patchBaseline(id,varde);
+      else g.reset(id,{tyst:true});
+    }catch(err){console.warn('[VYRA] malet kunde inte styras',err)}
+  }
+  // STYR EN TIMER (facits funktion 17). Timrarna bor i samma nyckel som actions och lases av
+  // action-timers.js var tionde sekund. `lastRun=nu` ar nollstallningen: nasta korning intraffar ett
+  // helt intervall framat.
+  function styrTimer(c){
+    const KEY='vyra-action-event-v2',id=c&&c.timerId;
+    if(!id)return;
+    try{
+      const rad=window.VyraSessionState?.readExtra?.(KEY)??localStorage.getItem(KEY);
+      const state=JSON.parse(rad||'{}');
+      const t=(state.timers||[]).find(x=>String(x.id)===String(id));
+      if(!t)return;
+      if(c.timerAction==='start')t.enabled=true;
+      else if(c.timerAction==='stop')t.enabled=false;
+      else t.lastRun=Date.now();
+      window.VyraSessionState.writeActive(KEY,JSON.stringify(state));
+    }catch(err){console.warn('[VYRA] timern kunde inte styras',err)}
+  }
+  async function executeNow(detail){const {action,payload={}}=detail,types=action.types||[],c=action.config||{};if(types.includes('picture'))playMedia(action,'picture',action.pictureMedia);if(types.includes('video'))playMedia(action,'video',action.videoMedia);if(types.includes('audio'))playMedia(action,'audio',action.audioMedia);if(types.includes('alert'))document.dispatchEvent(new CustomEvent('vyra:runtime-alert',{detail:{action,payload}}));if(types.includes('tts'))tts(action,payload);if(types.includes('overlay'))runWidget(action,payload);if(types.includes('animation')){if(c.animationPath)playMedia(action,'video',{packagePath:c.animationPath,name:c.animationName});else runWidget(action,payload)}if(types.includes('chat'))document.dispatchEvent(new CustomEvent('vyra:chatbot-send',{detail:{message:fill(c.chatText,payload),action,payload}}));if(types.includes('spotify'))document.dispatchEvent(new CustomEvent('vyra:spotify-play',{detail:{query:c.spotify,action,payload}}));if(types.includes('obsScene'))document.dispatchEvent(new CustomEvent('vyra:obs-scene',{detail:{scene:c.obsScene,action}}));if(types.includes('obsSource'))document.dispatchEvent(new CustomEvent('vyra:obs-source',{detail:{source:c.obsSource,action}}));if(types.includes('webhook')&&c.webhook)fetch(c.webhook,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>window.toast?.('Webhook kunde inte nås'));if(types.includes('goal'))styrMal(c);if(types.includes('timer'))styrTimer(c);if(types.includes('addPoints'))window.VyraPoints.add(payload.username,c.addPointsAmount||10);if(types.includes('removePoints'))window.VyraPoints.remove(payload.username,c.removePointsAmount||10)}
   // "Hoppa över om nästa action väntar i kön": if the queue already has something waiting behind
   // this action by the time it starts playing, cut its normal duration-wait short (a small
   // transition buffer instead) so the queue doesn't back up — trades "always play the full
