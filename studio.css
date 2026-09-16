@@ -1553,3 +1553,11 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
 .properties .vyra-emoji-val button{background:transparent;border:0;font-size:16px;line-height:1;padding:4px 0;cursor:pointer;border-radius:5px}
 .properties .vyra-emoji-val button:hover{background:#2a1838}
 .properties .vyra-emoji-val button:focus-visible{outline:2px solid #b13cff;outline-offset:-2px}
+/* Anslutningsraden i inställningarna: grön bara när den verkligen är ansluten, gul medan den
+   försöker. Förut satte `state.tiktok` grönt så fort ett namn var sparat — ett påstående om
+   minnet, inte om anslutningen. */
+.settings-status-value.vantar{color:#ffc46b}
+.settings-status-value.vantar i{background:#ffc46b}
+/* Skälet till att anslutningen inte gick igenom. Servern har alltid skickat det; fram till
+   2026-09-16 kastades det bort och användaren fick felsöka i blindo. */
+.settings-status-skal{display:block;margin-top:3px;font-weight:400;font-size:11px;color:#a58ea9;line-height:1.5}

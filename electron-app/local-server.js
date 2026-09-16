@@ -260,6 +260,15 @@ function startLocalServer(root, port = 4173, options = {}) {
         }
         return sendJson(res, { ok: true, server: 'VYRA Live Server', connection, lastEventId: events.length ? events[events.length - 1].id : 0 });
       }
+      // GAVOKATALOGEN (GET). Ren lasning ur en redan oppen anslutning: inga sidoeffekter, inget
+      // som skrivs, inga rattigheter utover den anslutning appen redan har. 503 nar TikTok-delen
+      // saknas ar samma svar som /api/connect ger — webblaget har ingen anslutning att fraga.
+      if (p === '/api/gifts' && req.method === 'GET') {
+        if (!liveConnector || typeof liveConnector.hamtaGavor !== 'function') {
+          return sendJson(res, { ok: false, error: 'Gavokatalogen finns endast i VYRA Desktop' }, 503);
+        }
+        return sendJson(res, await liveConnector.hamtaGavor());
+      }
       if (p === '/api/connect' && req.method === 'POST') {
         const d = JSON.parse((await readBody(req)) || '{}');
         if (!liveConnector) return sendJson(res, { ok: false, error: 'TikTok LIVE-anslutningen finns endast i VYRA Desktop' }, 503);

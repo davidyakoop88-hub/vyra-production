@@ -286,9 +286,22 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
     'battle-mvp-session.js cachebustades inte for #368');
-  for (const fil of ['vyra-tal', 'action-event', 'action-runtime', 'sound-alerts']) {
+  for (const fil of ['vyra-tal', 'sound-alerts']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
+  // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
+  // (docs/referens/tikfinity-actions-facit.md) och filen ar alltsa inte langre "oforandrad sedan
+  // duckningen". De fyra filerna i samma ombyggnad delar strang, for de ar EN andring — halls de
+  // isar kan en av dem laddas gammal mot de andras nya kontrakt, och faltregistret finns bara i en
+  // av dem: laddas action-event.js gammal saknar de andra tre `VyraActionFields` och tappar TYST
+  // varje falt de skulle ha lamnat ifran sig.
+  for (const fil of ['action-event', 'action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
+  }
+  assert.match(media, /action-event\.css\?v=20260916-facit/, 'action-event.css cachebustades inte');
+  // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
+  // från studio.html, inte från media.js.
+  assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.

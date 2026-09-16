@@ -4,7 +4,11 @@
 // event — this fills that specific gap without touching anything event-driven.
 (() => {
   const KEY = 'vyra-action-event-v2';
-  const getState = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{"actions":[],"events":[],"timers":[]}') } catch { return { actions: [], events: [], timers: [] } } };
+  // SAMMA NORMALISERING SOM action-event.js read(). Forvalet i `||` galler bara nar NYCKELN
+  // saknas — ett tillstand som finns men saknar `actions` slapp forbi och fallde vyn med
+  // "Cannot read properties of undefined". Formen garanteras har i stallet for att gissas
+  // vid varje lasning.
+  const getState = () => { let o = {}; try { o = JSON.parse(localStorage.getItem(KEY) || '{}') || {} } catch { o = {} } return { ...o, actions: Array.isArray(o.actions) ? o.actions : [], events: Array.isArray(o.events) ? o.events : [], timers: Array.isArray(o.timers) ? o.timers : [] } };
   const setState = state => window.VyraSessionState.writeActive(KEY, JSON.stringify(state));
 
   // Tracked from the first real "connected" status this page sees, not from page load — so a
@@ -28,7 +32,7 @@
       if (now - last >= intervalMs) {
         t.lastRun = now;
         changed = true;
-        const action = state.actions.find(a => a.id === t.actionId);
+        const action = (state.actions || []).find(a => a.id === t.actionId);
         if (action && window.VyraActionEvent) window.VyraActionEvent.runAction(action, { username: 'Timer' });
       }
     });
@@ -43,7 +47,10 @@
     const section = document.createElement('section');
     section.className = 'ae-timers-overview card';
     const rows = (state.timers || []).map(t => {
-      const action = state.actions.find(a => a.id === t.actionId);
+      // `(state.timers || [])` står på raden ovanför, men den här lästes oskyddat. Ett tillstånd
+      // med timers men utan `actions` fällde HELA Automatik-vyn med "Cannot read properties of
+      // undefined (reading 'length')" — uppmätt 2026-09-16. Guarden kostar ingenting.
+      const action = (state.actions || []).find(a => a.id === t.actionId);
       return `<article class="${t.enabled ? '' : 'off'}"><i>⏱</i><span><b>Var ${t.intervalMinutes} min</b><small>→ ${action ? action.name : 'Ingen Action vald'}</small></span><button data-toggle-timer="${t.id}">${t.enabled ? 'Aktiv' : 'Pausad'}</button><button data-delete-timer="${t.id}">×</button></article>`;
     }).join('');
     section.innerHTML = `<header><h3>Timer</h3><span>${(state.timers || []).length} timers</span></header><p class="ae-timer-hint">Kör en Action med jämna mellanrum medan du är live. Timern börjar räkna när TikTok-anslutningen blir aktiv.</p><button id="newAeTimer" class="primary">＋ Ny Timer</button><div class="ae-list">${rows || '<p data-tom="automatik-timers">Inga timers ännu. Skapa en som kör en Action på schema.</p>'}</div>`;
@@ -56,9 +63,9 @@
   function wireTimers() {
     document.querySelector('#newAeTimer').onclick = () => {
       const state = getState();
-      if (!state.actions.length) { window.toast?.('Skapa en Action först'); return; }
+      if (!(state.actions || []).length) { window.toast?.('Skapa en Action först'); return; }
       const modal = document.querySelector('#aeModal');
-      modal.innerHTML = `<div class="ae-modal"><div><header><h3>Ny Timer</h3><button data-close-ae>×</button></header><label>Intervall (minuter)<input id="aeTimerInterval" type="number" min="1" max="600" value="10"></label><label>Kör denna Action<select id="aeTimerActionId">${state.actions.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select></label><footer><button data-close-ae>Avbryt</button><button id="saveAeTimer" class="primary">Spara Timer</button></footer></div></div>`;
+      modal.innerHTML = `<div class="ae-modal"><div><header><h3>Ny Timer</h3><button data-close-ae>×</button></header><label>Intervall (minuter)<input id="aeTimerInterval" type="number" min="1" max="600" value="10"></label><label>Kör denna Action<select id="aeTimerActionId">${(state.actions || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select></label><footer><button data-close-ae>Avbryt</button><button id="saveAeTimer" class="primary">Spara Timer</button></footer></div></div>`;
       modal.querySelectorAll('[data-close-ae]').forEach(x => x.onclick = () => { modal.innerHTML = '' });
       modal.querySelector('#saveAeTimer').onclick = () => {
         const s = getState();

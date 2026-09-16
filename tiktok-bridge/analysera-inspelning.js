@@ -384,6 +384,129 @@ function heartMeKontroll(rader) {
   };
 }
 
+// ── FRÅGOR FRÅN OMBYGGNADEN 2026-09-16 ─────────────────────────────────────────────────────────
+//
+// Allt nedanför byggdes mot TRE inspelningar från 2026-09-01/02. De svaren styr nu produktionskod,
+// och de behöver bekräftas mot ny data — inte för att de är osäkra, utan för att ett mått från en
+// enda kväll kan råka gälla just den kvällen.
+
+// VAR KOMMER EMOTES IN, OCH VAD SKILJER EN STICKER FRÅN EN EMOTE?
+//
+// Uppmätt 2026-09-16: 48 av 48 emotes kom som `typ:'chat'` med emoten i `emotes[]` — NOLL som
+// WebcastEmoteChatMessage med `emoteList`. Och `packageId` sade 'fansclub' i 150 av 156, medan
+// `emoteScene` var 2 i 59 fall och 3 i 97 — där 3 inte ens finns i TikToks eget proto-enum.
+// Klassificeringen bygger därför på packageId, inte på scenen.
+function emoter(rader) {
+  const barande = rader.filter(r => {
+    const n = r && r.nyttolast;
+    return n && (Array.isArray(n.emoteList) ? n.emoteList.length
+      : Array.isArray(n.emotes) ? n.emotes.length : !!n.emote);
+  });
+  if (!barande.length) return { svar: INGET, kommentar: 'ingen emote i inspelningen' };
+
+  const via = {}, scener = {}, paket = {};
+  let stickers = 0, emotes = 0, utanId = 0, utanBild = 0;
+  for (const r of barande) {
+    const n = r.nyttolast;
+    via[Array.isArray(n.emoteList) && n.emoteList.length ? 'emoteList (EMOTE-händelse)'
+      : Array.isArray(n.emotes) && n.emotes.length ? 'emotes[] (chattrad)' : 'emote (enkel)']
+      = (via[Array.isArray(n.emoteList) && n.emoteList.length ? 'emoteList (EMOTE-händelse)'
+        : Array.isArray(n.emotes) && n.emotes.length ? 'emotes[] (chattrad)' : 'emote (enkel)'] || 0) + 1;
+    const f = N.emoteFields(n);
+    if (!f.emote) { utanId++; continue }
+    if (!f.giftImage) utanBild++;
+    scener[f.emoteScene] = (scener[f.emoteScene] || 0) + 1;
+    paket[f.emotePaket || '(tomt)'] = (paket[f.emotePaket || '(tomt)'] || 0) + 1;
+    if (String(f.emotePaket || '').toLowerCase() === 'fansclub') stickers++; else emotes++;
+  }
+  return {
+    svar: `${barande.length} emote-bärande händelser · ${stickers} Fan Club-stickers, ${emotes} subscriber-emotes`,
+    kom_in_via: via,
+    emoteScene: scener,
+    emotePaket: paket,
+    utan_id: utanId,
+    utan_bild: utanBild,
+    kontroll: 'Kom något via emoteList? Då finns BÅDA vägarna och båda måste fortsätta fungera.',
+  };
+}
+
+// GÅVOKATALOGEN: kommer namnen på streamerns språk, och bär de coin-värden?
+//
+// Vår statiska assets/gifts/gifts-manifest.js har ENGELSKA namn och inget värde alls. Facit visar
+// svenska namn med "1 Coins" per rad. OBS: inspelaren MASKERAR gåvonamn (namn#hash), så den här
+// punkten kan bara räkna och se på värdena — namnen måste avläsas i gåvoväljaren under sändningen.
+function gavor(rader) {
+  const g = rader.filter(r => r && r.typ === 'gift' && r.nyttolast);
+  if (!g.length) return { svar: INGET, kommentar: 'ingen gåva i inspelningen' };
+  const varden = {}; let utanVarde = 0, unika = new Set();
+  for (const r of g) {
+    // N.giftFields, INTE egna fältvägar. Första versionen letade i `giftDetails.diamondCount` och
+    // rapporterade 70 av 70 gåvor UTAN värde — ett mätfel, inte ett produktfel. Filhuvudet varnar
+    // för precis det: en kopia av en fältväg är en kopia som glider isär.
+    const f = N.giftFields(r.nyttolast) || {};
+    if (f.giftName) unika.add(String(f.giftName));
+    const coins = Number(f.diamonds ?? f.coins ?? 0);
+    if (!coins) utanVarde++; else varden[coins] = (varden[coins] || 0) + 1;
+  }
+  return {
+    svar: `${g.length} gåvor · ${unika.size} unika (namnen är maskerade i inspelningen)`,
+    coin_varden: Object.entries(varden).sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 10),
+    utan_coin_varde: utanVarde,
+    kontroll: 'Är utan_coin_varde > 0 bär inte alla gåvor sitt värde, och coin-trösklar missar dem.',
+    las_av_live: 'Öppna gåvoväljaren i Actions & Events under sändningen och fotografera den: står namnen på svenska med coin-värden fungerar inlärningen.',
+  };
+}
+
+// PROTOKOLLGLAPPET: vilka händelsetyper kom som VYRA inte gör något med?
+//
+// Anteckningarna säger 74 dokumenterade TikTok-händelser mot VYRA:s 12, och att glappet ska MÄTAS
+// i en sändning i stället för att gissas. Den här punkten är den mätningen.
+const VYRA_HANTERAR = new Set(['gift', 'giftcombo', 'like', 'likes', 'follow', 'share', 'member',
+  'subscribe', 'join', 'roomuser', 'chat', 'comment', 'chatcommand', 'subscriberemote',
+  'fanclubsticker', 'fansticker', 'shoppurchase', 'purchase', 'battle', 'glove', 'guardian',
+  'fanlevelup', 'battle_mvp', 'viewer', 'livesession']);
+function protokollglapp(rader) {
+  const handelser = rader.filter(arEvent);
+  if (!handelser.length) return { svar: INGET };
+  const okanda = {}, kanda = {};
+  for (const r of handelser) {
+    const t = String(r.typ || '').toLowerCase();
+    if (VYRA_HANTERAR.has(t)) kanda[t] = (kanda[t] || 0) + 1;
+    else okanda[t] = (okanda[t] || 0) + 1;
+  }
+  const lista = Object.entries(okanda).sort((a, b) => b[1] - a[1]);
+  return {
+    svar: lista.length ? `${lista.length} typer som VYRA inte gör något med` : 'inget glapp i den här sändningen',
+    ohanterade: lista.slice(0, 25),
+    hanterade: Object.entries(kanda).sort((a, b) => b[1] - a[1]),
+    kontroll: 'En ohanterad typ med många förekomster är en funktion konkurrenterna kan ha och vi inte.',
+  };
+}
+
+// IDENTITET: syns moderatorer, prenumeranter, följare och fanklubbsnivåer i trafiken?
+//
+// Målgruppsfiltren i Events vilar på de här flaggorna. Är de tomma matchar filtren aldrig — tyst.
+function identitet(rader) {
+  const medUser = rader.filter(r => r && r.nyttolast && r.nyttolast.user);
+  if (!medUser.length) return { svar: INGET };
+  const r = { moderator: 0, prenumerant: 0, foljare: 0, fanklubbsniva: 0 };
+  const nivaer = {};
+  for (const rad of medUser) {
+    const b = N.baseUser(rad.nyttolast);
+    if (b.isModerator) r.moderator++;
+    if (b.isSubscriber) r.prenumerant++;
+    if (b.isFollower) r.foljare++;
+    const niva = Number(b.fanClubLevel) || 0;
+    if (niva > 0) { r.fanklubbsniva++; nivaer[niva] = (nivaer[niva] || 0) + 1 }
+  }
+  const tomma = Object.entries(r).filter(([, v]) => !v).map(([k]) => k);
+  return {
+    svar: `${medUser.length} händelser med användare · ${JSON.stringify(r)}`,
+    fanklubbsnivaer: Object.entries(nivaer).sort((a, b) => Number(a[0]) - Number(b[0])).slice(0, 20),
+    varning: tomma.length ? `ALLTID NOLL: ${tomma.join(', ')} — motsvarande målgruppsfilter i Events kan aldrig matcha` : '',
+  };
+}
+
 function analysera(fil) {
   const rader = lasRader(fil);
   const handelser = rader.filter(arEvent);
@@ -400,6 +523,10 @@ function analysera(fil) {
       vidarebefordrade: handelser.filter(r => r.kalla === 'vidarebefordrad').length,
     },
     heartMeKontroll: heartMeKontroll(rader),
+    emoter: emoter(rader),
+    gavor: gavor(rader),
+    protokollglapp: protokollglapp(rader),
+    identitet: identitet(rader),
     punkt1: punkt1(rader),
     punkt2: punkt2(rader),
     punkt3: punkt3(rader),
@@ -417,6 +544,10 @@ function skrivUt(r) {
   if (s.forsta) console.log(`${s.forsta} → ${s.sista}`);
   console.log(`Vanligast: ${s.typer.slice(0, 6).map(([t, n]) => `${t} ${n}`).join(', ') || '(inga)'}\n`);
   const rubriker = {
+    emoter: 'A. Var kommer emotes in, och vad skiljer sticker från emote?',
+    gavor: 'B. Bär gåvorna coin-värden?',
+    protokollglapp: 'C. Vilka händelsetyper gör VYRA inget med?',
+    identitet: 'D. Syns moderator, prenumerant, följare och fanklubbsnivå?',
     punkt1: '1. Tänder handsken vid rätt ögonblick?',
     punkt2: '2. Vilka värden bär battleStatus?',
     punkt3: '3. Vilken händelse bär matchens slut?',

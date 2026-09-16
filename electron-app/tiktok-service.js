@@ -205,7 +205,45 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     }
   }
 
-  return { connect, disconnect, get username() { return activeUsername; } };
+  // GAVOKATALOGEN DIREKT FRAN RUMMET.
+  //
+  // `fetchAvailableGifts()` ar ett RUMSANROP och kraver ingen inloggning — men det kraver en oppen
+  // anslutning, sa det finns bara har i desktopappen. Webblaget lar sig katalogen en gava i taget
+  // i stallet (live-client.js recordSeenGift).
+  //
+  // VARFOR DET ar vart en egen vag: TikTok levererar namnen pa STREAMERNS sprak och bar coin-vardet.
+  // Den statiska assets/gifts/gifts-manifest.js har engelska namn och inget varde alls, sa en svensk
+  // streamer soker efter 'Morgonblommor' och hittar 'Morning Bloom' — om hen ens vet att den heter sa.
+  async function hamtaGavor() {
+    const connection = activeConnection;
+    if (!connection) return { ok: false, error: 'Ingen aktiv TikTok-anslutning' };
+    try {
+      return { ok: true, gavor: normaliseraGavor(await connection.fetchAvailableGifts()) };
+    } catch (error) {
+      return { ok: false, error: error?.message || 'Kunde inte hamta gavokatalogen' };
+    }
+  }
+
+  return { connect, disconnect, hamtaGavor, get username() { return activeUsername; } };
 }
 
-module.exports = { createTikTokService };
+// NORMALISERINGEN LIGGER UTANFOR FABRIKEN, och det ar for att den ska ga att prova.
+//
+// Inne i createTikTokService stangde den om `activeConnection`, som inte gar att byta ut utifran.
+// Ett prov kunde da bara stubba HELA hamtaGavor() — alltsa prova sin egen kopia av koden, inte
+// koden. Nu ar den en ren funktion: in raa data, ut det valjaren ritar.
+//
+// FORMEN VARIERAR MELLAN BIBLIOTEKSVERSIONER: ibland en naken array, ibland { gifts: [...] }, och
+// bildfaltet heter `url_list` i den ena och `urlList` i den andra. En gava utan namn gar inte att
+// valja och slapps darfor inte igenom.
+function normaliseraGavor(svar) {
+  const raa = Array.isArray(svar) ? svar : (svar && Array.isArray(svar.gifts) ? svar.gifts : []);
+  return raa.map(g => ({
+    giftId: String(g?.id ?? g?.giftId ?? ''),
+    name: String(g?.name ?? ''),
+    coins: Number(g?.diamond_count ?? g?.diamondCount ?? g?.coins ?? 0) || 0,
+    image: String(g?.image?.url_list?.[0] ?? g?.image?.urlList?.[0] ?? g?.icon?.url_list?.[0] ?? '')
+  })).filter(g => g.name);
+}
+
+module.exports = { createTikTokService, normaliseraGavor };
