@@ -131,9 +131,13 @@ function startLocalServer(root, port = 4173, options = {}) {
     // ett led senare. Provet som skulle vakta det matte tjanstens onEvent — ett steg FORE
     // strykningen. Ratt namn, fel led.
     //
-    // battleStatus star INTE har, till skillnad fran vad #350 pastod: skrivbordsappen raknar
-    // aldrig fram det. Battle MVP kraver att faltet BERAKNAS forst, vilket ar en annan andring.
+    // battleStatus KOM IN 2026-09-16 (#381), och kommentaren har sa forut motsatsen: att faltet
+    // inte stod i listan eftersom skrivbordsappen aldrig raknade fram det. Nu gor den det —
+    // tiktok-fields.battleStatusAv speglar molnets harledning — och da MASTE faltet sta har, annars
+    // stryks det i sista ledet och MVP-sessionen oppnas aldrig. #350 pastod att det stroks av
+    // vitlistan redan da; det var fel, men det ar ratt nu, och darfor star det med.
     giftId: text(d.giftId, 160),
+    battleStatus: text(d.battleStatus, 64),
     fanClubLevel: number(d.fanClubLevel, 0, 50),
     gifterLevel: number(d.gifterLevel, 0, 50),
     isModerator: !!d.isModerator, isFollower: !!d.isFollower, isSubscriber: !!d.isSubscriber,

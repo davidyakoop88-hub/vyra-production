@@ -122,6 +122,86 @@ function fansUppgradering(data) {
   return { ...baseUser(data), fanClubLevel: till, fanLevelUp: { from: till - 1, to: till } };
 }
 
-module.exports = { text, number, avatarOf, identityOf, baseUser, nivaFranBadge,
+module.exports = { battleStatusAv, armeMvp, mvpFields, text, number, avatarOf, identityOf, baseUser, nivaFranBadge,
   arGuardianEntrance, fansUppgradering,
   BADGE_FANKLUBB, BADGE_NIVA };
+
+// ---- BATTLE MVP OCH battleStatus — SPEGLADE UR tiktok-bridge/normalizer.js ---------------------
+//
+// #381: molnet tar emot typen `battle_mvp` och battle-mvp-session.js tander widgeten pa den, men
+// SKRIVBORDSAPPEN sande den aldrig. tiktok-service.js emitterade elva typer och battle_mvp var
+// ingen av dem. Battle MVP fungerade alltsa pa molnvagen och var HELT TYST pa desktopvagen.
+//
+// Tva led saknades, inte ett: sjalva typen, och `battleStatus` som ar grinden som oppnar en
+// MVP-session (battle-mvp-session.js). Ordet fanns inte en enda gang i electron-app/.
+//
+// SPEGLINGEN AR ORDAGRANN MED FLIT. Faltnamn, ordning och gransfall foljer normalizer.js rad for
+// rad — det ar samma kontrakt, och tva egna tolkningar av samma payload ar exakt den sortens glapp
+// som gor att en widget tands pa ena vagen och inte pa den andra. Provet
+// electron-app/test/battle-mvp-paritet.test.js kor BADA implementationerna mot samma uppmatta
+// payloader och kraver identiska svar; glider de isar faller det.
+const BATTLE_ACTION = { 4: 'battle_started', 5: 'battle_finished', 6: 'battle_finished' };
+const BATTLE_STATUS = { 1: 'battle_started', 2: 'battle_finished', 3: 'battle_punish_started', 4: 'battle_punish_finished' };
+
+function battleStatusAv(data, battle) {
+  return BATTLE_ACTION[Number(data?.action)]
+    || BATTLE_STATUS[Number(data?.battleSettings?.status)]
+    || text(battle?.status || battle?.battleStatus || '', 64);
+}
+
+// TIKTOK SKICKAR ARMELISTAN I TVA FORMER, och bada maste lasas — den ena bar `armies` som ett
+// OBJEKT nycklat pa ankar-id, den andra `teamArmies` som en array. Uppmatt 2026-09-04: i 450 rader
+// var `teamArmies` en TOM array i varenda rad, sa en implementation som bara laser den hade svarat
+// null pa fyra battle-slut i rad. Se tiktok-bridge/test/armies-mvp-tva-former.test.js.
+function vartLagsGivare(data, ankare) {
+  const armies = data && data.armies;
+  if (armies && typeof armies === 'object' && !Array.isArray(armies)) {
+    for (const nyckel of Object.keys(armies)) {
+      const lag = armies[nyckel];
+      if (String(nyckel).trim() !== ankare && String((lag && lag.anchorIdStr) || '').trim() !== ankare) continue;
+      if (Array.isArray(lag && lag.userArmies)) return lag.userArmies;
+      if (Array.isArray(lag && lag.userArmies && lag.userArmies.userArmies)) return lag.userArmies.userArmies;
+      return null;
+    }
+  }
+  const vart = (data && data.teamArmies || []).find(t =>
+    (t && t.teamUser || []).some(u => String((u && u.userIdStr) || '').trim() === ankare));
+  if (!vart) return null;
+  if (Array.isArray(vart.userArmies && vart.userArmies.userArmies)) return vart.userArmies.userArmies;
+  if (Array.isArray(vart.userArmies)) return vart.userArmies;
+  return null;
+}
+
+// GISSA INTE. Utan ankar-id gar det inte att veta vilken sida som ar var, och en MVP fran
+// MOTSTANDARENS lag i var egen overlay ar varre an ingen MVP alls. triggerReason 2 ar det enda
+// uppmatta varde som betyder "matchen ar slut och listan ar slutgiltig".
+function armeMvp(data, mittAnkarId) {
+  const ankare = String(mittAnkarId || '').trim();
+  if (!ankare) return null;
+  if (Number(data?.triggerReason) !== 2) return null;
+  const givare = vartLagsGivare(data, ankare);
+  if (!givare) return null;
+  const lista = givare
+    .map(b => ({
+      name: text(b?.nickname, 120), score: number(b?.score, 1e12),
+      profileImage: text(b?.avatarThumb?.urlList?.[0] || '', 1200)
+    }))
+    .filter(b => b.score > 0 && b.name);
+  if (!lista.length) return null;
+  lista.sort((a, b) => b.score - a.score || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return lista[0];
+}
+
+// BADA FALTNAMNEN FYLLS, precis som i molnet: name/score las av media.js triggerBattleMvp, medan
+// username/coins ar det handelsen faktiskt bar genom bussen. Utan bada tappas namnet eller poangen
+// beroende pa vilken ande som laser. battleId foljer med sa klienten kan deduplicera per match —
+// utan den kan widgeten tandas tva ganger, en gang av TikToks lista och en gang av
+// battle-mvp-session.js egen rakning.
+function mvpFields(data, mittAnkarId) {
+  const mvp = armeMvp(data, mittAnkarId);
+  if (!mvp) return null;
+  return {
+    name: mvp.name, username: mvp.name, score: mvp.score, coins: mvp.score,
+    profileImage: mvp.profileImage, battleId: text(data?.battleId, 160)
+  };
+}

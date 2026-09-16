@@ -294,17 +294,19 @@ test('desktop har ALLA molnets persontyper — inte bara typer molnet accepterar
     .matchAll(/([a-z_]+)\s*:\s*'([a-z_]+)'/g)].map(x => [x[1], x[2]]));
   for (const t of [...skickade]) if (alias[t]) skickade.add(alias[t]);
 
-  // ⚠️ EN NAMNGIVEN LUCKA, INTE ETT TYST UNDANTAG. battle_mvp tas emot av molnet men sands aldrig
-  // av skrivbordsappen: tiktok-service.js emitterar elva typer och den ar inte en av dem, och
-  // battleStatus — grinden som oppnar en MVP-session — raknas inte fram dar heller.
+  // LUCKAN AR STANGD. battle_mvp stod har som en NAMNGIVEN lucka fran 2026-09-07 till 2026-09-16:
+  // molnet tog emot typen och battle-mvp-session.js tande widgeten pa den, men skrivbordsappen
+  // sande den aldrig. battleStatus — grinden som oppnar en MVP-session — raknades inte fram dar
+  // heller; ordet fanns inte en enda gang i electron-app/.
   //
-  // Luckan var OSYNLIG till 2026-09-07: teckenklassen som plockar typerna saknade understreck, sa
-  // battle_mvp kunde aldrig matchas och tre paritetsprov rapporterade paritet utan att ha jamfort
-  // den. Att lata den sta kvar tyst hade varit att aterinfora samma blindhet med andra medel.
+  // Den var OSYNLIG innan dess: teckenklassen som plockar typerna saknade understreck, sa
+  // battle_mvp kunde aldrig matchas och TRE paritetsprov rapporterade paritet utan att ha jamfort
+  // typen. Teckenklassen rattades i #350, luckan namngavs har, och koden skrevs i #381.
   //
-  // Posten ska BORT nar desktop far Battle MVP — se #381. Den ar ett kvitto pa en kand skuld, inte
-  // ett godkannande.
-  const KAND_LUCKA = new Set(['battle_mvp']);
+  // Mangden ar tom med flit i stallet for borttagen: raden nedan och slingan under den ar vakten
+  // mot att nasta lucka blir ett tyst undantag. Laggs nagot har ska det vara ett kvitto pa en kand
+  // skuld med ett arendenummer, aldrig ett godkannande.
+  const KAND_LUCKA = new Set();
   const saknas = [...alla].filter(t => !rum.has(t) && t !== 'chat' && !KAND_LUCKA.has(t) && !skickade.has(t)).sort();
   // Och luckan far inte bli evig utan att nagon markt det: star typen kvar i listan MEN desktop
   // har borjat sanda den, ska posten tas bort — annars slutar vakten mata.

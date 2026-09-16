@@ -111,14 +111,22 @@ test('nivahojningen bars som objekt, och en TOM hojning bars inte alls', async (
   });
 });
 
-test('battleStatus star medvetet INTE i vitlistan — det raknas aldrig fram', () => {
-  // #350 pastod att battleStatus stryks. Det gor det inte: skrivbordsappen producerar det aldrig.
-  // Battle MVP pa desktopvagen kraver att faltet BERAKNAS forst, vilket ar en annan andring — och
-  // att lagga det i vitlistan hade sett ut som en fix utan att vara en.
+// VAKTEN VANDES 2026-09-16 (#381). Forut stod har ett prov som krävde att battleStatus INTE fanns:
+// #350 pastod att faltet stryks av vitlistan, men det producerades aldrig, och att lagga det i
+// listan hade sett ut som en fix utan att vara en. Provet bar sin egen efterlysning — "da SKA det
+// ocksa in i vitlistan, och den har vakten ska bytas mot ett prov som kraver det" — och det ar
+// precis det som skett. Bada leden kravs nu, for ettdera ensamt ar tyst:
+//
+//   raknas fram men stryks    -> MVP-sessionen oppnas aldrig, och ingenting sager ifran
+//   star i listan men saknas  -> faltet bars alltid tomt, vilket ser ut som en battle utan status
+test('battleStatus raknas fram OCH overlever vitlistan — bada leden kravs', () => {
   const fs = require('fs');
-  const kalla = fs.readFileSync(path.join(__dirname, '..', 'tiktok-service.js'), 'utf8')
-    + fs.readFileSync(path.join(__dirname, '..', 'tiktok-fields.js'), 'utf8');
-  assert.doesNotMatch(kalla, /battleStatus/,
-    'skrivbordsappen har borjat rakna fram battleStatus — da SKA det ocksa in i vitlistan, och '
-    + 'den har vakten ska bytas mot ett prov som kraver det');
+  const las = namn => fs.readFileSync(path.join(__dirname, '..', namn), 'utf8');
+
+  assert.match(las('tiktok-fields.js'), /function battleStatusAv/,
+    'harledningen ar borta — desktop kan da inte oppna en MVP-session');
+  assert.match(las('tiktok-service.js'), /battleStatus: text\(battleStatusAv/,
+    'battle-eventet bar inte langre battleStatus');
+  assert.match(las('local-server.js'), /battleStatus: text\(d\.battleStatus/,
+    'faltet stryks av vitlistan i sista ledet — precis det #350 trodde hande, fast pa riktigt');
 });
