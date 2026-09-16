@@ -43,4 +43,17 @@ function arUppdaterare(headers){const v=(headers||{})[UPPDATERARHUVUD];return ty
 // Grindens hela beslut pa ETT stalle, sa rutten inte bar halva regeln. Uppdateraren slapps igenom
 // pa sitt egna kannetecken; allt annat som inte ser ut som en webblasare slapps igenom som forut.
 function slapperForbi(headers){return arUppdaterare(headers)||!fromBrowser(headers)}
-module.exports={release,safeVersion,storeUrl,fromBrowser,BROWSER_HEADERS,arUppdaterare,slapperForbi,UPPDATERARHUVUD};
+// PLATTFORMSADMIN BETALAR INTE — OCH FLAGGAN SKA BETYDA SAMMA SAK OVERALLT.
+//
+// `is_platform_admin` slapper redan forbi betalgrinden i Studion (entitlement-gate.js), men
+// .exe-rutten kravde `plan === 'premium'` rakt av. En administrator utan prenumeration kom darfor
+// in i Studion och mottes anda av "Premium kravs" pa nedladdningen — samma flagga, tva svar.
+//
+// Grinden ar en BETALVAGG, inte ett skydd (se slapperForbi ovan), sa undantaget oppnar ingenting
+// som inte redan ar publikt. Den VERIFIERADE E-POSTEN star kvar aven for admin: den ar ett bevis pa
+// kontroll over adressen, inte ett betalningskrav, och den regeln hor inte hemma har.
+//
+// EXPLICIT `=== true`. Sessionsraden kommer ur en SELECT som kan sakna kolumnen om nagon skriver om
+// fragan; `undefined` ska da betyda "inte admin", inte "sant nog".
+function premiumKravs(session){return (session&&session.is_platform_admin)!==true}
+module.exports={release,safeVersion,storeUrl,fromBrowser,BROWSER_HEADERS,arUppdaterare,slapperForbi,UPPDATERARHUVUD,premiumKravs};
