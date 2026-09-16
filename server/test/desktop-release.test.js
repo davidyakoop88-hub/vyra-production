@@ -76,3 +76,56 @@ test('slapperForbi lamnar betalvaggen kvar for webblasare',()=>{
   assert.equal(slapperForbi({'user-agent':'curl/8.0'}),true);
   assert.equal(slapperForbi({'sec-fetch-mode':'cors','user-agent':'node'}),true);
 });
+
+// ================================================================================================
+// PLATTFORMSADMIN OCH BETALVAGGEN
+//
+// `is_platform_admin` slapper redan forbi betalgrinden i Studion (entitlement-gate.js:52), men
+// .exe-rutten kravde `plan === 'premium'` utan undantag. Samma flagga gav alltsa tva svar: admin
+// kom in i Studion och mottes anda av "Premium kravs" pa nedladdningen.
+//
+// Proven halls i tva halvor med flit. Den forsta matar BESLUTET, den andra att RUTTEN faktiskt
+// stallt beslutet pa ratt plats — ett gront modulprov sager ingenting om rutten, och det ar exakt
+// sa jsonb-buggen i /mfa/confirm overlevde fyra manader.
+const {premiumKravs}=require('../desktop-release');
+
+test('plattformsadmin slipper premiumkravet',()=>{
+  assert.equal(premiumKravs({is_platform_admin:true}),false);
+  assert.equal(premiumKravs({is_platform_admin:false}),true);
+  assert.equal(premiumKravs({}),true,'en session utan flaggan ar inte admin');
+  assert.equal(premiumKravs(null),true,'ingen session ar inte admin');
+  assert.equal(premiumKravs(undefined),true);
+});
+
+test('bara aktat sant duger — inget sanningsvarde smyger forbi betalvaggen',()=>{
+  // Kolumnen kan forsvinna ur en omskriven SELECT, och den kan komma tillbaka som strang ur en
+  // annan drivrutin. Bada lagena ska betyda "inte admin", inte "sant nog".
+  for(const varde of ['','0','false','true',0,1,null,undefined,NaN,[],{}])
+    assert.equal(premiumKravs({is_platform_admin:varde}),true,
+      `${JSON.stringify(varde)} slapptes forbi betalvaggen`);
+});
+
+test('rutten stallt beslutet pa ratt plats — och bara premiumdelen ligger innanfor',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const kod=fs.readFileSync(path.join(__dirname,'..','index.js'),'utf8');
+  const start=kod.indexOf("if(p==='/api/downloads/windows'");
+  assert.ok(start>0,'nedladdningsrutten hittades inte');
+  const rutt=kod.slice(start,kod.indexOf("if(p==='/api/public/status'",start));
+
+  const iAdminfall=rutt.indexOf('if(desktopPremiumKravs(dls)){');
+  assert.ok(iAdminfall>0,'rutten fragar aldrig om anroparen ar plattformsadmin');
+
+  // Premiumkontrollen MASTE ligga efter oppningen — annars ar undantaget verkningslost.
+  const i402=rutt.indexOf('entitlementRequired:true');
+  assert.ok(i402>iAdminfall,'402-svaret ligger utanfor adminfallet — undantaget gor da ingenting');
+
+  // Och e-postverifieringen MASTE ligga FORE. Hamnar den innanfor slapper adminflaggan forbi ett
+  // bevis pa kontroll over adressen, vilket ar en helt annan sak an att slippa betala.
+  const i403=rutt.indexOf('emailVerificationRequired:true');
+  assert.ok(i403>0&&i403<iAdminfall,
+    'e-postverifieringen hamnade innanfor adminfallet — admin ar ett betalundantag, inte ett sakerhetsundantag');
+
+  // Arbetsytefragan ska ocksa ligga innanfor: en admin ska inte kosta en databasfraga i onodan.
+  assert.ok(rutt.indexOf('FROM workspace_members m JOIN workspaces w')>iAdminfall,
+    'arbetsytefragan kors aven for admin');
+});
