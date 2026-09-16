@@ -109,3 +109,11 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 .overlay-mode .battle-mvp.mvp-celebration:not(.mvp-active),
 .battle-mvp.mvp-celebration.widget-hidden,
 .battle-mvp.mvp-celebration[hidden]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+
+/* Canvas celebration layers. The twenty <i> elements stay as the fallback:
+   where a 2D context is unavailable they animate exactly as before, and
+   .mvc-fx-on only appears once the engine has really started. */
+.mvp-celebration .mvc-fx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.mvp-celebration .mvc-fx-back{z-index:1}
+.mvp-celebration .mvc-fx-front{z-index:7}
+.mvp-celebration .mvc-stage.mvc-fx-on .mvc-finale{display:none}

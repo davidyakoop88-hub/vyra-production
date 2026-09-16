@@ -117,6 +117,7 @@
         "widget-factory.js",
         "widget-fas.js",
         "battle-mvp-celebrations.js",
+        "battle-mvp-particles.js",
         "gift-supernova-panel.js",
         "gift-jar-animals.js",
         "gift-jar-animals.css",
@@ -177,6 +178,7 @@
         "tests/browser/streak-katalog.browser.test.js",
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
+        "tests/battle-mvp-particles.test.js",
         "tests/gift-supernova-panel.test.js"
       ],
       "matning": [
