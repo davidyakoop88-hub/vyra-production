@@ -7,7 +7,7 @@ const crypto=require('crypto');
 // this is. Nothing here is relaxed for staging — the only differences are the PayPal mode and
 // the object-storage isolation that staging additionally requires.
 function good(appEnv='production'){
-  const env={APP_ENV:appEnv,APP_ORIGIN:'https://app.vyra.test',DATABASE_URL:'postgresql://vyra:secret@db.vyra.test/vyra',DATABASE_SSL:'require',REDIS_URL:'rediss://redis.vyra.test:6380',APP_ENCRYPTION_KEY:crypto.randomBytes(32).toString('base64url'),TIKTOK_INGEST_TOKEN:'ing_'+crypto.randomUUID(),METRICS_TOKEN:'met_'+crypto.randomUUID(),MEDIA_SCAN_TOKEN:'scan_'+crypto.randomUUID(),OBJECT_ENDPOINT:'https://objects.vyra.test',CDN_ORIGIN:'https://cdn.vyra.test',OBJECT_ACCESS_KEY:'access_'+crypto.randomUUID(),OBJECT_SECRET_KEY:'object_'+crypto.randomUUID(),MEDIA_SCAN_REQUIRED:'true',PAYPAL_CLIENT_ID:'A'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_CLIENT_SECRET:'E'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_ENV:'live',PAYPAL_WEBHOOK_ID:'7VL31387MH8558935',PAYPAL_PLAN_MONTHLY:'P-1N359441EG117004VNKPKILY',PAYPAL_PLAN_MONTHLY_TRIAL:'P-7UY349153P1818424NKPKG2A',RESEND_API_KEY:'re_'+crypto.randomUUID(),EMAIL_FROM:'VYRA <billing@vyra.test>',ALERT_EMAIL_TO:'alerts@vyra.test',ALERT_WEBHOOK_URL:'https://alerts.vyra.test/hook',DESKTOP_DOWNLOAD_URL:'https://downloads.vyra.test/VYRA-Setup.exe',DESKTOP_VERSION:'1.0.0',DESKTOP_SHA256:'a'.repeat(64),DESKTOP_SIZE_BYTES:'2048'};
+  const env={APP_ENV:appEnv,APP_ORIGIN:'https://app.vyra.test',DATABASE_URL:'postgresql://vyra:secret@db.vyra.test/vyra',DATABASE_SSL:'require',REDIS_URL:'rediss://redis.vyra.test:6380',APP_ENCRYPTION_KEY:crypto.randomBytes(32).toString('base64url'),TIKTOK_INGEST_TOKEN:'ing_'+crypto.randomUUID(),METRICS_TOKEN:'met_'+crypto.randomUUID(),MEDIA_SCAN_TOKEN:'scan_'+crypto.randomUUID(),OBJECT_ENDPOINT:'https://objects.vyra.test',CDN_ORIGIN:'https://cdn.vyra.test',OBJECT_ACCESS_KEY:'access_'+crypto.randomUUID(),OBJECT_SECRET_KEY:'object_'+crypto.randomUUID(),MEDIA_SCAN_REQUIRED:'true',PAYPAL_CLIENT_ID:'A'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_CLIENT_SECRET:'E'.repeat(20)+crypto.randomUUID().replace(/-/g,''),PAYPAL_ENV:'live',PAYPAL_WEBHOOK_ID:'7VL31387MH8558935',PAYPAL_PLAN_MONTHLY:'P-1N359441EG117004VNKPKILY',PAYPAL_PLAN_MONTHLY_TRIAL:'P-7UY349153P1818424NKPKG2A',RESEND_API_KEY:'re_'+crypto.randomUUID(),EMAIL_FROM:'VYRA <billing@vyra.test>',ALERT_EMAIL_TO:'alerts@vyra.test',ALERT_WEBHOOK_URL:'https://alerts.vyra.test/hook',DESKTOP_DOWNLOAD_URL:'https://downloads.vyra.test/VYRA-Setup.exe',DESKTOP_VERSION:'1.0.0',DESKTOP_SHA256:'a'.repeat(64),DESKTOP_SIZE_BYTES:'2048',BETRODD_PROXY:'1'};
   if(appEnv==='staging'){
     env.PAYPAL_ENV='sandbox';
     env.OBJECT_KEY_PREFIX='staging/';
@@ -145,4 +145,22 @@ test('DESKTOP_STORE_URL ar frivillig men valideras nar den ar satt',()=>{
   assert.equal(validateProductionEnv({...good(),DESKTOP_STORE_URL:''}).ok,true);
   fails({...good(),DESKTOP_STORE_URL:'https://example.com/detail/9PPKZN2SCJM2'},/DESKTOP_STORE_URL/);
   fails({...good(),DESKTOP_STORE_URL:'http://apps.microsoft.com/detail/9PPKZN2SCJM2'},/DESKTOP_STORE_URL/);
+});
+
+// BETRODD_PROXY ar inte en finess utan en forutsattning for att taket ska bita per besokare.
+//
+// Utan den faller S.klientadress() tillbaka pa req.socket.remoteAddress, som bakom Railways edge ar
+// PROXYNS adress - samma strang for varje besokare i varlden. Da ar AUTH_RATE_LIMIT ater ett globalt
+// tak: elva misslyckade forsok fran vem som helst laser ute alla andra fran login, register och
+// losenordsatersallning. Det ar precis den bugg #346 handlar om.
+//
+// Kravet star har och INTE bara i dokumentationen, for att fixen annars kan bli en tyst no-op i
+// drift den dag nagon glommer variabeln - och det syns inte pa nagot annat satt an att taket beter
+// sig som forut. En bortglomd flagga ska stoppa starten, inte tystna.
+test('BETRODD_PROXY kravs — utan den nycklas taket pa proxyns adress',()=>{
+  const utan={...good()};delete utan.BETRODD_PROXY;
+  fails(utan,/BETRODD_PROXY/,'en bortglomd flagga slapptes igenom');
+  fails({...good(),BETRODD_PROXY:'0'},/BETRODD_PROXY/,'0 ar inte ett ja');
+  fails({...good(),BETRODD_PROXY:'true'},/BETRODD_PROXY/,'bara strangen 1 duger — samma regel som i security.klientadress()');
+  assert.equal(validateProductionEnv({...good(),BETRODD_PROXY:'1'}).ok,true);
 });

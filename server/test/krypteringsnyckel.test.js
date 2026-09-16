@@ -158,7 +158,10 @@ const BAS = () => ({
   DESKTOP_DOWNLOAD_URL: 'https://downloads.vyra.test/VYRA-Setup.exe',
   DESKTOP_VERSION: '1.0.0',
   DESKTOP_SHA256: 'a'.repeat(64),
-  DESKTOP_SIZE_BYTES: '2048'
+  DESKTOP_SIZE_BYTES: '2048',
+  // Kravet kom med #346. Den har filen provar KRYPTERINGSNYCKELN, inte proxyinstallningen, sa
+  // fixturen ska vara giltig i allt annat — annars mater proven att en orelaterad variabel saknas.
+  BETRODD_PROXY: '1'
 });
 
 const uppstartKlarar = varde => {

@@ -17,4 +17,31 @@ function validOverlayState(v){return !!(v&&typeof v==='object'&&!Array.isArray(v
 // value ends up as an argv entry for a forked bridge process and inside a Postgres primary key,
 // so anything outside this alphabet is rejected rather than sanitised into something surprising.
 function normalizeTikTokUsername(v){const raw=String(v||'').trim().replace(/^@+/,'').toLowerCase();return /^[a-z0-9._]{2,24}$/.test(raw)?raw:null}
-module.exports={normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,safeText,validOverlayState,normalizeTikTokUsername};
+// KLIENTENS ADRESS BAKOM EN PROXY. Husets enda härledning — rate-limit-hinken OCH ip_hash läser
+// den, så de kan aldrig glida isär.
+//
+// `req.socket.remoteAddress` är adressen på den som PRATAR MED OSS. Ligger en proxy framför är det
+// proxyns adress — samma sträng för varje besökare i världen. Följden var att AUTH_RATE_LIMIT=10 var
+// ett GLOBALT tak för hela sajten: elva misslyckade försök från vem som helst låste ute alla andra
+// från login, register och lösenordsåterställning under resten av fönstret. Samma rot gjorde ip_hash
+// identisk för alla sessioner och därmed värdelös som signal. Upptäckt i #338, eget ärende som #346.
+//
+// TILLITSGRÄNSEN ÄR HELA POÄNGEN, och att läsa headern fel är VÄRRE än att inte läsa den alls:
+// X-Forwarded-For sätts av klienten lika gärna som av en proxy. Litar man på den utan att veta att en
+// proxy faktiskt står framför kan vem som helst skriva sin egen adress och få en FÄRSK hink vid varje
+// försök — alltså inget tak alls. Därför krävs ett uttryckligt BETRODD_PROXY=1. Utan det används
+// socket-adressen precis som förut, och ingen ny väg öppnas i en uppsättning där servern går att nå
+// direkt. production-config.js kräver flaggan i produktion, så den kan inte glömmas bort tyst.
+//
+// SISTA POSTEN, INTE DEN FÖRSTA. Kedjan byggs vänster till höger: klientens egna påhitt hamnar först
+// och proxyns egen observation sist. Den FÖRSTA posten är det vanliga misstaget och är helt
+// klientstyrd. Den SISTA är den enda en betrodd proxy själv har skrivit, och det gäller oavsett om
+// proxyn ersätter headern eller lägger till sist i den — i båda fallen är sista posten den adress
+// proxyn faktiskt såg.
+function klientadress(req,env=process.env){
+  const direkt=(req&&req.socket&&req.socket.remoteAddress)||'';
+  if(String(env.BETRODD_PROXY||'')!=='1')return direkt;
+  const kedja=String((req&&req.headers&&req.headers['x-forwarded-for'])||'').split(',').map(v=>v.trim()).filter(Boolean);
+  return kedja.length?kedja[kedja.length-1]:direkt;
+}
+module.exports={klientadress,normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,safeText,validOverlayState,normalizeTikTokUsername};

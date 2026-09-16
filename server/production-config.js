@@ -91,6 +91,16 @@ function validateProductionEnv(env=process.env){
   if(!/@(?!example\.com)[A-Za-z0-9.-]+\.[A-Za-z]{2,}>?$/.test(String(env.EMAIL_FROM||'')))errors.push('EMAIL_FROM måste använda en verifierad domän');
   if(env.ALERT_WEBHOOK_URL)check(()=>httpsUrl(env.ALERT_WEBHOOK_URL,'ALERT_WEBHOOK_URL'));
 if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(env.ALERT_EMAIL_TO||'')))errors.push('ALERT_EMAIL_TO är ogiltig');
+  // BETRODD_PROXY SAGER ATT NAGON TERMINERAR TRAFIKEN FRAMFOR OSS. Produktionen ligger bakom
+  // Railways edge, sa req.socket.remoteAddress ar alltid proxyns adress - samma strang for varje
+  // besokare. Utan flaggan faller security.klientadress() tillbaka pa just den adressen, och da ar
+  // AUTH_RATE_LIMIT ater ett GLOBALT tak for hela sajten: elva misslyckade forsok fran vem som helst
+  // laser ute alla andra. Kravet star har sa att fixen inte kan bli en tyst no-op i drift genom att
+  // nagon glommer satta variabeln; en bortglomd flagga stoppar deployen i stallet.
+  //
+  // Den far INTE sattas i en uppsattning dar servern gar att na direkt. Da blir X-Forwarded-For
+  // klientstyrd hela vagen, och taket forsvinner helt i stallet for att bara vara for grovt.
+  if(String(env.BETRODD_PROXY||'')!=='1')errors.push('BETRODD_PROXY måste vara 1 — utan den nycklas rate-limit och ip_hash på proxyns adress, vilket gör taket globalt för hela sajten');
   check(()=>httpsUrl(env.DESKTOP_DOWNLOAD_URL,'DESKTOP_DOWNLOAD_URL'));
   // Frivillig, men satt ska den vara Microsofts produktsida — samma regel som vid körning, sa en
   // felskriven butikslank stoppar deployen i stallet for att skickas ut till alla anvandare.

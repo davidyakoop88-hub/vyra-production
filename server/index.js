@@ -222,7 +222,7 @@ async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=
   let stangd=false;
   req.once('close',()=>{if(stangd)return;stangd=true;openHeartbeats-=1;clearInterval(heartbeat);unsubscribe().catch(()=>{})});
 }
-async function createSession(c,user,req,mfaVerified=true){const raw=S.token(),csrf=S.token(),expires=new Date(Date.now()+SESSION_SECONDS*1000),q=await c.query('INSERT INTO sessions(user_id,token_hash,csrf_hash,expires_at,ip_hash,user_agent,mfa_verified_at) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[user.id,S.digest(raw),S.digest(csrf),expires,S.digest(req.socket.remoteAddress||''),S.safeText(req.headers['user-agent'],300),mfaVerified?new Date():null]);return{id:q.rows[0].id,raw,csrf,expires}}
+async function createSession(c,user,req,mfaVerified=true){const raw=S.token(),csrf=S.token(),expires=new Date(Date.now()+SESSION_SECONDS*1000),q=await c.query('INSERT INTO sessions(user_id,token_hash,csrf_hash,expires_at,ip_hash,user_agent,mfa_verified_at) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[user.id,S.digest(raw),S.digest(csrf),expires,S.digest(S.klientadress(req)),S.safeText(req.headers['user-agent'],300),mfaVerified?new Date():null]);return{id:q.rows[0].id,raw,csrf,expires}}
 // SELECT 1 alone reported postgres:true through an outage where nobody could log in: reads worked
 // and the writes were the thing failing. A read-only probe cannot see that, so health looked green
 // while the product was down. This writes inside a transaction and rolls it back, so it exercises
@@ -311,7 +311,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!rest){const svar={ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}};
       if(process.env.VYRA_SANDNINGSIDENTITET==='1')svar.session=await StreamSessions.aktivSession({workspaceId:access.workspace_id});
       return send(res,200,svar)}
-    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${req.socket.remoteAddress||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
+    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${S.klientadress(req)||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
   // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
   // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
   // anropare far inte ens veta om funktionen ar paslagen.
@@ -426,9 +426,15 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});
   // EGET TAK, NYCKLAT PÅ ANVÄNDAREN. Rutten skickar mejl, så den måste begränsas — men INTE i den
-  // delade auth-hinken. Den nycklas på `req.socket.remoteAddress`, vilket bakom Caddy är proxyns
-  // adress och alltså samma sträng för alla besökare: en otålig kund hade låst ute alla andra från
-  // inloggning och verifiering. Här kan varje konto bara spärra sig självt.
+  // delade auth-hinken. Skälet står kvar även efter #346: den hinken är gemensam för alla anrop
+  // från samma adress, så en otålig kund hade låst ute sig själv från inloggning och verifiering
+  // genom att trycka på knappen. Här kan varje konto bara spärra sitt EGET utskick.
+  //
+  // Det som ÄNDRADES i #346 är vad "samma adress" betyder. Fram till dess nycklades den delade
+  // hinken på den som pratade med oss — bakom en proxy alltid proxyn själv — så taket var GLOBALT
+  // för hela sajten i stället för per besökare. Härledningen bor numera i S.klientadress().
+  // Vaktat av server/test/verifieringsmejl-tak.test.js (åtskilda hinkar) och
+  // server/test/klientadress.test.js (tillitsgränsen).
   if(p==='/api/auth/email/send-verification'&&req.method==='POST'){if(s.email_verified_at)return send(res,200,{ok:true,verified:true});
     if(await rateLimiter.exceeded(`verifieringsmejl:${s.user_id}`,VERIFIERINGSMEJL_TAK,VERIFIERINGSMEJL_FONSTER))
       return send(res,429,{ok:false,error:'Du har begärt många verifieringsmejl. Vänta en stund — de tidigare länkarna fungerar fortfarande.'});await AuthFlow.issue(pool,{id:s.user_id,email:s.email},'verify_email',1440);return send(res,202,{ok:true,message:'Verifieringsmejlet är skickat.'})}
