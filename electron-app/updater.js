@@ -29,7 +29,11 @@ async function fetchRelease(apiOrigin,fetchImpl=fetch){
   return validateMetadata(await response.json());
 }
 async function downloadRelease(apiOrigin,metadata,destination,fetchImpl=fetch){
-  const origin=validateOrigin(apiOrigin),expected=validateMetadata(metadata),response=await fetchImpl(origin+'/api/downloads/windows',{redirect:'follow',signal:AbortSignal.timeout(120000)});
+  // SAGER VEM VI AR, i stallet for att hoppas att servern gissar ratt. Nedladdningsgrinden slappte
+  // forr igenom oss genom att INTE kanna igen oss som webblasare, vilket band vart ode till vilka
+  // Sec-Fetch-huvuden undici rakade skicka i just den Node-version anvandaren hade. Den mangden
+  // andrades tva ganger och kravde #419 och #421. Se server/desktop-release.js (#424).
+  const origin=validateOrigin(apiOrigin),expected=validateMetadata(metadata),response=await fetchImpl(origin+'/api/downloads/windows',{headers:{'x-vyra-updater':'1'},redirect:'follow',signal:AbortSignal.timeout(120000)});
   if(!response.ok||!response.body)throw new Error('Kunde inte hämta uppdateringen');
   if(new URL(response.url).protocol!=='https:')throw new Error('Osäker omdirigering blockerades');
   const length=Number(response.headers.get('content-length')||0);if(length&&length!==expected.sizeBytes)throw new Error('Uppdateringens filstorlek stämmer inte');

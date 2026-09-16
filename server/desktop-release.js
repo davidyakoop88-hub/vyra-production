@@ -26,4 +26,21 @@ function release(env=process.env){const raw=String(env.DESKTOP_DOWNLOAD_URL||'')
 // Kvar star huvuden som bara en webblasare satter: navigering och sidanrop bar alltid minst ett.
 const BROWSER_HEADERS=['origin','referer','sec-fetch-site','sec-fetch-dest','sec-ch-ua'];
 function fromBrowser(headers){const h=headers||{};return BROWSER_HEADERS.some(name=>{const value=h[name];return typeof value==='string'&&value.trim()!==''})}
-module.exports={release,safeVersion,storeUrl,fromBrowser,BROWSER_HEADERS};
+// POSITIVT KANNETECKEN, tillagt i #424. fromBrowser() kan bara fraga "ar detta INTE en webblasare?",
+// och svaret hangde darfor pa vilka huvuden undici (Node:s fetch) rakade skicka i den version
+// anvandaren hade. Tva PR:er i rad (#419, #421) behovdes nar den mangden andrades. Fragan ar nu
+// vand: "ar detta uppdateraren?" - och det svaret ager VI, inte en tredjepartsklient.
+//
+// EXAKT '1', inte vilket sanningsvarde som helst. Ett huvud som rakar finnas med nagot annat varde
+// ska inte oppna grinden; det ar samma regel som BETRODD_PROXY i security.js och av samma skal.
+//
+// Att huvudet gar att forfalska sanker ingenting. Grinden ar en BETALVAGG, inte ett skydd:
+// DESKTOP_DOWNLOAD_URL pekar pa en publik GitHub-release, och curl far redan 302 rakt till filen.
+// Den doljer en adress, den skyddar ingen fil.
+const UPPDATERARHUVUD='x-vyra-updater';
+function arUppdaterare(headers){const v=(headers||{})[UPPDATERARHUVUD];return typeof v==='string'&&v.trim()==='1'}
+
+// Grindens hela beslut pa ETT stalle, sa rutten inte bar halva regeln. Uppdateraren slapps igenom
+// pa sitt egna kannetecken; allt annat som inte ser ut som en webblasare slapps igenom som forut.
+function slapperForbi(headers){return arUppdaterare(headers)||!fromBrowser(headers)}
+module.exports={release,safeVersion,storeUrl,fromBrowser,BROWSER_HEADERS,arUppdaterare,slapperForbi,UPPDATERARHUVUD};
