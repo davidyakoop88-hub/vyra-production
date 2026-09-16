@@ -46,7 +46,7 @@ const TOMMA = {
   'automatik-actions': { text: 'Inga Actions ännu. Skapa den första.',
     handling: { etikett: 'Skapa din första Action', mal: '#newAeAction' } },
   'automatik-events': { text: 'Inga Events ännu. Koppla ett event till en Action.',
-    handling: { etikett: 'Koppla ditt första Event', mal: '#newAeEvent' } },
+    handling: { etikett: 'Koppla ditt första Event', mal: '#newAeEventCard' } },
   'automatik-timers': { text: 'Inga timers ännu. Skapa en som kör en Action på schema.',
     handling: { etikett: 'Skapa din första timer', mal: '#newAeTimer' } },
   // TTS Chat

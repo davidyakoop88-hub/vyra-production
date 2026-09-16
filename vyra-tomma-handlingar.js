@@ -22,7 +22,7 @@
   // faller det, vilket ar meningen: rosten och handlingen ar ett beslut, inte en slump.
   const HANDLINGAR = {
     'automatik-actions': { etikett: 'Skapa din första Action', mal: '#newAeAction' },
-    'automatik-events': { etikett: 'Koppla ditt första Event', mal: '#newAeEvent' },
+    'automatik-events': { etikett: 'Koppla ditt första Event', mal: '#newAeEventCard' },
     'automatik-timers': { etikett: 'Skapa din första timer', mal: '#newAeTimer' },
     'tts-special': { etikett: 'Lägg till användare', mal: '#ttsAddSpecial' },
     'handelser-tom': { etikett: 'Anslut TikTok LIVE', mal: '.connect' },
