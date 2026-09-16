@@ -44,6 +44,23 @@ home = function () {
       ${[['◆', 'GÅVOR', 'gifts'], ['💎', 'DIAMANTER', 'diamonds'], ['♥', 'LIKES', 'likes']]
         .map(item => `<div><small>${item[0]} ${item[1]}</small><strong data-alltime-stat="${item[2]}">—</strong></div>`).join('')}
     </div>
+    <!-- TOPPGIVARNA SOM STANNAR KVAR.
+         Listan hogst upp pa sidan matas av LIVEFLODET och star tom sa fort man inte sander — den
+         svarar pa "vem ger just nu". Den har svarar pa "vem har gett mig mest", och overlever en
+         omladdning.
+
+         EGEN NOD, ALDRIG SAMMA SOM DEN LEVANDE. Samma regel som korten ovan: skriver de tva over
+         varandra betyder listan olika saker beroende pa nar man tittar.
+
+         ⚠️ DEN FOLJER INTE PERIODKNAPPARNA, och det star utskrivet i rubriken. gifter_totals bar
+         KUMULATIVA summor per givare — first_seen/last_seen finns, men inte summor per dag. Att
+         filtrera pa last_seen och visa livstidssumman hade sett helt ratt ut och varit falskt:
+         nagon som gav 10 000 diamanter i fjol och en ros i forra veckan hade legat overst under
+         "90 dagar". Ska listan kunna filtreras maste stream-stats.js lagra per givare OCH dag. -->
+    <div class="historikgivare" data-historikgivare hidden>
+      <h4>Dina toppgivare <span>sedan start</span></h4>
+      <ol class="historikgivare-lista"></ol>
+    </div>
     <p data-alltime-note data-tom="oversikt-historik">Hämtar din historik…</p>
   </section>
   <!-- SYNLIG FRAN OCH MED #428. Guiden var dold sa lange steg 2 beskrev nagot som inte gick
@@ -416,10 +433,72 @@ if (typeof view !== 'undefined' && view === 'home') render();
     if (nod) nod.textContent = text;
   }
 
+
+  // TOPPGIVARNA UR HISTORIKEN. Servern har returnerat dem sedan #136/#137 — topp 50 med namn,
+  // avatar, gavor, diamanter och basta gava — och INGEN klient har ritat dem. Datan raknades,
+  // skickades och kastades.
+  //
+  // RADERNA BAR ANVANDARDATA FRAN TIKTOK: visningsnamn och avatar-URL. Allt byggs darfor med
+  // createElement och textContent, aldrig innerHTML — samma regel som den levande listan. Ett namn
+  // som ser ut som markup ska visas som text, inte tolkas.
+  //
+  // ⚠️ LISTAN AR ALLTID SEDAN START, oavsett vald period. Se kommentaren vid markupen. Rubriken
+  // sager det rakt ut i stallet for att listan tyst ska verka folja knapparna.
+  const HISTORIK_TOPP = 10;
+
+  function malaHistorikgivare(givare) {
+    const ruta = document.querySelector('[data-historikgivare]');
+    if (!ruta) return;                       // annan vy — inte ett fel
+    const lista = ruta.querySelector('.historikgivare-lista');
+    if (!lista) return;
+
+    const rader = Array.isArray(givare) ? givare.slice(0, HISTORIK_TOPP) : [];
+    // Tom lista doljs HELT i stallet for att visa en rubrik over ingenting. Ett tomt avsnitt med
+    // rubrik laser sig som "du har noll givare", vilket for ett nytt konto ar fel: inspelningen har
+    // inte borjat. Den arliga texten om det star redan i notraden under.
+    if (!rader.length) { ruta.hidden = true; lista.replaceChildren(); return }
+
+    const nya = [];
+    for (const g of rader) {
+      const li = document.createElement('li');
+
+      const bild = document.createElement('span');
+      bild.className = 'historikgivare-avatar';
+      const url = String(g && g.avatar || '');
+      // Bara http(s). En avatar-URL ar TikToks data, och javascript:/data: hor inte hemma i en src.
+      if (/^https?:\/\//.test(url)) {
+        const img = document.createElement('img');
+        img.src = url; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+        bild.append(img);
+      }
+
+      const namn = document.createElement('b');
+      namn.textContent = String(g && g.namn || 'Okänd');
+
+      const varde = document.createElement('strong');
+      varde.textContent = nummer(g && g.diamonds) + ' 💎';
+
+      const extra = document.createElement('em');
+      // Basta gavan ar det som gor raden till en MINNESBILD i stallet for en siffra. Saknas den
+      // visas antalet gavor — aldrig en tom rad som ser ut som att nagot inte laddat.
+      // bastaGava ar ett OBJEKT {namn, diamanter}, inte en strang. Ett String() pa den hade skrivit
+      // "[object Object]" i granssnittet — och det hade inte fallit nagot prov som bara kollar att
+      // raden finns.
+      const basta = g && g.bastaGava && String(g.bastaGava.namn || '');
+      extra.textContent = basta || nummer(g && g.gifts) + ' gåvor';
+
+      li.append(bild, namn, varde, extra);
+      nya.push(li);
+    }
+    lista.replaceChildren(...nya);
+    ruta.hidden = false;
+  }
+
   function mala(data) {
     for (const stat of ['gifts', 'diamonds', 'likes']) skriv(stat, nummer(data.totalt?.[stat]));
     for (const knapp of document.querySelectorAll('[data-alltime-period]')) {
       knapp.classList.toggle('vald', knapp.dataset.alltimePeriod === period);
+    malaHistorikgivare(data.toppGivare);
     }
     if (data.fel) return notera('Kunde inte hämta historiken just nu. Siffrorna ovan är inte hela sanningen.');
     // Tomläget ska vara ÄRLIGT. Nollor utan förklaring ser ut som ett resultat — och för ett nytt
