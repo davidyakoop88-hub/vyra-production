@@ -14,7 +14,7 @@ test('en Store-länk som inte är Microsofts produktsida stoppas',()=>{for(const
 // cookie och fick 401. Proven låser fast BÅDA sidorna — att uppdateraren släpps igenom, och att
 // hemsidans webbläsaranrop fortfarande möter grinden. Faller det ena är fixen verkningslös; faller
 // det andra är premiumgrinden borta.
-const {fromBrowser}=require('../desktop-release');
+const {fromBrowser,arUppdaterare,slapperForbi}=require('../desktop-release');
 test('uppdateraren känns igen: ett anrop utan webbläsarhuvuden är inte en webbläsare',()=>{
   assert.equal(fromBrowser({}),false,'ren Node-fetch — uppdateraren');
   assert.equal(fromBrowser({accept:'application/json','user-agent':'node'}),false,'accept och user-agent gör det inte till en webbläsare');
@@ -37,4 +37,42 @@ test('Node:s fetch — uppdateraren — klassas ALDRIG som webbläsare',()=>{
 
 test('ett riktigt webbläsaranrop från hemsidan möter grinden',()=>{
   assert.equal(fromBrowser({origin:'https://vyralive.app',referer:'https://vyralive.app/','sec-fetch-site':'same-origin','sec-fetch-mode':'navigate','sec-fetch-dest':'document',cookie:'vyra=1'}),true);
+});
+
+// POSITIVT KANNETECKEN (#424). fromBrowser() kan bara svara "nej, detta ar ingen webblasare", och
+// det svaret agde undici — inte vi. Tva PR:er i rad (#419, #421) behovdes nar Node bytte vilka
+// Sec-Fetch-huvuden dess fetch skickar. arUppdaterare() vander pa fragan.
+//
+// Provet som mater detta med en RIKTIG fetch mot en riktig server ligger i
+// electron-app/test/uppdaterargrind.test.js — dar finns bade klienten och servern att kora mot.
+// Har star enhetsreglerna, i det paket som ager grinden.
+test('arUppdaterare kraver exakt "1"',()=>{
+  assert.equal(arUppdaterare({'x-vyra-updater':'1'}),true);
+  assert.equal(arUppdaterare({'x-vyra-updater':' 1 '}),true,'blanksteg runt vardet ska inte spela roll');
+  // Allt annat ar nej. Ett huvud som rakar finnas med nagot annat varde far inte oppna grinden —
+  // samma regel som BETRODD_PROXY i security.js, och av samma skal: en halvsatt flagga ar inte ett ja.
+  for(const v of ['true','0','ja','yes','','x',undefined,null,1])
+    assert.equal(arUppdaterare({'x-vyra-updater':v}),false,`"${v}" skulle inte raknats som ett ja`);
+  assert.equal(arUppdaterare({}),false);
+  assert.equal(arUppdaterare(),false,'ett anrop utan huvuden far inte kasta');
+});
+
+test('slapperForbi: kannetecknet slar igenom aven nar anropet ser ut som en webblasare',()=>{
+  // DET HAR AR HELA POANGEN MED #424. Sa lange undici inte skickar nagot av BROWSER_HEADERS slapps
+  // uppdateraren igenom anda, och da mater ingenting att allowlistan finns. Provet spelar darfor
+  // upp dagen da undici borjar skicka ett av dem.
+  const framtida={'sec-fetch-dest':'empty','user-agent':'node'};
+  assert.equal(fromBrowser(framtida),true,'kontrollmatning: den gamla vagen skulle stoppat detta');
+  assert.equal(slapperForbi(framtida),false,'utan kannetecken ska den stoppas');
+  assert.equal(slapperForbi({...framtida,'x-vyra-updater':'1'}),true,
+    'kannetecknet bar inte ensamt — grinden ar da ater beroende av undicis nycker mellan versioner');
+});
+
+test('slapperForbi lamnar betalvaggen kvar for webblasare',()=>{
+  assert.equal(slapperForbi({origin:'https://vyralive.app',referer:'https://vyralive.app/'}),false);
+  assert.equal(slapperForbi({origin:'https://vyralive.app','x-vyra-updater':'true'}),false,
+    'fel varde pa kannetecknet oppnade grinden');
+  // Och det som ALLTID sluppit igenom gor det fortfarande: curl, och Node:s fetch som den ser ut i dag.
+  assert.equal(slapperForbi({'user-agent':'curl/8.0'}),true);
+  assert.equal(slapperForbi({'sec-fetch-mode':'cors','user-agent':'node'}),true);
 });

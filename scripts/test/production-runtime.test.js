@@ -94,7 +94,10 @@ test('the desktop installer redirect requires login, a verified email, and an ac
   // UPPDATERAREN SLAPPS IGENOM — lika svart att ta bort som grinden sjalv.
   // Den installerade appen anropar rutten med ren fetch utan cookie. Utan den har vagen far den
   // 401 och kan ALDRIG hamta en uppdatering. Vagen maste ligga FORE grinden for att verka.
-  assert.match(body, /if\(!desktopFromBrowser\(req\.headers\)\)\{res\.writeHead\(302,/, 'uppdaterarens vag forbi grinden ar borta — appen kan da inte uppdatera sig');
-  assert.ok(body.indexOf('desktopFromBrowser') < body.indexOf('await session(req)'), 'uppdaterarens vag maste ligga fore sessionsgrinden');
+  // Bytt fran desktopFromBrowser till desktopSlapperForbi i #424. Fragan ar nu "ar detta
+  // uppdateraren?" i stallet for "ar detta INTE en webblasare?" — det senare svaret agdes av undici
+  // och andrades tva ganger, vilket kravde #419 och #421 for att laga samma sak igen.
+  assert.match(body, /if\(desktopSlapperForbi\(req\.headers\)\)\{res\.writeHead\(302,/, 'uppdaterarens vag forbi grinden ar borta — appen kan da inte uppdatera sig');
+  assert.ok(body.indexOf('desktopSlapperForbi') < body.indexOf('await session(req)'), 'uppdaterarens vag maste ligga fore sessionsgrinden');
 });
 
