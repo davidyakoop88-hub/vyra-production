@@ -331,6 +331,13 @@
 
   addEventListener('resize', function () { live.forEach(function (e) { e.resize(); }); });
 
-  root.VyraMvpParticles = { start: start, scan: scan, profiles: PROFILES, rateAt: rateAt };
+  root.VyraMvpParticles = {
+    start: start, scan: scan, profiles: PROFILES, rateAt: rateAt,
+    // Observability, mirroring VyraSupernova.active(): a rig that cannot see the
+    // particles cannot prove they were ever drawn, and an empty canvas renders at
+    // a flawless 60 FPS.
+    active: function () { return live.length; },
+    count: function () { var n = 0; live.forEach(function (e) { n += e.parts.length; }); return n; }
+  };
   scan();
 })(window);

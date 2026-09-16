@@ -179,6 +179,7 @@
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
         "tests/battle-mvp-particles.test.js",
+        "tests/browser/battle-mvp-partiklar.browser.test.js",
         "tests/gift-supernova-panel.test.js"
       ],
       "matning": [
