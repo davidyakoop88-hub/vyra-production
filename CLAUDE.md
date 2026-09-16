@@ -53,14 +53,38 @@ Slash-kommandon: `/fixa <uppgift>`, `/byt <del>`, `/mat <domän>`, `/agare <fil>
 
 ## Testkommandon
 
+**Installera först — fyra paket, fyra egna `node_modules`.** Repot är inte en workspace: roten,
+`server/`, `tiktok-bridge/` och `electron-app/` har varsin `package.json` och varsitt lås. Saknas
+ett av dem faller den sviten med `Cannot find module`, och CI är **grön för exakt samma kod**
+eftersom den kör `npm ci` i alla fyra.
+
 ```bash
-npm test                    # alla node-tester i roten
-npm run test:browser        # jsdom/browser-tester
+npm ci && (cd server && npm ci) && (cd tiktok-bridge && npm ci) && (cd electron-app && npm ci)
+```
+
+Det kostade en kväll 2026-09-15 innan någon läste felmeddelandet: tre prov i bryggan och sex i
+skrivbordsappen rapporterades som "kända fel" när de bara var oinstallerade paket (#425). Ett prov
+som är rött lokalt och grönt i CI lär en att sluta lita på rött — och nästa gång det faller av ett
+**riktigt** skäl går det obemärkt förbi. Kontrollera alltså `node_modules` innan ett lokalt fel
+antas vara ett fel i koden.
+
+```bash
+npm test                    # alla node-tester i roten            (~4 min)
+npm run test:browser        # jsdom/browser-tester                (~70 min, se nedan)
 npm run test:ci             # kontrakt + fuzz + allt
 npm run karta               # regenerera docs/katalogkarta.md
 node scripts/domaner.js test <domän>   # bara en domän
-cd server && npm test       # moln-API:t (kräver Postgres + Redis)
+cd server && npm test           # moln-API:t; utan Postgres + Redis hoppas ~460 prov över
+cd tiktok-bridge && npm test    # bryggan
+cd electron-app && npm test     # skrivbordsappen
 ```
+
+⏱ **`test:browser` tar över en timme och är TYST under tiden.** 67–72 min uppmätt över 29 körningar
+(median 68), och tyngsta steget — *"Visuell · alla katalognycklar mot referens"* — fotograferar
+widgetar utan att skriva en rad. Loggen kan stå stilla i över en och en halv timme utan att något är
+fel; siffrorna och tidsgränsen står i `.github/workflows/ci.yml` vid `test-client`. **Tystnad är
+inte bevis på hängning.** Rör ändringen bara några filer: kör de prov som faktiskt täcker dem
+(`grep -rl <fil> tests/`) i stället för hela sviten.
 
 ## Inför en riktig sändning
 
