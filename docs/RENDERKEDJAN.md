@@ -1,11 +1,15 @@
 # Renderkedjan — hur `wh`, `props` och `bind` staplas
 
-**Senast verifierad:** 2026-09-17 mot `origin/main` @ `5439096`, uppdaterad efter `5f674b2`
+**Senast verifierad:** 2026-09-17 mot `origin/main` @ `ec0074f` (hela auditen, block 2–4)
 **Metod:** källäsning + mätning i riktig Chromium (Playwright)
 
 `studio.js` är minifierad handkod och ändras aldrig direkt. Allt nytt beteende
-**monkey-patchar** fyra globala funktioner från en syskonfil. Det är projektets
+**monkey-patchar** globala funktioner från en syskonfil. Det är projektets
 centrala mekanism, och den som orsakar de flesta svårhittade felen.
+
+Mekanismen har **två former**, och skillnaden mellan dem avgör vad som överlever när
+en senare fil tar över en widget. Båda beskrivs nedan — stapling i §1–§4, överskrivning
+i §5.
 
 Det här dokumentet förklarar mekaniken, körordningen, och hur man spårar en död
 kodväg. Vem som äger vilken fil står i `.claude/domaner.json` — inte här.
@@ -23,16 +27,21 @@ wh = function (w) {                     // ersätt den
 };
 ```
 
-Fyra kedjor finns:
+**Fem** staplade kedjor finns — inte fyra, som det stått här tidigare:
 
 | Kedja | Bygger | Omslag (uppmätt 2026-09-17) |
 |---|---|---|
 | `wh` | Widgetens HTML | **36** |
 | `props` | Egenskapspanelen | **38** |
 | `bind` | Händelsekopplingar | **92** |
+| `send` | Testknappens live-simulering | **4** (alla i `media.js`) |
 | `render` | Hela vyn | (ingår i ovanstående) |
 
 `media.js` ensam bär 24 av de 36 `wh`-omslagen.
+
+`send` kedjas på exakt samma sätt (`const föregående=send;send=function(){föregående();…}`)
+och alla fyra omslagen gör det korrekt. Den står med här för att den inte ska komma som
+en överraskning, inte för att den är trasig.
 
 ---
 
@@ -148,7 +157,54 @@ Rättar någon ett stavfel i etiketten visar panelen sju modeller när det finns
 
 ---
 
-## 5. Regler
+## 5. Den andra formen: en namngiven renderare skrivs över
+
+En senare fil behöver inte lägga sig i kedjan alls. Den kan i stället **ersätta funktionen
+som kedjan anropar**:
+
+```js
+// premium-final.js
+vyraTopGift = function (w) { … };     // ingen `const föregående`, ingen delegering
+```
+
+| Funktion | Deklarerad i | Skrivs över av |
+|---|---|---|
+| `vyraTopGift` | `media.js` | `premium-final.js:39` |
+| `vyraStreak` | `media.js` | `premium-final.js:36` |
+| `socialGoalHtml` | `media.js` | `premium-final.js:41` |
+| `battleMvpHtml` | `media.js` | `battle-mvp-celebrations.js:8` |
+| `routeLiveBattleEvent` | `media.js` | `last-x-alerts.js:412` |
+| `home` | `studio.js` | `overview-premium.js:1` |
+| `go` | `studio.js` | `layout-safe.js:202` |
+| `analytics` | `studio.js` | `stream-time-analytics.js:82` |
+| `enhanceWidgetCatalog` | `extras.js` | `media.js:103` |
+
+### Varför skillnaden mellan formerna spelar roll
+
+**Formen avgör vad som överlever när en senare fil tar över en widgettyp.** Uppmätt under
+auditen, på samma tre typer (`templateTopGift`, `templateTopStreak`, `templateSocialGoal`):
+
+- `media.js`:s **props**-omslag byggde panelens HTML **inline**. När `premium-final.js:45`
+  avslutade props-kedjan för de typerna blev de **onåbara** — fyra omslag och 29
+  bindningar dödades tyst. De togs bort i PR #450.
+- `media.js`:s **wh**-omslag anropar en **namngiven funktion**: `media.js:123` är bara
+  `return w.type==='templateTopGift' ? vyraTopGift(w) : prototypeWh(w)`. Sen bindning gör
+  att anropet automatiskt hamnar hos premiumversionen. De är därför **fullt levande**.
+
+Samma fil, samma typer, motsatt utfall — av formen allena.
+
+### Regeln
+
+**Bygger du HTML inline i ett omslag är du sårbar för att någon avslutar kedjan efter dig.
+Anropar du en namngiven renderare är du det inte.** Delegera till en namngiven funktion när
+widgeten kan komma att få en premiumvariant.
+
+Och: en överskrivning **syns inte** när du läser den fil som deklarerar funktionen. Sök
+alltid på `<namn> *= *function` i hela repot innan du tror att du läst renderaren.
+
+---
+
+## 6. Regler
 
 - **Lägg aldrig till ett omslag utan att veta vad som körs efter det.** Din
   indata kan redan vara omskriven.
@@ -157,8 +213,12 @@ Rättar någon ett stavfel i etiketten visar panelen sju modeller när det finns
 - **Matcha aldrig på en cachebust.** Bumpar någon den försvinner din ändring tyst.
 - **Muterar du `w` innan du delegerar — skriv en kommentar om vad som blir
   blint.** Rad 345 och 512 har det; följ dem.
+- **En namngiven renderare kan vara överskriven av en annan fil.** Läs §5 innan du tror
+  att du vet vilken implementation som körs.
 - **Ett omslag som lagar en annan fils utdata är ett plåster.** Laga källan i
   stället när du kan, och ta bort plåstret i samma ändring.
+
+---
 
 ---
 
