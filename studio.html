@@ -69,11 +69,20 @@
   </main>
   <dialog id="connectModal">
     <button class="x">×</button><i class="tiktok">♪</i>
-    <h2>Anslut TikTok LIVE</h2>
-    <p>Skriv användarnamnet som du använder när du går live.</p>
-    <label>Användarnamn<input id="tikUser" placeholder="@dittnamn"></label>
-    <button class="primary" id="connectNow">Anslut konto</button>
-    <small>VYRA ansluter direkt till din riktiga TikTok LIVE-sändning.</small>
+    <h2>Lägg till ditt TikTok-användarnamn</h2>
+    <p>För att hålla varje sändares data säker läggs användarnamnet till genom att du loggar in på
+      dess TikTok-konto — det bevisar att det är ditt. Logga in på kontot du går live med, så
+      kopplar vi dess @handtag automatiskt.</p>
+    <button class="primary" id="verifieraTikTok">Verifiera med TikTok</button>
+    <small>Varje användarnamn låses till kontot som kopplade det.</small>
+    <!-- FRITEXTVÄGEN, PÅ VÄG BORT. Servern svarar `verifieringKravs` och studio-live.js döljer
+         blocket när flaggan VYRA_TIKTOK_VERIFIERING_KRAVS är satt i Railway. Spärren sitter i
+         servern — det här är bara att slippa visa ett fält som ändå skulle avvisas. -->
+    <div id="tikFritext">
+      <p class="tik-fritext-rubrik">Eller skriv namnet själv (overifierat)</p>
+      <label>Användarnamn<input id="tikUser" placeholder="@dittnamn"></label>
+      <button id="connectNow">Anslut konto</button>
+    </div>
   </dialog>
   <dialog id="brandKitModal">
     <button class="bx" id="brandKitClose">×</button>
