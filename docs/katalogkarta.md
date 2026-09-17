@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5e3cbbc`
+Commit: `98794d6`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -26,7 +26,7 @@ proveniensen saknas: datumet bredvid ar anda matt.
 | | |
 |---|---|
 | Kort totalt | **277** |
-| Sektioner | 22 |
+| Sektioner | 23 |
 | Med katalognyckel | 277 / 277 |
 | Med shadow DOM-miniatyr | 277 / 277 |
 | Ritar sin design | 277 / 277 |
@@ -47,7 +47,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
-| BATTLE MVP · 23 DESIGNER | 23 | 23/23 | 23/23 | 23/23 | 2026-09-11 | — |
+| BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-09-11 | — |
+| BATTLE MVP · FIRANDE · 6 KOREOGRAFIER | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
@@ -131,7 +132,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-03 | — |
 
-### BATTLE MVP · 23 DESIGNER
+### BATTLE MVP · 17 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -152,6 +153,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-03 | — |
 | Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-03 | — |
 | Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-03 | — |
+
+### BATTLE MVP · FIRANDE · 6 KOREOGRAFIER
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
 | Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
 | Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
 | Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |
