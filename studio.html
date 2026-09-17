@@ -75,6 +75,16 @@
       kopplar vi dess @handtag automatiskt.</p>
     <button class="primary" id="verifieraTikTok">Verifiera med TikTok</button>
     <small>Varje användarnamn låses till kontot som kopplade det.</small>
+    <!-- ANSLUT NU. Visas bara när ett konto redan är kopplat. Bryggan ansluter av sig själv när
+         sändningen startar, men försöker bara var 60:e sekund efter ett tag — uppmätt väntevärde
+         ~30 s. Den här knappen ber om ett försök direkt. Servern stryper den till ett var 20:e
+         sekund, för varje försök är en ny anslutning mot TikTok. -->
+    <div id="tikAnslutNu" hidden>
+      <p class="tik-fritext-rubrik">Kontot är kopplat</p>
+      <button id="anslutNu">Anslut nu</button>
+      <small>Vi ansluter automatiskt när du går live. Den här knappen försöker direkt i stället för
+        att vänta ut cykeln.</small>
+    </div>
     <!-- FRITEXTVÄGEN, PÅ VÄG BORT. Servern svarar `verifieringKravs` och studio-live.js döljer
          blocket när flaggan VYRA_TIKTOK_VERIFIERING_KRAVS är satt i Railway. Spärren sitter i
          servern — det här är bara att slippa visa ett fält som ändå skulle avvisas. -->

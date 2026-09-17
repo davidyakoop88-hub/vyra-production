@@ -322,6 +322,12 @@ if(!localRuntime){
       const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
       if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
       return{ok:true,...oppnaVerifiering(r.url)}},
+    // ANSLUT NU. Servern svarar 202 och skriver en tidsstampel; bryggmanagern ser den pa sin
+    // nasta tick. Det ar alltsa inte ett omedelbart svar om att anslutningen lyckats — bara att
+    // begaran tagits emot. Klienten far inte pasta mer an sa.
+    anslutNu:async()=>{const id=workspaceId();
+      if(!id)throw Error('Logga in för att ansluta');
+      return await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection/anslut-nu`,{method:'POST',body:'{}'})},
     disconnect:async()=>shape((await cloud('DELETE')).connection),
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
