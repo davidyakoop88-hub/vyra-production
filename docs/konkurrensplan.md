@@ -47,19 +47,39 @@ Det är skillnaden mellan att komma ikapp och att gå om.
 
 ## Planen, billigast först
 
-### 1. Starttappet — dagar, märks för varje sändare
+### 1. Starttappet — uppmätt 2026-09-18, mindre än vi trodde
 
-Uppmätt: `connection-manager.js` pollar var 15:e sekund, men en brygga som misslyckas backar av med
-fördubbling upp till **fem minuter**. Konkurrenten lovar *"usually within seconds"*.
+**Rättelse.** En första läsning gav "upp till fem minuter". Det var fel, och felet var att läsa
+`connection-manager.js` utan att läsa `bridge.js`.
 
-Det märks i exakt det ögonblick som betyder mest — starten av sändningen.
+Femminuterstaket i managern gäller bara när bryggans **process dör**. Går kontot bara offline dör
+den inte: `bridge.js` har en egen återanslutningsslinga utan försöksgräns.
 
-Verifieringen ger nu argumentet: ett verifierat konto är bevisligen någons eget och försvarar
-tätare pollning än ett fritextnamn som kan vara felstavat.
+Uppmätt genom att köra `baseReconnectDelayMs()` och `jitteredDelayMs()` direkt:
 
-- sänk taket för verifierade konton
-- lägg till en **"Anslut nu"**-knapp för den som vill ha det garanterat i stället för automatiskt
-- **mät den faktiska fördröjningen först** — fem minuter är ett värsta fall, inte ett typiskt
+| försök | väntan | kumulativt |
+|---|---|---|
+| 1–6 | 1, 2, 4, 8, 16, 32 s | 63 s |
+| 7 och framåt | **60 s** (jitter 48–72 s) | taket nått efter 123 s |
+
+**Verklig fördröjning när sändningen startar: ~30 s i snitt, som mest 72 s.**
+
+Konkurrenten lovar *"usually within seconds"*. Avståndet är alltså en halv minut — kännbart vid
+sändningsstart, men inte den avgrund fem minuter hade varit.
+
+**Vad som kan göras:** sänk `MAX_RECONNECT_MS` för **verifierade** konton. 60 s → 15 s ger ~7,5 s i
+snitt och som mest 18 s, alltså "inom sekunder" på riktigt.
+
+Ett verifierat konto försvarar tätare pollning: det är bevisligen någons eget, till skillnad från
+ett fritextnamn som kan vara felstavat och polla i onödan i evighet.
+
+**Bromsen är inte CPU utan TikToks tålamod.** `studio-live.js` känner redan igen ett
+"rate limit"-skäl från TikTok. Med kapacitetstaket på ~20 samtidiga konton ger 15 s ungefär
+1,3 anslutningsförsök per sekund totalt — måttligt, men det ska mätas mot ett riktigt konto innan
+det rullas ut brett, inte antas.
+
+**Komplement:** en "Anslut nu"-knapp för den som vill ha det garanterat i stället för automatiskt.
+Den kostar nästan ingenting och tar bort hela väntan för den som bryr sig.
 
 ### 2. Protokolluckan — gratis vid nästa sändning
 
