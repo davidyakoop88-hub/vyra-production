@@ -1,6 +1,6 @@
 # Renderkedjan — hur `wh`, `props` och `bind` staplas
 
-**Senast verifierad:** 2026-09-17 mot `origin/main` @ `5439096`
+**Senast verifierad:** 2026-09-17 mot `origin/main` @ `5439096`, uppdaterad efter `5f674b2`
 **Metod:** källäsning + mätning i riktig Chromium (Playwright)
 
 `studio.js` är minifierad handkod och ändras aldrig direkt. Allt nytt beteende
@@ -108,8 +108,18 @@ farligast till minst farlig:
 | Klass | Exempel | Varför |
 |---|---|---|
 | **UI-text** | `'7 MODELLER'`, `'Liggande · 4 på rad'` | Etiketter redigeras ofta — stavfel, omformulering, nya val |
-| **Cachebust** | `'…/${id}.png?v=2'` | Cachebustar bumpas rutinmässigt |
+| **Cachebust** | *(ingen kvar i repot)* | Cachebustar bumpas rutinmässigt |
 | **Struktur** | `'<div class="'`, `'style="'` | Robust så länge markupen inte ordnas om |
+
+Cachebust-klassen hade **en** medlem: `toplike-studio.js` lagade ramarnas sökväg genom att
+matcha literalen `.png?v=2` som `media.js` skrev. En rutinmässig bump där hade tyst tagit
+bort 19 av 53 ramar. Den är borttagen — `media.js` slår numera upp filnamnet i
+`VYRA_FRAME_FILES`, och `tests/browser/toplike-ramar-laddar.browser.test.js` vaktar att
+sökvägen byggs rätt från början i stället för att lagas i efterhand.
+
+**UI-textklassen lever kvar.** `gift-jar-animals.js:58` ersätter etiketten `'7 MODELLER'`
+med `'5 MODELLER'` i en panel som `media.js` byggt — och den filen har **noll testfiler**.
+Rättar någon ett stavfel i etiketten visar panelen sju modeller när det finns fem.
 
 ---
 
