@@ -41,8 +41,40 @@ function paint(d){malaInstallningsrad(d&&d.connection);let e=document.querySelec
 document.addEventListener('click',async e=>{if(e.target?.id!=='verifieraTikTok')return;
   e.preventDefault();e.stopImmediatePropagation();
   const b=e.target,text=b.textContent;b.disabled=true;b.textContent='Öppnar TikTok…';
-  try{await VyraLive.verifiera()}
+  try{const ut=await VyraLive.verifiera();
+    // SKRIVBORDSAPPEN LAMNAR INTE SIDAN. Dar oppnas TikTok i anvandarens riktiga webblasare
+    // (live-client.js oppnaVerifiering), sa den har fliken star kvar och far INGEN callback att
+    // reagera pa — utan det som foljer hade knappen sagt "Oppnar TikTok…" for alltid medan
+    // verifieringen redan var klar pa andra sidan.
+    if(ut&&ut.externt){b.textContent='Väntar på TikTok…';
+      note('Slutför inloggningen i webbläsaren som öppnades — det här fönstret uppdaterar sig självt');
+      vantaPaVerifiering(b,text)}}
   catch(error){b.disabled=false;b.textContent=text;note(error.message||'Kunde inte starta verifieringen')}},true);
+// Bevakar servern tills kopplingen blir verifierad. Bunden i tid med flit: en obegransad slinga
+// hade fortsatt fraga i evighet efter ett avbrutet varv. Tva minuter racker for en inloggning och
+// ger upp med ett SKAL i stallet for att tiga.
+let verifieringsvakt=null;
+function vantaPaVerifiering(b,text){
+  clearTimeout(verifieringsvakt);
+  let forsok=0;
+  const aterstall=()=>{if(b&&b.isConnected){b.disabled=false;b.textContent=text}};
+  const tick=async()=>{
+    forsok+=1;
+    let d=null;try{d=await VyraLive.status()}catch(_){}
+    if(d&&d.connection&&d.connection.verifierad){
+      paint(d);aterstall();
+      document.querySelector('#connectModal')?.close();
+      note('TikTok-kontot @'+String(d.connection.username||'').replace(/^@/,'')+' är verifierat och kopplat');
+      return}
+    if(forsok>=40){aterstall();note('Ingen verifiering kom in. Avbröt du i webbläsaren? Försök igen.');return}
+    verifieringsvakt=setTimeout(tick,3000);
+  };
+  verifieringsvakt=setTimeout(tick,3000);
+}
+// Slingan overlever inte en sessionsavslutning — den skulle annars fraga vidare mot ett konto
+// som loggat ut. `vyra-session-ended` ar UTLOGGNING, vilket ar precis ratt handelse har.
+window.VyraSessionState?.registerTeardown?.('tiktok-verifieringsvakt',()=>clearTimeout(verifieringsvakt));
+addEventListener('vyra-session-ended',()=>clearTimeout(verifieringsvakt));
 // Fritextfaltet goms nar servern kraver verifiering. Servern ar den som bestammer — det har ar
 // bara att slippa visa ett falt som rutten anda skulle avvisa med 403.
 function malaVerifieringslage(d){const block=document.querySelector('#tikFritext');

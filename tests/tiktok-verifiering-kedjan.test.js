@@ -48,6 +48,33 @@ test('live-client.js exponerar verifiera i BÅDA lägena — webb och skrivbord'
     + 'ingenting i det ena läget, utan att något felmeddelande säger varför');
 });
 
+test('KRITISK: skrivbordsappen öppnar TikTok externt, inte med location.href', () => {
+  // electron-app/main.js:97 gör preventDefault() på will-navigate mot allt som inte är appens
+  // egna adresser. location.href till TikTok blir därför en TYST NOLL i appen: ingen navigering,
+  // inget fel, ingen logg — knappen ser trasig ut utan att något säger varför. window.open går
+  // via setWindowOpenHandler, som skickar adressen till shell.openExternal.
+  const klient = las('live-client.js');
+  assert.match(klient, /Electron\\\//, 'ingen Electron-vakt — knappen är död i skrivbordsappen');
+  assert.match(klient, /window\.open\(url,'_blank'\)/, 'öppnar inte externt i Electron');
+  // Ingen av verifieringsvägarna får sätta location.href direkt förbi hjälparen.
+  const direkta = (klient.match(/location\.href\s*=\s*r\.url/g) || []).length;
+  assert.equal(direkta, 0, 'en verifieringsväg går förbi oppnaVerifiering och dör i appen');
+});
+
+test('KONTROLLMÄTNING: Electron-vakten läser den riktiga spärren i main.js', () => {
+  // Vakten ovan är bara meningsfull om spärren den skyddar mot faktiskt finns kvar. Försvinner
+  // will-navigate-raden ur main.js är hela resonemanget inaktuellt och ska läsas om.
+  const main = las('electron-app/main.js');
+  assert.match(main, /will-navigate[\s\S]{0,120}preventDefault/,
+    'main.js spärrar inte längre navigering — läs om varför window.open behövs');
+});
+
+test('studio-live.js väntar in resultatet när appen öppnade externt', () => {
+  const live = las('studio-live.js');
+  assert.match(live, /externt/, 'det externa fallet hanteras inte — knappen fastnar i "Öppnar TikTok…"');
+  assert.match(live, /clearTimeout\(verifieringsvakt\)/, 'slingan städas inte vid utloggning');
+});
+
 test('KRITISK: callbacken ligger FÖRE sessionsgrinden i server/index.js', () => {
   // S.sessionCookie() sätter SameSite=Strict. En omdirigering från tiktok.com tillbaka hit är en
   // korssajts-navigering, och en Strict-kaka följer INTE med en sådan. Flyttas rutten bakom

@@ -1,4 +1,22 @@
 (function(){const localRuntime=['127.0.0.1','localhost'].includes(location.hostname);const listeners=new Set(),activeUsers=new Set();
+// SKRIVBORDSAPPEN FAR INTE NAVIGERA BORT FRAN SINA EGNA ADRESSER.
+// electron-app/main.js:97 fanger will-navigate och gor preventDefault() pa allt som inte ar
+// localOrigin eller CLOUD_ORIGIN. `location.href = <TikToks URL>` blir darfor EN TYST NOLL i
+// appen: ingen navigering, inget fel, ingen logg — knappen ser trasig ut utan att nagot sager
+// varfor. Exakt det monstret har redan drabbat fem widgetar i det har repot.
+//
+// window.open gar en ANNAN vag: den traffar setWindowOpenHandler (main.js:84), som skickar varje
+// icke-betrodd https-adress till shell.openExternal — alltsa anvandarens riktiga webblasare.
+// Det ar dessutom det enda som FUNGERAR: TikTok avvisar rutinmassigt inloggning i inbaddade
+// webblasarfonster, sa ett barnfonster i Electron hade inte hjalpt heller.
+//
+// Klienten laddas fran vyralive.app AVEN i appen (main.js:82 laddar CLOUD_ORIGIN/studio.html), sa
+// localRuntime ar falskt dar — vakten maste darfor sitta pa Electron, inte pa vardnamnet.
+const iElectron=/\bElectron\//.test(navigator.userAgent||'');
+function oppnaVerifiering(url){
+  if(iElectron){window.open(url,'_blank');return{externt:true}}
+  location.href=url;return{externt:false};
+}
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
 // KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
 // vinner nar bada finns. ~20 filer nedstroms laser det interna `coins` utan att veta nagot
@@ -303,7 +321,7 @@ if(!localRuntime){
       if(!id)throw Error('Logga in för att verifiera ditt TikTok-konto');
       const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
       if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
-      location.href=r.url;return{ok:true}},
+      return{ok:true,...oppnaVerifiering(r.url)}},
     disconnect:async()=>shape((await cloud('DELETE')).connection),
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
@@ -358,4 +376,4 @@ verifiera:async()=>{const id=window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.i
   if(!id)throw Error('Logga in på ditt VYRA-konto för att verifiera TikTok');
   const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
   if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
-  location.href=r.url;return{ok:true}}};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();
+  return{ok:true,...oppnaVerifiering(r.url)}}};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();
