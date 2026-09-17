@@ -820,3 +820,46 @@ ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAUL
 COMMENT ON COLUMN subscriptions.stripe_subscription_id IS 'Leverantörens abonnemangs-id (PayPal I-… eller Stripe sub_…); se kolumnen provider';
 COMMENT ON COLUMN subscriptions.stripe_price_id IS 'Leverantörens plan-/pris-id (PayPal P-… eller Stripe price_…)';
 COMMENT ON COLUMN billing_events.stripe_event_id IS 'Leverantörens händelse-id (PayPal WH-… eller Stripe evt_…)';
+
+
+-- TIKTOK-VERIFIERING (2026-09-17). Fram till nu var tiktok_connections.tiktok_username FRITEXT:
+-- den som skrev in en annan kreatoers handtag fick bryggan startad mot DERAS saendning, och
+-- stream-stats.js boerjade spara deras publiks viewer_id, display_name och avatar_url i ett
+-- fraemmande workspace. Kolumnerna nedan baer beviset paa att handtaget aer kontots eget.
+-- verifierad_at aer NULL foer varje rad som kom in via fritextvaegen; den vaegen finns kvar bakom
+-- flaggan VYRA_TIKTOK_VERIFIERING_KRAVS tills alla kunder gaatt oever.
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS verifierad_at timestamptz;
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS tiktok_open_id text;
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS tiktok_union_id text;
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS visningsnamn text;
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS avatar_url text;
+COMMENT ON COLUMN tiktok_connections.verifierad_at IS 'Naer TikTok sjaelvt intygade handtaget; NULL = ovverifierad fritext';
+COMMENT ON COLUMN tiktok_connections.tiktok_open_id IS 'TikToks stabila konto-id; handtagslaaset haenger i den, inte i namnet';
+
+-- HANDTAGSLAASET. Ett verifierat handtag binds vid kontot som knoet det, saa naesta person som
+-- verifierar sig inte kan ta oever samma handtag i sitt eget workspace. Nyckeln aer handtaget och
+-- vaerdet aer open_id: ett handtag kan bytas hos TikTok, men open_id foeljer kontot.
+CREATE TABLE IF NOT EXISTS tiktok_handtagslas (
+  handtag     text PRIMARY KEY,
+  open_id     text NOT NULL,
+  knuten_at   timestamptz NOT NULL DEFAULT now(),
+  senast_sedd timestamptz NOT NULL DEFAULT now()
+);
+
+-- PAAGAAENDE VERIFIERINGSVARV. state och PKCE-verifieraren maaste oeverleva mellan tvaa HTTP-anrop
+-- som kan traeffa OLIKA Railway-instanser — minnet delas inte, saa ett varv som sparades i en
+-- process hade fallit varannan gaang. Verifieraren krypteras med token-vault.js: laecker tabellen
+-- ska den inte raecka foer att slutfoera naagon annans varv.
+-- state baer BAADE workspace och anvaendare, saa callbacken kan kraeva att samma inloggade person
+-- avslutar varvet som startade det. Utan den bindningen gaar det att lura en inloggad anvaendare
+-- att slutfoera naagon annans varv, och kopplingen hamnar i fel workspace.
+CREATE TABLE IF NOT EXISTS tiktok_verifieringsforsok (
+  state              text PRIMARY KEY,
+  workspace_id       uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id            uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kodverifierare_enc text NOT NULL,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  expires_at         timestamptz NOT NULL,
+  used_at            timestamptz
+);
+CREATE INDEX IF NOT EXISTS tiktok_verifieringsforsok_stad_idx ON tiktok_verifieringsforsok (expires_at);

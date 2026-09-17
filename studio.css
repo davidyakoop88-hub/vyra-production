@@ -1561,3 +1561,12 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
 /* Skälet till att anslutningen inte gick igenom. Servern har alltid skickat det; fram till
    2026-09-16 kastades det bort och användaren fick felsöka i blindo. */
 .settings-status-skal{display:block;margin-top:3px;font-weight:400;font-size:11px;color:#a58ea9;line-height:1.5}
+
+/* TIKTOK-VERIFIERINGEN I #connectModal.
+   [hidden] MASTE ha en egen regel har. Studions egna selektorer satter display pa breda grupper,
+   sa webblasarens inbyggda [hidden]-regel forlorar — ett dolt block skulle synas anda. Samma
+   falla som redan kostat en gang i den har filen. */
+#connectModal [hidden]{display:none!important}
+#connectModal #tikFritext{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+#connectModal .tik-fritext-rubrik{margin:0 0 8px;font-size:12px;letter-spacing:.04em;
+  text-transform:uppercase;opacity:.55}

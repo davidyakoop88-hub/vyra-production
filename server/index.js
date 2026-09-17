@@ -2,6 +2,9 @@
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
+const TikTokVerifiering=require('./tiktok-verifiering');
+const {knytVerifieratHandtag}=require('./tiktok-handtagslas');
+const Vault=require('./token-vault');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
 const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
@@ -17,6 +20,15 @@ const Support=require('./support');
 const TTS=require('./tts');
 const PORT=Number(process.env.PORT||8080),ORIGIN=process.env.APP_ORIGIN||`http://127.0.0.1:${PORT}`,SESSION_SECONDS=Number(process.env.SESSION_DAYS||14)*86400;
 const SSE_HEARTBEAT_MS=30000;
+// TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
+// Saknas de svarar rutten 503 i stället för att bygga en URL som TikTok ändå avvisar.
+const TIKTOK_CLIENT_KEY=process.env.TIKTOK_CLIENT_KEY||'',TIKTOK_CLIENT_SECRET=process.env.TIKTOK_CLIENT_SECRET||'';
+const TIKTOK_REDIRECT=`${ORIGIN}/api/auth/callback/tiktok`;
+// Fritextvägen in i tiktok_connections finns kvar tills flaggan sätts. Den stängs med ett handgrepp
+// i Railway när verifieringen är bevisad i drift — utan omdeploy, och utan att låsa ute en enda
+// kund i mellantiden. Se docs/tiktok-verifiering.md.
+const TIKTOK_VERIFIERING_KRAVS=process.env.VYRA_TIKTOK_VERIFIERING_KRAVS==='1';
+const TIKTOK_VARV_SEKUNDER=600;
 // Per-IP request budget, one minute at a time. The defaults are what production has always used and
 // what it keeps; they are named here because a test suite that drives one hundred real requests
 // through one socket is otherwise indistinguishable from an attack, and would be throttled halfway
@@ -423,6 +435,45 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!sameOrigin(req))return send(res,403,{ok:false,error:'Fel ursprung'});
     const sm=await session(req);if(!sm)return send(res,401,{ok:false,error:'Inte inloggad'});
    if(!sm.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(sm.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[sm.user_id]),user={...q.rows[0],user_id:sm.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[sm.id]);await notifyLogin(c,sm.email,sm.id,sm.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[sm.user_id,sm.id,{device:describeDevice(sm.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
+  // TIKTOK-VERIFIERINGENS AATERVAG. Ligger FORE den delade session-raden nedan med flit, och det
+  // ar inte en genväg — det är ett mätt krav:
+  //
+  //   S.sessionCookie() sätter SameSite=Strict (security.js:11). En omdirigering fran tiktok.com
+  //   tillbaka hit ar en KORSSAJTS-navigering, och en Strict-kaka foljer inte med en sadan. Hade
+  //   rutten legat bakom sessionsgrinden hade VARJE verifiering svarat 401 — i produktion, aldrig
+  //   i ett prov som anropar rutten direkt med kakan satt.
+  //
+  // Bindningen till anvandaren gors darfor av `state`, inte av kakan: raden i
+  // tiktok_verifieringsforsok bar bade workspace och user_id, den ar ENGANGS (used_at satts i
+  // samma UPDATE som laser den) och den dor efter tio minuter. Ett state kan bara ha skapats av
+  // nagon som redan var inloggad med ratt roll i just det workspacet, sa en angripare kan inte
+  // tillverka ett state som pekar pa nagon annans workspace.
+  if(p==='/api/auth/callback/tiktok'&&req.method==='GET'){
+    const till=(lage,extra='')=>send(res,302,{ok:lage==='klar'},{location:`/studio.html?tiktok=${lage}${extra}`});
+    // TikTok skickar hit aven nar anvandaren tryckte Avbryt. Det ar inte ett fel att hantera som fel.
+    if(u.searchParams.get('error'))return till('avbruten');
+    const kod=u.searchParams.get('code'),state=u.searchParams.get('state');
+    if(!kod||!state)return till('fel');
+    // Engangsanspraket och lasningen ar EN sats: tva samtidiga callbacks for samma state far
+    // aldrig bada gora ett varv. Utgangen filtrerar aven bort ett forfallet varv.
+    const varv=await pool.query('UPDATE tiktok_verifieringsforsok SET used_at=now() WHERE state=$1 AND used_at IS NULL AND expires_at>now() RETURNING workspace_id,user_id,kodverifierare_enc',[state]);
+    if(!varv.rowCount)return till('utgangen');
+    try{
+      const profil=await TikTokVerifiering.verifiera({clientKey:TIKTOK_CLIENT_KEY,clientSecret:TIKTOK_CLIENT_SECRET,
+        redirectUri:TIKTOK_REDIRECT,kod,kodverifierare:Vault.open(varv.rows[0].kodverifierare_enc)});
+      const limit=Number(process.env.MAX_BRIDGES||5);
+      const beslut=await tx(c=>knytVerifieratHandtag(c,{workspaceId:varv.rows[0].workspace_id,profil,limit}));
+      if(beslut.refused)return till(beslut.refused==='last'?'upptaget':beslut.refused==='duplicate'?'dubblett':'fullt');
+      await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'tiktok_verifierad','workspace',$1,$3)",
+        [varv.rows[0].workspace_id,varv.rows[0].user_id,{handtag:profil.handtag}]);
+      return till('klar','&konto='+encodeURIComponent(profil.handtag));
+    }catch(error){
+      // TikToks egen text loggas; koden och hemligheten gor det aldrig — verifiera() ser till att
+      // de inte foljer med ut i felmeddelandet.
+      console.error(JSON.stringify({level:'error',event:'tiktok_verifiering_misslyckades',message:error.message,at:new Date().toISOString()}));
+      return till('fel');
+    }
+  }
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});
   // EGET TAK, NYCKLAT PÅ ANVÄNDAREN. Rutten skickar mejl, så den måste begränsas — men INTE i den
@@ -563,13 +614,37 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // TikTok-anslutning per workspace. Skriver raden som tiktok-bridge/connection-manager.js pollar
   // (SELECT ... WHERE active = true) och startar/stoppar en bridge-process for. Det ar den enda
   // vagen in i tiktok_connections — tabellen fanns men ingenting fyllde den fore detta.
+  // STARTAR ETT VERIFIERINGSVARV. Svarar med TikToks egen URL — klienten skickar dit webblasaren.
+  // Rollkravet ar samma som for att SKRIVA en koppling: att verifiera ar att andra vilken sandning
+  // workspacet laser, inte att titta pa den.
+  const tikVerif=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-verifiering$/i);
+  if(tikVerif){const workspaceId=tikVerif[1];
+    if(req.method!=='POST')return send(res,405,{ok:false,error:'Metoden stods inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behorighet saknas'});
+    if(!TIKTOK_CLIENT_KEY||!TIKTOK_CLIENT_SECRET)return send(res,503,{ok:false,error:'TikTok-verifiering ar inte konfigurerad pa servern'});
+    const {verifierare,utmaning}=TikTokVerifiering.pkce(),state=S.token(32);
+    // Varvet maste overleva mellan tva HTTP-anrop som kan traffa OLIKA Railway-instanser, sa det
+    // bor i databasen och inte i minnet. Verifieraren forseglas: lacker tabellen ska den inte
+    // racka for att slutfora nagon annans varv.
+    await pool.query('INSERT INTO tiktok_verifieringsforsok(state,workspace_id,user_id,kodverifierare_enc,expires_at) VALUES($1,$2,$3,$4,now()+make_interval(secs=>$5))',
+      [state,workspaceId,s.user_id,Vault.seal(verifierare),TIKTOK_VARV_SEKUNDER]);
+    // Stadar bort gamla varv i samma andetag — en egen kron-rutt for tio minuter gamla rader vore
+    // en till sak som kan sluta kora utan att nagon marker det.
+    await pool.query('DELETE FROM tiktok_verifieringsforsok WHERE expires_at<now()-interval \'1 day\'').catch(()=>{});
+    return send(res,201,{ok:true,url:TikTokVerifiering.byggAuktoriseringsUrl({clientKey:TIKTOK_CLIENT_KEY,redirectUri:TIKTOK_REDIRECT,state,kodutmaning:utmaning})});}
   const tikMatch=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-connection$/i);
   if(tikMatch){const workspaceId=tikMatch[1];
     if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))
       return send(res,403,{ok:false,error:'Behorighet saknas'});
-    if(req.method==='GET'){const q=await pool.query('SELECT tiktok_username,active,updated_at FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
-      return send(res,200,{ok:true,connection:q.rows[0]||null})}
+    if(req.method==='GET'){const q=await pool.query('SELECT tiktok_username,active,updated_at,verifierad_at,visningsnamn,avatar_url FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
+      // verifieringKravs foljer med sa klienten kan dolja fritextfaltet utan att gissa serverns lage.
+      return send(res,200,{ok:true,connection:q.rows[0]||null,verifieringKravs:TIKTOK_VERIFIERING_KRAVS})}
     if(req.method==='PUT'){const d=await body(req,4096),username=S.normalizeTikTokUsername(d.username);
+      // FLAGGAN. Nar den ar satt finns bara EN vag in i tiktok_connections: en verifierad
+      // TikTok-inloggning. Spärren sitter HÄR och inte bara i UI:t — ett dolt formularfalt ar
+      // ingen spärr, och rutten ar anropbar utan var egen klient.
+      if(TIKTOK_VERIFIERING_KRAVS)return send(res,403,{ok:false,verifieringKravs:true,
+        error:'Anvandarnamnet maste verifieras med TikTok. Tryck "Verifiera med TikTok" och logga in med kontot du gar live med.'});
       if(!username)return send(res,400,{ok:false,error:'Ogiltigt TikTok-anvandarnamn'});
       // Capacity is refused HERE, not silently in the fleet manager. The manager caps concurrent
       // bridges at MAX_BRIDGES, but it only ever sees a row that was already written — so without
