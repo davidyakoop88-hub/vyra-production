@@ -237,11 +237,11 @@ const visaMatt=()=>{const m=bar.querySelector('#overlayLinkMatt');if(!m)return;
 visaMatt();
 /* Formatknapparna byter layoutens matt, sa texten maste folja med. Lyssnaren sitter pa dokumentet
    for att knapparna ritas om vid varje render — en direktbindning hade tappats vid nasta varv. */
-document.addEventListener('click',e=>{if(e.target.closest('[data-format]'))setTimeout(visaMatt,0)});
+/* EN bestaende lyssnare, inte en per render. Bindaren kor vid varje render, och vakten ovan letar efter en nod som render() just har ersatt -- sa den slapper igenom varje gang. Forr lades tre lyssnare pa window/document till har och togs aldrig bort (uppmatt: 25 renderingar gav 75 lyssnare plus 25 frankopplade rader som closurerna holl kvar). Nu vidarebefordrar en enda bestaende lyssnare till den AKTUELLA raden, och radens egna lyssnare dor med noden. */if(!window.__vyraObsLankKopplad){window.__vyraObsLankKopplad=true;const sag=namn=>document.querySelector('.overlay-link-bar')?.dispatchEvent(new CustomEvent(namn));document.addEventListener('click',e=>{if(e.target.closest('[data-format]'))setTimeout(()=>sag('vyra-obs-matt'),0)});addEventListener('vyra-overlay-access-created',()=>sag('vyra-obs-token'))}bar.addEventListener('vyra-obs-matt',visaMatt);
 const syncManage=()=>{const finns=harToken();manage.textContent=finns?'Säkra länkar':'Skapa säker länk';manage.dataset.first=finns?'':'1';manage.title=finns?'Visa, spärra eller skapa nya OBS-länkar. Din befintliga länk fortsätter gälla — du behöver aldrig byta den för att du ändrat layouten.':'Skapa den säkra länken du klistrar in i OBS. Den skapas en gång och gäller tills du spärrar den.'};
-syncManage();addEventListener('vyra-overlay-access-created',syncManage);
+syncManage();bar.addEventListener('vyra-obs-token',syncManage);
 manage.onclick=()=>document.querySelector('.oa-open')?.click();
-bar.querySelector('#copyOverlayLink').onclick=()=>copy('OBS och TikTok LIVE Studio');addEventListener('vyra-overlay-access-created',update)};
+bar.querySelector('#copyOverlayLink').onclick=()=>copy('OBS och TikTok LIVE Studio');bar.addEventListener('vyra-obs-token',update)};
 const layoutOnlyOverlayBarBind=bind;bind=function(){layoutOnlyOverlayBarBind();if(view!=='editor')document.querySelector('.overlay-link-bar')?.remove()};
 // Top Gift and Top Streak are the two widgets that flip from the gift picture to the profile
 // picture, and both are thrown away and rebuilt by render() on every gift — gift-event-images.js
