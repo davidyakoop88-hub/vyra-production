@@ -41,7 +41,9 @@
         '<label>Partikelfarg<select id="mvpFxTint">'+
           FX_TINTS.map(t=>'<option value="'+t+'"'+((w.mvpFxTint||'auto')===t?' selected':'')+'>'+
             ({auto:'Foljer firandet',gold:'Guld',violet:'Violett',white:'Vitt'})[t]+'</option>').join('')+
-        '</select></label></div><div class="property-group"><h4>POSITION');
+        '</select></label>'+
+        '<div class="property-actions"><button id="testBattleMvp">Testa firandet</button></div>'+
+        '</div><div class="property-group"><h4>POSITION');
     }
     return html.replace(/(<select id="mvpStyle">[\s\S]*?)<\/select>/,`$1<optgroup label="Firande · fyra steg">${Object.entries(designs).map(([key,d])=>`<option value="${key}">${d.label}</option>`).join('')}</optgroup></select>`);
   };
@@ -64,11 +66,32 @@
       });
       const tintSel=document.querySelector('#mvpFxTint');
       if(tintSel)tintSel.onchange=e=>{w.mvpFxTint=FX_TINTS.indexOf(e.target.value)>0?e.target.value:'auto';save();render()};
+      // Tander firandet pa begaran. triggerBattleMvp laser sjalv alla templateBattleMvp
+      // ur state, sa den behover bara de falt en riktig battle skulle ha skickat.
+      const test=document.querySelector('#testBattleMvp');
+      if(test)test.onclick=()=>{
+        if(typeof triggerBattleMvp!=='function')return toast('Firandet kunde inte startas');
+        triggerBattleMvp({name:w.mvpName||'TestAlpha',score:w.mvpScore??1500,
+          profileImage:w.profileImage});
+      };
     }
-    const grid=document.querySelector('[data-battle-mvp] .mvp-style-grid');
-    if(!grid||grid.querySelector('[data-mvp-celebration]'))return;
+    // EGEN SEKTION, INTE SAMMA RUTNAT. Firandena lag forr bland de 17 skinnen och
+    // ramarna, och rubriken skrevs om till '23 DESIGNER' -- da gick det inte att se
+    // vilka sex som var firanden. Rubriken i media.js ror vi inte langre: '17 DESIGNER'
+    // ar korrekt for 10 skinn plus 7 ramar, och en textmatchning mot en rubrik en annan
+    // fil byggt ar det sprodaste monstret i hela renderkedjan (docs/RENDERKEDJAN.md §3).
+    // Vi ankrar i stallet i data-attribut, bade for att hitta grannen och for att veta
+    // om sektionen redan finns.
+    const syskon=document.querySelector('[data-battle-mvp]');
+    if(!syskon||document.querySelector('[data-battle-mvp-firande]'))return;
+    const sektion=document.createElement('section');
+    sektion.dataset.battleMvpFirande='1';
+    sektion.className=syskon.className;          // samma utseende som grannen
+    sektion.innerHTML='<h4>BATTLE MVP · FIRANDE · 6 KOREOGRAFIER</h4>'+
+      '<div class="mvp-style-grid"></div>';
+    syskon.insertAdjacentElement('afterend',sektion);
+    const grid=sektion.querySelector('.mvp-style-grid');
     grid.insertAdjacentHTML('beforeend',Object.entries(designs).map(([key,d])=>`<button type="button" data-mvp-celebration="${key}" data-catalog-key="catalog:battlemvp:celebration:${key}"><i><img src="assets/mvp-celebrations/${key}.svg" alt="" style="width:100%;height:100%;object-fit:contain"></i><b>${d.label}</b></button>`).join(''));
-    const heading=grid.parentElement.querySelector('h4');if(heading)heading.textContent='BATTLE MVP · 23 DESIGNER';
     grid.querySelectorAll('[data-mvp-celebration]').forEach(button=>button.onclick=()=>{
       const created=VyraWidgets.create(button.dataset.catalogKey);
       state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateBattleMvp');
