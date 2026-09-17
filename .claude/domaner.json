@@ -659,7 +659,7 @@
         "server/schema.sql",
         "server/event-bus.js",
         "server/rate-limit.js",
-        "server/capacity-gate.js",
+        "server/capacity-gate.js", "server/tiktok-verifiering.js", "server/tiktok-handtagslas.js",
         "server/stream-sessions.js",
         "server/stream-stats.js",
         "server/stats-read.js",
@@ -674,7 +674,7 @@
         "server.ps1"
       ],
       "tester": [
-        "server/test/health.test.js",
+        "server/test/health.test.js", "tests/tiktok-verifiering-kedjan.test.js", "server/test/tiktok-verifiering.test.js", "server/test/tiktok-handtagslas.test.js",
         "server/test/event-bus.test.js",
         "server/test/event-replay.test.js",
         "server/test/sse-integration.test.js",

@@ -1,4 +1,22 @@
 (function(){const localRuntime=['127.0.0.1','localhost'].includes(location.hostname);const listeners=new Set(),activeUsers=new Set();
+// SKRIVBORDSAPPEN FAR INTE NAVIGERA BORT FRAN SINA EGNA ADRESSER.
+// electron-app/main.js:97 fanger will-navigate och gor preventDefault() pa allt som inte ar
+// localOrigin eller CLOUD_ORIGIN. `location.href = <TikToks URL>` blir darfor EN TYST NOLL i
+// appen: ingen navigering, inget fel, ingen logg — knappen ser trasig ut utan att nagot sager
+// varfor. Exakt det monstret har redan drabbat fem widgetar i det har repot.
+//
+// window.open gar en ANNAN vag: den traffar setWindowOpenHandler (main.js:84), som skickar varje
+// icke-betrodd https-adress till shell.openExternal — alltsa anvandarens riktiga webblasare.
+// Det ar dessutom det enda som FUNGERAR: TikTok avvisar rutinmassigt inloggning i inbaddade
+// webblasarfonster, sa ett barnfonster i Electron hade inte hjalpt heller.
+//
+// Klienten laddas fran vyralive.app AVEN i appen (main.js:82 laddar CLOUD_ORIGIN/studio.html), sa
+// localRuntime ar falskt dar — vakten maste darfor sitta pa Electron, inte pa vardnamnet.
+const iElectron=/\bElectron\//.test(navigator.userAgent||'');
+function oppnaVerifiering(url){
+  if(iElectron){window.open(url,'_blank');return{externt:true}}
+  location.href=url;return{externt:false};
+}
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
 // KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
 // vinner nar bada finns. ~20 filer nedstroms laser det interna `coins` utan att veta nagot
@@ -284,13 +302,26 @@ if(!localRuntime){
     const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection`,
       payload===undefined?{method}:{method,body:JSON.stringify(payload)});
     return r};
-  const shape=c=>({ok:true,localRuntime:false,cloud:true,
-    connection:c&&c.active?{connected:true,state:'cloud',username:c.tiktok_username}
+  // verifieringKravs och verifierad reser MED statusen. Klienten far aldrig gissa serverns lage:
+  // gissar den fel visar den ett fritextfalt som rutten anda avvisar, eller doljer ett falt som
+  // fortfarande fungerar.
+  const shape=(c,extra={})=>({ok:true,localRuntime:false,cloud:true,...extra,
+    connection:c&&c.active?{connected:true,state:'cloud',username:c.tiktok_username,
+                            verifierad:!!c.verifierad_at,visningsnamn:c.visningsnamn||null,avatarUrl:c.avatar_url||null}
                           :{connected:false,state:'idle'}});
   window.VyraLive={
-    status:async()=>{try{const r=await cloud('GET');return shape(r.connection)}
+    status:async()=>{try{const r=await cloud('GET');return shape(r.connection,{verifieringKravs:!!r.verifieringKravs})}
       catch{return{ok:true,localRuntime:false,cloud:true,connection:{connected:false,state:'idle'}}}},
     connect:async username=>shape((await cloud('PUT',{username})).connection),
+    // VERIFIERING. Servern bygger TikToks egen URL (den bär state + PKCE) och vi skickar dit
+    // webbläsaren. Vi öppnar INTE ett popup-fönster: TikToks inloggning avvisas i vissa inbäddade
+    // fönster, och en blockerad popup ser för användaren ut som att knappen är trasig.
+    // Återvägen är /api/auth/callback/tiktok, som omdirigerar till studio.html?tiktok=…
+    verifiera:async()=>{const id=workspaceId();
+      if(!id)throw Error('Logga in för att verifiera ditt TikTok-konto');
+      const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
+      if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
+      return{ok:true,...oppnaVerifiering(r.url)}},
     disconnect:async()=>shape((await cloud('DELETE')).connection),
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
@@ -337,4 +368,12 @@ if(!localRuntime){
 
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
 const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
-let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();
+let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
+// Aven i skrivbordslaget gar verifieringen via MOLNET: det ar molnets tiktok_connections som bar
+// handtagslaset, och den lokala servern har varken sessionen eller tabellen. Saknas inloggningen
+// sags det rakt ut i stallet for att knappen tyst inte gor nagot.
+verifiera:async()=>{const id=window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.id;
+  if(!id)throw Error('Logga in på ditt VYRA-konto för att verifiera TikTok');
+  const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
+  if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
+  return{ok:true,...oppnaVerifiering(r.url)}}};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();
