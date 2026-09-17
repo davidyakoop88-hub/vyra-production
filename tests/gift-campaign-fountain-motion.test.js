@@ -33,7 +33,9 @@ test('reducerad rörelse stoppar bara animationen', () => {
 });
 
 test('kampanjens liveväg förblir en riktad DOM-patch', () => {
-  const source = LIVE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  // `[^\n]*` och inte `.*$/m`: `.` stannar fore `\r`, sa `$` bommar pa en CRLF-checkout
+  // och strippningen blir en tyst no-op. Samma fella fallde like-fountain-vakten.
+  const source = LIVE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   assert.doesNotMatch(source, /\bsave\s*\(/);
   assert.doesNotMatch(source, /\brender\s*\(/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);

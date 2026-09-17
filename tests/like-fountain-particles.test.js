@@ -12,8 +12,12 @@ const factory = require('../widget-factory.js');
 test.after(closeAll);
 
 const ROOT = path.join(__dirname, '..');
-const KALLA = fs.readFileSync(path.join(ROOT, 'like-fountain-particles.js'), 'utf8');
-const MEDIA = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
+// Radsluten normaliseras VID INLASNINGEN, inte i varje enskild vakt. En Windows-checkout
+// med core.autocrlf=true ger CRLF i arbetskopian aven om bloben i Git ar LF, och da
+// slutar varje radbaserad regex harnere att bita. Se kommentaren i sista provet.
+const las = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
+const KALLA = las('like-fountain-particles.js');
+const MEDIA = las('media.js');
 
 function starta(overrides = {}) {
   const w = factory.create('catalog:likefountain');
@@ -107,8 +111,15 @@ test('motorn ror inte likeFountainHtml', () => {
   // Hela poangen med ett separat lager: DOM-fontanen ar reserven och ska vara orord.
   // Namnet FAR forekomma i en kommentar -- den forklarar just att filen lamnar
   // DOM-byggaren ifred. Det som inte far finnas ar ett ANROP.
+  //
+  // OM DEN HAR VAKTEN FALLER UTAN ATT MOTORN HAR ANDRATS: kolla radsluten forst.
+  // `.*$` kan inte matcha en rad som slutar pa CRLF -- `.` stannar FORE `\r` (det ar ett
+  // radslut for regexmotorn) och `$` matchar inte dar. Strippningen blev alltsa en tyst
+  // no-op pa en Windows-checkout, hela filhuvudets kommentar overlevde, och vakten fallde
+  // pa sin egen forklarande kommentar. CI ar gron for exakt samma kod eftersom Linux
+  // checkar ut LF. Darav normaliseringen i `las()` ovan -- och ingen `$`-ankare har.
   const utanKommentarer = KALLA
-    .split('\n').map(rad => rad.replace(/\/\/.*$/, '')).join('\n')
+    .split('\n').map(rad => rad.replace(/\/\/.*/, '')).join('\n')
     .replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!/likeFountainHtml\s*\(/.test(utanKommentarer),
     'motorn ska inte anropa DOM-byggaren');
