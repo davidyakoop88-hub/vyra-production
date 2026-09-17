@@ -237,12 +237,10 @@
       });
     }
 
-    // proTopLikeFrameWh (media.js) always builds the src as assets/images/profile-frames/{id}.png?v=2 —
-    // fix it up to the real filename (FRAME_FILES) for frames whose asset is a differently-named PNG
-    // reuse or an .svg placeholder, without touching that existing chain.
-    if (w.profileFrame && w.profileFrame !== 'none' && FRAME_FILES[w.profileFrame]) {
-      html = html.replaceAll(`assets/images/profile-frames/${w.profileFrame}.png?v=2`, `assets/images/profile-frames/${FRAME_FILES[w.profileFrame]}`);
-    }
+    // Sokvagen byggs numera ratt fran borjan i media.js, som slar upp filnamnet i
+    // VYRA_FRAME_FILES. Har satt tidigare ett plaster som matchade literalen
+    // `.png?v=2` — en cachebust-bump i media.js hade tystat det och tagit bort 19
+    // av 53 ramar utan ett enda felmeddelande.
     return html;
   };
 
