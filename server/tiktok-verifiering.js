@@ -30,9 +30,12 @@ const ANVANDARE = 'https://open.tiktokapis.com/v2/user/info/';
 // kontot. Blanda aldrig ihop dem — verifieringen hänger på det första.
 const FALT = 'open_id,union_id,username,display_name,avatar_url';
 
-// user.info.stats är med för profilkortet (följare/följer). Det är inte nödvändigt för själva
-// verifieringen, och användaren kan slå av det utan att något går sönder — se läsningen nedan.
-const SCOPE = 'user.info.basic,user.info.profile,user.info.stats';
+// EXAKT DE TVÅ VI ANVÄNDER, INTE FLER. TikToks granskningsanvisning säger rakt ut att scope som
+// inte demonstreras i ansökan FÖRDRÖJER granskningen. overlaylive.app begär dessutom
+// user.info.stats (följare/följer till ett profilkort) — VYRA läser inte de siffrorna någonstans,
+// så att be om dem hade kostat granskningstid för data vi kastar. Ett scope vi inte använder är
+// inte gratis: det är en extra sak användaren ska godkänna och en extra sak att förklara.
+const SCOPE = 'user.info.basic,user.info.profile';
 
 // PKCE. Verifieraren stannar hos oss (krypterad, se tiktok_verifieringsforsok), utmaningen reser
 // till TikTok. Utan PKCE räcker en avlyssnad auktoriseringskod för att ta över varvet.

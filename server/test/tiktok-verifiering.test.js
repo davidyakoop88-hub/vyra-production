@@ -50,6 +50,11 @@ test('auktoriserings-URL:en bär allt TikTok kräver, och PKCE-utmaningen är S2
   const scope = String(url.searchParams.get('scope')).split(',');
   assert.ok(scope.includes('user.info.profile'), 'user.info.profile måste begäras');
   assert.ok(scope.includes('user.info.basic'));
+  // ...och INGET mer. TikToks granskningsanvisning säger att scope som inte demonstreras i
+  // ansökan fördröjer granskningen, och VYRA läser inga följarsiffror någonstans. Läggs ett
+  // scope till här ska det vara ett medvetet beslut med en användning i koden — inte en kopia
+  // av någon annans uppsättning.
+  assert.deepEqual(scope, ['user.info.basic', 'user.info.profile']);
 
   // Utmaningen ska vara härledd, inte slumpad separat — annars misslyckas inlösningen hos TikTok.
   assert.equal(crypto.createHash('sha256').update(verifierare).digest('base64url'), utmaning);
