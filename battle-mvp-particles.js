@@ -266,6 +266,7 @@
   // --- the shared loop ------------------------------------------------------
   var engines = new WeakMap();
   var live = [];
+  var frozen = false;
   var raf = 0, last = 0;
 
   function engineFor(box) {
@@ -295,7 +296,7 @@
         for (var n = 0; n < whole; n++) e.emit();
         if (Math.random() < rate - whole) e.emit();
       }
-      if (!e.fired && f >= 0.5) { e.fired = true; e.burst(REDUCED ? 30 : 150); }
+      if (!e.fired && f >= 0.5 && !REDUCED) { e.fired = true; e.burst(150); }
       e.step(dt, f);
     }
 
@@ -322,6 +323,7 @@
   }
 
   function scan() {
+    if (frozen) return;
     document.querySelectorAll('.mvp-celebration').forEach(prewarm);
     document.querySelectorAll('.mvp-celebration.mvp-active').forEach(start);
   }
@@ -349,6 +351,20 @@
     // Observability, mirroring VyraSupernova.active(): a rig that cannot see the
     // particles cannot prove they were ever drawn, and an empty canvas renders at
     // a flawless 60 FPS.
+    // Freeze for the visual suite, mirroring VyraAnimalGiftJars.still(). The particles
+    // are decoration -- prefers-reduced-motion already hides them -- so the honest still
+    // state is the one without them: stop every engine, drop the canvases, and let the
+    // DOM return to exactly what it was before this module existed.
+    still: function () {
+      frozen = true;
+      while (live.length) live.pop().stop();
+      if (raf) { cancelAnimationFrame(raf); raf = 0; last = 0; }
+      document.querySelectorAll('.mvc-stage').forEach(function (stage) {
+        stage.querySelectorAll('canvas.mvc-fx').forEach(function (cv) { cv.remove(); });
+        stage.classList.remove('mvc-fx-on');
+      });
+      return true;
+    },
     active: function () { return live.length; },
     count: function () { var n = 0; live.forEach(function (e) { n += e.parts.length; }); return n; }
   };

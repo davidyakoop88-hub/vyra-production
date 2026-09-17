@@ -100,7 +100,7 @@
 .mvp-celebration[data-mvc-quality="low"] .mvc-charge{box-shadow:none}
 @media(prefers-reduced-motion:reduce){
  .mvp-celebration.mvp-active .mvc-stage,.mvp-celebration.mvp-active .mvc-art,.mvp-celebration.mvp-active .mvc-portrait,.mvp-celebration.mvp-active .mvc-copy{animation:none!important}
- .mvp-celebration .mvc-charge,.mvp-celebration .mvc-finale{display:none!important}
+ .mvp-celebration .mvc-charge,.mvp-celebration .mvc-finale,.mvp-celebration .mvc-fx{display:none!important}
 }
 
 

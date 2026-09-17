@@ -101,11 +101,17 @@ const REGI = {
   // men bara de sex firandena ar CSS-koreografier. De ovriga 17 fotograferas korrekt av den
   // generella frysningen — prefixet haller dem utanfor. Se uppslaget i tests/helpers/visuell.js.
   //
-  // FORLAGAN AR GUARDIAN, INTE GIFTJAR. Giftjar-posten anropar VyraAnimalGiftJars.still() for att
-  // en canvas maste ritas om av kod. Firandena har varken canvas, requestAnimationFrame eller
-  // renderarobjekt: de ar 24 @keyframes i battle-mvp-celebrations.css, alla bundna till
-  // .mvp-active och alla andliga. Det finns alltsa inget still() att anropa — tillstandet maste
-  // stallas, precis som guardian stallen sin fas.
+  // FORLAGAN AR GUARDIAN OCH GIFTJAR I FORENING. Fasen stalls som guardian gor, OCH en canvas
+  // maste stoppas som giftjar gor.
+  //
+  // Posten sa tidigare att firandena varken hade canvas, requestAnimationFrame eller
+  // renderarobjekt. Det slutade vara sant nar battle-mvp-particles.js lades till: tva dukar
+  // per scen, ritade av en rAF-slinga med slumpade partiklar. Vakten foll pa exakt det --
+  // 43 olika bildrutor pa 14 s och ingen som kom igen, for `stilla()` letar samma RASTER tva
+  // ganger och slumpade partiklar ger aldrig det. De stillastaende rutorna i slutet raknades
+  // inte heller: da har mvc-show redan tonat scenen under 3 % malad yta.
+  //
+  // Motorn lamnar darfor VyraMvpParticles.still(), precis som VyraAnimalGiftJars.still().
   //
   // MS AR VALT UR KEYFRAMES, inte pa kansla. Durationen ar 10 s for katalognycklarna
   // (widget-factory satter mvpDuration: 10, CSS laser var(--mvc-duration,10s)):
@@ -134,6 +140,8 @@ const REGI = {
       }
       // Samma tva val som @media(prefers-reduced-motion:reduce) gor i battle-mvp-celebrations.css.
       box.querySelectorAll('.mvc-charge, .mvc-finale').forEach(n => n.remove());
+      // Partikeldukarna ar samma sorts dekoration och doljs av samma media-regel.
+      if (window.VyraMvpParticles) window.VyraMvpParticles.still();
       const alla = [...box.getAnimations({ subtree: true })];
       alla.forEach(a => { a.pause(); a.currentTime = ms });
       void box.offsetWidth;
