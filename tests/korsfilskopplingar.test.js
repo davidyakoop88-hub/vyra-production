@@ -98,9 +98,25 @@ test('guardian: prakt-rubriken byts mot modellvaljaren', () => {
     'modellvaljaren saknas: omslaget tog bort ankaret men la inte dit sitt eget');
 });
 
-// -- Guardian: praktsteget doljs for andra modeller an guldmodellen ----------
+// -- Guardian: praktsteget markas dolt for andra modeller an guldmodellen ----
 
-test('guardian: praktsteget doljs for icke-klassiska modeller, inte for classic', () => {
+// OBS -- PROVET MATER MARKNINGEN, INTE ATT ETIKETTEN FORSVINNER.
+//
+// Uppmatt i Chromium 2026-09-17: `hidden` doljer INTE den har etiketten, for
+// `studio.css` satter `.properties label{display:block}` och en forfattarregel
+// som sater `display` slar ut webblasarens egen `[hidden]{display:none}`. Gamla
+// formen (<label hidden>), nya formen (<label data-ge-steg hidden>) och en
+// kontroll HELT UTAN hidden gav alla samma hojd, 27px.
+//
+// Det ar en aldre bugg och inte den har andringens: markningen fanns fore och
+// beter sig likadant efter. Den ratta fixen ar en egen regel i studio.css --
+// repot gor redan sa pa fem andra stallen (action-event.css:68, :139, :190,
+// gift-fireworks.css:63, :92). Den ligger utanfor den har omskrivningen.
+//
+// Provet pastar darfor bara det som ar sant: att omslaget TRAFFAR ankaret och
+// satter markningen. Nar CSS-regeln kommer ska det har provet skarpas till att
+// mata hojden i en riktig webblasare.
+test('guardian: praktsteget markas hidden for icke-klassiska modeller, inte for classic', () => {
   const utan = panel('catalog:guardianemblem:2', []);
   assert.ok(utan.querySelector('label[data-ge-steg]'),
     'media.js sander inte ut <label data-ge-steg> i guardianpanelen');
@@ -109,7 +125,7 @@ test('guardian: praktsteget doljs for icke-klassiska modeller, inte for classic'
   const cSteg = classic.querySelector('label[data-ge-steg]');
   assert.ok(cSteg, 'praktstegets etikett forsvann for classic');
   assert.equal(cSteg.hasAttribute('hidden'), false,
-    'praktsteget ar dolt for classic -- steget TILLHOR guldmodellen och ska synas');
+    'praktsteget ar markat dolt for classic -- steget TILLHOR guldmodellen');
 
   // Vilken modell som helst utom classic; namnet lases ur registret sa att provet
   // inte bar en modellista som kan glida isar fran den riktiga.
@@ -124,7 +140,7 @@ test('guardian: praktsteget doljs for icke-klassiska modeller, inte for classic'
   const dSteg = dold.querySelector('label[data-ge-steg]');
   assert.ok(dSteg, `praktstegets etikett forsvann for ${annan}`);
   assert.equal(dSteg.hasAttribute('hidden'), true,
-    `praktsteget syns for ${annan} -- ersattningen traffade inte ankaret`);
+    `praktsteget ar inte markat dolt for ${annan} -- ersattningen traffade inte ankaret`);
 });
 
 // -- Gift Campaign: orienteringens etiketter --------------------------------
