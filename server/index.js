@@ -637,6 +637,27 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // en till sak som kan sluta kora utan att nagon marker det.
     await pool.query('DELETE FROM tiktok_verifieringsforsok WHERE expires_at<now()-interval \'1 day\'').catch(()=>{});
     return send(res,201,{ok:true,url:TikTokVerifiering.byggAuktoriseringsUrl({clientKey:TIKTOK_CLIENT_KEY,redirectUri:TIKTOK_REDIRECT,state,kodutmaning:utmaning})});}
+  // ANSLUT NU. Sandaren vill inte vanta ut bryggans egen ateranslutningscykel (~30 s i snitt,
+  // 72 s som mest — uppmatt 2026-09-18). Servern och bryggmanagern ar tva olika Railway-tjanster,
+  // sa vagen dit gar via databasen: vi satter en tidsstampel, managern ser den pa sin nasta tick.
+  //
+  // STRYPT MED FLIT. Varje omstart ar en ny anslutning mot TikTok, och TikTok stryper den som
+  // ansluter for ofta — klienten kanner redan igen ett rate limit-skal i studio-live.js. En knapp
+  // som gar att halla nere hade darfor kunnat stanga ute sandaren fran sin egen sandning.
+  // Fonstret ligger i SQL-satsen, inte i en if-sats: tva samtidiga anrop maste tavla om samma rad.
+  const tikNu=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-connection\/anslut-nu$/i);
+  if(tikNu){const workspaceId=tikNu[1];
+    if(req.method!=='POST')return send(res,405,{ok:false,error:'Metoden stods inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behorighet saknas'});
+    const q=await pool.query(
+      "UPDATE tiktok_connections SET omstart_begard_at=now() WHERE workspace_id=$1 AND active=true "+
+      "AND (omstart_begard_at IS NULL OR omstart_begard_at < now() - interval '20 seconds') RETURNING omstart_begard_at",[workspaceId]);
+    if(!q.rowCount){
+      const finns=await pool.query('SELECT active FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
+      if(!finns.rowCount||!finns.rows[0].active)return send(res,409,{ok:false,error:'Inget TikTok-konto ar anslutet'});
+      return send(res,429,{ok:false,error:'Du bad precis om en anslutning. Vanta nagon sekund innan du forsoker igen.'});
+    }
+    return send(res,202,{ok:true,begard:q.rows[0].omstart_begard_at});}
   const tikMatch=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-connection$/i);
   if(tikMatch){const workspaceId=tikMatch[1];
     if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))

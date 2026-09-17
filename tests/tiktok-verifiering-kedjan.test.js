@@ -136,6 +136,35 @@ test('Dockerfilens COPY-lista bär de nya servermodulerna', () => {
   assert.match(docker, /tiktok-handtagslas\.js/);
 });
 
+test('ANSLUT NU: knappen finns, är bunden och når servern', () => {
+  assert.match(las('studio.html'), /id="tikAnslutNu"/, 'blocket saknas i modalen');
+  assert.match(las('studio.html'), /id="anslutNu"/, 'knappen saknas');
+  const live = las('studio-live.js');
+  assert.match(live, /anslutNu/, 'knappen är inte bunden — då gör den ingenting vid klick');
+  assert.match(live, /VyraLive\.anslutNu/, 'klicket leder inte till något anrop');
+  assert.match(las('live-client.js'), /anslutNu\s*:\s*async/, 'VyraLive saknar anslutNu');
+  assert.match(las('server/index.js'), /tiktok-connection\\\/anslut-nu/, 'rutten saknas i servern');
+});
+
+test('KRITISK: strypningen ligger i SQL-satsen, inte i en if-sats', () => {
+  // Två samtidiga anrop måste tävla om SAMMA RAD. En läs-sedan-skriv i JavaScript är en
+  // check-then-act-tävling: båda läser "senast för en minut sedan", båda skriver. Varje omstart är
+  // en ny anslutning mot TikTok, och TikTok stryper den som ansluter för ofta — studio-live.js
+  // känner redan igen ett rate limit-skäl därifrån.
+  const index = las('server/index.js');
+  assert.match(index, /UPDATE tiktok_connections SET omstart_begard_at=now\(\)[\s\S]{0,220}interval '20 seconds'/,
+    'fönstret finns inte i UPDATE-satsens WHERE — då är strypningen inte atomisk');
+});
+
+test('KRITISK: managern jämför begäran mot bryggans starttid', () => {
+  // Tidsstämpeln nollas aldrig. Utan jämförelsen mot startedAt startas bryggan om vid VARJE tick i
+  // evighet — var 15:e sekund, för alltid, mot TikTok.
+  const mgr = las('tiktok-bridge/connection-manager.js');
+  assert.match(mgr, /nar\s*>\s*entry\.startedAt/,
+    'ingen jämförelse mot startedAt — omstarten blir oändlig i stället för engångs');
+  assert.match(mgr, /omstart_begard_at/, 'kolumnen hämtas inte i syncOnce');
+});
+
 test('inga TikTok-hemligheter har hamnat i klientfilerna', () => {
   for (const f of ['studio.html', 'studio-live.js', 'live-client.js', 'studio.css']) {
     const text = las(f);
