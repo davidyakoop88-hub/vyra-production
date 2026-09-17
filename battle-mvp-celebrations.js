@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const designs=VyraWidgets.variants('battlemvp.celebration');
+  const FX_TINTS=['auto','gold','violet','white'];
   const finite=(v,fallback,min,max)=>Number.isFinite(+v)?Math.min(max,Math.max(min,+v)):fallback;
   const previous=battleMvpHtml;
   battleMvpHtml=function(w){
@@ -12,7 +13,7 @@
     const photo=design.photo||{left:29,top:24,width:42,height:42};
     const duration=finite(w.mvpDuration||10,10,2,15);
     const particles=Array.from({length:20},(_,i)=>'<i style="--i:'+i+';--x:'+((i*37)%100)+'%;--drift:'+((i%2?1:-1)*(12+i*2))+'px"></i>').join('');
-    return `<div class="widget battle-mvp mvp-celebration mvc-${key}${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||400,400,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--mvc-duration:${duration}s;--mvc-accent:${design.accent};--mvc-photo-left:${photo.left}%;--mvc-photo-top:${photo.top}%;--mvc-photo-width:${photo.width}%;--mvc-photo-height:${photo.height}%">
+    return `<div class="widget battle-mvp mvp-celebration mvc-${key}${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||400,400,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--mvc-duration:${duration}s;--mvc-accent:${design.accent};--mvc-photo-left:${photo.left}%;--mvc-photo-top:${photo.top}%;--mvc-photo-width:${photo.width}%;--mvc-photo-height:${photo.height}%;--mvc-fx-intensity:${finite(w.mvpFxIntensity,100,20,250)};--mvc-fx-speed:${finite(w.mvpFxSpeed,100,40,200)};--mvc-fx-size:${finite(w.mvpFxSize,100,50,220)};--mvc-fx-depth:${finite(w.mvpFxDepth,34,0,60)};--mvc-fx-hole:${finite(w.mvpFxHole,118,60,200)};--mvc-fx-tint:${FX_TINTS.indexOf(w.mvpFxTint)>0?w.mvpFxTint:'auto'}">
       <div class="mvc-stage"><div class="mvc-charge" aria-hidden="true"></div>
       <div class="mvc-portrait"><img src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt=""></div>
       <img class="mvc-art mvc-art-left" src="${art}" alt=""><img class="mvc-art mvc-art-right" src="${art}" alt="">
@@ -21,8 +22,27 @@
   };
   const oldProps=props;
   props=function(){
-    const html=oldProps(),w=liveWidget(selected);
+    let html=oldProps();const w=liveWidget(selected);
     if(!w||w.type!=='templateBattleMvp')return html;
+    if(Object.prototype.hasOwnProperty.call(designs,w.mvpStyle)){
+      const g=(k,d)=>Number.isFinite(+w[k])?+w[k]:d;
+      html=html.replace('<div class="property-group"><h4>POSITION',
+        '<div class="property-group"><h4>FIRANDETS PARTIKLAR</h4>'+
+        '<label class="range-label">Intensitet <b>'+g('mvpFxIntensity',100)+' %</b>'+
+        '<input id="mvpFxIntensity" type="range" min="20" max="250" step="5" value="'+g('mvpFxIntensity',100)+'"></label>'+
+        '<label class="range-label">Hastighet <b>'+g('mvpFxSpeed',100)+' %</b>'+
+        '<input id="mvpFxSpeed" type="range" min="40" max="200" step="5" value="'+g('mvpFxSpeed',100)+'"></label>'+
+        '<label class="range-label">Storlek <b>'+g('mvpFxSize',100)+' %</b>'+
+        '<input id="mvpFxSize" type="range" min="50" max="220" step="5" value="'+g('mvpFxSize',100)+'"></label>'+
+        '<label class="range-label">Andel framfor ramen <b>'+g('mvpFxDepth',34)+' %</b>'+
+        '<input id="mvpFxDepth" type="range" min="0" max="60" step="1" value="'+g('mvpFxDepth',34)+'"></label>'+
+        '<label class="range-label">Fri yta runt profilbilden <b>'+g('mvpFxHole',118)+' %</b>'+
+        '<input id="mvpFxHole" type="range" min="60" max="200" step="2" value="'+g('mvpFxHole',118)+'"></label>'+
+        '<label>Partikelfarg<select id="mvpFxTint">'+
+          FX_TINTS.map(t=>'<option value="'+t+'"'+((w.mvpFxTint||'auto')===t?' selected':'')+'>'+
+            ({auto:'Foljer firandet',gold:'Guld',violet:'Violett',white:'Vitt'})[t]+'</option>').join('')+
+        '</select></label></div><div class="property-group"><h4>POSITION');
+    }
     return html.replace(/(<select id="mvpStyle">[\s\S]*?)<\/select>/,`$1<optgroup label="Firande · fyra steg">${Object.entries(designs).map(([key,d])=>`<option value="${key}">${d.label}</option>`).join('')}</optgroup></select>`);
   };
   const oldBind=bind;
@@ -34,6 +54,16 @@
       const change=select.onchange;
       select.onchange=function(e){delete w.mvpFrame;if(change)change.call(this,e)};
       select.value=w.mvpStyle||'inferno';
+    }
+    if(w?.type==='templateBattleMvp'){
+      [['#mvpFxIntensity','mvpFxIntensity'],['#mvpFxSpeed','mvpFxSpeed'],['#mvpFxSize','mvpFxSize'],
+       ['#mvpFxDepth','mvpFxDepth'],['#mvpFxHole','mvpFxHole']].forEach(([id,key])=>{
+        const el=document.querySelector(id);if(!el)return;
+        el.oninput=e=>{const b=el.parentElement.querySelector('b');if(b)b.textContent=e.target.value+' %';vyraLivePatch(w,el,key,+e.target.value)};
+        el.onchange=e=>{w[key]=+e.target.value;save();vyraRenderKeepingPanel()};
+      });
+      const tintSel=document.querySelector('#mvpFxTint');
+      if(tintSel)tintSel.onchange=e=>{w.mvpFxTint=FX_TINTS.indexOf(e.target.value)>0?e.target.value:'auto';save();render()};
     }
     const grid=document.querySelector('[data-battle-mvp] .mvp-style-grid');
     if(!grid||grid.querySelector('[data-mvp-celebration]'))return;
@@ -47,6 +77,10 @@
   };
   if(!document.querySelector('link[data-mvp-celebrations]')){
     const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20260911-1';css.dataset.mvpCelebrations='1';document.head.append(css);
+  }
+  if(!document.querySelector('script[data-mvp-particles]')){
+    const js=document.createElement('script');js.src='battle-mvp-particles.js?v=20260917-1';
+    js.dataset.mvpParticles='1';document.body.append(js);
   }
   root.VyraMvpCelebrations={designs};
   // The sibling arrives after the first render; refresh existing widgets and catalog once.
