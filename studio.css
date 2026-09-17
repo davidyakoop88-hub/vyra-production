@@ -363,7 +363,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 /* Like Fountain — premium avatar/orbit/particle redesign */
 .lf-title{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 10px/1 Manrope,sans-serif;letter-spacing:.16em;color:var(--gold,#e8b968);text-shadow:0 0 10px var(--gold,#e8b968);opacity:.85;white-space:nowrap;z-index:4}
 .fountain-portrait .lf-title{font-size:9px}
-.lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}
+.lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}/* Canvas-lagret for poppen, sparet och avskedet. Ligger over DOM-fontanen, tar ingen plats i layouten och fangar inga pekare. */.lf-stream canvas.lf-duk{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 /* Alla partiklar maste borja i samma kalla. Sidledsspridningen sker i
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */
@@ -460,7 +460,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .lf-motion-card>span{display:flex;min-width:0;flex-direction:column;gap:2px}.lf-motion-card b{font-size:9px}.lf-motion-card small{overflow:hidden;color:#817588;font-size:7.5px;white-space:nowrap;text-overflow:ellipsis}
 .lf-motion-card>em{position:absolute;right:6px;top:5px;color:#c26cff;font-size:8px;font-style:normal;opacity:0}.lf-motion-card.selected>em{opacity:1}
 .lf-size-control{margin-top:13px}.like-fountain,.like-fountain::before,.like-fountain::after{background-color:transparent!important;background-image:none!important;backdrop-filter:none!important}
-@media(prefers-reduced-motion:reduce){.like-fountain[class*="lf-motion-"] .lf-p{animation-duration:12s!important}.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfReducedHeartRise!important}}
+@media(prefers-reduced-motion:reduce){.like-fountain[class*="lf-motion-"] .lf-p{animation-duration:12s!important}.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfReducedHeartRise!important}.like-fountain canvas.lf-duk{display:none!important}}
 @keyframes lfReducedHeartRise{0%{transform:translate(-50%,0) scale(.8);opacity:0}15%{opacity:.8}85%{opacity:.7}100%{transform:translate(calc(-50% + var(--lf-x1) * .25),calc(-1 * var(--rise) * .55)) scale(.8);opacity:0}}
 
 /* Crystal-heart material: translucent gradient body, faceted highlight and a

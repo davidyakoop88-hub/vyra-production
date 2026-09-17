@@ -118,6 +118,7 @@
         "widget-fas.js",
         "battle-mvp-celebrations.js",
         "battle-mvp-particles.js",
+        "like-fountain-particles.js",
         "gift-supernova-panel.js",
         "gift-jar-animals.js",
         "gift-jar-animals.css",
@@ -180,6 +181,7 @@
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
         "tests/battle-mvp-particles.test.js",
+        "tests/like-fountain-particles.test.js",
         "tests/browser/battle-mvp-partiklar.browser.test.js",
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js"

@@ -97,6 +97,33 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess
+  // hjartan ar CSS-animationer som gar i loop och hamnar i samma lage igen. Canvas-
+  // lagret i like-fountain-particles.js gor inte det -- partiklarna ar slumpade och
+  // samma RASTER kommer aldrig tillbaka, vilket ar exakt det `stilla()` letar efter.
+  //
+  // Motorn lamnar darfor VyraLikeFountainFx.still(), samma kontrakt som
+  // VyraMvpParticles.still() och VyraAnimalGiftJars.still(): den stoppar slingan,
+  // tar bort duken och later DOM:en ga tillbaka till det som fanns fore modulen.
+  // Referensbilderna gjordes pa DOM-fontanen och galler alltsa fortfarande.
+  //
+  // Duken ar dessutom dold for prefers-reduced-motion i studio.css, sa regin
+  // replikerar produktens egen regel i stallet for att hitta pa en ny.
+  'catalog:likefountain': {
+    fas: 'duken-borttagen', ms: 0,
+    varfor: 'DOM-fontanen loopar och kan fotograferas; canvas-lagret ar slumpat och kan inte',
+    regi: () => {
+      const box = document.querySelector('.widget.like-fountain');
+      if (!box) return { fel: 'fontanen renderades inte — saknas .widget.like-fountain' };
+      if (!window.VyraLikeFountainFx) return { fel: 'like-fountain-particles.js laddades aldrig' };
+      window.VyraLikeFountainFx.still();
+      return {
+        dukar: box.querySelectorAll('canvas.lf-duk').length,
+        partiklar: box.querySelectorAll('.lf-p').length
+      };
+    }
+  },
+
   // EN POST PA NYCKELNIVA, inte pa typ. Alla 23 battlemvp-nycklar har typen templateBattleMvp,
   // men bara de sex firandena ar CSS-koreografier. De ovriga 17 fotograferas korrekt av den
   // generella frysningen — prefixet haller dem utanfor. Se uppslaget i tests/helpers/visuell.js.
