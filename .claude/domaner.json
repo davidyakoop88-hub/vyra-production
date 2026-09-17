@@ -187,7 +187,6 @@
         "tests/browser/battle-mvp-entreruta.browser.test.js",
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js",
-        "tests/gift-jar-etikettkoppling.test.js",
         "tests/korsfilskopplingar.test.js"
       ],
       "matning": [
