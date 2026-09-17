@@ -200,29 +200,84 @@ test('matningen reagerar pa belastning - annars mater den ingenting', { skip }, 
   }
 });
 
-// Entrerutan ar brusig: triggerBattleMvp kor save() och ett fullt render() pa samma
-// bildruta som alerten tands, och den kostnaden finns med eller utan motor. Samma
-// konfiguration matte 83,2 / 66,7 / 33,4 / 16,8 ms i fyra korningar i rad. Ett rakt
-// tak pa varsta bildrutan hade darfor varit en flackig vakt fran forsta dagen.
+// FORVARMNINGEN: dukarna finns vid render, och en ny scan allokerar ingenting.
 //
-// Det som GAR att mata stabilt ar motorns egen ANDEL: bada matningarna gors i samma
-// session under samma forutsattningar, sa det gemensamma bruset tar ut sig. Fore
-// forvarmningen allokerades tva backing stores pa aktiveringsrutan. Vaxer andelen
-// igen har nagon lagt tillbaka arbete pa entrerutan.
-test('motorn lagger inget arbete pa entrerutan', { skip }, async () => {
-  const utan = await mat({ utanMotor: true });
-  const med = await mat({ intensitet: 100 });
-  rapportera('baslinje \u00b7 UTAN partikelmotor', utan);
-  rapportera('med motor \u00b7 100 %', med);
+// DEN HAR VAKTEN MATTE FORR TID, OCH DET GICK INTE. Den tog motorns ANDEL av varsta
+// bildrutan -- `med.varst - utan.varst` -- och kravde att den lag under 8 ms. Men
+// `varst` ar det storsta rAF-INTERVALLET, och rAF-intervall ar kvantiserade till
+// vsync: en stall av vilken storlek som helst rapporteras som en multipel av 16,67 ms.
+// Differensen mellan tva sadana tal kan darfor i praktiken bara bli -16,7, 0 eller
+// +16,7. Taket pa 8 lag i ett hal dar inget matvarde kan landa, sa vakten var ett
+// myntkast: tappade korningen med motor en bildruta mer an baslinjen foll den, annars
+// passerade den med stor marginal. Uppmatt: tre lokala korningar gav -16,6 / -16,4 /
+// -16,6 ms medan CI gav +16,7 pa exakt samma kod.
+//
+// DET SOM GAR ATT MATA UTAN BRUS ar allokeringarna. `canvas.width = X` omallokerar
+// backing storen AVEN nar vardet ar oforandrat, sa settern raknas oavsett vardet, och
+// motorns resize() ska returnera tidigt utan att rora den nar matten redan stammer.
+//
+// VAD VAKTEN INTE PASTAR. Entrerutan ar fortfarande inte allokeringsfri, och det ar
+// INTE motorns fel: `triggerBattleMvp` (media.js:1021) kor `save()` och ett fullt
+// `render()` innan den satter klassen, sa hela scenen rivs och byggs om -- och da
+// skapas dukarna igen. Uppmatt pa entrerutan: 2 x createElement(canvas) plus fyra
+// skrivningar av width/height. Det ar issue #448 och ska lagas dar, i media.js.
+// Forvarmningen gor det den kan: den flyttar arbetet till render-steget. Sa lange
+// triggern sjalv renderar om hamnar det steget anda pa entrerutan.
+test('forvarmningen: dukarna finns vid render och en ny scan allokerar ingenting', { skip }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+      { timeout: 30000, polling: 100 });
+    await page.waitForFunction(() => !!window.VyraMvpParticles, null,
+      { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(1200);
 
-  assert.equal(utan.motorFinns, false, 'baslinjen laddade motorn anda - da mater den inget');
-  assert.equal(utan.dukar, 0, 'baslinjen ska inte ha nagra dukar');
-  assert.ok(med.toppPartiklar > 40, 'matningen med motor sag ingen last');
+    const r = await page.evaluate(async () => {
+      const logg = [];
+      let raknar = false;
+      const origCreate = document.createElement.bind(document);
+      document.createElement = function (taggnamn, val) {
+        if (raknar && String(taggnamn).toLowerCase() === 'canvas') logg.push('createElement(canvas)');
+        return origCreate(taggnamn, val);
+      };
+      for (const falt of ['width', 'height']) {
+        const d = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, falt);
+        Object.defineProperty(HTMLCanvasElement.prototype, falt, {
+          configurable: true, enumerable: d.enumerable, get: d.get,
+          set(v) { if (raknar) logg.push('canvas.' + falt + ' = ' + v); d.set.call(this, v); }
+        });
+      }
 
-  const andel = med.faser[0].varst - utan.faser[0].varst;
-  console.log('\n    entreruta utan motor: ' + utan.faser[0].varst + ' ms' +
-              '   med motor: ' + med.faser[0].varst + ' ms' +
-              '   motorns andel: ' + andel.toFixed(1) + ' ms\n');
-  assert.ok(andel <= 8,
-    'motorn lade ' + andel.toFixed(1) + ' ms pa entrerutan (tak 8) - forvarmningen ar trasig');
+      state.widgets.length = 0;
+      const w = window.VyraWidgets.create('catalog:battlemvp:celebration:coronation');
+      Object.assign(w, { x: 40, y: 40, width: 760, mvpDuration: 9, mvpFxIntensity: 100,
+        mvpName: 'FPS', profileImage: 'assets/images/test-profile.svg' });
+      state.widgets.push(w); selected = null; render();
+      await new Promise(r => setTimeout(r, 400));
+
+      const dukar = [...document.querySelectorAll('canvas.mvc-fx')];
+      const matt = dukar.map(c => c.width + 'x' + c.height);
+
+      // Scenen ar oforandrad. En ny scan far darfor inte skapa nagot och inte rora
+      // ett enda width/height -- det ar hela forvarmningens kontrakt.
+      raknar = true;
+      window.VyraMvpParticles.scan();
+      window.VyraMvpParticles.scan();
+      raknar = false;
+
+      return { antal: dukar.length, matt, logg };
+    });
+
+    console.log('\n    dukar vid render: ' + r.antal + ' (' + r.matt.join(', ') + ')' +
+                '   allokeringar vid ny scan: ' + r.logg.length +
+                (r.logg.length ? ' -> ' + r.logg.join(', ') : '') + '\n');
+
+    assert.equal(r.antal, 2, 'forvarmningen skapade inte de tva dukarna vid render() - hittade ' + r.antal);
+    assert.ok(r.matt.every(m => !/^0x|x0$/.test(m)), 'en duk lamnades odimensionerad: ' + r.matt.join(', '));
+    assert.equal(r.logg.length, 0,
+      'en scan pa en oforandrad scen allokerade ' + r.logg.length + ' gang(er): ' +
+      r.logg.join(', ') + ' - resize() ar inte langre en akta no-op');
+  } finally { await page.close(); }
 });
