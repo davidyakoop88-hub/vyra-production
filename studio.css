@@ -363,7 +363,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 /* Like Fountain — premium avatar/orbit/particle redesign */
 .lf-title{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 10px/1 Manrope,sans-serif;letter-spacing:.16em;color:var(--gold,#e8b968);text-shadow:0 0 10px var(--gold,#e8b968);opacity:.85;white-space:nowrap;z-index:4}
 .fountain-portrait .lf-title{font-size:9px}
-.lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}/* Canvas-lagret for poppen, sparet och avskedet. Ligger over DOM-fontanen, tar ingen plats i layouten och fangar inga pekare. */.lf-stream canvas.lf-duk{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}/* Canvas-lagret for poppen, sparet och avskedet. Ligger over DOM-fontanen, tar ingen plats i layouten och fangar inga pekare. */.lf-stream canvas.lf-duk{position:absolute;left:0;bottom:0;width:100%;pointer-events:none;z-index:3}
 /* Alla partiklar maste borja i samma kalla. Sidledsspridningen sker i
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */

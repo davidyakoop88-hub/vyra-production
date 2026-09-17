@@ -100,10 +100,23 @@
   // omallokerar backing storen aven nar vardet ar oforandrat.
   Motor.prototype.matt = function () {
     var r = this.scen.getBoundingClientRect();
-    if (!r.width || !r.height) return false;
+    if (!r.width) return false;
     var dpr = Math.min(2, root.devicePixelRatio || 1);
-    var W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
-    this.w = r.width; this.h = r.height;
+
+    // DUKEN MASTE VARA HOGRE AN WIDGETENS RUTA.
+    //
+    // Uppmatt i riktig layout: rutan ar ~70 px hog medan DOM-fontanens hjartan
+    // stiger flera hundra pixlar och SPILLER UT ovanfor den -- .widget klipper
+    // ingenting. En canvas kan inte spilla ut: den ar exakt sa stor som sin egen
+    // ruta. Med inset:0 blev duken 624x70 och partiklarna kvavdes i en remsa.
+    //
+    // Duken ankras darfor i NEDERKANTEN och vaxer uppat, precis som fontanen gor.
+    // Hojden foljer bredden och installningen, med ett tak sa den inte blir absurd
+    // pa en bred widget.
+    var hojd = tal(this.installning().hojd * 100, 60, 0, 100) / 100;
+    var onskad = Math.min(900, Math.max(r.height, r.width * (0.55 + hojd * 0.85)));
+    var W = Math.round(r.width * dpr), H = Math.round(onskad * dpr);
+    this.w = r.width; this.h = onskad;
     if (!this.duk) {
       this.duk = document.createElement('canvas');
       this.duk.className = 'lf-duk';
@@ -111,6 +124,7 @@
       this.ctx = this.duk.getContext('2d');
       this.scen.append(this.duk);
     }
+    if (this.duk.style.height !== onskad + 'px') this.duk.style.height = onskad + 'px';
     if (this.duk.width === W && this.duk.height === H) return true;
     this.duk.width = W; this.duk.height = H;
     return true;
