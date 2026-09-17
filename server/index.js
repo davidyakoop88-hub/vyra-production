@@ -23,7 +23,12 @@ const SSE_HEARTBEAT_MS=30000;
 // TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
 // Saknas de svarar rutten 503 i stället för att bygga en URL som TikTok ändå avvisar.
 const TIKTOK_CLIENT_KEY=process.env.TIKTOK_CLIENT_KEY||'',TIKTOK_CLIENT_SECRET=process.env.TIKTOK_CLIENT_SECRET||'';
-const TIKTOK_REDIRECT=`${ORIGIN}/api/auth/callback/tiktok`;
+// Harleds med URL, inte med strangkonkatenering. APP_ORIGIN valideras bara som https-adress
+// (production-config.js:28) — ett avslutande snedstreck slipper igenom och hade gett
+// "https://vyralive.app//api/auth/callback/tiktok". TikTok jamfor redirect_uri TECKEN FOR TECKEN
+// mot det som star registrerat i appen, sa ett extra snedstreck avvisar hela varvet innan
+// anvandaren hinner se nagot — och felet syns bara hos TikTok, aldrig i var egen logg.
+const TIKTOK_REDIRECT=new URL('/api/auth/callback/tiktok',ORIGIN).toString();
 // Fritextvägen in i tiktok_connections finns kvar tills flaggan sätts. Den stängs med ett handgrepp
 // i Railway när verifieringen är bevisad i drift — utan omdeploy, och utan att låsa ute en enda
 // kund i mellantiden. Se docs/tiktok-verifiering.md.

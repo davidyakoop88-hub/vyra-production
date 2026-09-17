@@ -73,6 +73,20 @@ test('KONTROLLMÄTNING: vakten ovan kan faktiskt falla', () => {
   assert.notEqual(callback, grind);
 });
 
+test('redirect-URI:n härleds med URL, inte med strängkonkatenering', () => {
+  // APP_ORIGIN valideras bara som https-adress, så ett avslutande snedstreck slipper igenom.
+  // `${ORIGIN}/api/...` hade då gett en dubbel slash, och TikTok jämför redirect_uri tecken för
+  // tecken mot appens registrerade värde. Felet syns bara hos TikTok, aldrig i vår egen logg.
+  const index = las('server/index.js');
+  assert.match(index, /TIKTOK_REDIRECT\s*=\s*new URL\(/,
+    'TIKTOK_REDIRECT byggs som sträng — ett snedstreck i APP_ORIGIN spräcker hela varvet');
+  // Kontrollmätning: de två formerna måste faktiskt ge samma resultat.
+  const med = new URL('/api/auth/callback/tiktok', 'https://vyralive.app/').toString();
+  const utan = new URL('/api/auth/callback/tiktok', 'https://vyralive.app').toString();
+  assert.equal(med, utan);
+  assert.ok(!med.includes('//api/'), 'härledningen ger fortfarande dubbel slash');
+});
+
 test('flaggan spärrar fritextvägen i SERVERN, inte bara i gränssnittet', () => {
   const index = las('server/index.js');
   // Ett dolt formulärfält är ingen spärr: rutten är anropbar utan vår egen klient.
