@@ -184,6 +184,7 @@
         "tests/like-fountain-particles.test.js",
         "tests/browser/like-fountain-duk.browser.test.js",
         "tests/browser/battle-mvp-partiklar.browser.test.js",
+        "tests/browser/battle-mvp-entreruta.browser.test.js",
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js"
       ],
