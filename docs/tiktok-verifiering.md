@@ -102,7 +102,7 @@ Uppmätt på TikToks egen medgivandesida 2026-09-17.
 **Bevisat i produktion 2026-09-17** (mot sandbox-nycklar, avläst i databasen):
 
 - TikTok accepterar redirect-URI:n för vyralive.app
-- hela varvet går igenom med skarpa nycklar
+- hela varvet går igenom mot sandbox-nycklarna
 - `username` kommer tillbaka och skrivs som verifierat handtag
 - migreringen är körd; callbackens fyra utfallsvägar svarar rätt
 
