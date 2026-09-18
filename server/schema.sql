@@ -863,3 +863,17 @@ CREATE TABLE IF NOT EXISTS tiktok_verifieringsforsok (
   used_at            timestamptz
 );
 CREATE INDEX IF NOT EXISTS tiktok_verifieringsforsok_stad_idx ON tiktok_verifieringsforsok (expires_at);
+
+
+-- "ANSLUT NU" (2026-09-18). Servern och tiktok-bridge/connection-manager.js ar TVA OLIKA
+-- Railway-tjanster och pratar bara via den har tabellen. Knappen satter darfor en tidsstampel;
+-- managern ser den pa sin nasta tick (15 s) och startar om just den bryggan.
+--
+-- VARFOR: bridge.js ger aldrig upp mot ett konto som inte sander, men den forsoker bara var 60:e
+-- sekund efter ett tag. Uppmatt 2026-09-18 blir vantevardet vid sandningsstart ~30 s och varsta
+-- fallet 72 s. En omstart av processen nollstaller raknaren, sa nasta forsok sker efter en sekund.
+--
+-- Tidsstampeln NOLLAS ALDRIG. Managern jamfor den mot bryggans startedAt, och det ar jamforelsen
+-- som gor den till en engangshandelse. En stad-skrivning hade varit en andra sanning om samma sak.
+ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS omstart_begard_at timestamptz;
+COMMENT ON COLUMN tiktok_connections.omstart_begard_at IS 'Nar sandaren senast bad om omedelbar anslutning; jamfors mot bryggans starttid';

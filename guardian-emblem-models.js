@@ -41,9 +41,9 @@
       + Object.entries(VyraWidgets.variants('guardianemblem.model')).map(([key,namn]) =>
         `<option value="${key}"${m===key?' selected':''}>${VyraSafe.text(namn)}</option>`).join('')
       + '</select></label>';
-    let panel = html.replace('<h4>PRAKT</h4>', '<h4>UTSEENDE</h4>' + val);
+    let panel = html.replace(/<h4 data-ge-prakt>[\s\S]*?<\/h4>/, '<h4>UTSEENDE</h4>' + val);
     // Praktstegen tillhör guldmodellen. Valet sparas när modellen byts tillbaka.
-    if (m !== 'classic') panel = panel.replace('<label>Praktsteg<select id="geStep">', '<label hidden>Praktsteg<select id="geStep">');
+    if (m !== 'classic') panel = panel.replace('<label data-ge-steg>', '<label data-ge-steg hidden>');
     return panel;
   };
 

@@ -116,7 +116,7 @@ farligast till minst farlig:
 
 | Klass | Exempel | Varför |
 |---|---|---|
-| **UI-text** | `'7 MODELLER'`, `'Liggande · 4 på rad'` | Etiketter redigeras ofta — stavfel, omformulering, nya val |
+| **UI-text** | *(ingen kvar i repot)* | Etiketter redigeras ofta — stavfel, omformulering, nya val |
 | **Cachebust** | *(ingen kvar i repot)* | Cachebustar bumpas rutinmässigt |
 | **Struktur** | `'<div class="'`, `'style="'` | Robust så länge markupen inte ordnas om |
 
@@ -126,9 +126,18 @@ bort 19 av 53 ramar. Den är borttagen — `media.js` slår numera upp filnamnet
 `VYRA_FRAME_FILES`, och `tests/browser/toplike-ramar-laddar.browser.test.js` vaktar att
 sökvägen byggs rätt från början i stället för att lagas i efterhand.
 
-**UI-textklassen lever kvar.** `gift-jar-animals.js:58` ersätter etiketten `'7 MODELLER'`
-med `'5 MODELLER'` i en panel som `media.js` byggt — och den filen har **noll testfiler**.
-Rättar någon ett stavfel i etiketten visar panelen sju modeller när det finns fem.
+**UI-textklassen är tömd.** De fyra omslag som matchade på etiketter matchar nu ankare
+som `media.js` sänder ut med flit: `data-jar-modeller` (gåvoburkens etikett),
+`data-ge-prakt` och `data-ge-steg` (guardianpanelen). För kampanjens orientering behövdes
+ingen ändring i `media.js` — `select#campaignOrientation` och `option[value]` fanns redan,
+så omslaget matchade på texten i onödan.
+
+Etiketten `'Liggande · 4 på rad'` står på **två** ställen — i panelen (`:558`) och i
+katalogen (`:1031`). Det var därför textmatchning inte gick att vakta utan att nåla fast
+antalet förekomster: ändrades bara panelens förblev provet grönt medan panelen tappade sin
+ersättning. `tests/korsfilskopplingar.test.js` bygger numera panelen på riktigt och låter
+DOM:en svara på om ersättningen landade. Varje koppling är mutationsprovad från båda håll:
+ankaret borttaget ur `media.js`, och konsumentens matchning bruten.
 
 ---
 

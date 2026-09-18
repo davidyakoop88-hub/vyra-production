@@ -107,7 +107,13 @@ test('motorn ror inte likeFountainHtml', () => {
   // Hela poangen med ett separat lager: DOM-fontanen ar reserven och ska vara orord.
   // Namnet FAR forekomma i en kommentar -- den forklarar just att filen lamnar
   // DOM-byggaren ifred. Det som inte far finnas ar ett ANROP.
+  // `\r` strippas FORST. Pa en CRLF-utcheckning (Windows) slutar varje rad pa
+  // \r, och i JavaScript matchar `.` inte radbrytare -- alltsa kan `$` utan
+  // m-flagga aldrig na strangens slut, regexet backtrackar och INGENTING
+  // strippas. Provet foll da pa sin egen forklarande kommentar har ovanfor,
+  // men bara lokalt: CI checkar ut med LF och var gron hela tiden.
   const utanKommentarer = KALLA
+    .replace(/\r/g, '')
     .split('\n').map(rad => rad.replace(/\/\/.*$/, '')).join('\n')
     .replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!/likeFountainHtml\s*\(/.test(utanKommentarer),

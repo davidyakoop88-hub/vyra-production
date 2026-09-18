@@ -75,10 +75,29 @@ function vantaPaVerifiering(b,text){
 // som loggat ut. `vyra-session-ended` ar UTLOGGNING, vilket ar precis ratt handelse har.
 window.VyraSessionState?.registerTeardown?.('tiktok-verifieringsvakt',()=>clearTimeout(verifieringsvakt));
 addEventListener('vyra-session-ended',()=>clearTimeout(verifieringsvakt));
+// ANSLUT NU. Knappen lamnar inte sidan, sa den maste sjalv saga vad som hander — och den far inte
+// pasta att anslutningen ar klar. Servern svarar 202 "begaran mottagen"; bryggan ansluter nar den
+// hinner. Darfor sager knappen "Försöker…" och inte "Ansluten".
+document.addEventListener('click',async e=>{if(e.target?.id!=='anslutNu')return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const b=e.target,text=b.textContent;b.disabled=true;b.textContent='Försöker…';
+  try{await VyraLive.anslutNu();
+    note('Ansluter till TikTok — det tar upp till en halv minut');
+    // Statusen hamtas nagra ganger sa gransnittet foljer med av sig sjalvt nar bryggan kopplat.
+    let n=0;const tick=async()=>{n+=1;
+      try{const d=await VyraLive.status();paint(d);
+        if(d?.connection?.connected){b.disabled=false;b.textContent=text;return}}catch(_){}
+      if(n<12)setTimeout(tick,5000);else{b.disabled=false;b.textContent=text}};
+    setTimeout(tick,5000);}
+  catch(error){b.disabled=false;b.textContent=text;note(error.message||'Kunde inte be om anslutning')}},true);
 // Fritextfaltet goms nar servern kraver verifiering. Servern ar den som bestammer — det har ar
 // bara att slippa visa ett falt som rutten anda skulle avvisa med 403.
 function malaVerifieringslage(d){const block=document.querySelector('#tikFritext');
-  if(block)block.hidden=!!(d&&d.verifieringKravs)}
+  if(block)block.hidden=!!(d&&d.verifieringKravs);
+  // ANSLUT NU visas bara nar det FINNS ett konto att ansluta. Utan konto vore knappen ett lofte
+  // om nagot den inte kan gora — servern svarar 409 och anvandaren far felsoka i blindo.
+  const nu=document.querySelector('#tikAnslutNu');
+  if(nu)nu.hidden=!(d&&d.connection&&d.connection.username)}
 const grundPaint=paint;paint=function(d){grundPaint(d);malaVerifieringslage(d)};
 // ATERVAGEN FRAN TIKTOK. server/index.js omdirigerar hit med ?tiktok=<lage>. Varje lage far en
 // egen mening: "det gick inte" sager inte vad man ska gora, och tre av lagena nedan kraver helt
