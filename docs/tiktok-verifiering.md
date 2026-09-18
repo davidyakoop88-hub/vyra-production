@@ -38,6 +38,11 @@ På [developers.tiktok.com](https://developers.tiktok.com), i appens inställnin
 
 ## Det du måste sätta i Railway
 
+Båda hör på Railway-tjänsten **`Api`** — inte på `vyra-production`. Det är `Api` som kör
+`server/index.js`, och det är den processen som läser nycklarna. Sätts de på fel tjänst startar
+allt som vanligt och startrutten svarar `503` precis som om de aldrig satts, vilket ser ut som ett
+kodfel och inte som en felplacerad variabel.
+
 ```
 TIKTOK_CLIENT_KEY=...
 TIKTOK_CLIENT_SECRET=...
@@ -108,6 +113,6 @@ Uppmätt på TikToks egen medgivandesida 2026-09-17.
 - att produktionsnycklarna fungerar — de finns inte än. Railway kör sandbox-nycklar, och de
   släpper bara in `jokero060`.
 
-**Ordningen när godkännandet kommer:** byt `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` i Railway
-till produktionsnycklarna FÖRST. Sätt `VYRA_TIKTOK_VERIFIERING_KRAVS=1` först när verifieringen
+**Ordningen när godkännandet kommer:** byt `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` på
+Railway-tjänsten `Api` till produktionsnycklarna FÖRST. Sätt `VYRA_TIKTOK_VERIFIERING_KRAVS=1` först när verifieringen
 setts fungera för en riktig kund — sätts den innan, låses varenda kund ute samtidigt.

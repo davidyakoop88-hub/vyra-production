@@ -84,7 +84,8 @@ här appen.
 ## Förutsättningar innan videon kan spelas in
 
 - [ ] PR #459 mergad och utrullad, så koden finns på `vyralive.app`
-- [ ] sandbox-nycklar i Railway (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`)
+- [ ] sandbox-nycklar på Railway-tjänsten `Api` (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`) —
+      inte på `vyra-production`
 - [ ] sandbox-redirect-URI registrerad under Sandbox-fliken (egen lista, skild från Production)
 - [ ] en sandbox-testanvändare hos TikTok
 
