@@ -1,6 +1,15 @@
 // Sound Alerts — bibliotek med ljudklipp som kan kopplas till events.
-// Källor: mixkit.co (Mixkit License) och pixabay.com (Pixabay Content License) — båda royaltyfria,
-// ingen attribution krävs, tillåtna i kommersiella projekt.
+//
+// TRE KÄLLOR, OCH DE ÄR INTE LIKVÄRDIGA:
+//   kenney.nl   CC0 (public domain). Inga villkor alls. Massan ligger här.
+//   mixkit.co   Mixkit License      ─┐ royaltyfria och tillåtna kommersiellt, men BÅDA förbjuder
+//   pixabay.com Pixabay Content Lic. ─┘ att innehållet distribueras "standalone", dvs i oförändrad
+//                                       form utan att någon kreativ insats lagts till.
+//
+// Den sista raden är värd att läsa en gång till innan någon lägger till hundra klipp från Mixkit
+// eller Pixabay: ett bibliotek där kunden bläddrar bland oförändrade ljudklipp i en betald produkt
+// ligger nära den gränsen. Nya klipp i mängd hör därför hemma under CC0. Pixabay och Mixkit står
+// kvar för enstaka karaktärsljud som inte finns CC0 — airhorn, publikreaktioner och liknande.
 const soundAlerts={
   followCheer:{id:'followCheer',name:'Follow Cheer',path:'assets/sounds/mixkit/follow-cheer.mp3'},
   giftCoinWin:{id:'giftCoinWin',name:'Gift Coin Win',path:'assets/sounds/mixkit/gift-coin-win.mp3'},
@@ -14,8 +23,40 @@ const soundAlerts={
   jackpot:{id:'jackpot',name:'Jackpot',path:'assets/sounds/mixkit/jackpot.mp3'},
   achievement:{id:'achievement',name:'Achievement',path:'assets/sounds/mixkit/achievement.mp3'},
   victoryCheer:{id:'victoryCheer',name:'Victory Cheer',path:'assets/sounds/mixkit/victory-cheer.mp3'},
-  fanfare:{id:'fanfare',name:'Fanfare',path:'assets/sounds/mixkit/fanfare.mp3'}
+  fanfare:{id:'fanfare',name:'Fanfare',path:'assets/sounds/mixkit/fanfare.mp3'},
+  djAirhorn:{id:'djAirhorn',name:'DJ Airhorn',path:'assets/sounds/pixabay/dj-airhorn.mp3'}
 };
+
+// KENNEY-PAKETEN — 236 ljud, licensen ar CC0 (public domain), se assets/sounds/kenney/LICENSE.txt.
+//
+// VARFOR CC0 OCH INTE FLER FRAN PIXABAY/MIXKIT. Bada de licenserna tillater kommersiell
+// anvandning men forbjuder att innehallet distribueras "standalone" — i oforandrad form, utan att
+// nagon kreativ insats lagts till. Ett bibliotek dar kunden bladdrar bland ljudklipp och kopplar
+// dem rakt av ligger nara den grensen, och saGetMediaMeta() nedan hamtar dessutom filen och lagger
+// den som en File hos anvandaren. CC0 har inga sadana villkor alls: ingen attribution, inga
+// begransningar. Darfor ar massan CC0, och Pixabay/Mixkit star kvar for enstaka karaktarsljud.
+//
+// FILERNA ar konverterade fran Kenneys .ogg till .mp3. Det ar inte kosmetik: saGetMediaMeta()
+// hardkodar bade '.mp3' i filnamnet och 'audio/mpeg' som typ, sa en .ogg hade lagts in under fel
+// mimetyp. Langderna ar 0,28–1,76 s for jinglarna — alla ligger med god marginal under den
+// duration: 6 som kopplingen satter pa sin Action.
+//
+// Grupperna nedan ar TVA Kenney-paket med overlappande filnamn (bada har click och switch), darav
+// skilda prefix: `interface-` respektive `ui-`. Namnen ar systematiska med flit — ingen har lyssnat
+// igenom 236 klipp och dopt dem efter kansla, och ett pahittat beskrivande namn hade ljugit.
+const KENNEY_GRUPPER = [
+  ['jingle', 'Jingel', {'8bit':['8-bit',17],hit:['Hit',17],pizzicato:['Pizzicato',17],sax:['Sax',17],steel:['Steel',17]}],
+  ['interface', 'Gränssnitt', {back:['Tillbaka',4],bong:['Bong',1],click:['Klick',5],close:['Stäng',4],confirmation:['Bekräftelse',4],drop:['Släpp',4],error:['Fel',8],glass:['Glas',6],glitch:['Glitch',4],maximize:['Maximera',9],minimize:['Minimera',9],open:['Öppna',4],pluck:['Pluck',2],question:['Fråga',4],scratch:['Skrapa',5],scroll:['Scroll',5],select:['Välj',8],switch:['Växel',7],tick:['Tick',3],toggle:['Växla',4]}],
+  ['ui', 'Panel', {click:['Klick',5],mouseclick:['Musklick',1],mouserelease:['Mussläpp',1],rollover:['Hovring',6],switch:['Växel',38]}]
+];
+for (const [mapp, grupp, poster] of KENNEY_GRUPPER) {
+  for (const [fil, [etikett, antal]] of Object.entries(poster)) {
+    for (let i = 1; i <= antal; i++) {
+      const nr = String(i).padStart(2, '0'), id = `${mapp}-${fil}-${nr}`;
+      soundAlerts[id] = {id, name:`${grupp} ${etikett} ${i}`, path:`assets/sounds/kenney/${mapp}-${fil}-${nr}.mp3`};
+    }
+  }
+}
 const SA_TRIGGERS={gift:'Gåva mottagen',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',chat:'Kommentar',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp'};
 const SA_AE_KEY='vyra-action-event-v2';
 function aeRead(){return JSON.parse(localStorage.getItem(SA_AE_KEY)||'{"actions":[],"events":[]}')}
