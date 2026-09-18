@@ -186,6 +186,18 @@
     if (!session) return;
     const coins = coinsAv(e);
     if (!coins) return;
+    // MEDVARDSFILTRET. En gava till en medvard ar inte var, och den har rakningen slappte in
+    // varenda gava i rummet. Fyra andra konsumenter fick villkoret nar #360 rullades ut —
+    // goal-runtime, stream-stats, heart-me-goal och live-leaderboard — men MVP missades, och
+    // server/test/medvardsgavor.test.js namner den inte med ett ord.
+    //
+    // Den har raden andrade INGENTING under sandningen 2026-09-18: TikToks facit vann alla
+    // matcher, sa den harledda rakningen kastades varje gang. Den biter nasta gang facit
+    // uteblir — ingen LINK_MIC_ARMIES i matchen — och den harledda listan far avgora.
+    //
+    // `=== false`, inte `!e.tillVarden`: en aldre brygga utan faltet ska raknas som i dag.
+    // Uppmatt i bandet: alla 197 gavor bar faltet, men forvalet maste anda vara forsiktigt.
+    if (e.tillVarden === false) return;
     // IDENTITET OCH VISNING ÄR OLIKA SAKER, och det var hela felet här. Nyckeln ska vara stabil —
     // därför `username` (TikToks handle) först. Men handtaget är INTE det folk känner igen; de
     // känner igen visningsnamnet. Tidigare sparades bara nyckeln, och stang() skickade den vidare
