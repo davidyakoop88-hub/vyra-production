@@ -179,7 +179,9 @@ http('en borttagen målwidget försvinner i samma save som state', async () => {
   assert.deepEqual(await runtimeIds(), ['w-a', 'w-gone']);
 
   const v = (await overlayRow()).version;
-  const out = await put({ version: v, state: stateWith(goalWidget('w-a')) });
+  // allowWidgetLoss: tva widgetar blir EN. Det ar vad raderingsknappen gor, och krympvakten
+  // kraver att avsikten foljer med — annars kan en klient med for fa widgets tyst radera.
+  const out = await put({ version: v, state: stateWith(goalWidget('w-a')), allowWidgetLoss: true });
   assert.equal(out.status, 200);
   assert.deepEqual(await runtimeIds(), ['w-a'], 'runtime-raden för en borttagen widget blev kvar');
   assert.deepEqual((await overlayRow()).state.widgets.map(w => w.id), ['w-a'],

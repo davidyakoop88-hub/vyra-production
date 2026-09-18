@@ -417,7 +417,11 @@ async function putOverlayWithGoals(pool, { overlayId, workspaceId, name = null, 
     const hadeAntal = Array.isArray(existing.rows[0].state?.widgets)
       ? existing.rows[0].state.widgets.length : 0;
     const inkommandeAntal = Array.isArray(state?.widgets) ? state.widgets.length : 0;
-    if (inkommandeAntal < hadeAntal && allowWidgetLoss !== true) {
+    // EN AVSIKTLIG TOMNING AR OCKSA EN AVSIKTLIG MINSKNING. Wipe-guarden ovan slapper igenom
+    // `allowEmptyWidgets`, och utan den har raden blockerade krympvakten samma sparning direkt
+    // efterat — 0 ar farre an N. Uppmatt: overlay-put-http.test.js forvantade 200 och fick 409.
+    const avsiktlig = allowWidgetLoss === true || (incomingEmpty && allowEmptyWidgets === true);
+    if (inkommandeAntal < hadeAntal && !avsiktlig) {
       await client.query('ROLLBACK');
       return { shrinkBlocked: true, hade: hadeAntal, inkommande: inkommandeAntal };
     }
