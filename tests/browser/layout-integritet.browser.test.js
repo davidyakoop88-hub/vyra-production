@@ -338,3 +338,33 @@ test('A10: alla synliga navval gar att na vid 1440x900', { skip, timeout: 90000 
       'varje synligt navval ska rymmas eller ga att skrolla fram, men:\n  ' + fel.join('\n  '));
   } finally { await page.close() }
 });
+
+test('A11: ingen navetikett klipps av sin egen bredd', { skip, timeout: 90000 }, async () => {
+  // HAR FANNS INGEN VAKT, bara en kommentar. studio.css dokumenterade att "Vip-widget" och
+  // "Automatik" klipptes till "Vip-..." och "Auto..." vid 186px och att 210px valdes darfor —
+  // men ingenting matte det, sa nasta langre etikett klipptes igen utan att nagot blev rott.
+  // Det hande 2026-09-18: navvalet dopdes om till "Action & Event" (87px text i 68px plats) och
+  // renderades "Action & ..." tills en matning gjordes for hand.
+  //
+  // MATPUNKTEN ar <span>:ets egen scrollWidth mot clientWidth, inte knappens. Knappen ar en
+  // flexrad dar badgen (PRO/LIVE/AI) tar 32px av bredden, sa knappen "ryms" alltid medan texten
+  // inuti kapas. Ett matt pa knappen hade varit gront med buggen kvar.
+  const page = await oppnaStudio();
+  try {
+    const klippta = await page.evaluate(() => {
+      const ut = [];
+      for (const sp of document.querySelectorAll('aside nav button span, aside nav a span')) {
+        if (sp.getBoundingClientRect().width === 0) continue; // dolda navval raknas inte
+        if (sp.scrollWidth > sp.clientWidth + 1) {
+          const knapp = sp.closest('button, a');
+          const badge = knapp.querySelector('.nav-badge');
+          ut.push(`"${sp.textContent.trim()}" behover ${sp.scrollWidth}px men far ${sp.clientWidth}px`
+            + (badge ? ` (badgen ${badge.textContent.trim()} tar ${Math.ceil(badge.getBoundingClientRect().width)}px)` : ''));
+        }
+      }
+      return ut;
+    });
+    assert.deepEqual(klippta, [],
+      'navetiketter som kapas av sin egen bredd:\n  ' + klippta.join('\n  '));
+  } finally { await page.close() }
+});
