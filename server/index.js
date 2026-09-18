@@ -746,9 +746,12 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
 // så jokero060s live-layout raderades i natt. Blockeras med 409 så klienten visar konfliktvalet.
 // Guarden ligger nu inne i transaktionen, så ett block lämnar varken state, version eller
 // runtime-rader efter sig.
-const out=await GoalRuntime.putOverlayWithGoals(pool,{overlayId,workspaceId,name:S.safeText(d.name,120)||null,state:d.state,expectedVersion:version,allowEmptyWidgets:d.allowEmptyWidgets===true});
+const out=await GoalRuntime.putOverlayWithGoals(pool,{overlayId,workspaceId,name:S.safeText(d.name,120)||null,state:d.state,expectedVersion:version,allowEmptyWidgets:d.allowEmptyWidgets===true,allowWidgetLoss:d.allowWidgetLoss===true});
 if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});
 if(out.emptyBlocked)return send(res,409,{ok:false,error:'Layouten online har widgets men den här enheten försökte spara en tom layout — välj version i synkdialogen',emptyBlocked:true});
+// KRYMPVAKTEN. Samma 409 som wipe-guarden, men for en DELVIS forlust: klienten skickade farre
+// widgets an molnet har. Antalen foljer med sa klienten kan visa vad skillnaden bestar i.
+if(out.shrinkBlocked)return send(res,409,{ok:false,error:`Layouten online har ${out.hade} widgets men den här enheten försökte spara ${out.inkommande} — välj version i synkdialogen`,shrinkBlocked:true,hade:out.hade,inkommande:out.inkommande});
 if(out.conflict)return send(res,409,{ok:false,error:'Overlayn har ändrats i en annan session'});
 // KONFIGURATIONEN HAR ANDRATS — sag det till de OBS-kallor som star och tittar pa just den har
 // overlayn, sa slipper anvandaren uppdatera kallan for hand. Bara ett tecken gar ut

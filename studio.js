@@ -244,7 +244,7 @@ function bind(){
     if(w){
       $('#pt')&&($('#pt').onchange=e=>{w.title=e.target.value;saveThenRender()});
       $('#pv')&&($('#pv').onchange=e=>{w.value=e.target.value;saveThenRender()});
-      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;saveThenRender()});
+      $('#del')&&($('#del').onclick=()=>{state.widgets=state.widgets.filter(x=>x.id!==selected);window.__vyraUserRemovedWidget=true;if(!state.widgets.length)window.__vyraUserEmptiedWidgets=true;selected=null;saveThenRender()});
     }
     $('#testEvent')&&($('#testEvent').onclick=send);
     // #saveProject-hanteraren ar borttagen: autosparet skriver redan vid varje andring, och

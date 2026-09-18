@@ -384,6 +384,7 @@ async function syncGoalsFromState(client, overlayId, state) {
 // contract; only a genuine database failure throws, which the shared handler turns into a 500.
 async function putOverlayWithGoals(pool, { overlayId, workspaceId, name = null, state,
                                            expectedVersion, allowEmptyWidgets = false,
+                                           allowWidgetLoss = false,
                                            failSync = false } = {}) {
   const client = await pool.connect();
   try {
@@ -404,6 +405,21 @@ async function putOverlayWithGoals(pool, { overlayId, workspaceId, name = null, 
     if (hadWidgets && incomingEmpty && allowEmptyWidgets !== true) {
       await client.query('ROLLBACK');
       return { emptyBlocked: true };
+    }
+
+    // KRYMPVAKT. Wipe-guarden ovan tacker bara HELT tom lista, och versionslasningen nedan
+    // stoppar bara en GAMMAL version. Ingen av dem stoppar en AKTUELL klient som skickar for
+    // fa widgets: uppmatt 2026-09-18 gick en layout fran 8 till 6 utan att nagon raderade
+    // nagot, och bada vakterna slapp igenom det.
+    //
+    // Samma form som allowEmptyWidgets: avsikten maste folja med fran klienten, annars gar
+    // det inte att radera en widget langre. Klienten satter flaggan i raderingsknappen.
+    const hadeAntal = Array.isArray(existing.rows[0].state?.widgets)
+      ? existing.rows[0].state.widgets.length : 0;
+    const inkommandeAntal = Array.isArray(state?.widgets) ? state.widgets.length : 0;
+    if (inkommandeAntal < hadeAntal && allowWidgetLoss !== true) {
+      await client.query('ROLLBACK');
+      return { shrinkBlocked: true, hade: hadeAntal, inkommande: inkommandeAntal };
     }
 
     const updated = await client.query(
