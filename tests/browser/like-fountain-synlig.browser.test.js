@@ -23,8 +23,11 @@
 //   var 900 ms         0 %    100 %
 //   var 400 ms         0 %    100 %
 //
-// Fixen: vilolaget ska vara SYNLIGT. Basvardet ar 1, och `backwards` behaller
-// entrens timing utan att elementet kan falla tillbaka till osynligt.
+// Fixen: vilolaget ska vara SYNLIGT -- opacity 1, utan animation.
+//
+// EN OPACITY-BASERAD ENTRE GAR INTE ATT RADDA HAR. Den flimrar vid glesa
+// renderingar (42 % synlig vid 1800 ms) och slacker helt vid tata. Entren ar
+// darfor borttagen, tillsammans med @keyframes lfStreamIn som ingen annan anvande.
 //
 // campaign-flow i BEHALLER `opacity:0` med flit -- den ar en flygande partikel
 // (`campaignFountainRise ... infinite`) som ska vara osynlig utom under flykten.
