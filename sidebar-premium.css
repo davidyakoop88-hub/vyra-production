@@ -129,3 +129,44 @@ aside.collapsed .brand b,
 aside.collapsed .user span { display: none; }
 aside.collapsed nav button, aside.collapsed nav a, aside.collapsed .sidebar-feedback-cta { justify-content: center; padding: 12px; }
 aside.collapsed .sidebar-collapse-toggle svg { transform: rotate(180deg); }
+
+/* ── MENYN RULLAR INTE ──────────────────────────────────────────────────────
+   KRAV FRÅN DAVID 2026-09-18: ingen rullning i sidomenyn. Allt ska synas.
+
+   LÄGET INNAN, uppmätt vid 1366×768: navet är 823px högt och 495px syns. 328px
+   låg utanför bild — fyra navval plus grupprubrikerna MEDIA och INSIKTER — och
+   rullningslisten är dold sedan #182. Följden syntes som något annat: Support
+   och Inställningar hamnade direkt under Chatbot och lästes som poster i
+   AUTOMATIK-gruppen, fast de ligger i .aside-bottom och aldrig rör sig.
+
+   VARFÖR DET INTE UPPTÄCKTES. Provet "hela menyn ryms utan rullning ned till
+   1366x768" mäter `aside.scrollHeight - aside.clientHeight`. `aside` är
+   `overflow:hidden` (studio.css:4), så de två är alltid lika och differensen
+   alltid 0. Provet kunde inte falla. Rullningen ligger i `aside nav`, som är
+   overflow-y:auto. Provet är omskrivet i samma ändring.
+
+   INTE en ikonmeny. #182 tog bort ikonskenan för att "ingen ska hamna i ett
+   ikonläge utan att förstå varför menyn försvann", och vakten kräver minst tio
+   synliga etiketter. Varenda etikett står kvar här — det är radhöjden som
+   krymper, inte texten. */
+aside nav { gap: 5px; }
+.nav-section { gap: 1px; }
+.nav-section-label { margin-bottom: 1px; padding-top: 4px; }
+aside nav button, aside nav a, .sidebar-feedback-cta {
+  padding: 6px 12px;
+  border-radius: 12px;
+  gap: 11px;
+}
+aside button svg, aside nav a svg { width: 18px; height: 18px; }
+.aside-bottom {
+  border-top: 1px solid rgba(177, 60, 255, .20);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+/* Sidhuvudets 26px luft under logotypen och panelens ytterkanter bär de sista
+   pixlarna. De togs FÖRE radhöjden med flit: 34px rad är redan en rimlig
+   träffyta, och att krympa den vidare hade gjort menyn svårare att klicka i
+   för att spara luft som inte gör något. */
+aside { padding: 14px 14px 12px; }
+.sidebar-head { padding: 2px 4px 12px; }
+.nav-section-label { padding-top: 2px; }
