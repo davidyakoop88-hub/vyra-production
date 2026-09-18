@@ -207,7 +207,9 @@
     const m = Object.create(null);
     return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v) } };
   })();
+  let valdLagring = null;
   function lagringen() {
+    if (valdLagring) return valdLagring;
     // Att objektet FINNS racker inte: privat lage och vissa OBS-inbaddningar har det och kastar
     // forst vid skrivning. Darfor ett riktigt skrivprov innan lagringen accepteras.
     for (const valj of [() => root.localStorage, () => root.sessionStorage]) {
@@ -217,12 +219,14 @@
         const prov = '__vyra-lagringsprov';
         l.setItem(prov, '1');
         if (typeof l.removeItem === 'function') l.removeItem(prov);
+        valdLagring = l;
         return l;
       } catch (e) {}
     }
     // Sista utvagen. En overlay som slutar byta sandning ar en varre regression an en dedupe som
     // bara galler sidans livstid — samma fail-safe-regel som resten av filen lyder under.
-    return minneslagring;
+    valdLagring = minneslagring;
+    return valdLagring;
   }
   function runtime() {
     if (singel) return singel;
@@ -238,10 +242,13 @@
   }
 
   if (typeof module === 'object' && module.exports) module.exports = { skapaLiveSession };
-  // `lagringen` ar exponerad for proven: de matte fram till nu sessionStorage VID NAMN, vilket
-  // gjorde dem till ett prov pa backenden i stallet for pa beteendet — och de foll allihop nar
-  // fixen bytte backend. Nu fragar de klienten vilken lagring den valde, sa de overlever aven
-  // nasta byte. Ingen produktionskod las nycklarna direkt; de ar privata for den har filen.
-  else root.VyraLiveSession = { skapaLiveSession, runtime, lagringen,
+  // `lagratVarde` ar provytan, av samma sort som `lage()` ovan. Proven laste fram till nu
+  // sessionStorage VID NAMN — ett prov pa backenden, inte pa beteendet — och foll allihop nar
+  // fixen bytte backend. Nu fragar de klienten. Den lamnar INTE ut lagringsobjektet: bara ett
+  // varde at gangen, skrivskyddat. Tva prov kraver just lagringen och gar inte via `lage()`:
+  // ett vantar tomstrangen som bara lagringen bar, ett annat provar att en dormant klient
+  // aldrig SKREV nyckeln — och en oskriven nyckel gar inte att se i minnesvariablerna.
+  else root.VyraLiveSession = { skapaLiveSession, runtime,
+    lagratVarde: (nyckel) => { try { return lagringen().getItem(nyckel) } catch (e) { return null } },
     registreraKonfigOmhamtning: (fn) => { omhamtare = fn } };
 })(typeof window !== 'undefined' ? window : globalThis);

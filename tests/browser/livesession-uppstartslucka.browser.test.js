@@ -109,7 +109,7 @@ async function oppna() {
   // Las ur den lagring KLIENTEN valde, inte ur en vi gissat. Pilen kors forst nar provet
   // fragar, alltsa langt efter att VyraLiveSession hunnit definieras.
   await sida.addInitScript(() => {
-    window.__las = (nyckel) => window.VyraLiveSession.lagringen().getItem(nyckel);
+    window.__las = (nyckel) => window.VyraLiveSession.lagratVarde(nyckel);
   });
   sida.__fel = [];
   sida.on('pageerror', e => sida.__fel.push(String(e && e.message).slice(0, 160)));
