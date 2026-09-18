@@ -38,6 +38,11 @@ På [developers.tiktok.com](https://developers.tiktok.com), i appens inställnin
 
 ## Det du måste sätta i Railway
 
+Båda hör på Railway-tjänsten **`Api`** — inte på `vyra-production`. Det är `Api` som kör
+`server/index.js`, och det är den processen som läser nycklarna. Sätts de på fel tjänst startar
+allt som vanligt och startrutten svarar `503` precis som om de aldrig satts, vilket ser ut som ett
+kodfel och inte som en felplacerad variabel.
+
 ```
 TIKTOK_CLIENT_KEY=...
 TIKTOK_CLIENT_SECRET=...
@@ -92,15 +97,23 @@ Sparas det ändå får workspacet en rad som ser verifierad ut och inte är det.
 `verifiera()` avvisar det fallet hårt, och provet *"AVVISAR när username saknas"* pinnar beteendet.
 Uppmätt på TikToks egen medgivandesida 2026-09-17.
 
-## Vad som ÄNNU INTE är bevisat
+## Vad som är bevisat, och vad som inte är det
 
-Allt nedan är grönt i prov men **inte** avläst i produktion:
+**Bevisat i produktion 2026-09-17** (mot sandbox-nycklar, avläst i databasen):
 
-- att TikTok accepterar redirect-URI:n för vyralive.app (kräver att den läggs till i appen)
-- att hela varvet går igenom med skarpa nycklar
-- att `username` faktiskt kommer tillbaka för VYRA:s app-id (bevisat för overlaylive.app:s app
-  `awhw7pappaeymc73` 2026-09-17, inte för VYRA:s)
-- migreringen: `server/schema.sql` är additiv och `IF NOT EXISTS`-säkrad, men är inte körd mot
-  produktionsdatabasen
+- TikTok accepterar redirect-URI:n för vyralive.app
+- hela varvet går igenom mot sandbox-nycklarna
+- `username` kommer tillbaka och skrivs som verifierat handtag
+- migreringen är körd; callbackens fyra utfallsvägar svarar rätt
 
-Fyll i den här listan när den är avläst — inte innan.
+**Inte bevisat:**
+
+- att verifieringen fungerar för ANDRA konton än sandboxens testanvändare. Det kräver att TikTok
+  godkänner appen; ansökan är inskickad 2026-09-17 och ligger `In review`.
+- att produktionsnycklarna fungerar — de finns inte än. Railway kör sandbox-nycklar, och de
+  släpper bara in `jokero060`.
+
+**Ordningen när godkännandet kommer:** byt `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` på
+Railway-tjänsten `Api` till produktionsnycklarna FÖRST. Sätt `VYRA_TIKTOK_VERIFIERING_KRAVS=1`
+först när verifieringen setts fungera för en riktig kund — sätts den innan, låses varenda kund
+ute samtidigt.

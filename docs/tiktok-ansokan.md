@@ -1,6 +1,10 @@
 # TikTok-appens ansökan — ifyllda värden
 
-Appen skapades 2026-09-17. Status: **Draft**, ej inskickad.
+Appen skapades 2026-09-17. Status: **In review** — inskickad 2026-09-17 23:45.
+
+Skälstexten som följde med insändningen (114/120 tecken):
+
+> First submission. Login Kit verifies that a TikTok account belongs to the creator before we connect to their LIVE.
 
 Filen finns för att TikToks formulär **inte går att spara** förrän varje obligatoriskt fält är
 ifyllt — en omladdning av fliken innan dess raderar allt. Det som står här är återställbart.
@@ -50,8 +54,7 @@ Fältet *"Explain how each product and scope works within your app or website"*,
 
 ## Kvar innan Submit for review
 
-1. **App icon** — ladda upp PNG-filen.
-2. **Demovideo** — se nedan.
+Inget. Allt nedan är ifyllt, sparat och verifierat efter omladdning.
 
 ## Vad TikTok kräver av demovideon
 
@@ -81,6 +84,40 @@ här appen.
 ## Förutsättningar innan videon kan spelas in
 
 - [ ] PR #459 mergad och utrullad, så koden finns på `vyralive.app`
-- [ ] sandbox-nycklar i Railway (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`)
+- [ ] sandbox-nycklar på Railway-tjänsten `Api` (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`) —
+      inte på `vyra-production`
 - [ ] sandbox-redirect-URI registrerad under Sandbox-fliken (egen lista, skild från Production)
 - [ ] en sandbox-testanvändare hos TikTok
+
+
+## Bevisat i produktion 2026-09-17
+
+Hela kedjan kördes skarpt mot sandboxen och lästes av i databasen:
+
+```
+tiktok_username:  "jokero060"
+verifierad_at:    2026-09-17T21:00:56.932Z
+visningsnamn:     "ᵊᵒᵏᵉʳᵒ"   (display_name, INTE handtaget)
+```
+
+Fältet `username` kom tillbaka — det var hela osäkerheten i bygget. Visningsnamnet är skrivet med
+kalligrafiska unicode-tecken och en krona; hade koden läst `display_name` i stället hade den
+avvisat kontots egen inloggning eller skrivit skräp.
+
+Callbacken mättes också direkt mot produktion:
+
+| Anrop | Svar |
+|---|---|
+| okänt `state` | `302 -> /studio.html?tiktok=utgangen` (bevisar att migreringen körde) |
+| `?error=access_denied` | `302 -> /studio.html?tiktok=avbruten` |
+| startrutten utan session | `401` |
+
+## Två fällor som kostade tid, och som återkommer
+
+**TikTok hoppar över medgivandesidan för ett konto som redan godkänt appen.** Första demovideon
+visade fyra sekunder vit sida i stället för scopen. Behörigheten måste återkallas i TikTok-appen
+(Profil -> Inställningar och sekretess -> Säkerhet och behörigheter -> Hantera appbehörigheter)
+innan en ny inspelning.
+
+**Knappen binds några sekunder efter sidladdning.** Ett klick direkt efter reload gör ingenting
+alls — ingen navigering, inget fel. Vänta tills sidan står still innan du trycker.
