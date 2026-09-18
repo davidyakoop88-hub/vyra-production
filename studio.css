@@ -1570,3 +1570,17 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
 #connectModal #tikFritext{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
 #connectModal .tik-fritext-rubrik{margin:0 0 8px;font-size:12px;letter-spacing:.04em;
   text-transform:uppercase;opacity:.55}
+
+/* [hidden] ar en UA-regel med lag specificitet, och .properties styrs av ett
+   !important-lager: toplike-studio.css:11-14 satter display pa .property-group
+   och dess label med !important, medvetet ("to win regardless of dynamic <link>
+   injection order"). En dold etikett tog darfor plats anda.
+
+   `.properties [hidden]` DUGER INTE. Den ar (0,2,0) och forlorar mot
+   `.properties .property-group label` (0,2,1) aven med !important -- nar bada
+   ar viktiga avgor specificiteten. Uppmatt i Chromium: regeln laddades och
+   forlorade anda. Darfor (0,3,0).
+
+   Sprangradie uppmatt over 191 katalognycklar och 21 paneler: exakt ETT
+   element paverkas. Se tests/browser/panel-dolt.browser.test.js. */
+.properties .property-group [hidden]{display:none!important}
