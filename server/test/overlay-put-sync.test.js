@@ -208,8 +208,12 @@ db('borttagen målwidget försvinner atomärt med overlay-state', async () => {
   assert.deepEqual(await runtimeIds(), ['w-a', 'w-gone']);
 
   const v = (await overlayRow()).version;
+  // allowWidgetLoss: provet TAR BORT en widget, och det ar precis vad raderingsknappen gor.
+  // Utan flaggan blockerar krympvakten sparningen och runtime-raden skulle sta kvar — provet
+  // skulle da falla pa ratt satt men av fel skal.
   await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
-    state: stateWith(goalWidget('w-a')), expectedVersion: v, allowEmptyWidgets: false });
+    state: stateWith(goalWidget('w-a')), expectedVersion: v, allowEmptyWidgets: false,
+    allowWidgetLoss: true });
 
   assert.deepEqual(await runtimeIds(), ['w-a'], 'runtime-raden för en borttagen widget blev kvar');
   const saved = (await overlayRow()).state.widgets.map(w => w.id);
@@ -281,8 +285,11 @@ db('tom mållista tar bort alla runtime-rader utan ogiltig SQL', async () => {
   assert.equal((await runtimeIds()).length, 2);
   const v = (await overlayRow()).version;
   // Widgets remain, but none of them is a goal: the empty id list must still be valid SQL.
+  // Tva widgetar blir EN: en minskning, alltsa kraver krympvakten avsikten. Provet handlar om
+  // SQL:en for en tom mal-lista, inte om antalet — flaggan haller den fragan isar.
   const out = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
-    state: stateWith({ id: 'w-gift', type: 'templateTopGift' }), expectedVersion: v });
+    state: stateWith({ id: 'w-gift', type: 'templateTopGift' }), expectedVersion: v,
+    allowWidgetLoss: true });
   assert.equal(out.ok, true);
   assert.deepEqual(await runtimeIds(), [], 'runtime-rader blev kvar när alla mål togs bort');
 });
