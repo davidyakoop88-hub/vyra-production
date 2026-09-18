@@ -238,6 +238,10 @@
   }
 
   if (typeof module === 'object' && module.exports) module.exports = { skapaLiveSession };
-  else root.VyraLiveSession = { skapaLiveSession, runtime,
+  // `lagringen` ar exponerad for proven: de matte fram till nu sessionStorage VID NAMN, vilket
+  // gjorde dem till ett prov pa backenden i stallet for pa beteendet — och de foll allihop nar
+  // fixen bytte backend. Nu fragar de klienten vilken lagring den valde, sa de overlever aven
+  // nasta byte. Ingen produktionskod las nycklarna direkt; de ar privata for den har filen.
+  else root.VyraLiveSession = { skapaLiveSession, runtime, lagringen,
     registreraKonfigOmhamtning: (fn) => { omhamtare = fn } };
 })(typeof window !== 'undefined' ? window : globalThis);
