@@ -363,7 +363,12 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 /* Like Fountain — premium avatar/orbit/particle redesign */
 .lf-title{position:absolute;top:8px;left:50%;transform:translateX(-50%);font:700 10px/1 Manrope,sans-serif;letter-spacing:.16em;color:var(--gold,#e8b968);text-shadow:0 0 10px var(--gold,#e8b968);opacity:.85;white-space:nowrap;z-index:4}
 .fountain-portrait .lf-title{font-size:9px}
-.lf-stream{position:absolute;inset:0;opacity:0;animation:lfStreamIn .6s ease-out .4s forwards}/* Canvas-lagret for poppen, sparet och avskedet. Ligger over DOM-fontanen, tar ingen plats i layouten och fangar inga pekare. */.lf-stream canvas.lf-duk{position:absolute;left:0;bottom:0;width:100%;pointer-events:none;z-index:3}
+/* INGEN ENTREANIMATION HAR. Strommen hade `opacity:0` och en entreanimation som enda vag till 1,
+   och render() bygger om noden med innerHTML sa animationen startade om fran noll vid varje
+   render. Under en levande sandning hann den aldrig fram till opacity 1, och fontanen var
+   permanent osynlig. En opacity-baserad entre kan inte overleva det: den flimrar vid glesa
+   renderingar och slacker helt vid tata. Vilolaget ar darfor synligt, utan animation. */
+.lf-stream{position:absolute;inset:0;opacity:1}/* Canvas-lagret for poppen, sparet och avskedet. Ligger over DOM-fontanen, tar ingen plats i layouten och fangar inga pekare. */.lf-stream canvas.lf-duk{position:absolute;left:0;bottom:0;width:100%;pointer-events:none;z-index:3}
 /* Alla partiklar maste borja i samma kalla. Sidledsspridningen sker i
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */
@@ -376,7 +381,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .like-fountain.palette-ice .lf-p-heart{filter:brightness(1.2)}
 .like-fountain.palette-gold .lf-p-heart{filter:drop-shadow(0 0 5px #ffb51c)}
 .like-fountain.palette-rainbow .lf-p-heart{filter:saturate(1.3) brightness(1.1)}
-@keyframes lfStreamIn{to{opacity:1}}
+
 @keyframes lfHeartRise{0%{transform:translate(-50%,10px) scale(.25) rotate(0deg);opacity:0}12%{opacity:1}45%{transform:translate(calc(-50% + var(--ox)),calc(-1 * var(--rise) * .55)) scale(.85) rotate(6deg)}100%{transform:translate(calc(-50% + var(--ox) * 1.6),calc(-1 * var(--rise))) scale(.35) rotate(-4deg);opacity:0}}
 @keyframes lfSparkRise{0%{transform:translate(-50%,6px) scale(.3);opacity:0}20%{opacity:1}60%{transform:translate(calc(-50% + var(--ox) * 1.3),calc(-1 * var(--rise) * .7)) scale(1) rotate(90deg)}100%{transform:translate(calc(-50% + var(--ox) * 1.8),calc(-1 * var(--rise))) scale(.2) rotate(200deg);opacity:0}}
 @keyframes lfDustRise{0%{transform:translate(-50%,4px) scale(.5);opacity:0}30%{opacity:.7}100%{transform:translate(calc(-50% + var(--ox) * 2),calc(-1 * var(--rise) * 1.05)) scale(.3);opacity:0}}
