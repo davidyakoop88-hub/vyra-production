@@ -114,5 +114,6 @@ Uppmätt på TikToks egen medgivandesida 2026-09-17.
   släpper bara in `jokero060`.
 
 **Ordningen när godkännandet kommer:** byt `TIKTOK_CLIENT_KEY`/`TIKTOK_CLIENT_SECRET` på
-Railway-tjänsten `Api` till produktionsnycklarna FÖRST. Sätt `VYRA_TIKTOK_VERIFIERING_KRAVS=1` först när verifieringen
-setts fungera för en riktig kund — sätts den innan, låses varenda kund ute samtidigt.
+Railway-tjänsten `Api` till produktionsnycklarna FÖRST. Sätt `VYRA_TIKTOK_VERIFIERING_KRAVS=1`
+först när verifieringen setts fungera för en riktig kund — sätts den innan, låses varenda kund
+ute samtidigt.
