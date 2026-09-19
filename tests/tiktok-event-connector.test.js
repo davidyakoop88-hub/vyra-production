@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('fs');
 const http=require('http');
 const path=require('path');
-const {parseTikTokEventPage,officialUrl}=require('../electron-app/tiktok-event-service');
+const {parseTikTokEventPage,officialUrl,loginUrl}=require('../electron-app/tiktok-event-service');
 const {startLocalServer}=require('../electron-app/local-server');
 
 test('tolkar ett komplett Pact of Hearts-event utan att gissa osynliga falt',()=>{
@@ -26,6 +26,8 @@ test('ofullstandig eller extern sida stoppas',()=>{
   assert.ok(incomplete.missing.includes('start- och slutdatum'));
   assert.equal(officialUrl('https://evil.example/tiktok.com'),null);
   assert.equal(officialUrl('http://www.tiktok.com/'),null);
+  assert.ok(loginUrl('https://accounts.google.com/o/oauth2/auth'));
+  assert.equal(loginUrl('https://google.example/phishing'),null);
 });
 
 test('Desktop-rutterna ar kopplade och webblage faller stangt',async t=>{
@@ -43,5 +45,6 @@ test('Studio visar den nya sidan och Desktop-paketet innehaller lasaren',()=>{
   assert.match(html,/data-extra="tiktokEvents"/);
   assert.match(html,/tiktok-event-connector\.js\?v=20260920-1/);
   assert.ok(pkg.build.files.includes('tiktok-event-service.js'));
+  assert.equal(pkg.version,'1.2.5');
   assert.match(fs.readFileSync(path.join(__dirname,'..','electron-app','tiktok-event-service.js'),'utf8'),/15 \* 60 \* 1000/);
 });

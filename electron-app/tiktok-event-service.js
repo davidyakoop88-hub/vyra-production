@@ -3,11 +3,21 @@
 const crypto = require('crypto');
 
 const OFFICIAL_TIKTOK = /(^|\.)tiktok\.com$/i;
+const LOGIN_HOSTS = /(^|\.)(tiktok\.com|google\.com|googleusercontent\.com|facebook\.com|apple\.com)$/i;
+const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
 function officialUrl(value) {
   try {
     const url = new URL(String(value || ''));
     return url.protocol === 'https:' && !url.username && !url.password && OFFICIAL_TIKTOK.test(url.hostname)
+      ? url.href : null;
+  } catch { return null; }
+}
+
+function loginUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' && !url.username && !url.password && LOGIN_HOSTS.test(url.hostname)
       ? url.href : null;
   } catch { return null; }
 }
@@ -84,8 +94,17 @@ function createTikTokEventService({ BrowserWindow, partition = 'persist:vyra-tik
       webPreferences: { partition, contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true }
     });
     reader.setMenu(null);
-    reader.webContents.setWindowOpenHandler(({ url: next }) => officialUrl(next) ? { action: 'allow' } : { action: 'deny' });
-    reader.webContents.on('will-navigate', (event, next) => { if (!officialUrl(next)) event.preventDefault(); });
+    reader.webContents.setUserAgent(CHROME_UA);
+    reader.webContents.setWindowOpenHandler(({ url: next }) => loginUrl(next)
+      ? { action: 'allow', overrideBrowserWindowOptions: { autoHideMenuBar: true,
+          webPreferences: { partition, contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true } } }
+      : { action: 'deny' });
+    reader.webContents.on('did-create-window', child => child.webContents.setUserAgent(CHROME_UA));
+    reader.webContents.on('will-navigate', (event, next) => { if (!loginUrl(next)) event.preventDefault(); });
+    reader.webContents.on('did-fail-load', (_event, code, description, target) => {
+      lastError = `TikTok kunde inte laddas (${code}: ${description})`;
+      log('TikTok event load failed', code, description, target || '');
+    });
     reader.webContents.on('did-finish-load', () => {
       setTimeout(() => scan().catch(error => { lastError = error.message; }), 1500).unref?.();
     });
@@ -120,4 +139,4 @@ function createTikTokEventService({ BrowserWindow, partition = 'persist:vyra-tik
   return { open, scan, close, status };
 }
 
-module.exports = { createTikTokEventService, parseTikTokEventPage, officialUrl };
+module.exports = { createTikTokEventService, parseTikTokEventPage, officialUrl, loginUrl };
