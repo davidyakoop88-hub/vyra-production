@@ -225,3 +225,50 @@ test('ett klick pa raknaren flyttar in dem — och bara dem', { skip, timeout: 9
     assert.equal(m.kvar, false, 'raknaren stod kvar trots att allt nu ligger inne');
   } finally { await context.close() }
 });
+
+test('ett klick pa raknaren gar att angra', { skip, timeout: 90000 }, async () => {
+  // Jag PASTOD att angra fungerar for att save() anropar VyraHistorik.notera(). Det ar inte
+  // sjalvklart: flyttaInAlla muterar state FORE save(), sa om notera() spelade in nulaget hade
+  // den spelat in det NYA laget och angra blivit verkningslos. notera() lagger i stallet
+  // `senast` — det foregaende laget — pa stacken. Det har provet ar skillnaden mellan att tro
+  // det och att veta det, och utan det kan en anvandare som klickat fel bli inlast.
+  const { context, page } = await editorn([UTE, INNE]);
+  try {
+    const m = await page.evaluate(async () => {
+      const fore = state.widgets.find(w => w.id === 'd1').x;
+      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      await new Promise(r => setTimeout(r, 600));
+      const efterFlytt = state.widgets.find(w => w.id === 'd1').x;
+
+      const apiFinns = !!(window.VyraHistorik && typeof window.VyraHistorik.angra === 'function');
+      if (apiFinns) await window.VyraHistorik.angra();
+      await new Promise(r => setTimeout(r, 600));
+
+      return {
+        apiFinns, fore, efterFlytt,
+        efterAngra: state.widgets.find(w => w.id === 'd1').x,
+        knappFinns: !!document.querySelector('.editor-toolbar [data-angra]')
+      };
+    });
+    assert.equal(m.apiFinns, true, 'window.VyraHistorik.angra saknas');
+    assert.notEqual(m.efterFlytt, m.fore, 'knappen flyttade ingenting — provet mater inget');
+    assert.equal(m.efterAngra, m.fore,
+      `angra tog inte tillbaka widgeten: ${m.fore} -> ${m.efterFlytt} -> ${m.efterAngra}`);
+  } finally { await context.close() }
+});
+
+test('angra-knappen i verktygsraden blir klickbar efter en flytt', { skip, timeout: 90000 }, async () => {
+  // API:t ar en sak, knappen anvandaren faktiskt ser en annan.
+  const { context, page } = await editorn([UTE, INNE]);
+  try {
+    const m = await page.evaluate(async () => {
+      const k = () => document.querySelector('.editor-toolbar [data-angra]');
+      const foreDisablad = k() ? k().disabled : null;
+      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      await new Promise(r => setTimeout(r, 600));
+      return { foreDisablad, efterDisablad: k() ? k().disabled : null, finns: !!k() };
+    });
+    assert.equal(m.finns, true, 'angra-knappen saknas i verktygsraden');
+    assert.equal(m.efterDisablad, false, 'angra-knappen ar fortfarande disablad efter flytten');
+  } finally { await context.close() }
+});
