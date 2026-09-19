@@ -52,8 +52,12 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
     const card = el?.querySelector('.streak-simple-card');
     const cardRect = card?.getBoundingClientRect();
     const flipRect = el?.querySelector('.streak-flip')?.getBoundingClientRect();
-    const copyRect = el?.querySelector('.streak-copy')?.getBoundingClientRect();
+    const titleRect = el?.querySelector('.streak-simple-title')?.getBoundingClientRect();
+    const nameRect = el?.querySelector('.streak-simple-name')?.getBoundingClientRect();
     const scoreRect = el?.querySelector('.streak-score')?.getBoundingClientRect();
+    const idleProfileAnimation = profile && getComputedStyle(profile.parentElement).animationName;
+    const idleGiftAnimation = gift && getComputedStyle(gift.parentElement).animationName;
+    el?.classList.add('hit');
     return {
       heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
       buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
@@ -61,12 +65,16 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
       simple: !!el, mechanism: !!el?.querySelector('.streak-mechanism'),
       profileFit: profile && getComputedStyle(profile).objectFit,
       giftFit: gift && getComputedStyle(gift).objectFit,
+      idleProfileAnimation, idleGiftAnimation,
       profileAnimation: profile && getComputedStyle(profile.parentElement).animationName,
       giftAnimation: gift && getComputedStyle(gift.parentElement).animationName,
       styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle'),
-      cardHeight: cardRect?.height, sameRow: !!(flipRect&&copyRect&&scoreRect)&&
-        Math.abs((flipRect.top+flipRect.height/2)-(copyRect.top+copyRect.height/2))<4&&
-        Math.abs((flipRect.top+flipRect.height/2)-(scoreRect.top+scoreRect.height/2))<4
+      cardHeight: cardRect?.height, vertical: !!(titleRect&&flipRect&&nameRect&&scoreRect)&&
+        titleRect.bottom<=flipRect.top+1&&flipRect.bottom<=nameRect.top+1&&nameRect.bottom<=scoreRect.top+1,
+      centered: !!(cardRect&&flipRect&&nameRect&&scoreRect)&&
+        Math.abs((flipRect.left+flipRect.width/2)-(cardRect.left+cardRect.width/2))<2&&
+        Math.abs((nameRect.left+nameRect.width/2)-(cardRect.left+cardRect.width/2))<2&&
+        Math.abs((scoreRect.left+scoreRect.width/2)-(cardRect.left+cardRect.width/2))<2
     };
   });
   await page.close();
@@ -78,9 +86,12 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
   assert.equal(result.mechanism, false);
   assert.equal(result.profileFit, 'cover');
   assert.equal(result.giftFit, 'contain');
-  assert.match(result.profileAnimation, /vyraStreakFront/);
-  assert.match(result.giftAnimation, /vyraStreakBack/);
+  assert.equal(result.idleProfileAnimation, 'none');
+  assert.equal(result.idleGiftAnimation, 'none');
+  assert.match(result.profileAnimation, /vyraStreakFrontEvent/);
+  assert.match(result.giftAnimation, /vyraStreakBackEvent/);
   assert.equal(result.styleControl, false);
-  assert.ok(result.cardHeight >= 95 && result.cardHeight <= 120, `fel höjd ${result.cardHeight}`);
-  assert.equal(result.sameRow, true, JSON.stringify(result));
+  assert.ok(result.cardHeight >= 215 && result.cardHeight <= 235, `fel höjd ${result.cardHeight}`);
+  assert.equal(result.vertical, true, JSON.stringify(result));
+  assert.equal(result.centered, true, JSON.stringify(result));
 });
