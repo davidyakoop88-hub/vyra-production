@@ -41,7 +41,7 @@ test('Top Streak CSS keeps profile filled, gift complete, and motion accessible'
 test('cache versions change with the Top Streak files', () => {
   const studio = read('studio.html');
   const media = read('media.js');
-  assert.match(studio, /top-streak-simple\.css\?v=20260919-10/);
-  assert.match(studio, /media\.js\?v=20260919-10/);
-  assert.match(media, /const version='20260919-10'/);
+  assert.match(studio, /top-streak-simple\.css\?v=20260919-11/);
+  assert.match(studio, /media\.js\?v=20260919-11/);
+  assert.match(media, /const version='20260919-11'/);
 });
