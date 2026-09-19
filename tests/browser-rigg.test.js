@@ -62,7 +62,13 @@ test('varje browsertestfil avgör skip synkront via riggen', () => {
   for (const f of FILER) {
     const text = fs.readFileSync(f, 'utf8');
     if (!text.includes("require('../helpers/webblasare.js')")) { fel.push(`${kort(f)}: använder inte riggen`); continue }
-    const skip = /let skip = ([^;]*);/.exec(text);
+    // VAKTEN MATER BETEENDE, INTE STAVNING. Forr kravde den bokstavligen `let skip = hoppaOver();`
+    // med exakt ett mellanslag pa var sida. Fyra filer som gor precis ratt sak foll pa formen:
+    // `const skip=hoppaOver()` och `let server,browser,bas,skip=hoppaOver()`. `const` ar om nagot
+    // BATTRE an `let` har, eftersom hela poangen ar att skip inte far skrivas om. Kravet som
+    // betyder nagot ar att skip deklareras pa modulniva och far sitt varde av hoppaOver()
+    // SYNKRONT — omtilldelningen langre ner ar fortfarande forbjuden och provas nedan.
+    const skip = /(?:let|const|var)[^;]*?\bskip\s*=\s*([^;,\n]*)/.exec(text);
     if (!skip) { fel.push(`${kort(f)}: ingen skip-sats`); continue }
     if (skip[1].trim() !== 'hoppaOver()') fel.push(`${kort(f)}: skip sätts till "${skip[1].trim()}" i stället för hoppaOver()`);
     // Omtilldelning i before är just det som aldrig fungerade.

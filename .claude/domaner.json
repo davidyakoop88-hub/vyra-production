@@ -80,6 +80,12 @@
       "filer": [
         "battle-mvp-session.js",
         "custom-widgets.js",
+        "approved-rankings.css",
+        "approved-rankings.js",
+        "topcoins-v2.css",
+        "topcoins-v2.js",
+        "toplike-design.js",
+        "top-streak-simple.css",
         "extras.js",
         "fan-fas.js",
         "fan-level-session.js",
@@ -216,6 +222,10 @@
       "syfte": "Tokens, typografi, farger, premiumutseende och all CSS som inte agn av en enskild widget.",
       "filer": [
         "design-system.css",
+        "agency-test.css",
+        "agency-test-v2.css",
+        "agency-test-v3.css",
+        "agency-test.js",
         "design-tokens.css",
         "styles.css",
         "premium-widget-tokens.css",
@@ -460,6 +470,7 @@
       "syfte": "Malwidgetar och malruntime hela vagen: klient, designer, ingest, SSE, metrik och lagring.",
       "filer": [
         "goal-client.js",
+        "social-goals-v2.css",
         "server/goal-runtime.js",
         "server/goal-ingest.js",
         "server/goal-sse.js",
@@ -835,6 +846,12 @@
       "syfte": "Latens, lasttester, artefaktbudget och allt som svarar pa fragan hur snabbt eller hur tungt.",
       "filer": [
         "latency-probe.js",
+        "performance-runtime.css",
+        "performance-runtime.js",
+        "performance-wizard.css",
+        "performance-wizard.js",
+        "statistics-live.css",
+        "statistics-live.js",
         "tests/load/*"
       ],
       "tester": [
