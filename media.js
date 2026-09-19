@@ -1131,7 +1131,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
 Promise.resolve().then(()=>{['gift-fireworks.css?v=20260912-3','action-event.css?v=20260916-facit'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260916-facit','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20260916-facit','action-event-advanced.js?v=20260916-facit','action-runtime.js?v=20260916-facit'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260820-2';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260919-nav-restore';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20260908-bagpodiet';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260909-oppning';document.body.append(js)});
@@ -1420,7 +1420,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260919-13';
+  const version='20260919-14';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

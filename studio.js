@@ -137,7 +137,7 @@ function settings(){return `<article class="card settings-page"><h2>Kontoinstäl
 // EDITOR-VYN: layout-safe.js ager #view och returnerar utan render-kedja.
 // Nya moduler som behover reagera pa editor-rendering maste anvanda
 // MutationObserver pa #view (se layout-format.js, vyra-historik.js).
-function render(){let m={home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:vyraNavEtikett(view)||view[0].toUpperCase()+view.slice(1);bind()}
+function render(){let m={home:window.VyraPremiumHome||home,editor,flows,events,analytics,settings};if(!m[view])view='home';let viewRoot=$('#view'),titleRoot=$('#title');if(!viewRoot||!titleRoot)return;viewRoot.innerHTML=m[view]();titleRoot.textContent=view==='home'?`God kväll, ${state.user}`:vyraNavEtikett(view)||view[0].toUpperCase()+view.slice(1);bind()}
 // Titeln togs forut ur VYNYCKELN med versal — darfor stod det "Settings" pa en sida vars navval
 // heter "Installningar". Navetiketten ar den enda kalla som stammer, och den ar samma kalla som
 // brodsmulan anvander. Faller tillbaka pa gamla beteendet for vyer utan eget navval (t.ex. editor).
