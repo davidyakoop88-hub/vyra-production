@@ -1,0 +1,10 @@
+/* Balanserat lage behaller huvudanimeringen men tar bort dyr dekor som inte bar information. */
+.vyra-performance-balanced .battle-particles i:nth-child(n+9),
+.vyra-performance-balanced .mvc-finale i:nth-child(n+11),
+.vyra-performance-balanced .vyra-pw-particles>*:nth-child(n+6),
+.vyra-performance-balanced .recognition-particle:nth-child(n+5),
+.vyra-performance-balanced .gift-jar-item:nth-child(n+31){display:none!important}
+.vyra-performance-balanced .battle-smoke,
+.vyra-performance-balanced .battle-flare{filter:none!important;box-shadow:none!important}
+.vyra-performance-balanced .widget-hidden video{visibility:hidden!important}
+

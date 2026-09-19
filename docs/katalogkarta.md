@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `616d08a`
+Commit: `0d429c4`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **259** |
-| Sektioner | 23 |
-| Med katalognyckel | 259 / 259 |
-| Med shadow DOM-miniatyr | 259 / 259 |
-| Ritar sin design | 259 / 259 |
+| Kort totalt | **191** |
+| Sektioner | 21 |
+| Med katalognyckel | 191 / 191 |
+| Med shadow DOM-miniatyr | 191 / 191 |
+| Ritar sin design | 191 / 191 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -58,9 +58,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
 | VYRA TOP RANKING · VARJE DESIGN SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-03 | — |
 | TOP LIKE · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
-| VYRA TOP STREAK · REDIGERBAR | 23 | 23/23 | 23/23 | 23/23 | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| VYRA TOP STREAK · REDIGERBARA | 23 | 23/23 | 23/23 | 23/23 | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| VYRA TOP STREAK · PREMIUM | 23 | 23/23 | 23/23 | 23/23 | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
+| VYRA TOP STREAK · REDIGERBAR | 1 | 1/1 | 1/1 | 1/1 | 2026-09-19 | — |
 | VYRA ORIGINAL · REDIGERBARA | 40 | 40/40 | 40/40 | 40/40 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | TOP GIFTER · DESIGNVAL | 40 | 40/40 | 40/40 | 40/40 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
@@ -270,85 +268,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno Streak | `catalog:topstreak` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Inferno | `catalog:topstreak:inferno` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Neon Rail | `catalog:topstreak:neon` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Ice Badge | `catalog:topstreak:ice` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Royal Crown | `catalog:topstreak:royal` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Sakura Rail | `catalog:topstreak:sakura-rail` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Cyber Grid | `catalog:topstreak:cyber-grid` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Storm | `catalog:topstreak:storm` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Amethyst Heart | `catalog:topstreak:frame:amethyst-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Spire | `catalog:topstreak:frame:crystal-spire` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Golden Wings | `catalog:topstreak:frame:gold-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Rose Heart | `catalog:topstreak:frame:rose-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Luna Stars | `catalog:topstreak:frame:luna-stars` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Tiara | `catalog:topstreak:frame:crystal-tiara` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Violet Wings | `catalog:topstreak:frame:violet-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Star Crown | `catalog:topstreak:frame:star-crown` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Liquid Gold Fuse | `catalog:topstreak:premium:liquid` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Steps | `catalog:topstreak:premium:momentum` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Tier | `catalog:topstreak:premium:tier` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Silk Golden Thread | `catalog:topstreak:premium:thread` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Chronograph Timeline | `catalog:topstreak:premium:chrono` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-
-### VYRA TOP STREAK · REDIGERBARA
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Inferno Streak | `catalog:topstreak` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Inferno | `catalog:topstreak:inferno` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Neon Rail | `catalog:topstreak:neon` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Ice Badge | `catalog:topstreak:ice` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Royal Crown | `catalog:topstreak:royal` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Sakura Rail | `catalog:topstreak:sakura-rail` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Cyber Grid | `catalog:topstreak:cyber-grid` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Storm | `catalog:topstreak:storm` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Amethyst Heart | `catalog:topstreak:frame:amethyst-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Spire | `catalog:topstreak:frame:crystal-spire` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Golden Wings | `catalog:topstreak:frame:gold-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Rose Heart | `catalog:topstreak:frame:rose-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Luna Stars | `catalog:topstreak:frame:luna-stars` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Tiara | `catalog:topstreak:frame:crystal-tiara` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Violet Wings | `catalog:topstreak:frame:violet-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Star Crown | `catalog:topstreak:frame:star-crown` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Liquid Gold Fuse | `catalog:topstreak:premium:liquid` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Steps | `catalog:topstreak:premium:momentum` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Tier | `catalog:topstreak:premium:tier` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Silk Golden Thread | `catalog:topstreak:premium:thread` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Chronograph Timeline | `catalog:topstreak:premium:chrono` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-
-### VYRA TOP STREAK · PREMIUM
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Inferno Streak | `catalog:topstreak` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Inferno | `catalog:topstreak:inferno` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Neon Rail | `catalog:topstreak:neon` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Ice Badge | `catalog:topstreak:ice` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Royal Crown | `catalog:topstreak:royal` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Sakura Rail | `catalog:topstreak:sakura-rail` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Cyber Grid | `catalog:topstreak:cyber-grid` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Storm | `catalog:topstreak:storm` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Amethyst Heart | `catalog:topstreak:frame:amethyst-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Spire | `catalog:topstreak:frame:crystal-spire` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Golden Wings | `catalog:topstreak:frame:gold-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Rose Heart | `catalog:topstreak:frame:rose-heart` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Luna Stars | `catalog:topstreak:frame:luna-stars` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Crystal Tiara | `catalog:topstreak:frame:crystal-tiara` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Violet Wings | `catalog:topstreak:frame:violet-wings` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Star Crown | `catalog:topstreak:frame:star-crown` | ✓ | ✓ | 2026-08-05 | [#92](https://github.com/davidyakoop88-hub/vyra-production/pull/92) |
-| Liquid Gold Fuse | `catalog:topstreak:premium:liquid` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Steps | `catalog:topstreak:premium:momentum` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Momentum Tier | `catalog:topstreak:premium:tier` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Silk Golden Thread | `catalog:topstreak:premium:thread` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Chronograph Timeline | `catalog:topstreak:premium:chrono` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Jewelry Chain Reaction | `catalog:topstreak:premium:chain` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Thermochromic Gauge | `catalog:topstreak:premium:thermo` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
+| VYRA Top Streak | `catalog:topstreak` | ✓ | ✓ | 2026-09-19 | — |
 
 ### VYRA ORIGINAL · REDIGERBARA
 
