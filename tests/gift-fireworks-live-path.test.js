@@ -94,32 +94,45 @@ test('livevagen gor inga writes i kallan heller', () => {
 
 // ---- 2. combon hanteras ratt -------------------------------------------------------------------
 
+// NIVAN STYRS AV VARDET SEDAN 2026-09-19 (gift-fireworks.js fwStyrkaOf). Combon avgor nivan bara
+// nar beloppet ar OKANT — och det ar precis den vagen editorns testknapp och gamla Action-anrop
+// gar, sa den maste fortsatta fungera. Proven nedan skickar darfor medvetet INGET `coins`.
+// Vardevagen har egna prov i gift-fireworks-niva.test.js.
+
 test('en combo pa fem visar en personlig raket', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, combo: 5 });
+  h.window.triggerGiftFireworks({ username: 'lisa', combo: 5 });
   assert.equal(raketer(d), 1);
 });
 
 test('combon lases aven som count och repeatcount', () => {
   for (const [falt, varde] of [['count', 4], ['repeatcount', 6]]) {
     const { h, d } = boot();
-    h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, [falt]: varde });
+    h.window.triggerGiftFireworks({ username: 'lisa', [falt]: varde });
     assert.equal(raketer(d), 1, `${falt} nadde inte fram`);
   }
 });
 
 test('en gava utan combo ger en raket', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500 });
+  h.window.triggerGiftFireworks({ username: 'lisa' });
   assert.equal(raketer(d), 1);
 });
 
 test('combon klamps till 1-100', () => {
   for (const [in_, ut] of [[0, 1], [-5, 1], [500, 7], ['tolv', 1]]) {
     const { h, d } = boot();
-    h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, combo: in_ });
+    h.window.triggerGiftFireworks({ username: 'lisa', combo: in_ });
     assert.equal(raketer(d), ut, `combo ${JSON.stringify(in_)} gav ${raketer(d)} raketer`);
   }
+});
+
+test('ett KANT belopp tar over fran combon', () => {
+  // Gransen mellan de tva vagarna, i ett prov. Samma combo, en med belopp och en utan.
+  const a = boot(); a.h.window.triggerGiftFireworks({ username: 'lisa', combo: 100 });
+  assert.equal(raketer(a.d), 7, 'okant belopp: combon styr, som forr');
+  const b = boot(); b.h.window.triggerGiftFireworks({ username: 'lisa', combo: 100, coins: 50 });
+  assert.equal(raketer(b.d), 1, 'kant belopp pa 50 coins: single, oavsett hundra tryck');
 });
 
 // ---- 3. en ny gava forlanger, den avbryter inte -------------------------------------------------
@@ -155,8 +168,10 @@ test('den forsta gavans timer avbryts — den far inte klippa den andra animatio
 
 test('den andra gavans raketer bygger pa, de ersatter inte', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'a', coins: 100, combo: 2 });
-  h.window.triggerGiftFireworks({ username: 'b', coins: 100, combo: 3 });
+  // 50 coins, inte 100: provet handlar om LAGREN, och pa 100 byter nivan till burst (tre
+  // raketer per avsandare) sa att raknandet nedan matte nagot annat an det heter.
+  h.window.triggerGiftFireworks({ username: 'a', coins: 50, combo: 2 });
+  h.window.triggerGiftFireworks({ username: 'b', coins: 50, combo: 3 });
   assert.equal(raketer(d), 2, 'both senders retain one personal rocket');
   assert.equal(fx(d).querySelectorAll('.fw-event').length,2);
 });
@@ -209,7 +224,7 @@ const LION = 'https://p16.tiktokcdn.com/img/lion.png';
 
 test('raketen visar gavan ur eventet, inte panelbilden', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
-  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Lion', giftImage: LION });
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 50, count: 1, giftName: 'Lion', giftImage: LION });
   assert.deepEqual(bilder(d), [LION],
     'raketen visar fortfarande panelbilden — en ros flyger nar nagon skickat ett lejon');
 });
@@ -217,7 +232,7 @@ test('raketen visar gavan ur eventet, inte panelbilden', () => {
 // Antalet fungerade redan; provet halls kvar sa en fix av bilden inte rakar ta sonder det.
 test('tva lion delar en personlig raket med lejonbilden', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0001_Rose.png' })]);
-  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 2, giftName: 'Lion', giftImage: LION });
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 50, count: 2, giftName: 'Lion', giftImage: LION });
   assert.equal(raketer(d), 1, 'small combos share one showcase rocket');
   assert.deepEqual(bilder(d), [LION], 'bara nagra av raketerna fick ratt bild');
 });
@@ -226,7 +241,7 @@ test('tva lion delar en personlig raket med lejonbilden', () => {
 // utan bild ska inte ge en trasig <img src="">.
 test('utan bild i eventet anvands panelbilden', () => {
   const { h, d } = boot([fw('fw1', { fwGiftImage: 'assets/gifts/events/0042_Galaxy.png' })]);
-  h.window.triggerGiftFireworks({ username: 'lisa', coins: 500, count: 1, giftName: 'Galaxy' });
+  h.window.triggerGiftFireworks({ username: 'lisa', coins: 50, count: 1, giftName: 'Galaxy' });
   assert.deepEqual(bilder(d), ['assets/gifts/events/0042_Galaxy.png'],
     'reserven foll bort — en gava utan bild ger nu en tom <img>');
 });
@@ -301,7 +316,8 @@ const sender = d => latest(d).querySelector('.fw-rocket-avatar');
 
 test('gåvan finns på raketerna och avsändaren har ett eget raketansikte', () => {
   const { h, d } = boot();
-  h.window.triggerGiftFireworks({ username: 'anna', coins: 500, count: 3, giftImage: LION, profileImage: AVATAR });
+  // 50 coins: provet raknar EN raket och ETT ansikte, alltsa niva single. 500 coins ger burst.
+  h.window.triggerGiftFireworks({ username: 'anna', coins: 50, count: 3, giftImage: LION, profileImage: AVATAR });
   assert.equal(raketer(d), 1);
   assert.deepEqual(bilder(d), [LION]);
   assert.equal(sender(d).getAttribute('src'), AVATAR);
@@ -361,20 +377,24 @@ test('profil och gåvonamn är tillfälliga och skrivs inte till layouten', () =
 });
 
 
-test('antalet gåvor väljer rätt nivå vid gränserna', () => {
-  for (const [count,level,waves,duration] of [[1,'single',0,5],[9,'single',0,5],[10,'burst',2,5.9],[99,'burst',2,5.9],[100,'show',6,9.2]]) {
-    const {h,d}=boot();h.window.triggerGiftFireworks({count,username:'anna',coins:1});
-    assert.equal(fx(d).dataset.fwLevel,level);
+test('gåvans värde väljer rätt nivå vid gränserna', () => {
+  // Trosklarna ar 100 och 1000 COINS. Provet mater hela kedjan: dataset, raketantal, --duration
+  // och kotiden — de fyra maste folja varandra, annars reserverar kon fel tid for showen.
+  for (const [coins,level,waves,duration] of [[1,'single',0,5],[99,'single',0,5],[100,'burst',2,5.9],[999,'burst',2,5.9],[1000,'show',6,9.2]]) {
+    const {h,d}=boot();h.window.triggerGiftFireworks({coins,username:'anna',count:1});
+    assert.equal(fx(d).dataset.fwLevel,level,`${coins} coins`);
     assert.equal(fx(d).querySelectorAll('.fw-personal-rocket').length,waves+1);
     assert.equal(parseFloat(fx(d).style.getPropertyValue('--duration')),duration);
-    assert.equal(h.window.VyraFireworks.durationFor({count}),duration*1000);
+    assert.equal(h.window.VyraFireworks.durationFor({coins,count:1}),duration*1000);
     assert.equal(fx(d).querySelector('.fw-combo-badge'),null);
-
   }
 });
-test('nivån följer combo och inte myntvärdet',()=>{
-  const {h,d}=boot();h.window.triggerGiftFireworks({count:1,coins:10000});assert.equal(fx(d).dataset.fwLevel,'single');
-  h.window.triggerGiftFireworks({repeatcount:100,coins:1});assert.equal(fx(d).dataset.fwLevel,'show');
+test('nivån följer myntvärdet och inte combon',()=>{
+  // OMVANT MOT FORE 2026-09-19, med avsikt. Den gamla regeln las comboCount, och i Davids
+  // sandning den 18:e gav den alla elva stora tandningar till 1-coins-gavor medan en gava pa
+  // 5000 coins korde samma sex sekunder som en ros. Bandet ligger i tiktok-bridge/inspelningar.
+  const {h,d}=boot();h.window.triggerGiftFireworks({count:1,coins:10000});assert.equal(fx(d).dataset.fwLevel,'show','en dyr gava i ETT tryck ska vara finalen');
+  h.window.triggerGiftFireworks({repeatcount:100,coins:1});assert.equal(fx(d).dataset.fwLevel,'single','hundra tryck for 1 coin ar ingen final');
 });
 test('show particles are bounded and later gifts keep their own independent layer',()=>{
   const {h,d}=boot([fw('fw1',{fwDensity:100,fwColor:'#22ccff'})]);

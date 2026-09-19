@@ -9,7 +9,12 @@ const fwOutroOf=w=>FW_OUTRO[w.fwOutro]!==undefined?w.fwOutro:'fade';
 const fwDurationOf=w=>Math.max(2,Math.min(10,Number(w.fwDuration)||5));
 const fwFlightOf=w=>Math.min(Math.max(.2,Number(w.fwSpeed)||.6),fwDurationOf(w)*.22);
 const FW_GIFT='assets/gifts/events/0001_Rose.png';
-const fwComboOf=input=>{const d=input&&typeof input==='object'?input:{combo:input};return Math.max(1,Math.min(100,Math.floor(Number(d.combo??d.repeatcount??d.count)||1)))};
+/* fwAntalOf ar det RAA antalet, fwComboOf samma tal klamt till nivaskalans 1-100. Delningen
+   behovs for att styrkerakningen ska kunna gangra styckpris med ett antal pa 400 — klampte vi
+   forst blev en serie pa 400 bara 100, och vardet en fjardedel av det verkliga. Faltnamnen bor
+   pa ETT stalle. */
+const fwAntalOf=input=>{const d=input&&typeof input==='object'?input:{combo:input};return Math.max(1,Math.floor(Number(d.combo??d.repeatcount??d.count)||1))};
+const fwComboOf=input=>Math.min(100,fwAntalOf(input));
 const FW_LEVELS={single:{name:'single',lead:0,points:[],gain:1},burst:{name:'burst',lead:.9,points:[[-90,-35,0],[90,-55,.45]],gain:1.15},show:{name:'show',lead:4.2,points:[[-110,-30,0],[110,-30,.65],[-85,-100,1.3],[85,-100,2],[-125,-50,2.65],[125,-50,3.3]],gain:1.35}};
 const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
 const fwCanvas=w=>['royal','ice','rose','comet','supernova'].includes(w.fwTheme);
@@ -112,7 +117,7 @@ window.VyraFireworks={
   capacityFor:fwCapacity,
   pending:()=>fwPending.length,
   // Renderaren och bada koerna anvander exakt samma langsta synliga speltid.
-  durationFor:input=>Math.max(0,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(w=>fwSequence(w,fwComboOf(input)).duration*1000)),
+  durationFor:input=>Math.max(0,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(w=>fwSequence(w,fwStyrkaOf(input)).duration*1000)),
   timers:()=>fwTimers.size,
   slutarVid:()=>Math.max(0,...[...fwTimers.values()].map(t=>t.slutarVid)),
   spelar:e=>fwTimers.has(e),
@@ -162,6 +167,27 @@ window.addEventListener('vyra-session-ended',()=>{fwPending.length=0;fwTimers.fo
    Okant belopp blockerar aldrig. fwMin ar 1 som standard, och ett testevent utan coins hade
    annars slutat tanda nagot alls. Bara ett KANT belopp under gransen stoppas. */
 const fwBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
+/* STYRKAN RAKNAS PA VARDET, INTE PA ANTALET TRYCK. Uppmatt i sandningen 2026-09-18: fwLevelOf
+   las comboCount, sa alla elva tandningar som nadde burst eller show var 1-coins-gavor, medan
+   23 gavor varda 26 536 coins - en av dem pa 5000 - alla korde single. Firandet var omvant mot
+   vad det kostade.
+   Oversattningen sker HAR, till samma 1/10/100-skala som redan finns, i stallet for att de tre
+   trosklarna langre ned (fwLevelOf, canvas-duration, raketantal) skrivs om var for sig - tre
+   stallen ar tre chanser att missa ett.
+   `coins` OCH `value` BAR REDAN HELA COMBONS SUMMA (normalizer.js:159 `coinsEach*repeatCount`,
+   samma varning star i stream-stats.js:53). Att gangra dem med combon igen hade KVADRERAT varje
+   combo: hundra rosor hade blivit 10 000 och fatt den final som de just ska bli av med. Bara
+   `diamondCount`, som ar raapayloadens styckpris, far multipliceras.
+   OKANT BELOPP SANKER ALDRIG. Editorns testknapp skickar en ren combo utan coins, och ett event
+   dar beloppet inte gick att lasa ska bete sig precis som forr. Bara ett KANT belopp styr. */
+const fwTotalOf=d=>{const summa=[d.coins,d.value].map(Number).find(n=>Number.isFinite(n)&&n>0);
+ if(Number.isFinite(summa))return summa;
+ const styck=Number(d.diamondCount);
+ return Number.isFinite(styck)&&styck>0?styck*fwAntalOf(d):undefined};
+const fwStyrkaOf=input=>{const d=input&&typeof input==='object'?input:{combo:input};
+ const varde=fwTotalOf(d);
+ if(!Number.isFinite(varde))return fwComboOf(d);
+ return varde>=1000?100:varde>=100?10:1};
 function fwSlapperIgenom(w,d){
   /* Editorns testknapp slipper grindarna, men bara de. Utan undantaget blir knappen TYST sa fort
      streamern hojer fwMin: man trycker och ingenting hander, utan forklaring. Kon och
@@ -196,7 +222,7 @@ if(!fwCapacity(d)){if(fwPending.length>=200)return false;fwPending.push({...d});
    det numera far finnas flera. */
 const traffar=state.widgets.filter(x=>x.type==='templateGiftFireworks'&&!x.hidden&&fwSlapperIgenom(x,d));
 if(!traffar.length)return false;
-const combo=fwComboOf(d);
+const combo=fwStyrkaOf(d);
 /* Ingen omritning alls har langre — se kommentaren vid nagotTandes nedan. */
 /* Inga writes till layouten. Forr stod har `traffar.forEach(w=>{w.fwCombo=combo});save();render();`
    — senaste gavans combo hamnade permanent i den sparade layouten, hela canvasen byggdes om per

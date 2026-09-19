@@ -25,7 +25,14 @@ function boot(widgets = [widget()]) {
   const read = expression => { run(`window.__result=${expression}`); return h.window.__result; };
   return { ...h, run, read, fx: id => h.document.querySelector(`[data-id="${id || 'fw1'}"] .gift-fireworks-fx`) };
 }
-const event = extra => ({ username: 'Alice', giftName: 'Rose', coins: 100,
+/* NIVAN STYRS AV VARDET, INTE AV COMBON (gift-fireworks.js fwStyrkaOf). Proven nedan handlar om
+   raketer, bilder och lager — inte om nivaregeln — men de valjer sin niva via `combo`. Hjalparen
+   satter darfor ett `coins` vars TOTALVARDE landar pa den niva combon en gang gav, sa att varje
+   prov fortsatter mata det den heter. Nivaregeln har egna prov i gift-fireworks-niva.test.js.
+   `coins` ar hela seriens summa, aldrig styckpris — se normalizer.js:159. */
+const NIVAVARDE = { 1: 1, 9: 1, 10: 100, 99: 100, 100: 1000, 10000: 1000 };
+const event = extra => ({ username: 'Alice', giftName: 'Rose',
+  coins: NIVAVARDE[extra && extra.combo] ?? 100,
   giftImage: 'https://example.com/rose.png', profileImage: 'https://example.com/alice.png', ...extra });
 const latest = fx => fx.querySelector('.fw-event:last-child');
 const rockets = fx => [...fx.querySelectorAll('.fw-personal-rocket')];
@@ -102,7 +109,9 @@ test('unsafe event image URLs never become executable image sources', () => {
 
 test('hidden widgets and individual value / anonymous filters remain respected', () => {
   const h = boot([widget('visible'), widget('hidden', { hidden: true }),
-    widget('expensive', { fwMin: 1000 }), widget('private', { fwExcludeAnon: true })]);
+    // fwMin maste ligga OVER payloadens varde. combo:100 ger coins:1000 via NIVAVARDE, och
+    // 1000 >= 1000 slapper igenom — da hade provet matt ingenting.
+    widget('expensive', { fwMin: 2000 }), widget('private', { fwExcludeAnon: true })]);
   h.window.triggerGiftFireworks(event({ isAnonymous: true, combo: 100 }));
   assert.ok(h.fx('visible').classList.contains('play'));
   for (const id of ['hidden', 'expensive', 'private']) {

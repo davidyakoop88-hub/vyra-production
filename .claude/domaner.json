@@ -436,6 +436,7 @@
         "tests/gift-fireworks-sound.test.js",
         "tests/gift-fireworks-personal-rockets.test.js",
         "tests/gift-fireworks-concurrency.test.js",
+        "tests/gift-fireworks-niva.test.js",
         "tests/browser/fireworks-flip.browser.test.js",
         "tests/vfx-shared-ticker.test.js",
         "tests/gift-supernova-engine.test.js",
