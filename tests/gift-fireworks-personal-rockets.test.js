@@ -30,7 +30,8 @@ function boot(widgets = [widget()]) {
    satter darfor ett `coins` vars TOTALVARDE landar pa den niva combon en gang gav, sa att varje
    prov fortsatter mata det den heter. Nivaregeln har egna prov i gift-fireworks-niva.test.js.
    `coins` ar hela seriens summa, aldrig styckpris — se normalizer.js:159. */
-const NIVAVARDE = { 1: 1, 9: 1, 10: 100, 99: 100, 100: 1000, 10000: 1000 };
+// Widgeten i riggen har fwMin 1, sa trappan gar 10 och 100 (10 x och 100 x minimum).
+const NIVAVARDE = { 1: 1, 9: 1, 10: 10, 99: 10, 100: 100, 10000: 100 };
 const event = extra => ({ username: 'Alice', giftName: 'Rose',
   coins: NIVAVARDE[extra && extra.combo] ?? 100,
   giftImage: 'https://example.com/rose.png', profileImage: 'https://example.com/alice.png', ...extra });
@@ -109,9 +110,9 @@ test('unsafe event image URLs never become executable image sources', () => {
 
 test('hidden widgets and individual value / anonymous filters remain respected', () => {
   const h = boot([widget('visible'), widget('hidden', { hidden: true }),
-    // fwMin maste ligga OVER payloadens varde. combo:100 ger coins:1000 via NIVAVARDE, och
-    // 1000 >= 1000 slapper igenom — da hade provet matt ingenting.
-    widget('expensive', { fwMin: 2000 }), widget('private', { fwExcludeAnon: true })]);
+    // fwMin maste ligga OVER payloadens varde. combo:100 ger coins:100 via NIVAVARDE, sa en
+    // grans pa 100 hade slappt igenom och provet hade matt ingenting.
+    widget('expensive', { fwMin: 200 }), widget('private', { fwExcludeAnon: true })]);
   h.window.triggerGiftFireworks(event({ isAnonymous: true, combo: 100 }));
   assert.ok(h.fx('visible').classList.contains('play'));
   for (const id of ['hidden', 'expensive', 'private']) {
