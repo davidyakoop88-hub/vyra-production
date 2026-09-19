@@ -132,9 +132,15 @@
     return flyttade;
   }
 
+  // BANDEROLL OVANFOR DUKEN, INTE I VERKTYGSRADEN. Uppmatt vid 1280 px fonsterbredd:
+  // verktygsraden har 538 px synligt at nio knappar och spillde over med 6 px REDAN utan den
+  // har knappen — det ar darfor FORMAT, Mobil och Angra skriver over varandra dar. Varje
+  // forsok att placera varningen i raden gav antingen en 54 px bred olaslig knapp eller en
+  // knapp pa x=1026 som kravde att man rullade i sidled for att se den. En varning far inte
+  // behova letas fram. Arbetsytan ovanfor duken har plats, och ar dessutom dar felet finns.
   function raknare() {
     if (!iEditorn()) return;
-    var rad = document.querySelector('.editor-shell .editor-toolbar');
+    var rad = document.querySelector('.editor-shell .workarea');
     if (!rad) return;
     var ute = rakna();
     var knapp = rad.querySelector('[data-grans-raknare]');
@@ -144,11 +150,14 @@
       knapp.type = 'button';
       knapp.dataset.gransRaknare = '1';
       knapp.onclick = flyttaInAlla;
-      rad.append(knapp);
+      rad.prepend(knapp);
     }
-    knapp.textContent = '⚠ ' + ute.length + (ute.length === 1 ? ' widget' : ' widgetar') +
-      ' utanför bildrutan — flytta in';
-    knapp.title = 'Dessa syns inte i OBS eller TikTok LIVE Studio. Klicka för att flytta in dem. Ångra fungerar.';
+    // Banderollen gar over hela arbetsytans bredd, sa hela meningen far plats. I
+    // verktygsraden maste den kortas till '3 utanfor bild' for att over huvud taget rymmas.
+    knapp.textContent = '⚠ ' + ute.length +
+      (ute.length === 1 ? ' widget ligger' : ' widgetar ligger') +
+      ' utanför bildrutan och syns inte i sändningen — klicka för att flytta in';
+    knapp.title = 'Ångra fungerar om placeringen inte blir som du tänkt.';
   }
 
   // ---- KROKEN I DRAGET -------------------------------------------------------------------

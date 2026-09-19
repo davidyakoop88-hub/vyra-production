@@ -54,8 +54,8 @@ test.after(async () => {
 
 const WIDGET = { id: 'd1', type: 'templateTopLike', x: 40, y: 40, width: 300 };
 
-async function editorn(widgets) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+async function editorn(widgets, vy) {
+  const context = await browser.newContext({ viewport: vy || { width: 1440, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.render === 'function', null, { timeout: 20000 });
@@ -182,7 +182,7 @@ const INNE = { id: 'd2', type: 'templateTopLike', x: 40, y: 40, width: 300 };
 
 async function raknartext(page) {
   return page.evaluate(() => {
-    const k = document.querySelector('.editor-toolbar [data-grans-raknare]');
+    const k = document.querySelector('.workarea [data-grans-raknare]');
     return k ? k.textContent : null;
   });
 }
@@ -208,7 +208,7 @@ test('ett klick pa raknaren flyttar in dem — och bara dem', { skip, timeout: 9
   try {
     const m = await page.evaluate(async () => {
       const innanX = state.widgets.find(w => w.id === 'd2').x;
-      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      document.querySelector('.workarea [data-grans-raknare]').click();
       await new Promise(r => setTimeout(r, 600));
       const c = document.querySelector('.editor-shell .canvas');
       const ute = state.widgets.find(w => w.id === 'd1');
@@ -216,7 +216,7 @@ test('ett klick pa raknaren flyttar in dem — och bara dem', { skip, timeout: 9
       return {
         uteX: ute.x, uteBredd: el.offsetWidth, dukBredd: c.offsetWidth,
         inneX: state.widgets.find(w => w.id === 'd2').x, innanX,
-        kvar: !!document.querySelector('.editor-toolbar [data-grans-raknare]')
+        kvar: !!document.querySelector('.workarea [data-grans-raknare]')
       };
     });
     assert.ok(m.uteX + m.uteBredd <= m.dukBredd,
@@ -236,7 +236,7 @@ test('ett klick pa raknaren gar att angra', { skip, timeout: 90000 }, async () =
   try {
     const m = await page.evaluate(async () => {
       const fore = state.widgets.find(w => w.id === 'd1').x;
-      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      document.querySelector('.workarea [data-grans-raknare]').click();
       await new Promise(r => setTimeout(r, 600));
       const efterFlytt = state.widgets.find(w => w.id === 'd1').x;
 
@@ -264,11 +264,41 @@ test('angra-knappen i verktygsraden blir klickbar efter en flytt', { skip, timeo
     const m = await page.evaluate(async () => {
       const k = () => document.querySelector('.editor-toolbar [data-angra]');
       const foreDisablad = k() ? k().disabled : null;
-      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      document.querySelector('.workarea [data-grans-raknare]').click();
       await new Promise(r => setTimeout(r, 600));
       return { foreDisablad, efterDisablad: k() ? k().disabled : null, finns: !!k() };
     });
     assert.equal(m.finns, true, 'angra-knappen saknas i verktygsraden');
     assert.equal(m.efterDisablad, false, 'angra-knappen ar fortfarande disablad efter flytten');
+  } finally { await context.close() }
+});
+
+test('banderollen ar LASBAR vid ett smalt fonster, inte bara narvarande', { skip, timeout: 90000 }, async () => {
+  // DET HAR PROVET SAKNADES, och det kostade en deploy. Forsta versionen la varningen i
+  // editorns verktygsrad och provade bara textContent. I produktion, vid 1280 px
+  // fonsterbredd, hade raden 538 px synligt at nio knappar — den spillde over med 6 px REDAN
+  // utan varningen — sa flexboxen klamde ihop knappen till 54 px. Ratt text, oläslig knapp,
+  // gront prov. Darav: mat den RENDERADE rutan, inte strangen.
+  const { context, page } = await editorn([UTE, INNE], { width: 1280, height: 800 });
+  try {
+    const m = await page.evaluate(() => {
+      const k = document.querySelector('.workarea [data-grans-raknare]');
+      if (!k) return { finns: false };
+      const yta = document.querySelector('.editor-shell .workarea');
+      const kr = k.getBoundingClientRect(), yr = yta.getBoundingClientRect();
+      return {
+        finns: true,
+        klamd: k.scrollWidth > k.clientWidth + 1,
+        bredd: Math.round(kr.width),
+        innehall: k.scrollWidth,
+        inomYtan: kr.left >= yr.left - 1 && kr.right <= yr.right + 1,
+        text: k.textContent
+      };
+    });
+    assert.equal(m.finns, true, 'banderollen saknas vid 1280 px');
+    assert.equal(m.klamd, false,
+      `banderollen ar ihopklamd: rutan ar ${m.bredd} px men innehallet kraver ${m.innehall} px`);
+    assert.equal(m.inomYtan, true, 'banderollen ligger utanfor arbetsytans synliga del');
+    assert.ok(m.text.includes('utanf'), 'banderollen namner inte bildrutan');
   } finally { await context.close() }
 });
