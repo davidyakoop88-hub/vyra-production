@@ -33,16 +33,17 @@ test('Top Streak CSS keeps profile filled, gift complete, and motion accessible'
   const css = read('top-streak-simple.css');
   assert.match(css, /object-fit: cover/);
   assert.match(css, /object-fit: contain/);
-  assert.match(css, /\.hit \.streak-profile-face/);
-  assert.match(css, /vyraStreakFrontEvent/);
-  assert.match(css, /vyraStreakBackEvent/);
+  assert.match(css, /calc\(8s \/ var\(--speed\)\)/);
+  assert.match(css, /vyraStreakFrontLoop/);
+  assert.match(css, /vyraStreakBackLoop/);
+  assert.match(css, /infinite/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
 
 test('cache versions change with the Top Streak files', () => {
   const studio = read('studio.html');
   const media = read('media.js');
-  assert.match(studio, /top-streak-simple\.css\?v=20260919-12/);
-  assert.match(studio, /media\.js\?v=20260919-12/);
-  assert.match(media, /const version='20260919-12'/);
+  assert.match(studio, /top-streak-simple\.css\?v=20260919-13/);
+  assert.match(studio, /media\.js\?v=20260919-13/);
+  assert.match(media, /const version='20260919-13'/);
 });

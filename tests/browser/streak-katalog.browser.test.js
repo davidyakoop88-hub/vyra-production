@@ -57,7 +57,8 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
     const scoreRect = el?.querySelector('.streak-score')?.getBoundingClientRect();
     const idleProfileAnimation = profile && getComputedStyle(profile.parentElement).animationName;
     const idleGiftAnimation = gift && getComputedStyle(gift.parentElement).animationName;
-    el?.classList.add('hit');
+    const idleDuration = profile && getComputedStyle(profile.parentElement).animationDuration;
+    const idleIterations = profile && getComputedStyle(profile.parentElement).animationIterationCount;
     return {
       heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
       buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
@@ -66,8 +67,7 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
       profileFit: profile && getComputedStyle(profile).objectFit,
       giftFit: gift && getComputedStyle(gift).objectFit,
       idleProfileAnimation, idleGiftAnimation,
-      profileAnimation: profile && getComputedStyle(profile.parentElement).animationName,
-      giftAnimation: gift && getComputedStyle(gift.parentElement).animationName,
+      idleDuration, idleIterations,
       styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle'),
       cardHeight: cardRect?.height, vertical: !!(titleRect&&flipRect&&nameRect&&scoreRect)&&
         titleRect.bottom<=flipRect.top+1&&flipRect.bottom<=nameRect.top+1&&nameRect.bottom<=scoreRect.top+1,
@@ -86,10 +86,10 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
   assert.equal(result.mechanism, false);
   assert.equal(result.profileFit, 'cover');
   assert.equal(result.giftFit, 'contain');
-  assert.equal(result.idleProfileAnimation, 'none');
-  assert.equal(result.idleGiftAnimation, 'none');
-  assert.match(result.profileAnimation, /vyraStreakFrontEvent/);
-  assert.match(result.giftAnimation, /vyraStreakBackEvent/);
+  assert.match(result.idleProfileAnimation, /vyraStreakFrontLoop/);
+  assert.match(result.idleGiftAnimation, /vyraStreakBackLoop/);
+  assert.equal(result.idleDuration, '8s');
+  assert.equal(result.idleIterations, 'infinite');
   assert.equal(result.styleControl, false);
   assert.ok(result.cardHeight >= 215 && result.cardHeight <= 235, `fel höjd ${result.cardHeight}`);
   assert.equal(result.vertical, true, JSON.stringify(result));
