@@ -45,6 +45,6 @@ test('Studio visar den nya sidan och Desktop-paketet innehaller lasaren',()=>{
   assert.match(html,/data-extra="tiktokEvents"/);
   assert.match(html,/tiktok-event-connector\.js\?v=20260920-1/);
   assert.ok(pkg.build.files.includes('tiktok-event-service.js'));
-  assert.equal(pkg.version,'1.2.5');
+  assert.equal(pkg.version,'1.2.6');
   assert.match(fs.readFileSync(path.join(__dirname,'..','electron-app','tiktok-event-service.js'),'utf8'),/15 \* 60 \* 1000/);
 });
