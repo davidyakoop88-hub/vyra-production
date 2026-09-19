@@ -10,13 +10,25 @@ vid sin explosion. Båda ansiktena delar position och storlek. Saknad eller
 trasig profil visar en personsiluett utan text. Gamla sparade textfält lämnas
 orörda men renderas inte längre. Ingen livedata sparas i layouten.
 
-Nivåerna styrs av gåvoantal, inte myntvärde:
+Nivåerna styrs av gåvans VÄRDE. Fram till 2026-09-19 styrdes de av gåvoantalet,
+vilket i sändningen 2026-09-18 gav alla elva stora tändningar till 1-mynts-gåvor
+medan 23 gåvor värda 26 536 mynt — en av dem på 5000 — körde den minsta nivån.
 
-| Antal | Visade raketer | Extra uppbyggnad |
+**Gränsen och trappan är två olika siffror**, och det är avsiktligt.
+`fwMin` avgör vad som tänder något alls; `fwFinal` avgör vad som räknas som
+stort. Ett första försök lät `fwMin` göra båda jobben, och då gick det inte att
+både låta en 1-mynts-gåva tända och hålla finalen sällsynt — mätt på bandet gav
+`fwMin=1` fyrtionio stora finaler på två timmar.
+
+| Totalvärde | Visade raketer | Extra uppbyggnad |
 | --- | --- | --- |
-| 1–9 | 1 | 0 s |
-| 10–99 | 3 | 0,9 s |
-| 100 eller fler | 7 | 4,2 s |
+| under `fwFinal` / 10 | 1 | 0 s |
+| `fwFinal` / 10 upp till `fwFinal` | 3 | 0,9 s |
+| `fwFinal` eller mer | 7 | 4,2 s |
+
+Standardvärdet är 1000, alltså firande vid 100 mynt och stor final vid 1000.
+Ett event där beloppet inte går att läsa — editorns testknapp, till exempel —
+faller tillbaka på antalet precis som förr.
 
 Antalet raketer representerar en show, inte en raket per gåva. Grundtiden är
 fortfarande 2–10 sekunder. Varje raket har egen ankomsttid, explosion och flip.
