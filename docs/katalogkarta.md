@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `0d429c4`
+Commit: `8d7ea5c`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **191** |
-| Sektioner | 21 |
-| Med katalognyckel | 191 / 191 |
-| Med shadow DOM-miniatyr | 191 / 191 |
-| Ritar sin design | 191 / 191 |
+| Kort totalt | **189** |
+| Sektioner | 22 |
+| Med katalognyckel | 189 / 189 |
+| Med shadow DOM-miniatyr | 189 / 189 |
+| Ritar sin design | 189 / 189 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -40,9 +40,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
+| VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| TOP COINS · 2 NYA DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-20 | — |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
@@ -56,13 +58,18 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
-| VYRA TOP RANKING · VARJE DESIGN SEPARAT | 8 | 8/8 | 8/8 | 8/8 | 2026-08-03 | — |
-| TOP LIKE · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
-| VYRA TOP STREAK · REDIGERBAR | 1 | 1/1 | 1/1 | 1/1 | 2026-09-19 | — |
+| VYRA TOP RANKING · VARJE DESIGN SEPARAT | 4 | 4/4 | 4/4 | 4/4 | 2026-09-20 | — |
+| TOP LIKE · VYRA ORIGINAL | 4 | 4/4 | 4/4 | 4/4 | 2026-09-20 | — |
 | VYRA ORIGINAL · REDIGERBARA | 40 | 40/40 | 40/40 | 40/40 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | TOP GIFTER · DESIGNVAL | 40 | 40/40 | 40/40 | 40/40 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 
 ## Varje kort
+
+### VYRA TOP STREAK · CLEAN FLIP
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Clean Flip | `catalog:topstreak` | ✓ | ✓ | 2026-09-20 | — |
 
 ### GIFT FIREWORKS · 5 DESIGNER
 
@@ -91,6 +98,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+
+### TOP COINS · 2 NYA DESIGNER
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-20 | — |
+| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-20 | — |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 
@@ -246,29 +260,19 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Coins · Stil 1 · Lista | `catalog:ranking:templateTopCoins:clean` | ✓ | ✓ | 2026-08-03 | — |
-| Top Coins · Stil 2 · Tre i mitten | `catalog:ranking:templateTopCoins:center` | ✓ | ✓ | 2026-08-03 | — |
-| Top Coins · Stil 3 · Podium | `catalog:ranking:templateTopCoins:podium` | ✓ | ✓ | 2026-08-03 | — |
-| Top Coins · Stil 4 · Neon | `catalog:ranking:templateTopCoins:neon` | ✓ | ✓ | 2026-08-03 | — |
-| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-08-03 | — |
-| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-08-03 | — |
-| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-08-03 | — |
-| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-08-03 | — |
+| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-09-20 | — |
+| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-09-20 | — |
+| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-09-20 | — |
+| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-09-20 | — |
 
-### TOP LIKE · VARJE DESIGN SEPARAT
+### TOP LIKE · VYRA ORIGINAL
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Stil 1 · Lista | `catalog:toplike:clean` | ✓ | ✓ | 2026-08-03 | — |
-| Stil 2 · Tre i mitten | `catalog:toplike:center` | ✓ | ✓ | 2026-08-03 | — |
-| Stil 3 · Podium | `catalog:toplike:podium` | ✓ | ✓ | 2026-08-03 | — |
-| Stil 4 · Neon | `catalog:toplike:neon` | ✓ | ✓ | 2026-08-03 | — |
-
-### VYRA TOP STREAK · REDIGERBAR
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| VYRA Top Streak | `catalog:topstreak` | ✓ | ✓ | 2026-09-19 | — |
+| VYRA Clean Bar | `catalog:toplike:clean-bar` | ✓ | ✓ | 2026-09-20 | — |
+| VYRA Soft Stack | `catalog:toplike:soft-stack` | ✓ | ✓ | 2026-09-20 | — |
+| VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-20 | — |
+| VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-20 | — |
 
 ### VYRA ORIGINAL · REDIGERBARA
 

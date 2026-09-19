@@ -1,0 +1,30 @@
+html body .widget.vyra-streak.approved-streak{
+  position:absolute;display:flex!important;flex-direction:column!important;align-items:center!important;
+  gap:5px!important;height:auto!important;min-height:0!important;padding:0!important;border:0!important;
+  border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;overflow:visible!important;color:#fff;font-family:Inter,system-ui,sans-serif;
+}
+html body .widget.approved-streak .streak-flip{
+  position:relative!important;width:72%!important;height:auto!important;aspect-ratio:1!important;margin:0!important;
+  border-radius:50%!important;background:none!important;border:2px solid var(--streak)!important;
+  box-shadow:0 0 10px var(--streak),inset 0 0 9px color-mix(in srgb,var(--streak),transparent 45%)!important;
+  transform-style:preserve-3d!important;animation:approved-streak-flip var(--flip-duration,8s) ease-in-out infinite!important;
+}
+html body .widget.approved-streak .streak-flip::before{
+  content:"";position:absolute;inset:-7%;border-radius:50%;border:1px solid #47e7ff;border-left-color:transparent;
+  border-bottom-color:#9c5cff;filter:drop-shadow(0 0 5px #47e7ff);animation:approved-streak-ring 11s linear infinite;
+}
+html body .widget.approved-streak .streak-profile-face,
+html body .widget.approved-streak .streak-gift-face{position:absolute!important;inset:7%!important;width:86%!important;height:86%!important;border-radius:50%!important;overflow:hidden!important;backface-visibility:hidden!important;background:none!important}
+html body .widget.approved-streak .streak-profile-face{transform:rotateY(180deg)!important}
+html body .widget.approved-streak .streak-gift-face{transform:rotateY(0)!important}
+html body .widget.approved-streak .streak-profile-face img,
+html body .widget.approved-streak .streak-gift-face img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:50%!important;border:0!important;box-shadow:none!important}
+html body .widget.approved-streak .streak-gift-face img{object-fit:contain!important;padding:10%!important;box-sizing:border-box!important}
+html body .widget.approved-streak .approved-streak-copy{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;width:100%!important;white-space:nowrap!important;text-shadow:0 2px 6px #000!important}
+html body .widget.approved-streak .approved-streak-copy strong{max-width:55%;overflow:hidden;text-overflow:ellipsis;font-size:clamp(13px,7cqw,18px)!important;font-weight:850!important;color:#fff!important}
+html body .widget.approved-streak .approved-streak-copy em{font-size:clamp(11px,6cqw,15px)!important;font-style:normal!important;font-weight:900!important;color:var(--streak)!important;text-shadow:0 2px 6px #000,0 0 8px color-mix(in srgb,var(--streak),transparent 35%)!important}
+@keyframes approved-streak-flip{0%,42%{transform:rotateY(0)}50%,92%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+@keyframes approved-streak-ring{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){html body .widget.approved-streak .streak-flip,html body .widget.approved-streak .streak-flip::before{animation:none!important}}
+.approved-streak-catalog button>i{border-radius:50%!important;background:linear-gradient(145deg,#fff1a1,#d99516)!important;color:#6b3a00!important;box-shadow:0 0 10px #ffc94d88!important}

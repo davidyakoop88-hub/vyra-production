@@ -1,11 +1,7 @@
 (function () {
   const RANKING_TYPES = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
-  const SKINS = [
-    ['clean', 'Clean'], ['royal-gold', 'Royal Gold'], ['neon', 'Neon'], ['galaxy', 'Galaxy'], ['ice', 'Ice'],
-    ['fire', 'Fire'], ['sakura', 'Sakura'], ['cyber', 'Cyber'], ['luxury', 'Luxury'],
-    ['aurora', 'Aurora'], ['retro-crt', 'Retro CRT'], ['goldrush', 'Gold Rush'],
-    ['prism', 'Prism'], ['arena', 'Arena'], ['brandkit', 'Brand Kit']
-  ];
+  const SKINS = window.VYRA_TOPLIKE_STYLES || [['clean-bar', 'VYRA Clean Bar']];
+  const SKIN_IDS = new Set(SKINS.map(([id]) => id));
 
   // Custom font upload — same IndexedDB-blob pattern action-media.js already uses for action media,
   // applied to widget fonts instead. Font bytes never touch the server; FontFace + document.fonts is
@@ -211,7 +207,7 @@
   wh = function (w) {
     let html = wsRenderWh(w);
     if (!RANKING_TYPES.includes(w.type)) return html;
-    const skin = w.skin || 'royal-gold';
+    const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
     const anim = w.entranceAnimation && w.entranceAnimation !== 'none' ? ` ws-anim-${w.entranceAnimation}` : '';
     html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike skin-${skin}${anim}`);
     // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
@@ -236,6 +232,13 @@
         );
       });
     }
+
+    // Rank is communicated by podium position and profile size. Remove legacy
+    // 1-10 badges from the markup itself so an old skin cannot reveal them.
+    html = html.replace(
+      /(<div class="toplike-row[^"]*">(?:<i class="toplike-crown">[^<]*<\/i>)?)<b>\d+<\/b>/g,
+      '$1'
+    );
 
     // Sokvagen byggs numera ratt fran borjan i media.js, som slar upp filnamnet i
     // VYRA_FRAME_FILES. Har satt tidigare ett plaster som matchade literalen
@@ -264,7 +267,7 @@
       `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option><option value="points"${liveMetric === 'points' ? ' selected' : ''}>Poäng (Actions & Events)</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
     );
 
-    const skin = w.skin || 'royal-gold';
+    const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
     const skinGroup = `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
     const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
     const textFxGroup = `<div class="property-group"><h4>EGET TYPSNITT</h4><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
@@ -300,7 +303,10 @@
     if (dateRange) dateRange.onchange = e => { w.dateRange = e.target.value; save(); render(); };
 
     document.querySelectorAll('[data-ws-skin]').forEach(btn => {
-      btn.onclick = () => { w.skin = btn.dataset.wsSkin; save(); render(); };
+      btn.onclick = () => {
+        if (!window.applyVyraTopLikeStyle?.(w, btn.dataset.wsSkin)) w.skin = btn.dataset.wsSkin;
+        save(); render();
+      };
     });
 
     const entrance = document.querySelector('#wsEntrance');
