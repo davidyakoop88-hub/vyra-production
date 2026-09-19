@@ -268,8 +268,8 @@
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
-      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff','rose-frame':'#ff70b7','heart-frame':'#ff4d9a','sapphire-frame':'#46cbff','azure-frame':'#3a9cff'})[v.model] || '#ff4f9f',
-      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff','rose-frame':'#ffd0e7','heart-frame':'#ffe1ef','sapphire-frame':'#8cceff','azure-frame':'#b7e6ff'})[v.model] || '#ffb1dc'
+      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49c8ff',4:'#4d8dff','pulse-rail':'#b629ff','pulse-tower':'#b629ff','prism-core':'#38d9ff','prism-spine':'#38d9ff','signal-ribbon':'#ff3d91','heart-column':'#ff3d91'})[v.model] || '#b629ff',
+      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#d9f6ff',4:'#67dcff','pulse-rail':'#20d9ff','pulse-tower':'#20d9ff','prism-core':'#8768ff','prism-spine':'#8768ff','signal-ribbon':'#ff765e','heart-column':'#ff765e'})[v.model] || '#20d9ff'
     }),
 
     'fanlevel.theme': v => ({
@@ -403,7 +403,7 @@
     'socialgoal': parts => {
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
-      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['rose-frame','heart-frame','sapphire-frame','azure-frame']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
+      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
       if (!(frameModels.has(rawModel) || Number.isFinite(model))) throw new Error('catalog:socialgoal kräver en giltig modell');
       if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];

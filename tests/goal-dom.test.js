@@ -38,10 +38,10 @@ test('social goal märker värde, target, fyllnad och procent', () => {
   assert.ok(widget.querySelector('[data-goal-target]'), 'målet har inget eget element');
   assert.ok(widget.querySelector('[data-goal-fill]'), 'stapeln är inte märkt');
   assert.ok(widget.querySelector('[data-goal-pct]'), 'procenttexten är inte märkt');
-  // Separatorn ska förbli det enda span:et inuti strong — CSS-regeln för goal-4 träffar den.
-  const strong = widget.querySelector('.goal-track strong');
+  // Separatorn ska förbli det enda span:et inuti den nya kopians värderad.
+  const strong = widget.querySelector('.goal-new-copy strong');
   assert.equal(strong.querySelectorAll('span').length, 1,
-    'talen lades i span och ärver .goal-4 .goal-track strong span{display:block}');
+    'värdena ska vara separata b-element runt en enda separator');
   assert.equal(strong.querySelector('[data-goal-value]').tagName, 'B');
 });
 
