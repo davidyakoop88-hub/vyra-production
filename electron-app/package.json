@@ -31,6 +31,7 @@
       "local-server.js",
       "tiktok-service.js",
       "tiktok-fields.js",
+      "tiktok-event-service.js",
       "obs-service.js",
       "updater.js",
       "update-config.json",
