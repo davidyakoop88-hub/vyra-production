@@ -378,10 +378,11 @@ test('profil och gåvonamn är tillfälliga och skrivs inte till layouten', () =
 
 
 test('gåvans värde väljer rätt nivå vid gränserna', () => {
-  // Trosklarna raknas ur widgetens fwMin: firande vid 10 x minimum, final vid 100 x minimum.
-  // Riggens fw() har fwMin 1, alltsa 10 och 100. Provet mater hela kedjan: dataset, raketantal,
+  // Trappan raknas ur widgetens fwFinal: stor final vid det vardet, firande vid en tiondel.
+  // Riggens fw() satter ingen fwFinal, sa standarden 1000 galler — alltsa 100 och 1000.
+  // fwMin ar GRANSEN och paverkar inte nivan. Provet mater hela kedjan: dataset, raketantal,
   // --duration och kotiden — de fyra maste folja varandra, annars reserverar kon fel tid.
-  for (const [coins,level,waves,duration] of [[1,'single',0,5],[9,'single',0,5],[10,'burst',2,5.9],[99,'burst',2,5.9],[100,'show',6,9.2]]) {
+  for (const [coins,level,waves,duration] of [[1,'single',0,5],[99,'single',0,5],[100,'burst',2,5.9],[999,'burst',2,5.9],[1000,'show',6,9.2]]) {
     const {h,d}=boot();h.window.triggerGiftFireworks({coins,username:'anna',count:1});
     assert.equal(fx(d).dataset.fwLevel,level,`${coins} coins`);
     assert.equal(fx(d).querySelectorAll('.fw-personal-rocket').length,waves+1);
