@@ -231,9 +231,9 @@
     }),
 
     'topstreak': () => ({
-      type: 'templateTopStreak', x: 65, y: 220, width: 310, title: 'Top Streak',
-      templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18, accent: '#ff671f',
-      dataColor: '#fff'
+      type: 'templateTopStreak', x: 36, y: 220, width: 360, title: 'Top Streak',
+      templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18, accent: '#22d3ee',
+      dataColor: '#fff', giftSize: 82, streakSpeed: 1, streakGlow: 45
     }),
     'topstreak.theme': v => ({
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 220, width: v.width,
