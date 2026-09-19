@@ -46,15 +46,16 @@ test('legacy rank numbers cannot return through an old framed skin', () => {
 test('retired saved skins are clamped to the new VYRA designs at render time', () => {
   const media = fs.readFileSync('media.js', 'utf8');
   const studio = fs.readFileSync('toplike-studio.js', 'utf8');
-  assert.match(media, /hasOwnProperty\.call\(presets,w\.skin\)\?w\.skin:'clean-bar'/);
+  const guard = fs.readFileSync('approved-rankings.js', 'utf8');
+  assert.match(guard, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
   assert.match(studio, /SKIN_IDS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
-  assert.doesNotMatch(media, /<select id="likeTheme">/);
+  assert.match(guard, /querySelector\('#likeTheme'\).*closest\('label'\).*remove/);
 });
 
 test('fresh asset versions prevent a cached retired design from surviving reload', () => {
   const studioHtml = fs.readFileSync('studio.html', 'utf8');
   const media = fs.readFileSync('media.js', 'utf8');
-  assert.match(studioHtml, /media\.js\?v=20260919-8/);
-  assert.match(media, /toplike-studio\.css\?v=20260919-7/);
-  assert.match(media, /toplike-studio\.js\?v=20260919-7/);
+  assert.match(studioHtml, /media\.js\?v=20260919-14/);
+  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
+  assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
 });

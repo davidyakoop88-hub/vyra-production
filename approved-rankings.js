@@ -118,6 +118,7 @@
       if (view === 'editor' || view === 'overlay') cleanCatalog();
       if (view !== 'editor') return;
       const w = liveWidget(selected);
+      if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
       if (w && w.type === 'templateTopStreak') bindControls(w);
     };
 

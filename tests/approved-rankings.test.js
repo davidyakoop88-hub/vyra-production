@@ -28,7 +28,7 @@ test('Top Like accepts only the four approved skins and defaults transparent', (
 });
 
 test('central retirement guard loads last with its own cache version', () => {
-  assert.match(html, /approved-rankings\.css\?v=20260920-1/);
-  assert.match(html, /approved-rankings\.js\?v=20260920-1/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260920-1') > html.indexOf('vyra-state-sync.js'));
+  assert.match(html, /approved-rankings\.css\?v=20260920-2/);
+  assert.match(html, /approved-rankings\.js\?v=20260920-2/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260920-2') > html.indexOf('vyra-state-sync.js'));
 });
