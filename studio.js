@@ -218,12 +218,6 @@ function bind(){
             let snappat=window.VyraSnapp.justera(el,nextLeft,nextTop,e,s.scale);
             nextLeft=snappat.left;nextTop=snappat.top;
           }
-          // Gransen ligger EFTER snappen: snappen far dra mot ett mal, men malet far aldrig
-          // ligga utanfor duken. Omvand ordning hade latit snappen skjuta ut widgeten igen.
-          if(window.VyraGrans){
-            let inom=window.VyraGrans.klamp(nextLeft,nextTop);
-            nextLeft=inom.vanster;nextTop=inom.topp;
-          }
           el.style.left=Math.round(nextLeft)+'px';
           el.style.top=Math.round(nextTop)+'px';
         }
@@ -236,13 +230,8 @@ function bind(){
             return;
           }
           suppressClick=s.moved;
-          // Bade i dragmattet OCH har. Dragmattet ar vad anvandaren SER; det har ar vad som
-          // SPARAS, och ett lage kan na hit utan att ha passerat dragmattet.
-          let inom=window.VyraGrans
-            ?window.VyraGrans.klamp(parseInt(el.style.left),parseInt(el.style.top))
-            :{vanster:parseInt(el.style.left),topp:parseInt(el.style.top)};
-          w.x=inom.vanster;
-          w.y=inom.topp;
+          w.x=parseInt(el.style.left);
+          w.y=parseInt(el.style.top);
           save();
           if(e&&el.hasPointerCapture?.(e.pointerId))el.releasePointerCapture(e.pointerId);
           s=null;

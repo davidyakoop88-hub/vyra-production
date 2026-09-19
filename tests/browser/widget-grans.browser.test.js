@@ -54,17 +54,17 @@ test.after(async () => {
 
 const WIDGET = { id: 'd1', type: 'templateTopLike', x: 40, y: 40, width: 300 };
 
-async function editorn() {
+async function editorn(widgets) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.render === 'function', null, { timeout: 20000 });
-  await page.evaluate(async w => {
+  await page.evaluate(async ws => {
     await window.VyraSessionState.projectLocalSession();
-    view = 'editor'; state.widgets = [w]; selected = 'd1';
+    view = 'editor'; state.widgets = ws; selected = 'd1';
     render(); if (typeof bind === 'function') bind();
     await new Promise(r => setTimeout(r, 700));
-  }, WIDGET);
+  }, widgets || [WIDGET]);
   return { context, page };
 }
 
@@ -170,5 +170,58 @@ test('en widget inne pa duken markeras inte', { skip, timeout: 90000 }, async ()
       return document.querySelector('.canvas [data-id="d1"]').dataset.utanforDuken === '1';
     });
     assert.equal(markerad, false, 'en widget inne pa duken blev felaktigt markerad');
+  } finally { await context.close() }
+});
+
+// ---- RAKNAREN ----------------------------------------------------------------------------
+// Markeringen ensam racker inte: ligger widgeten HELT utanfor duken ligger dess markering
+// ocksa utanfor. Uppmatt pa Davids layout — Top Like pa x=688 lag utanfor hela ytan.
+
+const UTE = { id: 'd1', type: 'templateTopLike', x: 688, y: 200, width: 76 };
+const INNE = { id: 'd2', type: 'templateTopLike', x: 40, y: 40, width: 300 };
+
+async function raknartext(page) {
+  return page.evaluate(() => {
+    const k = document.querySelector('.editor-toolbar [data-grans-raknare]');
+    return k ? k.textContent : null;
+  });
+}
+
+test('raknaren visar hur manga som ligger utanfor', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([UTE, INNE]);
+  try {
+    const t = await raknartext(page);
+    assert.ok(t && /1\s+widget/.test(t), `raknaren sa ${JSON.stringify(t)}, forvantade "1 widget"`);
+    assert.ok(t.includes('utanf'), 'raknaren namner inte bildrutan');
+  } finally { await context.close() }
+});
+
+test('raknaren finns inte alls nar allt ligger inne', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([INNE]);
+  try {
+    assert.equal(await raknartext(page), null, 'raknaren visades trots att allt lag inne');
+  } finally { await context.close() }
+});
+
+test('ett klick pa raknaren flyttar in dem — och bara dem', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([UTE, INNE]);
+  try {
+    const m = await page.evaluate(async () => {
+      const innanX = state.widgets.find(w => w.id === 'd2').x;
+      document.querySelector('.editor-toolbar [data-grans-raknare]').click();
+      await new Promise(r => setTimeout(r, 600));
+      const c = document.querySelector('.editor-shell .canvas');
+      const ute = state.widgets.find(w => w.id === 'd1');
+      const el = document.querySelector('.canvas [data-id="d1"]');
+      return {
+        uteX: ute.x, uteBredd: el.offsetWidth, dukBredd: c.offsetWidth,
+        inneX: state.widgets.find(w => w.id === 'd2').x, innanX,
+        kvar: !!document.querySelector('.editor-toolbar [data-grans-raknare]')
+      };
+    });
+    assert.ok(m.uteX + m.uteBredd <= m.dukBredd,
+      `widgeten ligger fortfarande utanfor: ${m.uteX} + ${m.uteBredd} > ${m.dukBredd}`);
+    assert.equal(m.inneX, m.innanX, 'en widget som redan lag inne FLYTTADES av knappen');
+    assert.equal(m.kvar, false, 'raknaren stod kvar trots att allt nu ligger inne');
   } finally { await context.close() }
 });

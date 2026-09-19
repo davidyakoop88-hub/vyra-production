@@ -83,19 +83,139 @@
     return antal;
   }
 
+  // ---- RÄKNAREN --------------------------------------------------------------------------
+  // Markeringen ensam räcker inte: en widget som ligger HELT utanför duken har sin markering
+  // också utanför, och då syns varningen lika lite som widgeten. Uppmätt på Davids egen
+  // layout — Top Like på x=688 låg utanför hela redigeringsytan. Räknaren sitter i
+  // verktygsraden och syns oavsett var widgeten hamnat.
+  //
+  // Verktygsraden är redan dold i overlay-utdata (studio.css:257), så räknaren kan fysiskt
+  // inte hamna i sändningen.
+  function rakna() {
+    if (!iEditorn()) return [];
+    var d = duken(), ute = [];
+    try {
+      document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
+        if (stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
+          el.offsetWidth, el.offsetHeight, d)) ute.push(el.dataset.id);
+      });
+    } catch (e) {}
+    return ute;
+  }
+
+  // Flyttar in HELA widgeten när den får plats, annars till kanten. Det är en STARKARE
+  // regel än dragets gräns, och det är med flit: här har användaren bett om det med ett
+  // klick. Draget får inte göra samma sak — se resonemanget om kant-mot-kant-snappen ovan.
+  // Ångra fungerar: save() noterar i VyraHistorik före skrivningen.
+  function flyttaInAlla() {
+    if (!iEditorn()) return 0;
+    var d = duken(), flyttade = 0;
+    try {
+      // `state` och `save` deklareras med const/let i studio.js och hamnar darfor ALDRIG pa
+      // window — de ligger i den globala LEXIKALA miljon, som delas mellan skript. Darfor
+      // bara namnet, inte root.state. Uppmatt: root.state var undefined och knappen gjorde
+      // ingenting alls.
+      var lager = (typeof state !== 'undefined') ? state : null;
+      if (!lager || !Array.isArray(lager.widgets)) return 0;
+      document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
+        var w = lager.widgets.filter(function (x) { return x.id === el.dataset.id })[0];
+        if (!w) return;
+        var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
+        if (!stickerUt(x, y, el.offsetWidth, el.offsetHeight, d)) return;
+        w.x = Math.min(Math.max(0, x), Math.max(0, d.bredd - el.offsetWidth));
+        w.y = Math.min(Math.max(0, y), Math.max(0, d.hojd - el.offsetHeight));
+        flyttade++;
+      });
+      if (flyttade && typeof save === 'function') save();
+      if (flyttade && typeof render === 'function') render();
+    } catch (e) {}
+    return flyttade;
+  }
+
+  function raknare() {
+    if (!iEditorn()) return;
+    var rad = document.querySelector('.editor-shell .editor-toolbar');
+    if (!rad) return;
+    var ute = rakna();
+    var knapp = rad.querySelector('[data-grans-raknare]');
+    if (!ute.length) { if (knapp) knapp.remove(); return; }
+    if (!knapp) {
+      knapp = document.createElement('button');
+      knapp.type = 'button';
+      knapp.dataset.gransRaknare = '1';
+      knapp.onclick = flyttaInAlla;
+      rad.append(knapp);
+    }
+    knapp.textContent = '⚠ ' + ute.length + (ute.length === 1 ? ' widget' : ' widgetar') +
+      ' utanför bildrutan — flytta in';
+    knapp.title = 'Dessa syns inte i OBS eller TikTok LIVE Studio. Klicka för att flytta in dem. Ångra fungerar.';
+  }
+
+  // ---- KROKEN I DRAGET -------------------------------------------------------------------
+  // studio.js ar minifierad handkod och far enligt husregeln (domaner.json, studio-core)
+  // ALDRIG andras direkt — den monkey-patchas fran syskonfil. Draget sitter som
+  // el.onpointermove/onpointerup, satta av bind(), sa vi lindar dem efter varje bind().
+  //
+  // ORDNINGEN AR OLIKA I DE TVA: i move skriver originalet style.left, sa vi klamper EFTER.
+  // I up LASER originalet style.left och skriver w.x, sa vi klamper FORE — annars sparas
+  // det oklampade laget och widgeten hoppar tillbaka forst vid nasta ritning.
+  function klampElement(el) {
+    var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10));
+    el.style.left = k.vanster + 'px';
+    el.style.top = k.topp + 'px';
+  }
+
+  function haktaDrag() {
+    if (!iEditorn()) return 0;
+    var antal = 0;
+    try {
+      document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
+        // Markeringen sitter pa FUNKTIONEN, inte pa elementet: bind() satter om handlerarna
+        // varje gang den kors, sa en flagga pa elementet hade fatt oss att hoppa over en
+        // nod vars krok just skrivits over — och klampen hade tyst forsvunnit.
+        var move = el.onpointermove, up = el.onpointerup, avbryt = el.onpointercancel;
+        if (typeof move === 'function' && !move.__grans) {
+          var nyMove = function (e) { var r = move.call(this, e); klampElement(el); return r; };
+          nyMove.__grans = 1; el.onpointermove = nyMove; antal++;
+        }
+        if (typeof up === 'function' && !up.__grans) {
+          var nyUp = function (e) { klampElement(el); return up.call(this, e); };
+          nyUp.__grans = 1; el.onpointerup = nyUp;
+        }
+        if (typeof avbryt === 'function' && !avbryt.__grans) {
+          var nyAv = function (e) { klampElement(el); return avbryt.call(this, e); };
+          nyAv.__grans = 1; el.onpointercancel = nyAv;
+        }
+      });
+    } catch (e) {}
+    return antal;
+  }
+
   var api = {
-    klamp: klamp, klampEtt: klampEtt, duken: duken,
-    stickerUt: stickerUt, markera: markera, MIN_KVAR: MIN_KVAR, STANDARD: STANDARD
+    klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt,
+    markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, raknare: raknare,
+    haktaDrag: haktaDrag,
+    MIN_KVAR: MIN_KVAR, STANDARD: STANDARD
   };
 
   if (typeof module === 'object' && module.exports) { module.exports = api; return; }
 
   root.VyraGrans = api;
 
-  // Markeringen körs efter varje render. render() byter ut noderna, så en klass satt en gång
-  // hade försvunnit vid nästa ritning.
+  // Markeringen och räknaren körs efter varje render. render() byter ut noderna, så en klass
+  // satt en gång hade försvunnit vid nästa ritning.
   if (typeof root.render === 'function') {
     var forra = root.render;
-    root.render = function () { var r = forra.apply(this, arguments); markera(); return r; };
+    root.render = function () {
+      var r = forra.apply(this, arguments);
+      markera(); raknare();
+      return r;
+    };
+  }
+
+  // Draget krokas efter varje bind(), samma monster som syskonfilerna anvander.
+  if (typeof bind === 'function') {
+    var forraBind = bind;
+    bind = function () { var r = forraBind.apply(this, arguments); haktaDrag(); return r; };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
