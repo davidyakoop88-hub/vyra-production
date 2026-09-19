@@ -126,6 +126,59 @@ db('wipe-guard 409 ändrar ingenting', async () => {
   assert.deepEqual(await runtimeIds(), beforeIds, 'wipe-guarden hann ta runtime-rader');
 });
 
+db('krympvakt: en sparning som TAPPAR widgets nekas utan allowWidgetLoss', async () => {
+  // Wipe-guarden ovanfor tacker bara HELT tom lista, och versionslasningen bara en GAMMAL
+  // version. Uppmatt 2026-09-18: en layout gick fran 8 till 6 widgets med AKTUELL version och
+  // utan att nagon raderade nagot. Bada de befintliga vakterna slapp igenom det.
+  await reset(stateWith(goalWidget('w-a'), goalWidget('w-b')));
+  await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a'), goalWidget('w-b')), expectedVersion: 1 });
+  const fore = await overlayRow();
+  const foreIds = await runtimeIds();
+  assert.equal(foreIds.length, 2);
+
+  const krympt = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a')), expectedVersion: fore.version });
+  assert.equal(krympt.shrinkBlocked, true, 'en layout som tappar en widget gick igenom');
+  assert.equal(krympt.hade, 2);
+  assert.equal(krympt.inkommande, 1);
+
+  // BLOCKET FAR INTE LAMNA NAGOT EFTER SIG -- samma krav som wipe-guarden.
+  assert.equal((await overlayRow()).version, fore.version, 'versionen rordes trots block');
+  assert.deepEqual(await runtimeIds(), foreIds, 'krympvakten hann ta runtime-rader');
+});
+
+db('krympvakt: en avsiktlig radering slapps igenom med allowWidgetLoss', async () => {
+  // KONTROLLFALLET. Utan det kan provet ovan vara gront for att INGENTING kan spara, och da
+  // har vakten gjort radering omojlig i stallet for sakrare.
+  await reset(stateWith(goalWidget('w-a'), goalWidget('w-b')));
+  await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a'), goalWidget('w-b')), expectedVersion: 1 });
+  const fore = await overlayRow();
+
+  const ok = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a')), expectedVersion: fore.version, allowWidgetLoss: true });
+  assert.equal(ok.ok, true, 'en avsiktlig radering nekades');
+  assert.equal((await overlayRow()).version, fore.version + 1);
+});
+
+db('krympvakt: lika manga eller fler slapps alltid igenom', async () => {
+  // Vakten far inte rora det normala fallet.
+  await reset(stateWith(goalWidget('w-a')));
+  await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a')), expectedVersion: 1 });
+  let v = (await overlayRow()).version;
+
+  const lika = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a')), expectedVersion: v });
+  assert.equal(lika.ok, true, 'lika manga widgets nekades');
+  v = (await overlayRow()).version;
+
+  const fler = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
+    state: stateWith(goalWidget('w-a'), goalWidget('w-b')), expectedVersion: v });
+  assert.equal(fler.ok, true, 'fler widgets nekades');
+});
+
 db('befintlig runtime baseline/progress/target/epoch skrivs aldrig över', async () => {
   await reset(stateWith(goalWidget('w-own', { goalCurrent: 658, goalTarget: 1000 })));
   await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
@@ -155,8 +208,12 @@ db('borttagen målwidget försvinner atomärt med overlay-state', async () => {
   assert.deepEqual(await runtimeIds(), ['w-a', 'w-gone']);
 
   const v = (await overlayRow()).version;
+  // allowWidgetLoss: provet TAR BORT en widget, och det ar precis vad raderingsknappen gor.
+  // Utan flaggan blockerar krympvakten sparningen och runtime-raden skulle sta kvar — provet
+  // skulle da falla pa ratt satt men av fel skal.
   await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
-    state: stateWith(goalWidget('w-a')), expectedVersion: v, allowEmptyWidgets: false });
+    state: stateWith(goalWidget('w-a')), expectedVersion: v, allowEmptyWidgets: false,
+    allowWidgetLoss: true });
 
   assert.deepEqual(await runtimeIds(), ['w-a'], 'runtime-raden för en borttagen widget blev kvar');
   const saved = (await overlayRow()).state.widgets.map(w => w.id);
@@ -228,8 +285,11 @@ db('tom mållista tar bort alla runtime-rader utan ogiltig SQL', async () => {
   assert.equal((await runtimeIds()).length, 2);
   const v = (await overlayRow()).version;
   // Widgets remain, but none of them is a goal: the empty id list must still be valid SQL.
+  // Tva widgetar blir EN: en minskning, alltsa kraver krympvakten avsikten. Provet handlar om
+  // SQL:en for en tom mal-lista, inte om antalet — flaggan haller den fragan isar.
   const out = await putWithSync(pool, { overlayId: OVERLAY, workspaceId: WS,
-    state: stateWith({ id: 'w-gift', type: 'templateTopGift' }), expectedVersion: v });
+    state: stateWith({ id: 'w-gift', type: 'templateTopGift' }), expectedVersion: v,
+    allowWidgetLoss: true });
   assert.equal(out.ok, true);
   assert.deepEqual(await runtimeIds(), [], 'runtime-rader blev kvar när alla mål togs bort');
 });
