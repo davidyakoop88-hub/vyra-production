@@ -568,6 +568,12 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 #saveProject{border:1px solid #db72ff!important;background:linear-gradient(105deg,#8d24ee,#ce3cff)!important;color:#fff!important;font-weight:700!important;box-shadow:0 0 12px #a525ff55}
 #saveProject:hover{box-shadow:0 0 16px #a525ff80}
 .editor-shell .canvas{width:var(--layout-width,432px);height:var(--layout-height,768px);transition:width .22s ease,height .22s ease}
+/* Widget som sticker ut ur duken. Den syns inte i sandningen — markeringen ar editorns enda
+   satt att saga det. Flyttar ingenting: en engangsflytt hade skrivit om kundens layout. */
+.editor-shell .canvas .widget[data-utanfor-duken]{outline:2px dashed #ff5b7f;outline-offset:2px}
+.editor-shell .canvas .widget[data-utanfor-duken]::before{content:"UTANFOR BILDRUTAN";position:absolute;top:-16px;left:0;z-index:9;padding:1px 5px;border-radius:4px;background:#ff5b7f;color:#1a0009;font-size:8px;font-weight:700;letter-spacing:.06em;white-space:nowrap;pointer-events:none}
+html.overlay-output .widget[data-utanfor-duken]{outline:0!important}
+html.overlay-output .widget[data-utanfor-duken]::before{display:none!important}
 .editor-shell .canvas[data-layout-format="mobile"]::after,
 .editor-shell .canvas[data-layout-format="widescreen"]::after{position:absolute;right:10px;bottom:8px;z-index:1;padding:4px 7px;border:1px solid #ffffff1f;border-radius:5px;background:#08050ecc;color:#a597ad;font-size:7px;letter-spacing:.08em;pointer-events:none}
 .editor-shell .canvas[data-layout-format="mobile"]::after{content:"MOBIL · 9:16"}
