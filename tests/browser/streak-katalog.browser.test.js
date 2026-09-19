@@ -49,6 +49,11 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
     const el = document.querySelector('.vyra-streak-simple');
     const profile = el?.querySelector('.streak-profile-face img');
     const gift = el?.querySelector('.streak-gift-face img');
+    const card = el?.querySelector('.streak-simple-card');
+    const cardRect = card?.getBoundingClientRect();
+    const flipRect = el?.querySelector('.streak-flip')?.getBoundingClientRect();
+    const copyRect = el?.querySelector('.streak-copy')?.getBoundingClientRect();
+    const scoreRect = el?.querySelector('.streak-score')?.getBoundingClientRect();
     return {
       heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
       buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
@@ -58,7 +63,10 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
       giftFit: gift && getComputedStyle(gift).objectFit,
       profileAnimation: profile && getComputedStyle(profile.parentElement).animationName,
       giftAnimation: gift && getComputedStyle(gift.parentElement).animationName,
-      styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle')
+      styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle'),
+      cardHeight: cardRect?.height, sameRow: !!(flipRect&&copyRect&&scoreRect)&&
+        Math.abs((flipRect.top+flipRect.height/2)-(copyRect.top+copyRect.height/2))<4&&
+        Math.abs((flipRect.top+flipRect.height/2)-(scoreRect.top+scoreRect.height/2))<4
     };
   });
   await page.close();
@@ -73,4 +81,6 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
   assert.match(result.profileAnimation, /vyraStreakFront/);
   assert.match(result.giftAnimation, /vyraStreakBack/);
   assert.equal(result.styleControl, false);
+  assert.ok(result.cardHeight >= 95 && result.cardHeight <= 120, `fel höjd ${result.cardHeight}`);
+  assert.equal(result.sameRow, true, JSON.stringify(result));
 });
