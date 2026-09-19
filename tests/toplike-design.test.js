@@ -55,7 +55,10 @@ test('retired saved skins are clamped to the new VYRA designs at render time', (
 test('fresh asset versions prevent a cached retired design from surviving reload', () => {
   const studioHtml = fs.readFileSync('studio.html', 'utf8');
   const media = fs.readFileSync('media.js', 'utf8');
-  assert.match(studioHtml, /media\.js\?v=20260919-14/);
+  // Bumpad 2026-09-20: media.js bar versionsstrangen for gift-fireworks.js, som andrades nar
+  // fyrverkeriets niva borjade folja gavans varde. media.js har alltsa andrats, och da maste
+  // dess egen strang bytas - annars pekar en cachad media.js kvar pa den gamla filen.
+  assert.match(studioHtml, /media\.js\?v=20260919-16-niva/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
 });
