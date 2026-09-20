@@ -10,20 +10,34 @@
   });
   let installed = false;
 
+  // FABRIKENS DEMONAMN. widget-factory.js ('@StreamQueen') och createCleanStreak ('MAYA') bakar in
+  // en person i widgetobjektet sa att editorn har nagot att designa mot. I overlay ar det en
+  // pahittad person tittarna aldrig fick. Samma lista som DEMO_NAMES i live-zero-state.js - som
+  // dock saknar 'maya' och vars selektorer (.streak-copy) inte traffar Clean Flip alls.
+  const DEMO_NAMN = new Set(['streamqueen', 'maya']);
+  const arDemo = namn => DEMO_NAMN.has(String(namn || '').trim().toLowerCase().replace(/^@/, ''));
+
   function cleanStreakHtml(w) {
     const profile = VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg');
     const gift = VyraSafe.url(w.giftImage, 'assets/gifts/events/0001_Rose.png');
-    // PLATSHALLARE BARA I EDITORN. "MAYA x18" ar nagot att designa mot; i sandningen ar det en
-    // pahittad person som tittarna aldrig fick. Samma kontrakt som media.js:s ph/phn/phv: i
-    // overlay-lage blir tomt tomt, och en widget utan bade namn och varde doljs helt - uppmatt
-    // 2026-09-20 att den annars stod synlig som "MAYA x18 STREAK" fore forsta gavan. Inline
-    // !important, for approved-rankings.css satter display:flex!important pa widgeten.
+    // OVERLAYENS NOLLAGE AR SYNLIGT: tomt namn och '×0 STREAK', som Top Gifts nollade kort.
+    //
+    // Forsta utkastet (tidigare i #487) DOLDE en tom Clean Flip med display:none. Det haller inte,
+    // av tva uppmatta skal 2026-09-20: (1) livedatan kommer som en riktad DOM-patch fran
+    // gift-event-images.js, inte som en render() - en dold widget forblir dold hela sandningen;
+    // (2) den visuella vakten vagrar en referens som ar 0 % malad. Demonamnen ('@StreamQueen' fran
+    // fabriken, 'MAYA' fran createCleanStreak) renderas som tomt i overlay; ett riktigt namn i
+    // state (skrivet av gift-event-images vid ett rekord) renderas, sa en omritning mitt i
+    // sandningen inte nollar det som just visats.
+    //
+    // Talet ligger i ett eget <b> inne i <em>: patchen skriver BARA talet, sa '×' och 'STREAK'
+    // star kvar efter forsta gavan (SHAPES.templateTopStreak i gift-event-images.js).
     const overlay = typeof VYRA_OVERLAY !== 'undefined' && VYRA_OVERLAY;
-    const name = VyraSafe.text(w.dataName, overlay ? '' : 'MAYA');
-    const value = VyraSafe.text(w.dataValue, overlay ? '' : '18');
-    const tom = overlay && !w.dataName && !w.dataValue;
+    const demo = overlay && (arDemo(w.dataName) || !w.dataName);
+    const name = demo ? '' : VyraSafe.text(w.dataName, 'MAYA');
+    const value = demo ? '0' : VyraSafe.text(w.dataValue, overlay ? '0' : '18');
     const width = Math.max(150, Number(w.width) || 220);
-    return `<div class="widget vyra-streak approved-streak${selected===w.id?' selected':''}" data-id="${w.id}" style="${tom?'display:none!important;':''}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×${value} STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    return `<div class="widget vyra-streak approved-streak${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x||0}px;top:${w.y||0}px;width:${width}px;--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
   function approvedStreakProps(w) {

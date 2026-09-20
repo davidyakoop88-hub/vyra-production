@@ -90,6 +90,22 @@ function topStreakNode(id) {
   return root;
 }
 
+// Clean Flip (approved-rankings.js) — den enda Top Streak som nar skarmen sedan 2026-09-20.
+// Formen ar avlast ur cleanStreakHtml: namnet i .approved-streak-copy strong, talet i ett eget <b>
+// inne i <em>×<b>0</b> STREAK</em>. Overlayens nollage ar synligt: tomt namn och 0.
+function cleanStreakNode(id) {
+  const root = node('div', 'widget vyra-streak approved-streak');
+  root.dataset.id = id;
+  const flip = root.append(node('div', 'streak-flip'));
+  flip.append(node('div', 'streak-gift-face')).append(node('img'));
+  flip.append(node('div', 'streak-profile-face')).append(node('img'));
+  const copy = root.append(node('div', 'approved-streak-copy'));
+  const name = copy.append(node('strong')); name.textContent = '';
+  const em = copy.append(node('em')); em.textContent = '× STREAK';
+  const b = em.append(node('b')); b.textContent = '0';
+  return root;
+}
+
 function campaignNode(id, slots) {
   const root = node('div', 'widget vyra-campaign');
   root.dataset.id = id;
@@ -212,6 +228,24 @@ test('Top Streak målas om i sin egen DOM', () => {
   // i tests/top-streak-separation.test.js; här kontrolleras bara att värdet hamnar rätt i DOM:en.
   assert.equal(dom.querySelector('.streak-score b').textContent, '×3',
     'streakens värde sitter i .streak-score b med × framför, inte i ett <em>');
+});
+
+test('Clean Flip malas om: namnet i strong, talet i <b> - prefixet och STREAK ror patchen inte', () => {
+  // Uppmatt 2026-09-20 fore fixen: SHAPES traffade .streak-copy/.streak-score, som Clean Flip inte
+  // har, sa patchen skrev ingenting och widgeten stod pa demovardena hela sandningen.
+  const dom = cleanStreakNode('s1');
+  const env = makeEnv({
+    widgets: [{ id: 's1', type: 'templateTopStreak', profileImage: 'https://cdn/p.jpg' }],
+    dom: [dom]
+  });
+  env.gift(GIFT);
+  assert.equal(dom.querySelector('.streak-gift-face img').src, 'assets/gifts/rose.png');
+  assert.equal(dom.querySelector('.streak-profile-face img').src, 'https://cdn/p.jpg');
+  assert.equal(dom.querySelector('.approved-streak-copy strong').textContent, 'wpwer17', 'namnet');
+  assert.equal(dom.querySelector('.approved-streak-copy b').textContent, '3',
+    'talet ar combolangden (count), skrivet i <b> utan eget prefix');
+  assert.equal(dom.querySelector('.approved-streak-copy em').textContent, '× STREAK',
+    'em-textnoden rors inte - × och STREAK star kvar runt talet');
 });
 
 test('Top Streak rör inte mekanismraden', () => {
