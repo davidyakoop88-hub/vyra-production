@@ -91,7 +91,8 @@ const jamfor = (a, b) => sida.evaluate(V.JAMFOR, [a, b, V.KANALTROSKEL]);
 // Kontrollmätningen först: finns nycklarna alls? Ett prov som tyst hoppar över sin egen
 // mätpunkt är värre än inget prov.
 test('kontrollmätning: båda nycklarna finns i katalogen', { skip }, async () => {
-  const alla = await kravNycklar(sida);
+  // Inget argument: `sida` som golv gav jämförelsen `149 < Page`, som alltid är falsk.
+  const alla = kravNycklar();
   for (const n of [NYCKEL_SOM_ANVANDER, NYCKEL_SOM_INTE_ANVANDER]) {
     assert.ok(alla.includes(n), `nyckeln ${n} finns inte i katalogen längre — provet mäter ingenting`);
     assert.ok(!utanReferens(n), `nyckeln ${n} står i undantagslistan och går inte att fotografera stilla`);
