@@ -279,3 +279,50 @@ test('addBoostPack kräver en nyckel och kastar före varje stateändring', { ti
   assert.ok(body.indexOf('throw') < body.indexOf('state.widgets'),
     'state ändras innan nyckeln kontrollerats');
 });
+
+// ---- de nya designernas falt ---------------------------------------------------------------------
+// Uppmatt 2026-09-20 i den visuella riggen: fyra Top Like-skinn och tva Top Coins-designer gav
+// byte-identiska referensbilder, for fabriken satte bara likeTheme och renderarna laser skin
+// respektive topCoinsDesign. Katalogknappen satte ratt falt - fabriken maste ge samma widget.
+function sandlada(extra) {
+  const vm = require('vm');
+  const sandbox = {
+    console, JSON, Math, Number, String, Object, Array, Set, Map, Boolean, Date, Uint32Array,
+    crypto: { getRandomValues: a => { for (let i = 0; i < a.length; i += 1) a[i] = (i + 7) * 2654435761 >>> 0; return a } }
+  };
+  Object.assign(sandbox, extra || {});
+  sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'widget-factory.js'), 'utf8'), sandbox);
+  return sandbox.window.VyraWidgets;
+}
+
+test('de fyra godkanda Top Like-skinnen far `skin` ur fabriken', () => {
+  for (const skin of ['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']) {
+    assert.equal(VyraWidgets.create('catalog:toplike:' + skin).skin, skin, skin);
+  }
+  assert.equal('skin' in VyraWidgets.create('catalog:toplike:neon'), false, 'gamla teman far inget skin');
+});
+
+test('fabriken delegerar skinnets preset till toplike-design.js nar modulen finns', () => {
+  const anrop = [];
+  const F = sandlada({ applyVyraTopLikeStyle: (w, id) => { anrop.push(id); w.width = 180; w.likeTheme = 'right'; return true } });
+  const w = F.create('catalog:toplike:side-rank');
+  assert.deepEqual(anrop, ['side-rank'], 'presetet ska anropas exakt en gang for skinnet');
+  assert.equal(w.width, 180); assert.equal(w.likeTheme, 'right'); assert.equal(w.skin, 'side-rank');
+  F.create('catalog:toplike:neon');
+  assert.deepEqual(anrop, ['side-rank'], 'gamla teman gar inte via presetet');
+});
+
+test('Top Coins halo/signal-orbit far topCoinsDesign, skin och designens accent ur fabriken', () => {
+  for (const d of ['halo', 'signal-orbit']) {
+    const w = VyraWidgets.create('catalog:ranking:templateTopCoins:' + d);
+    assert.equal(w.topCoinsDesign, d); assert.equal(w.skin, d); assert.equal(w.width, 230);
+    assert.equal(w.liveMetric, 'coins');
+  }
+  assert.equal('topCoinsDesign' in VyraWidgets.create('catalog:ranking:templateTopCoins:gold'), false);
+  assert.equal('topCoinsDesign' in VyraWidgets.create('catalog:ranking:templateTopPoints:halo'), false, 'bara Top Coins');
+  const F = sandlada({ VyraTopCoins: { designs: { 'signal-orbit': { label: 'Signal Orbit', accent: '#45e7ff', width: 230 } } } });
+  assert.equal(F.create('catalog:ranking:templateTopCoins:signal-orbit').accent, '#45e7ff', 'designens accent, inte rankingfamiljens');
+  assert.equal(F.create('catalog:ranking:templateTopCoins:gold').accent, '#ffbd32', 'gamla teman behaller familjens accent');
+});
+
