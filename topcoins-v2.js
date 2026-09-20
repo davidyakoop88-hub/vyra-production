@@ -23,12 +23,23 @@
     const motion = w.topCoinsMotion === false ? ' topcoins-paused' : '';
     const background = w.showBackground === true ? ' topcoins-with-background' : '';
     const selectedClass = selected === w.id ? ' selected' : '';
-    const name = text(w.dataName, 'MAYA');
-    const value = number(w.dataValue ?? 44999);
+    // I OVERLAY RITAS DET NOLLADE LAGET DIREKT. live-leaderboard.js nollar varje .toplike-row i
+    // overlay utan livedata en gang i sekunden (strong -> '', em -> forsta ordet + ' 0') och
+    // skriver sedan livevarden pa samma satt. Uppmatt 2026-09-20: renderaren ritade
+    // 'MAYA / V44 999 COINS' och tick:et skrev om till 'V44 999 0' - namnet tomt, <i>-ikonen borta
+    // och ett lost "0", for ikonen lases som forsta mellanslagsavgransade ord och det fanns inget
+    // mellanslag efter </i>. Varje render() visade den pahittade raden i upp till en sekund i OBS,
+    // och den visuella vakten fick olika bild beroende pa vilken sida om tick:et fotot hamnade.
+    // Darfor: overlay ritar exakt leaderboardens nollform sa att skrivningen ar en no-op, och
+    // ikonen foljs alltid av ett mellanslag sa att ett livevarde blir 'V 12 300', inte
+    // 'V44 999 12 300'. Editorn behaller demodatan - den ar vad man designar mot.
+    const overlay = new URLSearchParams(location.search).has('overlay');
+    const name = overlay ? '' : text(w.dataName, 'MAYA');
+    const value = overlay ? '0' : number(w.dataValue ?? 44999) + ' COINS';
     const particles = design === 'halo'
       ? '<i class="tc-coin tc-c1">V</i><i class="tc-coin tc-c2">V</i><i class="tc-coin tc-c3">V</i><i class="tc-spark tc-s1"></i><i class="tc-spark tc-s2"></i>'
       : '<i class="tc-orbit tc-o1"></i><i class="tc-orbit tc-o2"></i><i class="tc-orbit tc-o3"></i><i class="tc-orbit-dot tc-d1"></i><i class="tc-orbit-dot tc-d2"></i>';
-    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${selectedClass}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${w.accent || meta.accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt=""><span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small></span><em><i>V</i>${value} COINS</em></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
+    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${selectedClass}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${w.accent || meta.accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt=""><span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small></span><em><i>V</i> ${value}</em></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }
 
   const previousWh = wh;
