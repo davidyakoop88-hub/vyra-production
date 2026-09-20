@@ -162,8 +162,16 @@ test('overlay-läget är verkligen påslaget', { skip }, async () => {
 });
 
 test('katalogen har nycklar att vakta', { skip }, () => {
-  assert.ok(NYCKLAR.length >= 150,
+  // Golvet var 150. Kartan (genererad i riktig Chrome av CI) gick fran 151 till 149 nycklar
+  // 2026-09-19 22:20 (cffae80) nar katalogen krympte med flit, och provet var rott pa main i
+  // fjorton timmar utan att nagon rorde det. Golvet ar en vakt mot en FLYTTAD eller TOM karta,
+  // inte ett facit for antalet - 140 haller den rollen med marginal for nasta avveckling.
+  assert.ok(NYCKLAR.length >= 140,
     `hittade bara ${NYCKLAR.length} katalognycklar i docs/katalogkarta.md — har kartan flyttat eller inte regenererats?`);
+  // Top Streak ar EN design sedan 2026-09-20: kartan far bara bara standardnyckeln. Dyker en
+  // tema-, premium- eller ramnyckel upp igen har en avvecklad design kommit tillbaka i katalogen.
+  assert.deepEqual(NYCKLAR.filter(k => k.startsWith('catalog:topstreak')), ['catalog:topstreak'],
+    'en avvecklad Top Streak-design ar tillbaka i katalogkartan');
 });
 
 test('varje katalognyckel renderas i overlay utan att kasta', { skip }, async () => {
