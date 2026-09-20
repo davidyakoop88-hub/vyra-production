@@ -262,8 +262,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // SAMMANSLAGNINGEN 2026-08-20 (Rise & Pop mot main): media.js andrades av bada
   // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
-  assert.match(media, /toplike-studio\.css\?v=20260908-bagpodiet/);  // bagpodiet 2026-09-08: bara .css andrades, .js behaller -ramstad
-  assert.match(media, /toplike-studio\.js\?v=20260909-oppning/);  // ramens accent pa brickan 2026-09-08
+  // Bumpade 2026-09-20 av 5a96741 ("Aktivera endast nya rankingdesigner"): BADA filerna
+  // andrades i den omgangen, sa bada far samma nya strang. Vakten foljde inte med da.
+  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
+  assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);
@@ -273,7 +275,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
   // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
   // Bumpad 2026-09-07 (#367): premium-final.js erbjuder numera diamantmålet bland ramdesignerna.
-  assert.match(media, /const version='20260911-2'/);
+  // Premium-bundelns strang. Den halkade efter i 48b3458 ("Byt gamla social goals mot sex nya
+  // VYRA-designer") och har varit ur synk sedan dess — darav tre veckor med en rod vakt som
+  // ingen atgardade. Star nu pa det media.js faktiskt bar.
+  assert.match(media, /const version='20260919-14'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
@@ -306,7 +311,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
   assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
-  assert.match(media, /gift-fireworks\.js\?v=20260912-3/);
+  // Bumpad 2026-09-20: gift-fireworks.js andrades nar nivan borjade folja gavans varde i
+  // stallet for antalet tryck. Grannarna pa samma rad (gift-classics-engine,
+  // gift-supernova-engine/-panel) ar ororda och behaller 20260912-3.
+  assert.match(media, /gift-fireworks\.js\?v=20260919-niva2/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 
