@@ -107,6 +107,12 @@
         if (riktning === 'e' || riktning === 'w') {
           var d = (riktning === 'e' ? dx : -dx) / f;
           var bredd = Math.max(60, Math.round(start.bredd + d));
+          // Hela widgeten ska rymmas pa duken (widget-grans.js). At oster: hogerkanten far inte
+          // passera dukens. At vaster: vansterkanten far inte ga under 0, och den flyttas lika
+          // mycket som bredden vaxer, sa taket ar startlaget plus startbredden.
+          var duk = (window.VyraGrans && window.VyraGrans.duken) ? window.VyraGrans.duken() : { bredd: 432 };
+          var tak = riktning === 'e' ? duk.bredd - start.wx : start.wx + start.bredd;
+          bredd = Math.max(60, Math.min(bredd, tak));
           w.width = bredd;
           widget.style.width = bredd + 'px';
           if (riktning === 'w') {

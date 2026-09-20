@@ -221,6 +221,12 @@
   render = function () {
     if (view === 'editor') {
       renderSafeLayout();
+      // UPPMATT I PRODUKTION 2026-09-20: renderSafeLayout() byter ut hela #view, alltsa aven
+      // .canvas - EFTER att media.js:s fitOverlayCanvas() skalat den gamla. Den nya duken stod
+      // pa 432x768 i ovre vanstra hornet av OBS/TikToks 1080x1920-ruta: transform none, ingen
+      // centrering. Det ar darfor layouten i Studion aldrig passade in i TikTok LIVE Studio.
+      // Passa in den nya duken igen. I editorn finns ingen VyraOverlayFit, sa inget hander dar.
+      if (window.VyraOverlayFit) window.VyraOverlayFit();
       return;
     }
     fullRender();
@@ -229,5 +235,11 @@
   if (new URLSearchParams(location.search).get('open') === 'layout') {
     setTimeout(function () { go('editor'); }, 0);
   }
+  // go('editor') gar via renderSafeLayout() utan render(), sa aven den vagen behover passformen.
+  var safeGo = go;
+  go = function (nextView) {
+    safeGo(nextView);
+    if (nextView === 'editor' && window.VyraOverlayFit) window.VyraOverlayFit();
+  };
 })();
 

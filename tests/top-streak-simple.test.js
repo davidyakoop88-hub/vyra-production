@@ -49,6 +49,6 @@ test('cache versions change with the Top Streak files', () => {
   const studio = read('studio.html');
   const media = read('media.js');
   assert.match(studio, /top-streak-simple\.css\?v=20260919-13/);
-  assert.match(studio, /media\.js\?v=20260920-2/);
+  assert.match(studio, /media\.js\?v=20260920-4/);
   assert.match(media, /const version='20260919-14'/);
 });

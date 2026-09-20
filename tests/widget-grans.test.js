@@ -1,11 +1,14 @@
 'use strict';
 // DUKENS GRÄNS — räknesättet.
 //
-// Regeln är INTE full inneslutning. Widgetarna renderar 220 × 388 oavsett `width`, så två av
-// dem får inte plats sida vid sida i en 432 bred duk — och kant-mot-kant-snappen
-// (snapp.browser.test.js prov 4) är byggd med flit. Inneslutning hade tagit bort den
-// funktionen. Regeln är i stället: origo måste ligga kvar på duken med minst en rutnätsruta
-// (8 px) kvar, så att en widget aldrig kan dras bort ur bilden.
+// SEDAN 2026-09-20 AR REGELN FULL INNESLUTNING: hela widgetens box ska rymmas pa duken.
+// Davids ord: "den ytan man lagger widget den ska man se". Gift Fireworks lag pa 540 px bredd
+// i hans 432 px ruta - synlig i editorn, avklippt i sandningen. Origo-regeln (8 px kvar) ar
+// bara reserven nar anroparen inte kanner widgetens storlek (storlek utelamnad), och nar
+// widgeten ar STORRE an duken gar origo till 0 - da far bredden krympas (flyttaInAlla, eller
+// resize-klampen i widget-handles.js).
+// Kant-mot-kant-snappen (snapp.browser.test.js prov 4) provas numera med widgetar sma nog att
+// bada ryms.
 //
 // Provet för dragningen och markeringen ligger i tests/browser/widget-grans.browser.test.js.
 const test = require('node:test');
@@ -24,19 +27,29 @@ test('negativt x dras in till kanten', () => {
   assert.equal(G.klamp(-16, 376, MOBIL).vanster, 0);
 });
 
-test('x långt bortom högerkanten stannar med en rutnätsruta kvar på duken', () => {
-  // Davids Top Like stod på x=688 i en duk som är 432 bred.
-  assert.equal(G.klamp(688, 200, MOBIL).vanster, 432 - G.MIN_KVAR);
+test('x långt bortom högerkanten stannar sa att HELA widgeten ryms', () => {
+  // Davids Top Like stod på x=688 i en duk som är 432 bred. Med storleken kand klamps till
+  // duk minus bredd; utan storlek galler origo-reserven (en rutnatsruta kvar).
+  assert.equal(G.klamp(688, 200, MOBIL, { bredd: 220, hojd: 388 }).vanster, 432 - 220);
+  assert.equal(G.klamp(688, 200, MOBIL).vanster, 432 - G.MIN_KVAR, 'reserven utan storlek');
 });
 
-test('y på nederkanten stannar med en rutnätsruta kvar', () => {
+test('en widget bredare an duken hamnar pa 0 - inte pa ett negativt tal', () => {
+  // Gift Fireworks 540 och Glove Snipe 760 i Davids layout 2643. 432-540 < 0 far aldrig
+  // bli ett lage; origo gar till 0 och bredden ar flyttaInAllas sak.
+  assert.equal(G.klamp(100, 0, MOBIL, { bredd: 540, hojd: 450 }).vanster, 0);
+  assert.equal(G.klamp(0, 500, MOBIL, { bredd: 200, hojd: 900 }).topp, 0);
+});
+
+test('y på nederkanten stannar sa att hela hojden ryms', () => {
   // Battle MVP stod på y=768 i bandet från sändningen — exakt på kanten, alltså helt utanför.
-  assert.equal(G.klamp(16, 768, MOBIL).topp, 768 - G.MIN_KVAR);
+  assert.equal(G.klamp(16, 768, MOBIL, { bredd: 400, hojd: 400 }).topp, 768 - 400);
 });
 
 test('gränsen följer formatet i stället för en hårdkodad siffra', () => {
-  assert.equal(G.klamp(600, 10, DATOR).vanster, 600, 'ryms i en 768 bred duk');
-  assert.equal(G.klamp(600, 10, MOBIL).vanster, 432 - G.MIN_KVAR, 'ryms inte i en 432 bred duk');
+  const S = { bredd: 150, hojd: 100 };
+  assert.equal(G.klamp(600, 10, DATOR, S).vanster, 600, 'ryms i en 768 bred duk');
+  assert.equal(G.klamp(600, 10, MOBIL, S).vanster, 432 - 150, 'ryms inte i en 432 bred duk');
 });
 
 test('ogiltiga tal blir 0 i stället för NaN i layouten', () => {
@@ -44,11 +57,11 @@ test('ogiltiga tal blir 0 i stället för NaN i layouten', () => {
   assert.deepEqual(G.klamp(NaN, undefined, MOBIL), { vanster: 0, topp: 0 });
 });
 
-test('kant mot kant är fortfarande tillåtet — snappen får inte brytas', () => {
-  // snapp.browser.test.js prov 4: d1 dras sa dess vansterkant landar pa m1:s hogerkant,
-  // 203 + 220 = 423 i en 432 bred duk. Klamps det bort faller det provet.
-  assert.equal(G.klamp(423, 535, MOBIL).vanster, 423);
-  assert.equal(G.klamp(423, 535, MOBIL).topp, 535);
+test('kant mot kant är tillåtet nar bada ryms', () => {
+  // snapp.browser.test.js prov 4 med 180 x 260-widgetar: m1 pa (20,20), d1 landar pa
+  // (200,280) - hogerkant 380, nederkant 540, allt inne. Klampen ror det inte.
+  const k = G.klamp(200, 280, MOBIL, { bredd: 180, hojd: 260 });
+  assert.deepEqual(k, { vanster: 200, topp: 280 });
 });
 
 test('stickerUt() ser alla fyra hållen', () => {
@@ -59,12 +72,13 @@ test('stickerUt() ser alla fyra hållen', () => {
   assert.equal(G.stickerUt(72, 600, 220, 388, MOBIL), true, 'ut nedtill');
 });
 
-test('stickerUt() flaggar det kant-mot-kant-läge som klampen släpper igenom', () => {
-  // Gransen och markeringen ar OLIKA starka med flit: gransen slapper igenom laget,
-  // markeringen sager att det inte kommer synas. Utan det har provet kunde nagon gora dem
-  // lika starka och tro att det var en forenkling.
-  assert.equal(G.klamp(423, 535, MOBIL).vanster, 423, 'gransen slapper igenom');
-  assert.equal(G.stickerUt(423, 535, 220, 388, MOBIL), true, 'markeringen sager ifran');
+test('klampen och markeringen ar ense: det klampen slapper igenom sticker inte ut', () => {
+  // Sedan inneslutningen ar de lika starka - med flit. Ett lage som passerar klampen med
+  // kand storlek far aldrig flaggas av markeringen, annars ljuger banderollen.
+  for (const [x, y] of [[688, 200], [-16, 376], [16, 768], [300, 600]]) {
+    const k = G.klamp(x, y, MOBIL, { bredd: 220, hojd: 388 });
+    assert.equal(G.stickerUt(k.vanster, k.topp, 220, 388, MOBIL), false, x + ',' + y + ' -> ' + k.vanster + ',' + k.topp);
+  }
 });
 
 test('utan DOM faller duken tillbaka på mobilformatet i stället för att krascha', () => {
