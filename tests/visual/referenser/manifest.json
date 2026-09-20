@@ -7,9 +7,9 @@
  },
  "antal": 203,
  "senaste": {
-  "motiv": "Tolv nya nycklar utan bild (2026-09-19), Top Points i nattens Top Like-layout och Top Streak som Clean Flip med synligt nollage - riggen neutraliserar passformen (#487)",
-  "nycklar": 17,
-  "tid": "2026-09-20T17:24:09.232Z"
+  "motiv": "Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)",
+  "nycklar": 6,
+  "tid": "2026-09-20T21:16:14.210Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -809,20 +809,20 @@
    "fyllnad": 38.17
   },
   "catalog:toplike:clean-bar": {
-   "matt": "250x234",
-   "fyllnad": 12.9
+   "matt": "250x270",
+   "fyllnad": 17.2
   },
   "catalog:toplike:mini-podium": {
-   "matt": "250x234",
-   "fyllnad": 12.9
+   "matt": "340x232",
+   "fyllnad": 31.79
   },
   "catalog:toplike:side-rank": {
-   "matt": "250x234",
-   "fyllnad": 12.9
+   "matt": "180x230",
+   "fyllnad": 17.57
   },
   "catalog:toplike:soft-stack": {
-   "matt": "250x234",
-   "fyllnad": 12.9
+   "matt": "250x237",
+   "fyllnad": 15.2
   }
  }
 }
