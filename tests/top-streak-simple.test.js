@@ -41,9 +41,14 @@ test('Top Streak CSS keeps profile filled, gift complete, and motion accessible'
 });
 
 test('cache versions change with the Top Streak files', () => {
+  // Bumpad 2026-09-20: media.js bar versionsstrangen for gift-fireworks.js, som andrades nar
+  // fyrverkeriets niva borjade folja gavans varde. media.js har alltsa andrats, och da maste
+  // dess EGEN strang bytas — annars fortsatter en cachad media.js peka pa den gamla filen.
+  // top-streak-simple.css ar OROD och behaller darfor -13: en bump utan andring ar en gratis
+  // omladdning for varje anvandare. Samma regel som i widget-rendering-cache-and-fountain.
   const studio = read('studio.html');
   const media = read('media.js');
   assert.match(studio, /top-streak-simple\.css\?v=20260919-13/);
-  assert.match(studio, /media\.js\?v=20260919-14/);
+  assert.match(studio, /media\.js\?v=20260919-16-niva/);
   assert.match(media, /const version='20260919-14'/);
 });

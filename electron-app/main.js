@@ -4,6 +4,7 @@ const fs = require('fs');
 const { startLocalServer } = require('./local-server');
 const { createTikTokService } = require('./tiktok-service');
 const { createObsService } = require('./obs-service');
+const { createTikTokEventService } = require('./tiktok-event-service');
 const Updater = require('./updater');
 const { synkaPlugin, elgatoKatalogWindows } = require('./streamdeck-sync');
 
@@ -252,6 +253,7 @@ app.whenReady().then(async () => {
     httpServer = await startLocalServer(appRoot(), PORT, {
       createLiveConnector: callbacks => createTikTokService({ ...callbacks, log }),
       obsService: createObsService({ log }),
+      eventConnector: createTikTokEventService({ BrowserWindow, log }),
       cloudOrigin: CLOUD_ORIGIN,
       // Lases vid varje proxat anrop, inte en gang vid start: servern startar fore inloggningen.
       cloudSession: () => cloudSessionCookie,

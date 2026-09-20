@@ -1492,7 +1492,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','gift-supernova-engine.js?v=20260912-3','gift-fireworks.js?v=20260912-3','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','gift-supernova-engine.js?v=20260912-3','gift-fireworks.js?v=20260919-niva2','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
