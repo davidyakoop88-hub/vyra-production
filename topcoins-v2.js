@@ -81,6 +81,10 @@
     if (view !== 'editor') return;
     const w = liveWidget(selected);
     if (!w || w.type !== 'templateTopCoins') return;
+    // topCoinsHtml laser aldrig profileFrame, sa ramvaljaren som gift-alert-frames.js/toplike-studio.js
+    // skjuter in i panelen gjorde ingenting - uppmatt 2026-09-20: valjaren fanns, ingen ramkonst
+    // renderades. En kontroll utan verkan tas bort (samma regel som for Clean Flip).
+    document.querySelectorAll('.properties .gaf-frame-group, .properties .ws-frame-grid, .properties [data-ws-frame]').forEach(el => (el.closest('.property-group') || el).remove());
     const assign = (selector, key, convert) => {
       const el = document.querySelector(selector);
       if (!el) return;

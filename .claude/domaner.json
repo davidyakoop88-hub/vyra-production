@@ -499,7 +499,6 @@
         "tests/goal-frame-designs.test.js",
         "tests/social-goal-landscape-designs.test.js",
         "tests/browser/goal-geometri.browser.test.js",
-        "tests/browser/goal-modell3-bredd.browser.test.js",
         "server/test/goal-*.test.js",
         "server/test/diamantmal.test.js",
         "server/test/studio-goal-stream.test.js",
