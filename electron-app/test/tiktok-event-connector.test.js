@@ -4,8 +4,12 @@ const assert=require('node:assert/strict');
 const fs=require('fs');
 const http=require('http');
 const path=require('path');
-const {parseTikTokEventPage,officialUrl,loginUrl}=require('../electron-app/tiktok-event-service');
-const {startLocalServer}=require('../electron-app/local-server');
+const {parseTikTokEventPage,officialUrl,loginUrl}=require('../tiktok-event-service');
+const {startLocalServer}=require('../local-server');
+// Provet flyttades hit fran tests/ 2026-09-20: rotsviten far inte require:a kod ur ett annat
+// pakets katalog, for CI kor npm ci per paket och det foll med MODULE_NOT_FOUND dar men inte
+// lokalt. Sokvagarna raknas darfor om: __dirname ar nu electron-app/test.
+const APP=path.join(__dirname,'..'), ROT=path.join(__dirname,'..','..');
 
 test('tolkar ett komplett Pact of Hearts-event utan att gissa osynliga falt',()=>{
   const result=parseTikTokEventPage({
@@ -31,7 +35,7 @@ test('ofullstandig eller extern sida stoppas',()=>{
 });
 
 test('Desktop-rutterna ar kopplade och webblage faller stangt',async t=>{
-  const root=path.join(__dirname,'..');
+  const root=ROT;
   const server=await startLocalServer(root,0,{});t.after(()=>server.close());
   const port=server.address().port;
   const response=await fetch(`http://127.0.0.1:${port}/api/tiktok-events/status`);
@@ -40,11 +44,11 @@ test('Desktop-rutterna ar kopplade och webblage faller stangt',async t=>{
 });
 
 test('Studio visar den nya sidan och Desktop-paketet innehaller lasaren',()=>{
-  const html=fs.readFileSync(path.join(__dirname,'..','studio.html'),'utf8');
-  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'..','electron-app','package.json'),'utf8'));
+  const html=fs.readFileSync(path.join(ROT,'studio.html'),'utf8');
+  const pkg=JSON.parse(fs.readFileSync(path.join(APP,'package.json'),'utf8'));
   assert.match(html,/data-extra="tiktokEvents"/);
   assert.match(html,/tiktok-event-connector\.js\?v=20260920-1/);
   assert.ok(pkg.build.files.includes('tiktok-event-service.js'));
   assert.equal(pkg.version,'1.2.6');
-  assert.match(fs.readFileSync(path.join(__dirname,'..','electron-app','tiktok-event-service.js'),'utf8'),/15 \* 60 \* 1000/);
+  assert.match(fs.readFileSync(path.join(APP,'tiktok-event-service.js'),'utf8'),/15 \* 60 \* 1000/);
 });

@@ -311,7 +311,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
   assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
-  assert.match(media, /gift-fireworks\.js\?v=20260912-3/);
+  // Bumpad 2026-09-20: gift-fireworks.js andrades nar nivan borjade folja gavans varde i
+  // stallet for antalet tryck. Grannarna pa samma rad (gift-classics-engine,
+  // gift-supernova-engine/-panel) ar ororda och behaller 20260912-3.
+  assert.match(media, /gift-fireworks\.js\?v=20260919-niva2/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 
