@@ -29,6 +29,7 @@ test('Top Like accepts only the four approved skins and defaults transparent', (
 
 test('central retirement guard loads last with its own cache version', () => {
   assert.match(html, /approved-rankings\.css\?v=20260920-2/);
-  assert.match(html, /approved-rankings\.js\?v=20260920-2/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260920-2') > html.indexOf('vyra-state-sync.js'));
+  // Bumpad till -3 2026-09-20: tom Clean Flip doljs i overlay, ramvaljaren bort. CSS:en ar orord (-2).
+  assert.match(html, /approved-rankings\.js\?v=20260920-3/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260920-3') > html.indexOf('vyra-state-sync.js'));
 });

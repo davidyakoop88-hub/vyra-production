@@ -13,10 +13,17 @@
   function cleanStreakHtml(w) {
     const profile = VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg');
     const gift = VyraSafe.url(w.giftImage, 'assets/gifts/events/0001_Rose.png');
-    const name = VyraSafe.text(w.dataName, 'MAYA');
-    const value = VyraSafe.text(w.dataValue, '18');
+    // PLATSHALLARE BARA I EDITORN. "MAYA x18" ar nagot att designa mot; i sandningen ar det en
+    // pahittad person som tittarna aldrig fick. Samma kontrakt som media.js:s ph/phn/phv: i
+    // overlay-lage blir tomt tomt, och en widget utan bade namn och varde doljs helt - uppmatt
+    // 2026-09-20 att den annars stod synlig som "MAYA x18 STREAK" fore forsta gavan. Inline
+    // !important, for approved-rankings.css satter display:flex!important pa widgeten.
+    const overlay = typeof VYRA_OVERLAY !== 'undefined' && VYRA_OVERLAY;
+    const name = VyraSafe.text(w.dataName, overlay ? '' : 'MAYA');
+    const value = VyraSafe.text(w.dataValue, overlay ? '' : '18');
+    const tom = overlay && !w.dataName && !w.dataValue;
     const width = Math.max(150, Number(w.width) || 220);
-    return `<div class="widget vyra-streak approved-streak${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x||0}px;top:${w.y||0}px;width:${width}px;--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×${value} STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    return `<div class="widget vyra-streak approved-streak${selected===w.id?' selected':''}" data-id="${w.id}" style="${tom?'display:none!important;':''}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×${value} STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
   function approvedStreakProps(w) {
@@ -119,7 +126,13 @@
       if (view !== 'editor') return;
       const w = liveWidget(selected);
       if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
-      if (w && w.type === 'templateTopStreak') bindControls(w);
+      if (w && w.type === 'templateTopStreak') {
+        bindControls(w);
+        // Clean Flip ritar ingen profilram (cleanStreakHtml laser aldrig profileFrame). Ramvaljaren
+        // som gift-alert-frames.js skjuter in i panelen gjorde da ingenting - uppmatt 2026-09-20:
+        // valjaren fanns, ingen ramkonst renderades. En kontroll utan verkan tas bort.
+        document.querySelector('.properties .gaf-frame-group')?.remove();
+      }
     };
 
     cleanCatalog();

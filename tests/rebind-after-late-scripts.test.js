@@ -72,19 +72,26 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   await settle();
 
   const sek = h.document.querySelector('.streak-template-section');
-  assert.equal(sek.dataset.finalPremium, '1',
+  // Sedan 2026-09-20 ror premium-final.js inte streak-sektionen alls (Top Streaks premiumdesigner
+  // ar avvecklade), sa beviset for att den sena filen KORDE sin sektionskod hamtas fran
+  // .prototype-section, som den fortfarande marker.
+  const proto0 = h.document.querySelector('.prototype-section');
+  assert.equal(proto0 && proto0.dataset.finalPremium, '1',
     'premium-final.js laddades efter sista bind() och dess sektionskod kordes aldrig — ' +
-    'exakt det som gjorde att TOP STREAK · PREMIUM och TOP GIFTER · DESIGNVAL saknades helt ' +
-    'i produktion');
+    'exakt det som gjorde att TOP GIFTER · DESIGNVAL saknades helt i produktion');
   // Sektionen bar sedan 2026-08-13 TVA rubriker: media.js bygger "REDIGERBARA" (7 klassiska
   // stilar + 8 ramar) och premium-final.js lagger till "PREMIUM" efter den. Bada anvander nu
   // tillagg i stallet for `innerHTML =`, sa ingen raderar den andra. querySelector('h4') tar
   // den FORSTA rubriken och sager darfor REDIGERBARA — kravet ar att PREMIUM finns, inte att
   // den ar ensam.
-  const rubriker = [...sek.querySelectorAll('h4')].map(h => h.textContent.trim());
-  assert.ok(rubriker.some(t => /PREMIUM/.test(t)),
-    `ingen PREMIUM-rubrik; rubrikerna ar: ${rubriker.join(' | ') || '(inga)'}`);
-  assert.equal(sek.querySelectorAll('[data-pf-streak]').length, 7);
+  // SEDAN 2026-09-20 bygger premium-final.js INGEN streak-sektion: Top Streaks sju premiumdesigner
+  // ar avvecklade och approved-rankings.js ager sektionen (Clean Flip, en knapp). Det som ska
+  // finnas kvar efter det sena bind-passet ar att sektionen inte fatt nagon gammal knapp tillbaka.
+  // Riggen laddar inte approved-rankings.js, sa media.js:s egna tema-/ramknappar star kvar har;
+  // i Studion tar approved-rankings bort hela sektionen. Det som INTE far komma tillbaka via den
+  // sena filen ar premiumknapparna, som var premium-final.js:s.
+  assert.equal(sek.querySelectorAll('[data-pf-streak]').length, 0,
+    'premium-final.js byggde Top Streaks avvecklade premiumknappar igen');
 
   // .prototype-section har TVA rubriker, och det ar med flit. Forut satte premium-final.js
   // innerHTML pa sektionen och tog darmed bort "VYRA ORIGINAL · REDIGERBARA" tillsammans med
@@ -109,8 +116,9 @@ test('de sena knapparna far bade koppling och miniatyr', async () => {
   ladddaSent(h, 'premium-final.js');
   await settle();
 
+  // Bara Top Gifters 21 sedan Top Streaks sju premiumdesigner avvecklades 2026-09-20.
   const kn = [...h.document.querySelectorAll('[data-pf-streak], [data-pf-topgift]')];
-  assert.ok(kn.length >= 28, `bara ${kn.length} premiumknappar`);
+  assert.ok(kn.length >= 21, `bara ${kn.length} premiumknappar`);
   const okopplade = kn.filter(b => !b.dataset.owgWrapped);
   assert.equal(okopplade.length, 0, `${okopplade.length} premiumknappar kopplades aldrig`);
   const utanMiniatyr = kn.filter(b => !b.querySelector('.owg-thumb'));
@@ -133,7 +141,7 @@ test('ombindningen snurrar inte', async () => {
   ladddaSent(h, 'premium-final.js');
   await settle();
   const sek = h.document.querySelector('.streak-template-section');
-  const forst = sek.querySelectorAll('[data-pf-streak]').length;
+  const forst = sek.querySelectorAll('button').length;
 
   // Fem skriptladdningar till ska inte dubblera nagot: dataset-vakterna gor sektionsbygget
   // idempotent och #89 hoppar over redan kopplade knappar.
@@ -143,9 +151,9 @@ test('ombindningen snurrar inte', async () => {
     s.dispatchEvent(new h.window.Event('load'));
   }
   await settle();
-  assert.equal(sek.querySelectorAll('[data-pf-streak]').length, forst,
+  assert.equal(sek.querySelectorAll('button').length, forst,
     'sektionen byggdes om vid varje skriptladdning');
-  const dubbla = [...h.document.querySelectorAll('[data-pf-streak]')]
+  const dubbla = [...h.document.querySelectorAll('.streak-template-section button, [data-pf-topgift]')]
     .filter(b => b.querySelectorAll('.owg-actions').length > 1);
   assert.equal(dubbla.length, 0, `${dubbla.length} knappar fick dubbla actions-rader`);
 });

@@ -33,7 +33,10 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { skip }, async () => {
+// SEDAN 2026-09-20 ags Top Streak av approved-rankings.js (Clean Flip). Provet matte forr
+// premium-final.js:s "simple"-design, som aldrig nadde skarmen - approved vann redan, och
+// provet var rott pa ren main. Nu mater det den design som faktiskt ritas.
+test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async () => {
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   await page.goto(`${bas}/studio.html?open=overlay`, { waitUntil: 'load' });
   await page.waitForFunction(() => document.querySelector('.streak-template-section button'), null,
@@ -46,52 +49,48 @@ test('Top Streak visar exakt ett nytt val och renderar den enkla flippen', { ski
     const host = document.createElement('div');
     host.innerHTML = wh(w);
     document.body.append(host);
-    const el = document.querySelector('.vyra-streak-simple');
+    const el = document.querySelector('.approved-streak');
     const profile = el?.querySelector('.streak-profile-face img');
     const gift = el?.querySelector('.streak-gift-face img');
-    const card = el?.querySelector('.streak-simple-card');
-    const cardRect = card?.getBoundingClientRect();
     const flipRect = el?.querySelector('.streak-flip')?.getBoundingClientRect();
-    const titleRect = el?.querySelector('.streak-simple-title')?.getBoundingClientRect();
-    const nameRect = el?.querySelector('.streak-simple-name')?.getBoundingClientRect();
-    const scoreRect = el?.querySelector('.streak-score')?.getBoundingClientRect();
-    const idleProfileAnimation = profile && getComputedStyle(profile.parentElement).animationName;
-    const idleGiftAnimation = gift && getComputedStyle(gift.parentElement).animationName;
-    const idleDuration = profile && getComputedStyle(profile.parentElement).animationDuration;
-    const idleIterations = profile && getComputedStyle(profile.parentElement).animationIterationCount;
+    const elRect = el?.getBoundingClientRect();
+    const copyRect = el?.querySelector('.approved-streak-copy')?.getBoundingClientRect();
+    const flip = el?.querySelector('.streak-flip');
+    const flipAnimation = flip && getComputedStyle(flip).animationName;
+    const idleDuration = flip && getComputedStyle(flip).animationDuration;
+    const idleIterations = flip && getComputedStyle(flip).animationIterationCount;
     return {
       heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
       buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
       oldStyles: section.querySelectorAll('[data-streak-style],[data-streak-frame],[data-pf-streak]').length,
-      simple: !!el, mechanism: !!el?.querySelector('.streak-mechanism'),
+      approved: !!el, gamlaKlasser: !!document.querySelector('.vyra-streak-simple,.premium-streak,.streak-framed'),
+      mechanism: !!el?.querySelector('.streak-mechanism'),
       profileFit: profile && getComputedStyle(profile).objectFit,
       giftFit: gift && getComputedStyle(gift).objectFit,
-      idleProfileAnimation, idleGiftAnimation,
+      flipAnimation,
       idleDuration, idleIterations,
       styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle'),
-      cardHeight: cardRect?.height, vertical: !!(titleRect&&flipRect&&nameRect&&scoreRect)&&
-        titleRect.bottom<=flipRect.top+1&&flipRect.bottom<=nameRect.top+1&&nameRect.bottom<=scoreRect.top+1,
-      centered: !!(cardRect&&flipRect&&nameRect&&scoreRect)&&
-        Math.abs((flipRect.left+flipRect.width/2)-(cardRect.left+cardRect.width/2))<2&&
-        Math.abs((nameRect.left+nameRect.width/2)-(cardRect.left+cardRect.width/2))<2&&
-        Math.abs((scoreRect.left+scoreRect.width/2)-(cardRect.left+cardRect.width/2))<2
+      // Clean Flip: cirkeln overst, namn + streak under, bada centrerade i widgeten.
+      vertical: !!(flipRect&&copyRect)&&flipRect.bottom<=copyRect.top+1,
+      centered: !!(elRect&&flipRect&&copyRect)&&
+        Math.abs((flipRect.left+flipRect.width/2)-(elRect.left+elRect.width/2))<2&&
+        Math.abs((copyRect.left+copyRect.width/2)-(elRect.left+elRect.width/2))<2
     };
   });
   await page.close();
-  assert.equal(result.heading, 'VYRA TOP STREAK · REDIGERBAR');
+  assert.equal(result.heading, 'VYRA TOP STREAK · CLEAN FLIP');
   assert.equal(result.buttonCount, 1);
-  assert.equal(result.buttonName, 'VYRA Top Streak');
-  assert.equal(result.oldStyles, 0);
-  assert.equal(result.simple, true, JSON.stringify(result));
+  assert.equal(result.buttonName, 'Clean Flip');
+  assert.equal(result.oldStyles, 0, 'en avvecklad design ar tillbaka i katalogen');
+  assert.equal(result.approved, true, JSON.stringify(result));
+  assert.equal(result.gamlaKlasser, false, 'en dod generation ritar igen');
   assert.equal(result.mechanism, false);
   assert.equal(result.profileFit, 'cover');
   assert.equal(result.giftFit, 'contain');
-  assert.match(result.idleProfileAnimation, /vyraStreakFrontLoop/);
-  assert.match(result.idleGiftAnimation, /vyraStreakBackLoop/);
+  assert.match(result.flipAnimation, /approved-streak-flip/);
   assert.equal(result.idleDuration, '8s');
-  assert.equal(result.idleIterations, 'infinite');
+  assert.equal(result.idleIterations, 'infinite', 'flippen ska fortsatta under hela LIVE');
   assert.equal(result.styleControl, false);
-  assert.ok(result.cardHeight >= 215 && result.cardHeight <= 235, `fel höjd ${result.cardHeight}`);
   assert.equal(result.vertical, true, JSON.stringify(result));
   assert.equal(result.centered, true, JSON.stringify(result));
 });

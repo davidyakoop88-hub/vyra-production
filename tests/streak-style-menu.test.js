@@ -1,150 +1,93 @@
 'use strict';
-// VYRA TOP STREAK — tva kataloger som inte kanner till varandra.
+// VYRA TOP STREAK HAR EN AGARE: approved-rankings.js. Inga gamla designer kommer tillbaka.
 //
-// Det finns fjorton streakdesigner, och de bor pa varsitt hall:
+// Den har filen vaktade forr en "Stil"-meny med fjorton designer (sju klassiska i media.js,
+// sju premium i premium-final.js) och att menyn visade ratt design. Sedan #476 (db7b2bb) och
+// #481 (approved-rankings) ar Top Streak EN design, Clean Flip, utan stilmeny - med flit,
+// Davids beslut. Fem prov beskrev da en funktion som inte finns. De byttes inte for att bli
+// grona: forst mattes det faktiska beteendet i Chromium 2026-09-20:
 //
-//   premium   liquid, momentum, tier, thread, chrono, chain, thermo    10 CSS-regler totalt
-//   klassiska inferno, neon, ice, royal, sakura-rail, cyber-grid, storm 58 CSS-regler totalt
+//   widget med streakTheme:'inferno' + streakFrame:'gold-wings'
+//     klasser:      widget vyra-streak approved-streak      (ingen streak-inferno, ingen ram)
+//     stilmeny:     #pfStreakStyle / #streakTheme finns inte
+//     katalogen:    exakt ett Top Streak-val, "Clean Flip"
+//     animation:    approved-streak-flip 8s infinite
 //
-// Bada katalogerna skriver till .streak-template-section, och premium-final.js kor sist - sa de
-// klassiska syns aldrig i widgetkatalogen. De finns bara i en "Stil"-meny som media.js smyger in i
-// DESIGN-gruppen, och DEN listar bara de sju klassiska.
-//
-// Uppmatt i produktion med en liquid-widget vald:
-//
-//   widgetens tema:        liquid
-//   menyns alternativ:     inferno, neon, ice, royal, sakura-rail, cyber-grid, storm
-//   menyn visar:           inferno        <- fel design
-//   liquid finns i menyn:  nej
-//
-// Menyn pastar alltsa att widgeten har en annan design an den har, och ett klick i den skriver
-// inferno over anvandarens val.
-//
-// Till skillnad fran Top Gifter ar ingen CSS dod har: bada namnuppsattningarna anvander samma
-// klassprefix streak-<namn>, och alla fjorton renderar unikt. Problemet ar bara att halften inte
-// gar att valja.
-//
-// liquid har dessutom NOLL egna regler och ritas som grundutseendet.
-//
-// ROTT NU.
+// Samma dag togs premium-final.js:s doda generation bort (STREAKS, "simple"-renderaren,
+// panelen och katalogsektionen) och top-streak-simple.css med den. media.js:s klassiska lager
+// star kvar i kallan for att katalogregistrets prov raknar dess knappar - men det nar aldrig
+// skarmen: approved-rankings.js tar bort sektionen och vinner wh(). Proven har laser att det
+// forblir sa.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const { createDom, closeAll } = require('./helpers/dom-harness.js');
 
 const ROOT = path.join(__dirname, '..');
-const CSS = fs.readdirSync(ROOT).filter(f => f.endsWith('.css'))
-  .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
-const PREMIUM_JS = fs.readFileSync(path.join(ROOT, 'premium-final.js'), 'utf8');
+const kall = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-// SEDAN 2026-09-09 ar menyn EN, inte tva. Bindaren i media.js byggde forr en egen <select
-// id="streakTheme"> bredvid premium-panelens "Stil" (#pfStreakStyle) — tva menyer med samma
-// etikett, samma falt och olika listor. Nu FYLLS premium-panelens meny i stallet, och bararen far
-// markoren data-vyra-stilar. Proven slar darfor upp menyn pa markoren, inte pa ett id som bytt
-// agare; #streakTheme star kvar som reserv for den vag dar premium-panelen inte byggt nagon meny.
-const MENY = '[data-vyra-stilar],#streakTheme';
+test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
-const KLASSISKA = ['inferno', 'neon', 'ice', 'royal', 'sakura-rail', 'cyber-grid', 'storm'];
-const PREMIUM = ['liquid', 'momentum', 'tier', 'thread', 'chrono', 'chain', 'thermo'];
-const ALLA = [...PREMIUM, ...KLASSISKA];
+// Gamla nycklar som fortfarande kan ligga i sparade layouter. Alla ska ritas som Clean Flip.
+const GAMLA = [
+  { streakTheme: 'inferno' }, { streakTheme: 'storm' }, { streakTheme: 'sakura-rail' },
+  { streakTheme: 'liquid' }, { streakTheme: 'thermo' },
+  { streakFrame: 'gold-wings' }, { streakFrame: 'rose-heart' }, { streakFrame: 'crystal-tiara' }
+];
 
-test.after(closeAll);
-
-function panel(streakTheme) {
-  const w = { id: 's1', type: 'templateTopStreak', streakTheme, x: 10, y: 10, width: 520,
-    title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
-    accent: '#d9a441', giftSize: 64, streakSpeed: 1, streakGlow: 50 };
-  const h = createDom({ url: 'https://vyralive.app/studio.html?open=layout',
-    state: { widgets: [w], projectName: 'streak' } });
+function studio(widgets) {
+  const h = createDom({ url: 'https://vyralive.app/studio.html?open=layout', state: { widgets, projectName: 'ts' } });
   h.load('overlay-sanitize.js');
+  h.load('widget-factory.js');
+  h.load('media.js');
   h.load('premium-final.js');
-  const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
-  run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(w)});selected='s1';view='editor';`);
-  run(`document.querySelector('#view').innerHTML='<div class="editor-shell"><div class="canvas">'
-    +wh(state.widgets[0])+'</div><div class="properties">'+props()+'</div></div>';bind();`);
-  return { h, run, meny: () => h.document.querySelector(MENY) };
+  h.load('approved-rankings.js');
+  h.window.dispatchEvent(new h.window.Event('load'));
+  return h;
 }
 
-// ---- menyn maste kanna till allt som gar att satta -------------------------------------------------
-test('Stil-menyn listar alla fjorton designerna', () => {
-  const { meny } = panel('inferno');
-  const m = meny();
-  assert.ok(m, 'Stil-menyn ritades inte alls');
-  const varden = [...m.options].map(o => o.value);
-  const saknas = ALLA.filter(t => !varden.includes(t));
-
-  assert.deepEqual(saknas, [],
-    `dessa gar att satta men gar inte att valja: ${saknas.join(', ')}`);
-});
-
-test('menyn visar den design widgeten faktiskt har', () => {
-  // Det har ar sjalva felet: med liquid vald pastod menyn inferno.
-  const fel = [];
-  for (const t of ALLA) {
-    const { meny } = panel(t);
-    const m = meny();
-    if (!m) { fel.push(t + ': ingen meny'); continue }
-    if (m.value !== t) fel.push(`${t}: menyn visar ${m.value}`);
+test('varje gammal design- och ramnyckel ritas som Clean Flip - inte som den gamla designen', () => {
+  const widgets = GAMLA.map((extra, i) => Object.assign(
+    { id: 's' + i, type: 'templateTopStreak', x: 10, y: 10, width: 220, dataName: '@Test', dataValue: 18 }, extra));
+  const h = studio(widgets);
+  for (const w of widgets) {
+    const html = h.window.wh(w);
+    const nyckel = JSON.stringify(w.streakTheme || w.streakFrame);
+    assert.match(html, /class="widget vyra-streak approved-streak/, `${nyckel}: ritas inte av approved-rankings`);
+    assert.doesNotMatch(html, /streak-(inferno|neon|ice|royal|sakura-rail|cyber-grid|storm|liquid|momentum|tier|thread|chrono|chain|thermo|framed)\b/,
+      `${nyckel}: den gamla designklassen dok upp igen`);
+    assert.doesNotMatch(html, /vyra-streak-simple|premium-streak|sframe-art|streak-mechanism/,
+      `${nyckel}: en dod generation ritar igen`);
+    if (w.streakFrame) assert.ok(!html.includes(w.streakFrame), `${nyckel}: ramen nadde utdatan - ramarna ar avvecklade`);
   }
-
-  assert.deepEqual(fel, [], 'menyn pastar fel design:\n  ' + fel.join('\n  '));
 });
 
-test('menyn skiljer premium fran klassiska', () => {
-  // Fjorton alternativ i en rak lista sager inget om vilka som hor ihop.
-  const { meny } = panel('liquid');
-  const grupper = [...meny().querySelectorAll('optgroup')].map(g => g.label);
-
-  assert.equal(grupper.length, 2, `hittade ${grupper.length} grupper: ${grupper.join(', ')}`);
+test('ingen stilmeny och inget ramval i panelen', () => {
+  const w = { id: 's1', type: 'templateTopStreak', x: 10, y: 10, width: 220, streakTheme: 'inferno' };
+  const h = studio([w]);
+  // `selected` ar ett lexikalt let i studio.js - inte pa window. Satts via skript, som riggarna gor.
+  const sc = h.document.createElement('script'); sc.textContent = "selected='s1'"; h.document.body.append(sc);
+  const panel = h.window.props();
+  assert.doesNotMatch(panel, /id="pfStreakStyle"|id="streakTheme"|data-streak-frame/, 'stilmenyn ar tillbaka');
+  assert.match(panel, /CLEAN FLIP/, 'panelen ar inte approved-rankings:s');
 });
 
-test('att valja en premium-design kastar inte', () => {
-  // Gamla koden slog upp accentfargen med themes.find(...)[1] i den KLASSISKA listan. En premium-
-  // design finns inte dar, sa uppslaget ger undefined och [1] kastar.
-  const { h, run, meny } = panel('inferno');
-  // render() stubbas: harnessens omritning bygger om #view och kastar da pa panelens egen
-  // insertBefore. Det ar riggen, inte handlern. Testet ska mata det handlern skriver.
-  run(`
-    window.__v = {};
-    window.render = () => {};
-    try {
-      const m = document.querySelector('[data-vyra-stilar],#streakTheme');
-      m.value = 'thermo'; m.onchange({ target: m });
-      __v.tema = state.widgets[0].streakTheme;
-      __v.accent = state.widgets[0].accent;
-    } catch (e) { __v.fel = e.message }
-  `);
-  const v = h.window.__v;
-
-  assert.equal(v.fel, undefined, `valet kastade: ${v.fel}`);
-  assert.equal(v.tema, 'thermo', 'temat skrevs inte');
-  assert.match(String(v.accent), /^#[0-9a-f]{3,8}$/i, `accenten blev ${JSON.stringify(v.accent)}`);
+test('bara EN kod ritar Top Streak - de doda generationerna ar borta ur kallan', () => {
+  // Strukturhalvan. En renderare som ligger kvar men "aldrig vinner" ar precis det som lat tre
+  // generationer stapla sig pa varandra i natt. Kallkoden far inte bara pa dem.
+  const media = kall('media.js'), premium = kall('premium-final.js');
+  // media.js:s klassiska lager (vyraStreak, STREAK_FRAMES, tema-/ramkatalogen) star KVAR i kallan:
+  // katalogregistrets prov raknar dess knappar och nycklar. Det nar aldrig skarmen - approved-
+  // rankings.js tar bort sektionen och vinner wh() - och det ar det forsta provet har som laser.
+  assert.doesNotMatch(premium, /VyraStreakPremium|vyraStreak=function|data-pf-streak|vyra-streak-simple|pfStreakStyle/, 'premium-final.js bar premium-/simple-generationen igen');
+  assert.ok(!fs.existsSync(path.join(ROOT, 'top-streak-simple.css')), 'top-streak-simple.css ar tillbaka - den stilar en klass ingen ritar');
+  assert.match(kall('approved-rankings.js'), /approved-streak/, 'agaren saknas');
 });
 
-test('att valja en klassisk design fungerar fortfarande', () => {
-  const { h, run } = panel('liquid');
-  run(`
-    window.__k = {};
-    window.render = () => {};
-    const m = document.querySelector('[data-vyra-stilar],#streakTheme');
-    m.value = 'royal'; m.onchange({ target: m });
-    __k.tema = state.widgets[0].streakTheme; __k.accent = state.widgets[0].accent;
-  `);
-
-  assert.equal(h.window.__k.tema, 'royal');
-  assert.match(String(h.window.__k.accent), /^#[0-9a-f]{3,8}$/i);
-});
-
-// ---- varje design maste ha en design -----------------------------------------------------------
-test('varje streakdesign har egen CSS', () => {
-  const utan = ALLA.filter(t =>
-    (CSS.match(new RegExp('\\.streak-' + t.replace('-', '\\-') + '(?![a-z0-9-])', 'g')) || []).length === 0);
-
-  assert.deepEqual(utan, [],
-    `dessa erbjuds som designval men ritas som grundutseendet: ${utan.join(', ')}`);
-});
-
-test('premiumlistan gar att lasa utifran, sa menyn kan bygga sig av den', () => {
-  // Utan en exponerad lista maste namnen dubbleras i media.js, och da glider de isar igen.
-  assert.match(PREMIUM_JS, /VyraStreakPremium/,
-    'premium-final.js exponerar ingen lista over sina designer');
+test('Clean Flip loopar under hela sandningen', () => {
+  // Panelen lovar "Flippen fortsatter under hela LIVE-sandningen". CSS:en ska halla det:
+  // infinite, aldrig ett andligt antal iterationer.
+  const css = kall('approved-rankings.css');
+  const regel = css.match(/\.approved-streak \.streak-flip\s*\{[^}]*\}/);
+  assert.ok(regel, 'flipp-regeln saknas');
+  assert.match(regel[0], /approved-streak-flip[^;]*infinite/, 'flippen ar inte infinite');
 });

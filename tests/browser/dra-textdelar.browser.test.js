@@ -58,7 +58,8 @@ test.after(async () => {
 
 const WIDGETS = [
   'catalog:topgift:premium:royal',
-  'catalog:topstreak:premium:liquid',
+  // Top Streak: premium:liquid ar avvecklad 2026-09-20; Clean Flip har inga dragbara textdelar
+  // (namn och streak sitter i .approved-streak-copy utan data-textdel). Raden togs bort.
   'catalog:toplike:clean',
 ];
 
