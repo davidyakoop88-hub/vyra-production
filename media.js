@@ -1053,6 +1053,9 @@ if(new URLSearchParams(location.search).has('overlay')){
     canvas.style.top=((window.innerHeight-768*scale)/2)+'px';
     canvas.style.transform=`scale(${scale})`;
   };
+  // Exponerad: layout-safe.js laddas EFTER den har filen, lindar render() utanpa och bygger om
+  // hela #view - med en NY .canvas utan skalningen. Den maste kunna passa in duken igen.
+  window.VyraOverlayFit=fitOverlayCanvas;
   const overlayFitRender=render;render=function(){overlayFitRender();fitOverlayCanvas()};
   window.addEventListener('resize',fitOverlayCanvas);
   setTimeout(()=>document.querySelector('[data-view="editor"]')?.click(),0);

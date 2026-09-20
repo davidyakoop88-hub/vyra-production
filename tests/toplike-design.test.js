@@ -58,7 +58,7 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // Bumpad 2026-09-20: media.js bar versionsstrangen for gift-fireworks.js, som andrades nar
   // fyrverkeriets niva borjade folja gavans varde. media.js har alltsa andrats, och da maste
   // dess egen strang bytas - annars pekar en cachad media.js kvar pa den gamla filen.
-  assert.match(studioHtml, /media\.js\?v=20260920-3/);
+  assert.match(studioHtml, /media\.js\?v=20260920-4/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
 });

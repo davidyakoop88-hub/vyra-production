@@ -257,7 +257,8 @@
         "tests/browser/sprak-vakt.browser.test.js",
         "tests/browser/sidhuvud-knappar.browser.test.js",
         "tests/browser/sidomeny-bredd.browser.test.js",
-        "tests/browser/overlaylank-synlig.browser.test.js"
+        "tests/browser/overlaylank-synlig.browser.test.js",
+        "tests/browser/overlay-passform.browser.test.js"
       ],
       "matning": [],
       "risker": [
