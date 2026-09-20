@@ -96,7 +96,7 @@ async function varmUpp(bas) {
   if (!b) return { kord: false, skal: 'ingen webblasare gick att starta' };
   let resultat = { kord: false, skal: 'uppvärmningen nådde aldrig fram till ett resultat' };
   try {
-    const s = await b.newPage({ viewport: { width: 1400, height: 1000 } });
+    const s = await b.newPage({ viewport: V.VIEWPORT });
     await s.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
     // SAMMA VÄNTAN SOM DEN RIKTIGA SESSIONEN. Utan overlay-kontrollen kan uppvärmningen hinna
     // rendera Studio-läget i stället, och då värms fel layout och fel typsnittsuppsättning.
@@ -145,7 +145,7 @@ test.before(async () => {
   browser = await startaWebblasare();
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   const bas = basAdress;
-  sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+  sida = await browser.newPage({ viewport: V.VIEWPORT });   // 1400x768: skala 1,0 - se visuell.js
   sida.__kast = [];
   sida.on('pageerror', e => sida.__kast.push(String(e.message).slice(0, 120)));
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
@@ -312,7 +312,12 @@ test('systemtypsnittet for de textritade symbolerna finns pa maskinen', { skip, 
 //   2. market maste anda RITAS — annars gar hela emblemet att radera och provet forblir gront
 const MARKEN = [
   { nyckel: 'catalog:battlemvp:samurai', valjare: '.mvp-emblem', sort: 'mask' },
-  { nyckel: 'catalog:socialgoal:followers:1:landscape', valjare: '.goal-icon', sort: 'svg' },
+  // Foljarmalets '+' (U+FF0B) forsvann med den gamla malmodellen i 48b3458 (2026-09-19): de nya
+  // designerna ar bildbaserade (assets/goal-new/*.png) och har varken .goal-icon eller <svg>.
+  // Uppmatt 2026-09-20: noll CJK-/fullbreddskodpunkter i bada foljarnycklarna. Kravet "market
+  // maste anda ritas" blir da att designbilden faktiskt ar laddad - annars vore widgeten tom.
+  { nyckel: 'catalog:socialgoal:followers:pulse-rail:landscape', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:pulse-tower:portrait', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
 ];
 
 test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 120000 }, async () => {
@@ -341,7 +346,9 @@ test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 
         cjk: [...new Set(cjk)],
         ritas: s === 'mask'
           ? (fore.maskImage || fore.webkitMaskImage || 'none')
-          : (el.querySelector('svg') ? 'svg' : 'ingen'),
+          : s === 'bild'
+            ? (el.tagName === 'IMG' && el.naturalWidth > 0 ? 'bild' : 'ingen')
+            : (el.querySelector('svg') ? 'svg' : 'ingen'),
       };
     }, [valjare, sort]);
     if (m.fel) { brister.push(`${nyckel}: ${m.fel}`); continue }
@@ -349,9 +356,10 @@ test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 
 )}`);
     if (sort === 'mask' && !/^url\(/.test(m.ritas)) brister.push(`${nyckel}: ${valjare}::before har ingen mask-image (${m.ritas}) — market ritas inte alls`);
     if (sort === 'svg' && m.ritas !== 'svg') brister.push(`${nyckel}: ${valjare} innehaller ingen <svg> — market ritas inte alls`);
+    if (sort === 'bild' && m.ritas !== 'bild') brister.push(`${nyckel}: ${valjare} ar inte en laddad bild — designen ritas inte alls`);
   }
   assert.deepEqual(brister, [],
-    'Marken i Battle MVP · Samurai och Follower Goal ska ritas av oss som inline-SVG. Hamtas de '
+    'Marken i Battle MVP · Samurai och Follower Goal ska ritas av oss (mask, bild eller inline-SVG). Hamtas de '
     + 'ur ett systemtypsnitt igen blir de tofu-rutor pa varje maskin utan CJK-tackning — bade i '
     + 'CI och i en streamers OBS-kalla — och referensbilderna borjar flacka igen.');
 });
@@ -406,7 +414,10 @@ test('overlayduken borjar pa canvasTop = 0', { skip, timeout: 30000 }, async () 
 });
 
 test('katalogen har nycklar att fotografera', { skip }, () => {
-  assert.ok(NYCKLAR.length >= 150, `bara ${NYCKLAR.length} katalognycklar`);
+  // NYCKLAR ar kartan MINUS undantagslistan: 149 - 16 = 133 den 2026-09-20 (kartan krympte till 149
+  // i cffae80). Golvet vaktar en flyttad eller tom karta, inte antalet - samma resonemang som
+  // kravNycklar() i katalognycklar.js, som star pa 140 fore undantagen.
+  assert.ok(NYCKLAR.length >= 125, `bara ${NYCKLAR.length} katalognycklar`);
 });
 
 test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || undefined }, () => {

@@ -583,5 +583,14 @@ async function fotografera(sida, nyckel, ALERTS) {
     hur: 'levande' };
 }
 
+/* RIGGENS FONSTER: 1400 x 768, OCH HOJDEN AR INTE VALFRI.
+   Sedan #486 (2026-09-20) skalar overlayen duken med min(innerWidth/432, innerHeight/768) sa att
+   432x768-ytan fyller OBS/TikTok-rutan. Riggen fotograferade i 1400x1000 - skala 1,302 - och
+   varenda referens foll pa MATTEN (240x177 blev 314x231, 400x400 blev 522x521). Med hojden 768 ar
+   skalan exakt 1,0 och duken borjar pa top 0; bredden 1400 rymmer den bredaste widgeten (608 px)
+   utan att skalan paverkas. Uppmatt 2026-09-20 pa fem nycklar: fotot vid 1400x768 ar pixel-
+   identiskt med fotot dar transformen neutraliserats, och matten ar manifestets. */
+const VIEWPORT = Object.freeze({ width: 1400, height: 768 });
+
 module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
-  motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL };
+  motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };
