@@ -140,7 +140,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
   assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
-  assert.match(studio, /widget-handles\.js\?v=20260820-1/);
+  // Bumpad 2026-09-20: resize-handtagen klamper bredden sa att hela widgeten ryms pa duken.
+  assert.match(studio, /widget-handles\.js\?v=20260920-1/);
     // Bumpad 2026-08-20 for toppgivarraden: media.js bar laddvagen till home-premium-bunten, och
   // overview-premium.css/.js laddades HELT UTAN version pa bada stallena — en cachad kopia hade
   // fortsatt visa de fyra gamla summakorten. Nu bar de ?v=20260820-1, och media.js sjalv maste

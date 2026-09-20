@@ -7,16 +7,19 @@
 // Studio. Samma mönster fanns i bandet från sändningen 2026-09-18 (Top Gift x=736,
 // Battle MVP y=768).
 //
-// VARFÖR INTE FULL INNESLUTNING. Den första versionen klämde så att HELA widgeten rymdes.
-// Den föll på snapp.browser.test.js prov 4, och mätningen visade varför: widgetarna renderar
-// 220 × 388 oavsett `width`, så två av dem får inte plats sida vid sida i en 432 bred duk och
-// inte staplade i en 768 hög. Kant-mot-kant-snappen är byggd med flit och har eget prov. Full
-// inneslutning hade tagit bort den funktionen för att laga en annan — det vore fel byte.
+// REGELN AR FULL INNESLUTNING sedan 2026-09-20: hela widgetens box ska rymmas pa duken.
+// Davids ord: "den ytan man lagger widget den ska man se". Den forsta versionen (#472) nojde
+// sig med att origo lag kvar med 8 px marginal, for att inte bryta kant-mot-kant-snappen i
+// snapp.browser.test.js prov 4 - men den regeln lat Gift Fireworks sta pa 540 px bredd i hans
+// 432 px ruta: synlig i editorn (contain:paint klipper), avklippt i sandningen. Snapp-riggen
+// anvander numera widgetar sma nog att tva ryms, sa snappen provas dar den ar synlig.
 //
-// REGELN BLEV: widgetens origo måste ligga kvar på duken, med minst en rutnätsruta (8 px)
-// kvar. Då går det inte längre att tappa bort en widget, och snappen är orörd. Det är en
-// SVAGARE garanti än inneslutning — en widget kan fortfarande sticka ut till största delen —
-// och därför märks den ut visuellt i stället (se markera() längre ned).
+// FYRA VAGAR IN, ALLA KLAMPADE: draget (haktaDrag), resize-handtagen (widget-handles.js),
+// panelens X/Y/Bredd-falt (klampFalt, capture-lyssnare fore media.js:81) och "flytta in"
+// (flyttaInAlla, som ocksa krymper en widget bredare an duken). Origo-regeln finns kvar som
+// reserv nar storleken ar okand. INTE klampad: proportionslasets hojdfalt (vyra-proportioner.js
+// satt()) kan fortfarande skriva en bredd via kvoten - markeringen fangar det, "flytta in"
+// rattar det.
 //
 // DUKENS MÅTT LÄSES UR DOM:EN, aldrig hårdkodat. `.editor-shell .canvas` har
 // `width:var(--layout-width,432px)` (studio.css:570) och layout-format.js skriver om
@@ -42,14 +45,21 @@
     return { bredd: STANDARD.bredd, hojd: STANDARD.hojd };
   }
 
-  function klampEtt(varde, dukMatt) {
+  // HELA WIDGETEN SKA RYMMAS. Davids ord 2026-09-20: "den ytan man lagger widget den ska man
+  // se". Origo-regeln (8 px kvar) lat en widget sticka ut till storsta delen, och i hans layout
+  // lag Gift Fireworks pa 540 px bredd i en 432 px ruta - synlig i editorn, avklippt i
+  // sandningen. Nu klamps laget sa att widgetens hela box ligger inne pa duken.
+  // AR WIDGETEN STORRE AN DUKEN kan den inte rymmas; da gar origo till 0 och bredden far
+  // hanteras av flyttaInAlla() eller resize-klampen i widget-handles.js.
+  function klampEtt(varde, dukMatt, storlek) {
     if (!Number.isFinite(varde)) return 0;
-    return Math.min(Math.max(0, varde), Math.max(0, dukMatt - MIN_KVAR));
+    var tak = Number.isFinite(storlek) && storlek > 0 ? dukMatt - storlek : dukMatt - MIN_KVAR;
+    return Math.min(Math.max(0, varde), Math.max(0, tak));
   }
 
-  function klamp(vanster, topp, dukMatt) {
-    var d = dukMatt || duken();
-    return { vanster: klampEtt(vanster, d.bredd), topp: klampEtt(topp, d.hojd) };
+  function klamp(vanster, topp, dukMatt, storlek) {
+    var d = dukMatt || duken(), st = storlek || {};
+    return { vanster: klampEtt(vanster, d.bredd, st.bredd), topp: klampEtt(topp, d.hojd, st.hojd) };
   }
 
   // Sant när widgeten sticker ut ur duken — åt något håll. Flyttar ingenting; används av
@@ -122,7 +132,11 @@
         if (!w) return;
         var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
         if (!stickerUt(x, y, el.offsetWidth, el.offsetHeight, d)) return;
-        w.x = Math.min(Math.max(0, x), Math.max(0, d.bredd - el.offsetWidth));
+        // Bredare an duken (Gift Fireworks 540, Glove Snipe 760 i Davids layout): att flytta
+        // origo hjalper inte, den sticker ut anda. Da krymps bredden till dukens. Bara
+        // `width` rors - hojden foljer innehallet.
+        if (el.offsetWidth > d.bredd && Number.isFinite(Number(w.width))) w.width = d.bredd;
+        w.x = Math.min(Math.max(0, x), Math.max(0, d.bredd - Math.min(el.offsetWidth, d.bredd)));
         w.y = Math.min(Math.max(0, y), Math.max(0, d.hojd - el.offsetHeight));
         flyttade++;
       });
@@ -169,7 +183,8 @@
   // I up LASER originalet style.left och skriver w.x, sa vi klamper FORE — annars sparas
   // det oklampade laget och widgeten hoppar tillbaka forst vid nasta ritning.
   function klampElement(el) {
-    var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10));
+    var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10), null,
+      { bredd: el.offsetWidth, hojd: el.offsetHeight });
     el.style.left = k.vanster + 'px';
     el.style.top = k.topp + 'px';
   }
@@ -198,6 +213,25 @@
       });
     } catch (e) {}
     return antal;
+  }
+
+  function klampFalt(e) {
+    var falt = e.target;
+    if (!falt || !iEditorn() || typeof state === 'undefined' || typeof selected === 'undefined') return;
+    if (falt.id !== 'propX' && falt.id !== 'propY' && falt.id !== 'propWidth') return;
+    var w = (state.widgets || []).filter(function (x) { return x.id === selected })[0];
+    var el = w && document.querySelector('.editor-shell .canvas .widget[data-id="' + w.id + '"]');
+    if (!w || !el) return;
+    var d = duken(), v = Number(falt.value);
+    if (!Number.isFinite(v)) return;
+    var ny = v;
+    if (falt.id === 'propWidth') ny = Math.max(60, Math.min(v, d.bredd - (w.x || 0)));
+    if (falt.id === 'propX') ny = klampEtt(v, d.bredd, Math.min(el.offsetWidth, d.bredd));
+    if (falt.id === 'propY') ny = klampEtt(v, d.hojd, el.offsetHeight);
+    if (ny !== v) falt.value = ny;
+  }
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('change', klampFalt, true);
   }
 
   var api = {

@@ -103,7 +103,8 @@ test('ett drag langt ut till hoger stannar vid kanten', { skip, timeout: 90000 }
   const { context, page } = await editorn();
   try {
     const m = await dra(page, 688, 200);          // Davids faktiska varde
-    const tak = m.duk.bredd - m.minKvar;
+    // Hela widgeten ska rymmas: taket ar duk minus widgetens renderade bredd.
+    const tak = m.duk.bredd - m.widget.bredd;
     assert.equal(m.sparat.x, tak, `x ${m.sparat.x} skulle vara ${tak} (duk ${m.duk.bredd})`);
     assert.ok(m.sparat.x < m.duk.bredd, 'widgeten hamnade helt utanfor duken');
     assert.equal(m.sett.left, tak, 'laget under draget slapptes ut och hoppade tillbaka forst vid slappet');
@@ -123,7 +124,7 @@ test('ett drag nedanfor duken stannar vid nederkanten', { skip, timeout: 90000 }
   const { context, page } = await editorn();
   try {
     const m = await dra(page, 100, 900);
-    const tak = m.duk.hojd - m.minKvar;
+    const tak = m.duk.hojd - m.widget.hojd;
     assert.equal(m.sparat.y, tak, `y ${m.sparat.y} skulle vara ${tak} (duk ${m.duk.hojd})`);
     assert.ok(m.sparat.y < m.duk.hojd, 'widgeten hamnade helt utanfor duken');
   } finally { await context.close() }
