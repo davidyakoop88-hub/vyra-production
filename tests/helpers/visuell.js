@@ -70,6 +70,15 @@ function motorKrock() {
 
 /* Mätfunktionerna körs INNE i sidan — en gång per sida, inte en gång per widget. */
 const RIGG = `(() => {
+  // PASSFORMEN NEUTRALISERAS - se VIEWPORT langst ned. media.js:s fitOverlayCanvas() skriver inline
+  // left/top/transform vid varje render; en !important-regel i ett stilark vinner over inline utan
+  // !important och overlever layout-safe.js:s ombyggnad av #view. Duken star da oskalad pa (0,0).
+  if (!document.getElementById('vis-rigg-passform')) {
+    const st = document.createElement('style');
+    st.id = 'vis-rigg-passform';
+    st.textContent = '.canvas{transform:none!important;left:0!important;top:0!important}';
+    document.head.append(st);
+  }
   window.__visBygg = (nyckel) => {
     try {
       state.widgets.length = 0;
@@ -583,14 +592,20 @@ async function fotografera(sida, nyckel, ALERTS) {
     hur: 'levande' };
 }
 
-/* RIGGENS FONSTER: 1400 x 768, OCH HOJDEN AR INTE VALFRI.
-   Sedan #486 (2026-09-20) skalar overlayen duken med min(innerWidth/432, innerHeight/768) sa att
-   432x768-ytan fyller OBS/TikTok-rutan. Riggen fotograferade i 1400x1000 - skala 1,302 - och
-   varenda referens foll pa MATTEN (240x177 blev 314x231, 400x400 blev 522x521). Med hojden 768 ar
-   skalan exakt 1,0 och duken borjar pa top 0; bredden 1400 rymmer den bredaste widgeten (608 px)
-   utan att skalan paverkas. Uppmatt 2026-09-20 pa fem nycklar: fotot vid 1400x768 ar pixel-
-   identiskt med fotot dar transformen neutraliserats, och matten ar manifestets. */
-const VIEWPORT = Object.freeze({ width: 1400, height: 768 });
+/* RIGGENS FONSTER: 1400 x 1000 - SAMMA SOM ALLA REFERENSER TOGS I - OCH PASSFORMEN NEUTRALISERAD.
+   Sedan #486 (2026-09-20) skalar overlayen duken med min(innerWidth/432, innerHeight/768) och
+   centrerar den, sa att 432x768-ytan fyller OBS/TikTok-rutan. I riggen gav det skala 1,302 och
+   varenda referens foll pa MATTEN (240x177 blev 314x231). Tre matningar 2026-09-20 avgjorde vad
+   som ska galla, alla A/B pa samma binar:
+     - hojden (768 mot 1000) ar irrelevant: identiska pixlar nar duken star pa (0,0)
+     - transformen scale(1) ar irrelevant: identiska pixlar med och utan
+     - dukens X-LAGE ar avgorande: centrerad pa left 484 skilde tolv alert-widgetar (Battle MVP-
+       ramar, Follower Alert, Gifter Level) 11-291 px fran samma widget pa left 0 - alla pa mjuka
+       glod-/skuggkanter, dvs kompositorns rastrering av oskarpa beror pa var i fonstret lagret
+       ligger. 432 px bredd (left 0 av sig sjalv) foll i stallet pa lastx:royal, som ar 500 px bred.
+   Riggen fotograferar darfor DESIGNPIXLAR: RIGG nedan laser duken oskalad pa (0,0), precis dar de
+   190 referenserna togs fore #486. Passformen i sig vaktas av overlay-passform.browser.test.js. */
+const VIEWPORT = Object.freeze({ width: 1400, height: 1000 });
 
 module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
   motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };

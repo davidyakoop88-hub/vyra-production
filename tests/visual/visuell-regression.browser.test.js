@@ -145,7 +145,7 @@ test.before(async () => {
   browser = await startaWebblasare();
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   const bas = basAdress;
-  sida = await browser.newPage({ viewport: V.VIEWPORT });   // 1400x768: skala 1,0 - se visuell.js
+  sida = await browser.newPage({ viewport: V.VIEWPORT });   // passformen neutraliseras i RIGG - se visuell.js
   sida.__kast = [];
   sida.on('pageerror', e => sida.__kast.push(String(e.message).slice(0, 120)));
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });

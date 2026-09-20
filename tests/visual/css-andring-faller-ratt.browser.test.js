@@ -65,7 +65,7 @@ test.before(async () => {
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den');
   server = await servera();
   const bas = `http://127.0.0.1:${server.address().port}`;
-  sida = await browser.newPage({ viewport: V.VIEWPORT });   // 1400x768: skala 1,0 - se visuell.js
+  sida = await browser.newPage({ viewport: V.VIEWPORT });   // passformen neutraliseras i RIGG - se visuell.js
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
   await sida.waitForFunction(() => typeof window.render === 'function', null,
     { timeout: 30000, polling: 100 });
