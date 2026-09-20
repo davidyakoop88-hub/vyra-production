@@ -137,6 +137,7 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/tom-widget-avslojas.test.js",
         "tests/widget-defaults-migration.test.js",
         "tests/widget-placement.test.js",
         "tests/widget-frameless-output.test.js",

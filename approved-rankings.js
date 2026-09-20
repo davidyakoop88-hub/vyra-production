@@ -109,13 +109,25 @@
     set('#approvedStreakSeconds', 'streakFlipSeconds', Number);
   }
 
+  // TOMD WIDGET SYNS INTE I SANDNINGEN (Davids beslut 2026-09-09, vyra-tom-widget.js). Den regeln
+  // sitter som en wh-wrapper LAGRE i kedjan, och overriden nedan anropar aldrig kedjan for Top
+  // Streak - uppmatt i CI (tom-widget.browser.test.js): en tomd Clean Flip syntes i overlay.
+  // Samma avgorande (arTom) och samma doljning, sa avslojandet vid forsta gavan galler aven har.
+  // Fabrikens demovarden ar INTE tomma (dataValue 18): de renderas synligt nollade av
+  // cleanStreakHtml, och det ar den bilden referensvakten fotograferar.
+  function doljOmTom(w, html) {
+    const TW = typeof window !== 'undefined' && window.VyraTomWidget;
+    const overlay = new URLSearchParams(location.search).has('overlay');
+    return overlay && TW && TW.arTom(w) ? TW.dolj(html) : html;
+  }
+
   function install() {
     if (installed) return;
     installed = true;
 
     const previousWh = wh;
     wh = function (w) {
-      if (w && w.type === 'templateTopStreak') return cleanStreakHtml(w);
+      if (w && w.type === 'templateTopStreak') return doljOmTom(w, cleanStreakHtml(w));
       if (w && w.type === 'templateTopLike') {
         const safeSkin = LIKE_SKINS.has(w.skin) ? w.skin : 'clean-bar';
         let html = previousWh({...w, skin: safeSkin, showBackground: w.showBackground === true});

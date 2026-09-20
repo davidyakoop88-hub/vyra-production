@@ -33,8 +33,12 @@ test('central retirement guard loads last with its own cache version', () => {
   assert.match(css, /\.approved-streak-copy em b\{display:inline!important/, 'talet i <b> ska ligga inline i vardesraden');
   // JS -3 2026-09-20: ramvaljaren bort. -4 samma dag: overlayens nollage synligt, talet i <b> for
   // livepatchen.
-  assert.match(html, /approved-rankings\.js\?v=20260920-4/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260920-4') > html.indexOf('vyra-state-sync.js'));
+  // -5: tomd Clean Flip doljs i overlay via vyra-tom-widget.js:s regel (doljOmTom).
+  assert.match(html, /approved-rankings\.js\?v=20260920-5/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260920-5') > html.indexOf('vyra-state-sync.js'));
+  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260920-1') > -1
+    && html.indexOf('vyra-tom-widget.js?v=20260920-1') < html.indexOf('approved-rankings.js?v=20260920-5'),
+    'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 
 // RIKTIG RENDERING AV CLEAN FLIP. approved-rankings.js kors i jsdom med de globala studio.js ger
@@ -77,6 +81,20 @@ test('Clean Flip i overlay: fabrikens demoperson blir ett synligt nollage, ett r
   const live = cleanRad(riggClean(true), { id: 's1', type: 'templateTopStreak', dataName: 'wpwer17', dataValue: 23 });
   assert.equal(live.strong.textContent, 'wpwer17');
   assert.equal(live.em.textContent, '×23 STREAK');
+});
+
+test('Clean Flip i overlay: en TOMD widget doljs (Davids beslut 2026-09-09), demovarden doljs inte', () => {
+  // Riggen bar vyra-tom-widget.js:s riktiga regel: arTom = inget namn och inget varde (0 raknas
+  // som inget). Uppmatt i CI fore fixen: en tomd Clean Flip syntes i overlay.
+  const w = riggClean(true);
+  w.eval(`window.VyraTomWidget = { arTom: w => (w.dataName == null || w.dataName === '') && (w.dataValue == null || w.dataValue === '' || Number(w.dataValue) === 0),
+    dolj: html => String(html).replace(/(<div\\b[^>]*?style=")/, '$1display:none!important;') };`);
+  const tomd = w.eval('wh')({ id: 's1', type: 'templateTopStreak' });
+  assert.match(tomd, /style="display:none!important;/, 'tomd Clean Flip ska doljas i overlay');
+  const demo = w.eval('wh')({ id: 's1', type: 'templateTopStreak', dataName: '@StreamQueen', dataValue: 18 });
+  assert.doesNotMatch(demo, /display:none/, 'fabrikens demovarden ar inte "tomt" - de renderas synligt nollade');
+  const editor = riggClean(false).eval('wh')({ id: 's1', type: 'templateTopStreak' });
+  assert.doesNotMatch(editor, /display:none/, 'i editorn syns aven en tomd widget - annars gar den inte att placera');
 });
 
 test('Clean Flip i editorn behaller demodatan att designa mot', () => {
