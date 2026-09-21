@@ -17,27 +17,40 @@
   const DEMO_NAMN = new Set(['streamqueen', 'maya']);
   const arDemo = namn => DEMO_NAMN.has(String(namn || '').trim().toLowerCase().replace(/^@/, ''));
 
+  // OVERLAY-LAGET LASES UR URL:EN, en gang och pa ett stalle. media.js:s VYRA_OVERLAY ar samma
+  // svar, men som en global fran en annan fil; vyra-tom-widget.js och live-leaderboard.js laser
+  // URL:en av samma skal ("oberoende av laddningsordningen").
+  const iOverlay = () => new URLSearchParams(location.search).has('overlay');
+
   function cleanStreakHtml(w) {
     const profile = VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg');
     const gift = VyraSafe.url(w.giftImage, 'assets/gifts/events/0001_Rose.png');
-    // OVERLAYENS NOLLAGE AR SYNLIGT: tomt namn och '×0 STREAK', som Top Gifts nollade kort.
-    //
-    // Forsta utkastet (tidigare i #487) DOLDE en tom Clean Flip med display:none. Det haller inte,
-    // av tva uppmatta skal 2026-09-20: (1) livedatan kommer som en riktad DOM-patch fran
-    // gift-event-images.js, inte som en render() - en dold widget forblir dold hela sandningen;
-    // (2) den visuella vakten vagrar en referens som ar 0 % malad. Demonamnen ('@StreamQueen' fran
-    // fabriken, 'MAYA' fran createCleanStreak) renderas som tomt i overlay; ett riktigt namn i
-    // state (skrivet av gift-event-images vid ett rekord) renderas, sa en omritning mitt i
-    // sandningen inte nollar det som just visats.
+    // TVA LAGEN UTAN TITTARE, TVA OLIKA BILDER - MED FLIT (samma som Top Gift):
+    //   - DEMOVARDEN, dvs fabrikens '@StreamQueen'/18 eller createCleanStreaks 'MAYA'/18, ar det
+    //     man designar mot i editorn. I overlay renderas de som tomt namn och '×0 STREAK' - ingen
+    //     pahittad person (live-zero-state.js:s regel, som inte nar Clean Flips markup). Det ar
+    //     ocksa den bild referensvakten fotograferar: fabrikens widget, synligt nollad.
+    //   - TOMD widget (falten borttagna av "Tom widget" eller live:start) doljs helt i overlay -
+    //     Davids beslut 2026-09-09 - av doljOmTom() nedan via vyra-tom-widget.js, och samma modul
+    //     visar den igen vid forsta gavan (avsloja). Livedatan ar en riktad DOM-patch, inte en
+    //     render(); darfor ligger avslojandet dar och inte har.
+    // Ett riktigt namn i state (skrivet av gift-event-images.js vid ett rekord) renderas, sa en
+    // omritning mitt i sandningen inte nollar det som just visats.
     //
     // Talet ligger i ett eget <b> inne i <em>: patchen skriver BARA talet, sa '×' och 'STREAK'
     // star kvar efter forsta gavan (SHAPES.templateTopStreak i gift-event-images.js).
-    const overlay = typeof VYRA_OVERLAY !== 'undefined' && VYRA_OVERLAY;
+    //
+    // OPACITET, LAGER OCH DOLJ: wh-overriden i install() anropar aldrig kedjan under sig, sa
+    // media.js:s styledWh (opacity/z-index/hidden) och liveVisibilityWh (widget-hidden + display:
+    // none!important) nadde aldrig Clean Flip - "Dolj widget" och lagerordningen gjorde ingenting
+    // for Top Streak. Samma varden skrivs darfor har, i samma form som media.js:973.
+    const overlay = iOverlay();
     const demo = overlay && (arDemo(w.dataName) || !w.dataName);
     const name = demo ? '' : VyraSafe.text(w.dataName, 'MAYA');
     const value = demo ? '0' : VyraSafe.text(w.dataValue, overlay ? '0' : '18');
     const width = Math.max(150, Number(w.width) || 220);
-    return `<div class="widget vyra-streak approved-streak${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x||0}px;top:${w.y||0}px;width:${width}px;--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    const dold = w.hidden ? 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;' : '';
+    return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
   function approvedStreakProps(w) {
@@ -117,8 +130,7 @@
   // cleanStreakHtml, och det ar den bilden referensvakten fotograferar.
   function doljOmTom(w, html) {
     const TW = typeof window !== 'undefined' && window.VyraTomWidget;
-    const overlay = new URLSearchParams(location.search).has('overlay');
-    return overlay && TW && TW.arTom(w) ? TW.dolj(html) : html;
+    return iOverlay() && TW && TW.arTom(w) ? TW.dolj(html) : html;
   }
 
   function install() {

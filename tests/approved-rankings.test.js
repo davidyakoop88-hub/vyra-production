@@ -33,11 +33,12 @@ test('central retirement guard loads last with its own cache version', () => {
   assert.match(css, /\.approved-streak-copy em b\{display:inline!important/, 'talet i <b> ska ligga inline i vardesraden');
   // JS -3 2026-09-20: ramvaljaren bort. -4 samma dag: overlayens nollage synligt, talet i <b> for
   // livepatchen.
-  // -5: tomd Clean Flip doljs i overlay via vyra-tom-widget.js:s regel (doljOmTom).
-  assert.match(html, /approved-rankings\.js\?v=20260920-5/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260920-5') > html.indexOf('vyra-state-sync.js'));
-  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260920-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20260920-1') < html.indexOf('approved-rankings.js?v=20260920-5'),
+  // 20260921-1: tomd Clean Flip doljs via vyra-tom-widget.js (doljOmTom), och w.hidden/opacitet/
+  // lager skrivs i mallen (wh-overriden nar aldrig media.js:s styledWh/liveVisibilityWh).
+  assert.match(html, /approved-rankings\.js\?v=20260921-1/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260921-1') > html.indexOf('vyra-state-sync.js'));
+  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260921-1') > -1
+    && html.indexOf('vyra-tom-widget.js?v=20260921-1') < html.indexOf('approved-rankings.js?v=20260921-1'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 
@@ -102,5 +103,49 @@ test('Clean Flip i editorn behaller demodatan att designa mot', () => {
   assert.equal(r.strong.textContent, 'MAYA');
   assert.equal(r.em.textContent, '×18 STREAK');
   assert.equal(r.b.textContent, '18');
+});
+
+// ---- HELA KEDJAN FOR CLEAN FLIP: vyra-tom-widget.js + gift-event-images.js + approved-rankings.js --
+// Riktiga moduler i produktens laddordning (tom-widget fore approved-rankings). Tomd Clean Flip
+// doljs; forsta gavan skriver state (gift-event-images), patchar <strong> och <b> via SHAPES och
+// avslojar (vyra-tom-widget). Det ar den vag en sandning faktiskt gar.
+const tomJs = fs.readFileSync('vyra-tom-widget.js', 'utf8');
+const giftJs = fs.readFileSync('gift-event-images.js', 'utf8');
+
+test('hela kedjan: tomd Clean Flip doljs, forsta gavan visar "wpwer17 ×3 STREAK"', async () => {
+  const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
+    { url: 'http://localhost/studio.html?overlay=1', runScripts: 'outside-only' });
+  const w = dom.window;
+  w.eval(`var wh=()=>'',props=()=>'',bind=()=>{},selected=null,view='overlay',state={widgets:[]},
+    save=()=>{},render=()=>{},toast=()=>{},liveWidget=id=>state.widgets.find(x=>x.id===id),
+    VYRA_OVERLAY=true,
+    VyraSafe={text:(v,f)=>(v==null||v==='')?f:String(v),url:(v,f)=>v||f},
+    VyraWidgets={create:()=>({id:'ny'}),isStandalone:()=>false};`);
+  w.eval(tomJs); w.eval(giftJs); w.eval(js);
+  w.dispatchEvent(new w.Event('load'));
+  const widget = { id: 's1', type: 'templateTopStreak' };
+  w.eval('state').widgets.push(widget);
+  const box = w.document.querySelector('.canvas');
+  box.innerHTML = w.eval('wh')(widget);
+  const el = box.querySelector('[data-id="s1"]');
+  assert.ok(el && el.classList.contains('approved-streak'), 'Clean Flip renderades inte');
+  assert.equal(el.style.display, 'none', 'tomd Clean Flip ska vara dold i overlay (Davids beslut 2026-09-09)');
+
+  w.dispatchEvent(new w.CustomEvent('vyra-live-event', { detail: {
+    type: 'gift', giftName: 'Rose', username: 'wpwer17', coins: 30, count: 3, profileImage: 'https://cdn/p.jpg', giftImage: 'assets/gifts/rose.png' } }));
+  await new Promise(r => setTimeout(r, 40));
+  assert.equal(el.querySelector('.approved-streak-copy strong').textContent, 'wpwer17');
+  assert.equal(el.querySelector('.approved-streak-copy em').textContent, '×3 STREAK', 'talet i <b>, prefix och STREAK kvar');
+  assert.equal(el.style.display, '', 'doljningen ska vara borta efter forsta gavan');
+});
+
+test('Clean Flip ritar w.hidden, opacitet och lager - wh-overriden nar aldrig media.js:s wrappers', () => {
+  const w = riggClean(false);
+  const dold = w.eval('wh')({ id: 's1', type: 'templateTopStreak', hidden: true });
+  assert.match(dold, /class="widget vyra-streak approved-streak widget-hidden/);
+  assert.match(dold, /style="display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;/);
+  const lager = w.eval('wh')({ id: 's1', type: 'templateTopStreak', opacity: 40, layer: 7 });
+  assert.match(lager, /opacity:0\.4;z-index:7;/);
+  assert.doesNotMatch(lager, /display:none/);
 });
 

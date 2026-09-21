@@ -162,7 +162,8 @@
   // syntes Top Gift aldrig under en hel sandning. Avslojandet hor hemma har, bredvid doljandet:
   // samma falt (arTom) avgor bada. setTimeout(0), inte requestAnimationFrame: rAF fyrar inte i
   // en dold flik, och skrivarna satter state synkront i sina lyssnare, sa nasta makrotask ser det.
-  // `w.hidden` ar streamerns eget val och rors inte - dess display:none kommer fran wh(), inte harifran.
+  // `w.hidden` ar streamerns eget val och rors inte - dess display:none kommer fran renderkedjan
+  // (media.js liveVisibilityWh, eller cleanStreakHtml for Clean Flip), inte harifran.
   function avsloja() {
     if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
     if (typeof document === 'undefined') return;

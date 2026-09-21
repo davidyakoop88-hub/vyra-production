@@ -604,7 +604,10 @@ async function fotografera(sida, nyckel, ALERTS) {
        glod-/skuggkanter, dvs kompositorns rastrering av oskarpa beror pa var i fonstret lagret
        ligger. 432 px bredd (left 0 av sig sjalv) foll i stallet pa lastx:royal, som ar 500 px bred.
    Riggen fotograferar darfor DESIGNPIXLAR: RIGG nedan laser duken oskalad pa (0,0), precis dar de
-   190 referenserna togs fore #486. Passformen i sig vaktas av overlay-passform.browser.test.js. */
+   190 referenserna togs fore #486. Passformen i sig vaktas av overlay-passform.browser.test.js.
+   MEDVETEN BLINDHET: duken har overflow:visible i overlay-lage, och elementfotot tar hela widgeten
+   aven om den spiller utanfor 432x768 - dar OBS/TikTok hade klippt. Vakten mater alltsa DESIGNEN,
+   inte placeringen; att en widget ryms pa duken vaktas av widget-grans-proven (#486). */
 const VIEWPORT = Object.freeze({ width: 1400, height: 1000 });
 
 module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,

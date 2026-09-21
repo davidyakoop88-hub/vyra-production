@@ -404,20 +404,36 @@ test('overlayduken borjar pa canvasTop = 0', { skip, timeout: 30000 }, async () 
   // STRUKTURELL VAKT, inte en bild. Referenserna ar tagna med duken pa 0; borjar den nagon
   // annanstans ar varje jamforelse nedan meningslos, och da ska DEN HAR raden falla - inte 44
   // widgetar som ingen rort.
-  const top = await sida.evaluate(() => {
+  const m = await sida.evaluate(() => {
     const c = document.querySelector('.canvas');
-    return c ? Math.round(c.getBoundingClientRect().top) : null;
+    if (!c) return null;
+    const r = c.getBoundingClientRect(), cs = getComputedStyle(c);
+    return { top: Math.round(r.top), left: Math.round(r.left), bredd: Math.round(r.width),
+      transform: cs.transform, inline: c.style.transform || '', regel: !!document.getElementById('vis-rigg-passform') };
   });
-  assert.equal(top, 0,
-    `duken borjar pa ${top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
+  assert.ok(m, 'ingen .canvas i riggen');
+  assert.equal(m.top, 0,
+    `duken borjar pa ${m.top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
     + 'da faller 44 nycklar pa enbart rasterlaget.');
+  // NEUTRALISERINGEN AR INTE ETT ANTAGANDE. #486:s passform skriver inline left/top/transform vid
+  // varje render; RIGG:s !important-regel ska vinna over dem. Uppmatt 2026-09-20: duken pa left 484
+  // gav tolv alert-widgetar 11-291 px pa mjuka kanter. Har mats det BERAKNADE resultatet - inline-
+  // stilen far sta kvar, det ar den beraknade transformen och rekten som avgor.
+  assert.equal(m.regel, true, 'RIGG:s stilregel (#vis-rigg-passform) ligger inte i dokumentet');
+  assert.equal(m.left, 0, `duken ar inte pa left 0 utan ${m.left} - passformen vann over riggen (inline: "${m.inline}")`);
+  assert.equal(m.transform, 'none', `duken ar transformerad (${m.transform}) trots riggens regel (inline: "${m.inline}")`);
+  assert.equal(m.bredd, 432, `duken ar ${m.bredd} px bred, inte designytans 432`);
 });
 
 test('katalogen har nycklar att fotografera', { skip }, () => {
-  // NYCKLAR ar kartan MINUS undantagslistan: 149 - 16 = 133 den 2026-09-20 (kartan krympte till 149
-  // i cffae80). Golvet vaktar en flyttad eller tom karta, inte antalet - samma resonemang som
-  // kravNycklar() i katalognycklar.js, som star pa 140 fore undantagen.
-  assert.ok(NYCKLAR.length >= 125, `bara ${NYCKLAR.length} katalognycklar`);
+  // Golvet mot en flyttad eller tom karta ligger redan i kravNycklar() (GOLV i katalognycklar.js),
+  // som ALLA ovan gick igenom vid inlasning. Det som ar KVAR att vakta har ar att undantagen inte
+  // ater upp kartan: NYCKLAR ar ALLA minus UTAN_REFERENS - 149 - 16 = 133 den 2026-09-20, alltsa
+  // 89 % med referens. En kvot i stallet for en tredje handskriven siffra, sa att golvet inte
+  // glider mellan proven vid nasta avveckling.
+  const minst = Math.ceil(ALLA.length * 0.85);
+  assert.ok(NYCKLAR.length >= minst,
+    `bara ${NYCKLAR.length} av ${ALLA.length} katalognycklar har referens (minst ${minst}) - undantagslistan ater upp kartan`);
 });
 
 test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || undefined }, () => {

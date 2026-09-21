@@ -74,3 +74,35 @@ test('dolj() ar exporterad sa att approved-rankings.js kan dolja Clean Flip med 
   assert.equal(typeof TW.dolj, 'function');
   assert.match(TW.dolj('<div class="widget" data-id="x" style="left:0">'), /style="display:none!important;left:0"/);
 });
+
+// ---- HELA KEDJAN, med de riktiga skrivarna --------------------------------------------------------
+// Proven ovan spelar skrivarens roll sjalva. Det har provet later gift-event-images.js gora sitt
+// jobb pa riktigt: den skriver state och patchar noderna via SHAPES, och vyra-tom-widget.js ska
+// darefter ta bort doljningen. Markupen ar Top Gifts sa som SHAPES.templateTopGift laser den.
+const giftJs = fs.readFileSync(path.join(__dirname, '..', 'gift-event-images.js'), 'utf8');
+
+test('hela kedjan: gift-event-images.js skriver, vyra-tom-widget.js avslojar (Top Gift)', async () => {
+  const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
+    { url: 'http://localhost/studio.html?overlay=1', runScripts: 'outside-only' });
+  const w = dom.window;
+  w.eval(`var view='editor',selected=null,state={widgets:[]},save=()=>{},render=()=>{},
+    liveWidget=id=>state.widgets.find(x=>x.id===id),bind=()=>{},
+    wh=w=>'<div class="widget vyra-topgift" data-id="'+w.id+'" style="left:0"><div class="vyra-flip"><div class="vyra-profile-face"><img></div><div class="vyra-gift-face"><img></div></div><div class="topgift-copy"><strong>'+(w.dataName||'')+'</strong><em>◉ 0</em></div></div>';`);
+  w.eval(js);        // vyra-tom-widget.js: doljer tomd i overlay, avslojar vid livehandelse
+  w.eval(giftJs);    // gift-event-images.js: skriver state + patchar DOM vid gava
+  const widget = { id: 'g1', type: 'templateTopGift' };
+  w.eval('state').widgets.push(widget);
+  const box = w.document.querySelector('.canvas');
+  box.innerHTML = w.eval('wh')(widget);
+  const el = box.querySelector('[data-id="g1"]');
+  assert.equal(el.style.display, 'none', 'tomd Top Gift ska vara dold fore forsta gavan');
+
+  w.dispatchEvent(new w.CustomEvent('vyra-live-event', { detail: {
+    type: 'gift', giftName: 'Rose', username: 'wpwer17', coins: 30, count: 3, profileImage: 'https://cdn/p.jpg', giftImage: 'assets/gifts/rose.png' } }));
+  await new Promise(r => setTimeout(r, 40));
+  assert.equal(widget.dataName, 'wpwer17', 'gift-event-images.js skrev inte state');
+  assert.equal(el.querySelector('.topgift-copy strong').textContent, 'wpwer17', 'patchen nadde inte namnet');
+  assert.equal(el.querySelector('.topgift-copy em').textContent, '◉ 10', 'patchen nadde inte vardet (gavans styckvarde)');
+  assert.equal(el.style.display, '', 'doljningen ska vara borta efter forsta gavan - annars syns Top Gift aldrig i sandningen');
+});
+
