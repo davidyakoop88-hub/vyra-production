@@ -209,7 +209,29 @@
     if (!RANKING_TYPES.includes(w.type)) return html;
     const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
     const anim = w.entranceAnimation && w.entranceAnimation !== 'none' ? ` ws-anim-${w.entranceAnimation}` : '';
-    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike skin-${skin}${anim}`);
+    // TOP COINS V2 BAR SIN EGEN DESIGN — INJICERA INGET SKINN DIT.
+    //
+    // Raden nedan injicerar en skin-klass i ALLA RANKING_TYPES, och `skin` ovan faller tillbaka
+    // pa 'clean-bar' nar widgetens skin inte ar ett kant skinn-id. Top Coins v2 satter w.skin
+    // till sin DESIGN ('halo' / 'signal-orbit'), som aldrig ar ett skinn-id — sa VARJE Top
+    // Coins-widget fick skin-clean-bar.
+    //
+    // UPPMATT 2026-09-21 i riktig Chrome, samma katalognyckel med och utan klassen pa noden:
+    //   catalog:ranking:templateTopCoins:halo          250x42  ->  230x193
+    //   catalog:ranking:templateTopCoins:signal-orbit  250x42  ->  230x190
+    // Alltsa ingen nyans: hela designen plattades till en clean-bar-stapel, och de tva
+    // referensbilderna bar det trasiga utseendet.
+    //
+    // VARFOR MATTET OCH INTE RESTEN. topcoins-v2.css har 33 hogspecifika regler
+    // (html body .widget.vyra-topcoins-new ...) som vinner over clean-bar pa allt DE satter.
+    // Bredden satts inte dar utan som en INLINE-stil i topcoins-v2.js, och inline forlorar mot
+    // .widget.vyra-toplike.skin-clean-bar{width:250px!important}. Darfor overlevde fargerna
+    // men inte geometrin.
+    //
+    // SCOPAT HAR OCH INTE I CSS:EN: det finns EN injektionspunkt, mot ~50 skinn med ett tiotal
+    // regler var. Entreanimationen foljer med som forut — den ar en rorelse, inte en design.
+    const egenDesign = w.type === 'templateTopCoins';
+    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${egenDesign ? '' : ' skin-' + skin}${anim}`);
     // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
     // .skin-brandkit rules in toplike-studio.css. The other 14 skins never see these vars.
     const brandVars = skin === 'brandkit' && state.brandKit
