@@ -145,3 +145,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Points om igen efter specificitets- och accentfixen: podium fick rutnat och neon lila brickor i forra korningen
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-21 — 2 referenser skrivna
+
+- **Motiv:** Top Coins ritades som en clean-bar-stapel 250x42 i stallet for sin egen design 230x193 — skinnet ar scopat och bilderna visar nu Halo och Signal Orbit
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
