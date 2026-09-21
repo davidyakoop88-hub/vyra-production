@@ -51,6 +51,8 @@ function servera() {
 // Teckenklassen måste bära A-Z. Uppmätt: utan versaler klipptes `catalog:glovesnipe:koiPearl` till
 // `koi` och `catalog:ranking:templateTopCoins` till `template`, och båda rapporterades som trasiga
 // katalognycklar när det var uttrycket som var trasigt.
+// Golvet delas med katalognycklar.js (GOLV) - en siffra, ett stalle.
+const { GOLV } = require('../helpers/katalognycklar.js');
 const NYCKLAR = [...new Set(
   fs.readFileSync(path.join(ROOT, 'docs/katalogkarta.md'), 'utf8')
     .match(/catalog:[A-Za-z0-9:._-]+/g) || [])].sort();
@@ -162,8 +164,17 @@ test('overlay-läget är verkligen påslaget', { skip }, async () => {
 });
 
 test('katalogen har nycklar att vakta', { skip }, () => {
-  assert.ok(NYCKLAR.length >= 150,
+  // Golvet var 150. Kartan (genererad i riktig Chrome av CI) gick fran 151 till 149 nycklar
+  // 2026-09-19 22:20 (cffae80) nar katalogen krympte med flit, och provet var rott pa main i
+  // fjorton timmar utan att nagon rorde det. Golvet ar en vakt mot en FLYTTAD eller TOM karta,
+  // inte ett facit for antalet - GOLV (katalognycklar.js) haller den rollen med marginal for nasta
+  // avveckling, och det ar EN siffra pa ETT stalle sa att den inte glider mellan proven.
+  assert.ok(NYCKLAR.length >= GOLV,
     `hittade bara ${NYCKLAR.length} katalognycklar i docs/katalogkarta.md — har kartan flyttat eller inte regenererats?`);
+  // Top Streak ar EN design sedan 2026-09-20: kartan far bara bara standardnyckeln. Dyker en
+  // tema-, premium- eller ramnyckel upp igen har en avvecklad design kommit tillbaka i katalogen.
+  assert.deepEqual(NYCKLAR.filter(k => k.startsWith('catalog:topstreak')), ['catalog:topstreak'],
+    'en avvecklad Top Streak-design ar tillbaka i katalogkartan');
 });
 
 test('varje katalognyckel renderas i overlay utan att kasta', { skip }, async () => {

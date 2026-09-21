@@ -214,7 +214,10 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
       return { delar, hero: !!document.querySelector('.hero') };
     });
     assert.ok(m.hero, 'heron ska finnas kvar');
-    assert.ok(m.delar.length <= 4,
-      `sidan har ${m.delar.length} toppnivadelar: ${m.delar.join(', ')} — beslutet var tre`);
+    // Beslutet var tre delar; 0575522 (2026-09-20, "Visa veckans TikTok-event pa framsidan") lade
+    // in en fjarde mellan heron och logotyperna. Ordningen lases i stallet for antalet, sa att en
+    // del som byter plats eller en ny som smyger in syns i diffen.
+    assert.deepEqual(m.delar, ['hero', 'tiktok-events', 'logos', 'premium', 'mini-sidfot'],
+      `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

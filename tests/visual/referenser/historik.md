@@ -116,8 +116,20 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
 
-## 2026-09-20 — 70 referenser raderade
+## 2026-09-20 — 17 referenser skrivna
 
-- **Motiv:** Föräldralösa bilder. Ingen av de 70 nycklarna finns i docs/katalogkarta.md (genererad av CI i riktig Chrome, senast 5cffb31 2026-09-20), så varken vakten eller riggen läser dem: de låg kvar och såg ut som täckning, samma mönster som giftjar-bilderna i 58a80fa (2026-09-14). Fyra borttagningsvågor: giftcampaign 16 (åtta gamla teman, ersatta av gold/platinum/emerald i 4403ff9, 2026-09-12), socialgoal 24 (1–4 och azure/heart/rose/sapphire-frame för followers/likes/diamonds, ersatta av sex VYRA-designer i PR #475), topstreak 22 (alla varianter, ersatta av en enda Clean Flip i PR #476), toplike 4 och ranking:templateTopCoins 4 (center/clean/neon/podium, ersatta av clean-bar/soft-stack/mini-podium/side-rank respektive halo/signal-orbit i ba916de–5a96741, 2026-09-20). Manifestet rensat i samma ändring: 191 → 121 poster, 121 png på disk. Noll kodreferenser till filnamnen. Kvar: 12 nya kartnycklar saknar referens (2 topcoins, 6 socialgoal, 4 toplike) och skrivs med `npm run test:visual:update` på CI-binären.
-- **Motor:** oförändrad, Google Chrome for Testing 151.0.7922.34
-- **Nycklar:** 70 raderade (se manifestets diff), 121 kvar
+- **Motiv:** Tolv nya nycklar utan bild (2026-09-19), Top Points i nattens Top Like-layout och Top Streak som Clean Flip med synligt nollage - riggen neutraliserar passformen (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-20 — 6 referenser skrivna
+
+- **Motiv:** Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-21 — 70 referenser raderade
+
+- **Motiv:** Föräldralösa bilder. Ingen av de 70 nycklarna finns i docs/katalogkarta.md, så varken vakten eller riggen läser dem: de låg kvar och såg ut som täckning, samma mönster som giftjar-bilderna i 58a80fa (2026-09-14). Fyra borttagningsvågor: giftcampaign 16 (åtta gamla teman, ersatta av gold/platinum/emerald i 4403ff9, 2026-09-12), socialgoal 24 (1–4 och azure/heart/rose/sapphire-frame för followers/likes/diamonds, ersatta av sex VYRA-designer i PR #475), topstreak 22 (alla varianter, ersatta av en enda Clean Flip i PR #476), toplike 4 och ranking:templateTopCoins 4 (center/clean/neon/podium, ersatta av clean-bar/soft-stack/mini-podium/side-rank respektive halo/signal-orbit i ba916de–5a96741). Inga bilder ritas om: den här raden TAR BORT, den skriver inte. Efter #487:s två referenskörningar (17 + 6 bilder, som bland annat gav de 12 nya nycklarna deras första bild) har manifestet 203 poster, varav 70 föräldralösa — kvar blir 133, lika många som png på disk, och lika många som kartans 149 nycklar minus de 16 som undantagslistan i katalognycklar.js täcker.
+- **Motor:** oförändrad, ingen ny fotografering
+- **Nycklar:** 70 raderade (se manifestets diff), 133 kvar

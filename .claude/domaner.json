@@ -88,7 +88,6 @@
         "topcoins-v2.css",
         "topcoins-v2.js",
         "toplike-design.js",
-        "top-streak-simple.css",
         "extras.js",
         "fan-fas.js",
         "fan-level-session.js",
@@ -138,6 +137,7 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/tom-widget-avslojas.test.js",
         "tests/widget-defaults-migration.test.js",
         "tests/widget-placement.test.js",
         "tests/widget-frameless-output.test.js",
@@ -500,7 +500,6 @@
         "tests/goal-frame-designs.test.js",
         "tests/social-goal-landscape-designs.test.js",
         "tests/browser/goal-geometri.browser.test.js",
-        "tests/browser/goal-modell3-bredd.browser.test.js",
         "server/test/goal-*.test.js",
         "server/test/diamantmal.test.js",
         "server/test/studio-goal-stream.test.js",

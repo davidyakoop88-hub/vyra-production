@@ -5,11 +5,11 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 121,
+ "antal": 133,
  "senaste": {
-  "motiv": "REGI-stilla for battlemvp-celebration (#418, 6 nycklar)",
+  "motiv": "Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)",
   "nycklar": 6,
-  "tid": "2026-09-14T19:43:53.950Z"
+  "tid": "2026-09-20T21:16:14.210Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -241,20 +241,20 @@
    "fyllnad": 27.01
   },
   "catalog:ranking:templateTopPoints:center": {
-   "matt": "340x263",
-   "fyllnad": 18.27
+   "matt": "340x232",
+   "fyllnad": 18.89
   },
   "catalog:ranking:templateTopPoints:clean": {
-   "matt": "220x388",
-   "fyllnad": 20.13
+   "matt": "250x234",
+   "fyllnad": 94.06
   },
   "catalog:ranking:templateTopPoints:neon": {
-   "matt": "300x406",
-   "fyllnad": 14.6
+   "matt": "250x234",
+   "fyllnad": 99.95
   },
   "catalog:ranking:templateTopPoints:podium": {
-   "matt": "300x406",
-   "fyllnad": 13.92
+   "matt": "250x234",
+   "fyllnad": 99.95
   },
   "catalog:topgift:extra:aurora": {
    "matt": "280x260",
@@ -401,8 +401,8 @@
    "fyllnad": 15.06
   },
   "catalog:topstreak": {
-   "matt": "310x105",
-   "fyllnad": 32.27
+   "matt": "280x226",
+   "fyllnad": 60.86
   },
   "catalog:topgift:cyber": {
    "matt": "280x260",
@@ -495,6 +495,54 @@
   "catalog:giftjar:phoenix": {
    "matt": "250x313",
    "fyllnad": 63.8
+  },
+  "catalog:ranking:templateTopCoins:halo": {
+   "matt": "250x42",
+   "fyllnad": 99.86
+  },
+  "catalog:ranking:templateTopCoins:signal-orbit": {
+   "matt": "250x42",
+   "fyllnad": 99.86
+  },
+  "catalog:socialgoal:diamonds:prism-core:landscape": {
+   "matt": "440x132",
+   "fyllnad": 36.16
+  },
+  "catalog:socialgoal:diamonds:prism-spine:portrait": {
+   "matt": "260x550",
+   "fyllnad": 35.15
+  },
+  "catalog:socialgoal:followers:pulse-rail:landscape": {
+   "matt": "440x132",
+   "fyllnad": 41.28
+  },
+  "catalog:socialgoal:followers:pulse-tower:portrait": {
+   "matt": "260x550",
+   "fyllnad": 37.57
+  },
+  "catalog:socialgoal:likes:heart-column:portrait": {
+   "matt": "260x550",
+   "fyllnad": 36.77
+  },
+  "catalog:socialgoal:likes:signal-ribbon:landscape": {
+   "matt": "440x132",
+   "fyllnad": 38.17
+  },
+  "catalog:toplike:clean-bar": {
+   "matt": "250x270",
+   "fyllnad": 17.2
+  },
+  "catalog:toplike:mini-podium": {
+   "matt": "340x232",
+   "fyllnad": 31.79
+  },
+  "catalog:toplike:side-rank": {
+   "matt": "180x230",
+   "fyllnad": 17.57
+  },
+  "catalog:toplike:soft-stack": {
+   "matt": "250x237",
+   "fyllnad": 15.2
   }
  }
 }
