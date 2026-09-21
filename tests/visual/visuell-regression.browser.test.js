@@ -96,7 +96,7 @@ async function varmUpp(bas) {
   if (!b) return { kord: false, skal: 'ingen webblasare gick att starta' };
   let resultat = { kord: false, skal: 'uppvärmningen nådde aldrig fram till ett resultat' };
   try {
-    const s = await b.newPage({ viewport: { width: 1400, height: 1000 } });
+    const s = await b.newPage({ viewport: V.VIEWPORT });
     await s.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
     // SAMMA VÄNTAN SOM DEN RIKTIGA SESSIONEN. Utan overlay-kontrollen kan uppvärmningen hinna
     // rendera Studio-läget i stället, och då värms fel layout och fel typsnittsuppsättning.
@@ -145,7 +145,7 @@ test.before(async () => {
   browser = await startaWebblasare();
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
   const bas = basAdress;
-  sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+  sida = await browser.newPage({ viewport: V.VIEWPORT });   // passformen neutraliseras i RIGG - se visuell.js
   sida.__kast = [];
   sida.on('pageerror', e => sida.__kast.push(String(e.message).slice(0, 120)));
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
@@ -312,7 +312,12 @@ test('systemtypsnittet for de textritade symbolerna finns pa maskinen', { skip, 
 //   2. market maste anda RITAS — annars gar hela emblemet att radera och provet forblir gront
 const MARKEN = [
   { nyckel: 'catalog:battlemvp:samurai', valjare: '.mvp-emblem', sort: 'mask' },
-  { nyckel: 'catalog:socialgoal:followers:1:landscape', valjare: '.goal-icon', sort: 'svg' },
+  // Foljarmalets '+' (U+FF0B) forsvann med den gamla malmodellen i 48b3458 (2026-09-19): de nya
+  // designerna ar bildbaserade (assets/goal-new/*.png) och har varken .goal-icon eller <svg>.
+  // Uppmatt 2026-09-20: noll CJK-/fullbreddskodpunkter i bada foljarnycklarna. Kravet "market
+  // maste anda ritas" blir da att designbilden faktiskt ar laddad - annars vore widgeten tom.
+  { nyckel: 'catalog:socialgoal:followers:pulse-rail:landscape', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:pulse-tower:portrait', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
 ];
 
 test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 120000 }, async () => {
@@ -341,7 +346,9 @@ test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 
         cjk: [...new Set(cjk)],
         ritas: s === 'mask'
           ? (fore.maskImage || fore.webkitMaskImage || 'none')
-          : (el.querySelector('svg') ? 'svg' : 'ingen'),
+          : s === 'bild'
+            ? (el.tagName === 'IMG' && el.naturalWidth > 0 ? 'bild' : 'ingen')
+            : (el.querySelector('svg') ? 'svg' : 'ingen'),
       };
     }, [valjare, sort]);
     if (m.fel) { brister.push(`${nyckel}: ${m.fel}`); continue }
@@ -349,9 +356,10 @@ test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 
 )}`);
     if (sort === 'mask' && !/^url\(/.test(m.ritas)) brister.push(`${nyckel}: ${valjare}::before har ingen mask-image (${m.ritas}) — market ritas inte alls`);
     if (sort === 'svg' && m.ritas !== 'svg') brister.push(`${nyckel}: ${valjare} innehaller ingen <svg> — market ritas inte alls`);
+    if (sort === 'bild' && m.ritas !== 'bild') brister.push(`${nyckel}: ${valjare} ar inte en laddad bild — designen ritas inte alls`);
   }
   assert.deepEqual(brister, [],
-    'Marken i Battle MVP · Samurai och Follower Goal ska ritas av oss som inline-SVG. Hamtas de '
+    'Marken i Battle MVP · Samurai och Follower Goal ska ritas av oss (mask, bild eller inline-SVG). Hamtas de '
     + 'ur ett systemtypsnitt igen blir de tofu-rutor pa varje maskin utan CJK-tackning — bade i '
     + 'CI och i en streamers OBS-kalla — och referensbilderna borjar flacka igen.');
 });
@@ -396,17 +404,36 @@ test('overlayduken borjar pa canvasTop = 0', { skip, timeout: 30000 }, async () 
   // STRUKTURELL VAKT, inte en bild. Referenserna ar tagna med duken pa 0; borjar den nagon
   // annanstans ar varje jamforelse nedan meningslos, och da ska DEN HAR raden falla - inte 44
   // widgetar som ingen rort.
-  const top = await sida.evaluate(() => {
+  const m = await sida.evaluate(() => {
     const c = document.querySelector('.canvas');
-    return c ? Math.round(c.getBoundingClientRect().top) : null;
+    if (!c) return null;
+    const r = c.getBoundingClientRect(), cs = getComputedStyle(c);
+    return { top: Math.round(r.top), left: Math.round(r.left), bredd: Math.round(r.width),
+      transform: cs.transform, inline: c.style.transform || '', regel: !!document.getElementById('vis-rigg-passform') };
   });
-  assert.equal(top, 0,
-    `duken borjar pa ${top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
+  assert.ok(m, 'ingen .canvas i riggen');
+  assert.equal(m.top, 0,
+    `duken borjar pa ${m.top} px i stallet for 0. Uppmatt: med lankraden monterad blev det 153, och `
     + 'da faller 44 nycklar pa enbart rasterlaget.');
+  // NEUTRALISERINGEN AR INTE ETT ANTAGANDE. #486:s passform skriver inline left/top/transform vid
+  // varje render; RIGG:s !important-regel ska vinna over dem. Uppmatt 2026-09-20: duken pa left 484
+  // gav tolv alert-widgetar 11-291 px pa mjuka kanter. Har mats det BERAKNADE resultatet - inline-
+  // stilen far sta kvar, det ar den beraknade transformen och rekten som avgor.
+  assert.equal(m.regel, true, 'RIGG:s stilregel (#vis-rigg-passform) ligger inte i dokumentet');
+  assert.equal(m.left, 0, `duken ar inte pa left 0 utan ${m.left} - passformen vann over riggen (inline: "${m.inline}")`);
+  assert.equal(m.transform, 'none', `duken ar transformerad (${m.transform}) trots riggens regel (inline: "${m.inline}")`);
+  assert.equal(m.bredd, 432, `duken ar ${m.bredd} px bred, inte designytans 432`);
 });
 
 test('katalogen har nycklar att fotografera', { skip }, () => {
-  assert.ok(NYCKLAR.length >= 150, `bara ${NYCKLAR.length} katalognycklar`);
+  // Golvet mot en flyttad eller tom karta ligger redan i kravNycklar() (GOLV i katalognycklar.js),
+  // som ALLA ovan gick igenom vid inlasning. Det som ar KVAR att vakta har ar att undantagen inte
+  // ater upp kartan: NYCKLAR ar ALLA minus UTAN_REFERENS - 149 - 16 = 133 den 2026-09-20, alltsa
+  // 89 % med referens. En kvot i stallet for en tredje handskriven siffra, sa att golvet inte
+  // glider mellan proven vid nasta avveckling.
+  const minst = Math.ceil(ALLA.length * 0.85);
+  assert.ok(NYCKLAR.length >= minst,
+    `bara ${NYCKLAR.length} av ${ALLA.length} katalognycklar har referens (minst ${minst}) - undantagslistan ater upp kartan`);
 });
 
 test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || undefined }, () => {

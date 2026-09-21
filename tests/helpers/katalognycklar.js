@@ -21,7 +21,13 @@ function nycklar() {
 
 // Golvet är en kontrollmätning, inte ett tak. En tom eller flyttad karta ger noll nycklar, och då
 // blir varje vakt som itererar över dem grön av ingenting.
-function kravNycklar(minst = 150) {
+//
+// Golvet var 150. Kartan gick från 151 till 149 nycklar 2026-09-19 22:20 (cffae80) när katalogen
+// krympte med flit, och referensvakten föll då vid inläsning — före ett enda foto — med felet
+// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet: 140 håller
+// den rollen med marginal för nästa avveckling, samma golv som overlay-alla-widgets använder.
+const GOLV = 140;
+function kravNycklar(minst = GOLV) {
   const lista = nycklar();
   if (lista.length < minst) {
     throw new Error(`hittade bara ${lista.length} katalognycklar i docs/katalogkarta.md `
@@ -233,4 +239,4 @@ const REGI = {
   },
 };
 
-module.exports = { nycklar, kravNycklar, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
+module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };

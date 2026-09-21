@@ -440,11 +440,11 @@ function vyraPlaceraTopLikeRamar(omobservera){
   arter.forEach(art=>{const foto=art.previousElementSibling,rad=art.parentElement;if(!foto||!rad)return;const f=px(foto),r=px(rad);
     if(!f.width||!r.width||!r.height){art.style.setProperty('display','none','important');return}
     art.style.setProperty('display','block','important');const fit=parseFloat(art.style.getPropertyValue('--frame-fit'))||.62,s=(k,v)=>art.style.setProperty(k,v.toFixed(3)+'%','important');
-    s('left',(f.left+f.width/2-r.left)/r.width*100);s('top',(f.top+f.height/2-r.top)/r.height*100);s('width',f.width/fit/r.width*100);s('height',f.width/fit/r.height*100);
+    /* PROCENT PA ETT ABSOLUT BARN LOSES MOT RADENS PADDING-BOX, inte mot getBoundingClientRect (som tar med kanten). Nar raden fick en 1 px-kant 2026-09-20 (toplike-studio.css [class*="skin-"] .toplike-row) blev konsten 83,7 x 80,4 - bredden mot 230 px, hojden mot 42 - exakt 230/228 : 42/40. Darfor padding-boxen: clientWidth/clientHeight och kantens tjocklek som origo. *//* client*-matten ar CSS-px fore zoom, rektarna ar skarm-px efter (widgetScale ar CSS zoom, uppmatt: 1,5 gav 189,7 mot 126,7). Kantens tjocklek skalas darfor med z = skarm-px per CSS-px. */const z=rad.offsetWidth?r.width/rad.offsetWidth:1,pl=r.left+rad.clientLeft*z,pt=r.top+rad.clientTop*z,pw=r.width-(rad.offsetWidth-rad.clientWidth)*z||r.width,ph2=r.height-(rad.offsetHeight-rad.clientHeight)*z||r.height;s('left',(f.left+f.width/2-pl)/pw*100);s('top',(f.top+f.height/2-pt)/ph2*100);/* STORLEKEN I PX, INTE PROCENT: Chrome snappar kantens 1,5 skarm-px (zoom 1,5) till hela pixlar, sa padding-boxens verkliga hojd och bredd avviker olika mycket fran de beraknade - konsten blev 125,6 x 126,5. Ett px-matt pa ett absolut barn paverkas inte av kanten alls. */art.style.setProperty('width',(f.width/fit/z).toFixed(3)+'px','important');art.style.setProperty('height',(f.width/fit/z).toFixed(3)+'px','important');
     /* Konstens MITT och matt som variabler pa raden (i % av raden, med dx/dy-forskjutningen inraknad) —
        gloden bakom portrattet (toplike-studio.css, .har-ram ...::after) foljer dem; --tl-i ger var plats
        sin egen fas i andningen sa att fem ramar inte pulserar i takt. */
-    {const g=n=>parseFloat(art.style.getPropertyValue(n))||0,lp=(f.left+f.width/2-r.left)/r.width*100,tp=(f.top+f.height/2-r.top)/r.height*100,wp=f.width/fit/r.width*100,hp=f.width/fit/r.height*100;
+    {const g=n=>parseFloat(art.style.getPropertyValue(n))||0,lp=(f.left+f.width/2-pl)/pw*100,tp=(f.top+f.height/2-pt)/ph2*100,wp=f.width/fit/pw*100,hp=f.width/fit/ph2*100;
       rad.style.setProperty('--tl-cx',(lp-g('--frame-dx')*wp).toFixed(3)+'%');rad.style.setProperty('--tl-cy',(tp-g('--frame-dy')*hp).toFixed(3)+'%');
       rad.style.setProperty('--tl-w',wp.toFixed(3)+'%');rad.style.setProperty('--tl-h',hp.toFixed(3)+'%');rad.style.setProperty('--tl-i',String(arter.indexOf(art)))}
     /* Rangbricka, namn, varde och krona lyfts OVER konsten sa att ornament aldrig tacker dem. Bara
@@ -1423,7 +1423,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260919-14';
+  const version='20260920-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

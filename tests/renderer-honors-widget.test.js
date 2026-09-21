@@ -45,7 +45,11 @@ function studio() {
 
 // En familj dar varje variant ska ge ett SYNLIGT eget avtryck.
 const FAMILJER = [
-  { familj: 'topstreak.frame', nyckel: v => `catalog:topstreak:frame:${v}`, falt: 'streakFrame' },
+  // topstreak.frame togs bort har 2026-09-20: Top Streaks sju ramar ar AVVECKLADE med flit
+  // (#476/#481, Clean Flip ar den enda designen). Fabriken har kvar nycklarna sa att sparade
+  // layouter laser, men renderaren ritar Clean Flip oavsett streakFrame - uppmatt i Chromium, och
+  // last av tests/streak-style-menu.test.js. Att lata familjen sta kvar har hade kravt att
+  // ramarna nadde utdatan, alltsa att en dod design kom tillbaka.
   { familj: 'topgift.frame', nyckel: v => `catalog:topgift:frame:${v}`, falt: 'giftFrame' },
   { familj: 'battlemvp.frame', nyckel: v => `catalog:battlemvp:frame:${v}`, falt: 'mvpFrame' }
 ];

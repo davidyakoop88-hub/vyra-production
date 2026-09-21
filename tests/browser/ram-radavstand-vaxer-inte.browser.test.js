@@ -208,7 +208,9 @@ async function brickfarger(page) {
     const acc = getComputedStyle(w).getPropertyValue('--ram-accent').trim();
     let accRgb = null;
     if (acc) { const t = document.createElement('i'); t.style.background = acc; document.body.append(t); accRgb = getComputedStyle(t).backgroundColor; t.remove(); }
-    return { harRam: w.classList.contains('har-ram'), accRgb, brickor: rader.map(r => getComputedStyle(r.querySelector('b')).backgroundColor) };
+    // Rangbrickorna (<b>) togs bort ur Top Like i bbdef1f (2026-09-20, "Rank is communicated by
+    // podium position and profile size"). Det som ar kvar av kontraktet ar ramens accent pa roten.
+    return { harRam: w.classList.contains('har-ram'), accRgb, brickor: rader.map(r => r.querySelector('b')).filter(Boolean).length };
   });
 }
 for (const tema of ['clean', 'center']) {
@@ -221,8 +223,8 @@ for (const tema of ['clean', 'center']) {
     await med.close();
     assert.ok(!f0.harRam && !f0.accRgb, 'utan ram: ingen accent på roten');
     assert.ok(f1.harRam && f1.accRgb, 'med ram: har-ram och --ram-accent på roten');
-    f1.brickor.forEach((b, i) => assert.equal(b, f1.accRgb, `like-${tema} bricka ${i + 1}: ${b} är inte ramens accent ${f1.accRgb}`));
-    assert.notEqual(f1.brickor[0], f0.brickor[0], 'accenten skiljer sig från färgen utan ram');
+    // Brickorna ar borta med flit (bbdef1f). Dyker de upp igen ska provet aterfa sina fargmatt.
+    assert.equal(f1.brickor, 0, `like-${tema}: rangbrickorna ar tillbaka — matt dem igen`);
     // ruby-velvet är röd: accenten ska ligga i det röda hörnet, inte på guldkanten (mätfällan 253° före).
     const [r, g, b] = f1.accRgb.match(/\d+/g).map(Number);
     assert.ok(r > g + 60 && r > b + 60, `ruby-velvets accent ${f1.accRgb} är inte röd`);

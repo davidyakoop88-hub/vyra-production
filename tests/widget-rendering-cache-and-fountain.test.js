@@ -279,7 +279,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Premium-bundelns strang. Den halkade efter i 48b3458 ("Byt gamla social goals mot sex nya
   // VYRA-designer") och har varit ur synk sedan dess — darav tre veckor med en rod vakt som
   // ingen atgardade. Star nu pa det media.js faktiskt bar.
-  assert.match(media, /const version='20260919-14'/);
+  assert.match(media, /const version='20260920-1'/);
   assert.match(media, /widget-fas\.js\?v=1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 

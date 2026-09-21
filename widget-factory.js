@@ -15,6 +15,10 @@
 (function (root) {
   'use strict';
 
+  // Namnen pa de designer vars renderare laser andra falt an likeTheme - se byggarna nedan.
+  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']);
+  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit']);
+
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
   // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett
   // rorelseomslag (.mvp-plate) som de gamla inte far — se battleMvpHtml i media.js.
@@ -246,16 +250,43 @@
       accent: v.accent, dataColor: '#fff'
     }),
 
-    'toplike.theme': v => ({
-      type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
-      templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
-      accent: '#ff4da6'
-    }),
-    'ranking.theme': v => ({
-      type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
-      likeCount: 5, likeTheme: v.theme,
-      accent: v.type === 'templateTopCoins' ? '#ffbd32' : '#9b5cff', profileFrame: 'none'
-    }),
+    'toplike.theme': v => {
+      const w = {
+        type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
+        templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
+        accent: '#ff4da6'
+      };
+      // DE FYRA GODKANDA SKINNEN (approved-rankings.js) LASER `skin`, INTE likeTheme. Uppmatt
+      // 2026-09-20: via fabriken renderades alla fyra som clean-bar - fyra byte-identiska
+      // referensbilder - medan katalogknappen satte skin och lat toplike-design.js:s preset ge
+      // layout, ram och bredd. Presetet ags av toplike-design.js (en kalla, en tabell); fabriken
+      // garanterar `skin` och delegerar resten dit nar modulen finns - i webblasaren alltid, i
+      // nodproven bara nar riggen lagger den pa window.
+      if (LIKE_SKINN.has(v.theme)) {
+        w.skin = v.theme;
+        if (typeof root.applyVyraTopLikeStyle === 'function') root.applyVyraTopLikeStyle(w, v.theme);
+      }
+      return w;
+    },
+    'ranking.theme': v => {
+      const w = {
+        type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
+        likeCount: 5, likeTheme: v.theme,
+        accent: v.type === 'templateTopCoins' ? '#ffbd32' : '#9b5cff', profileFrame: 'none'
+      };
+      // TOP COINS V2 (topcoins-v2.js) LASER `topCoinsDesign`/`skin` OCH DESIGNENS EGEN ACCENT.
+      // Samma fynd samma dag: halo och signal-orbit blev byte-identiska via fabriken, for
+      // renderaren foll tillbaka pa halo utan faltet. createTopCoins satter design, bredd och
+      // accent ur VyraTopCoins.designs; fabriken laser samma tabell nar modulen finns.
+      if (v.type === 'templateTopCoins' && TOPCOINS_V2.has(v.theme)) {
+        const designer = root.VyraTopCoins && root.VyraTopCoins.designs;
+        const meta = designer && designer[v.theme];
+        Object.assign(w, { topCoinsDesign: v.theme, skin: v.theme, likeCount: 1,
+          width: meta && meta.width ? meta.width : 230, useLiveData: true, liveMetric: 'coins' });
+        if (meta && meta.accent) w.accent = meta.accent;
+      }
+      return w;
+    },
 
     'heartgoal.theme': v => ({
       type: 'templateHeartGoal', x: 80, y: 120, width: 310, title: 'Heart Me Goal',
