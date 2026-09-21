@@ -58,7 +58,13 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // Bumpad 2026-09-20: media.js bar versionsstrangen for gift-fireworks.js, som andrades nar
   // fyrverkeriets niva borjade folja gavans varde. media.js har alltsa andrats, och da maste
   // dess egen strang bytas - annars pekar en cachad media.js kvar pa den gamla filen.
-  assert.match(studioHtml, /media\.js\?v=20260920-6/);
+  // Bumpad 2026-09-21: #493 andrade toplike-studio.js (skinnet stamplas inte langre pa en
+  // renderare som ager sin egen design) UTAN att hoja dess ?v=. Servern fick ratt fil men varje
+  // webblasare och OBS-kalla som redan cachat den gamla under samma URL korde kvar den gamla
+  // koden — alltsa en fix som inte nadde dem som hade buggen. media.js bar strangen, sa media.js
+  // andrades i sin tur, och da maste dess EGEN strang i studio.html ocksa bytas.
+  // toplike-studio.css ar OFORANDRAD och behaller darfor sin strang.
+  assert.match(studioHtml, /media\.js\?v=20260921-1/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
+  assert.match(media, /toplike-studio\.js\?v=20260921-skinngrind/);
 });
