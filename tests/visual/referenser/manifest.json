@@ -7,9 +7,9 @@
  },
  "antal": 203,
  "senaste": {
-  "motiv": "Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)",
-  "nycklar": 6,
-  "tid": "2026-09-20T21:16:14.210Z"
+  "motiv": "Top Points Stil 3 Podium ritade Stil 4 Neon - podium far skinnet mini-podium och ett eget podium igen (#491)",
+  "nycklar": 1,
+  "tid": "2026-09-21T10:06:37.911Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -333,8 +333,8 @@
    "fyllnad": 99.95
   },
   "catalog:ranking:templateTopPoints:podium": {
-   "matt": "250x234",
-   "fyllnad": 99.95
+   "matt": "300x97",
+   "fyllnad": 99.98
   },
   "catalog:socialgoal:followers:1:landscape": {
    "matt": "440x121",
