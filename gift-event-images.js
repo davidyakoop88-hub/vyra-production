@@ -113,7 +113,12 @@
       setImage(node.querySelector(shape.gift), widget.giftImage);
       setImage(node.querySelector(shape.profile), widget.profileImage);
       node.querySelectorAll(shape.name).forEach(function (el) {
-        setText(el, widget.dataName || '@StreamQueen');
+        // '@StreamQueen' AR EN PLATSHALLARE, INTE EN TITTARE. Den slog till nar ett event saknade
+        // bade username och name, och skrev da in fabrikens demoperson i en LIVE sandning - exakt
+        // det live-zero-state.js finns for att forhindra ("no invented person"). I overlay blir
+        // tomt tomt; i editorn ar platshallaren fortfarande det man designar mot.
+        var overlay = new URLSearchParams(location.search).has('overlay');
+        setText(el, widget.dataName || (overlay ? '' : '@StreamQueen'));
       });
       node.querySelectorAll(shape.value).forEach(function (el) {
         // Tecknet framför siffran står bara i DOM:en och är streamerns val: Top Gift renderar

@@ -69,6 +69,23 @@ test('ingen stilmeny och inget ramval i panelen', () => {
   const panel = h.window.props();
   assert.doesNotMatch(panel, /id="pfStreakStyle"|id="streakTheme"|data-streak-frame/, 'stilmenyn ar tillbaka');
   assert.match(panel, /CLEAN FLIP/, 'panelen ar inte approved-rankings:s');
+
+  // OCH DET RACKER INTE ATT LASA props(). Uppmatt 2026-09-21 i riktig Chrome: den har raden var
+  // gron medan panelen PA SKARMEN bar #streakTheme med alla sju avvecklade designerna. Menyn
+  // injiceras namligen av media.js:139, en bind-hakning som kor EFTER att props() renderat -
+  // provet matte en fas dar felet inte kan synas. Panelen ar DOM efter bind(), inte en strang.
+  // dom-harness.js:s skelett bar bara #title/#view/.toast - panelen monteras har, precis som
+  // studio.js gor: props() till .properties och sedan bind(). `view` ar ett lexikalt let i
+  // studio.js och satts via skript, av samma skal som `selected` ovan.
+  const panelNod = h.document.createElement('div');
+  panelNod.className = 'properties';
+  panelNod.innerHTML = panel;
+  h.document.body.append(panelNod);
+  const sv = h.document.createElement('script'); sv.textContent = "view='editor'"; h.document.body.append(sv);
+  h.window.bind();
+  assert.equal(panelNod.querySelector('#streakTheme'), null,
+    'stilmenyn med de sju avvecklade designerna injiceras fortfarande i bind-fasen');
+  assert.equal(panelNod.querySelector('.gaf-frame-group'), null, 'ramvaljaren injiceras fortfarande');
 });
 
 test('bara EN kod ritar Top Streak - de doda generationerna ar borta ur kallan', () => {

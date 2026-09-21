@@ -121,7 +121,7 @@ function campaignNode(id, slots) {
   return root;
 }
 
-function makeEnv({ widgets, dom }) {
+function makeEnv({ widgets, dom, overlay = false }) {
   const calls = { save: 0, render: 0 };
   const root = node('div', 'canvas');
   dom.forEach(d => root.append(d));
@@ -131,6 +131,9 @@ function makeEnv({ widgets, dom }) {
   const sandbox = {
     console: { log() {}, warn() {}, error() {} },
     JSON, Object, Array, String, Number, Math, Map, Set, Boolean, Error,
+    // Overlay-laget lases ur URL:en av bade den har filen och vyra-tom-widget.js.
+    URLSearchParams,
+    location: { search: overlay ? '?overlay=1' : '' },
     document: {
       querySelector: sel => root.querySelector(sel),
       querySelectorAll: sel => root.querySelectorAll(sel)
@@ -316,3 +319,15 @@ test('en widget med liknande id röres inte', () => {
   assert.match(mine.querySelector('strong').textContent, /wpwer17/);
   assert.equal(other.querySelector('strong').textContent, '@StreamQueen', 'fel widget patchades');
 });
+
+test('livepatchen skriver aldrig platshallaren @StreamQueen i en sandning', () => {
+  // Uppmatt: ett gift-event utan bade username och name lamnade widget.dataName odefinierat, och
+  // fallbacken skrev da fabrikens demoperson till DOM:en mitt i sandningen - exakt det
+  // live-zero-state.js finns for att forhindra ("no invented person").
+  const dom = topGiftNode('g1');
+  const env = makeEnv({ widgets: [{ id: 'g1', type: 'templateTopGift' }], dom: [dom], overlay: true });
+  env.gift({ type: 'gift', giftName: 'Rose', coins: 30, count: 3 });   // ingen username, inget name
+  assert.equal(dom.querySelector('.topgift-copy strong').textContent, '',
+    'i overlay ska ett namnlost event ge tomt namn, inte @StreamQueen');
+});
+

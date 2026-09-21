@@ -35,10 +35,10 @@ test('central retirement guard loads last with its own cache version', () => {
   // livepatchen.
   // 20260921-1: tomd Clean Flip doljs via vyra-tom-widget.js (doljOmTom), och w.hidden/opacitet/
   // lager skrivs i mallen (wh-overriden nar aldrig media.js:s styledWh/liveVisibilityWh).
-  assert.match(html, /approved-rankings\.js\?v=20260921-1/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260921-1') > html.indexOf('vyra-state-sync.js'));
-  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260921-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20260921-1') < html.indexOf('approved-rankings.js?v=20260921-1'),
+  assert.match(html, /approved-rankings\.js\?v=20260921-2/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260921-2') > html.indexOf('vyra-state-sync.js'));
+  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260921-2') > -1
+    && html.indexOf('vyra-tom-widget.js?v=20260921-2') < html.indexOf('approved-rankings.js?v=20260921-2'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 
@@ -147,5 +147,18 @@ test('Clean Flip ritar w.hidden, opacitet och lager - wh-overriden nar aldrig me
   const lager = w.eval('wh')({ id: 's1', type: 'templateTopStreak', opacity: 40, layer: 7 });
   assert.match(lager, /opacity:0\.4;z-index:7;/);
   assert.doesNotMatch(lager, /display:none/);
+});
+
+test('en riktig tittare som heter Maya blankas inte - giftName skiljer demo fran livedata', () => {
+  // arDemo kors vid VARJE render i overlay. Utan giftName-villkoret hade en tittare som heter
+  // 'Maya' eller 'StreamQueen' fatt namnet blankat och streaken nollad mitt i sandningen, om och
+  // om igen. gift-event-images.js satter giftName pa varje rekord; fabriken lamnar faltet tomt.
+  const w = riggClean(true);
+  const demo = cleanRad(w, { id: 's1', type: 'templateTopStreak', dataName: 'MAYA', dataValue: 18 });
+  assert.equal(demo.strong.textContent, '', 'fabrikens demoperson ska inte na sandningen');
+
+  const riktig = cleanRad(w, { id: 's1', type: 'templateTopStreak', dataName: 'Maya', dataValue: 12, giftName: 'Rose' });
+  assert.equal(riktig.strong.textContent, 'Maya', 'en riktig tittare som heter Maya ska synas');
+  assert.equal(riktig.em.textContent, '×12 STREAK', 'och hennes streak ska sta kvar');
 });
 

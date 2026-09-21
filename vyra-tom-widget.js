@@ -167,12 +167,18 @@
   function avsloja() {
     if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
     if (typeof document === 'undefined') return;
-    for (const w of state.widgets) {
-      if (!arLivewidget(w) || arTom(w) || w.hidden) continue;
-      document.querySelectorAll('[data-id]').forEach(el => {
-        if (!el.dataset || el.dataset.id !== w.id) return;
-        if (el.style && el.style.display === 'none') el.style.removeProperty('display');
-      });
+    // EN like-flod ar tusentals event i timmen, och efter forsta gavan finns ingenting att avsloja.
+    // Kandidaterna raknas fram ur state (billigt) innan DOM:en rors alls; ar listan tom gor
+    // funktionen ingenting. Utan den raden blev varje like tva hela querySelectorAll('[data-id]').
+    const kandidater = state.widgets.filter(w => arLivewidget(w) && !arTom(w) && !w.hidden);
+    if (!kandidater.length) return;
+    const dolda = [...document.querySelectorAll('[data-id]')]
+      .filter(el => el.style && el.style.display === 'none');
+    if (!dolda.length) return;
+    for (const w of kandidater) {
+      for (const el of dolda) {
+        if (el.dataset && el.dataset.id === w.id) el.style.removeProperty('display');
+      }
     }
   }
   window.addEventListener('vyra-live-event', function () { setTimeout(avsloja, 0); });

@@ -15,7 +15,17 @@
   // pahittad person tittarna aldrig fick. Samma lista som DEMO_NAMES i live-zero-state.js - som
   // dock saknar 'maya' och vars selektorer (.streak-copy) inte traffar Clean Flip alls.
   const DEMO_NAMN = new Set(['streamqueen', 'maya']);
-  const arDemo = namn => DEMO_NAMN.has(String(namn || '').trim().toLowerCase().replace(/^@/, ''));
+  const arDemoNamn = namn => DEMO_NAMN.has(String(namn || '').trim().toLowerCase().replace(/^@/, ''));
+
+  // ... MEN 'Maya' AR OCKSA ETT VANLIGT RIKTIGT NAMN, och den har regeln kors vid VARJE render i
+  // overlay - inte bara fore forsta gavan, som live-zero-state.js:s DOM-nollning. En tittare som
+  // heter Maya hade fatt sitt namn blankat och sin streak nollad om och om igen mitt i sandningen.
+  //
+  // Skiljelinjen ar darfor inte namnet utan OM LIVEDATA HAR RORT WIDGETEN: gift-event-images.js
+  // satter `giftName` pa varje rekord (raden `widget.giftName = giftName || widget.giftName`),
+  // och varken widget-factory.js:s 'topstreak' eller createCleanStreak lamnar det faltet. Finns
+  // giftName kommer namnet fran en riktig gava och renderas som det ar.
+  const arDemo = w => !w.giftName && (arDemoNamn(w.dataName) || !w.dataName);
 
   // OVERLAY-LAGET LASES UR URL:EN, en gang och pa ett stalle. media.js:s VYRA_OVERLAY ar samma
   // svar, men som en global fran en annan fil; vyra-tom-widget.js och live-leaderboard.js laser
@@ -45,7 +55,7 @@
     // none!important) nadde aldrig Clean Flip - "Dolj widget" och lagerordningen gjorde ingenting
     // for Top Streak. Samma varden skrivs darfor har, i samma form som media.js:973.
     const overlay = iOverlay();
-    const demo = overlay && (arDemo(w.dataName) || !w.dataName);
+    const demo = overlay && arDemo(w);
     const name = demo ? '' : VyraSafe.text(w.dataName, 'MAYA');
     const value = demo ? '0' : VyraSafe.text(w.dataValue, overlay ? '0' : '18');
     const width = Math.max(150, Number(w.width) || 220);
@@ -166,9 +176,20 @@
       if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
       if (w && w.type === 'templateTopStreak') {
         bindControls(w);
-        // Clean Flip ritar ingen profilram (cleanStreakHtml laser aldrig profileFrame). Ramvaljaren
-        // som gift-alert-frames.js skjuter in i panelen gjorde da ingenting - uppmatt 2026-09-20:
-        // valjaren fanns, ingen ramkonst renderades. En kontroll utan verkan tas bort.
+        // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
+        //
+        // `#streakTheme` ar media.js:139:s stilmeny med de SJU avvecklade designerna (inferno, neon,
+        // ice, royal, sakura-rail, cyber-grid, storm). Uppmatt 2026-09-21 i riktig Chrome: menyn
+        // fanns i Clean Flips panel med alla sju kvar, och dess onchange skriver streakTheme och
+        // accent - pa en widget som alltid ritas som Clean Flip. Att valja en design som inte finns
+        // kvar ar precis det #487 skulle stada bort.
+        //
+        // `.gaf-frame-group` ar gift-alert-frames.js ramvaljare: cleanStreakHtml laser aldrig
+        // profileFrame, sa den ritade ingenting (uppmatt 2026-09-20).
+        //
+        // Mats i bind-fasen. Ett prov som bara laser props() ser ingen av dem - bada injiceras
+        // efter att panelen renderats, och just sa missade tests/streak-style-menu.js menyn.
+        document.querySelector('.properties #streakTheme')?.closest('label')?.remove();
         document.querySelector('.properties .gaf-frame-group')?.remove();
       }
     };
