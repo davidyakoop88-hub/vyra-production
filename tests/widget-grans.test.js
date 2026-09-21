@@ -85,3 +85,45 @@ test('utan DOM faller duken tillbaka på mobilformatet i stället för att krasc
   // duken() anropas mitt i ett drag och far aldrig kasta.
   assert.deepEqual(G.duken(), { bredd: 432, hojd: 768 });
 });
+
+// ---- WIDGETENS EGEN NEDSKALNING --------------------------------------------------------
+// UPPMATT 2026-09-21 i Davids layout, i riktig Chrome: Top Gift hade offsetWidth 340 men
+// syntes bara 119 px bred, for widgeten bar `zoom:0.35` som inline-stil. Inneslutningen
+// reserverade 340 och slappte darfor aldrig widgeten forbi x=92 i en 432 bred duk, trots att
+// den hade fatt plats anda till 313. Top Likes stoppades vid 50, Top Streak vid 212.
+//
+// Ratt rakning ar ett KOORDINATBYTE: `x` och `width` lever i widgetens egna oskalade rum, sa
+// duken uttrycks i samma rum innan jamforelsen. Regeln "hela widgeten ska synas" ar oforandrad.
+test('duken uttryckt i widgetens eget rum vaxer nar widgeten ar nedskalad', () => {
+  assert.deepEqual(G.dukIWidgetens(MOBIL, 0.35), { bredd: 432 / 0.35, hojd: 768 / 0.35 });
+  assert.deepEqual(G.dukIWidgetens(MOBIL, 1), MOBIL, 'oskalad widget raknar precis som forut');
+});
+
+test('en saknad eller orimlig skala behandlas som 1 i stallet for att ge NaN', () => {
+  // getComputedStyle().zoom svarar 'normal' i en webblasare utan stod, och parseFloat ger NaN.
+  // Ett NaN har hade gjort varje lage oplacerbart.
+  for (const trasig of [undefined, null, NaN, 0, -1, Infinity]) {
+    assert.deepEqual(G.dukIWidgetens(MOBIL, trasig), MOBIL, String(trasig));
+  }
+});
+
+test('KARNFALLET: en widget med zoom 0.35 nar anda ut till hogerkanten', () => {
+  // Top Gift: offsetWidth 340, zoom 0.35 => syns 119 av 432. Hogsta tillatna x ska vara det
+  // som lagger den SYNLIGA hogerkanten pa dukens kant: (432 - 119) / 0.35 = 894.
+  const duk = G.dukIWidgetens(MOBIL, 0.35);
+  const max = G.klamp(99999, 0, duk, { bredd: 340, hojd: 260 }).vanster;
+  assert.equal(Math.round(max), Math.round((432 - 340 * 0.35) / 0.35));
+  // Och det motsvarar en synlig hogerkant precis pa 432 — varken innanfor eller utanfor.
+  assert.equal(Math.round(max * 0.35 + 340 * 0.35), 432);
+  // Gamla berakningen stannade pa 92 och lamnade 281 px oanvanda.
+  assert.ok(max > 92, 'klampen slapper fortfarande inte forbi den gamla gransen: ' + max);
+});
+
+test('regeln ar inte losare: en nedskalad widget far anda inte sticka ut', () => {
+  const duk = G.dukIWidgetens(MOBIL, 0.35);
+  const max = G.klamp(99999, 99999, duk, { bredd: 340, hojd: 260 });
+  assert.equal(G.stickerUt(max.vanster, max.topp, 340, 260, duk), false, 'hogsta laget ryms');
+  // Ett steg utanfor det klampade laget sticker ut — gransen finns kvar, den ligger bara ratt.
+  assert.equal(G.stickerUt(max.vanster + 1, max.topp, 340, 260, duk), true);
+  assert.equal(G.stickerUt(max.vanster, max.topp + 1, 340, 260, duk), true);
+});
