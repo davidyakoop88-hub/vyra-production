@@ -30,8 +30,17 @@ test('both approved designs are transparent by default and animated independentl
 
 test('Top Coins assets are loaded after media with a fresh shared cache version', () => {
   assert.match(html, /topcoins-v2\.css\?v=20260920-1/);
-  // Strangarna foljer filerna: media.js -5 och topcoins-v2.js -3 (2026-09-20). Ordningen ar det som vaktas.
-  assert.ok(html.indexOf('media.js?v=20260920-5') > -1 && html.indexOf('media.js?v=20260920-5') < html.indexOf('topcoins-v2.js?v=20260920-3'));
+  // Laddordningen mäts över de riktiga <script src>-taggarna i dokumentordning. media.js:s
+  // ?v= låses inte: den bumpas i varje PR som rör media.js, och en låst sträng som inte
+  // längre fanns gav indexOf -1 och en vakt som var grön oavsett ordning.
+  const scriptSrc = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]*)"/g)].map((m) => m[1]);
+  const mediaIndex = scriptSrc.findIndex((src) => src.startsWith('media.js?v='));
+  const topcoinsIndex = scriptSrc.indexOf('topcoins-v2.js?v=20260920-3');
+  const scripts = () => scriptSrc.map((s, i) => `[${i}]${s}`).join(' ');
+  assert.ok(mediaIndex !== -1 && topcoinsIndex !== -1,
+    `Expected both media.js and topcoins-v2.js to be present. mediaIndex=${mediaIndex}, topcoinsIndex=${topcoinsIndex}. Scripts: ${scripts()}`);
+  assert.ok(mediaIndex < topcoinsIndex,
+    `Expected media.js to load before topcoins-v2.js. mediaIndex=${mediaIndex}, topcoinsIndex=${topcoinsIndex}. Scripts: ${scripts()}`);
 });
 
 // RIKTIG RENDERING, INTE KALLKODSREGEX. Riggen kor topcoins-v2.js i jsdom med de globala som
