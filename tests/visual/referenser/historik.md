@@ -115,3 +115,15 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** REGI-stilla for battlemvp-celebration (#418, 6 nycklar)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-20 — 17 referenser skrivna
+
+- **Motiv:** Tolv nya nycklar utan bild (2026-09-19), Top Points i nattens Top Like-layout och Top Streak som Clean Flip med synligt nollage - riggen neutraliserar passformen (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-20 — 6 referenser skrivna
+
+- **Motiv:** Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla

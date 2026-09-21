@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="studio.css?v=20260910-installningar">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
-  <link rel="stylesheet" href="sidebar-premium.css?v=20260726-nav-a-fix">
+  <link rel="stylesheet" href="sidebar-premium.css?v=20260920-meny">
   <link rel="stylesheet" href="auth-client.css?v=20260724-1">
   <link rel="stylesheet" href="auth-security.css?v=20260724-1">
   <link rel="stylesheet" href="cloud-sync.css?v=20260724-1">
@@ -141,7 +141,7 @@
   <link rel="stylesheet" href="agency-test.css?v=20260919-2">
   <link rel="stylesheet" href="agency-test-v2.css?v=20260919-2">
   <link rel="stylesheet" href="agency-test-v3.css?v=20260919-3">
-  <script src="agency-test.js?v=20260919-3"></script>
+  <script src="agency-test.js?v=20260920-1"></script>
   <link rel="stylesheet" href="performance-wizard.css?v=20260919-1">
   <script src="performance-wizard.js?v=20260919-1"></script>
   <link rel="stylesheet" href="performance-runtime.css?v=20260919-1">
@@ -151,23 +151,18 @@
   <link rel="stylesheet" href="tiktok-event-connector.css?v=20260920-1">
   <script src="tiktok-event-connector.js?v=20260920-1"></script>
   <link rel="stylesheet" href="social-goals-v2.css?v=20260919-9">
-  <!-- Aterstalld 2026-09-20: raden foll bort i 5a96741, som redigerade blocket for de nya
-       rankingdesignerna. .vyra-streak-simple definieras BARA har, och renderaren i
-       premium-final.js satter klassen — utan filen ritas Top Streak helt ostylad i bade
-       Studion och OBS. Vakten i tests/top-streak-simple.test.js fangade det. -->
-  <link rel="stylesheet" href="top-streak-simple.css?v=20260919-13">
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
-  <script src="gift-event-images.js?v=20260912-4"></script>
-  <script src="widget-factory.js?v=20260919-9"></script>
+  <script src="gift-event-images.js?v=20260921-1"></script>
+  <script src="widget-factory.js?v=20260920-1"></script>
   <script src="standalone-links.js?v=20260803-links"></script>
   <script src="overlay-sanitize.js?v=20260803-sanitize"></script>
   <script src="event-dedupe.js?v=20260803-dedupe"></script>
   <script src="toplike-design.js?v=20260920-1"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260916-facit"></script>
-  <script src="media.js?v=20260920-4"></script>
+  <script src="media.js?v=20260920-5"></script>
   <link rel="stylesheet" href="topcoins-v2.css?v=20260920-1">
-  <script src="topcoins-v2.js?v=20260920-1"></script>
+  <script src="topcoins-v2.js?v=20260920-3"></script>
   <!-- Koreografin "Vapenskolden": EFTER media.js, som definierar triggern den lindar. -->
   <script src="guardian-emblem-fas.js?v=20260818-2"></script>
   <!-- Handtag pa alla sidor: injiceras efter render, darfor EFTER media.js. -->
@@ -193,7 +188,7 @@
   <!-- Handlingar i de tomma tillstanden. Syskon till [data-tom], aldrig barn — rostvakten
        jamfor nodens text exakt. Se filens huvudkommentar. -->
   <script src="vyra-tomma-handlingar.js?v=2"></script>
-  <script src="vyra-tom-widget.js?v=1"></script>
+  <script src="vyra-tom-widget.js?v=20260921-2"></script>
   <script src="vyra-textgrupp.js?v=1"></script>
   <script src="vyra-dra-text.js?v=1"></script>
   <script src="vyra-bildfalt.js?v=1"></script>
@@ -207,8 +202,8 @@
   <!-- Sist: exporterar/importerar hela Studio-state som JSON mellan datorer. Ritar inget i
        overlay-läge, och rör ingen annan fil. -->
   <script src="vyra-state-sync.js?v=1"></script>
-  <link rel="stylesheet" href="approved-rankings.css?v=20260920-2">
-  <script src="approved-rankings.js?v=20260920-2"></script>
+  <link rel="stylesheet" href="approved-rankings.css?v=20260920-3">
+  <script src="approved-rankings.js?v=20260921-2"></script>
   <script>
     (function () {
       const params = new URLSearchParams(location.search);

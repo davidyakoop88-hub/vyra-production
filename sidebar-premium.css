@@ -170,3 +170,12 @@ aside button svg, aside nav a svg { width: 18px; height: 18px; }
 aside { padding: 14px 14px 12px; }
 .sidebar-head { padding: 2px 4px 12px; }
 .nav-section-label { padding-top: 2px; }
+
+/* 2026-09-20: Performance Wizard och Agencies lades till i natt, och vid 1366x768 hamnade bada
+   utanfor navets ruta (meny-yta.browser.test.js: 66 px for hogt, 16 navval + 4 rubriker). Menyn
+   ska rymmas hel utan rullning, sa pa laga fonster tatas den: gap 5 -> 2 (57 px) och knapparnas
+   lodrata padding 6 -> 4 (64 px). Ovanfor 820 px hojd ar allt som forut. */
+@media (max-height: 820px) {
+  aside nav { gap: 2px; }
+  aside nav button, aside nav a { padding-top: 4px; padding-bottom: 4px; }
+}

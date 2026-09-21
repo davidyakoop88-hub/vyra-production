@@ -9,7 +9,8 @@ const css=fs.readFileSync('agency-test.css','utf8')+fs.readFileSync('agency-test
 test('Agencies finns som en tydligt markerad testflik i Studio',()=>{
   assert.match(html,/data-extra="agencies"/);
   assert.match(html,/Agencies <small>TEST<\/small>/);
-  assert.match(html,/agency-test\.js\?v=20260919-3/);
+  // -1 2026-09-20: titel och brodsmula foljer navetiketten (nav-state-kontraktet).
+  assert.match(html,/agency-test\.js\?v=20260920-1/);
   assert.match(html,/agency-test\.css\?v=20260919-2/);
 });
 

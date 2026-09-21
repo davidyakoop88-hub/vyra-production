@@ -120,9 +120,9 @@ const FALL = [
   ['catalog:topgift:extra:coronation',       'topgift'],
   ['catalog:topgift:frame:royal-wings',      'topgift', UTAN_RAM],
   ['catalog:topgift:frame:angel-heart',      'topgift', UTAN_RAM],
-  ['catalog:topstreak',                      'topstreak'],
-  ['catalog:topstreak:premium:liquid',       'topstreak'],
-  ['catalog:topstreak:frame:amethyst-heart', 'topstreak', UTAN_RAM],
+  // Top Streak togs bort ur ramfamiljen 2026-09-20: Clean Flip (approved-rankings.js) ritar ingen
+  // profilram, premium:liquid och gavoramarna ar avvecklade (#476/#481). Ramvaljaren visas inte
+  // langre for widgeten. Uppmatt: profileFrame:'lightning' pa catalog:topstreak gav ingen ramkonst.
   ['catalog:toplike:clean',                  'toplike'],
   ['catalog:toplike:center',                 'toplike'],
   ['catalog:toplike:podium',                 'toplike'],

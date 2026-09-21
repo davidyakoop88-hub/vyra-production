@@ -22,7 +22,7 @@
     if(picker)picker.onchange=e=>{region=e.target.value;renderAgency()};
     document.querySelectorAll('[data-agency-id]').forEach(button=>button.onclick=()=>{selected=button.dataset.agencyId;renderAgency()});
   }
-  function openAgency(){document.querySelectorAll('aside button').forEach(b=>b.classList.toggle('active',b.dataset.extra==='agencies'));const title=document.querySelector('#title'),crumb=document.querySelector('#crumb');if(title)title.textContent='Agencies · Test';if(crumb)crumb.textContent='VYRA / AGENCIES / TEST';renderAgency()}
+  function openAgency(){document.querySelectorAll('aside button').forEach(b=>b.classList.toggle('active',b.dataset.extra==='agencies'));const title=document.querySelector('#title'),crumb=document.querySelector('#crumb');/* Samma ord som navetiketten ('Agencies TEST'), och brodsmulan slutar med den i versaler - det ar kontraktet nav-state.browser.test.js vaktar for varje sida. */if(title)title.textContent='Agencies TEST';if(crumb)crumb.textContent='VYRA / AGENCIES TEST';renderAgency()}
   function mount(){document.querySelector('[data-extra="agencies"]')?.addEventListener('click',openAgency)}
   if(document.readyState==='loading')addEventListener('DOMContentLoaded',mount,{once:true});else mount();
   root.VyraAgencyTest={agencies,visible,open:openAgency};

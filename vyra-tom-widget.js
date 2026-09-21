@@ -44,6 +44,13 @@
       && (varde === undefined || varde === null || varde === '' || Number(varde) === 0);
   }
 
+  // Doljandet ar EN strang pa ETT stalle, sa att approved-rankings.js (vars wh-override aldrig
+  // anropar kedjan nedanfor for Top Streak) kan dolja Clean Flip med exakt samma regel.
+  const DOLJ = 'display:none!important;';
+  function dolj(html) {
+    return String(html).replace(/(<div\b[^>]*?style=")/, '$1' + DOLJ);
+  }
+
   // ---- 1. Knappen i panelen -----------------------------------------------------------------
   //
   // Läggs i PRESET & PRESTANDA-gruppen, bredvid "Återställ widget". De två gör olika saker och det
@@ -142,9 +149,39 @@
       // ELEMENTET STANNAR I DOM, det döljs bara. live-leaderboard.js uppdaterar widgeten genom att
       // slå upp `[data-id]` och returnerar tyst när noden saknas — utan den skulle första gåvan
       // skriva till state men aldrig nå skärmen, och widgeten förbli borta hela sändningen.
-      return String(html).replace(/(<div\b[^>]*?style=")/, '$1display:none!important;');
+      return dolj(html);
     };
   }
 
-  window.VyraTomWidget = { tom, arTom, LIVEFALT, TYPER };
+  // ---- 4. Forsta gavan visar widgeten igen ----------------------------------------------------
+  //
+  // Livedatan ar en riktad DOM-patch (gift-event-images.js, live-leaderboard.js), ALDRIG en
+  // render() - sa den dolda noden fick sitt namn men behall display:none. Uppmatt 2026-09-20 i
+  // overlay: Top Gift tomd -> dold; efter en gava stod "wpwer17 ◉ 10" i noden och display var
+  // fortfarande none. Varje sandning borjar med live:start, som tommer - sa utan det har steget
+  // syntes Top Gift aldrig under en hel sandning. Avslojandet hor hemma har, bredvid doljandet:
+  // samma falt (arTom) avgor bada. setTimeout(0), inte requestAnimationFrame: rAF fyrar inte i
+  // en dold flik, och skrivarna satter state synkront i sina lyssnare, sa nasta makrotask ser det.
+  // `w.hidden` ar streamerns eget val och rors inte - dess display:none kommer fran renderkedjan
+  // (media.js liveVisibilityWh, eller cleanStreakHtml for Clean Flip), inte harifran.
+  function avsloja() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    if (typeof document === 'undefined') return;
+    // EN like-flod ar tusentals event i timmen, och efter forsta gavan finns ingenting att avsloja.
+    // Kandidaterna raknas fram ur state (billigt) innan DOM:en rors alls; ar listan tom gor
+    // funktionen ingenting. Utan den raden blev varje like tva hela querySelectorAll('[data-id]').
+    const kandidater = state.widgets.filter(w => arLivewidget(w) && !arTom(w) && !w.hidden);
+    if (!kandidater.length) return;
+    const dolda = [...document.querySelectorAll('[data-id]')]
+      .filter(el => el.style && el.style.display === 'none');
+    if (!dolda.length) return;
+    for (const w of kandidater) {
+      for (const el of dolda) {
+        if (el.dataset && el.dataset.id === w.id) el.style.removeProperty('display');
+      }
+    }
+  }
+  window.addEventListener('vyra-live-event', function () { setTimeout(avsloja, 0); });
+
+  window.VyraTomWidget = { tom, arTom, dolj, avsloja, LIVEFALT, TYPER };
 })();

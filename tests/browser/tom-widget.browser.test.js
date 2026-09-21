@@ -61,7 +61,9 @@ test.after(async () => {
 });
 
 // De två familjer som livedata faktiskt skriver till.
-const WIDGETS = ['catalog:topgift:premium:royal', 'catalog:topstreak:premium:liquid'];
+// Top Streak: premium:liquid ar avvecklad 2026-09-20 och nyckeln ritas som Clean Flip. Samma
+// familj, samma livefalt - sa standardnyckeln provas i stallet.
+const WIDGETS = ['catalog:topgift:premium:royal', 'catalog:topstreak'];
 const FALT = ['dataName', 'dataValue', 'profileImage', 'giftImage', 'giftName'];
 
 async function studion(vy) {

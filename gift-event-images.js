@@ -72,8 +72,12 @@
       root: '.vyra-streak',
       gift: '.streak-gift-face img',
       profile: '.streak-profile-face img',
-      name: '.streak-copy strong, .sframe-row strong',
-      value: '.streak-score b, .sframe-row b'
+      // Clean Flip (approved-rankings.js) ar den enda Top Streak som nar skarmen sedan 2026-09-20:
+      // namnet i .approved-streak-copy strong och talet i ett eget <b> inne i <em>x<b>18</b> STREAK</em>,
+      // sa att prefixet och 'STREAK' star kvar nar patchen skriver talet. Uppmatt fore den har
+      // raden: patchen traffade inga noder alls, och Clean Flip stod pa demovardena hela sandningen.
+      name: '.streak-copy strong, .sframe-row strong, .approved-streak-copy strong',
+      value: '.streak-score b, .sframe-row b, .approved-streak-copy b'
     }
   };
 
@@ -109,7 +113,12 @@
       setImage(node.querySelector(shape.gift), widget.giftImage);
       setImage(node.querySelector(shape.profile), widget.profileImage);
       node.querySelectorAll(shape.name).forEach(function (el) {
-        setText(el, widget.dataName || '@StreamQueen');
+        // '@StreamQueen' AR EN PLATSHALLARE, INTE EN TITTARE. Den slog till nar ett event saknade
+        // bade username och name, och skrev da in fabrikens demoperson i en LIVE sandning - exakt
+        // det live-zero-state.js finns for att forhindra ("no invented person"). I overlay blir
+        // tomt tomt; i editorn ar platshallaren fortfarande det man designar mot.
+        var overlay = new URLSearchParams(location.search).has('overlay');
+        setText(el, widget.dataName || (overlay ? '' : '@StreamQueen'));
       });
       node.querySelectorAll(shape.value).forEach(function (el) {
         // Tecknet framför siffran står bara i DOM:en och är streamerns val: Top Gift renderar
