@@ -55,10 +55,12 @@ test('retired saved skins are clamped to the new VYRA designs at render time', (
 test('fresh asset versions prevent a cached retired design from surviving reload', () => {
   const studioHtml = fs.readFileSync('studio.html', 'utf8');
   const media = fs.readFileSync('media.js', 'utf8');
-  // Bumpad 2026-09-20: media.js bar versionsstrangen for gift-fireworks.js, som andrades nar
-  // fyrverkeriets niva borjade folja gavans varde. media.js har alltsa andrats, och da maste
-  // dess egen strang bytas - annars pekar en cachad media.js kvar pa den gamla filen.
-  assert.match(studioHtml, /media\.js\?v=20260920-6/);
-  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
+  // Bumpade 2026-09-21 for scopningen av skinn-reglerna: toplike-studio.css scopades till Top
+  // Like (:where(.vyra-templatetoplike) pa 189 selektorer) och media.js fick bade Top Likes nya
+  // typklass OCH bar toplike-studio.css:s versionsstrang. Bada filerna andrades alltsa, sa bada
+  // far nya strangar. toplike-studio.js ar OFORANDRAD och behaller sin - strangarna foljer
+  // filerna, inte varandra.
+  assert.match(studioHtml, /media\.js\?v=20260921-1/);
+  assert.match(media, /toplike-studio\.css\?v=20260921-scopad/);
   assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
 });

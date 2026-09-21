@@ -265,7 +265,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
   // Bumpade 2026-09-20 av 5a96741 ("Aktivera endast nya rankingdesigner"): BADA filerna
   // andrades i den omgangen, sa bada far samma nya strang. Vakten foljde inte med da.
-  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
+  // 2026-09-21 gick de isar: skinn-reglerna i toplike-studio.css scopades till Top Like och
+  // media.js bar bade den strangen och Top Likes nya typklass, sa CSS:en far en ny strang
+  // medan toplike-studio.js ar oforandrad och behaller sin.
+  assert.match(media, /toplike-studio\.css\?v=20260921-scopad/);
   assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
