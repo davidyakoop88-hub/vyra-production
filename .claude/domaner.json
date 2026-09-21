@@ -379,6 +379,7 @@
         "tests/glove-live-wiring.test.js",
         "tests/panel-live-path.test.js",
         "tests/leaderboard-like-count.test.js",
+        "tests/leaderboard-bevarar-myntikon.test.js",
         "tests/browser/likecount-en-kontroll.browser.test.js",
         "tests/browser/command-center-*.browser.test.js"
       ],
