@@ -216,6 +216,32 @@
     if (changed && typeof save === 'function') save();
   }
 
+  // SKRIV TALET UTAN ATT RIVA IKONEN. Top Coins v2 (topcoins-v2.js) ritar myntet som ett stylat
+  // <i> forst i <em>: `<em><i>V</i>44 999 COINS</em>`. textContent byter ut ALLA barn, sa det
+  // forsta livevardet gjorde myntet till ett vanligt "V" i lopande text — och ikonen som lastes ur
+  // textContent.trim().split(' ')[0] blev "V44", inte "V". Uppmatt 2026-09-20 (PR #487).
+  //
+  // Finns ett <i> forst i <em> star det kvar och talet skrivs i textnoden EFTER det. Rader utan
+  // <i> (Top Like: ikonen ar text, ♥) tar exakt den gamla vagen: ikonen ar forsta ordet i texten
+  // och hela strangen skrivs om. `baraOmAndrat` ar nollningsgrenens regel (se `satt` dar) och
+  // galler ikonvagen i BADA grenarna — en identisk skrivning ar anda en DOM-mutation.
+  //
+  // firstElementChild, inte querySelector: ikonen ar per design det forsta barnet, och egenskapen
+  // saknas helt i den handbyggda DOM:en i tests/overlay-live-leaderboards.test.js, som da tar den
+  // gamla vagen utan att nagot kastar.
+  function skrivTal(em, tal, baraOmAndrat) {
+    const ikon = em.firstElementChild;
+    if (!ikon || ikon.tagName !== 'I') {
+      const text = (em.textContent.trim().split(' ')[0] || '♥') + ' ' + tal;
+      if (!baraOmAndrat || em.textContent !== text) em.textContent = text;
+      return;
+    }
+    const text = ' ' + tal;
+    const sista = em.lastChild;
+    if (sista && sista.nodeType === 3) { if (sista.nodeValue !== text) sista.nodeValue = text; }
+    else em.append(text);
+  }
+
   function updateLiveLeaderboards() {
     if (typeof state === 'undefined' || !state?.widgets) return;
     document.querySelectorAll('.vyra-toplike[data-id]').forEach(el => {
@@ -263,7 +289,7 @@
           const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
           satt(strong, '');
           satt(small, '');
-          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; satt(em, icon + ' 0') }
+          if (em) skrivTal(em, '0', true);
         });
         return;
       }
@@ -274,7 +300,7 @@
         const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
         if (strong) strong.textContent = person.name;
         if (small) small.textContent = '@' + person.name.toLowerCase().replace(/\s+/g, '');
-        if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; const displayValue = person[metric]; em.textContent = icon + ' ' + formatNum(displayValue); }
+        if (em) skrivTal(em, formatNum(person[metric]), false);
         const img = row.querySelector('img:not(.pro-frame-art)');
         if (img && person.profileImage) img.src = VyraSafe.src(person.profileImage);
       });
