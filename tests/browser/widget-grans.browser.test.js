@@ -303,3 +303,63 @@ test('banderollen ar LASBAR vid ett smalt fonster, inte bara narvarande', { skip
     assert.ok(m.text.includes('utanf'), 'banderollen namner inte bildrutan');
   } finally { await context.close() }
 });
+
+// ---- NEDSKALAD WIDGET: HELA DUKEN SKA GA ATT ANVANDA ------------------------------------
+//
+// UPPMATT 2026-09-21 i Davids egen layout, i riktig Chrome: Top Gift hade offsetWidth 340 men
+// syntes bara 119 px bred, for widgeten bar `zoom:0.35` som inline-stil (widgetScale). Den
+// gamla inneslutningen reserverade 340 och slappte darfor aldrig widgeten forbi x=92 i en 432
+// bred duk, trots att den hade fatt plats anda till 313. Top Likes stoppades vid 50 och Top
+// Streak vid 212 av samma skal. Det var darfor allt klumpade ihop sig uppe till vanster.
+//
+// Provet drar en NEDSKALAD widget sa langt at hoger det gar och kraver tva saker:
+//   1. den SYNLIGA hogerkanten ska na dukens hogerkant — hela ytan ar anvandbar
+//   2. den far anda inte passera den — regeln "hela widgeten ska synas" ar oforandrad
+// Ett prov som bara krävde (1) hade varit grönt aven om gransen tagits bort helt.
+test('en nedskalad widget nar anda ut till dukens hogerkant', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([{ ...WIDGET, widgetScale: 0.35 }]);
+  try {
+    const fore = await page.evaluate(() => {
+      const el = document.querySelector('.canvas [data-id="d1"]');
+      return { zoom: getComputedStyle(el).zoom, offsetBredd: el.offsetWidth };
+    });
+    assert.ok(parseFloat(fore.zoom) > 0 && parseFloat(fore.zoom) < 1,
+      `riggen gav ingen nedskalning: zoom=${fore.zoom}`);
+
+    const r = await dra(page, 9999, 40);
+    const skala = parseFloat(fore.zoom);
+    const synligBredd = r.widget.bredd * skala;
+    const synligHoger = r.sparat.x * skala + synligBredd;
+
+    // 1. Hela duken ar anvandbar: den synliga hogerkanten nar anda fram.
+    assert.ok(synligHoger > r.duk.bredd - 2,
+      `widgeten stannade ${Math.round(r.duk.bredd - synligHoger)} px fran hogerkanten `
+      + `(sparat x=${r.sparat.x}, syns ${Math.round(synligBredd)} av ${r.duk.bredd})`);
+
+    // 2. Men inte utanfor.
+    assert.ok(synligHoger <= r.duk.bredd + 1,
+      `widgeten hamnade ${Math.round(synligHoger - r.duk.bredd)} px UTANFOR hogerkanten`);
+
+    // 3. Den gamla gransen lag pa duk minus OSKALAD bredd. Passeras den ar buggen borta.
+    assert.ok(r.sparat.x > r.duk.bredd - r.widget.bredd,
+      `x=${r.sparat.x} passerade aldrig den gamla gransen ${r.duk.bredd - r.widget.bredd}`);
+
+    // 4. Det man SER under draget ar redan inne — inget hopp nar man slapper.
+    assert.equal(r.sett.left, r.sparat.x, 'sett och sparat lage skiljer sig');
+  } finally { await context.close(); }
+});
+
+test('en nedskalad widget markeras inte som utanfor nar den star vid kanten', { skip, timeout: 90000 }, async () => {
+  // Klampen och markeringen maste vara ense aven med nedskalning. Annars star banderollen
+  // och sager att widgeten ligger utanfor bilden precis dar klampen just lagt den.
+  const { context, page } = await editorn([{ ...WIDGET, widgetScale: 0.35 }]);
+  try {
+    await dra(page, 9999, 40);
+    const r = await page.evaluate(() => {
+      const el = document.querySelector('.canvas [data-id="d1"]');
+      return { markerad: el.dataset.utanforDuken === '1', ute: window.VyraGrans.rakna().length };
+    });
+    assert.equal(r.markerad, false, 'klampen la den dar markeringen kallar den utanfor');
+    assert.equal(r.ute, 0, 'raknaren sager att en widget ligger utanfor bilden');
+  } finally { await context.close(); }
+});

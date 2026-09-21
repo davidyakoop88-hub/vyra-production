@@ -45,6 +45,46 @@
     return { bredd: STANDARD.bredd, hojd: STANDARD.hojd };
   }
 
+  // WIDGETENS EGEN NEDSKALNING MASTE RAKNAS MED.
+  //
+  // UPPMATT 2026-09-21 i Davids egen layout, i riktig Chrome:
+  //   Top Gift      offsetWidth 340  syns 119  =>  kom hogst till x 92 av 432
+  //   Top Likes     offsetWidth 382  syns 226  =>  kom hogst till x 50
+  //   Top Streak    offsetWidth 220  syns  77  =>  kom hogst till x 212
+  //   Gifter Level  offsetWidth 270  syns 216  =>  kom hogst till x 162
+  // Widgetarna satter `zoom:${w.widgetScale||1}` som INLINE-stil (se vyraTopLike i studio.js
+  // och syskonrenderarna). `zoom` skalar bade storleken OCH offseten, men `offsetWidth` ar
+  // LAYOUTmattet och kanner inte av den. Inneslutningen reserverade darfor upp till tre
+  // ganger widgetens synliga bredd, och hela hogra delen av duken blev omojlig att nA.
+  // Davids ord 2026-09-21: "den duken som visar pa layout ska man kunna placera widget dar
+  // hela duken".
+  //
+  // LOSNINGEN AR ETT KOORDINATBYTE, INTE EN LOSARE GRANS. `x` och `width` lever i widgetens
+  // EGET oskalade rum (style.left = x px, som zoom sedan krymper). Uttrycker man duken i
+  // samma rum - dukens matt delat med skalan - blir jamforelsen `x + width <= duk/skala`
+  // exakt rätt, och regeln "hela widgeten ska synas" haller precis som forut. For en
+  // oskalad widget (zoom 1) ar det identiskt med den gamla berakningen.
+  function skalanFor(el) {
+    try {
+      if (!el || typeof getComputedStyle !== 'function') return 1;
+      var z = getComputedStyle(el).zoom;              // 'normal' i webblasare utan stod
+      var s = parseFloat(z);
+      return Number.isFinite(s) && s > 0 ? s : 1;
+    } catch (e) { return 1; }
+  }
+
+  // Dukens matt uttryckta i widgetens eget rum. Ren rakning, sa den gar att prova utan DOM.
+  function dukIWidgetens(dukMatt, skala) {
+    var d = dukMatt || duken();
+    var s = Number.isFinite(skala) && skala > 0 ? skala : 1;
+    return { bredd: d.bredd / s, hojd: d.hojd / s };
+  }
+
+  // Dukens matt for ETT element, med dess egen nedskalning inraknad.
+  function dukFor(el, dukMatt) {
+    return dukIWidgetens(dukMatt || duken(), skalanFor(el));
+  }
+
   // HELA WIDGETEN SKA RYMMAS. Davids ord 2026-09-20: "den ytan man lagger widget den ska man
   // se". Origo-regeln (8 px kvar) lat en widget sticka ut till storsta delen, och i hans layout
   // lag Gift Fireworks pa 540 px bredd i en 432 px ruta - synlig i editorn, avklippt i
@@ -85,7 +125,7 @@
     try {
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
         var ut = stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
-          el.offsetWidth, el.offsetHeight, d);
+          el.offsetWidth, el.offsetHeight, dukFor(el, d));
         if (ut) { el.dataset.utanforDuken = '1'; antal++; }
         else delete el.dataset.utanforDuken;
       });
@@ -107,7 +147,7 @@
     try {
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
         if (stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
-          el.offsetWidth, el.offsetHeight, d)) ute.push(el.dataset.id);
+          el.offsetWidth, el.offsetHeight, dukFor(el, d))) ute.push(el.dataset.id);
       });
     } catch (e) {}
     return ute;
@@ -131,13 +171,14 @@
         var w = lager.widgets.filter(function (x) { return x.id === el.dataset.id })[0];
         if (!w) return;
         var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
-        if (!stickerUt(x, y, el.offsetWidth, el.offsetHeight, d)) return;
+        var dw = dukFor(el, d);
+        if (!stickerUt(x, y, el.offsetWidth, el.offsetHeight, dw)) return;
         // Bredare an duken (Gift Fireworks 540, Glove Snipe 760 i Davids layout): att flytta
         // origo hjalper inte, den sticker ut anda. Da krymps bredden till dukens. Bara
         // `width` rors - hojden foljer innehallet.
-        if (el.offsetWidth > d.bredd && Number.isFinite(Number(w.width))) w.width = d.bredd;
-        w.x = Math.min(Math.max(0, x), Math.max(0, d.bredd - Math.min(el.offsetWidth, d.bredd)));
-        w.y = Math.min(Math.max(0, y), Math.max(0, d.hojd - el.offsetHeight));
+        if (el.offsetWidth > dw.bredd && Number.isFinite(Number(w.width))) w.width = dw.bredd;
+        w.x = Math.min(Math.max(0, x), Math.max(0, dw.bredd - Math.min(el.offsetWidth, dw.bredd)));
+        w.y = Math.min(Math.max(0, y), Math.max(0, dw.hojd - el.offsetHeight));
         flyttade++;
       });
       if (flyttade && typeof save === 'function') save();
@@ -183,7 +224,7 @@
   // I up LASER originalet style.left och skriver w.x, sa vi klamper FORE — annars sparas
   // det oklampade laget och widgeten hoppar tillbaka forst vid nasta ritning.
   function klampElement(el) {
-    var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10), null,
+    var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10), dukFor(el),
       { bredd: el.offsetWidth, hojd: el.offsetHeight });
     el.style.left = k.vanster + 'px';
     el.style.top = k.topp + 'px';
@@ -222,7 +263,7 @@
     var w = (state.widgets || []).filter(function (x) { return x.id === selected })[0];
     var el = w && document.querySelector('.editor-shell .canvas .widget[data-id="' + w.id + '"]');
     if (!w || !el) return;
-    var d = duken(), v = Number(falt.value);
+    var d = dukFor(el), v = Number(falt.value);
     if (!Number.isFinite(v)) return;
     var ny = v;
     if (falt.id === 'propWidth') ny = Math.max(60, Math.min(v, d.bredd - (w.x || 0)));
@@ -236,6 +277,7 @@
 
   var api = {
     klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt,
+    dukIWidgetens: dukIWidgetens, skalanFor: skalanFor, dukFor: dukFor,
     markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, raknare: raknare,
     haktaDrag: haktaDrag,
     MIN_KVAR: MIN_KVAR, STANDARD: STANDARD
