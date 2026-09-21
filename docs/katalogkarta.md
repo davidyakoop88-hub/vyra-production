@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `b0db4c4`
+Commit: `c3ebc32`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -45,7 +45,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP POINTS · 4 SEPARATA DESIGNER | 4 | 4/4 | 4/4 | 4/4 | 2026-09-21 | — |
-| TOP COINS · 2 NYA DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-20 | — |
+| TOP COINS · 2 NYA DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-21 | — |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
@@ -112,8 +112,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-20 | — |
-| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-20 | — |
+| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-21 | — |
+| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-21 | — |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 
