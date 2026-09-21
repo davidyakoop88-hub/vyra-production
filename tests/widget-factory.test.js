@@ -326,3 +326,26 @@ test('Top Coins halo/signal-orbit far topCoinsDesign, skin och designens accent 
   assert.equal(F.create('catalog:ranking:templateTopCoins:gold').accent, '#ffbd32', 'gamla teman behaller familjens accent');
 });
 
+test('Top Points "Stil 3 · Podium" far skinnet som faktiskt ritar ett podium', () => {
+  // Uppmatt 2026-09-21: podium och neon gav IDENTISK md5 och identiska kolumner, och deras
+  // referensbilder var byte-identiska. toplike-studio.js tvingar skin-clean-bar pa varje
+  // ranking-widget utan `skin`, och slar darmed ut .like-podium-reglerna i studio.css.
+  const podium = VyraWidgets.create('catalog:ranking:templateTopPoints:podium');
+  assert.equal(podium.skin, 'mini-podium');
+  assert.equal(podium.likeTheme, 'podium', 'temat star kvar - det ar katalognyckelns identitet');
+  assert.equal(podium.type, 'templateTopPoints');
+
+  // De tre andra ar redan atskilda och ska INTE fa skin: en mappning hade bytt utseende pa
+  // designer som fungerar.
+  for (const tema of ['clean', 'neon', 'center']) {
+    const w = VyraWidgets.create('catalog:ranking:templateTopPoints:' + tema);
+    assert.equal('skin' in w, false, `${tema} ska inte fa nagot skin`);
+    assert.equal(w.likeTheme, tema);
+  }
+
+  // Top Coins ar en annan familj: dess podium-nyckel finns inte langre i katalogen, men om den
+  // byggs ska den inte rakas av Top Points-regeln.
+  assert.equal('skin' in VyraWidgets.create('catalog:ranking:templateTopCoins:podium'), false,
+    'regeln galler bara templateTopPoints');
+});
+

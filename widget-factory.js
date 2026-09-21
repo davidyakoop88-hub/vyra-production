@@ -19,6 +19,23 @@
   const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']);
   const TOPCOINS_V2 = new Set(['halo', 'signal-orbit']);
 
+  // TOP POINTS: ETT AV FYRA TEMAN BAR SIN DESIGN I `skin`, INTE I likeTheme.
+  //
+  // Uppmatt 2026-09-21: katalogknappen "Top Points · Stil 3 · Podium" ritade exakt samma bild som
+  // "Stil 4 · Neon" - identisk md5, identiska kolumner (42px 148.141px 23.8594px), radhojd 42 px.
+  // Deras referensbilder var byte-identiska. Orsaken ar toplike-studio.js:s renderare, som tvingar
+  // `skin-clean-bar` pa varje ranking-widget UTAN `skin`, och vars !important-regler slar ut
+  // `.like-podium .rank-1{height:66px!important}` i studio.css.
+  //
+  // Med `skin` satt ritas podiumlayouten: 300x97 med raden 80,6 px hog och kolumnerna
+  // `23px 60px minmax(72px,1fr)` - forstaplatsen upphojd, precis det knappen lovar.
+  //
+  // BARA podium star har. clean, neon och center ar redan atskilda (uppmatta md5 c528b296,
+  // de622444 och 307f004d) och far darfor inget skin - en mappning av dem hade bytt utseende pa
+  // designer som fungerar. Neons kant och innerglod ar for ovrigt SLACKT med flit av
+  // `.like-neon .toplike-row,...{border:0!important}` (det ramlosa formspraket), inte av det har.
+  const TOPPOINTS_SKIN = Object.freeze({ podium: 'mini-podium' });
+
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
   // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett
   // rorelseomslag (.mvp-plate) som de gamla inte far — se battleMvpHtml i media.js.
@@ -274,6 +291,10 @@
         likeCount: 5, likeTheme: v.theme,
         accent: v.type === 'templateTopCoins' ? '#ffbd32' : '#9b5cff', profileFrame: 'none'
       };
+      // Skinnet racker, och hela presetet vore fel: applyVyraTopLikeStyle satter bland annat
+      // showTitle:false, och Top Points rubrik ("TOP POINTS") ska sta kvar. Uppmatt att enbart
+      // `skin` ger podiumlayouten.
+      if (v.type === 'templateTopPoints' && TOPPOINTS_SKIN[v.theme]) w.skin = TOPPOINTS_SKIN[v.theme];
       // TOP COINS V2 (topcoins-v2.js) LASER `topCoinsDesign`/`skin` OCH DESIGNENS EGEN ACCENT.
       // Samma fynd samma dag: halo och signal-orbit blev byte-identiska via fabriken, for
       // renderaren foll tillbaka pa halo utan faltet. createTopCoins satter design, bredd och
