@@ -45,6 +45,16 @@
     const n = Number(String(v ?? '').replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? Math.round(n).toLocaleString('sv-SE') : String(v || '0');
   };
+  // FARGEN KOMMER UR DESIGNEN, INTE UR w.accent.
+  //
+  // Uppmatt 2026-09-21: den visuella riggen skapar widgeten med `VyraWidgets.create(nyckel)` rakt
+  // ur fabriken och kor aldrig katalogknappens handler. Fabriken satter redan en generisk lila
+  // `accent`, sa `w.accent || meta.accent` valde ALLTID lila — podiets trappsteg och neons brickor
+  // blev lila i stallet for guld respektive cyan, i referensbilderna och for alla widgetar som
+  // aterskapas ur sparat lage. Ett eget falt loser det: designens farg galler tills nagon
+  // uttryckligen valjer en annan I DEN HAR WIDGETEN.
+  const accent = w => w.topPointsAccent || DESIGNS[designId(w)].accent;
+
   const arOverlay = () => {
     try { return new URLSearchParams(location.search).has('overlay') } catch (_) { return false }
   };
@@ -93,7 +103,7 @@
     // darfor i CSS med `order`, inte i DOM:en.
     return `<div class="widget vyra-toplike vyra-templatetoppoints vyra-toppoints-new toppoints-${design}${paus}${bakgrund}${vald}"`
       + ` data-id="${w.id}" data-toppoints-design="${design}"`
-      + ` style="left:${w.x || 0}px;top:${w.y || 0}px;width:${bredd}px;--tp-accent:${w.accent || meta.accent};--tp-scale:${w.widgetScale || 1};z-index:${w.layer || 1}">`
+      + ` style="left:${w.x || 0}px;top:${w.y || 0}px;width:${bredd}px;--tp-accent:${accent(w)};--tp-scale:${w.widgetScale || 1};z-index:${w.layer || 1}">`
       + `<div class="toplike-list">${rader}</div>`
       + ((typeof selected !== 'undefined' && selected === w.id) ? '<span class="resize-handle">↘</span>' : '')
       + '</div>';
@@ -121,7 +131,7 @@
       + `<label class="range-label">Antal profiler <b>${Math.min(DEMO.length, Math.max(1, Number(w.likeCount) || 5))}</b>`
       + `<input id="tpCount" type="range" min="1" max="${DEMO.length}" value="${Math.min(DEMO.length, Math.max(1, Number(w.likeCount) || 5))}"></label></div>`
       + `<div class="property-group"><h4>DESIGN</h4><div class="toppoints-design-choice">${val}</div>`
-      + `<label>Accent<input id="tpAccent" type="color" value="${w.accent || meta.accent}"></label>`
+      + `<label>Accent<input id="tpAccent" type="color" value="${accent(w)}"></label>`
       + `<div class="switch-row one"><label><input id="tpMotion" type="checkbox" ${w.topPointsMotion === false ? '' : 'checked'}> Rörelse</label>`
       + `<label><input id="tpBackground" type="checkbox" ${w.showBackground === true ? 'checked' : ''}> Bakgrund</label></div></div>`
       + `<div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid">`
@@ -139,7 +149,7 @@
       topPointsDesign: design, skin: design, likeTheme: design, width: meta.width, likeCount: 5,
       dataName: 'MAYA', dataValue: 1500, showTitle: false, showCrown: false, autoMedal: false,
       showBackground: false, rankingCycle: false, topPointsMotion: true,
-      useLiveData: true, liveMetric: 'points', accent: meta.accent
+      useLiveData: true, liveMetric: 'points', topPointsAccent: meta.accent
     });
     state.widgets.push(created);
     selected = created.id;
@@ -184,18 +194,18 @@
     assign('#tpValue', 'dataValue', el => Number(el.value) || 0);
     assign('#tpAvatar', 'profileImage');
     assign('#tpCount', 'likeCount', el => Number(el.value) || 5);
-    assign('#tpAccent', 'accent');
+    assign('#tpAccent', 'topPointsAccent');
     assign('#tpMotion', 'topPointsMotion', el => el.checked);
     assign('#tpBackground', 'showBackground', el => el.checked);
     document.querySelectorAll('[data-tp-design]').forEach(button => {
       button.onclick = () => {
         const id = button.dataset.tpDesign, meta = DESIGNS[id];
         if (!meta) return;
-        w.topPointsDesign = id; w.skin = id; w.likeTheme = id; w.accent = meta.accent;
+        w.topPointsDesign = id; w.skin = id; w.likeTheme = id; w.topPointsAccent = meta.accent;
         save(); render();
       };
     });
   };
 
-  window.VyraTopPoints = Object.freeze({ designs: DESIGNS, designId, topPointsHtml });
+  window.VyraTopPoints = Object.freeze({ designs: DESIGNS, designId, accent, topPointsHtml });
 })();
