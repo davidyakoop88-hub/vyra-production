@@ -7,9 +7,9 @@
  },
  "antal": 133,
  "senaste": {
-  "motiv": "Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)",
-  "nycklar": 6,
-  "tid": "2026-09-20T21:16:14.210Z"
+  "motiv": "Top Points fyra designer: podium och neon ritades som samma lista, nu trappsteg respektive neonglod (fyra nycklar)",
+  "nycklar": 4,
+  "tid": "2026-09-21T10:14:28.763Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -241,20 +241,20 @@
    "fyllnad": 27.01
   },
   "catalog:ranking:templateTopPoints:center": {
-   "matt": "340x232",
-   "fyllnad": 18.89
+   "matt": "250x150",
+   "fyllnad": 67.53
   },
   "catalog:ranking:templateTopPoints:clean": {
    "matt": "250x234",
-   "fyllnad": 94.06
+   "fyllnad": 99.96
   },
   "catalog:ranking:templateTopPoints:neon": {
    "matt": "250x234",
-   "fyllnad": 99.95
+   "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:podium": {
-   "matt": "250x234",
-   "fyllnad": 99.95
+   "matt": "250x198",
+   "fyllnad": 79.92
   },
   "catalog:topgift:extra:aurora": {
    "matt": "280x260",
