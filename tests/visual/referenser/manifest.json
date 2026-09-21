@@ -7,9 +7,9 @@
  },
  "antal": 133,
  "senaste": {
-  "motiv": "Top Points om igen efter specificitets- och accentfixen: podium fick rutnat och neon lila brickor i forra korningen",
-  "nycklar": 4,
-  "tid": "2026-09-21T10:32:08.457Z"
+  "motiv": "Top Coins ritades som en clean-bar-stapel 250x42 i stallet for sin egen design 230x193 — skinnet ar scopat och bilderna visar nu Halo och Signal Orbit",
+  "nycklar": 2,
+  "tid": "2026-09-21T13:39:01.897Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -497,12 +497,12 @@
    "fyllnad": 63.8
   },
   "catalog:ranking:templateTopCoins:halo": {
-   "matt": "250x42",
-   "fyllnad": 99.86
+   "matt": "230x193",
+   "fyllnad": 52.25
   },
   "catalog:ranking:templateTopCoins:signal-orbit": {
-   "matt": "250x42",
-   "fyllnad": 99.86
+   "matt": "230x190",
+   "fyllnad": 50.8
   },
   "catalog:socialgoal:diamonds:prism-core:landscape": {
    "matt": "440x132",
