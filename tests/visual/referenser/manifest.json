@@ -7,9 +7,9 @@
  },
  "antal": 133,
  "senaste": {
-  "motiv": "Top Points fyra designer: podium och neon ritades som samma lista, nu trappsteg respektive neonglod (fyra nycklar)",
+  "motiv": "Top Points om igen efter specificitets- och accentfixen: podium fick rutnat och neon lila brickor i forra korningen",
   "nycklar": 4,
-  "tid": "2026-09-21T10:14:28.763Z"
+  "tid": "2026-09-21T10:32:08.457Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -241,20 +241,20 @@
    "fyllnad": 27.01
   },
   "catalog:ranking:templateTopPoints:center": {
-   "matt": "250x150",
-   "fyllnad": 67.53
+   "matt": "250x175",
+   "fyllnad": 33.92
   },
   "catalog:ranking:templateTopPoints:clean": {
-   "matt": "250x234",
-   "fyllnad": 99.96
+   "matt": "250x185",
+   "fyllnad": 27.39
   },
   "catalog:ranking:templateTopPoints:neon": {
-   "matt": "250x234",
-   "fyllnad": 100
+   "matt": "250x205",
+   "fyllnad": 38.73
   },
   "catalog:ranking:templateTopPoints:podium": {
-   "matt": "250x198",
-   "fyllnad": 79.92
+   "matt": "250x190",
+   "fyllnad": 37.46
   },
   "catalog:topgift:extra:aurora": {
    "matt": "280x260",

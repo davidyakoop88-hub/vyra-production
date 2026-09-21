@@ -139,3 +139,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Points fyra designer: podium och neon ritades som samma lista, nu trappsteg respektive neonglod (fyra nycklar)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-21 — 4 referenser skrivna
+
+- **Motiv:** Top Points om igen efter specificitets- och accentfixen: podium fick rutnat och neon lila brickor i forra korningen
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
