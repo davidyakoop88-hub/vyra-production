@@ -37,8 +37,10 @@ test('central retirement guard loads last with its own cache version', () => {
   // lager skrivs i mallen (wh-overriden nar aldrig media.js:s styledWh/liveVisibilityWh).
   assert.match(html, /approved-rankings\.js\?v=20260921-2/);
   assert.ok(html.indexOf('approved-rankings.js?v=20260921-2') > html.indexOf('vyra-state-sync.js'));
-  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260921-2') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20260921-2') < html.indexOf('approved-rankings.js?v=20260921-2'),
+  // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
+  // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
+  assert.ok(html.indexOf('vyra-tom-widget.js?v=20260922-1') > -1
+    && html.indexOf('vyra-tom-widget.js?v=20260922-1') < html.indexOf('approved-rankings.js?v=20260921-2'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 

@@ -15,6 +15,11 @@
   // Gåvorekordet nollställs redan vid live:start (gift-event-images.js: records.giftCoins = 0), just
   // för att en ny sändnings första gåva ska räknas som rekord. Widgetens DATA hade ingen sådan
   // nollställare alls — den här filen är den saknade halvan av samma regel.
+  //
+  // SEX FAMILJER, INTE TVÅ (2026-09-21). Regeln byggdes för Top Gift och Top Streak, där tomheten
+  // står i state och wh()-haken räcker. De fyra övriga som kan hamna i ett nollat läge framför
+  // publiken — Top Like, Top Coins, Top Points och Battle MVP — stod kvar som tomma skal hela
+  // sändningen. Deras tomhet står i DOM:en och inte i state, så de har en egen väg: avsnitt 5.
 
   // Fälten en sändning skriver. `giftName` följer med: den hör till samma gåva som bilden, och en
   // kvarglömd gåvorubrik utan bild ser ut som en bugg.
@@ -183,5 +188,89 @@
   }
   window.addEventListener('vyra-live-event', function () { setTimeout(avsloja, 0); });
 
-  window.VyraTomWidget = { tom, arTom, dolj, avsloja, LIVEFALT, TYPER };
+  // ---- 5. DE FYRA ANDRA FAMILJERNA -----------------------------------------------------------
+  //
+  // Regeln "en tom widget syns inte i sandningen" gallde tva av sex familjer. Uppmatt i livetestet
+  // 2026-09-21: Top Like, Top Coins, Top Points och Battle MVP stod kvar som TOMMA SKAL i overlay
+  // — ram, rubrik och fem namnlosa rader med "♥ 0" — hela sandningen tills nagon gav nagot. Samma
+  // sex familjer som live-zero-state.js nollar, och av samma skal: det ar de som bar demodata i
+  // markup eller state och darmed kan hamna i ett nollat lage framfor publiken.
+  //
+  // MEN TOMHETEN STAR PA ETT ANNAT STALLE. For Top Gift och Top Streak ligger den i state
+  // (`dataName`/`dataValue`), sa wh()-haken ovan racker. De har fyra far sitt innehall av
+  // livedatans riktade DOM-patchar och av live-zero-state.js nollning — vid render-tillfallet bar
+  // de fortfarande demoraderna, sa wh() kan omojligt veta om de ar tomma. Fragan maste darfor
+  // stallas till DOM:en, efter att bade renderaren och nollningen kort.
+  //
+  // DARFOR EN OBSERVATOR OCH INGEN TIMER: allt som kan andra svaret ar en DOM-mutation — render()
+  // bygger om widgeten (childList), live-zero-state.js nollar raderna (characterData) och livedatans
+  // riktade patchar skriver namnen (characterData). En timer hade latit ett tomt skal sta kvar till
+  // nasta varv och dessutom hallit sidan vaken: den visuella riggen fotograferar nar sidan star
+  // still, och ett intervall som tickar i evighet ar precis det den inte far mota.
+  const DOM_TYPER = {
+    templateTopLike: 'rader', templateTopCoins: 'rader', templateTopPoints: 'rader',
+    templateBattleMvp: 'mvp'
+  };
+  // EXAKT samma namnvaljare som live-zero-state.js SINGLE_WIDGETS bar for .battle-mvp, och det ar
+  // med flit: den filen avgor vad som NOLLAS, den har avgor vad som doljs, och de tva maste peka pa
+  // samma element. `.mvp-copy strong` star medvetet INTE med — i premiumdesignen ar det poangtalet,
+  // inte namnet. Saknas bada elementen doljs ingenting alls, vilket ar ratt fail-safe.
+  const MVP_NAMN = 'h2, .mvpf-row strong';
+  const text = el => String((el && el.textContent) || '').trim();
+
+  function domTom(el, sort) {
+    if (sort === 'rader') {
+      const rader = [...el.querySelectorAll('.toplike-row')];
+      // Inga rader alls betyder att widgeten annu inte ar ritad — inte att den ar tom. Att dolja
+      // pa den grunden hade slackt varje widget en halv render lang.
+      if (!rader.length) return false;
+      return rader.every(rad => !text(rad.querySelector('strong')));
+    }
+    const namn = el.querySelector(MVP_NAMN);
+    return !!namn && !text(namn);
+  }
+
+  function stall() {
+    if (!iOverlay()) return;
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    if (typeof document === 'undefined') return;
+    for (const w of state.widgets) {
+      const sort = DOM_TYPER[w.type];
+      // `w.hidden` ar streamerns eget val och ror vi aldrig — dess display:none kommer fran
+      // renderkedjan, och att ta bort den har hade tant en widget streamern slackt.
+      if (!sort || !w || w.hidden) continue;
+      const el = document.querySelector(`[data-id="${w.id}"]`);
+      if (!el || !el.style) continue;
+      const doljs = el.style.display === 'none';
+      const tom = domTom(el, sort);
+      // SKRIV ALDRIG SAMMA VARDE TILLBAKA. En identisk skrivning ar anda en DOM-mutation, som
+      // vacker observatoren nedan och kallar hit igen — samma regel som live-zero-state.js och
+      // live-leaderboard.js nollningsgren redan lyder under, och av samma skal.
+      if (tom === doljs) continue;
+      // `!important` av precis samma skal som i wh()-haken ovan: temaklasserna deklarerar sin
+      // layout med `display:flex!important` och en vanlig inline-stil forlorar mot dem.
+      if (tom) el.style.setProperty('display', 'none', 'important');
+      else el.style.removeProperty('display');
+    }
+  }
+
+  if (typeof document !== 'undefined' && iOverlay()) {
+    let vantar = false;
+    const schemalagg = () => {
+      if (vantar) return;
+      vantar = true;
+      setTimeout(() => { vantar = false; stall() }, 0);
+    };
+    // Attribut lyssnas det INTE pa: det enda den har filen andrar ar style-attributet, och att
+    // vackas av sin egen skrivning ar hur en observator blir en evighetsloop.
+    try {
+      new MutationObserver(schemalagg)
+        .observe(document.body, { childList: true, subtree: true, characterData: true });
+    } catch (e) {}
+    window.addEventListener('vyra-live-event', schemalagg);
+    window.addEventListener('DOMContentLoaded', stall);
+    stall();
+  }
+
+  window.VyraTomWidget = { tom, arTom, dolj, avsloja, stall, domTom, LIVEFALT, TYPER, DOM_TYPER };
 })();
