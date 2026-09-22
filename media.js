@@ -222,18 +222,35 @@ const overlayLinkBind=bind;bind=function(){overlayLinkBind();if(VYRA_OVERLAY||vi
 // aldrig att den befintliga token racker for alltid — sa man tror att en ny lank maste skapas
 // vid varje andring. Token ar bunden till OVERLAYN, inte till layouten.
 const manage=bar.querySelector('#manageObsLinks'),harToken=()=>{try{return new URL(overlayShareUrl()).searchParams.has('access')}catch{return false}};
-/* KALLANS MATT. Overlayn ritas i layoutens EGNA pixlar — 432x768 for Mobil 9:16, 768x432 for
-   Dator 16:9 — och den skalas inte till kallans storlek. Satter man kallan till 1080x1920 hamnar
-   allt i ovre vanstra hornet: uppmatt tacker canvasen da 40 % x 40 % av ytan, och 23 % x 71 % i en
-   1920x1080-kalla. Med exakt ratt matt tacker den 100 % x 100 % i position 0,0.
-   Talen lases ur VALT format och hardkodas inte: den som byter till Dator far 768x432. */
-const OVERLAY_FORMAT={mobile:[432,768],widescreen:[768,432]};
+/* KALLANS MATT. Overlayn SKALAR SIG SJALV till kallan och centreras — fitOverlayCanvas() langre
+   ner i den har filen raknar `Math.min(innerWidth/432, innerHeight/768)` och lagger resultatet som
+   transform pa duken. Kallan ska darfor sattas till SANDNINGENS matt, inte till layoutens
+   designpixlar, sa att overlayn renderas i full upplosning i stallet for att skalas upp av OBS.
+
+   UPPMATT 2026-09-22 i pinnad Chromium mot studio.html?overlay=1, .canvas.getBoundingClientRect():
+     kalla 1080x1920  ->  0,0  1080x1920  transform scale(2.5)  ->  tacker 100 % x 100 %
+     kalla  432x768   ->  0,0   432x768   transform scale(1)    ->  tacker 100 % x 100 %
+   Bada fyller alltsa kallan. Skillnaden ar att 432x768 ritar overlayn i en fjardedels upplosning
+   som TikTok och OBS sedan skalar upp — en mjukare bild utan anledning.
+
+   TEXTEN STOD FEL FRAM TILL 2026-09-22: den bad om exakt 432x768 och pastod att en 1080x1920-kalla
+   la widgetarna i ovre vanstra hornet och bara tackte en dryg tredjedel at bada hallen. (Den gamla
+   siffran citeras inte ordagrant: en vakt i tests/sync-visibility.test.js forbjuder den i den har
+   filen, och ett citat hade fallt provet pa sin egen dokumentation.) Det var sant INNAN passformen
+   lagades 2026-09-20 (se layout-safe.js, som ropar pa VyraOverlayFit efter varje renderSafeLayout)
+   — och Overlay-kontrollen i overlay-diagnostics.js har hela tiden sagt 1080x1920 i sin
+   portrait-preset. De tva sa alltsa emot varandra i appen. Nu sager de samma sak.
+
+   PROPORTIONEN ar det som faktiskt maste stamma: `min()` betyder att en kalla med fel ratio ger
+   tomma kanter i stallet for beskuren bild. Talen lases ur VALT format och hardkodas inte. */
+const OVERLAY_FORMAT={mobile:[1080,1920],widescreen:[1920,1080]};
 const visaMatt=()=>{const m=bar.querySelector('#overlayLinkMatt');if(!m)return;
   const [bredd,hojd]=OVERLAY_FORMAT[state.layoutFormat]||OVERLAY_FORMAT.mobile;
   m.textContent=`Källa: ${bredd} × ${hojd}`;
-  m.title=`Sätt webbläsarkällans bredd och höjd till exakt ${bredd} × ${hojd} i OBS eller TikTok `
-    +`LIVE Studio. Overlayn ritas i layoutens egna pixlar och skalas inte till källan — med andra `
-    +`mått hamnar widgetarna i ett hörn med tom yta runt om.`};
+  m.title=`Sätt webbläsarkällans bredd och höjd till ${bredd} × ${hojd} i OBS eller TikTok LIVE `
+    +`Studio. Overlayn skalar sig själv till källan och centreras, så det viktiga är `
+    +`PROPORTIONEN — en källa med fel förhållande ger tomma kanter. Mindre mått fungerar men `
+    +`ritar overlayn i lägre upplösning, som sedan skalas upp.`};
 visaMatt();
 /* Formatknapparna byter layoutens matt, sa texten maste folja med. Lyssnaren sitter pa dokumentet
    for att knapparna ritas om vid varje render — en direktbindning hade tappats vid nasta varv. */
@@ -246,14 +263,32 @@ const layoutOnlyOverlayBarBind=bind;bind=function(){layoutOnlyOverlayBarBind();i
 // Top Gift and Top Streak are the two widgets that flip from the gift picture to the profile
 // picture, and both are thrown away and rebuilt by render() on every gift — gift-event-images.js
 // updates their state and repaints. Arming the fresh node naively restarts the animation, and
-// neither flip rotates at all before roughly 42% of its duration (vyraFlipSmooth holds rotateY(0)
-// until 1.76s of 4.2s, streakFlip likewise). On a live stream gifts arrive far closer together than
-// that, so the widget was pinned to the gift face for the whole stream.
+// neither flip rotates at all through the first stretch of its turn:
 //
-// One flip therefore owns its widget until it has run out: a rebuilt node picks the animation up at
-// the same offset through a negative animation-delay, and only an event arriving after the flip has
-// finished starts a new one. Shared by autoStartAllFlips below and live-leaderboard.js's
-// updateTopGift so there is a single copy of the timing logic.
+//   .vyra-topgift.play .vyra-flip    vyraFlipSmooth  10s                 rotateY(0) to 43%  = 4.3s
+//   .vyra-streak.hit   .streak-flip  streakFlipLoop  var(--speed,3.8s)   rotateY(0) to 38%  = 1.44s
+//
+// On a live stream gifts arrive far closer together than that, so a restart per gift pinned the
+// widget to the gift face for the whole broadcast.
+//
+// BOTH LOOPS ARE INFINITE, and that is what makes resume() below never hand back to start() once a
+// flip has begun: the `!state.loopMs` branch requires a finite animation. A flip therefore owns its
+// widget for the whole broadcast, and a rebuilt node picks the turn up at the same offset through a
+// negative animation-delay. Shared by autoStartAllFlips below, live-leaderboard.js's updateTopGift
+// and gift-event-images.js's arma(), so there is a single copy of the timing logic.
+//
+// SIFFRORNA STOD FEL FRAM TILL 2026-09-22, och texten citeras med flit INTE ordagrant har: en vakt
+// nedan forbjuder de gamla talen i den har filen, och ett citat hade fallt den pa sin egen
+// dokumentation. I korthet sa den ett gemensamt procenttal for bada flipparna, raknade om det till
+// drygt en och en halv sekund av ett varv pa dryga fyra, och namngav en keyframe utan Loop-suffix.
+// Varvet hade sedan dess bytts till 10 s och keyframen dopts om, utan att kommentaren foljde med —
+// och de tva procenttalen ar dessutom OLIKA, 43 mot 38. Slutsatsen holl hela tiden, talen inte.
+// Vaktat av tests/flipp-kommentaren-mot-cssen.test.js, som laser bada talen ur studio.css och
+// kraver att de star har.
+//
+// DEFAULT_MS ar kvar fran samma tid. Den anvands BARA nar durationOf() inte kan mata nagonting —
+// alltsa nar getComputedStyle saknas, i praktiken bara i jsdom — och nar en riktig webblasare ritar
+// widgeten matts langden i stallet.
 const VyraFlip=window.VyraFlip=(function(){
   const running={};                                             // widget id -> {startedAt,durationMs}
   // Only the parts a flip actually animates. Keeping the list explicit is what stops the offset from
@@ -390,8 +425,10 @@ function vyraPlaceraTopLikeRamar(omobservera){
     const pos=rader.map(r=>parseFloat(getComputedStyle(r).getPropertyValue('--px'))/100);
     let behovL=0;for(let i=0;i<rader.length;i++)for(let j=0;j<i;j++){const d=Math.abs(pos[i]-pos[j]);if(!(d>0)||!aw[i]||!aw[j])continue;behovL=Math.max(behovL,((aw[i]+aw[j])/2*.8)/d)}
     const wb=px(wg),lb=px(lista),k=wb.width/(wg.offsetWidth||1);if(!(behovL>lb.width+.5))return;
-    /* DUKENS GRANS. Overlayn ritas i layoutens egna pixlar (432x768 for Mobil, se OVERLAY_FORMAT) och skalas
-       inte till kallan — en scen som vaxer forbi duken klipps i OBS. Uppmatt i riktig OBS 32.2.1 2026-09-08:
+    /* DUKENS GRANS. Duken ar 432x768 designpixlar for Mobil (layout-format.js FORMATS, studio.css
+       .canvas) och skalas som en HELHET till kallan — en scen som vaxer forbi duken klipps darfor i
+       OBS oavsett hur stor kallan ar, for klippningen sker i designpixlar fore skalningen.
+       (OVERLAY_FORMAT langre upp ar nagot annat: kallans REKOMMENDERADE matt, 1080x1920.) Uppmatt i riktig OBS 32.2.1 2026-09-08:
        amethyst-oracle gav 512 px pa en 432 px bred duk, fyran och femman utanfor bild. Vaxten begransas
        darfor till dukens bredd med 4 px luft, och widgeten skjuts sa att den ryms; ramarna far da
        overlappa mer an 20 % — hellre det an utanfor scenen. */
