@@ -268,8 +268,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-21: BARA .js-strangen. #493 andrade toplike-studio.js men inte .css:en, och
   // en strang som hojs utan att filen andrats ar lika fel at andra hallet — den tvingar fram en
   // omladdning av nagot som ar identiskt, och nasta lasare tror att filen bytts.
+  // Bumpad 2026-09-22: BARA .js-strangen igen. Skinnklassen stamplas nu bara pa templateTopLike,
+  // och skinnvaljaren ritas bara dar — en andring i toplike-studio.js, inte i .css:en. Utan
+  // hojningen kor varje cachad OBS-kalla kvar pa den gamla koden och far aldrig fixen.
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  assert.match(media, /toplike-studio\.js\?v=20260921-skinngrind/);
+  assert.match(media, /toplike-studio\.js\?v=20260922-skinnbarare/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);

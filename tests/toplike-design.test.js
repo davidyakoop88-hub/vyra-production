@@ -69,5 +69,7 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // toplike-studio.css och toplike-studio.js ar OFORANDRADE och behaller darfor sina strangar.
   assert.match(studioHtml, /media\.js\?v=20260922-1/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  assert.match(media, /toplike-studio\.js\?v=20260921-skinngrind/);
+  // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
+  // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.
+  assert.match(media, /toplike-studio\.js\?v=20260922-skinnbarare/);
 });
