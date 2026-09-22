@@ -230,8 +230,29 @@
     //
     // SCOPAT HAR OCH INTE I CSS:EN: det finns EN injektionspunkt, mot ~50 skinn med ett tiotal
     // regler var. Entreanimationen foljer med som forut — den ar en rorelse, inte en design.
-    const egenDesign = w.type === 'templateTopCoins';
-    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${egenDesign ? '' : ' skin-' + skin}${anim}`);
+    //
+    // OCH LISTAN AR VAND (2026-09-22). Undantaget namnde bara Top Coins, sa Top Points — som fick
+    // sina fyra egna designer i #492 och skriver dem i SAMMA falt (`skin: 'podium'`, precis som
+    // Top Coins skriver `skin: 'halo'`) — foll igenom pa exakt samma satt: ingen av design-id:na
+    // ar ett skinn-id, sa `skin` ovan gav 'clean-bar' och klassen stamplades pa alla fyra.
+    //
+    // UPPMATT 2026-09-22 i pinnad Chromium, samma nod med och utan klassen:
+    //   clean   250x185 -> 300x185     podium  250x208 -> 300x208
+    //   center  250x210 -> 300x210     neon    250x205 -> 300x205
+    // Designens egen bredd satts som INLINE-stil av katalogen och forlorar mot
+    // .widget.vyra-toplike.skin-clean-bar{width:250px!important} — samma inline-mot-!important
+    // som en gang plattade Top Coins.
+    //
+    // Darfor namns nu den familj som BAR ett skinn i stallet for de som inte gor det. Forvalet ar
+    // "inget skinn", och en femte rankingfamilj kan inte langre arva clean-bar under tystnad — det
+    // ar precis sa den har buggen uppstod tva ganger.
+    //
+    // INTE en sanningstest pa SKIN_IDS.has(w.skin): en Top Like-widget med ett PENSIONERAT eller
+    // saknat skinn maste fortsatta falla tillbaka pa clean-bar (approved-rankings.js klammer likadant),
+    // och en sadan test hade lamnat den helt ostylad.
+    const SKINNBARARE = ['templateTopLike'];
+    const barSkinn = SKINNBARARE.includes(w.type);
+    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${barSkinn ? ' skin-' + skin : ''}${anim}`);
     // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
     // .skin-brandkit rules in toplike-studio.css. The other 14 skins never see these vars.
     const brandVars = skin === 'brandkit' && state.brandKit
@@ -290,7 +311,14 @@
     );
 
     const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
-    const skinGroup = `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
+    // VALJAREN FOLJER SKINNET (2026-09-22). Gruppen ritades for alla tre rankingfamiljerna, men
+    // sedan skinnklassen bara stamplas pa Top Like (se wh-wrappern ovan) gjorde de fyra swatcharna
+    // ingenting alls i Top Coins och Top Points — dod UI som dessutom skriver `w.skin`, samma falt
+    // som de tva familjerna bar SIN EGEN design i. Pa en widget som saknar `topPointsDesign`
+    // (sparad fore #492) knuffade ett klick darfor designen till 'clean'.
+    // Bada familjerna har redan en egen designsektion, sa ingenting gar forlorat.
+    const visaSkinnvaljare = w.type === 'templateTopLike';
+    const skinGroup = !visaSkinnvaljare ? '' : `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
     const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
     const textFxGroup = `<div class="property-group"><h4>EGET TYPSNITT</h4><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
