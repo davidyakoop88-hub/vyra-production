@@ -63,8 +63,11 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // webblasare och OBS-kalla som redan cachat den gamla under samma URL korde kvar den gamla
   // koden — alltsa en fix som inte nadde dem som hade buggen. media.js bar strangen, sa media.js
   // andrades i sin tur, och da maste dess EGEN strang i studio.html ocksa bytas.
-  // toplike-studio.css ar OFORANDRAD och behaller darfor sin strang.
-  assert.match(studioHtml, /media\.js\?v=20260921-1/);
+  // Bumpad 2026-09-22: cykeln hoppar over metriker utan data i overlay, en andring i media.js
+  // egen kod (rankingStegMedData + updateRankingCycles). Samma regel som ovan galler da: bar en
+  // cachad media.js kvar den gamla koden ser OBS-kallan den tomma mallen an en gang.
+  // toplike-studio.css och toplike-studio.js ar OFORANDRADE och behaller darfor sina strangar.
+  assert.match(studioHtml, /media\.js\?v=20260922-1/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   assert.match(media, /toplike-studio\.js\?v=20260921-skinngrind/);
 });
