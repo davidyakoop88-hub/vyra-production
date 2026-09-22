@@ -42,10 +42,11 @@ i stället rakt från de två skrivare som redan finns — på exakt den rad dä
 Båda ligger redan rätt. Ingen ny inkoppling behöver uppfinnas — koreografin åker med där markeringen
 redan åker med.
 
-> **Fabriksändring som krävs:** `koppla()` måste tåla att `triggerNamn` saknas. Den returnerar redan
-> `false` när `typeof original !== 'function'`, alltså när namnet inte pekar på något. Det håller,
-> men det håller av en slump. Arten ska kunna säga `triggerNamn: null` och fabriken svara att den
-> inte kopplar sig — uttryckligen, med ett prov på det.
+> **Fabriksändringen är gjord (2026-09-22).** `koppla()` returnerade redan `false` när
+> `triggerNamn` var `null` — men bara för att `root['null']` råkade vara `undefined`, alltså rätt
+> svar av fel skäl: en global som händelsevis hette `null` hade lindats. Nu står `if (!triggerNamn)
+> return false;` först i funktionen, och ett prov lägger dit just en sådan global för att skilja de
+> två formerna åt.
 
 ---
 
@@ -192,10 +193,17 @@ kvitterar varje enskilt rekord oavsett.
 
 TikFinity kommer till samma svar: `Skip on next action` är **omarkerad** som förval.
 
-**Vad beslutet kostar:** fabriken vet i dag inte om en låda spelar. `box._fasTimers` fylls i `spela()` men
-töms bara i `avbryt()`, aldrig när sista fasen tagit slut. B kräver att den sista timern tömmer
-listan, och att fabriken exponerar `spelar(box)`. Två rader plus ett prov — och det gör fabriken
-ärligare för alla fyra arterna, inte bara den här.
+**Vad beslutet kostade, och det är betalt (2026-09-22):** `box._fasTimers` fylldes i `spela()` men
+tömdes bara i `avbryt()`, aldrig när sista fasen tagit slut. För en alert spelade det ingen roll —
+lådan släcks ändå. För en permanent widget stod listan kvar full för alltid, och då gick det inte
+att fråga om koreografin pågick. Sista fasens timer tömmer nu listan, och fabriken exponerar
+`spelar(box)`.
+
+`spelar()` är fabrikens **enda** bidrag till §7. Policyn ägs av anroparen, och det är med flit:
+`spela()` vägrar inte själv spela om. Fan och Gifter bygger på att den alltid spelar, och deras
+skydd mot omryckning är timerdiffen i `koppla()`, inte motorn. Att flytta upp regeln i fabriken
+hade ändrat två fungerande familjer för en tredjes skull. Arterna som inte kopplas frågar
+`spelar(box)` och avgör själva.
 
 ---
 
