@@ -151,3 +151,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Coins ritades som en clean-bar-stapel 250x42 i stallet for sin egen design 230x193 — skinnet ar scopat och bilderna visar nu Halo och Signal Orbit
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-22 — 4 referenser skrivna
+
+- **Motiv:** Top Points blir 300 px bred nar skin-clean-bar inte langre stamplas pa familjen (#498)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla

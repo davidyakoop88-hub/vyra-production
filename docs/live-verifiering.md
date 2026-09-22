@@ -5,7 +5,9 @@
 
 
 Fyra saker i battle-kedjan går **inte** att avgöra utan en riktig TikTok LIVE-match, och sedan
-2026-08-18 väntar Guardian Emblem (punkt 6) på samma sändning. De är byggda
+2026-08-18 väntar Guardian Emblem (punkt 6) på samma sändning. Sedan 2026-09-22 väntar även punkt 8:
+sändningsräknarnas omladdningsskydd hänger på ett `sessionId` som bara molnets `live:start` ger, och
+går därför inte att prova mot den lokala servern. De är byggda
 med tolerant kod och medvetna gissningar, och varje gissning står utskriven här tillsammans med
 exakt vad man ska titta på för att stänga den.
 
@@ -350,6 +352,52 @@ faktiskt spelar där. Det är den enda widgetfamiljen i katalogen där ingen vak
 
 Spelar de inte heller i OBS är det en riktig bugg som ingen vakt hittat — och då är nästa steg att
 byta kodek (VP9/WebM spelas av båda) i stället för att jaga den i provbrowsern.
+
+## 8. Överlever sändningens räknare en omladdning av OBS-källan?
+
+**Fixen finns, men går inte att prova utanför en riktig sändning.** `live-leaderboard.js` (`totals`,
+alltså "Denna stream") och `gift-event-images.js` (`records`, högvattenmärkena Top Gift och Top
+Streak jämför mot) sparar sedan 2026-09-22 en ögonblicksbild i `sessionStorage`, **nycklad på aktivt
+`sessionId`**. Utan en pågående sändning finns ingen nyckel, och då återtas ingenting — precis som
+det ska.
+
+Det `sessionId` kommer från molnets `live:start` (`server/stream-sessions.js`). Den lokala servern
+(`server.ps1`, desktop-appens `local-server.js`) kan inte skapa en sändningssession, så ett lokalt
+test visar "tomt efter omladdning" och ser ut som om fixen inte fungerar, fast den aldrig var
+påslagen. Därför står punkten här och inte i en provsvit.
+
+**Vad som lagades.** Före fixen låg båda räknarna i vanliga variabler. En omladdning mitt i
+sändningen tömde dem: topplistan fick bara tillbaka serverns rullande buffert (max 250 händelser),
+och rekordtröskeln gick till 0 — så nästa **enkrona** räknades som nytt rekord och skrev över den
+gåva som faktiskt ledde.
+
+**Så här läser du av det.**
+
+1. Låt sändningen komma igång tills det finns riktig aktivitet. Anteckna:
+   - Top Likes **topp tre**, namn och tal
+   - Top Gifts namn och tal
+2. Högerklicka browser source i OBS → **Refresh cache of current page**.
+3. Läs av när overlayen kommit upp igen:
+
+| Vad | Ska vara |
+|---|---|
+| Top Likes topp tre | **samma namn, samma tal** — inte tom, inte nollad |
+| Talen | **oförändrade** — dubblade tal betyder att backfyllnaden räknades ovanpå ögonblicksbilden |
+| Top Gift | samma gåva och samma tal som före |
+4. Ge (eller låt någon ge) en **billig** gåva efter omladdningen. Top Gift ska **inte** ändras så
+   länge rekordet är högre. Ändras den står tröskeln på 0 igen.
+
+Skriv in svaret här: **överlever / överlever inte**, och om talen dubblades.
+
+**Varning — "Shutdown source when not visible".** Är den kryssad river OBS hela källans kontext vid
+scenbyte, och då försvinner `sessionStorage` med den. Räknaren börjar om, och **det är väntat**:
+`event-dedupe.js` lägger sin grind i exakt samma lagring, så när ögonblicksbilden dör gör grinden
+det också och bufferten kan räknas en gång i en tom räknare i stället för ovanpå gamla siffror. Det
+är hela skälet till att lagringen är `sessionStorage` och inte `localStorage`. Vill du mäta punkten
+ovan: **kryssa ur den**, eller byt inte scen under avläsningen.
+
+Samma sak gäller punkt 5: en browser source har sin egen lagringsrymd, så ingenting du ser i Chrome
+på samma dator säger något om vad OBS-källan bär.
 
 ## Efteråt
 
