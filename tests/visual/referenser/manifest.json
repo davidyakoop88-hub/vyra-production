@@ -7,9 +7,9 @@
  },
  "antal": 133,
  "senaste": {
-  "motiv": "Top Coins ritades som en clean-bar-stapel 250x42 i stallet for sin egen design 230x193 — skinnet ar scopat och bilderna visar nu Halo och Signal Orbit",
-  "nycklar": 2,
-  "tid": "2026-09-21T13:39:01.897Z"
+  "motiv": "Top Points blir 300 px bred nar skin-clean-bar inte langre stamplas pa familjen (#498)",
+  "nycklar": 4,
+  "tid": "2026-09-22T11:31:27.760Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -241,20 +241,20 @@
    "fyllnad": 27.01
   },
   "catalog:ranking:templateTopPoints:center": {
-   "matt": "250x175",
-   "fyllnad": 33.92
+   "matt": "300x175",
+   "fyllnad": 28.29
   },
   "catalog:ranking:templateTopPoints:clean": {
-   "matt": "250x185",
-   "fyllnad": 27.39
+   "matt": "300x185",
+   "fyllnad": 22.82
   },
   "catalog:ranking:templateTopPoints:neon": {
-   "matt": "250x205",
-   "fyllnad": 38.73
+   "matt": "300x205",
+   "fyllnad": 34.47
   },
   "catalog:ranking:templateTopPoints:podium": {
-   "matt": "250x190",
-   "fyllnad": 37.46
+   "matt": "300x190",
+   "fyllnad": 32.98
   },
   "catalog:topgift:extra:aurora": {
    "matt": "280x260",
