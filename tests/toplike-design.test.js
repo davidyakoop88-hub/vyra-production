@@ -63,11 +63,15 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // webblasare och OBS-kalla som redan cachat den gamla under samma URL korde kvar den gamla
   // koden — alltsa en fix som inte nadde dem som hade buggen. media.js bar strangen, sa media.js
   // andrades i sin tur, och da maste dess EGEN strang i studio.html ocksa bytas.
-  // Bumpad 2026-09-22: cykeln hoppar over metriker utan data i overlay, en andring i media.js
+  // Bumpad 2026-09-22 (-1): cykeln hoppar over metriker utan data i overlay, en andring i media.js
   // egen kod (rankingStegMedData + updateRankingCycles). Samma regel som ovan galler da: bar en
   // cachad media.js kvar den gamla koden ser OBS-kallan den tomma mallen an en gang.
+  // Bumpad igen (-2): OVERLAY_FORMAT ber nu om sandningens matt (1080x1920) i stallet for
+  // layoutens designpixlar, och titeltexten sager att overlayn skalar sig sjalv. Det ar KOD och
+  // synlig text, inte bara en kommentar — en cachad media.js skulle fortsatta skicka streamern
+  // till en kalla pa en fjardedels upplosning.
   // toplike-studio.css och toplike-studio.js ar OFORANDRADE och behaller darfor sina strangar.
-  assert.match(studioHtml, /media\.js\?v=20260922-1/);
+  assert.match(studioHtml, /media\.js\?v=20260922-2/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
   // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.
