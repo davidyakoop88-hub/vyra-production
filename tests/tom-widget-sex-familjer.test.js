@@ -32,11 +32,17 @@ const WH = `wh=w=>{
   return '<div class="widget vyra-toplike" data-id="'+w.id+'" style="'+doljd+'left:0"><h3>TOP LIKES</h3>'+rader+'</div>';
 }`;
 
-function rigg({ overlay = true } = {}) {
+const SESSION = '11111111-1111-4111-8111-111111111111';
+
+// `sandning` ar den andra halvan av regeln: doljandet galler bara UNDER en sandning. Utan aktivt
+// sessionId ror filen ingenting — det ar det som later provriggarna (och den visuella vakten) se
+// widgetarna precis som forut.
+function rigg({ overlay = true, sandning = SESSION } = {}) {
   const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
     { url: 'http://localhost/studio.html' + (overlay ? '?overlay=1' : ''), runScripts: 'outside-only' });
   const w = dom.window;
   levande.push(w);
+  w.VyraLiveSession = { runtime: () => ({ aktivSession: () => sandning }) };
   w.eval(`var view='editor',selected=null,state={widgets:[]},save=()=>{},render=()=>{},
     liveWidget=id=>state.widgets.find(x=>x.id===id),bind=()=>{},${WH};`);
   w.eval(js);
@@ -121,6 +127,45 @@ test('w.hidden ar streamerns eget val och rors aldrig', () => {
   assert.equal(el.style.display, 'none', 'forutsattningen brast: renderkedjan dolde inte widgeten');
   w.VyraTomWidget.stall();
   assert.equal(el.style.display, 'none', 'en widget streamern slackt far aldrig tandas har');
+});
+
+// ---- utan sandning ror regeln ingenting -------------------------------------------------------
+for (const type of RADTYPER) {
+  test(`${type} doljs INTE nar ingen sandning pagar`, () => {
+    // Uppmatt 2026-09-22: utan den har grinden dolde regeln widgeten aven i provriggarna, som
+    // bygger katalognyckeln utan livedata i overlay-lage. Tio browserprov foll pa "0x0, dold: true",
+    // och den visuella vakten hade fatt 33 av 136 referenser omskrivna till tomma bilder.
+    const w = rigg({ sandning: null });
+    const el = montera(w, { id: 'ns-' + type, type, rader: TOMMA_TRE });
+    w.VyraTomWidget.stall();
+    assert.equal(el.style.display, '',
+      'utan pagaende sandning finns ingen publik — och ingen anledning att slacka nagot');
+  });
+}
+
+test('sandningsstarten slar pa regeln av sig sjalv', async () => {
+  // Widgeten ar redan tom nar sandningen borjar. Utan en lyssnare pa vyra-live-session stod de
+  // tomma skalen kvar anda till forsta handelsen.
+  let session = null;
+  const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
+    { url: 'http://localhost/studio.html?overlay=1', runScripts: 'outside-only' });
+  const w = dom.window;
+  levande.push(w);
+  w.VyraLiveSession = { runtime: () => ({ aktivSession: () => session }) };
+  w.eval(`var view='editor',selected=null,state={widgets:[]},save=()=>{},render=()=>{},
+    liveWidget=id=>state.widgets.find(x=>x.id===id),bind=()=>{},${WH};`);
+  w.eval(js);
+
+  const el = montera(w, { id: 'start1', type: 'templateTopLike', rader: TOMMA_TRE });
+  w.VyraTomWidget.stall();
+  assert.equal(el.style.display, '', 'forutsattningen brast: dold redan fore sandningen');
+
+  session = SESSION;
+  w.dispatchEvent(new w.CustomEvent('vyra-live-session',
+    { detail: { event: 'live:start', sessionId: SESSION } }));
+  await tick();
+  assert.equal(el.style.display, 'none',
+    'sandningsstarten vackte aldrig regeln — tomma skal star kvar till forsta handelsen');
 });
 
 test('SANNINGSPROVET: regeln galler sex familjer, inte tva', () => {

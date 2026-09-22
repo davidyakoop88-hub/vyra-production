@@ -230,8 +230,30 @@
     return !!namn && !text(namn);
   }
 
+  // BARA UNDER EN PAGAENDE SANDNING — och det ar regelns egen ordalydelse: en tom widget syns inte
+  // i SANDNINGEN. Utan sandning finns ingen publik, och da finns heller ingen anledning att slacka
+  // nagot.
+  //
+  // UPPMATT 2026-09-22: utan den har grinden dolde regeln widgeten aven i provriggarna. De oppnar
+  // studio.html?overlay=1 och bygger katalognyckeln utan livedata; live-zero-state.js nollar
+  // demoraderna, och da ar widgeten per definition tom. Tio browserprov i fem filer foll pa
+  // "0x0, dold: true" — de mater designens geometri och kan inte mata en dold nod — och den
+  // visuella vakten hade fatt 33 av sina 136 referenser omskrivna till tomma bilder. Ett larm hade
+  // bytts mot en tystnad for en fjardedel av vakten.
+  //
+  // Sessionen las ur VyraLiveSession, samma sanning som live-leaderboard.js och gift-event-images.js
+  // nycklar sina ogonblicksbilder pa. En kalla som oppnas mitt i en sandning far den via
+  // bootstrapsnapshotet (overlay-access.js), sa det finns ingen uppstartslucka.
+  //
+  // PRISET, utskrivet: slutar livesession-signalen fungera slutar doljandet tyst att fungera med
+  // den. Det ar en medveten avvagning mot alternativet — att ta bort en fjardedel av den visuella
+  // vakten for att fa provet gront.
+  const aktivSession = () => {
+    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+  };
+
   function stall() {
-    if (!iOverlay()) return;
+    if (!iOverlay() || !aktivSession()) return;
     if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
     if (typeof document === 'undefined') return;
     for (const w of state.widgets) {
@@ -268,9 +290,12 @@
         .observe(document.body, { childList: true, subtree: true, characterData: true });
     } catch (e) {}
     window.addEventListener('vyra-live-event', schemalagg);
+    // Sandningsstarten ar det som slar PA regeln, sa den maste vacka ett varv av sig sjalv —
+    // annars stod de tomma skalen kvar anda till forsta handelsen.
+    window.addEventListener('vyra-live-session', schemalagg);
     window.addEventListener('DOMContentLoaded', stall);
     stall();
   }
 
-  window.VyraTomWidget = { tom, arTom, dolj, avsloja, stall, domTom, LIVEFALT, TYPER, DOM_TYPER };
+  window.VyraTomWidget = { tom, arTom, dolj, avsloja, stall, domTom, aktivSession, LIVEFALT, TYPER, DOM_TYPER };
 })();
