@@ -30,6 +30,47 @@
   var records = { giftCoins: 0, streakCount: 0 };
   window.VyraGiftRecords = records;
 
+  // OCH DE OVERLEVER EN SIDLADDNING. Hogvattenmarkena ovan lag i en vanlig variabel: en omladdning
+  // mitt i sandningen satte bada till 0, och da rakades NASTA gava — en enkrona — som ett nytt
+  // rekord och skrev over den 30 000-coins-gava som faktiskt ledde. Uppmatt i livetestet
+  // 2026-09-21. Widgetens synliga tal kom tillbaka med konfig-omhamtningen; det var TROSKELN har
+  // som nollstalldes av fel handelse.
+  //
+  // Samma regel och samma lagringsval som live-leaderboard.js `totals`: nyckeln bar sessionId, sa
+  // forra sandningens rekord kan aldrig atertas i den har, och sessionStorage ger exakt sidans
+  // kontext — overlever F5, forsvinner nar OBS river kallan. Till skillnad fran topplistan kan de
+  // har talen inte dubbelraknas: de ar hogvattenmarken, inte summor.
+  var REKORD_NYCKEL = 'vyra-gift-records-v1';
+
+  function aktivSession() {
+    try { return window.VyraLiveSession && window.VyraLiveSession.runtime
+      ? (window.VyraLiveSession.runtime().aktivSession() || null) : null } catch (e) { return null }
+  }
+  function skrivRekord() {
+    var session = aktivSession();
+    try {
+      if (!session) window.sessionStorage.removeItem(REKORD_NYCKEL);
+      else window.sessionStorage.setItem(REKORD_NYCKEL, JSON.stringify({
+        sessionId: session, giftCoins: records.giftCoins, streakCount: records.streakCount }));
+    } catch (e) {}
+  }
+  function aterstallRekord() {
+    var session = aktivSession();
+    if (!session) return false;
+    try {
+      var sparad = JSON.parse(window.sessionStorage.getItem(REKORD_NYCKEL) || 'null');
+      if (!sparad || sparad.sessionId !== session) return false;
+      records.giftCoins = Number(sparad.giftCoins) || 0;
+      records.streakCount = Number(sparad.streakCount) || 0;
+      return true;
+    } catch (e) { return false }
+  }
+  // Tva forsok. Filen laddas FORE live-session-client.js i studio.html (rad 155 mot 204), sa vid
+  // korning finns VyraLiveSession annu inte — det forsta forsoket ar for provriggen och for en
+  // framtida laddordning, det andra ar det som faktiskt tar hem rekorden i webblasaren. Forsta
+  // gavan kommer langt senare an DOMContentLoaded, sa ingenting hinner jamforas mot en tom troskel.
+  if (!aterstallRekord()) window.addEventListener('DOMContentLoaded', aterstallRekord);
+
   // Top Gift rankar GÅVANS värde, inte combons summa. Davids regel 2026-08-07: "1 ros 1 coins,
   // 11 rosor 1 coins" — elva rosor är elva gånger samma ros och får aldrig slå ut en gåva som
   // ensam kostar mer.
@@ -196,6 +237,7 @@
     if (!detalj || detalj.event !== 'live:start') return;
     records.giftCoins = 0;
     records.streakCount = 0;
+    skrivRekord();
   });
 
   window.addEventListener('vyra-live-event', function (event) {
@@ -225,6 +267,7 @@
     var newStreak = streak > records.streakCount;
     if (newGift) records.giftCoins = giftVarde;
     if (newStreak) records.streakCount = streak;
+    if (newGift || newStreak) skrivRekord();
 
     state.widgets.forEach(function (widget) {
       if (widget.type === 'templateTopGift' && newGift) {

@@ -1,5 +1,71 @@
 # VYRA Project State
 
+## Checkpoint 54 — Tre fynd ur livetestet, alla i samma familj (2026-09-22)
+
+Kvallens livetest 2026-09-21 gav tre fel, och de visade sig vara tre ansikten pa samma sak:
+**widgetar som visar fel eller ingenting nar de saknar historik.** Alla tre ar lagade, var och en med
+egna prov och egen mutationskontroll.
+
+### 1. Rakarna nollstalldes av en sidladdning, inte av sandningsstarten
+
+Tva raknare bar "den har sandningen" i klienten och bada lag i vanliga variabler:
+
+| Raknare | Fil | Vad en omladdning gjorde |
+|---|---|---|
+| `totals` | `live-leaderboard.js` | "Denna stream" tomdes; tillbaka kom bara serverns rullande buffert (max 250 handelser) |
+| `records` | `gift-event-images.js` | Hogvattenmarkena gick till 0, sa nasta **enkrona** rakades som nytt rekord och skrev over den gava som ledde |
+
+Regeln stod redan i koden — raknarna nollstalls nar SANDNINGEN borjar om — men den hall bara for
+`live:start`, aldrig for laddningen. Bada far nu en ogonblicksbild i **sessionStorage**, nycklad pa
+aktivt `sessionId`.
+
+**Lagringsvalet ar hela sakerheten.** `event-dedupe.js` lagger sin grind i samma lagring och darmed
+samma livslangd: overlever grinden en omladdning dedupas backfyllnaden bort och raknaren dubbleras
+inte; rivs kontexten (OBS forstor kallan vid scenbyte) forsvinner bada. En delad `localStorage` hade
+gett ogonblicksbild **plus** oderdupad backfyllnad — alltsa dubbelraknat mitt i en sandning, varre an
+buggen som lagades.
+
+### 2. Cykeln visade en tom mall nar den bytte till en metrik utan data
+
+`visaRankingSteg` faller tillbaka pa demorostern nar ett steg saknar data. I editorn ar det ratt. I
+overlay nollar `live-zero-state.js` demoraderna direkt, sa framfor publiken stod rubriken
+"TOP POINTS" over fem namnlosa rader med "◆ 0", fyra sekunder per varv, hela sandningen.
+
+Steget valjs nu bland de metriker som faktiskt har data, **och bara i overlay** — i editorn maste en
+nyss ikryssad cykel ga att se utan att nagon forst ger en gava. Har ingen metrik data star valet
+orort; att widgeten da inte ska synas alls ar punkt 3:s regel.
+
+Steget identifieras dessutom av sin **metrik** i stallet for sitt index: listan kan vaxa mitt i en
+sandning (forsta gavan lagger till TOP COINS), och med index betydde samma siffra plotsligt en annan
+lista, sa koreografin uteblev vid just det bytet.
+
+### 3. Regeln om osynliga tomma widgetar gallde tva av sex
+
+"En tom widget syns inte i sandningen" var byggd for Top Gift och Top Streak, dar tomheten star i
+state och `wh()`-haken racker. De fyra ovriga — **Top Like, Top Coins, Top Points och Battle MVP** —
+stod kvar som tomma skal hela sandningen.
+
+De far sitt innehall av livedatans riktade DOM-patchar och av `live-zero-state.js` nollning, sa vid
+render-tillfallet bar de fortfarande demoraderna: `wh()` kan omojligt veta om de ar tomma. Fragan
+stalls darfor till DOM:en, efter att bade renderaren och nollningen kort — en MutationObserver, ingen
+timer, eftersom allt som kan andra svaret ar en DOM-mutation och ett intervall dessutom hade hallit
+sidan vaken for den visuella riggen.
+
+De sex ar exakt de familjer `live-zero-state.js` nollar i overlay. Ett sanningsprov vaktar antalet,
+sa nasta gang listan vaxer pa ena stallet maste den vaxa pa det andra.
+
+### Invarianter som inte far brytas
+
+- Raknarnas ogonblicksbilder ligger i `sessionStorage`, aldrig i `localStorage` (se skalet ovan).
+- Cykelfiltret och doljandet av tomma widgetar galler **bara overlay**. Editorn ska alltid visa allt.
+- Ingen av de tre vagarna far skriva tillbaka ett varde som redan star dar: en identisk skrivning ar
+  anda en DOM-mutation, och den vacker observatoren som kallade hit.
+
+### Nasta steg
+
+**Gavororelsen** ar beslutad och blir billigare an vantat — bade fasmotorn och flippen finns redan.
+Den ar inte pabörjad.
+
 ## Checkpoint 53 — Reservbilderna ligger inte framme (2026-09-10)
 
 David, om Profilbild och Gåvobild i INNEHÅLL: *"måste de vara synliga?"*
