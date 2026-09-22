@@ -97,10 +97,23 @@ fungerar. Alternativet — gavor som flyger over duken — kraver en ny renderar
 samtidiga element, kohantering vid gavostormar och en bana som inte konkurrerar med
 `vfx-engine.js` egna kvalitetsnivaer och FPS-tak. Ingenting av det blir billigare av fasmotorn.
 
-**Inte pabörjad.** Specifikationen — vilka faser, vilka tider, vad som triggar och vad som hander
-nar en ny gava landar mitt i en pagaende sekvens — ar inte skriven. `VyraFlip`:s egen regel ar den
-forsta att lasa: en flipp ager sin widget tills den spelat klart, och en ombyggd nod tar upp
-animationen vid samma offset. En koreografi som startar om vid varje gava skulle ata upp precis det.
+**Specifikationen ar skriven: `docs/gavororelsen.md` (2026-09-22).** Faser, tider, trigger och
+vad som hander nar en ny gava landar mitt i en pagaende sekvens star dar. Tva fynd ur den andrar
+formen pa arbetet:
+
+- **Fabriken kan inte koppla sig sjalv har.** `koppla()` lindar sig runt en global triggerfunktion
+  och laser ett timerspar per tand lada. Top Gift och Top Streak ar permanenta widgetar utan bade
+  trigger och spar. Koreografin anropas i stallet explicit fran `live-leaderboard.js:armFlip()` och
+  `gift-event-images.js:arma()` — alltsa exakt dar `mark()` redan anropas, efter patchen och efter
+  rekordgrinden.
+- **`VyraFlip`:s regel haller, och den kostar ingenting.** En flipp ager sin widget tills den spelat
+  klart, och en ombyggd nod tar upp animationen vid samma offset. Koreografin rar darfor ALDRIG
+  nagon av flippens sex noder (`VyraFlip.PARTS`); den animerar ramen, platen, namnet och talet. En
+  omstartad koreografi spolar alltsa inte tillbaka nagon rotation.
+
+**Kvar att besluta innan kod:** avbryter en ny gava en pagaende koreografi (A) eller spelar den
+klart (B)? Rekommendationen i specen ar B, med skalet att A:s fellage i en gavostorm ar exakt det
+`VyraFlip` byggdes for att forhindra, en vaning upp.
 
 ## Checkpoint 53 — Reservbilderna ligger inte framme (2026-09-10)
 
