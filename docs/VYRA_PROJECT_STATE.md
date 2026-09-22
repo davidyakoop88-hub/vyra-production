@@ -61,10 +61,46 @@ sa nasta gang listan vaxer pa ena stallet maste den vaxa pa det andra.
 - Ingen av de tre vagarna far skriva tillbaka ett varde som redan star dar: en identisk skrivning ar
   anda en DOM-mutation, och den vacker observatoren som kallade hit.
 
-### Nasta steg
+### Nasta steg: gavororelsen — BESLUTET OMFATTAT 2026-09-22
 
-**Gavororelsen** ar beslutad och blir billigare an vantat — bade fasmotorn och flippen finns redan.
-Den ar inte pabörjad.
+**Vad som ska byggas.** En **koreografi pa Top Gift och Top Streak**: en ny art pa fasmotorns
+fabrik (`widget-fas.js`), som koreograferar den flipp `VyraFlip` redan ager. Alltsa rorelse pa
+plats, i de widgetar som finns — INTE flygande ikoner eller partiklar over duken.
+
+**Varfor beslutet fattades om.** Den forsta versionen av den har raden sa bara att gavororelsen
+var "beslutad och blir billigare an vantat". Sjalva beslutet fattades i en session vars kontext ar
+borta, och det stod ingenstans — varken har, i `VYRA_MASTER_ROADMAP.md` (som fortfarande beskriver
+faser fran juli) eller nagon annanstans i repot. En anteckning som sager ATT nagot ar beslutat men
+inte VAD ar inget beslut; den ar en fralla for nasta person. Darfor togs det om medvetet.
+
+**Skalet, och det ar strukturellt och inte en tolkning av ordval:**
+
+| Familj | Koreografi | Flipp |
+|---|---|---|
+| Fan Level Up | `fan-fas.js` | — |
+| Gifter Level Up | `gifter-fas.js` | — |
+| Guardian Emblem | `guardian-emblem-fas.js` | — |
+| **Top Gift** | **ingen** | `VyraFlip` |
+| **Top Streak** | **ingen** | `VyraFlip` |
+
+Tre familjer har var sin fassekvens. De tva gavofamiljerna har ingen — bara vandningen mellan
+gavobild och profilbild. Uppmatt 2026-09-22: `vyra-topgift` och `vyra-streak` forekommer inte pa ett
+enda stalle i nagon `*fas*.js`. Halet ar exakt, och "gavororelsen" namnger det.
+
+`widget-fas.js` ar dessutom uttryckligen en FABRIK. Dess egen huvudkommentar motiverar varfor den
+finns: nar Gifter Level Up skulle fa samma motorform vore en kopierad fil "tva motorer som glider
+isar". Att lagga till en fjarde art ar precis det den ar byggd for.
+
+**Och det ar det enda som gor pastaendet sant.** "Billigare an vantat, eftersom bade fasmotorn och
+flippen finns redan" haller bara om arbetet ar en ny art pa fabriken runt en flipp som redan
+fungerar. Alternativet — gavor som flyger over duken — kraver en ny renderare, en budget for
+samtidiga element, kohantering vid gavostormar och en bana som inte konkurrerar med
+`vfx-engine.js` egna kvalitetsnivaer och FPS-tak. Ingenting av det blir billigare av fasmotorn.
+
+**Inte pabörjad.** Specifikationen — vilka faser, vilka tider, vad som triggar och vad som hander
+nar en ny gava landar mitt i en pagaende sekvens — ar inte skriven. `VyraFlip`:s egen regel ar den
+forsta att lasa: en flipp ager sin widget tills den spelat klart, och en ombyggd nod tar upp
+animationen vid samma offset. En koreografi som startar om vid varje gava skulle ata upp precis det.
 
 ## Checkpoint 53 — Reservbilderna ligger inte framme (2026-09-10)
 
