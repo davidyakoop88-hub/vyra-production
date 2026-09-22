@@ -15,6 +15,60 @@
 
   const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
 
+  // SANDNINGENS RAKNARE FAR INTE NOLLSTALLAS AV EN SIDLADDNING.
+  //
+  // `totals` ar "Denna stream" och lag i en vanlig variabel: en omladdning mitt i sandningen (F5 i
+  // studion, "Refresh" pa OBS-kallan, ett byte av overlay-lank) tomde den. Det som kom tillbaka var
+  // bara serverns rullande buffert via /api/events?after=0 — som mest 250 handelser — sa en
+  // sandning som pagatt en timme borjade om fran nastan noll framfor publiken. Uppmatt i
+  // livetestet 2026-09-21: Top Likes stod pa fyra namn efter en omladdning, mot tjugoatta fore.
+  //
+  // Regeln ar densamma som live:start-lyssnaren langst ner redan bar: listan nollstalls nar
+  // SANDNINGEN borjar om, inte nar sidan gor det.
+  //
+  // SESSIONSTORAGE, inte localStorage, och valet ar hela sakerheten i den har ogonblicksbilden:
+  // event-dedupe.js lagger sin grind i exakt samma lagring och darmed i exakt samma livslangd.
+  // Overlever grinden en omladdning gor ogonblicksbilden det ocksa, och backfyllnaden dedupas bort
+  // — raknaren blir inte dubblerad. Rivs kontexten (OBS forstor kallan vid scenbyte med "Shutdown
+  // source when not visible") forsvinner BADA, och bufferten raknas en gang i en tom raknare,
+  // precis som i dag. En delad localStorage hade gett ogonblicksbild PLUS oderdupad backfyllnad,
+  // alltsa dubbelraknade siffror mitt i en sandning — varre an det som lagas har.
+  //
+  // Nyckeln bar sessionId: forra sandningens ogonblicksbild hor inte hemma i den har, och utan en
+  // pagaende sandning atertas ingenting alls.
+  const STREAM_KEY = 'vyra-leaderboard-stream-v1';
+  let streamDirty = false;
+
+  function aktivSession() {
+    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+  }
+  function aterstallStream() {
+    const session = aktivSession();
+    if (!session) return;
+    try {
+      const sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
+      if (!sparad || sparad.sessionId !== session || !sparad.totals) return;
+      Object.entries(sparad.totals).forEach(([username, t]) => {
+        if (!t || typeof t !== 'object') return;
+        totals[username] = {
+          username, name: t.name || username, profileImage: t.profileImage || '',
+          likes: Number(t.likes) || 0, coins: Number(t.coins) || 0,
+          lastLikeAt: Number(t.lastLikeAt) || 0, present: t.present !== false
+        };
+      });
+    } catch (e) {}
+  }
+  function saveStreamIfDirty() {
+    if (!streamDirty) return;
+    streamDirty = false;
+    const session = aktivSession();
+    try {
+      if (!session) window.sessionStorage.removeItem(STREAM_KEY);
+      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals }));
+    } catch (e) {}
+  }
+  aterstallStream();
+
   // Day-bucketed persistence so a widget's "Period" (Today/Week/Month/Year/Alltid) means something —
   // `totals` above is session-only (resets on reload), which is exactly "Denna stream" and nothing
   // more. dailyTotals survives reloads via localStorage, keyed by calendar day (viewer's local time),
@@ -33,8 +87,12 @@
     if (keys.length > MAX_DAYS_KEPT) keys.slice(0, keys.length - MAX_DAYS_KEPT).forEach(k => delete dailyTotals[k]);
     try { localStorage.setItem(DAILY_KEY, JSON.stringify(dailyTotals)); dailyDirty = false; } catch {}
   }
-  setInterval(saveDailyIfDirty, 5000);
-  addEventListener('beforeunload', saveDailyIfDirty);
+  function saveIfDirty() { saveDailyIfDirty(); saveStreamIfDirty(); }
+  setInterval(saveIfDirty, 5000);
+  addEventListener('beforeunload', saveIfDirty);
+  // `pagehide` ocksa: i OBS och pa mobil ar `beforeunload` inte garanterad att fyra, och en
+  // ogonblicksbild som aldrig skrivs ner ar samma bugg som ingen ogonblicksbild alls.
+  addEventListener('pagehide', saveIfDirty);
 
   function recordDaily(username, name, profileImage, likeCount, coinCount) {
     const day = todayKey();
@@ -79,6 +137,7 @@
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
     const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, coins: 0, lastLikeAt: 0, present: true });
+    streamDirty = true;   // ogonblicksbilden skrivs ner av tickern nedan, inte per handelse
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;
@@ -342,6 +401,10 @@
     try {
       saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
       for (const key of Object.keys(totals)) delete totals[key];
+      // Ogonblicksbilden skrivs om DIREKT, inte vid nasta tick: ett OBS som river kallan i
+      // samma sekund som sandningen borjar skulle annars hitta forra sandningens siffror.
+      streamDirty = true;
+      saveStreamIfDirty();
       updateLiveLeaderboards();
     } catch (e) {}
   });
