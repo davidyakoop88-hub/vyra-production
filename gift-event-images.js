@@ -20,7 +20,8 @@
 
   window.VyraGiftImages = {
     count: gifts.length,
-    resolve: resolve
+    resolve: resolve,
+    arma: arma
   };
 
   // Sändningens rekord. Exponerade, inte privata, eftersom gift-event-images.js inte är ensam
@@ -208,14 +209,62 @@
     return !(typeof document !== 'undefined' && document.hidden);
   }
 
+  // TOP STREAK FICK ALDRIG SIN MARKERING I DRIFT (uppmatt 2026-09-22).
+  //
+  // Top Gift armas av live-leaderboard.js:updateTopGift — `if (!flip.resume(el)) flip.start(el)`
+  // foljt av `flip.mark(el)`. Top Streak har ingen sadan skrivare: den enda som ror den pa en
+  // riktig gava ar patchen harintill, och den satte aldrig nagon klass. `armFlip` anropas pa
+  // exakt ett stalle i hela repot, och det stallet filtrerar pa templateTopGift.
+  //
+  // Foljden syns i CSS:en. Allt som ar streakens accent hanger pa `.hit`:
+  //   .vyra-streak.hit                 streakEnter 3.8s   (engangs)
+  //   .vyra-streak.hit .streak-score b streakNumber .8s   (engangs)
+  //   .vyra-streak.hit .streak-flip>i  streakFire .8s     (engangs)
+  // Rotationen (streakFlipLoop) ar oandlig och rullar vidare, men de tre engangsanimationerna
+  // spelar bara nar klassen satts om. I studion satts den om av demoknappens send()-wrapper vid
+  // varje tryck, sa dar ser det ratt ut. I sandning satts den aldrig om, och talet byter varde
+  // i tystnad — ingen puls, ingen eld, ingen entre.
+  //
+  // MARKERINGEN, INTE OMSTARTEN. `resume()` lagger bara till triggerklassen om den saknas, sa de
+  // tre engangsanimationerna spelar INTE om — det ar med flit, samma regel som ger Top Gift en
+  // obruten rotation hela sandningen. Det som visar att ett rekord slagits ar `mark()`: egen
+  // klass, egen engangsanimation, ingen omstart av loopen. `mark()` rensar redan delayen pa
+  // `.streak-gift-face`, alltsa var den skriven for bada familjerna fran borjan.
+  var attArma = [];
+
+  function arma(widget) {
+    var flip = window.VyraFlip;
+    nodesFor(widget, '.vyra-streak').forEach(function (el) {
+      // Den handbyggda DOM:en i tests/gift-images-live-patch.test.js har inga klasslistor, och
+      // bade fallbacken och VyraFlip skriver klasser. Utan den har raden kastade armningen mitt i
+      // lyssnaren — och lyssnaren ar INTE inpackad, sa kastet hade tagit med sig kampanjpatchen
+      // och allt annat efter den. Samma tolerans som live-leaderboard.js skrivTal redan visar mot
+      // samma rigg: en nod som saknar det vi behover hoppas over, den fallpar inte flodet.
+      if (!el || !el.classList) return;
+      if (!flip) {
+        // Aldre overlagg utan modulen: samma fallback som live-leaderboard.js armFlip har.
+        el.classList.remove('hit');
+        void el.offsetWidth;
+        el.classList.add('hit');
+        return;
+      }
+      if (!flip.resume(el)) flip.start(el);
+      if (typeof flip.mark === 'function') flip.mark(el);
+    });
+  }
+
   function flush() {
     frame = 0;
     var queue = pending.slice();
     pending.length = 0;
+    var arm = attArma.slice();
+    attArma.length = 0;
     queue.forEach(function (widget) {
       if (widget.type === 'templateGiftCampaign') patchCampaignWidget(widget);
       else patchProfileWidget(widget);
     });
+    // EFTER patchen, inte fore: annars startar pulsen pa den gamla bilden och talet byts mitt i.
+    arm.forEach(arma);
   }
 
   function schedule(widget) {
@@ -287,6 +336,7 @@
         // Top Gifts avatar sätts av live-leaderboard.js. Streaken har ingen sådan skrivare, så
         // utan den här raden står den kvar på testbilden hela sändningen.
         widget.profileImage = detail.profileImage || detail.avatar || widget.profileImage;
+        if (attArma.indexOf(widget) === -1) attArma.push(widget);
         schedule(widget);
       }
 
