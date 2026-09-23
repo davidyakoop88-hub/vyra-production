@@ -296,7 +296,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Premium-bundelns strang. Den halkade efter i 48b3458 ("Byt gamla social goals mot sex nya
   // VYRA-designer") och har varit ur synk sedan dess — darav tre veckor med en rod vakt som
   // ingen atgardade. Star nu pa det media.js faktiskt bar.
-  assert.match(media, /const version='20260920-1'/);
+  // Bumpad 2026-09-23: premiumbunten fick topgift-pension.js, som lindar den vyraTopGift
+  // premium-final.js sjalv skriver over. En ny fil I bunten ar en andring AV bunten, sa
+  // strangen foljer med — annars laddar en cachad klient de fyra gamla och aldrig den femte.
+  assert.match(media, /const version='20260923-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
