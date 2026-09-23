@@ -622,7 +622,10 @@ triggerLikeFountainPop=function(event={}){
   });
   return lfBaseTriggerLikeFountainPop(event);
 };
-window.triggerLikeFountainPop=triggerLikeFountainPop;const lfFxTrigger=triggerLikeFountainPop;triggerLikeFountainPop=function(event={}){lfFxTrigger(event);/* Canvas-lagret ar dekoration och far aldrig hindra DOM-fontanen: fel har far inte stoppa resten av kedjan. */try{window.VyraLikeFountainFx&&window.VyraLikeFountainFx.pop({namn:event.username||event.name,bild:event.profileImage,__id:event.__id})}catch(fel){console.error('[VYRA] Like Fountain FX:',fel)}};window.triggerLikeFountainPop=triggerLikeFountainPop;
+// En Like Fountain ska ha en tydlig rörelse: DOM-fontänen och dess korta pop vid
+// ett like. Det tidigare canvas-lagret ritade ytterligare hjärtan ovanpå samma
+// händelse och såg ut som en andra fontän i sändning.
+window.triggerLikeFountainPop=triggerLikeFountainPop;
 
 // Premium organic movement layer for Like Fountain.
 // Kept additive so the existing widget, live-event routing and theme presets remain intact.
@@ -1130,7 +1133,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20260912-3','action-event.css?v=20260916-facit'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260916-facit','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20260916-facit','action-event-advanced.js?v=20260916-facit','action-runtime.js?v=20260916-facit'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20260912-3','action-event.css?v=20260923-workspace'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20260923-workspace','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20260916-facit','action-event-advanced.js?v=20260916-facit','action-runtime.js?v=20260916-facit'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20260901-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20260919-nav-restore';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1139,7 +1142,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='stan
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20260806-animation';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20260908-bildmatt';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});Promise.resolve().then(()=>{let js=document.createElement('script');js.src='like-fountain-particles.js?v=20260917-1';js.dataset.lfFx='1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260907-2';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
@@ -1207,7 +1210,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20260818-panel-live';document.body.append(js)});
 
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260817-duckning';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260913-1';document.body.append(js)});
 
