@@ -71,7 +71,10 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // synlig text, inte bara en kommentar — en cachad media.js skulle fortsatta skicka streamern
   // till en kalla pa en fjardedels upplosning.
   // toplike-studio.css och toplike-studio.js ar OFORANDRADE och behaller darfor sina strangar.
-  assert.match(studioHtml, /media\.js\?v=20260923-1/);
+  // Bumpad EN GANG TILL, samma dag (8b60613 "Bump media loader after today feature updates" och
+  // det efterfoljande stadstadet av dess ostrukturerade suffix): media.js gick vidare till -2,
+  // orelaterat till toplike-kedjan ovan.
+  assert.match(studioHtml, /media\.js\?v=20260923-2/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
   // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.

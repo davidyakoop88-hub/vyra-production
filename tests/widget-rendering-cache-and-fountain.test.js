@@ -143,7 +143,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // arten) och gift-event-images.js (armningen anropar koreografin), sa de bumpas ocksa — var och
   // en for sin egen andring. widget-factory.js och premiumbundlen ar OFORANDRADE och behaller
   // sina strangar.
-  assert.match(studio, /studio\.css\?v=20260923-1/);
+  // Bumpad EN GANG TILL, samma dag (d2fa2d2 "Fix Sound Alerts text readability"): studio.css
+  // andrades av en helt orelaterad Sound Alerts-fix, sa versionen gick vidare till -2. Den har
+  // radens jobb ar bara att bevisa att BUMPEN skedde i samma commit som filen — inte att haffa den
+  // exakta strangen fran gavororelsens egen bump ovan, vilket ar varfor bara denna rad andras och
+  // inte gift-event-images.js/streak-fas.js nedan, som ingen senare commit har rort.
+  assert.match(studio, /studio\.css\?v=20260923-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -314,19 +319,31 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
     'battle-mvp-session.js cachebustades inte for #368');
-  for (const fil of ['vyra-tal', 'sound-alerts']) {
+  for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
+  // sound-alerts.js LAMNADE listan 2026-09-23: forst "Add VYRA sound alerts library" (8f50463),
+  // sedan "Fix Sound Alerts text readability" (d2fa2d2) — bada riktiga andringar, bada foljda av
+  // en bump, sa filen ar inte langre "oforandrad sedan duckningen" (samma undantagsmonster som
+  // battle-mvp-session.js ovan). Strangen namnger nu funktionen, inte NAR — provet hogre upp i
+  // den har filen forbjuder det monstret for NYA strangar, men den har foregick den regeln.
+  assert.match(media, /sound-alerts\.js\?v=20260923-library/,
+    'sound-alerts.js cachebustades inte for biblioteket/lasbarhetsfixen');
   // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
   // (docs/referens/tikfinity-actions-facit.md) och filen ar alltsa inte langre "oforandrad sedan
   // duckningen". De fyra filerna i samma ombyggnad delar strang, for de ar EN andring — halls de
   // isar kan en av dem laddas gammal mot de andras nya kontrakt, och faltregistret finns bara i en
   // av dem: laddas action-event.js gammal saknar de andra tre `VyraActionFields` och tappar TYST
   // varje falt de skulle ha lamnat ifran sig.
-  for (const fil of ['action-event', 'action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
-  assert.match(media, /action-event\.css\?v=20260916-facit/, 'action-event.css cachebustades inte');
+  // action-event.js/.css LAMNADE gruppen 2026-09-23: en senare, orelaterad workspace-andring
+  // rorde bada filerna och bumpade dem tillsammans till EN ny delad strang (de ar fortfarande en
+  // andring, bara en senare an facit-ombyggnaden) — samma undantagsmonster som sound-alerts.js
+  // och battle-mvp-session.js ovan.
+  assert.match(media, /action-event\.js\?v=20260923-workspace/, 'action-event.js cachebustades inte for workspace-andringen');
+  assert.match(media, /action-event\.css\?v=20260923-workspace/, 'action-event.css cachebustades inte for workspace-andringen');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
