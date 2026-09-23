@@ -92,7 +92,11 @@ async function editorn() {
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
-  await page.waitForTimeout(2500);
+  // REDO AR ETT TILLSTAND, INTE EN KLOCKA. Uppmatt 2026-09-23 over fem laddningar: 32-39 ms fran
+  // .editor-shell tills VyraWidgets.create() svarar och panelen har kontroller. Somnen stod pa
+  // 2500 — sextiofyra ganger marginalen.
+  await page.waitForFunction(() => !!(window.VyraWidgets && window.VyraWidgets.create), null,
+    { timeout: 30000, polling: 25 });
   await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
   await page.waitForTimeout(400);
   await page.evaluate(s => { window.__SEL = s; }, SEL);
@@ -102,15 +106,31 @@ async function editorn() {
 // Seedar om widgeten från grunden. Panelen ritas om vid varje ändring, så varje kontroll måste
 // mätas mot ett orört utgångsläge och slås upp på nytt.
 async function seeda(page, nyckel) {
-  await page.evaluate(n => {
+  // PANELEN AR STABIL NAR ANTALET KONTROLLER SLUTAT ANDRAS, inte nar en klocka gatt ut.
+  //
+  // Elva filer monkey-patchar props()/bind() och flera injiceras asynkront av media.js, sa
+  // panelen vaxer i flera steg efter render(). Somnen stod pa 650 ms. Uppmatt 2026-09-23 over
+  // fem widgetfamiljer: 34 ms median, 55 ms varst — tolv ganger marginalen, och varje kontroll
+  // i provet betalade den.
+  //
+  // Loopen ligger INNE i evaluate: en pollning per 5 ms utan en round-trip till noden emellan,
+  // och tre stabila matningar i rad innan den slapper. Taket pa 2 s ar langt over den uppmatta
+  // varsta tiden och faller tillbaka pa samma beteende som den gamla somnen hade haft.
+  await page.evaluate(async n => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create(n);
     w.x = 200; w.y = 200;
     state.widgets.push(w);
     selected = w.id;
     render();
+    let forra = -1, stabila = 0;
+    for (let k = 0; k < 400; k++) {
+      const antal = document.querySelectorAll(window.__SEL).length;
+      if (antal > 0 && antal === forra) { if (++stabila >= 3) return; } else { stabila = 0; }
+      forra = antal;
+      await new Promise(r => setTimeout(r, 5));
+    }
   }, nyckel);
-  await page.waitForTimeout(650);
 }
 
 // Vilka fält i widgetens state en kontroll skriver till. null = kontrollen kunde inte provas.
@@ -131,8 +151,25 @@ async function faltFor(page, kontroll) {
     return fore;
   }, [kontroll.id, kontroll.i]);
   if (start === null) return null;
-  await page.waitForTimeout(240);
-  const efter = await page.evaluate(() => JSON.stringify(state.widgets[0]));
+  // EN KONTROLL SOM SKRIVER GOR DET DIREKT; EN SOM INTE GOR DET MASTE FA HELA BUDGETEN.
+  //
+  // Uppmatt 2026-09-23 over 60 kontroller i fem widgetfamiljer: av de 45 som andrar state gor 
+  // medianen det pa 1 ms och den varsta pa 27. Somnen stod pa 240, alltsa nio ganger varsta 
+  // fallet — betald aven av de kontroller som svarade omedelbart.
+  //
+  // De 15 som INTE andrar state ar inte ett fel: Presetnamn och Prestanda galler scenen, och
+  // propHeight ar skrivskyddad for aspect-styrda widgets. For dem kan ingen vantan forkortas —
+  // frånvaron av en andring bevisas bara genom att vanta ut budgeten. Den ar darfor kvar pa
+  // 250 ms, samma storleksordning som forut, och det ar ratt: provet far inte bli snabbare
+  // genom att sluta kolla.
+  const efter = await page.evaluate(async fore => {
+    for (let k = 0; k < 125; k++) {
+      const nu = JSON.stringify(state.widgets[0]);
+      if (nu !== fore) return nu;
+      await new Promise(r => setTimeout(r, 2));
+    }
+    return JSON.stringify(state.widgets[0]);
+  }, start);
   const a = JSON.parse(start), b = JSON.parse(efter), andrade = [];
   for (const f of new Set([...Object.keys(a), ...Object.keys(b)])) {
     if (JSON.stringify(a[f]) !== JSON.stringify(b[f])) andrade.push(f);
@@ -163,6 +200,18 @@ for (const nyckel of WIDGETS) {
         const falt = await faltFor(page, k);
         if (falt && falt.length) matta.push({ ...k, falt });
       }
+
+      // GRONT AV TOMHET AR DET FARLIGA UTFALLET HAR, och det blev farligare nar vantan blev
+      // adaptiv (2026-09-23). Kollapsar den ser varje kontroll ut som om den inte skriver nagot,
+      // `matta` blir tom, inga par jamfors — och provet sager GRONT utan att ha vaktat nagot.
+      //
+      // Uppmatt samma dag over alla nio widgetar: 30-47 av 31-48 kontroller mappar, alltsa
+      // 92-98 %. Rubriken hogst upp bar samma andel fran 2026-09-09 (187 av 196). Golvet star pa
+      // 70 % — langt under det uppmatta, langt over en kollaps.
+      assert.ok(matta.length >= Math.ceil(kontroller.length * 0.7),
+        `bara ${matta.length} av ${kontroller.length} kontroller i ${nyckel} kunde mappas till ett `
+        + 'falt. Provet har inget att jamfora och skulle bli gront utan att vakta nagot — troligen '
+        + 'har vantan i faltFor() blivit for kort for panelen.');
 
       const dubbletter = [];
       for (let a = 0; a < matta.length; a++) {
