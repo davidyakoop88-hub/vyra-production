@@ -1606,3 +1606,28 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
    Sprangradie uppmatt over 191 katalognycklar och 21 paneler: exakt ETT
    element paverkas. Se tests/browser/panel-dolt.browser.test.js. */
 .properties .property-group [hidden]{display:none!important}
+
+/* GÅVORÖRELSEN · TOP STREAK, temat inferno (docs/gavororelsen.md). En fas är en klass på
+   widgetlådan plus en varaktighet: JS bestämmer NÄR, CSS bestämmer VAD. Registret och tiderna bor
+   i streak-fas.js; här bor rörelsen.
+
+   FASERNA ANIMERAR BARNEN, ALDRIG NÅGON AV DE SJU NODERNA. `VyraFlip.parts()` är
+   `[el, ...el.querySelectorAll(PARTS)]` — widgetlådan står först, före de sex selektorerna. Den
+   får `animation-delay` skrivet vid varje gåva (uppmätt 2026-09-23: -38ms efter 38 ms), så en fas
+   på lådan hade aldrig synts. Prov S5 i tests/streak-fas.test.js vaktar det.
+
+   TVÅ BARN ÄR ÄNDÅ UPPTAGNA: `.streak-score b` bär streakNumber och `.streak-flip>i` bär
+   streakFire, båda under `.hit`. En fas-regel där hade ersatt animationen — och när fasklassen
+   togs bort hade den gamla startat om av sig själv, mitt i sekvensen.
+
+   OCH TRANSFORMEN ÄR UPPTAGEN PÅ DE DIREKTA BARNEN: `.streak-inferno>*` bär skewX(3deg) som
+   motvikt till lådans skewX(-3deg). Fas 2 rör därför `filter` på det direkta barnet; bara
+   barnbarnen får röra transform. */
+.vyra-streak.sfas-antandning .streak-copy small{animation:sfasRubrik .34s ease}
+.vyra-streak.sfas-slaget .streak-score{animation:sfasGlod .38s ease}
+.vyra-streak.sfas-slaget .streak-score span{animation:sfasEtikett .38s ease}
+.vyra-streak.sfas-avlasning .streak-copy strong{animation:sfasNamn .34s ease}
+@keyframes sfasRubrik{0%{opacity:.5;letter-spacing:2px}45%{opacity:1;letter-spacing:5px}100%{opacity:1;letter-spacing:2px}}
+@keyframes sfasGlod{0%{filter:none}40%{filter:drop-shadow(0 0 14px var(--streak))}100%{filter:none}}
+@keyframes sfasEtikett{0%{opacity:.5;letter-spacing:2px}40%{opacity:1;letter-spacing:4px}100%{opacity:.85;letter-spacing:2px}}
+@keyframes sfasNamn{0%{transform:translateY(0)}45%{transform:translateY(-2px)}100%{transform:translateY(0)}}

@@ -152,3 +152,75 @@ test('CSS: .record har nagot att visa i BADA familjerna', () => {
   assert.match(css, /\.vyra-streak\.record \.streak-gift-face\{animation:giftPulse/,
     'streaken saknar record-regel — mark() satter en klass som ingenting ritar');
 });
+
+// ——— KOREOGRAFIN I DRIFT (docs/gavororelsen.md §1 och §7) ———
+//
+// Fabriken kan saga OM en lada spelar, men den vagrar inte sjalv spela om — Fan och Gifter bygger
+// pa att `spela()` alltid spelar. §7:s beslut, att en pagaende koreografi spelar klart, far darfor
+// verkan FORST hos anroparen. Star det inte i ett prov ar beslutet bara en mening i ett dokument.
+function fasAttrapp() {
+  const anrop = [];
+  let ipluft = false;
+  return {
+    anrop,
+    spelar: () => ipluft,
+    spela(el) { anrop.push(['spela', el.dataset.id]); ipluft = true; return true },
+    slut() { ipluft = false },
+  };
+}
+
+function riggMedFas(fas) {
+  const r = rigg({ widgets: [{ ...STREAK }] });
+  r.w.VyraStreakFas = fas;
+  return r;
+}
+
+test('koreografin spelas nar ett rekord slas', () => {
+  const fas = fasAttrapp();
+  const r = riggMedFas(fas);
+  try {
+    gava(r.w, { type: 'gift', username: 'maya', name: 'Maya', coins: 11, count: 11 });
+    assert.deepEqual(fas.anrop, [['spela', 's1']], 'koreografin startade inte pa ett nytt rekord');
+  } finally { r.dom.window.close() }
+});
+
+test('MUTATIONSVAKTEN: en pagaende koreografi avbryts inte av nasta rekord', () => {
+  // Hela §7. I en gavostorm ligger rekorden nagra hundra millisekunder isar; en omstart dar hade
+  // visat fas 1 om och om igen — precis det fellage VyraFlip finns for att forhindra, en vaning
+  // upp. Talet ar anda aktuellt: patchen kor fore, och mark()-pulsen kvitterar varje rekord.
+  const fas = fasAttrapp();
+  const r = riggMedFas(fas);
+  try {
+    for (let i = 1; i <= 3; i += 1) {
+      gava(r.w, { type: 'gift', username: 'maya', name: 'Maya', coins: i * 10, count: i * 10 });
+    }
+    assert.equal(fas.anrop.length, 1,
+      'koreografin startades om mitt i sig sjalv — §7 sager att den ska spela klart');
+    // Och nar den spelat klart ska nasta rekord starta en ny.
+    fas.slut();
+    gava(r.w, { type: 'gift', username: 'maya', name: 'Maya', coins: 900, count: 900 });
+    assert.equal(fas.anrop.length, 2, 'efter att sekvensen tagit slut ska nasta rekord spela');
+  } finally { r.dom.window.close() }
+});
+
+test('en gava UNDER rekordet koreograferas inte', () => {
+  const fas = fasAttrapp();
+  const r = riggMedFas(fas);
+  try {
+    gava(r.w, { type: 'gift', username: 'maya', name: 'Maya', coins: 500, count: 500 });
+    fas.slut();
+    const efter = fas.anrop.length;
+    gava(r.w, { type: 'gift', username: 'ove', name: 'Ove', coins: 3, count: 3 });
+    assert.equal(fas.anrop.length, efter,
+      'en gava under rekordet startade en koreografi — widgeten sager "nytt rekord" i onodan');
+  } finally { r.dom.window.close() }
+});
+
+test('utan arten laddad hander ingenting — och ingenting kastar', () => {
+  // Ett aldre overlagg som inte laddar streak-fas.js ska armas precis som forut.
+  const r = rigg({ widgets: [{ ...STREAK }] });
+  try {
+    gava(r.w, { type: 'gift', username: 'maya', name: 'Maya', coins: 11, count: 11 });
+    assert.ok(nod(r.w).classList.contains('record'), 'markeringen ska finnas kvar utan arten');
+  } finally { r.dom.window.close() }
+});

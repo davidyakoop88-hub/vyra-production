@@ -138,7 +138,15 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-22: Top Streak fick en `.record`-regel sa att `mark()` har nagot att rita.
   // BARA studio.css andrades av den regeln; media.js, widget-factory.js och premiumbundlen ar
   // oforandrade och behaller sina strangar.
-  assert.match(studio, /studio\.css\?v=20260922-1/);
+  // Bumpad 2026-09-23 for gavororelsens forsta art: studio.css bar de fyra fas-reglerna och de
+  // fyra keyframes som streak-fas.js tander. Samtidigt andrades media.js (skriptsvansen laddar
+  // arten) och gift-event-images.js (armningen anropar koreografin), sa de bumpas ocksa — var och
+  // en for sin egen andring. widget-factory.js och premiumbundlen ar OFORANDRADE och behaller
+  // sina strangar.
+  assert.match(studio, /studio\.css\?v=20260923-1/);
+  assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
+  // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
+  assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=1/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);

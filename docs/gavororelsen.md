@@ -66,9 +66,9 @@ Det är rätt grind, och den ska inte byggas om:
 
 ---
 
-## 3. Koreografin får aldrig röra flippens noder
+## 3. Koreografin får aldrig röra flippens noder — och lådan är en av dem
 
-`VyraFlip.PARTS` är uppmätt exakt:
+`VyraFlip.PARTS` listar sex selektorer:
 
 ```
 .vyra-flip, .streak-flip,
@@ -76,13 +76,26 @@ Det är rätt grind, och den ska inte byggas om:
 .streak-gift-face, .streak-profile-face
 ```
 
-`offset()` skriver `animation-delay` på precis de noderna för att återuppta rotationen vid rätt
-punkt i varvet. En fas-CSS som animerar någon av dem skulle skriva över just det värdet — och då är
-hela `VyraFlip` verkningslös, vid varje gåva.
+**Men noderna är sju.** `parts()` är `[el, ...el.querySelectorAll(PARTS)]` — widgetlådan SJÄLV står
+först i listan, före de sex som selektorerna hittar. `offset()` skriver `animation-delay` på var och
+en av de sju.
 
-**Invariant (ska vaktas av ett prov):** ingen `<prefix><fas>`-regel får ha någon av de sex
-selektorerna i sin nyckel. Faserna animerar ramen, plåten, namnet, talet, titeln, etiketten och
-widgetlådan själv — allt utom flippen.
+Uppmätt 2026-09-23 i jsdom, efter `start()` följt av `resume()` 38 ms senare:
+
+| Nod | `animation-delay` efter `resume()` |
+|---|---|
+| `.vyra-streak` — **lådan** | `-38ms` |
+| `.streak-flip` | `-38ms` |
+| `.streak-copy` | *(tom)* |
+| `.streak-score b` | *(tom)* |
+
+Den första raden är hela poängen. Lådan bär `streakEnter` och `streakHit` och ser därför ut som en
+naturlig plats att hänga en fas på — men den får sitt förlopp överskrivet vid varje enskild gåva.
+En fas-animation där hade fått hela sändningens gångtid som negativ fördröjning och aldrig synts.
+
+**Invariant (ska vaktas av ett prov):** ingen `<prefix><fas>`-regel får ha någon av de SJU noderna i
+sin nyckel — de sex selektorerna, plus `.vyra-streak` och `.vyra-topgift` själva. Faserna animerar
+barnen: ramen, plåten, namnet, talet, titeln, etiketten och eldtecknet.
 
 Det här är också varför en omstart av koreografin **inte** är samma sak som en omstart av flippen.
 De rör olika noder. `spela()` kallar `avbryt()` först och startar om sin egen sekvens; rotationen
@@ -125,11 +138,33 @@ inte. Det ska stå i ett prov, inte hoppas på.
 En i taget, med godkänd byggplan per modell — samma ordning som Gifter byggdes i. En halvfärdig fas
 är sämre än ingen.
 
-| Ordning | Modell | Varför just den |
-|---|---|---|
-| 1 | `streak-inferno` | `w.streakTheme \|\| 'inferno'` — entrén varje användare får som aldrig öppnar temaväljaren |
-| 2 | `topgift-royal` | `w.theme \|\| 'royal'` — samma skäl, andra familjen |
-| 3+ | resten | efter mätning, en i taget |
+| Ordning | Modell | Läge | Varför just den |
+|---|---|---|---|
+| 1 | `streak-inferno` | **byggd 2026-09-23** | `w.streakTheme \|\| 'inferno'` — entrén varje användare får som aldrig öppnar temaväljaren |
+| 2 | `topgift-royal` | kvar | `w.theme \|\| 'royal'` — samma skäl, andra familjen |
+| 3+ | resten | kvar | efter mätning, en i taget |
+
+### Vad `streak-inferno` blev, och de två krockarna som formade den
+
+| Fas | ms | Nod | Vad |
+|---|---|---|---|
+| 1 · antändning | 340 | `.streak-copy small` | rubriken TOP STREAK tänds och öppnar sin spärr |
+| 2 · slaget | 380 | `.streak-score` + dess `span` | glöd på talblocket, etiketten STREAK hårdnar |
+| 3 · avläsning | 340 | `.streak-copy strong` | namnet lyfts fram kort och lägger sig |
+
+Totalt **1060 ms**. Prefixet är `sfas-`, inte `streak-fas-`: `layoutAv()` returnerar första klassen
+som börjar med `streak-`, så en fasklass med det prefixet hade kunnat läsas som modell så fort
+klassordningen bytte. Prov S4 vaktar att de två aldrig möts.
+
+**Krock 1 · två barn är upptagna.** `.streak-score b` bär `streakNumber` och `.streak-flip>i` bär
+`streakFire`, båda under `.hit`. En fas-regel där hade ersatt animationen — och när fasklassen togs
+bort hade den gamla startat om av sig själv, mitt i sekvensen. Faserna håller sig till noder utan
+egen animation.
+
+**Krock 2 · transformen är upptagen på de direkta barnen.** `.streak-inferno>*` bär `skewX(3deg)`
+som motvikt till lådans `skewX(-3deg)`. En transform-animation på `.streak-copy` eller
+`.streak-score` hade slagit ut skevningen mitt i rörelsen. Fas 2 rör därför `filter` på det direkta
+barnet; bara barnbarnen får röra transform.
 
 Samma motivering som `gifter-fas.js` gav sin `profile`-modell, och den håller av samma skäl.
 
@@ -211,7 +246,7 @@ hade ändrat två fungerande familjer för en tredjes skull. Arterna som inte ko
 
 | Påstående | Varför det måste mätas |
 |---|---|
-| Ingen fas-regel rör någon av `VyraFlip.PARTS` sex selektorer | En träff gör hela `VyraFlip` verkningslös vid varje gåva |
+| Ingen fas-regel rör någon av de SJU noderna — de sex selektorerna OCH widgetlådan själv | En träff gör hela `VyraFlip` verkningslös vid varje gåva. Lådan är den som ser oskyldig ut |
 | `spela()` anropas från `armFlip()` respektive `arma()`, **efter** patchen | Annars koreograferas den gamla bilden |
 | En gåva som inte slår rekordet spelar ingen koreografi | Annars säger widgeten "nytt rekord" när inget hänt |
 | `approved-streak` utan temaklass får ingen fas | Godkända rankingar får inte ändra utseende |
