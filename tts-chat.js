@@ -29,6 +29,8 @@
     filterLetterSpam: true,
     filterMentions: true,
     filterCommands: true,
+    filterEmojis: true,
+    nameFormat: 'display',
     messageTemplate: '{nickname} säger {comment}'
   };
   const getSettings = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}'), audience: { ...DEFAULTS.audience, ...(JSON.parse(localStorage.getItem(KEY) || '{}').audience || {}) } } } catch { return { ...DEFAULTS } } };
@@ -206,6 +208,7 @@
   }
   function filterContent(settings, content) {
     let c = content;
+    if (settings.filterEmojis) c = c.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '');
     if (settings.filterMentions) c = c.replace(/@\S+/g, '').trim();
     if (settings.filterLetterSpam) c = c.replace(/(.)\1{3,}/g, '$1$1$1');
     if (settings.maxCommentLength && c.length > settings.maxCommentLength) c = c.slice(0, settings.maxCommentLength);
@@ -245,13 +248,20 @@
     }
     cooldowns[key] = now;
     const nickname = ev.name || username;
-    const spoken = String(settings.messageTemplate || '{comment}')
+    const announcedName = settings.nameFormat === 'none' ? ''
+      : settings.nameFormat === 'username' ? username : nickname;
+    // "Inget namn" ska vara verkligen rent även när streamern använder VYRAs standardmall.
+    // Egna mallar lämnas orörda, så befintliga creators förlorar aldrig sina formuleringar.
+    const template = settings.nameFormat === 'none' && settings.messageTemplate === DEFAULTS.messageTemplate
+      ? '{comment}' : String(settings.messageTemplate || '{comment}');
+    const spoken = template
+      .replace(/\{name\}/g, announcedName)
       .replace(/\{nickname\}/g, nickname)
       .replace(/\{username\}/g, username)
       .replace(/\{comment\}/g, content);
     // `??`, not `||` — a special user explicitly set to speed/pitch 0 must not fall back to the
     // global default just because 0 is falsy.
-    const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: numOrFallback(special?.speed, settings.speed), pitch: numOrFallback(special?.pitch, settings.pitch), volume: settings.volume };
+    const opts = { language: settings.language, voice: special?.voice || settings.voice, randomVoice: !special?.voice && settings.randomVoice, speed: numOrFallback(special?.speed, settings.speed), pitch: numOrFallback(special?.pitch, settings.pitch), volume: numOrFallback(special?.volume, settings.volume) };
     if (sandTal(spoken, opts, settings.maxQueueLength)) {
       pushLog({ time: now, username, nickname, text: spoken });
       statusLage.upplasta++;
@@ -433,6 +443,7 @@
       <select class="ttsSuVoice"><option value="">Standardröst</option></select>
       <input class="ttsSuSpeed" type="number" min="0.5" max="2" step="0.1" placeholder="Hastighet" value="${s.speed || ''}">
       <input class="ttsSuPitch" type="number" min="0" max="2" step="0.1" placeholder="Tonhöjd" value="${s.pitch || ''}">
+      <input class="ttsSuVolume" type="number" min="0" max="100" step="1" placeholder="Volym %" value="${s.volume ?? ''}">
       <button type="button" class="tts-su-remove" data-i="${i}">×</button>
     </div>`;
   }
@@ -440,83 +451,18 @@
   function ttsChatHtml() {
     const s = getSettings();
     const log = getLog();
-    return `<div class="page-header section-head"><div><h2>TTS Chat</h2><p>Läs upp tittarnas chattkommentarer automatiskt via Text-to-Speech. Rösten spelas direkt i webbläsaren — ingen overlay krävs. (En egen TTS finns även i Action &amp; Event för mer flexibilitet, t.ex. läsa upp gåvor.)</p></div></div>
-    <div class="tts-chat-grid">
-      <section class="card tts-general">
-        <header><h3>Allmänna inställningar</h3></header>
-        <div class="tts-status" data-tts-status></div>
-        <label class="tts-enabled-row"><input type="checkbox" id="ttsEnabled" ${s.enabled ? 'checked' : ''}> Aktiverad</label>
-        <div class="ae-grid">
-          <label>Språk<input id="ttsLanguage" placeholder="t.ex. sv-SE" value="${s.language}"></label>
-          <label>Röst<select id="ttsVoice"></select></label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsRandomVoice" ${s.randomVoice ? 'checked' : ''}> Slumpad röst</label>
-          <label>Volym<input id="ttsVolume" type="range" min="0" max="100" value="${s.volume}"></label>
-          <label>Hastighet<input id="ttsSpeed" type="number" min="0.5" max="2" step="0.1" value="${s.speed}"></label>
-          <label>Tonhöjd<input id="ttsPitch" type="number" min="0" max="2" step="0.1" value="${s.pitch}"></label>
-        </div>
-      </section>
-      <section class="card tts-audience">
-        <header><h3>Tillåtna användare</h3></header>
-        <div class="tts-audience-list">
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudAll" ${s.audience.all ? 'checked' : ''}> Alla användare</label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudFollower" ${s.audience.follower ? 'checked' : ''}> Följare</label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudSubscriber" ${s.audience.subscriber ? 'checked' : ''}> Prenumeranter</label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudModerator" ${s.audience.moderator ? 'checked' : ''}> Moderatorer</label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudTeam" ${s.audience.team ? 'checked' : ''}> <span>Team-medlemmar</span> <span class="tts-inline-num">Min. nivå <input id="ttsAudTeamLevel" type="number" min="1" value="${s.audience.teamMinLevel}"></span></label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudTopGifter" ${s.audience.topGifter ? 'checked' : ''}> <span>Top Gifters</span> <span class="tts-inline-num">Topp <input id="ttsAudTopGifterCount" type="number" min="1" value="${s.audience.topGifterCount}"></span></label>
-          <label class="tts-inline-check"><input type="checkbox" id="ttsAudList" ${s.audience.list ? 'checked' : ''}> Tillåtna användare från lista</label>
-        </div>
-        <label>Lista (ett användarnamn per rad)<textarea id="ttsAllowedList" rows="3" placeholder="@användare1&#10;@användare2">${(s.allowedUsernames || []).join('\n')}</textarea></label>
-      </section>
-      <section class="card tts-trigger">
-        <header><h3>Kommentarstyp</h3></header>
-        <div class="ae-radio-list">
-          <label><input type="radio" name="ttsCommentType" value="any" ${s.commentType === 'any' ? 'checked' : ''}> Alla kommentarer</label>
-          <label><input type="radio" name="ttsCommentType" value="dot" ${s.commentType === 'dot' ? 'checked' : ''}> Kommentarer som börjar med punkt (.)</label>
-          <label><input type="radio" name="ttsCommentType" value="slash" ${s.commentType === 'slash' ? 'checked' : ''}> Kommentarer som börjar med snedstreck (/)</label>
-          <label><input type="radio" name="ttsCommentType" value="command" ${s.commentType === 'command' ? 'checked' : ''}> Kommentarer som börjar med kommando</label>
-        </div>
-        <label>Kommando<input id="ttsCommand" value="${s.command}" ${s.commentType === 'command' ? '' : 'disabled'}></label>
-        <header class="tts-charge-header"><h3>Kosta poäng</h3></header>
-        <div class="ae-radio-list">
-          <label><input type="radio" name="ttsCharge" value="no" ${s.chargePoints ? '' : 'checked'}> Nej, det är gratis</label>
-          <label><input type="radio" name="ttsCharge" value="yes" ${s.chargePoints ? 'checked' : ''}> Ja, dra följande belopp</label>
-        </div>
-        <label>Kostnad per meddelande<input id="ttsCost" type="number" min="1" value="${s.costPerMessage}" ${s.chargePoints ? '' : 'disabled'}></label>
-        <small class="ae-timer-hint">Har användaren inte tillräckligt med poäng läses kommentaren INTE upp.</small>
-      </section>
-      <section class="card tts-special">
-        <header><h3>Specialanvändare</h3></header>
-        <small class="ae-timer-hint">Tillåt/blockera specifika användare och ge dem egna röster.</small>
-        <div id="ttsSpecialRows">${(s.specialUsers || []).map(specialUserRow).join('') || '<p class="ae-timer-hint" data-tom="tts-special">Inga specialanvändare tillagda. Lägg till en för egen röst eller blockering.</p>'}</div>
-        <button type="button" id="ttsAddSpecial" class="primary">＋ Lägg till användare</button>
-      </section>
-      <section class="card tts-tester">
-        <header><h3>Röstprovare</h3></header>
-        <div class="tts-tester-row"><input id="ttsTesterText" placeholder="Skriv en text att testa..." value="Hej och välkommen till livet!"><button type="button" id="ttsTesterPlay" class="primary">▶ Spela upp</button></div>
-      </section>
-      <section class="card tts-logs">
-        <header><h3>TTS-logg</h3><button type="button" id="ttsClearLog">Rensa</button></header>
-        <div class="tts-log-list">${log.length ? log.map(l => `<div class="tts-log-row"><small>${new Date(l.time).toLocaleTimeString('sv-SE')}</small><b>${l.nickname || l.username}:</b><span>${l.text}</span></div>`).join('') : '<p class="ae-timer-hint" data-tom="tts-logg">Inget uppläst ännu. När chatten läses upp visas raderna här.</p>'}</div>
-      </section>
-      <section class="card tts-spam">
-        <header><h3>Spamskydd</h3></header>
-        <div class="ae-grid">
-          <label>Cooldown per användare (sekunder)<input id="ttsCooldown" type="number" min="0" value="${s.cooldownSeconds}"></label>
-          <label>Max kölängd<input id="ttsMaxQueue" type="number" min="1" value="${s.maxQueueLength}"></label>
-          <label>Max meddelandelängd<input id="ttsMaxLength" type="number" min="1" value="${s.maxCommentLength}"></label>
-        </div>
-        <label class="tts-inline-check"><input type="checkbox" id="ttsFilterSpam" ${s.filterLetterSpam ? 'checked' : ''}> Filtrera bokstavsspam (t.ex. "aaaaaaaa")</label>
-        <label class="tts-inline-check"><input type="checkbox" id="ttsFilterMentions" ${s.filterMentions ? 'checked' : ''}> Filtrera @omnämnanden</label>
-        <label class="tts-inline-check"><input type="checkbox" id="ttsFilterCommands" ${s.filterCommands ? 'checked' : ''}> Filtrera !kommandon</label>
-      </section>
-      <section class="card tts-advanced">
-        <header><h3>Avancerat</h3></header>
-        <label>Meddelandemall<input id="ttsTemplate" value="${s.messageTemplate}"></label>
-        <small class="ae-timer-hint">Platshållare: {nickname} {username} {comment} — Exempel: "{nickname} säger {comment}"</small>
-      </section>
-    </div>
-    <button id="ttsSaveSettings" class="primary tts-save">Spara TTS-inställningar</button>`;
+    const named = s.nameFormat || 'display';
+    return `<div class="tts-vyra-head"><div><span class="tts-kicker">LIVE-AUTOMATIK</span><h2>TTS Chat</h2><p>Läs upp kommentarer med din röst och dina regler.</p></div><label class="tts-power"><input type="checkbox" id="ttsEnabled" ${s.enabled ? 'checked' : ''}><span></span><b>${s.enabled ? 'TTS aktiv' : 'TTS av'}</b></label></div>
+    <div class="tts-status" data-tts-status></div>
+    <div class="tts-tabs" role="tablist"><button class="active" type="button" data-tts-tab="settings">Inställningar</button><button type="button" data-tts-tab="viewers">Tittarregler <b>${(s.specialUsers || []).length}</b></button></div>
+    <section class="tts-pane active" data-tts-pane="settings"><div class="tts-vyra-grid">
+      <section class="card tts-general"><header><h3>Röst</h3><p>Välj röst och testa hur den låter innan din LIVE.</p></header><div class="tts-fields"><label>Språk<input id="ttsLanguage" placeholder="t.ex. sv-SE" value="${s.language}"></label><label>Röst<select id="ttsVoice"></select></label><label class="tts-inline-check"><input type="checkbox" id="ttsRandomVoice" ${s.randomVoice ? 'checked' : ''}> Slumpad röst</label><label>Volym<input id="ttsVolume" type="range" min="0" max="100" value="${s.volume}"></label><label>Hastighet<input id="ttsSpeed" type="number" min="0.5" max="2" step="0.1" value="${s.speed}"></label><label>Tonhöjd<input id="ttsPitch" type="number" min="0" max="2" step="0.1" value="${s.pitch}"></label></div><div class="tts-tester-row"><input id="ttsTesterText" placeholder="Skriv en text att testa..." value="Hej och välkommen till livet!"><button type="button" id="ttsTesterPlay" class="primary">▶ Testa röst</button></div></section>
+      <section class="card tts-audience"><header><h3>Vem får höras?</h3><p>Välj exakt vilka kommentarer som läses upp.</p></header><div class="tts-audience-list"><label class="tts-inline-check"><input type="checkbox" id="ttsAudAll" ${s.audience.all ? 'checked' : ''}> Alla användare</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudFollower" ${s.audience.follower ? 'checked' : ''}> Följare</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudSubscriber" ${s.audience.subscriber ? 'checked' : ''}> Prenumeranter</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudModerator" ${s.audience.moderator ? 'checked' : ''}> Moderatorer</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudTeam" ${s.audience.team ? 'checked' : ''}> Team · min. nivå <input id="ttsAudTeamLevel" type="number" min="1" value="${s.audience.teamMinLevel}"></label><label class="tts-inline-check"><input type="checkbox" id="ttsAudTopGifter" ${s.audience.topGifter ? 'checked' : ''}> Top givare · topp <input id="ttsAudTopGifterCount" type="number" min="1" value="${s.audience.topGifterCount}"></label><label class="tts-inline-check"><input type="checkbox" id="ttsAudList" ${s.audience.list ? 'checked' : ''}> Egen lista</label></div><label class="tts-list-field">Lista (ett användarnamn per rad)<textarea id="ttsAllowedList" rows="2" placeholder="@användare1&#10;@användare2">${(s.allowedUsernames || []).join('\n')}</textarea></label></section>
+      <section class="card tts-format"><header><h3>Hur läses det?</h3><p>Håll TTS ren och enkel för tittarna.</p></header><label>Namnformat<select id="ttsNameFormat"><option value="none" ${named === 'none' ? 'selected' : ''}>Inget namn</option><option value="display" ${named === 'display' ? 'selected' : ''}>Visningsnamn</option><option value="username" ${named === 'username' ? 'selected' : ''}>@Användarnamn</option></select></label><div class="tts-filter-pair"><label class="tts-inline-check"><input type="checkbox" id="ttsFilterEmojis" ${s.filterEmojis ? 'checked' : ''}> Ta bort emojis</label><label class="tts-inline-check"><input type="checkbox" id="ttsFilterMentions" ${s.filterMentions ? 'checked' : ''}> Dölj @-omnämnanden</label></div><div class="tts-trigger-compact"><label><input type="radio" name="ttsCommentType" value="any" ${s.commentType === 'any' ? 'checked' : ''}> Alla</label><label><input type="radio" name="ttsCommentType" value="dot" ${s.commentType === 'dot' ? 'checked' : ''}> Punkt</label><label><input type="radio" name="ttsCommentType" value="slash" ${s.commentType === 'slash' ? 'checked' : ''}> Snedstreck</label><label><input type="radio" name="ttsCommentType" value="command" ${s.commentType === 'command' ? 'checked' : ''}> Kommando</label></div><label>Kommando<input id="ttsCommand" value="${s.command}" ${s.commentType === 'command' ? '' : 'disabled'}></label></section>
+      <section class="card tts-spam"><header><h3>Skydd & kö</h3><p>Stoppar spam utan att tysta vanlig chatt.</p></header><div class="tts-fields"><label>Cooldown (sekunder)<input id="ttsCooldown" type="number" min="0" value="${s.cooldownSeconds}"></label><label>Max i kö<input id="ttsMaxQueue" type="number" min="1" value="${s.maxQueueLength}"></label><label>Max längd<input id="ttsMaxLength" type="number" min="1" value="${s.maxCommentLength}"></label></div><label class="tts-inline-check"><input type="checkbox" id="ttsFilterSpam" ${s.filterLetterSpam ? 'checked' : ''}> Filtrera bokstavsspam</label><label class="tts-inline-check"><input type="checkbox" id="ttsFilterCommands" ${s.filterCommands ? 'checked' : ''}> Filtrera !kommandon</label><label class="tts-inline-check"><input type="radio" name="ttsCharge" value="no" ${s.chargePoints ? '' : 'checked'}> Gratis TTS</label><label class="tts-inline-check"><input type="radio" name="ttsCharge" value="yes" ${s.chargePoints ? 'checked' : ''}> Kosta poäng <input id="ttsCost" type="number" min="1" value="${s.costPerMessage}" ${s.chargePoints ? '' : 'disabled'}></label></section>
+      <section class="card tts-logs"><header><h3>Senast uppläst</h3><button type="button" id="ttsClearLog">Rensa</button></header><div class="tts-log-list">${log.length ? log.slice(0,3).map(l => `<div class="tts-log-row"><small>${new Date(l.time).toLocaleTimeString('sv-SE')}</small><b>${l.nickname || l.username}:</b><span>${l.text}</span></div>`).join('') : '<p class="ae-timer-hint" data-tom="tts-logg">Inget uppläst ännu. Nästa godkända kommentar syns här.</p>'}</div><details class="tts-advanced"><summary>Avancerat meddelandeformat</summary><label>Mall<input id="ttsTemplate" value="${s.messageTemplate}"></label><small>Platshållare: {name} {nickname} {username} {comment}</small></details></section>
+    </div><button id="ttsSaveSettings" class="primary tts-save">Spara TTS-inställningar</button></section>
+    <section class="tts-pane" data-tts-pane="viewers"><section class="card tts-special"><header><h3>Egna regler för tittare</h3><p>Ge en person egen röst, volym eller blockera TTS helt.</p></header><div id="ttsSpecialRows">${(s.specialUsers || []).map(specialUserRow).join('') || '<p class="ae-timer-hint" data-tom="tts-special">Inga tittarregler ännu. Lägg till en när någon ska ha en egen röst.</p>'}</div><button type="button" id="ttsAddSpecial" class="primary">＋ Lägg till tittarregel</button></section></section>`;
   }
 
   function bindTtsChat() {
@@ -544,8 +490,17 @@
     refreshVoiceOptions();
     if (window.speechSynthesis) speechSynthesis.onvoiceschanged = refreshVoiceOptions;
     root.querySelector('#ttsLanguage').onchange = refreshVoiceOptions;
+    root.querySelectorAll('[data-tts-tab]').forEach(tab => tab.onclick = () => {
+      const target = tab.dataset.ttsTab;
+      root.querySelectorAll('[data-tts-tab]').forEach(item => item.classList.toggle('active', item === tab));
+      root.querySelectorAll('[data-tts-pane]').forEach(pane => pane.classList.toggle('active', pane.dataset.ttsPane === target));
+    });
 
-    root.querySelector('[name=ttsCommentType]')?.closest('.ae-radio-list').querySelectorAll('input').forEach(x => x.onchange = () => { root.querySelector('#ttsCommand').disabled = x.value !== 'command' || !x.checked });
+    // Den äldre layouten lade radioknapparna i .ae-radio-list. Den nya, kompakta VYRA-ytan
+    // använder .tts-trigger-compact, så stöd båda utan att låta en saknad äldre wrapper stoppa
+    // resten av knappbindningarna.
+    const commentTypeList = root.querySelector('[name=ttsCommentType]')?.closest('.ae-radio-list') || root.querySelector('.tts-trigger-compact');
+    commentTypeList?.querySelectorAll('input').forEach(x => x.onchange = () => { root.querySelector('#ttsCommand').disabled = x.value !== 'command' || !x.checked });
     root.querySelectorAll('[name=ttsCharge]').forEach(x => x.onchange = () => { root.querySelector('#ttsCost').disabled = x.value !== 'yes' || !x.checked });
 
     function wireSpecialRows() {
@@ -560,10 +515,18 @@
     }
     wireSpecialRows();
     root.querySelector('#ttsAddSpecial').onclick = () => {
-      const s = readFormSettings();
-      s.specialUsers.push({ username: '', allowed: true, voice: '', speed: '', pitch: '' });
-      setSettings(s);
-      rerender();
+      // Lägg in en tom rad direkt. Att spara först skulle filtrera bort den tomma användaren
+      // innan streamern hunnit skriva ett namn, så knappen skulle se ut att inte göra något.
+      const rows = root.querySelector('#ttsSpecialRows');
+      rows.querySelector('[data-tom="tts-special"]')?.remove();
+      const next = rows.querySelectorAll('.tts-special-row').length;
+      rows.insertAdjacentHTML('beforeend', specialUserRow({ username: '', allowed: true, voice: '', speed: '', pitch: '', volume: '' }, next));
+      const newVoice = rows.querySelector('.tts-special-row:last-child .ttsSuVoice');
+      if (newVoice && root.querySelector('#ttsVoice')) {
+        newVoice.innerHTML = root.querySelector('#ttsVoice').innerHTML;
+        newVoice.value = '';
+      }
+      wireSpecialRows();
     };
 
     root.querySelector('#ttsTesterPlay').onclick = async () => {
@@ -595,7 +558,8 @@
         allowed: row.querySelector('.ttsSuAllowed').checked,
         voice: row.querySelector('.ttsSuVoice').value,
         speed: row.querySelector('.ttsSuSpeed').value !== '' ? +row.querySelector('.ttsSuSpeed').value : '',
-        pitch: row.querySelector('.ttsSuPitch').value !== '' ? +row.querySelector('.ttsSuPitch').value : ''
+        pitch: row.querySelector('.ttsSuPitch').value !== '' ? +row.querySelector('.ttsSuPitch').value : '',
+        volume: row.querySelector('.ttsSuVolume').value !== '' ? +row.querySelector('.ttsSuVolume').value : ''
       })).filter(u => u.username);
       return {
         enabled: root.querySelector('#ttsEnabled').checked,
@@ -630,6 +594,8 @@
         filterLetterSpam: root.querySelector('#ttsFilterSpam').checked,
         filterMentions: root.querySelector('#ttsFilterMentions').checked,
         filterCommands: root.querySelector('#ttsFilterCommands').checked,
+        filterEmojis: root.querySelector('#ttsFilterEmojis').checked,
+        nameFormat: root.querySelector('#ttsNameFormat').value,
         messageTemplate: root.querySelector('#ttsTemplate').value.trim() || '{comment}'
       };
     }

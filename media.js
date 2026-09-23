@@ -1150,7 +1150,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260916-facit';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260821-2';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260821-2';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260821-2';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260923-4';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20260731-1';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
@@ -1420,7 +1420,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260919-14';
+  const version='20260923-4';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

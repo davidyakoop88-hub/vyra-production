@@ -55,7 +55,7 @@ test('retired saved skins are clamped to the new VYRA designs at render time', (
 test('fresh asset versions prevent a cached retired design from surviving reload', () => {
   const studioHtml = fs.readFileSync('studio.html', 'utf8');
   const media = fs.readFileSync('media.js', 'utf8');
-  assert.match(studioHtml, /media\.js\?v=20260919-14/);
+  assert.match(studioHtml, /media\.js\?v=20260923-4/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   assert.match(media, /toplike-studio\.js\?v=20260920-approved/);
 });

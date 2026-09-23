@@ -30,5 +30,5 @@ test('both approved designs are transparent by default and animated independentl
 
 test('Top Coins assets are loaded after media with a fresh shared cache version', () => {
   assert.match(html, /topcoins-v2\.css\?v=20260920-1/);
-  assert.ok(html.indexOf('media.js?v=20260919-14') < html.indexOf('topcoins-v2.js?v=20260920-1'));
+  assert.ok(html.indexOf('media.js?v=20260923-4') < html.indexOf('topcoins-v2.js?v=20260920-1'));
 });

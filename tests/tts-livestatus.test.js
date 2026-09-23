@@ -37,6 +37,19 @@ test('panelen har en statusrad med en stabil krok', () => {
     + 'live-chatten, och da maste anvandaren gissa utifran sidhuvudet');
 });
 
+test('TTS har separata inställningar och tittarregler utan att tappa skydden', () => {
+  assert.match(kalla, /data-tts-tab="settings"/,
+    'inställningsfliken saknas');
+  assert.match(kalla, /data-tts-tab="viewers"/,
+    'tittarregler ska inte blandas in bland de vanliga inställningarna');
+  assert.match(kalla, /id="ttsNameFormat"/,
+    'namnformatet saknas från den nya TTS-ytan');
+  assert.match(kalla, /id="ttsFilterEmojis"/,
+    'emoji-filtret saknas från den nya TTS-ytan');
+  assert.match(kalla, /ttsSuVolume/,
+    'en egen tittarregel ska kunna ha egen volym');
+});
+
 test('alla fyra lagen finns formulerade', () => {
   for (const [lage, monster] of [
     ['avstängd', /Avstängd/],
