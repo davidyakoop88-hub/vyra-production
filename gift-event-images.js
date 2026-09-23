@@ -250,7 +250,29 @@
       }
       if (!flip.resume(el)) flip.start(el);
       if (typeof flip.mark === 'function') flip.mark(el);
+      koreografera(el);
     });
+  }
+
+  // KOREOGRAFIN, EFTER MARKERINGEN (docs/gavororelsen.md §1 och §7).
+  //
+  // Fabriken kopplar sig inte hit sjalv: den lindar en global trigger och laser ett timerspar per
+  // tand lada, och Top Streak ar en PERMANENT widget utan bada. Anropet gors darfor har, pa exakt
+  // den rad dar `mark()` redan anropas — efter patchen, sa koreografin aldrig ramar in ett gammalt
+  // tal, och efter rekordgrinden, sa en gava UNDER rekordet inte far widgeten att saga "nytt
+  // rekord".
+  //
+  // EN PAGAENDE KOREOGRAFI SPELAR KLART. Det ar §7:s beslut, och det bor HAR och inte i fabriken:
+  // `spela()` vagrar inte sjalv spela om, eftersom Fan och Gifter bygger pa att den alltid spelar.
+  // Fabriken svarar bara pa FRAGAN om ladan spelar. I en gavostorm kan tva rekord ligga nagra
+  // hundra millisekunder isar, och en omstart dar hade visat fas 1 om och om igen — precis det
+  // fellage VyraFlip finns for att forhindra, en vaning upp. Ingenting gar forlorat: talet ar
+  // redan patchat, och `mark()`-pulsen kvitterar varje enskilt rekord oavsett.
+  function koreografera(el) {
+    var fas = window.VyraStreakFas;
+    if (!fas || typeof fas.spelar !== 'function') return;   // aldre bunt utan arten
+    if (fas.spelar(el)) return;
+    fas.spela(el);
   }
 
   function flush() {

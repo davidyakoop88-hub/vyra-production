@@ -138,11 +138,33 @@ inte. Det ska stå i ett prov, inte hoppas på.
 En i taget, med godkänd byggplan per modell — samma ordning som Gifter byggdes i. En halvfärdig fas
 är sämre än ingen.
 
-| Ordning | Modell | Varför just den |
-|---|---|---|
-| 1 | `streak-inferno` | `w.streakTheme \|\| 'inferno'` — entrén varje användare får som aldrig öppnar temaväljaren |
-| 2 | `topgift-royal` | `w.theme \|\| 'royal'` — samma skäl, andra familjen |
-| 3+ | resten | efter mätning, en i taget |
+| Ordning | Modell | Läge | Varför just den |
+|---|---|---|---|
+| 1 | `streak-inferno` | **byggd 2026-09-23** | `w.streakTheme \|\| 'inferno'` — entrén varje användare får som aldrig öppnar temaväljaren |
+| 2 | `topgift-royal` | kvar | `w.theme \|\| 'royal'` — samma skäl, andra familjen |
+| 3+ | resten | kvar | efter mätning, en i taget |
+
+### Vad `streak-inferno` blev, och de två krockarna som formade den
+
+| Fas | ms | Nod | Vad |
+|---|---|---|---|
+| 1 · antändning | 340 | `.streak-copy small` | rubriken TOP STREAK tänds och öppnar sin spärr |
+| 2 · slaget | 380 | `.streak-score` + dess `span` | glöd på talblocket, etiketten STREAK hårdnar |
+| 3 · avläsning | 340 | `.streak-copy strong` | namnet lyfts fram kort och lägger sig |
+
+Totalt **1060 ms**. Prefixet är `sfas-`, inte `streak-fas-`: `layoutAv()` returnerar första klassen
+som börjar med `streak-`, så en fasklass med det prefixet hade kunnat läsas som modell så fort
+klassordningen bytte. Prov S4 vaktar att de två aldrig möts.
+
+**Krock 1 · två barn är upptagna.** `.streak-score b` bär `streakNumber` och `.streak-flip>i` bär
+`streakFire`, båda under `.hit`. En fas-regel där hade ersatt animationen — och när fasklassen togs
+bort hade den gamla startat om av sig själv, mitt i sekvensen. Faserna håller sig till noder utan
+egen animation.
+
+**Krock 2 · transformen är upptagen på de direkta barnen.** `.streak-inferno>*` bär `skewX(3deg)`
+som motvikt till lådans `skewX(-3deg)`. En transform-animation på `.streak-copy` eller
+`.streak-score` hade slagit ut skevningen mitt i rörelsen. Fas 2 rör därför `filter` på det direkta
+barnet; bara barnbarnen får röra transform.
 
 Samma motivering som `gifter-fas.js` gav sin `profile`-modell, och den håller av samma skäl.
 
