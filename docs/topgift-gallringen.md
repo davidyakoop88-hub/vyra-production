@@ -1,7 +1,10 @@
 # Top Gift — så gallras designerna säkert
 
-Top Gift har **40 designer**. Det är för många, och de ska bli färre. Det här dokumentet säger hur
-en design tas bort utan att någons sändning ser fel ut.
+Top Gift hade **40 designer**. Det var för många. Det här dokumentet säger hur en design tas bort
+utan att någons sändning ser fel ut, och vad som redan tagits bort.
+
+**Gjort 2026-09-23:** hela ramgruppen, sju designer, på Davids begäran — *"för mycket och tråkigt
+design"*. Kvar: **33**.
 
 Allt som står som **uppmätt** är läst ur koden 2026-09-23.
 
@@ -16,11 +19,11 @@ borttagning till en dataändring, inte en kodändring.
 |---|---|---|
 | Premium | `topgift.premium` | 21 |
 | Extra | `topgift.extra` | 8 |
-| Ramar | `topgift.frame` | 7 |
+| ~~Ramar~~ | ~~`topgift.frame`~~ | **pensionerade 2026-09-23** |
 | Klassiska | `topgift.theme` | 4 |
 
-Ramarna har dessutom konst i `assets/topgift-frames/<namn>.png`, och varje design har en
-referensbild i `tests/visual/referenser/topgift_*.png`.
+Varje design har en referensbild i `tests/visual/referenser/topgift_*.png`. Ramarna hade dessutom
+konst i `assets/topgift-frames/` — den katalogen finns inte längre.
 
 ## 2. Fällan: renderaren är inte den du tror
 
@@ -51,8 +54,14 @@ vara mitt i en sändning. Det är hela risken med en gallring, och den är tyst.
 Modulen pekar om en pensionerad design till en vi valt åt den, **innan** renderaren ser den. Den
 laddas i premiumbunten direkt efter `premium-final.js`, alltså efter den renderare som faktiskt kör.
 
-- **Tabellen är tom i dag, med flit.** Skyddsnätet byggdes före gallringen — annars hade den första
-  borttagningen varit den som inte skyddades.
+- **Skyddsnätet byggdes före gallringen** — annars hade den första borttagningen varit den som
+  inte skyddades. Tabellen bär i dag de sju ramarna, var och en som en **avframning**: `giftFrame`
+  töms och `theme` sätts till `royal`. En ram är nämligen en egen GREN i renderaren
+  (`if (w.giftFrame) return klassiskTopGift(w)`), inte ett annat skinn på samma gren — en ram som
+  pekats på ett temanamn hade fallit igenom ändå, men av en slump och inte av ett beslut.
+- **Ramens accentfärg följer med**, men bara om streamern inte valt en egen. Den ramade grenen föll
+  tillbaka på ramens färg; premiumgrenen faller tillbaka på guld. Utan den raden hade sju lila och
+  rosa widgetar blivit gula.
 - **Den muterar inte widgeten.** Renderaren får en kopia. Streamerns val står kvar orört, så en
   design som tas tillbaka dyker upp igen av sig själv, och en felaktig pensionering går att ångra
   utan att någons data gått förlorad.

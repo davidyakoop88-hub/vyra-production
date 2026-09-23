@@ -28,11 +28,35 @@
 (function (root) {
   'use strict';
 
-  // <pensionerad design> : <design den ska ritas som>
+  // <pensionerad design> : <vad den ska ritas som>
   //
   // Nyckeln är namnet som ligger i `w.theme` eller `w.giftFrame` hos någon som redan sparat sin
-  // layout. Värdet måste vara en design som FINNS i widget-factory.js variants — vakten kräver det.
-  const PENSIONERADE = {};
+  // layout. Värdet är antingen
+  //
+  //   en STRÄNG        — samma sorts design, nytt namn. Fältet behålls.
+  //   ett OBJEKT       — `{ tema, accent }`: widgeten AVFRAMAS. `giftFrame` töms och `theme` sätts.
+  //
+  // Objektformen finns därför att en ram och ett tema inte är samma sak: ramen är en egen GREN i
+  // renderaren (`if (w.giftFrame) return klassiskTopGift(w)`), inte ett annat skinn på samma gren.
+  // En ram som pekades på ett temanamn hade fallit igenom till premiumgrenen ändå — men av en
+  // slump, inte av ett beslut, och nästa läsare hade inte kunnat se skillnaden.
+  //
+  // `accent` sätts BARA om widgeten saknar en egen. Den ramade grenen föll tillbaka på ramens
+  // accentfärg när streamern inte valt någon (`bk(w, w.accent, 'highlight', gf.accent)`), och
+  // premiumgrenen faller tillbaka på guld. Utan raden hade sju lila och rosa widgetar blivit gula.
+  const PENSIONERADE = {
+    // RAMARNA, pensionerade 2026-09-23 pa Davids begaran: "for mycket och trakigt design".
+    // Hela grenen gar — `topgift.frame` ar borta ur widget-factory.js, sa katalogknapparna
+    // (som byggs ur Object.entries(GIFT_FRAMES)) forsvinner av sig sjalva och `klassiskTopGift`
+    // blir oatkomlig. Accentfargerna ar ramarnas egna, lasta ur tabellen innan den togs bort.
+    'royal-wings':   { tema: 'royal', accent: '#ffc13b' },
+    'crystal-spire': { tema: 'royal', accent: '#b083ff' },
+    'angel-heart':   { tema: 'royal', accent: '#ff8fc8' },
+    'dark-raven':    { tema: 'royal', accent: '#9b5cff' },
+    'frost-crystal': { tema: 'royal', accent: '#6db8ff' },
+    'rose-garden':   { tema: 'royal', accent: '#ff8fc8' },
+    'luna-mist':     { tema: 'royal', accent: '#c07bff' },
+  };
 
   // Standardtemat. `premium-final.js` gör `w.theme||'royal'`, så en widget utan valt tema ritas som
   // royal. Pensioneras royal utan att den defaulten ändras i samma andetag får varje sådan widget
@@ -45,8 +69,18 @@
   function levande(namn) {
     if (!namn) return namn;
     let n = namn;
-    for (let steg = 0; steg < 8 && PENSIONERADE[n]; steg += 1) n = PENSIONERADE[n];
+    for (let steg = 0; steg < 8; steg += 1) {
+      const post = PENSIONERADE[n];
+      if (typeof post !== 'string') break;      // slut, eller en avframning som `avframa` tar
+      n = post;
+    }
     return n;
+  }
+
+  // Avframningen, om den pensionerade posten är en sådan. Returnerar null när den inte är det.
+  function avframa(ram) {
+    const post = ram && PENSIONERADE[levande(ram)];
+    return post && typeof post === 'object' ? post : null;
   }
 
   function linda() {
@@ -54,10 +88,18 @@
     if (typeof original !== 'function' || original.__pensionLindad) return false;
     const lindad = function (w) {
       if (!w) return original.call(this, w);
+      const utan = avframa(w.giftFrame);
+      if (utan) {
+        // KOPIA, aldrig mutation — se filhuvudet. Accenten bara om streamern inte valt en egen.
+        return original.call(this, Object.assign({}, w, {
+          giftFrame: '',
+          theme: levande(utan.tema),
+          accent: w.accent || utan.accent,
+        }));
+      }
       const tema = levande(w.theme);
       const ram = levande(w.giftFrame);
       if (tema === w.theme && ram === w.giftFrame) return original.call(this, w);
-      // KOPIA, aldrig mutation — se filhuvudet.
       return original.call(this, Object.assign({}, w, { theme: tema, giftFrame: ram }));
     };
     lindad.__pensionLindad = true;
@@ -67,5 +109,5 @@
 
   linda();
 
-  root.VyraTopGiftPension = { PENSIONERADE, STANDARD, levande, linda };
+  root.VyraTopGiftPension = { PENSIONERADE, STANDARD, levande, avframa, linda };
 })(window);

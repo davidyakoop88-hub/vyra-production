@@ -29,9 +29,6 @@ const CONTRACT = [
   { name: 'Top Gift · extratema sakura', key: 'catalog:topgift:extra:sakura',
     marker: "giftName:'ROSE',giftCount:250",
     bindings: { id: 'x', theme: 'sakura', color: '#ff69b4' } },
-  { name: 'Top Gift · ram', key: 'catalog:topgift:frame:royal-wings',
-    marker: "type:'templateTopGift',giftFrame:fid",
-    bindings: { id: 'x', fid: 'royal-wings', f: { accent: '#ffc13b' } } },
 
   { name: 'Top Streak · standard', key: 'catalog:topstreak',
     marker: "type:'templateTopStreak',x:65,y:220,width:310", bindings: { id: 'x' } },

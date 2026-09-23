@@ -77,22 +77,6 @@
     "dataSize": 18,
     "showDataValue": true
   },
-  "catalog:topgift:frame:royal-wings": {
-    "type": "templateTopGift",
-    "giftFrame": "royal-wings",
-    "x": 70,
-    "y": 150,
-    "width": 300,
-    "title": "VYRA Top Gift",
-    "templateTitle": "TOP GIFTER",
-    "dataName": "@StreamQueen",
-    "dataValue": "44 999",
-    "accent": "#ffc13b",
-    "dataColor": "#fff",
-    "valueColor": "#ffc13b",
-    "dataSize": 15,
-    "showDataValue": true
-  },
   "catalog:topstreak": {
     "type": "templateTopStreak",
     "x": 76,

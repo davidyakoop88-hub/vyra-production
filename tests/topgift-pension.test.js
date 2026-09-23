@@ -27,11 +27,18 @@ function levandeDesigner() {
   vm.runInNewContext(las('widget-factory.js'), root, { filename: 'widget-factory.js' });
   const W = root.VyraWidgets;
   const namn = new Set();
-  for (const bord of ['topgift.theme', 'topgift.frame', 'topgift.extra', 'topgift.premium']) {
-    const tabell = W.variants(bord);
-    assert.ok(tabell && Object.keys(tabell).length > 0, `varianttabellen ${bord} ar tom`);
-    Object.keys(tabell).forEach(k => namn.add(k));
+  // topgift.frame star INTE i listan langre: hela grenen pensionerades 2026-09-23 och tabellen
+  // finns inte kvar. `table()` svarar `{}` pa ett borttaget bord, sa en kvarglomd rad hade gjort
+  // vakten tyst i stallet for rod — darfor raknas totalen i stallet.
+  for (const bord of ['topgift.theme', 'topgift.extra', 'topgift.premium']) {
+    Object.keys(W.variants(bord)).forEach(k => namn.add(k));
   }
+  // 22 UNIKA, inte 33: royal, neon, cyber, fire, ice, galaxy, sakura och flera till star i mer an
+  // en tabell. Golvet ar en kontrollmatning mot en omdopt eller flyttad tabell, inte ett facit.
+  assert.ok(namn.size >= 20,
+    `hittade bara ${namn.size} levande Top Gift-designer — har en varianttabell dopts om?`);
+  assert.equal(Object.keys(W.variants('topgift.frame')).length, 0,
+    'topgift.frame finns igen — da ska ramarna ut ur PENSIONERADE, inte ligga kvar som bada');
   return namn;
 }
 
@@ -48,10 +55,18 @@ test('P1: varje pensionerad design pekar pa en design som FINNS', () => {
   // om vi inte gjort nagot alls — skyddsnatet hade da varit ett hal med en etikett pa.
   const levande = levandeDesigner();
   const { PENSIONERADE } = rigg().VyraTopGiftPension;
-  for (const [fran, till] of Object.entries(PENSIONERADE)) {
+  for (const [fran, post] of Object.entries(PENSIONERADE)) {
+    const till = typeof post === 'string' ? post : post.tema;
     assert.ok(levande.has(till),
       `'${fran}' pensioneras till '${till}', som inte finns i nagon varianttabell`);
+    if (typeof post === 'object') {
+      assert.match(post.accent || '', /^#[0-9a-f]{6}$/i,
+        `avframningen av '${fran}' saknar en giltig accentfarg — den ramade grenen foll tillbaka `
+        + 'pa ramens egen farg, premiumgrenen faller tillbaka pa guld');
+    }
   }
+  assert.equal(Object.keys(PENSIONERADE).length, 7,
+    'antalet pensionerade designer andrades — uppdatera docs/topgift-gallringen.md i samma andring');
 });
 
 test('P2: ingen design ar bade levande och pensionerad', () => {
@@ -84,7 +99,8 @@ test('P4: inga cykler', () => {
   for (const fran of Object.keys(PENSIONERADE)) {
     const sedda = new Set([fran]);
     let n = PENSIONERADE[fran];
-    while (PENSIONERADE[n]) {
+    if (typeof n !== 'string') continue;        // en avframning ar alltid en andstation
+    while (typeof PENSIONERADE[n] === 'string') {
       assert.ok(!sedda.has(n), `pensioneringarna gar i cykel via '${n}'`);
       sedda.add(n);
       n = PENSIONERADE[n];
@@ -97,30 +113,29 @@ test('P5: MEKANIKEN — en pensionerad design ritas som sin efterfoljare', () =>
   // Provet injicerar sin egen post: det mater REGELN, inte dagens tomma tabell.
   const sett = [];
   const root = rigg(w => { sett.push({ theme: w.theme, giftFrame: w.giftFrame }); return 'ok' });
-  root.VyraTopGiftPension.PENSIONERADE['dark-raven'] = 'luna-mist';
-  root.vyraTopGift({ theme: 'royal', giftFrame: 'dark-raven' });
-  assert.deepEqual(sett, [{ theme: 'royal', giftFrame: 'luna-mist' }],
-    'renderaren fick den pensionerade ramen — den hade ritats osminkad i drift');
+  root.VyraTopGiftPension.PENSIONERADE['prov-gammal'] = 'prov-ny';
+  root.vyraTopGift({ theme: 'prov-gammal', giftFrame: '' });
+  assert.deepEqual(sett, [{ theme: 'prov-ny', giftFrame: '' }],
+    'renderaren fick det pensionerade temat — det hade ritats osminkat i drift');
 });
 
 test('P6: MEKANIKEN foljer en kedja', () => {
   const sett = [];
   const root = rigg(w => { sett.push(w.giftFrame); return 'ok' });
   const p = root.VyraTopGiftPension;
-  p.PENSIONERADE['a'] = 'b';
-  p.PENSIONERADE['b'] = 'luna-mist';
-  root.vyraTopGift({ giftFrame: 'a' });
-  assert.deepEqual(sett, ['luna-mist'], 'kedjan a -> b -> luna-mist foljdes inte');
+  p.PENSIONERADE['prov-a'] = 'prov-b';
+  p.PENSIONERADE['prov-b'] = 'prov-c';
+  root.vyraTopGift({ giftFrame: 'prov-a' });
+  assert.deepEqual(sett, ['prov-c'], 'kedjan prov-a -> prov-b -> prov-c foljdes inte');
 });
 
 test('P7: widgeten MUTERAS ALDRIG', () => {
   // Streamerns val star kvar orort, sa en design som tas tillbaka dyker upp igen av sig sjalv —
   // och en felaktig pensionering gar att angra utan att nagons data gatt forlorad.
   const root = rigg(() => 'ok');
-  root.VyraTopGiftPension.PENSIONERADE['dark-raven'] = 'luna-mist';
-  const w = { theme: 'royal', giftFrame: 'dark-raven', x: 10 };
+  const w = { theme: 'royal', giftFrame: 'luna-mist', x: 10 };
   root.vyraTopGift(w);
-  assert.equal(w.giftFrame, 'dark-raven', 'wrappern skrev i streamerns widget');
+  assert.equal(w.giftFrame, 'luna-mist', 'wrappern skrev i streamerns widget');
 });
 
 test('P8: en orord widget gar RAKT igenom, utan kopia', () => {
@@ -128,7 +143,7 @@ test('P8: en orord widget gar RAKT igenom, utan kopia', () => {
   // per rendering.
   const sett = [];
   const root = rigg(w => { sett.push(w); return 'ok' });
-  const w = { theme: 'royal', giftFrame: 'luna-mist' };
+  const w = { theme: 'royal', giftFrame: '' };
   root.vyraTopGift(w);
   assert.equal(sett[0], w, 'en orord widget kopierades i onodan');
 });
@@ -148,4 +163,72 @@ test('P10: modulen laddas EFTER premium-final.js', () => {
   assert.ok(rad.includes('topgift-pension.js'), 'modulen ligger inte i premiumbunten');
   assert.ok(rad.indexOf('topgift-pension.js') > rad.indexOf('premium-final.js'),
     'modulen laddas FORE premium-final.js — da lindas fel renderare');
+});
+
+// ——— RAMARNA, pensionerade 2026-09-23 ———
+//
+// Hela `topgift.frame`-grenen togs bort pa Davids begaran. Det ar ingen omdopning: ramen ar en egen
+// GREN i renderaren (`if (w.giftFrame) return klassiskTopGift(w)`), inte ett annat skinn pa samma.
+// De har proven mater att avframningen landar dar vi vill, och inte dar den hade landat av sig
+// sjalv.
+const RAMAR = ['royal-wings', 'crystal-spire', 'angel-heart', 'dark-raven', 'frost-crystal',
+  'rose-garden', 'luna-mist'];
+
+test('P11: alla sju ramar ar pensionerade, och som AVFRAMNINGAR', () => {
+  const { PENSIONERADE } = rigg().VyraTopGiftPension;
+  for (const ram of RAMAR) {
+    const post = PENSIONERADE[ram];
+    assert.ok(post, `ramen '${ram}' saknar pensionering — en sparad widget ritas osminkad`);
+    assert.equal(typeof post, 'object',
+      `'${ram}' pensioneras med en strang. En ram som pekas pa ett TEMANAMN faller igenom till `
+      + 'premiumgrenen anda — men av en slump, inte av ett beslut');
+    assert.ok(post.tema, `'${ram}' saknar mal-tema`);
+  }
+});
+
+test('P12: en sparad ramwidget AVFRAMAS — giftFrame toms', () => {
+  // Utan tomningen ar `if (w.giftFrame)` i premium-final.js fortfarande sant, och widgeten gar till
+  // klassiskTopGift → som med en tom GIFT_FRAMES faller till media.js EGNA klassiska tema. Det ar
+  // en TREDJE rendering, varken ramen eller premiumdesignen. Tomningen ar det som styr den ratt.
+  const sett = [];
+  const root = rigg(w => { sett.push(w); return 'ok' });
+  root.vyraTopGift({ giftFrame: 'luna-mist', theme: undefined });
+  assert.equal(sett[0].giftFrame, '', 'giftFrame tomdes inte — widgeten hamnar i fel gren');
+  assert.equal(sett[0].theme, 'royal');
+});
+
+test('P13: ramens accentfarg foljer med — men bara om streamern inte valt en egen', () => {
+  // Den ramade grenen foll tillbaka pa ramens egen farg nar streamern inte valt nagon
+  // (`bk(w, w.accent, 'highlight', gf.accent)`); premiumgrenen faller tillbaka pa guld. Utan den
+  // har raden hade sju lila och rosa widgetar blivit gula.
+  const sett = [];
+  const root = rigg(w => { sett.push(w.accent); return 'ok' });
+  root.vyraTopGift({ giftFrame: 'luna-mist' });
+  assert.equal(sett[0], '#c07bff', 'ramens accent tappades — widgeten blir guldfargad');
+  root.vyraTopGift({ giftFrame: 'luna-mist', accent: '#00ff00' });
+  assert.equal(sett[1], '#00ff00', 'streamerns egen accent skrevs over');
+});
+
+test('P14: katalogen kan inte langre skapa en ram, och sager varfor', () => {
+  // pick() kastar med en lasbar lista. Det ar RATT beteende har: en katalognyckel som pekar pa en
+  // borttagen design ar ett fel i koden eller i en gammal lank, inte i nagons sparade layout.
+  const root = { document: { addEventListener: () => {}, querySelectorAll: () => [] } };
+  root.window = root;
+  vm.runInNewContext(las('widget-factory.js'), root, { filename: 'widget-factory.js' });
+  assert.throws(() => root.VyraWidgets.create('catalog:topgift:frame:luna-mist'),
+    /Okänd tema "frame"|Okänd gåvoram/,
+    'en borttagen ram gick fortfarande att skapa ur katalogen');
+});
+
+test('P15: ramkonsten och referensbilderna ar borta', () => {
+  // Blir de kvar ar de ett arkeologiskt spar — och referensbilderna far den visuella vakten att
+  // falla pa nycklar som inte langre finns.
+  assert.ok(!fs.existsSync(path.join(ROT, 'assets', 'topgift-frames')),
+    'assets/topgift-frames/ finns kvar — 2,1 MB konst till sju borttagna designer');
+  const ref = path.join(ROT, 'tests', 'visual', 'referenser');
+  const kvar = fs.readdirSync(ref).filter(f => f.startsWith('topgift_frame_'));
+  assert.deepEqual(kvar, [], `referensbilder kvar for borttagna ramar: ${kvar.join(', ')}`);
+  const karta = las(path.join('docs', 'katalogkarta.md'));
+  assert.ok(!karta.includes('catalog:topgift:frame'),
+    'katalogkartan listar fortfarande ramarna — kor `npm run karta`');
 });

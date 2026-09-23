@@ -499,7 +499,6 @@ body:has(.editor-shell){grid-template-columns:var(--meny-bredd) minmax(0,1fr);he
    ut overallt, sa bredden foljer nu resten av Studion. Rullningslisten ar DOLD men rullningen
    kvar: innehallet ar 866px och ryms vid 900px fonsterhojd, men inte vid 768. */
 
-
 body:has(.editor-shell)>main{height:100vh;min-height:0;overflow:hidden;padding-bottom:0!important}
 body:has(.editor-shell) main>header{height:58px;padding:0 16px}
 body:has(.editor-shell) header h1{font-size:17px;margin:2px 0}
@@ -803,22 +802,6 @@ html.overlay-output .widget{
 .streak-framed .sframe-row b{color:var(--streak);text-shadow:0 0 12px var(--streak);white-space:nowrap}
 .streak-framed.hit .sframe-row b{animation:streakNumber .8s ease}
 
-/* Top Gift · ramdesigner (giftFrame): AI-ram, gift->profil-flip genom utstansat cirkelfönster (z2 under z3), rubrik på övre plattan och namn+summa på nedre (z4). tf-dark-* = ljus platta, mörk text. */
-.vyra-topgift.topgift-framed{height:auto!important;aspect-ratio:var(--fa);display:block!important;padding:0!important;overflow:visible!important;background:transparent!important;border:none!important;box-shadow:none!important;border-radius:0!important;text-align:initial!important}
-.vyra-topgift.topgift-framed:before,.vyra-topgift.topgift-framed:after{display:none!important}
-.topgift-framed .tgf-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:3}
-.topgift-framed .vyra-flip{position:absolute!important;z-index:2;margin:0!important}
-.topgift-framed .vyra-gift-face,.topgift-framed .vyra-profile-face{border:none!important;box-shadow:none!important;background:#0d0614;border-radius:50%}
-.topgift-framed .vyra-gift-face img{width:64%!important;height:64%!important;object-fit:contain}
-.topgift-framed .vyra-gift-face span{display:none}
-.topgift-framed .vyra-profile-face img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.topgift-framed .tgf-title{position:absolute;z-index:4;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:900;letter-spacing:3px;color:#ffe6a4;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;overflow:hidden;white-space:nowrap}
-.topgift-framed.tf-dark-title .tgf-title{color:#7a3b58;text-shadow:0 1px 2px rgba(255,255,255,.5)}
-.topgift-framed .tgf-plate{container-type:inline-size;position:absolute;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;pointer-events:none;overflow:hidden;line-height:1.1}
-.topgift-framed .tgf-plate strong{display:block!important;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topgift-framed .tgf-plate em{display:block!important}
-.topgift-framed .tgf-plate em{font-style:normal;font-weight:800;color:var(--accent);text-shadow:0 0 12px var(--accent);white-space:nowrap;font-size:13px}
-.topgift-framed.tf-dark-name .tgf-plate strong{color:#5e2c46!important;text-shadow:0 1px 2px rgba(255,255,255,.5)}
-.topgift-framed.tf-dark-name .tgf-plate em{color:#5e2c46!important;text-shadow:none}
 /* Ingen egen längd längre. Med en engångsflipp var 3,8 s bara en annan hastighet; med en evig loop
    hade den ramade varianten bytt bild var 1,9:e sekund medan alla andra bytte var 5:e. */
 
@@ -1043,8 +1026,6 @@ html.overlay-output .widget{
 @keyframes jarFull{50%{transform:scale(1.045) rotate(.7deg)}}
 @keyframes jarGalaxy{to{transform:rotate(360deg)}}
 
-
-
 .jar-heart .gift-jar-aura::before{transform:rotate(-45deg);transform-origin:0 100%}
 .jar-heart .gift-jar-aura::after{transform:translateX(-100%) rotate(45deg);transform-origin:100% 100%}
 .jar-heart .gift-jar-aura::before{transform:translate(-100%,-50%) rotate(-45deg)}
@@ -1057,15 +1038,6 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
 /* Kompakt meny i EDITORN. Full meny med etiketter tar 1241px i hojd, men editorn har ofta
    bara 768px. Raderna kortas dar — inte i ovriga Studion, dar hojden finns. Uppmatt: knapp
    57px -> 34px, sektionsetikett 34px -> 18px, sektionsavstand 22px -> 10px. */
-
-
-
-
-
-
-
-
-
 
 /* HANDTAG PA ALLA SIDOR. Placeringen sker med left/top plus negativ marginal, aldrig med
    translate — den inversa scaleY som haller handtagen fyrkantiga nar widgeten ar strackt
@@ -1187,7 +1159,6 @@ aside::-webkit-scrollbar{width:0;height:0;display:none}
   background-repeat:no-repeat!important;background-position:center!important;background-size:64% auto!important;
   background-color:transparent!important;
   filter:drop-shadow(0 0 12px color-mix(in srgb,var(--fan),transparent 40%))}
-
 
 /* ===== FAN LEVEL UP · tre rattelser efter Davids granskning 2026-08-13 =====
 
@@ -1392,7 +1363,6 @@ html.overlay-output .vyra-scenbakgrund{position:fixed;inset:0;width:100vw;height
 .vyra-handle-rot::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:12px;margin-left:-1px;background:#9f35ff;box-shadow:0 0 6px #9f35ff}
 label[data-rotation-falt] input{width:100%}
 
-
 /* ---- SIDOMENYN: EN BREDD, OCH PROFILEN ALLTID SYNLIG (2026-08-20) --------------------------
    TVA FEL, uppmatta i riktig Chrome fore fixen:
 
@@ -1422,7 +1392,6 @@ aside>nav::-webkit-scrollbar{display:none}
    och profilkortet blir en 3px hog rand i stallet for att trycka undan menyn. */
 aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
 
-
 /* ================================================================================================
    SIDOMENYN SER LIKADAN UT I ALLA VYER (2026-08-21).
 
@@ -1437,7 +1406,6 @@ aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
    flex-shrink:0, sa menyn rullar i stallet for att krympa. Det ar samma losning som redan galler
    i alla andra vyer.
    ================================================================================================ */
-
 
 /* ================================================================================================
    OVERLAYLANKEN FAR PLATS ATT SYNAS (Davids buggrapport 2026-08-21).
@@ -1475,7 +1443,6 @@ aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
   body:has(.editor-shell) #view{height:calc(100vh - 58px - 84px)}
 }
 
-
 /* ================================================================================================
    LANKRADENS HOJD FOLJER INNEHALLET (Davids skarmbild 2026-08-21).
 
@@ -1490,7 +1457,6 @@ aside>.sidebar-head,aside>.aside-bottom{flex-shrink:0}
    och vaxa nar den inte gor det. Editorytan raknar redan bort utrymmet via #view nedan.
    ================================================================================================ */
 body:has(.editor-shell) #view{height:calc(100vh - 58px - 84px)}
-
 
 /* ================================================================================================
    LANKEN FLYTTAR UPP I VERKTYGSRADEN, OCH WIDGETLISTAN FAR HELA PANELEN

@@ -118,8 +118,10 @@ const FALL = [
   ['catalog:topgift',                        'topgift'],
   ['catalog:topgift:premium:royal',          'topgift'],
   ['catalog:topgift:extra:coronation',       'topgift'],
-  ['catalog:topgift:frame:royal-wings',      'topgift', UTAN_RAM],
-  ['catalog:topgift:frame:angel-heart',      'topgift', UTAN_RAM],
+  // Top Gifts gavoramar togs bort 2026-09-23 pa Davids begaran ("for mycket och trakigt
+  // design"): varianttabellen, katalogknapparna och den ramade grenen i vyraTopGift ar ute
+  // ur repot. topgift-pension.js pekar de sju pa premiumdesignen royal sa sparade layouter
+  // laser. Battle MVP:s ramar star kvar och bar UTAN_RAM-fallet vidare.
   // Top Streak togs bort ur ramfamiljen 2026-09-20: Clean Flip (approved-rankings.js) ritar ingen
   // profilram, premium:liquid och gavoramarna ar avvecklade (#476/#481). Ramvaljaren visas inte
   // langre for widgeten. Uppmatt: profileFrame:'lightning' pa catalog:topstreak gav ingen ramkonst.

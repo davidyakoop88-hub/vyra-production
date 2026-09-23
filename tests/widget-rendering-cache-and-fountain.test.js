@@ -143,7 +143,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // arten) och gift-event-images.js (armningen anropar koreografin), sa de bumpas ocksa — var och
   // en for sin egen andring. widget-factory.js och premiumbundlen ar OFORANDRADE och behaller
   // sina strangar.
-  assert.match(studio, /studio\.css\?v=20260923-1/);
+  // Bumpad 2026-09-23 igen: de 16 reglerna for `.topgift-framed`/`.tgf-*` togs bort nar hela
+  // ramgrenen pensionerades. widget-factory.js bumpas i samma andring — det ar DEN som bar
+  // varianttabellen, och en cachad fabrik hade fortsatt erbjuda sju designer som inte finns.
+  assert.match(studio, /studio\.css\?v=20260923-2/);
+  assert.match(studio, /widget-factory\.js\?v=20260923-1/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);

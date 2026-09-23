@@ -101,7 +101,8 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
   const cases = [
     ['catalog:topgift:felstavat', /Okänd tema "felstavat"/],
     ['catalog:topgift:extra:felstavat', /Okänd extratema/],
-    ['catalog:topgift:frame:felstavat', /Okänd gåvoram/],
+    // `catalog:topgift:frame:*` star inte kvar: ramgrenen pensionerades 2026-09-23, sa 'frame'
+    // laser nu som ett TEMANAMN och kastar /Okänd tema "frame"/ — samma skydd, annan text.
     ['catalog:topstreak:felstavat', /Okänd streaktema/],
     ['catalog:topstreak:frame:felstavat', /Okänd streakram/],
     ['catalog:ranking:felstavat:gold', /Okänd rankingtyp/],
@@ -131,7 +132,8 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
 test('tabellerna är produktionskällan — inget behöver registreras utifrån', () => {
   assert.equal(typeof VyraWidgets.registerVariants, 'undefined',
     'extern registrering finns kvar och kan bli en andra kopia');
-  assert.ok(Object.keys(VyraWidgets.variants('topgift.frame')).length > 0, 'ramtabellen är tom');
+  assert.equal(Object.keys(VyraWidgets.variants('topgift.frame')).length, 0,
+    'topgift.frame finns igen — ramgrenen ar pensionerad, se docs/topgift-gallringen.md');
   assert.ok(Object.keys(VyraWidgets.variants('topstreak.frame')).length > 0);
   assert.ok(Object.keys(VyraWidgets.variants('battlemvp.frame')).length > 0);
 });
