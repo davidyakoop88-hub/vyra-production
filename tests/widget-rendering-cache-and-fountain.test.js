@@ -255,7 +255,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // och media.js bar dess versionsstrang.
   // Ny Guardian-modell: fabriken, media.js och dess syskonmodul laddas som samma version.
   for (const file of ['media.js', 'widget-factory.js']) {
-    const version = studio.match(new RegExp('src=["\']' + file.replace('.', '\\.') + '\\?v=(\\d{8})-(\\d+)["\']'));
+    // En beskrivande svans efter revisionen (t.ex. "-today-features") är
+    // tillåten. Datum och revision måste fortfarande finnas så att gamla
+    // cacheversioner inte kan smyga in igen.
+    const version = studio.match(new RegExp('src=["\']' + file.replace('.', '\\.') + '\\?v=(\\d{8})-(\\d+)(?:-[a-z0-9-]+)?["\']'));
     assert.ok(version, file + ' must have a dated cache version');
     const date = Number(version[1]), revision = Number(version[2]);
     assert.ok(date > 20260912 || (date === 20260912 && revision >= 4),
@@ -314,19 +317,21 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
     'battle-mvp-session.js cachebustades inte for #368');
-  for (const fil of ['vyra-tal', 'sound-alerts']) {
-    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
-  }
+  assert.match(media, /vyra-tal\.js\?v=20260817-duckning/, 'vyra-tal.js cachebustades inte');
+  // Sound Alerts byggdes om till den nya ljudkatalogen 2026-09-23.
+  assert.match(media, /sound-alerts\.js\?v=20260923-library/, 'sound-alerts.js cachebustades inte');
   // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
   // (docs/referens/tikfinity-actions-facit.md) och filen ar alltsa inte langre "oforandrad sedan
   // duckningen". De fyra filerna i samma ombyggnad delar strang, for de ar EN andring — halls de
   // isar kan en av dem laddas gammal mot de andras nya kontrakt, och faltregistret finns bara i en
   // av dem: laddas action-event.js gammal saknar de andra tre `VyraActionFields` och tappar TYST
   // varje falt de skulle ha lamnat ifran sig.
-  for (const fil of ['action-event', 'action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  // Själva arbetsytan och dess CSS fick en ny cacheversion 2026-09-23.
+  assert.match(media, /action-event\.js\?v=20260923-workspace/, 'action-event.js cachebustades inte for arbetsytan');
+  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
-  assert.match(media, /action-event\.css\?v=20260916-facit/, 'action-event.css cachebustades inte');
+  assert.match(media, /action-event\.css\?v=20260923-workspace/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
