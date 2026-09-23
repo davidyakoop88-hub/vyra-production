@@ -6,7 +6,7 @@ const TikTokVerifiering=require('./tiktok-verifiering');
 const {knytVerifieratHandtag}=require('./tiktok-handtagslas');
 const Vault=require('./token-vault');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read'),PointsRuntime=require('./points-runtime');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -129,7 +129,7 @@ const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params
 // event fran att na overlayet.
 const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const statsReader=createStatsReader({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
-const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels});
+const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels,pointsRuntime:PointsRuntime});
 async function ingestTikTokEvent(workspaceId,payload){
   if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
@@ -317,6 +317,17 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
+    // Samma mönster som 'goals' ovan: workspace_id kommer alltid från TOKEN:s egen rad, aldrig
+    // från query/body/header — en overlay-länk kan bara läsa sin egen arbetsytas topplista.
+    if(rest==='points'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTop(pool,access.workspace_id,{limit});return send(res,200,{ok:true,points:top})}
+    // Top Like / Top Coins are genuinely separate rankings, not the blended points engine: David's
+    // explicit requirement ("den ska inte blanda") is that these read gifter_totals' raw, unweighted
+    // likes/diamonds and never touch points_settings or points_ledger. Same token-scoping and limit
+    // clamp as 'points' above; readTopRaw shapes rows into the identical {workspaceId, viewerId,
+    // displayName, avatarUrl, points, level} object so the widget can stay metric-agnostic — level is
+    // always null here, there is no level concept for a raw count.
+    if(rest==='top-likes'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'likes',{limit});return send(res,200,{ok:true,points:top})}
+    if(rest==='top-coins'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'coins',{limit});return send(res,200,{ok:true,points:top})}
     // UPPSTARTSLUCKAN. Bootstrapsvaret ar den enda konfigurationskallan klienten hamtar fran vid
     // start OCH vid varje ateranslutning — darfor bar det sessionssnapshotet ocksa, i stallet for
     // en andra rutt med en andra sanning.
@@ -734,6 +745,23 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       if(out.missing)return overlayMissing();if(out.unknownWidget)return widgetMissing();
       return send(res,200,{ok:true,goal:out.goal})}
     return send(res,405,{ok:false,error:'Metoden stöds inte'})}
+  // Poängmotorns läsyta — minimal med flit (se points-runtime.js): två GET-rutter så en widget kan
+  // hämta det den behöver (nivå, poäng, poäng-till-nästa-nivå för EN tittare, eller topplistan för
+  // hela arbetsytan). Ingen SSE-ram här ännu — goal-sse.js:s ramkontrakt är overlay-scopat
+  // (FIELDS ovan i den filen kräver overlayId/widgetId), och poäng hör till arbetsytan, inte en
+  // enskild widget på en enskild overlay. Samma roller som mål-GET: läsning kräver bara medlemskap.
+  const pointsRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/points(?:\/([^/]+))?$/i);
+  if(pointsRoute){const[,workspaceId,rawViewerId]=pointsRoute;
+    if(req.method!=='GET')return send(res,405,{ok:false,error:'Metoden stöds inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(rawViewerId===undefined){
+      const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||10));
+      const top=await PointsRuntime.readTop(pool,workspaceId,{limit});
+      return send(res,200,{ok:true,points:top})}
+    let viewerId=null;
+    try{viewerId=decodeURIComponent(rawViewerId)}catch{return send(res,400,{ok:false,error:'Ogiltigt tittar-id'})}
+    const ledger=await PointsRuntime.readLedger(pool,workspaceId,viewerId);
+    return send(res,200,{ok:true,points:ledger})}
   const match=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays(?:\/([0-9a-f-]+))?$/i);if(match){const[,workspaceId,overlayId]=match;if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(req.method==='GET'&&!overlayId){const q=await pool.query('SELECT id,name,version,updated_at FROM overlays WHERE workspace_id=$1 ORDER BY updated_at DESC',[workspaceId]);return send(res,200,{ok:true,overlays:q.rows})}if(req.method==='GET'&&overlayId){const q=await pool.query('SELECT * FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);return q.rows[0]?send(res,200,{ok:true,overlay:q.rows[0]}):send(res,404,{ok:false,error:'Overlay saknas'})}if(req.method==='POST'&&!overlayId){const d=await body(req,5*1024*1024),name=S.safeText(d.name,120),state=d.state;if(!name||!S.validOverlayState(state))return send(res,400,{ok:false,error:'Ogiltig overlay'});const q=await pool.query('INSERT INTO overlays(workspace_id,name,state) VALUES($1,$2,$3) RETURNING *',[workspaceId,name,state]);return send(res,201,{ok:true,overlay:q.rows[0]})}if(req.method==='PUT'&&overlayId){const d=await body(req,5*1024*1024),version=Number(d.version);if(!Number.isInteger(version)||!S.validOverlayState(d.state))return send(res,400,{ok:false,error:'Ogiltig overlay eller version'});// Spara + målsynk i EN transaktion (2026-08-03): ett lyckat Layout-save måste betyda att målet
 // räknar direkt. Delas de upp finns ett fönster där widgeten står på skärmen utan att räkna, och
 // de eventen är förlorade — inget försöker om ett save som redan svarat 200. Läsningen, wipe-
