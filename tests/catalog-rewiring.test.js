@@ -86,21 +86,22 @@ const KEY_ASSIGNMENTS = source =>
 
 test('varje katalogknapp publicerar en nyckel som registret känner igen', () => {
   const built = KEY_ASSIGNMENTS(MEDIA);
-  // Golvet sankt 20 -> 19 -> 17 den 2026-09-23: forst Top Gifts ramknappar, sedan VYRA
-  // ORIGINAL-sektionens tolv kort. Golvet ar en kontrollmatning mot att monstret slutat matcha.
-  assert.ok(built.length >= 17, `hittade bara ${built.length} katalognycklar i media.js`);
+  // Golvet sankt 20 -> 19 -> 17 -> 16 den 2026-09-23: forst Top Gifts ramknappar, sedan VYRA
+  // ORIGINAL-sektionens tolv kort, sist dess prototypkort "Top Gift Flip". Golvet ar en
+  // kontrollmatning mot att monstret slutat matcha.
+  assert.ok(built.length >= 16, `hittade bara ${built.length} katalognycklar i media.js`);
   const families = new Set(built.map(b => b.literal.split(':')[1]).filter(Boolean));
   const unknown = [...families].filter(f => !VyraWidgets.families().includes(f));
   assert.deepEqual(unknown, [], 'media.js bygger nycklar för familjer registret inte känner');
   // Every assembled key is bound to a name the handler closes over, never re-derived at click time.
-  // 20 -> 19 -> 17 den 2026-09-23, se docs/topgift-gallringen.md.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 17,
-    'alla tjugo factory-anrop går inte via den bundna nyckeln');
+  // 20 -> 19 -> 17 -> 16 den 2026-09-23, se docs/topgift-gallringen.md.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 16,
+    'alla factory-anrop går inte via den bundna nyckeln');
 });
 
 test('nyckeln publiceras när knappen byggs, inte när den klickas', () => {
   const now = count(MEDIA);
-  assert.equal(now.total, 17, `factoryplatser: ${now.total}`);
+  assert.equal(now.total, 16, `factoryplatser: ${now.total}`);
   assert.equal(now.insideDirectOnclick, 0,
     'dessa publicerar först vid klick: ' +
     now.sites.filter(s => s.insideDirectOnclick).map(s => s.button).join(', '));
@@ -244,8 +245,13 @@ test('inga gamla inline-defaultobjekt finns kvar', () => {
   // Sankt 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades — elva var DUBBLETTER av
   // premiumdesignerna (samma `theme`, alltsa samma skinn) och den tolfte, coronation, gick med
   // dem. Tva katalogsektioner forsvann. Se docs/topgift-gallringen.md.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 19,
-    'antalet kataloganrop stämmer inte med de nitton katalogställena');
+  // 19 -> 18 den 2026-09-23: prototypkortet "Top Gift Flip" togs bort, sektionens sista egna
+  // knapp. Ingen sektion forsvann den har gangen — sektionen star kvar tom at premium-final.js —
+  // men dess EGNA create() gick med knappen. En census som gar ner utan att en sektion tagits bort
+  // ar enligt raden ovan allvarligt; har ar skalet utskrivet i stallet: det var sektionens enda
+  // egna katalogstalle.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 18,
+    'antalet kataloganrop stämmer inte med de arton katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {
@@ -332,7 +338,9 @@ test('två create()-anrop delar inte muterbart nästlat state', () => {
 test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => {
   // A key hardcoded to one variant would still resolve, still build a valid widget, and still pass
   // every test above — while every button in that group silently produced the same design.
-  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topgift', 'catalog:topstreak',
+  // catalog:topgift lamnade listan 2026-09-23 med prototypkortet: ingen knapp bygger den langre,
+  // sa en kvarlamnad tillatelse hade bara varit dod vikt som laste ut som en regel.
+  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topstreak',
     'catalog:followeralert', 'catalog:likefountain']);
   const constants = KEY_ASSIGNMENTS(MEDIA)
     .filter(b => !b.concatenated && !CONSTANT_OK.has(b.literal))
@@ -341,9 +349,12 @@ test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => 
     'dessa kataloganrop har en fast nyckel trots att familjen har varianter');
 });
 
-test('alla fem variantlösa katalognycklar finns kvar', () => {
+// FEM -> FYRA den 2026-09-23. catalog:topgift byggdes av prototypkortet "Top Gift Flip", som togs
+// bort med resten av sin sektion. Familjen finns kvar i fabriken och gar fortfarande att skapa ur
+// en nyckel — det ar KNAPPEN som ar borta, och det ar knappar det har provet raknar.
+test('alla fyra variantlösa katalognycklar finns kvar', () => {
   const literals = new Set(KEY_ASSIGNMENTS(MEDIA).filter(b => !b.concatenated).map(b => b.literal));
-  for (const key of ['catalog:video', 'catalog:topgift', 'catalog:topstreak',
+  for (const key of ['catalog:video', 'catalog:topstreak',
     'catalog:followeralert', 'catalog:likefountain']) {
     assert.ok(literals.has(key), `${key} byggs inte längre`);
   }

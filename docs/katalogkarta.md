@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `3e0ecad5`
+Commit: `0937f126`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **115** |
-| Sektioner | 22 |
-| Med katalognyckel | 115 / 115 |
-| Med shadow DOM-miniatyr | 115 / 115 |
-| Ritar sin design | 115 / 115 |
+| Kort totalt | **111** |
+| Sektioner | 21 |
+| Med katalognyckel | 111 / 111 |
+| Med shadow DOM-miniatyr | 111 / 111 |
+| Ritar sin design | 111 / 111 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -60,8 +60,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
 | TOP LIKE · VYRA ORIGINAL | 4 | 4/4 | 4/4 | 4/4 | 2026-09-20 | — |
-| VYRA ORIGINAL · REDIGERBAR | 3 | 3/3 | 3/3 | 3/3 | 2026-09-23 | — |
-| TOP GIFTER · DESIGNVAL | 3 | 3/3 | 3/3 | 3/3 | 2026-09-23 | — |
+| TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
 
 ## Varje kort
 
@@ -274,19 +273,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-20 | — |
 | VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-20 | — |
 
-### VYRA ORIGINAL · REDIGERBAR
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Top Gift Flip | `catalog:topgift` | ✓ | ✓ | 2026-09-23 | — |
-| Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-09-23 | — |
-| Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-09-23 | — |
-
 ### TOP GIFTER · DESIGNVAL
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Gift Flip | `catalog:topgift` | ✓ | ✓ | 2026-09-23 | — |
 | Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-09-23 | — |
 | Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-09-23 | — |
 

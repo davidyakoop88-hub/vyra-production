@@ -123,7 +123,16 @@ function vyraTopGift(w){const coronation=w.theme==='coronation';return `<div cla
 const prototypeWh=wh;wh=function(w){return w.type==='templateTopGift'?vyraTopGift(w):prototypeWh(w)};
 /* ONABAR SEDAN PREMIUMBUNTEN. premium-final.js:45 avslutar props-kedjan for templateTopGift: den definieras efter den har raden, kors alltsa forst, och returnerar egen HTML utan att delegera vidare. Uppmatt i Chromium 2026-09-17 -- panelen har id pfTopGift*, inte de som byggdes har. */
 /* ONABAR: band de 14 #proto*-faltena som raden ovan byggde. Uppmatt: 0 av 14 finns i DOM:en. */
-const prototypeCatalogBind=bind;bind=function(){prototypeCatalogBind();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-vyra-prototype]'))return;let section=document.createElement('section');section.dataset.vyraPrototype='1';section.className='prototype-section';section.innerHTML='<h4>VYRA ORIGINAL · REDIGERBAR</h4><button data-add-prototype><i>◆</i><span><b>Top Gift Flip</b><small>HTML/CSS-template · inte video</small></span></button>';catalog.prepend(section);const topGiftBtn=section.querySelector('button');const catalogKey='catalog:topgift';topGiftBtn.dataset.catalogKey=catalogKey;topGiftBtn.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateTopGift');state.widgets.push(created);selected=id;save();render();toast('Redigerbar Top Gift-template skapad')}};
+/* SEKTIONEN AR TOM MED FLIT, och den far inte tas bort.
+   "Top Gift Flip" stod har till 2026-09-23 — prototypkortet i "VYRA ORIGINAL · REDIGERBAR",
+   samma sektion vars tolv temakort pensionerades tidigare samma dag. Kvar blev ett ensamt kort
+   som dubblerade det katalogen redan visade under TOP GIFTER · DESIGNVAL, och dess nyckel
+   `catalog:topgift` hade aldrig fotograferats: den doldes i katalogkartan av de tolv korten och
+   blev synlig forst nar de forsvann. David: "ta bort Top Gift Flip".
+   SJALVA SEKTIONEN STAR KVAR for att premium-final.js:54 LAGGER TILL sin rubrik och sin
+   designgrid i just `.prototype-section`. Tas elementet bort forsvinner Royal Gold och Neon
+   Purple ur katalogen — och det syns inte har, utan i en annan fil. */
+const prototypeCatalogBind=bind;bind=function(){prototypeCatalogBind();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-vyra-prototype]'))return;let section=document.createElement('section');section.dataset.vyraPrototype='1';section.className='prototype-section';catalog.prepend(section)};
 function playTopGiftFlip(){document.querySelectorAll('.vyra-topgift').forEach(el=>{el.classList.remove('play');void el.offsetWidth;el.classList.add('play')})}
 const prototypeGiftSend=send;send=function(){prototypeGiftSend();playTopGiftFlip();if(state.widgets.some(w=>w.type==='templateTopGift'))toast('Gåva → flip → profilbild')};
 

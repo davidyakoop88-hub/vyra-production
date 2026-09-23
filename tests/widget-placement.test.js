@@ -183,7 +183,11 @@ test('varje singleton-filter i media.js skyddar standalone', () => {
   //
   // Sankt 15 -> 13 den 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades, och de tva
   // katalogblocken bar varsitt skyddat filter. Aterigen knappar som forsvann, inte skydd.
-  assert.ok(guarded >= 13, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
+  //
+  // Sankt 13 -> 12 den 2026-09-23: prototypkortet "Top Gift Flip" togs bort, sektionens sista egna
+  // knapp. Dess filter raderade alla templateTopGift som inte var standalone innan den lade dit
+  // sin egen — ett skydd som foll med knappen det tillhorde, inte ett skydd som togs bort.
+  assert.ok(guarded >= 12, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
 });
 
 // ---- hidden and placement stay separate ---------------------------------------------------------

@@ -106,9 +106,22 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   const protoRubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
   assert.ok(protoRubriker.some(t => /TOP GIFTER/.test(t)),
     `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(protoRubriker)}`);
-  assert.ok(protoRubriker.some(t => /VYRA ORIGINAL/.test(t)),
-    'premium-final.js skrev over sektionen igen — "VYRA ORIGINAL" och dess femton knappar ar borta:\n  ' +
-    JSON.stringify(protoRubriker));
+  // "VYRA ORIGINAL"-RUBRIKEN VAR OVERSKRIVNINGSPROBEN, och den gar inte langre att anvanda.
+  // Provet lade den har for att media.js byggde rubriken FORE premium-final.js korde: fanns den
+  // kvar efterat hade den sena filen lagt till, inte skrivit over. 2026-09-23 togs sektionens
+  // sista egna knapp bort ("Top Gift Flip") och med den rubriken — sektionen ar nu tom nar
+  // premium-final.js far den. Da finns ingenting for en `innerHTML =` att radera, och en probe som
+  // inte kan falla vaktar ingenting.
+  //
+  // Regeln ar oforandrad och provas darfor i KALLAN i stallet: premium-final.js ska LAGGA TILL i
+  // .prototype-section. Skriver den `gifts.innerHTML =` igen faller raden nedan, och den faller
+  // aven om sektionen rakar vara tom just da — vilket DOM-proben inte hade gjort.
+  const premiumKalla = fs.readFileSync(path.join(ROOT, 'premium-final.js'), 'utf8');
+  assert.match(premiumKalla, /gifts\.insertAdjacentHTML\('beforeend'/,
+    'premium-final.js lagger inte langre till i .prototype-section');
+  assert.equal(/gifts\.innerHTML\s*=/.test(premiumKalla), false,
+    'premium-final.js satter innerHTML pa .prototype-section igen — det raderade forut allt '
+    + 'media.js byggt dar, och femton katalogknappar forsvann vid varje forsta bind-pass');
   assert.ok(proto.querySelectorAll('[data-pf-topgift]').length >= 2,
     `bara ${proto.querySelectorAll('[data-pf-topgift]').length} Top Gifter-knappar`);
 });

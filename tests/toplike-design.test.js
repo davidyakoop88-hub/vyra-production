@@ -77,7 +77,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // suttit kvar pa sin halva av andringen.
   // -5 2026-09-23: like-fountain-particles.js togs bort ur skriptsvansen. En cachad media.js
   // hade fortsatt injicera den och allokerat en duk per render som ingenting ritar pa.
-  assert.match(studioHtml, /media\.js\?v=20260923-5/);
+  // -6 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur katalogen. En cachad media.js
+  // hade fortsatt rita knappen och dess nyckel.
+  assert.match(studioHtml, /media\.js\?v=20260923-6/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
   // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.
