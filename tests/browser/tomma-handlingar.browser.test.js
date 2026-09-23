@@ -59,6 +59,22 @@ async function tillVy(page, vy) {
   await page.waitForTimeout(1600);
 }
 
+// Vyer med flikar: tillstandet kan bo pa en annan flik an den som ar aktiv nar vyn oppnas. TTS-vyn
+// fick riktiga flikar 2026-09-23 och tittarreglerna hamnade pa den andra — utan det har klicket
+// matte proven en pane med noll hojd och rapporterade en fungerande knapp som onabar.
+async function oppnaFlik(page, nyckel) {
+  const flik = TOMMA[nyckel] && TOMMA[nyckel].flik;
+  if (!flik) return;
+  const traffad = await page.evaluate(f => {
+    const knapp = document.querySelector(`#view ${f}`);
+    if (!knapp) return false;
+    knapp.click();
+    return true;
+  }, flik);
+  assert.equal(traffad, true, `kontrollmatning: fliken ${flik} finns inte for ${nyckel}`);
+  await page.waitForTimeout(600);
+}
+
 // ---- Prov 1 - varje deklarerad handling finns, syns och ar ett syskon --------------------------
 test('varje tomt tillstand med handling bar den som synligt syskon', { skip, timeout: 300000 }, async () => {
   const s = await oppnaStudio();
@@ -68,6 +84,7 @@ test('varje tomt tillstand med handling bar den som synligt syskon', { skip, tim
       const vy = VY_FOR[nyckel];
       assert.ok(vy, `${nyckel} saknas i PER_VY - fixturen ar osammanhangande`);
       await tillVy(s.page, vy);
+      await oppnaFlik(s.page, nyckel);
       const m = await s.page.evaluate(`(() => {
         const tom = document.querySelector('[data-tom="${nyckel}"]');
         if (!tom) return { tomtSaknas: true };
@@ -104,6 +121,7 @@ test('varje handlings mal finns och gar att na i samma vy', { skip, timeout: 300
     const fel = [];
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
+      await oppnaFlik(s.page, nyckel);
       const m = await s.page.evaluate(`(() => {
         const mal = document.querySelector('${def.handling.mal}');
         if (!mal) return { saknas: true };
@@ -123,6 +141,7 @@ test('klick pa handlingen utloser malet', { skip, timeout: 300000 }, async () =>
     const fel = [];
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
+      await oppnaFlik(s.page, nyckel);
       const m = await s.page.evaluate(`(async () => {
         const mal = document.querySelector('${def.handling.mal}');
         const tom = document.querySelector('[data-tom="${nyckel}"]');
@@ -158,6 +177,7 @@ test('handlingen andrar inte det tomma tillstandets text', { skip, timeout: 3000
     const fel = [];
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
+      await oppnaFlik(s.page, nyckel);
       const text = await s.page.evaluate(n => {
         const el = document.querySelector(`[data-tom="${n}"]`);
         return el ? el.textContent.replace(/\s+/g, ' ').trim() : null;
@@ -175,8 +195,11 @@ test('ingen handling finns utan att vara deklarerad i fixturen', { skip, timeout
   const s = await oppnaStudio();
   try {
     const odeklarerade = [];
-    for (const vy of Object.keys(PER_VY)) {
+    for (const [vy, nycklar] of Object.entries(PER_VY)) {
       await tillVy(s.page, vy);
+      // Flikarna oppnas en i taget; knapparna injiceras per synlig [data-tom], sa en pane som
+      // aldrig visats bidrar med noll och vakten hade missat en odeklarerad knapp dar.
+      for (const n of nycklar) await oppnaFlik(s.page, n);
       const funna = await s.page.evaluate(() =>
         [...document.querySelectorAll('#view [data-tom-handling]')].map(el => {
           const syskon = el.parentElement &&

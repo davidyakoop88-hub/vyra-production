@@ -92,7 +92,29 @@ test('duken ar hogre an widgetens ruta — annars kvavs partiklarna i en remsa',
   } finally { await page.close(); }
 });
 
-test('riktiga likes ger levande partiklar, och DOM-fontanen ar orord', { skip }, async () => {
+// CANVAS-LAGRET AR URKOPPLAT SEDAN 2026-09-23, och det har provet vaktar numera DET.
+//
+// Provet hette forut "riktiga likes ger levande partiklar" och kravde att minst nio partiklar
+// levde efter tjugo likes. Det stod rott pa main nar den har raden skrevs, med noll partiklar och
+// NOLL motorer — ingen motor hade ens startat.
+//
+// Skalet star utskrivet i media.js, precis efter att den riktiga triggern patchats:
+//
+//   "En Like Fountain ska ha en tydlig rörelse: DOM-fontänen och dess korta pop vid ett like.
+//    Det tidigare canvas-lagret ritade ytterligare hjärtan ovanpå samma händelse och såg ut som
+//    en andra fontän i sändning."
+//
+// Det ar ett BESLUT, inte ett haveri: `VyraLikeFountainFx.pop` anropas inte langre fran triggern.
+// Ett prov som kraver partiklar av ett lager nagon medvetet kopplat ur ar inte en vakt, det ar en
+// rod lampa som lar en att sluta titta. Provet vander sig darfor at andra hallet och vaktar
+// beslutet: en like far ROVA DOM-fontanen, och canvas-lagret ska ligga still.
+//
+// Kopplas lagret in igen faller det har provet och sager varfor — vilket ar hela poangen.
+//
+// KVAR ATT STADA, och det ar inte den har grenens att gora: modulen forvarmer fortfarande en duk
+// per widget vid varje render (uppmatt 620x657 px backing store) som ingenting nagonsin ritar pa.
+// Provet ovanfor mater just den duken och gar igenom.
+test('en like rör DOM-fontänen och lämnar canvas-lagret stilla', { skip }, async () => {
   const page = await studion();
   try {
     const m = await page.evaluate(async () => {
@@ -103,19 +125,30 @@ test('riktiga likes ger levande partiklar, och DOM-fontanen ar orord', { skip },
         await new Promise(r => setTimeout(r, 45));
       }
       await new Promise(r => setTimeout(r, 300));
+      const popp = box.querySelector('.fountain-pop');
       return {
         partiklar: window.VyraLikeFountainFx.antal(),
         motorer: window.VyraLikeFountainFx.aktiva(),
+        poppSpelar: !!(popp && popp.classList.contains('play')),
+        poppBarn: popp ? popp.children.length : 0,
         domFore, domEfter: box.querySelectorAll('.lf-p').length
       };
     });
-    console.log(`    partiklar ${m.partiklar} · motorer ${m.motorer} · DOM ${m.domFore}->${m.domEfter}\n`);
+    console.log(`    popp ${m.poppSpelar ? 'spelar' : 'stilla'} med ${m.poppBarn} delar · `
+      + `canvas ${m.partiklar} partiklar / ${m.motorer} motorer · DOM ${m.domFore}->${m.domEfter}\n`);
 
-    assert.ok(m.partiklar > 8,
-      `bara ${m.partiklar} partiklar levde av 20 likes — de kulas bort for tidigt`);
-    assert.equal(m.motorer, 1, 'exakt en motor ska vara igang for en widget');
+    // Kontrollmatning: liket maste ha gjort NAGOT, annars bevisar stillheten nedan ingenting.
+    assert.ok(m.poppSpelar && m.poppBarn > 0,
+      `DOM-poppen rorde sig inte alls (${m.poppBarn} delar) — da mater provet inget beslut, `
+      + 'bara en trigger som inte nar fram');
+
+    assert.equal(m.motorer, 0,
+      'canvas-lagret har startat en motor igen — da ritas en ANDRA fontan ovanpa DOM-fontanen, '
+      + 'vilket ar precis det media.js kopplade ur. Se kommentaren dar innan du andrar provet.');
+    assert.equal(m.partiklar, 0, 'canvas-lagret har partiklar i luften trots att det ar urkopplat');
+
     assert.equal(m.domEfter, m.domFore,
-      'DOM-fontanen ar reserven och far inte roras av canvas-lagret');
+      'DOM-fontanens egna hjartan ska inte rubbas av poppen');
   } finally { await page.close(); }
 });
 

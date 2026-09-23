@@ -50,9 +50,21 @@ const TOMMA = {
   'automatik-timers': { text: 'Inga timers ännu. Skapa en som kör en Action på schema.',
     handling: { etikett: 'Skapa din första timer', mal: '#newAeTimer' } },
   // TTS Chat
-  'tts-special': { text: 'Inga specialanvändare tillagda. Lägg till en för egen röst eller blockering.',
+  //
+  // BADA ROSTERNA SKREVS OM 2026-09-23 nar TTS-vyn byggdes om, och fixturen fick veta forst nar
+  // vakten foll. Har foljer fixturen koden och inte tvartom, av ett skal: vyn heter numera "Egna
+  // regler for tittare" och knappen "Lagg till tittarregel", sa "specialanvandare" var inte langre
+  // ett ord som stod nagonstans i granssnittet. En fixtur som kraver en term anvandaren aldrig ser
+  // vaktar inte en rost, den vaktar ett minne. Bada nya texterna foljer formeln.
+  //
+  // 'flik' ar nytt: vyn fick riktiga flikar i samma ombyggnad, och tittarreglerna bor pa den andra.
+  // Utan den klickar provet bara fram vyn och mater en pane som ligger kvar med noll hojd — vilket
+  // ar precis vad som hande. Ett tomt tillstand bakom en flik ar fortfarande natt, bara ett klick
+  // langre bort, och det ska vaktas dar det bor i stallet for att tas ur listan.
+  'tts-special': { text: 'Inga tittarregler ännu. Lägg till en när någon ska ha en egen röst.',
+    flik: '[data-tts-tab="viewers"]',
     handling: { etikett: 'Lägg till användare', mal: '#ttsAddSpecial' } },
-  'tts-logg': { text: 'Inget uppläst ännu. När chatten läses upp visas raderna här.' },
+  'tts-logg': { text: 'Inget uppläst ännu. Nästa godkända kommentar syns här.' },
   // Handelser
   'handelser-tom': { text: 'Inga händelser ännu. Anslut TikTok LIVE så fylls historiken på här i realtid.',
     handling: { etikett: 'Anslut TikTok LIVE', mal: '.connect' } },

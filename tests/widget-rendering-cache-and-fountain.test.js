@@ -365,10 +365,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
-  for (const fil of ['action-event.js', 'action-event.css']) {
-    assert.match(media, new RegExp(`${fil.replace('.', '\\.')}\\?v=20260923-workspace`),
-      `${fil} cachebustades inte for workspace-andringen`);
-  }
+  // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
+  // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
+  // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
+  assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
+  assert.match(media, /action-event\.css\?v=20260923-workspace/, 'action-event.css bumpades utan andring');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
