@@ -174,7 +174,20 @@ test('varje singleton-filter i media.js skyddar standalone', () => {
   // av de tva anroparna satter placement (widget-factory.js:505), sa widgetarna blev LAYOUT-widgetar
   // och isStandalone-undantaget skyddade dem inte. Varje ny dator med tom localStorage raderade dem
   // ur kundens overlay. tests/inga-mount-migreringar.test.js vaktar nu att de inte kommer tillbaka.
-  assert.ok(guarded >= 16, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
+  //
+  // Sankt fran 16 till 15 den 2026-09-23: Top Gifts ramgren pensionerades pa Davids begaran
+  // ("for mycket och trakigt design"), och katalogblocket som byggde de sju ramknapparna togs
+  // bort ur media.js. Varje sadan knapp bar ett eget skyddat filter. Skalet gar att peka pa —
+  // se docs/topgift-gallringen.md och tests/topgift-pension.test.js P11-P15. Det ar en knapp
+  // som forsvann, inte ett skydd.
+  //
+  // Sankt 15 -> 13 den 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades, och de tva
+  // katalogblocken bar varsitt skyddat filter. Aterigen knappar som forsvann, inte skydd.
+  //
+  // Sankt 13 -> 12 den 2026-09-23: prototypkortet "Top Gift Flip" togs bort, sektionens sista egna
+  // knapp. Dess filter raderade alla templateTopGift som inte var standalone innan den lade dit
+  // sin egen — ett skydd som foll med knappen det tillhorde, inte ett skydd som togs bort.
+  assert.ok(guarded >= 12, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
 });
 
 // ---- hidden and placement stay separate ---------------------------------------------------------

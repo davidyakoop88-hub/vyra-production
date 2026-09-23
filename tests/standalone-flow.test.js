@@ -209,10 +209,16 @@ function catalogSites(source) {
 test('varje katalogknapp publicerar exakt den nyckel den skickar till factoryn', { timeout: 5000 }, () => {
   // The shared classifier counts publications, not bindings: addBoostPack's parameter default
   //  is a binding but publishes nothing, and counting bindings made it a 21st site.
+  // 20 -> 19 den 2026-09-23: Top Gifts sju ramknappar pensionerades, se docs/topgift-gallringen.md.
+  // 17 -> 16 den 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur
+  // VYRA ORIGINAL-sektionen. Det var sektionens sista egna knapp — de tolv temakorten gick
+  // tidigare samma dag — och det dubblerade det katalogen redan visade under TOP GIFTER ·
+  // DESIGNVAL. Sjalva sektionen star kvar tom: premium-final.js lagger till sin designgrid i
+  // den.
   const r = count(MEDIA);
-  assert.equal(r.total, 20, 'antal publiceringar');
+  assert.equal(r.total, 16, 'antal publiceringar');
   assert.equal(r.insideDirectOnclick, 0, 'en nyckel publiceras inuti en klickhandler');
-  assert.equal(MEDIA.split('VyraWidgets.create(catalogKey').length - 1, 20,
+  assert.equal(MEDIA.split('VyraWidgets.create(catalogKey').length - 1, 16,
     'något kataloganrop använder inte den bundna nyckeln');
   assert.equal(MEDIA.split("VyraWidgets.create('catalog:").length - 1, 0,
     'en katalognyckel skrivs fortfarande som literal i ett factory-anrop');
@@ -338,13 +344,17 @@ test('== och === förväxlas inte med en tilldelning', { timeout: 5000 }, () => 
 });
 
 // ---- the real file --------------------------------------------------------------------------------
-test('aktuell media.js: 20 platser, alla utanför direkt onclick', { timeout: 5000 }, () => {
+// 20 -> 19 den 2026-09-23: Top Gifts ramgren pensionerades och katalogblocket som byggde de sju
+// ramknapparna togs bort ur media.js. Talet ar ingen invariant — det ar en kontrollmatning mot att
+// monstret slutat matcha. Det som ar invarianten star pa raderna under: ingen publicering far ligga
+// inuti en direkt onclick, och varje plats ska ha sin egen position.
+test('aktuell media.js: 16 platser, alla utanför direkt onclick', { timeout: 5000 }, () => {
   const r = count(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'));
-  assert.equal(r.total, 20, `factoryplatser: ${r.total}`);
+  assert.equal(r.total, 16, `factoryplatser: ${r.total}`);
   assert.equal(r.insideDirectOnclick, 0,
     `publiceringar inuti direkt onclick: ${r.sites.filter(s => s.insideDirectOnclick).map(s => s.button).join(', ')}`);
-  assert.equal(r.outsideDirectOnclick, 20);
-  assert.equal(new Set(r.sites.map(s => s.publishAt)).size, 20, 'unika publiceringspositioner');
+  assert.equal(r.outsideDirectOnclick, 16);
+  assert.equal(new Set(r.sites.map(s => s.publishAt)).size, 16, 'unika publiceringspositioner');
 });
 
 test('addBoostPack publicerar inte längre någon nyckel', { timeout: 5000 }, () => {

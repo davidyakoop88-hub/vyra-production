@@ -24,9 +24,18 @@ function nycklar() {
 //
 // Golvet var 150. Kartan gick från 151 till 149 nycklar 2026-09-19 22:20 (cffae80) när katalogen
 // krympte med flit, och referensvakten föll då vid inläsning — före ett enda foto — med felet
-// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet: 140 håller
-// den rollen med marginal för nästa avveckling, samma golv som overlay-alla-widgets använder.
-const GOLV = 140;
+// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet.
+//
+// 140 skrevs "med marginal för nästa avvecklinger". Den marginalen räckte inte: gallringen av Top
+// Gifts designer 2026-09-23 tog bort 38 på en gång (sju gåvoramar, tolv VYRA ORIGINAL, nitton
+// premium) och kartan står nu på 112 nycklar i 115 kort. Golvet föll alltså på en avveckling som
+// var hela poängen med ändringen, inte på en karta som flyttat.
+//
+// 100 är det nya golvet, satt på samma sätt: långt under dagens 112 så att en normal avveckling
+// får plats, långt över noll så att en tom eller flyttad karta fortfarande fångas. Siffran står på
+// ETT ställe och overlay-alla-widgets läser den härifrån — annars glider de två isär, och det var
+// precis vad som hände förra gången golvet ändrades.
+const GOLV = 100;
 function kravNycklar(minst = GOLV) {
   const lista = nycklar();
   if (lista.length < minst) {
@@ -103,30 +112,27 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
-  // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess
-  // hjartan ar CSS-animationer som gar i loop och hamnar i samma lage igen. Canvas-
-  // lagret i like-fountain-particles.js gor inte det -- partiklarna ar slumpade och
-  // samma RASTER kommer aldrig tillbaka, vilket ar exakt det `stilla()` letar efter.
+  // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess hjartan ar
+  // CSS-animationer som gar i loop och hamnar i samma lage igen.
   //
-  // Motorn lamnar darfor VyraLikeFountainFx.still(), samma kontrakt som
-  // VyraMvpParticles.still() och VyraAnimalGiftJars.still(): den stoppar slingan,
-  // tar bort duken och later DOM:en ga tillbaka till det som fanns fore modulen.
-  // Referensbilderna gjordes pa DOM-fontanen och galler alltsa fortfarande.
+  // Regin kallade fram till 2026-09-23 VyraLikeFountainFx.still() for att ta bort canvas-lagrets
+  // duk fore fotot — det lagret ritade slumpade partiklar, och samma RASTER kom aldrig tillbaka,
+  // vilket ar exakt det `stilla()` letar efter. Lagret ar borttaget nu (det var redan urkopplat
+  // fran triggern), sa det finns ingen duk att ta bort.
   //
-  // Duken ar dessutom dold for prefers-reduced-motion i studio.css, sa regin
-  // replikerar produktens egen regel i stallet for att hitta pa en ny.
+  // Posten star kvar med SAMMA fas och ms, sa fotopipelinen beter sig precis som forut och
+  // referensbilderna galler oforandrat. Regin har bytt roll: den frys ingenting langre, den
+  // KONTROLLERAR att ingen duk kommit tillbaka. Gor den det ar fotot slumpat igen, och da ska det
+  // sagas har och inte visa sig som en oforklarlig diff i en bild.
   'catalog:likefountain': {
     fas: 'duken-borttagen', ms: 0,
-    varfor: 'DOM-fontanen loopar och kan fotograferas; canvas-lagret ar slumpat och kan inte',
+    varfor: 'DOM-fontanen loopar och kan fotograferas; canvas-lagret finns inte langre',
     regi: () => {
       const box = document.querySelector('.widget.like-fountain');
       if (!box) return { fel: 'fontanen renderades inte — saknas .widget.like-fountain' };
-      if (!window.VyraLikeFountainFx) return { fel: 'like-fountain-particles.js laddades aldrig' };
-      window.VyraLikeFountainFx.still();
-      return {
-        dukar: box.querySelectorAll('canvas.lf-duk').length,
-        partiklar: box.querySelectorAll('.lf-p').length
-      };
+      const dukar = box.querySelectorAll('canvas.lf-duk').length;
+      if (dukar) return { fel: `canvas-lagret ar tillbaka (${dukar} dukar) — fotot blir slumpat` };
+      return { dukar: 0, partiklar: box.querySelectorAll('.lf-p').length };
     }
   },
 

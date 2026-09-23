@@ -93,20 +93,36 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   assert.equal(sek.querySelectorAll('[data-pf-streak]').length, 0,
     'premium-final.js byggde Top Streaks avvecklade premiumknappar igen');
 
-  // .prototype-section har TVA rubriker, och det ar med flit. Forut satte premium-final.js
-  // innerHTML pa sektionen och tog darmed bort "VYRA ORIGINAL · REDIGERBARA" tillsammans med
-  // media.js:129:s atta extrateman och sju Top Gift-ramar — femton knappar som forsvann vid varje
-  // forsta bind-pass. Vid ett andra bind blockerade finalPremium-flaggan overskrivningen och
-  // knapparna kom tillbaka, vilket fick felet att se ut som ett ombindningsproblem.
-  // Uppmatt i Chromium: 145 knappar vid navigering, 164 efter rattelsen.
+  // REGELN SOM PROVAS: premium-final.js ska LAGGA TILL i .prototype-section, aldrig skriva over
+  // den. Forut satte den innerHTML pa sektionen och tog darmed bort "VYRA ORIGINAL · REDIGERBARA"
+  // med dess knappar vid varje forsta bind-pass; vid ett andra bind blockerade finalPremium-flaggan
+  // overskrivningen och knapparna kom tillbaka, vilket fick felet att se ut som ett
+  // ombindningsproblem. Uppmatt i Chromium: 145 knappar vid navigering, 164 efter rattelsen.
+  //
+  // TALEN ar sedan dess andra: media.js:s femton egna knappar (atta extrateman, sju Top Gift-ramar)
+  // pensionerades 2026-09-23, och premiumdesignerna gick fran 21 till tva. Regeln ar densamma —
+  // bada rubrikerna ska finnas kvar, och Top Gifter-knapparna ska vara de fabriken kanner.
   const proto = h.document.querySelector('.prototype-section');
   const protoRubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
   assert.ok(protoRubriker.some(t => /TOP GIFTER/.test(t)),
     `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(protoRubriker)}`);
-  assert.ok(protoRubriker.some(t => /VYRA ORIGINAL/.test(t)),
-    'premium-final.js skrev over sektionen igen — "VYRA ORIGINAL" och dess femton knappar ar borta:\n  ' +
-    JSON.stringify(protoRubriker));
-  assert.ok(proto.querySelectorAll('[data-pf-topgift]').length >= 21,
+  // "VYRA ORIGINAL"-RUBRIKEN VAR OVERSKRIVNINGSPROBEN, och den gar inte langre att anvanda.
+  // Provet lade den har for att media.js byggde rubriken FORE premium-final.js korde: fanns den
+  // kvar efterat hade den sena filen lagt till, inte skrivit over. 2026-09-23 togs sektionens
+  // sista egna knapp bort ("Top Gift Flip") och med den rubriken — sektionen ar nu tom nar
+  // premium-final.js far den. Da finns ingenting for en `innerHTML =` att radera, och en probe som
+  // inte kan falla vaktar ingenting.
+  //
+  // Regeln ar oforandrad och provas darfor i KALLAN i stallet: premium-final.js ska LAGGA TILL i
+  // .prototype-section. Skriver den `gifts.innerHTML =` igen faller raden nedan, och den faller
+  // aven om sektionen rakar vara tom just da — vilket DOM-proben inte hade gjort.
+  const premiumKalla = fs.readFileSync(path.join(ROOT, 'premium-final.js'), 'utf8');
+  assert.match(premiumKalla, /gifts\.insertAdjacentHTML\('beforeend'/,
+    'premium-final.js lagger inte langre till i .prototype-section');
+  assert.equal(/gifts\.innerHTML\s*=/.test(premiumKalla), false,
+    'premium-final.js satter innerHTML pa .prototype-section igen — det raderade forut allt '
+    + 'media.js byggt dar, och femton katalogknappar forsvann vid varje forsta bind-pass');
+  assert.ok(proto.querySelectorAll('[data-pf-topgift]').length >= 2,
     `bara ${proto.querySelectorAll('[data-pf-topgift]').length} Top Gifter-knappar`);
 });
 
@@ -118,7 +134,9 @@ test('de sena knapparna far bade koppling och miniatyr', async () => {
 
   // Bara Top Gifters 21 sedan Top Streaks sju premiumdesigner avvecklades 2026-09-20.
   const kn = [...h.document.querySelectorAll('[data-pf-streak], [data-pf-topgift]')];
-  assert.ok(kn.length >= 21, `bara ${kn.length} premiumknappar`);
+  // 21 -> 2 den 2026-09-23. Regeln ar att knapparna far bade koppling och miniatyr, inte hur
+  // manga de ar; golvet finns for att en tom lista annars gor provet gront av ingenting.
+  assert.ok(kn.length >= 2, `bara ${kn.length} premiumknappar`);
   const okopplade = kn.filter(b => !b.dataset.owgWrapped);
   assert.equal(okopplade.length, 0, `${okopplade.length} premiumknappar kopplades aldrig`);
   const utanMiniatyr = kn.filter(b => !b.querySelector('.owg-thumb'));

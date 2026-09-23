@@ -89,7 +89,10 @@ let uppvarmning = null;
 // om vid varje deploy — den första nyckeln kan alltså byta identitet utan att någon rör den här
 // filen, och uppvärmningen skulle då värma något annat än man tror. En vanlig, stillastående widget
 // utan alert-trigger är rätt val: den mäter ingenting och behöver bara rendera text.
-const UPPVARMNINGSNYCKEL = 'catalog:topgift:neon';
+// Bytt 2026-09-23 fran `catalog:topgift:neon`: tema- och extraregistren pensionerades, sa den
+// nyckeln star inte langre i katalogkartan och uppvarmningen hade tyst fallit till NYCKLAR[0] —
+// precis det filen sager att den INTE vill. Premiumtvillingen ritar samma skinn.
+const UPPVARMNINGSNYCKEL = 'catalog:topgift:premium:neon';
 
 async function varmUpp(bas) {
   const b = await startaWebblasare();

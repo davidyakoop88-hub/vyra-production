@@ -35,9 +35,8 @@ function everyCatalogKey() {
   const v = name => Object.keys(VyraWidgets.variants(name));
   const keys = ['catalog:video', 'catalog:topgift', 'catalog:topstreak', 'catalog:followeralert',
     'catalog:likefountain'];
-  v('topgift.theme').forEach(t => keys.push('catalog:topgift:' + t));
-  v('topgift.extra').forEach(t => keys.push('catalog:topgift:extra:' + t));
-  v('topgift.frame').forEach(f => keys.push('catalog:topgift:frame:' + f));
+  // topgift.theme och topgift.extra pensionerades 2026-09-23. `variants()` svarar `{}` pa ett
+  // borttaget bord, sa raderna hade gjort ingenting och listan blivit kortare i tysthet.
   v('topstreak.theme').forEach(t => keys.push('catalog:topstreak:' + t));
   v('topstreak.frame').forEach(f => keys.push('catalog:topstreak:frame:' + f));
   v('heartgoal.theme').forEach(t => keys.push('catalog:heartgoal:' + t));
@@ -87,18 +86,22 @@ const KEY_ASSIGNMENTS = source =>
 
 test('varje katalogknapp publicerar en nyckel som registret känner igen', () => {
   const built = KEY_ASSIGNMENTS(MEDIA);
-  assert.ok(built.length >= 20, `hittade bara ${built.length} katalognycklar i media.js`);
+  // Golvet sankt 20 -> 19 -> 17 -> 16 den 2026-09-23: forst Top Gifts ramknappar, sedan VYRA
+  // ORIGINAL-sektionens tolv kort, sist dess prototypkort "Top Gift Flip". Golvet ar en
+  // kontrollmatning mot att monstret slutat matcha.
+  assert.ok(built.length >= 16, `hittade bara ${built.length} katalognycklar i media.js`);
   const families = new Set(built.map(b => b.literal.split(':')[1]).filter(Boolean));
   const unknown = [...families].filter(f => !VyraWidgets.families().includes(f));
   assert.deepEqual(unknown, [], 'media.js bygger nycklar för familjer registret inte känner');
   // Every assembled key is bound to a name the handler closes over, never re-derived at click time.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 20,
-    'alla tjugo factory-anrop går inte via den bundna nyckeln');
+  // 20 -> 19 -> 17 -> 16 den 2026-09-23, se docs/topgift-gallringen.md.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 16,
+    'alla factory-anrop går inte via den bundna nyckeln');
 });
 
 test('nyckeln publiceras när knappen byggs, inte när den klickas', () => {
   const now = count(MEDIA);
-  assert.equal(now.total, 20, `factoryplatser: ${now.total}`);
+  assert.equal(now.total, 16, `factoryplatser: ${now.total}`);
   assert.equal(now.insideDirectOnclick, 0,
     'dessa publicerar först vid klick: ' +
     now.sites.filter(s => s.insideDirectOnclick).map(s => s.button).join(', '));
@@ -106,7 +109,7 @@ test('nyckeln publiceras när knappen byggs, inte när den klickas', () => {
   // Baseline-red. The two forms this replaced, verbatim in shape, so the assertions above are shown
   // to be load-bearing rather than trivially true of any source.
   const HEAD_FORM = "grid.querySelectorAll('[data-gift-frame]').forEach(b=>b.onclick=()=>{" +
-    "let fid=b.dataset.giftFrame,created=VyraWidgets.create('catalog:topgift:frame:'+fid),id=created.id});";
+    "let fid=b.dataset.giftFrame,created=VyraWidgets.create('catalog:topstreak:frame:'+fid),id=created.id});";
   assert.equal(KEY_ASSIGNMENTS(HEAD_FORM).length, 0,
     'baseline: den gamla formen hade ingen nyckel att publicera före klicket');
   assert.equal(count(HEAD_FORM).total, 0);
@@ -147,8 +150,6 @@ test('addBoostPack vägrar skapa något utan nyckel', () => {
 // widget had already been saved. These tests lift the real per-button body out of media.js and run
 // it, because a click is the only thing that reaches that line.
 const FRAME_FAMILIES = [
-  { name: 'Top Gift', field: 'giftFrame', table: 'topgift.frame', global: 'GIFT_FRAMES',
-    type: 'templateTopGift', prefix: 'Gifter · ' },
   { name: 'Top Streak', field: 'streakFrame', table: 'topstreak.frame', global: 'STREAK_FRAMES',
     type: 'templateTopStreak', prefix: 'Streak · ' },
   { name: 'Battle MVP', field: 'mvpFrame', table: 'battlemvp.frame', global: 'MVP_FRAMES',
@@ -237,16 +238,33 @@ test('inga gamla inline-defaultobjekt finns kvar', () => {
   // en panel som skapade en kastad widget bara for att lasa dess matt. Den lasningen gar nu genom
   // `VyraWidgets.variants('guardianemblem.matt')` i stallet. Censusen raknar KATALOGSTALLEN, och en
   // matt-uppslagning som smyger in bland dem gor siffran obegriplig for nasta lasare.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 22,
-    'antalet kataloganrop stämmer inte med de tjugotvå katalogställena');
+  //
+  // 22 -> 21 den 2026-09-23: Top Gifts RAMSEKTION pensionerades pa Davids begaran, och
+  // katalogblocket som byggde de sju knapparna togs bort ur media.js. Det ar en sektion som
+  // forsvann — precis det fall raden ovan beskriver som ofarligt. Sju designer, EN create().
+  // Sankt 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades — elva var DUBBLETTER av
+  // premiumdesignerna (samma `theme`, alltsa samma skinn) och den tolfte, coronation, gick med
+  // dem. Tva katalogsektioner forsvann. Se docs/topgift-gallringen.md.
+  // 19 -> 18 den 2026-09-23: prototypkortet "Top Gift Flip" togs bort, sektionens sista egna
+  // knapp. Ingen sektion forsvann den har gangen — sektionen star kvar tom at premium-final.js —
+  // men dess EGNA create() gick med knappen. En census som gar ner utan att en sektion tagits bort
+  // ar enligt raden ovan allvarligt; har ar skalet utskrivet i stallet: det var sektionens enda
+  // egna katalogstalle.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 18,
+    'antalet kataloganrop stämmer inte med de arton katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {
-  for (const table of ['topgift.frame', 'topstreak.frame', 'battlemvp.frame']) {
+  for (const table of ['topstreak.frame', 'battlemvp.frame']) {
     const first = Object.keys(VyraWidgets.variants(table))[0];
     assert.ok(!MEDIA.includes("'" + first + "':{"), `${table} finns fortfarande som literal i media.js`);
   }
-  assert.match(MEDIA, /GIFT_FRAMES=VyraWidgets\.variants\('topgift\.frame'\)/);
+  // topgift.frame pensionerades 2026-09-23: tabellen, katalogknapparna och den ramade grenen i
+  // vyraTopGift ar borta, sa GIFT_FRAMES finns inte langre. Raden hade blivit gron av tomhet
+  // om den fatt sta kvar — `Object.keys({})[0]` ar undefined, och `includes("'undefined':{")`
+  // ar alltid falskt. Ett prov som inte kan falla vaktar ingenting.
+  assert.ok(!MEDIA.includes('GIFT_FRAMES'),
+    'GIFT_FRAMES lever igen — ramgrenen ar pensionerad, se docs/topgift-gallringen.md');
   assert.match(MEDIA, /STREAK_FRAMES=VyraWidgets\.variants\('topstreak\.frame'\)/);
   assert.match(MEDIA, /MVP_FRAMES=VyraWidgets\.variants\('battlemvp\.frame'\)/);
 });
@@ -282,22 +300,22 @@ test('widget-factory.js laddas före media.js', () => {
 
 // ---- the registry must not be mutable from outside ----------------------------------------------
 test('mutation av ett resultat från variants() ändrar inte registret', () => {
-  const frames = VyraWidgets.variants('topgift.frame');
+  const frames = VyraWidgets.variants('topstreak.frame');
   const key = Object.keys(frames)[0];
   const original = frames[key].accent;
   frames[key] = { accent: '#000000' };
   frames.__injected = { accent: '#000000' };
-  assert.equal(VyraWidgets.variants('topgift.frame')[key].accent, original,
+  assert.equal(VyraWidgets.variants('topstreak.frame')[key].accent, original,
     'registret ändrades av en anropare');
-  assert.equal(VyraWidgets.variants('topgift.frame').__injected, undefined,
+  assert.equal(VyraWidgets.variants('topstreak.frame').__injected, undefined,
     'en anropare kunde lägga till en variant i registret');
   // And the widget built afterwards still carries the real accent.
-  assert.equal(VyraWidgets.create('catalog:topgift:frame:' + key).accent, original);
+  assert.equal(VyraWidgets.create('catalog:topstreak:frame:' + key).accent, original);
 });
 
 test('två create()-anrop delar inte muterbart nästlat state', () => {
-  const a = VyraWidgets.create('catalog:topgift:frame:' + Object.keys(VyraWidgets.variants('topgift.frame'))[0]);
-  const b = VyraWidgets.create('catalog:topgift:frame:' + Object.keys(VyraWidgets.variants('topgift.frame'))[0]);
+  const a = VyraWidgets.create('catalog:topstreak:frame:' + Object.keys(VyraWidgets.variants('topstreak.frame'))[0]);
+  const b = VyraWidgets.create('catalog:topstreak:frame:' + Object.keys(VyraWidgets.variants('topstreak.frame'))[0]);
   assert.notEqual(a.id, b.id);
   // The invariant that makes sharing impossible: a widget carries primitives only. Looping over
   // object values alone would be vacuous today — there are none — and would stay green the day a
@@ -309,7 +327,7 @@ test('två create()-anrop delar inte muterbart nästlat state', () => {
       `${field} delas mellan två widgets`);
   }
   // And nothing a widget carries may be a live reference into the registry.
-  const frames = VyraWidgets.variants('topgift.frame');
+  const frames = VyraWidgets.variants('topstreak.frame');
   for (const entry of Object.values(frames)) {
     assert.ok(!Object.values(a).includes(entry), 'en widget bär en referens rakt in i varianttabellen');
   }
@@ -320,7 +338,9 @@ test('två create()-anrop delar inte muterbart nästlat state', () => {
 test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => {
   // A key hardcoded to one variant would still resolve, still build a valid widget, and still pass
   // every test above — while every button in that group silently produced the same design.
-  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topgift', 'catalog:topstreak',
+  // catalog:topgift lamnade listan 2026-09-23 med prototypkortet: ingen knapp bygger den langre,
+  // sa en kvarlamnad tillatelse hade bara varit dod vikt som laste ut som en regel.
+  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topstreak',
     'catalog:followeralert', 'catalog:likefountain']);
   const constants = KEY_ASSIGNMENTS(MEDIA)
     .filter(b => !b.concatenated && !CONSTANT_OK.has(b.literal))
@@ -329,9 +349,12 @@ test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => 
     'dessa kataloganrop har en fast nyckel trots att familjen har varianter');
 });
 
-test('alla fem variantlösa katalognycklar finns kvar', () => {
+// FEM -> FYRA den 2026-09-23. catalog:topgift byggdes av prototypkortet "Top Gift Flip", som togs
+// bort med resten av sin sektion. Familjen finns kvar i fabriken och gar fortfarande att skapa ur
+// en nyckel — det ar KNAPPEN som ar borta, och det ar knappar det har provet raknar.
+test('alla fyra variantlösa katalognycklar finns kvar', () => {
   const literals = new Set(KEY_ASSIGNMENTS(MEDIA).filter(b => !b.concatenated).map(b => b.literal));
-  for (const key of ['catalog:video', 'catalog:topgift', 'catalog:topstreak',
+  for (const key of ['catalog:video', 'catalog:topstreak',
     'catalog:followeralert', 'catalog:likefountain']) {
     assert.ok(literals.has(key), `${key} byggs inte längre`);
   }
@@ -340,12 +363,12 @@ test('alla fem variantlösa katalognycklar finns kvar', () => {
 test('registret är fryst hela vägen ned', () => {
   // The shallow copy from variants() stops a caller replacing an entry; the freeze is what stops it
   // reaching in and editing the entry it was handed.
-  const frames = VyraWidgets.variants('topgift.frame');
+  const frames = VyraWidgets.variants('topstreak.frame');
   const key = Object.keys(frames)[0];
   const original = frames[key].accent;
   assert.throws(() => { frames[key].accent = '#000000' }, TypeError,
     'en anropare kunde skriva i en varianttabellpost');
-  assert.equal(VyraWidgets.variants('topgift.frame')[key].accent, original);
+  assert.equal(VyraWidgets.variants('topstreak.frame')[key].accent, original);
   assert.throws(() => { frames[key].circle.left = 0 }, TypeError,
     'nästlad geometri i varianttabellen är inte fryst');
 });

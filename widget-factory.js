@@ -55,7 +55,6 @@
 
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
-    'topgift.theme': { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' },
     // Premiumdesignerna ar en EGEN familj, inte fler rader i topgift.theme ovan: de delar bara
     // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
     // Accenten ar densamma for alla 21; tabellen bar etiketten sa den sager nagot mer an att
@@ -75,13 +74,15 @@
       comet: {label:'Kometspiral',primary:'#45e1d1',secondary:'#ff806c',motion:'spiral'},
       supernova: {label:'Supernova',primary:'#ffd06b',secondary:'#a764ff',motion:'supernova'}
     },
-    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
-      glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
-      galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
-      hall: 'VYRA Hall of Fame', throne: 'Royal Throne', champion: 'Celestial Champion',
-      pedestal: 'Diamond Pedestal', arch: 'Celestial Arch', phoenix: 'Phoenix',
-      signal: 'Signal', fireworks: 'Fireworks', bloom: 'Bloom', comet: 'Comet' },
-    'topgift.extra': {"sakura":"#ff69b4","fire":"#ff4b16","ice":"#64dfff","galaxy":"#9b5cff","aurora":"#4fd8c4","retro":"#ffcf3d","goldrush":"#e8b64d","coronation":"#e8c25a"},
+    // TVA DESIGNER KVAR (David 2026-09-23: "behall neon, royal o ta bort resten"). De nitton andra
+    // var omformningar av samma tre <i>-lador i `.topgift-ornament` — renderaren ar EN for hela
+    // familjen, sa hela designutrymmet var tre tomma lador plus en accentfarg. Fem av dem bar en
+    // enda CSS-regel var. Se docs/topgift-gallringen.md; topgift-pension.js pekar de nitton pa
+    // royal sa sparade layouter laser.
+    //
+    // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
+    // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
+    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
@@ -119,7 +120,6 @@
     },
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
     // they are geometry as much as colour, and one copy is the whole point.
-    'topgift.frame': {'royal-wings':{label:'Royal Wings',accent:'#ffc13b',aspect:0.8327,circle:{left:33.51,top:42.86,width:33.46,height:29.0},titlePlate:{left:27.14,top:25.56,width:45.97,height:12.19},namePlate:{left:34.22,top:76.81,width:31.32,height:12.7}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.5888,circle:{left:28.19,top:45.95,width:44.29,height:26.27},titlePlate:{left:19.42,top:28.85,width:61.51,height:11.57},namePlate:{left:28.22,top:77.2,width:43.57,height:12.07}},'angel-heart':{label:'Angel Heart',accent:'#ff8fc8',aspect:0.6766,circle:{left:31.86,top:47.71,width:36.88,height:25.14},titlePlate:{left:25.14,top:32.91,width:50.3,height:10.23},namePlate:{left:31.76,top:80.57,width:36.18,height:9.72},darkTitle:true,darkName:true},'dark-raven':{label:'Dark Raven',accent:'#9b5cff',aspect:0.6267,circle:{left:28.49,top:43.99,width:44.61,height:27.58},titlePlate:{left:19.26,top:27.05,width:61.8,height:11.57},namePlate:{left:28.36,top:77.98,width:43.61,height:11.9}},'frost-crystal':{label:'Frost Crystal',accent:'#6db8ff',aspect:0.6907,circle:{left:30.8,top:40.27,width:39.0,height:27.72},titlePlate:{left:26.33,top:23.6,width:47.64,height:11.78},namePlate:{left:30.82,top:76.45,width:38.36,height:10.39}},'rose-garden':{label:'Rose Garden',accent:'#ff8fc8',aspect:0.695,circle:{left:32.27,top:39.47,width:38.44,height:27.5},titlePlate:{left:27.07,top:24.49,width:49.15,height:10.98},namePlate:{left:31.94,top:75.43,width:37.61,height:9.93},darkTitle:true,darkName:true},'luna-mist':{label:'Luna Mist',accent:'#c07bff',aspect:0.6695,circle:{left:27.45,top:39.52,width:41.91,height:29.06},titlePlate:{left:20.34,top:22.64,width:56.45,height:11.64},namePlate:{left:27.81,top:73.77,width:41.2,height:13.43}}},
     'topstreak.frame': {'amethyst-heart':{label:'Amethyst Heart',accent:'#c07bff',aspect:0.9143,circle:{left:28.9,top:27.65,width:42.19,height:36.38},plate:{left:16.57,top:70.15,width:66.58,height:16.58}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.7871,circle:{left:28.13,top:32.66,width:43.43,height:33.73},plate:{left:12.81,top:72.71,width:77.11,height:14.87}},'gold-wings':{label:'Golden Wings',accent:'#ffc13b',aspect:0.8717,circle:{left:28.85,top:27.29,width:42.3,height:35.73},plate:{left:16.66,top:70.03,width:66.97,height:15.86}},'rose-heart':{label:'Rose Heart',accent:'#ff8fc8',aspect:0.8947,circle:{left:30.68,top:22.04,width:39.81,height:39.33},plate:{left:23.29,top:70.2,width:53.12,height:15.92}},'luna-stars':{label:'Luna Stars',accent:'#ffd57f',aspect:0.7673,circle:{left:25.27,top:25.97,width:50.13,height:36.54},plate:{left:19.89,top:68.68,width:61.88,height:14.82}},'crystal-tiara':{label:'Crystal Tiara',accent:'#b083ff',aspect:0.899,circle:{left:29.56,top:27.64,width:41.18,height:37.99},plate:{left:20.32,top:71.36,width:59.07,height:14.8}},'violet-wings':{label:'Violet Wings',accent:'#a866ff',aspect:0.9644,circle:{left:29.18,top:24.79,width:41.93,height:38.37},plate:{left:15.87,top:67.95,width:68.25,height:17.26}},'star-crown':{label:'Star Crown',accent:'#e8c25a',aspect:0.8042,circle:{left:26.18,top:26.88,width:47.31,height:38.05},plate:{left:15.7,top:70.49,width:71.57,height:15.11}}},
     'battlemvp.frame': {'gold-crown':{label:'Gold Crown',accent:'#ffc13b',aspect:0.8906,circle:{left:23.98,top:22.92,width:53.8,height:47.92},plate:{left:20.44,top:80.83,width:60.58,height:13.33}},'royal-ribbon':{label:'Royal Ribbon',accent:'#e8c25a',aspect:0.8125,circle:{left:18.74,top:23.04,width:62.51,height:50.79},plate:{left:15.16,top:80.52,width:70.0,height:12.92}},'laurel-star':{label:'Laurel Star',accent:'#ffd166',aspect:0.8229,circle:{left:17.63,top:20.24,width:63.47,height:52.23},plate:{left:13.29,top:83.1,width:73.42,height:12.71}},'dark-wings':{label:'Dark Wings',accent:'#c9d2e0',aspect:0.9728,circle:{left:21.97,top:22.46,width:55.51,height:54.0},plate:{left:17.21,top:81.66,width:66.15,height:14.13}},'dragon-fire':{label:'Dragon Fire',accent:'#ff5230',aspect:0.8639,circle:{left:16.19,top:15.56,width:65.79,height:56.84},plate:{left:13.48,top:78.66,width:73.94,height:15.71}},'nautical-helm':{label:'Nautical Helm',accent:'#d9a05b',aspect:0.8717,circle:{left:20.01,top:16.92,width:59.68,height:52.02},plate:{left:16.76,top:80.37,width:66.79,height:14.66}},'shadow-star':{label:'Shadow Star',accent:'#e8b64d',aspect:0.9124,circle:{left:19.96,top:12.56,width:60.38,height:55.1},plate:{left:15.7,top:80.56,width:68.61,height:11.75}}}
   };
@@ -213,25 +213,6 @@
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 170, width: 520,
       title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
       accent: v.accent, giftSize: 64, streakSpeed: 1, streakGlow: 50
-    }),
-    'topgift.theme': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180, width: 280, title: 'VYRA Top Gift',
-      templateTitle: 'TOP GIFT', value: '', dataName: '@StreamQueen', dataValue: '44 999',
-      accent: v.accent, dataColor: '#ffffff', valueColor: v.accent, dataSize: 18, showDataValue: true
-    }),
-    'topgift.extra': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180,
-      width: v.theme === 'coronation' ? 260 : 280, title: 'VYRA Top Gift',
-      templateTitle: v.theme === 'coronation' ? 'TOP GIFTER' : 'TOP GIFT',
-      dataName: '@StreamQueen', dataValue: v.theme === 'coronation' ? '12 500' : '44 999',
-      giftName: 'ROSE', giftCount: 250, giftSize: v.theme === 'coronation' ? 90 : 62,
-      accent: v.accent, dataColor: '#fff', valueColor: v.accent, dataSize: 18, showDataValue: true
-    }),
-    'topgift.frame': v => ({
-      type: 'templateTopGift', giftFrame: v.frame, x: 70, y: 150, width: 300,
-      title: 'VYRA Top Gift', templateTitle: 'TOP GIFTER', dataName: '@StreamQueen',
-      dataValue: '44 999', accent: v.accent, dataColor: '#fff', valueColor: v.accent,
-      dataSize: 15, showDataValue: true
     }),
 
     'topstreak': () => ({
@@ -410,10 +391,18 @@
     'video': (parts, extra) => ['video', extra || {}],
     'topgift': parts => {
       if (!parts.length) return ['topgift', {}];
-      if (parts[0] === 'frame') return ['topgift.frame', { frame: parts[1], accent: pick('topgift.frame', parts[1], 'gåvoram').accent }];
-      if (parts[0] === 'extra') return ['topgift.extra', { theme: parts[1], accent: pick('topgift.extra', parts[1], 'extratema') }];
       if (parts[0] === 'premium') { pick('topgift.premium', parts[1], 'premiumdesign'); return ['topgift.premium', { theme: parts[1] }] }
-      return ['topgift.theme', { theme: parts[0], accent: pick('topgift.theme', parts[0], 'tema') }];
+      // `topgift.theme` och `topgift.extra` pensionerades 2026-09-23. De var DUBBLETTER: uppmatt
+      // gav `catalog:topgift:royal` och `catalog:topgift:premium:royal` exakt samma `theme`, alltsa
+      // samma skinn `topgift-royal`. Det enda som skilde var forvald bredd, rubriktext och
+      // accentfarg. Katalogen visade samma design tva ganger, och David bad om farre.
+      //
+      // En gammal nyckel far darfor peka pa sin TVILLING i premiumtabellen. Det bryter inte mot
+      // regeln ovan — "never quietly resolve to another design" — eftersom det inte ar en annan
+      // design: det ar samma skinn med andra forvalda matt. Ett namn utan tvilling (coronation var
+      // det enda) kastar med en lasbar lista, precis som forut.
+      pick('topgift.premium', parts[0], 'premiumdesign');
+      return ['topgift.premium', { theme: parts[0] }];
     },
     'topstreak': parts => {
       if (!parts.length) return ['topstreak', {}];

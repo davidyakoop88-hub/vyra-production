@@ -1,20 +1,22 @@
 'use strict';
-// CANVAS-LAGRET I RIKTIG LAYOUT. Det har gar inte att prova i jsdom, och det ar
-// precis darfor provet finns.
+// LIKE FOUNTAIN I RIKTIG LAYOUT: DOM-fontanen ar rorelsen, och det finns inget canvas-lager.
 //
-// BUGGEN SOM GJORDE ATT PROVET SKREVS. Duken lades forst med `inset:0` i .lf-stream.
-// Uppmatt i riktig layout blev den da 624x70 px: widgetens ruta ar ~70 px hog, medan
-// DOM-fontanens hjartan stiger flera hundra pixlar och SPILLER UT ovanfor den. En
-// canvas kan inte spilla ut -- den ar exakt sa stor som sin egen ruta -- sa
-// partiklarna kvavdes i en remsa och kulades bort direkt.
+// HISTORIKEN, for den som undrar varfor filen heter "duk". Widgeten hade ett canvas-lager
+// (like-fountain-particles.js) som ritade egna hjartan ovanpa DOM-fontanen. Filen skrevs for att
+// vakta dess geometri: duken lades forst med `inset:0` och blev da 624x70 px — widgetens ruta ar
+// ~70 px hog medan hjartana stiger flera hundra pixlar och spiller ut ovanfor den. En canvas kan
+// inte spilla ut, sa partiklarna kvavdes i en remsa. jsdom kunde aldrig visa det: dar ar
+// getBoundingClientRect() alltid 0x0, sa duken skapades inte alls och allt sag bra ut.
 //
-// jsdom kunde aldrig visa det: dar ar getBoundingClientRect() alltid 0x0, sa duken
-// skapades inte alls och allt sag bra ut. Ett prov i jsdom hade varit gront.
+// Lagret kopplades sedan ur fran triggern, med skalet utskrivet i media.js: det "ritade
+// ytterligare hjärtan ovanpå samma händelse och såg ut som en andra fontän i sändning". Modulen
+// lag kvar urkopplad till 2026-09-23 och kostade en duk per widget vid varje render — uppmatt
+// 620x657 px backing store som ingenting nagonsin ritade pa. Da togs den bort.
 //
-// Duken ankras nu i nederkanten och vaxer uppat. Provet vaktar tre saker:
-//   1. duken ar HOGRE an widgetens ruta
-//   2. riktiga likes genom den riktiga triggern ger levande partiklar
-//   3. frysningen tar bort duken OCH overlever nasta render
+// Provet nedan vaktar det som blev kvar att vakta: att en like ROR DOM-fontanen, och att inget
+// canvas-lager kommit tillbaka. Kommer det tillbaka ser sandningen ut att ha tva fontaner igen,
+// och de visuella referensbilderna blir slumpade — canvas-partiklarna ar slumpade och samma
+// raster kommer aldrig igen.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
@@ -59,8 +61,6 @@ async function studion() {
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
-  await page.waitForFunction(() => !!window.VyraLikeFountainFx, null,
-    { timeout: 30000, polling: 100 });
   await page.waitForTimeout(1200);
   await page.evaluate(() => {
     state.widgets.length = 0;
@@ -72,75 +72,44 @@ async function studion() {
   return page;
 }
 
-test('duken ar hogre an widgetens ruta — annars kvavs partiklarna i en remsa', { skip }, async () => {
-  const page = await studion();
-  try {
-    const m = await page.evaluate(() => {
-      const box = document.querySelector('.widget.like-fountain');
-      const duk = box && box.querySelector('canvas.lf-duk');
-      if (!duk) return { fel: 'duken forvarmdes inte vid render' };
-      const b = box.getBoundingClientRect(), d = duk.getBoundingClientRect();
-      return { ruta: Math.round(b.height), duk: Math.round(d.height),
-               backing: duk.width + 'x' + duk.height };
-    });
-    if (m.fel) assert.fail(m.fel);
-    console.log(`\n    widgetens ruta ${m.ruta} px · duken ${m.duk} px · backing ${m.backing}\n`);
-
-    assert.ok(m.duk > m.ruta * 2,
-      `duken ar ${m.duk} px mot rutans ${m.ruta} px — den maste vaxa uppat forbi rutan`);
-    assert.ok(m.duk >= 200, `duken ar bara ${m.duk} px hog`);
-  } finally { await page.close(); }
-});
-
-test('riktiga likes ger levande partiklar, och DOM-fontanen ar orord', { skip }, async () => {
+test('en like rör DOM-fontänen, och inget canvas-lager har kommit tillbaka', { skip }, async () => {
   const page = await studion();
   try {
     const m = await page.evaluate(async () => {
       const box = document.querySelector('.widget.like-fountain');
+      if (!box) return { fel: 'fontanen renderades inte' };
       const domFore = box.querySelectorAll('.lf-p').length;
       for (let i = 0; i < 20; i++) {
         triggerLikeFountainPop({ username: '@P' + (i % 5), count: 1 });
         await new Promise(r => setTimeout(r, 45));
       }
       await new Promise(r => setTimeout(r, 300));
+      const popp = box.querySelector('.fountain-pop');
       return {
-        partiklar: window.VyraLikeFountainFx.antal(),
-        motorer: window.VyraLikeFountainFx.aktiva(),
+        poppSpelar: !!(popp && popp.classList.contains('play')),
+        poppBarn: popp ? popp.children.length : 0,
+        dukar: box.querySelectorAll('canvas.lf-duk').length,
+        modul: typeof window.VyraLikeFountainFx,
         domFore, domEfter: box.querySelectorAll('.lf-p').length
       };
     });
-    console.log(`    partiklar ${m.partiklar} · motorer ${m.motorer} · DOM ${m.domFore}->${m.domEfter}\n`);
+    if (m.fel) assert.fail(m.fel);
+    console.log(`\n    popp ${m.poppSpelar ? 'spelar' : 'stilla'} med ${m.poppBarn} delar · `
+      + `dukar ${m.dukar} · modul ${m.modul} · DOM ${m.domFore}->${m.domEfter}\n`);
 
-    assert.ok(m.partiklar > 8,
-      `bara ${m.partiklar} partiklar levde av 20 likes — de kulas bort for tidigt`);
-    assert.equal(m.motorer, 1, 'exakt en motor ska vara igang for en widget');
-    assert.equal(m.domEfter, m.domFore,
-      'DOM-fontanen ar reserven och far inte roras av canvas-lagret');
-  } finally { await page.close(); }
-});
+    // Kontrollmatningen forst: liket maste ha gjort NAGOT, annars bevisar stillheten nedan inget.
+    assert.ok(m.poppSpelar && m.poppBarn > 0,
+      `DOM-poppen rorde sig inte alls (${m.poppBarn} delar) — da mater provet ingen rorelse, `
+      + 'bara en trigger som inte nar fram');
 
-test('still() tar bort duken, och nasta render bygger inte tillbaka den', { skip }, async () => {
-  const page = await studion();
-  try {
-    const m = await page.evaluate(async () => {
-      for (let i = 0; i < 6; i++) triggerLikeFountainPop({ username: '@A', count: 1 });
-      await new Promise(r => setTimeout(r, 200));
-      const fore = document.querySelectorAll('canvas.lf-duk').length;
-      window.VyraLikeFountainFx.still();
-      const efterStill = document.querySelectorAll('canvas.lf-duk').length;
-      render(); render();
-      await new Promise(r => setTimeout(r, 250));
-      const box = document.querySelector('.widget.like-fountain');
-      return { fore, efterStill,
-               efterRender: document.querySelectorAll('canvas.lf-duk').length,
-               dom: box.querySelectorAll('.lf-p').length };
-    });
-    console.log(`    dukar ${m.fore} -> still ${m.efterStill} -> efter render ${m.efterRender}\n`);
+    assert.equal(m.dukar, 0,
+      'en canvas.lf-duk har ritats i widgeten — canvas-lagret ar tillbaka. Da ser sandningen ut '
+      + 'att ha tva fontaner, och de visuella referenserna blir slumpade. Se media.js dar '
+      + 'triggern patchas innan du andrar det har provet.');
+    assert.equal(m.modul, 'undefined',
+      'like-fountain-particles.js laddas igen — modulen togs bort 2026-09-23 for att den '
+      + 'allokerade en duk per render som ingenting ritade pa');
 
-    assert.equal(m.fore, 1, 'det skulle finnas en duk att frysa');
-    assert.equal(m.efterStill, 0, 'still() ska ta bort duken');
-    assert.equal(m.efterRender, 0,
-      'frysningen maste overleva nasta render, annars flackar den visuella regressionen');
-    assert.ok(m.dom > 0, 'DOM-fontanen ska vara kvar efter frysningen — referensbilderna vilar pa den');
+    assert.equal(m.domEfter, m.domFore, 'DOM-fontanens egna hjartan ska inte rubbas av poppen');
   } finally { await page.close(); }
 });

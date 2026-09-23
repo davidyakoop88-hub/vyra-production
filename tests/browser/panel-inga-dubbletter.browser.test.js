@@ -77,7 +77,8 @@ const WIDGETS = [
   'catalog:topstreak:premium:liquid',
   'catalog:topstreak',
   'catalog:topstreak:frame:amethyst-heart',
-  'catalog:topgift:frame:royal-wings',
+  // catalog:topgift:frame:* togs bort 2026-09-23 nar Top Gifts ramgren pensionerades
+  // (docs/topgift-gallringen.md). Top Streaks ram star kvar och bar formen vidare.
   'catalog:toplike:clean',
   'catalog:fanlevel:gold',
   'catalog:lastx:card',
