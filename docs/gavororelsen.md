@@ -66,9 +66,9 @@ Det är rätt grind, och den ska inte byggas om:
 
 ---
 
-## 3. Koreografin får aldrig röra flippens noder
+## 3. Koreografin får aldrig röra flippens noder — och lådan är en av dem
 
-`VyraFlip.PARTS` är uppmätt exakt:
+`VyraFlip.PARTS` listar sex selektorer:
 
 ```
 .vyra-flip, .streak-flip,
@@ -76,13 +76,26 @@ Det är rätt grind, och den ska inte byggas om:
 .streak-gift-face, .streak-profile-face
 ```
 
-`offset()` skriver `animation-delay` på precis de noderna för att återuppta rotationen vid rätt
-punkt i varvet. En fas-CSS som animerar någon av dem skulle skriva över just det värdet — och då är
-hela `VyraFlip` verkningslös, vid varje gåva.
+**Men noderna är sju.** `parts()` är `[el, ...el.querySelectorAll(PARTS)]` — widgetlådan SJÄLV står
+först i listan, före de sex som selektorerna hittar. `offset()` skriver `animation-delay` på var och
+en av de sju.
 
-**Invariant (ska vaktas av ett prov):** ingen `<prefix><fas>`-regel får ha någon av de sex
-selektorerna i sin nyckel. Faserna animerar ramen, plåten, namnet, talet, titeln, etiketten och
-widgetlådan själv — allt utom flippen.
+Uppmätt 2026-09-23 i jsdom, efter `start()` följt av `resume()` 38 ms senare:
+
+| Nod | `animation-delay` efter `resume()` |
+|---|---|
+| `.vyra-streak` — **lådan** | `-38ms` |
+| `.streak-flip` | `-38ms` |
+| `.streak-copy` | *(tom)* |
+| `.streak-score b` | *(tom)* |
+
+Den första raden är hela poängen. Lådan bär `streakEnter` och `streakHit` och ser därför ut som en
+naturlig plats att hänga en fas på — men den får sitt förlopp överskrivet vid varje enskild gåva.
+En fas-animation där hade fått hela sändningens gångtid som negativ fördröjning och aldrig synts.
+
+**Invariant (ska vaktas av ett prov):** ingen `<prefix><fas>`-regel får ha någon av de SJU noderna i
+sin nyckel — de sex selektorerna, plus `.vyra-streak` och `.vyra-topgift` själva. Faserna animerar
+barnen: ramen, plåten, namnet, talet, titeln, etiketten och eldtecknet.
 
 Det här är också varför en omstart av koreografin **inte** är samma sak som en omstart av flippen.
 De rör olika noder. `spela()` kallar `avbryt()` först och startar om sin egen sekvens; rotationen
@@ -211,7 +224,7 @@ hade ändrat två fungerande familjer för en tredjes skull. Arterna som inte ko
 
 | Påstående | Varför det måste mätas |
 |---|---|
-| Ingen fas-regel rör någon av `VyraFlip.PARTS` sex selektorer | En träff gör hela `VyraFlip` verkningslös vid varje gåva |
+| Ingen fas-regel rör någon av de SJU noderna — de sex selektorerna OCH widgetlådan själv | En träff gör hela `VyraFlip` verkningslös vid varje gåva. Lådan är den som ser oskyldig ut |
 | `spela()` anropas från `armFlip()` respektive `arma()`, **efter** patchen | Annars koreograferas den gamla bilden |
 | En gåva som inte slår rekordet spelar ingen koreografi | Annars säger widgeten "nytt rekord" när inget hänt |
 | `approved-streak` utan temaklass får ingen fas | Godkända rankingar får inte ändra utseende |
