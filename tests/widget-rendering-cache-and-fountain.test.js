@@ -289,7 +289,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // VYRA-designer") och har varit ur synk sedan dess — darav tre veckor med en rod vakt som
   // ingen atgardade. Star nu pa det media.js faktiskt bar.
   assert.match(media, /const version='20260920-1'/);
-  assert.match(media, /widget-fas\.js\?v=1/);
+  // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
+  // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
+  // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
+  // widget-fas.js och ingen av de tre arterna far den nya motorn. Samma skal som duckningen
+  // 2026-08-17. fan-fas.js och gifter-fas.js ar OFORANDRADE och behaller sina strangar.
+  assert.match(media, /widget-fas\.js\?v=20260922-1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
   // De filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje

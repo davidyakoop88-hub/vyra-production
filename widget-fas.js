@@ -58,6 +58,17 @@
       [...box.classList].forEach(k => { if (k.startsWith(PREFIX)) box.classList.remove(k) });
     }
 
+    // Spelar lådan just nu? Fabrikens enda bidrag till frågan — POLICYN ägs av anroparen.
+    //
+    // Att låta `spela()` själv vägra spela om vore att ändra Fan och Gifter för en tredje familjs
+    // skull: de bygger på att `spela()` alltid spelar, och deras skydd mot omryckning är
+    // timerdiffen i `koppla()`, inte motorn. Arter som INTE kopplas (se `koppla()` nedan) frågar
+    // här i stället, och avgör själva. Gåvorörelsens svar står i docs/gavororelsen.md §7: en
+    // pågående koreografi spelar klart.
+    function spelar(box) {
+      return !!(box._fasTimers && box._fasTimers.length);
+    }
+
     // Avbryter en pågående koreografi och lämnar lådan i sitt vilotillstånd.
     function avbryt(box) {
       if (box._fasTimers) box._fasTimers.forEach(klocka.rensa);
@@ -79,7 +90,12 @@
         const fran = lista[i].namn;
         box._fasTimers.push(klocka.satt(() => {
           box.classList.remove(PREFIX + fran);
-          if (nasta) box.classList.add(PREFIX + nasta.namn);
+          if (nasta) { box.classList.add(PREFIX + nasta.namn); return }
+          // SLUTET MÅSTE SYNAS. Listan fylldes här ovan och tömdes förr bara av `avbryt()` — för en
+          // alert spelade det ingen roll, den släcks ändå. Top Gift och Top Streak ligger kvar hela
+          // sändningen, och en lista som står kvar full gör `spelar()` sant för alltid: widgeten
+          // ser upptagen ut vid varje ny gåva, och koreografin spelar aldrig igen.
+          box._fasTimers = [];
         }, vid));
       }
       return true;
@@ -87,6 +103,13 @@
 
     let kopplad = false;
     function koppla() {
+      // EN ART UTAN TRIGGER KOPPLAS INTE, och säger det rakt ut. Top Gift och Top Streak är
+      // permanenta widgetar: uppmätt 2026-09-22 finns varken `triggerTopGift`, `triggerTopStreak`
+      // eller något timerfält på deras lådor, så de har ingenting att linda sig runt och anropar
+      // `spela()` direkt i stället (docs/gavororelsen.md §1). Utan den här raden blev svaret ändå
+      // false — men bara för att `root[null]` råkar vara undefined, alltså rätt svar av fel skäl.
+      // En global som händelsevis heter "null" hade lindats.
+      if (!triggerNamn) return false;
       const original = root[triggerNamn];
       if (kopplad || typeof original !== 'function') return false;
       const wrapper = function () {
@@ -112,8 +135,8 @@
     koppla();
     root.document.addEventListener('load', () => koppla(), true);
 
-    return { PREFIX, FASER, KORTASTE_VISNING, faser, total, layoutAv, spela, avbryt, klocka,
-      koppla, arKopplad: () => kopplad };
+    return { PREFIX, FASER, KORTASTE_VISNING, faser, total, layoutAv, spela, spelar, avbryt,
+      klocka, koppla, arKopplad: () => kopplad };
   }
 
   root.VyraWidgetFas = { skapa };
