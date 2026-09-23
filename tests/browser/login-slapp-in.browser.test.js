@@ -227,6 +227,12 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
       + 'produkten.');
     const svar = await page.__inloggningssvar;
     await page.__sekvens;
+    // Observatören kan ha sett dörren precis innan sidan lämnar inloggningen.
+    // Läs därför sessionStorage först efter att destinationen har committats;
+    // annars kan page.evaluate hamna mitt i den avsedda navigeringen i CI.
+    try {
+      await page.waitForURL(/studio\.html/, { timeout: 30000, waitUntil: 'commit' });
+    } catch (e) {}
     // Anteckningen, inte elementet. Den skrevs i samma ogonblick dorren fanns och ligger kvar i
     // sessionStorage aven efter att redirecten tagit oss till studio.html.
     const rad = await page.evaluate(() => sessionStorage.getItem('vyra-prov-slapp-in'));
