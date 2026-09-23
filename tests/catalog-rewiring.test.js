@@ -35,8 +35,8 @@ function everyCatalogKey() {
   const v = name => Object.keys(VyraWidgets.variants(name));
   const keys = ['catalog:video', 'catalog:topgift', 'catalog:topstreak', 'catalog:followeralert',
     'catalog:likefountain'];
-  v('topgift.theme').forEach(t => keys.push('catalog:topgift:' + t));
-  v('topgift.extra').forEach(t => keys.push('catalog:topgift:extra:' + t));
+  // topgift.theme och topgift.extra pensionerades 2026-09-23. `variants()` svarar `{}` pa ett
+  // borttaget bord, sa raderna hade gjort ingenting och listan blivit kortare i tysthet.
   v('topstreak.theme').forEach(t => keys.push('catalog:topstreak:' + t));
   v('topstreak.frame').forEach(f => keys.push('catalog:topstreak:frame:' + f));
   v('heartgoal.theme').forEach(t => keys.push('catalog:heartgoal:' + t));
@@ -86,20 +86,21 @@ const KEY_ASSIGNMENTS = source =>
 
 test('varje katalogknapp publicerar en nyckel som registret känner igen', () => {
   const built = KEY_ASSIGNMENTS(MEDIA);
-  // Golvet sankt fran 20 till 19 den 2026-09-23: Top Gifts ramknappar pensionerades.
-  assert.ok(built.length >= 19, `hittade bara ${built.length} katalognycklar i media.js`);
+  // Golvet sankt 20 -> 19 -> 17 den 2026-09-23: forst Top Gifts ramknappar, sedan VYRA
+  // ORIGINAL-sektionens tolv kort. Golvet ar en kontrollmatning mot att monstret slutat matcha.
+  assert.ok(built.length >= 17, `hittade bara ${built.length} katalognycklar i media.js`);
   const families = new Set(built.map(b => b.literal.split(':')[1]).filter(Boolean));
   const unknown = [...families].filter(f => !VyraWidgets.families().includes(f));
   assert.deepEqual(unknown, [], 'media.js bygger nycklar för familjer registret inte känner');
   // Every assembled key is bound to a name the handler closes over, never re-derived at click time.
-  // 20 -> 19 den 2026-09-23, se docs/topgift-gallringen.md.
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 19,
+  // 20 -> 19 -> 17 den 2026-09-23, se docs/topgift-gallringen.md.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(catalogKey/g) || []).length, 17,
     'alla tjugo factory-anrop går inte via den bundna nyckeln');
 });
 
 test('nyckeln publiceras när knappen byggs, inte när den klickas', () => {
   const now = count(MEDIA);
-  assert.equal(now.total, 19, `factoryplatser: ${now.total}`);
+  assert.equal(now.total, 17, `factoryplatser: ${now.total}`);
   assert.equal(now.insideDirectOnclick, 0,
     'dessa publicerar först vid klick: ' +
     now.sites.filter(s => s.insideDirectOnclick).map(s => s.button).join(', '));
@@ -240,8 +241,11 @@ test('inga gamla inline-defaultobjekt finns kvar', () => {
   // 22 -> 21 den 2026-09-23: Top Gifts RAMSEKTION pensionerades pa Davids begaran, och
   // katalogblocket som byggde de sju knapparna togs bort ur media.js. Det ar en sektion som
   // forsvann — precis det fall raden ovan beskriver som ofarligt. Sju designer, EN create().
-  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 21,
-    'antalet kataloganrop stämmer inte med de tjugoen katalogställena');
+  // Sankt 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades — elva var DUBBLETTER av
+  // premiumdesignerna (samma `theme`, alltsa samma skinn) och den tolfte, coronation, gick med
+  // dem. Tva katalogsektioner forsvann. Se docs/topgift-gallringen.md.
+  assert.equal((MEDIA.match(/VyraWidgets\.create\(/g) || []).length, 19,
+    'antalet kataloganrop stämmer inte med de nitton katalogställena');
 });
 
 test('inga ramtabellkopior finns kvar i media.js', () => {

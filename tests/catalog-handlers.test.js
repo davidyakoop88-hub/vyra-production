@@ -222,8 +222,6 @@ const HOISTED = [
   ['Ranking', "catalogKey='catalog:ranking:'+type+':'+theme",
     { rankingKinds: { templateTopCoins: { title: 'TOP COINS', icon: '●', label: 'Top Coins' },
       templateTopPoints: { title: 'TOP POINTS', icon: '◆', label: 'Top Points' } } }],
-  ['Top Gift · tema', "catalogKey='catalog:topgift:'+theme", {}, ['prototype-section']],
-  ['Top Gift · extratema', "catalogKey='catalog:topgift:extra:'+theme", {}, ['prototype-section template-style-grid']],
   ['Top Streak · tema', "catalogKey='catalog:topstreak:'+theme", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Top Streak · ram', "catalogKey='catalog:topstreak:frame:'+fid", { STREAK_FRAMES: FRAMES('topstreak.frame') }, ['streak-template-section']],
   ['Heart Goal', "catalogKey='catalog:heartgoal:'+t", { heartThemes: FRAMES('heartgoal.theme') }],

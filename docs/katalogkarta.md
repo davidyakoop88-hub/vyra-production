@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6065475f`
+Commit: `243a9c01`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **175** |
+| Kort totalt | **153** |
 | Sektioner | 22 |
-| Med katalognyckel | 175 / 175 |
-| Med shadow DOM-miniatyr | 175 / 175 |
-| Ritar sin design | 175 / 175 |
+| Med katalognyckel | 153 / 153 |
+| Med shadow DOM-miniatyr | 153 / 153 |
+| Ritar sin design | 153 / 153 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -60,8 +60,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
 | TOP LIKE · VYRA ORIGINAL | 4 | 4/4 | 4/4 | 4/4 | 2026-09-20 | — |
-| VYRA ORIGINAL · REDIGERBARA | 33 | 33/33 | 33/33 | 33/33 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| TOP GIFTER · DESIGNVAL | 33 | 33/33 | 33/33 | 33/33 | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
+| VYRA ORIGINAL · REDIGERBAR | 22 | 22/22 | 22/22 | 22/22 | 2026-09-23 | — |
+| TOP GIFTER · DESIGNVAL | 22 | 22/22 | 22/22 | 22/22 | 2026-09-23 | — |
 
 ## Varje kort
 
@@ -274,22 +274,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-20 | — |
 | VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-20 | — |
 
-### VYRA ORIGINAL · REDIGERBARA
+### VYRA ORIGINAL · REDIGERBAR
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Gold | `catalog:topgift:royal` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Neon Purple | `catalog:topgift:neon` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Cyber Blue | `catalog:topgift:cyber` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Glass | `catalog:topgift:glass` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-03 | — |
-| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-03 | — |
-| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-03 | — |
-| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-03 | — |
-| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-03 | — |
-| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-03 | — |
-| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-03 | — |
+| Top Gift Flip | `catalog:topgift` | ✓ | ✓ | 2026-09-23 | — |
 | Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
@@ -316,18 +305,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Gold | `catalog:topgift:royal` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Neon Purple | `catalog:topgift:neon` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Cyber Blue | `catalog:topgift:cyber` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Glass | `catalog:topgift:glass` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
-| Sakura Pink | `catalog:topgift:extra:sakura` | ✓ | ✓ | 2026-08-03 | — |
-| Inferno Fire | `catalog:topgift:extra:fire` | ✓ | ✓ | 2026-08-03 | — |
-| Ice Crystal | `catalog:topgift:extra:ice` | ✓ | ✓ | 2026-08-03 | — |
-| Galaxy | `catalog:topgift:extra:galaxy` | ✓ | ✓ | 2026-08-03 | — |
-| Aurora | `catalog:topgift:extra:aurora` | ✓ | ✓ | 2026-08-03 | — |
-| Retro Arcade | `catalog:topgift:extra:retro` | ✓ | ✓ | 2026-08-03 | — |
-| Gold Rush | `catalog:topgift:extra:goldrush` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Coronation | `catalog:topgift:extra:coronation` | ✓ | ✓ | 2026-08-03 | — |
+| Top Gift Flip | `catalog:topgift` | ✓ | ✓ | 2026-09-23 | — |
 | Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |
 | Cyber Blue | `catalog:topgift:premium:cyber` | ✓ | ✓ | 2026-08-05 | [#82](https://github.com/davidyakoop88-hub/vyra-production/pull/82) |

@@ -55,7 +55,6 @@
 
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
-    'topgift.theme': { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' },
     // Premiumdesignerna ar en EGEN familj, inte fler rader i topgift.theme ovan: de delar bara
     // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
     // Accenten ar densamma for alla 21; tabellen bar etiketten sa den sager nagot mer an att
@@ -81,7 +80,6 @@
       hall: 'VYRA Hall of Fame', throne: 'Royal Throne', champion: 'Celestial Champion',
       pedestal: 'Diamond Pedestal', arch: 'Celestial Arch', phoenix: 'Phoenix',
       signal: 'Signal', fireworks: 'Fireworks', bloom: 'Bloom', comet: 'Comet' },
-    'topgift.extra': {"sakura":"#ff69b4","fire":"#ff4b16","ice":"#64dfff","galaxy":"#9b5cff","aurora":"#4fd8c4","retro":"#ffcf3d","goldrush":"#e8b64d","coronation":"#e8c25a"},
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
@@ -212,19 +210,6 @@
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 170, width: 520,
       title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
       accent: v.accent, giftSize: 64, streakSpeed: 1, streakGlow: 50
-    }),
-    'topgift.theme': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180, width: 280, title: 'VYRA Top Gift',
-      templateTitle: 'TOP GIFT', value: '', dataName: '@StreamQueen', dataValue: '44 999',
-      accent: v.accent, dataColor: '#ffffff', valueColor: v.accent, dataSize: 18, showDataValue: true
-    }),
-    'topgift.extra': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180,
-      width: v.theme === 'coronation' ? 260 : 280, title: 'VYRA Top Gift',
-      templateTitle: v.theme === 'coronation' ? 'TOP GIFTER' : 'TOP GIFT',
-      dataName: '@StreamQueen', dataValue: v.theme === 'coronation' ? '12 500' : '44 999',
-      giftName: 'ROSE', giftCount: 250, giftSize: v.theme === 'coronation' ? 90 : 62,
-      accent: v.accent, dataColor: '#fff', valueColor: v.accent, dataSize: 18, showDataValue: true
     }),
 
     'topstreak': () => ({
@@ -403,9 +388,18 @@
     'video': (parts, extra) => ['video', extra || {}],
     'topgift': parts => {
       if (!parts.length) return ['topgift', {}];
-      if (parts[0] === 'extra') return ['topgift.extra', { theme: parts[1], accent: pick('topgift.extra', parts[1], 'extratema') }];
       if (parts[0] === 'premium') { pick('topgift.premium', parts[1], 'premiumdesign'); return ['topgift.premium', { theme: parts[1] }] }
-      return ['topgift.theme', { theme: parts[0], accent: pick('topgift.theme', parts[0], 'tema') }];
+      // `topgift.theme` och `topgift.extra` pensionerades 2026-09-23. De var DUBBLETTER: uppmatt
+      // gav `catalog:topgift:royal` och `catalog:topgift:premium:royal` exakt samma `theme`, alltsa
+      // samma skinn `topgift-royal`. Det enda som skilde var forvald bredd, rubriktext och
+      // accentfarg. Katalogen visade samma design tva ganger, och David bad om farre.
+      //
+      // En gammal nyckel far darfor peka pa sin TVILLING i premiumtabellen. Det bryter inte mot
+      // regeln ovan — "never quietly resolve to another design" — eftersom det inte ar en annan
+      // design: det ar samma skinn med andra forvalda matt. Ett namn utan tvilling (coronation var
+      // det enda) kastar med en lasbar lista, precis som forut.
+      pick('topgift.premium', parts[0], 'premiumdesign');
+      return ['topgift.premium', { theme: parts[0] }];
     },
     'topstreak': parts => {
       if (!parts.length) return ['topstreak', {}];

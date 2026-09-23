@@ -180,7 +180,10 @@ test('varje singleton-filter i media.js skyddar standalone', () => {
   // bort ur media.js. Varje sadan knapp bar ett eget skyddat filter. Skalet gar att peka pa —
   // se docs/topgift-gallringen.md och tests/topgift-pension.test.js P11-P15. Det ar en knapp
   // som forsvann, inte ett skydd.
-  assert.ok(guarded >= 15, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
+  //
+  // Sankt 15 -> 13 den 2026-09-23: VYRA ORIGINAL-sektionens tolv kort pensionerades, och de tva
+  // katalogblocken bar varsitt skyddat filter. Aterigen knappar som forsvann, inte skydd.
+  assert.ok(guarded >= 13, `bara ${guarded} skyddade filter — färre än de kända raderande ställena`);
 });
 
 // ---- hidden and placement stay separate ---------------------------------------------------------

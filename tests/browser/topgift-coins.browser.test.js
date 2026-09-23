@@ -29,7 +29,7 @@ test.after(async () => { if (browser) await browser.close() });
 async function forlopp(page) {
   return page.evaluate(async () => {
     state.widgets.length = 0;
-    const w = VyraWidgets.create('catalog:topgift:royal');
+    const w = VyraWidgets.create('catalog:topgift:premium:royal');
     w.x = 60; w.y = 60;
     state.widgets.push(w);
     selected = null;

@@ -216,7 +216,7 @@ test('P14: katalogen kan inte langre skapa en ram, och sager varfor', () => {
   root.window = root;
   vm.runInNewContext(las('widget-factory.js'), root, { filename: 'widget-factory.js' });
   assert.throws(() => root.VyraWidgets.create('catalog:topgift:frame:luna-mist'),
-    /Okänd tema "frame"|Okänd gåvoram/,
+    /Okänd premiumdesign "frame"|Okänd tema "frame"|Okänd gåvoram/,
     'en borttagen ram gick fortfarande att skapa ur katalogen');
 });
 

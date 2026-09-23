@@ -117,7 +117,9 @@ const UTAN_RAM = { utanRam: true };
 const FALL = [
   ['catalog:topgift',                        'topgift'],
   ['catalog:topgift:premium:royal',          'topgift'],
-  ['catalog:topgift:extra:coronation',       'topgift'],
+  // catalog:topgift:extra:coronation togs bort 2026-09-23 med VYRA ORIGINAL-sektionen.
+  // Coronation var den ENDA av de tolv utan premiumtvilling; de ovriga elva ritade redan
+  // samma skinn som en premiumdesign. Se docs/topgift-gallringen.md.
   // Top Gifts gavoramar togs bort 2026-09-23 pa Davids begaran ("for mycket och trakigt
   // design"): varianttabellen, katalogknapparna och den ramade grenen i vyraTopGift ar ute
   // ur repot. topgift-pension.js pekar de sju pa premiumdesignen royal sa sparade layouter

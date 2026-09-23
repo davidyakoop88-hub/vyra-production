@@ -97,12 +97,24 @@ test('de befintliga tema- och ramnycklarna fungerar som forut', () => {
   assert.deepEqual(fel, [], fel.join('\n  '));
 });
 
-test('premiumnyckeln och den gamla temanyckeln ar INTE samma widget', () => {
-  // topgift:royal och topgift:premium:royal delar namn men har olika defaults - bredd 280 mot 340.
-  // Skulle de ge samma sak vore den ena familjen overflodig, och da ar det battre att veta det.
-  const gammal = utanId(VyraWidgets.create('catalog:topgift:royal'));
-  const premium = utanId(VyraWidgets.create('catalog:topgift:premium:royal'));
-
-  assert.notDeepEqual(gammal, premium,
-    'de tva familjerna bygger samma widget — da behovs bara en av dem');
+// 'premiumnyckeln och den gamla temanyckeln ar INTE samma widget' — provet gjorde sitt jobb, och
+// svaret blev ja.
+//
+// Det stod dar for att svara pa en fraga: "Skulle de ge samma sak vore den ena familjen
+// overflodig, och da ar det battre att veta det." Widgetarna skilde sig i FORVALDA MATT (bredd 280
+// mot 340, egen accent, egen rubriktext) men inte i `theme` — och det ar `theme` som avgor skinnet:
+// premium-final.js ritar `topgift-${w.theme||'royal'}`. Katalogen visade alltsa samma design tva
+// ganger med olika standardbredd.
+//
+// 2026-09-23 pensionerades topgift.theme och topgift.extra av just det skalet. Den gamla nyckeln
+// pekar nu pa sin tvilling, sa provet kan inte langre falla — och ett prov som inte kan falla
+// vaktar ingenting. Provet under ('de befintliga tema- och ramnycklarna fungerar som forut') mater
+// att omdirigeringen haller.
+test('den gamla temanyckeln pekar pa sin premiumtvilling', () => {
+  const gammal = VyraWidgets.create('catalog:topgift:royal');
+  const premium = VyraWidgets.create('catalog:topgift:premium:royal');
+  assert.equal(gammal.theme, premium.theme, 'omdirigeringen ger inte samma skinn');
+  assert.equal(gammal.width, premium.width, 'omdirigeringen ger inte premiumdesignens matt');
+  assert.equal(gammal.createdFrom, 'catalog:topgift:royal',
+    'createdFrom ska bevara den nyckel anroparen faktiskt anvande');
 });

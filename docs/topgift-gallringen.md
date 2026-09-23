@@ -3,8 +3,34 @@
 Top Gift hade **40 designer**. Det var för många. Det här dokumentet säger hur en design tas bort
 utan att någons sändning ser fel ut, och vad som redan tagits bort.
 
-**Gjort 2026-09-23:** hela ramgruppen, sju designer, på Davids begäran — *"för mycket och tråkigt
-design"*. Kvar: **33**.
+**Gjort 2026-09-23**, på Davids begäran — *"för mycket och tråkigt design"*:
+
+| Vad | Antal | Kvar |
+|---|---|---|
+| Ramgruppen `topgift.frame` | 7 | 33 |
+| VYRA ORIGINAL: `topgift.theme` + `topgift.extra` | 12 | **21** |
+
+### Elva av de tolv var dubbletter
+
+Det viktigaste fyndet i hela gallringen, uppmätt innan något togs bort: `catalog:topgift:royal` och
+`catalog:topgift:premium:royal` byggde widgetar med **exakt samma `theme`**. Och det är `theme` som
+avgör skinnet — `premium-final.js` ritar `topgift-${w.theme||'royal'}`. Det enda som skilde var
+förvald bredd (280 mot 340), rubriktext och accentfärg.
+
+Katalogen visade alltså samma design två gånger. Elva av de tolv hade en premiumtvilling med samma
+namn; den tolfte, `coronation`, var den enda där en design faktiskt försvann.
+
+**Gamla nycklar leder vidare.** `catalog:topgift:royal` pekar nu på sin tvilling i premiumtabellen.
+Det bryter inte mot fabrikens regel *"never quietly resolve to another design"* — det är inte en
+annan design, det är samma skinn med andra förvalda mått. Ett namn utan tvilling kastar som förut.
+
+**Skinnen är kvar i CSS:en.** Premiumdesignerna använder samma `topgift-<tema>`-klasser, så ingen
+sparad widget ändrar utseende. Även `coronation` ritas som förut för den som redan har en — den går
+bara inte att skapa längre.
+
+Ett prov som fanns sedan tidigare ställde precis den här frågan: *"Skulle de ge samma sak vore den
+ena familjen överflödig, och då är det bättre att veta det."* Det gjorde sitt jobb, och svaret blev
+ja.
 
 Allt som står som **uppmätt** är läst ur koden 2026-09-23.
 
@@ -17,10 +43,10 @@ borttagning till en dataändring, inte en kodändring.
 
 | Grupp | Nyckel i `variants` | Antal |
 |---|---|---|
-| Premium | `topgift.premium` | 21 |
-| Extra | `topgift.extra` | 8 |
-| ~~Ramar~~ | ~~`topgift.frame`~~ | **pensionerade 2026-09-23** |
-| Klassiska | `topgift.theme` | 4 |
+| Premium | `topgift.premium` | 21 — allt som är kvar |
+| ~~Ramar~~ | ~~`topgift.frame`~~ | **borttagna 2026-09-23** |
+| ~~Extra~~ | ~~`topgift.extra`~~ | **borttagna 2026-09-23** |
+| ~~Klassiska~~ | ~~`topgift.theme`~~ | **borttagna 2026-09-23** |
 
 Varje design har en referensbild i `tests/visual/referenser/topgift_*.png`. Ramarna hade dessutom
 konst i `assets/topgift-frames/` — den katalogen finns inte längre.

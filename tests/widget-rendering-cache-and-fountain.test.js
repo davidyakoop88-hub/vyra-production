@@ -147,7 +147,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ramgrenen pensionerades. widget-factory.js bumpas i samma andring — det ar DEN som bar
   // varianttabellen, och en cachad fabrik hade fortsatt erbjuda sju designer som inte finns.
   assert.match(studio, /studio\.css\?v=20260923-2/);
-  assert.match(studio, /widget-factory\.js\?v=20260923-1/);
+  // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
+  // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
+  // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
+  assert.match(studio, /widget-factory\.js\?v=20260923-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
