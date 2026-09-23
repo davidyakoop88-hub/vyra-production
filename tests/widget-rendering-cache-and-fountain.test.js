@@ -143,7 +143,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // arten) och gift-event-images.js (armningen anropar koreografin), sa de bumpas ocksa — var och
   // en for sin egen andring. widget-factory.js och premiumbundlen ar OFORANDRADE och behaller
   // sina strangar.
-  assert.match(studio, /studio\.css\?v=20260923-1/);
+  assert.match(studio, /studio\.css\?v=20260923-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
