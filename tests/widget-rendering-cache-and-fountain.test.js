@@ -146,7 +146,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-23 igen: de 16 reglerna for `.topgift-framed`/`.tgf-*` togs bort nar hela
   // ramgrenen pensionerades. widget-factory.js bumpas i samma andring — det ar DEN som bar
   // varianttabellen, och en cachad fabrik hade fortsatt erbjuda sju designer som inte finns.
-  assert.match(studio, /studio\.css\?v=20260923-3/);
+  // Bumpad till -4 i sammanslagningen med main 2026-09-23: main andrade samma fil (sound
+  // alerts respektive today-features) utan att bumpa sin strang, sa den sammanslagna filen ar
+  // ny mot BADA foraldrarna. En klient som hamtat nagon av de tva gamla strangarna hade annars
+  // suttit kvar pa sin halva av andringen.
+  assert.match(studio, /studio\.css\?v=20260923-4/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -331,7 +335,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
     'battle-mvp-session.js cachebustades inte for #368');
-  for (const fil of ['vyra-tal', 'sound-alerts']) {
+  // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
+  // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
+  // den andringen — det var LISTAN som inte fick veta, sa provet stod rott pa main.
+  //
+  // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
+  // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
+  assert.match(media, /sound-alerts\.js\?v=20260923-library/, 'sound-alerts.js cachebustades inte');
+  for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
   // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
@@ -340,10 +351,24 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // isar kan en av dem laddas gammal mot de andras nya kontrakt, och faltregistret finns bara i en
   // av dem: laddas action-event.js gammal saknar de andra tre `VyraActionFields` och tappar TYST
   // varje falt de skulle ha lamnat ifran sig.
-  for (const fil of ['action-event', 'action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  //
+  // GRUPPEN DELADES 2026-09-23. action-event.js och action-event.css bumpades till
+  // `20260923-workspace` i workspace-arbetet pa main; de ovriga sju rordes inte. Provet stod rott
+  // pa main tills den har raden skrevs om.
+  //
+  // Delningen ar RATT, och det ar vart att skriva ut varfor, for regeln ovan sager motsatsen:
+  // repots grundregel ar att en strang foljer SIN fil, inte grannarnas. Faran gruppen skulle
+  // skydda mot ar att action-event.js laddas GAMMAL mot de andras nya kontrakt — da saknas
+  // `VyraActionFields` och de tre som laser registret tappar tyst varje falt. En NYARE strang pa
+  // just action-event.js gor tvartom: den tvingar fram en ny hamtning. De sju oforandrade ska
+  // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
+  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
-  assert.match(media, /action-event\.css\?v=20260916-facit/, 'action-event.css cachebustades inte');
+  for (const fil of ['action-event.js', 'action-event.css']) {
+    assert.match(media, new RegExp(`${fil.replace('.', '\\.')}\\?v=20260923-workspace`),
+      `${fil} cachebustades inte for workspace-andringen`);
+  }
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
