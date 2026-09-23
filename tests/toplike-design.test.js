@@ -71,7 +71,15 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // synlig text, inte bara en kommentar — en cachad media.js skulle fortsatta skicka streamern
   // till en kalla pa en fjardedels upplosning.
   // toplike-studio.css och toplike-studio.js ar OFORANDRADE och behaller darfor sina strangar.
-  assert.match(studioHtml, /media\.js\?v=20260923-1/);
+  // Bumpad till -4 i sammanslagningen med main 2026-09-23: main andrade samma fil (sound
+  // alerts respektive today-features) utan att bumpa sin strang, sa den sammanslagna filen ar
+  // ny mot BADA foraldrarna. En klient som hamtat nagon av de tva gamla strangarna hade annars
+  // suttit kvar pa sin halva av andringen.
+  // -5 2026-09-23: like-fountain-particles.js togs bort ur skriptsvansen. En cachad media.js
+  // hade fortsatt injicera den och allokerat en duk per render som ingenting ritar pa.
+  // -6 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur katalogen. En cachad media.js
+  // hade fortsatt rita knappen och dess nyckel.
+  assert.match(studioHtml, /media\.js\?v=20260923-6/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
   // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.

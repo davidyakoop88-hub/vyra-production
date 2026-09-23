@@ -50,19 +50,18 @@ const FAMILJER = [
   // layouter laser, men renderaren ritar Clean Flip oavsett streakFrame - uppmatt i Chromium, och
   // last av tests/streak-style-menu.test.js. Att lata familjen sta kvar har hade kravt att
   // ramarna nadde utdatan, alltsa att en dod design kom tillbaka.
-  { familj: 'topgift.frame', nyckel: v => `catalog:topgift:frame:${v}`, falt: 'giftFrame' },
+  // topgift.frame togs bort har 2026-09-23, och till skillnad fran Top Streaks avveckling ar det
+  // en HEL BORTTAGNING: varianttabellen, katalogknapparna och den ramade grenen i vyraTopGift ar
+  // ute ur repot. Davids skal: "for mycket och trakigt design". Familjen kan alltsa inte matas har
+  // — den finns inte att mata.
+  //
+  // Sparade layouter laser anda. topgift-pension.js pekar de sju ramarna pa premiumdesignen royal
+  // och bar med ramens accentfarg, sa en gammal widget byter till nagot vi VALT at den i stallet
+  // for att falla igenom till ingenting. tests/topgift-pension.test.js P11-P15 vaktar det, och
+  // docs/topgift-gallringen.md bar checklistan.
   { familj: 'battlemvp.frame', nyckel: v => `catalog:battlemvp:frame:${v}`, falt: 'mvpFrame' }
 ];
 
-// KVARVARANDE LUCKA, medvetet oppen i den har PR:en.
-//
-// topgift.frame har exakt samma fel: vyraTopGift skrivs over utan att titta pa topGiftFrame, och
-// alla sju ramarna renderas som topgift-royal. Fixen ar identisk med den for Top Streak men
-// verifieras i OBS for sig, sa den ligger i en egen PR.
-//
-// Listan star har i stallet for att familjen tyst utelamnas: en utelamnad rad ser ut som att
-// familjen inte finns, en namngiven lucka ser ut som det den ar. Nasta PR tar bort raden och
-// lagger till familjen ovan.
 const ANNU_INTE_FIXADE = {};
 
 for (const { familj, nyckel, falt } of FAMILJER) {
