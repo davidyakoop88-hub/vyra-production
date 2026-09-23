@@ -317,6 +317,9 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
+    // Samma mönster som 'goals' ovan: workspace_id kommer alltid från TOKEN:s egen rad, aldrig
+    // från query/body/header — en overlay-länk kan bara läsa sin egen arbetsytas topplista.
+    if(rest==='points'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTop(pool,access.workspace_id,{limit});return send(res,200,{ok:true,points:top})}
     // UPPSTARTSLUCKAN. Bootstrapsvaret ar den enda konfigurationskallan klienten hamtar fran vid
     // start OCH vid varje ateranslutning — darfor bar det sessionssnapshotet ocksa, i stallet for
     // en andra rutt med en andra sanning.

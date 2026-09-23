@@ -211,6 +211,34 @@ db('workspace_id kaskaderar: raderat workspace lamnar inga foraldralosa rader', 
   assert.equal(ledger.rows[0].c, 0, 'ledgerrader blev kvar efter att workspacet raderats');
 });
 
+db('readTop/readLedger tar visningsnamn och avatar fran gifter_totals, inte bara siffror', async () => {
+  const viewerId = 'profil-viewer';
+  await pool.query(
+    `INSERT INTO gifter_totals (workspace_id, tiktok_username, viewer_id, display_name, avatar_url)
+     VALUES ($1, 'testhandtag', $2, 'Testis', 'https://example.invalid/a.png')
+     ON CONFLICT (workspace_id, tiktok_username, viewer_id) DO NOTHING`,
+    [WS_A, viewerId]);
+  await P.applyEvent(pool, WS_A, { id: 'profil-1', type: 'follow', userId: viewerId });
+
+  const ledger = await P.readLedger(pool, WS_A, viewerId);
+  assert.equal(ledger.displayName, 'Testis');
+  assert.equal(ledger.avatarUrl, 'https://example.invalid/a.png');
+
+  const top = await P.readTop(pool, WS_A, { limit: 50 });
+  const row = top.find(r => r.viewerId === viewerId);
+  assert.ok(row, 'tittaren saknas i topplistan');
+  assert.equal(row.displayName, 'Testis', 'topplistan bar inte samma profil som readLedger');
+});
+
+db('en tittare utan gifter_totals-rad far null-namn, inte en trasig join', async () => {
+  const viewerId = 'namnlos-viewer';
+  await P.applyEvent(pool, WS_A, { id: 'namnlos-1', type: 'follow', userId: viewerId });
+  const ledger = await P.readLedger(pool, WS_A, viewerId);
+  assert.equal(ledger.displayName, null);
+  assert.equal(ledger.avatarUrl, null);
+  assert.equal(ledger.points, P.DEFAULT_SETTINGS.perFollow, 'joinen fick punkterna att forsvinna nar profilen saknas');
+});
+
 db('femtio samtidiga event fran samma tittare tappar ingen okning', async () => {
   const viewerId = 'race-viewer';
   const N = 50;

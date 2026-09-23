@@ -226,11 +226,28 @@ async function upsertSettings(pool, workspaceId, patch = {}) {
 }
 
 // ---- reads ----------------------------------------------------------------------------------------
+// points_ledger only ever stores viewer_id (see viewerIdFor above) — no display name, no avatar, on
+// purpose: it is an idempotency-and-totals table, not a profile table, and a viewer's name/avatar can
+// change after the row is written. gifter_totals already carries display_name/avatar_url for the same
+// (workspace_id, viewer_id) pair (kept fresh by stream-stats.js on every event) and a viewer can only
+// ever hold ONE (display_name, avatar_url) at a time per workspace regardless of how many
+// tiktok_username rows they appear under, so DISTINCT ON (viewer_id), newest last_seen first, is a safe
+// 1:1 pick — never a fan-out that would duplicate or drop a ledger row.
+const PROFILE_JOIN = `
+  LEFT JOIN (
+    SELECT DISTINCT ON (viewer_id) viewer_id, display_name, avatar_url
+    FROM gifter_totals
+    WHERE workspace_id = $1
+    ORDER BY viewer_id, last_seen DESC
+  ) p ON p.viewer_id = l.viewer_id
+`;
+
 function normalizeLedgerRow(row, settings) {
   if (!row) return null;
   const earned = Number(row.earned);
   return {
     workspaceId: row.workspace_id, viewerId: row.viewer_id,
+    displayName: row.display_name || null, avatarUrl: row.avatar_url || null,
     points: Number(row.points), earned,
     level: computeLevel(earned, settings)
   };
@@ -239,16 +256,18 @@ function normalizeLedgerRow(row, settings) {
 async function readLedger(pool, workspaceId, viewerId) {
   const settings = await getSettings(pool, workspaceId);
   const q = await pool.query(
-    'SELECT * FROM points_ledger WHERE workspace_id = $1 AND viewer_id = $2',
+    `SELECT l.*, p.display_name, p.avatar_url FROM points_ledger l ${PROFILE_JOIN}
+     WHERE l.workspace_id = $1 AND l.viewer_id = $2`,
     [workspaceId, viewerId]);
   return normalizeLedgerRow(q.rows[0], settings)
-    || { workspaceId, viewerId, points: 0, earned: 0, level: computeLevel(0, settings) };
+    || { workspaceId, viewerId, displayName: null, avatarUrl: null, points: 0, earned: 0, level: computeLevel(0, settings) };
 }
 
 async function readTop(pool, workspaceId, { limit = 10 } = {}) {
   const settings = await getSettings(pool, workspaceId);
   const q = await pool.query(
-    'SELECT * FROM points_ledger WHERE workspace_id = $1 ORDER BY points DESC LIMIT $2',
+    `SELECT l.*, p.display_name, p.avatar_url FROM points_ledger l ${PROFILE_JOIN}
+     WHERE l.workspace_id = $1 ORDER BY l.points DESC LIMIT $2`,
     [workspaceId, limit]);
   return q.rows.map(row => normalizeLedgerRow(row, settings));
 }
