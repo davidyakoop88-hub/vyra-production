@@ -150,3 +150,34 @@ test('reglerna pekar bara pa krokar som renderaren faktiskt producerar', () => {
   assert.equal(/\.vyra-topgift\.topgift-[a-z0-9-]+>strong/.test(CSS), false,
     'en regel star pa >strong, men strong ligger numera inuti .topgift-copy och natt aldrig');
 });
+
+// ---- en pensionerad design far inte komma tillbaka via CSS:en -----------------------------------
+//
+// David, 2026-09-23: "uppdatera bade hemsidan o deskapp att de som vi har tagit bort kommer inte
+// tillbaka, ta bort de helt."
+//
+// Gallringen stadade `studio.css` och lamnade `premium-final.css` orord. Uppmatt efterat: TIO av de
+// pensionerade designerna hade kvar 32 selektorer och fyra keyframes dar — hall, throne, champion
+// och arch med sina egna siluetter, pedestal, phoenix, bloom, comet, signal och fireworks med sina
+// ornament. Ingenting gick sonder av det; filen bar bara 4,6 kB som LAG UT SOM en fungerande
+// design nar man laste den, och nasta lasare hade inte kunnat se skillnaden.
+//
+// Provet lasar bada filerna pa en gang: KATALOGEN ar inte det enda stallet en design kan bo.
+// Listan lases ur pensionstabellen, inte handskriven — pensioneras nagot mer utan att CSS:en stadas
+// faller det har direkt.
+test('ingen pensionerad design har CSS kvar i nagon fil', () => {
+  const pension = fs.readFileSync(path.join(ROOT, 'topgift-pension.js'), 'utf8');
+  const tabell = pension.match(/const PENSIONERADE = \{[\s\S]*?\n  \};/);
+  assert.ok(tabell, 'PENSIONERADE hittades inte i topgift-pension.js');
+
+  const namn = [...tabell[0].matchAll(/^\s*'([a-z0-9-]+)':/gm)].map(m => m[1]);
+  assert.ok(namn.length >= 26, `pensionstabellen lastes till bara ${namn.length} namn — mönstret`);
+
+  const kvar = namn
+    .map(n => [n, (CSS.match(new RegExp('\\.topgift-' + n + '(?![a-z0-9-])', 'g')) || []).length])
+    .filter(([, antal]) => antal > 0);
+
+  assert.deepEqual(kvar, [],
+    'dessa pensionerade designer har CSS kvar och ar alltsa inte borttagna helt:\n' +
+    kvar.map(([n, a]) => `  ${n}  (${a} selektorer)`).join('\n'));
+});

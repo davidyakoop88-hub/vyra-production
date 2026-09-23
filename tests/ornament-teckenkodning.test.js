@@ -21,9 +21,17 @@ const path = require('node:path');
 const CSS = path.join(__dirname, '..', 'premium-final.css');
 
 // Selektor -> tecknen ornamentet ska bestå av, som code points.
+//
+// `.topgift-fireworks` stod har till 2026-09-23. Designen pensionerades med de nitton andra och
+// bada dess content-deklarationer — den dubbelkodade originalstrangen OCH escape-versionen som
+// overskuggade den — togs bort ur premium-final.css. Raden gick med designen i stallet for att
+// lamnas kvar: en selektor som inte finns ger `effektivContent` null, och provet hade fallit pa
+// "hittade ingen content-deklaration" utan att nagot varit fel med teckenkodningen.
+//
+// Goal-ornamentet bar exakt samma dubbelkodning och ar kvar, sa provet vaktar fortfarande den
+// bugg det skrevs for.
 const ORNAMENT = {
-  '.topgift-fireworks .topgift-ornament:after': [0x2726, 0x00b7, 0x2727, 0x00b7, 0x2726],
-  '.goal-constellation .goal-track:after':      [0x2726, 0x00b7, 0x2727, 0x00b7, 0x2726],
+  '.goal-constellation .goal-track:after': [0x2726, 0x00b7, 0x2727, 0x00b7, 0x2726],
 };
 
 function effektivContent(kalla, selektor) {

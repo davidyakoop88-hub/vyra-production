@@ -309,7 +309,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-23: premiumbunten fick topgift-pension.js, som lindar den vyraTopGift
   // premium-final.js sjalv skriver over. En ny fil I bunten ar en andring AV bunten, sa
   // strangen foljer med — annars laddar en cachad klient de fyra gamla och aldrig den femte.
-  assert.match(media, /const version='20260923-2'/);
+  // Bumpad 2026-09-23 igen: premium-final.css stadades pa de tio pensionerade designer som
+  // gallringen lamnade kvar dar (32 selektorer, fyra keyframes). Konstanten styr BADE
+  // premium-final.js och premium-final.css, sa en cachad klient hade annars fortsatt hamta den
+  // gamla CSS:en — och de borttagna designerna hade levt kvar hos just de som redan varit inne.
+  assert.match(media, /const version='20260923-3'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
