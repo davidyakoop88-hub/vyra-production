@@ -24,9 +24,18 @@ function nycklar() {
 //
 // Golvet var 150. Kartan gick från 151 till 149 nycklar 2026-09-19 22:20 (cffae80) när katalogen
 // krympte med flit, och referensvakten föll då vid inläsning — före ett enda foto — med felet
-// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet: 140 håller
-// den rollen med marginal för nästa avveckling, samma golv som overlay-alla-widgets använder.
-const GOLV = 140;
+// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet.
+//
+// 140 skrevs "med marginal för nästa avvecklinger". Den marginalen räckte inte: gallringen av Top
+// Gifts designer 2026-09-23 tog bort 38 på en gång (sju gåvoramar, tolv VYRA ORIGINAL, nitton
+// premium) och kartan står nu på 112 nycklar i 115 kort. Golvet föll alltså på en avveckling som
+// var hela poängen med ändringen, inte på en karta som flyttat.
+//
+// 100 är det nya golvet, satt på samma sätt: långt under dagens 112 så att en normal avveckling
+// får plats, långt över noll så att en tom eller flyttad karta fortfarande fångas. Siffran står på
+// ETT ställe och overlay-alla-widgets läser den härifrån — annars glider de två isär, och det var
+// precis vad som hände förra gången golvet ändrades.
+const GOLV = 100;
 function kravNycklar(minst = GOLV) {
   const lista = nycklar();
   if (lista.length < minst) {
