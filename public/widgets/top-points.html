@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VYRA · Top Points</title>
+<title>VYRA · Ranking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -192,7 +192,7 @@
 
     <div class="empty-state" id="emptyState" hidden>
       <strong>Ingen på listan än</strong>
-      <span>Top Points fylls på när tittare tjänar poäng — väntar på första händelsen.</span>
+      <span id="emptyText">Rankingen fylls på när tittare bidrar — väntar på första händelsen.</span>
     </div>
   </div>
 
@@ -202,12 +202,15 @@
 (function(){
   'use strict';
 
-  // Ranking-familjen har hittills bara EN riktig motor bakom sig: points-runtime.js ger ett
-  // blandat, arbetsyte-konfigurerbart poäng per tittare (per_coin/per_like/per_follow/...), inte
-  // separata råräknare. Den här widgeten heter därför "Top Points" — inte "Top Like"/"Top Coins" —
-  // för de kräver antingen per-widget-satta intjäningstakter eller egna register som inte finns än
-  // (se points-runtime.js och server/index.js:322). Att kalla den något annat hade lurat vem som
-  // helst att tro att de tre rankingtyperna redan fungerar.
+  // Ranking-familjen har nu TRE riktiga rankingtyper bakom sig, och de blandas aldrig ihop:
+  // "points" pollar server/index.js:s 'points'-rutt, som läser points-runtime.js's blandade,
+  // arbetsyte-konfigurerbara poäng per tittare (per_coin/per_like/per_follow/...). "likes" och
+  // "coins" pollar 'top-likes'/'top-coins', som läser gifter_totals rakt av — SUM(likes) resp.
+  // SUM(diamonds), aldrig points_settings/points_ledger (David: "se till den ska inte blanda").
+  // Alla tre svarar med samma {ok,points:[...]}-form (fältet heter "points" även för likes/coins —
+  // se server/points-runtime.js's readTopRaw), så render()/poll() nedan behöver bara veta VILKEN
+  // endpoint att fråga, inte olika svarsformer. ?design= väljer bara den visuella stilen (prism/
+  // voltage/basic) och är helt oberoende av ?metric=.
   const TIERS = [
     { c: '#ffa23c', c2: '#ffe36a' }, { c: '#3cbfff', c2: '#ff7a3c' },
     { c: '#ff3ca0', c2: '#3cffb0' }, { c: '#8a5cff', c2: '#3cffb0' },
@@ -358,14 +361,31 @@
     paintNames(listEl, rows);
   }
 
+  // ?metric= väljer VILKEN ranking som pollas — helt oberoende av ?design=, som bara väljer skinnet.
+  // Okänt/saknat värde faller tillbaka på "points", precis som ett okänt ?design= faller tillbaka
+  // på "prism" ovan. VyraWidget.getParams() bara returnerar {uid,variant} (base-widget.js:s egen
+  // allowlist) — precis som designId ovan måste läsa via VyraWidget.get('design',...) i stället för
+  // getParams().design, måste metric läsas via VyraWidget.get('metric',...).
+  const METRIC_ENDPOINTS = { points: 'points', likes: 'top-likes', coins: 'top-coins' };
   const params = VyraWidget.getParams();
+  const metricId = VyraWidget.get('metric', 'points');
+  const metric = METRIC_ENDPOINTS[metricId] ? metricId : 'points';
+  if (!METRIC_ENDPOINTS[metricId]) VyraWidget.warn(`okänd ?metric=${metricId} — faller tillbaka på "points"`);
+  const metricEndpoint = METRIC_ENDPOINTS[metric];
+  const EMPTY_TEXT = {
+    points: 'Top Points fylls på när tittare tjänar poäng — väntar på första händelsen.',
+    likes: 'Top Like fylls på när tittare gillar — väntar på första händelsen.',
+    coins: 'Top Coins fylls på när tittare skickar gåvor — väntar på första händelsen.'
+  };
+  const emptyTextEl = document.getElementById('emptyText');
+  if (emptyTextEl) emptyTextEl.textContent = EMPTY_TEXT[metric];
   const ACCESS = params.uid;
   const POLL_MS = 4000;
 
   async function poll() {
     if (!ACCESS) { setBadge('error', 'Ingen ?uid= (eller ?access=) i länken'); return; }
     try {
-      const res = await fetch(`/api/overlay-access/${encodeURIComponent(ACCESS)}/points?limit=${cfg.limit}`, { cache: 'no-store' });
+      const res = await fetch(`/api/overlay-access/${encodeURIComponent(ACCESS)}/${metricEndpoint}?limit=${cfg.limit}`, { cache: 'no-store' });
       if (res.status === 402) { setBadge('error', 'Kräver VYRA Premium'); return; }
       if (res.status === 401) { setBadge('error', 'Länken är ogiltig eller har gått ut'); return; }
       if (!res.ok) throw new Error('HTTP ' + res.status);

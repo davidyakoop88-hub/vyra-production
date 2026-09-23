@@ -272,9 +272,44 @@ async function readTop(pool, workspaceId, { limit = 10 } = {}) {
   return q.rows.map(row => normalizeLedgerRow(row, settings));
 }
 
+// ---- raw (unweighted) rankings ---------------------------------------------------------------------
+// Top Like and Top Coins are NOT the points engine: David's explicit requirement is that they read raw
+// gifter_totals counts and never touch points_settings/points_ledger or the earn-rate/level formula
+// above. This reads a plain SUM of one gifter_totals column, workspace-scoped exactly like readTop, and
+// shapes its rows into the SAME object shape normalizeLedgerRow produces (level always null — there is
+// no level concept for a raw count) so the widget can stay metric-agnostic.
+//
+// gifter_totals' primary key is (workspace_id, tiktok_username, viewer_id): a workspace with more than
+// one TikTok connection can have several rows for the same viewer_id. Summing the metric column
+// GROUP BY viewer_id (instead of picking one row, the way PROFILE_JOIN's DISTINCT ON does for
+// display_name/avatar_url alone) is what keeps such a viewer from being silently duplicated in — or
+// dropped from — the leaderboard. display_name/avatar_url still only need ONE pick per viewer (a
+// viewer has one identity regardless of how many rows they're summed from), so PROFILE_JOIN is reused
+// unchanged for that part.
+const RAW_METRIC_COLUMNS = { likes: 'likes', coins: 'diamonds' };
+
+async function readTopRaw(pool, workspaceId, metric, { limit = 10 } = {}) {
+  const column = RAW_METRIC_COLUMNS[metric];
+  if (!column) throw new Error(`Unknown raw ranking metric: ${metric}`);
+  const q = await pool.query(
+    `SELECT g.viewer_id, p.display_name, p.avatar_url, SUM(g.${column}) AS metric
+       FROM gifter_totals g ${PROFILE_JOIN.replace(/l\.viewer_id/, 'g.viewer_id')}
+      WHERE g.workspace_id = $1
+      GROUP BY g.viewer_id, p.display_name, p.avatar_url
+     HAVING SUM(g.${column}) > 0
+      ORDER BY metric DESC
+      LIMIT $2`,
+    [workspaceId, limit]);
+  return q.rows.map(row => ({
+    workspaceId, viewerId: row.viewer_id,
+    displayName: row.display_name || null, avatarUrl: row.avatar_url || null,
+    points: Number(row.metric), level: null
+  }));
+}
+
 module.exports = {
   DEFAULT_SETTINGS, SETTINGS_FIELDS, mergeSettings,
   eventType, pointsAmount, computeLevel,
   CLAIM_SQL, AWARD_SQL,
-  applyEvent, getSettings, upsertSettings, readLedger, readTop, normalizeLedgerRow
+  applyEvent, getSettings, upsertSettings, readLedger, readTop, readTopRaw, normalizeLedgerRow
 };

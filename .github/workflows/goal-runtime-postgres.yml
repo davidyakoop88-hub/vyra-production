@@ -97,6 +97,15 @@ jobs:
         run: node --test test/goal-runtime-contract.test.js
         working-directory: server
 
+      # Poängmotorns databaskontrakt: idempotens, workspace-isolering — och de rena, ovägda
+      # topplistorna (Top Like/Top Coins) som läser gifter_totals direkt och aldrig points_ledger.
+      # Precis den blockeringsrisk goal-postgres-flode.test.js:s andra prov mäter: utan en rad här
+      # går filen grön överallt genom att hoppa över sig själv, och idempotensen/separationen
+      # förblir obevisad.
+      - name: Poängmotorns kontrakt (inkl. Top Like/Top Coins, rå läsning)
+        run: node --test test/points-runtime-contract.test.js
+        working-directory: server
+
       # Order independence, proven rather than asserted: each of these runs alone, in a fresh
       # process, so neither can be relying on a row an earlier test happened to leave behind.
       - name: Ordningsbevis — reset och cleanup var för sig

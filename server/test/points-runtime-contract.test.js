@@ -250,4 +250,63 @@ db('femtio samtidiga event fran samma tittare tappar ingen okning', async () => 
     'samtidiga event skrev over varandra — okningen ar inte radlast');
 });
 
+// ---- del 3: raknarens motpol — readTopRaw laser gifter_totals direkt, aldrig points_ledger -------
+// David: "se till den ska inte blanda". Dessa prov bevisar att Top Like/Top Coins ar oberoende av
+// poangmotorn (ingen applyEvent, ingen points_settings har) och att de tre rankingtyperna verkligen
+// kan ge OLIKA ordningar for samma tittare.
+
+db('readTopRaw(likes) och readTopRaw(coins) sorterar pa ratt kolumn, oberoende av points_ledger', async () => {
+  const rawWs = '77777777-7777-7777-7777-777777777777';
+  await seedWorkspace(rawWs);
+  // A: flest likes, minst diamanter. B: flest diamanter, minst likes. Ingen applyEvent anropas —
+  // bara en direkt gifter_totals-rad, precis som stream-stats.js skriver dem.
+  await pool.query(
+    `INSERT INTO gifter_totals (workspace_id, tiktok_username, viewer_id, display_name, likes, diamonds)
+     VALUES ($1,'raw',$2,'Viewer A',100,5), ($1,'raw',$3,'Viewer B',10,500)
+     ON CONFLICT (workspace_id, tiktok_username, viewer_id) DO NOTHING`,
+    [rawWs, 'raw-a', 'raw-b']);
+
+  const byLikes = await P.readTopRaw(pool, rawWs, 'likes', { limit: 10 });
+  const byCoins = await P.readTopRaw(pool, rawWs, 'coins', { limit: 10 });
+
+  assert.equal(byLikes[0].viewerId, 'raw-a', 'top-likes sorterade inte pa likes');
+  assert.equal(byLikes[0].points, 100);
+  assert.equal(byLikes[0].level, null, 'en ra rankning ska aldrig ha en niva');
+  assert.equal(byCoins[0].viewerId, 'raw-b', 'top-coins sorterade inte pa diamonds');
+  assert.equal(byCoins[0].points, 500);
+
+  // Bevis pa att ordningarna genuint skiljer sig — inte bara tva namn pa samma lista.
+  assert.notEqual(byLikes.map(r => r.viewerId).join(','), byCoins.map(r => r.viewerId).join(','));
+});
+
+db('readTopRaw summerar over flera tiktok_username-rader for samma tittare, duplicerar inte', async () => {
+  const rawWs = '88888888-8888-8888-8888-888888888888';
+  await seedWorkspace(rawWs);
+  // Samma viewer_id under tva olika tiktok_username-anslutningar — schemat tillater det (PK ar
+  // workspace_id, tiktok_username, viewer_id). En ra topplista far varken tappa eller dubbelrakna
+  // den har tittaren.
+  await pool.query(
+    `INSERT INTO gifter_totals (workspace_id, tiktok_username, viewer_id, display_name, likes)
+     VALUES ($1,'konto-1',$2,'Multi',30), ($1,'konto-2',$2,'Multi',40)
+     ON CONFLICT (workspace_id, tiktok_username, viewer_id) DO NOTHING`,
+    [rawWs, 'multi-viewer']);
+
+  const byLikes = await P.readTopRaw(pool, rawWs, 'likes', { limit: 10 });
+  const rows = byLikes.filter(r => r.viewerId === 'multi-viewer');
+  assert.equal(rows.length, 1, 'tittaren dok upp mer an en gang i listan');
+  assert.equal(rows[0].points, 70, 'summan over de tva kontona stämde inte (30+40)');
+});
+
+db('readTopRaw filtrerar bort nollrader, samma konvention som stats-read.js', async () => {
+  const rawWs = '99999999-9999-9999-9999-999999999999';
+  await seedWorkspace(rawWs);
+  await pool.query(
+    `INSERT INTO gifter_totals (workspace_id, tiktok_username, viewer_id, display_name, likes, diamonds)
+     VALUES ($1,'raw',$2,'Bara narvaro',0,0)
+     ON CONFLICT (workspace_id, tiktok_username, viewer_id) DO NOTHING`,
+    [rawWs, 'noll-viewer']);
+  const byLikes = await P.readTopRaw(pool, rawWs, 'likes', { limit: 10 });
+  assert.ok(!byLikes.some(r => r.viewerId === 'noll-viewer'), 'en rad utan bidrag hamnade i topplistan');
+});
+
 test.after(async () => { if (pool) await pool.end() });

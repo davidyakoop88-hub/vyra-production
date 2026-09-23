@@ -320,6 +320,14 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // Samma mönster som 'goals' ovan: workspace_id kommer alltid från TOKEN:s egen rad, aldrig
     // från query/body/header — en overlay-länk kan bara läsa sin egen arbetsytas topplista.
     if(rest==='points'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTop(pool,access.workspace_id,{limit});return send(res,200,{ok:true,points:top})}
+    // Top Like / Top Coins are genuinely separate rankings, not the blended points engine: David's
+    // explicit requirement ("den ska inte blanda") is that these read gifter_totals' raw, unweighted
+    // likes/diamonds and never touch points_settings or points_ledger. Same token-scoping and limit
+    // clamp as 'points' above; readTopRaw shapes rows into the identical {workspaceId, viewerId,
+    // displayName, avatarUrl, points, level} object so the widget can stay metric-agnostic — level is
+    // always null here, there is no level concept for a raw count.
+    if(rest==='top-likes'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'likes',{limit});return send(res,200,{ok:true,points:top})}
+    if(rest==='top-coins'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'coins',{limit});return send(res,200,{ok:true,points:top})}
     // UPPSTARTSLUCKAN. Bootstrapsvaret ar den enda konfigurationskallan klienten hamtar fran vid
     // start OCH vid varje ateranslutning — darfor bar det sessionssnapshotet ocksa, i stallet for
     // en andra rutt med en andra sanning.
