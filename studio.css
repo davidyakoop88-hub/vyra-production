@@ -374,7 +374,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    render. Under en levande sandning hann den aldrig fram till opacity 1, och fontanen var
    permanent osynlig. En opacity-baserad entre kan inte overleva det: den flimrar vid glesa
    renderingar och slacker helt vid tata. Vilolaget ar darfor synligt, utan animation. */
-.lf-stream{position:absolute;inset:0;opacity:1}.lf-stream canvas
+.lf-stream{position:absolute;inset:0;opacity:1}
 /* Alla partiklar maste borja i samma kalla. Sidledsspridningen sker i
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */
@@ -471,7 +471,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .lf-motion-card>span{display:flex;min-width:0;flex-direction:column;gap:2px}.lf-motion-card b{font-size:9px}.lf-motion-card small{overflow:hidden;color:#817588;font-size:7.5px;white-space:nowrap;text-overflow:ellipsis}
 .lf-motion-card>em{position:absolute;right:6px;top:5px;color:#c26cff;font-size:8px;font-style:normal;opacity:0}.lf-motion-card.selected>em{opacity:1}
 .lf-size-control{margin-top:13px}.like-fountain,.like-fountain::before,.like-fountain::after{background-color:transparent!important;background-image:none!important;backdrop-filter:none!important}
-@media(prefers-reduced-motion:reduce){.like-fountain[class*="lf-motion-"] .lf-p{animation-duration:12s!important}.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfReducedHeartRise!important}.like-fountain canvas}
+@media(prefers-reduced-motion:reduce){.like-fountain[class*="lf-motion-"] .lf-p{animation-duration:12s!important}.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfReducedHeartRise!important}}
 @keyframes lfReducedHeartRise{0%{transform:translate(-50%,0) scale(.8);opacity:0}15%{opacity:.8}85%{opacity:.7}100%{transform:translate(calc(-50% + var(--lf-x1) * .25),calc(-1 * var(--rise) * .55)) scale(.8);opacity:0}}
 
 /* Crystal-heart material: translucent gradient body, faceted highlight and a
