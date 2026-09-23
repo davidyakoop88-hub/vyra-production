@@ -146,11 +146,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-23 igen: de 16 reglerna for `.topgift-framed`/`.tgf-*` togs bort nar hela
   // ramgrenen pensionerades. widget-factory.js bumpas i samma andring — det ar DEN som bar
   // varianttabellen, och en cachad fabrik hade fortsatt erbjuda sju designer som inte finns.
-  assert.match(studio, /studio\.css\?v=20260923-2/);
+  assert.match(studio, /studio\.css\?v=20260923-3/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
-  assert.match(studio, /widget-factory\.js\?v=20260923-2/);
+  // Bumpad igen 2026-09-23: nitton av tjugoen premiumdesigner pensionerades. Alla tre foljer med
+  // den har gangen — widget-factory.js bar varianttabellen, studio.css de 50 borttagna reglerna
+  // och premiumbunten (media.js `version`) listan i premium-final.js.
+  assert.match(studio, /widget-factory\.js\?v=20260923-3/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -306,7 +309,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-23: premiumbunten fick topgift-pension.js, som lindar den vyraTopGift
   // premium-final.js sjalv skriver over. En ny fil I bunten ar en andring AV bunten, sa
   // strangen foljer med — annars laddar en cachad klient de fyra gamla och aldrig den femte.
-  assert.match(media, /const version='20260923-1'/);
+  assert.match(media, /const version='20260923-2'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

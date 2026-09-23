@@ -33,10 +33,13 @@ function levandeDesigner() {
   for (const bord of ['topgift.theme', 'topgift.extra', 'topgift.premium']) {
     Object.keys(W.variants(bord)).forEach(k => namn.add(k));
   }
-  // 22 UNIKA, inte 33: royal, neon, cyber, fire, ice, galaxy, sakura och flera till star i mer an
-  // en tabell. Golvet ar en kontrollmatning mot en omdopt eller flyttad tabell, inte ett facit.
-  assert.ok(namn.size >= 20,
+  // TVA KVAR: royal och neon (David 2026-09-23). Golvet ar en kontrollmatning mot en omdopt eller
+  // FLYTTAD tabell — det ska fanga att `variants()` slutat svara, inte lasa antalet designer. Gar
+  // det till noll ar det tabellen som ar borta, inte gallringen som gatt for langt.
+  assert.ok(namn.size >= 2,
     `hittade bara ${namn.size} levande Top Gift-designer — har en varianttabell dopts om?`);
+  assert.ok(namn.has('royal'),
+    'royal saknas — den ar premium-final.js default (`w.theme||\'royal\'`) och maste finnas');
   assert.equal(Object.keys(W.variants('topgift.frame')).length, 0,
     'topgift.frame finns igen — da ska ramarna ut ur PENSIONERADE, inte ligga kvar som bada');
   return namn;
@@ -65,7 +68,7 @@ test('P1: varje pensionerad design pekar pa en design som FINNS', () => {
         + 'pa ramens egen farg, premiumgrenen faller tillbaka pa guld');
     }
   }
-  assert.equal(Object.keys(PENSIONERADE).length, 7,
+  assert.equal(Object.keys(PENSIONERADE).length, 26,
     'antalet pensionerade designer andrades — uppdatera docs/topgift-gallringen.md i samma andring');
 });
 

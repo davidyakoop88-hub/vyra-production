@@ -56,6 +56,31 @@
     'frost-crystal': { tema: 'royal', accent: '#6db8ff' },
     'rose-garden':   { tema: 'royal', accent: '#ff8fc8' },
     'luna-mist':     { tema: 'royal', accent: '#c07bff' },
+
+    // PREMIUMDESIGNERNA, nitton av tjugoen pensionerade 2026-09-23 (David: "behall neon, royal
+    // o ta bort resten"). De var omformningar av samma tre <i>-lador i `.topgift-ornament`;
+    // renderaren ar EN for hela familjen, sa hela designutrymmet var tre tomma lador plus en
+    // accentfarg. Har racker STRANGFORMEN: de ar redan temanamn, inte ramar, sa `giftFrame`
+    // ska inte rotas — bara skinnet byts.
+    'cyber':         'royal',
+    'glass':         'royal',
+    'sakura':        'royal',
+    'fire':          'royal',
+    'ice':           'royal',
+    'galaxy':        'royal',
+    'aurora':        'royal',
+    'retro':         'royal',
+    'goldrush':      'royal',
+    'hall':          'royal',
+    'throne':        'royal',
+    'champion':      'royal',
+    'pedestal':      'royal',
+    'arch':          'royal',
+    'phoenix':       'royal',
+    'signal':        'royal',
+    'fireworks':     'royal',
+    'bloom':         'royal',
+    'comet':         'royal',
   };
 
   // Standardtemat. `premium-final.js` gör `w.theme||'royal'`, så en widget utan valt tema ritas som

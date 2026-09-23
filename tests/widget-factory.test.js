@@ -127,7 +127,7 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
   }
   // And the error names the valid options, so a typo is fixable from the message alone.
   try { VyraWidgets.create('catalog:topgift:felstavat') } catch (e) {
-    assert.match(e.message, /royal, neon, cyber, glass/);
+    assert.match(e.message, /royal, neon/);
   }
 });
 

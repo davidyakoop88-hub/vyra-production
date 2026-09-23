@@ -74,12 +74,15 @@
       comet: {label:'Kometspiral',primary:'#45e1d1',secondary:'#ff806c',motion:'spiral'},
       supernova: {label:'Supernova',primary:'#ffd06b',secondary:'#a764ff',motion:'supernova'}
     },
-    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
-      glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
-      galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
-      hall: 'VYRA Hall of Fame', throne: 'Royal Throne', champion: 'Celestial Champion',
-      pedestal: 'Diamond Pedestal', arch: 'Celestial Arch', phoenix: 'Phoenix',
-      signal: 'Signal', fireworks: 'Fireworks', bloom: 'Bloom', comet: 'Comet' },
+    // TVA DESIGNER KVAR (David 2026-09-23: "behall neon, royal o ta bort resten"). De nitton andra
+    // var omformningar av samma tre <i>-lador i `.topgift-ornament` — renderaren ar EN for hela
+    // familjen, sa hela designutrymmet var tre tomma lador plus en accentfarg. Fem av dem bar en
+    // enda CSS-regel var. Se docs/topgift-gallringen.md; topgift-pension.js pekar de nitton pa
+    // royal sa sparade layouter laser.
+    //
+    // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
+    // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
+    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
