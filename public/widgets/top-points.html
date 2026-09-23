@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VYRA · Ranking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#05070b;--text-dim:#8892a0}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;height:100%}
+  body{color:#fff;font-family:'Inter',system-ui,sans-serif}
+
+  /* Same 432x768 (9:16) canvas every ranking design on this branch was built against — see
+     vyra_overlay_passform_och_topstreak.md: the editor's mobile canvas is 432x768. Scales with the
+     OBS source like goal-image-frame's .widget does, keeping the 9:16 ratio instead of stretching. */
+  .canvas432{
+    position:relative;margin:0 auto;overflow:hidden;background:var(--bg);
+    width:min(100vw, calc(100vh * 0.5625));
+    height:min(100vh, calc(100vw / 0.5625));
+  }
+
+  .conn-badge{
+    position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:5;
+    font-size:10px;padding:3px 10px;border-radius:999px;letter-spacing:.04em;
+    display:flex;align-items:center;gap:5px;
+  }
+  .conn-badge .dot{width:6px;height:6px;border-radius:50%}
+  .conn-badge.live{color:#6dffb0;background:rgba(109,255,176,.1);border:1px solid rgba(109,255,176,.3)}
+  .conn-badge.live .dot{background:#6dffb0;box-shadow:0 0 6px #6dffb0;animation:pulseDot 1.6s ease-in-out infinite}
+  .conn-badge.error{color:#ff8f8f;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3)}
+  .conn-badge.error .dot{background:#ff8f8f}
+  .conn-badge.loading{color:var(--text-dim);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+  .conn-badge.loading .dot{background:var(--text-dim)}
+  @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .empty-state{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:8px;color:var(--text-dim);font-size:13px;text-align:center;
+    padding:0 40px;z-index:2;
+  }
+  /* Same footgun as goal-image-frame/panel work: [hidden] alone loses to later, more specific
+     rules once this file grows. Own explicit rule, same as the three source demos had. */
+  .empty-state[hidden]{display:none}
+  .empty-state strong{color:#fff;font-size:16px;font-weight:800}
+
+  .design{position:absolute;inset:0;display:none}
+  .design.active{display:block}
+
+  /* ============================= PRISM (topp 10, ornamenterad ring) ============================= */
+  #design-prism{background:
+      radial-gradient(circle at 25% 15%, rgba(120,90,220,.18), transparent 55%),
+      radial-gradient(circle at 80% 85%, rgba(20,160,200,.12), transparent 55%),
+      var(--bg);}
+  #design-prism #list-prism{position:absolute;top:36px;left:0;right:0;padding:0 16px;
+    display:flex;flex-direction:column;gap:.55em;font-size:14px}
+  #design-prism .ns-row{position:relative}
+  #design-prism .ns-row-inner{position:relative;display:flex;align-items:center;gap:.7em;
+    opacity:0;transform:translateX(-24px);animation:prismRowIn .5s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes prismRowIn{to{opacity:1;transform:translateX(0)}}
+  #design-prism .avatar-wrap{position:relative;width:52px;height:52px;flex:0 0 auto}
+  #design-prism .flame-ring{position:absolute;inset:-9px;pointer-events:none}
+  #design-prism .ring-backlight{position:absolute;inset:-6px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle, color-mix(in srgb, var(--c) 45%, transparent) 0%, color-mix(in srgb, var(--c2) 22%, transparent) 45%, transparent 68%);
+    filter:blur(2px);animation:prismBacklightPulse 2.4s ease-in-out infinite}
+  @keyframes prismBacklightPulse{0%,100%{opacity:.5;transform:scale(.94)}50%{opacity:.85;transform:scale(1.02)}}
+  #design-prism .metal-ring{position:absolute;inset:0;background-image:url(assets/top-points/gold-ruby-wreath.png);
+    background-size:contain;background-repeat:no-repeat;background-position:center;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+  #design-prism .avatar-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
+  #design-prism .avatar-frame{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1}
+  #design-prism .pulse-glow{position:absolute;inset:-5px;border-radius:50%;z-index:0;
+    background:radial-gradient(circle, var(--c) 0%, transparent 70%);animation:prismPulseGlow 2s ease-in-out infinite}
+  @keyframes prismPulseGlow{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:.85;transform:scale(1.15)}}
+  #design-prism .avatar-img{width:100%;height:100%;border-radius:50%;border:2px solid rgba(0,0,0,.7);
+    box-shadow:0 0 14px -2px var(--c), 0 0 0 2px rgba(0,0,0,.4);object-fit:cover;display:block;background:#0c0c16;position:relative;z-index:1}
+  #design-prism .rank-badge{position:absolute;bottom:-6px;left:-3px;width:18px;height:16px;z-index:3;
+    background:none;box-shadow:none;color:#ffd97a;font-weight:900;font-size:11px;
+    text-shadow:0 0 4px #ffd97a, 0 0 8px #d4af37, 0 0 14px #d4af37;
+    display:flex;align-items:center;justify-content:center}
+  #design-prism .meta{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;gap:.2em}
+  #design-prism .player-name{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #design-prism .name-led{height:2.5px;border-radius:2px;width:100%;
+    background:linear-gradient(90deg, #ffe9a8, #d4af37, #8a1f1f);
+    box-shadow:0 0 5px #d4af37, 0 0 8px #8a1f1f;animation:prismLedPulse 1.8s ease-in-out infinite}
+  @keyframes prismLedPulse{0%,100%{opacity:.55}50%{opacity:1}}
+  #design-prism .score{flex:0 0 auto;height:26px;padding:0 10px;border-radius:9px;
+    border:1px solid color-mix(in srgb, var(--c) 55%, transparent);
+    background:linear-gradient(120deg, color-mix(in srgb, var(--c) 22%, #0b0b14), rgba(8,9,15,.9));
+    box-shadow:0 4px 10px rgba(0,0,0,.45), 0 0 10px -2px var(--c);
+    display:flex;align-items:center;justify-content:center}
+  #design-prism .score-value{color:#fbbf24;font-weight:900;font-size:12px;white-space:nowrap}
+
+  /* ============================= VOLTAGE (topp 5, neon energiring) ============================= */
+  #design-voltage{background:
+      radial-gradient(circle at 25% 15%, rgba(120,90,220,.18), transparent 55%),
+      radial-gradient(circle at 80% 85%, rgba(20,160,200,.12), transparent 55%),
+      var(--bg);}
+  #design-voltage #list-voltage{position:absolute;top:36px;left:0;right:0;padding:0 14px;
+    display:flex;flex-direction:column;gap:12px}
+  #design-voltage .cb-row{display:flex;flex-direction:row;align-items:center;gap:7px;
+    opacity:0;transform:translateX(-100%);animation:voltageSlideIn .6s cubic-bezier(.175,.885,.32,1.275) forwards}
+  @keyframes voltageSlideIn{0%{opacity:0;transform:translateX(-40px)}100%{opacity:1;transform:translateX(0)}}
+  #design-voltage .cb-avatar-core{position:relative;width:42px;height:42px;flex:0 0 auto;order:1;
+    transform:scale(0) rotate(720deg);animation:voltageAvatarSpinIn .6s cubic-bezier(.175,.885,.32,1.275) forwards;animation-delay:inherit}
+  @keyframes voltageAvatarSpinIn{0%{transform:scale(0) rotate(720deg)}100%{transform:scale(1) rotate(0deg)}}
+  #design-voltage .cb-energy-ring{position:absolute;inset:-4px;border-radius:50%;pointer-events:none;z-index:1}
+  #design-voltage .cb-ring-layer{position:absolute;inset:0;border-radius:50%;animation:voltageSpin 2.4s linear infinite;will-change:transform}
+  #design-voltage .cb-ring-layer.a{background:conic-gradient(transparent, transparent, var(--c));box-shadow:0 0 12px var(--c)}
+  #design-voltage .cb-ring-layer.b{inset:-1px;background:conic-gradient(transparent, var(--c), transparent 55%);opacity:.5}
+  @keyframes voltageSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  #design-voltage .cb-avatar-img{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.2);
+    box-shadow:0 0 10px var(--c);object-fit:cover;display:block;position:relative;z-index:2;background:#000}
+  #design-voltage .cb-crown{position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:18px;height:14px;z-index:3;
+    filter:drop-shadow(0 0 3px #ffd700) drop-shadow(0 0 6px #ffb700);animation:voltageBounce 2.4s ease-in-out infinite}
+  #design-voltage .cb-crown svg{width:100%;height:100%;display:block}
+  @keyframes voltageBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+  #design-voltage .cb-rank-badge{position:absolute;bottom:-2px;left:-1px;width:15px;height:15px;border-radius:50%;z-index:3;
+    background:var(--c);border:2px solid #14151d;box-shadow:0 0 7px var(--c), 0 2px 5px rgba(0,0,0,.55);
+    color:#0b0b14;font-weight:900;font-size:7.5px;display:flex;align-items:center;justify-content:center}
+  #design-voltage .cb-bar{position:relative;order:2;flex:0 1 auto;min-width:0;height:26px;border-radius:10px;
+    border:1px solid color-mix(in srgb, var(--c) 34%, transparent);
+    box-shadow:0 4px 12px rgba(0,0,0,.42), 0 0 10px -3px var(--c), inset 0 1px 0 rgba(255,255,255,.07);
+    background:linear-gradient(180deg, rgba(8,12,18,.9), rgba(4,6,10,.9));
+    display:flex;align-items:center;padding:0 10px;overflow:hidden;
+    opacity:0;transform:scaleX(0);transform-origin:left center;animation:voltageBarExpand .8s cubic-bezier(.22,1,.36,1) forwards}
+  @keyframes voltageBarExpand{to{opacity:1;transform:scaleX(1)}}
+  #design-voltage .cb-info{font-weight:800;font-size:12px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #design-voltage .cb-score-block{order:3;flex:0 0 auto;height:28px;padding:0 10px;border-radius:999px;
+    border:1px solid color-mix(in srgb, var(--c) 45%, transparent);
+    box-shadow:0 4px 10px rgba(0,0,0,.4), 0 0 10px -3px var(--c);
+    background:linear-gradient(180deg, rgba(8,12,18,.9), rgba(4,6,10,.9));
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    opacity:0;transform:scale(.6);animation:voltageScoreReveal .5s cubic-bezier(.175,.885,.32,1.275) forwards}
+  @keyframes voltageScoreReveal{to{opacity:1;transform:scale(1)}}
+  #design-voltage .cb-score-val{font-weight:900;font-size:12px;color:#fbbf24;white-space:nowrap}
+
+  /* ============================= BASIC (topp 4, minimal guldring) ============================= */
+  #design-basic{background:radial-gradient(circle at 25% 20%, rgba(120,90,220,.15), transparent 55%), var(--bg);
+    padding:28px 16px 0}
+  #design-basic #list-basic{display:flex;flex-direction:column;gap:36px;margin-top:20px}
+  #design-basic .ts-row{display:flex;align-items:center;gap:26px;opacity:0;transform:translateY(10px);
+    animation:basicRowIn .45s ease-out forwards}
+  @keyframes basicRowIn{to{opacity:1;transform:translateY(0)}}
+  #design-basic .avatar-section{position:relative;width:58px;height:58px;flex:0 0 auto}
+  #design-basic .ring-wrap{position:absolute;inset:-22px;pointer-events:none}
+  #design-basic .ring-backlight{position:absolute;inset:-4px;border-radius:50%;z-index:-1;
+    background:radial-gradient(circle, rgba(255,224,150,.4) 0%, rgba(212,175,55,.2) 45%, transparent 70%);
+    filter:blur(2px);animation:basicBacklightPulse 2.4s ease-in-out infinite}
+  @keyframes basicBacklightPulse{0%,100%{opacity:.5;transform:scale(.94)}50%{opacity:.9;transform:scale(1.04)}}
+  #design-basic .ring-img{position:absolute;inset:0;background-image:url(assets/top-points/gold-crystal-crown.png);
+    background-size:contain;background-repeat:no-repeat;background-position:center;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+  #design-basic .avatar-frame{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  #design-basic .pulse-glow{position:absolute;inset:-4px;border-radius:50%;z-index:0;
+    background:radial-gradient(circle, #ffd97a 0%, transparent 70%);animation:basicPulseGlow 2s ease-in-out infinite}
+  @keyframes basicPulseGlow{0%,100%{opacity:.3;transform:scale(.85)}50%{opacity:.7;transform:scale(1.12)}}
+  #design-basic .avatar-img{width:100%;height:100%;border-radius:50%;border:2px solid rgba(0,0,0,.7);
+    box-shadow:0 0 12px -2px #ffd97a;object-fit:cover;display:block;background:#171b26;position:relative;z-index:1}
+  #design-basic .rank-num{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);
+    width:22px;height:22px;border-radius:50%;background:radial-gradient(circle, rgba(8,9,15,.92) 55%, rgba(8,9,15,0) 100%);
+    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#ffe9a8;z-index:3;
+    text-shadow:0 0 4px #ffd97a, 0 0 9px #d4af37, 0 0 14px #d4af37}
+  #design-basic .info{display:flex;flex-direction:column;gap:4px;min-width:0}
+  #design-basic .player-name{font-weight:700;font-size:17px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #design-basic .name-led{height:2.5px;border-radius:2px;width:60%;
+    background:linear-gradient(90deg, #ffe9a8, #d4af37, transparent);box-shadow:0 0 5px #d4af37;
+    animation:basicLedPulse 1.8s ease-in-out infinite}
+  @keyframes basicLedPulse{0%,100%{opacity:.5}50%{opacity:1}}
+  #design-basic .score{display:flex;align-items:center;gap:5px;font-weight:800;font-size:16px;color:#fbbf24}
+
+  @media (prefers-reduced-motion:reduce){
+    .ns-row-inner,.cb-row,.cb-avatar-core,.cb-bar,.cb-score-block,.ts-row{animation:none!important;opacity:1!important;transform:none!important}
+  }
+</style>
+</head>
+<body>
+  <div class="canvas432" id="canvas">
+    <span class="conn-badge loading" id="connBadge"><span class="dot"></span><span id="connText">Ansluter…</span></span>
+
+    <div class="design" id="design-prism">
+      <div id="list-prism"></div>
+    </div>
+    <div class="design" id="design-voltage">
+      <div id="list-voltage"></div>
+    </div>
+    <div class="design" id="design-basic">
+      <div id="list-basic"></div>
+    </div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <strong>Ingen på listan än</strong>
+      <span id="emptyText">Rankingen fylls på när tittare bidrar — väntar på första händelsen.</span>
+    </div>
+  </div>
+
+<script src="../../cloud-fields.js"></script>
+<script src="base-widget.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // Ranking-familjen har nu TRE riktiga rankingtyper bakom sig, och de blandas aldrig ihop:
+  // "points" pollar server/index.js:s 'points'-rutt, som läser points-runtime.js's blandade,
+  // arbetsyte-konfigurerbara poäng per tittare (per_coin/per_like/per_follow/...). "likes" och
+  // "coins" pollar 'top-likes'/'top-coins', som läser gifter_totals rakt av — SUM(likes) resp.
+  // SUM(diamonds), aldrig points_settings/points_ledger (David: "se till den ska inte blanda").
+  // Alla tre svarar med samma {ok,points:[...]}-form (fältet heter "points" även för likes/coins —
+  // se server/points-runtime.js's readTopRaw), så render()/poll() nedan behöver bara veta VILKEN
+  // endpoint att fråga, inte olika svarsformer. ?design= väljer bara den visuella stilen (prism/
+  // voltage/basic) och är helt oberoende av ?metric=.
+  const TIERS = [
+    { c: '#ffa23c', c2: '#ffe36a' }, { c: '#3cbfff', c2: '#ff7a3c' },
+    { c: '#ff3ca0', c2: '#3cffb0' }, { c: '#8a5cff', c2: '#3cffb0' },
+    { c: '#c8ff3c', c2: '#ffe36a' }, { c: '#3cd9ff', c2: '#ff7a3c' },
+    { c: '#3c7bff', c2: '#3cffe0' }, { c: '#ff5c3c', c2: '#8a3cff' },
+  ];
+  const RANK_COLORS = ['#FFD700', '#00f2ff', '#ff5e00', '#b24bf3', '#00ff88'];
+
+  function avatarSVG(bg, fg) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="${bg}"/>
+      <circle cx="50" cy="38" r="18" fill="${fg}"/>
+      <ellipse cx="50" cy="88" rx="30" ry="26" fill="${fg}"/>
+    </svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+  function fmt(n) { return Math.round(n).toLocaleString('sv-SE'); }
+  function name(item) { return item.displayName || (item.viewerId ? '@' + String(item.viewerId).slice(0, 14) : 'Okänd tittare'); }
+  // Same rule as base-widget.js's own safeSrc consumers (goal-image-frame's frame img, the Studio
+  // bundle's VyraSafe.src): an avatar URL comes straight off the event/API payload and gets
+  // assigned to img.src, so it goes through the same http(s)/data:image allowlist before that.
+  function avatar(item, fallback) { return VyraWidget.safeSrc(item.avatarUrl, fallback); }
+
+  function rowHTMLPrism(item, index) {
+    const tier = TIERS[index % TIERS.length];
+    const fallback = avatarSVG('#171b26', tier.c);
+    return `
+      <div class="ns-row" style="--c:${tier.c};--c2:${tier.c2}">
+        <div class="ns-row-inner" style="animation-delay:${index * 0.1}s">
+          <div class="avatar-wrap">
+            <div class="flame-ring">
+              <div class="ring-backlight"></div>
+              <div class="metal-ring"></div>
+            </div>
+            <div class="avatar-core">
+              <div class="avatar-frame">
+                <div class="pulse-glow"></div>
+                <img class="avatar-img" src="${avatar(item, fallback)}" alt="" onerror="this.src='${fallback}'">
+              </div>
+              <div class="rank-badge">${index + 1}</div>
+            </div>
+          </div>
+          <div class="meta">
+            <span class="player-name"></span>
+            <div class="name-led"></div>
+          </div>
+          <div class="score">
+            <span class="score-value">${fmt(item.points)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function rowHTMLVoltage(item, index) {
+    const color = RANK_COLORS[index] || RANK_COLORS[RANK_COLORS.length - 1];
+    const fallback = avatarSVG('#171b26', color);
+    const rank = index + 1;
+    return `
+      <div class="cb-row" style="--c:${color}" data-delay="${index * 0.12}">
+        <div class="cb-avatar-core" style="animation-delay:${index * 0.12}s">
+          ${rank === 1 ? `<div class="cb-crown"><svg viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path fill="#ffd700" d="M528 448H112a16 16 0 0 1 0-32h416a16 16 0 0 1 0 32zM571.31 199.36a32 32 0 0 0-35.16 6.94L457.94 285 396 187.63a48.16 48.16 0 0 0-81.06 1.05L256 285l-78.15-78.73a32 32 0 0 0-54.65 22.6L144 400h352l20.8-166.67a32 32 0 0 0-9.49-33.97z"/></svg></div>` : ''}
+          <div class="cb-energy-ring">
+            <div class="cb-ring-layer a"></div>
+            <div class="cb-ring-layer b"></div>
+          </div>
+          <img class="cb-avatar-img" src="${avatar(item, fallback)}" alt="" onerror="this.src='${fallback}'">
+          <div class="cb-rank-badge">${rank}</div>
+        </div>
+        <div class="cb-bar" style="animation-delay:${index * 0.12 + 0.1}s">
+          <span class="cb-info player-name"></span>
+        </div>
+        <div class="cb-score-block" style="animation-delay:${index * 0.12 + 0.15}s">
+          <span class="cb-score-val">${fmt(item.points)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function rowHTMLBasic(item, index) {
+    const fallback = avatarSVG('#171b26', '#ffd97a');
+    return `
+      <div class="ts-row" style="animation-delay:${index * 0.15}s">
+        <div class="avatar-section">
+          <div class="ring-wrap">
+            <div class="ring-backlight"></div>
+            <div class="ring-img"></div>
+          </div>
+          <div class="avatar-frame">
+            <div class="pulse-glow"></div>
+            <img class="avatar-img" src="${avatar(item, fallback)}" alt="" onerror="this.src='${fallback}'">
+          </div>
+          <span class="rank-num">${index + 1}</span>
+        </div>
+        <div class="info">
+          <span class="player-name"></span>
+          <div class="name-led"></div>
+          <span class="score">${fmt(item.points)}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // display-namn skrivs med textContent, aldrig interpolerat i rowHTML-strängen (som avataren är
+  // en URL, inte fri text, är namnet det enda fältet här som verkligen är en XSS-yta — samma regel
+  // som base-widget.js's kommentar om varför bara URL:en behöver en sanering).
+  function paintNames(container, rows) {
+    const nodes = container.querySelectorAll('.player-name');
+    rows.forEach((item, i) => { if (nodes[i]) nodes[i].textContent = name(item); });
+  }
+
+  const DESIGNS = {
+    prism:   { limit: 10, rowHTML: rowHTMLPrism,   listId: 'list-prism' },
+    voltage: { limit: 5,  rowHTML: rowHTMLVoltage, listId: 'list-voltage' },
+    basic:   { limit: 4,  rowHTML: rowHTMLBasic,   listId: 'list-basic' },
+  };
+
+  const designId = VyraWidget.get('design', '') || VyraWidget.get('variant', 'prism');
+  const design = DESIGNS[designId] ? designId : 'prism';
+  if (!DESIGNS[designId]) VyraWidget.warn(`okänd ?design=${designId} — faller tillbaka på "prism"`);
+  document.getElementById('design-' + design).classList.add('active');
+  const cfg = DESIGNS[design];
+  const listEl = document.getElementById(cfg.listId);
+  const emptyEl = document.getElementById('emptyState');
+
+  function setBadge(state, text) {
+    const el = document.getElementById('connBadge');
+    el.className = 'conn-badge ' + state;
+    document.getElementById('connText').textContent = text;
+  }
+
+  let lastSignature = '';
+  function render(rows) {
+    if (!rows.length) {
+      listEl.innerHTML = '';
+      emptyEl.hidden = false;
+      lastSignature = '';
+      return;
+    }
+    emptyEl.hidden = true;
+    // Bygg om DOM:en bara när ordning/siffror faktiskt ändrats — annars startar
+    // inflygningsanimationen om varje poll och det ser ut som att widgeten hackar
+    // (samma vakt som i alla tre live-demo-filerna denna ersätter).
+    const signature = rows.map(r => r.viewerId + ':' + r.points).join('|');
+    if (signature === lastSignature) { paintNames(listEl, rows); return; }
+    lastSignature = signature;
+    listEl.innerHTML = rows.map(cfg.rowHTML).join('');
+    paintNames(listEl, rows);
+  }
+
+  // ?metric= väljer VILKEN ranking som pollas — helt oberoende av ?design=, som bara väljer skinnet.
+  // Okänt/saknat värde faller tillbaka på "points", precis som ett okänt ?design= faller tillbaka
+  // på "prism" ovan. VyraWidget.getParams() bara returnerar {uid,variant} (base-widget.js:s egen
+  // allowlist) — precis som designId ovan måste läsa via VyraWidget.get('design',...) i stället för
+  // getParams().design, måste metric läsas via VyraWidget.get('metric',...).
+  const METRIC_ENDPOINTS = { points: 'points', likes: 'top-likes', coins: 'top-coins' };
+  const params = VyraWidget.getParams();
+  const metricId = VyraWidget.get('metric', 'points');
+  const metric = METRIC_ENDPOINTS[metricId] ? metricId : 'points';
+  if (!METRIC_ENDPOINTS[metricId]) VyraWidget.warn(`okänd ?metric=${metricId} — faller tillbaka på "points"`);
+  const metricEndpoint = METRIC_ENDPOINTS[metric];
+  const EMPTY_TEXT = {
+    points: 'Top Points fylls på när tittare tjänar poäng — väntar på första händelsen.',
+    likes: 'Top Like fylls på när tittare gillar — väntar på första händelsen.',
+    coins: 'Top Coins fylls på när tittare skickar gåvor — väntar på första händelsen.'
+  };
+  const emptyTextEl = document.getElementById('emptyText');
+  if (emptyTextEl) emptyTextEl.textContent = EMPTY_TEXT[metric];
+  const ACCESS = params.uid;
+  const POLL_MS = 4000;
+
+  async function poll() {
+    if (!ACCESS) { setBadge('error', 'Ingen ?uid= (eller ?access=) i länken'); return; }
+    try {
+      const res = await fetch(`/api/overlay-access/${encodeURIComponent(ACCESS)}/${metricEndpoint}?limit=${cfg.limit}`, { cache: 'no-store' });
+      if (res.status === 402) { setBadge('error', 'Kräver VYRA Premium'); return; }
+      if (res.status === 401) { setBadge('error', 'Länken är ogiltig eller har gått ut'); return; }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'okänt fel');
+      setBadge('live', 'Live');
+      render(data.points || []);
+    } catch (e) {
+      setBadge('error', 'Tappade anslutningen — försöker igen');
+      VyraWidget.warn('poll misslyckades:', e && e.message);
+    }
+  }
+
+  if (!ACCESS) {
+    setBadge('error', 'Ingen ?uid= (eller ?access=) i länken');
+  } else {
+    poll();
+    setInterval(poll, POLL_MS);
+  }
+})();
+</script>
+</body>
+</html>

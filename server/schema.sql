@@ -877,3 +877,55 @@ CREATE INDEX IF NOT EXISTS tiktok_verifieringsforsok_stad_idx ON tiktok_verifier
 -- som gor den till en engangshandelse. En stad-skrivning hade varit en andra sanning om samma sak.
 ALTER TABLE tiktok_connections ADD COLUMN IF NOT EXISTS omstart_begard_at timestamptz;
 COMMENT ON COLUMN tiktok_connections.omstart_begard_at IS 'Nar sandaren senast bad om omedelbar anslutning; jamfors mot bryggans starttid';
+
+
+-- POANGMOTORN (server/points-runtime.js). Serversidan av window.VyraPoints (action-runtime.js) och
+-- dess getLevel() — den ledgern lever i en flikens localStorage, oskyddad mot dubbletter och inte
+-- knuten till nagot workspace. De tre tabellerna nedan foljer EXAKT samma monster som
+-- goal_runtime/goal_event_apply: en per-workspace installningsrad, en idempotensrad per applicerat
+-- event, och en ledger-rad per (workspace, tittare).
+
+-- Per-workspace installning for hur snabbt en tittare tjanar poang. Faltnamnen speglar
+-- action-runtime.js/points-system.js DEFAULTS (perCoin, perShare, perLike, subscriberBonus,
+-- levelBasePoints, levelMultiplier) i snake_case, plus tva nya: per_follow och per_comment, for de
+-- eventtyper VyraPoints aldrig hade en satsbar takt for. Saknas raden anvands
+-- points-runtime.js:DEFAULT_SETTINGS — tabellen behover ALDRIG en rad for att motorn ska fungera.
+CREATE TABLE IF NOT EXISTS points_settings (
+  workspace_id       uuid    PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+  per_coin           numeric(12,4) NOT NULL DEFAULT 1,
+  per_share          numeric(12,4) NOT NULL DEFAULT 50,
+  per_like           numeric(12,4) NOT NULL DEFAULT 0.1,
+  per_follow         numeric(12,4) NOT NULL DEFAULT 100,
+  per_comment        numeric(12,4) NOT NULL DEFAULT 0,
+  subscriber_bonus   numeric(8,4)  NOT NULL DEFAULT 1 CHECK (subscriber_bonus >= 1),
+  level_base_points  numeric(12,4) NOT NULL DEFAULT 100 CHECK (level_base_points >= 1),
+  level_multiplier   numeric(8,4)  NOT NULL DEFAULT 1.2 CHECK (level_multiplier >= 1),
+  updated_at         timestamptz   NOT NULL DEFAULT now()
+);
+
+-- Samma form som goal_event_apply, byte namn: en rad per (workspace, event.id) som redan gett poang.
+-- FK:t kaskaderar av samma skal goal_event_apply gor det — det hoegsta-volymvarda bordet i systemet
+-- far inte lamna kvar foeraeldraloesa rader efter ett raderat workspace.
+CREATE TABLE IF NOT EXISTS points_event_apply (
+  workspace_id uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  event_id     text        NOT NULL,
+  applied_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, event_id)
+) WITH (fillfactor = 90);
+-- BRIN, inte B-tree: skrivs i applied_at-ordning, precis som goal_event_apply_sweep_brin.
+CREATE INDEX IF NOT EXISTS points_event_apply_sweep_brin ON points_event_apply USING brin (applied_at);
+
+-- En rad per tittare och arbetsyta. `points` ar det spenderbara saldot, `earned` ar den livstida
+-- summan nivaer raknas fran — samma tvadelning som VyraPoints.points/earned i action-runtime.js.
+-- Motorn har idag ingen spend/refund-vag (utanfor scope: se anropsstallet), sa de tva vaxer
+-- tillsammans, men star som egna kolumner sa en framtida spend kan dra ner `points` utan att rora
+-- den livstida summan — exakt samma distinktion som raknaSomIntjanat redan gor klientsidan.
+CREATE TABLE IF NOT EXISTS points_ledger (
+  workspace_id uuid          NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  viewer_id    text          NOT NULL,
+  points       numeric(20,4) NOT NULL DEFAULT 0 CHECK (points >= 0),
+  earned       numeric(20,4) NOT NULL DEFAULT 0 CHECK (earned >= 0),
+  updated_at   timestamptz   NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, viewer_id)
+);
+CREATE INDEX IF NOT EXISTS points_ledger_leaderboard_idx ON points_ledger (workspace_id, points DESC);

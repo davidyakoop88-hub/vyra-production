@@ -12,7 +12,15 @@
 // compatibility approach as the old Last-X Alerts shim).
 (function () {
   const CATALOG = [
-    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner', [['rose-pink','Goal · Rose Pink','Mätarram · rosa ros'],['royal-gold','Goal · Royal Gold','Mätarram · guldkrona'],['winged-amethyst','Goal · Winged Amethyst','Mätarram · bevingat hjärta'],['lotus-violet','Goal · Lotus Violet','Mätarram · lotus'],['crescent-star','Goal · Crescent Star','Mätarram · halvmåne'],['crystal-bloom','Goal · Crystal Bloom','Mätarram · kristallblom'],['heart-wings','Goal · Heart Wings','Mätarram · hjärtkrona'],['moon-clouds','Goal · Moon Clouds','Mätarram · måne & moln'],['crystal-spike','Goal · Crystal Spike','Mätarram · kristallspets'],['rose-heart','Goal · Rose Heart','Mätarram · roshjärta'],['badge-gold-wings','Badge · Gold Wings','Progress-ring · guldvingar'],['badge-crystal-violet','Badge · Crystal Violet','Progress-ring · lila kristall'],['badge-pink-heartwings','Badge · Pink Heartwings','Progress-ring · rosa hjärta'],['badge-dark-raven','Badge · Dark Raven','Progress-ring · svarta vingar'],['badge-ice-blue','Badge · Ice Blue','Progress-ring · isblå'],['badge-rose-garden','Badge · Rose Garden','Progress-ring · rosenträdgård'],['badge-moon-mist','Badge · Moon Mist','Progress-ring · måndimma'],['amethyst-spire','Goal · Amethyst Spire','Mätarram · kristallspira'],['luna-pearl','Goal · Luna Pearl','Mätarram · guldmåne'],['heart-crown','Goal · Heart Crown','Mätarram · hjärtkrona'],['rosen-arch','Goal · Rosen Arch','Mätarram · rosenbåge'],['angelic-heart','Goal · Angelic Heart','Mätarram · änglahjärta'],['halo-ring','Goal · Halo Ring','Mätarram · gloriaring'],['frost-crystal','Goal · Frost Crystal','Mätarram · issnöflinga'],['nordic-heart','Goal · Nordic Heart','Mätarram · mörkt hjärta']]]
+    ['goal-image-frame', 'Goal · Image Frame', 'Målmätare, 25 ramdesigner', [['rose-pink','Goal · Rose Pink','Mätarram · rosa ros'],['royal-gold','Goal · Royal Gold','Mätarram · guldkrona'],['winged-amethyst','Goal · Winged Amethyst','Mätarram · bevingat hjärta'],['lotus-violet','Goal · Lotus Violet','Mätarram · lotus'],['crescent-star','Goal · Crescent Star','Mätarram · halvmåne'],['crystal-bloom','Goal · Crystal Bloom','Mätarram · kristallblom'],['heart-wings','Goal · Heart Wings','Mätarram · hjärtkrona'],['moon-clouds','Goal · Moon Clouds','Mätarram · måne & moln'],['crystal-spike','Goal · Crystal Spike','Mätarram · kristallspets'],['rose-heart','Goal · Rose Heart','Mätarram · roshjärta'],['badge-gold-wings','Badge · Gold Wings','Progress-ring · guldvingar'],['badge-crystal-violet','Badge · Crystal Violet','Progress-ring · lila kristall'],['badge-pink-heartwings','Badge · Pink Heartwings','Progress-ring · rosa hjärta'],['badge-dark-raven','Badge · Dark Raven','Progress-ring · svarta vingar'],['badge-ice-blue','Badge · Ice Blue','Progress-ring · isblå'],['badge-rose-garden','Badge · Rose Garden','Progress-ring · rosenträdgård'],['badge-moon-mist','Badge · Moon Mist','Progress-ring · måndimma'],['amethyst-spire','Goal · Amethyst Spire','Mätarram · kristallspira'],['luna-pearl','Goal · Luna Pearl','Mätarram · guldmåne'],['heart-crown','Goal · Heart Crown','Mätarram · hjärtkrona'],['rosen-arch','Goal · Rosen Arch','Mätarram · rosenbåge'],['angelic-heart','Goal · Angelic Heart','Mätarram · änglahjärta'],['halo-ring','Goal · Halo Ring','Mätarram · gloriaring'],['frost-crystal','Goal · Frost Crystal','Mätarram · issnöflinga'],['nordic-heart','Goal · Nordic Heart','Mätarram · mörkt hjärta']]],
+    // David krävde uttryckligen att Top Like/Top Coins INTE blandas med poängmotorn ("se till den
+    // ska inte blanda"): de läser gifter_totals rakt av (SUM likes / SUM diamonds), aldrig
+    // points_settings/points_ledger. Top Points är fortsatt den enda av de tre som är blandad/
+    // konfigurerbar (points-runtime.js's earn-rate-vägda poäng). Samma fil (public/widgets/
+    // top-points.html), samma tre visuella stilar (?design=) — men nu tre ÄKTA, separat beräknade
+    // rankingtyper valda via ?metric=, inte tre stilar på samma lista. widgetMetric styr ?metric=,
+    // widgetVariant styr fortsatt ?design= (se props()/bind() nedan).
+    ['top-points', 'Ranking', 'Top Points (blandat poäng, konfigurerbart), Top Like (rena likes) eller Top Coins (rena diamanter) — tre stilar, tre mätvärden', [['prism','Ranking · Prism','Ornamenterad ring, lista på 10'],['voltage','Ranking · Voltage','Neon energiring, lista på 5'],['basic','Ranking · Basic','Minimal guldring, lista på 4']]],
   ];
   const RETIRED = new Set(['gift-alert','follow-alert','like-counter','top-gifters','combo-counter',
     'goal-tracker','diamond-counter','vip-zone','welcome-viewer','screen-takeover','crystal-garden',
@@ -55,7 +63,7 @@
         ${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}
       </div>`;
     }
-    const src = `public/widgets/${w.widgetSlug}.html?uid=${encodeURIComponent(token)}${w.widgetVariant ? '&variant=' + encodeURIComponent(w.widgetVariant) : ''}`;
+    const src = `public/widgets/${w.widgetSlug}.html?uid=${encodeURIComponent(token)}${w.widgetVariant ? '&variant=' + encodeURIComponent(w.widgetVariant) : ''}${w.widgetMetric ? '&metric=' + encodeURIComponent(w.widgetMetric) : ''}`;
     return `<div class="widget standalone-widget-frame${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="${box}">
       <iframe src="${src}" loading="lazy" title="${entry ? entry[1] : 'VYRA-widget'}"></iframe>
       ${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}
@@ -75,8 +83,18 @@
     const w = liveWidget(selected);
     if (!w || w.type !== TYPE) return standaloneProps();
     const entry = CATALOG.find(c => c[0] === w.widgetSlug);
+    // Mätvärdesväljaren finns bara för 'top-points' (public/widgets/top-points.html), som är den
+    // enda standalone-widgeten med tre skilt beräknade rankingtyper bakom EN fil. Andra slugs (t.ex.
+    // goal-image-frame) har inget ?metric= att välja och får inte fältet.
+    const metricField = w.widgetSlug === 'top-points'
+      ? `<label>Mätvärde<select id="swMetric">
+           <option value="points"${w.widgetMetric === 'points' || !w.widgetMetric ? ' selected' : ''}>Top Points (blandat poäng)</option>
+           <option value="likes"${w.widgetMetric === 'likes' ? ' selected' : ''}>Top Like (rena likes)</option>
+           <option value="coins"${w.widgetMetric === 'coins' ? ' selected' : ''}>Top Coins (rena diamanter)</option>
+         </select></label>`
+      : '';
     return `<h3>${(entry ? entry[1] : 'VYRA-WIDGET').toUpperCase()}</h3><div hidden><input id="pt" value="${w.title || ''}"><input id="pv" value=""></div>
-      <div class="property-group"><h4>KÄLLA</h4><p class="topgift-help">${entry ? entry[2] : ''} · public/widgets/${w.widgetSlug}.html</p><label>Variant (valfritt)<input id="swVariant" placeholder="t.ex. cyber, celestial" value="${w.widgetVariant || ''}"></label></div>
+      <div class="property-group"><h4>KÄLLA</h4><p class="topgift-help">${entry ? entry[2] : ''} · public/widgets/${w.widgetSlug}.html</p><label>Variant (valfritt)<input id="swVariant" placeholder="t.ex. cyber, celestial" value="${w.widgetVariant || ''}"></label>${metricField}</div>
       <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || 320}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div>
       <button class="delete" id="del">Ta bort</button>`;
   };
@@ -93,6 +111,8 @@
     if (!w || w.type !== TYPE) return;
     const variant = document.querySelector('#swVariant');
     if (variant) variant.onchange = e => { w.widgetVariant = e.target.value.trim(); save(); render() };
+    const metricSel = document.querySelector('#swMetric');
+    if (metricSel) metricSel.onchange = e => { w.widgetMetric = e.target.value; save(); render() };
   };
 
   // Re-render active standalone widgets whenever a new OBS-link is created so they pick up the
