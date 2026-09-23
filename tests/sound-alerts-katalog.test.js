@@ -10,6 +10,7 @@
 // nagonstans — den ger bara poster som pekar pa filer som inte finns.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
+const F = require('./helpers/flikar.js');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -85,4 +86,31 @@ test('alla Kenney-ljud gar att lasa och ar kortare an kopplingens duration', () 
   }
   assert.deepEqual(olasbara, [], 'ljudfiler som inte gar att avkoda');
   assert.deepEqual(forLanga, [], 'klipp som ar langre an Actionens duration: 6');
+});
+
+test('en sound alert sparas i ett aktivt VYRA-projekt', async () => {
+  // Detta ar inte en localStorage-stubb: fonster(... skrivbar:true) skapar samma
+  // committade Studio-session med origin-wide lock som den riktiga Studion behover
+  // for writeActive(). Testet kor sedan Sound Alerts egen submit-vag.
+  const lager = F.delatLager();
+  const studio = await F.fonster({ namn: 'sound-alert-studio', lager, skrivbar: true,
+    extraFiler: ['sound-alerts.js'] });
+  try {
+    studio.document.querySelector('#title').textContent = 'Sound Alerts';
+    studio.renderSoundAlerts();
+    const form = studio.document.querySelector('#saNewAlert');
+    assert.ok(form, 'Sound Alerts skapade inte sitt formulär');
+    form.elements.sound.value = 'followCheer';
+
+    await studio.saCreateAlert(form)({ preventDefault() {} });
+
+    const saved = JSON.parse(studio.VyraSessionState.readActiveExtra('vyra-action-event-v2'));
+    assert.equal(saved.actions.length, 1, 'ljud-actionen skrevs inte i det aktiva projektet');
+    assert.equal(saved.events.length, 1, 'eventet skrevs inte i det aktiva projektet');
+    assert.equal(saved.events[0].soundAlertId, 'followCheer');
+    assert.equal(saved.actions[0].audioMedia.packagePath, 'assets/sounds/mixkit/follow-cheer.mp3');
+    assert.match(studio.__toaster.at(-1), /är kopplad till Gåva mottagen/);
+  } finally {
+    studio.close();
+  }
 });
