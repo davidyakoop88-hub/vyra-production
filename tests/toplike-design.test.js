@@ -75,7 +75,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // alerts respektive today-features) utan att bumpa sin strang, sa den sammanslagna filen ar
   // ny mot BADA foraldrarna. En klient som hamtat nagon av de tva gamla strangarna hade annars
   // suttit kvar pa sin halva av andringen.
-  assert.match(studioHtml, /media\.js\?v=20260923-4/);
+  // -5 2026-09-23: like-fountain-particles.js togs bort ur skriptsvansen. En cachad media.js
+  // hade fortsatt injicera den och allokerat en duk per render som ingenting ritar pa.
+  assert.match(studioHtml, /media\.js\?v=20260923-5/);
   assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
   // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
   // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.

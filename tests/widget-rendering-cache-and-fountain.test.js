@@ -150,7 +150,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // alerts respektive today-features) utan att bumpa sin strang, sa den sammanslagna filen ar
   // ny mot BADA foraldrarna. En klient som hamtat nagon av de tva gamla strangarna hade annars
   // suttit kvar pa sin halva av andringen.
-  assert.match(studio, /studio\.css\?v=20260923-4/);
+  // -5 2026-09-23: de tva foraldralosa .lf-duk-reglerna gick med canvas-lagret. Ingen nod bar
+  // den klassen langre, sa reglerna kunde aldrig matcha nagot — dod vikt som laste ut som
+  // ett fungerande lager.
+  assert.match(studio, /studio\.css\?v=20260923-5/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
