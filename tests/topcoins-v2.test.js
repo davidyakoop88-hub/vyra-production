@@ -33,9 +33,11 @@ test('Top Coins assets are loaded after media with a fresh shared cache version'
   // Laddordningen mäts över de riktiga <script src>-taggarna i dokumentordning. media.js:s
   // ?v= låses inte: den bumpas i varje PR som rör media.js, och en låst sträng som inte
   // längre fanns gav indexOf -1 och en vakt som var grön oavsett ordning.
+  // topcoins-v2.js:s egen ?v= låses inte heller längre av samma skäl (ranking-sixpack, 2026-09-24,
+  // bumpade den till 20260924-sixpack när DESIGNS-tabellen fick sex nya nycklar).
   const scriptSrc = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]*)"/g)].map((m) => m[1]);
   const mediaIndex = scriptSrc.findIndex((src) => src.startsWith('media.js?v='));
-  const topcoinsIndex = scriptSrc.indexOf('topcoins-v2.js?v=20260920-3');
+  const topcoinsIndex = scriptSrc.findIndex((src) => src.startsWith('topcoins-v2.js?v='));
   const scripts = () => scriptSrc.map((s, i) => `[${i}]${s}`).join(' ');
   assert.ok(mediaIndex !== -1 && topcoinsIndex !== -1,
     `Expected both media.js and topcoins-v2.js to be present. mediaIndex=${mediaIndex}, topcoinsIndex=${topcoinsIndex}. Scripts: ${scripts()}`);

@@ -32,11 +32,17 @@ function rigg(url) {
 const widget = design => ({ id: 'tp1', type: 'templateTopPoints', topPointsDesign: design, likeCount: 5 });
 const rita = (w, design) => w.VyraTopPoints.topPointsHtml(widget(design));
 
-test('katalogens fyra nycklar har fyra designer, och ingen delar id', () => {
+test('katalogens fyra ursprungliga nycklar finns kvar, och ingen delar id', () => {
   const w = rigg();
   const ids = Object.keys(w.VyraTopPoints.designs);
-  assert.deepEqual(ids.sort(), ['center', 'clean', 'neon', 'podium']);
-  assert.equal(new Set(ids).size, 4);
+  // Bumpad 2026-09-24 (ranking-sixpack): sex nya nycklar (voltage, basic-v2, prism-vertical,
+  // prism-horizontal, celestial, royal-rose) lades till EFTER de fyra ursprungliga — provet
+  // vaktar att de fyra gamla lever kvar oforandrade, inte att listan ar exakt fyra lang.
+  assert.deepEqual(
+    ['center', 'clean', 'neon', 'podium'].every(id => ids.includes(id)), true,
+    'nagon av de fyra ursprungliga designnycklarna forsvann');
+  assert.equal(new Set(ids).size, ids.length, 'tva designer delar samma id');
+  assert.equal(ids.length, 10);
 });
 
 // KARNPROVET. Det ar exakt det har paret som foll ihop i produktionen.

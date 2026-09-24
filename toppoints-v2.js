@@ -19,8 +19,19 @@
     clean: Object.freeze({ label: 'Lista', etikett: 'Stil 1 · Lista', accent: '#c9a227', width: 220 }),
     center: Object.freeze({ label: 'Tre i mitten', etikett: 'Stil 2 · Tre i mitten', accent: '#c9a227', width: 340 }),
     podium: Object.freeze({ label: 'Podium', etikett: 'Stil 3 · Podium', accent: '#ffc94d', width: 300 }),
-    neon: Object.freeze({ label: 'Neon', etikett: 'Stil 4 · Neon', accent: '#45e7ff', width: 300 })
+    neon: Object.freeze({ label: 'Neon', etikett: 'Stil 4 · Neon', accent: '#45e7ff', width: 300 }),
+    // Ranking-sixpack (2026-09-24): sex fristående prototyper David godkände som Claude Artifacts,
+    // integrerade i Top Points EGEN designtabell (inte via skin-klassen — se skinn-bara-top-like.test.js).
+    // Skelettet (tp-chip/tp-portratt/tp-copy/em) är oförändrat, se rad() nedan. Visuellt i ranking-sixpack.css.
+    voltage: Object.freeze({ label: 'Voltage', etikett: 'Stil 5 · Voltage', accent: '#ffd700', width: 300 }),
+    'basic-v2': Object.freeze({ label: 'Basic v2', etikett: 'Stil 6 · Basic v2', accent: '#ffd97a', width: 260 }),
+    'prism-vertical': Object.freeze({ label: 'Prism', etikett: 'Stil 7 · Prism', accent: '#ffb703', width: 260 }),
+    'prism-horizontal': Object.freeze({ label: 'Prism horisontal', etikett: 'Stil 8 · Prism horisontal', accent: '#ffb703', width: 340 }),
+    celestial: Object.freeze({ label: 'Celestial', etikett: 'Stil 9 · Celestial', accent: '#ffd54a', width: 340 }),
+    'royal-rose': Object.freeze({ label: 'Royal Rose', etikett: 'Stil 10 · Royal Rose', accent: '#ffd54a', width: 340 })
   });
+  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const SIXPACK_ROW = new Set(['prism-horizontal', 'celestial', 'royal-rose']); // horisontell rad, som center/podium
 
   // Demodata i editorn. I overlay ritas nollformen i stallet — se kommentaren vid rad().
   const DEMO = Object.freeze([
@@ -78,10 +89,15 @@
     const glod = design === 'neon' ? '<span class="tp-glod"></span>' : '';
     const steg = design === 'podium' && plats <= 3
       ? `<span class="tp-podium-steg" data-plats="${plats}"></span>` : '';
+    // Ranking-sixpack: samma ring/glöd-noder runt tp-portratt som toplike-studio.js:s sex nya
+    // skinn använder (.tp-six-backlight/.tp-six-ring), färg/bakgrundsbild sätts i CSS.
+    const sixRing = SIXPACK.has(design)
+      ? '<span class="tp-six-backlight"></span><span class="tp-six-ring tp-six-a"></span><span class="tp-six-ring tp-six-b"></span><span class="tp-six-art"></span>'
+      : '';
     return `<div class="toplike-row rank-${plats}" style="order:${plats}">`
       + steg + glod
       + `<span class="tp-chip">${plats}</span>`
-      + `<span class="tp-portratt"><img src="${avatar(w)}" alt=""></span>`
+      + `<span class="tp-portratt">${sixRing}<img src="${avatar(w)}" alt=""></span>`
       + `<span class="tp-copy"><strong>${namn}</strong><small></small></span>`
       + `<em>${IKON} ${varde}</em>`
       + '</div>';
@@ -168,7 +184,7 @@
     const section = document.createElement('section');
     section.dataset.toppointsV2 = '1';
     section.className = 'toplike-template-section toppoints-v2-catalog';
-    section.innerHTML = '<h4>TOP POINTS · 4 SEPARATA DESIGNER</h4>'
+    section.innerHTML = `<h4>TOP POINTS · ${Object.keys(DESIGNS).length} SEPARATA DESIGNER</h4>`
       + Object.entries(DESIGNS).map(([id, meta]) =>
         `<button type="button" data-toppoints-create="${id}" data-catalog-key="catalog:ranking:templateTopPoints:${id}">`
         + `<i>${IKON}</i><span><b>Top Points · ${meta.etikett}</b><small>1–10 profiler · transparent</small></span></button>`).join('');

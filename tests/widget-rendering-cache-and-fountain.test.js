@@ -308,8 +308,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-22: BARA .js-strangen igen. Skinnklassen stamplas nu bara pa templateTopLike,
   // och skinnvaljaren ritas bara dar — en andring i toplike-studio.js, inte i .css:en. Utan
   // hojningen kor varje cachad OBS-kalla kvar pa den gamla koden och far aldrig fixen.
-  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  assert.match(media, /toplike-studio\.js\?v=20260922-skinnbarare/);
+  // Bumpad 2026-09-24 (ranking-sixpack): BADA strangarna. toplike-studio.js fick den nya
+  // riktnings-/spegelklassen (ranking-mirrored) och toplike-studio.css inget nytt direkt (de sex
+  // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
+  // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
+  assert.match(media, /toplike-studio\.css\?v=20260924-sixpack/);
+  assert.match(media, /toplike-studio\.js\?v=20260924-sixpack/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);
