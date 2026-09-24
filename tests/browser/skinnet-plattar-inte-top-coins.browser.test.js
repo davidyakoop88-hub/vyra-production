@@ -90,15 +90,16 @@ async function mat(nyckel) {
   });
 }
 
-test('Top Like behaller sitt skinn och clean-bar-geometrin', { skip }, async () => {
+test('Top Like ritas som ny design — clean-bar-geometrin kommer inte tillbaka', { skip }, async () => {
+  // Clean Bar pensionerades 2026-09-24 (Davids beslut, docs/ranking-gallringen.md). En widget som
+  // byggs ur den gamla nyckeln ska ritas som Voltage av ranking-sixpack.js — utan skin-klass pa
+  // roten, sa toplike-studio.css:s clean-bar-regler (250 px, 42 px hoga rader) inte nar den.
   const m = await mat('catalog:toplike:clean-bar');
   assert.ok(!m.fel, m.fel);
-  assert.deepEqual(m.skinn, ['skin-clean-bar'],
-    `Top Like ska fortfarande fa sitt skinn injicerat. Klasser: ${m.klasser.join(' ')}`);
-  // 250 px och 42 px hoga rader ar clean-bar-regelns egna varden i toplike-studio.css.
-  // Faller det har har scopningen tagit med sig for mycket.
-  assert.equal(m.raknadBredd, '250px', 'clean-bar-bredden galler inte langre for Top Like');
-  assert.equal(m.radHojd, 42, 'clean-bar-radens hojd galler inte langre for Top Like');
+  assert.deepEqual(m.skinn, [], `ingen skin-klass pa roten. Klasser: ${m.klasser.join(' ')}`);
+  assert.ok(m.klasser.includes('rk6-voltage'), `Clean Bar ska ritas som Voltage. Klasser: ${m.klasser.join(' ')}`);
+  assert.notEqual(m.raknadBredd, '250px', 'clean-bar-bredden galler fortfarande');
+  // Radhojden provas inte: Voltage-raden ar ocksa 42 px (avataren ar 42 px), sa den skiljer inte.
 });
 
 test('Top Coins far inget skinn och behaller sin egen bredd', { skip }, async () => {

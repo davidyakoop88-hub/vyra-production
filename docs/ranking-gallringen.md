@@ -28,6 +28,19 @@ Top Coins Halo och Signal Orbit berördes inte. De syntes inte på Davids bilder
 - **Kartan och den visuella vakten.** De åtta nycklarna är borta ur `docs/katalogkarta.md`,
   referensbilderna är raderade och manifestet har 105 bilder.
 
+## Profilramarna finns kvar
+
+Top Likes ramväljare med 53 profilramar står kvar (Davids beslut). Väljer streamern en ram ersätter den
+designens egen ram, i `ranking-sixpack.js` (`profilram`). Den använder samma fil och samma uppmätta
+geometri (`vyraFrameGeom`) som den gamla `media.js`-motorn.
+
+- Avataren får en marginal lika stor som ramens utstick, så namn, värde och grannramar aldrig hamnar
+  på konsten. I raddesignerna gäller marginalen bara uppåt och nedåt, så podiet blir inte bredare än
+  duken.
+- Rangbrickor och glöd tar ramens accent (`vyraFrameAccent`, "siffror matchar ramarna").
+
+Proven finns i `tests/browser/ram-radavstand-vaxer-inte.browser.test.js`.
+
 ## Varför sparade widgetar inte skrivs om
 
 En widget som redan är sparad med en gammal design pekas om **vid rendering**, i
