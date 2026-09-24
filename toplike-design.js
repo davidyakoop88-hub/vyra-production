@@ -42,14 +42,22 @@
     'prism-vertical': Object.freeze({
       id: 'prism-vertical', name: 'VYRA Prism (vertikal)', layout: 'clean', frame: 'none', count: 5
     }),
+    // layout:'clean' (INTE 'center') for dessa tre, med flit — .like-center bar sedan tidigare
+    // Mini Podiums (0,4,0)-block (toplike-studio.css:393: .like-center.like-center, absolut
+    // per-rank-positionering via --px/--py, olika bildstorlek per plats). Prism horisontal/
+    // Celestial/Royal Rose ar EN RAK RAD UTAN HOJDSKILLNAD (Davids uttryckliga krav), och
+    // .like-center hade tyst atergett dem som en pyramid med krona-glod pa nummer 1 — matt i
+    // riktig Chromium, inte bara last i kallkod. .like-clean har ingen egen CSS alls (se
+    // kommentaren i toplike-studio.css:71), sa ranking-sixpack.css:s egna radregler ager hela
+    // layouten oemotsagda, precis som for voltage/basic-v2/prism-vertikal ovan.
     'prism-horizontal': Object.freeze({
-      id: 'prism-horizontal', name: 'VYRA Prism (horisontal)', layout: 'center', frame: 'none', count: 5
+      id: 'prism-horizontal', name: 'VYRA Prism (horisontal)', layout: 'clean', frame: 'none', count: 5
     }),
     celestial: Object.freeze({
-      id: 'celestial', name: 'VYRA Celestial', layout: 'center', frame: 'none', count: 5
+      id: 'celestial', name: 'VYRA Celestial', layout: 'clean', frame: 'none', count: 5
     }),
     'royal-rose': Object.freeze({
-      id: 'royal-rose', name: 'VYRA Royal Rose', layout: 'center', frame: 'none', count: 5
+      id: 'royal-rose', name: 'VYRA Royal Rose', layout: 'clean', frame: 'none', count: 5
     })
   });
 

@@ -169,7 +169,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad igen 2026-09-23: nitton av tjugoen premiumdesigner pensionerades. Alla tre foljer med
   // den har gangen — widget-factory.js bar varianttabellen, studio.css de 50 borttagna reglerna
   // och premiumbunten (media.js `version`) listan i premium-final.js.
-  assert.match(studio, /widget-factory\.js\?v=20260923-3/);
+  // Bumpad igen 2026-09-24: LIKE_SKINN/TOPCOINS_V2 sakande ranking-sixpackens sex nya ID:n, sa den
+  // generiska fabriksvagen (t.ex. widgetlank-kopiering) hade tystat tillbaka Celestial/Royal
+  // Rose/etc till clean-bar/halo. BARA widget-factory.js andrades — studio.css och media.js
+  // `version` ar oforandrade och behaller sina strangar.
+  assert.match(studio, /widget-factory\.js\?v=20260924-1/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);

@@ -90,9 +90,24 @@
 .widget.vyra-toplike.skin-prism-vertical .toplike-row>span:not(.pro-avatar-frame){flex:1 1 auto!important;min-width:0!important}
 .widget.vyra-toplike.skin-prism-vertical .toplike-row>em{flex:0 0 auto!important}
 
+/* profile-frames-premium.css:53 satter .vyra-toplike.like-clean{width:220px!important} for de smala
+ * listdesignerna (Voltage/Basic v2/Prism vertikal). Prism horisontal/Celestial/Royal Rose delar
+ * samma likeTheme:'clean' (se toplike-design.js) men ar en RAD i sidled, inte en lista — 220px
+ * klipper av rad 4-5 helt. Tre klasser (.widget.vyra-toplike.skin-X) slar profile-frames-premiums
+ * tva (.vyra-toplike.like-clean) pa specificitet, oavsett lastordning — matt i riktig Chromium,
+ * raderna gick utanfor duken innan denna rad fanns.
+ *
+ * SAMMA FIL, samma rad 56, satter ocksa `.toplike-row{min-width:168px!important}` — width:auto pa
+ * `.toplike-row` nedan rensar INTE min-width (olika egenskaper), sa flex:1 1 0 kunde aldrig krympa
+ * fem 168px-rader in i en 300px bred widget (864px innehall matt i DOM, verkligt overflow, inte
+ * radbrytning). min-width:0!important pa varje `.toplike-row`-regel nedan later flexboxen krympa
+ * raderna som avsett.
+ */
+.widget.vyra-toplike:is(.skin-prism-horizontal,.skin-celestial,.skin-royal-rose){width:300px!important;max-width:300px!important}
+
 /* --- Prism (horisontal): flat rad i sidled, #1 större, ram i varm bärnsten --- */
 .widget.vyra-toplike.skin-prism-horizontal>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:flex-end!important;gap:10px!important;width:100%!important;flex-wrap:wrap!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
+.widget.vyra-toplike.skin-prism-horizontal .toplike-row{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;min-width:0!important;max-width:none!important;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
 .widget.vyra-toplike.skin-prism-horizontal .toplike-row>img:not(.pro-frame-art){width:40px!important;height:40px!important;min-width:40px!important;border-color:#ffb703!important}
 .widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-1>img:not(.pro-frame-art){width:54px!important;height:54px!important;min-width:54px!important}
 .widget.vyra-toplike.skin-prism-horizontal .toplike-row>span:not(.pro-avatar-frame){width:100%!important;text-align:center!important}
@@ -102,7 +117,7 @@
 /* --- Celestial: kunglig rad utan höjdskillnad, metallring från celestial-wing-ring.png, diamantbricka --- */
 .widget.vyra-toplike.skin-celestial>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:flex-start!important;gap:6px!important;width:100%!important}
 .widget.vyra-toplike.skin-celestial.ranking-mirrored>.toplike-list{flex-direction:row-reverse!important}
-.widget.vyra-toplike.skin-celestial .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
+.widget.vyra-toplike.skin-celestial .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
 .widget.vyra-toplike.skin-celestial .toplike-row>img:not(.pro-frame-art){width:36px!important;height:36px!important;min-width:36px!important;border-color:#ffe9a8!important;animation:rk6-hue 4s linear infinite}
 .widget.vyra-toplike.skin-celestial .toplike-row>img:not(.pro-frame-art)::after{
   content:'';position:absolute;inset:-9px;border-radius:50%;pointer-events:none;z-index:-1;
@@ -118,7 +133,7 @@
 .widget.vyra-toplike.skin-royal-rose{isolation:isolate}
 .widget.vyra-toplike.skin-royal-rose>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:flex-start!important;gap:6px!important;width:100%!important;position:relative;z-index:1}
 .widget.vyra-toplike.skin-royal-rose.ranking-mirrored>.toplike-list{flex-direction:row-reverse!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
+.widget.vyra-toplike.skin-royal-rose .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
 .widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art){width:34px!important;height:34px!important;min-width:34px!important;border-color:#ffe9a8!important;animation:rk6-hue 4s linear infinite}
 .widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art)::after{
   content:'';position:absolute;inset:-14px -8px;pointer-events:none;z-index:-1;
