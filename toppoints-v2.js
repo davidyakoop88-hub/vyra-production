@@ -175,6 +175,9 @@
   // Katalogen far EN uppsattning knappar, inte tva. media.js bygger fyra generiska
   // `[data-ranking="templateTopPoints"]`-knappar som skapar widgetar utan de har defaultvardena;
   // de tas bort och ersatts med modulens egna, med samma katalognycklar.
+  // De sex ranking-sixpack-designerna listas i ranking-sixpack.js:s grupperade katalog (en grupp per
+  // design, med Top Like / Top Coins / Top Points under), inte har.
+  const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
@@ -184,8 +187,8 @@
     const section = document.createElement('section');
     section.dataset.toppointsV2 = '1';
     section.className = 'toplike-template-section toppoints-v2-catalog';
-    section.innerHTML = `<h4>TOP POINTS · ${Object.keys(DESIGNS).length} SEPARATA DESIGNER</h4>`
-      + Object.entries(DESIGNS).map(([id, meta]) =>
+    section.innerHTML = `<h4>TOP POINTS · ${KATALOG.length} SEPARATA DESIGNER</h4>`
+      + KATALOG.map(([id, meta]) =>
         `<button type="button" data-toppoints-create="${id}" data-catalog-key="catalog:ranking:templateTopPoints:${id}">`
         + `<i>${IKON}</i><span><b>Top Points · ${meta.etikett}</b><small>1–10 profiler · transparent</small></span></button>`).join('');
     catalog.prepend(section);
@@ -223,5 +226,5 @@
     });
   };
 
-  window.VyraTopPoints = Object.freeze({ designs: DESIGNS, designId, accent, topPointsHtml });
+  window.VyraTopPoints = Object.freeze({ create: createTopPoints, designs: DESIGNS, designId, accent, topPointsHtml });
 })();

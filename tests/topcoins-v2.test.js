@@ -14,7 +14,10 @@ test('Top Coins ships only the approved Halo and Signal Orbit designs', () => {
 });
 
 test('Top Coins is a single leader with no legacy rank badge', () => {
-  assert.match(js, /likeCount: 1/);
+  // Halo och Signal Orbit ar fortfarande EN ledare. De sex ranking-sixpack-designerna ar samma
+  // femplatslista som Top Like och Top Points (prototypernas "samma design, bara symbolen och
+  // datakallan byts") och skapas darfor med fem rader.
+  assert.match(js, /likeCount: SIXPACK\.has\(design\) \? 5 : 1/);
   assert.match(js, /UTAN PLACERINGSTAL/);
   assert.doesNotMatch(js, /<b>[1-9]<\/b>/);
   assert.match(js, /toplike-row rank-1/);
