@@ -165,9 +165,6 @@ function servera() {
       matt: `${f2.fyllnad.bredd}x${f2.fyllnad.hojd}` });
   }
 
-  await b.browser.close();
-  await new Promise(r => b.server.close(r));
-
   if (skrivna.length) {
     // MANIFESTET SLÅS SAMMAN, DET SKRIVS INTE ÖVER.
     //
@@ -226,6 +223,13 @@ function servera() {
       + `- **Motiv:** ${MOTIV}\n- **Motor:** ${motor.version}\n`
       + `- **Nycklar:** ${nyckelrad}\n`);
   }
+
+  // Stangs FORST har, efter rastreringsAvtryck(b.sida) ovan — inte direkt efter jamforelseloopen.
+  // Stod den dar tidigare stangdes sidan innan avtrycket kunde tas ("page.evaluate: Target page,
+  // context or browser has been closed"), och kommentaren nagra rader upp om att avtrycket maste
+  // tas "PA SAMMA SIDA SOM BILDERNA, i samma session" gick inte att uppfylla.
+  await b.browser.close();
+  await new Promise(r => b.server.close(r));
 
   console.log(`\n${skrivna.length} referenser skrivna till ${path.relative(ROOT, V.REFKAT)}`);
   // De här är INTE de undantagna — de är nycklar som skulle ha fått en referens men inte kunde.
