@@ -167,6 +167,12 @@ html body .widget.vyra-topcoins-new.topcoins-royal-rose::before{
  * clean/center/podium/neon (toppoints-v2.js). Delad ring-rigg via .tp-six-*.
  * =================================================================================== */
 html body .widget.vyra-toplike.vyra-toppoints-new .tp-portratt{position:relative}
+/* toppoints-v2.css:51-54 sätter overflow:hidden!important + fast 2.6em-storlek på .tp-portratt för de fyra
+ * gamla designerna (rätt där, ringen finns ingenstans att klippas). Celestial/Royal Rose ritar sin ring
+ * MED en negativ inset som sticker utanför den ramen (.tp-six-art/.tp-six-ring), så samma overflow:hidden
+ * klipper bort hela ringen tyst — mätt i riktig DOM, inte bara källkod, se docs/vyra_matning_dom_vs_pixlar.
+ * Högre specificitet (en extra klass via :is) än basregeln, inte bara senare i lastordningen. */
+html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-celestial,.toppoints-royal-rose) .toplike-row>.tp-portratt{overflow:visible!important}
 html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-backlight{position:absolute;inset:-16%;border-radius:50%;z-index:0;pointer-events:none;
   background:radial-gradient(circle,color-mix(in srgb,var(--tp-accent,#ffd54a),transparent 40%) 0%,transparent 70%);filter:blur(2px);animation:rk6-pulse-glow 2.4s ease-in-out infinite}
 html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-ring{position:absolute;inset:-6%;border-radius:50%;pointer-events:none;z-index:1}
