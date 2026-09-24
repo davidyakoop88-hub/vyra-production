@@ -34,12 +34,13 @@ Top Likes ramväljare med 53 profilramar står kvar (Davids beslut). Väljer str
 designens egen ram, i `ranking-sixpack.js` (`profilram`). Den använder samma fil och samma uppmätta
 geometri (`vyraFrameGeom`) som den gamla `media.js`-motorn.
 
-- Avataren får en marginal lika stor som ramens utstick, så namn, värde och grannramar aldrig hamnar
-  på konsten. I raddesignerna gäller marginalen bara uppåt och nedåt, så podiet blir inte bredare än
-  duken.
+- Ramens utstick bortom avataren (`--ram-ut`) läggs på grannarna, aldrig på avataren: avståndet
+  mellan raderna växer, och i sidled knuffas namn och värde med `translate`. Fotot flyttar sig alltså
+  inte, och widgeten blir inte bredare (`tests/browser/ram-ror-inte-bildmatt`). I raddesignerna
+  hamnar namnet under ramen, och grannramarna får mötas i sidled.
 - Rangbrickor och glöd tar ramens accent (`vyraFrameAccent`, "siffror matchar ramarna").
 
-Proven finns i `tests/browser/ram-radavstand-vaxer-inte.browser.test.js`.
+Proven finns i `tests/browser/ram-radavstand-vaxer-inte.browser.test.js` och `ram-ror-inte-bildmatt.browser.test.js`.
 
 ## Varför sparade widgetar inte skrivs om
 
