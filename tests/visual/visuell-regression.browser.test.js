@@ -180,6 +180,38 @@ test('vakten kör på den binär referenserna gjordes på', { skip }, () => {
   assert.equal(krock, null, krock || '');
 });
 
+test('rastreraren ritar som den gjorde när referenserna togs', { skip, timeout: 60000 }, async () => {
+  // TREDJE KONTROLLMÄTNINGEN FÖR HELA FILEN, och den som fattades den 2026-09-23.
+  //
+  // Binärkontrollen ovan var GRÖN den kvällen. Typsnittsprovet nedan var GRÖNT. Och ändå skilde
+  // sig alla 95 nycklar med 32–98 %, för att GitHub servade en annan runner-avbildning: samma
+  // Chromium, samma Inter och Manrope, men en annan rastrerare under dem.
+  //
+  // Utan det här provet står nästa läsare inför en lista på 95 widgetar och ingen aning om att
+  // ingen av dem är boven. Det kostade en kväll att räkna ut, och beviset var att tolv
+  // heartgoal-teman skilde på exakt samma pixelantal. Den slutsatsen ska provet dra, inte läsaren.
+  const m = V.lasManifest();
+  const lagrat = m && m.rastrering;
+
+  // ETT MANIFEST UTAN AVTRYCK ÄR INTE ETT FEL — bara äldre än den här vakten. Provet hoppar då,
+  // högljutt, i stället för att falla på något referenserna aldrig lovade.
+  if (!lagrat) {
+    console.log('# referensmanifestet bär inget rastreringsavtryck ännu — tas vid nästa '
+      + 'omkörning av visuell-referenser.yml. Kontrollen hoppas.');
+    return;
+  }
+
+  const nu = await V.rastreringsAvtryck(sida);
+  assert.equal(nu, lagrat,
+    `RASTRERAREN HAR BYTTS. Referenserna togs på en maskin vars textavtryck är ${lagrat}; den `
+    + `här maskinen ger ${nu}. Binären och typsnitten stämmer — det är maskinen UNDER dem som `
+    + 'ritar annorlunda.\n\n'
+    + 'Faller nycklar nedan är det därför INTE widgetarna. Leta inte i CSS:en. Antingen körs '
+    + 'vakten på en annan runner-avbildning än den som skrev bilderna, eller så har GitHub rullat '
+    + 'en ny. Ta om referenserna med visuell-referenser.yml, utan filter, och rör dem aldrig för '
+    + 'hand.');
+});
+
 test('uppvärmningssessionen kördes före mätningen', { skip }, () => {
   // KVITTOT. Utan det här provet går varmUpp() att ta bort — eller att tyst falla på ett kast —
   // utan att någonting säger ifrån, och då är uppvärmningen en kommentar i stället för en vakt.
