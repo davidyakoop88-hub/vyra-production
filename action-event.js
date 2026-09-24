@@ -405,7 +405,7 @@
         <button type="button" data-delete-action="${a.id}" title="Radera">🗑</button>
       </td>
       <td class="ae-col-name"><b>${namn}</b></td>
-      <td class="ae-col-screen">Scen ${n} <mark class="ae-action-scene ${on?'online':'offline'}">${on?'Online':'Offline'}</mark></td>
+      <td class="ae-col-screen"><span>Scen ${n}</span> <mark class="ae-action-scene ${on?'online':'offline'}">${on?'Online':'Offline'}</mark><button type="button" class="ae-scene-link" data-open-action-screen="${n}">OBS-länk</button></td>
       <td class="ae-col-duration">${timing.className==='persistent'?'Fast':Math.max(1,a.duration||10)}</td>
       <td class="ae-col-points">${actionPointsLabel(a)}</td>
       ${kryss}
@@ -430,19 +430,21 @@
     </tr>`;
   }
   function shell(){
-    const state=read(),onlineScenes=Array.from({length:10},(_,i)=>sceneOnline(i+1)).filter(Boolean).length;
+    const state=read(),usedScenes=[...new Set(state.actions.map(a=>Number(a.scene?.number)||1))],onlineScenes=usedScenes.filter(sceneOnline).length;
     const activeEvents=state.events.filter(event=>event.enabled).length;
     return `<section class="ae-workspace">
       <header class="ae-hero">
         <div class="ae-hero-copy"><span class="ae-eyebrow">VYRA AUTOMATIK</span><h2>Gör liven levande<br>utan att hålla i allt själv.</h2><p>Välj först vad som ska hända. Koppla sedan när det ska hända. VYRA skickar det till rätt overlay-skärm.</p></div>
         <div class="ae-hero-side"><span class="ae-live-pill ${actionsEnabled(state)?'is-on':'is-off'}"><i></i>${actionsEnabled(state)?'Automatik aktiv':'Automatik pausad'}</span><div class="ae-hero-actions"><button class="primary" data-new-ae-action>＋ Ny Action</button><button data-new-ae-event>＋ Nytt Event</button></div></div>
       </header>
-      <div class="ae-health" aria-label="Status för automatik"><div><b>${state.actions.length}</b><span>Actions</span></div><div><b>${activeEvents}</b><span>Aktiva events</span></div><div><b>${onlineScenes}/10</b><span>Skärmar online</span></div><p><strong>Så fungerar det:</strong> Event → Action → Overlay</p></div>
+      <div class="ae-health" aria-label="Status för automatik"><div><b>${state.actions.length}</b><span>Actions</span></div><div><b>${activeEvents}</b><span>Aktiva events</span></div><div><b>${usedScenes.length?`${onlineScenes}/${usedScenes.length}`:'–'}</b><span>${usedScenes.length?'Skärmar online':'Välj skärm i din Action'}</span></div><p><strong>Så fungerar det:</strong> Event → Action → Overlay</p></div>
       <div class="ae-steps ae-new-steps"><div><b>1</b><span>Skapa en Action</span><small>Vad ska VYRA göra?</small></div><i>→</i><div><b>2</b><span>Koppla ett Event</span><small>När ska det hända?</small></div><i>→</i><div><b>3</b><span>Välj skärm</span><small>Var ska det synas?</small></div></div>
-      <div class="ae-columns ae-work-columns">
+      <div class="ae-columns ae-work-columns ae-simple-flow">
         <section class="card ae-actions-card"><header><div><span class="ae-section-number">01</span><h3>Actions</h3><p>Det som ska hända i din LIVE.</p></div><span class="ae-count">${state.actions.length}</span></header><div class="ae-actions-toolbar"><button id="newAeAction" class="primary">＋ Skapa Action</button>${state.actions.length?`<label class="ae-check ae-master-toggle"><input id="aeMasterEnabled" type="checkbox"${actionsEnabled(state)?' checked':''}> Aktiverad</label><input id="aeActionSearch" type="search" placeholder="Sök actions…">`:''}</div>${state.actions.length?`<div class="ae-actions-scroll"><table class="ae-actions-table"><thead><tr><th></th><th>Namn</th><th>Skärm</th><th>Visningstid</th><th>Poäng +/−</th>${listColumnTypes.map(x=>`<th class="ae-col-check">${x[1]}</th>`).join('')}<th>Det här händer</th></tr></thead><tbody>${state.actions.map(actionRow).join('')}</tbody></table><p class="ae-sok-tomt" hidden>Ingen action matchar sökningen.</p></div>`:`<div class="ae-empty-state"><span>⚡</span><b>Din första Action börjar här</b><p class="ae-empty-exempel">Exempel: visa en alert, spela ett ljud eller byt OBS-scen.</p><p data-tom="automatik-actions">Inga Actions ännu. Skapa den första.</p></div>`}</section>
         <section class="card ae-events-card"><header><div><span class="ae-section-number">02</span><h3>Events</h3><p>Händelser som startar dina Actions.</p></div><span class="ae-count">${state.events.length}</span></header><div class="ae-actions-toolbar"><button id="newAeEventCard" class="primary">＋ Koppla Event</button>${state.events.length?`<input id="aeEventSearch" type="search" placeholder="Sök events…">`:''}</div>${state.events.length?`<div class="ae-actions-scroll"><table class="ae-actions-table ae-events-table"><thead><tr><th></th><th class="ae-col-check">Aktiv</th><th>Vem</th><th>När detta händer</th><th>Kör den här Actionen</th></tr></thead><tbody>${state.events.map(e=>eventRow(state,e)).join('')}</tbody></table><p class="ae-sok-tomt" data-tomt="event" hidden>Inget event matchar sökningen.</p></div>`:`<div class="ae-empty-state"><span>✦</span><b>Koppla din första trigger</b><p class="ae-empty-exempel">Exempel: en gåva, följning, likes eller ett kommando i chatten.</p><p data-tom="automatik-events">Inga Events ännu. Koppla ett event till en Action.</p></div>`}</section>
-      </div><div id="aeModal"></div></section>`
+      </div>
+      <details class="ae-advanced"><summary><span>Avancerat</span><small>OBS-länkar, testläge, timer och poängsystem</small></summary><div class="ae-advanced-body" data-ae-advanced-body></div></details>
+      <div id="aeModal"></div></section>`
   }
   function renderPage(){if(!document.querySelector('[data-extra="actions"]')?.classList.contains('active'))return;document.querySelector('#title').textContent='Action & Event';document.querySelector('#view').innerHTML=shell();bindPage();(window.VyraActionsExtras||[]).forEach(fn=>{try{fn()}catch(err){console.warn('[VYRA] extras-panel misslyckades',err)}})}
   function bindClose(){document.querySelectorAll('[data-close-ae]').forEach(x=>x.onclick=()=>document.querySelector('#aeModal').innerHTML='')}
