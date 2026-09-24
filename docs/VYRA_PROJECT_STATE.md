@@ -1,5 +1,74 @@
 # VYRA Project State
 
+## Checkpoint 56 — TikTok-event borta: kedjan som aldrig publicerade ett event (2026-09-24)
+
+**TikTok-event finns inte längre.** David och Codex byggde den, men den blev aldrig färdig, och den
+togs bort i sin helhet (#516). Den som letar efter den i koden ska veta att den är borttagen med
+avsikt och inte försvunnen av misstag.
+
+### Vad den var — en kedja i två ändar, inte två funktioner
+
+| led | fil | vad den gjorde |
+|---|---|---|
+| avläsaren (Desktop) | `electron-app/tiktok-event-service.js` + `tiktok-event-connector.js/.css` | öppnade ett TikTok-fönster, skrapade eventsidan, stoppade ofullständig information |
+| publiceringen (framsidan) | `tiktok-events-data.js` + `landing-events.js/.css` | renderade det som blivit verifierat |
+
+Den avgörande mätningen: `tiktok-events-data.js` stod med `events: Object.freeze([])`. **Kedjan
+publicerade aldrig ett enda event** — framsidan visade platshållaren "Vi verifierar veckans event"
+från den dag den lades in till den dag den togs bort. Båda leden var alltså värdelösa var för sig
+och tillsammans, vilket är skälet till att hela kedjan gick och inte bara ena änden.
+
+Borttaget: åtta filer, alla referenser i `index.html` och `studio.html`, de fyra
+`/api/tiktok-events/*`-rutterna i Desktop, `main.js`-kopplingen, paketlistan och fem rader i
+`.claude/domaner.json`. Filerna och kartan **måste** gå i samma commit —
+`tests/domankarta.test.js` jämför kartan mot git-spårade filer, så vilken ordning som helst ger ett
+rött mellanläge.
+
+### Tre saker som bär namnet men inte hörde dit
+
+Det här är checkpointens viktigaste rad, för nästa gång någon söker på "tiktok-event" och tror sig
+hitta rester:
+
+1. **`tiktok-fields.js` och `tiktok-service.js`** är den riktiga LIVE-bryggan. Orörda.
+2. **Allt som heter "TikTok-event" i `docs/`** syftar på LIVE-*händelseströmmen* (gåvor, likes) —
+   inte kalendern. Bland annat live-verifiering punkt 6. Står kvar.
+3. **Versionen 1.2.5** i `electron-app/package.json` är appens versionsnummer, inte funktionens.
+
+### Den kvarleva som hade blivit farlig
+
+Avläsaren loggade in användaren på TikTok i en **beständig** session, `persist:vyra-tiktok-events`.
+Tas koden bort utan mer blir riktiga TikTok-inloggningskakor kvar i `userData` på varje maskin som
+provade funktionen — utan att något längre kan nå eller rensa dem. `main.js` tvättar nu den
+partitionen vid start: gratis no-op när mappen är tom, inlindad i try/catch så den aldrig hindrar
+appen från att starta.
+
+**Lagren står utskrivna med flit.** Ett argumentlöst anrop får inte finnas i `main.js` —
+`test/clean-update.test.js` förbjuder det, av gott skäl: på `defaultSession` hade det raderat
+kontots kakor och sparade layouter. Vakten läser källan som **text**, så formen får inte ens stå i
+en kommentar i filen. Det tog två försök att lära sig.
+
+### Mätt efter borttagningen
+
+| svit | resultat |
+|---|---|
+| rot `npm test` | 1989 godkända, 0 fel, 3 överhoppade |
+| `npm run test:skript` | 28 / 28 |
+| `electron-app npm test` | 156 / 156 |
+| `tests/domankarta.test.js` | 7 / 7 — alla 294 filer i roten har exakt en ägare |
+| `tests/browser-skarvning.test.js` | 7 / 7 |
+| browser-prov mot studions sidopanel och landningssidan | 78 / 78, noll överhoppade |
+| kvarvarande referenser i repot | noll |
+
+Landningssidan väntar nu **fyra** delar i stället för fem
+(`tests/browser/landningssida.browser.test.js`).
+
+**En anteckning om browserproven:** de hoppas inte över i den här sandlådan. Chromium finns
+förinstallerad, och `VYRA_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` får
+`tests/helpers/webblasare.js` att hitta den. Utan den variabeln rapporteras sviten som överhoppad
+— grön av tomhet, precis det som helpern själv varnar för i sin kommentar.
+
+---
+
 ## Checkpoint 55 — Dagen då vakterna gick sönder, och vad de lärde oss (2026-09-23/24)
 
 Ett dygns arbete i fem spår. Fyra PR:er in, två stängda, och tre vakter som visade sig mäta något

@@ -20,9 +20,6 @@
         "studio.js",
         "studio.css",
         "landing-hamta.js",
-        "landing-events.css",
-        "landing-events.js",
-        "tiktok-events-data.js",
         "vyra-matning.js",
         "layout.html",
         "layout-format.js",
@@ -353,8 +350,6 @@
       "filer": [
         "cloud-fields.js",
         "live-client.js",
-        "tiktok-event-connector.css",
-        "tiktok-event-connector.js",
         "live-session-client.js",
         "live-control.js",
         "live-control.css",

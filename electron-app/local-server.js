@@ -245,7 +245,6 @@ function startLocalServer(root, port = 4173, options = {}) {
   }
   const liveConnector = options.createLiveConnector?.({ onStatus: setConnection, onEvent: ingestEvent });
   const obsService = options.obsService || null;
-  const eventConnector = options.eventConnector || null;
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -260,25 +259,6 @@ function startLocalServer(root, port = 4173, options = {}) {
           connection.connected = false; connection.state = 'stale'; connection.updated = Date.now();
         }
         return sendJson(res, { ok: true, server: 'VYRA Live Server', connection, lastEventId: events.length ? events[events.length - 1].id : 0 });
-      }
-      if (p === '/api/tiktok-events/status' && req.method === 'GET') {
-        if (!eventConnector) return sendJson(res, { ok: false, error: 'TikTok-event finns endast i VYRA Desktop' }, 503);
-        return sendJson(res, { ok: true, ...eventConnector.status() });
-      }
-      if (p === '/api/tiktok-events/open' && req.method === 'POST') {
-        if (!eventConnector) return sendJson(res, { ok: false, error: 'TikTok-event finns endast i VYRA Desktop' }, 503);
-        const d = JSON.parse((await readBody(req, 8192)) || '{}');
-        try { return sendJson(res, { ok: true, ...await eventConnector.open(text(d.url, 2048)) }); }
-        catch (error) { return sendJson(res, { ok: false, error: error.message }, 400); }
-      }
-      if (p === '/api/tiktok-events/scan' && req.method === 'POST') {
-        if (!eventConnector) return sendJson(res, { ok: false, error: 'TikTok-event finns endast i VYRA Desktop' }, 503);
-        try { return sendJson(res, { ok: true, ...await eventConnector.scan() }); }
-        catch (error) { return sendJson(res, { ok: false, error: error.message }, 409); }
-      }
-      if (p === '/api/tiktok-events/close' && req.method === 'POST') {
-        if (!eventConnector) return sendJson(res, { ok: false, error: 'TikTok-event finns endast i VYRA Desktop' }, 503);
-        return sendJson(res, { ok: true, ...eventConnector.close() });
       }
       // GAVOKATALOGEN (GET). Ren lasning ur en redan oppen anslutning: inga sidoeffekter, inget
       // som skrivs, inga rattigheter utover den anslutning appen redan har. 503 nar TikTok-delen
