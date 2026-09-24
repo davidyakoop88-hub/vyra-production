@@ -70,7 +70,8 @@ antas vara ett fel i koden.
 
 ```bash
 npm test                    # alla node-tester i roten            (~4 min)
-npm run test:browser        # jsdom/browser-tester                (~70 min, se nedan)
+npm run test:browser        # jsdom/browser-tester                (~42 min, se nedan)
+npm run test:browser:skarva -- 1 4   # bara del 1 av 4 — det CI kör, ~10 min
 npm run test:skript         # scripts/test/ — källvakter mot server/index.js m.fl.
 npm run test:ci             # kontrakt + fuzz + allt
 npm run karta               # regenerera docs/katalogkarta.md
@@ -86,12 +87,30 @@ en omdöpning som inte ändrar något beteende. De körs i CI (`test-client`), s
 vaktad fil kan vara grön lokalt och röd i CI utan att något är fel i koden. `npm run test:ci` kör
 allt: kontrakt, fuzz, `tests/`, `scripts/test/` och browser-sviten.
 
-⏱ **`test:browser` tar över en timme och är TYST under tiden.** 67–72 min uppmätt över 29 körningar
-(median 68), och tyngsta steget — *"Visuell · alla katalognycklar mot referens"* — fotograferar
-widgetar utan att skriva en rad. Loggen kan stå stilla i över en och en halv timme utan att något är
-fel; siffrorna och tidsgränsen står i `.github/workflows/ci.yml` vid `test-client`. **Tystnad är
-inte bevis på hängning.** Rör ändringen bara några filer: kör de prov som faktiskt täcker dem
-(`grep -rl <fil> tests/`) i stället för hela sviten.
+⏱ **`test:browser` tar drygt 40 minuter och är TYST under tiden.** Loggen kan stå stilla länge utan
+att något är fel. **Tystnad är inte bevis på hängning.** Rör ändringen bara några filer: kör de prov
+som faktiskt täcker dem (`grep -rl <fil> tests/`) i stället för hela sviten.
+
+Stycket ovan sa tidigare att sviten tar över en timme och att tyngsta steget var *"Visuell · alla
+katalognycklar mot referens"*. **Bägge var fel.** Uppmätt 2026-09-23 i körning 1bcc763e, hela
+`test-client` 70 min 28 s:
+
+| steg | tid |
+|---|---|
+| `npm ci` + kontrakt + fuzz + `npm test` + skript | 1 min 31 s |
+| **`test:browser`** | **57 min 44 s** — 82 % av jobbet |
+| pinnad Chromium + `test:visual:rigg` + `test:visual` | 9 min 24 s |
+| coverage | 1 min 44 s |
+
+Den visuella vakten var alltså åtta minuter, inte tyngsta steget — fel med en faktor sju. Och de tre
+snabba sviterna, där de flesta fel fångas, låg **bakom** båda: ett stavfel i en kontraktsfil tog
+sjuttio minuter att få veta om.
+
+Därför kör `test-client` numera som **tre parallella jobb**: node-sviterna svarar på ~4 min,
+`test-client-webblasare` skarvar `test:browser` i fyra delar (`scripts/browser-skarva.js`, packade
+efter uppmätt vikt i `tests/browser-tider.json`), och `test-visuell` kör pixelvakten odelad — den
+har nolltolerans och tål inte att bilderna jämförs på flera maskiner. Väggklockan är ~10 min i
+stället för 70. `tests/browser-skarvning.test.js` vaktar att delarna täcker katalogen exakt en gång.
 
 ## Inför en riktig sändning
 

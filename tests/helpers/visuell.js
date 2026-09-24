@@ -68,6 +68,63 @@ function motorKrock() {
     + `regenerera referenserna med motivering.`;
 }
 
+// RASTRERINGSAVTRYCKET — den tredje kontrollmätningen, och den som saknades.
+//
+// `motorKrock()` ovan fångar en BYTT CHROMIUM. Typsnittsprovet i visuell-regression fångar ett
+// typsnitt som INTE KOM FRAM. Ingen av dem fångade det som hände 2026-09-23: rätt binär, rätt
+// typsnitt, och ändå skilde sig ALLA 95 nycklar med 32–98 %.
+//
+// Det tog timmar att förstå varför, och beviset var till slut indirekt: alla tolv heartgoal-teman
+// skilde på EXAKT 36711 av 60720 pixlar. Tolv teman som skiljer sig i färg kan inte ge identiskt
+// tal av en kodändring — ett identiskt tal betyder att det som skiljer är det de DELAR, alltså
+// text och rastrering. Maskinen ritade samma typsnitt med samma motor på ett annat sätt.
+//
+// Det avtrycket ska inte behöva räknas fram av en människa klockan tolv på natten. Den här
+// funktionen ritar en textprob med de vikter studio.css faktiskt begär och hashar pixlarna. Byter
+// rastreraren byter hashen, och vakten kan säga RAKT UT att det är maskinen som ändrats — i
+// stället för att lämna en lista på 95 widgetar att misstänka.
+//
+// PROBEN BÄR DE TVÅ SÄRSKILDA TECKNEN med flit. U+5200 (samuraiemblemet) och U+FF0B (följarmålets
+// ikon) ligger utanför Inter och Manrope och hämtas ur systemets CJK-typsnitt — de fyra nycklar
+// som föll 2026-09-03 föll på just dem. Ett avtryck utan dem hade missat den sortens byte.
+//
+// HASHEN ÄR FNV-1a över den röda kanalen. Proben är svartvit, så en kanal bär hela signalen, och
+// en snabb hash räcker: det här ska svara "samma eller inte", inte tåla en angripare.
+//
+// VAD SOM ÄR BEVISAT, OCH VAD SOM INTE ÄR DET. Uppmätt 2026-09-24 i sandlådan: avtrycket är
+// IDENTISKT över två anrop på samma sida och över en ny webbläsarsession, och det ÄNDRAS när
+// proben ritas i 14px i stället för 13px. Hashen reagerar alltså på rastrering och brusar inte.
+//
+// Men sandlådan når inte fonts.googleapis.com, så Inter och Manrope föll tillbaka på
+// reservtypsnittet och en mutation av VIKTEN gav samma hash. Att avtrycket skiljer på två olika
+// TYPSNITT är därför oprövat här — det går bara att pröva där hämtningen lyckas, alltså i CI.
+// Den dagen någon rör den här funktionen: mutera vikten i ett jobb där typsnittsprovet är grönt.
+const AVTRYCKSPROB = ['400 13px Inter', '600 13px Inter', '700 16px Inter',
+  '600 16px Manrope', '700 16px Manrope'];
+
+async function rastreringsAvtryck(sida) {
+  return sida.evaluate(async (spec) => {
+    await Promise.all(spec.map(s => document.fonts.load(s).catch(() => null)));
+    try { await document.fonts.ready } catch (e) {}
+    const c = document.createElement('canvas');
+    c.width = 360; c.height = 170;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = '#fff';
+    g.textBaseline = 'alphabetic';
+    let y = 24;
+    for (const s of spec) {
+      g.font = s + ', sans-serif';
+      g.fillText('Handgloves 12345 VYRA \u5200\uFF0B\u2665', 4, y);
+      y += 30;
+    }
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let h = 0x811c9dc5;
+    for (let i = 0; i < d.length; i += 4) { h ^= d[i]; h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(16).padStart(8, '0');
+  }, AVTRYCKSPROB);
+}
+
 /* Mätfunktionerna körs INNE i sidan — en gång per sida, inte en gång per widget. */
 const RIGG = `(() => {
   // PASSFORMEN NEUTRALISERAS - se VIEWPORT langst ned. media.js:s fitOverlayCanvas() skriver inline
@@ -611,4 +668,4 @@ async function fotografera(sida, nyckel, ALERTS) {
 const VIEWPORT = Object.freeze({ width: 1400, height: 1000 });
 
 module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
-  motorKrock, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };
+  motorKrock, rastreringsAvtryck, AVTRYCKSPROB, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };

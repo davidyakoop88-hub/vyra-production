@@ -1,5 +1,82 @@
 # VYRA Project State
 
+## Checkpoint 55 — Dagen då vakterna gick sönder, och vad de lärde oss (2026-09-23/24)
+
+Ett dygns arbete i fem spår. Fyra PR:er in, två stängda, och tre vakter som visade sig mäta något
+annat än de påstod. **Det sista är den viktigaste delen av checkpointen** — de tre misstagen nedan
+kostade mest tid, och alla tre hade samma form: en medveten design lästes som ett slarvfel.
+
+### Vad som gick in
+
+| | |
+|---|---|
+| `c8d7f3d0` | **Top Gift: 40 designer → 2.** Sju gåvoramar, tolv VYRA ORIGINAL och nitton premiumdesigner pensionerade. `topgift-pension.js` lindar sparade layouter så ingen widget går sönder. Elva av tolv ORIGINAL-kort var dubbletter — identiskt tema, två bredder. |
+| `1b9a0c01` | Inloggningsprovets race vid redirect (Codex) |
+| `746a242d` | **Poängmotorn + Ranking-widget.** `server/points-runtime.js`, tre orörda rankningar, token-skopade läsrutter. Verifierad mot riktig Postgres. |
+| `d564d015` | 95 omskrivna referensbilder, de två tyngsta browserproven, Like Fountains CSS |
+
+Stängda: **#511** (överspelad av #506 — hade gjort två gröna prov röda) och **#513** (samma två
+rader som redan låg inne).
+
+### De tre vakterna som mätte fel sak
+
+**1. `premium-final.css` bar tio pensionerade designer.** Gallringen städade `studio.css` och
+katalogen. Kvar låg 32 selektorer och fyra keyframes som *såg ut som* fungerande designer när man
+läste filen. Nytt prov läser namnen ur pensionstabellen och söker dem i **alla** CSS-filer i roten
+— inte bara den fil någon råkade tänka på.
+
+**2. En lös CSS-selektor slukade partikelklassen.** När Like Fountains canvas togs bort lämnades
+`.lf-stream canvas` utan block. Parsern slog ihop den med nästa regel över en mellanliggande
+kommentar, så `.lf-p` blev `.lf-stream canvas .lf-p` och matchade ingenting. **Partiklarna stod
+utan grundstil i skarpt läge.** Tre vakter missade det: klammerbalansen går jämnt ut, browserprovet
+räknar noder och inte stil, och `catalog:likefountain` står i `UTAN_REFERENS`. Ingen av dem läser
+CSS:en som en **parser** gör. Codex hittade den; fixen ligger i `b2fb5077` + `9f45123d`.
+
+**3. Overlaylänkens fält hade noll marginal vid alla fyra fönsterbredder.** Etikettkolumnen var
+fasta 170 px och fältet fick resten. I CI klipptes adressen (fält 375 px, adress 389). Uppmätt
+samma maskin, samma kod, två körningar: fältet blev 382 px den ena gången och 439 den andra — det
+är inte tre maskiner, det är tre ögonblick i samma omflöde. Etiketten krymper nu först
+(`minmax(0,170px)`) och fältet har ett golv i `ch`, som skalar med typsnittet där `px` inte gör det.
+
+### Referensuppsättningen hade glidit från runnern
+
+95 av 95 nycklar föll i `ci.yml`, 93 av 96 i referensworkflowen. **Beviset att det var miljön:**
+alla tolv `heartgoal`-teman skilde på exakt 36711 av 60720 pixlar. Tolv teman som skiljer sig i
+färg kan inte ge identiskt tal av en kodändring.
+
+Full omkörning av `visuell-referenser.yml` på pinnad Chromium löste det, och de nya bilderna höll
+på två andra runners. **Referensbilder rörs aldrig för hand.**
+
+Nytt sedan dess: `rastreringsAvtryck()` skriver ett textavtryck i manifestet, och vakten säger nu
+rakt ut när maskinen ritat annorlunda — i stället för att lämna 95 widgetar att misstänka.
+
+### CI: 70 minuter → ungefär 10
+
+Uppmätt, inte gissat. `test:browser` var **82 %** av jobbet; den visuella vakten som alla trodde var
+tyngst var åtta minuter. `test-client` är nu tre parallella jobb, och browsersviten skarvas i fyra
+viktade delar. De två tyngsta provfilerna gick från 11 min 44 s till 1 min 6 s — `mat()` anropades
+66 gånger för 9 layouter, och tre sömner var 9–64× längre än vad mätningen visade att de behövde.
+
+### Invarianter som inte får brytas
+
+- **Referensbilder skrivs bara av `visuell-referenser.yml`**, aldrig för hand. Full omkörning utan
+  filter är botemedlet mot en glidande uppsättning — workflowen är inte trasig.
+- **Pixelvaktens tröskel är en avrundning, inte en budget.** 6/255 per kanal kommer ur CI:s
+  uppmätta brusgolv. En pixel som skiljer 7 ska fälla provet. Höj den inte.
+- **Full verifiering efter en delvis referensskrivning är avsiktlig** — den fångar en nyckel som
+  utelämnats ur filtret men påverkats av ändringen.
+- **Den visuella vakten skarvas aldrig** över flera runners. Läckagevakten får det, för den frågar
+  om en widget syns, inte om den ser likadan ut.
+- Ett prov som filtrerar över namn som inte finns är **grönt av tomhet** och vaktar ingenting.
+
+### Nästa steg
+
+1. **Live-verifiering.** `docs/live-verifiering.md` punkt 6 och 8 är obesvarade, och checkpoint 54:s
+   tre lagningar plus Top Streaks koreografi har aldrig körts i en riktig sändning.
+2. Rastreringsavtryckets känslighet för olika **typsnitt** är oprövad — sandlådan når inte Google
+   Fonts. Mutera vikten i ett jobb där typsnittsprovet är grönt.
+3. Roadmapens Phase 6 — Top Gifter Widget.
+
 ## Checkpoint 54 — Tre fynd ur livetestet, alla i samma familj (2026-09-22)
 
 Kvallens livetest 2026-09-21 gav tre fel, och de visade sig vara tre ansikten pa samma sak:

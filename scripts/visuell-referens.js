@@ -186,8 +186,14 @@ function servera() {
       if (!fs.existsSync(V.refvag(nyckel))) delete bilder[nyckel];
     }
 
+    // AVTRYCKET TAS PA SAMMA SIDA SOM BILDERNA, i samma session och efter samma uppvarmning.
+    // Tas det nagon annanstans mater det en annan maskin an den som ritade referenserna, och da
+    // ar det varre an inget: vakten hade sagt "rastreraren stammer" om fel maskin.
+    const rastrering = await V.rastreringsAvtryck(sida);
+    console.log(`Rastreringsavtryck: ${rastrering}`);
+
     fs.writeFileSync(V.MANIFEST, JSON.stringify({
-      motor, antal: Object.keys(bilder).length,
+      motor, rastrering, antal: Object.keys(bilder).length,
       // `filter` med i manifestet av samma skal som nyckelraden nedan: en maskinlasbar post som
       // inte sager att korningen var filtrerad ar lika vilseledande som en text som sager 'alla'.
       senaste: { motiv: MOTIV, nycklar: skrivna.length, filter: BARA || null, tid: new Date().toISOString() },
