@@ -157,3 +157,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Points blir 300 px bred nar skin-clean-bar inte langre stamplas pa familjen (#498)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-23 — 95 referenser skrivna
+
+- **Motiv:** Hela referensuppsattningen har glidit fran runnern: 95 av 95 nycklar foll i ci.yml och 93 av 96 i den har workflowen, med identiskt fingeravtryck over tva korningar. Bilderna tas om i sin helhet pa dagens pinnade Chromium.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 95

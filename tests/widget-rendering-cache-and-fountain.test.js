@@ -153,7 +153,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // -5 2026-09-23: de tva foraldralosa .lf-duk-reglerna gick med canvas-lagret. Ingen nod bar
   // den klassen langre, sa reglerna kunde aldrig matcha nagot — dod vikt som laste ut som
   // ett fungerande lager.
-  assert.match(studio, /studio\.css\?v=20260923-5/);
+  // -6 2026-09-23: tva losa selektorer stadades bort — rester efter Like Fountains borttagna
+  // canvas-lager. Den ena, `.lf-stream canvas`, stod utan block och SLOK nasta regel: `.lf-p`
+  // parsades som `.lf-stream canvas .lf-p` och matchade ingenting, eftersom duken var borta.
+  // Partiklarna tappade alltsa sin grundstil. En cachad studio.css hade fortsatt servera den
+  // trasiga regeln, sa strangen maste folja med.
+  assert.match(studio, /studio\.css\?v=20260923-6/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
