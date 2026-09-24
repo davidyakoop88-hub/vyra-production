@@ -66,11 +66,11 @@
 .widget.vyra-toplike.skin-voltage>.toplike-list{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important}
 .widget.vyra-toplike.skin-voltage .toplike-row{display:flex!important;align-items:center!important;gap:10px!important;padding:0!important;background:none!important;border:0!important;animation:vyra-clean-in .4s ease-out both!important}
 .widget.vyra-toplike.skin-voltage .toplike-row>img:not(.pro-frame-art){width:34px!important;height:34px!important;min-width:34px!important;border-color:#fff5!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 14px #FFD700}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px #00f2ff}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px #ff5e00}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px #b24bf3}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px #00ff88}
+.widget.vyra-toplike.skin-voltage .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 14px #FFD700!important}
+.widget.vyra-toplike.skin-voltage .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px #00f2ff!important}
+.widget.vyra-toplike.skin-voltage .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px #ff5e00!important}
+.widget.vyra-toplike.skin-voltage .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px #b24bf3!important}
+.widget.vyra-toplike.skin-voltage .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px #00ff88!important}
 .widget.vyra-toplike.skin-voltage .toplike-row>span:not(.pro-avatar-frame){flex:1 1 auto!important;min-width:0!important;background:rgba(8,12,18,.82)!important;border:1px solid color-mix(in srgb,var(--like),transparent 66%)!important;border-radius:10px!important;padding:4px 10px!important;box-shadow:0 3px 10px #0006!important}
 .widget.vyra-toplike.skin-voltage .toplike-row>em{flex:0 0 auto!important;background:rgba(8,12,18,.82)!important;border:1px solid color-mix(in srgb,var(--like),transparent 55%)!important;border-radius:999px!important;padding:4px 10px!important;font-size:12px!important;box-shadow:0 3px 10px #0006!important}
 
@@ -137,7 +137,14 @@
   background-image:url(assets/images/ranking-sixpack/celestial-wing-ring.png);background-size:contain;background-repeat:no-repeat;background-position:center;
   filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));animation:none;
 }
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 18px -2px #ffd54a}
+/* Per-placering-glod fran top-gifters-celestial-horizontal.html:172-178's TIERS-array
+ * (gul/bla/lila cykliskt, INTE bara guld pa forstaplatsen) — saknades helt i forsta versionen av
+ * den har integrationen, matt mot kallfilen efter att David bad om en sista kontroll. */
+.widget.vyra-toplike.skin-celestial .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 18px -2px #ffd54a!important}
+.widget.vyra-toplike.skin-celestial .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fb7ff!important}
+.widget.vyra-toplike.skin-celestial .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #b98fff!important}
+.widget.vyra-toplike.skin-celestial .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #ffd54a!important}
+.widget.vyra-toplike.skin-celestial .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fb7ff!important}
 .widget.vyra-toplike.skin-celestial .toplike-row>span:not(.pro-avatar-frame){width:100%!important;text-align:center!important}
 .widget.vyra-toplike.skin-celestial .toplike-row>span:not(.pro-avatar-frame)>strong{text-align:center!important;font-size:11px!important}
 .widget.vyra-toplike.skin-celestial .toplike-row>em{font-size:11px!important;color:#fbbf24!important}
@@ -148,6 +155,13 @@
 .widget.vyra-toplike.skin-royal-rose.ranking-mirrored>.toplike-list{flex-direction:row-reverse!important}
 .widget.vyra-toplike.skin-royal-rose .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
 .widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art){width:34px!important;height:34px!important;min-width:34px!important;border-color:#ffe9a8!important;animation:rk6-hue 4s linear infinite}
+/* Per-placering-glod fran top-gifters-royal-rose-horizontal.html:183-189's TIERS-array
+ * (guld/rosa/gron cykliskt) — samma saknade effekt som Celestial ovan. */
+.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 18px -2px #ffd54a!important}
+.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #e8b7c4!important}
+.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fae6f!important}
+.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #ffd54a!important}
+.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fae6f!important}
 .widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art)::after{
   content:'';position:absolute;inset:-14px -8px;pointer-events:none;z-index:-1;
   background-image:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);background-size:contain;background-repeat:no-repeat;background-position:center;
@@ -209,6 +223,18 @@ html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-b{inset:6%;border:1px 
 html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-art{position:absolute;inset:-26%;pointer-events:none;z-index:2;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .tp-six-art{background-image:url(assets/images/ranking-sixpack/celestial-wing-ring.png)}
 html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .tp-six-art{inset:-42% -26%;background-image:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)) brightness(1.15) contrast(1.1)}
+/* Per-placering-glod (samma TIERS-fargcykel som Top Like ovan) via --tp-accent, som redan styr
+ * bade .tp-six-backlight och .tp-six-a i den delade radrutan (rad 217-222). */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-1{--tp-accent:#ffd54a}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-2{--tp-accent:#6fb7ff}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-3{--tp-accent:#b98fff}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-4{--tp-accent:#ffd54a}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-5{--tp-accent:#6fb7ff}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-1{--tp-accent:#ffd54a}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-2{--tp-accent:#e8b7c4}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-3{--tp-accent:#6fae6f}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-4{--tp-accent:#ffd54a}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-5{--tp-accent:#6fae6f}
 html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-voltage,.toppoints-basic-v2,.toppoints-prism-vertical) .tp-portratt>img{animation:rk6-hue 4s linear infinite}
 
 /* Voltage/Basic v2/Prism vertikal: rak lista (som "clean"), med rank-färgad glöd på Voltage. */
