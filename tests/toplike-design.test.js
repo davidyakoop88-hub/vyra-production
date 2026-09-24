@@ -9,14 +9,16 @@ function load() {
   return root;
 }
 
-test('Top Like exposes ten separate original VYRA designs', () => {
+test('Top Like exposes the six VYRA designs in the picker — the four originals are retired', () => {
+  // Pensionerade 2026-09-24 (Davids beslut): Clean Bar, Soft Stack, Mini Podium och Side Rank star
+  // inte langre i listan designvaljaren laser. Deras presets finns kvar for sparade widgetar.
   // Bumpad 2026-09-24 (ranking-sixpack): fyra -> tio, sex nya skinn (Voltage, Basic v2, Prism
   // vertikal/horisontal, Celestial, Royal Rose), godkanda av David som Claude Artifacts. Se
   // ranking-sixpack.css for deras CSS och toplike-design.js for tabellen.
   const root = load();
-  assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES[0]), ['clean-bar', 'VYRA Clean Bar']);
-  assert.equal(root.VYRA_TOPLIKE_STYLES.length, 10);
-  assert.equal(new Set(root.VYRA_TOPLIKE_STYLES.map(([id]) => id)).size, 10);
+  assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES, ([id]) => id),
+    ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  assert.ok(root.VYRA_TOPLIKE_DEFAULTS['clean-bar'], 'presetet behovs fortfarande for sparade widgetar');
 });
 
 test('preset removes old ranking chrome and keeps the compact TikTok layout', () => {
@@ -50,7 +52,9 @@ test('retired saved skins are clamped to the new VYRA designs at render time', (
   const media = fs.readFileSync('media.js', 'utf8');
   const studio = fs.readFileSync('toplike-studio.js', 'utf8');
   const guard = fs.readFileSync('approved-rankings.js', 'utf8');
-  assert.match(guard, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
+  // Faller nu tillbaka pa Voltage (Clean Bar pensionerad 2026-09-24). toplike-studio.js klass-
+  // stampel faller fortfarande pa clean-bar, men ranking-sixpack.js tar bort den och ritar Voltage.
+  assert.match(guard, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'voltage'/);
   assert.match(studio, /SKIN_IDS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
   assert.match(guard, /querySelector\('#likeTheme'\).*closest\('label'\).*remove/);
 });

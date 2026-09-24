@@ -291,9 +291,18 @@ function sandlada(extra) {
   return sandbox.window.VyraWidgets;
 }
 
-test('de fyra godkanda Top Like-skinnen far `skin` ur fabriken', () => {
-  for (const skin of ['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']) {
+test('de godkanda Top Like-skinnen far `skin` ur fabriken — och de pensionerade blir aldrig sparade', () => {
+  for (const skin of ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']) {
     assert.equal(VyraWidgets.create('catalog:toplike:' + skin).skin, skin, skin);
+  }
+  // Pensionerade 2026-09-24 (Davids beslut): en gammal nyckel bygger narmaste nya design, sa
+  // ingen ny widget sparas med den gamla.
+  for (const [gammal, ny] of [['clean-bar', 'voltage'], ['soft-stack', 'voltage'], ['side-rank', 'voltage'], ['mini-podium', 'prism-horizontal']]) {
+    assert.equal(VyraWidgets.create('catalog:toplike:' + gammal).skin, ny, gammal);
+  }
+  for (const [gammal, ny] of [['clean', 'voltage'], ['neon', 'voltage'], ['center', 'prism-horizontal'], ['podium', 'prism-horizontal']]) {
+    const w = VyraWidgets.create('catalog:ranking:templateTopPoints:' + gammal);
+    assert.equal(w.topPointsDesign, ny, gammal); assert.equal(w.likeTheme, ny, gammal);
   }
   assert.equal('skin' in VyraWidgets.create('catalog:toplike:neon'), false, 'gamla teman far inget skin');
 });
@@ -301,11 +310,11 @@ test('de fyra godkanda Top Like-skinnen far `skin` ur fabriken', () => {
 test('fabriken delegerar skinnets preset till toplike-design.js nar modulen finns', () => {
   const anrop = [];
   const F = sandlada({ applyVyraTopLikeStyle: (w, id) => { anrop.push(id); w.width = 180; w.likeTheme = 'right'; return true } });
-  const w = F.create('catalog:toplike:side-rank');
-  assert.deepEqual(anrop, ['side-rank'], 'presetet ska anropas exakt en gang for skinnet');
-  assert.equal(w.width, 180); assert.equal(w.likeTheme, 'right'); assert.equal(w.skin, 'side-rank');
+  const w = F.create('catalog:toplike:celestial');
+  assert.deepEqual(anrop, ['celestial'], 'presetet ska anropas exakt en gang for skinnet');
+  assert.equal(w.width, 180); assert.equal(w.likeTheme, 'right'); assert.equal(w.skin, 'celestial');
   F.create('catalog:toplike:neon');
-  assert.deepEqual(anrop, ['side-rank'], 'gamla teman gar inte via presetet');
+  assert.deepEqual(anrop, ['celestial'], 'gamla teman gar inte via presetet');
 });
 
 test('Top Coins halo/signal-orbit far topCoinsDesign, skin och designens accent ur fabriken', () => {

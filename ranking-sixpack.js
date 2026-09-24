@@ -56,8 +56,32 @@
   const PODIUM = [3, 1, 0, 2, 4];
   const FAMILJER = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
 
+  // PENSIONERADE DESIGNER (2026-09-24, Davids beslut: "ta bort de gamla helt och hållet, att de
+  // inte kommer tillbaka"). Top Likes fyra (Clean Bar, Soft Stack, Mini Podium, Side Rank) och Top
+  // Points fyra (Lista, Tre i mitten, Podium, Neon) är borta ur katalogen och designväljarna. En
+  // SPARAD widget med en av dem pekas här om till den nya design som ligger närmast i form — listor
+  // blir Voltage, podier blir Prism horisontal — samma skyddsnät som topgift-pension.js: widgeten
+  // muteras inte, renderaren får designen, och streamerns sparade värde står orört.
+  //
+  // Top Like och Top Points ritas därmed ALLTID som en av de sex. Det gäller även en widget utan
+  // design alls, eller med något av de äldre skinn som redan tvingades till Clean Bar — de hade
+  // annars kommit tillbaka precis som det gamla. Top Coins Halo/Signal Orbit berörs inte.
+  const PENSION = Object.freeze({
+    'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal',
+    clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal'
+  });
+  const FORVAL = 'voltage';
+
   function designFor(w) {
     if (!w || !FAMILJER.includes(w.type)) return null;
+    if (w.type !== 'templateTopCoins') {
+      // Egna fält först: toppoints-v2.js designId() faller tillbaka på 'clean' när inget matchar,
+      // och det svaret säger inget om vad widgeten faktiskt bär.
+      const falt = w.type === 'templateTopLike' ? [w.skin] : [w.topPointsDesign, w.skin, w.likeTheme];
+      for (const f of falt) if (DESIGNS[f]) return f;
+      for (const f of falt) if (PENSION[f]) return PENSION[f];
+      return FORVAL;
+    }
     // Samma uppslag som familjen själv gör — Top Points kan bära designen i topPointsDesign, skin
     // ELLER likeTheme (katalognyckeln sätter bara det sista), se toppoints-v2.js designId().
     const id = w.type === 'templateTopLike' ? w.skin
@@ -148,6 +172,12 @@
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
     catalog.querySelectorAll('section[data-rk6-katalog]').forEach((el, i) => { if (i) el.remove() });
+    // media.js:s "VYRA TOP RANKING"-sektion byggs varje bind, men topcoins-v2.js/toppoints-v2.js tar
+    // bort alla dess knappar — kvar stod en tom rubrik. Döljs (tas inte bort: media.js bygger om den
+    // så fort markören saknas).
+    catalog.querySelectorAll('section[data-extra-rankings]').forEach(el => {
+      if (!el.querySelector('button')) el.hidden = true;
+    });
     if (catalog.querySelector('section[data-rk6-katalog]')) return;
     const section = document.createElement('section');
     section.dataset.rk6Katalog = '1';
@@ -186,5 +216,5 @@
   if (document.readyState === 'complete') install();
   else addEventListener('load', install, { once: true });
 
-  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, designFor, render: omsluten, katalog });
+  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog });
 })();

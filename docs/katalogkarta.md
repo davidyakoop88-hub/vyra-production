@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `bf53878`
+Commit: `18a7c1fb`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **129** |
-| Sektioner | 22 |
-| Med katalognyckel | 129 / 129 |
-| Med shadow DOM-miniatyr | 129 / 129 |
-| Ritar sin design | 129 / 129 |
+| Kort totalt | **121** |
+| Sektioner | 20 |
+| Med katalognyckel | 121 / 121 |
+| Med shadow DOM-miniatyr | 121 / 121 |
+| Ritar sin design | 121 / 121 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -45,7 +45,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| TOP POINTS · 4 SEPARATA DESIGNER | 4 | 4/4 | 4/4 | 4/4 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
@@ -60,7 +59,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
-| TOP LIKE · VYRA ORIGINAL | 4 | 4/4 | 4/4 | 4/4 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
 
 ## Varje kort
@@ -121,15 +119,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-
-### TOP POINTS · 4 SEPARATA DESIGNER
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### TOP COINS · 2 DESIGNER
 
@@ -287,15 +276,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Heart Me Goal · Frost | `catalog:heartgoal:frost` | ✓ | ✓ | 2026-08-03 | — |
 | Heart Me Goal · Midnight | `catalog:heartgoal:midnight` | ✓ | ✓ | 2026-08-03 | — |
 | Heart Me Goal · Citrus | `catalog:heartgoal:citrus` | ✓ | ✓ | 2026-08-03 | — |
-
-### TOP LIKE · VYRA ORIGINAL
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| VYRA Clean Bar | `catalog:toplike:clean-bar` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| VYRA Soft Stack | `catalog:toplike:soft-stack` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
-| VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### TOP GIFTER · DESIGNVAL
 

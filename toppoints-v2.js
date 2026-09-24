@@ -31,6 +31,9 @@
     'royal-rose': Object.freeze({ label: 'Royal Rose', etikett: 'Stil 10 · Royal Rose', accent: '#ffd54a', width: 340 })
   });
   const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  // Pensionerade 2026-09-24 (Davids beslut) — inte valbara längre; ranking-sixpack.js ritar en
+  // sparad widget med någon av dem som närmaste nya design.
+  const PENSIONERADE = new Set(['clean', 'center', 'podium', 'neon']);
   const SIXPACK_ROW = new Set(['prism-horizontal', 'celestial', 'royal-rose']); // horisontell rad, som center/podium
 
   // Demodata i editorn. I overlay ritas nollformen i stallet — se kommentaren vid rad().
@@ -134,8 +137,10 @@
   props = function () {
     const w = liveWidget(selected);
     if (!w || w.type !== 'templateTopPoints') return previousProps();
-    const design = designId(w), meta = DESIGNS[design];
-    const val = Object.entries(DESIGNS).map(([id, m]) =>
+    // Panelen visar designen som faktiskt ritas — en pensionerad pekas om av ranking-sixpack.js.
+    const ritad = window.VyraRankingSixpack?.designFor?.(w);
+    const design = DESIGNS[ritad] ? ritad : designId(w), meta = DESIGNS[design];
+    const val = Object.entries(DESIGNS).filter(([id]) => !PENSIONERADE.has(id)).map(([id, m]) =>
       `<button type="button" data-tp-design="${id}" class="${design === id ? 'active' : ''}">${m.label}</button>`).join('');
     return `<h3>TOP POINTS · ${meta.label.toUpperCase()}</h3>`
       + `<div class="template-badge">${meta.etikett.toUpperCase()}</div>`
@@ -177,12 +182,15 @@
   // de tas bort och ersatts med modulens egna, med samma katalognycklar.
   // De sex ranking-sixpack-designerna listas i ranking-sixpack.js:s grupperade katalog (en grupp per
   // design, med Top Like / Top Coins / Top Points under), inte har.
-  const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
+  const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id) && !PENSIONERADE.has(id));
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
     catalog.querySelectorAll('[data-ranking="templateTopPoints"]').forEach(el => el.remove());
     catalog.querySelectorAll('section[data-toppoints-v2]').forEach((el, index) => { if (index) el.remove() });
+    // Top Points fyra egna designer är pensionerade (2026-09-24) — ingen egen sektion längre. De sex
+    // som finns kvar listas i ranking-sixpack.js:s grupperade katalog.
+    if (!KATALOG.length) { catalog.querySelectorAll('section[data-toppoints-v2]').forEach(el => el.remove()); return; }
     if (catalog.querySelector('section[data-toppoints-v2]')) return;
     const section = document.createElement('section');
     section.dataset.toppointsV2 = '1';

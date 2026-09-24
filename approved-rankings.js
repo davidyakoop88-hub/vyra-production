@@ -20,11 +20,6 @@
     celestial: 'VYRA Celestial',
     'royal-rose': 'VYRA Royal Rose'
   });
-  // De sex ranking-sixpack-designerna listas INTE i Top Like-sektionen: de är en design för alla tre
-  // rankingtyperna och har sin egen grupperade katalog i ranking-sixpack.js. De står kvar i
-  // LIKE_SKINS ovan — vitlistan avgör vad som får renderas, inte vad som listas här.
-  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
-  const KATALOG_LABELS = Object.entries(LIKE_LABELS).filter(([id]) => !SIXPACK.has(id));
   let installed = false;
 
   // FABRIKENS DEMONAMN. widget-factory.js ('@StreamQueen') och createCleanStreak ('MAYA') bakar in
@@ -102,21 +97,25 @@
     state.widgets.push(w); selected = w.id; save(); render(); toast(LIKE_LABELS[theme] + ' skapad');
   }
 
+  // TOP LIKE-SEKTIONEN ("VYRA ORIGINAL") ÄR BORTTAGEN (2026-09-24, Davids beslut). De fyra designerna finns inte
+  // längre att välja; sparade widgetar pekas om i ranking-sixpack.js (PENSION). Sektionen står kvar
+  // som en TOM, DOLD markör: media.js:s topLikeCatalogBind bygger sin egen Top Like-sektion så fort
+  // ingen `[data-toplike-template]` finns, och utan markören hade de gamla knapparna kommit tillbaka
+  // vid varje render.
   function ensureApprovedLikes(catalog) {
-    let section = catalog.querySelector('[data-toplike-template]');
+    const sektioner = [...catalog.querySelectorAll('[data-toplike-template]')];
+    sektioner.slice(1).forEach(el => el.remove());
+    let section = sektioner[0];
     if (!section) {
       section = document.createElement('section');
       section.dataset.toplikeTemplate = '1';
-      section.className = 'toplike-template-section';
       catalog.prepend(section);
     }
-    const current = [...section.querySelectorAll('[data-top-like-theme]')].map(button => button.dataset.topLikeTheme);
-    if (section.dataset.approvedToplike === '1' && current.length === KATALOG_LABELS.length && current.every(id => LIKE_SKINS.has(id) && !SIXPACK.has(id))) return;
-    section.dataset.approvedToplike = '1';
-    section.innerHTML = '<h4>TOP LIKE · VYRA ORIGINAL</h4>' + KATALOG_LABELS.map(([id, label]) => `<button type="button" data-top-like-theme="${id}" data-catalog-key="catalog:toplike:${id}"><i>V</i><span><b>${label}</b><small>Profilbild · namn — likes</small></span></button>`).join('');
-    section.querySelectorAll('[data-top-like-theme]').forEach(button => {
-      button.onclick = () => createApprovedLike(button.dataset.topLikeTheme);
-    });
+    if (section.dataset.approvedToplike === 'pensionerad' && !section.children.length) return;
+    section.dataset.approvedToplike = 'pensionerad';
+    section.className = 'toplike-template-section toplike-pensionerad';
+    section.hidden = true;
+    section.innerHTML = '';
   }
 
   function cleanCatalog() {
@@ -168,7 +167,7 @@
     wh = function (w) {
       if (w && w.type === 'templateTopStreak') return doljOmTom(w, cleanStreakHtml(w));
       if (w && w.type === 'templateTopLike') {
-        const safeSkin = LIKE_SKINS.has(w.skin) ? w.skin : 'clean-bar';
+        const safeSkin = LIKE_SKINS.has(w.skin) ? w.skin : 'voltage';   // Clean Bar är pensionerad (2026-09-24)
         let html = previousWh({...w, skin: safeSkin, showBackground: w.showBackground === true});
         if (w.showBackground !== true && !html.includes('ranking-bg-off')) {
           html = html.replace('class="widget vyra-toplike', 'class="widget vyra-toplike ranking-bg-off');

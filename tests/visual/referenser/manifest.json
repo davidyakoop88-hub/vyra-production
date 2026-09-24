@@ -6,7 +6,7 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 113,
+ "antal": 105,
  "senaste": {
   "motiv": "Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points",
   "nycklar": 18,
@@ -242,22 +242,6 @@
    "matt": "501x425",
    "fyllnad": 100
   },
-  "catalog:ranking:templateTopPoints:center": {
-   "matt": "300x175",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:clean": {
-   "matt": "300x185",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:neon": {
-   "matt": "300x205",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:podium": {
-   "matt": "300x190",
-   "fyllnad": 100
-  },
   "catalog:topgift:premium:neon": {
    "matt": "210x270",
    "fyllnad": 100
@@ -376,22 +360,6 @@
   },
   "catalog:socialgoal:likes:signal-ribbon:landscape": {
    "matt": "440x132",
-   "fyllnad": 100
-  },
-  "catalog:toplike:clean-bar": {
-   "matt": "250x270",
-   "fyllnad": 100
-  },
-  "catalog:toplike:mini-podium": {
-   "matt": "340x232",
-   "fyllnad": 100
-  },
-  "catalog:toplike:side-rank": {
-   "matt": "180x230",
-   "fyllnad": 100
-  },
-  "catalog:toplike:soft-stack": {
-   "matt": "250x237",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:basic-v2": {

@@ -2,10 +2,9 @@
   'use strict';
 
   const styles = Object.freeze([
-    Object.freeze(['clean-bar', 'VYRA Clean Bar']),
-    Object.freeze(['soft-stack', 'VYRA Soft Stack']),
-    Object.freeze(['mini-podium', 'VYRA Mini Podium']),
-    Object.freeze(['side-rank', 'VYRA Side Rank']),
+    // Clean Bar, Soft Stack, Mini Podium och Side Rank är PENSIONERADE (2026-09-24, Davids beslut)
+    // och står inte längre i listan designväljaren läser. Deras presets nedan finns kvar för sparade
+    // widgetar och fabriksnycklar; ranking-sixpack.js ritar dem som närmaste nya design.
     // Ranking-sixpack (2026-09-24): sex fristående Claude Artifact-prototyper, godkända av David,
     // integrerade som rena CSS-skinn ovanpå SAMMA .toplike-row-skelett som ovanstående fyra — se
     // ranking-sixpack.css. Bara Top Like bär klassen (skinn-stämpeln, se toplike-studio.js), Top
