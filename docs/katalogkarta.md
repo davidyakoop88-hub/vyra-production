@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `b722799`
+Commit: `bf53878`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -26,7 +26,7 @@ proveniensen saknas: datumet bredvid ar anda matt.
 | | |
 |---|---|
 | Kort totalt | **129** |
-| Sektioner | 21 |
+| Sektioner | 22 |
 | Med katalognyckel | 129 / 129 |
 | Med shadow DOM-miniatyr | 129 / 129 |
 | Ritar sin design | 129 / 129 |
@@ -40,12 +40,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
+| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| TOP POINTS · 10 SEPARATA DESIGNER | 10 | 10/10 | 10/10 | 10/10 | 2026-09-21 | — |
-| TOP COINS · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-09-21 | — |
+| TOP POINTS · 4 SEPARATA DESIGNER | 4 | 4/4 | 4/4 | 4/4 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
@@ -59,10 +60,33 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
-| TOP LIKE · VYRA ORIGINAL | 10 | 10/10 | 10/10 | 10/10 | 2026-09-20 | — |
+| TOP LIKE · VYRA ORIGINAL | 4 | 4/4 | 4/4 | 4/4 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
 
 ## Varje kort
+
+### RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Top Like | `catalog:toplike:voltage` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:voltage` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Like | `catalog:toplike:basic-v2` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:basic-v2` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Like | `catalog:toplike:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Like | `catalog:toplike:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Like | `catalog:toplike:celestial` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:celestial` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Like | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### VYRA TOP STREAK · CLEAN FLIP
 
@@ -98,33 +122,21 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 
-### TOP POINTS · 10 SEPARATA DESIGNER
+### TOP POINTS · 4 SEPARATA DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 5 · Voltage | `catalog:ranking:templateTopPoints:voltage` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 6 · Basic v2 | `catalog:ranking:templateTopPoints:basic-v2` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 7 · Prism | `catalog:ranking:templateTopPoints:prism-vertical` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 8 · Prism horisontal | `catalog:ranking:templateTopPoints:prism-horizontal` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 9 · Celestial | `catalog:ranking:templateTopPoints:celestial` | ✓ | ✓ | 2026-09-21 | — |
-| Top Points · Stil 10 · Royal Rose | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-09-21 | — |
+| Top Points · Stil 1 · Lista | `catalog:ranking:templateTopPoints:clean` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points · Stil 2 · Tre i mitten | `catalog:ranking:templateTopPoints:center` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points · Stil 3 · Podium | `catalog:ranking:templateTopPoints:podium` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Points · Stil 4 · Neon | `catalog:ranking:templateTopPoints:neon` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
-### TOP COINS · 8 DESIGNER
+### TOP COINS · 2 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Voltage | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Basic v2 | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Prism | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Prism horisontal | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Celestial | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-09-21 | — |
-| Top Coins · Royal Rose | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-09-21 | — |
+| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 
@@ -280,16 +292,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| VYRA Clean Bar | `catalog:toplike:clean-bar` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Soft Stack | `catalog:toplike:soft-stack` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Voltage | `catalog:toplike:voltage` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Basic v2 | `catalog:toplike:basic-v2` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Prism (vertikal) | `catalog:toplike:prism-vertical` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Prism (horisontal) | `catalog:toplike:prism-horizontal` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Celestial | `catalog:toplike:celestial` | ✓ | ✓ | 2026-09-20 | — |
-| VYRA Royal Rose | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-09-20 | — |
+| VYRA Clean Bar | `catalog:toplike:clean-bar` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| VYRA Soft Stack | `catalog:toplike:soft-stack` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| VYRA Mini Podium | `catalog:toplike:mini-podium` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| VYRA Side Rank | `catalog:toplike:side-rank` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### TOP GIFTER · DESIGNVAL
 
