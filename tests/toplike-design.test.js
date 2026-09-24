@@ -9,11 +9,14 @@ function load() {
   return root;
 }
 
-test('Top Like exposes four separate original VYRA designs', () => {
+test('Top Like exposes ten separate original VYRA designs', () => {
+  // Bumpad 2026-09-24 (ranking-sixpack): fyra -> tio, sex nya skinn (Voltage, Basic v2, Prism
+  // vertikal/horisontal, Celestial, Royal Rose), godkanda av David som Claude Artifacts. Se
+  // ranking-sixpack.css for deras CSS och toplike-design.js for tabellen.
   const root = load();
   assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES[0]), ['clean-bar', 'VYRA Clean Bar']);
-  assert.equal(root.VYRA_TOPLIKE_STYLES.length, 4);
-  assert.equal(new Set(root.VYRA_TOPLIKE_STYLES.map(([id]) => id)).size, 4);
+  assert.equal(root.VYRA_TOPLIKE_STYLES.length, 10);
+  assert.equal(new Set(root.VYRA_TOPLIKE_STYLES.map(([id]) => id)).size, 10);
 });
 
 test('preset removes old ranking chrome and keeps the compact TikTok layout', () => {
@@ -80,8 +83,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // -6 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur katalogen. En cachad media.js
   // hade fortsatt rita knappen och dess nyckel.
   assert.match(studioHtml, /media\.js\?v=20260923-6/);
-  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  // Bumpad 2026-09-22: skinnklassen och skinnvaljaren grindas till templateTopLike, alltsa en
-  // andring i toplike-studio.js. Samma regel som raderna ovan: en andrad fil maste byta strang.
-  assert.match(media, /toplike-studio\.js\?v=20260922-skinnbarare/);
+  // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
+  // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
+  // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
+  assert.match(media, /toplike-studio\.css\?v=20260924-sixpack/);
+  assert.match(media, /toplike-studio\.js\?v=20260924-sixpack/);
 });

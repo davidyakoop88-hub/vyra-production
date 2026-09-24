@@ -209,6 +209,10 @@
     if (!RANKING_TYPES.includes(w.type)) return html;
     const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
     const anim = w.entranceAnimation && w.entranceAnimation !== 'none' ? ` ws-anim-${w.entranceAnimation}` : '';
+    // Riktnings-/spegelvaljaren (ranking-sixpack, 2026-09-24) ar en LAYOUT-VANDNING, inte ett
+    // skinn — precis som entreanimationen ovan foljer den ALLA RANKING_TYPES, inte bara Top Like
+    // (se resonemanget i skinn-bara-top-like.test.js: en rorelse ar inte en design).
+    const mirror = w.rankingMirror === true ? ' ranking-mirrored' : '';
     // TOP COINS V2 BAR SIN EGEN DESIGN — INJICERA INGET SKINN DIT.
     //
     // Raden nedan injicerar en skin-klass i ALLA RANKING_TYPES, och `skin` ovan faller tillbaka
@@ -252,7 +256,7 @@
     // och en sadan test hade lamnat den helt ostylad.
     const SKINNBARARE = ['templateTopLike'];
     const barSkinn = SKINNBARARE.includes(w.type);
-    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${barSkinn ? ' skin-' + skin : ''}${anim}`);
+    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${barSkinn ? ' skin-' + skin : ''}${anim}${mirror}`);
     // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
     // .skin-brandkit rules in toplike-studio.css. The other 14 skins never see these vars.
     const brandVars = skin === 'brandkit' && state.brandKit
@@ -319,7 +323,7 @@
     // Bada familjerna har redan en egen designsektion, sa ingenting gar forlorat.
     const visaSkinnvaljare = w.type === 'templateTopLike';
     const skinGroup = !visaSkinnvaljare ? '' : `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
-    const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
+    const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label><label><input id="wsMirror" type="checkbox" ${w.rankingMirror === true ? 'checked' : ''}> ↔ Vänd riktning (spegla raden)</label></div>`;
     const textFxGroup = `<div class="property-group"><h4>EGET TYPSNITT</h4><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
     const nudge = (label, xId, yId, xVal, yVal) => `<div class="property-grid"><label>${label} X<input id="${xId}" type="number" min="-200" max="200" value="${xVal}"></label><label>${label} Y<input id="${yId}" type="number" min="-200" max="200" value="${yVal}"></label></div>`;
@@ -367,6 +371,9 @@
 
     const opacity = document.querySelector('#wsOpacity');
     if (opacity) opacity.onchange = e => { w.opacity = (+e.target.value) / 100; save(); render(); };
+
+    const mirror = document.querySelector('#wsMirror');
+    if (mirror) mirror.onchange = e => { w.rankingMirror = e.target.checked; save(); render(); };
 
     // Skuggan och konturen flyttade till den gemensamma TEXT-gruppen 2026-09-09
     // (vyra-textgrupp.js). Fälten är desamma — textShadowBlur/X/Y/Color och

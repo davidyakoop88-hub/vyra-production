@@ -169,7 +169,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad igen 2026-09-23: nitton av tjugoen premiumdesigner pensionerades. Alla tre foljer med
   // den har gangen — widget-factory.js bar varianttabellen, studio.css de 50 borttagna reglerna
   // och premiumbunten (media.js `version`) listan i premium-final.js.
-  assert.match(studio, /widget-factory\.js\?v=20260923-3/);
+  // Bumpad igen 2026-09-24: LIKE_SKINN/TOPCOINS_V2 sakande ranking-sixpackens sex nya ID:n, sa den
+  // generiska fabriksvagen (t.ex. widgetlank-kopiering) hade tystat tillbaka Celestial/Royal
+  // Rose/etc till clean-bar/halo. BARA widget-factory.js andrades — studio.css och media.js
+  // `version` ar oforandrade och behaller sina strangar.
+  assert.match(studio, /widget-factory\.js\?v=20260924-1/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -308,8 +312,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-22: BARA .js-strangen igen. Skinnklassen stamplas nu bara pa templateTopLike,
   // och skinnvaljaren ritas bara dar — en andring i toplike-studio.js, inte i .css:en. Utan
   // hojningen kor varje cachad OBS-kalla kvar pa den gamla koden och far aldrig fixen.
-  assert.match(media, /toplike-studio\.css\?v=20260920-approved/);
-  assert.match(media, /toplike-studio\.js\?v=20260922-skinnbarare/);
+  // Bumpad 2026-09-24 (ranking-sixpack): BADA strangarna. toplike-studio.js fick den nya
+  // riktnings-/spegelklassen (ranking-mirrored) och toplike-studio.css inget nytt direkt (de sex
+  // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
+  // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
+  assert.match(media, /toplike-studio\.css\?v=20260924-sixpack/);
+  assert.match(media, /toplike-studio\.js\?v=20260924-sixpack/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);

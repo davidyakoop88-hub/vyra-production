@@ -16,8 +16,12 @@
   'use strict';
 
   // Namnen pa de designer vars renderare laser andra falt an likeTheme - se byggarna nedan.
-  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']);
-  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit']);
+  // Ranking-sixpack (2026-09-24): approved-rankings.js/topcoins-v2.js atersatter alltid dessa falt
+  // efter VyraWidgets.create() for sina egna katalogknappar, sa dessa tva listor blockerar inte
+  // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
+  // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
+  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
 
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
   // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett

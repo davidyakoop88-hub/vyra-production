@@ -1,12 +1,24 @@
 (function () {
   'use strict';
 
-  const LIKE_SKINS = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank']);
+  // Ranking-sixpack (2026-09-24): LIKE_SKINS ar en VITLISTA, inte bara en katalogkalla - wh()
+  // langre ner tvingar varje skin som inte star har tillbaka till 'clean-bar' (samma "skinn som
+  // glommer de nya vitlistorna"-monster som redan finns dokumenterat i toplike-studio.js).
+  // Bade denna lista OCH toplike-design.js:s VYRA_TOPLIKE_STYLES maste innehalla samma sex ID:n,
+  // annars renderas Celestial/Royal Rose/etc alltid som Clean Bar i overlay - matt i riktig
+  // Chromium, katalogkorten saknades helt tills detta lades till.
+  const LIKE_SKINS = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
   const LIKE_LABELS = Object.freeze({
     'clean-bar': 'VYRA Clean Bar',
     'soft-stack': 'VYRA Soft Stack',
     'mini-podium': 'VYRA Mini Podium',
-    'side-rank': 'VYRA Side Rank'
+    'side-rank': 'VYRA Side Rank',
+    voltage: 'VYRA Voltage',
+    'basic-v2': 'VYRA Basic v2',
+    'prism-vertical': 'VYRA Prism (vertikal)',
+    'prism-horizontal': 'VYRA Prism (horisontal)',
+    celestial: 'VYRA Celestial',
+    'royal-rose': 'VYRA Royal Rose'
   });
   let installed = false;
 
