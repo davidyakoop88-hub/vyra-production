@@ -180,3 +180,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 
 - **Motiv:** Davids beslut: de gamla rankingdesignerna tas bort helt. Top Like Clean Bar, Soft Stack, Mini Podium och Side Rank, och Top Points Lista, Tre i mitten, Podium och Neon, finns inte längre i katalogen. Sparade widgetar ritas som närmaste nya design (ranking-sixpack.js PENSION).
 - **Nycklar:** 8 borttagna, 105 kvar — catalog:toplike:clean-bar, catalog:toplike:soft-stack, catalog:toplike:mini-podium, catalog:toplike:side-rank, catalog:ranking:templateTopPoints:clean, catalog:ranking:templateTopPoints:center, catalog:ranking:templateTopPoints:podium, catalog:ranking:templateTopPoints:neon
+
+## 2026-09-24 — 3 referenser skrivna
+
+- **Motiv:** Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 105 (filter: prism-horizontal) — catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopPoints:prism-horizontal, catalog:toplike:prism-horizontal

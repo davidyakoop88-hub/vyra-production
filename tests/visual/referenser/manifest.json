@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 105,
  "senaste": {
-  "motiv": "Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points",
-  "nycklar": 18,
-  "filter": "voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose",
-  "tid": "2026-09-24T21:28:05.883Z"
+  "motiv": "Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken",
+  "nycklar": 3,
+  "filter": "prism-horizontal",
+  "tid": "2026-09-24T23:11:32.729Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -371,7 +371,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
@@ -395,7 +395,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
@@ -419,7 +419,7 @@
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
