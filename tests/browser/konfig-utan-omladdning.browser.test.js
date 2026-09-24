@@ -115,6 +115,13 @@ async function installeraMatare(sida) {
     window.__provRaknare = () => {
       const el = box();
       if (!el) return 0;
+      // Sedan 2026-09-24 ritas Top Like i en av ranking-sixpack-designerna, dar ikonen ar en SVG och
+      // inte tecknet ♥ — raknaren ar da forsta radens <em>, dit livedatan skriver talet (skrivTal).
+      const em = el.querySelector('.rk6 .toplike-row em');
+      if (em) {
+        const t = (em.textContent || '').match(/[0-9][0-9  ]*/);
+        return t ? Number(t[0].replace(/[\s ]/g, '')) : 0;
+      }
       const rader = (el.innerText || '').split(String.fromCharCode(10));
       const rad = rader.find(r => r.indexOf(HJARTA) >= 0);
       if (!rad) return 0;
