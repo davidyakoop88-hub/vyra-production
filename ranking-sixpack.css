@@ -218,7 +218,13 @@ html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal
   flex-direction:column!important;width:auto!important;flex:0 1 18%;gap:4px!important;text-align:center;
 }
 html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose) .toplike-row>.tp-copy{width:100%;text-align:center}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose) .toplike-row>.tp-chip{order:-1;margin:0 auto}
+html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial) .toplike-row>.tp-chip{order:-1;margin:0 auto}
+/* Royal Rose hade INGA ranksiffror alls i originalprototypen (David: "ta bort de siffror 1 2 3 4 5"),
+ * till skillnad fran Celestial/Prism horisontal som behaller sin guldbricka. rad()-skelettet i
+ * toppoints-v2.js ar delat mellan alla tio stilar och renderar alltid <span class="tp-chip">, sa
+ * Royal Rose maste dolja den har i stallet for att aldrig fa den i markupen — matt visuellt i
+ * riktig Chromium, siffrorna syntes fortfarande innan denna rad fanns. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row>.tp-chip{display:none!important}
 html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-1 .tp-portratt{width:3.4em!important;min-width:3.4em!important;height:3.4em!important}
 html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose{isolation:isolate}
 html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose::before{
