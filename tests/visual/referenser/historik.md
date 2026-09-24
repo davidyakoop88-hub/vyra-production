@@ -163,3 +163,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Hela referensuppsattningen har glidit fran runnern: 95 av 95 nycklar foll i ci.yml och 93 av 96 i den har workflowen, med identiskt fingeravtryck over tva korningar. Bilderna tas om i sin helhet pa dagens pinnade Chromium.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 95
+
+## 2026-09-24 — 18 referenser skrivna
+
+- **Motiv:** Nya referensbilder for de 18 nya ranking-sixpack-nycklarna, efter fix av bade ReferenceError och for tidig browser.close()
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 18 av 113 (filter: voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose) — catalog:ranking:templateTopCoins:basic-v2, catalog:ranking:templateTopCoins:celestial, catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopCoins:prism-vertical, catalog:ranking:templateTopCoins:royal-rose, catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:basic-v2, catalog:ranking:templateTopPoints:celestial, catalog:ranking:templateTopPoints:prism-horizontal, catalog:ranking:templateTopPoints:prism-vertical, catalog:ranking:templateTopPoints:royal-rose, catalog:ranking:templateTopPoints:voltage, catalog:toplike:basic-v2, catalog:toplike:celestial, catalog:toplike:prism-horizontal, catalog:toplike:prism-vertical, catalog:toplike:royal-rose, catalog:toplike:voltage

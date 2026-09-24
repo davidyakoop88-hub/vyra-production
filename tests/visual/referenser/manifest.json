@@ -5,12 +5,13 @@
   "version": "Google Chrome for Testing 151.0.7922.34",
   "revision": "1234"
  },
- "antal": 95,
+ "rastrering": "3e0f58bc",
+ "antal": 113,
  "senaste": {
-  "motiv": "Hela referensuppsattningen har glidit fran runnern: 95 av 95 nycklar foll i ci.yml och 93 av 96 i den har workflowen, med identiskt fingeravtryck over tva korningar. Bilderna tas om i sin helhet pa dagens pinnade Chromium.",
-  "nycklar": 95,
-  "filter": null,
-  "tid": "2026-09-23T21:50:08.027Z"
+  "motiv": "Nya referensbilder for de 18 nya ranking-sixpack-nycklarna, efter fix av bade ReferenceError och for tidig browser.close()",
+  "nycklar": 18,
+  "filter": "voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose",
+  "tid": "2026-09-24T19:44:18.705Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -391,6 +392,78 @@
   },
   "catalog:toplike:soft-stack": {
    "matt": "250x237",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:basic-v2": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:celestial": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:prism-horizontal": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:prism-vertical": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:royal-rose": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:voltage": {
+   "matt": "230x193",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:basic-v2": {
+   "matt": "300x195",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:celestial": {
+   "matt": "300x158",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:prism-horizontal": {
+   "matt": "300x164",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:prism-vertical": {
+   "matt": "300x185",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:royal-rose": {
+   "matt": "300x97",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:voltage": {
+   "matt": "300x185",
+   "fyllnad": 100
+  },
+  "catalog:toplike:basic-v2": {
+   "matt": "220x388",
+   "fyllnad": 100
+  },
+  "catalog:toplike:celestial": {
+   "matt": "300x68",
+   "fyllnad": 100
+  },
+  "catalog:toplike:prism-horizontal": {
+   "matt": "300x68",
+   "fyllnad": 100
+  },
+  "catalog:toplike:prism-vertical": {
+   "matt": "220x380",
+   "fyllnad": 100
+  },
+  "catalog:toplike:royal-rose": {
+   "matt": "300x68",
+   "fyllnad": 100
+  },
+  "catalog:toplike:voltage": {
+   "matt": "220x372",
    "fyllnad": 100
   }
  }
