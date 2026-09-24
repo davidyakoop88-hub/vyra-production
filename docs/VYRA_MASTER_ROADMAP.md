@@ -35,9 +35,14 @@ Status legend: `done` / `in-progress` / `not-started` / `blocked`.
 
 ## Next recommended task
 
-**Phase 4 — Premium Widget Design System** (in progress this session). See
-`VYRA_PROJECT_STATE.md` → "Exact next action" for the specific work items and current status.
-**Phase 6 — Top Gifter Widget** is next. Phase 5 (Premium Gift Widget) is done.
+**Phase 6 — Top Gifter Widget.** Phase 4 (Premium Widget Design System) och Phase 5 (Premium
+Gift Widget) är klara. Top Gifts designuppsättning gallrades dessutom 40 → 2 den 2026-09-23
+(`c8d7f3d0`) — formen var slut: tjugoen premiumdesigner delade en renderare och en markup, och
+fem av dem bar en enda CSS-regel var.
+
+Före Phase 6 ligger dock **live-verifieringen**: `docs/live-verifiering.md` punkt 6 och 8 är
+obesvarade, och checkpoint 54:s tre lagningar plus Top Streaks koreografi har aldrig körts i en
+riktig sändning. Se `VYRA_PROJECT_STATE.md` → checkpoint 55.
 
 ## TikTok-händelser vi inte använder
 
