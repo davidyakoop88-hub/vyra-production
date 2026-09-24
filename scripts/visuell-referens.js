@@ -165,9 +165,6 @@ function servera() {
       matt: `${f2.fyllnad.bredd}x${f2.fyllnad.hojd}` });
   }
 
-  await b.browser.close();
-  await new Promise(r => b.server.close(r));
-
   if (skrivna.length) {
     // MANIFESTET SLÅS SAMMAN, DET SKRIVS INTE ÖVER.
     //
@@ -189,7 +186,7 @@ function servera() {
     // AVTRYCKET TAS PA SAMMA SIDA SOM BILDERNA, i samma session och efter samma uppvarmning.
     // Tas det nagon annanstans mater det en annan maskin an den som ritade referenserna, och da
     // ar det varre an inget: vakten hade sagt "rastreraren stammer" om fel maskin.
-    const rastrering = await V.rastreringsAvtryck(sida);
+    const rastrering = await V.rastreringsAvtryck(b.sida);
     console.log(`Rastreringsavtryck: ${rastrering}`);
 
     fs.writeFileSync(V.MANIFEST, JSON.stringify({
@@ -226,6 +223,13 @@ function servera() {
       + `- **Motiv:** ${MOTIV}\n- **Motor:** ${motor.version}\n`
       + `- **Nycklar:** ${nyckelrad}\n`);
   }
+
+  // Stangs FORST har, efter rastreringsAvtryck(b.sida) ovan — inte direkt efter jamforelseloopen.
+  // Stod den dar tidigare stangdes sidan innan avtrycket kunde tas ("page.evaluate: Target page,
+  // context or browser has been closed"), och kommentaren nagra rader upp om att avtrycket maste
+  // tas "PA SAMMA SIDA SOM BILDERNA, i samma session" gick inte att uppfylla.
+  await b.browser.close();
+  await new Promise(r => b.server.close(r));
 
   console.log(`\n${skrivna.length} referenser skrivna till ${path.relative(ROOT, V.REFKAT)}`);
   // De här är INTE de undantagna — de är nycklar som skulle ha fått en referens men inte kunde.
