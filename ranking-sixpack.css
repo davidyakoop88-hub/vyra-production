@@ -114,7 +114,6 @@
 /* Ikonen står FÖRST i DOM:en (skrivTal skriver bara textnoden efter den) men EFTER talet på skärmen. */
 .widget.vyra-toplike.rk6 .rk6-ikon{order:2;display:block;width:14px;height:14px;flex:0 0 auto;font-style:normal}
 .widget.vyra-toplike.rk6 .rk6-ikon svg{width:100%;height:100%;display:block}
-.widget.vyra-toplike.rk6.vyra-templatetoplike .rk6-ikon,
 .widget.vyra-toplike.rk6:not(.vyra-templatetopcoins):not(.vyra-templatetoppoints) .rk6-ikon{animation:rk6-ikon 1.4s ease-in-out infinite,rk6-hue 3s linear infinite}
 
 /* ---------- Voltage (lista) — "Top gifters exact" ---------- */
