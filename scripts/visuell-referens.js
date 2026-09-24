@@ -189,7 +189,7 @@ function servera() {
     // AVTRYCKET TAS PA SAMMA SIDA SOM BILDERNA, i samma session och efter samma uppvarmning.
     // Tas det nagon annanstans mater det en annan maskin an den som ritade referenserna, och da
     // ar det varre an inget: vakten hade sagt "rastreraren stammer" om fel maskin.
-    const rastrering = await V.rastreringsAvtryck(sida);
+    const rastrering = await V.rastreringsAvtryck(b.sida);
     console.log(`Rastreringsavtryck: ${rastrering}`);
 
     fs.writeFileSync(V.MANIFEST, JSON.stringify({
