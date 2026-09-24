@@ -160,7 +160,7 @@ test('NSIS-vägen är orörd — Store-arbetet får inte ta med sig .exe-bygget'
   // vid NSIS-vagen, och da ar en handskriven forvantan hela poangen. Priset ar att den maste
   // uppdateras nar paketlistan avsiktligt andras — som nu.
   assert.deepEqual(pkg.build.files,
-    ['main.js', 'local-server.js', 'tiktok-service.js', 'tiktok-fields.js', 'tiktok-event-service.js', 'obs-service.js', 'streamdeck-sync.js',
+    ['main.js', 'local-server.js', 'tiktok-service.js', 'tiktok-fields.js', 'obs-service.js', 'streamdeck-sync.js',
      'updater.js', 'update-config.json', 'splash.html', 'icon.ico'],
     'paketlistan för appen ska vara oförändrad');
 });
