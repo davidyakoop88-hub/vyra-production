@@ -66,6 +66,19 @@ async function createMainWindow() {
   // content before either the cloud Studio or the bundled local Studio is opened.
   await session.defaultSession.clearCache();
   await session.defaultSession.clearStorageData({ storages: ['serviceworkers', 'cachestorage'] });
+  // TikTok-event-avlasaren (borttagen 2026-09-24) loggade in anvandaren pa TikTok i en BESTANDIG
+  // session, 'persist:vyra-tiktok-events'. Koden ar borta, men partitionen ligger kvar i userData
+  // pa varje maskin som provade funktionen — riktiga TikTok-inloggningskakor utan nagot kvar som
+  // kan na dem eller rensa dem. Den har tvatten kors vid varje start: den ar gratis nar mappen
+  // redan ar tom, och far aldrig hindra appen fran att starta.
+  // Lagren star utskrivna med flit: ett anrop UTAN argument rensar allt i den session det star pa,
+  // och den formen far inte finnas i den har filen. test/clean-update.test.js vaktar det genom att
+  // lasa kallan som text — sa den formen far inte ens skrivas ut i en kommentar har.
+  try {
+    await session.fromPartition('persist:vyra-tiktok-events').clearStorageData({
+      storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers', 'cachestorage']
+    });
+  } catch (error) { log('kunde inte rensa gamla TikTok-event-sessionen', error?.message); }
   main = new BrowserWindow({
     width: 1360, height: 860, minWidth: 1000, minHeight: 680,
     show: false, backgroundColor: '#08090d', autoHideMenuBar: true, icon: iconPath,
