@@ -41,7 +41,7 @@
   setInterval(tick, 10000);
 
   function renderTimers() {
-    const anchor = document.querySelector('.ae-scenes-overview') || document.querySelector('.ae-steps');
+    const anchor = document.querySelector('[data-ae-advanced-body]') || document.querySelector('.ae-scenes-overview') || document.querySelector('.ae-steps');
     if (!anchor || document.querySelector('.ae-timers-overview')) return;
     const state = getState();
     const section = document.createElement('section');
@@ -54,7 +54,8 @@
       return `<article class="${t.enabled ? '' : 'off'}"><i>⏱</i><span><b>Var ${t.intervalMinutes} min</b><small>→ ${action ? action.name : 'Ingen Action vald'}</small></span><button data-toggle-timer="${t.id}">${t.enabled ? 'Aktiv' : 'Pausad'}</button><button data-delete-timer="${t.id}">×</button></article>`;
     }).join('');
     section.innerHTML = `<header><h3>Timer</h3><span>${(state.timers || []).length} timers</span></header><p class="ae-timer-hint">Kör en Action med jämna mellanrum medan du är live. Timern börjar räkna när TikTok-anslutningen blir aktiv.</p><button id="newAeTimer" class="primary">＋ Ny Timer</button><div class="ae-list">${rows || '<p data-tom="automatik-timers">Inga timers ännu. Skapa en som kör en Action på schema.</p>'}</div>`;
-    anchor.after(section);
+    if (anchor.matches('[data-ae-advanced-body]')) anchor.append(section);
+    else anchor.after(section); // äldre testskal
     wireTimers();
   }
 

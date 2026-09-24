@@ -46,6 +46,11 @@ function studio({ tokenUrl = null, url = 'https://vyralive.app/studio.html' } = 
 
 test('scenlänken byggs ur overlayns access-token, inte ur location', () => {
   const { window, load } = studio({ tokenUrl: TOKEN_URL });
+  // Den förenklade arbetsytan visar bara använda skärmar. Scen 3 är därför en riktig Action-scen
+  // i provet, inte en av nio tomma rader som råkar renderas av gammal kod.
+  window.localStorage.setItem('vyra-action-event-v2', JSON.stringify({
+    actions: [{ id: 'a3', scene: { number: 3 } }], events: []
+  }));
   load('action-scenes.js');
   window.VyraActionsExtras.forEach(fn => fn());
 
