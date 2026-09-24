@@ -261,15 +261,23 @@
 /* ---------- Vald profilram ersätter designens egen (ranking-sixpack.js profilram) ---------- */
 .widget.vyra-toplike.rk6.rk6-egen-ram .rk6-ring::after{display:none}
 .widget.vyra-toplike.rk6.rk6-egen-ram .rk6-krona{display:none}
-/* Profilramarna sticker ut mer än designernas egna ringar. Avataren får en marginal lika stor som
-   ramens utstick bortom avataren — räknat ur ramens uppmätta öppning (--ram-fit) och fotots storlek
-   (--karna-px) — så namn, värde och grannramar aldrig hamnar på konsten. I raddesignerna bara uppåt och
-   nedåt: där får grannramarna mötas i sidled (som i bågpodiet), men namnet hamnar under ramen. */
-.widget.vyra-toplike.rk6.rk6-egen-ram .rk6-av{
+/* Profilramarna sticker ut mer än designernas egna ringar. --ram-ut är ramens utstick bortom avataren,
+   räknat ur ramens uppmätta öppning (--ram-fit) och fotots storlek (--karna-px). Luften läggs på
+   GRANNARNA, aldrig på avataren, och bara på höjden: fotot får inte flytta sig och widgeten får inte
+   bli bredare när en ram väljs (tests/browser/ram-ror-inte-bildmatt). I raddesignerna får
+   grannramarna mötas i sidled (som i bågpodiet), men namnet hamnar under ramen. */
+.widget.vyra-toplike.rk6.rk6-egen-ram,
+.widget.vyra-toplike.rk6.rk6-egen-ram .toplike-row{
   --ram-ut:max(0px,calc(var(--karna-px) / (2 * var(--ram-fit,.62)) - var(--av-h,var(--av)) / 2 + 4px));
-  margin:var(--ram-ut)!important;
 }
-.widget.vyra-toplike.rk6.rk6-egen-ram:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .rk6-av{margin:var(--ram-ut) 0!important}
+.widget.vyra-toplike.rk6.rk6-egen-ram.rk6-voltage .rk6-lista{gap:calc(12px + 2 * var(--ram-ut))}
+.widget.vyra-toplike.rk6.rk6-egen-ram.rk6-basic-v2 .rk6-lista{gap:calc(36px + 2 * var(--ram-ut))}
+.widget.vyra-toplike.rk6.rk6-egen-ram.rk6-prism-vertical .rk6-lista{gap:calc(7.7px + 2 * var(--ram-ut))}
+/* I sidled KNUFFAS namn och värde med `translate` (samma verktyg som media.js:s gamla ramplacering):
+   widgetens och radens bredd får inte ändras av en ram. Speglat knuffas de åt andra hållet. */
+.widget.vyra-toplike.rk6.rk6-egen-ram:is(.rk6-voltage,.rk6-basic-v2,.rk6-prism-vertical) .toplike-row>:is(.rk6-namn,em){translate:var(--ram-ut) 0}
+.widget.vyra-toplike.rk6.rk6-egen-ram.ranking-mirrored:is(.rk6-voltage,.rk6-basic-v2,.rk6-prism-vertical) .toplike-row>:is(.rk6-namn,em){translate:calc(-1 * var(--ram-ut)) 0}
+.widget.vyra-toplike.rk6.rk6-egen-ram:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .rk6-namn{margin-top:calc(6px + var(--ram-ut))!important}
 .widget.vyra-toplike.rk6 .toplike-row img.rk6-profilram{
   position:absolute!important;left:50%!important;top:50%!important;z-index:2!important;display:block!important;
   width:calc(100% / var(--ram-fit,.62))!important;height:calc(100% / var(--ram-fit,.62))!important;
