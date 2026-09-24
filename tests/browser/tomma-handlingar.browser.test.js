@@ -75,6 +75,20 @@ async function oppnaFlik(page, nyckel) {
   await page.waitForTimeout(600);
 }
 
+// Vissa hjälpfunktioner hör hemma under Avancerat. När ett prov kontrollerar ett tomt tillstånd
+// där ska det öppna samma yta som streamern öppnar med ett klick, innan synlighet mäts. Det är
+// inte en genväg: en hopfälld detalj är avsiktligt dold i huvudflödet, men måste vara nåbar.
+async function oppnaNarmasteDetalj(page, nyckel) {
+  const oppnade = await page.evaluate(n => {
+    const tom = document.querySelector(`[data-tom="${n}"]`);
+    const detalj = tom?.closest('details');
+    if (!detalj) return false;
+    detalj.open = true;
+    return true;
+  }, nyckel);
+  if (oppnade) await page.waitForTimeout(250);
+}
+
 // ---- Prov 1 - varje deklarerad handling finns, syns och ar ett syskon --------------------------
 test('varje tomt tillstand med handling bar den som synligt syskon', { skip, timeout: 300000 }, async () => {
   const s = await oppnaStudio();
@@ -85,6 +99,7 @@ test('varje tomt tillstand med handling bar den som synligt syskon', { skip, tim
       assert.ok(vy, `${nyckel} saknas i PER_VY - fixturen ar osammanhangande`);
       await tillVy(s.page, vy);
       await oppnaFlik(s.page, nyckel);
+      await oppnaNarmasteDetalj(s.page, nyckel);
       const m = await s.page.evaluate(`(() => {
         const tom = document.querySelector('[data-tom="${nyckel}"]');
         if (!tom) return { tomtSaknas: true };
@@ -122,6 +137,7 @@ test('varje handlings mal finns och gar att na i samma vy', { skip, timeout: 300
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
       await oppnaFlik(s.page, nyckel);
+      await oppnaNarmasteDetalj(s.page, nyckel);
       const m = await s.page.evaluate(`(() => {
         const mal = document.querySelector('${def.handling.mal}');
         if (!mal) return { saknas: true };
@@ -142,6 +158,7 @@ test('klick pa handlingen utloser malet', { skip, timeout: 300000 }, async () =>
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
       await oppnaFlik(s.page, nyckel);
+      await oppnaNarmasteDetalj(s.page, nyckel);
       const m = await s.page.evaluate(`(async () => {
         const mal = document.querySelector('${def.handling.mal}');
         const tom = document.querySelector('[data-tom="${nyckel}"]');
@@ -178,6 +195,7 @@ test('handlingen andrar inte det tomma tillstandets text', { skip, timeout: 3000
     for (const [nyckel, def] of MED_HANDLING) {
       await tillVy(s.page, VY_FOR[nyckel]);
       await oppnaFlik(s.page, nyckel);
+      await oppnaNarmasteDetalj(s.page, nyckel);
       const text = await s.page.evaluate(n => {
         const el = document.querySelector(`[data-tom="${n}"]`);
         return el ? el.textContent.replace(/\s+/g, ' ').trim() : null;

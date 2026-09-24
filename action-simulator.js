@@ -56,7 +56,7 @@
   }
 
   function render() {
-    const ankare = document.querySelector('.ae-timers-overview') || document.querySelector('.ae-scenes-overview') || document.querySelector('.ae-steps');
+    const ankare = document.querySelector('[data-ae-advanced-body]') || document.querySelector('.ae-timers-overview') || document.querySelector('.ae-scenes-overview') || document.querySelector('.ae-steps');
     if (!ankare || document.querySelector('.ae-simulator')) return;
     const lista = gavor();
     const section = document.createElement('section');
@@ -74,7 +74,8 @@
         <button type="button" data-sim-typ="kommando">Simulera Kommando !hype</button>
       </div>
       <small class="ae-sim-hint">De tre sista finns inte hos TikFinity. De är med för att emote-, sticker- och kommandotriggarna annars inte går att prova utan en riktig tittare som gör just den saken.</small>`;
-    ankare.after(section);
+    if (ankare.matches('[data-ae-advanced-body]')) ankare.append(section);
+    else ankare.after(section); // äldre testskal
 
     section.querySelectorAll('[data-sim]').forEach(btn => btn.onclick = () => {
       const [etikett, event] = KNAPPAR[+btn.dataset.sim];

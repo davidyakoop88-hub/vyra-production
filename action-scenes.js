@@ -70,7 +70,7 @@
   // vikningen och syntes inte utan att scrolla. I facit är "Overlay Screen Settings" en egen panel
   // längst ned, efter både Actions och Events. Den hänger därför på `.ae-columns` i stället.
   function renderScenes() {
-    const ankare = document.querySelector('.ae-columns') || document.querySelector('.ae-steps');
+    const ankare = document.querySelector('[data-ae-advanced-body]') || document.querySelector('.ae-columns') || document.querySelector('.ae-steps');
     if (!ankare || document.querySelector('.ae-scenes-overview')) return;
     const state = getState();
     const section = document.createElement('section');
@@ -83,11 +83,13 @@
       if (!url) return `<small class="ae-scene-needs-token" data-tom="automatik-scenlank">Ingen säker OBS-länk ännu — scenen kan inte öppnas i OBS förrän du skapat en.</small><button type="button" data-create-scene-link>Skapa säker OBS-länk</button>`;
       return `<input readonly value="${url}"><button type="button" data-copy-scene="${n}">Kopiera</button><button type="button" data-open-scene="${n}">Öppna ↗</button>`;
     };
-    // Facit §4 förklarar VARFÖR en scen behövs innan den listar dem. Rubriken "10 OVERLAY-SCENER"
-    // svarar på vad som finns, inte på vad streamern ska göra med det — och en tom lista med tio
-    // länkar säger ingenting till någon som aldrig satt upp en overlay förut.
-    section.innerHTML = `<header><b>OVERLAY-SKÄRMAR</b><span>Varje skärm har en egen OBS/TikTok-länk och en egen kö</span></header><p class="ae-scenes-intro">För att dina actions ska synas i OBS eller Live Studio måste du lägga in minst en overlay-skärm. Du kopplar varje action till en skärm, och varje skärm har sin egen kö. Här kopierar du länkarna och ställer in hur lång kön får bli. När du lagt in länken i OBS byter skärmen status till Online.</p><div class="ae-scene-cards">${Array.from({length:10},(_,i)=>{const n=i+1,count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="${count?'used':''}"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${Array.from({length:10},(_,i)=>{const n=i+1,maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;
-    ankare.after(section);
+    // Bara skärmar som används visas. Tio tomma kort fick det att se ut som att streamern
+    // måste konfigurera tio OBS-källor innan den första Actionen kan fungera.
+    const usedScenes=[...new Set(state.actions.map(a=>Number(a.scene?.number)||1))];
+    const scenes=usedScenes.length?usedScenes:[1];
+    section.innerHTML = `<header><b>OBS-SKÄRMAR</b><span>Endast skärmar som används av dina Actions</span></header><p class="ae-scenes-intro">Varje Action har en egen knapp för sin OBS-länk. Skapa länken här första gången och lägg den sedan i OBS eller Live Studio.</p><div class="ae-scene-cards">${scenes.map(n=>{const count=state.actions.filter(a=>(a.scene?.number||1)===n).length;return `<button type="button" data-show-scene="${n}" class="used"><b>${n}</b><span>Scen ${n}</span><small>${count} actions</small></button>`}).join('')}</div><div class="ae-scene-links">${scenes.map(n=>{const maxQueue=sceneSettings[n]?.maxQueue||0;return `<article data-scene-link="${n}"><b>Scen ${n}</b><span class="ae-scene-status offline" data-scene-status="${n}"><i></i> Offline</span><label class="ae-scene-max-queue">Max kö<input type="number" min="0" placeholder="Obegränsad" value="${maxQueue||''}" data-scene-max-queue="${n}"></label>${link(n)}</article>`}).join('')}</div>`;
+    if (ankare.matches('[data-ae-advanced-body]')) ankare.append(section);
+    else ankare.after(section); // test- och äldre skal saknar den nya hopfällbara behållaren
     updateSceneStatuses();
     section.querySelectorAll('[data-scene-max-queue]').forEach(input => input.onchange = () => setSceneMaxQueue(input.dataset.sceneMaxQueue, input.value));
   }
@@ -114,6 +116,15 @@
     if (event.target.closest('[data-extra=actions]')) setTimeout(renderScenes,120);
     const show = event.target.closest('[data-show-scene]');
     if (show) document.querySelector(`[data-scene-link="${show.dataset.showScene}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});
+    const actionLink = event.target.closest('[data-open-action-screen]');
+    if (actionLink) {
+      document.querySelector('.ae-advanced').open=true;
+      const article=document.querySelector(`[data-scene-link="${actionLink.dataset.openActionScreen}"]`);
+      article?.scrollIntoView({behavior:'smooth',block:'center'});
+      const open=article?.querySelector('[data-open-scene]');
+      const create=article?.querySelector('[data-create-scene-link]');
+      if(open) open.click(); else if(create) create.click();
+    }
     // Samma vag som overlaylankraden i media.js tar nar token saknas: oppna tokenhanteraren
     // (.oa-open ar overlay-access.js dolda knapp) i stallet for att lamna streamern utan nasta steg.
     if (event.target.closest('[data-create-scene-link]')) {
