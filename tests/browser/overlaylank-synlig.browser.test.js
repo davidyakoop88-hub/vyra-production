@@ -81,7 +81,19 @@ async function editornMedLank(bredd) {
     const inp = document.querySelector('.overlay-link-bar input');
     if (inp) inp.value = l;
   }, RIKTIG_LANK);
-  await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+  // TYPSNITTEN MASTE VARA LADDADE INNAN NAGOT MATS, annars mater provet ett OVERGANGSLAGE.
+  //
+  // Raden ar ett rutnat dar etiketten, adressfaltet och fyra knappar delar pa bredden, och alla
+  // utom faltet ar textbreddsberoende. Med reservtypsnittet far knapparna en bredd, med Inter en
+  // annan — och faltet far det som blir over. Uppmatt 2026-09-24 vid 1680 px, samma maskin, samma
+  // kod, tva korningar efter varandra: faltet blev 382 px den ena gangen och 439 px den andra.
+  // CI sag 375. Det ar inte tre olika maskiner, det ar tre olika ogonblick i samma omflode.
+  //
+  // `document.fonts.ready` loses forst nar alla @font-face som sidan faktiskt anvander ar klara,
+  // sa efter den har raden mater provet den layout anvandaren ser — inte den som rader ut sig en
+  // bildruta senare.
+  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   return page;
 }
 

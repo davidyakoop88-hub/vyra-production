@@ -158,7 +158,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // parsades som `.lf-stream canvas .lf-p` och matchade ingenting, eftersom duken var borta.
   // Partiklarna tappade alltsa sin grundstil. En cachad studio.css hade fortsatt servera den
   // trasiga regeln, sa strangen maste folja med.
-  assert.match(studio, /studio\.css\?v=20260923-6/);
+  // 20260924-1 2026-09-24: overlaylankradens inre rutnat. Etikettkolumnen gick fran fasta 170px
+  // till minmax(0,170px) och adressfaltet fick golvet min-width:72ch. Faltet hade noll marginal
+  // vid ALLA fyra fonsterbredder och klipptes i CI (falt 375 px, adress 389). En cachad studio.css
+  // hade fortsatt servera den trangare raden.
+  assert.match(studio, /studio\.css\?v=20260924-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
