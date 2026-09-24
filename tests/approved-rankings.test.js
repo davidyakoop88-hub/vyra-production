@@ -43,12 +43,15 @@ test('central retirement guard loads last with its own cache version', () => {
   // 20260924-1: LIKE_SKINS/LIKE_LABELS sakande ranking-sixpackens sex nya ID:n — safeSkin tvingade
   // tyst tillbaka varje ny Top Like-widget till clean-bar och katalogkorten for de sex visades
   // aldrig alls. En cachad approved-rankings.js hade fortsatt gora bada.
-  assert.match(html, /approved-rankings\.js\?v=20260924-1/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260924-1') > html.indexOf('vyra-state-sync.js'));
+  // 20260924-en-design: de sex sixpack-designerna flyttade ur Top Like-sektionen till
+  // ranking-sixpack.js:s grupperade katalog (en grupp per design, Top Like/Coins/Points under), och
+  // createLike exporteras dit. En cachad fil hade listat dem dubbelt.
+  assert.match(html, /approved-rankings\.js\?v=20260924-en-design/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260924-en-design') > html.indexOf('vyra-state-sync.js'));
   // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
   // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
   assert.ok(html.indexOf('vyra-tom-widget.js?v=20260922-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20260922-1') < html.indexOf('approved-rankings.js?v=20260924-1'),
+    && html.indexOf('vyra-tom-widget.js?v=20260922-1') < html.indexOf('approved-rankings.js?v=20260924-en-design'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 

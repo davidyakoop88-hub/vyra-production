@@ -76,7 +76,7 @@
     const meta = DESIGNS[design];
     const created = VyraWidgets.create('catalog:ranking:templateTopCoins:' + design);
     Object.assign(created, {
-      topCoinsDesign: design, skin: design, width: meta.width, likeCount: 1,
+      topCoinsDesign: design, skin: design, width: meta.width, likeCount: SIXPACK.has(design) ? 5 : 1,
       dataName: 'MAYA', dataValue: 44999, showTitle: false, showCrown: false,
       autoMedal: false, showBackground: false, rankingCycle: false,
       topCoinsMotion: true, useLiveData: true, liveMetric: 'coins', accent: meta.accent
@@ -86,6 +86,9 @@
     save(); render(); toast('Top Coins · ' + meta.label + ' skapad');
   }
 
+  // De sex ranking-sixpack-designerna listas i ranking-sixpack.js:s grupperade katalog (en grupp per
+  // design, med Top Like / Top Coins / Top Points under), inte har.
+  const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
@@ -95,7 +98,7 @@
     const section = document.createElement('section');
     section.dataset.topcoinsV2 = '1';
     section.className = 'toplike-template-section topcoins-v2-catalog';
-    section.innerHTML = `<h4>TOP COINS · ${Object.keys(DESIGNS).length} DESIGNER</h4>` + Object.entries(DESIGNS).map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i>V</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
+    section.innerHTML = `<h4>TOP COINS · ${KATALOG.length} DESIGNER</h4>` + KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i>V</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
     catalog.prepend(section);
     section.querySelectorAll('[data-topcoins-create]').forEach(button => {
       button.onclick = () => createTopCoins(button.dataset.topcoinsCreate);
@@ -133,5 +136,5 @@
     });
   };
 
-  window.VyraTopCoins = Object.freeze({ designs: DESIGNS, designId, topCoinsHtml });
+  window.VyraTopCoins = Object.freeze({ create: createTopCoins, designs: DESIGNS, designId, topCoinsHtml });
 })();

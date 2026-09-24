@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 113,
  "senaste": {
-  "motiv": "Nya referensbilder for de 18 nya ranking-sixpack-nycklarna, efter fix av bade ReferenceError och for tidig browser.close()",
+  "motiv": "Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points",
   "nycklar": 18,
   "filter": "voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose",
-  "tid": "2026-09-24T19:44:18.705Z"
+  "tid": "2026-09-24T21:28:05.883Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -395,75 +395,75 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:basic-v2": {
-   "matt": "230x193",
+   "matt": "162x478",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:celestial": {
-   "matt": "230x193",
+   "matt": "390x100",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "230x193",
+   "matt": "392x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
-   "matt": "230x193",
+   "matt": "129x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:royal-rose": {
-   "matt": "230x193",
+   "matt": "390x134",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:voltage": {
-   "matt": "230x193",
+   "matt": "136x278",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:basic-v2": {
-   "matt": "300x195",
+   "matt": "162x478",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:celestial": {
-   "matt": "300x158",
+   "matt": "390x100",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "300x164",
+   "matt": "392x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
-   "matt": "300x185",
+   "matt": "129x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:royal-rose": {
-   "matt": "300x97",
+   "matt": "390x134",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:voltage": {
-   "matt": "300x185",
+   "matt": "136x278",
    "fyllnad": 100
   },
   "catalog:toplike:basic-v2": {
-   "matt": "220x388",
+   "matt": "162x478",
    "fyllnad": 100
   },
   "catalog:toplike:celestial": {
-   "matt": "300x68",
+   "matt": "390x100",
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "300x68",
+   "matt": "392x185",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
-   "matt": "220x380",
+   "matt": "129x311",
    "fyllnad": 100
   },
   "catalog:toplike:royal-rose": {
-   "matt": "300x68",
+   "matt": "390x134",
    "fyllnad": 100
   },
   "catalog:toplike:voltage": {
-   "matt": "220x372",
+   "matt": "136x278",
    "fyllnad": 100
   }
  }

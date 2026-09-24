@@ -1,301 +1,271 @@
-/* RANKING-SIXPACK · sex godkända Claude Artifact-prototyper (Voltage, Basic v2, Prism vertikal,
- * Prism horisontal, Celestial, Royal Rose), integrerade som CSS-skinn/designer ovanpå de tre
- * BEFINTLIGA rankingfamiljernas EGNA skelett — se docs/RENDERKEDJAN.md och
- * tests/skinn-bara-top-like.test.js innan detta ändras.
+/* RANKING-SIXPACK · EN DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS (2026-09-24, omgjord).
  *
- * VIKTIGT — samma regel som toppoints-v2.css redan dokumenterar: `skin-clean-bar` (toplike-studio.js)
- * stämplas bara på templateTopLike. Top Coins/Top Points bär SIN EGEN design i `topcoins-<id>` /
- * `toppoints-<id>`, aldrig `skin-<id>`. Selektorerna nedan följer därför tre olika prefix, en per
- * familj, ALDRIG en gemensam `.skin-*`-regel som skulle träffa fel familj.
+ * Markupen kommer från ranking-sixpack.js, gemensam för alla tre familjerna: roten bär `rk6` +
+ * `rk6-<design>` och INGEN av familjernas egna skinn-/designklasser (skin-*, like-*, topcoins-*,
+ * toppoints-*), så de ~200 !important-reglerna i toplike-studio.css/topcoins-v2.css/
+ * toppoints-v2.css inte når raderna. Kvar är de generella `.vyra-toplike .toplike-row`-reglerna i
+ * studio.css — därav prefixet `.widget.vyra-toplike.rk6` och !important på det som ska
+ * nollställas. INTE `html body`: katalogens miniatyrer ritas i en shadow root (overlay-preview.js)
+ * där `html body` aldrig matchar, och då ritades varje kort som en rad lösa tecken.
  *
- * Bildassets: celestial-wing-ring.png och gold-crown-rose-ring.png (Celestial / Royal Rose) ligger i
- * assets/images/ranking-sixpack/, samma "egen mapp per widget-bildfamilj"-konvention som
- * assets/images/profile-frames/ och assets/images/medals/. Voltage/Basic v2/Prism hade i sina
- * originalprototyper egna PNG-ramar (gold-crystal-crown.png, gold-ruby-wreath.png,
- * gold-black-frame.png) som INTE levererades som filer till den här integrationen — de tre
- * skinnen ritar därför sin ring i ren CSS (conic-gradient/box-shadow) i stället för en bakgrundsbild.
- * Se rapporten till David för hur man byter in riktiga PNG-ramar om/när de levereras.
+ * Varje mått nedan är prototypens eget (Claude Artifact-källorna "Top gifters exact" = Voltage,
+ * "basic v2", "prism canvas check", "prism horizontal", "celestial horizontal", "royal rose
+ * horizontal"), inte uppskattat. Ramarna är riktiga noder (.rk6-ring) — den förra versionen ritade
+ * dem på img::before/::after, och ett <img> får aldrig pseudoelement, så ingen ram syntes i Top Like.
+ *
+ * Bildassets i assets/images/ranking-sixpack/: gold-crystal-crown.png (Basic v2),
+ * gold-ruby-wreath.png (Prism vertikal), gold-black-frame.png (Prism horisontal),
+ * celestial-wing-ring.png (Celestial), gold-crown-rose-ring.png (Royal Rose).
  */
 
 @keyframes rk6-hue{0%{filter:hue-rotate(0deg) saturate(1.3)}100%{filter:hue-rotate(360deg) saturate(1.3)}}
 @keyframes rk6-spin{to{transform:rotate(360deg)}}
-@keyframes rk6-spin-rev{to{transform:rotate(-360deg)}}
-@keyframes rk6-pulse-glow{0%,100%{opacity:.5;transform:scale(.94)}50%{opacity:.9;transform:scale(1.05)}}
-@keyframes rk6-pulse-scale{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
-@keyframes rk6-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes rk6-twinkle{0%,100%{opacity:.15}50%{opacity:.8}}
-@keyframes rk6-dust-rise{0%{opacity:0;transform:translateY(0)}12%{opacity:.85}88%{opacity:.4}100%{opacity:0;transform:translateY(-46px)}}
+@keyframes rk6-backlight{0%,100%{opacity:.5;transform:scale(.94)}50%{opacity:.88;transform:scale(1.03)}}
+@keyframes rk6-glod{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:.85;transform:scale(1.15)}}
+@keyframes rk6-glod-guld{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes rk6-led{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes rk6-ikon{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes rk6-krona-studs{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+@keyframes rk6-krona-gung{0%,100%{transform:translateX(-50%) translateY(0) rotate(-4deg)}50%{transform:translateX(-50%) translateY(-4px) rotate(4deg)}}
+@keyframes rk6-in-vanster{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes rk6-in-upp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes rk6-in-ned{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+@keyframes rk6-trad{to{background-position:-16px 0}}
+@keyframes rk6-stoft{0%{opacity:0;transform:translateY(0)}12%{opacity:.85}88%{opacity:.4}100%{opacity:0;transform:translateY(-60px)}}
 
-/* ===================================================================================
- * TOP LIKE — .skin-<id>, samma .toplike-row-skelett som clean-bar/soft-stack/mini-podium/side-rank.
- * Bär `--like` (satt av toplike-studio.css) som basaccent; varje skinn har sin egen paletthue ovanpå.
- * =================================================================================== */
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose){
-  padding:0!important;background:none!important;border:0!important;box-shadow:none!important;overflow:visible!important;
+/* ---------- Gemensamt skelett ---------- */
+.widget.vyra-toplike.rk6{
+  padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;
+  width:max-content!important;min-width:0!important;max-width:none!important;overflow:visible!important;
+  font-family:Inter,system-ui,sans-serif;color:#fff;isolation:isolate;
 }
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose)>h3,
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>b,
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-crown,
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .pro-frame-art{display:none!important}
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>span:not(.pro-avatar-frame)>strong,
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>em{
-  color:#fff!important;font-style:normal!important;font-weight:800!important;white-space:nowrap!important;
-  text-shadow:0 1px 5px #000!important;background:none!important;-webkit-text-fill-color:currentColor!important;animation:none!important;
+.widget.vyra-toplike.rk6>h3{display:none!important}
+.widget.vyra-toplike.rk6 .rk6-lista{position:relative;display:flex;flex-direction:column;gap:12px;margin:0;padding:0}
+.widget.vyra-toplike.rk6 .toplike-row{
+  position:relative!important;display:grid!important;grid-auto-flow:column!important;align-items:center!important;justify-content:start!important;
+  grid-template-columns:none!important;grid-template-rows:none!important;grid-template-areas:none!important;
+  width:auto!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:0!important;
+  margin:0!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;text-align:left;transform:none;overflow:visible!important;
+  animation:rk6-in-vanster .5s cubic-bezier(.2,.8,.2,1) both!important;animation-delay:var(--rk6-fordrojning,0s)!important;
 }
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row small{display:none!important}
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>em{color:var(--like)!important;filter:none}
+/* studio.css/toplike-studio.css placerar namn och värde i rutnätskolumn 3, rad 2/3 — nollställ. */
+.widget.vyra-toplike.rk6 .toplike-row>*{grid-column:auto!important;grid-row:auto!important;justify-self:auto!important;align-self:auto!important}
+.widget.vyra-toplike.rk6 .toplike-row::before,
+.widget.vyra-toplike.rk6 .toplike-row::after{content:none!important;display:none!important}
 
-/* Ring/glöd runt varje avatar: byggs med ::before (backlight) + ::after (roterande energiring) på
- * fotot självt, så ingen ny DOM-nod behövs — samma "CSS-bara skin" som de fyra befintliga. */
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>img:not(.pro-frame-art){
-  position:relative!important;box-sizing:border-box!important;border-radius:50%!important;object-fit:cover!important;
-  border:2px solid color-mix(in srgb,var(--like),#fff 20%)!important;box-shadow:0 0 12px color-mix(in srgb,var(--like),transparent 45%)!important;
-  z-index:2;animation:rk6-hue 4s linear infinite;
+/* Avataren: omslag (.rk6-av) → ram (.rk6-ring, backlight i ::before, metallram i ::after) →
+   kärna (.rk6-karna) med glöd, foto, krona och rangmärke. Samma DOM som prototyperna. */
+.widget.vyra-toplike.rk6 .rk6-av{position:relative;display:block;flex:0 0 auto;width:var(--av);height:var(--av-h,var(--av));font-style:normal}
+.widget.vyra-toplike.rk6 .rk6-ring{position:absolute;inset:var(--ring-inset,0);pointer-events:none;display:block;z-index:0}
+.widget.vyra-toplike.rk6 .rk6-ring::before{
+  content:'';position:absolute;inset:var(--bl-inset,-4px);border-radius:50%;z-index:-1;filter:blur(var(--bl-blur,2px));
+  background:radial-gradient(circle,color-mix(in srgb,var(--c) 45%,transparent) 0%,color-mix(in srgb,var(--c2) 22%,transparent) 45%,transparent 68%);
+  animation:rk6-backlight 2.4s ease-in-out infinite;
 }
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>img:not(.pro-frame-art)::before{
-  content:'';position:absolute;inset:-6px;border-radius:50%;z-index:-1;pointer-events:none;
-  background:radial-gradient(circle,color-mix(in srgb,var(--like),transparent 45%) 0%,transparent 70%);
-  animation:rk6-pulse-glow 2.2s ease-in-out infinite;
+.widget.vyra-toplike.rk6 .rk6-ring::after{
+  content:'';position:absolute;inset:0;background:var(--ram) center/contain no-repeat;
+  filter:var(--ram-filter,drop-shadow(0 2px 4px rgba(0,0,0,.5)));
 }
-.widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) .toplike-row>img:not(.pro-frame-art)::after{
-  content:'';position:absolute;inset:-4px;border-radius:50%;pointer-events:none;z-index:-1;
-  background:conic-gradient(transparent,transparent,var(--like));animation:rk6-spin 2.6s linear infinite;
+.widget.vyra-toplike.rk6 .rk6-karna{
+  position:absolute;left:50%;top:var(--karna-top,50%);transform:translate(-50%,-50%);
+  width:var(--karna,100%);height:var(--karna-h,var(--karna,100%));display:block;z-index:1;font-style:normal;
 }
-
-/* --- Voltage: elektriskt, RANK-FÄRGAD ring (guld/cyan/orange/lila/grön per plats 1-5), kantig badge --- */
-.widget.vyra-toplike.skin-voltage>.toplike-list{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important}
-.widget.vyra-toplike.skin-voltage .toplike-row{display:flex!important;align-items:center!important;gap:10px!important;padding:0!important;background:none!important;border:0!important;animation:vyra-clean-in .4s ease-out both!important}
-.widget.vyra-toplike.skin-voltage .toplike-row>img:not(.pro-frame-art){width:34px!important;height:34px!important;min-width:34px!important;border-color:#fff5!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 14px #FFD700!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px #00f2ff!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px #ff5e00!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px #b24bf3!important}
-.widget.vyra-toplike.skin-voltage .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px #00ff88!important}
-.widget.vyra-toplike.skin-voltage .toplike-row>span:not(.pro-avatar-frame){flex:1 1 auto!important;min-width:0!important;background:rgba(8,12,18,.82)!important;border:1px solid color-mix(in srgb,var(--like),transparent 66%)!important;border-radius:10px!important;padding:4px 10px!important;box-shadow:0 3px 10px #0006!important}
-.widget.vyra-toplike.skin-voltage .toplike-row>em{flex:0 0 auto!important;background:rgba(8,12,18,.82)!important;border:1px solid color-mix(in srgb,var(--like),transparent 55%)!important;border-radius:999px!important;padding:4px 10px!important;font-size:12px!important;box-shadow:0 3px 10px #0006!important}
-
-/* --- Basic v2: varmt guld, ledlist under namnet --- */
-.widget.vyra-toplike.skin-basic-v2>.toplike-list{display:flex!important;flex-direction:column!important;gap:12px!important;width:100%!important}
-.widget.vyra-toplike.skin-basic-v2 .toplike-row{display:flex!important;align-items:center!important;gap:10px!important;padding:0!important;background:none!important;border:0!important;animation:vyra-clean-in .4s ease-out both!important}
-.widget.vyra-toplike.skin-basic-v2 .toplike-row>img:not(.pro-frame-art){width:38px!important;height:38px!important;min-width:38px!important;border-color:#ffd97a!important}
-.widget.vyra-toplike.skin-basic-v2 .toplike-row>span:not(.pro-avatar-frame){flex:1 1 auto!important;min-width:0!important;position:relative;padding-bottom:5px!important}
-.widget.vyra-toplike.skin-basic-v2 .toplike-row>span:not(.pro-avatar-frame)::after{content:'';display:block;height:2px;width:60%;margin-top:3px;border-radius:2px;background:linear-gradient(90deg,#ffe9a8,#d4af37,transparent);box-shadow:0 0 5px #d4af37;animation:rk6-pulse-glow 1.8s ease-in-out infinite,rk6-hue 3s linear infinite}
-.widget.vyra-toplike.skin-basic-v2 .toplike-row>em{flex:0 0 auto!important;font-size:14px!important}
-
-/* --- Prism (vertikal): som Basic v2 men #1 sticker ut i storlek. RIKTIGA TIER-fargerna fran
- * originalprototypens egen TIERS-array (top-gifters-prism-canvas432.html:145), inte en enda
- * bärnstensfärg — mätt mot källfilen efter att en tidigare version av den här CSS:en av misstag
- * plattade till alla fem placeringar till samma #ffb703. */
-.widget.vyra-toplike.skin-prism-vertical>.toplike-list{display:flex!important;flex-direction:column!important;gap:10px!important;width:100%!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row{display:flex!important;align-items:center!important;gap:10px!important;padding:0!important;background:none!important;border:0!important;animation:vyra-clean-in .4s ease-out both!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row>img:not(.pro-frame-art){width:32px!important;height:32px!important;min-width:32px!important;border-color:#ffa23c!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row.rank-1>img:not(.pro-frame-art){width:44px!important;height:44px!important;min-width:44px!important;border-color:#ffa23c!important;box-shadow:0 0 12px -1px #ffa23c!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row.rank-2>img:not(.pro-frame-art){border-color:#3cbfff!important;box-shadow:0 0 12px -1px #3cbfff!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row.rank-3>img:not(.pro-frame-art){border-color:#ff3ca0!important;box-shadow:0 0 12px -1px #ff3ca0!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row.rank-4>img:not(.pro-frame-art){border-color:#8a5cff!important;box-shadow:0 0 12px -1px #8a5cff!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row.rank-5>img:not(.pro-frame-art){border-color:#c8ff3c!important;box-shadow:0 0 12px -1px #c8ff3c!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row>span:not(.pro-avatar-frame){flex:1 1 auto!important;min-width:0!important}
-.widget.vyra-toplike.skin-prism-vertical .toplike-row>em{flex:0 0 auto!important}
-
-/* profile-frames-premium.css:53 satter .vyra-toplike.like-clean{width:220px!important} for de smala
- * listdesignerna (Voltage/Basic v2/Prism vertikal). Prism horisontal/Celestial/Royal Rose delar
- * samma likeTheme:'clean' (se toplike-design.js) men ar en RAD i sidled, inte en lista — 220px
- * klipper av rad 4-5 helt. Tre klasser (.widget.vyra-toplike.skin-X) slar profile-frames-premiums
- * tva (.vyra-toplike.like-clean) pa specificitet, oavsett lastordning — matt i riktig Chromium,
- * raderna gick utanfor duken innan denna rad fanns.
- *
- * SAMMA FIL, samma rad 56, satter ocksa `.toplike-row{min-width:168px!important}` — width:auto pa
- * `.toplike-row` nedan rensar INTE min-width (olika egenskaper), sa flex:1 1 0 kunde aldrig krympa
- * fem 168px-rader in i en 300px bred widget (864px innehall matt i DOM, verkligt overflow, inte
- * radbrytning). min-width:0!important pa varje `.toplike-row`-regel nedan later flexboxen krympa
- * raderna som avsett.
- */
-.widget.vyra-toplike:is(.skin-prism-horizontal,.skin-celestial,.skin-royal-rose){width:300px!important;max-width:300px!important}
-
-/* --- Prism (horisontal): flat rad i sidled, #1 större, ram i varm bärnsten --- */
-.widget.vyra-toplike.skin-prism-horizontal>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:flex-end!important;gap:10px!important;width:100%!important;flex-wrap:wrap!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;width:auto!important;min-width:0!important;max-width:none!important;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
-/* RIKTIGA TIER-fargerna fran top-gifters-prism-horizontal.html:146-150, samma anledning som
- * prism-vertikal ovan — inte en enda bärnstensfärg. */
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row>img:not(.pro-frame-art){width:40px!important;height:40px!important;min-width:40px!important;border-color:#ffa23c!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-1>img:not(.pro-frame-art){width:54px!important;height:54px!important;min-width:54px!important;border-color:#ffa23c!important;box-shadow:0 0 14px -1px #ffa23c!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-2>img:not(.pro-frame-art){border-color:#3cbfff!important;box-shadow:0 0 12px -1px #3cbfff!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-3>img:not(.pro-frame-art){border-color:#ff3ca0!important;box-shadow:0 0 12px -1px #ff3ca0!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-4>img:not(.pro-frame-art){border-color:#8a5cff!important;box-shadow:0 0 12px -1px #8a5cff!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row.rank-5>img:not(.pro-frame-art){border-color:#c8ff3c!important;box-shadow:0 0 12px -1px #c8ff3c!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row>span:not(.pro-avatar-frame){width:100%!important;text-align:center!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row>span:not(.pro-avatar-frame)>strong{text-align:center!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.widget.vyra-toplike.skin-prism-horizontal .toplike-row>em{font-size:11px!important}
-
-/* --- Celestial: kunglig rad utan höjdskillnad, metallring från celestial-wing-ring.png, diamantbricka --- */
-.widget.vyra-toplike.skin-celestial>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:flex-start!important;gap:6px!important;width:100%!important}
-.widget.vyra-toplike.skin-celestial.ranking-mirrored>.toplike-list{flex-direction:row-reverse!important}
-.widget.vyra-toplike.skin-celestial .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
-.widget.vyra-toplike.skin-celestial .toplike-row>img:not(.pro-frame-art){width:36px!important;height:36px!important;min-width:36px!important;border-color:#ffe9a8!important;animation:rk6-hue 4s linear infinite}
-.widget.vyra-toplike.skin-celestial .toplike-row>img:not(.pro-frame-art)::after{
-  content:'';position:absolute;inset:-9px;border-radius:50%;pointer-events:none;z-index:-1;
-  background-image:url(assets/images/ranking-sixpack/celestial-wing-ring.png);background-size:contain;background-repeat:no-repeat;background-position:center;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.6));animation:none;
+.widget.vyra-toplike.rk6 .rk6-glod{
+  position:absolute;inset:var(--glod-inset,-5px);border-radius:50%;z-index:0;display:block;
+  background:radial-gradient(circle,var(--c) 0%,transparent 70%);animation:rk6-glod 2s ease-in-out infinite;
 }
-/* Per-placering-glod fran top-gifters-celestial-horizontal.html:172-178's TIERS-array
- * (gul/bla/lila cykliskt, INTE bara guld pa forstaplatsen) — saknades helt i forsta versionen av
- * den har integrationen, matt mot kallfilen efter att David bad om en sista kontroll. */
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 18px -2px #ffd54a!important}
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fb7ff!important}
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #b98fff!important}
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #ffd54a!important}
-.widget.vyra-toplike.skin-celestial .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fb7ff!important}
-.widget.vyra-toplike.skin-celestial .toplike-row>span:not(.pro-avatar-frame){width:100%!important;text-align:center!important}
-.widget.vyra-toplike.skin-celestial .toplike-row>span:not(.pro-avatar-frame)>strong{text-align:center!important;font-size:11px!important}
-.widget.vyra-toplike.skin-celestial .toplike-row>em{font-size:11px!important;color:#fbbf24!important}
-
-/* --- Royal Rose: samma struktur som Celestial, ram i gold-crown-rose-ring.png, guldstoft --- */
-.widget.vyra-toplike.skin-royal-rose{isolation:isolate}
-.widget.vyra-toplike.skin-royal-rose>.toplike-list{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:flex-start!important;gap:6px!important;width:100%!important;position:relative;z-index:1}
-.widget.vyra-toplike.skin-royal-rose.ranking-mirrored>.toplike-list{flex-direction:row-reverse!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row{position:relative;display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:1 1 0;padding:0!important;background:none!important;border:0!important;text-align:center;animation:vyra-clean-in .4s ease-out both!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art){width:34px!important;height:34px!important;min-width:34px!important;border-color:#ffe9a8!important;animation:rk6-hue 4s linear infinite}
-/* Per-placering-glod fran top-gifters-royal-rose-horizontal.html:183-189's TIERS-array
- * (guld/rosa/gron cykliskt) — samma saknade effekt som Celestial ovan. */
-.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-1>img:not(.pro-frame-art){box-shadow:0 0 18px -2px #ffd54a!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-2>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #e8b7c4!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-3>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fae6f!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-4>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #ffd54a!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row.rank-5>img:not(.pro-frame-art){box-shadow:0 0 14px -2px #6fae6f!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row>img:not(.pro-frame-art)::after{
-  content:'';position:absolute;inset:-14px -8px;pointer-events:none;z-index:-1;
-  background-image:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);background-size:contain;background-repeat:no-repeat;background-position:center;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.6)) brightness(1.15) contrast(1.1);animation:none;
+.widget.vyra-toplike.rk6 .toplike-row img{
+  position:relative!important;z-index:1!important;display:block!important;box-sizing:border-box!important;
+  width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;
+  border-radius:50%!important;object-fit:cover!important;background:#0c0c16!important;
+  border:2px solid rgba(0,0,0,.7)!important;box-shadow:0 0 14px -2px var(--c),0 0 0 2px rgba(0,0,0,.4)!important;
+  filter:none!important;animation:none!important;transform:none!important;opacity:1!important;
 }
-.widget.vyra-toplike.skin-royal-rose::before{
-  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+.widget.vyra-toplike.rk6 .rk6-krona{display:none}
+.widget.vyra-toplike.rk6 .rk6-krona svg{width:100%;height:100%;display:block}
+.widget.vyra-toplike.rk6 .rk6-rang{
+  position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;font-weight:900;font-style:normal;
+  line-height:1;padding:0;margin:0;background:none;border:0;box-shadow:none;color:#fff;
+}
+.widget.vyra-toplike.rk6 .rk6-rang>i{font-style:normal}
+
+/* Namn + ledlist, värde + ikon. <small> (handtaget) finns kvar för livedatan men visas inte. */
+.widget.vyra-toplike.rk6 .rk6-namn{
+  display:flex!important;flex-direction:column;gap:4px;min-width:0!important;max-width:none!important;width:auto!important;
+  margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;
+}
+.widget.vyra-toplike.rk6 .rk6-namn>strong{
+  display:block!important;font-weight:700!important;font-size:14px!important;color:#fff!important;line-height:1.2!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:inherit!important;
+  background:none!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important;animation:none!important;
+  letter-spacing:0!important;text-transform:none!important;
+}
+.widget.vyra-toplike.rk6 .rk6-namn>small{display:none!important}
+.widget.vyra-toplike.rk6 .rk6-led{display:block;height:2.5px;border-radius:2px;width:100%;font-style:normal;
+  background:linear-gradient(90deg,#ffe9a8,#d4af37,transparent);box-shadow:0 0 5px #d4af37;
+  animation:rk6-led 1.8s ease-in-out infinite,rk6-hue 3s linear infinite}
+.widget.vyra-toplike.rk6 .toplike-row>em{
+  display:inline-flex!important;align-items:center!important;justify-content:center;gap:5px!important;flex:0 0 auto;
+  font-style:normal!important;font-weight:900!important;font-size:12px!important;color:#fbbf24!important;white-space:nowrap!important;
+  line-height:1!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;
+  text-shadow:none!important;-webkit-text-fill-color:currentColor!important;animation:none!important;
+}
+/* Ikonen står FÖRST i DOM:en (skrivTal skriver bara textnoden efter den) men EFTER talet på skärmen. */
+.widget.vyra-toplike.rk6 .rk6-ikon{order:2;display:block;width:14px;height:14px;flex:0 0 auto;font-style:normal}
+.widget.vyra-toplike.rk6 .rk6-ikon svg{width:100%;height:100%;display:block}
+.widget.vyra-toplike.rk6:not(.vyra-templatetopcoins):not(.vyra-templatetoppoints) .rk6-ikon{animation:rk6-ikon 1.4s ease-in-out infinite,rk6-hue 3s linear infinite}
+
+/* ---------- Voltage (lista) — "Top gifters exact" ---------- */
+.widget.vyra-toplike.rk6.rk6-voltage{--av:42px}
+.widget.vyra-toplike.rk6-voltage .rk6-lista{gap:12px;padding:16px 4px 4px 4px}
+.widget.vyra-toplike.rk6-voltage .toplike-row{gap:7px!important}
+.widget.vyra-toplike.rk6-voltage .rk6-ring{inset:-4px;border-radius:50%;z-index:2}
+.widget.vyra-toplike.rk6-voltage .rk6-ring::before{
+  inset:0;filter:none;border-radius:50%;z-index:0;opacity:1;
+  background:conic-gradient(transparent,transparent,var(--c));box-shadow:0 0 12px var(--c);animation:rk6-spin 2.4s linear infinite;
+}
+.widget.vyra-toplike.rk6-voltage .rk6-ring::after{
+  inset:-1px;border-radius:50%;opacity:.5;filter:none;
+  background:conic-gradient(transparent,var(--c),transparent 55%);animation:rk6-spin 2.4s linear infinite;
+}
+.widget.vyra-toplike.rk6-voltage .rk6-karna{z-index:3}
+.widget.vyra-toplike.rk6-voltage .rk6-glod{display:none}
+.widget.vyra-toplike.rk6-voltage .toplike-row img{border:2px solid rgba(255,255,255,.2)!important;box-shadow:0 0 10px var(--c)!important;background:#000!important}
+.widget.vyra-toplike.rk6-voltage .rk6-krona{display:block;position:absolute;top:-15px;left:50%;width:18px;height:14px;z-index:4;
+  fill:#ffd700;filter:drop-shadow(0 0 3px #ffd700) drop-shadow(0 0 6px #ffb700);animation:rk6-krona-studs 2.4s ease-in-out infinite}
+.widget.vyra-toplike.rk6-voltage .rk6-rang{bottom:-2px;left:-1px;width:15px;height:15px;border-radius:50%;
+  background:var(--c);border:2px solid #14151d;box-shadow:0 0 7px var(--c),0 2px 5px rgba(0,0,0,.55);color:#0b0b14;font-size:7.5px;box-sizing:border-box}
+.widget.vyra-toplike.rk6-voltage .rk6-namn{
+  height:26px;box-sizing:border-box;justify-content:center;padding:0 10px!important;border-radius:10px;
+  border:1px solid color-mix(in srgb,var(--c) 34%,transparent)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.42),0 0 10px -3px var(--c),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  background:linear-gradient(180deg,rgba(8,12,18,.9),rgba(4,6,10,.9))!important;
+}
+.widget.vyra-toplike.rk6-voltage .rk6-namn>strong{font-size:12px!important;font-weight:800!important}
+.widget.vyra-toplike.rk6-voltage .rk6-led{display:none}
+.widget.vyra-toplike.rk6-voltage .toplike-row>em{height:28px;padding:0 10px!important;border-radius:999px;box-sizing:border-box;
+  border:1px solid color-mix(in srgb,var(--c) 45%,transparent)!important;box-shadow:0 4px 10px rgba(0,0,0,.4),0 0 10px -3px var(--c)!important;
+  background:linear-gradient(180deg,rgba(8,12,18,.9),rgba(4,6,10,.9))!important}
+
+/* ---------- Basic v2 (lista) — "Top gifters basic v2" ---------- */
+.widget.vyra-toplike.rk6.rk6-basic-v2{--av:58px;--ram:url(assets/images/ranking-sixpack/gold-crystal-crown.png)}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-lista{gap:36px;padding:22px}
+.widget.vyra-toplike.rk6-basic-v2 .toplike-row{grid-template-columns:auto auto!important;grid-template-rows:auto auto!important;grid-auto-flow:row!important;
+  column-gap:26px!important;row-gap:4px!important;animation-name:rk6-in-upp!important}
+.widget.vyra-toplike.rk6-basic-v2 .toplike-row>.rk6-av{grid-row:1/3!important;grid-column:1!important;align-self:center!important}
+.widget.vyra-toplike.rk6-basic-v2 .toplike-row>.rk6-namn{grid-row:1!important;grid-column:2!important;align-self:end!important}
+.widget.vyra-toplike.rk6-basic-v2 .toplike-row>em{grid-row:2!important;grid-column:2!important;justify-self:start!important;align-self:start!important;
+  gap:6px!important;font-size:16px!important;font-weight:800!important}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-ring{inset:-22px}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-ring::before{background:radial-gradient(circle,rgba(255,224,150,.4) 0%,rgba(212,175,55,.2) 45%,transparent 70%)}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-glod{inset:-4px;background:radial-gradient(circle,#ffd97a 0%,transparent 70%)}
+.widget.vyra-toplike.rk6-basic-v2 .toplike-row img{box-shadow:0 0 12px -2px #ffd97a!important;background:#171b26!important}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-rang{bottom:-11px;left:50%;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;
+  background:radial-gradient(circle,rgba(8,9,15,.92) 55%,rgba(8,9,15,0) 100%);font-size:14px;color:#ffe9a8;
+  text-shadow:0 0 4px #ffd97a,0 0 9px #d4af37,0 0 14px #d4af37}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-namn>strong{font-size:17px!important}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-led{width:60%}
+.widget.vyra-toplike.rk6-basic-v2 .rk6-ikon{width:17px;height:17px}
+
+/* ---------- Prism vertikal (lista) — "Top gifters prism canvas check" ---------- */
+.widget.vyra-toplike.rk6.rk6-prism-vertical{--av:52px;--ring-inset:-9px;--bl-inset:-6px;--karna:44px;
+  --ram:url(assets/images/ranking-sixpack/gold-ruby-wreath.png)}
+.widget.vyra-toplike.rk6-prism-vertical .rk6-lista{gap:7.7px;padding:10px 4px}
+.widget.vyra-toplike.rk6-prism-vertical .toplike-row{gap:9.8px!important}
+.widget.vyra-toplike.rk6-prism-vertical .rk6-rang{bottom:-6px;left:-3px;width:18px;height:16px;font-size:11px;color:#ffd97a;
+  text-shadow:0 0 4px #ffd97a,0 0 8px #d4af37,0 0 14px #d4af37}
+.widget.vyra-toplike.rk6-prism-vertical .rk6-namn{gap:2.8px}
+.widget.vyra-toplike.rk6-prism-vertical .rk6-led{background:linear-gradient(90deg,#ffe9a8,#d4af37,#8a1f1f);box-shadow:0 0 5px #d4af37,0 0 8px #8a1f1f}
+.widget.vyra-toplike.rk6-prism-vertical .toplike-row>em{height:26px;padding:0 10px!important;border-radius:9px;box-sizing:border-box;
+  border:1px solid color-mix(in srgb,var(--c) 55%,transparent)!important;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--c) 22%,#0b0b14),rgba(8,9,15,.9))!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.45),0 0 10px -2px var(--c)!important}
+
+/* ---------- Prism horisontal (podium 4-2-1-3-5) — "Top gifters prism horizontal" ---------- */
+.widget.vyra-toplike.rk6.rk6-prism-horizontal{--av:66px;--ring-inset:-12px;--karna:60px;
+  --ram:url(assets/images/ranking-sixpack/gold-black-frame.png)}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-lista{flex-direction:row;justify-content:center;align-items:flex-end;gap:3.9px;padding:40px 12px 4px}
+.widget.vyra-toplike.rk6-prism-horizontal .toplike-row{display:flex!important;flex-direction:column;align-items:center!important;gap:9.1px!important;
+  order:var(--rk6-ordning);text-align:center;animation-name:rk6-in-upp!important}
+.widget.vyra-toplike.rk6-prism-horizontal .toplike-row.rank-1{--av:88px;--karna:80px}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-ring::before{display:none}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-glod{inset:-6px}
+.widget.vyra-toplike.rk6-prism-horizontal .toplike-row img{box-shadow:0 0 16px -2px var(--c),0 0 0 2px rgba(0,0,0,.4)!important}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-krona{display:block;position:absolute;top:-22px;left:50%;width:22px;height:18px;z-index:3;
+  fill:var(--c);filter:drop-shadow(0 0 4px var(--c));animation:rk6-krona-gung 2.6s ease-in-out infinite}
+.widget.vyra-toplike.rk6-prism-horizontal .rank-1 .rk6-krona{width:30px;height:24px;top:-28px}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-rang{bottom:-5px;left:50%;transform:translateX(-50%);width:20px;height:19px;border-radius:6px;
+  background:linear-gradient(135deg,#fff -10%,var(--c) 55%,var(--c2) 130%);box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 6px var(--c);color:#0b0b14;font-size:10px}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-namn{align-items:center;gap:3.1px;width:100%!important}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-namn>strong{font-size:15px!important;max-width:100px;text-align:center!important}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-led{height:3px;width:70%;background:linear-gradient(90deg,#c9a15a,#e8b7c4);box-shadow:0 0 6px #c9a15a,0 0 10px #e8b7c4}
+.widget.vyra-toplike.rk6-prism-horizontal .toplike-row>em{height:28px;padding:0 12px!important;border-radius:10px;box-sizing:border-box;font-size:13px!important;
+  border:1px solid color-mix(in srgb,var(--c) 55%,transparent)!important;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--c) 22%,#0b0b14),rgba(8,9,15,.9))!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.45),0 0 12px -2px var(--c)!important}
+.widget.vyra-toplike.rk6-prism-horizontal .rk6-ikon{width:15px;height:15px}
+
+/* ---------- Celestial + Royal Rose (kunglig rad, ingen höjdskillnad) ---------- */
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rk6-lista{flex-direction:row;align-items:flex-start;gap:8px;padding:14px 4px 4px}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .toplike-row{display:flex!important;flex-direction:column;align-items:center!important;
+  gap:7.7px!important;width:70px!important;text-align:center;z-index:1;animation-name:rk6-in-ned!important}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rk6-namn{align-items:center;width:100%!important;margin-top:6px!important}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rk6-namn>strong{font-size:12px!important;max-width:100%;text-align:center!important}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rk6-led{display:none}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .toplike-row>em{gap:3px!important;font-size:11px!important}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rk6-ikon{width:12px;height:12px}
+/* #1: starkare, gyllene glöd i stället för rangens egen färg — samma storlek som de andra. */
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rank-1 .rk6-glod{background:radial-gradient(circle,#ffd54a 0%,transparent 70%);animation:rk6-glod-guld 1.8s ease-in-out infinite}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rank-1 .rk6-ring::before{background:radial-gradient(circle,rgba(255,213,74,.55) 0%,rgba(255,233,168,.28) 45%,transparent 68%)}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose) .rank-1 img{box-shadow:0 0 20px -2px #ffd54a,0 0 0 2px rgba(0,0,0,.4)!important}
+/* Ljuståden bakom avatarerna, i höjd med deras mitt. */
+.widget.vyra-toplike.rk6 .rk6-trad{position:absolute;left:4px;right:4px;top:calc(14px + var(--av-h,var(--av)) / 2);height:1.5px;z-index:0;display:block;pointer-events:none;
+  background:linear-gradient(90deg,#ffe9a8,#b98fff,#6fb7ff);
+  -webkit-mask:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 8px);mask:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 8px);
+  opacity:.8}
+.widget.vyra-toplike.rk6-royal-rose .rk6-trad{background:linear-gradient(90deg,#ffe9a8,#d4af37,#6fae6f)}
+
+.widget.vyra-toplike.rk6.rk6-celestial{--av:48px;--ring-inset:-9px;--bl-inset:-2px;--bl-blur:3px;--karna:38px;
+  --ram:url(assets/images/ranking-sixpack/celestial-wing-ring.png);--ram-filter:drop-shadow(0 2px 5px rgba(0,0,0,.6))}
+/* Diamantformat rangmärke i ringens guld — samma ton oavsett plats. */
+.widget.vyra-toplike.rk6-celestial .rk6-rang{bottom:-13px;left:50%;width:17px;height:17px;transform:translateX(-50%) rotate(45deg);
+  background:linear-gradient(135deg,#ffe9a8 -10%,#d4af37 55%,#1a2340 130%);box-shadow:0 2px 6px rgba(0,0,0,.5),0 0 6px #d4af37;color:#2a1a00;font-size:9px}
+.widget.vyra-toplike.rk6-celestial .rk6-rang>i{transform:rotate(-45deg)}
+.widget.vyra-toplike.rk6-celestial .rank-1 .rk6-rang{background:linear-gradient(135deg,#fff -10%,#ffd54a 55%,#b98000 130%);box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 10px #ffd54a}
+
+.widget.vyra-toplike.rk6.rk6-royal-rose{--av:56px;--av-h:82px;--ring-inset:-8px;--bl-inset:-6px;--bl-blur:4px;--karna:42px;--karna-h:43px;--karna-top:48%;
+  --ram:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);--ram-filter:brightness(1.35) contrast(1.2) saturate(1.15) drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+.widget.vyra-toplike.rk6-royal-rose .rk6-ring::before{
+  background:radial-gradient(circle,color-mix(in srgb,var(--c) 60%,transparent) 0%,color-mix(in srgb,var(--c2) 35%,transparent) 45%,transparent 70%)}
+.widget.vyra-toplike.rk6-royal-rose .rk6-rang{display:none}
+.widget.vyra-toplike.rk6-royal-rose .rk6-namn{margin-top:0!important}
+/* Guldstoft: mjuka prickar som stiger över raden. */
+.widget.vyra-toplike.rk6 .rk6-stoft{position:absolute;inset:0 0 30% 0;pointer-events:none;z-index:2;display:block;
   background:
-    radial-gradient(circle 3px at 12% 30%,#ffd54a,transparent 70%),
-    radial-gradient(circle 2px at 34% 70%,#fff6d9,transparent 70%),
-    radial-gradient(circle 3px at 58% 20%,#ffd54a,transparent 70%),
-    radial-gradient(circle 2px at 78% 60%,#fff6d9,transparent 70%),
-    radial-gradient(circle 2px at 92% 35%,#ffd54a,transparent 70%);
-  animation:rk6-dust-rise 5.5s linear infinite;
-}
-.widget.vyra-toplike.skin-royal-rose .toplike-row>span:not(.pro-avatar-frame){width:100%!important;text-align:center!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row>span:not(.pro-avatar-frame)>strong{text-align:center!important;font-size:11px!important}
-.widget.vyra-toplike.skin-royal-rose .toplike-row>em{font-size:11px!important;color:#fbbf24!important}
+    radial-gradient(circle 2.5px at 8% 80%,#fff6d9,#ffd54a 45%,transparent 75%),
+    radial-gradient(circle 1.5px at 27% 60%,#fff6d9,#ffd54a 45%,transparent 75%),
+    radial-gradient(circle 2px at 46% 90%,#fff6d9,#ffd54a 45%,transparent 75%),
+    radial-gradient(circle 1.5px at 63% 70%,#fff6d9,#ffd54a 45%,transparent 75%),
+    radial-gradient(circle 2.5px at 81% 85%,#fff6d9,#ffd54a 45%,transparent 75%),
+    radial-gradient(circle 1.5px at 94% 55%,#fff6d9,#ffd54a 45%,transparent 75%);
+  animation:rk6-stoft 6.5s linear infinite}
+
+/* ---------- Riktningsväxeln (rankingMirror) — bara riktningen vänds, ingen omdesign ---------- */
+.widget.vyra-toplike.rk6.ranking-mirrored:is(.rk6-voltage,.rk6-basic-v2,.rk6-prism-vertical) .toplike-row{direction:rtl}
+.widget.vyra-toplike.rk6.ranking-mirrored:is(.rk6-voltage,.rk6-basic-v2,.rk6-prism-vertical) .toplike-row>*{direction:ltr}
+.widget.vyra-toplike.rk6.ranking-mirrored:is(.rk6-basic-v2,.rk6-prism-vertical) .rk6-namn{align-items:flex-end;text-align:right}
+.widget.vyra-toplike.rk6.ranking-mirrored.rk6-basic-v2 .toplike-row>em{justify-self:end!important}
+.widget.vyra-toplike.rk6.ranking-mirrored.rk6-basic-v2 .rk6-led{background:linear-gradient(270deg,#ffe9a8,#d4af37,transparent)}
+.widget.vyra-toplike.rk6.ranking-mirrored:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .rk6-lista{flex-direction:row-reverse}
 
 @media(prefers-reduced-motion:reduce){
-  .widget.vyra-toplike:is(.skin-voltage,.skin-basic-v2,.skin-prism-vertical,.skin-prism-horizontal,.skin-celestial,.skin-royal-rose) *{animation:none!important}
+  .widget.vyra-toplike.rk6 *,.widget.vyra-toplike.rk6 *::before,.widget.vyra-toplike.rk6 *::after{animation:none!important}
 }
 
-/* ===================================================================================
- * TOP COINS — .topcoins-<id>, ovanpå EN LEDARE (topcoins-v2.js). Delad ring-rigg
- * (.tc-six-backlight/.tc-six-ring/.tc-six-art) sätts i topCoinsHtml() för alla sex.
- * =================================================================================== */
-html body .widget.vyra-topcoins-new .tc-six-backlight{position:absolute;inset:-6%;border-radius:50%;z-index:0;pointer-events:none;
-  background:radial-gradient(circle,color-mix(in srgb,var(--tc-accent),transparent 40%) 0%,transparent 70%);filter:blur(2px);animation:rk6-pulse-glow 2.4s ease-in-out infinite}
-html body .widget.vyra-topcoins-new .tc-six-ring{position:absolute;inset:-2%;border-radius:50%;pointer-events:none;z-index:3}
-html body .widget.vyra-topcoins-new .tc-six-a{border:2px solid var(--tc-accent);box-shadow:0 0 10px var(--tc-accent);animation:rk6-spin 2.6s linear infinite}
-html body .widget.vyra-topcoins-new .tc-six-b{inset:3%;border:1px solid transparent;border-top-color:var(--tc-accent);opacity:.55;animation:rk6-spin-rev 3.4s linear infinite}
-html body .widget.vyra-topcoins-new .tc-six-art{position:absolute;inset:-18%;pointer-events:none;z-index:4;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 5px rgba(0,0,0,.6))}
-html body .widget.vyra-topcoins-new.topcoins-celestial .tc-six-art{background-image:url(assets/images/ranking-sixpack/celestial-wing-ring.png)}
-html body .widget.vyra-topcoins-new.topcoins-royal-rose .tc-six-art{inset:-30% -18%;background-image:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);filter:drop-shadow(0 2px 5px rgba(0,0,0,.6)) brightness(1.15) contrast(1.1)}
-html body .widget.vyra-topcoins-new:is(.topcoins-voltage,.topcoins-basic-v2,.topcoins-prism-vertical,.topcoins-prism-horizontal) .tc-portrait>img{animation:rk6-hue 4s linear infinite}
-html body .widget.vyra-topcoins-new.topcoins-royal-rose::before{
-  content:'';position:absolute;inset:0;pointer-events:none;z-index:5;
-  background:radial-gradient(circle 3px at 15% 20%,#ffd54a,transparent 70%),radial-gradient(circle 2px at 70% 65%,#fff6d9,transparent 70%),radial-gradient(circle 2px at 85% 25%,#ffd54a,transparent 70%);
-  animation:rk6-dust-rise 5.5s linear infinite;
-}
-
-/* ===================================================================================
- * TOP POINTS — .toppoints-<id>, samma tp-chip/tp-portratt/tp-copy/em-skelett som
- * clean/center/podium/neon (toppoints-v2.js). Delad ring-rigg via .tp-six-*.
- * =================================================================================== */
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-portratt{position:relative}
-/* toppoints-v2.css:51-54 sätter overflow:hidden!important + fast 2.6em-storlek på .tp-portratt för de fyra
- * gamla designerna (rätt där, ringen finns ingenstans att klippas). Celestial/Royal Rose ritar sin ring
- * MED en negativ inset som sticker utanför den ramen (.tp-six-art/.tp-six-ring), så samma overflow:hidden
- * klipper bort hela ringen tyst — mätt i riktig DOM, inte bara källkod, se docs/vyra_matning_dom_vs_pixlar.
- * Högre specificitet (en extra klass via :is) än basregeln, inte bara senare i lastordningen. */
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-celestial,.toppoints-royal-rose) .toplike-row>.tp-portratt{overflow:visible!important}
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-backlight{position:absolute;inset:-16%;border-radius:50%;z-index:0;pointer-events:none;
-  background:radial-gradient(circle,color-mix(in srgb,var(--tp-accent,#ffd54a),transparent 40%) 0%,transparent 70%);filter:blur(2px);animation:rk6-pulse-glow 2.4s ease-in-out infinite}
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-ring{position:absolute;inset:-6%;border-radius:50%;pointer-events:none;z-index:1}
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-a{border:2px solid var(--tp-accent,#ffd54a);box-shadow:0 0 8px var(--tp-accent,#ffd54a);animation:rk6-spin 2.6s linear infinite}
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-b{inset:6%;border:1px solid transparent;border-top-color:var(--tp-accent,#ffd54a);opacity:.5;animation:rk6-spin-rev 3.4s linear infinite}
-html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-art{position:absolute;inset:-26%;pointer-events:none;z-index:2;background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .tp-six-art{background-image:url(assets/images/ranking-sixpack/celestial-wing-ring.png)}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .tp-six-art{inset:-42% -26%;background-image:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)) brightness(1.15) contrast(1.1)}
-/* Per-placering-glod (samma TIERS-fargcykel som Top Like ovan) via --tp-accent, som redan styr
- * bade .tp-six-backlight och .tp-six-a i den delade radrutan (rad 217-222). */
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-1{--tp-accent:#ffd54a}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-2{--tp-accent:#6fb7ff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-3{--tp-accent:#b98fff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-4{--tp-accent:#ffd54a}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-celestial .toplike-row.rank-5{--tp-accent:#6fb7ff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-1{--tp-accent:#ffd54a}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-2{--tp-accent:#e8b7c4}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-3{--tp-accent:#6fae6f}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-4{--tp-accent:#ffd54a}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row.rank-5{--tp-accent:#6fae6f}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-voltage,.toppoints-basic-v2,.toppoints-prism-vertical) .tp-portratt>img{animation:rk6-hue 4s linear infinite}
-
-/* Voltage/Basic v2/Prism vertikal: rak lista (som "clean"), med rank-färgad glöd på Voltage. */
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row{padding:2px 0!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row.rank-1 .tp-six-a{border-color:#FFD700;box-shadow:0 0 8px #FFD700}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row.rank-2 .tp-six-a{border-color:#00f2ff;box-shadow:0 0 8px #00f2ff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row.rank-3 .tp-six-a{border-color:#ff5e00;box-shadow:0 0 8px #ff5e00}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row.rank-4 .tp-six-a{border-color:#b24bf3;box-shadow:0 0 8px #b24bf3}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-voltage .toplike-row.rank-5 .tp-six-a{border-color:#00ff88;box-shadow:0 0 8px #00ff88}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-basic-v2 .toplike-row{padding:3px 0!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row{padding:2px 0!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-1 .tp-portratt{width:3.2em!important;min-width:3.2em!important;height:3.2em!important}
-/* RIKTIGA TIER-fargerna fran top-gifters-prism-canvas432.html:145-150 — samma palett som Top Like
- * ovan, inte den generiska --tp-accent-guldfargen alla ovriga stilar delar. */
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-1 .tp-six-a{border-color:#ffa23c;box-shadow:0 0 8px #ffa23c}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-2 .tp-six-a{border-color:#3cbfff;box-shadow:0 0 8px #3cbfff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-3 .tp-six-a{border-color:#ff3ca0;box-shadow:0 0 8px #ff3ca0}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-4 .tp-six-a{border-color:#8a5cff;box-shadow:0 0 8px #8a5cff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-vertical .toplike-row.rank-5 .tp-six-a{border-color:#c8ff3c;box-shadow:0 0 8px #c8ff3c}
-
-/* Prism horisontal/Celestial/Royal Rose: rak rad i sidled (ingen podium-höjdskillnad). */
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose) .toplike-list{
-  flex-direction:row!important;flex-wrap:wrap!important;justify-content:space-between!important;align-items:flex-start!important;gap:8px!important;
-}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose).ranking-mirrored .toplike-list{flex-direction:row-reverse!important}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose) .toplike-row{
-  flex-direction:column!important;width:auto!important;flex:0 1 18%;gap:4px!important;text-align:center;
-}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial,.toppoints-royal-rose) .toplike-row>.tp-copy{width:100%;text-align:center}
-html body .widget.vyra-toplike.vyra-toppoints-new:is(.toppoints-prism-horizontal,.toppoints-celestial) .toplike-row>.tp-chip{order:-1;margin:0 auto}
-/* Royal Rose hade INGA ranksiffror alls i originalprototypen (David: "ta bort de siffror 1 2 3 4 5"),
- * till skillnad fran Celestial/Prism horisontal som behaller sin guldbricka. rad()-skelettet i
- * toppoints-v2.js ar delat mellan alla tio stilar och renderar alltid <span class="tp-chip">, sa
- * Royal Rose maste dolja den har i stallet for att aldrig fa den i markupen — matt visuellt i
- * riktig Chromium, siffrorna syntes fortfarande innan denna rad fanns. */
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose .toplike-row>.tp-chip{display:none!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-1 .tp-portratt{width:3.4em!important;min-width:3.4em!important;height:3.4em!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-1 .tp-six-a{border-color:#ffa23c;box-shadow:0 0 8px #ffa23c}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-2 .tp-six-a{border-color:#3cbfff;box-shadow:0 0 8px #3cbfff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-3 .tp-six-a{border-color:#ff3ca0;box-shadow:0 0 8px #ff3ca0}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-4 .tp-six-a{border-color:#8a5cff;box-shadow:0 0 8px #8a5cff}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-prism-horizontal .toplike-row.rank-5 .tp-six-a{border-color:#c8ff3c;box-shadow:0 0 8px #c8ff3c}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose{isolation:isolate}
-html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-royal-rose::before{
-  content:'';position:absolute;inset:0;pointer-events:none;z-index:5;
-  background:radial-gradient(circle 3px at 15% 20%,#ffd54a,transparent 70%),radial-gradient(circle 2px at 70% 65%,#fff6d9,transparent 70%),radial-gradient(circle 2px at 85% 25%,#ffd54a,transparent 70%);
-  animation:rk6-dust-rise 5.5s linear infinite;
-}
-
-@media(prefers-reduced-motion:reduce){
-  html body .widget.vyra-topcoins-new .tc-six-a,html body .widget.vyra-topcoins-new .tc-six-b,
-  html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-a,html body .widget.vyra-toplike.vyra-toppoints-new .tp-six-b{animation:none!important}
-}
-
-/* ===================================================================================
- * RIKTNINGS-/SPEGELVÄXELN — `w.rankingMirror` (toplike-studio.js), samma "det är en rörelse, inte
- * en design"-princip som entreanimationen: en klass, en rad regler, för alla tre familjerna.
- * De familjespecifika layouterna ovan (celestial/royal-rose) har redan sin egen .ranking-mirrored-regel
- * där ordningen inte annars skulle gå att vända (row vs row-reverse på .toplike-list).
- * =================================================================================== */
-.widget.vyra-toplike.ranking-mirrored:is(.skin-clean-bar,.skin-soft-stack,.skin-side-rank,.skin-voltage,.skin-basic-v2,.skin-prism-vertical) .toplike-row{flex-direction:row-reverse!important}
-.widget.vyra-toplike.ranking-mirrored:is(.skin-clean-bar,.skin-soft-stack,.skin-side-rank,.skin-voltage,.skin-basic-v2,.skin-prism-vertical) .toplike-row>span:not(.pro-avatar-frame){text-align:right!important}
-html body .widget.vyra-toplike.vyra-toppoints-new.ranking-mirrored:is(.toppoints-clean,.toppoints-voltage,.toppoints-basic-v2,.toppoints-prism-vertical) .toplike-row{flex-direction:row-reverse!important}
-html body .widget.vyra-topcoins-new.ranking-mirrored .toplike-row{flex-direction:row-reverse!important}
+/* ---------- Katalogen: en grupp per design, tre knappar under ---------- */
+.widget-catalog .rk6-katalog .rk6-grupp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}
+.widget-catalog .rk6-katalog .rk6-grupp>h5{grid-column:1/-1;margin:4px 0 0;font-size:12px;font-weight:800;letter-spacing:.04em}
+.widget-catalog .rk6-katalog .rk6-grupp>button{min-width:0}
+.widget-catalog .rk6-katalog .rk6-kort-ikon{display:inline-flex;align-items:center;justify-content:center;font-style:normal}
+.widget-catalog .rk6-katalog .rk6-kort-ikon svg{width:16px;height:16px;display:block}
