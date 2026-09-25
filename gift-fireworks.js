@@ -18,7 +18,7 @@ const fwComboOf=input=>Math.min(100,fwAntalOf(input));
 const FW_LEVELS={single:{name:'single',lead:0,points:[],gain:1},burst:{name:'burst',lead:.9,points:[[-90,-35,0],[90,-55,.45]],gain:1.15},show:{name:'show',lead:4.2,points:[[-110,-30,0],[110,-30,.65],[-85,-100,1.3],[85,-100,2],[-125,-50,2.65],[125,-50,3.3]],gain:1.35}};
 const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
 const fwCanvas=w=>['royal','ice','rose','comet','supernova'].includes(w.fwTheme);
-function fwSequence(w,combo){const level=fwLevelOf(combo);if(fwCanvas(w))return{level,duration:Number(combo)>=100?18:Number(combo)>=10?9:6,impact:1.6,flight:1.4};return {level,duration:fwDurationOf(w)+level.lead,impact:fwFlightOf(w)+level.lead,flight:fwFlightOf(w)}}
+function fwSequence(w,combo){const level=fwLevelOf(combo);if(fwCanvas(w))return{level,duration:window.VyraSupernova.duration(combo),impact:1.6,flight:1.4};return {level,duration:fwDurationOf(w)+level.lead,impact:fwFlightOf(w)+level.lead,flight:fwFlightOf(w)}}
 const FW_THEMES=VyraWidgets.variants('giftfireworks.theme');
 const fwThemeOf=w=>Object.hasOwn(FW_THEMES,w.fwTheme)?w.fwTheme:({spiral:'comet',bloom:'ice'}[w.fwMotion]||'royal');
 const fwPending=[];

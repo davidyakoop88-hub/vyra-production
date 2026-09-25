@@ -442,7 +442,8 @@
         "battle-mvp-celebrations.css",
         "gift-supernova-engine.js",
         "gift-campaign-aura-engine.js",
-        "gift-classics-engine.js"
+        "gift-classics-engine.js",
+        "gift-natural-engine.js"
       ],
       "tester": [
         "tests/gift-fireworks-trigger.test.js",
@@ -457,7 +458,8 @@
         "tests/vfx-shared-ticker.test.js",
         "tests/gift-supernova-engine.test.js",
         "tests/gift-campaign-aura-engine.test.js",
-        "tests/gift-classics-engine.test.js"
+        "tests/gift-classics-engine.test.js",
+        "tests/gift-natural-engine.test.js"
       ],
       "matning": [
         {
