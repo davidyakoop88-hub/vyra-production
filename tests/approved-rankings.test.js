@@ -19,11 +19,16 @@ test('approved Top Streak is transparent and flips forever every eight seconds',
   assert.match(css, /background:none!important/);
 });
 
-test('Top Like accepts the ten approved skins (fyra original + ranking-sixpack) and defaults transparent', () => {
-  assert.match(js, /clean-bar.*soft-stack.*mini-podium.*side-rank.*voltage.*basic-v2.*prism-vertical.*prism-horizontal.*celestial.*royal-rose/s);
-  assert.match(js, /LIKE_SKINS\.has\(w\.skin\).*'clean-bar'/s);
+test('Top Like accepts the approved skins and defaults transparent', () => {
+  // De fyra ursprungliga (Clean Bar, Soft Stack, Mini Podium, Side Rank) PENSIONERADES 2026-09-24
+  // (Davids beslut). De står kvar i vitlistan sa en sparad widget renderas i stallet for att tappa
+  // sitt skinn — ranking-sixpack.js pekar sedan om den — men Top Like-sektionen i katalogen ar tom
+  // och dold, och ett saknat skinn faller tillbaka pa Voltage, inte Clean Bar.
+  assert.match(js, /voltage.*basic-v2.*prism-vertical.*prism-horizontal.*celestial.*royal-rose/s);
+  assert.match(js, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'voltage'/);
   assert.match(topLike, /widget\.showBackground = false/);
-  assert.match(js, /TOP LIKE · VYRA ORIGINAL/);
+  assert.doesNotMatch(js, /TOP LIKE · VYRA ORIGINAL/, 'de pensionerade designerna ska inte listas i katalogen');
+  assert.match(js, /approvedToplike = 'pensionerad'/);
   assert.match(js, /createApprovedLike/);
   // Ranking-sixpack (2026-09-24): LIKE_LABELS ar bade katalogkallan OCH samma vitlista safeSkin
   // laser — saknas ett ID har renderas widgeten alltid som clean-bar, tyst.
@@ -43,15 +48,17 @@ test('central retirement guard loads last with its own cache version', () => {
   // 20260924-1: LIKE_SKINS/LIKE_LABELS sakande ranking-sixpackens sex nya ID:n — safeSkin tvingade
   // tyst tillbaka varje ny Top Like-widget till clean-bar och katalogkorten for de sex visades
   // aldrig alls. En cachad approved-rankings.js hade fortsatt gora bada.
+  // 20260924-pension: Top Like-sektionen tom och dold (de fyra ursprungliga pensionerade), och ett
+  // saknat skinn faller tillbaka pa Voltage.
   // 20260924-en-design: de sex sixpack-designerna flyttade ur Top Like-sektionen till
   // ranking-sixpack.js:s grupperade katalog (en grupp per design, Top Like/Coins/Points under), och
   // createLike exporteras dit. En cachad fil hade listat dem dubbelt.
-  assert.match(html, /approved-rankings\.js\?v=20260924-en-design/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20260924-en-design') > html.indexOf('vyra-state-sync.js'));
+  assert.match(html, /approved-rankings\.js\?v=20260924-pension/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20260924-pension') > html.indexOf('vyra-state-sync.js'));
   // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
   // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
   assert.ok(html.indexOf('vyra-tom-widget.js?v=20260922-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20260922-1') < html.indexOf('approved-rankings.js?v=20260924-en-design'),
+    && html.indexOf('vyra-tom-widget.js?v=20260922-1') < html.indexOf('approved-rankings.js?v=20260924-pension'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 

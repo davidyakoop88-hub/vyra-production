@@ -21,6 +21,14 @@
   // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
   // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
   const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
+  // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
+  // podium ...) bygger i stället närmaste nya design, så inget gammalt val sparas i state eller molnet.
+  // Samma val som ranking-sixpack.js:s PENSION, som tar hand om widgetar som redan var sparade.
+  // Två tabeller, inte en: för Top Like är 'clean'/'center' LAYOUTVÄRDEN (likeTheme) som även de nya
+  // designernas presets sätter, inte designer — bara de fyra skinnen är pensionerade där.
+  const TOPLIKE_PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal' };
+  const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
   const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
 
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
@@ -236,6 +244,7 @@
     }),
 
     'toplike.theme': v => {
+      if (TOPLIKE_PENSION[v.theme]) v = { ...v, theme: TOPLIKE_PENSION[v.theme] };
       const w = {
         type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
         templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
@@ -254,6 +263,8 @@
       return w;
     },
     'ranking.theme': v => {
+      const pensionerad = v.type === 'templateTopPoints' && TOPPOINTS_PENSION[v.theme];
+      if (pensionerad) v = { ...v, theme: pensionerad };
       const w = {
         type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
         likeCount: 5, likeTheme: v.theme,
@@ -270,6 +281,7 @@
           width: meta && meta.width ? meta.width : 230, useLiveData: true, liveMetric: 'coins' });
         if (meta && meta.accent) w.accent = meta.accent;
       }
+      if (pensionerad) Object.assign(w, { topPointsDesign: v.theme, skin: v.theme });
       return w;
     },
 

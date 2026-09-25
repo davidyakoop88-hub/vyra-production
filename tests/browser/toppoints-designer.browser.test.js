@@ -44,11 +44,10 @@ function servera() {
 }
 
 const NYCKEL = d => 'catalog:ranking:templateTopPoints:' + d;
-const DESIGNER = ['clean', 'center', 'podium', 'neon'];
-// Samma varden som DESIGNS i toppoints-v2.js. EN EGENSKAP LASES RA: getPropertyValue pa en
-// CSS-variabel ger strangen som star dar (#c9a227), inte en losT farg — till skillnad fran
-// `color`, som webblasaren raknar om till rgb(). Darfor hex har och rgb i kontrollen nedan.
-const ACCENT = { clean: '#c9a227', center: '#c9a227', podium: '#ffc94d', neon: '#45e7ff' };
+// Top Points fyra egna designer PENSIONERADES 2026-09-24 (Davids beslut, docs/ranking-gallringen.md).
+// Filen matte tidigare deras berakade geometri; nu mater den att ingen av dem kommer tillbaka: en
+// widget ur en gammal nyckel ritas som sin ersattare, utan den gamla designens klasser och struktur.
+const ERSATTARE = { clean: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal', neon: 'voltage' };
 
 let browser, server, sida;
 const skip = hoppaOver();
@@ -75,85 +74,31 @@ test.after(async () => {
 });
 
 async function matUpp(design) {
-  const foto = await V.fotografera(sida, NYCKEL(design), ALERTS);
-  if (foto.fel) return { fel: foto.fel };
+  const byggd = await sida.evaluate(k => window.__visBygg(k), NYCKEL(design));
+  if (byggd.fel) return { fel: byggd.fel };
   return sida.evaluate(() => {
-    const el = document.querySelector('.vyra-toppoints-new');
+    const el = document.querySelector('.vyra-templatetoppoints[data-id]');
     if (!el) return { fanns: false };
-    const rad = el.querySelector('.toplike-row');
-    const chip = el.querySelector('.tp-chip');
-    const por = el.querySelector('.tp-portratt');
-    const cs = n => (n ? getComputedStyle(n) : null);
-    const r = cs(rad), c = cs(chip), p = cs(por);
-    const bredd = n => (n ? n.getBoundingClientRect().width : 0);
     return {
       fanns: true,
-      display: r.display,
-      bakgrund: r.backgroundImage,
-      accent: getComputedStyle(el).getPropertyValue('--tp-accent').trim(),
-      chipBredd: Math.round(bredd(chip)), chipHojd: Math.round(chip.getBoundingClientRect().height),
-      portrattBredd: Math.round(bredd(por)), radBredd: Math.round(bredd(rad)),
-      chipFarg: c.backgroundImage, stegFarg: (() => {
-        const s = el.querySelector('.tp-podium-steg');
-        return s ? getComputedStyle(s).backgroundImage : '';
-      })(),
-      emFarg: getComputedStyle(el.querySelector('em')).color,
-      steg: el.querySelectorAll('.tp-podium-steg').length,
-      glod: el.querySelectorAll('.tp-glod').length,
-      rader: el.querySelectorAll('.toplike-row').length
+      rk6: el.dataset.rk6 || null,
+      klasser: [...el.classList],
+      gammalStruktur: el.querySelectorAll('.tp-chip, .tp-portratt, .tp-podium-steg, .tp-glod').length,
+      rader: el.querySelectorAll('.toplike-row').length,
+      ramar: el.querySelectorAll('.toplike-row .rk6-ring').length
     };
   });
 }
 
-// FALLA 1. Raden maste vara var egen flexrad, inte clean-bars rutnat.
-test('raden ar flex och utan gradientbakgrund i alla fyra designerna', { skip, timeout: 180000 }, async () => {
-  for (const d of DESIGNER) {
-    const m = await matUpp(d);
-    assert.ok(!m.fel, `${d}: ${m.fel}`);
-    assert.ok(m.fanns, `${d}: widgeten renderades inte alls`);
-    assert.equal(m.display, 'flex', `${d}: raden ar ${m.display} — toplike-studio.css skin-clean-bar vann igen`);
-    assert.equal(m.bakgrund, 'none', `${d}: raden har ${m.bakgrund} — clean-bars gradient vann igen`);
+test('de fyra pensionerade Top Points-designerna ritas som sina ersattare — aldrig som de gamla', { skip, timeout: 180000 }, async () => {
+  for (const [gammal, ny] of Object.entries(ERSATTARE)) {
+    const m = await matUpp(gammal);
+    assert.ok(!m.fel, `${gammal}: ${m.fel}`);
+    assert.ok(m.fanns, `${gammal}: widgeten renderades inte alls`);
+    assert.equal(m.rk6, ny, `${gammal} ritades som ${m.rk6}, inte ${ny}`);
+    assert.deepEqual(m.klasser.filter(c => /^toppoints-|^vyra-toppoints-new$|^skin-/.test(c)), [],
+      `${gammal}: den gamla designens klasser sitter kvar: ${m.klasser.join(' ')}`);
+    assert.equal(m.gammalStruktur, 0, `${gammal}: den gamla designens noder (tp-chip/tp-podium-steg/tp-glod) ritas fortfarande`);
+    assert.equal(m.ramar, m.rader, `${gammal}: varje rad ska ha den nya designens ram`);
   }
-});
-
-// FALLA 1b. Brickan och portrattet far inte stracka sig over hela raden.
-test('brickan ar kvadratisk och smal, inte utstrackt till hela raden', { skip, timeout: 180000 }, async () => {
-  for (const d of DESIGNER) {
-    const m = await matUpp(d);
-    assert.ok(!m.fel && m.fanns, `${d}: ${m.fel || 'renderades inte'}`);
-    assert.ok(Math.abs(m.chipBredd - m.chipHojd) <= 2,
-      `${d}: brickan ar ${m.chipBredd}x${m.chipHojd} — width:100%!important fran toplike-studio.css vann`);
-    assert.ok(m.chipBredd < m.radBredd * 0.5,
-      `${d}: brickan ar ${m.chipBredd} px av radens ${m.radBredd} px`);
-    assert.ok(m.portrattBredd > 0 && m.portrattBredd < m.radBredd * 0.6,
-      `${d}: portrattet ar ${m.portrattBredd} px av radens ${m.radBredd} px`);
-  }
-});
-
-// FALLA 2. Designens farg ska galla aven nar widgeten skapas rakt ur fabriken.
-test('accenten kommer ur designen aven utan katalogknappens defaultvarden', { skip, timeout: 180000 }, async () => {
-  for (const d of DESIGNER) {
-    const m = await matUpp(d);
-    assert.ok(!m.fel && m.fanns, `${d}: ${m.fel || 'renderades inte'}`);
-    assert.equal(m.accent, ACCENT[d],
-      `${d}: --tp-accent ar ${m.accent}, vantade ${ACCENT[d]} — fabrikens generiska accent vann`);
-  }
-  // Och att fargen faktiskt NAR fram dit den syns, inte bara star i variabeln.
-  const neon = await matUpp('neon');
-  assert.match(neon.emFarg, /69, 231, 255/, `neons varde ar ${neon.emFarg}`);
-  const podium = await matUpp('podium');
-  assert.match(podium.stegFarg, /255, 201, 77/, `podiets trappsteg ar ${podium.stegFarg}`);
-});
-
-// Strukturen: podium har trappsteg, neon har glod, och ingen annan har det.
-test('podium har tre trappsteg och neon har glod per rad — ingen annan har nagot', { skip, timeout: 180000 }, async () => {
-  const m = {};
-  for (const d of DESIGNER) m[d] = await matUpp(d);
-  assert.equal(m.podium.steg, 3, `podium har ${m.podium.steg} trappsteg`);
-  assert.equal(m.neon.steg, 0);
-  assert.equal(m.clean.steg, 0);
-  assert.equal(m.center.steg, 0);
-  assert.equal(m.neon.glod, m.neon.rader, `neon har ${m.neon.glod} glod pa ${m.neon.rader} rader`);
-  assert.equal(m.podium.glod, 0);
-  assert.equal(m.clean.glod, 0);
 });

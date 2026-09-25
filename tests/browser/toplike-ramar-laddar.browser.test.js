@@ -81,7 +81,10 @@ test('varje ram i valjaren laddar sin konst i Top Like', { skip }, async () => {
         const w = window.VyraWidgets.create('catalog:toplike:clean');
         w.x = 20; w.y = 20; w.profileFrame = r;
         state.widgets.push(w); selected = null; render();
-        const konst = document.querySelector('.tl-frame-art');
+        // Sedan 2026-09-24 ritas varje Top Like i en av de sex ranking-sixpack-designerna, och en vald
+        // profilram laggs dar som .rk6-profilram (ranking-sixpack.js) i stallet for media.js:s
+        // .tl-frame-art. Samma fil, samma sokvag — det ar den provet vaktar.
+        const konst = document.querySelector('.tl-frame-art, .rk6-profilram');
         return konst ? konst.getAttribute('src') : null;
       }, ram);
 
@@ -92,7 +95,7 @@ test('varje ram i valjaren laddar sin konst i Top Like', { skip }, async () => {
       let laddad = false;
       try {
         await page.waitForFunction(() => {
-          const i = document.querySelector('.tl-frame-art');
+          const i = document.querySelector('.tl-frame-art, .rk6-profilram');
           return !!i && i.complete && i.naturalWidth > 0;
         }, null, { timeout: 5000, polling: 50 });
         laddad = true;

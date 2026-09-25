@@ -173,7 +173,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // generiska fabriksvagen (t.ex. widgetlank-kopiering) hade tystat tillbaka Celestial/Royal
   // Rose/etc till clean-bar/halo. BARA widget-factory.js andrades — studio.css och media.js
   // `version` ar oforandrade och behaller sina strangar.
-  assert.match(studio, /widget-factory\.js\?v=20260924-1/);
+  // Bumpad 2026-09-24 (-2): fabriken pekar om de pensionerade rankingdesignerna (Top Like
+  // Clean Bar/Soft Stack/Mini Podium/Side Rank, Top Points Lista/Tre i mitten/Podium/Neon) till
+  // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
+  assert.match(studio, /widget-factory\.js\?v=20260924-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);

@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 113,
+ "antal": 105,
  "senaste": {
-  "motiv": "Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points",
-  "nycklar": 18,
-  "filter": "voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose",
-  "tid": "2026-09-24T21:28:05.883Z"
+  "motiv": "Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken",
+  "nycklar": 3,
+  "filter": "prism-horizontal",
+  "tid": "2026-09-24T23:11:32.729Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -242,22 +242,6 @@
    "matt": "501x425",
    "fyllnad": 100
   },
-  "catalog:ranking:templateTopPoints:center": {
-   "matt": "300x175",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:clean": {
-   "matt": "300x185",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:neon": {
-   "matt": "300x205",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:podium": {
-   "matt": "300x190",
-   "fyllnad": 100
-  },
   "catalog:topgift:premium:neon": {
    "matt": "210x270",
    "fyllnad": 100
@@ -378,22 +362,6 @@
    "matt": "440x132",
    "fyllnad": 100
   },
-  "catalog:toplike:clean-bar": {
-   "matt": "250x270",
-   "fyllnad": 100
-  },
-  "catalog:toplike:mini-podium": {
-   "matt": "340x232",
-   "fyllnad": 100
-  },
-  "catalog:toplike:side-rank": {
-   "matt": "180x230",
-   "fyllnad": 100
-  },
-  "catalog:toplike:soft-stack": {
-   "matt": "250x237",
-   "fyllnad": 100
-  },
   "catalog:ranking:templateTopCoins:basic-v2": {
    "matt": "162x478",
    "fyllnad": 100
@@ -403,7 +371,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
@@ -427,7 +395,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
@@ -451,7 +419,7 @@
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {

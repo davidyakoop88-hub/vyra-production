@@ -175,3 +175,14 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 18 av 113 (filter: voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose) — catalog:ranking:templateTopCoins:basic-v2, catalog:ranking:templateTopCoins:celestial, catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopCoins:prism-vertical, catalog:ranking:templateTopCoins:royal-rose, catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:basic-v2, catalog:ranking:templateTopPoints:celestial, catalog:ranking:templateTopPoints:prism-horizontal, catalog:ranking:templateTopPoints:prism-vertical, catalog:ranking:templateTopPoints:royal-rose, catalog:ranking:templateTopPoints:voltage, catalog:toplike:basic-v2, catalog:toplike:celestial, catalog:toplike:prism-horizontal, catalog:toplike:prism-vertical, catalog:toplike:royal-rose, catalog:toplike:voltage
+
+## 2026-09-24 — 8 referenser borttagna
+
+- **Motiv:** Davids beslut: de gamla rankingdesignerna tas bort helt. Top Like Clean Bar, Soft Stack, Mini Podium och Side Rank, och Top Points Lista, Tre i mitten, Podium och Neon, finns inte längre i katalogen. Sparade widgetar ritas som närmaste nya design (ranking-sixpack.js PENSION).
+- **Nycklar:** 8 borttagna, 105 kvar — catalog:toplike:clean-bar, catalog:toplike:soft-stack, catalog:toplike:mini-podium, catalog:toplike:side-rank, catalog:ranking:templateTopPoints:clean, catalog:ranking:templateTopPoints:center, catalog:ranking:templateTopPoints:podium, catalog:ranking:templateTopPoints:neon
+
+## 2026-09-24 — 3 referenser skrivna
+
+- **Motiv:** Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 105 (filter: prism-horizontal) — catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopPoints:prism-horizontal, catalog:toplike:prism-horizontal

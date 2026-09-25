@@ -56,8 +56,32 @@
   const PODIUM = [3, 1, 0, 2, 4];
   const FAMILJER = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
 
+  // PENSIONERADE DESIGNER (2026-09-24, Davids beslut: "ta bort de gamla helt och hållet, att de
+  // inte kommer tillbaka"). Top Likes fyra (Clean Bar, Soft Stack, Mini Podium, Side Rank) och Top
+  // Points fyra (Lista, Tre i mitten, Podium, Neon) är borta ur katalogen och designväljarna. En
+  // SPARAD widget med en av dem pekas här om till den nya design som ligger närmast i form — listor
+  // blir Voltage, podier blir Prism horisontal — samma skyddsnät som topgift-pension.js: widgeten
+  // muteras inte, renderaren får designen, och streamerns sparade värde står orört.
+  //
+  // Top Like och Top Points ritas därmed ALLTID som en av de sex. Det gäller även en widget utan
+  // design alls, eller med något av de äldre skinn som redan tvingades till Clean Bar — de hade
+  // annars kommit tillbaka precis som det gamla. Top Coins Halo/Signal Orbit berörs inte.
+  const PENSION = Object.freeze({
+    'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal',
+    clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal'
+  });
+  const FORVAL = 'voltage';
+
   function designFor(w) {
     if (!w || !FAMILJER.includes(w.type)) return null;
+    if (w.type !== 'templateTopCoins') {
+      // Egna fält först: toppoints-v2.js designId() faller tillbaka på 'clean' när inget matchar,
+      // och det svaret säger inget om vad widgeten faktiskt bär.
+      const falt = w.type === 'templateTopLike' ? [w.skin] : [w.topPointsDesign, w.skin, w.likeTheme];
+      for (const f of falt) if (DESIGNS[f]) return f;
+      for (const f of falt) if (PENSION[f]) return PENSION[f];
+      return FORVAL;
+    }
     // Samma uppslag som familjen själv gör — Top Points kan bära designen i topPointsDesign, skin
     // ELLER likeTheme (katalognyckeln sätter bara det sista), se toppoints-v2.js designId().
     const id = w.type === 'templateTopLike' ? w.skin
@@ -86,6 +110,7 @@
     const foto = esc((typeof VyraSafe !== 'undefined' && VyraSafe.url) ? VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg') : (w.profileImage || 'assets/images/test-profile.svg'));
     const ikon = IKONER[w.type];
     const n = antal(w);
+    const ram = profilram(w);
     // Panelens reglage (Bilder/Namn/Värde) och dra-text-förskjutningarna, precis som media.js:s
     // vyraTopLike ritar dem — en design får inte tysta ett reglage som finns i panelen.
     const dold = v => v === false ? 'display:none!important;' : '';
@@ -94,21 +119,38 @@
     const namnStil = dold(w.showDataName) + flytt(w.nameOffsetX, w.nameOffsetY);
     const vardeStil = dold(w.showDataValue) + flytt(w.valueOffsetX, w.valueOffsetY);
     let html = '';
+    // "Siffror matchar ramarna" (David 2026-09-08): med en profilram vald tar rangbrickan och glöden
+    // ramens accent, uppmätt ur PNG:n (toplike-studio.js vyraFrameAccent), i stället för designens.
+    const ramAccent = ram && typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;
     for (let i = 0; i < n; i++) {
-      const [c, c2] = d.tiers[i % d.tiers.length];
+      const [c, c2] = ramAccent ? [ramAccent, ramAccent] : d.tiers[i % d.tiers.length];
       const person = demo[i] || ['', ''];
       const namn = nolla ? '' : esc(person[0]);
       const varde = nolla ? '0' : esc(person[1] || '0');
       const krona = (id === 'voltage' && i === 0) || (id === 'prism-horizontal' && i < 3) ? `<i class="rk6-krona">${KRONA}</i>` : '';
       const ordning = d.riktning === 'podium' ? PODIUM.indexOf(i) : i;
-      html += `<div class="toplike-row rank-${i + 1}" style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning};--rk6-fordrojning:${(ordning < 0 ? i : ordning) * 0.12}s">`
+      html += `<div class="toplike-row rank-${i + 1}" style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning}">`
         + `<i class="rk6-av"${avStil ? ` style="${avStil}"` : ''}><i class="rk6-ring"></i><i class="rk6-karna"><i class="rk6-glod"></i>`
-        + `<img src="${foto}" alt="">${krona}<b class="rk6-rang"><i>${i + 1}</i></b></i></i>`
+        + `<img src="${foto}" alt="">${ram}${krona}<b class="rk6-rang"><i>${i + 1}</i></b></i></i>`
         + `<span class="rk6-namn"${namnStil ? ` style="${namnStil}"` : ''}><strong>${namn}</strong><small></small><i class="rk6-led"></i></span>`
         + `<em${vardeStil ? ` style="${vardeStil}"` : ''}><i class="rk6-ikon">${ikon}</i> ${varde}</em>`
         + '</div>';
     }
     return html;
+  }
+
+  // PROFILRAMEN ERSÄTTER DESIGNENS EGEN (Davids beslut 2026-09-24). Top Likes ramväljare (53 ramar i
+  // toplike-studio.js) står kvar; väljer streamern en ram läggs den runt fotot i stället för designens
+  // metallring. Samma fil och samma uppmätta geometri som media.js:s tl-frame-art: `fit` är ramens
+  // genomskinliga öppning som andel av bildens bredd, så konsten skalas 1/fit för att öppningen ska
+  // hamna PÅ fotots kant, och dx/dy flyttar konstens mitt (mitt = fotomitt − dx·bredd).
+  function profilram(w) {
+    const id = String(w.profileFrame || '');
+    if (!id || id === 'none' || !/^[a-z0-9-]+$/.test(id)) return '';
+    const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(id) : { fit: 0.62, dx: 0, dy: 0 };
+    const fil = String((window.VYRA_FRAME_FILES || {})[id] || id + '.png').replace(/[^a-z0-9._-]/gi, '');
+    return `<img class="rk6-profilram pro-frame-art" src="assets/images/profile-frames/${fil}" alt="" `
+      + `style="--ram-fit:${g.fit};--ram-dx:${g.dx};--ram-dy:${g.dy}">`;
   }
 
   // Byter rotens innehåll och designklasser, men behåller allt annat i öppningstaggen.
@@ -117,6 +159,9 @@
     if (!m) return html;
     let open = m[1];
     const handtag = (/<span class="resize-handle"[\s\S]*?<\/span>/.exec(m[2]) || [''])[0];
+    // Rubriken följer med från kedjan: den bär Rubrik-reglaget (display) och dra-förskjutningen
+    // (transform) som media.js ritar, och vyra-dra-text.js märker den som dragbar textdel.
+    const rubrik = (/^\s*<h3\b[\s\S]*?<\/h3>/.exec(m[2]) || [''])[0];
     open = open.replace(/class="([^"]*)"/, (_, cls) => {
       // Familjernas egna design-/skinnklasser bär var sin hög !important-regler
       // (toplike-studio.css ~180 st, topcoins-v2.css, toppoints-v2.css) som byggde om raderna till
@@ -125,9 +170,15 @@
       return `class="${kvar.join(' ')} rk6 rk6-${id}"`;
     });
     open = open.replace(/^(\s*<div\b)/, `$1 data-rk6="${id}"`);
+    if (profilram(w)) {
+      const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(String(w.profileFrame)) : { fit: 0.62 };
+      const acc = typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;
+      open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-egen-ram"')
+        .replace(/style="/, `style="--ram-fit:${g.fit};${acc && /^[a-z0-9(),.% ]+$/i.test(acc) ? `--ram-accent:${acc};` : ''}`);
+    }
     const tr = id === 'celestial' || id === 'royal-rose' ? '<i class="rk6-trad" aria-hidden="true"></i>' : '';
     const stoft = id === 'royal-rose' ? '<i class="rk6-stoft" aria-hidden="true"></i>' : '';
-    return `${open}${stoft}<div class="rk6-lista">${tr}${rader(w, id)}</div>${handtag}</div>`;
+    return `${open}${stoft}${rubrik}<div class="rk6-lista">${tr}${rader(w, id)}</div>${handtag}</div>`;
   }
 
   // ---- Katalogen: en grupp per design, med Top Like / Top Coins / Top Points under ----
@@ -148,6 +199,12 @@
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
     catalog.querySelectorAll('section[data-rk6-katalog]').forEach((el, i) => { if (i) el.remove() });
+    // media.js:s "VYRA TOP RANKING"-sektion byggs varje bind, men topcoins-v2.js/toppoints-v2.js tar
+    // bort alla dess knappar — kvar stod en tom rubrik. Döljs (tas inte bort: media.js bygger om den
+    // så fort markören saknas).
+    catalog.querySelectorAll('section[data-extra-rankings]').forEach(el => {
+      if (!el.querySelector('button')) el.hidden = true;
+    });
     if (catalog.querySelector('section[data-rk6-katalog]')) return;
     const section = document.createElement('section');
     section.dataset.rk6Katalog = '1';
@@ -186,5 +243,5 @@
   if (document.readyState === 'complete') install();
   else addEventListener('load', install, { once: true });
 
-  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, designFor, render: omsluten, katalog });
+  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog });
 })();

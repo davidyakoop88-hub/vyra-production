@@ -129,8 +129,56 @@ test('katalogen: en grupp per design, med Top Like / Top Coins / Top Points unde
 });
 
 test('de sex listas inte langre i familjernas egna sektioner — bara i den grupperade', () => {
-  for (const fil of ['approved-rankings.js', 'topcoins-v2.js', 'toppoints-v2.js']) {
+  for (const fil of ['topcoins-v2.js', 'toppoints-v2.js']) {
     assert.match(fs.readFileSync(fil, 'utf8'), /!SIXPACK\.has\(id\)/, `${fil} filtrerar inte bort sixpack ur sin katalogsektion`);
+  }
+  // Top Like har ingen egen sektion alls langre (de fyra ursprungliga ar pensionerade).
+  assert.doesNotMatch(fs.readFileSync('approved-rankings.js', 'utf8'), /data-top-like-theme=/);
+});
+
+// PENSIONERINGEN (2026-09-24, Davids beslut: "ta bort de gamla helt och hallet, att de inte kommer
+// tillbaka"). Top Likes fyra och Top Points fyra ursprungliga designer ritas aldrig mer — en sparad
+// widget med en av dem, eller utan design alls, ritas som narmaste nya.
+test('pensionerade och saknade designer ritas som narmaste nya — aldrig som den gamla', () => {
+  const fall = [
+    [{ type: 'templateTopLike', skin: 'clean-bar' }, 'voltage'],
+    [{ type: 'templateTopLike', skin: 'soft-stack' }, 'voltage'],
+    [{ type: 'templateTopLike', skin: 'side-rank' }, 'voltage'],
+    [{ type: 'templateTopLike', skin: 'mini-podium' }, 'prism-horizontal'],
+    [{ type: 'templateTopLike' }, 'voltage'],
+    [{ type: 'templateTopLike', skin: 'royal-gold' }, 'voltage'],
+    [{ type: 'templateTopPoints', topPointsDesign: 'clean' }, 'voltage'],
+    [{ type: 'templateTopPoints', topPointsDesign: 'neon' }, 'voltage'],
+    [{ type: 'templateTopPoints', topPointsDesign: 'center' }, 'prism-horizontal'],
+    [{ type: 'templateTopPoints', likeTheme: 'podium' }, 'prism-horizontal'],
+    [{ type: 'templateTopPoints' }, 'voltage'],
+    [{ type: 'templateTopLike', skin: 'celestial' }, 'celestial'],
+    [{ type: 'templateTopPoints', topPointsDesign: 'royal-rose' }, 'royal-rose']
+  ];
+  fall.forEach(([w, vantat], i) => {
+    const el = nod({ id: 'pens-' + i, x: 0, y: 0, width: 300, likeCount: 5, ...w });
+    assert.equal(el.dataset.rk6, vantat, `${JSON.stringify(w)} ritades som ${el.dataset.rk6}, inte ${vantat}`);
+  });
+});
+
+test('Top Coins Halo/Signal Orbit berors inte av pensioneringen', () => {
+  const el = nod({ id: 'tc-halo', type: 'templateTopCoins', x: 0, y: 0, width: 230, likeCount: 1, topCoinsDesign: 'halo' });
+  assert.equal(el.dataset.rk6, undefined);
+  assert.ok(el.classList.contains('topcoins-halo'));
+});
+
+test('fabriken skapar aldrig en ny widget med en pensionerad design', () => {
+  const h = sixpackRigg();
+  const par = [
+    ['catalog:toplike:clean-bar', 'skin', 'voltage'], ['catalog:toplike:mini-podium', 'skin', 'prism-horizontal'],
+    ['catalog:ranking:templateTopPoints:clean', 'topPointsDesign', 'voltage'],
+    ['catalog:ranking:templateTopPoints:podium', 'topPointsDesign', 'prism-horizontal']
+  ];
+  if (!h.window.VyraWidgets) h.load('widget-factory.js');
+  assert.ok(h.window.VyraWidgets, 'fabriken laddades inte — provet mater ingenting');
+  for (const [nyckel, falt, vantat] of par) {
+    const w = h.window.VyraWidgets.create(nyckel);
+    assert.equal(w[falt], vantat, `${nyckel} sparade ${falt}=${w[falt]}`);
   }
 });
 
