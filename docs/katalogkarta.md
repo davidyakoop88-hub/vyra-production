@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `61b3d45`
+Commit: `ab3a557`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -27,9 +27,9 @@ proveniensen saknas: datumet bredvid ar anda matt.
 |---|---|
 | Kort totalt | **124** |
 | Sektioner | 20 |
-| Med katalognyckel | 115 / 124  ⚠️ |
-| Med shadow DOM-miniatyr | 115 / 124  ⚠️ |
-| Ritar sin design | 115 / 124  ⚠️ |
+| Med katalognyckel | 124 / 124 |
+| Med shadow DOM-miniatyr | 124 / 124 |
+| Ritar sin design | 124 / 124 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -43,7 +43,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 0/9 ⚠️ | 0/9 ⚠️ | 0/9 ⚠️ | — | — |
+| FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 9/9 | 9/9 | 9/9 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
@@ -106,15 +106,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Crown Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Crown Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Crown Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Heart Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Heart Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Heart Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Diamond Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Diamond Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
-| Diamond Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Crown Orbit | `catalog:socialgoal:followers:crown-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 
 ### EGET INNEHÅLL
 
