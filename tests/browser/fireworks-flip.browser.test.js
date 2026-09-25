@@ -82,3 +82,18 @@ test('production host cycles single forms independently per widget and resets on
   assert.equal(result.naturalCanvases,true);assert.equal(result.listeners,0);
  }finally{await page.close()}
 });
+
+test('mounted fireworks preserve their aspect ratio inside padded widget containers',{skip},async()=>{
+ const page=await fixture();try{
+  const dimensions=await page.evaluate(()=>{
+   const out=[];
+   for(const theme of ['royal','ice','rose','comet','supernova'])for(const width of [360,540,960]){
+    const group=document.createElement('div');group.style.cssText=`position:relative;box-sizing:border-box;width:${width}px;height:${width/1.2}px;padding:8px`;document.body.append(group);
+    VyraSupernova.mount(group,{id:`${theme}-${width}`,fwTheme:theme},1,'https://fireworks.test/gift.svg','https://fireworks.test/profile.svg');
+    const rect=group.querySelector('canvas').getBoundingClientRect();out.push({theme,width,canvasWidth:rect.width,canvasHeight:rect.height});VyraSupernova.dispose(group);group.remove();
+   }
+   return out;
+  });
+  for(const size of dimensions){assert.ok(size.canvasWidth>0);assert.ok(Math.abs(size.canvasWidth/size.canvasHeight-1.2)<.001,JSON.stringify(size));}
+ }finally{await page.close()}
+});
