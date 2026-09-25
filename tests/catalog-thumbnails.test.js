@@ -52,6 +52,8 @@ function katalogMedMiniatyrer({ classics = false, jars = false } = {}) {
         return (...args) => { if (key in counts) counts[key]++; };
       }, set(target, key, value) { target[key] = value; return true; } });
     };
+    h.load('vfx-rng.js');
+    h.load('gift-natural-engine.js');
     h.load('gift-classics-engine.js');
     h.load('gift-supernova-engine.js');
   }
