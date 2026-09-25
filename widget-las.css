@@ -1,0 +1,22 @@
+/* LÅS WIDGET (widget-las.js). Lagerradens lås-knapp och den låsta widgetens utseende i editorn.
+ * Overlayn ser aldrig klassen widget-last, så inget här når OBS. */
+
+/* Lagerraden får en kolumn till: namn | lås | Synlig | ✕. studio.css sätter tre kolumner med
+   !important på `.live-layer-list article`; den här regeln är mer specifik. */
+.live-layer-panel .live-layer-list article:has(>.layer-lock){grid-template-columns:minmax(0,1fr) 26px 58px 26px!important}
+.live-layer-list .layer-lock{
+  width:26px!important;height:100%;padding:0!important;display:flex!important;align-items:center;justify-content:center;
+  color:#b9a6c9!important;background:#140b1a!important;border:0!important;border-left:1px solid #2e1a38!important;cursor:pointer;
+}
+.live-layer-list .layer-lock svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.live-layer-list .layer-lock:hover{color:#fff!important;background:#231330!important}
+.live-layer-list .layer-lock.is-last{color:#ffd166!important;background:#221a0b!important}
+
+/* Den låsta widgeten på duken: handtagen döljs (de gör ändå ingenting), och markören säger att den
+   inte går att dra. Inga pseudoelement på widgetroten — flera widgetar använder egna ::before/::after. */
+.canvas .widget.widget-last{cursor:not-allowed!important}
+.canvas .widget.widget-last .resize-handle,
+.canvas .widget.widget-last [data-vyra-handle],
+.canvas .widget.widget-last .gift-resize-handle,
+.canvas .widget.widget-last .vyra-rot-handle{display:none!important}
+.canvas .widget.widget-last.selected{outline:2px dashed #ffd166!important;outline-offset:3px}

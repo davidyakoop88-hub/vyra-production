@@ -22,6 +22,7 @@
     "diamanter-vid-gransen.browser.test.js": 1,
     "dra-textdelar.browser.test.js": 39,
     "editor-ui-placering.browser.test.js": 18,
+    "widget-las.browser.test.js": 16,
     "emoji-knapp.browser.test.js": 46,
     "en-viewer-per-obs-kalla.browser.test.js": 14,
     "fan-fas-loyalty.browser.test.js": 30,
