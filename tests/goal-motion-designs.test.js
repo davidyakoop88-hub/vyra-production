@@ -1,0 +1,8 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const ROOT=path.join(__dirname,'..'),js=fs.readFileSync(path.join(ROOT,'goal-motion.js'),'utf8'),css=fs.readFileSync(path.join(ROOT,'goal-motion.css'),'utf8'),media=fs.readFileSync(path.join(ROOT,'media.js'),'utf8'),factory=fs.readFileSync(path.join(ROOT,'widget-factory.js'),'utf8');
+const designs=[['crown','followers'],['heart','likes'],['diamond','diamonds']].flatMap(([family,kind])=>[['orbit','circle'],['rail','landscape'],['tower','portrait']].map(([suffix,orientation])=>({id:`${family}-${suffix}`,kind,orientation})));
+test('katalogen erbjuder nio unika goal-designer i tre format',()=>{for(const d of designs){assert.match(js,new RegExp(`'${d.id}'.*kind:'${d.kind}'.*orientation:'${d.orientation}'`));assert.match(factory,new RegExp(d.id))}assert.match(js,/9 RÖRLIGA DESIGNER/)});
+test('alla nio transparenta designassets och tre mittsymboler finns',()=>{for(const family of ['follower','like','diamond'])for(const shape of ['circle','horizontal','vertical'])assert.ok(fs.existsSync(path.join(ROOT,'assets','goal-motion',`${shape}-${family}.png`)));for(const family of ['follower','like','diamond'])assert.ok(fs.existsSync(path.join(ROOT,'assets','goal-motion',`center-${family}.png`)))});
+test('goal motion laddas efter premium-renderaren',()=>{assert.match(media,/premium-final\.js[^\]]+goal-motion\.js/);assert.match(media,/goal-motion\.css/)});
+test('stora siffror är fristående och mittsymbolerna har egna pulser',()=>{assert.doesNotMatch(css,/goal-motion-copy[^}]*overflow\s*:\s*hidden/);assert.match(css,/gm-heart/);assert.match(css,/gm-crown/);assert.match(css,/gm-diamond/);assert.doesNotMatch(js,/goalLatestName|VYRA/)});
