@@ -439,9 +439,9 @@
     'socialgoal': parts => {
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
-      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
+      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column','crown-orbit','crown-rail','crown-tower','heart-orbit','heart-rail','heart-tower','diamond-orbit','diamond-rail','diamond-tower']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
       if (!(frameModels.has(rawModel) || Number.isFinite(model))) throw new Error('catalog:socialgoal kräver en giltig modell');
-      if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
+      if (!['portrait','landscape','circle'].includes(orientation)) throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape, circle');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
     'fanlevel': parts => {
