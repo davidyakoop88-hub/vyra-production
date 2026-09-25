@@ -342,7 +342,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // gamla CSS:en — och de borttagna designerna hade levt kvar hos just de som redan varit inne.
   // Bumpad 2026-09-25: goal-motion.js/.css läggs sist i samma sekventiella bunt och ersätter
   // den tidigare social-goal-renderaren. En cachad klient måste hämta båda nya filerna tillsammans.
-  assert.match(media, /const version='20260925-goal-motion-1'/);
+  assert.match(media, /const version='20260925-goal-motion-3'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
