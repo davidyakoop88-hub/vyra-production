@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `1a37902`
+Commit: `634f426`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **121** |
+| Kort totalt | **124** |
 | Sektioner | 20 |
-| Med katalognyckel | 121 / 121 |
-| Med shadow DOM-miniatyr | 121 / 121 |
-| Ritar sin design | 121 / 121 |
+| Med katalognyckel | 115 / 124  ⚠️ |
+| Med shadow DOM-miniatyr | 115 / 124  ⚠️ |
+| Ritar sin design | 115 / 124  ⚠️ |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -43,6 +43,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 0/9 ⚠️ | 0/9 ⚠️ | 0/9 ⚠️ | — | — |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
@@ -55,7 +56,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
-| FOLLOWERS, LIKE & DIAMOND GOALS · 6 NYA DESIGNER | 6 | 6/6 | 6/6 | 6/6 | 2026-09-19 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
@@ -101,6 +101,20 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Roséguld | `catalog:giftfireworks:rose` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Kometspiral | `catalog:giftfireworks:comet` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+
+### FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Crown Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Crown Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Crown Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Heart Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Heart Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Heart Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Diamond Orbit | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Diamond Rail | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
+| Diamond Tower | — ⚠️ | — ⚠️ | — ⚠️ | — | — |
 
 ### EGET INNEHÅLL
 
@@ -221,17 +235,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Follower Spotlight | `catalog:followeralert` | ✓ | ✓ | 2026-08-03 | — |
-
-### FOLLOWERS, LIKE & DIAMOND GOALS · 6 NYA DESIGNER
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Follower Goal · Pulse Rail | `catalog:socialgoal:followers:pulse-rail:landscape` | ✓ | ✓ | 2026-09-19 | — |
-| Follower Goal · Pulse Tower | `catalog:socialgoal:followers:pulse-tower:portrait` | ✓ | ✓ | 2026-09-19 | — |
-| Like Goal · Signal Ribbon | `catalog:socialgoal:likes:signal-ribbon:landscape` | ✓ | ✓ | 2026-09-19 | — |
-| Like Goal · Heart Column | `catalog:socialgoal:likes:heart-column:portrait` | ✓ | ✓ | 2026-09-19 | — |
-| Diamond Goal · Prism Core | `catalog:socialgoal:diamonds:prism-core:landscape` | ✓ | ✓ | 2026-09-19 | — |
-| Diamond Goal · Prism Spine | `catalog:socialgoal:diamonds:prism-spine:portrait` | ✓ | ✓ | 2026-09-19 | — |
 
 ### GIFTER LEVEL UP · VARJE MODELL SEPARAT
 
