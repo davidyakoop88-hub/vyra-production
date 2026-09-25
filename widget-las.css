@@ -1,14 +1,22 @@
 /* LÅS WIDGET (widget-las.js). Lagerradens lås-knapp och den låsta widgetens utseende i editorn.
  * Overlayn ser aldrig klassen widget-last, så inget här når OBS. */
 
-/* Lagerraden får en kolumn till: namn | lås | Synlig | ✕. studio.css sätter tre kolumner med
-   !important på `.live-layer-list article`; den här regeln är mer specifik. */
-.live-layer-panel .live-layer-list article:has(>.layer-lock){grid-template-columns:minmax(0,1fr) 26px 58px 26px!important}
+/* Lagerraden: namn | lås | öga | ta bort — tre ikoner i samma storlek, ingen text mellan dem.
+   studio.css sätter tre kolumner med !important på `.live-layer-list article`; den här regeln är
+   mer specifik. Ögat var 58 px brett för texten "● Synlig"; som ikon räcker 26 px, så raden
+   blir smalare än förut och namnet får mer plats. */
+.live-layer-panel .live-layer-list article:has(>.layer-lock){grid-template-columns:minmax(0,1fr) 26px 26px 26px!important}
+.live-layer-list .layer-ikon{
+  width:26px!important;height:100%;padding:0!important;display:flex!important;align-items:center;justify-content:center;
+  font-size:0!important;cursor:pointer;
+}
+.live-layer-list .layer-ikon svg,
+.live-layer-list .layer-lock svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.live-layer-list .is-hidden .layer-eye.layer-ikon{color:#e0a8b8!important;opacity:.85}
 .live-layer-list .layer-lock{
   width:26px!important;height:100%;padding:0!important;display:flex!important;align-items:center;justify-content:center;
   color:#b9a6c9!important;background:#140b1a!important;border:0!important;border-left:1px solid #2e1a38!important;cursor:pointer;
 }
-.live-layer-list .layer-lock svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .live-layer-list .layer-lock:hover{color:#fff!important;background:#231330!important}
 .live-layer-list .layer-lock.is-last{color:#ffd166!important;background:#221a0b!important}
 

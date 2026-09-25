@@ -89,7 +89,7 @@ async function dra(page, id, dx, dy) {
   await page.waitForTimeout(200);
 }
 
-test('lås-knappen sitter mellan namnet och Synlig, och raden blir inte bredare', { skip }, async () => {
+test('lagerraden är namn + tre ikoner (lås, öga, ta bort), och raden blir inte bredare', { skip }, async () => {
   const page = await editorn();
   try {
     const m = await page.evaluate(() => {
@@ -99,12 +99,38 @@ test('lås-knappen sitter mellan namnet och Synlig, och raden blir inte bredare'
       const rects = [...rad.children].map(n => n.getBoundingClientRect());
       const overlapp = rects.some((a, i) => rects.slice(i + 1).some(b => a.right > b.left + 0.5 && b.right > a.left + 0.5));
       return { barn, ryms: r.right <= lista.right + 0.5, overlapp,
-        titel: rad.querySelector('.layer-lock').title };
+        titel: rad.querySelector('.layer-lock').title,
+        textIKnappar: [...rad.querySelectorAll('.layer-lock,.layer-eye,.layer-delete')].map(n => n.innerText.trim()).join(''),
+        bredder: [...rad.querySelectorAll('.layer-lock,.layer-eye,.layer-delete')].map(n => Math.round(n.getBoundingClientRect().width)) };
     });
     assert.deepEqual(m.barn, ['layer-select', 'layer-lock', 'layer-eye', 'layer-delete']);
     assert.ok(m.ryms, 'raden ska rymmas i listan');
     assert.equal(m.overlapp, false, 'knapparna får inte överlappa');
     assert.equal(m.titel, 'Lås position och storlek');
+    assert.equal(m.textIKnappar, '', 'bara ikoner — ingen text mellan symbolerna');
+    assert.equal(new Set(m.bredder).size, 1, `ikonerna ska vara lika breda: ${m.bredder}`);
+  } finally { await page.close(); }
+});
+
+test('ögat är öppet när widgeten syns och stängt när den är dold, och klicket döljer fortfarande', { skip }, async () => {
+  const page = await editorn();
+  try {
+    const oga = () => page.evaluate(() => {
+      const b = document.querySelector('.live-layer-list .layer-eye');
+      return { hidden: !!state.widgets[0].hidden, stangt: !b.querySelector('circle'), titel: b.title };
+    });
+    const fore = await oga();
+    assert.equal(fore.hidden, false);
+    assert.equal(fore.stangt, false, 'synlig widget = öppet öga');
+    assert.match(fore.titel, /^Synlig/);
+    await page.click('.live-layer-list .layer-eye');
+    await page.waitForFunction(() => state.widgets[0].hidden === true, null, { timeout: 5000 });
+    const efter = await oga();
+    assert.equal(efter.stangt, true, 'dold widget = stängt öga');
+    assert.match(efter.titel, /^Dold/);
+    await page.click('.live-layer-list .layer-eye');
+    await page.waitForFunction(() => !state.widgets[0].hidden, null, { timeout: 5000 });
+    assert.equal((await oga()).stangt, false);
   } finally { await page.close(); }
 });
 

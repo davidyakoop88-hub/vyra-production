@@ -63,6 +63,47 @@
   const IKON_LAST = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const IKON_OPPEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>';
 
+  // Ögat (öppet = synlig, stängt = dold) och krysset blir ikoner i samma storlek som låset (Davids bild 2026-09-25: "en symbol,
+  // sen text, sen en symbol blir inte bra"). Bara INNEHÅLLET byts — media.js:s knappar och deras
+  // onclick står kvar, så dölj/visa och ta bort fungerar precis som förut. Texten flyttar till
+  // title/aria-label så den finns kvar för skärmläsare och som tips vid hovring.
+  const IKON_OGA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const IKON_OGA_DOLD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10s3.6 5 10 5 10-5 10-5"/><path d="M5 13.4l-1.6 2.1M9.2 14.8l-.7 2.5M14.8 14.8l.7 2.5M19 13.4l1.6 2.1"/></svg>';
+  const IKON_BORT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>';
+
+  function ikonKnappar(rad, w) {
+    const oga = rad.querySelector(':scope>.layer-eye');
+    if (oga) {
+      const dold = !!w.hidden;
+      oga.innerHTML = dold ? IKON_OGA_DOLD : IKON_OGA;
+      oga.title = dold ? 'Dold för publiken — klicka för att visa' : 'Synlig för publiken — klicka för att dölja';
+      oga.setAttribute('aria-label', oga.title);
+      oga.setAttribute('aria-pressed', dold ? 'false' : 'true');
+      oga.classList.add('layer-ikon');
+      // media.js:s onclick håller widgeten i en closure från när raden byggdes. En projektion
+      // (docs/tech-debt.md §16) byter ut widgetobjekten, och då växlar klicket `hidden` på ett
+      // objekt som inte längre finns i state: ögat står still. Samma beteende, men widgeten slås
+      // upp på id i klickögonblicket — precis som låsknappen.
+      oga.onclick = e => {
+        e.stopPropagation();
+        const nu = widgetFor(rad.dataset.layerId);
+        if (!nu) return;
+        nu.hidden = !nu.hidden;
+        if (typeof save === 'function') save();
+        if (typeof render === 'function') render();
+        const namn = typeof liveLayerName === 'function' ? liveLayerName(nu) : 'Widgeten';
+        if (typeof toast === 'function') toast(nu.hidden ? namn + ' är dold för publiken men kvar i lager' : namn + ' är synlig för publiken');
+      };
+    }
+    const bort = rad.querySelector(':scope>.layer-delete');
+    if (bort) {
+      bort.innerHTML = IKON_BORT;
+      bort.title = 'Ta bort permanent';
+      bort.setAttribute('aria-label', bort.title);
+      bort.classList.add('layer-ikon');
+    }
+  }
+
   function lasKnappar() {
     document.querySelectorAll('.live-layer-list article[data-layer-id]').forEach(rad => {
       const w = widgetFor(rad.dataset.layerId);
@@ -82,6 +123,7 @@
       knapp.setAttribute('aria-label', knapp.title);
       knapp.setAttribute('aria-pressed', last ? 'true' : 'false');
       rad.classList.toggle('is-last', last);
+      ikonKnappar(rad, w);
       knapp.onclick = e => {
         e.stopPropagation();
         const nu = widgetFor(rad.dataset.layerId);
