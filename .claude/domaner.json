@@ -39,6 +39,8 @@
         "index.html",
         "vyra-zoom.js",
         "vyra-snapp.js",
+        "widget-las.js",
+        "widget-las.css",
         "widget-grans.js",
         "vyra-historik.js",
         "vyra-proportioner.js",
@@ -48,6 +50,8 @@
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
+        "tests/widget-las.test.js",
+        "tests/browser/widget-las.browser.test.js",
         "tests/tomma-tillstand.test.js",
         "tests/handtag-lackage.test.js",
         "tests/browser/widget-handtag.browser.test.js",
