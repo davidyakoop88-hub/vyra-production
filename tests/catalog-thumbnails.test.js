@@ -59,6 +59,7 @@ function katalogMedMiniatyrer({ classics = false, jars = false } = {}) {
   }
   h.load('gift-fireworks.js');
   h.load('premium-final.js');
+  h.load('goal-motion.js');
   if (jars) {
     h.window.VyraGiftJarTextures = { load: () => new Promise(() => {}) };
     h.load('gift-jar-animals.js');
