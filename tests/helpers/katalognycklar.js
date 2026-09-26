@@ -92,8 +92,12 @@ const UTAN_REFERENS = {
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
 };
 
+// PREFIX BARA FÖR POSTER SOM SLUTAR PÅ ':'. Övriga poster gäller EXAKT den nyckeln. Uppmätt
+// 2026-09-26: 'catalog:likefountain' (den klassiska fontänen, alltid i rörelse) matchade som prefix
+// även 'catalog:likefountain:portal' — en deterministisk förhandsbild med egen REGI — så det nya
+// kortet fotograferades aldrig och pixelvakten var grön av ingenting.
 const utanReferens = nyckel =>
-  Object.keys(UTAN_REFERENS).some(p => nyckel === p || nyckel.startsWith(p));
+  Object.keys(UTAN_REFERENS).some(p => nyckel === p || (p.endsWith(':') && nyckel.startsWith(p)));
 
 // EGEN REGI FÖR DE WIDGETAR SOM INTE GÅR ATT FRYSA UTIFRÅN.
 //

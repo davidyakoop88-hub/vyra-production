@@ -424,7 +424,7 @@
       document.querySelectorAll('.like-fountain-portal').forEach(function (b) {
         b.classList.remove('lfp-live'); b.classList.add('lfp-still-vald');
         var sv = b.querySelector('.lfp-still'); if (sv) sv.style.opacity = '';
-        var cv = b.querySelector('canvas.lfp-duk'); if (cv) { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+        var cv = b.querySelector('canvas.lfp-duk'); if (cv) { var cx2 = cv.getContext('2d'); cx2.setTransform(1, 0, 0, 1, 0, 0); cx2.clearRect(0, 0, cv.width, cv.height); }
         n++;
       });
       return n;
