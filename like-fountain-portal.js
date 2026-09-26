@@ -319,10 +319,18 @@
   var cssId = function (s) { return String(s).replace(/["\\]/g, '\\$&'); };
 
   // ---- KOPPLINGEN: samma ström som Top Like ----------------------------------------------------
+  // DEN KLASSISKA FONTÄNEN OCKSÅ. Davids regel 2026-09-26: "Top Like, Like Fountain och Like Goal
+  // går på likes". Top Like (live-leaderboard.js) och Like Goal (server/goal-runtime.js) gjorde
+  // det redan; den klassiska fontänen rörde sig bara via en Action. Nu får den samma like-paket,
+  // genom sin egen trigger (media.js triggerLikeFountainPop), märkt __auto.
+  var klassiska = function () { try { return state.widgets.filter(function (w) { return w.type === 'templateLikeFountain' && !arPortal(w); }); } catch (x) { return []; } };
   root.addEventListener('vyra-live-event', function (ev) {
     var e = ev && ev.detail; if (!arFarskLike(e)) return;
     var antal = Number(e.count || e.likeCount || e.value || 1) || 1;
     widgetar().forEach(function (w) { if (!(w.hidden && iOverlay())) tappa(w, antal, e); });
+    if (klassiska().length && typeof root.triggerLikeFountainPop === 'function') {
+      root.triggerLikeFountainPop(Object.assign({}, e, { count: antal, __auto: true }));
+    }
   });
 
   // ---- RENDERING, PANEL OCH KATALOG (monkeypatch, studio.js rörs aldrig) ------------------------
@@ -345,6 +353,9 @@
     var forraPop = root.triggerLikeFountainPop;
     var nyPop = function (event) {
       var e = event || {};
+      // En Action som startats av ett like-paket (live-client.js sätter `likecount`) hade gett
+      // dubbla effekter: fontänerna tar redan likes direkt ovan.
+      if (!e.__test && !e.__auto && e.likecount != null) return false;
       if (e.__test) widgetar().forEach(function (w) { if (!e.__id || e.__id === w.id) tappa(w, Number(e.count) || 15, e); });
       return forraPop.apply(this, arguments);
     };

@@ -102,3 +102,24 @@ test('panelens testknapp ger hjärtan, och stora hjärtat poppar på milstolpen'
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// "TOP LIKE, LIKE FOUNTAIN OCH LIKE GOAL GÅR PÅ LIKES" (David 2026-09-26). Den klassiska fontänen
+// rörde sig förr bara via en Action. Nu tar den samma like-paket som portalen — och en Action som
+// själv startats av likes ger inte en andra effekt ovanpå.
+test('den klassiska fontänen svarar också på likes, utan Action och utan dubbel effekt', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(true);
+  try {
+    const id = await page.evaluate(() => {
+      const w = VyraWidgets.create('catalog:likefountain'); state.widgets.push(w); render(); bind();
+      return w.id;
+    });
+    await page.waitForTimeout(300);
+    await like(page, { count: 5, username: 'tittare' });
+    await page.waitForTimeout(150);
+    const reagerade = await page.evaluate(id => document.querySelector(`[data-id="${id}"]`).classList.contains('lf-live-react'), id);
+    assert.equal(reagerade, true, 'den klassiska fontänen reagerade inte på ett like-paket');
+    const svar = await page.evaluate(() => window.triggerLikeFountainPop({ username: 'x', count: 5, likecount: 5 }));
+    assert.equal(svar, false, 'en Action startad av likes gav en andra effekt');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
