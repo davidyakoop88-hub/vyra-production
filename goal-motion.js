@@ -1,8 +1,9 @@
 (function(){
 'use strict';
 // HELA MÅLET PÅ DUKEN (2026-09-26). Rail var 560 bred och Tower 205 bred = 1094 hög i en 432 x 768
-// duk; widget-grans.js klampar då x resp. y till 0 och målet gick inte att dra i den ledden. Rail
-// 400 x 36 och Tower 130 x ~707 ryms, med x/y så att de hamnar inne på duken när de skapas.
+// duk; så länge widget-grans.js krävde att hela widgeten rymdes gick målet inte att dra i den
+// ledden. Rail 400 x 36 och Tower 130 x ~707 ryms, med x/y så att de hamnar inne på duken när de
+// skapas. Därefter placerar användaren fritt (widget-grans.js, 2026-09-26).
 const DESIGNS={
  'crown-orbit':{name:'Crown Orbit',kind:'followers',orientation:'circle',art:'circle-follower.png',symbol:'center-follower.png',width:360},
  'crown-rail':{name:'Crown Rail',kind:'followers',orientation:'landscape',art:'horizontal-follower.png',width:400,x:16,y:120},
