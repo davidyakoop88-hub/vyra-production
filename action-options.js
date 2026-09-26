@@ -137,6 +137,10 @@
       () => document.querySelectorAll('#aoVoice').forEach(fyllRoster));
   }
 
+  // "Top Likes" skickade förr signalen till Like Fountain (action-runtime.js runWidget). Nu når
+  // den Top Like, som blinkar till som andra widgetar utan egen animation. Like Fountain finns med
+  // flit INTE här: fontänerna går på likes och inget annat (Davids beslut 2026-09-26), och tar dem
+  // direkt ur live-strömmen (like-fountain-portal.js).
   const widgetar = ['Gift Fireworks','Follower Spotlight','Top Likes','Gift Campaign','Heart Me Goal','Battle MVP'];
   // `mediaFiles`, `mediaTitle` och `mediaAssetPath` är top-level-bindningar i media.js, som laddas
   // före den här filen. `typeof`-vakterna finns för overlay-fliken, som kan ladda action-filerna

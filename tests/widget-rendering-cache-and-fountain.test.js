@@ -162,7 +162,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // till minmax(0,170px) och adressfaltet fick golvet min-width:72ch. Faltet hade noll marginal
   // vid ALLA fyra fonsterbredder och klipptes i CI (falt 375 px, adress 389). En cachad studio.css
   // hade fortsatt servera den trangare raden.
-  assert.match(studio, /studio\.css\?v=20260924-1/);
+  assert.match(studio, /studio\.css\?v=20260926-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -343,7 +343,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-25: goal-motion.js/.css läggs sist i samma sekventiella bunt och ersätter
   // den tidigare social-goal-renderaren. En cachad klient måste hämta båda nya filerna tillsammans.
   // Bumpad 2026-09-26: Rail och Tower fick mått som ryms på duken (goal-motion.js + .css).
-  assert.match(media, /const version='20260926-goal-motion-5'/);
+  assert.match(media, /const version='20260926-like-portal-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -388,7 +388,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // `VyraActionFields` och de tre som laser registret tappar tyst varje falt. En NYARE strang pa
   // just action-event.js gor tvartom: den tvingar fram en ny hamtning. De sju oforandrade ska
   // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
-  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
+  // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
+  for (const fil of ['action-options', 'action-runtime']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
+  }
+  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var

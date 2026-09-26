@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **124** |
+| Kort totalt | **125** |
 | Sektioner | 20 |
-| Med katalognyckel | 124 / 124 |
-| Med shadow DOM-miniatyr | 124 / 124 |
-| Ritar sin design | 124 / 124 |
+| Med katalognyckel | 125 / 125 |
+| Med shadow DOM-miniatyr | 125 / 125 |
+| Ritar sin design | 125 / 125 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -50,7 +50,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
-| LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
+| LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-08-03 | — |
 | BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-09-11 | — |
 | BATTLE MVP · FIRANDE · 6 KOREOGRAFIER | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
@@ -178,6 +178,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-03 | — |
+| Like Fountain · Portal | `catalog:likefountain:portal` | ✓ | ✓ | 2026-08-03 | — |
 
 ### BATTLE MVP · 17 DESIGNER
 

@@ -388,6 +388,12 @@
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
+    // PORTALEN: 360 bred ger 640 hög (designens 9:16), och x/y lägger hela fontänen på duken.
+    'likefountain.portal': () => ({
+      type: 'templateLikeFountain', fountainDesign: 'portal', x: 36, y: 64, width: 360,
+      title: 'Like Fountain · Portal', fountainPalette: 'portal', fountainPerLike: 6,
+      fountainAvatarHearts: true, fountainPopEvery: 1000
+    }),
     'likefountain': () => ({
       type: 'templateLikeFountain', x: 40, y: 100, width: 620, title: 'Like Fountain',
       fountainCount: 42, fountainSize: 22, fountainSpeed: 5, fountainHeight: 420,
@@ -503,7 +509,9 @@
       if (parts[0] === 'frame') return ['battlemvp.frame', { frame: parts[1], accent: pick('battlemvp.frame', parts[1], 'MVP-ram').accent }];
       return ['battlemvp.style', { style: parts[0], color: pick('battlemvp.style', parts[0], 'MVP-stil') }];
     },
-    'likefountain': () => ['likefountain', {}],
+    // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
+    // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
+    'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
     'lastx': parts => {
       pick('lastx.design', parts[0], 'Last-X-design');
       return ['lastx.design', { design: parts[0] }];

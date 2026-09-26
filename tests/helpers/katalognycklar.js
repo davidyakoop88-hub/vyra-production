@@ -92,8 +92,12 @@ const UTAN_REFERENS = {
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
 };
 
+// PREFIX BARA FÖR POSTER SOM SLUTAR PÅ ':'. Övriga poster gäller EXAKT den nyckeln. Uppmätt
+// 2026-09-26: 'catalog:likefountain' (den klassiska fontänen, alltid i rörelse) matchade som prefix
+// även 'catalog:likefountain:portal' — en deterministisk förhandsbild med egen REGI — så det nya
+// kortet fotograferades aldrig och pixelvakten var grön av ingenting.
 const utanReferens = nyckel =>
-  Object.keys(UTAN_REFERENS).some(p => nyckel === p || nyckel.startsWith(p));
+  Object.keys(UTAN_REFERENS).some(p => nyckel === p || (p.endsWith(':') && nyckel.startsWith(p)));
 
 // EGEN REGI FÖR DE WIDGETAR SOM INTE GÅR ATT FRYSA UTIFRÅN.
 //
@@ -112,6 +116,20 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  // LIKE FOUNTAIN · PORTAL (like-fountain-portal.js). Den lever på en canvas som bara ritar när
+  // tittarna tappar, och i overlay-läget är den genomskinlig i vila — ALERTS-triggern ovan startar
+  // alltså ett slumpat förlopp. Regin fryser klockan, tömmer duken och visar förhandsbilden, som är
+  // inline-SVG byggd av samma platser och samma frö varje gång. Bilden är då bestämd av kod.
+  'catalog:likefountain:portal': {
+    fas: 'forhandsbild', ms: 0,
+    varfor: 'canvas-förloppet är slumpat och tomt i vila; förhandsbilden är deterministisk',
+    regi: () => {
+      if (!window.VyraLikePortal) return { fel: 'like-fountain-portal.js laddades inte' };
+      const n = window.VyraLikePortal.stilla();
+      if (!n) return { fel: 'portalen renderades inte — saknas .like-fountain-portal' };
+      return { portaler: n, hjartan: document.querySelectorAll('.like-fountain-portal .lfp-still path').length };
+    }
+  },
   // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess hjartan ar
   // CSS-animationer som gar i loop och hamnar i samma lage igen.
   //

@@ -53,6 +53,7 @@
         "tests/rebind-after-late-scripts.test.js",
         "tests/widget-las.test.js",
         "tests/browser/widget-las.browser.test.js",
+        "tests/browser/katalog-tomma-sektioner.browser.test.js",
         "tests/browser/panelplats.browser.test.js",
         "tests/tomma-tillstand.test.js",
         "tests/handtag-lackage.test.js",
@@ -86,6 +87,7 @@
       "filer": [
         "battle-mvp-session.js",
         "custom-widgets.js",
+        "like-fountain-portal.js",
         "approved-rankings.css",
         "approved-rankings.js",
         "ranking-sixpack.css",
@@ -145,6 +147,8 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/like-fountain-portal.test.js",
+        "tests/browser/like-fountain-portal.browser.test.js",
         "tests/tom-widget-avslojas.test.js",
         "tests/widget-defaults-migration.test.js",
         "tests/widget-placement.test.js",
