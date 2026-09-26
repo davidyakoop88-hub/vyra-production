@@ -183,6 +183,12 @@
   // ---- the defaults -----------------------------------------------------------------------------
   // One builder per catalog family. `v` holds the values resolved from the tables above — the
   // builders never read a table themselves, which keeps the defaults readable next to each other.
+  const GOAL_MOTION_MATT = {
+    circle: { x: 70, y: 120, width: 360 },
+    landscape: { x: 16, y: 120, width: 400 },
+    portrait: { x: 151, y: 30, width: 130 },
+  };
+
   const BUILD = {
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
 
@@ -293,9 +299,14 @@
       templateTitle: 'HEART ME GOAL', heartCurrent: 0, heartTarget: 50, heartTheme: v.theme,
       heartColor: v.color, heartTextColor: '#ffffff', heartNumberColor: v.color
     }),
+    // De nio goal-motion-designerna (#525) far samma matt har som katalogknappen i goal-motion.js
+    // ger dem, sa att forhandsvisningen, den fristaende lanken och "Lagg till" visar samma widget.
+    // Alla ryms pa en 432 x 768-duk. Aldre modeller behaller sina matt.
     'socialgoal.kind': v => ({
-      type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
-      width: v.orientation === 'portrait' ? 220 : 440,
+      type: 'templateSocialGoal', goalKind: v.kind,
+      ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
+        ? GOAL_MOTION_MATT[v.orientation]
+        : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
