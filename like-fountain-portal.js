@@ -338,8 +338,9 @@
   }
 
   // Testknappen, Actions och pixelriggens ALERTS går via triggerLikeFountainPop. Portalen tar
-  // __test-event därifrån (ett tryck i panelen ska synas); riktiga likes kommer redan via
-  // `vyra-live-event` ovan, och en Action för likes hade annars gett dubbla hjärtan.
+  // BARA __test-event därifrån (ett tryck i panelen ska synas). Fontänen svarar på LIKES och
+  // inget annat (Davids beslut 2026-09-26) - de kommer redan via `vyra-live-event` ovan, och en
+  // Action (på likes eller något annat) sprutar därför inga hjärtan i portalen.
   if (typeof root.triggerLikeFountainPop === 'function') {
     var forraPop = root.triggerLikeFountainPop;
     var nyPop = function (event) {

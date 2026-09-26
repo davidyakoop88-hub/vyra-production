@@ -137,7 +137,10 @@
       () => document.querySelectorAll('#aoVoice').forEach(fyllRoster));
   }
 
-  const widgetar = ['Gift Fireworks','Follower Spotlight','Top Likes','Gift Campaign','Heart Me Goal','Battle MVP'];
+  // "Top Likes" skickade förr signalen till Like Fountain (action-runtime.js runWidget), och
+  // fontänen fanns inte i listan alls. Nu betyder varje namn den widget det säger: Like Fountain
+  // spelar en skur, Top Likes blinkar till som andra widgetar utan egen animation.
+  const widgetar = ['Gift Fireworks','Follower Spotlight','Like Fountain','Top Likes','Gift Campaign','Heart Me Goal','Battle MVP'];
   // `mediaFiles`, `mediaTitle` och `mediaAssetPath` är top-level-bindningar i media.js, som laddas
   // före den här filen. `typeof`-vakterna finns för overlay-fliken, som kan ladda action-filerna
   // utan media.js — då är biblioteket tomt i stället för att hela luckan kastar.

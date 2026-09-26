@@ -388,7 +388,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // `VyraActionFields` och de tre som laser registret tappar tyst varje falt. En NYARE strang pa
   // just action-event.js gor tvartom: den tvingar fram en ny hamtning. De sju oforandrade ska
   // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
-  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
+  // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
+  for (const fil of ['action-options', 'action-runtime']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
+  }
+  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var

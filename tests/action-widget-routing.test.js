@@ -94,7 +94,7 @@ test('övriga widgetnamn dirigeras som förut', () => {
   const cases = [
     ['Gift Fireworks', 'fireworks'],
     ['New Follower Alert', 'follower'],
-    ['Top Likes', 'likefountain'],
+    ['Like Fountain', 'likefountain'],
     ['Battle MVP', 'battlemvp']
   ];
   for (const [widget, expected] of cases) {
@@ -109,4 +109,14 @@ test('ett namn utan egen gren faller igenom till den generiska uppslagningen', (
   rt.fire('Gift Campaign');
   assert.deepEqual(rt.calls, [],
     'Gift Campaign har ingen egen trigger och ska inte fångas av någon namngren');
+});
+
+// "TOP LIKES" ÄR TOP LIKE, INTE FONTÄNEN. Förr skickade grenen `top like` signalen till
+// triggerLikeFountainPop, och Like Fountain fanns inte ens i Action-listan (action-options.js).
+// Top Like har ingen egen animation att spela - den faller igenom till den generiska uppslagningen,
+// som får widgeten att blinka till.
+test('Top Likes når inte längre Like Fountain', () => {
+  const rt = makeRuntime();
+  rt.fire('Top Likes');
+  assert.deepEqual(rt.calls, [], 'Top Likes startade fortfarande Like Fountain');
 });
