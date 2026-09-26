@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `bfc4b4b`
+Commit: `b0f0519`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -50,7 +50,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
-| LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-08-03 | — |
+| LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
 | BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-09-11 | — |
 | BATTLE MVP · FIRANDE · 6 KOREOGRAFIER | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
@@ -177,8 +177,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-08-03 | — |
-| Like Fountain · Portal | `catalog:likefountain:portal` | ✓ | ✓ | 2026-08-03 | — |
+| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
+| Like Fountain · Portal | `catalog:likefountain:portal` | ✓ | ✓ | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
 
 ### BATTLE MVP · 17 DESIGNER
 
