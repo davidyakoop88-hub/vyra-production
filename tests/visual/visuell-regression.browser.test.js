@@ -487,7 +487,8 @@ test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || u
   assert.deepEqual(utanSkal, [], `undantag utan begripligt skäl: ${utanSkal.join(', ')}`);
   // En post som inte träffar någon nyckel är död kod som ser levande ut — och den döljer att
   // täckningen tyst blivit större än listan påstår.
-  const traffar = poster.map(([p]) => [p, ALLA.filter(k => k === p || k.startsWith(p)).length]);
+  // Samma regel som utanReferens(): prefix bara för poster som slutar på ':'.
+  const traffar = poster.map(([p]) => [p, ALLA.filter(k => k === p || (p.endsWith(':') && k.startsWith(p))).length]);
   const utanTraff = traffar.filter(([, n]) => n === 0).map(([p]) => p);
   assert.deepEqual(utanTraff, [],
     `undantag som inte träffar någon katalognyckel: ${utanTraff.join(', ')}`);
