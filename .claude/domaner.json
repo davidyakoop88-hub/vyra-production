@@ -53,6 +53,7 @@
         "tests/rebind-after-late-scripts.test.js",
         "tests/widget-las.test.js",
         "tests/browser/widget-las.browser.test.js",
+        "tests/browser/katalog-tomma-sektioner.browser.test.js",
         "tests/browser/panelplats.browser.test.js",
         "tests/tomma-tillstand.test.js",
         "tests/handtag-lackage.test.js",

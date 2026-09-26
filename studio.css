@@ -309,6 +309,11 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .overlay-widget-gallery .widget-catalog section{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
 .overlay-widget-gallery .widget-catalog section h4{flex-basis:100%;margin:0 0 2px;font-size:10px;color:#9d87ac;letter-spacing:.5px}
 .overlay-widget-gallery .widget-catalog section>div{display:contents}
+/* EN DOLD KATALOGSEKTION SYNS ALDRIG. Regeln ovan ger varje sektion display:flex, och den vinner över
+   [hidden] - så de två markörerna som hålls kvar med flit (media.js bygger annars om gamla knappar:
+   Top Like-sektionen i approved-rankings.js och "VYRA TOP RANKING" i ranking-sixpack.js) stod som
+   tomma ramar i katalogen. Vaktas av tests/browser/katalog-tomma-sektioner.browser.test.js. */
+.overlay-widget-gallery .widget-catalog section[hidden]{display:none}
 .overlay-widget-gallery .widget-catalog button{flex:0 0 210px;display:flex;flex-direction:column;text-align:left;padding:0;background:#170c20;border:1px solid #2b2438;border-radius:12px;cursor:pointer;overflow:hidden}
 .overlay-widget-gallery .widget-catalog button:hover{border-color:#b13cff}
 .overlay-widget-gallery .widget-catalog button .owg-thumb{position:relative;width:100%;height:104px;background:#0a0510;overflow:hidden;flex:0 0 auto}
