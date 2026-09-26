@@ -89,10 +89,10 @@
       var X = (x - HJARTA_CX) / (HJARTA_S * 16) * 1.15, Y = -(y - HJARTA_CY) / (HJARTA_S * 16) * 1.15 + 0.1;
       return Math.pow(X * X + Y * Y - 1, 3) - X * X * Y * Y * Y <= 0;
     };
-    for (var i = 0; i < kontur; i++) { var p = kurva(i / kontur * Math.PI * 2); mal.push({ x: p.x, y: p.y, r: 7 }); }
+    for (var i = 0; i < kontur; i++) { var p = kurva(i / kontur * Math.PI * 2); mal.push({ x: p.x, y: p.y, r: 10 }); }
     for (var k = 0; k < 4000 && mal.length < antal; k++) {
       var x = HJARTA_CX + (rnd() * 2 - 1) * HJARTA_S * 15, y = HJARTA_CY + (rnd() * 2 - 1) * HJARTA_S * 15;
-      if (inne(x, y) && mal.every(function (q) { return Math.hypot(q.x - x, q.y - y) > q.r + 7 + 4; })) mal.push({ x: x, y: y, r: 7 });
+      if (inne(x, y) && mal.every(function (q) { return Math.hypot(q.x - x, q.y - y) > q.r + 10 + 3; })) mal.push({ x: x, y: y, r: 10 });
     }
     return { mal: mal, kurva: kurva };
   }
@@ -295,7 +295,7 @@
       t.form.hj.forEach(function (h) {
         var m = FORM.mal[h.i], u = io((nu - h.start) / 1.1); if (u <= 0) return;
         var px = CX + (m.x - CX) * u, py = SPETS + (m.y - SPETS) * u; px = HJARTA_CX + (px - HJARTA_CX) * sk; py = HJARTA_CY + (py - HJARTA_CY) * sk;
-        var sz = 7 * (0.5 + 0.5 * u) * 1.15; x.globalAlpha = Math.min(1, u * 1.5) * ut; x.drawImage(sprite(h.farg), px - sz, py - sz, sz * 2, sz * 2);
+        var sz = m.r * (0.5 + 0.5 * u) * 1.2; x.globalAlpha = Math.min(1, u * 1.5) * ut; x.drawImage(sprite(h.farg), px - sz, py - sz, sz * 2, sz * 2);
       });
       void ft;
     }
