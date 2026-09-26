@@ -14,9 +14,10 @@
 // 432 px ruta: synlig i editorn (contain:paint klipper), avklippt i sandningen. Snapp-riggen
 // anvander numera widgetar sma nog att tva ryms, sa snappen provas dar den ar synlig.
 //
-// FYRA VAGAR IN, ALLA KLAMPADE: draget (haktaDrag), resize-handtagen (widget-handles.js),
-// panelens X/Y/Bredd-falt (klampFalt, capture-lyssnare fore media.js:81) och "flytta in"
-// (flyttaInAlla, som ocksa krymper en widget bredare an duken). Origo-regeln finns kvar som
+// FEM VAGAR IN, ALLA KLAMPADE: draget (haktaDrag), resize-handtagen (widget-handles.js),
+// panelens X/Y/Bredd-falt (klampFalt, capture-lyssnare fore media.js:81), "flytta in"
+// (flyttaInAlla, som ocksa krymper en widget bredare an duken) och katalogen (passaInNya,
+// samma behandling automatiskt for en widget som just skapats). Origo-regeln finns kvar som
 // reserv nar storleken ar okand. INTE klampad: proportionslasets hojdfalt (vyra-proportioner.js
 // satt()) kan fortfarande skriva en bredd via kvoten - markeringen fangar det, "flytta in"
 // rattar det.
@@ -157,7 +158,11 @@
   // regel än dragets gräns, och det är med flit: här har användaren bett om det med ett
   // klick. Draget får inte göra samma sak — se resonemanget om kant-mot-kant-snappen ovan.
   // Ångra fungerar: save() noterar i VyraHistorik före skrivningen.
-  function flyttaInAlla() {
+  function flyttaInAlla() { return flyttaIn(null); }
+
+  // `urval` ar en lista med id:n, eller null for alla. Bara de nyskapade (passaInNya) och
+  // knappen (flyttaInAlla) kommer hit - en inlast layout gor det aldrig, se huvudet.
+  function flyttaIn(urval) {
     if (!iEditorn()) return 0;
     var d = duken(), flyttade = 0;
     try {
@@ -168,6 +173,7 @@
       var lager = (typeof state !== 'undefined') ? state : null;
       if (!lager || !Array.isArray(lager.widgets)) return 0;
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
+        if (urval && urval.indexOf(el.dataset.id) < 0) return;
         var w = lager.widgets.filter(function (x) { return x.id === el.dataset.id })[0];
         if (!w) return;
         var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
@@ -213,6 +219,65 @@
       (ute.length === 1 ? ' widget ligger' : ' widgetar ligger') +
       ' utanför bildrutan och syns inte i sändningen — klicka för att flytta in';
     knapp.title = 'Ångra fungerar om placeringen inte blir som du tänkt.';
+  }
+
+  // ---- NYA WIDGETAR RYMS FRÅN FÖRSTA STUND ----------------------------------------------
+  // UPPMATT 2026-09-26 med hela katalogen (124 kort) i en riktig webblasare: 39 skapades med en
+  // del utanfor duken, och 17 av dem var bredare an hela duken - Glove Snipe 760, Like Fountain
+  // 620, Gift Campaign 608, Last-X 500 i en 432-ruta. Varje fynd ledde till en egen rattning av
+  // en enskild widgets standardmatt, och nasta widget hade samma fel. Davids ord: "varje gang vi
+  // ska testa en widget och blir det fel". Regeln ligger darfor HAR, en gang for alla: en widget
+  // som just skapats ur katalogen far samma behandling som knappen "flytta in" ger, automatiskt.
+  //
+  // BARA NYA. Varje katalogknapp skapar sin widget med VyraWidgets.create, sa det ar dar vi ser
+  // att en widget ar ny. En layout som laddas (sparad, fran molnet, en scen) skapas aldrig dar -
+  // den ror vi inte, samma regel som i huvudet.
+  //
+  // BILDERNA AVGOR STORLEKEN. Manga widgetar far sin hojd forst nar ramens bild laddats (Goal
+  // Tower var 48 px hog i stallet for 708), sa passningen gors om nar en bild eller video i den
+  // nya widgeten laddas, under NY_FONSTER_MS. Den flyttar bara nagot som sticker ut.
+  var NY_FONSTER_MS = 15000, nya = {}, iPassning = false;
+
+  function passaInNya() {
+    if (iPassning || !iEditorn()) return 0;
+    // Fonstret raknas fran forsta gangen widgeten STAR PA DUKEN, inte fran skapandet: katalogen
+    // ligger i en egen vy, och den som valjer en widget och tittar pa layouten en minut senare
+    // ska fa samma passning.
+    var nu = Date.now(), ids = [];
+    Object.keys(nya).forEach(function (id) {
+      var el = document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+      if (!el) return;
+      if (!nya[id]) nya[id] = nu;
+      if (nu - nya[id] > NY_FONSTER_MS) delete nya[id]; else ids.push(id);
+    });
+    if (!ids.length) return 0;
+    iPassning = true;
+    try {
+      ids.forEach(function (id) {
+        var el = document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+        if (!el) return;
+        el.querySelectorAll('img,video').forEach(function (m) {
+          if (m.__grans) return;
+          m.__grans = 1;
+          var igen = function () { requestAnimationFrame(passaInNya); };
+          m.addEventListener(m.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', igen, { once: true });
+        });
+      });
+      return flyttaIn(ids);
+    } catch (e) { return 0; } finally { iPassning = false; }
+  }
+
+  function markeraNy(w) {
+    // 0 = inte sedd pa duken an. Forhandsbilderna i katalogen skapar ocksa widgetar som aldrig
+    // hamnar pa duken; de far inte vaxa listan utan gräns.
+    try {
+      if (w && w.id) {
+        var ids = Object.keys(nya);
+        if (ids.length > 300) ids.slice(0, 150).forEach(function (id) { delete nya[id]; });
+        nya[w.id] = 0;
+      }
+    } catch (e) {}
+    return w;
   }
 
   // ---- KROKEN I DRAGET -------------------------------------------------------------------
@@ -278,7 +343,8 @@
   var api = {
     klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt,
     dukIWidgetens: dukIWidgetens, skalanFor: skalanFor, dukFor: dukFor,
-    markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, raknare: raknare,
+    markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, flyttaIn: flyttaIn, raknare: raknare,
+    passaInNya: passaInNya, markeraNy: markeraNy, NY_FONSTER_MS: NY_FONSTER_MS,
     haktaDrag: haktaDrag,
     MIN_KVAR: MIN_KVAR, STANDARD: STANDARD
   };
@@ -293,9 +359,17 @@
     var forra = root.render;
     root.render = function () {
       var r = forra.apply(this, arguments);
-      markera(); raknare();
+      passaInNya(); markera(); raknare();
       return r;
     };
+  }
+
+  // Varje katalogknapp gar genom VyraWidgets.create - det ar dar en ny widget syns.
+  if (root.VyraWidgets && typeof root.VyraWidgets.create === 'function' && !root.VyraWidgets.create.__grans) {
+    var skapa = root.VyraWidgets.create;
+    var nyCreate = function () { return markeraNy(skapa.apply(this, arguments)); };
+    nyCreate.__grans = 1;
+    root.VyraWidgets.create = nyCreate;
   }
 
   // Draget krokas efter varje bind(), samma monster som syskonfilerna anvander.

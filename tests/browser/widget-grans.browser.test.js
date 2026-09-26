@@ -363,3 +363,75 @@ test('en nedskalad widget markeras inte som utanfor nar den star vid kanten', { 
     assert.equal(r.ute, 0, 'raknaren sager att en widget ligger utanfor bilden');
   } finally { await context.close(); }
 });
+
+// HELA KATALOGEN RYMS NÄR DEN SKAPAS. Uppmätt 2026-09-26: 39 av 124 katalogkort skapade sin
+// widget med en del utanför duken, 17 av dem bredare än hela duken (Glove Snipe 760, Like Fountain
+// 620, Gift Campaign 608, Last-X 500 i en 432-ruta). Varje fynd rättades förr ett i taget, i
+// widgetens egna standardmått, och nästa widget hade samma fel. Nu gör widget-grans.js samma sak
+// som "flytta in"-knappen automatiskt för en widget som just skapats — och provet går igenom
+// VARJE kort som användaren gör: klick i katalogen, sedan layouten, sedan bilderna laddade.
+test('varje katalogkort skapar en widget som ryms helt på duken', { skip, timeout: 900000 }, async () => {
+  const { context, page } = await editorn([]);
+  try {
+    await page.evaluate(() => { window.toast = () => {} });
+    const antal = await page.evaluate(async () => {
+      let n = 0;
+      for (let t = 0; t < 60 && n < 100; t++) {
+        view = 'overlay'; render(); bind();
+        n = document.querySelectorAll('[data-catalog-key]').length;
+        if (n < 100) await new Promise(r => setTimeout(r, 250));
+      }
+      return n;
+    });
+    assert.ok(antal >= 100, `katalogen byggdes inte, bara ${antal} kort`);
+    const ute = [], ingen = [];
+    for (let i = 0; i < antal; i++) {
+      const m = await page.evaluate(async i => {
+        state.widgets.length = 0; view = 'overlay'; render(); bind();
+        const k = document.querySelectorAll('[data-catalog-key]')[i];
+        if (!k) return null;
+        const nyckel = k.dataset.catalogKey;
+        k.click();
+        const w = state.widgets[state.widgets.length - 1];
+        if (!w) return { nyckel, ingen: true };
+        view = 'editor'; render(); bind();
+        const hitta = () => document.querySelector('.editor-shell .canvas .widget[data-id="' + w.id + '"]');
+        const el = hitta();
+        if (!el) return { nyckel, ingen: true };
+        const media = [...el.querySelectorAll('img,video')];
+        await Promise.race([
+          Promise.all(media.map(x => x.tagName === 'IMG'
+            ? (x.complete ? 0 : new Promise(r => { x.addEventListener('load', r); x.addEventListener('error', r) }))
+            : (x.readyState >= 1 ? 0 : new Promise(r => { x.addEventListener('loadedmetadata', r); x.addEventListener('error', r) })))),
+          new Promise(r => setTimeout(r, 4000))
+        ]);
+        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const e2 = hitta() || el, d = window.VyraGrans.dukFor(e2);
+        const x = parseInt(e2.style.left, 10), y = parseInt(e2.style.top, 10);
+        return { nyckel, ut: window.VyraGrans.stickerUt(x, y, e2.offsetWidth, e2.offsetHeight, d),
+          matt: `${x},${y} ${e2.offsetWidth}x${e2.offsetHeight} i ${Math.round(d.bredd)}x${Math.round(d.hojd)}` };
+      }, i);
+      if (!m) continue;
+      if (m.ingen) ingen.push(m.nyckel);
+      else if (m.ut) ute.push(`${m.nyckel} (${m.matt})`);
+    }
+    assert.deepEqual(ute, [], `${ute.length} widgetar skapas utanför duken`);
+    assert.deepEqual(ingen, [], 'katalogkort som inte ritar någon widget på duken');
+  } finally { await context.close() }
+});
+
+// EN SPARAD LAYOUT RÖRS INTE. Passningen gäller bara det som skapas i katalogen — en widget som
+// kommer ur en sparad layout, molnet eller en scen skapas aldrig där, och flyttas därför inte.
+test('en inläst widget utanför duken flyttas inte av passningen för nya', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([{ id: 'd1', type: 'templateGiftFireworks', x: 80, y: 120, width: 540, fwTheme: 'royal' }]);
+  try {
+    const m = await page.evaluate(async () => {
+      render(); bind(); await new Promise(r => setTimeout(r, 500));
+      const w = state.widgets.find(x => x.id === 'd1');
+      return { x: w.x, width: w.width, raknad: window.VyraGrans.rakna().length };
+    });
+    assert.equal(m.x, 80); assert.equal(m.width, 540);
+    assert.equal(m.raknad, 1, 'den ska fortfarande markeras, så att användaren ser den');
+  } finally { await context.close() }
+});
