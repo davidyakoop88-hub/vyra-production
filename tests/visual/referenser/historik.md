@@ -198,3 +198,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Rail fick luft ovan och under ramen så att rubrik och procent ryms i boxen (#528)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** Fabriken ger de nio goal-motion-designerna katalogknappens mått (Orbit 360, Rail 400, Tower 130) — #528
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait

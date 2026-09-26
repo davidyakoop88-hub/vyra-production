@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 114,
  "senaste": {
-  "motiv": "Rail fick luft ovan och under ramen så att rubrik och procent ryms i boxen (#528)",
+  "motiv": "Fabriken ger de nio goal-motion-designerna katalogknappens mått (Orbit 360, Rail 400, Tower 130) — #528",
   "nycklar": 9,
   "filter": "socialgoal",
-  "tid": "2026-09-26T11:30:09.568Z"
+  "tid": "2026-09-26T12:42:53.342Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -435,40 +435,40 @@
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-orbit:circle": {
-   "matt": "440x484",
+   "matt": "360x402",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-rail:landscape": {
-   "matt": "440x83",
+   "matt": "400x78",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-tower:portrait": {
-   "matt": "220x1176",
-   "fyllnad": 82.48
+   "matt": "130x712",
+   "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-orbit:circle": {
-   "matt": "440x484",
+   "matt": "360x402",
    "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-rail:landscape": {
-   "matt": "440x83",
+   "matt": "400x78",
    "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-tower:portrait": {
-   "matt": "220x1175",
-   "fyllnad": 82.55
+   "matt": "130x712",
+   "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-orbit:circle": {
-   "matt": "440x484",
+   "matt": "360x402",
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-rail:landscape": {
-   "matt": "440x83",
+   "matt": "400x78",
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-tower:portrait": {
-   "matt": "220x1164",
-   "fyllnad": 83.33
+   "matt": "130x705",
+   "fyllnad": 100
   }
  }
 }
