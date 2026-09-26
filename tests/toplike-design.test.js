@@ -87,7 +87,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // -6 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur katalogen. En cachad media.js
   // hade fortsatt rita knappen och dess nyckel.
   // 2026-09-25: den godkanda naturliga fyrverkerimotorn laddas via media.js.
-  assert.match(studioHtml, /media\.js\?v=20260925-1/);
+  // 2026-09-26: media.js laddar ny overlay-preview.js (goal-katalogens miniatyrer) och
+  // liveLayerName kanner igen Diamond Goal.
+  assert.match(studioHtml, /media\.js\?v=20260926-1/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

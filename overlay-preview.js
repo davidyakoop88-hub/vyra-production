@@ -295,6 +295,25 @@ function owgRenderCardThumb(btn) {
     if (fx) window.VyraFireworks.renderPreview(fx, preview);
   }
 
+  // Goal-motion-malen (#525) har samma problem som fyrverkeriet: goal-motion.css satter
+  // position:absolute!important pa roten, och dokumentets centreringsregel for .owg-thumb-inner
+  // nar inte in i skuggan. Utan det har hamnade Orbit halvvags under kortet och Tower utanfor det.
+  if (preview?.type === 'templateSocialGoal') {
+    const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner'), widget = inner && inner.firstElementChild;
+    if (widget && widget.classList.contains('goal-motion')) {
+      inner.style.position = 'absolute'; inner.style.left = '50%'; inner.style.top = '50%';
+      widget.style.setProperty('position', 'relative', 'important');
+      widget.style.setProperty('left', '0', 'important'); widget.style.setProperty('top', '0', 'important');
+    }
+  }
+
+  // Skalan raknas pa widgetens matt, och en bildbaserad widget har ingen hojd forran bilden laddats.
+  // Uppmatt pa Tower: 205 x ~50 innan bilden kom, 205 x 1094 efter — skalan blev tjugo ganger for
+  // stor och kortet tomt. Raknas darfor om nar varje bild i miniatyren har laddats.
+  owgThumbRot(thumb).querySelectorAll('img').forEach(img => {
+    if (!img.complete) img.addEventListener('load', () => scaleThumbnailToFit(thumb), { once: true });
+  });
+
   // En VIDEO FX-widget ar ett <video> med autoplay, loop, muted och playsinline. Den laddar klart
   // (readyState 4) men Chrome pausar video-only bakgrundsmedia for att spara strom: play() avbryts,
   // currentTime star kvar pa 0, och utan poster malas ingen bildruta alls. Kortet blev tomt.

@@ -183,6 +183,12 @@
   // ---- the defaults -----------------------------------------------------------------------------
   // One builder per catalog family. `v` holds the values resolved from the tables above — the
   // builders never read a table themselves, which keeps the defaults readable next to each other.
+  const GOAL_MOTION_MATT = {
+    circle: { x: 70, y: 120, width: 360 },
+    landscape: { x: 16, y: 120, width: 400 },
+    portrait: { x: 151, y: 30, width: 130 },
+  };
+
   const BUILD = {
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
 
@@ -210,8 +216,11 @@
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
+    // HELA FYRVERKERIET PÅ DUKEN (2026-09-26). 540 px bredd i en 432 px duk gick inte att dra i
+    // sidled: widget-grans.js klampar x till 0 när widgeten är bredare än duken. 360 bred ger
+    // 300 hög (samma 6:5 som motorn ritar i), centrerad med 36 px på var sida.
     'giftfireworks.theme': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 120, width: 540, title: 'Gift Fireworks · '+v.label,
+      type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
@@ -290,9 +299,14 @@
       templateTitle: 'HEART ME GOAL', heartCurrent: 0, heartTarget: 50, heartTheme: v.theme,
       heartColor: v.color, heartTextColor: '#ffffff', heartNumberColor: v.color
     }),
+    // De nio goal-motion-designerna (#525) far samma matt har som katalogknappen i goal-motion.js
+    // ger dem, sa att forhandsvisningen, den fristaende lanken och "Lagg till" visar samma widget.
+    // Alla ryms pa en 432 x 768-duk. Aldre modeller behaller sina matt.
     'socialgoal.kind': v => ({
-      type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
-      width: v.orientation === 'portrait' ? 220 : 440,
+      type: 'templateSocialGoal', goalKind: v.kind,
+      ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
+        ? GOAL_MOTION_MATT[v.orientation]
+        : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,

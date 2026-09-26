@@ -351,8 +351,12 @@ const MARKEN = [
   // designerna ar bildbaserade (assets/goal-new/*.png) och har varken .goal-icon eller <svg>.
   // Uppmatt 2026-09-20: noll CJK-/fullbreddskodpunkter i bada foljarnycklarna. Kravet "market
   // maste anda ritas" blir da att designbilden faktiskt ar laddad - annars vore widgeten tom.
-  { nyckel: 'catalog:socialgoal:followers:pulse-rail:landscape', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
-  { nyckel: 'catalog:socialgoal:followers:pulse-tower:portrait', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
+  // Sedan #525 (2026-09-25) ritas malen av goal-motion.js med bilder ur assets/goal-motion/ -
+  // goal-new-ramarna ritas inte langre, och de tva gamla nycklarna faller tillbaka till orbit.
+  // Vakten foljer darfor de tre foljardesigner katalogen erbjuder i dag.
+  { nyckel: 'catalog:socialgoal:followers:crown-orbit:circle', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:crown-rail:landscape', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:crown-tower:portrait', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
 ];
 
 test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 120000 }, async () => {
