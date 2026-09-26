@@ -2,7 +2,7 @@
   "_kommentar": "Sekunder per provfil, uppmatt for att SKARVNINGEN i scripts/browser-skarva.js ska bli jamn. De tva som snabbades 2026-09-23 (panel-inga-dubbletter 394->46, gifter-level-referens 310->20) bar sina NYA tider. Regenereras med: node scripts/browser-skarva.js --mat",
   "_matt": "2026-09-23",
   "_maskin": "ubuntu, node 22, pinnad Chromium 1194 — RELATIVA vikter ar det som anvands, inte de absoluta talen",
-  "_summa_s": 2504,
+  "_summa_s": 2633,
   "tider": {
     "abonnemang-i-installningar.browser.test.js": 11,
     "angra-gor-om.browser.test.js": 12,
@@ -91,7 +91,7 @@
     "toppoints-designer.browser.test.js": 10,
     "trial-onboarding.browser.test.js": 74,
     "uppsagningsknappen.browser.test.js": 9,
-    "widget-grans.browser.test.js": 31,
+    "widget-grans.browser.test.js": 160,
     "widget-handtag.browser.test.js": 66,
     "widget-rotation.browser.test.js": 64,
     "widgetlank-filtrering.browser.test.js": 42,
