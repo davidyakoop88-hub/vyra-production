@@ -90,9 +90,10 @@ test('de sex gamla modellerna i sparade layouter ritas kompletta av goal-motion'
 
 // MÅTTET FINNS INNAN RAMEN LADDATS. Tower var 48 px hög tills bilden kommit, och det var det
 // måttet draget klampade mot — målet gick att släppa på y 432 i en 768-duk, 372 px nedanför kanten,
-// och varningen "utanför bildrutan" kom först efteråt. Nu reserverar goal-motion.css bildens
+// och varningen "utanför bildrutan" kom först efteråt. Sedan 2026-09-26 får ett mål placeras delvis
+// utanför, men draget räknar fortfarande med höjden. Nu reserverar goal-motion.css bildens
 // proportioner, så höjden stämmer från första ritningen. Ramen fördröjs här med flit.
-test('Tower och Orbit har sin höjd innan ramen laddats, så draget klampar mot rätt mått',{skip},async()=>{
+test('Tower och Orbit har sin höjd innan ramen laddats, så draget räknar med rätt mått',{skip},async()=>{
  const page=await browser.newPage({viewport:{width:1600,height:950}});let slapp;const hall=new Promise(r=>slapp=r);
  await page.route(/assets\/goal-motion\/(vertical|circle)-/,async rt=>{await hall;await rt.continue()});
  try{await page.goto(`${bas}/studio.html`,{waitUntil:'domcontentloaded'});
@@ -101,8 +102,10 @@ test('Tower och Orbit har sin höjd innan ramen laddats, så draget klampar mot 
   for(const [id,minH] of [['crown-tower',600],['crown-orbit',300]]){
    const wid=await skapaFranKatalogen(page,id);assert.ok(wid,id);
    const m=await page.evaluate(wid=>{const el=document.querySelector('.canvas [data-id="'+wid+'"]'),art=el.querySelector('.goal-motion-art');
-    return{laddad:art.complete&&art.naturalWidth>0,h:el.offsetHeight,topp:VyraGrans.klamp(0,400,VyraGrans.dukFor(el),{bredd:el.offsetWidth,hojd:el.offsetHeight}).topp,duk:VyraGrans.dukFor(el).hojd}},wid);
+    return{laddad:art.complete&&art.naturalWidth>0,h:el.offsetHeight,topp:VyraGrans.klamp(0,-9999,VyraGrans.dukFor(el),{bredd:el.offsetWidth,hojd:el.offsetHeight}).topp,synlig:VyraGrans.MIN_SYNLIG}},wid);
    assert.equal(m.laddad,false,`${id}: ramen hann laddas, provet provar inget`);
    assert.ok(m.h>minH,`${id} är ${m.h} px hög innan ramen laddats`);
-   assert.ok(m.topp+m.h<=m.duk,`${id}: draget släpper målet på y ${m.topp}, nedre kanten ${m.topp+m.h} i en ${m.duk}-duk`);
+   // Draget räknar med rätt höjd: uppåt får målet gå tills bara MIN_SYNLIG px syns. Med 48 px
+   // höjd hade det stannat nästan direkt, och resten av målet hade varit omöjligt att dra ut.
+   assert.equal(m.topp,m.synlig-m.h,`${id}: draget stannar på y ${m.topp}, skulle vara ${m.synlig-m.h}`);
   }}finally{slapp();await page.close()}});
