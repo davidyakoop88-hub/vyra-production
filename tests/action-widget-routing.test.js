@@ -94,7 +94,6 @@ test('övriga widgetnamn dirigeras som förut', () => {
   const cases = [
     ['Gift Fireworks', 'fireworks'],
     ['New Follower Alert', 'follower'],
-    ['Like Fountain', 'likefountain'],
     ['Battle MVP', 'battlemvp']
   ];
   for (const [widget, expected] of cases) {
@@ -111,12 +110,14 @@ test('ett namn utan egen gren faller igenom till den generiska uppslagningen', (
     'Gift Campaign har ingen egen trigger och ska inte fångas av någon namngren');
 });
 
-// "TOP LIKES" ÄR TOP LIKE, INTE FONTÄNEN. Förr skickade grenen `top like` signalen till
-// triggerLikeFountainPop, och Like Fountain fanns inte ens i Action-listan (action-options.js).
-// Top Like har ingen egen animation att spela - den faller igenom till den generiska uppslagningen,
-// som får widgeten att blinka till.
-test('Top Likes når inte längre Like Fountain', () => {
-  const rt = makeRuntime();
-  rt.fire('Top Likes');
-  assert.deepEqual(rt.calls, [], 'Top Likes startade fortfarande Like Fountain');
+// ACTIONS HAR INGET MED LIKE FOUNTAIN ATT GÖRA (Davids beslut 2026-09-26). Förr skickade grenen
+// `top like` signalen till triggerLikeFountainPop. Nu går fontänerna bara på likes, direkt ur
+// live-strömmen (like-fountain-portal.js), och "Top Likes" faller igenom till den generiska
+// uppslagningen, som får Top Like att blinka till.
+test('ingen Action når Like Fountain — fontänerna går på likes och inget annat', () => {
+  for (const namn of ['Top Likes', 'Top Like', 'Like Fountain']) {
+    const rt = makeRuntime();
+    rt.fire(namn);
+    assert.deepEqual(rt.calls, [], `${namn} startade Like Fountain`);
+  }
 });

@@ -346,16 +346,13 @@
   }
 
   // Testknappen, Actions och pixelriggens ALERTS går via triggerLikeFountainPop. Portalen tar
-  // BARA __test-event därifrån (ett tryck i panelen ska synas). Fontänen svarar på LIKES och
-  // inget annat (Davids beslut 2026-09-26) - de kommer redan via `vyra-live-event` ovan, och en
-  // Action (på likes eller något annat) sprutar därför inga hjärtan i portalen.
+  // BARA __test-event därifrån (ett tryck i panelen ska synas). Fontänerna svarar på LIKES och
+  // inget annat (Davids beslut 2026-09-26) - de kommer via `vyra-live-event` ovan. Actions har
+  // ingen koppling till fontänerna alls (action-runtime.js/action-options.js).
   if (typeof root.triggerLikeFountainPop === 'function') {
     var forraPop = root.triggerLikeFountainPop;
     var nyPop = function (event) {
       var e = event || {};
-      // En Action som startats av ett like-paket (live-client.js sätter `likecount`) hade gett
-      // dubbla effekter: fontänerna tar redan likes direkt ovan.
-      if (!e.__test && !e.__auto && e.likecount != null) return false;
       if (e.__test) widgetar().forEach(function (w) { if (!e.__id || e.__id === w.id) tappa(w, Number(e.count) || 15, e); });
       return forraPop.apply(this, arguments);
     };
