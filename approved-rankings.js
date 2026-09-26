@@ -159,59 +159,100 @@
     return iOverlay() && TW && TW.arTom(w) ? TW.dolj(html) : html;
   }
 
-  function install() {
-    if (installed) return;
-    installed = true;
+  // RÄTT DESIGN FRÅN FÖRSTA RITNINGEN (2026-09-26).
+  //
+  // Wrapparna installerades förr på `load`, alltså först när VARJE bild och video på sidan laddats.
+  // Uppmätt i OBS-läge med bilderna fasthållna: Clean Flip ritades som den avvecklade Inferno
+  // (330x92, ingen flip) i över 2,5 sekunder och bytte först efteråt; Top Like, Top Coins och Top
+  // Points gjorde samma sak via ranking-sixpack.js. Davids ord: "de ska flippa mellan profilbilden
+  // och sen giften" - och det gör Clean Flip, men bara efter `load`.
+  //
+  // Skälet att vänta var att wrapparna måste ligga YTTERST: media.js injicerar ett tjugotal sena
+  // skript som också lindar wh/props/bind (toplike-studio.js, premium-final.js ...), och ett
+  // skript som lindar utanför oss och inte anropar kedjan för våra typer hade vunnit.
+  //
+  // Nu installeras de direkt, och lägger sig ytterst IGEN varje gång ett sent skript laddats och
+  // lindat om (capture-lyssnare på document, samma mönster som overlay-preview.js använder för
+  // sena bind-utökningar). `__vyraYtter` är rangen: 1 här, 2 i ranking-sixpack.js som ska ligga
+  // utanför oss. En äldre, inre kopia av wrappern släpper bara igenom (djup-räknarna), så en
+  // omlindning ritar aldrig något två gånger.
+  const RANG = 1;
+  const djup = { wh: 0, props: 0, bind: 0 };
+  function vakt(nyckel, forra, gor) {
+    const f = function () {
+      if (djup[nyckel]) return forra.apply(this, arguments);
+      djup[nyckel]++;
+      try { return gor.apply(this, arguments); } finally { djup[nyckel]--; }
+    };
+    f.__vyraYtter = RANG;
+    return f;
+  }
 
-    const previousWh = wh;
-    wh = function (w) {
-      if (w && w.type === 'templateTopStreak') return doljOmTom(w, cleanStreakHtml(w));
-      if (w && w.type === 'templateTopLike') {
-        const safeSkin = LIKE_SKINS.has(w.skin) ? w.skin : 'voltage';   // Clean Bar är pensionerad (2026-09-24)
-        let html = previousWh({...w, skin: safeSkin, showBackground: w.showBackground === true});
-        if (w.showBackground !== true && !html.includes('ranking-bg-off')) {
-          html = html.replace('class="widget vyra-toplike', 'class="widget vyra-toplike ranking-bg-off');
+  function linda() {
+    let andrat = false;
+    if (typeof wh === 'function' && !(wh.__vyraYtter >= RANG)) {
+      const previousWh = wh;
+      wh = vakt('wh', previousWh, function (w) {
+        if (w && w.type === 'templateTopStreak') return doljOmTom(w, cleanStreakHtml(w));
+        if (w && w.type === 'templateTopLike') {
+          const safeSkin = LIKE_SKINS.has(w.skin) ? w.skin : 'voltage';   // Clean Bar är pensionerad (2026-09-24)
+          let html = previousWh({...w, skin: safeSkin, showBackground: w.showBackground === true});
+          if (w.showBackground !== true && !html.includes('ranking-bg-off')) {
+            html = html.replace('class="widget vyra-toplike', 'class="widget vyra-toplike ranking-bg-off');
+          }
+          return html;
         }
-        return html;
-      }
-      return previousWh(w);
-    };
+        return previousWh(w);
+      });
+      andrat = true;
+    }
 
-    const previousProps = props;
-    props = function () {
-      const w = liveWidget(selected);
-      return w && w.type === 'templateTopStreak' ? approvedStreakProps(w) : previousProps();
-    };
+    if (typeof props === 'function' && !(props.__vyraYtter >= RANG)) {
+      const previousProps = props;
+      props = vakt('props', previousProps, function () {
+        const w = liveWidget(selected);
+        return w && w.type === 'templateTopStreak' ? approvedStreakProps(w) : previousProps();
+      });
+      andrat = true;
+    }
 
-    const previousBind = bind;
-    bind = function () {
-      previousBind();
-      if (view === 'editor' || view === 'overlay') cleanCatalog();
-      if (view !== 'editor') return;
-      const w = liveWidget(selected);
-      if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
-      if (w && w.type === 'templateTopStreak') {
-        bindControls(w);
-        // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
-        //
-        // `#streakTheme` ar media.js:139:s stilmeny med de SJU avvecklade designerna (inferno, neon,
-        // ice, royal, sakura-rail, cyber-grid, storm). Uppmatt 2026-09-21 i riktig Chrome: menyn
-        // fanns i Clean Flips panel med alla sju kvar, och dess onchange skriver streakTheme och
-        // accent - pa en widget som alltid ritas som Clean Flip. Att valja en design som inte finns
-        // kvar ar precis det #487 skulle stada bort.
-        //
-        // `.gaf-frame-group` ar gift-alert-frames.js ramvaljare: cleanStreakHtml laser aldrig
-        // profileFrame, sa den ritade ingenting (uppmatt 2026-09-20).
-        //
-        // Mats i bind-fasen. Ett prov som bara laser props() ser ingen av dem - bada injiceras
-        // efter att panelen renderats, och just sa missade tests/streak-style-menu.js menyn.
-        document.querySelector('.properties #streakTheme')?.closest('label')?.remove();
-        document.querySelector('.properties .gaf-frame-group')?.remove();
-      }
-    };
+    if (typeof bind === 'function' && !(bind.__vyraYtter >= RANG)) {
+      const previousBind = bind;
+      bind = vakt('bind', previousBind, function () {
+        previousBind();
+        if (view === 'editor' || view === 'overlay') cleanCatalog();
+        if (view !== 'editor') return;
+        const w = liveWidget(selected);
+        if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
+        if (w && w.type === 'templateTopStreak') {
+          bindControls(w);
+          // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
+          //
+          // `#streakTheme` ar media.js:139:s stilmeny med de SJU avvecklade designerna (inferno, neon,
+          // ice, royal, sakura-rail, cyber-grid, storm). Uppmatt 2026-09-21 i riktig Chrome: menyn
+          // fanns i Clean Flips panel med alla sju kvar, och dess onchange skriver streakTheme och
+          // accent - pa en widget som alltid ritas som Clean Flip. Att valja en design som inte finns
+          // kvar ar precis det #487 skulle stada bort.
+          //
+          // `.gaf-frame-group` ar gift-alert-frames.js ramvaljare: cleanStreakHtml laser aldrig
+          // profileFrame, sa den ritade ingenting (uppmatt 2026-09-20).
+          //
+          // Mats i bind-fasen. Ett prov som bara laser props() ser ingen av dem - bada injiceras
+          // efter att panelen renderats, och just sa missade tests/streak-style-menu.js menyn.
+          document.querySelector('.properties #streakTheme')?.closest('label')?.remove();
+          document.querySelector('.properties .gaf-frame-group')?.remove();
+        }
+      });
+      andrat = true;
+    }
+    return andrat;
+  }
 
-    cleanCatalog();
-    if (typeof render === 'function') render();
+  function install() {
+    installed = true;
+    if (!linda()) return;
+    try { cleanCatalog(); } catch (e) {}
+    try { if (typeof render === 'function') render(); } catch (e) {}
   }
 
   const observer = new MutationObserver(mutations => {
@@ -220,8 +261,11 @@
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  if (document.readyState === 'complete') install();
-  else addEventListener('load', install, { once: true });
+  install();
+  // Ett sent skript som lindat om utanför oss: lägg oss ytterst igen. `load` bubblar inte från
+  // <script>, men den går att fånga. `load` på fönstret är sista kontrollen.
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
+  addEventListener('load', install, { once: true });
 
   window.VyraApprovedRankings = Object.freeze({ cleanCatalog, cleanStreakHtml, createLike: createApprovedLike, likeSkins: [...LIKE_SKINS] });
 })();

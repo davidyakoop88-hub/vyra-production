@@ -220,28 +220,49 @@
     });
   }
 
-  let installerad = false;
+  // RÄTT DESIGN FRÅN FÖRSTA RITNINGEN (2026-09-26) - se samma stycke i approved-rankings.js.
+  // Förr väntade den här på `load` (alla bilder och videor); Top Like, Top Coins och Top Points
+  // ritades då med gamla designer tills sidan var helt klar. Nu installeras den direkt och lägger
+  // sig ytterst igen efter varje sent skript. Rang 2: alltid UTANFÖR approved-rankings.js (rang 1),
+  // så att den här wrappern ser den färdiga roten. En inre, äldre kopia släpper bara igenom.
+  const RANG = 2;
+  const djup = { wh: 0, bind: 0 };
+  function vakt(nyckel, forra, gor) {
+    const f = function () {
+      if (djup[nyckel]) return forra.apply(this, arguments);
+      djup[nyckel]++;
+      try { return gor.apply(this, arguments); } finally { djup[nyckel]--; }
+    };
+    f.__vyraYtter = RANG;
+    return f;
+  }
   function install() {
-    if (installerad || typeof wh !== 'function') return;
-    installerad = true;
-    const tidigareWh = wh;
-    wh = function (w) {
-      const html = tidigareWh(w);
-      const id = designFor(w);
-      return id ? omsluten(html, w, id) : html;
-    };
-    const tidigareBind = bind;
-    bind = function () {
-      tidigareBind();
-      if (typeof view !== 'undefined' && (view === 'editor' || view === 'overlay')) katalog();
-    };
-    if (typeof render === 'function') render();
+    let andrat = false;
+    if (typeof wh === 'function' && !(wh.__vyraYtter >= RANG)) {
+      const tidigareWh = wh;
+      wh = vakt('wh', tidigareWh, function (w) {
+        const html = tidigareWh(w);
+        const id = designFor(w);
+        return id ? omsluten(html, w, id) : html;
+      });
+      andrat = true;
+    }
+    if (typeof bind === 'function' && !(bind.__vyraYtter >= RANG)) {
+      const tidigareBind = bind;
+      bind = vakt('bind', tidigareBind, function () {
+        tidigareBind();
+        if (typeof view !== 'undefined' && (view === 'editor' || view === 'overlay')) katalog();
+      });
+      andrat = true;
+    }
+    if (andrat) { try { if (typeof render === 'function') render(); } catch (e) {} }
   }
 
-  // Efter approved-rankings.js, som också installerar på `load`: lyssnarna körs i registrerings-
-  // ordning, så den här wrappern hamnar ytterst och ser den färdiga roten.
-  if (document.readyState === 'complete') install();
-  else addEventListener('load', install, { once: true });
+  // Laddas efter approved-rankings.js, så dess capture-lyssnare körs före den här vid varje sent
+  // skript: approved lägger sig ytterst först, sedan hamnar den här utanför.
+  install();
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
+  addEventListener('load', install, { once: true });
 
   window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog });
 })();
