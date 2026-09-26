@@ -210,8 +210,11 @@
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
+    // HELA FYRVERKERIET PÅ DUKEN (2026-09-26). 540 px bredd i en 432 px duk gick inte att dra i
+    // sidled: widget-grans.js klampar x till 0 när widgeten är bredare än duken. 360 bred ger
+    // 300 hög (samma 6:5 som motorn ritar i), centrerad med 36 px på var sida.
     'giftfireworks.theme': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 120, width: 540, title: 'Gift Fireworks · '+v.label,
+      type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
