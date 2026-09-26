@@ -87,3 +87,22 @@ test('de sex gamla modellerna i sparade layouter ritas kompletta av goal-motion'
   assert.deepEqual(m.saknas,[],`${model}: delar saknas`);assert.deepEqual(m.utanfor,[],`${model}: delar ritas utanför boxen`);
   assert.equal(m.pct,'66%');assert.equal(m.gammal,false,`${model}: gammal goal-markup kom tillbaka`);
  }}finally{await page.close()}});
+
+// MÅTTET FINNS INNAN RAMEN LADDATS. Tower var 48 px hög tills bilden kommit, och det var det
+// måttet draget klampade mot — målet gick att släppa på y 432 i en 768-duk, 372 px nedanför kanten,
+// och varningen "utanför bildrutan" kom först efteråt. Nu reserverar goal-motion.css bildens
+// proportioner, så höjden stämmer från första ritningen. Ramen fördröjs här med flit.
+test('Tower och Orbit har sin höjd innan ramen laddats, så draget klampar mot rätt mått',{skip},async()=>{
+ const page=await browser.newPage({viewport:{width:1600,height:950}});let slapp;const hall=new Promise(r=>slapp=r);
+ await page.route(/assets\/goal-motion\/(vertical|circle)-/,async rt=>{await hall;await rt.continue()});
+ try{await page.goto(`${bas}/studio.html`,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>typeof window.render==='function'&&!!window.VyraSessionState,null,{timeout:30000,polling:100});
+  await page.evaluate(async()=>{await window.VyraSessionState.projectLocalSession();state.widgets.length=0});
+  for(const [id,minH] of [['crown-tower',600],['crown-orbit',300]]){
+   const wid=await skapaFranKatalogen(page,id);assert.ok(wid,id);
+   const m=await page.evaluate(wid=>{const el=document.querySelector('.canvas [data-id="'+wid+'"]'),art=el.querySelector('.goal-motion-art');
+    return{laddad:art.complete&&art.naturalWidth>0,h:el.offsetHeight,topp:VyraGrans.klamp(0,400,VyraGrans.dukFor(el),{bredd:el.offsetWidth,hojd:el.offsetHeight}).topp,duk:VyraGrans.dukFor(el).hojd}},wid);
+   assert.equal(m.laddad,false,`${id}: ramen hann laddas, provet provar inget`);
+   assert.ok(m.h>minH,`${id} är ${m.h} px hög innan ramen laddats`);
+   assert.ok(m.topp+m.h<=m.duk,`${id}: draget släpper målet på y ${m.topp}, nedre kanten ${m.topp+m.h} i en ${m.duk}-duk`);
+  }}finally{slapp();await page.close()}});
