@@ -142,6 +142,49 @@
   var MAPP = 'streamdeck-plugin/se.vyra.live.sdPlugin/';
   var viaDesktop = function () { return /^(127\.0\.0\.1|localhost)$/.test(location.hostname); };
 
+  // ---- MOLNVÄGEN: parkopplingskod och enheter ------------------------------------------------
+  // Utan VYRA Desktop når Stream Deck-knapparna VYRA via molnet. Streamern genererar en kod här och
+  // knappar in den i pluginet; pluginet byter koden mot en enhetstoken (server/streamdeck.js).
+  function arbetsyta() { try { return root.VyraAuth && root.VyraAuth.lastDetail && root.VyraAuth.lastDetail().workspaces[0].id; } catch (e) { return ''; } }
+  function api(vag, opt) {
+    if (root.VyraAuth && root.VyraAuth.api) return root.VyraAuth.api(vag, opt);
+    return Promise.reject(new Error('Logga in på VYRA för att parkoppla'));
+  }
+  function tidText(iso) {
+    if (!iso) return 'aldrig';
+    var d = new Date(iso), s = Math.round((Date.now() - d.getTime()) / 1000);
+    if (s < 60) return 'nyss'; if (s < 3600) return Math.floor(s / 60) + ' min sedan';
+    if (s < 86400) return Math.floor(s / 3600) + ' tim sedan'; return Math.floor(s / 86400) + ' dygn sedan';
+  }
+  function ritaEnheter() {
+    var lista = document.querySelector('#sdEnheter'); if (!lista) return;
+    var ws = arbetsyta();
+    if (!ws) { lista.innerHTML = '<p>Logga in på VYRA för att parkoppla en Stream Deck mot molnet.</p>'; return; }
+    api('/api/workspaces/' + encodeURIComponent(ws) + '/streamdeck/devices').then(function (d) {
+      var e = (d && d.enheter) || [];
+      lista.innerHTML = e.length
+        ? e.map(function (x) { return '<div class="sd-enhet-rad"><span><b>' + saker(x.label || 'Stream Deck') + '</b><small>Senast: ' + tidText(x.last_seen_at) + '</small></span><button type="button" class="sd-sparra" data-id="' + saker(x.id) + '">Spärra</button></div>'; }).join('')
+        : '<p>Ingen parkopplad enhet ännu.</p>';
+      lista.querySelectorAll('.sd-sparra').forEach(function (b) {
+        b.onclick = function () {
+          api('/api/workspaces/' + encodeURIComponent(ws) + '/streamdeck/devices/' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
+            .then(function () { if (typeof toast === 'function') toast('Enheten spärrad'); ritaEnheter(); })
+            .catch(function (err) { if (typeof toast === 'function') toast(err.message); });
+        };
+      });
+    }).catch(function (err) { lista.innerHTML = '<p>' + saker(err.message) + '</p>'; });
+  }
+  function generera() {
+    var ws = arbetsyta();
+    if (!ws) { if (typeof toast === 'function') toast('Logga in på VYRA först'); return; }
+    var ruta = document.querySelector('#sdKodruta'); if (ruta) ruta.textContent = 'Genererar …';
+    api('/api/workspaces/' + encodeURIComponent(ws) + '/streamdeck/pairings', { method: 'POST', body: '{}' })
+      .then(function (d) {
+        if (ruta) ruta.innerHTML = '<b class="sd-kod">' + saker(d.kod) + '</b><small>Gäller i 15 minuter — skriv in den i pluginets ruta <b>VYRA-molnet</b>.</small>';
+      })
+      .catch(function (err) { if (ruta) ruta.textContent = err.message; });
+  }
+
   function lista(rubrik, namn) {
     var unika = namn.filter(function (n, i) { return n && namn.indexOf(n) === i; }).slice(0, 40);
     return '<div class="sd-namnlista"><h4>' + rubrik + ' <small>' + unika.length + '</small></h4>'
@@ -170,8 +213,11 @@
         return '<span class="sd-ruta"><img src="' + MAPP + BILD[k] + '.png" width="36" height="36" alt="">' + NAMN[k] + '</span>'; }).join('') + '</div></div></div></section>'
       + '<section class="card sd-sida"><header><h3>Enheter</h3></header>'
       + '<div class="sd-enhet"><b>' + (desktop ? 'VYRA Desktop är igång' : 'Den här sidan är öppen i webbläsaren') + '</b><span>'
-      + (desktop ? 'Knapparna på din Stream Deck når VYRA via appen på den här datorn.' : 'Knapparna når VYRA via VYRA Desktop på datorn där Stream Deck sitter. Parkoppling via molnet, utan Desktop, kommer i nästa uppdatering.')
+      + (desktop ? 'Knapparna på din Stream Deck når VYRA via appen på den här datorn.' : 'Knapparna når VYRA via VYRA Desktop på datorn där Stream Deck sitter — eller via molnet med en parkopplingskod nedan, helt utan Desktop.')
       + '</span><small id="sdSenast">' + saker(beskriv(senaste)) + '</small></div></section>'
+      + '<section class="card sd-sida"><header><h3>Molnet — utan VYRA Desktop</h3><p>Kör du inte VYRA Desktop på datorn där Stream Deck sitter? Generera en kod och skriv in den i pluginets ruta <b>VYRA-molnet</b>. Då når knapparna VYRA direkt via molnet.</p></header>'
+      + '<div class="sd-kolumner"><div><button type="button" class="sd-primar" id="sdGenerera">Generera parkopplingskod</button><div class="sd-kodruta" id="sdKodruta"></div></div>'
+      + '<div><h4 class="sd-rubrik">PARKOPPLADE ENHETER</h4><div id="sdEnheter" class="sd-enheter"><p>Laddar …</p></div></div></div></section>'
       + '<section class="card sd-sida"><header><h3>Namn att använda</h3><p>Klicka för att kopiera, och klistra in i knappens ruta i Stream Deck.</p></header><div class="sd-namn">'
       + lista('Actions', actions) + lista('Ljud', ljud) + lista('Widgetar', widgets) + '</div></section>';
     vy.querySelectorAll('.sd-kopiera').forEach(function (b) {
@@ -182,6 +228,9 @@
     });
     var ladda = vy.querySelector('#sdLaddaNer');
     if (ladda) ladda.onclick = function () { laddaNerPlugin().catch(function (e) { if (typeof toast === 'function') toast('Pluginet kunde inte laddas ner: ' + e.message); }); };
+    var gen = vy.querySelector('#sdGenerera');
+    if (gen) gen.onclick = generera;
+    ritaEnheter();
   }
   document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('[data-extra="streamdeck"]')) setTimeout(sida, 0); }, true);
 
@@ -264,10 +313,19 @@
       '.sd-namnlista div{display:flex;flex-wrap:wrap;gap:6px}',
       '.sd-namnlista p{opacity:.55;font-size:12px;margin:0}',
       '.sd-kopiera{padding:5px 10px;border-radius:8px;border:1px solid #ffffff1f;background:#ffffff0a;color:inherit;font:inherit;font-size:12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.sd-kopiera:hover{border-color:#b13cff;background:#b13cff22}'
+      '.sd-kopiera:hover{border-color:#b13cff;background:#b13cff22}',
+      '.sd-kodruta{margin-top:14px;display:flex;flex-direction:column;gap:6px}',
+      '.sd-kodruta .sd-kod{font-size:28px;letter-spacing:.18em;font-weight:800;color:#6ad7ff;font-family:ui-monospace,Menlo,Consolas,monospace}',
+      '.sd-kodruta small{opacity:.7;font-size:12px}',
+      '.sd-enheter{display:flex;flex-direction:column;gap:8px}',
+      '.sd-enheter p{opacity:.55;font-size:13px;margin:0}',
+      '.sd-enhet-rad{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12}',
+      '.sd-enhet-rad span{display:flex;flex-direction:column}.sd-enhet-rad small{opacity:.55;font-size:12px}',
+      '.sd-sparra{padding:6px 12px;border-radius:8px;border:1px solid #ff6b6b55;background:transparent;color:#ff8a8a;font:inherit;font-size:12px;cursor:pointer}',
+      '.sd-sparra:hover{background:#ff6b6b22}'
     ].join('');
     document.head.appendChild(st);
   }
 
-  root.VyraStreamDeck = { utfor: utfor, sida: sida, pluginFiler: pluginFiler, zip: zip, crc32: crc32, KOMMANDON: Object.keys(KOMMANDON) };
+  root.VyraStreamDeck = { utfor: utfor, sida: sida, pluginFiler: pluginFiler, zip: zip, crc32: crc32, KOMMANDON: Object.keys(KOMMANDON), generera: generera, ritaEnheter: ritaEnheter };
 })(typeof window !== 'undefined' ? window : globalThis);

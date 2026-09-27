@@ -72,16 +72,29 @@
     <p>Namnet som står i <b>Live-lager</b>. Studion måste vara öppen.</p>
   </section>
 
+  <!-- MOLNET. Delas av alla knappar (globala inställningar i plugin.js). Utan VYRA Desktop når
+       knapparna VYRA via molnet med en parkopplingskod från sidan Stream Deck i studion. -->
+  <hr style="border:none;border-top:1px solid #4a4a4a;margin:16px 0 0">
+  <section id="moln">
+    <label style="color:#c9a9ff">VYRA-molnet <small style="opacity:.7">— om du inte kör VYRA Desktop</small></label>
+    <p id="molnStatus" style="margin:0 0 8px">Knapparna når VYRA via VYRA Desktop. Kör du inte appen: parkoppla mot molnet.</p>
+    <label for="molnKod">Parkopplingskod</label>
+    <input id="molnKod" placeholder="t.ex. ABCD-2345" maxlength="12" autocapitalize="characters" style="text-transform:uppercase">
+    <button id="molnKnapp" type="button" style="margin-top:8px;width:100%;padding:8px;border-radius:5px;border:1px solid #b13cff;background:#b13cff33;color:#fff;font:inherit;cursor:pointer">Parkoppla</button>
+    <p>Hämta koden på sidan <b>Stream Deck</b> i VYRA-studion. Den gäller i 15 minuter.</p>
+  </section>
+
 <script>
 // Property Inspector pratar BARA med Stream Deck-appen, aldrig med VYRA. All HTTP mot 127.0.0.1
 // sker i plugin.js (Node), just för att en webview skickar ett Origin-huvud som local-server.js
 // avvisar med 403. Uppmätt 2026-09-15 — se kommentaren i plugin.js.
-let ws, ctx, aktiv = null, installning = {};
+let ws, ctx, aktiv = null, installning = {}, minAction = '';
 
 function connectElgatoStreamDeckSocket(port, uuid, registerEvent, info, actionInfo) {
   ctx = uuid;
   let uppgift = {};
   try { uppgift = JSON.parse(actionInfo); } catch (e) {}
+  minAction = uppgift.action || '';
   installning = (uppgift.payload && uppgift.payload.settings) || {};
   document.querySelectorAll('section[data-for]').forEach(s => { s.hidden = s.dataset.for !== uppgift.action; });
   aktiv = document.querySelector(`section[data-for="${uppgift.action}"]`) || document.querySelector('section[data-for="se.vyra.live.knapp"]');
@@ -91,7 +104,31 @@ function connectElgatoStreamDeckSocket(port, uuid, registerEvent, info, actionIn
     f.addEventListener('change', spara); f.addEventListener('blur', spara);
   });
   ws = new WebSocket('ws://127.0.0.1:' + port);
-  ws.onopen = () => { ws.send(JSON.stringify({ event: registerEvent, uuid })); spara(); };
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ event: registerEvent, uuid }));
+    spara();
+    tillPlugin({ status: true });   // fråga om molnet redan är parkopplat
+  };
+  // Molnets svar (parkopplat eller inte) kommer via plugin.js, aldrig direkt från molnet.
+  ws.onmessage = e => {
+    let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+    if (m.event === 'sendToPropertyInspector') visaMoln(m.payload || {});
+  };
+  document.getElementById('molnKnapp').addEventListener('click', () => {
+    const kod = document.getElementById('molnKod').value.trim();
+    if (!kod) return;
+    document.getElementById('molnStatus').textContent = 'Parkopplar …';
+    tillPlugin({ parkoppla: true, kod: kod, namn: 'Stream Deck' });
+  });
+}
+
+function tillPlugin(payload) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ event: 'sendToPlugin', context: ctx, action: minAction, payload }));
+}
+function visaMoln(p) {
+  const el = document.getElementById('molnStatus');
+  if (p.parkopplad) { el.textContent = '✓ Parkopplat mot molnet — knapparna fungerar utan VYRA Desktop.'; el.style.color = '#3ddc97'; document.getElementById('molnKod').value = ''; }
+  else if (p.fel) { el.textContent = 'Kunde inte parkoppla: ' + p.fel; el.style.color = '#ff8a8a'; }
 }
 
 function spara() {

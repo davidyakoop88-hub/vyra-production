@@ -55,11 +55,26 @@ test('varje typ bryggan skickar tas emot av molnet', () => {
     `bryggan skickar typer molnet kastar: ${orphans.join(', ')} — de nar aldrig en widget`);
 });
 
+// 'streamdeck' ar molnets ENDA tillatna typ som inte fods i TikTok-bryggan: den kommer fran
+// Stream Deck-pluginet via rutten POST /api/streamdeck/events (server/index.js, server/streamdeck.js).
+// Den maste sta i ALLOWED for att cleanEvent inte ska kasta den, men har ingen bryggproducent — sa
+// den undantas har OCH kravs ha sin producent i index.js, sa undantaget inte tyst doljer en tappad
+// TikTok-typ.
+const ICKE_BRYGGA = new Set(['streamdeck']);
+
 test('varje typ molnet slapper igenom har en producent', () => {
   const produced = new Set([...bridgeTypes()].map(t => aliases()[t] || t));
-  const stranded = [...cloudAllowed()].filter(t => !produced.has(t));
+  const stranded = [...cloudAllowed()].filter(t => !produced.has(t) && !ICKE_BRYGGA.has(t));
   assert.deepEqual(stranded, [],
     `molnet slapper igenom typer ingen skickar: ${stranded.join(', ')} — dod kod eller tappad producent`);
+});
+
+test('de icke-bryggade typerna har en serverproducent', () => {
+  // streamdeck maste faktiskt publiceras nagonstans — annars ar undantaget ovan bara en lucka.
+  const index = read('server/index.js');
+  for (const typ of ICKE_BRYGGA)
+    assert.match(index, new RegExp(`type:\\s*'${typ}'`),
+      `${typ} ar undantagen bryggkravet men publiceras inte i server/index.js`);
 });
 
 // ---- faltnamnen maste overleva hela vagen ------------------------------------------------------------

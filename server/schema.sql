@@ -929,3 +929,32 @@ CREATE TABLE IF NOT EXISTS points_ledger (
   PRIMARY KEY (workspace_id, viewer_id)
 );
 CREATE INDEX IF NOT EXISTS points_ledger_leaderboard_idx ON points_ledger (workspace_id, points DESC);
+
+-- STREAM DECK, MOLNVÄGEN. Pluginet (streamdeck-plugin/) postar i första hand till VYRA Desktop;
+-- utan Desktop faller det tillbaka på POST /api/streamdeck/events med en enhetstoken. Token byts
+-- fram EN gång mot en kort parkopplingskod streamern genererar i studion. Samma hash-bara-mönster
+-- som overlay_access_tokens: varken koden eller token lagras i klartext, så tabellen kan inte läcka
+-- en giltig nyckel. Se server/streamdeck.js.
+CREATE TABLE IF NOT EXISTS streamdeck_pairings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  code_hash text NOT NULL UNIQUE,
+  created_by uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz,
+  device_id uuid
+);
+CREATE INDEX IF NOT EXISTS streamdeck_pairings_workspace_idx ON streamdeck_pairings(workspace_id,created_at DESC);
+
+CREATE TABLE IF NOT EXISTS streamdeck_devices (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  token_hash text NOT NULL UNIQUE,
+  label text NOT NULL DEFAULT 'Stream Deck',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  last_seen_at timestamptz,
+  revoked_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS streamdeck_devices_workspace_idx ON streamdeck_devices(workspace_id,created_at DESC);
+CREATE INDEX IF NOT EXISTS streamdeck_devices_active_token_idx ON streamdeck_devices(token_hash) WHERE revoked_at IS NULL;

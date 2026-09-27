@@ -20,6 +20,9 @@ const Support=require('./support');
 const TTS=require('./tts');
 // Låtönskningarnas YouTube-sökning. Nyckeln (YOUTUBE_API_KEY) läses bara här, på servern.
 const Musik=require('./musik').createMusik();
+// Stream Deck-molnvägen: parkopplingskoder och enhetstoken. Utan VYRA Desktop postar pluginet hit.
+const Streamdeck=require('./streamdeck').createStreamdeck({pool}),{KOMMANDON:STREAMDECK_KOMMANDON}=require('./streamdeck');
+const STREAMDECK_RATE_LIMIT=Number(process.env.STREAMDECK_RATE_LIMIT||10);
 const PORT=Number(process.env.PORT||8080),ORIGIN=process.env.APP_ORIGIN||`http://127.0.0.1:${PORT}`,SESSION_SECONDS=Number(process.env.SESSION_DAYS||14)*86400;
 const SSE_HEARTBEAT_MS=30000;
 // TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
@@ -444,6 +447,33 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     const d=await body(req,64*1024),out=await ingestTikTokEvent(workspaceId,d);
     return send(res,out.duplicate?200:202,{ok:true,...out});
   }
+  // STREAM DECK-MOLNVÄGEN — PLUGINETS TVÅ MASKINRUTTER. Ligger FÖRE den delade session-raden nedan,
+  // för de har ingen inloggning: pluginet är en process på streamerns dator, inte en webbläsare.
+  // Autentiseringen är parkopplingskoden respektive enhetstoken, aldrig en session eller CSRF.
+  //
+  //   1. Byt en kod mot en token. Ingen sameOrigin: en Node-fetch skickar ingen Origin, och koden
+  //      ÄR beviset. Tar en IP-baserad rate-limit så en angripare inte kan gissa koder i mängd.
+  if(p==='/api/streamdeck/pair'&&req.method==='POST'){
+    if(await rateLimiter.exceeded(`streamdeck-pair:${S.klientadress(req)||'unknown'}`,20))return send(res,429,{ok:false,error:'För många försök — vänta en stund'});
+    const d=await body(req).catch(()=>({}));
+    const par=await Streamdeck.parkoppla(d.kod,d.namn);
+    return send(res,201,{ok:true,deviceToken:par.deviceToken,workspace:par.workspaceId});
+  }
+  //   2. Ta emot ett knapptryck. Enhetstoken i Authorization: Bearer bär workspace — pluginet
+  //      skickar aldrig något workspace-id, precis som Desktop-vägen inte gör det. Publiceras som
+  //      typen `streamdeck` på bussen; live-client.js routar den och streamdeck.js utför den.
+  if(p==='/api/streamdeck/events'&&req.method==='POST'){
+    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+    const enhet=await Streamdeck.enhetAvToken(token);
+    if(!enhet)return send(res,401,{ok:false,error:'Okänd eller spärrad Stream Deck-enhet'});
+    if(await rateLimiter.exceeded(`streamdeck-event:${enhet.id}`,STREAMDECK_RATE_LIMIT))return send(res,429,{ok:false,error:'För många knapptryck'});
+    const d=await body(req).catch(()=>({}));
+    const sdKommando=String(d.sdKommando||'');
+    if(!STREAMDECK_KOMMANDON.has(sdKommando))return send(res,400,{ok:false,error:'Okänt kommando'});
+    const id=String(d.eventKey||'').slice(0,160)||`sd:${enhet.id}:${Date.now()}`;
+    const out=await eventBus.publish(enhet.workspace_id,{type:'streamdeck',id,sdKommando,sdVarde:d.sdVarde,sdVal:d.sdVal});
+    return send(res,out.duplicate?200:202,{ok:true,duplicate:out.duplicate});
+  }
   // TVASTEGSUTMANINGEN KAN INTE BARA EN DELAD CSRF-TOKEN — AV EXAKT SAMMA SKAL SOM INGEST-RUTTEN
   // OVAN, och den har rutten last ute varje skrivbordskund med 2FA tills detta skrevs.
   //
@@ -656,6 +686,18 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,201,{ok:true,...ut});
   }
   const tokenRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays\/([0-9a-f-]+)\/access-tokens(?:\/([0-9a-f-]+))?$/i);if(tokenRoute){const[,workspaceId,overlayId,tokenId]=tokenRoute;if(!await membership(s.user_id,workspaceId,['owner','admin']))return send(res,403,{ok:false,error:'Endast ägare och administratörer kan hantera OBS-länkar'});const exists=await pool.query('SELECT 1 FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);if(!exists.rowCount)return send(res,404,{ok:false,error:'Overlay saknas'});if(req.method==='GET'&&!tokenId){const q=await pool.query('SELECT id,label,created_at,expires_at,last_used_at,revoked_at FROM overlay_access_tokens WHERE overlay_id=$1 ORDER BY created_at DESC',[overlayId]);return send(res,200,{ok:true,tokens:q.rows})}if(req.method==='POST'&&!tokenId){const d=await body(req),raw=S.token(32),label=S.safeText(d.label||'OBS',80)||'OBS',days=d.expiresInDays==null?null:Math.max(1,Math.min(365,Number(d.expiresInDays)||30)),expires=days?new Date(Date.now()+days*86400000):null,q=await pool.query('INSERT INTO overlay_access_tokens(overlay_id,token_hash,label,created_by,expires_at) VALUES($1,$2,$3,$4,$5) RETURNING id,label,created_at,expires_at',[overlayId,S.digest(raw),label,s.user_id,expires]);await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_created','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId:q.rows[0].id,label}]);return send(res,201,{ok:true,token:q.rows[0],accessToken:raw,overlayUrl:`${ORIGIN}/overlay.html?access=${encodeURIComponent(raw)}`})}if(req.method==='DELETE'&&tokenId){const q=await pool.query('UPDATE overlay_access_tokens SET revoked_at=now() WHERE id=$1 AND overlay_id=$2 AND revoked_at IS NULL RETURNING id',[tokenId,overlayId]);if(!q.rowCount)return send(res,404,{ok:false,error:'Länken saknas eller är redan spärrad'});await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_revoked','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId}]);return send(res,200,{ok:true})}return send(res,405,{ok:false,error:'Metoden stöds inte'})}
+  // STREAM DECK-MOLNVÄGEN, streamerns egen sida. Generera en parkopplingskod, lista de enheter som
+  // parkopplat sig, och spärra en enhet. Editor räcker: att koppla sin egen Stream Deck är att styra
+  // sin studio, inte att administrera arbetsytan. Koden visas EN gång; den lagras bara som hash.
+  const sdRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/streamdeck\/(pairings|devices)(?:\/([0-9a-f-]+))?$/i);
+  if(sdRoute){
+    const[,workspaceId,gren,deviceId]=sdRoute;
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(gren==='pairings'&&req.method==='POST'){const d=await body(req).catch(()=>({})),ut=await Streamdeck.skapaKod(workspaceId,s.user_id);return send(res,201,{ok:true,kod:ut.kod,expiresAt:ut.expiresAt})}
+    if(gren==='devices'&&req.method==='GET'&&!deviceId)return send(res,200,{ok:true,enheter:await Streamdeck.listaEnheter(workspaceId)});
+    if(gren==='devices'&&req.method==='DELETE'&&deviceId){const bort=await Streamdeck.taBort(deviceId,workspaceId);return bort?send(res,200,{ok:true}):send(res,404,{ok:false,error:'Enheten saknas eller är redan spärrad'})}
+    return send(res,405,{ok:false,error:'Metoden stöds inte'});
+  }
   // TikTok-anslutning per workspace. Skriver raden som tiktok-bridge/connection-manager.js pollar
   // (SELECT ... WHERE active = true) och startar/stoppar en bridge-process for. Det ar den enda
   // vagen in i tiktok_connections — tabellen fanns men ingenting fyllde den fore detta.

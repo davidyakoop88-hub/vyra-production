@@ -686,10 +686,12 @@
         "chatbot-overlay.css",
         "configure_obs_tikcontrol.py",
         "server/tts.js",
-        "server/musik.js"
+        "server/musik.js",
+        "server/streamdeck.js"
       ],
       "tester": [
         "server/test/tts.test.js",
+        "server/test/streamdeck.test.js",
         "tests/tts-livestatus.test.js",
         "tests/paus-indikator.test.js"
       ],

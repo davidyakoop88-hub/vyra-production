@@ -31,6 +31,10 @@
 // trasigt ut fast det fungerar, så knappen visar ✓/✗ på serverns svar för att skilja dem åt.
 
 const VYRA = 'http://127.0.0.1:4173';
+// MOLNVÄGEN. Kör inte VYRA Desktop — streamern sitter på en annan dator, eller vill slippa appen —
+// postar pluginet i stället hit, med en ENHETSTOKEN som byts fram mot en parkopplingskod (server/
+// streamdeck.js). Origin: ingen — Node:s fetch skickar inget, och /api/streamdeck/* kräver ingen.
+const MOLN = 'https://vyralive.app';
 // Knapp (UUID i manifest.json) → kommando som streamdeck.js i VYRA utför. 'se.vyra.live.knapp' står
 // inte här med flit: den är 0.1-knappen och skickar sin nyckel som förut, så gamla knappar fungerar.
 const KOMMANDO = {
@@ -54,10 +58,73 @@ const send = o => { try { ws.send(JSON.stringify(o)) } catch (_) {} };
 const visa = (context, tecken) => send({ event: 'showOk', context });
 const fel = context => send({ event: 'showAlert', context });
 
-ws.addEventListener('open', () => send({ event: registerEvent, uuid }));
+// Parkopplingens enhetstoken bor i GLOBALA inställningar (delas av alla knappar), inte per knapp —
+// streamern parkopplar en gång och alla knappar når molnet. Stream Deck skickar den vid start.
+let moln = {};
+
+ws.addEventListener('open', () => {
+  send({ event: registerEvent, uuid });
+  send({ event: 'getGlobalSettings', context: uuid });
+});
+
+// Ett knapptryck levereras FÖRST till VYRA Desktop, och bara om det misslyckas till molnet — så en
+// streamer med appen igång aldrig får en runda över internet i onödan. Den gamla 'knapp'-knappen
+// (0.1) har ingen molnväg: den saknar sdKommando och molnrutten skulle avvisa den med 400.
+async function leverera(kropp, context) {
+  try {
+    const r = await fetch(`${VYRA}/api/events`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(kropp), signal: AbortSignal.timeout(3000)
+    });
+    if (r.ok) return visa(context);
+  } catch (_) { /* Desktop kör troligen inte — prova molnet nedan */ }
+
+  if (kropp.type === 'streamdeck' && moln.deviceToken) {
+    try {
+      const r = await fetch(`${MOLN}/api/streamdeck/events`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + moln.deviceToken },
+        body: JSON.stringify(kropp), signal: AbortSignal.timeout(6000)
+      });
+      if (r.ok) return visa(context);
+      console.error(`[vyra] molnet svarade ${r.status}`);
+    } catch (err) { console.error('[vyra] nådde inte molnet —', err.message); }
+  }
+  // Krysset skiljer "kom inte fram" från "kördes". Utan Desktop och utan parkoppling: kryss.
+  fel(context);
+  console.error('[vyra] varken VYRA Desktop (4173) eller molnet nåddes');
+}
+
+// Byter en parkopplingskod mot en enhetstoken och sparar den globalt. Property Inspector skickar
+// koden hit (sendToPlugin) i stället för att prata med molnet själv — en webview skickar ett Origin
+// och kan råka ut för CORS, medan Node:s fetch inte gör det.
+async function parkoppla(kod, namn, context, action) {
+  const svara = nytt => send({ event: 'sendToPropertyInspector', context, action, payload: nytt });
+  try {
+    const r = await fetch(`${MOLN}/api/streamdeck/pair`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kod: String(kod || ''), namn: String(namn || '') }), signal: AbortSignal.timeout(8000)
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.deviceToken) {
+      moln = { deviceToken: j.deviceToken, workspace: j.workspace, parkoppladAt: Date.now() };
+      send({ event: 'setGlobalSettings', context: uuid, payload: moln });
+      return svara({ parkopplad: true });
+    }
+    svara({ parkopplad: false, fel: j.error || `Fel ${r.status}` });
+  } catch (err) { svara({ parkopplad: false, fel: err.message }); }
+}
 
 ws.addEventListener('message', async e => {
   let m; try { m = JSON.parse(e.data) } catch (_) { return }
+
+  if (m.event === 'didReceiveGlobalSettings') { moln = (m.payload && m.payload.settings) || {}; return; }
+  if (m.event === 'sendToPlugin') {
+    const d = m.payload || {};
+    if (d.parkoppla) return parkoppla(d.kod, d.namn, m.context, m.action);
+    if (d.status) return send({ event: 'sendToPropertyInspector', context: m.context, action: m.action, payload: { parkopplad: !!moln.deviceToken } });
+    return;
+  }
   if (m.event !== 'keyDown') return;
 
   const installning = (m.payload && m.payload.settings) || {};
@@ -76,23 +143,7 @@ ws.addEventListener('message', async e => {
         sdVarde: String(installning.varde || '').slice(0, 300), sdVal: String(installning.val || '').slice(0, 40) }
     : { type: 'knapp', eventKey: nyckel };
 
-  try {
-    const r = await fetch(`${VYRA}/api/events`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(kropp),
-      signal: AbortSignal.timeout(4000)
-    });
-    if (r.ok) visa(m.context);
-    else {
-      fel(m.context);
-      console.error(`[vyra] ${r.status} från VYRA Desktop`);
-    }
-  } catch (err) {
-    // Vanligaste orsaken: VYRA Desktop kör inte. Krysset på knappen säger det direkt.
-    fel(m.context);
-    console.error('[vyra] nådde inte VYRA Desktop på 4173 —', err.message);
-  }
+  leverera(kropp, m.context);
 });
 
 ws.addEventListener('error', () => console.error('[vyra] WebSocket-fel mot Stream Deck'));
