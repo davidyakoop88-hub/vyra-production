@@ -496,7 +496,10 @@ function battleProbe(data){
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope']);
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope',
+  // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
+  // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt stoppas.
+  'chatcommand']);
 
 // EMOTES — formen kommer ur bibliotekets egna typer, inte ur en gissning
 // (tiktok-live-proto/dist/node/v3.d.ts):

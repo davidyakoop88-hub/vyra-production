@@ -388,6 +388,14 @@
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
+    // LÅTÖNSKNINGAR (latonskningar.js). 340 bred, ungefär 250 hög — nere till vänster på duken.
+    'latonskningar': v => ({
+      type: 'templateSongRequests', latKalla: v.kalla, x: 46, y: 470, width: 340,
+      title: v.kalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube',
+      latKommando: '!önska', latCooldown: 60, latMaxKo: 10, latMaxMinuter: 8, latVisa: 3, latVolym: 70,
+      latFarg: v.kalla === 'spotify' ? '#1db954' : '#ff3b7a', layer: 25
+    }),
+
     // SKATTKISTAN (skattkista.js). Kistan är 220 bred och ungefär 260 hög, raden 340 × 56 — båda
     // skapas hela på duken (432 × 768), kistan mitt i övre delen och raden högst upp.
     'skattkista': v => v.design === 'pill'
@@ -520,6 +528,11 @@
     // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
     // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
     'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
+    // catalog:latonskningar:youtube och catalog:latonskningar:spotify — källan är nyckelns enda led.
+    'latonskningar': parts => {
+      if (parts[0] !== 'youtube' && parts[0] !== 'spotify') throw new Error(`Okänd källa för låtönskningar: ${parts[0]}`);
+      return ['latonskningar', { kalla: parts[0] }];
+    },
     // catalog:skattkista:kista och catalog:skattkista:pill. Okänd design är ett fel, inte en tyst kista.
     'skattkista': parts => {
       if (parts[0] !== 'kista' && parts[0] !== 'pill') throw new Error(`Okänd skattkistedesign: ${parts[0]}`);

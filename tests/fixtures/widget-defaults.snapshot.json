@@ -456,5 +456,37 @@
     "kistaVisaAvsandare": true,
     "kistaEfterOppning": 8,
     "layer": 30
+  },
+  "catalog:latonskningar:youtube": {
+    "type": "templateSongRequests",
+    "latKalla": "youtube",
+    "x": 46,
+    "y": 470,
+    "width": 340,
+    "title": "Låtönskningar · YouTube",
+    "latKommando": "!önska",
+    "latCooldown": 60,
+    "latMaxKo": 10,
+    "latMaxMinuter": 8,
+    "latVisa": 3,
+    "latVolym": 70,
+    "latFarg": "#ff3b7a",
+    "layer": 25
+  },
+  "catalog:latonskningar:spotify": {
+    "type": "templateSongRequests",
+    "latKalla": "spotify",
+    "x": 46,
+    "y": 470,
+    "width": 340,
+    "title": "Låtönskningar · Spotify",
+    "latKommando": "!önska",
+    "latCooldown": 60,
+    "latMaxKo": 10,
+    "latMaxMinuter": 8,
+    "latVisa": 3,
+    "latVolym": 70,
+    "latFarg": "#1db954",
+    "layer": 25
   }
 }

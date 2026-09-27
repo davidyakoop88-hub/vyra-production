@@ -221,7 +221,10 @@ function startLocalServer(root, port = 4173, options = {}) {
     // kapar listan har och far provet att falla pa nasta typ.
     'battle_mvp',
     // envelope (skattkistan) tillkom 2026-09-27, samtidigt i molnet och i tiktok-service.js.
-    'envelope']);
+    'envelope',
+    // chatcommand (rader som börjar med utropstecken) samma dag: molnet räknar dem i en egen
+    // takthink, så de kan inte tränga undan gåvorna. Vanlig chatt stannar hemma som förut.
+    'chatcommand']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');

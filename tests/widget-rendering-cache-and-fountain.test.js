@@ -344,7 +344,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // den tidigare social-goal-renderaren. En cachad klient måste hämta båda nya filerna tillsammans.
   // Bumpad 2026-09-26: Rail och Tower fick mått som ryms på duken (goal-motion.js + .css).
   // Bumpad 2026-09-27: skattkista.js läggs sist i bunten (widgeten Skattkista).
-  assert.match(media, /const version='20260927-skattkista-1'/);
+  // Bumpad 2026-09-27 igen: latonskningar.js (låtönskningar) läggs efter den.
+  assert.match(media, /const version='20260927-latonsk-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5e822d9`
+Commit: `fce75a4`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **127** |
-| Sektioner | 21 |
-| Med katalognyckel | 127 / 127 |
-| Med shadow DOM-miniatyr | 127 / 127 |
-| Ritar sin design | 127 / 127 |
+| Kort totalt | **129** |
+| Sektioner | 22 |
+| Med katalognyckel | 129 / 129 |
+| Med shadow DOM-miniatyr | 129 / 129 |
+| Ritar sin design | 129 / 129 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -60,7 +60,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
 | TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
-| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | — | — |
+| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | — |
+| LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | — | — |
 
 ## Varje kort
 
@@ -293,6 +294,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | — | — |
-| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | — | — |
+| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | 2026-09-27 | — |
+| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | 2026-09-27 | — |
+
+### LÅTÖNSKNINGAR · LIVE
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Låtönskningar · YouTube | `catalog:latonskningar:youtube` | ✓ | ✓ | — | — |
+| Låtönskningar · Spotify | `catalog:latonskningar:spotify` | ✓ | ✓ | — | — |
 

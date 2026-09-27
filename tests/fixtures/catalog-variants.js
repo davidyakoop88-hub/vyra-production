@@ -99,6 +99,8 @@ const CONTRACT = [
   // jämföra mot, så raden har ingen marker. Snapshoten är kontraktet.
   { name: 'Skattkista · kista', key: 'catalog:skattkista:kista' },
   { name: 'Skattkista · rad', key: 'catalog:skattkista:pill' },
+  { name: 'Låtönskningar · YouTube', key: 'catalog:latonskningar:youtube' },
+  { name: 'Låtönskningar · Spotify', key: 'catalog:latonskningar:spotify' },
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',
     marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } },
   { name: 'Gift Jar · Royal Lion', key: 'catalog:giftjar:lion',

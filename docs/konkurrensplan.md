@@ -26,7 +26,7 @@ Sökt i hela repot, testfixturer borträknade:
 | Funktion de har | Finns i VYRA | Kommentar |
 |---|---|---|
 | Chattruta (18+ teman) | **nej** | enda träffen är en nämning i `extras.js` |
-| Låtönskningar | **nej** | noll träffar |
+| Låtönskningar | **ja** (2026-09-27) | `latonskningar.js`: `!önska <låt>` i chatten, YouTube (sökning via `server/musik.js`) eller Spotify-kön. Tidigare: noll träffar |
 | Spel och quiz | **nej** | träffarna är testfixturer |
 | Donationssida (PayPal) | **nej** | träffarna är landningssidans text |
 | Bakgrundsbibliotek | **nej** | noll träffar |
