@@ -121,3 +121,24 @@ test('den klassiska fontänen svarar också på likes, utan Action', { skip, tim
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// Svepet 2026-09-27: en render() innan like-fountain-portal.js hunnit laddas gick till den klassiska
+// fontänens likeFountainHtml med paletten 'portal', som den inte har — och HELA render() kastade.
+// likeFountainHtml är den oinslagna klassiska funktionen, så den kan anropas direkt.
+test('den klassiska fontänen kraschar inte på en portal som ritas före sitt skript', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(true);
+  try {
+    const m = await page.evaluate(() => {
+      const w = VyraWidgets.create('catalog:likefountain:portal');
+      const html = likeFountainHtml(w);
+      const okand = likeFountainHtml(Object.assign(VyraWidgets.create('catalog:likefountain'), { fountainPalette: 'finns-inte' }));
+      const d = document.createElement('div'); d.innerHTML = html; const el = d.firstElementChild;
+      return { hjartan: d.querySelectorAll('.lf-p').length, b: parseInt(el.style.width), h: parseInt(el.style.height), bredd: w.width, okand: okand.includes('lf-p-heart') };
+    });
+    assert.equal(m.hjartan, 0, 'den klassiska fontänen ritade sina hjärtan i portalens ruta');
+    assert.equal(m.b, m.bredd);
+    assert.equal(m.h, Math.round(m.bredd * 768 / 432), 'rutan har inte portalens mått');
+    assert.equal(m.okand, true, 'en okänd palett ska falla tillbaka, inte krascha');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});

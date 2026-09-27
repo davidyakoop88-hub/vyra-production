@@ -112,10 +112,17 @@
   // The observer now runs for the whole broadcast. It is safe to leave running because zeroing is
   // gated on isDemoName(): a row holding real data is never touched (see zeroRankingRows and
   // zeroSingleValueWidgets below). `writing` remains, to ignore the mutations we cause ourselves.
-  let writing = false;
+  //
+  // A mutation that arrives while `writing` is set is DEFERRED, never dropped (2026-09-27). The
+  // window lasts until the setTimeout below, and a render() landing inside it used to be thrown
+  // away with our own echoes: nothing else mutated, so 'TestAlpha' / 1500 stayed on the OBS
+  // overlay until something unrelated repainted. One re-run after the window is enough, and it
+  // cannot spin: zeroing only writes where a demo value is still present, so the re-run over
+  // our own echoes writes nothing and schedules nothing.
+  let writing = false, missed = false;
 
   function zeroAll() {
-    if (writing) return;
+    if (writing) { missed = true; return; }
     writing = true;                       // second guard: ignore the mutations we cause ourselves
     try {
       zeroRankingRows(document);
@@ -123,8 +130,8 @@
     } catch (err) {
       console.warn('[vyra] live-zero-state:', err.message);
     } finally {
-      // Let the observer drain the mutations we just made before accepting new work.
-      setTimeout(() => { writing = false }, 0);
+      // Let the observer drain the mutations we just made, then catch up on anything that came in.
+      setTimeout(() => { writing = false; if (missed) { missed = false; zeroAll(); } }, 0);
     }
   }
 
