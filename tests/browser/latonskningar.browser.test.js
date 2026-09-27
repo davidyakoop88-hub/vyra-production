@@ -113,3 +113,30 @@ test('i studion: båda källorna finns i katalogen och skapas hela på duken', {
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// "När man väljer Spotify eller YouTube ska namnet synas där widgetens namn står" (David 2026-09-27).
+test('namnet i lagerlistan följer källan, men en egen titel rörs inte', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    const m = await page.evaluate(async () => {
+      const byt = async (w, kalla) => {
+        selected = w.id; view = 'editor'; render(); bind();
+        const sel = document.querySelector('#latKalla'); sel.value = kalla; sel.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 150));
+        const rad = document.querySelector(`.live-layer-list article[data-layer-id="${w.id}"]`);
+        // liveWidget, inte w: en sparning byter objektet i state (docs/tech-debt.md #16).
+        return { titel: liveWidget(w.id).title, rad: rad ? rad.textContent : '' };
+      };
+      const w = VyraWidgets.create('catalog:latonskningar:youtube'); state.widgets.push(w);
+      const tillSpotify = await byt(w, 'spotify'), tillbaka = await byt(w, 'youtube');
+      const egen = VyraWidgets.create('catalog:latonskningar:youtube'); egen.title = 'Min musik'; state.widgets.push(egen);
+      const egenEfter = await byt(egen, 'spotify');
+      return { tillSpotify, tillbaka, egenEfter };
+    });
+    assert.equal(m.tillSpotify.titel, 'Låtönskningar · Spotify');
+    assert.match(m.tillSpotify.rad, /Låtönskningar · Spotify/, 'lagerraden visar inte den nya källan');
+    assert.equal(m.tillbaka.titel, 'Låtönskningar · YouTube');
+    assert.equal(m.egenEfter.titel, 'Min musik', 'en titel streamern skrivit själv skrevs över');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});

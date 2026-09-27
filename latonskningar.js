@@ -31,6 +31,7 @@
   var SEDDA = {};           // event-id -> 1, så samma chattrad aldrig blir två önskningar
   var HISTORIK_MS = 30000;  // äldre chattrader än så är historik som spelas upp vid sidladdning
 
+  var STANDARDNAMN = ['Låtönskningar', 'Låtönskningar · YouTube', 'Låtönskningar · Spotify'];
   var arLat = function (w) { return !!w && w.type === TYP; };
   var widgetar = function () { try { return state.widgets.filter(arLat); } catch (e) { return []; } };
   var forsta = function () { return widgetar().filter(function (w) { return !w.hidden; })[0] || null; };
@@ -301,7 +302,13 @@
     var q = function (s) { return document.querySelector('.properties ' + s) || document.querySelector(s); };
     var spara = function (omrita) { if (typeof save === 'function') save(); if (omrita !== false) { if (typeof render === 'function') render(); if (typeof bind === 'function') bind(); } };
     var el;
-    if ((el = q('#latKalla'))) el.onchange = function (e) { w.latKalla = e.target.value === 'spotify' ? 'spotify' : 'youtube'; spara(); };
+    // Namnet i lagerlistan (och i Live-lager) är widgetens titel. Den följer källan så länge den är
+    // ett standardnamn — en titel streamern skrivit själv rörs aldrig.
+    if ((el = q('#latKalla'))) el.onchange = function (e) {
+      w.latKalla = e.target.value === 'spotify' ? 'spotify' : 'youtube';
+      if (!w.title || STANDARDNAMN.indexOf(w.title) >= 0) w.title = w.latKalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube';
+      spara();
+    };
     if ((el = q('#latKommando'))) el.onchange = function (e) { var v = String(e.target.value || '').trim().toLowerCase(); w.latKommando = /^!\S{1,19}$/.test(v) ? v : '!önska'; spara(); };
     [['#latCooldown', 'latCooldown'], ['#latMaxKo', 'latMaxKo'], ['#latMaxMinuter', 'latMaxMinuter']].forEach(function (p) {
       var f = q(p[0]); if (f) f.onchange = function (e) { w[p[1]] = Number(e.target.value); spara(false); };
