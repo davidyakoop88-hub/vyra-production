@@ -28,7 +28,7 @@
   // skrivare till templateTopGift — live-leaderboard.js:130 skriver också dit, på varje gåva. Utan
   // en gemensam sanning hade separationen gällt i testet men inte i produktion: Top Gift skulle
   // fortsätta byta namn på varje billig gåva.
-  var records = { giftCoins: 0, streakCount: 0 };
+  var records = { giftCoins: 0, streakCoins: 0 };
   window.VyraGiftRecords = records;
 
   // OCH DE OVERLEVER EN SIDLADDNING. Hogvattenmarkena ovan lag i en vanlig variabel: en omladdning
@@ -52,7 +52,7 @@
     try {
       if (!session) window.sessionStorage.removeItem(REKORD_NYCKEL);
       else window.sessionStorage.setItem(REKORD_NYCKEL, JSON.stringify({
-        sessionId: session, giftCoins: records.giftCoins, streakCount: records.streakCount }));
+        sessionId: session, giftCoins: records.giftCoins, streakCoins: records.streakCoins }));
     } catch (e) {}
   }
   function aterstallRekord() {
@@ -62,7 +62,7 @@
       var sparad = JSON.parse(window.sessionStorage.getItem(REKORD_NYCKEL) || 'null');
       if (!sparad || sparad.sessionId !== session) return false;
       records.giftCoins = Number(sparad.giftCoins) || 0;
-      records.streakCount = Number(sparad.streakCount) || 0;
+      records.streakCoins = Number(sparad.streakCoins) || 0;
       return true;
     } catch (e) { return false }
   }
@@ -307,7 +307,7 @@
     var detalj = event && event.detail;
     if (!detalj || detalj.event !== 'live:start') return;
     records.giftCoins = 0;
-    records.streakCount = 0;
+    records.streakCoins = 0;
     skrivRekord();
   });
 
@@ -324,20 +324,30 @@
 
     // De två topplistorna mäter olika saker och delade tidigare en gren, så båda blev en dubblett
     // av den senaste gåvan. Bryggan skiljer dem åt: `coins:coinsEach*repeatCount, count:repeatCount`
-    // i tiktok-bridge/normalizer.js. En billig gåva spammad 50 gånger är en stor STREAK men en liten
-    // GÅVA; en enda dyr gåva är tvärtom.
+    // i tiktok-bridge/normalizer.js.
     var coins = Number(detail.coins || 0) || 0;
     var streak = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
 
     // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden
     // gäller sändningen, inte layouten — de nollställs vid omladdning, precis som topplistorna.
-    // Gåvans eget värde avgör Top Gift; antalet avgör Top Streak. `coins` självt lämnas orört —
-    // det är totalen alla andra läsare räknar med.
+    // `coins` självt lämnas orört — det är totalen alla andra läsare räknar med.
+    //
+    // TOP GIFT rankas på gåvans STYCKVÄRDE (coins ÷ antal): den enskilt dyraste gåvan vinner.
+    //
+    // TOP STREAK rankas på COMBONS VÄRDE (coins = styckpris × antal), inte på antalet. Davids regel
+    // 2026-09-27: 10 handhjärtan à 100 coins (1 000) slår 20 rosor à 1 coin (20) — den DYRARE combon
+    // vinner även om den är kortare, och widgeten stannar på den. Tidigare avgjorde antalet, så en
+    // billig gåva spammad många gånger tog streaken; det var fel. Widgeten VISAR fortfarande antalet
+    // (`dataValue = streak`, renderaren skriver ×N) — bara vem som vinner bytte grund.
+    //
+    // En enstaka gåva (antal 1) är ingen combo och kan aldrig ta streaken — den hör till Top Gift.
+    // Annars hade en enda dyr gåva fastnat som "×1 STREAK" och låst widgeten hela sändningen.
     var giftVarde = records.styckvarde(coins, streak);
+    var comboVarde = streak >= 2 ? coins : 0;
     var newGift = giftVarde > records.giftCoins;
-    var newStreak = streak > records.streakCount;
+    var newStreak = comboVarde > records.streakCoins;
     if (newGift) records.giftCoins = giftVarde;
-    if (newStreak) records.streakCount = streak;
+    if (newStreak) records.streakCoins = comboVarde;
     if (newGift || newStreak) skrivRekord();
 
     state.widgets.forEach(function (widget) {
