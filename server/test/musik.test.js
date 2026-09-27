@@ -67,3 +67,23 @@ test('rutterna finns både för OBS-länken och för studion, med takt', () => {
   assert.match(index, /musik-youtube:\$\{access\.workspace_id\}/);
   assert.ok(!/YOUTUBE_API_KEY/.test(fs.readFileSync(path.join(__dirname, '..', '..', 'studio.html'), 'utf8')));
 });
+
+test('status: saknas, fungerar och ogiltig nyckel — och aldrig nyckeln i svaret', async () => {
+  assert.equal((await createMusik({ fetch: falskFetch({}), apiKey: '' }).status()).youtube, 'saknas');
+  const f = falskFetch({ video: ok({ items: [{ id: 'dQw4w9WgXcQ' }] }) });
+  const m = createMusik({ fetch: f, apiKey: 'HEMLIG' });
+  assert.equal((await m.status()).youtube, 'fungerar');
+  await m.status();
+  assert.equal(f.anrop.length, 1, 'statusen sparas inte — varje sidladdning kostar kvot');
+  assert.match(f.anrop[0], /part=id/, 'statusen använder search (100 enheter) i stället för videos (1)');
+  const fel = createMusik({ fetch: falskFetch({ video: { ok: false, status: 400, json: async () => ({ error: { errors: [{ reason: 'keyInvalid' }] } }) } }), apiKey: 'HEMLIG' });
+  const s = await fel.status();
+  assert.equal(s.youtube, 'fel');
+  assert.match(s.text, /ogiltig/);
+  assert.ok(!JSON.stringify(s).includes('HEMLIG'));
+});
+
+test('statussidan är öppen utan inloggning', () => {
+  const index = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
+  assert.match(index, /p==='\/api\/musik\/status'&&req\.method==='GET'\)return send\(res,200,\{ok:true,\.\.\.await Musik\.status\(\)\}\)/);
+});

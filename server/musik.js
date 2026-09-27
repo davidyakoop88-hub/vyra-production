@@ -67,7 +67,33 @@ function createMusik({ fetch: hamta = globalThis.fetch, apiKey = process.env.YOU
     return svar;
   }
 
-  return { sokYoutube, konfigurerad };
+  // STATUS FÖR DEN SOM VILL VETA OM KOPPLINGEN FUNGERAR (GET /api/musik/status, utan inloggning).
+  // Ett riktigt anrop mot YouTube (videos.list, 1 kvotenhet — inte search, som kostar 100), och
+  // svaret sparas i tio minuter: sidan kan laddas om hur ofta som helst utan att tömma kvoten.
+  // Svaret säger BARA om det fungerar och i så fall varför inte — aldrig nyckeln.
+  let senasteStatus = null;
+  async function status() {
+    if (!konfigurerad()) return { youtube: 'saknas', text: 'YOUTUBE_API_KEY är inte satt på servern' };
+    if (senasteStatus && now() - senasteStatus.at < 10 * 60 * 1000) return senasteStatus.svar;
+    let svar;
+    try {
+      const r = await hamta(`${VIDEO_URL}?part=id&id=dQw4w9WgXcQ&key=${encodeURIComponent(apiKey)}`, { signal: AbortSignal.timeout(8000) });
+      if (r.ok) svar = { youtube: 'fungerar', text: 'YouTube-nyckeln fungerar' };
+      else {
+        let orsak = '';
+        try { const d = await r.json(); orsak = String(d?.error?.errors?.[0]?.reason || d?.error?.status || ''); } catch (e) {}
+        const text = /keyInvalid|API_KEY_INVALID|badRequest/i.test(orsak) ? 'Nyckeln är ogiltig — kopiera den igen från Google Cloud'
+          : /accessNotConfigured|SERVICE_DISABLED|PERMISSION_DENIED/i.test(orsak) ? 'YouTube Data API v3 är inte aktiverat i Google Cloud-projektet'
+          : /quota/i.test(orsak) ? 'Dagens kvot är slut — den nollställs runt kl 09 svensk tid'
+          : `YouTube svarade ${r.status}`;
+        svar = { youtube: 'fel', text: text, orsak: orsak.slice(0, 60) };
+      }
+    } catch (e) { svar = { youtube: 'fel', text: 'Servern nådde inte YouTube' }; }
+    senasteStatus = { at: now(), svar };
+    return svar;
+  }
+
+  return { sokYoutube, konfigurerad, status };
 }
 
 module.exports = { createMusik, sekunderAv };
