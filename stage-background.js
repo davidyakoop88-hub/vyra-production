@@ -187,7 +187,9 @@
       var sb = null;
       if (lage.value === 'color') sb = { mode: 'color', value: host.querySelector('.sb-farg').value };
       else if (lage.value) sb = { mode: lage.value, value: host.querySelector('.sb-url').value.trim() };
-      if (sb) sb.studioOnly = host.querySelector('.sb-studio').checked;
+      // Skriv BARA studioOnly när den är på — samma opt-in-form som resten av fältet, så en
+      // vanlig bakgrund sparas som { mode, value } utan extra nyckel. Avbockad = frånvarande = av.
+      if (sb && host.querySelector('.sb-studio').checked) sb.studioOnly = true;
       if (sb && !giltig(sb)) { if (typeof toast === 'function') toast('Ogiltig källa — bara https eller assets/'); return; }
       persist(sb);
       popover.hidden = true;
