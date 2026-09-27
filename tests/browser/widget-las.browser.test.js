@@ -224,6 +224,41 @@ test('genomslapp: klick och drag pa en last topp-widget nar widgeten under', { s
   } finally { await page.close(); }
 });
 
+test('genomslapp haller aven for en widget med pointer-events:auto!important (Last-X, markerad + last)', { skip, timeout: 60000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await seedaStudioState(page, ['catalog:topgift', 'catalog:lastx:card']);
+    await page.waitForFunction(() => document.querySelectorAll('.canvas .widget[data-id]').length >= 2
+      && !!document.querySelector('.live-layer-list .layer-lock'), null, { timeout: 15000, polling: 100 });
+    // Last-X (index 1) overst och overlappande, och MARKERAD sa .last-x-widget.selected{pe:auto!important} galler.
+    // Last-X positionerar sig via egen layout (inte w.x/w.y), sa overlapp-geometri ar opalitlig i
+    // testet. Genomslappet end-to-end bevisas av topgift+toplike-testet ovan; har verifieras den
+    // strukturella forutsattningen for att det ska funka AVEN for last-x: klassen och pe:none.
+    const top = await page.evaluate(() => { selected = state.widgets[1].id; render(); return state.widgets[1].id; });
+    await page.evaluate(id => {
+      const rad = [...document.querySelectorAll('.live-layer-list article[data-layer-id]')].find(r => r.dataset.layerId === id);
+      rad.querySelector('.layer-lock').click();
+    }, top);
+    await page.waitForFunction(id => (state.widgets.find(w => w.id === id) || {}).locked === true, top, { timeout: 5000 });
+    // Bugg #4+#5 (uppmatt 2026-09-27): last-x renderas via egen vag och fick ALDRIG widget-last, sa
+    // laset var visuellt trasigt (synliga handtag) OCH .last-x-widget.selected{pointer-events:auto!important}
+    // slog ett icke-important genomslapp. markLocked() stamplar nu klassen pa alla lasta widgetar, och
+    // pe:none!important vinner over pe:auto!important.
+    const m = await page.evaluate(id => {
+      const el = document.querySelector(`.canvas .widget[data-id="${id}"]`);
+      return { widgetLast: el.classList.contains('widget-last'), selected: selected === id,
+        pe: getComputedStyle(el).pointerEvents };
+    }, top);
+    assert.ok(m.selected, 'forutsattning: last-x ska vara markerad nar den las, sa pe:auto!important galler');
+    assert.equal(m.widgetLast, true, 'en last last-x maste fa klassen widget-last (markLocked) — annars ar laset visuellt trasigt');
+    assert.equal(m.pe, 'none', 'pe:none!important maste vinna over .last-x-widget.selected{pe:auto!important} sa klicket gar igenom');
+  } finally { await page.close(); }
+});
+
 test('overlayn ritar den låsta widgeten som vanligt och ser aldrig låset', { skip, timeout: 90000 }, async () => {
   const sida = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   try {

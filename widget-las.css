@@ -23,11 +23,14 @@
 /* Den låsta widgeten på duken: handtagen döljs (de gör ändå ingenting), och markören säger att den
    inte går att dra. Inga pseudoelement på widgetroten — flera widgetar använder egna ::before/::after. */
 /* Genomslapp (Davids val 2026-09-27): en last widget slapper igenom klick OCH drag till
-   widgeten under, precis som TikControl. pointer-events:none pa hela widgeten racker - handelser
-   traffar naturligt nasta widget i stapeln (kaskad: flera lasta staplade hoppas over), och den
-   lasta markeras inte langre av ett klick (las upp i lagerlistan). Barnen arver none.
-   Overlayn ser aldrig klassen widget-last, sa inget av detta nar OBS. */
-.canvas .widget.widget-last{pointer-events:none}
+   widgeten under, precis som TikControl. Handelser traffar naturligt nasta widget i stapeln
+   (kaskad: flera lasta staplade hoppas over), och den lasta markeras inte langre av ett klick
+   (las upp i lagerlistan). !important OCH ett barn-* behovs: vissa widgettyper satter sjalva
+   pointer-events:auto!important (t.ex. .last-x-widget.selected, .vyra-pw-widget), som annars
+   skulle slap min pe:none och fanga klicket. Overlayn ser aldrig klassen widget-last, sa inget
+   av detta nar OBS. */
+html:not(.overlay-output) .canvas .widget.widget-last,
+html:not(.overlay-output) .canvas .widget.widget-last *{pointer-events:none!important}
 .canvas .widget.widget-last .resize-handle,
 .canvas .widget.widget-last [data-vyra-handle],
 .canvas .widget.widget-last .gift-resize-handle,

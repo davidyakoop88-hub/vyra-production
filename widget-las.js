@@ -57,6 +57,7 @@
       // Overlayn kör också med view === 'editor' och media.js bygger där en (dold) lagerlista.
       // Knappen ska inte ens finnas i OBS-lankens DOM.
       if (iOverlay() || (typeof view !== 'undefined' && view !== 'editor')) return;
+      markLocked();
       lasKnappar();
     };
     return true;
@@ -105,6 +106,17 @@
       bort.setAttribute('aria-label', bort.title);
       bort.classList.add('layer-ikon');
     }
+  }
+
+  // Stampla widget-last pa ALLA lasta widgetar pa duken, oavsett renderingsvag. wh-omslaget nedan
+  // nar bara widgetar som gar genom wh(); last-x-alerts.js, custom-widgets.js m.fl. bygger sin egen
+  // markup och missades helt (uppmatt 2026-09-27: en last last-x saknade klassen helt -> inga dolda
+  // handtag och inget klick-genomslapp). Ett DOM-pass efter render tacker alla, och tar bort klassen
+  // fran upplasta. Overlayn nas aldrig (bind-omslaget returnerar tidigt i iOverlay).
+  function markLocked() {
+    document.querySelectorAll('.canvas .widget[data-id]').forEach(el => {
+      el.classList.toggle('widget-last', arLast(widgetFor(el.dataset.id)));
+    });
   }
 
   function lasKnappar() {
