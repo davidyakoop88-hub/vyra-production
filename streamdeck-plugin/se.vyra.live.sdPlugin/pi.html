@@ -2,36 +2,103 @@
 <html><head><meta charset="utf-8">
 <style>
   body{font:13px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#d8d8d8;background:#2d2d2d;margin:0;padding:14px}
-  label{display:block;margin-bottom:6px;color:#9a9a9a}
-  input{width:100%;box-sizing:border-box;padding:7px 9px;border-radius:5px;border:1px solid #4a4a4a;background:#3d3d3d;color:#fff;font:inherit}
+  label{display:block;margin:10px 0 6px;color:#9a9a9a}
+  label:first-child{margin-top:0}
+  input,select,textarea{width:100%;box-sizing:border-box;padding:7px 9px;border-radius:5px;border:1px solid #4a4a4a;background:#3d3d3d;color:#fff;font:inherit}
+  textarea{min-height:64px;resize:vertical}
   p{color:#8a8a8a;margin:10px 0 0}
   code{background:#3d3d3d;padding:1px 5px;border-radius:3px;color:#c9a9ff}
+  [hidden]{display:none!important}
 </style></head>
 <body>
-  <label for="nyckel">Knappens nyckel</label>
-  <input id="nyckel" placeholder="t.ex. scen-1" maxlength="200">
-  <p>Peka ett Event i <b>Action &amp; Event</b> på triggern <code>Manuell knapp</code> och matcha
-     mot samma nyckel. Lämnas fältet tomt matchar knappen Event utan nyckelkrav.</p>
-  <p>Actions spelas i <b>OBS-utgången</b>, inte i Studion — ha overlay-källan öppen när du provar.</p>
+  <!-- EN inställningsruta för alla knappar. Vilka fält som syns avgörs av knappens UUID (actionInfo.action). -->
+  <section data-for="se.vyra.live.knapp">
+    <label for="nyckel">Knappens nyckel</label>
+    <input id="nyckel" data-falt="nyckel" placeholder="t.ex. scen-1" maxlength="200">
+    <p>Peka ett Event i <b>Action &amp; Event</b> på triggern <code>Manuell knapp</code> och matcha
+       mot samma nyckel. Lämnas fältet tomt matchar knappen Event utan nyckelkrav.</p>
+  </section>
+
+  <section data-for="se.vyra.live.action" hidden>
+    <label>Actionens namn</label>
+    <input data-falt="varde" placeholder="t.ex. Fyrverkeri" maxlength="200">
+    <p>Skriv namnet exakt som det står i <b>Action &amp; Event</b>. Namnen finns också att kopiera på sidan
+       <b>Stream Deck</b> i VYRA.</p>
+  </section>
+
+  <section data-for="se.vyra.live.ljud" hidden>
+    <label>Ljudets namn</label>
+    <input data-falt="varde" placeholder="t.ex. Airhorn" maxlength="200">
+    <p>Namnet från <b>Sound Alerts</b>. Ljudet spelas i OBS-utgången (scen 1).</p>
+  </section>
+
+  <section data-for="se.vyra.live.tts" hidden>
+    <label>Text att läsa upp</label>
+    <textarea data-falt="varde" maxlength="300" placeholder="t.ex. Tack för alla gåvor!"></textarea>
+    <p>Läses upp med samma röst som TTS Chat, i OBS-utgången (scen 1).</p>
+  </section>
+
+  <section data-for="se.vyra.live.spotify" hidden>
+    <label>Vad knappen gör</label>
+    <select data-falt="val"><option value="nasta">Nästa låt</option><option value="spela">Spela en låt</option></select>
+    <label>Låt (bara för "Spela en låt")</label>
+    <input data-falt="varde" placeholder="t.ex. Blinding Lights" maxlength="200">
+    <p>Kräver att Spotify är anslutet i VYRA-studion och att studion är öppen.</p>
+  </section>
+
+  <section data-for="se.vyra.live.latonsk" hidden>
+    <label>Vad knappen gör</label>
+    <select data-falt="val"><option value="hoppa">Hoppa över låten som spelas</option><option value="tom">Töm kön</option></select>
+  </section>
+
+  <section data-for="se.vyra.live.scen" hidden>
+    <label>OBS-scenens namn</label>
+    <input data-falt="varde" placeholder="t.ex. Just Chatting" maxlength="200">
+    <p>Exakt som scenen heter i OBS. Kräver att OBS är kopplat i VYRA Desktop.</p>
+  </section>
+
+  <section data-for="se.vyra.live.timer" hidden>
+    <label>Vad knappen gör</label>
+    <select data-falt="val"><option value="start">Starta</option><option value="stopp">Stoppa</option><option value="nollstall">Nollställ</option><option value="vaxla">Växla start/stopp</option></select>
+    <label>Timerns Action</label>
+    <input data-falt="varde" placeholder="namnet på Actionen timern kör" maxlength="200">
+  </section>
+
+  <section data-for="se.vyra.live.widget" hidden>
+    <label>Vad knappen gör</label>
+    <select data-falt="val"><option value="vaxla">Växla visa/göm</option><option value="visa">Visa</option><option value="gom">Göm</option></select>
+    <label>Widgetens namn</label>
+    <input data-falt="varde" placeholder="som i lagerlistan, t.ex. Top Like" maxlength="200">
+    <p>Namnet som står i <b>Live-lager</b>. Studion måste vara öppen.</p>
+  </section>
 
 <script>
 // Property Inspector pratar BARA med Stream Deck-appen, aldrig med VYRA. All HTTP mot 127.0.0.1
 // sker i plugin.js (Node), just för att en webview skickar ett Origin-huvud som local-server.js
 // avvisar med 403. Uppmätt 2026-09-15 — se kommentaren i plugin.js.
-let ws, ctx;
-const falt = document.getElementById('nyckel');
+let ws, ctx, aktiv = null, installning = {};
 
 function connectElgatoStreamDeckSocket(port, uuid, registerEvent, info, actionInfo) {
   ctx = uuid;
+  let uppgift = {};
+  try { uppgift = JSON.parse(actionInfo); } catch (e) {}
+  installning = (uppgift.payload && uppgift.payload.settings) || {};
+  document.querySelectorAll('section[data-for]').forEach(s => { s.hidden = s.dataset.for !== uppgift.action; });
+  aktiv = document.querySelector(`section[data-for="${uppgift.action}"]`) || document.querySelector('section[data-for="se.vyra.live.knapp"]');
+  aktiv.hidden = false;
+  aktiv.querySelectorAll('[data-falt]').forEach(f => {
+    if (installning[f.dataset.falt] != null) f.value = installning[f.dataset.falt];
+    f.addEventListener('change', spara); f.addEventListener('blur', spara);
+  });
   ws = new WebSocket('ws://127.0.0.1:' + port);
-  ws.onopen = () => ws.send(JSON.stringify({ event: registerEvent, uuid }));
-  try { falt.value = (JSON.parse(actionInfo).payload.settings || {}).nyckel || '' } catch (e) {}
+  ws.onopen = () => { ws.send(JSON.stringify({ event: registerEvent, uuid })); spara(); };
 }
 
-const spara = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({
-  event: 'setSettings', context: ctx, payload: { nyckel: falt.value.trim() }
-}));
-falt.addEventListener('change', spara);
-falt.addEventListener('blur', spara);
+function spara() {
+  if (!aktiv || !ws || ws.readyState !== 1) return;
+  const payload = {};
+  aktiv.querySelectorAll('[data-falt]').forEach(f => { payload[f.dataset.falt] = f.value.trim(); });
+  ws.send(JSON.stringify({ event: 'setSettings', context: ctx, payload }));
+}
 </script>
 </body></html>

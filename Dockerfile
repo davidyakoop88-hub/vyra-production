@@ -26,6 +26,9 @@ RUN set -eux; \
     # sounds, frames, and the standalone widget pages OBS opens.
     cp -R assets /site/; \
     cp -R public /site/; \
+    # Stream Deck-pluginet. Sidan Stream Deck (streamdeck.js) bygger .streamDeckPlugin-filen i
+    # webbläsaren ur exakt de här filerna, så nedladdningen är alltid samma plugin som Desktop installerar.
+    cp -R streamdeck-plugin /site/; \
     # The repository root is a flat pile of the files the pages load by name, so the root is taken by
     # extension rather than by a list that would go stale the first time someone adds a widget.
     for f in *.html *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp *.woff *.woff2 *.mp3 *.wav; do \

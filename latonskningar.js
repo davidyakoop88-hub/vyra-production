@@ -169,7 +169,9 @@
   function hoppaOver() {
     var p = spelandeYt();
     if (p) { try { if (spelare && spelare.stopVideo) spelare.stopVideo(); } catch (e) {} klar(); return; }
-    if (root.VyraSpotify && !iOverlay()) { try { root.VyraSpotify.next(); } catch (e) {} }
+    // Spotify bara när widgeten faktiskt spelar via Spotify — annars hade en YouTube-streamers
+    // !skip bytt låt i hens privata Spotify.
+    if (root.VyraSpotify && !iOverlay() && kalla(forsta()) === 'spotify') { try { root.VyraSpotify.next(); } catch (e) {} }
   }
   root.VyraLatKlar = klar;   // provet (och riggar utan YouTube) kan signalera att en låt tagit slut
 

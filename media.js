@@ -1495,7 +1495,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20260927-latonsk-2';
+  const version='20260927-streamdeck-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1504,7 +1504,7 @@ Promise.resolve().then(()=>{
     css.dataset.vyraWidgetBundle='premium';
     document.head.append(css);
   });
-  const scripts=['guardian-emblem-models.js','premium-final.js','topgift-pension.js','runtime-controls.js','chatbot-controls.js','goal-motion.js','like-fountain-portal.js','skattkista.js','latonskningar.js'];
+  const scripts=['guardian-emblem-models.js','premium-final.js','topgift-pension.js','runtime-controls.js','chatbot-controls.js','goal-motion.js','like-fountain-portal.js','skattkista.js','latonskningar.js','streamdeck.js'];
   const loadNext=index=>{
     if(index>=scripts.length)return;
     const src=scripts[index];
