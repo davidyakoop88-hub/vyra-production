@@ -175,7 +175,10 @@ aside { padding: 14px 14px 12px; }
    utanfor navets ruta (meny-yta.browser.test.js: 66 px for hogt, 16 navval + 4 rubriker). Menyn
    ska rymmas hel utan rullning, sa pa laga fonster tatas den: gap 5 -> 2 (57 px) och knapparnas
    lodrata padding 6 -> 4 (64 px). Ovanfor 820 px hojd ar allt som forut. */
+/* 2026-09-27: YouTube och Stream Deck lades till (17 navval). Luften vid 1366x768 var 19 px efter
+   YouTube och en post tar 29 — padding 4 -> 3 ger 34 px till, alltsa ~24 px luft med Stream Deck.
+   Raden ar da 26 px, fortfarande en tydlig traffyta. */
 @media (max-height: 820px) {
   aside nav { gap: 2px; }
-  aside nav button, aside nav a { padding-top: 4px; padding-bottom: 4px; }
+  aside nav button, aside nav a { padding-top: 3px; padding-bottom: 3px; }
 }

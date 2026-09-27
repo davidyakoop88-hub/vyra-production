@@ -151,6 +151,11 @@ function startLocalServer(root, port = 4173, options = {}) {
     ...(d.kistaId
       ? { kistaId: text(d.kistaId, 160), oppnasAt: number(d.oppnasAt, 0, Number.MAX_SAFE_INTEGER), kistaDold: !!d.kistaDold }
       : {}),
+    // STREAM DECK (typen streamdeck, plugin 0.2.0): vad knappen gör. Bara på den typen — ingen gåva
+    // ska bära ett sdKommando. streamdeck.js i studion/overlayn utför kommandot.
+    ...(String(d.type || '') === 'streamdeck'
+      ? { sdKommando: text(d.sdKommando, 40), sdVarde: text(d.sdVarde, 300), sdVal: text(d.sdVal, 40) }
+      : {}),
   }; }
   function setConnection(next) {
     Object.assign(connection, next, { updated: Date.now() });
