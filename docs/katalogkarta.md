@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `fce75a4`
+Commit: `bd964f5`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -60,8 +60,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
 | TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
-| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | — |
-| LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | — | — |
+| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
+| LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 
 ## Varje kort
 
@@ -294,13 +294,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | 2026-09-27 | — |
-| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | 2026-09-27 | — |
+| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
+| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 
 ### LÅTÖNSKNINGAR · LIVE
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Låtönskningar · YouTube | `catalog:latonskningar:youtube` | ✓ | ✓ | — | — |
-| Låtönskningar · Spotify | `catalog:latonskningar:spotify` | ✓ | ✓ | — | — |
+| Låtönskningar · YouTube | `catalog:latonskningar:youtube` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
+| Låtönskningar · Spotify | `catalog:latonskningar:spotify` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 
