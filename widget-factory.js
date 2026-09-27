@@ -354,7 +354,7 @@
     }),
 
     'glovesnipe.pack': v => ({
-      type: 'templateGloveSnipe', x: 80, y: 580, width: 760, title: v.title, boostPack: v.pack,
+      type: 'templateGloveSnipe', x: 0, y: 460, width: 432, title: v.title, boostPack: v.pack,
       battleEventKind: v.kind, gloveIcon: v.icon, gloveMultiplier: v.multiplier,
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
       gloveColor2: v.color2, gloveDuration: 6, layer: 20, battleVideoMode: true
