@@ -46,6 +46,7 @@ const FRAN_UTGAENDE = {
   chat: 'CHAT', gift: 'GIFT', likes: 'LIKE', follow: 'FOLLOW', share: 'SHARE',
   member: 'MEMBER', subscribe: 'SUB_NOTIFY', viewer: 'ROOM_USER',
   battle: 'LINK_MIC_BATTLE', glove: 'LINK_MIC_BATTLE_TASK', battle_mvp: 'LINK_MIC_ARMIES',
+  envelope: 'ENVELOPE',
   guardian: 'BARRAGE', subscriberemote: 'EMOTE',
 };
 

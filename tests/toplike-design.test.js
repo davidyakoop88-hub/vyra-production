@@ -89,7 +89,7 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 2026-09-25: den godkanda naturliga fyrverkerimotorn laddas via media.js.
   // 2026-09-26: media.js laddar ny overlay-preview.js (goal-katalogens miniatyrer) och
   // liveLayerName kanner igen Diamond Goal.
-  assert.match(studioHtml, /media\.js\?v=20260927-2/);
+  assert.match(studioHtml, /media\.js\?v=20260927-4/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

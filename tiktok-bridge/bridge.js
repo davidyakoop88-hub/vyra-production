@@ -595,6 +595,12 @@ if (require.main === module) {
         : 'vart lag hittades inte i nyttolasten — kontrollera armies/teamArmies mot ankar-id';
       console.log(`[bridge][battle-mvp] match ${battleId || 'okand'} tog slut utan MVP: ${skal}`);
     });
+    // SKATTKISTAN — se N.envelopeFields. En kista ger flera ENVELOPE (visas, döljs); widgeten
+    // håller isär dem på kistaId, så dedupen här behöver inte veta något om dem.
+    connection.on(WebcastEvent.ENVELOPE, data => {
+      const kista = N.envelopeFields(data);
+      if (kista) sendEvent('envelope', kista, data);
+    });
     connection.on(WebcastEvent.LIKE, data => sendEvent('likes', N.likeFields(data), data));
 
     connection.on(ControlEvent.DISCONNECTED, () => {
@@ -632,7 +638,9 @@ if (require.main === module) {
         'SUB_NOTIFY', 'ROOM_USER', 'STREAM_END', 'LINK_MIC_BATTLE', 'LINK_MIC_BATTLE_TASK', 'EMOTE', 'LINK_MIC_ARMIES',
         // BARRAGE tillkom med guardian_entrance: utan raden lagger inspelaren en ANDRA lyssnare
         // pa en typ bryggan redan prenumererar pa, och varje BARRAGE hamnar dubbelt i filen.
-        'BARRAGE']);
+        'BARRAGE',
+        // ENVELOPE tillkom med skattkistan, av samma skal som BARRAGE ovan.
+        'ENVELOPE']);
       const spelaIn = Object.keys(WebcastEvent)
         .filter(namn => onskade === null || onskade.has(namn))
         .filter(namn => !redanLyssnade.has(namn));

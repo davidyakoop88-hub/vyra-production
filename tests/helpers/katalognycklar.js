@@ -130,6 +130,29 @@ const REGI = {
       return { portaler: n, hjartan: document.querySelectorAll('.like-fountain-portal .lfp-still path').length };
     }
   },
+  // SKATTKISTAN (skattkista.js). I OBS-läget är den osynlig i vila och syns bara medan en kista
+  // räknar ned — en klocka, alltså aldrig samma bild två gånger. Regin stänger av klockan och alla
+  // rörelser och visar en fast kista med 00:42 kvar. Bilden är då bestämd av kod.
+  'catalog:skattkista:kista': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
+  'catalog:skattkista:pill': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
   // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess hjartan ar
   // CSS-animationer som gar i loop och hamnar i samma lage igen.
   //

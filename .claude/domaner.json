@@ -88,6 +88,8 @@
         "battle-mvp-session.js",
         "custom-widgets.js",
         "like-fountain-portal.js",
+        "skattkista.js",
+        "latonskningar.js",
         "approved-rankings.css",
         "approved-rankings.js",
         "ranking-sixpack.css",
@@ -198,6 +200,8 @@
         "tests/browser/battle-mvp-ramar.browser.test.js",
         "tests/browser/toplike-ramar-laddar.browser.test.js",
         "tests/browser/ranking-direkt.browser.test.js",
+        "tests/browser/skattkista.browser.test.js",
+        "tests/browser/latonskningar.browser.test.js",
         "tests/browser/glove-snipe-inom-rutan.browser.test.js",
         "tests/browser/nollning-missar-inte-omritning.browser.test.js",
         "tests/browser/fan-level-referens.browser.test.js",
@@ -677,7 +681,8 @@
         "chatbot-overlay.js",
         "chatbot-overlay.css",
         "configure_obs_tikcontrol.py",
-        "server/tts.js"
+        "server/tts.js",
+        "server/musik.js"
       ],
       "tester": [
         "server/test/tts.test.js",
@@ -738,6 +743,8 @@
         "server/test/krypteringsnyckel.test.js",
         "server/test/test-event.test.js",
         "server/test/tiktok-ingest.test.js",
+        "server/test/skattkista.test.js",
+        "server/test/musik.test.js",
         "server/test/tiktok-connection.test.js",
         "tests/security-headers.test.js",
         "tests/static-cache-headers.test.js",

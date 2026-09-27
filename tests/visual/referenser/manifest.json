@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 115,
+ "antal": 119,
  "senaste": {
-  "motiv": "Nytt katalogkort Like Fountain · Portal (#531): förhandsbilden i fryst regi",
-  "nycklar": 1,
-  "filter": "likefountain:portal",
-  "tid": "2026-09-26T23:05:59.106Z"
+  "motiv": "Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget",
+  "nycklar": 2,
+  "filter": "latonskningar",
+  "tid": "2026-09-27T02:34:45.356Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -472,6 +472,22 @@
   },
   "catalog:likefountain:portal": {
    "matt": "360x640",
+   "fyllnad": 100
+  },
+  "catalog:skattkista:kista": {
+   "matt": "220x278",
+   "fyllnad": 100
+  },
+  "catalog:skattkista:pill": {
+   "matt": "340x76",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:spotify": {
+   "matt": "340x142",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:youtube": {
+   "matt": "340x94",
    "fyllnad": 100
   }
  }

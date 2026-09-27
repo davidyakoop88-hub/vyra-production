@@ -25,7 +25,7 @@ const fs = require('fs'), path = require('path');
 // Molnets egen lista, server/index.js:72. Kopierad med flit: bryts kontraktet ska det här provet
 // falla, inte tyst följa med.
 const MOLNETS_TYPER = ['gift', 'like', 'likes', 'chat', 'follow', 'share', 'member', 'subscribe',
-  'viewer', 'battle', 'guardian', 'subscriberemote', 'fanlevelup', 'battle_mvp'];
+  'viewer', 'battle', 'guardian', 'subscriberemote', 'fanlevelup', 'battle_mvp', 'envelope', 'chatcommand'];
 
 test('regeln finns och är en funktion', () => {
   assert.equal(typeof N.tillMolnet, 'function', 'normalizer.js exporterar ingen tillMolnet-regel');
@@ -38,9 +38,15 @@ test('allt som släpps fram accepteras av molnet', () => {
     `dessa släpps fram men avvisas av molnet med 400: ${avvisade.join(', ')}`);
 });
 
-test('chatcommand stoppas', () => {
-  assert.equal(N.tillMolnet('chatcommand'), false,
-    'chatcommand postas fortfarande och ger 400 — en console.error per utropsteckenkommando');
+// ÖPPNAD 2026-09-27 (låtönskningar, #365 väg ett: "egen hink för chatt"). chatcommand — bara rader
+// som börjar med "!" — släpps fram, och molnet räknar dem i en EGEN hink med eget tak. Vakten
+// kräver hinken: försvinner den faller provet, i stället för att kommandona tyst börjar äta gåvornas
+// budget igen.
+test('chatcommand släpps fram, men bara med en egen hink i molnet', () => {
+  assert.equal(N.tillMolnet('chatcommand'), true, 'chattkommandon (t.ex. !önska) når inte molnet');
+  const index = fs.readFileSync(path.join(__dirname, '..', '..', 'server', 'index.js'), 'utf8');
+  assert.match(index, /rateLimiter\.exceeded\(`tiktok-ingest-kommando:\$\{workspaceId\}`/,
+    'chatcommand släpps till molnet men räknas i gåvornas hink — en kommandostorm kan ge gåvor 429');
 });
 
 // Chatt är giltig för molnet men får ändå inte skickas: den äter takten och kan svälta gåvorna.
@@ -68,13 +74,13 @@ test('chatt stoppas på volym, inte på giltighet', () => {
 //
 // AVSTÅNDET TILL "ÖPPNAD" ÄR EN RAD. Uppmätt 2026-09-15: `chat` står redan i server/index.js
 // TIKTOK_INGEST_TYPES och i server/event-bus.js ALLOWED. Två av tre vitlistor släpper alltså redan
-// igenom den — bara TILL_MOLNET håller emot. (`chatcommand` saknas i alla tre, se provet ovan.)
+// igenom den — bara TILL_MOLNET håller emot. (`chatcommand` har sedan 2026-09-27 en egen hink, se provet ovan.)
 //
 // Vakten är därför villkorad på hinken, inte på ett minne: blir hinken typmedveten faller den här
 // och tvingar fram ett nytt beslut i stället för att tyst fortsätta blockera något vars skäl är
 // borta. Samma form som KAND_LUCKA i tests/desktop-paritet.test.js — en känd skuld ska vara
 // synlig tills den är stängd, inte tyst undantagen.
-const HINK_LUCKA = new Set(['chat', 'chatcommand']);
+const HINK_LUCKA = new Set(['chat']);
 const SERVER_INDEX = path.join(__dirname, '..', '..', 'server', 'index.js');
 // Typblind = nyckeln bär bara workspace. Får den ett typled är hinken inte längre blind.
 const hinkenArTypblind = () =>

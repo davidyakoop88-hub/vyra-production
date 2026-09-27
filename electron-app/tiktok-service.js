@@ -3,7 +3,7 @@
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
 const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering,
-  battleStatusAv, mvpFields } = require('./tiktok-fields');
+  battleStatusAv, mvpFields, envelopeFields } = require('./tiktok-fields');
 
 function eventKey(type, data, fields) {
   const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
@@ -141,6 +141,11 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     connection.on(WebcastEvent.LINK_MIC_ARMIES, data => {
       const mvp = mvpFields(data, mittAnkarId);
       if (mvp) emit('battle_mvp', mvp, data);
+    });
+    // SKATTKISTAN — samma typ och samma fält som bryggan (tiktok-fields.js envelopeFields).
+    connection.on(WebcastEvent.ENVELOPE, data => {
+      const kista = envelopeFields(data);
+      if (kista) emit('envelope', kista, data);
     });
     // PAUS OCH ATERUPPTAGANDE (Davids fraga 2026-08-21).
     //
