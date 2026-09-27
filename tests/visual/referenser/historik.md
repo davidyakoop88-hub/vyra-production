@@ -216,3 +216,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny widget Skattkista (catalog:skattkista:kista och :pill) — första referensen, fryst kista med 00:42 kvar
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 111 (filter: skattkista) — catalog:skattkista:kista, catalog:skattkista:pill
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 113 (filter: latonskningar) — catalog:latonskningar:spotify, catalog:latonskningar:youtube

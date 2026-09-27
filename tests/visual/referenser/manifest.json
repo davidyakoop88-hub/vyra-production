@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 117,
+ "antal": 119,
  "senaste": {
-  "motiv": "Ny widget Skattkista (catalog:skattkista:kista och :pill) — första referensen, fryst kista med 00:42 kvar",
+  "motiv": "Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget",
   "nycklar": 2,
-  "filter": "skattkista",
-  "tid": "2026-09-27T02:09:22.758Z"
+  "filter": "latonskningar",
+  "tid": "2026-09-27T02:34:45.356Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -480,6 +480,14 @@
   },
   "catalog:skattkista:pill": {
    "matt": "340x76",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:spotify": {
+   "matt": "340x142",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:youtube": {
+   "matt": "340x94",
    "fyllnad": 100
   }
  }
