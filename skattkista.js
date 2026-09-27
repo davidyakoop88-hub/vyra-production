@@ -236,7 +236,12 @@
     var q = function (s) { return document.querySelector('.properties ' + s) || document.querySelector(s); };
     var spara = function () { if (typeof save === 'function') save(); if (typeof render === 'function') render(); if (typeof bind === 'function') bind(); };
     var el;
-    if ((el = q('#skDesign'))) el.onchange = function (e) { w.kistaDesign = e.target.value === 'pill' ? 'pill' : 'kista'; w.width = w.kistaDesign === 'pill' ? 340 : 220; spara(); };
+    // Namnet i lagerlistan följer designen så länge det är ett standardnamn (se latonskningar.js).
+    if ((el = q('#skDesign'))) el.onchange = function (e) {
+      w.kistaDesign = e.target.value === 'pill' ? 'pill' : 'kista'; w.width = w.kistaDesign === 'pill' ? 340 : 220;
+      if (!w.title || w.title === 'Skattkista' || w.title === 'Skattkista · rad') w.title = w.kistaDesign === 'pill' ? 'Skattkista · rad' : 'Skattkista';
+      spara();
+    };
     if ((el = q('#skFarg'))) el.onchange = function (e) { w.kistaFarg = e.target.value; spara(); };
     if ((el = q('#skRubrik'))) el.onchange = function (e) { w.kistaRubrik = String(e.target.value || '').slice(0, 24); spara(); };
     if ((el = q('#skAvsandare'))) el.onchange = function (e) { w.kistaVisaAvsandare = e.target.checked; spara(); };

@@ -113,3 +113,66 @@ test('i studion: båda källorna finns i katalogen och skapas hela på duken', {
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// "När man väljer Spotify eller YouTube ska namnet synas där widgetens namn står" (David 2026-09-27).
+test('namnet i lagerlistan följer källan, men en egen titel rörs inte', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    const m = await page.evaluate(async () => {
+      const byt = async (w, kalla) => {
+        selected = w.id; view = 'editor'; render(); bind();
+        const sel = document.querySelector('#latKalla'); sel.value = kalla; sel.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 150));
+        const rad = document.querySelector(`.live-layer-list article[data-layer-id="${w.id}"]`);
+        // liveWidget, inte w: en sparning byter objektet i state (docs/tech-debt.md #16).
+        return { titel: liveWidget(w.id).title, rad: rad ? rad.textContent : '' };
+      };
+      const w = VyraWidgets.create('catalog:latonskningar:youtube'); state.widgets.push(w);
+      const tillSpotify = await byt(w, 'spotify'), tillbaka = await byt(w, 'youtube');
+      const egen = VyraWidgets.create('catalog:latonskningar:youtube'); egen.title = 'Min musik'; state.widgets.push(egen);
+      const egenEfter = await byt(egen, 'spotify');
+      return { tillSpotify, tillbaka, egenEfter };
+    });
+    assert.equal(m.tillSpotify.titel, 'Låtönskningar · Spotify');
+    assert.match(m.tillSpotify.rad, /Låtönskningar · Spotify/, 'lagerraden visar inte den nya källan');
+    assert.equal(m.tillbaka.titel, 'Låtönskningar · YouTube');
+    assert.equal(m.egenEfter.titel, 'Min musik', 'en titel streamern skrivit själv skrevs över');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
+
+// "Där de blå jag vill den ska stå YouTube, och jag vill man ska lägga som alternativ om man vill listan
+// ska visas i layout eller inte" (David 2026-09-27, med en skärmbild av menyn MEDIA).
+test('menyn har YouTube under Spotify, och sidan visar kopplingens status', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    await page.route('**/api/musik/status', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"youtube":"fungerar","text":"YouTube-nyckeln fungerar"}' }));
+    const ordning = await page.evaluate(() => [...document.querySelectorAll('aside nav button')].map(b => b.textContent.trim()));
+    assert.equal(ordning[ordning.indexOf('Spotify') + 1], 'YouTube', `YouTube står inte direkt under Spotify: ${ordning.join(', ')}`);
+    await page.click('[data-extra="youtube"]');
+    await page.waitForFunction(() => /fungerar/.test(document.querySelector('#ytStatus')?.textContent || ''), null, { timeout: 10000 });
+    assert.equal(await page.evaluate(() => document.querySelector('#title').textContent), 'YouTube');
+    await page.click('#ytLaggTill');
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => state.widgets.filter(w => w.type === 'templateSongRequests' && w.latKalla === 'youtube').length), 1, 'knappen skapade ingen widget');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
+
+test('kön kan döljas i widgeten', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    const m = await page.evaluate(async () => {
+      const w = VyraWidgets.create('catalog:latonskningar:youtube'); state.widgets.push(w);
+      selected = w.id; view = 'editor'; render(); bind();
+      const fore = document.querySelectorAll(`.widget[data-id="${w.id}"] li`).length;
+      const ruta = document.querySelector('#latVisaKo'); ruta.checked = false; ruta.dispatchEvent(new Event('change'));
+      await new Promise(r => setTimeout(r, 200));
+      return { fore, efter: document.querySelectorAll(`.widget[data-id="${w.id}"] li`).length, varde: liveWidget(w.id).latVisaKo };
+    });
+    assert.ok(m.fore > 0, 'förhandsbilden visar ingen kö');
+    assert.equal(m.efter, 0, 'kön syns fast den är avstängd');
+    assert.equal(m.varde, false);
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
