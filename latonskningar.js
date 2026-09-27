@@ -198,11 +198,12 @@
     var vantar = k === 'spotify'
       ? KO.filter(function (x) { return x.kalla === 'spotify' && (x.status === 'skickad' || x.status === 'sokar'); }).reverse()
       : KO.filter(function (x) { return x.kalla === 'youtube' && (x.status === 'redo' || x.status === 'sokar'); });
-    var visa = vantar.slice(0, s.visa);
+    // Davids val 2026-09-27: kön kan döljas helt, så att widgeten bara visar det som spelas.
+    var visa = w.latVisaKo === false ? [] : vantar.slice(0, s.visa);
     var forhand = !KO.length && !iOverlay();
     if (forhand) {
       spelar = k === 'youtube' ? { lat: { titel: 'Önskad låt', kanal: 'Artist', sekunder: 213 }, av: 'Tittare' } : null;
-      visa = [{ fraga: 'Nästa låt', av: 'Tittare2', status: 'redo' }, { fraga: 'En till låt', av: 'Tittare3', status: 'redo' }].slice(0, s.visa);
+      visa = w.latVisaKo === false ? [] : [{ fraga: 'Nästa låt', av: 'Tittare2', status: 'redo' }, { fraga: 'En till låt', av: 'Tittare3', status: 'redo' }].slice(0, s.visa);
     }
     var rubrik = saker(w.latRubrik || 'LÅTÖNSKNINGAR');
     var tips = 'Skriv <b>' + saker(s.kommando) + ' &lt;låt&gt;</b> i chatten';
@@ -281,6 +282,7 @@
           + '<small>Moderatorer kan skriva !skip för att hoppa över låten som spelas.</small>')
         + sek('UTSEENDE', '<label>Rubrik<input id="latRubrik" maxlength="24" value="' + saker(w.latRubrik || 'LÅTÖNSKNINGAR') + '"></label>'
           + '<label>Färg<input id="latFarg" type="color" value="' + saker(w.latFarg || '#ff3b7a') + '"></label>'
+          + '<label class="switch-row">Visa kön i widgeten<input id="latVisaKo" type="checkbox"' + (w.latVisaKo === false ? '' : ' checked') + '><i></i></label>'
           + '<label class="range-label">Visa låtar i kön <b>' + s.visa + '</b><input id="latVisa" type="range" min="0" max="10" value="' + s.visa + '"></label>'
           + '<label class="range-label">Volym (YouTube) <b>' + s.volym + '</b><input id="latVolym" type="range" min="0" max="100" value="' + s.volym + '"></label>')
         + sek('STYR', '<div class="switch-row"><button id="latTesta" type="button">▶ Testa en önskning</button><button id="latHoppa" type="button">⏭ Hoppa över</button><button id="latTom" type="button">Töm kön</button></div>')
@@ -313,6 +315,7 @@
     [['#latCooldown', 'latCooldown'], ['#latMaxKo', 'latMaxKo'], ['#latMaxMinuter', 'latMaxMinuter']].forEach(function (p) {
       var f = q(p[0]); if (f) f.onchange = function (e) { w[p[1]] = Number(e.target.value); spara(false); };
     });
+    if ((el = q('#latVisaKo'))) el.onchange = function (e) { w.latVisaKo = e.target.checked; spara(); };
     if ((el = q('#latRubrik'))) el.onchange = function (e) { w.latRubrik = String(e.target.value || '').slice(0, 24); spara(); };
     if ((el = q('#latFarg'))) el.onchange = function (e) { w.latFarg = e.target.value; spara(); };
     [['#latVisa', 'latVisa'], ['#latVolym', 'latVolym']].forEach(function (p) {
@@ -373,6 +376,47 @@
       '.lat-spelare{position:fixed;left:-9999px;top:0;width:128px;height:72px;visibility:hidden}'
     ].join('');
     document.head.appendChild(st);
+  }
+
+  // ---- YOUTUBE-SIDAN I MENYN (Media → YouTube) ----------------------------------------------
+  // Samma form som Spotify-sidan (extras.js): status för kopplingen och en genväg till widgeten.
+  // Statusen läses från servern (/api/musik/status) — den säger om YOUTUBE_API_KEY fungerar, aldrig
+  // nyckeln själv.
+  function youtubeSida() {
+    var knapp = document.querySelector('[data-extra="youtube"]');
+    if (!knapp || !knapp.classList.contains('active')) return;
+    var vy = document.querySelector('#view'), titel = document.querySelector('#title');
+    if (!vy) return;
+    if (titel) titel.textContent = 'YouTube';
+    vy.innerHTML = '<div class="page-header section-head"><div><h2>YouTube</h2><p>Låtönskningar via YouTube: tittarna skriver !önska &lt;låt&gt; i chatten och låten spelas i OBS-overlayn.</p></div></div>'
+      + '<article class="card spotify-card youtube-card"><div class="spotify-connect"><i class="yt-ikon">▶</i><span><b>YouTube</b><small id="ytStatus">Kontrollerar kopplingen…</small></span><button id="ytLaggTill" type="button">＋ Lägg till Låtönskningar · YouTube</button></div>'
+      + '<h3>Så fungerar det</h3><div class="music-rules">'
+      + '<article><b>!önska &lt;låt&gt;</b><small>Tittaren önskar en låt i chatten — även !sr fungerar</small></article>'
+      + '<article><b>Spelas i OBS</b><small>Låten spelas i overlayn och syns i widgeten, en i taget</small></article>'
+      + '<article><b>!skip</b><small>Moderatorer hoppar över låten som spelas</small></article>'
+      + '</div><p class="yt-not">Kvoten från Google räcker till ungefär 100 nya låtsökningar per dygn. En låt som redan önskats kostar ingenting.</p></article>';
+    var status = vy.querySelector('#ytStatus');
+    fetch('/api/musik/status', { credentials: 'include' }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!status) return;
+      status.textContent = d && d.youtube === 'fungerar' ? 'Kopplad — YouTube-nyckeln fungerar' : (d && d.text) || 'Kunde inte läsa statusen';
+      status.dataset.ytStatus = (d && d.youtube) || 'fel';
+    }).catch(function () { if (status) { status.textContent = 'Servern svarade inte — YouTube kräver molnkontot'; status.dataset.ytStatus = 'fel'; } });
+    var lagg = vy.querySelector('#ytLaggTill');
+    if (lagg) lagg.onclick = function () {
+      try {
+        var w = root.VyraWidgets.create('catalog:latonskningar:youtube');
+        state.widgets.push(w); selected = w.id; if (typeof save === 'function') save();
+        if (typeof go === 'function') go('editor'); else if (typeof render === 'function') render();
+        if (typeof toast === 'function') toast('Låtönskningar · YouTube skapad');
+      } catch (e) { if (typeof toast === 'function') toast('Widgeten kunde inte skapas'); }
+    };
+  }
+  // Efter extras.js egen klickhanterare (den skriver titeln och tömmer valet), därav setTimeout.
+  document.addEventListener('click', function (e) { if (e.target && e.target.closest && e.target.closest('[data-extra="youtube"]')) setTimeout(youtubeSida, 0); }, true);
+  if (!document.getElementById('yt-sida-stil')) {
+    var ys = document.createElement('style'); ys.id = 'yt-sida-stil';
+    ys.textContent = '.youtube-card .yt-ikon{font-style:normal;background:#ff0033!important;color:#fff!important}.youtube-card .yt-not{font-size:12px;opacity:.7;margin:12px 0 0}.youtube-card .music-rules b{display:block;margin-bottom:4px}';
+    document.head.appendChild(ys);
   }
 
   root.VyraLatonskningar = {

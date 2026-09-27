@@ -140,3 +140,39 @@ test('namnet i lagerlistan följer källan, men en egen titel rörs inte', { ski
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// "Där de blå jag vill den ska stå YouTube, och jag vill man ska lägga som alternativ om man vill listan
+// ska visas i layout eller inte" (David 2026-09-27, med en skärmbild av menyn MEDIA).
+test('menyn har YouTube under Spotify, och sidan visar kopplingens status', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    await page.route('**/api/musik/status', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true,"youtube":"fungerar","text":"YouTube-nyckeln fungerar"}' }));
+    const ordning = await page.evaluate(() => [...document.querySelectorAll('aside nav button')].map(b => b.textContent.trim()));
+    assert.equal(ordning[ordning.indexOf('Spotify') + 1], 'YouTube', `YouTube står inte direkt under Spotify: ${ordning.join(', ')}`);
+    await page.click('[data-extra="youtube"]');
+    await page.waitForFunction(() => /fungerar/.test(document.querySelector('#ytStatus')?.textContent || ''), null, { timeout: 10000 });
+    assert.equal(await page.evaluate(() => document.querySelector('#title').textContent), 'YouTube');
+    await page.click('#ytLaggTill');
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => state.widgets.filter(w => w.type === 'templateSongRequests' && w.latKalla === 'youtube').length), 1, 'knappen skapade ingen widget');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
+
+test('kön kan döljas i widgeten', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    const m = await page.evaluate(async () => {
+      const w = VyraWidgets.create('catalog:latonskningar:youtube'); state.widgets.push(w);
+      selected = w.id; view = 'editor'; render(); bind();
+      const fore = document.querySelectorAll(`.widget[data-id="${w.id}"] li`).length;
+      const ruta = document.querySelector('#latVisaKo'); ruta.checked = false; ruta.dispatchEvent(new Event('change'));
+      await new Promise(r => setTimeout(r, 200));
+      return { fore, efter: document.querySelectorAll(`.widget[data-id="${w.id}"] li`).length, varde: liveWidget(w.id).latVisaKo };
+    });
+    assert.ok(m.fore > 0, 'förhandsbilden visar ingen kö');
+    assert.equal(m.efter, 0, 'kön syns fast den är avstängd');
+    assert.equal(m.varde, false);
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
