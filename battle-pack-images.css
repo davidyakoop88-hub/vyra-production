@@ -1,5 +1,12 @@
+/* INOM SIN EGEN RUTA (2026-09-27). Förr: bottom:35% från .battle-symbol och höjden 23vw. 23vw räknas
+   från OBS-källans bredd, inte widgetens - 150 px i en 432-källa, 248 px i en 1080-källa - och toppen
+   låg 75 px OVANFÖR rutan redan i vila, 97 px när vyraPackHero lyfte den på slutet. Centreringen
+   (left:50% + translateX(-50%)) skrevs över av animationens transform, så symbolen hamnade i rutans
+   HÖGRA halva. Nu: fast höjd (det en 1080-källa visade), centrerad utan transform och 24 px från
+   botten, så att hela förloppet - skala 1.08 vid 12 %, lyftet -45px vid 100 % - ryms i 300 px. */
 .battle-pack-video .battle-image-symbol{
-  width:clamp(190px,34%,320px);height:clamp(150px,23vw,270px);
+  width:clamp(190px,34%,320px);height:248px;
+  left:0;right:0;bottom:24px;margin:0 auto;
   border:0;background-image:var(--pack-image);background-repeat:no-repeat;
   background-size:500% 400%;
   background-position:calc(var(--pack-x) * 25%) calc(var(--pack-y) * 33.333%);
