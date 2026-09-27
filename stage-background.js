@@ -36,13 +36,17 @@
   function giltig(sb) {
     if (!sb || typeof sb !== 'object' || Array.isArray(sb)) return null;
     if (typeof sb.value !== 'string' || !sb.value) return null;
+    // studioOnly: bakgrunden förhandsvisas i studion men aldrig i OBS-utgången. Booleskt och
+    // defensivt läst — ett korrupt molnvärde ska aldrig råka slå PÅ den (då tystnar overlayn) eller
+    // AV den; bara ett uttryckligt true räknas.
+    var studioOnly = sb.studioOnly === true;
     if (sb.mode === 'color') {
       return /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(sb.value)
-        ? { mode: 'color', value: sb.value } : null;
+        ? { mode: 'color', value: sb.value, studioOnly: studioOnly } : null;
     }
     if (sb.mode === 'image' || sb.mode === 'video') {
       var url = (window.VyraSafe && window.VyraSafe.url) ? window.VyraSafe.url(sb.value, '') : '';
-      return url ? { mode: sb.mode, value: url } : null;
+      return url ? { mode: sb.mode, value: url, studioOnly: studioOnly } : null;
     }
     return null;
   }
@@ -90,6 +94,10 @@
     var sb = giltig(lasState().stageBackground);
     if (!sb) { riv(); return; }
     var overlay = document.documentElement.classList.contains('overlay-output');
+    // BARA I STUDION: bakgrunden är en förhandsvisning i editorn men får aldrig nå OBS. Samma
+    // kontrakt som frånvaro (§8): noden monteras ALDRIG i overlay, så transparensen kan inte läcka
+    // via en gömd nod. Streamern lägger sin egen bakgrund/kamera i OBS.
+    if (overlay && sb.studioOnly) { riv(); return; }
     // Sändning: nod på body, utanför #view:s render-riv. Editor: förhandsvisning i .canvas —
     // den byggs om per render (observern målar om), vilket är acceptabelt kosmetiskt där.
     var host = overlay ? document.body : document.querySelector('.editor-shell .canvas');
@@ -116,7 +124,7 @@
 
   function uppdateraKnapp(knapp) {
     var sb = giltig(lasState().stageBackground);
-    var text = sb ? 'Bakgrund · ' + LAGEN[sb.mode] : 'Bakgrund';
+    var text = sb ? 'Bakgrund · ' + LAGEN[sb.mode] + (sb.studioOnly ? ' (studio)' : '') : 'Bakgrund';
     if (knapp.textContent !== text) knapp.textContent = text;
     knapp.classList.toggle('active', !!sb);
   }
@@ -139,6 +147,7 @@
         '</select></label>' +
         '<label class="sb-rad-farg" hidden>Färg<input type="color" class="sb-farg" value="#0a0612"></label>' +
         '<label class="sb-rad-url" hidden>Källa<input type="text" class="sb-url" placeholder="https://… eller assets/videos/…"></label>' +
+        '<label class="sb-rad-studio switch-row" hidden>Visa bara i studion (transparent i OBS)<input type="checkbox" class="sb-studio"><i></i></label>' +
         '<small class="sb-obs-not">Videon spelas alltid utan ljud. Lokalt uppladdade filer når inte OBS — använd https-länkar eller paketens assets.</small>' +
         '<button type="button" class="sb-anvand">Använd</button>' +
       '</div>';
@@ -151,10 +160,13 @@
     var lage = host.querySelector('.sb-lage');
     var radFarg = host.querySelector('.sb-rad-farg');
     var radUrl = host.querySelector('.sb-rad-url');
+    var radStudio = host.querySelector('.sb-rad-studio');
 
     function visaRader() {
       radFarg.hidden = lage.value !== 'color';
       radUrl.hidden = lage.value !== 'image' && lage.value !== 'video';
+      // "Bara i studion" gäller bara när en bakgrund faktiskt är vald — dölj för "Ingen".
+      radStudio.hidden = !lage.value;
     }
 
     knapp.onclick = function () {
@@ -166,6 +178,7 @@
         lage.value = sb ? sb.mode : '';
         if (sb && sb.mode === 'color') host.querySelector('.sb-farg').value = sb.value;
         if (sb && sb.mode !== 'color') host.querySelector('.sb-url').value = sb.value;
+        host.querySelector('.sb-studio').checked = !!(sb && sb.studioOnly);
         visaRader();
       }
     };
@@ -174,6 +187,7 @@
       var sb = null;
       if (lage.value === 'color') sb = { mode: 'color', value: host.querySelector('.sb-farg').value };
       else if (lage.value) sb = { mode: lage.value, value: host.querySelector('.sb-url').value.trim() };
+      if (sb) sb.studioOnly = host.querySelector('.sb-studio').checked;
       if (sb && !giltig(sb)) { if (typeof toast === 'function') toast('Ogiltig källa — bara https eller assets/'); return; }
       persist(sb);
       popover.hidden = true;
