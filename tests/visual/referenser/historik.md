@@ -210,3 +210,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Nytt katalogkort Like Fountain · Portal (#531): förhandsbilden i fryst regi
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 109 (filter: likefountain:portal) — catalog:likefountain:portal
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Skattkista (catalog:skattkista:kista och :pill) — första referensen, fryst kista med 00:42 kvar
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 111 (filter: skattkista) — catalog:skattkista:kista, catalog:skattkista:pill
