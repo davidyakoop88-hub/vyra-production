@@ -28,8 +28,9 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // Vidgad 2026-09-01 med 'guardian': BARRAGE med subType 'guardian_entrance', uppmatt i en skarp
   // sandning (atta event, alla fran samma person, av ~59 tittare). Widgeten och klientsessionen
   // fanns redan — det var bara kallan som saknades, precis som med 'glove'.
+  // Vidgad 2026-09-27 med 'envelope': skattkistan ur ENVELOPE (tiktok-bridge normalizer envelopeFields).
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','battle_mvp','chat','fanlevelup','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','viewer']);
+    ['battle','battle_mvp','chat','envelope','fanlevelup','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','viewer']);
 });
 
 test('validateTikTokIngestPayload accepterar guardian med anvandare och avvisar utan',()=>{

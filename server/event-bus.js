@@ -9,7 +9,7 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope']);
 // `member` STOD HAR fram till 2026-09-06 och doptes om till 'viewer'. Foljden: klientens
 // liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och 'viewer' matchar
 // INGEN av dem, sa varken member- eller join-triggern kunde fyra pa molnvagen. Uppmatt i en skarp
@@ -109,6 +109,13 @@ const event={
     const fran=Math.round(Number(v?.from)),till=Math.round(Number(v?.to));
     return Number.isInteger(fran)&&Number.isInteger(till)&&fran>=1&&till<=50&&till>fran?{from:fran,to:till}:null;
   };
+  // SKATTKISTAN (typen envelope, se tiktok-bridge/normalizer.js envelopeFields). Fälten finns BARA
+  // på den typen: en gåva ska inte bära ett tomt kistaId. oppnasAt är millisekunder sedan epoken.
+  if(typ==='envelope'){
+    event.kistaId=String(input?.kistaId||'').slice(0,160);
+    event.oppnasAt=Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.round(Number(input?.oppnasAt)||0)));
+    event.kistaDold=!!input?.kistaDold;
+  }
   const fanUpp=hojning(input?.fanLevelUp),gifterUpp=hojning(input?.gifterLevelUp);
   if(fanUpp)event.fanLevelUp=fanUpp;
   if(gifterUpp)event.gifterLevelUp=gifterUpp;

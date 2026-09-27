@@ -146,6 +146,11 @@ function startLocalServer(root, port = 4173, options = {}) {
     ...(d.fanLevelUp && Number(d.fanLevelUp.to) > 0
       ? { fanLevelUp: { from: number(d.fanLevelUp.from, 0, 50), to: number(d.fanLevelUp.to, 0, 50) } }
       : {}),
+    // SKATTKISTAN (typen envelope). Utan de här raderna hade kistan nått overlayn utan öppningstid
+    // och utan id — samma fälla som giftId i #350, ett led senare än den som räknar fram fälten.
+    ...(d.kistaId
+      ? { kistaId: text(d.kistaId, 160), oppnasAt: number(d.oppnasAt, 0, Number.MAX_SAFE_INTEGER), kistaDold: !!d.kistaDold }
+      : {}),
   }; }
   function setConnection(next) {
     Object.assign(connection, next, { updated: Date.now() });
@@ -214,7 +219,9 @@ function startLocalServer(root, port = 4173, options = {}) {
     // OBS: skriv ALDRIG en hakparentes i den har kommentaren. Provet plockar ut listan med ett
     // monster som slutar vid forsta hakparentesen, sa ett exempel med en teckenklass i klartext
     // kapar listan har och far provet att falla pa nasta typ.
-    'battle_mvp']);
+    'battle_mvp',
+    // envelope (skattkistan) tillkom 2026-09-27, samtidigt i molnet och i tiktok-service.js.
+    'envelope']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');

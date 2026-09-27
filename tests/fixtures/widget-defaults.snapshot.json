@@ -432,5 +432,29 @@
     "jarShowCounter": false,
     "jarAutoResetMs": 0,
     "createdFrom": "catalog:giftjar:lion"
+  },
+  "catalog:skattkista:kista": {
+    "type": "templateTreasureChest",
+    "kistaDesign": "kista",
+    "x": 106,
+    "y": 90,
+    "width": 220,
+    "title": "Skattkista",
+    "kistaFarg": "#ffc94d",
+    "kistaVisaAvsandare": true,
+    "kistaEfterOppning": 8,
+    "layer": 30
+  },
+  "catalog:skattkista:pill": {
+    "type": "templateTreasureChest",
+    "kistaDesign": "pill",
+    "x": 46,
+    "y": 24,
+    "width": 340,
+    "title": "Skattkista · rad",
+    "kistaFarg": "#ffc94d",
+    "kistaVisaAvsandare": true,
+    "kistaEfterOppning": 8,
+    "layer": 30
   }
 }

@@ -388,6 +388,14 @@
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
+    // SKATTKISTAN (skattkista.js). Kistan är 220 bred och ungefär 260 hög, raden 340 × 56 — båda
+    // skapas hela på duken (432 × 768), kistan mitt i övre delen och raden högst upp.
+    'skattkista': v => v.design === 'pill'
+      ? { type: 'templateTreasureChest', kistaDesign: 'pill', x: 46, y: 24, width: 340, title: 'Skattkista · rad',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 }
+      : { type: 'templateTreasureChest', kistaDesign: 'kista', x: 106, y: 90, width: 220, title: 'Skattkista',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 },
+
     // PORTALEN: 360 bred ger 640 hög (designens 9:16), och x/y lägger hela fontänen på duken.
     'likefountain.portal': () => ({
       type: 'templateLikeFountain', fountainDesign: 'portal', x: 36, y: 64, width: 360,
@@ -512,6 +520,11 @@
     // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
     // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
     'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
+    // catalog:skattkista:kista och catalog:skattkista:pill. Okänd design är ett fel, inte en tyst kista.
+    'skattkista': parts => {
+      if (parts[0] !== 'kista' && parts[0] !== 'pill') throw new Error(`Okänd skattkistedesign: ${parts[0]}`);
+      return ['skattkista', { design: parts[0] }];
+    },
     'lastx': parts => {
       pick('lastx.design', parts[0], 'Last-X-design');
       return ['lastx.design', { design: parts[0] }];
