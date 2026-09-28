@@ -365,6 +365,19 @@
     "fwColor2": "#ffd45b",
     "fwSound": true
   },
+  "catalog:giftbubbles": {
+    "type": "templateGiftBubbles",
+    "x": 36,
+    "y": 120,
+    "width": 320,
+    "title": "Gift Bubbles",
+    "gbSize": "m",
+    "gbMin": 1,
+    "gbGiftIn": true,
+    "gbHearts": true,
+    "gbShowCombo": true,
+    "gbDuration": 5
+  },
   "catalog:guardianemblem:1": {
     "type": "templateGuardianEmblem",
     "x": 100,
