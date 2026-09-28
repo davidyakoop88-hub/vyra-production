@@ -1518,8 +1518,10 @@ body:has(.editor-shell) .live-layer-panel>.live-layer-list{flex:1 1 auto;min-hei
   max-height:none;align-content:start}
 
 /* Bara den riktiga overlayduken ar en placeringsyta. Mittkolumnens extra bredd
-   far inte ha samma rutnat och lura anvandaren att widgets kan laggas dar. */
-body:has(.editor-shell) .workarea{
+   far inte ha samma rutnat och lura anvandaren att widgets kan laggas dar.
+   html:not(.overlay-output) haller regeln borta fran OBS-utgangen: overlay-laget ska
+   vara transparent, annars foljer en svart platta med lanken till OBS/TikTok Studio. */
+html:not(.overlay-output) body:has(.editor-shell) .workarea{
   background:#050308!important;
   background-image:none!important
 }
