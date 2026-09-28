@@ -67,7 +67,20 @@
       for(let i=0;i<hearts;i++){const p=spots[i%spots.length];later(()=>rocket(W*p[0],H*p[1],()=>heartBurst(W*p[0],H*p[1],S*0.017*lerp(1.15,0.95,cf)*rnd(0.9,1.1),pick(),perN)),(i/hearts)*1900+rnd(0,60));}
       if(o.showCombo&&c>1)comboBadge(W*0.5,H*0.13,c,S);
     }
-    function previewStill(){resize();if(!W||!H){W=W||160;H=H||284;}heartBurst(W*0.5,H*0.5,Math.min(W,H)*0.02,pick(),90);}
+    function previewStill(){ // static snapshot for catalog cards — synchronous canvas heart so it
+      // shows in the shadow-DOM thumbnail regardless of stylesheet reach or animation timing.
+      resize(); const w=Math.max(60,W||160), h=Math.max(100,H||284);
+      cv.style.width=w+'px';cv.style.height=h+'px';cv.width=w;cv.height=h;
+      if(!ctx)return; ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,w,h);
+      const cx=w*0.5, cy=h*0.46, R=Math.min(w,h)*0.42;
+      ctx.globalCompositeOperation='lighter';
+      for(let i=0;i<120;i++){const t=(i/120)*Math.PI*2;
+        const hx=16*Math.pow(Math.sin(t),3),hy=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+        const px=cx+(hx/16)*R,py=cy-(hy/16)*R;
+        ctx.fillStyle=HEART_COLORS[i%HEART_COLORS.length];ctx.globalAlpha=.9;
+        ctx.beginPath();ctx.arc(px,py,Math.max(1.2,R*0.04),0,7);ctx.fill();}
+      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+    }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];rockets=[];flashes=[];rings=[];host.classList.remove('hf-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.hf-combo').forEach(n=>n.remove());}
     return {fire,previewStill,clear,resize};
   }
@@ -92,7 +105,7 @@
   const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay')return;
     let cat=document.querySelector('.widget-catalog');
     if(cat&&!cat.querySelector('[data-hf]')){let s=document.createElement('section');s.dataset.hf='1';
-      s.innerHTML=`<h4>HEART FIREWORKS · 1 DESIGN</h4><button data-hf-create="1"><i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Heart Fireworks</b><small>Skott formar hjärtan · guldskott i mitten</small></span></button>`;
+      s.innerHTML=`<h4>HEART FIREWORKS · 1 DESIGN</h4><button data-hf-create="1" data-catalog-key="catalog:heartfireworks"><i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Heart Fireworks</b><small>Skott formar hjärtan · guldskott i mitten</small></span></button>`;
       cat.prepend(s);
       s.querySelector('[data-hf-create]').onclick=()=>{const created=VyraWidgets.create('catalog:heartfireworks');state.widgets.push(created);selected=created.id;save();render();if(window.toast)toast('Heart Fireworks skapad');};
     }

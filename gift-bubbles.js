@@ -71,12 +71,16 @@
       for(let i=0;i<total;i++) riseOne(i*rnd(gap*0.5,gap), {hearts:o.hearts,giftIn:o.giftIn,giftEl:gEl,mult});
       if(o.showCombo&&c>1) comboBadge(W*0.5,H*0.13,c,S);
     }
-    function previewStill(o){ // static snapshot for catalog cards
-      resize(); if(!W||!H){W=W||160;H=H||284;} const mult=SIZE[o.size]||1,gEl=giftHtml(o.gift,o.fallback);
-      [[0.30,0.62,0.9],[0.62,0.5,1.1],[0.45,0.72,0.7]].forEach(([fx,fy,sc])=>{
-        const size=H*0.14*mult*sc,el=document.createElement('div');el.className='gb-orb';el.style.cssText=`width:${size}px;height:${size}px;left:${W*fx-size/2}px;top:${H*fy-size/2}px;opacity:1`;
-        if(o.giftIn){const g=document.createElement('div');g.className='gb-gift';g.innerHTML=gEl;el.appendChild(g);}host.appendChild(el);
-      });
+    function previewStill(o){ // static snapshot for catalog cards — synchronous canvas so it shows
+      // in the shadow-DOM thumbnail regardless of stylesheet reach or animation timing.
+      resize(); const w=Math.max(60,W||160), h=Math.max(100,H||284);
+      cv.style.width=w+'px';cv.style.height=h+'px';cv.width=w;cv.height=h;
+      if(!ctx)return; ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,w,h);
+      const bubble=(bx,by,r)=>{const g=ctx.createRadialGradient(bx-r*0.35,by-r*0.35,r*0.1,bx,by,r);
+        g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.45,'rgba(190,150,255,.5)');g.addColorStop(1,'rgba(120,90,200,.12)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,r*0.06);ctx.stroke();};
+      bubble(w*0.34,h*0.58,h*0.14);bubble(w*0.62,h*0.46,h*0.17);bubble(w*0.48,h*0.74,h*0.1);
     }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];host.classList.remove('gb-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.gb-orb,.gb-heart,.gb-shard,.gb-ring,.gb-flash,.gb-hero,.gb-giftback,.gb-combo').forEach(n=>n.remove());}
     return {fire,previewStill,clear,resize};
@@ -104,7 +108,7 @@
   const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay')return;
     let cat=document.querySelector('.widget-catalog');
     if(cat&&!cat.querySelector('[data-gb]')){let s=document.createElement('section');s.dataset.gb='1';
-      s.innerHTML=`<h4>GIFT BUBBLES · 1 DESIGN</h4><button data-gb-create="1"><i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Gift Bubbles</b><small>Bubblor stiger & poppar · storlek följer combo</small></span></button>`;
+      s.innerHTML=`<h4>GIFT BUBBLES · 1 DESIGN</h4><button data-gb-create="1" data-catalog-key="catalog:giftbubbles"><i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Gift Bubbles</b><small>Bubblor stiger & poppar · storlek följer combo</small></span></button>`;
       cat.prepend(s);
       s.querySelector('[data-gb-create]').onclick=()=>{const created=VyraWidgets.create('catalog:giftbubbles');state.widgets.push(created);selected=created.id;save();render();if(window.toast)toast('Gift Bubbles skapad');};
     }
