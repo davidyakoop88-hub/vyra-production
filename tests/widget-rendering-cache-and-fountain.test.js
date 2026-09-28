@@ -162,7 +162,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // till minmax(0,170px) och adressfaltet fick golvet min-width:72ch. Faltet hade noll marginal
   // vid ALLA fyra fonsterbredder och klipptes i CI (falt 375 px, adress 389). En cachad studio.css
   // hade fortsatt servera den trangare raden.
-  assert.match(studio, /studio\.css\?v=20260926-1/);
+  // 20260928-overlay 2026-09-28: rebasad pa main (som stod pa 20260928-lasbar). Den sammanslagna
+  // studio.css bar bade main:s andringar och grenens placeringsyta for .workarea, nu scopead till
+  // html:not(.overlay-output) sa overlay-utgangen forblir transparent. Filen ar alltsa ny mot BADA
+  // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
+  // svarta plattan i OBS/TikTok.
+  assert.match(studio, /studio\.css\?v=20260928-overlay/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
