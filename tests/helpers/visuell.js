@@ -133,7 +133,14 @@ const RIGG = `(() => {
   if (!document.getElementById('vis-rigg-passform')) {
     const st = document.createElement('style');
     st.id = 'vis-rigg-passform';
-    st.textContent = '.canvas{transform:none!important;left:0!important;top:0!important}';
+    // KAPTERINGSBAKGRUND PINNAD. Referenserna (RGB, hornpixel #050308) togs nar overlay-workarea
+    // annu malades #050308. Produktionen gor nu overlay transparent - den svarta plattan foljde
+    // annars med lanken till OBS/TikTok Studio - sa riggen maste sjalv aterstalla samma backdrop
+    // referenserna byggdes pa, annars flippar varje widgets transparenta ytor fran svart till
+    // kompositorns vita och 113 nycklar faller utan att designen andrats. Overlay-transparensen
+    // vaktas separat (provet "riggen kor i overlay-lage" + overlay-passform.browser.test.js).
+    st.textContent = '.canvas{transform:none!important;left:0!important;top:0!important}'
+      + 'html.overlay-output body:has(.editor-shell) .workarea{background:#050308!important;background-image:none!important}';
     document.head.append(st);
   }
   window.__visBygg = (nyckel) => {
