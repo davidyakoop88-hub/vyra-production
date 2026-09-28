@@ -231,6 +231,11 @@
       type: 'templateGiftBubbles', x: 36, y: 120, width: 320, title: 'Gift Bubbles',
       gbSize: 'm', gbMin: 1, gbGiftIn: true, gbHearts: true, gbShowCombo: true, gbDuration: 5
     }),
+    // Heart Fireworks - modell 2. Skotten formar hjartan; guldskott vid hogre combo.
+    'heartfireworks': () => ({
+      type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
+      hfMin: 1, hfGold: true, hfShowCombo: true, hfDuration: 6
+    }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
@@ -510,6 +515,7 @@
     },
     'followeralert': () => ['followeralert', {}],
     'giftbubbles': () => ['giftbubbles', {}],
+    'heartfireworks': () => ['heartfireworks', {}],
     'glovesnipe': parts => {
       // catalog:glovesnipe:<pack>:<kind>[:<multiplier>] — the labels, icon and name are derived from
       // kind and multiplier exactly as addBoostPack() derived them.

@@ -306,6 +306,17 @@ function owgRenderCardThumb(btn) {
     if (fx) window.VyraGiftBubblesFx.renderPreview(fx, preview);
   }
 
+  // Heart Fireworks: samma monster - tom vard live, en frusen forhandsvisning i katalogkortet.
+  if (preview?.type === 'templateHeartFireworks' && window.VyraHeartFireworksFx?.renderPreview) {
+    const root = owgThumbRot(thumb), inner = root.querySelector('.owg-thumb-inner');
+    inner.style.position='absolute';inner.style.left='50%';inner.style.top='50%';
+    const widget=inner.firstElementChild;
+    widget.style.setProperty('position','relative','important');
+    widget.style.setProperty('left','0','important');widget.style.setProperty('top','0','important');
+    const fx = root.querySelector('.heart-fireworks-fx');
+    if (fx) window.VyraHeartFireworksFx.renderPreview(fx, preview);
+  }
+
   // Goal-motion-malen (#525) har samma problem som fyrverkeriet: goal-motion.css satter
   // position:absolute!important pa roten, och dokumentets centreringsregel for .owg-thumb-inner
   // nar inte in i skuggan. Utan det har hamnade Orbit halvvags under kortet och Tower utanfor det.

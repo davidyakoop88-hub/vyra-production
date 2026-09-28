@@ -378,6 +378,17 @@
     "gbShowCombo": true,
     "gbDuration": 5
   },
+  "catalog:heartfireworks": {
+    "type": "templateHeartFireworks",
+    "x": 36,
+    "y": 120,
+    "width": 320,
+    "title": "Heart Fireworks",
+    "hfMin": 1,
+    "hfGold": true,
+    "hfShowCombo": true,
+    "hfDuration": 6
+  },
   "catalog:guardianemblem:1": {
     "type": "templateGuardianEmblem",
     "x": 100,
