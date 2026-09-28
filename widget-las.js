@@ -1,7 +1,8 @@
 (function () {
   'use strict';
-  // LÅS WIDGET (2026-09-25, Davids önskan): en låst widget går inte att flytta, dra i storlek eller
-  // rotera på duken — men den går fortfarande att markera, redigera i panelen och låsa upp.
+  // LÅS WIDGET (2026-09-25, Davids önskan; genomsläpp 2026-09-27): en låst widget går inte att flytta,
+  // dra i storlek eller rotera på duken. Klick och drag går i stället IGENOM till widgeten under
+  // (pointer-events:none i widget-las.css), och man låser upp den i lagerlistan — som i TikControl.
   //
   // ETT STÄLLE STOPPAR ALLT. Sju olika vägar flyttar eller skalar en widget: studio.js:s drag
   // (el.onpointerdown), layout-safe.js och layout-standalone.js som lindar den, widget-handles.js
@@ -11,8 +12,10 @@
   // i FÅNGSTFASEN på window körs före samtliga och stoppar händelsen där — ingen av de sju behöver
   // ändras, och en åttonde väg som läggs till senare stoppas också. studio.js rörs inte.
   //
-  // KLICKET SLÄPPS IGENOM. `click` är en egen händelse; studio.js:s el.onclick markerar widgeten
-  // som förut, så panelen öppnas och låset går att slå av där eller i lagerlistan.
+  // KLICKET GÅR IGENOM (Davids val 2026-09-27). widget-las.css ger en låst widget pointer-events:none
+  // i editorn, så både klick och drag träffar widgeten UNDER — precis som TikControl. Man låser upp i
+  // lagerlistan, inte genom att klicka den låsta. stoppaDrag nedan står kvar som skyddsnät ifall ett
+  // barn återinför pointer-events; med pointer-events:none får en låst widget aldrig pointerdown.
   //
   // BARA I EDITORN. Overlayn (OBS) har ingen dragning och ska aldrig se låset: klassen stämplas inte
   // där, och fältet `locked` påverkar ingenting i rendern.
@@ -54,6 +57,7 @@
       // Overlayn kör också med view === 'editor' och media.js bygger där en (dold) lagerlista.
       // Knappen ska inte ens finnas i OBS-lankens DOM.
       if (iOverlay() || (typeof view !== 'undefined' && view !== 'editor')) return;
+      markLocked();
       lasKnappar();
     };
     return true;
@@ -102,6 +106,17 @@
       bort.setAttribute('aria-label', bort.title);
       bort.classList.add('layer-ikon');
     }
+  }
+
+  // Stampla widget-last pa ALLA lasta widgetar pa duken, oavsett renderingsvag. wh-omslaget nedan
+  // nar bara widgetar som gar genom wh(); last-x-alerts.js, custom-widgets.js m.fl. bygger sin egen
+  // markup och missades helt (uppmatt 2026-09-27: en last last-x saknade klassen helt -> inga dolda
+  // handtag och inget klick-genomslapp). Ett DOM-pass efter render tacker alla, och tar bort klassen
+  // fran upplasta. Overlayn nas aldrig (bind-omslaget returnerar tidigt i iOverlay).
+  function markLocked() {
+    document.querySelectorAll('.canvas .widget[data-id]').forEach(el => {
+      el.classList.toggle('widget-last', arLast(widgetFor(el.dataset.id)));
+    });
   }
 
   function lasKnappar() {

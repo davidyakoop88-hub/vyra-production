@@ -1622,3 +1622,58 @@ body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
 @keyframes sfasGlod{0%{filter:none}40%{filter:drop-shadow(0 0 14px var(--streak))}100%{filter:none}}
 @keyframes sfasEtikett{0%{opacity:.5;letter-spacing:2px}40%{opacity:1;letter-spacing:4px}100%{opacity:.85;letter-spacing:2px}}
 @keyframes sfasNamn{0%{transform:translateY(0)}45%{transform:translateY(-2px)}100%{transform:translateY(0)}}
+/* ===================================================================
+   Lasbarhet: Layout-editorn. Scopat till html:not(.overlay-output)
+   .editor-shell sa overlay-utdatan till OBS ALDRIG paverkas. Hojer
+   typografin till >=12px (husregeln finstilt-lasbarhet) och lyfter
+   ytorna ur svartet. Struktur och klassnamn ar ororda.
+   =================================================================== */
+:root{--ed-panel:#17111f;--ed-panel-2:#1e1529;--ed-row:#1c1327;--ed-work:#0c0714;--ed-text:#f7f2ff;--ed-text-2:#cabede;--ed-muted:#9a8da8}
+/* ytor lyfta ur svartet */
+html:not(.overlay-output) .editor-shell .elements,
+html:not(.overlay-output) .editor-shell .properties,
+html:not(.overlay-output) .editor-shell .editor-toolbar{background:var(--ed-panel)}
+html:not(.overlay-output) .editor-shell .workarea{background-color:var(--ed-work)}
+html:not(.overlay-output) .editor-shell .live-layer-panel{background:linear-gradient(150deg,#1d1427,#160e1f);border-bottom-color:#7a37a0}
+html:not(.overlay-output) .editor-shell .live-layer-list{align-content:start}
+html:not(.overlay-output) .editor-shell .live-layer-list article{background:var(--ed-row);border-color:#3a2450}
+html:not(.overlay-output) .editor-shell .live-layer-list article.active{background:#2a1838}
+/* panelrubriker */
+html:not(.overlay-output) .editor-shell .panel-title,
+html:not(.overlay-output) .editor-shell .live-layer-panel header b{font-size:12px;letter-spacing:.1em;color:#dcc6f2}
+html:not(.overlay-output) .editor-shell .live-layer-panel header span{font-size:12px;color:var(--ed-muted)}
+html:not(.overlay-output) .editor-shell .live-layer-panel header button{font-size:12px}
+/* lagerrader */
+html:not(.overlay-output) .editor-shell .layer-select b{font-size:14px;color:var(--ed-text)}
+html:not(.overlay-output) .editor-shell .layer-select small{font-size:12px;color:var(--ed-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:not(.overlay-output) .editor-shell .layer-eye{font-size:15px}
+html:not(.overlay-output) .editor-shell .layer-delete{font-size:14px}
+html:not(.overlay-output) .editor-shell .live-layer-list>p{font-size:12px;color:var(--ed-muted)}
+html:not(.overlay-output) .editor-shell .live-layer-add{font-size:13.5px}
+html:not(.overlay-output) .editor-shell .elements small{font-size:12px;color:var(--ed-muted)}
+/* widget-katalog */
+html:not(.overlay-output) .editor-shell .widget-catalog h4{font-size:11px;color:#c26fd6}
+html:not(.overlay-output) .editor-shell .widget-catalog button b{font-size:12px}
+html:not(.overlay-output) .editor-shell .widget-catalog button small{font-size:11px}
+html:not(.overlay-output) .editor-shell .catalog-notice b{font-size:12px}
+html:not(.overlay-output) .editor-shell .catalog-notice span{font-size:11.5px;color:#a690b0}
+html:not(.overlay-output) .editor-shell .editor-library-tabs b{font-size:11px}
+/* egenskaper */
+html:not(.overlay-output) .editor-shell .properties label{font-size:12.5px;color:var(--ed-text-2)}
+html:not(.overlay-output) .editor-shell .properties input{font-size:13px}
+html:not(.overlay-output) .editor-shell .property-group h4{font-size:12px;color:#cf6bd6}
+html:not(.overlay-output) .editor-shell .property-group.collapsible .pg-toggle{font-size:13px}
+html:not(.overlay-output) .editor-shell .properties-empty{font-size:13px}
+html:not(.overlay-output) .editor-shell .editor-help{font-size:12px;color:#b29cbc}
+html:not(.overlay-output) .editor-shell .property-actions button{font-size:12.5px}
+/* verktygsrad */
+html:not(.overlay-output) .editor-shell .editor-toolbar button{font-size:13px}
+html:not(.overlay-output) .editor-shell .layout-format-picker>span{font-size:12px;color:#c1b3cf}
+html:not(.overlay-output) .editor-shell .layout-format-picker button small{font-size:11.5px;color:#a596ad}
+html:not(.overlay-output) .editor-shell .layout-format-status{font-size:12px;color:#c8bcd2}
+html:not(.overlay-output) .editor-shell .vy-kontroll button{font-size:12px}
+html:not(.overlay-output) .editor-shell [data-zoom-niva]{font-size:12px;color:#c8bcd2}
+html:not(.overlay-output) .editor-shell .scenbakgrund-kontroll .sb-oppna{font-size:12.5px}
+html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(--ed-muted)}
+/* widget-etikett pa duken (endast editor-preview) */
+html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c0}

@@ -134,7 +134,7 @@ test('ögat är öppet när widgeten syns och stängt när den är dold, och kli
   } finally { await page.close(); }
 });
 
-test('en låst widget flyttar sig inte, men går att markera — och upplåst går den att dra igen', { skip }, async () => {
+test('en låst widget flyttar sig inte och fångar inte klick (går igenom), och upplåst går den att dra igen', { skip }, async () => {
   const page = await editorn();
   try {
     const fore = await lage(page);
@@ -148,9 +148,14 @@ test('en låst widget flyttar sig inte, men går att markera — och upplåst g�
     assert.equal(last.x, fore.x, 'x ska stå still');
     assert.equal(last.y, fore.y, 'y ska stå still');
 
-    await page.click(`.canvas .widget[data-id="${fore.id}"]`);
+    // Genomslapp (Davids val 2026-09-27): klick pa en last widget gar igenom (pe:none). Rakt
+    // musklick pa koordinaten - page.click() vagrar klicka ett pointer-events:none-element
+    // (actionability-timeout). Med bara en widget landar klicket pa duken och markerar ingenting.
+    await page.evaluate(() => { selected = null; render(); });
+    const box = await page.locator(`.canvas .widget[data-id="${fore.id}"]`).boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await page.waitForTimeout(150);
-    assert.equal((await lage(page)).selected, fore.id, 'klicket ska fortfarande markera widgeten');
+    assert.notEqual((await lage(page)).selected, fore.id, 'klicket ska ga igenom en last widget, inte markera den');
 
     const handtag = await page.evaluate(id => [...document.querySelectorAll(
       `.canvas .widget[data-id="${id}"] .resize-handle, .canvas .widget[data-id="${id}"] [data-vyra-handle]`)]
@@ -165,6 +170,92 @@ test('en låst widget flyttar sig inte, men går att markera — och upplåst g�
     assert.notEqual(`${upp.x},${upp.y}`, `${fore.x},${fore.y}`, 'upplåst ska den gå att dra');
     assert.equal('locked' in (await page.evaluate(() => state.widgets[0])), false,
       'upplåsning tar bort fältet i stället för att spara locked:false');
+  } finally { await page.close(); }
+});
+
+test('genomslapp: klick och drag pa en last topp-widget nar widgeten under', { skip, timeout: 60000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await seedaStudioState(page, ['catalog:topgift', 'catalog:toplike:center']);
+    await page.waitForFunction(() => document.querySelectorAll('.canvas .widget[data-id]').length >= 2
+      && !!document.querySelector('.live-layer-list .layer-lock'), null, { timeout: 15000, polling: 100 });
+    // Lagg dem overlappande och ta reda pa vilken som RENDERAS overst i en gemensam punkt.
+    const info = await page.evaluate(() => {
+      state.widgets[0].x = 120; state.widgets[0].y = 160;
+      state.widgets[1].x = 150; state.widgets[1].y = 190;
+      save(); render();
+      const r = document.querySelector(`.canvas .widget[data-id="${state.widgets[1].id}"]`).getBoundingClientRect();
+      const px = Math.round(r.x + 14), py = Math.round(r.y + 14);
+      const stack = document.elementsFromPoint(px, py)
+        .map(e => e.closest && e.closest('.canvas .widget[data-id]')).filter(Boolean);
+      const topp = stack[0] ? stack[0].dataset.id : null;
+      const under = (stack.find(e => e.dataset.id !== topp) || {}).dataset;
+      return { topp, under: under ? under.id : null, px, py };
+    });
+    assert.ok(info.topp && info.under && info.topp !== info.under,
+      `testet behover tva overlappande widgetar i punkten: ${JSON.stringify(info)}`);
+    // Las den OVERSTA via dess lagerrad.
+    await page.evaluate(id => {
+      const rad = [...document.querySelectorAll('.live-layer-list article[data-layer-id]')]
+        .find(r => r.dataset.layerId === id);
+      rad.querySelector('.layer-lock').click();
+    }, info.topp);
+    await page.waitForFunction(id => (state.widgets.find(w => w.id === id) || {}).locked === true,
+      info.topp, { timeout: 5000 });
+    await page.evaluate(() => { selected = null; render(); });
+    // Klick i overlappet -> ska markera den UNDRE, inte den lasta oversta.
+    await page.mouse.click(info.px, info.py);
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => selected), info.under,
+      'klick i overlappet ska ga igenom den lasta och markera widgeten under');
+    // Drag i overlappet -> ska flytta den UNDRE.
+    const fore = await page.evaluate(id => { const w = state.widgets.find(x => x.id === id); return `${w.x},${w.y}`; }, info.under);
+    await page.mouse.move(info.px, info.py);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(info.px + 90 * i / 8, info.py + 70 * i / 8);
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const efter = await page.evaluate(id => { const w = state.widgets.find(x => x.id === id); return `${w.x},${w.y}`; }, info.under);
+    assert.notEqual(efter, fore, 'drag i overlappet ska flytta den undre widgeten, inte den lasta');
+  } finally { await page.close(); }
+});
+
+test('genomslapp haller aven for en widget med pointer-events:auto!important (Last-X, markerad + last)', { skip, timeout: 60000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await seedaStudioState(page, ['catalog:topgift', 'catalog:lastx:card']);
+    await page.waitForFunction(() => document.querySelectorAll('.canvas .widget[data-id]').length >= 2
+      && !!document.querySelector('.live-layer-list .layer-lock'), null, { timeout: 15000, polling: 100 });
+    // Last-X (index 1) overst och overlappande, och MARKERAD sa .last-x-widget.selected{pe:auto!important} galler.
+    // Last-X positionerar sig via egen layout (inte w.x/w.y), sa overlapp-geometri ar opalitlig i
+    // testet. Genomslappet end-to-end bevisas av topgift+toplike-testet ovan; har verifieras den
+    // strukturella forutsattningen for att det ska funka AVEN for last-x: klassen och pe:none.
+    const top = await page.evaluate(() => { selected = state.widgets[1].id; render(); return state.widgets[1].id; });
+    await page.evaluate(id => {
+      const rad = [...document.querySelectorAll('.live-layer-list article[data-layer-id]')].find(r => r.dataset.layerId === id);
+      rad.querySelector('.layer-lock').click();
+    }, top);
+    await page.waitForFunction(id => (state.widgets.find(w => w.id === id) || {}).locked === true, top, { timeout: 5000 });
+    // Bugg #4+#5 (uppmatt 2026-09-27): last-x renderas via egen vag och fick ALDRIG widget-last, sa
+    // laset var visuellt trasigt (synliga handtag) OCH .last-x-widget.selected{pointer-events:auto!important}
+    // slog ett icke-important genomslapp. markLocked() stamplar nu klassen pa alla lasta widgetar, och
+    // pe:none!important vinner over pe:auto!important.
+    const m = await page.evaluate(id => {
+      const el = document.querySelector(`.canvas .widget[data-id="${id}"]`);
+      return { widgetLast: el.classList.contains('widget-last'), selected: selected === id,
+        pe: getComputedStyle(el).pointerEvents };
+    }, top);
+    assert.ok(m.selected, 'forutsattning: last-x ska vara markerad nar den las, sa pe:auto!important galler');
+    assert.equal(m.widgetLast, true, 'en last last-x maste fa klassen widget-last (markLocked) — annars ar laset visuellt trasigt');
+    assert.equal(m.pe, 'none', 'pe:none!important maste vinna over .last-x-widget.selected{pe:auto!important} sa klicket gar igenom');
   } finally { await page.close(); }
 });
 
