@@ -8,9 +8,13 @@
   'use strict';
   const rnd=(a,b)=>a+Math.random()*(b-a), lerp=(a,b,t)=>a+(b-a)*t;
   const SIZE={s:0.7,m:1.0,l:1.45};
-  // Original, icke-varumärkt reservgåva (används i editorn/testet och när eventet saknar bild).
+  // Riktig standardgåva — samma fil och samma reservkedja som Gift Fireworks (FW_GIFT), så en
+  // gåva UTAN förresolvad bild (editor-test, eller ett live-event som saknar bild) ändå visar en
+  // riktig gåva i stället för en tecknad platshållare. Kedja: skickad bild → widgetens reservbild
+  // → 0001_Rose.png. SVG:n är sista utväg om VyraSafe kastar allt (aldrig i praktiken).
+  const GB_GIFT='assets/gifts/events/0001_Rose.png';
   const GB_GIFT_SVG=`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9.2" width="18" height="12" rx="1.6" fill="#ff9ecb" stroke="#d15c95" stroke-width="1"/><rect x="2" y="6.4" width="20" height="4.1" rx="1.1" fill="#ffc2df" stroke="#d15c95" stroke-width="1"/><rect x="10.5" y="6.4" width="3" height="14.8" fill="#ffe066"/><path d="M12 6.4c-1.1-3.3-5.4-3.6-5.4-1 0 1.9 3.5 1.8 5.4 1zM12 6.4c1.1-3.3 5.4-3.6 5.4-1 0 1.9-3.5 1.8-5.4 1z" fill="#ffe066" stroke="#e0a83a" stroke-width=".7"/></svg>`;
-  const giftHtml=(url,fallback)=>{const src=(window.VyraSafe?VyraSafe.src(url):url)||(fallback?(window.VyraSafe?VyraSafe.src(fallback):fallback):'');return src?`<img alt="" src="${src}">`:GB_GIFT_SVG;};
+  const giftHtml=(url,fallback)=>{const src=window.VyraSafe?VyraSafe.src(url,VyraSafe.src(fallback,GB_GIFT)):(url||fallback||GB_GIFT);return src?`<img alt="" src="${src}">`:GB_GIFT_SVG;};
   // WAAPI when available, graceful final-frame fallback otherwise (jsdom har ingen Element.animate).
   function anim(el,frames,opts){
     if(typeof el.animate==='function'){return el.animate(frames,opts);}
