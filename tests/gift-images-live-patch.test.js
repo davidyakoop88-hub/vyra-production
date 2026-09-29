@@ -90,6 +90,22 @@ function topStreakNode(id) {
   return root;
 }
 
+// Clean Flip (approved-rankings.js) — den enda Top Streak som nar skarmen sedan 2026-09-20.
+// Formen ar avlast ur cleanStreakHtml: namnet i .approved-streak-copy strong, talet i ett eget <b>
+// inne i <em>×<b>0</b> STREAK</em>. Overlayens nollage ar synligt: tomt namn och 0.
+function cleanStreakNode(id) {
+  const root = node('div', 'widget vyra-streak approved-streak');
+  root.dataset.id = id;
+  const flip = root.append(node('div', 'streak-flip'));
+  flip.append(node('div', 'streak-gift-face')).append(node('img'));
+  flip.append(node('div', 'streak-profile-face')).append(node('img'));
+  const copy = root.append(node('div', 'approved-streak-copy'));
+  const name = copy.append(node('strong')); name.textContent = '';
+  const em = copy.append(node('em')); em.textContent = '× STREAK';
+  const b = em.append(node('b')); b.textContent = '0';
+  return root;
+}
+
 function campaignNode(id, slots) {
   const root = node('div', 'widget vyra-campaign');
   root.dataset.id = id;
@@ -105,7 +121,7 @@ function campaignNode(id, slots) {
   return root;
 }
 
-function makeEnv({ widgets, dom }) {
+function makeEnv({ widgets, dom, overlay = false }) {
   const calls = { save: 0, render: 0 };
   const root = node('div', 'canvas');
   dom.forEach(d => root.append(d));
@@ -115,6 +131,9 @@ function makeEnv({ widgets, dom }) {
   const sandbox = {
     console: { log() {}, warn() {}, error() {} },
     JSON, Object, Array, String, Number, Math, Map, Set, Boolean, Error,
+    // Overlay-laget lases ur URL:en av bade den har filen och vyra-tom-widget.js.
+    URLSearchParams,
+    location: { search: overlay ? '?overlay=1' : '' },
     document: {
       querySelector: sel => root.querySelector(sel),
       querySelectorAll: sel => root.querySelectorAll(sel)
@@ -214,6 +233,24 @@ test('Top Streak målas om i sin egen DOM', () => {
     'streakens värde sitter i .streak-score b med × framför, inte i ett <em>');
 });
 
+test('Clean Flip malas om: namnet i strong, talet i <b> - prefixet och STREAK ror patchen inte', () => {
+  // Uppmatt 2026-09-20 fore fixen: SHAPES traffade .streak-copy/.streak-score, som Clean Flip inte
+  // har, sa patchen skrev ingenting och widgeten stod pa demovardena hela sandningen.
+  const dom = cleanStreakNode('s1');
+  const env = makeEnv({
+    widgets: [{ id: 's1', type: 'templateTopStreak', profileImage: 'https://cdn/p.jpg' }],
+    dom: [dom]
+  });
+  env.gift(GIFT);
+  assert.equal(dom.querySelector('.streak-gift-face img').src, 'assets/gifts/rose.png');
+  assert.equal(dom.querySelector('.streak-profile-face img').src, 'https://cdn/p.jpg');
+  assert.equal(dom.querySelector('.approved-streak-copy strong').textContent, 'wpwer17', 'namnet');
+  assert.equal(dom.querySelector('.approved-streak-copy b').textContent, '3',
+    'talet ar combolangden (count), skrivet i <b> utan eget prefix');
+  assert.equal(dom.querySelector('.approved-streak-copy em').textContent, '× STREAK',
+    'em-textnoden rors inte - × och STREAK star kvar runt talet');
+});
+
 test('Top Streak rör inte mekanismraden', () => {
   const dom = topStreakNode('s1');
   const env = makeEnv({ widgets: [{ id: 's1', type: 'templateTopStreak' }], dom: [dom] });
@@ -282,3 +319,15 @@ test('en widget med liknande id röres inte', () => {
   assert.match(mine.querySelector('strong').textContent, /wpwer17/);
   assert.equal(other.querySelector('strong').textContent, '@StreamQueen', 'fel widget patchades');
 });
+
+test('livepatchen skriver aldrig platshallaren @StreamQueen i en sandning', () => {
+  // Uppmatt: ett gift-event utan bade username och name lamnade widget.dataName odefinierat, och
+  // fallbacken skrev da fabrikens demoperson till DOM:en mitt i sandningen - exakt det
+  // live-zero-state.js finns for att forhindra ("no invented person").
+  const dom = topGiftNode('g1');
+  const env = makeEnv({ widgets: [{ id: 'g1', type: 'templateTopGift' }], dom: [dom], overlay: true });
+  env.gift({ type: 'gift', giftName: 'Rose', coins: 30, count: 3 });   // ingen username, inget name
+  assert.equal(dom.querySelector('.topgift-copy strong').textContent, '',
+    'i overlay ska ett namnlost event ge tomt namn, inte @StreamQueen');
+});
+

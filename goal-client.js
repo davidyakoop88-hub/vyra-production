@@ -229,10 +229,13 @@
     const patchBaseline = (widgetId, value) => sendPatch(widgetId, 'baseline', value);
     const patchTarget = (widgetId, value) => sendPatch(widgetId, 'target', value);
 
-    async function reset(widgetId) {
+    // `alternativ.tyst` hoppar over bekraftelsen. Den finns for en MANNISKA som klickar; en
+    // Action som streamern sjalv konfigurerat ar redan bekraftelsen, och en dialog mitt i en
+    // sandning vore osynlig i OBS och hade last actionen i en tyst vantan.
+    async function reset(widgetId, alternativ) {
       const url = controlUrl(widgetId, '/reset');
       if (!url || !request) return { ok: false, reason: 'not-editable' };
-      if (!ask('Nollställ målet? Startvärdet och målet behålls.')) return { ok: false, reason: 'cancelled' };
+      if (!(alternativ && alternativ.tyst) && !ask('Nollställ målet? Startvärdet och målet behålls.')) return { ok: false, reason: 'cancelled' };
       return once(`${widgetId}:reset`, async () => {
         const mine = generation;
         let payload = null;

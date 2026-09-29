@@ -57,6 +57,46 @@ test('battle start → gåvor → battle end ger en MVP', () => {
   assert.equal(traffar()[0].score, 1200);
 });
 
+test('en gåva till en MEDVÄRD räknas inte som vår', () => {
+  // #360 gav medvärdsfiltret till goal-runtime, stream-stats, heart-me-goal och
+  // live-leaderboard. MVP missades, och server/test/medvardsgavor.test.js nämner den inte.
+  //
+  // Uppmätt 2026-09-18: i en 2v2 visade MVP:n en person som gett allt till medvärden. Det
+  // kom från TikToks facit, som rapporterar på LAGETS nivå — inte härifrån, för facit vann
+  // varje match. Men uteblir facit får den här räkningen avgöra, och då räknades varenda
+  // gåva i rummet som vår.
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar', 5000, { tillVarden: false }));   // gick till medvärden
+  skicka(gava('lisa', 500));                            // gick till oss
+  skicka(battle('battle_end'));
+
+  assert.equal(traffar().length, 1, 'matchen gav ingen MVP alls');
+  assert.equal(traffar()[0].name, 'lisa',
+    'medvärdens givare vann MVP:n trots att gåvan var märkt tillVarden:false');
+  assert.equal(traffar()[0].score, 500, 'medvärdens coins räknades in i summan');
+});
+
+test('KONTROLL: utan märkningen vinner samma gåva — annars mäter provet ovan ingenting', () => {
+  // Faller det här är filtret för brett och tar gåvor som ÄR våra.
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar', 5000));                           // ingen tillVarden alls
+  skicka(gava('lisa', 500));
+  skicka(battle('battle_end'));
+
+  assert.equal(traffar()[0].name, 'omar', 'en omärkt gåva ska räknas som vår');
+  assert.equal(traffar()[0].score, 5000);
+});
+
+test('FÖRVALET ÄR FÖRSIKTIGT: tillVarden true räknas, precis som en äldre brygga utan fältet', () => {
+  const { skicka, traffar } = boot();
+  skicka(battle('battle_start'));
+  skicka(gava('omar', 5000, { tillVarden: true }));
+  skicka(battle('battle_end'));
+  assert.equal(traffar()[0].name, 'omar');
+});
+
 test('summeringen är total, inte största enskilda gåva', () => {
   const { skicka, traffar } = boot();
   skicka(battle('battle_start'));

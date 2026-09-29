@@ -135,12 +135,62 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // varandra.
   // Bumpad 2026-09-10: prestandavaljaren i Installningar saknade `flex:1` som sidans input har, sa
   // radens harlinje gick 475 px forbi innehallet. BARA studio.css andrades.
-  assert.match(studio, /studio\.css\?v=20260910-installningar/);
+  // Bumpad 2026-09-22: Top Streak fick en `.record`-regel sa att `mark()` har nagot att rita.
+  // BARA studio.css andrades av den regeln; media.js, widget-factory.js och premiumbundlen ar
+  // oforandrade och behaller sina strangar.
+  // Bumpad 2026-09-23 for gavororelsens forsta art: studio.css bar de fyra fas-reglerna och de
+  // fyra keyframes som streak-fas.js tander. Samtidigt andrades media.js (skriptsvansen laddar
+  // arten) och gift-event-images.js (armningen anropar koreografin), sa de bumpas ocksa — var och
+  // en for sin egen andring. widget-factory.js och premiumbundlen ar OFORANDRADE och behaller
+  // sina strangar.
+  // Bumpad 2026-09-23 igen: de 16 reglerna for `.topgift-framed`/`.tgf-*` togs bort nar hela
+  // ramgrenen pensionerades. widget-factory.js bumpas i samma andring — det ar DEN som bar
+  // varianttabellen, och en cachad fabrik hade fortsatt erbjuda sju designer som inte finns.
+  // Bumpad till -4 i sammanslagningen med main 2026-09-23: main andrade samma fil (sound
+  // alerts respektive today-features) utan att bumpa sin strang, sa den sammanslagna filen ar
+  // ny mot BADA foraldrarna. En klient som hamtat nagon av de tva gamla strangarna hade annars
+  // suttit kvar pa sin halva av andringen.
+  // -5 2026-09-23: de tva foraldralosa .lf-duk-reglerna gick med canvas-lagret. Ingen nod bar
+  // den klassen langre, sa reglerna kunde aldrig matcha nagot — dod vikt som laste ut som
+  // ett fungerande lager.
+  // -6 2026-09-23: tva losa selektorer stadades bort — rester efter Like Fountains borttagna
+  // canvas-lager. Den ena, `.lf-stream canvas`, stod utan block och SLOK nasta regel: `.lf-p`
+  // parsades som `.lf-stream canvas .lf-p` och matchade ingenting, eftersom duken var borta.
+  // Partiklarna tappade alltsa sin grundstil. En cachad studio.css hade fortsatt servera den
+  // trasiga regeln, sa strangen maste folja med.
+  // 20260924-1 2026-09-24: overlaylankradens inre rutnat. Etikettkolumnen gick fran fasta 170px
+  // till minmax(0,170px) och adressfaltet fick golvet min-width:72ch. Faltet hade noll marginal
+  // vid ALLA fyra fonsterbredder och klipptes i CI (falt 375 px, adress 389). En cachad studio.css
+  // hade fortsatt servera den trangare raden.
+  // 20260928-overlay 2026-09-28: rebasad pa main (som stod pa 20260928-lasbar). Den sammanslagna
+  // studio.css bar bade main:s andringar och grenens placeringsyta for .workarea, nu scopead till
+  // html:not(.overlay-output) sa overlay-utgangen forblir transparent. Filen ar alltsa ny mot BADA
+  // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
+  // svarta plattan i OBS/TikTok.
+  assert.match(studio, /studio\.css\?v=20260928-overlay/);
+  // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
+  // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
+  // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
+  // Bumpad igen 2026-09-23: nitton av tjugoen premiumdesigner pensionerades. Alla tre foljer med
+  // den har gangen — widget-factory.js bar varianttabellen, studio.css de 50 borttagna reglerna
+  // och premiumbunten (media.js `version`) listan i premium-final.js.
+  // Bumpad igen 2026-09-24: LIKE_SKINN/TOPCOINS_V2 sakande ranking-sixpackens sex nya ID:n, sa den
+  // generiska fabriksvagen (t.ex. widgetlank-kopiering) hade tystat tillbaka Celestial/Royal
+  // Rose/etc till clean-bar/halo. BARA widget-factory.js andrades — studio.css och media.js
+  // `version` ar oforandrade och behaller sina strangar.
+  // Bumpad 2026-09-24 (-2): fabriken pekar om de pensionerade rankingdesignerna (Top Like
+  // Clean Bar/Soft Stack/Mini Podium/Side Rank, Top Points Lista/Tre i mitten/Podium/Neon) till
+  // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
+  assert.match(studio, /widget-factory\.js\?v=20260924-2/);
+  assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
+  // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
+  assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
-  assert.match(studio, /stage-background\.js\?v=1/);
+  assert.match(studio, /stage-background\.js\?v=2/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
   assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
-  assert.match(studio, /widget-handles\.js\?v=20260820-1/);
+  // Bumpad 2026-09-20: resize-handtagen klamper bredden sa att hela widgeten ryms pa duken.
+  assert.match(studio, /widget-handles\.js\?v=20260926-fri/);
     // Bumpad 2026-08-20 for toppgivarraden: media.js bar laddvagen till home-premium-bunten, och
   // overview-premium.css/.js laddades HELT UTAN version pa bada stallena — en cachad kopia hade
   // fortsatt visa de fyra gamla summakorten. Nu bar de ?v=20260820-1, och media.js sjalv maste
@@ -262,8 +312,20 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // SAMMANSLAGNINGEN 2026-08-20 (Rise & Pop mot main): media.js andrades av bada
   // grenarna och premium-final.css bar profile-koreografin, sa skript-URL:en, den
   // injicerade version-konstanten OCH gifter-fas.js far strangen 20260820-4.
-  assert.match(media, /toplike-studio\.css\?v=20260908-bagpodiet/);  // bagpodiet 2026-09-08: bara .css andrades, .js behaller -ramstad
-  assert.match(media, /toplike-studio\.js\?v=20260909-oppning/);  // ramens accent pa brickan 2026-09-08
+  // Bumpade 2026-09-20 av 5a96741 ("Aktivera endast nya rankingdesigner"): BADA filerna
+  // andrades i den omgangen, sa bada far samma nya strang. Vakten foljde inte med da.
+  // Bumpad 2026-09-21: BARA .js-strangen. #493 andrade toplike-studio.js men inte .css:en, och
+  // en strang som hojs utan att filen andrats ar lika fel at andra hallet — den tvingar fram en
+  // omladdning av nagot som ar identiskt, och nasta lasare tror att filen bytts.
+  // Bumpad 2026-09-22: BARA .js-strangen igen. Skinnklassen stamplas nu bara pa templateTopLike,
+  // och skinnvaljaren ritas bara dar — en andring i toplike-studio.js, inte i .css:en. Utan
+  // hojningen kor varje cachad OBS-kalla kvar pa den gamla koden och far aldrig fixen.
+  // Bumpad 2026-09-24 (ranking-sixpack): BADA strangarna. toplike-studio.js fick den nya
+  // riktnings-/spegelklassen (ranking-mirrored) och toplike-studio.css inget nytt direkt (de sex
+  // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
+  // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
+  assert.match(media, /toplike-studio\.css\?v=20260924-sixpack/);
+  assert.match(media, /toplike-studio\.js\?v=20260924-sixpack/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20260908-bildmatt/);
@@ -273,8 +335,31 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // laddas har, inte av en <script>-tagg i studio.html — och dess plusikon ritas numera som
   // inline-SVG. Konstanten styr premium-final.js/.css och runtime-controls.css.
   // Bumpad 2026-09-07 (#367): premium-final.js erbjuder numera diamantmålet bland ramdesignerna.
-  assert.match(media, /const version='20260911-2'/);
-  assert.match(media, /widget-fas\.js\?v=1/);
+  // Premium-bundelns strang. Den halkade efter i 48b3458 ("Byt gamla social goals mot sex nya
+  // VYRA-designer") och har varit ur synk sedan dess — darav tre veckor med en rod vakt som
+  // ingen atgardade. Star nu pa det media.js faktiskt bar.
+  // Bumpad 2026-09-23: premiumbunten fick topgift-pension.js, som lindar den vyraTopGift
+  // premium-final.js sjalv skriver over. En ny fil I bunten ar en andring AV bunten, sa
+  // strangen foljer med — annars laddar en cachad klient de fyra gamla och aldrig den femte.
+  // Bumpad 2026-09-23 igen: premium-final.css stadades pa de tio pensionerade designer som
+  // gallringen lamnade kvar dar (32 selektorer, fyra keyframes). Konstanten styr BADE
+  // premium-final.js och premium-final.css, sa en cachad klient hade annars fortsatt hamta den
+  // gamla CSS:en — och de borttagna designerna hade levt kvar hos just de som redan varit inne.
+  // Bumpad 2026-09-25: goal-motion.js/.css läggs sist i samma sekventiella bunt och ersätter
+  // den tidigare social-goal-renderaren. En cachad klient måste hämta båda nya filerna tillsammans.
+  // Bumpad 2026-09-26: Rail och Tower fick mått som ryms på duken (goal-motion.js + .css).
+  // Bumpad 2026-09-27: skattkista.js läggs sist i bunten (widgeten Skattkista).
+  // Bumpad 2026-09-27 igen: latonskningar.js (låtönskningar) läggs efter den.
+  // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
+  // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
+  // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
+  assert.match(media, /const version='20260928-goal-1'/);
+  // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
+  // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
+  // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
+  // widget-fas.js och ingen av de tre arterna far den nya motorn. Samma skal som duckningen
+  // 2026-08-17. fan-fas.js och gifter-fas.js ar OFORANDRADE och behaller sina strangar.
+  assert.match(media, /widget-fas\.js\?v=20260922-1/);
   assert.match(media, /fan-fas\.js\?v=20260819-fabriken/);
 
   // De filer duckningen rorde. En bump utan andring ar en gratis omladdning for varje
@@ -286,14 +371,58 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
     'battle-mvp-session.js cachebustades inte for #368');
-  for (const fil of ['vyra-tal', 'action-event', 'action-runtime', 'sound-alerts']) {
+  // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
+  // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
+  // den andringen — det var LISTAN som inte fick veta, sa provet stod rott pa main.
+  //
+  // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
+  // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
+  assert.match(media, /sound-alerts\.js\?v=20260923-library/, 'sound-alerts.js cachebustades inte');
+  for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
+  // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
+  // (docs/referens/tikfinity-actions-facit.md) och filen ar alltsa inte langre "oforandrad sedan
+  // duckningen". De fyra filerna i samma ombyggnad delar strang, for de ar EN andring — halls de
+  // isar kan en av dem laddas gammal mot de andras nya kontrakt, och faltregistret finns bara i en
+  // av dem: laddas action-event.js gammal saknar de andra tre `VyraActionFields` och tappar TYST
+  // varje falt de skulle ha lamnat ifran sig.
+  //
+  // GRUPPEN DELADES 2026-09-23. action-event.js och action-event.css bumpades till
+  // `20260923-workspace` i workspace-arbetet pa main; de ovriga sju rordes inte. Provet stod rott
+  // pa main tills den har raden skrevs om.
+  //
+  // Delningen ar RATT, och det ar vart att skriva ut varfor, for regeln ovan sager motsatsen:
+  // repots grundregel ar att en strang foljer SIN fil, inte grannarnas. Faran gruppen skulle
+  // skydda mot ar att action-event.js laddas GAMMAL mot de andras nya kontrakt — da saknas
+  // `VyraActionFields` och de tre som laser registret tappar tyst varje falt. En NYARE strang pa
+  // just action-event.js gor tvartom: den tvingar fram en ny hamtning. De sju oforandrade ska
+  // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
+  // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
+  // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
+  for (const fil of ['action-options', 'action-runtime']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
+  }
+  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'live-client', 'action-simulator']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
+  }
+  // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
+  // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
+  // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
+  assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
+  assert.match(media, /action-event\.css\?v=20260923-workspace/, 'action-event.css bumpades utan andring');
+  // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
+  // från studio.html, inte från media.js.
+  assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
   assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
-  assert.match(media, /gift-fireworks\.js\?v=20260912-3/);
+  // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
+  // Classics och panelen ar ororda och behaller sina tidigare versioner.
+  assert.match(media, /gift-fireworks\.js\?v=20260925-natural1/);
+  assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
+  assert.match(media, /gift-supernova-engine\.js\?v=20260925-natural1/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 
@@ -307,7 +436,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // kunde ater visa hela layouten fran en individuell lank. -3 hann publiceras i PR-grenen och
   // kan ligga i previewmiljons cache, sa strangen maste byta igen — annars serveras den
   // fail-open-versionen vidare.
-  assert.match(studio, /layout-safe\.js\?v=20260822-4/);
+  // Bumpad 2026-09-20: layout-safe.js passar in duken igen efter att den bytt ut #view i
+  // overlay-utdata - forr stod overlayen oskalad 432x768 i hornet av TikToks 1080x1920-ruta.
+  assert.match(studio, /layout-safe\.js\?v=20260920-1/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {

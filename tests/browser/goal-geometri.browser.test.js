@@ -1,168 +1,111 @@
 'use strict';
-// MÃ¥ldesignernas VERKLIGA geometri, mÃ¤tt i en riktig webblÃ¤sare.
+// Goal-designerna mats i en riktig webblasare. jsdom kan inte rakna layout.
 //
-// ORSAKEN, uppmÃ¤tt 2026-08-11: `socialGoalHtml` lÃ¤mnar sina fyra barn utan gridplacering, och
-// basregeln Ã¤r `grid-template-columns:42px minmax(0,1fr)` med `grid-template-rows:24px 44px 12px`.
-// Automatisk placering fyller radvis, sÃ¥ `.goal-track` hamnar i IKONKOLUMNEN pÃ¥ 42 px och vÃ¤rdet
-// `0 / 1 000` inuti den spiller ut Ã¶ver spÃ¥ret. Modell 3 klarar sig â den har eget enkolumnsblock.
+// NIO DESIGNER SEDAN #525. goal-motion.js ersatte de sex goal-new-ramarna (pulse-rail,
+// pulse-tower, signal-ribbon, heart-column, prism-core, prism-spine) med crown/heart/diamond x
+// orbit/rail/tower. Provet mätte tidigare de gamla ramarnas DOM (.goal-new-art m.fl.) och föll
+// 6/6 på main från den dagen, eftersom den DOM:en inte längre ritas.
 //
-// VARFÃR DE BEFINTLIGA PROVEN MISSADE DET: tests/social-goal-landscape-designs.test.js lÃ¤ser
-// KÃLLKODSTEXT â att rÃ¤tt regler stÃ¥r skrivna. Det sÃ¤ger ingenting om var elementen hamnar eller
-// om nÃ¥got fÃ¥r plats. Alla sju CI-jobb var grÃ¶na medan kollisionen fanns.
+// VARJE DESIGN SKAPAS SOM ANVÄNDAREN SKAPAR DEN: med katalogknappen ([data-gm-create]), som sätter
+// bredd och läge ur goal-motion.js:s DESIGNS. Att bygga widgeten själv i provet hade provat ett mått
+// ingen användare får. Rail var 560 bred och Tower 205 x 1094 i en 432 x 768 duk — utanför bild
+// redan när de skapades, och fast i en led (widget-grans.js klampar till 0). Duk-provet nedan vaktar
+// just det.
 //
-// VARFÃR BROWSER OCH INTE jsdom: allt hÃ¤rinne Ã¤r getBoundingClientRect. jsdom har ingen layout och
-// svarar 0 pÃ¥ varje mÃ¥tt, sÃ¥ provet hade varit grÃ¶nt fÃ¶re fixen ocksÃ¥.
-//
-// EN FÃLLA VÃRD ATT NAMNGE: testa INTE att `<strong>` och `.goal-track` saknar Ã¶verlapp. VÃ¤rdet
-// ligger INUTI spÃ¥ret och ska alltid Ã¶verlappa geometriskt â ett sÃ¥dant prov mÃ¤ter ingenting.
-// Det som ska mÃ¤tas Ã¤r att vÃ¤rdet RYMS i spÃ¥ret, och att spÃ¥ret ligger i rÃ¤tt kolumn.
-//
-// RÃTT NU: modell 1, 2 och 4 lÃ¤gger spÃ¥ret i ikonkolumnen.
-const test = require('node:test'), assert = require('node:assert/strict');
-const path = require('path'), http = require('http'), fs = require('fs');
+// DE SEX GAMLA MODELLERNA finns kvar i sparade layouter. goal-motion faller tillbaka till sin
+// sorts orbit-design för dem — de ska ritas kompletta, aldrig som tom ruta eller gammal markup.
+const test=require('node:test'),assert=require('node:assert/strict'),path=require('path'),http=require('http'),fs=require('fs');
+const ROOT=path.join(__dirname,'..','..'),{startaWebblasare,hoppaOver}=require('../helpers/webblasare.js');
+const MIME={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.woff2':'font/woff2'};
+const FAMILJ={followers:['crown','follower'],likes:['heart','like'],diamonds:['diamond','diamond']};
+const FORM={orbit:['circle','circle'],rail:['landscape','horizontal'],tower:['portrait','vertical']};
+const DESIGNS=Object.entries(FAMILJ).flatMap(([kind,[familj,fil]])=>Object.entries(FORM).map(([form,[orientation,bild]])=>({kind,id:`${familj}-${form}`,orientation,art:`${bild}-${fil}.png`})));
+const GAMLA=[['followers','pulse-rail','landscape'],['followers','pulse-tower','portrait'],['likes','signal-ribbon','landscape'],['likes','heart-column','portrait'],['diamonds','prism-core','landscape'],['diamonds','prism-spine','portrait']];
+function servera(){const server=http.createServer((req,res)=>{const rel=decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/,''),fil=path.join(ROOT,rel);if(!fil.startsWith(ROOT)||!fs.existsSync(fil)||fs.statSync(fil).isDirectory()){res.writeHead(404);res.end('nej');return}res.writeHead(200,{'content-type':MIME[path.extname(fil)]||'application/octet-stream'});fs.createReadStream(fil).pipe(res)});return new Promise(r=>server.listen(0,'127.0.0.1',()=>r(server)))}
+let server,browser,bas,skip=hoppaOver();
+test.before(async()=>{if(skip)return;browser=await startaWebblasare();if(!browser)throw new Error('webblasaren kunde inte starta');server=await servera();bas=`http://127.0.0.1:${server.address().port}`});
+test.after(async()=>{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r))});
 
-const ROOT = path.join(__dirname, '..', '..');
-const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
+// Körs i sidan. Väntar in bilderna och mäter allt mot widgetens egen box och mot duken. En del som
+// designen döljer (orbit visar ingen rubrik, goal-motion.css) räknas inte som utanför — den ritas inte.
+// Procenten på Rail hängde 23 px under boxen (top:115%) tills boxen fick plats för den: duken och
+// widget-grans.js räknar bara boxen, så en Rail längst ner fick procenten avklippt i sändningen.
+const MAT=`async id=>{const rot=document.querySelector('.canvas [data-id="'+id+'"]');if(!rot)return{fel:'widgeten renderades inte'};
+ const bilder=[...rot.querySelectorAll('img')];await Promise.all(bilder.map(i=>i.complete?0:new Promise(r=>{i.addEventListener('load',r,{once:true});i.addEventListener('error',r,{once:true})})));
+ await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+ const box=e=>{const r=e.getBoundingClientRect();return{l:r.left,r:r.right,t:r.top,b:r.bottom,w:r.width,h:r.height}},rb=box(rot),duk=box(document.querySelector('.editor-shell .canvas')),
+  inom=(b,y)=>b.l>=y.l-1&&b.r<=y.r+1&&b.t>=y.t-1&&b.b<=y.b+1,delar=['.goal-motion-art','.goal-motion-copy h3','.goal-motion-copy strong','[data-goal-pct]','[data-goal-fill]'];
+ const art=rot.querySelector('.goal-motion-art'),sym=rot.querySelector('.goal-motion-symbol'),fill=rot.querySelector('[data-goal-fill]');
+ return{klass:rot.className,box:rb,art:art&&art.getAttribute('src'),artLaddad:!!art&&art.naturalWidth>0,artBox:art&&box(art),
+  symbol:sym&&sym.getAttribute('src'),symbolLaddad:!!sym&&sym.naturalWidth>0,
+  saknas:delar.filter(q=>!rot.querySelector(q)),utanfor:delar.filter(q=>{const e=rot.querySelector(q);return e&&e.getClientRects().length>0&&!inom(box(e),rb)}),
+  paDuken:inom(rb,duk),fill:fill&&box(fill),fillVar:getComputedStyle(rot).getPropertyValue('--goal-fill').trim(),
+  pct:rot.querySelector('[data-goal-pct]')?.textContent,varde:rot.querySelector('[data-goal-value]')?.textContent,
+  gammal:!!rot.querySelector('.goal-new-art,.goal-new-track,.goal-icon,.goal-track')}}`;
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-  '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
-  '.mp3': 'audio/mpeg', '.json': 'application/json', '.woff2': 'font/woff2' };
+async function sida(){const page=await browser.newPage({viewport:{width:1600,height:950}});await page.goto(`${bas}/studio.html`,{waitUntil:'load'});
+ await page.waitForFunction(()=>typeof window.render==='function'&&!!window.VyraSessionState,null,{timeout:30000,polling:100});
+ await page.evaluate(async()=>{await window.VyraSessionState.projectLocalSession();state.widgets.length=0});return page}
 
-function servera() {
-  const server = http.createServer((req, res) => {
-    const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '');
-    const fil = path.join(ROOT, rel);
-    if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
-      res.writeHead(404); res.end('nej'); return;
-    }
-    res.writeHead(200, { 'content-type': MIME[path.extname(fil)] || 'application/octet-stream' });
-    fs.createReadStream(fil).pipe(res);
-  });
-  return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
-}
+// Katalogknappen ligger i widgetvyn; goal-motion.js lägger in sektionen i bind(). Knappen skapar
+// widgeten, sedan byts till editorn där duken finns att mäta mot.
+async function skapaFranKatalogen(page,id){return page.evaluate(async id=>{let knapp=null;
+ for(let i=0;i<60&&!knapp;i++){view='overlay';render();bind();knapp=document.querySelector(`[data-gm-create="${id}"]`);if(!knapp)await new Promise(r=>setTimeout(r,250))}
+ if(!knapp)return null;knapp.click();const w=state.widgets[state.widgets.length-1];w.goalCurrent=658;w.goalTarget=1000;
+ view='editor';render();bind();return w.id},id)}
 
-let server, browser, bas;
-let skip = hoppaOver();
+async function mat(page,id){return page.evaluate(`(${MAT})(${JSON.stringify(id)})`)}
+async function medVarde(page,id,varde){await page.evaluate(({id,varde})=>{state.widgets.find(w=>w.id===id).goalCurrent=varde;render();bind()},{id,varde});return mat(page,id)}
 
-test.before(async () => {
-  if (skip) return;
-  browser = await startaWebblasare();
-  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
-  server = await servera();
-  bas = `http://127.0.0.1:${server.address().port}`;
-});
+for(const d of DESIGNS)test(`${d.id} skapas ur katalogen komplett som ${d.orientation}, och ryms på duken`,{skip},async()=>{
+ const page=await sida();try{
+  const id=await skapaFranKatalogen(page,d.id);assert.ok(id,`katalogknappen [data-gm-create="${d.id}"] finns inte`);
+  const m=await mat(page,id);assert.ok(!m.fel,m.fel);
+  assert.match(m.klass,new RegExp(`goal-motion-${d.orientation}\\b`));assert.match(m.klass,new RegExp(`goal-${d.id}\\b`));assert.match(m.klass,new RegExp(`goal-kind-${d.kind}\\b`));
+  assert.equal(m.art,`assets/goal-motion/${d.art}`);assert.equal(m.artLaddad,true,'ramasseten laddades inte');
+  if(d.orientation==='circle'){assert.ok(m.symbol,'mittsymbolen saknas');assert.equal(m.symbolLaddad,true,'mittsymbolen laddades inte')}else assert.equal(m.symbol,null,'bara orbit har mittsymbol');
+  assert.deepEqual(m.saknas,[],'delar av målet saknas');assert.deepEqual(m.utanfor,[],'delar ritas utanför widgetens box');
+  assert.equal(m.pct,'66%');assert.equal(m.varde,'658');assert.equal(m.gammal,false,'gammal goal-markup kom tillbaka');
+  // Orienteringen är konstens form, inte bara klassnamnet.
+  const {w,h}=m.artBox;if(d.orientation==='landscape')assert.ok(w>h*3,`liggande ram är ${w}x${h}`);else if(d.orientation==='portrait')assert.ok(h>w*3,`stående ram är ${w}x${h}`);else assert.ok(Math.abs(w-h)<w*.15,`cirkeln är ${w}x${h}`);
+  assert.equal(m.paDuken,true,`målet skapas utanför bild: ${JSON.stringify(m.box)}`);
+  // Progress fyller i rätt led: mer värde ger större fyllning, aldrig större än ramen.
+  const lag=await medVarde(page,id,250),hog=await medVarde(page,id,750);
+  assert.equal(lag.fillVar,'25%');assert.equal(hog.fillVar,'75%');
+  if(d.orientation==='landscape')assert.ok(hog.fill.w>lag.fill.w,'liggande progress fylls inte på bredden');
+  else if(d.orientation==='portrait')assert.ok(hog.fill.h>lag.fill.h,'stående progress fylls inte på höjden');
+  assert.deepEqual(hog.utanfor,[],'fyllningen går utanför ramen');
+ }finally{await page.close()}});
 
-test.after(async () => {
-  if (browser) await browser.close();
-  if (server) await new Promise(r => server.close(r));
-});
+test('de sex gamla modellerna i sparade layouter ritas kompletta av goal-motion',{skip},async()=>{
+ const page=await sida();try{for(const [kind,model,orientation] of GAMLA){
+  const id=await page.evaluate(({kind,model,orientation})=>{const w=window.VyraWidgets.create(`catalog:socialgoal:${kind}:${model}:${orientation}`);w.x=0;w.y=0;w.goalCurrent=658;state.widgets.length=0;state.widgets.push(w);view='editor';render();bind();return w.id},{kind,model,orientation});
+  const m=await mat(page,id),[,fil]=FAMILJ[kind];
+  assert.ok(!m.fel,`${model}: ${m.fel}`);assert.match(m.klass,/\bgoal-motion\b/,`${model} ritas inte av goal-motion`);
+  assert.match(m.klass,new RegExp(`goal-kind-${kind}\\b`),`${model} byter sort`);
+  assert.equal(m.art,`assets/goal-motion/circle-${fil}.png`,`${model} faller inte tillbaka till sin sorts orbit`);assert.equal(m.artLaddad,true,`${model}: ramen laddades inte`);
+  assert.deepEqual(m.saknas,[],`${model}: delar saknas`);assert.deepEqual(m.utanfor,[],`${model}: delar ritas utanför boxen`);
+  assert.equal(m.pct,'66%');assert.equal(m.gammal,false,`${model}: gammal goal-markup kom tillbaka`);
+ }}finally{await page.close()}});
 
-// `?open=layout` gar direkt till editorn â samma vag meny-yta-provet anvander. Att vaxla vy med
-// go() efterat lamnar sidopaneler kvar som klipper widgeten.
-async function matModell(model) {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 950 } });
-  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
-    { timeout: 30000, polling: 100 });
-  await page.waitForTimeout(2500);
-
-  const matt = await page.evaluate(m => {
-    // `state` och `render` ar top-level let/function i media.js och blir aldrig window-egenskaper.
-    const w = window.VyraWidgets.create(`catalog:socialgoal:followers:${m}:landscape`);
-    w.x = 20; w.y = 20;
-    state.widgets.length = 0; state.widgets.push(w);
-    render();
-    const rot = document.querySelector(`[data-id="${w.id}"]`);
-    if (!rot) return { fel: 'widgeten renderades inte' };
-    const box = n => { const e = rot.querySelector(n); if (!e) return null;
-      const r = e.getBoundingClientRect();
-      return { v: r.left, h: r.right, o: r.top, u: r.bottom, bredd: r.width, hojd: r.height } };
-    const r = rot.getBoundingClientRect();
-    return {
-      rot: { v: r.left, h: r.right, o: r.top, u: r.bottom, bredd: r.width, hojd: r.height },
-      ikon: box('.goal-icon'), kopia: box('.goal-copy'), rubrik: box('.goal-copy h3'),
-      spar: box('.goal-track'), varde: box('.goal-copy strong'),
-      procent: box('.goal-copy small'), senaste: box('em'),
-      senasteAbsolut: (() => { const e = rot.querySelector('em');
-        return !!e && getComputedStyle(e).position === 'absolute' })(),
-      // radhojd for att avgora om vardet brutits till flera rader
-      vardeRadhojd: (() => { const e = rot.querySelector('.goal-copy strong');
-        return e ? parseFloat(getComputedStyle(e).lineHeight) || parseFloat(getComputedStyle(e).fontSize) * 1.2 : 0 })()
-    };
-  }, model);
-  await page.close();
-  return matt;
-}
-
-// Modell 3 ar avsiktligt enkolumnig. Den generiska premiumplaceringen far inte
-// skapa en implicit andra kolumn for .goal-copy eller .goal-track.
-test('Goal-modell 3: enkolumnsdesignen behaller ett brett spar och separata rader', { skip }, async () => {
-  const m = await matModell(3);
-  assert.ok(!m.fel, m.fel);
-  assert.ok(m.kopia && m.spar && m.varde, 'kopia, varde eller spar saknas i DOM');
-  assert.ok(m.spar.bredd > 350,
-    `modell 3:s spar ar bara ${Math.round(m.spar.bredd)} px brett â en implicit kolumn har skapats`);
-  assert.ok(Math.abs(m.kopia.v - m.spar.v) <= 1 && Math.abs(m.kopia.h - m.spar.h) <= 1,
-    'modell 3:s kopia och spar ligger inte i samma enda gridkolumn');
-  const lodratt = Math.min(m.varde.u, m.spar.u) - Math.max(m.varde.o, m.spar.o);
-  assert.ok(lodratt <= 1,
-    `modell 3:s varde och spar overlappar ${Math.round(lodratt)} px lodratt`);
-  for (const del of ['kopia', 'rubrik', 'spar', 'varde', 'procent']) {
-    assert.ok(m[del].v >= m.rot.v - 1 && m[del].h <= m.rot.h + 1
-      && m[del].o >= m.rot.o - 1 && m[del].u <= m.rot.u + 1,
-    `modell 3:s ${del} ligger utanfor widgetens box`);
-  }
-});
-
-for (const model of [1, 2, 4]) {
-  test(`Goal-modell ${model}: sparet ligger i den breda kolumnen, inte i ikonkolumnen`, { skip }, async () => {
-    const m = await matModell(model);
-    assert.ok(!m.fel, m.fel);
-    assert.ok(m.ikon && m.spar, 'ikon eller spar saknas i DOM');
-    assert.ok(m.spar.v >= m.ikon.h - 1,
-      `sparet borjar vid ${Math.round(m.spar.v)} men ikonen slutar vid ${Math.round(m.ikon.h)} â `
-      + 'sparet ligger i ikonkolumnen, vilket ar hela buggen');
-    assert.ok(m.spar.bredd > 42 * 2,
-      `sparet ar bara ${Math.round(m.spar.bredd)} px brett â det har hamnat i 42 px-kolumnen`);
-  });
-
-  test(`Goal-modell ${model}: varderaden lagger sig inte over sparet`, { skip }, async () => {
-    const m = await matModell(model);
-    assert.ok(m.varde && m.spar, 'vardet eller sparet saknas');
-    // I premium-markupen ligger vardet i .goal-copy och sparet ar dess SYSKON â de har alltsa
-    // varsin yta och far inte rora varandra. (I media.js-varianten lag vardet inuti sparet, men
-    // den renderas aldrig; premium-final.js:40 skriver om socialGoalHtml.)
-    const lodratt = Math.min(m.varde.u, m.spar.u) - Math.max(m.varde.o, m.spar.o);
-    assert.ok(lodratt <= 1,
-      `vardet och sparet overlappar ${Math.round(lodratt)} px lodratt`);
-    assert.ok(m.varde.hojd <= m.vardeRadhojd * 1.6,
-      `vardet ar ${Math.round(m.varde.hojd)} px hogt mot en radhojd pa `
-      + `${Math.round(m.vardeRadhojd)} â det har brutits till flera rader`);
-  });
-
-  test(`Goal-modell ${model}: kopia, spar och senaste-raden ligger pa skilda gridrader`, { skip }, async () => {
-    const m = await matModell(model);
-    // `+1 @NOVA` ar en medvetet svavande bricka (position:absolute, top:-16px). Den deltar
-    // inte i gridflodet och SKA ligga ovanpa â att krava skilda rader av den vore fel.
-    const parar = m.senasteAbsolut ? [['kopia', 'spar']] : [['kopia', 'spar'], ['spar', 'senaste']];
-    for (const [a, b] of parar) {
-      if (!m[a] || !m[b]) continue;
-      const lodratt = Math.min(m[a].u, m[b].u) - Math.max(m[a].o, m[b].o);
-      assert.ok(lodratt <= 1,
-        `${a} och ${b} overlappar lodratt med ${Math.round(lodratt)} px â de delar gridrad`);
-    }
-  });
-
-  test(`Goal-modell ${model}: ingenting klipps i normal liggande storlek`, { skip }, async () => {
-    const m = await matModell(model);
-    const delar = ['ikon', 'kopia', 'rubrik', 'spar', 'procent']
-      .concat(m.senasteAbsolut ? [] : ['senaste']);   // brickan far sticka ut med flit
-    for (const del of delar) {
-      if (!m[del]) continue;
-      assert.ok(m[del].h <= m.rot.h + 1 && m[del].v >= m.rot.v - 1,
-        `${del} ligger utanfor widgetens box i sidled`);
-      assert.ok(m[del].u <= m.rot.u + 1 && m[del].o >= m.rot.o - 1,
-        `${del} ligger utanfor widgetens box i hojdled`);
-    }
-  });
-}
+// MÅTTET FINNS INNAN RAMEN LADDATS. Tower var 48 px hög tills bilden kommit, och det var det
+// måttet draget klampade mot — målet gick att släppa på y 432 i en 768-duk, 372 px nedanför kanten,
+// och varningen "utanför bildrutan" kom först efteråt. Sedan 2026-09-26 får ett mål placeras delvis
+// utanför, men draget räknar fortfarande med höjden. Nu reserverar goal-motion.css bildens
+// proportioner, så höjden stämmer från första ritningen. Ramen fördröjs här med flit.
+test('Tower och Orbit har sin höjd innan ramen laddats, så draget räknar med rätt mått',{skip},async()=>{
+ const page=await browser.newPage({viewport:{width:1600,height:950}});let slapp;const hall=new Promise(r=>slapp=r);
+ await page.route(/assets\/goal-motion\/(vertical|circle)-/,async rt=>{await hall;await rt.continue()});
+ try{await page.goto(`${bas}/studio.html`,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>typeof window.render==='function'&&!!window.VyraSessionState,null,{timeout:30000,polling:100});
+  await page.evaluate(async()=>{await window.VyraSessionState.projectLocalSession();state.widgets.length=0});
+  for(const [id,minH] of [['crown-tower',600],['crown-orbit',300]]){
+   const wid=await skapaFranKatalogen(page,id);assert.ok(wid,id);
+   const m=await page.evaluate(wid=>{const el=document.querySelector('.canvas [data-id="'+wid+'"]'),art=el.querySelector('.goal-motion-art');
+    return{laddad:art.complete&&art.naturalWidth>0,h:el.offsetHeight,topp:VyraGrans.klamp(0,-9999,VyraGrans.dukFor(el),{bredd:el.offsetWidth,hojd:el.offsetHeight}).topp,synlig:VyraGrans.MIN_SYNLIG}},wid);
+   assert.equal(m.laddad,false,`${id}: ramen hann laddas, provet provar inget`);
+   assert.ok(m.h>minH,`${id} är ${m.h} px hög innan ramen laddats`);
+   // Draget räknar med rätt höjd: uppåt får målet gå tills bara MIN_SYNLIG px syns. Med 48 px
+   // höjd hade det stannat nästan direkt, och resten av målet hade varit omöjligt att dra ut.
+   assert.equal(m.topp,m.synlig-m.h,`${id}: draget stannar på y ${m.topp}, skulle vara ${m.synlig-m.h}`);
+  }}finally{slapp();await page.close()}});

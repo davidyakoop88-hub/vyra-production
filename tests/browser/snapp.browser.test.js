@@ -57,10 +57,14 @@ test.after(async () => {
 // Tva widgets: en som dras (d1) och en som star still och erbjuder snappmal (m1).
 // Malets lage ar med FLIT inte delbart med 8 — annars gick det inte att skilja en traff pa
 // widgeten fran en traff pa rutnatet, och provet hade varit gront av fel skal.
-const DRAGEN = { id: 'd1', type: 'templateTopLike', x: 40, y: 40, width: 300 };
-const MALET = { id: 'm1', type: 'templateTopLike', x: 203, y: 147, width: 300 };
+// SEDAN 2026-09-20 ska hela widgeten rymmas pa duken (widget-grans.js). Top Like renderar
+// 250 x 234 oavsett width, sa malet pa x=203 hade klamts till 182 (432-250) och varje prov som
+// siktar pa 203 hade fallit pa gransen i stallet for pa snappen. Top Gift foljer sin width
+// (uppmatt: 180 -> 180 x 260): 203+180=383 och 147+260=407 ryms, sa proven mater snappen igen.
+const DRAGEN = { id: 'd1', type: 'templateTopGift', x: 40, y: 40, width: 180 };
+const MALET = { id: 'm1', type: 'templateTopGift', x: 203, y: 147, width: 180 };
 
-async function editorn(vy = { width: 1440, height: 900 }) {
+async function editorn(vy = { width: 1440, height: 900 }, widgets = [DRAGEN, MALET]) {
   const context = await browser.newContext({ viewport: vy });
   const page = await context.newPage();
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
@@ -70,7 +74,7 @@ async function editorn(vy = { width: 1440, height: 900 }) {
     view = 'editor'; state.widgets = widgets; selected = 'd1';
     render(); if (typeof bind === 'function') bind();
     await new Promise(r => setTimeout(r, 700));
-  }, [DRAGEN, MALET]);
+  }, widgets);
   return { context, page };
 }
 
@@ -149,14 +153,23 @@ test('draget snappar till en annan widgets overkant i Y', { skip, timeout: 90000
 
 // ---- Prov 4 · kant mot kant --------------------------------------------------------------------
 test('draget snappar mot en annan widgets hoger- och nederkant', { skip, timeout: 120000 }, async () => {
-  const { context, page } = await editorn();
+  // SEDAN 2026-09-20 ska hela widgeten rymmas pa duken (widget-grans.js). Top Like renderar
+  // 250 x 234 oavsett width, sa tva av dem far inte plats kant mot kant i 432 x 768 - forr
+  // snappade det har provet d1 till (423, 535), ett lage som var osynligt i sandningen.
+  // Top Gift foljer sin width (uppmatt: width 180 -> 180 x 260), sa tva ryms: m1 pa (20,20),
+  // d1 landar pa (200, 280) med hogerkant 380 och nederkant 540.
+  const SMA = [{ id: 'd1', type: 'templateTopGift', x: 300, y: 600, width: 180 },
+               { id: 'm1', type: 'templateTopGift', x: 20, y: 20, width: 180 }];
+  const { context, page } = await editorn(undefined, SMA);
   try {
     const matt = await page.evaluate(() => {
       const m = document.querySelector('.canvas [data-id="m1"]');
       return { bredd: m.offsetWidth, hojd: m.offsetHeight };
     });
+    assert.ok(20 + 2 * matt.bredd <= 432 && 20 + 2 * matt.hojd <= 768,
+      'riggens widgetar ryms inte tva och tva: ' + matt.bredd + ' x ' + matt.hojd);
     // Malets hogerkant, och dess nederkant. Sikta 3px fran bada.
-    const x = 203 + matt.bredd, y = 147 + matt.hojd;
+    const x = 20 + matt.bredd, y = 20 + matt.hojd;
     const m = await dra(page, { malLeft: x - 3, malTop: y - 3 });
     assert.equal(m.left, x, `x blev ${m.left}, forvantat ${x} (malets hogerkant)`);
     assert.equal(m.top, y, `y blev ${m.top}, forvantat ${y} (malets nederkant)`);

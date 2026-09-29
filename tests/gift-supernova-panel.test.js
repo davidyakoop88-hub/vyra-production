@@ -15,9 +15,9 @@ function change(h,id,value){const el=h.document.getElementById(id);el.value=valu
 test('Supernova factory and standalone use approved defaults without changing old four',()=>{
  for(const placement of ['layout','standalone']){
   const w=factory.create('catalog:giftfireworks:supernova',placement==='standalone'?{placement}:{});
-  assert.equal(w.fwTheme,'supernova');assert.equal(w.fwNovaStyle,'classic');assert.equal(w.fwColor,'#ffd06b');assert.equal(w.fwColor2,'#a764ff');assert.equal(w.width,540);
+  assert.equal(w.fwTheme,'supernova');assert.equal(w.fwNovaStyle,'classic');assert.equal(w.fwColor,'#ffd06b');assert.equal(w.fwColor2,'#a764ff');assert.equal(w.width,360);
  }
- for(const key of ['royal','ice','rose','comet']){const w=factory.create('catalog:giftfireworks:'+key);assert.equal(w.width,540);assert.equal(w.fwNovaStyle,undefined);}
+ for(const key of ['royal','ice','rose','comet']){const w=factory.create('catalog:giftfireworks:'+key);assert.equal(w.width,360);assert.equal(w.fwNovaStyle,undefined);}
 });
 test('Supernova panel exposes three styles and only supported animation controls',()=>{
  const h=setup();assert.equal(h.document.querySelectorAll('#fwNovaStyle option').length,3);assert.equal(h.document.querySelectorAll('#fwNovaPalette option').length,5);

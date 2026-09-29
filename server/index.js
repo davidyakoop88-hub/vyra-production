@@ -2,8 +2,11 @@
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
+const TikTokVerifiering=require('./tiktok-verifiering');
+const {knytVerifieratHandtag}=require('./tiktok-handtagslas');
+const Vault=require('./token-vault');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
-const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read');
+const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read'),PointsRuntime=require('./points-runtime');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
 const Notifications=require('./notifications');
@@ -12,11 +15,30 @@ const MFA=require('./mfa');
 const {describe:describeDevice}=require('./session-device');
 const LoginProtection=require('./login-protection');
 const {streamExport}=require('./account-data');
-const {release:desktopRelease,slapperForbi:desktopSlapperForbi}=require('./desktop-release');
+const {release:desktopRelease,slapperForbi:desktopSlapperForbi,premiumKravs:desktopPremiumKravs}=require('./desktop-release');
 const Support=require('./support');
 const TTS=require('./tts');
+// Låtönskningarnas YouTube-sökning. Nyckeln (YOUTUBE_API_KEY) läses bara här, på servern.
+const Musik=require('./musik').createMusik();
+// Stream Deck-molnvägen: parkopplingskoder och enhetstoken. Utan VYRA Desktop postar pluginet hit.
+const Streamdeck=require('./streamdeck').createStreamdeck({pool}),{KOMMANDON:STREAMDECK_KOMMANDON}=require('./streamdeck');
+const STREAMDECK_RATE_LIMIT=Number(process.env.STREAMDECK_RATE_LIMIT||10);
 const PORT=Number(process.env.PORT||8080),ORIGIN=process.env.APP_ORIGIN||`http://127.0.0.1:${PORT}`,SESSION_SECONDS=Number(process.env.SESSION_DAYS||14)*86400;
 const SSE_HEARTBEAT_MS=30000;
+// TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
+// Saknas de svarar rutten 503 i stället för att bygga en URL som TikTok ändå avvisar.
+const TIKTOK_CLIENT_KEY=process.env.TIKTOK_CLIENT_KEY||'',TIKTOK_CLIENT_SECRET=process.env.TIKTOK_CLIENT_SECRET||'';
+// Harleds med URL, inte med strangkonkatenering. APP_ORIGIN valideras bara som https-adress
+// (production-config.js:28) — ett avslutande snedstreck slipper igenom och hade gett
+// "https://vyralive.app//api/auth/callback/tiktok". TikTok jamfor redirect_uri TECKEN FOR TECKEN
+// mot det som star registrerat i appen, sa ett extra snedstreck avvisar hela varvet innan
+// anvandaren hinner se nagot — och felet syns bara hos TikTok, aldrig i var egen logg.
+const TIKTOK_REDIRECT=new URL('/api/auth/callback/tiktok',ORIGIN).toString();
+// Fritextvägen in i tiktok_connections finns kvar tills flaggan sätts. Den stängs med ett handgrepp
+// i Railway när verifieringen är bevisad i drift — utan omdeploy, och utan att låsa ute en enda
+// kund i mellantiden. Se docs/tiktok-verifiering.md.
+const TIKTOK_VERIFIERING_KRAVS=process.env.VYRA_TIKTOK_VERIFIERING_KRAVS==='1';
+const TIKTOK_VARV_SEKUNDER=600;
 // Per-IP request budget, one minute at a time. The defaults are what production has always used and
 // what it keeps; they are named here because a test suite that drives one hundred real requests
 // through one socket is otherwise indistinguishable from an attack, and would be throttled halfway
@@ -77,12 +99,20 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
 // en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
 // kommer utan username och far inte krava ett.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
+// CHATTKOMMANDON I EGEN HINK (2026-09-27, #365). Rader som börjar med "!" (bryggans typ
+// `chatcommand`, som cleanEvent gör till `chat`) behövs i molnet för låtönskningar och chattbotens
+// kommandon. De räknas i en EGEN hink med eget tak, så en kommandostorm aldrig kan äta den budget
+// gåvorna lever på. Vanlig chatt släpps fortfarande inte fram — den delar gåvornas hink.
+const TIKTOK_KOMMANDO_RATE_LIMIT=10;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
 // and so it's already in place if a paid provider is ever swapped in behind server/tts.js later.
 const TTS_SYNTH_RATE_LIMIT=20,TTS_SYNTH_RATE_WINDOW_SECONDS=30;
+// Varje YouTube-sökning kostar 100 av 10 000 kvotenheter per dygn. Taket skyddar kvoten mot en
+// chattstorm av !önska; samma låt två gånger kostar inget (server/musik.js cachar svaren).
+const MUSIK_RATE_LIMIT=30,MUSIK_RATE_WINDOW_SECONDS=60;
 // Pure — validates the ingest payload's shape before it ever reaches eventBus.publish/cleanEvent,
 // so a request from a leaked/misused ingest token (or a bug in the bridge) gets a specific,
 // route-scoped 400 instead of falling through to cleanEvent()'s generic "Ogiltigt live-event".
@@ -112,9 +142,12 @@ const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params
 // event fran att na overlayet.
 const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const statsReader=createStatsReader({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
-const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels});
+const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels,pointsRuntime:PointsRuntime});
 async function ingestTikTokEvent(workspaceId,payload){
-  if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+  if(String(payload?.type||'').toLowerCase()==='chatcommand'){
+    if(await rateLimiter.exceeded(`tiktok-ingest-kommando:${workspaceId}`,TIKTOK_KOMMANDO_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+      throw Object.assign(new Error(`För många chattkommandon för denna workspace (max ${TIKTOK_KOMMANDO_RATE_LIMIT}/sekund)`),{status:429});
+  }else if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
   validateTikTokIngestPayload(payload);
   const{raw}=await ingestEvent(workspaceId,payload);
@@ -268,7 +301,7 @@ async function checkMfaCode(c,user,code){if(user.mfa_secret_enc&&MFA.verify(MFA.
 async function cleanupPendingMedia(){try{const q=await pool.query("UPDATE media_assets SET status='deleted',deleted_at=now() WHERE id IN (SELECT id FROM media_assets WHERE status='pending' AND created_at<now()-interval '1 hour' LIMIT 25) RETURNING object_key");await Promise.allSettled(q.rows.map(row=>mediaStorage.remove(row.object_key)));if(q.rowCount)console.log(JSON.stringify({level:'info',event:'media_cleanup',count:q.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'media_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function cleanupAuthData(){try{const sessions=await pool.query("DELETE FROM sessions WHERE expires_at<now() OR (mfa_verified_at IS NULL AND created_at<now()-interval '30 minutes')"),tokens=await pool.query("DELETE FROM auth_tokens WHERE expires_at<now()-interval '7 days' OR consumed_at<now()-interval '7 days'"),audit=await pool.query("DELETE FROM audit_log WHERE created_at<now()-interval '180 days'");if(sessions.rowCount||tokens.rowCount||audit.rowCount)console.log(JSON.stringify({level:'info',event:'auth_cleanup',sessions:sessions.rowCount,tokens:tokens.rowCount,audit:audit.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'auth_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function deleteDueAccounts(){try{const q=await pool.query("SELECT id,email FROM users WHERE deletion_requested_at<=now()-interval '7 days' ORDER BY deletion_requested_at LIMIT 10");for(const user of q.rows){const media=await pool.query('SELECT m.object_key FROM media_assets m JOIN workspaces w ON w.id=m.workspace_id WHERE w.owner_user_id=$1',[user.id]);await Promise.all(media.rows.map(row=>mediaStorage.remove(row.object_key)));await tx(async c=>{await c.query('DELETE FROM notification_outbox WHERE recipient=$1',[user.email]);await c.query('DELETE FROM audit_log WHERE actor_user_id=$1',[user.id]);await c.query('DELETE FROM users WHERE id=$1',[user.id])});console.log(JSON.stringify({level:'info',event:'account_deleted',userId:S.digest(user.id).slice(0,12),at:new Date().toISOString()}))}}catch(error){console.error(JSON.stringify({level:'error',event:'account_deletion_failed',message:error.message,at:new Date().toISOString()}))}}
-const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
+const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/api/musik/status'&&req.method==='GET')return send(res,200,{ok:true,...await Musik.status()});if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
 // in a dashboard, and pointing it at a path that 404s marks the service unhealthy — an outage caused
 // by the config rather than the code. Both spellings answer so either is safe to configure.
   if((p==='/health/ready'||p==='/api/health/ready')&&req.method==='GET'){try{await pool.query('SELECT 1');
@@ -276,7 +309,7 @@ const server=http.createServer(async(req,res)=>{const started=Date.now(),request
     // the login outage ran in, and a read-only probe reported ready throughout it.
     const write=await probeWrite();
     if(!write.ok)return send(res,503,{ok:false,status:'not-ready',reason:write.reason,code:write.code});
-    if(process.env.REDIS_REQUIRED==='true')await eventBus.ping();return send(res,200,{ok:true,status:'ready'})}catch{return send(res,503,{ok:false,status:'not-ready'})}}if(p==='/api/health'&&req.method==='GET'){const[postgresUp,redisUp]=await Promise.all([pool.query('SELECT 1').then(()=>true).catch(()=>false),eventBus.ping().then(()=>true).catch(()=>false)]),payload=buildHealthStatus({postgresUp,redisUp,sseConnections:metrics.sse,lastTikTokEventAt});return send(res,payload.status==='ok'?200:503,payload)}if(p==='/api/auth/config'&&req.method==='GET')return send(res,200,{ok:true,authRequired:true});if(p==='/api/downloads/windows'&&req.method==='GET'){const release=desktopRelease();if(u.searchParams.get('meta')==='1')return send(res,200,{ok:true,...release,url:undefined});if(desktopSlapperForbi(req.headers)){res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}const dls=await session(req);if(!dls)return send(res,401,{ok:false,error:'Logga in och aktivera VYRA Premium för att ladda ner VYRA Desktop',loginRequired:true});if(!dls.email_verified_at)return send(res,403,{ok:false,error:'Verifiera din e-post innan du laddar ner VYRA Desktop',emailVerificationRequired:true});const dlw=await pool.query('SELECT w.id FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at LIMIT 1',[dls.user_id]),dlWorkspaceId=dlw.rows[0]?.id,dlEnt=dlWorkspaceId?await Billing.entitlement(pool,dlWorkspaceId):{plan:'free'};if(dlEnt.plan!=='premium')return send(res,402,{ok:false,error:'Premium (3 dagar gratis) krävs för att ladda ner VYRA Desktop',entitlementRequired:true});res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}if(p==='/api/public/status'&&req.method==='GET'){const q=await pool.query("SELECT id,title,status,impact,message,started_at,resolved_at,updated_at FROM platform_incidents WHERE resolved_at IS NULL OR resolved_at>now()-interval '7 days' ORDER BY started_at DESC LIMIT 20"),active=q.rows.filter(row=>!row.resolved_at),overall=active.some(row=>row.impact==='critical')?'major_outage':active.length?'degraded':'operational';return send(res,200,{ok:true,overall,checkedAt:new Date(),incidents:q.rows})}if(!p.startsWith('/api/'))return send(res,404,{ok:false,error:'Hittades inte'});// Everything under an OBS link. The trailing part is matched loosely on purpose: a token-scoped
+    if(process.env.REDIS_REQUIRED==='true')await eventBus.ping();return send(res,200,{ok:true,status:'ready'})}catch{return send(res,503,{ok:false,status:'not-ready'})}}if(p==='/api/health'&&req.method==='GET'){const[postgresUp,redisUp]=await Promise.all([pool.query('SELECT 1').then(()=>true).catch(()=>false),eventBus.ping().then(()=>true).catch(()=>false)]),payload=buildHealthStatus({postgresUp,redisUp,sseConnections:metrics.sse,lastTikTokEventAt});return send(res,payload.status==='ok'?200:503,payload)}if(p==='/api/auth/config'&&req.method==='GET')return send(res,200,{ok:true,authRequired:true});if(p==='/api/downloads/windows'&&req.method==='GET'){const release=desktopRelease();if(u.searchParams.get('meta')==='1')return send(res,200,{ok:true,...release,url:undefined});if(desktopSlapperForbi(req.headers)){res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}const dls=await session(req);if(!dls)return send(res,401,{ok:false,error:'Logga in och aktivera VYRA Premium för att ladda ner VYRA Desktop',loginRequired:true});if(!dls.email_verified_at)return send(res,403,{ok:false,error:'Verifiera din e-post innan du laddar ner VYRA Desktop',emailVerificationRequired:true});if(desktopPremiumKravs(dls)){const dlw=await pool.query('SELECT w.id FROM workspace_members m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 ORDER BY w.created_at LIMIT 1',[dls.user_id]),dlWorkspaceId=dlw.rows[0]?.id,dlEnt=dlWorkspaceId?await Billing.entitlement(pool,dlWorkspaceId):{plan:'free'};if(dlEnt.plan!=='premium')return send(res,402,{ok:false,error:'Premium (3 dagar gratis) krävs för att ladda ner VYRA Desktop',entitlementRequired:true});}res.writeHead(302,{location:release.url,'cache-control':'no-store','content-security-policy':"default-src 'none'",'referrer-policy':'no-referrer'});return res.end()}if(p==='/api/public/status'&&req.method==='GET'){const q=await pool.query("SELECT id,title,status,impact,message,started_at,resolved_at,updated_at FROM platform_incidents WHERE resolved_at IS NULL OR resolved_at>now()-interval '7 days' ORDER BY started_at DESC LIMIT 20"),active=q.rows.filter(row=>!row.resolved_at),overall=active.some(row=>row.impact==='critical')?'major_outage':active.length?'degraded':'operational';return send(res,200,{ok:true,overall,checkedAt:new Date(),incidents:q.rows})}if(!p.startsWith('/api/'))return send(res,404,{ok:false,error:'Hittades inte'});// Everything under an OBS link. The trailing part is matched loosely on purpose: a token-scoped
 // path must be answered here — 405 for a write, 404 for a subpath that does not exist — and never
 // fall through to the session gate, where it would come back as "Inte inloggad" and read as if the
 // link were the wrong kind of thing. The method is refused before any of it is looked at: a link is
@@ -300,6 +333,19 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
+    // Samma mönster som 'goals' ovan: workspace_id kommer alltid från TOKEN:s egen rad, aldrig
+    // från query/body/header — en overlay-länk kan bara läsa sin egen arbetsytas topplista.
+    // Låtönskningar: OBS-overlayn söker på YouTube genom sin egen länk. Arbetsytan kommer från TOKEN.
+    if(rest==='musik/youtube'){if(await rateLimiter.exceeded(`musik-youtube:${access.workspace_id}`,MUSIK_RATE_LIMIT,MUSIK_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många låtönskningar just nu — vänta en stund'});try{return send(res,200,{ok:true,lat:await Musik.sokYoutube(u.searchParams.get('q'))})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
+    if(rest==='points'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTop(pool,access.workspace_id,{limit});return send(res,200,{ok:true,points:top})}
+    // Top Like / Top Coins are genuinely separate rankings, not the blended points engine: David's
+    // explicit requirement ("den ska inte blanda") is that these read gifter_totals' raw, unweighted
+    // likes/diamonds and never touch points_settings or points_ledger. Same token-scoping and limit
+    // clamp as 'points' above; readTopRaw shapes rows into the identical {workspaceId, viewerId,
+    // displayName, avatarUrl, points, level} object so the widget can stay metric-agnostic — level is
+    // always null here, there is no level concept for a raw count.
+    if(rest==='top-likes'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'likes',{limit});return send(res,200,{ok:true,points:top})}
+    if(rest==='top-coins'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTopRaw(pool,access.workspace_id,'coins',{limit});return send(res,200,{ok:true,points:top})}
     // UPPSTARTSLUCKAN. Bootstrapsvaret ar den enda konfigurationskallan klienten hamtar fran vid
     // start OCH vid varje ateranslutning — darfor bar det sessionssnapshotet ocksa, i stallet for
     // en andra rutt med en andra sanning.
@@ -401,6 +447,33 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     const d=await body(req,64*1024),out=await ingestTikTokEvent(workspaceId,d);
     return send(res,out.duplicate?200:202,{ok:true,...out});
   }
+  // STREAM DECK-MOLNVÄGEN — PLUGINETS TVÅ MASKINRUTTER. Ligger FÖRE den delade session-raden nedan,
+  // för de har ingen inloggning: pluginet är en process på streamerns dator, inte en webbläsare.
+  // Autentiseringen är parkopplingskoden respektive enhetstoken, aldrig en session eller CSRF.
+  //
+  //   1. Byt en kod mot en token. Ingen sameOrigin: en Node-fetch skickar ingen Origin, och koden
+  //      ÄR beviset. Tar en IP-baserad rate-limit så en angripare inte kan gissa koder i mängd.
+  if(p==='/api/streamdeck/pair'&&req.method==='POST'){
+    if(await rateLimiter.exceeded(`streamdeck-pair:${S.klientadress(req)||'unknown'}`,20))return send(res,429,{ok:false,error:'För många försök — vänta en stund'});
+    const d=await body(req).catch(()=>({}));
+    const par=await Streamdeck.parkoppla(d.kod,d.namn);
+    return send(res,201,{ok:true,deviceToken:par.deviceToken,workspace:par.workspaceId});
+  }
+  //   2. Ta emot ett knapptryck. Enhetstoken i Authorization: Bearer bär workspace — pluginet
+  //      skickar aldrig något workspace-id, precis som Desktop-vägen inte gör det. Publiceras som
+  //      typen `streamdeck` på bussen; live-client.js routar den och streamdeck.js utför den.
+  if(p==='/api/streamdeck/events'&&req.method==='POST'){
+    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+    const enhet=await Streamdeck.enhetAvToken(token);
+    if(!enhet)return send(res,401,{ok:false,error:'Okänd eller spärrad Stream Deck-enhet'});
+    if(await rateLimiter.exceeded(`streamdeck-event:${enhet.id}`,STREAMDECK_RATE_LIMIT))return send(res,429,{ok:false,error:'För många knapptryck'});
+    const d=await body(req).catch(()=>({}));
+    const sdKommando=String(d.sdKommando||'');
+    if(!STREAMDECK_KOMMANDON.has(sdKommando))return send(res,400,{ok:false,error:'Okänt kommando'});
+    const id=String(d.eventKey||'').slice(0,160)||`sd:${enhet.id}:${Date.now()}`;
+    const out=await eventBus.publish(enhet.workspace_id,{type:'streamdeck',id,sdKommando,sdVarde:d.sdVarde,sdVal:d.sdVal});
+    return send(res,out.duplicate?200:202,{ok:true,duplicate:out.duplicate});
+  }
   // TVASTEGSUTMANINGEN KAN INTE BARA EN DELAD CSRF-TOKEN — AV EXAKT SAMMA SKAL SOM INGEST-RUTTEN
   // OVAN, och den har rutten last ute varje skrivbordskund med 2FA tills detta skrevs.
   //
@@ -423,6 +496,45 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!sameOrigin(req))return send(res,403,{ok:false,error:'Fel ursprung'});
     const sm=await session(req);if(!sm)return send(res,401,{ok:false,error:'Inte inloggad'});
    if(!sm.mfa_enabled_at)return send(res,400,{ok:false,error:'MFA är inte aktiverat'});if(sm.mfa_verified_at)return send(res,409,{ok:false,error:'Sessionen är redan verifierad'});const d=await body(req),used=await tx(async c=>{const q=await c.query('SELECT id,mfa_secret_enc,mfa_recovery_hashes FROM users WHERE id=$1 FOR UPDATE',[sm.user_id]),user={...q.rows[0],user_id:sm.user_id},kind=await checkMfaCode(c,user,d.code);if(!kind)return null;await c.query('UPDATE sessions SET mfa_verified_at=now(),last_seen_at=now() WHERE id=$1',[sm.id]);await notifyLogin(c,sm.email,sm.id,sm.user_agent);await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'login_completed','session',$2,$3)",[sm.user_id,sm.id,{device:describeDevice(sm.user_agent).label,mfa:true}]);return kind});if(!used)return send(res,401,{ok:false,error:'Fel kod'});return send(res,200,{ok:true,recoveryCodeUsed:used==='recovery'})}
+  // TIKTOK-VERIFIERINGENS AATERVAG. Ligger FORE den delade session-raden nedan med flit, och det
+  // ar inte en genväg — det är ett mätt krav:
+  //
+  //   S.sessionCookie() sätter SameSite=Strict (security.js:11). En omdirigering fran tiktok.com
+  //   tillbaka hit ar en KORSSAJTS-navigering, och en Strict-kaka foljer inte med en sadan. Hade
+  //   rutten legat bakom sessionsgrinden hade VARJE verifiering svarat 401 — i produktion, aldrig
+  //   i ett prov som anropar rutten direkt med kakan satt.
+  //
+  // Bindningen till anvandaren gors darfor av `state`, inte av kakan: raden i
+  // tiktok_verifieringsforsok bar bade workspace och user_id, den ar ENGANGS (used_at satts i
+  // samma UPDATE som laser den) och den dor efter tio minuter. Ett state kan bara ha skapats av
+  // nagon som redan var inloggad med ratt roll i just det workspacet, sa en angripare kan inte
+  // tillverka ett state som pekar pa nagon annans workspace.
+  if(p==='/api/auth/callback/tiktok'&&req.method==='GET'){
+    const till=(lage,extra='')=>send(res,302,{ok:lage==='klar'},{location:`/studio.html?tiktok=${lage}${extra}`});
+    // TikTok skickar hit aven nar anvandaren tryckte Avbryt. Det ar inte ett fel att hantera som fel.
+    if(u.searchParams.get('error'))return till('avbruten');
+    const kod=u.searchParams.get('code'),state=u.searchParams.get('state');
+    if(!kod||!state)return till('fel');
+    // Engangsanspraket och lasningen ar EN sats: tva samtidiga callbacks for samma state far
+    // aldrig bada gora ett varv. Utgangen filtrerar aven bort ett forfallet varv.
+    const varv=await pool.query('UPDATE tiktok_verifieringsforsok SET used_at=now() WHERE state=$1 AND used_at IS NULL AND expires_at>now() RETURNING workspace_id,user_id,kodverifierare_enc',[state]);
+    if(!varv.rowCount)return till('utgangen');
+    try{
+      const profil=await TikTokVerifiering.verifiera({clientKey:TIKTOK_CLIENT_KEY,clientSecret:TIKTOK_CLIENT_SECRET,
+        redirectUri:TIKTOK_REDIRECT,kod,kodverifierare:Vault.open(varv.rows[0].kodverifierare_enc)});
+      const limit=Number(process.env.MAX_BRIDGES||5);
+      const beslut=await tx(c=>knytVerifieratHandtag(c,{workspaceId:varv.rows[0].workspace_id,profil,limit}));
+      if(beslut.refused)return till(beslut.refused==='last'?'upptaget':beslut.refused==='duplicate'?'dubblett':'fullt');
+      await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'tiktok_verifierad','workspace',$1,$3)",
+        [varv.rows[0].workspace_id,varv.rows[0].user_id,{handtag:profil.handtag}]);
+      return till('klar','&konto='+encodeURIComponent(profil.handtag));
+    }catch(error){
+      // TikToks egen text loggas; koden och hemligheten gor det aldrig — verifiera() ser till att
+      // de inte foljer med ut i felmeddelandet.
+      console.error(JSON.stringify({level:'error',event:'tiktok_verifiering_misslyckades',message:error.message,at:new Date().toISOString()}));
+      return till('fel');
+    }
+  }
   const s=await session(req,{csrf:req.method!=='GET'});if(!s)return send(res,401,{ok:false,error:'Inte inloggad'});
   if(s.mfa_enabled_at&&!s.mfa_verified_at)return send(res,403,{ok:false,error:'Bekräfta tvåstegsverifieringen först',mfaRequired:true});
   // EGET TAK, NYCKLAT PÅ ANVÄNDAREN. Rutten skickar mejl, så den måste begränsas — men INTE i den
@@ -455,7 +567,20 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   if(p==='/api/support/tickets'&&req.method==='POST'){const d=Support.ticket(await body(req)),workspaceId=S.safeText((await body(req)).workspaceId,40)||null;if(workspaceId&&!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Workspace-behörighet saknas'});const q=await pool.query('INSERT INTO support_tickets(user_id,workspace_id,category,subject,message) VALUES($1,$2,$3,$4,$5) RETURNING id,category,subject,status,priority,created_at,updated_at',[s.user_id,workspaceId,d.category,d.subject,d.message]);return send(res,201,{ok:true,ticket:q.rows[0]})}
   const supportRoute=p.match(/^\/api\/support\/tickets\/([0-9a-f-]+)$/i);if(supportRoute&&req.method==='GET'){const q=await pool.query('SELECT * FROM support_tickets WHERE id=$1 AND user_id=$2',[supportRoute[1],s.user_id]);if(!q.rows[0])return send(res,404,{ok:false,error:'Supportärendet saknas'});const replies=await pool.query('SELECT id,message,is_staff,created_at FROM support_replies WHERE ticket_id=$1 ORDER BY created_at',[supportRoute[1]]);return send(res,200,{ok:true,ticket:q.rows[0],replies:replies.rows})}if(supportRoute&&req.method==='POST'){const d=await body(req),message=Support.text(d.message,5000);if(message.length<2)return send(res,400,{ok:false,error:'Svaret är för kort'});const q=await pool.query('SELECT id FROM support_tickets WHERE id=$1 AND user_id=$2',[supportRoute[1],s.user_id]);if(!q.rowCount)return send(res,404,{ok:false,error:'Supportärendet saknas'});await tx(async c=>{await c.query('INSERT INTO support_replies(ticket_id,author_user_id,message) VALUES($1,$2,$3)',[supportRoute[1],s.user_id,message]);await c.query("UPDATE support_tickets SET status='open',updated_at=now() WHERE id=$1",[supportRoute[1]])});return send(res,201,{ok:true})}
   if(p==='/api/client-errors'&&req.method==='POST'){const report=Support.errorReport(await body(req));if(!report)return send(res,202,{ok:true,ignored:true});await pool.query('INSERT INTO client_error_reports(user_id,fingerprint,message,source,stack,context) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(user_id,fingerprint) DO UPDATE SET occurrences=client_error_reports.occurrences+1,last_seen_at=now()',[s.user_id,report.fingerprint,report.message,report.source,report.stack,report.context]);return send(res,202,{ok:true})}
-  if(p.startsWith('/api/admin/')){if(!s.is_platform_admin)return send(res,403,{ok:false,error:'Plattformsadministratör krävs'});if(p==='/api/admin/support/tickets'&&req.method==='GET'){const q=await pool.query("SELECT t.*,u.email FROM support_tickets t LEFT JOIN users u ON u.id=t.user_id WHERE ($1='' OR t.status=$1) ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,t.created_at LIMIT 250",[S.safeText(u.searchParams.get('status'),20)]);return send(res,200,{ok:true,tickets:q.rows})}const adminTicket=p.match(/^\/api\/admin\/support\/tickets\/([0-9a-f-]+)$/i);if(adminTicket&&req.method==='PUT'){const d=await body(req),status=['open','in_progress','waiting','resolved','closed'].includes(d.status)?d.status:null,priority=['low','normal','high','urgent'].includes(d.priority)?d.priority:null;if(!status&&!priority)return send(res,400,{ok:false,error:'Ogiltig status eller prioritet'});const q=await pool.query('UPDATE support_tickets SET status=COALESCE($1,status),priority=COALESCE($2,priority),updated_at=now() WHERE id=$3 RETURNING *',[status,priority,adminTicket[1]]);return q.rows[0]?send(res,200,{ok:true,ticket:q.rows[0]}):send(res,404,{ok:false,error:'Ärendet saknas'})}const staffReply=p.match(/^\/api\/admin\/support\/tickets\/([0-9a-f-]+)\/replies$/i);if(staffReply&&req.method==='POST'){const message=Support.text((await body(req)).message,5000);if(message.length<2)return send(res,400,{ok:false,error:'Svaret är för kort'});const q=await pool.query('SELECT t.id,u.email FROM support_tickets t LEFT JOIN users u ON u.id=t.user_id WHERE t.id=$1',[staffReply[1]]);if(!q.rowCount)return send(res,404,{ok:false,error:'Ärendet saknas'});await tx(async c=>{const reply=await c.query('INSERT INTO support_replies(ticket_id,author_user_id,message,is_staff) VALUES($1,$2,$3,true) RETURNING id',[staffReply[1],s.user_id,message]);await c.query("UPDATE support_tickets SET status='waiting',updated_at=now() WHERE id=$1",[staffReply[1]]);if(q.rows[0].email)await c.query("INSERT INTO notification_outbox(recipient,template,payload,dedupe_key) VALUES($1,'support_reply',$2,$3)",[q.rows[0].email,{ticketId:staffReply[1]},`support_reply:${reply.rows[0].id}`])});return send(res,201,{ok:true})}if(p==='/api/admin/incidents'&&req.method==='POST'){const d=await body(req),title=Support.text(d.title,160),message=Support.text(d.message,3000),status=['investigating','identified','monitoring','resolved'].includes(d.status)?d.status:'investigating',impact=['minor','major','critical'].includes(d.impact)?d.impact:'minor';if(title.length<4||message.length<10)return send(res,400,{ok:false,error:'Incidenten behöver titel och beskrivning'});const q=await pool.query('INSERT INTO platform_incidents(title,status,impact,message,created_by,resolved_at) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[title,status,impact,message,s.user_id,status==='resolved'?new Date():null]);return send(res,201,{ok:true,incident:q.rows[0]})}const incident=p.match(/^\/api\/admin\/incidents\/([0-9a-f-]+)$/i);if(incident&&req.method==='PUT'){const d=await body(req),status=['investigating','identified','monitoring','resolved'].includes(d.status)?d.status:null,message=Support.text(d.message,3000)||null;if(!status&&!message)return send(res,400,{ok:false,error:'Ingen giltig ändring'});const q=await pool.query("UPDATE platform_incidents SET status=COALESCE($1,status),message=COALESCE($2,message),resolved_at=CASE WHEN $1='resolved' THEN now() WHEN $1 IS NOT NULL THEN NULL ELSE resolved_at END,updated_at=now() WHERE id=$3 RETURNING *",[status,message,incident[1]]);return q.rows[0]?send(res,200,{ok:true,incident:q.rows[0]}):send(res,404,{ok:false,error:'Incidenten saknas'})}// GAVOKATALOGEN. Katalogen postas hit fran en INLOGGAD TikTok-flik — datan gar webblasare -> server
+  if(p.startsWith('/api/admin/')){if(!s.is_platform_admin)return send(res,403,{ok:false,error:'Plattformsadministratör krävs'});if(p==='/api/admin/support/tickets'&&req.method==='GET'){const q=await pool.query("SELECT t.*,u.email FROM support_tickets t LEFT JOIN users u ON u.id=t.user_id WHERE ($1='' OR t.status=$1) ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,t.created_at LIMIT 250",[S.safeText(u.searchParams.get('status'),20)]);return send(res,200,{ok:true,tickets:q.rows})}const adminTicket=p.match(/^\/api\/admin\/support\/tickets\/([0-9a-f-]+)$/i);if(adminTicket&&req.method==='PUT'){const d=await body(req),status=['open','in_progress','waiting','resolved','closed'].includes(d.status)?d.status:null,priority=['low','normal','high','urgent'].includes(d.priority)?d.priority:null;if(!status&&!priority)return send(res,400,{ok:false,error:'Ogiltig status eller prioritet'});const q=await pool.query('UPDATE support_tickets SET status=COALESCE($1,status),priority=COALESCE($2,priority),updated_at=now() WHERE id=$3 RETURNING *',[status,priority,adminTicket[1]]);return q.rows[0]?send(res,200,{ok:true,ticket:q.rows[0]}):send(res,404,{ok:false,error:'Ärendet saknas'})}const staffReply=p.match(/^\/api\/admin\/support\/tickets\/([0-9a-f-]+)\/replies$/i);if(staffReply&&req.method==='POST'){const message=Support.text((await body(req)).message,5000);if(message.length<2)return send(res,400,{ok:false,error:'Svaret är för kort'});const q=await pool.query('SELECT t.id,u.email FROM support_tickets t LEFT JOIN users u ON u.id=t.user_id WHERE t.id=$1',[staffReply[1]]);if(!q.rowCount)return send(res,404,{ok:false,error:'Ärendet saknas'});await tx(async c=>{const reply=await c.query('INSERT INTO support_replies(ticket_id,author_user_id,message,is_staff) VALUES($1,$2,$3,true) RETURNING id',[staffReply[1],s.user_id,message]);await c.query("UPDATE support_tickets SET status='waiting',updated_at=now() WHERE id=$1",[staffReply[1]]);if(q.rows[0].email)await c.query("INSERT INTO notification_outbox(recipient,template,payload,dedupe_key) VALUES($1,'support_reply',$2,$3)",[q.rows[0].email,{ticketId:staffReply[1]},`support_reply:${reply.rows[0].id}`])});return send(res,201,{ok:true})}if(p==='/api/admin/incidents'&&req.method==='POST'){const d=await body(req),title=Support.text(d.title,160),message=Support.text(d.message,3000),status=['investigating','identified','monitoring','resolved'].includes(d.status)?d.status:'investigating',impact=['minor','major','critical'].includes(d.impact)?d.impact:'minor';if(title.length<4||message.length<10)return send(res,400,{ok:false,error:'Incidenten behöver titel och beskrivning'});const q=await pool.query('INSERT INTO platform_incidents(title,status,impact,message,created_by,resolved_at) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[title,status,impact,message,s.user_id,status==='resolved'?new Date():null]);return send(res,201,{ok:true,incident:q.rows[0]})}const incident=p.match(/^\/api\/admin\/incidents\/([0-9a-f-]+)$/i);if(incident&&req.method==='PUT'){const d=await body(req),status=['investigating','identified','monitoring','resolved'].includes(d.status)?d.status:null,message=Support.text(d.message,3000)||null;if(!status&&!message)return send(res,400,{ok:false,error:'Ingen giltig ändring'});const q=await pool.query("UPDATE platform_incidents SET status=COALESCE($1,status),message=COALESCE($2,message),resolved_at=CASE WHEN $1='resolved' THEN now() WHEN $1 IS NOT NULL THEN NULL ELSE resolved_at END,updated_at=now() WHERE id=$3 RETURNING *",[status,message,incident[1]]);return q.rows[0]?send(res,200,{ok:true,incident:q.rows[0]}):send(res,404,{ok:false,error:'Incidenten saknas'})}
+  // VERIFIERADE TIKTOK-KOPPLINGAR. Frågan den svarar på är EN: bär godkännandet för andra konton
+  // än sandboxens testanvändare? Sandbox-nycklarna slapper in exakt ett konto, sa en lista dar
+  // BARA det kontot star ar inte ett bevis — och `VYRA_TIKTOK_VERIFIERING_KRAVS=1` far inte sattas
+  // forran ett andra handtag dykt upp har. Satts den innan lases varenda kund ute samtidigt.
+  // Se docs/tiktok-verifiering.md.
+  //
+  // Antalet raknas i en EGEN fraga. Att lasa rowCount ur listan hade gett 200 sa fort det fanns
+  // fler an sa, och ett tak som ser ut som en summa ar varre an ingen summa alls.
+  if(p==='/api/admin/tiktok-verifieringar'&&req.method==='GET'){
+    const lista=await pool.query('SELECT tiktok_username,visningsnamn,verifierad_at,active FROM tiktok_connections WHERE verifierad_at IS NOT NULL ORDER BY verifierad_at DESC LIMIT 200');
+    const summa=await pool.query('SELECT count(*)::int n FROM tiktok_connections WHERE verifierad_at IS NOT NULL');
+    return send(res,200,{ok:true,verifieringar:lista.rows,antal:summa.rows[0].n})}
+  // GAVOKATALOGEN. Katalogen postas hit fran en INLOGGAD TikTok-flik — datan gar webblasare -> server
   // och passerar aldrig nagon logg eller nagon transkription. Kroppen far vara stor: 783 gavor med
   // namn och bild ar mer an standardgransen pa 1 MB.
   // REGIONEN AR OBLIGATORISK I KROPPEN. webcast/gift/list/ bar inget regionfalt — uppmatt
@@ -538,6 +663,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,200,{ok:true,...ut},{'cache-control':'no-store'});
   }
   const ttsVoicesRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/voices$/i);if(ttsVoicesRoute&&req.method==='GET'){const workspaceId=ttsVoicesRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});try{return send(res,200,{ok:true,voices:await TTS.listVoices(u.searchParams.get('languageCode')||'')})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
+  const musikRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/musik\/youtube$/i);if(musikRoute&&req.method==='GET'){const workspaceId=musikRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`musik-youtube:${workspaceId}`,MUSIK_RATE_LIMIT,MUSIK_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många låtönskningar just nu — vänta en stund'});try{return send(res,200,{ok:true,lat:await Musik.sokYoutube(u.searchParams.get('q'))})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   const ttsSynthRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/synthesize$/i);if(ttsSynthRoute&&req.method==='POST'){const workspaceId=ttsSynthRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`tts-synth:${workspaceId}`,TTS_SYNTH_RATE_LIMIT,TTS_SYNTH_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många TTS-förfrågningar just nu — vänta en stund'});const d=await body(req);try{return send(res,200,{ok:true,audioContent:await TTS.synthesize({text:d.text,languageCode:d.languageCode,voiceName:d.voiceName,speed:d.speed,pitch:d.pitch})})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   // Deliberately eventBus.publish() and NOT the ingest path: a test event is for looking at, and it
   // must never touch a persistent goal. Someone trying out widget designs would otherwise run their
@@ -560,16 +686,73 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,201,{ok:true,...ut});
   }
   const tokenRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays\/([0-9a-f-]+)\/access-tokens(?:\/([0-9a-f-]+))?$/i);if(tokenRoute){const[,workspaceId,overlayId,tokenId]=tokenRoute;if(!await membership(s.user_id,workspaceId,['owner','admin']))return send(res,403,{ok:false,error:'Endast ägare och administratörer kan hantera OBS-länkar'});const exists=await pool.query('SELECT 1 FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);if(!exists.rowCount)return send(res,404,{ok:false,error:'Overlay saknas'});if(req.method==='GET'&&!tokenId){const q=await pool.query('SELECT id,label,created_at,expires_at,last_used_at,revoked_at FROM overlay_access_tokens WHERE overlay_id=$1 ORDER BY created_at DESC',[overlayId]);return send(res,200,{ok:true,tokens:q.rows})}if(req.method==='POST'&&!tokenId){const d=await body(req),raw=S.token(32),label=S.safeText(d.label||'OBS',80)||'OBS',days=d.expiresInDays==null?null:Math.max(1,Math.min(365,Number(d.expiresInDays)||30)),expires=days?new Date(Date.now()+days*86400000):null,q=await pool.query('INSERT INTO overlay_access_tokens(overlay_id,token_hash,label,created_by,expires_at) VALUES($1,$2,$3,$4,$5) RETURNING id,label,created_at,expires_at',[overlayId,S.digest(raw),label,s.user_id,expires]);await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_created','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId:q.rows[0].id,label}]);return send(res,201,{ok:true,token:q.rows[0],accessToken:raw,overlayUrl:`${ORIGIN}/overlay.html?access=${encodeURIComponent(raw)}`})}if(req.method==='DELETE'&&tokenId){const q=await pool.query('UPDATE overlay_access_tokens SET revoked_at=now() WHERE id=$1 AND overlay_id=$2 AND revoked_at IS NULL RETURNING id',[tokenId,overlayId]);if(!q.rowCount)return send(res,404,{ok:false,error:'Länken saknas eller är redan spärrad'});await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_revoked','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId}]);return send(res,200,{ok:true})}return send(res,405,{ok:false,error:'Metoden stöds inte'})}
+  // STREAM DECK-MOLNVÄGEN, streamerns egen sida. Generera en parkopplingskod, lista de enheter som
+  // parkopplat sig, och spärra en enhet. Editor räcker: att koppla sin egen Stream Deck är att styra
+  // sin studio, inte att administrera arbetsytan. Koden visas EN gång; den lagras bara som hash.
+  const sdRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/streamdeck\/(pairings|devices)(?:\/([0-9a-f-]+))?$/i);
+  if(sdRoute){
+    const[,workspaceId,gren,deviceId]=sdRoute;
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(gren==='pairings'&&req.method==='POST'){const d=await body(req).catch(()=>({})),ut=await Streamdeck.skapaKod(workspaceId,s.user_id);return send(res,201,{ok:true,kod:ut.kod,expiresAt:ut.expiresAt})}
+    if(gren==='devices'&&req.method==='GET'&&!deviceId)return send(res,200,{ok:true,enheter:await Streamdeck.listaEnheter(workspaceId)});
+    if(gren==='devices'&&req.method==='DELETE'&&deviceId){const bort=await Streamdeck.taBort(deviceId,workspaceId);return bort?send(res,200,{ok:true}):send(res,404,{ok:false,error:'Enheten saknas eller är redan spärrad'})}
+    return send(res,405,{ok:false,error:'Metoden stöds inte'});
+  }
   // TikTok-anslutning per workspace. Skriver raden som tiktok-bridge/connection-manager.js pollar
   // (SELECT ... WHERE active = true) och startar/stoppar en bridge-process for. Det ar den enda
   // vagen in i tiktok_connections — tabellen fanns men ingenting fyllde den fore detta.
+  // STARTAR ETT VERIFIERINGSVARV. Svarar med TikToks egen URL — klienten skickar dit webblasaren.
+  // Rollkravet ar samma som for att SKRIVA en koppling: att verifiera ar att andra vilken sandning
+  // workspacet laser, inte att titta pa den.
+  const tikVerif=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-verifiering$/i);
+  if(tikVerif){const workspaceId=tikVerif[1];
+    if(req.method!=='POST')return send(res,405,{ok:false,error:'Metoden stods inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behorighet saknas'});
+    if(!TIKTOK_CLIENT_KEY||!TIKTOK_CLIENT_SECRET)return send(res,503,{ok:false,error:'TikTok-verifiering ar inte konfigurerad pa servern'});
+    const {verifierare,utmaning}=TikTokVerifiering.pkce(),state=S.token(32);
+    // Varvet maste overleva mellan tva HTTP-anrop som kan traffa OLIKA Railway-instanser, sa det
+    // bor i databasen och inte i minnet. Verifieraren forseglas: lacker tabellen ska den inte
+    // racka for att slutfora nagon annans varv.
+    await pool.query('INSERT INTO tiktok_verifieringsforsok(state,workspace_id,user_id,kodverifierare_enc,expires_at) VALUES($1,$2,$3,$4,now()+make_interval(secs=>$5))',
+      [state,workspaceId,s.user_id,Vault.seal(verifierare),TIKTOK_VARV_SEKUNDER]);
+    // Stadar bort gamla varv i samma andetag — en egen kron-rutt for tio minuter gamla rader vore
+    // en till sak som kan sluta kora utan att nagon marker det.
+    await pool.query('DELETE FROM tiktok_verifieringsforsok WHERE expires_at<now()-interval \'1 day\'').catch(()=>{});
+    return send(res,201,{ok:true,url:TikTokVerifiering.byggAuktoriseringsUrl({clientKey:TIKTOK_CLIENT_KEY,redirectUri:TIKTOK_REDIRECT,state,kodutmaning:utmaning})});}
+  // ANSLUT NU. Sandaren vill inte vanta ut bryggans egen ateranslutningscykel (~30 s i snitt,
+  // 72 s som mest — uppmatt 2026-09-18). Servern och bryggmanagern ar tva olika Railway-tjanster,
+  // sa vagen dit gar via databasen: vi satter en tidsstampel, managern ser den pa sin nasta tick.
+  //
+  // STRYPT MED FLIT. Varje omstart ar en ny anslutning mot TikTok, och TikTok stryper den som
+  // ansluter for ofta — klienten kanner redan igen ett rate limit-skal i studio-live.js. En knapp
+  // som gar att halla nere hade darfor kunnat stanga ute sandaren fran sin egen sandning.
+  // Fonstret ligger i SQL-satsen, inte i en if-sats: tva samtidiga anrop maste tavla om samma rad.
+  const tikNu=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-connection\/anslut-nu$/i);
+  if(tikNu){const workspaceId=tikNu[1];
+    if(req.method!=='POST')return send(res,405,{ok:false,error:'Metoden stods inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behorighet saknas'});
+    const q=await pool.query(
+      "UPDATE tiktok_connections SET omstart_begard_at=now() WHERE workspace_id=$1 AND active=true "+
+      "AND (omstart_begard_at IS NULL OR omstart_begard_at < now() - interval '20 seconds') RETURNING omstart_begard_at",[workspaceId]);
+    if(!q.rowCount){
+      const finns=await pool.query('SELECT active FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
+      if(!finns.rowCount||!finns.rows[0].active)return send(res,409,{ok:false,error:'Inget TikTok-konto ar anslutet'});
+      return send(res,429,{ok:false,error:'Du bad precis om en anslutning. Vanta nagon sekund innan du forsoker igen.'});
+    }
+    return send(res,202,{ok:true,begard:q.rows[0].omstart_begard_at});}
   const tikMatch=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tiktok-connection$/i);
   if(tikMatch){const workspaceId=tikMatch[1];
     if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))
       return send(res,403,{ok:false,error:'Behorighet saknas'});
-    if(req.method==='GET'){const q=await pool.query('SELECT tiktok_username,active,updated_at FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
-      return send(res,200,{ok:true,connection:q.rows[0]||null})}
+    if(req.method==='GET'){const q=await pool.query('SELECT tiktok_username,active,updated_at,verifierad_at,visningsnamn,avatar_url FROM tiktok_connections WHERE workspace_id=$1',[workspaceId]);
+      // verifieringKravs foljer med sa klienten kan dolja fritextfaltet utan att gissa serverns lage.
+      return send(res,200,{ok:true,connection:q.rows[0]||null,verifieringKravs:TIKTOK_VERIFIERING_KRAVS})}
     if(req.method==='PUT'){const d=await body(req,4096),username=S.normalizeTikTokUsername(d.username);
+      // FLAGGAN. Nar den ar satt finns bara EN vag in i tiktok_connections: en verifierad
+      // TikTok-inloggning. Spärren sitter HÄR och inte bara i UI:t — ett dolt formularfalt ar
+      // ingen spärr, och rutten ar anropbar utan var egen klient.
+      if(TIKTOK_VERIFIERING_KRAVS)return send(res,403,{ok:false,verifieringKravs:true,
+        error:'Anvandarnamnet maste verifieras med TikTok. Tryck "Verifiera med TikTok" och logga in med kontot du gar live med.'});
       if(!username)return send(res,400,{ok:false,error:'Ogiltigt TikTok-anvandarnamn'});
       // Capacity is refused HERE, not silently in the fleet manager. The manager caps concurrent
       // bridges at MAX_BRIDGES, but it only ever sees a row that was already written — so without
@@ -633,6 +816,23 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
       if(out.missing)return overlayMissing();if(out.unknownWidget)return widgetMissing();
       return send(res,200,{ok:true,goal:out.goal})}
     return send(res,405,{ok:false,error:'Metoden stöds inte'})}
+  // Poängmotorns läsyta — minimal med flit (se points-runtime.js): två GET-rutter så en widget kan
+  // hämta det den behöver (nivå, poäng, poäng-till-nästa-nivå för EN tittare, eller topplistan för
+  // hela arbetsytan). Ingen SSE-ram här ännu — goal-sse.js:s ramkontrakt är overlay-scopat
+  // (FIELDS ovan i den filen kräver overlayId/widgetId), och poäng hör till arbetsytan, inte en
+  // enskild widget på en enskild overlay. Samma roller som mål-GET: läsning kräver bara medlemskap.
+  const pointsRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/points(?:\/([^/]+))?$/i);
+  if(pointsRoute){const[,workspaceId,rawViewerId]=pointsRoute;
+    if(req.method!=='GET')return send(res,405,{ok:false,error:'Metoden stöds inte'});
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(rawViewerId===undefined){
+      const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||10));
+      const top=await PointsRuntime.readTop(pool,workspaceId,{limit});
+      return send(res,200,{ok:true,points:top})}
+    let viewerId=null;
+    try{viewerId=decodeURIComponent(rawViewerId)}catch{return send(res,400,{ok:false,error:'Ogiltigt tittar-id'})}
+    const ledger=await PointsRuntime.readLedger(pool,workspaceId,viewerId);
+    return send(res,200,{ok:true,points:ledger})}
   const match=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays(?:\/([0-9a-f-]+))?$/i);if(match){const[,workspaceId,overlayId]=match;if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(req.method==='GET'&&!overlayId){const q=await pool.query('SELECT id,name,version,updated_at FROM overlays WHERE workspace_id=$1 ORDER BY updated_at DESC',[workspaceId]);return send(res,200,{ok:true,overlays:q.rows})}if(req.method==='GET'&&overlayId){const q=await pool.query('SELECT * FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);return q.rows[0]?send(res,200,{ok:true,overlay:q.rows[0]}):send(res,404,{ok:false,error:'Overlay saknas'})}if(req.method==='POST'&&!overlayId){const d=await body(req,5*1024*1024),name=S.safeText(d.name,120),state=d.state;if(!name||!S.validOverlayState(state))return send(res,400,{ok:false,error:'Ogiltig overlay'});const q=await pool.query('INSERT INTO overlays(workspace_id,name,state) VALUES($1,$2,$3) RETURNING *',[workspaceId,name,state]);return send(res,201,{ok:true,overlay:q.rows[0]})}if(req.method==='PUT'&&overlayId){const d=await body(req,5*1024*1024),version=Number(d.version);if(!Number.isInteger(version)||!S.validOverlayState(d.state))return send(res,400,{ok:false,error:'Ogiltig overlay eller version'});// Spara + målsynk i EN transaktion (2026-08-03): ett lyckat Layout-save måste betyda att målet
 // räknar direkt. Delas de upp finns ett fönster där widgeten står på skärmen utan att räkna, och
 // de eventen är förlorade — inget försöker om ett save som redan svarat 200. Läsningen, wipe-
@@ -645,9 +845,12 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
 // så jokero060s live-layout raderades i natt. Blockeras med 409 så klienten visar konfliktvalet.
 // Guarden ligger nu inne i transaktionen, så ett block lämnar varken state, version eller
 // runtime-rader efter sig.
-const out=await GoalRuntime.putOverlayWithGoals(pool,{overlayId,workspaceId,name:S.safeText(d.name,120)||null,state:d.state,expectedVersion:version,allowEmptyWidgets:d.allowEmptyWidgets===true});
+const out=await GoalRuntime.putOverlayWithGoals(pool,{overlayId,workspaceId,name:S.safeText(d.name,120)||null,state:d.state,expectedVersion:version,allowEmptyWidgets:d.allowEmptyWidgets===true,allowWidgetLoss:d.allowWidgetLoss===true});
 if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});
 if(out.emptyBlocked)return send(res,409,{ok:false,error:'Layouten online har widgets men den här enheten försökte spara en tom layout — välj version i synkdialogen',emptyBlocked:true});
+// KRYMPVAKTEN. Samma 409 som wipe-guarden, men for en DELVIS forlust: klienten skickade farre
+// widgets an molnet har. Antalen foljer med sa klienten kan visa vad skillnaden bestar i.
+if(out.shrinkBlocked)return send(res,409,{ok:false,error:`Layouten online har ${out.hade} widgets men den här enheten försökte spara ${out.inkommande} — välj version i synkdialogen`,shrinkBlocked:true,hade:out.hade,inkommande:out.inkommande});
 if(out.conflict)return send(res,409,{ok:false,error:'Overlayn har ändrats i en annan session'});
 // KONFIGURATIONEN HAR ANDRATS — sag det till de OBS-kallor som star och tittar pa just den har
 // overlayn, sa slipper anvandaren uppdatera kallan for hand. Bara ett tecken gar ut

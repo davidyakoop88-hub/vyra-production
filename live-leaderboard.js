@@ -15,6 +15,60 @@
 
   const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
 
+  // SANDNINGENS RAKNARE FAR INTE NOLLSTALLAS AV EN SIDLADDNING.
+  //
+  // `totals` ar "Denna stream" och lag i en vanlig variabel: en omladdning mitt i sandningen (F5 i
+  // studion, "Refresh" pa OBS-kallan, ett byte av overlay-lank) tomde den. Det som kom tillbaka var
+  // bara serverns rullande buffert via /api/events?after=0 — som mest 250 handelser — sa en
+  // sandning som pagatt en timme borjade om fran nastan noll framfor publiken. Uppmatt i
+  // livetestet 2026-09-21: Top Likes stod pa fyra namn efter en omladdning, mot tjugoatta fore.
+  //
+  // Regeln ar densamma som live:start-lyssnaren langst ner redan bar: listan nollstalls nar
+  // SANDNINGEN borjar om, inte nar sidan gor det.
+  //
+  // SESSIONSTORAGE, inte localStorage, och valet ar hela sakerheten i den har ogonblicksbilden:
+  // event-dedupe.js lagger sin grind i exakt samma lagring och darmed i exakt samma livslangd.
+  // Overlever grinden en omladdning gor ogonblicksbilden det ocksa, och backfyllnaden dedupas bort
+  // — raknaren blir inte dubblerad. Rivs kontexten (OBS forstor kallan vid scenbyte med "Shutdown
+  // source when not visible") forsvinner BADA, och bufferten raknas en gang i en tom raknare,
+  // precis som i dag. En delad localStorage hade gett ogonblicksbild PLUS oderdupad backfyllnad,
+  // alltsa dubbelraknade siffror mitt i en sandning — varre an det som lagas har.
+  //
+  // Nyckeln bar sessionId: forra sandningens ogonblicksbild hor inte hemma i den har, och utan en
+  // pagaende sandning atertas ingenting alls.
+  const STREAM_KEY = 'vyra-leaderboard-stream-v1';
+  let streamDirty = false;
+
+  function aktivSession() {
+    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+  }
+  function aterstallStream() {
+    const session = aktivSession();
+    if (!session) return;
+    try {
+      const sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
+      if (!sparad || sparad.sessionId !== session || !sparad.totals) return;
+      Object.entries(sparad.totals).forEach(([username, t]) => {
+        if (!t || typeof t !== 'object') return;
+        totals[username] = {
+          username, name: t.name || username, profileImage: t.profileImage || '',
+          likes: Number(t.likes) || 0, coins: Number(t.coins) || 0,
+          lastLikeAt: Number(t.lastLikeAt) || 0, present: t.present !== false
+        };
+      });
+    } catch (e) {}
+  }
+  function saveStreamIfDirty() {
+    if (!streamDirty) return;
+    streamDirty = false;
+    const session = aktivSession();
+    try {
+      if (!session) window.sessionStorage.removeItem(STREAM_KEY);
+      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals }));
+    } catch (e) {}
+  }
+  aterstallStream();
+
   // Day-bucketed persistence so a widget's "Period" (Today/Week/Month/Year/Alltid) means something —
   // `totals` above is session-only (resets on reload), which is exactly "Denna stream" and nothing
   // more. dailyTotals survives reloads via localStorage, keyed by calendar day (viewer's local time),
@@ -33,8 +87,12 @@
     if (keys.length > MAX_DAYS_KEPT) keys.slice(0, keys.length - MAX_DAYS_KEPT).forEach(k => delete dailyTotals[k]);
     try { localStorage.setItem(DAILY_KEY, JSON.stringify(dailyTotals)); dailyDirty = false; } catch {}
   }
-  setInterval(saveDailyIfDirty, 5000);
-  addEventListener('beforeunload', saveDailyIfDirty);
+  function saveIfDirty() { saveDailyIfDirty(); saveStreamIfDirty(); }
+  setInterval(saveIfDirty, 5000);
+  addEventListener('beforeunload', saveIfDirty);
+  // `pagehide` ocksa: i OBS och pa mobil ar `beforeunload` inte garanterad att fyra, och en
+  // ogonblicksbild som aldrig skrivs ner ar samma bugg som ingen ogonblicksbild alls.
+  addEventListener('pagehide', saveIfDirty);
 
   function recordDaily(username, name, profileImage, likeCount, coinCount) {
     const day = todayKey();
@@ -79,6 +137,7 @@
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
     const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, coins: 0, lastLikeAt: 0, present: true });
+    streamDirty = true;   // ogonblicksbilden skrivs ner av tickern nedan, inte per handelse
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;
@@ -216,6 +275,32 @@
     if (changed && typeof save === 'function') save();
   }
 
+  // SKRIV TALET UTAN ATT RIVA IKONEN. Top Coins v2 (topcoins-v2.js) ritar myntet som ett stylat
+  // <i> forst i <em>: `<em><i>V</i>44 999 COINS</em>`. textContent byter ut ALLA barn, sa det
+  // forsta livevardet gjorde myntet till ett vanligt "V" i lopande text — och ikonen som lastes ur
+  // textContent.trim().split(' ')[0] blev "V44", inte "V". Uppmatt 2026-09-20 (PR #487).
+  //
+  // Finns ett <i> forst i <em> star det kvar och talet skrivs i textnoden EFTER det. Rader utan
+  // <i> (Top Like: ikonen ar text, ♥) tar exakt den gamla vagen: ikonen ar forsta ordet i texten
+  // och hela strangen skrivs om. `baraOmAndrat` ar nollningsgrenens regel (se `satt` dar) och
+  // galler ikonvagen i BADA grenarna — en identisk skrivning ar anda en DOM-mutation.
+  //
+  // firstElementChild, inte querySelector: ikonen ar per design det forsta barnet, och egenskapen
+  // saknas helt i den handbyggda DOM:en i tests/overlay-live-leaderboards.test.js, som da tar den
+  // gamla vagen utan att nagot kastar.
+  function skrivTal(em, tal, baraOmAndrat) {
+    const ikon = em.firstElementChild;
+    if (!ikon || ikon.tagName !== 'I') {
+      const text = (em.textContent.trim().split(' ')[0] || '♥') + ' ' + tal;
+      if (!baraOmAndrat || em.textContent !== text) em.textContent = text;
+      return;
+    }
+    const text = ' ' + tal;
+    const sista = em.lastChild;
+    if (sista && sista.nodeType === 3) { if (sista.nodeValue !== text) sista.nodeValue = text; }
+    else em.append(text);
+  }
+
   function updateLiveLeaderboards() {
     if (typeof state === 'undefined' || !state?.widgets) return;
     document.querySelectorAll('.vyra-toplike[data-id]').forEach(el => {
@@ -263,7 +348,7 @@
           const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
           satt(strong, '');
           satt(small, '');
-          if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; satt(em, icon + ' 0') }
+          if (em) skrivTal(em, '0', true);
         });
         return;
       }
@@ -274,7 +359,7 @@
         const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
         if (strong) strong.textContent = person.name;
         if (small) small.textContent = '@' + person.name.toLowerCase().replace(/\s+/g, '');
-        if (em) { const icon = em.textContent.trim().split(' ')[0] || '♥'; const displayValue = person[metric]; em.textContent = icon + ' ' + formatNum(displayValue); }
+        if (em) skrivTal(em, formatNum(person[metric]), false);
         const img = row.querySelector('img:not(.pro-frame-art)');
         if (img && person.profileImage) img.src = VyraSafe.src(person.profileImage);
       });
@@ -316,6 +401,10 @@
     try {
       saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
       for (const key of Object.keys(totals)) delete totals[key];
+      // Ogonblicksbilden skrivs om DIREKT, inte vid nasta tick: ett OBS som river kallan i
+      // samma sekund som sandningen borjar skulle annars hitta forra sandningens siffror.
+      streamDirty = true;
+      saveStreamIfDirty();
       updateLiveLeaderboards();
     } catch (e) {}
   });

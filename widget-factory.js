@@ -15,6 +15,22 @@
 (function (root) {
   'use strict';
 
+  // Namnen pa de designer vars renderare laser andra falt an likeTheme - se byggarna nedan.
+  // Ranking-sixpack (2026-09-24): approved-rankings.js/topcoins-v2.js atersatter alltid dessa falt
+  // efter VyraWidgets.create() for sina egna katalogknappar, sa dessa tva listor blockerar inte
+  // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
+  // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
+  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
+  // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
+  // podium ...) bygger i stället närmaste nya design, så inget gammalt val sparas i state eller molnet.
+  // Samma val som ranking-sixpack.js:s PENSION, som tar hand om widgetar som redan var sparade.
+  // Två tabeller, inte en: för Top Like är 'clean'/'center' LAYOUTVÄRDEN (likeTheme) som även de nya
+  // designernas presets sätter, inte designer — bara de fyra skinnen är pensionerade där.
+  const TOPLIKE_PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal' };
+  const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
+  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
   // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett
   // rorelseomslag (.mvp-plate) som de gamla inte far — se battleMvpHtml i media.js.
@@ -51,7 +67,6 @@
 
   const TABLES = {
     // Short colour tables, verbatim from the catalog they came from.
-    'topgift.theme': { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' },
     // Premiumdesignerna ar en EGEN familj, inte fler rader i topgift.theme ovan: de delar bara
     // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
     // Accenten ar densamma for alla 21; tabellen bar etiketten sa den sager nagot mer an att
@@ -71,13 +86,15 @@
       comet: {label:'Kometspiral',primary:'#45e1d1',secondary:'#ff806c',motion:'spiral'},
       supernova: {label:'Supernova',primary:'#ffd06b',secondary:'#a764ff',motion:'supernova'}
     },
-    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple', cyber: 'Cyber Blue',
-      glass: 'Glass', sakura: 'Sakura Pink', fire: 'Inferno Fire', ice: 'Ice Crystal',
-      galaxy: 'Galaxy', aurora: 'Aurora', retro: 'Retro', goldrush: 'Gold Rush',
-      hall: 'VYRA Hall of Fame', throne: 'Royal Throne', champion: 'Celestial Champion',
-      pedestal: 'Diamond Pedestal', arch: 'Celestial Arch', phoenix: 'Phoenix',
-      signal: 'Signal', fireworks: 'Fireworks', bloom: 'Bloom', comet: 'Comet' },
-    'topgift.extra': {"sakura":"#ff69b4","fire":"#ff4b16","ice":"#64dfff","galaxy":"#9b5cff","aurora":"#4fd8c4","retro":"#ffcf3d","goldrush":"#e8b64d","coronation":"#e8c25a"},
+    // TVA DESIGNER KVAR (David 2026-09-23: "behall neon, royal o ta bort resten"). De nitton andra
+    // var omformningar av samma tre <i>-lador i `.topgift-ornament` — renderaren ar EN for hela
+    // familjen, sa hela designutrymmet var tre tomma lador plus en accentfarg. Fem av dem bar en
+    // enda CSS-regel var. Se docs/topgift-gallringen.md; topgift-pension.js pekar de nitton pa
+    // royal sa sparade layouter laser.
+    //
+    // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
+    // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
+    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
@@ -119,7 +136,6 @@
     },
     // The frame tables. media.js reads these back through VyraWidgets.variants() for rendering —
     // they are geometry as much as colour, and one copy is the whole point.
-    'topgift.frame': {'royal-wings':{label:'Royal Wings',accent:'#ffc13b',aspect:0.8327,circle:{left:33.51,top:42.86,width:33.46,height:29.0},titlePlate:{left:27.14,top:25.56,width:45.97,height:12.19},namePlate:{left:34.22,top:76.81,width:31.32,height:12.7}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.5888,circle:{left:28.19,top:45.95,width:44.29,height:26.27},titlePlate:{left:19.42,top:28.85,width:61.51,height:11.57},namePlate:{left:28.22,top:77.2,width:43.57,height:12.07}},'angel-heart':{label:'Angel Heart',accent:'#ff8fc8',aspect:0.6766,circle:{left:31.86,top:47.71,width:36.88,height:25.14},titlePlate:{left:25.14,top:32.91,width:50.3,height:10.23},namePlate:{left:31.76,top:80.57,width:36.18,height:9.72},darkTitle:true,darkName:true},'dark-raven':{label:'Dark Raven',accent:'#9b5cff',aspect:0.6267,circle:{left:28.49,top:43.99,width:44.61,height:27.58},titlePlate:{left:19.26,top:27.05,width:61.8,height:11.57},namePlate:{left:28.36,top:77.98,width:43.61,height:11.9}},'frost-crystal':{label:'Frost Crystal',accent:'#6db8ff',aspect:0.6907,circle:{left:30.8,top:40.27,width:39.0,height:27.72},titlePlate:{left:26.33,top:23.6,width:47.64,height:11.78},namePlate:{left:30.82,top:76.45,width:38.36,height:10.39}},'rose-garden':{label:'Rose Garden',accent:'#ff8fc8',aspect:0.695,circle:{left:32.27,top:39.47,width:38.44,height:27.5},titlePlate:{left:27.07,top:24.49,width:49.15,height:10.98},namePlate:{left:31.94,top:75.43,width:37.61,height:9.93},darkTitle:true,darkName:true},'luna-mist':{label:'Luna Mist',accent:'#c07bff',aspect:0.6695,circle:{left:27.45,top:39.52,width:41.91,height:29.06},titlePlate:{left:20.34,top:22.64,width:56.45,height:11.64},namePlate:{left:27.81,top:73.77,width:41.2,height:13.43}}},
     'topstreak.frame': {'amethyst-heart':{label:'Amethyst Heart',accent:'#c07bff',aspect:0.9143,circle:{left:28.9,top:27.65,width:42.19,height:36.38},plate:{left:16.57,top:70.15,width:66.58,height:16.58}},'crystal-spire':{label:'Crystal Spire',accent:'#b083ff',aspect:0.7871,circle:{left:28.13,top:32.66,width:43.43,height:33.73},plate:{left:12.81,top:72.71,width:77.11,height:14.87}},'gold-wings':{label:'Golden Wings',accent:'#ffc13b',aspect:0.8717,circle:{left:28.85,top:27.29,width:42.3,height:35.73},plate:{left:16.66,top:70.03,width:66.97,height:15.86}},'rose-heart':{label:'Rose Heart',accent:'#ff8fc8',aspect:0.8947,circle:{left:30.68,top:22.04,width:39.81,height:39.33},plate:{left:23.29,top:70.2,width:53.12,height:15.92}},'luna-stars':{label:'Luna Stars',accent:'#ffd57f',aspect:0.7673,circle:{left:25.27,top:25.97,width:50.13,height:36.54},plate:{left:19.89,top:68.68,width:61.88,height:14.82}},'crystal-tiara':{label:'Crystal Tiara',accent:'#b083ff',aspect:0.899,circle:{left:29.56,top:27.64,width:41.18,height:37.99},plate:{left:20.32,top:71.36,width:59.07,height:14.8}},'violet-wings':{label:'Violet Wings',accent:'#a866ff',aspect:0.9644,circle:{left:29.18,top:24.79,width:41.93,height:38.37},plate:{left:15.87,top:67.95,width:68.25,height:17.26}},'star-crown':{label:'Star Crown',accent:'#e8c25a',aspect:0.8042,circle:{left:26.18,top:26.88,width:47.31,height:38.05},plate:{left:15.7,top:70.49,width:71.57,height:15.11}}},
     'battlemvp.frame': {'gold-crown':{label:'Gold Crown',accent:'#ffc13b',aspect:0.8906,circle:{left:23.98,top:22.92,width:53.8,height:47.92},plate:{left:20.44,top:80.83,width:60.58,height:13.33}},'royal-ribbon':{label:'Royal Ribbon',accent:'#e8c25a',aspect:0.8125,circle:{left:18.74,top:23.04,width:62.51,height:50.79},plate:{left:15.16,top:80.52,width:70.0,height:12.92}},'laurel-star':{label:'Laurel Star',accent:'#ffd166',aspect:0.8229,circle:{left:17.63,top:20.24,width:63.47,height:52.23},plate:{left:13.29,top:83.1,width:73.42,height:12.71}},'dark-wings':{label:'Dark Wings',accent:'#c9d2e0',aspect:0.9728,circle:{left:21.97,top:22.46,width:55.51,height:54.0},plate:{left:17.21,top:81.66,width:66.15,height:14.13}},'dragon-fire':{label:'Dragon Fire',accent:'#ff5230',aspect:0.8639,circle:{left:16.19,top:15.56,width:65.79,height:56.84},plate:{left:13.48,top:78.66,width:73.94,height:15.71}},'nautical-helm':{label:'Nautical Helm',accent:'#d9a05b',aspect:0.8717,circle:{left:20.01,top:16.92,width:59.68,height:52.02},plate:{left:16.76,top:80.37,width:66.79,height:14.66}},'shadow-star':{label:'Shadow Star',accent:'#e8b64d',aspect:0.9124,circle:{left:19.96,top:12.56,width:60.38,height:55.1},plate:{left:15.7,top:80.56,width:68.61,height:11.75}}}
   };
@@ -171,6 +187,12 @@
   // ---- the defaults -----------------------------------------------------------------------------
   // One builder per catalog family. `v` holds the values resolved from the tables above — the
   // builders never read a table themselves, which keeps the defaults readable next to each other.
+  const GOAL_MOTION_MATT = {
+    circle: { x: 70, y: 120, width: 360 },
+    landscape: { x: 16, y: 120, width: 400 },
+    portrait: { x: 151, y: 30, width: 130 },
+  };
+
   const BUILD = {
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
 
@@ -198,11 +220,25 @@
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
+    // HELA FYRVERKERIET PÅ DUKEN (2026-09-26). 540 px bredd i en 432 px duk gick inte att dra i
+    // sidled så länge widget-grans.js krävde att hela widgeten rymdes. 360 bred ger 300 hög
+    // (samma 6:5 som motorn ritar i), centrerad med 36 px på var sida - en bra START; sedan
+    // 2026-09-26 får användaren göra den större och dra den delvis utanför.
     'giftfireworks.theme': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 120, width: 540, title: 'Gift Fireworks · '+v.label,
+      type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
+    }),
+    // Gift Bubbles - systerwidget. En design; storleken foljer combo + gbSize-valjaren.
+    'giftbubbles': () => ({
+      type: 'templateGiftBubbles', x: 36, y: 120, width: 320, title: 'Gift Bubbles',
+      gbSize: 'm', gbMin: 1, gbGiftIn: true, gbHearts: true, gbShowCombo: true, gbDuration: 5
+    }),
+    // Heart Fireworks - modell 2. Skotten formar hjartan; guldskott vid hogre combo.
+    'heartfireworks': () => ({
+      type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
+      hfMin: 1, hfGold: true, hfShowCombo: true, hfDuration: 6
     }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
@@ -214,30 +250,11 @@
       title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
       accent: v.accent, giftSize: 64, streakSpeed: 1, streakGlow: 50
     }),
-    'topgift.theme': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180, width: 280, title: 'VYRA Top Gift',
-      templateTitle: 'TOP GIFT', value: '', dataName: '@StreamQueen', dataValue: '44 999',
-      accent: v.accent, dataColor: '#ffffff', valueColor: v.accent, dataSize: 18, showDataValue: true
-    }),
-    'topgift.extra': v => ({
-      type: 'templateTopGift', theme: v.theme, x: 70, y: 180,
-      width: v.theme === 'coronation' ? 260 : 280, title: 'VYRA Top Gift',
-      templateTitle: v.theme === 'coronation' ? 'TOP GIFTER' : 'TOP GIFT',
-      dataName: '@StreamQueen', dataValue: v.theme === 'coronation' ? '12 500' : '44 999',
-      giftName: 'ROSE', giftCount: 250, giftSize: v.theme === 'coronation' ? 90 : 62,
-      accent: v.accent, dataColor: '#fff', valueColor: v.accent, dataSize: 18, showDataValue: true
-    }),
-    'topgift.frame': v => ({
-      type: 'templateTopGift', giftFrame: v.frame, x: 70, y: 150, width: 300,
-      title: 'VYRA Top Gift', templateTitle: 'TOP GIFTER', dataName: '@StreamQueen',
-      dataValue: '44 999', accent: v.accent, dataColor: '#fff', valueColor: v.accent,
-      dataSize: 15, showDataValue: true
-    }),
 
     'topstreak': () => ({
-      type: 'templateTopStreak', x: 65, y: 220, width: 310, title: 'Top Streak',
-      templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18, accent: '#ff671f',
-      dataColor: '#fff'
+      type: 'templateTopStreak', x: 76, y: 180, width: 280, title: 'Top Streak',
+      templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18, accent: '#22d3ee',
+      dataColor: '#fff', giftSize: 110, streakSpeed: 1, streakGlow: 45
     }),
     'topstreak.theme': v => ({
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 220, width: v.width,
@@ -250,30 +267,66 @@
       accent: v.accent, dataColor: '#fff'
     }),
 
-    'toplike.theme': v => ({
-      type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
-      templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
-      accent: '#ff4da6'
-    }),
-    'ranking.theme': v => ({
-      type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
-      likeCount: 5, likeTheme: v.theme,
-      accent: v.type === 'templateTopCoins' ? '#ffbd32' : '#9b5cff', profileFrame: 'none'
-    }),
+    'toplike.theme': v => {
+      if (TOPLIKE_PENSION[v.theme]) v = { ...v, theme: TOPLIKE_PENSION[v.theme] };
+      const w = {
+        type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
+        templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
+        accent: '#ff4da6'
+      };
+      // DE FYRA GODKANDA SKINNEN (approved-rankings.js) LASER `skin`, INTE likeTheme. Uppmatt
+      // 2026-09-20: via fabriken renderades alla fyra som clean-bar - fyra byte-identiska
+      // referensbilder - medan katalogknappen satte skin och lat toplike-design.js:s preset ge
+      // layout, ram och bredd. Presetet ags av toplike-design.js (en kalla, en tabell); fabriken
+      // garanterar `skin` och delegerar resten dit nar modulen finns - i webblasaren alltid, i
+      // nodproven bara nar riggen lagger den pa window.
+      if (LIKE_SKINN.has(v.theme)) {
+        w.skin = v.theme;
+        if (typeof root.applyVyraTopLikeStyle === 'function') root.applyVyraTopLikeStyle(w, v.theme);
+      }
+      return w;
+    },
+    'ranking.theme': v => {
+      const pensionerad = v.type === 'templateTopPoints' && TOPPOINTS_PENSION[v.theme];
+      if (pensionerad) v = { ...v, theme: pensionerad };
+      const w = {
+        type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
+        likeCount: 5, likeTheme: v.theme,
+        accent: v.type === 'templateTopCoins' ? '#ffbd32' : '#9b5cff', profileFrame: 'none'
+      };
+      // TOP COINS V2 (topcoins-v2.js) LASER `topCoinsDesign`/`skin` OCH DESIGNENS EGEN ACCENT.
+      // Samma fynd samma dag: halo och signal-orbit blev byte-identiska via fabriken, for
+      // renderaren foll tillbaka pa halo utan faltet. createTopCoins satter design, bredd och
+      // accent ur VyraTopCoins.designs; fabriken laser samma tabell nar modulen finns.
+      if (v.type === 'templateTopCoins' && TOPCOINS_V2.has(v.theme)) {
+        const designer = root.VyraTopCoins && root.VyraTopCoins.designs;
+        const meta = designer && designer[v.theme];
+        Object.assign(w, { topCoinsDesign: v.theme, skin: v.theme, likeCount: 1,
+          width: meta && meta.width ? meta.width : 230, useLiveData: true, liveMetric: 'coins' });
+        if (meta && meta.accent) w.accent = meta.accent;
+      }
+      if (pensionerad) Object.assign(w, { topPointsDesign: v.theme, skin: v.theme });
+      return w;
+    },
 
     'heartgoal.theme': v => ({
       type: 'templateHeartGoal', x: 80, y: 120, width: 310, title: 'Heart Me Goal',
       templateTitle: 'HEART ME GOAL', heartCurrent: 0, heartTarget: 50, heartTheme: v.theme,
       heartColor: v.color, heartTextColor: '#ffffff', heartNumberColor: v.color
     }),
+    // De nio goal-motion-designerna (#525) far samma matt har som katalogknappen i goal-motion.js
+    // ger dem, sa att forhandsvisningen, den fristaende lanken och "Lagg till" visar samma widget.
+    // Alla ryms pa en 432 x 768-duk. Aldre modeller behaller sina matt.
     'socialgoal.kind': v => ({
-      type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
-      width: v.orientation === 'portrait' ? 220 : 440,
+      type: 'templateSocialGoal', goalKind: v.kind,
+      ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
+        ? GOAL_MOTION_MATT[v.orientation]
+        : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
-      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49bfff',4:'#287dff','rose-frame':'#ff70b7','heart-frame':'#ff4d9a','sapphire-frame':'#46cbff','azure-frame':'#3a9cff'})[v.model] || '#ff4f9f',
-      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#8ce8ff',4:'#79a7ff','rose-frame':'#ffd0e7','heart-frame':'#ffe1ef','sapphire-frame':'#8cceff','azure-frame':'#b7e6ff'})[v.model] || '#ffb1dc'
+      goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49c8ff',4:'#4d8dff','pulse-rail':'#b629ff','pulse-tower':'#b629ff','prism-core':'#38d9ff','prism-spine':'#38d9ff','signal-ribbon':'#ff3d91','heart-column':'#ff3d91'})[v.model] || '#b629ff',
+      goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#d9f6ff',4:'#67dcff','pulse-rail':'#20d9ff','pulse-tower':'#20d9ff','prism-core':'#8768ff','prism-spine':'#8768ff','signal-ribbon':'#ff765e','heart-column':'#ff765e'})[v.model] || '#20d9ff'
     }),
 
     'fanlevel.theme': v => ({
@@ -323,7 +376,7 @@
     }),
 
     'glovesnipe.pack': v => ({
-      type: 'templateGloveSnipe', x: 80, y: 580, width: 760, title: v.title, boostPack: v.pack,
+      type: 'templateGloveSnipe', x: 0, y: 460, width: 432, title: v.title, boostPack: v.pack,
       battleEventKind: v.kind, gloveIcon: v.icon, gloveMultiplier: v.multiplier,
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
       gloveColor2: v.color2, gloveDuration: 6, layer: 20, battleVideoMode: true
@@ -357,6 +410,28 @@
       mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
     }),
 
+    // LÅTÖNSKNINGAR (latonskningar.js). 340 bred, ungefär 250 hög — nere till vänster på duken.
+    'latonskningar': v => ({
+      type: 'templateSongRequests', latKalla: v.kalla, x: 46, y: 470, width: 340,
+      title: v.kalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube',
+      latKommando: '!önska', latCooldown: 60, latMaxKo: 10, latMaxMinuter: 8, latVisa: 3, latVolym: 70,
+      latFarg: v.kalla === 'spotify' ? '#1db954' : '#ff3b7a', layer: 25
+    }),
+
+    // SKATTKISTAN (skattkista.js). Kistan är 220 bred och ungefär 260 hög, raden 340 × 56 — båda
+    // skapas hela på duken (432 × 768), kistan mitt i övre delen och raden högst upp.
+    'skattkista': v => v.design === 'pill'
+      ? { type: 'templateTreasureChest', kistaDesign: 'pill', x: 46, y: 24, width: 340, title: 'Skattkista · rad',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 }
+      : { type: 'templateTreasureChest', kistaDesign: 'kista', x: 106, y: 90, width: 220, title: 'Skattkista',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 },
+
+    // PORTALEN: 360 bred ger 640 hög (designens 9:16), och x/y lägger hela fontänen på duken.
+    'likefountain.portal': () => ({
+      type: 'templateLikeFountain', fountainDesign: 'portal', x: 36, y: 64, width: 360,
+      title: 'Like Fountain · Portal', fountainPalette: 'portal', fountainPerLike: 6,
+      fountainAvatarHearts: true, fountainPopEvery: 1000
+    }),
     'likefountain': () => ({
       type: 'templateLikeFountain', x: 40, y: 100, width: 620, title: 'Like Fountain',
       fountainCount: 42, fountainSize: 22, fountainSpeed: 5, fountainHeight: 420,
@@ -391,10 +466,18 @@
     'video': (parts, extra) => ['video', extra || {}],
     'topgift': parts => {
       if (!parts.length) return ['topgift', {}];
-      if (parts[0] === 'frame') return ['topgift.frame', { frame: parts[1], accent: pick('topgift.frame', parts[1], 'gåvoram').accent }];
-      if (parts[0] === 'extra') return ['topgift.extra', { theme: parts[1], accent: pick('topgift.extra', parts[1], 'extratema') }];
       if (parts[0] === 'premium') { pick('topgift.premium', parts[1], 'premiumdesign'); return ['topgift.premium', { theme: parts[1] }] }
-      return ['topgift.theme', { theme: parts[0], accent: pick('topgift.theme', parts[0], 'tema') }];
+      // `topgift.theme` och `topgift.extra` pensionerades 2026-09-23. De var DUBBLETTER: uppmatt
+      // gav `catalog:topgift:royal` och `catalog:topgift:premium:royal` exakt samma `theme`, alltsa
+      // samma skinn `topgift-royal`. Det enda som skilde var forvald bredd, rubriktext och
+      // accentfarg. Katalogen visade samma design tva ganger, och David bad om farre.
+      //
+      // En gammal nyckel far darfor peka pa sin TVILLING i premiumtabellen. Det bryter inte mot
+      // regeln ovan — "never quietly resolve to another design" — eftersom det inte ar en annan
+      // design: det ar samma skinn med andra forvalda matt. Ett namn utan tvilling (coronation var
+      // det enda) kastar med en lasbar lista, precis som forut.
+      pick('topgift.premium', parts[0], 'premiumdesign');
+      return ['topgift.premium', { theme: parts[0] }];
     },
     'topstreak': parts => {
       if (!parts.length) return ['topstreak', {}];
@@ -415,9 +498,9 @@
     'socialgoal': parts => {
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
-      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['rose-frame','heart-frame','sapphire-frame','azure-frame']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
+      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column','crown-orbit','crown-rail','crown-tower','heart-orbit','heart-rail','heart-tower','diamond-orbit','diamond-rail','diamond-tower']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
       if (!(frameModels.has(rawModel) || Number.isFinite(model))) throw new Error('catalog:socialgoal kräver en giltig modell');
-      if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
+      if (!['portrait','landscape','circle'].includes(orientation)) throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape, circle');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
     'fanlevel': parts => {
@@ -448,6 +531,8 @@
       return ['gifterlevel.layout', { layout: parts[0] }];
     },
     'followeralert': () => ['followeralert', {}],
+    'giftbubbles': () => ['giftbubbles', {}],
+    'heartfireworks': () => ['heartfireworks', {}],
     'glovesnipe': parts => {
       // catalog:glovesnipe:<pack>:<kind>[:<multiplier>] — the labels, icon and name are derived from
       // kind and multiplier exactly as addBoostPack() derived them.
@@ -469,7 +554,19 @@
       if (parts[0] === 'frame') return ['battlemvp.frame', { frame: parts[1], accent: pick('battlemvp.frame', parts[1], 'MVP-ram').accent }];
       return ['battlemvp.style', { style: parts[0], color: pick('battlemvp.style', parts[0], 'MVP-stil') }];
     },
-    'likefountain': () => ['likefountain', {}],
+    // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
+    // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
+    'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
+    // catalog:latonskningar:youtube och catalog:latonskningar:spotify — källan är nyckelns enda led.
+    'latonskningar': parts => {
+      if (parts[0] !== 'youtube' && parts[0] !== 'spotify') throw new Error(`Okänd källa för låtönskningar: ${parts[0]}`);
+      return ['latonskningar', { kalla: parts[0] }];
+    },
+    // catalog:skattkista:kista och catalog:skattkista:pill. Okänd design är ett fel, inte en tyst kista.
+    'skattkista': parts => {
+      if (parts[0] !== 'kista' && parts[0] !== 'pill') throw new Error(`Okänd skattkistedesign: ${parts[0]}`);
+      return ['skattkista', { design: parts[0] }];
+    },
     'lastx': parts => {
       pick('lastx.design', parts[0], 'Last-X-design');
       return ['lastx.design', { design: parts[0] }];

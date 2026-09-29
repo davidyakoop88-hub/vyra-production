@@ -81,7 +81,8 @@ async function panelen(nyckel) {
 const GOMS = [
   ['catalog:topgift:premium:royal', 'pfTopGiftProfile'],
   ['catalog:topgift:premium:royal', 'pfTopGiftGift'],
-  ['catalog:topstreak:premium:liquid', 'pfStreakProfile'],
+  // Top Streak (Clean Flip) har inga bildfalt i en hopfalld grupp: panelen ar approved-rankings.js:s
+  // sedan 2026-09-20, och premium:liquid ar avvecklad. Raden med pfStreakProfile togs bort.
   ['catalog:followeralert', 'followProfile'],
   ['catalog:fanlevel:gold', 'fanProfile'],
   ['catalog:battlemvp:inferno', 'mvpProfile'],

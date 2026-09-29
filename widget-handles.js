@@ -107,6 +107,8 @@
         if (riktning === 'e' || riktning === 'w') {
           var d = (riktning === 'e' ? dx : -dx) / f;
           var bredd = Math.max(60, Math.round(start.bredd + d));
+          // Ingen ovre grans: en widget far goras storre an duken (widget-grans.js, 2026-09-26 -
+          // "om jag vill gora den stor och lite hamnar utanfor ska det inte vara problem").
           w.width = bredd;
           widget.style.width = bredd + 'px';
           if (riktning === 'w') {

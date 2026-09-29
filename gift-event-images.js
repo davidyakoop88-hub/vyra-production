@@ -20,15 +20,57 @@
 
   window.VyraGiftImages = {
     count: gifts.length,
-    resolve: resolve
+    resolve: resolve,
+    arma: arma
   };
 
   // Sändningens rekord. Exponerade, inte privata, eftersom gift-event-images.js inte är ensam
   // skrivare till templateTopGift — live-leaderboard.js:130 skriver också dit, på varje gåva. Utan
   // en gemensam sanning hade separationen gällt i testet men inte i produktion: Top Gift skulle
   // fortsätta byta namn på varje billig gåva.
-  var records = { giftCoins: 0, streakCount: 0 };
+  var records = { giftCoins: 0, streakCoins: 0 };
   window.VyraGiftRecords = records;
+
+  // OCH DE OVERLEVER EN SIDLADDNING. Hogvattenmarkena ovan lag i en vanlig variabel: en omladdning
+  // mitt i sandningen satte bada till 0, och da rakades NASTA gava — en enkrona — som ett nytt
+  // rekord och skrev over den 30 000-coins-gava som faktiskt ledde. Uppmatt i livetestet
+  // 2026-09-21. Widgetens synliga tal kom tillbaka med konfig-omhamtningen; det var TROSKELN har
+  // som nollstalldes av fel handelse.
+  //
+  // Samma regel och samma lagringsval som live-leaderboard.js `totals`: nyckeln bar sessionId, sa
+  // forra sandningens rekord kan aldrig atertas i den har, och sessionStorage ger exakt sidans
+  // kontext — overlever F5, forsvinner nar OBS river kallan. Till skillnad fran topplistan kan de
+  // har talen inte dubbelraknas: de ar hogvattenmarken, inte summor.
+  var REKORD_NYCKEL = 'vyra-gift-records-v1';
+
+  function aktivSession() {
+    try { return window.VyraLiveSession && window.VyraLiveSession.runtime
+      ? (window.VyraLiveSession.runtime().aktivSession() || null) : null } catch (e) { return null }
+  }
+  function skrivRekord() {
+    var session = aktivSession();
+    try {
+      if (!session) window.sessionStorage.removeItem(REKORD_NYCKEL);
+      else window.sessionStorage.setItem(REKORD_NYCKEL, JSON.stringify({
+        sessionId: session, giftCoins: records.giftCoins, streakCoins: records.streakCoins }));
+    } catch (e) {}
+  }
+  function aterstallRekord() {
+    var session = aktivSession();
+    if (!session) return false;
+    try {
+      var sparad = JSON.parse(window.sessionStorage.getItem(REKORD_NYCKEL) || 'null');
+      if (!sparad || sparad.sessionId !== session) return false;
+      records.giftCoins = Number(sparad.giftCoins) || 0;
+      records.streakCoins = Number(sparad.streakCoins) || 0;
+      return true;
+    } catch (e) { return false }
+  }
+  // Tva forsok. Filen laddas FORE live-session-client.js i studio.html (rad 155 mot 204), sa vid
+  // korning finns VyraLiveSession annu inte — det forsta forsoket ar for provriggen och for en
+  // framtida laddordning, det andra ar det som faktiskt tar hem rekorden i webblasaren. Forsta
+  // gavan kommer langt senare an DOMContentLoaded, sa ingenting hinner jamforas mot en tom troskel.
+  if (!aterstallRekord()) window.addEventListener('DOMContentLoaded', aterstallRekord);
 
   // Top Gift rankar GÅVANS värde, inte combons summa. Davids regel 2026-08-07: "1 ros 1 coins,
   // 11 rosor 1 coins" — elva rosor är elva gånger samma ros och får aldrig slå ut en gåva som
@@ -72,8 +114,12 @@
       root: '.vyra-streak',
       gift: '.streak-gift-face img',
       profile: '.streak-profile-face img',
-      name: '.streak-copy strong, .sframe-row strong',
-      value: '.streak-score b, .sframe-row b'
+      // Clean Flip (approved-rankings.js) ar den enda Top Streak som nar skarmen sedan 2026-09-20:
+      // namnet i .approved-streak-copy strong och talet i ett eget <b> inne i <em>x<b>18</b> STREAK</em>,
+      // sa att prefixet och 'STREAK' star kvar nar patchen skriver talet. Uppmatt fore den har
+      // raden: patchen traffade inga noder alls, och Clean Flip stod pa demovardena hela sandningen.
+      name: '.streak-copy strong, .sframe-row strong, .approved-streak-copy strong',
+      value: '.streak-score b, .sframe-row b, .approved-streak-copy b'
     }
   };
 
@@ -109,7 +155,12 @@
       setImage(node.querySelector(shape.gift), widget.giftImage);
       setImage(node.querySelector(shape.profile), widget.profileImage);
       node.querySelectorAll(shape.name).forEach(function (el) {
-        setText(el, widget.dataName || '@StreamQueen');
+        // '@StreamQueen' AR EN PLATSHALLARE, INTE EN TITTARE. Den slog till nar ett event saknade
+        // bade username och name, och skrev da in fabrikens demoperson i en LIVE sandning - exakt
+        // det live-zero-state.js finns for att forhindra ("no invented person"). I overlay blir
+        // tomt tomt; i editorn ar platshallaren fortfarande det man designar mot.
+        var overlay = new URLSearchParams(location.search).has('overlay');
+        setText(el, widget.dataName || (overlay ? '' : '@StreamQueen'));
       });
       node.querySelectorAll(shape.value).forEach(function (el) {
         // Tecknet framför siffran står bara i DOM:en och är streamerns val: Top Gift renderar
@@ -158,14 +209,84 @@
     return !(typeof document !== 'undefined' && document.hidden);
   }
 
+  // TOP STREAK FICK ALDRIG SIN MARKERING I DRIFT (uppmatt 2026-09-22).
+  //
+  // Top Gift armas av live-leaderboard.js:updateTopGift — `if (!flip.resume(el)) flip.start(el)`
+  // foljt av `flip.mark(el)`. Top Streak har ingen sadan skrivare: den enda som ror den pa en
+  // riktig gava ar patchen harintill, och den satte aldrig nagon klass. `armFlip` anropas pa
+  // exakt ett stalle i hela repot, och det stallet filtrerar pa templateTopGift.
+  //
+  // Foljden syns i CSS:en. Allt som ar streakens accent hanger pa `.hit`:
+  //   .vyra-streak.hit                 streakEnter 3.8s   (engangs)
+  //   .vyra-streak.hit .streak-score b streakNumber .8s   (engangs)
+  //   .vyra-streak.hit .streak-flip>i  streakFire .8s     (engangs)
+  // Rotationen (streakFlipLoop) ar oandlig och rullar vidare, men de tre engangsanimationerna
+  // spelar bara nar klassen satts om. I studion satts den om av demoknappens send()-wrapper vid
+  // varje tryck, sa dar ser det ratt ut. I sandning satts den aldrig om, och talet byter varde
+  // i tystnad — ingen puls, ingen eld, ingen entre.
+  //
+  // MARKERINGEN, INTE OMSTARTEN. `resume()` lagger bara till triggerklassen om den saknas, sa de
+  // tre engangsanimationerna spelar INTE om — det ar med flit, samma regel som ger Top Gift en
+  // obruten rotation hela sandningen. Det som visar att ett rekord slagits ar `mark()`: egen
+  // klass, egen engangsanimation, ingen omstart av loopen. `mark()` rensar redan delayen pa
+  // `.streak-gift-face`, alltsa var den skriven for bada familjerna fran borjan.
+  var attArma = [];
+
+  function arma(widget) {
+    var flip = window.VyraFlip;
+    nodesFor(widget, '.vyra-streak').forEach(function (el) {
+      // Den handbyggda DOM:en i tests/gift-images-live-patch.test.js har inga klasslistor, och
+      // bade fallbacken och VyraFlip skriver klasser. Utan den har raden kastade armningen mitt i
+      // lyssnaren — och lyssnaren ar INTE inpackad, sa kastet hade tagit med sig kampanjpatchen
+      // och allt annat efter den. Samma tolerans som live-leaderboard.js skrivTal redan visar mot
+      // samma rigg: en nod som saknar det vi behover hoppas over, den fallpar inte flodet.
+      if (!el || !el.classList) return;
+      if (!flip) {
+        // Aldre overlagg utan modulen: samma fallback som live-leaderboard.js armFlip har.
+        el.classList.remove('hit');
+        void el.offsetWidth;
+        el.classList.add('hit');
+        return;
+      }
+      if (!flip.resume(el)) flip.start(el);
+      if (typeof flip.mark === 'function') flip.mark(el);
+      koreografera(el);
+    });
+  }
+
+  // KOREOGRAFIN, EFTER MARKERINGEN (docs/gavororelsen.md §1 och §7).
+  //
+  // Fabriken kopplar sig inte hit sjalv: den lindar en global trigger och laser ett timerspar per
+  // tand lada, och Top Streak ar en PERMANENT widget utan bada. Anropet gors darfor har, pa exakt
+  // den rad dar `mark()` redan anropas — efter patchen, sa koreografin aldrig ramar in ett gammalt
+  // tal, och efter rekordgrinden, sa en gava UNDER rekordet inte far widgeten att saga "nytt
+  // rekord".
+  //
+  // EN PAGAENDE KOREOGRAFI SPELAR KLART. Det ar §7:s beslut, och det bor HAR och inte i fabriken:
+  // `spela()` vagrar inte sjalv spela om, eftersom Fan och Gifter bygger pa att den alltid spelar.
+  // Fabriken svarar bara pa FRAGAN om ladan spelar. I en gavostorm kan tva rekord ligga nagra
+  // hundra millisekunder isar, och en omstart dar hade visat fas 1 om och om igen — precis det
+  // fellage VyraFlip finns for att forhindra, en vaning upp. Ingenting gar forlorat: talet ar
+  // redan patchat, och `mark()`-pulsen kvitterar varje enskilt rekord oavsett.
+  function koreografera(el) {
+    var fas = window.VyraStreakFas;
+    if (!fas || typeof fas.spelar !== 'function') return;   // aldre bunt utan arten
+    if (fas.spelar(el)) return;
+    fas.spela(el);
+  }
+
   function flush() {
     frame = 0;
     var queue = pending.slice();
     pending.length = 0;
+    var arm = attArma.slice();
+    attArma.length = 0;
     queue.forEach(function (widget) {
       if (widget.type === 'templateGiftCampaign') patchCampaignWidget(widget);
       else patchProfileWidget(widget);
     });
+    // EFTER patchen, inte fore: annars startar pulsen pa den gamla bilden och talet byts mitt i.
+    arm.forEach(arma);
   }
 
   function schedule(widget) {
@@ -186,7 +307,8 @@
     var detalj = event && event.detail;
     if (!detalj || detalj.event !== 'live:start') return;
     records.giftCoins = 0;
-    records.streakCount = 0;
+    records.streakCoins = 0;
+    skrivRekord();
   });
 
   window.addEventListener('vyra-live-event', function (event) {
@@ -202,20 +324,31 @@
 
     // De två topplistorna mäter olika saker och delade tidigare en gren, så båda blev en dubblett
     // av den senaste gåvan. Bryggan skiljer dem åt: `coins:coinsEach*repeatCount, count:repeatCount`
-    // i tiktok-bridge/normalizer.js. En billig gåva spammad 50 gånger är en stor STREAK men en liten
-    // GÅVA; en enda dyr gåva är tvärtom.
+    // i tiktok-bridge/normalizer.js.
     var coins = Number(detail.coins || 0) || 0;
     var streak = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
 
     // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden
     // gäller sändningen, inte layouten — de nollställs vid omladdning, precis som topplistorna.
-    // Gåvans eget värde avgör Top Gift; antalet avgör Top Streak. `coins` självt lämnas orört —
-    // det är totalen alla andra läsare räknar med.
+    // `coins` självt lämnas orört — det är totalen alla andra läsare räknar med.
+    //
+    // TOP GIFT rankas på gåvans STYCKVÄRDE (coins ÷ antal): den enskilt dyraste gåvan vinner.
+    //
+    // TOP STREAK rankas på COMBONS VÄRDE (coins = styckpris × antal), inte på antalet. Davids regel
+    // 2026-09-27: 10 handhjärtan à 100 coins (1 000) slår 20 rosor à 1 coin (20) — den DYRARE combon
+    // vinner även om den är kortare, och widgeten stannar på den. Tidigare avgjorde antalet, så en
+    // billig gåva spammad många gånger tog streaken; det var fel. Widgeten VISAR fortfarande antalet
+    // (`dataValue = streak`, renderaren skriver ×N) — bara vem som vinner bytte grund.
+    //
+    // En enstaka gåva (antal 1) är ingen combo och kan aldrig ta streaken — den hör till Top Gift.
+    // Annars hade en enda dyr gåva fastnat som "×1 STREAK" och låst widgeten hela sändningen.
     var giftVarde = records.styckvarde(coins, streak);
+    var comboVarde = streak >= 2 ? coins : 0;
     var newGift = giftVarde > records.giftCoins;
-    var newStreak = streak > records.streakCount;
+    var newStreak = comboVarde > records.streakCoins;
     if (newGift) records.giftCoins = giftVarde;
-    if (newStreak) records.streakCount = streak;
+    if (newStreak) records.streakCoins = comboVarde;
+    if (newGift || newStreak) skrivRekord();
 
     state.widgets.forEach(function (widget) {
       if (widget.type === 'templateTopGift' && newGift) {
@@ -235,6 +368,7 @@
         // Top Gifts avatar sätts av live-leaderboard.js. Streaken har ingen sådan skrivare, så
         // utan den här raden står den kvar på testbilden hela sändningen.
         widget.profileImage = detail.profileImage || detail.avatar || widget.profileImage;
+        if (attArma.indexOf(widget) === -1) attArma.push(widget);
         schedule(widget);
       }
 

@@ -137,11 +137,14 @@ async function dra(page, { valjare, skala, dx, dy, form }) {
 test('drag vid skala 0.5 flyttar widgeten dit pekaren pekar', { skip, timeout: 90000 }, async () => {
   const page = await editorn(GENERISK);
   try {
-    const m = await dra(page, { valjare: '.canvas [data-id="g1"]', skala: 0.5, dx: 100, dy: 60 });
+    // dx 60, inte 100: sedan #486 (2026-09-20) ska hela widgeten rymmas pa duken. Top Like renderar
+    // 250 px bred, sa ett mal pa 240 (240+250 > 432) hade klamts till 182 och provet hade matt
+    // gransen i stallet for skalan. 60 skarmpixlar over en halvskalad duk ar 120 dukpixlar:
+    // 40+120 = 160, och 160+250 = 410 ryms.
+    const m = await dra(page, { valjare: '.canvas [data-id="g1"]', skala: 0.5, dx: 60, dy: 60 });
     assert.equal(m.skala, 0.5, 'skalan ska vara avlast som 0.5');
-    // 100 skarmpixlar over en halvskalad duk ar 200 dukpixlar.
-    assert.ok(Math.abs(m.elLeft - (40 + 200)) <= 2,
-      `left skulle bli ~240 (40 + 100/0.5), blev ${m.elLeft}`);
+    assert.ok(Math.abs(m.elLeft - (40 + 120)) <= 2,
+      `left skulle bli ~160 (40 + 60/0.5), blev ${m.elLeft}`);
     assert.ok(Math.abs(m.elTop - (40 + 120)) <= 2,
       `top skulle bli ~160 (40 + 60/0.5), blev ${m.elTop}`);
   } finally { await page.close() }
@@ -178,10 +181,11 @@ test('getEditorCanvasScale laser skalan aven ur matrix()', { skip, timeout: 9000
 test('drag vid matrix-satt skala 0.5 landar ocksa ratt', { skip, timeout: 90000 }, async () => {
   const page = await editorn(GENERISK);
   try {
-    const m = await dra(page, { valjare: '.canvas [data-id="g1"]', skala: 0.5, dx: 100, dy: 0,
+    // dx 60 av samma skal som i prov 1: malet maste rymmas pa duken (#486).
+    const m = await dra(page, { valjare: '.canvas [data-id="g1"]', skala: 0.5, dx: 60, dy: 0,
       form: 'matrix' });
     assert.equal(m.skala, 0.5, 'skalan ska lasas ur matrix');
-    assert.ok(Math.abs(m.elLeft - 240) <= 2, `left skulle bli ~240, blev ${m.elLeft}`);
+    assert.ok(Math.abs(m.elLeft - 160) <= 2, `left skulle bli ~160, blev ${m.elLeft}`);
   } finally { await page.close() }
 });
 
@@ -224,13 +228,12 @@ test('custom-widgetens handtag respekterar skalan', { skip, timeout: 90000 }, as
 });
 
 // ---- Prov 7 · gavohandtaget --------------------------------------------------------------------
-test('gavohandtaget respekterar skalan', { skip, timeout: 90000 }, async () => {
-  const page = await editorn(GIFT);
-  try {
-    const m = await dra(page, { valjare: '.gift-resize-handle', skala: 0.5, dx: 40, dy: 0 });
-    assert.equal(m.giftSize, 140, `giftSize skulle bli 60 + 40/0.5 = 140, blev ${m.giftSize}`);
-  } finally { await page.close() }
-});
+// 'gavohandtaget respekterar skalan' togs bort 2026-09-20. Handtaget (.gift-resize-handle) ritades
+// BARA av media.js:s klassiska Top Streak-renderare med ram - och den nar inte skarmen sedan
+// approved-rankings.js (Clean Flip, inga ramar). Uppmatt: varken Top Streak, Top Gift med ram
+// (catalog:topgift:frame:royal-wings) eller Top Gift utan ram ritar nagot .gift-resize-handle;
+// alla har det vanliga .resize-handle, som proven ovan redan mater. Ett prov mot ett handtag
+// ingen ritar matte en tom sida.
 
 // ---- Prov 8 · agarskapet ar uttalat, inte en fraga om bindningsordning -------------------------
 test('varje widgettyp har en utpekad handtagsagare', { skip, timeout: 90000 }, async () => {

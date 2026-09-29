@@ -1,4 +1,18 @@
 'use strict';
+// TOP GIFTER · TVA DESIGNVAL (2026-09-23).
+//
+// David, efter att ha sett alla 21: "behall neon, royal o ta bort resten". Skalet syns i den
+// matning som gjordes innan: ALLA 21 delade EN renderare och EN markup — det renderaren skickar ut
+// ar alltid `<div class="topgift-ornament"><i></i><i></i><i></i></div>`, tre tomma lador och en
+// accentfarg. Varje "design" var ett satt att forma just de tre, och fem av dem bar en enda
+// CSS-regel var. Formen var slut; fler varianter hade inte hjalpt.
+//
+// Proven nedan ar kvar och mater samma regler pa tva designer som de gjorde pa 21. De tre som
+// mätte de fyra tunnaste (hall, throne, champion, arch) ar borttagna med dem — ett prov som
+// filtrerar over namn som inte finns ar gront av tomhet, inte av att regeln haller.
+//
+// HISTORIKEN, som forklarar varfor proven ser ut som de gor:
+//
 // TOP GIFTER · 21 DESIGNVAL — men bara 8 unika utseenden.
 //
 // Uppmatt i produktion: alla 21 renderade samtidigt, beraknad stil jamford over hela widgettradet.
@@ -43,8 +57,24 @@ const KLASS = namn => 'topgift-' + namn;
 const regler = (prefix, namn) =>
   (CSS.match(new RegExp('\\.' + prefix + '-' + namn + '(?![a-z0-9-])', 'g')) || []).length;
 
-test('katalogen har 21 designval', () => {
-  assert.equal(designval().length, 21, 'antalet i katalogen har andrats — rubriken sager 21');
+test('katalogen har tva designval', () => {
+  assert.deepEqual(designval(), ['royal', 'neon'],
+    'antalet eller ordningen i katalogen har andrats — se docs/topgift-gallringen.md');
+});
+
+test('katalogen och fabriken erbjuder samma designer', () => {
+  // TOP_GIFTS i premium-final.js ar en DUBBLETT av widget-factory.js variants('topgift.premium').
+  // Top Streak fick exakt det felet: "en dubblerad lista ar precis det som gled isar". Listan star
+  // kvar som literal for att provet ovan ska kunna lasa den — men de tva far aldrig saga olika
+  // saker, for det ar katalogen anvandaren ser och fabriken som bygger.
+  const vm = require('vm');
+  const root = { document: { addEventListener: () => {}, querySelectorAll: () => [] } };
+  root.window = root;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'widget-factory.js'), 'utf8'), root,
+    { filename: 'widget-factory.js' });
+  assert.deepEqual(designval().sort(),
+    Object.keys(root.VyraWidgets.variants('topgift.premium')).sort(),
+    'katalogen i premium-final.js och fabrikens varianttabell sager olika saker');
 });
 
 test('varje designval har CSS under den klass renderaren satter', () => {
@@ -72,6 +102,11 @@ test('renderaren satter fortfarande topgift-klassen — testet mater ratt sak', 
 });
 
 // ---- ingen design far vara en kopia av en annan -------------------------------------------------
+//
+// Tre prov las har tidigare hall, throne, champion och arch: att de fyra tunnaste fatt en egen
+// siluett, att var och en har en egen signaturrorelse, och att varje rorelse har sina keyframes.
+// Alla fyra designerna pensionerades 2026-09-23, och ett prov som filtrerar over namn som inte
+// finns ar gront av tomhet. De togs darfor bort med dem, inte lamnade kvar som gron dekoration.
 // Efter omdopningen gick 8 -> 18 unika utseenden, men fyra designval var fortfarande kopior:
 // hall delade sin ENDA regel med throne, och champion sin med arch. De var inte trasiga, bara
 // aldrig fardigritade.
@@ -104,45 +139,6 @@ test('inga tva designval har identisk styling', () => {
     kopior.map(x => '  ' + x.join(' = ')).join('\n'));
 });
 
-test('de fyra tunnaste designvalen har fatt en egen siluett', () => {
-  const teman = ALLA_TEMAN();
-  const tunna = ['hall', 'throne', 'champion', 'arch'].filter(t => {
-    const n = regeluppsattning(t, teman);
-    return !n || n.split('\n').length < 3;
-  });
-
-  assert.deepEqual(tunna, [],
-    `dessa har farre an tre regler och kan darfor inte ha en egen form: ${tunna.join(', ')}`);
-});
-
-test('varje ny design har en egen signaturrorelse', () => {
-  // VYRA:s designsprak: egen siluett OCH egen rorelse per design. Delar tva designer animation
-  // ar de inte sarskilda i rorelse, bara i farg.
-  const rorelser = {};
-  for (const t of ['hall', 'throne', 'champion', 'arch']) {
-    const namn = [...regeluppsattning(t, ALLA_TEMAN()).matchAll(/animation:\s*(?!none\b)([a-zA-Z][\w-]*)/g)]
-      .map(m => m[1]);
-    assert.ok(namn.length, `${t} har ingen animation alls`);
-    namn.forEach(n => (rorelser[n] ||= []).push(t));
-  }
-  const delade = Object.entries(rorelser).filter(([, t]) => new Set(t).size > 1);
-
-  assert.deepEqual(delade.map(([n, t]) => n + ': ' + [...new Set(t)].join(', ')), [],
-    'dessa designer delar rorelse');
-});
-
-test('varje rorelse har sina keyframes', () => {
-  const anvanda = new Set();
-  for (const t of ['hall', 'throne', 'champion', 'arch']) {
-    [...regeluppsattning(t, ALLA_TEMAN()).matchAll(/animation:\s*(?!none\b)([a-zA-Z][\w-]*)/g)]
-      .forEach(m => anvanda.add(m[1]));
-  }
-  const saknas = [...anvanda].filter(n => !new RegExp('@keyframes\\s+' + n + '\\b').test(CSS));
-
-  assert.deepEqual(saknas, [],
-    `dessa animationer namnges men har inga keyframes, sa ingenting ror sig: ${saknas.join(', ')}`);
-});
-
 // ---- DOM-kontraktet som de aterupplivade reglerna hanger pa -------------------------------------
 // Reglerna skrevs mot den GAMLA renderarens DOM. De flesta krokarna finns kvar, men strong har
 // flyttat in i .topgift-copy - en regel som star pa `>strong` traffar darfor ingenting langre.
@@ -153,4 +149,35 @@ test('reglerna pekar bara pa krokar som renderaren faktiskt producerar', () => {
   assert.deepEqual(saknas, [], `renderaren producerar inte: ${saknas.join(', ')}`);
   assert.equal(/\.vyra-topgift\.topgift-[a-z0-9-]+>strong/.test(CSS), false,
     'en regel star pa >strong, men strong ligger numera inuti .topgift-copy och natt aldrig');
+});
+
+// ---- en pensionerad design far inte komma tillbaka via CSS:en -----------------------------------
+//
+// David, 2026-09-23: "uppdatera bade hemsidan o deskapp att de som vi har tagit bort kommer inte
+// tillbaka, ta bort de helt."
+//
+// Gallringen stadade `studio.css` och lamnade `premium-final.css` orord. Uppmatt efterat: TIO av de
+// pensionerade designerna hade kvar 32 selektorer och fyra keyframes dar — hall, throne, champion
+// och arch med sina egna siluetter, pedestal, phoenix, bloom, comet, signal och fireworks med sina
+// ornament. Ingenting gick sonder av det; filen bar bara 4,6 kB som LAG UT SOM en fungerande
+// design nar man laste den, och nasta lasare hade inte kunnat se skillnaden.
+//
+// Provet lasar bada filerna pa en gang: KATALOGEN ar inte det enda stallet en design kan bo.
+// Listan lases ur pensionstabellen, inte handskriven — pensioneras nagot mer utan att CSS:en stadas
+// faller det har direkt.
+test('ingen pensionerad design har CSS kvar i nagon fil', () => {
+  const pension = fs.readFileSync(path.join(ROOT, 'topgift-pension.js'), 'utf8');
+  const tabell = pension.match(/const PENSIONERADE = \{[\s\S]*?\n  \};/);
+  assert.ok(tabell, 'PENSIONERADE hittades inte i topgift-pension.js');
+
+  const namn = [...tabell[0].matchAll(/^\s*'([a-z0-9-]+)':/gm)].map(m => m[1]);
+  assert.ok(namn.length >= 26, `pensionstabellen lastes till bara ${namn.length} namn — mönstret`);
+
+  const kvar = namn
+    .map(n => [n, (CSS.match(new RegExp('\\.topgift-' + n + '(?![a-z0-9-])', 'g')) || []).length])
+    .filter(([, antal]) => antal > 0);
+
+  assert.deepEqual(kvar, [],
+    'dessa pensionerade designer har CSS kvar och ar alltsa inte borttagna helt:\n' +
+    kvar.map(([n, a]) => `  ${n}  (${a} selektorer)`).join('\n'));
 });

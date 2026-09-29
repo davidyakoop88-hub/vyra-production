@@ -15,7 +15,8 @@
     "test:doman": "node scripts/domaner.js test",
     "test:visual": "node --test tests/visual/visuell-regression.browser.test.js",
     "test:visual:rigg": "node --test tests/visual/jamforaren-muterad.browser.test.js tests/visual/css-andring-faller-ratt.browser.test.js",
-    "test:visual:update": "node scripts/visuell-referens.js"
+    "test:visual:update": "node scripts/visuell-referens.js",
+    "test:browser:skarva": "node scripts/browser-skarva.js"
   },
   "devDependencies": {
     "jsdom": "30.0.1",

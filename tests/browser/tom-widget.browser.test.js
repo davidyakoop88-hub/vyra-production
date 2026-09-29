@@ -9,7 +9,7 @@
 // live-leaderboard.js (rad 199-202) och gift-event-images.js (rad 218-232). Båda sparar sedan
 // layouten. Efter en sändning står alltså en riktig persons namn och avatar kvar i widgeten, och
 // nästa gång studion öppnas ser David deras namn i stället för "@StreamQueen". Gåvorekordet
-// (records.giftCoins / records.streakCount) nollställs redan vid live:start i gift-event-images.js
+// (records.giftCoins / records.streakCoins) nollställs redan vid live:start i gift-event-images.js
 // — men widgetens data har ingen sådan nollställare alls.
 //
 // KONTRAKTET, tre delar:
@@ -61,7 +61,9 @@ test.after(async () => {
 });
 
 // De två familjer som livedata faktiskt skriver till.
-const WIDGETS = ['catalog:topgift:premium:royal', 'catalog:topstreak:premium:liquid'];
+// Top Streak: premium:liquid ar avvecklad 2026-09-20 och nyckeln ritas som Clean Flip. Samma
+// familj, samma livefalt - sa standardnyckeln provas i stallet.
+const WIDGETS = ['catalog:topgift:premium:royal', 'catalog:topstreak'];
 const FALT = ['dataName', 'dataValue', 'profileImage', 'giftImage', 'giftName'];
 
 async function studion(vy) {

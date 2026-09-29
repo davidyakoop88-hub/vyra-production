@@ -116,28 +116,36 @@ jobs:
       - name: Prove database backup and restore
         working-directory: .
         run: bash scripts/verify-backup-restore.sh
-
-  # The client files at the repository root: the session owner, the goal runtime and the DOM patcher.
-  # Until now this suite only ever ran on a developer machine. jsdom is the single devDependency and
-  # ships nowhere — server/Dockerfile builds from the server/ context, and the electron builder
-  # excludes package.json, node_modules and tests from extraResources.
+  # KLIENTFILERNA I REPOTROTEN, i TRE jobb i stallet for ett.
+  #
+  # VARFOR DE DELADES. Uppmatt i korning 1bcc763e (2026-09-23), hela test-client 70 min 28 s:
+  #
+  #     npm ci + kontrakt + fuzz + npm test + skript      1 min 31 s
+  #     test:browser  (Lackage · riktig webblasare)      57 min 44 s     <- 82 % av jobbet
+  #     playwright-kedjan (cache, deps, CJK, Chromium)        31 s
+  #     test:visual:rigg + test:visual                    8 min 53 s
+  #     coverage                                          1 min 44 s
+  #
+  # Jobbets gamla kommentar pekade ut "Visuell · alla katalognycklar mot referens" som tyngsta
+  # steget. Det var fel med en faktor sju. Den visuella vakten ar atta minuter; lackagevakten ar
+  # femtioatta — och de tre snabba sviterna, dar de flesta fel faktiskt fangas, lag BAKOM bada.
+  # Ett stavfel i en kontraktsfil tog darfor 70 minuter att fa veta om.
+  #
+  # Nu kor de tre parallellt pa var sin runner:
+  #   test-client              node-sviterna, svar inom ~4 min
+  #   test-client-webblasare   test:browser, skarvat i fyra delar
+  #   test-visuell             pinnad Chromium + pixelvakten
+  #
+  # NAMNET test-client BEHALLS pa det forsta jobbet med flit: det ar det namn grenskyddet kraver,
+  # och ett omdopt obligatoriskt prov blir ett som aldrig kors i stallet for ett som faller.
   #
   # The audit here runs WITH devDependencies, unlike server and bridge: jsdom is a test tool that
   # executes on this CI runner, which is exactly where a vulnerability in it would matter.
   test-client:
     runs-on: ubuntu-latest
-    # TAK MOT HANGNING, inte mot langsamhet. Utan detta galler GitHubs standard pa 360 min, och
-    # det ar just det har jobbet som historiskt haft tva eviga loopar gomda bakom grona prov — en
-    # hangning hade brunnit sex timmars runner-tid innan nagon markte nagot.
-    #
-    # 120 ar valt ur MATNINGEN, inte pa kansla. 29 avslutade korningar 2026-09-14, de sju lyckade:
-    #   67, 67, 68, 68, 69, 71, 72 min  (median 68,0, max 72,5)
-    # Tyngsta steget ar "Visuell · alla katalognycklar mot referens" och sviten vaxer over tid.
-    # 90 min hade bara varit 1,24x det uppmatta maxet — en trog runner hade tippat over det och
-    # gett ett dott jobb utan att nagot var fel. Den sortens flackning ar dyrast i det har repot,
-    # for den lar en att sluta lita pa rott. 120 ar 1,65x maxet och fangar anda en hangning pa en
-    # tredjedel av standardens tid.
-    timeout-minutes: 120
+    # Steget som motiverade 120 minuter bor i test-client-webblasare numera. Det som ar kvar har
+    # tog 3 min 15 s uppmatt; 20 ar tak mot HANGNING, inte mot langsamhet, och ar 6x det uppmatta.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -167,34 +175,120 @@ jobs:
       - name: 'Skriptsviten (scripts/test)'
         run: npm run test:skript
 
-      # Lackagevakten kors i en RIKTIG webblasare, inte i jsdom.
-      #
-      # jsdom har ingen Web Locks-implementation, sa session-state faller tillbaka pa read-only och
-      # save() skriver aldrig — ett lackage som gar via save() ar osynligt dar. Det var precis
-      # darfor widgetarna som dok upp i Davids OBS-overlay (#86) kunde ligga bakom en gron vakt.
-      # jsdom har inte heller nagon layout, sa fragan "syns den har widgeten?" gar inte att stalla.
-      #
-      # ubuntu-latest levereras med Google Chrome; playwright-core startar den utan att ladda ner
-      # nagon egen webblasare. Hittas ingen hoppar testet hogljutt i stallet for att falla.
-      - name: 'Lackage · riktig webblasare'
-        run: npm run test:browser
+      # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
+      # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
+      # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde
+      # — syns inte alls, eftersom de laddas som <script> i jsdom. Se docs/ci.md.
+      - name: 'Coverage (informativ, tacker inte widgetfilerna)'
+        continue-on-error: true
+        run: npm run test:coverage 2>&1 | sed -n '/start of coverage/,/end of coverage/p'
 
-      # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
+      # OMFORSOKET AR SELEKTIVT, OCH DET FAR INTE FORENKLAS BORT.
       #
-      # Steget installerar playwright-core:s EGNA pinnade Chromium i stallet for att anvanda
-      # ubuntu-latest:s Google Chrome. Skalet ar att vakten har NOLLTOLERANS: den skiljer inte pa
-      # "widgeten andrades" och "rastreraren andrades", sa referensbilderna ar bara giltiga pa exakt
-      # den binar de togs pa. Runnerns Chrome uppdateras utan att en rad i repot andras, och hade
-      # gjort alla nycklar roda samtidigt en slumpmassig tisdag. Den pinnade revisionen andras bara
-      # nar package-lock.json andras — alltsa i en commit nagon kan peka pa.
+      # `npm audit` returnerar 1 for BADA sakerna: en sarbarhet OCH ett natverksfel mot
+      # advisory-endpointen. Uppmatt 2026-09-04: endpointen svarade 1 gang av 3 under flera timmar
+      # och fallde 12 jobb pa tre PR:er, medan npm:s statussida pastod "All Systems Operational".
       #
-      # Cachen ar nycklad pa exakt den versionen, sa en uppdatering av playwright-core ger en ny
-      # cache i stallet for en tyst traff pa fel binar. Manifestet i referenskatalogen bar samma
-      # sanning och faller hogljutt om de tva glider isar.
+      # Skillnaden gors pa UTSKRIFTEN: bara natverksfelet skriver "audit endpoint returned an
+      # error". En sarbarhet faller darfor pa forsta forsoket, precis som forut.
       #
-      # Provet bor i tests/visual/ och inte i tests/browser/ just for att `npm run test:browser`
-      # ovanfor INTE ska plocka upp det: dar hade det kort en gang till pa runnerns Google Chrome
-      # och fallit av fel skal. tests/browser-rigg.test.js vaktar bada katalogerna.
+      # EN BLIND LOOP AR EN SAKERHETSREGRESSION, inte en forenkling:
+      #
+      #     for i in 1 2 3; do npm audit ... && exit 0; sleep 20; done    # GOR INTE SA
+      #
+      # Den kor om aven vid en verklig sarbarhet. Grinden svarar da langsammare nar den faktiskt
+      # har nagot att saga — och en langsammare sakerhetsgrind ar en samre sakerhetsgrind. Vardet
+      # ligger i att skilja de tva felen at, inte i sjalva omforsoket.
+      #
+      # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
+      # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
+      - name: npm audit (omforsok bara vid natverksfel)
+        run: |
+          for i in 1 2 3; do
+            ut=$(npm audit --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
+            echo "$ut"
+            echo "$ut" | grep -q "audit endpoint returned an error" || {
+              echo "::error::npm audit hittade en sarbarhet — inte ett natverksfel, inget omforsok"
+              exit 1
+            }
+            echo "::warning::npm:s advisory-endpoint svarade inte (forsok $i av 3) — provar igen"
+            sleep $((i * 20))
+          done
+          echo "::error::npm:s advisory-endpoint svarade inte pa tre forsok"
+          exit 1
+
+  # LACKAGEVAKTEN, SKARVAD I FYRA DELAR.
+  #
+  # Kors i en RIKTIG webblasare, inte i jsdom. jsdom har ingen Web Locks-implementation, sa
+  # session-state faller tillbaka pa read-only och save() skriver aldrig — ett lackage som gar via
+  # save() ar osynligt dar. Det var precis darfor widgetarna som dok upp i Davids OBS-overlay (#86)
+  # kunde ligga bakom en gron vakt. jsdom har inte heller nagon layout, sa fragan "syns den har
+  # widgeten?" gar inte att stalla.
+  #
+  # ubuntu-latest levereras med Google Chrome; playwright-core startar den utan att ladda ner nagon
+  # egen webblasare. Hittas ingen hoppar testet hogljutt i stallet for att falla.
+  #
+  # SKARVNINGEN AR OFARLIG HAR, OCH BARA HAR. Sviten jamfor inga pixlar: den fragar om en widget
+  # SYNS, inte om den ser likadan ut. Fyra runners kan darfor ha fyra olika Chrome-versioner utan
+  # att utfallet andras — vilket ar precis vad den visuella vakten INTE tal, och skalet till att
+  # test-visuell nedan ar ett enda jobb.
+  #
+  # fail-fast: false — en fallande del ska inte avbryta de andra tre. Halva varden i att skarva ar
+  # att fa ALLA fel i samma korning i stallet for det forsta.
+  test-client-webblasare:
+    runs-on: ubuntu-latest
+    # Uppmatt: hela sviten 57 min 44 s pa en runner. En fjardedel ar ~15 min; 45 ar 3x det.
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        del: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: 'Lackage · riktig webblasare (del ${{ matrix.del }} av 4)'
+        run: npm run test:browser:skarva -- ${{ matrix.del }} 4
+
+  # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
+  #
+  # ETT ENDA JOBB, aldrig skarvat. Vakten har NOLLTOLERANS och skiljer inte pa "widgeten andrades"
+  # och "rastreraren andrades". Tva runners ar tva maskiner; att dela bilderna mellan dem hade
+  # gjort maskinskillnaden till ett rott prov. Jobbet ar anda bara ~10 min — det var aldrig det
+  # som kostade tid.
+  #
+  # Steget installerar playwright-core:s EGNA pinnade Chromium i stallet for att anvanda
+  # ubuntu-latest:s Google Chrome, av samma skal: referensbilderna ar bara giltiga pa exakt den
+  # binar de togs pa. Runnerns Chrome uppdateras utan att en rad i repot andras, och hade gjort
+  # alla nycklar roda samtidigt en slumpmassig tisdag. Den pinnade revisionen andras bara nar
+  # package-lock.json andras — alltsa i en commit nagon kan peka pa.
+  #
+  # Cachen ar nycklad pa exakt den versionen, sa en uppdatering av playwright-core ger en ny cache
+  # i stallet for en tyst traff pa fel binar. Manifestet i referenskatalogen bar samma sanning och
+  # faller hogljutt om de tva glider isar.
+  #
+  # Proven bor i tests/visual/ och inte i tests/browser/ just for att test:browser ovanfor INTE ska
+  # plocka upp dem: dar hade de kort en gang till pa runnerns Google Chrome och fallit av fel skal.
+  # tests/browser-rigg.test.js vaktar bada katalogerna.
+  test-visuell:
+    runs-on: ubuntu-latest
+    # Uppmatt 10 min 3 s (kedjan 31 s + rigg 57 s + vakten 7 min 56 s). 45 ger rum for en trog
+    # apt-spegel i de tva beroendestegen, som har egna tak pa 25 respektive 15 minuter.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
       - name: 'Visuell · lastversion for webblasarcachen'
         id: pw
         run: echo "version=$(node -p "require('playwright-core/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -232,7 +326,6 @@ jobs:
             sleep 20
           done
           exit 1
-
 
       # TYPSNITTEN FÅR INTE KOMMA FRÅN RUNNER-AVBILDNINGEN.
       #
@@ -316,48 +409,6 @@ jobs:
           path: tests/visual/diff/
           if-no-files-found: ignore
           retention-days: 14
-
-      # Coverage kors informativt och far inte falla bygget. Siffran ar aven MISSVISANDE hogt
-      # avgransad: node instrumenterar bara moduler den sjalv laddar, sa media.js, cloud-sync.js,
-      # gift-event-images.js, live-client.js och last-x-alerts.js — filerna dar veckans buggar bodde
-      # — syns inte alls, eftersom de laddas som <script> i jsdom. Se docs/ci.md.
-      - name: 'Coverage (informativ, tacker inte widgetfilerna)'
-        continue-on-error: true
-        run: npm run test:coverage 2>&1 | sed -n '/start of coverage/,/end of coverage/p'
-
-      # OMFORSOKET AR SELEKTIVT, OCH DET FAR INTE FORENKLAS BORT.
-      #
-      # `npm audit` returnerar 1 for BADA sakerna: en sarbarhet OCH ett natverksfel mot
-      # advisory-endpointen. Uppmatt 2026-09-04: endpointen svarade 1 gang av 3 under flera timmar
-      # och fallde 12 jobb pa tre PR:er, medan npm:s statussida pastod "All Systems Operational".
-      #
-      # Skillnaden gors pa UTSKRIFTEN: bara natverksfelet skriver "audit endpoint returned an
-      # error". En sarbarhet faller darfor pa forsta forsoket, precis som forut.
-      #
-      # EN BLIND LOOP AR EN SAKERHETSREGRESSION, inte en forenkling:
-      #
-      #     for i in 1 2 3; do npm audit ... && exit 0; sleep 20; done    # GOR INTE SA
-      #
-      # Den kor om aven vid en verklig sarbarhet. Grinden svarar da langsammare nar den faktiskt
-      # har nagot att saga — och en langsammare sakerhetsgrind ar en samre sakerhetsgrind. Vardet
-      # ligger i att skilja de tva felen at, inte i sjalva omforsoket.
-      #
-      # Provat mot ett fejkat npm, fyra fall: gront -> 1 forsok, natverksfel -> 3, SARBARHET -> 1
-      # (inget omforsok), overgaende fel -> 2. Andras logiken, prova om dem.
-      - name: npm audit (omforsok bara vid natverksfel)
-        run: |
-          for i in 1 2 3; do
-            ut=$(npm audit --audit-level=high 2>&1) && { echo "$ut"; exit 0; }
-            echo "$ut"
-            echo "$ut" | grep -q "audit endpoint returned an error" || {
-              echo "::error::npm audit hittade en sarbarhet — inte ett natverksfel, inget omforsok"
-              exit 1
-            }
-            echo "::warning::npm:s advisory-endpoint svarade inte (forsok $i av 3) — provar igen"
-            sleep $((i * 20))
-          done
-          echo "::error::npm:s advisory-endpoint svarade inte pa tre forsok"
-          exit 1
 
   # Caddyfilen ar det enda i repot som kan ta ner HELA sajten utan att nagot test marker det:
   # den kopieras rakt in i imagen av Dockerfile:55 och las forst av Caddy vid start. Ett syntaxfel

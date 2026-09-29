@@ -81,12 +81,15 @@ test('varje katalogfamilj täcks av minst ett kontrakt', () => {
 // ---- the call the link bar makes ----------------------------------------------------------------
 test('en katalognyckel räcker — anroparen känner inte till accent eller bredd', () => {
   // The whole point of the key grammar: no colours, no widths, no titles at the call site.
-  const w = VyraWidgets.create('catalog:topgift:neon', { placement: 'standalone' });
-  assert.equal(w.accent, '#d946ef');
-  assert.equal(w.valueColor, '#d946ef');
-  assert.equal(w.width, 280);
+  //
+  // Exemplet bytte fran `catalog:topgift:neon` till premiumnyckeln 2026-09-23: tema- och
+  // extraregistren pensionerades (docs/topgift-gallringen.md), och den gamla nyckeln pekar numera
+  // pa sin tvilling. Regeln som mats ar oforandrad — det ar nyckelgrammatiken, inte neon.
+  const w = VyraWidgets.create('catalog:topgift:premium:neon', { placement: 'standalone' });
+  assert.equal(w.accent, '#d9a441');
+  assert.equal(w.width, 340);
   assert.equal(w.placement, 'standalone');
-  assert.equal(w.createdFrom, 'catalog:topgift:neon');
+  assert.equal(w.createdFrom, 'catalog:topgift:premium:neon');
 });
 
 test('okänd familj kastar i stället för att ge en tom widget', () => {
@@ -99,9 +102,9 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
   // The failure mode this replaces: an unknown theme resolved to undefined and produced a widget
   // with no accent, which looks like a rendering bug rather than a typo in a catalog key.
   const cases = [
-    ['catalog:topgift:felstavat', /Okänd tema "felstavat"/],
-    ['catalog:topgift:extra:felstavat', /Okänd extratema/],
-    ['catalog:topgift:frame:felstavat', /Okänd gåvoram/],
+    ['catalog:topgift:felstavat', /Okänd premiumdesign "felstavat"/],
+    // `catalog:topgift:frame:*` star inte kvar: ramgrenen pensionerades 2026-09-23, sa 'frame'
+    // laser nu som ett TEMANAMN och kastar /Okänd tema "frame"/ — samma skydd, annan text.
     ['catalog:topstreak:felstavat', /Okänd streaktema/],
     ['catalog:topstreak:frame:felstavat', /Okänd streakram/],
     ['catalog:ranking:felstavat:gold', /Okänd rankingtyp/],
@@ -126,14 +129,15 @@ test('felstavad variant kastar och faller aldrig tillbaka på en annan design', 
   }
   // And the error names the valid options, so a typo is fixable from the message alone.
   try { VyraWidgets.create('catalog:topgift:felstavat') } catch (e) {
-    assert.match(e.message, /royal, neon, cyber, glass/);
+    assert.match(e.message, /royal, neon/);
   }
 });
 
 test('tabellerna är produktionskällan — inget behöver registreras utifrån', () => {
   assert.equal(typeof VyraWidgets.registerVariants, 'undefined',
     'extern registrering finns kvar och kan bli en andra kopia');
-  assert.ok(Object.keys(VyraWidgets.variants('topgift.frame')).length > 0, 'ramtabellen är tom');
+  assert.equal(Object.keys(VyraWidgets.variants('topgift.frame')).length, 0,
+    'topgift.frame finns igen — ramgrenen ar pensionerad, se docs/topgift-gallringen.md');
   assert.ok(Object.keys(VyraWidgets.variants('topstreak.frame')).length > 0);
   assert.ok(Object.keys(VyraWidgets.variants('battlemvp.frame')).length > 0);
 });
@@ -227,20 +231,11 @@ test('Battle MVP: inferno och royal accepteras med legacyfärgen', { timeout: 50
   }
 });
 
-test('Top Gift: sakura hör till extra-registret, inte tema-registret', { timeout: 5000 }, () => {
-  // The injected extra themes carried data-theme-template, which resolves against topgift.theme —
-  // four entries that do not include sakura. There is deliberately no fallback between the two
-  // registries: one would hide exactly this kind of misclassification.
-  assert.doesNotThrow(() => VyraWidgets.create('catalog:topgift:extra:sakura'));
-  assert.throws(() => VyraWidgets.create('catalog:topgift:sakura'), /Okänd tema/,
-    'sakura får inte tas emot som ett grundtema');
-  // The four real base themes stay where they are.
-  for (const theme of ['royal', 'neon', 'cyber', 'glass']) {
-    assert.doesNotThrow(() => VyraWidgets.create('catalog:topgift:' + theme));
-    assert.throws(() => VyraWidgets.create('catalog:topgift:extra:' + theme), /Okänd extratema/,
-      `${theme} bytte kategori`);
-  }
-});
+// 'Top Gift: sakura hor till extra-registret, inte tema-registret' togs bort 2026-09-23. Provet
+// vaktade GRANSEN mellan tva register som nu bada ar pensionerade: topgift.theme och topgift.extra
+// var dubbletter av premiumdesignerna — uppmatt gav `catalog:topgift:royal` och
+// `catalog:topgift:premium:royal` exakt samma `theme`, alltsa samma skinn. Det finns ingen grans
+// kvar att felklassificera over. Se docs/topgift-gallringen.md.
 
 test('Social Goal: followers normaliseras till follows', { timeout: 5000 }, () => {
   // `follows` is the canonical identity. `followers` is what the renderer defaults to for widgets
@@ -281,3 +276,59 @@ test('addBoostPack kräver en nyckel och kastar före varje stateändring', { ti
   assert.ok(body.indexOf('throw') < body.indexOf('state.widgets'),
     'state ändras innan nyckeln kontrollerats');
 });
+
+// ---- de nya designernas falt ---------------------------------------------------------------------
+// Uppmatt 2026-09-20 i den visuella riggen: fyra Top Like-skinn och tva Top Coins-designer gav
+// byte-identiska referensbilder, for fabriken satte bara likeTheme och renderarna laser skin
+// respektive topCoinsDesign. Katalogknappen satte ratt falt - fabriken maste ge samma widget.
+function sandlada(extra) {
+  const vm = require('vm');
+  const sandbox = {
+    console, JSON, Math, Number, String, Object, Array, Set, Map, Boolean, Date, Uint32Array,
+    crypto: { getRandomValues: a => { for (let i = 0; i < a.length; i += 1) a[i] = (i + 7) * 2654435761 >>> 0; return a } }
+  };
+  Object.assign(sandbox, extra || {});
+  sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'widget-factory.js'), 'utf8'), sandbox);
+  return sandbox.window.VyraWidgets;
+}
+
+test('de godkanda Top Like-skinnen far `skin` ur fabriken — och de pensionerade blir aldrig sparade', () => {
+  for (const skin of ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']) {
+    assert.equal(VyraWidgets.create('catalog:toplike:' + skin).skin, skin, skin);
+  }
+  // Pensionerade 2026-09-24 (Davids beslut): en gammal nyckel bygger narmaste nya design, sa
+  // ingen ny widget sparas med den gamla.
+  for (const [gammal, ny] of [['clean-bar', 'voltage'], ['soft-stack', 'voltage'], ['side-rank', 'voltage'], ['mini-podium', 'prism-horizontal']]) {
+    assert.equal(VyraWidgets.create('catalog:toplike:' + gammal).skin, ny, gammal);
+  }
+  for (const [gammal, ny] of [['clean', 'voltage'], ['neon', 'voltage'], ['center', 'prism-horizontal'], ['podium', 'prism-horizontal']]) {
+    const w = VyraWidgets.create('catalog:ranking:templateTopPoints:' + gammal);
+    assert.equal(w.topPointsDesign, ny, gammal); assert.equal(w.likeTheme, ny, gammal);
+  }
+  assert.equal('skin' in VyraWidgets.create('catalog:toplike:neon'), false, 'gamla teman far inget skin');
+});
+
+test('fabriken delegerar skinnets preset till toplike-design.js nar modulen finns', () => {
+  const anrop = [];
+  const F = sandlada({ applyVyraTopLikeStyle: (w, id) => { anrop.push(id); w.width = 180; w.likeTheme = 'right'; return true } });
+  const w = F.create('catalog:toplike:celestial');
+  assert.deepEqual(anrop, ['celestial'], 'presetet ska anropas exakt en gang for skinnet');
+  assert.equal(w.width, 180); assert.equal(w.likeTheme, 'right'); assert.equal(w.skin, 'celestial');
+  F.create('catalog:toplike:neon');
+  assert.deepEqual(anrop, ['celestial'], 'gamla teman gar inte via presetet');
+});
+
+test('Top Coins halo/signal-orbit far topCoinsDesign, skin och designens accent ur fabriken', () => {
+  for (const d of ['halo', 'signal-orbit']) {
+    const w = VyraWidgets.create('catalog:ranking:templateTopCoins:' + d);
+    assert.equal(w.topCoinsDesign, d); assert.equal(w.skin, d); assert.equal(w.width, 230);
+    assert.equal(w.liveMetric, 'coins');
+  }
+  assert.equal('topCoinsDesign' in VyraWidgets.create('catalog:ranking:templateTopCoins:gold'), false);
+  assert.equal('topCoinsDesign' in VyraWidgets.create('catalog:ranking:templateTopPoints:halo'), false, 'bara Top Coins');
+  const F = sandlada({ VyraTopCoins: { designs: { 'signal-orbit': { label: 'Signal Orbit', accent: '#45e7ff', width: 230 } } } });
+  assert.equal(F.create('catalog:ranking:templateTopCoins:signal-orbit').accent, '#45e7ff', 'designens accent, inte rankingfamiljens');
+  assert.equal(F.create('catalog:ranking:templateTopCoins:gold').accent, '#ffbd32', 'gamla teman behaller familjens accent');
+});
+

@@ -115,3 +115,116 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** REGI-stilla for battlemvp-celebration (#418, 6 nycklar)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla
+
+## 2026-09-20 — 17 referenser skrivna
+
+- **Motiv:** Tolv nya nycklar utan bild (2026-09-19), Top Points i nattens Top Like-layout och Top Streak som Clean Flip med synligt nollage - riggen neutraliserar passformen (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-20 — 6 referenser skrivna
+
+- **Motiv:** Sex nycklar vars fabriksvag saknade skin/topCoinsDesign - nu de riktiga designerna (#487)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-21 — 70 referenser raderade
+
+- **Motiv:** Föräldralösa bilder. Ingen av de 70 nycklarna finns i docs/katalogkarta.md, så varken vakten eller riggen läser dem: de låg kvar och såg ut som täckning, samma mönster som giftjar-bilderna i 58a80fa (2026-09-14). Fyra borttagningsvågor: giftcampaign 16 (åtta gamla teman, ersatta av gold/platinum/emerald i 4403ff9, 2026-09-12), socialgoal 24 (1–4 och azure/heart/rose/sapphire-frame för followers/likes/diamonds, ersatta av sex VYRA-designer i PR #475), topstreak 22 (alla varianter, ersatta av en enda Clean Flip i PR #476), toplike 4 och ranking:templateTopCoins 4 (center/clean/neon/podium, ersatta av clean-bar/soft-stack/mini-podium/side-rank respektive halo/signal-orbit i ba916de–5a96741). Inga bilder ritas om: den här raden TAR BORT, den skriver inte. Efter #487:s två referenskörningar (17 + 6 bilder, som bland annat gav de 12 nya nycklarna deras första bild) har manifestet 203 poster, varav 70 föräldralösa — kvar blir 133, lika många som png på disk, och lika många som kartans 149 nycklar minus de 16 som undantagslistan i katalognycklar.js täcker.
+- **Motor:** oförändrad, ingen ny fotografering
+- **Nycklar:** 70 raderade (se manifestets diff), 133 kvar
+
+## 2026-09-21 — 4 referenser skrivna
+
+- **Motiv:** Top Points fyra designer: podium och neon ritades som samma lista, nu trappsteg respektive neonglod (fyra nycklar)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-21 — 4 referenser skrivna
+
+- **Motiv:** Top Points om igen efter specificitets- och accentfixen: podium fick rutnat och neon lila brickor i forra korningen
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-21 — 2 referenser skrivna
+
+- **Motiv:** Top Coins ritades som en clean-bar-stapel 250x42 i stallet for sin egen design 230x193 — skinnet ar scopat och bilderna visar nu Halo och Signal Orbit
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-22 — 4 referenser skrivna
+
+- **Motiv:** Top Points blir 300 px bred nar skin-clean-bar inte langre stamplas pa familjen (#498)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla
+
+## 2026-09-23 — 95 referenser skrivna
+
+- **Motiv:** Hela referensuppsattningen har glidit fran runnern: 95 av 95 nycklar foll i ci.yml och 93 av 96 i den har workflowen, med identiskt fingeravtryck over tva korningar. Bilderna tas om i sin helhet pa dagens pinnade Chromium.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 95
+
+## 2026-09-24 — 18 referenser skrivna
+
+- **Motiv:** Nya referensbilder for de 18 nya ranking-sixpack-nycklarna, efter fix av bade ReferenceError och for tidig browser.close()
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 18 av 113 (filter: voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose) — catalog:ranking:templateTopCoins:basic-v2, catalog:ranking:templateTopCoins:celestial, catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopCoins:prism-vertical, catalog:ranking:templateTopCoins:royal-rose, catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:basic-v2, catalog:ranking:templateTopPoints:celestial, catalog:ranking:templateTopPoints:prism-horizontal, catalog:ranking:templateTopPoints:prism-vertical, catalog:ranking:templateTopPoints:royal-rose, catalog:ranking:templateTopPoints:voltage, catalog:toplike:basic-v2, catalog:toplike:celestial, catalog:toplike:prism-horizontal, catalog:toplike:prism-vertical, catalog:toplike:royal-rose, catalog:toplike:voltage
+
+## 2026-09-24 — 18 referenser skrivna
+
+- **Motiv:** Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 18 av 113 (filter: voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose) — catalog:ranking:templateTopCoins:basic-v2, catalog:ranking:templateTopCoins:celestial, catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopCoins:prism-vertical, catalog:ranking:templateTopCoins:royal-rose, catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:basic-v2, catalog:ranking:templateTopPoints:celestial, catalog:ranking:templateTopPoints:prism-horizontal, catalog:ranking:templateTopPoints:prism-vertical, catalog:ranking:templateTopPoints:royal-rose, catalog:ranking:templateTopPoints:voltage, catalog:toplike:basic-v2, catalog:toplike:celestial, catalog:toplike:prism-horizontal, catalog:toplike:prism-vertical, catalog:toplike:royal-rose, catalog:toplike:voltage
+
+## 2026-09-24 — 8 referenser borttagna
+
+- **Motiv:** Davids beslut: de gamla rankingdesignerna tas bort helt. Top Like Clean Bar, Soft Stack, Mini Podium och Side Rank, och Top Points Lista, Tre i mitten, Podium och Neon, finns inte längre i katalogen. Sparade widgetar ritas som närmaste nya design (ranking-sixpack.js PENSION).
+- **Nycklar:** 8 borttagna, 105 kvar — catalog:toplike:clean-bar, catalog:toplike:soft-stack, catalog:toplike:mini-podium, catalog:toplike:side-rank, catalog:ranking:templateTopPoints:clean, catalog:ranking:templateTopPoints:center, catalog:ranking:templateTopPoints:podium, catalog:ranking:templateTopPoints:neon
+
+## 2026-09-24 — 3 referenser skrivna
+
+- **Motiv:** Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 105 (filter: prism-horizontal) — catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopPoints:prism-horizontal, catalog:toplike:prism-horizontal
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** #525 ersatte social goals med nio goal-motion-designer; #528 gav Rail/Tower mått som ryms på duken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** Rail fick luft ovan och under ramen så att rubrik och procent ryms i boxen (#528)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** Fabriken ger de nio goal-motion-designerna katalogknappens mått (Orbit 360, Rail 400, Tower 130) — #528
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 1 referenser skrivna
+
+- **Motiv:** Nytt katalogkort Like Fountain · Portal (#531): förhandsbilden i fryst regi
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 109 (filter: likefountain:portal) — catalog:likefountain:portal
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Skattkista (catalog:skattkista:kista och :pill) — första referensen, fryst kista med 00:42 kvar
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 111 (filter: skattkista) — catalog:skattkista:kista, catalog:skattkista:pill
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 113 (filter: latonskningar) — catalog:latonskningar:spotify, catalog:latonskningar:youtube
+
+## 2026-09-29 — 115 referenser skrivna
+
+- **Motiv:** Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 115

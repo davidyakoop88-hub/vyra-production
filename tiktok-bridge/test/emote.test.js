@@ -49,13 +49,22 @@ const anv = () => ({
   avatarThumb: { urlList: ['https://cdn/avatar.jpg'] }
 });
 
+// FIXTUREN AR UPPMATT, INTE PAHITTAD (2026-09-16).
+//
+// `emoteType: 2` och `packageId: '99'` var gissningar fran den tid da inget skarpt emote-event
+// observerats. Tre riktiga inspelningar (2026-09-01/02, 156 emotes) visar en annan form:
+//
+//   emoteType 0, emotePrivateType 0, packageId 'fansclub', auditStatus 0, contentSource 0
+//   emoteScene 2 i 59 fall och 3 i 97 — proto-enumet har inget 3
+//
+// En fixtur som inte liknar verkligheten provar bara sig sjalv.
 const emote = (over = {}) => Object.assign({
   emoteId: '7382910',
   image: { urlList: ['https://cdn/emote-1.png', 'https://cdn/spegel.png'], uri: 'webcast/emote1.png' },
-  emoteType: 2,          // EMOTE_TYPE_FANS
-  emoteScene: 2,         // FANS_CLUB
+  emoteType: 0,
+  emoteScene: 2,
   emotePrivateType: 0,
-  packageId: '99'
+  packageId: 'fansclub'
 }, over);
 
 const EMOTE_EVENT = { user: anv(), emoteList: [emote()] };
@@ -107,6 +116,92 @@ test('emote överlever cloudEvent', () => {
   const moln = N.cloudEvent('e1', 'subscriberemote', N.emoteFields(EMOTE_EVENT));
   assert.equal(moln.emote, '7382910', 'cloudEvent strök emote-id:t');
   assert.equal(moln.giftImage, 'https://cdn/emote-1.png', 'cloudEvent strök bilden');
+});
+
+// FAN CLUB-STICKERS AR EMOTES MED emoteScene 2 (FANS_CLUB).
+//
+// Uppmatt 2026-09-16: INGENTING i hela kedjan emitterar typen `fanclubsticker` — varken
+// normalizer.js, bridge.js eller electron-app/tiktok-service.js. Triggern `fanSticker` i
+// live-client.js kunde alltsa fysiskt aldrig fyra, och stickervaljaren visade subscriber-emotes
+// eftersom bada las ur samma nyckel.
+//
+// Scenen ar det ENDA som skiljer dem at, och den maste overleva bada vitlistorna for att klienten
+// ska kunna dela listorna. Provet ar skrivet som en falla: stryk `emoteScene` ur emoteFields eller
+// ur cloudEvent och det faller.
+// EMOTES KOMMER PA CHATTKANALEN, INTE PA EMOTE-KANALEN.
+//
+// UPPMATT 2026-09-16 mot tre skarpa inspelningar (2026-09-01/02): 48 av 48 meddelanden som bar en
+// emote var `typ:'chat'` med emoten i `emotes[]` — formen { index, emote:{...} }. NOLL kom som
+// WebcastEmoteChatMessage med `emoteList`. Innan den formen lastes nadde 0 av 48 igenom kedjan;
+// efterat 48 av 48, alla med id och bild.
+//
+// Detta ar hela forklaringen till varfor filen tidigare sa att inget skarpt EMOTE-event setts.
+const CHATT_MED_EMOTE = {
+  user: anv(),
+  content: 'hej',
+  emotes: [{ index: 0, emote: emote() }]
+};
+
+test('emoteFields laser chattformen emotes[].emote', () => {
+  const f = N.emoteFields(CHATT_MED_EMOTE);
+  assert.equal(f.emote, '7382910', 'emoten i ett chattmeddelande hittades inte');
+  assert.equal(f.giftImage, 'https://cdn/emote-1.png', 'bilden hittades inte i chattformen');
+  assert.equal(f.emotePaket, 'fansclub', 'paketet hittades inte i chattformen');
+});
+
+test('emoteList gar fortfarande fore — en riktig EMOTE-handelse far inte sluta fungera', () => {
+  const bada = { user: anv(), emoteList: [emote({ emoteId: 'fran-emoteList' })],
+                 emotes: [{ index: 0, emote: emote({ emoteId: 'fran-chatt' }) }] };
+  assert.equal(N.emoteFields(bada).emote, 'fran-emoteList');
+});
+
+test('bryggan skickar en emote aven nar den kommer i en chattrad', () => {
+  const kod = fs.readFileSync(path.join(ROT, 'tiktok-bridge/bridge.js'), 'utf8');
+  const chatt = kod.slice(kod.indexOf('WebcastEvent.CHAT'), kod.indexOf('WebcastEvent.GIFT'));
+  assert.match(chatt, /data\?\.emotes/,
+    'CHAT-hanteraren tittar inte efter emotes — da kan subscriberEmote och fanSticker aldrig fyra');
+  assert.match(chatt, /sendEvent\('subscriberemote'/,
+    'CHAT-hanteraren skickar inget emote-event');
+});
+
+// `packageId` AR DISKRIMINATORN, INTE SCENEN.
+//
+// UPPMATT 2026-09-16 mot 156 emotes i tre SKARPA inspelningar (2026-09-01/02):
+//   packageId 'fansclub' + emoteScene 2 ..... 53
+//   packageId 'fansclub' + emoteScene 3 ..... 97   <- proto-enumet har inget 3
+//   packageId ''         + emoteScene 2 ...... 6
+// Scen 3 ar alltsa majoriteten och finns inte i enumet. En klassificering pa scenen hade stamplat
+// 97 fanklubbs-stickers som prenumerationsemotes.
+test('emotePaket foljer med ut ur emoteFields', () => {
+  assert.equal(N.emoteFields(EMOTE_EVENT).emotePaket, 'fansclub',
+    'packageId plockades inte ur emoteList — utan det gar en sticker inte att skilja fran en emote');
+});
+
+test('emotePaket overlever cloudEvent-vitlistan', () => {
+  const moln = N.cloudEvent('e1', 'subscriberemote', N.emoteFields(EMOTE_EVENT));
+  assert.equal(moln.emotePaket, 'fansclub', 'cloudEvent strok packageId');
+});
+
+test('en emote utan paket blir INTE en sticker', () => {
+  const utan = { ...EMOTE_EVENT, emoteList: [{ ...EMOTE_EVENT.emoteList[0], packageId: '' }] };
+  assert.equal(N.emoteFields(utan).emotePaket, '',
+    'ett tomt paket ska forbli tomt — att gissa AT hallet sticker fyller fel valjare');
+});
+
+test('emoteScene foljer med ut ur emoteFields', () => {
+  assert.equal(N.emoteFields(EMOTE_EVENT).emoteScene, 2, 'scenen plockades inte ur emoteList');
+});
+
+test('emoteScene overlever cloudEvent-vitlistan', () => {
+  const moln = N.cloudEvent('e1', 'subscriberemote', N.emoteFields(EMOTE_EVENT));
+  assert.equal(moln.emoteScene, 2,
+    'cloudEvent strok emoteScene — utan den kan klienten inte skilja en Fan Club-sticker fran en emote');
+});
+
+test('en emote utan scen blir INTE en sticker', () => {
+  // 99 = okand scen. Att gissa AT hallet 'sticker' hade fyllt fel valjare med ratt bilder.
+  const utanScen = { ...EMOTE_EVENT, emoteList: [{ ...EMOTE_EVENT.emoteList[0], emoteScene: undefined }] };
+  assert.notEqual(N.emoteFields(utanScen).emoteScene, 2, 'en ofullstandig nyttolast lases som sticker');
 });
 
 test('emote överlever molnets cleanEvent', () => {

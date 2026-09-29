@@ -1,0 +1,156 @@
+/* TOP POINTS · FYRA DESIGNER
+ *
+ * Basen ar gemensam, sa att livedata alltid hittar samma tre noder (strong/small/em). Det som
+ * skiljer designerna at ligger under .toppoints-<id>, och varje regel har ett synligt syfte:
+ *   clean   rak lista, bricka till vanster
+ *   center  radarna centrerade, portrattet ovanfor namnet
+ *   podium  topp tre som trappsteg, ettan hogst och i mitten
+ *   neon    glodande brickor och kantljus i accentfargen
+ *
+ * SPECIFICITETEN AR MATT, INTE GISSAD. Widgeten bar klassen `vyra-toplike` for att
+ * live-leaderboard.js hittar livedata via `.vyra-toplike[data-id]`, och approved-rankings.js
+ * klammer darfor in `skin-clean-bar` i klasslistan (okand skin -> clean-bar). Det tander
+ * toplike-studio.css regler `.widget.vyra-toplike.skin-clean-bar .toplike-row`, som ar (0,4,0).
+ * Uppmatt 2026-09-21 i riktig Chromium: med `html body .widget.vyra-toppoints-new ...` (0,3,2)
+ * FORLORADE varenda regel har trots !important, och raden ritades som clean-bars rutnat.
+ * Darfor bar varje selektor `.vyra-toplike` = (0,4,2), och darfor har geometrin !important:
+ * toplike-studio.css satter `width:100%!important` pa `.toplike-row > span`, och en deklaration
+ * UTAN !important forlorar mot en MED oavsett specificitet.
+ */
+html body .widget.vyra-toplike.vyra-toppoints-new{
+  position:absolute;box-sizing:border-box!important;height:auto!important;min-height:0!important;
+  padding:0!important;border:0!important;border-radius:0!important;background:none!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  overflow:visible!important;transform:scale(var(--tp-scale,1));transform-origin:top left;
+  font-family:Inter,system-ui,sans-serif;color:#fff;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-with-background{
+  padding:14px 12px 12px!important;border-radius:22px!important;
+  background:linear-gradient(145deg,rgba(8,11,22,.86),rgba(20,10,34,.76))!important;
+  box-shadow:0 14px 40px #0008!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-list{
+  display:flex!important;flex-direction:column!important;width:100%!important;height:auto!important;
+  gap:8px!important;padding:0!important;margin:0!important;overflow:visible!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row{
+  position:relative!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+  width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;
+  gap:8px!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;
+}
+/* Det gamla placeringstalet som studio.css ritar som <b> far aldrig komma tillbaka vid sidan av
+ * brickan — samma regel som toplike-studio.css har for sina designer. */
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>b{display:none!important}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-chip{
+  display:grid!important;place-items:center;flex:0 0 auto!important;
+  width:1.9em!important;min-width:1.9em!important;height:1.9em!important;border-radius:9px;
+  background:linear-gradient(145deg,#f7dd8a,#c9931a);border:1px solid #ffeaa6;color:#4a2c00;
+  font-size:clamp(10px,4.4cqw,14px);font-weight:900;line-height:1;z-index:3;
+  box-shadow:0 2px 6px #0007;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-portratt{
+  position:relative;flex:0 0 auto!important;
+  width:2.6em!important;min-width:2.6em!important;height:2.6em!important;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 34% 28%,#4a2a72,#140a24);box-shadow:0 0 14px #0009;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-portratt>img{
+  width:100%!important;height:100%!important;min-width:0!important;border:0!important;
+  border-radius:50%!important;object-fit:cover!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-copy{display:block!important;flex:1 1 auto!important;width:auto!important;min-width:0!important;margin:0!important}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-copy strong{
+  display:block!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:clamp(11px,5cqw,16px)!important;line-height:1.1!important;font-weight:900!important;
+  letter-spacing:.04em;color:#fff!important;text-shadow:0 2px 6px #000!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>.tp-copy small{display:none!important}
+html body .widget.vyra-toplike.vyra-toppoints-new .toplike-row>em{
+  flex:0 0 auto!important;width:auto!important;min-width:0!important;margin:0!important;color:#ffd566!important;font-style:normal!important;font-weight:900!important;
+  font-size:clamp(10px,4.4cqw,14px)!important;line-height:1.1!important;letter-spacing:.02em;
+  text-shadow:0 2px 6px #000!important;
+}
+
+/* STIL 1 · LISTA — basen, utan tillagg. Egen regel sa att designen har en synlig definition
+ * och inte bara ar "det som blir kvar". */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-clean .toplike-row{padding:2px 0!important}
+
+/* STIL 2 · TRE I MITTEN — portrattet ovanfor namnet, allt centrerat. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-center .toplike-list{
+  flex-direction:row!important;flex-wrap:wrap!important;justify-content:center!important;gap:12px!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-center .toplike-row{
+  flex-direction:column!important;width:auto!important;flex:0 1 28%;gap:4px!important;text-align:center;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-center .toplike-row>.tp-copy{flex:0 0 auto;width:100%;text-align:center}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-center .toplike-row>.tp-portratt{width:3.4em!important;min-width:3.4em!important;height:3.4em!important}
+
+/* STIL 3 · PODIUM — topp tre som trappsteg. DOM-ordningen ar 1,2,3 for livedatans skull, sa
+ * placeringen i sidled gors med `order`: tvaan till vanster, ettan i mitten, trean till hoger.
+ * Trappstegen ar egna noder (.tp-podium-steg) sa att hojden kan skilja per plats. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-list{
+  flex-direction:row!important;flex-wrap:wrap!important;align-items:flex-end!important;
+  justify-content:center!important;gap:10px!important;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row{
+  flex-direction:column!important;width:auto!important;flex:0 0 28%;gap:3px!important;
+  justify-content:flex-end!important;text-align:center;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row.rank-1{order:2!important}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row.rank-2{order:1!important}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row.rank-3{order:3!important}
+/* Plats fyra och nedat ar en vanlig rad under podiet, i full bredd. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row:not(.rank-1):not(.rank-2):not(.rank-3){
+  flex:0 0 100%!important;flex-direction:row!important;text-align:left;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row>.tp-podium-steg{
+  order:9;width:100%!important;min-width:0!important;border-radius:7px 7px 0 0;
+  background:linear-gradient(180deg,var(--tp-accent,#ffc94d),#8a5a05);
+  box-shadow:0 -2px 10px #0007 inset;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row>.tp-podium-steg[data-plats="1"]{height:34px}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row>.tp-podium-steg[data-plats="2"]{height:23px;filter:brightness(.86)}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row>.tp-podium-steg[data-plats="3"]{height:15px;filter:brightness(.72)}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row.rank-1 .tp-portratt{width:3.6em!important;min-width:3.6em!important;height:3.6em!important}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-podium .toplike-row>.tp-chip{order:-1}
+
+/* STIL 4 · NEON — kantljus bakom varje rad och glodande brickor i accentfargen. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row{
+  padding:4px 8px!important;border-radius:11px!important;isolation:isolate;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row>.tp-glod{
+  position:absolute;inset:0;z-index:-1;border-radius:11px;pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--tp-accent,#45e7ff),transparent 45%);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--tp-accent,#45e7ff),transparent 86%),transparent 68%);
+  box-shadow:0 0 12px color-mix(in srgb,var(--tp-accent,#45e7ff),transparent 62%);
+  animation:tp-glod 3.6s ease-in-out infinite;
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row.rank-2 .tp-glod{animation-delay:-.45s}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row.rank-3 .tp-glod{animation-delay:-.9s}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row.rank-4 .tp-glod{animation-delay:-1.35s}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row.rank-5 .tp-glod{animation-delay:-1.8s}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row>.tp-chip{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--tp-accent,#45e7ff),#fff 34%),var(--tp-accent,#45e7ff));
+  border-color:color-mix(in srgb,var(--tp-accent,#45e7ff),#fff 55%);color:#05222b;
+  box-shadow:0 0 10px var(--tp-accent,#45e7ff);
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row>.tp-portratt{
+  box-shadow:0 0 12px color-mix(in srgb,var(--tp-accent,#45e7ff),transparent 40%);
+}
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-neon .toplike-row>em{color:var(--tp-accent,#45e7ff)!important;text-shadow:0 0 9px color-mix(in srgb,var(--tp-accent,#45e7ff),transparent 55%)!important}
+
+/* Rorelsen maste ga att stanga av: nolltoleransvakten fotograferar stillastaende bilder, och en
+ * design som andrar sig i evighet gar inte att jamfora. Samma vaxel som Top Coins har. */
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-paused *,
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-paused *::before,
+html body .widget.vyra-toplike.vyra-toppoints-new.toppoints-paused *::after{animation-play-state:paused!important}
+@keyframes tp-glod{0%,100%{opacity:.62}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){html body .widget.vyra-toplike.vyra-toppoints-new *{animation:none!important}}
+
+/* Katalogsektionen och designvaljaren i panelen — samma form som Top Coins. */
+.toppoints-v2-catalog button i{
+  border-radius:9px!important;background:linear-gradient(145deg,#f7dd8a,#c9931a)!important;
+  color:#4a2c00!important;box-shadow:0 0 11px #c9a22788!important;
+}
+.toppoints-design-choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:7px 0 12px}
+.toppoints-design-choice button{padding:10px 8px;border:1px solid #ffffff22;border-radius:10px;background:#ffffff08;color:#fff;font-weight:750;cursor:pointer}
+.toppoints-design-choice button.active{border-color:#b84cff;background:#a632ff22;box-shadow:0 0 0 1px #b84cff55 inset}

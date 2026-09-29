@@ -1,0 +1,59 @@
+html body .widget.vyra-toplike.vyra-topcoins-new{
+  position:absolute;box-sizing:border-box!important;height:auto!important;min-height:0!important;
+  padding:0!important;border:0!important;border-radius:0!important;background:none!important;
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  overflow:visible!important;transform:scale(var(--tc-scale,1));transform-origin:top left;
+  font-family:Inter,system-ui,sans-serif;color:#fff;
+}
+html body .widget.vyra-topcoins-new.topcoins-with-background{
+  padding:14px 12px 12px!important;border-radius:24px!important;
+  background:linear-gradient(145deg,rgba(8,11,22,.86),rgba(20,10,34,.76))!important;
+  box-shadow:0 14px 40px #0008!important;
+}
+html body .widget.vyra-topcoins-new .toplike-list{display:block!important;width:100%!important;height:auto!important;padding:0!important;margin:0!important;overflow:visible!important}
+html body .widget.vyra-topcoins-new .toplike-row{
+  position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+  width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;
+  gap:5px!important;border:0!important;background:none!important;box-shadow:none!important;overflow:visible!important;
+}
+html body .widget.vyra-topcoins-new .tc-portrait{position:relative;width:72%;aspect-ratio:1;isolation:isolate}
+html body .widget.vyra-topcoins-new .tc-portrait>img{
+  position:absolute!important;inset:13%!important;width:74%!important;height:74%!important;min-width:0!important;
+  border-radius:50%!important;object-fit:cover!important;border:0!important;box-shadow:0 0 22px #000b!important;z-index:2!important;
+}
+html body .widget.vyra-topcoins-new .tc-ring{position:absolute;inset:8%;border-radius:50%;pointer-events:none;z-index:3}
+html body .widget.vyra-topcoins-new .tc-ring-a{border:2px solid var(--tc-accent);box-shadow:0 0 9px var(--tc-accent),inset 0 0 8px color-mix(in srgb,var(--tc-accent),transparent 38%)}
+html body .widget.vyra-topcoins-new .tc-ring-b{inset:3%;border:1px solid #44e7ff;border-left-color:transparent;border-bottom-color:#9a5cff;filter:drop-shadow(0 0 5px #42e9ff)}
+html body .widget.vyra-topcoins-new .tc-copy{display:block!important;width:100%!important;margin:0!important;text-align:center!important}
+html body .widget.vyra-topcoins-new .tc-copy strong{display:block!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(15px,9cqw,23px)!important;line-height:1.08!important;font-weight:900!important;letter-spacing:.045em;color:#fff!important;text-shadow:0 2px 7px #000,0 0 10px #7d3dff90!important}
+html body .widget.vyra-topcoins-new .tc-copy small{display:none!important}
+html body .widget.vyra-topcoins-new em{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;width:100%!important;margin:0!important;color:#ffd566!important;font-size:clamp(12px,6.8cqw,18px)!important;line-height:1.1!important;font-style:normal!important;font-weight:900!important;letter-spacing:.025em;text-shadow:0 2px 6px #000,0 0 8px #eebd3977!important}
+html body .widget.vyra-topcoins-new em>i{display:grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;background:linear-gradient(145deg,#fff4aa,#d99213);border:1px solid #fff0a0;color:#6b3a00;font-size:.66em;font-style:normal;box-shadow:0 0 8px #ffc94daa}
+html body .widget.vyra-topcoins-new .tc-coin{position:absolute;z-index:4;display:grid;place-items:center;width:14%;aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#fff2a2,#d89514);border:1px solid #fff0a0;color:#6b3a00;font:800 clamp(6px,3cqw,10px)/1 Inter,sans-serif;box-shadow:0 0 8px #ffc94d;font-style:normal}
+html body .widget.vyra-topcoins-new .tc-c1{left:1%;top:40%;animation:tc-float 5.4s ease-in-out infinite}
+html body .widget.vyra-topcoins-new .tc-c2{right:0;top:24%;animation:tc-float 6.2s ease-in-out -2s infinite}
+html body .widget.vyra-topcoins-new .tc-c3{right:10%;bottom:3%;animation:tc-float 5.8s ease-in-out -3.5s infinite}
+html body .widget.vyra-topcoins-new .tc-spark{position:absolute;z-index:5;width:4px;height:4px;border-radius:50%;background:#fff7be;box-shadow:0 0 8px #ffd45c}
+html body .widget.vyra-topcoins-new .tc-s1{left:10%;top:17%;animation:tc-pulse 2.8s ease-in-out infinite}
+html body .widget.vyra-topcoins-new .tc-s2{right:15%;bottom:17%;animation:tc-pulse 2.8s ease-in-out -1.4s infinite}
+html body .widget.vyra-topcoins-new.topcoins-halo .tc-ring-b{animation:tc-spin 12s linear infinite}
+html body .widget.vyra-topcoins-new .tc-orbit{position:absolute;border-radius:50%;z-index:4;pointer-events:none}
+html body .widget.vyra-topcoins-new .tc-o1{inset:0;border:2px solid transparent;border-top-color:#45e7ff;border-right-color:#45e7ff;animation:tc-spin 8s linear infinite}
+html body .widget.vyra-topcoins-new .tc-o2{inset:5%;border:2px solid transparent;border-bottom-color:#ffc94d;border-left-color:#ffc94d;animation:tc-spin-rev 10s linear infinite}
+html body .widget.vyra-topcoins-new .tc-o3{inset:11%;border:1px solid transparent;border-top-color:#a05cff;border-left-color:#a05cff;animation:tc-spin 13s linear infinite}
+html body .widget.vyra-topcoins-new .tc-orbit-dot{position:absolute;z-index:5;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 10px #44e7ff}
+html body .widget.vyra-topcoins-new .tc-d1{left:8%;top:27%;animation:tc-dot 4.2s ease-in-out infinite}
+html body .widget.vyra-topcoins-new .tc-d2{right:7%;bottom:24%;background:#ffd35d;box-shadow:0 0 10px #ffd35d;animation:tc-dot 4.2s ease-in-out -2.1s infinite}
+html body .widget.vyra-topcoins-new.topcoins-signal-orbit .tc-copy{margin-top:-2px!important}
+html body .widget.vyra-topcoins-new.topcoins-signal-orbit em{font-size:clamp(11px,6.2cqw,17px)!important}
+html body .widget.vyra-topcoins-new.topcoins-paused *,html body .widget.vyra-topcoins-new.topcoins-paused *::before,html body .widget.vyra-topcoins-new.topcoins-paused *::after{animation-play-state:paused!important}
+@keyframes tc-spin{to{transform:rotate(360deg)}}
+@keyframes tc-spin-rev{to{transform:rotate(-360deg)}}
+@keyframes tc-float{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-5px) rotate(8deg)}}
+@keyframes tc-pulse{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.35)}}
+@keyframes tc-dot{0%,100%{opacity:.45;transform:scale(.75)}50%{opacity:1;transform:scale(1.25)}}
+@media(prefers-reduced-motion:reduce){html body .widget.vyra-topcoins-new *{animation:none!important}}
+.topcoins-v2-catalog button i{border-radius:50%!important;background:linear-gradient(145deg,#fff1a1,#da9415)!important;color:#6b3a00!important;box-shadow:0 0 11px #ffc94d88!important}
+.topcoins-design-choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:7px 0 12px}
+.topcoins-design-choice button{padding:10px 8px;border:1px solid #ffffff22;border-radius:10px;background:#ffffff08;color:#fff;font-weight:750;cursor:pointer}
+.topcoins-design-choice button.active{border-color:#b84cff;background:#a632ff22;box-shadow:0 0 0 1px #b84cff55 inset}

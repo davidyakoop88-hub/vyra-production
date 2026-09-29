@@ -438,7 +438,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -496,7 +496,10 @@ function battleProbe(data){
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope',
+  // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
+  // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt stoppas.
+  'chatcommand']);
 
 // EMOTES — formen kommer ur bibliotekets egna typer, inte ur en gissning
 // (tiktok-live-proto/dist/node/v3.d.ts):
@@ -518,12 +521,37 @@ const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subs
 // FORSTA EMOTEN TAS. emoteList ar en array — en chattrad kan bara flera. Ett event per emote hade
 // dubblerat trafiken mot ingest-taket for en ren valjarfunktion.
 function emoteFields(data){
-  const forsta=data?.emoteList?.[0]||data?.emote||{};
+  // EMOTES KOMMER I PRAKTIKEN PA CHATTKANALEN, INTE PA EMOTE-KANALEN.
+  //
+  // UPPMATT 2026-09-16 mot tre skarpa inspelningar (2026-09-01/02): 48 av 48 meddelanden som bar
+  // en emote var `typ:'chat'` med emoten i `emotes[]` — formen `{index, emote:{...}}`. NOLL kom som
+  // WebcastEmoteChatMessage med `emoteList`. Det ar hela forklaringen till varfor filen tidigare
+  // sa "Vi har annu inte sett ett enda skarpt EMOTE-event": de har aldrig kommit den vagen.
+  //
+  // `emoteList` last forst anda — biblioteket kan skicka bada formerna, och en installation som
+  // FAR riktiga EMOTE-handelser ska fortsatta fungera oforandrat.
+  const forsta=data?.emoteList?.[0]||data?.emotes?.[0]?.emote||data?.emotes?.[0]||data?.emote||{};
   const bild=forsta?.image||{};
   return{
     ...baseUser(data),
     emote:text(forsta?.emoteId,160),
-    giftImage:text(bild?.urlList?.[0]||bild?.imageUrl||'',1200)
+    giftImage:text(bild?.urlList?.[0]||bild?.imageUrl||'',1200),
+    // `packageId` SKILJER EN FAN CLUB-STICKER FRAN EN PRENUMERATIONSEMOTE — INTE `emoteScene`.
+    //
+    // Forsta forsoket klassade pa scenen, eftersom proto-enumet sager SUBSCRIPTION=0, GAME=1,
+    // FANS_CLUB=2. UPPMATT 2026-09-16 mot 156 emotes i tre SKARPA inspelningar (2026-09-01/02):
+    //
+    //   packageId 'fansclub' + emoteScene 2 ..... 53
+    //   packageId 'fansclub' + emoteScene 3 ..... 97      <- enumet har inget 3 alls
+    //   packageId ''         + emoteScene 2 ...... 6
+    //
+    // Scen 3 finns alltsa i verkligheten men inte i enumet, och den ar MAJORITETEN. En
+    // klassificering pa scenen hade stamplat 97 fanklubbs-stickers som prenumerationsemotes.
+    // `packageId` ar entydigt i samma data: 150 av 156 sager 'fansclub'.
+    //
+    // Scenen foljer anda med — den ar uppmatt data och kan behovas — men den AVGOR ingenting.
+    emoteScene:number(forsta?.emoteScene,99),
+    emotePaket:text(forsta?.packageId,64)
   };
 }
 // FANS_UPGRADE — TikToks EGEN nivahojning, uppmatt 2026-09-01 (fem exemplar, nivaer 32/18/10/19/11).
@@ -645,6 +673,28 @@ function mvpFields(data, mittAnkarId){
   return{name:mvp.name,username:mvp.name,score:mvp.score,coins:mvp.score,
     profileImage:mvp.profileImage,battleId:text(data?.battleId,160)};
 }
+// SKATTKISTAN (ENVELOPE). Mätt 2026-09-06 i en riktig sändning: 14 rader, 100 diamanter delades ut
+// och ingen widget såg dem. Fälten nedan är lästa ur tiktok-live-proto v2 (WebcastEnvelopeMessage),
+// inte gissade: envelopeInfo bär avsändarens NAMN och BILD, inte bara sendUserId.
+//
+//   display 1 = kistan visas, 2 = kistan döljs (öppnad eller borttagen). Widgeten behöver båda.
+//   unpackAt  = när kistan går att öppna. Protofilen säger bara `number` — TikTok brukar skicka
+//               sekunder, men millisekunder accepteras också så att en enhetsgissning inte kan ge en
+//               nedräkning på 50 år eller på 0 sekunder.
+//
+// Namnen kistaId/oppnasAt/kistaDold är NYA fält i händelsekontraktet, lagda samtidigt i bryggan,
+// skrivbordsappen, servern (cleanEvent) och klienten (skattkista.js). Diamanter och antal personer
+// går i de befintliga fälten diamonds/count.
+function tillMs(v){const n=Number(v);if(!Number.isFinite(n)||n<=0)return 0;return n<1e12?Math.round(n*1000):Math.round(n)}
+function envelopeFields(data){
+  const e=data?.envelopeInfo;
+  if(!e||!e.envelopeId)return null;
+  const bild=e.sendUserAvatar?.urlList?.[0]||e.sendUserAvatar?.urlListList?.[0]||'';
+  const namn=text(e.sendUserName,120);
+  return{userId:text(e.sendUserId,160),username:namn,name:namn,profileImage:text(bild,1200),
+    diamonds:number(e.diamondCount,1e9),count:number(e.peopleCount,1e6),
+    kistaId:text(e.envelopeId,160),oppnasAt:tillMs(e.unpackAt),kistaDold:Number(data?.display)===2};
+}
 function tillMolnet(typ){return TILL_MOLNET.has(typ)}
 
 // GUARDIAN — UPPMATT, INTE GISSAD (2026-09-01, inspelning med VYRA_INSPELNING_TYPER=alla).
@@ -662,4 +712,4 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields};
+module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};

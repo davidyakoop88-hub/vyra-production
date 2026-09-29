@@ -1,5 +1,266 @@
 # VYRA Project State
 
+## Checkpoint 56 — TikTok-event borta: kedjan som aldrig publicerade ett event (2026-09-24)
+
+**TikTok-event finns inte längre.** David och Codex byggde den, men den blev aldrig färdig, och den
+togs bort i sin helhet (#516). Den som letar efter den i koden ska veta att den är borttagen med
+avsikt och inte försvunnen av misstag.
+
+### Vad den var — en kedja i två ändar, inte två funktioner
+
+| led | fil | vad den gjorde |
+|---|---|---|
+| avläsaren (Desktop) | `electron-app/tiktok-event-service.js` + `tiktok-event-connector.js/.css` | öppnade ett TikTok-fönster, skrapade eventsidan, stoppade ofullständig information |
+| publiceringen (framsidan) | `tiktok-events-data.js` + `landing-events.js/.css` | renderade det som blivit verifierat |
+
+Den avgörande mätningen: `tiktok-events-data.js` stod med `events: Object.freeze([])`. **Kedjan
+publicerade aldrig ett enda event** — framsidan visade platshållaren "Vi verifierar veckans event"
+från den dag den lades in till den dag den togs bort. Båda leden var alltså värdelösa var för sig
+och tillsammans, vilket är skälet till att hela kedjan gick och inte bara ena änden.
+
+Borttaget: åtta filer, alla referenser i `index.html` och `studio.html`, de fyra
+`/api/tiktok-events/*`-rutterna i Desktop, `main.js`-kopplingen, paketlistan och fem rader i
+`.claude/domaner.json`. Filerna och kartan **måste** gå i samma commit —
+`tests/domankarta.test.js` jämför kartan mot git-spårade filer, så vilken ordning som helst ger ett
+rött mellanläge.
+
+### Tre saker som bär namnet men inte hörde dit
+
+Det här är checkpointens viktigaste rad, för nästa gång någon söker på "tiktok-event" och tror sig
+hitta rester:
+
+1. **`tiktok-fields.js` och `tiktok-service.js`** är den riktiga LIVE-bryggan. Orörda.
+2. **Allt som heter "TikTok-event" i `docs/`** syftar på LIVE-*händelseströmmen* (gåvor, likes) —
+   inte kalendern. Bland annat live-verifiering punkt 6. Står kvar.
+3. **Versionen 1.2.5** i `electron-app/package.json` är appens versionsnummer, inte funktionens.
+
+### Den kvarleva som hade blivit farlig
+
+Avläsaren loggade in användaren på TikTok i en **beständig** session, `persist:vyra-tiktok-events`.
+Tas koden bort utan mer blir riktiga TikTok-inloggningskakor kvar i `userData` på varje maskin som
+provade funktionen — utan att något längre kan nå eller rensa dem. `main.js` tvättar nu den
+partitionen vid start: gratis no-op när mappen är tom, inlindad i try/catch så den aldrig hindrar
+appen från att starta.
+
+**Lagren står utskrivna med flit.** Ett argumentlöst anrop får inte finnas i `main.js` —
+`test/clean-update.test.js` förbjuder det, av gott skäl: på `defaultSession` hade det raderat
+kontots kakor och sparade layouter. Vakten läser källan som **text**, så formen får inte ens stå i
+en kommentar i filen. Det tog två försök att lära sig.
+
+### Mätt efter borttagningen
+
+| svit | resultat |
+|---|---|
+| rot `npm test` | 1989 godkända, 0 fel, 3 överhoppade |
+| `npm run test:skript` | 28 / 28 |
+| `electron-app npm test` | 156 / 156 |
+| `tests/domankarta.test.js` | 7 / 7 — alla 294 filer i roten har exakt en ägare |
+| `tests/browser-skarvning.test.js` | 7 / 7 |
+| browser-prov mot studions sidopanel och landningssidan | 78 / 78, noll överhoppade |
+| kvarvarande referenser i repot | noll |
+
+Landningssidan väntar nu **fyra** delar i stället för fem
+(`tests/browser/landningssida.browser.test.js`).
+
+**En anteckning om browserproven:** de hoppas inte över i den här sandlådan. Chromium finns
+förinstallerad, och `VYRA_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` får
+`tests/helpers/webblasare.js` att hitta den. Utan den variabeln rapporteras sviten som överhoppad
+— grön av tomhet, precis det som helpern själv varnar för i sin kommentar.
+
+---
+
+## Checkpoint 55 — Dagen då vakterna gick sönder, och vad de lärde oss (2026-09-23/24)
+
+Ett dygns arbete i fem spår. Fyra PR:er in, två stängda, och tre vakter som visade sig mäta något
+annat än de påstod. **Det sista är den viktigaste delen av checkpointen** — de tre misstagen nedan
+kostade mest tid, och alla tre hade samma form: en medveten design lästes som ett slarvfel.
+
+### Vad som gick in
+
+| | |
+|---|---|
+| `c8d7f3d0` | **Top Gift: 40 designer → 2.** Sju gåvoramar, tolv VYRA ORIGINAL och nitton premiumdesigner pensionerade. `topgift-pension.js` lindar sparade layouter så ingen widget går sönder. Elva av tolv ORIGINAL-kort var dubbletter — identiskt tema, två bredder. |
+| `1b9a0c01` | Inloggningsprovets race vid redirect (Codex) |
+| `746a242d` | **Poängmotorn + Ranking-widget.** `server/points-runtime.js`, tre orörda rankningar, token-skopade läsrutter. Verifierad mot riktig Postgres. |
+| `d564d015` | 95 omskrivna referensbilder, de två tyngsta browserproven, Like Fountains CSS |
+
+Stängda: **#511** (överspelad av #506 — hade gjort två gröna prov röda) och **#513** (samma två
+rader som redan låg inne).
+
+### De tre vakterna som mätte fel sak
+
+**1. `premium-final.css` bar tio pensionerade designer.** Gallringen städade `studio.css` och
+katalogen. Kvar låg 32 selektorer och fyra keyframes som *såg ut som* fungerande designer när man
+läste filen. Nytt prov läser namnen ur pensionstabellen och söker dem i **alla** CSS-filer i roten
+— inte bara den fil någon råkade tänka på.
+
+**2. En lös CSS-selektor slukade partikelklassen.** När Like Fountains canvas togs bort lämnades
+`.lf-stream canvas` utan block. Parsern slog ihop den med nästa regel över en mellanliggande
+kommentar, så `.lf-p` blev `.lf-stream canvas .lf-p` och matchade ingenting. **Partiklarna stod
+utan grundstil i skarpt läge.** Tre vakter missade det: klammerbalansen går jämnt ut, browserprovet
+räknar noder och inte stil, och `catalog:likefountain` står i `UTAN_REFERENS`. Ingen av dem läser
+CSS:en som en **parser** gör. Codex hittade den; fixen ligger i `b2fb5077` + `9f45123d`.
+
+**3. Overlaylänkens fält hade noll marginal vid alla fyra fönsterbredder.** Etikettkolumnen var
+fasta 170 px och fältet fick resten. I CI klipptes adressen (fält 375 px, adress 389). Uppmätt
+samma maskin, samma kod, två körningar: fältet blev 382 px den ena gången och 439 den andra — det
+är inte tre maskiner, det är tre ögonblick i samma omflöde. Etiketten krymper nu först
+(`minmax(0,170px)`) och fältet har ett golv i `ch`, som skalar med typsnittet där `px` inte gör det.
+
+### Referensuppsättningen hade glidit från runnern
+
+95 av 95 nycklar föll i `ci.yml`, 93 av 96 i referensworkflowen. **Beviset att det var miljön:**
+alla tolv `heartgoal`-teman skilde på exakt 36711 av 60720 pixlar. Tolv teman som skiljer sig i
+färg kan inte ge identiskt tal av en kodändring.
+
+Full omkörning av `visuell-referenser.yml` på pinnad Chromium löste det, och de nya bilderna höll
+på två andra runners. **Referensbilder rörs aldrig för hand.**
+
+Nytt sedan dess: `rastreringsAvtryck()` skriver ett textavtryck i manifestet, och vakten säger nu
+rakt ut när maskinen ritat annorlunda — i stället för att lämna 95 widgetar att misstänka.
+
+### CI: 70 minuter → ungefär 10
+
+Uppmätt, inte gissat. `test:browser` var **82 %** av jobbet; den visuella vakten som alla trodde var
+tyngst var åtta minuter. `test-client` är nu tre parallella jobb, och browsersviten skarvas i fyra
+viktade delar. De två tyngsta provfilerna gick från 11 min 44 s till 1 min 6 s — `mat()` anropades
+66 gånger för 9 layouter, och tre sömner var 9–64× längre än vad mätningen visade att de behövde.
+
+### Invarianter som inte får brytas
+
+- **Referensbilder skrivs bara av `visuell-referenser.yml`**, aldrig för hand. Full omkörning utan
+  filter är botemedlet mot en glidande uppsättning — workflowen är inte trasig.
+- **Pixelvaktens tröskel är en avrundning, inte en budget.** 6/255 per kanal kommer ur CI:s
+  uppmätta brusgolv. En pixel som skiljer 7 ska fälla provet. Höj den inte.
+- **Full verifiering efter en delvis referensskrivning är avsiktlig** — den fångar en nyckel som
+  utelämnats ur filtret men påverkats av ändringen.
+- **Den visuella vakten skarvas aldrig** över flera runners. Läckagevakten får det, för den frågar
+  om en widget syns, inte om den ser likadan ut.
+- Ett prov som filtrerar över namn som inte finns är **grönt av tomhet** och vaktar ingenting.
+
+### Nästa steg
+
+1. **Live-verifiering.** `docs/live-verifiering.md` punkt 6 och 8 är obesvarade, och checkpoint 54:s
+   tre lagningar plus Top Streaks koreografi har aldrig körts i en riktig sändning.
+2. Rastreringsavtryckets känslighet för olika **typsnitt** är oprövad — sandlådan når inte Google
+   Fonts. Mutera vikten i ett jobb där typsnittsprovet är grönt.
+3. Roadmapens Phase 6 — Top Gifter Widget.
+
+## Checkpoint 54 — Tre fynd ur livetestet, alla i samma familj (2026-09-22)
+
+Kvallens livetest 2026-09-21 gav tre fel, och de visade sig vara tre ansikten pa samma sak:
+**widgetar som visar fel eller ingenting nar de saknar historik.** Alla tre ar lagade, var och en med
+egna prov och egen mutationskontroll.
+
+### 1. Rakarna nollstalldes av en sidladdning, inte av sandningsstarten
+
+Tva raknare bar "den har sandningen" i klienten och bada lag i vanliga variabler:
+
+| Raknare | Fil | Vad en omladdning gjorde |
+|---|---|---|
+| `totals` | `live-leaderboard.js` | "Denna stream" tomdes; tillbaka kom bara serverns rullande buffert (max 250 handelser) |
+| `records` | `gift-event-images.js` | Hogvattenmarkena gick till 0, sa nasta **enkrona** rakades som nytt rekord och skrev over den gava som ledde |
+
+Regeln stod redan i koden — raknarna nollstalls nar SANDNINGEN borjar om — men den hall bara for
+`live:start`, aldrig for laddningen. Bada far nu en ogonblicksbild i **sessionStorage**, nycklad pa
+aktivt `sessionId`.
+
+**Lagringsvalet ar hela sakerheten.** `event-dedupe.js` lagger sin grind i samma lagring och darmed
+samma livslangd: overlever grinden en omladdning dedupas backfyllnaden bort och raknaren dubbleras
+inte; rivs kontexten (OBS forstor kallan vid scenbyte) forsvinner bada. En delad `localStorage` hade
+gett ogonblicksbild **plus** oderdupad backfyllnad — alltsa dubbelraknat mitt i en sandning, varre an
+buggen som lagades.
+
+### 2. Cykeln visade en tom mall nar den bytte till en metrik utan data
+
+`visaRankingSteg` faller tillbaka pa demorostern nar ett steg saknar data. I editorn ar det ratt. I
+overlay nollar `live-zero-state.js` demoraderna direkt, sa framfor publiken stod rubriken
+"TOP POINTS" over fem namnlosa rader med "◆ 0", fyra sekunder per varv, hela sandningen.
+
+Steget valjs nu bland de metriker som faktiskt har data, **och bara i overlay** — i editorn maste en
+nyss ikryssad cykel ga att se utan att nagon forst ger en gava. Har ingen metrik data star valet
+orort; att widgeten da inte ska synas alls ar punkt 3:s regel.
+
+Steget identifieras dessutom av sin **metrik** i stallet for sitt index: listan kan vaxa mitt i en
+sandning (forsta gavan lagger till TOP COINS), och med index betydde samma siffra plotsligt en annan
+lista, sa koreografin uteblev vid just det bytet.
+
+### 3. Regeln om osynliga tomma widgetar gallde tva av sex
+
+"En tom widget syns inte i sandningen" var byggd for Top Gift och Top Streak, dar tomheten star i
+state och `wh()`-haken racker. De fyra ovriga — **Top Like, Top Coins, Top Points och Battle MVP** —
+stod kvar som tomma skal hela sandningen.
+
+De far sitt innehall av livedatans riktade DOM-patchar och av `live-zero-state.js` nollning, sa vid
+render-tillfallet bar de fortfarande demoraderna: `wh()` kan omojligt veta om de ar tomma. Fragan
+stalls darfor till DOM:en, efter att bade renderaren och nollningen kort — en MutationObserver, ingen
+timer, eftersom allt som kan andra svaret ar en DOM-mutation och ett intervall dessutom hade hallit
+sidan vaken for den visuella riggen.
+
+De sex ar exakt de familjer `live-zero-state.js` nollar i overlay. Ett sanningsprov vaktar antalet,
+sa nasta gang listan vaxer pa ena stallet maste den vaxa pa det andra.
+
+### Invarianter som inte far brytas
+
+- Raknarnas ogonblicksbilder ligger i `sessionStorage`, aldrig i `localStorage` (se skalet ovan).
+- Cykelfiltret och doljandet av tomma widgetar galler **bara overlay**. Editorn ska alltid visa allt.
+- Ingen av de tre vagarna far skriva tillbaka ett varde som redan star dar: en identisk skrivning ar
+  anda en DOM-mutation, och den vacker observatoren som kallade hit.
+
+### Nasta steg: gavororelsen — BESLUTET OMFATTAT 2026-09-22
+
+**Vad som ska byggas.** En **koreografi pa Top Gift och Top Streak**: en ny art pa fasmotorns
+fabrik (`widget-fas.js`), som koreograferar den flipp `VyraFlip` redan ager. Alltsa rorelse pa
+plats, i de widgetar som finns — INTE flygande ikoner eller partiklar over duken.
+
+**Varfor beslutet fattades om.** Den forsta versionen av den har raden sa bara att gavororelsen
+var "beslutad och blir billigare an vantat". Sjalva beslutet fattades i en session vars kontext ar
+borta, och det stod ingenstans — varken har, i `VYRA_MASTER_ROADMAP.md` (som fortfarande beskriver
+faser fran juli) eller nagon annanstans i repot. En anteckning som sager ATT nagot ar beslutat men
+inte VAD ar inget beslut; den ar en fralla for nasta person. Darfor togs det om medvetet.
+
+**Skalet, och det ar strukturellt och inte en tolkning av ordval:**
+
+| Familj | Koreografi | Flipp |
+|---|---|---|
+| Fan Level Up | `fan-fas.js` | — |
+| Gifter Level Up | `gifter-fas.js` | — |
+| Guardian Emblem | `guardian-emblem-fas.js` | — |
+| **Top Gift** | **ingen** | `VyraFlip` |
+| **Top Streak** | **ingen** | `VyraFlip` |
+
+Tre familjer har var sin fassekvens. De tva gavofamiljerna har ingen — bara vandningen mellan
+gavobild och profilbild. Uppmatt 2026-09-22: `vyra-topgift` och `vyra-streak` forekommer inte pa ett
+enda stalle i nagon `*fas*.js`. Halet ar exakt, och "gavororelsen" namnger det.
+
+`widget-fas.js` ar dessutom uttryckligen en FABRIK. Dess egen huvudkommentar motiverar varfor den
+finns: nar Gifter Level Up skulle fa samma motorform vore en kopierad fil "tva motorer som glider
+isar". Att lagga till en fjarde art ar precis det den ar byggd for.
+
+**Och det ar det enda som gor pastaendet sant.** "Billigare an vantat, eftersom bade fasmotorn och
+flippen finns redan" haller bara om arbetet ar en ny art pa fabriken runt en flipp som redan
+fungerar. Alternativet — gavor som flyger over duken — kraver en ny renderare, en budget for
+samtidiga element, kohantering vid gavostormar och en bana som inte konkurrerar med
+`vfx-engine.js` egna kvalitetsnivaer och FPS-tak. Ingenting av det blir billigare av fasmotorn.
+
+**Specifikationen ar skriven: `docs/gavororelsen.md` (2026-09-22).** Faser, tider, trigger och
+vad som hander nar en ny gava landar mitt i en pagaende sekvens star dar. Tva fynd ur den andrar
+formen pa arbetet:
+
+- **Fabriken kan inte koppla sig sjalv har.** `koppla()` lindar sig runt en global triggerfunktion
+  och laser ett timerspar per tand lada. Top Gift och Top Streak ar permanenta widgetar utan bade
+  trigger och spar. Koreografin anropas i stallet explicit fran `live-leaderboard.js:armFlip()` och
+  `gift-event-images.js:arma()` — alltsa exakt dar `mark()` redan anropas, efter patchen och efter
+  rekordgrinden.
+- **`VyraFlip`:s regel haller, och den kostar ingenting.** En flipp ager sin widget tills den spelat
+  klart, och en ombyggd nod tar upp animationen vid samma offset. Koreografin rar darfor ALDRIG
+  nagon av flippens sex noder (`VyraFlip.PARTS`); den animerar ramen, platen, namnet och talet. En
+  omstartad koreografi spolar alltsa inte tillbaka nagon rotation.
+
+**Kvar att besluta innan kod:** avbryter en ny gava en pagaende koreografi (A) eller spelar den
+klart (B)? Rekommendationen i specen ar B, med skalet att A:s fellage i en gavostorm ar exakt det
+`VyraFlip` byggdes for att forhindra, en vaning upp.
+
 ## Checkpoint 53 — Reservbilderna ligger inte framme (2026-09-10)
 
 David, om Profilbild och Gåvobild i INNEHÅLL: *"måste de vara synliga?"*
@@ -336,7 +597,7 @@ Två skrivare fyller Top Gift och Top Streak med riktiga tittare — `live-leade
 sedan `save()`. Efter en sändning stod alltså en riktig persons namn och avatar kvar i layouten.
 Nästa gång studion öppnades stod deras namn i panelen i stället för "@StreamQueen".
 
-Gåvorekordet (`records.giftCoins`, `records.streakCount`) nollställdes redan vid `live:start`, just
+Gåvorekordet (`records.giftCoins`, `records.streakCoins`) nollställdes redan vid `live:start`, just
 för att en ny sändnings första gåva ska räknas som rekord. **Widgetens data hade ingen sådan
 nollställare alls.** `vyra-tom-widget.js` är den saknade halvan av samma regel.
 

@@ -146,6 +146,16 @@ function startLocalServer(root, port = 4173, options = {}) {
     ...(d.fanLevelUp && Number(d.fanLevelUp.to) > 0
       ? { fanLevelUp: { from: number(d.fanLevelUp.from, 0, 50), to: number(d.fanLevelUp.to, 0, 50) } }
       : {}),
+    // SKATTKISTAN (typen envelope). Utan de här raderna hade kistan nått overlayn utan öppningstid
+    // och utan id — samma fälla som giftId i #350, ett led senare än den som räknar fram fälten.
+    ...(d.kistaId
+      ? { kistaId: text(d.kistaId, 160), oppnasAt: number(d.oppnasAt, 0, Number.MAX_SAFE_INTEGER), kistaDold: !!d.kistaDold }
+      : {}),
+    // STREAM DECK (typen streamdeck, plugin 0.2.0): vad knappen gör. Bara på den typen — ingen gåva
+    // ska bära ett sdKommando. streamdeck.js i studion/overlayn utför kommandot.
+    ...(String(d.type || '') === 'streamdeck'
+      ? { sdKommando: text(d.sdKommando, 40), sdVarde: text(d.sdVarde, 300), sdVal: text(d.sdVal, 40) }
+      : {}),
   }; }
   function setConnection(next) {
     Object.assign(connection, next, { updated: Date.now() });
@@ -214,7 +224,12 @@ function startLocalServer(root, port = 4173, options = {}) {
     // OBS: skriv ALDRIG en hakparentes i den har kommentaren. Provet plockar ut listan med ett
     // monster som slutar vid forsta hakparentesen, sa ett exempel med en teckenklass i klartext
     // kapar listan har och far provet att falla pa nasta typ.
-    'battle_mvp']);
+    'battle_mvp',
+    // envelope (skattkistan) tillkom 2026-09-27, samtidigt i molnet och i tiktok-service.js.
+    'envelope',
+    // chatcommand (rader som börjar med utropstecken) samma dag: molnet räknar dem i en egen
+    // takthink, så de kan inte tränga undan gåvorna. Vanlig chatt stannar hemma som förut.
+    'chatcommand']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');
@@ -259,6 +274,15 @@ function startLocalServer(root, port = 4173, options = {}) {
           connection.connected = false; connection.state = 'stale'; connection.updated = Date.now();
         }
         return sendJson(res, { ok: true, server: 'VYRA Live Server', connection, lastEventId: events.length ? events[events.length - 1].id : 0 });
+      }
+      // GAVOKATALOGEN (GET). Ren lasning ur en redan oppen anslutning: inga sidoeffekter, inget
+      // som skrivs, inga rattigheter utover den anslutning appen redan har. 503 nar TikTok-delen
+      // saknas ar samma svar som /api/connect ger — webblaget har ingen anslutning att fraga.
+      if (p === '/api/gifts' && req.method === 'GET') {
+        if (!liveConnector || typeof liveConnector.hamtaGavor !== 'function') {
+          return sendJson(res, { ok: false, error: 'Gavokatalogen finns endast i VYRA Desktop' }, 503);
+        }
+        return sendJson(res, await liveConnector.hamtaGavor());
       }
       if (p === '/api/connect' && req.method === 'POST') {
         const d = JSON.parse((await readBody(req)) || '{}');

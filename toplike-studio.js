@@ -1,11 +1,7 @@
 (function () {
   const RANKING_TYPES = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
-  const SKINS = [
-    ['clean', 'Clean'], ['royal-gold', 'Royal Gold'], ['neon', 'Neon'], ['galaxy', 'Galaxy'], ['ice', 'Ice'],
-    ['fire', 'Fire'], ['sakura', 'Sakura'], ['cyber', 'Cyber'], ['luxury', 'Luxury'],
-    ['aurora', 'Aurora'], ['retro-crt', 'Retro CRT'], ['goldrush', 'Gold Rush'],
-    ['prism', 'Prism'], ['arena', 'Arena'], ['brandkit', 'Brand Kit']
-  ];
+  const SKINS = window.VYRA_TOPLIKE_STYLES || [['clean-bar', 'VYRA Clean Bar']];
+  const SKIN_IDS = new Set(SKINS.map(([id]) => id));
 
   // Custom font upload — same IndexedDB-blob pattern action-media.js already uses for action media,
   // applied to widget fonts instead. Font bytes never touch the server; FontFace + document.fonts is
@@ -211,9 +207,56 @@
   wh = function (w) {
     let html = wsRenderWh(w);
     if (!RANKING_TYPES.includes(w.type)) return html;
-    const skin = w.skin || 'royal-gold';
+    const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
     const anim = w.entranceAnimation && w.entranceAnimation !== 'none' ? ` ws-anim-${w.entranceAnimation}` : '';
-    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike skin-${skin}${anim}`);
+    // Riktnings-/spegelvaljaren (ranking-sixpack, 2026-09-24) ar en LAYOUT-VANDNING, inte ett
+    // skinn — precis som entreanimationen ovan foljer den ALLA RANKING_TYPES, inte bara Top Like
+    // (se resonemanget i skinn-bara-top-like.test.js: en rorelse ar inte en design).
+    const mirror = w.rankingMirror === true ? ' ranking-mirrored' : '';
+    // TOP COINS V2 BAR SIN EGEN DESIGN — INJICERA INGET SKINN DIT.
+    //
+    // Raden nedan injicerar en skin-klass i ALLA RANKING_TYPES, och `skin` ovan faller tillbaka
+    // pa 'clean-bar' nar widgetens skin inte ar ett kant skinn-id. Top Coins v2 satter w.skin
+    // till sin DESIGN ('halo' / 'signal-orbit'), som aldrig ar ett skinn-id — sa VARJE Top
+    // Coins-widget fick skin-clean-bar.
+    //
+    // UPPMATT 2026-09-21 i riktig Chrome, samma katalognyckel med och utan klassen pa noden:
+    //   catalog:ranking:templateTopCoins:halo          250x42  ->  230x193
+    //   catalog:ranking:templateTopCoins:signal-orbit  250x42  ->  230x190
+    // Alltsa ingen nyans: hela designen plattades till en clean-bar-stapel, och de tva
+    // referensbilderna bar det trasiga utseendet.
+    //
+    // VARFOR MATTET OCH INTE RESTEN. topcoins-v2.css har 33 hogspecifika regler
+    // (html body .widget.vyra-topcoins-new ...) som vinner over clean-bar pa allt DE satter.
+    // Bredden satts inte dar utan som en INLINE-stil i topcoins-v2.js, och inline forlorar mot
+    // .widget.vyra-toplike.skin-clean-bar{width:250px!important}. Darfor overlevde fargerna
+    // men inte geometrin.
+    //
+    // SCOPAT HAR OCH INTE I CSS:EN: det finns EN injektionspunkt, mot ~50 skinn med ett tiotal
+    // regler var. Entreanimationen foljer med som forut — den ar en rorelse, inte en design.
+    //
+    // OCH LISTAN AR VAND (2026-09-22). Undantaget namnde bara Top Coins, sa Top Points — som fick
+    // sina fyra egna designer i #492 och skriver dem i SAMMA falt (`skin: 'podium'`, precis som
+    // Top Coins skriver `skin: 'halo'`) — foll igenom pa exakt samma satt: ingen av design-id:na
+    // ar ett skinn-id, sa `skin` ovan gav 'clean-bar' och klassen stamplades pa alla fyra.
+    //
+    // UPPMATT 2026-09-22 i pinnad Chromium, samma nod med och utan klassen:
+    //   clean   250x185 -> 300x185     podium  250x208 -> 300x208
+    //   center  250x210 -> 300x210     neon    250x205 -> 300x205
+    // Designens egen bredd satts som INLINE-stil av katalogen och forlorar mot
+    // .widget.vyra-toplike.skin-clean-bar{width:250px!important} — samma inline-mot-!important
+    // som en gang plattade Top Coins.
+    //
+    // Darfor namns nu den familj som BAR ett skinn i stallet for de som inte gor det. Forvalet ar
+    // "inget skinn", och en femte rankingfamilj kan inte langre arva clean-bar under tystnad — det
+    // ar precis sa den har buggen uppstod tva ganger.
+    //
+    // INTE en sanningstest pa SKIN_IDS.has(w.skin): en Top Like-widget med ett PENSIONERAT eller
+    // saknat skinn maste fortsatta falla tillbaka pa clean-bar (approved-rankings.js klammer likadant),
+    // och en sadan test hade lamnat den helt ostylad.
+    const SKINNBARARE = ['templateTopLike'];
+    const barSkinn = SKINNBARARE.includes(w.type);
+    html = html.replace('class="widget vyra-toplike', `class="widget vyra-toplike${barSkinn ? ' skin-' + skin : ''}${anim}${mirror}`);
     // Brand Kit skin only: inject the global "🎨 Färgschema" colors as inline CSS vars, read by the
     // .skin-brandkit rules in toplike-studio.css. The other 14 skins never see these vars.
     const brandVars = skin === 'brandkit' && state.brandKit
@@ -237,12 +280,17 @@
       });
     }
 
-    // proTopLikeFrameWh (media.js) always builds the src as assets/images/profile-frames/{id}.png?v=2 —
-    // fix it up to the real filename (FRAME_FILES) for frames whose asset is a differently-named PNG
-    // reuse or an .svg placeholder, without touching that existing chain.
-    if (w.profileFrame && w.profileFrame !== 'none' && FRAME_FILES[w.profileFrame]) {
-      html = html.replaceAll(`assets/images/profile-frames/${w.profileFrame}.png?v=2`, `assets/images/profile-frames/${FRAME_FILES[w.profileFrame]}`);
-    }
+    // Rank is communicated by podium position and profile size. Remove legacy
+    // 1-10 badges from the markup itself so an old skin cannot reveal them.
+    html = html.replace(
+      /(<div class="toplike-row[^"]*">(?:<i class="toplike-crown">[^<]*<\/i>)?)<b>\d+<\/b>/g,
+      '$1'
+    );
+
+    // Sokvagen byggs numera ratt fran borjan i media.js, som slar upp filnamnet i
+    // VYRA_FRAME_FILES. Har satt tidigare ett plaster som matchade literalen
+    // `.png?v=2` — en cachebust-bump i media.js hade tystat det och tagit bort 19
+    // av 53 ramar utan ett enda felmeddelande.
     return html;
   };
 
@@ -266,9 +314,16 @@
       `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option><option value="points"${liveMetric === 'points' ? ' selected' : ''}>Poäng (Actions & Events)</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
     );
 
-    const skin = w.skin || 'royal-gold';
-    const skinGroup = `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
-    const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label></div>`;
+    const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
+    // VALJAREN FOLJER SKINNET (2026-09-22). Gruppen ritades for alla tre rankingfamiljerna, men
+    // sedan skinnklassen bara stamplas pa Top Like (se wh-wrappern ovan) gjorde de fyra swatcharna
+    // ingenting alls i Top Coins och Top Points — dod UI som dessutom skriver `w.skin`, samma falt
+    // som de tva familjerna bar SIN EGEN design i. Pa en widget som saknar `topPointsDesign`
+    // (sparad fore #492) knuffade ett klick darfor designen till 'clean'.
+    // Bada familjerna har redan en egen designsektion, sa ingenting gar forlorat.
+    const visaSkinnvaljare = w.type === 'templateTopLike';
+    const skinGroup = !visaSkinnvaljare ? '' : `<div class="property-group"><h4>DESIGN · VÄLJ TEMA</h4><div class="toplike-skin-grid">${SKINS.map(([id, name]) => `<button type="button" data-ws-skin="${id}" class="toplike-skin-swatch skin-${id}${skin === id ? ' active' : ''}"><i></i><b>${name}</b></button>`).join('')}</div></div>`;
+    const animGroup = `<div class="property-group"><h4>ANIMATION</h4><label>Inträdeseffekt<select id="wsEntrance"><option value="none">Ingen</option><option value="fade">Tona in</option><option value="slideUp">Glid upp</option><option value="pop">Poppa in</option><option value="signal">Signal</option><option value="gilded">Gyllene</option></select></label><label class="range-label">Varaktighet <b>${w.entranceDuration || 600} ms</b><input id="wsEntranceDuration" type="range" min="150" max="1500" step="50" value="${w.entranceDuration || 600}"></label><label class="range-label">Opacitet <b>${Math.round((w.opacity ?? 1) * 100)}%</b><input id="wsOpacity" type="range" min="10" max="100" value="${Math.round((w.opacity ?? 1) * 100)}"></label><label><input id="wsMirror" type="checkbox" ${w.rankingMirror === true ? 'checked' : ''}> ↔ Vänd riktning (spegla raden)</label></div>`;
     const textFxGroup = `<div class="property-group"><h4>EGET TYPSNITT</h4><label>Anpassat typsnitt${w.customFontFamily ? ` <small>(${w.customFontFamily})</small>` : ''}<input id="wsCustomFont" type="file" accept=".ttf,.otf,.woff,.woff2"></label>${w.customFontFamily ? '<button type="button" id="wsRemoveFont">Ta bort anpassat typsnitt</button>' : ''}</div>`;
 
     const nudge = (label, xId, yId, xVal, yVal) => `<div class="property-grid"><label>${label} X<input id="${xId}" type="number" min="-200" max="200" value="${xVal}"></label><label>${label} Y<input id="${yId}" type="number" min="-200" max="200" value="${yVal}"></label></div>`;
@@ -302,7 +357,10 @@
     if (dateRange) dateRange.onchange = e => { w.dateRange = e.target.value; save(); render(); };
 
     document.querySelectorAll('[data-ws-skin]').forEach(btn => {
-      btn.onclick = () => { w.skin = btn.dataset.wsSkin; save(); render(); };
+      btn.onclick = () => {
+        if (!window.applyVyraTopLikeStyle?.(w, btn.dataset.wsSkin)) w.skin = btn.dataset.wsSkin;
+        save(); render();
+      };
     });
 
     const entrance = document.querySelector('#wsEntrance');
@@ -313,6 +371,9 @@
 
     const opacity = document.querySelector('#wsOpacity');
     if (opacity) opacity.onchange = e => { w.opacity = (+e.target.value) / 100; save(); render(); };
+
+    const mirror = document.querySelector('#wsMirror');
+    if (mirror) mirror.onchange = e => { w.rankingMirror = e.target.checked; save(); render(); };
 
     // Skuggan och konturen flyttade till den gemensamma TEXT-gruppen 2026-09-09
     // (vyra-textgrupp.js). Fälten är desamma — textShadowBlur/X/Y/Color och

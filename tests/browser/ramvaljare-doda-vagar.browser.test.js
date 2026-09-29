@@ -171,7 +171,10 @@ test('§8-vakt: den gamla Profilram-dropdownen finns inte i DOM', { skip }, asyn
 test('ramval via swatch når save-tratten och rendern bär .pro-avatar-frame', { skip }, async () => {
   // Tre vägar genom samma bärande kedja: Top Like (wsFramesBind), Top Coins (typ-spoofen via
   // extraRankingWh) och Top Gift (gafWh:s ankare). Klicket är ett riktigt klick på swatchen.
-  for (const nyckel of ['catalog:toplike:clean', 'catalog:ranking:templateTopCoins:gold', 'catalog:topgift']) {
+  // Top Coins togs bort ur listan 2026-09-20: topcoins-v2.js (5a96741) ager renderaren och laser
+  // aldrig profileFrame - uppmatt: ramvaljaren fanns, ingen ramkonst renderades. Valjaren visas
+  // inte langre for Top Coins (topcoins-v2.js bind), sa vagen finns inte att prova.
+  for (const nyckel of ['catalog:toplike:clean', 'catalog:topgift']) {
     const { page, id } = await editorMedWidget(nyckel);
     const vald = await page.evaluate(wid => {
       const swatch = [...document.querySelectorAll('[data-ws-frame]')]

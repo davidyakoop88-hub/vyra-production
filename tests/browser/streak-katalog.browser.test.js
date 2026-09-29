@@ -1,31 +1,10 @@
 'use strict';
-// Top Streak · katalogen ska bara ALLA val samtidigt.
-//
-// ORSAKEN, uppmatt 2026-08-13 i overlay-vyn: `.streak-template-section` fanns, hade 5644 tecken
-// innehall och `dataset.styles="1"` — men noll av media.js knappar. Ett manuellt `bind()`
-// andrade ingenting.
-//
-//   1. media.js:121 kor forst, satter dataset.styles='1' och bygger 7 klassiska stilar + 8 ramar
-//   2. premium-final.js:68 kor EFTER och gor `streak.innerHTML = '<h4>…PREMIUM</h4>…'`
-//      — vilket RADERAR allt media.js just byggde
-//   3. media.js-flaggan star kvar, sa blocket bygger aldrig om. Permanent.
-//
-// Foljden: 15 val som finns i koden men inte gar att valja. Inte bara de atta ramarna — aven de
-// sju klassiska stilarna. Samma familj som `.resize-handle` hade (media.js:128): tva byggare om
-// samma yta dar laddningsordningen avgor i stallet for ett uttalat agarskap.
-//
-// FIXEN ror bara premium-final.js: den lagger till sin sektion i stallet for att ersatta.
-// Registret och renderaren ar ororda — de fungerade redan, vilket det har provet ocksa visar
-// genom att alla atta ramar gar att skapa och rendera.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
-
 const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
-
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-  '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
-  '.mp3': 'audio/mpeg', '.json': 'application/json', '.woff2': 'font/woff2' };
+  '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
 function servera() {
   const server = http.createServer((req, res) => {
@@ -41,124 +20,77 @@ function servera() {
 }
 
 let server, browser, bas;
-let skip = hoppaOver();
-
+const skip = hoppaOver();
 test.before(async () => {
   if (skip) return;
   browser = await startaWebblasare();
-  if (!browser) throw new Error('hittade en webblasare men kunde inte starta den - se tests/helpers/webblasare.js');
+  if (!browser) throw new Error('kunde inte starta webbläsaren');
   server = await servera();
   bas = `http://127.0.0.1:${server.address().port}`;
 });
-
 test.after(async () => {
   if (browser) await browser.close();
   if (server) await new Promise(r => server.close(r));
 });
 
-const RAMAR = ['amethyst-heart', 'crystal-spire', 'crystal-tiara', 'gold-wings',
-               'luna-stars', 'rose-heart', 'star-crown', 'violet-wings'];
-
-async function katalogen() {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+// SEDAN 2026-09-20 ags Top Streak av approved-rankings.js (Clean Flip). Provet matte forr
+// premium-final.js:s "simple"-design, som aldrig nadde skarmen - approved vann redan, och
+// provet var rott pa ren main. Nu mater det den design som faktiskt ritas.
+test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   await page.goto(`${bas}/studio.html?open=overlay`, { waitUntil: 'load' });
-  await page.waitForTimeout(5000);
-  const m = await page.evaluate(() => {
-    const s = document.querySelector('.streak-template-section');
+  await page.waitForFunction(() => document.querySelector('.streak-template-section button'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(1000);
+  const result = await page.evaluate(() => {
+    const section = document.querySelector('.streak-template-section');
+    const buttons = [...section.querySelectorAll('button')];
+    const w = window.VyraWidgets.create('catalog:topstreak');
+    const host = document.createElement('div');
+    host.innerHTML = wh(w);
+    document.body.append(host);
+    const el = document.querySelector('.approved-streak');
+    const profile = el?.querySelector('.streak-profile-face img');
+    const gift = el?.querySelector('.streak-gift-face img');
+    const flipRect = el?.querySelector('.streak-flip')?.getBoundingClientRect();
+    const elRect = el?.getBoundingClientRect();
+    const copyRect = el?.querySelector('.approved-streak-copy')?.getBoundingClientRect();
+    const flip = el?.querySelector('.streak-flip');
+    const flipAnimation = flip && getComputedStyle(flip).animationName;
+    const idleDuration = flip && getComputedStyle(flip).animationDuration;
+    const idleIterations = flip && getComputedStyle(flip).animationIterationCount;
     return {
-      sektion: !!s,
-      rubriker: s ? [...s.querySelectorAll('h4')].map(h => h.textContent.trim()) : [],
-      stilar: document.querySelectorAll('[data-streak-style]').length,
-      ramar: [...document.querySelectorAll('[data-streak-frame]')].map(b => b.dataset.streakFrame).sort(),
-      premium: document.querySelectorAll('[data-pf-streak]').length
+      heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
+      buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
+      oldStyles: section.querySelectorAll('[data-streak-style],[data-streak-frame],[data-pf-streak]').length,
+      approved: !!el, gamlaKlasser: !!document.querySelector('.vyra-streak-simple,.premium-streak,.streak-framed'),
+      mechanism: !!el?.querySelector('.streak-mechanism'),
+      profileFit: profile && getComputedStyle(profile).objectFit,
+      giftFit: gift && getComputedStyle(gift).objectFit,
+      flipAnimation,
+      idleDuration, idleIterations,
+      styleControl: !!document.querySelector('#streakTheme,#pfStreakStyle'),
+      // Clean Flip: cirkeln overst, namn + streak under, bada centrerade i widgeten.
+      vertical: !!(flipRect&&copyRect)&&flipRect.bottom<=copyRect.top+1,
+      centered: !!(elRect&&flipRect&&copyRect)&&
+        Math.abs((flipRect.left+flipRect.width/2)-(elRect.left+elRect.width/2))<2&&
+        Math.abs((copyRect.left+copyRect.width/2)-(elRect.left+elRect.width/2))<2
     };
   });
   await page.close();
-  return m;
-}
-
-test('katalogen visar bada rubrikerna, REDIGERBARA och PREMIUM', { skip }, async () => {
-  const m = await katalogen();
-  assert.ok(m.sektion, '.streak-template-section saknas i overlay-vyn');
-  const text = m.rubriker.join(' | ').toUpperCase();
-  assert.match(text, /REDIGERBARA/, `rubrikerna ar: ${m.rubriker.join(' | ') || '(inga)'}`);
-  assert.match(text, /PREMIUM/, `rubrikerna ar: ${m.rubriker.join(' | ') || '(inga)'}`);
+  assert.equal(result.heading, 'VYRA TOP STREAK · CLEAN FLIP');
+  assert.equal(result.buttonCount, 1);
+  assert.equal(result.buttonName, 'Clean Flip');
+  assert.equal(result.oldStyles, 0, 'en avvecklad design ar tillbaka i katalogen');
+  assert.equal(result.approved, true, JSON.stringify(result));
+  assert.equal(result.gamlaKlasser, false, 'en dod generation ritar igen');
+  assert.equal(result.mechanism, false);
+  assert.equal(result.profileFit, 'cover');
+  assert.equal(result.giftFit, 'contain');
+  assert.match(result.flipAnimation, /approved-streak-flip/);
+  assert.equal(result.idleDuration, '8s');
+  assert.equal(result.idleIterations, 'infinite', 'flippen ska fortsatta under hela LIVE');
+  assert.equal(result.styleControl, false);
+  assert.equal(result.vertical, true, JSON.stringify(result));
+  assert.equal(result.centered, true, JSON.stringify(result));
 });
-
-test('de sju klassiska stilarna gar att valja', { skip }, async () => {
-  const m = await katalogen();
-  assert.equal(m.stilar, 7,
-    `hittade ${m.stilar} klassiska stilknappar — premium-final.js raderar media.js sektion`);
-});
-
-test('alla atta ramar gar att valja', { skip }, async () => {
-  const m = await katalogen();
-  assert.deepEqual(m.ramar, [...RAMAR].sort(),
-    `hittade ${m.ramar.length} ramknappar: ${m.ramar.join(', ') || '(inga)'}`);
-});
-
-test('alla 22 Top Streak-val syns samtidigt', { skip }, async () => {
-  const m = await katalogen();
-  const summa = m.stilar + m.ramar.length + m.premium;
-  assert.equal(summa, 22,
-    `hittade ${summa} val (${m.stilar} klassiska + ${m.ramar.length} ramar + ${m.premium} premium) `
-    + '— kravet ar 7 + 8 + 7');
-});
-
-test('premiumdesignerna finns kvar', { skip }, async () => {
-  const m = await katalogen();
-  assert.ok(m.premium >= 7, `hittade ${m.premium} premiumknappar, forvantade minst 7`);
-});
-
-// ---- Davids ovriga krav ------------------------------------------------------------------
-async function ram(fid) {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
-  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
-    { timeout: 30000, polling: 100 });
-  await page.waitForTimeout(2500);
-  const m = await page.evaluate(f => {
-    state.widgets.length = 0;
-    const w = window.VyraWidgets.create('catalog:topstreak:frame:' + f);
-    w.x = 30; w.y = 40; state.widgets.push(w); selected = null; render();
-    const el = document.querySelector('.vyra-streak');
-    if (!el) return { fel: 'widgeten renderades inte' };
-    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
-    const konst = el.querySelector('.sframe-art');
-    const fram = el.querySelector('.streak-profile-face'), gift = el.querySelector('.streak-gift-face');
-    return { klass: el.className, konstSrc: konst ? konst.getAttribute('src') : null,
-      text: (el.textContent || '').trim().replace(/\s+/g, ' '),
-      framIter: fram ? getComputedStyle(fram).animationIterationCount : null,
-      giftIter: gift ? getComputedStyle(gift).animationIterationCount : null,
-      giftTransformViktig: gift ? getComputedStyle(gift).transform : null };
-  }, fid);
-  await page.waitForTimeout(600);
-  const konstLaddad = await page.evaluate(() => {
-    const i = document.querySelector('.sframe-art');
-    return !!i && i.complete && i.naturalWidth > 0;
-  });
-  await page.close();
-  return { ...m, konstLaddad };
-}
-
-for (const fid of RAMAR) {
-  test(`ram ${fid}: renderar med sin konst`, { skip }, async () => {
-    const m = await ram(fid);
-    assert.ok(!m.fel, m.fel);
-    assert.match(m.klass, /streak-framed/, `klasserna ar "${m.klass}"`);
-    assert.equal(m.konstSrc, `assets/topstreak-frames/${fid}.png`);
-    assert.ok(m.konstLaddad, `${fid}.png laddade inte`);
-  });
-
-  test(`ram ${fid}: flippen loopar oandligt`, { skip }, async () => {
-    const m = await ram(fid);
-    assert.equal(m.framIter, 'infinite', 'profilsidan loopar inte');
-    assert.equal(m.giftIter, 'infinite', 'gavosidan loopar inte');
-  });
-
-  test(`ram ${fid}: visar streak, aldrig coins`, { skip }, async () => {
-    const m = await ram(fid);
-    assert.match(m.text, /×\d+|x\d+/i, `hittade ingen streak-siffra i "${m.text}"`);
-    assert.ok(!/coin|diamond|◉/i.test(m.text), `giftdata syns i texten: "${m.text}"`);
-  });
-}

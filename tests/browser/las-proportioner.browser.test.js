@@ -78,7 +78,10 @@ async function panelenFor(widget) {
   return page;
 }
 
-const INNEHALL = { id: 'p1', type: 'templateTopLike', x: 40, y: 40, width: 300, likeCount: 5 };
+// width 150, inte 300: sedan 2026-09-20 klamper widget-grans.js panelens Bredd-falt sa att hela
+// widgeten ryms pa duken (432 - x). Proven nedan dubblar bredden, och 2 x 300 = 600 pa x=40 hade
+// klamts till 392 - da hade de matt gransen i stallet for proportionslaset. 2 x 150 = 300 ryms.
+const INNEHALL = { id: 'p1', type: 'templateTopLike', x: 40, y: 40, width: 150, likeCount: 5 };
 const MEDIA = { id: 'p2', type: 'templateCustomImage', x: 40, y: 40, width: 300,
   mediaMeta: { id: 'demo', name: 'demo.png' } };
 const CSSLAST = { id: 'p3', type: 'templateTopGift', x: 40, y: 40, width: 300 };
@@ -191,13 +194,13 @@ test('olast: W och H andras oberoende', { skip, timeout: 90000 }, async () => {
       await new Promise(r => setTimeout(r, 300));
       const w0 = state.widgets[0].width;
       const wFalt = document.querySelector('#propWidth');
-      wFalt.value = '600';
+      wFalt.value = '380';   // ryms: 40 + 380 <= 432
       wFalt.dispatchEvent(new Event('change', { bubbles: true }));
       await new Promise(r => setTimeout(r, 400));
       return { w0, h: state.widgets[0].height, w: state.widgets[0].width };
     });
     assert.equal(m.h, 400, 'olast H ska ta det satta vardet');
-    assert.equal(m.w, 600, 'olast W ska ta det satta vardet');
+    assert.equal(m.w, 380, 'olast W ska ta det satta vardet');
   } finally { await page.close() }
 });
 

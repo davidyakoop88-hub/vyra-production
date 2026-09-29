@@ -58,9 +58,15 @@ async function decideTikTokCapacity(c, { workspaceId, username, limit }) {
     }
   }
 
+  // VERIFIERINGEN NOLLSTÄLLS VID VARJE SKRIVNING. Den här satsen är gemensam för båda vägarna in:
+  // fritext (PUT /tiktok-connection) och verifierad inloggning (tiktok-handtagslas.js, som sätter
+  // kolumnerna igen direkt efteråt). Utan nollställningen ärvde en fritextskrivning stämpeln från
+  // en tidigare verifiering — raden hade visat "verifierad" bredvid ett handtag som ingen bevisat,
+  // vilket är värre än ingen stämpel alls: det är en stämpel som ljuger.
   const q = await c.query(
     'INSERT INTO tiktok_connections(workspace_id,tiktok_username,active) VALUES($1,$2,true) ' +
-    'ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=$2,active=true,updated_at=now() ' +
+    'ON CONFLICT (workspace_id) DO UPDATE SET tiktok_username=$2,active=true,updated_at=now(),' +
+    'verifierad_at=NULL,tiktok_open_id=NULL,tiktok_union_id=NULL,visningsnamn=NULL,avatar_url=NULL ' +
     'RETURNING tiktok_username,active,updated_at', [workspaceId, username]);
   return { connection: q.rows[0] };
 }

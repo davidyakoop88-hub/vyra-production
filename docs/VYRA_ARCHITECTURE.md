@@ -3,6 +3,11 @@
 Last audited: 2026-07-22, branch `feature/vyra-vfx-engine`. Updated same day to add §10
 (Premium Widget Design System, Roadmap Phase 4).
 
+> **§1–10 were last verified 2026-07-22 and have not been re-checked since.** The codebase
+> moved considerably between July and September; treat those sections as a starting point,
+> not as current truth, and verify before relying on them.
+> **§11 was measured 2026-09-17 against `origin/main` @ `5439096`.**
+
 This document describes the system **as it actually exists today**, verified by direct
 inspection of the repository (not assumed). Where the long-term roadmap
 (`VYRA_MASTER_ROADMAP.md`) requires capabilities that do not exist yet, that gap is called
@@ -222,3 +227,58 @@ Reveal, Gift Widget, Match Widgets — Roadmap Phases 5-9). Files: `premium-widg
   pixel-level visual review — flagged so a future session with working screenshot tooling can
   do a supplementary pixel-level pass before this system is considered fully visually signed
   off.
+
+---
+
+## 11. Render chain mechanics (measured 2026-09-17, `origin/main` @ `5439096`)
+
+`studio.js` is minified hand-written code and is never edited directly. Every later
+behaviour **monkey-patches** the globals `wh`, `props`, `bind` and `render` from a sibling
+file. This is the system's central mechanism and the source of most of its hard-to-find
+bugs, so it is written out here rather than left to be rediscovered.
+
+### Measured size
+
+| Chain | Builds | Wrappers |
+|---|---|---:|
+| `wh` | widget HTML | **36** |
+| `props` | the property panel | **38** |
+| `bind` | event wiring | **92** |
+
+`media.js` alone carries 24 of the 36 `wh` wrappers. There is no bundler and no module
+system: `package.json` has **zero runtime dependencies**, and the 44 `<script>` tags in
+`studio.html` plus the script tail in `media.js` decide everything.
+
+### Execution order is the reverse of load order
+
+Each wrapper captures the previous one and calls it, so **the last-defined function runs
+first**. Two dependencies point in opposite directions:
+
+- **What you receive** (`w`) comes from whoever was defined **after** you.
+- **What you change in the output** lands on top of what everyone defined **before** you
+  produced.
+
+Load order is therefore load-bearing logic, not a detail.
+
+### Two confirmed failure modes
+
+**A — the input is already rewritten.** `media.js:345` passes `{...w, profileFrame:'none'}`
+downwards, which makes the `(w.profileFrame || 'none')` expression in `media.js:344`
+unreachable for Top Like: it can only ever emit `frame-none`.
+
+`media.js:512` rewrites `type` to `templateTopLike` so Top Coins and Top Points can reuse
+the ranking renderer. **8 of the 9 wrappers defined before line 512 read `w.type`** and
+therefore never see the real type. Deliberate and working, but a new wrapper placed between
+345 and 512 that special-cases `templateTopLike` will silently also hit Top Coins and
+Top Points.
+
+**B — string coupling across files.** A wrapper that searches for a literal produced by a
+*different* file is bound to that file's exact output, and `String.replace()` on a miss
+returns the string unchanged — no error, no warning. 25 such replacements exist in the `wh`
+chain. The most fragile match **Swedish UI label text**, which gets edited routinely.
+
+### Reading further
+
+- `docs/RENDERKEDJAN.md` — the mechanism in full, with a procedure for tracing a dead path
+- `docs/HANDELSEKARTA.md` — the events that drive the chain
+- `.claude/domaner.json` — who owns which file (`node scripts/domaner.js agare <fil>`)

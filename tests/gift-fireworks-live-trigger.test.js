@@ -253,5 +253,6 @@ test('en avslutad session tommer kon', () => {
 
 test('livekön väntar hela showen plus marginal',()=>{
   const {h,gava}=boot();const waits=[];h.window.Date.now=()=>1000;h.window.setTimeout=(fn,ms)=>{waits.push(ms);return waits.length};
-  gava({count:100});assert.ok(waits.includes(9200));assert.ok(waits.includes(9400));
+  // 1000 coins, inte count:100 — showen valjs av vardet sedan 2026-09-19.
+  gava({count:100,coins:1000});assert.ok(waits.includes(9200));assert.ok(waits.includes(9400));
 });

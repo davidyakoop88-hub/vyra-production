@@ -76,10 +76,29 @@ test('varje tomt tillstand ar taggat och bar exakt fixturens text', { skip, time
     const fel = [];
     for (const [vy, nycklar] of Object.entries(PER_VY)) {
       await tillVy(page, vy);
-      const funna = await page.evaluate(() =>
+      // SAMLAS PER FLIK sedan 2026-09-23. TTS-vyn fick riktiga flikar, och tva av dess tomma
+      // tillstand bor pa var sin: en enda matning ser darfor aldrig bada, for den inaktiva panen
+      // ligger kvar med noll hojd. Matningen gors pa vyn som den oppnas, sedan en gang per flik
+      // nagon nyckel i vyn deklarerat, och resultaten slas ihop. Utan det hade tts-special
+      // rapporterats som "otaggad rost kvar" fast den finns och fungerar ett klick bort.
+      const samla = () => page.evaluate(() =>
         [...document.querySelectorAll('#view [data-tom]')]
           .filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 })
           .map(el => ({ nyckel: el.dataset.tom, text: el.textContent.replace(/\s+/g, ' ').trim() })));
+
+      const funna = await samla();
+      const flikar = [...new Set(nycklar.map(n => TOMMA[n] && TOMMA[n].flik).filter(Boolean))];
+      for (const flik of flikar) {
+        const traffad = await page.evaluate(f => {
+          const knapp = document.querySelector(`#view ${f}`);
+          if (!knapp) return false;
+          knapp.click();
+          return true;
+        }, flik);
+        assert.equal(traffad, true, `kontrollmatning: fliken ${flik} finns inte i vyn ${vy}`);
+        await page.waitForTimeout(600);
+        for (const f of await samla()) if (!funna.some(x => x.nyckel === f.nyckel)) funna.push(f);
+      }
 
       // Unika nycklar: samma rost far upprepas (scenlanken star pa alla tio scenrader) —
       // det ar TEXTEN som ska vara identisk, vilket loopen nedan provar per forekomst.

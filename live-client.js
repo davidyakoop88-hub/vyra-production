@@ -1,4 +1,22 @@
 (function(){const localRuntime=['127.0.0.1','localhost'].includes(location.hostname);const listeners=new Set(),activeUsers=new Set();
+// SKRIVBORDSAPPEN FAR INTE NAVIGERA BORT FRAN SINA EGNA ADRESSER.
+// electron-app/main.js:97 fanger will-navigate och gor preventDefault() pa allt som inte ar
+// localOrigin eller CLOUD_ORIGIN. `location.href = <TikToks URL>` blir darfor EN TYST NOLL i
+// appen: ingen navigering, inget fel, ingen logg — knappen ser trasig ut utan att nagot sager
+// varfor. Exakt det monstret har redan drabbat fem widgetar i det har repot.
+//
+// window.open gar en ANNAN vag: den traffar setWindowOpenHandler (main.js:84), som skickar varje
+// icke-betrodd https-adress till shell.openExternal — alltsa anvandarens riktiga webblasare.
+// Det ar dessutom det enda som FUNGERAR: TikTok avvisar rutinmassigt inloggning i inbaddade
+// webblasarfonster, sa ett barnfonster i Electron hade inte hjalpt heller.
+//
+// Klienten laddas fran vyralive.app AVEN i appen (main.js:82 laddar CLOUD_ORIGIN/studio.html), sa
+// localRuntime ar falskt dar — vakten maste darfor sitta pa Electron, inte pa vardnamnet.
+const iElectron=/\bElectron\//.test(navigator.userAgent||'');
+function oppnaVerifiering(url){
+  if(iElectron){window.open(url,'_blank');return{externt:true}}
+  location.href=url;return{externt:false};
+}
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
 // KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
 // vinner nar bada finns. ~20 filer nedstroms laser det interna `coins` utan att veta nagot
@@ -33,8 +51,18 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
   else if(t==='likes'||t==='like')out.push(['likes',{...payload,value:payload.count,likecount:payload.count,totallikecount:e.points??e.totalLikes??e.totalLikeCount??0}]);
   else if(t==='chatcommand'||t==='command')out.push(['chatCommand',{...payload,command:e.command||e.name,value:e.command||e.name}]);
   else if(t==='chat'||t==='comment'){const text=String(e.comment||e.name||'');out.push(['chat',{...payload,comment:text,value:text}]);if(text.trim().startsWith('!'))out.push(['chatCommand',{...payload,command:text.trim().split(/\s+/)[0],value:text.trim().split(/\s+/)[0],comment:text}])}
-  else if(t==='subscriberemote')out.push(['subscriberEmote',{...payload,value:e.emote||e.name}]);
-  else if(t==='fanclubsticker'||t==='fansticker')out.push(['fanSticker',{...payload,value:e.sticker||e.name}]);
+  // EN FAN CLUB-STICKER AR EN EMOTE MED emoteScene 2 (FANS_CLUB). Bada kommer i TikToks
+  // WebcastEmoteChatMessage och bryggan skickar dem som samma typ, `subscriberemote`.
+  //
+  // `fanclubsticker` nedan var DOD KOD: uppmatt 2026-09-16 emitterar ingenting i hela kedjan den
+  // typen — varken normalizer.js, bridge.js eller tiktok-service.js — sa `fanSticker` var en
+  // trigger som fysiskt aldrig kunde fyra. Den star kvar som reservvag ifall en framtida kalla
+  // skickar en egen typ, men den riktiga vagen ar scenen.
+  else if(t==='subscriberemote'||t==='fanclubsticker'||t==='fansticker'){
+    const id=e.emote||e.sticker||e.name;
+    const arSticker=arFanklubb(e)||t==='fanclubsticker'||t==='fansticker';
+    out.push([arSticker?'fanSticker':'subscriberEmote',{...payload,value:id,emote:id,emoteScene:e.emoteScene}]);
+  }
   else if(t==='shoppurchase'||t==='purchase')out.push(['shopPurchase',{...payload,value:e.productName||e.name}]);
   // EN MANUELL KNAPP (Stream Deck och liknande). Den ska kunna kora en Action utan att PASTA att
   // en tittare gjorde nagot: ett falskt `gift` hade rakat upp mal, topplistor och sandnings-
@@ -65,13 +93,29 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
 // Subscriber emotes have no human-readable name (TikTok only gives an opaque emoteId), so the
 // Events picker can't ship with a fixed catalog like gifts have. Instead it offers whatever emotes
 // have actually appeared live, most-recent-first, capped so a long session doesn't grow forever.
+// EN FAN CLUB-STICKER KANNS PA `packageId`, INTE PA `emoteScene`.
+//
+// UPPMATT 2026-09-16 mot 156 emotes i tre skarpa inspelningar: `packageId` sade 'fansclub' i 150
+// av dem, medan scenen var 2 i 59 fall och 3 i 97 — och 3 finns inte ens i TikToks eget
+// proto-enum (SUBSCRIPTION=0, GAME=1, FANS_CLUB=2). Ett forsta forsok klassade pa scenen och hade
+// darmed stamplat 97 fanklubbs-stickers som prenumerationsemotes.
+//
+// EN agare av fragan: bade triggern och inlarningen fragar harifran, sa de kan inte glida isar.
+function arFanklubb(e){
+  return String(e?.emotePaket||e?.packageId||'').toLowerCase()==='fansclub';
+}
 function recordSeenEmote(e){
   const type=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
-  if(type!=='subscriberemote'||!e.emote)return;
+  const id=e.emote||e.sticker;
+  if(!['subscriberemote','fanclubsticker','fansticker'].includes(type)||!id)return;
   try{
-    const KEY='vyra-seen-emotes-v1';
-    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.id!==e.emote);
-    list.unshift({id:e.emote,image:e.giftImage||'',lastSeen:Date.now()});
+    // TVA LISTOR, INTE EN. Valjaren for Fan Club-stickers visade forr subscriber-emotes, for bada
+    // hamtades ur samma nyckel. Facit har dem som tva skilda val med varsin bildlista, och
+    // emoteScene 2 (FANS_CLUB) ar det enda som skiljer dem at i TikToks data.
+    const arSticker=arFanklubb(e)||type!=='subscriberemote';
+    const KEY=arSticker?'vyra-seen-stickers-v1':'vyra-seen-emotes-v1';
+    const list=JSON.parse(localStorage.getItem(KEY)||'[]').filter(x=>x.id!==id);
+    list.unshift({id,image:e.giftImage||'',lastSeen:Date.now()});
     localStorage.setItem(KEY,JSON.stringify(list.slice(0,40)));
   }catch{}
 }
@@ -80,6 +124,38 @@ function recordSeenEmote(e){
 // tiktok-live-connector), so the Events "specific user" picker can't ship with a real follower
 // list either. Every live event already carries a real username, so capture-as-seen is the only
 // technically honest way to offer a picker instead of free text.
+// GAVOKATALOGEN LARS IN LIVE, av exakt samma skal som emotes (se bridge.js:553): det finns ingen
+// lista att hamta fran webblasaren. Serverns `gavokatalog` ar ADMIN-ONLY (/api/admin/gavokatalog)
+// och nas inte harifran, och den statiska assets/gifts/gifts-manifest.js bar bara ENGELSKA namn
+// utan coin-varde — medan TikTok levererar katalogen pa streamerns eget sprak.
+//
+// UPPMATT MOT FACIT: TikFinity visar `Basketboll`, `Kor hart!`, `Morgonblommor` och `1 Coins` per
+// rad. Vart manifest sager `Basketball` och inget varde alls. Ett inlart namn ar darfor ALLTID
+// battre an manifestets: det kommer fran samma kalla som sjalva gavan.
+//
+// Vardet skrivs bara over nar vi faktiskt har ett — en combo-post utan coins ska inte nolla ett
+// varde vi redan lart oss.
+function recordSeenGift(e){
+  const type=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,'');
+  if(type!=='gift'&&type!=='giftcombo')return;
+  const namn=e.giftName||e.gift;
+  if(!namn)return;
+  try{
+    const KEY='vyra-seen-gifts-v1';
+    const lista=JSON.parse(localStorage.getItem(KEY)||'[]');
+    const gammal=lista.find(x=>x.name===namn)||{};
+    const kvar=lista.filter(x=>x.name!==namn);
+    const coins=Number(e.diamonds??e.coins??e.diamondCount??0)||0;
+    kvar.unshift({
+      name:namn,
+      image:e.giftImage||gammal.image||'',
+      coins:coins||gammal.coins||0,
+      giftId:e.giftId||gammal.giftId||'',
+      lastSeen:Date.now()
+    });
+    localStorage.setItem(KEY,JSON.stringify(kvar.slice(0,200)));
+  }catch{}
+}
 function recordSeenUser(e){
   const username=e.username||e.uniqueId||e.user;
   if(!username)return;
@@ -185,8 +261,24 @@ function ingest(e,frameId){
   normalizeUserFlags(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
-  recordSeenEmote(e);
-  recordSeenUser(e);
+  // SIMULERADE EVENT FAR INTE LARAS IN.
+  //
+  // Simulatorn skickar sina event genom ingest() med flit — hela poangen ar att de ska ga samma
+  // vag som ett riktigt event. Men inlarningen ar en PASTAENDE om verkligheten: en gava i
+  // valjaren markt som inlard sager "den har gavan har skickats i din sandning", och en
+  // anvandare i valjaren sager "den har personen har varit har".
+  //
+  // Uppmatt 2026-09-16: `TestFollower`, `TestSharer`, `TestSubscriber`, `TestLiker` och
+  // `TestGifter` lag redan i anvandarvaljaren hos alla som nagonsin tryckt pa en simuleringsknapp,
+  // eftersom recordSeenUser aldrig skilde pa riktigt och simulerat. Med gavokatalogen hade samma
+  // hal gett en falsk `Rose / 1 coins` markt som inlard.
+  //
+  // Triggrarna kors fortfarande — bara minnet lamnas i fred.
+  if(!e||!e.__simulerad){
+    recordSeenEmote(e);
+    recordSeenGift(e);
+    recordSeenUser(e);
+  }
   // ISOLERAD MED FLIT. routeLiveBattleEvent ar inte en funktion utan en KEDJA: battle-mvp-,
   // fan-level-, gifter-level-, gift-fireworks- och guardian-session lindar alla samma namn, var och
   // en runt den forra. Kastade nagon av dem gick undantaget rakt igenom ingest och raden nedanfor
@@ -210,13 +302,32 @@ if(!localRuntime){
     const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection`,
       payload===undefined?{method}:{method,body:JSON.stringify(payload)});
     return r};
-  const shape=c=>({ok:true,localRuntime:false,cloud:true,
-    connection:c&&c.active?{connected:true,state:'cloud',username:c.tiktok_username}
+  // verifieringKravs och verifierad reser MED statusen. Klienten far aldrig gissa serverns lage:
+  // gissar den fel visar den ett fritextfalt som rutten anda avvisar, eller doljer ett falt som
+  // fortfarande fungerar.
+  const shape=(c,extra={})=>({ok:true,localRuntime:false,cloud:true,...extra,
+    connection:c&&c.active?{connected:true,state:'cloud',username:c.tiktok_username,
+                            verifierad:!!c.verifierad_at,visningsnamn:c.visningsnamn||null,avatarUrl:c.avatar_url||null}
                           :{connected:false,state:'idle'}});
   window.VyraLive={
-    status:async()=>{try{const r=await cloud('GET');return shape(r.connection)}
+    status:async()=>{try{const r=await cloud('GET');return shape(r.connection,{verifieringKravs:!!r.verifieringKravs})}
       catch{return{ok:true,localRuntime:false,cloud:true,connection:{connected:false,state:'idle'}}}},
     connect:async username=>shape((await cloud('PUT',{username})).connection),
+    // VERIFIERING. Servern bygger TikToks egen URL (den bär state + PKCE) och vi skickar dit
+    // webbläsaren. Vi öppnar INTE ett popup-fönster: TikToks inloggning avvisas i vissa inbäddade
+    // fönster, och en blockerad popup ser för användaren ut som att knappen är trasig.
+    // Återvägen är /api/auth/callback/tiktok, som omdirigerar till studio.html?tiktok=…
+    verifiera:async()=>{const id=workspaceId();
+      if(!id)throw Error('Logga in för att verifiera ditt TikTok-konto');
+      const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
+      if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
+      return{ok:true,...oppnaVerifiering(r.url)}},
+    // ANSLUT NU. Servern svarar 202 och skriver en tidsstampel; bryggmanagern ser den pa sin
+    // nasta tick. Det ar alltsa inte ett omedelbart svar om att anslutningen lyckats — bara att
+    // begaran tagits emot. Klienten far inte pasta mer an sa.
+    anslutNu:async()=>{const id=workspaceId();
+      if(!id)throw Error('Logga in för att ansluta');
+      return await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection/anslut-nu`,{method:'POST',body:'{}'})},
     disconnect:async()=>shape((await cloud('DELETE')).connection),
     send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
@@ -263,4 +374,12 @@ if(!localRuntime){
 
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
 const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
-let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();
+let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
+// Aven i skrivbordslaget gar verifieringen via MOLNET: det ar molnets tiktok_connections som bar
+// handtagslaset, och den lokala servern har varken sessionen eller tabellen. Saknas inloggningen
+// sags det rakt ut i stallet for att knappen tyst inte gor nagot.
+verifiera:async()=>{const id=window.VyraAuth?.lastDetail?.()?.workspaces?.[0]?.id;
+  if(!id)throw Error('Logga in på ditt VYRA-konto för att verifiera TikTok');
+  const r=await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-verifiering`,{method:'POST',body:'{}'});
+  if(!r||!r.url)throw Error('Servern lämnade ingen verifieringslänk');
+  return{ok:true,...oppnaVerifiering(r.url)}}};window.VyraSessionState?.registerTeardown?.('live-client-poll',stopPolling);addEventListener('vyra-session-ended',stopPolling);status().catch(()=>{});startPolling()})();

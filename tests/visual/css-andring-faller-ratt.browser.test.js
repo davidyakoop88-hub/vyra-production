@@ -52,7 +52,12 @@ let skip = hoppaOver();
 // i pixlarna eftersom den bär widgetens ram, glöd och accenter.
 const REGEL = '.gifter-level-up{--gifter:#00d0a0!important;--gifter-light:#b8ffe8!important}';
 const NYCKEL_SOM_ANVANDER = 'catalog:gifterlevel:profile';
-const NYCKEL_SOM_INTE_ANVANDER = 'catalog:socialgoal:followers:1:landscape';
+// Bytt 2026-09-20: catalog:socialgoal:followers:1:landscape finns inte i katalogen langre - de gamla
+// malmodellerna byttes ut i 48b3458, och de sex nya designerna pulserar (goalNewPulse) sa de gar
+// inte att fotografera stilla. Heart Me Goal ar stabil, har referens, star inte i undantagslistan
+// och ror aldrig --gifter. Uppmatt: 112 sadana kandidater, den har ar den som ligger narmast i
+// funktion (ett mal, som forr).
+const NYCKEL_SOM_INTE_ANVANDER = 'catalog:heartgoal:classic';
 
 test.before(async () => {
   if (skip) return;
@@ -60,7 +65,7 @@ test.before(async () => {
   if (!browser) throw new Error('hittade en webblasare men kunde inte starta den');
   server = await servera();
   const bas = `http://127.0.0.1:${server.address().port}`;
-  sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+  sida = await browser.newPage({ viewport: V.VIEWPORT });   // passformen neutraliseras i RIGG - se visuell.js
   await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
   await sida.waitForFunction(() => typeof window.render === 'function', null,
     { timeout: 30000, polling: 100 });
@@ -86,7 +91,8 @@ const jamfor = (a, b) => sida.evaluate(V.JAMFOR, [a, b, V.KANALTROSKEL]);
 // Kontrollmätningen först: finns nycklarna alls? Ett prov som tyst hoppar över sin egen
 // mätpunkt är värre än inget prov.
 test('kontrollmätning: båda nycklarna finns i katalogen', { skip }, async () => {
-  const alla = await kravNycklar(sida);
+  // Inget argument: `sida` som golv gav jämförelsen `149 < Page`, som alltid är falsk.
+  const alla = kravNycklar();
   for (const n of [NYCKEL_SOM_ANVANDER, NYCKEL_SOM_INTE_ANVANDER]) {
     assert.ok(alla.includes(n), `nyckeln ${n} finns inte i katalogen längre — provet mäter ingenting`);
     assert.ok(!utanReferens(n), `nyckeln ${n} står i undantagslistan och går inte att fotografera stilla`);

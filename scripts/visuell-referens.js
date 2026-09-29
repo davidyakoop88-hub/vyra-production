@@ -94,7 +94,7 @@ function servera() {
     const browser = await startaWebblasare();
     const server = await servera();
     const bas = `http://127.0.0.1:${server.address().port}`;
-    const sida = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+    const sida = await browser.newPage({ viewport: V.VIEWPORT });   // passformen neutraliseras i RIGG - se visuell.js
     await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
     await sida.waitForFunction(() => typeof window.render === 'function', null,
       { timeout: 30000, polling: 100 });
@@ -165,9 +165,6 @@ function servera() {
       matt: `${f2.fyllnad.bredd}x${f2.fyllnad.hojd}` });
   }
 
-  await b.browser.close();
-  await new Promise(r => b.server.close(r));
-
   if (skrivna.length) {
     // MANIFESTET SLÅS SAMMAN, DET SKRIVS INTE ÖVER.
     //
@@ -186,9 +183,17 @@ function servera() {
       if (!fs.existsSync(V.refvag(nyckel))) delete bilder[nyckel];
     }
 
+    // AVTRYCKET TAS PA SAMMA SIDA SOM BILDERNA, i samma session och efter samma uppvarmning.
+    // Tas det nagon annanstans mater det en annan maskin an den som ritade referenserna, och da
+    // ar det varre an inget: vakten hade sagt "rastreraren stammer" om fel maskin.
+    const rastrering = await V.rastreringsAvtryck(b.sida);
+    console.log(`Rastreringsavtryck: ${rastrering}`);
+
     fs.writeFileSync(V.MANIFEST, JSON.stringify({
-      motor, antal: Object.keys(bilder).length,
-      senaste: { motiv: MOTIV, nycklar: skrivna.length, tid: new Date().toISOString() },
+      motor, rastrering, antal: Object.keys(bilder).length,
+      // `filter` med i manifestet av samma skal som nyckelraden nedan: en maskinlasbar post som
+      // inte sager att korningen var filtrerad ar lika vilseledande som en text som sager 'alla'.
+      senaste: { motiv: MOTIV, nycklar: skrivna.length, filter: BARA || null, tid: new Date().toISOString() },
       bilder,
     }, null, 1) + '\n');
 
@@ -197,10 +202,34 @@ function servera() {
       fs.writeFileSync(logg, '# Historik för de visuella referenserna\n\n'
         + 'Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.\n');
     }
+    // "ALLA" MASTE BETYDA ALLA, INTE "ALLA I FILTRET".
+    //
+    // Jamforelsen gick mot `nycklar`, som redan ar filtrerad av VYRA_VISUELL_BARA. En korning med
+    // `bara=templateTopPoints` skrev alltsa fyra bilder och loggade "Nycklar: alla" — sant om
+    // filtret, falskt om katalogen. Uppmatt 2026-09-22 i korning 65: fyra bilder committades,
+    // historiken pastod alla 133.
+    //
+    // Historiken ar det enda stallet dar nasta person kan se VAD som byttes och varfor. En rad som
+    // sager "alla" nar fyra skrevs later en framtida lasare tro att hela uppsattningen togs om pa
+    // den motorn — och da letar hen fel nar en referens visar sig vara aldre an den ser ut.
+    const utanUndantag = alla.filter(k => !utanReferens(k));
+    const helaSatsen = skrivna.length === utanUndantag.length;
+    const nyckelrad = helaSatsen
+      ? `alla ${utanUndantag.length}`
+      : `${skrivna.length} av ${utanUndantag.length}`
+        + (BARA ? ` (filter: ${BARA})` : '')
+        + ` — ${skrivna.map(s => s.nyckel).join(', ')}`;
     fs.appendFileSync(logg, `\n## ${new Date().toISOString().slice(0, 10)} — ${skrivna.length} referenser skrivna\n\n`
       + `- **Motiv:** ${MOTIV}\n- **Motor:** ${motor.version}\n`
-      + `- **Nycklar:** ${skrivna.length === nycklar.length ? 'alla' : skrivna.map(s => s.nyckel).join(', ')}\n`);
+      + `- **Nycklar:** ${nyckelrad}\n`);
   }
+
+  // Stangs FORST har, efter rastreringsAvtryck(b.sida) ovan — inte direkt efter jamforelseloopen.
+  // Stod den dar tidigare stangdes sidan innan avtrycket kunde tas ("page.evaluate: Target page,
+  // context or browser has been closed"), och kommentaren nagra rader upp om att avtrycket maste
+  // tas "PA SAMMA SIDA SOM BILDERNA, i samma session" gick inte att uppfylla.
+  await b.browser.close();
+  await new Promise(r => b.server.close(r));
 
   console.log(`\n${skrivna.length} referenser skrivna till ${path.relative(ROOT, V.REFKAT)}`);
   // De här är INTE de undantagna — de är nycklar som skulle ha fått en referens men inte kunde.

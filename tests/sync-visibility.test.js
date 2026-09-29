@@ -241,13 +241,21 @@ test('lankraden har en synlig vag till tokenhanteraren', () => {
 });
 
 // ---- kallans matt i overlaylankraden -----------------------------------------------------------
-// Overlayn ritas i layoutens EGNA pixlar och skalas INTE till kallans storlek. Uppmatt i skarp
-// Chrome: en kalla pa 1080x1920 far canvasen att tacka 40 % x 40 % av ytan och en pa 1920x1080
-// 23 % x 71 % — widgetarna hamnar i ovre vanstra hornet med tom yta runt om. Med EXAKT ratt matt
-// tacker den 100 % x 100 % i position 0,0.
+// OMSKRIVET 2026-09-22. Den har vakten kravde tidigare att raden bad om 432x768 och att titeln sa
+// att overlayn INTE skalas. Bada pastaendena var sanna fore 2026-09-20, da passformen lagades
+// (layout-safe.js ropar numera pa VyraOverlayFit efter varje renderSafeLayout), och falska darefter.
 //
-// Darfor star matten bredvid kopieringsknappen. Talen far inte hardkodas: det finns tva format,
-// och den som byter till Dator 16:9 ska se 768 x 432.
+// Uppmatt 2026-09-22 i pinnad Chromium mot studio.html?overlay=1, .canvas.getBoundingClientRect():
+//   kalla 1080x1920  ->  0,0  1080x1920  transform scale(2.5)  ->  tacker 100 % x 100 %
+//   kalla  432x768   ->  0,0   432x768   transform scale(1)    ->  tacker 100 % x 100 %
+// Bada fyller kallan. fitOverlayCanvas() raknar `Math.min(innerWidth/432, innerHeight/768)` och
+// centrerar — det ar PROPORTIONEN som maste stamma, inte de exakta talen.
+//
+// Raden ska darfor be om SANDNINGENS matt, sa att overlayn ritas i full upplosning i stallet for
+// att skalas upp av OBS. Overlay-kontrollen (overlay-diagnostics.js PRESETS.portrait) har hela
+// tiden sagt 1080x1920; de tva sa emot varandra i appen tills nu.
+//
+// Talen far fortfarande inte hardkodas: den som byter till Dator 16:9 ska se 1920 x 1080.
 const fsMatt = require('fs'), pathMatt = require('path');
 const MEDIA_MATT = fsMatt.readFileSync(pathMatt.join(__dirname, '..', 'media.js'), 'utf8');
 
@@ -261,8 +269,13 @@ test('overlaylankraden visar kallans matt', () => {
 });
 
 test('matten foljer VALT format och hardkodas inte', () => {
-  assert.match(MEDIA_MATT, /OVERLAY_FORMAT=\{mobile:\[432,768\],widescreen:\[768,432\]\}/,
-    'formattabellen saknas eller har andra matt an layout-format.js');
+  assert.match(MEDIA_MATT, /OVERLAY_FORMAT=\{mobile:\[1080,1920\],widescreen:\[1920,1080\]\}/,
+    'formattabellen saknas eller ber inte om sandningens matt');
+  // Samma sanning som Overlay-kontrollen. Sager de emot varandra igen ar en av dem fel, och
+  // streamern har ingen chans att veta vilken.
+  const DIAG = fsMatt.readFileSync(pathMatt.join(__dirname, '..', 'overlay-diagnostics.js'), 'utf8');
+  assert.match(DIAG, /portrait:\[1080,1920\]/, 'Overlay-kontrollen sager nagot annat an raden');
+  assert.match(DIAG, /landscape:\[1920,1080\]/);
   assert.match(MEDIA_MATT, /OVERLAY_FORMAT\[state\.layoutFormat\]\|\|OVERLAY_FORMAT\.mobile/,
     'matten laser inte valt format — den som valjer Dator 16:9 far fel siffror');
   // Formatknapparna ritas om vid varje render, sa lyssnaren maste sitta pa dokumentet.
@@ -271,11 +284,23 @@ test('matten foljer VALT format och hardkodas inte', () => {
 });
 
 test('och de forklarar VARFOR, inte bara vad', () => {
-  // Ett tal utan skal ser ut som en rekommendation. Titeln maste saga att overlayn inte skalas,
-  // annars provar man 1080x1920 igen nasta gang.
+  // Ett tal utan skal ser ut som en rekommendation. Titeln maste saga vad som faktiskt kan ga fel —
+  // och det ar proportionen, inte de exakta talen.
   const titel = (MEDIA_MATT.match(/m\.title=`[^`]*`[^;]*/) || [''])[0];
-  assert.match(titel, /skalas inte|skalar inte/i,
-    'titeln sager inte att overlayn inte skalas till kallan — da ser matten ut som ett tips');
+  assert.match(titel, /PROPORTION/i,
+    'titeln sager inte att det ar proportionen som maste stamma');
+  assert.match(titel, /skalar sig själv/i,
+    'titeln sager inte att overlayn skalar sig sjalv — da ser matten ut som ett krav pa exakthet');
   assert.match(titel, /\$\{bredd\} × \$\{hojd\}/,
     'titeln upprepar inte de faktiska matten');
+});
+
+test('MUTATIONSVAKTEN: det gamla pastaendet om att overlayn inte skalas ar borta', () => {
+  // Det var sant fore passformsfixen och ar falskt nu. Kommer det tillbaka skickas varje streamer
+  // till en kalla pa en fjardedels upplosning igen.
+  const titel = (MEDIA_MATT.match(/m\.title=`[^`]*`[^;]*/) || [''])[0];
+  assert.doesNotMatch(titel, /skalas inte till källan|skalas inte till kallan/i,
+    'titeln pastar igen att overlayn inte skalas — fitOverlayCanvas() gor precis det');
+  assert.doesNotMatch(MEDIA_MATT, /40 % x 40 %/,
+    'den gamla matningen fran fore passformsfixen ar tillbaka i kommentaren');
 });

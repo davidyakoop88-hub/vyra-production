@@ -190,8 +190,43 @@
   // da ska bytet av sandning inte hamta nagonting alls.
   let singel = null;
   let omhamtare = null;
+  // DEDUPELISTAN MASTE OVERLEVA EN NY WEBBLASARKONTEXT, inte bara en omladdning.
+  //
+  // `sessionStorage` ar per KONTEXT. I OBS forstors och aterskapas en browserkalla vid scenbyte
+  // (nar "Shutdown source when not visible" ar pa), vid omstart och vid cache-uppdatering. Varje
+  // gang ar listan tom, snapshotet levererar `live:start` for den PAGAENDE sandningen, dedupen
+  // missar — och signalen tommer live-leaderboard.js `totals`, alltsa bade Top Gift och Top Likes
+  // i samma ogonblick. Uppmatt 2026-09-18: tva instanser med tom lagring gav bada en signal for
+  // samma eventId; med delad lagring gav den andra noll.
+  //
+  // INGEN TTL. `TAK` ar 16 och en sandningscykel ar tva eventId, sa listan kan aldrig vaxa forbi
+  // atta cykler — storleken ar redan begransad. En TIDSbaserad rensning vore daremot farlig: loper
+  // en post ut mitt i en lang sandning ar listan tom igen for just den sessionen, och da ar vi
+  // tillbaka i precis den bugg som lagas har.
+  const minneslagring = (() => {
+    const m = Object.create(null);
+    return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v) } };
+  })();
+  let valdLagring = null;
   function lagringen() {
-    try { return root.sessionStorage } catch (e) { return null }
+    if (valdLagring) return valdLagring;
+    // Att objektet FINNS racker inte: privat lage och vissa OBS-inbaddningar har det och kastar
+    // forst vid skrivning. Darfor ett riktigt skrivprov innan lagringen accepteras.
+    for (const valj of [() => root.localStorage, () => root.sessionStorage]) {
+      try {
+        const l = valj();
+        if (!l) continue;
+        const prov = '__vyra-lagringsprov';
+        l.setItem(prov, '1');
+        if (typeof l.removeItem === 'function') l.removeItem(prov);
+        valdLagring = l;
+        return l;
+      } catch (e) {}
+    }
+    // Sista utvagen. En overlay som slutar byta sandning ar en varre regression an en dedupe som
+    // bara galler sidans livstid — samma fail-safe-regel som resten av filen lyder under.
+    valdLagring = minneslagring;
+    return valdLagring;
   }
   function runtime() {
     if (singel) return singel;
@@ -207,6 +242,13 @@
   }
 
   if (typeof module === 'object' && module.exports) module.exports = { skapaLiveSession };
+  // `lagratVarde` ar provytan, av samma sort som `lage()` ovan. Proven laste fram till nu
+  // sessionStorage VID NAMN — ett prov pa backenden, inte pa beteendet — och foll allihop nar
+  // fixen bytte backend. Nu fragar de klienten. Den lamnar INTE ut lagringsobjektet: bara ett
+  // varde at gangen, skrivskyddat. Tva prov kraver just lagringen och gar inte via `lage()`:
+  // ett vantar tomstrangen som bara lagringen bar, ett annat provar att en dormant klient
+  // aldrig SKREV nyckeln — och en oskriven nyckel gar inte att se i minnesvariablerna.
   else root.VyraLiveSession = { skapaLiveSession, runtime,
+    lagratVarde: (nyckel) => { try { return lagringen().getItem(nyckel) } catch (e) { return null } },
     registreraKonfigOmhamtning: (fn) => { omhamtare = fn } };
 })(typeof window !== 'undefined' ? window : globalThis);

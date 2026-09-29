@@ -5,7 +5,9 @@
 
 
 Fyra saker i battle-kedjan går **inte** att avgöra utan en riktig TikTok LIVE-match, och sedan
-2026-08-18 väntar Guardian Emblem (punkt 6) på samma sändning. De är byggda
+2026-08-18 väntar Guardian Emblem (punkt 6) på samma sändning. Sedan 2026-09-22 väntar även punkt 8:
+sändningsräknarnas omladdningsskydd hänger på ett `sessionId` som bara molnets `live:start` ger, och
+går därför inte att prova mot den lokala servern. De är byggda
 med tolerant kod och medvetna gissningar, och varje gissning står utskriven här tillsammans med
 exakt vad man ska titta på för att stänga den.
 
@@ -350,6 +352,133 @@ faktiskt spelar där. Det är den enda widgetfamiljen i katalogen där ingen vak
 
 Spelar de inte heller i OBS är det en riktig bugg som ingen vakt hittat — och då är nästa steg att
 byta kodek (VP9/WebM spelas av båda) i stället för att jaga den i provbrowsern.
+
+## 8. Överlever sändningens räknare en omladdning av OBS-källan?
+
+**Fixen finns, men går inte att prova utanför en riktig sändning.** `live-leaderboard.js` (`totals`,
+alltså "Denna stream") och `gift-event-images.js` (`records`, högvattenmärkena Top Gift och Top
+Streak jämför mot) sparar sedan 2026-09-22 en ögonblicksbild i `sessionStorage`, **nycklad på aktivt
+`sessionId`**. Utan en pågående sändning finns ingen nyckel, och då återtas ingenting — precis som
+det ska.
+
+Det `sessionId` kommer från molnets `live:start` (`server/stream-sessions.js`). Den lokala servern
+(`server.ps1`, desktop-appens `local-server.js`) kan inte skapa en sändningssession, så ett lokalt
+test visar "tomt efter omladdning" och ser ut som om fixen inte fungerar, fast den aldrig var
+påslagen. Därför står punkten här och inte i en provsvit.
+
+**Vad som lagades.** Före fixen låg båda räknarna i vanliga variabler. En omladdning mitt i
+sändningen tömde dem: topplistan fick bara tillbaka serverns rullande buffert (max 250 händelser),
+och rekordtröskeln gick till 0 — så nästa **enkrona** räknades som nytt rekord och skrev över den
+gåva som faktiskt ledde.
+
+**Så här läser du av det.**
+
+1. Låt sändningen komma igång tills det finns riktig aktivitet. Anteckna:
+   - Top Likes **topp tre**, namn och tal
+   - Top Gifts namn och tal
+2. Högerklicka browser source i OBS → **Refresh cache of current page**.
+3. Läs av när overlayen kommit upp igen:
+
+| Vad | Ska vara |
+|---|---|
+| Top Likes topp tre | **samma namn, samma tal** — inte tom, inte nollad |
+| Talen | **oförändrade** — dubblade tal betyder att backfyllnaden räknades ovanpå ögonblicksbilden |
+| Top Gift | samma gåva och samma tal som före |
+4. Ge (eller låt någon ge) en **billig** gåva efter omladdningen. Top Gift ska **inte** ändras så
+   länge rekordet är högre. Ändras den står tröskeln på 0 igen.
+
+Skriv in svaret här: **överlever / överlever inte**, och om talen dubblades.
+
+**Varning — "Shutdown source when not visible".** Är den kryssad river OBS hela källans kontext vid
+scenbyte, och då försvinner `sessionStorage` med den. Räknaren börjar om, och **det är väntat**:
+`event-dedupe.js` lägger sin grind i exakt samma lagring, så när ögonblicksbilden dör gör grinden
+det också och bufferten kan räknas en gång i en tom räknare i stället för ovanpå gamla siffror. Det
+är hela skälet till att lagringen är `sessionStorage` och inte `localStorage`. Vill du mäta punkten
+ovan: **kryssa ur den**, eller byt inte scen under avläsningen.
+
+Samma sak gäller punkt 5: en browser source har sin egen lagringsrymd, så ingenting du ser i Chrome
+på samma dator säger något om vad OBS-källan bär.
+
+---
+
+# Nya funktioner som ännu inte setts i skarp sändning
+
+Punkterna nedan är byggda och enhetstestade den här veckan, men ingen har sett dem mot riktig
+TikTok LIVE-trafik. De hänger inte på battle-kedjan — de behöver bara en vanlig sändning med
+gåvor och chatt. Kör gärna `SPELA-IN-TIKTOK.cmd` så kan gåvedelarna läsas av i efterhand.
+
+## 9. Tänder en riktig skattkista widgeten? (ENVELOPE)
+
+**Byggd, aldrig sedd mot en riktig kista.** TikToks skattkista skickar en `ENVELOPE`-händelse.
+Bryggan (`tiktok-bridge/normalizer.js` → `envelopeFields`) normaliserar den till typen `envelope`
+med `kistaId`, `oppnasAt` (ms sedan epoken), `diamonds`, `count` och `kistaDold`. Widgeten
+`templateTreasureChest` (`skattkista.js`) ritar kista- eller pill-designen, räknar ner till
+öppning och tänder då.
+
+**Antagandet:** att en riktig kista faktiskt bär `envelopeInfo` med de fälten, och att `display===2`
+betyder dold kista. Ingen riktig payload är uppmätt — allt vilar på fältnamn från protokollet.
+
+**Så här läser du av det:**
+1. Vänta tills någon skickar en skattkista i sändningen (eller skicka en själv).
+2. I bryggans logg / inspelningen: leta raden med `ENVELOPE`, kolla att `_utgaende` bär `type:
+   "envelope"` med `kistaId` och `oppnasAt`.
+3. I Studion/overlayn: widgeten ska tända, visa nedräkning till öppningstiden och sedan öppna.
+
+Skriv in: tänder den? räknar nedräkningen rätt mot öppningen? Koden: `skattkista.js`,
+`tiktok-bridge/normalizer.js` → `envelopeFields`, `server/event-bus.js` (`envelope` i ALLOWED).
+
+## 10. Fungerar låtönskningar från chatten? (YouTube + Spotify)
+
+**Byggd och testad i jsdom, aldrig mot riktig chatt.** En tittare skriver `!önska <låt>` (eller
+`!sr`) i TikTok-chatten. Chatten når molnet som `chatcommand`, och `latonskningar.js` söker låten
+(YouTube via serverns nyckel, eller Spotify) och lägger den i kön.
+
+**Så här läser du av det, i sändning:**
+1. Låt en tittare (eller du själv från en annan enhet) skriva `!önska <känd låt>` i chatten.
+2. YouTube-källa: låten ska dyka upp i kön och spelas i overlayn i den fasta spelaren över
+   `.lat-video`. Spotify-källa: status blir `skickad` och låten hamnar i Spotifys egen kö.
+3. Testa gränserna: cooldown per tittare, `maxKo`, `maxMinuter`, dubbletter avvisas.
+4. Som moderator: `!skip` ska hoppa över låten som spelas.
+
+Skriv in: kom önskningen fram? spelades YouTube i overlayn? la Spotify i kön? Koden:
+`latonskningar.js`, `server/musik.js` (nyckeln bor på servern), `spotify-client.js`.
+
+⚠️ **YouTube-kvoten.** En sökning kostar 100 av 10 000 enheter/dygn. Testa med några få sökningar,
+inte hundra.
+
+## 11. Når Stream Deck VYRA via molnet, utan Desktop? (parkopplingskod)
+
+**Byggd, aldrig provad end-to-end mot molnet.** Desktop-vägen är redan verifierad. Molnvägen: du
+genererar en kod på sidan **Stream Deck** i studion, skriver in den i pluginets ruta **VYRA-molnet**,
+och pluginet byter koden mot en enhetstoken. Efter det ska ett knapptryck nå VYRA även när VYRA
+Desktop **inte** kör.
+
+**Så här läser du av det:**
+1. Stäng VYRA Desktop (eller kör Stream Deck på en dator utan appen).
+2. Generera en parkopplingskod i studion, skriv in den i pluginet — statusraden ska bli grön
+   ("Parkopplat mot molnet").
+3. Enheten ska dyka upp i listan **Parkopplade enheter** i studion.
+4. Tryck en knapp (t.ex. Kör Action) — den ska köras i overlayn/studion utan Desktop.
+
+Skriv in: parkopplades enheten? kom knapptrycket fram utan Desktop? Koden: `server/streamdeck.js`,
+`streamdeck-plugin/se.vyra.live.sdPlugin/plugin.js`, `streamdeck.js`.
+
+## 12. Stannar Top Streak på den dyrare combon, och Top Gift på störst enskild gåva?
+
+**Nyss ändrat (2026-09-27), aldrig sett live.** Top Streak rankas nu på combons VÄRDE (styckpris ×
+antal), inte antalet. Top Gift visar den dyraste enskilda gåvan (styckvärde). Båda är rekord som
+gäller hela sändningen.
+
+**Så här läser du av det, i sändning:**
+1. Låt någon skicka en **kort men dyr** combo (t.ex. några gåvor à högt värde) och någon annan en
+   **lång men billig** (många gåvor à 1 coin).
+2. **Top Streak** ska stanna på den **dyrare** combon (visar dess antal ×N), inte den med flest
+   gåvor.
+3. **Top Gift** ska visa den **enskilt dyraste** gåvan som getts, och inte ändras av en billigare.
+4. Ladda om OBS-källan (se punkt 8) — rekorden ska stå kvar.
+
+Skriv in: stannade Top Streak på den dyrare combon? visade Top Gift störst enskild gåva? Koden:
+`gift-event-images.js` (`records.streakCoins` / `records.giftCoins`), `live-leaderboard.js`.
 
 ## Efteråt
 

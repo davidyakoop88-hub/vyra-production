@@ -96,18 +96,21 @@ test('pausat event triggar inte, aktivt bredvid det gör det', async () => {
   assert.equal(w.__traffar.length, 1, 'det pausade eventet spelade också, eller det aktiva inte alls');
 });
 
-test('de tio scenlänkarna bär token, eget scennummer och pekar på overlay.html', async () => {
-  const w = studio({ tokenUrl: 'https://vyralive.app/overlay.html?access=TOK123' });
+test('bara använda scenlänkar bär token, eget scennummer och pekar på overlay.html', async () => {
+  const w = studio({ tokenUrl: 'https://vyralive.app/overlay.html?access=TOK123', actions: [
+    action({ id: 'a1', scene: { number: 2 } }), action({ id: 'a2', scene: { number: 4 } })
+  ] });
   w.VyraActionsExtras.forEach(fn => fn());   // renderScenes körs när Actions-vyn öppnas
   await vanta(200);
   const lankar = Array.from(w.document.querySelectorAll('[data-scene-link] input[readonly]'), i => i.value);
-  assert.equal(lankar.length, 10, 'alla tio scener fick inte en länk');
-  lankar.forEach((l, i) => {
-    assert.match(l, /\/overlay\.html/, `scen ${i + 1} pekar inte på overlay.html`);
-    assert.match(l, /access=TOK123/, `scen ${i + 1} bär ingen token — länken visar inloggningen i OBS`);
-    assert.match(l, new RegExp(`scene=${i + 1}(&|$)`), `scen ${i + 1} bär fel scennummer`);
+  assert.equal(lankar.length, 2, 'bara använda skärmar ska visas');
+  [2,4].forEach((scene, i) => {
+    const l=lankar[i];
+    assert.match(l, /\/overlay\.html/, `scen ${scene} pekar inte på overlay.html`);
+    assert.match(l, /access=TOK123/, `scen ${scene} bär ingen token — länken visar inloggningen i OBS`);
+    assert.match(l, new RegExp(`scene=${scene}(&|$)`), `scen ${scene} bär fel scennummer`);
   });
-  assert.equal(new Set(lankar).size, 10, 'två scener delar länk');
+  assert.equal(new Set(lankar).size, 2, 'två använda scener delar länk');
 });
 
 test('en öppnad scenlänk sätter scenen och spelar rätt actions', async () => {

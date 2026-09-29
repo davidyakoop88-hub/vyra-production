@@ -1,0 +1,12 @@
+/* Agency catalog test v3: direct contact channels, no creator counts or application flow. */
+.agency-test-card{grid-template-columns:54px minmax(0,1fr)}
+.agency-test-card>span{min-width:0}
+.agency-test-info{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.agency-test-info span{display:grid;gap:5px;padding:13px;border:1px solid #30233d;border-radius:13px;background:#100b17}
+.agency-test-info small{color:#9f92ac;font-size:8px;letter-spacing:.12em}
+.agency-test-info b{overflow:hidden;text-overflow:ellipsis;color:#fff;font-size:12px}
+.agency-test-contact-links{display:flex;flex-wrap:wrap;gap:8px}
+.agency-test-contact-links a{padding:10px 12px;border:1px solid #6f4598;border-radius:10px;background:#1b1126;color:#eadbfa;font-size:10px;font-weight:700;text-decoration:none}
+.agency-test-contact-links a:hover{border-color:#b46fff;background:#29163b;transform:translateY(-1px)}
+@media(max-width:850px){.agency-test-info{grid-template-columns:1fr}.agency-test-contact-links{display:grid}.agency-test-contact-links a{text-align:center}}
+

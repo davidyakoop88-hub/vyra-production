@@ -21,7 +21,22 @@ function nycklar() {
 
 // Golvet är en kontrollmätning, inte ett tak. En tom eller flyttad karta ger noll nycklar, och då
 // blir varje vakt som itererar över dem grön av ingenting.
-function kravNycklar(minst = 150) {
+//
+// Golvet var 150. Kartan gick från 151 till 149 nycklar 2026-09-19 22:20 (cffae80) när katalogen
+// krympte med flit, och referensvakten föll då vid inläsning — före ett enda foto — med felet
+// här nedanför. Vakten mot en FLYTTAD eller TOM karta är inte ett facit för antalet.
+//
+// 140 skrevs "med marginal för nästa avvecklinger". Den marginalen räckte inte: gallringen av Top
+// Gifts designer 2026-09-23 tog bort 38 på en gång (sju gåvoramar, tolv VYRA ORIGINAL, nitton
+// premium) och kartan står nu på 112 nycklar i 115 kort. Golvet föll alltså på en avveckling som
+// var hela poängen med ändringen, inte på en karta som flyttat.
+//
+// 100 är det nya golvet, satt på samma sätt: långt under dagens 112 så att en normal avveckling
+// får plats, långt över noll så att en tom eller flyttad karta fortfarande fångas. Siffran står på
+// ETT ställe och overlay-alla-widgets läser den härifrån — annars glider de två isär, och det var
+// precis vad som hände förra gången golvet ändrades.
+const GOLV = 100;
+function kravNycklar(minst = GOLV) {
   const lista = nycklar();
   if (lista.length < minst) {
     throw new Error(`hittade bara ${lista.length} katalognycklar i docs/katalogkarta.md `
@@ -77,8 +92,12 @@ const UTAN_REFERENS = {
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
 };
 
+// PREFIX BARA FÖR POSTER SOM SLUTAR PÅ ':'. Övriga poster gäller EXAKT den nyckeln. Uppmätt
+// 2026-09-26: 'catalog:likefountain' (den klassiska fontänen, alltid i rörelse) matchade som prefix
+// även 'catalog:likefountain:portal' — en deterministisk förhandsbild med egen REGI — så det nya
+// kortet fotograferades aldrig och pixelvakten var grön av ingenting.
 const utanReferens = nyckel =>
-  Object.keys(UTAN_REFERENS).some(p => nyckel === p || nyckel.startsWith(p));
+  Object.keys(UTAN_REFERENS).some(p => nyckel === p || (p.endsWith(':') && nyckel.startsWith(p)));
 
 // EGEN REGI FÖR DE WIDGETAR SOM INTE GÅR ATT FRYSA UTIFRÅN.
 //
@@ -97,15 +116,82 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  // LIKE FOUNTAIN · PORTAL (like-fountain-portal.js). Den lever på en canvas som bara ritar när
+  // tittarna tappar, och i overlay-läget är den genomskinlig i vila — ALERTS-triggern ovan startar
+  // alltså ett slumpat förlopp. Regin fryser klockan, tömmer duken och visar förhandsbilden, som är
+  // inline-SVG byggd av samma platser och samma frö varje gång. Bilden är då bestämd av kod.
+  'catalog:likefountain:portal': {
+    fas: 'forhandsbild', ms: 0,
+    varfor: 'canvas-förloppet är slumpat och tomt i vila; förhandsbilden är deterministisk',
+    regi: () => {
+      if (!window.VyraLikePortal) return { fel: 'like-fountain-portal.js laddades inte' };
+      const n = window.VyraLikePortal.stilla();
+      if (!n) return { fel: 'portalen renderades inte — saknas .like-fountain-portal' };
+      return { portaler: n, hjartan: document.querySelectorAll('.like-fountain-portal .lfp-still path').length };
+    }
+  },
+  // SKATTKISTAN (skattkista.js). I OBS-läget är den osynlig i vila och syns bara medan en kista
+  // räknar ned — en klocka, alltså aldrig samma bild två gånger. Regin stänger av klockan och alla
+  // rörelser och visar en fast kista med 00:42 kvar. Bilden är då bestämd av kod.
+  'catalog:skattkista:kista': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
+  'catalog:skattkista:pill': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
+  // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess hjartan ar
+  // CSS-animationer som gar i loop och hamnar i samma lage igen.
+  //
+  // Regin kallade fram till 2026-09-23 VyraLikeFountainFx.still() for att ta bort canvas-lagrets
+  // duk fore fotot — det lagret ritade slumpade partiklar, och samma RASTER kom aldrig tillbaka,
+  // vilket ar exakt det `stilla()` letar efter. Lagret ar borttaget nu (det var redan urkopplat
+  // fran triggern), sa det finns ingen duk att ta bort.
+  //
+  // Posten star kvar med SAMMA fas och ms, sa fotopipelinen beter sig precis som forut och
+  // referensbilderna galler oforandrat. Regin har bytt roll: den frys ingenting langre, den
+  // KONTROLLERAR att ingen duk kommit tillbaka. Gor den det ar fotot slumpat igen, och da ska det
+  // sagas har och inte visa sig som en oforklarlig diff i en bild.
+  'catalog:likefountain': {
+    fas: 'duken-borttagen', ms: 0,
+    varfor: 'DOM-fontanen loopar och kan fotograferas; canvas-lagret finns inte langre',
+    regi: () => {
+      const box = document.querySelector('.widget.like-fountain');
+      if (!box) return { fel: 'fontanen renderades inte — saknas .widget.like-fountain' };
+      const dukar = box.querySelectorAll('canvas.lf-duk').length;
+      if (dukar) return { fel: `canvas-lagret ar tillbaka (${dukar} dukar) — fotot blir slumpat` };
+      return { dukar: 0, partiklar: box.querySelectorAll('.lf-p').length };
+    }
+  },
+
   // EN POST PA NYCKELNIVA, inte pa typ. Alla 23 battlemvp-nycklar har typen templateBattleMvp,
   // men bara de sex firandena ar CSS-koreografier. De ovriga 17 fotograferas korrekt av den
   // generella frysningen — prefixet haller dem utanfor. Se uppslaget i tests/helpers/visuell.js.
   //
-  // FORLAGAN AR GUARDIAN, INTE GIFTJAR. Giftjar-posten anropar VyraAnimalGiftJars.still() for att
-  // en canvas maste ritas om av kod. Firandena har varken canvas, requestAnimationFrame eller
-  // renderarobjekt: de ar 24 @keyframes i battle-mvp-celebrations.css, alla bundna till
-  // .mvp-active och alla andliga. Det finns alltsa inget still() att anropa — tillstandet maste
-  // stallas, precis som guardian stallen sin fas.
+  // FORLAGAN AR GUARDIAN OCH GIFTJAR I FORENING. Fasen stalls som guardian gor, OCH en canvas
+  // maste stoppas som giftjar gor.
+  //
+  // Posten sa tidigare att firandena varken hade canvas, requestAnimationFrame eller
+  // renderarobjekt. Det slutade vara sant nar battle-mvp-particles.js lades till: tva dukar
+  // per scen, ritade av en rAF-slinga med slumpade partiklar. Vakten foll pa exakt det --
+  // 43 olika bildrutor pa 14 s och ingen som kom igen, for `stilla()` letar samma RASTER tva
+  // ganger och slumpade partiklar ger aldrig det. De stillastaende rutorna i slutet raknades
+  // inte heller: da har mvc-show redan tonat scenen under 3 % malad yta.
+  //
+  // Motorn lamnar darfor VyraMvpParticles.still(), precis som VyraAnimalGiftJars.still().
   //
   // MS AR VALT UR KEYFRAMES, inte pa kansla. Durationen ar 10 s for katalognycklarna
   // (widget-factory satter mvpDuration: 10, CSS laser var(--mvc-duration,10s)):
@@ -134,6 +220,8 @@ const REGI = {
       }
       // Samma tva val som @media(prefers-reduced-motion:reduce) gor i battle-mvp-celebrations.css.
       box.querySelectorAll('.mvc-charge, .mvc-finale').forEach(n => n.remove());
+      // Partikeldukarna ar samma sorts dekoration och doljs av samma media-regel.
+      if (window.VyraMvpParticles) window.VyraMvpParticles.still();
       const alla = [...box.getAnimations({ subtree: true })];
       alla.forEach(a => { a.pause(); a.currentTime = ms });
       void box.offsetWidth;
@@ -198,4 +286,4 @@ const REGI = {
   },
 };
 
-module.exports = { nycklar, kravNycklar, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
+module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };

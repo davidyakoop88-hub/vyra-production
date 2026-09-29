@@ -27,7 +27,19 @@ const KALLKOD_MONSTER = [
   { namn: 'Overlay Preview', re: /Overlay Preview/i },
   { namn: 'Engelsk grupprubrik i navet', re: /nav-section-label">(Core|Automation|Insights)</ },
   { namn: 'Engelskt navval', re: /<span>(Events|Analytics)<\/span>/ },
-  { namn: 'Guide pekar pa gammalt navnamn', re: /where: '(Action & Event|Vip-paket|Analytics)/ },
+  // 'Action & Event' STOD har till 2026-09-18 och ar medvetet borttaget.
+  //
+  // Etapp 4 (#154) dopte om navvalet 'Action & Event' till 'Automatik' och satte det pa den har
+  // listan for att guiden inte skulle peka pa det gamla namnet. Beslutet ar aterkallat av David:
+  // navet heter 'Action & Event' igen. Skalet ar att termerna ar produktens EGNA — CLAUDE.md
+  // beskriver flodet som "Action skapas forst; Event valjer sedan vilken Action som triggas" —
+  // och att guiden aldrig slutade anvanda dem: FAQ-svaret i guide.js kallade funktionen
+  // 'Action & Event' hela tiden, medan navet sa 'Automatik'. Vakten skyddade alltsa en
+  // inkonsekvens. Dessutom stod grupprubriken 'Automatik' over ett navval som ocksa het
+  // 'Automatik', bredvid ett tredje som heter 'Automationer'.
+  //
+  // 'Vip-paket' och 'Analytics' ar KVAR: de ar aldrig produkttermer, bara gamla engelska namn.
+  { namn: 'Guide pekar pa gammalt navnamn', re: /where: '(Vip-paket|Analytics)/ },
 ];
 
 // Fraser som aldrig far synas i renderad text, oavsett vy. Matchas radvis, skiftlagesokansligt.

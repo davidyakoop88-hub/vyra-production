@@ -16,24 +16,14 @@ const CONTRACT = [
   { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
   // Fan Level 50 ar en ny familj (aldrig en media.js-literal) — markerlos, som raderna ovan.
   { name: 'Fan Level 50 · Fly Love', key: 'catalog:fanlevel50:flylove' },
+  { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
+  { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",
     values: { title: 'Aurora', value: 'aurora.mp4', src: 'assets/videos/aurora.mp4' },
     bindings: { f: 'aurora.mp4', mediaTitle: () => 'Aurora', normalizeMediaFile: () => 'aurora.mp4', mediaAssetPath: () => 'assets/videos/aurora.mp4' } },
 
   { name: 'Top Gift · standard', key: 'catalog:topgift',
     marker: "type:'templateTopGift',x:70,y:180,width:280", bindings: { id: 'x' } },
-  { name: 'Top Gift · tema neon', key: 'catalog:topgift:neon',
-    marker: "type:'templateTopGift',theme,x:70,y:180,width:280",
-    bindings: { id: 'x', theme: 'neon', colors: { royal: '#ff9d28', neon: '#d946ef', cyber: '#22d3ee', glass: '#d8e6ff' } } },
-  { name: 'Top Gift · extratema coronation', key: 'catalog:topgift:extra:coronation',
-    marker: "giftName:'ROSE',giftCount:250",
-    bindings: { id: 'x', theme: 'coronation', color: '#e8c25a' } },
-  { name: 'Top Gift · extratema sakura', key: 'catalog:topgift:extra:sakura',
-    marker: "giftName:'ROSE',giftCount:250",
-    bindings: { id: 'x', theme: 'sakura', color: '#ff69b4' } },
-  { name: 'Top Gift · ram', key: 'catalog:topgift:frame:royal-wings',
-    marker: "type:'templateTopGift',giftFrame:fid",
-    bindings: { id: 'x', fid: 'royal-wings', f: { accent: '#ffc13b' } } },
 
   { name: 'Top Streak · standard', key: 'catalog:topstreak',
     marker: "type:'templateTopStreak',x:65,y:220,width:310", bindings: { id: 'x' } },
@@ -109,6 +99,12 @@ const CONTRACT = [
 
   { name: 'Like Fountain', key: 'catalog:likefountain',
     marker: "type:'templateLikeFountain'", bindings: { id: 'x' } },
+  // Skattkistan föddes i fabriken (skattkista.js, 2026-09-27) — det finns ingen äldre literal att
+  // jämföra mot, så raden har ingen marker. Snapshoten är kontraktet.
+  { name: 'Skattkista · kista', key: 'catalog:skattkista:kista' },
+  { name: 'Skattkista · rad', key: 'catalog:skattkista:pill' },
+  { name: 'Låtönskningar · YouTube', key: 'catalog:latonskningar:youtube' },
+  { name: 'Låtönskningar · Spotify', key: 'catalog:latonskningar:spotify' },
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',
     marker: "type:'templateGiftCampaign'", bindings: { id: 'x', t: 'neon', o: 'portrait', label: 'Neon Event' } },
   { name: 'Gift Jar · Royal Lion', key: 'catalog:giftjar:lion',

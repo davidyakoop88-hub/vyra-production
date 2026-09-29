@@ -54,12 +54,31 @@ test.after(async () => {
 const MODELLER = ['stack', 'sidebadge', 'reveal', 'orbitlevel', 'risingtier',
                   'flip', 'duo', 'profile', 'number'];
 
-async function mat(layout) {
+// MATNINGEN AR REN — samma layout ger samma svar — men den anropades 66 GANGER for 9 layouter.
+//
+// Uppmatt 2026-09-23: fem prov i forsta loopen, ett i andra, ett i tredje (tva layouter), ett i
+// fjarde och ett fristaende. 66 anrop dar 57 raknade fram exakt samma svar en gang till. Varje
+// anrop oppnade en egen flik, laddade studio.html och sov 3,9 sekunder innan ett enda pastaende
+// provades: 66 x ~4,7 s = 310 s, alltsa hela filens kortid utan rest.
+//
+// MINNET AR DET SOM GOR DET BILLIGT, inte kortare somn. Ingen vantan har rorts av memoiseringen,
+// sa den kan inte gora ett prov flakigt — den raknar bara inte om det den redan vet.
+const MINNE = new Map();
+function mat(layout) {
+  if (!MINNE.has(layout)) MINNE.set(layout, matUtanMinne(layout));
+  return MINNE.get(layout);
+}
+
+async function matUtanMinne(layout) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
     { timeout: 30000, polling: 100 });
-  await page.waitForTimeout(2500);
+  // REDO AR ETT TILLSTAND, INTE EN KLOCKA. Uppmatt 2026-09-23 over fem laddningar: 32-39 ms fran
+  // .editor-shell tills VyraWidgets.create() svarar och panelen har kontroller. Somnen stod pa
+  // 2500 — sextiofyra ganger marginalen, och den syntes bara som vantetid.
+  await page.waitForFunction(() => !!(window.VyraWidgets && window.VyraWidgets.create), null,
+    { timeout: 30000, polling: 25 });
   const start = await page.evaluate(l => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create('catalog:gifterlevel:' + l);

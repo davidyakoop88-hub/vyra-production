@@ -241,9 +241,13 @@ function createConnectionManager({
   // while later arrivals jumped ahead. Oldest connection first makes the queue fair and repeatable.
   async function syncOnce() {
     if (!pool) throw new Error('connection-manager: pool krävs för syncOnce()');
-    const { rows } = await pool.query('SELECT workspace_id, tiktok_username FROM tiktok_connections WHERE active = true ORDER BY updated_at ASC, workspace_id ASC');
+    const { rows } = await pool.query('SELECT workspace_id, tiktok_username, omstart_begard_at FROM tiktok_connections WHERE active = true ORDER BY updated_at ASC, workspace_id ASC');
     const wanted = new Map(rows.map(r => [r.workspace_id, r.tiktok_username]));
-    let started = 0, stopped = 0, refused = 0;
+    // "ANSLUT NU". Servern och managern ar tva olika Railway-tjanster och pratar bara via
+    // databasen, sa knappen satter en tidsstampel som vi jamfor mot bryggans startedAt.
+    const begard = new Map(rows.map(r =>
+      [r.workspace_id, r.omstart_begard_at ? new Date(r.omstart_begard_at).getTime() : null]));
+    let started = 0, stopped = 0, refused = 0, restarted = 0;
 
     for (const [workspaceId, entry] of [...bridges.entries()]) {
       const want = wanted.get(workspaceId);
@@ -256,6 +260,27 @@ function createConnectionManager({
     // would keep advertising demand that no longer exists.
     for (const workspaceId of [...waiting.keys()]) {
       if (!wanted.has(workspaceId)) waiting.delete(workspaceId);
+    }
+
+    // "ANSLUT NU" — sandaren vantar inte ut cykeln.
+    //
+    // bridge.js ger aldrig upp mot ett konto som inte sander: 1, 2, 4, 8, 16, 32 och sedan 60
+    // sekunder i evighet. Uppmatt 2026-09-18 blir vantevardet vid sandningsstart ~30 s och varsta
+    // fallet 72 s. En omstart av processen nollstaller den raknaren, sa nasta forsok sker efter en
+    // sekund i stallet for sextio.
+    //
+    // JAMFORELSEN MOT startedAt AR HELA SKYDDET. Tidsstampeln ligger kvar i tabellen efter att den
+    // anvants — det finns ingen stad-skrivning som nollar den. Utan `> entry.startedAt` skulle
+    // bryggan darfor startas om vid VARJE tick i evighet, var 15:e sekund, mot TikTok. Provet
+    // "KRITISK: en begaran som ar ALDRE an bryggans start ror ingenting" pinnar det.
+    for (const [workspaceId, entry] of [...bridges.entries()]) {
+      const nar = begard.get(workspaceId);
+      if (nar == null || !(nar > entry.startedAt)) continue;
+      stopBridge(workspaceId);
+      // Backoffen far inte halla kvar en start nagon uttryckligen bett om. Hela poangen med
+      // knappen ar att det sker NU.
+      backoff.delete(workspaceId);
+      restarted++;
     }
 
     for (const [workspaceId, username] of wanted) {
@@ -273,7 +298,7 @@ function createConnectionManager({
         refused++;
       }
     }
-    return { started, stopped, refused, running: bridges.size, waiting: waiting.size };
+    return { started, stopped, refused, restarted, running: bridges.size, waiting: waiting.size };
   }
 
   async function startAll() {

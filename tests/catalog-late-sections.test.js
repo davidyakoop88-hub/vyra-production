@@ -89,7 +89,7 @@ test('en sektion som kommer EFTER bind far ocksa miniatyrer', async () => {
     ...senSektion(h, 'VYRA TOP STREAK · PREMIUM',
       ['catalog:topstreak:premium:liquid', 'catalog:topstreak:premium:thermo']),
     ...senSektion(h, 'TOP GIFTER · DESIGNVAL',
-      ['catalog:topgift:royal', 'catalog:topgift:neon'])
+      ['catalog:topgift:premium:royal', 'catalog:topgift:premium:neon'])
   ];
   await vantaPaObservatorn();
 
@@ -129,7 +129,7 @@ test('omstylingen skapar ingen andlos loop', async () => {
 test('omstylingen ror inte anvandarens layout', async () => {
   // #86 igen: allt som kanns av katalogen maste halla sig utanfor state och disk.
   const h = galleri();
-  senSektion(h, 'TOP GIFTER · DESIGNVAL', ['catalog:topgift:royal', 'catalog:topgift:neon']);
+  senSektion(h, 'TOP GIFTER · DESIGNVAL', ['catalog:topgift:premium:royal', 'catalog:topgift:premium:neon']);
   await vantaPaObservatorn();
 
   const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };

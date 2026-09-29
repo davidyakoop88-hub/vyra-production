@@ -1,4 +1,4 @@
-home = function () {
+window.VyraPremiumHome = home = function () {
   const connected = Boolean(state.tiktok);
   const user = state.user || 'VYRA-konto';
   const connectionText = connected ? `TikTok sparad · ${state.tiktok}` : 'TikTok väntar';

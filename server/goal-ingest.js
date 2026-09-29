@@ -36,8 +36,17 @@
 // FÅR veta, inte en förutsättning för att eventet ska nå fram — faller det bort ska gåvan gå ut ändå.
 const INGA_NIVAER = { applyEvent: async () => ({ fanLevelUp: null, gifterLevelUp: null }) };
 
+// pointsRuntime är valfri på samma sätt: en sidokonsument av SAMMA eventström som mål redan
+// använder, inte en förutsättning för den. server/points-runtime.js skriver sin egen idempotenta
+// rad (points_event_apply, samma ON CONFLICT-mönster som goal_event_apply) i sin EGEN transaktion —
+// den delar ingen transaktion med goalRuntime.applyEvent, så ett fel där kan aldrig rulla tillbaka
+// en redan committad målökning, och tvärtom. Om poängskrivningen misslyckas svaljs felet och loggas
+// (samma konvention som streamStats/viewerLevels), exakt som kommentaren ovan redan säger om
+// goal-ramar: en sidoeffekt som brister får aldrig hindra det rå eventet från att nå overlayet.
+const INGA_POANG = { applyEvent: async () => null };
+
 function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
-                             viewerLevels = INGA_NIVAER,
+                             viewerLevels = INGA_NIVAER, pointsRuntime = INGA_POANG,
                              log = (...args) => console.error(...args), now = Date.now } = {}) {
   // A frame failure must not fail the request: the number is committed and the raw event is out, so
   // the response is already true. The widget corrects itself on the next event or the next GET,
@@ -76,11 +85,21 @@ function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
     if (nivaer.fanLevelUp) event.fanLevelUp = nivaer.fanLevelUp;
     if (nivaer.gifterLevelUp) event.gifterLevelUp = nivaer.gifterLevelUp;
     const applied = await goalRuntime.applyEvent(pool, workspaceId, event);
+    // Efter målets claim (Postgres-ordningen ovan gäller fortfarande målet), men FÖRE det rå eventet
+    // publiceras — av samma skäl som nivåminnet ovan: en poängbrist får inte hindra gåvan från att
+    // gå ut, men den ska inte heller kunna hända EFTER att widgeten redan fått besked om eventet.
+    let points = null;
+    try {
+      points = await pointsRuntime.applyEvent(pool, workspaceId, event);
+    } catch (error) {
+      log(JSON.stringify({ level: 'error', event: 'points_apply_failed',
+        message: error.message, at: new Date(now()).toISOString() }));
+    }
     const raw = await eventBus.publish(workspaceId, event);
     const frames = applied.applied && applied.rows.length
       ? await publishFrames(workspaceId, applied.rows, event.at)
       : 0;
-    return { raw, applied, frames };
+    return { raw, applied, frames, points };
   };
 }
 

@@ -98,17 +98,43 @@ test('inget lager far ligga ovanpa sidopanelen i editorn', { skip }, async () =>
 });
 
 test('hela menyn ryms utan rullning ned till 1366x768', { skip }, async () => {
+  // DET HAR PROVET MATTE FEL ELEMENT TILL 2026-09-18 och kunde darfor inte falla.
+  //
+  // Det fragade `aside` om `scrollHeight - clientHeight`. `aside` ar `overflow:hidden`
+  // (studio.css:4), och for ett element som inte kan rulla ar de tva alltid lika — differensen
+  // ar 0 oavsett hur mycket innehall som finns. Provet var gront medan 328px av menyn lag
+  // utanfor bild vid 1366x768: fyra navval plus grupprubrikerna MEDIA och INSIKTER.
+  //
+  // Rullningen ligger i `aside nav`, som ar overflow-y:auto sedan profilfixen. Det ar DEN som
+  // ska fragas. Och eftersom navet ar flexibelt och vaxer till tillgangligt utrymme racker inte
+  // heller `scrollHeight` ensamt som matt pa marginal — darfor mats dessutom var varje enskilt
+  // navval faktiskt hamnar. Ett navval utanfor navets ruta ar buggen, oavsett vad talen sager.
   for (const [b, h] of [[1920, 1080], [1440, 900], [1366, 768]]) {
     const page = await oppnaEditorn(b, h);
     const m = await page.evaluate(() => {
-      const a = document.querySelector('aside');
-      return { overskott: a.scrollHeight - a.clientHeight,
-        // Nedersta raden ska sluta INNANFOR fonstret, inte bara "finnas".
-        bottenKant: Math.round(a.lastElementChild.getBoundingClientRect().bottom),
-        fonster: innerHeight };
+      const nav = document.querySelector('aside nav');
+      const nr = nav.getBoundingClientRect();
+      const poster = [...document.querySelectorAll('aside nav button, aside nav a')]
+        .filter(el => el.getBoundingClientRect().width > 0);
+      const utanfor = poster.filter(el => {
+        const r = el.getBoundingClientRect();
+        return r.bottom > nr.bottom + 1 || r.top < nr.top - 1;
+      }).map(el => el.textContent.trim().split('\n')[0]);
+      const sista = poster[poster.length - 1];
+      return {
+        overskott: nav.scrollHeight - nav.clientHeight,
+        utanfor,
+        // Marginalen under sista posten. Vid 1366x768 ar den ~33px — en ny menypost far
+        // plats, tva gor det inte. Siffran star har sa nasta tillagg syns i diffen.
+        luft: Math.round(nr.bottom - sista.getBoundingClientRect().bottom),
+        bottenKant: Math.round(document.querySelector('aside').lastElementChild.getBoundingClientRect().bottom),
+        fonster: innerHeight,
+      };
     });
     await page.close();
+    assert.deepEqual(m.utanfor, [], `${b}x${h}: navval utanfor menyns ruta: ${m.utanfor.join(', ')}`);
     assert.ok(m.overskott <= 2, `${b}x${h}: menyn rullar, ${m.overskott}px for hog`);
+    assert.ok(m.luft >= 0, `${b}x${h}: sista posten gar ${-m.luft}px forbi navets underkant`);
     assert.ok(m.bottenKant <= m.fonster + 2,
       `${b}x${h}: nedersta raden slutar pa ${m.bottenKant}, fonstret ar ${m.fonster}`);
   }
