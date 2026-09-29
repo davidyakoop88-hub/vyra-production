@@ -96,6 +96,9 @@
         <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Auto + manuell')}${opt('auto', w.fanl50Source, 'Bara auto (live)')}${opt('manual', w.fanl50Source, 'Bara manuell')}</select></label>
         <label>Lagnamn (#)<input id="fl50Team" value="${safe.text(w.fanl50Team, 'FANCLUB')}"></label>
       </div>
+      <div class="property-group"><h4>LÄGG TILL VIA @ANVÄNDARNAMN</h4>
+        <div style="display:flex;gap:6px;align-items:center"><input id="fl50AddUser" placeholder="@användarnamn" spellcheck="false" style="flex:1"><button id="fl50AddBtn" type="button">Hämta</button></div>
+        <small id="fl50AddStatus">Hämtar namn + profilbild från TikTok och lägger till i listan.</small></div>
       <div class="property-group"><h4>MANUELL LISTA</h4><small>En per rad: <code>namn</code> eller <code>namn|profilbild-url</code></small>
         <textarea id="fl50Manual" rows="4" spellcheck="false">${safe.text(manualLines, '')}</textarea></div>
       <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid">
@@ -124,6 +127,28 @@
           const bit = rad.split('|'); return { name: bit[0].trim(), avatar: (bit[1] || '').trim() };
         });
         save(); render();
+      };
+    });
+    on('#fl50AddBtn', btn => {
+      btn.onclick = async () => {
+        const inp = document.querySelector('#fl50AddUser'), stat = document.querySelector('#fl50AddStatus');
+        const namn = String(inp && inp.value || '').trim().replace(/^@/, '');
+        if (!namn) { if (stat) stat.textContent = 'Skriv ett användarnamn först.'; return; }
+        btn.disabled = true; if (stat) stat.textContent = 'Hämtar @' + namn + '…';
+        try {
+          const r = await fetch('/api/tiktok-profile?username=' + encodeURIComponent(namn));
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || !d || !d.ok) throw new Error((d && d.error) || 'kunde inte hämta');
+          const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
+          if (!lista.some(m => String(m && m.name || '').toLowerCase() === String(d.nickname).toLowerCase()))
+            lista.push({ name: d.nickname, avatar: d.avatar || '' });
+          w.fanl50Manual = lista; save();
+          if (typeof toast === 'function') toast('La till ' + d.nickname);
+          render();
+        } catch (e) {
+          if (stat) stat.textContent = 'Kunde inte hämta @' + namn + ': ' + (e && e.message || 'fel');
+          btn.disabled = false;
+        }
       };
     });
   };
