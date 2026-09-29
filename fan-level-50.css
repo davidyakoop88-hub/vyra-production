@@ -1,0 +1,61 @@
+/* fan-level-50.css — Fan Level 50-tavlan.
+   Ett hederskort = bakgrundsmall (Fly Love · LEVEL 50) + foto i guldringen + namn i bannern + lag.
+   Matten ar i % av kortet och verifierade mot den riktiga mallen (foto centrerat i ringen,
+   namn i bannern). Textstorlek i cqw sa den skalar med widgetens bredd. */
+
+.fan-level-50 { position: absolute; }
+.fan-level-50 .fl50-viewport { position: relative; width: 100%; overflow: hidden; }
+
+.fan-level-50 .fl50-card {
+  position: relative; width: 100%; aspect-ratio: 753 / 976; border-radius: 6px; overflow: hidden;
+  container-type: inline-size; transition: opacity .4s ease, transform .4s ease;
+}
+.fan-level-50 .fl50-art { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+/* profilbild — inuti mallens guldring (mallen bar redan ringen; ingen egen ram) */
+.fan-level-50 .fl50-photo {
+  position: absolute; left: 6.6%; bottom: 4.8%; width: 18.1%; aspect-ratio: 1;
+  border-radius: 50%; overflow: hidden; background: #2e2140;
+}
+.fan-level-50 .fl50-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* namn — i den tomma guld-bannern */
+.fan-level-50 .fl50-name {
+  position: absolute; left: 29%; right: 5%; bottom: 8.6%; height: 7.9%;
+  display: flex; align-items: center; justify-content: center;
+}
+.fan-level-50 .fl50-name span {
+  font-family: 'Oswald', 'Segoe UI', system-ui, sans-serif; font-weight: 800; letter-spacing: .4px;
+  font-size: 6.4cqw; line-height: 1; color: #3a2400; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 100%; text-shadow: 0 1px 0 rgba(255, 240, 190, .5);
+}
+
+/* lag — under bannern, guldtext */
+.fan-level-50 .fl50-team {
+  position: absolute; left: 29%; right: 5%; bottom: 3.2%; text-align: center;
+}
+.fan-level-50 .fl50-team span {
+  font-family: 'Oswald', 'Segoe UI', system-ui, sans-serif; font-weight: 800; letter-spacing: .6px;
+  font-size: 3.6cqw; background: linear-gradient(180deg, #fff2c4, #ffd049 55%, #d99a1e);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+/* rank */
+.fan-level-50 .fl50-rank {
+  position: absolute; top: 2%; left: 2.5%; z-index: 2; font-weight: 800; font-size: 6cqw;
+  color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); font-family: 'Oswald', system-ui, sans-serif;
+}
+
+/* slideshow-overgang */
+.fan-level-50 .fl50-card.fl50-out { opacity: 0; transform: translateY(-8px) scale(.97); }
+.fan-level-50 .fl50-card.fl50-in { animation: fl50in .5s ease both; }
+@keyframes fl50in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* rullande band — samma kort, andlost */
+.fan-level-50.fl50-mode-band .fl50-track {
+  display: flex; gap: 14px; width: max-content; will-change: transform;
+  animation: fl50scroll linear infinite; animation-duration: calc(var(--fl50-speed, 6s) * 4);
+}
+.fan-level-50.fl50-mode-band .fl50-card { width: 200px; flex: 0 0 auto; }
+@keyframes fl50scroll { to { transform: translateX(-50%); } }

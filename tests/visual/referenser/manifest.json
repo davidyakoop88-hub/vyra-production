@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 121,
+ "antal": 122,
  "senaste": {
-  "motiv": "Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547",
-  "nycklar": 115,
-  "filter": null,
-  "tid": "2026-09-29T07:13:25.259Z"
+  "motiv": "Ny widget Fan Level 50 (catalog:fanlevel50:flylove) behover sin referensbild",
+  "nycklar": 1,
+  "filter": "fanlevel50",
+  "tid": "2026-09-29T12:44:53.138Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -496,6 +496,10 @@
   },
   "catalog:heartfireworks": {
    "matt": "320x569",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel50:flylove": {
+   "matt": "300x382",
    "fyllnad": 100
   }
  }

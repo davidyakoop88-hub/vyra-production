@@ -1597,3 +1597,7 @@ Promise.resolve().then(()=>{
 
 // Approved animal jars share the existing live state and drop pipeline.
 Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='gift-jar-animals.css?v=20260913-1';document.head.append(css);const files=['gift-jar-textures.js?v=20260913-1','gift-jar-animals.js?v=20260913-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);document.body.append(script)};next(0)});
+
+// Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
+// VyraFanLevel50, sessionen matar den — ladda i den ordningen.
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20260929-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20260929-1','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
