@@ -85,10 +85,6 @@
         ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fill();
         ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,r*0.06);ctx.stroke();};
       bubble(w*0.34,h*0.58,h*0.14);bubble(w*0.62,h*0.46,h*0.17);bubble(w*0.48,h*0.74,h*0.1);
-      // Riktig gåva i huvudbubblan (async — bubblorna är redan ritade, så kortet är aldrig tomt).
-      try{const fb=o&&o.fallback;const gs=window.VyraSafe?VyraSafe.src(fb,GB_GIFT):(fb||GB_GIFT);
-        if(gs&&typeof Image==='function'){const im=new Image();im.onload=()=>{if(!ctx)return;const gx=w*0.62,gy=h*0.46,r=h*0.17*0.72;try{ctx.save();ctx.beginPath();ctx.arc(gx,gy,r,0,7);ctx.clip();ctx.drawImage(im,gx-r,gy-r,r*2,r*2);ctx.restore();}catch(_){}}; im.src=gs;}
-      }catch(_){}
     }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];host.classList.remove('gb-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.gb-orb,.gb-heart,.gb-shard,.gb-ring,.gb-flash,.gb-hero,.gb-giftback,.gb-combo').forEach(n=>n.remove());}
     return {fire,previewStill,clear,resize};
