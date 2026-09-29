@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `c16c79c`
+Commit: `79e99e1`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **129** |
-| Sektioner | 22 |
-| Med katalognyckel | 129 / 129 |
-| Med shadow DOM-miniatyr | 129 / 129 |
-| Ritar sin design | 129 / 129 |
+| Kort totalt | **131** |
+| Sektioner | 24 |
+| Med katalognyckel | 131 / 131 |
+| Med shadow DOM-miniatyr | 131 / 131 |
+| Ritar sin design | 131 / 131 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,6 +44,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 9/9 | 9/9 | 9/9 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| HEART FIREWORKS · 1 DESIGN | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
+| GIFT BUBBLES · 1 DESIGN | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
@@ -117,6 +119,18 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+
+### HEART FIREWORKS · 1 DESIGN
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Heart Fireworks | `catalog:heartfireworks` | ✓ | ✓ | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
+
+### GIFT BUBBLES · 1 DESIGN
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Gift Bubbles | `catalog:giftbubbles` | ✓ | ✓ | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
 
 ### EGET INNEHÅLL
 
