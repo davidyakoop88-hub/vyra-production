@@ -228,3 +228,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 115
+
+## 2026-09-29 — 1 referenser skrivna
+
+- **Motiv:** Ny widget Fan Level 50 (catalog:fanlevel50:flylove) behover sin referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 116 (filter: fanlevel50) — catalog:fanlevel50:flylove
