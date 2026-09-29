@@ -18,7 +18,18 @@
   const ART = { flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 } };
   const FALLBACK = 'assets/images/test-profile.svg';
 
-  const auto = [];                 // live-roster {name,avatar,team}, bara i minnet
+  const auto = [];                 // live-roster {name,avatar,team} — sparas i localStorage sa den overlever omladdning + sandning
+  const STORAGE_KEY = 'vyra-fanlevel50-roster';
+  function saveRoster() { try { root.localStorage.setItem(STORAGE_KEY, JSON.stringify(auto)); } catch (_) {} }
+  function loadRoster() {
+    try {
+      const raw = root.localStorage.getItem(STORAGE_KEY); if (!raw) return;
+      const arr = JSON.parse(raw); if (!Array.isArray(arr)) return;
+      const seen = new Set();
+      arr.forEach(m => { const namn = String(m && m.name || '').trim(); const k = namn.toLowerCase(); if (!namn || seen.has(k)) return; seen.add(k); auto.push({ name: namn, avatar: String(m.avatar || ''), team: String(m.team || '') }); });
+    } catch (_) {}
+  }
+  loadRoster();
   const idx = new Map();           // widgetId -> aktuellt slideshow-index
   const lastSwap = new Map();      // widgetId -> tidsstampel for senaste byte
   const cssEsc = s => (root.CSS && CSS.escape) ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&');
@@ -173,12 +184,21 @@
     members,
     addAuto(m) {
       const namn = String(m && m.name || '').trim(); if (!namn) return;
-      if (auto.some(x => x.name.toLowerCase() === namn.toLowerCase())) return;
-      auto.push({ name: namn, avatar: String(m.avatar || ''), team: String(m.team || '') });
-      schedule();
+      const av = String(m.avatar || ''), team = String(m.team || '');
+      // Redan med? Fyll i saknad bild/lag om live-eventet bar dem (namn-bara-post far sitt foto nar hen dyker upp).
+      const ex = auto.find(x => x.name.toLowerCase() === namn.toLowerCase());
+      if (ex) {
+        let changed = false;
+        if (av && !ex.avatar) { ex.avatar = av; changed = true; }
+        if (team && !ex.team) { ex.team = team; changed = true; }
+        if (changed) { saveRoster(); schedule(); }
+        return;
+      }
+      auto.push({ name: namn, avatar: av, team: team });
+      saveRoster(); schedule();
     },
-    remove(namn) { const k = String(namn || '').toLowerCase(); const i = auto.findIndex(x => x.name.toLowerCase() === k); if (i >= 0) { auto.splice(i, 1); schedule(); } },
-    clear() { auto.length = 0; schedule(); }
+    remove(namn) { const k = String(namn || '').toLowerCase(); const i = auto.findIndex(x => x.name.toLowerCase() === k); if (i >= 0) { auto.splice(i, 1); saveRoster(); schedule(); } },
+    clear() { auto.length = 0; saveRoster(); schedule(); }
   };
 
   // Stilmallen laddas av media.js-svansen (stylesheet-pairs.test.js vaktar att paret halls ihop dar).
