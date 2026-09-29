@@ -1575,7 +1575,7 @@ Promise.resolve().then(()=>{
 // Gift Bubbles - systerwidget till Gift Fireworks, egen fristaende canvas/DOM-motor.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-gift-bubbles]')){let css=document.createElement('link');css.rel='stylesheet';css.href='gift-bubbles.css?v=20260928-1';css.dataset.giftBubbles='1';document.head.append(css)}
-  const files=['gift-bubbles.js?v=20260928-1','gift-bubbles-session.js?v=20260928-1'];
+  const files=['gift-bubbles.js?v=20260929-1','gift-bubbles-session.js?v=20260928-1'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });

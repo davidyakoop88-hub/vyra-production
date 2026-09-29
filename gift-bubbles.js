@@ -8,9 +8,13 @@
   'use strict';
   const rnd=(a,b)=>a+Math.random()*(b-a), lerp=(a,b,t)=>a+(b-a)*t;
   const SIZE={s:0.7,m:1.0,l:1.45};
-  // Original, icke-varumärkt reservgåva (används i editorn/testet och när eventet saknar bild).
+  // Riktig standardgåva — samma fil och samma reservkedja som Gift Fireworks (FW_GIFT), så en
+  // gåva UTAN förresolvad bild (editor-test, eller ett live-event som saknar bild) ändå visar en
+  // riktig gåva i stället för en tecknad platshållare. Kedja: skickad bild → widgetens reservbild
+  // → 0001_Rose.png. SVG:n är sista utväg om VyraSafe kastar allt (aldrig i praktiken).
+  const GB_GIFT='assets/gifts/events/0001_Rose.png';
   const GB_GIFT_SVG=`<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9.2" width="18" height="12" rx="1.6" fill="#ff9ecb" stroke="#d15c95" stroke-width="1"/><rect x="2" y="6.4" width="20" height="4.1" rx="1.1" fill="#ffc2df" stroke="#d15c95" stroke-width="1"/><rect x="10.5" y="6.4" width="3" height="14.8" fill="#ffe066"/><path d="M12 6.4c-1.1-3.3-5.4-3.6-5.4-1 0 1.9 3.5 1.8 5.4 1zM12 6.4c1.1-3.3 5.4-3.6 5.4-1 0 1.9-3.5 1.8-5.4 1z" fill="#ffe066" stroke="#e0a83a" stroke-width=".7"/></svg>`;
-  const giftHtml=(url,fallback)=>{const src=(window.VyraSafe?VyraSafe.src(url):url)||(fallback?(window.VyraSafe?VyraSafe.src(fallback):fallback):'');return src?`<img alt="" src="${src}">`:GB_GIFT_SVG;};
+  const giftHtml=(url,fallback)=>{const src=window.VyraSafe?VyraSafe.src(url,VyraSafe.src(fallback,GB_GIFT)):(url||fallback||GB_GIFT);return src?`<img alt="" src="${src}">`:GB_GIFT_SVG;};
   // WAAPI when available, graceful final-frame fallback otherwise (jsdom har ingen Element.animate).
   function anim(el,frames,opts){
     if(typeof el.animate==='function'){return el.animate(frames,opts);}
@@ -81,6 +85,10 @@
         ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fill();
         ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,r*0.06);ctx.stroke();};
       bubble(w*0.34,h*0.58,h*0.14);bubble(w*0.62,h*0.46,h*0.17);bubble(w*0.48,h*0.74,h*0.1);
+      // Riktig gåva i huvudbubblan (async — bubblorna är redan ritade, så kortet är aldrig tomt).
+      try{const fb=o&&o.fallback;const gs=window.VyraSafe?VyraSafe.src(fb,GB_GIFT):(fb||GB_GIFT);
+        if(gs&&typeof Image==='function'){const im=new Image();im.onload=()=>{if(!ctx)return;const gx=w*0.62,gy=h*0.46,r=h*0.17*0.72;try{ctx.save();ctx.beginPath();ctx.arc(gx,gy,r,0,7);ctx.clip();ctx.drawImage(im,gx-r,gy-r,r*2,r*2);ctx.restore();}catch(_){}}; im.src=gs;}
+      }catch(_){}
     }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];host.classList.remove('gb-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.gb-orb,.gb-heart,.gb-shard,.gb-ring,.gb-flash,.gb-hero,.gb-giftback,.gb-combo').forEach(n=>n.remove());}
     return {fire,previewStill,clear,resize};
