@@ -455,6 +455,12 @@
         "gift-fireworks.js",
         "gift-fireworks.css",
         "gift-fireworks-session.js",
+        "gift-bubbles.js",
+        "gift-bubbles.css",
+        "gift-bubbles-session.js",
+        "heart-fireworks.js",
+        "heart-fireworks.css",
+        "heart-fireworks-session.js",
         "validate_fx_theme.py",
         "battle-mvp-celebrations.css",
         "gift-supernova-engine.js",
@@ -463,6 +469,8 @@
         "gift-natural-engine.js"
       ],
       "tester": [
+        "tests/gift-bubbles-trigger.test.js",
+        "tests/heart-fireworks-trigger.test.js",
         "tests/gift-fireworks-trigger.test.js",
         "tests/gift-fireworks-live-trigger.test.js",
         "tests/gift-fireworks-live-path.test.js",

@@ -14,6 +14,8 @@ const CONTRACT = [
   { name: 'Last-X · design card', key: 'catalog:lastx:card' },
   { name: 'Eget innehåll · text', key: 'catalog:custom:text' },
   { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
+  { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
+  { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",
     values: { title: 'Aurora', value: 'aurora.mp4', src: 'assets/videos/aurora.mp4' },
     bindings: { f: 'aurora.mp4', mediaTitle: () => 'Aurora', normalizeMediaFile: () => 'aurora.mp4', mediaAssetPath: () => 'assets/videos/aurora.mp4' } },
