@@ -113,7 +113,7 @@
     // Fan Level 50 — en milstolpe-tavla. Varje design ar en fardig kort-mall (bakgrundsbild) vars
     // niva ar inbrand; bara fans som natt den nivan visas. Fler mallar (level 40, 100) blir fler
     // rader har. Geometrin (foto/namn/lag) bor i fan-level-50.css, en mall = en uppsattning matt.
-    'fanlevel50.design': {flylove:'Fly Love'},
+    'fanlevel50.design': {flylove:'Fly Love', royal:'Fly Love · Royal'},
     // Guardian Emblem. Praktsteget ar familjens ENDA katalogingang — sprak, namn och egen text ar
     // panelval, eftersom ett emblem alltid ser likadant ut och bara bar olika mycket guld. Matten
     // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett

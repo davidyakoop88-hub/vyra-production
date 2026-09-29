@@ -15,10 +15,24 @@
   'use strict';
   const safe = VyraSafe;
   const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {flylove:'Fly Love'}
-  const ART = { flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 } };
+  const ART = {
+    flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 },
+    royal:   { art: 'assets/fanlevel50/fly-love-royal-50.jpg?v=20260929-1', level: 50 }
+  };
   const FALLBACK = 'assets/images/test-profile.svg';
 
-  const auto = [];                 // live-roster {name,avatar,team}, bara i minnet
+  const auto = [];                 // live-roster {name,avatar,team} — sparas i localStorage sa den overlever omladdning + sandning
+  const STORAGE_KEY = 'vyra-fanlevel50-roster';
+  function saveRoster() { try { root.localStorage.setItem(STORAGE_KEY, JSON.stringify(auto)); } catch (_) {} }
+  function loadRoster() {
+    try {
+      const raw = root.localStorage.getItem(STORAGE_KEY); if (!raw) return;
+      const arr = JSON.parse(raw); if (!Array.isArray(arr)) return;
+      const seen = new Set();
+      arr.forEach(m => { const namn = String(m && m.name || '').trim(); const k = namn.toLowerCase(); if (!namn || seen.has(k)) return; seen.add(k); auto.push({ name: namn, avatar: String(m.avatar || ''), team: String(m.team || '') }); });
+    } catch (_) {}
+  }
+  loadRoster();
   const idx = new Map();           // widgetId -> aktuellt slideshow-index
   const lastSwap = new Map();      // widgetId -> tidsstampel for senaste byte
   const cssEsc = s => (root.CSS && CSS.escape) ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&');
@@ -39,9 +53,10 @@
   }
 
   function cardHtml(w, m, rank) {
-    const d = ART[w.fanl50Design] || ART.flylove;
+    const design = ART[w.fanl50Design] ? w.fanl50Design : 'flylove';
+    const d = ART[design];
     const team = safe.text(m.team || w.fanl50Team || '');
-    return `<div class="fl50-card">
+    return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
       <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
       <div class="fl50-name"><span>${safe.text(m.name, 'FAN')}</span></div>
@@ -85,6 +100,9 @@
         <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Auto + manuell')}${opt('auto', w.fanl50Source, 'Bara auto (live)')}${opt('manual', w.fanl50Source, 'Bara manuell')}</select></label>
         <label>Lagnamn (#)<input id="fl50Team" value="${safe.text(w.fanl50Team, 'FANCLUB')}"></label>
       </div>
+      <div class="property-group"><h4>LÄGG TILL VIA @ANVÄNDARNAMN</h4>
+        <div style="display:flex;gap:6px;align-items:center"><input id="fl50AddUser" placeholder="@användarnamn" spellcheck="false" style="flex:1"><button id="fl50AddBtn" type="button">Hämta</button></div>
+        <small id="fl50AddStatus">Hämtar namn + profilbild från TikTok och lägger till i listan.</small></div>
       <div class="property-group"><h4>MANUELL LISTA</h4><small>En per rad: <code>namn</code> eller <code>namn|profilbild-url</code></small>
         <textarea id="fl50Manual" rows="4" spellcheck="false">${safe.text(manualLines, '')}</textarea></div>
       <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid">
@@ -113,6 +131,28 @@
           const bit = rad.split('|'); return { name: bit[0].trim(), avatar: (bit[1] || '').trim() };
         });
         save(); render();
+      };
+    });
+    on('#fl50AddBtn', btn => {
+      btn.onclick = async () => {
+        const inp = document.querySelector('#fl50AddUser'), stat = document.querySelector('#fl50AddStatus');
+        const namn = String(inp && inp.value || '').trim().replace(/^@/, '');
+        if (!namn) { if (stat) stat.textContent = 'Skriv ett användarnamn först.'; return; }
+        btn.disabled = true; if (stat) stat.textContent = 'Hämtar @' + namn + '…';
+        try {
+          const r = await fetch('/api/tiktok-profile?username=' + encodeURIComponent(namn));
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || !d || !d.ok) throw new Error((d && d.error) || 'kunde inte hämta');
+          const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
+          if (!lista.some(m => String(m && m.name || '').toLowerCase() === String(d.nickname).toLowerCase()))
+            lista.push({ name: d.nickname, avatar: d.avatar || '' });
+          w.fanl50Manual = lista; save();
+          if (typeof toast === 'function') toast('La till ' + d.nickname);
+          render();
+        } catch (e) {
+          if (stat) stat.textContent = 'Kunde inte hämta @' + namn + ': ' + (e && e.message || 'fel');
+          btn.disabled = false;
+        }
       };
     });
   };
@@ -173,12 +213,21 @@
     members,
     addAuto(m) {
       const namn = String(m && m.name || '').trim(); if (!namn) return;
-      if (auto.some(x => x.name.toLowerCase() === namn.toLowerCase())) return;
-      auto.push({ name: namn, avatar: String(m.avatar || ''), team: String(m.team || '') });
-      schedule();
+      const av = String(m.avatar || ''), team = String(m.team || '');
+      // Redan med? Fyll i saknad bild/lag om live-eventet bar dem (namn-bara-post far sitt foto nar hen dyker upp).
+      const ex = auto.find(x => x.name.toLowerCase() === namn.toLowerCase());
+      if (ex) {
+        let changed = false;
+        if (av && !ex.avatar) { ex.avatar = av; changed = true; }
+        if (team && !ex.team) { ex.team = team; changed = true; }
+        if (changed) { saveRoster(); schedule(); }
+        return;
+      }
+      auto.push({ name: namn, avatar: av, team: team });
+      saveRoster(); schedule();
     },
-    remove(namn) { const k = String(namn || '').toLowerCase(); const i = auto.findIndex(x => x.name.toLowerCase() === k); if (i >= 0) { auto.splice(i, 1); schedule(); } },
-    clear() { auto.length = 0; schedule(); }
+    remove(namn) { const k = String(namn || '').toLowerCase(); const i = auto.findIndex(x => x.name.toLowerCase() === k); if (i >= 0) { auto.splice(i, 1); saveRoster(); schedule(); } },
+    clear() { auto.length = 0; saveRoster(); schedule(); }
   };
 
   // Stilmallen laddas av media.js-svansen (stylesheet-pairs.test.js vaktar att paret halls ihop dar).

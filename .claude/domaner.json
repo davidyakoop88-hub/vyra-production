@@ -698,6 +698,7 @@
         "configure_obs_tikcontrol.py",
         "server/tts.js",
         "server/musik.js",
+        "server/tiktok-profil.js",
         "server/streamdeck.js"
       ],
       "tester": [
