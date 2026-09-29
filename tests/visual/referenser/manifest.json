@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 119,
+ "antal": 121,
  "senaste": {
-  "motiv": "Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget",
-  "nycklar": 2,
-  "filter": "latonskningar",
-  "tid": "2026-09-27T02:34:45.356Z"
+  "motiv": "Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547",
+  "nycklar": 115,
+  "filter": null,
+  "tid": "2026-09-29T07:13:25.259Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -488,6 +488,14 @@
   },
   "catalog:latonskningar:youtube": {
    "matt": "340x94",
+   "fyllnad": 100
+  },
+  "catalog:giftbubbles": {
+   "matt": "320x569",
+   "fyllnad": 100
+  },
+  "catalog:heartfireworks": {
+   "matt": "320x569",
    "fyllnad": 100
   }
  }

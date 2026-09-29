@@ -222,3 +222,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 113 (filter: latonskningar) — catalog:latonskningar:spotify, catalog:latonskningar:youtube
+
+## 2026-09-29 — 115 referenser skrivna
+
+- **Motiv:** Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 115
