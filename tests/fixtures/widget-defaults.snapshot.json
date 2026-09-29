@@ -500,5 +500,18 @@
     "jarShowCounter": false,
     "jarAutoResetMs": 0,
     "createdFrom": "catalog:giftjar:lion"
+  },
+  "catalog:fanlevel50:flylove": {
+    "type": "templateFanLevel50",
+    "x": 100,
+    "y": 80,
+    "width": 300,
+    "title": "Fan Level 50",
+    "fanl50Design": "flylove",
+    "fanl50Team": "FANCLUB",
+    "fanl50Mode": "slideshow",
+    "fanl50Interval": 6,
+    "fanl50Source": "both",
+    "fanl50Manual": []
   }
 }

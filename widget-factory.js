@@ -93,6 +93,10 @@
     // ||'hero'}, sa en widget utan vald modell ar redan en hero. Den saknade bara sin plats i
     // registret, vilket gjorde att katalogen inte kunde skapa den och provet inte kunde mata den.
     'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    // Fan Level 50 — en milstolpe-tavla. Varje design ar en fardig kort-mall (bakgrundsbild) vars
+    // niva ar inbrand; bara fans som natt den nivan visas. Fler mallar (level 40, 100) blir fler
+    // rader har. Geometrin (foto/namn/lag) bor i fan-level-50.css, en mall = en uppsattning matt.
+    'fanlevel50.design': {flylove:'Fly Love'},
     // Guardian Emblem. Praktsteget ar familjens ENDA katalogingang — sprak, namn och egen text ar
     // panelval, eftersom ett emblem alltid ser likadant ut och bara bar olika mycket guld. Matten
     // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett
@@ -283,6 +287,14 @@
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
       fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout
     }),
+    // Fan Level 50-tavlan. Rostern (vilka fans som natt niva 50) lever i minnet och kommer fran
+    // fan-level-50-session.js; fanl50Manual ar den handtaggade listan som SPARAS. fanl50Source
+    // 'both' = auto (live) + manuellt. Team ar ett konfigfalt (TikTok skickar inget lagnamn).
+    'fanlevel50.design': v => ({
+      type: 'templateFanLevel50', x: 100, y: 80, width: 300, title: 'Fan Level 50',
+      fanl50Design: v.design, fanl50Team: 'FANCLUB', fanl50Mode: 'slideshow',
+      fanl50Interval: 6, fanl50Source: 'both', fanl50Manual: []
+    }),
     // Guardian Emblem. Bredden ar 400 i VARJE steg — det ar familjens format, inte en installning
     // per niva. Hojden ar det praktnivan betalar med, och den vaxer monotont. En widget vars hojd
     // star pa tva stallen far forr eller senare tva olika varden, sa GE_MATT ar det enda stallet.
@@ -416,6 +428,11 @@
       }
       const c = pick('fanlevel.theme', parts[0], 'fan level-tema');
       return ['fanlevel.theme', { theme: parts[0], color: c[0], light: c[1] }];
+    },
+    'fanlevel50': parts => {
+      if (!parts[0]) throw new Error('catalog:fanlevel50 kräver en design');
+      pick('fanlevel50.design', parts[0], 'Fan Level 50-design');
+      return ['fanlevel50.design', { design: parts[0] }];
     },
     'guardianemblem': parts => {
       if (parts[0] === 'model') {

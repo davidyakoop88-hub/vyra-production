@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `28535ac`
+Commit: `bf7a7435`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **277** |
-| Sektioner | 22 |
-| Med katalognyckel | 277 / 277 |
-| Med shadow DOM-miniatyr | 277 / 277 |
-| Ritar sin design | 277 / 277 |
+| Kort totalt | **278** |
+| Sektioner | 23 |
+| Med katalognyckel | 278 / 278 |
+| Med shadow DOM-miniatyr | 278 / 278 |
+| Ritar sin design | 278 / 278 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -41,6 +41,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | — | — |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
@@ -74,6 +75,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Roséguld | `catalog:giftfireworks:rose` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Kometspiral | `catalog:giftfireworks:comet` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+
+### FAN LEVEL 50 · MILSTOLPE
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Fan Level 50 · Fly Love | `catalog:fanlevel50:flylove` | ✓ | ✓ | — | — |
 
 ### EGET INNEHÅLL
 

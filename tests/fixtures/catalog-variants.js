@@ -14,6 +14,8 @@ const CONTRACT = [
   { name: 'Last-X · design card', key: 'catalog:lastx:card' },
   { name: 'Eget innehåll · text', key: 'catalog:custom:text' },
   { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
+  // Fan Level 50 ar en ny familj (aldrig en media.js-literal) — markerlos, som raderna ovan.
+  { name: 'Fan Level 50 · Fly Love', key: 'catalog:fanlevel50:flylove' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",
     values: { title: 'Aurora', value: 'aurora.mp4', src: 'assets/videos/aurora.mp4' },
     bindings: { f: 'aurora.mp4', mediaTitle: () => 'Aurora', normalizeMediaFile: () => 'aurora.mp4', mediaAssetPath: () => 'assets/videos/aurora.mp4' } },
