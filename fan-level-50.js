@@ -15,7 +15,10 @@
   'use strict';
   const safe = VyraSafe;
   const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {flylove:'Fly Love'}
-  const ART = { flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 } };
+  const ART = {
+    flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 },
+    royal:   { art: 'assets/fanlevel50/fly-love-royal-50.jpg?v=20260929-1', level: 50 }
+  };
   const FALLBACK = 'assets/images/test-profile.svg';
 
   const auto = [];                 // live-roster {name,avatar,team} — sparas i localStorage sa den overlever omladdning + sandning
@@ -50,9 +53,10 @@
   }
 
   function cardHtml(w, m, rank) {
-    const d = ART[w.fanl50Design] || ART.flylove;
+    const design = ART[w.fanl50Design] ? w.fanl50Design : 'flylove';
+    const d = ART[design];
     const team = safe.text(m.team || w.fanl50Team || '');
-    return `<div class="fl50-card">
+    return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
       <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
       <div class="fl50-name"><span>${safe.text(m.name, 'FAN')}</span></div>

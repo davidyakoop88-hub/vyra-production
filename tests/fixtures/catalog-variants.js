@@ -16,6 +16,7 @@ const CONTRACT = [
   { name: 'Gift Fireworks · magnetic', key: 'catalog:giftfireworks:magnetic' },
   // Fan Level 50 ar en ny familj (aldrig en media.js-literal) — markerlos, som raderna ovan.
   { name: 'Fan Level 50 · Fly Love', key: 'catalog:fanlevel50:flylove' },
+  { name: 'Fan Level 50 · Fly Love · Royal', key: 'catalog:fanlevel50:royal' },
   { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
   { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Media · video', key: 'catalog:video', marker: "type:'video'",

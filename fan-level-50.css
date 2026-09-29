@@ -59,3 +59,20 @@
 }
 .fan-level-50.fl50-mode-band .fl50-card { width: 200px; flex: 0 0 auto; }
 @keyframes fl50scroll { to { transform: translateX(-50%); } }
+
+/* ---- design: royal (Fly Love + krönt banderoll längst ner) ------------------------------------
+   Samma bakgrundsmall och kortmått (753/976), men foto och namn sitter i den krönta ringen resp.
+   den svarta banderollen. Bara namn — lag/rank döljs. Matten i % av kortet, uppmätta mot mallen. */
+.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1407; }
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-photo {
+  left: 11.9%; top: 82.3%; bottom: auto; width: 17.4%; background: #050505;
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-name {
+  left: 35.5%; right: 8%; top: 84.3%; bottom: auto; height: 9.4%;
+  justify-content: flex-start;
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-name span {
+  color: #ffe6a6; text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 190, 60, .35);
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-team,
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-rank { display: none; }
