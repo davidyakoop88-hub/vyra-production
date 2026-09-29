@@ -90,6 +90,11 @@ const UTAN_REFERENS = {
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
+  'catalog:battlefx:':
+    'en trigger-effekt: fullskärms cover som är opacity:0 i vila och bara spelar när ett battle-event '
+    + '(x2/x3/glove/snipe/tap) triggas. Vid varje fast tidpunkt utan trigger är den tom (0 % målad), '
+    + 'precis som glovesnipe/giftfireworks. Rörelsen (slide-up + flash) styrs av bfx-active, inte av '
+    + 'katalogrendern, så det finns ingen stillastående bild att jämföra mot.',
 };
 
 // PREFIX BARA FÖR POSTER SOM SLUTAR PÅ ':'. Övriga poster gäller EXAKT den nyckeln. Uppmätt

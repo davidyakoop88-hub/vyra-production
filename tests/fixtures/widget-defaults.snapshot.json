@@ -525,5 +525,16 @@
     "fanl50Interval": 6,
     "fanl50Source": "both",
     "fanl50Manual": []
+  },
+  "catalog:battlefx:chrome": {
+    "type": "templateBattleFX",
+    "title": "Chrome Battle FX",
+    "bfxDesign": "chrome",
+    "bfxKind": "x2",
+    "bfxDuration": 6,
+    "bfxLow": 14,
+    "bfxEnter": 0.62,
+    "autoTrigger": true,
+    "layer": 40
   }
 }

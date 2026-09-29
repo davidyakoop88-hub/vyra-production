@@ -114,6 +114,9 @@
     // niva ar inbrand; bara fans som natt den nivan visas. Fler mallar (level 40, 100) blir fler
     // rader har. Geometrin (foto/namn/lag) bor i fan-level-50.css, en mall = en uppsattning matt.
     'fanlevel50.design': {flylove:'Fly Love'},
+    // Chrome Battle FX — en fullskarms event-effekt (After Effect-motsvarighet). En design ('chrome')
+    // som spelar krom-bilder (x2/x3/glove/snipe/tap) med skriptad slide-up-entre. En rad = ett tema.
+    'battlefx.design': {chrome:'Chrome'},
     // Guardian Emblem. Praktsteget ar familjens ENDA katalogingang — sprak, namn och egen text ar
     // panelval, eftersom ett emblem alltid ser likadant ut och bara bar olika mycket guld. Matten
     // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett
@@ -348,6 +351,12 @@
       fanl50Design: v.design, fanl50Team: 'FANCLUB', fanl50Mode: 'slideshow',
       fanl50Interval: 6, fanl50Source: 'both', fanl50Manual: []
     }),
+    // Chrome Battle FX — fullskarms cover, ingen x/y/width (CSS fyller duken). bfxKind ar bara
+    // forhandsvisningen i editorn; live-eventet byter bild via triggerBattleFX.
+    'battlefx.design': v => ({
+      type: 'templateBattleFX', title: 'Chrome Battle FX', bfxDesign: v.design,
+      bfxKind: 'x2', bfxDuration: 6, bfxLow: 14, bfxEnter: 0.62, autoTrigger: true, layer: 40
+    }),
     // Guardian Emblem. Bredden ar 400 i VARJE steg — det ar familjens format, inte en installning
     // per niva. Hojden ar det praktnivan betalar med, och den vaxer monotont. En widget vars hojd
     // star pa tva stallen far forr eller senare tva olika varden, sa GE_MATT ar det enda stallet.
@@ -516,6 +525,11 @@
       if (!parts[0]) throw new Error('catalog:fanlevel50 kräver en design');
       pick('fanlevel50.design', parts[0], 'Fan Level 50-design');
       return ['fanlevel50.design', { design: parts[0] }];
+    },
+    'battlefx': parts => {
+      if (!parts[0]) throw new Error('catalog:battlefx kräver en design');
+      pick('battlefx.design', parts[0], 'Battle FX-design');
+      return ['battlefx.design', { design: parts[0] }];
     },
     'guardianemblem': parts => {
       if (parts[0] === 'model') {
