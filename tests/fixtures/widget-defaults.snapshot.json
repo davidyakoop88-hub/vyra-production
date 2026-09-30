@@ -521,7 +521,7 @@
     "title": "Fan Level 50",
     "fanl50Design": "flylove",
     "fanl50Team": "FANCLUB",
-    "fanl50Mode": "slideshow",
+    "fanl50Mode": "band",
     "fanl50Interval": 6,
     "fanl50Source": "both",
     "fanl50Manual": []
@@ -534,7 +534,7 @@
     "title": "Fan Level 50",
     "fanl50Design": "royal",
     "fanl50Team": "FANCLUB",
-    "fanl50Mode": "slideshow",
+    "fanl50Mode": "band",
     "fanl50Interval": 6,
     "fanl50Source": "both",
     "fanl50Manual": []
