@@ -76,3 +76,26 @@
 }
 .fan-level-50 .fl50-card.fl50-design-royal .fl50-team,
 .fan-level-50 .fl50-card.fl50-design-royal .fl50-rank { display: none; }
+
+/* ---- inspektorn: "lägg till användare"-lista (studio, inte overlay) ---------------------------- */
+.fl50-add { display: flex; gap: 6px; align-items: center; }
+.fl50-add input { flex: 1; min-width: 0; }
+.fl50-count {
+  float: right; min-width: 20px; padding: 0 6px; border-radius: 999px;
+  background: rgba(168, 85, 247, .25); color: #e9d5ff; font-size: 11px; line-height: 18px; text-align: center;
+}
+.fl50-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.fl50-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 3px 4px 3px 3px; border-radius: 999px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1);
+}
+.fl50-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: #2e2140; flex: 0 0 auto; }
+.fl50-chip b { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fl50-chip-x {
+  flex: 0 0 auto; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .08); color: inherit; cursor: pointer; font-size: 13px; line-height: 16px;
+}
+.fl50-chip-x:hover { background: rgba(239, 68, 68, .35); }
+.fl50-chips-tom { opacity: .6; }
+.fl50-summary { cursor: pointer; font-weight: 600; font-size: 12px; letter-spacing: .04em; opacity: .8; }
