@@ -90,7 +90,11 @@
     const w = liveWidget(selected);
     if (!w || w.type !== 'templateFanLevel50') return prevProps();
     const interval = num(w.fanl50Interval, 6, 2, 60);
-    const manualLines = manualOf(w).map(m => m.avatar ? `${m.name}|${m.avatar}` : String(m.name || '')).join('\n');
+    const manual = manualOf(w);
+    const manualLines = manual.map(m => m.avatar ? `${m.name}|${m.avatar}` : String(m.name || '')).join('\n');
+    const chipsHtml = manual.length
+      ? manual.map((m, i) => `<span class="fl50-chip"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""><b>${safe.text(m.name, 'FAN')}</b><button type="button" class="fl50-chip-x" data-fl50-del="${i}" title="Ta bort" aria-label="Ta bort ${safe.text(m.name, 'FAN')}">×</button></span>`).join('')
+      : '<small class="fl50-chips-tom">Inga taggade än — lägg till en användare ovan.</small>';
     const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${label}</option>`;
     return `<h3>FAN LEVEL 50</h3><div class="template-badge">MILSTOLPE · LIVE + MANUELL</div>
       <div hidden><input id="pt" value="${safe.text(w.title, 'Fan Level 50')}"><input id="pv" value=""></div>
@@ -100,11 +104,13 @@
         <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Auto + manuell')}${opt('auto', w.fanl50Source, 'Bara auto (live)')}${opt('manual', w.fanl50Source, 'Bara manuell')}</select></label>
         <label>Lagnamn (#)<input id="fl50Team" value="${safe.text(w.fanl50Team, 'FANCLUB')}"></label>
       </div>
-      <div class="property-group"><h4>LÄGG TILL VIA @ANVÄNDARNAMN</h4>
-        <div style="display:flex;gap:6px;align-items:center"><input id="fl50AddUser" placeholder="@användarnamn" spellcheck="false" style="flex:1"><button id="fl50AddBtn" type="button">Hämta</button></div>
-        <small id="fl50AddStatus">Hämtar namn + profilbild från TikTok och lägger till i listan.</small></div>
-      <div class="property-group"><h4>MANUELL LISTA</h4><small>En per rad: <code>namn</code> eller <code>namn|profilbild-url</code></small>
-        <textarea id="fl50Manual" rows="4" spellcheck="false">${safe.text(manualLines, '')}</textarea></div>
+      <div class="property-group"><h4>LÄGG TILL ANVÄNDARE <span class="fl50-count">${manual.length}</span></h4>
+        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2, @namn3 …" spellcheck="false"><button id="fl50AddBtn" type="button">Hämta</button></div>
+        <small id="fl50AddStatus">Skriv ett eller flera @användarnamn (separera med komma eller mellanslag). Namn + profilbild hämtas — tagga hur många du vill.</small>
+        <div id="fl50Chips" class="fl50-chips">${chipsHtml}</div></div>
+      <details class="property-group"><summary class="fl50-summary">Redigera listan som text</summary>
+        <small>En per rad: <code>namn</code> eller <code>namn|profilbild-url</code></small>
+        <textarea id="fl50Manual" rows="4" spellcheck="false">${safe.text(manualLines, '')}</textarea></details>
       <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid">
         <label>X<input id="propX" type="number" value="${num(w.x, 0, -10000, 10000)}"></label>
         <label>Y<input id="propY" type="number" value="${num(w.y, 0, -10000, 10000)}"></label>
@@ -136,23 +142,40 @@
     on('#fl50AddBtn', btn => {
       btn.onclick = async () => {
         const inp = document.querySelector('#fl50AddUser'), stat = document.querySelector('#fl50AddStatus');
-        const namn = String(inp && inp.value || '').trim().replace(/^@/, '');
-        if (!namn) { if (stat) stat.textContent = 'Skriv ett användarnamn först.'; return; }
-        btn.disabled = true; if (stat) stat.textContent = 'Hämtar @' + namn + '…';
-        try {
-          const r = await fetch('/api/tiktok-profile?username=' + encodeURIComponent(namn));
-          const d = await r.json().catch(() => ({}));
-          if (!r.ok || !d || !d.ok) throw new Error((d && d.error) || 'kunde inte hämta');
-          const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
-          if (!lista.some(m => String(m && m.name || '').toLowerCase() === String(d.nickname).toLowerCase()))
-            lista.push({ name: d.nickname, avatar: d.avatar || '' });
-          w.fanl50Manual = lista; save();
-          if (typeof toast === 'function') toast('La till ' + d.nickname);
-          render();
-        } catch (e) {
-          if (stat) stat.textContent = 'Kunde inte hämta @' + namn + ': ' + (e && e.message || 'fel');
-          btn.disabled = false;
+        // Flera namn: separera på komma, mellanslag eller radbrytning. Skiftlägesokänslig dedupe.
+        const seen = new Set(), koll = [];
+        String(inp && inp.value || '').split(/[\s,]+/).forEach(bit => {
+          const n = bit.trim().replace(/^@/, ''); const k = n.toLowerCase();
+          if (n && !seen.has(k)) { seen.add(k); koll.push(n); }
+        });
+        if (!koll.length) { if (stat) stat.textContent = 'Skriv minst ett användarnamn.'; return; }
+        btn.disabled = true;
+        const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
+        let lagt = 0; const fel = [];
+        for (let i = 0; i < koll.length; i++) {
+          const n = koll[i];
+          if (stat) stat.textContent = 'Hämtar @' + n + '… (' + (i + 1) + '/' + koll.length + ')';
+          try {
+            const r = await fetch('/api/tiktok-profile?username=' + encodeURIComponent(n));
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d || !d.ok) throw new Error((d && d.error) || 'kunde inte hämta');
+            if (!lista.some(m => String(m && m.name || '').toLowerCase() === String(d.nickname).toLowerCase())) {
+              lista.push({ name: d.nickname, avatar: d.avatar || '' }); lagt++;
+            }
+          } catch (_) { fel.push('@' + n); }
         }
+        w.fanl50Manual = lista; save();
+        if (typeof toast === 'function' && lagt) toast('La till ' + lagt + ' användare');
+        render();
+        // render() bygger om panelen — sätt eventuell felnotis på det nya statusfältet.
+        if (fel.length) { const s2 = document.querySelector('#fl50AddStatus'); if (s2) s2.textContent = (lagt ? ('La till ' + lagt + '. ') : '') + 'Kunde inte hämta: ' + fel.join(', '); }
+      };
+    });
+    document.querySelectorAll('[data-fl50-del]').forEach(x => {
+      x.onclick = () => {
+        const i = Number(x.getAttribute('data-fl50-del'));
+        const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
+        if (i >= 0 && i < lista.length) { lista.splice(i, 1); w.fanl50Manual = lista; save(); render(); }
       };
     });
   };
