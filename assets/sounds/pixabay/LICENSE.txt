@@ -1,0 +1,10 @@
+Pixabay Content License  —  https://pixabay.com/service/license-summary/
+
+Ljuden i den har mappen ar hamtade fran pixabay.com.
+- Gratis for kommersiell och personlig anvandning. Ingen attribution kravs.
+- FAR INTE saljas eller distribueras som fristaende ("standalone") ljudfiler,
+  dvs i ooforandrad form utan att nagon kreativ insats lagts till.
+
+Notera darfor (se aven kommentaren i sound-alerts.js): Pixabay-klipp hor hemma
+som enstaka karaktarsljud i produkten, inte som ett bladdringsbart massbibliotek.
+CC0-massan ligger under assets/sounds/kenney/.
