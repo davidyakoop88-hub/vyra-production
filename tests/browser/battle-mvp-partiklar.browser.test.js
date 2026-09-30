@@ -176,10 +176,13 @@ test('bildfrekvensen halls uppe genom hela sekvensen, med bada dukarna igang', {
     assert.ok(f.p95 <= 26, f.namn + ' hade p95 ' + f.p95 + ' ms (tak 26)');
   }
 
-  // Fas 3 och 4 ar de tunga - dar bygger utslappet mot landningen och finalen.
-  const fas3 = m.faser[2], fas4 = m.faser[3];
+  // MVP-firandena (WOW) frontladdar nu utslappet: avslojandet fyrar tidigt (utslapp under forsta
+  // ~22 %, partiklar lever kvar en bit in i fas 3) och lugnar sig sedan medan den statiska ramen far
+  // tala - "effekterna lugnar sig under visningen". Lasten ligger darfor i fas 1-3; fas 4 ar
+  // avsiktligt lugn. Vakten mater alltjamt over verklig partikellast (fas 1 ar tyngst, fas 3 ar svansen).
+  const fas1 = m.faser[0], fas3 = m.faser[2];
+  assert.ok(fas1.toppPartiklar > 0, 'fas 1 hade inga partiklar');
   assert.ok(fas3.toppPartiklar > 0, 'fas 3 hade inga partiklar');
-  assert.ok(fas4.toppPartiklar > 0, 'fas 4 hade inga partiklar');
 });
 
 test('matningen reagerar pa belastning - annars mater den ingenting', { skip }, async () => {
