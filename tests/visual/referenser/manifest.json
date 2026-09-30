@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 123,
+ "antal": 124,
  "senaste": {
-  "motiv": "MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium",
-  "nycklar": 112,
-  "filter": null,
-  "tid": "2026-09-30T14:59:13.968Z"
+  "motiv": "Lion Clash-referens: mvp-celebration-klass sa regin hittar firandet",
+  "nycklar": 1,
+  "filter": "lion-clash",
+  "tid": "2026-09-30T16:02:00.139Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -504,6 +504,10 @@
   },
   "catalog:battlemvp:celebration:gold-ribbon": {
    "matt": "280x308",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:lion-clash": {
+   "matt": "320x346",
    "fyllnad": 100
   }
  }

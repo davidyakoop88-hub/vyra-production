@@ -252,3 +252,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 112
+
+## 2026-09-30 — 1 referenser skrivna
+
+- **Motiv:** Lion Clash-referens: mvp-celebration-klass sa regin hittar firandet
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: lion-clash) — catalog:battlemvp:celebration:lion-clash
