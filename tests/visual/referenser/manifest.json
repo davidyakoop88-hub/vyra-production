@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 123,
  "senaste": {
-  "motiv": "MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium",
-  "nycklar": 112,
-  "filter": null,
-  "tid": "2026-09-30T14:59:13.968Z"
+  "motiv": "Battle MVP stil/ram-referenser: synligt 92-procentsfonster istallet for uttonade tomma bildrutor",
+  "nycklar": 19,
+  "filter": "battlemvp",
+  "tid": "2026-09-30T15:59:04.926Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
