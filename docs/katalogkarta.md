@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6611fec6`
+Commit: `4d5d6ea9`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -54,7 +54,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
-| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-09-11 | — |
+| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-09-30 | — |
 | BATTLE MVP · FIRANDE · 7 KOREOGRAFIER | 7 | 7/7 | 7/7 | 7/7 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
@@ -112,14 +112,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Crown Orbit | `catalog:socialgoal:followers:crown-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | — | — |
-| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | — | — |
-| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | — | — |
-| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | — | — |
-| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | — | — |
-| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | — | — |
-| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | — | — |
-| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | — | — |
+| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 
 ### FAN LEVEL 50 · MILSTOLPE
 
@@ -182,8 +182,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
-| Blå kristall | `catalog:guardianemblem:model:sapphire` | ✓ | ✓ | — | — |
-| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | — | — |
+| Blå kristall | `catalog:guardianemblem:model:sapphire` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 
 ### GIFT CAMPAIGN · LJUS OCH RÖRELSE
 
@@ -191,10 +191,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-09-12 | — |
 | Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-09-12 | — |
-| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | — | — |
-| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | — | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | — | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | — | — |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-09-12 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-09-12 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-09-12 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-09-12 | — |
 
 ### LIKE FOUNTAIN
 
@@ -207,18 +207,18 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-09-11 | — |
-| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-09-11 | — |
-| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-09-11 | — |
-| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-09-11 | — |
-| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-09-11 | — |
-| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-09-11 | — |
-| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | — | — |
-| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | — | — |
-| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | — | — |
-| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | — | — |
-| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | — | — |
-| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | — | — |
+| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-09-30 | — |
+| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-09-30 | — |
+| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-09-30 | — |
+| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-09-30 | — |
+| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-09-30 | — |
+| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-09-30 | — |
+| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-09-30 | — |
+| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-09-30 | — |
+| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-09-30 | — |
+| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-09-30 | — |
+| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-09-30 | — |
+| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-09-30 | — |
 
 ### BATTLE MVP · FIRANDE · 7 KOREOGRAFIER
 
@@ -238,8 +238,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | ✓ | ✓ | 2026-08-03 | — |
 | Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | ✓ | ✓ | 2026-08-03 | — |
-| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | — | — |
-| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | — | — |
+| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | 2026-08-03 | — |
 
 ### Masquerade Ball · VIDEO FX
 
@@ -247,8 +247,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | ✓ | ✓ | 2026-08-03 | — |
 | Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | ✓ | ✓ | 2026-08-03 | — |
-| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | — | — |
-| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | — | — |
+| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | 2026-08-03 | — |
 
 ### NEW FOLLOWER ALERT
 
