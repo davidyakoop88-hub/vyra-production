@@ -194,6 +194,19 @@ function overlayPreviewWidget(btn) {
 const OWG_TAND = `.owg-thumb-inner .widget,
 .owg-thumb-inner .widget *{visibility:visible!important;opacity:1!important}`;
 
+// Kort vars motiv är för glest/dekorativt för att den automatiska omramningen ska få dem att läsa
+// i den lilla rutan (en ensam ledare i en genomskinlig halo, Clean Flips glöd-lager, premium-Top
+// Gifter). De får en handplockad förhandsbild — samma grepp som Video FX-postern — renderad ur
+// widgetens EGEN design i full storlek. Bilden visas helbild med object-fit:cover. Ändras
+// designen: kör `node scripts/generera-katalog-forhandsbilder.js` och generera om bilden.
+const OWG_CATALOG_PREVIEW = {
+  'catalog:topstreak': 'assets/previews/topstreak-cleanflip.jpg',
+  'catalog:ranking:templateTopCoins:halo': 'assets/previews/topcoins-halo.jpg',
+  'catalog:ranking:templateTopCoins:signal-orbit': 'assets/previews/topcoins-signal-orbit.jpg',
+  'catalog:topgift:premium:royal': 'assets/previews/topgift-royal.jpg',
+  'catalog:topgift:premium:neon': 'assets/previews/topgift-neon.jpg'
+};
+
 // Arken byggs EN gang och delas av alla kort. Att kopiera ett trettiotal stilmallar per miniatyr
 // hade kostat mer an hela katalogen ar vard; adoptedStyleSheets ar gjort for att delas.
 let owgArkCache = null;
@@ -233,6 +246,74 @@ function scaleThumbnailToFit(thumb) {
   inner.style.transform = `translate(-50%,-50%) scale(${scale})`;
 }
 
+// Union-låda (viewport-koordinater) för synliga, MÅLADE eller text-bärande ättlingar i `root` —
+// alltså det som faktiskt syns, inte de osynliga wrappar-lager som annars styr offsetWidth. null
+// om inget målas.
+function owgContentBox(root) {
+  let minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity, any = false;
+  for (const el of root.querySelectorAll('*')) {
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0 || cs.display === 'none') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    const hasBg = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
+    const hasBgImg = cs.backgroundImage && cs.backgroundImage !== 'none';
+    const tag = el.tagName.toLowerCase();
+    const painted = tag === 'img' || tag === 'canvas' || tag === 'svg' || hasBg || hasBgImg;
+    const hasText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+    if (!painted && !hasText) continue;
+    any = true;
+    minL = Math.min(minL, r.left); minT = Math.min(minT, r.top);
+    maxR = Math.max(maxR, r.right); maxB = Math.max(maxB, r.bottom);
+  }
+  return any ? { left: minL, top: minT, width: maxR - minL, height: maxB - minT } : null;
+}
+
+// Hur stor del av kortet som faktiskt täcks av målat innehåll INNE i klippytan. Varje elements
+// låda klipps mot kortet först — annars kan en enda låda som SPÄNNER över kortet (med allt sitt
+// synliga innehåll utanför) se ut som full täckning fast kortet är tomt.
+function owgPaintedInClip(root, tr) {
+  let minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity, any = false;
+  for (const el of root.querySelectorAll('*')) {
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0 || cs.display === 'none') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    const hasBg = cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent';
+    const hasBgImg = cs.backgroundImage && cs.backgroundImage !== 'none';
+    const tag = el.tagName.toLowerCase();
+    const painted = tag === 'img' || tag === 'canvas' || tag === 'svg' || hasBg || hasBgImg;
+    const hasText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+    if (!painted && !hasText) continue;
+    const l = Math.max(r.left, tr.left), t = Math.max(r.top, tr.top), rr = Math.min(r.right, tr.right), bb = Math.min(r.bottom, tr.bottom);
+    if (rr - l > 1 && bb - t > 1) { any = true; minL = Math.min(minL, l); minT = Math.min(minT, t); maxR = Math.max(maxR, rr); maxB = Math.max(maxB, bb); }
+  }
+  return any ? ((maxR - minL) * (maxB - minT)) / (tr.width * tr.height || 1) : 0;
+}
+
+// Vissa widgetar ritar sitt motiv som en liten, ABSOLUT-placerad symbol i en mycket större,
+// annars genomskinlig yta (Top Coins-ledaren, Clean Flip, Låtönskningar, Like Fountain, några
+// Battle MVP). scaleThumbnailToFit skalar hela ytan från dess origo, så motivet hamnar UTANFÖR
+// kortets klippyta och kortet ser tomt ut — trots att HTML:en finns. Fångas det (nästan inget
+// målat syns inne i kortet) ramar vi om till motivets FAKTISKA innehållslåda och fyller kortet.
+// De ~123 kort som redan fyller sin ruta rörs inte (de returnerar tidigt).
+function owgFitThumbToContentIfEmpty(thumb) {
+  const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner');
+  if (!inner) return;
+  const tr = thumb.getBoundingClientRect();
+  if (owgPaintedInClip(inner, tr) >= 0.05) return; // redan synligt nog
+  // Mät innehållslådan utan transform och rama om den till att fylla kortet (tillåt måttlig
+  // uppskalning så en ensam ledare/symbol inte blir en prick).
+  const o = inner.style.transformOrigin, tf = inner.style.transform, l = inner.style.left, t = inner.style.top;
+  inner.style.transformOrigin = '0 0'; inner.style.transform = 'none'; inner.style.left = '0'; inner.style.top = '0';
+  const c = owgContentBox(inner);
+  if (!c || c.width < 2 || c.height < 2) { inner.style.transformOrigin = o; inner.style.transform = tf; inner.style.left = l; inner.style.top = t; return; }
+  const pad = 12, s = Math.min((tr.width - pad) / c.width, (tr.height - pad) / c.height, 3);
+  const localL = c.left - tr.left, localT = c.top - tr.top;
+  const tx = (tr.width - c.width * s) / 2 - localL * s, ty = (tr.height - c.height * s) / 2 - localT * s;
+  inner.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+}
+
 // Renders a real thumbnail for one card, on demand — used by the lazy observer below so only
 // cards that actually scroll near the viewport ever run overlayCatalogPreviewHtml()'s dry-run,
 // instead of all ~50+ catalog widgets at once (which is what used to lock the renderer).
@@ -259,30 +340,29 @@ function owgRenderCardThumb(btn) {
   if (!thumbHtml) return;
   const icon = btn.querySelector('i');
 
-  // VIDEO FX-paketen (battleVideoMode): sjalva motivet ar bara en liten centrerad symbol i en
-  // 760x300-widget av annars genomskinlig yta. Skalas hela widgeten in i det lilla, breda kortet
-  // krymper motivet till en prick — och en autospelande <video> visar dessutom morka reveal-rutor
-  // (och drar ner 8-10 MB per kort). Vi visar darfor postern (en handplockad hjalteruta) fyllande
-  // HELA kortet; object-fit:cover ramar in den precis som widgetens egen symbolruta gor live.
-  const owgBattlePoster = preview && preview.type === 'templateGloveSnipe' && preview.battleVideoMode
-    ? (thumbHtml.match(/poster="([^"]+)"/) || [])[1] : null;
-  if (owgBattlePoster) {
+  // Helbilds-förhandsbild i stället för den skalade widgeten, för två fall:
+  //  • VIDEO FX-paketen (battleVideoMode): motivet är en liten symbol i en 760x300-yta, och en
+  //    autospelande <video> visar mörka reveal-rutor (+ 8-10 MB/kort). Vi tar videons poster.
+  //  • De glesa/dekorativa korten i OWG_CATALOG_PREVIEW (Clean Flip, Top Coins, premium-Top Gifter)
+  //    som annars inte fyller rutan — de får sin handplockade förhandsbild.
+  // Bilden fyller HELA kortet; object-fit:cover ramar in den som widgetens egen symbolruta gör.
+  const owgPreviewImg = (btn && btn.dataset && OWG_CATALOG_PREVIEW[btn.dataset.catalogKey])
+    || (preview && preview.type === 'templateGloveSnipe' && preview.battleVideoMode
+      ? (thumbHtml.match(/poster="([^"]+)"/) || [])[1] : null);
+  if (owgPreviewImg) {
     const thumb = document.createElement('div');
     thumb.className = 'owg-thumb';
-    // Postern bor i en .owg-thumb-inner precis som ovriga kort (thumb-leak-provet letar motivet
+    // Bilden bor i en .owg-thumb-inner precis som ovriga kort (thumb-leak-provet letar motivet
     // dar) — men den har fyller HELA rutan i stallet for att centreras och skalas ner: inset:0 +
     // transform:none overrider den vanliga centreringen sa <img> far ratt yta att tacka.
     const inner = document.createElement('div');
     inner.className = 'owg-thumb-inner';
     inner.style.cssText = 'position:absolute;inset:0;left:0;top:0;width:100%;height:100%;transform:none';
     const img = document.createElement('img');
-    img.src = owgBattlePoster;
+    img.src = owgPreviewImg;
     img.alt = '';
     img.setAttribute('aria-hidden', 'true');
     img.draggable = false;
-    // object-fit:cover + centrerad position tar mittbandet av den portratta rutan — dar motivet
-    // (X:et/plattan/handsken) sitter — och skar bort den svarta toppen och verktygsvattenstampeln
-    // langst ner, sa kortet fylls av sjalva motivet.
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;display:block';
     inner.appendChild(img);
     thumb.appendChild(inner);
@@ -385,6 +465,16 @@ function owgRenderCardThumb(btn) {
   });
   if (icon) icon.remove();
   scaleThumbnailToFit(thumb);
+  // Räddar kort vars motiv hamnade utanför klippytan (annars tomma). Rör bara de tomma korten.
+  owgFitThumbToContentIfEmpty(thumb);
+  // Motiv som ritas med <img> (t.ex. Clean Flips profil/gåva) har ingen storlek förrän bilden
+  // laddat — då mätte omramningen tomt. Mät om när varje bild kommit in. Gaten gör att redan
+  // fyllda kort inte rörs.
+  owgThumbRot(thumb).querySelectorAll('img').forEach(img => {
+    if (!img.complete || !img.naturalWidth) {
+      img.addEventListener('load', () => owgFitThumbToContentIfEmpty(thumb), { once: true });
+    }
+  });
 }
 
 const owgThumbObserver = new IntersectionObserver(entries => {
