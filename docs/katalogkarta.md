@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `4d5d6ea9`
+Commit: `111e1ca9`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **128** |
+| Kort totalt | **129** |
 | Sektioner | 25 |
-| Med katalognyckel | 128 / 128 |
-| Med shadow DOM-miniatyr | 128 / 128 |
-| Ritar sin design | 128 / 128 |
+| Med katalognyckel | 129 / 129 |
+| Med shadow DOM-miniatyr | 129 / 129 |
+| Ritar sin design | 129 / 129 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -55,7 +55,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-09-30 | — |
-| BATTLE MVP · FIRANDE · 7 KOREOGRAFIER | 7 | 7/7 | 7/7 | 7/7 | 2026-09-11 | — |
+| BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
@@ -220,11 +220,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-09-30 | — |
 | Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-09-30 | — |
 
-### BATTLE MVP · FIRANDE · 7 KOREOGRAFIER
+### BATTLE MVP · FIRANDE · 8 KOREOGRAFIER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-09-11 | — |
+| Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-09-11 | — |
 | Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
 | Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
 | Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |

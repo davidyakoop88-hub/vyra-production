@@ -58,7 +58,7 @@ test('the engine exposes a profile for every celebration the catalog offers', ()
   h.load('battle-mvp-particles.js');
   const profiles = h.window.VyraMvpParticles.profiles;
   for (const [key, design] of Object.entries(factory.variants('battlemvp.celebration'))) {
-    if (design.raster) continue;
+    if (design.raster || design.bespoke) continue;
     assert.ok(profiles[key], key + ' has no particle profile');
     assert.ok(profiles[key].cols.length, key + ' has no colours');
   }

@@ -4,7 +4,7 @@ const {createDom,closeAll}=require('./helpers/dom-harness.js');
 const factory=require('../widget-factory.js');
 test.after(closeAll);
 const designs=factory.variants('battlemvp.celebration');
-for(const key of Object.keys(designs))test(key+' renders a real winner through the existing MVP renderer',()=>{
+for(const key of Object.keys(designs))if(!designs[key].bespoke)test(key+' renders a real winner through the existing MVP renderer',()=>{
   const w=factory.create('catalog:battlemvp:celebration:'+key);
   Object.assign(w,{id:'winner',mvpName:'A <winner>',profileImage:'https://example.com/avatar.png',mvpDuration:12});
   const h=createDom({state:{widgets:[w],projectName:'test'}});h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
@@ -19,6 +19,21 @@ for(const key of Object.keys(designs))test(key+' renders a real winner through t
   assert.equal(w.mvpShowName,true);assert.equal(w.mvpShowCoins,false);
   assert.equal(box.querySelectorAll('.mvc-charge,.mvc-smoke,.mvc-art-left,.mvc-copy,.mvc-finale').length,4);
 
+});
+test('Lion Clash renders its own animated emblem through the MVP renderer',()=>{
+  const w=factory.create('catalog:battlemvp:celebration:lion-clash');
+  Object.assign(w,{id:'lion-w',mvpName:'A <winner>',profileImage:'https://example.com/avatar.png',mvpDuration:12});
+  const h=createDom({state:{widgets:[w],projectName:'test'}});h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
+  const box=h.paint([w]).querySelector('.mvc-lion-clash');
+  assert.ok(box,'lion-clash-boxen saknas');
+  assert.equal(box.querySelector('.lion-name').textContent,'A <winner>');
+  assert.equal(box.querySelector('.lion-photo').src,'https://example.com/avatar.png');
+  assert.match(box.querySelector('.lion-art').src,/lion-clash\.png$/);
+  assert.equal(box.querySelectorAll('.eye').length,2);
+  assert.equal(box.querySelectorAll('.energy path').length,2);
+  assert.ok(box.querySelector('.crown-flash')&&box.querySelector('.plate-shine'));
+  assert.equal(box.style.getPropertyValue('--lion-dur'),'12s');
+  assert.equal(box.querySelector('.mvc-portrait'),null,'bespoke-designen anvander inte firande-mallen');
 });
 test('explicit visibility flags and unsafe portrait URL are respected',()=>{
   const w=factory.create('catalog:battlemvp:celebration:moon');Object.assign(w,{id:'safe',mvpShowName:false,mvpShowLabel:false,profileImage:'javascript:alert(1)'});

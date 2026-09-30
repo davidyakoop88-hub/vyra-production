@@ -16,6 +16,22 @@
   const previous=battleMvpHtml;
   battleMvpHtml=function(w){
     const design=Object.prototype.hasOwnProperty.call(designs,w.mvpStyle)?designs[w.mvpStyle]:null;
+    if(design&&design.bespoke==='lion-clash'){
+      // Lion Clash ar en egen animerad komposition (ogon, energibagar, kron-glimt, skylt-svep) och
+      // ritar darfor sin egen DOM i stallet for firande-mallen. mvp-active driver hela sekvensen.
+      const safe=VyraSafe;
+      const art='assets/mvp-celebrations/'+(design.asset||'lion-clash.png');
+      const dur=finite(w.mvpDuration||design.duration||10,design.duration||10,2,15);
+      return `<div class="widget battle-mvp mvc-lion-clash${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" data-mvp-lion="1" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||320,320,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--lion-dur:${dur}s">`
+        + `<div class="lion" role="img" aria-label="Lion Clash MVP"><div class="lion-body">`
+        + `<img class="lion-photo" src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt="">`
+        + `<img class="lion-art" src="${art}" alt="">`
+        + `<span class="eye eye-blue"></span><span class="eye eye-orange"></span>`
+        + `<svg class="energy" viewBox="0 0 1000 1000" aria-hidden="true"><path class="blue-path" pathLength="1" d="M276 517 A224 224 0 0 1 500 293"/><path class="orange-path" pathLength="1" d="M724 517 A224 224 0 0 0 500 293"/></svg>`
+        + `<span class="crown-flash"></span><div class="plate-shine"></div>`
+        + `<h2 class="lion-name" style="display:${w.mvpShowName===false?'none':'block'}">${safe.text(w.mvpName,'TestAlpha')}</h2>`
+        + `</div></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    }
     if(!design){
       // Keep the established renderer and live contract, add only finite motion hooks.
       const family=w.mvpFrame?'battlemvp.frame':'battlemvp.style';
