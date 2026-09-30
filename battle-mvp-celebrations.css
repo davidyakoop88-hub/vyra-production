@@ -420,7 +420,9 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 .mvc-lion-clash .plate-shine{position:absolute;left:13%;top:75%;width:74%;height:11%;z-index:3;overflow:hidden;clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)}
 .mvc-lion-clash .plate-shine::before{content:"";display:block;width:25%;height:100%;background:linear-gradient(100deg,transparent,#fff9,transparent);transform:translateX(-150%) skewX(-18deg);opacity:0}
 .mvc-lion-clash .lion-body::after{content:"";position:absolute;left:27%;top:28.8%;width:46%;height:46%;box-sizing:border-box;border-radius:50%;border:2px solid transparent;box-shadow:-5px 0 15px #09d9ff,5px 0 15px #ff861e;opacity:0;pointer-events:none;z-index:4}
+.mvc-lion-clash.mvp-active{animation:lion-box var(--lion-dur,10s) linear both}
 .mvc-lion-clash.mvp-active .lion-body{animation:lion-exit var(--lion-dur,10s) ease-in-out both}
+@keyframes lion-box{0%,92%{opacity:1}100%{opacity:0}}
 .mvc-lion-clash.mvp-active .lion-art{animation:lion-reveal var(--lion-dur,10s) ease-out both}
 .mvc-lion-clash.mvp-active .lion-photo{animation:lion-profile var(--lion-dur,10s) ease-out both}
 .mvc-lion-clash.mvp-active .lion-name{animation:lion-name var(--lion-dur,10s) ease-out both}
