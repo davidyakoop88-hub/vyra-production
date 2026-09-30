@@ -246,3 +246,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Baslinje for catalog:fanlevel50:royal (ny design), royal nu i katalogkartan, PR #550
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 117 (filter: fanlevel50) — catalog:fanlevel50:flylove, catalog:fanlevel50:royal
+
+## 2026-09-30 — 112 referenser skrivna
+
+- **Motiv:** MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 112

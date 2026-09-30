@@ -6,16 +6,16 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 122,
+ "antal": 123,
  "senaste": {
-  "motiv": "Baslinje for catalog:fanlevel50:royal (ny design), royal nu i katalogkartan, PR #550",
-  "nycklar": 2,
-  "filter": "fanlevel50",
-  "tid": "2026-09-29T19:06:16.719Z"
+  "motiv": "MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium",
+  "nycklar": 112,
+  "filter": null,
+  "tid": "2026-09-30T14:59:13.968Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:battlemvp:cyber": {
@@ -67,7 +67,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:royal": {
-   "matt": "240x158",
+   "matt": "240x165",
    "fyllnad": 100
   },
   "catalog:battlemvp:royal-purple": {
@@ -79,7 +79,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:storm": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:custom:text": {
@@ -263,27 +263,27 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:coronation": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:moon": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:pearl": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:portal": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:rosegold": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:wings": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:landscape": {
@@ -499,7 +499,11 @@
    "fyllnad": 100
   },
   "catalog:fanlevel50:royal": {
-   "matt": "300x372",
+   "matt": "300x276",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:gold-ribbon": {
+   "matt": "280x308",
    "fyllnad": 100
   }
  }
