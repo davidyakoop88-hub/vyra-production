@@ -345,7 +345,7 @@
     // 'both' = auto (live) + manuellt. Team ar ett konfigfalt (TikTok skickar inget lagnamn).
     'fanlevel50.design': v => ({
       type: 'templateFanLevel50', x: 100, y: 80, width: 300, title: 'Fan Level 50',
-      fanl50Design: v.design, fanl50Team: 'FANCLUB', fanl50Mode: 'slideshow',
+      fanl50Design: v.design, fanl50Team: 'FANCLUB', fanl50Mode: 'band',
       fanl50Interval: 6, fanl50Source: 'both', fanl50Manual: []
     }),
     // Guardian Emblem. Bredden ar 400 i VARJE steg — det ar familjens format, inte en installning
