@@ -6,7 +6,7 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 123,
+ "antal": 122,
  "senaste": {
   "motiv": "Baslinje for catalog:fanlevel50:royal (ny design), royal nu i katalogkartan, PR #550",
   "nycklar": 2,
@@ -496,10 +496,6 @@
   },
   "catalog:heartfireworks": {
    "matt": "320x569",
-   "fyllnad": 100
-  },
-  "catalog:fanlevel50:flylove": {
-   "matt": "300x382",
    "fyllnad": 100
   },
   "catalog:fanlevel50:royal": {
