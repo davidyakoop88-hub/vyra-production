@@ -14,9 +14,8 @@
 (function (root) {
   'use strict';
   const safe = VyraSafe;
-  const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {flylove:'Fly Love'}
+  const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {royal:'Fly Love · Royal'}
   const ART = {
-    flylove: { art: 'assets/fanlevel50/fly-love-50.jpg?v=20260929-1', level: 50 },
     royal:   { art: 'assets/fanlevel50/fly-love-royal-50.jpg?v=20260929-1', level: 50 }
   };
   const FALLBACK = 'assets/images/test-profile.svg';
@@ -53,7 +52,7 @@
   }
 
   function cardHtml(w, m, rank) {
-    const design = ART[w.fanl50Design] ? w.fanl50Design : 'flylove';
+    const design = ART[w.fanl50Design] ? w.fanl50Design : 'royal';
     const d = ART[design];
     const team = safe.text(m.team || w.fanl50Team || '');
     return `<div class="fl50-card fl50-design-${design}">

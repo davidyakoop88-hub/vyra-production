@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `f7488be`
+Commit: `bcc3edc7`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **133** |
+| Kort totalt | **132** |
 | Sektioner | 25 |
-| Med katalognyckel | 133 / 133 |
-| Med shadow DOM-miniatyr | 133 / 133 |
-| Ritar sin design | 133 / 133 |
+| Med katalognyckel | 132 / 132 |
+| Med shadow DOM-miniatyr | 132 / 132 |
+| Ritar sin design | 132 / 132 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,7 +44,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 9/9 | 9/9 | 9/9 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| FAN LEVEL 50 · MILSTOLPE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
+| FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | HEART FIREWORKS · 1 DESIGN | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
 | GIFT BUBBLES · 1 DESIGN | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
@@ -125,7 +125,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fan Level 50 · Fly Love | `catalog:fanlevel50:flylove` | ✓ | ✓ | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | Fan Level 50 · Fly Love · Royal | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 
 ### HEART FIREWORKS · 1 DESIGN
