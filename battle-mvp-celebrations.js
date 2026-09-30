@@ -22,7 +22,7 @@
       const safe=VyraSafe;
       const art='assets/mvp-celebrations/'+(design.asset||'lion-clash.png');
       const dur=finite(w.mvpDuration||design.duration||10,design.duration||10,2,15);
-      return `<div class="widget battle-mvp mvc-lion-clash${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" data-mvp-lion="1" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||320,320,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--lion-dur:${dur}s">`
+      return `<div class="widget battle-mvp mvp-celebration mvc-lion-clash${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" data-mvp-lion="1" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||320,320,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--lion-dur:${dur}s">`
         + `<div class="lion" role="img" aria-label="Lion Clash MVP"><div class="lion-body">`
         + `<img class="lion-photo" src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt="">`
         + `<img class="lion-art" src="${art}" alt="">`
