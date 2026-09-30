@@ -258,6 +258,39 @@ function owgRenderCardThumb(btn) {
   // ar kosmetiskt, en widget som smyger in i en sandning ar det inte.
   if (!thumbHtml) return;
   const icon = btn.querySelector('i');
+
+  // VIDEO FX-paketen (battleVideoMode): sjalva motivet ar bara en liten centrerad symbol i en
+  // 760x300-widget av annars genomskinlig yta. Skalas hela widgeten in i det lilla, breda kortet
+  // krymper motivet till en prick — och en autospelande <video> visar dessutom morka reveal-rutor
+  // (och drar ner 8-10 MB per kort). Vi visar darfor postern (en handplockad hjalteruta) fyllande
+  // HELA kortet; object-fit:cover ramar in den precis som widgetens egen symbolruta gor live.
+  const owgBattlePoster = preview && preview.type === 'templateGloveSnipe' && preview.battleVideoMode
+    ? (thumbHtml.match(/poster="([^"]+)"/) || [])[1] : null;
+  if (owgBattlePoster) {
+    const thumb = document.createElement('div');
+    thumb.className = 'owg-thumb';
+    // Postern bor i en .owg-thumb-inner precis som ovriga kort (thumb-leak-provet letar motivet
+    // dar) — men den har fyller HELA rutan i stallet for att centreras och skalas ner: inset:0 +
+    // transform:none overrider den vanliga centreringen sa <img> far ratt yta att tacka.
+    const inner = document.createElement('div');
+    inner.className = 'owg-thumb-inner';
+    inner.style.cssText = 'position:absolute;inset:0;left:0;top:0;width:100%;height:100%;transform:none';
+    const img = document.createElement('img');
+    img.src = owgBattlePoster;
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    img.draggable = false;
+    // object-fit:cover + centrerad position tar mittbandet av den portratta rutan — dar motivet
+    // (X:et/plattan/handsken) sitter — och skar bort den svarta toppen och verktygsvattenstampeln
+    // langst ner, sa kortet fylls av sjalva motivet.
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center;display:block';
+    inner.appendChild(img);
+    thumb.appendChild(inner);
+    btn.prepend(thumb);
+    if (icon) icon.remove();
+    return;
+  }
+
   const thumb = document.createElement('div');
   thumb.className = 'owg-thumb';
   if (OWG_SKUGGA_STODS) {
@@ -342,6 +375,7 @@ function owgRenderCardThumb(btn) {
   //
   // Att soka till en tidpunkt tvingar fram en avkodad ruta aven nar videon ar pausad. Det ar
   // billigare an att spela, och funkar oavsett vad autoplay-policyn sager.
+  // (battleVideoMode-paketen tas om hand tidigare, som helbildsposter — se owgBattlePoster ovan.)
   owgThumbRot(thumb).querySelectorAll('video').forEach(video => {
     video.muted = true;
     video.preload = 'auto';
