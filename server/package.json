@@ -18,5 +18,8 @@
   },
   "devDependencies": {
     "jsqr": "^1.4.0"
+  },
+  "overrides": {
+    "axios": "^1.20.0"
   }
 }
