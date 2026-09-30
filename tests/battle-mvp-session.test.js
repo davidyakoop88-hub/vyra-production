@@ -259,13 +259,13 @@ test('okänt statusvärde ändrar ingenting, men antecknas', () => {
 
 // ---- 7. duration-default -----------------------------------------------------------------------
 
-test('visningstidens default är 7 sekunder överallt', () => {
+test('gamla osparade widgets behaller 7 sekunders fallback; nya katalogval sparar tio', () => {
   const fs = require('fs'), path = require('path');
   const ROOT = path.join(__dirname, '..');
   const avvikande = [];
   for (const fil of ['media.js', 'runtime-controls.js', 'widget-factory.js']) {
-    // Celebration defaults are explicit ten-second timelines; queue reads that saved value.
-    const src = fs.readFileSync(path.join(ROOT, fil), 'utf8').replace(/'battlemvp\.celebration': v => \({[\s\S]*?\n    \}\),/, '');
+    // Factory presets save ten seconds explicitly; legacy fallback remains seven.
+    const src = fs.readFileSync(path.join(ROOT, fil), 'utf8').replace(/'battlemvp\.(?:celebration|style|frame)': v => \({[\s\S]*?\n    \}\),/g, '');
     for (const m of src.matchAll(/mvpDuration\s*(?:\|\||\?\?)\s*(\d+)/g)) {
       if (m[1] !== '7') avvikande.push(`${fil}: mvpDuration || ${m[1]}`);
     }

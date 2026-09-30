@@ -57,7 +57,8 @@ test('the engine exposes a profile for every celebration the catalog offers', ()
   const { h } = paint();
   h.load('battle-mvp-particles.js');
   const profiles = h.window.VyraMvpParticles.profiles;
-  for (const key of Object.keys(factory.variants('battlemvp.celebration'))) {
+  for (const [key, design] of Object.entries(factory.variants('battlemvp.celebration'))) {
+    if (design.raster) continue;
     assert.ok(profiles[key], key + ' has no particle profile');
     assert.ok(profiles[key].cols.length, key + ' has no colours');
   }
@@ -67,11 +68,9 @@ test('emission builds towards the landing instead of running flat', () => {
   const { h } = paint();
   h.load('battle-mvp-particles.js');
   const rateAt = h.window.VyraMvpParticles.rateAt;
-  // Phase 1 is the light alone; the build peaks as the face lands at half time;
-  // the finale lifts again. A flat curve is exactly the bug this replaces.
-  assert.ok(rateAt(0.05) < rateAt(0.35), 'it has to build through the entrance');
-  assert.ok(rateAt(0.35) < rateAt(0.50), 'the landing is the loudest moment of the build');
-  assert.ok(rateAt(0.70) < rateAt(0.50), 'and it settles again during the hold');
-  assert.ok(rateAt(0.95) > rateAt(0.70), 'the finale lifts');
-  assert.ok(rateAt(0.05) < 0.2, 'phase one stays quiet');
+  assert.ok(rateAt(0.02) < rateAt(0.07), 'the entrance builds');
+  assert.ok(rateAt(0.07) < rateAt(0.12), 'reveal is the strongest moment');
+  assert.ok(rateAt(0.19) < rateAt(0.12), 'emission settles after the reveal');
+  for(const f of [.22,.5,.7,.95,1])assert.equal(rateAt(f),0,'quiet hold and exit');
+  assert.ok(rateAt(0.02) < 0.2, 'phase one stays quiet');
 });

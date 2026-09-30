@@ -36,18 +36,18 @@ for (const style of PREMIUM) {
   });
 }
 
-test('premiumstilarna haller 5 sekunder, enligt specen', () => {
+test('nya premiumstilar visar vinnaren i 10 sekunder', () => {
   for (const style of PREMIUM) {
-    assert.equal(VyraWidgets.create(`catalog:battlemvp:${style}`).mvpDuration, 5,
+    assert.equal(VyraWidgets.create(`catalog:battlemvp:${style}`).mvpDuration, 10,
       `${style} har fel halltid`);
   }
 });
 
-test('de sju gamla stilarna ar orörda', () => {
+test('de sju klassiska stilarna har tio sekunders ny standard', () => {
   for (const style of ['inferno', 'royal', 'cyber', 'ice', 'storm', 'aurora', 'samurai']) {
     const w = VyraWidgets.create(`catalog:battlemvp:${style}`);
     assert.equal(w.mvpStyle, style);
-    assert.equal(w.mvpDuration, 7, `${style} fick en ny halltid`);
+    assert.equal(w.mvpDuration, 10, `${style} fick en ny halltid`);
   }
 });
 

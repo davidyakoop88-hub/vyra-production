@@ -74,10 +74,12 @@ const AVSIKTLIG_DRIFT = {
   'catalog:socialgoal:follows:1:landscape': { falt: ['goalColor', 'goalColor2'], beslut: 'd0a7156' },
   // d0a7156 + 195fc8a: ramarna visar MVP, profilbild och namn — inget annat. Etiketten och de tre
   // visa-flaggorna följde med det beslutet.
-  'catalog:battlemvp:ice': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins'], beslut: 'd0a7156' },
-  'catalog:battlemvp:inferno': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins'], beslut: 'd0a7156' },
-  'catalog:battlemvp:royal': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins'], beslut: 'd0a7156' },
-  'catalog:battlemvp:frame:gold-crown': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName'], beslut: '195fc8a' },
+  // MVP-firanden (WOW/BASIC, Codex): enhetlig 10 s visningstid för alla Battle MVP-förval, och
+  // ramarna fick läsbara etikett-/namnstorlekar. mvpDuration (och ramens storleksfält) följer det.
+  'catalog:battlemvp:ice': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins', 'mvpDuration'], beslut: 'd0a7156 + MVP-firanden' },
+  'catalog:battlemvp:inferno': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins', 'mvpDuration'], beslut: 'd0a7156 + MVP-firanden' },
+  'catalog:battlemvp:royal': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpShowCoins', 'mvpDuration'], beslut: 'd0a7156 + MVP-firanden' },
+  'catalog:battlemvp:frame:gold-crown': { falt: ['mvpLabel', 'mvpShowLabel', 'mvpShowName', 'mvpDuration', 'mvpLabelSize', 'mvpNameSize'], beslut: '195fc8a + MVP-firanden' },
   // Texten skilde sig redan när repot importerades (058badb) — den har aldrig matchat grenen.
   'catalog:gifterlevel:profile': { falt: ['gifterMessage'], beslut: '058badb' },
   // 23ece1d porterade Gift Jar till dagens kodbas. Widgeten fanns inte i media.js före

@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `bcc3edc7`
+Commit: `6611fec6`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **132** |
+| Kort totalt | **128** |
 | Sektioner | 25 |
-| Med katalognyckel | 132 / 132 |
-| Med shadow DOM-miniatyr | 132 / 132 |
-| Ritar sin design | 132 / 132 |
+| Med katalognyckel | 128 / 128 |
+| Med shadow DOM-miniatyr | 128 / 128 |
+| Ritar sin design | 128 / 128 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -54,8 +54,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
-| BATTLE MVP · 17 DESIGNER | 17 | 17/17 | 17/17 | 17/17 | 2026-09-11 | — |
-| BATTLE MVP · FIRANDE · 6 KOREOGRAFIER | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | — |
+| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-09-11 | — |
+| BATTLE MVP · FIRANDE · 7 KOREOGRAFIER | 7 | 7/7 | 7/7 | 7/7 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
@@ -112,14 +112,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Crown Orbit | `catalog:socialgoal:followers:crown-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | — | — |
+| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | — | — |
+| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | — | — |
+| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | — | — |
+| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | — | — |
+| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | — | — |
+| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | — | — |
+| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | — | — |
 
 ### FAN LEVEL 50 · MILSTOLPE
 
@@ -182,8 +182,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Hjort | `catalog:guardianemblem:2` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | Krona | `catalog:guardianemblem:3` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | Kungakrona | `catalog:guardianemblem:4` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
-| Blå kristall | `catalog:guardianemblem:model:sapphire` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
-| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
+| Blå kristall | `catalog:guardianemblem:model:sapphire` | ✓ | ✓ | — | — |
+| Grön aura | `catalog:guardianemblem:model:emerald` | ✓ | ✓ | — | — |
 
 ### GIFT CAMPAIGN · LJUS OCH RÖRELSE
 
@@ -191,10 +191,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-09-12 | — |
 | Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-09-12 | — |
-| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-09-12 | — |
-| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-09-12 | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-09-12 | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-09-12 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | — | — |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | — | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | — | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | — | — |
 
 ### LIKE FOUNTAIN
 
@@ -203,32 +203,28 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
 | Like Fountain · Portal | `catalog:likefountain:portal` | ✓ | ✓ | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
 
-### BATTLE MVP · 17 DESIGNER
+### BATTLE MVP · 12 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-09-11 | — |
 | Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-09-11 | — |
 | Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-09-11 | — |
-| Ice | `catalog:battlemvp:ice` | ✓ | ✓ | 2026-09-11 | — |
 | Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-09-11 | — |
 | Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-09-11 | — |
 | Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-09-11 | — |
-| Royal Purple | `catalog:battlemvp:royal-purple` | ✓ | ✓ | 2026-09-11 | — |
-| Neon Cyber | `catalog:battlemvp:neon-cyber` | ✓ | ✓ | 2026-09-11 | — |
-| Diamond Elite | `catalog:battlemvp:diamond-elite` | ✓ | ✓ | 2026-09-11 | — |
-| Gold Crown | `catalog:battlemvp:frame:gold-crown` | ✓ | ✓ | 2026-08-03 | — |
-| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-08-03 | — |
-| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-08-03 | — |
-| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-08-03 | — |
-| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-08-03 | — |
-| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-08-03 | — |
-| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-08-03 | — |
+| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | — | — |
+| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | — | — |
+| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | — | — |
+| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | — | — |
+| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | — | — |
+| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | — | — |
 
-### BATTLE MVP · FIRANDE · 6 KOREOGRAFIER
+### BATTLE MVP · FIRANDE · 7 KOREOGRAFIER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
+| Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-09-11 | — |
 | Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
 | Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
 | Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |
@@ -242,8 +238,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | ✓ | ✓ | 2026-08-03 | — |
 | Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | ✓ | ✓ | 2026-08-03 | — |
-| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | 2026-08-03 | — |
-| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | 2026-08-03 | — |
+| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | — | — |
+| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | — | — |
 
 ### Masquerade Ball · VIDEO FX
 
@@ -251,8 +247,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | ✓ | ✓ | 2026-08-03 | — |
 | Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | ✓ | ✓ | 2026-08-03 | — |
-| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | 2026-08-03 | — |
-| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | 2026-08-03 | — |
+| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | — | — |
+| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | — | — |
 
 ### NEW FOLLOWER ALERT
 

@@ -75,26 +75,26 @@
 @keyframes mvc-charge{0%{opacity:0;transform:scale(1.4) rotate(-50deg)}8%{opacity:.8}18%{opacity:1;transform:scale(.85) rotate(0)}35%{opacity:.5;transform:scale(1.12) rotate(25deg)}48%,100%{opacity:0;transform:scale(1.25) rotate(40deg)}}
 @keyframes mvc-face{0%,40%{opacity:0;transform:translate(-50%,-50%) scale(.86)}48%{opacity:1;transform:translate(-50%,-50%) scale(1.03)}54%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes mvc-copy{0%,44%{opacity:0;transform:translateY(15%)}54%,100%{opacity:1;transform:translateY(0)}}
-@keyframes mvc-crown{0%,18%{opacity:0;transform:translateY(-24%) scale(1.08)}30%{opacity:1;transform:translateY(2%) scale(.98)}40%,100%{opacity:1;transform:none}}
-@keyframes mvc-wing-left{0%,18%{opacity:0;transform:perspective(600px) rotateY(78deg) rotate(16deg)}29%{opacity:1;transform:perspective(600px) rotateY(-12deg) rotate(-5deg)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-wing-right{0%,18%{opacity:0;transform:perspective(600px) rotateY(-78deg) rotate(-16deg)}29%{opacity:1;transform:perspective(600px) rotateY(12deg) rotate(5deg)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-portal-left{0%,18%{opacity:0;transform:rotate(-65deg) scale(.45)}30%{opacity:1;transform:rotate(8deg) scale(1.07)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-portal-right{0%,18%{opacity:0;transform:rotate(65deg) scale(.45)}30%{opacity:1;transform:rotate(-8deg) scale(1.07)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-orbit{0%{transform:rotate(-180deg)}42%,100%{transform:rotate(180deg)}}
-@keyframes mvc-orbit-reverse{0%{transform:rotate(180deg)}42%,100%{transform:rotate(-180deg)}}
-@keyframes mvc-bloom-left{0%,18%{opacity:0;transform:scale(.3) rotate(-28deg)}31%{opacity:1;transform:scale(1.04) rotate(3deg)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-bloom-right{0%,21%{opacity:0;transform:scale(.3) rotate(28deg)}34%{opacity:1;transform:scale(1.04) rotate(-3deg)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-pearl-left{0%,18%{opacity:0;transform:translateY(20%) rotate(22deg) scale(.7)}33%{opacity:1;transform:translateY(-3%) rotate(-4deg) scale(1.02)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-pearl-right{0%,18%{opacity:0;transform:translateY(20%) rotate(-22deg) scale(.7)}33%{opacity:1;transform:translateY(-3%) rotate(4deg) scale(1.02)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-moon-arc{0%{opacity:0;transform:rotate(-160deg) scale(.7)}12%{opacity:1}30%{opacity:1;transform:rotate(90deg) scale(1.1)}45%,100%{opacity:0;transform:rotate(190deg) scale(1.15)}}
-@keyframes mvc-moon-left{0%,18%{opacity:0;transform:rotate(-70deg) scale(.75)}35%{opacity:1;transform:rotate(4deg) scale(1.01)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-moon-right{0%,24%{opacity:0;transform:translate(8%,-10%) scale(.9)}42%,100%{opacity:1;transform:none}}
-@keyframes mvc-rain{0%,70%{opacity:0;transform:translateY(0)}73%{opacity:.9}94%{opacity:.5}100%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(100deg)}}
-@keyframes mvc-feathers{0%,70%{opacity:0;transform:translateY(0) rotate(-20deg)}76%{opacity:.9}100%{opacity:0;transform:translate(var(--drift,0px),-160px) rotate(100deg)}}
-@keyframes mvc-burst{0%,70%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-35px)}74%{opacity:1}92%,100%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-180px) scale(.4)}}
-@keyframes mvc-petals{0%,70%{opacity:0;transform:translate(0,0) rotate(0)}75%{opacity:.9}85%{transform:translate(calc(var(--drift,0px)*.4),70px) rotate(90deg)}100%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(200deg)}}
-@keyframes mvc-pearls{0%,70%{opacity:0;transform:translateY(0) scale(.5)}77%{opacity:.9;transform:translateY(-30px) scale(1)}100%{opacity:0;transform:translate(calc(var(--drift,0px)*.5),-145px) scale(.65)}}
-@keyframes mvc-stars{0%,70%{opacity:0;transform:translate(0,0) rotate(-35deg) scaleX(.3)}76%{opacity:.9;transform:translate(-20px,15px) rotate(-35deg) scaleX(1)}94%,100%{opacity:0;transform:translate(-160px,125px) rotate(-35deg) scaleX(.2)}}
+@keyframes mvc-crown{0%,5.76%{opacity:0;transform:translateY(-24%) scale(1.08)}9.6%{opacity:1;transform:translateY(2%) scale(.98)}12.8%,100%{opacity:1;transform:none}}
+@keyframes mvc-wing-left{0%,5.76%{opacity:0;transform:perspective(600px) rotateY(78deg) rotate(16deg)}9.28%{opacity:1;transform:perspective(600px) rotateY(-12deg) rotate(-5deg)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-wing-right{0%,5.76%{opacity:0;transform:perspective(600px) rotateY(-78deg) rotate(-16deg)}9.28%{opacity:1;transform:perspective(600px) rotateY(12deg) rotate(5deg)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-portal-left{0%,5.76%{opacity:0;transform:rotate(-65deg) scale(.45)}9.6%{opacity:1;transform:rotate(8deg) scale(1.07)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-portal-right{0%,5.76%{opacity:0;transform:rotate(65deg) scale(.45)}9.6%{opacity:1;transform:rotate(-8deg) scale(1.07)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-orbit{0%{transform:rotate(-180deg)}13.44%,100%{transform:rotate(180deg)}}
+@keyframes mvc-orbit-reverse{0%{transform:rotate(180deg)}13.44%,100%{transform:rotate(-180deg)}}
+@keyframes mvc-bloom-left{0%,5.76%{opacity:0;transform:scale(.3) rotate(-28deg)}9.92%{opacity:1;transform:scale(1.04) rotate(3deg)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-bloom-right{0%,6.72%{opacity:0;transform:scale(.3) rotate(28deg)}10.88%{opacity:1;transform:scale(1.04) rotate(-3deg)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-pearl-left{0%,5.76%{opacity:0;transform:translateY(20%) rotate(22deg) scale(.7)}10.56%{opacity:1;transform:translateY(-3%) rotate(-4deg) scale(1.02)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-pearl-right{0%,5.76%{opacity:0;transform:translateY(20%) rotate(-22deg) scale(.7)}10.56%{opacity:1;transform:translateY(-3%) rotate(4deg) scale(1.02)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-moon-arc{0%{opacity:0;transform:rotate(-160deg) scale(.7)}3.84%{opacity:1}9.6%{opacity:1;transform:rotate(90deg) scale(1.1)}14.4%,100%{opacity:0;transform:rotate(190deg) scale(1.15)}}
+@keyframes mvc-moon-left{0%,5.76%{opacity:0;transform:rotate(-70deg) scale(.75)}11.2%{opacity:1;transform:rotate(4deg) scale(1.01)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-moon-right{0%,7.68%{opacity:0;transform:translate(8%,-10%) scale(.9)}13.44%,100%{opacity:1;transform:none}}
+@keyframes mvc-rain{0%,19.6%{opacity:0;transform:translateY(0)}20.44%{opacity:.9}26.32%{opacity:.5}28%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(100deg)}}
+@keyframes mvc-feathers{0%,19.6%{opacity:0;transform:translateY(0) rotate(-20deg)}21.28%{opacity:.9}28%{opacity:0;transform:translate(var(--drift,0px),-160px) rotate(100deg)}}
+@keyframes mvc-burst{0%,19.6%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-35px)}20.72%{opacity:1}25.76%,28%{opacity:0;transform:rotate(calc(var(--i)*18deg)) translateY(-180px) scale(.4)}}
+@keyframes mvc-petals{0%,19.6%{opacity:0;transform:translate(0,0) rotate(0)}21%{opacity:.9}23.8%{transform:translate(calc(var(--drift,0px)*.4),70px) rotate(90deg)}28%{opacity:0;transform:translate(var(--drift,0px),180px) rotate(200deg)}}
+@keyframes mvc-pearls{0%,19.6%{opacity:0;transform:translateY(0) scale(.5)}21.56%{opacity:.9;transform:translateY(-30px) scale(1)}28%{opacity:0;transform:translate(calc(var(--drift,0px)*.5),-145px) scale(.65)}}
+@keyframes mvc-stars{0%,19.6%{opacity:0;transform:translate(0,0) rotate(-35deg) scaleX(.3)}21.28%{opacity:.9;transform:translate(-20px,15px) rotate(-35deg) scaleX(1)}26.32%,28%{opacity:0;transform:translate(-160px,125px) rotate(-35deg) scaleX(.2)}}
 /* Bound simultaneous decoration cost. Hosts may opt into low quality explicitly. */
 .mvp-celebration[data-mvc-quality="low"] .mvc-finale i:nth-child(n+9){display:none}
 .mvp-celebration[data-mvc-quality="low"] .mvc-charge{box-shadow:none}
@@ -117,3 +117,284 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 .mvp-celebration .mvc-fx-back{z-index:1}
 .mvp-celebration .mvc-fx-front{z-index:7}
 .mvp-celebration .mvc-stage.mvc-fx-on .mvc-finale{display:none}
+/* Guldkrona: one compact raster emblem; 0–.4 light, .4–.9 frame,
+   .9–9.4 portrait hold, 9.4–10 exit at the default duration. */
+.mvc-gold-ribbon .mvc-stage{overflow:visible;margin-bottom:10%}
+.mvc-gold-ribbon .mvc-stage::before{content:"";position:absolute;inset:8%;border-radius:50%;pointer-events:none;z-index:0;opacity:0;background:radial-gradient(ellipse at center,transparent 34%,rgba(255,218,125,.8) 48%,rgba(255,175,45,.35) 60%,transparent 73%)}
+.mvc-gold-ribbon.mvp-active .mvc-stage::before{animation:mvc-gold-halo var(--mvc-duration,10s) ease-out both}
+.mvc-gold-ribbon .mvc-art-left{clip-path:none}
+.mvc-gold-ribbon .mvc-art-right,.mvc-gold-ribbon .mvc-copy small,.mvc-gold-ribbon .mvc-finale{display:none!important}
+.mvc-gold-ribbon .mvc-copy{top:96%;left:8%;right:8%}
+.mvc-gold-ribbon .mvc-copy h2{font:650 clamp(14px,6.5cqw,30px)/1.2 system-ui,sans-serif;margin:0;letter-spacing:.01em}
+.mvc-gold-ribbon .mvc-smoke{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;pointer-events:none;opacity:0}
+.mvc-gold-ribbon.mvp-active .mvc-stage{animation-name:mvc-gold-exit}
+.mvc-gold-ribbon.mvp-active .mvc-art{animation-name:mvc-gold-frame}
+.mvc-gold-ribbon.mvp-active .mvc-portrait{animation-name:mvc-gold-photo}
+.mvc-gold-ribbon.mvp-active .mvc-copy{animation-name:mvc-gold-name}
+.mvc-gold-ribbon.mvp-active .mvc-smoke{animation:mvc-gold-smoke var(--mvc-duration,10s) ease-out both}
+@keyframes mvc-gold-exit{0%,94%{opacity:1;transform:none}100%{opacity:0;transform:translateY(2%)}}
+@keyframes mvc-gold-frame{0%,4%{opacity:0;transform:translateY(5%) scale(.88);filter:brightness(1.4)}8%{opacity:1;transform:translateY(-.5%) scale(1.025);filter:brightness(1.3) drop-shadow(0 0 8px rgba(255,203,88,.7))}12%,100%{opacity:1;transform:none;filter:none}}
+@keyframes mvc-gold-photo{0%,6.6%{opacity:0;transform:translate(-50%,-50%)}9%,100%{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes mvc-gold-name{0%,6.6%{opacity:0}9%,100%{opacity:1}}
+@keyframes mvc-gold-smoke{0%{opacity:0;transform:translateY(6%) scale(.82)}4%{opacity:.95;transform:translateY(1%) scale(1)}9%{opacity:.8;transform:translateY(-2%) scale(1.05)}18%,100%{opacity:0;transform:translateY(-6%) scale(1.12)}}
+@keyframes mvc-gold-halo{0%{opacity:0;transform:scale(.7)}4%{opacity:.85;transform:scale(.96)}8%{opacity:.65;transform:scale(1.04)}15%,100%{opacity:0;transform:scale(1.12)}}
+@media(prefers-reduced-motion:reduce){.mvc-gold-ribbon.mvp-active .mvc-stage::before{display:none!important}}
+@media(prefers-reduced-motion:reduce){.mvc-gold-ribbon.mvp-active .mvc-smoke{display:none!important}.mvc-gold-ribbon.mvp-active .mvc-stage{animation:mvc-gold-exit var(--mvc-duration,10s) linear both!important}.mvc-gold-ribbon.mvp-active .mvc-stage{transform:none!important}}
+
+/* 2026-09: shape-specific entrances, quiet winner hold and finite exits.
+   Saved durations remain authoritative; newly created MVPs default to 10 s. */
+.battle-mvp.mvp-celebration:not(.mvc-gold-ribbon){transform:none!important;transition:none!important}
+.mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-charge{animation-duration:var(--mvc-duration,10s);animation-name:mvc-charge-compact}
+.mvc-moon.mvp-active .mvc-charge{animation-name:mvc-moon-arc!important}
+.mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-portrait{animation-name:mvc-winner-early}
+.mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-copy{animation-name:mvc-name-early}
+.mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-finale{animation:mvc-effects-settle var(--mvc-duration,10s) linear both}
+.mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-fx{animation:mvc-effects-settle var(--mvc-duration,10s) linear both}
+@keyframes mvc-charge-compact{0%{opacity:0;transform:scale(.65)}5%{opacity:.7;transform:scale(.85)}10%{opacity:1;transform:scale(1.02)}19%,100%{opacity:0;transform:scale(1.12)}}
+@keyframes mvc-winner-early{0%,9%{opacity:0;transform:translate(-50%,-50%) scale(.92)}15%,92%{opacity:1;transform:translate(-50%,-50%) scale(1)}97%,100%{opacity:0;transform:translate(-50%,-50%) scale(.98)}}
+@keyframes mvc-name-early{0%,12%{opacity:0;transform:translateY(12%)}18%,91%{opacity:1;transform:none}96%,100%{opacity:0;transform:translateY(5%)}}
+@keyframes mvc-effects-settle{0%,20%{opacity:1}32%,100%{opacity:0}}
+.mvc-coronation.mvp-active .mvc-stage{animation-name:mvc-exit-coronation}
+@keyframes mvc-exit-coronation{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-5%) scale(.97)}}
+.mvc-wings.mvp-active .mvc-stage{animation-name:mvc-exit-wings}
+@keyframes mvc-exit-wings{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:scaleX(.90) translateY(-3%)}}
+.mvc-portal.mvp-active .mvc-stage{animation-name:mvc-exit-portal}
+@keyframes mvc-exit-portal{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:scale(.65) rotate(14deg)}}
+.mvc-rosegold.mvp-active .mvc-stage{animation-name:mvc-exit-rosegold}
+@keyframes mvc-exit-rosegold{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:scale(.97) translateY(6%)}}
+.mvc-pearl.mvp-active .mvc-stage{animation-name:mvc-exit-pearl}
+@keyframes mvc-exit-pearl{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-9%)}}
+.mvc-moon.mvp-active .mvc-stage{animation-name:mvc-exit-moon}
+@keyframes mvc-exit-moon{0%,93%{opacity:1;transform:none}100%{opacity:0;transform:translate(6%,-4%) rotate(5deg)}}
+
+/* Stop inherited endless spins/glitches; animate inner artwork, never the position root. */
+.battle-mvp.mvp-motion{transform:none!important;transition:opacity .2s ease!important}
+.battle-mvp.mvp-motion :is(.mvp-plate,.mvp-emblem,.mvp-emblem img,.mvp-copy small,.mvp-copy h2),
+.battle-mvp.mvp-motion .mvp-emblem::before,.battle-mvp.mvp-motion .mvp-emblem::after,
+.battle-mvp.mvp-motion .mvp-plate::after{animation:none!important}
+.battle-mvp.mvp-motion.mvp-active :is(.mvpf-photo,.mvpf-plate,.mvp-copy){animation:mvm-winner var(--mvm-duration,10s) ease-out both!important}
+.battle-mvp.mvp-motion.mvp-active .mvp-plate .mvp-copy{animation:none!important}
+.battle-mvp.mvp-motion.mvp-active .mvp-plate{opacity:1}
+.battle-mvp.mvp-motion.mvp-active .mvp-emblem img{animation:mvm-photo var(--mvm-duration,10s) ease-out both!important}
+.battle-mvp.mvp-motion.mvp-active .mvp-plate .mvp-emblem img{animation:none!important}
+@keyframes mvm-winner{0%,10%{opacity:0;transform:translateY(5px)}17%,91%{opacity:1;transform:none}97%,100%{opacity:0;transform:translateY(3px)}}
+@keyframes mvm-photo{0%,8%{opacity:0}14%,92%{opacity:1}98%,100%{opacity:0}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="gold-crown"] .mvpf-art{animation:mvm-gold-crown var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-gold-crown{0%,3%{opacity:0;transform:translateY(-12%) scale(1.04)}10%{opacity:1;transform:translateY(1%)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-5%) scale(.97)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="royal-ribbon"] .mvpf-art{animation:mvm-royal-ribbon var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-royal-ribbon{0%,3%{opacity:0;transform:scaleX(.18) scaleY(.94)}10%{opacity:1;transform:scaleX(1.035)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scaleX(.82)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="laurel-star"] .mvpf-art{animation:mvm-laurel-star var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-laurel-star{0%,3%{opacity:0;transform:rotate(-18deg) scale(.7)}10%{opacity:1;transform:rotate(2deg) scale(1.02)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:rotate(8deg) scale(.9)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="dark-wings"] .mvpf-art{animation:mvm-dark-wings var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-dark-wings{0%,3%{opacity:0;transform:perspective(650px) rotateX(28deg) scaleX(.62)}10%{opacity:1;transform:perspective(650px) rotateX(-3deg) scaleX(1.04)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scaleX(.65) translateY(-5%)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="dragon-fire"] .mvpf-art{animation:mvm-dragon-fire var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-dragon-fire{0%,3%{opacity:0;transform:translateY(10%) scale(.88) rotate(-3deg)}10%{opacity:1;transform:translateY(-1%) scale(1.035)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8%) scale(1.035)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="nautical-helm"] .mvpf-art{animation:mvm-nautical-helm var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-nautical-helm{0%,3%{opacity:0;transform:rotate(-38deg) scale(.90)}10%{opacity:1;transform:rotate(4deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:rotate(22deg) scale(.94)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="shadow-star"] .mvpf-art{animation:mvm-shadow-star var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-shadow-star{0%,3%{opacity:0;transform:scale(.65) rotate(18deg)}10%{opacity:1;transform:scale(1.04) rotate(-2deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scale(.75) rotate(-15deg)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="inferno"] .mvp-emblem{animation:mvm-inferno var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-inferno{0%,3%{opacity:0;transform:translateY(22px) scaleY(.65)}10%{opacity:1;transform:translateY(-3px) scaleY(1.05)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-18px) scale(.92)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="royal"] .mvp-emblem{animation:mvm-royal var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-royal{0%,3%{opacity:0;transform:translateY(-22px)}10%{opacity:1;transform:translateY(3px)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-12px) scale(.95)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="ice"] .mvp-emblem{animation:mvm-ice var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-ice{0%,3%{opacity:0;transform:scale(.70) rotate(-12deg)}10%{opacity:1;transform:scale(1.06) rotate(2deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scale(.82) rotate(8deg)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="cyber"] .mvp-emblem{animation:mvm-cyber var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-cyber{0%,3%{opacity:0;transform:scaleX(.05)}10%{opacity:1;transform:scaleX(1.04)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scaleY(.03)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="storm"] .mvp-emblem{animation:mvm-storm var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-storm{0%,3%{opacity:0;transform:translateX(-14px) skewX(-9deg)}10%{opacity:1;transform:translateX(3px) skewX(2deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateX(18px) skewX(5deg)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="aurora"] .mvp-emblem{animation:mvm-aurora var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-aurora{0%,3%{opacity:0;transform:translateY(12px) rotate(-6deg)}10%{opacity:1;transform:translateY(-2px) rotate(1deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translate(10px,-15px)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="samurai"] .mvp-emblem{animation:mvm-samurai var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-samurai{0%,3%{opacity:0;transform:translate(-24px,12px) rotate(-16deg)}10%{opacity:1;transform:translate(3px,-2px) rotate(2deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translate(22px,-10px) rotate(12deg)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="royal-purple"] .mvp-plate{animation:mvm-royal-purple var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-royal-purple{0%,3%{opacity:0;transform:translateY(-16px) scale(.96)}10%{opacity:1;transform:translateY(2px)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-10px) scale(.98)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="neon-cyber"] .mvp-plate{animation:mvm-neon-cyber var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-neon-cyber{0%,3%{opacity:0;transform:perspective(700px) rotateY(42deg) scaleX(.8)}10%{opacity:1;transform:perspective(700px) rotateY(-4deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:scaleY(.04)}}
+.battle-mvp.mvp-motion.mvp-active[data-mvp-motion="diamond-elite"] .mvp-plate{animation:mvm-diamond-elite var(--mvm-duration,10s) cubic-bezier(.2,.7,.2,1) both!important}
+@keyframes mvm-diamond-elite{0%,3%{opacity:0;transform:perspective(700px) rotateX(24deg) translateY(10px)}10%{opacity:1;transform:perspective(700px) rotateX(-2deg)}16%,93%{opacity:1;transform:none}100%{opacity:0;transform:perspective(700px) rotateX(-15deg) translateY(-5px)}}
+
+@media(prefers-reduced-motion:reduce){
+ .battle-mvp.mvp-motion.mvp-active[data-mvp-motion] :is(.mvpf-art,.mvpf-photo,.mvpf-plate,.mvp-plate,.mvp-emblem,.mvp-emblem img,.mvp-copy){animation:mvm-reduced var(--mvm-duration,10s) linear both!important;transform:none!important}
+ .mvp-celebration:not(.mvc-gold-ribbon).mvp-active .mvc-stage{animation:mvm-reduced var(--mvc-duration,10s) linear both!important;transform:none!important}
+ .mvp-celebration:not(.mvc-gold-ribbon) .mvc-charge,.mvp-celebration:not(.mvc-gold-ribbon) .mvc-fx{display:none!important}
+}
+@keyframes mvm-reduced{0%,94%{opacity:1}100%{opacity:0}}
+
+/* Kröningen: MVP must remain readable when the frame is reduced to 280 px. */
+.mvc-coronation .mvc-copy small{
+ font:850 clamp(19px,8.5cqw,34px)/1.12 system-ui,-apple-system,"Segoe UI",sans-serif;
+ letter-spacing:.075em;color:#ffe39a;
+ width:fit-content;max-width:100%;margin-inline:auto;padding:1px .3em;
+ background:radial-gradient(ellipse at center,#130d08d9 0%,#130d0880 55%,transparent 75%);
+ text-shadow:0 1px 2px #000,0 0 6px #000;
+}
+.mvc-coronation .mvc-copy h2{margin-top:6px}
+.mvc-coronation .mvc-stage{margin-bottom:4%}
+
+/* Personal title treatment follows the artwork; hidden labels stay hidden.
+   These ornaments use empty pseudo-elements, never a second copy of MVP. */
+.mvp-celebration:not(.mvc-gold-ribbon) .mvc-copy small{position:relative;box-sizing:border-box;max-width:100%;width:fit-content;margin-inline:auto}
+.mvp-celebration:not(.mvc-gold-ribbon) .mvc-copy h2{line-height:1.15;text-shadow:0 2px 3px #000,0 0 9px #000}
+.mvc-wings .mvc-copy{top:84.5%;left:10%;right:10%}
+.mvc-wings .mvc-copy small{font:750 clamp(18px,7.5cqw,30px)/1.15 system-ui,sans-serif;letter-spacing:.17em;padding:0 .55em;color:#eee4ff;text-shadow:0 1px 3px #08030f,0 0 7px #bba0ed66}
+.mvc-wings .mvc-copy small::before,.mvc-wings .mvc-copy small::after{content:"";position:absolute;top:44%;width:.32em;height:.48em;border-top:1px solid #d9c3ff;border-bottom:1px solid #d9c3ff;transform:skewY(-28deg);opacity:.8}
+.mvc-wings .mvc-copy small::before{left:0}.mvc-wings .mvc-copy small::after{right:0;transform:skewY(28deg)}
+.mvc-wings .mvc-copy h2{font-family:system-ui,sans-serif;font-weight:500;letter-spacing:.025em;margin-top:5px;color:#fff}
+.mvc-wings .mvc-stage{margin-bottom:4%}
+.mvc-portal .mvc-copy{top:84.5%}
+.mvc-portal .mvc-copy small{font:800 clamp(18px,7.5cqw,30px)/1.12 ui-monospace,Consolas,monospace;letter-spacing:.06em;padding:2px .48em;color:#a1ffff;border-inline:2px solid #53edec;background:linear-gradient(90deg,transparent,#041d25d9,transparent);text-shadow:0 0 3px #001013}
+.mvc-portal .mvc-copy h2{font-family:ui-monospace,Consolas,monospace;font-weight:650;font-size:clamp(13px,5.8cqw,25px);letter-spacing:0;margin-top:5px;color:#efffff}
+.mvc-portal .mvc-stage{margin-bottom:5%}
+.mvc-rosegold .mvc-copy{top:84.5%;left:9%;right:9%}
+.mvc-rosegold .mvc-copy small{font:700 clamp(19px,8cqw,32px)/1.05 Georgia,"Times New Roman",serif;letter-spacing:.08em;padding:0 .4em 3px;color:#ffdacb;border-bottom:1px solid #dbab9477;text-shadow:0 2px 3px #200d08,0 0 8px #100604}
+.mvc-rosegold .mvc-copy h2{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;margin-top:5px;color:#fff1eb}
+.mvc-rosegold .mvc-stage{margin-bottom:5%}
+.mvc-pearl .mvc-copy{top:84%;left:10%;right:10%}
+.mvc-pearl .mvc-copy small{font:750 clamp(18px,7.2cqw,29px)/1.1 system-ui,sans-serif;letter-spacing:.12em;padding:2px .65em;color:#fff3ef;border:1px solid #f3d8e459;border-radius:999px;background:linear-gradient(135deg,#eac9de22,#241524bb);text-shadow:0 1px 3px #110816}
+.mvc-pearl .mvc-copy h2{font-family:system-ui,sans-serif;font-weight:500;letter-spacing:.04em;margin-top:5px;color:#fff8f6}
+.mvc-pearl .mvc-stage{margin-bottom:5%}
+.mvc-moon .mvc-copy{top:84.5%}
+.mvc-moon .mvc-copy small{font:600 clamp(19px,7.8cqw,31px)/1.1 Georgia,serif;letter-spacing:.13em;padding:0 .28em 0 .85em;color:#e7deff;text-shadow:0 1px 4px #0b0618,0 0 8px #0b0618}
+.mvc-moon .mvc-copy small::before{content:"";position:absolute;left:.12em;top:50%;width:.42em;height:.42em;border-radius:50%;box-shadow:-.13em .035em 0 .015em #d4c3ff;transform:translateY(-55%) rotate(-18deg)}
+.mvc-moon .mvc-copy h2{font-family:Georgia,serif;font-weight:500;letter-spacing:.045em;margin-top:6px;color:#f8f4ff}
+.mvc-moon .mvc-stage{margin-bottom:5%}
+
+/* BASIC uses compact typography rather than adding presentation panels. */
+.battle-mvp.mvp-motion{container-type:inline-size}
+.battle-mvp.mvp-motion .mvp-emblem>b{display:none}
+.battle-mvp.mvp-motion .mvp-copy small{font-size:clamp(18px,7cqw,25px);line-height:1.15;letter-spacing:.05em;box-sizing:border-box;max-width:100%;width:fit-content;margin-inline:auto;padding:0;color:var(--mvp2);text-shadow:0 1px 3px #000}
+.battle-mvp.mvp-motion .mvp-copy h2{font-size:clamp(15px,6.5cqw,23px);line-height:1.15;color:#fff;letter-spacing:0;margin-top:5px!important;text-shadow:0 1px 4px #000}
+.battle-mvp.mvp-motion .mvpf-plate{gap:1px}
+.battle-mvp.mvp-motion .mvpf-plate small{line-height:1.05;letter-spacing:.06em;max-width:100%;overflow:hidden;text-overflow:ellipsis;padding:0;text-shadow:0 1px 2px #000,0 0 4px #000}
+.battle-mvp.mvp-motion .mvpf-row strong{line-height:1.1;font-weight:650;color:#fff;text-shadow:0 1px 3px #000}
+/* Gold Crown: bold award lettering. Royal Ribbon: engraved serif. */
+.mvp-motion[data-mvp-motion="gold-crown"] .mvpf-plate small{font-family:system-ui,sans-serif;font-weight:900;color:#ffe49b;letter-spacing:.09em}
+.mvp-motion[data-mvp-motion="gold-crown"] .mvpf-row strong{font-family:system-ui,sans-serif;font-weight:750}
+.mvp-motion[data-mvp-motion="royal-ribbon"] .mvpf-plate small{font-family:Georgia,serif;font-weight:700;color:#ffe4af;letter-spacing:.15em}
+.mvp-motion[data-mvp-motion="royal-ribbon"] .mvpf-row strong{font-family:Georgia,serif;font-weight:600;font-style:italic}
+/* Laurel Star: ceremony; Dark Wings: cool condensed uppercase title. */
+.mvp-motion[data-mvp-motion="laurel-star"] .mvpf-plate small{font-family:Georgia,serif;font-weight:700;color:#ffedbe;letter-spacing:.23em}
+.mvp-motion[data-mvp-motion="laurel-star"] .mvpf-row strong{font-family:system-ui,sans-serif;letter-spacing:.035em;font-weight:500}
+.mvp-motion[data-mvp-motion="dark-wings"] .mvpf-plate small{font-family:"Arial Narrow",system-ui,sans-serif;font-weight:900;color:#e0e8f4;letter-spacing:.11em}
+.mvp-motion[data-mvp-motion="dark-wings"] .mvpf-row strong{font-family:system-ui,sans-serif;font-weight:550;letter-spacing:.06em}
+/* Dragon: forward italic; Helm: brass navigator; Shadow: sharp gold accent. */
+.mvp-motion[data-mvp-motion="dragon-fire"] .mvpf-plate small{font-family:system-ui,sans-serif;font-weight:950;font-style:italic;color:#ffcfaa;letter-spacing:.015em}
+.mvp-motion[data-mvp-motion="dragon-fire"] .mvpf-row strong{font-family:system-ui,sans-serif;font-weight:750}
+.mvp-motion[data-mvp-motion="nautical-helm"] .mvpf-plate small{font-family:Georgia,serif;font-weight:700;color:#ffe2b3;letter-spacing:.2em}
+.mvp-motion[data-mvp-motion="nautical-helm"] .mvpf-row strong{font-family:ui-monospace,Consolas,monospace;font-weight:500;letter-spacing:-.025em}
+.mvp-motion[data-mvp-motion="shadow-star"] .mvpf-plate small{font-family:ui-monospace,Consolas,monospace;font-weight:900;color:#ffdd8f;letter-spacing:.18em}
+.mvp-motion[data-mvp-motion="shadow-star"] .mvpf-row strong{font-family:system-ui,sans-serif;font-weight:650;letter-spacing:.02em}
+/* Seven classic emblems: individual tone without extra boxes. */
+.mvp-motion[data-mvp-motion="inferno"] .mvp-copy small{font-family:system-ui,sans-serif;font-weight:950;font-style:italic;color:#ffce9b;border-bottom:2px solid #ff8b1666;padding-bottom:2px;letter-spacing:.015em}
+.mvp-motion[data-mvp-motion="inferno"] .mvp-copy h2{font-family:system-ui,sans-serif;font-weight:800}
+.mvp-motion[data-mvp-motion="royal"] .mvp-copy small{font-family:Georgia,serif;font-weight:700;color:#ffe5a3;letter-spacing:.19em}
+.mvp-motion[data-mvp-motion="royal"] .mvp-copy h2{font-family:Georgia,serif;font-weight:600;font-style:italic}
+.mvp-motion[data-mvp-motion="ice"] .mvp-copy small{font-family:system-ui,sans-serif;font-weight:600;color:#d7f6ff;letter-spacing:.22em;border-bottom:1px solid #b5ebff88;padding-bottom:2px}
+.mvp-motion[data-mvp-motion="ice"] .mvp-copy h2{font-family:system-ui,sans-serif;font-weight:500;letter-spacing:.02em}
+.mvp-motion[data-mvp-motion="cyber"] .mvp-copy small{font-family:ui-monospace,Consolas,monospace;font-weight:850;color:#efccff;border-inline:2px solid #cb46ff;padding-inline:.24em;letter-spacing:.02em}
+.mvp-motion[data-mvp-motion="cyber"] .mvp-copy h2{font-family:ui-monospace,Consolas,monospace;font-weight:600;letter-spacing:-.04em}
+.mvp-motion[data-mvp-motion="storm"] .mvp-copy small{font-family:system-ui,sans-serif;font-weight:900;font-style:italic;color:#dce0ff;letter-spacing:.06em;text-shadow:1px 1px 0 #39429c,0 1px 3px #000}
+.mvp-motion[data-mvp-motion="storm"] .mvp-copy h2{font-family:system-ui,sans-serif;font-weight:750;letter-spacing:-.025em}
+.mvp-motion[data-mvp-motion="aurora"] .mvp-copy small{font-family:system-ui,sans-serif;font-weight:550;color:#c4fff1;letter-spacing:.24em}
+.mvp-motion[data-mvp-motion="aurora"] .mvp-copy h2{font-family:system-ui,sans-serif;font-weight:450;letter-spacing:.035em}
+.mvp-motion[data-mvp-motion="samurai"] .mvp-copy small{font-family:Georgia,serif;font-weight:800;color:#ffc1cb;border-left:3px solid #ff3355;padding-left:.3em;letter-spacing:.06em}
+.mvp-motion[data-mvp-motion="samurai"] .mvp-copy h2{font-family:Georgia,serif;font-weight:650;letter-spacing:0}
+/* Three premium BASIC plates retain their original plate geometry. */
+.mvp-motion[data-mvp-motion="royal-purple"] .mvp-copy small{font-family:Georgia,serif;font-weight:750;background:none;-webkit-background-clip:initial;background-clip:initial;color:#ffe6ac;letter-spacing:.16em}
+.mvp-motion[data-mvp-motion="royal-purple"] .mvp-copy h2{font-family:system-ui,sans-serif;font-weight:750;letter-spacing:.01em}
+.mvp-motion[data-mvp-motion="neon-cyber"] .mvp-copy small{font-family:ui-monospace,Consolas,monospace;font-weight:800;color:#b2ffff;letter-spacing:.1em;border-bottom:1px solid #3ff5ff77;padding-bottom:3px}
+.mvp-motion[data-mvp-motion="neon-cyber"] .mvp-copy h2{font-family:ui-monospace,Consolas,monospace;font-weight:650;letter-spacing:-.025em;text-shadow:0 1px 4px #000}
+.mvp-motion[data-mvp-motion="diamond-elite"] .mvp-copy small{font-family:system-ui,sans-serif;font-weight:500;color:#f0f4fa;letter-spacing:.25em}
+.mvp-motion[data-mvp-motion="diamond-elite"] .mvp-copy h2{font-family:Georgia,serif;font-weight:400;font-style:italic;letter-spacing:.01em}
+
+/* Readable luminous MVP: crisp light core, dark edge, a small themed halo.
+   No flashes; no new panel; label visibility and saved frame sizes remain intact. */
+.mvc-coronation .mvc-copy small{color:#fff0bd;--mvp-label-glow:#e6aa40}
+.mvc-wings .mvc-copy small{color:#f7eeff;--mvp-label-glow:#b597ee}
+.mvc-portal .mvc-copy small{color:#d5ffff;--mvp-label-glow:#46dada}
+.mvc-rosegold .mvc-copy small{color:#ffece2;--mvp-label-glow:#dca18f}
+.mvc-pearl .mvc-copy small{color:#fff7f1;--mvp-label-glow:#d9aecb}
+.mvc-moon .mvc-copy small{color:#f2ebff;--mvp-label-glow:#b9a3ea}
+.mvp-motion[data-mvp-motion="royal-ribbon"] .mvpf-plate small{color:#fff0c9;--mvp-label-glow:#c89e48}
+.mvp-motion[data-mvp-motion="laurel-star"] .mvpf-plate small{color:#fff5d5;--mvp-label-glow:#d2ad52}
+.mvp-motion[data-mvp-motion="dark-wings"] .mvpf-plate small{color:#f0f5ff;--mvp-label-glow:#9caec9}
+.mvp-motion[data-mvp-motion="dragon-fire"] .mvpf-plate small{color:#ffe9d6;--mvp-label-glow:#ea8354}
+.mvp-motion[data-mvp-motion="nautical-helm"] .mvpf-plate small{color:#fff0d3;--mvp-label-glow:#bd9257}
+.mvp-motion[data-mvp-motion="shadow-star"] .mvpf-plate small{color:#ffedbd;--mvp-label-glow:#c7a345}
+.mvp-motion[data-mvp-motion="inferno"] .mvp-copy small{color:#ffe6c6;--mvp-label-glow:#ea8a3f}
+.mvp-motion[data-mvp-motion="royal"] .mvp-copy small{color:#fff0bd;--mvp-label-glow:#cfa447}
+.mvp-motion[data-mvp-motion="cyber"] .mvp-copy small{color:#f5e4ff;--mvp-label-glow:#c37ddd}
+.mvp-motion[data-mvp-motion="storm"] .mvp-copy small{color:#edf0ff;--mvp-label-glow:#8b99e5}
+.mvp-motion[data-mvp-motion="aurora"] .mvp-copy small{color:#ddfff5;--mvp-label-glow:#67c2ad}
+.mvp-motion[data-mvp-motion="samurai"] .mvp-copy small{color:#ffe4e9;--mvp-label-glow:#dc7b8d}
+:is(.mvc-coronation,.mvc-wings,.mvc-portal,.mvc-rosegold,.mvc-pearl,.mvc-moon) .mvc-copy small,
+.mvp-motion:is([data-mvp-motion="royal-ribbon"],[data-mvp-motion="laurel-star"],[data-mvp-motion="dark-wings"],[data-mvp-motion="dragon-fire"],[data-mvp-motion="nautical-helm"],[data-mvp-motion="shadow-star"]) .mvpf-plate small,
+.mvp-motion:is([data-mvp-motion="inferno"],[data-mvp-motion="royal"],[data-mvp-motion="cyber"],[data-mvp-motion="storm"],[data-mvp-motion="aurora"],[data-mvp-motion="samurai"]) .mvp-copy small{
+ text-shadow:-1px 0 1px #100c18,1px 0 1px #100c18,0 -1px 1px #100c18,0 1px 1px #100c18,0 2px 3px #000,0 0 5px color-mix(in srgb,var(--mvp-label-glow),transparent 20%),0 0 10px color-mix(in srgb,var(--mvp-label-glow),transparent 55%);
+}
+
+/* Six finite signature details. Coordinates are measured against the existing
+   square artwork; decoration never crosses the middle of the winner portrait. */
+.mvc-signature{position:absolute;inset:0;z-index:4;pointer-events:none}
+.mvc-signature i{position:absolute;display:block;opacity:0;pointer-events:none}
+.mvc-crown-glint,.mvc-moon-tip{width:7%;height:7%;background:radial-gradient(circle,#fff 0 7%,#ffe3a977 18%,transparent 55%)}
+.mvc-crown-glint::before,.mvc-crown-glint::after,.mvc-moon-tip::before,.mvc-moon-tip::after{content:"";position:absolute;inset:45% 0;background:linear-gradient(90deg,transparent,#fff6df,transparent);border-radius:50%}
+.mvc-crown-glint::after,.mvc-moon-tip::after{inset:0 45%;background:linear-gradient(transparent,#fff6df,transparent)}
+.mvc-crown-glint{left:50%;top:8%;transform:translate(-50%,-50%)}
+.mvc-coronation.mvp-active .mvc-crown-glint{animation:mvc-crown-signature var(--mvc-duration,10s) ease-out both}
+@keyframes mvc-crown-signature{0%,10%{opacity:0;transform:translate(-50%,-50%) scale(.35) rotate(-20deg)}13.5%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(0)}18%,100%{opacity:0;transform:translate(-50%,-50%) scale(.6) rotate(12deg)}}
+/* Compact feather-shaped streaks slide along both wings towards the ring. */
+.mvc-wing-wave{top:36%;width:4%;height:15%;border-radius:80%;background:linear-gradient(100deg,transparent,#f7eeffdd,transparent);filter:drop-shadow(0 0 3px #c8afff);transform-origin:center}
+.mvc-wing-wave-left{left:12%}.mvc-wing-wave-right{left:84%}
+.mvc-wings.mvp-active .mvc-wing-wave-left{animation:mvc-wing-signature-left var(--mvc-duration,10s) ease-out both}
+.mvc-wings.mvp-active .mvc-wing-wave-right{animation:mvc-wing-signature-right var(--mvc-duration,10s) ease-out both}
+@keyframes mvc-wing-signature-left{0%,7%{opacity:0;left:12%;top:36%;transform:rotate(-28deg) scaleY(.4)}9.5%{opacity:.9}13.5%{opacity:.75;left:21%;top:43%;transform:rotate(-10deg) scaleY(.65)}17%,100%{opacity:0;left:24%;top:46%;transform:scaleY(.15)}}
+@keyframes mvc-wing-signature-right{0%,7%{opacity:0;left:84%;top:36%;transform:rotate(28deg) scaleY(.4)}9.5%{opacity:.9}13.5%{opacity:.75;left:75%;top:43%;transform:rotate(10deg) scaleY(.65)}17%,100%{opacity:0;left:72%;top:46%;transform:scaleY(.15)}}
+/* Two opposing rim arcs converge at the top of the portrait opening. */
+.mvc-energy-arc{left:calc(var(--mvc-photo-left) - 1.5%);top:calc(var(--mvc-photo-top) - 1.5%);width:calc(var(--mvc-photo-width) + 3%);height:calc(var(--mvc-photo-height) + 3%);border:2px solid transparent;border-radius:50%;box-sizing:border-box}
+.mvc-energy-cyan{border-top-color:#afffff;border-left-color:#43dfee;filter:drop-shadow(0 0 3px #3de8f0)}
+.mvc-energy-coral{border-top-color:#ffe2b1;border-right-color:#ff944e;filter:drop-shadow(0 0 3px #ff9048)}
+.mvc-energy-meeting{left:50%;top:19%;width:5%;height:5%;border-radius:50%;background:radial-gradient(circle,#fff8e8,#ffe4ad66 20%,transparent 65%);transform:translate(-50%,-50%)}
+.mvc-portal.mvp-active .mvc-energy-cyan{animation:mvc-energy-cyan-reveal var(--mvc-duration,10s) ease-out both}
+.mvc-portal.mvp-active .mvc-energy-coral{animation:mvc-energy-coral-reveal var(--mvc-duration,10s) ease-out both}
+.mvc-portal.mvp-active .mvc-energy-meeting{animation:mvc-energy-meeting-reveal var(--mvc-duration,10s) linear both}
+@keyframes mvc-energy-cyan-reveal{0%,7%{opacity:0;transform:rotate(-160deg)}10%{opacity:.85}13.5%{opacity:1;transform:rotate(0)}17%,100%{opacity:0;transform:rotate(8deg)}}
+@keyframes mvc-energy-coral-reveal{0%,7%{opacity:0;transform:rotate(160deg)}10%{opacity:.85}13.5%{opacity:1;transform:rotate(0)}17%,100%{opacity:0;transform:rotate(-8deg)}}
+@keyframes mvc-energy-meeting-reveal{0%,12%{opacity:0}13.5%{opacity:1}16.5%,100%{opacity:0}}
+/* A glint touches the rose, follows the outside edge, then hands off to the label. */
+.mvc-rose-trail{left:77%;top:18%;width:4.5%;height:4.5%;border-radius:50%;background:radial-gradient(circle,#fff8e6 0 8%,#ffd9c788 24%,transparent 65%);transform:translate(-50%,-50%)}
+.mvc-rosegold.mvp-active .mvc-rose-trail{animation:mvc-rose-signature var(--mvc-duration,10s) linear both}
+@keyframes mvc-rose-signature{0%,8%{opacity:0;left:77%;top:18%}10%{opacity:1;left:79%;top:22%}12%{opacity:.9;left:87%;top:44%}14%{opacity:.9;left:77%;top:68%}16%{opacity:.65;left:55%;top:80%}18%,100%{opacity:0;left:50%;top:84%}}
+.mvc-rosegold .mvc-copy small::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#fff3db,transparent);opacity:0;transform:scaleX(.2)}
+.mvc-rosegold.mvp-active .mvc-copy small::after{animation:mvc-rose-label-touch var(--mvc-duration,10s) ease-out both}
+@keyframes mvc-rose-label-touch{0%,16%{opacity:0;transform:scaleX(.2)}18%{opacity:1;transform:scaleX(1)}23%,100%{opacity:0;transform:scaleX(1)}}
+/* Four measured pearls reflect one after another, once. */
+.mvc-pearl-glint{width:4%;height:4%;border-radius:50%;background:radial-gradient(circle,#fffdf7 0 12%,#ffecf6aa 25%,transparent 70%);transform:translate(-50%,-50%)}
+.mvc-pearl-top{left:50%;top:8%}.mvc-pearl-left{left:21%;top:29%}.mvc-pearl-right{left:79%;top:29%}.mvc-pearl-bottom{left:50%;top:80%}
+.mvc-pearl.mvp-active .mvc-pearl-top{animation:mvc-pearl-light-1 var(--mvc-duration,10s) ease-out both}
+.mvc-pearl.mvp-active .mvc-pearl-left{animation:mvc-pearl-light-2 var(--mvc-duration,10s) ease-out both}
+.mvc-pearl.mvp-active .mvc-pearl-right{animation:mvc-pearl-light-3 var(--mvc-duration,10s) ease-out both}
+.mvc-pearl.mvp-active .mvc-pearl-bottom{animation:mvc-pearl-light-4 var(--mvc-duration,10s) ease-out both}
+@keyframes mvc-pearl-light-1{0%,8%{opacity:0}10%{opacity:1}13%,100%{opacity:0}}
+@keyframes mvc-pearl-light-2{0%,10%{opacity:0}12%{opacity:1}15%,100%{opacity:0}}
+@keyframes mvc-pearl-light-3{0%,12%{opacity:0}14%{opacity:1}17%,100%{opacity:0}}
+@keyframes mvc-pearl-light-4{0%,14%{opacity:0}16%{opacity:1}20%,100%{opacity:0}}
+/* Moon tip marks the reveal; the last little star remains after the frame fades. */
+.mvc-moon-tip{left:18%;top:68%;background:radial-gradient(circle,#fff 0 7%,#e5d8ff77 18%,transparent 55%);transform:translate(-50%,-50%)}
+.mvc-moon.mvp-active .mvc-moon-tip{animation:mvc-moon-signature var(--mvc-duration,10s) ease-out both}
+.mvc-moon.mvp-active .mvc-stage{animation-name:mvc-moon-signature-stage}
+@keyframes mvc-moon-signature{0%,10%{opacity:0;transform:translate(-50%,-50%) scale(.35)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}21%,93%{opacity:0;transform:translate(-50%,-50%) scale(.6)}96%,98%{opacity:.85;transform:translate(-50%,-50%) scale(.65)}100%{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
+@keyframes mvc-moon-signature-stage{0%,99%{opacity:1;transform:none}100%{opacity:0;transform:none}}
+@keyframes mvc-moon-left{0%,5.76%{opacity:0;transform:rotate(-70deg) scale(.75)}11.2%{opacity:1;transform:rotate(4deg) scale(1.01)}13.44%,93%{opacity:1;transform:none}97%,100%{opacity:0;transform:rotate(4deg) scale(.98)}}
+@keyframes mvc-moon-right{0%,7.68%{opacity:0;transform:translate(8%,-10%) scale(.9)}13.44%,93%{opacity:1;transform:none}97%,100%{opacity:0;transform:translate(2%,-2%)}}
+/* BASIC: portrait settles first, then the name. No additional decoration. */
+.battle-mvp.mvp-motion.mvp-active .mvpf-photo{animation:mvm-basic-face var(--mvm-duration,10s) ease-out both!important}
+.battle-mvp.mvp-motion.mvp-active .mvp-plate .mvp-copy{animation:mvm-winner var(--mvm-duration,10s) ease-out both!important}
+@keyframes mvm-basic-face{0%,8%{opacity:0;transform:scale(.98)}14%,92%{opacity:1;transform:none}98%,100%{opacity:0;transform:scale(.99)}}
+@keyframes mvm-winner{0%,12%{opacity:0;transform:translateY(3px)}19%,91%{opacity:1;transform:none}97%,100%{opacity:0;transform:translateY(2px)}}
+@media(prefers-reduced-motion:reduce){
+ .mvc-signature,.mvc-rosegold .mvc-copy small::after{display:none!important}
+ .mvc-moon.mvp-active .mvc-stage{animation:mvm-reduced var(--mvc-duration,10s) linear both!important}
+ .battle-mvp.mvp-motion.mvp-active[data-mvp-motion] :is(.mvpf-photo,.mvp-plate .mvp-copy){animation:mvm-reduced var(--mvm-duration,10s) linear both!important;transform:none!important}
+}
