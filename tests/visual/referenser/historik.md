@@ -264,3 +264,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Battle MVP stil/ram-referenser: synligt 92-procentsfonster istallet for uttonade tomma bildrutor
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 19 av 112 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:coronation, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:moon, catalog:battlemvp:celebration:pearl, catalog:battlemvp:celebration:portal, catalog:battlemvp:celebration:rosegold, catalog:battlemvp:celebration:wings, catalog:battlemvp:cyber, catalog:battlemvp:frame:dark-wings, catalog:battlemvp:frame:dragon-fire, catalog:battlemvp:frame:laurel-star, catalog:battlemvp:frame:nautical-helm, catalog:battlemvp:frame:royal-ribbon, catalog:battlemvp:frame:shadow-star, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm
+
+## 2026-10-01 — 19 referenser skrivna
+
+- **Motiv:** Battle MVP stil/ram-referenser omgenererade pa aktuell topp efter main-merge (tidigare svep klottrades bort)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 19 av 112 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:coronation, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:moon, catalog:battlemvp:celebration:pearl, catalog:battlemvp:celebration:portal, catalog:battlemvp:celebration:rosegold, catalog:battlemvp:celebration:wings, catalog:battlemvp:cyber, catalog:battlemvp:frame:dark-wings, catalog:battlemvp:frame:dragon-fire, catalog:battlemvp:frame:laurel-star, catalog:battlemvp:frame:nautical-helm, catalog:battlemvp:frame:royal-ribbon, catalog:battlemvp:frame:shadow-star, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm
