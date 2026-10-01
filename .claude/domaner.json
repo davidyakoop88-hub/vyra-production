@@ -265,7 +265,9 @@
         "legal.css",
         "terms.html",
         "privacy.html",
-        "favicon.ico"
+        "favicon.ico",
+        "robots.txt",
+        "sitemap.xml"
       ],
       "tester": [
         "tests/css-struktur.test.js",
