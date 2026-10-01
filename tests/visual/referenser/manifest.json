@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 122,
  "senaste": {
-  "motiv": "Baslinje for catalog:fanlevel50:royal (ny design), royal nu i katalogkartan, PR #550",
-  "nycklar": 2,
+  "motiv": "Fan Level 50 Royal andrade hojd i #555 (Fly Love borttagen), referens 300x372 ar stale mot ny 300x276",
+  "nycklar": 1,
   "filter": "fanlevel50",
-  "tid": "2026-09-29T19:06:16.719Z"
+  "tid": "2026-09-30T20:28:34.150Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -499,7 +499,7 @@
    "fyllnad": 100
   },
   "catalog:fanlevel50:royal": {
-   "matt": "300x372",
+   "matt": "300x276",
    "fyllnad": 100
   }
  }
