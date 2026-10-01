@@ -420,7 +420,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
   // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
   // Classics och panelen ar ororda och behaller sina tidigare versioner.
-  assert.match(media, /gift-fireworks\.js\?v=20260925-natural1/);
+  // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
+  // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
+  // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
+  assert.match(media, /gift-fireworks\.js\?v=20261001-burst1/);
   assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
   assert.match(media, /gift-supernova-engine\.js\?v=20260925-natural1/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
