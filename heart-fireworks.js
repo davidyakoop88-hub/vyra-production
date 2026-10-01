@@ -103,12 +103,13 @@
 
   // ---------- catalog + bindings ----------
   const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay')return;
+    // Delad katalogsektion [data-burst] — samma som Gift Fireworks/Gift Bubbles. Helpern definieras
+    // pa window av den fil som binder forst (laddordningen ar inte garanterad); Heart Fireworks ar
+    // grupp 'hf' med sort 2, sa den hamnar efter Gift Fireworks (1) men fore Gift Bubbles (3)
+    // oavsett vem som laddade forst. Rubriken raknar alla knappar i sektionen.
+    const vyraBurstKatalog=window.vyraBurstKatalog||(window.vyraBurstKatalog=function(cat,grupp,sort,bygg){if(!cat)return null;let sec=cat.querySelector('[data-burst]');if(!sec){sec=document.createElement('section');sec.dataset.burst='1';sec.innerHTML='<h4></h4>';cat.prepend(sec)}if(!sec.querySelector('[data-burst-grupp="'+grupp+'"]'))(bygg()||[]).forEach(b=>{if(!b)return;b.dataset.burstGrupp=grupp;b.dataset.burstSort=String(sort);sec.append(b)});const knappar=[...sec.querySelectorAll(':scope > button')];knappar.map((b,i)=>[b,i]).sort((a,b)=>(+a[0].dataset.burstSort- +b[0].dataset.burstSort)||(a[1]-b[1])).forEach(x=>sec.append(x[0]));const h=sec.querySelector('h4');if(h)h.textContent='FIREWORKS & BUBBLES · '+knappar.length+' DESIGNER';return sec});
     let cat=document.querySelector('.widget-catalog');
-    if(cat&&!cat.querySelector('[data-hf]')){let s=document.createElement('section');s.dataset.hf='1';
-      s.innerHTML=`<h4>HEART FIREWORKS · 1 DESIGN</h4><button data-hf-create="1" data-catalog-key="catalog:heartfireworks"><i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Heart Fireworks</b><small>Skott formar hjärtan · guldskott i mitten</small></span></button>`;
-      cat.prepend(s);
-      s.querySelector('[data-hf-create]').onclick=()=>{const created=VyraWidgets.create('catalog:heartfireworks');state.widgets.push(created);selected=created.id;save();render();if(window.toast)toast('Heart Fireworks skapad');};
-    }
+    if(cat)vyraBurstKatalog(cat,'hf',2,()=>{const b=document.createElement('button');b.dataset.hfCreate='1';b.dataset.catalogKey='catalog:heartfireworks';b.innerHTML=`<i class="vyra-pro-icon">${(window.vyraCatalogIcon?vyraCatalogIcon('bolt'):'✦')}</i><span><b>Heart Fireworks</b><small>Skott formar hjärtan · guldskott i mitten</small></span>`;b.onclick=()=>{const created=VyraWidgets.create('catalog:heartfireworks');state.widgets.push(created);selected=created.id;save();render();if(window.toast)toast('Heart Fireworks skapad');};return [b]});
     let w=liveWidget(selected);if(!w||w.type!=='templateHeartFireworks')return;
     const set=(id,key,bool=false)=>{let e=document.querySelector(id);if(e)e.onchange=x=>{w[key]=bool?x.target.checked:(x.target.type==='number'?+x.target.value:x.target.value);save();render();};};
     set('#hfMin','hfMin');set('#hfGold','hfGold',true);set('#hfShowCombo','hfShowCombo',true);set('#hfExcludeAnon','hfExcludeAnon',true);
