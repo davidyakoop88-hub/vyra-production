@@ -269,9 +269,12 @@ test('catalog exposes four themes and each card creates its matching personal ro
   const { h, run, d } = panel();
   run(`document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
   const keys=['royal','ice','rose','comet'];
-  const cards=[...d.querySelectorAll('[data-fw] [data-fw-theme]')];
+  // Gift Fireworks, Heart Fireworks och Gift Bubbles delar numera EN katalogsektion med markoren
+  // [data-burst] (rubrik "FIREWORKS & BUBBLES · N DESIGNER"). Den gamla egna [data-fw]-sektionen
+  // finns inte langre; Gift Fireworks-korten kanns igen pa sitt eget [data-fw-theme].
+  const cards=[...d.querySelectorAll('[data-burst] [data-fw-theme]')];
   assert.deepEqual(cards.map(b=>b.dataset.fwTheme),[...keys,'supernova']);
-  assert.equal(d.querySelectorAll('[data-fw] [data-fw-motion]').length,0);
+  assert.equal(d.querySelectorAll('[data-burst] [data-fw-motion]').length,0);
   for(const key of keys){
     run(`document.querySelector('[data-fw-theme="${key}"]').click(); window.__createdFw=state.widgets[state.widgets.length-1];`);
     const w=h.window.__createdFw;
@@ -281,7 +284,7 @@ test('catalog exposes four themes and each card creates its matching personal ro
     assert.ok(d.querySelector('#testFw'),'new card keeps the test control accessible');
     // Reinstall catalog only if render has replaced the editor shell.
     run(`if(!document.querySelector('.widget-catalog'))document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
-    assert.equal(d.querySelectorAll('[data-fw] [data-fw-theme]').length,5);
+    assert.equal(d.querySelectorAll('[data-burst] [data-fw-theme]').length,5);
   }
 });
 

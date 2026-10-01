@@ -1567,7 +1567,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20260925-natural1','gift-supernova-engine.js?v=20260925-natural1','gift-fireworks.js?v=20260925-natural1','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20260925-natural1','gift-supernova-engine.js?v=20260925-natural1','gift-fireworks.js?v=20261001-burst1','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20260912-3'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
@@ -1575,7 +1575,7 @@ Promise.resolve().then(()=>{
 // Gift Bubbles - systerwidget till Gift Fireworks, egen fristaende canvas/DOM-motor.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-gift-bubbles]')){let css=document.createElement('link');css.rel='stylesheet';css.href='gift-bubbles.css?v=20260928-1';css.dataset.giftBubbles='1';document.head.append(css)}
-  const files=['gift-bubbles.js?v=20260929-1','gift-bubbles-session.js?v=20260928-1'];
+  const files=['gift-bubbles.js?v=20261001-burst1','gift-bubbles-session.js?v=20260928-1'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1583,7 +1583,7 @@ Promise.resolve().then(()=>{
 // Heart Fireworks - modell 2, egen fristaende canvas-motor (skotten formar hjartan).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-heart-fireworks]')){let css=document.createElement('link');css.rel='stylesheet';css.href='heart-fireworks.css?v=20260928-1';css.dataset.heartFireworks='1';document.head.append(css)}
-  const files=['heart-fireworks.js?v=20260928-1','heart-fireworks-session.js?v=20260928-1'];
+  const files=['heart-fireworks.js?v=20261001-burst1','heart-fireworks-session.js?v=20260928-1'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
