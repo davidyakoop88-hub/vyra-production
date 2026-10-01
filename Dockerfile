@@ -36,6 +36,9 @@ RUN set -eux; \
     done; \
     # Two data files the pages fetch by name; every other .json in the root is tooling.
     for f in manifest.json theme.schema.json; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
+    # SEO-filer sokmotorer hamtar by name: robots.txt pekar ut sitemap.xml. Tas per namn, inte per
+    # andelse — andra .txt/.xml i roten ar tooling och ska inte ligga publikt i dokumentroten.
+    for f in robots.txt sitemap.xml; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
     # Belt and braces. .dockerignore already keeps these out of the context and no rule above would
     # pick them up, but this is the file someone reads in a year to learn what is public.
     rm -f /site/package.json /site/package-lock.json /site/Caddyfile; \
