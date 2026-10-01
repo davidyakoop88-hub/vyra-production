@@ -6,16 +6,16 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 122,
+ "antal": 123,
  "senaste": {
-  "motiv": "Fan Level 50 Royal andrade hojd i #555 (Fly Love borttagen), referens 300x372 ar stale mot ny 300x276",
-  "nycklar": 1,
-  "filter": "fanlevel50",
-  "tid": "2026-09-30T20:28:34.150Z"
+  "motiv": "Battle MVP stil/ram-referenser omgenererade pa aktuell topp efter main-merge (tidigare svep klottrades bort)",
+  "nycklar": 19,
+  "filter": "battlemvp",
+  "tid": "2026-10-01T07:21:25.545Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:battlemvp:cyber": {
@@ -67,7 +67,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:royal": {
-   "matt": "240x158",
+   "matt": "240x165",
    "fyllnad": 100
   },
   "catalog:battlemvp:royal-purple": {
@@ -79,7 +79,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:storm": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:custom:text": {
@@ -263,27 +263,27 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:coronation": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:moon": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:pearl": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:portal": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:rosegold": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:wings": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:landscape": {
@@ -500,6 +500,10 @@
   },
   "catalog:fanlevel50:royal": {
    "matt": "300x276",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:gold-ribbon": {
+   "matt": "280x308",
    "fyllnad": 100
   }
  }

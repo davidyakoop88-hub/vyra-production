@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-30",
+  "generator": "built-in image_gen",
+  "reference": "User-provided 3bfd223e7123a3e3c2b3ccd011784075.jpg",
+  "assets": [
+    {
+      "file": "gold-ribbon.png",
+      "prompt": "Use case: background-extraction / precise-object-edit. Create a production transparent PNG overlay asset for the VYRA MVP widget from the supplied reference image. Preserve the reference design faithfully: same dimensional polished gold crown at top, circular round gold frame with small light bulbs, and wide gold ribbon at bottom. Keep the same frontal geometry and relative placement. Replace all black background with genuine alpha transparency, INCLUDING the entire circular center/aperture for a separately inserted profile photo. No portrait, no interior disc, no backing plate, no checkerboard painted into image. Add exact text \"MVP\" centered on the gold ribbon, elegant bold dark embossed letters, readable at small widget size. Remove the surrounding dust cloud, rays from top, smoke and large scattered sparkles; runtime will animate separate restrained entrance effects. Keep only subtle local gold gleams on the metal frame. Square canvas, object centered with about 8% clean transparent margin, full crown and full ribbon visible, no cropping. Output only this single finished clean frame asset on fully transparent background, not storyboard.",
+      "purpose": "Gold crown, circular bulb frame, MVP ribbon with transparent portrait aperture",
+      "portrait": {
+        "centerPercent": [
+          50.64,
+          55.42
+        ],
+        "recommendedBoxPercent": {
+          "left": 24,
+          "top": 28.8,
+          "width": 53.3,
+          "height": 53.3
+        }
+      },
+      "sha256": "1f580e892208872fe385c0e1b0dec00f16d4a5cd2ec45707ff4b0c65af1c9b43",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "transparentPixels": 1168669
+    },
+    {
+      "file": "gold-ribbon-smoke.png",
+      "prompt": "Use case: stylized-concept. Asset type: transparent overlay VFX sprite for a small luxury gold MVP profile frame. Generate a single isolated restrained wisp of soft charcoal-grey smoke lit by warm champagne gold light along its edges, shaped into a shallow symmetrical upward crescent, as if a small puff is emerging from beneath a round portrait medal. Square image. Most smoke concentrated in bottom third, tiny curling wisps at left and right rising only toward middle, center and top mostly transparent. Very subtle, delicate and airy, low density, fully transparent background with true alpha, no black backdrop, no checkerboard, no objects, no portrait, no frame, no crown, no text, no sparks explosion. This sprite will briefly fade in and dissipate behind a gold MVP widget, must not obscure camera or avatar. Smooth semitransparent antialiased smoke edges. Keep all smoke inside canvas with generous fully transparent margin.",
+      "purpose": "Independent transparent gold-lit smoke for runtime entrance/exit animation",
+      "sha256": "c330815fd3e13806690e1d790e20ed900c57591b43e27243e8925348eeceb064",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        253
+      ],
+      "transparentPixels": 1152980
+    }
+  ]
+}

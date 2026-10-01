@@ -252,3 +252,21 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Fan Level 50 Royal andrade hojd i #555 (Fly Love borttagen), referens 300x372 ar stale mot ny 300x276
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 116 (filter: fanlevel50) — catalog:fanlevel50:royal
+
+## 2026-09-30 — 112 referenser skrivna
+
+- **Motiv:** MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 112
+
+## 2026-09-30 — 19 referenser skrivna
+
+- **Motiv:** Battle MVP stil/ram-referenser: synligt 92-procentsfonster istallet for uttonade tomma bildrutor
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 19 av 112 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:coronation, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:moon, catalog:battlemvp:celebration:pearl, catalog:battlemvp:celebration:portal, catalog:battlemvp:celebration:rosegold, catalog:battlemvp:celebration:wings, catalog:battlemvp:cyber, catalog:battlemvp:frame:dark-wings, catalog:battlemvp:frame:dragon-fire, catalog:battlemvp:frame:laurel-star, catalog:battlemvp:frame:nautical-helm, catalog:battlemvp:frame:royal-ribbon, catalog:battlemvp:frame:shadow-star, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm
+
+## 2026-10-01 — 19 referenser skrivna
+
+- **Motiv:** Battle MVP stil/ram-referenser omgenererade pa aktuell topp efter main-merge (tidigare svep klottrades bort)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 19 av 112 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:coronation, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:moon, catalog:battlemvp:celebration:pearl, catalog:battlemvp:celebration:portal, catalog:battlemvp:celebration:rosegold, catalog:battlemvp:celebration:wings, catalog:battlemvp:cyber, catalog:battlemvp:frame:dark-wings, catalog:battlemvp:frame:dragon-fire, catalog:battlemvp:frame:laurel-star, catalog:battlemvp:frame:nautical-helm, catalog:battlemvp:frame:royal-ribbon, catalog:battlemvp:frame:shadow-star, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm

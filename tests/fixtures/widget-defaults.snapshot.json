@@ -251,7 +251,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#52d9ff",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:inferno": {
     "type": "templateBattleMvp",
@@ -268,7 +268,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#ff8b16",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:royal": {
     "type": "templateBattleMvp",
@@ -285,7 +285,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#ff8b16",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:frame:gold-crown": {
     "type": "templateBattleMvp",
@@ -302,7 +302,9 @@
     "mvpShowCoins": false,
     "mvpColor": "#ffc13b",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10,
+    "mvpLabelSize": 18,
+    "mvpNameSize": 14
   },
   "catalog:likefountain": {
     "type": "templateLikeFountain",
