@@ -56,6 +56,20 @@ kö, deduplicering, aktivering och borttagning av den aktiva klassen.
 Entrén har förstärkt rök, en kort guldgloria och lätt inzoomning. Ljuset tonar bort inom 1,8 sekunder; profilens stilla visning och totala 10 sekunder behålls.
 
 
+## Lion Clash
+
+`catalog:battlemvp:celebration:lion-clash` är en egen animerad komposition (320 px
+som standard): två lejon i blått och orange flankerar profilöppningen, en krönt
+banderoll överst och en MVP-skylt nederst. Till skillnad från de mall-baserade
+firandena ritar Lion Clash sin **egen DOM** ur `battle-mvp-celebrations.js`
+(`.mvc-lion-clash`) och animeras av sex lager över en gemensam 10-sekunderstidslinje:
+lejonögonens glöd, ringens blå/orange ljusspår, kronans glimt, profilbilden,
+namnraden och ljussvepet över MVP-skylten. `mvp-active` på widget-boxen driver
+sekvensen; `--lion-dur` speglar visningstiden. Minskad rörelse stänger av
+entréeffekterna och visar ramen stilla. Ingen partikelmotor — energibågarna är SVG.
+Den befintliga battle-kedjan äger vinnardata, aktivering och borttagning som vanligt.
+
+
 ## Individuell textpresentation
 
 Alla 23 ursprungliga designer har egna textsignaturer. WOW: Kröningen har tydlig

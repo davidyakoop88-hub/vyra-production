@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `b3ef28f`
+Commit: `111e1ca9`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **128** |
+| Kort totalt | **129** |
 | Sektioner | 25 |
-| Med katalognyckel | 128 / 128 |
-| Med shadow DOM-miniatyr | 115 / 128  ⚠️ |
-| Ritar sin design | 128 / 128 |
+| Med katalognyckel | 129 / 129 |
+| Med shadow DOM-miniatyr | 129 / 129 |
+| Ritar sin design | 129 / 129 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -41,7 +41,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 9/9 | 9/9 | 9/9 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
@@ -49,20 +49,20 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT BUBBLES · 1 DESIGN | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#547](https://github.com/davidyakoop88-hub/vyra-production/pull/547) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| TOP COINS · 2 DESIGNER | 2 | 2/2 | 0/2 ⚠️ | 2/2 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#531](https://github.com/davidyakoop88-hub/vyra-production/pull/531) |
-| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| BATTLE MVP · FIRANDE · 7 KOREOGRAFIER | 7 | 7/7 | 7/7 | 7/7 | 2026-09-11 | — |
-| Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-08-03 | — |
-| Masquerade Ball · VIDEO FX | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-08-03 | — |
+| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-09-30 | — |
+| BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-09-11 | — |
+| Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
+| Masquerade Ball · VIDEO FX | 4 | 4/4 | 4/4 | 4/4 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
-| TOP GIFTER · DESIGNVAL | 2 | 2/2 | 0/2 ⚠️ | 2/2 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| TOP GIFTER · DESIGNVAL | 2 | 2/2 | 2/2 | 2/2 | 2026-09-23 | — |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
 
@@ -73,29 +73,29 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Top Like | `catalog:toplike:voltage` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:voltage` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | Top Like | `catalog:toplike:basic-v2` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:basic-v2` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | Top Like | `catalog:toplike:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | Top Like | `catalog:toplike:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | Top Like | `catalog:toplike:celestial` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:celestial` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | Top Like | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 
 ### VYRA TOP STREAK · CLEAN FLIP
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Clean Flip | `catalog:topstreak` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Clean Flip | `catalog:topstreak` | ✓ | ✓ | 2026-09-20 | — |
 
 ### GIFT FIREWORKS · 5 DESIGNER
 
@@ -161,8 +161,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
-| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Coins · Halo | `catalog:ranking:templateTopCoins:halo` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
+| Top Coins · Signal Orbit | `catalog:ranking:templateTopCoins:signal-orbit` | ✓ | ✓ | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 
@@ -207,24 +207,25 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
+| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-09-30 | — |
+| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-09-30 | — |
+| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-09-30 | — |
+| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-09-30 | — |
+| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-09-30 | — |
+| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-09-30 | — |
+| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-09-30 | — |
+| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-09-30 | — |
+| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-09-30 | — |
+| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-09-30 | — |
+| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-09-30 | — |
+| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-09-30 | — |
 
-### BATTLE MVP · FIRANDE · 7 KOREOGRAFIER
+### BATTLE MVP · FIRANDE · 8 KOREOGRAFIER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-09-11 | — |
+| Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-09-11 | — |
 | Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
 | Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
 | Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |
@@ -236,19 +237,19 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Koi X2 | `catalog:glovesnipe:koiPearl:boost:2` | ✓ | ✓ | 2026-08-03 | — |
+| Koi X3 | `catalog:glovesnipe:koiPearl:boost:3` | ✓ | ✓ | 2026-08-03 | — |
+| Koi Tap Tap | `catalog:glovesnipe:koiPearl:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Koi Glove | `catalog:glovesnipe:koiPearl:glove:2` | ✓ | ✓ | 2026-08-03 | — |
 
 ### Masquerade Ball · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | — ⚠️ | ✓ | 2026-08-03 | — |
-| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Masquerade X2 | `catalog:glovesnipe:masquerade:boost:2` | ✓ | ✓ | 2026-08-03 | — |
+| Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | ✓ | ✓ | 2026-08-03 | — |
+| Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | ✓ | ✓ | 2026-08-03 | — |
 
 ### NEW FOLLOWER ALERT
 
@@ -304,8 +305,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Gold | `catalog:topgift:premium:royal` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
-| Neon Purple | `catalog:topgift:premium:neon` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Royal Gold | `catalog:topgift:premium:royal` | ✓ | ✓ | 2026-09-23 | — |
+| Neon Purple | `catalog:topgift:premium:neon` | ✓ | ✓ | 2026-09-23 | — |
 
 ### SKATTKISTA · LIVE
 

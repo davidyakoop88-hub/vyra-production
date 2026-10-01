@@ -172,8 +172,6 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 .battle-mvp.mvp-motion :is(.mvp-plate,.mvp-emblem,.mvp-emblem img,.mvp-copy small,.mvp-copy h2),
 .battle-mvp.mvp-motion .mvp-emblem::before,.battle-mvp.mvp-motion .mvp-emblem::after,
 .battle-mvp.mvp-motion .mvp-plate::after{animation:none!important}
-.battle-mvp.mvp-motion.mvp-active{animation:mvm-box var(--mvm-duration,10s) linear both!important}
-@keyframes mvm-box{0%,92%{opacity:1}100%{opacity:0}}
 .battle-mvp.mvp-motion.mvp-active :is(.mvpf-photo,.mvpf-plate,.mvp-copy){animation:mvm-winner var(--mvm-duration,10s) ease-out both!important}
 .battle-mvp.mvp-motion.mvp-active .mvp-plate .mvp-copy{animation:none!important}
 .battle-mvp.mvp-motion.mvp-active .mvp-plate{opacity:1}
@@ -400,3 +398,50 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
  .mvc-moon.mvp-active .mvc-stage{animation:mvm-reduced var(--mvc-duration,10s) linear both!important}
  .battle-mvp.mvp-motion.mvp-active[data-mvp-motion] :is(.mvpf-photo,.mvp-plate .mvp-copy){animation:mvm-reduced var(--mvm-duration,10s) linear both!important;transform:none!important}
 }
+
+/* ── Lion Clash ──────────────────────────────────────────────────────────────
+   Egen animerad MVP-komposition (blaa/orange kroning). Ritar egen DOM ur
+   battle-mvp-celebrations.js; mvp-active pa widget-boxen driver hela sekvensen.
+   Portad fran lion-clash-prototypen: .playing -> .mvp-active, 10s -> var(--lion-dur). */
+.mvc-lion-clash{background:none;border:0;padding:0;box-shadow:none;overflow:visible}
+.mvc-lion-clash .lion{position:relative;width:100%;max-width:100%;aspect-ratio:1/1.08;container-type:inline-size}
+.mvc-lion-clash .lion-body{position:relative;width:100%;aspect-ratio:1}
+.mvc-lion-clash .lion-art{position:absolute;inset:0;width:100%;z-index:2}
+.mvc-lion-clash .lion-photo{position:absolute;left:29.7%;top:31.5%;width:40.6%;height:40.6%;border-radius:50%;object-fit:cover;z-index:1}
+.mvc-lion-clash .lion-name{position:absolute;top:97%;width:100%;margin:0;text-align:center;font:750 clamp(16px,7.2cqw,29px)/1.2 system-ui;color:#fff;text-shadow:0 2px 5px #000,0 0 3px #000;z-index:4}
+.mvc-lion-clash .eye{position:absolute;top:36.3%;width:2.2%;height:1.3%;border-radius:50%;opacity:0;z-index:3}
+.mvc-lion-clash .eye-blue{left:14%;background:#b4fbff;box-shadow:0 0 5px 2px #12d5ff,0 0 15px #04a7ff}
+.mvc-lion-clash .eye-orange{right:13.5%;background:#fff4a4;box-shadow:0 0 5px 2px #ff951f,0 0 15px #ff5814}
+.mvc-lion-clash .energy{position:absolute;inset:0;width:100%;height:100%;z-index:3;overflow:visible;opacity:0}
+.mvc-lion-clash .energy path{fill:none;stroke-width:7;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.mvc-lion-clash .blue-path{stroke:#c5ffff;filter:drop-shadow(0 0 7px #00cfff)}
+.mvc-lion-clash .orange-path{stroke:#fff2cd;filter:drop-shadow(0 0 7px #ff7a1c)}
+.mvc-lion-clash .crown-flash{position:absolute;left:42%;top:19%;width:16%;height:16%;background:radial-gradient(ellipse,#fff 0%,#b3f5ff 7%,#2bc9ff66 30%,transparent 65%);opacity:0;z-index:4}
+.mvc-lion-clash .plate-shine{position:absolute;left:13%;top:75%;width:74%;height:11%;z-index:3;overflow:hidden;clip-path:polygon(7% 0,93% 0,100% 50%,93% 100%,7% 100%,0 50%)}
+.mvc-lion-clash .plate-shine::before{content:"";display:block;width:25%;height:100%;background:linear-gradient(100deg,transparent,#fff9,transparent);transform:translateX(-150%) skewX(-18deg);opacity:0}
+.mvc-lion-clash .lion-body::after{content:"";position:absolute;left:27%;top:28.8%;width:46%;height:46%;box-sizing:border-box;border-radius:50%;border:2px solid transparent;box-shadow:-5px 0 15px #09d9ff,5px 0 15px #ff861e;opacity:0;pointer-events:none;z-index:4}
+.mvc-lion-clash.mvp-active{animation:lion-box var(--lion-dur,10s) linear both}
+.mvc-lion-clash.mvp-active .lion-body{animation:lion-exit var(--lion-dur,10s) ease-in-out both}
+@keyframes lion-box{0%,92%{opacity:1}100%{opacity:0}}
+.mvc-lion-clash.mvp-active .lion-art{animation:lion-reveal var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .lion-photo{animation:lion-profile var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .lion-name{animation:lion-name var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .eye{animation:lion-eyes var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .eye-orange{animation-name:lion-eyes-orange}
+.mvc-lion-clash.mvp-active .energy{animation:lion-energy var(--lion-dur,10s) linear both}
+.mvc-lion-clash.mvp-active .energy path{animation:lion-trace var(--lion-dur,10s) ease-in-out both}
+.mvc-lion-clash.mvp-active .crown-flash{animation:lion-crown var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .plate-shine::before{animation:lion-shine var(--lion-dur,10s) ease-out both}
+.mvc-lion-clash.mvp-active .lion-body::after{animation:lion-pulse var(--lion-dur,10s) ease-out both}
+@keyframes lion-reveal{0%{opacity:0;transform:scale(.9);filter:brightness(.25)}4%,9%{opacity:.65;transform:scale(.93);filter:brightness(.4)}13%{opacity:1;transform:scale(1.025);filter:brightness(1.5)}19%,92%{opacity:1;transform:scale(1);filter:brightness(.78)}97%,100%{opacity:.35;transform:scale(1);filter:brightness(.35)}}
+@keyframes lion-eyes{0%{opacity:0}3%,12%{opacity:1}20%,91%{opacity:0}94%,97%{opacity:1}100%{opacity:0}}
+@keyframes lion-eyes-orange{0%,2%{opacity:0}5%,12%{opacity:1}20%,91%{opacity:0}94%,97%{opacity:1}100%{opacity:0}}
+@keyframes lion-energy{0%,6%{opacity:0}7%,13%{opacity:1}18%,100%{opacity:0}}
+@keyframes lion-trace{0%,7%{stroke-dashoffset:1}12%,100%{stroke-dashoffset:0}}
+@keyframes lion-crown{0%,11.8%{opacity:0;transform:scale(.5)}13%{opacity:1;transform:scale(1.5)}19%,100%{opacity:0;transform:scale(1.8)}}
+@keyframes lion-profile{0%,12%{opacity:0;transform:scale(.9);filter:brightness(1.3)}14%,92%{opacity:1;transform:scale(1);filter:brightness(1)}95%,100%{opacity:0;transform:scale(.98);filter:brightness(1)}}
+@keyframes lion-name{0%,12%{opacity:0;transform:translateY(5px)}16%,92%{opacity:1;transform:none}95%,100%{opacity:0;transform:translateY(3px)}}
+@keyframes lion-shine{0%,12%{opacity:0;transform:translateX(-150%) skewX(-18deg)}13%{opacity:1}18%{opacity:0;transform:translateX(550%) skewX(-18deg)}100%{opacity:0;transform:translateX(550%)}}
+@keyframes lion-exit{0%,97%{opacity:1;transform:none}100%{opacity:0;transform:scale(.97)}}
+@keyframes lion-pulse{0%,12%{opacity:0;transform:scale(.94)}13%{opacity:1;transform:scale(1.02)}19%,100%{opacity:0;transform:scale(1.26)}}
+@media(prefers-reduced-motion:reduce){.mvc-lion-clash.mvp-active .lion-body{animation:lion-exit var(--lion-dur,10s) linear both}.mvc-lion-clash.mvp-active .lion-art,.mvc-lion-clash.mvp-active .lion-photo,.mvc-lion-clash.mvp-active .lion-name{animation:none}.mvc-lion-clash .energy,.mvc-lion-clash .eye,.mvc-lion-clash .crown-flash,.mvc-lion-clash .plate-shine,.mvc-lion-clash .lion-body::after{display:none}}
