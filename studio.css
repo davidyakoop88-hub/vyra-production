@@ -385,7 +385,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    en egen startpunkt. */
 .lf-p{position:absolute;left:50%;bottom:14px;font-style:normal;line-height:1;opacity:0;will-change:transform,opacity}
 .lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 1px #fff,0 0 4px var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
-.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-72%);width:calc(var(--sz,20px) * .92);height:calc(var(--sz,20px) * .92);border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 4px var(--c);pointer-events:none}
+.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-78%);width:calc(var(--sz,20px) * 1.3);height:calc(var(--sz,20px) * 1.3);box-sizing:content-box;padding:2px;border-radius:50%;object-fit:cover;background:#120a1f;border:2.5px solid color-mix(in srgb,var(--c),#fff 35%);box-shadow:0 0 0 1.5px rgba(8,4,16,.75),0 0 5px var(--c);pointer-events:none}
 .lf-p-spark{color:var(--c);font-size:11px;text-shadow:0 0 6px var(--c);animation:lfSparkRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .lf-p-dust{width:3px;height:3px;border-radius:50%;background:var(--c);box-shadow:0 0 5px var(--c);animation:lfDustRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .like-fountain.palette-fire .lf-p-heart{filter:saturate(1.25)}
@@ -445,11 +445,11 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .like-fountain.lf-motion-bloom .lf-p-heart{transform-origin:center bottom}
 @keyframes lfOrganicHeartRise{
   0%{transform:translate(-50%,10px) scale(.22) rotate(0);opacity:0}
-  10%{opacity:.95}
-  32%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1))}
-  63%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1}
-  86%{opacity:.8}
-  100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise))) scale(.46) rotate(var(--lf-r3));opacity:0}
+  7%{opacity:.95}
+  20%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1))}
+  62%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1}
+  86%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1) rotate(var(--lf-r3));opacity:.92}
+  100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(.9) rotate(var(--lf-r3));opacity:0}
 }
 @keyframes lfHeartSway{0%{translate:calc(var(--lf-sway,6px) * -1) 0;rotate:calc(var(--lf-tilt,8deg) * -1)}100%{translate:var(--lf-sway,6px) 0;rotate:var(--lf-tilt,8deg)}}
 @keyframes lfOrganicSparkRise{
@@ -1668,3 +1668,41 @@ html:not(.overlay-output) .editor-shell .scenbakgrund-kontroll .sb-oppna{font-si
 html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(--ed-muted)}
 /* widget-etikett pa duken (endast editor-preview) */
 html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c0}
+
+/* LIKE FOUNTAIN · LIKES SOM SLÄPPER HJÄRTAN (2026-10-05). I OBS visas bara hjärtan som en like
+   släppt; förhandsströmmen är mallen de klonas ur. Ett släppt hjärta spelar EN gång. */
+.overlay-output .like-fountain .lf-p:not(.lf-live){display:none}
+.like-fountain[class*="lf-motion-"] .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
+.like-fountain .lf-p-heart.lf-star{z-index:3}
+.like-fountain .lf-p-heart.lf-star .lf-p-heart-avatar-img{width:calc(var(--sz,20px) * 2.1);height:calc(var(--sz,20px) * 2.1);border:3.5px solid #ffd34d;box-shadow:0 0 0 2px rgba(8,4,16,.8),0 0 10px #ffb21c}
+
+/* TIO MODELLER, TIO RÖRELSER. Modellen väljer rörelse i applyLikeFountainPreset; reglerna nedan
+   ger varje rörelse sitt eget beteende ovanpå banan från lfMotionVars. */
+.like-fountain.lf-motion-pulse .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartBeat;animation-duration:var(--dur),1.1s;animation-timing-function:linear,ease-out;animation-direction:normal,normal}
+@keyframes lfHeartBeat{0%,45%,100%{scale:1}12%{scale:1.24}26%{scale:1.06}34%{scale:1.16}}
+.like-fountain.lf-motion-pixel .lf-p-heart{animation-name:lfPixelRise;animation-timing-function:steps(18,end)}
+@keyframes lfPixelRise{0%{transform:translate(-50%,10px) scale(.5);opacity:0}6%{opacity:1}25%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(1)}50%{transform:translate(calc(-50% + var(--lf-x2) * .7),calc(-1 * var(--rise) * .62)) scale(1)}75%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .84)) scale(1);opacity:1}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .95)) scale(1);opacity:0}}
+.like-fountain.lf-motion-bubble .lf-p-heart{animation-name:lfBubbleRise,lfBubbleSway;animation-duration:var(--dur),calc(var(--lf-sway-dur,2s) * 1.4)}
+@keyframes lfBubbleRise{0%{transform:translate(-50%,10px) scale(.3);opacity:0}8%{opacity:.95}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .38)) scale(.9)}70%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .78)) scale(1);opacity:1}88%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .88)) scale(1.04);opacity:1}94%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.3);opacity:.55}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.5);opacity:0}}
+@keyframes lfBubbleSway{0%{translate:calc(var(--lf-sway,6px) * -1.6) 0}100%{translate:calc(var(--lf-sway,6px) * 1.6) 0}}
+.like-fountain.lf-motion-ghost .lf-p-heart{animation-name:lfGhostRise,lfHeartSway;animation-duration:calc(var(--dur) * 1.15),calc(var(--lf-sway-dur,2s) * 1.5)}
+@keyframes lfGhostRise{0%{transform:translate(-50%,10px) scale(.4);opacity:0}12%{opacity:.75}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(.9);opacity:.35}50%{opacity:.85}65%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .72)) scale(1);opacity:.4}82%{opacity:.8}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(1.05);opacity:0}}
+.like-fountain.lf-motion-flip .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartFlip;animation-duration:var(--dur),2.6s;animation-timing-function:linear,ease-in-out;animation-direction:normal,normal}
+@keyframes lfHeartFlip{0%{rotate:y 0deg}50%{rotate:y 180deg}100%{rotate:y 360deg}}
+.like-fountain.lf-motion-pulse .lf-p.lf-live,.like-fountain.lf-motion-flip .lf-p.lf-live,.like-fountain.lf-motion-bubble .lf-p.lf-live,.like-fountain.lf-motion-ghost .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
+
+/* Modellernas utseende (från Codex-utkastet 2026-10-05, glöden nedtonad: max 6 px). */
+.like-fountain.lf-preset-sakura-fall .lf-p-heart:not(.lf-p-heart-avatar){border-radius:70% 15% 70% 20%;font-size:0;background:linear-gradient(135deg,#fff7fb 0 12%,var(--c) 34% 72%,#d94f91);width:var(--sz);height:calc(var(--sz) * .72);-webkit-text-stroke:0;transform-origin:75% 75%}
+.like-fountain.lf-preset-sakura-fall .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'';inset:12% 42% 12% 42%;border-radius:50%;background:#fff;opacity:.5;transform:rotate(-35deg)}
+.like-fountain.lf-preset-neon-pulse .lf-p-heart:not(.lf-p-heart-avatar){color:transparent;background:none;-webkit-text-stroke:1.4px var(--c);filter:drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 6px var(--c))}
+.like-fountain.lf-preset-gold-rush .lf-p-heart:not(.lf-p-heart-avatar){background:linear-gradient(135deg,#fffbe2,#ffd15a 34%,#b87300 70%,#fff0a0);-webkit-background-clip:text;background-clip:text}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart:not(.lf-p-heart-avatar){font-family:monospace;-webkit-text-stroke:0;background:none;color:var(--c);filter:drop-shadow(3px 0 0 rgba(255,255,255,.18))}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart:not(.lf-p-heart-avatar)::before{display:none}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart-avatar-img{border-radius:3px;image-rendering:pixelated}
+.like-fountain.lf-preset-galaxy-drift .lf-p-heart:not(.lf-p-heart-avatar){background:radial-gradient(circle at 38% 28%,#fff 0 3%,transparent 4%),radial-gradient(circle at 66% 64%,#fff 0 2%,transparent 3%),linear-gradient(145deg,#3421a8,#8b5cf6 45%,#ef5be8);-webkit-background-clip:text;background-clip:text}
+.like-fountain.lf-preset-bubble-pop .lf-p-heart:not(.lf-p-heart-avatar){display:grid;place-items:center;width:calc(var(--sz) * 1.15);height:calc(var(--sz) * 1.15);border:1px solid color-mix(in srgb,var(--c),white 58%);border-radius:50%;background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.92) 0 5%,transparent 7%),color-mix(in srgb,var(--c),transparent 84%);-webkit-text-stroke:0;color:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c),transparent 45%));font-size:calc(var(--sz) * .5)}
+.like-fountain.lf-preset-bubble-pop .lf-p-heart:not(.lf-p-heart-avatar)::before{display:none}
+.like-fountain.lf-preset-ghost-hearts .lf-p-heart:not(.lf-p-heart-avatar){background:none;color:transparent;-webkit-text-stroke:1px rgba(235,242,255,.85);filter:drop-shadow(0 0 4px rgba(196,181,253,.7))}
+.like-fountain.lf-preset-plasma-core .lf-p-heart:not(.lf-p-heart-avatar){background:conic-gradient(from var(--lf-r1),#ff29d8,#7b3cff,#00dcff,#ff7a18,#ff29d8);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 5px #8b3dff)}
+.like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar){clip-path:polygon(50% 100%,4% 42%,8% 16%,30% 4%,50% 26%,70% 4%,92% 16%,96% 42%);width:var(--sz);height:var(--sz);font-size:0;background:linear-gradient(135deg,#fff 0 16%,var(--c) 17% 48%,color-mix(in srgb,var(--c),#8a284b 46%) 49% 73%,#ffd6e1 74%);-webkit-text-stroke:0}
+.like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'';inset:0;background:linear-gradient(72deg,transparent 48%,rgba(255,255,255,.72) 49% 52%,transparent 53%);clip-path:inherit;opacity:.75;transform:none}

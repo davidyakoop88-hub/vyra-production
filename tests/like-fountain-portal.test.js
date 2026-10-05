@@ -72,5 +72,10 @@ test('katalogen: portalen skapas hel på duken, den klassiska är oförändrad',
   assert.ok(w.y >= 0 && w.y + hojd <= 768, `y ${w.y} + ${hojd} ryms inte`);
   const klassisk = VyraWidgets.create('catalog:likefountain');
   assert.equal(klassisk.fountainDesign, undefined, 'den klassiska fontänen fick portalens design');
-  assert.equal(klassisk.width, 620);
+  // 2026-10-05: den klassiska låg på x 40 med bredd 620 — mitten på 350 av 432, långt till höger.
+  // .like-fountain har min-width 420 (studio.css), så 420 är den smalaste den ritas i, och x 6
+  // lägger mitten på dukens mitt.
+  assert.equal(klassisk.width, 420);
+  assert.ok(klassisk.x >= 0 && klassisk.x + klassisk.width <= 432, `klassisk x ${klassisk.x} + ${klassisk.width} ryms inte`);
+  assert.equal(klassisk.x + klassisk.width / 2, 216, 'den klassiska fontänen ska ha sin källa mitt på duken');
 });
