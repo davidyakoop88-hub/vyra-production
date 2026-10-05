@@ -96,3 +96,12 @@ test('profilbilderna har egna stora platser som hjärtan aldrig får', () => {
   assert.match(fil, /nasta\.stjarna \? ledigPlats\(t, STJARN_R\)/);
   assert.match(fil, /fountainStarLikes\) \|\| 25/);
 });
+
+test('ett fel i en bildruta fryser inte fontänen, och ingen radie kan bli negativ', () => {
+  // 2026-10-05, uppmätt: en profilbild som växer från r ≈ 3 gav arc(r − 4,5) < 0, arc() kastade,
+  // tick() dog före nästa requestAnimationFrame och fontänen stod still medan kön växte till 69.
+  const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
+  const tick = fil.slice(fil.indexOf('function tick() {'), fil.indexOf('requestAnimationFrame(tick); else gar = false;'));
+  assert.match(tick, /try \{\s*steg\(w, t, nu, dt\);[\s\S]*rita\(w, t, cv, nu\);\s*\} catch/, 'steg/rita måste ligga i try i tick()');
+  for (const m of fil.matchAll(/x\.arc\(px, py, ([^,]+),/g)) assert.match(m[1], /^rr\(/, `osäkrad radie i profilbilden: ${m[1]}`);
+});

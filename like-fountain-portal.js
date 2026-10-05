@@ -287,21 +287,23 @@
   }
   function hjartLage(t, h, nu) {
     var liv = FLYG + STANNA, P = PLATS[h.p], a = nu - h.start, k = Math.min(1, a / FLYG), u = ease(k), B = bage(P, u), S = svav(h, nu, a, 1);
-    // I flykten är hjärtat litet och svagt (u^2,4) och syns först nära sin plats: på väg ut korsar det
-    // andra hjärtans platser, och det var där alla kvarvarande överlapp låg (uppmätt 2026-10-05).
-    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3), sz = P.s * (0.3 + 0.7 * studs(k)) * S.andas, px = B.x + S.dx, py = B.y + S.dy;
-    if (a > liv) { var b = Math.min(1, (a - liv) / TONA); py -= b * 3; sz *= 1 - b * 0.25; alfa *= 1 - b; }
+    // I FLYKTEN ÄR HJÄRTAT LITET OCH KLART, inte stort och svagt. En halvgenomskinlig fullstor hjärta
+    // såg grumligt och mörkt ut mot mörk botten (Davids skärmbild från OBS 2026-10-05). Nu syns det
+    // nästan direkt men börjar som en prick och växer in på sin plats, så det korsar ändå små.
+    var alfa = Math.min(1, u * 3), sz = P.s * (0.12 + 0.88 * Math.pow(studs(k), 1.8)) * S.andas, px = B.x + S.dx, py = B.y + S.dy;
+    // Uttoningen krymper hjärtat mot noll; alfa följer först sent, så det aldrig blir ett dimmigt spöke.
+    if (a > liv) { var b = Math.min(1, (a - liv) / TONA); py -= b * 3; sz *= 1 - b * 0.85; alfa *= 1 - b * b; }
     if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
     return { x: px, y: py, sz: sz, r: sz * 0.55, alfa: alfa, u: u, rot: S.rot };
   }
   function bubblaLage(t, b, nu) {
     var liv = FLYG + STANNA, P = PLATS[b.p], a = nu - b.start, k = Math.min(1, a / FLYG), u = ease(k), B = bage(P, u), S = svav(b, nu, a, 0.8);
-    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3);
+    var alfa = Math.min(1, u * 3), krymp = 1;
     if (a > liv + 0.8) return null;
     var px = B.x + S.dx, py = B.y + S.dy;
-    if (a > liv) { var bb = Math.min(1, (a - liv) / (TONA + 0.8)); py -= bb * 3; alfa *= 1 - bb; }
+    if (a > liv) { var bb = Math.min(1, (a - liv) / (TONA + 0.8)); py -= bb * 3; krymp = 1 - bb * 0.8; alfa *= 1 - bb * bb; }
     if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
-    return { x: px, y: py, r: (P.r - 1) * (0.4 + 0.6 * studs(k)), alfa: alfa, u: u };
+    return { x: px, y: py, r: (P.r - 1) * (0.15 + 0.85 * Math.pow(studs(k), 1.8)) * krymp, alfa: alfa, u: u };
   }
 
   function rita(w, t, cv, nu) {
@@ -333,12 +335,14 @@
     });
     t.bubblor.forEach(function (b) {
       var L = bubblaLage(t, b, nu); if (!L || L.alfa <= 0.01) return;
-      var px = L.x, py = L.y, r = L.r, alfa = L.alfa;
+      // r växer från ~3 px: alla radier nedan golvas, för arc() KASTAR på negativ radie och stoppar
+      // då hela ritloopen (fontänen frös med kön växande, uppmätt 2026-10-05).
+      var px = L.x, py = L.y, r = Math.max(5, L.r), alfa = L.alfa, rr = function (v) { return Math.max(0.5, v); };
       var ringB = b.stjarna ? 3.5 : 2.5;
-      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = b.stjarna ? 12 : 5; x.strokeStyle = b.ring; x.lineWidth = ringB; x.beginPath(); x.arc(px, py, r - ringB / 2, 0, 6.28); x.stroke(); x.shadowBlur = 0;
-      x.fillStyle = '#120a1f'; x.beginPath(); x.arc(px, py, r - 2.5, 0, 6.28); x.fill();
-      x.beginPath(); x.arc(px, py, r - 4.5, 0, 6.28); x.clip(); var im = bild(b.src);
-      if (im && im.complete && im.naturalWidth) x.drawImage(im, px - r + 4.5, py - r + 4.5, (r - 4.5) * 2, (r - 4.5) * 2); else { x.fillStyle = '#d9c6e8'; x.fill(); }
+      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = b.stjarna ? 12 : 5; x.strokeStyle = b.ring; x.lineWidth = ringB; x.beginPath(); x.arc(px, py, rr(r - ringB / 2), 0, 6.28); x.stroke(); x.shadowBlur = 0;
+      x.fillStyle = '#120a1f'; x.beginPath(); x.arc(px, py, rr(r - 2.5), 0, 6.28); x.fill();
+      x.beginPath(); x.arc(px, py, rr(r - 4.5), 0, 6.28); x.clip(); var im = bild(b.src);
+      if (im && im.complete && im.naturalWidth) x.drawImage(im, px - rr(r - 4.5), py - rr(r - 4.5), rr(r - 4.5) * 2, rr(r - 4.5) * 2); else { x.fillStyle = '#d9c6e8'; x.fill(); }
       x.restore();
     });
     if (t.form) {
@@ -364,10 +368,16 @@
   function tick() {
     if (fryst) { gar = false; return; }
     var nu = performance.now() / 1000, dt = Math.min(0.05, nu - forra), nagot = false; forra = nu;
+    // ETT FEL FÅR INTE FRYSA FONTÄNEN. Ett kast i steg/rita avbröt tick innan nästa
+    // requestAnimationFrame, och då stod fontänen still resten av sändningen medan kön växte.
+    // Varje widget ritas därför för sig, och klockan går vidare även om en bildruta kastar.
     widgetar().forEach(function (w) {
-      var t = till(w.id); steg(w, t, nu, dt);
-      var cv = document.querySelector('.widget[data-id="' + cssId(w.id) + '"] canvas.lfp-duk');
-      if (cv && !(w.hidden && iOverlay())) rita(w, t, cv, nu);
+      var t = till(w.id);
+      try {
+        steg(w, t, nu, dt);
+        var cv = document.querySelector('.widget[data-id="' + cssId(w.id) + '"] canvas.lfp-duk');
+        if (cv && !(w.hidden && iOverlay())) rita(w, t, cv, nu);
+      } catch (e) { if (!t.loggat) { t.loggat = true; try { console.warn('[vyra] Like Fountain Portal: bildrutan kastade', e); } catch (x) {} } }
       if (t.aktiv) nagot = true;
     });
     if (nagot) requestAnimationFrame(tick); else gar = false;
