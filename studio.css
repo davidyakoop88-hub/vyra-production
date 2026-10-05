@@ -384,8 +384,8 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */
 .lf-p{position:absolute;left:50%;bottom:14px;font-style:normal;line-height:1;opacity:0;will-change:transform,opacity}
-.lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 3px #fff,0 0 var(--glow,14px) var(--c),0 0 calc(var(--glow,14px) * 1.6) var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
-.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-72%);width:calc(var(--sz,20px) * .68);height:calc(var(--sz,20px) * .68);border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 8px var(--c),0 0 3px rgba(255,255,255,.7);pointer-events:none}
+.lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 1px #fff,0 0 4px var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
+.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-72%);width:calc(var(--sz,20px) * .92);height:calc(var(--sz,20px) * .92);border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 4px var(--c);pointer-events:none}
 .lf-p-spark{color:var(--c);font-size:11px;text-shadow:0 0 6px var(--c);animation:lfSparkRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .lf-p-dust{width:3px;height:3px;border-radius:50%;background:var(--c);box-shadow:0 0 5px var(--c);animation:lfDustRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .like-fountain.palette-fire .lf-p-heart{filter:saturate(1.25)}
@@ -481,12 +481,12 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 
 /* Crystal-heart material: translucent gradient body, faceted highlight and a
    controlled bloom. Avatar particles keep their circular portrait treatment. */
-.like-fountain .lf-p-heart:not(.lf-p-heart-avatar){position:absolute;color:transparent;-webkit-text-stroke:.55px rgba(255,255,255,.76);background:linear-gradient(145deg,#fff 3%,color-mix(in srgb,var(--c) 42%,#fff) 24%,var(--c) 48%,color-mix(in srgb,var(--c) 62%,#39216e) 71%,#fff 94%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 calc(var(--glow,14px) * .48) var(--c)) drop-shadow(0 0 calc(var(--glow,14px) * .9) color-mix(in srgb,var(--c) 72%,transparent));text-shadow:none}
+.like-fountain .lf-p-heart:not(.lf-p-heart-avatar){position:absolute;color:transparent;-webkit-text-stroke:.55px rgba(255,255,255,.76);background:linear-gradient(145deg,#fff 3%,color-mix(in srgb,var(--c) 42%,#fff) 24%,var(--c) 48%,color-mix(in srgb,var(--c) 62%,#39216e) 71%,#fff 94%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 3px var(--c));text-shadow:none}
 .like-fountain .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'♥';position:absolute;inset:0;color:transparent;-webkit-text-stroke:.35px rgba(255,255,255,.55);background:linear-gradient(112deg,transparent 21%,rgba(255,255,255,.95) 31%,transparent 39%,transparent 58%,rgba(255,255,255,.5) 66%,transparent 73%);-webkit-background-clip:text;background-clip:text;opacity:.78;transform:scale(.84);transform-origin:center}
 
 /* LIVE likes add a brief organic lift without restarting the continuous flow. */
 .like-fountain.lf-live-react .lf-stream{animation:lfLiveBreath .9s cubic-bezier(.2,.72,.22,1)}
-.like-fountain.lf-live-react .lf-p-heart:not(.lf-p-heart-avatar){filter:brightness(var(--lf-live-boost,1.15)) drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 calc(var(--glow,14px) * .7) var(--c))}
+.like-fountain.lf-live-react .lf-p-heart:not(.lf-p-heart-avatar){filter:brightness(var(--lf-live-boost,1.15)) drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 3px var(--c))}
 .like-fountain.lf-live-mid .lf-stream{animation-duration:1.05s}
 .like-fountain.lf-live-high .lf-stream{animation-name:lfLiveSurge;animation-duration:1.25s}
 .like-fountain.lf-live-high .fountain-pop{transform:scale(1.12)}
@@ -531,15 +531,6 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 
 /* Selected effects travel with the hearts instead of replacing the fountain with a source pop. */
 .like-fountain .fountain-pop{display:none!important}
-.like-fountain.lf-fx-burst .lf-p-heart:nth-child(5n){filter:brightness(1.32) saturate(1.25) drop-shadow(0 0 7px var(--c)) drop-shadow(0 0 18px var(--c))}
-.like-fountain.lf-fx-mini .lf-p-heart:nth-child(4n)::before{content:'♥';position:absolute;inset:auto;left:-.7em;top:.42em;color:var(--c);-webkit-text-stroke:0;background:none;-webkit-background-clip:initial;background-clip:initial;font-size:.36em;opacity:.85;filter:drop-shadow(0 0 4px var(--c));animation:lfMiniCompanion 1.8s ease-in-out infinite}
-.like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n){position:absolute;color:transparent;font-size:calc(var(--heart-size,24px) * .48);text-shadow:none}
-.like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n)::before{content:'★';position:absolute;color:var(--c);text-shadow:0 0 5px #fff,0 0 12px var(--c)}
-.like-fountain.lf-fx-confetti .lf-p-dust:nth-child(3n){width:3px;height:9px;border-radius:1px;box-shadow:0 0 5px var(--c);transform-origin:center}
-.like-fountain.lf-fx-firework .lf-p-spark:nth-child(4n){filter:drop-shadow(-7px 8px 1px var(--c)) drop-shadow(7px 11px 1px var(--c)) drop-shadow(0 16px 1px #fff)}
-.like-fountain.lf-fx-ring .lf-p-heart:nth-child(6n){outline:1px solid color-mix(in srgb,var(--c),white 45%);outline-offset:.18em;border-radius:50%;box-shadow:0 0 0 .14em color-mix(in srgb,var(--c),transparent 78%),0 0 12px var(--c)}
-.like-fountain.lf-live-react .lf-p-heart:nth-child(2n){filter:brightness(1.45) saturate(1.2) drop-shadow(0 0 9px var(--c))}
-@keyframes lfMiniCompanion{0%,100%{transform:translate(0,3px) scale(.8);opacity:.35}50%{transform:translate(-5px,-7px) scale(1.15);opacity:1}}
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
 .head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
 /* Alla tre knapparna i sidhuvudet lyser (Davids beslut 2026-08-20). Regeln bor HAR, bredvid den
