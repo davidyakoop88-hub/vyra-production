@@ -1671,7 +1671,7 @@ html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c
 
 /* LIKE FOUNTAIN · LIKES SOM SLÄPPER HJÄRTAN (2026-10-05). I OBS visas bara hjärtan som en like
    släppt; förhandsströmmen är mallen de klonas ur. Ett släppt hjärta spelar EN gång. */
-.overlay-output .like-fountain .lf-p:not(.lf-live){display:none}
+.overlay-output .like-fountain .lf-p:not(.lf-live){display:none!important}
 .like-fountain[class*="lf-motion-"] .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
 .like-fountain .lf-p-heart.lf-star{z-index:3}
 .like-fountain .lf-p-heart.lf-star .lf-p-heart-avatar-img{width:calc(var(--sz,20px) * 1.7);height:calc(var(--sz,20px) * 1.7);border:3.5px solid #ffd34d;box-shadow:0 0 0 2px rgba(8,4,16,.8),0 0 10px #ffb21c}

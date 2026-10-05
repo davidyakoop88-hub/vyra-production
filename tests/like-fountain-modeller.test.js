@@ -46,7 +46,9 @@ test('profilbilden är större än hjärtat och har ring och skyddszon', () => {
 });
 
 test('i OBS syns bara hjärtan som en like släppt', () => {
-  assert.match(css, /\.overlay-output \.like-fountain \.lf-p:not\(\.lf-live\)\{display:none\}/);
+  // !important: modellernas egna display (Bubble Pop: display:grid, (0,4,1)) slog annars döljningen
+  // (0,4,0), och Bubble Pops förhandsström rullade i OBS fast ingen tappade (uppmätt i OBS 2026-10-05).
+  assert.match(css, /\.overlay-output \.like-fountain \.lf-p:not\(\.lf-live\)\{display:none!important\}/);
   assert.match(media, /triggerLikeFountainPop=function\(event=\{\}\)\{try\{lfSlappLikes\(event\)\}/);
   assert.match(media, /fountainMaxAvatars\|\|4/, 'taket för profilbilder samtidigt saknas');
   assert.match(media, /fountainStarLikes\|\|25/, 'stjärnläget saknas');
