@@ -33,7 +33,7 @@
 
   var BAS_B = 432, BAS_H = 768;                 // designens rum; ritas skalat till widgetens box
   var SPETS = 690, TOPP = 40, CX = 216;          // V:et
-  var PLATSER = 88, MARG = 6;
+  var PLATSER = 88, MARG = 6, STORA = 14, BILD_R = 20;   // STORA: profilbildsplatser, BILD_R: minsta radie för en sådan
   var FARSKT_MS = 15000;
   var FLYG = 1.0, STANNA = 3.2, TONA = 1.3;      // sekunder: ut i V:et, sväva, tona bort uppåt
   var HJARTA_CX = 216, HJARTA_CY = 250, HJARTA_S = 10.5;
@@ -61,10 +61,13 @@
 
   // Platserna i V:et: raka kanter från spetsen, tre av fyra längs armarna så att formen syns, och
   // ingen plats närmare en annan än summan av radierna plus MARG. Sorterade nerifrån och upp.
+  // PROFILBILDERNA HAR EGNA PLATSER (2026-10-05). Förut var ingen plats större än r 14,9 medan
+  // bubblan ritades med r 15 och 12 px glöd på platser ner till r 11, så den låg alltid på grannarna.
+  // De STORA första platserna (r ≈ 22) läggs ut först och är bara till för profilbilder.
   function platser(frö) {
     var rnd = slump(frö || 47), ut = [];
     for (var i = 0; i < PLATSER; i++) {
-      var storlek = (i % 9 === 0 ? 0.62 : 0.25 + rnd() * 0.35) * 48, r = storlek / 2, ok = false, x = 0, y = 0;
+      var storlek = (i < STORA ? 0.92 : i % 9 === 0 ? 0.62 : 0.25 + rnd() * 0.35) * 48, r = storlek / 2, ok = false, x = 0, y = 0;
       for (var k = 0; k < 900 && !ok; k++) {
         var t = i < 58 ? 0.06 + rnd() * 0.94 : 0.6 + rnd() * 0.4;
         y = SPETS - (SPETS - TOPP) * t;
@@ -116,7 +119,7 @@
   }
 
   var ARIT = { platser: platser, hjartform: hjartform, hjartanFor: hjartanFor, arFarskLike: arFarskLike,
-    PALETTER: PALETTER, PLATSER: PLATSER, FARSKT_MS: FARSKT_MS, BAS_B: BAS_B, BAS_H: BAS_H };
+    PALETTER: PALETTER, PLATSER: PLATSER, BILD_R: BILD_R, FARSKT_MS: FARSKT_MS, BAS_B: BAS_B, BAS_H: BAS_H };
   if (typeof module === 'object' && module.exports) { module.exports = ARIT; return; }
 
   // ---- WEBBLÄSAREN -------------------------------------------------------------------------------
@@ -144,7 +147,11 @@
     kropp += '<ellipse cx="216" cy="718" rx="95" ry="24" fill="url(#lfph' + id + ')"/>'
       + '<ellipse cx="216" cy="722" rx="65" ry="11" fill="none" stroke="#ff7ae0" stroke-width="2" filter="url(#lfpf' + id + ')"/>';
     for (var s = 0; s < 7; s++) { var h = 180 + s * 45; kropp += '<rect x="' + (216 + (s - 3) * 3.2 - 1.2).toFixed(1) + '" y="' + (722 - h) + '" width="2.4" height="' + h + '" rx="1.2" fill="url(#lfps' + id + ')" opacity=".55"/>'; }
-    PLATS.slice(0, 64).forEach(function (p, i) {
+    PLATS.forEach(function (p) { if (p.r < BILD_R || p.y > 560 || p.y < 120 || Math.round(p.x) % 3) return;
+      kropp += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (p.r - 2.5).toFixed(1) + '" fill="#120a1f" stroke="' + saker(RINGAR[Math.round(p.y) % RINGAR.length]) + '" stroke-width="2.5"/>'
+        + '<circle cx="' + p.x.toFixed(1) + '" cy="' + (p.y - p.r * 0.22).toFixed(1) + '" r="' + (p.r * 0.24).toFixed(1) + '" fill="#d9c6e8"/><path d="M' + (p.x - p.r * 0.42).toFixed(1) + ' ' + (p.y + p.r * 0.45).toFixed(1) + 'a' + (p.r * 0.42).toFixed(1) + ' ' + (p.r * 0.36).toFixed(1) + ' 0 0 1 ' + (p.r * 0.84).toFixed(1) + ' 0z" fill="#d9c6e8"/>';
+    });
+    PLATS.filter(function (p) { return p.r < BILD_R; }).slice(0, 64).forEach(function (p, i) {
       var k = p.s / 24, c = i % f.length;
       kropp += '<g transform="translate(' + (p.x - p.s / 2).toFixed(1) + ' ' + (p.y - p.s * 0.48).toFixed(1) + ') scale(' + k.toFixed(3) + ')" filter="url(#lfpf' + id + ')">'
         + '<path d="' + HJARTSTIG + '" fill="url(#lfpg' + id + c + ')" stroke="rgba(255,255,255,.55)" stroke-width=".5"/>'
@@ -188,11 +195,11 @@
   }
   function nyGlitter(x, y, vx, vy, liv) { return { x: x, y: y, vx: vx, vy: vy, liv: liv, c: ['#ffb3ea', '#ff4fd8', '#c9a0ff', '#ffffff', '#ffb347', '#7fb2ff'][Math.floor(Math.random() * 6)], sz: 0.8 + Math.random() * 1.8 }; }
 
-  function ledigPlats(t, minR) {
+  function ledigPlats(t, minR, maxR) {
     var tagna = {};
     t.hj.forEach(function (h) { tagna[h.p] = 1; }); t.bubblor.forEach(function (b) { tagna[b.p] = 1; });
     var fria = [];
-    for (var i = 0; i < PLATS.length; i++) if (!tagna[i] && PLATS[i].r >= (minR || 0)) fria.push(i);
+    for (var i = 0; i < PLATS.length; i++) if (!tagna[i] && PLATS[i].r >= (minR || 0) && PLATS[i].r <= (maxR || 1e9)) fria.push(i);
     if (!fria.length) return -1;
     // nedre halvan först när fontänen är tom, så V:et fylls underifrån
     var vikt = fria.slice(0, Math.max(1, Math.ceil(fria.length * 0.6)));
@@ -220,11 +227,11 @@
     // kön: högst ~12 hjärtan i sekunden, och bara till lediga platser
     t.utslapp = (t.utslapp || 0) + dt;
     while (t.ko > 0 && t.utslapp > 0.085 && !t.form) {
-      var p = ledigPlats(t); if (p < 0) break;
+      var p = ledigPlats(t, 0, BILD_R - 1); if (p < 0) break;
       t.ko--; t.utslapp = 0; t.hj.push({ p: p, start: nu, farg: f[(PLATS[p].farg) % f.length], wob: Math.random() * 6.28 });
     }
     if (t.ko > 40) t.ko = 40;
-    if (t.koBubblor.length && !t.form) { var pb = ledigPlats(t, 11); if (pb >= 0) t.bubblor.push({ p: pb, start: nu, src: t.koBubblor.shift(), ring: RINGAR[Math.floor(Math.random() * RINGAR.length)] }); }
+    if (t.koBubblor.length && !t.form && t.bubblor.length < Math.max(1, Number(w.fountainMaxAvatars) || 4)) { var pb = ledigPlats(t, BILD_R); if (pb >= 0) t.bubblor.push({ p: pb, start: nu, src: t.koBubblor.shift(), ring: RINGAR[Math.floor(Math.random() * RINGAR.length)] }); }
     var liv = FLYG + STANNA + TONA;
     t.hj = t.hj.filter(function (h) { return nu - h.start < liv; });
     t.bubblor = t.bubblor.filter(function (b) { return nu - b.start < liv + 0.8; });
@@ -241,6 +248,28 @@
       if (t.form.pop && nu - t.form.pop > 2.2) t.form = null;
     }
     t.aktiv = !!(t.hj.length || t.bubblor.length || t.glitter.length || t.ko > 0 || t.form || t.tempo > 0.02);
+  }
+
+  // VAR ETT HJÄRTA OCH EN PROFILBILD RITAS JUST NU. r är den synliga radien: hjärtat fyller ~1,1·sz
+  // av sin sprite (96 px, stigen skalad 2,2), profilbilden är platsens radie minus 1.
+  // UTTONINGEN GLIDER 8 PX (2026-10-05). Förut 60 px: ett tonande hjärta gled rakt in i grannarna ovanför.
+  function hjartLage(t, h, nu) {
+    var liv = FLYG + STANNA, P = PLATS[h.p], a = nu - h.start, u = ease(a / FLYG);
+    var px = CX + (P.x - CX) * u + Math.sin(nu * 1.6 + h.wob) * 2 * u, py = SPETS + (P.y - SPETS) * u + Math.cos(nu * 1.3 + h.wob) * 2 * u;
+    // I flykten är hjärtat litet och svagt (u^2,4) och syns först nära sin plats: på väg ut korsar det
+    // andra hjärtans platser, och det var där alla kvarvarande överlapp låg (uppmätt 2026-10-05).
+    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3), sz = P.s * (0.3 + 0.7 * u);
+    if (a > liv) { var b = Math.min(1, (a - liv) / TONA); py -= b * 8; sz *= 1 - b * 0.2; alfa *= 1 - b; }
+    if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
+    return { x: px, y: py, sz: sz, r: sz * 0.55, alfa: alfa, u: u };
+  }
+  function bubblaLage(t, b, nu) {
+    var liv = FLYG + STANNA, P = PLATS[b.p], a = nu - b.start, u = ease(a / FLYG);
+    var px = CX + (P.x - CX) * u, py = SPETS + (P.y - SPETS) * u, alfa = Math.min(1, Math.pow(u, 2.4) * 1.3);
+    if (a > liv + 0.8) return null;
+    if (a > liv) { var bb = Math.min(1, (a - liv) / (TONA + 0.8)); py -= bb * 8; alfa *= 1 - bb; }
+    if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
+    return { x: px, y: py, r: (P.r - 1) * (0.4 + 0.6 * u), alfa: alfa };
   }
 
   function rita(w, t, cv, nu) {
@@ -263,24 +292,18 @@
       x.globalAlpha = 0.55; x.fillStyle = g; x.fillRect(216 + (s - 3) * 3.2 - 1.2, 722 - h, 2.4, h);
     }
     t.glitter.forEach(function (g) { x.globalAlpha = Math.max(0, Math.min(1, g.liv)); x.fillStyle = g.c; x.beginPath(); x.arc(g.x, g.y, g.sz, 0, 6.28); x.fill(); });
-    var liv = FLYG + STANNA;
     t.hj.forEach(function (h) {
-      var P = PLATS[h.p], a = nu - h.start, u = ease(a / FLYG);
-      var px = CX + (P.x - CX) * u + Math.sin(nu * 1.6 + h.wob) * 2 * u, py = SPETS + (P.y - SPETS) * u + Math.cos(nu * 1.3 + h.wob) * 2 * u;
-      var alfa = Math.min(1, u * 1.6), sz = P.s * (0.4 + 0.6 * u);
-      if (a > liv) { var b = (a - liv) / TONA; py -= b * 60; alfa *= Math.max(0, 1 - b); }
-      if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
-      if (alfa <= 0.01) return;
-      x.globalAlpha = alfa; x.drawImage(sprite(h.farg), px - sz, py - sz, sz * 2, sz * 2);
+      var L = hjartLage(t, h, nu);
+      if (L.alfa <= 0.01) return;
+      x.globalAlpha = L.alfa; x.drawImage(sprite(h.farg), L.x - L.sz, L.y - L.sz, L.sz * 2, L.sz * 2);
     });
     t.bubblor.forEach(function (b) {
-      var P = PLATS[b.p], a = nu - b.start, u = ease(a / FLYG), r = 15;
-      var px = CX + (P.x - CX) * u, py = SPETS + (P.y - SPETS) * u, alfa = Math.min(1, u * 1.6);
-      if (a > liv + 0.8) return; if (a > liv) { var bb = (a - liv) / (TONA + 0.8); py -= bb * 60; alfa *= Math.max(0, 1 - bb); }
-      if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
-      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = 12; x.strokeStyle = b.ring; x.lineWidth = 2.5; x.beginPath(); x.arc(px, py, r, 0, 6.28); x.stroke(); x.shadowBlur = 0;
-      x.beginPath(); x.arc(px, py, r - 2, 0, 6.28); x.clip(); var im = bild(b.src);
-      if (im && im.complete && im.naturalWidth) x.drawImage(im, px - r + 2, py - r + 2, (r - 2) * 2, (r - 2) * 2); else { x.fillStyle = '#d9c6e8'; x.fill(); }
+      var L = bubblaLage(t, b, nu); if (!L || L.alfa <= 0.01) return;
+      var px = L.x, py = L.y, r = L.r, alfa = L.alfa;
+      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = 5; x.strokeStyle = b.ring; x.lineWidth = 2.5; x.beginPath(); x.arc(px, py, r - 1.25, 0, 6.28); x.stroke(); x.shadowBlur = 0;
+      x.fillStyle = '#120a1f'; x.beginPath(); x.arc(px, py, r - 2.5, 0, 6.28); x.fill();
+      x.beginPath(); x.arc(px, py, r - 4.5, 0, 6.28); x.clip(); var im = bild(b.src);
+      if (im && im.complete && im.naturalWidth) x.drawImage(im, px - r + 4.5, py - r + 4.5, (r - 4.5) * 2, (r - 4.5) * 2); else { x.fillStyle = '#d9c6e8'; x.fill(); }
       x.restore();
     });
     if (t.form) {
@@ -436,6 +459,10 @@
     tappa: function (id, antal, e) { var w = widgetar().filter(function (x) { return x.id === id; })[0]; if (w) tappa(w, antal, e); return !!w; },
     tillstand: function (id) { var t = TILL[id]; return t ? { hjartan: t.hj.length, bubblor: t.bubblor.length, ko: t.ko, form: !!t.form, aktiv: t.aktiv, platser: t.hj.map(function (h) { return h.p; }).concat(t.bubblor.map(function (b) { return b.p; })) } : null; },
     platser: function () { return PLATS.map(function (p) { return { x: p.x, y: p.y, r: p.r }; }); },
+    // Exakt det som ritas just nu (designens rum 432×768): för prov och mätning av överlapp.
+    ritat: function (id) { var t = TILL[id], nu = performance.now() / 1000; if (!t) return [];
+      return t.hj.map(function (h) { var L = hjartLage(t, h, nu); return { typ: 'hjarta', x: L.x, y: L.y, r: L.r, alfa: L.alfa, flyger: L.u < 1 }; })
+        .concat(t.bubblor.map(function (b) { var L = bubblaLage(t, b, nu); return L && { typ: 'bild', x: L.x, y: L.y, r: L.r + 1.25, alfa: L.alfa }; }).filter(Boolean)); },
     ARIT: ARIT
   };
   if (typeof render === 'function' && typeof view !== 'undefined') { try { render(); bind(); } catch (e) {} }

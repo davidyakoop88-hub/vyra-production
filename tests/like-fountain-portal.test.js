@@ -79,3 +79,16 @@ test('katalogen: portalen skapas hel på duken, den klassiska är oförändrad',
   assert.ok(klassisk.x >= 0 && klassisk.x + klassisk.width <= 432, `klassisk x ${klassisk.x} + ${klassisk.width} ryms inte`);
   assert.equal(klassisk.x + klassisk.width / 2, 216, 'den klassiska fontänen ska ha sin källa mitt på duken');
 });
+
+test('profilbilderna har egna stora platser som hjärtan aldrig får', () => {
+  // 2026-10-05: ingen plats var större än r 14,9 medan profilbilden ritades med r 15 och 12 px
+  // glöd på platser ner till r 11 — den låg alltid på grannarna (Davids skärmbild).
+  const pl = P.platser(47), stora = pl.filter(p => p.r >= P.BILD_R);
+  assert.ok(stora.length >= 12, `bara ${stora.length} profilbildsplatser`);
+  const hojder = stora.map(p => p.y);
+  assert.ok(Math.max(...hojder) - Math.min(...hojder) > 400, 'profilbildsplatserna klumpar ihop sig');
+  const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
+  assert.match(fil, /ledigPlats\(t, 0, BILD_R - 1\)/, 'hjärtan får inte ta profilbildsplatser');
+  assert.match(fil, /ledigPlats\(t, BILD_R\)/, 'profilbilder måste ta stora platser');
+  assert.match(fil, /py -= b \* 8;/, 'uttoningen får inte glida in i grannarna (förut 60 px)');
+});

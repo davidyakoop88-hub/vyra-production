@@ -96,7 +96,8 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 20261005-2: hjärtana får egna banor och jämna starttider så att de inte hamnar på varandra.
   // 20261005-3: hjärtana stiger som ballonger och pendlar var för sig (lfHeartSway).
   // 20261005-4: tio modeller med egna rörelser, likes släpper hjärtan i OBS.
-  assert.match(studioHtml, /media\.js\?v=20261005-4/);
+  // 20261005-5: premiumsvansen laddar en ny like-fountain-portal.js (profilbildsplatser).
+  assert.match(studioHtml, /media\.js\?v=20261005-5/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
