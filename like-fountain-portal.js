@@ -33,7 +33,7 @@
 
   var BAS_B = 432, BAS_H = 768;                 // designens rum; ritas skalat till widgetens box
   var SPETS = 690, TOPP = 40, CX = 216;          // V:et
-  var PLATSER = 88, MARG = 6, STORA = 14, BILD_R = 20;   // STORA: profilbildsplatser, BILD_R: minsta radie för en sådan
+  var PLATSER = 88, MARG = 6, STORA = 14, BILD_R = 20, STJARN_R = 28;   // STORA: profilbildsplatser, BILD_R: minsta radie för en sådan
   var FARSKT_MS = 15000;
   var FLYG = 1.0, STANNA = 3.2, TONA = 1.3;      // sekunder: ut i V:et, sväva, tona bort uppåt
   var HJARTA_CX = 216, HJARTA_CY = 250, HJARTA_S = 10.5;
@@ -67,7 +67,7 @@
   function platser(frö) {
     var rnd = slump(frö || 47), ut = [];
     for (var i = 0; i < PLATSER; i++) {
-      var storlek = (i < STORA ? 0.92 : i % 9 === 0 ? 0.62 : 0.25 + rnd() * 0.35) * 48, r = storlek / 2, ok = false, x = 0, y = 0;
+      var storlek = (i === 0 ? 1.3 : i < STORA ? 0.92 : i % 9 === 0 ? 0.62 : 0.25 + rnd() * 0.35) * 48, r = storlek / 2, ok = false, x = 0, y = 0;
       for (var k = 0; k < 900 && !ok; k++) {
         var t = i < 58 ? 0.06 + rnd() * 0.94 : 0.6 + rnd() * 0.4;
         y = SPETS - (SPETS - TOPP) * t;
@@ -119,7 +119,7 @@
   }
 
   var ARIT = { platser: platser, hjartform: hjartform, hjartanFor: hjartanFor, arFarskLike: arFarskLike,
-    PALETTER: PALETTER, PLATSER: PLATSER, BILD_R: BILD_R, FARSKT_MS: FARSKT_MS, BAS_B: BAS_B, BAS_H: BAS_H };
+    PALETTER: PALETTER, PLATSER: PLATSER, BILD_R: BILD_R, STJARN_R: STJARN_R, FARSKT_MS: FARSKT_MS, BAS_B: BAS_B, BAS_H: BAS_H };
   if (typeof module === 'object' && module.exports) { module.exports = ARIT; return; }
 
   // ---- WEBBLÄSAREN -------------------------------------------------------------------------------
@@ -187,7 +187,15 @@
     t.sedan = nu; t.aktiv = true;
     t.likesSedanPop += Math.max(1, Number(antal) || 1);
     var namn = e && (e.username || e.uniqueId || e.name), pic = e && sakerSrc(e.profileImage || e.profileUrl || e.avatar);
-    if (w.fountainAvatarHearts !== false && pic && namn && !(t.senast[namn] > nu - 2.5)) { t.senast[namn] = nu; t.koBubblor.push(pic); if (t.koBubblor.length > 6) t.koBubblor.shift(); }
+    // STJÄRNLÄGET (2026-10-05): ett paket på fountainStarLikes (25) eller fler från en tittare ger
+    // tittarens bild på STJÄRNPLATSEN (r ≈ 31, guldring) först i kön, och bilden kommer igen två
+    // gånger till som en serie. Serien går förbi taket för profilbilder samtidigt.
+    var stjarna = !!pic && !!namn && Number(antal) >= Math.max(5, Number(w.fountainStarLikes) || 25);
+    if (w.fountainAvatarHearts !== false && stjarna) {
+      t.senast[namn] = nu;
+      t.koBubblor.unshift({ src: pic, stjarna: true });
+      t.koBubblor.splice(1, 0, { src: pic, serie: true }, { src: pic, serie: true });
+    } else if (w.fountainAvatarHearts !== false && pic && namn && !(t.senast[namn] > nu - 2.5)) { t.senast[namn] = nu; t.koBubblor.push({ src: pic }); if (t.koBubblor.length > 6) t.koBubblor.shift(); }
     var varje = Number(w.fountainPopEvery);
     if (!Number.isFinite(varje)) varje = 1000;
     if (varje > 0 && t.likesSedanPop >= varje && !t.form) { t.likesSedanPop = 0; t.form = { start: nu, hj: [] }; }
@@ -231,7 +239,12 @@
       t.ko--; t.utslapp = 0; t.hj.push({ p: p, start: nu, farg: f[(PLATS[p].farg) % f.length], wob: Math.random() * 6.28 });
     }
     if (t.ko > 40) t.ko = 40;
-    if (t.koBubblor.length && !t.form && t.bubblor.length < Math.max(1, Number(w.fountainMaxAvatars) || 4)) { var pb = ledigPlats(t, BILD_R); if (pb >= 0) t.bubblor.push({ p: pb, start: nu, src: t.koBubblor.shift(), ring: RINGAR[Math.floor(Math.random() * RINGAR.length)] }); }
+    var nasta = t.koBubblor[0], vanliga = t.bubblor.filter(function (b) { return !b.stjarna && !b.serie; }).length;
+    if (nasta && !t.form && (nasta.stjarna || nasta.serie || vanliga < Math.max(1, Number(w.fountainMaxAvatars) || 4))) {
+      var pb = nasta.stjarna ? ledigPlats(t, STJARN_R) : ledigPlats(t, BILD_R, STJARN_R - 1);
+      if (pb >= 0) { t.koBubblor.shift(); t.bubblor.push({ p: pb, start: nu, src: nasta.src, stjarna: !!nasta.stjarna, serie: !!nasta.serie, wob: Math.random() * 6.28,
+        ring: nasta.stjarna ? '#ffd34d' : RINGAR[Math.floor(Math.random() * RINGAR.length)] }); }
+    }
     var liv = FLYG + STANNA + TONA;
     t.hj = t.hj.filter(function (h) { return nu - h.start < liv; });
     t.bubblor = t.bubblor.filter(function (b) { return nu - b.start < liv + 0.8; });
@@ -253,23 +266,42 @@
   // VAR ETT HJÄRTA OCH EN PROFILBILD RITAS JUST NU. r är den synliga radien: hjärtat fyller ~1,1·sz
   // av sin sprite (96 px, stigen skalad 2,2), profilbilden är platsens radie minus 1.
   // UTTONINGEN GLIDER 8 PX (2026-10-05). Förut 60 px: ett tonande hjärta gled rakt in i grannarna ovanför.
+  // RÖRELSEN I FYRA FASER (2026-10-05, "inte som en robot"):
+  //  1. UTSKJUTET: en båge ur portalen — rakt upp först, sedan ut mot platsen (kvadratisk Bézier).
+  //  2. LANDNINGEN: en liten studs (storleken slår över ~8 % och sätter sig).
+  //  3. SVÄVNINGEN: egen gungning (±GUNG px), lutning (±8°), andning (±4 %) och en långsam stigning.
+  //  4. UTTONINGEN: stiger lite till, krymper och tonar.
+  // GUNG + stigning hålls under MARG (6 px) så att två grannar aldrig når varandra.
+  var GUNG = 2.4, BAGE = 0.85;
+  function bage(P, u) {
+    // Kontrollpunkten ligger rakt över portalen på BAGE av höjden: hjärtat lämnar portalen uppåt och
+    // svänger ut sent, så det korsar V:ets inre platser så lite som möjligt.
+    var kx = CX + (P.x - CX) * 0.15, ky = SPETS + (P.y - SPETS) * BAGE, v = 1 - u;
+    return { x: v * v * CX + 2 * v * u * kx + u * u * P.x, y: v * v * SPETS + 2 * v * u * ky + u * u * P.y };
+  }
+  var studs = function (k) { return k >= 1 ? 1 : 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); };   // easeOutBack, lätt
+  function svav(h, nu, a, styrka) {
+    var f = 1.1 + (h.wob % 1) * 0.7, fas = nu * f + h.wob, ro = Math.min(1, Math.max(0, (a - FLYG) / 0.6)) * styrka;
+    return { dx: Math.sin(fas) * GUNG * ro, dy: (Math.cos(fas * 0.8) * 1.2 - Math.min(1, Math.max(0, (a - FLYG) / STANNA)) * 2.5) * ro,
+      rot: Math.sin(fas + 0.6) * 0.14 * ro, andas: 1 + Math.sin(nu * 2.1 + h.wob * 3) * 0.04 * ro };
+  }
   function hjartLage(t, h, nu) {
-    var liv = FLYG + STANNA, P = PLATS[h.p], a = nu - h.start, u = ease(a / FLYG);
-    var px = CX + (P.x - CX) * u + Math.sin(nu * 1.6 + h.wob) * 2 * u, py = SPETS + (P.y - SPETS) * u + Math.cos(nu * 1.3 + h.wob) * 2 * u;
+    var liv = FLYG + STANNA, P = PLATS[h.p], a = nu - h.start, k = Math.min(1, a / FLYG), u = ease(k), B = bage(P, u), S = svav(h, nu, a, 1);
     // I flykten är hjärtat litet och svagt (u^2,4) och syns först nära sin plats: på väg ut korsar det
     // andra hjärtans platser, och det var där alla kvarvarande överlapp låg (uppmätt 2026-10-05).
-    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3), sz = P.s * (0.3 + 0.7 * u);
-    if (a > liv) { var b = Math.min(1, (a - liv) / TONA); py -= b * 8; sz *= 1 - b * 0.2; alfa *= 1 - b; }
+    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3), sz = P.s * (0.3 + 0.7 * studs(k)) * S.andas, px = B.x + S.dx, py = B.y + S.dy;
+    if (a > liv) { var b = Math.min(1, (a - liv) / TONA); py -= b * 3; sz *= 1 - b * 0.25; alfa *= 1 - b; }
     if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
-    return { x: px, y: py, sz: sz, r: sz * 0.55, alfa: alfa, u: u };
+    return { x: px, y: py, sz: sz, r: sz * 0.55, alfa: alfa, u: u, rot: S.rot };
   }
   function bubblaLage(t, b, nu) {
-    var liv = FLYG + STANNA, P = PLATS[b.p], a = nu - b.start, u = ease(a / FLYG);
-    var px = CX + (P.x - CX) * u, py = SPETS + (P.y - SPETS) * u, alfa = Math.min(1, Math.pow(u, 2.4) * 1.3);
+    var liv = FLYG + STANNA, P = PLATS[b.p], a = nu - b.start, k = Math.min(1, a / FLYG), u = ease(k), B = bage(P, u), S = svav(b, nu, a, 0.8);
+    var alfa = Math.min(1, Math.pow(u, 2.4) * 1.3);
     if (a > liv + 0.8) return null;
-    if (a > liv) { var bb = Math.min(1, (a - liv) / (TONA + 0.8)); py -= bb * 8; alfa *= 1 - bb; }
+    var px = B.x + S.dx, py = B.y + S.dy;
+    if (a > liv) { var bb = Math.min(1, (a - liv) / (TONA + 0.8)); py -= bb * 3; alfa *= 1 - bb; }
     if (t.form) alfa *= Math.max(0, 1 - (nu - t.form.start) / 0.6);
-    return { x: px, y: py, r: (P.r - 1) * (0.4 + 0.6 * u), alfa: alfa };
+    return { x: px, y: py, r: (P.r - 1) * (0.4 + 0.6 * studs(k)), alfa: alfa, u: u };
   }
 
   function rita(w, t, cv, nu) {
@@ -292,15 +324,18 @@
       x.globalAlpha = 0.55; x.fillStyle = g; x.fillRect(216 + (s - 3) * 3.2 - 1.2, 722 - h, 2.4, h);
     }
     t.glitter.forEach(function (g) { x.globalAlpha = Math.max(0, Math.min(1, g.liv)); x.fillStyle = g.c; x.beginPath(); x.arc(g.x, g.y, g.sz, 0, 6.28); x.fill(); });
-    t.hj.forEach(function (h) {
-      var L = hjartLage(t, h, nu);
+    // Flygande hjärtan ritas FÖRST, alltså bakom de som landat: ett hjärta på väg ut passerar bakom
+    // grannarna i stället för över dem (förut ritades det nyaste överst).
+    t.hj.map(function (h) { return { h: h, L: hjartLage(t, h, nu) }; }).sort(function (p, q) { return (p.L.u < 1 ? 0 : 1) - (q.L.u < 1 ? 0 : 1); }).forEach(function (o) {
+      var h = o.h, L = o.L;
       if (L.alfa <= 0.01) return;
-      x.globalAlpha = L.alfa; x.drawImage(sprite(h.farg), L.x - L.sz, L.y - L.sz, L.sz * 2, L.sz * 2);
+      x.globalAlpha = L.alfa; x.save(); x.translate(L.x, L.y); x.rotate(L.rot); x.drawImage(sprite(h.farg), -L.sz, -L.sz, L.sz * 2, L.sz * 2); x.restore();
     });
     t.bubblor.forEach(function (b) {
       var L = bubblaLage(t, b, nu); if (!L || L.alfa <= 0.01) return;
       var px = L.x, py = L.y, r = L.r, alfa = L.alfa;
-      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = 5; x.strokeStyle = b.ring; x.lineWidth = 2.5; x.beginPath(); x.arc(px, py, r - 1.25, 0, 6.28); x.stroke(); x.shadowBlur = 0;
+      var ringB = b.stjarna ? 3.5 : 2.5;
+      x.globalAlpha = alfa; x.save(); x.shadowColor = b.ring; x.shadowBlur = b.stjarna ? 12 : 5; x.strokeStyle = b.ring; x.lineWidth = ringB; x.beginPath(); x.arc(px, py, r - ringB / 2, 0, 6.28); x.stroke(); x.shadowBlur = 0;
       x.fillStyle = '#120a1f'; x.beginPath(); x.arc(px, py, r - 2.5, 0, 6.28); x.fill();
       x.beginPath(); x.arc(px, py, r - 4.5, 0, 6.28); x.clip(); var im = bild(b.src);
       if (im && im.complete && im.naturalWidth) x.drawImage(im, px - r + 4.5, py - r + 4.5, (r - 4.5) * 2, (r - 4.5) * 2); else { x.fillStyle = '#d9c6e8'; x.fill(); }
@@ -308,7 +343,10 @@
     });
     if (t.form) {
       var ft = nu - t.form.start, pop = t.form.pop ? nu - t.form.pop : -1;
+      // POPPEN (2026-10-05): glittret som sprack ut är borta, så hjärtat spricker i stället själv —
+      // efter studsen glider formationens hjärtan utåt från mitten medan de tonar.
       var sk = pop >= 0 && pop < 0.45 ? 1 + 0.14 * Math.sin(pop / 0.45 * Math.PI) : 1, ut = pop > 1.2 ? Math.max(0, 1 - (pop - 1.2)) : 1;
+      if (pop > 0.9) sk *= 1 + ease(Math.min(1, (pop - 0.9) / 1.3)) * 0.9;
       if (pop >= 0) { var kk = Math.sin(Math.min(1, pop / 0.8) * Math.PI), gl = x.createRadialGradient(HJARTA_CX, HJARTA_CY, 0, HJARTA_CX, HJARTA_CY, 230); gl.addColorStop(0, 'rgba(255,79,216,' + (0.5 * kk * ut) + ')'); gl.addColorStop(1, 'rgba(7,3,15,0)'); x.globalAlpha = 1; x.fillStyle = gl; x.fillRect(0, 0, BAS_B, BAS_H); }
       t.form.hj.forEach(function (h) {
         var m = FORM.mal[h.i], u = io((nu - h.start) / 1.1); if (u <= 0) return;
@@ -462,7 +500,7 @@
     // Exakt det som ritas just nu (designens rum 432×768): för prov och mätning av överlapp.
     ritat: function (id) { var t = TILL[id], nu = performance.now() / 1000; if (!t) return [];
       return t.hj.map(function (h) { var L = hjartLage(t, h, nu); return { typ: 'hjarta', x: L.x, y: L.y, r: L.r, alfa: L.alfa, flyger: L.u < 1 }; })
-        .concat(t.bubblor.map(function (b) { var L = bubblaLage(t, b, nu); return L && { typ: 'bild', x: L.x, y: L.y, r: L.r + 1.25, alfa: L.alfa }; }).filter(Boolean)); },
+        .concat(t.bubblor.map(function (b) { var L = bubblaLage(t, b, nu); return L && { typ: 'bild', x: L.x, y: L.y, r: L.r + 1.25, alfa: L.alfa, flyger: L.u < 1, stjarna: !!b.stjarna }; }).filter(Boolean)); },
     ARIT: ARIT
   };
   if (typeof render === 'function' && typeof view !== 'undefined') { try { render(); bind(); } catch (e) {} }

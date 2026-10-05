@@ -89,6 +89,10 @@ test('profilbilderna har egna stora platser som hjärtan aldrig får', () => {
   assert.ok(Math.max(...hojder) - Math.min(...hojder) > 400, 'profilbildsplatserna klumpar ihop sig');
   const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
   assert.match(fil, /ledigPlats\(t, 0, BILD_R - 1\)/, 'hjärtan får inte ta profilbildsplatser');
-  assert.match(fil, /ledigPlats\(t, BILD_R\)/, 'profilbilder måste ta stora platser');
-  assert.match(fil, /py -= b \* 8;/, 'uttoningen får inte glida in i grannarna (förut 60 px)');
+  assert.match(fil, /ledigPlats\(t, BILD_R, STJARN_R - 1\)/, 'profilbilder måste ta stora platser, men inte stjärnans');
+  assert.match(fil, /py -= b \* 3;/, 'uttoningen får inte glida in i grannarna (förut 60 px)');
+  // Stjärnläget: en egen plats som rymmer den större bilden, och bara stjärnan tar den.
+  assert.equal(pl.filter(p => p.r >= P.STJARN_R).length, 1, 'stjärnplatsen saknas');
+  assert.match(fil, /nasta\.stjarna \? ledigPlats\(t, STJARN_R\)/);
+  assert.match(fil, /fountainStarLikes\) \|\| 25/);
 });
