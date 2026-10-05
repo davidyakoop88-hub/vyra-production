@@ -483,7 +483,6 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    controlled bloom. Avatar particles keep their circular portrait treatment. */
 .like-fountain .lf-p-heart:not(.lf-p-heart-avatar){position:absolute;color:transparent;-webkit-text-stroke:.55px rgba(255,255,255,.76);background:linear-gradient(145deg,#fff 3%,color-mix(in srgb,var(--c) 42%,#fff) 24%,var(--c) 48%,color-mix(in srgb,var(--c) 62%,#39216e) 71%,#fff 94%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 calc(var(--glow,14px) * .48) var(--c)) drop-shadow(0 0 calc(var(--glow,14px) * .9) color-mix(in srgb,var(--c) 72%,transparent));text-shadow:none}
 .like-fountain .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'♥';position:absolute;inset:0;color:transparent;-webkit-text-stroke:.35px rgba(255,255,255,.55);background:linear-gradient(112deg,transparent 21%,rgba(255,255,255,.95) 31%,transparent 39%,transparent 58%,rgba(255,255,255,.5) 66%,transparent 73%);-webkit-background-clip:text;background-clip:text;opacity:.78;transform:scale(.84);transform-origin:center}
-.like-fountain .lf-p-heart:not(.lf-p-heart-avatar)::after{content:'✦';position:absolute;right:-.12em;top:-.22em;color:#fff;font-size:.3em;text-shadow:0 0 5px #fff,0 0 9px var(--c);opacity:.7;animation:lfCrystalFacet 2.8s ease-in-out infinite}
 
 /* LIVE likes add a brief organic lift without restarting the continuous flow. */
 .like-fountain.lf-live-react .lf-stream{animation:lfLiveBreath .9s cubic-bezier(.2,.72,.22,1)}
@@ -533,7 +532,6 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 /* Selected effects travel with the hearts instead of replacing the fountain with a source pop. */
 .like-fountain .fountain-pop{display:none!important}
 .like-fountain.lf-fx-burst .lf-p-heart:nth-child(5n){filter:brightness(1.32) saturate(1.25) drop-shadow(0 0 7px var(--c)) drop-shadow(0 0 18px var(--c))}
-.like-fountain.lf-fx-sparkle .lf-p-heart:nth-child(3n)::after{content:'✦';opacity:1;font-size:.38em;animation:lfCrystalFacet 1.25s ease-in-out infinite}
 .like-fountain.lf-fx-mini .lf-p-heart:nth-child(4n)::before{content:'♥';position:absolute;inset:auto;left:-.7em;top:.42em;color:var(--c);-webkit-text-stroke:0;background:none;-webkit-background-clip:initial;background-clip:initial;font-size:.36em;opacity:.85;filter:drop-shadow(0 0 4px var(--c));animation:lfMiniCompanion 1.8s ease-in-out infinite}
 .like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n){position:absolute;color:transparent;font-size:calc(var(--heart-size,24px) * .48);text-shadow:none}
 .like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n)::before{content:'★';position:absolute;color:var(--c);text-shadow:0 0 5px #fff,0 0 12px var(--c)}
@@ -543,7 +541,6 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 .like-fountain.lf-live-react .lf-p-heart:nth-child(2n){filter:brightness(1.45) saturate(1.2) drop-shadow(0 0 9px var(--c))}
 @keyframes lfMiniCompanion{0%,100%{transform:translate(0,3px) scale(.8);opacity:.35}50%{transform:translate(-5px,-7px) scale(1.15);opacity:1}}
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
-@keyframes lfCrystalFacet{50%{opacity:.22;transform:scale(.72) rotate(28deg)}}
 .head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
 /* Alla tre knapparna i sidhuvudet lyser (Davids beslut 2026-08-20). Regeln bor HAR, bredvid den
    grona, for att de tre glodena maste lasas ihop: de tva neutrala i husets violett, anslutningen

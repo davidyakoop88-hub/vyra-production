@@ -144,8 +144,6 @@
     kropp += '<ellipse cx="216" cy="718" rx="95" ry="24" fill="url(#lfph' + id + ')"/>'
       + '<ellipse cx="216" cy="722" rx="65" ry="11" fill="none" stroke="#ff7ae0" stroke-width="2" filter="url(#lfpf' + id + ')"/>';
     for (var s = 0; s < 7; s++) { var h = 180 + s * 45; kropp += '<rect x="' + (216 + (s - 3) * 3.2 - 1.2).toFixed(1) + '" y="' + (722 - h) + '" width="2.4" height="' + h + '" rx="1.2" fill="url(#lfps' + id + ')" opacity=".55"/>'; }
-    var rnd = slump(97);
-    for (var g = 0; g < 90; g++) { var u = Math.pow(rnd(), 1.3), gy = 700 - 640 * u, gx = 216 + (rnd() + rnd() + rnd() - 1.5) / 1.5 * (6 + 140 * u); kropp += '<circle cx="' + gx.toFixed(1) + '" cy="' + gy.toFixed(1) + '" r="' + (0.7 + rnd() * 1.4).toFixed(2) + '" fill="' + ['#ffb3ea', '#ff4fd8', '#c9a0ff', '#ffffff', '#ffb347'][g % 5] + '" opacity="' + (0.4 + (1 - u) * 0.5).toFixed(2) + '"/>'; }
     PLATS.slice(0, 64).forEach(function (p, i) {
       var k = p.s / 24, c = i % f.length;
       kropp += '<g transform="translate(' + (p.x - p.s / 2).toFixed(1) + ' ' + (p.y - p.s * 0.48).toFixed(1) + ') scale(' + k.toFixed(3) + ')" filter="url(#lfpf' + id + ')">'
@@ -181,7 +179,6 @@
     t.tempo = Math.min(1, t.tempo + 0.12 * Math.min(Number(antal) || 1, 5));
     t.sedan = nu; t.aktiv = true;
     t.likesSedanPop += Math.max(1, Number(antal) || 1);
-    for (var i = 0; i < 6 + Math.min(12, antal || 1); i++) t.glitter.push(nyGlitter(216 + (Math.random() - 0.5) * 10, 712, (Math.random() - 0.5) * 40, -(120 + Math.random() * 260), 1));
     var namn = e && (e.username || e.uniqueId || e.name), pic = e && sakerSrc(e.profileImage || e.profileUrl || e.avatar);
     if (w.fountainAvatarHearts !== false && pic && namn && !(t.senast[namn] > nu - 2.5)) { t.senast[namn] = nu; t.koBubblor.push(pic); if (t.koBubblor.length > 6) t.koBubblor.shift(); }
     var varje = Number(w.fountainPopEvery);
@@ -234,14 +231,12 @@
     t.tempo = Math.max(0, t.tempo - dt * 0.3);
     t.glitter.forEach(function (g) { g.x += g.vx * dt; g.y += g.vy * dt; g.vy += 40 * dt; g.liv -= dt * 0.7; });
     t.glitter = t.glitter.filter(function (g) { return g.liv > 0; });
-    if (t.tempo > 0.05 && Math.random() < t.tempo * 0.9) t.glitter.push(nyGlitter(216 + (Math.random() - 0.5) * 8, 712, (Math.random() - 0.5) * 30, -(160 + Math.random() * 280), 1));
     // milstolpen: hjärtan flyger ur portalen in i det stora hjärtat, det poppar, allt tonar ut
     if (t.form) {
       var ft = nu - t.form.start;
       while (t.form.hj.length < FORM.mal.length && t.form.hj.length < ft * 70) { var i = t.form.hj.length; t.form.hj.push({ i: i, start: t.form.start + i / 70, farg: f[i % f.length] }); }
       if (!t.form.pop && ft > FORM.mal.length / 70 + 1.2) {
         t.form.pop = nu;
-        for (var k = 0; k < 140; k++) { var q = FORM.kurva(Math.random() * 6.28); t.glitter.push(nyGlitter(q.x, q.y, (q.x - HJARTA_CX) * (1 + Math.random() * 1.5), (q.y - HJARTA_CY) * (1 + Math.random() * 1.5) - 30, 1.4)); }
       }
       if (t.form.pop && nu - t.form.pop > 2.2) t.form = null;
     }

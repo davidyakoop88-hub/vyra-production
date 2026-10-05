@@ -92,7 +92,8 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 2026-09-28: rebasad pa main — media.js bar bade Diamond Goal-laddningen och den naturliga
   // fyrverkerimotorn, sa strangen bumpas forbi bada (20260927-6 + 20260925-1).
   // 2026-09-30: media.js bar poster-attributet pa battle-video-FX-widgetarna (katalogmito).
-  assert.match(studioHtml, /media\.js\?v=20260930-1/);
+  // 2026-10-05: Like Fountain visar bara hjärtan och profilbilder (gnistor, damm och glitter borta).
+  assert.match(studioHtml, /media\.js\?v=20261005-1/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

@@ -167,7 +167,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // html:not(.overlay-output) sa overlay-utgangen forblir transparent. Filen ar alltsa ny mot BADA
   // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
   // svarta plattan i OBS/TikTok.
-  assert.match(studio, /studio\.css\?v=20260928-overlay/);
+  // 20261005-1: Like Fountain-hjärtana tappade sin ✦ i ::after (bara hjärtan och profilbilder).
+  assert.match(studio, /studio\.css\?v=20261005-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -353,7 +354,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
   // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
   // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
-  assert.match(media, /const version='20260928-goal-1'/);
+  assert.match(media, /const version='20261005-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
