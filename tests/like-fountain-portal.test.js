@@ -80,20 +80,27 @@ test('katalogen: portalen skapas hel på duken, den klassiska är oförändrad',
   assert.equal(klassisk.x + klassisk.width / 2, 216, 'den klassiska fontänen ska ha sin källa mitt på duken');
 });
 
-test('profilbilderna har egna stora platser som hjärtan aldrig får', () => {
-  // 2026-10-05: ingen plats var större än r 14,9 medan profilbilden ritades med r 15 och 12 px
-  // glöd på platser ner till r 11 — den låg alltid på grannarna (Davids skärmbild).
+test('förhandsbilden har profilringar på egna stora platser', () => {
+  // 2026-10-05: ingen plats var större än r 14,9 medan profilbilden ritades med r 15 — den låg på
+  // grannarna. Live stiger nu allt (provet nedan); platserna bär förhandsbilden.
   const pl = P.platser(47), stora = pl.filter(p => p.r >= P.BILD_R);
   assert.ok(stora.length >= 12, `bara ${stora.length} profilbildsplatser`);
   const hojder = stora.map(p => p.y);
   assert.ok(Math.max(...hojder) - Math.min(...hojder) > 400, 'profilbildsplatserna klumpar ihop sig');
+});
+
+test('varje like STIGER hela vägen ur portalen — inget parkerar på en plats', () => {
+  // 2026-10-05, Davids "rörelse gillar inte jag": hjärtana flög till en plats och stod still i drygt
+  // tre sekunder. Nu stiger de i nio banor som breder ut sig i V:et och tonar bort högst upp.
   const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
-  assert.match(fil, /ledigPlats\(t, 0, BILD_R - 1\)/, 'hjärtan får inte ta profilbildsplatser');
-  assert.match(fil, /ledigPlats\(t, BILD_R, STJARN_R - 1\)/, 'profilbilder måste ta stora platser, men inte stjärnans');
-  assert.match(fil, /py -= b \* 3;/, 'uttoningen får inte glida in i grannarna (förut 60 px)');
-  // Stjärnläget: en egen plats som rymmer den större bilden, och bara stjärnan tar den.
-  assert.equal(pl.filter(p => p.r >= P.STJARN_R).length, 1, 'stjärnplatsen saknas');
-  assert.match(fil, /nasta\.stjarna \? ledigPlats\(t, STJARN_R\)/);
+  assert.doesNotMatch(fil, /STANNA|ledigPlats/, 'parkeringen (STANNA/ledigPlats) är tillbaka');
+  assert.match(fil, /function stigLage\(o, nu\)/);
+  assert.match(fil, /y = SPETS - \(SPETS - TOPP_Y\) \* f/, 'hjärtat ska stiga från portalen till toppen');
+  assert.match(fil, /return \(\(\(n \* 4\) % BANOR\)/, 'efterföljande hjärtan ska hamna fyra banor isär');
+  // Stjärnläget: mittbanan, längre stigning, och serien med en sekunds mellanrum.
+  assert.match(fil, /bana: nasta\.stjarna \? 0 : bb/);
+  assert.match(fil, /if \(nara\(bana\(n\), 0\.25\)\) continue;/, 'hjärtan ska vänta en takt vid en färsk profilbild, inte byta bana');
+  assert.match(fil, /nu - \(t\.serieTid \|\| 0\) > 1\.1/);
   assert.match(fil, /fountainStarLikes\) \|\| 25/);
 });
 

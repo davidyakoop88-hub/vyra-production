@@ -358,7 +358,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
   // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
   // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
-  assert.match(media, /const version='20261005-4'/);
+  assert.match(media, /const version='20261005-5'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

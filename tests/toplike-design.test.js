@@ -100,7 +100,8 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 20261005-6: Portalens nya rörelse och stjärnläge (premiumsvansen laddar en ny like-fountain-portal.js).
   // 20261005-7: stjärnserien i takt (en sekund mellan bilderna), uppmätt i OBS.
   // 20261005-8: Portalens flykt/uttoning utan grumliga hjärtan, och en ritloop som inte kan frysa.
-  assert.match(studioHtml, /media\.js\?v=20261005-8/);
+  // 20261005-9: Portalens hjärtan stiger hela vägen i banor i stället för att parkera.
+  assert.match(studioHtml, /media\.js\?v=20261005-9/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
