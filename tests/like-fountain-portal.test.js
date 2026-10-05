@@ -72,5 +72,43 @@ test('katalogen: portalen skapas hel på duken, den klassiska är oförändrad',
   assert.ok(w.y >= 0 && w.y + hojd <= 768, `y ${w.y} + ${hojd} ryms inte`);
   const klassisk = VyraWidgets.create('catalog:likefountain');
   assert.equal(klassisk.fountainDesign, undefined, 'den klassiska fontänen fick portalens design');
-  assert.equal(klassisk.width, 620);
+  // 2026-10-05: den klassiska låg på x 40 med bredd 620 — mitten på 350 av 432, långt till höger.
+  // .like-fountain har min-width 420 (studio.css), så 420 är den smalaste den ritas i, och x 6
+  // lägger mitten på dukens mitt.
+  assert.equal(klassisk.width, 420);
+  assert.ok(klassisk.x >= 0 && klassisk.x + klassisk.width <= 432, `klassisk x ${klassisk.x} + ${klassisk.width} ryms inte`);
+  assert.equal(klassisk.x + klassisk.width / 2, 216, 'den klassiska fontänen ska ha sin källa mitt på duken');
+});
+
+test('förhandsbilden har profilringar på egna stora platser', () => {
+  // 2026-10-05: ingen plats var större än r 14,9 medan profilbilden ritades med r 15 — den låg på
+  // grannarna. Live stiger nu allt (provet nedan); platserna bär förhandsbilden.
+  const pl = P.platser(47), stora = pl.filter(p => p.r >= P.BILD_R);
+  assert.ok(stora.length >= 12, `bara ${stora.length} profilbildsplatser`);
+  const hojder = stora.map(p => p.y);
+  assert.ok(Math.max(...hojder) - Math.min(...hojder) > 400, 'profilbildsplatserna klumpar ihop sig');
+});
+
+test('varje like STIGER hela vägen ur portalen — inget parkerar på en plats', () => {
+  // 2026-10-05, Davids "rörelse gillar inte jag": hjärtana flög till en plats och stod still i drygt
+  // tre sekunder. Nu stiger de i nio banor som breder ut sig i V:et och tonar bort högst upp.
+  const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
+  assert.doesNotMatch(fil, /STANNA|ledigPlats/, 'parkeringen (STANNA/ledigPlats) är tillbaka');
+  assert.match(fil, /function stigLage\(o, nu\)/);
+  assert.match(fil, /y = SPETS - \(SPETS - TOPP_Y\) \* f/, 'hjärtat ska stiga från portalen till toppen');
+  assert.match(fil, /return \(\(\(n \* 4\) % BANOR\)/, 'efterföljande hjärtan ska hamna fyra banor isär');
+  // Stjärnläget: mittbanan, längre stigning, och serien med en sekunds mellanrum.
+  assert.match(fil, /bana: nasta\.stjarna \? 0 : bb/);
+  assert.match(fil, /if \(nara\(bana\(n\), 0\.25\)\) continue;/, 'hjärtan ska vänta en takt vid en färsk profilbild, inte byta bana');
+  assert.match(fil, /nu - \(t\.serieTid \|\| 0\) > 1\.1/);
+  assert.match(fil, /fountainStarLikes\) \|\| 25/);
+});
+
+test('ett fel i en bildruta fryser inte fontänen, och ingen radie kan bli negativ', () => {
+  // 2026-10-05, uppmätt: en profilbild som växer från r ≈ 3 gav arc(r − 4,5) < 0, arc() kastade,
+  // tick() dog före nästa requestAnimationFrame och fontänen stod still medan kön växte till 69.
+  const fil = require('fs').readFileSync(path.join(ROOT, 'like-fountain-portal.js'), 'utf8');
+  const tick = fil.slice(fil.indexOf('function tick() {'), fil.indexOf('requestAnimationFrame(tick); else gar = false;'));
+  assert.match(tick, /try \{\s*steg\(w, t, nu, dt\);[\s\S]*rita\(w, t, cv, nu\);\s*\} catch/, 'steg/rita måste ligga i try i tick()');
+  for (const m of fil.matchAll(/x\.arc\(px, py, ([^,]+),/g)) assert.match(m[1], /^rr\(/, `osäkrad radie i profilbilden: ${m[1]}`);
 });

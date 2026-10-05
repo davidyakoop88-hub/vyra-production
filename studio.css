@@ -384,8 +384,8 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    keyframes via --ox eller --lf-x*, inte genom att var partikel placeras pa
    en egen startpunkt. */
 .lf-p{position:absolute;left:50%;bottom:14px;font-style:normal;line-height:1;opacity:0;will-change:transform,opacity}
-.lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 3px #fff,0 0 var(--glow,14px) var(--c),0 0 calc(var(--glow,14px) * 1.6) var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
-.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-72%);width:calc(var(--sz,20px) * .68);height:calc(var(--sz,20px) * .68);border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.9);box-shadow:0 0 8px var(--c),0 0 3px rgba(255,255,255,.7);pointer-events:none}
+.lf-p-heart{color:var(--c);font-size:var(--sz,20px);font-weight:900;-webkit-text-stroke:.4px #ffffff77;text-shadow:0 0 1px #fff,0 0 4px var(--c);animation:lfHeartRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
+.lf-p-heart-avatar-img{position:absolute;left:50%;top:0;transform:translate(-50%,-78%);width:calc(var(--sz,20px) * 1.3);height:calc(var(--sz,20px) * 1.3);box-sizing:content-box;padding:2px;border-radius:50%;object-fit:cover;background:#120a1f;border:2.5px solid color-mix(in srgb,var(--c),#fff 35%);box-shadow:0 0 0 1.5px rgba(8,4,16,.75),0 0 5px var(--c);pointer-events:none}
 .lf-p-spark{color:var(--c);font-size:11px;text-shadow:0 0 6px var(--c);animation:lfSparkRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .lf-p-dust{width:3px;height:3px;border-radius:50%;background:var(--c);box-shadow:0 0 5px var(--c);animation:lfDustRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
 .like-fountain.palette-fire .lf-p-heart{filter:saturate(1.25)}
@@ -435,7 +435,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    bounded control points from media.js; repeated modulo lanes are no longer
    visible as robotic straight tracks. */
 .like-fountain[class*="lf-motion-"] .lf-p{animation-timing-function:linear}
-.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfOrganicHeartRise}
+.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartSway;animation-duration:var(--dur),var(--lf-sway-dur,2s);animation-delay:var(--delay),var(--lf-sway-delay,0s);animation-timing-function:linear,ease-in-out;animation-direction:normal,alternate;animation-iteration-count:infinite}
 .like-fountain[class*="lf-motion-"] .lf-p-spark{animation-name:lfOrganicSparkRise}
 .like-fountain[class*="lf-motion-"] .lf-p-dust{animation-name:lfOrganicDustRise}
 .like-fountain.lf-motion-firefly .lf-p{animation-duration:calc(var(--dur) * 1.28)}
@@ -444,13 +444,14 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .like-fountain.lf-motion-cascade .lf-p-heart{animation-name:lfCascadeRise;filter:brightness(1.12) saturate(1.05)}
 .like-fountain.lf-motion-bloom .lf-p-heart{transform-origin:center bottom}
 @keyframes lfOrganicHeartRise{
-  0%{transform:translate(-50%,10px) scale(.22) rotate(0);opacity:0;animation-timing-function:cubic-bezier(.2,.72,.3,1)}
-  11%{opacity:.94}
-  32%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1));animation-timing-function:cubic-bezier(.45,.05,.35,1)}
-  63%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1;animation-timing-function:cubic-bezier(.35,.1,.28,1)}
-  84%{opacity:.76}
-  100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise))) scale(.46) rotate(var(--lf-r3));opacity:0}
+  0%{transform:translate(-50%,10px) scale(.22) rotate(0);opacity:0}
+  7%{opacity:.95}
+  20%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1))}
+  62%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1}
+  86%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1) rotate(var(--lf-r3));opacity:.92}
+  100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(.9) rotate(var(--lf-r3));opacity:0}
 }
+@keyframes lfHeartSway{0%{translate:calc(var(--lf-sway,3px) * -1) 0;rotate:calc(var(--lf-tilt,3deg) * -1)}100%{translate:var(--lf-sway,3px) 0;rotate:var(--lf-tilt,3deg)}}
 @keyframes lfOrganicSparkRise{
   0%{transform:translate(-50%,8px) scale(.2) rotate(0);opacity:0}
   18%{opacity:.9}
@@ -481,13 +482,12 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 
 /* Crystal-heart material: translucent gradient body, faceted highlight and a
    controlled bloom. Avatar particles keep their circular portrait treatment. */
-.like-fountain .lf-p-heart:not(.lf-p-heart-avatar){position:absolute;color:transparent;-webkit-text-stroke:.55px rgba(255,255,255,.76);background:linear-gradient(145deg,#fff 3%,color-mix(in srgb,var(--c) 42%,#fff) 24%,var(--c) 48%,color-mix(in srgb,var(--c) 62%,#39216e) 71%,#fff 94%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 0 calc(var(--glow,14px) * .48) var(--c)) drop-shadow(0 0 calc(var(--glow,14px) * .9) color-mix(in srgb,var(--c) 72%,transparent));text-shadow:none}
+.like-fountain .lf-p-heart:not(.lf-p-heart-avatar){position:absolute;color:transparent;-webkit-text-stroke:.55px rgba(255,255,255,.76);background:linear-gradient(145deg,#fff 3%,color-mix(in srgb,var(--c) 42%,#fff) 24%,var(--c) 48%,color-mix(in srgb,var(--c) 62%,#39216e) 71%,#fff 94%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 3px var(--c));text-shadow:none}
 .like-fountain .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'♥';position:absolute;inset:0;color:transparent;-webkit-text-stroke:.35px rgba(255,255,255,.55);background:linear-gradient(112deg,transparent 21%,rgba(255,255,255,.95) 31%,transparent 39%,transparent 58%,rgba(255,255,255,.5) 66%,transparent 73%);-webkit-background-clip:text;background-clip:text;opacity:.78;transform:scale(.84);transform-origin:center}
-.like-fountain .lf-p-heart:not(.lf-p-heart-avatar)::after{content:'✦';position:absolute;right:-.12em;top:-.22em;color:#fff;font-size:.3em;text-shadow:0 0 5px #fff,0 0 9px var(--c);opacity:.7;animation:lfCrystalFacet 2.8s ease-in-out infinite}
 
 /* LIVE likes add a brief organic lift without restarting the continuous flow. */
 .like-fountain.lf-live-react .lf-stream{animation:lfLiveBreath .9s cubic-bezier(.2,.72,.22,1)}
-.like-fountain.lf-live-react .lf-p-heart:not(.lf-p-heart-avatar){filter:brightness(var(--lf-live-boost,1.15)) drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 calc(var(--glow,14px) * .7) var(--c))}
+.like-fountain.lf-live-react .lf-p-heart:not(.lf-p-heart-avatar){filter:brightness(var(--lf-live-boost,1.15)) drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 3px var(--c))}
 .like-fountain.lf-live-mid .lf-stream{animation-duration:1.05s}
 .like-fountain.lf-live-high .lf-stream{animation-name:lfLiveSurge;animation-duration:1.25s}
 .like-fountain.lf-live-high .fountain-pop{transform:scale(1.12)}
@@ -532,18 +532,7 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 
 /* Selected effects travel with the hearts instead of replacing the fountain with a source pop. */
 .like-fountain .fountain-pop{display:none!important}
-.like-fountain.lf-fx-burst .lf-p-heart:nth-child(5n){filter:brightness(1.32) saturate(1.25) drop-shadow(0 0 7px var(--c)) drop-shadow(0 0 18px var(--c))}
-.like-fountain.lf-fx-sparkle .lf-p-heart:nth-child(3n)::after{content:'✦';opacity:1;font-size:.38em;animation:lfCrystalFacet 1.25s ease-in-out infinite}
-.like-fountain.lf-fx-mini .lf-p-heart:nth-child(4n)::before{content:'♥';position:absolute;inset:auto;left:-.7em;top:.42em;color:var(--c);-webkit-text-stroke:0;background:none;-webkit-background-clip:initial;background-clip:initial;font-size:.36em;opacity:.85;filter:drop-shadow(0 0 4px var(--c));animation:lfMiniCompanion 1.8s ease-in-out infinite}
-.like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n){position:absolute;color:transparent;font-size:calc(var(--heart-size,24px) * .48);text-shadow:none}
-.like-fountain.lf-fx-stars .lf-p-spark:nth-child(3n)::before{content:'★';position:absolute;color:var(--c);text-shadow:0 0 5px #fff,0 0 12px var(--c)}
-.like-fountain.lf-fx-confetti .lf-p-dust:nth-child(3n){width:3px;height:9px;border-radius:1px;box-shadow:0 0 5px var(--c);transform-origin:center}
-.like-fountain.lf-fx-firework .lf-p-spark:nth-child(4n){filter:drop-shadow(-7px 8px 1px var(--c)) drop-shadow(7px 11px 1px var(--c)) drop-shadow(0 16px 1px #fff)}
-.like-fountain.lf-fx-ring .lf-p-heart:nth-child(6n){outline:1px solid color-mix(in srgb,var(--c),white 45%);outline-offset:.18em;border-radius:50%;box-shadow:0 0 0 .14em color-mix(in srgb,var(--c),transparent 78%),0 0 12px var(--c)}
-.like-fountain.lf-live-react .lf-p-heart:nth-child(2n){filter:brightness(1.45) saturate(1.2) drop-shadow(0 0 9px var(--c))}
-@keyframes lfMiniCompanion{0%,100%{transform:translate(0,3px) scale(.8);opacity:.35}50%{transform:translate(-5px,-7px) scale(1.15);opacity:1}}
 .lf-cascade-jewel{color:transparent!important;-webkit-text-stroke:.55px rgba(255,255,255,.82);background:linear-gradient(145deg,#fff,#f3b4ff 24%,#b94cff 52%,#6130a8 76%,#fff);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 5px #d75cff) drop-shadow(0 0 13px rgba(143,55,255,.6))}
-@keyframes lfCrystalFacet{50%{opacity:.22;transform:scale(.72) rotate(28deg)}}
 .head-actions .connection.connected{background:linear-gradient(105deg,#126c49,#19a66e)!important;border-color:#43df9f!important;color:#fff!important;box-shadow:0 0 20px #24d78b45!important}.head-actions .connection.connected i{background:#8dffc9!important;box-shadow:0 0 9px #55efaa}
 /* Alla tre knapparna i sidhuvudet lyser (Davids beslut 2026-08-20). Regeln bor HAR, bredvid den
    grona, for att de tre glodena maste lasas ihop: de tva neutrala i husets violett, anslutningen
@@ -1679,3 +1668,43 @@ html:not(.overlay-output) .editor-shell .scenbakgrund-kontroll .sb-oppna{font-si
 html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(--ed-muted)}
 /* widget-etikett pa duken (endast editor-preview) */
 html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c0}
+
+/* LIKE FOUNTAIN · LIKES SOM SLÄPPER HJÄRTAN (2026-10-05). I OBS visas bara hjärtan som en like
+   släppt; förhandsströmmen är mallen de klonas ur. Ett släppt hjärta spelar EN gång. */
+.overlay-output .like-fountain .lf-p:not(.lf-live){display:none!important}
+.like-fountain[class*="lf-motion-"] .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
+.like-fountain .lf-p-heart.lf-star{z-index:3}
+.like-fountain .lf-p-heart.lf-star .lf-p-heart-avatar-img{width:calc(var(--sz,20px) * 1.7);height:calc(var(--sz,20px) * 1.7);border:3.5px solid #ffd34d;box-shadow:0 0 0 2px rgba(8,4,16,.8),0 0 10px #ffb21c}
+
+/* TIO MODELLER, TIO RÖRELSER. Modellen väljer rörelse i applyLikeFountainPreset; reglerna nedan
+   ger varje rörelse sitt eget beteende ovanpå banan från lfMotionVars. */
+.like-fountain.lf-motion-pulse .lf-p-heart{animation-name:lfOrganicHeartRise,lfNeonGlow;animation-duration:var(--dur),2.2s;animation-timing-function:linear,ease-in-out;animation-direction:normal,alternate}
+/* Neon Pulse pulserar i GLÖDEN, inte i storleken: hjärtslaget (1,24x varje sekund) hoppade fram och
+   tillbaka (Davids "ser jobbigt ut", 2026-10-05). Storlek och bana står still; bara skenet andas. */
+@keyframes lfNeonGlow{0%{filter:drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 4px var(--c))}100%{filter:drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 9px var(--c)) brightness(1.15)}}
+.like-fountain.lf-motion-pixel .lf-p-heart{animation-name:lfPixelRise;animation-timing-function:steps(18,end)}
+@keyframes lfPixelRise{0%{transform:translate(-50%,10px) scale(.5);opacity:0}6%{opacity:1}25%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(1)}50%{transform:translate(calc(-50% + var(--lf-x2) * .7),calc(-1 * var(--rise) * .62)) scale(1)}75%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .84)) scale(1);opacity:1}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .95)) scale(1);opacity:0}}
+.like-fountain.lf-motion-bubble .lf-p-heart{animation-name:lfBubbleRise,lfBubbleSway;animation-duration:var(--dur),calc(var(--lf-sway-dur,2s) * 1.4)}
+@keyframes lfBubbleRise{0%{transform:translate(-50%,10px) scale(.3);opacity:0}8%{opacity:.95}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .38)) scale(.9)}70%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .78)) scale(1);opacity:1}88%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .88)) scale(1.04);opacity:1}94%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.3);opacity:.55}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.5);opacity:0}}
+@keyframes lfBubbleSway{0%{translate:calc(var(--lf-sway,3px) * -1.1) 0}100%{translate:calc(var(--lf-sway,3px) * 1.1) 0}}
+.like-fountain.lf-motion-ghost .lf-p-heart{animation-name:lfGhostRise,lfHeartSway;animation-duration:calc(var(--dur) * 1.15),calc(var(--lf-sway-dur,2s) * 1.5)}
+@keyframes lfGhostRise{0%{transform:translate(-50%,10px) scale(.4);opacity:0}12%{opacity:.75}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(.9);opacity:.35}50%{opacity:.85}65%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .72)) scale(1);opacity:.4}82%{opacity:.8}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(1.05);opacity:0}}
+.like-fountain.lf-motion-flip .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartFlip;animation-duration:var(--dur),2.6s;animation-timing-function:linear,ease-in-out;animation-direction:normal,normal}
+@keyframes lfHeartFlip{0%{rotate:y 0deg}50%{rotate:y 180deg}100%{rotate:y 360deg}}
+.like-fountain.lf-motion-pulse .lf-p.lf-live,.like-fountain.lf-motion-flip .lf-p.lf-live,.like-fountain.lf-motion-bubble .lf-p.lf-live,.like-fountain.lf-motion-ghost .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
+
+/* Modellernas utseende (från Codex-utkastet 2026-10-05, glöden nedtonad: max 6 px). */
+.like-fountain.lf-preset-sakura-fall .lf-p-heart:not(.lf-p-heart-avatar){border-radius:70% 15% 70% 20%;font-size:0;background:linear-gradient(135deg,#fff7fb 0 12%,var(--c) 34% 72%,#d94f91);width:var(--sz);height:calc(var(--sz) * .72);-webkit-text-stroke:0;transform-origin:75% 75%}
+.like-fountain.lf-preset-sakura-fall .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'';inset:12% 42% 12% 42%;border-radius:50%;background:#fff;opacity:.5;transform:rotate(-35deg)}
+.like-fountain.lf-preset-neon-pulse .lf-p-heart:not(.lf-p-heart-avatar){color:transparent;background:none;-webkit-text-stroke:1.4px var(--c);filter:drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 6px var(--c))}
+.like-fountain.lf-preset-gold-rush .lf-p-heart:not(.lf-p-heart-avatar){background:linear-gradient(135deg,#fffbe2,#ffd15a 34%,#b87300 70%,#fff0a0);-webkit-background-clip:text;background-clip:text}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart:not(.lf-p-heart-avatar){font-family:monospace;-webkit-text-stroke:0;background:none;color:var(--c);filter:drop-shadow(3px 0 0 rgba(255,255,255,.18))}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart:not(.lf-p-heart-avatar)::before{display:none}
+.like-fountain.lf-preset-pixel-arcade .lf-p-heart-avatar-img{border-radius:3px;image-rendering:pixelated}
+.like-fountain.lf-preset-galaxy-drift .lf-p-heart:not(.lf-p-heart-avatar){background:radial-gradient(circle at 38% 28%,#fff 0 3%,transparent 4%),radial-gradient(circle at 66% 64%,#fff 0 2%,transparent 3%),linear-gradient(145deg,#3421a8,#8b5cf6 45%,#ef5be8);-webkit-background-clip:text;background-clip:text}
+.like-fountain.lf-preset-bubble-pop .lf-p-heart:not(.lf-p-heart-avatar){display:grid;place-items:center;width:calc(var(--sz) * 1.15);height:calc(var(--sz) * 1.15);border:1px solid color-mix(in srgb,var(--c),white 58%);border-radius:50%;background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.92) 0 5%,transparent 7%),color-mix(in srgb,var(--c),transparent 84%);-webkit-text-stroke:0;color:var(--c);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c),transparent 45%));font-size:calc(var(--sz) * .5)}
+.like-fountain.lf-preset-bubble-pop .lf-p-heart:not(.lf-p-heart-avatar)::before{display:none}
+.like-fountain.lf-preset-ghost-hearts .lf-p-heart:not(.lf-p-heart-avatar){background:none;color:transparent;-webkit-text-stroke:1px rgba(235,242,255,.85);filter:drop-shadow(0 0 4px rgba(196,181,253,.7))}
+.like-fountain.lf-preset-plasma-core .lf-p-heart:not(.lf-p-heart-avatar){background:conic-gradient(from var(--lf-r1),#ff29d8,#7b3cff,#00dcff,#ff7a18,#ff29d8);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 5px #8b3dff)}
+.like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar){clip-path:polygon(50% 100%,4% 42%,8% 16%,30% 4%,50% 26%,70% 4%,92% 16%,96% 42%);width:var(--sz);height:var(--sz);font-size:0;background:linear-gradient(135deg,#fff 0 16%,var(--c) 17% 48%,color-mix(in srgb,var(--c),#8a284b 46%) 49% 73%,#ffd6e1 74%);-webkit-text-stroke:0}
+.like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'';inset:0;background:linear-gradient(72deg,transparent 48%,rgba(255,255,255,.72) 49% 52%,transparent 53%);clip-path:inherit;opacity:.75;transform:none}

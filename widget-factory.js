@@ -433,8 +433,8 @@
       fountainAvatarHearts: true, fountainPopEvery: 1000
     }),
     'likefountain': () => ({
-      type: 'templateLikeFountain', x: 40, y: 100, width: 620, title: 'Like Fountain',
-      fountainCount: 42, fountainSize: 22, fountainSpeed: 5, fountainHeight: 420,
+      type: 'templateLikeFountain', x: 6, y: 150, width: 420, title: 'Like Fountain',
+      fountainCount: 18, fountainSize: 32, fountainSpeed: 6, fountainHeight: 600,
       fountainColor: '#ff3c88', fountainColor2: '#b94cff'
     }),
     // Undertexten är temats egen röst. Alla teman utom Crystal Garden delar 'PUSH THE EVENT';

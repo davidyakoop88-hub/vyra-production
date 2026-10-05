@@ -58,7 +58,13 @@ test('i OBS: tom när ingen tappar, hjärtan när tittarna tappar, historik ger 
     const t = await page.evaluate(id => VyraLikePortal.tillstand(id), id);
     assert.ok(t && t.hjartan > 5, `för få hjärtan efter 12 like-paket: ${JSON.stringify(t)}`);
     assert.ok(t.bubblor >= 1, 'tittarnas profilbilder stiger inte med');
-    assert.equal(new Set(t.platser).size, t.platser.length, 'två hjärtan på samma plats');
+    // Det som RITAS får inte ligga på varandra (2026-10-05: hjärtan stiger i banor, inga platser).
+    const par = await page.evaluate(id => {
+      const ting = VyraLikePortal.ritat(id).filter(o => o.alfa > 0.4 && !o.flyger); let n = 0;
+      for (let i = 0; i < ting.length; i++) for (let j = i + 1; j < ting.length; j++) if (Math.hypot(ting[i].x - ting[j].x, ting[i].y - ting[j].y) < ting[i].r + ting[j].r) n++;
+      return n;
+    }, id);
+    assert.ok(par <= 1, `${par} hjärtan/profilbilder ligger på varandra`);
     assert.ok(await malad(page, id) > 50, 'duken är tom fast fontänen lever');
     assert.deepEqual(fel, []);
   } finally { await page.close(); }

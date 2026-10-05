@@ -167,7 +167,13 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // html:not(.overlay-output) sa overlay-utgangen forblir transparent. Filen ar alltsa ny mot BADA
   // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
   // svarta plattan i OBS/TikTok.
-  assert.match(studio, /studio\.css\?v=20260928-overlay/);
+  // 20261005-1: Like Fountain-hjärtana tappade sin ✦ i ::after (bara hjärtan och profilbilder).
+  // 20261005-4: tio Like Fountain-modeller med egna rörelser och likes som släpper hjärtan i OBS.
+  // 20261005-5: stjärnbilden 1,7× (förut 2,1×), uppmätt i OBS.
+  // 20261005-6: lfHeartSway/lfBubbleSway lugnare (de vinglade för mycket).
+  // 20261005-7: OBS-döljningen av förhandsströmmen !important (Bubble Pop syntes i OBS).
+  // 20261005-8: lfHeartBeat (hoppade) ersatt av lfNeonGlow.
+  assert.match(studio, /studio\.css\?v=20261005-8/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -181,7 +187,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-24 (-2): fabriken pekar om de pensionerade rankingdesignerna (Top Like
   // Clean Bar/Soft Stack/Mini Podium/Side Rank, Top Points Lista/Tre i mitten/Podium/Neon) till
   // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
-  assert.match(studio, /widget-factory\.js\?v=20260924-2/);
+  // Bumpad 2026-10-05: Like Fountain centrerad på duken (x 6, bredd 420) och 18 hjärtan som standard.
+  // 20261005-2: hjärtstorlek 32 som standard (24 blev för smått i OBS).
+  assert.match(studio, /widget-factory\.js\?v=20261005-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -353,7 +361,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
   // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
   // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
-  assert.match(media, /const version='20260928-goal-1'/);
+  assert.match(media, /const version='20261005-5'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
