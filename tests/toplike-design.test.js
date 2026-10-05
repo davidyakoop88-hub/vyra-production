@@ -94,7 +94,8 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 2026-09-30: media.js bar poster-attributet pa battle-video-FX-widgetarna (katalogmito).
   // 2026-10-05: Like Fountain visar bara hjärtan och profilbilder (gnistor, damm och glitter borta).
   // 20261005-2: hjärtana får egna banor och jämna starttider så att de inte hamnar på varandra.
-  assert.match(studioHtml, /media\.js\?v=20261005-2/);
+  // 20261005-3: hjärtana stiger som ballonger och pendlar var för sig (lfHeartSway).
+  assert.match(studioHtml, /media\.js\?v=20261005-3/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

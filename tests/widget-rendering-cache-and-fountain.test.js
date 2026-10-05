@@ -168,7 +168,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
   // svarta plattan i OBS/TikTok.
   // 20261005-1: Like Fountain-hjärtana tappade sin ✦ i ::after (bara hjärtan och profilbilder).
-  assert.match(studio, /studio\.css\?v=20261005-2/);
+  assert.match(studio, /studio\.css\?v=20261005-3/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.

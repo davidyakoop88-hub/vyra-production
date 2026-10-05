@@ -435,7 +435,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
    bounded control points from media.js; repeated modulo lanes are no longer
    visible as robotic straight tracks. */
 .like-fountain[class*="lf-motion-"] .lf-p{animation-timing-function:linear}
-.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfOrganicHeartRise}
+.like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartSway;animation-duration:var(--dur),var(--lf-sway-dur,2s);animation-delay:var(--delay),var(--lf-sway-delay,0s);animation-timing-function:linear,ease-in-out;animation-direction:normal,alternate;animation-iteration-count:infinite}
 .like-fountain[class*="lf-motion-"] .lf-p-spark{animation-name:lfOrganicSparkRise}
 .like-fountain[class*="lf-motion-"] .lf-p-dust{animation-name:lfOrganicDustRise}
 .like-fountain.lf-motion-firefly .lf-p{animation-duration:calc(var(--dur) * 1.28)}
@@ -444,13 +444,14 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .like-fountain.lf-motion-cascade .lf-p-heart{animation-name:lfCascadeRise;filter:brightness(1.12) saturate(1.05)}
 .like-fountain.lf-motion-bloom .lf-p-heart{transform-origin:center bottom}
 @keyframes lfOrganicHeartRise{
-  0%{transform:translate(-50%,10px) scale(.22) rotate(0);opacity:0;animation-timing-function:cubic-bezier(.2,.72,.3,1)}
-  11%{opacity:.94}
-  32%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1));animation-timing-function:cubic-bezier(.45,.05,.35,1)}
-  63%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1;animation-timing-function:cubic-bezier(.35,.1,.28,1)}
-  84%{opacity:.76}
+  0%{transform:translate(-50%,10px) scale(.22) rotate(0);opacity:0}
+  10%{opacity:.95}
+  32%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * var(--lf-lift1))) scale(var(--lf-breathe)) rotate(var(--lf-r1))}
+  63%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * var(--lf-lift2))) scale(1) rotate(var(--lf-r2));opacity:1}
+  86%{opacity:.8}
   100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise))) scale(.46) rotate(var(--lf-r3));opacity:0}
 }
+@keyframes lfHeartSway{0%{translate:calc(var(--lf-sway,6px) * -1) 0;rotate:calc(var(--lf-tilt,8deg) * -1)}100%{translate:var(--lf-sway,6px) 0;rotate:var(--lf-tilt,8deg)}}
 @keyframes lfOrganicSparkRise{
   0%{transform:translate(-50%,8px) scale(.2) rotate(0);opacity:0}
   18%{opacity:.9}

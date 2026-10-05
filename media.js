@@ -728,8 +728,8 @@ function lfMotionVars(w,index){
   }else{
     x1=lane*spread*.55+b*3;x2=lane*spread*.68+c*4;x3=lane*spread*.94+b*5;
   }
-  let lift1=.26+b*.012,lift2=.58+c*.012,rot1=Math.round(a*9),rot2=Math.round(b*13),rot3=Math.round(c*8);
-  return `--lf-x1:${x1.toFixed(1)}px;--lf-x2:${x2.toFixed(1)}px;--lf-x3:${x3.toFixed(1)}px;--lf-lift1:${lift1.toFixed(3)};--lf-lift2:${lift2.toFixed(3)};--lf-r1:${rot1}deg;--lf-r2:${rot2}deg;--lf-r3:${rot3}deg;--lf-breathe:${(0.7+Math.abs(a)*.08).toFixed(2)};`;
+  let lift1=.37+b*.012,lift2=.69+c*.012,rot1=Math.round(a*9),rot2=Math.round(b*13),rot3=Math.round(c*8);
+  return `--lf-x1:${x1.toFixed(1)}px;--lf-x2:${x2.toFixed(1)}px;--lf-x3:${x3.toFixed(1)}px;--lf-lift1:${lift1.toFixed(3)};--lf-lift2:${lift2.toFixed(3)};--lf-r1:${rot1}deg;--lf-r2:${rot2}deg;--lf-r3:${rot3}deg;--lf-breathe:${(0.7+Math.abs(a)*.08).toFixed(2)};--lf-sway:${(5+Math.abs(c)*4).toFixed(1)}px;--lf-tilt:${(6+Math.abs(b)*7).toFixed(1)}deg;--lf-sway-dur:${(1.4+Math.abs(a)*.9).toFixed(2)}s;--lf-sway-delay:${(-Math.abs(b)*2.3).toFixed(2)}s;`;
 }
 const lfOrganicBaseHtml=likeFountainHtml;
 function lfSelectedEffectClasses(w){
