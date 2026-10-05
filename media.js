@@ -712,7 +712,7 @@ function lfSlappLikes(event={}){
     let stjarna=!!pic&&amount>=Math.max(5,+w.fountainStarLikes||25);
     if(pic)st.ko.push({bild:pic,stjarna});
     for(let i=0;i<hjartan-(pic?1:0);i++)st.ko.push({});
-    if(stjarna){st.ko.push({},{bild:pic,stjarna:true},{},{bild:pic,stjarna:true})}
+    if(stjarna){st.ko[st.ko.length-(hjartan>1?hjartan:1)].paus=1000;st.ko.push({bild:pic,stjarna:true,paus:1000},{bild:pic,stjarna:true})}
     if(st.ko.length>40)st.ko.splice(0,st.ko.length-40);
     lfPumpa(w,st);
   });
@@ -727,7 +727,7 @@ function lfPumpa(w,st){
     if(!mallar.length||!st.ko.length)return;
     let iLuften=strom.querySelectorAll('.lf-live').length,tak=Math.max(6,Math.min(40,w.fountainCount||18));
     if(iLuften<tak){
-      let sak=st.ko.shift(),bilder=strom.querySelectorAll('.lf-live.lf-p-heart-avatar').length;
+      var sak;sak=st.ko.shift();let bilder=strom.querySelectorAll('.lf-live.lf-p-heart-avatar').length;
       if(sak.bild&&!sak.stjarna&&bilder>=Math.max(1,w.fountainMaxAvatars||4))sak={};
       let mall=mallar[st.slot++%mallar.length],el=mall.cloneNode(true);
       el.classList.add('lf-live');el.style.setProperty('--delay','0s');el.style.setProperty('--lf-sway-delay','0s');
@@ -738,7 +738,7 @@ function lfPumpa(w,st){
       setTimeout(bort,(parseFloat(getComputedStyle(el).getPropertyValue('--dur'))||w.fountainSpeed||5)*1400+800);
       strom.appendChild(el);
     }
-    if(st.ko.length)st.timer=setTimeout(steg,140);
+    if(st.ko.length)st.timer=setTimeout(steg,sak&&sak.paus||140);
   };
   st.timer=setTimeout(steg,0);
 }

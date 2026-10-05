@@ -169,7 +169,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // svarta plattan i OBS/TikTok.
   // 20261005-1: Like Fountain-hjärtana tappade sin ✦ i ::after (bara hjärtan och profilbilder).
   // 20261005-4: tio Like Fountain-modeller med egna rörelser och likes som släpper hjärtan i OBS.
-  assert.match(studio, /studio\.css\?v=20261005-4/);
+  // 20261005-5: stjärnbilden 1,7× (förut 2,1×), uppmätt i OBS.
+  assert.match(studio, /studio\.css\?v=20261005-5/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -184,7 +185,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Clean Bar/Soft Stack/Mini Podium/Side Rank, Top Points Lista/Tre i mitten/Podium/Neon) till
   // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
   // Bumpad 2026-10-05: Like Fountain centrerad på duken (x 6, bredd 420) och 18 hjärtan som standard.
-  assert.match(studio, /widget-factory\.js\?v=20261005-1/);
+  // 20261005-2: hjärtstorlek 32 som standard (24 blev för smått i OBS).
+  assert.match(studio, /widget-factory\.js\?v=20261005-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
