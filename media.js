@@ -755,7 +755,7 @@ const LIKE_FOUNTAIN_MOTIONS={
   bloom:{name:'Heart Bloom',description:'Öppnar sig som en bukett',icon:'♡'},
   firefly:{name:'Firefly Drift',description:'Långsam svävande rörelse',icon:'✦'},
   cascade:{name:'Heart Cascade',description:'Hjärtformation utan profilbild',icon:'♡'},
-  pulse:{name:'Neon Pulse',description:'Hjärtslag på väg upp',icon:'♥'},
+  pulse:{name:'Neon Glow',description:'Glöden pulserar lugnt',icon:'♥'},
   pixel:{name:'Pixel Hop',description:'Hoppar i steg som ett arkadspel',icon:'▦'},
   bubble:{name:'Bubble Float',description:'Bred gungning, spricker högst upp',icon:'○'},
   ghost:{name:'Ghost Flicker',description:'Tonar in och ut på vägen',icon:'◌'},

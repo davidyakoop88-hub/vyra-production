@@ -1678,8 +1678,10 @@ html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c
 
 /* TIO MODELLER, TIO RÖRELSER. Modellen väljer rörelse i applyLikeFountainPreset; reglerna nedan
    ger varje rörelse sitt eget beteende ovanpå banan från lfMotionVars. */
-.like-fountain.lf-motion-pulse .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartBeat;animation-duration:var(--dur),1.1s;animation-timing-function:linear,ease-out;animation-direction:normal,normal}
-@keyframes lfHeartBeat{0%,45%,100%{scale:1}12%{scale:1.24}26%{scale:1.06}34%{scale:1.16}}
+.like-fountain.lf-motion-pulse .lf-p-heart{animation-name:lfOrganicHeartRise,lfNeonGlow;animation-duration:var(--dur),2.2s;animation-timing-function:linear,ease-in-out;animation-direction:normal,alternate}
+/* Neon Pulse pulserar i GLÖDEN, inte i storleken: hjärtslaget (1,24x varje sekund) hoppade fram och
+   tillbaka (Davids "ser jobbigt ut", 2026-10-05). Storlek och bana står still; bara skenet andas. */
+@keyframes lfNeonGlow{0%{filter:drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 4px var(--c))}100%{filter:drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 9px var(--c)) brightness(1.15)}}
 .like-fountain.lf-motion-pixel .lf-p-heart{animation-name:lfPixelRise;animation-timing-function:steps(18,end)}
 @keyframes lfPixelRise{0%{transform:translate(-50%,10px) scale(.5);opacity:0}6%{opacity:1}25%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(1)}50%{transform:translate(calc(-50% + var(--lf-x2) * .7),calc(-1 * var(--rise) * .62)) scale(1)}75%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .84)) scale(1);opacity:1}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .95)) scale(1);opacity:0}}
 .like-fountain.lf-motion-bubble .lf-p-heart{animation-name:lfBubbleRise,lfBubbleSway;animation-duration:var(--dur),calc(var(--lf-sway-dur,2s) * 1.4)}

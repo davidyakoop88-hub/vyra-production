@@ -26,7 +26,7 @@ test('tio modeller, och var och en har sin EGEN rörelse', () => {
 });
 
 test('varje ny rörelse har egna keyframes, inte bara en färg', () => {
-  for (const [rorelse, kf] of [['pulse', 'lfHeartBeat'], ['pixel', 'lfPixelRise'], ['bubble', 'lfBubbleRise'], ['ghost', 'lfGhostRise'], ['flip', 'lfHeartFlip']]) {
+  for (const [rorelse, kf] of [['pulse', 'lfNeonGlow'], ['pixel', 'lfPixelRise'], ['bubble', 'lfBubbleRise'], ['ghost', 'lfGhostRise'], ['flip', 'lfHeartFlip']]) {
     assert.match(css, new RegExp(`\\.lf-motion-${rorelse} \\.lf-p-heart\\{animation-name:[^}]*${kf}`), `${rorelse} använder inte ${kf}`);
     assert.match(css, new RegExp(`@keyframes ${kf}\\{`), `${kf} saknas`);
   }
