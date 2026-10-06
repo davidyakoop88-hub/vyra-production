@@ -78,7 +78,9 @@ test('en like rör DOM-fontänen, och inget canvas-lager har kommit tillbaka', {
     const m = await page.evaluate(async () => {
       const box = document.querySelector('.widget.like-fountain');
       if (!box) return { fel: 'fontanen renderades inte' };
-      const domFore = box.querySelectorAll('.lf-p').length;
+      // Fontänens EGNA hjärtan (mallarna). Sedan #566 släpper varje like dessutom egna hjärtan
+      // (.lf-live) i strömmen — de räknas separat nedan och får inte blandas in här.
+      const domFore = box.querySelectorAll('.lf-p:not(.lf-live)').length;
       for (let i = 0; i < 20; i++) {
         triggerLikeFountainPop({ username: '@P' + (i % 5), count: 1 });
         await new Promise(r => setTimeout(r, 45));
@@ -90,7 +92,8 @@ test('en like rör DOM-fontänen, och inget canvas-lager har kommit tillbaka', {
         poppBarn: popp ? popp.children.length : 0,
         dukar: box.querySelectorAll('canvas.lf-duk').length,
         modul: typeof window.VyraLikeFountainFx,
-        domFore, domEfter: box.querySelectorAll('.lf-p').length
+        domFore, domEfter: box.querySelectorAll('.lf-p:not(.lf-live)').length,
+        slappta: box.querySelectorAll('.lf-p.lf-live').length
       };
     });
     if (m.fel) assert.fail(m.fel);
@@ -111,5 +114,7 @@ test('en like rör DOM-fontänen, och inget canvas-lager har kommit tillbaka', {
       + 'allokerade en duk per render som ingenting ritade pa');
 
     assert.equal(m.domEfter, m.domFore, 'DOM-fontanens egna hjartan ska inte rubbas av poppen');
+    // Och liken ska ha SLÄPPT hjärtan (#566: i OBS är det det enda som syns).
+    assert.ok(m.slappta > 0, `20 likes slappte inga hjartan (${m.slappta})`);
   } finally { await page.close(); }
 });
