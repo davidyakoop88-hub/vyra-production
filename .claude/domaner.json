@@ -337,6 +337,7 @@
         "overlay-diagnostics.js",
         "overlay-diagnostics.css",
         "overlay-packages.js",
+        "battle-fx-auto.js",
         "overlay-preview.js",
         "overlay-sanitize.js",
         "layout-standalone.js",
@@ -346,6 +347,7 @@
       ],
       "tester": [
         "tests/overlay-sanitize.test.js",
+        "tests/battle-fx-auto.test.js",
         "tests/overlay-live-leaderboards.test.js",
         "tests/thumb-no-overlay-leak.test.js",
         "tests/scene-links.test.js",
