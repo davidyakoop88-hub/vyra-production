@@ -13,6 +13,9 @@
 //   multiplier 3 / typ x3      -> boost-x3
 //   glove med 4+ eller utan tal -> glove   (Boosting Glove ar 5x)
 //   typ tap / snipe            -> tap / snipe
+// Det ar mappningen for testknappar och uttryckliga typer. NAR en riktig battle spelar vad styrs av
+// reglerna vid hantera() nedan (Tap Tap vid matchstart, X2/X3 utom forsta boosten, Glove och
+// Snipe nar 30 s aterstar).
 //
 // VAR DET SPELAS. Bara i OBS-utgangen och bara i scen 1, via VyraActionRuntime — samma ko, samma
 // .vyra-runtime-item som en Action "Spela video". Studion spelar aldrig; tre OBS-scener ger inte
@@ -116,21 +119,58 @@
     return f ? { path: f.path, name: pkg.name + ' · ' + f.label } : null;
   }
 
+  // ---- NAR KLIPPEN SPELAS — Davids regler 2026-10-07 -------------------------------------------
+  //   1. Tap Tap  nar matchen borjar (forsta battle_started per match)
+  //   2. X2 / X3  nar ett boost-fonster oppnar — men INTE matchens forsta boost
+  //   3. Glove    nar 30 s aterstar av varje boost-fonster
+  //   4. Snipe    nar 30 s aterstar av matchen
+  // TIDERNA: bryggan skickar remainingSec pa `battle` (matchens aterstod, raknad i TikToks klocka)
+  // och durationSec pa `glove` (fonstrets langd). Saknas de galler reserverna nedan: en TikTok-match
+  // ar uppmatt 300 s. Testknapparna (id battle-fx-test-...) spelar sitt klipp direkt som forut.
+  var MATCH_SEK = 300, BOOST_SEK = 60, SLUT_SEK = 30;
+  var SLUT = /(end|finish|over|settle|result|punish|complete|close)/;
+  var START = /(start|active|begin|ongoing|progress)/;
+  var match = null;      // { id, boostar, timers, snipe, snipeSpelad }
+  var avslutade = {};    // battleId -> ms, sa ett sent battle_started inte startar om en slutspelad match
   var sedda = {};
-  function spela(event, opts) {
+
+  function nu() { return Date.now(); }
+  function planera(fn, ms) { return (root.setTimeout || setTimeout)(fn, Math.max(0, ms)); }
+  function avbryt(t) { try { (root.clearTimeout || clearTimeout)(t); } catch (e) {} }
+  function rensa(karta, ms) { var t = nu(); Object.keys(karta).forEach(function (k) { if (t - karta[k] > ms) delete karta[k]; }); }
+  function avslutaMatch(id) {
+    if (id) avslutade[id] = nu();
+    if (!match) return;
+    if (match.id) avslutade[match.id] = nu();
+    match.timers.forEach(avbryt); if (match.snipe) avbryt(match.snipe);
+    match = null;
+  }
+  function nyMatch(id) {
+    avslutaMatch();
+    rensa(avslutade, 3600000);
+    match = { id: id || '', boostar: 0, timers: [], snipe: null, snipeSpelad: false };
+    return match;
+  }
+  function arTest(e, opts) {
+    return !!(opts && opts.test) || e.source === 'battle-fx-test' ||
+      /^battle-fx-test/.test(String(e.id || '')) || /^battle-fx-test/.test(String(e.battleId || ''));
+  }
+  function dubblett(e) {
+    var id = e && e.id != null ? String(e.id) : '';
+    if (!id) return false;
+    rensa(sedda, 60000);
+    if (sedda[id]) return true;
+    sedda[id] = nu();
+    return false;
+  }
+
+  // Spelar ett klipp ur valt paket i scen 1. Ingen tids- eller dubblettkontroll har — det ar
+  // hantera() som avgor NAR.
+  function spelaKlipp(nyckel, event, opts) {
     opts = opts || {};
-    var nyckel = klippFor(event);
     if (!nyckel) return 'inget klipp';
     var inst = installning(), pack = opts.pack || inst.pack;
     if (!pack) return 'av';
-    if (!opts.test && forGammal(event)) return 'for gammal';
-    var id = event && event.id != null ? String(event.id) : '';
-    if (id && !opts.test) {
-      var nu = Date.now();
-      Object.keys(sedda).forEach(function (k) { if (nu - sedda[k] > 60000) delete sedda[k]; });
-      if (sedda[id]) return 'dubblett';
-      sedda[id] = nu;
-    }
     var klipp = klippSokvag(pack, nyckel);
     if (!klipp) return 'paketet saknar ' + nyckel;
     if (!root.VyraActionRuntime || !root.VyraActionRuntime.execute) return 'ingen runtime';
@@ -141,9 +181,79 @@
       videoMedia: { packagePath: klipp.path, name: klipp.name },
       scene: { number: 1, x: plats.x, y: plats.y, width: plats.width, layer: plats.layer }
     };
-    var ok = root.VyraActionRuntime.execute({ action: action, payload: { username: 'TikTok' }, runId: 'battle-fx-' + (id || Date.now()) });
+    var id = event && event.id != null ? String(event.id) : '';
+    var ok = root.VyraActionRuntime.execute({ action: action, payload: { username: 'TikTok' }, runId: 'battle-fx-' + nyckel + '-' + (id || nu()) });
     return ok ? 'spelas' : 'inte scen 1';
   }
+
+  function planeraSnipe(kvarSek) {
+    var m = match;
+    if (!m || m.snipeSpelad) return;
+    if (m.snipe) avbryt(m.snipe);
+    m.snipe = planera(function () {
+      if (match !== m || m.snipeSpelad) return;
+      m.snipeSpelad = true;
+      spelaKlipp('snipe', { id: 'snipe-' + (m.id || nu()) });
+    }, (kvarSek - SLUT_SEK) * 1000);
+  }
+
+  function battleHandelse(e) {
+    var status = String(e.battleStatus || '').toLowerCase(), id = String(e.battleId || '');
+    if (!status) return 'ingen status';
+    if (SLUT.test(status)) {
+      if (!match || !id || !match.id || match.id === id) avslutaMatch(id); else avslutade[id] = nu();
+      return 'matchen slut';
+    }
+    if (!START.test(status)) return 'okand status';
+    if (id && avslutade[id]) return 'matchen redan slut';
+    var kvar = Number(e.remainingSec) || 0;
+    if (match && (!id || !match.id || match.id === id)) {
+      // TikTok skickar battle_started om och om igen under en pagaende match. Varje ny aterstod
+      // rattar Snipe-tiden; Tap Tap spelas inte igen.
+      if (!match.id && id) match.id = id;
+      if (kvar > 0) planeraSnipe(kvar);
+      return 'pagaende match';
+    }
+    nyMatch(id);
+    planeraSnipe(kvar > 0 ? kvar : MATCH_SEK);
+    // Laddades overlayn mitt i en match ar starten redan forbi — ingen Tap Tap i efterhand.
+    if (kvar > 0 && kvar < MATCH_SEK - SLUT_SEK) return 'mitt i matchen';
+    return spelaKlipp('tap', e);
+  }
+
+  function boostHandelse(e) {
+    var id = String(e.battleId || '');
+    if (!match || (id && match.id && match.id !== id)) nyMatch(id);
+    else if (!match.id && id) match.id = id;
+    var m = match;
+    m.boostar++;
+    var langd = Number(e.durationSec) > 0 ? Number(e.durationSec) : BOOST_SEK;
+    var gid = 'glove-' + (e.id || nu());
+    m.timers.push(planera(function () { if (match === m) spelaKlipp('glove', { id: gid }); }, (langd - SLUT_SEK) * 1000));
+    if (m.boostar === 1) return 'forsta boosten';
+    var mult = Number(e.multiplier || e.x || e.combo || 0) || 0;
+    if (mult >= 3) return spelaKlipp('boost-x3', e);
+    if (mult === 2) return spelaKlipp('boost-x2', e);
+    return 'ingen multiplikator';
+  }
+
+  // Ett event in, ett beslut ut. Returvardet ar for proven och konsolen.
+  function hantera(event, opts) {
+    if (!event || typeof event !== 'object') return 'inget klipp';
+    var typ = String(event.type || event.event || '').toLowerCase();
+    if (arTest(event, opts)) return spelaKlipp(klippFor(event), event, opts);
+    if (!installning().pack) return 'av';
+    if (typ !== 'battle' && !klippFor(event)) return 'inget klipp';
+    if (forGammal(event)) return 'for gammal';
+    if (dubblett(event)) return 'dubblett';
+    if (typ === 'battle') return battleHandelse(event);
+    // Uttryckliga typer (Stream Deck, eget event) spelar direkt.
+    if (/tap|snipe|x2|x3/.test(typ)) return spelaKlipp(klippFor(event), event);
+    return boostHandelse(event);
+  }
+  // Bakatkompatibelt namn: spela(event, {test, pack}).
+  function spela(event, opts) { return hantera(event, opts); }
+  function lage() { return match ? { id: match.id, boostar: match.boostar, snipeSpelad: match.snipeSpelad } : null; }
 
   // Lank i routeLiveBattleEvent-kedjan. Felet i var lank far aldrig stoppa de andra.
   function koppla() {
@@ -152,7 +262,7 @@
     var lank = function (event) {
       var svar;
       try { svar = tidigare.apply(this, arguments); } finally {
-        try { spela(event || {}); } catch (err) { console.error('[VYRA battle-fx]', err); }
+        try { hantera(event || {}); } catch (err) { console.error('[VYRA battle-fx]', err); }
       }
       return svar;
     };
@@ -169,7 +279,7 @@
     var pct = Math.round(inst.storlek * 100);
     return '<section class="battle-fx-auto" data-battle-fx-auto style="margin:0 0 28px;padding:16px 18px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:14px">' +
       '<span class="section-header-eyebrow">⚔ Automatisk battle-FX</span>' +
-      '<p style="color:var(--text-muted);font-size:11px;margin:6px 0 12px">Spelar paketets klipp i OBS när TikTok öppnar ett boost-fönster: X2 vid ×2, X3 vid ×3 och Glove vid ×5. Tap Tap och Snipe spelas när du triggar dem själv. Spelas i scen 1. Utan inloggning: lägg <code>&amp;scene=1&amp;battlefx=pinkPrincess</code> på overlay-länken i OBS.</p>' +
+      '<p style="color:var(--text-muted);font-size:11px;margin:6px 0 12px">Spelar paketets klipp i OBS under en battle: Tap Tap när matchen börjar, X2/X3 när en dubbel- eller trippelboost startar (inte matchens första), Glove när 30 s återstår av boosten och Snipe när 30 s återstår av matchen. Testknapparna spelar direkt. Spelas i scen 1. Utan inloggning: lägg <code>&amp;scene=1&amp;battlefx=pinkPrincess</code> på overlay-länken i OBS.</p>' +
       '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">' +
       '<label>Paket <select id="battleFxPack">' + val + '</select></label>' +
       '<label>Storlek <b id="battleFxStorlekVarde">' + pct + ' %</b> <input id="battleFxStorlek" type="range" min="40" max="100" step="5" value="' + pct + '"></label>' +
@@ -198,7 +308,9 @@
       b.onclick = function () {
         if (!installning().pack) { if (root.toast) root.toast('Välj ett paket först'); return; }
         // Samma vag som ett riktigt event: via bryggans lokala server till live-client i OBS.
-        var ev = Object.assign({ source: 'battle-fx-test', eventKey: 'battle-fx-test-' + Date.now(), id: 'battle-fx-test-' + Date.now(), at: Date.now() }, TEST_EVENT[b.dataset.battleFxTest]);
+        // battleId battle-fx-test markerar testet aven om molnet byter id: overlayn spelar da
+        // klippet direkt i stallet for att rakna det som en riktig boost.
+        var ev = Object.assign({ source: 'battle-fx-test', eventKey: 'battle-fx-test-' + Date.now(), id: 'battle-fx-test-' + Date.now(), battleId: 'battle-fx-test', at: Date.now() }, TEST_EVENT[b.dataset.battleFxTest]);
         // Inloggad pa vyralive.app: workspace-rutten (samma som Desktop postar till). Den finns inte
         // lokalt, och /api/events finns bara lokalt. Molnet tar bara emot glove-typen, sa Tap Tap
         // och Snipe kan inte testas den vagen.
@@ -212,7 +324,7 @@
     });
   }
 
-  root.VyraBattleFx = { klippFor: klippFor, placering: placering, forGammal: forGammal, spela: spela, installning: installning, sparaInstallning: sparaInstallning, paketMedKlipp: paketMedKlipp };
+  root.VyraBattleFx = { klippFor: klippFor, placering: placering, forGammal: forGammal, spela: spela, hantera: hantera, lage: lage, installning: installning, sparaInstallning: sparaInstallning, paketMedKlipp: paketMedKlipp };
   if (typeof module === 'object' && module.exports) module.exports = root.VyraBattleFx;
   if (typeof document === 'undefined') return;
   koppla();
