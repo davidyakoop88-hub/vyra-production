@@ -55,11 +55,15 @@
 
   // Ren funktion: placering i runtime-koordinater (1080 bred, 1920 hog, oavsett OBS-kallans form),
   // sa att en 16:9-video hamnar centrerad i nederkant. `storlek` ar andel av bredden (0.4-1).
-  function placering(vw, vh, storlek) {
+  // `botten` (0.3-1) ar var klippets underkant hamnar, som andel av kallans hojd. 1 = nederkant.
+  // Behovs nar OBS-kallan ar uppskalad och dess nedre del hamnar utanfor canvasen: en staende
+  // 432x768-kalla i en liggande 1920x1080-canvas visar bara ungefar ovre 58 %.
+  function placering(vw, vh, storlek, botten) {
     var s = Math.min(1, Math.max(0.4, Number(storlek) || 1));
+    var b = Math.min(1, Math.max(0.3, Number(botten) || 1));
     var bredd = 1080 * s;
-    var hojdPx = Math.min(vw * s * 9 / 16, vh * 0.9);
-    var toppPx = Math.max(0, vh - hojdPx);
+    var hojdPx = Math.min(vw * s * 9 / 16, vh * 0.9 * b);
+    var toppPx = Math.max(0, vh * b - hojdPx);
     return { x: Math.round((1080 - bredd) / 2), y: Math.round(toppPx / vh * 1920), width: Math.round(bredd), layer: 40 };
   }
 
@@ -69,16 +73,18 @@
   function urlVal() {
     try {
       var p = new URLSearchParams((root.location && root.location.search) || '');
-      var pack = p.get('battlefx'), st = Number(p.get('battlefxstorlek'));
-      return { pack: pack == null ? null : (pack === 'av' ? '' : pack), storlek: st > 0 ? st / 100 : null };
-    } catch (e) { return { pack: null, storlek: null }; }
+      var pack = p.get('battlefx'), st = Number(p.get('battlefxstorlek')), h = Number(p.get('battlefxhojd'));
+      return { pack: pack == null ? null : (pack === 'av' ? '' : pack), storlek: st > 0 ? st / 100 : null, botten: h > 0 ? h / 100 : null };
+    } catch (e) { return { pack: null, storlek: null, botten: null }; }
   }
   function installning() {
     var d = root.VyraExtras && root.VyraExtras.data;
     var b = d && d.battleFx, u = urlVal();
     return {
       pack: u.pack != null ? u.pack : ((b && b.pack) || ''),
-      storlek: u.storlek != null ? u.storlek : ((b && b.storlek) || 1)
+      storlek: u.storlek != null ? u.storlek : ((b && b.storlek) || 1),
+      // Kallans form, inte ett kontoval: den foljer bara med lanken.
+      botten: u.botten != null ? u.botten : 1
     };
   }
   function sparaInstallning(patch) {
@@ -128,7 +134,7 @@
     var klipp = klippSokvag(pack, nyckel);
     if (!klipp) return 'paketet saknar ' + nyckel;
     if (!root.VyraActionRuntime || !root.VyraActionRuntime.execute) return 'ingen runtime';
-    var plats = placering(root.innerWidth || 1080, root.innerHeight || 1920, inst.storlek);
+    var plats = placering(root.innerWidth || 1080, root.innerHeight || 1920, inst.storlek, inst.botten);
     var action = {
       id: 'battle-fx-' + nyckel, name: 'Battle-FX: ' + klipp.name, types: ['video'],
       duration: KLIPP_SEK, cooldown: 0, volume: 0, fade: false,
@@ -192,8 +198,14 @@
       b.onclick = function () {
         if (!installning().pack) { if (root.toast) root.toast('Välj ett paket först'); return; }
         // Samma vag som ett riktigt event: via bryggans lokala server till live-client i OBS.
-        var ev = Object.assign({ source: 'battle-fx-test', eventKey: 'battle-fx-test-' + Date.now() }, TEST_EVENT[b.dataset.battleFxTest]);
-        fetch('/api/events', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ev) })
+        var ev = Object.assign({ source: 'battle-fx-test', eventKey: 'battle-fx-test-' + Date.now(), id: 'battle-fx-test-' + Date.now(), at: Date.now() }, TEST_EVENT[b.dataset.battleFxTest]);
+        // Inloggad pa vyralive.app: workspace-rutten (samma som Desktop postar till). Den finns inte
+        // lokalt, och /api/events finns bara lokalt. Molnet tar bara emot glove-typen, sa Tap Tap
+        // och Snipe kan inte testas den vagen.
+        var ws = root.VyraAuth && root.VyraAuth.lastDetail && root.VyraAuth.lastDetail();
+        var wsId = ws && ws.workspaces && ws.workspaces[0] && ws.workspaces[0].id;
+        if (wsId && ev.type !== 'glove') { if (root.toast) root.toast('Tap Tap och Snipe kan bara testas lokalt — X2, X3 och Glove går att testa här'); return; }
+        fetch(wsId ? '/api/workspaces/' + wsId + '/events' : '/api/events', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ev) })
           .then(function (r) { if (root.toast) root.toast(r.ok ? 'Test skickat till OBS' : 'Testet kunde inte skickas'); })
           .catch(function () { if (root.toast) root.toast('Den lokala servern svarar inte'); });
       };
