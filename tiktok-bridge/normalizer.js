@@ -268,7 +268,20 @@ function battleFields(data, mittAnkarId){
     scoreThem:number(deras?deras.lag?.hostscore:(battle?.guestScore??battle?.scoreThem??battle?.team2Score),1e12),
     ...(vartCombo?{winsUs:number(vartCombo.varde?.comboCount,999)}:{}),
     ...(derasCombo?{winsThem:number(derasCombo.varde?.comboCount,999)}:{}),
+    ...(matchKvarSek(data)!=null?{remainingSec:matchKvarSek(data)}:{}),
     multiplier:number(battle?.multiplier??battle?.boostMultiplier,100),battleStatus:text(battleStatusAv(data,battle),64),battleId:text(data?.battleId??battle?.battleId??data?.battleSettings?.battleId,160)};
+}
+// HUR MANGA SEKUNDER AV MATCHEN SOM ATERSTAR — for battle-FX "Snipe de sista 30 s".
+// battleSettings bar startTimeMs (strang, ms) och duration (sekunder, uppmatt 300). Raknat INOM
+// TikToks klocka mot meddelandets common.createTime, av samma skal som boostFordrojningMs: den
+// lokala klockan har legat 223 s fel. Saknas nagot skickas faltet inte alls — klienten faller da
+// tillbaka pa 300 s fran battle_started. Villkorligt som battleId: hellre inget falt an en nolla.
+function matchKvarSek(data){
+  const s=data&&data.battleSettings||{};
+  const start=Number(s.startTimeMs),langd=Number(s.duration),nu=Number(data&&data.common&&data.common.createTime);
+  if(!(start>1e12&&langd>0&&langd<=3600&&nu>1e12))return null;
+  const kvar=(start+langd*1000-nu)/1000;
+  return kvar>0&&kvar<=3600?Math.round(kvar):null;
 }
 // LIGABRICKAN — den enda plats i TikToks strom som sager VAR VARDEN LIGGER. #367 del 3
 //
@@ -438,7 +451,7 @@ function arBoostFonster(f){
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.remainingSec>0?{remainingSec:number(fields.remainingSec,3600)}:{}),...(fields.durationSec>0?{durationSec:number(fields.durationSec,3600)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //

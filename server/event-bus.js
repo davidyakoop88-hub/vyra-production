@@ -80,6 +80,10 @@ const event={
     // ganger: en gang av TikToks officiella lista och en gang av battle-mvp-session.js egen
     // rakning (som fungerar sedan #312).
     battleId:String(input?.battleId||'').slice(0,160),
+    // Battle-FX-tider (battle-fx-auto.js). remainingSec: sekunder kvar av matchen nar `battle`
+    // skickades. durationSec: boost-fonstrets langd pa `glove`. 0 = okant, klienten har reserver.
+    remainingSec:Math.max(0,Math.min(3600,Math.round(Number(input?.remainingSec)||0))),
+    durationSec:Math.max(0,Math.min(3600,Math.round(Number(input?.durationSec)||0))),
     // Emote-id:t. Utan den har raden strok vitlistan faltet och Actions & Events emote-valjare
     // forblev tom for alltid — samma tysta forlust som en gang drabbade chattexten och
     // fanClubLevel. Bilden aker redan med i giftImage ovan; faltnamnen ar klientens

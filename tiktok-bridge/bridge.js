@@ -465,12 +465,15 @@ if (require.main === module) {
       console.log(`[bridge] boost-fonster x${f.multiplier} i match ${f.battleId || 'okand'}, ${f.fonsterSekunder || '?'}s`
         + (fordrojning ? ` — skickas om ${Math.round(fordrojning / 1000)}s` : ' — skickas nu'));
 
-      if (!fordrojning) { sendEvent('glove', { multiplier: f.multiplier }, data); return }
+      // durationSec och battleId foljer med for battle-FX (battle-fx-auto.js): Glove spelas nar
+      // 30 s av fonstret aterstar, och X2/X3 hoppar over matchens forsta boost.
+      const boostFalt = { multiplier: f.multiplier, ...(f.fonsterSekunder > 0 ? { durationSec: f.fonsterSekunder } : {}), ...(f.battleId ? { battleId: f.battleId } : {}) };
+      if (!fordrojning) { sendEvent('glove', boostFalt, data); return }
       // TIMERN SPARAS FOR ATT KUNNA RIVAS. En som overlever nedkopplingen tander Glove Snipe
       // i NASTA sandning, tva minuter in i ingenting.
       const boostTimer = setTimeout(() => {
         boostTimers.delete(boostTimer);
-        sendEvent('glove', { multiplier: f.multiplier }, data);
+        sendEvent('glove', boostFalt, data);
       }, fordrojning);
       boostTimers.add(boostTimer);
     });
