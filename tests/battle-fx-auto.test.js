@@ -40,6 +40,15 @@ test('placeringen ligger i nederkant i både liggande och stående OBS-källa', 
   assert.equal(fx.placering(1920, 1080, 0.1).width, 432, 'storleken har ett golv på 40 %');
 });
 
+test('battlefxhojd flyttar upp klippets underkant (uppskalad källa som går utanför canvasen)', () => {
+  const [vw, vh] = [432, 768];
+  const p = fx.placering(vw, vh, 1, 0.56);
+  const toppPx = p.y / 1920 * vh, hojdPx = vw * 9 / 16;
+  assert.ok(Math.abs(toppPx + hojdPx - vh * 0.56) <= 1, `slutar ${toppPx + hojdPx} i stället för ${vh * 0.56}`);
+  assert.deepEqual(fx.placering(vw, vh, 1, undefined), fx.placering(vw, vh, 1), 'utan värde = nederkant');
+  assert.ok(fx.placering(vw, vh, 1, 0.05).y >= 0, 'golv på 30 %, aldrig ovanför toppen');
+});
+
 function miljo(pack) {
   const korda = [], glove = [];
   const fonster = {
@@ -111,9 +120,9 @@ test('ett fel i den gamla länken stoppar inte effekten', () => {
 });
 
 test('overlay-länkens battlefx går före studions val — och kan stänga av', () => {
-  const m = miljo(''); m.fonster.location = { search: '?overlay=1&scene=1&battlefx=pinkPrincess&battlefxstorlek=60' };
+  const m = miljo(''); m.fonster.location = { search: '?overlay=1&scene=1&battlefx=pinkPrincess&battlefxstorlek=60&battlefxhojd=56' };
   ladda(m.fonster);
-  assert.deepEqual(JSON.parse(JSON.stringify(m.fonster.VyraBattleFx.installning())), { pack: 'pinkPrincess', storlek: 0.6 });
+  assert.deepEqual(JSON.parse(JSON.stringify(m.fonster.VyraBattleFx.installning())), { pack: 'pinkPrincess', storlek: 0.6, botten: 0.56 });
   m.fonster.routeLiveBattleEvent({ id: 'e6', type: 'glove', multiplier: 2 });
   assert.equal(m.korda.length, 1, 'utan inloggning ska länken räcka');
   assert.equal(m.korda[0].action.scene.width, 648);
@@ -125,5 +134,5 @@ test('overlay-länkens battlefx går före studions val — och kan stänga av',
 
 test('overlay.html skickar battlefx vidare till studio.html', () => {
   const html = require('fs').readFileSync(path.join(__dirname, '..', 'overlay.html'), 'utf8');
-  assert.match(html, /'battlefx','battlefxstorlek'/);
+  assert.match(html, /'battlefx','battlefxstorlek','battlefxhojd'/);
 });
