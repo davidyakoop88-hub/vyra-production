@@ -80,12 +80,19 @@ const UTAN_REFERENS = {
     'partiklarna ritas på en Pixi-duk med egen ticker, som animationsfrysningen inte styr. Vid '
     + 'varje fast tidpunkt är duken tom (0 % målad i alla tre varianterna), och en pixeljämförelse '
     + 'av ett partikelsystem säger ingenting även när den lyckas.',
-  'catalog:glovesnipe:':
+  // BARA MP4-PAKETEN. Fram till 2026-10-08 stod har ett enda 'catalog:glovesnipe:', och det svalde
+  // aven de tre WebM-paketen (Pink Princess, Royal Ruby, Cloud Fox, 15 nycklar) som provets Chromium
+  // KAN spela — uppmatt 2026-10-08: 14-50 % malad yta vid riggens 0,5 s i alla 15. Uppdelningen
+  // kostar en post men undantar 8 nycklar i stallet for 23.
+  'catalog:glovesnipe:koiPearl:':
     'effekten är en H.264-kodad MP4 (`pack-fx-video`), och playwright-core:s Chromium saknar stöd '
     + 'för den kodeken. Uppmätt 2026-08-19: `canPlayType("video/mp4; codecs=avc1.42E01E")` ger tom '
-    + 'sträng och videon faller med DEMUXER_ERROR_NO_SUPPORTED_STREAMS, så alla åtta varianter '
+    + 'sträng och videon faller med DEMUXER_ERROR_NO_SUPPORTED_STREAMS, så alla fyra varianter '
     + 'målar 0 %. Det är webbläsaren i provet som saknar kodeken — i OBS och i vanlig Chrome '
     + 'spelar de. Undantaget gäller alltså provmiljön, inte widgeten.',
+  'catalog:glovesnipe:masquerade:':
+    'samma som Koi Pearl: H.264-kodad MP4 som playwright-core:s Chromium inte kan avkoda '
+    + '(DEMUXER_ERROR_NO_SUPPORTED_STREAMS, 0 % målat i alla fyra varianter, uppmätt 2026-08-19).',
   'catalog:likefountain':
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '
