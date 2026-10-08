@@ -97,14 +97,14 @@ Guardian Emblem fotograferas i `hyllning` vid 900 ms — 20 fotograferingar av 2
 
 ## Vad som INTE har någon referens
 
-Sex poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans 15 av 181
+Sju poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans 15 av 181
 nycklar. Varje post bär sitt uppmätta skäl:
 
 | Post | Nycklar | Skäl i korthet |
 |---|---|---|
 | `catalog:custom:image` / `:video` | 2 | tomma behållare som väntar på användarens egen fil — 0,4 % respektive 0,2 % målat |
 | `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
-| `catalog:glovesnipe:` | 23 | Koi och Masquerade (8) är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de. Pink Princess, Royal Ruby och Cloud Fox (15, WebM) omfattas av samma prefix men är **inte uppmätta** i provets webbläsare |
+| `catalog:glovesnipe:koiPearl:` / `:masquerade:` | 8 | effekten är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de. WebM-paketen (Pink Princess, Royal Ruby, Cloud Fox) fotograferas |
 | `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
 | `catalog:giftjar:heart` | 1 | **orsak inte fastställd** — växlar på CI mellan exakt två renderingar (115 px inom 232×34, kanalskillnad 18), men är helt stabil lokalt |
 
