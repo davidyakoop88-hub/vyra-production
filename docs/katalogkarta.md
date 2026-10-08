@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `f3064cb`
+Commit: `8158d41`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -26,7 +26,7 @@ proveniensen saknas: datumet bredvid ar anda matt.
 | | |
 |---|---|
 | Kort totalt | **147** |
-| Sektioner | 27 |
+| Sektioner | 26 |
 | Med katalognyckel | 147 / 147 |
 | Med shadow DOM-miniatyr | 116 / 147  ⚠️ |
 | Ritar sin design | 147 / 147 |
@@ -41,9 +41,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
-| FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER | 9 | 9/9 | 9/9 | 9/9 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| NYA WIDGETAR · 3 DESIGNER | 3 | 3/3 | 0/3 ⚠️ | 3/3 | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
+| VYRA TOP STREAK · CLEAN FLIP | 2 | 2/2 | 0/2 ⚠️ | 2/2 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| FOLLOWER, LIKE & DIAMOND GOALS · 10 RÖRLIGA DESIGNER | 10 | 10/10 | 9/10 ⚠️ | 10/10 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | FIREWORKS & BUBBLES · 7 DESIGNER | 7 | 7/7 | 7/7 | 7/7 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
@@ -64,7 +63,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
-| TOP GIFTER · DESIGNVAL | 2 | 2/2 | 0/2 ⚠️ | 2/2 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| TOP GIFTER · DESIGNVAL | 3 | 3/3 | 0/3 ⚠️ | 3/3 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
 
@@ -98,8 +97,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Clean Flip | `catalog:topstreak` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Streak Flip | `catalog:pgstreak` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 
-### FOLLOWER, LIKE & DIAMOND GOALS · 9 RÖRLIGA DESIGNER
+### FOLLOWER, LIKE & DIAMOND GOALS · 10 RÖRLIGA DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -112,13 +112,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-
-### NYA WIDGETAR · 3 DESIGNER
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Top Gifter Podium | `catalog:pgpodium` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Streak Flip | `catalog:pgstreak` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Goal Pro | `catalog:pggoal` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 
 ### FAN LEVEL 50 · MILSTOLPE
@@ -337,6 +330,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Royal Gold | `catalog:topgift:premium:royal` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
 | Neon Purple | `catalog:topgift:premium:neon` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Top Gifter Podium | `catalog:pgpodium` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 
 ### SKATTKISTA · LIVE
 
