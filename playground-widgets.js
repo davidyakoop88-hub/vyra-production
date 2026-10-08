@@ -715,23 +715,41 @@ props = function () {
 };
 
 /* ---------- katalog + bindningar ---------- */
+/* Varje widget hör hemma i sin befintliga katalogsektion; en egen sektion skapas bara om hemsektionen saknas.
+   Sektionerna byggs av annan kod i olika ögonblick, så placeringen är idempotent och flyttar knappen när hemmet dyker upp. */
+function placeCatalog(cat) {
+  const HEM = {
+    podium: () => [...cat.querySelectorAll('section.prototype-section')].find(s => /TOP GIFTER/i.test(s.querySelector('h4')?.textContent || '')),
+    streak: () => cat.querySelector('section.approved-streak-catalog'),
+    goal: () => cat.querySelector('section.social-goal-template-section'),
+  };
+  const antal = (h, d) => { if (h && /\d+(?=\s+(?:RÖRLIGA\s+)?DESIGNER)/i.test(h.textContent)) h.textContent = h.textContent.replace(/(\d+)(?=\s+(?:RÖRLIGA\s+)?DESIGNER)/i, n => Math.max(0, +n + d)); };
+  Object.keys(TYPES).forEach(k => {
+    let b = cat.querySelector('[data-pg-create="' + k + '"]');
+    const hem = HEM[k] && HEM[k]();
+    const reserv = cat.querySelector('[data-pgcat]');
+    if (b && (!hem || b.closest('section') === hem)) return;
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button'; b.dataset.pgCreate = k; b.dataset.catalogKey = KEYS[k];
+      b.innerHTML = `<i class="vyra-pro-icon">${(window.vyraCatalogIcon ? vyraCatalogIcon('bolt') : '✦')}</i><span><b>${TITEL[k]}</b><small>${BESKR[k]}</small></span>`;
+      b.onclick = () => { const created = VyraWidgets.create(KEYS[k]); state.widgets.push(created); selected = created.id; save(); render(); if (window.toast) toast(TITEL[k] + ' skapad'); };
+    }
+    let home = hem;
+    if (!home) { home = reserv; if (!home) { home = document.createElement('section'); home.dataset.pgcat = '1'; home.innerHTML = '<h4>NYA WIDGETAR</h4>'; cat.prepend(home); } }
+    const gammal = b.closest('section');
+    (home.querySelector(':scope > .template-style-grid') || home).append(b);
+    if (home === hem) antal(home.querySelector('h4'), 1);
+    if (gammal && gammal !== home && gammal.dataset.pgcat && !gammal.querySelector('button')) gammal.remove();
+  });
+}
+
 const oldBind = bind;
 bind = function () {
   oldBind();
   if (view !== 'editor' && view !== 'overlay') return;
   const cat = document.querySelector('.widget-catalog');
-  if (cat && !cat.querySelector('[data-pgcat]')) {
-    const sec = document.createElement('section'); sec.dataset.pgcat = '1';
-    sec.innerHTML = '<h4>NYA WIDGETAR · ' + Object.keys(TYPES).length + ' DESIGNER</h4>';
-    Object.keys(TYPES).forEach(k => {
-      const b = document.createElement('button');
-      b.dataset.pgCreate = k; b.dataset.catalogKey = KEYS[k];
-      b.innerHTML = `<i class="vyra-pro-icon">${(window.vyraCatalogIcon ? vyraCatalogIcon('bolt') : '✦')}</i><span><b>${TITEL[k]}</b><small>${BESKR[k]}</small></span>`;
-      b.onclick = () => { const created = VyraWidgets.create(KEYS[k]); state.widgets.push(created); selected = created.id; save(); render(); if (window.toast) toast(TITEL[k] + ' skapad'); };
-      sec.append(b);
-    });
-    cat.prepend(sec);
-  }
+  if (cat) { placeCatalog(cat); if (!cat.__pgObs) { cat.__pgObs = new MutationObserver(() => { if (cat.__pgRaf) return; cat.__pgRaf = requestAnimationFrame(() => { cat.__pgRaf = 0; placeCatalog(cat); }); }); cat.__pgObs.observe(cat, { childList: true }); } }
   const w = liveWidget(selected);
   if (!w || !KINDS[w.type]) return;
   const k = KINDS[w.type];
