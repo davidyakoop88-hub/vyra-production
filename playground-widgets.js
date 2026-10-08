@@ -116,8 +116,9 @@ W.podium={name:"Top Gifter-podium",title:true,
         $(".nm",c).textContent=name;
         $(".blk span",c).textContent=r+1;
         const cn=$(".cn",c);
-        if(cn.textContent!==txt||c.dataset.n!==name){cn.textContent=txt;if(u)bump(c)}
-        const changed1=(r===0&&u&&c.dataset.n!==name);c.dataset.n=name;if(changed1)setTimeout(()=>crownBurst(c),60);
+        const first=c.dataset.n===undefined;
+        if(cn.textContent!==txt||c.dataset.n!==name){cn.textContent=txt;if(u&&!first)bump(c)}
+        const changed1=(r===0&&u&&!first&&c.dataset.n!==name);c.dataset.n=name;if(changed1)setTimeout(()=>crownBurst(c),60);
       }
     }
     return{refresh,event(e){if(e.type==="gift"||e.type==="reset")refresh()},destroy(){}};

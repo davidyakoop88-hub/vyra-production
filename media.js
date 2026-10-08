@@ -1635,7 +1635,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261008-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261008-1'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261008-2'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
