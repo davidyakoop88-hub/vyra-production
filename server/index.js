@@ -3,6 +3,7 @@ if(process.env.NODE_ENV==='production')require('./production-config').validatePr
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');
 const {decideTikTokCapacity}=require('./capacity-gate');
 const TikTokVerifiering=require('./tiktok-verifiering');
+const {createTikTokProfil}=require('./tiktok-profil');const TikTokProfil=createTikTokProfil();
 const {knytVerifieratHandtag}=require('./tiktok-handtagslas');
 const Vault=require('./token-vault');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
@@ -18,6 +19,11 @@ const {streamExport}=require('./account-data');
 const {release:desktopRelease,slapperForbi:desktopSlapperForbi,premiumKravs:desktopPremiumKravs}=require('./desktop-release');
 const Support=require('./support');
 const TTS=require('./tts');
+// Låtönskningarnas YouTube-sökning. Nyckeln (YOUTUBE_API_KEY) läses bara här, på servern.
+const Musik=require('./musik').createMusik();
+// Stream Deck-molnvägen: parkopplingskoder och enhetstoken. Utan VYRA Desktop postar pluginet hit.
+const Streamdeck=require('./streamdeck').createStreamdeck({pool}),{KOMMANDON:STREAMDECK_KOMMANDON}=require('./streamdeck');
+const STREAMDECK_RATE_LIMIT=Number(process.env.STREAMDECK_RATE_LIMIT||10);
 const PORT=Number(process.env.PORT||8080),ORIGIN=process.env.APP_ORIGIN||`http://127.0.0.1:${PORT}`,SESSION_SECONDS=Number(process.env.SESSION_DAYS||14)*86400;
 const SSE_HEARTBEAT_MS=30000;
 // TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
@@ -94,12 +100,24 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
 // en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
 // kommer utan username och far inte krava ett.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
+// CHATTKOMMANDON I EGEN HINK (2026-09-27, #365). Rader som börjar med "!" (bryggans typ
+// `chatcommand`, som cleanEvent gör till `chat`) behövs i molnet för låtönskningar och chattbotens
+// kommandon. De räknas i en EGEN hink med eget tak, så en kommandostorm aldrig kan äta den budget
+// gåvorna lever på. Vanlig chatt släpps fortfarande inte fram — den delar gåvornas hink.
+const TIKTOK_KOMMANDO_RATE_LIMIT=10;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
 // and so it's already in place if a paid provider is ever swapped in behind server/tts.js later.
 const TTS_SYNTH_RATE_LIMIT=20,TTS_SYNTH_RATE_WINDOW_SECONDS=30;
+// Varje YouTube-sökning kostar 100 av 10 000 kvotenheter per dygn. Taket skyddar kvoten mot en
+// chattstorm av !önska; samma låt två gånger kostar inget (server/musik.js cachar svaren).
+const MUSIK_RATE_LIMIT=30,MUSIK_RATE_WINDOW_SECONDS=60;
+// Profiluppslag (@anvandarnamn -> namn+avatar) hamtar TikToks publika sida. Taket per klient-IP
+// skyddar mot att nagon spammar uppslag och far VYRA:s server-IP blockat av TikTok. Samma profil
+// tva ganger kostar inget (server/tiktok-profil.js cachar 10 min).
+const TIKTOK_PROFILE_RATE_LIMIT=Number(process.env.TIKTOK_PROFILE_RATE_LIMIT||20),TIKTOK_PROFILE_RATE_WINDOW_SECONDS=60;
 // Pure — validates the ingest payload's shape before it ever reaches eventBus.publish/cleanEvent,
 // so a request from a leaked/misused ingest token (or a bug in the bridge) gets a specific,
 // route-scoped 400 instead of falling through to cleanEvent()'s generic "Ogiltigt live-event".
@@ -131,7 +149,10 @@ const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)}
 const statsReader=createStatsReader({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels,pointsRuntime:PointsRuntime});
 async function ingestTikTokEvent(workspaceId,payload){
-  if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+  if(String(payload?.type||'').toLowerCase()==='chatcommand'){
+    if(await rateLimiter.exceeded(`tiktok-ingest-kommando:${workspaceId}`,TIKTOK_KOMMANDO_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+      throw Object.assign(new Error(`För många chattkommandon för denna workspace (max ${TIKTOK_KOMMANDO_RATE_LIMIT}/sekund)`),{status:429});
+  }else if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
   validateTikTokIngestPayload(payload);
   const{raw}=await ingestEvent(workspaceId,payload);
@@ -285,7 +306,7 @@ async function checkMfaCode(c,user,code){if(user.mfa_secret_enc&&MFA.verify(MFA.
 async function cleanupPendingMedia(){try{const q=await pool.query("UPDATE media_assets SET status='deleted',deleted_at=now() WHERE id IN (SELECT id FROM media_assets WHERE status='pending' AND created_at<now()-interval '1 hour' LIMIT 25) RETURNING object_key");await Promise.allSettled(q.rows.map(row=>mediaStorage.remove(row.object_key)));if(q.rowCount)console.log(JSON.stringify({level:'info',event:'media_cleanup',count:q.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'media_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function cleanupAuthData(){try{const sessions=await pool.query("DELETE FROM sessions WHERE expires_at<now() OR (mfa_verified_at IS NULL AND created_at<now()-interval '30 minutes')"),tokens=await pool.query("DELETE FROM auth_tokens WHERE expires_at<now()-interval '7 days' OR consumed_at<now()-interval '7 days'"),audit=await pool.query("DELETE FROM audit_log WHERE created_at<now()-interval '180 days'");if(sessions.rowCount||tokens.rowCount||audit.rowCount)console.log(JSON.stringify({level:'info',event:'auth_cleanup',sessions:sessions.rowCount,tokens:tokens.rowCount,audit:audit.rowCount,at:new Date().toISOString()}))}catch(error){console.error(JSON.stringify({level:'error',event:'auth_cleanup_failed',message:error.message,at:new Date().toISOString()}))}}
 async function deleteDueAccounts(){try{const q=await pool.query("SELECT id,email FROM users WHERE deletion_requested_at<=now()-interval '7 days' ORDER BY deletion_requested_at LIMIT 10");for(const user of q.rows){const media=await pool.query('SELECT m.object_key FROM media_assets m JOIN workspaces w ON w.id=m.workspace_id WHERE w.owner_user_id=$1',[user.id]);await Promise.all(media.rows.map(row=>mediaStorage.remove(row.object_key)));await tx(async c=>{await c.query('DELETE FROM notification_outbox WHERE recipient=$1',[user.email]);await c.query('DELETE FROM audit_log WHERE actor_user_id=$1',[user.id]);await c.query('DELETE FROM users WHERE id=$1',[user.id])});console.log(JSON.stringify({level:'info',event:'account_deleted',userId:S.digest(user.id).slice(0,12),at:new Date().toISOString()}))}}catch(error){console.error(JSON.stringify({level:'error',event:'account_deletion_failed',message:error.message,at:new Date().toISOString()}))}}
-const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
+const server=http.createServer(async(req,res)=>{const started=Date.now(),requestId=crypto.randomUUID();res.setHeader('x-request-id',requestId);res.on('finish',()=>{const rawPath=String(req.url).split('?')[0],safePath=rawPath.replace(/(\/api\/overlay-access\/)[^/]+/,'$1[redacted]');console.log(JSON.stringify({level:'info',event:'http_request',requestId,method:req.method,path:safePath,status:res.statusCode,durationMs:Date.now()-started,at:new Date().toISOString()}))});try{const u=new URL(req.url,ORIGIN),p=u.pathname;if(p==='/api/musik/status'&&req.method==='GET')return send(res,200,{ok:true,...await Musik.status()});if(p==='/api/tiktok-profile'&&req.method==='GET'){if(await rateLimiter.exceeded('tiktok-profile:'+S.klientadress(req),TIKTOK_PROFILE_RATE_LIMIT,TIKTOK_PROFILE_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många profilsökningar just nu — vänta en stund'});try{return send(res,200,{ok:true,...await TikTokProfil.hamta(u.searchParams.get('username'))})}catch(error){return send(res,error.status||500,{ok:false,error:error.status?error.message:'Kunde inte hämta profilen'})}}if(p==='/health/live'&&req.method==='GET')return send(res,200,{ok:true,status:'live'});// /api/health/ready is an alias for /health/ready. The platform health check is configured by hand
 // in a dashboard, and pointing it at a path that 404s marks the service unhealthy — an outage caused
 // by the config rather than the code. Both spellings answer so either is safe to configure.
   if((p==='/health/ready'||p==='/api/health/ready')&&req.method==='GET'){try{await pool.query('SELECT 1');
@@ -319,6 +340,8 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(rest==='goals'){const out=await GoalRuntime.listGoals(pool,access.overlay_id);if(out.missing)return send(res,404,{ok:false,error:'Overlay saknas'});return send(res,200,{ok:true,goals:out.goals})}
     // Samma mönster som 'goals' ovan: workspace_id kommer alltid från TOKEN:s egen rad, aldrig
     // från query/body/header — en overlay-länk kan bara läsa sin egen arbetsytas topplista.
+    // Låtönskningar: OBS-overlayn söker på YouTube genom sin egen länk. Arbetsytan kommer från TOKEN.
+    if(rest==='musik/youtube'){if(await rateLimiter.exceeded(`musik-youtube:${access.workspace_id}`,MUSIK_RATE_LIMIT,MUSIK_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många låtönskningar just nu — vänta en stund'});try{return send(res,200,{ok:true,lat:await Musik.sokYoutube(u.searchParams.get('q'))})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
     if(rest==='points'){const limit=Math.min(50,Math.max(1,Number(u.searchParams.get('limit'))||10));const top=await PointsRuntime.readTop(pool,access.workspace_id,{limit});return send(res,200,{ok:true,points:top})}
     // Top Like / Top Coins are genuinely separate rankings, not the blended points engine: David's
     // explicit requirement ("den ska inte blanda") is that these read gifter_totals' raw, unweighted
@@ -428,6 +451,33 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!await membership(si.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});
     const d=await body(req,64*1024),out=await ingestTikTokEvent(workspaceId,d);
     return send(res,out.duplicate?200:202,{ok:true,...out});
+  }
+  // STREAM DECK-MOLNVÄGEN — PLUGINETS TVÅ MASKINRUTTER. Ligger FÖRE den delade session-raden nedan,
+  // för de har ingen inloggning: pluginet är en process på streamerns dator, inte en webbläsare.
+  // Autentiseringen är parkopplingskoden respektive enhetstoken, aldrig en session eller CSRF.
+  //
+  //   1. Byt en kod mot en token. Ingen sameOrigin: en Node-fetch skickar ingen Origin, och koden
+  //      ÄR beviset. Tar en IP-baserad rate-limit så en angripare inte kan gissa koder i mängd.
+  if(p==='/api/streamdeck/pair'&&req.method==='POST'){
+    if(await rateLimiter.exceeded(`streamdeck-pair:${S.klientadress(req)||'unknown'}`,20))return send(res,429,{ok:false,error:'För många försök — vänta en stund'});
+    const d=await body(req).catch(()=>({}));
+    const par=await Streamdeck.parkoppla(d.kod,d.namn);
+    return send(res,201,{ok:true,deviceToken:par.deviceToken,workspace:par.workspaceId});
+  }
+  //   2. Ta emot ett knapptryck. Enhetstoken i Authorization: Bearer bär workspace — pluginet
+  //      skickar aldrig något workspace-id, precis som Desktop-vägen inte gör det. Publiceras som
+  //      typen `streamdeck` på bussen; live-client.js routar den och streamdeck.js utför den.
+  if(p==='/api/streamdeck/events'&&req.method==='POST'){
+    const token=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
+    const enhet=await Streamdeck.enhetAvToken(token);
+    if(!enhet)return send(res,401,{ok:false,error:'Okänd eller spärrad Stream Deck-enhet'});
+    if(await rateLimiter.exceeded(`streamdeck-event:${enhet.id}`,STREAMDECK_RATE_LIMIT))return send(res,429,{ok:false,error:'För många knapptryck'});
+    const d=await body(req).catch(()=>({}));
+    const sdKommando=String(d.sdKommando||'');
+    if(!STREAMDECK_KOMMANDON.has(sdKommando))return send(res,400,{ok:false,error:'Okänt kommando'});
+    const id=String(d.eventKey||'').slice(0,160)||`sd:${enhet.id}:${Date.now()}`;
+    const out=await eventBus.publish(enhet.workspace_id,{type:'streamdeck',id,sdKommando,sdVarde:d.sdVarde,sdVal:d.sdVal});
+    return send(res,out.duplicate?200:202,{ok:true,duplicate:out.duplicate});
   }
   // TVASTEGSUTMANINGEN KAN INTE BARA EN DELAD CSRF-TOKEN — AV EXAKT SAMMA SKAL SOM INGEST-RUTTEN
   // OVAN, och den har rutten last ute varje skrivbordskund med 2FA tills detta skrevs.
@@ -618,6 +668,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,200,{ok:true,...ut},{'cache-control':'no-store'});
   }
   const ttsVoicesRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/voices$/i);if(ttsVoicesRoute&&req.method==='GET'){const workspaceId=ttsVoicesRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});try{return send(res,200,{ok:true,voices:await TTS.listVoices(u.searchParams.get('languageCode')||'')})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
+  const musikRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/musik\/youtube$/i);if(musikRoute&&req.method==='GET'){const workspaceId=musikRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`musik-youtube:${workspaceId}`,MUSIK_RATE_LIMIT,MUSIK_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många låtönskningar just nu — vänta en stund'});try{return send(res,200,{ok:true,lat:await Musik.sokYoutube(u.searchParams.get('q'))})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   const ttsSynthRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/tts\/synthesize$/i);if(ttsSynthRoute&&req.method==='POST'){const workspaceId=ttsSynthRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`tts-synth:${workspaceId}`,TTS_SYNTH_RATE_LIMIT,TTS_SYNTH_RATE_WINDOW_SECONDS))return send(res,429,{ok:false,error:'För många TTS-förfrågningar just nu — vänta en stund'});const d=await body(req);try{return send(res,200,{ok:true,audioContent:await TTS.synthesize({text:d.text,languageCode:d.languageCode,voiceName:d.voiceName,speed:d.speed,pitch:d.pitch})})}catch(error){return send(res,error.status||500,{ok:false,error:error.message})}}
   // Deliberately eventBus.publish() and NOT the ingest path: a test event is for looking at, and it
   // must never touch a persistent goal. Someone trying out widget designs would otherwise run their
@@ -640,6 +691,18 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,201,{ok:true,...ut});
   }
   const tokenRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays\/([0-9a-f-]+)\/access-tokens(?:\/([0-9a-f-]+))?$/i);if(tokenRoute){const[,workspaceId,overlayId,tokenId]=tokenRoute;if(!await membership(s.user_id,workspaceId,['owner','admin']))return send(res,403,{ok:false,error:'Endast ägare och administratörer kan hantera OBS-länkar'});const exists=await pool.query('SELECT 1 FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);if(!exists.rowCount)return send(res,404,{ok:false,error:'Overlay saknas'});if(req.method==='GET'&&!tokenId){const q=await pool.query('SELECT id,label,created_at,expires_at,last_used_at,revoked_at FROM overlay_access_tokens WHERE overlay_id=$1 ORDER BY created_at DESC',[overlayId]);return send(res,200,{ok:true,tokens:q.rows})}if(req.method==='POST'&&!tokenId){const d=await body(req),raw=S.token(32),label=S.safeText(d.label||'OBS',80)||'OBS',days=d.expiresInDays==null?null:Math.max(1,Math.min(365,Number(d.expiresInDays)||30)),expires=days?new Date(Date.now()+days*86400000):null,q=await pool.query('INSERT INTO overlay_access_tokens(overlay_id,token_hash,label,created_by,expires_at) VALUES($1,$2,$3,$4,$5) RETURNING id,label,created_at,expires_at',[overlayId,S.digest(raw),label,s.user_id,expires]);await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_created','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId:q.rows[0].id,label}]);return send(res,201,{ok:true,token:q.rows[0],accessToken:raw,overlayUrl:`${ORIGIN}/overlay.html?access=${encodeURIComponent(raw)}`})}if(req.method==='DELETE'&&tokenId){const q=await pool.query('UPDATE overlay_access_tokens SET revoked_at=now() WHERE id=$1 AND overlay_id=$2 AND revoked_at IS NULL RETURNING id',[tokenId,overlayId]);if(!q.rowCount)return send(res,404,{ok:false,error:'Länken saknas eller är redan spärrad'});await pool.query("INSERT INTO audit_log(workspace_id,actor_user_id,action,target_type,target_id,metadata) VALUES($1,$2,'overlay_token_revoked','overlay',$3,$4)",[workspaceId,s.user_id,overlayId,{tokenId}]);return send(res,200,{ok:true})}return send(res,405,{ok:false,error:'Metoden stöds inte'})}
+  // STREAM DECK-MOLNVÄGEN, streamerns egen sida. Generera en parkopplingskod, lista de enheter som
+  // parkopplat sig, och spärra en enhet. Editor räcker: att koppla sin egen Stream Deck är att styra
+  // sin studio, inte att administrera arbetsytan. Koden visas EN gång; den lagras bara som hash.
+  const sdRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/streamdeck\/(pairings|devices)(?:\/([0-9a-f-]+))?$/i);
+  if(sdRoute){
+    const[,workspaceId,gren,deviceId]=sdRoute;
+    if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    if(gren==='pairings'&&req.method==='POST'){const d=await body(req).catch(()=>({})),ut=await Streamdeck.skapaKod(workspaceId,s.user_id);return send(res,201,{ok:true,kod:ut.kod,expiresAt:ut.expiresAt})}
+    if(gren==='devices'&&req.method==='GET'&&!deviceId)return send(res,200,{ok:true,enheter:await Streamdeck.listaEnheter(workspaceId)});
+    if(gren==='devices'&&req.method==='DELETE'&&deviceId){const bort=await Streamdeck.taBort(deviceId,workspaceId);return bort?send(res,200,{ok:true}):send(res,404,{ok:false,error:'Enheten saknas eller är redan spärrad'})}
+    return send(res,405,{ok:false,error:'Metoden stöds inte'});
+  }
   // TikTok-anslutning per workspace. Skriver raden som tiktok-bridge/connection-manager.js pollar
   // (SELECT ... WHERE active = true) och startar/stoppar en bridge-process for. Det ar den enda
   // vagen in i tiktok_connections — tabellen fanns men ingenting fyllde den fore detta.

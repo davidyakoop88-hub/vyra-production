@@ -53,7 +53,8 @@ function served(repoPath) {
 }
 
 test('Dockerfilen kopierar de kataloger och ändelser testet tror', () => {
-  assert.deepEqual(DIRS.sort(), ['assets', 'public']);
+  // streamdeck-plugin sedan 2026-09-27: sidan Stream Deck laddar ner pluginet ur mappen.
+  assert.deepEqual(DIRS.sort(), ['assets', 'public', 'streamdeck-plugin']);
   for (const ext of ['.html', '.js', '.css', '.png']) {
     assert.ok(EXTENSIONS.includes(ext), `${ext} kopieras inte — sajten skulle tappa filer`);
   }

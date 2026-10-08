@@ -9,14 +9,16 @@ function load() {
   return root;
 }
 
-test('Top Like exposes ten separate original VYRA designs', () => {
+test('Top Like exposes the six VYRA designs in the picker — the four originals are retired', () => {
+  // Pensionerade 2026-09-24 (Davids beslut): Clean Bar, Soft Stack, Mini Podium och Side Rank star
+  // inte langre i listan designvaljaren laser. Deras presets finns kvar for sparade widgetar.
   // Bumpad 2026-09-24 (ranking-sixpack): fyra -> tio, sex nya skinn (Voltage, Basic v2, Prism
   // vertikal/horisontal, Celestial, Royal Rose), godkanda av David som Claude Artifacts. Se
   // ranking-sixpack.css for deras CSS och toplike-design.js for tabellen.
   const root = load();
-  assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES[0]), ['clean-bar', 'VYRA Clean Bar']);
-  assert.equal(root.VYRA_TOPLIKE_STYLES.length, 10);
-  assert.equal(new Set(root.VYRA_TOPLIKE_STYLES.map(([id]) => id)).size, 10);
+  assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES, ([id]) => id),
+    ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  assert.ok(root.VYRA_TOPLIKE_DEFAULTS['clean-bar'], 'presetet behovs fortfarande for sparade widgetar');
 });
 
 test('preset removes old ranking chrome and keeps the compact TikTok layout', () => {
@@ -50,7 +52,9 @@ test('retired saved skins are clamped to the new VYRA designs at render time', (
   const media = fs.readFileSync('media.js', 'utf8');
   const studio = fs.readFileSync('toplike-studio.js', 'utf8');
   const guard = fs.readFileSync('approved-rankings.js', 'utf8');
-  assert.match(guard, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
+  // Faller nu tillbaka pa Voltage (Clean Bar pensionerad 2026-09-24). toplike-studio.js klass-
+  // stampel faller fortfarande pa clean-bar, men ranking-sixpack.js tar bort den och ritar Voltage.
+  assert.match(guard, /LIKE_SKINS\.has\(w\.skin\) \? w\.skin : 'voltage'/);
   assert.match(studio, /SKIN_IDS\.has\(w\.skin\) \? w\.skin : 'clean-bar'/);
   assert.match(guard, /querySelector\('#likeTheme'\).*closest\('label'\).*remove/);
 });
@@ -82,7 +86,24 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // hade fortsatt injicera den och allokerat en duk per render som ingenting ritar pa.
   // -6 2026-09-23: prototypkortet "Top Gift Flip" togs bort ur katalogen. En cachad media.js
   // hade fortsatt rita knappen och dess nyckel.
-  assert.match(studioHtml, /media\.js\?v=20260923-6/);
+  // 2026-09-25: den godkanda naturliga fyrverkerimotorn laddas via media.js.
+  // 2026-09-26: media.js laddar ny overlay-preview.js (goal-katalogens miniatyrer) och
+  // liveLayerName kanner igen Diamond Goal.
+  // 2026-09-28: rebasad pa main — media.js bar bade Diamond Goal-laddningen och den naturliga
+  // fyrverkerimotorn, sa strangen bumpas forbi bada (20260927-6 + 20260925-1).
+  // 2026-09-30: media.js bar poster-attributet pa battle-video-FX-widgetarna (katalogmito).
+  // 2026-10-05: Like Fountain visar bara hjärtan och profilbilder (gnistor, damm och glitter borta).
+  // 20261005-2: hjärtana får egna banor och jämna starttider så att de inte hamnar på varandra.
+  // 20261005-3: hjärtana stiger som ballonger och pendlar var för sig (lfHeartSway).
+  // 20261005-4: tio modeller med egna rörelser, likes släpper hjärtan i OBS.
+  // 20261005-5: premiumsvansen laddar en ny like-fountain-portal.js (profilbildsplatser).
+  // 20261005-6: Portalens nya rörelse och stjärnläge (premiumsvansen laddar en ny like-fountain-portal.js).
+  // 20261005-7: stjärnserien i takt (en sekund mellan bilderna), uppmätt i OBS.
+  // 20261005-8: Portalens flykt/uttoning utan grumliga hjärtan, och en ritloop som inte kan frysa.
+  // 20261005-9: Portalens hjärtan stiger hela vägen i banor i stället för att parkera.
+  // 20261005-10: lugnare gungning och lutning i den klassiska fontänens tio modeller.
+  // 20261005-11: Neon Pulse heter Neon Glow och pulserar i glöden, inte i storleken.
+  assert.match(studioHtml, /media\.js\?v=20261005-11/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

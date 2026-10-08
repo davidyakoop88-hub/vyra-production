@@ -200,9 +200,9 @@
   },
   "catalog:glovesnipe:koiPearl:tap:2": {
     "type": "templateGloveSnipe",
-    "x": 80,
-    "y": 580,
-    "width": 760,
+    "x": 0,
+    "y": 460,
+    "width": 432,
     "title": "Koi Pearl Lagoon TAP TAP",
     "boostPack": "koiPearl",
     "battleEventKind": "tap",
@@ -219,9 +219,9 @@
   },
   "catalog:glovesnipe:koiPearl:boost:3": {
     "type": "templateGloveSnipe",
-    "x": 80,
-    "y": 580,
-    "width": 760,
+    "x": 0,
+    "y": 460,
+    "width": 432,
     "title": "Koi Pearl Lagoon TRIPLE BOOST",
     "boostPack": "koiPearl",
     "battleEventKind": "boost",
@@ -251,7 +251,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#52d9ff",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:inferno": {
     "type": "templateBattleMvp",
@@ -268,7 +268,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#ff8b16",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:royal": {
     "type": "templateBattleMvp",
@@ -285,7 +285,7 @@
     "mvpShowCoins": false,
     "mvpColor": "#ff8b16",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10
   },
   "catalog:battlemvp:frame:gold-crown": {
     "type": "templateBattleMvp",
@@ -302,18 +302,20 @@
     "mvpShowCoins": false,
     "mvpColor": "#ffc13b",
     "mvpColor2": "#ffe239",
-    "mvpDuration": 7
+    "mvpDuration": 10,
+    "mvpLabelSize": 18,
+    "mvpNameSize": 14
   },
   "catalog:likefountain": {
     "type": "templateLikeFountain",
-    "x": 40,
-    "y": 100,
-    "width": 620,
+    "x": 6,
+    "y": 150,
+    "width": 420,
     "title": "Like Fountain",
-    "fountainCount": 42,
-    "fountainSize": 22,
-    "fountainSpeed": 5,
-    "fountainHeight": 420,
+    "fountainCount": 18,
+    "fountainSize": 32,
+    "fountainSpeed": 6,
+    "fountainHeight": 600,
     "fountainColor": "#ff3c88",
     "fountainColor2": "#b94cff"
   },
@@ -364,6 +366,54 @@
     "fwColor": "#ff4fa3",
     "fwColor2": "#ffd45b",
     "fwSound": true
+  },
+  "catalog:giftbubbles": {
+    "type": "templateGiftBubbles",
+    "x": 36,
+    "y": 120,
+    "width": 320,
+    "title": "Gift Bubbles",
+    "gbSize": "m",
+    "gbMin": 1,
+    "gbGiftIn": true,
+    "gbHearts": true,
+    "gbShowCombo": true,
+    "gbDuration": 5
+  },
+  "catalog:heartfireworks": {
+    "type": "templateHeartFireworks",
+    "x": 36,
+    "y": 120,
+    "width": 320,
+    "title": "Heart Fireworks",
+    "hfMin": 1,
+    "hfGold": true,
+    "hfShowCombo": true,
+    "hfDuration": 6
+  },
+  "catalog:pgpodium": {
+    "type": "templatePgPodium",
+    "x": 26,
+    "y": 90,
+    "width": 380,
+    "title": "Top Gifter Podium",
+    "pg": {}
+  },
+  "catalog:pgstreak": {
+    "type": "templatePgStreak",
+    "x": 66,
+    "y": 90,
+    "width": 300,
+    "title": "Top Streak Flip",
+    "pg": {}
+  },
+  "catalog:pggoal": {
+    "type": "templatePgGoal",
+    "x": 26,
+    "y": 90,
+    "width": 380,
+    "title": "Goal Pro",
+    "pg": {}
   },
   "catalog:guardianemblem:1": {
     "type": "templateGuardianEmblem",
@@ -432,5 +482,74 @@
     "jarShowCounter": false,
     "jarAutoResetMs": 0,
     "createdFrom": "catalog:giftjar:lion"
+  },
+  "catalog:skattkista:kista": {
+    "type": "templateTreasureChest",
+    "kistaDesign": "kista",
+    "x": 106,
+    "y": 90,
+    "width": 220,
+    "title": "Skattkista",
+    "kistaFarg": "#ffc94d",
+    "kistaVisaAvsandare": true,
+    "kistaEfterOppning": 8,
+    "layer": 30
+  },
+  "catalog:skattkista:pill": {
+    "type": "templateTreasureChest",
+    "kistaDesign": "pill",
+    "x": 46,
+    "y": 24,
+    "width": 340,
+    "title": "Skattkista · rad",
+    "kistaFarg": "#ffc94d",
+    "kistaVisaAvsandare": true,
+    "kistaEfterOppning": 8,
+    "layer": 30
+  },
+  "catalog:latonskningar:youtube": {
+    "type": "templateSongRequests",
+    "latKalla": "youtube",
+    "x": 46,
+    "y": 470,
+    "width": 340,
+    "title": "Låtönskningar · YouTube",
+    "latKommando": "!önska",
+    "latCooldown": 60,
+    "latMaxKo": 10,
+    "latMaxMinuter": 8,
+    "latVisa": 3,
+    "latVolym": 70,
+    "latFarg": "#ff3b7a",
+    "layer": 25
+  },
+  "catalog:latonskningar:spotify": {
+    "type": "templateSongRequests",
+    "latKalla": "spotify",
+    "x": 46,
+    "y": 470,
+    "width": 340,
+    "title": "Låtönskningar · Spotify",
+    "latKommando": "!önska",
+    "latCooldown": 60,
+    "latMaxKo": 10,
+    "latMaxMinuter": 8,
+    "latVisa": 3,
+    "latVolym": 70,
+    "latFarg": "#1db954",
+    "layer": 25
+  },
+  "catalog:fanlevel50:royal": {
+    "type": "templateFanLevel50",
+    "x": 100,
+    "y": 80,
+    "width": 300,
+    "title": "Fan Level 50",
+    "fanl50Design": "royal",
+    "fanl50Team": "FANCLUB",
+    "fanl50Mode": "band",
+    "fanl50Interval": 6,
+    "fanl50Source": "both",
+    "fanl50Manual": []
   }
 }

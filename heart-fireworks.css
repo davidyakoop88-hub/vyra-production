@@ -1,0 +1,10 @@
+/* Heart Fireworks — gåvoeffekt (modell 2): fyrverkeri där skotten formar hjärtan + guldskott.
+   Ren canvas-motor (partiklar med svansar), äkta OBS-transparens. Allt scopat under
+   .heart-fireworks-fx. Look/kvalitet = den godkända prototypen (2026-09-28). */
+.widget.templateHeartFireworks{ background:none!important; border:0!important; box-shadow:none!important; }
+.heart-fireworks-fx{ position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.heart-fireworks-fx .hf-canvas{ position:absolute; inset:0; width:100%; height:100%; }
+.heart-fireworks-fx .hf-combo{ position:absolute; z-index:5; pointer-events:none; font-weight:900; letter-spacing:-.02em; color:#fff;
+  font-family:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  text-shadow:0 2px 12px rgba(0,0,0,.55), 0 0 24px rgba(255,190,120,.7); white-space:nowrap;
+  font-variant-numeric:tabular-nums; will-change:transform,opacity; }

@@ -175,3 +175,128 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 18 av 113 (filter: voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose) — catalog:ranking:templateTopCoins:basic-v2, catalog:ranking:templateTopCoins:celestial, catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopCoins:prism-vertical, catalog:ranking:templateTopCoins:royal-rose, catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:basic-v2, catalog:ranking:templateTopPoints:celestial, catalog:ranking:templateTopPoints:prism-horizontal, catalog:ranking:templateTopPoints:prism-vertical, catalog:ranking:templateTopPoints:royal-rose, catalog:ranking:templateTopPoints:voltage, catalog:toplike:basic-v2, catalog:toplike:celestial, catalog:toplike:prism-horizontal, catalog:toplike:prism-vertical, catalog:toplike:royal-rose, catalog:toplike:voltage
+
+## 2026-09-24 — 8 referenser borttagna
+
+- **Motiv:** Davids beslut: de gamla rankingdesignerna tas bort helt. Top Like Clean Bar, Soft Stack, Mini Podium och Side Rank, och Top Points Lista, Tre i mitten, Podium och Neon, finns inte längre i katalogen. Sparade widgetar ritas som närmaste nya design (ranking-sixpack.js PENSION).
+- **Nycklar:** 8 borttagna, 105 kvar — catalog:toplike:clean-bar, catalog:toplike:soft-stack, catalog:toplike:mini-podium, catalog:toplike:side-rank, catalog:ranking:templateTopPoints:clean, catalog:ranking:templateTopPoints:center, catalog:ranking:templateTopPoints:podium, catalog:ranking:templateTopPoints:neon
+
+## 2026-09-24 — 3 referenser skrivna
+
+- **Motiv:** Prism horisontal fick fasta kolumnbredder sa podiet ryms pa den 432 px breda mobilduken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 105 (filter: prism-horizontal) — catalog:ranking:templateTopCoins:prism-horizontal, catalog:ranking:templateTopPoints:prism-horizontal, catalog:toplike:prism-horizontal
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** #525 ersatte social goals med nio goal-motion-designer; #528 gav Rail/Tower mått som ryms på duken
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** Rail fick luft ovan och under ramen så att rubrik och procent ryms i boxen (#528)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 9 referenser skrivna
+
+- **Motiv:** Fabriken ger de nio goal-motion-designerna katalogknappens mått (Orbit 360, Rail 400, Tower 130) — #528
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 108 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-09-26 — 1 referenser skrivna
+
+- **Motiv:** Nytt katalogkort Like Fountain · Portal (#531): förhandsbilden i fryst regi
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 109 (filter: likefountain:portal) — catalog:likefountain:portal
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Skattkista (catalog:skattkista:kista och :pill) — första referensen, fryst kista med 00:42 kvar
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 111 (filter: skattkista) — catalog:skattkista:kista, catalog:skattkista:pill
+
+## 2026-09-27 — 2 referenser skrivna
+
+- **Motiv:** Ny widget Låtönskningar (catalog:latonskningar:youtube och :spotify) — första referensen, tom kö i OBS-läget
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 113 (filter: latonskningar) — catalog:latonskningar:spotify, catalog:latonskningar:youtube
+
+## 2026-09-29 — 115 referenser skrivna
+
+- **Motiv:** Nya katalognycklar giftbubbles och heartfireworks saknar referensbilder sedan #547
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 115
+
+## 2026-09-29 — 1 referenser skrivna
+
+- **Motiv:** Ny widget Fan Level 50 (catalog:fanlevel50:flylove) behover sin referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 116 (filter: fanlevel50) — catalog:fanlevel50:flylove
+
+## 2026-09-29 — 1 referenser skrivna
+
+- **Motiv:** Ny design Royal (Fly Love + kront banderoll) — baslinje for catalog:fanlevel50:royal, PR #550
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 116 (filter: fanlevel50) — catalog:fanlevel50:flylove
+
+## 2026-09-29 — 2 referenser skrivna
+
+- **Motiv:** Baslinje for catalog:fanlevel50:royal (ny design), royal nu i katalogkartan, PR #550
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 117 (filter: fanlevel50) — catalog:fanlevel50:flylove, catalog:fanlevel50:royal
+
+## 2026-09-30 — 112 referenser skrivna
+
+- **Motiv:** MVP-firanden: Codex omdesign av battle-mvp-kort (firanden/stilar/ramar) samt ombaslinjering av fanlevel50:royal mot aktuell pinnad Chromium
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 112
+
+## 2026-09-30 — 1 referenser skrivna
+
+- **Motiv:** Lion Clash-referens: mvp-celebration-klass sa regin hittar firandet
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: lion-clash) — catalog:battlemvp:celebration:lion-clash
+
+## 2026-10-05 — 1 referenser skrivna
+
+- **Motiv:** Like Fountain: tio modeller, centrerad på duken, bara hjärtan och profilbilder (PR #566)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: likefountain) — catalog:likefountain:portal
+
+## 2026-10-05 — 1 referenser skrivna
+
+- **Motiv:** Like Fountain Portal: egna profilbildsplatser i förhandsbilden (PR #566)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: likefountain) — catalog:likefountain:portal
+
+## 2026-10-05 — 1 referenser skrivna
+
+- **Motiv:** Like Fountain Portal: stjärnplats flyttar platserna i förhandsbilden (PR #566)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: likefountain) — catalog:likefountain:portal
+
+## 2026-10-05 — 1 referenser skrivna
+
+- **Motiv:** Like Fountain Portal: förhandsbilden efter stjärnplatsen (PR #566)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 113 (filter: likefountain) — catalog:likefountain:portal
+
+## 2026-10-08 — 15 referenser skrivna
+
+- **Motiv:** Pink Princess, Royal Ruby och Cloud Fox (WebM) i Glove Snipe-katalogen far sina forsta referenser
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 15 av 128 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:boost:2, catalog:glovesnipe:cloudFox:boost:3, catalog:glovesnipe:cloudFox:glove:2, catalog:glovesnipe:cloudFox:snipe:2, catalog:glovesnipe:cloudFox:tap:2, catalog:glovesnipe:pinkPrincess:boost:2, catalog:glovesnipe:pinkPrincess:boost:3, catalog:glovesnipe:pinkPrincess:glove:2, catalog:glovesnipe:pinkPrincess:snipe:2, catalog:glovesnipe:pinkPrincess:tap:2, catalog:glovesnipe:royalRuby:boost:2, catalog:glovesnipe:royalRuby:boost:3, catalog:glovesnipe:royalRuby:glove:2, catalog:glovesnipe:royalRuby:snipe:2, catalog:glovesnipe:royalRuby:tap:2
+
+## 2026-10-08 — 15 referenser skrivna
+
+- **Motiv:** WebM-paketen i Glove Snipe fotograferas om nar riggen kan soka i videon (HTTP Range) - forra omgangen var tomma plattor
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 15 av 128 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:boost:2, catalog:glovesnipe:cloudFox:boost:3, catalog:glovesnipe:cloudFox:glove:2, catalog:glovesnipe:cloudFox:snipe:2, catalog:glovesnipe:cloudFox:tap:2, catalog:glovesnipe:pinkPrincess:boost:2, catalog:glovesnipe:pinkPrincess:boost:3, catalog:glovesnipe:pinkPrincess:glove:2, catalog:glovesnipe:pinkPrincess:snipe:2, catalog:glovesnipe:pinkPrincess:tap:2, catalog:glovesnipe:royalRuby:boost:2, catalog:glovesnipe:royalRuby:boost:3, catalog:glovesnipe:royalRuby:glove:2, catalog:glovesnipe:royalRuby:snipe:2, catalog:glovesnipe:royalRuby:tap:2
+
+## 2026-10-08 — 5 referenser skrivna
+
+- **Motiv:** Nya katalognycklar pgpodium, pgstreak, pggoal saknar baslinjer
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 5 av 131 (filter: pg) — catalog:pggoal, catalog:pgpodium, catalog:pgstreak, catalog:topgift:premium:neon, catalog:topgift:premium:royal

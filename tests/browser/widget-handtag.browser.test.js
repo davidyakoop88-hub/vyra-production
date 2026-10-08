@@ -207,6 +207,22 @@ test('hoger handtag andrar bredden och haller vansterkanten stilla', { skip }, a
     `vansterkanten flyttade sig ${Math.round(efter.v - fore.v)} px, den ska sta stilla`);
 });
 
+// STORRE AN DUKEN AR TILLATET sedan 2026-09-26. Davids ord: "om jag vill gora den stor widget
+// och lite hamnar utanfor den ska inte vara problem". Handtaget klampade forr bredden sa att
+// hogerkanten aldrig passerade dukens.
+test('hoger handtag kan gora widgeten bredare an duken', { skip }, async () => {
+  const { page, id } = await editorMedWidget();
+  await dra(page, 'e', 700, 0);
+  const m = await page.evaluate(i => {
+    const w = state.widgets.find(x => x.id === i), el = document.querySelector('.widget.selected');
+    const d = window.VyraGrans.dukFor(el);
+    return { x: w.x, bredd: w.width, dukBredd: d.bredd };
+  }, id);
+  await page.close();
+  assert.ok(m.x + m.bredd > m.dukBredd + 50,
+    `hogerkanten stannade pa ${m.x + m.bredd} i en ${Math.round(m.dukBredd)} bred duk — handtaget klampar fortfarande`);
+});
+
 test('vanster handtag andrar bredden och haller hogerkanten stilla', { skip }, async () => {
   const { page, id } = await editorMedWidget();
   const fore = await page.evaluate(i => ({ bredd: state.widgets.find(w => w.id === i).width,

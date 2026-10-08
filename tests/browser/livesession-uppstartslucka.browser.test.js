@@ -331,7 +331,7 @@ prov('missat live:end: ateranslutningens snapshot avslutar den gamla sandningen'
 // Designen pekade ut extras.js/action-event.js for "streak-raknare". Mätningen visar att den
 // raknaren inte finns dar — extras.js ar katalog och chatbot-UI, action-event.js har en regex och
 // en kommentar. Den VERKLIGA raknaren bor i gift-event-images.js: `records = {giftCoins,
-// streakCount}`, med filens egen kommentar "Rekorden galler SANDNINGEN, inte layouten — de
+// streakCoins}`, med filens egen kommentar "Rekorden galler SANDNINGEN, inte layouten — de
 // nollstalls vid omladdning". Utan omladdning nollstalldes de aldrig, och Top Gift / Top Streak
 // bar da forra sandningens rekord in i den nya.
 prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
@@ -344,17 +344,17 @@ prov('sandningsrekorden nollstalls nar en ny sandning borjar', async () => {
     await sida.evaluate(() => dispatchEvent(new CustomEvent('vyra-live-event', {
       detail: { type: 'gift', giftName: 'Rose', username: '@provgivare', coins: 500, count: 25 } })));
     await sida.waitForFunction(() => window.VyraGiftRecords
-      && window.VyraGiftRecords.streakCount > 0, null, { timeout: 10000 });
+      && window.VyraGiftRecords.streakCoins > 0, null, { timeout: 10000 });
     const fore = await sida.evaluate(() => ({ ...window.VyraGiftRecords }));
-    assert.equal(fore.streakCount, 25, 'riggens gava naddes aldrig fram till rekordhallaren');
+    assert.equal(fore.streakCoins, 500, 'riggens combo (500 coins) naddes aldrig fram till rekordhallaren');
     assert.ok(fore.giftCoins > 0);
 
     r.skicka('live:start', S2);
     await sida.waitForFunction(id => __las('vyra-live-session-aktiv') === id,
       S2, { timeout: 60000 });
     const efter = await sida.evaluate(() => ({
-      streakCount: window.VyraGiftRecords.streakCount, giftCoins: window.VyraGiftRecords.giftCoins }));
-    assert.deepEqual(efter, { streakCount: 0, giftCoins: 0 },
+      streakCoins: window.VyraGiftRecords.streakCoins, giftCoins: window.VyraGiftRecords.giftCoins }));
+    assert.deepEqual(efter, { streakCoins: 0, giftCoins: 0 },
       'forra sandningens rekord foljde med in i den nya');
   } finally { await sida.close() }
 });
@@ -390,7 +390,7 @@ prov('en gava i samma tick som sandningsbytet lamnar inga spar i de nya rekorden
     await sida.evaluate(() => new Promise(r2 => requestAnimationFrame(() => requestAnimationFrame(r2))));
 
     const rekord = await sida.evaluate(() => ({ ...window.VyraGiftRecords }));
-    assert.equal(rekord.streakCount, 0, 'gavan overlevde sessionsbytet i rekordhallaren');
+    assert.equal(rekord.streakCoins, 0, 'gavan overlevde sessionsbytet i rekordhallaren');
     assert.equal(rekord.giftCoins, 0);
   } finally { await sida.close() }
 });

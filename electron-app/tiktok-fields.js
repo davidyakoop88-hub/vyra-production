@@ -205,3 +205,26 @@ function mvpFields(data, mittAnkarId) {
     profileImage: mvp.profileImage, battleId: text(data?.battleId, 160)
   };
 }
+
+// ---- SKATTKISTAN — SPEGLAD UR tiktok-bridge/normalizer.js envelopeFields ----------------------
+//
+// Samma fält och samma enhetsregel som bryggan: kistaId, oppnasAt (ms), kistaDold, samt
+// diamanter och antal personer i de befintliga fälten diamonds och count. En kista som bara
+// fungerade på molnvägen hade varit ett nytt #381 — typen fanns, men skrivbordsappen sände den aldrig.
+function tillMs(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n < 1e12 ? Math.round(n * 1000) : Math.round(n);
+}
+function envelopeFields(data) {
+  const e = data?.envelopeInfo;
+  if (!e || !e.envelopeId) return null;
+  const bild = e.sendUserAvatar?.urlList?.[0] || e.sendUserAvatar?.urlListList?.[0] || '';
+  const namn = text(e.sendUserName, 120);
+  return {
+    userId: text(e.sendUserId, 160), username: namn, name: namn, profileImage: text(bild, 1200),
+    diamonds: number(e.diamondCount, 1e9), count: number(e.peopleCount, 1e6),
+    kistaId: text(e.envelopeId, 160), oppnasAt: tillMs(e.unpackAt), kistaDold: Number(data?.display) === 2
+  };
+}
+module.exports.envelopeFields = envelopeFields;

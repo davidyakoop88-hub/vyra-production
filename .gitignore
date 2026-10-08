@@ -87,3 +87,6 @@ tiktok-bridge/inspelningar/
 # referens. De ar en felsokningsartefakt for den korningen — referensen och det faktiska fotot
 # finns redan, och en incheckad diff hade bara varit en gammal sanning om ett fel som ar fixat.
 tests/visual/diff/
+
+# Battle-FX: fullkvalitetsoriginalen (1080p60) stannar lokalt; overlayen spelar 720p30-versionerna.
+assets/videos/battle/*/hd/

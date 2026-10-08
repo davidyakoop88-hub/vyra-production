@@ -1,0 +1,10 @@
+Mixkit Free Sound Effects License  —  https://mixkit.co/license/#sfxFree
+
+Ljuden i den har mappen ar hamtade fran mixkit.co.
+- Gratis for kommersiell och personlig anvandning. Ingen attribution kravs.
+- FAR INTE saljas eller distribueras som fristaende ("standalone") ljudfiler,
+  och far inte anvandas i ett konkurrerande ljudbibliotek.
+
+Notera darfor (se aven kommentaren i sound-alerts.js): Mixkit-klipp hor hemma
+som enstaka karaktarsljud i produkten, inte som ett bladdringsbart massbibliotek.
+CC0-massan ligger under assets/sounds/kenney/.

@@ -6,16 +6,16 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 113,
+ "antal": 142,
  "senaste": {
-  "motiv": "Ranking-sixpack omgjord till prototypernas design: riktiga ramar, en gemensam markup for Top Like/Coins/Points",
-  "nycklar": 18,
-  "filter": "voltage,basic-v2,prism-vertical,prism-horizontal,celestial,royal-rose",
-  "tid": "2026-09-24T21:28:05.883Z"
+  "motiv": "Nya katalognycklar pgpodium, pgstreak, pggoal saknar baslinjer",
+  "nycklar": 5,
+  "filter": "pg",
+  "tid": "2026-10-08T17:48:44.229Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:battlemvp:cyber": {
@@ -67,7 +67,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:royal": {
-   "matt": "240x158",
+   "matt": "240x165",
    "fyllnad": 100
   },
   "catalog:battlemvp:royal-purple": {
@@ -79,7 +79,7 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:storm": {
-   "matt": "240x177",
+   "matt": "240x183",
    "fyllnad": 100
   },
   "catalog:custom:text": {
@@ -242,22 +242,6 @@
    "matt": "501x425",
    "fyllnad": 100
   },
-  "catalog:ranking:templateTopPoints:center": {
-   "matt": "300x175",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:clean": {
-   "matt": "300x185",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:neon": {
-   "matt": "300x205",
-   "fyllnad": 100
-  },
-  "catalog:ranking:templateTopPoints:podium": {
-   "matt": "300x190",
-   "fyllnad": 100
-  },
   "catalog:topgift:premium:neon": {
    "matt": "210x270",
    "fyllnad": 100
@@ -279,27 +263,27 @@
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:coronation": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:moon": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:pearl": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:portal": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:rosegold": {
-   "matt": "400x400",
+   "matt": "400x420",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:wings": {
-   "matt": "400x400",
+   "matt": "400x416",
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:landscape": {
@@ -378,22 +362,6 @@
    "matt": "440x132",
    "fyllnad": 100
   },
-  "catalog:toplike:clean-bar": {
-   "matt": "250x270",
-   "fyllnad": 100
-  },
-  "catalog:toplike:mini-podium": {
-   "matt": "340x232",
-   "fyllnad": 100
-  },
-  "catalog:toplike:side-rank": {
-   "matt": "180x230",
-   "fyllnad": 100
-  },
-  "catalog:toplike:soft-stack": {
-   "matt": "250x237",
-   "fyllnad": 100
-  },
   "catalog:ranking:templateTopCoins:basic-v2": {
    "matt": "162x478",
    "fyllnad": 100
@@ -403,7 +371,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
@@ -427,7 +395,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
@@ -451,7 +419,7 @@
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "392x185",
+   "matt": "420x185",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
@@ -464,6 +432,154 @@
   },
   "catalog:toplike:voltage": {
    "matt": "136x278",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:diamonds:diamond-orbit:circle": {
+   "matt": "360x402",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:diamonds:diamond-rail:landscape": {
+   "matt": "400x78",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:diamonds:diamond-tower:portrait": {
+   "matt": "130x712",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:followers:crown-orbit:circle": {
+   "matt": "360x402",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:followers:crown-rail:landscape": {
+   "matt": "400x78",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:followers:crown-tower:portrait": {
+   "matt": "130x712",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:likes:heart-orbit:circle": {
+   "matt": "360x402",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:likes:heart-rail:landscape": {
+   "matt": "400x78",
+   "fyllnad": 100
+  },
+  "catalog:socialgoal:likes:heart-tower:portrait": {
+   "matt": "130x705",
+   "fyllnad": 100
+  },
+  "catalog:likefountain:portal": {
+   "matt": "360x640",
+   "fyllnad": 100
+  },
+  "catalog:skattkista:kista": {
+   "matt": "220x278",
+   "fyllnad": 100
+  },
+  "catalog:skattkista:pill": {
+   "matt": "340x76",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:spotify": {
+   "matt": "340x142",
+   "fyllnad": 100
+  },
+  "catalog:latonskningar:youtube": {
+   "matt": "340x94",
+   "fyllnad": 100
+  },
+  "catalog:giftbubbles": {
+   "matt": "320x569",
+   "fyllnad": 100
+  },
+  "catalog:heartfireworks": {
+   "matt": "320x569",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel50:royal": {
+   "matt": "300x276",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:gold-ribbon": {
+   "matt": "280x308",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:lion-clash": {
+   "matt": "320x346",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:tap:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:tap:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:tap:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:pggoal": {
+   "matt": "380x101",
+   "fyllnad": 100
+  },
+  "catalog:pgpodium": {
+   "matt": "380x364",
+   "fyllnad": 100
+  },
+  "catalog:pgstreak": {
+   "matt": "300x355",
    "fyllnad": 100
   }
  }

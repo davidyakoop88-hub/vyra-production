@@ -162,7 +162,18 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // till minmax(0,170px) och adressfaltet fick golvet min-width:72ch. Faltet hade noll marginal
   // vid ALLA fyra fonsterbredder och klipptes i CI (falt 375 px, adress 389). En cachad studio.css
   // hade fortsatt servera den trangare raden.
-  assert.match(studio, /studio\.css\?v=20260924-1/);
+  // 20260928-overlay 2026-09-28: rebasad pa main (som stod pa 20260928-lasbar). Den sammanslagna
+  // studio.css bar bade main:s andringar och grenens placeringsyta for .workarea, nu scopead till
+  // html:not(.overlay-output) sa overlay-utgangen forblir transparent. Filen ar alltsa ny mot BADA
+  // foraldrarna och strangen bumpas forbi dem — annars hade en cachad studio.css lackt tillbaka den
+  // svarta plattan i OBS/TikTok.
+  // 20261005-1: Like Fountain-hjärtana tappade sin ✦ i ::after (bara hjärtan och profilbilder).
+  // 20261005-4: tio Like Fountain-modeller med egna rörelser och likes som släpper hjärtan i OBS.
+  // 20261005-5: stjärnbilden 1,7× (förut 2,1×), uppmätt i OBS.
+  // 20261005-6: lfHeartSway/lfBubbleSway lugnare (de vinglade för mycket).
+  // 20261005-7: OBS-döljningen av förhandsströmmen !important (Bubble Pop syntes i OBS).
+  // 20261005-8: lfHeartBeat (hoppade) ersatt av lfNeonGlow.
+  assert.match(studio, /studio\.css\?v=20261005-8/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -173,16 +184,21 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // generiska fabriksvagen (t.ex. widgetlank-kopiering) hade tystat tillbaka Celestial/Royal
   // Rose/etc till clean-bar/halo. BARA widget-factory.js andrades — studio.css och media.js
   // `version` ar oforandrade och behaller sina strangar.
-  assert.match(studio, /widget-factory\.js\?v=20260924-1/);
+  // Bumpad 2026-09-24 (-2): fabriken pekar om de pensionerade rankingdesignerna (Top Like
+  // Clean Bar/Soft Stack/Mini Podium/Side Rank, Top Points Lista/Tre i mitten/Podium/Neon) till
+  // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
+  // Bumpad 2026-10-05: Like Fountain centrerad på duken (x 6, bredd 420) och 18 hjärtan som standard.
+  // 20261005-2: hjärtstorlek 32 som standard (24 blev för smått i OBS).
+  assert.match(studio, /widget-factory\.js\?v=20261005-2/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
-  assert.match(studio, /stage-background\.js\?v=1/);
+  assert.match(studio, /stage-background\.js\?v=2/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
   assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
   // Bumpad 2026-09-20: resize-handtagen klamper bredden sa att hela widgeten ryms pa duken.
-  assert.match(studio, /widget-handles\.js\?v=20260920-1/);
+  assert.match(studio, /widget-handles\.js\?v=20260926-fri/);
     // Bumpad 2026-08-20 for toppgivarraden: media.js bar laddvagen till home-premium-bunten, och
   // overview-premium.css/.js laddades HELT UTAN version pa bada stallena — en cachad kopia hade
   // fortsatt visa de fyra gamla summakorten. Nu bar de ?v=20260820-1, och media.js sjalv maste
@@ -337,7 +353,15 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // gallringen lamnade kvar dar (32 selektorer, fyra keyframes). Konstanten styr BADE
   // premium-final.js och premium-final.css, sa en cachad klient hade annars fortsatt hamta den
   // gamla CSS:en — och de borttagna designerna hade levt kvar hos just de som redan varit inne.
-  assert.match(media, /const version='20260923-3'/);
+  // Bumpad 2026-09-25: goal-motion.js/.css läggs sist i samma sekventiella bunt och ersätter
+  // den tidigare social-goal-renderaren. En cachad klient måste hämta båda nya filerna tillsammans.
+  // Bumpad 2026-09-26: Rail och Tower fick mått som ryms på duken (goal-motion.js + .css).
+  // Bumpad 2026-09-27: skattkista.js läggs sist i bunten (widgeten Skattkista).
+  // Bumpad 2026-09-27 igen: latonskningar.js (låtönskningar) läggs efter den.
+  // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
+  // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
+  // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
+  assert.match(media, /const version='20261005-5'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -382,7 +406,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // `VyraActionFields` och de tre som laser registret tappar tyst varje falt. En NYARE strang pa
   // just action-event.js gor tvartom: den tvingar fram en ny hamtning. De sju oforandrade ska
   // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
-  for (const fil of ['action-media', 'action-options', 'action-scenes', 'action-runtime', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
+  // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
+  for (const fil of ['action-options', 'action-runtime']) {
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
+  }
+  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'live-client', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
@@ -397,10 +426,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
   assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
-  // Bumpad 2026-09-20: gift-fireworks.js andrades nar nivan borjade folja gavans varde i
-  // stallet for antalet tryck. Grannarna pa samma rad (gift-classics-engine,
-  // gift-supernova-engine/-panel) ar ororda och behaller 20260912-3.
-  assert.match(media, /gift-fireworks\.js\?v=20260919-niva2/);
+  // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
+  // Classics och panelen ar ororda och behaller sina tidigare versioner.
+  // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
+  // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
+  // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
+  assert.match(media, /gift-fireworks\.js\?v=20261001-burst1/);
+  assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
+  assert.match(media, /gift-supernova-engine\.js\?v=20260925-natural1/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 

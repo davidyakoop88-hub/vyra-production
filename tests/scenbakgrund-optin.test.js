@@ -43,6 +43,17 @@ function runInline(h, source) {
   h.document.body.append(s);
 }
 
+// Editorläget (ingen overlay-output): scenbakgrunden förhandsvisas i .editor-shell .canvas.
+function studioDom(state) {
+  const h = createDom({ url: 'https://vyralive.app/studio.html', state });
+  const shell = h.document.createElement('div');
+  shell.className = 'editor-shell';
+  shell.innerHTML = '<div class="editor-toolbar"></div><div class="canvas"></div>';
+  h.document.body.append(shell);
+  h.load('stage-background.js');
+  return h;
+}
+
 const bas = () => ({ widgets: [], layoutFormat: 'mobile' });
 
 test('utan stageBackground finns ingen bakgrundsnod alls', () => {
@@ -130,4 +141,33 @@ test('historiken diffar stageBackground — ångra ska kunna återställa bakgru
   const historik = fs.readFileSync(path.join(__dirname, '..', 'vyra-historik.js'), 'utf8');
   assert.match(historik, /stageBackground/,
     'vyra-historik.js projicerar inte stageBackground — bakgrundsbyten hamnar utanför ångra');
+});
+
+test('studioOnly: bakgrunden förhandsvisas i editorn men monteras ALDRIG i OBS-utgången', () => {
+  // Overlay: ingen nod alls — samma kontrakt som frånvaro (§8), transparensen kan inte läcka.
+  const overlay = overlayDom({ ...bas(), stageBackground: { mode: 'color', value: '#ff0044', studioOnly: true } });
+  assert.equal(overlay.document.querySelector(NOD), null,
+    'studioOnly-bakgrunden nådde OBS-utgången — hela poängen är att den inte ska följa med');
+
+  // Editor: noden finns, i canvasen — förhandsvisningen streamern faktiskt vill ha.
+  const studio = studioDom({ ...bas(), stageBackground: { mode: 'color', value: '#ff0044', studioOnly: true } });
+  const nod = studio.document.querySelector(NOD);
+  assert.ok(nod, 'studioOnly-bakgrunden syns inte ens i editorns förhandsvisning');
+  assert.ok(studio.document.querySelector('.editor-shell .canvas').contains(nod),
+    'förhandsvisningen bor inte i canvasen');
+});
+
+test('utan studioOnly renderas bakgrunden i OBS precis som förut', () => {
+  const overlay = overlayDom({ ...bas(), stageBackground: { mode: 'color', value: '#ff0044' } });
+  assert.ok(overlay.document.querySelector(NOD),
+    'en vanlig scenbakgrund slutade synas i OBS — den ska bara påverkas av studioOnly');
+});
+
+test('studioOnly läses defensivt: bara ett uttryckligt true räknas', () => {
+  // Ett korrupt molnvärde ska varken tysta overlayn av misstag eller behållas som bakgrund.
+  for (const skräp of ['ja', 1, {}, null]) {
+    const overlay = overlayDom({ ...bas(), stageBackground: { mode: 'color', value: '#ff0044', studioOnly: skräp } });
+    assert.ok(overlay.document.querySelector(NOD),
+      `studioOnly=${JSON.stringify(skräp)} tystade overlayn — bara true ska räknas`);
+  }
 });

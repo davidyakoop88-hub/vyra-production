@@ -104,9 +104,8 @@ nycklar. Varje post bär sitt uppmätta skäl:
 |---|---|---|
 | `catalog:custom:image` / `:video` | 2 | tomma behållare som väntar på användarens egen fil — 0,4 % respektive 0,2 % målat |
 | `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
-| `catalog:glovesnipe:` | 8 | effekten är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de |
+| `catalog:glovesnipe:koiPearl:` / `:masquerade:` | 8 | effekten är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de. WebM-paketen (Pink Princess, Royal Ruby, Cloud Fox) fotograferas |
 | `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
-| `catalog:giftjar:heart` | 1 | **orsak inte fastställd** — växlar på CI mellan exakt två renderingar (115 px inom 232×34, kanalskillnad 18), men är helt stabil lokalt |
 
 Ett undantag är alltid ett hål i täckningen, och listan har ett tak i provet så att den ska göra ont
 att växa. En tom referens matchar allt — både vakten och uppdateringsskriptet vägrar därför skriva

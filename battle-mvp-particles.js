@@ -55,11 +55,12 @@
 
   // How hard the celebration blows, as a fraction of the way through the alert.
   function rateAt(f) {
-    if (f < 0.18) return 0.15;
-    if (f < 0.45) return 0.25 + 0.65 * ((f - 0.18) / 0.27);
-    if (f < 0.54) return 1.60;
-    if (f < 0.90) return 1.00 - 0.30 * ((f - 0.54) / 0.36);
-    return 1.50;
+    // Build toward the reveal, then leave the winner readable during the hold.
+    if (f < 0.04) return 0.12;
+    if (f < 0.10) return 0.30;
+    if (f < 0.16) return 0.85;
+    if (f < 0.22) return 0.18;
+    return 0;
   }
 
   // --- one running celebration ---------------------------------------------
@@ -270,6 +271,8 @@
   var raf = 0, last = 0;
 
   function engineFor(box) {
+    // Raster celebrations supply their own bounded entrance effect.
+    if (box.dataset.mvcParticles === 'off') return null;
     var e = engines.get(box);
     if (!e) { e = new Engine(box); engines.set(box, e); }
     return e.ok ? e : null;
@@ -296,7 +299,7 @@
         for (var n = 0; n < whole; n++) e.emit();
         if (Math.random() < rate - whole) e.emit();
       }
-      if (!e.fired && f >= 0.5 && !REDUCED) { e.fired = true; e.burst(150); }
+      if (!e.fired && f >= 0.12 && !REDUCED) { e.fired = true; e.burst(70); }
       e.step(dt, f);
     }
 

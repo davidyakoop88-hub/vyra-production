@@ -1,5 +1,5 @@
-// DUKENS GRÄNS — så att en widget aldrig kan dras bort ur bildrutan, och så att den som
-// ändå sticker ut SYNS i editorn.
+// DUKENS GRÄNS — så att en widget aldrig kan TAPPAS BORT ur bildrutan, och så att den som
+// ändå har försvunnit SYNS i editorn.
 //
 // BAKGRUND, uppmätt 2026-09-19: Davids layout hade Top Gift på x=-16 och Top Like på x=688
 // i en duk som är 432 bred — 256 px bortom kanten. Editorn lät honom dra dit och sa
@@ -7,19 +7,21 @@
 // Studio. Samma mönster fanns i bandet från sändningen 2026-09-18 (Top Gift x=736,
 // Battle MVP y=768).
 //
-// REGELN AR FULL INNESLUTNING sedan 2026-09-20: hela widgetens box ska rymmas pa duken.
-// Davids ord: "den ytan man lagger widget den ska man se". Den forsta versionen (#472) nojde
-// sig med att origo lag kvar med 8 px marginal, for att inte bryta kant-mot-kant-snappen i
-// snapp.browser.test.js prov 4 - men den regeln lat Gift Fireworks sta pa 540 px bredd i hans
-// 432 px ruta: synlig i editorn (contain:paint klipper), avklippt i sandningen. Snapp-riggen
-// anvander numera widgetar sma nog att tva ryms, sa snappen provas dar den ar synlig.
+// REGELN AR FRI PLACERING MED EN SYNLIG DEL sedan 2026-09-26. Davids ord: "om jag vill gora
+// den stor widget och lite hamnar utanfor den ska inte vara problem, men att man stoppar
+// widget flytta vart man vill ar problem". En widget far alltsa dras, goras storre an duken och
+// hamna delvis utanfor - det enda som stoppas ar att den forsvinner: minst MIN_SYNLIG px av den
+// (eller hela, om den ar mindre) ligger alltid kvar pa duken i bada leder, sa den gar att se och
+// ta tag i igen. Top Like pa x=688 (2026-09-19) hade inte gatt att dra dit.
 //
-// FYRA VAGAR IN, ALLA KLAMPADE: draget (haktaDrag), resize-handtagen (widget-handles.js),
-// panelens X/Y/Bredd-falt (klampFalt, capture-lyssnare fore media.js:81) och "flytta in"
-// (flyttaInAlla, som ocksa krymper en widget bredare an duken). Origo-regeln finns kvar som
-// reserv nar storleken ar okand. INTE klampad: proportionslasets hojdfalt (vyra-proportioner.js
-// satt()) kan fortfarande skriva en bredd via kvoten - markeringen fangar det, "flytta in"
-// rattar det.
+// FORE DET (2026-09-20 till 09-26) var regeln FULL INNESLUTNING: hela boxen skulle rymmas.
+// Den stoppade widgetar vid kanten och krympte dem som var storre an duken, och det var just
+// det som gjorde att widgetar inte gick att placera dar man ville.
+//
+// VAGARNA IN: draget (haktaDrag) och panelens X/Y-falt (klampFalt) haller kvar en synlig del.
+// Resize-handtagen (widget-handles.js) och Bredd-faltet har ingen ovre grans. "Flytta in"
+// (flyttaInAlla) flyttar bara in widgetar som forsvunnit, och katalogen (passaInNya) ger en
+// NYSKAPAD widget ett lage som ryms helt - tills anvandaren sjalv tar i den.
 //
 // DUKENS MÅTT LÄSES UR DOM:EN, aldrig hårdkodat. `.editor-shell .canvas` har
 // `width:var(--layout-width,432px)` (studio.css:570) och layout-format.js skriver om
@@ -34,6 +36,7 @@
 
   var STANDARD = { bredd: 432, hojd: 768 };
   var MIN_KVAR = 8;               // en rutnätsruta, samma mått som snappens rutnät
+  var MIN_SYNLIG = 48;            // så mycket av en widget som alltid ligger kvar på duken
 
   function duken() {
     try {
@@ -85,22 +88,40 @@
     return dukIWidgetens(dukMatt || duken(), skalanFor(el));
   }
 
-  // HELA WIDGETEN SKA RYMMAS. Davids ord 2026-09-20: "den ytan man lagger widget den ska man
-  // se". Origo-regeln (8 px kvar) lat en widget sticka ut till storsta delen, och i hans layout
-  // lag Gift Fireworks pa 540 px bredd i en 432 px ruta - synlig i editorn, avklippt i
-  // sandningen. Nu klamps laget sa att widgetens hela box ligger inne pa duken.
-  // AR WIDGETEN STORRE AN DUKEN kan den inte rymmas; da gar origo till 0 och bredden far
-  // hanteras av flyttaInAlla() eller resize-klampen i widget-handles.js.
-  function klampEtt(varde, dukMatt, storlek) {
+  // EN SYNLIG DEL KVAR, INTE HELA WIDGETEN. Laget far ga sa langt at vanster/uppat att bara
+  // `synlig` px av widgeten ar kvar pa duken, och lika langt at hoger/nedat. En widget storre
+  // an duken far darmed ocksa ett fritt lage. `synlig` ar i widgetens eget rum (MIN_SYNLIG delat
+  // med skalan, se klampElement), sa en nedskalad widget behaller lika manga SYNLIGA pixlar.
+  // Okand storlek: origo-reserven, 0 till duk minus en rutnatsruta.
+  function klampEtt(varde, dukMatt, storlek, synlig) {
     if (!Number.isFinite(varde)) return 0;
-    var tak = Number.isFinite(storlek) && storlek > 0 ? dukMatt - storlek : dukMatt - MIN_KVAR;
-    return Math.min(Math.max(0, varde), Math.max(0, tak));
+    if (!(Number.isFinite(storlek) && storlek > 0)) {
+      return Math.min(Math.max(0, varde), Math.max(0, dukMatt - MIN_KVAR));
+    }
+    var m = Math.min(Number.isFinite(synlig) && synlig > 0 ? synlig : MIN_SYNLIG, storlek);
+    var r = Math.min(Math.max(m - storlek, varde), dukMatt - m);
+    return r === 0 ? 0 : r;                                   // aldrig -0 i layouten
   }
 
-  function klamp(vanster, topp, dukMatt, storlek) {
+  function klamp(vanster, topp, dukMatt, storlek, synlig) {
     var d = dukMatt || duken(), st = storlek || {};
-    return { vanster: klampEtt(vanster, d.bredd, st.bredd), topp: klampEtt(topp, d.hojd, st.hojd) };
+    return { vanster: klampEtt(vanster, d.bredd, st.bredd, synlig),
+      topp: klampEtt(topp, d.hojd, st.hojd, synlig) };
   }
+
+  // Sant nar for lite av widgeten syns for att den ska ga att hitta: mindre an `synlig` px
+  // (eller hela, om den ar mindre) ligger pa duken i nagon led. Det ar det enda som markeras
+  // och raknas - en widget som bara sticker ut delvis ar ett val, inte ett fel.
+  function forsvunnen(vanster, topp, bredd, hojd, dukMatt, synlig) {
+    var d = dukMatt || duken(), b = bredd || 0, h = hojd || 0;
+    var s = Number.isFinite(synlig) && synlig > 0 ? synlig : MIN_SYNLIG;
+    var iX = Math.min(vanster + b, d.bredd) - Math.max(vanster, 0);
+    var iY = Math.min(topp + h, d.hojd) - Math.max(topp, 0);
+    return iX < Math.min(s, b) - 1 || iY < Math.min(s, h) - 1 || vanster >= d.bredd || topp >= d.hojd;
+  }
+
+  // Widgetens egen MIN_SYNLIG, i dess eget rum.
+  function synligFor(el) { return MIN_SYNLIG / skalanFor(el); }
 
   // Sant när widgeten sticker ut ur duken — åt något håll. Flyttar ingenting; används av
   // markeringen så att den som redan står fel går att se utan att layouten skrivs om.
@@ -124,8 +145,8 @@
     var d = duken(), antal = 0;
     try {
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
-        var ut = stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
-          el.offsetWidth, el.offsetHeight, dukFor(el, d));
+        var ut = forsvunnen(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
+          el.offsetWidth, el.offsetHeight, dukFor(el, d), synligFor(el));
         if (ut) { el.dataset.utanforDuken = '1'; antal++; }
         else delete el.dataset.utanforDuken;
       });
@@ -146,18 +167,22 @@
     var d = duken(), ute = [];
     try {
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
-        if (stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
-          el.offsetWidth, el.offsetHeight, dukFor(el, d))) ute.push(el.dataset.id);
+        if (forsvunnen(parseInt(el.style.left, 10), parseInt(el.style.top, 10),
+          el.offsetWidth, el.offsetHeight, dukFor(el, d), synligFor(el))) ute.push(el.dataset.id);
       });
     } catch (e) {}
     return ute;
   }
 
-  // Flyttar in HELA widgeten när den får plats, annars till kanten. Det är en STARKARE
-  // regel än dragets gräns, och det är med flit: här har användaren bett om det med ett
-  // klick. Draget får inte göra samma sak — se resonemanget om kant-mot-kant-snappen ovan.
-  // Ångra fungerar: save() noterar i VyraHistorik före skrivningen.
-  function flyttaInAlla() {
+  // KNAPPEN flyttar in de widgetar som FORSVUNNIT - hela widgeten nar den far plats, annars
+  // till kanten. Storleken rors inte: en widget storre an duken ar ett val. Ångra fungerar:
+  // save() noterar i VyraHistorik före skrivningen.
+  function flyttaInAlla() { return flyttaIn(null); }
+
+  // `urval` ar en lista med id:n (de nyskapade, passaInNya) eller null (knappen). Bara de tva
+  // kommer hit - en inlast layout gor det aldrig, se huvudet. De nyskapade far ett lage som
+  // ryms HELT och krymps till dukens bredd om de ar bredare; knappen ror bara de forsvunna.
+  function flyttaIn(urval) {
     if (!iEditorn()) return 0;
     var d = duken(), flyttade = 0;
     try {
@@ -168,15 +193,16 @@
       var lager = (typeof state !== 'undefined') ? state : null;
       if (!lager || !Array.isArray(lager.widgets)) return 0;
       document.querySelectorAll('.editor-shell .canvas .widget[data-id]').forEach(function (el) {
+        if (urval && urval.indexOf(el.dataset.id) < 0) return;
         var w = lager.widgets.filter(function (x) { return x.id === el.dataset.id })[0];
         if (!w) return;
         var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
         var dw = dukFor(el, d);
-        if (!stickerUt(x, y, el.offsetWidth, el.offsetHeight, dw)) return;
-        // Bredare an duken (Gift Fireworks 540, Glove Snipe 760 i Davids layout): att flytta
-        // origo hjalper inte, den sticker ut anda. Da krymps bredden till dukens. Bara
-        // `width` rors - hojden foljer innehallet.
-        if (el.offsetWidth > dw.bredd && Number.isFinite(Number(w.width))) w.width = dw.bredd;
+        if (urval ? !stickerUt(x, y, el.offsetWidth, el.offsetHeight, dw)
+                  : !forsvunnen(x, y, el.offsetWidth, el.offsetHeight, dw, synligFor(el))) return;
+        // En NY widget bredare an duken (Glove Snipe 760, Like Fountain 620 i katalogen) far
+        // dukens bredd som start. Bara `width` rors - hojden foljer innehallet.
+        if (urval && el.offsetWidth > dw.bredd && Number.isFinite(Number(w.width))) w.width = dw.bredd;
         w.x = Math.min(Math.max(0, x), Math.max(0, dw.bredd - Math.min(el.offsetWidth, dw.bredd)));
         w.y = Math.min(Math.max(0, y), Math.max(0, dw.hojd - el.offsetHeight));
         flyttade++;
@@ -215,6 +241,85 @@
     knapp.title = 'Ångra fungerar om placeringen inte blir som du tänkt.';
   }
 
+  // ---- NYA WIDGETAR RYMS FRÅN FÖRSTA STUND ----------------------------------------------
+  // UPPMATT 2026-09-26 med hela katalogen (124 kort) i en riktig webblasare: 39 skapades med en
+  // del utanfor duken, och 17 av dem var bredare an hela duken - Glove Snipe 760, Like Fountain
+  // 620, Gift Campaign 608, Last-X 500 i en 432-ruta. Varje fynd ledde till en egen rattning av
+  // en enskild widgets standardmatt, och nasta widget hade samma fel. Davids ord: "varje gang vi
+  // ska testa en widget och blir det fel". Regeln ligger darfor HAR, en gang for alla: en widget
+  // som just skapats ur katalogen far samma behandling som knappen "flytta in" ger, automatiskt.
+  //
+  // BARA NYA. Varje katalogknapp skapar sin widget med VyraWidgets.create, sa det ar dar vi ser
+  // att en widget ar ny. En layout som laddas (sparad, fran molnet, en scen) skapas aldrig dar -
+  // den ror vi inte, samma regel som i huvudet.
+  //
+  // BILDERNA AVGOR STORLEKEN. Manga widgetar far sin hojd forst nar ramens bild laddats (Goal
+  // Tower var 48 px hog i stallet for 708), sa passningen gors om nar en bild eller video i den
+  // nya widgeten laddas, under NY_FONSTER_MS. Den flyttar bara nagot som sticker ut.
+  var NY_FONSTER_MS = 15000, nya = {}, iPassning = false;
+
+  function passaInNya() {
+    if (iPassning || !iEditorn()) return 0;
+    // Fonstret raknas fran forsta gangen widgeten STAR PA DUKEN, inte fran skapandet: katalogen
+    // ligger i en egen vy, och den som valjer en widget och tittar pa layouten en minut senare
+    // ska fa samma passning.
+    var nu = Date.now(), ids = [];
+    Object.keys(nya).forEach(function (id) {
+      var el = document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+      if (!el) return;
+      if (!nya[id]) nya[id] = nu;
+      if (nu - nya[id] > NY_FONSTER_MS) delete nya[id]; else ids.push(id);
+    });
+    if (!ids.length) return 0;
+    iPassning = true;
+    try {
+      ids.forEach(function (id) {
+        var el = document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+        if (!el) return;
+        el.querySelectorAll('img,video').forEach(function (m) {
+          if (m.__grans) return;
+          m.__grans = 1;
+          var igen = function () { requestAnimationFrame(passaInNya); };
+          m.addEventListener(m.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', igen, { once: true });
+        });
+      });
+      return flyttaIn(ids);
+    } catch (e) { return 0; } finally { iPassning = false; }
+  }
+
+  // ANVANDAREN BESTAMMER OVER PASSNINGEN. Sa fort widgeten tas i - drag, handtag eller ett
+  // falt i panelen - slutar passningen for den. Annars hade den krympt tillbaka en widget som
+  // anvandaren just gjort storre an duken med flit.
+  function slappNy(id) { if (id && id in nya) delete nya[id]; }
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('pointerdown', function (e) {
+      try {
+        var el = e.target && e.target.closest && e.target.closest('.editor-shell .canvas .widget[data-id]');
+        if (el) slappNy(el.dataset.id);
+      } catch (x) {}
+    }, true);
+    ['input', 'change'].forEach(function (typ) {
+      document.addEventListener(typ, function (e) {
+        try {
+          if (e.target && e.target.closest && e.target.closest('.properties') && typeof selected !== 'undefined') slappNy(selected);
+        } catch (x) {}
+      }, true);
+    });
+  }
+
+  function markeraNy(w) {
+    // 0 = inte sedd pa duken an. Forhandsbilderna i katalogen skapar ocksa widgetar som aldrig
+    // hamnar pa duken; de far inte vaxa listan utan gräns.
+    try {
+      if (w && w.id) {
+        var ids = Object.keys(nya);
+        if (ids.length > 300) ids.slice(0, 150).forEach(function (id) { delete nya[id]; });
+        nya[w.id] = 0;
+      }
+    } catch (e) {}
+    return w;
+  }
+
   // ---- KROKEN I DRAGET -------------------------------------------------------------------
   // studio.js ar minifierad handkod och far enligt husregeln (domaner.json, studio-core)
   // ALDRIG andras direkt — den monkey-patchas fran syskonfil. Draget sitter som
@@ -225,7 +330,7 @@
   // det oklampade laget och widgeten hoppar tillbaka forst vid nasta ritning.
   function klampElement(el) {
     var k = klamp(parseInt(el.style.left, 10), parseInt(el.style.top, 10), dukFor(el),
-      { bredd: el.offsetWidth, hojd: el.offsetHeight });
+      { bredd: el.offsetWidth, hojd: el.offsetHeight }, synligFor(el));
     el.style.left = k.vanster + 'px';
     el.style.top = k.topp + 'px';
   }
@@ -266,9 +371,9 @@
     var d = dukFor(el), v = Number(falt.value);
     if (!Number.isFinite(v)) return;
     var ny = v;
-    if (falt.id === 'propWidth') ny = Math.max(60, Math.min(v, d.bredd - (w.x || 0)));
-    if (falt.id === 'propX') ny = klampEtt(v, d.bredd, Math.min(el.offsetWidth, d.bredd));
-    if (falt.id === 'propY') ny = klampEtt(v, d.hojd, el.offsetHeight);
+    if (falt.id === 'propWidth') ny = Math.max(60, v);                // storre an duken ar tillatet
+    if (falt.id === 'propX') ny = Math.round(klampEtt(v, d.bredd, el.offsetWidth, synligFor(el)));
+    if (falt.id === 'propY') ny = Math.round(klampEtt(v, d.hojd, el.offsetHeight, synligFor(el)));
     if (ny !== v) falt.value = ny;
   }
   if (typeof document !== 'undefined' && document.addEventListener) {
@@ -276,11 +381,12 @@
   }
 
   var api = {
-    klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt,
+    klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt, forsvunnen: forsvunnen,
     dukIWidgetens: dukIWidgetens, skalanFor: skalanFor, dukFor: dukFor,
-    markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, raknare: raknare,
+    markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, flyttaIn: flyttaIn, raknare: raknare,
+    passaInNya: passaInNya, markeraNy: markeraNy, NY_FONSTER_MS: NY_FONSTER_MS,
     haktaDrag: haktaDrag,
-    MIN_KVAR: MIN_KVAR, STANDARD: STANDARD
+    MIN_KVAR: MIN_KVAR, MIN_SYNLIG: MIN_SYNLIG, STANDARD: STANDARD
   };
 
   if (typeof module === 'object' && module.exports) { module.exports = api; return; }
@@ -293,9 +399,17 @@
     var forra = root.render;
     root.render = function () {
       var r = forra.apply(this, arguments);
-      markera(); raknare();
+      passaInNya(); markera(); raknare();
       return r;
     };
+  }
+
+  // Varje katalogknapp gar genom VyraWidgets.create - det ar dar en ny widget syns.
+  if (root.VyraWidgets && typeof root.VyraWidgets.create === 'function' && !root.VyraWidgets.create.__grans) {
+    var skapa = root.VyraWidgets.create;
+    var nyCreate = function () { return markeraNy(skapa.apply(this, arguments)); };
+    nyCreate.__grans = 1;
+    root.VyraWidgets.create = nyCreate;
   }
 
   // Draget krokas efter varje bind(), samma monster som syskonfilerna anvander.

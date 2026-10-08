@@ -287,6 +287,9 @@ test('desktop har ALLA molnets persontyper — inte bara typer molnet accepterar
     .matchAll(/'([a-z_]+)'/g)].map(x => x[1]));
 
   const skickade = new Set([...DESKTOP.matchAll(/emit\('([a-z_]+)'/g)].map(x => x[1]));
+  // Chatten skickas med ett VILLKOR: emit(rad.startsWith('!') ? 'chatcommand' : 'chat', ...). Utan
+  // den här raden såg provet bara emit('...') och trodde att desktop aldrig sände chatcommand.
+  for (const v of DESKTOP.matchAll(/emit\([^,]*\?\s*'([a-z_]+)'\s*:\s*'([a-z_]+)'/g)) { skickade.add(v[1]); skickade.add(v[2]); }
   // Molnets alias: bryggan/desktop skickar 'likes' och 'member', molnet lagrar dem som
   // 'like'/'viewer'. En typ som desktop skickar under sitt raa namn raknas som tackt.
   const bus = las('server/event-bus.js');

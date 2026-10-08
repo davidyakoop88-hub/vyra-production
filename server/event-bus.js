@@ -9,7 +9,13 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp']);
+// 'streamdeck' tillkom 2026-09-27: Stream Deck-molnvägen (server/streamdeck.js). Den är INTE en
+// TikTok-händelse och har därför ingen producent i bryggan eller desktop-tjänsten — den föds i
+// rutten POST /api/streamdeck/events i index.js, mot en enhetstoken. Den står med här för att
+// cleanEvent annars kastar den med 400, och står med UNDANTAGET i tests/event-contract.test.js
+// (som annars kräver en bryggproducent för varje tillåten typ). Den bär inga person- eller
+// gåvofält, bara sitt kommando — se sd-blocket i cleanEvent nedan.
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','streamdeck']);
 // `member` STOD HAR fram till 2026-09-06 och doptes om till 'viewer'. Foljden: klientens
 // liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och 'viewer' matchar
 // INGEN av dem, sa varken member- eller join-triggern kunde fyra pa molnvagen. Uppmatt i en skarp
@@ -74,6 +80,10 @@ const event={
     // ganger: en gang av TikToks officiella lista och en gang av battle-mvp-session.js egen
     // rakning (som fungerar sedan #312).
     battleId:String(input?.battleId||'').slice(0,160),
+    // Battle-FX-tider (battle-fx-auto.js). remainingSec: sekunder kvar av matchen nar `battle`
+    // skickades. durationSec: boost-fonstrets langd pa `glove`. 0 = okant, klienten har reserver.
+    remainingSec:Math.max(0,Math.min(3600,Math.round(Number(input?.remainingSec)||0))),
+    durationSec:Math.max(0,Math.min(3600,Math.round(Number(input?.durationSec)||0))),
     // Emote-id:t. Utan den har raden strok vitlistan faltet och Actions & Events emote-valjare
     // forblev tom for alltid — samma tysta forlust som en gang drabbade chattexten och
     // fanClubLevel. Bilden aker redan med i giftImage ovan; faltnamnen ar klientens
@@ -109,6 +119,20 @@ const event={
     const fran=Math.round(Number(v?.from)),till=Math.round(Number(v?.to));
     return Number.isInteger(fran)&&Number.isInteger(till)&&fran>=1&&till<=50&&till>fran?{from:fran,to:till}:null;
   };
+  // SKATTKISTAN (typen envelope, se tiktok-bridge/normalizer.js envelopeFields). Fälten finns BARA
+  // på den typen: en gåva ska inte bära ett tomt kistaId. oppnasAt är millisekunder sedan epoken.
+  if(typ==='envelope'){
+    event.kistaId=String(input?.kistaId||'').slice(0,160);
+    event.oppnasAt=Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.round(Number(input?.oppnasAt)||0)));
+    event.kistaDold=!!input?.kistaDold;
+  }
+  // STREAM DECK-MOLNVÄGEN (typen streamdeck, se server/streamdeck.js). Bär bara vad knappen gör.
+  // Fälten finns BARA på den här typen — en gåva ska aldrig släpa ett sdKommando med sig.
+  if(typ==='streamdeck'){
+    event.sdKommando=String(input?.sdKommando||'').slice(0,40);
+    event.sdVarde=String(input?.sdVarde||'').slice(0,300);
+    event.sdVal=String(input?.sdVal||'').slice(0,40);
+  }
   const fanUpp=hojning(input?.fanLevelUp),gifterUpp=hojning(input?.gifterLevelUp);
   if(fanUpp)event.fanLevelUp=fanUpp;
   if(gifterUpp)event.gifterLevelUp=gifterUpp;

@@ -52,11 +52,14 @@ function katalogMedMiniatyrer({ classics = false, jars = false } = {}) {
         return (...args) => { if (key in counts) counts[key]++; };
       }, set(target, key, value) { target[key] = value; return true; } });
     };
+    h.load('vfx-rng.js');
+    h.load('gift-natural-engine.js');
     h.load('gift-classics-engine.js');
     h.load('gift-supernova-engine.js');
   }
   h.load('gift-fireworks.js');
   h.load('premium-final.js');
+  h.load('goal-motion.js');
   if (jars) {
     h.window.VyraGiftJarTextures = { load: () => new Promise(() => {}) };
     h.load('gift-jar-animals.js');

@@ -38,8 +38,7 @@ function servera() {
     if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
       res.writeHead(404); res.end('nej'); return;
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(fil)] || 'application/octet-stream' });
-    fs.createReadStream(fil).pipe(res);
+    V.skickaFil(req, res, fil, MIME[path.extname(fil)] || 'application/octet-stream');
   });
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
@@ -351,8 +350,12 @@ const MARKEN = [
   // designerna ar bildbaserade (assets/goal-new/*.png) och har varken .goal-icon eller <svg>.
   // Uppmatt 2026-09-20: noll CJK-/fullbreddskodpunkter i bada foljarnycklarna. Kravet "market
   // maste anda ritas" blir da att designbilden faktiskt ar laddad - annars vore widgeten tom.
-  { nyckel: 'catalog:socialgoal:followers:pulse-rail:landscape', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
-  { nyckel: 'catalog:socialgoal:followers:pulse-tower:portrait', valjare: 'img[src*="goal-new/"]', sort: 'bild' },
+  // Sedan #525 (2026-09-25) ritas malen av goal-motion.js med bilder ur assets/goal-motion/ -
+  // goal-new-ramarna ritas inte langre, och de tva gamla nycklarna faller tillbaka till orbit.
+  // Vakten foljer darfor de tre foljardesigner katalogen erbjuder i dag.
+  { nyckel: 'catalog:socialgoal:followers:crown-orbit:circle', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:crown-rail:landscape', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
+  { nyckel: 'catalog:socialgoal:followers:crown-tower:portrait', valjare: 'img.goal-motion-art[src*="goal-motion/"]', sort: 'bild' },
 ];
 
 test('de tva marken ritas av oss, inte av maskinens typsnitt', { skip, timeout: 120000 }, async () => {
@@ -483,7 +486,8 @@ test('undantagslistan är kort, och varje post har ett skäl', { skip: skip || u
   assert.deepEqual(utanSkal, [], `undantag utan begripligt skäl: ${utanSkal.join(', ')}`);
   // En post som inte träffar någon nyckel är död kod som ser levande ut — och den döljer att
   // täckningen tyst blivit större än listan påstår.
-  const traffar = poster.map(([p]) => [p, ALLA.filter(k => k === p || k.startsWith(p)).length]);
+  // Samma regel som utanReferens(): prefix bara för poster som slutar på ':'.
+  const traffar = poster.map(([p]) => [p, ALLA.filter(k => k === p || (p.endsWith(':') && k.startsWith(p))).length]);
   const utanTraff = traffar.filter(([, n]) => n === 0).map(([p]) => p);
   assert.deepEqual(utanTraff, [],
     `undantag som inte träffar någon katalognyckel: ${utanTraff.join(', ')}`);

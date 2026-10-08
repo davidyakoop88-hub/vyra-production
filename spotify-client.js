@@ -180,6 +180,24 @@
     return uri;
   }
 
+  // LÅTÖNSKNINGAR (latonskningar.js): lägg en låt SIST i streamerns Spotify-kö i stället för att
+  // byta låt direkt. Spotify spelar sedan kön i ordning. Samma behörighet som play()
+  // (user-modify-playback-state), och Spotify Premium krävs precis som där.
+  async function queue(query) {
+    const value = String(query || '').trim();
+    if (!value) throw new Error('Ingen låt att lägga i kön');
+    let track = null;
+    if (value.startsWith('spotify:track:')) track = { uri: value, name: '', artists: [] };
+    else {
+      const result = await api(`/search?type=track&limit=1&q=${encodeURIComponent(value)}`);
+      track = result?.tracks?.items?.[0] || null;
+      if (!track) throw new Error('Låten hittades inte på Spotify');
+    }
+    await api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}`, { method: 'POST' });
+    return { uri: track.uri, titel: track.name || '', artist: (track.artists || []).map(a => a.name).join(', '),
+      bild: track.album?.images?.[track.album.images.length > 1 ? 1 : 0]?.url || '', sekunder: Math.round((track.duration_ms || 0) / 1000) };
+  }
+
   async function next() {
     return api('/me/player/next', { method: 'POST' });
   }
@@ -200,5 +218,5 @@
     channel.onmessage = () => window.dispatchEvent(new CustomEvent('vyra:spotify-changed'));
   } catch {}
 
-  window.VyraSpotify = { connect, disconnect, status, current, play, next, handleCallback };
+  window.VyraSpotify = { connect, disconnect, status, current, play, queue, next, handleCallback };
 })();

@@ -464,7 +464,7 @@ function gavor(rader) {
 const VYRA_HANTERAR = new Set(['gift', 'giftcombo', 'like', 'likes', 'follow', 'share', 'member',
   'subscribe', 'join', 'roomuser', 'chat', 'comment', 'chatcommand', 'subscriberemote',
   'fanclubsticker', 'fansticker', 'shoppurchase', 'purchase', 'battle', 'glove', 'guardian',
-  'fanlevelup', 'battle_mvp', 'viewer', 'livesession']);
+  'fanlevelup', 'battle_mvp', 'envelope', 'viewer', 'livesession']);
 function protokollglapp(rader) {
   const handelser = rader.filter(arEvent);
   if (!handelser.length) return { svar: INGET };

@@ -75,7 +75,8 @@ for (const design of ['clean', 'center', 'podium', 'neon']) {
 
 // ---- och den familj som faktiskt bar ett skinn ------------------------------------------------
 test('Top Like far sitt valda skinn', () => {
-  assert.deepEqual(skinnklasser(topLike({ skin: 'soft-stack' })), ['skin-soft-stack']);
+  // Soft Stack m.fl. ar pensionerade 2026-09-24 — provet anvander ett skinn som finns kvar.
+  assert.deepEqual(skinnklasser(topLike({ skin: 'voltage' })), ['skin-voltage']);
 });
 
 test('Top Like utan skinn faller tillbaka pa clean-bar', () => {
@@ -112,9 +113,11 @@ function panel(w) {
 }
 
 test('skinnvaljaren ritas for Top Like', () => {
-  const html = panel(topLike({ skin: 'soft-stack' }));
+  const html = panel(topLike({ skin: 'voltage' }));
   assert.match(html, /DESIGN · VÄLJ TEMA/, 'Top Like tappade sin temavaljare');
-  assert.match(html, /data-ws-skin="soft-stack"/);
+  assert.match(html, /data-ws-skin="voltage"/);
+  // De pensionerade gar inte att valja i panelen.
+  assert.doesNotMatch(html, /data-ws-skin="(clean-bar|soft-stack|mini-podium|side-rank)"/);
 });
 
 for (const [namn, w] of [['Top Coins', topCoins('halo')], ['Top Points', topPoints('podium')]]) {

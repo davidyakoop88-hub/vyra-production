@@ -1,0 +1,16 @@
+# VYRA LIVE — vyralive.app
+# Publika sidor (startsida, villkor, integritet) får indexeras.
+# App-, overlay- och demo-sidor hålls utanför sökindex.
+User-agent: *
+Allow: /
+Disallow: /studio.html
+Disallow: /overlay.html
+Disallow: /layout.html
+Disallow: /operations.html
+Disallow: /recognition-adapter-demo.html
+Disallow: /premium-gift-widget-demo.html
+Disallow: /premium-widget-demo.html
+Disallow: /_cf_preview.html
+Disallow: /_proc.html
+
+Sitemap: https://vyralive.app/sitemap.xml

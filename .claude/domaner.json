@@ -39,6 +39,9 @@
         "index.html",
         "vyra-zoom.js",
         "vyra-snapp.js",
+        "widget-las.js",
+        "widget-las.css",
+        "vyra-panelplats.js",
         "widget-grans.js",
         "vyra-historik.js",
         "vyra-proportioner.js",
@@ -48,6 +51,10 @@
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
+        "tests/widget-las.test.js",
+        "tests/browser/widget-las.browser.test.js",
+        "tests/browser/katalog-tomma-sektioner.browser.test.js",
+        "tests/browser/panelplats.browser.test.js",
         "tests/tomma-tillstand.test.js",
         "tests/handtag-lackage.test.js",
         "tests/browser/widget-handtag.browser.test.js",
@@ -80,6 +87,9 @@
       "filer": [
         "battle-mvp-session.js",
         "custom-widgets.js",
+        "like-fountain-portal.js",
+        "skattkista.js",
+        "latonskningar.js",
         "approved-rankings.css",
         "approved-rankings.js",
         "ranking-sixpack.css",
@@ -92,6 +102,8 @@
         "extras.js",
         "fan-fas.js",
         "fan-level-session.js",
+        "fan-level-50.js",
+        "fan-level-50-session.js",
         "gift-alert-chrome.js",
         "gift-alert-frames.css",
         "gift-alert-frames.js",
@@ -139,6 +151,8 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/like-fountain-portal.test.js",
+        "tests/browser/like-fountain-portal.browser.test.js",
         "tests/tom-widget-avslojas.test.js",
         "tests/widget-defaults-migration.test.js",
         "tests/widget-placement.test.js",
@@ -187,6 +201,11 @@
         "tests/wishlist-retired.test.js",
         "tests/browser/battle-mvp-ramar.browser.test.js",
         "tests/browser/toplike-ramar-laddar.browser.test.js",
+        "tests/browser/ranking-direkt.browser.test.js",
+        "tests/browser/skattkista.browser.test.js",
+        "tests/browser/latonskningar.browser.test.js",
+        "tests/browser/glove-snipe-inom-rutan.browser.test.js",
+        "tests/browser/nollning-missar-inte-omritning.browser.test.js",
         "tests/browser/fan-level-referens.browser.test.js",
         "tests/browser/fan-fas-loyalty.browser.test.js",
         "tests/browser/guardian-emblem.browser.test.js",
@@ -246,7 +265,9 @@
         "legal.css",
         "terms.html",
         "privacy.html",
-        "favicon.ico"
+        "favicon.ico",
+        "robots.txt",
+        "sitemap.xml"
       ],
       "tester": [
         "tests/css-struktur.test.js",
@@ -316,6 +337,7 @@
         "overlay-diagnostics.js",
         "overlay-diagnostics.css",
         "overlay-packages.js",
+        "battle-fx-auto.js",
         "overlay-preview.js",
         "overlay-sanitize.js",
         "layout-standalone.js",
@@ -325,6 +347,7 @@
       ],
       "tester": [
         "tests/overlay-sanitize.test.js",
+        "tests/battle-fx-auto.test.js",
         "tests/overlay-live-leaderboards.test.js",
         "tests/thumb-no-overlay-leak.test.js",
         "tests/scene-links.test.js",
@@ -438,13 +461,27 @@
         "gift-fireworks.js",
         "gift-fireworks.css",
         "gift-fireworks-session.js",
+        "gift-bubbles.js",
+        "gift-bubbles.css",
+        "gift-bubbles-session.js",
+        "playground-widgets.js",
+        "playground-widgets.css",
+        "playground-assets.js",
+        "heart-fireworks.js",
+        "heart-fireworks.css",
+        "heart-fireworks-session.js",
         "validate_fx_theme.py",
         "battle-mvp-celebrations.css",
+        "fan-level-50.css",
         "gift-supernova-engine.js",
         "gift-campaign-aura-engine.js",
-        "gift-classics-engine.js"
+        "gift-classics-engine.js",
+        "gift-natural-engine.js"
       ],
       "tester": [
+        "tests/gift-bubbles-trigger.test.js",
+        "tests/playground-widgets.test.js",
+        "tests/heart-fireworks-trigger.test.js",
         "tests/gift-fireworks-trigger.test.js",
         "tests/gift-fireworks-live-trigger.test.js",
         "tests/gift-fireworks-live-path.test.js",
@@ -457,7 +494,8 @@
         "tests/vfx-shared-ticker.test.js",
         "tests/gift-supernova-engine.test.js",
         "tests/gift-campaign-aura-engine.test.js",
-        "tests/gift-classics-engine.test.js"
+        "tests/gift-classics-engine.test.js",
+        "tests/gift-natural-engine.test.js"
       ],
       "matning": [
         {
@@ -487,7 +525,10 @@
         "server/heart-me-goal.js",
         "server/gavokatalog.js",
         "gift-identity-larlage.js",
-        "scripts/goal-*.js"
+        "scripts/goal-*.js",
+        "goal-motion.js",
+        "goal-motion.css",
+        "assets/goal-motion/*"
       ],
       "tester": [
         "tests/goal-client.test.js",
@@ -509,7 +550,8 @@
         "server/test/heart-me-unika-avsandare.test.js",
         "server/test/gavokatalog.test.js",
         "server/test/gavokatalog-http.test.js",
-        "tests/goal-postgres-flode.test.js"
+        "tests/goal-postgres-flode.test.js",
+        "tests/goal-motion-designs.test.js"
       ],
       "matning": [
         {
@@ -652,16 +694,24 @@
         "tts-chat.css",
         "sound-alerts.js",
         "spotify-client.js",
+        "streamdeck.js",
+        "scripts/streamdeck-ikoner.js",
+        "streamdeck-plugin/*",
+        "streamdeck-plugin/se.vyra.live.sdPlugin/*",
         "spotify-callback.html",
         "obs-client.js",
         "chatbot-controls.js",
         "chatbot-overlay.js",
         "chatbot-overlay.css",
         "configure_obs_tikcontrol.py",
-        "server/tts.js"
+        "server/tts.js",
+        "server/musik.js",
+        "server/tiktok-profil.js",
+        "server/streamdeck.js"
       ],
       "tester": [
         "server/test/tts.test.js",
+        "server/test/streamdeck.test.js",
         "tests/tts-livestatus.test.js",
         "tests/paus-indikator.test.js"
       ],
@@ -719,6 +769,10 @@
         "server/test/krypteringsnyckel.test.js",
         "server/test/test-event.test.js",
         "server/test/tiktok-ingest.test.js",
+        "server/test/skattkista.test.js",
+        "server/test/musik.test.js",
+        "tests/streamdeck-plugin.test.js",
+        "tests/browser/streamdeck.browser.test.js",
         "server/test/tiktok-connection.test.js",
         "tests/security-headers.test.js",
         "tests/static-cache-headers.test.js",

@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA Studio</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20260924-1">
+  <link rel="stylesheet" href="studio.css?v=20261005-8">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
-  <link rel="stylesheet" href="sidebar-premium.css?v=20260920-meny">
+  <link rel="stylesheet" href="sidebar-premium.css?v=20260927-meny">
   <link rel="stylesheet" href="auth-client.css?v=20260724-1">
   <link rel="stylesheet" href="auth-security.css?v=20260724-1">
   <link rel="stylesheet" href="cloud-sync.css?v=20260724-1">
@@ -37,11 +37,13 @@
         <button data-extra="soundAlerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>Sound Alerts</span></button>
         <button data-extra="ttsChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/></svg><span>TTS Chat</span></button>
         <button data-extra="chatbot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg><span>Chatbot</span></button>
+        <button data-extra="streamdeck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Stream Deck</span></button>
         <button data-view="flows"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M7 11v3a2 2 0 0 0 2 2h4"/><path d="M17 13v-3a2 2 0 0 0-2-2h-4"/></svg><span>Automationer</span></button>
       </div>
       <div class="nav-section">
         <span class="nav-section-label">Media</span>
         <button data-extra="spotify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="18" r="4"/><path d="M12 18V2l7 4"/></svg><span>Spotify</span></button>
+        <button data-extra="youtube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/></svg><span>YouTube</span></button>
         <button data-view="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/></svg><span>Händelser</span></button>
       </div>
       <div class="nav-section">
@@ -131,11 +133,11 @@
   <script src="desktop-profile.js?v=20260724-1"></script>
   <script src="studio.js?v=20260916-anslutningsprick"></script>
   <script src="layout-format.js?v=20260726-freeze-fix"></script>
-  <script src="stage-background.js?v=1"></script>
+  <script src="stage-background.js?v=2"></script>
   <!-- Angra/gor om: wrappar render for baslinjesynk och monterar sina knappar efter
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
   <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
-  <script src="spotify-client.js?v=20260724-1"></script>
+  <script src="spotify-client.js?v=20260927-ko"></script>
   <script src="extras.js?v=20260724-spotify"></script>
   <link rel="stylesheet" href="agency-test.css?v=20260919-2">
   <link rel="stylesheet" href="agency-test-v2.css?v=20260919-2">
@@ -150,28 +152,29 @@
   <link rel="stylesheet" href="social-goals-v2.css?v=20260919-9">
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
   <script src="gift-event-images.js?v=20260923-1"></script>
-  <script src="widget-factory.js?v=20260924-1"></script>
+  <script src="widget-factory.js?v=20261005-2"></script>
   <script src="standalone-links.js?v=20260803-links"></script>
   <script src="overlay-sanitize.js?v=20260803-sanitize"></script>
   <script src="event-dedupe.js?v=20260803-dedupe"></script>
-  <script src="toplike-design.js?v=20260924-2"></script>
+  <script src="toplike-design.js?v=20260924-pension"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260916-facit"></script>
-  <script src="media.js?v=20260923-6"></script>
+  <script src="media.js?v=20261005-11"></script>
   <link rel="stylesheet" href="topcoins-v2.css?v=20260920-1">
   <script src="topcoins-v2.js?v=20260924-en-design"></script>
   <!-- Top Points fyra designer. EFTER media.js: modulen lindar wh/props/bind som media.js definierar,
        och tar over media.js generiska katalogknappar for templateTopPoints. -->
   <link rel="stylesheet" href="toppoints-v2.css?v=20260921-1">
-  <script src="toppoints-v2.js?v=20260924-en-design"></script>
+  <script src="toppoints-v2.js?v=20260924-pension"></script>
   <!-- Ranking-sixpack: sex nya designer (Voltage/Basic v2/Prism vertikal/horisontal/Celestial/Royal
        Rose) delade av Top Like (skin-<id>), Top Coins och Top Points (topcoins-/toppoints-<id>).
        Ren CSS ovanpa toplike-studio.css/topcoins-v2.css/toppoints-v2.css - laddas darfor sist av de fyra. -->
-  <link rel="stylesheet" href="ranking-sixpack.css?v=20260924-en-design-2">
+  <link rel="stylesheet" href="ranking-sixpack.css?v=20260924-profilram">
+  <link rel="stylesheet" href="widget-las.css?v=3-genomslapp">
   <!-- Koreografin "Vapenskolden": EFTER media.js, som definierar triggern den lindar. -->
   <script src="guardian-emblem-fas.js?v=20260818-2"></script>
   <!-- Handtag pa alla sidor: injiceras efter render, darfor EFTER media.js. -->
-  <script src="widget-handles.js?v=20260920-1"></script>
+  <script src="widget-handles.js?v=20260926-fri"></script>
   <script src="layout-safe.js?v=20260920-1"></script>
   <script src="cloud-sync.js?v=20260807-scene"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
@@ -182,8 +185,12 @@
   <!-- Zoom i editorn. Monterar via MutationObserver pa #view, se filens huvudkommentar. -->
   <!-- Snapp + rutnat. Haken sitter i dragmatten (studio.js), aldrig i render eller save. -->
   <!-- Dukens grans. Samma have som snappen: haken sitter i dragmattet i studio.js. -->
-  <script src="widget-grans.js?v=4-egen-skala"></script>
+  <script src="widget-grans.js?v=6-fri-placering"></script>
   <script src="vyra-snapp.js?v=1"></script>
+  <!-- Las widget. Fangstfas-stopp pa pointerdown for lasta widgetar; studio.js ror inte. -->
+  <script src="widget-las.js?v=3-genomslapp"></script>
+  <!-- Panelen star kvar dar man ar vid omritning. EFTER layout-safe.js, som lindar render(). -->
+  <script src="vyra-panelplats.js?v=1"></script>
   <script src="vyra-zoom.js?v=1"></script>
   <script src="vyra-proportioner.js?v=20260820-1"></script>
   <script src="vyra-rotation.js?v=20260820-1"></script>
@@ -208,11 +215,11 @@
        overlay-läge, och rör ingen annan fil. -->
   <script src="vyra-state-sync.js?v=1"></script>
   <link rel="stylesheet" href="approved-rankings.css?v=20260920-3">
-  <script src="approved-rankings.js?v=20260924-en-design"></script>
+  <script src="approved-rankings.js?v=20260926-direkt"></script>
   <!-- Ranking-sixpack: EN renderare for de sex designerna i Top Like, Top Coins och Top Points, och
        katalogens grupp per design. EFTER approved-rankings.js: bada installerar pa `load`, och den har
        wrappern maste ligga ytterst for att se den fardiga rotnoden. -->
-  <script src="ranking-sixpack.js?v=20260924-en-design"></script>
+  <script src="ranking-sixpack.js?v=20260926-direkt"></script>
   <script>
     (function () {
       const params = new URLSearchParams(location.search);

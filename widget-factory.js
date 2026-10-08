@@ -21,6 +21,14 @@
   // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
   // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
   const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
+  // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
+  // podium ...) bygger i stället närmaste nya design, så inget gammalt val sparas i state eller molnet.
+  // Samma val som ranking-sixpack.js:s PENSION, som tar hand om widgetar som redan var sparade.
+  // Två tabeller, inte en: för Top Like är 'clean'/'center' LAYOUTVÄRDEN (likeTheme) som även de nya
+  // designernas presets sätter, inte designer — bara de fyra skinnen är pensionerade där.
+  const TOPLIKE_PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal' };
+  const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
   const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
 
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
@@ -104,6 +112,10 @@
     // ||'hero'}, sa en widget utan vald modell ar redan en hero. Den saknade bara sin plats i
     // registret, vilket gjorde att katalogen inte kunde skapa den och provet inte kunde mata den.
     'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    // Fan Level 50 — en milstolpe-tavla. Varje design ar en fardig kort-mall (bakgrundsbild) vars
+    // niva ar inbrand; bara fans som natt den nivan visas. Fler mallar (level 40, 100) blir fler
+    // rader har. Geometrin (foto/namn/lag) bor i fan-level-50.css, en mall = en uppsattning matt.
+    'fanlevel50.design': {royal:'Fly Love · Royal'},
     // Guardian Emblem. Praktsteget ar familjens ENDA katalogingang — sprak, namn och egen text ar
     // panelval, eftersom ett emblem alltid ser likadant ut och bara bar olika mycket guld. Matten
     // star i GE_MATT nedan, inte har, sa etiketten och mattet aldrig kan glida isar utan att ett
@@ -111,10 +123,10 @@
     'guardianemblem.matt': GE_MATT,
     'guardianemblem.step': {1:'Ram',2:'Hjort',3:'Krona',4:'Kungakrona'},
     'guardianemblem.model': {classic:'Guld',sapphire:'Blå kristall',emerald:'Grön aura'},
-    'battlemvp.celebration': {coronation:{photo:{left:24.085,top:28.305,width:51.83,height:47.05},label:'Kröningen',accent:'#f5ce70'},wings:{photo:{left:21.93,top:20.815,width:56.14,height:54.23},label:'Vingar',accent:'#cbb4ff'},portal:{photo:{left:24.32,top:20.5,width:51.36,height:49.6},label:'Energiportalen',accent:'#67eff0'},rosegold:{photo:{left:12.44,top:10.29,width:74.16,height:67.94},label:'Roséguld',accent:'#efb6ae'},pearl:{photo:{left:17.705,top:14.75,width:64.59,height:61.4},label:'Pärlvingar',accent:'#f2dcdb'},moon:{photo:{left:16.905,top:13.395,width:72.57,height:65.39},label:'Lavendelmåne',accent:'#c4b4ff'}},
+    'battlemvp.celebration': {'gold-ribbon':{photo:{left:24,top:28.8,width:53.3,height:53.3},label:'Guldkrona',accent:'#eec875',asset:'gold-ribbon.png',width:280,duration:10,raster:true},'lion-clash':{photo:{left:29.7,top:31.5,width:40.6,height:40.6},label:'Lion Clash',accent:'#eec875',asset:'lion-clash.png',width:320,duration:10,bespoke:'lion-clash'},coronation:{photo:{left:24.085,top:28.305,width:51.83,height:47.05},label:'Kröningen',accent:'#f5ce70'},wings:{photo:{left:21.93,top:20.815,width:56.14,height:54.23},label:'Vingar',accent:'#cbb4ff'},portal:{photo:{left:24.32,top:20.5,width:51.36,height:49.6},label:'Energiportalen',accent:'#67eff0'},rosegold:{photo:{left:12.44,top:10.29,width:74.16,height:67.94},label:'Roséguld',accent:'#efb6ae'},pearl:{photo:{left:17.705,top:14.75,width:64.59,height:61.4},label:'Pärlvingar',accent:'#f2dcdb'},moon:{photo:{left:16.905,top:13.395,width:72.57,height:65.39},label:'Lavendelmåne',accent:'#c4b4ff'}},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
-    'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade']},
-    'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE']},
+    'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade'],pinkPrincess:['Tjej','#ff4fd8','#ffd1f3','neon','luxury'],royalRuby:['Tjej','#c1122f','#f5c96b','fire','luxury'],cloudFox:['Tjej','#f5b942','#7fd8ff','impact','luxury']},
+    'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE'],pinkPrincess:['Pink Princess','💎','PRINCESS STRIKE'],royalRuby:['Royal Ruby','👑','ROYAL STRIKE'],cloudFox:['Cloud Fox','🦊','FOX STRIKE']},
     // Gift Jar. Till skillnad fran temaregistren ovan bar varje modell bade farg OCH symbol:
     // burken ritas ur dem — accent ar glaset, light ar innehallet, symbol ar markningen.
     'giftjar.model': {
@@ -177,6 +189,12 @@
   // ---- the defaults -----------------------------------------------------------------------------
   // One builder per catalog family. `v` holds the values resolved from the tables above — the
   // builders never read a table themselves, which keeps the defaults readable next to each other.
+  const GOAL_MOTION_MATT = {
+    circle: { x: 70, y: 120, width: 360 },
+    landscape: { x: 16, y: 120, width: 400 },
+    portrait: { x: 151, y: 30, width: 130 },
+  };
+
   const BUILD = {
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
 
@@ -206,11 +224,30 @@
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
+    // HELA FYRVERKERIET PÅ DUKEN (2026-09-26). 540 px bredd i en 432 px duk gick inte att dra i
+    // sidled så länge widget-grans.js krävde att hela widgeten rymdes. 360 bred ger 300 hög
+    // (samma 6:5 som motorn ritar i), centrerad med 36 px på var sida - en bra START; sedan
+    // 2026-09-26 får användaren göra den större och dra den delvis utanför.
     'giftfireworks.theme': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 120, width: 540, title: 'Gift Fireworks · '+v.label,
+      type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
+    }),
+    // Gift Bubbles - systerwidget. En design; storleken foljer combo + gbSize-valjaren.
+    'giftbubbles': () => ({
+      type: 'templateGiftBubbles', x: 36, y: 120, width: 320, title: 'Gift Bubbles',
+      gbSize: 'm', gbMin: 1, gbGiftIn: true, gbHearts: true, gbShowCombo: true, gbDuration: 5
+    }),
+    // Playground-widgetar (2026-10): Top Gifter Podium, Top Streak Flip och Goal Pro. Egen renderare i
+    // playground-widgets.js; designval och färger ligger i pg-objektet och fylls från standardvärdena där.
+    'pgpodium': () => ({ type: 'templatePgPodium', x: 26, y: 90, width: 380, title: 'Top Gifter Podium', pg: {} }),
+    'pgstreak': () => ({ type: 'templatePgStreak', x: 66, y: 90, width: 300, title: 'Top Streak Flip', pg: {} }),
+    'pggoal': () => ({ type: 'templatePgGoal', x: 26, y: 90, width: 380, title: 'Goal Pro', pg: {} }),
+    // Heart Fireworks - modell 2. Skotten formar hjartan; guldskott vid hogre combo.
+    'heartfireworks': () => ({
+      type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
+      hfMin: 1, hfGold: true, hfShowCombo: true, hfDuration: 6
     }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
@@ -240,6 +277,7 @@
     }),
 
     'toplike.theme': v => {
+      if (TOPLIKE_PENSION[v.theme]) v = { ...v, theme: TOPLIKE_PENSION[v.theme] };
       const w = {
         type: 'templateTopLike', x: 70, y: 100, width: 220, title: 'Top Likes',
         templateTitle: 'TOP LIKES', likeCount: 5, likeTheme: v.theme, likePosition: 'left',
@@ -258,6 +296,8 @@
       return w;
     },
     'ranking.theme': v => {
+      const pensionerad = v.type === 'templateTopPoints' && TOPPOINTS_PENSION[v.theme];
+      if (pensionerad) v = { ...v, theme: pensionerad };
       const w = {
         type: v.type, x: 80, y: 110, width: 300, title: v.label, templateTitle: v.title,
         likeCount: 5, likeTheme: v.theme,
@@ -274,6 +314,7 @@
           width: meta && meta.width ? meta.width : 230, useLiveData: true, liveMetric: 'coins' });
         if (meta && meta.accent) w.accent = meta.accent;
       }
+      if (pensionerad) Object.assign(w, { topPointsDesign: v.theme, skin: v.theme });
       return w;
     },
 
@@ -282,9 +323,14 @@
       templateTitle: 'HEART ME GOAL', heartCurrent: 0, heartTarget: 50, heartTheme: v.theme,
       heartColor: v.color, heartTextColor: '#ffffff', heartNumberColor: v.color
     }),
+    // De nio goal-motion-designerna (#525) far samma matt har som katalogknappen i goal-motion.js
+    // ger dem, sa att forhandsvisningen, den fristaende lanken och "Lagg till" visar samma widget.
+    // Alla ryms pa en 432 x 768-duk. Aldre modeller behaller sina matt.
     'socialgoal.kind': v => ({
-      type: 'templateSocialGoal', goalKind: v.kind, x: 70, y: 120,
-      width: v.orientation === 'portrait' ? 220 : 440,
+      type: 'templateSocialGoal', goalKind: v.kind,
+      ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
+        ? GOAL_MOTION_MATT[v.orientation]
+        : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
@@ -302,6 +348,14 @@
       title: 'Fan Level Up', fanHeadline: 'FAN LEVEL UP', fanLevelLabel: 'LV.', fanLevel: 12,
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
       fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout
+    }),
+    // Fan Level 50-tavlan. Rostern (vilka fans som natt niva 50) lever i minnet och kommer fran
+    // fan-level-50-session.js; fanl50Manual ar den handtaggade listan som SPARAS. fanl50Source
+    // 'both' = auto (live) + manuellt. Team ar ett konfigfalt (TikTok skickar inget lagnamn).
+    'fanlevel50.design': v => ({
+      type: 'templateFanLevel50', x: 100, y: 80, width: 300, title: 'Fan Level 50',
+      fanl50Design: v.design, fanl50Team: 'FANCLUB', fanl50Mode: 'band',
+      fanl50Interval: 6, fanl50Source: 'both', fanl50Manual: []
     }),
     // Guardian Emblem. Bredden ar 400 i VARJE steg — det ar familjens format, inte en installning
     // per niva. Hojden ar det praktnivan betalar med, och den vaxer monotont. En widget vars hojd
@@ -331,7 +385,7 @@
     }),
 
     'glovesnipe.pack': v => ({
-      type: 'templateGloveSnipe', x: 80, y: 580, width: 760, title: v.title, boostPack: v.pack,
+      type: 'templateGloveSnipe', x: 0, y: 460, width: 432, title: v.title, boostPack: v.pack,
       battleEventKind: v.kind, gloveIcon: v.icon, gloveMultiplier: v.multiplier,
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
       gloveColor2: v.color2, gloveDuration: 6, layer: 20, battleVideoMode: true
@@ -350,26 +404,47 @@
       mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
       mvpColor: v.color,
       mvpColor2: v.style === 'neon-cyber' ? '#ff3fd0' : v.style === 'diamond-elite' ? '#8d96a2' : '#ffe239',
-      mvpDuration: PREMIUM_MVP_STYLES.has(v.style) ? 5 : 7
+      mvpDuration: 10
     }),
     'battlemvp.celebration': v => ({
-      type: 'templateBattleMvp', x: 100, y: 90, width: 400, title: 'MVP · '+v.label,
+      type: 'templateBattleMvp', x: 100, y: 90, width: v.width || 400, title: 'MVP · '+v.label,
       mvpStyle: v.style, mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
       mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
-      mvpColor: v.accent, mvpColor2: '#ffffff', mvpDuration: 10
+      mvpColor: v.accent, mvpColor2: '#ffffff', mvpDuration: v.duration || 10
     }),
     'battlemvp.frame': v => ({
       type: 'templateBattleMvp', mvpFrame: v.frame, x: 100, y: 90, width: 300, title: 'Battle MVP',
-      mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
+      mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500, mvpLabelSize: 18, mvpNameSize: 14,
       mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
-      mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 7
+      mvpColor: v.accent, mvpColor2: '#ffe239', mvpDuration: 10
     }),
 
+    // LÅTÖNSKNINGAR (latonskningar.js). 340 bred, ungefär 250 hög — nere till vänster på duken.
+    'latonskningar': v => ({
+      type: 'templateSongRequests', latKalla: v.kalla, x: 46, y: 470, width: 340,
+      title: v.kalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube',
+      latKommando: '!önska', latCooldown: 60, latMaxKo: 10, latMaxMinuter: 8, latVisa: 3, latVolym: 70,
+      latFarg: v.kalla === 'spotify' ? '#1db954' : '#ff3b7a', layer: 25
+    }),
+
+    // SKATTKISTAN (skattkista.js). Kistan är 220 bred och ungefär 260 hög, raden 340 × 56 — båda
+    // skapas hela på duken (432 × 768), kistan mitt i övre delen och raden högst upp.
+    'skattkista': v => v.design === 'pill'
+      ? { type: 'templateTreasureChest', kistaDesign: 'pill', x: 46, y: 24, width: 340, title: 'Skattkista · rad',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 }
+      : { type: 'templateTreasureChest', kistaDesign: 'kista', x: 106, y: 90, width: 220, title: 'Skattkista',
+          kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 },
+
+    // PORTALEN: 360 bred ger 640 hög (designens 9:16), och x/y lägger hela fontänen på duken.
+    'likefountain.portal': () => ({
+      type: 'templateLikeFountain', fountainDesign: 'portal', x: 36, y: 64, width: 360,
+      title: 'Like Fountain · Portal', fountainPalette: 'portal', fountainPerLike: 6,
+      fountainAvatarHearts: true, fountainPopEvery: 1000
+    }),
     'likefountain': () => ({
-      type: 'templateLikeFountain', x: 40, y: 100, width: 620, title: 'Like Fountain',
-      fountainCount: 42, fountainSize: 22, fountainSpeed: 5, fountainHeight: 420,
-      fountainColor: '#ff3c88', fountainColor2: '#b94cff', fountainPreset: 'classic',
-      fountainMotion: 'organic', fountainAvatarHearts: true
+      type: 'templateLikeFountain', x: 6, y: 150, width: 420, title: 'Like Fountain',
+      fountainCount: 18, fountainSize: 32, fountainSpeed: 6, fountainHeight: 600,
+      fountainColor: '#ff3c88', fountainColor2: '#b94cff'
     }),
     // Undertexten är temats egen röst. Alla teman utom Crystal Garden delar 'PUSH THE EVENT';
     // kristallträdgården växer i stället för att pushas, och namnger det själv.
@@ -432,9 +507,9 @@
     'socialgoal': parts => {
       // goalKind() throws on anything else, and normalises the legacy alias so both spellings
       // resolve to one canonical key — the third return value below.
-      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
+      const kind = goalKind(parts[0]), rawModel = parts[1], frameModels = new Set(['pulse-rail','pulse-tower','prism-core','prism-spine','signal-ribbon','heart-column','crown-orbit','crown-rail','crown-tower','heart-orbit','heart-rail','heart-tower','diamond-orbit','diamond-rail','diamond-tower']), model = frameModels.has(rawModel) ? rawModel : Number(rawModel), orientation = parts[2];
       if (!(frameModels.has(rawModel) || Number.isFinite(model))) throw new Error('catalog:socialgoal kräver en giltig modell');
-      if (orientation !== 'portrait' && orientation !== 'landscape') throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape');
+      if (!['portrait','landscape','circle'].includes(orientation)) throw new Error('Okänd orientering "' + orientation + '" — giltiga: portrait, landscape, circle');
       return ['socialgoal.kind', { kind, model, orientation }, 'catalog:socialgoal:' + kind + ':' + model + ':' + orientation];
     },
     'fanlevel': parts => {
@@ -445,6 +520,11 @@
       }
       const c = pick('fanlevel.theme', parts[0], 'fan level-tema');
       return ['fanlevel.theme', { theme: parts[0], color: c[0], light: c[1] }];
+    },
+    'fanlevel50': parts => {
+      if (!parts[0]) throw new Error('catalog:fanlevel50 kräver en design');
+      pick('fanlevel50.design', parts[0], 'Fan Level 50-design');
+      return ['fanlevel50.design', { design: parts[0] }];
     },
     'guardianemblem': parts => {
       if (parts[0] === 'model') {
@@ -460,6 +540,11 @@
       return ['gifterlevel.layout', { layout: parts[0] }];
     },
     'followeralert': () => ['followeralert', {}],
+    'giftbubbles': () => ['giftbubbles', {}],
+    'heartfireworks': () => ['heartfireworks', {}],
+    'pgpodium': () => ['pgpodium', {}],
+    'pgstreak': () => ['pgstreak', {}],
+    'pggoal': () => ['pggoal', {}],
     'glovesnipe': parts => {
       // catalog:glovesnipe:<pack>:<kind>[:<multiplier>] — the labels, icon and name are derived from
       // kind and multiplier exactly as addBoostPack() derived them.
@@ -481,7 +566,19 @@
       if (parts[0] === 'frame') return ['battlemvp.frame', { frame: parts[1], accent: pick('battlemvp.frame', parts[1], 'MVP-ram').accent }];
       return ['battlemvp.style', { style: parts[0], color: pick('battlemvp.style', parts[0], 'MVP-stil') }];
     },
-    'likefountain': () => ['likefountain', {}],
+    // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
+    // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
+    'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
+    // catalog:latonskningar:youtube och catalog:latonskningar:spotify — källan är nyckelns enda led.
+    'latonskningar': parts => {
+      if (parts[0] !== 'youtube' && parts[0] !== 'spotify') throw new Error(`Okänd källa för låtönskningar: ${parts[0]}`);
+      return ['latonskningar', { kalla: parts[0] }];
+    },
+    // catalog:skattkista:kista och catalog:skattkista:pill. Okänd design är ett fel, inte en tyst kista.
+    'skattkista': parts => {
+      if (parts[0] !== 'kista' && parts[0] !== 'pill') throw new Error(`Okänd skattkistedesign: ${parts[0]}`);
+      return ['skattkista', { design: parts[0] }];
+    },
     'lastx': parts => {
       pick('lastx.design', parts[0], 'Last-X-design');
       return ['lastx.design', { design: parts[0] }];

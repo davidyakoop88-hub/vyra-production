@@ -1,7 +1,7 @@
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
 $listener=[Net.HttpListener]::new();$listener.Prefixes.Add('http://127.0.0.1:4173/');$listener.Prefixes.Add('http://localhost:4173/');$listener.Start()
 $events=[Collections.Generic.List[object]]::new();$seenEvents=@{};$requestBuckets=@{};$connection=[ordered]@{connected=$false;username='';mode='demo';state='idle';roomId='';heartbeat=0;reconnectAttempt=0;updated=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()}
-$types=@{'.html'='text/html; charset=utf-8';'.css'='text/css; charset=utf-8';'.js'='text/javascript; charset=utf-8';'.json'='application/json; charset=utf-8';'.png'='image/png';'.jpg'='image/jpeg';'.jpeg'='image/jpeg';'.mp4'='video/mp4';'.svg'='image/svg+xml';'.webp'='image/webp';'.woff2'='font/woff2'}
+$types=@{'.html'='text/html; charset=utf-8';'.css'='text/css; charset=utf-8';'.js'='text/javascript; charset=utf-8';'.json'='application/json; charset=utf-8';'.png'='image/png';'.jpg'='image/jpeg';'.jpeg'='image/jpeg';'.mp4'='video/mp4';'.webm'='video/webm';'.svg'='image/svg+xml';'.webp'='image/webp';'.woff2'='font/woff2'}
 function Send-Bytes($r,[byte[]]$b,[string]$t='application/json; charset=utf-8',[int]$s=200){$r.StatusCode=$s;$r.ContentType=$t;$r.ContentLength64=$b.Length;$r.AddHeader('Cache-Control','no-store');$r.OutputStream.Write($b,0,$b.Length);$r.Close()}
 function Send-Json($r,$v,[int]$s=200){Send-Bytes $r ([Text.Encoding]::UTF8.GetBytes(($v|ConvertTo-Json -Depth 12 -Compress))) 'application/json; charset=utf-8' $s}
 $utf8NoBom=[Text.UTF8Encoding]::new($false)

@@ -597,7 +597,7 @@ Två skrivare fyller Top Gift och Top Streak med riktiga tittare — `live-leade
 sedan `save()`. Efter en sändning stod alltså en riktig persons namn och avatar kvar i layouten.
 Nästa gång studion öppnades stod deras namn i panelen i stället för "@StreamQueen".
 
-Gåvorekordet (`records.giftCoins`, `records.streakCount`) nollställdes redan vid `live:start`, just
+Gåvorekordet (`records.giftCoins`, `records.streakCoins`) nollställdes redan vid `live:start`, just
 för att en ny sändnings första gåva ska räknas som rekord. **Widgetens data hade ingen sådan
 nollställare alls.** `vyra-tom-widget.js` är den saknade halvan av samma regel.
 

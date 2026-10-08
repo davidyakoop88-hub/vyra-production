@@ -4,12 +4,13 @@
 // Handlern i gift-event-images.js behandlade de två typerna i en och samma gren och gav båda
 // exakt samma fält, inklusive `dataValue = coins`. Widgetarna mäter olika saker:
 //
-//   Top Gift    — den dyraste gåvan. Bryggan skickar coins = värde per gåva × antal.
-//   Top Streak  — den längsta comboen. Bryggan skickar count = repeatCount.
+//   Top Gift    — den dyraste gåvan (styckvärde). Bryggan skickar coins = värde per gåva × antal.
+//   Top Streak  — den DYRASTE comboen. Rankas på combons värde (coins), visar antalet (count).
 //
-// Se tiktok-bridge/normalizer.js: `coins:coinsEach*repeatCount, count:repeatCount`. En billig gåva
-// spammad 50 gånger är en stor streak men en liten gåva; en enda dyr gåva är tvärtom. Med en delad
-// gren blev båda widgetarna en dubblett av den senaste gåvan.
+// Se tiktok-bridge/normalizer.js: `coins:coinsEach*repeatCount, count:repeatCount`. Top Streak
+// rankas sedan 2026-09-27 på combons VÄRDE, inte antalet: 10 hjärtan à 100 (1 000) slår 20 rosor
+// à 1 (20). En enstaka gåva (antal 1) är ingen combo och hör till Top Gift. Med en delad gren blev
+// båda widgetarna en dubblett av den senaste gåvan.
 //
 // Båda är dessutom "topp"-widgetar, inte "senaste"-widgetar: de ska bara ändras när ett rekord slås.
 //
@@ -107,11 +108,21 @@ test('combo läses även när fältet heter repeatCount eller combo', () => {
   }
 });
 
-test('en gåva utan combo räknas som en enda', () => {
+test('en enstaka gåva är ingen combo — den sätter Top Gift men inte Top Streak', () => {
   const env = makeEnv();
   env.gift({ type: 'gift', giftName: 'Rose', username: 'u', coins: 700 });
-  assert.equal(env.topStreak().dataValue, 1, 'saknad combo ska bli 1, inte 0 eller coins');
+  // antal 1 → ingen streak. Annars hade en enda dyr gåva fastnat som "×1" och låst widgeten.
+  assert.equal(env.topStreak().dataValue, 0, 'en enstaka gåva (antal 1) ska inte röra Top Streak');
   assert.equal(env.topGift().dataValue, 700);
+});
+
+test('Top Streak rankas på combons VÄRDE, inte antalet — den dyrare combon vinner', () => {
+  const env = makeEnv();
+  // 10 handhjärtan à 100 coins = 1 000. 20 rosor à 1 coin = 20. Hjärtan är den dyrare combon.
+  env.gift({ type: 'gift', giftName: 'Heart', username: 'hjarta', coins: 1000, count: 10 });
+  env.gift({ type: 'gift', giftName: 'Rose', username: 'ros', coins: 20, count: 20 });
+  assert.equal(env.topStreak().dataName, 'hjarta', 'den kortare men dyrare combon ska vinna');
+  assert.equal(env.topStreak().dataValue, 10, 'Top Streak visar antalet gåvor i den vinnande combon');
 });
 
 test('rekorden exponeras så att andra skrivare kan respektera dem', () => {
@@ -123,7 +134,8 @@ test('rekorden exponeras så att andra skrivare kan respektera dem', () => {
   const records = env.sandbox.VyraGiftRecords;
   assert.ok(records, 'ingen delad rekordkälla exponerades');
   assert.equal(records.giftCoins, 30000);
-  assert.equal(records.streakCount, 99);
+  // DYR har antal 1 (ingen combo → 0). LANG:s combo är värd 50 coins och sätter streak-rekordet.
+  assert.equal(records.streakCoins, 50);
 });
 
 test('kampanjer räknar fortfarande varje gåva, inte bara rekord', () => {

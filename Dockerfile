@@ -26,6 +26,9 @@ RUN set -eux; \
     # sounds, frames, and the standalone widget pages OBS opens.
     cp -R assets /site/; \
     cp -R public /site/; \
+    # Stream Deck-pluginet. Sidan Stream Deck (streamdeck.js) bygger .streamDeckPlugin-filen i
+    # webbläsaren ur exakt de här filerna, så nedladdningen är alltid samma plugin som Desktop installerar.
+    cp -R streamdeck-plugin /site/; \
     # The repository root is a flat pile of the files the pages load by name, so the root is taken by
     # extension rather than by a list that would go stale the first time someone adds a widget.
     for f in *.html *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp *.woff *.woff2 *.mp3 *.wav; do \
@@ -33,6 +36,9 @@ RUN set -eux; \
     done; \
     # Two data files the pages fetch by name; every other .json in the root is tooling.
     for f in manifest.json theme.schema.json; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
+    # SEO-filer sokmotorer hamtar by name: robots.txt pekar ut sitemap.xml. Tas per namn, inte per
+    # andelse — andra .txt/.xml i roten ar tooling och ska inte ligga publikt i dokumentroten.
+    for f in robots.txt sitemap.xml; do [ -e "$f" ] && cp "$f" /site/ || true; done; \
     # Belt and braces. .dockerignore already keeps these out of the context and no rule above would
     # pick them up, but this is the file someone reads in a year to learn what is public.
     rm -f /site/package.json /site/package-lock.json /site/Caddyfile; \

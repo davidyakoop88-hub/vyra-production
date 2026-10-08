@@ -116,7 +116,7 @@ function startLocalServer(root, port = 4173, options = {}) {
   function text(v, max) { return String(v ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F<>]/g, '').slice(0, max); }
   function imageUrl(v) { const value = text(v, 2048); return /^(https?:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(value) ? value : ''; }
   function number(v, min = 0, max = Number.MAX_SAFE_INTEGER) { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : 0; }
-  function cleanEvent(d) { return { type: text(d.type, 64).replace(/[^a-z0-9_:-]/gi, ''), username: text(d.username, 100), name: text(d.name, 500), profileImage: imageUrl(d.profileImage), giftName: text(d.giftName, 160), giftImage: imageUrl(d.giftImage), emote: text(d.emote, 160), isAnonymous: !!d.isAnonymous, diamonds: number(d.diamonds ?? d.coins, 0, 1e9), coins: number(d.coins, 0, 1e9), count: number(d.count, 0, 1e7), multiplier: number(d.multiplier, 0, 100), points: number(d.points, 0, 1e12), level: number(d.level, 0, 10000), score: number(d.score, 0, 1e12), scoreUs: number(d.scoreUs, 0, 1e12), scoreThem: number(d.scoreThem, 0, 1e12), ourScore: number(d.ourScore, 0, 1e12), opponentScore: number(d.opponentScore, 0, 1e12), eventKey: text(d.eventKey, 200), source: text(d.source, 64),
+  function cleanEvent(d) { return { type: text(d.type, 64).replace(/[^a-z0-9_:-]/gi, ''), username: text(d.username, 100), name: text(d.name, 500), profileImage: imageUrl(d.profileImage), giftName: text(d.giftName, 160), giftImage: imageUrl(d.giftImage), emote: text(d.emote, 160), isAnonymous: !!d.isAnonymous, diamonds: number(d.diamonds ?? d.coins, 0, 1e9), coins: number(d.coins, 0, 1e9), count: number(d.count, 0, 1e7), multiplier: number(d.multiplier, 0, 100), remainingSec: number(d.remainingSec, 0, 3600), durationSec: number(d.durationSec, 0, 3600), battleId: text(d.battleId, 160), points: number(d.points, 0, 1e12), level: number(d.level, 0, 10000), score: number(d.score, 0, 1e12), scoreUs: number(d.scoreUs, 0, 1e12), scoreThem: number(d.scoreThem, 0, 1e12), ourScore: number(d.ourScore, 0, 1e12), opponentScore: number(d.opponentScore, 0, 1e12), eventKey: text(d.eventKey, 200), source: text(d.source, 64),
     // SJU FALT SOM SKRIVBORDSAPPEN RAKNAR FRAM OCH SOM VITLISTAN STROK (#350).
     //
     // baseUser() i tiktok-fields.js producerar isModerator/isFollower/isSubscriber/fanClubLevel/
@@ -145,6 +145,16 @@ function startLocalServer(root, port = 4173, options = {}) {
     // en riktig hojning till niva 0.
     ...(d.fanLevelUp && Number(d.fanLevelUp.to) > 0
       ? { fanLevelUp: { from: number(d.fanLevelUp.from, 0, 50), to: number(d.fanLevelUp.to, 0, 50) } }
+      : {}),
+    // SKATTKISTAN (typen envelope). Utan de här raderna hade kistan nått overlayn utan öppningstid
+    // och utan id — samma fälla som giftId i #350, ett led senare än den som räknar fram fälten.
+    ...(d.kistaId
+      ? { kistaId: text(d.kistaId, 160), oppnasAt: number(d.oppnasAt, 0, Number.MAX_SAFE_INTEGER), kistaDold: !!d.kistaDold }
+      : {}),
+    // STREAM DECK (typen streamdeck, plugin 0.2.0): vad knappen gör. Bara på den typen — ingen gåva
+    // ska bära ett sdKommando. streamdeck.js i studion/overlayn utför kommandot.
+    ...(String(d.type || '') === 'streamdeck'
+      ? { sdKommando: text(d.sdKommando, 40), sdVarde: text(d.sdVarde, 300), sdVal: text(d.sdVal, 40) }
       : {}),
   }; }
   function setConnection(next) {
@@ -214,7 +224,12 @@ function startLocalServer(root, port = 4173, options = {}) {
     // OBS: skriv ALDRIG en hakparentes i den har kommentaren. Provet plockar ut listan med ett
     // monster som slutar vid forsta hakparentesen, sa ett exempel med en teckenklass i klartext
     // kapar listan har och far provet att falla pa nasta typ.
-    'battle_mvp']);
+    'battle_mvp',
+    // envelope (skattkistan) tillkom 2026-09-27, samtidigt i molnet och i tiktok-service.js.
+    'envelope',
+    // chatcommand (rader som börjar med utropstecken) samma dag: molnet räknar dem i en egen
+    // takthink, så de kan inte tränga undan gåvorna. Vanlig chatt stannar hemma som förut.
+    'chatcommand']);
   function speglaTillMolnet(d) {
     if (!cloudOrigin || !TILL_MOLNET.has(d.type)) return;
     const workspaceId = String((cloudIdentity() || {}).workspaceId || '');

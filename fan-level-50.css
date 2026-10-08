@@ -1,0 +1,101 @@
+/* fan-level-50.css — Fan Level 50-tavlan.
+   Ett hederskort = bakgrundsmall (Fly Love · LEVEL 50) + foto i guldringen + namn i bannern + lag.
+   Matten ar i % av kortet och verifierade mot den riktiga mallen (foto centrerat i ringen,
+   namn i bannern). Textstorlek i cqw sa den skalar med widgetens bredd. */
+
+.fan-level-50 { position: absolute; }
+.fan-level-50 .fl50-viewport { position: relative; width: 100%; overflow: hidden; }
+
+.fan-level-50 .fl50-card {
+  position: relative; width: 100%; aspect-ratio: 753 / 976; border-radius: 6px; overflow: hidden;
+  container-type: inline-size; transition: opacity .4s ease, transform .4s ease;
+}
+.fan-level-50 .fl50-art { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+/* profilbild — inuti mallens guldring (mallen bar redan ringen; ingen egen ram) */
+.fan-level-50 .fl50-photo {
+  position: absolute; left: 6.6%; bottom: 4.8%; width: 18.1%; aspect-ratio: 1;
+  border-radius: 50%; overflow: hidden; background: #2e2140;
+}
+.fan-level-50 .fl50-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* namn — i den tomma guld-bannern */
+.fan-level-50 .fl50-name {
+  position: absolute; left: 29%; right: 5%; bottom: 8.6%; height: 7.9%;
+  display: flex; align-items: center; justify-content: center;
+}
+.fan-level-50 .fl50-name span {
+  font-family: 'Oswald', 'Segoe UI', system-ui, sans-serif; font-weight: 800; letter-spacing: .4px;
+  font-size: 6.4cqw; line-height: 1; color: #3a2400; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 100%; text-shadow: 0 1px 0 rgba(255, 240, 190, .5);
+}
+
+/* lag — under bannern, guldtext */
+.fan-level-50 .fl50-team {
+  position: absolute; left: 29%; right: 5%; bottom: 3.2%; text-align: center;
+}
+.fan-level-50 .fl50-team span {
+  font-family: 'Oswald', 'Segoe UI', system-ui, sans-serif; font-weight: 800; letter-spacing: .6px;
+  font-size: 3.6cqw; background: linear-gradient(180deg, #fff2c4, #ffd049 55%, #d99a1e);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+/* rank */
+.fan-level-50 .fl50-rank {
+  position: absolute; top: 2%; left: 2.5%; z-index: 2; font-weight: 800; font-size: 6cqw;
+  color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); font-family: 'Oswald', system-ui, sans-serif;
+}
+
+/* slideshow-overgang */
+.fan-level-50 .fl50-card.fl50-out { opacity: 0; transform: translateY(-8px) scale(.97); }
+.fan-level-50 .fl50-card.fl50-in { animation: fl50in .5s ease both; }
+@keyframes fl50in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* rullande band — samma kort, andlost */
+.fan-level-50.fl50-mode-band .fl50-track {
+  display: flex; gap: 14px; width: max-content; will-change: transform;
+  animation: fl50scroll linear infinite; animation-duration: calc(var(--fl50-speed, 6s) * 4);
+}
+.fan-level-50.fl50-mode-band .fl50-card { width: 200px; flex: 0 0 auto; }
+@keyframes fl50scroll { to { transform: translateX(-50%); } }
+
+/* ---- design: royal (Fly Love + krönt banderoll längst ner) ------------------------------------
+   Samma bakgrundsmall och kortmått (753/976), men foto och namn sitter i den krönta ringen resp.
+   den svarta banderollen. Bara namn — lag/rank döljs. Matten i % av kortet, uppmätta mot mallen. */
+.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1407; }
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-photo {
+  left: 11.9%; top: 82.3%; bottom: auto; width: 17.4%; background: #050505;
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-name {
+  left: 35.5%; right: 8%; top: 84.3%; bottom: auto; height: 9.4%;
+  justify-content: flex-start;
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-name span {
+  color: #ffe6a6; text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 190, 60, .35);
+}
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-team,
+.fan-level-50 .fl50-card.fl50-design-royal .fl50-rank { display: none; }
+
+/* ---- inspektorn: "lägg till användare"-lista (studio, inte overlay) ---------------------------- */
+.fl50-add { display: flex; gap: 6px; align-items: center; }
+.fl50-add input { flex: 1; min-width: 0; }
+.fl50-count {
+  float: right; min-width: 20px; padding: 0 6px; border-radius: 999px;
+  background: rgba(168, 85, 247, .25); color: #e9d5ff; font-size: 11px; line-height: 18px; text-align: center;
+}
+.fl50-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.fl50-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 3px 4px 3px 3px; border-radius: 999px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1);
+}
+.fl50-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; background: #2e2140; flex: 0 0 auto; }
+.fl50-chip b { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fl50-chip-x {
+  flex: 0 0 auto; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .08); color: inherit; cursor: pointer; font-size: 13px; line-height: 16px;
+}
+.fl50-chip-x:hover { background: rgba(239, 68, 68, .35); }
+.fl50-chips-tom { opacity: .6; }
+.fl50-summary { cursor: pointer; font-weight: 600; font-size: 12px; letter-spacing: .04em; opacity: .8; }

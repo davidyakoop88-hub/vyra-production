@@ -133,7 +133,14 @@ const RIGG = `(() => {
   if (!document.getElementById('vis-rigg-passform')) {
     const st = document.createElement('style');
     st.id = 'vis-rigg-passform';
-    st.textContent = '.canvas{transform:none!important;left:0!important;top:0!important}';
+    // KAPTERINGSBAKGRUND PINNAD. Referenserna (RGB, hornpixel #050308) togs nar overlay-workarea
+    // annu malades #050308. Produktionen gor nu overlay transparent - den svarta plattan foljde
+    // annars med lanken till OBS/TikTok Studio - sa riggen maste sjalv aterstalla samma backdrop
+    // referenserna byggdes pa, annars flippar varje widgets transparenta ytor fran svart till
+    // kompositorns vita och 113 nycklar faller utan att designen andrats. Overlay-transparensen
+    // vaktas separat (provet "riggen kor i overlay-lage" + overlay-passform.browser.test.js).
+    st.textContent = '.canvas{transform:none!important;left:0!important;top:0!important}'
+      + 'html.overlay-output body:has(.editor-shell) .workarea{background:#050308!important;background-image:none!important}';
     document.head.append(st);
   }
   window.__visBygg = (nyckel) => {
@@ -667,5 +674,30 @@ async function fotografera(sida, nyckel, ALERTS) {
    inte placeringen; att en widget ryms pa duken vaktas av widget-grans-proven (#486). */
 const VIEWPORT = Object.freeze({ width: 1400, height: 1000 });
 
-module.exports = { ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
+/* EN FILSANDARE FOR RIGGENS TRE SERVRAR - MED BYTE-INTERVALL (HTTP Range).
+   Utan Range kan Chromium inte soka i en video: currentTime = 0.5 svarar med `seeked` men videon star
+   kvar pa 0. UPPMATT 2026-10-08: __visVideo(0.5) rapporterade "sokt" for catalog:glovesnipe:cloudFox:boost:3
+   och videon stod pa 0,00 - klippets forsta, tomma bildruta - sa alla 15 WebM-nycklarna fotograferades
+   som riggens bakgrund #050308. Med Range-svar stod samma video pa 0,50. Caddy (produktionen) svarar
+   med Range, sa det var riggen som skiljde sig fran OBS. */
+function skickaFil(req, res, fil, typ) {
+  const storlek = fs.statSync(fil).size;
+  const m = /^bytes=(d*)-(d*)$/.exec(req.headers.range || '');
+  if (m && (m[1] || m[2])) {
+    const start = m[1] ? Number(m[1]) : Math.max(0, storlek - Number(m[2]));
+    const slut = m[1] && m[2] ? Math.min(Number(m[2]), storlek - 1) : storlek - 1;
+    if (start > slut || start >= storlek) {
+      res.writeHead(416, { 'content-range': `bytes */${storlek}` }); res.end(); return;
+    }
+    res.writeHead(206, { 'content-type': typ, 'accept-ranges': 'bytes',
+      'content-range': `bytes ${start}-${slut}/${storlek}`, 'content-length': slut - start + 1 });
+    fs.createReadStream(fil, { start, end: slut }).pipe(res);
+    return;
+  }
+  res.writeHead(200, { 'content-type': typ, 'accept-ranges': 'bytes', 'content-length': storlek });
+  fs.createReadStream(fil).pipe(res);
+}
+
+
+module.exports = { skickaFil, ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
   motorKrock, rastreringsAvtryck, AVTRYCKSPROB, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };

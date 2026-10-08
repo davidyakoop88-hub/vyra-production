@@ -80,20 +80,31 @@ const UTAN_REFERENS = {
     'partiklarna ritas på en Pixi-duk med egen ticker, som animationsfrysningen inte styr. Vid '
     + 'varje fast tidpunkt är duken tom (0 % målad i alla tre varianterna), och en pixeljämförelse '
     + 'av ett partikelsystem säger ingenting även när den lyckas.',
-  'catalog:glovesnipe:':
+  // BARA MP4-PAKETEN. Fram till 2026-10-08 stod har ett enda 'catalog:glovesnipe:', och det svalde
+  // aven de tre WebM-paketen (Pink Princess, Royal Ruby, Cloud Fox, 15 nycklar) som provets Chromium
+  // KAN spela — uppmatt 2026-10-08: 14-50 % malad yta vid riggens 0,5 s i alla 15. Uppdelningen
+  // kostar en post men undantar 8 nycklar i stallet for 23.
+  'catalog:glovesnipe:koiPearl:':
     'effekten är en H.264-kodad MP4 (`pack-fx-video`), och playwright-core:s Chromium saknar stöd '
     + 'för den kodeken. Uppmätt 2026-08-19: `canPlayType("video/mp4; codecs=avc1.42E01E")` ger tom '
-    + 'sträng och videon faller med DEMUXER_ERROR_NO_SUPPORTED_STREAMS, så alla åtta varianter '
+    + 'sträng och videon faller med DEMUXER_ERROR_NO_SUPPORTED_STREAMS, så alla fyra varianter '
     + 'målar 0 %. Det är webbläsaren i provet som saknar kodeken — i OBS och i vanlig Chrome '
     + 'spelar de. Undantaget gäller alltså provmiljön, inte widgeten.',
+  'catalog:glovesnipe:masquerade:':
+    'samma som Koi Pearl: H.264-kodad MP4 som playwright-core:s Chromium inte kan avkoda '
+    + '(DEMUXER_ERROR_NO_SUPPORTED_STREAMS, 0 % målat i alla fyra varianter, uppmätt 2026-08-19).',
   'catalog:likefountain':
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '
     + 'stillastående ögonblick finns ingen bild att jämföra mot.',
 };
 
+// PREFIX BARA FÖR POSTER SOM SLUTAR PÅ ':'. Övriga poster gäller EXAKT den nyckeln. Uppmätt
+// 2026-09-26: 'catalog:likefountain' (den klassiska fontänen, alltid i rörelse) matchade som prefix
+// även 'catalog:likefountain:portal' — en deterministisk förhandsbild med egen REGI — så det nya
+// kortet fotograferades aldrig och pixelvakten var grön av ingenting.
 const utanReferens = nyckel =>
-  Object.keys(UTAN_REFERENS).some(p => nyckel === p || nyckel.startsWith(p));
+  Object.keys(UTAN_REFERENS).some(p => nyckel === p || (p.endsWith(':') && nyckel.startsWith(p)));
 
 // EGEN REGI FÖR DE WIDGETAR SOM INTE GÅR ATT FRYSA UTIFRÅN.
 //
@@ -112,6 +123,43 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
+  // LIKE FOUNTAIN · PORTAL (like-fountain-portal.js). Den lever på en canvas som bara ritar när
+  // tittarna tappar, och i overlay-läget är den genomskinlig i vila — ALERTS-triggern ovan startar
+  // alltså ett slumpat förlopp. Regin fryser klockan, tömmer duken och visar förhandsbilden, som är
+  // inline-SVG byggd av samma platser och samma frö varje gång. Bilden är då bestämd av kod.
+  'catalog:likefountain:portal': {
+    fas: 'forhandsbild', ms: 0,
+    varfor: 'canvas-förloppet är slumpat och tomt i vila; förhandsbilden är deterministisk',
+    regi: () => {
+      if (!window.VyraLikePortal) return { fel: 'like-fountain-portal.js laddades inte' };
+      const n = window.VyraLikePortal.stilla();
+      if (!n) return { fel: 'portalen renderades inte — saknas .like-fountain-portal' };
+      return { portaler: n, hjartan: document.querySelectorAll('.like-fountain-portal .lfp-still path').length };
+    }
+  },
+  // SKATTKISTAN (skattkista.js). I OBS-läget är den osynlig i vila och syns bara medan en kista
+  // räknar ned — en klocka, alltså aldrig samma bild två gånger. Regin stänger av klockan och alla
+  // rörelser och visar en fast kista med 00:42 kvar. Bilden är då bestämd av kod.
+  'catalog:skattkista:kista': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
+  'catalog:skattkista:pill': {
+    fas: 'fryst-kista', ms: 0,
+    varfor: 'osynlig i OBS tills en kista kommer, och nedräkningen går; regin visar en fast kista med 00:42 kvar',
+    regi: () => {
+      if (!window.VyraSkattkista) return { fel: 'skattkista.js laddades inte' };
+      const n = window.VyraSkattkista.stilla();
+      if (!n) return { fel: 'kistan renderades inte — saknas .skattkista' };
+      return { kistor: n, klocka: document.querySelector('.skattkista .sk-klocka')?.textContent };
+    }
+  },
   // LIKE FOUNTAIN. Den DOM-byggda fontanen har alltid kunnat fotograferas: dess hjartan ar
   // CSS-animationer som gar i loop och hamnar i samma lage igen.
   //

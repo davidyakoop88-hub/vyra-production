@@ -1,29 +1,174 @@
 {
   "SDKVersion": 2,
   "Name": "VYRA Live",
-  "Version": "0.1.0",
+  "Version": "0.2.0",
   "Author": "VYRA",
   "URL": "https://vyralive.app",
-  "Description": "Kör dina Actions i VYRA från en fysisk knapp. Kräver att VYRA Desktop är igång.",
+  "Description": "Styr VYRA från Stream Deck: Actions, ljud, uppläsning, musik, OBS-scener, timers och widgetar. Kräver att VYRA Desktop är igång.",
   "Category": "VYRA",
   "CategoryIcon": "icon",
   "Icon": "icon",
   "CodePath": "plugin.js",
-  "Nodejs": { "Version": "20" },
-  "Software": { "MinimumVersion": "6.5" },
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
   "OS": [
-    { "Platform": "windows", "MinimumVersion": "10" },
-    { "Platform": "mac", "MinimumVersion": "11" }
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "11"
+    }
   ],
   "Actions": [
     {
       "UUID": "se.vyra.live.knapp",
-      "Name": "Kör Action",
+      "Name": "Manuell knapp",
       "Icon": "action",
-      "Tooltip": "Skickar en knapp-händelse till VYRA. Peka ett Event på triggern \"Manuell knapp\".",
+      "Tooltip": "Skickar en knapp-händelse med en nyckel. Peka ett Event på triggern \"Manuell knapp\".",
       "PropertyInspectorPath": "pi.html",
-      "Controllers": ["Keypad"],
-      "States": [{ "Image": "key", "TitleAlignment": "bottom" }]
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "key",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.action",
+      "Name": "Kör Action",
+      "Icon": "sd-action",
+      "Tooltip": "Kör en Action i VYRA direkt, med namnet från Action & Event.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-action",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.ljud",
+      "Name": "Spela ljud",
+      "Icon": "sd-ljud",
+      "Tooltip": "Spelar ett ljud ur ditt ljudbibliotek i OBS-utgången.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-ljud",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.tts",
+      "Name": "Läs upp",
+      "Icon": "sd-tts",
+      "Tooltip": "Läser upp en text med VYRA:s röst i OBS-utgången.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-tts",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.spotify",
+      "Name": "Spotify",
+      "Icon": "sd-spotify",
+      "Tooltip": "Spela en låt eller hoppa till nästa på din Spotify.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-spotify",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.latonsk",
+      "Name": "Låtönskningar",
+      "Icon": "sd-latonsk",
+      "Tooltip": "Hoppa över låten som spelas, eller töm kön.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-latonsk",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.scen",
+      "Name": "Byt OBS-scen",
+      "Icon": "sd-scen",
+      "Tooltip": "Byter scen i OBS via VYRA Desktop.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-scen",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.timer",
+      "Name": "Timer",
+      "Icon": "sd-timer",
+      "Tooltip": "Starta, stoppa eller nollställ en timer i Action & Event.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-timer",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "UUID": "se.vyra.live.widget",
+      "Name": "Visa eller göm widget",
+      "Icon": "sd-widget",
+      "Tooltip": "Visar, gömmer eller växlar en widget i din layout.",
+      "PropertyInspectorPath": "pi.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "sdk-widget",
+          "TitleAlignment": "bottom"
+        }
+      ]
     }
   ]
 }
