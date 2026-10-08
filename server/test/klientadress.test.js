@@ -23,18 +23,38 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const S = require('../security');
 
-const req = (xff, sock = '10.0.0.1') => ({
-  headers: xff === null ? {} : { 'x-forwarded-for': xff },
+const req = (xff, sock = '10.0.0.1', realip = null) => ({
+  headers: {
+    ...(xff === null ? {} : { 'x-forwarded-for': xff }),
+    ...(realip == null ? {} : { 'x-real-ip': realip })
+  },
   socket: { remoteAddress: sock }
 });
 
-test('utan BETRODD_PROXY ignoreras X-Forwarded-For helt', () => {
+test('utan BETRODD_PROXY ignoreras BÅDE X-Real-Ip och X-Forwarded-For', () => {
   // Dagens beteende, oförändrat. En uppsättning där servern går att nå direkt får INTE bli sämre av
-  // den här ändringen: där är headern helt klientstyrd och att läsa den vore att ta bort taket.
+  // den här ändringen: där är headrarna helt klientstyrda och att läsa dem vore att ta bort taket.
   assert.equal(S.klientadress(req('1.2.3.4'), {}), '10.0.0.1');
   assert.equal(S.klientadress(req('1.2.3.4, 5.6.7.8'), { BETRODD_PROXY: '0' }), '10.0.0.1');
   assert.equal(S.klientadress(req('1.2.3.4'), { BETRODD_PROXY: 'true' }), '10.0.0.1',
     'bara strängen "1" duger — "true" är inte ett ja, och en halvsatt variabel ska inte öppna något');
+  assert.equal(S.klientadress(req(null, '10.0.0.1', '9.9.9.9'), {}), '10.0.0.1',
+    'X-Real-Ip utan BETRODD_PROXY vore en helt klientstyrd väg in — den får aldrig läsas');
+});
+
+test('X-Real-Ip väljs före X-Forwarded-For när vi är bakom betrodd proxy', () => {
+  // ROTEN TILL #??? (2026-10-08): i drift är kedjan Railway edge -> vår Caddy -> api, så sista
+  // X-Forwarded-For-posten är det INTERNA hoppet (100.64.0.x) som byter för varje anrop. Railways
+  // edge sätter X-Real-Ip till den riktiga klienten och skriver över klientens egen — det är den
+  // enda posten som både är rätt klient OCH inte går att förfalska. Den ska vinna.
+  assert.equal(S.klientadress(req('100.64.0.7', '100.64.0.7', '203.0.113.9'), { BETRODD_PROXY: '1' }),
+    '203.0.113.9',
+    'X-Real-Ip ska väljas — annars nycklas hinken på Railways interna hopp som roterar per anrop');
+  // Även om en angripare fyller X-Forwarded-For med påhitt vinner X-Real-Ip (som Railway styr).
+  assert.equal(S.klientadress(req('66.66.66.66, 100.64.0.7', '100.64.0.7', '203.0.113.9'), { BETRODD_PROXY: '1' }),
+    '203.0.113.9');
+  assert.equal(S.klientadress(req(null, '100.64.0.7', '  203.0.113.9  '), { BETRODD_PROXY: '1' }),
+    '203.0.113.9', 'blanksteg runt adressen ska inte bli en egen hink');
 });
 
 test('SÄKERHETEN: en påhittad post längst fram plockas aldrig', () => {
@@ -50,11 +70,13 @@ test('SÄKERHETEN: en påhittad post längst fram plockas aldrig', () => {
   assert.equal(ut, '203.0.113.9', 'sista posten skulle användas');
 });
 
-test('med BETRODD_PROXY används sista posten i kedjan', () => {
-  // Gäller oavsett om proxyn ERSÄTTER headern eller LÄGGER TILL sist i den: i båda fallen är sista
-  // posten den adress proxyn faktiskt såg.
+test('utan X-Real-Ip faller den tillbaka på sista X-Forwarded-For-posten', () => {
+  // Reserv för uppsättningar där Railways edge inte står framför (lokalt, enstaka proxyled). Gäller
+  // oavsett om proxyn ERSÄTTER headern eller LÄGGER TILL sist i den: i båda fallen är sista posten
+  // den adress proxyn faktiskt såg. Den FÖRSTA posten är klientstyrd och plockas aldrig.
   assert.equal(S.klientadress(req('203.0.113.9'), { BETRODD_PROXY: '1' }), '203.0.113.9');
-  assert.equal(S.klientadress(req('a, b, 203.0.113.9'), { BETRODD_PROXY: '1' }), '203.0.113.9');
+  assert.equal(S.klientadress(req('66.66.66.66, 203.0.113.9'), { BETRODD_PROXY: '1' }), '203.0.113.9',
+    'en påhittad post längst fram får aldrig bli en egen hink');
   assert.equal(S.klientadress(req('  203.0.113.9  '), { BETRODD_PROXY: '1' }), '203.0.113.9',
     'blanksteg runt posterna ska inte bli en egen hink');
 });
