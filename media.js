@@ -1632,6 +1632,14 @@ Promise.resolve().then(()=>{
   next(0);
 });
 
+// Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
+Promise.resolve().then(()=>{
+  if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261008-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261008-1'];
+  const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
+  next(0);
+});
+
 // Gift Bubbles - systerwidget till Gift Fireworks, egen fristaende canvas/DOM-motor.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-gift-bubbles]')){let css=document.createElement('link');css.rel='stylesheet';css.href='gift-bubbles.css?v=20260928-1';css.dataset.giftBubbles='1';document.head.append(css)}

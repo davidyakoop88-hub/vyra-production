@@ -235,6 +235,11 @@
       type: 'templateGiftBubbles', x: 36, y: 120, width: 320, title: 'Gift Bubbles',
       gbSize: 'm', gbMin: 1, gbGiftIn: true, gbHearts: true, gbShowCombo: true, gbDuration: 5
     }),
+    // Playground-widgetar (2026-10): Top Gifter Podium, Top Streak Flip och Goal Pro. Egen renderare i
+    // playground-widgets.js; designval och färger ligger i pg-objektet och fylls från standardvärdena där.
+    'pgpodium': () => ({ type: 'templatePgPodium', x: 26, y: 90, width: 380, title: 'Top Gifter Podium', pg: {} }),
+    'pgstreak': () => ({ type: 'templatePgStreak', x: 66, y: 90, width: 300, title: 'Top Streak Flip', pg: {} }),
+    'pggoal': () => ({ type: 'templatePgGoal', x: 26, y: 90, width: 380, title: 'Goal Pro', pg: {} }),
     // Heart Fireworks - modell 2. Skotten formar hjartan; guldskott vid hogre combo.
     'heartfireworks': () => ({
       type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
@@ -533,6 +538,9 @@
     'followeralert': () => ['followeralert', {}],
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
+    'pgpodium': () => ['pgpodium', {}],
+    'pgstreak': () => ['pgstreak', {}],
+    'pggoal': () => ['pggoal', {}],
     'glovesnipe': parts => {
       // catalog:glovesnipe:<pack>:<kind>[:<multiplier>] — the labels, icon and name are derived from
       // kind and multiplier exactly as addBoostPack() derived them.
