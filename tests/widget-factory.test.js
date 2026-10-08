@@ -29,7 +29,13 @@ const VOLATILE = ['id', 'placement', 'createdFrom'];
 // design shows the winner's name, not just the seven frames. Measured under PR #313: the ten style
 // models rendered only the word MVP and never who actually won. Proven by name in the test below
 // and, at the render level, in tests/battle-mvp-display.test.js.
-const DELIBERATELY_CHANGED = ['goalCurrent', 'heartCurrent', 'mvpShowName'];
+// Like Fountain gained explicit model/motion/avatar defaults in 2026-10. Older saved widgets do
+// not contain those keys, so the historical snapshot intentionally remains unchanged; the current
+// contract is covered by tests/like-fountain-models.test.js.
+const DELIBERATELY_CHANGED = [
+  'goalCurrent', 'heartCurrent', 'mvpShowName',
+  'fountainPreset', 'fountainMotion', 'fountainAvatarHearts'
+];
 const stripVolatile = w => {
   const copy = Object.assign({}, w);
   VOLATILE.concat(DELIBERATELY_CHANGED).forEach(k => delete copy[k]);

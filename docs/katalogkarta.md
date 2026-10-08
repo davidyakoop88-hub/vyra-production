@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `bf53878`
+Commit: `9d579b4`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **129** |
+| Kort totalt | **135** |
 | Sektioner | 22 |
-| Med katalognyckel | 129 / 129 |
-| Med shadow DOM-miniatyr | 129 / 129 |
-| Ritar sin design | 129 / 129 |
+| Med katalognyckel | 135 / 135 |
+| Med shadow DOM-miniatyr | 135 / 135 |
+| Ritar sin design | 135 / 135 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,7 +44,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK · CLEAN FLIP | 1 | 1/1 | 1/1 | 1/1 | 2026-09-20 | — |
 | GIFT FIREWORKS · 5 DESIGNER | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| LAST-X ALERTS · VARJE DESIGN SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP POINTS · 4 SEPARATA DESIGNER | 4 | 4/4 | 4/4 | 4/4 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-09-25 | [#521](https://github.com/davidyakoop88-hub/vyra-production/pull/521) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
@@ -121,6 +121,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Crown Banner | `catalog:lastx:crownBanner` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Royal Amethyst | `catalog:lastx:royalAmethyst` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Ice King | `catalog:lastx:iceKing` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Neon Cyber | `catalog:lastx:neonCyber` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Dragon Flame | `catalog:lastx:dragonFlame` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Last-X · Angel Gold | `catalog:lastx:angelGold` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 
 ### TOP POINTS · 4 SEPARATA DESIGNER
 

@@ -122,6 +122,10 @@ const RIGG_KALLA = `(() => {
     try {
       state.widgets.length = 0;
       const w = window.VyraWidgets.create(nyckel);
+      // Last-X kan med flit behålla den senaste personen synlig. Det här provet mäter däremot
+      // familjernas enter -> hold -> exit-koreografi, så kör den valbara icke-beständiga varianten
+      // här. Produktens standard och dess separata persistensprov lämnas orörda.
+      if (w.type === 'templateLastX') w.lastXPersistent = false;
       w.x = 40; w.y = 30; state.widgets.push(w); selected = null; render();
       const box = document.querySelector('[data-id="' + w.id + '"]');
       return { typ: w.type, renderad: !!box,

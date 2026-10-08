@@ -46,12 +46,12 @@
 
 /* Visible while selected (so you can position/resize it in the layout editor) or while actually
    firing a test/live alert — same convention as .follower-spotlight.selected/.follow-active. */
-.last-x-widget.selected,.last-x-widget.last-x-active{
+.last-x-widget.selected,.last-x-widget.last-x-active,.last-x-widget.last-x-sticky{
   opacity:1!important;visibility:visible!important;pointer-events:auto!important;
   transform:translateX(0) scale(1)!important;
   transition:opacity .32s ease,transform .38s cubic-bezier(.22,1,.36,1),visibility 0s linear;
 }
-.last-x-widget.last-x-active.last-x-leaving{
+.last-x-widget.last-x-active.last-x-leaving:not(.last-x-sticky){
   opacity:0!important;
   transition:opacity .34s ease,transform .34s cubic-bezier(.4,0,.68,0),visibility 0s linear .34s;
 }
@@ -331,6 +331,60 @@
   0%{opacity:0;transform:translateY(-10px) scale(.96)}
   100%{opacity:1;transform:translateY(0) scale(1)}
 }
+
+/* Six production banner models. The generated PNG is the visible frame; live avatar and text stay
+   as real DOM so names remain crisp, safe and updatable in OBS. */
+.last-x-frame-art{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:2}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold){
+  min-width:0!important;container-type:inline-size;
+}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-tilt{
+  display:block;width:100%;min-width:0;padding:0;background:none;box-shadow:none;overflow:visible;
+}
+.last-x-widget.design-crownBanner .last-x-tilt{aspect-ratio:2087/754}
+.last-x-widget.design-royalAmethyst .last-x-tilt{aspect-ratio:2020/779}
+.last-x-widget:is(.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-tilt{aspect-ratio:1774/887}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-frame-art{display:block}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-glass,
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-emblem{display:none}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-avatar{
+  position:absolute;z-index:1;left:22.8%;top:53%;width:21.2%;height:auto;aspect-ratio:1;border:0;box-shadow:none;
+  transform:translate(-50%,-50%);
+}
+.last-x-widget.design-royalAmethyst .last-x-avatar{left:24.5%;top:50%;width:22%}
+.last-x-widget:is(.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-avatar{left:22.5%;top:53%;width:25%}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-copy{
+  position:absolute;z-index:3;left:38%;right:4%;top:31%;bottom:17%;display:block;
+  box-sizing:border-box;padding:3px 8px;text-align:center;transform:none;
+}
+.last-x-widget:is(.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-copy{
+  left:38%;right:4%;top:34%;bottom:19%;
+}
+.last-x-widget.design-crownBanner .last-x-copy{left:0;right:0;top:0;bottom:0;padding:0}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-label{
+  position:absolute;left:0;right:0;top:4%;font-size:1.8cqw;line-height:1;letter-spacing:.18em;color:#ffe38b;
+  text-shadow:0 1px 3px #000,0 0 6px #000;
+}
+.last-x-widget:is(.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-label{top:18%}
+.last-x-widget.design-crownBanner .last-x-label{left:42%;right:22%;top:32%;transform:translateY(-50%);text-align:center}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-name{
+  position:absolute;left:0;right:0;top:56%;transform:translateY(-50%);width:100%;font-size:4.2cqw;line-height:1;
+  max-width:100%;color:#fff;background:none;-webkit-text-fill-color:#fff;-webkit-text-stroke:.55px rgba(0,0,0,.95);
+  text-shadow:0 2px 2px #000,0 0 8px #000,0 0 14px rgba(0,0,0,.85);
+}
+.last-x-widget.design-crownBanner .last-x-name{left:43.6%;right:6%;top:59.2%;width:auto;transform:translateY(-50%);text-align:left}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-message{
+  display:none;
+}
+.last-x-widget.design-angelGold .last-x-name{color:#360714;-webkit-text-fill-color:#360714;-webkit-text-stroke:.35px #fff0b8;font-weight:900;letter-spacing:.015em;text-shadow:0 1px 0 #fff,0 0 3px #fff1ad,0 0 7px rgba(255,174,35,.88),0 2px 2px rgba(56,15,0,.72)}
+.last-x-widget.design-angelGold .last-x-label,.last-x-widget.design-angelGold .last-x-message{color:#24030b;-webkit-text-fill-color:#24030b;-webkit-text-stroke:.2px #fff0b8;font-weight:900;text-shadow:0 1px 0 #fff,0 0 3px #fff1ad,0 0 6px rgba(255,174,35,.8)}
+.last-x-widget.design-angelGold .last-x-copy{left:42%;right:12%;top:34%;bottom:19%}
+.last-x-widget.design-angelGold .last-x-label{top:17%;font-size:2.55cqw;line-height:1;font-weight:900;letter-spacing:.1em}
+.last-x-widget.design-angelGold .last-x-name{top:54%;font-size:4.15cqw}
+.last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold).last-x-active .last-x-tilt{
+  animation:lx-banner-enter .62s cubic-bezier(.2,.85,.2,1) both;
+}
+@keyframes lx-banner-enter{0%{opacity:0;transform:translateX(-34px) scale(.97)}100%{opacity:1;transform:none}}
 
 /* ---- catalog + property panel chrome (same visual language as the old follower-alert section) */
 .last-x-template-section{border:1px solid #6d3d7a!important;background:linear-gradient(145deg,#1e0f22,#0d0710);border-radius:8px;padding:7px!important}
