@@ -464,6 +464,9 @@
         "gift-bubbles.js",
         "gift-bubbles.css",
         "gift-bubbles-session.js",
+        "playground-widgets.js",
+        "playground-widgets.css",
+        "playground-assets.js",
         "heart-fireworks.js",
         "heart-fireworks.css",
         "heart-fireworks-session.js",
@@ -477,6 +480,7 @@
       ],
       "tester": [
         "tests/gift-bubbles-trigger.test.js",
+        "tests/playground-widgets.test.js",
         "tests/heart-fireworks-trigger.test.js",
         "tests/gift-fireworks-trigger.test.js",
         "tests/gift-fireworks-live-trigger.test.js",

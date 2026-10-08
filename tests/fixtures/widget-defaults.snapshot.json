@@ -391,6 +391,30 @@
     "hfShowCombo": true,
     "hfDuration": 6
   },
+  "catalog:pgpodium": {
+    "type": "templatePgPodium",
+    "x": 26,
+    "y": 90,
+    "width": 380,
+    "title": "Top Gifter Podium",
+    "pg": {}
+  },
+  "catalog:pgstreak": {
+    "type": "templatePgStreak",
+    "x": 66,
+    "y": 90,
+    "width": 300,
+    "title": "Top Streak Flip",
+    "pg": {}
+  },
+  "catalog:pggoal": {
+    "type": "templatePgGoal",
+    "x": 26,
+    "y": 90,
+    "width": 380,
+    "title": "Goal Pro",
+    "pg": {}
+  },
   "catalog:guardianemblem:1": {
     "type": "templateGuardianEmblem",
     "x": 100,

@@ -294,3 +294,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** WebM-paketen i Glove Snipe fotograferas om nar riggen kan soka i videon (HTTP Range) - forra omgangen var tomma plattor
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 15 av 128 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:boost:2, catalog:glovesnipe:cloudFox:boost:3, catalog:glovesnipe:cloudFox:glove:2, catalog:glovesnipe:cloudFox:snipe:2, catalog:glovesnipe:cloudFox:tap:2, catalog:glovesnipe:pinkPrincess:boost:2, catalog:glovesnipe:pinkPrincess:boost:3, catalog:glovesnipe:pinkPrincess:glove:2, catalog:glovesnipe:pinkPrincess:snipe:2, catalog:glovesnipe:pinkPrincess:tap:2, catalog:glovesnipe:royalRuby:boost:2, catalog:glovesnipe:royalRuby:boost:3, catalog:glovesnipe:royalRuby:glove:2, catalog:glovesnipe:royalRuby:snipe:2, catalog:glovesnipe:royalRuby:tap:2
+
+## 2026-10-08 — 5 referenser skrivna
+
+- **Motiv:** Nya katalognycklar pgpodium, pgstreak, pggoal saknar baslinjer
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 5 av 131 (filter: pg) — catalog:pggoal, catalog:pgpodium, catalog:pgstreak, catalog:topgift:premium:neon, catalog:topgift:premium:royal
