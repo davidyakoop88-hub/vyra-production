@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `070775d`
+Commit: `be59b25`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **129** |
-| Sektioner | 23 |
-| Med katalognyckel | 129 / 129 |
-| Med shadow DOM-miniatyr | 116 / 129  ⚠️ |
-| Ritar sin design | 129 / 129 |
+| Kort totalt | **144** |
+| Sektioner | 26 |
+| Med katalognyckel | 144 / 144 |
+| Med shadow DOM-miniatyr | 131 / 144  ⚠️ |
+| Ritar sin design | 144 / 144 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -56,6 +56,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-09-11 | — |
 | Koi Pearl Lagoon · VIDEO FX | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-08-03 | — |
+| Pink Princess · VIDEO FX | 5 | 5/5 | 5/5 | 5/5 | 2026-08-03 | — |
+| Royal Ruby · VIDEO FX | 5 | 5/5 | 5/5 | 5/5 | 2026-08-03 | — |
+| Cloud Fox · VIDEO FX | 5 | 5/5 | 5/5 | 5/5 | 2026-08-03 | — |
 | NEW FOLLOWER ALERT | 1 | 1/1 | 1/1 | 1/1 | 2026-08-03 | — |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-08-20 | — |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-12 | — |
@@ -238,6 +241,36 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Masquerade X3 | `catalog:glovesnipe:masquerade:boost:3` | — ⚠️ | ✓ | 2026-08-03 | — |
 | Masquerade Tap Tap | `catalog:glovesnipe:masquerade:tap:2` | — ⚠️ | ✓ | 2026-08-03 | — |
 | Masquerade Glove | `catalog:glovesnipe:masquerade:glove:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+
+### Pink Princess · VIDEO FX
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Pink X2 | `catalog:glovesnipe:pinkPrincess:boost:2` | ✓ | ✓ | 2026-08-03 | — |
+| Pink X3 | `catalog:glovesnipe:pinkPrincess:boost:3` | ✓ | ✓ | 2026-08-03 | — |
+| Pink Tap Tap | `catalog:glovesnipe:pinkPrincess:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Pink Glove | `catalog:glovesnipe:pinkPrincess:glove:2` | ✓ | ✓ | 2026-08-03 | — |
+| Pink Snipe | `catalog:glovesnipe:pinkPrincess:snipe:2` | ✓ | ✓ | 2026-08-03 | — |
+
+### Royal Ruby · VIDEO FX
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Royal X2 | `catalog:glovesnipe:royalRuby:boost:2` | ✓ | ✓ | 2026-08-03 | — |
+| Royal X3 | `catalog:glovesnipe:royalRuby:boost:3` | ✓ | ✓ | 2026-08-03 | — |
+| Royal Tap Tap | `catalog:glovesnipe:royalRuby:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Royal Glove | `catalog:glovesnipe:royalRuby:glove:2` | ✓ | ✓ | 2026-08-03 | — |
+| Royal Snipe | `catalog:glovesnipe:royalRuby:snipe:2` | ✓ | ✓ | 2026-08-03 | — |
+
+### Cloud Fox · VIDEO FX
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Cloud X2 | `catalog:glovesnipe:cloudFox:boost:2` | ✓ | ✓ | 2026-08-03 | — |
+| Cloud X3 | `catalog:glovesnipe:cloudFox:boost:3` | ✓ | ✓ | 2026-08-03 | — |
+| Cloud Tap Tap | `catalog:glovesnipe:cloudFox:tap:2` | ✓ | ✓ | 2026-08-03 | — |
+| Cloud Glove | `catalog:glovesnipe:cloudFox:glove:2` | ✓ | ✓ | 2026-08-03 | — |
+| Cloud Snipe | `catalog:glovesnipe:cloudFox:snipe:2` | ✓ | ✓ | 2026-08-03 | — |
 
 ### NEW FOLLOWER ALERT
 
