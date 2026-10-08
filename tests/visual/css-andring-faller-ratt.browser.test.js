@@ -37,8 +37,7 @@ function servera() {
     if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
       res.writeHead(404); res.end('nej'); return;
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(fil)] || 'application/octet-stream' });
-    fs.createReadStream(fil).pipe(res);
+    V.skickaFil(req, res, fil, MIME[path.extname(fil)] || 'application/octet-stream');
   });
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
