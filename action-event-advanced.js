@@ -80,7 +80,8 @@
     const antalRum=alla.filter(g=>g.rum).length;
     const modal=document.createElement('div');
     modal.className='gift-picker-modal';
-    modal.innerHTML='<div><header><b>VÄLJ GÅVA</b><button type="button">×</button></header>'
+    modal.innerHTML='<div><header><b>VÄLJ GÅVA</b><button type="button" class="ae-ik ae-ik--stang" title="Stäng" aria-label="Stäng">'
+      +'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>'
       +'<input placeholder="Sök bland '+alla.length+' gåvor...">'
       +'<small class="gp-hint">'+(antalRum?antalRum+' gåvor kommer från TikToks katalog för ditt rum'+(antalLarda?' och '+antalLarda+' är inlärda från dina sändningar':'')+' — med riktiga namn och coin-värden.':antalLarda?antalLarda+' gåvor är inlärda från dina egna sändningar och visar riktigt namn och coin-värde.':'Inga gåvor inlärda än. När du sänder lär VYRA sig namn, bild och coin-värde från TikTok — på ditt språk.')+'</small>'
       +'<section></section></div>';

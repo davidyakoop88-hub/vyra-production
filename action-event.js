@@ -390,6 +390,18 @@
   // Huvudbrytaren bredvid "Skapa ny Action" (facit §1). Den pausar LIVE-triggade actions, inte
   // Testa-knappen: en streamer som pausat automationen ska ändå kunna prova en action i lugn och ro.
   const actionsEnabled=state=>state?.actionsEnabled!==false;
+  // Radikonerna (Kör, Redigera, Duplicera, Radera) som SVG i färgkodade cirklar. Tecknen ▶ ✎ ⧉ 🗑
+  // var tunna och nästan osynliga mot den mörka bakgrunden; färgen säger nu vad knappen gör.
+  const svgIkon=d=>`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
+  const IKON={
+    kor:svgIkon('<path d="M7 4.5v15l12.5-7.5z"/>'),
+    redigera:svgIkon('<path d="M16.5 3.5a2.5 2.5 0 0 1 3.5 3.5L8 19l-4.5 1.5L5 16z"/><path d="M14.5 5.5l4 4"/>'),
+    duplicera:svgIkon('<rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/>'),
+    radera:svgIkon('<path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/>'),
+    stang:svgIkon('<path d="M6 6l12 12M18 6L6 18"/>')
+  };
+  // Modalens stängknapp: samma neutrala kryss i alla A&E-modaler (se action-timers.js).
+  const STANG_KNAPP=`<button type="button" class="ae-ik ae-ik--stang" data-close-ae title="Stäng" aria-label="Stäng">${IKON.stang}</button>`;
   function actionRow(a){
     const n=a.scene?.number||1,on=sceneOnline(n),timing=actionTimingMeta(a);
     const namn=formatActionName(a),beskrivning=describeAction(a);
@@ -399,10 +411,10 @@
     const sokText=`${namn} ${beskrivning} Scen ${n}`.toLowerCase().replace(/"/g,'');
     return `<tr data-action-row="${a.id}" data-sok="${sokText}">
       <td class="ae-col-icons">
-        <button type="button" data-test-action="${a.id}" title="Kör actionen nu">▶</button>
-        <button type="button" data-edit-action="${a.id}" title="Redigera">✎</button>
-        <button type="button" data-copy-action="${a.id}" title="Duplicera">⧉</button>
-        <button type="button" data-delete-action="${a.id}" title="Radera">🗑</button>
+        <button type="button" class="ae-ik ae-ik--kor" data-test-action="${a.id}" title="Kör actionen nu" aria-label="Kör actionen nu">${IKON.kor}</button>
+        <button type="button" class="ae-ik ae-ik--redigera" data-edit-action="${a.id}" title="Redigera" aria-label="Redigera">${IKON.redigera}</button>
+        <button type="button" class="ae-ik ae-ik--duplicera" data-copy-action="${a.id}" title="Duplicera" aria-label="Duplicera">${IKON.duplicera}</button>
+        <button type="button" class="ae-ik ae-ik--radera" data-delete-action="${a.id}" title="Radera" aria-label="Radera">${IKON.radera}</button>
       </td>
       <td class="ae-col-name"><b>${namn}</b></td>
       <td class="ae-col-screen"><span>Scen ${n}</span> <mark class="ae-action-scene ${on?'online':'offline'}">${on?'Online':'Offline'}</mark><button type="button" class="ae-scene-link" data-open-action-screen="${n}">OBS-länk</button></td>
@@ -420,8 +432,8 @@
     const sokText=`${anvandare} ${trigger} ${actions}`.toLowerCase().replace(/"/g,'');
     return `<tr data-event-row="${e.id}" data-sok="${sokText}" class="${e.enabled?'':'off'}">
       <td class="ae-col-icons">
-        <button type="button" data-edit-event="${e.id}" title="Redigera">✎</button>
-        <button type="button" data-delete-event="${e.id}" title="Radera">🗑</button>
+        <button type="button" class="ae-ik ae-ik--redigera" data-edit-event="${e.id}" title="Redigera" aria-label="Redigera">${IKON.redigera}</button>
+        <button type="button" class="ae-ik ae-ik--radera" data-delete-event="${e.id}" title="Radera" aria-label="Radera">${IKON.radera}</button>
       </td>
       <td class="ae-col-check"><input type="checkbox" data-toggle-event="${e.id}"${e.enabled?' checked':''} aria-label="Aktiv"></td>
       <td class="ae-col-user">${esc(anvandare)}</td>
@@ -459,7 +471,7 @@
     const volume=editing?Number(editing.volume??100):100;
     const rutor=actionTypes.map(([value,label])=>`<div class="ae-fn" data-fn="${value}"><label class="ae-check"><input type="checkbox" data-fn-check value="${value}"${vald(value)?' checked':''}> ${label}</label><div class="ae-fn-slot" data-slot="${value}"${vald(value)?'':' hidden'}></div></div>`).join('');
     document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-action"><div>
-      <header><h3>${editing?'Redigera Action':'Ny Action'}</h3><button data-close-ae>×</button></header>
+      <header><h3>${editing?'Redigera Action':'Ny Action'}</h3>${STANG_KNAPP}</header>
       <label class="ae-field-name">Vad ska actionen heta?<input id="aeActionName" placeholder="Exempel: Prenumerationsanimation" value="${esc(editing?.name||'')}"></label>
       <fieldset class="ae-fns"><legend>Vad ska hända? Flera val är möjliga.</legend>${rutor}</fieldset>
       <div class="ae-extra-slot"></div>
@@ -560,7 +572,7 @@
     const editing=existingId?state.events.find(e=>e.id===existingId):null;
     if(!state.actions.length&&!editing)return window.toast?.('Skapa en Action först');
     document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-event"><div>
-      <header><h3>${editing?'Redigera Event':'Nytt Event'}</h3><button data-close-ae>×</button></header>
+      <header><h3>${editing?'Redigera Event':'Nytt Event'}</h3>${STANG_KNAPP}</header>
       <div class="ae-event-slot"></div>
       <footer><button data-close-ae>✘ Avbryt</button><button id="saveAeEvent" class="primary">✔ Spara</button></footer>
     </div></div>`;

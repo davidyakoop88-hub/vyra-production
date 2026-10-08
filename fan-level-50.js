@@ -92,7 +92,7 @@
     const manual = manualOf(w);
     const manualLines = manual.map(m => m.avatar ? `${m.name}|${m.avatar}` : String(m.name || '')).join('\n');
     const chipsHtml = manual.length
-      ? manual.map((m, i) => `<span class="fl50-chip"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""><b>${safe.text(m.name, 'FAN')}</b><button type="button" class="fl50-chip-x" data-fl50-del="${i}" title="Ta bort" aria-label="Ta bort ${safe.text(m.name, 'FAN')}">×</button></span>`).join('')
+      ? manual.map((m, i) => `<span class="fl50-chip"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""><b>${safe.text(m.name, 'FAN')}</b><button type="button" class="fl50-chip-x vw-ik vw-ik--radera vw-ik--trang" data-fl50-del="${i}" title="Ta bort" aria-label="Ta bort ${safe.text(m.name, 'FAN')}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/></svg></button></span>`).join('')
       : '<small class="fl50-chips-tom">Inga taggade än — lägg till en användare ovan.</small>';
     const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${label}</option>`;
     return `<h3>FAN LEVEL 50</h3><div class="template-badge">MILSTOLPE · LIVE + MANUELL</div>

@@ -444,7 +444,7 @@
       <input class="ttsSuSpeed" type="number" min="0.5" max="2" step="0.1" placeholder="Hastighet" value="${s.speed || ''}">
       <input class="ttsSuPitch" type="number" min="0" max="2" step="0.1" placeholder="Tonhöjd" value="${s.pitch || ''}">
       <input class="ttsSuVolume" type="number" min="0" max="100" step="1" placeholder="Volym %" value="${s.volume ?? ''}">
-      <button type="button" class="tts-su-remove" data-i="${i}">×</button>
+      <button type="button" class="tts-su-remove tts-ik tts-ik--radera" data-i="${i}" title="Ta bort" aria-label="Ta bort"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/></svg></button>
     </div>`;
   }
 
