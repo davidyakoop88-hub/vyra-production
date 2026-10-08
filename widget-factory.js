@@ -74,7 +74,9 @@
     // De tre sista katalogsektionerna. Etiketterna ar desamma som knapparna visar, sa tabellen
     // bar nagot mer an att namnet finns - en okand variant kastar med giltiga alternativ i texten.
     'lastx.design': { card: 'Card', stack: 'Stack', skew: 'Skew', badge: 'Badge',
-      royal: 'Royal Coronation' },
+      royal: 'Royal Coronation', crownBanner: 'Crown Banner', royalAmethyst: 'Royal Amethyst',
+      iceKing: 'Ice King', neonCyber: 'Neon Cyber', dragonFlame: 'Dragon Flame',
+      angelGold: 'Angel Gold' },
     'custom.kind': { text: 'templateCustomText', image: 'templateCustomImage',
       video: 'templateCustomVideo' },
     'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
@@ -205,7 +207,9 @@
     // varje befintlig anvandare utseende nasta gang de lagger till en design, sa det finns ett
     // test som jamfor mot den gamla formen.
     'lastx.design': v => ({
-      type: 'templateLastX', x: 100, y: 80, width: 500, title: 'Last-X Alerts',
+      type: 'templateLastX', x: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 16 : 100, y: 80,
+      width: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 400 : 500,
+      title: 'Last-X Alerts',
       lastXType: 'all', lastXDesign: v.design, lastXEntrance: 'slide-left', followDuration: 5
     }),
     // Text har egen bredd och en starttext; bild och video delar allt utom hojden. Formen ar

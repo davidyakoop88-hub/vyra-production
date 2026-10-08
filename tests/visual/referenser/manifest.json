@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 142,
+ "antal": 148,
  "senaste": {
-  "motiv": "Nya katalognycklar pgpodium, pgstreak, pggoal saknar baslinjer",
-  "nycklar": 5,
-  "filter": "pg",
-  "tid": "2026-10-08T17:48:44.229Z"
+  "motiv": "Sex nya Last-X bannerdesigner behöver referensbilder",
+  "nycklar": 6,
+  "filter": "catalog:lastx:angelGold,catalog:lastx:crownBanner,catalog:lastx:dragonFlame,catalog:lastx:iceKing,catalog:lastx:neonCyber,catalog:lastx:royalAmethyst",
+  "tid": "2026-10-08T19:41:31.811Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -580,6 +580,30 @@
   },
   "catalog:pgstreak": {
    "matt": "300x355",
+   "fyllnad": 100
+  },
+  "catalog:lastx:angelGold": {
+   "matt": "400x200",
+   "fyllnad": 100
+  },
+  "catalog:lastx:crownBanner": {
+   "matt": "400x145",
+   "fyllnad": 100
+  },
+  "catalog:lastx:dragonFlame": {
+   "matt": "400x200",
+   "fyllnad": 100
+  },
+  "catalog:lastx:iceKing": {
+   "matt": "400x200",
+   "fyllnad": 100
+  },
+  "catalog:lastx:neonCyber": {
+   "matt": "400x200",
+   "fyllnad": 100
+  },
+  "catalog:lastx:royalAmethyst": {
+   "matt": "400x155",
    "fyllnad": 100
   }
  }

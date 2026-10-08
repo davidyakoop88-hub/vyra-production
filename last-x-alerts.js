@@ -38,10 +38,24 @@
       themes: { neon: '#ff58d6', ocean: '#4fc3ff', gold: '#ffd35d' },
       defaultName: 'Sara', defaultMsg: 'JOINED THE CLUB',
       message: () => 'JOINED THE CLUB'
+    },
+    follower: {
+      label: 'LAST FOLLOWER', catalogLabel: 'Last Follower', events: ['follow'], multiAccent: '#a3e635',
+      themes: { neon: '#ff58d6', lime: '#a3e635', blue: '#4fc3ff' },
+      defaultName: 'Zoe', defaultMsg: 'FOLLOWED THE LIVE',
+      message: () => 'FOLLOWED THE LIVE'
     }
   };
   const TYPE_KEYS = Object.keys(TYPES);
-  const DESIGNS = { card: 'Card', stack: 'Stack', skew: 'Skew', badge: 'Badge', royal: 'Royal Coronation' };
+  const DESIGNS = {
+    card: 'Card', stack: 'Stack', skew: 'Skew', badge: 'Badge', royal: 'Royal Coronation',
+    crownBanner: 'Crown Banner', royalAmethyst: 'Royal Amethyst', iceKing: 'Ice King',
+    neonCyber: 'Neon Cyber', dragonFlame: 'Dragon Flame', angelGold: 'Angel Gold'
+  };
+  const BANNER_ASSETS = {
+    crownBanner: 'crown-banner.png', royalAmethyst: 'royal-amethyst.png', iceKing: 'ice-king.png',
+    neonCyber: 'neon-cyber.png', dragonFlame: 'dragon-flame.png', angelGold: 'angel-gold.png'
+  };
   const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'roll', 'fade'];
   const ENTRANCE_LABEL = {
     'slide-left': 'Slider in från vänster', 'slide-right': 'Slider in från höger',
@@ -57,7 +71,8 @@
   // fyra ställen (här, panelen, legacy-vägen och OBS-widgetens HOLD_MS) — fyra ställen som kunde
   // säga olika saker. Nu finns tiderna på ETT ställe och alla fyra läser dem härifrån.
   const DURATIONS = [5, 10, 15];
-  const EMBLEM = { card: '✦', stack: '✦', skew: '✦', badge: '◆', royal: '✦' };
+  const EMBLEM = { card: '✦', stack: '✦', skew: '✦', badge: '◆', royal: '✦',
+    crownBanner: '', royalAmethyst: '', iceKing: '', neonCyber: '', dragonFlame: '', angelGold: '' };
 
   // Old placed widgets used one type PER template (templateLastGifter etc.) — map those onto the
   // new single-type field so nothing already on a layout disappears when this file updates.
@@ -138,19 +153,24 @@
     const active = activeKeysFor(w), typeKey = active[0], cfg = TYPES[typeKey];
     const design = designOf(w), entrance = entranceOf(w);
     const accent = accentFor(w, typeKey);
-    const name = w.followName || cfg.defaultName;
-    const message = w.followMessage || cfg.defaultMsg;
+    const remembered = w.lastXLatest && w.lastXLatest[typeKey];
+    const name = remembered?.username || w.followName || cfg.defaultName;
+    const message = remembered?.message || w.followMessage || cfg.defaultMsg;
     const label = labelFor(w, typeKey);
-    const hasImage = w.profileImage ? ` data-has-image="1"` : '';
-    return `<div class="widget last-x-widget design-${design} entrance-${entrance}${selected === w.id ? ' selected' : ''}" data-id="${w.id}"
+    const profileImage = remembered?.avatar || w.profileImage || '';
+    const hasImage = profileImage ? ` data-has-image="1"` : '';
+    const sticky = w.lastXPersistent !== false && remembered ? ' last-x-sticky' : '';
+    const banner = BANNER_ASSETS[design] ? `<img class="last-x-frame-art" src="assets/images/last-x/${BANNER_ASSETS[design]}" alt="">` : '';
+    return `<div class="widget last-x-widget design-${design} entrance-${entrance}${sticky}${selected === w.id ? ' selected' : ''}" data-id="${w.id}"
         style="left:${w.x}px;top:${w.y}px;width:${w.width || 500}px;--last-x:${accent}${brandKitStyleFor(w)};zoom:${zoomFor(w)}">
       <div class="last-x-tilt">
+        ${banner}
         <div class="last-x-glass"><div class="last-x-sheen"></div><div class="last-x-gleam"></div></div>
-        <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${(name[0] || '✦').toUpperCase()}</span><img src="${VyraSafe.url(w.profileImage)}" alt=""></div>
+        <div class="last-x-avatar"${hasImage}><span class="last-x-initial">${VyraSafe.text((name[0] || '✦').toUpperCase())}</span><img src="${VyraSafe.url(profileImage)}" alt=""></div>
         <div class="last-x-copy">
-          <div class="last-x-label">${label}</div>
-          <div class="last-x-name">${name}</div>
-          <div class="last-x-message">${message}</div>
+          <div class="last-x-label">${VyraSafe.text(label)}</div>
+          <div class="last-x-name">${VyraSafe.text(name)}</div>
+          <div class="last-x-message">${VyraSafe.text(message)}</div>
         </div>
         <div class="last-x-emblem">${EMBLEM[design]}</div>
       </div>
@@ -211,8 +231,9 @@
           ${DURATIONS.map(d => `<option value="${d}">${d} sekunder</option>`).join('')}
         </select></label>
         <p class="last-x-type-hint">Räknat från att intron är klar. Kommer en ny händelse av samma typ under tiden byts namnet på plats och tiden börjar om.</p>
+        <label class="last-x-type-check"><input type="checkbox" id="lastXPersistent"${w.lastXPersistent !== false ? ' checked' : ''}><span>Behåll senaste personen synlig tills nästa händelse</span></label>
         <button id="testLastX" type="button">▶ Testa alert</button>
-        ${multi ? '<button id="testLastXAll" type="button">▶ Testa alla fyra i rad</button>' : ''}
+        ${multi ? '<button id="testLastXAll" type="button">▶ Testa alla valda i rad</button>' : ''}
       </div>
       <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || 500}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div>
       <button class="delete" id="del">Ta bort</button>`;
@@ -237,6 +258,10 @@
     if (avatar) {
       if (data.avatar) { img.src = VyraSafe.src(data.avatar); avatar.dataset.hasImage = '1' } else delete avatar.dataset.hasImage;
     }
+    w.lastXLatest = Object.assign({}, w.lastXLatest || {}, { [typeKey]: data });
+    box.classList.toggle('last-x-sticky', w.lastXPersistent !== false);
+    clearTimeout(w._lastXPersistTimer);
+    w._lastXPersistTimer = setTimeout(() => { delete w._lastXPersistTimer; save() }, 700);
     const copy = box.querySelector('.last-x-copy');
     if (swap && copy) { copy.classList.remove('lx-swap'); void copy.offsetWidth; copy.classList.add('lx-swap') }
   }
@@ -355,6 +380,8 @@
       set('#followMessage', 'followMessage');
       set('#followProfile', 'profileImage');
       set('#followDuration', 'followDuration', { num: true });
+      const persistentBox = document.querySelector('#lastXPersistent');
+      if (persistentBox) persistentBox.onchange = e => { w.lastXPersistent = e.target.checked; save(); render() };
 
       // Each checkbox toggles its own type in/out of the active set. Unchecking the very last
       // one is rejected (re-checked right back) instead of leaving the widget with nothing to
@@ -386,9 +413,13 @@
     if (catalog && !catalog.querySelector('[data-last-x]')) {
       const section = document.createElement('section');
       section.dataset.lastX = '1'; section.className = 'last-x-template-section';
-      const lastXCards = [['card', 'Card'], ['stack', 'Stack'], ['skew', 'Skew'], ['badge', 'Badge'], ['royal', 'Royal Coronation']];
+      const lastXCards = [
+        ['card', 'Card'], ['stack', 'Stack'], ['skew', 'Skew'], ['badge', 'Badge'], ['royal', 'Royal Coronation'],
+        ['crownBanner', 'Crown Banner'], ['royalAmethyst', 'Royal Amethyst'], ['iceKing', 'Ice King'],
+        ['neonCyber', 'Neon Cyber'], ['dragonFlame', 'Dragon Flame'], ['angelGold', 'Angel Gold']
+      ];
       section.innerHTML = '<h4>LAST-X ALERTS · VARJE DESIGN SEPARAT</h4>' + lastXCards.map(([d, label]) =>
-        `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gifter · Liker · Sharer · Subscriber</small></span></button>`
+        `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gifter · Liker · Sharer · Subscriber · Follower</small></span></button>`
       ).join('');
       catalog.prepend(section);
       // Nyckeln pa knappen ar det som gor designen matbar, forhandsvisningsbar och aterskapbar.
@@ -416,6 +447,7 @@
       if (t.includes('like')) showLastX('liker', event);
       if (t.includes('share')) showLastX('sharer', event);
       if (t.includes('subscribe')) showLastX('subscriber', event); // "member" intentionally excluded
+      if (t === 'follow' || t === 'follower' || t === 'new_follower') showLastX('follower', event);
     };
   }
   // NY SANDNING => de vantande korten kastas. `slots` bar den forra sandningens senaste gavor och
