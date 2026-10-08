@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 139,
+ "antal": 142,
  "senaste": {
-  "motiv": "WebM-paketen i Glove Snipe fotograferas om nar riggen kan soka i videon (HTTP Range) - forra omgangen var tomma plattor",
-  "nycklar": 15,
-  "filter": "glovesnipe",
-  "tid": "2026-10-08T13:58:26.968Z"
+  "motiv": "Nya katalognycklar pgpodium, pgstreak, pggoal saknar baslinjer",
+  "nycklar": 5,
+  "filter": "pg",
+  "tid": "2026-10-08T17:48:44.229Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -568,6 +568,18 @@
   },
   "catalog:glovesnipe:royalRuby:tap:2": {
    "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:pggoal": {
+   "matt": "380x101",
+   "fyllnad": 100
+  },
+  "catalog:pgpodium": {
+   "matt": "380x364",
+   "fyllnad": 100
+  },
+  "catalog:pgstreak": {
+   "matt": "300x355",
    "fyllnad": 100
   }
  }
