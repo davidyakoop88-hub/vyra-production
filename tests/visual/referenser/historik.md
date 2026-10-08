@@ -282,3 +282,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Like Fountain Portal: förhandsbilden efter stjärnplatsen (PR #566)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 113 (filter: likefountain) — catalog:likefountain:portal
+
+## 2026-10-08 — 15 referenser skrivna
+
+- **Motiv:** Pink Princess, Royal Ruby och Cloud Fox (WebM) i Glove Snipe-katalogen far sina forsta referenser
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 15 av 128 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:boost:2, catalog:glovesnipe:cloudFox:boost:3, catalog:glovesnipe:cloudFox:glove:2, catalog:glovesnipe:cloudFox:snipe:2, catalog:glovesnipe:cloudFox:tap:2, catalog:glovesnipe:pinkPrincess:boost:2, catalog:glovesnipe:pinkPrincess:boost:3, catalog:glovesnipe:pinkPrincess:glove:2, catalog:glovesnipe:pinkPrincess:snipe:2, catalog:glovesnipe:pinkPrincess:tap:2, catalog:glovesnipe:royalRuby:boost:2, catalog:glovesnipe:royalRuby:boost:3, catalog:glovesnipe:royalRuby:glove:2, catalog:glovesnipe:royalRuby:snipe:2, catalog:glovesnipe:royalRuby:tap:2

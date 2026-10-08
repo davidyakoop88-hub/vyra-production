@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 124,
+ "antal": 139,
  "senaste": {
-  "motiv": "Like Fountain Portal: förhandsbilden efter stjärnplatsen (PR #566)",
-  "nycklar": 1,
-  "filter": "likefountain",
-  "tid": "2026-10-05T19:31:05.559Z"
+  "motiv": "Pink Princess, Royal Ruby och Cloud Fox (WebM) i Glove Snipe-katalogen far sina forsta referenser",
+  "nycklar": 15,
+  "filter": "glovesnipe",
+  "tid": "2026-10-08T13:36:44.978Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -508,6 +508,66 @@
   },
   "catalog:battlemvp:celebration:lion-clash": {
    "matt": "320x346",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:tap:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:tap:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:boost:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:boost:3": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:glove:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:snipe:2": {
+   "matt": "432x300",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:tap:2": {
+   "matt": "432x300",
    "fyllnad": 100
   }
  }
