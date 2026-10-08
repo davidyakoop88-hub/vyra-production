@@ -44,7 +44,8 @@ test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async (
   await page.waitForTimeout(1000);
   const result = await page.evaluate(() => {
     const section = document.querySelector('.streak-template-section');
-    const buttons = [...section.querySelectorAll('button')];
+    // Top Streak Flip (playground) är en annan widget som bor i samma grupp; provet vaktar dubbletter av Clean Flip.
+    const buttons = [...section.querySelectorAll('button:not([data-pg-create])')];
     const w = window.VyraWidgets.create('catalog:topstreak');
     const host = document.createElement('div');
     host.innerHTML = wh(w);
