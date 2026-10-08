@@ -33,14 +33,26 @@ function normalizeTikTokUsername(v){const raw=String(v||'').trim().replace(/^@+/
 // socket-adressen precis som förut, och ingen ny väg öppnas i en uppsättning där servern går att nå
 // direkt. production-config.js kräver flaggan i produktion, så den kan inte glömmas bort tyst.
 //
-// SISTA POSTEN, INTE DEN FÖRSTA. Kedjan byggs vänster till höger: klientens egna påhitt hamnar först
-// och proxyns egen observation sist. Den FÖRSTA posten är det vanliga misstaget och är helt
-// klientstyrd. Den SISTA är den enda en betrodd proxy själv har skrivit, och det gäller oavsett om
-// proxyn ersätter headern eller lägger till sist i den — i båda fallen är sista posten den adress
-// proxyn faktiskt såg.
+// X-REAL-IP FÖRST. Den ursprungliga härledningen tog sista posten i X-Forwarded-For och antog EN
+// proxy framför oss. I drift är kedjan TVÅ hopp: Railways edge -> vår egen Caddy -> api-tjänsten.
+// Då är sista X-Forwarded-For-posten det INTERNA hoppet Caddy->api (Railways privata 100.64.0.0/10),
+// en adress som BYTER för varje anrop. Följden: rate-limit-hinken nycklades på en adress som aldrig
+// upprepades, så taket slog aldrig till — 45 misslyckade login i rad gav 45 svar, 0 blockeringar.
+// Uppmätt mot vyralive.app 2026-10-08 via Caddys egna request-loggar och vyra:rate:*-nycklarna.
+//
+// Railways edge sätter X-Real-Ip till den FAKTISKA besökaren och skriver över allt klienten själv
+// skickar (bekräftat av Railways personal). Det är den enda posten som både är den riktiga klienten
+// OCH inte går att förfalska bakifrån. Den läses bara när BETRODD_PROXY=1, alltså när vi VET att
+// Railways edge står framför och har satt headern; utan flaggan rörs varken X-Real-Ip eller
+// X-Forwarded-For och socket-adressen används precis som förut (ingen ny väg in direktexponerad).
+//
+// X-Forwarded-For (sista posten) och socket-adressen står kvar som reserv för uppsättningar utan
+// X-Real-Ip — lokala körningar och proven själva.
 function klientadress(req,env=process.env){
   const direkt=(req&&req.socket&&req.socket.remoteAddress)||'';
   if(String(env.BETRODD_PROXY||'')!=='1')return direkt;
+  const realip=String((req&&req.headers&&req.headers['x-real-ip'])||'').trim();
+  if(realip)return realip;
   const kedja=String((req&&req.headers&&req.headers['x-forwarded-for'])||'').split(',').map(v=>v.trim()).filter(Boolean);
   return kedja.length?kedja[kedja.length-1]:direkt;
 }
