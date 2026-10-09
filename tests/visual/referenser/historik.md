@@ -306,3 +306,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Sex nya Last-X bannerdesigner behöver referensbilder
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 6 av 137 (filter: catalog:lastx:angelGold,catalog:lastx:crownBanner,catalog:lastx:dragonFlame,catalog:lastx:iceKing,catalog:lastx:neonCyber,catalog:lastx:royalAmethyst) — catalog:lastx:angelGold, catalog:lastx:crownBanner, catalog:lastx:dragonFlame, catalog:lastx:iceKing, catalog:lastx:neonCyber, catalog:lastx:royalAmethyst
+
+## 2026-10-09 — 3 referenser skrivna
+
+- **Motiv:** Video FX som helt paket (#580): fem nya catalog:glovesnipe:<paket>:pack-nycklar ersatter de 23 per-klipp-nycklarna
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 125 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:pack:2, catalog:glovesnipe:pinkPrincess:pack:2, catalog:glovesnipe:royalRuby:pack:2

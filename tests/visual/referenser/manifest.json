@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 148,
+ "antal": 151,
  "senaste": {
-  "motiv": "Sex nya Last-X bannerdesigner behöver referensbilder",
-  "nycklar": 6,
-  "filter": "catalog:lastx:angelGold,catalog:lastx:crownBanner,catalog:lastx:dragonFlame,catalog:lastx:iceKing,catalog:lastx:neonCyber,catalog:lastx:royalAmethyst",
-  "tid": "2026-10-08T19:41:31.811Z"
+  "motiv": "Video FX som helt paket (#580): fem nya catalog:glovesnipe:<paket>:pack-nycklar ersatter de 23 per-klipp-nycklarna",
+  "nycklar": 3,
+  "filter": "glovesnipe",
+  "tid": "2026-10-09T23:11:44.771Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -604,6 +604,18 @@
   },
   "catalog:lastx:royalAmethyst": {
    "matt": "400x155",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:cloudFox:pack:2": {
+   "matt": "432x243",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:pinkPrincess:pack:2": {
+   "matt": "432x243",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:royalRuby:pack:2": {
+   "matt": "432x243",
    "fyllnad": 100
   }
  }
