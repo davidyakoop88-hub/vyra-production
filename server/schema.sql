@@ -817,6 +817,12 @@ END $$;
 ALTER TABLE billing_customers ALTER COLUMN stripe_customer_id DROP NOT NULL;
 ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAULT 'stripe'
   CHECK(provider IN ('stripe','paypal'));
+-- Beta 2026-10: provider='comp' = gratis Premium utan betalning (de första 30 registrerade kontona,
+-- se server/index.js registreringsrutt). ADD COLUMN IF NOT EXISTS ovan rör INTE CHECK:en när kolumnen
+-- redan finns, så constrainten byts ut explicit. Idempotent (DROP IF EXISTS + ADD), och den nya
+-- mängden är en övermängd av den gamla så alla befintliga rader passerar vid ADD.
+ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_provider_check;
+ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_provider_check CHECK (provider IN ('stripe','paypal','comp'));
 COMMENT ON COLUMN subscriptions.stripe_subscription_id IS 'Leverantörens abonnemangs-id (PayPal I-… eller Stripe sub_…); se kolumnen provider';
 COMMENT ON COLUMN subscriptions.stripe_price_id IS 'Leverantörens plan-/pris-id (PayPal P-… eller Stripe price_…)';
 COMMENT ON COLUMN billing_events.stripe_event_id IS 'Leverantörens händelse-id (PayPal WH-… eller Stripe evt_…)';
