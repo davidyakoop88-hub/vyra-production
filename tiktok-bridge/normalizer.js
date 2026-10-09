@@ -725,4 +725,53 @@ function arGuardianEntrance(data){
 }
 
 
-module.exports={text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};
+// BOOSTING GLOVE-KORTEN — WebcastLinkMicBattleItemCard (2026-10-10).
+//
+// UPPMATT I DAVIDS SANDNING 2026-10-09 (TikTok LIVE Studios egen logg): 96 LinkMicBattleItemCard
+// mot 57 LinkmicBattleTaskMessage. Tittarna skickar "boosting glove" som ett KORT
+// (useCriticalStrikeCard: multiple '5', effectLastDuration '30', effectTimeSec, toAnchorId) —
+// inte som ett boost-fonster i LINK_MIC_BATTLE_TASK. Bryggan lyssnade bara pa TASK, och
+// tiktok-live-connector 2.4.0 hade inte ens kortet i sitt proto; 2.5.0 har det
+// (WebcastEvent.LINK_MIC_BATTLE_ITEM_CARD).
+//
+// VARDENA AR STRANGAR (int64 i protot): '5', '30', '1791577892'. number() tar dem.
+// KORTET HAR EN MOTTAGARE. anchorId/toAnchorId ar varden vars gavor multipliceras. Ett kort till
+// MOTSTANDAREN ska inte tanda var overlay — i loggen gick Tjaotts kort till Bertil, inte till
+// David. Darfor kravs mittAnkarId i arGloveKort; saknas det slapps kortet igenom med en logg,
+// hellre en handske for mycket an en battle utan.
+//
+// BattleCardMsgType: 2 = USE_CRITICAL_STRIKE_CARD (Boosting Glove), 12 = USE_VAULT_GLOVE_CARD
+// (samma handske, annan kortsort, 'multiple' pa cardInfo). 4 = AWARD_CARD_NOTICE
+// ("Contributors got match power-ups") bar ingen multiplikator och ska inte tanda nagot.
+const KORT_CRIT=2, KORT_VAULT=12;
+function battleKortFields(data){
+  const rot=data&&typeof data==='object'?data:{};
+  const typ=number(rot.msgType,99);
+  const crit=rot.useCriticalStrikeCard||null, vault=rot.useVaultGloveCard||null;
+  const bar=typ===KORT_CRIT?crit:typ===KORT_VAULT?vault:null;
+  const info=(bar&&bar.cardInfo)||{};
+  const vanlig=info.common||{};
+  return{
+    sort:typ===KORT_CRIT?'crit':typ===KORT_VAULT?'vault':'',
+    multiplier:number(info.multiple??vanlig.multiple,100),
+    // effectTimeSec: nar kortet BORJAR galla (TikToks klocka, sekunder). sendTimeSec ar nar det
+    // skickades — uppmatt 3 s respektive 31 s fore effekten nar tva kort lag i ko.
+    effektStart:number(info.effectTimeSec??vanlig.effectTimeSec,Number.MAX_SAFE_INTEGER)||Number.MAX_SAFE_INTEGER,
+    effektSekunder:number(info.effectLastDuration??vanlig.effectLastDuration,86400),
+    anchorId:text((bar&&bar.anchorId)||info.toAnchorIdStr||info.toAnchorId||'',160),
+    sandareId:text(info.sendUser?.user?.userId||info.sendUser?.userId||'',160),
+    battleId:text(rot.battleId||rot.battle_id||'',64),
+    msgType:typ,
+    skickatAt:number(rot.common?.createTime,Number.MAX_SAFE_INTEGER)
+  };
+}
+function arGloveKort(k,mittAnkarId){
+  if(!k||!k.sort||!(k.multiplier>=2))return false;
+  const mitt=String(mittAnkarId||'').trim();
+  return !mitt||!k.anchorId||k.anchorId===mitt;
+}
+// Samma vantan som boost-fonstret: effektens start raknad inom TikToks klocka, tak tio minuter.
+function kortFordrojningMs(k){
+  return boostFordrojningMs(k&&{fonsterStart:k.effektStart,skickatAt:k.skickatAt});
+}
+module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};

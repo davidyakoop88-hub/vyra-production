@@ -478,6 +478,41 @@ if (require.main === module) {
       boostTimers.add(boostTimer);
     });
 
+    // ---- Boosting Glove-korten (LinkMicBattleItemCard) -----------------------------------------
+    // Uppmatt 2026-10-09: tittarnas handskar kom som KORT (96 st), inte som boost-fonster (57 st),
+    // och ingen av dem nadde overlayn. Samma event som ovan (`glove`, multiplier, durationSec,
+    // battleId), samma vantan till effektens start, egen dedupe pa kortets effekttid.
+    // Eventnamnet finns forst i tiktok-live-connector 2.5.0 — pa ett aldre bibliotek loggas det
+    // en gang i stallet for att krascha anslutningen.
+    if (!WebcastEvent.LINK_MIC_BATTLE_ITEM_CARD) {
+      console.log('[bridge] LINK_MIC_BATTLE_ITEM_CARD saknas i tiktok-live-connector — Boosting Glove-korten kan inte lasas');
+    } else connection.on(WebcastEvent.LINK_MIC_BATTLE_ITEM_CARD, data => {
+      let k;
+      try { k = N.battleKortFields(data) } catch (err) {
+        console.log(`[bridge] battle-kort kunde inte lasas: ${err.message}`); return;
+      }
+      if (!k.sort) return;
+      if (!N.arGloveKort(k, mittAnkarId)) {
+        if (k.multiplier >= 2) console.log(`[bridge] glove-kort x${k.multiplier} till ${k.anchorId || 'okand'} — inte var sida (${mittAnkarId || 'ankar-id saknas'})`);
+        return;
+      }
+      if (!mittAnkarId) console.log('[bridge] glove-kort utan ankar-id att jamfora mot — skickas anda');
+      const nyckel = `kort:${k.battleId}:${k.effektStart}:${k.sandareId}`;
+      if (settaBoostFonster.has(nyckel)) return;
+      for (const [gammalNyckel, at] of settaBoostFonster) if (Date.now() - at > 600_000) settaBoostFonster.delete(gammalNyckel);
+      settaBoostFonster.set(nyckel, Date.now());
+      const fordrojning = N.kortFordrojningMs(k);
+      console.log(`[bridge] glove-kort (${k.sort}) x${k.multiplier} i match ${k.battleId || 'okand'}, ${k.effektSekunder || '?'}s`
+        + (fordrojning ? ` — skickas om ${Math.round(fordrojning / 1000)}s` : ' — skickas nu'));
+      const kortFalt = { multiplier: k.multiplier, ...(k.effektSekunder > 0 ? { durationSec: k.effektSekunder } : {}), ...(k.battleId ? { battleId: k.battleId } : {}) };
+      if (!fordrojning) { sendEvent('glove', kortFalt, data); return }
+      const kortTimer = setTimeout(() => {
+        boostTimers.delete(kortTimer);
+        sendEvent('glove', kortFalt, data);
+      }, fordrojning);
+      boostTimers.add(kortTimer);
+    });
+
     // ---- battle-sond -------------------------------------------------------------------------
     // En hel sandning gick 2026-08-06 utan att ETT ENDA battle-event nadde klienten, trots att
     // anslutningen satt stabilt (loggen: alla anslutningsfel FORE den enda "Ansluten till @", inget
