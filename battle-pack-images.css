@@ -48,3 +48,17 @@
   72%{opacity:1;transform:perspective(900px) translateY(-8px) rotateY(4deg) scale(1.03);filter:blur(0) drop-shadow(0 18px 22px #000b) drop-shadow(0 0 22px var(--glove))}
   100%{opacity:0;transform:perspective(900px) translateY(-45px) rotateX(-15deg) scale(.82);filter:blur(6px) drop-shadow(0 0 34px var(--glove))}
 }
+
+/* HELA PAKETET SOM EN WIDGET (2026-10-10, media.js battlePaketHtml). Filmen ar 16:9 och visas HEL i
+   widgetens bredd — ingen symbolruta, ingen cover-beskarning, ingen screen-blandning (klippen ar
+   riktig VP9-alpha, uppmatt: hornen har alpha 1/255). Hojden foljer bredden via aspect-ratio, sa
+   300px!important fran battle-packs.css maste slas med samma vikt. Slackt i vila; synlig nar den
+   ar vald i editorn (affischen) och medan ett klipp spelar (.pack-active). */
+.battle-pack-video.battle-pack-full{height:auto!important;aspect-ratio:16/9;line-height:0;animation:none!important;isolation:auto}
+.battle-pack-video.battle-pack-full.selected,.battle-pack-video.battle-pack-full.pack-active{opacity:1;visibility:visible;animation:none!important}
+.battle-pack-video.battle-pack-full .pack-fx-video{width:100%;height:100%;object-fit:contain;mix-blend-mode:normal;clip-path:none;display:block;background:transparent}
+/* Panelens testknappar (editorn). */
+.paket-testknappar{display:flex;flex-wrap:wrap;gap:6px}
+.paket-testknappar button{flex:1 1 30%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.14));background:var(--surface-2,rgba(255,255,255,.06));color:inherit;font-weight:700;cursor:pointer}
+.paket-testknappar button:hover{background:var(--surface-3,rgba(255,255,255,.12))}
+.property-help{color:var(--text-muted,#9aa);font-size:11px;line-height:1.45;margin:4px 0 10px}

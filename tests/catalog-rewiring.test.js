@@ -46,7 +46,10 @@ function everyCatalogKey() {
   v('battlemvp.style').forEach(t => keys.push('catalog:battlemvp:' + t));
   v('battlemvp.frame').forEach(f => keys.push('catalog:battlemvp:frame:' + f));
   v('ranking.kind').forEach(type => ['gold', 'violet'].forEach(t => keys.push('catalog:ranking:' + type + ':' + t)));
-  v('glovesnipe.pack').forEach(p => ['boost', 'glove', 'tap', 'snipe'].forEach(k =>
+  // 'pack' (2026-10-10) är katalogens enda knapp per paket — hela paketet som en widget. De
+  // övriga sorterna byggs inte längre av katalogen men ska fortsätta gå att skapa: sparade
+  // layouter bär dem.
+  v('glovesnipe.pack').forEach(p => ['boost', 'glove', 'tap', 'snipe', 'pack'].forEach(k =>
     [2, 3].forEach(m => keys.push('catalog:glovesnipe:' + p + ':' + k + ':' + m))));
   // Themes and layouts the registry does not gate: the catalog UI owns their lists.
   ['clean', 'neon', 'royal'].forEach(t => keys.push('catalog:toplike:' + t));

@@ -384,7 +384,16 @@
       followColor: '#ffd35d', followDuration: 6
     }),
 
-    'glovesnipe.pack': v => ({
+    // HELA PAKETET (kind 'pack', 2026-10-10): en widget per paket, lika bred som duken (432) och
+    // 16:9 hel — y 480 lägger filmens underkant ~45 px över dukens nederkant (768). Klippet väljs
+    // av eventet i media.js/battle-fx-auto.js, så varken multiplikator eller etikett är ett val.
+    // gloveDuration är här TAKET för en uppspelning (klippen är 10 s och stänger sig själva).
+    'glovesnipe.pack': v => v.kind === 'pack' ? ({
+      type: 'templateGloveSnipe', x: 0, y: 480, width: 432, title: v.title, boostPack: v.pack,
+      battleEventKind: 'pack', gloveIcon: v.icon, gloveMultiplier: 2,
+      gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
+      gloveColor2: v.color2, gloveDuration: 20, layer: 20, battleVideoMode: true
+    }) : ({
       type: 'templateGloveSnipe', x: 0, y: 460, width: 432, title: v.title, boostPack: v.pack,
       battleEventKind: v.kind, gloveIcon: v.icon, gloveMultiplier: v.multiplier,
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
@@ -551,11 +560,11 @@
       const pack = parts[0], kind = parts[1] || 'boost', multiplier = Number(parts[2] || 2);
       const p = pick('glovesnipe.pack', pack, 'boostpaket');
       const d = pick('glovesnipe.detail', pack, 'boostpaket');
-      const labels = { boost: multiplier === 3 ? 'TRIPLE BOOST' : 'BATTLE BOOST', glove: 'GLOVE POWER', tap: 'TAP TAP', snipe: 'SNIPE ATTACK' };
+      const labels = { boost: multiplier === 3 ? 'TRIPLE BOOST' : 'BATTLE BOOST', glove: 'GLOVE POWER', tap: 'TAP TAP', snipe: 'SNIPE ATTACK', pack: 'HELA PAKETET' };
       if (!(kind in labels)) throw new Error('Okänd battle-typ "' + kind + '" — giltiga: ' + Object.keys(labels).join(', '));
-      const icons = { boost: d[1], glove: '🥊', tap: '👆', snipe: '🎯' };
+      const icons = { boost: d[1], glove: '🥊', tap: '👆', snipe: '🎯', pack: d[1] };
       return ['glovesnipe.pack', {
-        title: d[0] + ' ' + labels[kind], pack, kind, icon: icons[kind], multiplier,
+        title: kind === 'pack' ? d[0] + ' · Video FX' : d[0] + ' ' + labels[kind], pack, kind, icon: icons[kind], multiplier,
         label: labels[kind],
         name: kind === 'tap' ? 'KEEP TAPPING' : kind === 'snipe' ? 'FINAL SNIPE' : kind === 'glove' ? 'POWER GLOVE' : d[2],
         style: p[3], color: p[1], color2: p[2]
