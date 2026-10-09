@@ -189,7 +189,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // narmaste nya, sa en cachad fabrik hade fortsatt spara det gamla valet.
   // Bumpad 2026-10-05: Like Fountain centrerad på duken (x 6, bredd 420) och 18 hjärtan som standard.
   // 20261005-2: hjärtstorlek 32 som standard (24 blev för smått i OBS).
-  assert.match(studio, /widget-factory\.js\?v=20261005-2/);
+  // 20261010-paket: catalog:glovesnipe:<paket>:pack bygger hela paketet som en widget.
+  assert.match(studio, /widget-factory\.js\?v=20261010-1/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);

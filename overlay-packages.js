@@ -6,4 +6,4 @@ function bindPackages(){document.querySelectorAll('.media-card[data-pkg]').forEa
 const overlayPackagesRender=render;render=function(){if(view==='packages'){$('#view').innerHTML=packagesHtml();$('#title').textContent='Vip-widget';document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));bind();return}overlayPackagesRender()};
 const overlayPackagesBind=bind;bind=function(){overlayPackagesBind();if(view==='packages')bindPackages()};
 // Automatisk battle-FX laddas EFTER paketen, sa att VYRA_OVERLAY_PACKAGES finns nar den kopplar in sig.
-(function(){if(document.querySelector('script[data-battle-fx-auto]'))return;const js=document.createElement('script');js.src='battle-fx-auto.js?v=20261007-2';js.dataset.battleFxAuto='1';document.body.append(js)})();
+(function(){if(document.querySelector('script[data-battle-fx-auto]'))return;const js=document.createElement('script');js.src='battle-fx-auto.js?v=20261010-paket';js.dataset.battleFxAuto='1';document.body.append(js)})();

@@ -265,3 +265,39 @@ test('bryggan räknar matchens återstod i TikToks klocka och molnet bär fälte
   const bridge = require('fs').readFileSync(path.join(__dirname, '..', 'tiktok-bridge', 'bridge.js'), 'utf8');
   assert.match(bridge, /durationSec: f\.fonsterSekunder/);
 });
+
+// ---- PAKETWIDGETEN I LAYOUTEN (2026-10-10) -----------------------------------------------------
+// Ligger ett helt Video FX-paket på duken (media.js VyraBattlePaket) spelar motorn i DEN, inte i
+// action-runtimens egen ruta: widgeten är lika bred som duken, står där streamern lagt den, och
+// kräver ingen `&scene=1` på länken. Uppmätt 2026-10-09: Davids länk saknade scenen, så runtimen
+// nekade varje klipp en hel sändning ('inte scen 1').
+function medPaket(m, pack = 'pinkPrincess') {
+  const spelade = [];
+  m.fonster.VyraBattlePaket = { finns: () => true, paket: () => pack, spela: k => { spelade.push(k); return true; } };
+  return spelade;
+}
+
+test('paketwidgeten tar över uppspelningen från action-runtimen', () => {
+  const m = miljo('pinkPrincess'); const spelade = medPaket(m); ladda(m.fonster);
+  m.fonster.routeLiveBattleEvent(start('p1', { remainingSec: 300 }));
+  m.fonster.routeLiveBattleEvent(boost('p1', 2, 90, 1));
+  m.fonster.routeLiveBattleEvent(boost('p1', 3, 90, 2));
+  m.spolaFram(300);
+  assert.deepEqual(spelade, ['tap', 'boost-x3', 'glove', 'glove', 'snipe'], 'samma regler, men i widgeten');
+  assert.deepEqual(m.korda, [], 'action-runtimen ska inte få klippet också — då spelas det dubbelt');
+});
+
+test('paketwidgetens paket gäller när panelen inte valt något', () => {
+  // Panelvalet (vyra-extras battleFx.pack) är tomt; widgeten på duken bär paketet.
+  const m = miljo(undefined); const spelade = medPaket(m, 'royalRuby'); ladda(m.fonster);
+  assert.equal(m.fonster.VyraBattleFx.installning().pack, 'royalRuby');
+  assert.equal(m.fonster.VyraBattleFx.hantera({ type: 'tap' }), 'spelas i widgeten');
+  assert.deepEqual(spelade, ['tap']);
+});
+
+test('utan paketwidget är allt som förut: runtime, scen 1, panelvalet', () => {
+  const m = miljo('pinkPrincess'); ladda(m.fonster);
+  m.fonster.VyraBattlePaket = { finns: () => false, paket: () => '', spela: () => { throw new Error('ska inte anropas'); } };
+  assert.equal(m.fonster.VyraBattleFx.hantera({ type: 'tap' }), 'spelas');
+  assert.deepEqual(m.spelat(), ['tap']);
+});

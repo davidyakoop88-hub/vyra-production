@@ -80,11 +80,20 @@
       return { pack: pack == null ? null : (pack === 'av' ? '' : pack), storlek: st > 0 ? st / 100 : null, botten: h > 0 ? h / 100 : null };
     } catch (e) { return { pack: null, storlek: null, botten: null }; }
   }
+  // PAKETWIDGETEN I LAYOUTEN GAR FORE PANELVALET (2026-10-10). Har streamern lagt ett helt paket pa
+  // duken (media.js VyraBattlePaket, templateGloveSnipe med battleEventKind 'pack') ar det valet
+  // gjort dar, och klippen spelas i DEN widgeten — i layoutens bredd, dar hon placerat den — i
+  // stallet for i action-runtimens egen ruta. Lanken `&battlefx=` gar fortfarande fore allt, sa
+  // en OBS-kalla kan avvika.
+  function paketWidget() {
+    var w = root.VyraBattlePaket;
+    return w && typeof w.paket === 'function' ? (w.paket() || '') : '';
+  }
   function installning() {
     var d = root.VyraExtras && root.VyraExtras.data;
     var b = d && d.battleFx, u = urlVal();
     return {
-      pack: u.pack != null ? u.pack : ((b && b.pack) || ''),
+      pack: u.pack != null ? u.pack : (paketWidget() || (b && b.pack) || ''),
       storlek: u.storlek != null ? u.storlek : ((b && b.storlek) || 1),
       // Kallans form, inte ett kontoval: den foljer bara med lanken.
       botten: u.botten != null ? u.botten : 1
@@ -171,6 +180,12 @@
     if (!nyckel) return 'inget klipp';
     var inst = installning(), pack = opts.pack || inst.pack;
     if (!pack) return 'av';
+    // Widgeten forst: den finns i layouten, kraver ingen scen-parameter pa lanken och visar klippet
+    // i full bredd. Uppmatt 2026-10-09: Davids overlaylank saknade `&scene=1`, sa action-runtimen
+    // nekade VARJE klipp ('inte scen 1') en hel sandning — widgeten har inte den fallan.
+    if (root.VyraBattlePaket && typeof root.VyraBattlePaket.finns === 'function' && root.VyraBattlePaket.finns()) {
+      return root.VyraBattlePaket.spela(nyckel, { event: event }) ? 'spelas i widgeten' : 'widgeten saknar ' + nyckel;
+    }
     var klipp = klippSokvag(pack, nyckel);
     if (!klipp) return 'paketet saknar ' + nyckel;
     if (!root.VyraActionRuntime || !root.VyraActionRuntime.execute) return 'ingen runtime';
