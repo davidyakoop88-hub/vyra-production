@@ -65,6 +65,10 @@ test('paketwidgeten ritas som en hel film, ingen symbolruta', () => {
   assert.match(v.getAttribute('poster'), /x2\.jpg$/);
   assert.equal(v.hasAttribute('autoplay'), false, 'ska inte spela i vila');
   assert.equal(v.hasAttribute('loop'), false, 'klippet ska spelas en gång');
+  // Affischen ar ett syskon till videon (visas bara nar videon star stilla, se spela()-provet).
+  const bild = nod.querySelector('img.pack-fx-poster');
+  assert.ok(bild, 'affischbilden saknas');
+  assert.match(bild.getAttribute('src'), /x2\.jpg$/);
   assert.match(nod.getAttribute('style'), /width:432px/);
 });
 
@@ -79,12 +83,20 @@ test('spela() byter klipp och tänder noden utan save och utan render', () => {
   assert.match(v.getAttribute('src'), /snipe\.webm$/);
   assert.ok(nod.classList.contains('pack-active'), 'noden tändes inte');
   assert.equal(nod.dataset.klipp, 'snipe');
+  // UPPSPELNINGEN STARTAR SOM DEN GAMLA WIDGETEN: autoplay satt vid spela(), borta efter stang().
+  // Uppmatt 2026-10-10: play() fran skript loste utan fel i ett dolt dokument medan videon stod
+  // kvar pa bildruta 0 — och TikTok LIVE Studio visade inget pa en hel sandning.
+  assert.equal(v.hasAttribute('autoplay'), true, 'autoplay saknas vid uppspelning');
+  assert.equal(v.preload, 'auto', 'preload ska vara auto vid uppspelning');
+  assert.match(nod.querySelector('img.pack-fx-poster').getAttribute('src'), /snipe\.jpg$/, 'affischen foljer inte klippet');
   assert.equal(w.__saves, saves, 'uppspelningen anropade save()');
   assert.equal(w.__renders, renders, 'uppspelningen byggde om duken');
   assert.equal(w.VyraBattlePaket.spela('boost-x3'), true);
   assert.match(v.getAttribute('src'), /x3\.webm$/);
   w.VyraBattlePaket.stang(p.id);
   assert.ok(!nod.classList.contains('pack-active'), 'stang() släckte inte noden');
+  assert.equal(v.hasAttribute('autoplay'), false, 'autoplay ska bort i vila, annars spelar klippet om vid nasta omladdning');
+  assert.ok(!nod.classList.contains('pack-stilla'), 'stang() tog inte bort affischlaget');
   assert.equal(w.VyraBattlePaket.spela('finns-inte'), false, 'okänd nyckel spelar inget');
 });
 
