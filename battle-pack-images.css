@@ -57,6 +57,10 @@
 .battle-pack-video.battle-pack-full{height:auto!important;aspect-ratio:16/9;line-height:0;animation:none!important;isolation:auto}
 .battle-pack-video.battle-pack-full.selected,.battle-pack-video.battle-pack-full.pack-active{opacity:1;visibility:visible;animation:none!important}
 .battle-pack-video.battle-pack-full .pack-fx-video{width:100%;height:100%;object-fit:contain;mix-blend-mode:normal;clip-path:none;display:block;background:transparent}
+/* Affischen (klippets .jpg) ligger ovanpa videon och visas BARA nar videon star stilla (pack-stilla,
+   satt av spelaBattlePaket efter 1,2 s utan rorelse). I vila och under uppspelning ar den dold. */
+.battle-pack-video.battle-pack-full .pack-fx-poster{display:none;position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.battle-pack-video.battle-pack-full.pack-stilla .pack-fx-poster{display:block}
 /* Panelens testknappar (editorn). */
 .paket-testknappar{display:flex;flex-wrap:wrap;gap:6px}
 .paket-testknappar button{flex:1 1 30%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.14));background:var(--surface-2,rgba(255,255,255,.06));color:inherit;font-weight:700;cursor:pointer}
