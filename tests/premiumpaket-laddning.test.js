@@ -42,9 +42,10 @@ test('premiumpaketet laddas fortfarande ivrigt', () => {
 });
 
 test('skalet: lyssnaren sitter pa modulniva, inte i renderingen', () => {
-  // Det HAR ar varfor laddningen maste vara ivrig. Bufferten borjar fyllas nar skriptet laddas.
-  // Flyttas lyssnaren in i en renderingsfunktion forsvinner skalet — och da faller det har provet
-  // i stallet for att pulsen tyst blir tom i drift.
+  // Det HAR ar varfor laddningen maste vara ivrig. Lyssnaren pa liveflodet (sedan 2026-10-10:
+  // en gava ber toppgivarraden hamta om sig ur servern) finns fran forsta skriptraden. Flyttas
+  // den in i en renderingsfunktion forsvinner skalet — och da faller det har provet i stallet
+  // for att raden tyst slutar folja sandningen i drift.
   const kod = las('overview-premium.js');
   const forePuls = kod.slice(0, kod.indexOf("addEventListener('vyra-live-event'"));
   const oppna = (forePuls.match(/\{/g) || []).length, stangda = (forePuls.match(/\}/g) || []).length;
