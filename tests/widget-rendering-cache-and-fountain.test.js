@@ -173,7 +173,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261005-6: lfHeartSway/lfBubbleSway lugnare (de vinglade för mycket).
   // 20261005-7: OBS-döljningen av förhandsströmmen !important (Bubble Pop syntes i OBS).
   // 20261005-8: lfHeartBeat (hoppade) ersatt av lfNeonGlow.
-  assert.match(studio, /studio\.css\?v=20261005-8/);
+  // Bumpad 2026-10-10 (-1): lagerpanelen och sidopanelen ritar inga rullister (Davids beslut),
+  // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
+  assert.match(studio, /studio\.css\?v=20261010-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -450,7 +452,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // fail-open-versionen vidare.
   // Bumpad 2026-09-20: layout-safe.js passar in duken igen efter att den bytt ut #view i
   // overlay-utdata - forr stod overlayen oskalad 432x768 i hornet av TikToks 1080x1920-ruta.
-  assert.match(studio, /layout-safe\.js\?v=20260920-1/);
+  // Bumpad 2026-10-10: layout-safe.js och cloud-sync.js — raderingsvagarna bar avsiktsflaggan
+  // (__vyraUserRemovedWidget) sa att serverns krympvakt slapper igenom en avsiktlig radering;
+  // media.js (-3) av samma skal (LIVE-LAGER-papperskorgen).
+  assert.match(studio, /layout-safe\.js\?v=20261010-1/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {

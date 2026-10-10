@@ -107,7 +107,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // Bumpad 2026-10-10 (-2): media.js bar laddraderna for overview-premium.js/.css, som andrades
   // nar toppgivarraden borjade ritas ur servern. Utan ny strang pekar en cachad media.js kvar
   // pa den gamla raden som bara levde i minnet.
-  assert.match(studioHtml, /media\.js\?v=20261010-2/);
+  // Bumpad 2026-10-10 (-3): LIVE-LAGER-papperskorgen satter __vyraUserRemovedWidget sa att
+  // serverns krympvakt slapper igenom en avsiktlig radering (tidigare 409 i evighet).
+  assert.match(studioHtml, /media\.js\?v=20261010-3/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

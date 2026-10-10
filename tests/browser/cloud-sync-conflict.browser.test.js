@@ -86,7 +86,7 @@ function harness(antal409) {
     lastLocal: '{"widgets":[{"id":"nagot-osynkat"}]}'
   }));
   window.__server = { version: 2, state: { widgets: CFG.serverns.map(id => ({ id })) },
-    puts: 0, mottagna: [] };
+    puts: 0, mottagna: [], flaggor: [] };
   window.VyraSessionState = {
     canPush: () => true, canQueue: () => true,
     beginProjection: () => ({}),
@@ -107,6 +107,7 @@ function harness(antal409) {
         const body = JSON.parse(options.body);
         s.state = body.state; s.version += 1;
         s.mottagna.push(body.state.widgets.map(w => w.id));
+        s.flaggor.push(body.allowWidgetLoss === true);
         return { overlay: { id: CFG.ov, name: 'x', version: s.version, state: s.state } };
       }
       if (p.endsWith('/overlays/' + CFG.ov))
@@ -145,6 +146,7 @@ const laget = page => page.evaluate(ws => ({
   ko: localStorage.getItem('vyra-cloud-sync-queue:' + ws) != null,
   puts: window.__server.puts,
   mottagna: window.__server.mottagna,
+  flaggor: window.__server.flaggor,
 }), WS);
 
 // ---- Prov 1 · dubbel-409 ---------------------------------------------------------------------
@@ -196,6 +198,10 @@ test('accepterar servern direkt loses konflikten pa ett klick — far inte regre
       const l = await laget(page);
 
       assert.deepEqual(l.mottagna, [LOKALA], 'servern ska ha den valda lokala versionen');
+      // Valet ar avsikten (2026-10-10): utan allowWidgetLoss avvisar serverns krympvakt en lokal
+      // version med farre widgets an molnet, och dialogens "Den har datorn" kan aldrig vinna.
+      assert.deepEqual(l.flaggor, [true],
+        '"Den har datorn" skickade inte allowWidgetLoss — krympvakten ger da 409 pa en lokal version med farre widgets');
       assert.equal(l.status, 'synced', `status blev "${l.status}"`);
       assert.equal(l.ko, false, 'ingen ko ska ligga kvar');
       assert.equal(l.banderoll, false, 'banderollen ska bort nar konflikten faktiskt ar lost');

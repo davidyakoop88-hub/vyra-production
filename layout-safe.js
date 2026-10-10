@@ -151,6 +151,9 @@
     if (value) value.onchange = function (event) { widget.value = event.target.value; save(); renderSafeLayout(); };
     if (remove) remove.onclick = function () {
       state.widgets = state.widgets.filter(function (item) { return item.id !== selected; });
+      // Samma avsiktsflagga som studio.js #del och LIVE-LAGER-papperskorgen: utan den avvisar
+      // serverns krympvakt sparningen med 409 (2026-10-10).
+      window.__vyraUserRemovedWidget = true;
       if (!state.widgets.length) window.__vyraUserEmptiedWidgets = true;
       selected = null;
       save();
