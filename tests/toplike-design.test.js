@@ -109,7 +109,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // pa den gamla raden som bara levde i minnet.
   // Bumpad 2026-10-10 (-3): LIVE-LAGER-papperskorgen satter __vyraUserRemovedWidget sa att
   // serverns krympvakt slapper igenom en avsiktlig radering (tidigare 409 i evighet).
-  assert.match(studioHtml, /media\.js\?v=20261010-3/);
+  // Bumpad 2026-10-10 (-4): media.js bar laddraden for overview-premium.js, dar korten Din scen
+  // och Snabbstart togs bort fran framsidan.
+  assert.match(studioHtml, /media\.js\?v=20261010-4/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
