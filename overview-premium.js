@@ -1,6 +1,5 @@
 window.VyraPremiumHome = home = function () {
   const connected = Boolean(state.tiktok);
-  const user = state.user || 'VYRA-konto';
   const connectionText = connected ? `TikTok sparad · ${state.tiktok}` : 'TikTok väntar';
   // Statusraden pastod "Overlay redo" for varje anvandare, aven en med noll widgets — den var
   // hardkodad. Nu speglar den state.widgets, som filen redan laser.
@@ -136,34 +135,10 @@ window.VyraPremiumHome = home = function () {
          <b>✗</b> när appen inte svarade.</p>
     </div>
   </section>
-  <div class="command-grid">
-    <article class="card live-preview-card">
-      <div class="preview-top">
-        <div><span class="eyebrow">OVERLAY</span><h3>Din scen</h3></div>
-        <button data-go="editor">Öppna Studio <b>↗</b></button>
-      </div>
-      <div class="preview-stage">
-        <div class="ambient a1"></div><div class="ambient a2"></div>
-        <div class="phone">
-          <div class="phone-live"><span>REDO</span></div>
-          <div class="creator"><i>AV</i><span><b>${user}</b><small>VYRA LIVE</small></span></div>
-          <div class="preview-widget"><small>DINA WIDGETAR</small><b>${state.widgets.length}</b><strong>redo</strong></div>
-        </div>
-        <div class="preview-note"><i></i><span><b>Transparent overlay</b><small>För OBS och TikTok LIVE Studio</small></span></div>
-      </div>
-    </article>
-    <!-- LIVE-PULS-kortet ("Senaste händelser") stod har 2026-08 -> 2026-10-10 och ar borttaget pa
-         Davids ord ("jag vill inte ens ha den dar"). Handelser i realtid har redan sin vy
-         (Handelser) och sin overlay; framsidan ska visa det som star kvar nar man inte sander. -->
-    <div class="command-side">
-      <article class="card launch-card">
-        <span class="eyebrow">SNABBSTART</span>
-        <h3>Skapa något som syns.</h3>
-        <p>Redigera din overlay och kopiera länken till OBS eller TikTok LIVE Studio.</p>
-        <div><button class="primary" data-go="editor">Skapa overlay</button><button id="testGift">Testa widget</button></div>
-      </article>
-    </div>
-  </div>`;
+  <!-- "Din scen" (telefonmocken med antal widgets) och "Snabbstart" (Skapa overlay / Testa widget)
+       stod har 2026-08 -> 2026-10-10 och ar borttagna pa Davids ord ("varfor ar den kvar?" — bada).
+       LIVE-PULS-kortet forsvann samma dag. Framsidan ska visa det som star kvar nar man inte
+       sander: toppgivarna, historiken och Stream Deck-guiden. Vagen till editorn ar sidomenyn. -->`;
 };
 
 if (typeof view !== 'undefined' && view === 'home') render();
