@@ -152,12 +152,10 @@ window.VyraPremiumHome = home = function () {
         <div class="preview-note"><i></i><span><b>Transparent overlay</b><small>För OBS och TikTok LIVE Studio</small></span></div>
       </div>
     </article>
+    <!-- LIVE-PULS-kortet ("Senaste händelser") stod har 2026-08 -> 2026-10-10 och ar borttaget pa
+         Davids ord ("jag vill inte ens ha den dar"). Handelser i realtid har redan sin vy
+         (Handelser) och sin overlay; framsidan ska visa det som star kvar nar man inte sander. -->
     <div class="command-side">
-      <article class="card activity premium-activity" data-pulse>
-        <div class="card-head"><div><span class="eyebrow">LIVE-PULS</span><h2>Senaste händelser</h2></div></div>
-        <p data-tom="oversikt-puls">Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.</p>
-        <div class="puls-skelett" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-      </article>
       <article class="card launch-card">
         <span class="eyebrow">SNABBSTART</span>
         <h3>Skapa något som syns.</h3>
@@ -203,13 +201,13 @@ if (typeof view !== 'undefined' && view === 'home') render();
 //
 // Vardena lever bara i minnet. De ska inte overleva en omladdning, och tokenlaget (?access=) far
 // aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
-// Raden med de fem som gett mest ritas ur SERVERN av historik-blocket nedan. Live-blocket har
-// ager LIVE PULSE-bufferten och ber bara om en ny hamtning nar en gava kommit in. Funktionen
+// Raden med de fem som gett mest ritas ur SERVERN av historik-blocket nedan. Det har blocket
+// lyssnar bara pa liveflodet och ber om en ny hamtning nar en gava kommit in. Funktionen
 // tilldelas av historik-blocket; fram till dess ar den tyst.
 let uppdateraToppgivareSnart = () => {};
 
 (function () {
-  // ---- TOPPGIVARNA ----------------------------------------------------------------------------
+  // ---- LIVEFLODET -> TOPPGIVARRADEN ----------------------------------------------------------
   //
   // RADEN HOLL EN EGEN SUMMERING I MINNET 2026-08-20 -> 2026-10-10: en Map per givare som fylldes
   // av `vyra-live-event` och tomdes vid omladdning. Uppmatt i sandningen 2026-10-09: bryggan
@@ -223,81 +221,16 @@ let uppdateraToppgivareSnart = () => {};
   // dubbelrakning vid ateranslutning, inget tidsfonster att besluta, inget som gar forlorat nar
   // fliken laddas om. Diamanter, inte intakt — samma skal som forut: kursen varierar, och ett
   // fel belopp i kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
-  let koad = false;
+  //
+  // LIVE PULSE-kortet som bodde har (egen handelsebuffert, atta rader) ar borttaget 2026-10-10
+  // pa Davids ord. Lyssnaren sitter kvar pa MODULNIVA: den ska finnas fran forsta skriptraden,
+  // inte forst nar Oversikten ritas (tests/premiumpaket-laddning.test.js).
   let levande = true;
-
-  // ---- LIVE PULSE -----------------------------------------------------------------------------
-  //
-  // Kortet holl en fast mening: "Riktiga TikTok-handelser visas har nar VYRA Desktop ar anslutet."
-  //
-  // Fas A sa att detta skulle bli enkelt eftersom VyraLiveControl.getSnapshot() redan finns. Det
-  // var fel: live-control.js finns som fil och serveras (200 i produktion), men INGENTING laddar
-  // den — varken studio.html eller media.js namner den, sa VyraLiveControl definieras aldrig.
-  // Pulsen haller darfor sin egen buffert.
-  //
-  // `viewer` och `chat` utesluts med flit. Tittarantalet ar inte en handelse utan ett tal som redan
-  // har ett eget kort, och bada typerna kommer sa tatt att de skulle tranga ut allt annat.
-  const PULS_MAX = 8;
-  const puls = [];                       // nyaste forst
-  const PULS_TEXT = {
-    gift: data => '🎁 @' + namn(data) + (data.giftName ? ' · ' + data.giftName : '')
-      + (Number(data.count) > 1 ? ' ×' + Math.round(Number(data.count)) : ''),
-    follow: data => '＋ @' + namn(data) + ' började följa',
-    like: data => '♥ @' + namn(data),
-    likes: data => '♥ @' + namn(data),
-    share: data => '↗ @' + namn(data) + ' delade',
-    subscribe: data => '★ @' + namn(data) + ' prenumererar'
-  };
-  function namn(data) {
-    return String(data.username || data.uniqueId || data.user || 'okänd').replace(/^@/, '');
-  }
-
-  function mala() {
-    koad = false;
-    if (!levande) return;
-    malaPuls();
-  }
-
-  // Raderna bar ANVANDARDATA fran TikTok. Listan byggs darfor med createElement och textContent —
-  // aldrig innerHTML. Ett anvandarnamn som ser ut som markup ska visas som text, inte tolkas.
-  function malaPuls() {
-    if (!puls.length) return;
-    const kort = document.querySelector('[data-pulse]');
-    if (!kort) return;
-    const lista = document.createElement('ul');
-    lista.className = 'pulse-list';
-    for (const rad of puls) {
-      const post = document.createElement('li');
-      post.textContent = rad;
-      lista.append(post);
-    }
-    const gammal = kort.querySelector('.pulse-list');
-    if (gammal) gammal.replaceWith(lista);
-    else kort.append(lista);
-    // Tomtexten och skelettet har gjort sitt sa fort det finns riktiga handelser.
-    const tomtext = kort.querySelector('p');
-    if (tomtext) tomtext.hidden = true;
-    const skelett = kort.querySelector('.puls-skelett');
-    if (skelett) skelett.hidden = true;
-  }
-
-  function schemalagg() {
-    if (koad || !levande) return;
-    koad = true;
-    requestAnimationFrame(mala);
-  }
 
   addEventListener('vyra-live-event', event => {
     if (!levande) return;
     const data = event.detail || {};
     const typ = String(data.type || data.event || '').toLowerCase();
-    const berattare = PULS_TEXT[typ];
-    if (berattare) {
-      puls.unshift(berattare(data));
-      if (puls.length > PULS_MAX) puls.length = PULS_MAX;
-      schemalagg();
-    }
-
     if (typ !== 'gift') return;
     // Gavan har just skrivits till gifter_totals pa servern (stream-stats.js skriver per event).
     // Raden hamtas om — en gang per skur, inte en gang per gava. Vardet laggs ALDRIG till har:
@@ -306,19 +239,8 @@ let uppdateraToppgivareSnart = () => {};
     uppdateraToppgivareSnart();
   });
 
-  // render() bygger om #view fran grunden, sa korten ar nya noder varje gang. Utan den har skulle
-  // pulsen forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
-  // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
-  const observer = new MutationObserver(() => {
-    if (puls.length) schemalagg();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  addEventListener('vyra-session-ended', () => {
-    levande = false;
-    puls.length = 0;
-    observer.disconnect();
-  });
+  // Teardown pa vyra-session-ended: ingen hamtning far overleva en utloggning eller ett kontobyte.
+  addEventListener('vyra-session-ended', () => { levande = false });
 })();
 
 // ---- TOTALT: historiken från servern -----------------------------------------------------------

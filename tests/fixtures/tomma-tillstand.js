@@ -17,7 +17,7 @@
 //
 // 'mal' ar den befintliga mekanismen i samma vy, uppmatt som narvarande och synlig 2026-08-09.
 // Tillstand UTAN handling har inget att klicka pa: tts-logg och statistik-topp beskriver en
-// konsekvens, statistik-basta-tid en troskel, och oversikt-puls/statistik-tillvaxt pekar pa
+// konsekvens, statistik-basta-tid en troskel, och statistik-tillvaxt pekar pa
 // skrivbordsappen som sedan #175 bor i sidhuvudet — fem utspridda knappar slar en hogt upp.
 const TOMMA = {
   // Oversikt
@@ -51,7 +51,7 @@ const TOMMA = {
     laddar: 'Hämtar dina toppgivare…',
     kalla: 'overview-premium.js',
   },
-  'oversikt-puls': { text: 'Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.' },
+  // 'oversikt-puls' STOD har till 2026-10-10: LIVE-PULS-kortet ar borttaget pa Davids ord.
   // Overlay (wrapper: rubrik + rad — bada raknas in i texten)
   'overlay-tom': { text: 'Inga widgets ännu. Lägg till en från katalogen nedan så visas den här direkt.' },
   // Automatik (mallen)
@@ -92,7 +92,7 @@ const TOMMA = {
 
 // Vilka tillstand varje vy ska visa i TOMT lage (lokal server utan inloggning/livedata).
 const PER_VY = {
-  home: ['oversikt-toppgivare', 'oversikt-historik', 'oversikt-puls'],
+  home: ['oversikt-toppgivare', 'oversikt-historik'],
   overlay: ['overlay-tom'],
   actions: ['automatik-scenlank', 'automatik-actions', 'automatik-events', 'automatik-timers'],
   ttsChat: ['tts-special', 'tts-logg'],
