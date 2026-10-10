@@ -38,6 +38,19 @@ const TOMMA = {
     laddar: 'Hämtar din historik…',
     kalla: 'overview-premium.js',
   },
+  // TOPPGIVARRADEN ritas ur servern sedan 2026-10-10 (samma /stats-svar som historiken) och har
+  // darfor samma fyra lagen: utloggad (den DOM-provet moter), inget konto, inga gavor, fel —
+  // plus laddtexten, som ar ett overgangslage och star i markupen tills forsta svaret.
+  'oversikt-toppgivare': {
+    text: 'Inga toppgivare att visa ännu. Logga in så hämtas de fem som gett dig mest.',
+    varianter: [
+      'Inga gåvor registrerade ännu — dina toppgivare visas här efter din första sändning.',
+      'Ingen TikTok ansluten ännu. Toppgivarna börjar räknas när du sänder första gången.',
+      'Kunde inte hämta toppgivarna just nu. Raden hämtas om vid nästa försök.',
+    ],
+    laddar: 'Hämtar dina toppgivare…',
+    kalla: 'overview-premium.js',
+  },
   'oversikt-puls': { text: 'Inga händelser ännu. Anslut VYRA Desktop så visas riktiga TikTok-händelser här direkt.' },
   // Overlay (wrapper: rubrik + rad — bada raknas in i texten)
   'overlay-tom': { text: 'Inga widgets ännu. Lägg till en från katalogen nedan så visas den här direkt.' },
@@ -79,7 +92,7 @@ const TOMMA = {
 
 // Vilka tillstand varje vy ska visa i TOMT lage (lokal server utan inloggning/livedata).
 const PER_VY = {
-  home: ['oversikt-historik', 'oversikt-puls'],
+  home: ['oversikt-toppgivare', 'oversikt-historik', 'oversikt-puls'],
   overlay: ['overlay-tom'],
   actions: ['automatik-scenlank', 'automatik-actions', 'automatik-events', 'automatik-timers'],
   ttsChat: ['tts-special', 'tts-logg'],

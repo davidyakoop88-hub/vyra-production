@@ -104,7 +104,10 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // 20261005-10: lugnare gungning och lutning i den klassiska fontänens tio modeller.
   // 20261005-11: Neon Pulse heter Neon Glow och pulserar i glöden, inte i storleken.
   // 20261010-paket: Video FX-paketen blir en widget i layoutens bredd (VyraBattlePaket).
-  assert.match(studioHtml, /media\.js\?v=20261010-1/);
+  // Bumpad 2026-10-10 (-2): media.js bar laddraderna for overview-premium.js/.css, som andrades
+  // nar toppgivarraden borjade ritas ur servern. Utan ny strang pekar en cachad media.js kvar
+  // pa den gamla raden som bara levde i minnet.
+  assert.match(studioHtml, /media\.js\?v=20261010-2/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

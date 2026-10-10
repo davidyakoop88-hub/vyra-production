@@ -23,9 +23,15 @@ window.VyraPremiumHome = home = function () {
       <span><i class="${widgetAntal ? '' : 'offline'}"></i>${overlayText}</span>
     </div>
   </section>
+  <!-- TOPPGIVARNA: de fem som gett mest SEDAN START, ur servern (gifter_totals via /stats).
+       Raden summerade sjalv ur liveflodet 2026-08-20 -> 2026-10-10 och var da i praktiken alltid
+       tom: den levde bara i en oppen, synlig flik medan sandningen pagick och tomdes av varje
+       omladdning. Se live-blocket langre ner. Rubriken sager "sedan start" rakt ut: raden foljer
+       inte periodknapparna i TOTALT-rutan, eftersom gifter_totals saknar summor per dag. -->
   <div class="toppgivare" data-toppgivare>
+    <small class="toppgivare-rubrik">Dina toppgivare <span>sedan start · uppdateras under LIVE</span></small>
     <div class="toppgivare-rad toppgivare-skelett" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-    <p class="toppgivare-tom">Toppgivarna visas här under riktig LIVE.</p>
+    <p class="toppgivare-tom" data-tom="oversikt-toppgivare">Hämtar dina toppgivare…</p>
   </div>
   <!-- TOTALT: historiken, inte sessionen.
        Korten ovanfor visar SESSIONEN och star pa "—" sa fort man inte sander. Den har raden ar
@@ -197,40 +203,26 @@ if (typeof view !== 'undefined' && view === 'home') render();
 //
 // Vardena lever bara i minnet. De ska inte overleva en omladdning, och tokenlaget (?access=) far
 // aldrig skriva nagot — darfor ror den har vagen inte session-state.js alls.
+// Raden med de fem som gett mest ritas ur SERVERN av historik-blocket nedan. Live-blocket har
+// ager LIVE PULSE-bufferten och ber bara om en ny hamtning nar en gava kommit in. Funktionen
+// tilldelas av historik-blocket; fram till dess ar den tyst.
+let uppdateraToppgivareSnart = () => {};
+
 (function () {
   // ---- TOPPGIVARNA ----------------------------------------------------------------------------
   //
-  // Ersatte de fyra summakorten (TITTARE/LIKES/GAVOR/DIAMANTER) 2026-08-20 pa Davids beslut:
-  // en rad med de fem som gett mest, var och en med sin andel av totalen.
+  // RADEN HOLL EN EGEN SUMMERING I MINNET 2026-08-20 -> 2026-10-10: en Map per givare som fylldes
+  // av `vyra-live-event` och tomdes vid omladdning. Uppmatt i sandningen 2026-10-09: bryggan
+  // vidarebefordrade 295 gavor, servern skrev 869 gavor och 98 073 diamanter till gifter_totals,
+  // och raden i Davids Studio stod kvar som fem tomma platshallare hela kvallen. En rad som bara
+  // lever i en oppen, synlig flik medan sandningen pagar, och som toms av varje omladdning,
+  // flikfrysning och vybyte, ar i praktiken alltid tom — och servern hade redan hela svaret.
   //
-  // DIAMANTER, inte INTAKT — samma skal som det gamla kortet bar: faltet gift.coins fylls fran
-  // diamondCount i bada bryggorna, och diamanter ar vad kreatoren far. Coins ar vad tittaren koper
-  // for, grovt dubbelt sa manga. Ingen av konkurrenterna rakar heller om till pengar: TikFinity
-  // visar "Coins Earned", TikControl "Total Diamonds". Kursen varierar med region och avtal, och
-  // ett fel belopp i kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
-  //
-  // SUMMERING AR SAKER, och det ar inte sjalvklart: bada bryggorna vidarebefordrar bara SISTA
-  // ramen av en streakbar gava (tiktok-bridge/bridge.js:314, electron-app/tiktok-service.js:97) —
-  // annars hade en combo blivit ett triangeltal. Nar eventet nar hit motsvarar det en avslutad
-  // gava eller combo, och `coins` bar REDAN hela combons varde (coinsEach x repeatCount). Det
-  // laggs darfor till rakt av och multipliceras ALDRIG med count.
-  const TOPP_ANTAL = 5;
-  const givare = new Map();              // nyckel -> { namn, avatar, diamanter }
-  let total = 0;
-
-  // Nyckeln ar userId nar det finns, annars namnet. Tva tittare kan ha samma visningsnamn, och da
-  // ska de inte slas ihop till en rad som ser ut som en storgivare.
-  function nyckelFor(data) {
-    return String(data.userId || data.username || data.uniqueId || data.user || '').toLowerCase();
-  }
-
-  // Avataren ar en URL fran ett event, alltsa data utifran. Bara http/https slapps igenom: allt
-  // annat (data:, blob:, javascript:) har ingen legitim anvandning har, och en <img> ar inte ratt
-  // plats att lita pa en frammande strang.
-  function saker(url) {
-    const s = String(url || '');
-    return /^https?:\/\//i.test(s) ? s : '';
-  }
+  // Nu ritas raden ur /stats (gifter_totals, sedan start) av historik-blocket nedan. En gava i
+  // liveflodet ber bara om en ny hamtning. EN sanning, ingen summering pa klienten: ingen
+  // dubbelrakning vid ateranslutning, inget tidsfonster att besluta, inget som gar forlorat nar
+  // fliken laddas om. Diamanter, inte intakt — samma skal som forut: kursen varierar, och ett
+  // fel belopp i kronor ar ett fortroendeproblem som inte gar att laga i efterhand.
   let koad = false;
   let levande = true;
 
@@ -263,68 +255,7 @@ if (typeof view !== 'undefined' && view === 'home') render();
   function mala() {
     koad = false;
     if (!levande) return;
-    malaToppgivare();
     malaPuls();
-  }
-
-  // Raderna bar ANVANDARDATA fran TikTok: visningsnamn och avatar-URL. Allt byggs darfor med
-  // createElement och textContent — aldrig innerHTML. Ett namn som ser ut som markup ska visas
-  // som text, inte tolkas.
-  function malaToppgivare() {
-    if (!givare.size) return;
-    // Vyn kan vara en annan just nu (editor, overlay). Da finns ingen rad, och det ar inte ett fel.
-    const rad = document.querySelector('[data-toppgivare]');
-    if (!rad) return;
-
-    const topp = [...givare.values()].sort((a, b) => b.diamanter - a.diamanter).slice(0, TOPP_ANTAL);
-    const ny = document.createElement('div');
-    ny.className = 'toppgivare-rad';
-
-    for (const g of topp) {
-      const kort = document.createElement('article');
-      kort.className = 'toppgivare-kort';
-
-      const bild = document.createElement('span');
-      bild.className = 'toppgivare-avatar';
-      if (g.avatar) {
-        const img = document.createElement('img');
-        img.src = g.avatar;
-        img.alt = '';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        bild.append(img);
-      }
-      kort.append(bild);
-
-      const text = document.createElement('div');
-      const namnrad = document.createElement('b');
-      namnrad.textContent = g.namn;
-      const varde = document.createElement('strong');
-      varde.textContent = kort9(g.diamanter) + ' 💎';
-      const andel = document.createElement('em');
-      // Andelen rundas av HELTAL. En rad som sager "0 %" for nagon som faktiskt gett nagot ser ut
-      // som ett fel, sa allt under en procent visas som "<1 %".
-      const procent = total > 0 ? (g.diamanter / total) * 100 : 0;
-      andel.textContent = '(' + (procent > 0 && procent < 1 ? '<1' : Math.round(procent)) + ' %)';
-      text.append(namnrad, varde, andel);
-      kort.append(text);
-      ny.append(kort);
-    }
-
-    const gammal = rad.querySelector('.toppgivare-rad');
-    if (gammal) gammal.replaceWith(ny); else rad.append(ny);
-    const tomtext = rad.querySelector('.toppgivare-tom');
-    if (tomtext) tomtext.hidden = true;
-  }
-
-  // 174200 -> "174.2 K", 15000 -> "15 K", 9600 -> "9.6 K". Raden rymmer fem kort, och fulla
-  // siffror bryter layouten vid stora tal. EN decimal genomgaende, och en avslutande ",0" stryks:
-  // "15,0 K" laser sig som falsk precision pa ett tal som ar jamnt.
-  function kort9(n) {
-    const skala = (v, suffix) => v.toFixed(1).replace(/\.0$/, '') + ' ' + suffix;
-    if (n >= 1e6) return skala(n / 1e6, 'M');
-    if (n >= 1e3) return skala(n / 1e3, 'K');
-    return String(Math.round(n));
   }
 
   // Raderna bar ANVANDARDATA fran TikTok. Listan byggs darfor med createElement och textContent —
@@ -368,40 +299,23 @@ if (typeof view !== 'undefined' && view === 'home') render();
     }
 
     if (typ !== 'gift') return;
-    // Ett trasigt event far inte oka en summa. En felaktig addition sitter kvar hela sessionen —
-    // till skillnad fran ett vardet-skrivs-over-kort finns ingen sjalvlakning har.
-    const varde = Number(data.coins);
-    if (!Number.isFinite(varde) || varde <= 0) return;
-    const nyckel = nyckelFor(data);
-    if (!nyckel) return;
-
-    const forra = givare.get(nyckel);
-    const avatar = saker(data.profileImage || data.avatarUrl || data.profileUrl);
-    if (forra) {
-      forra.diamanter += Math.round(varde);
-      // Avataren kan komma forst i ett senare event. Den skrivs bara over av ett riktigt varde,
-      // aldrig tillbaka till tomt.
-      if (avatar) forra.avatar = avatar;
-      forra.namn = namn(data);
-    } else {
-      givare.set(nyckel, { namn: namn(data), avatar, diamanter: Math.round(varde) });
-    }
-    total += Math.round(varde);
-    schemalagg();
+    // Gavan har just skrivits till gifter_totals pa servern (stream-stats.js skriver per event).
+    // Raden hamtas om — en gang per skur, inte en gang per gava. Vardet laggs ALDRIG till har:
+    // en trasig gava hade annars okat en summa for resten av sessionen, och ett medvardsrum
+    // (tillVarden:false) ar serverns sak att sortera.
+    uppdateraToppgivareSnart();
   });
 
   // render() bygger om #view fran grunden, sa korten ar nya noder varje gang. Utan den har skulle
-  // vardena forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
+  // pulsen forsvinna sa fort anvandaren navigerar bort och tillbaka. En observer i stallet for en
   // hake i render(): den fangar varje vag som kan bygga om vyn, aven de som tillkommer senare.
   const observer = new MutationObserver(() => {
-    if (puls.length || givare.size) schemalagg();
+    if (puls.length) schemalagg();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
   addEventListener('vyra-session-ended', () => {
     levande = false;
-    givare.clear();
-    total = 0;
     puls.length = 0;
     observer.disconnect();
   });
@@ -431,6 +345,94 @@ if (typeof view !== 'undefined' && view === 'home') render();
   function notera(text) {
     const nod = document.querySelector('[data-alltime-note]');
     if (nod) nod.textContent = text;
+  }
+
+  // ---- TOPPGIVARRADEN: de fem som gett mest, ur servern --------------------------------------
+  //
+  // Raden overst pa sidan ritas HAR, ur samma /stats-svar som totalsummorna — se live-blocket
+  // ovan for varfor den inte langre summerar sjalv. Den foljer INTE periodknapparna:
+  // gifter_totals bar livstidssummor per givare och inga summor per dag, sa raden ritas bara om
+  // nar svaret galler perioden 'all'. Rubriken sager "sedan start" rakt ut.
+  //
+  // RADERNA BAR ANVANDARDATA FRAN TIKTOK: visningsnamn och avatar-URL. Allt byggs darfor med
+  // createElement och textContent — aldrig innerHTML. Bara http(s)-avatarer slapps in i en <img>:
+  // data:, blob: och javascript: har ingen legitim anvandning har.
+  const TOPP_ANTAL = 5;
+  function saker(url) { const s = String(url || ''); return /^https?:\/\//i.test(s) ? s : '' }
+  // 174200 -> "174.2 K", 15000 -> "15 K", 9600 -> "9.6 K". Raden rymmer fem kort, och fulla
+  // siffror bryter layouten vid stora tal. EN decimal genomgaende, och en avslutande ".0" stryks.
+  function kort9(n) {
+    const skala = (v, suffix) => v.toFixed(1).replace(/\.0$/, '') + ' ' + suffix;
+    if (n >= 1e6) return skala(n / 1e6, 'M');
+    if (n >= 1e3) return skala(n / 1e3, 'K');
+    return String(Math.round(n));
+  }
+  // Tomlaget i raden. Skelettet ar ett LADDNINGSTECKEN och doljs sa fort servern svarat — fem
+  // andande platshallare over "inga gavor annu" hade sett ut som att nagot fortfarande hamtas.
+  function toppgivareText(rad, text, { skelettBort = false } = {}) {
+    const tom = rad.querySelector('.toppgivare-tom');
+    if (tom) { tom.textContent = text; tom.hidden = false }
+    if (skelettBort) { const s = rad.querySelector('.toppgivare-skelett'); if (s) s.hidden = true }
+  }
+  function malaToppgivare(data) {
+    if (period !== 'all') return;
+    const rad = document.querySelector('[data-toppgivare]');
+    if (!rad) return;                        // annan vy — inte ett fel
+    if (data.fel) {
+      // En rad som redan ritats star kvar med sina siffror; bara ett tomt lage far felet.
+      if (!rad.querySelector('.toppgivare-kort')) toppgivareText(rad, 'Kunde inte hämta toppgivarna just nu. Raden hämtas om vid nästa försök.', { skelettBort: true });
+      return;
+    }
+    const givare = (Array.isArray(data.toppGivare) ? data.toppGivare : [])
+      .map(g => ({ namn: String(g && g.namn || 'Okänd'), avatar: saker(g && g.avatar),
+        diamanter: Math.max(0, Math.round(Number(g && g.diamonds) || 0)) }))
+      .filter(g => g.diamanter > 0)
+      .sort((a, b) => b.diamanter - a.diamanter)
+      .slice(0, TOPP_ANTAL);
+    if (!givare.length) {
+      // Tomlaget ska vara ARLIGT. For ett nytt konto ar sanningen att inspelningen inte borjat,
+      // inte att ingen gav nagot.
+      toppgivareText(rad, data.konto
+        ? 'Inga gåvor registrerade ännu — dina toppgivare visas här efter din första sändning.'
+        : 'Ingen TikTok ansluten ännu. Toppgivarna börjar räknas när du sänder första gången.', { skelettBort: true });
+      return;
+    }
+    // Andelen raknas mot ALLA diamanter sedan start (perioden ar 'all' har), aldrig mot bara de
+    // fem — annars summerade raden alltid till 100 % oavsett hur manga som gett.
+    const total = Math.max(Number(data.totalt && data.totalt.diamonds) || 0,
+      givare.reduce((summa, g) => summa + g.diamanter, 0));
+    const ny = document.createElement('div');
+    ny.className = 'toppgivare-rad';
+    for (const g of givare) {
+      const kort = document.createElement('article');
+      kort.className = 'toppgivare-kort';
+      const bild = document.createElement('span');
+      bild.className = 'toppgivare-avatar';
+      if (g.avatar) {
+        const img = document.createElement('img');
+        img.src = g.avatar; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+        bild.append(img);
+      }
+      const text = document.createElement('div');
+      const namnrad = document.createElement('b');
+      namnrad.textContent = g.namn;
+      const varde = document.createElement('strong');
+      varde.textContent = kort9(g.diamanter) + ' 💎';
+      const andel = document.createElement('em');
+      // Andelen rundas av HELTAL. "0 %" for nagon som faktiskt gett nagot ser ut som ett fel, sa
+      // allt under en procent visas som "<1 %".
+      const procent = total > 0 ? (g.diamanter / total) * 100 : 0;
+      andel.textContent = '(' + (procent > 0 && procent < 1 ? '<1' : Math.round(procent)) + ' %)';
+      text.append(namnrad, varde, andel);
+      kort.append(bild, text);
+      ny.append(kort);
+    }
+    // Skelettet bar klassen .toppgivare-rad med flit: forsta riktiga raden byter ut det, och en
+    // senare hamtning byter ut den forra raden. Riktad DOM-patchning — aldrig render().
+    const gammal = rad.querySelector('.toppgivare-rad');
+    if (gammal) gammal.replaceWith(ny); else rad.append(ny);
+    const tom = rad.querySelector('.toppgivare-tom');
+    if (tom) tom.hidden = true;
   }
 
 
@@ -495,11 +497,12 @@ if (typeof view !== 'undefined' && view === 'home') render();
   }
 
   function mala(data) {
+    malaToppgivare(data);
     for (const stat of ['gifts', 'diamonds', 'likes']) skriv(stat, nummer(data.totalt?.[stat]));
     for (const knapp of document.querySelectorAll('[data-alltime-period]')) {
       knapp.classList.toggle('vald', knapp.dataset.alltimePeriod === period);
-    malaHistorikgivare(data.toppGivare);
     }
+    malaHistorikgivare(data.toppGivare);
     if (data.fel) return notera('Kunde inte hämta historiken just nu. Siffrorna ovan är inte hela sanningen.');
     // Tomläget ska vara ÄRLIGT. Nollor utan förklaring ser ut som ett resultat — och för ett nytt
     // konto är sanningen att inspelningen inte börjat, inte att ingen gav något.
@@ -519,7 +522,11 @@ if (typeof view !== 'undefined' && view === 'home') render();
     const workspace = window.VyraCloudSync?.current?.()?.workspace;
     // Inte inloggad eller ingen arbetsyta än: markupen står kvar med sitt streck. Det är ett normalt
     // läge i editorn och på en ny installation, inte ett fel att skrika om.
-    if (!workspace?.id || !window.VyraAuth?.api) return notera('Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.');
+    if (!workspace?.id || !window.VyraAuth?.api) {
+      const rad = document.querySelector('[data-toppgivare]');
+      if (rad) toppgivareText(rad, 'Inga toppgivare att visa ännu. Logga in så hämtas de fem som gett dig mest.', { skelettBort: true });
+      return notera('Ingen historik att visa ännu. Logga in så hämtas dina gåvor, diamanter och likes.');
+    }
     try {
       const data = await window.VyraAuth.api(
         `/api/workspaces/${encodeURIComponent(workspace.id)}/stats?period=${encodeURIComponent(period)}`);
@@ -548,22 +555,53 @@ if (typeof view !== 'undefined' && view === 'home') render();
     hamta();
   });
 
+  // SAMLAR FLERA ANROP TILL ETT. Uppmatt 2026-10-10 i Api-loggen: 45 anrop till /stats pa nio
+  // sekunder vid EN sidladdning — render() kors manga ganger under uppstarten, och varje gang
+  // ar [data-alltime] en ny nod. Generationsvakten i hamta() gjorde att bara det sista svaret
+  // vann, men alla 45 fragorna gick anda till servern. Det utloggade laget gar fortfarande
+  // direkt: det hamtar inget, bara skriver sin text, och ska inte vanta pa en timer.
+  //
+  // FORSTA anropet gar direkt (raden ska ritas sa fort vyn finns, inte efter en timer); de som
+  // foljer inom fonstret samlas till ETT slapande anrop. Liveflodet anvander BARA det slapande:
+  // gavan publiceras till strommen i samma andetag som den skrivs till gifter_totals, och en
+  // hamtning som gar ivag omedelbart kan hinna fore skrivningen.
+  let hamtTimer = null, senastHamtad = 0;
+  function hamtaSnart(ms = 300, { direkt = true } = {}) {
+    if (!levande) return;
+    if (!window.VyraCloudSync?.current?.()?.workspace?.id) return hamta();
+    const nu = Date.now();
+    if (direkt && !hamtTimer && nu - senastHamtad >= ms) { senastHamtad = nu; return hamta() }
+    clearTimeout(hamtTimer);
+    hamtTimer = setTimeout(() => { hamtTimer = null; senastHamtad = Date.now(); hamta() }, ms);
+  }
+  // Liveflodet: en gava har just landat i gifter_totals, sa raden hamtas om — en gang per skur.
+  uppdateraToppgivareSnart = () => hamtaSnart(1500, { direkt: false });
+  // Langsam puls medan Oversikten ar synlig, sa raden ror sig under en sandning aven om
+  // handelsestrommen till Studion skulle tappa ett event. Tyst i bakgrundsflikar och andra vyer.
+  const pulsTimer = setInterval(() => {
+    if (!levande || document.hidden || !document.querySelector('[data-toppgivare]')) return;
+    hamtaSnart(0);
+  }, 60_000);
+
   // Raden finns bara i home-vyn, och render() river den vid varje vybyte. Samma observer-mönster
   // som live-korten: fånga varje väg som kan bygga om vyn, även de som tillkommer senare.
   let sedd = null;
   const observer = new MutationObserver(() => {
     if (!levande) return;
     const rad = document.querySelector('[data-alltime]');
-    if (rad && rad !== sedd) { sedd = rad; hamta() }
+    if (rad && rad !== sedd) { sedd = rad; hamtaSnart() }
     else if (!rad) sedd = null;
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  if (document.querySelector('[data-alltime]')) { sedd = document.querySelector('[data-alltime]'); hamta() }
+  if (document.querySelector('[data-alltime]')) { sedd = document.querySelector('[data-alltime]'); hamtaSnart() }
 
   addEventListener('vyra-session-ended', () => {
     levande = false;
     generation++;
+    clearTimeout(hamtTimer);
+    clearInterval(pulsTimer);
+    uppdateraToppgivareSnart = () => {};
     observer.disconnect();
   });
 })();

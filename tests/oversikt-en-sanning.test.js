@@ -65,7 +65,7 @@ test('bada vyerna bar samma toppgivarrad', () => {
   for (const [namn, kalla] of [['studio.js (basvyn)', bas], ['overview-premium.js', premium]]) {
     assert.match(kalla, /data-toppgivare/,
       `${namn} saknar [data-toppgivare] — vyerna har glidit isar igen`);
-    assert.match(kalla, /Toppgivarna visas här under riktig LIVE/,
+    assert.match(kalla, /Hämtar dina toppgivare…/,
       `${namn} bar en annan tomtext an den andra vyn`);
   }
 });

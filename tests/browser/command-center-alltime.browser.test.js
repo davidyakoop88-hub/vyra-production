@@ -154,26 +154,29 @@ test('periodväljaren begär en ny period', { skip }, async () => {
 
 // Historiken far ALDRIG rora korten ovanfor. De mater sessionen; blandas de ihop betyder siffran
 // olika saker beroende pa nar man tittar.
-test('historiken rör inte live-korten', { skip }, async () => {
+test('historiken fyller toppgivarraden', { skip }, async () => {
+  // VANDES 2026-10-10. Fram till dess fick historiken ALDRIG rora raden: sessionen och historiken
+  // var tva sanningar. Men sessionens rad levde bara i minnet i en oppen flik under sandningen,
+  // och var uppmatt tom en hel kvall med 869 gavor pa servern. Nu ar servern radens enda kalla,
+  // och det ar exakt det har provet mater: ett /stats-svar med en givare ger ett kort.
   const page = await framsidan();
-  await page.waitForSelector('[data-alltime]', { timeout: 8000 }).catch(() => {});
   await kravRaden(page);
-  // Riktades om 2026-08-20: de fyra live-korten ersattes av toppgivarraden, men fragan ar
-  // OFORANDRAD — historiken och sessionen ar tva olika sanningar och far aldrig skriva i
-  // varandras noder. Raden ska sta kvar i sitt tomlage tills en RIKTIG gava kommit in.
+  await page.waitForFunction(() => document.querySelector('[data-toppgivare] .toppgivare-kort'),
+    null, { timeout: 8000 }).catch(() => {});
   const ut = await page.evaluate(() => {
     const rad = document.querySelector('[data-toppgivare]');
     return {
       finns: !!rad,
       kort: rad ? rad.querySelectorAll('.toppgivare-kort').length : -1,
+      namn: rad?.querySelector('.toppgivare-kort b')?.textContent || '',
       tomSynlig: !!rad?.querySelector('.toppgivare-tom:not([hidden])')
     };
   });
   await page.close();
   assert.equal(ut.finns, true, '[data-toppgivare] saknas — testet mätte ingenting');
-  assert.equal(ut.kort, 0,
-    `historiken fyllde live-raden med ${ut.kort} kort — sessionens rad ska vara tom utan gåvor`);
-  assert.equal(ut.tomSynlig, true, 'tomtexten i live-raden skrevs över av historiken');
+  assert.equal(ut.kort, 1, `historiken skulle gett ett kort, fick ${ut.kort}`);
+  assert.equal(ut.namn, 'Anna');
+  assert.equal(ut.tomSynlig, false, 'tomtexten står kvar fast raden är ritad');
 });
 
 // En ny anvandare har ingen historik. Da ska raden saga det arligt — inte visa nollor som ser ut
