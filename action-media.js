@@ -33,11 +33,14 @@
   const ljudbibliotek=()=>{try{return typeof soundAlerts==='object'&&soundAlerts?Object.values(soundAlerts):[]}catch{return[]}};
   // Ett valt biblioteksljud per modal, samma form som paketklippet: hämtas inte förrän det sparas.
   let valtLjud=null;
+  // Provlyssna-knappen: samma gröna play-cirkel som Kör i action-event.js (lokal kopia, filerna
+  // delar inte scope). Den sitter INUTI valknappen och kan därför inte själv vara en <button>.
+  const IKON_SPELA='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15l12.5-7.5z"/></svg>';
   function bibliotekspanel(slot,preview){
     const klipp=ljudbibliotek();
     if(!klipp.length)return '';
     return `<button type="button" class="ae-sound-open">♪ Öppna ljudbiblioteket</button>
-      <div class="ae-sound-library" hidden>${klipp.map(s=>`<button type="button" class="ae-sound-choice" data-path="${s.path}" data-namn="${s.name}"><i>♪</i><b>${s.name}</b><span class="ae-sound-play" data-prova="${s.path}">▶</span></button>`).join('')}</div>`;
+      <div class="ae-sound-library" hidden>${klipp.map(s=>`<button type="button" class="ae-sound-choice" data-path="${s.path}" data-namn="${s.name}"><i>♪</i><b>${s.name}</b><span class="ae-sound-play ae-ik ae-ik--kor ae-ik--liten" data-prova="${s.path}" title="Provlyssna">${IKON_SPELA}</span></button>`).join('')}</div>`;
   }
 
   function render(slot,namn,befintlig){

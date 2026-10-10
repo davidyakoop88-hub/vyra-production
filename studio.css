@@ -1708,3 +1708,16 @@ html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c
 .like-fountain.lf-preset-plasma-core .lf-p-heart:not(.lf-p-heart-avatar){background:conic-gradient(from var(--lf-r1),#ff29d8,#7b3cff,#00dcff,#ff7a18,#ff29d8);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 5px #8b3dff)}
 .like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar){clip-path:polygon(50% 100%,4% 42%,8% 16%,30% 4%,50% 26%,70% 4%,92% 16%,96% 42%);width:var(--sz);height:var(--sz);font-size:0;background:linear-gradient(135deg,#fff 0 16%,var(--c) 17% 48%,color-mix(in srgb,var(--c),#8a284b 46%) 49% 73%,#ffd6e1 74%);-webkit-text-stroke:0}
 .like-fountain.lf-preset-origami .lf-p-heart:not(.lf-p-heart-avatar)::before{content:'';inset:0;background:linear-gradient(72deg,transparent 48%,rgba(255,255,255,.72) 49% 52%,transparent 53%);clip-path:inherit;opacity:.75;transform:none}
+
+/* STANGKNAPPAR I STUDIODIALOGERNA. Ett ensamt "x" i #777 forsvann mot den morka dialogen.
+   Gemensam ikonknapp-spec: 32px ring i currentColor, SVG-kryss, fylls vid hover.
+   Dialogerna doljs helt i overlay-laget, sa inget av detta ritas dar.
+   !important pa farg/kant/bakgrund: design-system.css satter .x{background;border;color} med
+   !important (ui-designs fil), och det slar annars igenom aven mot id-selektorn. */
+#connectModal>.x,#brandKitModal>#brandKitClose{position:absolute;right:12px;top:10px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:32px;height:32px;padding:0;margin:0;border:1.5px solid currentColor!important;border-radius:50%;background:none!important;color:#c9c2db!important;cursor:pointer;transition:background-color .15s ease,transform .1s ease}
+#connectModal>.x svg,#brandKitModal>#brandKitClose svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;transition:stroke .15s ease}
+#connectModal>.x:hover,#brandKitModal>#brandKitClose:hover{background:currentColor!important}
+#connectModal>.x:hover svg,#brandKitModal>#brandKitClose:hover svg{stroke:#0f0a18}
+#connectModal>.x:active,#brandKitModal>#brandKitClose:active{transform:scale(.92)}
+#connectModal>.x:focus-visible,#brandKitModal>#brandKitClose:focus-visible{outline:2px solid #ece8f5;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){#connectModal>.x,#brandKitModal>#brandKitClose,#connectModal>.x svg,#brandKitModal>#brandKitClose svg{transition:none}#connectModal>.x:active,#brandKitModal>#brandKitClose:active{transform:none}}

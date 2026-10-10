@@ -16,7 +16,6 @@
 .tts-charge-header{margin-top:14px!important;padding-top:10px!important;border-top:1px solid #39203e}
 .tts-special-row{display:grid;grid-template-columns:1.4fr auto 1fr .7fr .7fr auto;gap:6px;align-items:center;margin-bottom:8px}
 .tts-special-row input,.tts-special-row select{margin:0!important}
-.tts-su-remove{border:1px solid #553060;background:#1b1021;color:#eee;border-radius:6px;padding:8px 11px}
 .tts-tester-row{display:flex;gap:8px}
 .tts-tester-row input{flex:1;margin:0!important}
 .tts-tester-row button{flex:none;white-space:nowrap}
@@ -48,3 +47,27 @@
 /* TTS Chat arbetsyta. Samma motor och inställningar, men tydlig gruppering och text som går att
    läsa under en LIVE. */
 .tts-vyra-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:12px}.tts-kicker{display:block;margin-bottom:7px;color:#cf78ff;font-size:10px;font-weight:850;letter-spacing:.14em}.tts-vyra-head h2{margin:0;color:#fff;font-size:29px;letter-spacing:-.035em}.tts-vyra-head p{margin:6px 0 0;color:#b6a8c0;font-size:14px}.tts-power{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #5b356d;border-radius:999px;background:#1a0f23;color:#f0e4f4;font-size:13px;white-space:nowrap}.tts-power input{accent-color:#c840ef}.tts-status{font-size:13px;padding:12px 14px}.tts-status b{font-size:14px}.tts-tabs{display:flex;gap:5px;width:max-content;margin:0 0 16px;padding:4px;border:1px solid #392243;border-radius:10px;background:#0d0712}.tts-tabs button{border:0;border-radius:7px;background:transparent;color:#b6a2bf;padding:10px 15px;font-size:13px;font-weight:750}.tts-tabs button.active{background:#51205f;color:#fff}.tts-tabs b{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:9px;background:#733087;color:#fff;font-size:10px}.tts-pane{display:none}.tts-pane.active{display:block}.tts-vyra-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.tts-vyra-grid>.card,.tts-special{padding:19px;border-color:#3d2948;background:linear-gradient(145deg,#160c20,#0e0815)}.tts-vyra-grid header,.tts-special header{align-items:flex-start;margin-bottom:14px}.tts-vyra-grid h3,.tts-special h3{margin:0;color:#fff;font-size:18px}.tts-vyra-grid header p,.tts-special header p{margin:5px 0 0;color:#aa96b3;font-size:12px;line-height:1.45}.tts-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tts-fields label,.tts-format>label,.tts-list-field{color:#d4c0dc;font-size:12px}.tts-fields input,.tts-fields select,.tts-format input,.tts-format select,.tts-list-field textarea,.tts-advanced input{padding:11px;font-size:14px}.tts-inline-check{gap:8px;font-size:13px}.tts-audience-list{grid-template-columns:1fr 1fr;gap:0 14px}.tts-audience-list .tts-inline-check{padding:9px 0;border-bottom:1px solid #2c1835;margin:0}.tts-tester-row{margin-top:15px}.tts-tester-row input{padding:11px;font-size:14px}.tts-tester-row .primary,.tts-save,.tts-special>#ttsAddSpecial{font-size:14px;padding:11px 14px}.tts-filter-pair{gap:9px;margin:11px 0}.tts-filter-pair .tts-inline-check{padding:10px;border:1px solid #392044;border-radius:8px}.tts-trigger-compact{display:flex;flex-wrap:wrap;gap:10px;margin:13px 0}.tts-trigger-compact label{font-size:13px;color:#d4c0dc}.tts-log-row{padding:10px;font-size:13px}.tts-advanced{font-size:13px}.tts-special{max-width:1040px}.tts-special-row{grid-template-columns:minmax(140px,1.2fr) 140px 92px 78px 78px 78px 30px;gap:9px;padding:12px}.tts-special-row input,.tts-special-row select{padding:9px;font-size:13px}@media(max-width:700px){.tts-vyra-head{flex-direction:column}.tts-tabs{width:100%}.tts-tabs button{flex:1}.tts-vyra-grid,.tts-fields,.tts-audience-list,.tts-filter-pair{grid-template-columns:1fr}.tts-special-row{grid-template-columns:1fr 1fr}.tts-save{width:100%}}
+
+/* IKONKNAPPAR (Sound Alerts + TTS Special Users). Samma spec och farger som .ae-col-icons .ae-ik i
+   action-event.css: ett ensamt tecken (▶ ×) syntes knappt mot den morka bakgrunden.
+   Sound Alerts-stilen ligger har eftersom sound-alerts.js saknar egen CSS-fil och tts-chat.css
+   laddas av samma lista i media.js. button.-prefixet slar studio.css och design-system.css. */
+button.sa-ik,.tts-special-row button.tts-ik{box-sizing:border-box;width:32px;height:32px;min-width:0;padding:0;margin:0;border-radius:50%;border:1.5px solid currentColor;background:none;box-shadow:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:0;line-height:1;transition:background .15s,transform .1s}
+button.sa-ik svg,.tts-special-row button.tts-ik svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+button.sa-ik--spela{color:#3ddc97}
+button.sa-ik--spela svg{fill:currentColor}
+button.sa-ik--radera,.tts-special-row button.tts-ik--radera{color:#ff6b7a}
+button.sa-ik--stang{color:#c9c2db}
+button.sa-ik:hover,.tts-special-row button.tts-ik:hover{background:currentColor}
+button.sa-ik:hover svg,.tts-special-row button.tts-ik:hover svg{stroke:#0f0a18}
+button.sa-ik--spela:hover svg{fill:#0f0a18}
+button.sa-ik:active,.tts-special-row button.tts-ik:active{transform:scale(.92)}
+button.sa-ik:focus-visible,.tts-special-row button.tts-ik:focus-visible{outline:2px solid #ece8f5;outline-offset:2px}
+/* Raderakolumnerna (alertlistan och Special Users) ar bara 28-30 px breda: den trangare storleken. */
+.sa-alert-row button.sa-remove.sa-ik,.tts-special-row button.tts-su-remove.tts-ik{width:28px;height:28px}
+.sa-alert-row button.sa-remove.sa-ik svg,.tts-special-row button.tts-su-remove.tts-ik svg{width:16px;height:16px}
+/* Spelknappen i ljudkortet lag forut mitt over notikonen; utan egen bakgrund skulle noten synas
+   genom ringen. Den flyttas till kortets nedre hogra horn. */
+.sound-card .sound-icon button.media-play.sa-ik{position:absolute;left:auto;top:auto;right:10px;bottom:10px;transform:none}
+.sound-card .sound-icon button.media-play.sa-ik:active{transform:scale(.92)}
+@media (prefers-reduced-motion:reduce){button.sa-ik,.tts-special-row button.tts-ik{transition:none}button.sa-ik:active,.tts-special-row button.tts-ik:active,.sound-card .sound-icon button.media-play.sa-ik:active{transform:none}}

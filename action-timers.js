@@ -40,6 +40,14 @@
   }
   setInterval(tick, 10000);
 
+  // Lokal kopia av ikonerna i action-event.js (filerna delar inte scope). Samma färgkodade
+  // cirklar som raderna där: röd papperskorg för Ta bort, neutralt kryss för Stäng.
+  const svgIkon = d => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
+  const IKON = {
+    radera: svgIkon('<path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/>'),
+    stang: svgIkon('<path d="M6 6l12 12M18 6L6 18"/>')
+  };
+
   function renderTimers() {
     const anchor = document.querySelector('[data-ae-advanced-body]') || document.querySelector('.ae-scenes-overview') || document.querySelector('.ae-steps');
     if (!anchor || document.querySelector('.ae-timers-overview')) return;
@@ -51,7 +59,7 @@
       // med timers men utan `actions` fällde HELA Automatik-vyn med "Cannot read properties of
       // undefined (reading 'length')" — uppmätt 2026-09-16. Guarden kostar ingenting.
       const action = (state.actions || []).find(a => a.id === t.actionId);
-      return `<article class="${t.enabled ? '' : 'off'}"><i>⏱</i><span><b>Var ${t.intervalMinutes} min</b><small>→ ${action ? action.name : 'Ingen Action vald'}</small></span><button data-toggle-timer="${t.id}">${t.enabled ? 'Aktiv' : 'Pausad'}</button><button data-delete-timer="${t.id}">×</button></article>`;
+      return `<article class="${t.enabled ? '' : 'off'}"><i>⏱</i><span><b>Var ${t.intervalMinutes} min</b><small>→ ${action ? action.name : 'Ingen Action vald'}</small></span><button data-toggle-timer="${t.id}">${t.enabled ? 'Aktiv' : 'Pausad'}</button><button type="button" class="ae-ik ae-ik--radera" data-delete-timer="${t.id}" title="Ta bort timer" aria-label="Ta bort timer">${IKON.radera}</button></article>`;
     }).join('');
     section.innerHTML = `<header><h3>Timer</h3><span>${(state.timers || []).length} timers</span></header><p class="ae-timer-hint">Kör en Action med jämna mellanrum medan du är live. Timern börjar räkna när TikTok-anslutningen blir aktiv.</p><button id="newAeTimer" class="primary">＋ Ny Timer</button><div class="ae-list">${rows || '<p data-tom="automatik-timers">Inga timers ännu. Skapa en som kör en Action på schema.</p>'}</div>`;
     if (anchor.matches('[data-ae-advanced-body]')) anchor.append(section);
@@ -66,7 +74,7 @@
       const state = getState();
       if (!(state.actions || []).length) { window.toast?.('Skapa en Action först'); return; }
       const modal = document.querySelector('#aeModal');
-      modal.innerHTML = `<div class="ae-modal"><div><header><h3>Ny Timer</h3><button data-close-ae>×</button></header><label>Intervall (minuter)<input id="aeTimerInterval" type="number" min="1" max="600" value="10"></label><label>Kör denna Action<select id="aeTimerActionId">${(state.actions || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select></label><footer><button data-close-ae>Avbryt</button><button id="saveAeTimer" class="primary">Spara Timer</button></footer></div></div>`;
+      modal.innerHTML = `<div class="ae-modal"><div><header><h3>Ny Timer</h3><button type="button" class="ae-ik ae-ik--stang" data-close-ae title="Stäng" aria-label="Stäng">${IKON.stang}</button></header><label>Intervall (minuter)<input id="aeTimerInterval" type="number" min="1" max="600" value="10"></label><label>Kör denna Action<select id="aeTimerActionId">${(state.actions || []).map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select></label><footer><button data-close-ae>Avbryt</button><button id="saveAeTimer" class="primary">Spara Timer</button></footer></div></div>`;
       modal.querySelectorAll('[data-close-ae]').forEach(x => x.onclick = () => { modal.innerHTML = '' });
       modal.querySelector('#saveAeTimer').onclick = () => {
         const s = getState();

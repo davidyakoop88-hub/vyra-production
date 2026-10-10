@@ -51,8 +51,39 @@
 .ae-actions-table td{padding:9px 10px;border-bottom:1px solid #241528;color:#ddd;vertical-align:middle}
 .ae-actions-table tbody tr:hover{background:#180e1d}
 .ae-col-icons{white-space:nowrap}
-.ae-col-icons button{border:0;background:none;color:#7fb6ff;font-size:14px;padding:2px 5px;cursor:pointer;line-height:1}
-.ae-col-icons button:hover{color:#ff5dc8}
+.ae-col-icons .ae-ik+.ae-ik{margin-left:6px}
+/* Färgkodade ikonknappar: grön kör, blå redigera, lila duplicera, röd radera. */
+.ae-col-icons .ae-ik{box-sizing:border-box;width:32px;height:32px;padding:0;border-radius:50%;border:1.5px solid currentColor;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;transition:background .15s,transform .1s}
+.ae-col-icons .ae-ik svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ae-col-icons .ae-ik--kor{color:#3ddc97}
+.ae-col-icons .ae-ik--kor svg{fill:currentColor}
+.ae-col-icons .ae-ik--redigera{color:#6aa8ff}
+.ae-col-icons .ae-ik--duplicera{color:#b48cff}
+.ae-col-icons .ae-ik--radera{color:#ff6b7a}
+.ae-col-icons .ae-ik:hover{background:currentColor}
+.ae-col-icons .ae-ik:hover svg{stroke:#0f0a18}
+.ae-col-icons .ae-ik--kor:hover svg{fill:#0f0a18}
+.ae-col-icons .ae-ik:active{transform:scale(.92)}
+.ae-col-icons .ae-ik:focus-visible{outline:2px solid #ece8f5;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.ae-col-icons .ae-ik{transition:none}.ae-col-icons .ae-ik:active{transform:none}}
+/* Samma ikonknapp utanför tabellen: modalernas Stäng, timerns Ta bort, ljudbibliotekets Provlyssna.
+   !important är nödvändigt: design-system.css sätter `.ae-modal button` och `.gift-picker-modal
+   button` med !important på bakgrund, kant och färg, och studio.css stylar gåvoväljarens kryss. */
+.ae-ik.ae-ik{box-sizing:border-box!important;flex:none;width:32px!important;height:32px!important;min-width:0!important;padding:0!important;margin:0;border-radius:50%!important;border:1.5px solid currentColor!important;background:none!important;box-shadow:none!important;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-size:0;transition:background .15s,transform .1s}
+.ae-ik.ae-ik svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ae-ik.ae-ik--liten{width:28px!important;height:28px!important}
+.ae-ik.ae-ik--liten svg{width:16px;height:16px}
+.ae-ik.ae-ik--kor{color:#3ddc97!important}
+.ae-ik.ae-ik--kor svg{fill:currentColor}
+.ae-ik.ae-ik--redigera{color:#6aa8ff!important}
+.ae-ik.ae-ik--radera{color:#ff6b7a!important}
+.ae-ik.ae-ik--stang{color:#c9c2db!important}
+.ae-ik.ae-ik:hover{background:currentColor!important}
+.ae-ik.ae-ik:hover svg{stroke:#0f0a18}
+.ae-ik.ae-ik--kor:hover svg{fill:#0f0a18}
+.ae-ik.ae-ik:active{transform:scale(.92)}
+.ae-ik.ae-ik:focus-visible{outline:2px solid #ece8f5;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.ae-ik.ae-ik{transition:none}.ae-ik.ae-ik:active{transform:none}}
 .ae-col-check{text-align:center;width:66px}
 .ae-tick{color:#54efa3;font-style:normal}
 .ae-col-name b{color:#fff}
@@ -145,13 +176,12 @@
 .ae-sound-open:hover{border-color:#ff5dc8}
 .ae-sound-library{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-top:4px;max-height:230px;overflow-y:auto;padding:6px;border:1px solid #3d2544;border-radius:9px;background:#0d0911}
 .ae-sound-library[hidden]{display:none}
-.ae-sound-choice{display:grid;grid-template-columns:22px minmax(0,1fr) 24px;align-items:center;gap:8px;padding:8px 9px;border:1px solid #412449;border-radius:8px;background:#1a101f;color:#ddd;text-align:left;cursor:pointer}
+.ae-sound-choice{display:grid;grid-template-columns:22px minmax(0,1fr) 28px;align-items:center;gap:8px;padding:8px 9px;border:1px solid #412449;border-radius:8px;background:#1a101f;color:#ddd;text-align:left;cursor:pointer}
 .ae-sound-choice:hover{border-color:#ff5dc8}
 .ae-sound-choice.selected{border-color:#d03be8;box-shadow:0 0 0 1px #d03be8}
 .ae-sound-choice i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#32143d;color:#ef6eff;font-style:normal;font-size:11px}
 .ae-sound-choice b{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ae-sound-play{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#2a1233;color:#f17cff;font-size:10px}
-.ae-sound-play:hover{background:#431b52}
+/* .ae-sound-play är nu en grön play-cirkel (.ae-ik--kor .ae-ik--liten, se ovan). */
 
 /* ── Egen färgväljare med R/G/B och hex (facit §6) ───────────────────────────────────────── */
 .vyra-fargknapp{display:flex;align-items:center;gap:8px;width:170px;padding:6px 9px;border:1px solid #3d2544;border-radius:7px;background:#0d0911;color:#cbb6d0;font-size:11.5px;font-family:ui-monospace,Menlo,Consolas,monospace;cursor:pointer}
