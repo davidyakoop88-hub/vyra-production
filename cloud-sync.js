@@ -94,7 +94,7 @@
       if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
-  function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
+  function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);/* lastLocal maste folja med: utan det sag tickern den nyss hamtade layouten som en LOKAL andring och skickade molnets egen layout tillbaka till molnet (uppmatt 2026-10-10: PUT 200 sju sekunder efter varje Online-klick). */lastLocal=localStorage.getItem('vyra-state');saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
     // push() KASTAR inte vid 409 — den returnerar {ok:false} och satter sjalv conflict-status.
     // Utan avbrottet har fortsatte kedjan till bar.remove(), och den nya banderollen som
     // 409-vagen visar undertrycktes av vakten overst eftersom den gamla annu fanns i DOM:
@@ -207,7 +207,7 @@
   // natverksfel kan aldrig oppna en skrivbar session utan verifierad identitet.
   // Logout river hela den sessionsbundna maskinen, inte tre id:n. Generationen hojs forst, sa varje
   // svar som redan ar i luften blir verkningslost innan nagot annat hinner kora.
-  function resetSession(){session+=1;clearTimeout(timer);timer=null;if(tickTimer){clearInterval(tickTimer);tickTimer=null}
+  function resetSession(){session+=1;clearTimeout(timer);timer=null;if(tickTimer){clearInterval(tickTimer);tickTimer=null}if(foljTimer){clearInterval(foljTimer);foljTimer=null}foljer=false;
     if(pendingChoice){const resolve=pendingChoice;pendingChoice=null;resolve('aborted')}
     document.querySelector('.cs-modal')?.remove();document.querySelector('.cs-conflict')?.remove();
     workspace=null;overlay=null;lastLocal=null;syncing=false;initialized=false;setStatus('local')}
@@ -223,7 +223,44 @@
     const d=root.VyraAuth?.lastDetail?.();
     if(d?.workspaces?.length)initialize(d);
   },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>setStatus('offline'));
-  function startTicker(){if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
+  // ---- REDIGERAREN FOLJER MOLNET (Davids beslut 2026-10-10) -----------------------------------
+  //
+  // Appen och webben delar redan molnets layout: appens lokala server proxar konto- och
+  // layoutanropen med den bryggade sessionen, sa cloud-sync kor pa bada. Men tva OPPNA
+  // redigerare foljde inte varandra: den som sparade sist vann versionen, och den andra fick
+  // 409 pa sin nasta sparning och dialogen "valj version" — fast den inte hade nagot eget att
+  // valja. Uppmatt: webbens Studio oppen dygnet runt, appen under sandningen.
+  //
+  // Foljaren fragar molnet var tionde sekund efter overlayens version (listan — ett litet svar,
+  // inga widgets). Ar molnet nyare och den har enheten inte har nagot osparat (vyra-state ar
+  // det senast synkade och ingen ko ligger), hamtas och projiceras molnets layout tyst. Har
+  // enheten osparat arbete ar det en riktig konflikt, och da visas samma banderoll som forut —
+  // nu redan nar den andra enheten sparat, inte forst nar den har enheten forsoker.
+  //
+  // Molnet ar INTE en ny sanning har: det ar samma overlay som OBS-lanken laser, och den har
+  // enheten hade redan tagit emot den vid nasta omladdning. Foljaren tar bara bort vantan.
+  const FOLJ_MS=10000;
+  let foljTimer=null,foljer=false;
+  async function foljMolnet(){
+    if(foljer||!workspace||!overlay||!initialized||syncing||pendingChoice)return{ok:false,reason:'upptagen'};
+    if(document.querySelector('.cs-conflict'))return{ok:false,reason:'konflikt-visas'};
+    const mine=session;foljer=true;
+    try{
+      const items=(await list()).overlays||[];if(mine!==session)return{ok:false,reason:'superseded'};
+      const remote=items.find(x=>x.id===overlay.id);
+      if(!remote||!(Number(remote.version)>Number(overlay.version)))return{ok:true,reason:'lika'};
+      const osynkat=localStorage.getItem('vyra-state')!==lastLocal||!!read(QUEUE());
+      if(osynkat){setStatus('conflict');showConflict();return{ok:true,reason:'konflikt'}}
+      const hamtad=await getRemote(overlay.id);if(mine!==session)return{ok:false,reason:'superseded'};
+      overlay=hamtad;await apply(overlay.state);if(mine!==session)return{ok:false,reason:'superseded'};
+      lastLocal=localStorage.getItem('vyra-state');koadLokal=null;localStorage.removeItem(QUEUE());saveMeta();setStatus('synced');
+      root.toast?.('Layouten uppdaterades från en annan enhet');
+      return{ok:true,reason:'hamtad',version:overlay.version};
+    }catch(e){return{ok:false,reason:'fel',error:e&&e.message}}
+    finally{foljer=false}
+  }
+  function startFoljare(){if(foljTimer)return;foljTimer=setInterval(()=>{if(document.hidden)return;foljMolnet()},FOLJ_MS)}
+  function startTicker(){startFoljare();if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
   // Mountningen far INTE hanga pa initialize() eller startTicker(): bada kraver ett workspace, och
@@ -235,5 +272,5 @@
   // Slutar sa fort den lyckats. Lankraden byggs en gang (bind() vaktar mot dubbletter), och nar
   // man ar inloggad halls monteringen anda vid liv av tickern.
   const mountTimer=setInterval(()=>{if(mountStatus())clearInterval(mountTimer)},1000);
-  root.VyraCloudSync={initialize,push,status:()=>status,current:()=>({workspace,overlay})};
+  root.VyraCloudSync={initialize,push,foljMolnet,status:()=>status,current:()=>({workspace,overlay})};
 })(typeof window!=='undefined'?window:globalThis);
