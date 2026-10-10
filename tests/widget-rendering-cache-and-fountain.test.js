@@ -173,7 +173,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261005-6: lfHeartSway/lfBubbleSway lugnare (de vinglade för mycket).
   // 20261005-7: OBS-döljningen av förhandsströmmen !important (Bubble Pop syntes i OBS).
   // 20261005-8: lfHeartBeat (hoppade) ersatt av lfNeonGlow.
-  assert.match(studio, /studio\.css\?v=20261005-8/);
+  // Bumpad 2026-10-10 (-1): lagerpanelen och sidopanelen ritar inga rullister (Davids beslut),
+  // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
+  assert.match(studio, /studio\.css\?v=20261010-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.

@@ -1721,3 +1721,13 @@ html:not(.overlay-output) .editor-shell .widget span{font-size:11px;color:#b4a6c
 #connectModal>.x:active,#brandKitModal>#brandKitClose:active{transform:scale(.92)}
 #connectModal>.x:focus-visible,#brandKitModal>#brandKitClose:focus-visible{outline:2px solid #ece8f5;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){#connectModal>.x,#brandKitModal>#brandKitClose,#connectModal>.x svg,#brandKitModal>#brandKitClose svg{transition:none}#connectModal>.x:active,#brandKitModal>#brandKitClose:active{transform:none}}
+
+/* INGA SYNLIGA RULLISTER I LAGERPANELEN (Davids beslut 2026-10-10: "jag vill inte att det ska
+   finnas en slide på sidan eller under"). Uppmätt med tolv widgets: sidopanelen (.elements,
+   overflow:auto) ritade en lodrät list till höger och en vågrät under listan. Rullningen finns
+   kvar — hjul, pekplatta och tangentbord fungerar som förut — men listen ritas inte, och i sidled
+   får inget spilla alls: raderna är redan minmax(0,1fr) + tre 26 px-kolumner, så ett vågrätt
+   spill är ett fel att dölja, inte ett innehåll att nå. Båda syntaxerna behövs: scrollbar-width
+   för Firefox, ::-webkit-scrollbar för Chromium/Electron (OBS och appen). */
+.elements,.live-layer-list{overflow-x:hidden!important;scrollbar-width:none}
+.elements::-webkit-scrollbar,.live-layer-list::-webkit-scrollbar{width:0;height:0;display:none}

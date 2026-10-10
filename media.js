@@ -33,7 +33,7 @@ const VW_IK=(()=>{const s=d=>`<svg viewBox="0 0 24 24" aria-hidden="true" focusa
 '.fl50-chip .fl50-chip-x.vw-ik{width:28px;height:28px;padding:0;border:1.5px solid currentColor;background:none;color:#ff6b7a;font-size:0;line-height:1}',
 '.fl50-chip .fl50-chip-x.vw-ik:hover{background:currentColor}',
 /* Lagerlistans ta bort-knapp: studio.css ger .layer-delete en hel remsa med !important, sa har kravs !important. */
-'.layer-delete.vw-ik{width:28px!important;height:28px!important;margin:auto 6px!important;padding:0!important;border:1.5px solid currentColor!important;border-radius:50%!important;background:none!important;color:#ff6b7a!important;font-size:0!important;align-self:center}',
+/* 26 px utan sidomarginal, som las- och ogonknappen: kolumnen ar 26 px (widget-las.css), och 28 px + 2 x 6 px marginal spillde 5 px utanfor raden — det var den vagrata rullisten i LIVE-LAGER (uppmatt 2026-10-10). */'.layer-delete.vw-ik{width:26px!important;height:26px!important;margin:auto 0!important;padding:0!important;border:1.5px solid currentColor!important;border-radius:50%!important;background:none!important;color:#ff6b7a!important;font-size:0!important;align-self:center}',
 '.layer-delete.vw-ik:hover{background:currentColor!important}',
 '@media (prefers-reduced-motion:reduce){.vw-ik{transition:none}.vw-ik:active{transform:none}.media-card .media-play.vw-ik:active{transform:translate(-50%,-50%)}}'
 ].join('\n');(document.head||document.documentElement).appendChild(st)})();
