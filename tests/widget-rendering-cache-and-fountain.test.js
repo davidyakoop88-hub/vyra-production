@@ -450,7 +450,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // fail-open-versionen vidare.
   // Bumpad 2026-09-20: layout-safe.js passar in duken igen efter att den bytt ut #view i
   // overlay-utdata - forr stod overlayen oskalad 432x768 i hornet av TikToks 1080x1920-ruta.
-  assert.match(studio, /layout-safe\.js\?v=20260920-1/);
+  // Bumpad 2026-10-10: layout-safe.js och cloud-sync.js — raderingsvagarna bar avsiktsflaggan
+  // (__vyraUserRemovedWidget) sa att serverns krympvakt slapper igenom en avsiktlig radering;
+  // media.js (-3) av samma skal (LIVE-LAGER-papperskorgen).
+  assert.match(studio, /layout-safe\.js\?v=20261010-1/);
 });
 
 test('Like Fountain föder alla partiklar från mitten', () => {
