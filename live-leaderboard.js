@@ -378,6 +378,12 @@
     });
   }).catch(() => {});
   addEventListener('vyra-live-event', e => record(e.detail || {}));
+  // vyra-stor-avatar.js: profilsidans 1080 px-bild ersätter 72 px-eventbilden i registret, så nästa
+  // repaint (tickern) ritar den stora i raderna och i Top Gift.
+  addEventListener('vyra-stor-avatar', e => {
+    const d = e.detail || {}, t = totals[d.username];
+    if (t && d.stor && (t.profileImage === d.liten || !t.profileImage)) t.profileImage = d.stor;
+  });
   setInterval(updateLiveLeaderboards, 1000);
   // MALA GENAST NAR NAGON RITAT OM WIDGETARNA.
   //
