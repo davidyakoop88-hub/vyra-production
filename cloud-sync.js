@@ -76,7 +76,13 @@
   }
   async function call(path,options){return root.VyraAuth.api(path,options)}
   async function list(){return call(`/api/workspaces/${workspace.id}/overlays`)}
-  async function create(){const data=payload();const d=await call(`/api/workspaces/${workspace.id}/overlays`,{method:'POST',body:JSON.stringify({name:'Min VYRA-overlay',state:data})});overlay=d.overlay;saveMeta();return overlay}
+  // EN NY WEBBLÄSARE HAR INGEN vyra-state (uppmätt i produktion 2026-10-11: kontot jrofficialswe
+  // fick 400 "Ogiltig overlay" vid varje sidladdning och hade noll overlays efter en dag).
+  // payload() ger då null, och `state: null` avvisas av serverns validOverlayState. Första
+  // overlayn får därför en TOM men giltig layout; användarens första sparning fyller den sedan
+  // via push() som vanligt. Se tests/cloud-sync-forsta-overlay.test.js.
+  function tomLayout(){return{widgets:[],__vyraCloud:{schema:1,storage:{},savedAt:Date.now()}}}
+  async function create(){const data=payload()||tomLayout();const d=await call(`/api/workspaces/${workspace.id}/overlays`,{method:'POST',body:JSON.stringify({name:'Min VYRA-overlay',state:data})});overlay=d.overlay;saveMeta();return overlay}
   function saveMeta(){if(!overlay)return;localStorage.setItem(META(),JSON.stringify({workspaceId:workspace.id,overlayId:overlay.id,version:overlay.version,updatedAt:overlay.updated_at,lastLocal}))}
   async function getRemote(id){return(await call(`/api/workspaces/${workspace.id}/overlays/${id}`)).overlay}
   // Wipe-guard: allowEmptyWidgets följer med bara när användaren själv raderat sista widgeten
