@@ -522,9 +522,9 @@ const KINDS = { templatePgPodium: 'podium', templatePgStreak: 'streak', template
 const KEYS = { podium: 'catalog:pgpodium', streak: 'catalog:pgstreak', goal: 'catalog:pggoal' };
 const TITEL = { podium: 'Top Gifter Podium', streak: 'Top Streak Flip', goal: 'Goal Pro' };
 const BESKR = {
-  podium: 'Pallplats med HD-ram, krona och siffermedaljer · 12 ramar',
-  streak: 'Profilbild som flippar till gåvan · 12 egna ramar',
-  goal: 'Mål med 8 designer, markör, bubblor och färgpalett'
+  podium: 'Pallplats med HD-ram, krona och siffermedaljer',
+  streak: 'Profilbild som flippar till gåvan',
+  goal: 'Mål med markör, bubblor och färgpalett'
 };
 const NAT = { podium: { w: 940, h: 900 }, streak: { w: 760, h: 900 }, goal: { w: 940, h: 640 } };
 const GOALH = { 1: 250, 2: 320, 3: 520, 4: 470, 5: 280, 6: 360, 7: 620, 8: 660 };
@@ -717,6 +717,25 @@ props = function () {
 /* ---------- katalog + bindningar ---------- */
 /* Varje widget hör hemma i sin befintliga katalogsektion; en egen sektion skapas bara om hemsektionen saknas.
    Sektionerna byggs av annan kod i olika ögonblick, så placeringen är idempotent och flyttar knappen när hemmet dyker upp. */
+/* ETT KORT PER MODELL (Davids beslut 2026-10-11). Forut ett kort per widget med modellen som ett
+   val inuti Anpassa — "12 egna ramar" pa ett enda kort. Nu ar varje modell ett eget kort med egen
+   katalognyckel (basnyckeln + ':<modell>', widget-factory.js) och egen forhandsbild: streakens
+   ramfil, podiets HD-ram, Goal Pros familjebild. Basnyckelns samlingskort ritas inte langre.
+   Varje widget hor hemma i sin befintliga katalogsektion; en egen sektion skapas bara om hemsektionen
+   saknas. Sektionerna byggs av annan kod i olika ogonblick, sa placeringen ar idempotent och flyttar
+   knapparna nar hemmet dyker upp. */
+const MODELLER = {
+  streak: () => STREAK_MODELS.map(m => ({ id: m.id, namn: m.name, bild: m.file })),
+  podium: () => [{ id: 'none', namn: 'Kodad ram', bild: 'assets/previews/pgpodium.jpg' }]
+    .concat(HD.map(f => ({ id: f.id, namn: f.name, bild: (PGD.img || {})[f.id + '-key'] || 'assets/previews/pgpodium.jpg' }))),
+  goal: () => schemaOf('goal').find(f => f.k === 'design').o.map(([id, namn]) => ({ id, namn, bild: 'assets/previews/pggoal.jpg' })),
+};
+// overlay-preview.js fragar registret nar OWG_CATALOG_PREVIEW saknar nyckeln.
+(window.VyraKatalogForhandsbilder = window.VyraKatalogForhandsbilder || []).push(key => {
+  const m = /^catalog:(pgstreak|pgpodium|pggoal):(.+)$/.exec(String(key || '')); if (!m) return null;
+  const k = { pgstreak: 'streak', pgpodium: 'podium', pggoal: 'goal' }[m[1]];
+  const hit = MODELLER[k]().find(x => x.id === m[2]); return hit ? hit.bild : null;
+});
 function placeCatalog(cat) {
   const HEM = {
     podium: () => [...cat.querySelectorAll('section.prototype-section')].find(s => /TOP GIFTER/i.test(s.querySelector('h4')?.textContent || '')),
@@ -725,22 +744,30 @@ function placeCatalog(cat) {
   };
   const antal = (h, d) => { if (h && /\d+(?=\s+(?:RÖRLIGA\s+)?DESIGNER)/i.test(h.textContent)) h.textContent = h.textContent.replace(/(\d+)(?=\s+(?:RÖRLIGA\s+)?DESIGNER)/i, n => Math.max(0, +n + d)); };
   Object.keys(TYPES).forEach(k => {
-    let b = cat.querySelector('[data-pg-create="' + k + '"]');
     const hem = HEM[k] && HEM[k]();
     const reserv = cat.querySelector('[data-pgcat]');
-    if (b && (!hem || b.closest('section') === hem)) return;
-    if (!b) {
-      b = document.createElement('button');
-      b.type = 'button'; b.dataset.pgCreate = k; b.dataset.catalogKey = KEYS[k];
-      b.innerHTML = `<i class="vyra-pro-icon">${(window.vyraCatalogIcon ? vyraCatalogIcon('bolt') : '✦')}</i><span><b>${TITEL[k]}</b><small>${BESKR[k]}</small></span>`;
-      b.onclick = () => { const created = VyraWidgets.create(KEYS[k]); state.widgets.push(created); selected = created.id; save(); render(); if (window.toast) toast(TITEL[k] + ' skapad'); };
-    }
     let home = hem;
     if (!home) { home = reserv; if (!home) { home = document.createElement('section'); home.dataset.pgcat = '1'; home.innerHTML = '<h4>NYA WIDGETAR</h4>'; cat.prepend(home); } }
-    const gammal = b.closest('section');
-    (home.querySelector(':scope > .template-style-grid') || home).append(b);
-    if (home === hem) antal(home.querySelector('h4'), 1);
-    if (gammal && gammal !== home && gammal.dataset.pgcat && !gammal.querySelector('button')) gammal.remove();
+    const malet = home.querySelector(':scope > .template-style-grid') || home;
+    let nya = 0;
+    MODELLER[k]().forEach(m => {
+      const key = KEYS[k] + ':' + m.id;
+      let b = cat.querySelector('[data-catalog-key="' + key + '"]');
+      if (b && b.closest('section') === home) return;
+      if (!b) {
+        b = document.createElement('button');
+        b.type = 'button'; b.dataset.pgCreate = k; b.dataset.pgModel = m.id; b.dataset.catalogKey = key;
+        b.innerHTML = `<i class="vyra-pro-icon">${(window.vyraCatalogIcon ? vyraCatalogIcon('bolt') : '✦')}</i><span><b>${esc(TITEL[k] + ' · ' + m.namn)}</b><small>${esc(BESKR[k])}</small></span>`;
+        b.onclick = () => { const created = VyraWidgets.create(key); state.widgets.push(created); selected = created.id; save(); render(); if (window.toast) toast(created.title + ' skapad'); };
+        nya++;
+      }
+      const gammal = b.closest('section');
+      malet.append(b);
+      if (gammal && gammal !== home && gammal.dataset.pgcat && !gammal.querySelector('button')) gammal.remove();
+    });
+    // Basnyckelns samlingskort ska inte sta kvar bredvid modellkorten.
+    const bas = cat.querySelector('[data-catalog-key="' + KEYS[k] + '"]'); if (bas) bas.remove();
+    if (home === hem && nya) antal(home.querySelector('h4'), nya);
   });
 }
 
@@ -778,6 +805,6 @@ bind = function () {
   document.querySelectorAll('[data-pgtest]').forEach(b => b.onclick = ev => { ev.preventDefault(); pgTest(b.dataset.pgtest); });
 };
 
-window.VyraPlaygroundWidgets = { feed, resetAll, scan, types: TYPES, keys: KEYS, mounted: () => REG.size, state: STATE };
+window.VyraPlaygroundWidgets = { feed, resetAll, scan, types: TYPES, keys: KEYS, modeller: MODELLER, mounted: () => REG.size, state: STATE };
 
 })();

@@ -464,16 +464,25 @@
   function bindKatalog() {
     if (typeof view === 'undefined' || (view !== 'editor' && view !== 'overlay')) return;
     var sektion = document.querySelector('.widget-catalog [data-like-fountain]');
-    if (!sektion || sektion.querySelector('[data-catalog-key="catalog:likefountain:portal"]')) return;
-    var knapp = document.createElement('button');
-    knapp.type = 'button'; knapp.dataset.catalogKey = 'catalog:likefountain:portal';
-    knapp.innerHTML = '<i>♥</i><span><b>Like Fountain · Portal</b><small>Stiger när tittarna tappar · live</small></span>';
-    knapp.onclick = function () {
-      var w = root.VyraWidgets.create('catalog:likefountain:portal');
-      state.widgets.push(w); selected = w.id; if (typeof save === 'function') save(); if (typeof render === 'function') render();
-      if (typeof toast === 'function') toast('Like Fountain · Portal skapad');
-    };
-    sektion.appendChild(knapp);
+    if (!sektion) return;
+    // ETT KORT PER PALETT (Davids beslut 2026-10-11): de nio paletterna ar portalens modeller, och
+    // varje palett har en egen katalognyckel (widget-factory.js 'likefountain.palette'). 'custom' ar
+    // inget kort — egna farger valjs i panelen pa vilket kort som helst. Basnyckeln
+    // catalog:likefountain:portal finns kvar for sparade layouter men ritas inte som kort.
+    Object.keys(PALETTNAMN).filter(function (k) { return k !== 'custom' }).forEach(function (pal) {
+      var key = 'catalog:likefountain:portal:' + pal;
+      if (sektion.querySelector('[data-catalog-key="' + key + '"]')) return;
+      var knapp = document.createElement('button');
+      knapp.type = 'button'; knapp.dataset.catalogKey = key;
+      knapp.innerHTML = '<i>♥</i><span><b></b><small>Stiger när tittarna tappar · live</small></span>';
+      knapp.querySelector('b').textContent = 'Like Fountain · Portal · ' + PALETTNAMN[pal];
+      knapp.onclick = function () {
+        var w = root.VyraWidgets.create(key);
+        state.widgets.push(w); selected = w.id; if (typeof save === 'function') save(); if (typeof render === 'function') render();
+        if (typeof toast === 'function') toast(w.title + ' skapad');
+      };
+      sektion.appendChild(knapp);
+    });
   }
 
   // Stil: förhandsbilden syns i studion, aldrig i sändningen, och inte medan fontänen lever.

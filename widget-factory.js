@@ -66,6 +66,42 @@
   const GE_MATT = { 1: [400, 450], 2: [400, 535], 3: [400, 560], 4: [400, 570] };
 
   const TABLES = {
+    // ETT KORT PER MODELL (Davids beslut 2026-10-11). Fem samlingskort bar sina modeller som ett val
+    // inuti Anpassa (Top Streak Flip 12, Top Gifter Podium 12 HD-ramar + kodad ram, Goal Pro 8,
+    // Like Fountain · Portal 9 paletter, Follower Spotlight 3 teman). Nu har varje modell en egen
+    // katalognyckel: basnyckeln + ':<modell>'. Basnyckeln utan modell finns kvar for sparade
+    // layouter och ger exakt samma widget som forut. Id:n och namn speglar playground-assets.js
+    // (streak, frames), playground-widgets.js (goal), like-fountain-portal.js (paletter) och
+    // media.js (followerAlertThemes) — tests/ett-kort-per-modell.test.js vaktar att listorna ar samma.
+    'pgstreak.model': {
+      'royal-wings': { label: 'Royal Amethyst' }, 'frost-wings': { label: 'Frost Sapphire' },
+      'emerald-wings': { label: 'Emerald Leaf' }, 'inferno-wings': { label: 'Inferno Ruby' },
+      'neon-wings': { label: 'Neon Crystal' }, 'rose-wings': { label: 'Rose Pearl' },
+      'royal-gold': { label: 'Royal Gold' }, 'frost-crystal': { label: 'Frost Crystal' },
+      'inferno': { label: 'Inferno' }, 'emerald-grove': { label: 'Emerald Grove' },
+      'neon-circuit': { label: 'Neon Circuit' }, 'violet-orchid': { label: 'Violet Orchid' }
+    },
+    'pgpodium.frame': {
+      none: { label: 'Kodad ram' },
+      'royal-phoenix': { label: 'Royal Phoenix' }, 'obsidian-dragon': { label: 'Obsidian Dragon' },
+      'gilded-lion': { label: 'Gilded Lion' }, 'frostfire-crown': { label: 'Frostfire Crown' },
+      'diamond-halo': { label: 'Diamond Halo' }, 'midnight-butterfly': { label: 'Midnight Butterfly' },
+      'thunder-warden': { label: 'Thunder Warden' }, 'stellar-emperor': { label: 'Stellar Emperor' },
+      'ocean-oracle': { label: 'Ocean Oracle' }, 'moonlit-sakura': { label: 'Moonlit Sakura' },
+      'celestial-serpent': { label: 'Celestial Serpent' }, 'neon-valkyrie': { label: 'Neon Valkyrie' }
+    },
+    'pggoal.design': {
+      '1': { label: 'Rak bar' }, '2': { label: 'Pill' }, '3': { label: 'Ring' }, '4': { label: 'Mätare' },
+      '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }
+    },
+    'likefountain.palette': {
+      portal: { label: 'Portal · rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
+      fire: { label: 'Fire' }, ice: { label: 'Ice' }, gold: { label: 'Gold' }, aurora: { label: 'Aurora' },
+      pastel: { label: 'Pastel' }, mono: { label: 'Mono' }
+    },
+    'followeralert.theme': {
+      gold: { label: 'Gold', color: '#ffd35d' }, ocean: { label: 'Ocean', color: '#4fc3ff' }, blush: { label: 'Blush', color: '#ff6f9c' }
+    },
     // Short colour tables, verbatim from the catalog they came from.
     // Premiumdesignerna ar en EGEN familj, inte fler rader i topgift.theme ovan: de delar bara
     // namn, inte defaults - premium ar 340 px bred mot temats 280, och bar giftSize och glow.
@@ -241,9 +277,11 @@
     }),
     // Playground-widgetar (2026-10): Top Gifter Podium, Top Streak Flip och Goal Pro. Egen renderare i
     // playground-widgets.js; designval och färger ligger i pg-objektet och fylls från standardvärdena där.
-    'pgpodium': () => ({ type: 'templatePgPodium', x: 26, y: 90, width: 380, title: 'Top Gifter Podium', pg: {} }),
-    'pgstreak': () => ({ type: 'templatePgStreak', x: 66, y: 90, width: 300, title: 'Top Streak Flip', pg: {} }),
-    'pggoal': () => ({ type: 'templatePgGoal', x: 26, y: 90, width: 380, title: 'Goal Pro', pg: {} }),
+    // Med modell i nyckeln forvaljs den i pg (samma falt som Anpassa skriver); utan modell ar
+    // widgeten exakt den gamla — pg tomt, titeln utan tillagg.
+    'pgpodium': v => ({ type: 'templatePgPodium', x: 26, y: 90, width: 380, title: v.frame ? 'Top Gifter Podium · ' + v.frame.label : 'Top Gifter Podium', pg: v.frame ? { frameImg: v.frameId } : {} }),
+    'pgstreak': v => ({ type: 'templatePgStreak', x: 66, y: 90, width: 300, title: v.model ? 'Top Streak Flip · ' + v.model.label : 'Top Streak Flip', pg: v.model ? { x: { model: v.modelId } } : {} }),
+    'pggoal': v => ({ type: 'templatePgGoal', x: 26, y: 90, width: 380, title: v.design ? 'Goal Pro · ' + v.design.label : 'Goal Pro', pg: v.design ? { x: { design: v.designId } } : {} }),
     // Heart Fireworks - modell 2. Skotten formar hjartan; guldskott vid hogre combo.
     'heartfireworks': () => ({
       type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
@@ -378,11 +416,13 @@
       gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
       gifterColor: '#9965ff', gifterLight: '#e2d6ff'
     }),
-    'followeralert': () => ({
-      type: 'templateFollowerAlert', x: 100, y: 80, width: 300, title: 'New Follower Alert',
+    // Med tema i nyckeln satts followTheme + temats farg (samma som panelens temaval skriver).
+    // Basnyckeln ger exakt det gamla objektet, utan followTheme — snapshotprovet jamfor det.
+    'followeralert': v => Object.assign({
+      type: 'templateFollowerAlert', x: 100, y: 80, width: 300, title: v.theme ? 'New Follower Alert · ' + v.theme.label : 'New Follower Alert',
       followLabel: 'NEW FOLLOWER', followName: 'Aurora Vale', followMessage: 'TAKES THE STAGE',
-      followColor: '#ffd35d', followDuration: 6
-    }),
+      followColor: v.theme ? v.theme.color : '#ffd35d', followDuration: 6
+    }, v.theme ? { followTheme: v.themeId } : {}),
 
     // HELA PAKETET (kind 'pack', 2026-10-10): en widget per paket, lika bred som duken (432) och
     // 16:9 hel — y 480 lägger filmens underkant ~45 px över dukens nederkant (768). Klippet väljs
@@ -445,9 +485,9 @@
           kistaFarg: '#ffc94d', kistaVisaAvsandare: true, kistaEfterOppning: 8, layer: 30 },
 
     // PORTALEN: 360 bred ger 640 hög (designens 9:16), och x/y lägger hela fontänen på duken.
-    'likefountain.portal': () => ({
+    'likefountain.portal': v => ({
       type: 'templateLikeFountain', fountainDesign: 'portal', x: 36, y: 64, width: 360,
-      title: 'Like Fountain · Portal', fountainPalette: 'portal', fountainPerLike: 6,
+      title: v.palette ? 'Like Fountain · Portal · ' + v.palette.label : 'Like Fountain · Portal', fountainPalette: v.paletteId || 'portal', fountainPerLike: 6,
       fountainAvatarHearts: true, fountainPopEvery: 1000
     }),
     'likefountain': () => ({
@@ -548,12 +588,12 @@
       if (!parts[0]) throw new Error('catalog:gifterlevel kräver en layout');
       return ['gifterlevel.layout', { layout: parts[0] }];
     },
-    'followeralert': () => ['followeralert', {}],
+    'followeralert': parts => parts[0] ? ['followeralert', { themeId: parts[0], theme: pick('followeralert.theme', parts[0], 'tema för Follower Spotlight') }] : ['followeralert', {}],
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
-    'pgpodium': () => ['pgpodium', {}],
-    'pgstreak': () => ['pgstreak', {}],
-    'pggoal': () => ['pggoal', {}],
+    'pgpodium': parts => parts[0] ? ['pgpodium', { frameId: parts[0], frame: pick('pgpodium.frame', parts[0], 'HD-ram för Top Gifter Podium') }] : ['pgpodium', {}],
+    'pgstreak': parts => parts[0] ? ['pgstreak', { modelId: parts[0], model: pick('pgstreak.model', parts[0], 'modell för Top Streak Flip') }] : ['pgstreak', {}],
+    'pggoal': parts => parts[0] ? ['pggoal', { designId: parts[0], design: pick('pggoal.design', parts[0], 'design för Goal Pro') }] : ['pggoal', {}],
     'glovesnipe': parts => {
       // catalog:glovesnipe:<pack>:<kind>[:<multiplier>] — the labels, icon and name are derived from
       // kind and multiplier exactly as addBoostPack() derived them.
@@ -577,7 +617,7 @@
     },
     // `catalog:likefountain:portal` är den live-drivna fontänen (like-fountain-portal.js). Utan
     // del är det den klassiska, som förut - sparade layouter och katalogkortet oförändrade.
-    'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', {}] : ['likefountain', {}],
+    'likefountain': parts => parts[0] === 'portal' ? ['likefountain.portal', parts[1] ? { paletteId: parts[1], palette: pick('likefountain.palette', parts[1], 'palett för Like Fountain · Portal') } : {}] : ['likefountain', {}],
     // catalog:latonskningar:youtube och catalog:latonskningar:spotify — källan är nyckelns enda led.
     'latonskningar': parts => {
       if (parts[0] !== 'youtube' && parts[0] !== 'spotify') throw new Error(`Okänd källa för låtönskningar: ${parts[0]}`);

@@ -43,6 +43,13 @@ function everyCatalogKey() {
   v('fanlevel.theme').forEach(t => keys.push('catalog:fanlevel:' + t));
   v('fanlevel.layout').forEach(l => keys.push('catalog:fanlevel:layout:' + l));
   v('fanlevel50.design').forEach(d => keys.push('catalog:fanlevel50:' + d));
+  // Ett kort per modell (2026-10-11): basnycklarna ovan/nedan finns kvar, och varje modell har en
+  // egen nyckel som katalogen bygger ur sin tabell.
+  v('followeralert.theme').forEach(t => keys.push('catalog:followeralert:' + t));
+  v('pgstreak.model').forEach(m => keys.push('catalog:pgstreak:' + m));
+  v('pgpodium.frame').forEach(f => keys.push('catalog:pgpodium:' + f));
+  v('pggoal.design').forEach(d => keys.push('catalog:pggoal:' + d));
+  v('likefountain.palette').forEach(p => keys.push('catalog:likefountain:portal:' + p));
   v('battlemvp.style').forEach(t => keys.push('catalog:battlemvp:' + t));
   v('battlemvp.frame').forEach(f => keys.push('catalog:battlemvp:frame:' + f));
   v('ranking.kind').forEach(type => ['gold', 'violet'].forEach(t => keys.push('catalog:ranking:' + type + ':' + t)));
@@ -344,8 +351,9 @@ test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => 
   // every test above — while every button in that group silently produced the same design.
   // catalog:topgift lamnade listan 2026-09-23 med prototypkortet: ingen knapp bygger den langre,
   // sa en kvarlamnad tillatelse hade bara varit dod vikt som laste ut som en regel.
-  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topstreak',
-    'catalog:followeralert', 'catalog:likefountain']);
+  // catalog:followeralert lamnade listan 2026-10-11: Follower Spotlight fick ett kort per tema
+  // (Gold/Ocean/Blush), sa knappen bygger nyckeln ur sin variant som alla andra familjer.
+  const CONSTANT_OK = new Set(['catalog:video', 'catalog:topstreak', 'catalog:likefountain']);
   const constants = KEY_ASSIGNMENTS(MEDIA)
     .filter(b => !b.concatenated && !CONSTANT_OK.has(b.literal))
     .map(b => b.literal);
@@ -356,10 +364,11 @@ test('varje variantbärande knapp bygger sin nyckel ur sin egen variant', () => 
 // FEM -> FYRA den 2026-09-23. catalog:topgift byggdes av prototypkortet "Top Gift Flip", som togs
 // bort med resten av sin sektion. Familjen finns kvar i fabriken och gar fortfarande att skapa ur
 // en nyckel — det ar KNAPPEN som ar borta, och det ar knappar det har provet raknar.
-test('alla fyra variantlösa katalognycklar finns kvar', () => {
+// FYRA -> TRE den 2026-10-11. catalog:followeralert fick varianter (ett kort per tema) och bygger
+// nu sin nyckel ur variantens id, som de andra familjerna; basnyckeln finns kvar i fabriken.
+test('alla tre variantlösa katalognycklar finns kvar', () => {
   const literals = new Set(KEY_ASSIGNMENTS(MEDIA).filter(b => !b.concatenated).map(b => b.literal));
-  for (const key of ['catalog:video', 'catalog:topstreak',
-    'catalog:followeralert', 'catalog:likefountain']) {
+  for (const key of ['catalog:video', 'catalog:topstreak', 'catalog:likefountain']) {
     assert.ok(literals.has(key), `${key} byggs inte längre`);
   }
 });

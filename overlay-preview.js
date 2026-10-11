@@ -209,6 +209,16 @@ const OWG_CATALOG_PREVIEW = {
   'catalog:pgstreak': 'assets/previews/pgstreak.jpg',
   'catalog:pggoal': 'assets/previews/pggoal.jpg'
 };
+// MODELLKORTEN (ett kort per modell, 2026-10-11) registrerar sina egna forhandsbilder:
+// window.VyraKatalogForhandsbilder ar en lista av funktioner nyckel -> bildvag eller null, fylld av
+// playground-widgets.js (streakens ramfil, podiets HD-ram, Goal Pros familjebild). Tabellen ovan gar
+// fore; registret fragas bara nar den saknar nyckeln.
+function owgRegistreradForhandsbild(key) {
+  const reg = window.VyraKatalogForhandsbilder;
+  if (!Array.isArray(reg)) return null;
+  for (const fn of reg) { try { const b = fn(key); if (b) return b } catch (_) {} }
+  return null;
+}
 
 // Arken byggs EN gang och delas av alla kort. Att kopiera ett trettiotal stilmallar per miniatyr
 // hade kostat mer an hela katalogen ar vard; adoptedStyleSheets ar gjort for att delas.
@@ -349,7 +359,7 @@ function owgRenderCardThumb(btn) {
   //  • De glesa/dekorativa korten i OWG_CATALOG_PREVIEW (Clean Flip, Top Coins, premium-Top Gifter)
   //    som annars inte fyller rutan — de får sin handplockade förhandsbild.
   // Bilden fyller HELA kortet; object-fit:cover ramar in den som widgetens egen symbolruta gör.
-  const owgPreviewImg = (btn && btn.dataset && OWG_CATALOG_PREVIEW[btn.dataset.catalogKey])
+  const owgPreviewImg = (btn && btn.dataset && (OWG_CATALOG_PREVIEW[btn.dataset.catalogKey] || owgRegistreradForhandsbild(btn.dataset.catalogKey)))
     || (preview && preview.type === 'templateGloveSnipe' && preview.battleVideoMode
       ? (thumbHtml.match(/poster="([^"]+)"/) || [])[1] : null);
   if (owgPreviewImg) {
