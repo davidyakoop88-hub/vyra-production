@@ -728,7 +728,10 @@ const MODELLER = {
   streak: () => STREAK_MODELS.map(m => ({ id: m.id, namn: m.name, bild: m.file })),
   podium: () => [{ id: 'none', namn: 'Kodad ram', bild: 'assets/previews/pgpodium.jpg' }]
     .concat(HD.map(f => ({ id: f.id, namn: f.name, bild: (PGD.img || {})[f.id + '-key'] || 'assets/previews/pgpodium.jpg' }))),
-  goal: () => schemaOf('goal').find(f => f.k === 'design').o.map(([id, namn]) => ({ id, namn, bild: 'assets/previews/pggoal.jpg' })),
+  // En bild per design (2026-10-11, Davids ord: "varje modell for sig sjalv"): renderade ur
+  // W.goalvar i Chromium vid 64 % av 2 000, samma lage som familjebilden. Familjebilden
+  // pggoal.jpg finns kvar for basnyckeln och gamla referenser.
+  goal: () => schemaOf('goal').find(f => f.k === 'design').o.map(([id, namn]) => ({ id, namn, bild: 'assets/previews/pggoal-' + id + '.jpg' })),
 };
 // overlay-preview.js fragar registret nar OWG_CATALOG_PREVIEW saknar nyckeln.
 (window.VyraKatalogForhandsbilder = window.VyraKatalogForhandsbilder || []).push(key => {
