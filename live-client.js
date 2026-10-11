@@ -259,6 +259,9 @@ function ingest(e,frameId){
   if(!gateFor().accept(frameId||e?.id))return;
   normalizeCloudFields(e);
   normalizeUserFlags(e);
+  // Skarpa profilbilder: byter 72 px-avataren mot profilsidans 1080 px när den är känd, annars
+  // köar ett uppslag (vyra-stor-avatar.js). Synkront, så widgetarna nedströms ser den stora.
+  if(window.VyraStorAvatar)window.VyraStorAvatar.forbattra(e);
   try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
   emit('vyra-live-event',e);
   // SIMULERADE EVENT FAR INTE LARAS IN.

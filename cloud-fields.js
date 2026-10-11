@@ -43,15 +43,29 @@
   // Typvakten kommer från base-widget.js-kopian och behålls: de fristående sidorna får sitt event
   // ur postMessage och localStorage, där ett trasigt värde är fullt möjligt. live-client.js
   // anropar alltid med ett objekt, så vakten kostar den ingenting.
+  // GÅVOBILDER I 512 PX (David 2026-10-11, "mina widget ser suddiga"). TikTok skickar gåvans bild
+  // som `~tplv-obj.webp` (168×168, uppmätt) och ibland `~tplv-resize:258:258`. Top Gift ritar den
+  // i 275 px i 1080×1920. CDN:en svarar 200 på `~tplv-resize:512:512.webp` utan signatur
+  // (uppmätt 512×512 på tre URL-former). Redan stora varianter rörs inte; andra värdar rörs inte.
+  function storGavobild(url) {
+    const s = String(url == null ? '' : url);
+    if (!/^https:\/\/p\d+-webcast\.tiktokcdn[a-z.-]*\.com\//.test(s)) return url;
+    const m = /~tplv-(obj|resize:(\d+):(\d+))\.webp(\?|$)/.exec(s);
+    if (!m) return url;
+    if (m[1] !== 'obj' && Number(m[2]) >= 512) return url;
+    return s.replace(/~tplv-(obj|resize:\d+:\d+)\.webp/, '~tplv-resize:512:512.webp');
+  }
+
   function normalizeCloudFields(e) {
     if (!e || typeof e !== 'object') return e;
+    if (e.giftImage) e.giftImage = storGavobild(e.giftImage);
     if (e.profileImage == null && e.profileUrl) e.profileImage = e.profileUrl;
     if (e.coins == null && e.value != null) e.coins = e.value;
     if (e.name != null) e.name = plattaNamn(e.name);
     return e;
   }
 
-  const api = Object.freeze({ plattaNamn, normalizeCloudFields });
+  const api = Object.freeze({ plattaNamn, normalizeCloudFields, storGavobild });
   root.VyraCloudFields = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
