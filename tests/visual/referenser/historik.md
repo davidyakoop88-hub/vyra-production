@@ -318,3 +318,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ett kort per modell (#587): 45 nya katalognycklar, omkorning efter att katalogkartan uppdaterats till 175 nycklar
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 165
+
+## 2026-10-11 — 8 referenser skrivna
+
+- **Motiv:** Goal Pro design 7 Stående delad i två modeller (7 Stående, 9 Stående pill), PR #592
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 8 av 165 (filter: pggoal) — catalog:pggoal:1, catalog:pggoal:2, catalog:pggoal:3, catalog:pggoal:4, catalog:pggoal:5, catalog:pggoal:6, catalog:pggoal:7, catalog:pggoal:8
