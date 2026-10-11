@@ -27,6 +27,9 @@
 
   // OVERLAY-LÄGET LÄSES UR URL:EN, inte ur `view` (se avsnitt 3 för varför).
   function iOverlay() { return typeof location !== 'undefined' && new URLSearchParams(location.search).has('overlay'); }
+  function aktivSession() {
+    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+  }
 
   // Bara familjer som livedata faktiskt skriver till. En widget vars innehåll streamern själv har
   // skrivit (Egen text, Heart Goal) får aldrig tömmas av en sändningsstart.
@@ -62,9 +65,13 @@
   function arTom(w) {
     if (!arLivewidget(w)) return false;
     const namn = w.dataName, varde = w.dataValue;
-    const namnTomt = namn === undefined || namn === null || namn === '' || (iOverlay() && platshallare(namn));
+    // BARA UNDER EN PÅGÅENDE SÄNDNING, precis som stall() i avsnitt 5 och av samma skäl: den visuella
+    // riggen öppnar ?overlay=1 utan sändning och fotograferar katalogen — där ska platshållaren synas.
+    // Uppmätt i CI 2026-10-11: utan grinden blev Top Gift/Top Streak "0×0, dold" i 3 referenser.
+    const platsTom = !!namn && iOverlay() && platshallare(namn) && !!aktivSession();
+    const namnTomt = namn === undefined || namn === null || namn === '' || platsTom;
     if (!namnTomt) return false;
-    if (namn && iOverlay() && platshallare(namn)) return true;
+    if (platsTom) return true;
     return varde === undefined || varde === null || varde === '' || Number(varde) === 0;
   }
 
@@ -267,9 +274,7 @@
   // PRISET, utskrivet: slutar livesession-signalen fungera slutar doljandet tyst att fungera med
   // den. Det ar en medveten avvagning mot alternativet — att ta bort en fjardedel av den visuella
   // vakten for att fa provet gront.
-  const aktivSession = () => {
-    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
-  };
+  // (aktivSession är deklarerad överst i filen, bredvid iOverlay — arTom behöver den också.)
 
   function stall() {
     if (!iOverlay() || !aktivSession()) return;

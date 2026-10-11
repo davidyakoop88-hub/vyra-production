@@ -51,7 +51,7 @@
     // REGEL NR 1 (David 2026-10-11): demomedlemmarna (MICHELLY, GARY B., NOVA STORM) är till för
     // editorn. I overlay med en tom roster visades de som riktiga fans — uppmätt med noll events.
     // Tom lista i overlay ger en dold widget; första riktiga level-50-fansen (addAuto) tänder den.
-    return out.length ? out : (iOverlay() ? [] : demo());
+    return out.length ? out : (iOverlay() && aktivSandning() ? [] : demo());
   }
 
   function cardHtml(w, m, rank) {
@@ -68,6 +68,10 @@
   }
 
   const iOverlay = () => new URLSearchParams(root.location.search).has('overlay');
+  // Samma sändningsgrind som vyra-tom-widget.js: utan sändning (t.ex. den visuella riggen) visas demot.
+  const aktivSandning = () => { try { return !!(root.VyraTomWidget && root.VyraTomWidget.aktivSession()) } catch (_) { return false } };
+  // Sändningsstarten ritar om, så demomedlemmarna försvinner när publiken kommer.
+  root.addEventListener('vyra-live-session', () => { if (typeof render === 'function') render(); });
   const DOLJ = 'display:none!important;';
 
   function fanLevel50Html(w) {

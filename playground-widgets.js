@@ -597,8 +597,12 @@ function mount(host) {
 // w.hidden är streamerns eget val och rörs aldrig. Bara i overlay — i editorn ska podiet synas
 // för att gå att placera.
 const iOverlay = () => new URLSearchParams(location.search).has('overlay');
+// Sändningsgrinden är vyra-tom-widget.js:s egen (aktivSession): utan pågående sändning finns ingen
+// publik, och den visuella riggen fotograferar katalogen i ?overlay=1 utan sändning — där ska podiet
+// synas. Uppmätt i CI 2026-10-11: utan grinden blev 26 podium-/streak-referenser "0×0, dold".
+const aktivSandning = () => { try { return !!(window.VyraTomWidget && window.VyraTomWidget.aktivSession()) } catch (_) { return false } };
 function syncTom(host, r) {
-  if (!r || !r.inst || typeof r.inst.tom !== 'function' || !iOverlay()) return;
+  if (!r || !r.inst || typeof r.inst.tom !== 'function' || !iOverlay() || !aktivSandning()) return;
   const w = widgetById(r.id); if (!w || w.hidden) return;
   const el = host.closest('[data-id]') || host;
   if (r.inst.tom()) el.style.setProperty('display', 'none', 'important');
@@ -658,7 +662,7 @@ function resetAll() {
   lastRC.clear();
   for (const [h, r] of REG) { try { r.inst.event({ type: 'reset' }); } catch (_) {} syncTom(h, r); }
 }
-window.addEventListener('vyra-live-session', ev => { const d = ev && ev.detail; if (d && d.event === 'live:start') resetAll(); });
+window.addEventListener('vyra-live-session', ev => { const d = ev && ev.detail; if (d && d.event === 'live:start') resetAll(); else for (const [h, r] of REG) syncTom(h, r); });
 function glom() {
   for (const [h, r] of REG) { try { r.inst.destroy && r.inst.destroy() } catch (_) {} REG.delete(h); }
   resetAll();

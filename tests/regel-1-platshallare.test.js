@@ -15,13 +15,17 @@ const ROOT = path.join(__dirname, '..');
 const las = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const js = las('vyra-tom-widget.js');
 
-function rigg({ overlay = true } = {}) {
+// `sandning` = en pågående sändning (VyraLiveSession.runtime().aktivSession()). Regeln gäller bara då:
+// den visuella riggen öppnar ?overlay=1 UTAN sändning och ska se platshållaren (CI 2026-10-11:
+// utan grinden blev Top Gift/Top Streak "0×0, dold" i referenserna).
+function rigg({ overlay = true, sandning = true } = {}) {
   const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
     { url: 'http://localhost/studio.html' + (overlay ? '?overlay=1' : ''), runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(`var view='editor',selected=null,state={widgets:[]},save=()=>{},render=()=>{},
     liveWidget=id=>state.widgets.find(x=>x.id===id),bind=()=>{},
     wh=w=>'<div class="widget vyra-topgift" data-id="'+w.id+'" style="left:0"><strong>'+(w.dataName||'')+'</strong></div>';`);
+  if (sandning) w.VyraLiveSession = { runtime: () => ({ aktivSession: () => '0f3f2a8e-9c6d-4b0a-8e2d-1a2b3c4d5e6f' }) };
   w.eval(js);
   return w;
 }
@@ -30,6 +34,9 @@ test('fabrikens platshållare döljs i overlay, men inte i editorn', () => {
   const demo = { id: 'g1', type: 'templateTopGift', dataName: '@StreamQueen', dataValue: '44 999' };
   assert.match(rigg().eval('wh')(demo), /style="display:none!important;/, 'overlay: @StreamQueen är ingen tittare');
   assert.doesNotMatch(rigg({ overlay: false }).eval('wh')(demo), /display:none/, 'editorn designar mot platshållaren');
+  assert.doesNotMatch(rigg({ sandning: false }).eval('wh')(demo), /display:none/, 'overlay utan sändning (den visuella riggen) ska visa platshållaren');
+  // En FAKTISKT tom widget döljs i overlay oavsett sändning — det är den gamla regeln, orörd.
+  assert.match(rigg({ sandning: false }).eval('wh')({ id: 'g3', type: 'templateTopGift' }), /display:none!important/);
   const streak = { id: 's1', type: 'templateTopStreak', dataName: '@StreamQueen', dataValue: 18 };
   assert.match(rigg().eval('wh')(streak), /display:none!important/, 'Top Streak bär samma platshållare');
 });
@@ -56,5 +63,8 @@ test('raderna i topplistan döljs med !important, inte med en vanlig inline-stil
   // förlorade mot dem och fyra tomma rader stod under den enda likaren.
   const src = las('live-leaderboard.js');
   assert.match(src, /if \(person\) row\.style\.removeProperty\('display'\);\n\s*else row\.style\.setProperty\('display', 'none', 'important'\);/);
+  // Podium/streak-flip och Fan Level 50 döljs bara under pågående sändning — samma grind.
+  assert.match(las('playground-widgets.js'), /if \(!r \|\| !r\.inst \|\| typeof r\.inst\.tom !== 'function' \|\| !iOverlay\(\) \|\| !aktivSandning\(\)\) return;/);
+  assert.match(las('fan-level-50.js'), /return out\.length \? out : \(iOverlay\(\) && aktivSandning\(\) \? \[\] : demo\(\)\);/);
   assert.doesNotMatch(src, /row\.style\.display = person \? '' : 'none'/);
 });
