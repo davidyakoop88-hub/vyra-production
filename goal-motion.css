@@ -4,7 +4,10 @@
    ovanför nivån som släcker konsten. Underkanten följer samma formel som skenets höjd, så gränsen
    ligger exakt där fyllningen slutar. Landskap och cirkel har egna uttryck och rörs inte. */
 .goal-motion-portrait .goal-motion-livefill{position:absolute;left:29%;right:29%;bottom:5%;height:calc(var(--goal-fill)*.85);max-height:85%;border-radius:999px;background:linear-gradient(0deg,rgba(255,255,255,.5),rgba(255,255,255,.1));filter:blur(2px);opacity:.95;box-shadow:0 -2px 6px rgba(255,255,255,.45)}
-.goal-motion-portrait .goal-motion-dim{position:absolute;left:22%;right:22%;top:9.5%;bottom:calc(5% + var(--goal-fill)*.85);background:rgba(0,0,0,.58);border-radius:999px 999px 0 0;pointer-events:none;transition:bottom .6s ease}
+/* Lagret täcker BARA rörets insida (uppmätt: ramlinjerna ligger vid 31 % och 65 % av bredden, insidan
+   35–65 %). Davids ord 2026-10-11: "den på sidan ska lysa så man ser hur den ser ut" — ramen och dess
+   glöd ska lysa hela vägen, även i den tomma delen, så formen syns. */
+.goal-motion-portrait .goal-motion-dim{position:absolute;left:35%;right:35%;top:10%;bottom:calc(5% + var(--goal-fill)*.85);background:rgba(0,0,0,.58);border-radius:999px 999px 0 0;pointer-events:none;transition:bottom .6s ease}
 .goal-motion-portrait .goal-motion-dim::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.9);box-shadow:0 0 10px #fff}
 /* MARKÖREN ÄR HJÄRTAT (2026-10-11, Davids ord "målet är den hjärta i mitten ska vara den som visar hur
    mycket man har tappat"). Emblemet satt inbakat mitt i konsten (vertical-like.png, rad 42–48 %) och
