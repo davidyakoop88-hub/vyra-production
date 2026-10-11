@@ -100,7 +100,13 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
 // en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
 // kommer utan username och far inte krava ett.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove']);
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove'])
+// KISTAN FÅR KOMMA UTAN AVSÄNDARE (uppmätt 2026-10-11, sändningen jrofficialswe): TikToks
+// envelopeInfo bar inget sendUserName, bryggan skickade username '' och molnet svarade 400 på
+// alla tio kistorna — de nådde aldrig overlayn. En kista identifieras av kistaId; avsändarnamnet
+// är dekoration. Inte i TIKTOK_ROOM_TYPES, för kistan bär en person när namnet finns och ska
+// behandlas som en personhändelse i allt annat (nivåminne, statistik).
+const TIKTOK_UTAN_AVSANDARE=new Set(['envelope']);;
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
 // CHATTKOMMANDON I EGEN HINK (2026-09-27, #365). Rader som börjar med "!" (bryggans typ
 // `chatcommand`, som cleanEvent gör till `chat`) behövs i molnet för låtönskningar och chattbotens
@@ -128,6 +134,7 @@ function validateTikTokIngestPayload(payload){
   // Room-level events (viewer count, battle score) describe the room, not a person, so the bridge
   // sends them without a username — requiring one there rejected every single one with a 400.
   if(TIKTOK_ROOM_TYPES.has(type))return;
+  if(TIKTOK_UTAN_AVSANDARE.has(type)&&(payload?.username==null||typeof payload.username==='string'))return;
   if(typeof payload?.username!=='string'||!payload.username.trim())throw Object.assign(new Error('Fältet "username" saknas eller är inte en sträng'),{status:400});
 }
 // Rate limit first (cheapest check, sheds load before touching Redis Streams/Pub-Sub or even
