@@ -420,9 +420,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   for (const fil of ['action-options', 'action-runtime']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
   }
-  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'live-client', 'action-simulator']) {
+  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
+  // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
+  // profilsidans 1080 px (vyra-stor-avatar.js).
+  assert.match(media, /live-client\.js\?v=20261011-1/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.

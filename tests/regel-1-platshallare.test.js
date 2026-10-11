@@ -52,9 +52,9 @@ test('en riktig tittare med samma mönster i namnet döljs inte', () => {
 test('cachebustarna höjdes med filerna', () => {
   const html = las('studio.html'), media = las('media.js');
   assert.match(html, /vyra-tom-widget\.js\?v=20261011-1/);
-  assert.match(html, /media\.js\?v=20261011-4/);
-  assert.match(media, /live-leaderboard\.js\?v=20261011-1/);
-  assert.match(media, /playground-widgets\.js\?v=20261011-3/);
+  assert.match(html, /media\.js\?v=20261011-6/);  // 20261011-6: busten foljde med nasta andring i samma fil
+  assert.match(media, /live-leaderboard\.js\?v=20261011-2/);
+  assert.match(media, /playground-widgets\.js\?v=20261011-6/);
   assert.match(media, /fan-level-50\.js\?v=20261011-1/);
 });
 
@@ -62,7 +62,7 @@ test('raderna i topplistan döljs med !important, inte med en vanlig inline-stil
   // Temana deklarerar radens display med !important (31 regler); `row.style.display='none'`
   // förlorade mot dem och fyra tomma rader stod under den enda likaren.
   const src = las('live-leaderboard.js');
-  assert.match(src, /if \(person\) row\.style\.removeProperty\('display'\);\n\s*else row\.style\.setProperty\('display', 'none', 'important'\);/);
+  assert.match(src, /if \(person\) row\.style\.removeProperty\('display'\);\r?\n\s*else row\.style\.setProperty\('display', 'none', 'important'\);/);
   // Podium/streak-flip och Fan Level 50 döljs bara under pågående sändning — samma grind.
   assert.match(las('playground-widgets.js'), /if \(!r \|\| !r\.inst \|\| typeof r\.inst\.tom !== 'function' \|\| !iOverlay\(\) \|\| !aktivSandning\(\)\) return;/);
   assert.match(las('fan-level-50.js'), /return out\.length \? out : \(iOverlay\(\) && aktivSandning\(\) \? \[\] : demo\(\)\);/);
