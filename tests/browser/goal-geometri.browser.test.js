@@ -19,7 +19,8 @@ const ROOT=path.join(__dirname,'..','..'),{startaWebblasare,hoppaOver}=require('
 const MIME={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.woff2':'font/woff2'};
 const FAMILJ={followers:['crown','follower'],likes:['heart','like'],diamonds:['diamond','diamond']};
 const FORM={orbit:['circle','circle'],rail:['landscape','horizontal'],tower:['portrait','vertical']};
-const DESIGNS=Object.entries(FAMILJ).flatMap(([kind,[familj,fil]])=>Object.entries(FORM).map(([form,[orientation,bild]])=>({kind,id:`${familj}-${form}`,orientation,art:`${bild}-${fil}.png`})));
+// heart-tower (2026-10-11, #593): röret ritas utan emblemet (vertical-like-tube.png), emblemet är markören.
+const DESIGNS=Object.entries(FAMILJ).flatMap(([kind,[familj,fil]])=>Object.entries(FORM).map(([form,[orientation,bild]])=>({kind,id:`${familj}-${form}`,orientation,art:`${familj}-${form}`==='heart-tower'?'vertical-like-tube.png':`${bild}-${fil}.png`})));
 const GAMLA=[['followers','pulse-rail','landscape'],['followers','pulse-tower','portrait'],['likes','signal-ribbon','landscape'],['likes','heart-column','portrait'],['diamonds','prism-core','landscape'],['diamonds','prism-spine','portrait']];
 function servera(){const server=http.createServer((req,res)=>{const rel=decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/,''),fil=path.join(ROOT,rel);if(!fil.startsWith(ROOT)||!fs.existsSync(fil)||fs.statSync(fil).isDirectory()){res.writeHead(404);res.end('nej');return}res.writeHead(200,{'content-type':MIME[path.extname(fil)]||'application/octet-stream'});fs.createReadStream(fil).pipe(res)});return new Promise(r=>server.listen(0,'127.0.0.1',()=>r(server)))}
 let server,browser,bas,skip=hoppaOver();
@@ -39,7 +40,7 @@ const MAT=`async id=>{const rot=document.querySelector('.canvas [data-id="'+id+'
  return{klass:rot.className,box:rb,art:art&&art.getAttribute('src'),artLaddad:!!art&&art.naturalWidth>0,artBox:art&&box(art),
   symbol:sym&&sym.getAttribute('src'),symbolLaddad:!!sym&&sym.naturalWidth>0,
   saknas:delar.filter(q=>!rot.querySelector(q)),utanfor:delar.filter(q=>{const e=rot.querySelector(q);return e&&e.getClientRects().length>0&&!inom(box(e),rb)}),
-  paDuken:inom(rb,duk),fill:fill&&box(fill),fillVar:getComputedStyle(rot).getPropertyValue('--goal-fill').trim(),
+  paDuken:inom(rb,duk),fill:fill&&box(fill),dim:(()=>{const d=rot.querySelector('.goal-motion-dim');return d&&box(d)})(),fillVar:getComputedStyle(rot).getPropertyValue('--goal-fill').trim(),
   pct:rot.querySelector('[data-goal-pct]')?.textContent,varde:rot.querySelector('[data-goal-value]')?.textContent,
   gammal:!!rot.querySelector('.goal-new-art,.goal-new-track,.goal-icon,.goal-track')}}`;
 
@@ -73,7 +74,8 @@ for(const d of DESIGNS)test(`${d.id} skapas ur katalogen komplett som ${d.orient
   const lag=await medVarde(page,id,250),hog=await medVarde(page,id,750);
   assert.equal(lag.fillVar,'25%');assert.equal(hog.fillVar,'75%');
   if(d.orientation==='landscape')assert.ok(hog.fill.w>lag.fill.w,'liggande progress fylls inte på bredden');
-  else if(d.orientation==='portrait')assert.ok(hog.fill.h>lag.fill.h,'stående progress fylls inte på höjden');
+  // Stående (#593): livefill är display:none — nivån bärs av det mörka lagret ovanför fyllningen, som krymper när målet fylls.
+  else if(d.orientation==='portrait')assert.ok(hog.dim&&lag.dim&&hog.dim.h<lag.dim.h,`stående progress fylls inte på höjden (dim ${JSON.stringify(lag.dim)} -> ${JSON.stringify(hog.dim)})`);
   assert.deepEqual(hog.utanfor,[],'fyllningen går utanför ramen');
  }finally{await page.close()}});
 
