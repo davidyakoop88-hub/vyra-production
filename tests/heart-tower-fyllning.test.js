@@ -64,6 +64,17 @@ test('hjärtat i mitten är markören som glider med nivån', () => {
   assert.match(css, /\.goal-heart-tower \.goal-motion-dim::after\{display:none\}/, 'den vita linjen ska bort där hjärtat är markör');
 });
 
+test('orbit: nivåringen ligger på konstens ring, i designens färg', () => {
+  // Davids granskning vid 100 %: en vit ring med fast storlek (81 % av bredden) hamnade utanför likes-
+  // och följarringen och innanför diamantringen. Nu per design, kalibrerat mot renderingen.
+  const css = las('goal-motion.css');
+  assert.match(css, /\.goal-motion-circle \.goal-motion-livefill\{[^}]*left:50%;top:50%;transform:translate\(-50%,-50%\)/, 'ringen ska vara centrerad på konsten');
+  assert.match(css, /\.goal-motion-circle \.goal-motion-livefill\{[^}]*conic-gradient\(from -90deg,var\(--gm-ring\)/, 'färgen ska komma från --gm-ring, inte vara vit');
+  assert.match(css, /\.goal-heart-orbit \.goal-motion-livefill\{width:69%;--gm-ring:rgba\(255,105,170,\.95\)\}/);
+  assert.match(css, /\.goal-crown-orbit \.goal-motion-livefill\{width:75%;--gm-ring:rgba\(255,200,95,\.95\)\}/);
+  assert.match(css, /\.goal-diamond-orbit \.goal-motion-livefill\{width:60%;--gm-ring:rgba\(95,185,255,\.95\)\}/);
+});
+
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
   assert.match(las('media.js'), /const version='20261011-3'/);
 });
