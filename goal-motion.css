@@ -3,7 +3,10 @@
    vid 100 % — osynligt i sändning. Nu: starkare sken MED en kant, och ett mörkt lager (.goal-motion-dim)
    ovanför nivån som släcker konsten. Underkanten följer samma formel som skenets höjd, så gränsen
    ligger exakt där fyllningen slutar. Landskap och cirkel har egna uttryck och rörs inte. */
-.goal-motion-portrait .goal-motion-livefill{position:absolute;left:29%;right:29%;bottom:5%;height:calc(var(--goal-fill)*.85);max-height:85%;border-radius:999px;background:linear-gradient(0deg,rgba(255,255,255,.5),rgba(255,255,255,.1));filter:blur(2px);opacity:.95;box-shadow:0 -2px 6px rgba(255,255,255,.45)}
+/* Det vita skenet är BORTA i porträtt (Davids ord 2026-10-11: "vad är den vita skuggan"): oskarpt vitt
+   utanför röret. Nivån visas av det mörka lagret ovanför och, på Heart Tower, av hjärtat. Röret under
+   nivån lyser av sig självt. */
+.goal-motion-portrait .goal-motion-livefill{display:none}
 /* Lagret täcker BARA rörets insida (uppmätt: ramlinjerna ligger vid 31 % och 65 % av bredden, insidan
    35–65 %). Davids ord 2026-10-11: "den på sidan ska lysa så man ser hur den ser ut" — ramen och dess
    glöd ska lysa hela vägen, även i den tomma delen, så formen syns. */

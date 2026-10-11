@@ -37,7 +37,7 @@ test('fabriken ger samma bredd som katalogknappen, och panelen tillåter den', (
   assert.match(las('studio.html'), /widget-factory\.js\?v=20261011-3/);
 });
 
-test('ovanför fyllnadsnivån ligger ett mörkt lager, och skenet är tydligt', () => {
+test('ovanför fyllnadsnivån ligger ett mörkt lager, och det vita skenet är borta', () => {
   const js = las('goal-motion.js'), css = las('goal-motion.css');
   assert.match(js, /<div class="goal-motion-livefill" data-goal-fill><\/div><div class="goal-motion-dim" data-goal-dim><\/div>/,
     'markupen saknar goal-motion-dim efter livefill');
@@ -45,9 +45,8 @@ test('ovanför fyllnadsnivån ligger ett mörkt lager, och skenet är tydligt', 
   assert.ok(dim, 'CSS-regeln för goal-motion-dim saknas');
   assert.match(dim[1], /bottom:calc\(5% \+ var\(--goal-fill\)\*\.85\)/, 'lagrets underkant ska följa fyllnadsnivån exakt som livefill');
   assert.match(dim[1], /background:rgba\(0,0,0,\.[5-9]\d*\)/, 'lagret ska släcka konsten tydligt');
-  const fill = /\.goal-motion-portrait \.goal-motion-livefill\{([^}]*)\}/.exec(css);
-  assert.ok(fill);
-  assert.match(fill[1], /opacity:(\.9|1)/, 'skenet ska vara tydligt (var .65)');
+  // Det vita skenet är borta i porträtt: oskarpt vitt utanför röret ("vad är den vita skuggan").
+  assert.match(css, /\.goal-motion-portrait \.goal-motion-livefill\{display:none\}/);
   // Landskap och cirkel rörs inte: lagret är bara definierat för porträtt.
   assert.doesNotMatch(css, /\.goal-motion-(landscape|circle) \.goal-motion-dim/);
 });
