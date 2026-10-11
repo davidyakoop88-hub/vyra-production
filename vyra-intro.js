@@ -35,7 +35,20 @@
     // Egen panel med "Entré / utgång" (playground-widgets.js) — två val för samma sak vore ett glapp.
     'templatePgGoal', 'templatePgPodium', 'templatePgStreak',
   ]);
-  // Kontrollerna som redan finns. Finns en av dem i panelen byggs ingen andra.
+  // Familjerna som redan bygger ett eget intro-val. AVGÖRS PÅ TYP, INTE PÅ DOM. Uppmätt i CI
+  // 2026-10-11 (panel-inga-dubbletter): gift-alert-frames.js laddas dynamiskt precis som den här
+  // filen, och landar den EFTER oss ligger dess bind-krok utanför vår — då är #gafEntrance ännu
+  // inte byggd när vi tittar, vi bygger vår grupp, och sedan bygger den sin. Två "Inträdeseffekt"
+  // i samma panel. Typlistan är laddningsordningsoberoende; DOM-kontrollen står kvar som hängsle.
+  const EGNA_FAMILJER = new Set([
+    // gift-alert-frames.js (#gafEntrance)
+    'templateTopGift', 'templateTopStreak', 'templateFollowerAlert', 'templateFanLevel', 'templateGifterLevel',
+    'templateLastGifter', 'templateLastLiker', 'templateLastSharer', 'templateLastSubscriber',
+    // last-x-alerts.js (#lastXEntrance)
+    'templateLastX',
+    // toplike-studio.js (#wsEntrance)
+    'templateTopLike', 'templateTopCoins', 'templateTopPoints',
+  ]);
   const EGNA_KONTROLLER = '#gafEntrance, #wsEntrance, #lastXEntrance';
 
   const EFFEKTER = [['none', 'Ingen'], ['fade', 'Tona in'], ['slideUp', 'Glid upp'], ['pop', 'Poppa in']];
@@ -99,7 +112,7 @@
       const ut = introBind.apply(this, arguments);
       if (typeof view !== 'undefined' && view !== 'editor') return ut;
       const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
-      if (!w || UTAN_VAL.has(w.type)) return ut;
+      if (!w || UTAN_VAL.has(w.type) || EGNA_FAMILJER.has(w.type)) return ut;
       const panel = document.querySelector('.properties');
       if (!panel || panel.querySelector(EGNA_KONTROLLER) || panel.querySelector('.vyra-intro-group')) return ut;
 

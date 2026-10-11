@@ -49,6 +49,13 @@ test('vyra-intro.js laddas av media.js med cachebust, utanför overlay-vakten', 
     assert.ok(intro.includes(`'${t}'`), `${t} ska stå i UTAN_VAL`);
   }
   assert.match(intro, /#gafEntrance, #wsEntrance, #lastXEntrance/, 'befintliga kontroller ska kännas igen');
+  // PÅ TYP, INTE PÅ DOM (CI 2026-10-11, panel-inga-dubbletter): gift-alert-frames.js laddas lika
+  // dynamiskt som vyra-intro.js; landar den efteråt finns #gafEntrance inte när vi tittar, och två
+  // "Inträdeseffekt" byggs. Typlistan måste täcka exakt de tre familjernas typer.
+  const gaf = las('gift-alert-frames.js').match(/const GIFT_ALERT_TYPES = \[([^\]]*)\]/)[1].match(/'[^']+'/g).map(s => s.slice(1, -1));
+  const ws = las('toplike-studio.js').match(/const RANKING_TYPES ?= ?\[([^\]]*)\]/)[1].match(/'[^']+'/g).map(s => s.slice(1, -1));
+  for (const t of [...gaf, ...ws, 'templateLastX']) assert.ok(intro.includes(`'${t}'`), `${t} ska stå i EGNA_FAMILJER`);
+  assert.match(intro, /EGNA_FAMILJER\.has\(w\.type\)\) return ut;/);
 });
 
 test('Egen text får inte den delade TEXT-gruppen — den har redan TYPSNITT och SKUGGA', () => {
