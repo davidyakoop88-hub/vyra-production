@@ -318,3 +318,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ett kort per modell (#587): 45 nya katalognycklar, omkorning efter att katalogkartan uppdaterats till 175 nycklar
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 165
+
+## 2026-10-11 — 3 referenser skrivna
+
+- **Motiv:** Heart Tower: smalare rör, emblemet som markör, mörkt lager ovanför nivån (PR #593) — bara tornen
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 165 (filter: tower) — catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-tower:portrait

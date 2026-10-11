@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 196,
  "senaste": {
-  "motiv": "Ett kort per modell (#587): 45 nya katalognycklar, omkorning efter att katalogkartan uppdaterats till 175 nycklar",
-  "nycklar": 165,
-  "filter": null,
-  "tid": "2026-10-11T10:42:39.062Z"
+  "motiv": "Heart Tower: smalare rör, emblemet som markör, mörkt lager ovanför nivån (PR #593) — bara tornen",
+  "nycklar": 3,
+  "filter": "tower",
+  "tid": "2026-10-11T22:12:27.593Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -467,7 +467,7 @@
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-tower:portrait": {
-   "matt": "130x705",
+   "matt": "100x554",
    "fyllnad": 100
   },
   "catalog:likefountain:portal": {
