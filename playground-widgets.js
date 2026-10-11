@@ -327,7 +327,7 @@ W.goalvar={name:"Mål-varianter",
       if(!row5)return;const pp=Math.min(1,shown/tgt())*10;
       segs5.forEach((e,i)=>{e.firstChild.style.width=Math.max(0,Math.min(1,pp-i))*100+"%"});
       const done=Math.min(10,Math.floor(pp+1e-6));if(done>lastSeg&&done<=10){const e=segs5[done-1];if(e){e.classList.remove("s5pop");void e.offsetWidth;e.classList.add("s5pop")}}lastSeg=done;
-      if(row5.clientWidth){mk5.style.left=headX5()+"px";mk5.style.opacity=pp>0?1:0}
+      if(row5.clientWidth){mk5.style.left=klamp(mk5,row5,headX5())+"px";mk5.style.opacity=pp>0?1:0}
     }
     function spawn5(fast){if(!row5.clientWidth)return;const hx=headX5();if(hx<14)return;p5.push({x:Math.random()*Math.min(hx*.25,70),y:8+Math.random()*(H5-16),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:2+Math.random()*3.6,w:Math.random()*6.28})}
     function loop5(t){
@@ -344,11 +344,15 @@ W.goalvar={name:"Mål-varianter",
       raf5=requestAnimationFrame(loop5);
     }
     if(row5){row5.__cloop=loop5;raf5=requestAnimationFrame(loop5)}
+    // ETIKETTEN STANNAR INOM RUTAN (2026-10-11, Davids granskning vid 100 %): markörens etikett är
+    // centrerad på huvudet (translateX(-50%)), så vid 100 % stack halva utanför raden och klipptes av
+    // widgetens kant. Centrum klämms till [halva etikettbredden, radbredd - halva etikettbredden].
+    const klamp=(mk,row,x)=>{const b=(mk&&mk.offsetWidth)||0;return Math.min(Math.max(x,b/2),Math.max(b/2,row.clientWidth-b/2))};
     function barFx(row,H,fillEl){
       const cv=$("canvas",row),c=cv&&cv.getContext("2d"),head=$(".s6head",row),mk=$(".s5mark",row);let ps=[],lt=0,sa=0,raf=0;
       const fxp=()=>Math.min(1,shown/tgt())*row.clientWidth;
       function paint(){const p=Math.min(1,shown/tgt());fillEl.style.width=(p*100)+"%";
-        if(row.clientWidth){const x=fxp();head.style.left=x+"px";mk.style.left=x+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
+        if(row.clientWidth){const x=fxp();head.style.left=x+"px";mk.style.left=klamp(mk,row,x)+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
       function spawn(fast){if(!row.clientWidth)return;const hx=fxp();if(hx<14)return;ps.push({x:Math.random()*Math.min(hx*.25,70),y:H*.18+Math.random()*(H*.64),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:Math.max(2,H*.07)+Math.random()*Math.max(2.5,H*.1),w:Math.random()*6.28})}
       function loop(t){
         const dt=Math.max(0,Math.min(.05,((t-lt)/1000)||0));lt=Math.max(lt,t);
@@ -373,7 +377,7 @@ W.goalvar={name:"Mål-varianter",
     const fx6=()=>Math.min(1,shown/tgt())*row6.clientWidth;
     function paintBar6(){
       if(!row6)return;const p=Math.min(1,shown/tgt());f6.style.width=(p*100)+"%";
-      if(row6.clientWidth){const x=fx6();head6.style.left=x+"px";mk6.style.left=x+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
+      if(row6.clientWidth){const x=fx6();head6.style.left=x+"px";mk6.style.left=klamp(mk6,row6,x)+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
     }
     function spawn6(fast){if(!row6.clientWidth)return;const hx=fx6();if(hx<14)return;p6.push({x:Math.random()*Math.min(hx*.25,60),y:5+Math.random()*(H6-10),sp:fast?160+Math.random()*180:44+Math.random()*56,sz:2+Math.random()*3,w:Math.random()*6.28})}
     function loop6(t){
