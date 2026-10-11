@@ -25,6 +25,12 @@
   // kvarglömd gåvorubrik utan bild ser ut som en bugg.
   const LIVEFALT = ['dataName', 'dataValue', 'profileImage', 'giftImage', 'giftName'];
 
+  // OVERLAY-LÄGET LÄSES UR URL:EN, inte ur `view` (se avsnitt 3 för varför).
+  function iOverlay() { return typeof location !== 'undefined' && new URLSearchParams(location.search).has('overlay'); }
+  function aktivSession() {
+    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+  }
+
   // Bara familjer som livedata faktiskt skriver till. En widget vars innehåll streamern själv har
   // skrivit (Egen text, Heart Goal) får aldrig tömmas av en sändningsstart.
   const TYPER = ['templateTopGift', 'templateTopStreak'];
@@ -42,11 +48,31 @@
 
   // Sant när widgeten inte har någon tittare att visa. `dataValue` räknas som tom även vid 0 —
   // noll coins är ingen gåva, och en nolla på skärmen ser ut som ett fel snarare än som tomhet.
+  // PLATSHÅLLAREN ÄR OCKSÅ TOMHET (2026-10-11). Fabriken skickar med '@StreamQueen · 44 999' så att
+  // editorn har något att designa mot. Töms widgeten av live:start försvinner fälten — men en
+  // widget som LÄGGS TILL MITT I SÄNDNINGEN (eller når overlayen via molnet efter starten) får
+  // aldrig något live:start, och bar då platshållaren in i sändningen. UPPMÄTT i overlay med
+  // pågående session: dataName '@StreamQueen', arTom false, beräknat display 'flex', synlig text
+  // "TOP GIFTER ◉ 0" (live-zero-state.js hade nollat siffran men inte kunnat dölja ramen) och
+  // för Top Streak en ros med "×0 STREAK". Davids regel nr 1: Top Gift syns inte förrän någon
+  // börjat ge. I overlay räknas därför platshållarnamnet som inget namn alls; i editorn ska den
+  // synas precis som förut.
+  const PLATSHALLARE = ['streamqueen', 'testalpha', 'thundergifter', 'heartriser', 'aurora vale'];
+  function platshallare(namn) {
+    return PLATSHALLARE.includes(String(namn || '').trim().toLowerCase().replace(/^@/, ''));
+  }
+
   function arTom(w) {
     if (!arLivewidget(w)) return false;
     const namn = w.dataName, varde = w.dataValue;
-    return (namn === undefined || namn === null || namn === '')
-      && (varde === undefined || varde === null || varde === '' || Number(varde) === 0);
+    // BARA UNDER EN PÅGÅENDE SÄNDNING, precis som stall() i avsnitt 5 och av samma skäl: den visuella
+    // riggen öppnar ?overlay=1 utan sändning och fotograferar katalogen — där ska platshållaren synas.
+    // Uppmätt i CI 2026-10-11: utan grinden blev Top Gift/Top Streak "0×0, dold" i 3 referenser.
+    const platsTom = !!namn && iOverlay() && platshallare(namn) && !!aktivSession();
+    const namnTomt = namn === undefined || namn === null || namn === '' || platsTom;
+    if (!namnTomt) return false;
+    if (platsTom) return true;
+    return varde === undefined || varde === null || varde === '' || Number(varde) === 0;
   }
 
   // Doljandet ar EN strang pa ETT stalle, sa att approved-rankings.js (vars wh-override aldrig
@@ -138,7 +164,7 @@
   //
   // Rendering, inte borttagning: widgeten finns kvar i state och dyker upp av sig själv så fort
   // första gåvan skriver ett namn.
-  const iOverlay = () => new URLSearchParams(location.search).has('overlay');
+  // (iOverlay är deklarerad överst i filen, bredvid arTom som också behöver den.)
 
   if (typeof wh === 'function') {
     const foregaendeWh = wh;
@@ -248,9 +274,7 @@
   // PRISET, utskrivet: slutar livesession-signalen fungera slutar doljandet tyst att fungera med
   // den. Det ar en medveten avvagning mot alternativet — att ta bort en fjardedel av den visuella
   // vakten for att fa provet gront.
-  const aktivSession = () => {
-    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
-  };
+  // (aktivSession är deklarerad överst i filen, bredvid iOverlay — arTom behöver den också.)
 
   function stall() {
     if (!iOverlay() || !aktivSession()) return;
@@ -297,5 +321,5 @@
     stall();
   }
 
-  window.VyraTomWidget = { tom, arTom, dolj, avsloja, stall, domTom, aktivSession, LIVEFALT, TYPER, DOM_TYPER };
+  window.VyraTomWidget = { tom, arTom, dolj, avsloja, stall, domTom, aktivSession, platshallare, LIVEFALT, TYPER, DOM_TYPER };
 })();

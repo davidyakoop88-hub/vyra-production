@@ -48,7 +48,10 @@
     if (src !== 'auto') list = list.concat(manualOf(w));
     const seen = new Set(), out = [];
     for (const m of list) { const k = String(m && m.name || '').toLowerCase().trim(); if (!k || seen.has(k)) continue; seen.add(k); out.push(m); }
-    return out.length ? out : demo();
+    // REGEL NR 1 (David 2026-10-11): demomedlemmarna (MICHELLY, GARY B., NOVA STORM) är till för
+    // editorn. I overlay med en tom roster visades de som riktiga fans — uppmätt med noll events.
+    // Tom lista i overlay ger en dold widget; första riktiga level-50-fansen (addAuto) tänder den.
+    return out.length ? out : (iOverlay() && aktivSandning() ? [] : demo());
   }
 
   function cardHtml(w, m, rank) {
@@ -64,8 +67,16 @@
     </div>`;
   }
 
+  const iOverlay = () => new URLSearchParams(root.location.search).has('overlay');
+  // Samma sändningsgrind som vyra-tom-widget.js: utan sändning (t.ex. den visuella riggen) visas demot.
+  const aktivSandning = () => { try { return !!(root.VyraTomWidget && root.VyraTomWidget.aktivSession()) } catch (_) { return false } };
+  // Sändningsstarten ritar om, så demomedlemmarna försvinner när publiken kommer.
+  root.addEventListener('vyra-live-session', () => { if (typeof render === 'function') render(); });
+  const DOLJ = 'display:none!important;';
+
   function fanLevel50Html(w) {
     const list = members(w);
+    const dold = !list.length;
     const mode = w.fanl50Mode === 'band' ? 'band' : 'slideshow';
     let inner;
     if (mode === 'band') {
@@ -73,10 +84,10 @@
       inner = `<div class="fl50-track">${cards}${cards}</div>`;
     } else {
       let i = idx.get(w.id) || 0; if (i >= list.length) i = 0;
-      inner = cardHtml(w, list[i], i + 1);
+      inner = list.length ? cardHtml(w, list[i], i + 1) : '';
     }
     const interval = num(w.fanl50Interval, 6, 2, 60);
-    return `<div class="widget fan-level-50 fl50-mode-${mode}${selected === w.id ? ' selected' : ''}" data-id="${safe.text(w.id)}" style="left:${num(w.x, 0, -10000, 10000)}px;top:${num(w.y, 0, -10000, 10000)}px;width:${num(w.width, 300, 120, 2000)}px;zoom:${num(w.widgetScale, 1, .1, 5)};z-index:${num(w.layer, 1, 0, 99)};${w.hidden ? 'display:none;' : ''}--fl50-speed:${interval}s"><div class="fl50-viewport">${inner}</div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
+    return `<div class="widget fan-level-50 fl50-mode-${mode}${selected === w.id ? ' selected' : ''}" data-id="${safe.text(w.id)}" style="${dold ? DOLJ : ''}left:${num(w.x, 0, -10000, 10000)}px;top:${num(w.y, 0, -10000, 10000)}px;width:${num(w.width, 300, 120, 2000)}px;zoom:${num(w.widgetScale, 1, .1, 5)};z-index:${num(w.layer, 1, 0, 99)};${w.hidden ? 'display:none;' : ''}--fl50-speed:${interval}s"><div class="fl50-viewport">${inner}</div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }
 
   // ---- render-kedja: patcha wh for den nya typen -------------------------------------------------
