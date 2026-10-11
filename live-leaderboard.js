@@ -354,7 +354,15 @@
       }
       rows.forEach((row, i) => {
         const person = top[i];
-        row.style.display = person ? '' : 'none';
+        // `!important`, INTE en vanlig inline-stil. Temana deklarerar radens layout med samma
+        // vapen (studio.css: `.toplike-row:has(>.pro-avatar-frame){display:grid!important}`,
+        // podiet `.toplike-row:nth-child(-n+3){display:flex!important}` — 31 sådana regler), och
+        // `row.style.display = 'none'` förlorade mot dem. UPPMÄTT 2026-10-11, overlay med en
+        // likare: inline 'none', prioritet '', beräknat 'grid', 58 px hög — fyra tomma rader med
+        // "0 ♥" under det enda namnet, i alla 20 rankingdesigner. Davids regel nr 1: en likare =
+        // en rad. Samma fälla som vyra-tom-widget.js redan dokumenterar för hela widgeten.
+        if (person) row.style.removeProperty('display');
+        else row.style.setProperty('display', 'none', 'important');
         if (!person) return;
         const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
         if (strong) strong.textContent = person.name;
