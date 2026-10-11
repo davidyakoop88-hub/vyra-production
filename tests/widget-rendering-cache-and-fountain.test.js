@@ -337,7 +337,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // riktnings-/spegelklassen (ranking-mirrored) och toplike-studio.css inget nytt direkt (de sex
   // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
   // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
-  assert.match(media, /toplike-studio\.css\?v=20260924-sixpack/);
+  assert.match(media, /toplike-studio\.css\?v=20261011-1/);   // 20261011-1: kryssrutor + ws-anim-specificitet
   assert.match(media, /toplike-studio\.js\?v=20260924-sixpack/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
@@ -367,7 +367,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
   // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
   // 20261011-1: like-fountain-portal.js ritar ett kort per palett; bunten bar dess URL.
-  assert.match(media, /const version='20261011-1'/);
+  // 20261011-2: egenskapspanelen utan glapp — vyra-intro.js laddas, Guardian Emblem får position
+  // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
+  // gift-supernova-panel.
+  assert.match(media, /const version='20261011-2'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

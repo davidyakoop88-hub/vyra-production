@@ -184,6 +184,10 @@
       if (typeof view !== 'undefined' && view !== 'editor') return ut;
       const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
       if (!w) return ut;
+      // EGEN TEXT HAR REDAN TYPSNITT OCH SKUGGA (custom-widgets.js). Uppmätt 2026-10-11: med den
+      // delade gruppen fanns Typsnitt två gånger, Textstorlek två gånger (100 % och 32px) och
+      // Skugga X/Y två gånger i samma panel. Två reglage för samma sak är ett glapp.
+      if (w.type === 'templateCustomText') return ut;
 
       const panel = document.querySelector('.properties');
       if (!panel) return ut;

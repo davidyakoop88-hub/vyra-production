@@ -13,6 +13,14 @@
 .properties .property-group h4{margin:0!important;font-size:8px!important;letter-spacing:.12em!important;color:#8f94a3!important;text-transform:uppercase!important;float:none!important;border:0!important;padding:0!important}
 .properties .property-group label{display:flex!important;flex-direction:column!important;gap:6px!important;font-size:9px!important;color:#aeb2bd!important;border:0!important;padding:0!important}
 .properties .property-group label input,.properties .property-group label select{float:none!important;width:100%!important;background:#151821;border:1px solid #292d39;color:#fff;border-radius:6px;padding:7px 8px;font-size:10px}
+/* KRYSSRUTOR ÄR OCKSÅ INPUT (uppmätt 2026-10-11). Regeln ovan gav varje kryssruta i en label
+   width:100%!important — en vit ruta på 90×90 px med etiketten UNDER sig, i 20 av 60 paneler
+   ("Ta bort bakgrund" i varje BAKGRUND-grupp, "Exkludera anonyma tittare", "Visa riktig
+   aktivitet", "Vänd riktning", Last-X:s fem val). last-x-alerts.css sa redan width:16px och
+   förlorade mot !important. Här, EFTER regeln ovan, så den vinner vid lika specificitet;
+   .switch-row:s 14px-regel nedanför vinner i sin tur över den här, som förut. */
+.properties .property-group label:not(.switch-row label):has(>input[type=checkbox]),.properties .property-group label:not(.switch-row label):has(>input[type=radio]){display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;line-height:1.3}
+.properties .property-group label input[type=checkbox],.properties .property-group label input[type=radio]{width:16px!important;height:16px;min-height:0;flex:0 0 16px;margin:0;padding:0;float:none!important;accent-color:var(--purple,#7c5cff)}
 .properties .range-label{position:relative}
 .properties .range-label b{color:#fff;font-weight:600}
 .properties .range-label input[type=range]{accent-color:var(--purple,#7c5cff);width:100%!important}
@@ -203,9 +211,14 @@
 @keyframes wsFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes wsSlideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @keyframes wsPopIn{0%{opacity:0;transform:scale(.85)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
-.ws-anim-fade{animation:wsFadeIn var(--ws-anim-duration,.5s) ease both}
-.ws-anim-slideUp{animation:wsSlideUp var(--ws-anim-duration,.5s) ease both}
-.ws-anim-pop{animation:wsPopIn var(--ws-anim-duration,.5s) cubic-bezier(.2,.8,.3,1.2) both}
+/* (0,3,0) MED FLIT (2026-10-11): användarens intro-val ska vinna över widgetens egen entré på
+   rotnoden. Uppmätt: `.vyra-topgift.play{animation:vyraAppear}` och `.vyra-streak.hit{animation:
+   streakEnter}` i studio.css är (0,2,0) och slog `.ws-anim-pop` (0,1,0) — valet "Poppa in" gjorde
+   ingenting på Top Gift och Top Streak. Dubblad klass i stället för !important: inre animationer
+   (flippen, lågan) rörs inte, bara rotens. */
+.ws-anim-fade,.widget.ws-anim-fade.ws-anim-fade{animation:wsFadeIn var(--ws-anim-duration,.5s) ease both}
+.ws-anim-slideUp,.widget.ws-anim-slideUp.ws-anim-slideUp{animation:wsSlideUp var(--ws-anim-duration,.5s) ease both}
+.ws-anim-pop,.widget.ws-anim-pop.ws-anim-pop{animation:wsPopIn var(--ws-anim-duration,.5s) cubic-bezier(.2,.8,.3,1.2) both}
 
 @keyframes wsSignalIn{0%{opacity:0;transform:translateX(28px)}55%{opacity:1}100%{opacity:1;transform:translateX(0)}}
 @keyframes wsScanSweep{0%{top:0;opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}

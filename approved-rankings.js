@@ -188,6 +188,15 @@
     return f;
   }
 
+  function tomDesignGrupp() {
+    for (const g of document.querySelectorAll('.properties .property-group')) {
+      const rubrik = g.querySelector(':scope > h4, :scope > .pg-toggle');
+      if (!rubrik || rubrik.textContent.trim() !== 'DESIGN') continue;
+      const synlig = [...g.querySelectorAll('input,select,textarea,button')].some(el => el.offsetParent !== null && !el.closest('[hidden]'));
+      if (!synlig) g.remove();
+    }
+  }
+
   function linda() {
     let andrat = false;
     if (typeof wh === 'function' && !(wh.__vyraYtter >= RANG)) {
@@ -223,7 +232,13 @@
         if (view === 'editor' || view === 'overlay') cleanCatalog();
         if (view !== 'editor') return;
         const w = liveWidget(selected);
-        if (w && w.type === 'templateTopLike') document.querySelector('#likeTheme')?.closest('label')?.remove();
+        if (w && w.type === 'templateTopLike') {
+          document.querySelector('#likeTheme')?.closest('label')?.remove();
+          // Uppmätt 2026-10-11: kvar stod rubriken DESIGN över ingenting — accentfältet ligger i en
+          // inline-dold grupp och positionsvalet togs just bort. En DESIGN-grupp utan synlig kontroll
+          // tas bort hel (tomDesignGrupp), i stället för att stå som ett glapp i panelen.
+          tomDesignGrupp();
+        }
         if (w && w.type === 'templateTopStreak') {
           bindControls(w);
           // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
