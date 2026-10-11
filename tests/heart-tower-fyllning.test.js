@@ -22,7 +22,7 @@ test.after(() => closeAll());
 
 test('Heart Tower är smalare som standard', () => {
   const js = las('goal-motion.js');
-  assert.match(js, /'heart-tower':\{name:'Heart Tower',kind:'likes',orientation:'portrait',art:'vertical-like\.png',width:100,/,
+  assert.match(js, /'heart-tower':\{name:'Heart Tower',kind:'likes',orientation:'portrait',art:'vertical-like-tube\.png',marker:'vertical-like-emblem\.png',width:100,/,
     'heart-tower ska ha width:100 (var 130)');
 });
 
@@ -50,6 +50,19 @@ test('ovanför fyllnadsnivån ligger ett mörkt lager, och skenet är tydligt', 
   assert.match(fill[1], /opacity:(\.9|1)/, 'skenet ska vara tydligt (var .65)');
   // Landskap och cirkel rörs inte: lagret är bara definierat för porträtt.
   assert.doesNotMatch(css, /\.goal-motion-(landscape|circle) \.goal-motion-dim/);
+});
+
+test('hjärtat i mitten är markören som glider med nivån', () => {
+  // Davids ord: "målet är den hjärta i mitten ska vara den som visar hur mycket man har tappat".
+  const js = las('goal-motion.js'), css = las('goal-motion.css');
+  assert.match(js, /'heart-tower':\{[^}]*art:'vertical-like-tube\.png',marker:'vertical-like-emblem\.png'/, 'tornet ska rita röret utan emblem och emblemet separat');
+  for (const f of ['vertical-like-tube.png', 'vertical-like-emblem.png']) assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'goal-motion', f)), f + ' saknas');
+  assert.match(js, /goal-motion-marker/, 'markupen saknar markören');
+  const m = /\.goal-motion-portrait \.goal-motion-marker\{([^}]*)\}/.exec(css);
+  assert.ok(m, 'CSS för markören saknas');
+  assert.match(m[1], /bottom:calc\(5% \+ var\(--goal-fill\)\*\.85\)/, 'markören ska stå på exakt samma nivå som fyllningen');
+  assert.match(m[1], /translate\(-50%,50%\)/, 'emblemets mittpunkt ska ligga på nivån');
+  assert.match(css, /\.goal-heart-tower \.goal-motion-dim::after\{display:none\}/, 'den vita linjen ska bort där hjärtat är markör');
 });
 
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
