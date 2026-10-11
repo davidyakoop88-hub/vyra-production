@@ -113,7 +113,9 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // och Snabbstart togs bort fran framsidan.
   // Bumpad 2026-10-10 (-5): paketklippet startar med autoplay + omladdning och visar affischen
   // nar videon star stilla (TikTok LIVE Studios browserkalla visade inget pa 2 h 48 min).
-  assert.match(studioHtml, /media\.js\?v=20261010-5/);
+  // Bumpad 2026-10-11 (-1): ett kort per modell — media.js bar Follower Spotlights tre temakort,
+  // laddraderna for playground-widgets.js/overlay-preview.js och premiumbuntens version.
+  assert.match(studioHtml, /media\.js\?v=20261011-1/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.

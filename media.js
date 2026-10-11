@@ -1107,7 +1107,7 @@ function triggerNewFollower(event={}){
   toast('New Follower Alert triggas')
 }
 window.triggerNewFollower=triggerNewFollower;
-const followerAlertCatalog=bind;bind=function(){followerAlertCatalog();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-follower-alert]'))return;let section=document.createElement('section');section.dataset.followerAlert='1';section.className='follower-alert-template-section';section.innerHTML='<h4>NEW FOLLOWER ALERT</h4><button><i>✦</i><span><b>Follower Spotlight</b><small>Profil · namn · spotlight</small></span></button>';catalog.prepend(section);const followerBtn=section.querySelector('button');const catalogKey='catalog:followeralert';followerBtn.dataset.catalogKey=catalogKey;followerBtn.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateFollowerAlert');state.widgets.push(created);selected=id;save();render();toast('Follower Spotlight skapad')}};
+const followerAlertCatalog=bind;bind=function(){followerAlertCatalog();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-follower-alert]'))return;let section=document.createElement('section');section.dataset.followerAlert='1';section.className='follower-alert-template-section';/* ETT KORT PER TEMA (Davids beslut 2026-10-11): Gold, Ocean och Blush ar var sitt kort med egen katalognyckel (widget-factory.js 'followeralert.theme'); basnyckeln catalog:followeralert finns kvar for sparade layouter men ritas inte. Namnen ar fasta strangar har — inget anvandardata i innerHTML. */section.innerHTML='<h4>NEW FOLLOWER ALERT · 3 TEMAN</h4>';[['gold','Gold'],['ocean','Ocean'],['blush','Blush']].forEach(([t,n])=>{const catalogKey='catalog:followeralert:'+t;const followerBtn=document.createElement('button');followerBtn.dataset.catalogKey=catalogKey;followerBtn.innerHTML=`<i>✦</i><span><b>Follower Spotlight · ${n}</b><small>Profil · namn · spotlight</small></span>`;followerBtn.onclick=()=>{let created=VyraWidgets.create(catalogKey),id=created.id;state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateFollowerAlert');state.widgets.push(created);selected=id;save();render();toast(created.title+' skapad')};section.append(followerBtn)});catalog.prepend(section)};
 {let alerts=state.widgets.filter(w=>w.type==='templateFollowerAlert');if(alerts.length>1){let keep=alerts[alerts.length-1];state.widgets=state.widgets.filter(w=>VyraWidgets.isStandalone(w)||w.type!=='templateFollowerAlert'||w.id===keep.id);selected=keep.id;save()}}
 
 // Battle MVP with four genuinely different designs.
@@ -1403,7 +1403,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20260930-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261011-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
 if(new URLSearchParams(location.search).get('vfxdemo')==='2'){Promise.resolve().then(()=>{let files=['pixi.min.js','gsap.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-fountain-types.js','vfx-rng.js','vfx-crystal-heart-particle.js','vfx-sparkle-particle.js','vfx-trail-pool.js','vfx-fountain-source.js','vfx-fountain-emitter.js','vfx-fountain-debug.js','vfx-fountain-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1614,7 +1614,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261005-5';
+  const version='20261011-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1694,7 +1694,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261008-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261008-4'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261011-1'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });

@@ -192,7 +192,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-10-05: Like Fountain centrerad på duken (x 6, bredd 420) och 18 hjärtan som standard.
   // 20261005-2: hjärtstorlek 32 som standard (24 blev för smått i OBS).
   // 20261010-paket: catalog:glovesnipe:<paket>:pack bygger hela paketet som en widget.
-  assert.match(studio, /widget-factory\.js\?v=20261010-1/);
+  // Bumpad 2026-10-11: ett kort per modell — widget-factory.js bar de nya modelltabellerna och
+  // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
+  assert.match(studio, /widget-factory\.js\?v=20261011-1/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -364,7 +366,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-09-27 en tredje gång: streamdeck.js (Stream Deck-knapparna och sidan).
   // Bumpad 2026-09-28: rebasad på main (20260927-streamdeck-1) — den sammanslagna bunten bär både
   // main:s streamdeck-tillägg och goal-motion-designerna, så konstanten bumpas förbi båda.
-  assert.match(media, /const version='20261005-5'/);
+  // 20261011-1: like-fountain-portal.js ritar ett kort per palett; bunten bar dess URL.
+  assert.match(media, /const version='20261011-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
