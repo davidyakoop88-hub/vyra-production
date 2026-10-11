@@ -293,4 +293,11 @@ const REGI = {
   },
 };
 
+// ETT KORT PER PALETT (2026-10-11): portalens nio palettkort delar portalens regi — samma canvas,
+// samma deterministiska forhandsbild, bara fargerna skiljer. Utan den har raden hade de nio
+// fotograferats levande (slumpat) och vakten fallit pa brus.
+for (const pal of ['portal', 'rainbow', 'neon', 'fire', 'ice', 'gold', 'aurora', 'pastel', 'mono']) {
+  REGI['catalog:likefountain:portal:' + pal] = REGI['catalog:likefountain:portal'];
+}
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };

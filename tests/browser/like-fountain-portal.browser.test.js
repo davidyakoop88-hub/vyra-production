@@ -75,7 +75,7 @@ test('i studion: katalogkortet skapar portalen hel på duken, med förhandsbild 
   try {
     const m = await page.evaluate(async () => {
       let k = null;
-      for (let t = 0; t < 40 && !k; t++) { view = 'overlay'; render(); bind(); k = document.querySelector('[data-catalog-key="catalog:likefountain:portal"]'); if (!k) await new Promise(r => setTimeout(r, 250)); }
+      for (let t = 0; t < 40 && !k; t++) { view = 'overlay'; render(); bind(); k = document.querySelector('[data-catalog-key="catalog:likefountain:portal:portal"]'); if (!k) await new Promise(r => setTimeout(r, 250)); }
       if (!k) return { fel: 'katalogkortet saknas' };
       k.click(); const w = state.widgets[state.widgets.length - 1]; view = 'editor'; selected = null; render(); bind();
       await new Promise(r => setTimeout(r, 400));
