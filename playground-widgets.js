@@ -97,6 +97,13 @@ function crownBurst(col){
     sp.style.animationDelay=(Math.random()*.15)+"s";cr.appendChild(sp);setTimeout(()=>sp.remove(),1300)}
 }
 const TESTAVATAR="assets/images/test-profile.svg"; // samma reservavatar som resten av studion (David 2026-10-11)
+// EDITORN VISAR MODELLEN (David 2026-10-11: "de modellerna knappt man kan se de"). Utan events stod
+// podiet med tre dimmade ringar (opacity .4) och "?" och streak-flippen med "Ingen streak än" — i
+// EDITORN, där man ska se designen. Alla andra familjer visar demovärden där. Demot gäller bara
+// editorn: i overlay (?overlay=1) ritas enbart riktiga tittare (regel nr 1).
+const PG_OVERLAY=new URLSearchParams(location.search).has("overlay");
+const DEMO_PODIUM=[["Lina",{coins:1200,img:""}],["Jokero",{coins:800,img:""}],["Nova",{coins:450,img:""}]];
+const DEMO_STREAK={user:"Lina",gift:{id:"rose",n:"Rose",e:"🌹",c:1,img:""},n:12,img:""};
 W.podium={name:"Top Gifter-podium",title:true,
   defaults:{accent:"#ffd24a",accent2:"#ff4fa3",title:"TOP GIFTERS"},schema:[],
   create(root,O){
@@ -107,7 +114,8 @@ W.podium={name:"Top Gifter-podium",title:true,
       cols.appendChild(c);els[r]=c});
     function refresh(){
       title.textContent=O().title;
-      const top=Object.entries(S.users).filter(u=>u[1].coins>0).sort((a,b)=>b[1].coins-a[1].coins).slice(0,3);
+      const riktiga=Object.entries(S.users).filter(u=>u[1].coins>0).sort((a,b)=>b[1].coins-a[1].coins).slice(0,3);
+      const top=(!riktiga.length&&!PG_OVERLAY)?DEMO_PODIUM:riktiga;
       for(let r=0;r<3;r++){
         const c=els[r],u=top[r],av=$(".av",c);
         c.classList.toggle("dim",!u);
@@ -159,12 +167,14 @@ W.streak={name:"Top Streak",title:false,
       else setSide(0);
     }
     function paint(swap){
-      const has=top.user&&top.n>=O().x.minn;el.classList.toggle("stk-empty",!has);
-      fa.textContent="";fa.style.background="url('"+((top.user&&top.img)||TESTAVATAR)+"') center/cover";
-      if(top.user){ge.innerHTML=giftHTML(top.gift);ge2.innerHTML=giftHTML(top.gift)}else{ge.innerHTML="";ge2.innerHTML=""}
-      nm.textContent=top.user?top.user:"Ingen streak än";nm.style.display=O().x.showname==="1"?"":"none";
+      const t=(top.user||PG_OVERLAY)?top:DEMO_STREAK;
+      const has=t.user&&t.n>=O().x.minn;el.classList.toggle("stk-empty",!has);
+      fa.textContent="";fa.style.background="url('"+((t.user&&t.img)||TESTAVATAR)+"') center/cover";
+      if(t.user){ge.innerHTML=giftHTML(t.gift);ge2.innerHTML=giftHTML(t.gift)}else{ge.innerHTML="";ge2.innerHTML=""}
+      nm.textContent=t.user?t.user:"Ingen streak än";nm.style.display=O().x.showname==="1"?"":"none";
       if(swap){setSide(0);av.classList.remove("swap");void av.offsetWidth;av.classList.add("swap")}
-      if(!raf)loop();
+      // Demot räknas inte upp av loop() (den jagar top.n, som är 0): skriv siffran direkt.
+      if(t!==top){shown=t.n;cnt.textContent=t.n}else if(!raf)loop();
     }
     function loop(){shown+=(top.n-shown)*.2;if(Math.abs(top.n-shown)<.5)shown=top.n;cnt.textContent=Math.round(shown);raf=shown===top.n?0:requestAnimationFrame(loop)}
     function roar(){

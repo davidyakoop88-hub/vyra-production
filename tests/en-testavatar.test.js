@@ -24,7 +24,7 @@ test('playground-familjerna ritar testavataren, aldrig en bokstav', () => {
   assert.match(src, /const TESTAVATAR="assets\/images\/test-profile\.svg"/);
   // podium, streak-flip och bidragsraderna
   assert.match(src, /av\.style\.background="url\('"\+\(pimg\|\|TESTAVATAR\)\+"'\) center\/cover"/, 'podiet');
-  assert.match(src, /fa\.style\.background="url\('"\+\(\(top\.user&&top\.img\)\|\|TESTAVATAR\)\+"'\) center\/cover"/, 'streak-flippen');
+  assert.match(src, /fa\.style\.background="url\('"\+\(\(t\.user&&t\.img\)\|\|TESTAVATAR\)\+"'\) center\/cover"/, 'streak-flippen');
   assert.match(src, /JSON\.stringify\(e\.avatar\|\|TESTAVATAR\)/, 'bidragsraderna');
   assert.doesNotMatch(src, /\[0\]\.toUpperCase\(\)/, 'ingen initial som avatar');
 });
@@ -43,7 +43,7 @@ test('ingen klientfil pekar längre på den gamla PNG:n som profilreserv', () =>
 test('cachebustarna höjdes med filerna', () => {
   const media = las('media.js'), html = las('studio.html');
   assert.match(media, /const version='20261011-5'/, 'premiumbunten (premium-final, runtime-controls)');
-  assert.match(media, /playground-widgets\.js\?v=20261011-4/);
+  assert.match(media, /playground-widgets\.js\?v=20261011-5/);
   assert.match(media, /last-x-alerts\.js\?v=20261011-1/);
   assert.match(media, /gift-fireworks\.js\?v=20261011-1/);
   assert.match(html, /media\.js\?v=20261011-5/);
