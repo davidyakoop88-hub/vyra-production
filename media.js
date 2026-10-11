@@ -1026,7 +1026,11 @@ function patchGoalDom(widgetId,goal){
       text('[data-goal-target]',heart?String(target):target.toLocaleString('sv-SE'));
       text('[data-goal-pct]',node.classList.contains('goal-new')?pct+'%':pct+'% KLART');
       const fill=node.querySelector('[data-goal-fill]');
-      if(fill)fill.style.width=pct+'%';
+      // GOAL-MOTION-DESIGNERNA STYRS AV --goal-fill, INTE AV INLINE-BREDD (uppmätt 2026-10-11): deras
+      // nivåelement har egen geometri i goal-motion.css (cirkelns ring, tornets höjd, railens
+      // calc(var(--goal-fill)*.84)). Inline-bredden här gjorde cirkelns ring 0 px vid 0 % och 360 px
+      // vid 100 % — den växte med nivån och låg utanför konsten. Variabeln nedan räcker för dem.
+      if(fill&&!node.classList.contains('goal-motion'))fill.style.width=pct+'%';
       node.style.setProperty('--goal-pct',pct);
       node.style.setProperty('--goal-fill',pct+'%');
       // premiumdesignen ritar sin stapel med .goal-track:before{width:var(--fill)}, sa bada

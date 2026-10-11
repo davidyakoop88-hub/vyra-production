@@ -75,6 +75,14 @@ test('orbit: nivåringen ligger på konstens ring, i designens färg', () => {
   assert.match(css, /\.goal-diamond-orbit \.goal-motion-livefill\{width:60%;--gm-ring:rgba\(95,185,255,\.95\)\}/);
 });
 
+test('den delade live-uppdateringen skriver ingen inline-bredd på goal-motion-fyllningen', () => {
+  // Uppmätt med riktiga frames: cirkelns ring var 0 px vid 0 %, 180 px vid 50 %, 360 px vid 100 % —
+  // media.js:s patch satte fill.style.width=pct% på alla [data-goal-fill], även goal-motion, vars
+  // geometri redan följer --goal-fill i CSS. Det var den ursprungliga stora ringen vid 100 %.
+  assert.match(las('media.js'), /if\(fill&&!node\.classList\.contains\('goal-motion'\)\)fill\.style\.width=pct\+'%';/);
+  assert.match(las('studio.html'), /media\.js\?v=20261011-3/);
+});
+
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
   assert.match(las('media.js'), /const version='20261011-3'/);
 });
