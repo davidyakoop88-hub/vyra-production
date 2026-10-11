@@ -97,7 +97,7 @@ test('ett misslyckat uppslag försöks inte igen, och eventet lämnas som det ä
 });
 
 test('kopplingarna finns: ingest anropar modulen, registren lyssnar, loader och busts', () => {
-  assert.match(las('live-client.js'), /normalizeUserFlags\(e\);\n[\s\S]{0,400}if\(window\.VyraStorAvatar\)window\.VyraStorAvatar\.forbattra\(e\);/);
+  assert.match(las('live-client.js'), /normalizeUserFlags\(e\);\r?\n[\s\S]{0,400}if\(window\.VyraStorAvatar\)window\.VyraStorAvatar\.forbattra\(e\);/);
   assert.match(las('live-leaderboard.js'), /addEventListener\('vyra-stor-avatar'/);
   assert.match(las('playground-widgets.js'), /addEventListener\('vyra-stor-avatar'/);
   const media = las('media.js');
@@ -105,7 +105,7 @@ test('kopplingarna finns: ingest anropar modulen, registren lyssnar, loader och 
   assert.match(media, /cloud-fields\.js\?v=20261011-1/);
   assert.match(media, /live-client\.js\?v=20261011-1/);
   assert.match(media, /live-leaderboard\.js\?v=20261011-2/);
-  assert.match(media, /playground-widgets\.js\?v=20261011-6/);
-  assert.match(las('studio.html'), /media\.js\?v=20261011-6/);
+  assert.match(media, /playground-widgets\.js\?v=20261011-9/);
+  assert.match(las('studio.html'), /media\.js\?v=20261011-9/);
   assert.ok(JSON.stringify(JSON.parse(las('.claude/domaner.json'))).includes('"vyra-stor-avatar.js"'));
 });

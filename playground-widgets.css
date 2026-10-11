@@ -435,7 +435,9 @@
 .pgw .stk-pill{display:inline-flex;align-items:center;gap:12px;padding:10px 28px;border-radius:99px;background:linear-gradient(90deg,rgba(14,12,22,.86),rgba(30,22,10,.86));border:2.5px solid var(--a);box-shadow:0 0 calc(var(--g)*26px) color-mix(in srgb,var(--a) 55%,transparent);font:900 44px/1 var(--font);color:var(--t)}
 .pgw .stk-pill svg{width:34px;height:34px;fill:var(--a);filter:drop-shadow(0 0 8px var(--a))}
 .pgw .stk-pill small{font:800 24px var(--font);letter-spacing:.14em;opacity:.85}
-.pgw .stk-pill b{color:var(--a);min-width:2ch;text-align:center}
+.pgw /* UPPMÄTT 2026-10-11: siffran ärvde studio.css `.widget b{display:block;font-size:12px}` och blev 5 px
+   hög i en 44 px-pill ("STREAK ·"). Regeln här satte aldrig någon storlek. */
+.stk-pill b{color:var(--a);min-width:2ch;text-align:center;display:inline-block;font:800 44px/1 var(--font)}
 .pgw .stk-empty .stk-nm{opacity:.7}
 .pgw .pal{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
 .pgw .sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}

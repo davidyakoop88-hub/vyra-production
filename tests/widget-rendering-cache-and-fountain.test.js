@@ -370,7 +370,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261011-2: egenskapspanelen utan glapp — vyra-intro.js laddas, Guardian Emblem får position
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
-  assert.match(media, /const version='20261011-2'/);
+  assert.match(media, /const version='20261011-5'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -443,7 +443,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
   // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
-  assert.match(media, /gift-fireworks\.js\?v=20261001-burst1/);
+  assert.match(media, /gift-fireworks\.js\?v=20261011-1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
   assert.match(media, /gift-supernova-engine\.js\?v=20260925-natural1/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);

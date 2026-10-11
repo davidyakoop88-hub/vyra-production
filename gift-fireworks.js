@@ -70,7 +70,7 @@ set('#fwSound','fwSound',true);set('#fwExcludeAnon','fwExcludeAnon',true);set('#
    sin grans — men behaller kon och sparren. Samma monster som triggerFanLevelUp.
    Combon LASES ur faltet och skickas som argument. Den skrivs inte till widgeten har; det gor
    faltets egen onchange langre ner. Se docs/tech-debt.md punkt 3. */
-document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))return;event.preventDefault();let w=liveWidget(selected,'templateGiftFireworks');if(!w)return toast('Välj Gift Fireworks på canvasen först');let combo=Math.max(1,Math.min(100,+document.querySelector('#fwCombo')?.value||w.fwCombo||1));window.triggerGiftFireworks({combo,username:'@Test',giftName:'Rose',profileImage:'assets/images/test/test-profile.png',__test:true})},true);
+document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))return;event.preventDefault();let w=liveWidget(selected,'templateGiftFireworks');if(!w)return toast('Välj Gift Fireworks på canvasen först');let combo=Math.max(1,Math.min(100,+document.querySelector('#fwCombo')?.value||w.fwCombo||1));window.triggerGiftFireworks({combo,username:'@Test',giftName:'Rose',profileImage:'assets/images/test-profile.svg',__test:true})},true);
 /* En timer per EFFEKT, inte en per gava. Forr fick varje gava sin egen setTimeout som tog bort
    .play; tva gavor tatt inpa varandra gav tva timers, och den FORSTA klippte den andra animationen
    kort mitt i. Nu satts samma timer om sa den nya omgangens CSS-sekvens far sin fulla tid. */

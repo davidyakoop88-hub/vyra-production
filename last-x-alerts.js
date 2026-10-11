@@ -11,6 +11,7 @@
   // is configured for more than one type — solo defaults all share the same neon pink, which would
   // make a shared stage unreadable.
   const giftLine = e => `${String(e.giftName || e.gift || 'GIFT').toUpperCase().slice(0, 40)} ×${Math.max(1, Math.round(Number(e.count ?? e.repeatCount) || 1))}`;
+  const TESTAVATAR = 'assets/images/test-profile.svg'; // samma reservavatar som resten av studion
   const TYPES = {
     gifter: {
       label: 'LAST GIFTER', catalogLabel: 'Last Gifter', events: ['gift'], multiAccent: '#ffd35d',
@@ -157,7 +158,9 @@
     const name = remembered?.username || w.followName || cfg.defaultName;
     const message = remembered?.message || w.followMessage || cfg.defaultMsg;
     const label = labelFor(w, typeKey);
-    const profileImage = remembered?.avatar || w.profileImage || '';
+    // EN TESTAVATAR FÖR ALLA (David 2026-10-11): utan foto visades initialen; nu samma reservbild
+    // som alla andra familjer.
+    const profileImage = remembered?.avatar || w.profileImage || TESTAVATAR;
     const hasImage = profileImage ? ` data-has-image="1"` : '';
     const sticky = w.lastXPersistent !== false && remembered ? ' last-x-sticky' : '';
     const banner = BANNER_ASSETS[design] ? `<img class="last-x-frame-art" src="assets/images/last-x/${BANNER_ASSETS[design]}" alt="">` : '';
@@ -256,7 +259,8 @@
     if (message) message.textContent = data.message;
     if (initial) initial.textContent = (data.username[0] || '✦').toUpperCase();
     if (avatar) {
-      if (data.avatar) { img.src = VyraSafe.src(data.avatar); avatar.dataset.hasImage = '1' } else delete avatar.dataset.hasImage;
+      // EN TESTAVATAR FOR ALLA (David 2026-10-11): utan foto visas test-profile.svg, aldrig initialen.
+      img.src = VyraSafe.src(data.avatar || TESTAVATAR); avatar.dataset.hasImage = '1';
     }
     w.lastXLatest = Object.assign({}, w.lastXLatest || {}, { [typeKey]: data });
     box.classList.toggle('last-x-sticky', w.lastXPersistent !== false);
@@ -346,7 +350,7 @@
     const name = box.querySelector('.last-x-name'), message = box.querySelector('.last-x-message'), image = box.querySelector('.last-x-avatar img');
     if (name) name.textContent = w.followName;
     if (message) message.textContent = w.followMessage;
-    if (image && w.profileImage) image.src = VyraSafe.src(w.profileImage);
+    if (image) image.src = VyraSafe.src(w.profileImage || TESTAVATAR);
     box.classList.remove('last-x-active', 'last-x-leaving');
     void box.offsetWidth;
     box.classList.add('last-x-active');
