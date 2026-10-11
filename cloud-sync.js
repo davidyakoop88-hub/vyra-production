@@ -136,7 +136,11 @@
       settleLegacy();
       const result=await list();if(mine!==session)return;
       const meta=read(META()),items=result.overlays||[];
-      if(!items.length){await create();if(mine!==session)return;setStatus('synced');startTicker();return}
+      // FÖRSTA OVERLAYN MÅSTE OCKSÅ PROJICERAS (uppmätt 2026-10-11, jrofficialswe): apply() är det
+      // som commitar sessionen (projectActive, mode studio-committed). Utan den var canPush()
+      // falsk hela första sessionen — widgets lades till, raden sade "Sparat i molnet ✓", och
+      // molnet stod kvar på version 1 med noll widgets. Se tests/cloud-sync-forsta-overlay-commit.test.js.
+      if(!items.length){await create();if(mine!==session)return;await apply(overlay.state);if(mine!==session)return;setStatus('synced');startTicker();return}
       const preferred=items.find(x=>x.id===meta?.overlayId)||items[0];
       overlay=await getRemote(preferred.id);if(mine!==session)return;
 

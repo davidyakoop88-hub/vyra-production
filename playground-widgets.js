@@ -104,9 +104,11 @@ W.podium={name:"Top Gifter-podium",title:true,
     [1,0,2].forEach(r=>{const c=document.createElement("div");c.className="pcol r"+(r+1);
       c.innerHTML='<div class="crown">👑</div><div class="avw"><div class="av"></div><div class="fxbox"><i></i><i></i><i></i></div></div><div class="nm"></div><div class="cn"></div><div class="blk"><span></span></div>';
       cols.appendChild(c);els[r]=c});
+    let tomt=true;
     function refresh(){
       title.textContent=O().title;
       const top=Object.entries(S.users).filter(u=>u[1].coins>0).sort((a,b)=>b[1].coins-a[1].coins).slice(0,3);
+      tomt=!top.length;
       for(let r=0;r<3;r++){
         const c=els[r],u=top[r],av=$(".av",c);
         c.classList.toggle("dim",!u);
@@ -121,7 +123,7 @@ W.podium={name:"Top Gifter-podium",title:true,
         const changed1=(r===0&&u&&!first&&c.dataset.n!==name);c.dataset.n=name;if(changed1)setTimeout(()=>crownBurst(c),60);
       }
     }
-    return{refresh,event(e){if(e.type==="gift"||e.type==="reset")refresh()},destroy(){}};
+    return{refresh,event(e){if(e.type==="gift"||e.type==="reset")refresh()},destroy(){},tom(){return tomt}};
   }};
 
 
@@ -188,7 +190,7 @@ W.streak={name:"Top Streak",title:false,
           const newHolder=top.user!==e.user;
           top.user=e.user;top.gift=cur.gift;top.n=cur.n;top.img=cur.img||e.avatar||'';paint(newHolder);roar();
         }
-      },destroy(){cancelAnimationFrame(raf);clearInterval(flipT)}};
+      },destroy(){cancelAnimationFrame(raf);clearInterval(flipT)},tom(){return !top.user}};
   }};
 
 
@@ -592,6 +594,28 @@ function mount(host) {
   if (kind === 'podium') applyPodiumFrames(host, O());
   try { inst.refresh && inst.refresh(); } catch (_) {}
   REG.set(host, { id, kind, inst, O });
+  syncTom(host, REG.get(host));
+}
+// REGEL NR 1 (David 2026-10-11): en tom widget syns inte i sändningen. Podiet stod med tre tomma
+// ringar och "0", streak-flippen med "?" och "Ingen streak än", från första sekunden i OBS —
+// uppmätt i overlay med pågående session och noll events. Samma regel som vyra-tom-widget.js
+// redan ger Top Gift/Top Streak (state) och Top Like/Coins/Points (DOM); här står tomheten i
+// instansen (S.users / top.user), så bara instansen kan svara. Goal Pro har ingen tom(): ett mål
+// på 0 är ett mål, inte en platshållare. `!important` av samma skäl som i vyra-tom-widget.js:
+// temaklasserna deklarerar display med !important och en vanlig inline-stil förlorar.
+// w.hidden är streamerns eget val och rörs aldrig. Bara i overlay — i editorn ska podiet synas
+// för att gå att placera.
+const iOverlay = () => new URLSearchParams(location.search).has('overlay');
+// Sändningsgrinden är vyra-tom-widget.js:s egen (aktivSession): utan pågående sändning finns ingen
+// publik, och den visuella riggen fotograferar katalogen i ?overlay=1 utan sändning — där ska podiet
+// synas. Uppmätt i CI 2026-10-11: utan grinden blev 26 podium-/streak-referenser "0×0, dold".
+const aktivSandning = () => { try { return !!(window.VyraTomWidget && window.VyraTomWidget.aktivSession()) } catch (_) { return false } };
+function syncTom(host, r) {
+  if (!r || !r.inst || typeof r.inst.tom !== 'function' || !iOverlay() || !aktivSandning()) return;
+  const w = widgetById(r.id); if (!w || w.hidden) return;
+  const el = host.closest('[data-id]') || host;
+  if (r.inst.tom()) el.style.setProperty('display', 'none', 'important');
+  else if (el.style.getPropertyPriority('display') === 'important') el.style.removeProperty('display');
 }
 function scan() {
   document.querySelectorAll('.pgw[data-pgid]:not([data-pgm])').forEach(mount);
@@ -633,7 +657,7 @@ function feed(ev) {
   const e = conv(ev);
   if (!e) return;
   applyState(e);
-  for (const [, r] of REG) { try { r.inst.event(e); } catch (_) {} }
+  for (const [h, r] of REG) { try { r.inst.event(e); } catch (_) {} syncTom(h, r); }
 }
 const prevRoute = window.routeLiveBattleEvent;
 window.routeLiveBattleEvent = function (event = {}) {
@@ -645,9 +669,9 @@ function resetAll() {
   S.coins = S.likes = S.follows = S.shares = 0; S.focus = null;
   for (const k of Object.keys(STATE)) delete STATE[k];
   lastRC.clear();
-  for (const [, r] of REG) { try { r.inst.event({ type: 'reset' }); } catch (_) {} }
+  for (const [h, r] of REG) { try { r.inst.event({ type: 'reset' }); } catch (_) {} syncTom(h, r); }
 }
-window.addEventListener('vyra-live-session', ev => { const d = ev && ev.detail; if (d && d.event === 'live:start') resetAll(); });
+window.addEventListener('vyra-live-session', ev => { const d = ev && ev.detail; if (d && d.event === 'live:start') resetAll(); else for (const [h, r] of REG) syncTom(h, r); });
 function glom() {
   for (const [h, r] of REG) { try { r.inst.destroy && r.inst.destroy() } catch (_) {} REG.delete(h); }
   resetAll();

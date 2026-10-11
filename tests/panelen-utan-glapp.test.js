@@ -108,5 +108,6 @@ test('cachebustarna höjdes i samma commit som filerna', () => {
   assert.match(media, /gift-supernova-panel\.js\?v=20261011-1/);
   assert.match(html, /vyra-textgrupp\.js\?v=20261011-1/);
   assert.match(html, /approved-rankings\.js\?v=20261011-1/);
-  assert.match(html, /media\.js\?v=20261011-2/);
+  // media.js 20261011-4: regel 1 (live-leaderboard/playground/fan-level-50-bustarna i loadern).
+  assert.match(html, /media\.js\?v=20261011-7/);
 });

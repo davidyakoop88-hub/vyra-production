@@ -1338,7 +1338,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-intro.js?v=20261011-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20260922-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261011-1';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1702,7 +1702,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261008-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261011-2'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261011-7'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1735,4 +1735,4 @@ Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='st
 
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20260930-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20260930-3','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20260930-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261011-1','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});

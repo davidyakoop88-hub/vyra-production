@@ -24,7 +24,9 @@ function makeElement(tag, attrs = {}) {
     parent: null,
     textContent: attrs.textContent || '',
     dataset: attrs.dataset || {},
-    style: {},
+    // live-leaderboard.js doljer tomma rader med setProperty('display','none','important') (regel 1,
+    // 2026-10-11) - samma yta som CSSStyleDeclaration, speglad i .display sa laserna ar oforandrade.
+    style: { _prio: {}, setProperty(k, v, p) { this[k] = v; this._prio[k] = p || '' }, removeProperty(k) { const v = this[k] || ''; delete this[k]; delete this._prio[k]; return v }, getPropertyPriority(k) { return this._prio[k] || '' } },
     classList: { _set: new Set(attrs.classes || []), add(c) { this._set.add(c) }, remove(c) { this._set.delete(c) }, contains(c) { return this._set.has(c) } },
     _classes: new Set(attrs.classes || []),
     src: '',
