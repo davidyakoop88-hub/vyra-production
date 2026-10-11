@@ -48,7 +48,7 @@
   /* .gift-fireworks-fx star med sedan raketerna borjade visa den RIKTIGA gavan: deras src ar numera
      en TikTok-CDN-URL som kan fallera, och utan den har traffen bytte de till profilplatshallaren —
      ett ansiktsfoto flygande i ett fyrverkeri. Profilbilder markerar fallbackApplied och hanterar egna bildfel. */
-  document.addEventListener('error',e=>{let img=e.target;if(!(img instanceof HTMLImageElement)||img.dataset.fallbackApplied)return;img.dataset.fallbackApplied='1';img.src=img.closest('.vyra-gift-face,.streak-gift-face,.campaign-gift-image,.gift-fireworks-fx')?'assets/gifts/events/0001_Rose.png':'assets/images/test/test-profile.png'},true);
+  document.addEventListener('error',e=>{let img=e.target;if(!(img instanceof HTMLImageElement)||img.dataset.fallbackApplied)return;img.dataset.fallbackApplied='1';img.src=img.closest('.vyra-gift-face,.streak-gift-face,.campaign-gift-image,.gift-fireworks-fx')?'assets/gifts/events/0001_Rose.png':'assets/images/test-profile.svg'},true);
 
   function presets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY)||'{}')}catch{return{}}}
   function savePresets(x){localStorage.setItem(PRESET_KEY,JSON.stringify(x))}
