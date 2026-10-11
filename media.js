@@ -1292,7 +1292,7 @@ document.addEventListener('load',e=>{
 //
 // onload racker inte som halsotecken: ett skript som KASTAR under korning utloser onload anda.
 // Darfor kontrolleras VyraLive, inte bara att filen kom fram.
-Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20260906-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20260916-facit';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20260916-anslutningsprick';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
+Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261011-1';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20260916-anslutningsprick';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -1336,9 +1336,12 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 // statiska skript, så dess renderkrok ligger utanför approved-rankings.js:s vakt och når även
 // Clean Flips markup. Egen rad, inte en andra sträng på raden ovanför (se live-leaderboard).
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-intro.js?v=20261011-1';document.body.append(js)});
+// Skarpa profilbilder (2026-10-11): laddas före live-client.js:s första event — ingest() anropar
+// window.VyraStorAvatar.forbattra om modulen finns, annars inget.
+Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261011-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261011-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261011-2';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1702,7 +1705,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261011-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261011-5'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261011-9'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });

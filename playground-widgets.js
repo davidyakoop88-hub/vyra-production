@@ -193,6 +193,7 @@ W.streak={name:"Top Streak",title:false,
     return{refresh(){layout();paint(false)},
       event(e){
         if(e.type==="reset"){for(const k in live)delete live[k];top.user=null;top.n=0;top.img='';shown=0;paint(false);return}
+        if(e.type==="avatar"){if(live[e.user])live[e.user].img=e.avatar;if(top.user===e.user){top.img=e.avatar;paint(false)}return}
         if(e.type!=="gift")return;
         const now=Date.now(),L=live[e.user],gap=O().x.gap*1000;
         if(L&&L.gift.id===e.gift.id&&now-L.last<gap){L.n+=e.count;L.last=now}
@@ -675,6 +676,13 @@ function resetAll() {
   for (const [h, r] of REG) { try { r.inst.event({ type: 'reset' }); } catch (_) {} syncTom(h, r); }
 }
 window.addEventListener('vyra-live-session', ev => { const d = ev && ev.detail; if (d && d.event === 'live:start') resetAll(); else for (const [h, r] of REG) syncTom(h, r); });
+// vyra-stor-avatar.js: byt 72 px-bilden mot profilsidans 1080 px i S.users och rita om instanserna.
+window.addEventListener('vyra-stor-avatar', ev => {
+  const d = ev && ev.detail; if (!d || !d.stor) return;
+  const u = S.users[d.username]; if (!u || (u.img && u.img !== d.liten)) return;
+  u.img = d.stor;
+  for (const [, r] of REG) { try { r.inst.event({ type: 'avatar', user: d.username, avatar: d.stor }); r.inst.refresh && r.inst.refresh(); } catch (_) {} }
+});
 function glom() {
   for (const [h, r] of REG) { try { r.inst.destroy && r.inst.destroy() } catch (_) {} REG.delete(h); }
   resetAll();
