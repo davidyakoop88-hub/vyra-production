@@ -117,7 +117,7 @@ test('Goal Pros designer i fabriken ar samma som i playground-widgets.js (utan "
   assert.ok(m, 'hittar inte Goal Pros designlista');
   const ids = [...m[1].matchAll(/\["([^"]+)","[^"]+"\]/g)].map(x => x[1]).filter(id => id !== 'all');
   assert.deepEqual(tabell('pggoal.design').sort(), ids.sort());
-  assert.equal(ids.length, 8);
+  assert.equal(ids.length, 9);   // 9 = Stående pill (2026-10-11): 7 var två staplar i en ruta
 });
 
 test('portalens paletter i fabriken ar samma som PALETTNAMN i like-fountain-portal.js (utan custom)', () => {
@@ -152,19 +152,19 @@ test('playground-katalogen ritar 33 modellkort och inget samlingskort', () => {
   h.run(`view='overlay';document.querySelector('#view').innerHTML='<div class="widget-catalog"><section class="approved-streak-catalog"><h4>VYRA TOP STREAK</h4></section><section class="social-goal-template-section"><h4>GOALS · 10 RÖRLIGA DESIGNER</h4></section></div>';bind();`);
   const d = h.document;
   const kort = [...d.querySelectorAll('.widget-catalog [data-pg-create]')];
-  assert.equal(kort.length, 33, '12 streak + 13 podium + 8 goal');
+  assert.equal(kort.length, 34, '12 streak + 13 podium + 9 goal');
   assert.equal(kort.filter(b => b.dataset.pgCreate === 'streak').length, 12);
   assert.equal(kort.filter(b => b.dataset.pgCreate === 'podium').length, 13);
-  assert.equal(kort.filter(b => b.dataset.pgCreate === 'goal').length, 8);
-  assert.equal(new Set(kort.map(b => b.dataset.catalogKey)).size, 33, 'varje kort har en egen nyckel');
+  assert.equal(kort.filter(b => b.dataset.pgCreate === 'goal').length, 9);
+  assert.equal(new Set(kort.map(b => b.dataset.catalogKey)).size, 34, 'varje kort har en egen nyckel');
   for (const bas of ['catalog:pgstreak', 'catalog:pgpodium', 'catalog:pggoal'])
     assert.equal(d.querySelector(`[data-catalog-key="${bas}"]`), null, bas + ' ritas fortfarande som samlingskort');
   // Streakkorten bor i streaksektionen, goalkorten i goalsektionen, och rubriken raknar upp.
   assert.equal(d.querySelectorAll('section.approved-streak-catalog [data-pg-create="streak"]').length, 12);
-  assert.match(d.querySelector('section.social-goal-template-section h4').textContent, /18 RÖRLIGA DESIGNER/);
+  assert.match(d.querySelector('section.social-goal-template-section h4').textContent, /19 RÖRLIGA DESIGNER/);
   // Idempotent: en andra bind() lagger inte till dubbletter.
   h.run('bind();');
-  assert.equal(d.querySelectorAll('.widget-catalog [data-pg-create]').length, 33);
+  assert.equal(d.querySelectorAll('.widget-catalog [data-pg-create]').length, 34);
   // Kortet skapar widgeten med sin modell.
   d.querySelector('[data-catalog-key="catalog:pgstreak:neon-circuit"]').click();
   // `state` ar en lexikal global i studio.js — nas via eval, inte via window.state.

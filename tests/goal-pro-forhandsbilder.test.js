@@ -13,7 +13,8 @@ const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 
-const DESIGNER = ['1', '2', '3', '4', '5', '6', '7', '8'];
+// 9 = Stående pill (2026-10-11): 7 var två staplar i en ruta, prototypens jämförelseläge.
+const DESIGNER = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 test('varje Goal Pro-design har en egen förhandsbild på disk', () => {
   for (const id of DESIGNER) {
@@ -24,7 +25,7 @@ test('varje Goal Pro-design har en egen förhandsbild på disk', () => {
   // Åtta olika bilder, inte åtta kopior.
   const md5 = f => require('crypto').createHash('md5').update(fs.readFileSync(f)).digest('hex');
   const hashar = new Set(DESIGNER.map(id => md5(path.join(ROOT, 'assets', 'previews', `pggoal-${id}.jpg`))));
-  assert.equal(hashar.size, 8, 'minst två designer delar bild');
+  assert.equal(hashar.size, 9, 'minst två designer delar bild');
 });
 
 test('katalogen pekar varje Goal Pro-kort på sin egen bild', () => {
