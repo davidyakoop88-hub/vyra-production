@@ -312,3 +312,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Video FX som helt paket (#580): fem nya catalog:glovesnipe:<paket>:pack-nycklar ersatter de 23 per-klipp-nycklarna
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 3 av 125 (filter: glovesnipe) — catalog:glovesnipe:cloudFox:pack:2, catalog:glovesnipe:pinkPrincess:pack:2, catalog:glovesnipe:royalRuby:pack:2
+
+## 2026-10-11 — 165 referenser skrivna
+
+- **Motiv:** Ett kort per modell (#587): 45 nya katalognycklar, omkorning efter att katalogkartan uppdaterats till 175 nycklar
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 165
