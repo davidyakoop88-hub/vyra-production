@@ -233,12 +233,17 @@ W.goalvar={name:"Mål-varianter",
       <div class="gvc"><div class="gvcap">4 · Mätare</div><div class="gv4w"><div class="s3t"><span class="s3i"></span><span class="s3l">GIFT-MÅL</span></div><div class="gv4"><svg viewBox="0 0 200 118"><defs><linearGradient id="gv4g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--a)"/><stop offset="1" style="stop-color:var(--b)"/></linearGradient></defs><path class="tr" d="M20 100 A${R} ${R} 0 0 1 180 100" fill="none" stroke-width="16" stroke-linecap="round"/><path class="pg" d="M20 100 A${R} ${R} 0 0 1 180 100" fill="none" stroke-width="16" stroke-linecap="round" stroke-dasharray="${G}" stroke-dashoffset="${G}"/>${gaugeTicks}</svg><canvas width="840" height="500"></canvas><i class="s4head"></i><b class="s4mark mk">0</b><div class="mid"><b class="pc"></b><small>av <span class="t"></span></small></div></div></div></div>
       <div class="gvc"><div class="gvcap">5 · Steg</div><div class="gv5"><div class="s3t s5h"><span class="s3i"></span><span class="s3l">GIFT-MÅL</span><span class="s5r"><b class="pc"></b><small>av <span class="t"></span></small></span></div><div class="s5row"><div class="seg">${Array.from({length:10},(_,i)=>`<i style="--c:color-mix(in srgb,var(--a) ${Math.round(100-i/9*100)}%,var(--b) ${Math.round(i/9*100)}%)"><u></u></i>`).join("")}</div><canvas></canvas><div class="s5mark"><b class="mk">0</b><i class="s5tri"></i></div></div></div></div>
       <div class="gvc"><div class="gvcap">6 · Bara siffra</div><div class="gv6"><div class="s3t s6t"><span class="s3i"></span><span class="s3l">GIFT-MÅL</span></div><b class="big n"></b><small>av <span class="t"></span></small><div class="s6row"><div class="gv6b"><i class="f6"></i></div><canvas></canvas><i class="s6head"></i><div class="s5mark s6mark"><b class="pc">0%</b><i class="s5tri"></i></div></div></div></div>
+      <!-- 7 och 9 var EN ruta med två staplar och siffran emellan — prototypens jämförelseläge.
+           Davids ord 2026-10-11 ("gaol pro är två i ett? stående"): en modell per kort. -->
       <div class="gvc"><div class="gvcap">7 · Stående</div><div class="gv7w"><div class="s3t"><span class="s3i"></span><span class="s3l">GIFT-MÅL</span></div><div class="gv7">
         <div class="vbar"><i class="fv"><i class="s9b" style="width:6px;height:6px;left:25%;animation-duration:4.0s;animation-delay:0.2s"></i><i class="s9b" style="width:8px;height:8px;left:18%;animation-duration:4.0s;animation-delay:0.2s"></i><i class="s9b" style="width:8px;height:8px;left:33%;animation-duration:3.1s;animation-delay:1.7s"></i><i class="s9b" style="width:4px;height:4px;left:36%;animation-duration:3.2s;animation-delay:1.7s"></i><i class="s9b" style="width:8px;height:8px;left:21%;animation-duration:5.5s;animation-delay:2.5s"></i><i class="s9b" style="width:8px;height:8px;left:13%;animation-duration:4.5s;animation-delay:1.6s"></i><i class="s9b" style="width:5px;height:5px;left:11%;animation-duration:4.4s;animation-delay:0.5s"></i><i class="s9b" style="width:7px;height:7px;left:24%;animation-duration:4.4s;animation-delay:2.3s"></i><i class="s9b" style="width:8px;height:8px;left:29%;animation-duration:3.3s;animation-delay:2.3s"></i><i class="s9b" style="width:5px;height:5px;left:53%;animation-duration:3.3s;animation-delay:2.8s"></i><i class="s9b" style="width:8px;height:8px;left:13%;animation-duration:4.6s;animation-delay:2.0s"></i></i>${vticks}</div>
         <div class="vinfo"><b class="big n"></b><small>av <span class="t"></span></small></div>
-        <div class="vpill"><i class="fv"><i class="s9b" style="width:8px;height:8px;left:60%;animation-duration:5.0s;animation-delay:1.9s"></i><i class="s9b" style="width:7px;height:7px;left:52%;animation-duration:3.8s;animation-delay:3.2s"></i><i class="s9b" style="width:9px;height:9px;left:37%;animation-duration:3.2s;animation-delay:1.2s"></i><i class="s9b" style="width:7px;height:7px;left:49%;animation-duration:4.9s;animation-delay:1.2s"></i><i class="s9b" style="width:4px;height:4px;left:21%;animation-duration:4.3s;animation-delay:0.7s"></i><i class="s9b" style="width:6px;height:6px;left:25%;animation-duration:5.4s;animation-delay:1.7s"></i><i class="s9b" style="width:9px;height:9px;left:15%;animation-duration:5.0s;animation-delay:2.3s"></i><i class="s9b" style="width:6px;height:6px;left:49%;animation-duration:4.8s;animation-delay:2.4s"></i><i class="s9b" style="width:8px;height:8px;left:64%;animation-duration:3.2s;animation-delay:0.4s"></i><i class="s9b" style="width:6px;height:6px;left:66%;animation-duration:4.8s;animation-delay:0.3s"></i><i class="s9b" style="width:9px;height:9px;left:45%;animation-duration:4.7s;animation-delay:4.0s"></i></i><span class="pc"></span></div>
       </div></div></div>
       <div class="gvc"><div class="gvcap">8 · Smal med pil</div><div class="gv9"><div class="s9t"><span class="s9i"></span><span class="s9l">GIFT-MÅL</span></div><div class="s9w"><div class="vbar s9bar"><i class="fv"><i class="s9b" style="width:5px;height:5px;left:2px;animation-duration:3.2s;animation-delay:0.0s"></i><i class="s9b" style="width:7px;height:7px;left:7px;animation-duration:4.1s;animation-delay:0.9s"></i><i class="s9b" style="width:4px;height:4px;left:5px;animation-duration:2.8s;animation-delay:1.7s"></i><i class="s9b" style="width:6px;height:6px;left:3px;animation-duration:3.7s;animation-delay:2.4s"></i><i class="s9b" style="width:5px;height:5px;left:8px;animation-duration:4.6s;animation-delay:0.4s"></i><i class="s9b" style="width:8px;height:8px;left:4px;animation-duration:5.2s;animation-delay:3.1s"></i><i class="s9b" style="width:4px;height:4px;left:9px;animation-duration:3.0s;animation-delay:2.0s"></i><i class="s9b" style="width:6px;height:6px;left:6px;animation-duration:3.9s;animation-delay:1.2s"></i><i class="s9b" style="width:5px;height:5px;left:3px;animation-duration:4.4s;animation-delay:3.6s"></i><i class="s9b" style="width:7px;height:7px;left:8px;animation-duration:3.4s;animation-delay:0.6s"></i><i class="s9b" style="width:4px;height:4px;left:4px;animation-duration:2.6s;animation-delay:2.8s"></i><i class="s9b" style="width:6px;height:6px;left:2px;animation-duration:4.8s;animation-delay:1.5s"></i></i></div><div class="s9mark"><svg viewBox="0 0 20 30"><path d="M19 2 L2 15 L19 28 Z" fill="var(--a)" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><b class="mk">0</b></div></div><div class="s9n"><b class="pc"></b><small>av <span class="t"></span></small></div></div></div>
+      <div class="gvc"><div class="gvcap">9 · Stående pill</div><div class="gv7w"><div class="s3t"><span class="s3i"></span><span class="s3l">GIFT-MÅL</span></div><div class="gv7">
+        <div class="vpill"><i class="fv"><i class="s9b" style="width:8px;height:8px;left:60%;animation-duration:5.0s;animation-delay:1.9s"></i><i class="s9b" style="width:7px;height:7px;left:52%;animation-duration:3.8s;animation-delay:3.2s"></i><i class="s9b" style="width:9px;height:9px;left:37%;animation-duration:3.2s;animation-delay:1.2s"></i><i class="s9b" style="width:7px;height:7px;left:49%;animation-duration:4.9s;animation-delay:1.2s"></i><i class="s9b" style="width:4px;height:4px;left:21%;animation-duration:4.3s;animation-delay:0.7s"></i><i class="s9b" style="width:6px;height:6px;left:25%;animation-duration:5.4s;animation-delay:1.7s"></i><i class="s9b" style="width:9px;height:9px;left:15%;animation-duration:5.0s;animation-delay:2.3s"></i><i class="s9b" style="width:6px;height:6px;left:49%;animation-duration:4.8s;animation-delay:2.4s"></i><i class="s9b" style="width:8px;height:8px;left:64%;animation-duration:3.2s;animation-delay:0.4s"></i><i class="s9b" style="width:6px;height:6px;left:66%;animation-duration:4.8s;animation-delay:0.3s"></i><i class="s9b" style="width:9px;height:9px;left:45%;animation-duration:4.7s;animation-delay:4.0s"></i></i><span class="pc"></span></div>
+        <div class="vinfo"><b class="big n"></b><small>av <span class="t"></span></small></div>
+      </div></div></div>
       <div class="gvc"><div class="gvcap">9 · Senaste bidrag och takt</div><div class="gv8"><div class="gvlast"><div class="empty">Väntar på första gåvan…</div></div><div class="gvpace"><b class="rate">+0/min</b><small class="eta">—</small></div></div></div>
       <div class="gvtoast"></div>
       <div class="gvbanner">MÅL NÅTT!</div>
@@ -337,7 +342,7 @@ W.goalvar={name:"Mål-varianter",
       if(!row5)return;const pp=Math.min(1,shown/tgt())*10;
       segs5.forEach((e,i)=>{e.firstChild.style.width=Math.max(0,Math.min(1,pp-i))*100+"%"});
       const done=Math.min(10,Math.floor(pp+1e-6));if(done>lastSeg&&done<=10){const e=segs5[done-1];if(e){e.classList.remove("s5pop");void e.offsetWidth;e.classList.add("s5pop")}}lastSeg=done;
-      if(row5.clientWidth){mk5.style.left=headX5()+"px";mk5.style.opacity=pp>0?1:0}
+      if(row5.clientWidth){mk5.style.left=klamp(mk5,row5,headX5())+"px";mk5.style.opacity=pp>0?1:0}
     }
     function spawn5(fast){if(!row5.clientWidth)return;const hx=headX5();if(hx<14)return;p5.push({x:Math.random()*Math.min(hx*.25,70),y:8+Math.random()*(H5-16),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:2+Math.random()*3.6,w:Math.random()*6.28})}
     function loop5(t){
@@ -354,11 +359,15 @@ W.goalvar={name:"Mål-varianter",
       raf5=requestAnimationFrame(loop5);
     }
     if(row5){row5.__cloop=loop5;raf5=requestAnimationFrame(loop5)}
+    // ETIKETTEN STANNAR INOM RUTAN (2026-10-11, Davids granskning vid 100 %): markörens etikett är
+    // centrerad på huvudet (translateX(-50%)), så vid 100 % stack halva utanför raden och klipptes av
+    // widgetens kant. Centrum klämms till [halva etikettbredden, radbredd - halva etikettbredden].
+    const klamp=(mk,row,x)=>{const b=(mk&&mk.offsetWidth)||0;return Math.min(Math.max(x,b/2),Math.max(b/2,row.clientWidth-b/2))};
     function barFx(row,H,fillEl){
       const cv=$("canvas",row),c=cv&&cv.getContext("2d"),head=$(".s6head",row),mk=$(".s5mark",row);let ps=[],lt=0,sa=0,raf=0;
       const fxp=()=>Math.min(1,shown/tgt())*row.clientWidth;
       function paint(){const p=Math.min(1,shown/tgt());fillEl.style.width=(p*100)+"%";
-        if(row.clientWidth){const x=fxp();head.style.left=x+"px";mk.style.left=x+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
+        if(row.clientWidth){const x=fxp();head.style.left=x+"px";mk.style.left=klamp(mk,row,x)+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
       function spawn(fast){if(!row.clientWidth)return;const hx=fxp();if(hx<14)return;ps.push({x:Math.random()*Math.min(hx*.25,70),y:H*.18+Math.random()*(H*.64),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:Math.max(2,H*.07)+Math.random()*Math.max(2.5,H*.1),w:Math.random()*6.28})}
       function loop(t){
         const dt=Math.max(0,Math.min(.05,((t-lt)/1000)||0));lt=Math.max(lt,t);
@@ -383,7 +392,7 @@ W.goalvar={name:"Mål-varianter",
     const fx6=()=>Math.min(1,shown/tgt())*row6.clientWidth;
     function paintBar6(){
       if(!row6)return;const p=Math.min(1,shown/tgt());f6.style.width=(p*100)+"%";
-      if(row6.clientWidth){const x=fx6();head6.style.left=x+"px";mk6.style.left=x+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
+      if(row6.clientWidth){const x=fx6();head6.style.left=x+"px";mk6.style.left=klamp(mk6,row6,x)+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
     }
     function spawn6(fast){if(!row6.clientWidth)return;const hx=fx6();if(hx<14)return;p6.push({x:Math.random()*Math.min(hx*.25,60),y:5+Math.random()*(H6-10),sp:fast?160+Math.random()*180:44+Math.random()*56,sz:2+Math.random()*3,w:Math.random()*6.28})}
     function loop6(t){
@@ -460,7 +469,7 @@ W.goalvar={name:"Mål-varianter",
 
 Object.assign(W.goal,{name:"Mål / progress",title:true,
   defaults:{accent:"#3dffb0",accent2:"#2d8cff",title:"GIFT-MÅL"},schema:[
-    {k:"design",l:"Design",t:"select",o:[["1","Rak bar"],["2","Pill"],["3","Ring"],["4","Mätare"],["5","Steg"],["6","Bara siffra"],["7","Stående"],["8","Smal med pil"],["all","Alla (jämför)"]],d:"1"},
+    {k:"design",l:"Design",t:"select",o:[["1","Rak bar"],["2","Pill"],["3","Ring"],["4","Mätare"],["5","Steg"],["6","Bara siffra"],["7","Stående"],["8","Smal med pil"],["9","Stående pill"],["all","Alla (jämför)"]],d:"1"},
     {k:"metric",l:"Mäter",t:"select",o:GMETOPT,d:"coins"},
     {k:"target",l:"Mål",t:"range",min:5,max:20000,step:5,d:2000},
     {k:"last",l:"Visa senaste bidrag",t:"select",o:[["1","Ja"],["0","Nej"]],d:"0"},
@@ -542,7 +551,7 @@ const BESKR = {
   goal: 'Mål med markör, bubblor och färgpalett'
 };
 const NAT = { podium: { w: 940, h: 900 }, streak: { w: 760, h: 900 }, goal: { w: 940, h: 640 } };
-const GOALH = { 1: 250, 2: 320, 3: 520, 4: 470, 5: 280, 6: 360, 7: 620, 8: 660 };
+const GOALH = { 1: 250, 2: 320, 3: 520, 4: 470, 5: 280, 6: 360, 7: 620, 8: 660, 9: 620 };
 const STATE = {};          // per-widget runtime-state som överlever en omrendering
 const REG = new Map();     // host-element -> { id, kind, inst }
 
@@ -772,7 +781,10 @@ const MODELLER = {
   streak: () => STREAK_MODELS.map(m => ({ id: m.id, namn: m.name, bild: m.file })),
   podium: () => [{ id: 'none', namn: 'Kodad ram', bild: 'assets/previews/pgpodium.jpg' }]
     .concat(HD.map(f => ({ id: f.id, namn: f.name, bild: (PGD.img || {})[f.id + '-key'] || 'assets/previews/pgpodium.jpg' }))),
-  goal: () => schemaOf('goal').find(f => f.k === 'design').o.map(([id, namn]) => ({ id, namn, bild: 'assets/previews/pggoal.jpg' })),
+  // En bild per design (2026-10-11, Davids ord: "varje modell for sig sjalv"): renderade ur
+  // W.goalvar i Chromium vid 64 % av 2 000, samma lage som familjebilden. Familjebilden
+  // pggoal.jpg finns kvar for basnyckeln och gamla referenser.
+  goal: () => schemaOf('goal').find(f => f.k === 'design').o.map(([id, namn]) => ({ id, namn, bild: 'assets/previews/pggoal-' + id + '.jpg' })),
 };
 // overlay-preview.js fragar registret nar OWG_CATALOG_PREVIEW saknar nyckeln.
 (window.VyraKatalogForhandsbilder = window.VyraKatalogForhandsbilder || []).push(key => {
