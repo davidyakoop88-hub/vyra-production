@@ -196,7 +196,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   assert.match(studio, /widget-factory\.js\?v=20261011-3/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261012-1/);
+  assert.match(studio, /gift-event-images\.js\?v=20261012-diamonds/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -388,7 +388,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // samtidigt en strang som bara sager NAR — `20260817-duckning` namngav sitt innehall, vilket
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   // 20261012-1: vakten mot konfig-omhamtningen efter live:start (#271 avsnitt 4).
-  assert.match(media, /battle-mvp-session\.js\?v=20261012-1/,
+  assert.match(media, /battle-mvp-session\.js\?v=20261012-diamonds/,
     'battle-mvp-session.js cachebustades inte for #271');
   // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
   // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
@@ -420,14 +420,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
   // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
   for (const fil of ['action-options', 'action-runtime']) {
-    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260926-likefountain`), `${fil}.js cachebustades inte`);
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
   for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261011-1/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261012-diamonds/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
@@ -445,7 +445,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
   // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
-  assert.match(media, /gift-fireworks\.js\?v=20261011-1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
+  assert.match(media, /gift-fireworks\.js\?v=20261012-diamonds/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
   assert.match(media, /gift-supernova-engine\.js\?v=20260925-natural1/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
