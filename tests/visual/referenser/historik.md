@@ -342,3 +342,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny Goal Pro-modell Stående pill (pggoal:9) från #592 saknade referensbild
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 166 (filter: pggoal:9) — catalog:pggoal:9
+
+## 2026-10-12 — 1 referenser skrivna
+
+- **Motiv:** Heart Tower smalare med hjärtmarkör och tydlig fyllnadsnivå (#593)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 166 (filter: heart-tower) — catalog:socialgoal:likes:heart-tower:portrait
