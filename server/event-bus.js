@@ -9,13 +9,15 @@ const {CircuitBreaker}=require('./observability');
 // 'guardian' tillkom 2026-09-01: BARRAGE med subType 'guardian_entrance', uppmatt i skarp
 // sandning. Den bar en person, sa den star med i TIKTOK_INGEST_TYPES men INTE i
 // TIKTOK_ROOM_TYPES — annars slutar molnet krava username for typen.
+// 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén, samma BARRAGE-ror som guardian och
+// av samma skal en persontyp. Bar tre egna bildfalt, se superfan-blocket i cleanEvent.
 // 'streamdeck' tillkom 2026-09-27: Stream Deck-molnvägen (server/streamdeck.js). Den är INTE en
 // TikTok-händelse och har därför ingen producent i bryggan eller desktop-tjänsten — den föds i
 // rutten POST /api/streamdeck/events i index.js, mot en enhetstoken. Den står med här för att
 // cleanEvent annars kastar den med 400, och står med UNDANTAGET i tests/event-contract.test.js
 // (som annars kräver en bryggproducent för varje tillåten typ). Den bär inga person- eller
 // gåvofält, bara sitt kommando — se sd-blocket i cleanEvent nedan.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','streamdeck']);
+const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','streamdeck']);
 // `member` STOD HAR fram till 2026-09-06 och doptes om till 'viewer'. Foljden: klientens
 // liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och 'viewer' matchar
 // INGEN av dem, sa varken member- eller join-triggern kunde fyra pa molnvagen. Uppmatt i en skarp
@@ -125,6 +127,14 @@ const event={
     event.kistaId=String(input?.kistaId||'').slice(0,160);
     event.oppnasAt=Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.round(Number(input?.oppnasAt)||0)));
     event.kistaDold=!!input?.kistaDold;
+  }
+  // SUPER FAN-ENTRÉN (typen superfan, se tiktok-bridge/normalizer.js superfanFields). TikToks färdiga
+  // grafik: badgen, bakgrundsbilden och bandanimationen. Bara på den här typen, av samma skäl som
+  // kistans fält. Nivån bärs i det befintliga fanClubLevel. #361
+  if(typ==='superfan'){
+    event.superfanBadge=String(input?.superfanBadge||'').slice(0,1200);
+    event.superfanBakgrund=String(input?.superfanBakgrund||'').slice(0,1200);
+    event.superfanBand=String(input?.superfanBand||'').slice(0,1200);
   }
   // STREAM DECK-MOLNVÄGEN (typen streamdeck, se server/streamdeck.js). Bär bara vad knappen gör.
   // Fälten finns BARA på den här typen — en gåva ska aldrig släpa ett sdKommando med sig.

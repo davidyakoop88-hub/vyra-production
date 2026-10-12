@@ -47,6 +47,9 @@ function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().re
   else if(t==='follow')out.push(['follow',{...payload,isFollower:true}]);
   else if(t==='member'||t==='subscribe'||t==='subscription')out.push(['member',{...payload,isSubscriber:true}]);
   else if(t==='join'||t==='roomuser')out.push(['join',payload]);
+  // SUPER FAN-ENTRÉN (#361 fynd 2). Bryggan skickar typen 'superfan' ur TikToks BARRAGE, med nivån i
+  // fanClubLevel — den landar i payload.teamLevel ovan, sa teamnivåfiltret i Actions fungerar direkt.
+  else if(t==='superfan')out.push(['superfan',payload]);
   else if(t==='share')out.push(['share',payload]);
   else if(t==='likes'||t==='like')out.push(['likes',{...payload,value:payload.count,likecount:payload.count,totallikecount:e.points??e.totalLikes??e.totalLikeCount??0}]);
   else if(t==='chatcommand'||t==='command')out.push(['chatCommand',{...payload,command:e.command||e.name,value:e.command||e.name}]);

@@ -480,6 +480,28 @@ gäller hela sändningen.
 Skriv in: stannade Top Streak på den dyrare combon? visade Top Gift störst enskild gåva? Koden:
 `gift-event-images.js` (`records.streakCoins` / `records.giftCoins`), `live-leaderboard.js`.
 
+## 13. Känns en riktig Super Fan-entré igen, med nivå och grafik? (SUPER_FAN_JOIN, #361)
+
+**Byggd 2026-10-12, aldrig sedd vidarebefordrad.** Fem `SUPER_FAN_JOIN` är uppmätta 2026-09-06 —
+men bara deras NYCKLAR, inte värdena. Bryggan grenar i den befintliga BARRAGE-lyssnaren
+(`normalizer.js` → `superfanFields`) och skickar typen `superfan` med användaren, nivån i
+`fanClubLevel` (ur `fansLevelParam.currentGrade`) och tre bildfält: `superfanBadge`,
+`superfanBakgrund`, `superfanBand`. Actions & Events har triggern **Super Fan går med i liven**.
+
+**Antagandet:** igenkänningen är bibliotekets egen (`content.key` eller `commonBarrageContent.key`
+innehåller `ttlive_superfan_commentnotif_superfanjoined`) — det var den som sorterade ut de fem
+raderna, men själva nyckelvärdet har vi aldrig läst. Var badgebilden ligger (`badge.image.image`
+eller `badge.combine.icon`) är läst ur protot, inte ur en payload.
+
+**Så här läser du av det:**
+1. Kör med inspelning. Vänta på att en Super Fan går in.
+2. I inspelningen: raden ska ha typen `superfan` och märkningen `vidarebefordrad`, och `_utgaende`
+   ska bära `fanClubLevel` > 0 och tre icke-tomma bild-URL:er.
+3. En Action bunden till **Super Fan går med i liven** ska köras.
+
+Skriv in: kändes entrén igen? var bilderna tomma? Koden: `tiktok-bridge/normalizer.js`
+(`superfanFields`), `electron-app/tiktok-fields.js` (kopian), `server/event-bus.js`.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

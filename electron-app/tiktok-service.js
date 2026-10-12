@@ -2,7 +2,7 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
-const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering,
+const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering, superfanFields,
   battleStatusAv, mvpFields, envelopeFields } = require('./tiktok-fields');
 
 function eventKey(type, data, fields) {
@@ -119,6 +119,12 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     connection.on(WebcastEvent.BARRAGE, data => {
       if (arGuardianEntrance(data)) {
         emit('guardian', baseUser(data), data);
+        return;
+      }
+      // SUPER FAN-ENTRÉN (#361 fynd 2) — samma gren som i bryggan, regeln kopierad i tiktok-fields.js.
+      const superfan = superfanFields(data);
+      if (superfan) {
+        emit('superfan', superfan, data);
         return;
       }
       const upp = fansUppgradering(data);

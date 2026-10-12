@@ -100,7 +100,9 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // 'glove' tillkom 2026-08-14: multiplikatorfonstret i en battle, ur LINK_MIC_BATTLE_TASK. Det ar
 // en rumshandelse precis som viewer och battle — fonstret galler matchen, inte en person, sa det
 // kommer utan username och far inte krava ett.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove'])
+// 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén ur BARRAGE. Den bar en PERSON och
+// kraver darfor username, precis som 'guardian'.
+const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove'])
 // KISTAN FÅR KOMMA UTAN AVSÄNDARE (uppmätt 2026-10-11, sändningen jrofficialswe): TikToks
 // envelopeInfo bar inget sendUserName, bryggan skickade username '' och molnet svarade 400 på
 // alla tio kistorna — de nådde aldrig overlayn. En kista identifieras av kistaId; avsändarnamnet
