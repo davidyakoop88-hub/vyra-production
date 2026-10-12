@@ -369,6 +369,10 @@
       ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
         ? GOAL_MOTION_MATT[v.orientation]
         : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
+      // Heart Tower 100 px (2026-10-11, Davids ord "smalare på bredden"): likes-tornets konst är 247 px
+      // bred av 313 (följar-/diamanttornen 186/192), så vid 130 såg det bredast ut av de tre. Samma
+      // tal som DESIGNS i goal-motion.js, så katalogknapp och fabrik ger samma widget.
+      ...(v.model === 'heart-tower' ? { width: 100 } : {}),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
       goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,

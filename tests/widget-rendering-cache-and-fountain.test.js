@@ -194,7 +194,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261010-paket: catalog:glovesnipe:<paket>:pack bygger hela paketet som en widget.
   // Bumpad 2026-10-11: ett kort per modell — widget-factory.js bar de nya modelltabellerna och
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
-  assert.match(studio, /widget-factory\.js\?v=20261011-2/);
+  assert.match(studio, /widget-factory\.js\?v=20261011-3/);
   assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
@@ -370,7 +370,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261011-2: egenskapspanelen utan glapp — vyra-intro.js laddas, Guardian Emblem får position
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
-  assert.match(media, /const version='20261011-5'/);
+  assert.match(media, /const version='20261011-6'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

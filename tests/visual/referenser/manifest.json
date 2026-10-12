@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 196,
+ "antal": 197,
  "senaste": {
-  "motiv": "En testavatar för alla familjer och demopersoner i editorn för podium/streak-flip, PR #595",
-  "nycklar": 165,
-  "filter": null,
-  "tid": "2026-10-11T21:35:22.763Z"
+  "motiv": "Ny Goal Pro-modell Stående pill (pggoal:9) från #592 saknade referensbild",
+  "nycklar": 1,
+  "filter": "pggoal:9",
+  "tid": "2026-10-12T07:54:19.086Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -467,7 +467,7 @@
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-tower:portrait": {
-   "matt": "130x705",
+   "matt": "100x554",
    "fyllnad": 100
   },
   "catalog:likefountain:portal": {
@@ -796,6 +796,10 @@
   },
   "catalog:pgstreak:violet-orchid": {
    "matt": "300x355",
+   "fyllnad": 100
+  },
+  "catalog:pggoal:9": {
+   "matt": "380x251",
    "fyllnad": 100
   }
  }
