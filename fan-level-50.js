@@ -60,6 +60,7 @@
     const team = safe.text(m.team || w.fanl50Team || '');
     return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
+      <div class="fl50-badge">LEVEL ${d.level}</div>
       <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
       <div class="fl50-name"><span>${safe.text(m.name, 'FAN')}</span></div>
       ${team ? `<div class="fl50-team"><span>#${team}</span></div>` : ''}
@@ -87,7 +88,10 @@
       inner = list.length ? cardHtml(w, list[i], i + 1) : '';
     }
     const interval = num(w.fanl50Interval, 6, 2, 60);
-    return `<div class="widget fan-level-50 fl50-mode-${mode}${selected === w.id ? ' selected' : ''}" data-id="${safe.text(w.id)}" style="${dold ? DOLJ : ''}left:${num(w.x, 0, -10000, 10000)}px;top:${num(w.y, 0, -10000, 10000)}px;width:${num(w.width, 300, 120, 2000)}px;zoom:${num(w.widgetScale, 1, .1, 5)};z-index:${num(w.layer, 1, 0, 99)};${w.hidden ? 'display:none;' : ''}--fl50-speed:${interval}s"><div class="fl50-viewport">${inner}</div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
+    // --fl50-z: kortet tar tillbaka zoomen sa att dess container query mater den verkliga bredden
+    // (kompakt lage i fan-level-50.css). Samma tal som zoom:, annars stammer inte storleken.
+    const zoom = num(w.widgetScale, 1, .1, 5);
+    return `<div class="widget fan-level-50 fl50-mode-${mode}${selected === w.id ? ' selected' : ''}" data-id="${safe.text(w.id)}" style="${dold ? DOLJ : ''}left:${num(w.x, 0, -10000, 10000)}px;top:${num(w.y, 0, -10000, 10000)}px;width:${num(w.width, 300, 120, 2000)}px;zoom:${zoom};--fl50-z:${zoom};z-index:${num(w.layer, 1, 0, 99)};${w.hidden ? 'display:none;' : ''}--fl50-speed:${interval}s"><div class="fl50-viewport">${inner}</div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }
 
   // ---- render-kedja: patcha wh for den nya typen -------------------------------------------------

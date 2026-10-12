@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Topplistorna läsbara i liten storlek: platta, 12 px-golv, kompaktläge, ett mynt (PR #604) — Top Like, Top Coins, Top Points och Top Gift",
-  "nycklar": 166,
-  "filter": null,
-  "tid": "2026-10-12T17:00:22.350Z"
+  "motiv": "Top Streak Flip läsbar i liten storlek: platta, textgolv och kompakt ring (PR #601)",
+  "nycklar": 12,
+  "filter": "pgstreak",
+  "tid": "2026-10-12T16:29:14.779Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
