@@ -45,16 +45,61 @@
   });
   const IDS = Object.keys(DESIGNS);
 
+  // EN MYNTSYMBOL I HELA FAMILJEN. Före fanns tre: guldmyntet här (sex designer), ett "V" i en
+  // guldcirkel (Halo, Signal Orbit) och "◉" (Top Gift). Guldmyntet vinner: det är det vanligaste
+  // (sex av åtta Top Coins-designer) och det enda som ser ut som ett mynt även i 12 px — "V" läses
+  // som VYRA:s logga och "◉" som en radioknapp. topcoins-v2.js och Top Gift hämtar det härifrån.
+  const MYNT = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ffd54a" stroke="#c99a12" stroke-width="1.5"/><path d="M13.6 8.2a4 4 0 1 0 0 7.6" fill="none" stroke="#8a6300" stroke-width="2" stroke-linecap="round"/></svg>';
+
   // En symbol per rankingtyp, ordagrant ur prototyperna: rött hjärta, guldmynt, lila stjärna.
   const IKONER = Object.freeze({
     templateTopLike: '<svg viewBox="0 0 24 24" fill="#ff4d6d" aria-hidden="true"><path d="M12 21s-7.5-4.6-10.2-9.1C.2 8.9 1.4 5 5 4.1c2.1-.5 4.1.4 5.4 2.2 1.3-1.8 3.3-2.7 5.4-2.2 3.6.9 4.8 4.8 3.2 7.8C19.5 16.4 12 21 12 21z"/></svg>',
-    templateTopCoins: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#ffd54a" stroke="#c99a12" stroke-width="1.5"/><path d="M13.6 8.2a4 4 0 1 0 0 7.6" fill="none" stroke="#8a6300" stroke-width="2" stroke-linecap="round"/></svg>',
+    templateTopCoins: MYNT,
     templateTopPoints: '<svg viewBox="0 0 24 24" fill="#c9a8ff" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6L12 2z"/></svg>'
   });
   const KRONA = '<svg viewBox="0 0 640 512" aria-hidden="true"><path d="M528 448H112a16 16 0 0 1 0-32h416a16 16 0 0 1 0 32zM571.31 199.36a32 32 0 0 0-35.16 6.94L457.94 285 396 187.63a48.16 48.16 0 0 0-81.06 1.05L256 285l-78.15-78.73a32 32 0 0 0-54.65 22.6L144 400h352l20.8-166.67a32 32 0 0 0-9.49-33.97z"/></svg>';
   // Prism horisontal: nummer 1 i mitten, sedan utåt — visuell ordning 4, 2, 1, 3, 5.
   const PODIUM = [3, 1, 0, 2, 4];
   const FAMILJER = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
+
+  // LÄSBARHETSLÄGET (2026-10-12). Davids ord: "ramarna syns knappt så tydliga — overlaylive.app har
+  // ramar som ser tydligt på liven men inte mina", och "grejen är när man har dem i mini läge (liten
+  // storlek) så ser man inte dem tydligt". Liten storlek är `widgetScale`, som ritas som CSS `zoom`.
+  //
+  // VARFÖR INTE EN REN CONTAINER QUERY PÅ WIDGETEN. Uppmätt i Chromium 154: en container med
+  // `zoom:.5` och bredd 300 px svarar på `@container (max-width:200px)` som om den vore 300 bred —
+  // zoomen syns inte för frågan. Den synliga bredden räknas därför här, ur designens uppmätta
+  // grundmått gånger skalan, och listan i kompaktläget får en MOTZOOM (1/skala) så att allt inuti
+  // ritas i riktiga designpixlar. Där inne är listan en riktig container (`rk6-lista`), och
+  // underlägena (smal rad-lista / tre i bredd) väljs med vanliga container queries.
+  //
+  // GRUNDMÅTTEN, uppmätta i overlay med fem riktiga namn (Anya Plays, Kave, Lina Nordin, Omar_92,
+  // Sara K) vid skala 1: Voltage 232 px, Basic v2 222, Prism vertikal 235, Celestial/Royal Rose 390,
+  // Prism horisontal 420 före rättningen (380 efter). `foto` är profilbildens diameter, `kolumn`
+  // en plats bredd i raddesignerna.
+  //
+  // TRÖSKELN, efter mätning vid synlig bredd 120/160/200/260/320: kompaktläget slår till när
+  //   listorna:  profilbilden blir mindre än 36 synliga px (Voltage 42·0,87 = 36,5 vid 200 px), och
+  //   raderna:   en plats blir smalare än 54 synliga px — där ryms inte längre ett namn i 12 px.
+  // Före: Celestial vid 260 px gav namn 8,3 px och foto 25,5 px, Voltage vid 160 px namn 8,6 px.
+  const GEOMETRI = Object.freeze({
+    voltage: { bredd: 232, foto: 42 },
+    'basic-v2': { bredd: 222, foto: 58 },
+    'prism-vertical': { bredd: 235, foto: 44 },
+    'prism-horizontal': { kolumn: 68, etta: 84, gap: 3.9, kant: 8 },
+    celestial: { kolumn: 70, gap: 8, kant: 8 },
+    'royal-rose': { kolumn: 70, gap: 8, kant: 8 }
+  });
+  const MIN_FOTO = 36, MIN_KOLUMN = 54, MIN_KOMPAKT_BREDD = 112;
+  const skalaFor = w => { const z = Number(w && w.widgetScale); return Number.isFinite(z) && z > 0 ? Math.min(4, Math.max(0.2, z)) : 1; };
+  function lasbarhet(id, n, z) {
+    const g = GEOMETRI[id];
+    if (!g) return { z, synlig: 0, kompakt: false };
+    const grund = g.bredd || ((n - 1) * (g.kolumn + g.gap) + (g.etta || g.kolumn) + g.kant);
+    const kompakt = g.foto ? g.foto * z < MIN_FOTO : g.kolumn * z < MIN_KOLUMN;
+    return { z, synlig: Math.round(grund * z), kompakt };
+  }
+
 
   // PENSIONERADE DESIGNER (2026-09-24, Davids beslut: "ta bort de gamla helt och hållet, att de
   // inte kommer tillbaka"). Top Likes fyra (Clean Bar, Soft Stack, Mini Podium, Side Rank) och Top
@@ -170,6 +215,16 @@
       return `class="${kvar.join(' ')} rk6 rk6-${id}"`;
     });
     open = open.replace(/^(\s*<div\b)/, `$1 data-rk6="${id}"`);
+    // SKALAN ÄR ZOOM, FÖR ALLA TRE. Top Like bär `zoom:widgetScale` från media.js, men Top Coins och
+    // Top Points skalade med sina egna klasser (topcoins-v2.css/toppoints-v2.css transform), och
+    // de klasserna tas bort ovan. Uppmätt 2026-10-12: Top Coins Voltage var 228 px bred vid varje
+    // skala, och handtagets dragning hoppade tillbaka vid nästa render(). En zoom, en sanning.
+    const l = lasbarhet(id, antal(w), skalaFor(w));
+    open = open.replace(/style="([^"]*)"/, (_, st) => {
+      const utan = st.replace(/(^|;)\s*zoom:[^;]*;?/g, '$1');
+      return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${l.z};--rk6-mot:${+(1 / l.z).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
+    });
+    if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');
     if (profilram(w)) {
       const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(String(w.profileFrame)) : { fit: 0.62 };
       const acc = typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;
@@ -179,6 +234,35 @@
     const tr = id === 'celestial' || id === 'royal-rose' ? '<i class="rk6-trad" aria-hidden="true"></i>' : '';
     const stoft = id === 'royal-rose' ? '<i class="rk6-stoft" aria-hidden="true"></i>' : '';
     return `${open}${stoft}${rubrik}<div class="rk6-lista">${tr}${rader(w, id)}</div>${handtag}</div>`;
+  }
+
+  // ---- Ensamma ledare: Top Gift (neon, royal) och Top Coins Halo/Signal Orbit ----
+  // Samma läsbarhetsläge som listorna, för de kort som visar EN person. Den här wrappern ligger
+  // ytterst i wh-kedjan (rang 2), så den ser den färdiga markupen från premium-final.js och
+  // topcoins-v2.js utan att ta över deras renderare. Grundbredderna är uppmätta i overlay vid skala 1:
+  // Top Gift neon 136 px, royal 222 px, Halo/Signal Orbit = widgetens bredd (230). Under 170 synliga
+  // px blir ornamenten (orbitar, svävande mynt, ramlinjer) brus på under 3 px — där slår
+  // kompaktläget till: ornamenten bort, tjock ljus ring, större bild.
+  const KORT_GRUND = Object.freeze({ neon: 136, royal: 222 });
+  const KORT_KOMPAKT = 170;
+  function enkelLasbar(html, w) {
+    if (!w || typeof html !== 'string') return html;
+    const gava = w.type === 'templateTopGift' && /\bpremium-topgift\b/.test(html);
+    const mynt = w.type === 'templateTopCoins' && /\bvyra-topcoins-new\b/.test(html);
+    if (!gava && !mynt) return html;
+    // Halo/Signal Orbit skalar med transform (--tc-scale), Top Gift med zoom — samma fält.
+    const z = skalaFor(w);
+    const grund = gava ? (KORT_GRUND[w.theme] || KORT_GRUND.royal) : Math.max(150, Number(w.width) || 230);
+    const kompakt = grund * z < KORT_KOMPAKT;
+    let ut = html.replace(/^(\s*<div\b[^>]*?)class="([^"]*)"/, (_, a, cls) => `${a}class="${cls} rk-lasbar${kompakt ? ' rk-kompakt' : ''}"`)
+      .replace(/^(\s*<div\b[^>]*?)style="/, `$1style="--rk-z:${z};`);
+    if (gava) {
+      // Namnets storlek är streamerns eget val (dataSize, inline) — det står kvar, men aldrig under
+      // 12 synliga px. Myntet ersätter "◉" i värdet.
+      ut = ut.replace(/(<div class="topgift-copy"><strong style="[^"]*?)font-size:(\d+(?:\.\d+)?)px/, '$1font-size:max($2px,calc(12px / var(--rk-z,1)))')
+        .replace(/(<div class="topgift-copy">[\s\S]*?<em\b[^>]*>)◉\s?/, `$1<i class="rk-mynt">${MYNT}</i> `);
+    }
+    return ut;
   }
 
   // ---- Katalogen: en grupp per design, med Top Like / Top Coins / Top Points under ----
@@ -243,7 +327,7 @@
       wh = vakt('wh', tidigareWh, function (w) {
         const html = tidigareWh(w);
         const id = designFor(w);
-        return id ? omsluten(html, w, id) : html;
+        return id ? omsluten(html, w, id) : enkelLasbar(html, w);
       });
       andrat = true;
     }
@@ -264,5 +348,6 @@
   document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
   addEventListener('load', install, { once: true });
 
-  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog });
+  window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog,
+    mynt: MYNT, geometri: GEOMETRI, lasbarhet, enkelLasbar });
 })();

@@ -28,8 +28,9 @@ html body .widget.vyra-topcoins-new .tc-copy{display:block!important;width:100%!
 html body .widget.vyra-topcoins-new .tc-copy strong{display:block!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(15px,9cqw,23px)!important;line-height:1.08!important;font-weight:900!important;letter-spacing:.045em;color:#fff!important;text-shadow:0 2px 7px #000,0 0 10px #7d3dff90!important}
 html body .widget.vyra-topcoins-new .tc-copy small{display:none!important}
 html body .widget.vyra-topcoins-new em{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;width:100%!important;margin:0!important;color:#ffd566!important;font-size:clamp(12px,6.8cqw,18px)!important;line-height:1.1!important;font-style:normal!important;font-weight:900!important;letter-spacing:.025em;text-shadow:0 2px 6px #000,0 0 8px #eebd3977!important}
-html body .widget.vyra-topcoins-new em>i{display:grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;background:linear-gradient(145deg,#fff4aa,#d99213);border:1px solid #fff0a0;color:#6b3a00;font-size:.66em;font-style:normal;box-shadow:0 0 8px #ffc94daa}
-html body .widget.vyra-topcoins-new .tc-coin{position:absolute;z-index:4;display:grid;place-items:center;width:14%;aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#fff2a2,#d89514);border:1px solid #fff0a0;color:#6b3a00;font:800 clamp(6px,3cqw,10px)/1 Inter,sans-serif;box-shadow:0 0 8px #ffc94d;font-style:normal}
+html body .widget.vyra-topcoins-new em>i{display:block;flex:0 0 auto;width:1.15em;height:1.15em;font-style:normal}
+html body .widget.vyra-topcoins-new em>i svg,html body .widget.vyra-topcoins-new .tc-coin svg{display:block;width:100%;height:100%}
+html body .widget.vyra-topcoins-new .tc-coin{position:absolute;z-index:4;display:block;width:14%;aspect-ratio:1;font-style:normal;filter:drop-shadow(0 0 5px #ffc94d)}
 html body .widget.vyra-topcoins-new .tc-c1{left:1%;top:40%;animation:tc-float 5.4s ease-in-out infinite}
 html body .widget.vyra-topcoins-new .tc-c2{right:0;top:24%;animation:tc-float 6.2s ease-in-out -2s infinite}
 html body .widget.vyra-topcoins-new .tc-c3{right:10%;bottom:3%;animation:tc-float 5.8s ease-in-out -3.5s infinite}
@@ -53,7 +54,24 @@ html body .widget.vyra-topcoins-new.topcoins-paused *,html body .widget.vyra-top
 @keyframes tc-pulse{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.35)}}
 @keyframes tc-dot{0%,100%{opacity:.45;transform:scale(.75)}50%{opacity:1;transform:scale(1.25)}}
 @media(prefers-reduced-motion:reduce){html body .widget.vyra-topcoins-new *{animation:none!important}}
-.topcoins-v2-catalog button i{border-radius:50%!important;background:linear-gradient(145deg,#fff1a1,#da9415)!important;color:#6b3a00!important;box-shadow:0 0 11px #ffc94d88!important}
+.topcoins-v2-catalog button i.tc-mynt{background:none!important;box-shadow:none!important;border:0!important}
+.topcoins-v2-catalog button i.tc-mynt svg{display:block;width:18px;height:18px}
 .topcoins-design-choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:7px 0 12px}
 .topcoins-design-choice button{padding:10px 8px;border:1px solid #ffffff22;border-radius:10px;background:#ffffff08;color:#fff;font-weight:750;cursor:pointer}
 .topcoins-design-choice button.active{border-color:#b84cff;background:#a632ff22;box-shadow:0 0 0 1px #b84cff55 inset}
+
+/* LÄSBARHETSLÄGET (2026-10-12) — samma som topplistorna i ranking-sixpack.css. Klasserna rk-lasbar
+   och rk-kompakt sätts av ranking-sixpack.js (enkelLasbar), --rk-z är widgetScale (här en transform,
+   --tc-scale). Namn och siffra på en mörk platta med tunn kant i accentfärgen, aldrig under 12
+   synliga px. Under 170 synliga px: orbitar, mynt och gnistor bort, tjock ljus ring, större foto. */
+html body .widget.vyra-topcoins-new.rk-lasbar .tc-copy{
+  display:flex!important;flex-direction:column;align-items:center;gap:2px;width:auto!important;max-width:100%;box-sizing:border-box;
+  margin:2px auto 0!important;padding:5px 12px 6px!important;border-radius:12px;background:rgba(10,6,16,.85);
+  border:1px solid color-mix(in srgb,var(--tc-accent) 70%,transparent);box-shadow:0 3px 10px rgba(0,0,0,.45)}
+html body .widget.vyra-topcoins-new.rk-lasbar .tc-copy strong{font-size:max(clamp(15px,9cqw,23px),calc(12px / var(--rk-z,1)))!important;text-shadow:none!important}
+html body .widget.vyra-topcoins-new.rk-lasbar .tc-copy em{width:auto!important;font-size:max(clamp(12px,6.8cqw,18px),calc(12px / var(--rk-z,1)))!important;color:var(--tc-accent)!important;text-shadow:none!important}
+html body .widget.vyra-topcoins-new.rk-kompakt :is(.tc-coin,.tc-spark,.tc-orbit,.tc-orbit-dot,.tc-ring-b,.tc-six-backlight,.tc-six-ring,.tc-six-art){display:none!important}
+html body .widget.vyra-topcoins-new.rk-kompakt .tc-portrait{width:86%}
+html body .widget.vyra-topcoins-new.rk-kompakt .tc-portrait>img{inset:7%!important;width:86%!important;height:86%!important}
+html body .widget.vyra-topcoins-new.rk-kompakt .tc-ring-a{inset:4%;border:4px solid #fff;box-shadow:0 0 0 2px var(--tc-accent),0 0 14px var(--tc-accent)}
+html body .widget.vyra-topcoins-new.rk-kompakt .tc-copy strong{font-size:max(23px,calc(14px / var(--rk-z,1)))!important}

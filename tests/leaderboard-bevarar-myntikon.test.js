@@ -7,6 +7,9 @@
 // Uppmatt 2026-09-20 under arbetet med PR #487. Nollningsgrenen (!top.length i overlay) skrev
 // ikon + ' 0' pa samma satt och rev ikonen likadant.
 //
+// 2026-10-12: "V" ersattes av familjens guldmynt (SVG, ranking-sixpack.js MYNT). Provet ger
+// fonstret en attrapp av symbolen och kontrollerar att just den overlever skrivningen.
+//
 // Regeln som provas: finns ett <i> forst i <em> star det kvar och talet skrivs i textnoden EFTER
 // det, i bada grenarna. Top Like-raderna har inget <i> (ikonen ar text, ♥) och ska bete sig
 // exakt som forut.
@@ -38,6 +41,7 @@ function overlayFonster(widgets) {
     var selected = null; var view = 'overlay';
     var wh = () => ''; var props = () => ''; var bind = () => {};
     var liveWidget = id => state.widgets.find(x => x.id === id);`);
+  w.VyraRankingSixpack = { mynt: '<svg data-mynt="1"></svg>' };
   w.eval(SANITIZE);
   w.eval(TOPCOINS);
   w.eval(LEADERBOARD);
@@ -64,8 +68,8 @@ test('Top Coins v2: <i>-myntet star kvar och livevardet skrivs i textnoden efter
       'leaderboarden skrev aldrig raden — provet nadde inte skrivvagen');
     const ikon = em.querySelector('i');
     assert.ok(ikon, 'myntikonen <i> revs av skrivningen: textContent byter ut alla barn');
-    assert.equal(ikon.textContent, 'V');
-    assert.equal(em.textContent, 'V 12.3K');
+    assert.ok(ikon.querySelector('svg[data-mynt]'), 'myntsymbolen ska sta kvar i <i>');
+    assert.equal(em.textContent, ' 12.3K');
     assert.equal(em.lastChild.nodeType, 3, 'talet ska ligga i en textnod efter <i>');
     assert.equal(em.lastChild.nodeValue, ' 12.3K');
   } finally { dom.window.close(); }
@@ -83,7 +87,8 @@ test('Top Coins v2 i overlay utan livedata: nollningen behaller <i>, skriver "V 
     assert.equal(w.document.querySelector('.toplike-row strong').textContent, '',
       'nollningen nadde aldrig raden — provet mater ingenting');
     assert.ok(em.querySelector('i'), 'myntikonen <i> revs av nollningen');
-    assert.equal(em.textContent, 'V 0');
+    assert.ok(em.querySelector('i svg[data-mynt]'), 'myntsymbolen revs av nollningen');
+    assert.equal(em.textContent, ' 0');
 
     // Andra varvet med oforandrat varde far inte rora DOM:en: en identisk skrivning ar anda en
     // mutation som vacker observatorer som kallar hit igen (regeln vid `satt` i live-leaderboard.js).
