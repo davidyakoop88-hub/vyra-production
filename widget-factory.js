@@ -92,7 +92,7 @@
     },
     'pggoal.design': {
       '1': { label: 'Rak bar' }, '2': { label: 'Pill' }, '3': { label: 'Ring' }, '4': { label: 'Mätare' },
-      '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }
+      '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }, '9': { label: 'Stående pill' }
     },
     'likefountain.palette': {
       portal: { label: 'Portal · rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
