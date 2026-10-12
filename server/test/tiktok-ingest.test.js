@@ -29,9 +29,10 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // sandning (atta event, alla fran samma person, av ~59 tittare). Widgeten och klientsessionen
   // fanns redan — det var bara kallan som saknades, precis som med 'glove'.
   // Vidgad 2026-09-27 med 'chatcommand': rader som börjar med "!", i en egen takthink (se ingestTikTokEvent).
+  // Vidgad 2026-10-12 med 'superfan': super fan-entrén ur BARRAGE (#361 fynd 2), en persontyp.
   // Vidgad 2026-09-27 med 'envelope': skattkistan ur ENVELOPE (tiktok-bridge normalizer envelopeFields).
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','battle_mvp','chat','chatcommand','envelope','fanlevelup','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','viewer']);
+    ['battle','battle_mvp','chat','chatcommand','envelope','fanlevelup','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','superfan','viewer']);
 });
 
 test('validateTikTokIngestPayload accepterar guardian med anvandare och avvisar utan',()=>{

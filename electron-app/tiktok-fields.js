@@ -122,8 +122,33 @@ function fansUppgradering(data) {
   return { ...baseUser(data), fanClubLevel: till, fanLevelUp: { from: till - 1, to: till } };
 }
 
+// SUPER FAN-ENTRÉN (#361 fynd 2). KOPIERAD FRAN normalizer.arSuperfanEntre/superfanFields av samma
+// paketeringsskal som arGuardianEntrance. tests/desktop-paritet.test.js kor bada mot samma tabell.
+//
+// Regeln ar tiktok-live-connectors egen (superFanJoin): content.key eller commonBarrageContent.key
+// innehaller nyckeln nedan. msgType 11 ensam duger inte — den bars ocksa av vanliga fanklubbsentréer.
+const SUPERFAN_NYCKEL = 'ttlive_superfan_commentnotif_superfanjoined';
+function arSuperfanEntre(data) {
+  return [data?.content?.key, data?.commonBarrageContent?.key]
+    .some(v => typeof v === 'string' && v.toLowerCase().includes(SUPERFAN_NYCKEL));
+}
+function bildUrl(m) {
+  return text(String(m?.urlList?.[0] || m?.urlListList?.[0] || m?.url || '').trim(), 1200);
+}
+function superfanFields(data) {
+  if (!arSuperfanEntre(data)) return null;
+  const bas = baseUser(data);
+  const niva = Math.round(number(data?.fansLevelParam?.currentGrade, 50));
+  const badge = data?.badge || {};
+  return { ...bas,
+    fanClubLevel: niva || bas.fanClubLevel,
+    superfanBadge: bildUrl(badge.image?.image) || bildUrl(badge.combine?.icon) || bildUrl(badge.image),
+    superfanBakgrund: bildUrl(data?.background) || bildUrl(data?.backGround),
+    superfanBand: bildUrl(data?.ribbonAnimation) };
+}
+
 module.exports = { battleStatusAv, armeMvp, mvpFields, text, number, avatarOf, identityOf, baseUser, nivaFranBadge,
-  arGuardianEntrance, fansUppgradering,
+  arGuardianEntrance, fansUppgradering, arSuperfanEntre, superfanFields,
   BADGE_FANKLUBB, BADGE_NIVA };
 
 // ---- BATTLE MVP OCH battleStatus — SPEGLADE UR tiktok-bridge/normalizer.js ---------------------

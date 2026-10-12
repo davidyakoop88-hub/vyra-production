@@ -586,6 +586,14 @@ if (require.main === module) {
         sendEvent('guardian', { ...N.baseUser(data) }, data);
         return;
       }
+      // SUPER FAN-ENTRÉN (#361 fynd 2). Samma ror, en gren till — se N.superfanFields for regeln.
+      // Biblioteket emitterar dessutom SUPER_FAN_JOIN for samma meddelande; vi lyssnar INTE pa
+      // den, sa varje entré skickas exakt en gang harifran.
+      const superfan = N.superfanFields(data);
+      if (superfan) {
+        sendEvent('superfan', superfan, data);
+        return;
+      }
       // TikToks EGEN nivahojning. Bar molnets befintliga fanLevelUp-stampel {from,to}, som
       // event-bus.js redan validerar och fan-level-session.js redan laser — klienten rors inte.
       const upp = N.fansUppgradering(data);
@@ -678,7 +686,11 @@ if (require.main === module) {
         // pa en typ bryggan redan prenumererar pa, och varje BARRAGE hamnar dubbelt i filen.
         'BARRAGE',
         // ENVELOPE tillkom med skattkistan, av samma skal som BARRAGE ovan.
-        'ENVELOPE']);
+        'ENVELOPE',
+        // SUPER_FAN_JOIN ar samma BarrageMessage som BARRAGE-lyssnaren redan skickar som
+        // 'superfan' (och spelar in som vidarebefordrad). En raa lyssnare till hade lagt varje
+        // super fan-entré dubbelt i filen.
+        'SUPER_FAN_JOIN']);
       const spelaIn = Object.keys(WebcastEvent)
         .filter(namn => onskade === null || onskade.has(namn))
         .filter(namn => !redanLyssnade.has(namn));

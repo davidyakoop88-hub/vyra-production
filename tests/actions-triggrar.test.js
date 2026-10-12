@@ -239,3 +239,27 @@ test('knappen är valbar i Action & Event — annars går den inte att binda', (
   assert.ok(namn.includes('knapp'),
     `knapp saknas bland de ${namn.length} valbara triggrarna: ${namn.join(', ')}`);
 });
+
+// ---- Super Fan-entrén (#361 fynd 2) ---------------------------------------------------------------
+// Bryggan skickar typen 'superfan' med nivån i fanClubLevel. Den ska ge en egen trigger, och nivån
+// ska landa i teamLevel så att teamnivåfiltret i Actions & Events (allowed()) kan använda den.
+test('en super fan-entré ger triggern superfan med nivån som teamLevel', () => {
+  const mapEvent = boot();
+  const par = mapEvent({ type: 'superfan', username: 'testfan', fanClubLevel: 50,
+    superfanBadge: 'https://cdn.example/badge.webp' });
+  const sf = par.find(([namn]) => namn === 'superfan');
+  assert.ok(sf, 'superfan-triggern fyrar inte. Fick: ' + par.map(([n]) => n).join(', '));
+  assert.equal(sf[1].teamLevel, 50, 'nivån når inte teamnivåfiltret');
+  assert.equal(sf[1].username, 'testfan');
+  assert.ok(!par.some(([namn]) => namn === 'join' || namn === 'member'),
+    'super fan-entrén räknas som ett vanligt intrade eller en prenumeration');
+});
+
+test('superfan är valbar i Action & Event och har ett namn i listan', () => {
+  const kod = fs2.readFileSync(path2.join(__dirname, '..', 'action-event-advanced.js'), 'utf8');
+  const lista = kod.match(/const triggers=\[(.*?)\];/s);
+  const namn = [...lista[1].matchAll(/\['([a-zA-Z]+)','[^']+'\]/g)].map(m => m[1]);
+  assert.ok(namn.includes('superfan'), `superfan saknas bland triggrarna: ${namn.join(', ')}`);
+  const ae = fs2.readFileSync(path2.join(__dirname, '..', 'action-event.js'), 'utf8');
+  assert.match(ae, /superfan:'Super Fan går med'/, 'triggern saknar namn i Event-listan');
+});
