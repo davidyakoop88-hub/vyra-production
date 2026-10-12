@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Heart Tower smalare med hjärtmarkör och tydlig fyllnadsnivå (#593)",
-  "nycklar": 1,
-  "filter": "heart-tower",
-  "tid": "2026-10-12T08:35:47.424Z"
+  "motiv": "Topplistorna läsbara i liten storlek: platta, 12 px-golv, kompaktläge, ett mynt (PR #604) — Top Like, Top Coins, Top Points och Top Gift",
+  "nycklar": 166,
+  "filter": null,
+  "tid": "2026-10-12T17:00:22.350Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -331,11 +331,11 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:halo": {
-   "matt": "230x193",
+   "matt": "230x206",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:signal-orbit": {
-   "matt": "230x190",
+   "matt": "230x206",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:prism-core:landscape": {
@@ -363,23 +363,23 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:basic-v2": {
-   "matt": "162x478",
+   "matt": "186x478",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:celestial": {
-   "matt": "390x100",
+   "matt": "390x116",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "420x185",
+   "matt": "380x170",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
-   "matt": "129x311",
+   "matt": "127x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:royal-rose": {
-   "matt": "390x134",
+   "matt": "390x144",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:voltage": {
@@ -387,23 +387,23 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:basic-v2": {
-   "matt": "162x478",
+   "matt": "186x478",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:celestial": {
-   "matt": "390x100",
+   "matt": "390x116",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "420x185",
+   "matt": "380x170",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
-   "matt": "129x311",
+   "matt": "127x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:royal-rose": {
-   "matt": "390x134",
+   "matt": "390x144",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:voltage": {
@@ -411,23 +411,23 @@
    "fyllnad": 100
   },
   "catalog:toplike:basic-v2": {
-   "matt": "162x478",
+   "matt": "186x478",
    "fyllnad": 100
   },
   "catalog:toplike:celestial": {
-   "matt": "390x100",
+   "matt": "390x116",
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "420x185",
+   "matt": "380x170",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
-   "matt": "129x311",
+   "matt": "127x311",
    "fyllnad": 100
   },
   "catalog:toplike:royal-rose": {
-   "matt": "390x134",
+   "matt": "390x144",
    "fyllnad": 100
   },
   "catalog:toplike:voltage": {

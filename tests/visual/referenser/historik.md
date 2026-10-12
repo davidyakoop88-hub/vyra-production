@@ -348,3 +348,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Heart Tower smalare med hjärtmarkör och tydlig fyllnadsnivå (#593)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 166 (filter: heart-tower) — catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-10-12 — 166 referenser skrivna
+
+- **Motiv:** Topplistorna läsbara i liten storlek: platta, 12 px-golv, kompaktläge, ett mynt (PR #604) — Top Like, Top Coins, Top Points och Top Gift
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 166
