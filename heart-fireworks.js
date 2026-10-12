@@ -124,7 +124,7 @@
   // ---------- live trigger ----------
   const hfAntal=d=>Math.max(1,Math.floor(Number(d.combo??d.repeatcount??d.count)||1));
   const hfComboOf=d=>Math.min(100,hfAntal(d));
-  const hfBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
+  const hfBelopp=d=>[d.diamonds,d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
   function hfSlapper(w,d){if(d.__test)return true;if(w.hfExcludeAnon&&d.isAnonymous)return false;const b=hfBelopp(d);return b===undefined||b>=(w.hfMin||1);}
   const hfSedda=new Map(),HF_SPARR=1500;
   function hfRedan(d){const id=d&&d.id;if(!id)return false;const nu=Date.now();for(const[k,t]of hfSedda)if(nu-t>HF_SPARR)hfSedda.delete(k);const key=String(id);if(hfSedda.has(key))return true;hfSedda.set(key,nu);return false;}

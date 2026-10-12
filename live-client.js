@@ -19,8 +19,9 @@ function oppnaVerifiering(url){
 }
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
 // KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
-// vinner nar bada finns. ~20 filer nedstroms laser det interna `coins` utan att veta nagot
-// om tradformatet — de behover alltsa inte roras nar tradfaltet till slut forsvinner.
+// vinner nar bada finns. Sedan steg 2 laser konsumenterna `diamonds` forst och `coins` bara som
+// reserv for en aldre .exe — `coins` skrivs fortfarande, eftersom cachad widgetkod i OBS kan
+// lasa det.
 //
 // Beteendet bevakas av tests/browser/diamanter-vid-gransen.browser.test.js. Kalltextsvakten
 // i tests/diamanter-faltnamn.test.js pinnar uttrycket nedan och ar blind for allt som skriver
@@ -39,8 +40,8 @@ function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listene
 // och bara for de anvandarna. Ingen widget kraschar, inga prov faller, summorna blir bara fel.
 //
 // Nar det ar dags: `coins` finns pa tre stallen i skrivvagen (den har filen, den andra bryggan,
-// och normaliseringen i live-client.js) och som nyckel i sparad localStorage-state i
-// live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
+// och normaliseringen i live-client.js). Den sparade localStorage-staten i live-leaderboard.js
+// ar redan migrerad till `diamonds` (steg 2) och laser `coins` bara som reserv.
 function liveEventTriggers(e){let t=String(e.type||e.event||'').toLowerCase().replace(/[\s_-]/g,''),username=e.username||e.uniqueId||e.user,first=!!username&&!activeUsers.has(String(username).toLowerCase()),payload={username,name:e.name||username,gift:e.giftName||e.gift,giftname:e.giftName||e.gift,giftImage:e.giftImage||'',profileImage:e.profileImage||e.avatarUrl,coins:Number(e.diamonds??e.coins??e.diamondCount??0),diamonds:Number(e.diamonds??e.coins??e.diamondCount??0),count:Number(e.count||e.repeatCount||1),repeatcount:Number(e.count||e.repeatCount||1),combo:Number(e.count||e.repeatCount||1),teamLevel:Number(e.teamLevel||e.fanClubLevel||0),isFollower:!!e.isFollower,isSubscriber:!!(e.isSubscriber||e.isMember),isModerator:!!e.isModerator,isTopGifter:!!e.isTopGifter,isAnonymous:!!e.isAnonymous,value:e.value??e.name??e.giftName??e.gift??username};let out=[];
   if(first){activeUsers.add(String(username).toLowerCase());out.push(['firstActivity',payload])}
   if(t==='gift'||t==='giftcombo'){const giftPayload={...payload,value:payload.gift};out.push(['gift',giftPayload],['giftCoins',giftPayload]);if(payload.count>1||t==='giftcombo')out.push(['giftCombo',giftPayload])}
@@ -186,7 +187,7 @@ function normalizeUserFlags(e){
   e.isFollower=!!e.isFollower||t==='follow';
   e.isSubscriber=!!(e.isSubscriber||e.isMember)||t==='member'||t==='subscribe'||t==='subscription';
   e.isModerator=!!e.isModerator;
-  const topGifter=window.VyraLeaderboard?.getTop('coins',1)[0];
+  const topGifter=window.VyraLeaderboard?.getTop('diamonds',1)[0];
   e.isTopGifter=!!e.isTopGifter||(!!e.username&&!!topGifter&&String(topGifter.username||'').toLowerCase()===String(e.username).toLowerCase());
   e.isAnonymous=!!e.isAnonymous;
   e.teamLevel=Number(e.teamLevel||e.fanClubLevel||0);

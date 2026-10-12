@@ -173,7 +173,7 @@ window.addEventListener('vyra-session-ended',()=>{fwPending.length=0;fwTimers.fo
    riktigt positivt tal vinner, och saknas alla tre ar beloppet OKANT.
    Okant belopp blockerar aldrig. fwMin ar 1 som standard, och ett testevent utan coins hade
    annars slutat tanda nagot alls. Bara ett KANT belopp under gransen stoppas. */
-const fwBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
+const fwBelopp=d=>[d.diamonds,d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
 /* STYRKAN RAKNAS PA VARDET, INTE PA ANTALET TRYCK. Uppmatt i sandningen 2026-09-18: fwLevelOf
    las comboCount, sa alla elva tandningar som nadde burst eller show var 1-coins-gavor, medan
    23 gavor varda 26 536 coins - en av dem pa 5000 - alla korde single. Firandet var omvant mot
@@ -187,7 +187,7 @@ const fwBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.is
    `diamondCount`, som ar raapayloadens styckpris, far multipliceras.
    OKANT BELOPP SANKER ALDRIG. Editorns testknapp skickar en ren combo utan coins, och ett event
    dar beloppet inte gick att lasa ska bete sig precis som forr. Bara ett KANT belopp styr. */
-const fwTotalOf=d=>{const summa=[d.coins,d.value].map(Number).find(n=>Number.isFinite(n)&&n>0);
+const fwTotalOf=d=>{const summa=[d.diamonds,d.coins,d.value].map(Number).find(n=>Number.isFinite(n)&&n>0);
  if(Number.isFinite(summa))return summa;
  const styck=Number(d.diamondCount);
  return Number.isFinite(styck)&&styck>0?styck*fwAntalOf(d):undefined};

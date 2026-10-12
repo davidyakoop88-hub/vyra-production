@@ -382,7 +382,7 @@
       label:'LAST GIFTER',events:['gift'],multiAccent:'#ffd35d',
       themes:{neon:'#ff58d6',gold:'#ffd35d',emerald:'#3ddc84'},
       message:e=>`SENT ${giftLine(e)}`,
-      lines:e=>{const d=nOf(e.coins,e.value,e.diamonds);return d?{value:`${d.toLocaleString('sv-SE')} DIAMONDS`,detail:giftLine(e)}:{value:giftLine(e),detail:''}}
+      lines:e=>{const d=nOf(e.diamonds,e.coins,e.value);return d?{value:`${d.toLocaleString('sv-SE')} DIAMONDS`,detail:giftLine(e)}:{value:giftLine(e),detail:''}}
     },
     liker:{
       label:'LAST LIKER',events:['like','likes'],multiAccent:'#ff58d6',

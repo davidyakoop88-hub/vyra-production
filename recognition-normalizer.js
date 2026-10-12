@@ -63,7 +63,8 @@
     }
 
     var count = toPositiveInt(rawEvent.count, DEFAULT_COUNT);
-    var coins = toNonNegativeNumber(rawEvent.coins, DEFAULT_COINS);
+    // #133: `diamonds` ar det sanna namnet; `coins` ar reserven for en aldre .exe.
+    var coins = toNonNegativeNumber(rawEvent.diamonds != null ? rawEvent.diamonds : rawEvent.coins, DEFAULT_COINS);
     var timestamp = toValidTimestamp(rawEvent.timestamp);
     var id = firstPresentIdentifier([rawEvent.id]) || generateLocalId();
 

@@ -72,7 +72,7 @@
     const type = String(ev.type || ev.event || '').toLowerCase();
     let score = 0;
     if (type === 'like' || type === 'likes' || type.includes('tap')) score = Number(ev.count || ev.likes || ev.value) || 1;
-    else if (type === 'gift' || type === 'gift_combo' || type === 'giftcombo') score = (Number(ev.coins || ev.diamondCount || ev.value) || 0) * 3;
+    else if (type === 'gift' || type === 'gift_combo' || type === 'giftcombo') score = (Number(ev.diamonds || ev.coins || ev.diamondCount || ev.value) || 0) * 3;
     else if (type === 'join' || type.includes('enter')) score = 1;
     if (score) record(score);
   });

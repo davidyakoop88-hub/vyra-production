@@ -1,5 +1,5 @@
 (function () {
-  // Aggregates real per-user totals (likes, gift coins) from the live event stream so the Top Like /
+  // Aggregates real per-user totals (likes, gift diamonds) from the live event stream so the Top Like /
   // Top Coins / Top Points widgets can show real activity instead of the hardcoded demo names in
   // media.js's topLikePeople array. Opt-in and independent PER WIDGET (w.useLiveData / w.liveMetric,
   // set via toplike-studio.js's Content-tab controls) — two widgets of the same type can independently
@@ -13,7 +13,27 @@
   // this file. Same source of truth (the ?overlay flag studio.html is loaded with), read locally.
   const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
 
-  const totals = {}; // username -> {name, profileImage, likes, coins, lastLikeAt, present}
+  const totals = {}; // username -> {name, profileImage, likes, diamonds, lastLikeAt, present}
+
+  // #133 STEG 2: TALET HETER `diamonds`, inte `coins`. Det har alltid varit diamanter (bryggans
+  // kallfalt ar `diamondCount`) — bara namnet ljog. Tva saker bar fortfarande det gamla namnet och
+  // maste lasas bada vagarna tills steg 3:
+  //   * SPARAD STATE. Dagshinkarna i localStorage och ogonblicksbilden i sessionStorage skrevs med
+  //     `coins`. migreraPost() lyfter over talet till `diamonds` vid inlasning — ingen historik
+  //     far forsvinna for att nyckeln bytte namn.
+  //   * METRIKNAMNET. Widgetar ar sparade med `liveMetric: 'coins'` och media.js:s cykel fragar
+  //     efter 'coins'. matt() oversatter, sa getTop('coins') och getTop('diamonds') ar samma lista.
+  const matt = metric => metric === 'coins' ? 'diamonds' : metric;
+  function migreraPost(t) {
+    if (!t || typeof t !== 'object') return false;
+    if (!('coins' in t)) return false;
+    const gammal = Number(t.coins) || 0;
+    // Bada nycklarna i samma post kan bara uppsta om en ny klient skrev diamonds ovanpa en gammal
+    // post utan att migrera — da ar de skilda bidrag och SUMMAN ar det sanna, inte det ena.
+    t.diamonds = (Number(t.diamonds) || 0) + gammal;
+    delete t.coins;
+    return true;
+  }
 
   // SANDNINGENS RAKNARE FAR INTE NOLLSTALLAS AV EN SIDLADDNING.
   //
@@ -52,7 +72,7 @@
         if (!t || typeof t !== 'object') return;
         totals[username] = {
           username, name: t.name || username, profileImage: t.profileImage || '',
-          likes: Number(t.likes) || 0, coins: Number(t.coins) || 0,
+          likes: Number(t.likes) || 0, diamonds: (Number(t.diamonds) || 0) + (Number(t.coins) || 0),
           lastLikeAt: Number(t.lastLikeAt) || 0, present: t.present !== false
         };
       });
@@ -76,7 +96,16 @@
   const DAILY_KEY = 'vyra-leaderboard-daily-v1';
   const MAX_DAYS_KEPT = 400; // covers "Detta år" with margin without the key growing forever
   let dailyTotals = (() => { try { return JSON.parse(localStorage.getItem(DAILY_KEY) || '{}'); } catch { return {}; } })();
+  if (!dailyTotals || typeof dailyTotals !== 'object' || Array.isArray(dailyTotals)) dailyTotals = {};
   let dailyDirty = false;
+  // Migreringen av sparad historik (#133): varje dagshink skriven av en aldre klient bar `coins`.
+  // Lyfts over en gang vid inlasning och skrivs ner vid nasta sparning — nyckeln DAILY_KEY ar
+  // densamma, sa en aldre flik som laser den nya formen tappar bara diamanterna i sin egen vy,
+  // aldrig i lagringen (den skriver tillbaka sina egna dagars `coins`, som migreras igen har).
+  Object.values(dailyTotals).forEach(bucket => {
+    if (!bucket || typeof bucket !== 'object') return;
+    Object.values(bucket).forEach(t => { if (migreraPost(t)) dailyDirty = true; });
+  });
 
   function todayKey(d = new Date()) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -94,14 +123,14 @@
   // ogonblicksbild som aldrig skrivs ner ar samma bugg som ingen ogonblicksbild alls.
   addEventListener('pagehide', saveIfDirty);
 
-  function recordDaily(username, name, profileImage, likeCount, coinCount) {
+  function recordDaily(username, name, profileImage, likeCount, diamondCount) {
     const day = todayKey();
     const bucket = dailyTotals[day] || (dailyTotals[day] = {});
-    const t = bucket[username] || (bucket[username] = { name: name || username, profileImage: profileImage || '', likes: 0, coins: 0 });
+    const t = bucket[username] || (bucket[username] = { name: name || username, profileImage: profileImage || '', likes: 0, diamonds: 0 });
     if (name) t.name = name;
     if (profileImage) t.profileImage = profileImage;
     if (likeCount) t.likes += likeCount;
-    if (coinCount) t.coins += coinCount;
+    if (diamondCount) t.diamonds += diamondCount;
     dailyDirty = true;
   }
   function rangeDayKeys(range) {
@@ -113,11 +142,13 @@
     return keys.filter(k => k >= cutoffKey);
   }
   function sortedTopForRange(metric, range) {
+    metric = matt(metric);
     const merged = {};
     rangeDayKeys(range).forEach(day => {
       Object.entries(dailyTotals[day] || {}).forEach(([username, t]) => {
-        const m = merged[username] || (merged[username] = { name: t.name, profileImage: t.profileImage, likes: 0, coins: 0 });
-        m.likes += t.likes || 0; m.coins += t.coins || 0;
+        const m = merged[username] || (merged[username] = { name: t.name, profileImage: t.profileImage, likes: 0, diamonds: 0 });
+        // `?? t.coins`: en hink som en aldre flik skrivit EFTER inlasningen har aldrig migrerats.
+        m.likes += t.likes || 0; m.diamonds += Number(t.diamonds ?? t.coins) || 0;
         if (t.name) m.name = t.name;
         if (t.profileImage) m.profileImage = t.profileImage;
       });
@@ -136,7 +167,7 @@
     const username = e.username || e.uniqueId || e.userId || e.name;
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
-    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, coins: 0, lastLikeAt: 0, present: true });
+    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, diamonds: 0, lastLikeAt: 0, present: true });
     streamDirty = true;   // ogonblicksbilden skrivs ner av tickern nedan, inte per handelse
     if (e.name) t.name = e.name;
     if (e.profileImage) t.profileImage = e.profileImage;
@@ -176,11 +207,12 @@
       // `=== false` och inte `!== true`: en aldre brygga skickar inte faltet, och da ska gavan
       // raknas precis som i dag. Filtret far bara utesluta det vi ar SAKRA pa.
       if (e.tillVarden === false) return;
-      const coins = Number(e.coins || e.diamondCount || e.value) || 0;
-      t.coins += coins;
+      // `diamonds` forst; `coins` ar reserven for en aldre .exe som bara skickar det namnet (#133).
+      const diamonds = Number(e.diamonds || e.coins || e.diamondCount || e.value) || 0;
+      t.diamonds += diamonds;
       t.present = true;
       updateTopGift(e, t);
-      recordDaily(username, t.name, t.profileImage, 0, coins);
+      recordDaily(username, t.name, t.profileImage, 0, diamonds);
     }
   }
 
@@ -205,6 +237,7 @@
   // en borttagen person försvann ur Top Likes men låg kvar i Top Coins var svårt att förstå som en
   // regel.
   function sortedTop(metric) {
+    metric = matt(metric);
     return Object.values(totals)
       .filter(t => t.present !== false && t[metric] > 0)
       .sort((a, b) => b[metric] - a[metric]);
@@ -249,9 +282,9 @@
       const n = Math.round(Number(antal));
       return Math.round(summa / (Number.isFinite(n) && n >= 1 ? n : 1));
     });
-    const summa = Number(e.coins || e.diamondCount || e.value);
-    // person.coins är tittarens ACKUMULERADE bidrag, inte en gåva — den får aldrig delas med antalet.
-    const value = Number.isFinite(summa) && summa > 0 ? styck(summa, e.count) : person.coins;
+    const summa = Number(e.diamonds || e.coins || e.diamondCount || e.value);
+    // person.diamonds är tittarens ACKUMULERADE bidrag, inte en gåva — den får aldrig delas med antalet.
+    const value = Number.isFinite(summa) && summa > 0 ? styck(summa, e.count) : person.diamonds;
     if (records && value < records.giftCoins) return;
     let changed = false;
     state.widgets.filter(w => w.type === 'templateTopGift').forEach(w => {
@@ -313,7 +346,7 @@
       // leader's name next to demo values or vice versa.
       if (!w || w.useLiveData === false || w.rankingCycle) return;
       const rows = el.querySelectorAll('.toplike-row');
-      const metric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
+      const metric = matt(w.liveMetric || (w.type === 'templateTopCoins' ? 'diamonds' : 'likes'));
       const range = w.dateRange || 'stream';
       // Points come from action-runtime.js's Add/Remove-points ledger (window.VyraPoints), not
       // from raw live events, so there's no day-bucketed history to range-filter — always the
