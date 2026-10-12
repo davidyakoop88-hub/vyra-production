@@ -336,3 +336,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Heart Tower: smalare rör, emblemet som markör, mörkt lager ovanför nivån (PR #593) — bara tornen
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 3 av 165 (filter: tower) — catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-10-12 — 1 referenser skrivna
+
+- **Motiv:** Ny Goal Pro-modell Stående pill (pggoal:9) från #592 saknade referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 166 (filter: pggoal:9) — catalog:pggoal:9
