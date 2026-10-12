@@ -21,7 +21,7 @@
     const s = getSettings();
     const bonus = (ev.isSubscriber || ev.isMember) ? Math.max(1, Number(s.subscriberBonus) || 1) : 1;
     if (type === 'gift' || type === 'gift_combo' || type === 'giftcombo') {
-      const coins = Number(ev.coins || ev.diamondCount || 0);
+      const coins = Number(ev.diamonds || ev.coins || ev.diamondCount || 0);   // #133: coins = aldre .exe
       if (coins > 0 && s.perCoin) window.VyraPoints.add(username, coins * Number(s.perCoin) * bonus);
     } else if (type === 'share') {
       if (s.perShare) window.VyraPoints.add(username, Number(s.perShare) * bonus);

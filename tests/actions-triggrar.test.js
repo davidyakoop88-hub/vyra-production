@@ -117,7 +117,7 @@ test('Top Gifters raknar inte en gava till en medvard', () => {
   skicka({ type: 'gift', username: 'lisa', coins: 500, tillVarden: false });
   const topp = lb.getTop('coins', 5).find(t => String(t.username).toLowerCase() === 'lisa');
   assert.ok(topp, 'givaren hamnade inte i listan alls');
-  assert.equal(topp.coins, 100,
+  assert.equal(topp.diamonds, 100,
     'medvardsgavan raknades — Top Gifters visar da diamanter streamern aldrig fick');
 });
 
@@ -130,7 +130,7 @@ test('och en aldre brygga utan faltet raknas som i dag', () => {
   browser.sandbox.dispatchEvent(new browser.sandbox.CustomEvent(
     'vyra-live-event', { detail: { type: 'gift', username: 'mira', coins: 250 } }));
   const topp = lb.getTop('coins', 5).find(t => String(t.username).toLowerCase() === 'mira');
-  assert.equal(topp && topp.coins, 250, 'en gava utan faltet filtrerades bort — forvalet ar fel');
+  assert.equal(topp && topp.diamonds, 250, 'en gava utan faltet filtrerades bort — forvalet ar fel');
 });
 
 // ---- ligabrickan i Match Monitor (#367 del 3) --------------------------------------------------

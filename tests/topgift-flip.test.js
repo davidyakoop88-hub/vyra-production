@@ -276,7 +276,7 @@ test('several gifts from the same user keep updating name, value and totals', ()
   h.advance(FLIP_MS); h.gift(25);         // after the flip
   assert.equal(h.node.querySelector('em').textContent, '◉ 25', 'displayen frös under flippen');
   const top = h.sandbox.window.VyraLeaderboard.getTop('coins', 5);
-  assert.equal(top[0].coins, 175, 'summan slutade ackumulera');
+  assert.equal(top[0].diamonds, 175, 'summan slutade ackumulera');
 });
 
 // ---- 6. ordinary rendering and saving keep working --------------------------------------------

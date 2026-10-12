@@ -132,7 +132,7 @@
   // ---------- live trigger ----------
   const gbAntal=d=>Math.max(1,Math.floor(Number(d.combo??d.repeatcount??d.count)||1));
   const gbComboOf=d=>Math.min(100,gbAntal(d));
-  const gbBelopp=d=>[d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
+  const gbBelopp=d=>[d.diamonds,d.coins,d.value,d.diamondCount].map(Number).find(n=>Number.isFinite(n)&&n>0);
   function gbSlapper(w,d){if(d.__test)return true;if(w.gbExcludeAnon&&d.isAnonymous)return false;const b=gbBelopp(d);return b===undefined||b>=(w.gbMin||1);}
   const gbSedda=new Map(),GB_SPARR=1500;
   function gbRedan(d){const id=d&&d.id;if(!id)return false;const nu=Date.now();for(const[k,t]of gbSedda)if(nu-t>GB_SPARR)gbSedda.delete(k);const key=String(id);if(gbSedda.has(key))return true;gbSedda.set(key,nu);return false;}

@@ -325,7 +325,7 @@
     // De två topplistorna mäter olika saker och delade tidigare en gren, så båda blev en dubblett
     // av den senaste gåvan. Bryggan skiljer dem åt: `coins:coinsEach*repeatCount, count:repeatCount`
     // i tiktok-bridge/normalizer.js.
-    var coins = Number(detail.coins || 0) || 0;
+    var coins = Number(detail.diamonds || detail.coins || 0) || 0;   // #133: coins = aldre .exe
     var streak = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
 
     // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden

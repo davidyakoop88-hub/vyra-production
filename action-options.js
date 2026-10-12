@@ -10,7 +10,7 @@
   // Nu ritas fälten i action-event.js:s luckor och lämnas tillbaka i `collect`. Se fältregistret
   // i action-event.js och docs/referens/tikfinity-actions-facit.md.
   const vars = '{username} {giftname} {repeatcount} {coins} {likecount} {totallikecount} {comment} {submonth} {points}';
-  const fill = (text = '', p = {}) => text.replace(/\{(\w+)\}/g, (_, k) => ({username:p.username||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.coins||1,likecount:p.likecount||0,totallikecount:p.totallikecount||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username)||0}[k] ?? ''));
+  const fill = (text = '', p = {}) => text.replace(/\{(\w+)\}/g, (_, k) => ({username:p.username||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.diamonds||p.coins||1,likecount:p.likecount||0,totallikecount:p.totallikecount||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username)||0}[k] ?? ''));
 
   // Facit §7. Namnen till vänster är TikFinitys, nycklarna till höger är våra config-fält.
   const overlaySettingsHtml = c => `<div class="ao-global-panel" id="aoGlobalPanel" hidden>

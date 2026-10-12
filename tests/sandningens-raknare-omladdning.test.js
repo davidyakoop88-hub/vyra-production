@@ -100,7 +100,7 @@ test('topplistan star kvar efter en omladdning mitt i sandningen', () => {
   try {
     assert.deepEqual(topp(efter.w, 'likes'), [['Maya', 420]],
       'likes fran fore omladdningen kom inte tillbaka');
-    assert.deepEqual(topp(efter.w, 'coins'), [['Ove', 1500]],
+    assert.deepEqual(topp(efter.w, 'coins', 'diamonds'), [['Ove', 1500]],
       'coins fran fore omladdningen kom inte tillbaka');
   } finally { efter.dom.window.close() }
 });

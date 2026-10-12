@@ -169,11 +169,12 @@
     return mvp;
   }
 
-  // Beloppet: coins först, value som reserv. Molnets kontrakt döper coins till value, men
+  // Beloppet: diamonds först (#133), coins för en äldre .exe som bara skickar det namnet, value
+  // som reserv. Molnets kontrakt döper coins till value, men
   // liveEventTriggers skriver samtidigt över value med gåvans NAMN för gift-payloads, så value kan
   // vara en sträng — därför krävs ett ändligt positivt tal. Samma resonemang som i gift-fireworks.js.
   function coinsAv(e) {
-    for (const v of [e.coins, e.value, e.diamondCount]) {
+    for (const v of [e.diamonds, e.coins, e.value, e.diamondCount]) {
       const n = Number(v);
       if (Number.isFinite(n) && n > 0) return n;
     }

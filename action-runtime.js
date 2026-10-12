@@ -57,7 +57,7 @@
     // sin valuta, inte sin XP.
     refund:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0),false)
   };
-  const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
+  const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.diamonds||p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
   function openDb(){return new Promise((ok,no)=>{const r=indexedDB.open('vyra-action-media',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('files'))r.result.createObjectStore('files')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
   async function file(meta){if(!meta?.id)return null;const db=await openDb(),value=await new Promise((ok,no)=>{const tx=db.transaction('files');const r=tx.objectStore('files').get(meta.id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});db.close();return value}
   function allowed(action){const scene=window.VYRA_OVERLAY_SCENE;return !!scene&&Number(action.scene?.number||1)===Number(scene)}
