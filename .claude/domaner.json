@@ -214,6 +214,7 @@
         "tests/browser/panel-dolt.browser.test.js",
         "tests/browser/gifter-level-referens.browser.test.js",
         "tests/browser/streak-katalog.browser.test.js",
+        "tests/browser/topstreak-lasbar.browser.test.js",
         "tests/browser/nollrader-skrivloop.browser.test.js",
         "tests/battle-mvp-celebrations.test.js",
         "tests/battle-mvp-particles.test.js",
