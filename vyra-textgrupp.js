@@ -72,7 +72,13 @@
 
     if (eget) {
       const grund = parseFloat(eget) || 0;
-      if (grund) el.style.setProperty('font-size', (grund * faktor) + 'px', 'important');
+      if (grund) { el.style.setProperty('font-size', (grund * faktor) + 'px', 'important'); return; }
+      // LÄSBARHETSGOLVET (ranking-sixpack.js, 2026-10-12) skriver namnets storlek som
+      // `max(20px,calc(12px / var(--rk-z,1)))`. parseFloat ger NaN på det, och skalan hoppade
+      // tyst över elementet — uppmätt i CI: "@StreamQueen 20px -> 20px (1.00x)" vid 1,5. Skala det
+      // första px-talet (streamerns storlek) och låt golvet stå kvar.
+      const m = /^(?:max|min|clamp)\(\s*(\d+(?:\.\d+)?)px/.exec(eget);
+      if (m) el.style.setProperty('font-size', eget.replace(/\d+(?:\.\d+)?px/, (parseFloat(m[1]) * faktor) + 'px'), 'important');
       return;
     }
     // Ingen inline-storlek att skydda: då är CSS:ens värde det rätta att räkna från.
