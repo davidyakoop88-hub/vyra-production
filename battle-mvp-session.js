@@ -268,9 +268,14 @@
   const annonserade = new Set();
   const vantande = new Map();
   const FACIT_NADTID_MS = 1200;
+  // Sant fran live:start tills en MVP faktiskt tands i den nya sandningen. Se lyssnaren pa
+  // `vyra-live-repaint` langst ned for varfor.
+  let vaktaOmhamtning = false;
   {
     const original = root.triggerBattleMvp;
     const tand = (self, args) => {
+      // En ny vinnare ar korad: namnet i layouten ar fran och med nu den har sandningens.
+      vaktaOmhamtning = false;
       if (typeof original === 'function') return original.apply(self, args);
     };
     root.triggerBattleMvp = function (event = {}) {
@@ -385,6 +390,24 @@
   root.addEventListener('vyra-live-session', event => {
     if (!event || !event.detail || event.detail.event !== 'live:start') return;
     session = null;
+    vaktaOmhamtning = true;
     nollstallMvpText();
+  });
+
+  /* OMHAMTNINGEN TOG TILLBAKA NAMNET (uppmatt 2026-10-12, #271 avsnitt 4).
+   *
+   * Nollstallningen ovan sker i MINNET. I en OBS-kalla foljs live:start direkt av en
+   * konfig-omhamtning (live-session-client.js hamtaOm -> overlay-access.js), och den ersatter
+   * state.widgets med den SPARADE layouten. Var Studio oppen under forra sandningen har
+   * triggerBattleMvp sparat vinnarens namn dar — servern nollstaller det inte (stream-sessions.js
+   * ror bara giftCurrent<i> och malen) — sa omhamtningen ritade tillbaka forra sandningens vinnare
+   * en halv sekund efter att den nollstallts. Provet
+   * tests/browser/nollstallning-vid-ny-sandning.browser.test.js var rott pa just det.
+   *
+   * Darfor nollstalls igen efter varje applicerad konfiguration (`vyra-live-repaint`, som bara
+   * overlay-access.js skickar) — men bara tills en ny MVP tands i den nya sandningen. Darefter ar
+   * namnet i layouten den har sandningens, och en senare omhamtning ska fa visa det. */
+  root.addEventListener('vyra-live-repaint', () => {
+    if (vaktaOmhamtning) nollstallMvpText();
   });
 })(window);

@@ -95,7 +95,7 @@
     if(types.includes('removePoints'))return `−${config.removePointsAmount||10}`;
     return '0';
   }
-  const triggerNames={gift:'Gåva mottagen',giftCombo:'Gift-combo',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',level:'Level up',battle:'Battle-event',chat:'Chattkommando',join:'Går med i liven',firstActivity:'Första aktiviteten',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp',knapp:'Manuell knapp'};
+  const triggerNames={gift:'Gåva mottagen',giftCombo:'Gift-combo',follow:'Ny följare',member:'Ny medlem',likes:'Likes uppnådda',share:'Delning',level:'Level up',battle:'Battle-event',chat:'Chattkommando',join:'Går med i liven',superfan:'Super Fan går med',firstActivity:'Första aktiviteten',chatCommand:'Chattkommando',giftCoins:'Minsta coin-värde',subscriberEmote:'Subscriber-emote',fanSticker:'Fan Club-sticker',shopPurchase:'TikTok Shop-köp',knapp:'Manuell knapp'};
 
   // EVENTREGISTRET — samma lösning som fältregistret ovan, av samma skäl.
   // action-event-advanced.js sparade förr genom att räkna events före klicket och sedan läsa
@@ -115,7 +115,7 @@
   // ⌨️ (tangentbord) ritades som TOMMA RUTOR — bada ar sena tillskott som systemets
   // emoji-typsnitt saknar. En ikon som blir en ruta ar samre an ingen ikon alls: den ser ut som
   // trasig data. Valda glyfer ar darfor gamla och brett stodda.
-  const triggerIkon={join:'👋',firstActivity:'✨',share:'🔁',follow:'➕',member:'⭐',likes:'❤️',chat:'💬',chatCommand:'❗',giftCoins:'💰',gift:'🎁',subscriberEmote:'😀',fanSticker:'🏅',shopPurchase:'🛒',knapp:'🔘',giftCombo:'🎁',level:'⬆️',battle:'⚔️'};
+  const triggerIkon={join:'👋',superfan:'🌟',firstActivity:'✨',share:'🔁',follow:'➕',member:'⭐',likes:'❤️',chat:'💬',chatCommand:'❗',giftCoins:'💰',gift:'🎁',subscriberEmote:'😀',fanSticker:'🏅',shopPurchase:'🛒',knapp:'🔘',giftCombo:'🎁',level:'⬆️',battle:'⚔️'};
   function triggerMening(event){
     const typ=event?.advancedTrigger||event?.trigger||'';
     const v=String(event?.triggerValue||event?.condition||'').trim();

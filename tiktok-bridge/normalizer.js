@@ -450,8 +450,11 @@ function arBoostFonster(f){
 // igenom pa noll. Utan raden hade fixen alltsa flyttat exakt samma bugg ett steg nedstroms.
 // I dag satter bara giftFields `coins` (likeFields satter `points`, battleFields ingetdera), och
 // dar ar de tva talen samma — men reserven ska sta dar datat finns, inte dar felet visar sig.
+//
+// superfanBadge/superfanBakgrund/superfanBand (#361) bars villkorligt, som kistans falt: bara
+// super fan-entrén har dem, och en gava ska inte slapa tre tomma bildfalt med sig.
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.remainingSec>0?{remainingSec:number(fields.remainingSec,3600)}:{}),...(fields.durationSec>0?{durationSec:number(fields.durationSec,3600)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.remainingSec>0?{remainingSec:number(fields.remainingSec,3600)}:{}),...(fields.durationSec>0?{durationSec:number(fields.durationSec,3600)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.superfanBadge||fields.superfanBakgrund||fields.superfanBand?{superfanBadge:text(fields.superfanBadge,1200),superfanBakgrund:text(fields.superfanBakgrund,1200),superfanBand:text(fields.superfanBand,1200)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
@@ -509,7 +512,8 @@ function battleProbe(data){
 // 'glove' ar rumsnivå precis som battle och viewer: fonstret galler matchen, inte en person.
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','subscriberemote','fanlevelup','battle_mvp','envelope',
+// 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén, samma BARRAGE-ror. Ocksa en person.
+const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
   // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
   // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt stoppas.
   'chatcommand']);
@@ -724,6 +728,47 @@ function arGuardianEntrance(data){
   return String(data?.subType||data?.scene||'').trim().toLowerCase()==='guardian_entrance';
 }
 
+// SUPER FAN-ENTRÉN — #361 fynd 2, uppmatt 2026-09-06 (28 min, 5 handelser).
+//
+// Kommer som WebcastBarrageMessage, msgType 11 (FANS_LEVEL_ENTRANCE i protot) — SAMMA rör som
+// Guardian och fans_upgrade, sa det ar en gren till i bryggans befintliga BARRAGE-lyssnare. Bar
+// fansLevelParam.currentGrade (uppmatt 50), en badge, egen bakgrundsbild och en bandanimation.
+//
+// IGENKANNINGEN AR BIBLIOTEKETS EGEN, ordagrant. tiktok-live-connector 2.5.0 (processDecodedData,
+// fallet WebcastBarrageMessage) emitterar superFanJoin nar content.key ELLER
+// commonBarrageContent.key innehaller 'ttlive_superfan_commentnotif_superfanjoined' — och det var
+// DEN regeln som sorterade ut de fem SUPER_FAN_JOIN-raderna i inspelningen. En egen regel hade
+// kunnat sortera annorlunda an mätningen. Bara de tva nyckelfalten lases, aldrig hela payloaden.
+//
+// msgType ensam duger INTE: 11 ar "fanklubbsentré" i allmanhet, och fans_entrance (34 st
+// 2026-09-01) ar mycket vanligare an super fan-entrén.
+//
+// NIVAN LAGGS I fanClubLevel, inget nytt falt. currentGrade ar fanklubbsnivan, faltet bars redan
+// av alla tre vitlistor (molnets cleanEvent, desktopens cleanEvent, klientens teamLevel), och
+// TikToks egen uppgift i eventet ar battre an badge-harledningen i baseUser. Saknas den faller vi
+// tillbaka pa badgen.
+//
+// BILDERNA ar TikToks fardiga grafik. `background` ar det UPPMATTA namnet; protot v2 kallar det
+// `backGround` och lases som reserv. Badge-bilden ligger i image.image eller combine.icon beroende
+// pa badgens displayType.
+const SUPERFAN_NYCKEL='ttlive_superfan_commentnotif_superfanjoined';
+function arSuperfanEntre(data){
+  return [data?.content?.key,data?.commonBarrageContent?.key]
+    .some(v=>typeof v==='string'&&v.toLowerCase().includes(SUPERFAN_NYCKEL));
+}
+function bildUrl(m){return text(m?.urlList?.[0]||m?.urlListList?.[0]||m?.url||'',1200)}
+function superfanFields(data){
+  if(!arSuperfanEntre(data))return null;
+  const bas=baseUser(data);
+  const niva=Math.round(number(data?.fansLevelParam?.currentGrade,50));
+  const badge=data?.badge||{};
+  return{...bas,
+    fanClubLevel:niva||bas.fanClubLevel,
+    superfanBadge:bildUrl(badge.image?.image)||bildUrl(badge.combine?.icon)||bildUrl(badge.image),
+    superfanBakgrund:bildUrl(data?.background)||bildUrl(data?.backGround),
+    superfanBand:bildUrl(data?.ribbonAnimation)};
+}
+
 
 // BOOSTING GLOVE-KORTEN — WebcastLinkMicBattleItemCard (2026-10-10).
 //
@@ -774,4 +819,4 @@ function arGloveKort(k,mittAnkarId){
 function kortFordrojningMs(k){
   return boostFordrojningMs(k&&{fonsterStart:k.effektStart,skickatAt:k.skickatAt});
 }
-module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};
+module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};

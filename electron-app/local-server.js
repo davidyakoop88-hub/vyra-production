@@ -151,6 +151,11 @@ function startLocalServer(root, port = 4173, options = {}) {
     ...(d.kistaId
       ? { kistaId: text(d.kistaId, 160), oppnasAt: number(d.oppnasAt, 0, Number.MAX_SAFE_INTEGER), kistaDold: !!d.kistaDold }
       : {}),
+    // SUPER FAN-ENTRÉN (typen superfan, #361). TikToks färdiga grafik, bara på den typen — samma
+    // fälla som giftId i #350 om de saknas här: fälten räknas fram ett led tidigare och stryks.
+    ...(String(d.type || '') === 'superfan'
+      ? { superfanBadge: imageUrl(d.superfanBadge), superfanBakgrund: imageUrl(d.superfanBakgrund), superfanBand: imageUrl(d.superfanBand) }
+      : {}),
     // STREAM DECK (typen streamdeck, plugin 0.2.0): vad knappen gör. Bara på den typen — ingen gåva
     // ska bära ett sdKommando. streamdeck.js i studion/overlayn utför kommandot.
     ...(String(d.type || '') === 'streamdeck'
@@ -213,7 +218,7 @@ function startLocalServer(root, port = 4173, options = {}) {
   // natt. tests/desktop-paritet.test.js provar numera REGELN — molnets typer minus chat — i
   // stallet for att jamfora mot en hardkodad kopia som kan glida igen.
   const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
-    'viewer', 'battle', 'glove', 'guardian', 'subscriberemote', 'fanlevelup',
+    'viewer', 'battle', 'glove', 'guardian', 'superfan', 'subscriberemote', 'fanlevelup',
     // battle_mvp tillkom 2026-09-07 (#350). Skrivbordsappen SANDER den inte an — tiktok-service.js
     // emitterar elva typer och battle_mvp ar inte en av dem — men listan sager vad som FAR speglas,
     // och en post for en typ vi annu inte producerar ar ofarlig. Utan den holl inte regeln
