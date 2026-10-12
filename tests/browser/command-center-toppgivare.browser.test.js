@@ -32,6 +32,15 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 function servera() {
   const server = http.createServer((req, res) => {
     const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '');
+    // En avatar som FINNS. Provet "en riktig avatar visas" pekade forut pa https://exempel.test/,
+    // en vard som aldrig svarar: bilden fallerade, och den globala bildfelsfallbacken
+    // (runtime-controls.js) bytte src till test-profile.svg — ibland fore avlasningen, ibland
+    // efter. Provet foll darfor slumpvis i CI, aven pa grenar som inte rort Command Center.
+    if (rel === 'prov-avatar.svg') {
+      res.writeHead(200, { 'content-type': 'image/svg+xml' });
+      res.end('<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#f0a"/></svg>');
+      return;
+    }
     const fil = path.join(ROOT, rel);
     if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) {
       res.writeHead(404); res.end('nej'); return;
@@ -205,12 +214,13 @@ test('en avatar-URL som inte ar http slapps inte in i en img', { skip }, async (
 });
 
 test('en riktig avatar visas', { skip }, async () => {
-  const page = await framsidan(SVAR([givare('ana', 100, { avatar: 'https://exempel.test/a.jpg' })], 100));
+  const avatar = `${bas}/prov-avatar.svg`;
+  const page = await framsidan(SVAR([givare('ana', 100, { avatar })], 100));
   await kravRaden(page);
   await vantaPaKort(page);
   const ut = await page.evaluate(RADEN);
   await page.close();
-  assert.equal(ut.kort[0].avatar, 'https://exempel.test/a.jpg');
+  assert.equal(ut.kort[0].avatar, avatar);
 });
 
 test('utan givare doljs skelettet och en arlig text star kvar', { skip }, async () => {
