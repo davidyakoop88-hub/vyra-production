@@ -732,7 +732,7 @@ const oldWh = wh;
 wh = function (w) {
   if (!KINDS[w.type]) return oldWh(w);
   const k = KINDS[w.type], n = natOf(w), width = w.width || 300, s = width / n.w, height = Math.round(n.h * s);
-  return `<div class="widget templatePg ${w.type}${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;height:${height}px"><div class="pgw wroot" data-pgid="${w.id}" data-pgkind="${k}" style="width:${n.w}px;transform:scale(${s.toFixed(4)});transform-origin:0 0"></div><span class="resize-handle">↘</span></div>`;
+  return `<div class="widget templatePg ${w.type}${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;height:${height}px"><div class="pgw wroot" data-pgid="${w.id}" data-pgkind="${k}" style="width:${n.w}px;--pgs:${s.toFixed(4)};transform:scale(${s.toFixed(4)});transform-origin:0 0"></div><span class="resize-handle">↘</span></div>`;
 };
 
 /* ---------- panel (props) ---------- */

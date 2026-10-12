@@ -349,6 +349,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 166 (filter: heart-tower) — catalog:socialgoal:likes:heart-tower:portrait
 
+## 2026-10-12 — 12 referenser skrivna
+
+- **Motiv:** Top Streak Flip läsbar i liten storlek: platta, textgolv och kompakt ring (PR #601)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 12 av 166 (filter: pgstreak) — catalog:pgstreak:emerald-grove, catalog:pgstreak:emerald-wings, catalog:pgstreak:frost-crystal, catalog:pgstreak:frost-wings, catalog:pgstreak:inferno, catalog:pgstreak:inferno-wings, catalog:pgstreak:neon-circuit, catalog:pgstreak:neon-wings, catalog:pgstreak:rose-wings, catalog:pgstreak:royal-gold, catalog:pgstreak:royal-wings, catalog:pgstreak:violet-orchid
+
 ## 2026-10-12 — 18 referenser skrivna
 
 - **Motiv:** Gifter/Fan Level Up läsbara i liten storlek, duo-layouterna lagade (PR #605)

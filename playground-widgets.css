@@ -443,3 +443,43 @@
 .pgw .sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
 .pgw .sw:hover{transform:scale(1.12);border-color:#fff9}
 .pgw .sw.on{border-color:#fff;box-shadow:0 0 0 2px #7c5cff}
+/* TOP STREAK: LÄSBARHETSLÄGE (David 2026-10-12: "ramarna syns knappt så tydliga" och "när man har dem
+   i mini läge (liten storlek) så ser man inte dem tydligt").
+   UPPMÄTT före ändringen: namnet stod fritt under ramen direkt mot videon och renderade 8,5 designpx
+   vid 120 px bredd och 11,4 vid 160; räknaren 6,9 och 9,3. Hela .pgw ritas i 760 px och skalas med
+   transform:scale(bredd/760) (wh i playground-widgets.js), så en vanlig textstorlek krymper linjärt med
+   widgeten. wh lägger därför skalan i --pgs, och golven nedan är calc(Npx / var(--pgs)): N designpx
+   efter skalningen, oavsett bredd. Stor vy påverkas inte — där är 54/44 px redan större än golvet.
+   1. Namn och siffra står på en platta: mörk, rundad, tunn kant i designens accentfärg, fet vit text.
+   2. Golv: namnet aldrig under 12 designpx (14 i kompakt läge), räknaren aldrig under 12.
+   3. Kompakt läge (container query på widgetens egen bredd, högst 220 px): ornamentramen döljs, kvar
+      blir en tjock ljus ring runt profilbilden, och profilbilden växer till ~82 % av ritytan. Detaljrika
+      vingar och kronor blir brus i den storleken — en ren ring syns. */
+.widget.templatePgStreak{container:pgstreak/inline-size}
+.pgw .stk{--nmmin:12px;--cntmin:12px}
+.pgw .stk-info{width:max-content;max-width:720px;box-sizing:border-box;margin:8px auto 0;gap:8px;
+  padding:14px 30px 16px;border-radius:30px;background:rgba(10,6,16,.85);
+  border:max(3px,calc(1px / var(--pgs,1))) solid color-mix(in srgb,var(--a) 80%,transparent);
+  box-shadow:0 6px 22px rgba(0,0,0,.55),0 0 calc(var(--g)*18px) color-mix(in srgb,var(--a) 35%,transparent)}
+.pgw .stk-nm{font-size:max(54px,calc(var(--nmmin) / var(--pgs,1)));color:var(--t,#fff);max-width:100%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;line-height:1.18;text-shadow:0 2px 6px #000c}
+.pgw .stk-info .stk-pill b{font-size:max(44px,calc(var(--cntmin) / var(--pgs,1)))}
+@container pgstreak (max-width:220px){
+  .pgw .stk{--nmmin:14px;--cntmin:13px}
+  .pgw .stk-stage{height:660px}
+  .pgw .stk-frame{display:none}
+  .pgw .stk-ring{display:none}
+  .pgw .stk-av{left:70px!important;top:20px!important;width:620px!important;height:620px!important;border-radius:50%;
+    box-shadow:0 0 0 12px #fff,0 0 0 40px var(--a),0 0 0 48px rgba(10,6,16,.6),
+      0 0 70px 44px color-mix(in srgb,var(--a) 60%,transparent)}
+  .pgw .stk-gift{left:520px!important;top:470px!important;width:190px!important;height:190px!important;
+    box-shadow:0 0 0 10px #fff,0 0 0 26px var(--a),0 0 30px 14px rgba(0,0,0,.6)}
+  .pgw .stk-gift .ge{width:150px!important;height:150px!important}
+  .pgw .stk.roar .stk-av{animation:pg-stkroarc calc(.55s/var(--sp)) ease-out}
+  .pgw .stk-info{padding:14px 26px 16px;border-radius:40px;gap:2px;max-width:900px;position:relative;left:50%;transform:translateX(-50%);margin:8px 0 0;
+    border-width:max(5px,calc(1.5px / var(--pgs,1)))}
+  .pgw .stk-info .stk-pill{background:none;border:0;box-shadow:none;padding:0;gap:14px}
+  .pgw .stk-info .stk-pill small{display:none}
+  .pgw .stk-info .stk-pill svg{width:calc(var(--cntmin) * .9 / var(--pgs,1));height:calc(var(--cntmin) * .9 / var(--pgs,1))}
+}
+@keyframes pg-stkroarc{0%{filter:brightness(1)}30%{filter:brightness(1.3) drop-shadow(0 0 40px var(--a))}100%{filter:brightness(1)}}

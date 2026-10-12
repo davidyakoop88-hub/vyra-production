@@ -84,6 +84,7 @@
     "sprak-vakt.browser.test.js": 16,
     "statistics-live.browser.test.js": 2,
     "streak-katalog.browser.test.js": 5,
+    "topstreak-lasbar.browser.test.js": 16,
     "synlighet.browser.test.js": 1,
     "text-grupp.browser.test.js": 158,
     "thumb-leak.browser.test.js": 21,
