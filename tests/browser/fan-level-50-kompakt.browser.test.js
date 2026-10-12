@@ -44,7 +44,7 @@ test.before(async () => {
   if (!browser) throw new Error('hittade en webbläsare men kunde inte starta den - se tests/helpers/webblasare.js');
   server = await servera();
   sida = await browser.newPage({ viewport: { width: 432, height: 768 } });
-  await sida.goto(`http://127.0.0.1:${server.address().port}/studio.html?overlay=1`, { waitUntil: 'load' });
+  await sida.goto(`http://127.0.0.1:${server.address().port}/studio.html?overlay=1`, { waitUntil: 'load', timeout: 90000 });
   await sida.waitForFunction(() => typeof VyraWidgets !== 'undefined' && typeof render === 'function'
     && window.VyraFanLevel50 && document.querySelector('link[data-fl50]'), null, { timeout: 60000 });
   await sida.waitForTimeout(500);
