@@ -309,7 +309,40 @@
     records.giftCoins = 0;
     records.streakCoins = 0;
     skrivRekord();
+    nollstallKampanjerIStudio();
   });
+
+  // GIFT CAMPAIGN I STUDIO-LAGET (uppmatt 2026-10-12, #271 avsnitt 4).
+  //
+  // Raknaren nedan skrivs in i state.widgets — samma objekt som save() serialiserar — och foljer
+  // darfor med i layouten vid NASTA sparning, vilken andring som helst. Det ar avsiktligt: servern
+  // nollstaller just de nycklarna vid en ny sandning (stream-sessions.js nollstallKampanjerPa), och
+  // en OBS-kalla hamtar om konfigurationen vid live:start och far nollan darifran.
+  //
+  // Studio har ingen sadan omhamtning. Utan raderna nedan stod forra sandningens rakning kvar i
+  // Studios minne, och agarens nasta save() skrev tillbaka den OVER serverns nolla — varpa OBS
+  // hamtade den med nasta konfigrevision. Har servern redan noll hojs inte ens versionen, sa
+  // cloud-sync:s foljare har ingenting att ratta det med.
+  //
+  // Speglar serverns regel exakt: bara ^giftCurrent\d+$ pa templateGiftCampaign. INGEN save():
+  // servern har redan nollan, och en PUT med Studios gamla version hade bara gett en synkkonflikt
+  // mot serverns egen nollstallning. Nasta vanliga sparning bar nollan. En OBS-lank (`access`)
+  // rors inte — dar ager konfig-omhamtningen raknaren, och en kalla som oppnas mitt i en sandning
+  // far live:start ur snapshotet och hade annars nollat den PAGAENDE sandningens rakning.
+  function nollstallKampanjerIStudio() {
+    if (new URLSearchParams(location.search).has('access')) return;
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    state.widgets.forEach(function (widget) {
+      if (!widget || widget.type !== 'templateGiftCampaign') return;
+      var rort = false;
+      Object.keys(widget).forEach(function (nyckel) {
+        if (!/^giftCurrent\d+$/.test(nyckel) || Number(widget[nyckel]) === 0) return;
+        widget[nyckel] = 0;
+        rort = true;
+      });
+      if (rort) schedule(widget);
+    });
+  }
 
   window.addEventListener('vyra-live-event', function (event) {
     var detail = event.detail || {};
