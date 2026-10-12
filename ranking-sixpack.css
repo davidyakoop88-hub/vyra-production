@@ -324,7 +324,7 @@
  *      ranking-sixpack.js.
  *   3. KOMPAKTLÄGET (.rk6-kompakt, satt av ranking-sixpack.js när den synliga bredden passerar
  *      tröskeln — se GEOMETRI där). Ornamenten bort, tjock ljus ring runt fotot, större foto och
- *      namn, plats 4-5 döljs. Listan får motzoom (1/skala) och ritas i riktiga designpixlar; där
+ *      namn — alla platser kvar, som en kompakt rad-lista. Listan får motzoom (1/skala) och ritas i riktiga designpixlar; där
  *      inne är den en container, och underlägena väljs med container queries.
  * ========================================================================================== */
 
@@ -365,6 +365,14 @@
 .widget.vyra-toplike.rk6.rk6-egen-ram:is(.rk6-basic-v2,.rk6-prism-vertical) .toplike-row::before{translate:var(--ram-ut) 0}
 .widget.vyra-toplike.rk6.rk6-egen-ram.ranking-mirrored:is(.rk6-basic-v2,.rk6-prism-vertical) .toplike-row::before{translate:calc(-1 * var(--ram-ut)) 0}
 
+/* Raddesignerna i stor vy: kolumnen är fast (68-84 px), så ett namn i 12 px får BRYTAS på två rader
+   i stället för att klippas — ellips först när två rader inte räcker. Plattorna i Celestial/Royal
+   Rose blir lika höga (namnraden tar resten av höjden), så siffrorna står på samma linje. */
+.widget.vyra-toplike.rk6:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .rk6-namn>strong{
+  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal!important;overflow-wrap:anywhere;line-height:1.15!important}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose):not(.rk6-kompakt) .rk6-lista{align-items:stretch}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose):not(.rk6-kompakt) .toplike-row.toplike-row{grid-template-rows:auto 1fr auto!important}
+
 /* ---- 3. Kompaktläget ---- */
 .widget.vyra-toplike.rk6.rk6-kompakt .rk6-lista{
   zoom:var(--rk6-mot,1);width:var(--rk6-vb,160px);box-sizing:border-box;container:rk6-lista/inline-size;
@@ -373,11 +381,8 @@
 }
 .widget.vyra-toplike.rk6.rk6-kompakt :is(.rk6-trad,.rk6-stoft,.rk6-ring,.rk6-glod,.rk6-krona,.rk6-led,.rk6-profilram){display:none!important}
 .widget.vyra-toplike.rk6.rk6-kompakt>h3{font-size:max(13px,calc(13px / var(--rk6-z,1)))!important}
-/* Tre platser, inte fem som krymper. live-leaderboard.js döljer tomma rader med inline !important,
-   som vinner över det här — en likare är fortfarande en rad (regel 1). */
-.widget.vyra-toplike.rk6.rk6-kompakt .toplike-row:not(.rank-1):not(.rank-2):not(.rank-3){display:none!important}
 .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row.toplike-row{
-  --av:38px;--av-h:38px;--karna:100%;--karna-h:100%;--karna-top:50%;
+  --av:32px;--av-h:32px;--karna:100%;--karna-h:100%;--karna-top:50%;
   display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-rows:auto auto!important;grid-auto-flow:row!important;
   justify-items:stretch!important;align-items:center!important;align-content:center;column-gap:7px!important;row-gap:0!important;
   flex:1 1 100%;width:auto!important;min-width:0!important;order:0!important;text-align:left;
@@ -402,31 +407,23 @@
   grid-row:1!important;grid-column:2!important;align-self:end!important;align-items:flex-start!important;justify-content:flex-end!important;
   height:auto!important;width:auto!important;min-width:0!important;margin:0!important;padding:5px 8px 0!important;translate:none!important;
   background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important}
-.widget.vyra-toplike.rk6.rk6-kompakt .rk6-namn>strong{font-size:13px!important;font-weight:800!important;max-width:100%;text-align:left!important}
+/* Namnet klipps inte i onödan: två rader innan ellips. */
+.widget.vyra-toplike.rk6.rk6-kompakt .rk6-namn>strong{font-size:13px!important;font-weight:800!important;max-width:100%;text-align:left!important;
+  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal!important;overflow-wrap:anywhere;line-height:1.15!important}
 .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row>em{
   grid-row:2!important;grid-column:2!important;align-self:start!important;justify-self:start!important;justify-content:flex-start!important;
   height:auto!important;margin:0!important;padding:2px 8px 5px!important;translate:none!important;gap:4px!important;
   font-size:12px!important;color:var(--c)!important;background:none!important;border:0!important;box-shadow:none!important}
 .widget.vyra-toplike.rk6.rk6-kompakt .rk6-ikon{width:12px!important;height:12px!important;animation:none!important}
 
-/* Smal: under 140 designpixlar krymper fotot något och texten står på golvet, 12 px. */
+/* Smal: under 140 designpixlar står texten på golvet, 12 px, med tätare marginaler. */
 @container rk6-lista (max-width:139px){
-  .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row.toplike-row{--av:32px;--av-h:32px;column-gap:5px!important}
+  .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row.toplike-row{column-gap:5px!important}
   .widget.vyra-toplike.rk6.rk6-kompakt .rk6-namn>strong{font-size:12px!important}
   .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row>.rk6-namn{padding:4px 6px 0!important}
   .widget.vyra-toplike.rk6.rk6-kompakt .toplike-row>em{padding:1px 6px 4px!important}
 }
 /* Raddesignerna, minst 230 designpixlar: tre i bredd med fotot överst, som den stora vyn. */
-@container rk6-lista (min-width:230px){
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .toplike-row.toplike-row{
-    --av:46px;--av-h:46px;flex:1 1 0;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;
-    justify-items:center!important;row-gap:4px!important;order:var(--rk6-ordning)!important}
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .toplike-row>.rk6-av{grid-row:1!important;grid-column:1!important}
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .toplike-row::before{grid-row:2/4!important;grid-column:1!important;margin-top:4px!important}
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .toplike-row>.rk6-namn{grid-row:2!important;grid-column:1!important;align-items:center!important;width:100%!important;box-sizing:border-box;padding:8px 6px 0!important}
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .rk6-namn>strong{text-align:center!important}
-  .widget.vyra-toplike.rk6.rk6-kompakt:is(.rk6-prism-horizontal,.rk6-celestial,.rk6-royal-rose) .toplike-row>em{grid-row:3!important;grid-column:1!important;justify-self:center!important;padding:1px 6px 5px!important}
-}
 
 /* ---- Ensamma ledare: Top Gift neon/royal (ranking-sixpack.js enkelLasbar) ---- */
 .premium-topgift.rk-lasbar .topgift-copy{

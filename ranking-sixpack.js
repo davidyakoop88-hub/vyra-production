@@ -71,7 +71,7 @@
   // zoomen syns inte för frågan. Den synliga bredden räknas därför här, ur designens uppmätta
   // grundmått gånger skalan, och listan i kompaktläget får en MOTZOOM (1/skala) så att allt inuti
   // ritas i riktiga designpixlar. Där inne är listan en riktig container (`rk6-lista`), och
-  // underlägena (smal rad-lista / tre i bredd) väljs med vanliga container queries.
+  // det smala underläget (under 140 px) väljs med en vanlig container query. Alla platser står kvar.
   //
   // GRUNDMÅTTEN, uppmätta i overlay med fem riktiga namn (Anya Plays, Kave, Lina Nordin, Omar_92,
   // Sara K) vid skala 1: Voltage 232 px, Basic v2 222, Prism vertikal 235, Celestial/Royal Rose 390,
@@ -80,7 +80,10 @@
   //
   // TRÖSKELN, efter mätning vid synlig bredd 120/160/200/260/320: kompaktläget slår till när
   //   listorna:  profilbilden blir mindre än 36 synliga px (Voltage 42·0,87 = 36,5 vid 200 px), och
-  //   raderna:   en plats blir smalare än 54 synliga px — där ryms inte längre ett namn i 12 px.
+  //   raderna:   en plats blir smalare än 44 synliga px. Ner dit ryms ett namn i 12 px på två rader
+  //              (Celestial vid 260 px: kolumn 52 px, "Lina / Nordin"); först under det blir fem
+  //              kolumner för smala och listan blir en kompakt rad-lista med alla platser kvar.
+  //              (Granskningen av #604: tröskeln 54 px gjorde Celestial 260 px kompakt och klippte namnen.)
   // Före: Celestial vid 260 px gav namn 8,3 px och foto 25,5 px, Voltage vid 160 px namn 8,6 px.
   const GEOMETRI = Object.freeze({
     voltage: { bredd: 232, foto: 42 },
@@ -90,7 +93,7 @@
     celestial: { kolumn: 70, gap: 8, kant: 8 },
     'royal-rose': { kolumn: 70, gap: 8, kant: 8 }
   });
-  const MIN_FOTO = 36, MIN_KOLUMN = 54, MIN_KOMPAKT_BREDD = 112;
+  const MIN_FOTO = 36, MIN_KOLUMN = 44, MIN_KOMPAKT_BREDD = 112;
   const skalaFor = w => { const z = Number(w && w.widgetScale); return Number.isFinite(z) && z > 0 ? Math.min(4, Math.max(0.2, z)) : 1; };
   function lasbarhet(id, n, z) {
     const g = GEOMETRI[id];

@@ -249,7 +249,8 @@ test('kompaktläget: av i full storlek, på när den synliga bredden blir smal',
   assert.equal(l('voltage', 5, 0.87).kompakt, false, 'Voltage vid 200 synliga px: foto 36,5 px, inte kompakt');
   assert.equal(l('voltage', 5, 0.7).kompakt, true, 'Voltage vid 160 synliga px: kompakt');
   assert.equal(l('celestial', 5, 0.82).kompakt, false, 'Celestial vid 320 synliga px: inte kompakt');
-  assert.equal(l('celestial', 5, 0.67).kompakt, true, 'Celestial vid 260 synliga px: kompakt');
+  assert.equal(l('celestial', 5, 0.67).kompakt, false, 'Celestial vid 260 synliga px: fem kolumner à 52 px, namnen ryms på två rader');
+  assert.equal(l('celestial', 5, 0.51).kompakt, true, 'Celestial vid 200 synliga px: kompakt');
 });
 
 test('en myntsymbol: Top Gift får guldmyntet i stället för ◉', () => {

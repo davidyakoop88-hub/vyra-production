@@ -11,7 +11,9 @@
 //   1. Namn, plats och siffra är aldrig under 12 SYNLIGA designpixlar — varken i full storlek
 //      eller när widgeten krymps.
 //   2. Vid smal bredd slår kompaktläget till: namn och siffra står på en mörk platta
-//      (rgba(10,6,16,.85)) med kant, plats 4-5 döljs, och fotot är större än före.
+//      (rgba(10,6,16,.85)) med kant, alla platser står kvar, och fotot är större än före.
+//   5. Kompaktläget slår inte till i onödan: Celestial vid 260 px behåller fem kolumner, och namnen
+//      bryts på två rader i stället för att klippas (granskningen av #604).
 //   3. Top Coins i de sex designerna följer widgetScale (zoom), som Top Like.
 //   4. Top Gift visar familjens guldmynt, inte "◉".
 //
@@ -104,7 +106,7 @@ for (const [nyckel, skala] of [
     const m = await mat(nyckel, skala);
     assert.match(m.klass, /\brk6-kompakt\b/, `kompaktläget slog inte till vid skala ${skala}: ${m.klass}`);
     assert.ok(m.bredd <= 140, `widgeten ska följa sin skala (synlig bredd ${m.bredd} px)`);
-    assert.equal(m.rader, 3, 'plats 4-5 döljs i kompaktläget i stället för att allt krymper');
+    assert.equal(m.rader, 5, 'kompaktläget behåller alla fem platserna (granskningen av #604)');
     for (const [del, v] of [['namn', m.namn], ['siffra', m.varde], ['plats', m.rang]]) {
       assert.ok(v >= 11.9, `${del} är ${v} synliga px — golvet är 12`);
     }
@@ -152,3 +154,18 @@ test('Top Gift royal liten: guldmyntet i stället för ◉, namn och siffra på 
   assert.ok(m.namn >= 11.9 && m.varde >= 11.9, `namn ${m.namn} / siffra ${m.varde} synliga px`);
   assert.equal(m.platta.bg, PLATTA);
 });
+
+// GRANSKNINGEN AV #604: kompaktläget slog till redan vid 260 px och klippte "Anya Pla…" och
+// "Lina Nor…" där före-bilden visade hela namnen. Nu: fem kolumner kvar, namnen i 12 px bryts på
+// två rader, och ingen ellips så länge två rader räcker.
+for (const [nyckel, skala] of [['catalog:toplike:celestial', 0.67], ['catalog:toplike:royal-rose', 0.67], ['catalog:toplike:royal-rose', 0.82]]) {
+  test(`${nyckel} vid skala ${skala}: inte kompakt, fem platser, inga klippta namn`, { skip }, async () => {
+    const m = await mat(nyckel, skala);
+    assert.doesNotMatch(m.klass, /\brk6-kompakt\b/, 'fem platser i 12 px ryms här — kompaktläget ska inte slå till');
+    assert.equal(m.rader, 5);
+    assert.ok(m.namn >= 11.9, `namn ${m.namn} px`);
+    const klippta = await page.evaluate(() => [...document.querySelectorAll('.canvas .toplike-row .rk6-namn>strong')]
+      .filter(s => s.textContent && (s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1)).map(s => s.textContent));
+    assert.deepEqual(klippta, [], `klippta namn: ${klippta.join(', ')}`);
+  });
+}
