@@ -119,11 +119,19 @@ test.after(async () => {
   }
 });
 
-async function oppnaOverlay() {
+// `redanSett`: en OBS-kalla som var oppen nar sandningen startade har redan `live:start:<id>` i
+// sin dedupelista (localStorage, se live-session-client.js). Utan den levererar snapshotet en
+// EGEN live:start for den pagaende sandningen nar sidan oppnas — och den nollstaller allt som
+// sandningsstarten nollstaller, fore provets forsta avlasning.
+async function oppnaOverlay({ redanSett = null } = {}) {
   const sida = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  await sida.addInitScript(() => {
+  await sida.addInitScript(sett => {
     window.__las = (nyckel) => window.VyraLiveSession.lagratVarde(nyckel);
-  });
+    if (sett) {
+      localStorage.setItem('vyra-live-session-hanterade', JSON.stringify(['live:start:' + sett]));
+      localStorage.setItem('vyra-live-session-aktiv', sett);
+    }
+  }, redanSett);
   sida.__fel = [];
   sida.on('pageerror', e => sida.__fel.push(String(e && e.message).slice(0, 160)));
   await sida.goto(`${bas}/studio.html?overlay=1&access=${TOKEN}`, { waitUntil: 'load' });
@@ -139,7 +147,7 @@ async function oppnaOverlay() {
 async function vantaPa(villkor, meddelande, { timeout = 15000, intervall = 50 } = {}) {
   const slut = Date.now() + timeout;
   while (Date.now() < slut) {
-    if (villkor()) return;
+    if (await villkor()) return;
     await new Promise(res => setTimeout(res, intervall));
   }
   throw new assert.AssertionError({ message: meddelande + ' (inom ' + timeout + ' ms)',
@@ -224,10 +232,16 @@ prov('battle MVP: ett vinnarnamn som Studio sparat i layouten kommer inte tillba
   r.lada.version = 1;
   r.lada.state = { widgets: [mvp({ mvpName: 'Sparad Vinnare', mvpScore: 4258 })] };
   r.lada.session = { sessionId: S1, startedAt: '2026-08-25T09:00:00.000Z' };
-  const sida = await oppnaOverlay();
+  // Kallan var oppen under S1 — det ar dar Studio hann spara vinnaren. En kalla som oppnas forst
+  // nu hade fatt en egen live:start for S1 och nollstallt namnet fore utgangslaget (rott 1 av 5).
+  const sida = await oppnaOverlay({ redanSett: S1 });
   try {
     await sida.waitForFunction(id => __las('vyra-live-session-aktiv') === id, S1, { timeout: 60000 });
-    assert.match(await text(sida, 'm1'), /Sparad Vinnare/, 'utgangslaget ritades aldrig');
+    // VANTA, LAS INTE DIREKT. Sessionsmarkoren satts fore den forsta omritningen med den sparade
+    // layouten: en direkt avlasning sag ibland mallens tomlage ('MVP● 0') — 1 av 5 lokalt, och
+    // rott i CI pa #599. Utgangslaget ar ett forvillkor, inte det som provas.
+    await vantaPa(async () => /Sparad Vinnare/.test(await text(sida, 'm1') || ''),
+      'utgangslaget ritades aldrig');
 
     // Servern nollstaller inte MVP-namnet (bara giftCurrent<i> och malen), sa layouten bar det
     // fortfarande. Versionen hojs anda: nagot annat i samma nollstallning andrades.
