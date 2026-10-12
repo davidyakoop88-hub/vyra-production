@@ -195,7 +195,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-10-11: ett kort per modell — widget-factory.js bar de nya modelltabellerna och
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   assert.match(studio, /widget-factory\.js\?v=20261011-3/);
-  assert.match(studio, /gift-event-images\.js\?v=20260923-1/);
+  // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
+  assert.match(studio, /gift-event-images\.js\?v=20261012-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -386,8 +387,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // rakningen, #368), sa dess strang foljer numera den andringen och inte duckningen. Den fick
   // samtidigt en strang som bara sager NAR — `20260817-duckning` namngav sitt innehall, vilket
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
-  assert.match(media, /battle-mvp-session\.js\?v=20260906-1/,
-    'battle-mvp-session.js cachebustades inte for #368');
+  // 20261012-1: vakten mot konfig-omhamtningen efter live:start (#271 avsnitt 4).
+  assert.match(media, /battle-mvp-session\.js\?v=20261012-1/,
+    'battle-mvp-session.js cachebustades inte for #271');
   // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
   // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
   // den andringen — det var LISTAN som inte fick veta, sa provet stod rott pa main.
