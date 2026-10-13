@@ -185,8 +185,9 @@ const REGI = {
   },
 
   // EN POST PA NYCKELNIVA, inte pa typ. Alla 23 battlemvp-nycklar har typen templateBattleMvp,
-  // men bara de sex firandena ar CSS-koreografier. De ovriga 17 fotograferas korrekt av den
-  // generella frysningen — prefixet haller dem utanfor. Se uppslaget i tests/helpers/visuell.js.
+  // men bara de sex firandena ar CSS-koreografier. De ovriga 17 antogs fotograferas korrekt av den
+  // generella frysningen — det holl inte, se posten 'catalog:battlemvp:' nedan (2026-10-12).
+  // Se uppslaget i tests/helpers/visuell.js.
   //
   // FORLAGAN AR GUARDIAN OCH GIFTJAR I FORENING. Fasen stalls som guardian gor, OCH en canvas
   // maste stoppas som giftjar gor.
@@ -229,6 +230,42 @@ const REGI = {
       box.querySelectorAll('.mvc-charge, .mvc-finale').forEach(n => n.remove());
       // Partikeldukarna ar samma sorts dekoration och doljs av samma media-regel.
       if (window.VyraMvpParticles) window.VyraMvpParticles.still();
+      const alla = [...box.getAnimations({ subtree: true })];
+      alla.forEach(a => { a.pause(); a.currentTime = ms });
+      void box.offsetWidth;
+      return { fas, ms, animationer: alla.length };
+    },
+  },
+  // BASIC-DESIGNERNA OCH DE SJU RAMARNA (allt under catalog:battlemvp: utom firandena, som har
+  // sitt eget, langre prefix ovan — langsta prefixet vinner, se tests/helpers/visuell.js).
+  //
+  // UPPMATT 2026-10-12: 12 av deras 17 referenser var tomma bilder pa 415-1075 byte, och
+  // fyllnadsmattet sade 100 % for dem. Orsaken: battle-mvp-celebrations.js ger dem klassen
+  // mvp-motion, och dess animationer (mvm-winner, mvm-basic-face, mvm-<ram>) har
+  //   0-10 % osynligt, 16-19 % -> 91-93 % helt synligt, 97-100 % tonat till opacitet 0 (fill: both).
+  // Den generella skanningen valjer den SENASTE bildrutan dar ROTENS arvda opacitet ar hogst — och
+  // roten star pa opacitet 1 hela tiden medan barnen tonar ut. Slutbilden 999000 ms vann, och den
+  // ar tom. Durationen ar 10 s (fabriken satter mvpDuration: 10), sa hallfonstret ar 1900-9100 ms.
+  // 5000 ms ar mitten, med drygt 3 s marginal at bada hallen.
+  'catalog:battlemvp:': {
+    fas: 'mvp-tand-hall', ms: 5000,
+    varfor: 'mvp-motion tonar ut barnen till opacitet 0 vid slutet medan roten star kvar synlig',
+    regi: async ([fas, ms]) => {
+      const t0 = Date.now();
+      let box = document.querySelector('.battle-mvp');
+      // Alertkon kan spela upp triggern en bildruta senare an anropet.
+      while (box && !box.classList.contains('mvp-active') && Date.now() - t0 < 4000) {
+        await new Promise(r => setTimeout(r, 50));
+        box = document.querySelector('.battle-mvp');
+      }
+      if (!box) return { fel: 'Battle MVP renderades inte — saknas .battle-mvp' };
+      if (!box.classList.contains('mvp-active')) {
+        return { fel: 'Battle MVP tandes aldrig — .mvp-active saknas, kordes triggerBattleMvp?' };
+      }
+      // Triggern byter namnet, och for ramarna ritas noden da om (media.js triggerBattleMvp:
+      // ramgrenen har inget h2 att patcha). De nya <img> maste vara avkodade fore fotot.
+      await Promise.all([...box.querySelectorAll('img')].map(i => i.decode().catch(() => {})));
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       const alla = [...box.getAnimations({ subtree: true })];
       alla.forEach(a => { a.pause(); a.currentTime = ms });
       void box.offsetWidth;

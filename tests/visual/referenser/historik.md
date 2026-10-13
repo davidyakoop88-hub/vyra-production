@@ -355,6 +355,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 12 av 166 (filter: pgstreak) — catalog:pgstreak:emerald-grove, catalog:pgstreak:emerald-wings, catalog:pgstreak:frost-crystal, catalog:pgstreak:frost-wings, catalog:pgstreak:inferno, catalog:pgstreak:inferno-wings, catalog:pgstreak:neon-circuit, catalog:pgstreak:neon-wings, catalog:pgstreak:rose-wings, catalog:pgstreak:royal-gold, catalog:pgstreak:royal-wings, catalog:pgstreak:violet-orchid
 
+## 2026-10-12 — 20 referenser skrivna
+
+- **Motiv:** Battle MVP-ramar läsbara i litet format: platta, minsta namnstorlek, kompakt läge (PR #603)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 20 av 166 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:coronation, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:lion-clash, catalog:battlemvp:celebration:moon, catalog:battlemvp:celebration:pearl, catalog:battlemvp:celebration:portal, catalog:battlemvp:celebration:rosegold, catalog:battlemvp:celebration:wings, catalog:battlemvp:cyber, catalog:battlemvp:frame:dark-wings, catalog:battlemvp:frame:dragon-fire, catalog:battlemvp:frame:laurel-star, catalog:battlemvp:frame:nautical-helm, catalog:battlemvp:frame:royal-ribbon, catalog:battlemvp:frame:shadow-star, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm
+
 ## 2026-10-12 — 166 referenser skrivna
 
 - **Motiv:** Topplistorna läsbara i liten storlek: platta, 12 px-golv, kompaktläge, ett mynt (PR #604) — Top Like, Top Coins, Top Points och Top Gift
