@@ -572,15 +572,21 @@ async function bygg(sida, nyckel, ALERTS) {
   // REGI slogs tidigare bara upp pa widgettyp, och det racker sa lange en hel familj delar
   // forlopp. Battle MVP gor inte det: alla 23 nycklarna har typen templateBattleMvp, men bara de
   // sex under catalog:battlemvp:celebration: ar CSS-koreografier som inte gar att frysa utifran.
-  // De ovriga 17 — aurora, cyber, samurai och de sju frame:*-ramarna — fotograferas korrekt av den
-  // generella frysningen och har giltiga referensbilder.
+  // De ovriga 17 antogs fotograferas korrekt av den generella frysningen. DET VAR FEL (uppmatt
+  // 2026-10-12): deras rorelse (mvm-* i battle-mvp-celebrations.css) tonar ut innehallet till
+  // opacitet 0 pa 100 %, medan roten star kvar pa opacitet 1. Skanningen mater bara rotens arvda
+  // opacitet, valde slutbilden och fick en tom ruta — 12 referenser pa 415-1075 byte. De har darfor
+  // en egen REGI-post, 'catalog:battlemvp:', se tests/helpers/katalognycklar.js.
   //
   // En post pa typnivan hade darfor tyst bytt fotograferingssatt for de 17 och ogiltigforklarat
   // deras referenser, utan att nagot prov sagt ifran forran nasta PR foll pa nycklar ingen rort.
   // Prefixet gor traffbilden exakt: 6 traffar, 17 oberorda.
-  const regi = REGI[nyckel]
-    || Object.entries(REGI).find(([k]) => k.endsWith(':') && nyckel.startsWith(k))?.[1]
-    || REGI[byggd.typ];
+  // LANGSTA PREFIXET VINNER. Sedan 2026-10-12 finns tva battlemvp-prefix — 'catalog:battlemvp:'
+  // (BASIC och ramarna) och 'catalog:battlemvp:celebration:' — och en traff fick inte bero pa i
+  // vilken ordning posterna rakar sta i REGI.
+  const prefix = Object.entries(REGI).filter(([k]) => k.endsWith(':') && nyckel.startsWith(k))
+    .sort((a, b) => b[0].length - a[0].length)[0];
+  const regi = REGI[nyckel] || (prefix && prefix[1]) || REGI[byggd.typ];
   if (regi) {
     const r = await sida.evaluate(regi.regi, [regi.fas, regi.ms]);
     if (r && r.fel) return { fel: `regin för ${byggd.typ} klarade inte att ställa scenen — ${r.fel}` };

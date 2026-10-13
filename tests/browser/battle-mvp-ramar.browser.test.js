@@ -137,6 +137,70 @@ test('ett uttryckligt mvpShowName:false doljer fortfarande namnet', { skip }, as
     'en sparad layout som medvetet stangt av namnet ska inte fa det patvingat tillbaka');
 });
 
+// ---- LASBARHETSLAGET: namnet pa en platta, aldrig under 12 px, kompakt nar ramen ar smal --------
+//
+// Davids ord 2026-10-12: "ramarna syns knappt ... nar man har dem i mini lage (liten storlek) sa
+// ser man inte dem tydligt". Uppmatt fore andringen (riktig Chromium, overlay-lage, tand widget):
+// namnet var 14 px utan platta i alla bredder, och vid 150 px klipptes MVP-etiketten bakom
+// bannern och namnet kortades till "NovaStorm...". Profilbilden var 54-66 % av bredden.
+//
+// Provet later det som gor ramen lasbar pa en telefon:
+//   * namnet star pa en mork platta (rgba(10,6,16,.85)) med kant och rundning — i ALLA bredder
+//   * namnet ritas aldrig under 12 designpixlar, aven nar panelens minsta namnstorlek (9) ar vald
+//   * vid smal bredd (<= 240 px) doljs ornamentet och profilbilden ar minst 55 % av bredden
+//   * vid 300 px (fabrikens bredd) syns ornamentet fortfarande — stor vy ar orord
+// 150 ar den minsta bredd en widget faktiskt far (studio.css .widget{min-width:150px}).
+test('lasbarhetslaget: platta, minsta namnstorlek och kompakt lage vid smal bredd', { skip, timeout: 180000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+  await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
+    { timeout: 30000, polling: 100 });
+  await page.waitForTimeout(2500);
+  const matt = await page.evaluate((ramar) => {
+    const ut = [];
+    for (const ram of ramar) for (const bredd of [150, 200, 240, 300]) {
+      state.widgets.length = 0;
+      const w = window.VyraWidgets.create('catalog:battlemvp:frame:' + ram);
+      Object.assign(w, { x: 24, y: 60, width: bredd, mvpName: 'NovaStorm_99', mvpNameSize: 9 });
+      state.widgets.push(w); selected = w.id; render();
+      const box = document.querySelector(`[data-id="${w.id}"]`);
+      if (!box) { ut.push({ ram, bredd, fel: 'widgeten renderades inte' }); continue }
+      const rad = box.querySelector('.mvpf-row'), namn = box.querySelector('.mvpf-row strong');
+      const foto = box.querySelector('.mvpf-photo'), konst = box.querySelector('.mvpf-art');
+      const rc = getComputedStyle(rad), nc = getComputedStyle(namn);
+      const bb = box.getBoundingClientRect(), nb = namn.getBoundingClientRect();
+      ut.push({ ram, bredd,
+        namnPx: parseFloat(nc.fontSize), vikt: parseInt(nc.fontWeight, 10), farg: nc.color,
+        platta: rc.backgroundColor, kant: parseFloat(rc.borderTopWidth), rundning: parseFloat(rc.borderTopLeftRadius),
+        konst: getComputedStyle(konst).display,
+        fotoAndel: foto.getBoundingClientRect().width / bb.width,
+        inuti: nb.left >= bb.left - 1 && nb.right <= bb.right + 1 && nb.top >= bb.top - 1 && nb.bottom <= bb.bottom + 1 });
+    }
+    return ut;
+  }, RAMAR);
+  await page.close();
+
+  assert.equal(matt.length, RAMAR.length * 4);
+  assert.deepEqual(matt.filter(m => m.fel), []);
+  for (const m of matt) {
+    const vem = `${m.ram} @ ${m.bredd} px`;
+    assert.ok(m.namnPx >= 12, `${vem}: namnet ar ${m.namnPx} px — golvet ar 12 designpixlar`);
+    assert.ok(m.vikt >= 700, `${vem}: namnet ar inte fett (vikt ${m.vikt})`);
+    assert.equal(m.farg, 'rgb(255, 255, 255)', `${vem}: namnet ar inte vitt`);
+    assert.equal(m.platta, 'rgba(10, 6, 16, 0.85)', `${vem}: namnet star inte pa den morka plattan`);
+    assert.ok(m.kant >= 1, `${vem}: plattan saknar kant i accentfargen`);
+    assert.ok(m.rundning > 0, `${vem}: plattan ar inte rundad`);
+    assert.ok(m.inuti, `${vem}: namnet ligger utanfor widgeten`);
+    if (m.bredd <= 240) {
+      assert.equal(m.konst, 'none', `${vem}: ornamentet ska vara dolt i kompakt lage`);
+      assert.ok(m.fotoAndel >= 0.55, `${vem}: profilbilden ar ${Math.round(m.fotoAndel * 100)} % av bredden — minst 55 %`);
+      assert.ok(m.namnPx >= 15, `${vem}: kompakt lage ska ge ett storre namn (${m.namnPx} px)`);
+    } else {
+      assert.notEqual(m.konst, 'none', `${vem}: stor vy ska behalla ornamentet`);
+    }
+  }
+});
+
 // ---- ALLA SJUTTON DESIGNERNA: namnet far aldrig spilla ut ur widgeten -------------------------
 //
 // Filen hette fran borjan bara "ramar", men fran 2026-09-03 visar ALLA sjutton Battle MVP-designer
