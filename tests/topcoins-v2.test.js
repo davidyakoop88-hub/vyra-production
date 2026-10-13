@@ -32,7 +32,7 @@ test('both approved designs are transparent by default and animated independentl
 });
 
 test('Top Coins assets are loaded after media with a fresh shared cache version', () => {
-  assert.match(html, /topcoins-v2\.css\?v=20260920-1/);
+  assert.match(html, /topcoins-v2\.css\?v=20261012-lasbar/);
   // Laddordningen mäts över de riktiga <script src>-taggarna i dokumentordning. media.js:s
   // ?v= låses inte: den bumpas i varje PR som rör media.js, och en låst sträng som inte
   // längre fanns gav indexOf -1 och en vakt som var grön oavsett ordning.
@@ -76,14 +76,13 @@ test('overlay: Top Coins ritar leaderboardens nollform sjalv, editorn behaller d
   assert.equal(ov.strong.textContent, '', 'ingen pahittad person i overlay');
   // Exakt det live-leaderboard.js skriver i overlay utan livedata: forsta ordet + ' 0'. Ar
   // texten redan den blir skrivningen en no-op, och <i>-ikonen overlever.
-  const ikon = ov.em.textContent.trim().split(' ')[0];
-  assert.equal(ikon, 'V', `ikonen ska vara forsta ordet, texten ar "${ov.em.textContent}"`);
-  assert.equal(ov.em.textContent, ikon + ' 0');
-  assert.ok(ov.em.querySelector('i'), 'myntikonen ar kvar som <i>');
+  // 2026-10-12: myntet ar en SVG i <i> (ingen text), sa nollformen ar ' 0' efter ikonen.
+  assert.equal(ov.em.firstElementChild && ov.em.firstElementChild.tagName, 'I', 'myntikonen ar forsta barnet');
+  assert.equal(ov.em.textContent, ' 0');
 
   const ed = rad(rigg('http://localhost/studio.html'), widget);
   assert.equal(ed.strong.textContent, 'MAYA');
-  assert.equal(ed.em.textContent.trim().split(' ')[0], 'V',
-    `mellanslag efter ikonen, annars blir ett livevarde "V44 999 12 300": "${ed.em.textContent}"`);
+  assert.ok(ed.em.textContent.startsWith(' '),
+    `mellanslag efter ikonen, annars klistras livevardet ihop med den: "${ed.em.textContent}"`);
   assert.match(ed.em.textContent, /44.999 COINS$/);
 });
