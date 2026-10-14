@@ -367,6 +367,18 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 166
 
+## 2026-10-14 — 1 referenser skrivna
+
+- **Motiv:** Fan Level 50: fyra nya mallar (Fly Love, Zeus, Örnen, Lejonkungen), gamla bilden borttagen
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 166 (filter: fanlevel50) — catalog:fanlevel50:royal
+
+## 2026-10-14 — 1 referenser skrivna
+
+- **Motiv:** Fan Level 50: Fly Love i samma 2:3-format som de andra tre mallarna
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 166 (filter: fanlevel50) — catalog:fanlevel50:royal
+
 ## 2026-10-12 — 18 referenser skrivna
 
 - **Motiv:** Gifter/Fan Level Up läsbara i liten storlek, duo-layouterna lagade (PR #605)

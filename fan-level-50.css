@@ -69,22 +69,30 @@
 .fan-level-50.fl50-mode-band .fl50-card { width: calc(min(200px, 72.5cqw) * var(--fl50-z, 1)); flex: 0 0 auto; }
 @keyframes fl50scroll { to { transform: translateX(-50%); } }
 
-/* ---- design: royal (Fly Love + krönt banderoll längst ner) ------------------------------------
-   Samma bakgrundsmall och kortmått (753/976), men foto och namn sitter i den krönta ringen resp.
-   den svarta banderollen. Bara namn — lag/rank döljs. Matten i % av kortet, uppmätta mot mallen. */
-.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1407; }
-.fan-level-50 .fl50-card.fl50-design-royal .fl50-photo {
-  left: 11.9%; top: 82.3%; bottom: auto; width: 17.4%; background: #050505;
+/* ---- mallarna: Fly Love (royal), Zeus, Örnen, Lejonkungen ------------------------------------
+   Alla fyra har samma krönta guldring och samma svarta pilbanderoll längst ner — men olika
+   bildformat och något olika läge. Måtten är UPPMÄTTA i varje mall (2026-10-14): den mörka insidan
+   av ringen och banderollen hittades pixel för pixel; fotot är 96 % av ringens insida, centrerat på
+   dess mittpunkt, så guldkanten syns runt om. Namnet sitter i banderollens vänstra del, fritt från
+   pilspetsen och dess ädelsten. Bara namn — lag/rank döljs.
+   Fly Love var 1118×1407 och ritades därför lägre än de andra; himlen är förlängd 270 px upptill
+   (mjuk, suddig himmel) så alla fyra har formatet 2:3 och samma höjd i bandet. */
+.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1677; --fl50-ph-l: 8.46%; --fl50-ph-t: 79.55%; --fl50-ph-w: 20.13%; --fl50-nm-t: 82.38%; --fl50-nm-h: 7.8%; }
+.fan-level-50 .fl50-card.fl50-design-zeus  { aspect-ratio: 1024 / 1536; --fl50-ph-l: 9.58%; --fl50-ph-t: 80.25%; --fl50-ph-w: 19.51%; --fl50-nm-t: 83.0%; --fl50-nm-h: 7.4%; }
+.fan-level-50 .fl50-card.fl50-design-ornen { aspect-ratio: 1024 / 1536; --fl50-ph-l: 9.38%; --fl50-ph-t: 79.66%; --fl50-ph-w: 19.32%; --fl50-nm-t: 82.4%; --fl50-nm-h: 7.4%; }
+.fan-level-50 .fl50-card.fl50-design-lejon { aspect-ratio: 1024 / 1536; --fl50-ph-l: 8.62%; --fl50-ph-t: 78.82%; --fl50-ph-w: 20.46%; --fl50-nm-t: 82.2%; --fl50-nm-h: 7.4%; }
+.fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-photo {
+  left: var(--fl50-ph-l); top: var(--fl50-ph-t); bottom: auto; width: var(--fl50-ph-w); background: #050505;
 }
-.fan-level-50 .fl50-card.fl50-design-royal .fl50-name {
-  left: 35.5%; right: 8%; top: 84.3%; bottom: auto; height: 9.4%;
+.fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-name {
+  left: 36.5%; right: 12%; top: var(--fl50-nm-t); bottom: auto; height: var(--fl50-nm-h);
   justify-content: flex-start;
 }
-.fan-level-50 .fl50-card.fl50-design-royal .fl50-name span {
-  color: #ffe6a6; text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 190, 60, .35);
+.fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-name span {
+  font-size: calc(7.4cqw * var(--fl50-nm-k, 1)); line-height: 1.3; color: #ffe6a6; /* 1.3: understreck i namn klipptes vid 1 */ text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 190, 60, .35);
 }
-.fan-level-50 .fl50-card.fl50-design-royal .fl50-team,
-.fan-level-50 .fl50-card.fl50-design-royal .fl50-rank { display: none; }
+.fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-team,
+.fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-rank { display: none; }
 
 /* ---- kompakt lage: litet kort -> profilbild och namn ar huvudsaken ---------------------------
    Davids ord 2026-10-12: "den i min sidan ser valdigt tydlig men nar man kor live och hade liten man
