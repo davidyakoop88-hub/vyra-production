@@ -25,6 +25,11 @@
     return Math.round(n).toLocaleString('sv-SE');
   };
   const avatar = w => VyraSafe.src(w.profileImage, 'assets/images/test-profile.svg');
+  // EN MYNTSYMBOL I HELA FAMILJEN (2026-10-12): guldmyntet som de sex ranking-sixpack-designerna
+  // redan bar ersätter "V" i guldcirkeln — se motiveringen vid MYNT i ranking-sixpack.js, som äger
+  // symbolen. Den laddas efter den här filen, därför läses den vid ritning, inte vid laddning.
+  // Saknas den (isolerade prov) blir <i> tomt men står kvar FÖRST i <em>, så skrivTal() fungerar.
+  const mynt = () => (window.VyraRankingSixpack && window.VyraRankingSixpack.mynt) || '';
   const text = (value, fallback) => VyraSafe.text(value, fallback);
 
   function topCoinsHtml(w) {
@@ -47,14 +52,14 @@
     const name = overlay ? '' : text(w.dataName, 'MAYA');
     const value = overlay ? '0' : number(w.dataValue ?? 44999) + ' COINS';
     const particles = design === 'halo'
-      ? '<i class="tc-coin tc-c1">V</i><i class="tc-coin tc-c2">V</i><i class="tc-coin tc-c3">V</i><i class="tc-spark tc-s1"></i><i class="tc-spark tc-s2"></i>'
+      ? `<i class="tc-coin tc-c1">${mynt()}</i><i class="tc-coin tc-c2">${mynt()}</i><i class="tc-coin tc-c3">${mynt()}</i><i class="tc-spark tc-s1"></i><i class="tc-spark tc-s2"></i>`
       : SIXPACK.has(design)
         // Ranking-sixpack-designerna delar EN riggad ring (energiring + metallring) — samma noder
         // som prototypernas .flame-ring/.metal-ring/.ring-backlight, färg och ev. bakgrundsbild
         // sätts per design i ranking-sixpack.css via .topcoins-<design>.
         ? '<i class="tc-six-backlight"></i><i class="tc-six-ring tc-six-a"></i><i class="tc-six-ring tc-six-b"></i><i class="tc-six-art"></i>'
         : '<i class="tc-orbit tc-o1"></i><i class="tc-orbit tc-o2"></i><i class="tc-orbit tc-o3"></i><i class="tc-orbit-dot tc-d1"></i><i class="tc-orbit-dot tc-d2"></i>';
-    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${selectedClass}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${w.accent || meta.accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt=""><span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small></span><em><i>V</i> ${value}</em></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
+    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${selectedClass}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${w.accent || meta.accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt=""><span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small><em><i class="tc-mynt">${mynt()}</i> ${value}</em></span></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }
 
   const previousWh = wh;
@@ -98,7 +103,7 @@
     const section = document.createElement('section');
     section.dataset.topcoinsV2 = '1';
     section.className = 'toplike-template-section topcoins-v2-catalog';
-    section.innerHTML = `<h4>TOP COINS · ${KATALOG.length} DESIGNER</h4>` + KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i>V</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
+    section.innerHTML = `<h4>TOP COINS · ${KATALOG.length} DESIGNER</h4>` + KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
     catalog.prepend(section);
     section.querySelectorAll('[data-topcoins-create]').forEach(button => {
       button.onclick = () => createTopCoins(button.dataset.topcoinsCreate);

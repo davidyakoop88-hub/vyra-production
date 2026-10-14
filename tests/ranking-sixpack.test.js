@@ -226,3 +226,41 @@ test('ranking-sixpack.css laddas i studio.html efter toppoints-v2.css', () => {
   assert.ok(html.indexOf('toppoints-v2.css?v=') < html.indexOf('ranking-sixpack.css?v='),
     'ranking-sixpack.css maste laddas efter toppoints-v2.css for att kunna komplettera dess klasser');
 });
+
+// LÄSBARHETSLÄGET (2026-10-12): skalan är zoom för alla tre familjerna, och kompaktläget väljs ur
+// den synliga bredden (designens uppmätta grundmått gånger widgetScale). Mätt i riktig Chromium i
+// tests/browser/topplistor-lasbar.browser.test.js — här låses besluten i renderaren.
+test('alla tre familjerna bär widgetScale som zoom och --rk6-z', () => {
+  for (const w of FAMILJ('voltage')) {
+    const el = nod({ ...w, widgetScale: 0.9 });
+    assert.match(el.getAttribute('style'), /zoom:0\.9;--rk6-z:0\.9;/, `${w.type}: ${el.getAttribute('style')}`);
+    assert.equal((el.getAttribute('style').match(/zoom:/g) || []).length, 1, 'en zoom, inte två');
+  }
+});
+
+test('kompaktläget: av i full storlek, på när den synliga bredden blir smal', () => {
+  for (const id of SIXPACK) {
+    for (const w of FAMILJ(id)) {
+      assert.ok(!nod({ ...w, widgetScale: 1 }).classList.contains('rk6-kompakt'), `${w.type} ${id} kompakt i full storlek`);
+      assert.ok(nod({ ...w, widgetScale: 0.4 }).classList.contains('rk6-kompakt'), `${w.type} ${id} inte kompakt vid skala 0,4`);
+    }
+  }
+  const l = sixpackRigg().window.VyraRankingSixpack.lasbarhet;
+  assert.equal(l('voltage', 5, 0.87).kompakt, false, 'Voltage vid 200 synliga px: foto 36,5 px, inte kompakt');
+  assert.equal(l('voltage', 5, 0.7).kompakt, true, 'Voltage vid 160 synliga px: kompakt');
+  assert.equal(l('celestial', 5, 0.82).kompakt, false, 'Celestial vid 320 synliga px: inte kompakt');
+  assert.equal(l('celestial', 5, 0.67).kompakt, false, 'Celestial vid 260 synliga px: fem kolumner à 52 px, namnen ryms på två rader');
+  assert.equal(l('celestial', 5, 0.51).kompakt, true, 'Celestial vid 200 synliga px: kompakt');
+});
+
+test('en myntsymbol: Top Gift får guldmyntet i stället för ◉', () => {
+  const rs = sixpackRigg().window.VyraRankingSixpack;
+  const html = '<div class="widget vyra-topgift premium-topgift topgift-royal" data-id="g" style="left:0;zoom:0.5">'
+    + '<div class="topgift-copy"><strong style="font-size:20px;color:#fff">Anya</strong><em style="display:block">◉ 48 210</em></div></div>';
+  const ut = rs.enkelLasbar(html, { type: 'templateTopGift', theme: 'royal', widgetScale: 0.5 });
+  assert.ok(!ut.includes('◉'), 'cirkeln ska vara ersatt');
+  assert.ok(ut.includes(rs.mynt), 'guldmyntet saknas');
+  assert.match(ut, /class="[^"]*\brk-lasbar rk-kompakt\b/);
+  assert.match(ut, /font-size:max\(20px,calc\(12px \/ var\(--rk-z,1\)\)\)/, 'namnet får golvet 12 synliga px');
+  assert.equal(rs.enkelLasbar('<div class="widget">x</div>', { type: 'templateTopLike' }), '<div class="widget">x</div>');
+});

@@ -29,6 +29,8 @@
   // designernas presets sätter, inte designer — bara de fyra skinnen är pensionerade där.
   const TOPLIKE_PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal' };
   const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
+  const RAD_DESIGNER = new Set(['prism-horizontal', 'celestial', 'royal-rose']);
+  const RAD_X = 20;
   const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
 
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
@@ -314,6 +316,9 @@
       accent: v.accent, dataColor: '#fff'
     }),
 
+    // RADDESIGNERNA ÄR 380-390 PX BREDA (ranking-sixpack.css) på en 432 px bred duk. Från x 70/80
+    // hamnade plats 5 utanför kanten (uppmätt 2026-10-12, Prism horisontal 420 px från x 80 = 500).
+    // De läggs därför nästan kant i kant från början; listorna behåller sitt läge.
     'toplike.theme': v => {
       if (TOPLIKE_PENSION[v.theme]) v = { ...v, theme: TOPLIKE_PENSION[v.theme] };
       const w = {
@@ -331,6 +336,7 @@
         w.skin = v.theme;
         if (typeof root.applyVyraTopLikeStyle === 'function') root.applyVyraTopLikeStyle(w, v.theme);
       }
+      if (RAD_DESIGNER.has(v.theme)) w.x = RAD_X;
       return w;
     },
     'ranking.theme': v => {
@@ -353,6 +359,7 @@
         if (meta && meta.accent) w.accent = meta.accent;
       }
       if (pensionerad) Object.assign(w, { topPointsDesign: v.theme, skin: v.theme });
+      if (RAD_DESIGNER.has(v.theme)) w.x = RAD_X;
       return w;
     },
 

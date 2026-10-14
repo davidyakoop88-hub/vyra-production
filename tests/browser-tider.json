@@ -70,6 +70,7 @@
     "panel-ordning.browser.test.js": 41,
     "prestanda-ur-panelen.browser.test.js": 35,
     "ram-radavstand-vaxer-inte.browser.test.js": 125,
+    "topplistor-lasbar.browser.test.js": 30,
     "ram-ror-inte-bildmatt.browser.test.js": 59,
     "ramvaljare-doda-vagar.browser.test.js": 27,
     "ramvaljarens-rubrik.browser.test.js": 28,

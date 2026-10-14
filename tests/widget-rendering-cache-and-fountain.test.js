@@ -194,7 +194,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261010-paket: catalog:glovesnipe:<paket>:pack bygger hela paketet som en widget.
   // Bumpad 2026-10-11: ett kort per modell — widget-factory.js bar de nya modelltabellerna och
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
-  assert.match(studio, /widget-factory\.js\?v=20261011-3/);
+  assert.match(studio, /widget-factory\.js\?v=20261012-1/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261012-diamonds/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.

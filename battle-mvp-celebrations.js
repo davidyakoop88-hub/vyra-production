@@ -41,9 +41,13 @@
       let html=previous(w);
       // Live updates target the first image; artwork must never occupy that slot.
       if(w.mvpFrame)html=html.replace(/(<img class="mvpf-art"[^>]*>)(<div class="mvpf-photo"[\s\S]*?<\/div>)/,'$2$1');
+      // LASBARHETSLAGET (2026-10-12) behover den valda namnstorleken som variabel: namnets egen
+      // inline-storlek gar inte att golva med max() fran ett stilark. Samma reservvarde som
+      // renderaren i media.js (w.mvpNameSize||17). Se "LASBARHETSLAGE" i battle-mvp-celebrations.css.
+      const namnPx=w.mvpFrame?finite(w.mvpNameSize||17,17,1,200):0;
       return html.replace('class="widget battle-mvp','class="widget battle-mvp mvp-motion')
         .replace('data-id=', 'data-mvp-motion="'+key+'" data-id=')
-        .replace('style="','style="--mvm-duration:'+duration+'s;');
+        .replace('style="','style="--mvm-duration:'+duration+'s;'+(namnPx?'--mvpf-namn:'+namnPx+'px;':''));
     }
     const key=w.mvpStyle, safe=VyraSafe;
     const art='assets/mvp-celebrations/'+(design.asset||key+'.svg');
@@ -156,7 +160,7 @@
     });
   };
   if(!document.querySelector('link[data-mvp-celebrations]')){
-    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20260930-signature5';css.dataset.mvpCelebrations='1';document.head.append(css);
+    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261012-1';css.dataset.mvpCelebrations='1';document.head.append(css);
   }
   if(!document.querySelector('script[data-mvp-particles]')){
     const js=document.createElement('script');js.src='battle-mvp-particles.js?v=20260930-signature5';

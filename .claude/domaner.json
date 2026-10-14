@@ -206,6 +206,7 @@
         "tests/browser/battle-mvp-ramar.browser.test.js",
         "tests/browser/toplike-ramar-laddar.browser.test.js",
         "tests/browser/ranking-direkt.browser.test.js",
+        "tests/browser/topplistor-lasbar.browser.test.js",
         "tests/browser/skattkista.browser.test.js",
         "tests/browser/latonskningar.browser.test.js",
         "tests/browser/glove-snipe-inom-rutan.browser.test.js",

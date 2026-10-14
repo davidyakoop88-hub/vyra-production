@@ -445,3 +445,30 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 @keyframes lion-exit{0%,97%{opacity:1;transform:none}100%{opacity:0;transform:scale(.97)}}
 @keyframes lion-pulse{0%,12%{opacity:0;transform:scale(.94)}13%{opacity:1;transform:scale(1.02)}19%,100%{opacity:0;transform:scale(1.26)}}
 @media(prefers-reduced-motion:reduce){.mvc-lion-clash.mvp-active .lion-body{animation:lion-exit var(--lion-dur,10s) linear both}.mvc-lion-clash.mvp-active .lion-art,.mvc-lion-clash.mvp-active .lion-photo,.mvc-lion-clash.mvp-active .lion-name{animation:none}.mvc-lion-clash .energy,.mvc-lion-clash .eye,.mvc-lion-clash .crown-flash,.mvc-lion-clash .plate-shine,.mvc-lion-clash .lion-body::after{display:none}}
+
+/* LASBARHETSLAGE FOR RAMARNA (Davids ord 2026-10-12: "ramarna syns knappt ... nar man har dem
+   i mini lage (liten storlek) sa ser man inte dem tydligt").
+   Uppmatt orsak, jamfort med overlaylive.app: deras kort har en mork, nastan ogenomskinlig platta
+   med tunn fargkant bakom texten, fet vit text och en enkel ljus ring runt profilbilden. Vara ramar
+   har ornament som blir brus nar de krymps, liten text och mork fyllning som forsvinner mot mork
+   video. TikTok ses pa telefon; duken ar 432 designpixlar bred och skalas till kallan.
+   1. Namnet star alltid pa en mork platta med tunn kant i ramens accentfarg.
+   2. Namnet ritas aldrig under 12 designpixlar, oavsett vald namnstorlek (--mvpf-namn satts av
+      battle-mvp-celebrations.js fran w.mvpNameSize).
+   3. Smal widget (<= 240 px, container query pa roten) far ett kompakt lage: ornamentet doljs,
+      en tjock ljus ring runt profilbilden, profilbilden 66 % av bredden och ett storre namn.
+   Stor vy ar i ovrigt orord. En webblasare utan container queries far stor vy i alla storlekar. */
+.battle-mvp.mvp-motion.mvp-framed .mvpf-plate{overflow:visible}
+.battle-mvp.mvp-motion.mvp-framed .mvpf-row{box-sizing:border-box;max-width:94%;padding:.1em .7em .14em;border-radius:999px;
+ background:rgba(10,6,16,.85);border:1px solid color-mix(in srgb,var(--mvp),transparent 20%);box-shadow:0 1px 5px rgba(0,0,0,.55)}
+.battle-mvp.mvp-motion.mvp-framed .mvpf-row strong{font-size:max(12px,var(--mvpf-namn,14px))!important;font-weight:700;color:#fff;line-height:1.15}
+@container (max-width:240px){
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-art{display:none!important}
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-photo{left:17cqw!important;top:4cqw!important;width:66cqw!important;height:66cqw!important;box-sizing:border-box;
+  border:max(3px,2.6cqw) solid #fff;box-shadow:0 0 0 max(2px,1.2cqw) var(--mvp),0 3px 12px rgba(0,0,0,.65)}
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-plate{left:4cqw!important;width:92cqw!important;top:62cqw!important;height:auto!important;gap:0;justify-content:flex-start}
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-plate small{position:relative;z-index:1;margin-bottom:-.3em;padding:.12em .55em;border-radius:999px;
+  font:900 max(9px,6.5cqw)/1.1 system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:.12em;color:#140b00;background:var(--mvp);text-shadow:none}
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-row{max-width:100%;padding:.22em .65em .2em;border-width:max(1px,.9cqw)}
+ .battle-mvp.mvp-motion.mvp-framed .mvpf-row strong{font:800 max(12px,min(10cqw,22px))/1.15 system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:0}
+}
