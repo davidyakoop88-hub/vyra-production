@@ -34,7 +34,7 @@ test('fabriken ger samma bredd som katalogknappen, och panelen tillåter den', (
   assert.equal(W.create('catalog:socialgoal:likes:heart-tower:portrait').width, 100);
   assert.equal(W.create('catalog:socialgoal:followers:crown-tower:portrait').width, 130, 'de andra tornen är orörda');
   assert.match(las('goal-motion.js'), /Bredd<input id="propWidth" type="number" min="80" max="1200"/);
-  assert.match(las('studio.html'), /widget-factory\.js\?v=20261012-1/);
+  assert.match(las('studio.html'), /widget-factory\.js\?v=20261014-1/);
 });
 
 test('ovanför fyllnadsnivån ligger ett mörkt lager, och det vita skenet är borta', () => {
@@ -80,7 +80,7 @@ test('den delade live-uppdateringen skriver ingen inline-bredd på goal-motion-f
   // media.js:s patch satte fill.style.width=pct% på alla [data-goal-fill], även goal-motion, vars
   // geometri redan följer --goal-fill i CSS. Det var den ursprungliga stora ringen vid 100 %.
   assert.match(las('media.js'), /if\(fill&&!node\.classList\.contains\('goal-motion'\)\)fill\.style\.width=pct\+'%';/);
-  assert.match(las('studio.html'), /media\.js\?v=20261012-3/);
+  assert.match(las('studio.html'), /media\.js\?v=20261014-2/);
 });
 
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
