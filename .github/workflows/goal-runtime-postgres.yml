@@ -297,6 +297,11 @@ jobs:
         run: node --test test/gavokatalog-http.test.js
         working-directory: server
 
+      # NYA TIKTOK-GÅVOR. Gåvobevakaren, NY-baslinjen och den publika läsningen.
+      - name: Gåvokatalogen — gåvobevakaren och nya gåvor
+        run: node --test test/gavokatalog-rumslista.test.js test/gavobevakare.test.js
+        working-directory: server
+
       # HEART ME GOAL — unika personer som skickar gåvan Heart Me under aktuell LIVE.
       #
       # Steget ligger SIST i jobbet. Ett steg som placeras efter ett fallande steg körs ALDRIG
