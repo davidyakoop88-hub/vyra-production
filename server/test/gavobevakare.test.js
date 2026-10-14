@@ -73,6 +73,9 @@ const BLOCKED = DB_URL ? false : 'BLOCKERAT: ingen isolerad Postgres.';
 let pool;
 const prov = (namn, fn) => test('bevakare: ' + namn, { timeout: 30000, skip: BLOCKED }, fn);
 async function rensa() {
+  // speglaBilder arbetar på HELA katalogen, så bilderna rensas helt — annars märker ett prov som
+  // simulerar ett fel andra provfilers rader som misslyckade.
+  await pool.query('DELETE FROM gavobild');
   await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'bv-%'");
   await pool.query('DELETE FROM gavokatalog_rumslista');
 }
@@ -90,4 +93,69 @@ prov('två körningar: den andra hittar gåvan TikTok släppt däremellan', asyn
   const rad = (await pool.query("SELECT ny, diamanter, gift_image FROM gavokatalog WHERE gift_id='bv-2'")).rows[0];
   assert.deepEqual(rad, { ny: true, diamanter: 25999, gift_image: CDN('bv-2') });
   assert.equal(JSON.parse(logg.lines[1]).nya, 1, 'loggraden ska säga hur många som var nya');
+});
+
+
+// ---- BILDERNA HOS OSS ---------------------------------------------------------------------------
+// Minsta giltiga WEBP-huvud: RIFF....WEBP. Innehållet avgör typen, aldrig serverns huvud.
+const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(20, 7)]);
+const bildsvar = (buf, { status = 200 } = {}) => async () => ({ ok: status < 300, status, arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length) });
+
+test('bilder: typen läses ur innehållet', () => {
+  assert.equal(B.bildtyp(WEBP), 'image/webp');
+  assert.equal(B.bildtyp(Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10])), 'image/png');
+  assert.equal(B.bildtyp(Buffer.from([0xff, 0xd8, 0xff, 0xe0])), 'image/jpeg');
+  assert.equal(B.bildtyp(Buffer.from('<html><script>alert(1)</script>')), null);
+});
+
+test('bilder: bara TikToks bildvärdar, bara riktiga bilder, inga jättefiler', async () => {
+  await assert.rejects(B.hamtaBild('https://evil.example/x.webp', { hamta: bildsvar(WEBP) }), /otillåten/);
+  await assert.rejects(B.hamtaBild(CDN('x'), { hamta: bildsvar(Buffer.from('<html>inte en bild</html>')) }), /inte en bild/);
+  await assert.rejects(B.hamtaBild(CDN('x'), { hamta: bildsvar(Buffer.alloc(3 * 1024 * 1024)) }), /storlek/);
+  await assert.rejects(B.hamtaBild(CDN('x'), { hamta: bildsvar(WEBP, { status: 404 }) }), /404/);
+  const ok = await B.hamtaBild(CDN('x'), { hamta: bildsvar(WEBP) });
+  assert.equal(ok.typ, 'image/webp');
+  assert.match(ok.sha256, /^[a-f0-9]{64}$/);
+});
+
+prov('speglingen sparar bilden och katalogen pekar på vår adress', async () => {
+  await B.korEnGang(pool, { hamta: async (url) => url.includes('gift/list')
+    ? svar({ data: { gifts: [tiktokgava('bv-1', 'Rose')] } })()
+    : bildsvar(WEBP)(), logg: tyst });
+  const b = await B.lasBild(pool, 'bv-1');
+  assert.equal(b.typ, 'image/webp');
+  assert.deepEqual(Buffer.from(b.data), WEBP);
+  const K = require('../gavokatalog');
+  K.tomCache();
+  const rose = (await K.publikKatalog(pool)).find(g => g.giftId === 'bv-1');
+  assert.match(rose.image, /^\/api\/gavor\/bild\/bv-1\?v=[a-f0-9]{12}$/);
+});
+
+prov('en händelsegåva (exklusiv, ingen lista) speglas också', async () => {
+  const K = require('../gavokatalog');
+  await K.noteraFranEvent(pool, { type: 'gift', giftId: 'bv-ex', giftName: 'Exklusiv', giftImage: CDN('bv-ex') });
+  const ut = await B.speglaBilder(pool, { hamta: bildsvar(WEBP) });
+  assert.ok(ut.sparade >= 1);
+  assert.ok(await B.lasBild(pool, 'bv-ex'));
+});
+
+prov('ett misslyckat försök behåller en fungerande kopia och hamrar inte', async () => {
+  await B.korEnGang(pool, { hamta: async (u) => u.includes('gift/list') ? svar({ data: { gifts: [tiktokgava('bv-1', 'Rose')] } })() : bildsvar(WEBP)(), logg: tyst });
+  // Tvinga ett nytt försök på SAMMA adress och låt det misslyckas: kopian ska stå kvar.
+  await pool.query("UPDATE gavobild SET data = NULL WHERE gift_id = 'bv-1'");
+  await pool.query("UPDATE gavobild SET forsok_at = now() - interval '2 days' WHERE gift_id = 'bv-1'");
+  let anrop = 0;
+  await B.speglaBilder(pool, { hamta: async u => { if (u.includes('/bv-1.')) anrop++; throw new Error('borta') } });
+  assert.equal(anrop, 1, 'ett dygn gammalt försök ska göras om');
+  anrop = 0;
+  await B.speglaBilder(pool, { hamta: async u => { if (u.includes('/bv-1.')) anrop++; throw new Error('borta') } });
+  assert.equal(anrop, 0, 'ett nytt misslyckande ska inte försökas igen direkt');
+});
+
+prov('när TikTok byter bildadress laddas bilden ner igen', async () => {
+  const lista = img => async u => u.includes('gift/list') ? svar({ data: { gifts: [tiktokgava('bv-1', 'Rose', 1)].map(g => ({ ...g, image: { url_list: [img] } })) } })() : bildsvar(WEBP)();
+  await B.korEnGang(pool, { hamta: lista(CDN('gammal')), logg: tyst });
+  await B.korEnGang(pool, { hamta: lista(CDN('ny')), logg: tyst });
+  const rad = (await pool.query("SELECT kalla_url FROM gavobild WHERE gift_id='bv-1'")).rows[0];
+  assert.equal(rad.kalla_url, CDN('ny'));
 });

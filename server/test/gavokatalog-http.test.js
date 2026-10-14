@@ -573,3 +573,24 @@ prov('det finns ingen skrivväg utifrån till listan', async () => {
   const g = await fetch(bas + '/api/gavor', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
   assert.notEqual(g.status, 200);
 });
+
+
+prov('/api/gavor/bild serverar vår kopia med lång cache och rätt typ', async () => {
+  await K.noteraRumslista(pool, [rumspost('httprov-r1', 'Rose')]);
+  const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(20, 7)]);
+  await pool.query("INSERT INTO gavobild (gift_id,kalla_url,typ,sha256,data) VALUES ('httprov-r1',$1,'image/webp',$2,$3)",
+    [CDN('httprov-r1'), 'a'.repeat(64), WEBP]);
+  const r = await fetch(bas + '/api/gavor/bild/httprov-r1');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-type'), 'image/webp');
+  assert.match(r.headers.get('cache-control') || '', /immutable/);
+  assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
+  assert.deepEqual(Buffer.from(await r.arrayBuffer()), WEBP);
+  const { d } = await gavor();
+  assert.match(d.gavor.find(g => g.giftId === 'httprov-r1').image, /^\/api\/gavor\/bild\/httprov-r1\?v=/);
+});
+
+prov('/api/gavor/bild: okänd gåva ger 404, trasig kodning ger 400', async () => {
+  assert.equal((await fetch(bas + '/api/gavor/bild/httprov-finns-inte')).status, 404);
+  assert.equal((await fetch(bas + '/api/gavor/bild/%E0%A4%A')).status, 400);
+});

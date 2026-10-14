@@ -394,3 +394,10 @@ Bilderna ligger på `p16-webcast.tiktokcdn.com`. **149 av de 770 fanns inte i
 Hemsidan läser katalogen publikt via `GET /api/gavor`; gåvoväljaren visar nya gåvor först med en
 NY-etikett. Seedningen (kontraktet, `gavoobservation`) rörs inte.
 
+## Bilderna ligger hos oss
+
+Varje katalogbild laddas ner till tabellen `gavobild` (Postgres, `bytea`) och serveras från
+`/api/gavor/bild/<giftId>?v=<sha256>` med ett års cache. Uppmätt lokalt 2026-10-14 mot riktiga
+TikTok: 766 bilder på 6 sekunder, 6,37 MB, alla `image/webp`. Gåvor som bara setts i en sändning
+(exklusiva) speglas också. Typen avgörs av filens innehåll, och bara TikToks bildvärdar laddas ner.
+

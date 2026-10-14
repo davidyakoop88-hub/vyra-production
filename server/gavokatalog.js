@@ -423,17 +423,21 @@ async function publikKatalogCachad(pool) {
 }
 
 async function publikKatalog(pool, { nu = Date.now } = {}) {
+  // En bild vi har laddat ner serveras från VÅR adress (versionerad med sin sha256, så den kan cachas
+  // för alltid). Saknas kopian faller vi tillbaka på TikToks adress tills speglingen hunnit ifatt.
   const q = await pool.query(
-    `SELECT gift_id, gift_name, gift_image, diamanter, kalla, ny, forsta_sedd
-       FROM gavokatalog
-      WHERE gift_name <> '' AND gift_image <> ''
-      ORDER BY forsta_sedd DESC, gift_id
+    `SELECT k.gift_id, k.gift_name, k.gift_image, k.diamanter, k.kalla, k.ny, k.forsta_sedd,
+            CASE WHEN b.data IS NOT NULL AND b.kalla_url = k.gift_image THEN b.sha256 END AS bild_sha
+       FROM gavokatalog k
+       LEFT JOIN gavobild b ON b.gift_id = k.gift_id
+      WHERE k.gift_name <> '' AND k.gift_image <> ''
+      ORDER BY k.forsta_sedd DESC, k.gift_id
       LIMIT 6000`);
   const grans = nu() - NY_DAGAR * 86400000;
   return q.rows.filter(r => tillatenBild(r.gift_image)).map(r => ({
     giftId: r.gift_id,
     name: r.gift_name,
-    image: r.gift_image,
+    image: r.bild_sha ? '/api/gavor/bild/' + encodeURIComponent(r.gift_id) + '?v=' + r.bild_sha.slice(0, 12) : r.gift_image,
     coins: Number(r.diamanter) || 0,
     ny: r.kalla === 'katalog' && r.ny === true && new Date(r.forsta_sedd).getTime() >= grans,
     forstaSedd: new Date(r.forsta_sedd).toISOString()

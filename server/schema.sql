@@ -755,6 +755,19 @@ CREATE TABLE IF NOT EXISTS gavokatalog_rumslista (
   nya    integer     NOT NULL CHECK (nya >= 0)
 );
 
+-- GÅVOBILDERNA HOS OSS (server/gavobevakare.js speglaBilder). TikToks bildadresser kan bytas eller
+-- försvinna; varje katalogbild laddas därför ner en gång och serveras från /api/gavor/bild/<id>.
+-- ~6 kB per bild (uppmätt 2026-10-14, image/webp), så 770 gåvor är runt 5 MB — Postgres räcker och
+-- kräver ingen objektlagring. `data` är NULL efter ett misslyckat försök; `forsok_at` styr omförsöket.
+CREATE TABLE IF NOT EXISTS gavobild (
+  gift_id   text        PRIMARY KEY REFERENCES gavokatalog(gift_id) ON DELETE CASCADE,
+  kalla_url text        NOT NULL,
+  typ       text,
+  sha256    text,
+  data      bytea,
+  forsok_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
 -- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
 -- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.
