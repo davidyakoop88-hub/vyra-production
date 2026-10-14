@@ -19,7 +19,7 @@
   // med fanl50Design:'royal' far den nya bilden i stallet for att tappa sin design. Den gamla bilden
   // (fly-love-royal-50.jpg) ar borttagen. Foto- och namngeometrin per mall bor i fan-level-50.css.
   const ART = {
-    royal: { art: 'assets/fanlevel50/fly-love-50.webp?v=20261014-1', level: 50 },
+    royal: { art: 'assets/fanlevel50/fly-love-50.webp?v=20261014-2', level: 50 },
     zeus:  { art: 'assets/fanlevel50/zeus-50.webp?v=20261014-1', level: 50 },
     ornen: { art: 'assets/fanlevel50/ornen-50.webp?v=20261014-1', level: 50 },
     lejon: { art: 'assets/fanlevel50/lejon-50.webp?v=20261014-1', level: 50 }

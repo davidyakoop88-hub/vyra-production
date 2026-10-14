@@ -74,8 +74,10 @@
    bildformat och något olika läge. Måtten är UPPMÄTTA i varje mall (2026-10-14): den mörka insidan
    av ringen och banderollen hittades pixel för pixel; fotot är 96 % av ringens insida, centrerat på
    dess mittpunkt, så guldkanten syns runt om. Namnet sitter i banderollens vänstra del, fritt från
-   pilspetsen och dess ädelsten. Bara namn — lag/rank döljs. */
-.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1407; --fl50-ph-l: 8.46%; --fl50-ph-t: 75.62%; --fl50-ph-w: 20.13%; --fl50-nm-t: 79.0%; --fl50-nm-h: 9.3%; }
+   pilspetsen och dess ädelsten. Bara namn — lag/rank döljs.
+   Fly Love var 1118×1407 och ritades därför lägre än de andra; himlen är förlängd 270 px upptill
+   (mjuk, suddig himmel) så alla fyra har formatet 2:3 och samma höjd i bandet. */
+.fan-level-50 .fl50-card.fl50-design-royal { aspect-ratio: 1118 / 1677; --fl50-ph-l: 8.46%; --fl50-ph-t: 79.55%; --fl50-ph-w: 20.13%; --fl50-nm-t: 82.38%; --fl50-nm-h: 7.8%; }
 .fan-level-50 .fl50-card.fl50-design-zeus  { aspect-ratio: 1024 / 1536; --fl50-ph-l: 9.58%; --fl50-ph-t: 80.25%; --fl50-ph-w: 19.51%; --fl50-nm-t: 83.0%; --fl50-nm-h: 7.4%; }
 .fan-level-50 .fl50-card.fl50-design-ornen { aspect-ratio: 1024 / 1536; --fl50-ph-l: 9.38%; --fl50-ph-t: 79.66%; --fl50-ph-w: 19.32%; --fl50-nm-t: 82.4%; --fl50-nm-h: 7.4%; }
 .fan-level-50 .fl50-card.fl50-design-lejon { aspect-ratio: 1024 / 1536; --fl50-ph-l: 8.62%; --fl50-ph-t: 78.82%; --fl50-ph-w: 20.46%; --fl50-nm-t: 82.2%; --fl50-nm-h: 7.4%; }
