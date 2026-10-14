@@ -14,9 +14,15 @@
 (function (root) {
   'use strict';
   const safe = VyraSafe;
-  const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {royal:'Fly Love · Royal'}
+  const DESIGNS = VyraWidgets.variants('fanlevel50.design');           // {royal:'Fly Love', zeus, ornen, lejon}
+  // Fyra mallar (David 2026-10-14). Nyckeln `royal` bar nu den nya Fly Love-mallen: sparade layouter
+  // med fanl50Design:'royal' far den nya bilden i stallet for att tappa sin design. Den gamla bilden
+  // (fly-love-royal-50.jpg) ar borttagen. Foto- och namngeometrin per mall bor i fan-level-50.css.
   const ART = {
-    royal:   { art: 'assets/fanlevel50/fly-love-royal-50.jpg?v=20260929-1', level: 50 }
+    royal: { art: 'assets/fanlevel50/fly-love-50.webp?v=20261014-2', level: 50 },
+    zeus:  { art: 'assets/fanlevel50/zeus-50.webp?v=20261014-1', level: 50 },
+    ornen: { art: 'assets/fanlevel50/ornen-50.webp?v=20261014-1', level: 50 },
+    lejon: { art: 'assets/fanlevel50/lejon-50.webp?v=20261014-1', level: 50 }
   };
   const FALLBACK = 'assets/images/test-profile.svg';
 
@@ -54,6 +60,15 @@
     return out.length ? out : (iOverlay() && aktivSandning() ? [] : demo());
   }
 
+  // NAMNET SKA FÅ PLATS (David 2026-10-14). Banderollen rymmer ~11 tecken i full storlek; ett längre
+  // namn krymper i stället för att klippas till "Nova Stor…". Faktorn är en uppskattning (en
+  // versal i Oswald 800 ≈ 0,6 em) — ellipsen i CSS finns kvar som sista skydd för extrema namn.
+  // Golvet 0,5: under halva storleken går texten inte att läsa i OBS, då är ellipsen bättre.
+  function namnFaktor(namn) {
+    const n = Array.from(String(namn || '')).length;
+    return n <= 11 ? 1 : Math.max(0.5, Math.round(1100 / n) / 100);
+  }
+
   function cardHtml(w, m, rank) {
     const design = ART[w.fanl50Design] ? w.fanl50Design : 'royal';
     const d = ART[design];
@@ -62,7 +77,7 @@
       <img class="fl50-art" src="${d.art}" alt="">
       <div class="fl50-badge">LEVEL ${d.level}</div>
       <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
-      <div class="fl50-name"><span>${safe.text(m.name, 'FAN')}</span></div>
+      <div class="fl50-name" style="--fl50-nm-k:${namnFaktor(m.name)}"><span>${safe.text(m.name, 'FAN')}</span></div>
       ${team ? `<div class="fl50-team"><span>#${team}</span></div>` : ''}
       ${rank ? `<div class="fl50-rank">#${rank}</div>` : ''}
     </div>`;
@@ -231,7 +246,7 @@
       card.classList.add('fl50-out');
       root.setTimeout(() => {
         const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
-        const nm = card.querySelector('.fl50-name span'); if (nm) nm.textContent = safe.text(m.name, 'FAN');
+        const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); }
         const teamText = safe.text(m.team || w.fanl50Team || '');
         const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';
         const rk = card.querySelector('.fl50-rank'); if (rk) rk.textContent = '#' + (i + 1);
@@ -248,6 +263,7 @@
   root.VyraFanLevel50 = {
     roster: () => auto.slice(),
     members,
+    namnFaktor,
     addAuto(m) {
       const namn = String(m && m.name || '').trim(); if (!namn) return;
       const av = String(m.avatar || ''), team = String(m.team || '');

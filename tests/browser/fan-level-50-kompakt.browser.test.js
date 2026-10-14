@@ -105,13 +105,15 @@ for (const fall of SMALA) {
 test('stor vy: standardkortet (bandet, bredd 300) ar orort — mallens ring, ingen bricka', { skip }, async () => {
   const m = await mat({ bredd: 300, mode: 'band' });
   assert.equal(Math.round(m.kort), 200, 'standardkortet i bandet ar 200 px');
-  assert.ok(m.foto < m.kort * 0.2, `fotot ska sitta i mallens ring (17,4 %), ar ${m.foto.toFixed(1)} px`);
+  // Den nya Fly Love-mallen (2026-10-14) har en storre ring: fotot ar 20,1 % av kortet. Kompaktlaget
+  // ger 58 %, sa 22 % skiljer fortfarande lagena at med god marginal.
+  assert.ok(m.foto < m.kort * 0.22, `fotot ska sitta i mallens ring (20,1 %), ar ${m.foto.toFixed(1)} px`);
   assert.equal(m.bricka, 'none');
 });
 
 test('stor vy: bred slideshow far inget kompaktlage', { skip }, async () => {
   const m = await mat({ bredd: 320 });
   assert.ok(m.kort > 190);
-  assert.ok(m.foto < m.kort * 0.2);
+  assert.ok(m.foto < m.kort * 0.22);
   assert.equal(m.bricka, 'none');
 });

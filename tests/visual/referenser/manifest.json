@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Top Streak Flip läsbar i liten storlek: platta, textgolv och kompakt ring (PR #601)",
-  "nycklar": 12,
-  "filter": "pgstreak",
-  "tid": "2026-10-12T16:29:14.779Z"
+  "motiv": "Fan Level 50: Fly Love i samma 2:3-format som de andra tre mallarna",
+  "nycklar": 1,
+  "filter": "fanlevel50",
+  "tid": "2026-10-14T18:09:48.193Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -499,7 +499,7 @@
    "fyllnad": 100
   },
   "catalog:fanlevel50:royal": {
-   "matt": "300x276",
+   "matt": "300x324",
    "fyllnad": 100
   },
   "catalog:battlemvp:celebration:gold-ribbon": {
