@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 197,
+ "antal": 200,
  "senaste": {
-  "motiv": "Fan Level 50: Fly Love i samma 2:3-format som de andra tre mallarna",
-  "nycklar": 1,
+  "motiv": "Fan Level 50: referenser för de nya mallarna Zeus, Örnen och Lejonkungen (#607)",
+  "nycklar": 4,
   "filter": "fanlevel50",
-  "tid": "2026-10-14T18:09:48.193Z"
+  "tid": "2026-10-14T19:17:18.569Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -800,6 +800,18 @@
   },
   "catalog:pggoal:9": {
    "matt": "380x251",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel50:lejon": {
+   "matt": "300x324",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel50:ornen": {
+   "matt": "300x324",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel50:zeus": {
+   "matt": "300x324",
    "fyllnad": 100
   }
  }
