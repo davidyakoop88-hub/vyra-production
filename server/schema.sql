@@ -744,6 +744,17 @@ CREATE INDEX IF NOT EXISTS gavoobservation_region_idx ON gavoobservation(region)
 -- bort har, sa att ingen kan tro att den betyder nagot.
 ALTER TABLE gavokatalog DROP COLUMN IF EXISTS region;
 
+-- RUMSLISTAN · NYA GÅVOR (server/gavokatalog.js noteraRumslista). Gåvobevakaren hämtar TikToks egen
+-- gåvolista var sjätte timme. `ny` sätts bara för gåvor som dyker upp EFTER den första listan —
+-- annars hade hela den första importen lyst NY. Tabellen nedan är både baslinjen och en logg.
+ALTER TABLE gavokatalog ADD COLUMN IF NOT EXISTS ny boolean NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS gavokatalog_rumslista (
+  id     bigserial   PRIMARY KEY,
+  at     timestamptz NOT NULL DEFAULT now(),
+  poster integer     NOT NULL CHECK (poster >= 0),
+  nya    integer     NOT NULL CHECK (nya >= 0)
+);
+
 -- INGET INDEX PÅ gift_name, med flit. Ett uttrycksindex på lower(gift_name) hade underhållits vid
 -- VARJE skrivning på husets hetaste väg (varje gåva i varje rum), och det enda uppslag det kunde
 -- betjäna är namn -> gift_id: precis det designen förbjuder, och som ett vaktprov fäller på.

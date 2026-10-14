@@ -52,6 +52,36 @@
       .catch(()=>{})
       .finally(()=>{hamtningPagar=false});
   }
+  // MOLNETS KATALOG (/api/gavor). Servern hämtar TikToks gåvolista var sjätte timme (gavobevakare.js),
+  // så katalogen växer av sig själv när TikTok släpper nya gåvor — utan att någon behöver
+  // skicka dem först, och även i webbläget där desktopappens /api/gifts inte finns. Gåvor som dykt
+  // upp efter den första listan bär `ny:true` och visas överst med en NY-etikett.
+  const MOLN_NYCKEL='vyra-gift-cloud-v1';
+  function molnKatalog(){
+    try{
+      const lista=JSON.parse(localStorage.getItem(MOLN_NYCKEL)||'[]');
+      return Array.isArray(lista)?lista.filter(g=>g&&g.name):[];
+    }catch{return[]}
+  }
+  let molnHamtning=false;
+  function hamtaMolnKatalog(){
+    // Samma tålighet som en saknad desktopserver: utan fetch (äldre inbäddning, provriggen) ritas
+    // väljaren på det som redan finns.
+    if(molnHamtning||typeof fetch!=='function')return;
+    molnHamtning=true;
+    fetch('/api/gavor',{credentials:'same-origin'})
+      .then(r=>r.ok?r.json():null)
+      .then(svar=>{
+        if(!svar||!svar.ok||!Array.isArray(svar.gavor)||!svar.gavor.length)return;
+        const lista=svar.gavor.slice(0,6000).map(g=>({name:g.name,image:g.image,coins:g.coins||0,giftId:g.giftId,ny:!!g.ny}));
+        try{localStorage.setItem(MOLN_NYCKEL,JSON.stringify(lista))}catch{}
+      })
+      .catch(()=>{})
+      .finally(()=>{molnHamtning=false});
+  }
+  (window.VyraActionsExtras=window.VyraActionsExtras||[]).push(hamtaMolnKatalog);
+  window.VyraMolnGavor={lista:molnKatalog,hamta:hamtaMolnKatalog};
+
   // Hamtningen startas nar Automatik-sidan ritas, inte vid filens laddning: en anslutning som inte
   // finns an hinner komma upp medan streamern jobbar med sina actions.
   (window.VyraActionsExtras=window.VyraActionsExtras||[]).push(hamtaRumsKatalog);
@@ -67,10 +97,19 @@
       .filter(g=>!tagna.has(String(g.name||'').toLowerCase()))
       .map(g=>({name:g.name,image:g.image||'',coins:Number(g.coins)||0,lard:false,rum:true}));
     rummet.forEach(g=>tagna.add(g.name.toLowerCase()));
+    // Nya gåvor först i molnkällan, så en gåva TikTok släppt i veckan syns utan att man söker.
+    const moln=molnKatalog()
+      .filter(g=>g.image&&!tagna.has(String(g.name||'').toLowerCase()))
+      .map(g=>({name:g.name,image:g.image,coins:Number(g.coins)||0,lard:false,moln:true,ny:!!g.ny}))
+      .sort((a,b)=>(b.ny?1:0)-(a.ny?1:0));
+    moln.forEach(g=>tagna.add(g.name.toLowerCase()));
     const manifest=(window.VYRA_GIFTS||[])
       .filter(g=>!tagna.has(String(g.name||'').toLowerCase()))
       .map(g=>({name:g.name,image:g.file,coins:0,lard:false}));
-    return [...lardda,...rummet,...manifest];
+    // En gåva som är NY i molnet lyfts överst även om den redan är inlärd eller finns i rummet.
+    const nyaNamn=new Set(molnKatalog().filter(g=>g.ny).map(g=>String(g.name).toLowerCase()));
+    const alla=[...lardda,...rummet,...moln,...manifest].map(g=>nyaNamn.has(g.name.toLowerCase())?{...g,ny:true}:g);
+    return [...alla.filter(g=>g.ny),...alla.filter(g=>!g.ny)];
   }
   function openTriggerGiftPicker(input){
     const gammal=document.querySelector('.gift-picker-modal');
@@ -78,18 +117,21 @@
     const alla=gavolistan();
     const antalLarda=alla.filter(g=>g.lard).length;
     const antalRum=alla.filter(g=>g.rum).length;
+    const antalNya=alla.filter(g=>g.ny).length;
     const modal=document.createElement('div');
     modal.className='gift-picker-modal';
     modal.innerHTML='<div><header><b>VÄLJ GÅVA</b><button type="button" class="ae-ik ae-ik--stang" title="Stäng" aria-label="Stäng">'
       +'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>'
       +'<input placeholder="Sök bland '+alla.length+' gåvor...">'
+      +(antalNya?'<small class="gp-hint gp-nya">'+antalNya+(antalNya===1?' ny gåva':' nya gåvor')+' från TikTok — visas först.</small>':'')
       +'<small class="gp-hint">'+(antalRum?antalRum+' gåvor kommer från TikToks katalog för ditt rum'+(antalLarda?' och '+antalLarda+' är inlärda från dina sändningar':'')+' — med riktiga namn och coin-värden.':antalLarda?antalLarda+' gåvor är inlärda från dina egna sändningar och visar riktigt namn och coin-värde.':'Inga gåvor inlärda än. När du sänder lär VYRA sig namn, bild och coin-värde från TikTok — på ditt språk.')+'</small>'
       +'<section></section></div>';
     document.body.append(modal);
     const section=modal.querySelector('section');
     const rita=lista=>{
       section.innerHTML=lista.slice(0,200).map(g=>
-        '<button type="button" data-name="'+VyraSafe.text(g.name)+'"'+(g.lard?' class="lard"':g.rum?' class="rum"':'')+'>'
+        '<button type="button" data-name="'+VyraSafe.text(g.name)+'"'+(g.lard?' class="lard'+(g.ny?' ny':'')+'"':g.rum?' class="rum'+(g.ny?' ny':'')+'"':g.ny?' class="ny"':'')+'>'
+        +(g.ny?'<em class="gp-ny">NY</em>':'')
         +(g.image?'<img loading="lazy" src="'+VyraSafe.url(g.image)+'">':'<i>🎁</i>')
         +'<span>'+VyraSafe.text(g.name)+'</span>'
         // Ett varde vi inte kan visas som "okant", inte som 0 — noll coins ar ett pastaende om

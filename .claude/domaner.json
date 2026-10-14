@@ -532,6 +532,7 @@
         "server/regelnycklar.js",
         "server/heart-me-goal.js",
         "server/gavokatalog.js",
+        "server/gavobevakare.js",
         "gift-identity-larlage.js",
         "scripts/goal-*.js",
         "goal-motion.js",
@@ -558,6 +559,8 @@
         "server/test/heart-me-unika-avsandare.test.js",
         "server/test/gavokatalog.test.js",
         "server/test/gavokatalog-http.test.js",
+        "server/test/gavokatalog-rumslista.test.js",
+        "server/test/gavobevakare.test.js",
         "tests/goal-postgres-flode.test.js",
         "tests/goal-motion-designs.test.js"
       ],

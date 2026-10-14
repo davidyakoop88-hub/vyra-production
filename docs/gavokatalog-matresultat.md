@@ -373,3 +373,24 @@ const ids = gifts.map(g => String(g.id).slice(0, 160)).filter(Boolean).sort();
 
 Samma värde ska falla ut ur `Gavokatalog.digestAvPoster(gifts)`. Skriv in det i
 `server/seedningskontrakt.js` via granskad PR — aldrig via ett anrop.
+
+---
+
+# 2026-10-14: listan svarar UTAN inloggning — gåvobevakaren bygger på det
+
+Uppmätt från en vanlig maskin, utan cookies och utan signering:
+
+| Anrop | Svar |
+|---|---|
+| `GET webcast.tiktok.com/webcast/gift/list/?aid=1988` | HTTP 200, 3,18 MB, **770 gåvor**, alla med id, namn, styckpris och bild |
+| samma med `&room_id=<ett rum>` | HTTP 200, 772 gåvor |
+| `fetchAvailableGifts()` via biblioteket | faller fortfarande: signeringen kräver Euler Business |
+
+Bilderna ligger på `p16-webcast.tiktokcdn.com`. **149 av de 770 fanns inte i
+`assets/gifts/gifts-manifest.js`** (Super Car, Shell Castle, LIVE Legends, Rin the Snowborn …).
+
+`server/gavobevakare.js` frågar listan var sjätte timme och skriver den via
+`Gavokatalog.noteraRumslista`. Gåvor som dyker upp efter den första listan får `ny = true`.
+Hemsidan läser katalogen publikt via `GET /api/gavor`; gåvoväljaren visar nya gåvor först med en
+NY-etikett. Seedningen (kontraktet, `gavoobservation`) rörs inte.
+
