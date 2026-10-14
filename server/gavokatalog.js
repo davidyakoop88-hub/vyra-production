@@ -318,6 +318,132 @@ async function noteraKatalog(pool, poster, { region, forvantat, _provFel = null,
   }
 }
 
+// ---- RUMSLISTAN · NYA GÅVOR AUTOMATISKT -------------------------------------------------------
+//
+// Problemet: hemsidans gåvobilder var en fast lista från juli (assets/gifts/gifts-manifest.js, 1148
+// PNG). När TikTok släpper en ny gåva fanns den inte hos oss förrän någon skickade den i en sändning
+// — och även då bara i den streamerns egen localStorage.
+//
+// Gåvobevakaren (gavobevakare.js) hämtar TikToks EGEN lista (webcast/gift/list/) var sjätte timme
+// och skickar den hit. Den kommer från servern själv, aldrig från en hyresgäst — därför får den
+// skriva kalla = 'katalog' och skriva över namn och bild. Namnet "rumslista" är kvar för att samma
+// form också är vad ett rumsanrop (fetchAvailableGifts) ger.
+//
+// SKILLNADEN MOT noteraKatalog: den vägen är seedningen, regional och kontraktsbunden, och skriver
+// gavoobservation. Rumslistan bär ingen region och rör ALDRIG gavoobservation eller gavoseedning —
+// den är ren etikettering, precis som katalogen själv.
+//
+// "NY" BETYDER "DYKTE UPP EFTER ATT VI REDAN HADE EN HEL LISTA". Den första rumslistan någonsin
+// lägger in hundratals gåvor som bara är nya FÖR OSS; markerades de hade varje gåva lyst NY. Därför
+// sätts `ny` bara när en tidigare rumslista redan finns i gavokatalog_rumslista.
+const RUMSLISTA_MAX = 3000;
+
+function normaliseraRumslista(svar) {
+  const raa = Array.isArray(svar) ? svar
+    : (svar && Array.isArray(svar.gifts) ? svar.gifts
+      : (svar && svar.data && Array.isArray(svar.data.gifts) ? svar.data.gifts : []));
+  const sett = new Set();
+  const ut = [];
+  for (const g of raa.slice(0, RUMSLISTA_MAX)) {
+    const giftId = text(g && (g.id ?? g.giftId ?? g.gift_id), 160);
+    const namn = text(g && g.name, 160).trim();
+    const bilder = g && g.image && (g.image.url_list || g.image.urlList);
+    const bild = text((Array.isArray(bilder) && bilder[0]) || (g && (g.icon_url || g.image_url)) || '', 1200);
+    if (!giftId || !namn || sett.has(giftId)) continue;
+    sett.add(giftId);
+    ut.push({ giftId, namn, bild, diamanter: heltal(g.diamond_count ?? g.diamondCount) });
+  }
+  return ut;
+}
+
+async function noteraRumslista(pool, svar) {
+  const poster = normaliseraRumslista(svar);
+  if (!poster.length) return { ok: false, skal: 'tom-lista', poster: 0, nya: 0 };
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Serialiserar samtidiga listor: två skrivare samtidigt hade annars båda sett "ingen tidigare
+    // lista" och båda lagt in utan baslinje.
+    await client.query('LOCK TABLE gavokatalog_rumslista IN EXCLUSIVE MODE');
+    const tidigare = await client.query('SELECT 1 FROM gavokatalog_rumslista LIMIT 1');
+    const markera = tidigare.rowCount > 0;
+    const q = await client.query(
+      `INSERT INTO gavokatalog (gift_id, gift_name, gift_image, diamanter, kalla, ny)
+       SELECT id, namn, bild, dm, 'katalog', $5
+         FROM unnest($1::text[], $2::text[], $3::text[], $4::int[]) AS t(id, namn, bild, dm)
+       ON CONFLICT (gift_id) DO UPDATE
+         SET gift_name = EXCLUDED.gift_name,
+             gift_image = CASE WHEN EXCLUDED.gift_image <> '' THEN EXCLUDED.gift_image
+                               ELSE gavokatalog.gift_image END,
+             diamanter = CASE WHEN EXCLUDED.diamanter > 0 THEN EXCLUDED.diamanter
+                              ELSE gavokatalog.diamanter END,
+             kalla = 'katalog', senast_sedd = now()
+       RETURNING (xmax = 0) AS insatt`,
+      [poster.map(p => p.giftId), poster.map(p => p.namn), poster.map(p => p.bild),
+       poster.map(p => p.diamanter), markera]);
+    const nya = q.rows.filter(r => r.insatt).length;
+    await client.query('INSERT INTO gavokatalog_rumslista (poster, nya) VALUES ($1,$2)', [poster.length, nya]);
+    await client.query('COMMIT');
+    publik.svar = null;
+    return { ok: true, poster: poster.length, nya, baslinje: !markera };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// ---- PUBLIK LÄSNING ----------------------------------------------------------------------------
+//
+// Bilderna visas för ALLA streamers, så bara TikToks egna bildvärdar släpps igenom. Händelseraderna
+// (kalla = 'handelse') kommer från ingest-vägen; en URL till en godtycklig värd hade blivit en bild
+// som VYRA serverar till varje kund. NY-flaggan sätts bara av rumslistan (serverns egen hämtning),
+// aldrig av ett event.
+const BILDVARDAR = /(^|\.)(tiktokcdn\.com|tiktokcdn-us\.com|tiktokcdn-eu\.com|ibyteimg\.com|byteimg\.com|muscdn\.com)$/i;
+const NY_DAGAR = 30;
+
+function tillatenBild(url) {
+  try {
+    const u = new URL(String(url || ''));
+    return u.protocol === 'https:' && BILDVARDAR.test(u.hostname);
+  } catch { return false }
+}
+
+// Fem minuters cache: /api/gavor läses vid varje öppning av Automatik-sidan, för varje kund. En ny
+// lista (noteraRumslista) och tomCache() tömmer den direkt.
+const PUBLIK_MS = 5 * 60 * 1000;
+const publik = { at: 0, svar: null };
+async function publikKatalogCachad(pool) {
+  if (!publik.svar || Date.now() - publik.at > PUBLIK_MS) {
+    publik.svar = await publikKatalog(pool);
+    publik.at = Date.now();
+  }
+  return publik.svar;
+}
+
+async function publikKatalog(pool, { nu = Date.now } = {}) {
+  // En bild vi har laddat ner serveras från VÅR adress (versionerad med sin sha256, så den kan cachas
+  // för alltid). Saknas kopian faller vi tillbaka på TikToks adress tills speglingen hunnit ifatt.
+  const q = await pool.query(
+    `SELECT k.gift_id, k.gift_name, k.gift_image, k.diamanter, k.kalla, k.ny, k.forsta_sedd,
+            CASE WHEN b.data IS NOT NULL AND b.kalla_url = k.gift_image THEN b.sha256 END AS bild_sha
+       FROM gavokatalog k
+       LEFT JOIN gavobild b ON b.gift_id = k.gift_id
+      WHERE k.gift_name <> '' AND k.gift_image <> ''
+      ORDER BY k.forsta_sedd DESC, k.gift_id
+      LIMIT 6000`);
+  const grans = nu() - NY_DAGAR * 86400000;
+  return q.rows.filter(r => tillatenBild(r.gift_image)).map(r => ({
+    giftId: r.gift_id,
+    name: r.gift_name,
+    image: r.bild_sha ? '/api/gavor/bild/' + encodeURIComponent(r.gift_id) + '?v=' + r.bild_sha.slice(0, 12) : r.gift_image,
+    coins: Number(r.diamanter) || 0,
+    ny: r.kalla === 'katalog' && r.ny === true && new Date(r.forsta_sedd).getTime() >= grans,
+    forstaSedd: new Date(r.forsta_sedd).toISOString()
+  }));
+}
+
 // Var och när en gåva observerats, med regionens EGNA värden. PK är (gift_id, region), så SE och
 // US är två rader och ingen kan skriva över den andra.
 async function observationer(pool, giftId) {
@@ -359,7 +485,7 @@ const CACHE_MS = 30 * 1000;
 const cache = new Map();          // rule_key -> { ids, tid }
 
 function tomCache(ruleKey) {
-  if (ruleKey) cache.delete(ruleKey); else cache.clear();
+  if (ruleKey) cache.delete(ruleKey); else { cache.clear(); publik.svar = null; }
 }
 
 async function verifieradeId(pool, ruleKey, { nu = Date.now } = {}) {
@@ -514,7 +640,8 @@ async function kandidater(pool, ruleKey, { region } = {}) {
 }
 
 module.exports = {
-  noteraFranEvent, noteraKatalog, verifieradeId, noteraKandidat, verifiera,
+  noteraFranEvent, noteraKatalog, noteraRumslista, normaliseraRumslista, publikKatalog, publikKatalogCachad, tillatenBild,
+  verifieradeId, noteraKandidat, verifiera,
   inaktivera, taBort, kandidater,
   observationer, seedningStatus, digestAvPoster,
   kallnyckel, tomCache, giltigRegion, KRAV_BEKRAFTELSER, ETIKETT, CACHE_MS

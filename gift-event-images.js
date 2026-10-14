@@ -14,8 +14,29 @@
     return [key(gift.name), gift];
   }));
 
+  // Manifestet ar en fast lista fran juli. Gavor TikTok slappt sedan dess finns i molnets katalog
+  // (/api/gavor, cachad av gavovaljaren i 'vyra-gift-cloud-v1'), och anvands nar manifestet saknar
+  // namnet — samma form ({name, file}) sa ingen anropare behover veta varifran bilden kom.
+  // Kartan byggs om hogst en gang i minuten: resolve() kors vid varje gava, och listan kan vara
+  // flera tusen poster.
+  var moln = { at: 0, karta: new Map() };
+  function molnGava(name) {
+    if (Date.now() - moln.at > 60000) {
+      moln.at = Date.now();
+      moln.karta = new Map();
+      try {
+        var lista = JSON.parse(window.localStorage.getItem('vyra-gift-cloud-v1') || '[]');
+        for (var i = 0; i < lista.length; i++) {
+          var g = lista[i];
+          if (g && g.name && g.image && !moln.karta.has(key(g.name))) moln.karta.set(key(g.name), { name: g.name, file: g.image });
+        }
+      } catch (e) {}
+    }
+    return moln.karta.get(key(name)) || null;
+  }
+
   function resolve(name) {
-    return byName.get(key(name)) || null;
+    return byName.get(key(name)) || molnGava(name);
   }
 
   window.VyraGiftImages = {

@@ -128,6 +128,7 @@ async function rensa() {
   await pool.query("DELETE FROM gavoregel_kalla WHERE gift_id LIKE 'httprov-%'");
   await pool.query("DELETE FROM gavoregel WHERE gift_id LIKE 'httprov-%'");
   await pool.query("DELETE FROM gavokatalog WHERE gift_id LIKE 'httprov-%'");
+  await pool.query('DELETE FROM gavokatalog_rumslista');
   await pool.query('DELETE FROM gavoseedning');   // kaskaderar inte — annars lacker 'klar' mellan prov
 }
 // CACHEN TOMMS MELLAN PROV. rensa() raderar rader, men verifieradeId har en 30-sekunderscache i
@@ -537,3 +538,59 @@ prov('en påhittad regelnyckel avvisas på alla tre rutterna', async () => {
   }
 });
 
+
+// ---- DEN PUBLIKA KATALOGEN (/api/gavor) ---------------------------------------------------------
+// Arrangeras via modulen (noteraRumslista) — samma väg som gåvobevakaren använder i produktion.
+const CDN = id => 'https://p16-webcast.tiktokcdn.com/img/' + id + '~tplv-obj.webp';
+const rumspost = (id, namn) => ({ id, name: namn, diamond_count: 3, image: { url_list: [CDN(id)] } });
+const gavor = async () => { const r = await fetch(bas + '/api/gavor'); return { r, d: await r.json() }; };
+
+prov('/api/gavor kräver ingen inloggning och får cachas publikt', async () => {
+  await K.noteraRumslista(pool, [rumspost('httprov-r1', 'Rose')]);
+  const { r, d } = await gavor();
+  assert.equal(r.status, 200);
+  assert.equal(d.ok, true);
+  assert.match(r.headers.get('cache-control') || '', /public/);
+  assert.ok(d.gavor.some(g => g.giftId === 'httprov-r1'));
+});
+
+prov('en gåva som dyker upp i en senare lista syns som NY i /api/gavor', async () => {
+  await K.noteraRumslista(pool, [rumspost('httprov-r1', 'Rose')]);
+  await gavor();   // fyller cachen — nästa lista måste tömma den
+  await K.noteraRumslista(pool, [rumspost('httprov-r1', 'Rose'), rumspost('httprov-r2', 'Ny Drake')]);
+  const { d } = await gavor();
+  const drake = d.gavor.find(g => g.giftId === 'httprov-r2');
+  assert.ok(drake, 'den nya gåvan saknas — cachen tömdes inte av den nya listan');
+  assert.equal(drake.ny, true);
+  assert.equal(drake.image, CDN('httprov-r2'));
+  assert.equal(d.nya >= 1, true);
+  assert.equal(d.gavor.find(g => g.giftId === 'httprov-r1').ny, false);
+});
+
+prov('det finns ingen skrivväg utifrån till listan', async () => {
+  const r = await fetch(bas + '/api/gavokatalog/rum', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"gifts":[]}' });
+  assert.notEqual(r.status, 200);
+  const g = await fetch(bas + '/api/gavor', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  assert.notEqual(g.status, 200);
+});
+
+
+prov('/api/gavor/bild serverar vår kopia med lång cache och rätt typ', async () => {
+  await K.noteraRumslista(pool, [rumspost('httprov-r1', 'Rose')]);
+  const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(20, 7)]);
+  await pool.query("INSERT INTO gavobild (gift_id,kalla_url,typ,sha256,data) VALUES ('httprov-r1',$1,'image/webp',$2,$3)",
+    [CDN('httprov-r1'), 'a'.repeat(64), WEBP]);
+  const r = await fetch(bas + '/api/gavor/bild/httprov-r1');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-type'), 'image/webp');
+  assert.match(r.headers.get('cache-control') || '', /immutable/);
+  assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
+  assert.deepEqual(Buffer.from(await r.arrayBuffer()), WEBP);
+  const { d } = await gavor();
+  assert.match(d.gavor.find(g => g.giftId === 'httprov-r1').image, /^\/api\/gavor\/bild\/httprov-r1\?v=/);
+});
+
+prov('/api/gavor/bild: okänd gåva ger 404, trasig kodning ger 400', async () => {
+  assert.equal((await fetch(bas + '/api/gavor/bild/httprov-finns-inte')).status, 404);
+  assert.equal((await fetch(bas + '/api/gavor/bild/%E0%A4%A')).status, 400);
+});

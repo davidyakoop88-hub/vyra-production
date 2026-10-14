@@ -196,7 +196,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   assert.match(studio, /widget-factory\.js\?v=20261014-1/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261012-diamonds/);
+  assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -422,7 +422,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   for (const fil of ['action-options', 'action-runtime']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
-  for (const fil of ['action-media', 'action-scenes', 'action-event-advanced', 'action-simulator']) {
+  // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
+  // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan.
+  assert.match(media, /action-event-advanced\.js\?v=20261014-nya-gavor/, 'action-event-advanced.js cachebustades inte for nya gavor');
+  for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
@@ -432,7 +435,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
-  assert.match(media, /action-event\.css\?v=20260923-workspace/, 'action-event.css bumpades utan andring');
+  // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
+  assert.match(media, /action-event\.css\?v=20261014-nya-gavor/, 'action-event.css cachebustades inte for NY-etiketten');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
