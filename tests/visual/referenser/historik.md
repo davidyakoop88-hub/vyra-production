@@ -379,6 +379,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 166 (filter: fanlevel50) — catalog:fanlevel50:royal
 
+## 2026-10-14 — 4 referenser skrivna
+
+- **Motiv:** Fan Level 50: referenser för de nya mallarna Zeus, Örnen och Lejonkungen (#607)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 4 av 169 (filter: fanlevel50) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus
+
 ## 2026-10-12 — 18 referenser skrivna
 
 - **Motiv:** Gifter/Fan Level Up läsbara i liten storlek, duo-layouterna lagade (PR #605)
