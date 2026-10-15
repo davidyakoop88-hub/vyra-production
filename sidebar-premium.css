@@ -178,7 +178,11 @@ aside { padding: 14px 14px 12px; }
 /* 2026-09-27: YouTube och Stream Deck lades till (17 navval). Luften vid 1366x768 var 19 px efter
    YouTube och en post tar 29 — padding 4 -> 3 ger 34 px till, alltsa ~24 px luft med Stream Deck.
    Raden ar da 26 px, fortfarande en tydlig traffyta. */
+/* 2026-10-16: Gaming overlay lades till (18 navval) och Agencies hamnade utanfor navets ruta vid
+   1366x768. Mellanrummet INOM en sektion 5 -> 3 ger 2 px per mellanrum, ~28 px; raderna star kvar
+   pa 26 px. */
 @media (max-height: 820px) {
   aside nav { gap: 2px; }
+  .nav-section { gap: 3px; }
   aside nav button, aside nav a { padding-top: 3px; padding-bottom: 3px; }
 }
