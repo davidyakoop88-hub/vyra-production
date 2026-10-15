@@ -106,6 +106,15 @@ const CONTRACT = [
   // jämföra mot, så raden har ingen marker. Snapshoten är kontraktet.
   { name: 'Skattkista · kista', key: 'catalog:skattkista:kista' },
   { name: 'Skattkista · rad', key: 'catalog:skattkista:pill' },
+  // Spellayout (2026-10-15): en ny familj, aldrig en media.js-literal — markerlös som raderna ovan.
+  { name: 'Spellayout · Fortnite · bakgrund', key: 'catalog:spellayout:fortnite:bakgrund' },
+  { name: 'Spellayout · Fortnite · kameraram', key: 'catalog:spellayout:fortnite:kameraram' },
+  { name: 'Spellayout · Fortnite · spelram', key: 'catalog:spellayout:fortnite:spelram' },
+  { name: 'Spellayout · Fortnite · topplista', key: 'catalog:spellayout:fortnite:lista' },
+  { name: 'Spellayout · Fortnite · Top Gifter', key: 'catalog:spellayout:fortnite:gifter' },
+  { name: 'Spellayout · Fortnite · följarmål', key: 'catalog:spellayout:fortnite:mal' },
+  { name: 'Spellayout · Fortnite · Gift Campaign 4', key: 'catalog:spellayout:fortnite:kampanj4' },
+  { name: 'Spellayout · Fortnite · Gift Campaign 6', key: 'catalog:spellayout:fortnite:kampanj6' },
   { name: 'Låtönskningar · YouTube', key: 'catalog:latonskningar:youtube' },
   { name: 'Låtönskningar · Spotify', key: 'catalog:latonskningar:spotify' },
   { name: 'Gift Campaign · tema/orientering', key: 'catalog:giftcampaign:neon:portrait',

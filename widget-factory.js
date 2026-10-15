@@ -68,6 +68,8 @@
   const GE_MATT = { 1: [400, 450], 2: [400, 535], 3: [400, 560], 4: [400, 570] };
 
   const TABLES = {
+    // Spellayoutens teman. Konsten ligger i assets/spellayout/<tema>/, geometrin i spellayout.js.
+    'spellayout.tema': { fortnite: 'Fortnite' },
     // ETT KORT PER MODELL (Davids beslut 2026-10-11). Fem samlingskort bar sina modeller som ett val
     // inuti Anpassa (Top Streak Flip 12, Top Gifter Podium 12 HD-ramar + kodad ram, Goal Pro 8,
     // Like Fountain · Portal 9 paletter, Follower Spotlight 3 teman). Nu har varje modell en egen
@@ -233,8 +235,40 @@
     portrait: { x: 151, y: 30, width: 130 },
   };
 
+  // SPELLAYOUT (2026-10-15). Ett tema = en hel scen: kameraram överst, spelram under, bakgrund
+  // nederst, och i kameraytan topplistan (likes → coins → poäng), Top Gifter och följarmålet, plus
+  // Gift Campaign under spelet. Varje del är en egen widget så att den kan döljas och flyttas för
+  // sig. Delarna som har data bygger på de befintliga familjerna (samma typ, samma livevägar) och
+  // bär `spelTema` + `spelDel`; spellayout.js ritar dem i temats konst. Ramarna och bakgrunden är
+  // en egen typ, templateSpelram, eftersom ingen befintlig widget ritar en ren bildram.
+  //
+  // Placeringarna är uppmätta ur temats scen-referens (941 × 1671) omräknad till duken 432 × 768.
+  // Lager: bakgrund 1 längst bak, ramarna 2, allt med data 6 — ramen får aldrig täcka ett namn.
+  const SPEL_DELAR = {
+    bakgrund:  { type: 'templateSpelram', x: 0, y: 0, width: 432, layer: 1, title: 'Bakgrund' },
+    kameraram: { type: 'templateSpelram', x: 0, y: 0, width: 432, layer: 2, title: 'Kameraram' },
+    spelram:   { type: 'templateSpelram', x: 0, y: 236, width: 432, layer: 2, title: 'Spelram' },
+    lista:     { type: 'templateTopLike', x: 10, y: 16, width: 136, layer: 6, title: 'Topplista',
+                 templateTitle: 'TOP LIKES', likeCount: 5, useLiveData: true, rankingCycle: true,
+                 cycleLikes: true, cycleCoins: true, cyclePoints: true, cycleSeconds: 6 },
+    gifter:    { type: 'templateTopGift', x: 312, y: 34, width: 110, layer: 6, title: 'Top Gifter',
+                 templateTitle: 'TOP GIFTER', theme: 'royal', dataName: '@StreamQueen', dataValue: '44 999' },
+    mal:       { type: 'templateSocialGoal', x: 0, y: 214, width: 432, layer: 6, title: 'Följarmål',
+                 goalKind: 'follows', goalTitle: 'FÖLJARE', goalCurrent: 0, goalTarget: 1000 },
+    kampanj4:  { type: 'templateGiftCampaign', x: 36, y: 492, width: 360, layer: 6, title: 'Gift Campaign',
+                 templateTitle: 'GIFT CAMPAIGN', giftCount: 4 },
+    kampanj6:  { type: 'templateGiftCampaign', x: 16, y: 496, width: 400, layer: 6, title: 'Gift Campaign',
+                 templateTitle: 'GIFT CAMPAIGN', giftCount: 6 }
+  };
+
   const BUILD = {
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
+    'spellayout': v => {
+      const del = SPEL_DELAR[v.del];
+      // Titeln bär temat, så lagerlistan säger vilken scen en del hör till.
+      return Object.assign({}, del, { title: v.label + ' · ' + del.title, spelTema: v.tema,
+        spelDel: v.del.startsWith('kampanj') ? 'kampanj' : v.del });
+    },
 
     'topgift': () => ({
       type: 'templateTopGift', x: 70, y: 180, width: 280, title: 'VYRA Top Gift', value: '',
@@ -533,6 +567,14 @@
   // builder needs, reading the tables so the caller never has to.
   const RESOLVE = {
     'video': (parts, extra) => ['video', extra || {}],
+    // catalog:spellayout:<tema>:<del>. Okänt tema eller okänd del kastar med giltiga alternativ.
+    'spellayout': parts => {
+      const label = pick('spellayout.tema', parts[0], 'spellayout-tema');
+      if (!Object.hasOwn(SPEL_DELAR, parts[1] || '')) {
+        throw new Error('Okänd spellayout-del "' + parts[1] + '" — giltiga: ' + Object.keys(SPEL_DELAR).join(', '));
+      }
+      return ['spellayout', { tema: parts[0], del: parts[1], label }];
+    },
     'topgift': parts => {
       if (!parts.length) return ['topgift', {}];
       if (parts[0] === 'premium') { pick('topgift.premium', parts[1], 'premiumdesign'); return ['topgift.premium', { theme: parts[1] }] }

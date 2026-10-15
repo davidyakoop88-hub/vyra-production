@@ -1,0 +1,149 @@
+/* SPELLAYOUT — se spellayout.js. Konsten är en bild per del; allt dynamiskt ligger ovanpå i procent
+   av bilden, så en del ser likadan ut i alla storlekar. */
+.widget.spel{position:absolute;background:transparent;border:0;box-shadow:none;padding:0;overflow:visible;
+  font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#fff;line-height:1.1}
+/* Konsten är en container: textstorlekarna nedan är cqw (andel av konstens bredd), så texten
+   följer med när widgeten skalas och stannar inuti sitt fält. */
+.spel .spel-konst{position:relative;width:100%;user-select:none;container-type:inline-size}
+.spel .spel-bild{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+
+/* RÖRLIGT RAMLJUS, två lager (David 2026-10-15: "starkare", sedan "ska gå runtom ramarna").
+   1. GLÖD: en suddad, uppljusad kopia av delens egen bild bakom konsten. Den pulserar i temats egna
+      färger runt hela ramen. Bara opaciteten animeras — filtret är statiskt — så OBS komponerar den
+      utan att rita om bilden varje bildruta.
+   2. VARV: två ljuspunkter som jagar varandra runt ramen. Lagret maskas med delens kantmask
+      (<del>-kant.webp, konturen som ett smalt band), och under masken roterar en konisk gradient —
+      där gradientens topp korsar kanten lyser kanten. Rotationen är en transform, alltså också
+      komponerad, inte omritad. */
+.spel .spel-glod{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  filter:blur(5px) brightness(1.9) saturate(1.6);opacity:.35;animation:spel-glod 3.2s ease-in-out infinite}
+@keyframes spel-glod{0%,100%{opacity:.35}50%{opacity:.95}}
+.spel .spel-ljus{position:absolute;inset:0;pointer-events:none;overflow:hidden;
+  -webkit-mask:var(--spel-mask) center/100% 100% no-repeat;mask:var(--spel-mask) center/100% 100% no-repeat;
+  filter:drop-shadow(0 0 3px var(--spel-ljusfarg,#fff)) drop-shadow(0 0 6px var(--spel-ljusfarg,#fff))}
+.spel .spel-ljus::before{content:'';position:absolute;left:50%;top:50%;width:300%;aspect-ratio:1;
+  translate:-50% -50%;
+  /* Två kometer: kort svans i temats färg, vitt huvud, skarp front — läses som en ljuspunkt som
+     springer runt ramen, inte som ett svep. */
+  background:conic-gradient(from 0deg,transparent 0 34%,color-mix(in srgb,var(--spel-ljusfarg,#fff) 50%,transparent) 41%,var(--spel-ljusfarg,#fff) 46%,#fff 48.6%,transparent 49% 84%,
+    color-mix(in srgb,var(--spel-ljusfarg,#fff) 50%,transparent) 91%,var(--spel-ljusfarg,#fff) 96%,#fff 98.6%,transparent 99%);
+  animation:spel-varv 5s linear infinite}
+@keyframes spel-varv{to{rotate:360deg}}
+@media (prefers-reduced-motion:reduce){.spel .spel-ljus::before{animation:none}.spel .spel-glod{animation:none;opacity:.4}}
+
+/* Bakgrund: SVG med hål — se bakgrund() i spellayout.js. */
+.spel-bakgrund .spel-bakgrund-svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}
+
+/* ---- topplistan ---- */
+/* Rubriken har inget eget fält i konsten och syns därför inte. Den finns kvar i DOM:en, för
+   rankingcykeln skriver steget i den; vilken lista som visas syns på ikonen framför värdet. */
+.spel-lista>h3{display:none}
+/* Familjens egna radregler (toplike-studio.css m.fl.) bär !important på .toplike-row och dess barn —
+   bland annat en fast radhöjd på 68 px som sträckte fotona till en pelare. Inuti skinnet nollas de,
+   och bara det skinnet behöver sätts tillbaka. */
+.widget.spel.spel-lista .toplike-row,.widget.spel.spel-lista .toplike-row *{all:unset!important;box-sizing:border-box!important}
+.widget.spel.spel-lista .toplike-row{position:absolute!important;display:block!important;left:0!important;right:0!important;
+  top:var(--spel-rad-top)!important;height:var(--spel-rad-h)!important}
+.widget.spel.spel-lista .toplike-row .spel-foto{position:absolute!important;display:block!important;top:0!important;height:100%!important;
+  left:var(--spel-x)!important;width:var(--spel-b)!important;border-radius:50%!important;overflow:hidden!important}
+.widget.spel.spel-lista .toplike-row .spel-foto img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
+.widget.spel.spel-lista .toplike-row .spel-rad-text{position:absolute!important;top:var(--spel-y)!important;height:var(--spel-h)!important;left:var(--spel-x)!important;
+  width:var(--spel-b)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:0!important;
+  overflow:hidden!important}
+.widget.spel.spel-lista .toplike-row strong{display:block!important;flex-shrink:0!important;font:800 5.7cqw/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px var(--spel-rad-glod,#6fe3ff),0 0 9px var(--spel-rad-glod,#6fe3ff)!important}
+.widget.spel.spel-lista .toplike-row small{display:none!important}
+.widget.spel.spel-lista .toplike-row em{display:block!important;flex-shrink:0!important;font:900 5.9cqw/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+  white-space:nowrap!important;color:#fff3b0!important;
+  text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px #ffb020,0 0 9px #ff8a00!important}
+/* LYSANDE TEXT I OLIKA FÄRGER (David 2026-10-16: "så den syns bättre"). Närmast bokstaven ligger en
+   tunn mörk kant så att den är skarp; utanför den en glöd i platsens färg — guld, silver, brons och
+   temats blå för 4–5. Värdet lyser varmgult i alla rader. */
+.widget.spel.spel-lista .toplike-row{--spel-rad-glod:var(--spel-ljusfarg,#6fe3ff)}
+.widget.spel.spel-lista .toplike-row.rank-1{--spel-rad-glod:#ffcc33}
+.widget.spel.spel-lista .toplike-row.rank-2{--spel-rad-glod:#d8e6ff}
+.widget.spel.spel-lista .toplike-row.rank-3{--spel-rad-glod:#ff9a3c}
+
+/* Ikonen är första tecknet i <em>: rankingcykeln och livedatan skriver om hela texten ("● 1 204"),
+   så färgen sätts på ::first-letter i stället för på en egen nod som skrivs bort. */
+.widget.spel.spel-lista .toplike-row em::first-letter{color:#ff4d6d}
+.widget.spel.spel-lista[data-tl-steg="coins"] .toplike-row em::first-letter{color:#ffd23f}
+.widget.spel.spel-lista[data-tl-steg="points"] .toplike-row em::first-letter{color:#c9a8ff}
+/* ANTAL PLATSER — se lista() i spellayout.js. Varje block bär hela konsten i en inre låda; ett
+   klippt block visar bara den övre delen. Klippet tar bara nederkanten, så glöden runt sidorna står
+   kvar. Avståndet mellan block 1 och 2 blir av sig självt detsamma som mellan två rader. */
+.spel-lista .spel-konst-inre{position:absolute;left:0;top:0;width:100%}
+.spel-lista .spel-klippt{clip-path:inset(-12% -12% 0 -12%)}
+/* Block 2 (plats 6–10): konstens rangbrickor 1–5 och kronorna över 1–3 maskas bort ... */
+.spel-lista .spel-fortsattning .spel-bild,.spel-lista .spel-fortsattning .spel-glod{
+  -webkit-mask:linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);mask:linear-gradient(90deg,transparent 0 16.5%,#000 19.5%)}
+.spel-lista .spel-fortsattning .spel-ljus{
+  -webkit-mask:var(--spel-mask) center/100% 100% no-repeat,linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);-webkit-mask-composite:source-in;
+  mask:var(--spel-mask) center/100% 100% no-repeat,linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);mask-composite:intersect}
+/* ... och egna brickor med 6–10 ritas på samma ställe, i konstens silverstil. */
+.widget.spel.spel-lista .toplike-row .spel-rang{position:absolute!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;left:2.45%!important;top:50%!important;width:15.7%!important;aspect-ratio:1!important;
+  translate:0 -50%!important;border-radius:50%!important;box-sizing:border-box!important;
+  background:radial-gradient(circle at 35% 30%,#ffffff,#cfdcec 45%,#8796ad 100%)!important;border:2px solid #2a3c5c!important;
+  box-shadow:0 0 0 1px #9fd8ff,0 0 6px var(--spel-ljusfarg,#6fe3ff)!important;
+  font:900 8.4cqw/1 Inter,'Segoe UI',system-ui,sans-serif!important;color:#14203a!important}
+
+/* Cykelbytet (media.js): samma ton ut / ton in som de andra listorna, rad för rad. */
+.widget.spel.spel-lista.tl-byt .toplike-row{opacity:0!important;transition:opacity .6s ease!important}
+.widget.spel.spel-lista.tl-in .toplike-row{animation:spel-in .9s ease both!important}
+@keyframes spel-in{from{opacity:0}to{opacity:1}}
+
+/* ---- Top Gifter ---- */
+.spel-gifter .spel-gifter-rubrik{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;font-size:7.4cqw;
+  font-weight:900;letter-spacing:.04em;color:#fff1a8;text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px #ffc21a,0 0 9px #ff9900}
+.spel-gifter .spel-flip{position:absolute;border-radius:50%;overflow:hidden;perspective:300px}
+/* Top Gifts egna regler (studio.css, premium-final.css) bär !important på .vyra-gift-face img m.fl. —
+   uppmätt 2026-10-16: gåvobilden ritades 302 px bred, långt utanför cirkeln. Nollas inuti skinnet. */
+.widget.spel.spel-gifter .spel-flip>div,.widget.spel.spel-gifter .spel-flip img{all:unset!important;box-sizing:border-box!important}
+.widget.spel.spel-gifter .spel-flip>div{position:absolute!important;inset:0!important;display:block!important;border-radius:50%!important;
+  overflow:hidden!important;backface-visibility:hidden!important;animation:spel-flip 8s ease-in-out infinite!important}
+.widget.spel.spel-gifter .spel-flip>.vyra-gift-face{animation-delay:-4s!important;background:radial-gradient(circle,#ffffff22,#0000 70%)!important}
+.widget.spel.spel-gifter .spel-flip img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
+.widget.spel.spel-gifter .spel-flip .vyra-gift-face img{object-fit:contain!important;padding:14%!important}
+/* Profil ↔ gåva: bilden byts, namnet och värdet står kvar. */
+@keyframes spel-flip{0%,42%{transform:rotateY(0)}50%,92%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.spel-gifter .topgift-copy strong,.spel-gifter .topgift-copy em{position:absolute;display:flex;align-items:center;
+  justify-content:center;white-space:nowrap;overflow:hidden}
+.spel-gifter .topgift-copy strong{font-size:6.6cqw;font-weight:800;line-height:1;text-overflow:ellipsis;color:#fff;
+  text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px var(--spel-ljusfarg),0 0 9px var(--spel-ljusfarg)}
+.spel-gifter .topgift-copy em{font-style:normal;font-size:6.8cqw;font-weight:900;line-height:1;color:#fff3b0;
+  text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px #ffb020,0 0 9px #ff8a00}
+
+/* ---- följarmålet ---- */
+.spel-mal .spel-mal-spar{position:absolute;border-radius:999px;overflow:hidden}
+.spel-mal .spel-mal-spar i{display:block;height:100%;width:var(--goal-fill,0%);border-radius:inherit;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--spel-ljusfarg) 70%,#0066ff),var(--spel-ljusfarg));box-shadow:0 0 6px var(--spel-ljusfarg);transition:width .6s ease}
+/* Rubrik och siffror ligger INUTI stapeln (konstens enda textfält), över fyllningen. */
+.spel-mal .spel-mal-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;gap:4%;
+  padding:0 6%;font-size:1.55cqw;font-weight:900;line-height:1;white-space:nowrap;overflow:hidden;color:#fff}
+.spel-mal .spel-mal-rubrik{letter-spacing:.04em;text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px var(--spel-ljusfarg),0 0 8px var(--spel-ljusfarg)}
+/* studio.css gör varje `.widget b` till ett block på 12 px — siffrorna staplades och klipptes bort. */
+.widget.spel.spel-mal .spel-mal-varde b{display:inline;font-size:inherit;font-weight:inherit}
+.spel-mal .spel-mal-varde{color:#fff3b0;text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px #ffb020,0 0 8px #ff8a00}
+
+/* ---- Gift Campaign ---- */
+.spel-kampanj .spel-gava{position:absolute;display:flex;align-items:center;justify-content:center}
+.spel-kampanj .campaign-gift-image{width:78%;height:78%;display:flex;align-items:center;justify-content:center}
+.spel-kampanj .campaign-gift-image img{max-width:100%;max-height:100%;object-fit:contain;
+  animation:spel-gava 3.2s ease-in-out infinite;animation-delay:var(--spel-fas,0s);filter:drop-shadow(0 0 4px var(--spel-ljusfarg))}
+@keyframes spel-gava{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
+
+/* ---- sidan Gaming overlay ---- */
+.spel-sida-head h2{margin:0 0 6px}
+.spel-sida-head p{margin:0;max-width:720px;opacity:.8;line-height:1.5}
+.spel-teman{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:16px}
+.spel-tema{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start;padding:14px;border:1px solid transparent}
+.spel-tema.aktiv{border-color:#8f5cff}
+.spel-tema-bild{width:150px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;display:block;background:#0b0d14}
+.spel-tema-text h3{margin:2px 0 8px}
+.spel-tema-text ul{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;opacity:.85}
+.spel-tema-text small{display:block;margin-top:8px;opacity:.7}
+.spel-anvand{width:100%;padding:10px 14px;border:0;border-radius:10px;font-weight:800;cursor:pointer;color:#fff;
+  background:linear-gradient(135deg,#8f5cff,#c43dff)}
+@media (max-width:520px){.spel-tema{grid-template-columns:1fr}.spel-tema-bild{width:100%;max-width:220px}}
