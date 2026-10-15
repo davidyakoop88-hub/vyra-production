@@ -602,9 +602,9 @@
   },
   "catalog:spellayout:fortnite:gifter": {
     "type": "templateTopGift",
-    "x": 330,
-    "y": 40,
-    "width": 92,
+    "x": 312,
+    "y": 34,
+    "width": 110,
     "layer": 6,
     "title": "Fortnite · Top Gifter",
     "templateTitle": "TOP GIFTER",

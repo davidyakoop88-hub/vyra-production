@@ -251,7 +251,7 @@
     lista:     { type: 'templateTopLike', x: 12, y: 40, width: 124, layer: 6, title: 'Topplista',
                  templateTitle: 'TOP LIKES', likeCount: 5, useLiveData: true, rankingCycle: true,
                  cycleLikes: true, cycleCoins: true, cyclePoints: true, cycleSeconds: 6 },
-    gifter:    { type: 'templateTopGift', x: 330, y: 40, width: 92, layer: 6, title: 'Top Gifter',
+    gifter:    { type: 'templateTopGift', x: 312, y: 34, width: 110, layer: 6, title: 'Top Gifter',
                  templateTitle: 'TOP GIFTER', theme: 'royal', dataName: '@StreamQueen', dataValue: '44 999' },
     mal:       { type: 'templateSocialGoal', x: 56, y: 216, width: 320, layer: 6, title: 'Följarmål',
                  goalKind: 'follows', goalTitle: 'FÖLJARMÅL', goalCurrent: 0, goalTarget: 1000 },

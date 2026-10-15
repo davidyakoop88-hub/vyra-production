@@ -254,7 +254,7 @@
       + 'Lägg kamera- och spelkällan under VYRA-overlayn i OBS — ramarnas mitt är genomskinlig.</p></div></section>'
       + '<section class="spel-teman">' + Object.entries(TEMAN).map(([id, t]) =>
         `<article class="card spel-tema${aktiv === id ? ' aktiv' : ''}" data-spel-tema="${id}">`
-        + `<img class="spel-tema-bild" src="${mapp(id)}forhandsvisning.webp" alt="${esc(t.label)}" loading="lazy">`
+        + `<img class="spel-tema-bild" src="${mapp(id)}forhandsvisning.webp" alt="${esc(t.label)}">`
         + `<div class="spel-tema-text"><h3>${esc(t.label)}</h3><ul>${INNEHALL.map(r => `<li>${r}</li>`).join('')}</ul>`
         + `<button type="button" class="spel-anvand" data-spel-anvand="${id}">${aktiv === id ? 'Lägg om temat' : 'Använd tema'}</button>`
         + (aktiv === id ? '<small>Används i din layout nu</small>' : '') + '</div></article>').join('')
@@ -278,6 +278,14 @@
   document.addEventListener('click', e => {
     if (e.target && e.target.closest && e.target.closest('[data-extra="gaming"]')) setTimeout(sida, 0);
   }, true);
+  // Ett klick direkt efter sidladdningen hann före startsidans egen ritning, som sedan skrev över
+  // #view (uppmätt 2026-10-16: rubriken sade Gaming overlay, innehållet var Översikt). Så länge
+  // menyknappen är aktiv ritas sidan om när någon annan har skrivit över den.
+  new MutationObserver(() => {
+    const knapp = document.querySelector('[data-extra="gaming"]');
+    const vy = document.querySelector('#view');
+    if (knapp && vy && knapp.classList.contains('active') && !vy.querySelector('.spel-teman')) sida();
+  }).observe(document.documentElement, { childList: true, subtree: true });
 
   // ---- installation, ytterst i kedjan --------------------------------------------------------------
   // Samma vakt som ranking-sixpack.js (rang 2): wrappern lägger sig ytterst igen efter varje sent

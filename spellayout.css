@@ -46,11 +46,11 @@
 .widget.spel.spel-lista .toplike-row .spel-foto img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
 .widget.spel.spel-lista .toplike-row .spel-rad-text{position:absolute!important;top:0!important;height:100%!important;left:var(--spel-x)!important;
   width:var(--spel-b)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:0!important;
-  overflow:hidden!important}
-.widget.spel.spel-lista .toplike-row strong{display:block!important;font:800 9px/1.15 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+  overflow:visible!important}
+.widget.spel.spel-lista .toplike-row strong{display:block!important;flex-shrink:0!important;font:800 9px/1.3 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
   white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-shadow:0 1px 2px rgba(0,0,0,.9)!important}
 .widget.spel.spel-lista .toplike-row small{display:none!important}
-.widget.spel.spel-lista .toplike-row em{display:block!important;font:900 10px/1.1 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+.widget.spel.spel-lista .toplike-row em{display:block!important;flex-shrink:0!important;font:900 10px/1.2 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
   white-space:nowrap!important;text-shadow:0 1px 2px rgba(0,0,0,.9)!important}
 /* Ikonen är första tecknet i <em>: rankingcykeln och livedatan skriver om hela texten ("● 1 204"),
    så färgen sätts på ::first-letter i stället för på en egen nod som skrivs bort. */
@@ -66,11 +66,14 @@
 .spel-gifter .spel-gifter-rubrik{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;font-size:8px;
   font-weight:900;letter-spacing:.06em;color:var(--spel-accent);text-shadow:0 1px 2px #000}
 .spel-gifter .spel-flip{position:absolute;border-radius:50%;overflow:hidden;perspective:300px}
-.spel-gifter .spel-flip>div{position:absolute;inset:0;backface-visibility:hidden;border-radius:50%;overflow:hidden;
-  animation:spel-flip 8s ease-in-out infinite}
-.spel-gifter .spel-flip .vyra-gift-face{animation-delay:-4s;background:radial-gradient(circle,#ffffff22,#0000 70%)}
-.spel-gifter .spel-flip img{width:100%;height:100%;object-fit:cover;display:block}
-.spel-gifter .spel-flip .vyra-gift-face img{object-fit:contain;padding:12%;box-sizing:border-box}
+/* Top Gifts egna regler (studio.css, premium-final.css) bär !important på .vyra-gift-face img m.fl. —
+   uppmätt 2026-10-16: gåvobilden ritades 302 px bred, långt utanför cirkeln. Nollas inuti skinnet. */
+.widget.spel.spel-gifter .spel-flip>div,.widget.spel.spel-gifter .spel-flip img{all:unset!important;box-sizing:border-box!important}
+.widget.spel.spel-gifter .spel-flip>div{position:absolute!important;inset:0!important;display:block!important;border-radius:50%!important;
+  overflow:hidden!important;backface-visibility:hidden!important;animation:spel-flip 8s ease-in-out infinite!important}
+.widget.spel.spel-gifter .spel-flip>.vyra-gift-face{animation-delay:-4s!important;background:radial-gradient(circle,#ffffff22,#0000 70%)!important}
+.widget.spel.spel-gifter .spel-flip img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
+.widget.spel.spel-gifter .spel-flip .vyra-gift-face img{object-fit:contain!important;padding:14%!important}
 /* Profil ↔ gåva: bilden byts, namnet och värdet står kvar. */
 @keyframes spel-flip{0%,42%{transform:rotateY(0)}50%,92%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
 .spel-gifter .topgift-copy strong,.spel-gifter .topgift-copy em{position:absolute;display:flex;align-items:center;
