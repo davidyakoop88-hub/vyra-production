@@ -5,14 +5,29 @@
 .spel .spel-konst{position:relative;width:100%;user-select:none}
 .spel .spel-bild{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 
-/* RÖRLIGT RAMLJUS. En ljusstrimma sveper över delen, maskad med delens egen bild — den lyser bara
-   där konsten finns. Lugnt (5,5 s) och med skärmblandning, så den aldrig gör text oläslig. */
-.spel .spel-ljus{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+/* RÖRLIGT RAMLJUS, två lager (David 2026-10-15: "starkare", sedan "ska gå runtom ramarna").
+   1. GLÖD: en suddad, uppljusad kopia av delens egen bild bakom konsten. Den pulserar i temats egna
+      färger runt hela ramen. Bara opaciteten animeras — filtret är statiskt — så OBS komponerar den
+      utan att rita om bilden varje bildruta.
+   2. VARV: två ljuspunkter som jagar varandra runt ramen. Lagret maskas med delens kantmask
+      (<del>-kant.webp, konturen som ett smalt band), och under masken roterar en konisk gradient —
+      där gradientens topp korsar kanten lyser kanten. Rotationen är en transform, alltså också
+      komponerad, inte omritad. */
+.spel .spel-glod{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  filter:blur(5px) brightness(1.9) saturate(1.6);opacity:.35;animation:spel-glod 3.2s ease-in-out infinite}
+@keyframes spel-glod{0%,100%{opacity:.35}50%{opacity:.95}}
+.spel .spel-ljus{position:absolute;inset:0;pointer-events:none;overflow:hidden;
   -webkit-mask:var(--spel-mask) center/100% 100% no-repeat;mask:var(--spel-mask) center/100% 100% no-repeat;
-  background:linear-gradient(105deg,transparent 0 42%,color-mix(in srgb,var(--spel-ljusfarg,#fff) 75%,#fff) 50%,transparent 58% 100%);
-  background-size:280% 100%;background-position:120% 0;opacity:.75;animation:spel-svep 5.5s cubic-bezier(.45,.05,.55,.95) infinite}
-@keyframes spel-svep{0%{background-position:120% 0}70%,100%{background-position:-40% 0}}
-@media (prefers-reduced-motion:reduce){.spel .spel-ljus{animation:none;opacity:0}}
+  filter:drop-shadow(0 0 3px var(--spel-ljusfarg,#fff)) drop-shadow(0 0 6px var(--spel-ljusfarg,#fff))}
+.spel .spel-ljus::before{content:'';position:absolute;left:50%;top:50%;width:300%;aspect-ratio:1;
+  translate:-50% -50%;
+  /* Två kometer: kort svans i temats färg, vitt huvud, skarp front — läses som en ljuspunkt som
+     springer runt ramen, inte som ett svep. */
+  background:conic-gradient(from 0deg,transparent 0 34%,color-mix(in srgb,var(--spel-ljusfarg,#fff) 50%,transparent) 41%,var(--spel-ljusfarg,#fff) 46%,#fff 48.6%,transparent 49% 84%,
+    color-mix(in srgb,var(--spel-ljusfarg,#fff) 50%,transparent) 91%,var(--spel-ljusfarg,#fff) 96%,#fff 98.6%,transparent 99%);
+  animation:spel-varv 5s linear infinite}
+@keyframes spel-varv{to{rotate:360deg}}
+@media (prefers-reduced-motion:reduce){.spel .spel-ljus::before{animation:none}.spel .spel-glod{animation:none;opacity:.4}}
 
 /* Bakgrund: SVG med hål — se bakgrund() i spellayout.js. */
 .spel-bakgrund .spel-bakgrund-svg{display:block;width:100%;height:auto;overflow:visible;pointer-events:none}

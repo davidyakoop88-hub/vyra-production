@@ -76,10 +76,12 @@
     return `<div class="widget spel ${klasser}${arVald(w) ? ' selected' : ''}" data-id="${esc(w.id)}" data-spel="${esc(w.spelTema)}"${attr || ''} style="${stil}">`;
   }
   const handtag = w => arVald(w) ? '<span class="resize-handle">↘</span>' : '';
-  // Ljuset: en ljusstrimma som vandrar över konsten, maskad med SAMMA bild — den lyser alltså bara
-  // där ramen finns, i vilket tema som helst, utan en ritad bana per tema.
-  const ljus = src => `<i class="spel-ljus" aria-hidden="true" style="--spel-mask:url('${src}')"></i>`;
-  const konst = (src, bild) => `<div class="spel-konst" style="aspect-ratio:${bild[0]}/${bild[1]}"><img class="spel-bild" src="${src}" alt="" draggable="false">${ljus(src)}`;
+  // Ljuset GÅR RUNT RAMARNA (David 2026-10-15: "ljuset ska gå runtom ramarna"). Det maskas med
+  // delens kantmask, <del>-kant.webp: konstens kontur — yttre kant och öppningarnas kanter — som ett
+  // smalt band, genererat ur bildens alfa. Ljuspunkterna färdas alltså bara längs kanterna, i vilket
+  // tema som helst, utan en handritad bana per tema.
+  const ljus = src => `<i class="spel-ljus" aria-hidden="true" style="--spel-mask:url('${src.replace(/\.webp$/, '-kant.webp')}')"></i>`;
+  const konst = (src, bild) => `<div class="spel-konst" style="aspect-ratio:${bild[0]}/${bild[1]}"><img class="spel-glod" src="${src}" alt="" aria-hidden="true" draggable="false"><img class="spel-bild" src="${src}" alt="" draggable="false">${ljus(src)}`;
 
   // ---- ramar och bakgrund -----------------------------------------------------------------------
   function ram(w, t) {
