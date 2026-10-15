@@ -34,7 +34,10 @@ test('fabriken ger samma bredd som katalogknappen, och panelen tillåter den', (
   assert.equal(W.create('catalog:socialgoal:likes:heart-tower:portrait').width, 100);
   assert.equal(W.create('catalog:socialgoal:followers:crown-tower:portrait').width, 130, 'de andra tornen är orörda');
   assert.match(las('goal-motion.js'), /Bredd<input id="propWidth" type="number" min="80" max="1200"/);
-  assert.match(las('studio.html'), /widget-factory\.js\?v=20261014-1/);
+  // Fabriken bumpades för tornet i 20261014-1. Det provet bevisar är att en cachad fabrik INTE kan ge
+  // 130 — vilken senare version som helst bevisar samma sak, så kravet är "minst", inte "exakt".
+  const v = /widget-factory\.js\?v=(\d{8})-(\d+)/.exec(las('studio.html'));
+  assert.ok(v && (+v[1] > 20261014 || (+v[1] === 20261014 && +v[2] >= 1)), 'fabriken ska vara minst 20261014-1');
 });
 
 test('ovanför fyllnadsnivån ligger ett mörkt lager, och det vita skenet är borta', () => {

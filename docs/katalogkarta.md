@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `3c85913`
+Commit: `611c758`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **179** |
-| Sektioner | 26 |
-| Med katalognyckel | 179 / 179 |
-| Med shadow DOM-miniatyr | 135 / 179  ⚠️ |
-| Ritar sin design | 179 / 179 |
+| Kort totalt | **188** |
+| Sektioner | 27 |
+| Med katalognyckel | 188 / 188 |
+| Med shadow DOM-miniatyr | 144 / 188  ⚠️ |
+| Ritar sin design | 188 / 188 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -40,6 +40,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
+| SPELLAYOUT · KAMERA, SPEL OCH WIDGETS I SAMMA TEMA | 9 | 9/9 | 9/9 | 9/9 | — | — |
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | VYRA TOP STREAK · CLEAN FLIP | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
@@ -68,6 +69,20 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
 
 ## Varje kort
+
+### SPELLAYOUT · KAMERA, SPEL OCH WIDGETS I SAMMA TEMA
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Hela layouten | `catalog:spellayout:fortnite:kameraram` | ✓ | ✓ | — | — |
+| Bakgrund | `catalog:spellayout:fortnite:bakgrund` | ✓ | ✓ | — | — |
+| Kameraram | `catalog:spellayout:fortnite:kameraram` | ✓ | ✓ | — | — |
+| Spelram | `catalog:spellayout:fortnite:spelram` | ✓ | ✓ | — | — |
+| Topplista | `catalog:spellayout:fortnite:lista` | ✓ | ✓ | — | — |
+| Top Gifter | `catalog:spellayout:fortnite:gifter` | ✓ | ✓ | — | — |
+| Följarmål | `catalog:spellayout:fortnite:mal` | ✓ | ✓ | — | — |
+| Gift Campaign · 4 | `catalog:spellayout:fortnite:kampanj4` | ✓ | ✓ | — | — |
+| Gift Campaign · 6 | `catalog:spellayout:fortnite:kampanj6` | ✓ | ✓ | — | — |
 
 ### RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS
 
