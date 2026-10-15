@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Textkontur i overlay-utgangen (#608): namn och siffror far tat kontur dar kontrasten mot vit eller svart inte racker",
-  "nycklar": 99,
-  "filter": "catalog:battlemvp:,catalog:fanlevel,catalog:followeralert,catalog:gifterlevel,catalog:guardianemblem,catalog:lastx,catalog:pggoal,catalog:pgpodium,prism-vertical,catalog:skattkista,catalog:topgift:premium:royal,catalog:topstreak,catalog:socialgoal",
-  "tid": "2026-10-15T15:01:40.167Z"
+  "motiv": "Kontur (#608) ovanpå läsbara level-widgetar (#605): level-bilderna tas om efter sammanslagningen",
+  "nycklar": 21,
+  "filter": "level",
+  "tid": "2026-10-15T16:50:57.158Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
