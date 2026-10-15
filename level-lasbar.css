@@ -1,0 +1,119 @@
+/* LÄSBARA LEVEL-LARM — Gifter Level Up och Fan Level Up, alla layouter. Se level-lasbar.js.
+ *
+ * Förebilden är overlaylive.app: mörk platta med tunn färgkant bakom texten, fet vit text och en
+ * enkel ljus ring runt profilbilden. Tre delar:
+ *   1. NAMNPLATTAN gäller i alla storlekar — det är den som bär namnet mot rörig kameravideo.
+ *   2. MINSTA TEXTSTORLEK 12 designpixlar för namn och nivå, även under storlekshandtagets zoom:
+ *      `calc(12px / var(--lv-z))` ritas som 12 px efter zoomen.
+ *   3. KOMPAKTLÄGE (.lv-kompakt, satt av renderaren under 210 effektiva designpixlar): ornamenten
+ *      bort, en stor profilbild med tjock ljus ring, nivån som "LV. 9", namnet på plattan.
+ * Duo-layouterna lagas också här: de klipptes (Fan) och tryckte ihop texten (Gifter).
+ *
+ * Specificiteten är medvetet hög (.widget.lv-las + familj) — reglerna ska vinna över studio.css
+ * och premium-final.css, men bara för widgetar som renderaren märkt med lv-las. */
+
+.widget.lv-las.gifter-level-up{--lv-accent:color-mix(in srgb,var(--gifter) 75%,#fff)}
+.widget.lv-las.fan-level-up{--lv-accent:var(--fan)}
+
+/* ---- 1. Namnet på en platta -------------------------------------------------------------- */
+.widget.lv-las:is(.gifter-level-up,.fan-level-up)>h3{
+  box-sizing:border-box!important;max-width:100%!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  padding:.2em .75em .24em!important;border-radius:999px!important;
+  background:rgba(10,6,16,.85)!important;border:1px solid var(--lv-accent)!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important;
+  text-shadow:none!important;line-height:1.15!important;
+  box-shadow:0 2px 10px rgba(0,0,0,.45)!important}
+
+/* ---- 2. Minsta textstorlek: namn och nivå ------------------------------------------------- */
+.widget.lv-las.gifter-level-up>h3{font-size:max(calc(12px / var(--lv-z,1)),18px)!important}
+.widget.lv-las.gifter-layout-number>h3{font-size:max(calc(12px / var(--lv-z,1)),20px)!important}
+.widget.lv-las.fan-level-up>h3{font-size:max(calc(12px / var(--lv-z,1)),15px)!important}
+.widget.lv-las.gifter-level-up .gifter-level-badge strong{font-size:max(calc(12px / var(--lv-z,1)),13px)!important}
+.widget.lv-las.fan-level-up .fan-level-pill{font-size:max(calc(12px / var(--lv-z,1)),13px)!important}
+.widget.lv-las.fan-level-up .fan-level-pill :is(.fan-level-from,.fan-level-to){font-size:inherit!important}
+.widget.lv-las.gifter-level-up .gifter-level-badge strong :is(.lv-fran,.lv-till){display:inline!important;font:inherit!important}
+
+/* ---- Duo-layouterna --------------------------------------------------------------------------
+   FAN · COMMUNITY DUO klipptes: EKG-kurvan hade min-width 110 px, så textkolumnen fick 125 px av en
+   widget på 320 och "FAN LEVEL UP"/"TROGEN SUPPORTER" sköts ut över högerkanten. Kurvan krymper
+   nu till 40 px och textkolumnen tar resten (minmax(0,1fr)), så den aldrig kan tryckas ut. */
+.widget.lv-las.fan-layout-duo:not(.lv-kompakt){
+  grid-template-columns:auto 40px auto minmax(0,1fr)!important;column-gap:7px!important}
+.widget.lv-las.fan-layout-duo:not(.lv-kompakt)>h3{padding:.18em .6em .22em!important}
+.widget.lv-las.fan-layout-duo:not(.lv-kompakt) .fan-pulse-line{min-width:0!important;width:100%!important}
+.widget.lv-las.fan-layout-duo:not(.lv-kompakt)>:is(h2,p){
+  max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+/* GIFTER · KOMPAKT DUO tryckte ihop texten nere till vänster: översta raden var fyra smala
+   kolumner (medaljong 74 px, puls, avatar, bricka) och LEVEL UP, namn och undertext låg på egna
+   rader UNDER dem. Samma uppställning som Fan Duo i stället: medaljong · puls · profilbild, och
+   en textkolumn till höger som tar resten av bredden. */
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt){
+  grid-template-columns:auto 14px auto minmax(0,1fr)!important;
+  grid-template-areas:"diamond pulse avatar badge" "diamond pulse avatar head" "diamond pulse avatar name" "diamond pulse avatar msg"!important;
+  column-gap:8px!important;row-gap:2px!important;align-items:center!important;padding:8px!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-diamond-stack{width:44px!important;height:44px!important;
+  box-shadow:0 0 0 3px #d8a63a,0 0 0 4px #8a651f,0 0 16px color-mix(in srgb,var(--gifter),transparent 35%)!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-diamond-stack img.gifter-diamond{width:28px!important;height:28px!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-pulse-line{width:100%!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-orbit,
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-orbit img{width:56px!important;height:56px!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt) .gifter-level-badge{justify-self:start!important;margin:0 0 2px!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt)>h2{margin:0!important;font-size:19px!important;line-height:1.05!important;white-space:nowrap!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt)>h3{margin:1px 0 0!important;padding:.18em .6em .22em!important;font-size:max(calc(12px / var(--lv-z,1)),15px)!important}
+.widget.lv-las.gifter-layout-duo:not(.lv-kompakt)>p{margin:2px 0 0!important;white-space:nowrap!important;
+  max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+/* ---- 3. Kompaktläget ----------------------------------------------------------------------- */
+.widget.lv-las.lv-kompakt:is(.gifter-level-up,.fan-level-up){
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:flex-start!important;justify-items:center!important;text-align:center!important;
+  width:var(--lv-b)!important;min-width:0!important;padding:4px!important;
+  grid-template:none!important;column-gap:0!important;row-gap:0!important;
+  container-type:inline-size}
+
+/* Ornamenten bort: ringar, gnistor, medaljong, pulskurvor, vingar, hjärtan, banderoll och
+   undertexten. Det som blir kvar är det tittaren ska läsa: vem, vilken nivå. */
+.widget.lv-las.lv-kompakt.gifter-level-up :is(.gifter-orbit>i,.gifter-orbit>b,.gifter-big-level,.gifter-diamond-row,.gifter-bottom-profile,.gifter-streak,.gifter-pulse-line,.gifter-arrow-up),
+.widget.lv-las.lv-kompakt.gifter-level-up>p,
+.widget.lv-las.lv-kompakt.fan-level-up :is(.fan-rising-hearts,.fan-wing,.fan-burst,.fan-pulse-line,.fan-ribbon,.fan-ring),
+.widget.lv-las.lv-kompakt.fan-level-up>p{display:none!important}
+
+/* Profilbilden: minst 55 % av bredden, tjock ljus ring och en tunn accentring utanför. */
+.widget.lv-las.lv-kompakt.gifter-level-up .gifter-orbit{
+  display:grid!important;place-items:center!important;order:1!important;
+  position:relative!important;inset:auto!important;width:auto!important;height:auto!important;margin:0!important;grid-area:auto!important}
+.widget.lv-las.lv-kompakt.gifter-level-up .gifter-orbit img,
+.widget.lv-las.lv-kompakt.fan-level-up .fan-profile img{
+  display:block!important;box-sizing:border-box!important;width:62cqi!important;height:62cqi!important;
+  margin:0!important;border-radius:50%!important;object-fit:cover!important;
+  border:max(3px,3.4cqi) solid #fff!important;
+  box-shadow:0 0 0 max(2px,1.4cqi) var(--lv-accent),0 0 16px color-mix(in srgb,var(--lv-accent),transparent 30%)!important}
+.widget.lv-las.lv-kompakt.fan-level-up .fan-profile{
+  display:block!important;order:1!important;position:relative!important;inset:auto!important;
+  width:auto!important;height:auto!important;margin:0!important;padding:0!important;
+  background:none!important;box-shadow:none!important;border:0!important;grid-area:auto!important}
+
+/* Nivån: "LV. 9" — från-nivån och pilen döljs, brickan läggs över profilbildens nederkant. */
+.widget.lv-las.lv-kompakt.gifter-level-up .gifter-level-badge,
+.widget.lv-las.lv-kompakt.fan-level-up .fan-level-pill{
+  display:inline-block!important;order:2!important;position:relative!important;z-index:3!important;min-width:0!important;
+  margin:-5cqi 0 0!important;padding:.22em .8em!important;grid-area:auto!important;
+  align-self:center!important;justify-self:center!important;white-space:nowrap!important;
+  border:max(1.5px,1.2cqi) solid #fff!important}
+.widget.lv-las.lv-kompakt.gifter-level-up .gifter-level-badge strong,
+.widget.lv-las.lv-kompakt.fan-level-up .fan-level-pill{font-size:max(calc(12px / var(--lv-z,1)),12cqi)!important;line-height:1.05!important}
+.widget.lv-las.lv-kompakt.gifter-level-up .gifter-level-badge strong .lv-fran,
+.widget.lv-las.lv-kompakt.fan-level-up .fan-level-pill :is(.fan-level-from,.fan-level-arrow){display:none!important}
+
+/* Rubriken kort och tydlig, namnet störst — på plattan. */
+.widget.lv-las.lv-kompakt:is(.gifter-level-up,.fan-level-up)>h2{
+  display:block!important;order:3!important;grid-area:auto!important;margin:3cqi 0 0!important;
+  max-width:100%!important;font-size:max(calc(10px / var(--lv-z,1)),10cqi)!important;
+  line-height:1.05!important;letter-spacing:0!important;white-space:normal!important;text-align:center!important;
+  justify-self:center!important}
+.widget.lv-las.lv-kompakt:is(.gifter-level-up,.fan-level-up)>h3{
+  display:block!important;order:4!important;grid-area:auto!important;margin:2cqi 0 0!important;
+  font-size:max(calc(12px / var(--lv-z,1)),11.5cqi)!important;padding:.2em .6em .24em!important;
+  justify-self:center!important;text-align:center!important}
