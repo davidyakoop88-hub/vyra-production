@@ -179,10 +179,10 @@ aside { padding: 14px 14px 12px; }
    YouTube och en post tar 29 — padding 4 -> 3 ger 34 px till, alltsa ~24 px luft med Stream Deck.
    Raden ar da 26 px, fortfarande en tydlig traffyta. */
 /* 2026-10-16: Gaming overlay lades till (18 navval) och Agencies hamnade utanfor navets ruta vid
-   1366x768. Mellanrummet INOM en sektion 5 -> 3 ger 2 px per mellanrum, ~28 px; raderna star kvar
-   pa 26 px. */
+   1366x768. Mellanrummet inom en sektion ar redan 1 px (ovan), sa luften tas ur radernas padding
+   3 -> 2: 36 px for 18 rader. Raden ar da 24 px. (Ett forsta forsok satte sektionens gap till 3 px
+   har — det BREDDADE mellanrummet fran 1 px och gjorde det varre.) */
 @media (max-height: 820px) {
   aside nav { gap: 2px; }
-  .nav-section { gap: 3px; }
-  aside nav button, aside nav a { padding-top: 3px; padding-bottom: 3px; }
+  aside nav button, aside nav a { padding-top: 2px; padding-bottom: 2px; }
 }
