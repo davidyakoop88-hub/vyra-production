@@ -29,16 +29,19 @@
   // FAKTISKA läge på duken — flyttar streamern en ram följer hålet med.
 
   // Geometrin i procent av den beskurna bilden. Hålen är uppmätta som inneslutna genomskinliga
-  // ytor (alfa < 60) i varje WebP; textytorna ur scen-referensen.
+  // ytor (alfa < 60) i varje WebP. TEXTFÄLTEN är uppmätta som mörka, täckande ytor i konsten —
+  // Davids regel 2026-10-16: "texten ska inte vara utanför någon ram". All text ligger därför inuti
+  // ett sådant fält, och storleken räknas i cqw (andel av konstens bredd), så den stannar kvar
+  // inuti även när widgeten görs större eller mindre.
   const TEMAN = Object.freeze({
     fortnite: Object.freeze({
       label: 'Fortnite', ljus: '#8ff0ff', accent: '#ffd23f', text: '#ffffff',
       kameraram: { bild: [1080, 616], hal: [2.69, 5.41, 94.62, 89.19] },
       spelram: { bild: [1080, 608], hal: [2.69, 4.11, 94.62, 91.1] },
       bakgrund: { bild: [941, 1672] },
-      lista: { bild: [520, 759], rad: 20.09, forsta: 4.47, foto: [19.62, 17.31, 12.37], namn: [41, 52] },
-      gifter: { bild: [480, 555], foto: [26.15, 30.56, 47.69, 40.53], rubrik: [14, 8.5, 72, 12], namn: [14, 70, 72, 8], varde: [14, 78.5, 72, 8] },
-      mal: { bild: [1100, 80], spar: [37, 33, 26.4, 34], rubrik: [23, 28, 13.6, 44], varde: [63.6, 28, 12, 44] },
+      lista: { bild: [520, 759], rad: 20.09, forsta: 4.47, foto: [19.62, 17.31, 12.37], namn: [44.5, 47, 14, 74] },
+      gifter: { bild: [480, 555], foto: [26.15, 30.56, 47.69, 40.53], rubrik: [14, 7, 72, 16], namn: [13, 79.5, 74, 7.8], varde: [13, 87.2, 74, 7.6] },
+      mal: { bild: [1100, 80], spar: [37.6, 31.8, 24.6, 32] },
       kampanj4: { bild: [1100, 263], hal: [[3.46, 14.52, 17.69, 72.58], [28.46, 14.52, 18.08, 72.58], [53.46, 14.52, 18.08, 72.58], [78.85, 14.52, 17.69, 72.58]] },
       kampanj6: { bild: [1100, 174], hal: [[2.31, 14.63, 11.15, 70.73], [18.85, 14.63, 11.54, 70.73], [35.77, 14.63, 11.54, 70.73], [52.69, 14.63, 11.54, 70.73], [69.62, 14.63, 11.92, 70.73], [86.54, 14.63, 11.54, 70.73]] }
     })
@@ -132,7 +135,7 @@
       const top = g.forsta + i * g.rad;
       rader += `<div class="toplike-row rank-${i + 1}" style="--spel-rad-top:${top}%;--spel-rad-h:${g.foto[2]}%">`
         + `<i class="spel-foto" style="--spel-x:${g.foto[0]}%;--spel-b:${g.foto[1]}%"><img src="${foto}" alt=""></i>`
-        + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
+        + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%;--spel-y:${g.namn[2]}%;--spel-h:${g.namn[3]}%"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
         + `<em>${IKON[w.type]} ${nolla ? '0' : esc(p[1] || '0')}</em></span></div>`;
     }
     return rot(w, 'vyra-toplike spel-lista', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`)
@@ -167,9 +170,9 @@
     const fmt = n => Number(n || 0).toLocaleString('sv-SE');
     return rot(w, 'spel-mal', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent};--goal-fill:${p}%`, ' data-goal="social"')
       + konst(src, g.bild)
-      + `<div class="spel-mal-rubrik" style="${pct(g.rubrik)}">${esc(w.goalTitle || 'FÖLJARMÅL')}</div>`
-      + `<div class="spel-mal-spar" style="${pct(g.spar)}"><i data-goal-fill style="width:${p}%"></i></div>`
-      + `<div class="spel-mal-varde" style="${pct(g.varde)}"><b data-goal-value>${fmt(nu)}</b><span>/</span><b data-goal-target>${fmt(mal)}</b></div>`
+      + `<div class="spel-mal-spar" style="${pct(g.spar)}"><i data-goal-fill style="width:${p}%"></i>`
+      + `<span class="spel-mal-text"><span class="spel-mal-rubrik">${esc(w.goalTitle || 'FÖLJARE')}</span>`
+      + `<span class="spel-mal-varde"><b data-goal-value>${fmt(nu)}</b>/<b data-goal-target>${fmt(mal)}</b></span></span></div>`
       + '</div>' + handtag(w) + '</div>';
   }
 
