@@ -143,16 +143,39 @@
     return antal;
   }
 
-  const aktiv = () => document.documentElement.classList.contains('overlay-output');
-  let vantar = 0;
-  function schemalagg() {
-    if (vantar) return;
-    vantar = setTimeout(() => { vantar = 0; if (aktiv()) skanna() }, 120);
+  // SYNKRONT, I OBSERVATÖRENS EGET ANROP. Första versionen väntade 120 ms och skannade sedan hela
+  // sidan. Det gav en bildruta utan kontur varje gång en renderare ritade om sin nod — en
+  // nedräkning blinkade varje sekund, och den visuella riggen (som väntar på två lika bilder i
+  // rad, tak 12 s per nyckel) fick aldrig stillhet: referensjobbet slog i sitt 30-minuterstak
+  // (körning 38747148233). MutationObserver-anropet körs som mikrouppgift FÖRE nästa målning, så
+  // en ny nod har sin kontur redan i första bildrutan den syns i. Bara det som ändrats behandlas.
+  // En tillagd nod: inne i en widget behandlas den och allt under den; utanför (en hel widget
+  // eller duken som byggts om) skannas bara de widgetar den innehåller.
+  function tillagd(n) {
+    if (n.nodeType !== 1) return;
+    const rot = n.closest('[data-id]');
+    if (rot) {
+      behandla(n, rot);
+      n.querySelectorAll('*').forEach(x => behandla(x, rot));
+    } else if (n.querySelector('[data-id]')) {
+      skanna(n);
+    }
   }
+  function vidAndring(poster) {
+    if (!aktiv()) return;
+    for (const p of poster) {
+      // Ny text i ett befintligt element kommer som en ersatt textnod: elementet själv bedöms.
+      const t = p.target;
+      if (t && t.nodeType === 1) { const rot = t.closest('[data-id]'); if (rot) behandla(t, rot) }
+      p.addedNodes.forEach(tillagd);
+    }
+  }
+
+  const aktiv = () => document.documentElement.classList.contains('overlay-output');
 
   window.VyraTextKontur = { kvot, harKontur, bedom, skanna, KRAV };
 
   if (!aktiv()) return;
   skanna();
-  new MutationObserver(schemalagg).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(vidAndring).observe(document.body, { childList: true, subtree: true });
 })();
