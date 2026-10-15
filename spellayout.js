@@ -322,13 +322,15 @@
   }
 
   // Namn och coins i den nedre plattan: två rader där plattan rymmer dem, annars en rad (namnet till
-  // vänster, coins till höger) — samma 6 px-gräns som topplistan.
+  // vänster, coins till höger).
   function kopia(g, w, namn, varde) {
     const dold = w.showDataValue === false ? 'display:none;' : '';
     const W = tal(w.width, 110);
-    if (cqw(g.bild, g.namn[3], .78) * W / 100 >= 6) {
-      return `<div class="topgift-copy"><strong style="${pct(g.namn)};font-size:${cqw(g.bild, g.namn[3], .78)}cqw">${namn}</strong>`
-        + `<em style="${pct(g.varde)};font-size:${cqw(g.bild, g.varde[3], .8)}cqw;${dold}">◉ ${varde}</em></div>`;
+    // 6,5 px och 0,72 av radens höjd: Linux-typsnitten i CI är något högre än Windows, och Ruby
+    // Eclipse (6,0 px på två rader) klipptes där men inte lokalt (uppmätt 2026-10-16).
+    if (cqw(g.bild, g.namn[3], .78) * W / 100 >= 6.5) {
+      return `<div class="topgift-copy"><strong style="${pct(g.namn)};font-size:${cqw(g.bild, g.namn[3], .72)}cqw">${namn}</strong>`
+        + `<em style="${pct(g.varde)};font-size:${cqw(g.bild, g.varde[3], .74)}cqw;${dold}">◉ ${varde}</em></div>`;
     }
     const ruta = [g.namn[0], g.namn[1], g.namn[2], g.varde[1] + g.varde[3] - g.namn[1]];
     return `<div class="topgift-copy spel-en-rad" style="${pct(ruta)};font-size:${cqw(g.bild, ruta[3], .62)}cqw">`
