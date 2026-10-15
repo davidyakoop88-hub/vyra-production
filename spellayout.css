@@ -50,11 +50,11 @@
 .widget.spel.spel-lista .toplike-row .spel-rad-text{position:absolute!important;top:var(--spel-y)!important;height:var(--spel-h)!important;left:var(--spel-x)!important;
   width:var(--spel-b)!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:0!important;
   overflow:hidden!important}
-.widget.spel.spel-lista .toplike-row strong{display:block!important;flex-shrink:0!important;font:800 5.7cqw/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+.widget.spel.spel-lista .toplike-row strong{display:block!important;flex-shrink:0!important;font:800 var(--spel-fs,5.7cqw)/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
   white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
   text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px var(--spel-rad-glod,#6fe3ff),0 0 9px var(--spel-rad-glod,#6fe3ff)!important}
 .widget.spel.spel-lista .toplike-row small{display:none!important}
-.widget.spel.spel-lista .toplike-row em{display:block!important;flex-shrink:0!important;font:900 5.9cqw/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
+.widget.spel.spel-lista .toplike-row em{display:block!important;flex-shrink:0!important;font:900 calc(var(--spel-fs,5.7cqw) * 1.04)/1.12 Inter,'Segoe UI',system-ui,sans-serif!important;color:#fff!important;
   white-space:nowrap!important;color:#fff3b0!important;
   text-shadow:0 0 1px #000,0 0 2px #000,0 0 4px #ffb020,0 0 9px #ff8a00!important}
 /* LYSANDE TEXT I OLIKA FÄRGER (David 2026-10-16: "så den syns bättre"). Närmast bokstaven ligger en
@@ -133,6 +133,29 @@
 .spel-kampanj .campaign-gift-image img{max-width:100%;max-height:100%;object-fit:contain;
   animation:spel-gava 3.2s ease-in-out infinite;animation-delay:var(--spel-fas,0s);filter:drop-shadow(0 0 4px var(--spel-ljusfarg))}
 @keyframes spel-gava{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
+
+/* ---- EN RAD i tunna plattor (se lista() och kopia() i spellayout.js) ---- */
+.widget.spel.spel-lista.spel-en-rad .toplike-row .spel-rad-text{flex-direction:row!important;align-items:center!important;
+  justify-content:space-between!important;gap:4%!important}
+.widget.spel.spel-lista.spel-en-rad .toplike-row strong{flex:1 1 auto!important;min-width:0!important;font-size:var(--spel-fs)!important}
+.widget.spel.spel-lista.spel-en-rad .toplike-row em{flex:0 0 auto!important;font-size:var(--spel-fs)!important}
+.spel-gifter .topgift-copy.spel-en-rad{position:absolute;display:flex;align-items:center;justify-content:space-between;gap:5%;
+  padding:0 4%;box-sizing:border-box;overflow:hidden;line-height:1}
+.spel-gifter .topgift-copy.spel-en-rad strong,.spel-gifter .topgift-copy.spel-en-rad em{position:static;display:block;font-size:inherit}
+.spel-gifter .topgift-copy.spel-en-rad strong{flex:1 1 auto;min-width:0;justify-content:flex-start}
+.spel-gifter .topgift-copy.spel-en-rad em{flex:0 0 auto}
+
+/* ---- LJUSA PLATTOR (Ice Pearl, Moonlight Silver, Peach Bloom, Rose Gold, Sakura m.fl.) ----
+   Vit text med glöd syns inte på en vit eller persikofärgad platta. Där plattan är ljus
+   (data-spel-text="ljus", uppmätt per tema) blir texten mörk med en ljus glöd i stället, och
+   platsfärgen ligger kvar som en tunn ytterglöd. */
+.widget.spel.spel-lista[data-spel-text="ljus"] .toplike-row strong{color:#3a2238!important;
+  text-shadow:0 0 1px #fff,0 0 2px #fff,0 0 5px var(--spel-rad-glod,#fff),0 0 9px #fff!important}
+.widget.spel.spel-lista[data-spel-text="ljus"] .toplike-row em{color:#7a3c12!important;
+  text-shadow:0 0 1px #fff,0 0 2px #fff,0 0 5px #ffd27a,0 0 9px #fff!important}
+.spel-gifter[data-spel-text="ljus"] .topgift-copy strong{color:#3a2238;text-shadow:0 0 1px #fff,0 0 2px #fff,0 0 5px var(--spel-ljusfarg),0 0 9px #fff}
+.spel-gifter[data-spel-text="ljus"] .topgift-copy em{color:#7a3c12;text-shadow:0 0 1px #fff,0 0 2px #fff,0 0 5px #ffd27a,0 0 9px #fff}
+.spel-gifter[data-spel-text="ljus"] .spel-gifter-rubrik{color:#7a3c12;text-shadow:0 0 1px #fff,0 0 2px #fff,0 0 5px #ffd27a}
 
 /* ---- sidan Gaming overlay ---- */
 .spel-sida-head h2{margin:0 0 6px}

@@ -32,10 +32,10 @@ async function sida(overlay) {
   return { page, fel };
 }
 // Hela paketet direkt ur fabriken, som "Använd tema" bygger det.
-const lagg = (page, extra) => page.evaluate(extra => {
-  state.widgets = VyraSpellayout.hela.map(d => Object.assign(VyraWidgets.create('catalog:spellayout:fortnite:' + d), (extra || {})[d] || {}));
+const lagg = (page, extra, tema) => page.evaluate(([extra, tema]) => {
+  state.widgets = VyraSpellayout.hela.map(d => Object.assign(VyraWidgets.create('catalog:spellayout:' + (tema || 'fortnite') + ':' + d), (extra || {})[d] || {}));
   render();
-}, extra);
+}, [extra, tema]);
 
 test('sidan Gaming overlay: Använd tema lägger hela paketet en gång och öppnar layouten', { skip, timeout: 90000 }, async () => {
   const { page, fel } = await sida(false);
@@ -142,6 +142,51 @@ test('topplistan: 1–10 platser, 6–10 under 1–5 med egna brickor, och ingen
     });
     assert.ok(r.maltext, 'målets text ligger utanför stapeln');
     assert.ok(r.siffror, 'målets siffror blev block (studio.css .widget b) och klipptes');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
+
+// ALLA TRETTON TEMAN. Geometrin för de tolv senare temana är uppmätt automatiskt ur deras bilder och
+// rättad för hand på sex ställen — provet är det som säger att varje tema faktiskt håller samma regler
+// som Fortnite: bilderna laddas, och ingen text hamnar utanför sitt fält, inte ens med långa namn.
+test('alla teman: bilderna laddas och ingen text utanför sitt fält i lista, Top Gifter och mål', { skip, timeout: 240000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    await page.click('aside a[href="layout.html"]');
+    await page.waitForFunction(() => view === 'editor' && !!document.querySelector('.canvas'), null, { timeout: 10000 });
+    const teman = await page.evaluate(() => Object.keys(VyraSpellayout.teman));
+    assert.equal(teman.length, 13, 'sidan ska erbjuda tretton teman');
+    for (const tema of teman) {
+      await lagg(page, { lista: { rankingCycle: false }, gifter: { dataName: 'EttMycketLångtAnvändarnamn_1234', dataValue: '1 234 567' } }, tema);
+      await page.waitForFunction(() => [...document.querySelectorAll('.canvas .widget.spel img')].every(i => i.complete), null, { timeout: 15000 });
+      const r = await page.evaluate(() => {
+        const inuti = (a, b) => { const x = a.getBoundingClientRect(), y = b.getBoundingClientRect(); return x.top >= y.top - 0.5 && x.bottom <= y.bottom + 0.5 && x.left >= y.left - 0.5 && x.right <= y.right + 0.5; };
+        const lista = document.querySelector('.canvas .spel-lista');
+        const rader = [...lista.querySelectorAll('.toplike-row')];
+        rader.forEach(rad => { rad.querySelector('strong').textContent = 'EttMycketLångtAnvändarnamn_1234'; rad.querySelector('em').textContent = '♥ 99.4K'; });
+        const listaUt = rader.filter(rad => ['strong', 'em'].some(s => !inuti(rad.querySelector(s), rad.querySelector('.spel-rad-text')))).length;
+        // Top Gifter: namn och coins inuti sin platta (en rad eller två), rubriken bara där konsten har ett fält.
+        const g = document.querySelector('.canvas .spel-gifter'), kopia = g.querySelector('.topgift-copy');
+        const ram = kopia.classList.contains('spel-en-rad') ? kopia : null;
+        // En rad: namn och coins inuti den gemensamma rutan. Två rader: varje rad ryms i sin egen ruta
+        // på höjden (rutan är plattans fält), och ett för långt namn klipps med … i stället för att rinna ut.
+        const gifterUt = ['strong', 'em'].filter(s => { const el = kopia.querySelector(s); return ram ? !inuti(el, ram)
+          : el.scrollHeight > el.clientHeight + 1 || (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflow !== 'hidden'); }).length;
+        const mal = document.querySelector('.canvas .spel-mal');
+        return {
+          trasiga: [...document.querySelectorAll('.canvas .widget.spel img')].filter(i => !i.naturalWidth).map(i => i.getAttribute('src')),
+          listaUt, gifterUt, malUt: !inuti(mal.querySelector('.spel-mal-text'), mal.querySelector('.spel-mal-spar')),
+          platser: document.querySelectorAll('.canvas .spel-kampanj .spel-gava').length,
+          textstorlek: Math.min(...rader.map(rad => parseFloat(getComputedStyle(rad.querySelector('strong')).fontSize)))
+        };
+      });
+      assert.deepEqual(r.trasiga, [], `${tema}: bilder som inte laddas`);
+      assert.equal(r.listaUt, 0, `${tema}: topplistans text utanför sitt fält`);
+      assert.equal(r.gifterUt, 0, `${tema}: Top Gifters namn eller coins utanför sin platta`);
+      assert.equal(r.malUt, false, `${tema}: målets text utanför stapeln`);
+      assert.equal(r.platser, 6, `${tema}: Gift Campaign ska ha sex platser`);
+      assert.ok(r.textstorlek >= 3.5, `${tema}: topplistans text är ${r.textstorlek} px — oläslig`);
+    }
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
