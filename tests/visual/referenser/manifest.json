@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Fan Level 50: referenser för de nya mallarna Zeus, Örnen och Lejonkungen (#607)",
-  "nycklar": 4,
-  "filter": "fanlevel50",
-  "tid": "2026-10-14T19:17:18.569Z"
+  "motiv": "Textkontur i overlay-utgangen (#608): namn och siffror far tat kontur dar kontrasten mot vit eller svart inte racker",
+  "nycklar": 99,
+  "filter": "catalog:battlemvp:,catalog:fanlevel,catalog:followeralert,catalog:gifterlevel,catalog:guardianemblem,catalog:lastx,catalog:pggoal,catalog:pgpodium,prism-vertical,catalog:skattkista,catalog:topgift:premium:royal,catalog:topstreak,catalog:socialgoal",
+  "tid": "2026-10-15T15:01:40.167Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
