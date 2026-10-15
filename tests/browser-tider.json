@@ -60,6 +60,7 @@
     "nollstallning-vid-ny-sandning.browser.test.js": 30,
     "obs-lank-lyssnare.browser.test.js": 3,
     "overlay-alla-widgets.browser.test.js": 49,
+    "overlay-textkontur.browser.test.js": 20,
     "overlay-lackage-studio-ui.browser.test.js": 12,
     "overlay-passform.browser.test.js": 4,
     "overlaylank-synlig.browser.test.js": 11,
