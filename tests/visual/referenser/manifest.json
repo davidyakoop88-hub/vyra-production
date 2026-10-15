@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Fan Level 50: referenser för de nya mallarna Zeus, Örnen och Lejonkungen (#607)",
-  "nycklar": 4,
-  "filter": "fanlevel50",
-  "tid": "2026-10-14T19:17:18.569Z"
+  "motiv": "Kontur (#608) ovanpå läsbara level-widgetar (#605): level-bilderna tas om efter sammanslagningen",
+  "nycklar": 21,
+  "filter": "level",
+  "tid": "2026-10-15T16:50:57.158Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {

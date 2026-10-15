@@ -86,6 +86,7 @@
       "syfte": "Widgetbiblioteket: renderare, fabrik, defaults, katalogkort, gavo-/nivalarm och alla widgetfamiljer.",
       "filer": [
         "battle-mvp-session.js",
+        "overlay-textkontur.js",
         "custom-widgets.js",
         "like-fountain-portal.js",
         "skattkista.js",
@@ -157,6 +158,7 @@
         "tests/widget-factory.test.js",
         "tests/like-fountain-portal.test.js",
         "tests/browser/like-fountain-portal.browser.test.js",
+        "tests/browser/overlay-textkontur.browser.test.js",
         "tests/tom-widget-avslojas.test.js",
         "tests/widget-defaults-migration.test.js",
         "tests/widget-placement.test.js",
