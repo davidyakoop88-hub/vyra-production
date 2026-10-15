@@ -385,6 +385,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 4 av 169 (filter: fanlevel50) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus
 
+## 2026-10-12 — 18 referenser skrivna
+
+- **Motiv:** Gifter/Fan Level Up läsbara i liten storlek, duo-layouterna lagade (PR #605)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 18 av 166 (filter: level) — catalog:fanlevel50:royal, catalog:fanlevel:layout:badgereveal, catalog:fanlevel:layout:duo, catalog:fanlevel:layout:heartbeat, catalog:fanlevel:layout:hearts, catalog:fanlevel:layout:hero, catalog:fanlevel:layout:loyalty, catalog:fanlevel:layout:ribbon, catalog:fanlevel:layout:stack, catalog:gifterlevel:duo, catalog:gifterlevel:flip, catalog:gifterlevel:number, catalog:gifterlevel:orbitlevel, catalog:gifterlevel:profile, catalog:gifterlevel:reveal, catalog:gifterlevel:risingtier, catalog:gifterlevel:sidebadge, catalog:gifterlevel:stack
+
 ## 2026-10-15 — 99 referenser skrivna
 
 - **Motiv:** Textkontur i overlay-utgangen (#608): namn och siffror far tat kontur dar kontrasten mot vit eller svart inte racker

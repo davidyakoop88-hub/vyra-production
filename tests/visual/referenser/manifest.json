@@ -87,35 +87,35 @@
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:badgereveal": {
-   "matt": "260x189",
+   "matt": "260x196",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:duo": {
-   "matt": "320x90",
+   "matt": "320x97",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:heartbeat": {
-   "matt": "300x141",
+   "matt": "300x150",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:hearts": {
-   "matt": "260x209",
+   "matt": "260x216",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:hero": {
-   "matt": "260x292",
+   "matt": "260x299",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:loyalty": {
-   "matt": "260x161",
+   "matt": "260x168",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:ribbon": {
-   "matt": "260x183",
+   "matt": "260x191",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:stack": {
-   "matt": "260x269",
+   "matt": "260x276",
    "fyllnad": 100
   },
   "catalog:followeralert": {
@@ -123,31 +123,31 @@
    "fyllnad": 100
   },
   "catalog:gifterlevel:duo": {
-   "matt": "300x151",
+   "matt": "300x108",
    "fyllnad": 100
   },
   "catalog:gifterlevel:flip": {
-   "matt": "290x154",
+   "matt": "290x164",
    "fyllnad": 100
   },
   "catalog:gifterlevel:number": {
-   "matt": "270x467",
+   "matt": "270x477",
    "fyllnad": 100
   },
   "catalog:gifterlevel:orbitlevel": {
-   "matt": "270x406",
+   "matt": "270x416",
    "fyllnad": 100
   },
   "catalog:gifterlevel:profile": {
-   "matt": "270x385",
+   "matt": "270x395",
    "fyllnad": 100
   },
   "catalog:gifterlevel:reveal": {
-   "matt": "270x422",
+   "matt": "270x432",
    "fyllnad": 100
   },
   "catalog:gifterlevel:risingtier": {
-   "matt": "270x435",
+   "matt": "270x445",
    "fyllnad": 100
   },
   "catalog:gifterlevel:sidebadge": {
@@ -155,7 +155,7 @@
    "fyllnad": 100
   },
   "catalog:gifterlevel:stack": {
-   "matt": "270x381",
+   "matt": "270x391",
    "fyllnad": 100
   },
   "catalog:guardianemblem:1": {
