@@ -95,7 +95,16 @@
   animation:spel-gava 3.2s ease-in-out infinite;animation-delay:var(--spel-fas,0s);filter:drop-shadow(0 0 4px var(--spel-ljusfarg))}
 @keyframes spel-gava{0%,100%{transform:translateY(0)}50%{transform:translateY(-4%)}}
 
-/* Katalogen */
-.spel-katalog .spel-katalog-tema{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-.spel-katalog .spel-katalog-tema h5{grid-column:1/-1;margin:4px 0 0}
-.spel-katalog .spel-hela{grid-column:1/-1}
+/* ---- sidan Gaming overlay ---- */
+.spel-sida-head h2{margin:0 0 6px}
+.spel-sida-head p{margin:0;max-width:720px;opacity:.8;line-height:1.5}
+.spel-teman{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:16px}
+.spel-tema{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start;padding:14px;border:1px solid transparent}
+.spel-tema.aktiv{border-color:#8f5cff}
+.spel-tema-bild{width:150px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;display:block;background:#0b0d14}
+.spel-tema-text h3{margin:2px 0 8px}
+.spel-tema-text ul{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;opacity:.85}
+.spel-tema-text small{display:block;margin-top:8px;opacity:.7}
+.spel-anvand{width:100%;padding:10px 14px;border:0;border-radius:10px;font-weight:800;cursor:pointer;color:#fff;
+  background:linear-gradient(135deg,#8f5cff,#c43dff)}
+@media (max-width:520px){.spel-tema{grid-template-columns:1fr}.spel-tema-bild{width:100%;max-width:220px}}

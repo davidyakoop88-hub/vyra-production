@@ -45,7 +45,7 @@
   });
   const DELAR = ['bakgrund', 'kameraram', 'spelram', 'lista', 'gifter', 'mal', 'kampanj4', 'kampanj6'];
   // Hela layouten: bakgrund och ramar först, sedan allt med data. Kampanjen med sex gåvor är
-  // standard; fyra finns som egen del i katalogen.
+  // standard; fyra väljs i kampanjens egen panel (Antal gåvor), och skinnet byter då till fyrkonsten.
   const HELA = ['bakgrund', 'kameraram', 'spelram', 'lista', 'gifter', 'mal', 'kampanj6'];
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -218,52 +218,72 @@
       + '<button class="delete" id="del">Ta bort</button>';
   }
 
-  // ---- katalogen ----------------------------------------------------------------------------------
-  const DEL_NAMN = { bakgrund: 'Bakgrund', kameraram: 'Kameraram', spelram: 'Spelram', lista: 'Topplista',
-    gifter: 'Top Gifter', mal: 'Följarmål', kampanj4: 'Gift Campaign · 4', kampanj6: 'Gift Campaign · 6' };
-  const DEL_TEXT = { bakgrund: 'Med hål för kamera och spel', kameraram: 'Kameran överst', spelram: 'Spelet under',
-    lista: 'Likes → coins → poäng', gifter: 'Profil ↔ gåva', mal: 'Följare, live', kampanj4: 'Fyra gåvor', kampanj6: 'Sex gåvor' };
+  // ---- sidan GAMING OVERLAY ---------------------------------------------------------------------
+  // Davids beslut 2026-10-15: delarna ligger INTE i widgetkatalogen. Streamern väljer ett tema på en
+  // egen sida i menyn och får hela paketet — ramar, bakgrund och alla widgetar — på en gång. Varje
+  // del är ändå en egen widget i layouten, så den kan flyttas, döljas eller tas bort för sig.
 
-  function skapaDel(tema, del) {
-    const w = VyraWidgets.create(`catalog:spellayout:${tema}:${del}`);
-    state.widgets.push(w);
-    return w;
-  }
-
-  // En scen per tema: delar av SAMMA tema som redan ligger i layouten tas bort först, så att två
-  // klick inte ger två kameraramar ovanpå varandra. Andra widgetar rörs inte.
+  // EN gaming overlay i taget: alla delar från ett tidigare tema tas bort först, så att ett byte av
+  // tema inte lämnar två kameraramar ovanpå varandra. Andra widgetar i layouten rörs inte.
   function skapaHela(tema) {
-    state.widgets = state.widgets.filter(w => !(w && w.spelTema === tema));
-    let sista = null;
-    HELA.forEach(del => { sista = skapaDel(tema, del); });
-    selected = sista ? sista.id : selected;
-    save(); render();
-    if (typeof toast === 'function') toast(`${TEMAN[tema].label}: hela layouten lagd`);
+    if (!Object.hasOwn(TEMAN, tema)) return;
+    state.widgets = state.widgets.filter(w => !(w && w.spelTema));
+    HELA.forEach(del => { state.widgets.push(VyraWidgets.create(`catalog:spellayout:${tema}:${del}`)); });
+    selected = null;
+    save();
+    if (typeof toast === 'function') toast(`${TEMAN[tema].label}: hela gaming overlayn är lagd i din layout`);
   }
 
-  function katalog() {
-    const catalog = document.querySelector('.widget-catalog');
-    if (!catalog || catalog.querySelector('section[data-spellayout]')) return;
-    const section = document.createElement('section');
-    section.dataset.spellayout = '1';
-    section.className = 'spel-katalog';
-    section.innerHTML = '<h4>SPELLAYOUT · KAMERA, SPEL OCH WIDGETS I SAMMA TEMA</h4>' + Object.entries(TEMAN).map(([id, t]) =>
-      `<div class="spel-katalog-tema" data-spel-tema="${id}"><h5>${esc(t.label)}</h5>`
-      + `<button type="button" class="spel-hela" data-spel-hela="${id}" data-catalog-key="catalog:spellayout:${id}:kameraram"><i>▣</i><span><b>Hela layouten</b><small>Alla delar på en gång</small></span></button>`
-      + DELAR.map(del => `<button type="button" data-spel-del="${del}" data-spel-tema="${id}" data-catalog-key="catalog:spellayout:${id}:${del}"><i>◆</i><span><b>${DEL_NAMN[del]}</b><small>${DEL_TEXT[del]}</small></span></button>`).join('')
-      + '</div>').join('');
-    catalog.prepend(section);
-    section.querySelectorAll('[data-spel-hela]').forEach(b => { b.onclick = () => skapaHela(b.dataset.spelHela); });
-    section.querySelectorAll('[data-spel-del]').forEach(b => {
-      b.onclick = () => { const w = skapaDel(b.dataset.spelTema, b.dataset.spelDel); selected = w.id; save(); render(); };
+  const aktivtTema = () => {
+    const w = (typeof state !== 'undefined' && state && state.widgets || []).find(x => x && x.spelTema);
+    return w ? w.spelTema : null;
+  };
+
+  const INNEHALL = ['Kameraram och spelram', 'Bakgrund med plats för kamera och spel', 'Topplista: likes → coins → poäng',
+    'Top Gifter', 'Följarmål', 'Gift Campaign med 6 gåvor', 'Rörligt ljus runt ramarna'];
+
+  function sida() {
+    const knapp = document.querySelector('[data-extra="gaming"]');
+    if (!knapp || !knapp.classList.contains('active')) return;
+    const vy = document.querySelector('#view'), titel = document.querySelector('#title');
+    if (!vy) return;
+    if (titel) titel.textContent = 'Gaming overlay';
+    const aktiv = aktivtTema();
+    vy.innerHTML = '<section class="card spel-sida-head"><div><h2>Gaming overlay</h2>'
+      + '<p>Välj ett tema så får du hela paketet på en gång: kamera överst, spelet under och dina widgetar i samma stil. '
+      + 'Lägg kamera- och spelkällan under VYRA-overlayn i OBS — ramarnas mitt är genomskinlig.</p></div></section>'
+      + '<section class="spel-teman">' + Object.entries(TEMAN).map(([id, t]) =>
+        `<article class="card spel-tema${aktiv === id ? ' aktiv' : ''}" data-spel-tema="${id}">`
+        + `<img class="spel-tema-bild" src="${mapp(id)}forhandsvisning.webp" alt="${esc(t.label)}" loading="lazy">`
+        + `<div class="spel-tema-text"><h3>${esc(t.label)}</h3><ul>${INNEHALL.map(r => `<li>${r}</li>`).join('')}</ul>`
+        + `<button type="button" class="spel-anvand" data-spel-anvand="${id}">${aktiv === id ? 'Lägg om temat' : 'Använd tema'}</button>`
+        + (aktiv === id ? '<small>Används i din layout nu</small>' : '') + '</div></article>').join('')
+      + '</section>';
+    vy.querySelectorAll('[data-spel-anvand]').forEach(b => {
+      b.onclick = () => {
+        const tema = b.dataset.spelAnvand;
+        const annat = aktivtTema();
+        if (annat && !confirm(annat === tema
+          ? `${TEMAN[tema].label} ligger redan i din layout. Lägga om det? Flyttade och ändrade delar återställs.`
+          : `Byta från ${TEMAN[annat].label} till ${TEMAN[tema].label}? Delarna från ${TEMAN[annat].label} tas bort.`)) return;
+        skapaHela(tema);
+        // Till layouteditorn, där streamern ser scenen och kan finjustera den. Via menyns egen
+        // Layout-länk, som byter vy utan omladdning — en omladdning direkt efter save() hann före
+        // skrivningen och gav en tom layout (uppmätt 2026-10-15).
+        const lank = document.querySelector('aside a[href="layout.html"]');
+        if (lank) lank.click(); else if (typeof toast === 'function') toast('Öppna Layout för att se din gaming overlay');
+      };
     });
   }
+  document.addEventListener('click', e => {
+    if (e.target && e.target.closest && e.target.closest('[data-extra="gaming"]')) setTimeout(sida, 0);
+  }, true);
 
   // ---- installation, ytterst i kedjan --------------------------------------------------------------
   // Samma vakt som ranking-sixpack.js (rang 2): wrappern lägger sig ytterst igen efter varje sent
   // skript, så att Gift Campaign Aura (laddas asynkront ur media.js) inte hamnar utanför skinnet.
   const RANG = 3;
-  const djup = { wh: 0, bind: 0, props: 0 };
+  const djup = { wh: 0, props: 0 };
   function vakt(nyckel, forra, gor) {
     const f = function () {
       if (djup[nyckel]) return forra.apply(this, arguments);
@@ -291,14 +311,6 @@
       });
       andrat = true;
     }
-    if (typeof bind === 'function' && !(bind.__vyraYtter >= RANG)) {
-      const tidigare = bind;
-      bind = vakt('bind', tidigare, function () {
-        tidigare();
-        if (typeof view !== 'undefined' && (view === 'editor' || view === 'overlay')) katalog();
-      });
-      andrat = true;
-    }
     if (andrat) { try { if (typeof render === 'function') render(); } catch (e) {} }
   }
 
@@ -306,5 +318,5 @@
   document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
   addEventListener('load', install, { once: true });
 
-  window.VyraSpellayout = Object.freeze({ teman: TEMAN, delar: DELAR, hela: HELA, html, delFor, skapaHela });
+  window.VyraSpellayout = Object.freeze({ teman: TEMAN, delar: DELAR, hela: HELA, html, delFor, skapaHela, sida });
 })();

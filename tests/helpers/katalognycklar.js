@@ -123,27 +123,6 @@ const utanReferens = nyckel =>
 // i filhuvudet. Regin stoppar klockan, ställer lådan i den fas som ska fotograferas och fryser
 // animationerna en fast tid in i just den fasen. Då är bilden bestämd av kod och inte av tajming.
 const REGI = {
-  // SPELLAYOUT (spellayout.js). Två saker rör sig av sig själva: topplistans cykel väljer steg ur
-  // klockan (likes → coins → poäng), och ramljuset går runt i en loop. Uppmätt i första
-  // referenskörningen 2026-10-15: listan REPRODUCERADE INTE (871 px skilde mellan två sessioner,
-  // rubriken bytte steg), och kampanjdelarna föll på typregin för templateGiftCampaign, som letar
-  // efter Aura-renderarens låda — skinnet ersätter den. Regin här stänger av cykeln på widgeten och
-  // fryser alla animationer i delen på en fast tidpunkt. Prefix: gäller alla teman och alla delar.
-  'catalog:spellayout:': {
-    fas: 'stilla ljus', ms: 1200,
-    varfor: 'listans cykel styrs av klockan och ljuset går i en loop; fryst blir bilden bestämd av kod',
-    regi: async ([fas, ms]) => {
-      const hitta = () => document.querySelector('.widget.spel[data-id]');
-      const box = hitta();
-      const w = box && state.widgets.find(x => String(x.id) === box.dataset.id);
-      if (!box || !w) return { fel: 'spellayoutens renderare saknas' };
-      if (w.rankingCycle) { w.rankingCycle = false; render(); await new Promise(r => setTimeout(r, 300)); }
-      const rot = hitta();
-      const alla = [...rot.getAnimations({ subtree: true })];
-      alla.forEach(a => { a.pause(); a.currentTime = ms; });
-      return { fas, ms, animationer: alla.length };
-    },
-  },
   // LIKE FOUNTAIN · PORTAL (like-fountain-portal.js). Den lever på en canvas som bara ritar när
   // tittarna tappar, och i overlay-läget är den genomskinlig i vila — ALERTS-triggern ovan startar
   // alltså ett slumpat förlopp. Regin fryser klockan, tömmer duken och visar förhandsbilden, som är
