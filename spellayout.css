@@ -70,17 +70,15 @@
 .widget.spel.spel-lista .toplike-row em::first-letter{color:#ff4d6d}
 .widget.spel.spel-lista[data-tl-steg="coins"] .toplike-row em::first-letter{color:#ffd23f}
 .widget.spel.spel-lista[data-tl-steg="points"] .toplike-row em::first-letter{color:#c9a8ff}
-/* ANTAL PLATSER — se lista() i spellayout.js. Den inre lådan bär hela konsten; en klippt lista visar
-   bara den övre delen. Klippet tar bara nederkanten, så glöden runt sidorna står kvar. */
+/* ANTAL PLATSER — se lista() i spellayout.js. Varje block bär hela konsten i en inre låda; ett
+   klippt block visar bara den övre delen. Klippet tar bara nederkanten, så glöden runt sidorna står
+   kvar. Avståndet mellan block 1 och 2 blir av sig självt detsamma som mellan två rader. */
 .spel-lista .spel-konst-inre{position:absolute;left:0;top:0;width:100%}
 .spel-lista .spel-klippt{clip-path:inset(-12% -12% 0 -12%)}
-/* Två sidor: bara den aktiva sidans rader syns. */
-.widget.spel.spel-lista[data-spel-sida="0"] .toplike-row[data-sida="1"],
-.widget.spel.spel-lista[data-spel-sida="1"] .toplike-row[data-sida="0"]{display:none!important}
-/* Sida två: konstens rangbrickor 1–5 och kronorna över 1–3 maskas bort ... */
-.spel-lista[data-spel-sida="1"] .spel-bild,.spel-lista[data-spel-sida="1"] .spel-glod{
+/* Block 2 (plats 6–10): konstens rangbrickor 1–5 och kronorna över 1–3 maskas bort ... */
+.spel-lista .spel-fortsattning .spel-bild,.spel-lista .spel-fortsattning .spel-glod{
   -webkit-mask:linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);mask:linear-gradient(90deg,transparent 0 16.5%,#000 19.5%)}
-.spel-lista[data-spel-sida="1"] .spel-ljus{
+.spel-lista .spel-fortsattning .spel-ljus{
   -webkit-mask:var(--spel-mask) center/100% 100% no-repeat,linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);-webkit-mask-composite:source-in;
   mask:var(--spel-mask) center/100% 100% no-repeat,linear-gradient(90deg,transparent 0 16.5%,#000 19.5%);mask-composite:intersect}
 /* ... och egna brickor med 6–10 ritas på samma ställe, i konstens silverstil. */

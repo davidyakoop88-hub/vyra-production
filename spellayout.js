@@ -129,50 +129,34 @@
     const nolla = iOverlay();
     const foto = esc(sakerUrl(w.profileImage, 'assets/images/test-profile.svg'));
     // ANTAL PLATSER, 1–10 (Davids beslut 2026-10-16), ur samma reglage som de andra listorna
-    // (likeCount, "Antal profiler"). Konsten har fem numrerade platser:
-    //   färre än 5  — bilden klipps strax under sista platsen, så inga tomma platser syns
-    //   fler än 5   — två sidor på samma fem platser: 1–5, sedan 6–10. På sida två döljs konstens
-    //                 egna rangbrickor (och kronorna över 1–3) och egna brickor med 6–10 ritas.
+    // (likeCount, "Antal profiler"). Konsten har fem numrerade platser, så listan byggs av block:
+    //   block 1 — plats 1–5, konsten som den är
+    //   block 2 — plats 6–10 UNDER block 1 ("de ska vara under varandra"), samma konst men med
+    //             rangbrickorna och kronorna maskade och egna brickor 6–10
+    // Varje block klipps strax under sin sista plats, så färre än fem ger inga tomma platser.
     // Livedatan fyller raderna i DOM-ordning, så rad 6–10 får plats 6–10 utan något eget.
     const n = Math.max(1, Math.min(10, Math.round(tal(w.likeCount, 5))));
-    const klipp = n < 5 ? Math.min(100, g.forsta + (n - 1) * g.rad + g.foto[2] + 3.5) : 100;
-    let rader = '';
-    for (let i = 0; i < n; i++) {
-      const p = demo[i] || ['', ''];
-      const sida = i < 5 ? 0 : 1, plats = i % 5;
-      const top = g.forsta + plats * g.rad;
-      rader += `<div class="toplike-row rank-${i + 1}" data-sida="${sida}" style="--spel-rad-top:${top}%;--spel-rad-h:${g.foto[2]}%">`
-        + (sida ? `<b class="spel-rang">${i + 1}</b>` : '')
-        + `<i class="spel-foto" style="--spel-x:${g.foto[0]}%;--spel-b:${g.foto[1]}%"><img src="${foto}" alt=""></i>`
-        + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%;--spel-y:${g.namn[2]}%;--spel-h:${g.namn[3]}%"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
-        + `<em>${IKON[w.type]} ${nolla ? '0' : esc(p[1] || '0')}</em></span></div>`;
-    }
-    // Den klippta konsten: ytterlådan har den klippta höjden, den inre hela konstens — så att
-    // radernas procent, ljusets mask och glöden räknas mot samma bild som förut.
-    const inre = `<div class="spel-konst-inre" style="height:${(10000 / klipp).toFixed(3)}%">`;
     const bild = `<img class="spel-glod" src="${src}" alt="" aria-hidden="true" draggable="false"><img class="spel-bild" src="${src}" alt="" draggable="false">${ljus(src)}`;
-    return rot(w, 'vyra-toplike spel-lista', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`,
-      ` data-spel-sidor="${n > 5 ? 2 : 1}" data-spel-sida="0"`)
-      + `<h3>${esc(w.templateTitle || RUBRIK[w.type])}</h3>`
-      + `<div class="spel-konst${klipp < 100 ? ' spel-klippt' : ''}" style="aspect-ratio:${g.bild[0]}/${(g.bild[1] * klipp / 100).toFixed(2)}">`
-      + inre + bild + rader + '</div></div>' + handtag(w) + '</div>';
-  }
-
-  // SIDBYTET för listor med fler än fem. Sidan räknas ur klockan (samma vana som rankingcykeln),
-  // så alla OBS-källor visar samma sida. I OBS hoppas sida två över så länge plats 6 saknar namn —
-  // publiken ska inte se fem tomma platser.
-  const SIDA_MS = 5000;
-  function bytSidor() {
-    document.querySelectorAll('.spel-lista[data-spel-sidor="2"]').forEach(box => {
-      let sida = Math.floor(Date.now() / SIDA_MS) % 2;
-      if (sida === 1 && iOverlay()) {
-        const sjatte = box.querySelector('.toplike-row.rank-6 strong');
-        if (!sjatte || !sjatte.textContent.trim()) sida = 0;
+    const block = (forsta, antal) => {
+      const klipp = antal < 5 ? Math.min(100, g.forsta + (antal - 1) * g.rad + g.foto[2] + 3.5) : 100;
+      let rader = '';
+      for (let j = 0; j < antal; j++) {
+        const i = forsta + j, p = demo[i] || ['', ''];
+        rader += `<div class="toplike-row rank-${i + 1}" style="--spel-rad-top:${g.forsta + j * g.rad}%;--spel-rad-h:${g.foto[2]}%">`
+          + (forsta ? `<b class="spel-rang">${i + 1}</b>` : '')
+          + `<i class="spel-foto" style="--spel-x:${g.foto[0]}%;--spel-b:${g.foto[1]}%"><img src="${foto}" alt=""></i>`
+          + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%;--spel-y:${g.namn[2]}%;--spel-h:${g.namn[3]}%"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
+          + `<em>${IKON[w.type]} ${nolla ? '0' : esc(p[1] || '0')}</em></span></div>`;
       }
-      if (box.dataset.spelSida !== String(sida)) box.dataset.spelSida = String(sida);
-    });
+      // Ytterlådan har den klippta höjden, den inre hela konstens — så att radernas procent, ljusets
+      // mask och glöden räknas mot samma bild som förut.
+      return `<div class="spel-konst${klipp < 100 ? ' spel-klippt' : ''}${forsta ? ' spel-fortsattning' : ''}" style="aspect-ratio:${g.bild[0]}/${(g.bild[1] * klipp / 100).toFixed(2)}">`
+        + `<div class="spel-konst-inre" style="height:${(10000 / klipp).toFixed(3)}%">` + bild + rader + '</div></div>';
+    };
+    return rot(w, 'vyra-toplike spel-lista', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`)
+      + `<h3>${esc(w.templateTitle || RUBRIK[w.type])}</h3>`
+      + block(0, Math.min(5, n)) + (n > 5 ? block(5, n - 5) : '') + handtag(w) + '</div>';
   }
-  setInterval(bytSidor, 500);
 
   // ---- Top Gifter ---------------------------------------------------------------------------------
   function gifter(w, t) {
