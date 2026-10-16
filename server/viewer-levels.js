@@ -38,6 +38,12 @@ function avgorHojning(forra, ny) {
 //
 // Lagret är MONOTONT (GREATEST): högsta sedda nivå vinner. En tillfällig nolla eller en nivå som
 // gått ner när ett medlemskap löpt ut ska inte kunna skapa en falsk höjning nästa gång.
+//
+// NULLIF RUNT GREATEST ÄR INTE VALFRITT. COALESCE gör NULL till 0 för jämförelsen, och har ingen
+// av sidorna någon nivå blir resultatet 0 — som bryter mot CHECK (… BETWEEN 1 AND 50). Uppmätt
+// under en riktig LIVE 2026-10-15: en tittare som lärts in med bara fanklubbsnivå och sedan skickar
+// en gåva med bara fan level gav 0 i gifter_level, och HELA raden avvisades, fan level-höjningen
+// med den. Kolumnen ska vara NULL när ingen nivå setts, inte 0.
 const SQL = `
 WITH forra AS (
   SELECT fan_level, gifter_level
@@ -47,10 +53,10 @@ WITH forra AS (
   INSERT INTO viewer_levels (workspace_id, viewer_id, fan_level, gifter_level, seen_at)
   VALUES ($1, $2, NULLIF($3, 0), NULLIF($4, 0), now())
   ON CONFLICT (workspace_id, viewer_id) DO UPDATE SET
-    fan_level    = GREATEST(COALESCE(viewer_levels.fan_level, 0),
-                            COALESCE(EXCLUDED.fan_level, 0)),
-    gifter_level = GREATEST(COALESCE(viewer_levels.gifter_level, 0),
-                            COALESCE(EXCLUDED.gifter_level, 0)),
+    fan_level    = NULLIF(GREATEST(COALESCE(viewer_levels.fan_level, 0),
+                                   COALESCE(EXCLUDED.fan_level, 0)), 0),
+    gifter_level = NULLIF(GREATEST(COALESCE(viewer_levels.gifter_level, 0),
+                                   COALESCE(EXCLUDED.gifter_level, 0)), 0),
     seen_at      = now()
   RETURNING 1
 )

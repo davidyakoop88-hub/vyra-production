@@ -124,6 +124,13 @@ jobs:
         run: node --test test/overlay-put-http.test.js
         working-directory: server
 
+      # The level ledger's upsert against the migrated CHECK constraints. The unit test injects a
+      # fake query and never runs the SQL — which is exactly where a GREATEST(...)=0 slipped past
+      # CHECK (1..50) and rejected every update during a real LIVE on 2026-10-15.
+      - name: Nivåminnet — upserten mot tabellens CHECK
+        run: node --test test/viewer-levels-postgres.test.js
+        working-directory: server
+
       # Frame shape and the write path. Pure, so it also runs in the main CI job — but the isolation
       # step below only means something if these hold, and a failure here should stop this job too.
       - name: Goal-SSE — absoluta frames, normalisering och skrivvägen
