@@ -9,10 +9,14 @@
 // med `zoom`, som en container query inte ser (ett 296 px kort ritat i 148 px trodde att det var
 // stort). Duken ar 432 designpixlar = en telefonbredd i TikTok, sa designpixlar ar ratt matt.
 //
-// Provet mater den renderade sidan i overlay-lage: under troskeln (190 px kort) ska fotot vara minst
-// 45 % av kortet och namnet minst 14 px — oavsett om widgeten gjorts smal med bredden, med zoomen
+// 2026-10-16: forsta losningen bytte ut mallen mot en mork inzoomad bild — DAVID: "bilden kommer upp
+// och inte designen". Mallen ska alltid synas orord; i ett litet kort vaxer bara fotot ut ur ringen.
+//
+// Provet mater den renderade sidan i overlay-lage: under troskeln (190 px kort) ska mallen vara
+// orord (ingen transform/filter pa konsten), fotot minst 30 % av kortet (mot ~19 % i ringen) och
+// namnet storre an i stora vyn — oavsett om widgeten gjorts smal med bredden, med zoomen
 // (dra-handtaget) eller ligger i bandlaget. Standardkortet (bandet, bredd 300 -> 200 px kort) ar
-// Davids "tydliga" vy och ska vara orort: inget kompaktlage, fotot kvar i mallens ring.
+// Davids "tydliga" vy och ska vara orort: fotot kvar i mallens ring.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
@@ -63,7 +67,7 @@ function mat({ bredd, zoom = 1, mode = 'slideshow' }) {
     await new Promise(r => setTimeout(r, 700));
     const box = document.querySelector(`[data-id="${w.id}"]`);
     const card = box.querySelector('.fl50-card'), foto = box.querySelector('.fl50-photo');
-    const namn = box.querySelector('.fl50-name span'), bricka = box.querySelector('.fl50-badge');
+    const namn = box.querySelector('.fl50-name span'), konst = getComputedStyle(box.querySelector('.fl50-art'));
     const skala = document.querySelector('.canvas').getBoundingClientRect().width / 432;
     const r = el => el.getBoundingClientRect();
     const egenZoom = namn.currentCSSZoom || 1;
@@ -75,7 +79,9 @@ function mat({ bredd, zoom = 1, mode = 'slideshow' }) {
       namnSyns: r(namn).height > 0 && getComputedStyle(namn).visibility !== 'hidden',
       // ellips/klipp: textens bredd far inte vara bredare an rutan pa en rad (kompakt bryter till tva)
       klipptBredd: namn.scrollWidth > namn.clientWidth + 1,
-      bricka: bricka ? getComputedStyle(bricka).display : 'saknas'
+      // namnets storlek i cqw (andel av kortets bredd) — jamfors mot stora vyns 7,4cqw * faktor
+      namnCqw: parseFloat(getComputedStyle(namn).fontSize) * egenZoom / skala / (r(card).width / skala) * 100,
+      mallOrord: konst.transform === 'none' && konst.filter === 'none'
     };
   }, { bredd, zoom, mode });
 }
@@ -92,13 +98,13 @@ for (const fall of SMALA) {
   test(`kompakt: ${fall.namn} — fotot och namnet bar kortet`, { skip }, async () => {
     const m = await mat(fall);
     assert.ok(m.kort < 190, `kortet skulle vara smalt men ar ${m.kort.toFixed(1)} px`);
-    assert.ok(m.foto >= m.kort * 0.45, `fotot ar ${m.foto.toFixed(1)} px av ${m.kort.toFixed(1)} px kort — under 45 %`);
-    assert.ok(m.foto >= 50, `fotot ar bara ${m.foto.toFixed(1)} px`);
-    assert.ok(m.namnPx >= 14, `namnet ar bara ${m.namnPx.toFixed(1)} px`);
+    assert.ok(m.mallOrord, 'mallen ska synas orord — ingen inzoomning eller dampning av bilden');
+    assert.ok(m.foto >= m.kort * 0.30, `fotot ar ${m.foto.toFixed(1)} px av ${m.kort.toFixed(1)} px kort — under 30 %`);
+    // "Sara Lindqvist" (14 tecken): stora vyn ger 7,4 * 0,79 = 5,8cqw, litet kort 9,5 * 0,57 -> golvet 5,8
+    assert.ok(m.namnCqw >= 5.8 - 0.1, `namnet ar ${m.namnCqw.toFixed(2)}cqw — mindre an i stora vyn`);
     assert.equal(m.namnText, 'Sara Lindqvist');
     assert.ok(m.namnSyns, 'namnet syns inte');
     assert.ok(!m.klipptBredd, 'namnet klipps i sidled');
-    assert.equal(m.bricka, 'block', 'LEVEL 50-brickan ska synas i kompakt lage');
   });
 }
 
@@ -108,12 +114,56 @@ test('stor vy: standardkortet (bandet, bredd 300) ar orort — mallens ring, ing
   // Den nya Fly Love-mallen (2026-10-14) har en storre ring: fotot ar 20,1 % av kortet. Kompaktlaget
   // ger 58 %, sa 22 % skiljer fortfarande lagena at med god marginal.
   assert.ok(m.foto < m.kort * 0.22, `fotot ska sitta i mallens ring (20,1 %), ar ${m.foto.toFixed(1)} px`);
-  assert.equal(m.bricka, 'none');
+  assert.ok(m.mallOrord);
+});
+
+// EN WIDGET, ALLA DESIGNER (David 2026-10-16): "lagger alla design tillsammans ... om anvandare vill
+// att en design ska visas eller alla". 'alla' ger kort N mall N; en vald design ger samma mall overallt.
+test('design "alla" visar alla fyra mallarna, en vald design bara den', { skip }, async () => {
+  const mallar = design => sida.evaluate(async design => {
+    const st = window.eval('state'); st.widgets = [];
+    const w = VyraWidgets.create('catalog:fanlevel50:royal');
+    Object.assign(w, { x: 8, y: 8, width: 300, fanl50Mode: 'band', fanl50Design: design, fanl50Source: 'manual',
+      fanl50Manual: ['A', 'B', 'C', 'D'].map(name => ({ name, avatar: '' })) });
+    st.widgets.push(w); render(); await new Promise(r => setTimeout(r, 300));
+    const kort = [...document.querySelectorAll(`[data-id="${w.id}"] .fl50-card`)].slice(0, 4);
+    return kort.map(k => [...k.classList].find(c => c.startsWith('fl50-design-')));
+  }, design);
+  assert.deepEqual(await mallar('alla'), ['fl50-design-royal', 'fl50-design-zeus', 'fl50-design-ornen', 'fl50-design-lejon']);
+  assert.deepEqual(await mallar('ornen'), Array(4).fill('fl50-design-ornen'));
+});
+
+// SUDDIGT I OBS (2026-10-16): overlayen skalas upp med transform: scale(~2,5). will-change: transform
+// pa bandet fryste rastreringen i designstorleken, sa kortet forstorades som en bild — uppmatt i en
+// 4x uppskalad duk: allt suddigt med will-change, skarpt utan. Inget i kortet far bara will-change.
+test('bandet bar ingen will-change — annars blir kortet suddigt nar overlayen skalas upp', { skip }, async () => {
+  const wc = await sida.evaluate(async () => {
+    const st = window.eval('state'); st.widgets = [];
+    const w = VyraWidgets.create('catalog:fanlevel50:royal');
+    Object.assign(w, { x: 8, y: 8, width: 160, fanl50Mode: 'band', fanl50Source: 'manual', fanl50Manual: [{ name: 'A', avatar: '' }] });
+    st.widgets.push(w); render(); await new Promise(r => setTimeout(r, 300));
+    return [...document.querySelectorAll(`[data-id="${w.id}"], [data-id="${w.id}"] *`)]
+      .map(el => getComputedStyle(el).willChange).filter(v => v !== 'auto');
+  });
+  assert.deepEqual(wc, []);
+});
+
+test('kort med kort namn far storre text i litet kort an i stora vyn', { skip }, async () => {
+  const m = await sida.evaluate(async () => {
+    const st = window.eval('state'); st.widgets = [];
+    const w = VyraWidgets.create('catalog:fanlevel50:royal');
+    Object.assign(w, { x: 8, y: 8, width: 160, fanl50Source: 'manual', fanl50Manual: [{ name: 'kurdiia6', avatar: '' }] });
+    st.widgets.push(w); render(); await new Promise(r => setTimeout(r, 700));
+    const box = document.querySelector(`[data-id="${w.id}"]`);
+    const namn = box.querySelector('.fl50-name span'), card = box.querySelector('.fl50-card');
+    return parseFloat(getComputedStyle(namn).fontSize) * (namn.currentCSSZoom || 1) / (card.getBoundingClientRect().width / (card.currentCSSZoom || 1)) * 100;
+  });
+  assert.ok(m > 9, `namnet ar ${m.toFixed(2)}cqw — skulle vara ~9,5`);
 });
 
 test('stor vy: bred slideshow far inget kompaktlage', { skip }, async () => {
   const m = await mat({ bredd: 320 });
   assert.ok(m.kort > 190);
   assert.ok(m.foto < m.kort * 0.22);
-  assert.equal(m.bricka, 'none');
+  assert.ok(m.mallOrord);
 });

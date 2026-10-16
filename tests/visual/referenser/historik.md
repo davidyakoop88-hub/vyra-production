@@ -403,6 +403,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 21 av 169 (filter: level) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus, catalog:fanlevel:layout:badgereveal, catalog:fanlevel:layout:duo, catalog:fanlevel:layout:heartbeat, catalog:fanlevel:layout:hearts, catalog:fanlevel:layout:hero, catalog:fanlevel:layout:loyalty, catalog:fanlevel:layout:ribbon, catalog:fanlevel:layout:stack, catalog:gifterlevel:duo, catalog:gifterlevel:flip, catalog:gifterlevel:number, catalog:gifterlevel:orbitlevel, catalog:gifterlevel:profile, catalog:gifterlevel:reveal, catalog:gifterlevel:risingtier, catalog:gifterlevel:sidebadge, catalog:gifterlevel:stack
 
+## 2026-10-16 — 4 referenser skrivna
+
+- **Motiv:** Fan Level 50: will-change borttaget fran bandet (suddigt nar overlayen skalas upp i OBS) - kortet rastreras skarpare, PR #614
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 4 av 169 (filter: fanlevel50) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus
+
 ## 2026-10-16 — 9 referenser skrivna
 
 - **Motiv:** Goals: svart skiva och etikettplatta bortnyckade ur circle-like/-follower/-diamond.png, PR #615
