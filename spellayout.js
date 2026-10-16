@@ -333,7 +333,7 @@
         + `<em style="${pct(g.varde)};font-size:${cqw(g.bild, g.varde[3], .74)}cqw;${dold}">◉ ${varde}</em></div>`;
     }
     const ruta = [g.namn[0], g.namn[1], g.namn[2], g.varde[1] + g.varde[3] - g.namn[1]];
-    return `<div class="topgift-copy spel-en-rad" style="${pct(ruta)};font-size:${cqw(g.bild, ruta[3], .62)}cqw">`
+    return `<div class="topgift-copy spel-en-rad spel-passa" style="${pct(ruta)};font-size:${cqw(g.bild, ruta[3], .62)}cqw">`
       + `<strong>${namn}</strong><em style="${dold}">◉ ${varde}</em></div>`;
   }
 
@@ -348,7 +348,7 @@
     return rot(w, 'spel-mal', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent};--goal-fill:${p}%`, ` data-goal="social" data-spel-text="${g.text || 'mork'}"`)
       + konst(src, g.bild)
       + `<div class="spel-mal-spar" style="${pct(g.spar)}"><i data-goal-fill style="width:${p}%"></i>`
-      + `<span class="spel-mal-text" style="font-size:${cqw(g.bild, g.spar[3], .64)}cqw"><span class="spel-mal-rubrik">${esc(w.goalTitle || 'FÖLJARE')}</span>`
+      + `<span class="spel-mal-text spel-passa" style="font-size:${cqw(g.bild, g.spar[3], .64)}cqw"><span class="spel-mal-rubrik">${esc(w.goalTitle || 'FÖLJARE')}</span>`
       + `<span class="spel-mal-varde"><b data-goal-value>${fmt(nu)}</b>/<b data-goal-target>${fmt(mal)}</b></span></span></div>`
       + '</div>' + handtag(w) + '</div>';
   }
@@ -466,6 +466,32 @@
     const vy = document.querySelector('#view');
     if (knapp && vy && knapp.classList.contains('active') && !vy.querySelector('.spel-teman')) sida();
   }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // ---- texten ryms alltid i sitt fält ---------------------------------------------------------------
+  // I de smala fälten (en rad i Top Gifter, målstapeln) kan ett långt värde bli bredare än fältet, och
+  // hur mycket beror på typsnittet: uppmätt 2026-10-16 rymdes Ruby Eclipses "◉ 1 234 567" på Windows
+  // men inte på Linux i CI. Texten krymps då steg för steg tills den ryms — coins klipps aldrig. Körs
+  // när en del ritas och när livedatan skriver ny text.
+  function passa(el) {
+    if (!el.dataset.spelBas) el.dataset.spelBas = el.style.fontSize || getComputedStyle(el).fontSize;
+    el.style.fontSize = el.dataset.spelBas;
+    for (let i = 0, f = 1; i < 12 && el.scrollWidth > el.clientWidth + 0.5; i++) {
+      f *= 0.92; el.style.fontSize = `calc(${el.dataset.spelBas} * ${f.toFixed(3)})`;
+    }
+  }
+  let passaPlanerad = false;
+  const passaAlla = () => {
+    passaPlanerad = false;
+    document.querySelectorAll('.widget.spel .spel-passa').forEach(passa);
+  };
+  new MutationObserver(muts => {
+    if (passaPlanerad) return;
+    if (!muts.some(m => (m.target.closest && m.target.closest('.widget.spel')) || (m.target.parentElement && m.target.parentElement.closest('.widget.spel'))
+      || [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches('.widget.spel') || n.querySelector('.widget.spel'))))) return;
+    passaPlanerad = true;
+    // setTimeout, inte requestAnimationFrame: rAF körs inte i en dold flik eller en dold OBS-källa.
+    setTimeout(passaAlla, 0);
+  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 
   // ---- installation, ytterst i kedjan --------------------------------------------------------------
   // Samma vakt som ranking-sixpack.js (rang 2): wrappern lägger sig ytterst igen efter varje sent

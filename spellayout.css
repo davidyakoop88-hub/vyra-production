@@ -143,7 +143,7 @@
   padding:0 4%;box-sizing:border-box;overflow:hidden;line-height:1}
 .spel-gifter .topgift-copy.spel-en-rad strong,.spel-gifter .topgift-copy.spel-en-rad em{position:static;display:block;font-size:inherit}
 .spel-gifter .topgift-copy.spel-en-rad strong{flex:1 1 auto;min-width:0;justify-content:flex-start}
-.spel-gifter .topgift-copy.spel-en-rad em{flex:0 0 auto}
+.spel-gifter .topgift-copy.spel-en-rad em{flex:0 0 auto;white-space:nowrap}
 
 /* ---- LJUSA PLATTOR (Ice Pearl, Moonlight Silver, Peach Bloom, Rose Gold, Sakura m.fl.) ----
    Vit text med glöd syns inte på en vit eller persikofärgad platta. Där plattan är ljus
