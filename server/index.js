@@ -110,6 +110,13 @@ const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share'
 // behandlas som en personhändelse i allt annat (nivåminne, statistik).
 const TIKTOK_UTAN_AVSANDARE=new Set(['envelope']);;
 const TIKTOK_INGEST_RATE_LIMIT=100,TIKTOK_INGEST_RATE_WINDOW_SECONDS=1;
+// HÖGVOLYMTYPER I EGNA HINKAR (uppmätt 2026-10-16, sändningen jrofficialswe). Alla typer delade
+// 100/sekund: bryggan räknade member=4075 och likes=3423 under sändningen, molnet svarade 429 på
+// 1741 events och bryggan kastade dem — likes stod på 0 och en Guardian-entré nådde aldrig
+// overlayn. Inträden och tittarantal fyller nu sin egen hink, likes sin, och gåvor, Guardian,
+// följare m.fl. behåller sina 100/sekund som massinträden inte längre kan tränga ut.
+const TIKTOK_INGEST_HINKAR={member:['rum',200],viewer:['rum',200],like:['like',300],likes:['like',300]};
+const ingestHink=type=>TIKTOK_INGEST_HINKAR[String(type||'').toLowerCase()]||null;
 // CHATTKOMMANDON I EGEN HINK (2026-09-27, #365). Rader som börjar med "!" (bryggans typ
 // `chatcommand`, som cleanEvent gör till `chat`) behövs i molnet för låtönskningar och chattbotens
 // kommandon. De räknas i en EGEN hink med eget tak, så en kommandostorm aldrig kan äta den budget
@@ -161,6 +168,10 @@ async function ingestTikTokEvent(workspaceId,payload){
   if(String(payload?.type||'').toLowerCase()==='chatcommand'){
     if(await rateLimiter.exceeded(`tiktok-ingest-kommando:${workspaceId}`,TIKTOK_KOMMANDO_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
       throw Object.assign(new Error(`För många chattkommandon för denna workspace (max ${TIKTOK_KOMMANDO_RATE_LIMIT}/sekund)`),{status:429});
+  }else if(ingestHink(payload?.type)){
+    const[hink,gräns]=ingestHink(payload.type);
+    if(await rateLimiter.exceeded(`tiktok-ingest-${hink}:${workspaceId}`,gräns,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+      throw Object.assign(new Error(`För många TikTok-events av typen ${hink} för denna workspace (max ${gräns}/sekund)`),{status:429});
   }else if(await rateLimiter.exceeded(`tiktok-ingest:${workspaceId}`,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
     throw Object.assign(new Error(`För många TikTok-events för denna workspace (max ${TIKTOK_INGEST_RATE_LIMIT}/sekund)`),{status:429});
   validateTikTokIngestPayload(payload);
@@ -211,6 +222,13 @@ const StreamSessions=skapaStreamSessions({pool});
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
 // inget), langdkontroll fore timingSafeEqual (kravet for konstant tid), och ett felmeddelande
 // utan siffror, langd eller token. Domanfunktionerna ser aldrig ravarden - de ar rena.
+// BRYGGANS INGEST RÄKNAS INTE MOT IP-GRÄNSEN (uppmätt 2026-10-16). API_RATE_LIMIT är 120 per
+// minut och IP — ett skydd för webbens besökare. Molnbryggan skickar ALLA konton från en IP, så i
+// skarp sändning släpptes ~2 events/sekund igenom och resten fick 429 innan ingest ens nåddes;
+// stresstest mot staging: exakt 120 av 1500 likes, allt annat 429. En POST till
+// /api/events/tiktok/:ws med giltig maskintoken har egna gränser per workspace och typ
+// (ingestTikTokEvent). Utan giltig token räknas anropet mot IP-gränsen precis som förut.
+const bryggansIngest=(req,p)=>req.method==='POST'&&/^\/api\/events\/tiktok\/[0-9a-f-]+$/i.test(p)&&maskinAuth(req);
 function maskinAuth(req){
   const expected=String(process.env.TIKTOK_INGEST_TOKEN||''),
         supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
@@ -371,7 +389,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!rest){const svar={ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}};
       if(process.env.VYRA_SANDNINGSIDENTITET==='1')svar.session=await StreamSessions.aktivSession({workspaceId:access.workspace_id});
       return send(res,200,svar)}
-    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${S.klientadress(req)||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
+    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${S.klientadress(req)||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(!bryggansIngest(req,p)&&await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
   // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
   // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
   // anropare far inte ens veta om funktionen ar paslagen.
@@ -904,4 +922,4 @@ const stopGavobevakning=startaGavobevakning({pool});
 // nar flaggan ar exakt '1' — annars finns ingen timer, ingen pollning, inget claim alls.
 const streamWorker=process.env.VYRA_SANDNINGSIDENTITET==='1'?startStreamWorker({pool,eventBus,metrics,logg:console}):null;
 mediaCleanup.unref();authCleanup.unref();cleanupAuthData();deleteDueAccounts();server.listen(PORT,'0.0.0.0',()=>console.log(JSON.stringify({level:'info',event:'server_started',port:PORT,at:new Date().toISOString()})));let closing=false;const shutdown=signal=>{if(closing)return;closing=true;stopMonitor();stopCapacity();clearInterval(mediaCleanup);goalCleanup.stop();clearInterval(authCleanup);const workerStopp=streamWorker?streamWorker.stop():null;console.log(JSON.stringify({level:'info',event:'shutdown_started',signal,at:new Date().toISOString()}));server.close(async()=>{if(workerStopp)await workerStopp;await Promise.allSettled([pool.end(),eventBus.close(),mediaStorage.close()]);console.log(JSON.stringify({level:'info',event:'shutdown_complete',at:new Date().toISOString()}));process.exit(0)});setTimeout(()=>process.exit(1),Number(process.env.SHUTDOWN_TIMEOUT_MS||10000)).unref()};process.on('SIGTERM',()=>shutdown('SIGTERM'));process.on('SIGINT',()=>shutdown('SIGINT'));process.on('unhandledRejection',error=>{console.error(JSON.stringify({level:'fatal',event:'unhandled_rejection',message:error?.message||String(error),at:new Date().toISOString()}));webhookAlert('unhandled_rejection',{message:error?.message||String(error)})});process.on('uncaughtException',error=>{console.error(JSON.stringify({level:'fatal',event:'uncaught_exception',message:error.message,stack:error.stack,at:new Date().toISOString()}));webhookAlert('uncaught_exception',{message:error.message}).finally(()=>shutdown('uncaughtException'))})}
-module.exports={server,eventBus,sseHeartbeats:()=>openHeartbeats,metrics,dbBreaker,redisBreaker,buildHealthStatus,buildTestEvent,openEventStream,SSE_HEARTBEAT_MS,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,TIKTOK_INGEST_RATE_LIMIT};
+module.exports={server,eventBus,sseHeartbeats:()=>openHeartbeats,metrics,dbBreaker,redisBreaker,buildHealthStatus,buildTestEvent,openEventStream,SSE_HEARTBEAT_MS,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_HINKAR};
