@@ -199,3 +199,18 @@
 .gift-fireworks-fx[data-fw-quality="busy"] .fw-ring{display:none}
 .gift-fireworks-fx[data-fw-quality="busy"] .fw-rocket-gift,
 .gift-fireworks-fx[data-fw-quality="busy"] .fw-rocket-profile{box-shadow:none}
+
+/* ENTRÉ PER FYRVERKERI (2026-10-17, stilpanelens "Entré / utgång"): samma sex rörelser som i
+   playgrounden. Spelas på varje fyrverkeris grupp när det startar; scale/translate för filer och
+   Storlek sätts separat (CSS-egenskaperna scale/translate), så animationen använder transform. */
+@keyframes fw-en-zoom{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes fw-en-drop{0%{transform:translateY(-40%);opacity:0}70%{transform:translateY(4%);opacity:1}100%{transform:none}}
+@keyframes fw-en-bounce{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.15);opacity:1}75%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes fw-en-rise{0%{transform:translateY(30%);opacity:0}100%{transform:none;opacity:1}}
+@keyframes fw-en-glass{0%{filter:blur(14px) brightness(1.6);opacity:0}100%{filter:none;opacity:1}}
+@keyframes fw-en-neon{0%{opacity:0}20%{opacity:1}35%{opacity:.2}55%{opacity:1}70%{opacity:.4}100%{opacity:1}}
+
+/* Färgpaletten i Gift Fireworks-panelen: samma 24 färgpar och samma rutnät som playgroundens. */
+.fw-pal{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:4px 0 10px}
+.fw-sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;min-width:0}
+.fw-sw.on{border-color:#fff;box-shadow:0 0 0 2px #7c5cff}

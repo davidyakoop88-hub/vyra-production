@@ -254,10 +254,11 @@ test('förinställningen följer värdena även efter omritning och egen justeri
   assert.equal(d.querySelector('#fwPreset').value, '');
 });
 
-test('alla fem designerna kan väljas och sparas',()=>{
+// 2026-10-17: Festival (hjärtfyrverkerier runt en guldsol) är den sjätte designen och ligger först.
+test('alla sex designerna kan väljas och sparas',()=>{
  const {h,d,run}=panel();
- assert.equal(d.querySelectorAll('[data-fw-theme-choice]').length,5);
- for(const theme of ['royal','ice','rose','comet','supernova']){
+ assert.equal(d.querySelectorAll('[data-fw-theme-choice]').length,6);
+ for(const theme of ['festival','royal','ice','rose','comet','supernova']){
   d.querySelector('[data-fw-theme-choice="'+theme+'"]').click();
   run('window.__theme=state.widgets[0].fwTheme');
   assert.equal(h.window.__theme,theme);
@@ -273,7 +274,7 @@ test('catalog exposes four themes and each card creates its matching personal ro
   // [data-burst] (rubrik "FIREWORKS & BUBBLES · N DESIGNER"). Den gamla egna [data-fw]-sektionen
   // finns inte langre; Gift Fireworks-korten kanns igen pa sitt eget [data-fw-theme].
   const cards=[...d.querySelectorAll('[data-burst] [data-fw-theme]')];
-  assert.deepEqual(cards.map(b=>b.dataset.fwTheme),[...keys,'supernova']);
+  assert.deepEqual(cards.map(b=>b.dataset.fwTheme),['festival',...keys,'supernova']);
   assert.equal(d.querySelectorAll('[data-burst] [data-fw-motion]').length,0);
   for(const key of keys){
     run(`document.querySelector('[data-fw-theme="${key}"]').click(); window.__createdFw=state.widgets[state.widgets.length-1];`);
@@ -284,7 +285,7 @@ test('catalog exposes four themes and each card creates its matching personal ro
     assert.ok(d.querySelector('#testFw'),'new card keeps the test control accessible');
     // Reinstall catalog only if render has replaced the editor shell.
     run(`if(!document.querySelector('.widget-catalog'))document.querySelector('.editor-shell').insertAdjacentHTML('afterbegin','<div class="widget-catalog"></div>');bind();`);
-    assert.equal(d.querySelectorAll('[data-burst] [data-fw-theme]').length,5);
+    assert.equal(d.querySelectorAll('[data-burst] [data-fw-theme]').length,6);
   }
 });
 

@@ -17,13 +17,19 @@ const fwAntalOf=input=>{const d=input&&typeof input==='object'?input:{combo:inpu
 const fwComboOf=input=>Math.min(100,fwAntalOf(input));
 const FW_LEVELS={single:{name:'single',lead:0,points:[],gain:1},burst:{name:'burst',lead:.9,points:[[-90,-35,0],[90,-55,.45]],gain:1.15},show:{name:'show',lead:4.2,points:[[-110,-30,0],[110,-30,.65],[-85,-100,1.3],[85,-100,2],[-125,-50,2.65],[125,-50,3.3]],gain:1.35}};
 const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
-const fwCanvas=w=>['royal','ice','rose','comet','supernova'].includes(w.fwTheme);
-function fwSequence(w,combo){const level=fwLevelOf(combo);if(fwCanvas(w))return{level,duration:window.VyraSupernova.duration(combo),impact:1.6,flight:1.4};return {level,duration:fwDurationOf(w)+level.lead,impact:fwFlightOf(w)+level.lead,flight:fwFlightOf(w)}}
+const fwCanvas=w=>['festival','royal','ice','rose','comet','supernova'].includes(w.fwTheme);
+// Rörelsehastighet (stilpanelen) gör hela programmet kortare/längre; köns bokföring följer med.
+const fwFart=w=>Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1));
+// Samtidiga fyrverkerier (stilpanelen): 1–5, standard 3.
+const fwFiler=w=>Math.min(5,Math.max(1,Math.round(Number(w.fwLanes)||3)));
+function fwSequence(w,combo){const level=fwLevelOf(combo);if(fwCanvas(w))return{level,duration:window.VyraSupernova.duration(combo)/fwFart(w),impact:1.6,flight:1.4};return {level,duration:fwDurationOf(w)+level.lead,impact:fwFlightOf(w)+level.lead,flight:fwFlightOf(w)}}
 const FW_THEMES=VyraWidgets.variants('giftfireworks.theme');
+// Entré per fyrverkeri (stilpanelens Entré / utgång); keyframes i gift-fireworks.css.
+const FW_ENTREER={zoom:'fw-en-zoom {t}s cubic-bezier(.2,1.4,.4,1) both',drop:'fw-en-drop {t}s cubic-bezier(.2,1.2,.4,1) both',bounce:'fw-en-bounce {t}s ease-out both',rise:'fw-en-rise {t}s ease-out both',glass:'fw-en-glass {t}s ease-out both',neon:'fw-en-neon {t}s steps(6) both'};
 const fwThemeOf=w=>Object.hasOwn(FW_THEMES,w.fwTheme)?w.fwTheme:({spiral:'comet',bloom:'ice'}[w.fwMotion]||'royal');
 const fwPending=[];
 function fwActive(e){return [...e.querySelectorAll(':scope > .fw-event')].filter(n=>Number(n.dataset.expires)>Date.now())}
-function fwCapacity(d){return state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden&&fwSlapperIgenom(w,d||{})).every(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);return !e||fwActive(e).length<3})}
+function fwCapacity(d){return state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden&&fwSlapperIgenom(w,d||{})).every(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);return !e||fwActive(e).length<fwFiler(w)})}
 function fwDrain(){while(fwPending.length&&fwCapacity(fwPending[0]))fwTrigger(fwPending.shift(),true)}
 function fwQuality(e){
  const active=fwActive(e),busy=active.length>1;e.dataset.fwQuality=busy?'busy':'full';
@@ -77,7 +83,7 @@ document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))re
 const fwTimers=new Map();
 /* `gavobild` ar den gava som FAKTISKT skickades, hamtad ur eventet. Utan den visade varje raket
    panelinstallningens bild — standard 0001_Rose.png — sa tva lion gav tva rosor. */
-function fwSpela(w,e,combo,gavobild,avatarbild){
+function fwSpela(w,e,combo,gavobild,avatarbild,namn){
  const sequence=fwSequence(w,combo),theme=fwThemeOf(w),palette=FW_THEMES[theme];
  const group=document.createElement('div');group.className='fw-event play';
  group.dataset.fwTheme=theme;group.dataset.fwLevel=sequence.level.name;
@@ -90,7 +96,14 @@ function fwSpela(w,e,combo,gavobild,avatarbild){
  const properties={'--duration':sequence.duration+'s','--fw-flight':sequence.impact+'s','--fw-reveal':(sequence.duration-sequence.impact)+'s','--fw-primary':primary,'--fw-secondary':secondary,'--gift':Math.min(100,Math.max(38,(Number(w.fwGiftSize)||110)*.6))+'px','--blast':String((Number(w.fwExplosion)||100)/100*sequence.level.gain),'--fw-in':FW_INTRO[fwIntroOf(w)]+'ms','--fw-out':FW_OUTRO[fwOutroOf(w)]+'ms','--return-strength':String((w.fwReturn||80)/100)};
  Object.entries(properties).forEach(([key,value])=>{group.style.setProperty(key,value);e.style.setProperty(key,value)});
  e.dataset.fwTheme=theme;e.dataset.fwLevel=sequence.level.name;
- if(fwCanvas(w)){e.style.animation='none';group.style.animation='none';group.style.translate='none';e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary});fwSchedule(e);return}
+ if(fwCanvas(w)){
+  // FILER BREDVID VARANDRA (2026-10-17): tidigare stängdes förskjutningen av här, så samtidiga
+  // fyrverkerier ritades exakt ovanpå varandra (Davids "hjärta o smail på varandra"). Nu får fil 1
+  // och 2 vänster/höger i procent av widgetens bredd. Storlek skalar, Entré spelar per fyrverkeri.
+  const fil=[0,-30,30,-15,15][lane]||0,skala=Math.min(1.8,Math.max(.5,Number(w.fwScale)||1));
+  e.style.animation='none';group.style.translate=fil+'% 0';group.style.scale=String(skala);group.style.transformOrigin='50% 45%';
+  const entre=FW_ENTREER[w.fwEnter]||'';group.style.animation=entre?entre.replace('{t}',String((.6/fwFart(w)).toFixed(2))):'none';
+  e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary},namn);fwSchedule(e);return}
  e.style.removeProperty('animation');
  buildComboRockets(w,group,combo,gavobild,sequence,avatarbild);
  e.append(group);e.classList.add('play');fwSchedule(e);

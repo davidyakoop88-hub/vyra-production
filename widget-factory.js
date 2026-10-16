@@ -140,6 +140,8 @@
     'giftfireworks.motion': { magnetic: 'Magnetic Return', spiral: 'Spiral Recall',
       bloom: 'Crystal Bloom' },
     'giftfireworks.theme': {
+      // Festival (2026-10-17): hjärtfyrverkerier runt en guldsol, alla färger (gift-festival-engine.js).
+      festival: {label:'Festival · alla färger',primary:'#ffd99a',secondary:'#1f6bff',motion:'bloom'},
       royal: {label:'Lila & guld',primary:'#ffd06b',secondary:'#a764ff',motion:'magnetic'},
       ice: {label:'Isblå & silver',primary:'#dcecff',secondary:'#49cfff',motion:'bloom'},
       rose: {label:'Roséguld',primary:'#edb98b',secondary:'#ff7cc8',motion:'bloom'},
