@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const net=require('node:net');
 const {eventBus,buildTestEvent,ingestTikTokEvent,validateTikTokIngestPayload,TIKTOK_INGEST_TYPES,
-  TIKTOK_INGEST_RATE_LIMIT}=require('../index');
+  TIKTOK_INGEST_RATE_LIMIT,TIKTOK_INGEST_HINKAR}=require('../index');
 
 function redisReachable(url){
   return new Promise(resolve=>{
@@ -172,13 +172,14 @@ test('ingestTikTokEvent enforces max 100 events/second per workspace, scoped ind
     assert.equal(TIKTOK_INGEST_RATE_LIMIT,100,'gränsen har flyttat — meddelandet nedan säger 100/sekund');
     await fillIngestBudget(busyWorkspace,TIKTOK_INGEST_RATE_LIMIT);
 
+    // 'follow', inte 'like': likes har egen hink sedan 2026-10-16 och räknas inte här.
     await assert.rejects(
-      ()=>ingestTikTokEvent(busyWorkspace,buildTestEvent('like',{username:'OneTooMany'})),
+      ()=>ingestTikTokEvent(busyWorkspace,buildTestEvent('follow',{username:'OneTooMany'})),
       err=>{assert.equal(err.status,429);assert.match(err.message,/100\/sekund/);return true}
     );
 
     // A different workspace's own per-second budget must be untouched by busyWorkspace's flood.
-    const out=await ingestTikTokEvent(otherWorkspace,buildTestEvent('like',{username:'UnaffectedFan'}));
+    const out=await ingestTikTokEvent(otherWorkspace,buildTestEvent('follow',{username:'UnaffectedFan'}));
     assert.equal(out.duplicate,false);
   }finally{
     await eventBus.close().catch(()=>{});
@@ -202,15 +203,48 @@ test('en ny sekund ger workspacet sin budget tillbaka',async t=>{
     await client.expire(spent,5);
 
     // Budgeten ar slut i DEN har sekunden.
-    await assert.rejects(()=>ingestTikTokEvent(workspaceId,buildTestEvent('like',{username:'Blocked'})),
+    await assert.rejects(()=>ingestTikTokEvent(workspaceId,buildTestEvent('follow',{username:'Blocked'})),
       err=>err.status===429);
 
     // Vanta tills vaggklockan bytt sekund, sa nasta anrop raknas mot en annan hink.
     const second=Math.floor(Date.now()/1000);
     while(Math.floor(Date.now()/1000)===second)await new Promise(r=>setTimeout(r,25));
 
-    const out=await ingestTikTokEvent(workspaceId,buildTestEvent('like',{username:'FreshSecond'}));
+    const out=await ingestTikTokEvent(workspaceId,buildTestEvent('follow',{username:'FreshSecond'}));
     assert.equal(out.duplicate,false,'budgeten aterstalldes inte nar sekunden bytte');
+  }finally{
+    await eventBus.close().catch(()=>{});
+  }
+});
+
+// MASSINTRÄDEN OCH LIKES FÅR INTE TRÄNGA UT GUARDIAN (uppmätt 2026-10-16, sändningen
+// jrofficialswe): alla typer delade 100/sekund, molnet svarade 429 på 1741 events och en
+// Guardian-entré nådde aldrig overlayn. Nu har member/viewer och likes egna hinkar. Provet fyller
+// båda högvolymhinkarna helt och visar att (1) en like och ett inträde avvisas med 429 och (2) en
+// Guardian och en gåva i samma sekund ändå går igenom.
+test('fulla like- och inträdeshinkar stoppar inte Guardian eller gåvor',async t=>{
+  const url=process.env.REDIS_URL||'redis://127.0.0.1:6379';
+  if(!await redisReachable(url)){t.skip(`No Redis reachable at ${url}`);return}
+
+  const workspaceId='66666666-6666-6666-6666-666666666666';
+  const hinkNyckel=(hink,at)=>`vyra:rate:${nyckelrymd()}tiktok-ingest-${hink}:${workspaceId}:${Math.floor(at/1000)}`;
+  try{
+    assert.deepEqual(TIKTOK_INGEST_HINKAR.like,['like',300]);
+    assert.deepEqual(TIKTOK_INGEST_HINKAR.member,['rum',200]);
+    const client=await eventBus.connect(),now=Date.now();
+    for(const[hink,gräns]of[['like',300],['rum',200]])for(const at of[now,now+1000]){
+      const key=hinkNyckel(hink,at);await client.set(key,String(gräns));await client.expire(key,5);
+    }
+
+    await assert.rejects(()=>ingestTikTokEvent(workspaceId,buildTestEvent('like',{username:'Tappare'})),
+      err=>{assert.equal(err.status,429);assert.match(err.message,/like.*300\/sekund/);return true});
+    await assert.rejects(()=>ingestTikTokEvent(workspaceId,buildTestEvent('member',{username:'Inträde'})),
+      err=>{assert.equal(err.status,429);assert.match(err.message,/rum.*200\/sekund/);return true});
+
+    const guardian=await ingestTikTokEvent(workspaceId,buildTestEvent('guardian',{username:'Beskyddaren'}));
+    assert.equal(guardian.duplicate,false,'Guardian stoppades av likes/inträden');
+    const gava=await ingestTikTokEvent(workspaceId,buildTestEvent('gift',{username:'Gavogivaren'}));
+    assert.equal(gava.duplicate,false,'gåvan stoppades av likes/inträden');
   }finally{
     await eventBus.close().catch(()=>{});
   }
