@@ -222,6 +222,13 @@ const StreamSessions=skapaStreamSessions({pool});
 // ingest-rutten sa den har EN agare: minst 32 tecken i expected (en osatt env-variabel oppnar
 // inget), langdkontroll fore timingSafeEqual (kravet for konstant tid), och ett felmeddelande
 // utan siffror, langd eller token. Domanfunktionerna ser aldrig ravarden - de ar rena.
+// BRYGGANS INGEST RÄKNAS INTE MOT IP-GRÄNSEN (uppmätt 2026-10-16). API_RATE_LIMIT är 120 per
+// minut och IP — ett skydd för webbens besökare. Molnbryggan skickar ALLA konton från en IP, så i
+// skarp sändning släpptes ~2 events/sekund igenom och resten fick 429 innan ingest ens nåddes;
+// stresstest mot staging: exakt 120 av 1500 likes, allt annat 429. En POST till
+// /api/events/tiktok/:ws med giltig maskintoken har egna gränser per workspace och typ
+// (ingestTikTokEvent). Utan giltig token räknas anropet mot IP-gränsen precis som förut.
+const bryggansIngest=(req,p)=>req.method==='POST'&&/^\/api\/events\/tiktok\/[0-9a-f-]+$/i.test(p)&&maskinAuth(req);
 function maskinAuth(req){
   const expected=String(process.env.TIKTOK_INGEST_TOKEN||''),
         supplied=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
@@ -382,7 +389,7 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!rest){const svar={ok:true,overlay:{id:access.overlay_id,name:access.name,state:access.state,version:access.version,updated_at:access.updated_at}};
       if(process.env.VYRA_SANDNINGSIDENTITET==='1')svar.session=await StreamSessions.aktivSession({workspaceId:access.workspace_id});
       return send(res,200,svar)}
-    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${S.klientadress(req)||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
+    return send(res,404,{ok:false,error:'Hittades inte'})}if(!sameOrigin(req))return send(res,403,{ok:false,error:'Origin nekad'});const sensitiveAuth=/^\/api\/auth\/(?:login|register|password\/request|password\/reset|email\/verify|mfa\/challenge)$/.test(p),rateKey=`${S.klientadress(req)||'unknown'}:${sensitiveAuth?'auth':'api'}`;if(!bryggansIngest(req,p)&&await rateLimiter.exceeded(rateKey,sensitiveAuth?AUTH_RATE_LIMIT:API_RATE_LIMIT))return send(res,429,{ok:false,error:'För många försök'});
   // SANDNINGSIDENTITETENS MASKINRUTTER. Ordning i varje hanterare: auth -> flagga ->
   // forbjudna falt -> formvalidering -> domanfunktion. Auth FORE flaggan: en oautentiserad
   // anropare far inte ens veta om funktionen ar paslagen.
