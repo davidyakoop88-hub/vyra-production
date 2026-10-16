@@ -25,10 +25,16 @@ test.before(async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   bas = `http://127.0.0.1:${server.address().port}`;
 });
+// Teardown i tre delar som i gavokatalog-http.test.js: keep-alive-anslutningarna från fetch håller
+// annars servern öppen, och Redis och Postgres-poolen håller händelseloopen vid liv.
 test.after(async () => {
-  const { eventBus } = require('../index');
-  await new Promise(resolve => server.close(resolve));
+  const { eventBus } = require('../index'), { pool } = require('../db');
+  await new Promise(klar => {
+    server.close(klar);
+    if (typeof server.closeAllConnections === 'function') server.closeAllConnections();
+  });
   await eventBus.close().catch(() => {});
+  await pool.end();
 });
 
 const ws = '12121212-1212-4212-8212-121212121212';
