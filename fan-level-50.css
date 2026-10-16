@@ -57,9 +57,13 @@
 .fan-level-50 .fl50-card.fl50-in { animation: fl50in .5s ease both; }
 @keyframes fl50in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
 
-/* rullande band — samma kort, andlost */
+/* rullande band — samma kort, andlost.
+   INGEN will-change (David 2026-10-16: "profilbilden ... va suddigt"). Overlayen skalas upp med
+   transform: scale(~2,5) i OBS, och will-change fryser lagrets rastrering i designstorleken — kortet
+   ritades 136 px brett och forstorades sedan som en bild, sa bild, foto och namn blev suddiga.
+   Animationen ar fortfarande kompositerad; utan will-change rastreras den i den verkliga skalan. */
 .fan-level-50.fl50-mode-band .fl50-track {
-  display: flex; gap: 14px; width: max-content; will-change: transform;
+  display: flex; gap: 14px; width: max-content;
   animation: fl50scroll linear infinite; animation-duration: calc(var(--fl50-speed, 6s) * 4);
 }
 /* Korten i bandet foljer widgetens bredd: 200 px vid standardbredden 300 (innerbredd 276, samma
@@ -94,49 +98,26 @@
 .fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-team,
 .fan-level-50 .fl50-card[class*="fl50-design-"] .fl50-rank { display: none; }
 
-/* ---- kompakt lage: litet kort -> profilbild och namn ar huvudsaken ---------------------------
-   Davids ord 2026-10-12: "den i min sidan ser valdigt tydlig men nar man kor live och hade liten man
-   ser knappt profilbilden eller namn." I den stora vyn ar fotot 17,4 % av kortet och namnet 6,4cqw —
-   vid 150 px kort blir det ett 26 px foto och 10 px text. Under 190 px kortbredd (designpixlar,
-   zoomen inraknad) byter kortet layout: mallen blir dampad bakgrund, fotot tar 58 % av bredden med
-   guldring, namnet star stort med kraftig kontur, och LEVEL 50 blir en liten guldbricka.
-   Tröskeln 190: standardkortet (bandet, bredd 300) ar 200 px och ska se ut som forut. */
-.fan-level-50 .fl50-badge { display: none; }
+/* ---- litet kort: DESIGNEN BEHALLS, fotot och namnet lyfts fram -------------------------------
+   Davids ord 2026-10-12: "nar man kor live och hade liten man ser knappt profilbilden eller namn."
+   Forsta losningen (#602) bytte ut hela mallen mot en mork inzoomad bild + stort foto — David
+   2026-10-16: "bilden kommer upp och inte designen". Mallen ska alltid synas. Under 190 px kortbredd
+   (designpixlar, zoomen inraknad) ligger mallen kvar orord; bara fotot vaxer 1,7x ut ur ringen
+   (fran ~26 till ~44 px vid 150 px kort) med en guldkant, och namnet blir storre med kontur.
+   Fotots mittpunkt ar kvar i ringens mitt, sa det tacker ringen och inget annat i mallen.
+   Troskeln 190: standardkortet (bandet, bredd 300) ar 200 px och ska se ut som forut. */
 @container (width < 190px) {
-  /* Konsten beskars till hjart-/planmotivet upptill (de ovre ~48 %). Mallens egen "LEVEL 50" och
-     hjartemblem hamnade annars halvt bakom fotot och namnet — brickan sager LEVEL 50 i stallet. */
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-art {
-    filter: brightness(.45) saturate(1.15); transform: scale(2.1); transform-origin: 50% 0;
-  }
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-badge {
-    display: block; position: absolute; top: 4cqw; left: 50%; transform: translateX(-50%); z-index: 2;
-    padding: .28em .8em .22em; border-radius: 999px; white-space: nowrap;
-    font: 900 8cqw/1 'Oswald', 'Bahnschrift', 'Segoe UI', system-ui, sans-serif; letter-spacing: .08em;
-    color: #3a2400; background: linear-gradient(180deg, #fff6d2, #ffd049 55%, #c98a14);
-    box-shadow: 0 0 0 .6cqw rgba(58, 36, 0, .55), 0 .8cqw 2.4cqw rgba(0, 0, 0, .65);
-  }
   .fan-level-50 .fl50-viewport .fl50-card .fl50-photo {
-    left: 21cqw; top: 16cqw; bottom: auto; width: 58cqw; box-sizing: border-box;
-    border: 2.6cqw solid transparent;
-    background: linear-gradient(#050505, #050505) padding-box,
-      linear-gradient(135deg, #fff3c4, #e7b33a 35%, #8a5a0a 55%, #ffd76a 80%, #fff3c4) border-box;
-    box-shadow: 0 0 6cqw rgba(255, 190, 60, .55), 0 1.2cqw 3cqw rgba(0, 0, 0, .7);
+    transform: scale(1.7); transform-origin: 50% 50%; z-index: 3;
+    box-shadow: 0 0 0 1.2cqw #e7b33a, 0 0 0 1.8cqw rgba(40, 20, 0, .8), 0 1cqw 3cqw rgba(0, 0, 0, .7);
   }
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-photo img { border-radius: 50%; }
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-name {
-    left: 0; right: 0; top: 76cqw; bottom: 0; height: auto; padding: 3cqw 3cqw 3cqw; justify-content: center;
-    background: linear-gradient(180deg, rgba(12, 4, 20, 0), rgba(12, 4, 20, .78) 38%, rgba(12, 4, 20, .9));
-  }
+  .fan-level-50 .fl50-viewport .fl50-card .fl50-name { left: 38%; right: 9%; }
+  /* Storre namn — men aldrig mindre an i stora vyn: langa namn krymper med --fl50-nm-ks (fler
+     tecken an 8 far inte plats i den storre storleken) och golvet ar den vanliga storleken. */
   .fan-level-50 .fl50-viewport .fl50-card .fl50-name span {
-    font-family: 'Oswald', 'Bahnschrift', 'Segoe UI', system-ui, sans-serif; font-weight: 900;
-    font-size: 13cqw; line-height: 1.08; letter-spacing: .2px; text-align: center;
-    white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2; line-clamp: 2; color: #ffeab0;
-    -webkit-text-stroke: 1.4cqw #140800; paint-order: stroke fill;
-    text-shadow: 0 .6cqw 0 #140800, 0 0 3cqw rgba(0, 0, 0, .9), 0 0 6cqw rgba(255, 190, 60, .45);
+    font-size: max(calc(7.4cqw * var(--fl50-nm-k, 1)), calc(9.5cqw * var(--fl50-nm-ks, 1)));
+    font-weight: 900; -webkit-text-stroke: .9cqw #140800; paint-order: stroke fill;
   }
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-team,
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-rank { display: none; }
 }
 
 /* ---- inspektorn: "lägg till användare"-lista (studio, inte overlay) ---------------------------- */
