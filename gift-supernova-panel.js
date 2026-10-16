@@ -3,10 +3,10 @@
 // widget". Varje reglage här ändrar fyrverkerierna (gift-festival-engine.js via
 // gift-supernova-engine.js rendererFor/mount, och gift-fireworks.js fwSpela) — inget visas som inte
 // gör något. Inställningarna sparas på widgeten, så andra widgetar påverkas inte.
-// Bildram är borttagen (2026-10-17): mitten visar bara gåvan och profilbilden.
+// Bildram och ramlager är borttagna (2026-10-17): mitten visar bara gåvan och profilbilden.
 //
 //   RÖRELSE   testknapp + antal testgåvor
-//   STIL      entré, ramlager, namneffekt, färgpalett, Färg 1/2, textfärg, typsnitt,
+//   STIL      entré, namneffekt, färgpalett, Färg 1/2, textfärg, typsnitt,
 //             storlek, rörelsehastighet, glöd, rundning, position
 //   FYRVERKERI tema, final vid, minsta gåva, samtidiga, anonyma
 //   LJUD      ljud på/av och volym
@@ -24,7 +24,6 @@ const PALETT=[["Mint","#3dffb0","#2d8cff"],["Rosa/guld","#ff4fa3","#ffd24a"],["E
  ["Kunglig","#ffc83d","#9a4dff"],["Neongul","#f5ff3d","#3dff8a"],["Rosé","#ffb3c7","#ffd9a8"],["Kol","#cfd6e6","#5a6478"],
  ["Lava","#ff5a1f","#ffd23d"],["Orkidé","#d28cff","#ff8ad0"],["Is","#bff0ff","#6fb8ff"],["Blod","#c3122b","#ff4d4d"]];
 const ENTRE=[['zoom','Zoom (överskjuter)'],['drop','Drop'],['bounce','Bounce'],['rise','Rise'],['glass','Glas'],['neon','Neon-flimmer'],['none','Ingen']];
-const RAMLAGER=[['halo','Halo + ripple'],['flame','Flamma'],['bolt','Blixt'],['glint','Guld + glimt'],['ripple','Ripple'],['comet','Komet'],['petals','Kronblad'],['none','Ingen']];
 const NAMNFX=[['none','Ingen effekt'],['shimmer','Shimmer'],['aurora','Aurora'],['flicker','Flimmer'],['hide','Dölj namnet']];
 const TYPSNITT=[["'Segoe UI',system-ui,sans-serif",'Segoe UI'],["Impact,'Arial Narrow Bold',sans-serif",'Impact'],['Georgia,serif','Georgia (serif)'],["'Trebuchet MS',sans-serif",'Trebuchet'],["Consolas,'Courier New',monospace",'Mono']];
 const POS=[['top','Överst'],['mid','Mitten'],['bottom','Nederst']];
@@ -50,7 +49,6 @@ props=function(){
  <div class="property-group"><h4>RÖRELSE</h4><button id="testFw" type="button">▶ Testa fyrverkeriet</button><label>Antal testgåvor<input id="fwCombo" type="number" min="1" max="100" value="${Number(w.fwCombo)||1}"></label><small>1 gåva: en uppskjutning. 10: rytmiskt firande. 100: finalen.</small></div>
  <div class="property-group"><h4>STIL</h4>
   <label>Entré / utgång<select id="fwEnter">${opt(ENTRE,w.fwEnter||'zoom')}</select></label>
-  <label>Ramlager på avatar<select id="fwFrameFx">${opt(RAMLAGER,w.fwFrameFx||'none')}</select></label>
   <label>Namneffekt<select id="fwNameFx">${opt(NAMNFX,w.fwNameFx||'none')}</select></label>
   <label>Färgpalett</label><div class="fw-pal">${sw}</div>
   <label>Färg 1<input id="fwColor" type="color" value="${p}"></label>
@@ -70,7 +68,7 @@ bind=function(){
  previousBind();const w=liveWidget(selected);if(!isCanvas(w))return;
  const commit=()=>{save();render()},$=id=>document.getElementById(id);
  const val=(id,field,fn=v=>v)=>{const el=$(id);if(el)el.onchange=e=>{w[field]=fn(e.target.value);commit()}};
- val('fwEnter','fwEnter');val('fwFrameFx','fwFrameFx');val('fwNameFx','fwNameFx');val('fwFont','fwFont');
+ val('fwEnter','fwEnter');val('fwNameFx','fwNameFx');val('fwFont','fwFont');
  for(const id of ['fwColor','fwColor2','fwTextColor'])val(id,id,v=>color(v,w[id]));
  for(const k of Object.keys(REGLAGE)){const el=$(k),r=REGLAGE[k];if(!el)continue;
   el.oninput=e=>{const b=$(k+'Val');if(b)b.textContent=r[5](Number(e.target.value))};

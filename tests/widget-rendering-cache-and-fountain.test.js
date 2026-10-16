@@ -453,7 +453,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
   assert.match(media, /gift-fireworks\.js\?v=20261017-festival1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   assert.match(media, /gift-natural-engine\.js\?v=20260925-natural1/);
-  assert.match(media, /gift-supernova-engine\.js\?v=20261017-festival2/);
+  assert.match(media, /gift-supernova-engine\.js\?v=20261017-festival3/);
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 
