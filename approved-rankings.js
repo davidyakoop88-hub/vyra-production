@@ -93,7 +93,8 @@
   function createApprovedLike(theme) {
     const w = VyraWidgets.create('catalog:toplike:' + theme);
     window.applyVyraTopLikeStyle?.(w, theme);
-    state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.type !== 'templateTopLike');
+    // Temats topplista (spellayout.js) är också en Top Like, men den hör till gaming overlayn och står kvar.
+    state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.spelTema || item.type !== 'templateTopLike');
     state.widgets.push(w); selected = w.id; save(); render(); toast(LIKE_LABELS[theme] + ' skapad');
   }
 
