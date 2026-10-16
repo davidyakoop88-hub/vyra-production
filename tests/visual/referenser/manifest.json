@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Kontur (#608) ovanpå läsbara level-widgetar (#605): level-bilderna tas om efter sammanslagningen",
-  "nycklar": 21,
-  "filter": "level",
-  "tid": "2026-10-15T16:50:57.158Z"
+  "motiv": "Fan Level 50: will-change borttaget fran bandet (suddigt nar overlayen skalas upp i OBS) - kortet rastreras skarpare, PR #614",
+  "nycklar": 4,
+  "filter": "fanlevel50",
+  "tid": "2026-10-16T17:39:39.033Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
