@@ -39,11 +39,146 @@
       kameraram: { bild: [1080, 616], hal: [2.69, 5.41, 94.62, 89.19] },
       spelram: { bild: [1080, 608], hal: [2.69, 4.11, 94.62, 91.1] },
       bakgrund: { bild: [941, 1672] },
-      lista: { bild: [520, 759], rad: 20.09, forsta: 4.47, foto: [19.62, 17.31, 12.37], namn: [44.5, 47, 14, 74] },
-      gifter: { bild: [480, 555], foto: [26.15, 30.56, 47.69, 40.53], rubrik: [14, 7, 72, 16], namn: [13, 79.5, 74, 7.8], varde: [13, 87.2, 74, 7.6] },
-      mal: { bild: [1100, 80], spar: [37.6, 31.8, 24.6, 32] },
+      lista: { bild: [520, 759], rad: 20.09, forsta: 4.47, foto: [19.62, 17.31, 12.37], namn: [44.5, 47, 14, 74], text: 'mork' },
+      gifter: { bild: [480, 555], foto: [26.15, 30.56, 47.69, 40.53], rubrik: [14, 7, 72, 16], namn: [13, 79.5, 74, 7.8], varde: [13, 87.2, 74, 7.6], text: 'mork' },
+      mal: { bild: [1100, 80], spar: [37.6, 31.8, 24.6, 32], text: 'mork' },
       kampanj4: { bild: [1100, 263], hal: [[3.46, 14.52, 17.69, 72.58], [28.46, 14.52, 18.08, 72.58], [53.46, 14.52, 18.08, 72.58], [78.85, 14.52, 17.69, 72.58]] },
       kampanj6: { bild: [1100, 174], hal: [[2.31, 14.63, 11.15, 70.73], [18.85, 14.63, 11.54, 70.73], [35.77, 14.63, 11.54, 70.73], [52.69, 14.63, 11.54, 70.73], [69.62, 14.63, 11.92, 70.73], [86.54, 14.63, 11.54, 70.73]] }
+    }),
+    // De tolv övriga temana ur samma leverans (2026-10-16). Hål, textfält och ljusfärg är uppmätta
+    // ur respektive WebP på samma sätt som Fortnite; `text` säger om plattan under texten är mörk
+    // eller ljus, och därmed om texten ritas ljus eller mörk.
+    'call-of-duty': Object.freeze({
+      label: 'Call of Duty', ljus: '#f5d490', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  608],  hal:  [3.0,  5.92,  94.33,  88.17] },
+      spelram: { bild:  [1080,  608],  hal:  [2.67,  5.33,  94.33,  88.76] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 873], rad: 20.29, forsta: 3.37, foto: [19.67, 19.67, 12.7], namn: [46.87, 45.6, 21.5, 58.8], text: 'mork' },
+      gifter: { bild:  [480,  637],  foto:  [23.67,  30.15,  52.67,  38.94],  namn:  [13.33,  76.8,  75.33,  8.94],  varde:  [13.33,  85.3,  75.33,  8.5],  rubrik:  [13.33,  6.95,  73.67,  16.0],  text:  'mork' },
+      mal: { bild:  [1100,  76],  spar:  [57.67,  23.81,  30.33,  47.62],  text:  'mork' },
+      kampanj4: { bild:  [1100,  264],  hal:  [[2.67,  11.11,  19.0,  77.78],  [27.67,  11.11,  19.33,  77.78],  [53.0,  11.11,  19.33,  77.78],  [78.0,  11.11,  19.33,  77.78]] },
+      kampanj6: { bild:  [1100,  176],  hal:  [[2.0,  12.5,  12.67,  75.0],  [18.67,  12.5,  12.67,  75.0],  [35.33,  12.5,  12.67,  75.0],  [52.0,  12.5,  12.67,  75.0],  [68.67,  12.5,  12.67,  75.0],  [85.33,  12.5,  12.67,  75.0]] }
+    }),
+    'cyber-cherry': Object.freeze({
+      label: 'Cyber Cherry', ljus: '#f6a1bd', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  595],  hal:  [2.67,  4.85,  94.67,  90.91] },
+      spelram: { bild:  [1080,  600],  hal:  [2.0,  4.19,  96.0,  92.22] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 570], rad: 19.15, forsta: 6.99, foto: [9.33, 14.33, 13.37], namn: [33.2, 55.93, 33.2, 47.3], text: 'mork' },
+      gifter: { bild:  [480,  500],  foto:  [18.0,  23.72,  64.0,  57.37],  namn:  [22.0,  85.52,  56.33,  4.1],  varde:  [22.0,  89.42,  56.33,  3.9],  text:  'ljus' },
+      mal: { bild:  [1100,  102],  spar:  [33.0,  32.14,  44.0,  39.29],  text:  'mork' },
+      kampanj4: { bild:  [1100,  255],  hal:  [[2.33,  11.43,  19.33,  77.14],  [27.67,  11.43,  19.33,  78.57],  [52.67,  11.43,  19.67,  78.57],  [78.0,  11.43,  19.33,  78.57]] },
+      kampanj6: { bild:  [1100,  172],  hal:  [[1.67,  10.64,  12.33,  76.6],  [18.33,  10.64,  12.67,  76.6],  [35.33,  10.64,  12.33,  76.6],  [52.0,  10.64,  12.33,  76.6],  [69.0,  10.64,  12.33,  76.6],  [85.67,  10.64,  12.33,  76.6]] }
+    }),
+    'emerald-queen': Object.freeze({
+      label: 'Emerald Queen', ljus: '#80dba6', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  604],  hal:  [2.67,  5.36,  94.67,  89.88] },
+      spelram: { bild:  [1080,  614],  hal:  [2.67,  5.26,  95.0,  87.72] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 556], rad: 19.55, forsta: 6.23, foto: [11.33, 14.33, 13.08], namn: [34.2, 50.93, 21.5, 57.2], text: 'mork' },
+      gifter: { bild:  [480,  568],  foto:  [14.33,  20.28,  71.33,  57.75],  namn:  [21.67,  85.69,  56.67,  3.94],  varde:  [21.67,  89.44,  56.67,  3.75],  text:  'mork' },
+      mal: { bild:  [1100,  87],  spar:  [27.0,  29.17,  49.67,  41.67],  text:  'mork' },
+      kampanj4: { bild:  [1100,  310],  hal:  [[3.0,  21.18,  20.33,  68.24],  [27.33,  21.18,  20.67,  68.24],  [52.0,  21.18,  20.33,  68.24],  [76.67,  21.18,  20.33,  68.24]] },
+      kampanj6: { bild:  [1100,  195],  hal:  [[2.33,  16.98,  12.67,  73.58],  [18.67,  16.98,  13.0,  73.58],  [35.33,  16.98,  12.67,  73.58],  [52.0,  16.98,  12.67,  73.58],  [68.67,  16.98,  12.67,  73.58],  [85.0,  16.98,  13.0,  73.58]] }
+    }),
+    'gta-v': Object.freeze({
+      label: 'GTA V', ljus: '#84d6a0', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  608],  hal:  [2.33,  4.73,  95.33,  89.35] },
+      spelram: { bild:  [1080,  608],  hal:  [2.33,  4.14,  95.33,  91.12] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 717], rad: 19.99, forsta: 3.14, foto: [16.0, 19.0, 13.29], namn: [41.53, 50.6, 22.5, 64.0], text: 'mork' },
+      gifter: { bild:  [480,  525],  foto:  [24.33,  28.35,  51.0,  46.04],  namn:  [14.67,  78.6,  70.67,  7.93],  varde:  [14.67,  86.13,  70.67,  7.53],  rubrik:  [14.0,  5.38,  72.0,  10.88],  text:  'mork' },
+      mal: { bild:  [1100,  93],  spar:  [33.0,  20.0,  33.67,  52.0],  text:  'mork' },
+      kampanj4: { bild:  [1100,  259],  hal:  [[2.33,  9.86,  20.0,  77.46],  [27.33,  9.86,  20.0,  77.46],  [52.67,  9.86,  19.67,  77.46],  [77.67,  9.86,  20.0,  77.46]] },
+      kampanj6: { bild:  [1100,  189],  hal:  [[2.33,  19.23,  12.33,  69.23],  [19.0,  19.23,  12.33,  69.23],  [35.33,  19.23,  12.67,  69.23],  [52.0,  19.23,  12.67,  69.23],  [68.67,  19.23,  12.67,  69.23],  [85.67,  19.23,  12.33,  69.23]] }
+    }),
+    'ice-pearl': Object.freeze({
+      label: 'Ice Pearl', ljus: '#96e2f6', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  609],  hal:  [4.33,  8.88,  91.33,  85.8] },
+      spelram: { bild:  [1080,  607],  hal:  [4.67,  8.88,  90.67,  81.07] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 778], rad: 19.43, forsta: 5.79, foto: [15.67, 19.0, 12.03], namn: [40.53, 50.93, 21.0, 63.7], text: 'ljus' },
+      gifter: { bild:  [480,  508],  foto:  [25.33,  21.07,  49.67,  44.97],  namn:  [16.0,  69.41,  67.67,  7.04],  varde:  [16.0,  76.1,  67.67,  6.69],  text:  'ljus' },
+      mal: { bild:  [1100,  239],  spar:  [23.0,  53.85,  49.0,  15.38],  text:  'mork' },
+      kampanj4: { bild:  [1100,  260],  hal:  [[3.0,  11.27,  19.33,  80.28],  [28.0,  11.27,  19.33,  80.28],  [52.67,  11.27,  19.67,  80.28],  [77.67,  11.27,  19.67,  80.28]] },
+      kampanj6: { bild:  [1100,  190],  hal:  [[2.0,  13.46,  12.67,  71.15],  [18.67,  13.46,  12.67,  71.15],  [35.33,  13.46,  12.67,  71.15],  [52.0,  13.46,  12.67,  71.15],  [68.67,  13.46,  12.67,  71.15],  [85.33,  13.46,  12.67,  71.15]] }
+    }),
+    'minecraft': Object.freeze({
+      label: 'Minecraft', ljus: '#80efe0', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  612],  hal:  [7.33,  10.59,  85.33,  78.24] },
+      spelram: { bild:  [1080,  608],  hal:  [6.33,  8.88,  87.67,  80.47] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 871], rad: 19.57, forsta: 4.78, foto: [17.33, 20.67, 12.15], namn: [46.2, 45.6, 19.9, 66.9], text: 'mork' },
+      gifter: { bild:  [480,  614],  foto:  [30.67,  30.99,  37.33,  27.86],  namn:  [15.33,  66.0,  68.33,  9.06],  varde:  [15.33,  74.61,  68.33,  8.61],  rubrik:  [18.33,  10.01,  62.67,  15.13],  text:  'mork' },
+      mal: { bild:  [1100,  239],  spar:  [16.33,  50.77,  52.0,  15.38],  text:  'mork' },
+      kampanj4: { bild:  [1100,  265],  hal:  [[4.67,  18.06,  16.0,  65.28],  [29.67,  18.06,  16.0,  65.28],  [54.67,  18.06,  16.0,  65.28],  [79.67,  18.06,  16.33,  65.28]] },
+      kampanj6: { bild:  [1100,  169],  hal:  [[2.67,  17.39,  10.67,  63.04],  [19.67,  17.39,  10.33,  63.04],  [36.33,  17.39,  10.67,  63.04],  [53.0,  17.39,  10.67,  63.04],  [70.0,  17.39,  10.33,  63.04],  [86.67,  17.39,  10.67,  63.04]] }
+    }),
+    'moonlight-silver': Object.freeze({
+      label: 'Moonlight Silver', ljus: '#e0d1c5', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  603],  hal:  [3.0,  6.55,  94.0,  87.5] },
+      spelram: { bild:  [1080,  604],  hal:  [2.33,  5.36,  95.33,  89.88] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 580], rad: 19.26, forsta: 7.16, foto: [9.33, 15.67, 14.33], namn: [31.2, 57.6, 18.6, 65.0], text: 'ljus' },
+      gifter: { bild:  [480,  520],  foto:  [19.0,  18.15,  62.33,  55.08],  namn:  [21.0,  76.7,  58.0,  8.49],  varde:  [21.0,  84.77,  58.0,  8.07],  text:  'ljus' },
+      mal: { bild:  [1100,  161],  spar:  [29.33,  54.55,  47.67,  15.91],  text:  'mork' },
+      kampanj4: { bild:  [1100,  275],  hal:  [[2.0,  12.0,  20.67,  80.0],  [27.0,  12.0,  21.0,  80.0],  [52.33,  12.0,  20.67,  80.0],  [77.33,  12.0,  20.67,  80.0]] },
+      kampanj6: { bild:  [1100,  177],  hal:  [[2.0,  16.67,  11.67,  68.75],  [19.0,  16.67,  11.67,  68.75],  [35.67,  16.67,  12.0,  70.83],  [52.67,  14.58,  11.67,  70.83],  [69.33,  14.58,  12.0,  70.83],  [86.33,  16.67,  11.67,  68.75]] }
+    }),
+    'peach-bloom': Object.freeze({
+      label: 'Peach Bloom', ljus: '#f7d2a4', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  601],  hal:  [4.0,  7.19,  92.0,  86.23] },
+      spelram: { bild:  [1080,  603],  hal:  [5.0,  9.52,  90.0,  83.93] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 758], rad: 19.34, forsta: 3.89, foto: [13.67, 17.67, 11.9], namn: [39.53, 46.6, 26.1, 55.4], text: 'ljus' },
+      gifter: { bild:  [480,  505],  foto:  [23.67,  23.1,  52.67,  47.78],  namn:  [21.33,  76.1,  57.67,  3.67],  varde:  [21.33,  79.59,  57.67,  3.49],  text:  'ljus' },
+      mal: { bild:  [1100,  268],  spar:  [25.67,  45.21,  46.33,  15.07],  text:  'mork' },
+      kampanj4: { bild:  [1100,  273],  hal:  [[2.67,  10.81,  20.33,  79.73],  [27.33,  10.81,  20.67,  79.73],  [52.33,  10.81,  20.33,  79.73],  [77.33,  10.81,  20.33,  79.73]] },
+      kampanj6: { bild:  [1100,  192],  hal:  [[1.33,  11.54,  13.33,  73.08],  [18.0,  11.54,  13.33,  73.08],  [35.0,  11.54,  13.0,  73.08],  [51.67,  11.54,  13.33,  73.08],  [68.33,  11.54,  13.33,  73.08],  [85.33,  11.54,  13.0,  73.08]] }
+    }),
+    'rose-gold': Object.freeze({
+      label: 'Rose Gold', ljus: '#fdc6a4', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  601],  hal:  [5.67,  4.19,  88.67,  88.62] },
+      spelram: { bild:  [1080,  604],  hal:  [6.33,  6.55,  87.33,  85.12] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 717], rad: 19.87, forsta: 4.35, foto: [13.33, 17.0, 12.32], namn: [36, 52, 22, 56], text: 'ljus' },
+      gifter: { bild:  [480,  495],  foto:  [24.0,  23.62,  52.0,  48.22],  namn:  [26.33,  76.45,  47.33,  3.5],  varde:  [26.33,  79.77,  47.33,  3.32],  text:  'ljus' },
+      mal: { bild:  [1100,  229],  spar:  [23.0,  61.29,  46.67,  16.13],  text:  'mork' },
+      kampanj4: { bild:  [1100,  272],  hal:  [[2.67,  12.16,  19.67,  77.03],  [27.67,  12.16,  19.67,  77.03],  [53.0,  12.16,  19.33,  77.03],  [78.0,  12.16,  19.67,  77.03]] },
+      kampanj6: { bild:  [1100,  177],  hal:  [[1.67,  10.42,  13.67,  79.17],  [18.0,  10.42,  14.0,  79.17],  [34.67,  10.42,  13.67,  79.17],  [51.33,  10.42,  13.67,  79.17],  [68.0,  10.42,  13.67,  79.17],  [84.33,  10.42,  14.0,  79.17]] }
+    }),
+    'ruby-eclipse': Object.freeze({
+      label: 'Ruby Eclipse', ljus: '#f47d66', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  607],  hal:  [3.67,  7.1,  92.67,  86.98] },
+      spelram: { bild:  [1080,  610],  hal:  [3.0,  5.92,  94.0,  86.39] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 554], rad: 19.45, forsta: 5.32, foto: [12.33, 14.67, 13.44], namn: [37.5, 45.6, 26, 52], text: 'mork' },
+      gifter: { bild:  [480,  562],  foto:  [15.67,  17.38,  68.33,  54.7],  namn:  [23.0,  75.88,  53.67,  6.04],  varde:  [23.0,  81.62,  53.67,  5.74],  text:  'mork' },
+      mal: { bild:  [1100,  109],  spar:  [29.67,  23.33,  48.67,  53.33],  text:  'mork' },
+      kampanj4: { bild:  [1100,  292],  hal:  [[2.33,  13.75,  19.67,  72.5],  [27.33,  13.75,  20.0,  71.25],  [52.67,  13.75,  20.0,  71.25],  [78.0,  13.75,  19.67,  72.5]] },
+      kampanj6: { bild:  [1100,  200],  hal:  [[1.67,  20.0,  12.67,  65.45],  [18.67,  20.0,  12.67,  65.45],  [35.33,  20.0,  12.67,  65.45],  [52.0,  20.0,  12.67,  65.45],  [69.0,  20.0,  12.67,  65.45],  [85.67,  20.0,  12.67,  65.45]] }
+    }),
+    'sakura': Object.freeze({
+      label: 'Sakura', ljus: '#fbaeb7', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  584],  hal:  [3.0,  4.32,  94.0,  91.36] },
+      spelram: { bild:  [1080,  605],  hal:  [6.0,  9.52,  88.0,  82.14] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 841], rad: 17.06, forsta: 8.45, foto: [14.33, 19.0, 11.75], namn: [39.87, 45.6, 24.3, 53.4], text: 'ljus' },
+      gifter: { bild:  [480,  447],  foto:  [28.0,  25.81,  44.0,  45.88],  namn:  [25.33,  76.29,  48.0,  8.17],  varde:  [25.33,  84.06,  48.0,  7.76],  text:  'ljus' },
+      mal: { bild:  [1100,  187],  spar:  [35.0,  50.98,  41.67,  21.57],  text:  'mork' },
+      kampanj4: { bild:  [1100,  265],  hal:  [[1.67,  9.72,  20.67,  81.94],  [27.0,  9.72,  20.33,  81.94],  [52.0,  9.72,  20.67,  81.94],  [77.33,  9.72,  20.67,  81.94]] },
+      kampanj6: { bild:  [1100,  187],  hal:  [[1.67,  11.76,  13.67,  76.47],  [18.33,  11.76,  13.67,  76.47],  [35.0,  11.76,  13.67,  76.47],  [51.67,  11.76,  13.67,  76.47],  [68.67,  11.76,  13.33,  76.47],  [85.0,  11.76,  13.67,  76.47]] }
+    }),
+    'solar-butterfly': Object.freeze({
+      label: 'Solar Butterfly', ljus: '#edd8ad', accent: '#ffd23f', text: '#ffffff',
+      kameraram: { bild:  [1080,  614],  hal:  [1.67,  4.68,  96.67,  90.06] },
+      spelram: { bild:  [1080,  594],  hal:  [2.67,  5.45,  94.67,  89.7] },
+      bakgrund: { bild:  [941,  1672] },
+      lista: { bild: [520, 683], rad: 20.24, forsta: 1.78, foto: [7.0, 18.33, 14.21], namn: [39.87, 41.27, 45.6, 37.1], text: 'mork' },
+      gifter: { bild:  [480,  535],  foto:  [16.0,  18.26,  68.0,  58.38],  namn:  [21.33,  81.08,  57.33,  4.79],  varde:  [21.33,  85.63,  57.33,  4.55],  text:  'mork' },
+      mal: { bild:  [1100,  127],  spar:  [31.33,  40.0,  45.33,  28.57],  text:  'mork' },
+      kampanj4: { bild:  [1100,  271],  hal:  [[4.0,  14.86,  17.67,  68.92],  [29.0,  14.86,  17.67,  68.92],  [54.0,  14.86,  17.67,  68.92],  [79.0,  14.86,  17.67,  68.92]] },
+      kampanj6: { bild:  [1100,  199],  hal:  [[2.67,  22.22,  12.0,  64.81],  [19.33,  22.22,  12.0,  64.81],  [36.0,  22.22,  12.0,  64.81],  [52.67,  22.22,  12.0,  64.81],  [69.33,  22.22,  12.0,  64.81],  [86.0,  22.22,  12.0,  64.81]] }
     })
   });
   const DELAR = ['bakgrund', 'kameraram', 'spelram', 'lista', 'gifter', 'mal', 'kampanj4', 'kampanj6'];
@@ -58,6 +193,10 @@
   const temaFor = w => w && w.spelTema && Object.hasOwn(TEMAN, w.spelTema) ? TEMAN[w.spelTema] : null;
   const mapp = id => 'assets/spellayout/' + id + '/';
   const pct = a => `left:${a[0]}%;top:${a[1]}%;width:${a[2]}%;height:${a[3]}%`;
+  // TEXTSTORLEKEN RÄKNAS UR FÄLTETS HÖJD, inte ur konstens bredd. En bred lista (Emerald Queen) har
+  // lägre rader än en smal (Fortnite) vid samma bredd; en storlek i bredd fyllde Fortnites plattor och
+  // klippte de breda. hojdProcent är fältets höjd i % av bildens höjd; svaret är cqw.
+  const cqw = (bild, hojdProcent, andel) => +(hojdProcent / 100 * bild[1] / bild[0] * 100 * andel).toFixed(3);
   const sakerUrl = (u, f) => (typeof VyraSafe !== 'undefined' && VyraSafe.url) ? VyraSafe.url(u, f) : (u || f);
 
   function delFor(w) {
@@ -137,6 +276,12 @@
     // Livedatan fyller raderna i DOM-ordning, så rad 6–10 får plats 6–10 utan något eget.
     const n = Math.max(1, Math.min(10, Math.round(tal(w.likeCount, 5))));
     const bild = `<img class="spel-glod" src="${src}" alt="" aria-hidden="true" draggable="false"><img class="spel-bild" src="${src}" alt="" draggable="false">${ljus(src)}`;
+    // TUNNA PLATTOR: ger två rader (namn över värde) under 5 px text vid listans bredd, läggs namn och
+    // värde på EN rad — namnet till vänster, värdet till höger — och texten blir dubbelt så stor.
+    // Uppmätt 2026-10-16: Solar Butterflys plattor gav 3,7 px på två rader.
+    const falthojd = g.namn[3] / 100 * g.foto[2];
+    const enRad = cqw(g.bild, falthojd, 1 / 2.35) * tal(w.width, 136) / 100 < 5;
+    const fs = enRad ? cqw(g.bild, falthojd, .6) : cqw(g.bild, falthojd, 1 / 2.35);
     const block = (forsta, antal) => {
       const klipp = antal < 5 ? Math.min(100, g.forsta + (antal - 1) * g.rad + g.foto[2] + 3.5) : 100;
       let rader = '';
@@ -145,7 +290,7 @@
         rader += `<div class="toplike-row rank-${i + 1}" style="--spel-rad-top:${g.forsta + j * g.rad}%;--spel-rad-h:${g.foto[2]}%">`
           + (forsta ? `<b class="spel-rang">${i + 1}</b>` : '')
           + `<i class="spel-foto" style="--spel-x:${g.foto[0]}%;--spel-b:${g.foto[1]}%"><img src="${foto}" alt=""></i>`
-          + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%;--spel-y:${g.namn[2]}%;--spel-h:${g.namn[3]}%"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
+          + `<span class="spel-rad-text" style="--spel-x:${g.namn[0]}%;--spel-b:${g.namn[1]}%;--spel-y:${g.namn[2]}%;--spel-h:${g.namn[3]}%;--spel-fs:${fs}cqw"><strong>${nolla ? '' : esc(p[0])}</strong><small></small>`
           + `<em>${IKON[w.type]} ${nolla ? '0' : esc(p[1] || '0')}</em></span></div>`;
       }
       // Ytterlådan har den klippta höjden, den inre hela konstens — så att radernas procent, ljusets
@@ -153,7 +298,7 @@
       return `<div class="spel-konst${klipp < 100 ? ' spel-klippt' : ''}${forsta ? ' spel-fortsattning' : ''}" style="aspect-ratio:${g.bild[0]}/${(g.bild[1] * klipp / 100).toFixed(2)}">`
         + `<div class="spel-konst-inre" style="height:${(10000 / klipp).toFixed(3)}%">` + bild + rader + '</div></div>';
     };
-    return rot(w, 'vyra-toplike spel-lista', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`)
+    return rot(w, `vyra-toplike spel-lista${enRad ? ' spel-en-rad' : ''}`, `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`, ` data-spel-text="${g.text || 'mork'}"`)
       + `<h3>${esc(w.templateTitle || RUBRIK[w.type])}</h3>`
       + block(0, Math.min(5, n)) + (n > 5 ? block(5, n - 5) : '') + handtag(w) + '</div>';
   }
@@ -164,15 +309,32 @@
     const nolla = iOverlay() && !w.dataName;
     const namn = nolla ? '' : esc(w.dataName || '@StreamQueen');
     const varde = esc(w.dataValue == null ? '44 999' : w.dataValue);
-    return rot(w, 'vyra-topgift spel-gifter', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`)
+    return rot(w, 'vyra-topgift spel-gifter', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent}`, ` data-spel-text="${g.text || 'mork'}"`)
       + konst(src, g.bild)
-      + `<div class="spel-gifter-rubrik" style="${pct(g.rubrik)}">${esc(w.templateTitle || 'TOP GIFTER')}</div>`
+      // Rubriken bara där konsten har ett fält för den — åtta av temana har ingen övre platta, och
+      // text utanför en ram är inte tillåten.
+      + (g.rubrik ? `<div class="spel-gifter-rubrik" style="${pct(g.rubrik)};font-size:${Math.min(7.4, cqw(g.bild, g.rubrik[3], .55))}cqw">${esc(w.templateTitle || 'TOP GIFTER')}</div>` : '')
       + `<div class="spel-flip" style="${pct(g.foto)}">`
       + `<div class="vyra-profile-face"><img src="${esc(sakerUrl(w.profileImage, 'assets/images/test-profile.svg'))}" alt=""></div>`
       + `<div class="vyra-gift-face"><img src="${esc(sakerUrl(w.giftImage, 'assets/gifts/events/0001_Rose.png'))}" alt=""></div></div>`
-      + `<div class="topgift-copy"><strong style="${pct(g.namn)}">${namn}</strong>`
-      + `<em style="${pct(g.varde)};${w.showDataValue === false ? 'display:none' : ''}">◉ ${varde}</em></div>`
+      + kopia(g, w, namn, varde)
       + '</div>' + handtag(w) + '</div>';
+  }
+
+  // Namn och coins i den nedre plattan: två rader där plattan rymmer dem, annars en rad (namnet till
+  // vänster, coins till höger).
+  function kopia(g, w, namn, varde) {
+    const dold = w.showDataValue === false ? 'display:none;' : '';
+    const W = tal(w.width, 110);
+    // 6,5 px och 0,72 av radens höjd: Linux-typsnitten i CI är något högre än Windows, och Ruby
+    // Eclipse (6,0 px på två rader) klipptes där men inte lokalt (uppmätt 2026-10-16).
+    if (cqw(g.bild, g.namn[3], .78) * W / 100 >= 6.5) {
+      return `<div class="topgift-copy"><strong style="${pct(g.namn)};font-size:${cqw(g.bild, g.namn[3], .72)}cqw">${namn}</strong>`
+        + `<em style="${pct(g.varde)};font-size:${cqw(g.bild, g.varde[3], .74)}cqw;${dold}">◉ ${varde}</em></div>`;
+    }
+    const ruta = [g.namn[0], g.namn[1], g.namn[2], g.varde[1] + g.varde[3] - g.namn[1]];
+    return `<div class="topgift-copy spel-en-rad spel-passa" style="${pct(ruta)};font-size:${cqw(g.bild, ruta[3], .62)}cqw">`
+      + `<strong>${namn}</strong><em style="${dold}">◉ ${varde}</em></div>`;
   }
 
   // ---- följarmålet --------------------------------------------------------------------------------
@@ -183,10 +345,10 @@
     const mal = live ? live.target : Math.max(1, tal(w.goalTarget, 1000));
     const p = Math.min(100, Math.round(nu / mal * 100));
     const fmt = n => Number(n || 0).toLocaleString('sv-SE');
-    return rot(w, 'spel-mal', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent};--goal-fill:${p}%`, ' data-goal="social"')
+    return rot(w, 'spel-mal', `--spel-ljusfarg:${t.ljus};--spel-accent:${t.accent};--goal-fill:${p}%`, ` data-goal="social" data-spel-text="${g.text || 'mork'}"`)
       + konst(src, g.bild)
       + `<div class="spel-mal-spar" style="${pct(g.spar)}"><i data-goal-fill style="width:${p}%"></i>`
-      + `<span class="spel-mal-text"><span class="spel-mal-rubrik">${esc(w.goalTitle || 'FÖLJARE')}</span>`
+      + `<span class="spel-mal-text spel-passa" style="font-size:${cqw(g.bild, g.spar[3], .64)}cqw"><span class="spel-mal-rubrik">${esc(w.goalTitle || 'FÖLJARE')}</span>`
       + `<span class="spel-mal-varde"><b data-goal-value>${fmt(nu)}</b>/<b data-goal-target>${fmt(mal)}</b></span></span></div>`
       + '</div>' + handtag(w) + '</div>';
   }
@@ -304,6 +466,32 @@
     const vy = document.querySelector('#view');
     if (knapp && vy && knapp.classList.contains('active') && !vy.querySelector('.spel-teman')) sida();
   }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // ---- texten ryms alltid i sitt fält ---------------------------------------------------------------
+  // I de smala fälten (en rad i Top Gifter, målstapeln) kan ett långt värde bli bredare än fältet, och
+  // hur mycket beror på typsnittet: uppmätt 2026-10-16 rymdes Ruby Eclipses "◉ 1 234 567" på Windows
+  // men inte på Linux i CI. Texten krymps då steg för steg tills den ryms — coins klipps aldrig. Körs
+  // när en del ritas och när livedatan skriver ny text.
+  function passa(el) {
+    if (!el.dataset.spelBas) el.dataset.spelBas = el.style.fontSize || getComputedStyle(el).fontSize;
+    el.style.fontSize = el.dataset.spelBas;
+    for (let i = 0, f = 1; i < 12 && el.scrollWidth > el.clientWidth + 0.5; i++) {
+      f *= 0.92; el.style.fontSize = `calc(${el.dataset.spelBas} * ${f.toFixed(3)})`;
+    }
+  }
+  let passaPlanerad = false;
+  const passaAlla = () => {
+    passaPlanerad = false;
+    document.querySelectorAll('.widget.spel .spel-passa').forEach(passa);
+  };
+  new MutationObserver(muts => {
+    if (passaPlanerad) return;
+    if (!muts.some(m => (m.target.closest && m.target.closest('.widget.spel')) || (m.target.parentElement && m.target.parentElement.closest('.widget.spel'))
+      || [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches('.widget.spel') || n.querySelector('.widget.spel'))))) return;
+    passaPlanerad = true;
+    // setTimeout, inte requestAnimationFrame: rAF körs inte i en dold flik eller en dold OBS-källa.
+    setTimeout(passaAlla, 0);
+  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 
   // ---- installation, ytterst i kedjan --------------------------------------------------------------
   // Samma vakt som ranking-sixpack.js (rang 2): wrappern lägger sig ytterst igen efter varje sent

@@ -69,7 +69,25 @@
 
   const TABLES = {
     // Spellayoutens teman. Konsten ligger i assets/spellayout/<tema>/, geometrin i spellayout.js.
-    'spellayout.tema': { fortnite: 'Fortnite' },
+    // Etikett och förvalda bredder per tema. Konsten har olika proportioner (Fortnites lista är hög och
+    // smal, Emerald Queens nästan kvadratisk), så bredden räknas så att listan blir ~200 px hög och Top
+    // Gifter ~127 px — samma storlek på raderna och fotot i alla teman. Målet blir högst ~44 px och
+    // centreras på kamerans nederkant (y 230), oavsett hur hög temats målkonst är.
+    'spellayout.tema': {
+      'fortnite': { label: 'Fortnite', lista: 136, gifter: 110, mal: 432 },
+      'call-of-duty': { label: 'Call of Duty', lista: 119, gifter: 96, mal: 432 },
+      'cyber-cherry': { label: 'Cyber Cherry', lista: 182, gifter: 122, mal: 432 },
+      'emerald-queen': { label: 'Emerald Queen', lista: 187, gifter: 107, mal: 432 },
+      'gta-v': { label: 'GTA V', lista: 145, gifter: 116, mal: 432 },
+      'ice-pearl': { label: 'Ice Pearl', lista: 134, gifter: 120, mal: 203 },
+      'minecraft': { label: 'Minecraft', lista: 119, gifter: 99, mal: 203 },
+      'moonlight-silver': { label: 'Moonlight Silver', lista: 179, gifter: 117, mal: 301 },
+      'peach-bloom': { label: 'Peach Bloom', lista: 137, gifter: 121, mal: 181 },
+      'rose-gold': { label: 'Rose Gold', lista: 145, gifter: 123, mal: 211 },
+      'ruby-eclipse': { label: 'Ruby Eclipse', lista: 188, gifter: 108, mal: 432 },
+      'sakura': { label: 'Sakura', lista: 124, gifter: 136, mal: 259 },
+      'solar-butterfly': { label: 'Solar Butterfly', lista: 152, gifter: 114, mal: 381 }
+    },
     // ETT KORT PER MODELL (Davids beslut 2026-10-11). Fem samlingskort bar sina modeller som ett val
     // inuti Anpassa (Top Streak Flip 12, Top Gifter Podium 12 HD-ramar + kodad ram, Goal Pro 8,
     // Like Fountain · Portal 9 paletter, Follower Spotlight 3 teman). Nu har varje modell en egen
@@ -265,8 +283,12 @@
     'video': v => ({ type: 'video', x: 40, y: 180, title: v.title, value: v.value, src: v.src }),
     'spellayout': v => {
       const del = SPEL_DELAR[v.del];
+      // Listan och Top Gifter får temats bredd; Top Gifter ligger kvar mot kamerans högerkant.
+      const matt = v.del === 'lista' ? { width: v.storlek.lista }
+        : v.del === 'gifter' ? { width: v.storlek.gifter, x: 422 - v.storlek.gifter }
+        : v.del === 'mal' && v.storlek.mal < 432 ? { width: v.storlek.mal, x: Math.round((432 - v.storlek.mal) / 2), y: 230 - 22 } : {};
       // Titeln bär temat, så lagerlistan säger vilken scen en del hör till.
-      return Object.assign({}, del, { title: v.label + ' · ' + del.title, spelTema: v.tema,
+      return Object.assign({}, del, matt, { title: v.label + ' · ' + del.title, spelTema: v.tema,
         spelDel: v.del.startsWith('kampanj') ? 'kampanj' : v.del });
     },
 
@@ -569,11 +591,11 @@
     'video': (parts, extra) => ['video', extra || {}],
     // catalog:spellayout:<tema>:<del>. Okänt tema eller okänd del kastar med giltiga alternativ.
     'spellayout': parts => {
-      const label = pick('spellayout.tema', parts[0], 'spellayout-tema');
+      const tema = pick('spellayout.tema', parts[0], 'spellayout-tema');
       if (!Object.hasOwn(SPEL_DELAR, parts[1] || '')) {
         throw new Error('Okänd spellayout-del "' + parts[1] + '" — giltiga: ' + Object.keys(SPEL_DELAR).join(', '));
       }
-      return ['spellayout', { tema: parts[0], del: parts[1], label }];
+      return ['spellayout', { tema: parts[0], del: parts[1], label: tema.label, storlek: tema }];
     },
     'topgift': parts => {
       if (!parts.length) return ['topgift', {}];
