@@ -408,3 +408,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Fan Level 50: will-change borttaget fran bandet (suddigt nar overlayen skalas upp i OBS) - kortet rastreras skarpare, PR #614
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 4 av 169 (filter: fanlevel50) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus
+
+## 2026-10-16 — 9 referenser skrivna
+
+- **Motiv:** Goals: svart skiva och etikettplatta bortnyckade ur circle-like/-follower/-diamond.png, PR #615
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 169 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
