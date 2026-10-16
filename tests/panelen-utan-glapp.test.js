@@ -105,8 +105,8 @@ test('cachebustarna höjdes i samma commit som filerna', () => {
   const media = las('media.js'), html = las('studio.html');
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);
   assert.match(media, /gift-campaign-aura\.js\?v=20261011-1/);
-  assert.match(media, /gift-supernova-panel\.js\?v=20261017-festival1/);
-  assert.match(html, /vyra-textgrupp\.js\?v=20261017-festival1/);
+  assert.match(media, /gift-supernova-panel\.js\?v=20261017-festival2/);
+  assert.match(html, /vyra-textgrupp\.js\?v=20261017-festival2/);
   assert.match(html, /approved-rankings\.js\?v=20261016-1/);
   assert.match(html, /media\.js\?v=20261014-4/);
 });

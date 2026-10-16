@@ -3,9 +3,10 @@
 // widget". Varje reglage här ändrar fyrverkerierna (gift-festival-engine.js via
 // gift-supernova-engine.js rendererFor/mount, och gift-fireworks.js fwSpela) — inget visas som inte
 // gör något. Inställningarna sparas på widgeten, så andra widgetar påverkas inte.
+// Bildram är borttagen (2026-10-17): mitten visar bara gåvan och profilbilden.
 //
 //   RÖRELSE   testknapp + antal testgåvor
-//   STIL      bildram, entré, ramlager, namneffekt, färgpalett, Färg 1/2, textfärg, typsnitt,
+//   STIL      entré, ramlager, namneffekt, färgpalett, Färg 1/2, textfärg, typsnitt,
 //             storlek, rörelsehastighet, glöd, rundning, position
 //   FYRVERKERI tema, final vid, minsta gåva, samtidiga, anonyma
 //   LJUD      ljud på/av och volym
@@ -37,7 +38,6 @@ const REGLAGE={
  fwMin:['Minsta gåva (mynt)',1,500,1,1,v=>String(Math.round(v))],
  fwLanes:['Samtidiga fyrverkerier',1,5,1,3,v=>String(Math.round(v))]};
 const varde=(w,k)=>{const r=REGLAGE[k],n=Number(w[k]);return Number.isFinite(n)?Math.min(r[2],Math.max(r[1],n)):r[4]};
-const ramar=()=>((window.VYRA_PG&&window.VYRA_PG.frames)||[]);
 const opt=(lista,val)=>lista.map(([k,l])=>`<option value="${k}" ${val===k?'selected':''}>${l}</option>`).join('');
 const reglage=(w,k)=>{const r=REGLAGE[k],v=varde(w,k);return `<label class="range-label">${r[0]} <b id="${k}Val">${r[5](v)}</b><input id="${k}" type="range" min="${r[1]}" max="${r[2]}" step="${r[3]}" value="${v}"></label>`};
 
@@ -49,7 +49,6 @@ props=function(){
  return `<h3>GIFT FIREWORKS</h3><div class="template-badge">GÅVOR · TRANSPARENT</div><div hidden><input id="pt" value="${safe(w.title||'Gift Fireworks')}"><input id="pv" value=""></div>
  <div class="property-group"><h4>RÖRELSE</h4><button id="testFw" type="button">▶ Testa fyrverkeriet</button><label>Antal testgåvor<input id="fwCombo" type="number" min="1" max="100" value="${Number(w.fwCombo)||1}"></label><small>1 gåva: en uppskjutning. 10: rytmiskt firande. 100: finalen.</small></div>
  <div class="property-group"><h4>STIL</h4>
-  <label>Bildram (HD)<select id="fwFrameImg"><option value="none">Ingen (kodad ram)</option>${ramar().map(f=>`<option value="${safe(f.id)}" ${w.fwFrameImg===f.id?'selected':''}>${safe(f.name||f.id)}</option>`).join('')}</select></label>
   <label>Entré / utgång<select id="fwEnter">${opt(ENTRE,w.fwEnter||'zoom')}</select></label>
   <label>Ramlager på avatar<select id="fwFrameFx">${opt(RAMLAGER,w.fwFrameFx||'none')}</select></label>
   <label>Namneffekt<select id="fwNameFx">${opt(NAMNFX,w.fwNameFx||'none')}</select></label>
@@ -71,7 +70,7 @@ bind=function(){
  previousBind();const w=liveWidget(selected);if(!isCanvas(w))return;
  const commit=()=>{save();render()},$=id=>document.getElementById(id);
  const val=(id,field,fn=v=>v)=>{const el=$(id);if(el)el.onchange=e=>{w[field]=fn(e.target.value);commit()}};
- val('fwFrameImg','fwFrameImg');val('fwEnter','fwEnter');val('fwFrameFx','fwFrameFx');val('fwNameFx','fwNameFx');val('fwFont','fwFont');
+ val('fwEnter','fwEnter');val('fwFrameFx','fwFrameFx');val('fwNameFx','fwNameFx');val('fwFont','fwFont');
  for(const id of ['fwColor','fwColor2','fwTextColor'])val(id,id,v=>color(v,w[id]));
  for(const k of Object.keys(REGLAGE)){const el=$(k),r=REGLAGE[k];if(!el)continue;
   el.oninput=e=>{const b=$(k+'Val');if(b)b.textContent=r[5](Number(e.target.value))};

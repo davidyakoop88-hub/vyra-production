@@ -121,16 +121,17 @@ const duration=combo=>({1:7,10:11,100:20})[mode(combo)];
 function dispose(group){const item=mounted.get(group);if(!item)return;item.unsubscribe?.();item.canvas.getContext('2d')?.clearRect(0,0,item.canvas.width,item.canvas.height);mounted.delete(group)}
 // FESTIVAL-MOTORN (2026-10-17) ersätter den gamla när den är laddad: hjärtfyrverkerier runt en
 // guldsol, byggd i playgrounden efter Davids referensbild. Den får också stilpanelens inställningar —
-// bildram, ramlager, namneffekt, textfärg, typsnitt, glöd och rundning — och Färg 1/Färg 2 gäller
+// ramlager, namneffekt, textfärg, typsnitt, glöd och rundning — och Färg 1/Färg 2 gäller
 // alltid (solen / ett av hjärtana). Utan VyraFestival används den gamla motorn som förut.
-function bildram(id){const pg=root.VYRA_PG;if(!pg||!id||id==='none')return null;const f=(pg.frames||[]).find(x=>x.id===id);if(!f)return null;
- return{url:(pg.img&&pg.img[(f.imgKey||f.id+'-key')])||('assets/playground/'+(f.imgKey||f.id+'-key')+'.webp'),hole:Number(f.hole)||.6}}
+// INGEN BILDRAM (2026-10-17, Davids ord: "ta bort ramarna ... kan visa bara profilbilden och
+// gåvor"). Mitten visar gåvan som vänds till profilbilden, utan ram — även för sparade widgetar
+// som valt en ram tidigare.
 function rendererFor(w,giftImage,profileImage,palette={},playback={}){
  const primary=palette.primary||w.fwColor,secondary=palette.secondary||w.fwColor2;
- if(root.VyraFestival){const ram=bildram(w.fwFrameImg);
+ if(root.VyraFestival){
   return root.VyraFestival.create({theme:w.fwTheme,primary,secondary,customPalette:true,giftImage:giftImage||w.fwGiftImage,profileImage,
    glow:Number.isFinite(+w.fwGlow)?+w.fwGlow:.8,radius:Number.isFinite(+w.fwRadius)?+w.fwRadius:50,
-   badgeFrame:ram?ram.url:'',badgeHole:ram?ram.hole:.6,badgeFx:w.fwFrameFx||'none',
+   badgeFrame:'',badgeFx:w.fwFrameFx||'none',
    name:w.fwNameFx&&w.fwNameFx!=='hide'?playback.name:'',nameFx:w.fwNameFx||'none',nameColor:w.fwTextColor||'#ffffff',nameFont:w.fwFont||"'Segoe UI',system-ui,sans-serif",...playback})}
  const defaults={royal:['#ffd06b','#a764ff'],ice:['#dcecff','#49cfff'],rose:['#edb98b','#ff7cc8'],comet:['#45e1d1','#ff806c'],supernova:['#ffd06b','#a764ff']}[w.fwTheme]||[];
  const customPalette=!!w.inheritBrandKit||[primary,secondary].some((color,i)=>typeof color==='string'&&color.toLowerCase()!==defaults[i]);

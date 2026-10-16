@@ -197,7 +197,7 @@
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.
-      if (w.type === 'templateGiftFireworks' && w.fwTheme && document.getElementById('fwFrameImg')) return ut;
+      if (w.type === 'templateGiftFireworks' && w.fwTheme && document.getElementById('fwFrameFx')) return ut;
 
       const panel = document.querySelector('.properties');
       if (!panel) return ut;
