@@ -168,7 +168,27 @@ test('panelen har färgpalett, test och position — på svenska', () => {
   assert.ok((html.match(/data-pgsw=/g) || []).length === 24, 'paletten ska ha 24 färgpar');
   assert.ok(html.includes('data-pgtest="gift"') && html.includes('id="propX"') && html.includes('id="del"'));
   assert.ok(html.includes('Flippa mellan profil och gåva'));
-  assert.ok(html.includes('FÄRGER OCH STIL') && html.includes('TEST'));
+  // 2026-10-17: samma ordning som playgroundens panel — RÖRELSE, STIL, widgetens egna fält, POSITION.
+  const rubriker = [...html.matchAll(/<h4>([^<]+)<\/h4>/g)].map(m => m[1]);
+  assert.deepEqual(rubriker, ['RÖRELSE', 'STIL', 'TOP STREAK FLIP', 'POSITION & STORLEK']);
+  let pos = -1;
+  for (const ord of ['Entré / utgång', 'Ramlager på avatar', 'Namneffekt', 'Färgpalett', 'Färg 1', 'Färg 2', 'Textfärg', 'Typsnitt', 'Storlek', 'Rörelsehastighet', 'Glöd', 'Rundning', 'Position']) {
+    const n = html.indexOf('>' + ord, pos + 1); assert.ok(n > pos, ord + ' saknas eller står fel'); pos = n;
+  }
+});
+
+test('Storlek och Position flyttar och skalar den valda widgeten', () => {
+  const h = boot(['templatePgPodium']);
+  h.run(`selected='pg0';document.querySelector('#view').insertAdjacentHTML('beforeend','<div class="properties" id="props"></div>');`);
+  h.document.querySelector('#props').innerHTML = h.window.props();
+  h.window.bind();
+  const w = () => h.window.eval("state.widgets[0]");
+  const bredd = w().width;
+  const st = h.document.getElementById('pgg_storlek'); st.value = '1.5'; st.onchange();
+  assert.equal(w().width, Math.round(h.window.eval("VyraWidgets.create('catalog:pgpodium').width") * 1.5));
+  assert.notEqual(w().width, bredd);
+  const pl = h.document.getElementById('pgg_placering'); pl.value = 'top'; pl.onchange();
+  assert.equal(w().y, 8); assert.equal(w().pg.placering, 'top');
 });
 
 test('ett färgval skrivs i widgetens pg-objekt', () => {

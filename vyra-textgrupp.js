@@ -198,6 +198,9 @@
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.
       if (w.type === 'templateGiftFireworks' && w.fwTheme && document.getElementById('fwNameFx')) return ut;
+      // PLAYGROUND-WIDGETARNA (podium, streak, Goal Pro) har Textfärg och Typsnitt i sin STIL-grupp
+      // (playground-widgets.js). En andra TEXT-grupp gav två Typsnitt-reglage i samma panel.
+      if (document.getElementById('pgg_font')) return ut;
 
       const panel = document.querySelector('.properties');
       if (!panel) return ut;

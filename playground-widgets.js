@@ -743,6 +743,10 @@ function fieldHtml(id, f, val) {
   if (f.t === 'select') return `<label>${esc(f.l)}<select id="${id}">${f.o.map(o => `<option value="${esc(o[0])}"${String(o[0]) === String(val) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label>`;
   return `<label>${esc(f.l)}<input id="${id}" type="text" value="${esc(val)}"></label>`;
 }
+const STORLEK = { k: 'storlek', l: 'Storlek', t: 'range', min: .5, max: 1.8, step: .05 };
+const PLACERING = { k: 'placering', l: 'Position', t: 'select', o: [['top', 'Överst'], ['mid', 'Mitten'], ['bottom', 'Nederst']] };
+const grundBredd = k => { try { return VyraWidgets.create(KEYS[k]).width || 300 } catch (_) { return 300 } };
+const storlekAv = (w, k) => Math.round((Number(w.width) || grundBredd(k)) / grundBredd(k) * 20) / 20;
 const GLOBAL_PG = k => GLOBAL.filter(f => !(f.k === 'frameImg' && k !== 'podium') && f.k !== 'pos' && f.k !== 'scale');
 function schemaOf(k) {
   const sch = W[k].schema || [];
@@ -756,14 +760,20 @@ props = function () {
   const k = KINDS[w.type], o = cfgOf(w);
   const sw = PALETTE.map(([n, a, b]) => `<button type="button" class="pg-sw${(o.accent || '').toLowerCase() === a && (o.accent2 || '').toLowerCase() === b ? ' on' : ''}" data-pgsw="${a}|${b}" title="${esc(n)}" style="background:linear-gradient(135deg,${a},${b})"></button>`).join('');
   const sch = schemaOf(k).map(f => fieldHtml('pgx_' + f.k, f, o.x[f.k])).join('');
-  const glob = GLOBAL_PG(k).map(f => fieldHtml('pgg_' + f.k, f, o[f.k])).join('');
+  // STIL i playgroundens ordning (2026-10-17, Davids ord: "se till inställningar matchar widget på
+  // sido panel"): Rubrik, Bildram, Entré, Ramlager, Namneffekt, Färgpalett, Färg 1/2, Textfärg,
+  // Typsnitt, Storlek, Rörelsehastighet, Glöd, Rundning, Position. Storlek och Position styr
+  // widgetens bredd och Y här, eftersom VYRA alltid ritar i skala 1 (--s) och placerar med X/Y.
+  const glob = GLOBAL_PG(k).map(f => (f.k === 'accent' ? `<label>Färgpalett</label><div class="pg-pal">${sw}</div>` : '')
+    + (f.k === 'speed' ? fieldHtml('pgg_storlek', STORLEK, storlekAv(w, k)) : '')
+    + fieldHtml('pgg_' + f.k, f, o[f.k])).join('') + fieldHtml('pgg_placering', PLACERING, w.pg && w.pg.placering || 'mid');
   const titelFalt = W[k].title ? fieldHtml('pgg_title', { t: 'text', l: 'Rubrik' }, o.title) : '';
   const testKnappar = (k === 'goal' || k === 'podium' || k === 'streak')
     ? ['gift:Skicka gåva', 'combo:Combo ×10', 'likes:Likes ×50', 'follow:Följ', 'share:Dela', 'comment:Kommentar', 'reset:Nollställ'].map(s => { const [a, b] = s.split(':'); return `<button type="button" data-pgtest="${a}">${b}</button>` }).join('') : '';
   return `<h3>${esc(TITEL[k].toUpperCase())}</h3><div class="template-badge">LIVE · TRANSPARENT</div><div hidden><input id="pt" value="${esc(TITEL[k])}"><input id="pv" value=""></div>`
-    + `<div class="property-group"><h4>DESIGN</h4>${titelFalt}${sch}</div>`
-    + `<div class="property-group"><h4>FÄRGER OCH STIL</h4><div class="pg-pal">${sw}</div>${glob}</div>`
-    + `<div class="property-group fw-premium-motion"><h4>TEST</h4><div class="pg-test">${testKnappar}</div></div>`
+    + `<div class="property-group fw-premium-motion"><h4>RÖRELSE</h4><div class="pg-test">${testKnappar}</div></div>`
+    + `<div class="property-group"><h4>STIL</h4>${titelFalt}${glob}</div>`
+    + (sch ? `<div class="property-group"><h4>${esc(TITEL[k].toUpperCase())}</h4>${sch}</div>` : '')
     + `<div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || 300}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
 };
 
@@ -852,6 +862,19 @@ bind = function () {
   });
   wire('pgx_', 'x', schemaOf(k));
   wire('pgg_', 'g', GLOBAL_PG(k));
+  const st = document.getElementById('pgg_storlek');
+  if (st) {
+    st.oninput = () => { const sp = document.querySelector('[data-pgv="pgg_storlek"]'); if (sp) sp.textContent = st.value; };
+    st.onchange = () => { w.width = Math.round(grundBredd(k) * Math.min(1.8, Math.max(.5, +st.value || 1))); save(); render(); };
+  }
+  const pl = document.getElementById('pgg_placering');
+  if (pl) pl.onchange = () => {
+    const el = document.querySelector('[data-widget-id="' + w.id + '"]') || document.querySelector('[data-id="' + w.id + '"]');
+    const h = el ? el.offsetHeight : (Number(w.height) || Number(w.width) || 300);
+    w.pg = w.pg || {}; w.pg.placering = pl.value;
+    w.y = pl.value === 'top' ? 8 : pl.value === 'bottom' ? Math.max(0, 768 - h - 8) : Math.max(0, Math.round((768 - h) / 2));
+    save(); render();
+  };
   const tt = document.getElementById('pgg_title'); if (tt) tt.onchange = () => { w.pg = w.pg || {}; w.pg.title = tt.value; save(); render(); };
   document.querySelectorAll('[data-pgsw]').forEach(b => b.onclick = () => {
     const [a, c] = b.dataset.pgsw.split('|'); w.pg = w.pg || {}; w.pg.accent = a; w.pg.accent2 = c;

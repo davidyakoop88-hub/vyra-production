@@ -483,3 +483,25 @@
   .pgw .stk-info .stk-pill svg{width:calc(var(--cntmin) * .9 / var(--pgs,1));height:calc(var(--cntmin) * .9 / var(--pgs,1))}
 }
 @keyframes pg-stkroarc{0%{filter:brightness(1)}30%{filter:brightness(1.3) drop-shadow(0 0 40px var(--a))}100%{filter:brightness(1)}}
+
+/* ===== Top Gifter Podium, justerat i playgrounden 2026-10-17 ===== */
+/* Tätare: sidoplatserna dras in mot ettan. `translate` och inte `transform`, så studsen fungerar. */
+.pgw .pod .pod-cols{gap:0}
+.pgw .pod .r2{translate:64px 0}.pgw .pod .r3{translate:-64px 0}.pgw .pod .r1{position:relative;z-index:2}
+/* Nr 2 och 3 i samma höjd, så namn och mynt ligger på samma linje. */
+.pgw .pod .r2 .blk,.pgw .pod .r3 .blk{height:200px}.pgw .pod .r3 .blk{opacity:1}
+.pgw[data-fimg="1"] .pod .r2,.pgw[data-fimg="1"] .pod .r3{margin-bottom:48px!important}
+/* Neontext: vit kärna med lager av Färg 1 (namn, rubrik) och Färg 2 (mynt). */
+.pgw .pod .nm{color:#fff;padding:10px 20px;-webkit-text-stroke:1px var(--a);text-shadow:0 0 3px #fff,0 0 calc(max(var(--g),1)*8px) var(--a),0 0 calc(max(var(--g),1)*16px) var(--a),0 0 calc(max(var(--g),1)*32px) var(--a),0 0 calc(max(var(--g),1)*60px) var(--a)}
+.pgw .pod .cn{color:#fff;-webkit-text-stroke:1px var(--b);text-shadow:0 0 3px #fff,0 0 calc(max(var(--g),1)*8px) var(--b),0 0 calc(max(var(--g),1)*16px) var(--b),0 0 calc(max(var(--g),1)*32px) var(--b),0 0 calc(max(var(--g),1)*60px) var(--b)}
+.pgw .pod .pod-title{color:#fff;-webkit-text-stroke:1px var(--a);text-shadow:0 0 3.9px #fff,0 0 calc(max(var(--g),1)*10.4px) var(--a),0 0 calc(max(var(--g),1)*20.8px) var(--a),0 0 calc(max(var(--g),1)*41.6px) var(--a),0 0 calc(max(var(--g),1)*78px) var(--a)}
+/* Lugn start: liten studs utan överskjutning, och glöden går i otakt mellan platserna. */
+@keyframes pg-pod-bump{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pgw .pod .pcol.bump{animation:pg-pod-bump calc(.6s/var(--sp)) ease-out}
+.pgw .pod .r2 :is(.fimgbox>img,.fxbox i,.fpart i){animation-delay:-1.2s}.pgw .pod .r3 :is(.fimgbox>img,.fxbox i,.fpart i){animation-delay:-2.3s}
+
+/* Kronan syns bättre (2026-10-17, "jag vill den ska synas bättre"): ljusare och mättade färger,
+   glöd i ramens egen färg i stället för svarta skuggor, och lite större. Tomma platser 70 %. */
+.pgw .rcrown{width:50cqw}
+.pgw .rcrown img{filter:brightness(1.3) saturate(1.5) contrast(1.12) drop-shadow(0 0 .35cqw #000a) drop-shadow(0 0 1.4cqw var(--fg,#ffd27a)) drop-shadow(0 0 3.2cqw var(--fg,#ffd27a))}
+.pgw .pod .pcol.dim{opacity:.7}
