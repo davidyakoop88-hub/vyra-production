@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Kontur (#608) ovanpå läsbara level-widgetar (#605): level-bilderna tas om efter sammanslagningen",
-  "nycklar": 21,
-  "filter": "level",
-  "tid": "2026-10-15T16:50:57.158Z"
+  "motiv": "Goals: svart skiva och etikettplatta bortnyckade ur circle-like/-follower/-diamond.png, PR #615",
+  "nycklar": 9,
+  "filter": "socialgoal",
+  "tid": "2026-10-16T19:06:58.703Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {

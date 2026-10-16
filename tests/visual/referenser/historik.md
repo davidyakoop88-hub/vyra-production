@@ -402,3 +402,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Kontur (#608) ovanpå läsbara level-widgetar (#605): level-bilderna tas om efter sammanslagningen
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 21 av 169 (filter: level) — catalog:fanlevel50:lejon, catalog:fanlevel50:ornen, catalog:fanlevel50:royal, catalog:fanlevel50:zeus, catalog:fanlevel:layout:badgereveal, catalog:fanlevel:layout:duo, catalog:fanlevel:layout:heartbeat, catalog:fanlevel:layout:hearts, catalog:fanlevel:layout:hero, catalog:fanlevel:layout:loyalty, catalog:fanlevel:layout:ribbon, catalog:fanlevel:layout:stack, catalog:gifterlevel:duo, catalog:gifterlevel:flip, catalog:gifterlevel:number, catalog:gifterlevel:orbitlevel, catalog:gifterlevel:profile, catalog:gifterlevel:reveal, catalog:gifterlevel:risingtier, catalog:gifterlevel:sidebadge, catalog:gifterlevel:stack
+
+## 2026-10-16 — 9 referenser skrivna
+
+- **Motiv:** Goals: svart skiva och etikettplatta bortnyckade ur circle-like/-follower/-diamond.png, PR #615
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 9 av 169 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
