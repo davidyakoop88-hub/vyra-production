@@ -505,3 +505,15 @@
 .pgw .rcrown{width:50cqw}
 .pgw .rcrown img{filter:brightness(1.3) saturate(1.5) contrast(1.12) drop-shadow(0 0 .35cqw #000a) drop-shadow(0 0 1.4cqw var(--fg,#ffd27a)) drop-shadow(0 0 3.2cqw var(--fg,#ffd27a))}
 .pgw .pod .pcol.dim{opacity:.7}
+
+/* Ingen pulsering på podiet (2026-10-17, "ingen pulserande"): ramens glöd, halon, kronan,
+   strålarnas blink och studsen står still. Strålarna roterar fortfarande långsamt. */
+.pgw .pod .fimgbox>img{animation:none;filter:drop-shadow(0 0 calc(var(--g)*20px) var(--fg)) brightness(1.06)}
+.pgw .pod .fxbox i{animation:none!important}
+.pgw[data-frame=halo] .pod .fxbox i:nth-child(n+2),.pgw[data-frame=ripple] .pod .fxbox i{display:none}
+.pgw .pod .crown{animation:none}
+.pgw .pod .rays{animation:pg-raysp calc(26s/var(--sp)) linear infinite;opacity:.4}
+.pgw .pod .pcol.bump{animation:none}
+/* Siffrorna 1 2 3 lyser i neon: rangmärkena på ramarna och siffrorna i de kodade blocken. */
+.pgw .pod .rbadge{filter:drop-shadow(0 0 .5cqw #fff) drop-shadow(0 0 1.6cqw var(--fg,var(--a))) drop-shadow(0 0 3.4cqw var(--fg,var(--a)))}
+.pgw .pod .blk span{color:#fff;mix-blend-mode:normal;-webkit-text-stroke:2px var(--a);text-shadow:0 0 4px #fff,0 0 calc(max(var(--g),1)*14px) var(--a),0 0 calc(max(var(--g),1)*30px) var(--a),0 0 calc(max(var(--g),1)*60px) var(--a)}
