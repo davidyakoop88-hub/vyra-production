@@ -119,24 +119,38 @@ const sequences=new Map();
 const mode=combo=>Number(combo)>=100?'100':Number(combo)>=10?'10':'1';
 const duration=combo=>({1:7,10:11,100:20})[mode(combo)];
 function dispose(group){const item=mounted.get(group);if(!item)return;item.unsubscribe?.();item.canvas.getContext('2d')?.clearRect(0,0,item.canvas.width,item.canvas.height);mounted.delete(group)}
+// FESTIVAL-MOTORN (2026-10-17) ersätter den gamla när den är laddad: hjärtfyrverkerier runt en
+// guldsol, byggd i playgrounden efter Davids referensbild. Den får också stilpanelens inställningar —
+// namneffekt, textfärg, typsnitt, glöd och rundning — och Färg 1/Färg 2 gäller
+// alltid (solen / ett av hjärtana). Utan VyraFestival används den gamla motorn som förut.
+// INGEN BILDRAM OCH INGET RAMLAGER (2026-10-17, Davids ord: "ta bort ramarna ... kan visa bara profilbilden och
+// gåvor"). Mitten visar gåvan som vänds till profilbilden, utan ram — även för sparade widgetar
+// som valt en ram tidigare.
 function rendererFor(w,giftImage,profileImage,palette={},playback={}){
- const defaults={royal:['#ffd06b','#a764ff'],ice:['#dcecff','#49cfff'],rose:['#edb98b','#ff7cc8'],comet:['#45e1d1','#ff806c'],supernova:['#ffd06b','#a764ff']}[w.fwTheme]||[];
  const primary=palette.primary||w.fwColor,secondary=palette.secondary||w.fwColor2;
+ if(root.VyraFestival){
+  return root.VyraFestival.create({theme:w.fwTheme,primary,secondary,customPalette:true,giftImage:giftImage||w.fwGiftImage,profileImage,
+   glow:Number.isFinite(+w.fwGlow)?+w.fwGlow:.8,radius:Number.isFinite(+w.fwRadius)?+w.fwRadius:50,
+   badgeFrame:'',badgeFx:'none',
+   name:w.fwNameFx&&w.fwNameFx!=='hide'?playback.name:'',nameFx:w.fwNameFx||'none',nameColor:w.fwTextColor||'#ffffff',nameFont:w.fwFont||"'Segoe UI',system-ui,sans-serif",...playback})}
+ const defaults={royal:['#ffd06b','#a764ff'],ice:['#dcecff','#49cfff'],rose:['#edb98b','#ff7cc8'],comet:['#45e1d1','#ff806c'],supernova:['#ffd06b','#a764ff']}[w.fwTheme]||[];
  const customPalette=!!w.inheritBrandKit||[primary,secondary].some((color,i)=>typeof color==='string'&&color.toLowerCase()!==defaults[i]);
  return root.VyraNatural.create({theme:w.fwTheme,style:w.fwNovaStyle||'classic',primary,secondary,customPalette,giftImage:giftImage||w.fwGiftImage,profileImage,...playback});
 }
-function mount(group,w,combo,giftImage,profileImage,palette){
+function mount(group,w,combo,giftImage,profileImage,palette,namn){
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=800;canvas.className=(w.fwTheme==='supernova'?'fw-supernova-canvas':'fw-classics-canvas')+' fw-natural-canvas';canvas.style.cssText='display:block;width:100%;height:auto;pointer-events:none';group.append(canvas);
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const key=w.id||w,sequence=sequences.get(key)||{single:0,variant:0};
- const renderer=rendererFor(w,giftImage,profileImage,palette,{combo,singleIndex:sequence.single,variantIndex:++sequence.variant});
+ const renderer=rendererFor(w,giftImage,profileImage,palette,{combo,singleIndex:sequence.single,variantIndex:++sequence.variant,name:namn?String(namn):''});
+ // Rörelsehastighet (stilpanelen): tempot på hela programmet; längden kommer från motorn.
+ const fart=Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1)),langd=typeof renderer.duration==='function'?renderer.duration():duration(combo);
  if(mode(combo)==='1'){canvas.dataset.fwShape=['heart','smile','star'][sequence.single%3];sequence.single++}
  sequences.set(key,sequence);
  const started=performance.now(),item={renderer,canvas,unsubscribe:null};mounted.set(group,item);
  const reduced=root.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  const paint=now=>{
   if(!group.isConnected||w.hidden||group.closest('.widget-hidden')){dispose(group);return}
-  const elapsed=(now-started)/1000;if(elapsed>=duration(combo)){dispose(group);return}
+  const elapsed=(now-started)/1000*fart;if(elapsed>=langd){dispose(group);return}
   renderer.setQuality(Math.max(1,Math.ceil(mounted.size*2180/2500)));
   if(reduced)renderer.renderStill(ctx,960,800);else renderer.render(ctx,960,800,elapsed,mode(combo));
  };

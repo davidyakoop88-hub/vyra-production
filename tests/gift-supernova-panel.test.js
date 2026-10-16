@@ -19,44 +19,37 @@ test('Supernova factory and standalone use approved defaults without changing ol
  }
  for(const key of ['royal','ice','rose','comet']){const w=factory.create('catalog:giftfireworks:'+key);assert.equal(w.width,360);assert.equal(w.fwNovaStyle,undefined);}
 });
-test('Supernova panel exposes three styles and only supported animation controls',()=>{
- const h=setup();assert.equal(h.document.querySelectorAll('#fwNovaStyle option').length,3);assert.equal(h.document.querySelectorAll('#fwNovaPalette option').length,5);
- assert.equal(h.document.getElementById('fwGiftImage').closest('details').open,false);
- for(const id of ['fwDuration','fwSpeed','fwPreset','fwReturn','fwDensity','fwExplosion','fwIntro','fwOutro'])assert.equal(h.document.getElementById(id),null,id+' should not promise an unused control');
- for(const id of ['fwMin','fwSound','fwExcludeAnon','fwVolume','fwGiftImage','propWidth','testFw'])assert.ok(h.document.getElementById(id));
+// 2026-10-17: panelen är byggd som widget-playgroundens (RÖRELSE, STIL, FYRVERKERI, LJUD,
+// POSITION & STORLEK). Varje reglage skriver till just den valda widgeten.
+test('panelen har playgroundens ordning och inga döda reglage',()=>{
+ const h=setup('festival');
+ const rubriker=[...h.document.querySelectorAll('.property-group h4')].map(x=>x.textContent);
+ assert.deepEqual(rubriker,['RÖRELSE','STIL','FYRVERKERI','LJUD','POSITION & STORLEK']);
+ const stil=[...h.document.querySelectorAll('.property-group')][1].textContent;
+ let pos=-1;for(const ord of ['Entré / utgång','Namneffekt','Färgpalett','Färg 1','Färg 2','Textfärg','Typsnitt','Storlek','Rörelsehastighet','Glöd','Rundning','Position']){const n=stil.indexOf(ord,pos+1);assert.ok(n>pos,ord+' saknas eller står fel');pos=n}
+ assert.equal(h.document.querySelectorAll('[data-fwsw]').length,24);
+ for(const id of ['fwFrameImg','fwFrameFx','fwDuration','fwSpeed','fwPreset','fwReturn','fwDensity','fwExplosion','fwNovaStyle','fwNovaPalette','fwGiftImage'])assert.equal(h.document.getElementById(id),null,id+' ska inte finnas');
+ for(const id of ['testFw','fwCombo','fwCanvasTheme','fwFinal','fwMin','fwLanes','fwExcludeAnon','fwSound','fwVolume','propWidth','del'])assert.ok(h.document.getElementById(id),id);
 });
-test('style, palettes, custom colors, and reset update the real selected widget',()=>{
- const h=setup();change(h,'fwNovaStyle','willow');assert.equal(state(h).fwNovaStyle,'willow');change(h,'fwNovaPalette','ice');assert.equal(state(h).fwColor,'#dcecff');assert.equal(state(h).fwColor2,'#49cfff');
- change(h,'fwColor','#123456');assert.equal(state(h).fwColor,'#123456');assert.equal(h.document.getElementById('fwNovaPalette').value,'custom');
- change(h,'fwGiftImage','https://example.com/gift.png');assert.equal(state(h).fwGiftImage,'https://example.com/gift.png');
- const x=state(h).x;h.document.getElementById('fwNovaReset').click();assert.equal(state(h).fwNovaStyle,'classic');assert.equal(state(h).fwColor,'#ffd06b');assert.equal(state(h).fwColor2,'#a764ff');assert.equal(state(h).x,x);
+test('stilreglagen sparas på den valda widgeten',()=>{
+ const h=setup('festival');
+ const val={fwEnter:'bounce',fwNameFx:'aurora',fwTextColor:'#ffeeaa',fwColor:'#123456',fwColor2:'#654321'};
+ for(const [id,v] of Object.entries(val)){change(h,id,v);assert.equal(state(h)[id],v,id)}
+ change(h,'fwFont','Georgia,serif');assert.equal(state(h).fwFont,'Georgia,serif');
+ for(const [id,v,ut] of [['fwScale','1.4',1.4],['fwPlaySpeed','9',2.5],['fwGlow','0.3',.3],['fwRadius','12',12],['fwFinal','5000',5000],['fwMin','10',10],['fwLanes','5',5]]){change(h,id,v);assert.equal(state(h)[id],ut,id)}
+ h.document.querySelector('[data-fwsw="#ff3b3b|#ff9a3d"]').click();assert.equal(state(h).fwColor,'#ff3b3b');assert.equal(state(h).fwColor2,'#ff9a3d');assert.equal(state(h).inheritBrandKit,false);
+ assert.ok(h.document.querySelector('[data-fwsw="#ff3b3b|#ff9a3d"]').classList.contains('on'));
+ change(h,'fwPos','top');assert.equal(state(h).y,8);change(h,'fwPos','bottom');assert.ok(state(h).y>300);
+});
+test('temat byter färger men behåller placering',()=>{
+ const h=setup('ice',{x:321,y:456,width:377});
+ for(const key of ['festival','royal','rose','comet','supernova']){
+  change(h,'fwCanvasTheme',key);const original=factory.create('catalog:giftfireworks:'+key);
+  assert.equal(state(h).fwTheme,key);assert.equal(state(h).fwColor,original.fwColor);assert.equal(state(h).fwColor2,original.fwColor2);
+  assert.equal(state(h).width,377);assert.equal(state(h).x,321);assert.equal(state(h).y,456);
+ }
 });
 test('test count and volume are clamped and legacy panel stays available',()=>{
  const h=setup();change(h,'fwCombo','1000');assert.equal(state(h).fwCombo,100);change(h,'fwVolume','20');assert.equal(state(h).fwVolume,20);
- h.window.eval("delete state.widgets[0].fwTheme;state.widgets[0].fwMotion='magnetic';render();bind()");assert.ok(h.document.getElementById('fwDuration'));assert.equal(h.document.getElementById('fwNovaStyle'),null);
-});
-
-test('explicit classic themes expose their own motions and preserve saved placement and colors',()=>{
- const h=setup('ice',{x:321,y:456,width:377,fwColor:'#112233',fwColor2:'#445566'});
- assert.equal(state(h).width,377);assert.equal(state(h).x,321);assert.equal(state(h).y,456);
- assert.equal(state(h).fwColor,'#112233');assert.equal(state(h).fwColor2,'#445566');
- assert.equal(h.document.getElementById('fwNovaPalette').value,'custom');
- assert.equal(h.document.getElementById('fwNovaStyle'),null);
- for(const key of ['royal','ice','rose','comet']){
-  change(h,'fwCanvasTheme',key);assert.equal(state(h).fwTheme,key);
-  for(const id of ['fwDuration','fwSpeed','fwDensity','fwExplosion','fwReturn'])assert.equal(h.document.getElementById(id),null);
-  change(h,'fwColor','#123456');h.document.getElementById('fwNovaReset').click();
-  const original=factory.create('catalog:giftfireworks:'+key);
-  assert.equal(state(h).fwColor,original.fwColor);assert.equal(state(h).fwColor2,original.fwColor2);
-  assert.equal(state(h).width,377);assert.equal(state(h).x,321);assert.equal(state(h).y,456);
- }
- change(h,'fwCanvasTheme','supernova');assert.ok(h.document.getElementById('fwNovaStyle'));
-});
-
-test('saved Brand Kit inheritance remains until an explicit palette or reset choice',()=>{
- const h=setup('rose',{inheritBrandKit:true});
- assert.equal(state(h).inheritBrandKit,true);assert.equal(h.document.getElementById('fwColor').disabled,true);
- change(h,'fwNovaPalette','ice');assert.equal(state(h).inheritBrandKit,false);assert.equal(state(h).fwColor,'#dcecff');assert.equal(h.document.getElementById('fwColor').disabled,false);
- h.window.eval("state.widgets[0].inheritBrandKit=true;render();bind()");
- h.document.getElementById('fwNovaReset').click();assert.equal(state(h).inheritBrandKit,false);assert.equal(state(h).fwColor,'#edb98b');
+ h.window.eval("delete state.widgets[0].fwTheme;state.widgets[0].fwMotion='magnetic';render();bind()");assert.ok(h.document.getElementById('fwDuration'));assert.equal(h.document.getElementById('fwNameFx'),null);
 });
