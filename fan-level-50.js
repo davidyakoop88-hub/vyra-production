@@ -64,20 +64,32 @@
   // namn krymper i stället för att klippas till "Nova Stor…". Faktorn är en uppskattning (en
   // versal i Oswald 800 ≈ 0,6 em) — ellipsen i CSS finns kvar som sista skydd för extrema namn.
   // Golvet 0,5: under halva storleken går texten inte att läsa i OBS, då är ellipsen bättre.
-  function namnFaktor(namn) {
+  // `ryms` = antal tecken som far plats i full storlek: 11 i stora vyn, 8 i det sma kortets storre
+  // namn (fan-level-50.css, --fl50-nm-ks).
+  function namnFaktor(namn, ryms = 11) {
     const n = Array.from(String(namn || '')).length;
-    return n <= 11 ? 1 : Math.max(0.5, Math.round(1100 / n) / 100);
+    return n <= ryms ? 1 : Math.max(0.5, Math.round(ryms * 100 / n) / 100);
+  }
+  const namnStil = namn => `--fl50-nm-k:${namnFaktor(namn)};--fl50-nm-ks:${namnFaktor(namn, 8)}`;
+
+  // EN WIDGET, ALLA DESIGNER (David 2026-10-16): katalogen har ett kort i stallet for fyra, och
+  // inspektorn valjer en design eller 'alla'. Med 'alla' far kort nr N mall nr N (runt), sa bandet
+  // visar alla fyra bredvid varandra och slideshowen byter mall med varje fan.
+  const ALLA = 'alla';
+  const NYCKLAR = Object.keys(ART);
+  function designFor(w, rank) {
+    if (w.fanl50Design === ALLA) return NYCKLAR[(Math.max(1, rank || 1) - 1) % NYCKLAR.length];
+    return ART[w.fanl50Design] ? w.fanl50Design : 'royal';
   }
 
   function cardHtml(w, m, rank) {
-    const design = ART[w.fanl50Design] ? w.fanl50Design : 'royal';
+    const design = designFor(w, rank);
     const d = ART[design];
     const team = safe.text(m.team || w.fanl50Team || '');
     return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
-      <div class="fl50-badge">LEVEL ${d.level}</div>
       <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
-      <div class="fl50-name" style="--fl50-nm-k:${namnFaktor(m.name)}"><span>${safe.text(m.name, 'FAN')}</span></div>
+      <div class="fl50-name" style="${namnStil(m.name)}"><span>${safe.text(m.name, 'FAN')}</span></div>
       ${team ? `<div class="fl50-team"><span>#${team}</span></div>` : ''}
       ${rank ? `<div class="fl50-rank">#${rank}</div>` : ''}
     </div>`;
@@ -128,6 +140,7 @@
     return `<h3>FAN LEVEL 50</h3><div class="template-badge">MILSTOLPE · LIVE + MANUELL</div>
       <div hidden><input id="pt" value="${safe.text(w.title, 'Fan Level 50')}"><input id="pv" value=""></div>
       <div class="property-group"><h4>VISNING</h4>
+        <label>Design<select id="fl50Design">${opt(ALLA, w.fanl50Design, 'Alla designer (växlar)')}${Object.entries(DESIGNS).map(([k, label]) => opt(k, w.fanl50Design, label)).join('')}</select></label>
         <label>Läge<select id="fl50Mode">${opt('slideshow', w.fanl50Mode || 'slideshow', 'Slideshow')}${opt('band', w.fanl50Mode, 'Rullande band')}</select></label>
         <label class="range-label">Bytestid <b>${interval} sek</b><input id="fl50Interval" type="range" min="2" max="20" value="${interval}"></label>
         <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Auto + manuell')}${opt('auto', w.fanl50Source, 'Bara auto (live)')}${opt('manual', w.fanl50Source, 'Bara manuell')}</select></label>
@@ -156,6 +169,7 @@
     const w = liveWidget(selected);
     if (!w || w.type !== 'templateFanLevel50') return;
     const on = (id, fn) => { const el = document.querySelector(id); if (el) fn(el); };
+    on('#fl50Design', el => { el.onchange = e => { w.fanl50Design = e.target.value; save(); render(); }; });
     on('#fl50Mode', el => { el.value = w.fanl50Mode || 'slideshow'; el.onchange = e => { w.fanl50Mode = e.target.value; save(); render(); }; });
     on('#fl50Source', el => { el.value = w.fanl50Source || 'both'; el.onchange = e => { w.fanl50Source = e.target.value; save(); render(); }; });
     on('#fl50Interval', el => { el.oninput = e => { w.fanl50Interval = +e.target.value; const b = el.parentElement.querySelector('b'); if (b) b.textContent = (+e.target.value) + ' sek'; }; el.onchange = e => { w.fanl50Interval = +e.target.value; save(); }; });
@@ -219,12 +233,15 @@
     const section = document.createElement('section');
     section.dataset.fl50 = '1';
     section.className = 'fan-level-50-template-section';
-    section.innerHTML = '<h4>FAN LEVEL 50 · MILSTOLPE</h4>' + Object.entries(DESIGNS).map(([key, label]) =>
-      `<button data-fl50-design="${key}" data-catalog-key="catalog:fanlevel50:${key}"><i>♛</i><span><b>Fan Level 50 · ${label}</b><small>Auto + manuell · namn · foto</small></span></button>`).join('');
+    // Ett kort for alla designer (David 2026-10-16). Fabriken bygger fortfarande en widget per mall
+    // (sparade layouter bar sina nycklar); det nya kortet startar i 'alla' och designen valjs sedan
+    // i inspektorn.
+    section.innerHTML = '<h4>FAN LEVEL 50 · MILSTOLPE</h4>' +
+      `<button data-fl50-design="${ALLA}" data-catalog-key="catalog:fanlevel50:royal"><i>♛</i><span><b>Fan Level 50</b><small>${Object.values(DESIGNS).join(' · ')} · välj en eller alla</small></span></button>`;
     catalog.prepend(section);
     section.querySelectorAll('button').forEach(b => {
       const key = b.dataset.catalogKey;
-      b.onclick = () => { const created = VyraWidgets.create(key); state.widgets.push(created); selected = created.id; save(); render(); toast('Fan Level 50 skapad'); };
+      b.onclick = () => { const created = VyraWidgets.create(key); created.fanl50Design = ALLA; state.widgets.push(created); selected = created.id; save(); render(); toast('Fan Level 50 skapad'); };
     });
   };
 
@@ -245,8 +262,14 @@
       const m = list[i];
       card.classList.add('fl50-out');
       root.setTimeout(() => {
+        // 'alla': nasta fan far nasta mall — byt bild och mallklass (geometrin hanger pa klassen).
+        const design = designFor(w, i + 1);
+        if (!card.classList.contains('fl50-design-' + design)) {
+          NYCKLAR.forEach(k => card.classList.remove('fl50-design-' + k)); card.classList.add('fl50-design-' + design);
+          const art = card.querySelector('.fl50-art'); if (art) art.src = ART[design].art;
+        }
         const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
-        const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); }
+        const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); nm.parentElement.style.setProperty('--fl50-nm-ks', namnFaktor(m.name, 8)); }
         const teamText = safe.text(m.team || w.fanl50Team || '');
         const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';
         const rk = card.querySelector('.fl50-rank'); if (rk) rk.textContent = '#' + (i + 1);
