@@ -102,12 +102,20 @@
    uppmätt 2026-10-16: gåvobilden ritades 302 px bred, långt utanför cirkeln. Nollas inuti skinnet. */
 .widget.spel.spel-gifter .spel-flip>div,.widget.spel.spel-gifter .spel-flip img{all:unset!important;box-sizing:border-box!important}
 .widget.spel.spel-gifter .spel-flip>div{position:absolute!important;inset:0!important;display:block!important;border-radius:50%!important;
-  overflow:hidden!important;backface-visibility:hidden!important;animation:spel-flip 8s ease-in-out infinite!important}
-.widget.spel.spel-gifter .spel-flip>.vyra-gift-face{animation-delay:-4s!important;background:radial-gradient(circle,#ffffff22,#0000 70%)!important}
+  overflow:hidden!important;backface-visibility:hidden!important;transform:rotateY(var(--spel-vand))!important;
+  animation:spel-flip 8s ease-in-out infinite!important}
+/* Gåvosidan får en egen mörk botten: förut låg profilbilden alltid under och dolde att den var
+   genomskinlig, och i OBS hade kameran eller spelet synts genom cirkeln. */
+.widget.spel.spel-gifter .spel-flip>.vyra-gift-face{animation-delay:-4s!important;background:radial-gradient(circle,#ffffff2e,#0000 70%),#160f2c!important}
 .widget.spel.spel-gifter .spel-flip img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important}
 .widget.spel.spel-gifter .spel-flip .vyra-gift-face img{object-fit:contain!important;padding:14%!important}
-/* Profil ↔ gåva: bilden byts, namnet och värdet står kvar. */
-@keyframes spel-flip{0%,42%{transform:rotateY(0)}50%,92%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+/* Profil ↔ gåva: bilden byts, namnet och värdet står kvar.
+   VINKELN ANIMERAS, INTE TRANSFORM. Återställningen ovan (all:unset!important) gör transform till en
+   !important-deklaration, och en animation kan aldrig skriva över !important — uppmätt 2026-10-16:
+   båda sidorna stod på transform:none, så gåvan låg ovanpå profilbilden hela tiden. `all` rör inte
+   anpassade egenskaper, så --spel-vand animeras fritt och transform läser den. */
+@property --spel-vand{syntax:'<angle>';inherits:false;initial-value:0deg}
+@keyframes spel-flip{0%,42%{--spel-vand:0deg}50%,92%{--spel-vand:180deg}100%{--spel-vand:360deg}}
 .spel-gifter .topgift-copy strong,.spel-gifter .topgift-copy em{position:absolute;display:flex;align-items:center;
   justify-content:center;white-space:nowrap;overflow:hidden}
 .spel-gifter .topgift-copy strong{font-size:6.6cqw;font-weight:800;line-height:1;text-overflow:ellipsis;color:#fff;

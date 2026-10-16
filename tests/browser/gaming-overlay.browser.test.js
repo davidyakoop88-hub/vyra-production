@@ -231,3 +231,40 @@ test('en vanlig widget efter temat hamnar ovanpå det, går att klicka på och r
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// Davids skärmbild 2026-10-16: "gåva och profilbilden ligger på varandra istället, de ska flippa, och
+// TOP GIFTER-texten ska sitta i mitten". Vändningen stod still: återställningen i spellayout.css
+// (all:unset!important) gjorde transform till !important, som en animation aldrig skriver över — båda
+// sidorna stod på transform:none och gåvan låg ovanpå profilbilden. Och rubrikfälten låg för lågt, mot
+// kronan. Plattornas höjd är uppmätt i konsten (mörka, täckande pixlar i bildens mittkolumner).
+const RUBRIKPLATTA = { fortnite: [7.5, 17], 'call-of-duty': [3.3, 13.8], 'gta-v': [3.4, 12], minecraft: [6, 16.1] };
+test('Top Gifter: profilbild och gåva vänds i tur och ordning, och rubriken sitter mitt i sin platta', { skip, timeout: 120000 }, async () => {
+  const { page, fel } = await sida(true);
+  try {
+    await lagg(page, { gifter: { width: 260, dataName: '@StreamQueen' } });
+    // Vid start syns profilbilden och gåvan är vänd bort; en halv period senare tvärtom.
+    const sidor = () => page.evaluate(() => [...document.querySelectorAll('.canvas .spel-gifter .spel-flip>div')].map(d => {
+      const m = new DOMMatrix(getComputedStyle(d).transform);
+      return { klass: d.className, framsida: m.m11 > 0 };
+    }));
+    await page.evaluate(() => document.getAnimations().filter(a => a.animationName === 'spel-flip').forEach(a => { a.pause(); a.currentTime = 1000; }));
+    const fore = await sidor();
+    await page.evaluate(() => document.getAnimations().filter(a => a.animationName === 'spel-flip').forEach(a => { a.currentTime = 5000; }));
+    const efter = await sidor();
+    assert.deepEqual(fore.map(s => s.framsida), [true, false], `vid 1 s ska bara profilbilden synas: ${JSON.stringify(fore)}`);
+    assert.deepEqual(efter.map(s => s.framsida), [false, true], `vid 5 s ska bara gåvan synas: ${JSON.stringify(efter)}`);
+
+    for (const [tema, [topp, botten]] of Object.entries(RUBRIKPLATTA)) {
+      await lagg(page, { gifter: { width: 260 } }, tema);
+      const r = await page.evaluate(() => {
+        const konst = document.querySelector('.canvas .spel-gifter .spel-konst').getBoundingClientRect();
+        const rub = document.querySelector('.canvas .spel-gifter .spel-gifter-rubrik').getBoundingClientRect();
+        return { mitt: (rub.top + rub.height / 2 - konst.top) / konst.height * 100, x: (rub.left + rub.width / 2 - konst.left) / konst.width * 100 };
+      });
+      const plattansMitt = (topp + botten) / 2;
+      assert.ok(Math.abs(r.mitt - plattansMitt) <= 1.5, `${tema}: rubrikens mitt på ${r.mitt.toFixed(1)} % av höjden, plattans mitt på ${plattansMitt} %`);
+      assert.ok(Math.abs(r.x - 50) <= 1, `${tema}: rubriken inte centrerad i sidled (${r.x.toFixed(1)} %)`);
+    }
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
