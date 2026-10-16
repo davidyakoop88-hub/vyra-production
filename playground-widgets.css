@@ -517,3 +517,9 @@
 /* Siffrorna 1 2 3 lyser i neon: rangmärkena på ramarna och siffrorna i de kodade blocken. */
 .pgw .pod .rbadge{filter:drop-shadow(0 0 .5cqw #fff) drop-shadow(0 0 1.6cqw var(--fg,var(--a))) drop-shadow(0 0 3.4cqw var(--fg,var(--a)))}
 .pgw .pod .blk span{color:#fff;mix-blend-mode:normal;-webkit-text-stroke:2px var(--a);text-shadow:0 0 4px #fff,0 0 calc(max(var(--g),1)*14px) var(--a),0 0 calc(max(var(--g),1)*30px) var(--a),0 0 calc(max(var(--g),1)*60px) var(--a)}
+
+/* Siffrorna 1 2 3 syns tydligt (2026-10-17, "1 2 3 är inte så synligt"): större märke och en
+   stor neonsiffra ovanpå medaljbilden, hämtad ur märkets data-rank. */
+.pgw .pod .rbadge{width:34cqw;height:34cqw}
+.pgw .pod .rbadge img{filter:brightness(1.25) saturate(1.3) drop-shadow(0 .5cqw .8cqw #000b)}
+.pgw .pod .rbadge::after{content:attr(data-rank);position:absolute;inset:0;display:grid;place-items:center;font:900 19cqw/1 Impact,'Arial Black',sans-serif;color:#fff;-webkit-text-stroke:.5cqw var(--fg,var(--a));text-shadow:0 0 .8cqw #fff,0 0 2.4cqw var(--fg,var(--a)),0 0 4.8cqw var(--fg,var(--a)),0 .6cqw 1cqw #000c}
