@@ -409,10 +409,58 @@
     if (!Object.hasOwn(TEMAN, tema)) return;
     state.widgets = state.widgets.filter(w => !(w && w.spelTema));
     HELA.forEach(del => { state.widgets.push(VyraWidgets.create(`catalog:spellayout:${tema}:${del}`)); });
+    // Widgetar som redan låg i layouten lyfts över temat. Bakgrunden täcker hela duken utom hålen,
+    // så en widget kvar i lager 1 hade försvunnit bakom den. Alla flyttas lika mycket, så att deras
+    // inbördes ordning står kvar.
+    const ovriga = state.widgets.filter(w => w && !w.spelTema && !VyraWidgets.isStandalone(w));
+    const lagst = Math.min(...ovriga.map(w => tal(w.layer, 1)));
+    if (ovriga.length && lagst <= tematsTopp()) {
+      const steg = tematsTopp() + 1 - lagst;
+      ovriga.forEach(w => { w.layer = tal(w.layer, 1) + steg; });
+    }
     selected = null;
     save();
     if (typeof toast === 'function') toast(`${TEMAN[tema].label}: hela gaming overlayn är lagd i din layout`);
   }
+
+  // Översta lagret bland temats delar i layouten, 0 när inget tema ligger där.
+  function tematsTopp() {
+    const lista = typeof state !== 'undefined' && state && Array.isArray(state.widgets) ? state.widgets : [];
+    return Math.max(0, ...lista.filter(w => w && w.spelTema && !VyraWidgets.isStandalone(w)).map(w => tal(w.layer, 1)));
+  }
+
+  // EN NY WIDGET HAMNAR OVANPÅ TEMAT. Katalogens widgetar saknar oftast eget lager och ritades i
+  // lager 1, under ramarna (2) och temats topplista, Top Gifter, mål och kampanj (6). Där syntes de
+  // bara delvis, och ett klick på dem markerade ramen i stället (uppmätt 2026-10-16: 142 av 170
+  // katalogwidgetar täckta). Lagret sätts när widgeten skapas, så det gäller varje katalogknapp
+  // utan att någon av dem behöver ändras. En widget som redan ligger högre behåller sitt lager.
+  const skapa = VyraWidgets.create;
+  VyraWidgets.create = function () {
+    const w = skapa.apply(this, arguments);
+    if (w && !w.spelTema && !VyraWidgets.isStandalone(w)) {
+      const topp = tematsTopp();
+      if (topp && tal(w.layer, 1) <= topp) w.layer = topp + 1;
+    }
+    return w;
+  };
+
+  // LAGRET MÅSTE OCKSÅ NÅ SKÄRMEN. Flera familjers renderare (bland dem Top Like-skinnen i
+  // approved-rankings.js) skriver aldrig ut `layer` som z-index, så widgeten står på z-index auto —
+  // och det ligger under varje del av temat, vilket lager den än har (uppmätt 2026-10-16: Top Like
+  // Voltage i lager 7 täcktes av följarmålet i lager 6). När ett tema ligger i layouten får en sådan
+  // widget sitt lager som z-index. En renderare som redan satt ett z-index rörs inte, och utan tema
+  // rörs ingenting alls. Gäller i studion och i OBS-utgången, som är samma sida.
+  function lagerTillSkarm() {
+    if (!tematsTopp()) return;
+    document.querySelectorAll('.widget[data-id]:not(.spel)').forEach(el => {
+      if (el.style.zIndex) return;
+      const w = state.widgets.find(x => x && x.id === el.dataset.id);
+      if (w && !w.spelTema) el.style.zIndex = String(tal(w.layer, 1));
+    });
+  }
+  new MutationObserver(muts => {
+    if (muts.some(m => [...m.addedNodes].some(n => n.nodeType === 1 && (n.matches('.widget[data-id]') || n.querySelector('.widget[data-id]'))))) lagerTillSkarm();
+  }).observe(document.documentElement, { childList: true, subtree: true });
 
   const aktivtTema = () => {
     const w = (typeof state !== 'undefined' && state && state.widgets || []).find(x => x && x.spelTema);

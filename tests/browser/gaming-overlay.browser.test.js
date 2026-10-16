@@ -190,3 +190,44 @@ test('alla teman: bilderna laddas och ingen text utanför sitt fält i lista, To
     assert.deepEqual(fel, []);
   } finally { await page.close(); }
 });
+
+// Davids fråga 2026-10-16: "vad händer när man lägger en vanlig widget — hamnar den under?" Det
+// gjorde den: katalogens widgetar saknar oftast eget lager och ritades i lager 1, under ramarna (2)
+// och temats widgetar (6), och ett klick på dem markerade ramen. Flera Top Like-skin skriver dessutom
+// aldrig ut lagret som z-index, och två katalogknappar (Top Like, Top Gift Premium) raderade temats
+// egen topplista och Top Gifter när de ersatte "den gamla". Provet går genom de riktiga knapparna.
+test('en vanlig widget efter temat hamnar ovanpå det, går att klicka på och raderar ingen del av temat', { skip, timeout: 120000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    page.on('dialog', d => d.accept());
+    await page.evaluate(() => { state.widgets.push(Object.assign(VyraWidgets.create('catalog:custom:text'), { layer: 1 })); });
+    await page.click('[data-extra="gaming"]');
+    await page.waitForSelector('[data-spel-anvand="fortnite"]');
+    await page.click('[data-spel-anvand="fortnite"]');
+    await page.waitForFunction(() => view === 'editor', null, { timeout: 10000 });
+    // En widget som låg där före temat lyfts över det, i stället för att försvinna bakom bakgrunden.
+    assert.ok(await page.evaluate(() => state.widgets.find(w => w.type === 'templateCustomText').layer > 6), 'den tidigare widgeten ligger kvar under temat');
+
+    for (const nyckel of ['catalog:toplike:voltage', 'catalog:ranking:templateTopCoins:celestial', 'catalog:topgift:premium:royal']) {
+      const r = await page.evaluate(async nyckel => {
+        view = 'overlay'; render(); await new Promise(r => setTimeout(r, 100));
+        const knapp = document.querySelector(`.widget-catalog [data-catalog-key="${nyckel}"]`);
+        if (!knapp) return { saknas: true };
+        const fore = new Set(state.widgets.map(w => w.id));
+        knapp.click();
+        const ny = state.widgets.find(w => !fore.has(w.id));
+        view = 'editor'; render(); await new Promise(r => setTimeout(r, 150));
+        const el = document.querySelector(`.editor-shell [data-id="${ny.id}"]`), b = el.getBoundingClientRect();
+        const traff = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+        return { layer: ny.layer, z: getComputedStyle(el).zIndex, egen: !!(traff && traff.closest(`[data-id="${ny.id}"]`)),
+          delar: state.widgets.filter(w => w.spelTema).map(w => w.spelDel).sort() };
+      }, nyckel);
+      assert.ok(!r.saknas, `${nyckel}: katalogknappen finns inte`);
+      assert.ok(r.layer > 6, `${nyckel}: hamnade i lager ${r.layer}, under temat`);
+      assert.equal(r.z, String(r.layer), `${nyckel}: lagret når inte skärmen (z-index ${r.z})`);
+      assert.ok(r.egen, `${nyckel}: ett klick mitt på widgeten träffar temat`);
+      assert.deepEqual(r.delar, ['bakgrund', 'gifter', 'kameraram', 'kampanj', 'lista', 'mal', 'spelram'], `${nyckel}: raderade en del av temat`);
+    }
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
