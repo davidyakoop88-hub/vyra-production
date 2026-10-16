@@ -491,6 +491,7 @@
         "gift-supernova-engine.js",
         "gift-campaign-aura-engine.js",
         "gift-classics-engine.js",
+        "gift-festival-engine.js",
         "gift-natural-engine.js"
       ],
       "tester": [
