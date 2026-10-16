@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `a5e864f`
+Commit: `556d7fc`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **176** |
+| Kort totalt | **177** |
 | Sektioner | 26 |
-| Med katalognyckel | 176 / 176 |
-| Med shadow DOM-miniatyr | 132 / 176  ⚠️ |
-| Ritar sin design | 176 / 176 |
+| Med katalognyckel | 177 / 177 |
+| Med shadow DOM-miniatyr | 133 / 177  ⚠️ |
+| Ritar sin design | 177 / 177 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,7 +44,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK · CLEAN FLIP | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
-| FIREWORKS & BUBBLES · 7 DESIGNER | 7 | 7/7 | 7/7 | 7/7 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | TOP COINS · 2 DESIGNER | 2 | 2/2 | 0/2 ⚠️ | 2/2 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
@@ -139,10 +139,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Fan Level 50 | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 
-### FIREWORKS & BUBBLES · 7 DESIGNER
+### FIREWORKS & BUBBLES · 8 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
+| Festival · alla färger | `catalog:giftfireworks:festival` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Lila & guld | `catalog:giftfireworks:royal` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Isblå & silver | `catalog:giftfireworks:ice` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Roséguld | `catalog:giftfireworks:rose` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
