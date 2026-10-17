@@ -214,3 +214,6 @@
 .fw-pal{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:4px 0 10px}
 .fw-sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;min-width:0}
 .fw-sw.on{border-color:#fff;box-shadow:0 0 0 2px #7c5cff}
+
+/* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
+.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
