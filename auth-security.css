@@ -21,3 +21,7 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
+/* Bannern hor aldrig hemma i OBS-utgangen. auth-security.js skapar den inte i overlay-lage; regeln
+   ar andra lasen om nagot annat skulle lagga dit den. */
+html.overlay-output .verification-banner{display:none!important}
