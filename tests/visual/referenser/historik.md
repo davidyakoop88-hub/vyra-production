@@ -432,3 +432,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny referens för Top Gift Design 3 (fokus, #622) — nyckeln fanns inte i kartan när #622 togs
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 159 (filter: topgift:premium:fokus) — catalog:topgift:premium:fokus
+
+## 2026-10-17 — 3 referenser skrivna
+
+- **Motiv:** Nya referenser för Top Streak · Design 1–3 (#628)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 162 (filter: topstreak:design) — catalog:topstreak:design:1, catalog:topstreak:design:2, catalog:topstreak:design:3

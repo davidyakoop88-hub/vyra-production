@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 194,
+ "antal": 197,
  "senaste": {
-  "motiv": "Ny referens för Top Gift Design 3 (fokus, #622) — nyckeln fanns inte i kartan när #622 togs",
-  "nycklar": 1,
-  "filter": "topgift:premium:fokus",
-  "tid": "2026-10-17T18:12:43.771Z"
+  "motiv": "Nya referenser för Top Streak · Design 1–3 (#628)",
+  "nycklar": 3,
+  "filter": "topstreak:design",
+  "tid": "2026-10-17T18:42:57.097Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -788,6 +788,18 @@
   },
   "catalog:topgift:premium:fokus": {
    "matt": "340x360",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:1": {
+   "matt": "210x187",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:2": {
+   "matt": "276x167",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:3": {
+   "matt": "236x250",
    "fyllnad": 100
   }
  }
