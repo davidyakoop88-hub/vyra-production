@@ -53,7 +53,7 @@ test('alla assets modulen pekar på finns på disk', () => {
   forbered(h);
   const pg = h.window.VYRA_PG;
   assert.equal(pg.frames.length, 12, 'podiet ska ha 12 HD-ramar');
-  assert.equal(pg.streak.length, 12, 'Top Streak ska ha 12 modeller');
+  assert.equal(pg.streak.length, 5, 'Top Streak ska ha 5 modeller (7 togs bort 2026-10-17)');
   const filer = [...Object.values(pg.img), ...Object.values(pg.gift), ...pg.streak.map(m => m.file)];
   assert.ok(filer.length > 80);
   for (const f of filer) assert.ok(fs.existsSync(path.join(ROOT, f)), 'saknas: ' + f);
