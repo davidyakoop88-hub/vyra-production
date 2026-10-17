@@ -95,8 +95,9 @@
   // design, med Top Like / Top Coins / Top Points under), inte har.
   const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
   // I katalogen heter de Top Gift · Design 3 och 4 (David 2026-10-17: alla heter Top Gift).
-  const KATALOGNAMN = { halo: 'Top Gift · Design 3', 'signal-orbit': 'Top Gift · Design 4' };
-  const knappar = () => KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>${KATALOGNAMN[id] || 'Top Coins · ' + meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
+  const KATALOGNAMN = { 'signal-orbit': 'Top Gift · Design 4' };
+  // Bara de som har ett Top Gift-namn hamnar i Top Gift-sektionen (Halo ersattes av Design 3, temat fokus).
+  const knappar = () => KATALOG.filter(([id]) => KATALOGNAMN[id]).map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>${KATALOGNAMN[id] || 'Top Coins · ' + meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
