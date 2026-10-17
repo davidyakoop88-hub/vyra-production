@@ -62,7 +62,7 @@ function visaEpostkrav(error){if(!error||!error.emailVerificationRequired)return
   modal.querySelector('[data-epostkrav]')?.remove();
   const ruta=document.createElement('div');ruta.className='tik-epostkrav';
   ruta.setAttribute('data-epostkrav','');ruta.setAttribute('role','alert');
-  ruta.innerHTML='<p><b>Verifiera din e-post först.</b> TikTok LIVE går att ansluta när du har öppnat länken vi skickade till <em></em>.</p><button type="button">Skicka mejlet igen</button>';
+  ruta.innerHTML='<p><b>Steg 1: verifiera din e-post först.</b> Öppna länken vi skickade till <em></em>. Därefter kan du ansluta TikTok LIVE här nedanför.</p><button type="button">Skicka mejlet igen</button>';
   ruta.querySelector('em').textContent=window.VyraAuth?.lastDetail?.()?.user?.email||'din e-postadress';
   const knapp=ruta.querySelector('button');
   knapp.onclick=async()=>{knapp.disabled=true;
@@ -70,6 +70,19 @@ function visaEpostkrav(error){if(!error||!error.emailVerificationRequired)return
     catch(err){knapp.disabled=false;note(err.message||'Kunde inte skicka mejlet')}};
   const fore=modal.querySelector('#verifieraTikTok');if(fore)fore.before(ruta);else modal.append(ruta);
   return true}
+// I FÖRVÄG. Att beskedet kom först efter ett misslyckat tryck var inte tydligt nog: användaren
+// skrev sitt namn, tryckte och fick då veta att ett annat steg saknades. Därför visas kravet så
+// fort modalen öppnas för ett konto som inte har verifierat sin e-post. Knapparna förblir
+// klickbara med flit: lastDetail kan vara inaktuell (verifierat i en annan flik), och servern är
+// den som bestämmer — svarar den 403 visas samma besked igen.
+function forhandsEpostkrav(){const m=document.querySelector('#connectModal');if(!m||!m.open)return;
+  const anv=window.VyraAuth?.lastDetail?.()?.user;
+  if(anv&&anv.emailVerified===false)visaEpostkrav({emailVerificationRequired:true});
+  else m.querySelector('[data-epostkrav]')?.remove()}
+(function(){const m=document.querySelector('#connectModal');if(!m)return;
+  new MutationObserver(forhandsEpostkrav).observe(m,{attributes:true,attributeFilter:['open']});
+  addEventListener('vyra-auth-ready',forhandsEpostkrav);
+  forhandsEpostkrav()})();
 // Bevakar servern tills kopplingen blir verifierad. Bunden i tid med flit: en obegransad slinga
 // hade fortsatt fraga i evighet efter ett avbrutet varv. Tva minuter racker for en inloggning och
 // ger upp med ett SKAL i stallet for att tiga.

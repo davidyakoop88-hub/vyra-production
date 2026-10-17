@@ -21,8 +21,8 @@ const { JSDOM } = require('jsdom');
 const ROT = path.join(__dirname, '..');
 const las = f => fs.readFileSync(path.join(ROT, f), 'utf8');
 
-const MODAL = `<button class="connect connection"><i></i><span>Anslut TikTok</span></button>
-<dialog id="connectModal" open>
+const MODAL = (oppen = true) => `<button class="connect connection"><i></i><span>Anslut TikTok</span></button>
+<dialog id="connectModal"${oppen ? ' open' : ''}>
   <button class="primary" id="verifieraTikTok">Verifiera med TikTok</button>
   <div id="tikAnslutNu" hidden><button id="anslutNu">Anslut nu</button></div>
   <div id="tikFritext"><input id="tikUser"><button id="connectNow">Anslut konto</button></div>
@@ -33,13 +33,13 @@ function epostfel() {
     { status: 403, emailVerificationRequired: true });
 }
 
-function studio({ connect, verifiera } = {}) {
-  const dom = new JSDOM(`<!doctype html><body>${MODAL}</body>`, { runScripts: 'outside-only', url: 'https://vyra.test/studio.html' });
+function studio({ connect, verifiera, verifierad = false, oppen = true } = {}) {
+  const dom = new JSDOM(`<!doctype html><body>${MODAL(oppen)}</body>`, { runScripts: 'outside-only', url: 'https://vyra.test/studio.html' });
   const w = dom.window, anrop = [], toasts = [];
   w.toast = t => toasts.push(String(t));
   w.state = {}; w.save = () => {};
   w.VyraAuth = {
-    lastDetail: () => ({ user: { email: 'ny@exempel.se', emailVerified: false }, workspaces: [{ id: 'w1' }] }),
+    lastDetail: () => ({ user: { email: 'ny@exempel.se', emailVerified: verifierad }, workspaces: [{ id: 'w1' }] }),
     api: async (p, o) => { anrop.push([p, o && o.method]); return { ok: true }; },
   };
   w.VyraLive = {
@@ -86,7 +86,7 @@ test('e-postkrav: beskedet har en knapp som skickar verifieringsmejlet igen', as
 });
 
 test('e-postkrav: ett ANNAT fel visar inte e-postbeskedet', async () => {
-  const { d, toasts } = studio({ connect: async () => { throw Object.assign(new Error('Ogiltigt TikTok-anvandarnamn'), { status: 400 }); } });
+  const { d, toasts } = studio({ verifierad: true, connect: async () => { throw Object.assign(new Error('Ogiltigt TikTok-anvandarnamn'), { status: 400 }); } });
   d.querySelector('#tikUser').value = 'x y';
   d.querySelector('#connectNow').click();
   await vanta();
@@ -115,4 +115,26 @@ test('e-postkrav: bannern lovar inte längre att allt annat fungerar utan verifi
   const kalla = las('auth-security.js');
   assert.doesNotMatch(kalla, /allt annat fungerar redan/, 'bannern lovar något servern inte håller');
   assert.match(kalla, /verificationBanner[\s\S]{0,900}TikTok/, 'bannern nämner inte att TikTok kräver verifierad e-post');
+});
+
+// I FÖRVÄG, INTE EFTERÅT. Att beskedet kom först när man tryckt var inte nog tydligt: användaren
+// skrev in sitt namn, tryckte och fick då veta att ett annat steg saknades. Kravet ska synas så fort
+// modalen öppnas, innan något har gått fel.
+test('e-postkrav: kravet syns direkt när modalen öppnas, utan att något knapptryck behövs', async () => {
+  const { w, d } = studio({ oppen: false });
+  assert.equal(d.querySelector('[data-epostkrav]'), null, 'stängd modal ska inte ha fått beskedet än');
+  d.querySelector('#connectModal').setAttribute('open', '');
+  await vanta();
+  const ruta = d.querySelector('#connectModal [data-epostkrav]');
+  assert.ok(ruta, 'modalen öppnas utan att säga att e-posten måste verifieras först');
+  assert.match(ruta.textContent, /först/);
+  assert.ok(ruta.compareDocumentPosition(d.querySelector('#verifieraTikTok')) & w.Node.DOCUMENT_POSITION_FOLLOWING,
+    'beskedet ska stå FÖRE TikTok-knapparna — det är steg ett');
+});
+
+test('e-postkrav: ett verifierat konto ser inget e-postbesked', async () => {
+  const { d } = studio({ verifierad: true, oppen: false });
+  d.querySelector('#connectModal').setAttribute('open', '');
+  await vanta();
+  assert.equal(d.querySelector('[data-epostkrav]'), null);
 });
