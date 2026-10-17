@@ -484,42 +484,52 @@
 }
 @keyframes pg-stkroarc{0%{filter:brightness(1)}30%{filter:brightness(1.3) drop-shadow(0 0 40px var(--a))}100%{filter:brightness(1)}}
 
-/* ===== Top Gifter Podium, justerat i playgrounden 2026-10-17 ===== */
-/* Tätare: sidoplatserna dras in mot ettan. `translate` och inte `transform`, så studsen fungerar. */
-.pgw .pod .pod-cols{gap:0}
-.pgw .pod .r2{translate:64px 0}.pgw .pod .r3{translate:-64px 0}.pgw .pod .r1{position:relative;z-index:2}
-/* Nr 2 och 3 i samma höjd, så namn och mynt ligger på samma linje. */
+/* ===== Top Gifter Podium, justerat i playgrounden 2026-10-17 =====
+   Granskat rad för rad före merge (Davids ord: "hjälpa mig hitta minsta felet"). */
+
+/* Placering. Med bildram dras sidoplatserna in mot ettan (translate, inte transform). De kodade
+   blocken får 8 px mellanrum i stället, annars glider de in under varandra. */
+.pgw .pod .pod-cols{gap:8px;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr)}
+.pgw[data-fimg="1"] .pod .pod-cols{gap:0}
+.pgw[data-fimg="1"] .pod .r2{translate:64px 0}.pgw[data-fimg="1"] .pod .r3{translate:-64px 0}
+.pgw .pod .r1{position:relative;z-index:2}
+/* Nr 2 och 3 i samma höjd. */
 .pgw .pod .r2 .blk,.pgw .pod .r3 .blk{height:200px}.pgw .pod .r3 .blk{opacity:1}
 .pgw[data-fimg="1"] .pod .r2,.pgw[data-fimg="1"] .pod .r3{margin-bottom:48px!important}
-/* Neontext: vit kärna med lager av Färg 1 (namn, rubrik) och Färg 2 (mynt). */
-.pgw .pod .nm{color:#fff;padding:10px 20px;-webkit-text-stroke:1px var(--a);text-shadow:0 0 3px #fff,0 0 calc(max(var(--g),1)*8px) var(--a),0 0 calc(max(var(--g),1)*16px) var(--a),0 0 calc(max(var(--g),1)*32px) var(--a),0 0 calc(max(var(--g),1)*60px) var(--a)}
-.pgw .pod .cn{color:#fff;-webkit-text-stroke:1px var(--b);text-shadow:0 0 3px #fff,0 0 calc(max(var(--g),1)*8px) var(--b),0 0 calc(max(var(--g),1)*16px) var(--b),0 0 calc(max(var(--g),1)*32px) var(--b),0 0 calc(max(var(--g),1)*60px) var(--b)}
-.pgw .pod .pod-title{color:#fff;-webkit-text-stroke:1px var(--a);text-shadow:0 0 3.9px #fff,0 0 calc(max(var(--g),1)*10.4px) var(--a),0 0 calc(max(var(--g),1)*20.8px) var(--a),0 0 calc(max(var(--g),1)*41.6px) var(--a),0 0 calc(max(var(--g),1)*78px) var(--a)}
-/* Lugn start: liten studs utan överskjutning, och glöden går i otakt mellan platserna. */
-@keyframes pg-pod-bump{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
-.pgw .pod .pcol.bump{animation:pg-pod-bump calc(.6s/var(--sp)) ease-out}
-.pgw .pod .r2 :is(.fimgbox>img,.fxbox i,.fpart i){animation-delay:-1.2s}.pgw .pod .r3 :is(.fimgbox>img,.fxbox i,.fpart i){animation-delay:-2.3s}
-
-/* Kronan syns bättre (2026-10-17, "jag vill den ska synas bättre"): ljusare och mättade färger,
-   glöd i ramens egen färg i stället för svarta skuggor, och lite större. Tomma platser 70 %. */
-.pgw .rcrown{width:50cqw}
-.pgw .rcrown img{filter:brightness(1.3) saturate(1.5) contrast(1.12) drop-shadow(0 0 .35cqw #000a) drop-shadow(0 0 1.4cqw var(--fg,#ffd27a)) drop-shadow(0 0 3.2cqw var(--fg,#ffd27a))}
+.pgw .pod .pcol{min-width:0}
 .pgw .pod .pcol.dim{opacity:.7}
 
-/* Ingen pulsering på podiet (2026-10-17, "ingen pulserande"): ramens glöd, halon, kronan,
-   strålarnas blink och studsen står still. Strålarna roterar fortfarande långsamt. */
+/* Neontext i Textfärg med glöd i Färg 1 (namn, rubrik) och Färg 2 (mynt). Glöd-reglaget styr
+   styrkan. Namneffekterna Shimmer, Aurora och Flimmer behåller sin egen stil. Namnet får luft
+   (padding med negativ marginal) så att glöden inte klipps av ellipsens overflow:hidden. */
+.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .nm{color:var(--t);-webkit-text-stroke:1px var(--a);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
+.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .pod-title{color:var(--t);-webkit-text-stroke:1px var(--a);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
+.pgw .pod .nm{padding:24px 26px;margin:-22px -26px -22px;max-width:calc(100% + 52px);box-sizing:border-box}
+.pgw .pod .cn{color:var(--t);-webkit-text-stroke:1px var(--b);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--b),0 0 calc(var(--g)*20px) var(--b),0 0 calc(var(--g)*40px) var(--b),0 0 calc(var(--g)*75px) var(--b)}
+.pgw .pod .blk span{color:#fff;mix-blend-mode:normal;-webkit-text-stroke:2px var(--a);text-shadow:0 0 4px #fff,0 0 calc(var(--g)*17.5px) var(--a),0 0 calc(var(--g)*37.5px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
+
+/* Kronan: ljusare och mättade färger med glöd i ramens färg. Bara podiets krona. */
+.pgw .pod .rcrown{width:50cqw}
+.pgw .pod .rcrown img{filter:brightness(1.3) saturate(1.5) contrast(1.12) drop-shadow(0 0 .35cqw #000a) drop-shadow(0 0 1.4cqw var(--fg,#ffd27a)) drop-shadow(0 0 3.2cqw var(--fg,#ffd27a))}
+
+/* Ingen pulsering: ramens glöd, halons andning, ripple-ringarna, kronans hjärtslag, strålarnas blink
+   och studsen står still. Flamma, glimt, komet och kronblad rör sig som förut, och strålarna
+   roterar långsamt. */
 .pgw .pod .fimgbox>img{animation:none;filter:drop-shadow(0 0 calc(var(--g)*20px) var(--fg)) brightness(1.06)}
-.pgw .pod .fxbox i{animation:none!important}
+.pgw[data-frame=halo] .pod .fxbox i:nth-child(1){animation:none;opacity:.85}
 .pgw[data-frame=halo] .pod .fxbox i:nth-child(n+2),.pgw[data-frame=ripple] .pod .fxbox i{display:none}
 .pgw .pod .crown{animation:none}
 .pgw .pod .rays{animation:pg-raysp calc(26s/var(--sp)) linear infinite;opacity:.4}
 .pgw .pod .pcol.bump{animation:none}
-/* Siffrorna 1 2 3 lyser i neon: rangmärkena på ramarna och siffrorna i de kodade blocken. */
-.pgw .pod .rbadge{filter:drop-shadow(0 0 .5cqw #fff) drop-shadow(0 0 1.6cqw var(--fg,var(--a))) drop-shadow(0 0 3.4cqw var(--fg,var(--a)))}
-.pgw .pod .blk span{color:#fff;mix-blend-mode:normal;-webkit-text-stroke:2px var(--a);text-shadow:0 0 4px #fff,0 0 calc(max(var(--g),1)*14px) var(--a),0 0 calc(max(var(--g),1)*30px) var(--a),0 0 calc(max(var(--g),1)*60px) var(--a)}
 
-/* Siffrorna 1 2 3 syns tydligt (2026-10-17, "1 2 3 är inte så synligt"): större märke och en
-   stor neonsiffra ovanpå medaljbilden, hämtad ur märkets data-rank. */
-.pgw .pod .rbadge{width:34cqw;height:34cqw}
-.pgw .pod .rbadge img{filter:brightness(1.25) saturate(1.3) drop-shadow(0 .5cqw .8cqw #000b)}
-.pgw .pod .rbadge::after{content:attr(data-rank);position:absolute;inset:0;display:grid;place-items:center;font:900 19cqw/1 Impact,'Arial Black',sans-serif;color:#fff;-webkit-text-stroke:.5cqw var(--fg,var(--a));text-shadow:0 0 .8cqw #fff,0 0 2.4cqw var(--fg,var(--a)),0 0 4.8cqw var(--fg,var(--a)),0 .6cqw 1cqw #000c}
+/* Siffrorna 1 2 3: större märke som lyser i ramens färg och en stor neonsiffra i mitten. Medaljens
+   egen inbakade siffra täcks av en mörk rund platta, så att det aldrig står två siffror på varandra.
+   Den allmänna medaljen behåller sin ramfärg (sepia + hue-rotate), ramens egen medalj sin storlek. */
+.pgw .pod .rbadge{width:34cqw;height:34cqw;filter:drop-shadow(0 0 .5cqw #fff) drop-shadow(0 0 1.6cqw var(--fg,var(--a))) drop-shadow(0 0 3.4cqw var(--fg,var(--a)))}
+.pgw .pod .rbadge.own{width:40cqw;height:40cqw}
+.pgw .pod .rbadge:not(.own) img{filter:sepia(.85) saturate(var(--ms,1.7)) hue-rotate(var(--mh,0deg)) brightness(1.25) drop-shadow(0 .5cqw .8cqw #000b)}
+.pgw .pod .rbadge.own img{filter:brightness(1.25) saturate(1.3) drop-shadow(0 .5cqw .8cqw #000b)}
+.pgw .pod .rbadge::after{content:attr(data-rank);position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#140a22 0 62%,#140a2200 72%);font:900 19cqw/1 Impact,'Arial Black',sans-serif;color:#fff;-webkit-text-stroke:.4cqw var(--fg,var(--a));text-shadow:0 0 .8cqw #fff,0 0 2.4cqw var(--fg,var(--a)),0 0 4.8cqw var(--fg,var(--a))}
+
+/* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
+.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
