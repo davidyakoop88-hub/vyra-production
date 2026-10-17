@@ -13,7 +13,7 @@
      kan inte langre glida isar utan att nagot faller. */
   const TOP_GIFTS={
     // Alla heter Top Gift (David 2026-10-17). Design 1 och 2 här, Design 3 och 4 är Top Coins.
-    neon:'Top Gift · Design 1',royal:'Top Gift · Design 2'
+    neon:'Top Gift · Design 1',royal:'Top Gift · Design 2',fokus:'Top Gift · Design 3'
   };
   const GOALS={'pulse-rail':'Pulse Rail','pulse-tower':'Pulse Tower','signal-ribbon':'Signal Ribbon','heart-column':'Heart Column','prism-core':'Prism Core','prism-spine':'Prism Spine'};
   const fallbackProfile='assets/images/test-profile.svg',fallbackGift='assets/gifts/events/0001_Rose.png';

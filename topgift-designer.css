@@ -1,0 +1,162 @@
+/* topgift-designer.css — Top Gift · Design 1, 2 och 3 (godkända i widget-playgrounden 2026-10-17).
+   Hör ihop med topgift-designer.js. Varje design har sitt eget kännetecken och lånar inget av de andra:
+     Design 1 (tema neon, .tgd1)  svävande krona i stället för rubriken, fri gåva, ljusstrålar bakom gåvan
+     Design 2 (tema royal, .tgd2) profil och gåva sida vid sida, guldlinje med glans, profilram, glans över profilen
+     Design 3 (tema fokus, .tgd3) gåvan stor i en glasruta, bubblor, skimrande kant, landning, bubbelbricka
+   Ingenting pulserar (Davids krav). Allt som rör sig gör det lugnt och respekterar prefers-reduced-motion.
+   Färg 1 = --accent, Färg 2 = --a2, Ljus-reglaget = --g (55 % ger 0,8 som i playgrounden). */
+
+/* ===== Design 1 · krona, fri gåva, strålar (bygger på Neon Purple) ===== */
+.vyra-topgift.tgd1 .vyra-gift-title{display:none!important}
+/* Kronan står i en höjdlös behållare före bilden: den tar ingen plats, så den trycker aldrig ihop
+   profilbilden i kortets fasta höjd, och dess underkant ligger strax ovanför bildens överkant. */
+.vyra-topgift.tgd1 .tgd-kronfaste{position:relative;height:0;width:100%;z-index:6;pointer-events:none}
+.vyra-topgift.tgd1 .tgd-krona{position:absolute;left:50%;bottom:6px;width:39%;max-width:82px;
+  filter:drop-shadow(0 0 7px #ff5cf499) drop-shadow(0 3px 4px #000a);animation:tgdFlyt 3.4s ease-in-out infinite}
+@keyframes tgdFlyt{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-7px)}}
+/* Gåvan visas fri, utan cirkel och kant, så att hela gåvobilden syns (1148 bilder mätta: 704 kapades i cirkeln). */
+.vyra-topgift.premium-topgift.tgd1 .vyra-gift-face{border-radius:0!important;overflow:visible!important;border:0!important;box-shadow:none!important;background:none!important}
+.vyra-topgift.premium-topgift.tgd1 .vyra-gift-face>img{object-fit:contain!important;transform:none!important;position:relative;z-index:1}
+/* Ljusstrålar bakom gåvan, i Färg 1. De tonar ut precis utanför gåvans ruta, vilken gåvobild det än är. */
+.vyra-topgift.premium-topgift.tgd1 .vyra-gift-face::before{content:"";position:absolute;inset:-14%;z-index:0;border-radius:50%;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--accent) 65%,#fff) 0 7deg,transparent 7deg 22deg);
+  -webkit-mask:radial-gradient(circle closest-side,#000 25%,#000b 55%,#0004 80%,transparent 100%);mask:radial-gradient(circle closest-side,#000 25%,#000b 55%,#0004 80%,transparent 100%);
+  opacity:.85;animation:tgdStralar 28s linear infinite}
+@keyframes tgdStralar{to{transform:rotate(360deg)}}
+
+/* ===== Gemensam grund för Design 2 och 3: egen markup, inga ärvda kort- eller vändstilar ===== */
+.vyra-topgift.tgd{aspect-ratio:auto!important;height:auto!important;padding:0!important;background:none!important;border:0!important;
+  box-shadow:none!important;clip-path:none!important;backdrop-filter:none!important;overflow:visible!important;min-width:0!important}
+.vyra-topgift.tgd .tgd-in{display:flex;flex-direction:column;align-items:center;width:max-content;margin:0 auto;transform-origin:top center}
+.vyra-topgift.tgd .vyra-profile-face,.vyra-topgift.tgd .vyra-gift-face{position:relative!important;inset:auto!important;transform:none!important;
+  animation:none!important;backface-visibility:visible!important;opacity:1!important;border:0!important;box-shadow:none!important;
+  background:none!important;margin:0!important;display:block!important}
+.vyra-topgift.tgd .vyra-profile-face img,.vyra-topgift.tgd .vyra-gift-face img{display:block;transform:none}
+.vyra-topgift.tgd2 .vyra-gift-face>img,.vyra-topgift.tgd3 .vyra-gift-face>img,.vyra-topgift.tgd .vyra-profile-face>img{width:100%!important;height:100%!important}
+.vyra-topgift.tgd .topgift-copy{position:static!important;display:flex;flex-direction:column;align-items:center;background:none!important;border:0!important;
+  box-shadow:none!important;padding:0!important;max-width:none!important;margin:0!important;transform:none!important}
+.vyra-topgift.tgd .topgift-copy strong{display:block;font-weight:800;line-height:1.15;color:#fff;paint-order:stroke fill;-webkit-text-stroke:2.5px #0a0614d9;
+  max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 6px}
+.vyra-topgift.tgd .topgift-copy em{display:block;font-style:normal;font-weight:900}
+
+/* ===== Design 2 · Kunglig banderoll med guldlinje ===== */
+.vyra-topgift.tgd2 .tgd-in{gap:8px;padding:10px 8px;width:260px}
+.vyra-topgift.tgd2 .rad{display:flex;align-items:center;gap:24px}
+.vyra-topgift.tgd2 .pw{position:relative;width:96px;height:96px;display:grid;place-items:center}
+.vyra-topgift.tgd2 .vyra-profile-face{width:80px!important;height:80px!important;border-radius:50%!important;overflow:hidden!important;z-index:1}
+.vyra-topgift.tgd2 .vyra-profile-face img{width:100%;height:100%;object-fit:cover}
+.vyra-topgift.tgd2 .hdram{display:none}
+/* glans som sveper snett över profilbilden, klippt till ramens form */
+.vyra-topgift.tgd2 .glans{position:absolute;z-index:2;width:80px;height:80px;border-radius:50%;overflow:hidden;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,#ffffffcc 50%,transparent 65%) no-repeat;background-size:250% 100%;animation:tgdGlans 3.6s ease-in-out infinite}
+@keyframes tgdGlans{0%{background-position:130% 0}55%,100%{background-position:-60% 0}}
+/* profilram: rörlig färgring (Färg 1 → Färg 2) */
+.vyra-topgift.tgd2.ram-farg .pw::before{content:"";position:absolute;inset:2px;border-radius:50%;
+  background:conic-gradient(var(--accent),var(--a2),#fff3c4,var(--a2),var(--accent));animation:tgdRing 9s linear infinite;
+  -webkit-mask:radial-gradient(circle,transparent 61%,#000 62%);mask:radial-gradient(circle,transparent 61%,#000 62%);filter:drop-shadow(0 0 calc(var(--g,.8)*6px) var(--a2))}
+@keyframes tgdRing{to{transform:rotate(360deg)}}
+/* profilram: sexkant i guld (Färg 1) */
+.vyra-topgift.tgd2.ram-sexkant .pw::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,#fff3c4,var(--accent) 45%,color-mix(in srgb,var(--accent) 50%,#000));
+  clip-path:polygon(25% 3%,75% 3%,99% 50%,75% 97%,25% 97%,1% 50%);filter:drop-shadow(0 0 calc(var(--g,.8)*7px) var(--accent))}
+.vyra-topgift.tgd2.ram-sexkant .vyra-profile-face,.vyra-topgift.tgd2.ram-sexkant .glans{width:84px!important;height:84px!important;border-radius:0!important;
+  clip-path:polygon(25% 3%,75% 3%,99% 50%,75% 97%,25% 97%,1% 50%)}
+/* profilram: HD-bildram, hålet passar bilden */
+.vyra-topgift.tgd2.ram-hd .pw{width:120px;height:120px}
+.vyra-topgift.tgd2.ram-hd .vyra-profile-face,.vyra-topgift.tgd2.ram-hd .glans{width:calc(120px * var(--hal,.6))!important;height:calc(120px * var(--hal,.6))!important}
+.vyra-topgift.tgd2.ram-hd .hdram{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:3;pointer-events:none;
+  filter:drop-shadow(0 0 calc(var(--g,.8)*6px) color-mix(in srgb,var(--accent) 50%,transparent))}
+/* gåvan svävar och vaggar lugnt bredvid profilen */
+.vyra-topgift.tgd2 .vyra-gift-face{width:86px;height:86px}
+.vyra-topgift.tgd2 .vyra-gift-face img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 5px #000a);animation:tgdGava 4.2s ease-in-out infinite;transform-origin:50% 80%}
+@keyframes tgdGava{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.vyra-topgift.tgd2 .topgift-copy{gap:7px}
+.vyra-topgift.tgd2 .topgift-copy strong{font-size:var(--tgd-text,19px);color:var(--t,#fff);
+  text-shadow:0 1px 2px #000d,0 0 calc(var(--g,.8)*9px) color-mix(in srgb,var(--accent) 60%,transparent)}
+/* guldlinjen med diamant: stadig glöd och ett ljussken som glider längs den */
+.vyra-topgift.tgd2 .linje{display:block;width:200px;height:3.5px;border-radius:2px;position:relative;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 70%,#fff) 30%,#fff7d6 50%,color-mix(in srgb,var(--accent) 70%,#fff) 70%,transparent);
+  filter:drop-shadow(0 0 calc(max(var(--g,.8),.6)*7px) var(--accent)) drop-shadow(0 0 2px #000)}
+.vyra-topgift.tgd2 .linje::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border:1.5px solid #fff7d6;background:var(--accent);
+  transform:translate(-50%,-50%) rotate(45deg);box-shadow:0 0 calc(var(--g,.8)*7px) var(--accent)}
+.vyra-topgift.tgd2 .linje::before{content:"";position:absolute;left:0;right:0;top:-1.5px;height:5px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#fff 50%,transparent) no-repeat;background-size:28% 100%;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);
+  animation:tgdSvep 3.6s ease-in-out infinite}
+@keyframes tgdSvep{0%{background-position:-40% 0}55%,100%{background-position:140% 0}}
+.vyra-topgift.tgd2 .topgift-copy em{font-size:18px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--accent) 45%,#fff) 50%,color-mix(in srgb,var(--accent) 80%,#fff));
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000) drop-shadow(0 1px 2px #000)}
+.vyra-topgift.tgd2 .topgift-copy em::before{content:"● ";-webkit-text-fill-color:var(--accent)}
+
+/* ===== Design 3 · Gåvan i fokus ===== */
+.vyra-topgift.tgd3 .tgd-in{gap:4px;padding:8px;width:220px}
+.vyra-topgift.tgd3 .ruta{position:relative;width:164px;height:164px;border-radius:32px;display:grid;place-items:center;
+  border:1.5px solid #ffffff40;background:linear-gradient(160deg,#ffffff1a,#ffffff05 50%,#ffffff0c);
+  box-shadow:inset 0 0 calc(var(--g,.8)*36px) color-mix(in srgb,var(--a2) 35%,transparent),0 8px 22px #0008}
+/* glansbåge längs övre vänstra kanten */
+.vyra-topgift.tgd3 .ruta::before{content:"";position:absolute;inset:6px;border-radius:27px;z-index:1;pointer-events:none;
+  border-top:2px solid #ffffffaa;border-left:2px solid #ffffff55;border-right:2px solid transparent;border-bottom:2px solid transparent;
+  -webkit-mask:linear-gradient(135deg,#000 0 35%,transparent 55%);mask:linear-gradient(135deg,#000 0 35%,transparent 55%)}
+/* skimrande kant Färg 1 → Färg 2, roterar långsamt */
+@property --tgdv{syntax:"<angle>";inherits:false;initial-value:0deg}
+.vyra-topgift.tgd3 .ruta::after{content:"";position:absolute;inset:-1px;border-radius:33px;padding:1.5px;z-index:1;pointer-events:none;
+  background:conic-gradient(from var(--tgdv),var(--accent),var(--a2),#fff6,var(--a2),var(--accent));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  filter:drop-shadow(0 0 calc(var(--g,.8)*8px) var(--a2));animation:tgdKant 10s linear infinite}
+@keyframes tgdKant{to{--tgdv:360deg}}
+/* bubblor som stiger i glaset */
+.vyra-topgift.tgd3 .bubblor{position:absolute;inset:6px;border-radius:28px;overflow:hidden;z-index:1;pointer-events:none}
+.vyra-topgift.tgd3 .bubblor i{position:absolute;bottom:-14px;width:var(--b,8px);height:var(--b,8px);border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--a2) 55%,#fff);background:radial-gradient(circle at 32% 30%,#ffffffd0 0 18%,color-mix(in srgb,var(--a2) 30%,transparent) 40%,transparent 70%);
+  box-shadow:0 0 6px color-mix(in srgb,var(--a2) 60%,transparent);animation:tgdBubbla var(--t,5s) linear infinite;animation-delay:var(--d,0s)}
+@keyframes tgdBubbla{0%{transform:translate(0,0);opacity:0}12%{opacity:.95}50%{transform:translate(5px,-75px)}88%{opacity:.8}100%{transform:translate(-3px,-150px);opacity:0}}
+/* gåvan stor i glaset, med en svag spegling under */
+.vyra-topgift.tgd3 .vyra-gift-face{width:126px;height:126px;z-index:2}
+.vyra-topgift.tgd3 .vyra-gift-face img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 6px #000a);
+  animation:tgdGava3 5s ease-in-out infinite;transform-origin:50% 80%;-webkit-box-reflect:below 22px linear-gradient(transparent 62%,#0000004d)}
+@keyframes tgdGava3{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+/* landning när en ny gåva kommer: fall, mjuk studs, ring, bubbelstänk och vågor från brickan */
+.vyra-topgift.tgd3.landar .vyra-gift-face img{animation:tgdLand .95s cubic-bezier(.3,1.35,.5,1) both}
+@keyframes tgdLand{0%{transform:translateY(-80px) scale(.55);opacity:0}45%{transform:translateY(5px) scale(1.05,.95);opacity:1}70%{transform:translateY(-3px) scale(.99,1.01)}100%{transform:translateY(0) scale(1)}}
+.vyra-topgift.tgd3 .landring{position:absolute;inset:-6px;border-radius:36px;border:2px solid var(--a2);opacity:0;pointer-events:none;box-shadow:0 0 12px var(--a2);z-index:1}
+.vyra-topgift.tgd3.landar .landring{animation:tgdRingUt .9s ease-out .35s both}
+@keyframes tgdRingUt{0%{opacity:.95;transform:scale(.97)}100%{opacity:0;transform:scale(1.14)}}
+.vyra-topgift.tgd3 .stank{position:absolute;left:50%;bottom:22px;width:0;height:0;pointer-events:none;z-index:3}
+.vyra-topgift.tgd3 .stank i{position:absolute;width:6px;height:6px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--a2) 55%,#fff);opacity:0}
+.vyra-topgift.tgd3.landar .stank i{animation:tgdStank .8s ease-out .38s both}
+.vyra-topgift.tgd3 .stank i:nth-child(1){--x:-38px;--y:-26px}.vyra-topgift.tgd3 .stank i:nth-child(2){--x:-14px;--y:-44px}
+.vyra-topgift.tgd3 .stank i:nth-child(3){--x:16px;--y:-40px}.vyra-topgift.tgd3 .stank i:nth-child(4){--x:40px;--y:-22px}
+@keyframes tgdStank{0%{opacity:1;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.1)}}
+/* profilen som bubbelbricka i hörnet: regnbågsskimmer, glansprick, vågor vid ny gåva. Alltid överst. */
+.vyra-topgift.tgd3 .bw{position:absolute;right:-14px;bottom:-14px;width:60px;height:60px;z-index:5}
+.vyra-topgift.tgd3 .bw .vyra-profile-face{width:100%!important;height:100%!important;border-radius:50%!important;overflow:hidden!important;
+  border:2px solid #ffffff55!important;box-shadow:0 4px 10px #000a!important}
+.vyra-topgift.tgd3 .bw .vyra-profile-face img{width:100%;height:100%;object-fit:cover}
+.vyra-topgift.tgd3 .bw::before{content:"";position:absolute;inset:-5px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,#7cf7ff,#b388ff,#ff8ad8,#ffe08a,#7cf7ff);-webkit-mask:radial-gradient(circle,transparent 62%,#000 64%);mask:radial-gradient(circle,transparent 62%,#000 64%);
+  filter:drop-shadow(0 0 5px #b388ff);animation:tgdRing 8s linear infinite}
+.vyra-topgift.tgd3 .bw::after{content:"";position:absolute;left:16%;top:12%;width:24%;height:16%;border-radius:50%;background:#ffffffcc;transform:rotate(-30deg);pointer-events:none}
+.vyra-topgift.tgd3 .bw>i{position:absolute;inset:0;border-radius:50%;border:2px solid var(--a2);opacity:0;pointer-events:none}
+.vyra-topgift.tgd3.landar .bw>i{animation:tgdVag 1.4s ease-out .3s both}.vyra-topgift.tgd3.landar .bw>i+i{animation-delay:.55s}
+@keyframes tgdVag{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+/* namn och mynt: namnet större, mynten i en frostad glaspill */
+.vyra-topgift.tgd3 .topgift-copy{margin-top:34px!important;gap:3px}
+.vyra-topgift.tgd3 .topgift-copy strong{font-size:var(--tgd-text,20px);font-weight:900;color:var(--t,#fff);text-shadow:0 1px 2px #000d;max-width:210px}
+.vyra-topgift.tgd3 .topgift-copy em{padding:3px 12px;border-radius:999px;background:#0b0712a6;border:1px solid color-mix(in srgb,var(--accent) 55%,#ffffff40);
+  backdrop-filter:blur(4px);font-size:14px;font-weight:800;color:color-mix(in srgb,var(--accent) 35%,#fff);
+  text-shadow:0 0 calc(var(--g,.8)*7px) var(--accent),0 1px 2px #000;box-shadow:0 0 calc(var(--g,.8)*10px) color-mix(in srgb,var(--accent) 35%,transparent)}
+.vyra-topgift.tgd3 .topgift-copy em::before{content:"● ";color:var(--accent)}
+.vyra-topgift.tgd3 .topgift-copy em::after{content:" mynt"}
+
+@media (prefers-reduced-motion:reduce){
+  .vyra-topgift.tgd1 .tgd-krona,.vyra-topgift.premium-topgift.tgd1 .vyra-gift-face::before,
+  .vyra-topgift.tgd2 .glans,.vyra-topgift.tgd2 .pw::before,.vyra-topgift.tgd2 .linje::before,.vyra-topgift.tgd2 .vyra-gift-face img,
+  .vyra-topgift.tgd3 .ruta::after,.vyra-topgift.tgd3 .vyra-gift-face img,.vyra-topgift.tgd3 .bw::before{animation:none!important}
+  .vyra-topgift.tgd3 .bubblor,.vyra-topgift.tgd3 .landring,.vyra-topgift.tgd3 .stank,.vyra-topgift.tgd3 .bw>i{display:none}
+}
+/* Gift-redigerarens kryssrutor (Gift, Profil, Namn, Värde) i Design 2 och 3. Guldlinjen hör ihop med
+   både namn och mynt och försvinner med någon av dem; i Design 3 försvinner glasrutan med gåvan. */
+.vyra-topgift.tgd.utan-namn strong,.vyra-topgift.tgd.utan-varde em,
+.vyra-topgift.tgd2.utan-namn .linje,.vyra-topgift.tgd2.utan-varde .linje,
+.vyra-topgift.tgd2.utan-gava .vyra-gift-face,.vyra-topgift.tgd2.utan-profil .pw,
+.vyra-topgift.tgd3.utan-profil .bw,.vyra-topgift.tgd3.utan-gava .vyra-gift-face{display:none!important}
+.vyra-topgift.tgd3.utan-gava.utan-profil .ruta{display:none}

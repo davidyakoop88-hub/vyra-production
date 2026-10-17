@@ -266,6 +266,8 @@
         "styles.css",
         "premium-widget-tokens.css",
         "premium-pack-library.css",
+        "topgift-designer.css",
+        "topgift-designer.js",
         "premium-final.js",
         "premium-final.css",
         "overview-premium.js",
