@@ -94,7 +94,9 @@
   // De sex ranking-sixpack-designerna listas i ranking-sixpack.js:s grupperade katalog (en grupp per
   // design, med Top Like / Top Coins / Top Points under), inte har.
   const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
-  const knappar = () => KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
+  // I katalogen heter de Top Gift · Design 3 och 4 (David 2026-10-17: alla heter Top Gift).
+  const KATALOGNAMN = { halo: 'Top Gift · Design 3', 'signal-orbit': 'Top Gift · Design 4' };
+  const knappar = () => KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>${KATALOGNAMN[id] || 'Top Coins · ' + meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
@@ -103,7 +105,7 @@
     // katalogen"). Finns Top Gifter-sektionen (premium-final.js) läggs korten i dess rutnät och den
     // egna sektionen tas bort. Byggs Top Gifter-sektionen först senare flyttas korten dit vid nästa
     // bind; tills dess står de i sin egna sektion som förut, så de syns alltid.
-    const giftRubrik = [...catalog.querySelectorAll('section.prototype-section > h4')].find(h => /TOP GIFTER/i.test(h.textContent || ''));
+    const giftRubrik = [...catalog.querySelectorAll('section.prototype-section > h4')].find(h => /TOP GIFT\b/i.test(h.textContent || ''));
     const giftGrid = giftRubrik && giftRubrik.nextElementSibling && giftRubrik.nextElementSibling.classList.contains('template-style-grid') ? giftRubrik.nextElementSibling : null;
     if (giftGrid) {
       catalog.querySelectorAll('section[data-topcoins-v2]').forEach(el => el.remove());

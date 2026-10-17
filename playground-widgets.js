@@ -826,7 +826,7 @@ function placeCatalog(cat) {
         cat.prepend(s);
       }
       // Top Gifter-sektionen kan byggas efter podiet; flytta in podiet direkt efter den när den finns.
-      const topGift = [...cat.querySelectorAll('section.prototype-section')].find(x => /TOP GIFTER/i.test(x.querySelector('h4')?.textContent || ''));
+      const topGift = [...cat.querySelectorAll('section.prototype-section')].find(x => /TOP GIFT\b/i.test(x.querySelector('h4')?.textContent || ''));
       if (topGift && topGift.nextElementSibling !== s) topGift.after(s);
       return s;
     },
