@@ -196,7 +196,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261016-5/);
+  assert.match(studio, /widget-factory\.js\?v=20261017-1/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
@@ -204,7 +204,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=2/);
   assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
-  assert.match(studio, /vyra-proportioner\.js\?v=20260820-1/);
+  assert.match(studio, /vyra-proportioner\.js\?v=20261017-1/);
   // Bumpad 2026-09-20: resize-handtagen klamper bredden sa att hela widgeten ryms pa duken.
   assert.match(studio, /widget-handles\.js\?v=20260926-fri/);
     // Bumpad 2026-08-20 for toppgivarraden: media.js bar laddvagen till home-premium-bunten, och

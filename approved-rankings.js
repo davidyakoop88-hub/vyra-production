@@ -72,6 +72,9 @@
     const value = demo ? '0' : VyraSafe.text(w.dataValue, overlay ? '0' : '18');
     const width = Math.max(150, Number(w.width) || 220);
     const dold = w.hidden ? 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;' : '';
+    // Top Streak · Design 1–3 (topstreak-designer.js) ritas med samma demonollning, döljning och rot-stil.
+    const D = window.VyraStreakDesigner;
+    if (D && D.har(w)) return D.html(w, { name, value, profile, gift, dold, valt: selected === w.id });
     return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
@@ -88,6 +91,19 @@
     });
     state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.type !== 'templateTopStreak');
     state.widgets.push(w); selected = w.id; save(); render(); toast('Top Streak · Clean Flip skapad');
+  }
+
+  // TOP STREAK · DESIGN 1–3 (David 2026-10-17, topstreak-designer.js). Samma regel som Clean Flip: en
+  // Top Streak i taget, och den nya ersätter den förra.
+  const STREAK_DESIGNER = [
+    [1, 'Profil ↔ gåva i en cirkel · strålar · neonplatta'],
+    [2, 'Profil och gåva sida vid sida · guldlinje'],
+    [3, 'Gåvan i en glasruta · bubblor · åtta stilar']
+  ];
+  function createStreakDesign(key) {
+    const w = VyraWidgets.create(key);
+    state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.type !== 'templateTopStreak');
+    state.widgets.push(w); selected = w.id; save(); render(); toast(w.title + ' skapad');
   }
 
   function createApprovedLike(theme) {
@@ -129,9 +145,11 @@
     const section = document.createElement('section');
     section.dataset.approvedStreak = '1';
     section.className = 'streak-template-section approved-streak-catalog';
-    section.innerHTML = '<h4>VYRA TOP STREAK · CLEAN FLIP</h4><button type="button" data-approved-streak-create data-catalog-key="catalog:topstreak"><i>V</i><span><b>Clean Flip</b><small>Gåva ↔ profil · transparent · var 8:e sekund</small></span></button>';
+    section.innerHTML = '<h4>VYRA TOP STREAK</h4><button type="button" data-approved-streak-create data-catalog-key="catalog:topstreak"><i>V</i><span><b>Clean Flip</b><small>Gåva ↔ profil · transparent · var 8:e sekund</small></span></button>'
+      + STREAK_DESIGNER.map(([n, text]) => `<button type="button" data-approved-streak-create data-catalog-key="catalog:topstreak:design:${n}"><i>${n}</i><span><b>Top Streak · Design ${n}</b><small>${text}</small></span></button>`).join('');
     catalog.prepend(section);
-    section.querySelector('button').onclick = createCleanStreak;
+    section.querySelector('[data-catalog-key="catalog:topstreak"]').onclick = createCleanStreak;
+    section.querySelectorAll('[data-catalog-key^="catalog:topstreak:design:"]').forEach(b => { b.onclick = () => createStreakDesign(b.dataset.catalogKey); });
 
   }
 
@@ -221,7 +239,9 @@
       const previousProps = props;
       props = vakt('props', previousProps, function () {
         const w = liveWidget(selected);
-        return w && w.type === 'templateTopStreak' ? approvedStreakProps(w) : previousProps();
+        if (!w || w.type !== 'templateTopStreak') return previousProps();
+        const D = window.VyraStreakDesigner;
+        return D && D.har(w) ? D.props(w) : approvedStreakProps(w);
       });
       andrat = true;
     }
@@ -242,6 +262,7 @@
         }
         if (w && w.type === 'templateTopStreak') {
           bindControls(w);
+          if (window.VyraStreakDesigner?.har(w)) window.VyraStreakDesigner.bind(w);
           // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
           //
           // `#streakTheme` ar media.js:139:s stilmeny med de SJU avvecklade designerna (inferno, neon,
