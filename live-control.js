@@ -4,6 +4,20 @@
   const stats={online:false,connected:false,connectionState:'idle',username:'',received:0,errors:0,reconnects:0,lastEventAt:0,lastPollAt:0,pollLatency:0,queueDepth:0,maxQueue:2000,dropped:0,processed:0};
   const battle={active:false,scoreUs:0,scoreThem:0,winsUs:0,winsThem:0,lastKind:'—',lastAt:0,multiplier:1,mvp:'—',events:0,liga:'',ligaPoang:null,ligaFarg:'',ligaBakgrund:'',ligaIkon:'',ligaVisa:true};
   let opened=false, filter='all', query='';
+  // TESTGÅVANS ÅTERKOPPLING (F03). Klicket gav tidigare ingenting synligt: send() kastade i
+  // webbläget och felet hamnade bara i konsolen. Nu skrivs utfallet i en aria-live-region intill
+  // knappen. Tillståndet ligger utanför DOM:en, för render() bygger om hela vyn när eventet
+  // kommer tillbaka — annars skulle beskedet suddas ut av just det event det handlar om.
+  let testStatus={text:'',state:''};
+  function testStatusHtml(){return `<p id="lcTestStatus" class="lc-test-status" role="status" aria-live="polite" data-state="${safe(testStatus.state)}">${safe(testStatus.text)}</p>`}
+  function visaTestStatus(text,state){testStatus={text,state};const el=document.querySelector('#lcTestStatus');if(el){el.textContent=text;el.dataset.state=state}}
+  async function skickaTestgava(){
+    const live=root.VyraLive;
+    if(!live||typeof live.send!=='function'){visaTestStatus('Live-klienten är inte laddad. Ladda om sidan och försök igen.','error');return}
+    visaTestStatus('Skickar testgåva…','pending');
+    try{await live.send({type:'gift',username:'TestViewer',name:'TestViewer',giftName:'Rose',coins:1,count:1});visaTestStatus('Testgåvan skickades.','ok')}
+    catch(err){visaTestStatus((err&&err.message)||'Testgåvan kunde inte skickas.','error')}
+  }
 
   function safe(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   // LIGABRICKANS VARDEN KOMMER FRAN TIKTOK och gar in i ett style-attribut respektive ett src.
@@ -52,13 +66,22 @@
     // Vyns egna H2 far garna heta "LIVE Control Center"; #title far inte.
     if(title)title.textContent='LIVE-kontroll';
     const types=[...new Set(events.map(e=>String(e.type||'okänd').toLowerCase()))];
-    const tikStatus=stats.connected?safe(stats.username||'Ansluten'):stats.connectionState==='reconnecting'?'Återansluter':stats.connectionState==='stale'?'Signal saknas':'Väntar på connector';
-    view.innerHTML=`<div class="lc-page"><div class="lc-head"><div><h2>LIVE Control Center</h2><p>Se varje TikTok-event, vad som matchade och varför inget hände.</p></div><button id="lcTest" class="primary">Skicka testgåva</button></div><div class="lc-health"><article><i class="${stats.online?'ok':''}"></i><span><small>SERVER</small><b>${stats.online?'Online':'Offline'}</b></span></article><article><i class="${stats.connected?'ok':'warn'}"></i><span><small>TIKTOK</small><b>${tikStatus}</b></span></article><article><span><small>EVENT / MIN</small><b>${rate()}</b></span></article><article><span><small>MOTTAGNA</small><b>${stats.received}</b></span></article><article><span><small>FEL</small><b>${stats.errors}</b></span></article></div><section class="lc-panel"><header><div><h3>Event Inspector</h3><span>${events.length} event i lokal historik</span></div><div><input id="lcSearch" value="${safe(query)}" placeholder="Sök namn, gift eller event"><select id="lcFilter"><option value="all">Alla event</option>${types.map(t=>`<option value="${safe(t)}" ${filter===t?'selected':''}>${safe(t)}</option>`).join('')}</select><button id="lcClear">Rensa</button></div></header><div class="lc-table"><table><thead><tr><th>Tid / event</th><th>Person / data</th><th>Resultat</th><th>Test</th></tr></thead><tbody>${filtered().length?filtered().map(row).join(''):'<tr><td colspan="4" class="lc-empty">Inga event ännu. Starta LIVE-connectorn eller skicka ett testevent.</td></tr>'}</tbody></table></div></section></div>`;
-    mountPerformance();mountBattle();document.querySelector('#lcSearch').oninput=e=>{query=e.target.value.toLowerCase();render()};document.querySelector('#lcFilter').onchange=e=>{filter=e.target.value;render()};document.querySelector('#lcClear').onclick=()=>{events.length=0;render()};document.querySelector('#lcTest').onclick=()=>root.VyraLive?.send({type:'gift',username:'TestViewer',name:'TestViewer',giftName:'Rose',coins:1,count:1});document.querySelectorAll('[data-replay]').forEach(b=>b.onclick=()=>replay(b.dataset.replay));
+    // F04: SERVER- och TIKTOK-korten läser samma tillståndsmodell som toppraden (live-client.js,
+    // VyraLive.tillstand). Förut drevs de av vyra-server-status, som bara den lokala servern
+    // skickar — i webbläget stod de därför kvar på "Offline" och "Väntar på connector" medan
+    // toppraden sa "TikTok ansluten". Saknas modellen (gammal cachad live-client) gäller det gamla.
+    const lt=root.VyraLive?.tillstand?.()||{server:{namn:'SERVER',text:stats.online?'Online':'Offline',varning:!stats.online},
+      konto:stats.username||null,connector:stats.connected?'ansluten':'väntar',gron:stats.connected,
+      connectorText:stats.connected?'Ansluten':stats.connectionState==='reconnecting'?'Återansluter':stats.connectionState==='stale'?'Signal saknas':'Väntar på connector'};
+    const tikStatus=safe(lt.connectorText);
+    const kontoRad=lt.konto?'@'+safe(String(lt.konto).replace(/^@/,'')):'Inget TikTok-konto sparat';
+    view.innerHTML=`<div class="lc-page"><div class="lc-head"><div><h2>LIVE Control Center</h2><p>Se varje TikTok-event, vad som matchade och varför inget hände.</p></div><div class="lc-test"><button id="lcTest" class="primary" aria-describedby="lcTestStatus">Skicka testgåva</button>${testStatusHtml()}</div></div><div class="lc-health"><article data-lc-kort="server"><i class="${lt.server.varning?'warn':''}"></i><span><small>${safe(lt.server.namn)}</small><b>${safe(lt.server.text)}</b></span></article><article data-lc-kort="tiktok" data-connector="${safe(lt.connector)}"><i class="${lt.gron?'ok':'warn'}"></i><span><small>TIKTOK</small><b>${tikStatus}</b><small class="lc-konto">${kontoRad}</small></span></article><article><span><small>EVENT / MIN</small><b>${rate()}</b></span></article><article><span><small>MOTTAGNA</small><b>${stats.received}</b></span></article><article><span><small>FEL</small><b>${stats.errors}</b></span></article></div><section class="lc-panel"><header><div><h3>Event Inspector</h3><span>${events.length} event i lokal historik</span></div><div><input id="lcSearch" value="${safe(query)}" placeholder="Sök namn, gift eller event"><select id="lcFilter"><option value="all">Alla event</option>${types.map(t=>`<option value="${safe(t)}" ${filter===t?'selected':''}>${safe(t)}</option>`).join('')}</select><button id="lcClear">Rensa</button></div></header><div class="lc-table"><table><thead><tr><th>Tid / event</th><th>Person / data</th><th>Resultat</th><th>Test</th></tr></thead><tbody>${filtered().length?filtered().map(row).join(''):'<tr><td colspan="4" class="lc-empty">Inga event ännu. Starta LIVE-connectorn eller skicka ett testevent.</td></tr>'}</tbody></table></div></section></div>`;
+    mountPerformance();mountBattle();document.querySelector('#lcSearch').oninput=e=>{query=e.target.value.toLowerCase();render()};document.querySelector('#lcFilter').onchange=e=>{filter=e.target.value;render()};document.querySelector('#lcClear').onclick=()=>{events.length=0;render()};document.querySelector('#lcTest').onclick=skickaTestgava;document.querySelectorAll('[data-replay]').forEach(b=>b.onclick=()=>replay(b.dataset.replay));
   }
   addEventListener('vyra-server-status',e=>{const wasConnected=stats.connected,c=e.detail?.connection||{},client=e.detail?.client||root.VyraLive?.metrics?.()||{};stats.online=true;stats.connected=!!c.connected;stats.connectionState=c.state||'idle';stats.username=c.username||'';stats.reconnects=Math.max(stats.reconnects,Number(c.reconnectAttempt||0));stats.queueDepth=Number(client.queueDepth||0);stats.maxQueue=Number(client.maxQueue||2000);stats.dropped=Number(client.dropped||0);stats.processed=Number(client.processed||0);stats.pollLatency=Number(client.pollLatency||0);if(!wasConnected&&stats.connected&&stats.received)stats.reconnects++;if(opened)render()});
+  addEventListener('vyra-live-tillstand',()=>{if(opened)render()});
   addEventListener('vyra-server-offline',()=>{stats.online=false;stats.connected=false;stats.errors++;if(opened)render()});
   addEventListener('vyra-live-event',e=>record(e.detail||{}));
   document.addEventListener('click',e=>{const b=e.target.closest?.('[data-extra="liveControl"]');if(b){e.preventDefault();setTimeout(render)}});
-  root.VyraLiveControl={render,record,replay,testBattle,getSnapshot:()=>({stats:{...stats,eventRate:rate()},battle:{...battle},events:events.map(e=>({...e}))})};
+  root.VyraLiveControl={render,record,replay,testBattle,skickaTestgava,getSnapshot:()=>({stats:{...stats,eventRate:rate()},battle:{...battle},events:events.map(e=>({...e}))})};
 })(typeof window!=='undefined'?window:globalThis);

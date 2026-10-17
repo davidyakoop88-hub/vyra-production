@@ -18,6 +18,51 @@ function oppnaVerifiering(url){
   location.href=url;return{externt:false};
 }
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
+// EN TILLSTÅNDSMODELL FÖR LIVE (F04). Toppraden sa "TikTok ansluten · @x" (grön) samtidigt som
+// LIVE-kontroll sa "SERVER Offline" och "TIKTOK Väntar på connector". Bägge hade rätt om sin egen
+// källa och fel om helheten:
+//   * I webbläget betyder molnets connection.connected bara att raden i tiktok_connections är
+//     AKTIV (shape() nedan, c.active) — att kontot är sparat och att bryggmanagern ska försöka.
+//     Det säger ingenting om att bryggan faktiskt har kontakt med en LIVE.
+//   * LIVE-kontroll drevs av vyra-server-status, som bara den lokala servern (skrivbordsgrenen)
+//     skickar. I webbläget kom den aldrig, så korten stod kvar på sitt startläge "Offline".
+// Modellen byggs BARA av sådant som redan finns: statussvaret, om den lokala servern svarar, och
+// den aktiva livesessionen (live-session-client.js, servern äger den och den kommer via SSE).
+// Inga nya fält mot servern eller bryggan. Grönt (gron) betyder att LIVE-händelser kan komma fram.
+const EJ_LOPANDE={paused:1,suspended:1};
+function byggLiveTillstand(d,{lage='webb',online=null,aktivSession=null}={}){
+  const c=(d&&d.connection)||{},st=String(c.state||'idle');
+  const konto=String(c.username||'').replace(/^@/,'').trim()||null,at=konto?' · @'+konto:'';
+  let connector='väntar',connectorText='Väntar på connector',text=konto?'TikTok-konto sparat'+at:'Anslut TikTok',klass='';
+  const ansluten=()=>{connector='ansluten';connectorText='Ansluten';text='Ansluten till LIVE'+at};
+  if(lage==='webb'){
+    // Molnets connected:true är ett SPARAT konto, inte en anslutning. Först när servern har
+    // startat en livesession vet vi att bryggan levererar.
+    if(aktivSession)ansluten();
+    else if(st==='connecting'){connector='ansluter';connectorText='Ansluter…';text='Ansluter till TikTok…'}
+  }else if(online===false){connector='fel';connectorText='Lokala servern svarar inte';text='VYRA Desktop svarar inte'}
+  else if(c.connected&&!EJ_LOPANDE[st])ansluten();
+  else if(st==='paused'){connector='pausad';connectorText='Sändningen pausad';text='Sändningen pausad';klass='pausad'}
+  else if(st==='suspended'){connector='fel';connectorText='Stoppad av TikTok';text='Sändningen stoppad av TikTok';klass='pausad'}
+  else if(st==='connecting'){connector='ansluter';connectorText='Ansluter…';text='Ansluter till TikTok…'}
+  else if(st==='reconnecting'){connector='ansluter';connectorText='Återansluter';text='TikTok återansluter · försök '+(c.reconnectAttempt||1)}
+  else if(st==='stale'){connector='fel';connectorText='Signal saknas';text='TikTok-signal saknas'}
+  // SERVERKORTET. I webbläget finns ingen lokal server att vara offline — där visas molnet,
+  // neutralt, och bara ett faktiskt fel mot molnet varnar. Kortet blir aldrig grönt: en server
+  // som svarar är inte samma sak som att händelser kommer fram.
+  const server=lage==='webb'
+    ?{namn:'MOLNET',text:d&&d.molnFel?'Svarar inte':'Webbläge',varning:!!(d&&d.molnFel)}
+    :{namn:'SERVER',text:online===false?'Offline':online?'Online':'Kontrollerar…',varning:online===false};
+  return{lage,konto,connector,live:aktivSession?'aktiv':'inte aktiv',connectorText,text,gron:connector==='ansluten',klass,server};
+}
+const liveLage={status:null,online:null};
+function aktivLiveSession(){try{return window.VyraLiveSession?.runtime?.().aktivSession()||null}catch{return null}}
+// d skickas med när anroparen målar ett eget mellanläge (studio-live.js: "Ansluter…" under ett
+// tryck); annars gäller senaste statussvaret.
+function liveTillstand(d){return byggLiveTillstand(d===undefined?liveLage.status:d,{lage:localRuntime?'desktop':'webb',online:liveLage.online,aktivSession:aktivLiveSession()})}
+let senasteLiveTillstand='';
+function meddelaLiveTillstand(){const m=liveTillstand(),k=JSON.stringify(m);if(k!==senasteLiveTillstand){senasteLiveTillstand=k;dispatchEvent(new CustomEvent('vyra-live-tillstand',{detail:m}))}return m}
+addEventListener('vyra-live-session',()=>meddelaLiveTillstand());
 // KLIENTGRANSEN FOR #133. Bade `coins` och `diamonds` satts till samma tal, och `diamonds`
 // vinner nar bada finns. Sedan steg 2 laser konsumenterna `diamonds` forst och `coins` bara som
 // reserv for en aldre .exe — `coins` skrivs fortfarande, eftersom cachad widgetkod i OBS kan
@@ -317,8 +362,11 @@ if(!localRuntime){
                             verifierad:!!c.verifierad_at,visningsnamn:c.visningsnamn||null,avatarUrl:c.avatar_url||null}
                           :{connected:false,state:'idle'}});
   window.VyraLive={
-    status:async()=>{try{const r=await cloud('GET');return shape(r.connection,{verifieringKravs:!!r.verifieringKravs})}
-      catch{return{ok:true,localRuntime:false,cloud:true,connection:{connected:false,state:'idle'}}}},
+    status:async()=>{let d;try{const r=await cloud('GET');d=shape(r.connection,{verifieringKravs:!!r.verifieringKravs})}
+      // molnFel bara när ett anrop faktiskt gjordes och föll — utan arbetsyta är det inget molnfel.
+      catch{d={ok:true,localRuntime:false,cloud:true,molnFel:!!workspaceId(),connection:{connected:false,state:'idle'}}}
+      liveLage.status=d;meddelaLiveTillstand();return d},
+    tillstand:liveTillstand,byggTillstand:byggLiveTillstand,
     connect:async username=>shape((await cloud('PUT',{username})).connection),
     // VERIFIERING. Servern bygger TikToks egen URL (den bär state + PKCE) och vi skickar dit
     // webbläsaren. Vi öppnar INTE ett popup-fönster: TikToks inloggning avvisas i vissa inbäddade
@@ -336,7 +384,14 @@ if(!localRuntime){
       if(!id)throw Error('Logga in för att ansluta');
       return await window.VyraAuth.api(`/api/workspaces/${id}/tiktok-connection/anslut-nu`,{method:'POST',body:'{}'})},
     disconnect:async()=>shape((await cloud('DELETE')).connection),
-    send:async()=>{throw Error('Testevent kraver VYRA Desktop')},
+    // TESTEVENT I WEBBLÄGET (F03). Molnet har POST /api/test/event/:workspaceId: samma
+    // eventBus/SSE-väg som riktiga händelser, men ingen skrivning till Postgres, så mål rörs inte.
+    // VyraAuth.api skickar X-VYRA-CSRF, som den gemensamma sessionsraden kräver för POST.
+    // Servern läser value, inte coins — därför mappas coins/diamonds hit. 202 = mottaget.
+    send:async(ev={})=>{const id=workspaceId();
+      if(!id)throw Error('Logga in för att skicka testevent');
+      const e=ev||{},body={type:e.type,username:e.username||e.name,giftName:e.giftName,count:e.count,value:e.value??e.coins??e.diamonds};
+      return await window.VyraAuth.api(`/api/test/event/${id}`,{method:'POST',body:JSON.stringify(body)})},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
     mapEvent:liveEventTriggers,ingest,closeStream};
   // Subscribe to the workspace event stream. Without this Studio never saw a single live event in
@@ -380,8 +435,8 @@ if(!localRuntime){
   setTimeout(openStream, 2000);
 
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
-const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');if(!online){online=true;emit('vyra-server-status',d)}return d}catch(e){if(online){online=false;emit('vyra-server-offline',{error:e.message})}throw e}}
-let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
+const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');liveLage.status=d;liveLage.online=true;if(!online){online=true;emit('vyra-server-status',d)}meddelaLiveTillstand();return d}catch(e){liveLage.online=false;if(online){online=false;emit('vyra-server-offline',{error:e.message})}meddelaLiveTillstand();throw e}}
+let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,tillstand:liveTillstand,byggTillstand:byggLiveTillstand,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
 // Aven i skrivbordslaget gar verifieringen via MOLNET: det ar molnets tiktok_connections som bar
 // handtagslaset, och den lokala servern har varken sessionen eller tabellen. Saknas inloggningen
 // sags det rakt ut i stallet for att knappen tyst inte gor nagot.

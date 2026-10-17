@@ -71,7 +71,8 @@
         "tests/browser/las-proportioner.browser.test.js",
         "tests/browser/framsida-logo.browser.test.js",
         "tests/browser/login-slapp-in.browser.test.js",
-        "tests/oversikt-en-sanning.test.js"
+        "tests/oversikt-en-sanning.test.js",
+        "tests/browser/verktygsrad-overlapp.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -420,7 +421,9 @@
         "tests/leaderboard-diamonds-migrering.test.js",
         "tests/diamonds-konsumenter.test.js",
         "tests/browser/likecount-en-kontroll.browser.test.js",
-        "tests/browser/command-center-*.browser.test.js"
+        "tests/browser/command-center-*.browser.test.js",
+        "tests/live-control-testgava.test.js",
+        "tests/live-tillstand.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"
@@ -739,7 +742,8 @@
         "server/test/tts.test.js",
         "server/test/streamdeck.test.js",
         "tests/tts-livestatus.test.js",
-        "tests/paus-indikator.test.js"
+        "tests/paus-indikator.test.js",
+        "tests/tts-rostkort-bredd.test.js"
       ],
       "matning": [],
       "risker": [

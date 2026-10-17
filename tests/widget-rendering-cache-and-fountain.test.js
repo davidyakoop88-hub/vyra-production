@@ -177,7 +177,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
   // Bumpad 2026-10-17 (-2): TikTok-rutan visar e-postkravet som steg 1 och låser steg 2 (#connectModal
   // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
-  assert.match(studio, /studio\.css\?v=20261017-2/);
+  assert.match(studio, /studio\.css\?v=20261017-3/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -434,7 +434,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261012-diamonds/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261017-p1granskning/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.

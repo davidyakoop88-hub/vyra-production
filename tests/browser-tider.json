@@ -105,6 +105,7 @@
     "toppoints-designer.browser.test.js": 10,
     "trial-onboarding.browser.test.js": 74,
     "uppsagningsknappen.browser.test.js": 9,
+    "verktygsrad-overlapp.browser.test.js": 8,
     "widget-grans.browser.test.js": 160,
     "widget-handtag.browser.test.js": 66,
     "widget-rotation.browser.test.js": 64,
