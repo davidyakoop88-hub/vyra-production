@@ -34,7 +34,7 @@ function malaInstallningsrad(c){
   rad.innerHTML='<i></i>'+(namn?namn+' · '+lage:'Inte anslutet')
     +(skal?'<small class="settings-status-skal">'+skal.replace(/[<>&]/g,'')+'</small>':'');
 }
-function paint(d){malaInstallningsrad(d&&d.connection);let e=document.querySelector('.connection');if(!e)return;let c=d?.connection,state=c?.state;e.classList.toggle('connected',!!c?.connected&&state!=='paused'&&state!=='suspended');e.classList.toggle('pausad',state==='paused'||state==='suspended');e.querySelector('span').textContent=(c?.connected&&state!=='paused'&&state!=='suspended')?`TikTok ansluten · @${String(c.username||'LIVE').replace(/^@/,'')}`:state==='paused'?'Sändningen pausad':state==='suspended'?'Sändningen stoppad av TikTok':state==='connecting'?'Ansluter till TikTok…':state==='reconnecting'?`TikTok återansluter · försök ${c.reconnectAttempt||1}`:state==='stale'?'TikTok-signal saknas':'Anslut TikTok'}addEventListener('vyra-server-status',e=>paint(e.detail));document.addEventListener('click',()=>setTimeout(()=>VyraLive.status().then(paint).catch(()=>{}),60),true);addEventListener('vyra-server-offline',()=>{let e=document.querySelector('.connection span');if(e)e.textContent='Anslut TikTok'});addEventListener('vyra-live-event',e=>{let x=e.detail||{};note('LIVE: '+(x.username||x.name||'Event')+' · '+(x.giftName||x.type||''))});document.addEventListener('click',async e=>{if(e.target?.id!=='connectNow')return;e.preventDefault();e.stopImmediatePropagation();let u=(document.querySelector('#tikUser')?.value||'').trim();if(!u)return note('Skriv TikTok-användarnamn');let button=e.target;button.disabled=true;button.textContent='Ansluter…';paint({connection:{connected:false,state:'connecting'}});try{let d=await VyraLive.connect(u);state.tiktok=u;save();paint(d);document.querySelector('#connectModal')?.close();note('TikTok LIVE är anslutet · '+u)}catch(error){paint({connection:{connected:false,state:'failed'}});note(error.message||'Kunde inte ansluta till TikTok LIVE')}finally{button.disabled=false;button.textContent='Anslut konto'}},true);// VERIFIERA MED TIKTOK. Knappen lamnar sidan — VyraLive.verifiera() satter location.href till
+function paint(d){malaInstallningsrad(d&&d.connection);let e=document.querySelector('.connection');if(!e)return;let c=d?.connection,state=c?.state;e.classList.toggle('connected',!!c?.connected&&state!=='paused'&&state!=='suspended');e.classList.toggle('pausad',state==='paused'||state==='suspended');e.querySelector('span').textContent=(c?.connected&&state!=='paused'&&state!=='suspended')?`TikTok ansluten · @${String(c.username||'LIVE').replace(/^@/,'')}`:state==='paused'?'Sändningen pausad':state==='suspended'?'Sändningen stoppad av TikTok':state==='connecting'?'Ansluter till TikTok…':state==='reconnecting'?`TikTok återansluter · försök ${c.reconnectAttempt||1}`:state==='stale'?'TikTok-signal saknas':'Anslut TikTok'}addEventListener('vyra-server-status',e=>paint(e.detail));document.addEventListener('click',()=>setTimeout(()=>VyraLive.status().then(paint).catch(()=>{}),60),true);addEventListener('vyra-server-offline',()=>{let e=document.querySelector('.connection span');if(e)e.textContent='Anslut TikTok'});addEventListener('vyra-live-event',e=>{let x=e.detail||{};note('LIVE: '+(x.username||x.name||'Event')+' · '+(x.giftName||x.type||''))});document.addEventListener('click',async e=>{if(e.target?.id!=='connectNow')return;e.preventDefault();e.stopImmediatePropagation();let u=(document.querySelector('#tikUser')?.value||'').trim();if(!u)return note('Skriv TikTok-användarnamn');let button=e.target;button.disabled=true;button.textContent='Ansluter…';paint({connection:{connected:false,state:'connecting'}});try{let d=await VyraLive.connect(u);document.querySelector('#connectModal [data-epostkrav]')?.remove();state.tiktok=u;save();paint(d);document.querySelector('#connectModal')?.close();note('TikTok LIVE är anslutet · '+u)}catch(error){paint({connection:{connected:false,state:'failed'}});if(!visaEpostkrav(error))note(error.message||'Kunde inte ansluta till TikTok LIVE')}finally{button.disabled=false;button.textContent='Anslut konto'}},true);// VERIFIERA MED TIKTOK. Knappen lamnar sidan — VyraLive.verifiera() satter location.href till
 // TikToks egen URL. Darfor aterstalls knappen bara i FELfallet: i lyckofallet ar sidan redan pa
 // vag bort, och en knapp som hoppar tillbaka till "Verifiera med TikTok" strax innan det ser ut
 // som att ingenting hande.
@@ -49,7 +49,27 @@ document.addEventListener('click',async e=>{if(e.target?.id!=='verifieraTikTok')
     if(ut&&ut.externt){b.textContent='Väntar på TikTok…';
       note('Slutför inloggningen i webbläsaren som öppnades — det här fönstret uppdaterar sig självt');
       vantaPaVerifiering(b,text)}}
-  catch(error){b.disabled=false;b.textContent=text;note(error.message||'Kunde inte starta verifieringen')}},true);
+  catch(error){b.disabled=false;b.textContent=text;if(!visaEpostkrav(error))note(error.message||'Kunde inte starta verifieringen')}},true);
+// E-POSTEN FÖRST. server/index.js stoppar varje skrivning från ett konto med overifierad e-post —
+// också PUT /tiktok-connection, POST /tiktok-verifiering och anslut-nu. Det är hela skillnaden
+// mellan ett nytt och ett gammalt konto (rapporterat 2026-10-17), och den syntes förut bara som en
+// toast om att "spara eller publicera" som försvann. Beskedet ligger nu kvar i modalen, säger vart
+// mejlet gick och har en knapp som skickar det igen. Spärren själv står kvar: varje anslutning är
+// en bryggplats, och overifierade engångskonton ska inte kunna ta dem. Vaktat av
+// tests/epostkrav-tiktok.test.js.
+function visaEpostkrav(error){if(!error||!error.emailVerificationRequired)return false;
+  const modal=document.querySelector('#connectModal');if(!modal)return false;
+  modal.querySelector('[data-epostkrav]')?.remove();
+  const ruta=document.createElement('div');ruta.className='tik-epostkrav';
+  ruta.setAttribute('data-epostkrav','');ruta.setAttribute('role','alert');
+  ruta.innerHTML='<p><b>Verifiera din e-post först.</b> TikTok LIVE går att ansluta när du har öppnat länken vi skickade till <em></em>.</p><button type="button">Skicka mejlet igen</button>';
+  ruta.querySelector('em').textContent=window.VyraAuth?.lastDetail?.()?.user?.email||'din e-postadress';
+  const knapp=ruta.querySelector('button');
+  knapp.onclick=async()=>{knapp.disabled=true;
+    try{await window.VyraAuth.api('/api/auth/email/send-verification',{method:'POST',body:'{}'});knapp.textContent='Mejlet är skickat'}
+    catch(err){knapp.disabled=false;note(err.message||'Kunde inte skicka mejlet')}};
+  const fore=modal.querySelector('#verifieraTikTok');if(fore)fore.before(ruta);else modal.append(ruta);
+  return true}
 // Bevakar servern tills kopplingen blir verifierad. Bunden i tid med flit: en obegransad slinga
 // hade fortsatt fraga i evighet efter ett avbrutet varv. Tva minuter racker for en inloggning och
 // ger upp med ett SKAL i stallet for att tiga.
@@ -89,7 +109,7 @@ document.addEventListener('click',async e=>{if(e.target?.id!=='anslutNu')return;
         if(d?.connection?.connected){b.disabled=false;b.textContent=text;return}}catch(_){}
       if(n<12)setTimeout(tick,5000);else{b.disabled=false;b.textContent=text}};
     setTimeout(tick,5000);}
-  catch(error){b.disabled=false;b.textContent=text;note(error.message||'Kunde inte be om anslutning')}},true);
+  catch(error){b.disabled=false;b.textContent=text;if(!visaEpostkrav(error))note(error.message||'Kunde inte be om anslutning')}},true);
 // Fritextfaltet goms nar servern kraver verifiering. Servern ar den som bestammer — det har ar
 // bara att slippa visa ett falt som rutten anda skulle avvisa med 403.
 function malaVerifieringslage(d){const block=document.querySelector('#tikFritext');
