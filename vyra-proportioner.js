@@ -49,7 +49,8 @@
     if (!w) return 'content';
     if (w.giftFrame || w.streakFrame || w.mvpFrame) return 'frame';
     if (w.type === 'templateCustomImage' || w.type === 'templateCustomVideo') return 'media';
-    if (w.type === 'templateTopGift' || cssAgerHojden(nod(w.id))) return 'css';
+    // Top Streak · Design 1–3 (topstreak-designer.js) får sin höjd av designen, som Top Gift.
+    if (w.type === 'templateTopGift' || (w.type === 'templateTopStreak' && w.streakDesign) || cssAgerHojden(nod(w.id))) return 'css';
     return 'content';
   }
   const lasbar = k => k === 'media' || k === 'content';
