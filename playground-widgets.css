@@ -498,14 +498,19 @@
 .pgw[data-fimg="1"] .pod .r2,.pgw[data-fimg="1"] .pod .r3{margin-bottom:48px!important}
 .pgw .pod .pcol{min-width:0}
 .pgw .pod .pcol.dim{opacity:.7}
+/* Läsbar på ljus bakgrund (2026-10-17): neonet har en mörk kontur bakom bokstäverna och en mjuk
+   mörk skugga under, så att namn, mynt och rubrik syns mot ljusa väggar och fönster i kameran. */
+/* Tomma platser visar bara ramen och den tomma profilbilden, inte "—" och "0". Namn och mynt tar
+   ändå sin plats, så inget hoppar när första gåvan kommer. */
+.pgw .pod .pcol.dim .nm,.pgw .pod .pcol.dim .cn{visibility:hidden}
 
 /* Neontext i Textfärg med glöd i Färg 1 (namn, rubrik) och Färg 2 (mynt). Glöd-reglaget styr
    styrkan. Namneffekterna Shimmer, Aurora och Flimmer behåller sin egen stil. Namnet får luft
    (padding med negativ marginal) så att glöden inte klipps av ellipsens overflow:hidden. */
-.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .nm{color:var(--t);-webkit-text-stroke:1px var(--a);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
-.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .pod-title{color:var(--t);-webkit-text-stroke:1px var(--a);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
+.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .nm{color:var(--t);-webkit-text-stroke:3px #0a0614d9;paint-order:stroke fill;text-shadow:0 1px 2px #000d,0 2px 8px #000a,0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
+.pgw:not([data-namefx=shimmer]):not([data-namefx=aurora]):not([data-namefx=flicker]) .pod .pod-title{color:var(--t);-webkit-text-stroke:3px #0a0614d9;paint-order:stroke fill;text-shadow:0 1px 2px #000d,0 2px 8px #000a,0 0 2px #fff,0 0 calc(var(--g)*10px) var(--a),0 0 calc(var(--g)*20px) var(--a),0 0 calc(var(--g)*40px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
 .pgw .pod .nm{padding:24px 26px;margin:-22px -26px -22px;max-width:calc(100% + 52px);box-sizing:border-box}
-.pgw .pod .cn{color:var(--t);-webkit-text-stroke:1px var(--b);text-shadow:0 0 2px #fff,0 0 calc(var(--g)*10px) var(--b),0 0 calc(var(--g)*20px) var(--b),0 0 calc(var(--g)*40px) var(--b),0 0 calc(var(--g)*75px) var(--b)}
+.pgw .pod .cn{color:var(--t);-webkit-text-stroke:3px #0a0614d9;paint-order:stroke fill;text-shadow:0 1px 2px #000d,0 2px 8px #000a,0 0 2px #fff,0 0 calc(var(--g)*10px) var(--b),0 0 calc(var(--g)*20px) var(--b),0 0 calc(var(--g)*40px) var(--b),0 0 calc(var(--g)*75px) var(--b)}
 .pgw .pod .blk span{color:#fff;mix-blend-mode:normal;-webkit-text-stroke:2px var(--a);text-shadow:0 0 4px #fff,0 0 calc(var(--g)*17.5px) var(--a),0 0 calc(var(--g)*37.5px) var(--a),0 0 calc(var(--g)*75px) var(--a)}
 
 /* Kronan: ljusare och mättade färger med glöd i ramens färg. Bara podiets krona. */
