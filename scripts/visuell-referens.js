@@ -137,9 +137,7 @@ function servera() {
     const krock = V.rastreringsKrock({ lagrat, nu, filtrerad: !!BARA,
       nyRastrerare: process.env.VYRA_VISUELL_NY_RASTRERARE === '1' });
     if (krock) {
-      console.error('
-' + krock + '
-');
+      console.error(''); console.error(krock); console.error('');
       await a.browser.close();
       await new Promise(r => a.server.close(r));
       process.exit(1);

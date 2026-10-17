@@ -65,3 +65,11 @@ test('rastreringskrock: båda visuella jobben loggar maskinen', () => {
     assert.match(flode, /libfreetype6/, fil + ' loggar inte FreeType-versionen');
   }
 });
+
+test('rastreringskrock: referensskriptet går att tolka', () => {
+  // Proven ovan LÄSER skriptet som text. Ett syntaxfel i det — som i första versionen av den här
+  // ändringen, där en radbrytning hamnade mitt i en sträng — gick därför igenom lokalt och föll
+  // först i CI. Skriptet körs bara i referensflödet, så ingen annan svit hade märkt det.
+  const { execFileSync } = require('child_process');
+  execFileSync(process.execPath, ['--check', path.join(__dirname, '..', 'scripts', 'visuell-referens.js')]);
+});
