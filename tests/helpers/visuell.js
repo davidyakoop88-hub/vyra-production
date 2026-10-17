@@ -125,6 +125,29 @@ async function rastreringsAvtryck(sida) {
   }, AVTRYCKSPROB);
 }
 
+// FÅR DEN HÄR MASKINEN SKRIVA REFERENSER? Svarar null (ja) eller ett skäl (nej). Ren funktion, så
+// beslutet går att pröva utan webbläsare — se tests/visuell-rastreringskrock.test.js för varför den
+// finns. Två regler:
+//   · Med filter skrivs bara några bilder, och resten ligger kvar från maskinen som tog dem. Avviker
+//     avtrycket blandas två rastrerare i samma uppsättning. Det är aldrig rätt, så det stoppas alltid.
+//   · Utan filter skrivs allt om. Det är rätt BARA om GitHub verkligen bytt rastrerare för hela
+//     flottan — annars ritas alla bilder av en sällsynt maskin och varje vanlig maskin går röd.
+//     Det beslutet tas av en människa: VYRA_VISUELL_NY_RASTRERARE=1.
+function rastreringsKrock({ lagrat, nu, filtrerad, nyRastrerare = false }) {
+  if (!lagrat || lagrat === nu) return null;
+  const huvud = `Den här maskinen ritar text som ${nu}; referenserna är tagna på ${lagrat}. `;
+  if (filtrerad) {
+    return huvud + 'En filtrerad körning skulle blanda två rastrerare i samma uppsättning, så '
+      + 'ingenting skrivs. Kör om jobbet — GitHub servar då och då en sådan maskin.';
+  }
+  if (!nyRastrerare) {
+    return huvud + 'Ingenting skrivs. Kör om jobbet först: oftast är det en enstaka avvikande maskin. '
+      + 'Har GitHub bytt rastrerare för hela flottan (samma avtryck flera körningar i rad) tas allt om '
+      + 'med VYRA_VISUELL_NY_RASTRERARE=1 — i workflowen valet ny_rastrerare.';
+  }
+  return null;
+}
+
 /* Mätfunktionerna körs INNE i sidan — en gång per sida, inte en gång per widget. */
 const RIGG = `(() => {
   // PASSFORMEN NEUTRALISERAS - se VIEWPORT langst ned. media.js:s fitOverlayCanvas() skriver inline
@@ -706,4 +729,4 @@ function skickaFil(req, res, fil, typ) {
 
 
 module.exports = { skickaFil, ROOT, REFKAT, DIFFKAT, MANIFEST, filnamn, refvag, motorn, lasManifest,
-  motorKrock, rastreringsAvtryck, AVTRYCKSPROB, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };
+  motorKrock, rastreringsAvtryck, rastreringsKrock, AVTRYCKSPROB, RIGG, FYLLNAD, JAMFOR, fotografera, fota, stilla, STEGE, KANALTROSKEL, VIEWPORT };

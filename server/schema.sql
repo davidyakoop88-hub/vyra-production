@@ -841,8 +841,8 @@ END $$;
 ALTER TABLE billing_customers ALTER COLUMN stripe_customer_id DROP NOT NULL;
 ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAULT 'stripe'
   CHECK(provider IN ('stripe','paypal'));
--- Beta 2026-10: provider='comp' = gratis Premium utan betalning (de första 30 registrerade kontona,
--- se server/index.js registreringsrutt). ADD COLUMN IF NOT EXISTS ovan rör INTE CHECK:en när kolumnen
+-- Beta 2026-10: provider='comp' = gratis Premium utan betalning i 30 dagar. Gällde först de 30 första
+-- registrerade kontona; sedan 2026-10-17 varje nytt konto (se server/index.js registreringsrutt). ADD COLUMN IF NOT EXISTS ovan rör INTE CHECK:en när kolumnen
 -- redan finns, så constrainten byts ut explicit. Idempotent (DROP IF EXISTS + ADD), och den nya
 -- mängden är en övermängd av den gamla så alla befintliga rader passerar vid ADD.
 ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_provider_check;

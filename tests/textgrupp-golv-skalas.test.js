@@ -37,5 +37,5 @@ test('ett max()-golv skalas i sitt första px-tal och behåller golvet', () => {
 });
 
 test('cachebusten höjdes med filen', () => {
-  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /vyra-textgrupp\.js\?v=20261017-festival3/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /vyra-textgrupp\.js\?v=20261017-podium6/);
 });

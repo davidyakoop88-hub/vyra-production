@@ -170,10 +170,27 @@ test('bildfrekvensen halls uppe genom hela sekvensen, med bada dukarna igang', {
   assert.ok(m.totaltRutor > SEKUNDER * 30, 'for fa bildrutor spelades in: ' + m.totaltRutor);
 
   // Sedan: höll den?
+  //
+  // p95 ÄR KVANTISERAT, SÅ TAKET ÄR EGENTLIGEN ETT ANTAL. Ett rAF-intervall är en multipel av en
+  // vsync (16,7 ms), så p95 kan bara bli 16,7, 33,4, 50 … — taket 26 betyder "högst 5 % tappade
+  // rutor i fasen". Fas 1 är 1,6 s, ungefär 90 rutor, och bär dessutom triggerns fulla render()
+  // (#448), som inte är motorns. Där räckte FEM tappade rutor för att fälla provet.
+  //
+  // Uppmätt i 24 gröna CI-körningar 2026-10-17: fas 1 tappade 0-3 rutor både vid 100 % och 250 %
+  // intensitet, fas 2-4 tappade NOLL i alla 48 mätningar. Main föll i körning 39037325526 på fem
+  // tappade i fas 1 (median 16,7, FPS 53,3), på en commit som inte rörde någon klientkod.
+  //
+  // Därför får fas 1 en uttalad budget i stället för ett p95 som en enda stall på löparen slår
+  // igenom. De långa faserna behåller p95-taket. MUTATIONSPRÖVAT lokalt: en motor som väntar 6, 12
+  // eller 15 ms per ruta hinner fortfarande inom en vsync (inget att fånga), 20 ms fäller provet på
+  // FPS-golvet och på budgeten (20 tappade i fas 1). Medianen stod på 16,7 även då, så den är ingen
+  // vakt och står inte här.
+  const FAS1_TAPPADE = 8;
   for (const f of m.faser) {
     assert.ok(f.rutor > 0, f.namn + ' fick inga bildrutor alls');
     assert.ok(f.fps >= 50, f.namn + ' snittade ' + f.fps + ' FPS (golv 50)');
-    assert.ok(f.p95 <= 26, f.namn + ' hade p95 ' + f.p95 + ' ms (tak 26)');
+    if (f === m.faser[0]) assert.ok(f.tappade <= FAS1_TAPPADE, f.namn + ' tappade ' + f.tappade + ' rutor (budget ' + FAS1_TAPPADE + ')');
+    else assert.ok(f.p95 <= 26, f.namn + ' hade p95 ' + f.p95 + ' ms (tak 26)');
   }
 
   // MVP-firandena (WOW) frontladdar nu utslappet: avslojandet fyrar tidigt (utslapp under forsta

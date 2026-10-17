@@ -58,7 +58,8 @@ const regler = (prefix, namn) =>
   (CSS.match(new RegExp('\\.' + prefix + '-' + namn + '(?![a-z0-9-])', 'g')) || []).length;
 
 test('katalogen har tva designval', () => {
-  assert.deepEqual(designval(), ['royal', 'neon'],
+  // 2026-10-17: Top Gift · Design 1 (neon) forst, Design 2 (royal) sedan — David: alla heter Top Gift.
+  assert.deepEqual(designval(), ['neon', 'royal'],
     'antalet eller ordningen i katalogen har andrats — se docs/topgift-gallringen.md');
 });
 

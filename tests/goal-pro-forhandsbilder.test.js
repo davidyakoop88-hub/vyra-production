@@ -36,5 +36,5 @@ test('katalogen pekar varje Goal Pro-kort på sin egen bild', () => {
 });
 
 test('cachebusten höjdes med filen', () => {
-  assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /playground-widgets\.js\?v=20261012-lasbar/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /playground-widgets\.js\?v=20261017-katalog3/);
 });
