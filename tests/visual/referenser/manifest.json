@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 200,
  "senaste": {
-  "motiv": "Top Gifter Podium omdesignat (PR 618): tätare platser, neontext, krona i ramens färg, siffror 1 2 3, inga pulser, läsbart mot ljus bakgrund",
-  "nycklar": 13,
-  "filter": "pgpodium",
-  "tid": "2026-10-17T00:34:49.675Z"
+  "motiv": "Top Gift Design 1-3 (PR 622): kronan och strålarna i Design 1, ny markup i Design 2, nytt tema fokus",
+  "nycklar": 2,
+  "filter": "topgift:premium",
+  "tid": "2026-10-17T13:35:36.940Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -247,7 +247,7 @@
    "fyllnad": 100
   },
   "catalog:topgift:premium:royal": {
-   "matt": "340x260",
+   "matt": "340x207",
    "fyllnad": 100
   },
   "catalog:topstreak": {
