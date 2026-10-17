@@ -351,6 +351,50 @@
   document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
   addEventListener('load', install, { once: true });
 
+  // NAMNET FÅR PLATS (2026-10-17). Neon Purple är ett smalt stående kort (210 px, studio.css), så
+  // namnskylten rymde bara ~12 tecken: ett vanligt "@StreamQueen2" klipptes till "@StreamQue…" i
+  // OBS. Namnet krymper nu tills det får plats, ner till 60 % av sin storlek; först ett riktigt långt
+  // namn får ellips. Körs när namnet byts (render eller live via gift-event-images.js), aldrig per
+  // bildruta: textcachen hoppar över namn som redan är anpassade.
+  const anpassade = new WeakMap();
+  // TEXTSTORLEKEN FÅR INTE TAPPAS. TEXT-gruppen (vyra-textgrupp.js) skalar namnet med en inline
+  // font-size; en första version tog bort ALL inline-storlek innan den mätte, så 150 % blev 100 %
+  // (uppmätt i CI: "@StreamQueen" 13px -> 13px vid 1,5). Nu rörs bara den storlek vi själva skrev
+  // (data-passad), mätningen utgår från den storlek namnet har just nu, och anpassningen görs om när
+  // den storleken ändras — inte bara när texten gör det.
+  function passaNamn(el) {
+    const egen = el.dataset.passad === '1';
+    const bas = egen ? (el.dataset.passadFran || '') : el.style.getPropertyValue('font-size');
+    const nyckel = el.textContent + '|' + bas;
+    if (anpassade.get(el) === nyckel) return;
+    anpassade.set(el, nyckel);
+    if (egen) {
+      if (bas) el.style.setProperty('font-size', bas, 'important'); else el.style.removeProperty('font-size');
+      delete el.dataset.passad; delete el.dataset.passadFran;
+    }
+    if (el.scrollWidth <= el.clientWidth + 1) return;
+    const grund = parseFloat(getComputedStyle(el).fontSize) || 20;
+    el.dataset.passad = '1'; el.dataset.passadFran = bas;
+    for (let fs = grund - 1; fs >= grund * 0.6; fs -= 1) {
+      el.style.setProperty('font-size', fs + 'px', 'important');
+      if (el.scrollWidth <= el.clientWidth + 1) return;
+    }
+  }
+  let namnRaf = 0;
+  const passaAlla = () => { namnRaf = 0; document.querySelectorAll('.premium-topgift .topgift-copy strong').forEach(passaNamn); };
+  const nastaRuta = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : f => setTimeout(f, 16);
+  const planera = () => { if (!namnRaf) namnRaf = nastaRuta(passaAlla); };
+  if (typeof MutationObserver === 'function' && typeof document !== 'undefined' && document.body) {
+    new MutationObserver(muts => {
+      for (const m of muts) {
+        const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if (t && t.closest && t.closest('.premium-topgift')) { planera(); return; }
+        for (const n of m.addedNodes || []) if (n.nodeType === 1 && (n.matches('.premium-topgift') || n.querySelector('.premium-topgift'))) { planera(); return; }
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true });
+  }
+  planera();
+
   window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog,
     mynt: MYNT, geometri: GEOMETRI, lasbarhet, enkelLasbar });
 })();
