@@ -62,14 +62,43 @@ function visaEpostkrav(error){if(!error||!error.emailVerificationRequired)return
   modal.querySelector('[data-epostkrav]')?.remove();
   const ruta=document.createElement('div');ruta.className='tik-epostkrav';
   ruta.setAttribute('data-epostkrav','');ruta.setAttribute('role','alert');
-  ruta.innerHTML='<p><b>Steg 1: verifiera din e-post först.</b> Öppna länken vi skickade till <em></em>. Därefter kan du ansluta TikTok LIVE här nedanför.</p><button type="button">Skicka mejlet igen</button>';
+  ruta.innerHTML='<p><b>Steg 1: verifiera din e-post först.</b> Öppna länken vi skickade till <em></em>.</p>'
+    +'<p><b>Steg 2: anslut TikTok LIVE</b> här nedanför. Knapparna låses upp när e-posten är verifierad.</p>'
+    +'<p class="tik-epostkrav-knappar"><button type="button" class="primary" data-har-verifierat>Jag har verifierat</button>'
+    +'<button type="button" data-skicka-igen>Skicka mejlet igen</button></p><small data-epoststatus role="status"></small>';
   ruta.querySelector('em').textContent=window.VyraAuth?.lastDetail?.()?.user?.email||'din e-postadress';
-  const knapp=ruta.querySelector('button');
+  const status=ruta.querySelector('[data-epoststatus]');
+  const knapp=ruta.querySelector('[data-skicka-igen]');
   knapp.onclick=async()=>{knapp.disabled=true;
     try{await window.VyraAuth.api('/api/auth/email/send-verification',{method:'POST',body:'{}'});knapp.textContent='Mejlet är skickat'}
     catch(err){knapp.disabled=false;note(err.message||'Kunde inte skicka mejlet')}};
+  // SERVERN SVARAR, INTE WEBBLÄSARENS MINNE. Länken i mejlet öppnas ofta i en annan flik, och då vet
+  // den här fliken ingenting. /api/auth/me läser kontot som det är nu.
+  const klar=ruta.querySelector('[data-har-verifierat]');
+  klar.onclick=async()=>{klar.disabled=true;status.textContent='Kontrollerar…';
+    try{const me=await window.VyraAuth.api('/api/auth/me');
+      if(me&&me.user&&me.user.emailVerified){
+        const detalj=window.VyraAuth?.lastDetail?.();if(detalj&&detalj.user)detalj.user.emailVerified=true;
+        ruta.remove();lasTikTok(false);malaEpostknapp();
+        note('E-posten är verifierad. Nu kan du ansluta TikTok LIVE.');return}
+      status.textContent='E-posten är inte verifierad än. Öppna länken i mejlet och tryck sedan här igen.'}
+    catch(err){status.textContent=err.message||'Kunde inte kontrollera just nu'}
+    klar.disabled=false};
   const fore=modal.querySelector('#verifieraTikTok');if(fore)fore.before(ruta);else modal.append(ruta);
+  lasTikTok(true);
   return true}
+// STEG 2 ÄR LÅST TILLS STEG 1 ÄR KLART. Knappar som ser klickbara ut men som servern ändå avvisar
+// var det som gjorde kravet otydligt. Låsningen är bara en spegel — spärren sitter i servern.
+function lasTikTok(last){const m=document.querySelector('#connectModal');if(!m)return;
+  for(const id of ['#verifieraTikTok','#connectNow','#tikUser','#anslutNu']){const e=m.querySelector(id);if(e)e.disabled=last}
+  m.toggleAttribute('data-epostlast',last)}
+// SIDHUVUDET SÄGER DET OCKSÅ. "Anslut TikTok" till ett konto som inte kan ansluta än var ett löfte
+// knappen inte höll. Bara viloläget skrivs om — "Ansluter…", "Ansluten" och felen står kvar.
+function malaEpostknapp(){const e=document.querySelector('.connection span');if(!e)return;
+  const overifierad=window.VyraAuth?.lastDetail?.()?.user?.emailVerified===false;
+  if(overifierad&&e.textContent==='Anslut TikTok')e.textContent='Verifiera e-post för TikTok';
+  else if(!overifierad&&e.textContent==='Verifiera e-post för TikTok')e.textContent='Anslut TikTok';
+  document.querySelector('.connection')?.classList.toggle('epostkrav',overifierad)}
 // I FÖRVÄG. Att beskedet kom först efter ett misslyckat tryck var inte tydligt nog: användaren
 // skrev sitt namn, tryckte och fick då veta att ett annat steg saknades. Därför visas kravet så
 // fort modalen öppnas för ett konto som inte har verifierat sin e-post. Knapparna förblir
@@ -78,10 +107,11 @@ function visaEpostkrav(error){if(!error||!error.emailVerificationRequired)return
 function forhandsEpostkrav(){const m=document.querySelector('#connectModal');if(!m||!m.open)return;
   const anv=window.VyraAuth?.lastDetail?.()?.user;
   if(anv&&anv.emailVerified===false)visaEpostkrav({emailVerificationRequired:true});
-  else m.querySelector('[data-epostkrav]')?.remove()}
+  else if(m.querySelector('[data-epostkrav]')){m.querySelector('[data-epostkrav]').remove();lasTikTok(false)}}
 (function(){const m=document.querySelector('#connectModal');if(!m)return;
   new MutationObserver(forhandsEpostkrav).observe(m,{attributes:true,attributeFilter:['open']});
   addEventListener('vyra-auth-ready',forhandsEpostkrav);
+  addEventListener('vyra-auth-ready',malaEpostknapp);
   forhandsEpostkrav()})();
 // Bevakar servern tills kopplingen blir verifierad. Bunden i tid med flit: en obegransad slinga
 // hade fortsatt fraga i evighet efter ett avbrutet varv. Tva minuter racker for en inloggning och
@@ -131,7 +161,7 @@ function malaVerifieringslage(d){const block=document.querySelector('#tikFritext
   // om nagot den inte kan gora — servern svarar 409 och anvandaren far felsoka i blindo.
   const nu=document.querySelector('#tikAnslutNu');
   if(nu)nu.hidden=!(d&&d.connection&&d.connection.username)}
-const grundPaint=paint;paint=function(d){grundPaint(d);malaVerifieringslage(d)};
+const grundPaint=paint;paint=function(d){grundPaint(d);malaVerifieringslage(d);malaEpostknapp()};
 // ATERVAGEN FRAN TIKTOK. server/index.js omdirigerar hit med ?tiktok=<lage>. Varje lage far en
 // egen mening: "det gick inte" sager inte vad man ska gora, och tre av lagena nedan kraver helt
 // olika handling av anvandaren.
