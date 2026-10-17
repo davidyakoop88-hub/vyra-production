@@ -168,7 +168,59 @@ test('panelen har färgpalett, test och position — på svenska', () => {
   assert.ok((html.match(/data-pgsw=/g) || []).length === 24, 'paletten ska ha 24 färgpar');
   assert.ok(html.includes('data-pgtest="gift"') && html.includes('id="propX"') && html.includes('id="del"'));
   assert.ok(html.includes('Flippa mellan profil och gåva'));
-  assert.ok(html.includes('FÄRGER OCH STIL') && html.includes('TEST'));
+  // 2026-10-17: samma ordning som playgroundens panel — RÖRELSE, STIL, widgetens egna fält, POSITION.
+  const rubriker = [...html.matchAll(/<h4>([^<]+)<\/h4>/g)].map(m => m[1]);
+  assert.deepEqual(rubriker, ['RÖRELSE', 'STIL', 'TOP STREAK FLIP', 'POSITION & STORLEK']);
+  let pos = -1;
+  for (const ord of ['Entré / utgång', 'Ramlager på avatar', 'Namneffekt', 'Färgpalett', 'Färg 1', 'Färg 2', 'Textfärg', 'Typsnitt', 'Storlek', 'Rörelsehastighet', 'Glöd', 'Rundning', 'Position']) {
+    const n = html.indexOf('>' + ord, pos + 1); assert.ok(n > pos, ord + ' saknas eller står fel'); pos = n;
+  }
+});
+
+test('Storlek och Position flyttar och skalar den valda widgeten', () => {
+  const h = boot(['templatePgPodium']);
+  h.run(`selected='pg0';document.querySelector('#view').insertAdjacentHTML('beforeend','<div class="properties" id="props"></div>');`);
+  h.document.querySelector('#props').innerHTML = h.window.props();
+  h.window.bind();
+  const w = () => h.window.eval("state.widgets[0]");
+  const bredd = w().width;
+  const st = h.document.getElementById('pgg_storlek'); st.value = '1.1'; st.onchange();
+  assert.equal(w().width, Math.min(432, Math.round(h.window.eval("VyraWidgets.create('catalog:pgpodium').width") * 1.1)));
+  assert.notEqual(w().width, bredd);
+  const pl = h.document.getElementById('pgg_placering'); pl.value = 'top'; pl.onchange();
+  assert.equal(w().y, 8); assert.equal(w().pg.placering, 'top');
+});
+
+test('Position räknar mot dukens format och visar "Egen placering" när widgeten står fritt', () => {
+  const h = boot(['templatePgPodium']);
+  h.run(`selected='pg0'`);
+  const panel = () => {
+    if (!h.document.querySelector('#props')) h.document.querySelector('#view').insertAdjacentHTML('beforeend', '<div class="properties" id="props"></div>');
+    h.document.querySelector('#props').innerHTML = h.window.props(); h.window.bind();
+  };
+  const w = () => h.window.eval("state.widgets[0]");
+  h.run("state.widgets[0].y=123");
+  panel();
+  assert.equal(h.document.getElementById('pgg_placering').value, '', 'en ny eller flyttad widget ska inte påstå Mitten');
+  // Dator-format: duken är 768×432, så Nederst får aldrig hamna under 432.
+  h.run("state.layoutFormat='widescreen'");
+  panel();
+  const pl = h.document.getElementById('pgg_placering'); pl.value = 'bottom'; pl.onchange();
+  assert.ok(w().y <= 432 - 8, 'Nederst i Dator-format hamnade under duken: ' + w().y);
+  // Storlek stannar vid dukens bredd och flyttar in X.
+  h.run("state.layoutFormat='mobile';state.widgets[0].x=200");
+  panel();
+  const st = h.document.getElementById('pgg_storlek'); st.value = '1.8'; st.onchange();
+  assert.ok(w().width <= 432 && w().x + w().width <= 432, 'podiet gick utanför duken');
+});
+
+test('podiets neontext slår inte ut namneffekterna eller Textfärg', () => {
+  const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'playground-widgets.css'), 'utf8');
+  const pod = css.slice(css.indexOf('Top Gifter Podium, justerat i playgrounden'));
+  assert.ok(!/\.pgw \.pod \.(nm|pod-title|cn)\{[^}]*color:#fff/.test(pod), 'namn/rubrik/mynt får inte låsas till vitt — Textfärg ska gälla');
+  assert.match(pod, /\.pgw:not\(\[data-namefx=shimmer\]\):not\(\[data-namefx=aurora\]\):not\(\[data-namefx=flicker\]\) \.pod \.nm\{/);
+  assert.ok(!/max\(var\(--g\)/.test(pod), 'Glöd-reglaget ska kunna skruva ner neonet');
+  assert.ok(!/\.pgw \.rcrown/.test(pod), 'kronans stil får bara gälla podiet, inte Goal Pro');
 });
 
 test('ett färgval skrivs i widgetens pg-objekt', () => {
