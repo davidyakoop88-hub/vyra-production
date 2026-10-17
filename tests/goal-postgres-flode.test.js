@@ -307,3 +307,21 @@ test('varje provfil som seedar tömmer också gavoseedning', () => {
   assert.deepEqual(brister, [],
     'en kvarlämnad seedning gör seedningStatus() sann i nästa prov, och atomicitetsprovet grönt utan grund');
 });
+
+// FLERA PROVFILER I SAMMA STEG KÖRS EFTER VARANDRA, INTE SAMTIDIGT.
+//
+// `node --test a.js b.js` startar filerna parallellt, men jobbet har EN databas. 2026-10-17 föll
+// "en gåva som dyker upp i en senare lista blir NY" på main (körning 39037325531) med nya=1 men
+// ny=false: gavobevakare.test.js tömde gavokatalog_rumslista i sin beforeEach mitt mellan
+// rumslistprovets två anrop, och det andra anropet trodde då att det var baslinjen. Grönt vid
+// omkörning, rött igen när schemaläggaren råkade lägga filerna så. Reproducerat lokalt mot en
+// egen Postgres: 1 fel på 42 körningar med gavobevakare i gång samtidigt, 0 på 20 utan.
+test('Postgres-flödet kör flera provfiler i samma steg seriellt', () => {
+  const samtidiga = steg(FLODE).filter(s => {
+    const run = (s.match(/run:\s*(.*)/) || [])[1] || '';
+    return /node --test/.test(run) && (run.match(/test\/[\w.-]+\.test\.js/g) || []).length > 1
+      && !/--test-concurrency[= ]1\b/.test(run);
+  });
+  assert.deepEqual(samtidiga.map(s => (s.match(/- name:\s*(.*)/) || [])[1]), [],
+    'de här stegen kör flera provfiler mot samma databas samtidigt — lägg till --test-concurrency=1');
+});
