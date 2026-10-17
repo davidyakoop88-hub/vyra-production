@@ -371,6 +371,15 @@ jobs:
           done
           exit 1
 
+      # VILKEN MASKIN RITADE? 2026-10-17 gav en löpare ett annat textavtryck med samma avbild och
+      # samma typsnittspaket, och ingenting i loggen sa vad den maskinen var. Nu gör det det.
+      - name: 'Visuell · maskinen'
+        run: |
+          lscpu | grep -E '^(Model name|Vendor ID)' || true
+          grep -qw avx512f /proc/cpuinfo && echo 'AVX-512: ja' || echo 'AVX-512: nej'
+          echo "Kärna: $(uname -r)"
+          dpkg-query -W libfreetype6 libfontconfig1 libharfbuzz0b 2>/dev/null || true
+
       - name: 'Visuell · pinnad Chromium'
         timeout-minutes: 10
         # DEN LOKALA CLI:N, INTE npx.

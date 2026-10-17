@@ -414,3 +414,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Goals: svart skiva och etikettplatta bortnyckade ur circle-like/-follower/-diamond.png, PR #615
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 9 av 169 (filter: socialgoal) — catalog:socialgoal:diamonds:diamond-orbit:circle, catalog:socialgoal:diamonds:diamond-rail:landscape, catalog:socialgoal:diamonds:diamond-tower:portrait, catalog:socialgoal:followers:crown-orbit:circle, catalog:socialgoal:followers:crown-rail:landscape, catalog:socialgoal:followers:crown-tower:portrait, catalog:socialgoal:likes:heart-orbit:circle, catalog:socialgoal:likes:heart-rail:landscape, catalog:socialgoal:likes:heart-tower:portrait
+
+## 2026-10-17 — 13 referenser skrivna
+
+- **Motiv:** Top Gifter Podium omdesignat (PR 618): tätare platser, neontext, krona i ramens färg, siffror 1 2 3, inga pulser, läsbart mot ljus bakgrund
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 13 av 166 (filter: pgpodium) — catalog:pgpodium:celestial-serpent, catalog:pgpodium:diamond-halo, catalog:pgpodium:frostfire-crown, catalog:pgpodium:gilded-lion, catalog:pgpodium:midnight-butterfly, catalog:pgpodium:moonlit-sakura, catalog:pgpodium:neon-valkyrie, catalog:pgpodium:none, catalog:pgpodium:obsidian-dragon, catalog:pgpodium:ocean-oracle, catalog:pgpodium:royal-phoenix, catalog:pgpodium:stellar-emperor, catalog:pgpodium:thunder-warden

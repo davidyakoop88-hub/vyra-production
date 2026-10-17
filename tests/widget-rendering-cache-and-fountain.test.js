@@ -175,7 +175,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261005-8: lfHeartBeat (hoppade) ersatt av lfNeonGlow.
   // Bumpad 2026-10-10 (-1): lagerpanelen och sidopanelen ritar inga rullister (Davids beslut),
   // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
-  assert.match(studio, /studio\.css\?v=20261010-1/);
+  // Bumpad 2026-10-17 (-2): TikTok-rutan visar e-postkravet som steg 1 och låser steg 2 (#connectModal
+  // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
+  assert.match(studio, /studio\.css\?v=20261017-2/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -196,7 +198,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261016-5/);
+  assert.match(studio, /widget-factory\.js\?v=20261017-1/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.

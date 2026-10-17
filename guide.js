@@ -4,7 +4,7 @@
 // och var den hittas — inte bara en snabb definition i förbifarten.
 (() => {
   const STEPS = [
-    { n: 1, title: 'Anslut TikTok LIVE', body: 'Klicka på "Anslut TikTok" uppe till höger och skriv in ditt användarnamn. Anslutningen är riktig och kopplar direkt till din pågående livesändning — du måste vara live på TikTok för att den ska lyckas.' },
+    { n: 1, title: 'Anslut TikTok LIVE', body: 'Verifiera först din e-post: öppna länken i mejlet vi skickade när du skapade kontot, annars går TikTok inte att ansluta. Klicka sedan på "Anslut TikTok" uppe till höger och skriv in ditt användarnamn. Anslutningen är riktig och kopplar direkt till din pågående livesändning — du måste vara live på TikTok för att den ska lyckas.' },
     { n: 2, title: 'Bygg din overlay', body: 'Gå till <b>Overlay</b> i menyn. Dra in widgets (mål, alerts, topplistor, TTS-text m.m.) från katalogen, placera dem som du vill och spara. Under <b>Layout</b> kan du spara flera olika layouter och byta mellan dem.' },
     { n: 3, title: 'Lägg overlayen i OBS', body: 'Kopiera overlay-länken från Overlay-sidan och lägg den som en <b>Browser Source</b> i OBS, Streamlabs eller liknande program. Allt du bygger och ändrar i VYRA uppdateras live i OBS automatiskt — du behöver aldrig ladda om källan.' }
   ];
