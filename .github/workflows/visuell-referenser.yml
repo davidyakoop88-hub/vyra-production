@@ -24,6 +24,12 @@ on:
         description: 'Valfritt filter, t.ex. battlemvp — tomt betyder alla nycklar'
         required: false
         default: ''
+      ny_rastrerare:
+        description: 'Bara om GitHub bytt rastrerare för HELA flottan (samma nya avtryck flera körningar i rad). 1 = ta om allt på den här maskinen.'
+        required: false
+        default: '0'
+        type: choice
+        options: ['0', '1']
   push:
     branches:
       - 'guard/**'
@@ -143,6 +149,15 @@ jobs:
           done
           exit 1
 
+      # VILKEN MASKIN RITADE? 2026-10-17 gav en löpare ett annat textavtryck med samma avbild och
+      # samma typsnittspaket, och ingenting i loggen sa vad den maskinen var. Nu gör det det.
+      - name: 'Maskinen'
+        run: |
+          lscpu | grep -E '^(Model name|Vendor ID)' || true
+          grep -qw avx512f /proc/cpuinfo && echo 'AVX-512: ja' || echo 'AVX-512: nej'
+          echo "Kärna: $(uname -r)"
+          dpkg-query -W libfreetype6 libfontconfig1 libharfbuzz0b 2>/dev/null || true
+
       - name: 'Den pinnade Chromium'
         timeout-minutes: 10
         # DEN LOKALA CLI:N, INTE npx.
@@ -166,6 +181,7 @@ jobs:
           # byttes, inte ett helt commitmeddelande med medforfattare och sessionslank.
           MOTIV_RAA: ${{ github.event.inputs.motiv || github.event.head_commit.message }}
           VYRA_VISUELL_BARA: ${{ github.event.inputs.bara }}
+          VYRA_VISUELL_NY_RASTRERARE: ${{ github.event.inputs.ny_rastrerare || '0' }}
         run: |
           set -eu
           MOTIV=$(printf '%s' "$MOTIV_RAA" | head -1 | sed 's/^\[referenser\] *//')

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA Studio</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20261017-1">
+  <link rel="stylesheet" href="studio.css?v=20261017-2">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
@@ -121,12 +121,12 @@
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
-  <script src="auth-client.js?v=20260804-session"></script>
+  <script src="auth-client.js?v=20261017-epostkrav"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
        verifieringsmailet. Bada monterar via MutationObserver / auth-handelser. -->
   <script src="vyra-losenordsstyrka.js?v=1"></script>
-  <script src="auth-security.js?v=20260724-1"></script>
+  <script src="auth-security.js?v=20261017-epostforst"></script>
   <!-- Trial-onboarding. Monterar pa vyra-entitlement-ok, som entitlement-gate.js redan
        avfyrar och ingen lyssnade pa. Maste alltsa ligga FORE den. -->
   <script src="vyra-trial-onboarding.js?v=1"></script>
