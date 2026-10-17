@@ -1538,7 +1538,58 @@ body:has(.editor-shell) .canvas{
    fallde sin egen vakt.
    Raden ar darfor en EGEN rad direkt under verktygsraden: fortfarande hogst upp som David bad
    om, men den trangs inte med FORMAT, Angra/Gor om och Testevent. */
-body:has(.editor-shell) .editor-toolbar{flex-wrap:nowrap}
+/* VERKTYGSRADEN BRYTS, DEN KROCKAR INTE (granskningsfynd F01, 2026-10-17).
+   Raden ovan var `flex-wrap:nowrap` med fast `height:40px` (rad 517). Grupperna monteras av fyra
+   filer (layout-format.js, vyra-historik.js, stage-background.js, vyra-zoom.js) och ingen av dem
+   ar absolut positionerad — overlappet kom ur flexen sjalv: .layout-format-picker har min-width:0,
+   sa nowrap-raden krympte gruppen under sitt innehall och knapparna rann ut over grannarna, och
+   knapptexterna ("Gor om", "Dator 16:9 · 1920 × 1080") brots inne i en 40 px hog rad.
+   UPPMATT fore: krockar vid 1024, 1145, 1280, 1366, 1440 OCH 1600 px fonster (mittkolumnen
+   356-858 px), knappar utanfor mittkolumnen vid alla bredder.
+   Nu: varje grupp behaller sin naturliga bredd och raden bryts nar mittkolumnen ar smal. Lanken
+   ligger sedan dess i en egen rad (ovan), sa brytningen tranger inte langre ut den. Zoomen
+   behaller margin-left:auto och sitter i hogerkanten av sin rad.
+   Radavstandet ligger som marginal pa barnen, inte som row-gap: radbrytaren nedan ar en tom
+   rad, och ett row-gap hade lagt ett extra mellanrum runt den. */
+body:has(.editor-shell) .editor-toolbar{flex-wrap:wrap;height:auto;min-height:40px;box-sizing:border-box;
+  column-gap:10px;row-gap:0;padding-top:5px;padding-bottom:5px;justify-content:flex-start;
+  align-items:center;container:vy-verktyg/inline-size}
+body:has(.editor-shell) .editor-toolbar>*{flex:0 0 auto;max-width:100%;margin-top:3px;margin-bottom:3px}
+/* EN RADHOJD FOR ALLA GRUPPER (30 px). Grupperna monteras av MutationObservers EFTER att
+   layout-safe.js ritat raden med bara Testevent i. Med fast hojd syntes det aldrig; med en
+   radbrytande rad hade duken hoppat nedat nar grupperna kom pa plats (uppmatt: widget-las-provet
+   klickade 34 px for hogt eftersom det mater direkt efter render()). Med samma hojd pa varje rad
+   och en reserverad forsta rad (::before nedan) ar raden lika hog fore och efter monteringen. */
+body:has(.editor-shell) .editor-toolbar>:not(.layout-format-status){min-height:30px;box-sizing:border-box}
+body:has(.editor-shell) .editor-toolbar>.historik-knappar{align-items:center}
+body:has(.editor-shell) .editor-toolbar button{white-space:nowrap}
+/* Mellanrummet ager raden (gap) — gruppernas egna vanstermarginaler dubblade det. */
+body:has(.editor-shell) .editor-toolbar>.historik-knappar,
+body:has(.editor-shell) .editor-toolbar>.scenbakgrund-kontroll,
+body:has(.editor-shell) .editor-toolbar>.layout-format-status{margin-left:0}
+/* Formatgruppen far sjalv brytas i allra smalaste lage (Dator-knappen under Mobil) i stallet
+   for att sticka ut ur kolumnen. */
+body:has(.editor-shell) .editor-toolbar>.layout-format-picker{flex-wrap:wrap;row-gap:6px}
+/* NAR ALLT INTE RYMS PA EN RAD (mittkolumnen under ~1000 px, alltsa varje vanlig skarm med bada
+   sidopanelerna) blir raden tva fasta grupprader i stallet for en slumpvis brytning:
+     rad 1: Format ........................ zoom
+     rad 2: Angra/Gor om · Bakgrund · Testevent
+   Zoomen stannar i forsta raden (tests/browser/zoom + editor-ui-placering: <=40 px fran radens
+   overkant). Radbrytaren ar ett tomt ::after med full bredd; ar kolumnen for smal for Format och
+   zoom bredvid varandra hamnar zoomen pa egen rad — brytning, aldrig overlapp.
+   Statusen upprepar bara det aktiva formatvalet och ar det forsta som far ga. aria-live-noden
+   finns kvar i DOM:en. */
+@container vy-verktyg (max-width:999px){
+  .editor-toolbar>.layout-format-status{display:none}
+  .editor-toolbar>.vy-kontroll{order:1}
+  .editor-toolbar>:not(.layout-format-picker):not(.layout-format-status):not(.vy-kontroll){order:3}
+}
+@container vy-verktyg (max-width:999px){
+  .editor-toolbar::after{content:"";order:2;flex:0 0 100%;height:0;margin:0}
+  /* Haller forsta raden oppen innan Format och zoom monterats. Noll bred; den negativa
+     marginalen tar bort kolumnmellanrummet den annars hade gett. */
+  .editor-toolbar::before{content:"";order:0;flex:0 0 0;width:0;height:30px;margin:3px -10px 3px 0}
+}
 .workarea>.overlay-link-bar{flex-wrap:wrap}
 /* Vid smala fonster racker inte EN rad heller: uppmatt vid 1280 px vy blev faltet 367 px medan
    adressen krävde 389, for valjaren och de tva knapparna ater bredden. Da far adressen en egen

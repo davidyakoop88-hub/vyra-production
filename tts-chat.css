@@ -71,3 +71,20 @@ button.sa-ik:focus-visible,.tts-special-row button.tts-ik:focus-visible{outline:
 .sound-card .sound-icon button.media-play.sa-ik{position:absolute;left:auto;top:auto;right:10px;bottom:10px;transform:none}
 .sound-card .sound-icon button.media-play.sa-ik:active{transform:scale(.92)}
 @media (prefers-reduced-motion:reduce){button.sa-ik,.tts-special-row button.tts-ik{transition:none}button.sa-ik:active,.tts-special-row button.tts-ik:active,.sound-card .sound-icon button.media-play.sa-ik:active{transform:none}}
+
+/* RÖSTKORTET FÅR INTE VÄXA UT ÖVER GRANNKORTET (granskning F02, 2026-10-17).
+   Rösterna laddas in efter första renderingen, och en select är lika bred som sitt längsta
+   alternativ ("Microsoft ... Online (Natural) - Swedish (Sweden)"). Gridbarn har min-width:auto,
+   så kolumnen följde med ut ur kortet och in över "Vem får höras?" — plus horisontell scroll.
+   min-width:0 låter kolumnen krympa, select:en fyller sin kolumn och klipper texten.
+   Räcker inte bredden läggs fälten under varandra i stället för att trängas. */
+.tts-vyra-grid>*,.tts-fields>*{min-width:0}
+.tts-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tts-fields select{box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tts-fields input{max-width:100%;min-width:0;box-sizing:border-box}
+.tts-fields input[type=range]{width:100%}
+.tts-tester-row{flex-wrap:wrap}
+.tts-tester-row input{min-width:0;flex-basis:160px}
+.tts-vyra-grid>.card{container-type:inline-size}
+@container (max-width:340px){.tts-fields{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.tts-fields{grid-template-columns:minmax(0,1fr)}}

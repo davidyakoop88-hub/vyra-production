@@ -103,7 +103,7 @@ test('kopplingarna finns: ingest anropar modulen, registren lyssnar, loader och 
   const media = las('media.js');
   assert.match(media, /setAttribute\('src','vyra-stor-avatar\.js\?v=20261011-1'\)/);
   assert.match(media, /cloud-fields\.js\?v=20261011-1/);
-  assert.match(media, /live-client\.js\?v=20261012-diamonds/);
+  assert.match(media, /live-client\.js\?v=20261017-p1granskning/);
   assert.match(media, /live-leaderboard\.js\?v=20261012-diamonds/);
   assert.match(media, /playground-widgets\.js\?v=20261017-katalog3/);
   assert.match(las('studio.html'), /media\.js\?v=20261017-8/);
