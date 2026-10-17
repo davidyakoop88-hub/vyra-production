@@ -31,13 +31,19 @@
   // cacherna, och mutera globala state-objektet in-place. Utan det kunde tva flikar committa
   // varsin layout och den forlorande rulla tillbaka ovanpa vinnaren.
   async function apply(remote){if(!remote||!Array.isArray(remote.widgets))throw new Error('Online-layouten ar ogiltig');const data={...remote},meta=data.__vyraCloud;delete data.__vyraCloud;const extras={};Object.entries(meta?.storage||{}).forEach(([k,v])=>{if(EXTRA.includes(k)&&typeof v==='string')extras[k]=v});const token=root.VyraSessionState.beginProjection();const out=await root.VyraSessionState.projectActive(token,{mode:'studio-committed',workspaceId:workspace&&workspace.id,overlayId:overlay&&overlay.id,state:data,extras});if(!out.ok)throw new Error('Sessionen kunde inte projiceras');lastLocal=localStorage.getItem('vyra-state');root.render?.()}
-  const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',conflict:'Synkkonflikt',local:'Lokalt läge'};
+  const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',verifiering:'Verifiera din e-post för att spara i molnet',conflict:'Synkkonflikt',local:'Lokalt läge'};
   // Konsekvensen, inte tillstandet. "Offline" i sig forklarar inte varfor OBS ser gammalt ut, och
   // da felsoker man widgeten i stallet for anslutningen — precis det som hant.
   const OFFLINE_NOTE='Dina ändringar finns kvar på den här datorn, men OBS hämtar layouten från servern och ser dem inte förrän synken är tillbaka.';
   // Senaste laget sparas for att en SEN mount ska kunna rita det. Lankraden byggs av media.js
   // bind(), alltsa efter att cloud-sync redan bootat och satt sitt forsta lage; utan minnet hade
   // rutan statt tom anda tills nasta statusbyte.
+  // E-POSTSPÄRREN ÄR INTE ETT NÄTVERKSFEL. server/index.js svarar 403 {emailVerificationRequired}
+  // på varje skrivning från ett konto med overifierad e-post — också den första POST /overlays. Den
+  // gick tidigare till samma catch som ett avbrott, och ett nytt konto fick "Ingen kontakt med
+  // molnet" och en lovad synk som aldrig kom. Se tests/cloud-sync-epostkrav.test.js.
+  const VERIFIERING_NOTE='Ändringarna sparas på den här datorn. OBS-länken skapas när du öppnat länken i verifieringsmejlet och laddat om sidan.';
+  const epostkrav=e=>!!(e&&e.emailVerificationRequired);
   let statusText=STATUS_TEXT.local;
   function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];paint();offlineNote()}
   // Tidpunkten for senaste LYCKADE skrivning, satt av agarens egen signal nedan. Visas som
@@ -53,10 +59,10 @@
   function offlineNote(){
     const bar=document.querySelector('.overlay-link-bar');
     let note=document.querySelector('.cs-offline-note');
-    if(status!=='offline'){note?.remove();return}
+    if(status!=='offline'&&status!=='verifiering'){note?.remove();return}
     if(!bar)return;
     if(!note){note=document.createElement('div');note.className='cs-offline-note';document.body.append(note)}
-    note.innerHTML='<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+'</span>';
+    note.innerHTML=status==='verifiering'?'<b>Verifiera din e-post</b><span>'+VERIFIERING_NOTE+'</span>':'<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+'</span>';
   }
   // Var en tom stubb. setStatus() skrev till document.querySelectorAll('.cloud-status') och det
   // fanns inget sadant element pa sidan — ingen skapade det. Hela statusmaskinen raknade ut ratt
@@ -97,7 +103,7 @@
       // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
       // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
       // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
-      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);/* lastLocal maste folja med: utan det sag tickern den nyss hamtade layouten som en LOKAL andring och skickade molnets egen layout tillbaka till molnet (uppmatt 2026-10-10: PUT 200 sju sekunder efter varje Online-klick). */lastLocal=localStorage.getItem('vyra-state');saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
@@ -140,7 +146,10 @@
       // som commitar sessionen (projectActive, mode studio-committed). Utan den var canPush()
       // falsk hela första sessionen — widgets lades till, raden sade "Sparat i molnet ✓", och
       // molnet stod kvar på version 1 med noll widgets. Se tests/cloud-sync-forsta-overlay-commit.test.js.
-      if(!items.length){await create();if(mine!==session)return;await apply(overlay.state);if(mine!==session)return;setStatus('synced');startTicker();return}
+      // Overifierad e-post: ingen overlay kan skapas an. Sessionen projiceras anda — utan overlay-id —
+      // sa att studion ar skrivbar pa den har datorn. Nasta inloggning efter verifieringen gar hit
+      // igen, och create() laddar da upp det som byggts som forsta overlay (payload()).
+      if(!items.length){try{await create()}catch(e){if(!epostkrav(e))throw e;if(mine!==session)return;await apply(payload()||tomLayout());if(mine!==session)return;setStatus('verifiering');return}if(mine!==session)return;await apply(overlay.state);if(mine!==session)return;setStatus('synced');startTicker();return}
       const preferred=items.find(x=>x.id===meta?.overlayId)||items[0];
       overlay=await getRemote(preferred.id);if(mine!==session)return;
 
