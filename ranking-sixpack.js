@@ -357,13 +357,24 @@
   // namn får ellips. Körs när namnet byts (render eller live via gift-event-images.js), aldrig per
   // bildruta: textcachen hoppar över namn som redan är anpassade.
   const anpassade = new WeakMap();
+  // TEXTSTORLEKEN FÅR INTE TAPPAS. TEXT-gruppen (vyra-textgrupp.js) skalar namnet med en inline
+  // font-size; en första version tog bort ALL inline-storlek innan den mätte, så 150 % blev 100 %
+  // (uppmätt i CI: "@StreamQueen" 13px -> 13px vid 1,5). Nu rörs bara den storlek vi själva skrev
+  // (data-passad), mätningen utgår från den storlek namnet har just nu, och anpassningen görs om när
+  // den storleken ändras — inte bara när texten gör det.
   function passaNamn(el) {
-    const text = el.textContent;
-    if (anpassade.get(el) === text) return;
-    anpassade.set(el, text);
-    el.style.removeProperty('font-size');
+    const egen = el.dataset.passad === '1';
+    const bas = egen ? (el.dataset.passadFran || '') : el.style.getPropertyValue('font-size');
+    const nyckel = el.textContent + '|' + bas;
+    if (anpassade.get(el) === nyckel) return;
+    anpassade.set(el, nyckel);
+    if (egen) {
+      if (bas) el.style.setProperty('font-size', bas, 'important'); else el.style.removeProperty('font-size');
+      delete el.dataset.passad; delete el.dataset.passadFran;
+    }
     if (el.scrollWidth <= el.clientWidth + 1) return;
     const grund = parseFloat(getComputedStyle(el).fontSize) || 20;
+    el.dataset.passad = '1'; el.dataset.passadFran = bas;
     for (let fs = grund - 1; fs >= grund * 0.6; fs -= 1) {
       el.style.setProperty('font-size', fs + 'px', 'important');
       if (el.scrollWidth <= el.clientWidth + 1) return;
