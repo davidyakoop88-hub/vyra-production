@@ -619,6 +619,9 @@ main,.mini-sidfot{position:relative;z-index:1}
 .login-kort input{background:#0d0815;border:1px solid #2c2138;border-radius:10px;color:#fff;
   padding:12px 14px;font:500 14px var(--font-body);outline:0;transition:border-color .15s}
 .login-kort input:focus{border-color:var(--violet-light);box-shadow:0 0 0 3px #a78bfa26}
+/* Registreringen sager att TikTok kraver verifierad e-post (tests/registrering-epost-fore-tiktok.test.js). */
+.login-kort .login-epostkrav{margin:0;padding:9px 11px;border:1px solid rgba(190,120,255,.35);border-radius:10px;background:rgba(150,60,220,.10);color:#d9c7e6;font-size:12px;line-height:1.45}
+.login-kort .login-epostkrav[hidden]{display:none}
 .login-kort #loginError,.login-kort #loginMfaError{min-height:16px;margin:0;font-size:12px;
   color:#ff7a9c;text-align:left}
 .login-knapp{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;

@@ -64,6 +64,9 @@
   const felrad = kort.querySelector('#loginError');
   const knapp = form.querySelector('button[type="submit"]');
   const namnFalt = kort.querySelector('[data-login-namn]');
+  // TikTok-anslutningen kräver verifierad e-post (server/index.js, e-postspärren). Det sägs här,
+  // där adressen skrivs in — inte först efteråt. Se tests/registrering-epost-fore-tiktok.test.js.
+  const epostkrav = kort.querySelector('[data-login-epostkrav]');
   const flikar = kort.querySelectorAll('[data-login-flik]');
   let lage = 'login';
 
@@ -84,6 +87,7 @@
     lage = nytt;
     flikar.forEach(f => f.classList.toggle('active', f.dataset.loginFlik === lage));
     namnFalt.hidden = lage !== 'register';
+    if (epostkrav) epostkrav.hidden = lage !== 'register';
     namnFalt.querySelector('input').required = lage === 'register';
     form.querySelector('#loginPassword').autocomplete =
       lage === 'login' ? 'current-password' : 'new-password';
