@@ -82,10 +82,10 @@ test('podiet i overlay: inga demonamn utan events, givaren efter en gåva', { sk
 });
 
 test('streak-flippen i editorn visar en demostreak, i overlay bara riktiga', { skip, timeout: 120000 }, async () => {
-  const editor = await mat(false, 'catalog:pgstreak:emerald-grove', false);
+  const editor = await mat(false, 'catalog:pgstreak:emerald-wings', false);
   assert.deepEqual(editor.namn, ['Lina'], JSON.stringify(editor));
   assert.equal(editor.pill, '12');
   assert.equal(editor.tom, false, 'stk-empty ska inte stå kvar i editorn');
-  const overlay = await mat(true, 'catalog:pgstreak:emerald-grove', true);
+  const overlay = await mat(true, 'catalog:pgstreak:emerald-wings', true);
   assert.deepEqual(overlay.namn, ['anna_01'], JSON.stringify(overlay));
 });

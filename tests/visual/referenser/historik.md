@@ -426,3 +426,15 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Gift Design 1-3 (PR 622): kronan och strålarna i Design 1, ny markup i Design 2, nytt tema fokus
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 166 (filter: topgift:premium) — catalog:topgift:premium:neon, catalog:topgift:premium:royal
+
+## 2026-10-17 — 1 referenser skrivna
+
+- **Motiv:** Ny referens för Top Gift Design 3 (fokus, #622) — nyckeln fanns inte i kartan när #622 togs
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 159 (filter: topgift:premium:fokus) — catalog:topgift:premium:fokus
+
+## 2026-10-17 — 3 referenser skrivna
+
+- **Motiv:** Nya referenser för Top Streak · Design 1–3 (#628)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 162 (filter: topstreak:design) — catalog:topstreak:design:1, catalog:topstreak:design:2, catalog:topstreak:design:3

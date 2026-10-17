@@ -56,7 +56,7 @@ const FALL = [
   ['catalog:topgift:premium:neon', 'gift'],
   ['catalog:topstreak', 'streak'],
   ['catalog:pgpodium:celestial-serpent', 'gift'],
-  ['catalog:pgstreak:emerald-grove', 'streak'],
+  ['catalog:pgstreak:emerald-wings', 'streak'],
   ['catalog:fanlevel50:royal', 'fan50']
 ];
 
