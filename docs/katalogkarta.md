@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `dfdb025`
+Commit: `e7f257f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **177** |
+| Kort totalt | **180** |
 | Sektioner | 26 |
-| Med katalognyckel | 177 / 177 |
-| Med shadow DOM-miniatyr | 134 / 177  ⚠️ |
-| Ritar sin design | 177 / 177 |
+| Med katalognyckel | 180 / 180 |
+| Med shadow DOM-miniatyr | 134 / 180  ⚠️ |
+| Ritar sin design | 180 / 180 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -41,7 +41,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| VYRA TOP STREAK · CLEAN FLIP | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| VYRA TOP STREAK | 16 | 16/16 | 0/16 ⚠️ | 16/16 | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
@@ -92,11 +92,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
 | Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 
-### VYRA TOP STREAK · CLEAN FLIP
+### VYRA TOP STREAK
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Clean Flip | `catalog:topstreak` | — ⚠️ | ✓ | 2026-10-01 | [#558](https://github.com/davidyakoop88-hub/vyra-production/pull/558) |
+| Clean Flip | `catalog:topstreak` | — ⚠️ | ✓ | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
+| Top Streak · Design 1 | `catalog:topstreak:design:1` | — ⚠️ | ✓ | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
+| Top Streak · Design 2 | `catalog:topstreak:design:2` | — ⚠️ | ✓ | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
+| Top Streak · Design 3 | `catalog:topstreak:design:3` | — ⚠️ | ✓ | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
 | Top Streak Flip · Royal Amethyst | `catalog:pgstreak:royal-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Top Streak Flip · Frost Sapphire | `catalog:pgstreak:frost-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Top Streak Flip · Emerald Leaf | `catalog:pgstreak:emerald-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
