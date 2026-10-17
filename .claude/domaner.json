@@ -664,6 +664,7 @@
       ],
       "tester": [
         "tests/pris-och-loften.test.js",
+        "tests/beta-alla-konton.test.js",
         "tests/browser/trial-onboarding.browser.test.js",
         "server/test/billing.test.js",
         "server/test/prenumerationsfalt.test.js"
