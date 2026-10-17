@@ -26,12 +26,7 @@ const PALETT=[["Mint","#3dffb0","#2d8cff"],["Rosa/guld","#ff4fa3","#ffd24a"],["E
 const ENTRE=[['zoom','Zoom (överskjuter)'],['drop','Drop'],['bounce','Bounce'],['rise','Rise'],['glass','Glas'],['neon','Neon-flimmer'],['none','Ingen']];
 const NAMNFX=[['none','Ingen effekt'],['shimmer','Shimmer'],['aurora','Aurora'],['flicker','Flimmer'],['hide','Dölj namnet']];
 const TYPSNITT=[["'Segoe UI',system-ui,sans-serif",'Segoe UI'],["Impact,'Arial Narrow Bold',sans-serif",'Impact'],['Georgia,serif','Georgia (serif)'],["'Trebuchet MS',sans-serif",'Trebuchet'],["Consolas,'Courier New',monospace",'Mono']];
-const POS=[['','Egen placering'],['top','Överst'],['mid','Mitten'],['bottom','Nederst']];
-// Duken är 432×768 i Mobil och 768×432 i Dator (layout-format.js).
-const dukH=()=>(typeof state!=='undefined'&&state&&state.layoutFormat==='widescreen')?432:768;
-const hojd=w=>{const el=document.querySelector('.editor-shell .canvas [data-id="'+w.id+'"]');return el?el.offsetHeight:Math.round((Number(w.width)||360)*800/960)};
-const yFor=(w,v)=>{const H=dukH(),h=hojd(w);return v==='top'?8:v==='bottom'?Math.max(0,H-h-8):Math.max(0,Math.round((H-h)/2))};
-const posAv=w=>w.fwPos&&Math.abs((Number(w.y)||0)-yFor(w,w.fwPos))<=2?w.fwPos:'';
+const POS=[['top','Överst'],['mid','Mitten'],['bottom','Nederst']];
 // [id, fält, min, max, steg, standard, visning]
 const REGLAGE={
  fwScale:['Storlek',.5,1.8,.05,1,v=>v.toFixed(2)],
@@ -55,13 +50,13 @@ props=function(){
  <div class="property-group"><h4>STIL</h4>
   <label>Entré / utgång<select id="fwEnter">${opt(ENTRE,w.fwEnter||'zoom')}</select></label>
   <label>Namneffekt<select id="fwNameFx">${opt(NAMNFX,w.fwNameFx||'none')}</select></label>
-  <span class="pg-pal-rubrik">Färgpalett</span><div class="fw-pal" role="group" aria-label="Färgpalett">${sw}</div>
+  <label>Färgpalett</label><div class="fw-pal">${sw}</div>
   <label>Färg 1<input id="fwColor" type="color" value="${p}"></label>
   <label>Färg 2<input id="fwColor2" type="color" value="${s}"></label>
   <label>Textfärg<input id="fwTextColor" type="color" value="${color(w.fwTextColor,'#ffffff')}"></label>
   <label>Typsnitt<select id="fwFont">${opt(TYPSNITT,w.fwFont||TYPSNITT[0][0])}</select></label>
   ${reglage(w,'fwScale')}${reglage(w,'fwPlaySpeed')}${reglage(w,'fwGlow')}${reglage(w,'fwRadius')}
-  <label>Position<select id="fwPos">${opt(POS,posAv(w))}</select></label></div>
+  <label>Position<select id="fwPos">${opt(POS,w.fwPos||'mid')}</select></label></div>
  <div class="property-group"><h4>FYRVERKERI</h4><label>Tema<select id="fwCanvasTheme">${Object.entries(themes).map(([key,t])=>`<option value="${key}" ${w.fwTheme===key?'selected':''}>${t.label}</option>`).join('')}</select></label>
   ${reglage(w,'fwFinal')}${reglage(w,'fwMin')}${reglage(w,'fwLanes')}
   <label><input id="fwExcludeAnon" type="checkbox" ${w.fwExcludeAnon?'checked':''}> Exkludera anonyma tittare</label></div>
@@ -79,8 +74,8 @@ bind=function(){
   el.oninput=e=>{const b=$(k+'Val');if(b)b.textContent=r[5](Number(e.target.value))};
   el.onchange=e=>{w[k]=Math.min(r[2],Math.max(r[1],Number(e.target.value)||r[4]));commit()}}
  document.querySelectorAll('[data-fwsw]').forEach(b=>b.onclick=()=>{const [a,c]=b.dataset.fwsw.split('|');w.inheritBrandKit=false;w.fwColor=a;w.fwColor2=c;commit()});
- // Position: placerar widgeten överst/mitten/nederst på duken utifrån dess höjd.
- const pos=$('fwPos');if(pos)pos.onchange=e=>{const v=e.target.value;w.fwPos=v;if(v)w.y=yFor(w,v);commit()};
+ // Position: placerar widgeten överst/mitten/nederst på duken (432×768) utifrån dess höjd.
+ const pos=$('fwPos');if(pos)pos.onchange=e=>{const v=e.target.value,h=Math.round((Number(w.width)||360)*800/960);w.fwPos=v;w.y=v==='top'?8:v==='bottom'?Math.max(0,768-h-8):Math.round((768-h)/2);commit()};
  const tema=$('fwCanvasTheme');if(tema)tema.onchange=e=>{const t=themes[e.target.value];if(t){w.inheritBrandKit=false;w.fwTheme=e.target.value;w.fwMotion=t.motion;w.fwColor=t.primary;w.fwColor2=t.secondary;commit()}};
  const combo=$('fwCombo');if(combo)combo.onchange=e=>{w.fwCombo=Math.min(100,Math.max(1,Number(e.target.value)||1));commit()};
  const vol=$('fwVolume');if(vol){vol.oninput=e=>{const b=$('fwVolumeVal');if(b)b.textContent=e.target.value+'%'};vol.onchange=e=>{w.fwVolume=Math.min(100,Math.max(0,Number(e.target.value)||0));commit()}}

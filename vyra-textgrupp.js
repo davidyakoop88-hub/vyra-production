@@ -136,18 +136,17 @@
     }
   }
 
-  function utanTextgrupp(w) {
-    return /^templatePg(Podium|Streak|Goal)$/.test(w && w.type || '')
-      || (w && w.type === 'templateGiftFireworks' && !!w.fwTheme);
+  function arPlaygroundWidget(w) {
+    return /^templatePg(Podium|Streak|Goal)$/.test(w && w.type || '');
   }
 
   function appliceraAlla() {
     if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
     for (const w of state.widgets) {
-      // Widgetar med egen Textfärg/Typsnitt i STIL (playground-widgetarna och Gift Fireworks på duk)
-      // visar ingen TEXT-grupp. Ett tidigare sparat textFont m.m. får då inte heller ligga kvar
-      // osynligt med !important och slå ut STIL-valet — det fanns inget reglage kvar att nollställa.
-      if (utanTextgrupp(w)) continue;
+      // Playground-widgetarna har Textfärg och Typsnitt i STIL och visar ingen TEXT-grupp. Ett tidigare
+      // sparat textFont m.m. får då inte heller ligga kvar osynligt med !important och slå ut
+      // STIL-valet — det fanns inget reglage kvar att nollställa.
+      if (arPlaygroundWidget(w)) continue;
       const rot = document.querySelector(`[data-id="${w.id}"]`);
       if (rot) applicera(rot, w);
     }
@@ -206,9 +205,10 @@
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.
-      // PLAYGROUND-WIDGETARNA (podium, streak, Goal Pro) och Gift Fireworks på duk har Textfärg och
-      // Typsnitt i sin STIL-grupp. En andra TEXT-grupp gav två Typsnitt-reglage i samma panel.
-      if (utanTextgrupp(w)) return ut;
+      if (w.type === 'templateGiftFireworks' && w.fwTheme && document.getElementById('fwNameFx')) return ut;
+      // PLAYGROUND-WIDGETARNA (podium, streak, Goal Pro) har Textfärg och Typsnitt i sin STIL-grupp.
+      // En andra TEXT-grupp gav två Typsnitt-reglage i samma panel.
+      if (arPlaygroundWidget(w)) return ut;
 
       const panel = document.querySelector('.properties');
       if (!panel) return ut;
