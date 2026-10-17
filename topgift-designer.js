@@ -32,6 +32,9 @@
 
   function rot(w, klass, inner) {
     const k = ((Number(w.width) || 340) / BAS[w.theme]).toFixed(3);
+    // Total förstoring av texten: widgetens zoom gånger designens. CSS:en räknar med den för att
+    // namn och siffra aldrig ska bli under 12 synliga px när widgeten krymps (som topplistorna).
+    const z = ((Number(w.widgetScale) || 1) * k).toFixed(3);
     const bild = ((Number(w.giftSize) || 110) / 110).toFixed(3);
     const valt = typeof selected !== 'undefined' && selected === w.id;
     // Gift-redigeraren (media.js, "GIFT EDITOR · VISA / TA BORT") skriver showGift/showProfile/
@@ -41,7 +44,7 @@
       .filter(([k]) => w[k] === false).map(([, c]) => ' ' + c).join('');
     const typ = `font-family:${txt(w.fontFamily, 'Inter')};font-style:${w.fontStyle === 'italic' ? 'italic' : 'normal'};`;
     return `<div class="widget vyra-topgift tgd ${klass}${utan}${valt ? ' selected' : ''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width || 340}px;${typ}`
-      + `--accent:${w.accent || '#d9a441'};--a2:${farg2(w)};--g:${glod(w)};--t:${w.dataColor || '#fff'};--tgd-text:${w.dataSize || 20}px;`
+      + `--accent:${w.accent || '#d9a441'};--a2:${farg2(w)};--g:${glod(w)};--t:${w.dataColor || '#fff'};--tgd-text:${w.dataSize || 20}px;--tgd-z:${z};`
       + `zoom:${w.widgetScale || 1}"><div class="tgd-in" style="zoom:${k}"><div class="tgd-bild" style="zoom:${bild}">${inner.bild}</div>`
       + `<div class="topgift-copy">${inner.text}</div></div>${valt ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }

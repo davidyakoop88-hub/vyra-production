@@ -116,7 +116,9 @@ const FAMILJER = {
 const UTAN_RAM = { utanRam: true };
 const FALL = [
   ['catalog:topgift',                        'topgift'],
-  ['catalog:topgift:premium:royal',          'topgift'],
+  // Design 1 (neon) bär originalmarkupen med profilramslagret. Design 2 och 3 (topgift-designer.js)
+  // har egna profilramar i panelen och ritar inte den gemensamma ramkonsten.
+  ['catalog:topgift:premium:neon',           'topgift'],
   // catalog:topgift:extra:coronation togs bort 2026-09-23 med VYRA ORIGINAL-sektionen.
   // Coronation var den ENDA av de tolv utan premiumtvilling; de ovriga elva ritade redan
   // samma skinn som en premiumdesign. Se docs/topgift-gallringen.md.

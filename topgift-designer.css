@@ -70,7 +70,9 @@
 .vyra-topgift.tgd2 .vyra-gift-face img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 5px #000a);animation:tgdGava 4.2s ease-in-out infinite;transform-origin:50% 80%}
 @keyframes tgdGava{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
 .vyra-topgift.tgd2 .topgift-copy{gap:7px}
-.vyra-topgift.tgd2 .topgift-copy strong{font-size:var(--tgd-text,19px);color:var(--t,#fff);
+/* LÄSBARHETSGOLVET: namn och siffra är aldrig under 12 synliga px, hur liten widgeten än görs —
+   samma kontrakt som topplistorna (tests/browser/topplistor-lasbar). --tgd-z är den totala zoomen. */
+.vyra-topgift.tgd2 .topgift-copy strong{font-size:max(var(--tgd-text,19px),calc(12px / var(--tgd-z,1)));color:var(--t,#fff);
   text-shadow:0 1px 2px #000d,0 0 calc(var(--g,.8)*9px) color-mix(in srgb,var(--accent) 60%,transparent)}
 /* guldlinjen med diamant: stadig glöd och ett ljussken som glider längs den */
 .vyra-topgift.tgd2 .linje{display:block;width:200px;height:3.5px;border-radius:2px;position:relative;
@@ -83,7 +85,7 @@
   -webkit-mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);
   animation:tgdSvep 3.6s ease-in-out infinite}
 @keyframes tgdSvep{0%{background-position:-40% 0}55%,100%{background-position:140% 0}}
-.vyra-topgift.tgd2 .topgift-copy em{font-size:18px;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--accent) 45%,#fff) 50%,color-mix(in srgb,var(--accent) 80%,#fff));
+.vyra-topgift.tgd2 .topgift-copy em{font-size:max(18px,calc(12px / var(--tgd-z,1)));background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--accent) 45%,#fff) 50%,color-mix(in srgb,var(--accent) 80%,#fff));
   -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 2px #000) drop-shadow(0 1px 2px #000)}
 .vyra-topgift.tgd2 .topgift-copy em::before{content:"● ";-webkit-text-fill-color:var(--accent)}
 
@@ -140,9 +142,9 @@
 @keyframes tgdVag{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
 /* namn och mynt: namnet större, mynten i en frostad glaspill */
 .vyra-topgift.tgd3 .topgift-copy{margin-top:34px!important;gap:3px}
-.vyra-topgift.tgd3 .topgift-copy strong{font-size:var(--tgd-text,20px);font-weight:900;color:var(--t,#fff);text-shadow:0 1px 2px #000d;max-width:210px}
+.vyra-topgift.tgd3 .topgift-copy strong{font-size:max(var(--tgd-text,20px),calc(12px / var(--tgd-z,1)));font-weight:900;color:var(--t,#fff);text-shadow:0 1px 2px #000d;max-width:210px}
 .vyra-topgift.tgd3 .topgift-copy em{padding:3px 12px;border-radius:999px;background:#0b0712a6;border:1px solid color-mix(in srgb,var(--accent) 55%,#ffffff40);
-  backdrop-filter:blur(4px);font-size:14px;font-weight:800;color:color-mix(in srgb,var(--accent) 35%,#fff);
+  backdrop-filter:blur(4px);font-size:max(14px,calc(12px / var(--tgd-z,1)));font-weight:800;color:color-mix(in srgb,var(--accent) 35%,#fff);
   text-shadow:0 0 calc(var(--g,.8)*7px) var(--accent),0 1px 2px #000;box-shadow:0 0 calc(var(--g,.8)*10px) color-mix(in srgb,var(--accent) 35%,transparent)}
 .vyra-topgift.tgd3 .topgift-copy em::before{content:"● ";color:var(--accent)}
 .vyra-topgift.tgd3 .topgift-copy em::after{content:" mynt"}
