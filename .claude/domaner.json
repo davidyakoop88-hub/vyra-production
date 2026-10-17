@@ -635,6 +635,7 @@
         "tests/session-write-monopoly.test.js",
         "tests/support-client-wiring.test.js",
         "tests/browser/registrering.browser.test.js",
+        "tests/browser/verifieringsbanner-plats.browser.test.js",
         "tests/epostkrav-tiktok.test.js",
         "server/test/security.test.js",
         "server/test/mfa.test.js",
