@@ -637,6 +637,7 @@
         "tests/session-write-monopoly.test.js",
         "tests/support-client-wiring.test.js",
         "tests/browser/registrering.browser.test.js",
+        "tests/epostkrav-tiktok.test.js",
         "server/test/security.test.js",
         "server/test/mfa.test.js",
         "server/test/token-vault.test.js",
@@ -666,6 +667,7 @@
       ],
       "tester": [
         "tests/pris-och-loften.test.js",
+        "tests/beta-alla-konton.test.js",
         "tests/browser/trial-onboarding.browser.test.js",
         "server/test/billing.test.js",
         "server/test/prenumerationsfalt.test.js"
