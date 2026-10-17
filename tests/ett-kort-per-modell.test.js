@@ -100,7 +100,8 @@ test('streak-modellerna i fabriken ar samma som i playground-assets.js', () => {
   h.load('playground-assets.js');
   const ids = h.window.VYRA_PG.streak.map(m => m.id);
   assert.deepEqual(tabell('pgstreak.model').sort(), [...ids].sort());
-  assert.equal(ids.length, 12);
+  // 12 -> 5 den 2026-10-17: Inferno Ruby och de sex med gåvan i en egen cirkel togs bort (David).
+  assert.equal(ids.length, 5);
 });
 
 test('podiets HD-ramar i fabriken ar samma som i playground-assets.js, plus den kodade ramen', () => {
@@ -152,30 +153,30 @@ test('playground-katalogen ritar 33 modellkort och inget samlingskort', () => {
   h.run(`view='overlay';document.querySelector('#view').innerHTML='<div class="widget-catalog"><section class="approved-streak-catalog"><h4>VYRA TOP STREAK</h4></section><section class="social-goal-template-section"><h4>GOALS · 10 RÖRLIGA DESIGNER</h4></section></div>';bind();`);
   const d = h.document;
   const kort = [...d.querySelectorAll('.widget-catalog [data-pg-create]')];
-  assert.equal(kort.length, 34, '12 streak + 13 podium + 9 goal');
-  assert.equal(kort.filter(b => b.dataset.pgCreate === 'streak').length, 12);
+  assert.equal(kort.length, 27, '5 streak + 13 podium + 9 goal');
+  assert.equal(kort.filter(b => b.dataset.pgCreate === 'streak').length, 5);
   assert.equal(kort.filter(b => b.dataset.pgCreate === 'podium').length, 13);
   assert.equal(kort.filter(b => b.dataset.pgCreate === 'goal').length, 9);
-  assert.equal(new Set(kort.map(b => b.dataset.catalogKey)).size, 34, 'varje kort har en egen nyckel');
+  assert.equal(new Set(kort.map(b => b.dataset.catalogKey)).size, 27, 'varje kort har en egen nyckel');
   for (const bas of ['catalog:pgstreak', 'catalog:pgpodium', 'catalog:pggoal'])
     assert.equal(d.querySelector(`[data-catalog-key="${bas}"]`), null, bas + ' ritas fortfarande som samlingskort');
   // Streakkorten bor i streaksektionen, goalkorten i goalsektionen, och rubriken raknar upp.
-  assert.equal(d.querySelectorAll('section.approved-streak-catalog [data-pg-create="streak"]').length, 12);
+  assert.equal(d.querySelectorAll('section.approved-streak-catalog [data-pg-create="streak"]').length, 5);
   assert.match(d.querySelector('section.social-goal-template-section h4').textContent, /19 RÖRLIGA DESIGNER/);
   // Idempotent: en andra bind() lagger inte till dubbletter.
   h.run('bind();');
-  assert.equal(d.querySelectorAll('.widget-catalog [data-pg-create]').length, 34);
+  assert.equal(d.querySelectorAll('.widget-catalog [data-pg-create]').length, 27);
   // Kortet skapar widgeten med sin modell.
-  d.querySelector('[data-catalog-key="catalog:pgstreak:neon-circuit"]').click();
+  d.querySelector('[data-catalog-key="catalog:pgstreak:neon-wings"]').click();
   // `state` ar en lexikal global i studio.js — nas via eval, inte via window.state.
   const widgets = h.window.eval('state').widgets;
   const skapad = widgets[widgets.length - 1];
-  assert.equal(skapad.pg.x.model, 'neon-circuit');
+  assert.equal(skapad.pg.x.model, 'neon-wings');
   // Forhandsbilden per modellkort: streakens egen ramfil.
   const reg = h.window.VyraKatalogForhandsbilder;
   assert.ok(Array.isArray(reg) && reg.length, 'registret for forhandsbilder saknas');
-  const bild = reg.map(f => f('catalog:pgstreak:neon-circuit')).find(Boolean);
-  assert.match(bild, /streak-neon-circuit\.webp$/);
+  const bild = reg.map(f => f('catalog:pgstreak:neon-wings')).find(Boolean);
+  assert.match(bild, /streak-neon-wings\.webp$/);
   assert.match(reg.map(f => f('catalog:pgpodium:royal-phoenix')).find(Boolean), /royal-phoenix-key\.webp$/);
 });
 

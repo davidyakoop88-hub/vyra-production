@@ -36,7 +36,7 @@ test.after(async () => {
 // SEDAN 2026-09-20 ags Top Streak av approved-rankings.js (Clean Flip). Provet matte forr
 // premium-final.js:s "simple"-design, som aldrig nadde skarmen - approved vann redan, och
 // provet var rott pa ren main. Nu mater det den design som faktiskt ritas.
-test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async () => {
+test('Top Streak visar exakt en Clean Flip, Design 1–3 bredvid, och renderar Clean Flip', { skip }, async () => {
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
   await page.goto(`${bas}/studio.html?open=overlay`, { waitUntil: 'load' });
   await page.waitForFunction(() => document.querySelector('.streak-template-section button'), null,
@@ -45,7 +45,9 @@ test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async (
   const result = await page.evaluate(() => {
     const section = document.querySelector('.streak-template-section');
     // Top Streak Flip (playground) är en annan widget som bor i samma grupp; provet vaktar dubbletter av Clean Flip.
-    const buttons = [...section.querySelectorAll('button:not([data-pg-create])')];
+    // Top Streak · Design 1–3 (2026-10-17) är egna kort i samma grupp och räknas för sig.
+    const buttons = [...section.querySelectorAll('button:not([data-pg-create]):not([data-catalog-key^="catalog:topstreak:design:"])')];
+    const designKort = [...section.querySelectorAll('button[data-catalog-key^="catalog:topstreak:design:"]')].map(b => b.dataset.catalogKey);
     const w = window.VyraWidgets.create('catalog:topstreak');
     const host = document.createElement('div');
     host.innerHTML = wh(w);
@@ -61,7 +63,7 @@ test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async (
     const idleDuration = flip && getComputedStyle(flip).animationDuration;
     const idleIterations = flip && getComputedStyle(flip).animationIterationCount;
     return {
-      heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length,
+      heading: section.querySelector('h4')?.textContent.trim(), buttonCount: buttons.length, designKort,
       buttonName: buttons[0]?.querySelector('b')?.textContent.trim(),
       oldStyles: section.querySelectorAll('[data-streak-style],[data-streak-frame],[data-pf-streak]').length,
       approved: !!el, gamlaKlasser: !!document.querySelector('.vyra-streak-simple,.premium-streak,.streak-framed'),
@@ -79,7 +81,8 @@ test('Top Streak visar exakt ett val och renderar Clean Flip', { skip }, async (
     };
   });
   await page.close();
-  assert.equal(result.heading, 'VYRA TOP STREAK · CLEAN FLIP');
+  assert.equal(result.heading, 'VYRA TOP STREAK');
+  assert.deepEqual(result.designKort, ['catalog:topstreak:design:1', 'catalog:topstreak:design:2', 'catalog:topstreak:design:3']);
   assert.equal(result.buttonCount, 1);
   assert.equal(result.buttonName, 'Clean Flip');
   assert.equal(result.oldStyles, 0, 'en avvecklad design ar tillbaka i katalogen');

@@ -21,6 +21,7 @@
     "diamanter-vid-gransen.browser.test.js": 1,
     "dra-textdelar.browser.test.js": 39,
     "editor-ui-placering.browser.test.js": 18,
+    "verifieringsbanner-plats.browser.test.js": 18,
     "widget-las.browser.test.js": 16,
     "panelplats.browser.test.js": 18,
     "emoji-knapp.browser.test.js": 46,

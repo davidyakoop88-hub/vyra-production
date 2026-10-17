@@ -175,9 +175,11 @@ test('katalogen har nycklar att vakta', { skip }, () => {
   // avveckling, och det ar EN siffra pa ETT stalle sa att den inte glider mellan proven.
   assert.ok(NYCKLAR.length >= GOLV,
     `hittade bara ${NYCKLAR.length} katalognycklar i docs/katalogkarta.md — har kartan flyttat eller inte regenererats?`);
-  // Top Streak ar EN design sedan 2026-09-20: kartan far bara bara standardnyckeln. Dyker en
-  // tema-, premium- eller ramnyckel upp igen har en avvecklad design kommit tillbaka i katalogen.
-  assert.deepEqual(NYCKLAR.filter(k => k.startsWith('catalog:topstreak')), ['catalog:topstreak'],
+  // Top Streak: Clean Flip (standardnyckeln) sedan 2026-09-20, och Design 1–3 (topstreak-designer.js)
+  // sedan 2026-10-17. Dyker en tema-, premium- eller ramnyckel upp igen har en avvecklad design kommit
+  // tillbaka i katalogen.
+  assert.deepEqual(NYCKLAR.filter(k => k.startsWith('catalog:topstreak')).sort(),
+    ['catalog:topstreak', 'catalog:topstreak:design:1', 'catalog:topstreak:design:2', 'catalog:topstreak:design:3'],
     'en avvecklad Top Streak-design ar tillbaka i katalogkartan');
 });
 

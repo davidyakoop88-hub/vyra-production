@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 200,
+ "antal": 197,
  "senaste": {
-  "motiv": "Top Gift Design 1-3 (PR 622): kronan och strålarna i Design 1, ny markup i Design 2, nytt tema fokus",
-  "nycklar": 2,
-  "filter": "topgift:premium",
-  "tid": "2026-10-17T13:35:36.940Z"
+  "motiv": "Nya referenser för Top Streak · Design 1–3 (#628)",
+  "nycklar": 3,
+  "filter": "topstreak:design",
+  "tid": "2026-10-17T18:42:57.097Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -750,31 +750,11 @@
    "matt": "380x364",
    "fyllnad": 100
   },
-  "catalog:pgstreak:emerald-grove": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:emerald-wings": {
    "matt": "300x355",
    "fyllnad": 100
   },
-  "catalog:pgstreak:frost-crystal": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:frost-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:inferno": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:inferno-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:neon-circuit": {
    "matt": "300x355",
    "fyllnad": 100
   },
@@ -786,15 +766,7 @@
    "matt": "300x355",
    "fyllnad": 100
   },
-  "catalog:pgstreak:royal-gold": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:royal-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:violet-orchid": {
    "matt": "300x355",
    "fyllnad": 100
   },
@@ -812,6 +784,22 @@
   },
   "catalog:fanlevel50:zeus": {
    "matt": "300x324",
+   "fyllnad": 100
+  },
+  "catalog:topgift:premium:fokus": {
+   "matt": "340x360",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:1": {
+   "matt": "210x187",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:2": {
+   "matt": "276x167",
+   "fyllnad": 100
+  },
+  "catalog:topstreak:design:3": {
+   "matt": "236x250",
    "fyllnad": 100
   }
  }
