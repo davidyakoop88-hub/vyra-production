@@ -6,7 +6,7 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 200,
+ "antal": 193,
  "senaste": {
   "motiv": "Top Gifter Podium omdesignat (PR 618): tätare platser, neontext, krona i ramens färg, siffror 1 2 3, inga pulser, läsbart mot ljus bakgrund",
   "nycklar": 13,
@@ -750,31 +750,11 @@
    "matt": "380x364",
    "fyllnad": 100
   },
-  "catalog:pgstreak:emerald-grove": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:emerald-wings": {
    "matt": "300x355",
    "fyllnad": 100
   },
-  "catalog:pgstreak:frost-crystal": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:frost-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:inferno": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:inferno-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:neon-circuit": {
    "matt": "300x355",
    "fyllnad": 100
   },
@@ -786,15 +766,7 @@
    "matt": "300x355",
    "fyllnad": 100
   },
-  "catalog:pgstreak:royal-gold": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
   "catalog:pgstreak:royal-wings": {
-   "matt": "300x355",
-   "fyllnad": 100
-  },
-  "catalog:pgstreak:violet-orchid": {
    "matt": "300x355",
    "fyllnad": 100
   },

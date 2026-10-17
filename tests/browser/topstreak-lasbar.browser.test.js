@@ -85,7 +85,9 @@ async function mat(modell) {
   } finally { await sida.close(); }
 }
 
-for (const modell of ['royal-wings', 'royal-gold']) {
+// royal-gold (gåvan i en egen liten cirkel) togs bort 2026-10-17 med de andra sex av den sorten;
+// alla fem som finns kvar visar profil och gåva i samma cirkel. Två av dem provas.
+for (const modell of ['royal-wings', 'rose-wings']) {
   test(`Top Streak ${modell}: platta, textgolv och kompakt läge vid smal bredd`, { skip, timeout: 120000 }, async () => {
     const rader = await mat(modell);
     for (const r of rader) {

@@ -95,13 +95,13 @@
     // layouter och ger exakt samma widget som forut. Id:n och namn speglar playground-assets.js
     // (streak, frames), playground-widgets.js (goal), like-fountain-portal.js (paletter) och
     // media.js (followerAlertThemes) — tests/ett-kort-per-modell.test.js vaktar att listorna ar samma.
+    // David 2026-10-17: Inferno Ruby och de sex med gåvan i en egen liten cirkel (Royal Gold, Frost
+    // Crystal, Inferno, Emerald Grove, Neon Circuit, Violet Orchid) togs bort. En sparad widget med
+    // någon av dem ritas som Royal Amethyst: playground-widgets.js faller tillbaka på första modellen.
     'pgstreak.model': {
       'royal-wings': { label: 'Royal Amethyst' }, 'frost-wings': { label: 'Frost Sapphire' },
-      'emerald-wings': { label: 'Emerald Leaf' }, 'inferno-wings': { label: 'Inferno Ruby' },
-      'neon-wings': { label: 'Neon Crystal' }, 'rose-wings': { label: 'Rose Pearl' },
-      'royal-gold': { label: 'Royal Gold' }, 'frost-crystal': { label: 'Frost Crystal' },
-      'inferno': { label: 'Inferno' }, 'emerald-grove': { label: 'Emerald Grove' },
-      'neon-circuit': { label: 'Neon Circuit' }, 'violet-orchid': { label: 'Violet Orchid' }
+      'emerald-wings': { label: 'Emerald Leaf' }, 'neon-wings': { label: 'Neon Crystal' },
+      'rose-wings': { label: 'Rose Pearl' }
     },
     'pgpodium.frame': {
       none: { label: 'Kodad ram' },
