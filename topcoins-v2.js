@@ -94,16 +94,42 @@
   // De sex ranking-sixpack-designerna listas i ranking-sixpack.js:s grupperade katalog (en grupp per
   // design, med Top Like / Top Coins / Top Points under), inte har.
   const KATALOG = Object.entries(DESIGNS).filter(([id]) => !SIXPACK.has(id));
+  // I katalogen heter de Top Gift · Design 3 och 4 (David 2026-10-17: alla heter Top Gift).
+  const KATALOGNAMN = { halo: 'Top Gift · Design 3', 'signal-orbit': 'Top Gift · Design 4' };
+  const knappar = () => KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>${KATALOGNAMN[id] || 'Top Coins · ' + meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
   function refreshCatalog() {
     const catalog = document.querySelector('.widget-catalog');
     if (!catalog) return;
     catalog.querySelectorAll('[data-ranking="templateTopCoins"]').forEach(el => el.remove());
+    // TOP COINS BOR HOS TOP GIFT (2026-10-17, Davids ord: "Top Coins är Top gift de ska ligga samma
+    // katalogen"). Finns Top Gifter-sektionen (premium-final.js) läggs korten i dess rutnät och den
+    // egna sektionen tas bort. Byggs Top Gifter-sektionen först senare flyttas korten dit vid nästa
+    // bind; tills dess står de i sin egna sektion som förut, så de syns alltid.
+    const giftRubrik = [...catalog.querySelectorAll('section.prototype-section > h4')].find(h => /TOP GIFT\b/i.test(h.textContent || ''));
+    const giftGrid = giftRubrik && giftRubrik.nextElementSibling && giftRubrik.nextElementSibling.classList.contains('template-style-grid') ? giftRubrik.nextElementSibling : null;
+    if (giftGrid) {
+      catalog.querySelectorAll('section[data-topcoins-v2]').forEach(el => el.remove());
+      if (!giftGrid.querySelector('[data-topcoins-create]')) {
+        giftGrid.insertAdjacentHTML('beforeend', knappar());
+        giftGrid.querySelectorAll('[data-topcoins-create]').forEach(button => { button.onclick = () => createTopCoins(button.dataset.topcoinsCreate); });
+      }
+      return;
+    }
+    // premium-final.js bygger Top Gifter-sektionen EFTER den här bind-omgången. Lyssna på katalogen
+    // tills den finns, så att korten flyttas dit utan att vänta på nästa bind.
+    if (!catalog.__tcVantar && typeof MutationObserver === 'function') {
+      catalog.__tcVantar = new MutationObserver(() => {
+        if (catalog.querySelector('section.prototype-section [data-topcoins-create]')) { catalog.__tcVantar.disconnect(); catalog.__tcVantar = null; return; }
+        refreshCatalog();
+      });
+      catalog.__tcVantar.observe(catalog, { childList: true, subtree: true });
+    }
     catalog.querySelectorAll('section[data-topcoins-v2]').forEach((el, index) => { if (index) el.remove() });
     if (catalog.querySelector('section[data-topcoins-v2]')) return;
     const section = document.createElement('section');
     section.dataset.topcoinsV2 = '1';
     section.className = 'toplike-template-section topcoins-v2-catalog';
-    section.innerHTML = `<h4>TOP COINS · ${KATALOG.length} DESIGNER</h4>` + KATALOG.map(([id, meta]) => `<button type="button" data-topcoins-create="${id}" data-catalog-key="catalog:ranking:templateTopCoins:${id}"><i class="tc-mynt">${mynt()}</i><span><b>Top Coins · ${meta.label}</b><small>En ledare · transparent · utan placeringstal</small></span></button>`).join('');
+    section.innerHTML = `<h4>TOP COINS · ${KATALOG.length} DESIGNER</h4>` + knappar();
     catalog.prepend(section);
     section.querySelectorAll('[data-topcoins-create]').forEach(button => {
       button.onclick = () => createTopCoins(button.dataset.topcoinsCreate);

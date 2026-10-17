@@ -912,6 +912,7 @@
         "tests/rigg/*",
         "tests/e2e/*",
         "tests/skip-dirs.test.js",
+        "tests/visuell-rastreringskrock.test.js",
         "tests/visual/*",
         "scripts/visuell-referens.js",
         "scripts/browser-skarva.js",
@@ -921,6 +922,7 @@
         "tests/skip-dirs.test.js",
         "tests/browser/mock-backend.browser.test.js",
         "tests/visual/visuell-regression.browser.test.js",
+        "tests/visuell-rastreringskrock.test.js",
         "tests/browser-rigg.test.js",
         "tests/browser-skarvning.test.js"
       ],

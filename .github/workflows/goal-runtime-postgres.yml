@@ -306,7 +306,10 @@ jobs:
 
       # NYA TIKTOK-GÅVOR. Gåvobevakaren, NY-baslinjen och den publika läsningen.
       - name: Gåvokatalogen — gåvobevakaren och nya gåvor
-        run: node --test test/gavokatalog-rumslista.test.js test/gavobevakare.test.js
+        # SERIELLT. Båda filerna tömmer gavokatalog_rumslista i sin beforeEach, och node --test kör
+        # filer parallellt. 2026-10-17 tömde bevakaren tabellen mitt i ett rumslistprov på main —
+        # vaktat av tests/goal-postgres-flode.test.js.
+        run: node --test --test-concurrency=1 test/gavokatalog-rumslista.test.js test/gavobevakare.test.js
         working-directory: server
 
       # HEART ME GOAL — unika personer som skickar gåvan Heart Me under aktuell LIVE.
