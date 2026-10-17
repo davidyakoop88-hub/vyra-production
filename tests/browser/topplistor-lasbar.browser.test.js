@@ -147,13 +147,22 @@ test('Prism horisontal ryms på 432-duken från riggens x=40', { skip }, async (
   assert.ok(40 + m.bredd <= 432, `40 + ${m.bredd} px går utanför duken`);
 });
 
-test('Top Gift royal liten: guldmyntet i stället för ◉, namn och siffra på plattan, minst 12 px', { skip }, async () => {
-  const m = await mat('catalog:topgift:premium:royal', 0.54);
+// Läsbarhetslagret (ranking-sixpack.js) gäller originalmarkupen, som Design 1 (neon) bär sedan
+// 2026-10-17. Design 2 och 3 har egen markup och ett eget golv i topgift-designer.css; provet under.
+test('Top Gift Design 1 liten: guldmyntet i stället för ◉, namn och siffra på plattan, minst 12 px', { skip }, async () => {
+  const m = await mat('catalog:topgift:premium:neon', 0.54);
   assert.match(m.klass, /\brk-kompakt\b/);
   assert.ok(m.mynt && !m.cirkel, 'värdet ska bära guldmyntet, inte ◉');
   assert.ok(m.namn >= 11.9 && m.varde >= 11.9, `namn ${m.namn} / siffra ${m.varde} synliga px`);
   assert.equal(m.platta.bg, PLATTA);
 });
+
+for (const [nyckel, skala] of [['catalog:topgift:premium:royal', 0.54], ['catalog:topgift:premium:fokus', 0.54], ['catalog:topgift:premium:fokus', 0.35]]) {
+  test(`${nyckel} vid ${skala}: namn och siffra minst 12 synliga px`, { skip }, async () => {
+    const m = await mat(nyckel, skala);
+    assert.ok(m.namn >= 11.9 && m.varde >= 11.9, `namn ${m.namn} / siffra ${m.varde} synliga px`);
+  });
+}
 
 // GRANSKNINGEN AV #604: kompaktläget slog till redan vid 260 px och klippte "Anya Pla…" och
 // "Lina Nor…" där före-bilden visade hela namnen. Nu: fem kolumner kvar, namnen i 12 px bryts på

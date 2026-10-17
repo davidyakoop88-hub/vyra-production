@@ -29,7 +29,8 @@ test.after(async () => { if (browser) await browser.close() });
 async function forlopp(page) {
   return page.evaluate(async () => {
     state.widgets.length = 0;
-    const w = VyraWidgets.create('catalog:topgift:premium:royal');
+    // Design 1 (neon) är den som vänder profil -> gåva; Design 2 och 3 vänder inte.
+    const w = VyraWidgets.create('catalog:topgift:premium:neon');
     w.x = 60; w.y = 60;
     state.widgets.push(w);
     selected = null;

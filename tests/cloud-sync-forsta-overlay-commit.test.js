@@ -116,5 +116,5 @@ test('befintlig overlay: oförändrat — projektionen commitar som förut', asy
 });
 
 test('cachebusten höjdes med filen', () => {
-  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /cloud-sync\.js\?v=20261011-2/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /cloud-sync\.js\?v=20261017-epost/);
 });

@@ -57,9 +57,10 @@ const KLASS = namn => 'topgift-' + namn;
 const regler = (prefix, namn) =>
   (CSS.match(new RegExp('\\.' + prefix + '-' + namn + '(?![a-z0-9-])', 'g')) || []).length;
 
-test('katalogen har tva designval', () => {
-  // 2026-10-17: Top Gift · Design 1 (neon) forst, Design 2 (royal) sedan — David: alla heter Top Gift.
-  assert.deepEqual(designval(), ['neon', 'royal'],
+test('katalogen har tre designval', () => {
+  // 2026-10-17: Top Gift · Design 1 (neon), Design 2 (royal) och Design 3 (fokus), i den ordningen —
+  // David: alla heter Top Gift. Design 2 och 3 godkandes i widget-playgrounden samma dag.
+  assert.deepEqual(designval(), ['neon', 'royal', 'fokus'],
     'antalet eller ordningen i katalogen har andrats — se docs/topgift-gallringen.md');
 });
 
@@ -78,8 +79,23 @@ test('katalogen och fabriken erbjuder samma designer', () => {
     'katalogen i premium-final.js och fabrikens varianttabell sager olika saker');
 });
 
+// Design 2 och 3 ritas inte av premium-final.js utan av topgift-designer.js, med egen markup och
+// en egen klass (tgd2, tgd3) i stallet for topgift-<namn>. For dem raknas reglerna under den klassen.
+const DESIGNER = fs.readFileSync(path.join(ROOT, 'topgift-designer.js'), 'utf8');
+const EGEN = { royal: 'tgd2', fokus: 'tgd3' };
+const klassregler = namn => EGEN[namn]
+  ? (CSS.match(new RegExp('\\.vyra-topgift\\.' + EGEN[namn] + '(?![a-z0-9-])', 'g')) || []).length
+  : regler('topgift', namn);
+
+test('topgift-designer.js ritar Design 2 och 3 med de klasser provet raknar', () => {
+  assert.match(DESIGNER, /w\.theme === 'royal'\) return design2\(w\)/);
+  assert.match(DESIGNER, /w\.theme === 'fokus'\) return design3\(w\)/);
+  assert.match(DESIGNER, /rot\(w, 'tgd2 /);
+  assert.match(DESIGNER, /rot\(w, 'tgd3'/);
+});
+
 test('varje designval har CSS under den klass renderaren satter', () => {
-  const utan = designval().filter(namn => regler('topgift', namn) === 0);
+  const utan = designval().filter(namn => klassregler(namn) === 0);
 
   assert.deepEqual(utan, [],
     'dessa designval ritas utan egen styling och ser darfor likadana ut:\n' +

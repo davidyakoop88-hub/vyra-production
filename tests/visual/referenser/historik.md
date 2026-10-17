@@ -420,3 +420,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Gifter Podium omdesignat (PR 618): tätare platser, neontext, krona i ramens färg, siffror 1 2 3, inga pulser, läsbart mot ljus bakgrund
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 13 av 166 (filter: pgpodium) — catalog:pgpodium:celestial-serpent, catalog:pgpodium:diamond-halo, catalog:pgpodium:frostfire-crown, catalog:pgpodium:gilded-lion, catalog:pgpodium:midnight-butterfly, catalog:pgpodium:moonlit-sakura, catalog:pgpodium:neon-valkyrie, catalog:pgpodium:none, catalog:pgpodium:obsidian-dragon, catalog:pgpodium:ocean-oracle, catalog:pgpodium:royal-phoenix, catalog:pgpodium:stellar-emperor, catalog:pgpodium:thunder-warden
+
+## 2026-10-17 — 2 referenser skrivna
+
+- **Motiv:** Top Gift Design 1-3 (PR 622): kronan och strålarna i Design 1, ny markup i Design 2, nytt tema fokus
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 166 (filter: topgift:premium) — catalog:topgift:premium:neon, catalog:topgift:premium:royal

@@ -62,6 +62,9 @@ const WIDGETS = [
   // (namn och streak sitter i .approved-streak-copy utan data-textdel). Raden togs bort.
   'catalog:toplike:clean',
 ];
+// Top Gift · Design 2 (royal) har ingen rubrik med flit: profil och gåva står sida vid sida och
+// namnet bär widgeten (topgift-designer.js, David 2026-10-17). Där finns bara namn och värde att dra.
+const ROLLER = nyckel => nyckel === 'catalog:topgift:premium:royal' ? ['name', 'value'] : ['title', 'name', 'value'];
 
 async function editorn() {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -146,7 +149,7 @@ async function dra(page, roll, dx, dy, skift) {
 }
 
 for (const nyckel of WIDGETS) {
-  test(`${nyckel}: rubrik, namn och värde är märkta som dragbara`, { skip }, async () => {
+  test(`${nyckel}: ${ROLLER(nyckel).length === 3 ? 'rubrik, namn och värde' : 'namn och värde'} är märkta som dragbara`, { skip }, async () => {
     const page = await editorn();
     try {
       await seeda(page, nyckel);
@@ -155,14 +158,14 @@ for (const nyckel of WIDGETS) {
         return rot ? [...rot.querySelectorAll('[data-textdel]')].map(el => el.dataset.textdel) : null;
       });
       assert.ok(delar, `${nyckel}: widgeten renderades inte`);
-      for (const roll of ['title', 'name', 'value']) {
+      for (const roll of ROLLER(nyckel)) {
         assert.ok(delar.includes(roll),
           `${nyckel}: ingen textdel märkt "${roll}". Hittade: ${delar.join(', ') || '(inga)'}`);
       }
     } finally { await page.close(); }
   });
 
-  for (const roll of ['title', 'name', 'value']) {
+  for (const roll of ROLLER(nyckel)) {
     test(`${nyckel}: ${roll} går att dra utan att widgeten följer med`, { skip }, async () => {
       const page = await editorn();
       try {
