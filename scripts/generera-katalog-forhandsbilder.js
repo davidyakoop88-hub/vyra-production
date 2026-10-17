@@ -20,7 +20,13 @@ const JOBS = [
   ['catalog:ranking:templateTopCoins:signal-orbit', 'topcoins-signal-orbit'],
   ['catalog:topgift:premium:royal', 'topgift-royal'],
   ['catalog:topgift:premium:neon', 'topgift-neon'],
+  ['catalog:topstreak:design:1', 'topstreak-design-1'],
+  ['catalog:topstreak:design:2', 'topstreak-design-2'],
+  ['catalog:topstreak:design:3', 'topstreak-design-3'],
 ];
+// Valfritt filter: `node scripts/generera-katalog-forhandsbilder.js topstreak-design` skriver bara de
+// bilder vars namn innehåller ordet, så en ny design inte skriver om de andra.
+const FILTER = process.argv[2] || '';
 
 (async () => {
   const browser = await startaWebblasare();
@@ -31,7 +37,7 @@ const JOBS = [
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, deviceScaleFactor: 2 });
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.wh === 'function' && typeof window.overlayPreviewWidget === 'function', null, { timeout: 20000 });
-  for (const [key, name] of JOBS) {
+  for (const [key, name] of JOBS.filter(([, n]) => n.includes(FILTER))) {
     await page.evaluate(async (key) => {
       view = 'overlay'; selected = null; render(); bind();
       await new Promise(r => setTimeout(r, 300));
