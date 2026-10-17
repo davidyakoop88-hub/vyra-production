@@ -104,5 +104,5 @@ test('med en riktig lokal layout skickas den som förut', async () => {
 });
 
 test('cachebusten höjdes med filen', () => {
-  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /cloud-sync\.js\?v=20261011-2/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'studio.html'), 'utf8'), /cloud-sync\.js\?v=20261017-epost/);
 });

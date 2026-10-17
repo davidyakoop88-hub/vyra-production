@@ -1416,7 +1416,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261011-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261017-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1632,8 +1632,8 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261011-6';
-  ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css'].forEach(href=>{
+  const version='20261017-1';
+  ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
     css.rel='stylesheet';
@@ -1641,7 +1641,7 @@ Promise.resolve().then(()=>{
     css.dataset.vyraWidgetBundle='premium';
     document.head.append(css);
   });
-  const scripts=['guardian-emblem-models.js','premium-final.js','topgift-pension.js','runtime-controls.js','chatbot-controls.js','goal-motion.js','like-fountain-portal.js','skattkista.js','latonskningar.js','streamdeck.js'];
+  const scripts=['guardian-emblem-models.js','premium-final.js','topgift-pension.js','topgift-designer.js','runtime-controls.js','chatbot-controls.js','goal-motion.js','like-fountain-portal.js','skattkista.js','latonskningar.js','streamdeck.js'];
   const loadNext=index=>{
     if(index>=scripts.length)return;
     const src=scripts[index];

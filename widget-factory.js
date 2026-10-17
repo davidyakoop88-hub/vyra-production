@@ -156,12 +156,18 @@
     //
     // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
     // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
-    'topgift.premium': { neon: 'Top Gift · Design 1', royal: 'Top Gift · Design 2' },
+    'topgift.premium': { neon: 'Top Gift · Design 1', royal: 'Top Gift · Design 2', fokus: 'Top Gift · Design 3' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
     'topstreak.premium': { liquid: '#d9a441', momentum: '#d8dee9', tier: '#c68cff',
       thread: '#e7bc63', chrono: '#9db7d0', chain: '#d2d5da', thermo: '#ff8a36' },
+    // Top Streak · Design 1–3 (topstreak-designer.js, David 2026-10-17). Bredden är designens egen.
+    'topstreak.design': {
+      1: { label: 'Top Streak · Design 1', width: 210, accent: '#ff4fa3' },
+      2: { label: 'Top Streak · Design 2', width: 276, accent: '#d9a441' },
+      3: { label: 'Top Streak · Design 3', width: 236, accent: '#19d3ff' }
+    },
     'topstreak.width': {neon:235,'sakura-rail':235,'cyber-grid':330,storm:310},
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
     'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
@@ -350,7 +356,10 @@
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
-      accent: '#d9a441', giftSize: 110, dataSize: 20, topGiftFlipSpeed: 1, topGiftGlow: 55
+      accent: '#d9a441', giftSize: 110, dataSize: 20, topGiftFlipSpeed: 1, topGiftGlow: 55,
+      // Design 3 (fokus) är ljusblått glas. Färg 2 har inget fält här: standardvärdet ligger i
+      // topgift-designer.js, så att royal och neon sparas exakt som knappen byggde dem förut.
+      ...(v.theme === 'fokus' ? { accent: '#19d3ff' } : {})
     }),
     'topstreak.premium': v => ({
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 170, width: 520,
@@ -367,6 +376,14 @@
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 220, width: v.width,
       title: 'Top Streak', templateTitle: 'TOP STREAK', dataName: '@StreamQueen', dataValue: 18,
       accent: v.accent, dataColor: '#fff'
+    }),
+    // Samma grund som Clean Flip (createCleanStreak i approved-rankings.js): demonamnet MAYA, streak 18,
+    // ingen bakgrund. streakDesign väljer renderaren; Design 3 börjar i stilen Is.
+    'topstreak.design': v => ({
+      type: 'templateTopStreak', streakTheme: 'approved-clean', streakFrame: null, streakDesign: v.n,
+      x: 76, y: 180, width: v.design.width, title: v.design.label, templateTitle: 'TOP STREAK',
+      dataName: 'MAYA', dataValue: 18, showBackground: false, accent: v.design.accent,
+      ...(v.n === 1 ? { streakFlipSeconds: 7 } : {}), ...(v.n === 3 ? { streakStil: 'is', accent2: '#1f6bff' } : {})
     }),
     'topstreak.frame': v => ({
       type: 'templateTopStreak', streakFrame: v.frame, x: 65, y: 180, width: 300,
@@ -616,6 +633,7 @@
     },
     'topstreak': parts => {
       if (!parts.length) return ['topstreak', {}];
+      if (parts[0] === 'design') return ['topstreak.design', { n: Number(parts[1]), design: pick('topstreak.design', parts[1], 'Top Streak-design') }];
       if (parts[0] === 'frame') return ['topstreak.frame', { frame: parts[1], accent: pick('topstreak.frame', parts[1], 'streakram').accent }];
       if (parts[0] === 'premium') return ['topstreak.premium', { theme: parts[1], accent: pick('topstreak.premium', parts[1], 'premiumdesign') }];
       return ['topstreak.theme', { theme: parts[0], accent: pick('topstreak.theme', parts[0], 'streaktema'), width: table('topstreak.width')[parts[0]] || 310 }];

@@ -205,6 +205,9 @@ const OWG_CATALOG_PREVIEW = {
   'catalog:ranking:templateTopCoins:signal-orbit': 'assets/previews/topcoins-signal-orbit.jpg',
   'catalog:topgift:premium:royal': 'assets/previews/topgift-royal.jpg',
   'catalog:topgift:premium:neon': 'assets/previews/topgift-neon.jpg',
+  'catalog:topstreak:design:1': 'assets/previews/topstreak-design-1.jpg',
+  'catalog:topstreak:design:2': 'assets/previews/topstreak-design-2.jpg',
+  'catalog:topstreak:design:3': 'assets/previews/topstreak-design-3.jpg',
   'catalog:pgpodium': 'assets/previews/pgpodium.jpg',
   'catalog:pgstreak': 'assets/previews/pgstreak.jpg',
   'catalog:pggoal': 'assets/previews/pggoal.jpg'
