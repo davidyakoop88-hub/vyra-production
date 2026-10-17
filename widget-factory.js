@@ -156,7 +156,7 @@
     //
     // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
     // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
-    'topgift.premium': { neon: 'Top Gift · Design 1', royal: 'Top Gift · Design 2' },
+    'topgift.premium': { neon: 'Top Gift · Design 1', royal: 'Top Gift · Design 2', fokus: 'Top Gift · Design 3' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.
@@ -350,7 +350,10 @@
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
-      accent: '#d9a441', giftSize: 110, dataSize: 20, topGiftFlipSpeed: 1, topGiftGlow: 55
+      accent: '#d9a441', giftSize: 110, dataSize: 20, topGiftFlipSpeed: 1, topGiftGlow: 55,
+      // Design 3 (fokus) är ljusblått glas. Färg 2 har inget fält här: standardvärdet ligger i
+      // topgift-designer.js, så att royal och neon sparas exakt som knappen byggde dem förut.
+      ...(v.theme === 'fokus' ? { accent: '#19d3ff' } : {})
     }),
     'topstreak.premium': v => ({
       type: 'templateTopStreak', streakTheme: v.theme, x: 65, y: 170, width: 520,

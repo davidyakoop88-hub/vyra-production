@@ -198,7 +198,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261017-1/);
+  assert.match(studio, /widget-factory\.js\?v=20261017-2/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
@@ -375,7 +375,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261011-2: egenskapspanelen utan glapp — vyra-intro.js laddas, Guardian Emblem får position
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
-  assert.match(media, /const version='20261011-6'/);
+  assert.match(media, /const version='20261017-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
