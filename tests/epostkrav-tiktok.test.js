@@ -33,14 +33,19 @@ function epostfel() {
     { status: 403, emailVerificationRequired: true });
 }
 
-function studio({ connect, verifiera, verifierad = false, oppen = true } = {}) {
+function studio({ connect, verifiera, verifierad = false, oppen = true, servernSager = verifierad } = {}) {
   const dom = new JSDOM(`<!doctype html><body>${MODAL(oppen)}</body>`, { runScripts: 'outside-only', url: 'https://vyra.test/studio.html' });
   const w = dom.window, anrop = [], toasts = [];
   w.toast = t => toasts.push(String(t));
   w.state = {}; w.save = () => {};
+  const detalj = { user: { email: 'ny@exempel.se', emailVerified: verifierad }, workspaces: [{ id: 'w1' }] };
   w.VyraAuth = {
-    lastDetail: () => ({ user: { email: 'ny@exempel.se', emailVerified: verifierad }, workspaces: [{ id: 'w1' }] }),
-    api: async (p, o) => { anrop.push([p, o && o.method]); return { ok: true }; },
+    lastDetail: () => detalj,
+    api: async (p, o) => {
+      anrop.push([p, o && o.method]);
+      if (p === '/api/auth/me') return { ok: true, user: { email: 'ny@exempel.se', emailVerified: servernSager } };
+      return { ok: true };
+    },
   };
   w.VyraLive = {
     status: async () => ({ ok: true, connection: { connected: false, state: 'idle' } }),
@@ -53,8 +58,11 @@ function studio({ connect, verifiera, verifierad = false, oppen = true } = {}) {
 }
 const vanta = () => new Promise(r => setTimeout(r, 30));
 
+// De tre proven nedan prövar SERVERNS svar: klienten tror att e-posten är verifierad (inaktuell
+// lastDetail, verifierat i en annan flik som sedan ångrades …) men servern säger nej. Ett konto som
+// klienten VET är overifierat når aldrig hit — knapparna är låsta, se proven längre ned.
 test('e-postkrav: "Anslut konto" visar i modalen att e-posten måste verifieras — och var', async () => {
-  const { d } = studio();
+  const { d } = studio({ verifierad: true, servernSager: false });
   d.querySelector('#tikUser').value = 'nykanal';
   d.querySelector('#connectNow').click();
   await vanta();
@@ -65,20 +73,20 @@ test('e-postkrav: "Anslut konto" visar i modalen att e-posten måste verifieras 
   assert.match(ruta.textContent, /ny@exempel\.se/, 'beskedet ska säga VILKEN adress mejlet gick till');
 });
 
-test('e-postkrav: "Verifiera med TikTok" ger samma besked', async () => {
-  const { d } = studio();
+test('e-postkrav: "Verifiera med TikTok" ger samma besked och låser steg 2', async () => {
+  const { d } = studio({ verifierad: true, servernSager: false });
   d.querySelector('#verifieraTikTok').click();
   await vanta();
   assert.ok(d.querySelector('#connectModal [data-epostkrav]'), 'verifieringsknappen tiger om e-postkravet');
-  assert.equal(d.querySelector('#verifieraTikTok').disabled, false, 'knappen ska gå att trycka igen');
+  assert.equal(d.querySelector('#verifieraTikTok').disabled, true, 'servern sa nej — steg 2 ska låsas');
 });
 
 test('e-postkrav: beskedet har en knapp som skickar verifieringsmejlet igen', async () => {
-  const { d, anrop } = studio();
+  const { d, anrop } = studio({ verifierad: true, servernSager: false });
   d.querySelector('#tikUser').value = 'nykanal';
   d.querySelector('#connectNow').click();
   await vanta();
-  const knapp = d.querySelector('#connectModal [data-epostkrav] button');
+  const knapp = d.querySelector('#connectModal [data-epostkrav] [data-skicka-igen]');
   assert.ok(knapp, 'ingen väg vidare från beskedet');
   knapp.click();
   await vanta();
@@ -137,4 +145,62 @@ test('e-postkrav: ett verifierat konto ser inget e-postbesked', async () => {
   d.querySelector('#connectModal').setAttribute('open', '');
   await vanta();
   assert.equal(d.querySelector('[data-epostkrav]'), null);
+});
+
+// ---- TYDLIGT INNAN NÅGON FÖRSÖKER (2026-10-17) ---------------------------------------------------
+// David: "man måste vara tydligt till användare att de måste verifiera sig innan de kopplar sig till
+// tiktok". Beskedet i modalen räckte inte: knappen i sidhuvudet sa fortfarande "Anslut TikTok",
+// bannern gick att stänga, och TikTok-knapparna såg klickbara ut fast servern skulle säga nej.
+
+test('tydligt: knappen i sidhuvudet säger att e-posten kommer först', async () => {
+  const { d } = studio({ oppen: false });
+  await vanta();
+  assert.match(d.querySelector('.connection span').textContent, /Verifiera e-post/,
+    'sidhuvudet säger "Anslut TikTok" till ett konto som inte kan ansluta än');
+});
+
+test('tydligt: ett verifierat konto ser vanliga "Anslut TikTok"', async () => {
+  const { d } = studio({ verifierad: true, oppen: false });
+  await vanta();
+  assert.equal(d.querySelector('.connection span').textContent, 'Anslut TikTok');
+});
+
+test('tydligt: TikTok-knapparna är låsta tills e-posten är verifierad', async () => {
+  const { d } = studio();
+  await vanta();
+  for (const id of ['#verifieraTikTok', '#connectNow', '#tikUser'])
+    assert.equal(d.querySelector(id).disabled, true, id + ' går att använda fast e-posten inte är verifierad');
+  assert.match(d.querySelector('[data-epostkrav]').textContent, /Steg 1/);
+  assert.match(d.querySelector('[data-epostkrav]').textContent, /Steg 2/, 'beskedet ska säga att TikTok är nästa steg');
+});
+
+test('tydligt: "Jag har verifierat" frågar servern och låser upp', async () => {
+  const { d, anrop } = studio({ servernSager: true });
+  await vanta();
+  d.querySelector('[data-epostkrav] [data-har-verifierat]').click();
+  await vanta();
+  assert.deepEqual(anrop.at(-1), ['/api/auth/me', undefined], 'svaret ska komma från servern, inte från webbläsarens minne');
+  assert.equal(d.querySelector('[data-epostkrav]'), null, 'beskedet ligger kvar fast e-posten är verifierad');
+  for (const id of ['#verifieraTikTok', '#connectNow', '#tikUser'])
+    assert.equal(d.querySelector(id).disabled, false, id + ' är fortfarande låst');
+  assert.equal(d.querySelector('.connection span').textContent, 'Anslut TikTok');
+});
+
+test('tydligt: "Jag har verifierat" utan verifiering säger det och låser inte upp', async () => {
+  const { d } = studio({ servernSager: false });
+  await vanta();
+  d.querySelector('[data-epostkrav] [data-har-verifierat]').click();
+  await vanta();
+  assert.match(d.querySelector('[data-epostkrav]').textContent, /inte verifierad än/);
+  assert.equal(d.querySelector('#verifieraTikTok').disabled, true);
+});
+
+test('tydligt: bannern börjar med TikTok', () => {
+  assert.match(las('auth-security.js'), /<b>Verifiera din e-post för att kunna ansluta TikTok LIVE\.<\/b>/);
+});
+
+test('tydligt: guidens första steg är att verifiera e-posten', () => {
+  const forsta = (las('guide.js').match(/\{ n: 1, title: '[^']*', body: '[^']*' \}/) || [''])[0];
+  assert.ok(forsta, 'hittade inte guidens första steg');
+  assert.match(forsta, /verifier/i, 'guiden börjar med TikTok utan att nämna e-posten');
 });
