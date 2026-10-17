@@ -104,8 +104,8 @@ test('premiumsektionerna byggs nar filen kommer efter bind', async () => {
   // bada rubrikerna ska finnas kvar, och Top Gifter-knapparna ska vara de fabriken kanner.
   const proto = h.document.querySelector('.prototype-section');
   const protoRubriker = [...proto.querySelectorAll('h4')].map(el => el.textContent);
-  assert.ok(protoRubriker.some(t => /TOP GIFTER/.test(t)),
-    `ingen TOP GIFTER-rubrik i sektionen: ${JSON.stringify(protoRubriker)}`);
+  assert.ok(protoRubriker.some(t => /TOP GIFT\b/.test(t)),
+    `ingen TOP GIFT-rubrik i sektionen: ${JSON.stringify(protoRubriker)}`);
   // "VYRA ORIGINAL"-RUBRIKEN VAR OVERSKRIVNINGSPROBEN, och den gar inte langre att anvanda.
   // Provet lade den har for att media.js byggde rubriken FORE premium-final.js korde: fanns den
   // kvar efterat hade den sena filen lagt till, inte skrivit over. 2026-09-23 togs sektionens

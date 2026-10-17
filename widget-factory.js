@@ -156,7 +156,7 @@
     //
     // `royal` far ALDRIG tas bort utan att defaulten i premium-final.js (`w.theme||'royal'`) andras
     // i samma andetag — prov P3 i tests/topgift-pension.test.js vaktar det.
-    'topgift.premium': { royal: 'Royal Gold', neon: 'Neon Purple' },
+    'topgift.premium': { neon: 'Top Gift · Design 1', royal: 'Top Gift · Design 2' },
     'topstreak.theme': {"inferno":"#ff671f","neon":"#cf45ff","ice":"#65ddff","royal":"#ffc13b","sakura-rail":"#ff8fc7","cyber-grid":"#3ddcff","storm":"#8fa6ff"},
     // Samma skal som topgift.premium: eget bord, egna defaults. Har bar tabellen accentfargen,
     // som skiljer sig per design.

@@ -128,6 +128,21 @@ function servera() {
   await new Promise(r => varm.server.close(r));
 
   const a = await session(2);
+  // FÅR MASKINEN SKRIVA? Avgörs här, på den uppvärmda sessionens sida och innan en enda bild skrivs.
+  // Se rastreringsKrock i tests/helpers/visuell.js.
+  {
+    const nu = await V.rastreringsAvtryck(a.sida);
+    const lagrat = (V.lasManifest() || {}).rastrering || null;
+    console.log(`Rastreringsavtryck här: ${nu}  (referenserna: ${lagrat || 'inget lagrat'})`);
+    const krock = V.rastreringsKrock({ lagrat, nu, filtrerad: !!BARA,
+      nyRastrerare: process.env.VYRA_VISUELL_NY_RASTRERARE === '1' });
+    if (krock) {
+      console.error(''); console.error(krock); console.error('');
+      await a.browser.close();
+      await new Promise(r => a.server.close(r));
+      process.exit(1);
+    }
+  }
   await a.browser.close();
   await new Promise(r => a.server.close(r));
 

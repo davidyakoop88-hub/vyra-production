@@ -810,7 +810,26 @@ const MODELLER = {
 });
 function placeCatalog(cat) {
   const HEM = {
-    podium: () => [...cat.querySelectorAll('section.prototype-section')].find(s => /TOP GIFTER/i.test(s.querySelector('h4')?.textContent || '')),
+    // EGEN SEKTION FÖR PODIET (2026-10-17, Davids ord: "top gifters pudiom ska vara i annan
+    // katalogen"). Förut låg de tretton podiekorten i TOP GIFTER · DESIGNVAL bland Top Gift och
+    // Top Coins. Sektionen skapas här, direkt efter Top Gifter-sektionen; rubriken saknar siffra
+    // med flit, så att antal() nedan inte räknar upp den.
+    // Inte klassen prototype-section: premium-final.js lägger Top Gift i den FÖRSTA sådana, och
+    // hade då kunnat hamna i podiets sektion.
+    podium: () => {
+      let s = cat.querySelector('section[data-pgpodium-katalog]');
+      if (!s) {
+        s = document.createElement('section');
+        s.dataset.pgpodiumKatalog = '1';
+        s.className = 'pgpodium-katalog';
+        s.innerHTML = '<h4>TOP GIFTERS PODIUM · VARJE RAM SEPARAT</h4><div class="template-style-grid"></div>';
+        cat.prepend(s);
+      }
+      // Top Gifter-sektionen kan byggas efter podiet; flytta in podiet direkt efter den när den finns.
+      const topGift = [...cat.querySelectorAll('section.prototype-section')].find(x => /TOP GIFT\b/i.test(x.querySelector('h4')?.textContent || ''));
+      if (topGift && topGift.nextElementSibling !== s) topGift.after(s);
+      return s;
+    },
     streak: () => cat.querySelector('section.approved-streak-catalog'),
     goal: () => cat.querySelector('section.social-goal-template-section'),
   };

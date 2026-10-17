@@ -12,7 +12,8 @@
      'katalogen och fabriken erbjuder samma designer' kraver numera att de tva ar identiska, sa de
      kan inte langre glida isar utan att nagot faller. */
   const TOP_GIFTS={
-    royal:'Royal Gold',neon:'Neon Purple'
+    // Alla heter Top Gift (David 2026-10-17). Design 1 och 2 här, Design 3 och 4 är Top Coins.
+    neon:'Top Gift · Design 1',royal:'Top Gift · Design 2'
   };
   const GOALS={'pulse-rail':'Pulse Rail','pulse-tower':'Pulse Tower','signal-ribbon':'Signal Ribbon','heart-column':'Heart Column','prism-core':'Prism Core','prism-spine':'Prism Spine'};
   const fallbackProfile='assets/images/test-profile.svg',fallbackGift='assets/gifts/events/0001_Rose.png';
@@ -51,7 +52,7 @@
 
   const oldCatalogBind=bind;
   bind=function(){oldCatalogBind();if(view!=='editor'&&view!=='overlay')return;
-    let gifts=document.querySelector('.prototype-section');if(gifts&&!gifts.dataset.finalPremium){gifts.dataset.finalPremium='1';/* LAGG TILL, skriv inte over. .prototype-section agdes av tva moduler: media.js:128 bygger "VYRA ORIGINAL · REDIGERBARA" med sin template-style-grid, media.js:129 fyller griden med atta extrateman och sju Top Gift-ramar, och den har raden satte darefter innerHTML pa SAMMA sektion och raderade allt de byggt. Femton katalogknappar forsvann darfor vid varje forsta bind-pass; vid ett andra bind blockerade finalPremium-flaggan overskrivningen och knapparna kom tillbaka - vilket ar precis varfor felet sag ut som ett ombindningsproblem. Uppmatt i Chromium: 145 knappar vid navigering, 160 efter ett extra bind(). */gifts.insertAdjacentHTML('beforeend','<h4>TOP GIFTER · DESIGNVAL</h4><div class="template-style-grid">'+Object.entries(TOP_GIFTS).map(([id,n])=>`<button data-pf-topgift="${id}"><i>◆</i><span><b>${n}</b><small>Profil → gåva · inga gåvonamn</small></span></button>`).join('')+'</div>');gifts.querySelectorAll('[data-pf-topgift]').forEach(b=>{const catalogKey='catalog:topgift:premium:'+b.dataset.pfTopgift;b.dataset.catalogKey=catalogKey;b.onclick=()=>{const created=VyraWidgets.create(catalogKey);state.widgets=state.widgets.filter(w=>w.spelTema||w.type!=='templateTopGift');state.widgets.push(created);selected=created.id;save();render()}})}
+    let gifts=document.querySelector('.prototype-section');if(gifts&&!gifts.dataset.finalPremium){gifts.dataset.finalPremium='1';/* LAGG TILL, skriv inte over. .prototype-section agdes av tva moduler: media.js:128 bygger "VYRA ORIGINAL · REDIGERBARA" med sin template-style-grid, media.js:129 fyller griden med atta extrateman och sju Top Gift-ramar, och den har raden satte darefter innerHTML pa SAMMA sektion och raderade allt de byggt. Femton katalogknappar forsvann darfor vid varje forsta bind-pass; vid ett andra bind blockerade finalPremium-flaggan overskrivningen och knapparna kom tillbaka - vilket ar precis varfor felet sag ut som ett ombindningsproblem. Uppmatt i Chromium: 145 knappar vid navigering, 160 efter ett extra bind(). */gifts.insertAdjacentHTML('beforeend','<h4>TOP GIFT · DESIGNVAL</h4><div class="template-style-grid">'+Object.entries(TOP_GIFTS).map(([id,n])=>`<button data-pf-topgift="${id}"><i>◆</i><span><b>${n}</b><small>Profil → gåva · inga gåvonamn</small></span></button>`).join('')+'</div>');gifts.querySelectorAll('[data-pf-topgift]').forEach(b=>{const catalogKey='catalog:topgift:premium:'+b.dataset.pfTopgift;b.dataset.catalogKey=catalogKey;b.onclick=()=>{const created=VyraWidgets.create(catalogKey);state.widgets=state.widgets.filter(w=>w.spelTema||w.type!=='templateTopGift');state.widgets.push(created);selected=created.id;save();render()}})}
     let goals=document.querySelector('.social-goal-template-section');if(goals&&!goals.dataset.finalPremium){goals.dataset.finalPremium='1'}
   };
 })();
