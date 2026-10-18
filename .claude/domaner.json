@@ -362,7 +362,8 @@
         "layout-standalone.js",
         "layout-standalone.css",
         "standalone-links.js",
-        "standalone-widgets.js"
+        "standalone-widgets.js",
+        "overlay-dolda.js"
       ],
       "tester": [
         "tests/overlay-sanitize.test.js",
@@ -374,7 +375,8 @@
         "tests/standalone-links.test.js",
         "tests/overlay-preview-klar-synkar.test.js",
         "tests/browser/thumb-leak.browser.test.js",
-        "tests/browser/synlighet.browser.test.js"
+        "tests/browser/synlighet.browser.test.js",
+        "tests/browser/overlay-dolda-widgetar.browser.test.js"
       ],
       "matning": [
         {
