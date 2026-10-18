@@ -48,7 +48,12 @@
   // en ändring i panelen slår igenom direkt.
   function visningsMs() {
     let w = null;
-    try { w = root.state && root.state.widgets && root.state.widgets.find(x => x.type === 'templateFanLevel') } catch (_) {}
+    // `state` ar en const i studio.js och hamnar aldrig pa window — `root.state` var alltid undefined,
+    // sa kon raknade med standardtiden och struntade i widgetens egen visningstid (2026-10-18).
+    try {
+      const st = typeof state !== 'undefined' ? state : root.VyraSessionState?.activeState?.();
+      w = st && Array.isArray(st.widgets) ? st.widgets.find(x => x && x.type === 'templateFanLevel') : null;
+    } catch (_) {}
     const visa = Math.max(0, Number(w && w.fanDuration) || 6);
     const ut = Math.max(0, Number(w && w.fanExitDuration) || 0.5);
     return (visa + ut) * 1000 + 200;   // liten lucka så två alerts aldrig andas i varandra
