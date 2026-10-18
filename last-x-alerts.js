@@ -332,7 +332,8 @@
   // the OBS widget's per-type latest-event routing, just fanned out across however many Last-X
   // widgets are on this layout.
   function showLastX(typeKey, event = {}) {
-    state.widgets.filter(w => isLastX(w) && activeKeysFor(w).includes(typeKey)).forEach(w => {
+    // En dold widget tands aldrig i sandningen (overlay-dolda.js), samma regel som Gift Fireworks.
+    state.widgets.filter(w => isLastX(w) && !w.hidden && activeKeysFor(w).includes(typeKey)).forEach(w => {
       if (w.type !== 'templateLastX') { legacyShowLastX(w, typeKey, event); return }
       showLastXOn(w, typeKey, event);
     });
