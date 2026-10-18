@@ -167,6 +167,7 @@ test('state-backup makes no request when only an access token is present', () =>
 test('state-backup still runs in Studio mode', () => {
   // The guard must not disable backup for the streamer who is actually editing a layout.
   const env = makeSandbox({ search: '' });
+  env.sandbox.location.hostname = '127.0.0.1';   // /api/state* finns bara i Desktop (F04)
   env.sandbox.localStorage.setItem('vyra-state', JSON.stringify({ widgets: [{ id: 'a' }] }));
   env.run('state-backup.js');
   assert.ok(env.intervals.length > 0, 'Studio-läget måste fortfarande säkerhetskopiera');
@@ -177,6 +178,7 @@ test('a failing backend cannot produce a version POST every three seconds', () =
   // lastVersionAt used to advance only on success, so a 401/500 left the five-minute gate open and
   // every tick fired another POST /api/state/version. That is the log flood we saw in production.
   const env = makeSandbox({ search: '' });
+  env.sandbox.location.hostname = '127.0.0.1';   // /api/state* finns bara i Desktop (F04)
   env.sandbox.localStorage.setItem('vyra-state', JSON.stringify({ widgets: [{ id: 'a' }] }));
   env.run('state-backup.js');
   const before = env.fetchCalls.length;

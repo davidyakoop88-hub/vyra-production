@@ -200,7 +200,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261018-13/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
+  assert.match(studio, /gift-event-images\.js\?v=20261018-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -376,7 +376,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
-  assert.match(media, /const version='20261018-13'/);
+  assert.match(media, /const version='20261018-17'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -424,7 +424,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
   // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
   // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
-  for (const fil of ['action-options', 'action-runtime']) {
+  // action-options.js gick vidare till 20261018-1 nar textalerten borjade folja scenpanelens
+  // placering (F01); action-runtime.js star kvar.
+  assert.match(media, /action-options\.js\?v=20261018-1/, 'action-options.js cachebustades inte for F01');
+  for (const fil of ['action-runtime']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
@@ -435,13 +438,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261017-p1granskning/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261018-klocka/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
-  assert.match(media, /action-event\.css\?v=20261014-nya-gavor/, 'action-event.css cachebustades inte for NY-etiketten');
+  // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
+  assert.match(media, /action-event\.css\?v=20261018-1/, 'action-event.css cachebustades inte for F01');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
