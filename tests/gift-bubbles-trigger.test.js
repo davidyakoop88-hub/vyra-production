@@ -162,3 +162,13 @@ test('fabriken bygger en giltig Gift Bubbles-widget', () => {
   assert.equal(w.type, 'templateGiftBubbles');
   assert.ok(w.id, 'widget saknar id');
 });
+
+test('kön håller widgetens egen visningstid, inte standardtiden', () => {
+  // visningsMs() läste root.state, som aldrig finns: state är en const i studio.js. Kön väntade
+  // därför alltid 5,4 s oavsett panelens tid (upptäckt 2026-10-18). gbDuration 2 → 2 s + 0,4 s.
+  const { h, gava } = boot([gb('gb1', { gbDuration: 2 })]);
+  assert.equal(h.window.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
+  const waits = []; h.window.setTimeout = (fn, ms) => { waits.push(ms); return waits.length };
+  gava();
+  assert.ok(waits.includes(2400), `kön väntade ${waits.join(', ')} ms i stället för widgetens 2400`);
+});

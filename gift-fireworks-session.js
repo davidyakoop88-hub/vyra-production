@@ -8,7 +8,12 @@
   function visningsMs(jobb) {
     if (root.VyraFireworks?.durationFor) return root.VyraFireworks.durationFor(jobb) + 200;
     let w = null;
-    try { w = root.state?.widgets?.find(x => x.type === 'templateGiftFireworks') } catch (_) {}
+    // `state` ar en const i studio.js och hamnar aldrig pa window — `root.state` var alltid undefined,
+    // sa kon raknade med standardtiden i stallet for widgetens egen (2026-10-18).
+    try {
+      const st = typeof state !== 'undefined' ? state : root.VyraSessionState?.activeState?.();
+      w = Array.isArray(st?.widgets) ? st.widgets.find(x => x && x.type === 'templateGiftFireworks') : null;
+    } catch (_) {}
     return Math.max(0, Number(w?.fwDuration) || 5) * 1000 + 200;
   }
   function bokaForsok() {

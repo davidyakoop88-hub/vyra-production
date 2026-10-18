@@ -291,3 +291,27 @@ test('flaggan skrivs aldrig till state, localStorage eller molnpayloaden', () =>
   assert.match(sync, /__vyraUserEmptiedWidgets===true&&data\.widgets\.length>0\)delete/,
     'en inaktuell avsikt rensas inte nar anvandaren lagt tillbaka widgets');
 });
+
+// ---- state som studio.js deklarerar den ------------------------------------------------------------
+test('modulen hittar layouten när state är en const, inte en egenskap på window', async () => {
+  // widgets() läste root.state, men state är en const i studio.js och hamnar aldrig på window. I
+  // studion gav "Kopiera widgetlänk" därför alltid "Layouten är inte laddad än." (upptäckt
+  // 2026-10-18). Proven ovan lägger state på sandlådan, som ÄR window — de var gröna ändå.
+  const sandbox = {
+    console, JSON, Math, Number, String, Object, Array, Set, Map, Boolean, Date, Promise, Error,
+    crypto: require('crypto').webcrypto, Uint32Array, VyraWidgets
+  };
+  sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext('const state = { widgets: [{ id: "a", type: "templateTopLike" }] };', ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'standalone-links.js'), 'utf8'), ctx, { filename: 'standalone-links.js' });
+  assert.equal(sandbox.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
+  const deps = {
+    widgets: VyraWidgets, workspaceId: 'ws-1', save: () => {},
+    fetchJson: async () => ({ limits: { widgets: 500 } }),
+    sync: { push: async () => ({ ok: true }) }
+  };
+  const result = await sandbox.VyraStandalone.create(KEY, deps);
+  assert.equal(result.reused, false);
+  assert.equal(vm.runInContext('state.widgets.length', ctx), 2, 'kandidaten hamnade inte i studions state');
+});
