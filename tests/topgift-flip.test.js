@@ -279,11 +279,15 @@ test('several gifts from the same user keep updating name, value and totals', ()
   assert.equal(top[0].diamonds, 175, 'summan slutade ackumulera');
 });
 
-// ---- 6. ordinary rendering and saving keep working --------------------------------------------
-test('the layout is still saved when a gift lands', () => {
+// ---- 6. a gift patches live data, it does not save the layout --------------------------------
+// Vände 2026-10-18 (Davids beslut: "ingen sparning och omritning per gåva"). save() per gåva gav i
+// overlayn en ny konfiguration och en hel render() — widgetar som blinkade. Livevärdet ligger i
+// state i minnet och i DOM; tests/top-gift-strikt-rekord.test.js visar att det överlever omladdning.
+test('a gift does not save the layout', () => {
   const h = harness(); h.run();
   h.gift(250);
-  assert.ok(h.saves.length >= 1, 'gåvan sparade inte längre layouten');
+  assert.equal(h.saves.length, 0, 'gåvan sparade layouten — en ny konfiguration per gåva');
+  assert.equal(h.state.widgets[0].dataValue, 250, 'livevärdet nådde inte state');
 });
 
 test('a widget with no flip in flight is untouched by the tick', () => {

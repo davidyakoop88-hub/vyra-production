@@ -59,7 +59,8 @@ test('en gåva med 72 px-avatar slås upp och bilden byts i DOM, state och regis
   assert.equal(w.document.querySelector('img').getAttribute('src'), STOR, 'img byttes');
   assert.ok(w.document.querySelector('.av').style.backgroundImage.includes(STOR), 'background-image byttes');
   assert.equal(w.eval('state').widgets[0].profileImage, STOR, 'state byttes');
-  assert.equal(w.eval('sparat'), 1, 'state sparades en gång');
+  // Bilden är livedata: state ändras i minnet, ingen save() (2026-10-18, ingen omritning per byte).
+  assert.equal(w.eval('sparat'), 0, 'bildbytet sparade layouten');
   assert.equal(JSON.stringify(handelser), JSON.stringify([{ username: 'anna_01', liten: LITEN, stor: STOR }]));
   // Nästa event från samma person får den stora direkt, utan nytt uppslag.
   const e2 = { type: 'like', username: 'anna_01', profileImage: LITEN, avatar: LITEN };
@@ -101,10 +102,10 @@ test('kopplingarna finns: ingest anropar modulen, registren lyssnar, loader och 
   assert.match(las('live-leaderboard.js'), /addEventListener\('vyra-stor-avatar'/);
   assert.match(las('playground-widgets.js'), /addEventListener\('vyra-stor-avatar'/);
   const media = las('media.js');
-  assert.match(media, /setAttribute\('src','vyra-stor-avatar\.js\?v=20261011-1'\)/);
+  assert.match(media, /setAttribute\('src','vyra-stor-avatar\.js\?v=20261018-1'\)/);
   assert.match(media, /cloud-fields\.js\?v=20261011-1/);
-  assert.match(media, /live-client\.js\?v=20261017-p1granskning/);
-  assert.match(media, /live-leaderboard\.js\?v=20261012-diamonds/);
+  assert.match(media, /live-client\.js\?v=20261018-klocka/);
+  assert.match(media, /live-leaderboard\.js\?v=20261018-1/);
   assert.match(media, /playground-widgets\.js\?v=20261017-katalog3/);
   assert.match(las('studio.html'), /media\.js\?v=20261018-11/);
   assert.ok(JSON.stringify(JSON.parse(las('.claude/domaner.json'))).includes('"vyra-stor-avatar.js"'));

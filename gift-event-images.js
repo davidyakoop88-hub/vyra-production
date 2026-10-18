@@ -110,6 +110,42 @@
     return Math.round(total / n);
   };
 
+  // ETT BESLUT PER HANDELSE, och det fattas har (uppmatt 2026-10-18 i Edge mot overlayn).
+  //
+  // Top Gift har tva skrivare som lyssnar pa samma vyra-live-event: lyssnaren langst ner i den har
+  // filen och live-leaderboard.js:updateTopGift. Tidigare jamforde de var for sig mot
+  // records.giftCoins — den har strikt (>), live-leaderboard med `value < giftCoins`, alltsa LIKA
+  // slapptes igenom. Den regeln var tvungen: den har filen laddas forst och hojer rekordet innan
+  // live-leaderboard ser handelsen, sa `<=` dar hade blockerat varje riktigt rekord. Foljden var att
+  // en gava lika stor som rekordet (Heart Me 1 coin fran en ny tittare) bytte bild och person i
+  // live-leaderboard men inte har — ny bild, gammalt namn.
+  //
+  // bedom() avgor en gang per handelseobjekt och minns svaret, sa ordningen mellan lyssnarna inte
+  // spelar nagon roll: den som fragar forst fattar beslutet och hojer rekordet, den andra far samma
+  // svar. Regeln ar strikt storre for bade Top Gift och Top Streak. Faltnamnen ar oforandrade.
+  var beslutPerHandelse = typeof WeakMap === 'function' ? new WeakMap() : null;
+  records.bedom = function (detail) {
+    var arObjekt = !!detail && typeof detail === 'object';
+    if (arObjekt && beslutPerHandelse && beslutPerHandelse.has(detail)) return beslutPerHandelse.get(detail);
+    var kalla = detail;
+    if (!arObjekt) detail = {};
+    var coins = Number(detail.diamonds || detail.coins || 0) || 0;   // #133: coins = aldre .exe
+    var antal = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
+    var giftVarde = records.styckvarde(coins, antal);
+    var comboVarde = antal >= 2 ? coins : 0;
+    var beslut = {
+      gift: giftVarde > records.giftCoins,
+      streak: comboVarde > records.streakCoins,
+      giftVarde: giftVarde,
+      comboVarde: comboVarde
+    };
+    if (beslut.gift) records.giftCoins = giftVarde;
+    if (beslut.streak) records.streakCoins = comboVarde;
+    if (beslut.gift || beslut.streak) skrivRekord();
+    if (arObjekt && beslutPerHandelse) beslutPerHandelse.set(kalla, beslut);
+    return beslut;
+  };
+
   // ---- riktad DOM-patchning ------------------------------------------------------------------
   // Den här vägen slutade tidigare på save() + render() för VARJE gåva. render() ritar om hela
   // canvasen, vilket river ner den animation som just spelar — precis det VyraFlip byggdes för att
@@ -143,6 +179,10 @@
       value: '.streak-score b, .sframe-row b, .approved-streak-copy b'
     }
   };
+  // live-leaderboard.js skriver namn och varde i samma Top Gift och laser vaeljarna harifran, sa att
+  // tva skrivare aldrig kan peka pa olika noder (den pekade tidigare pa ':scope > strong', som inte
+  // finns i nagon av designerna neon/royal/fokus: ny bild, gammalt namn).
+  window.VyraGiftImages.shapes = SHAPES;
 
   // Widget-id jämförs exakt. Ett id får aldrig byggas in i en selektorsträng — det är en
   // injektionsyta, och en selektor matchar dessutom '#a' i '#a-kopia' på fel sätt.
@@ -379,7 +419,7 @@
     // De två topplistorna mäter olika saker och delade tidigare en gren, så båda blev en dubblett
     // av den senaste gåvan. Bryggan skiljer dem åt: `coins:coinsEach*repeatCount, count:repeatCount`
     // i tiktok-bridge/normalizer.js.
-    var coins = Number(detail.diamonds || detail.coins || 0) || 0;   // #133: coins = aldre .exe
+    // Vardet (coins/diamonds) lases i records.bedom ovan, en gang per handelse.
     var streak = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
 
     // Båda är topplistor, inte "senaste"-widgetar: de ändras bara när ett rekord slås. Rekorden
@@ -396,13 +436,10 @@
     //
     // En enstaka gåva (antal 1) är ingen combo och kan aldrig ta streaken — den hör till Top Gift.
     // Annars hade en enda dyr gåva fastnat som "×1 STREAK" och låst widgeten hela sändningen.
-    var giftVarde = records.styckvarde(coins, streak);
-    var comboVarde = streak >= 2 ? coins : 0;
-    var newGift = giftVarde > records.giftCoins;
-    var newStreak = comboVarde > records.streakCoins;
-    if (newGift) records.giftCoins = giftVarde;
-    if (newStreak) records.streakCoins = comboVarde;
-    if (newGift || newStreak) skrivRekord();
+    var beslut = records.bedom(detail);
+    var giftVarde = beslut.giftVarde;
+    var newGift = beslut.gift;
+    var newStreak = beslut.streak;
 
     state.widgets.forEach(function (widget) {
       if (widget.type === 'templateTopGift' && newGift) {

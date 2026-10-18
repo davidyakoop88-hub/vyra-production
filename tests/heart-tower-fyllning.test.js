@@ -87,5 +87,5 @@ test('den delade live-uppdateringen skriver ingen inline-bredd på goal-motion-f
 });
 
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
-  assert.match(las('media.js'), /const version='20261018-1'/);
+  assert.match(las('media.js'), /const version='20261018-klocka'/);
 });

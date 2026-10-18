@@ -40,7 +40,9 @@
   const tidigareRoute = root.routeLiveBattleEvent;
   root.routeLiveBattleEvent = function (event = {}) {
     const at = Number(event && event.at);
-    if (Number.isFinite(at) && at > 0) mat(nat, Date.now() - at);
+    // Serverns tid, inte PC-klockans: en klocka som går 20 s fel mäter annars 20 s "nät" (2026-10-18).
+    const nu = root.VyraLive && typeof root.VyraLive.serverNu === 'function' ? Number(root.VyraLive.serverNu()) : NaN;
+    if (Number.isFinite(at) && at > 0) mat(nat, (nu > 0 ? nu : Date.now()) - at);
     if (typeof tidigareRoute === 'function') return tidigareRoute(event);
   };
 
