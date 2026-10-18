@@ -1390,7 +1390,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261017-p1granskning';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261017-p1granskning';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261017-p1granskning';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261018-state';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
@@ -1716,7 +1716,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20260925-natural1','gift-festival-engine.js?v=20261017-festival1','gift-supernova-engine.js?v=20261017-festival3','gift-fireworks.js?v=20261017-festival1','gift-fireworks-session.js?v=20260806-1','gift-supernova-panel.js?v=20261017-festival4'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20260925-natural1','gift-festival-engine.js?v=20261017-festival1','gift-supernova-engine.js?v=20261017-festival3','gift-fireworks.js?v=20261017-festival1','gift-fireworks-session.js?v=20261018-state','gift-supernova-panel.js?v=20261017-festival4'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
@@ -1732,7 +1732,7 @@ Promise.resolve().then(()=>{
 // Gift Bubbles - systerwidget till Gift Fireworks, egen fristaende canvas/DOM-motor.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-gift-bubbles]')){let css=document.createElement('link');css.rel='stylesheet';css.href='gift-bubbles.css?v=20260928-1';css.dataset.giftBubbles='1';document.head.append(css)}
-  const files=['gift-bubbles.js?v=20261012-diamonds','gift-bubbles-session.js?v=20260928-1'];
+  const files=['gift-bubbles.js?v=20261012-diamonds','gift-bubbles-session.js?v=20261018-state'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1740,7 +1740,7 @@ Promise.resolve().then(()=>{
 // Heart Fireworks - modell 2, egen fristaende canvas-motor (skotten formar hjartan).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-heart-fireworks]')){let css=document.createElement('link');css.rel='stylesheet';css.href='heart-fireworks.css?v=20260928-1';css.dataset.heartFireworks='1';document.head.append(css)}
-  const files=['heart-fireworks.js?v=20261012-diamonds','heart-fireworks-session.js?v=20260928-1'];
+  const files=['heart-fireworks.js?v=20261012-diamonds','heart-fireworks-session.js?v=20261018-state'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
