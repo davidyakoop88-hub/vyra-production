@@ -152,6 +152,16 @@ test('vyra-session-ended glömmer nivåkartan och tömmer kön — nästa konto 
     'nivåkartan överlevde sessionens slut — a:s hopp tände en alert ur förra kontots minne');
 });
 
+test('kön följer widgetens egen visningstid, inte standardtiden', async () => {
+  // Samma fel som Fan Level Up: root.state fanns aldrig, så kön väntade alltid 6,7 s (2026-10-18).
+  const { skicka, traffar } = boot([gifterWidget('g1', { gifterDuration: 1, gifterExitDuration: 0 })]);
+  for (const n of ['a', 'b']) skicka(chatt(n, 5));
+  for (const n of ['a', 'b']) skicka(chatt(n, 6));
+  assert.equal(traffar().length, 1);
+  await new Promise(r => setTimeout(r, 1800));
+  assert.deepEqual([...traffar()].map(t => t.name), ['a', 'b'], 'kön väntade på standardtiden i stället för widgetens');
+});
+
 test('kön töms i ankomstordning', () => {
   const { skicka, traffar, h } = boot();
   for (const n of ['a', 'b', 'c']) skicka(chatt(n, 5));

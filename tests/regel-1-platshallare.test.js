@@ -55,7 +55,7 @@ test('cachebustarna höjdes med filerna', () => {
   assert.match(html, /media\.js\?v=20261018-1/);  // 20261011-6: busten foljde med nasta andring i samma fil
   assert.match(media, /live-leaderboard\.js\?v=20261012-diamonds/);
   assert.match(media, /playground-widgets\.js\?v=20261017-katalog3/);
-  assert.match(media, /fan-level-50\.js\?v=20261014-1/);
+  assert.match(media, /fan-level-50\.js\?v=20261018-1/);  // 20261018-1: slideshowen laser studions state
 });
 
 test('raderna i topplistan döljs med !important, inte med en vanlig inline-stil', () => {
