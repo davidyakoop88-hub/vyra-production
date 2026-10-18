@@ -29,10 +29,15 @@ const KALLA = fs.readFileSync(path.join(ROOT, 'gift-fireworks.js'), 'utf8');
 
 test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
+/* fwLanes: 3 — ETT UTTRYCKLIGT VAL. Standard ar ett fyrverkeri i taget sedan 2026-10-18
+   (anvandarens beslut, gift-fireworks.js fwFiler): da koas gava tva i renderaren tills den forsta
+   natt sin topp. Proven har handlar om att en gava som startar MEDAN en annan spelar inte klipper
+   den, och det fallet finns kvar for den som valt fler "Samtidiga fyrverkerier". Standardfallet
+   har egna prov i gift-fireworks-en-i-taget.test.js. */
 const fw = (id = 'fw1', over = {}) => Object.assign({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360, title: 'Gift Fireworks',
   fwMotion: 'magnetic', fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
-  fwExplosion: 100, fwDensity: 70, fwSound: false
+  fwExplosion: 100, fwDensity: 70, fwSound: false, fwLanes: 3
 }, over);
 
 function boot(widgets = [fw()]) {

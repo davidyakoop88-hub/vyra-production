@@ -150,25 +150,41 @@ test('filen duplicerar inte triggerns filter', () => {
 
 // ---- 3. kon ------------------------------------------------------------------------------------
 
-test('three senders start together and the fourth waits', () => {
+// ETT I TAGET SOM STANDARD sedan 2026-10-18 (anvandarens beslut). Tidigare startade tre avsandare
+// samtidigt. Tidslinjen, sammanslagningen och det uttryckliga valet pa 3 provas i
+// gift-fireworks-en-i-taget.test.js; har provas bara att den skarpa kedjan foljer regeln.
+// `klocka` flyttar renderarens Date.now forbi toppen — renderaren slapper inte nasta fyrverkeri
+// forran det forra nått sin topp, och nastaNu() kan inte ga runt det.
+const klocka = h => { let t = h.window.Date.now(); h.window.Date.now = () => t; return ms => { t += ms } };
+
+test('ett fyrverkeri i taget: den forsta startar och de tre andra vantar', () => {
   const { gava, traffar, h } = boot();
   for (let i = 0; i < 4; i++) gava();
-  assert.equal(traffar().length, 3, 'three independent senders should start');
+  assert.equal(traffar().length, 1, 'fyra gavor startade flera fyrverkerier samtidigt');
+  assert.equal(h.window.VyraGiftFireworks.koLangd(), 3);
+});
+
+test('ett uttryckligt val pa tre filer startar tre avsandare samtidigt', () => {
+  const { gava, traffar, h } = boot([fw('fw1', { fwLanes: 3 })]);
+  for (let i = 0; i < 4; i++) gava();
+  assert.equal(traffar().length, 3);
   assert.equal(h.window.VyraGiftFireworks.koLangd(), 1);
 });
 
 test('kon toms i ankomstordning', () => {
   const { gava, traffar, h } = boot();
+  const fram = klocka(h);
   for (const namn of ['a', 'b', 'c']) gava({ username: namn });
-  h.window.VyraGiftFireworks.nastaNu();
-  h.window.VyraGiftFireworks.nastaNu();
+  fram(10000); h.window.VyraGiftFireworks.nastaNu();
+  fram(10000); h.window.VyraGiftFireworks.nastaNu();
   assert.deepEqual([...traffar()].map(t => t.username), ['a', 'b', 'c']);
 });
 
 test('en skur pa tjugo tappar ingenting', () => {
+  // Tjugo OLIKA avsandare: ingen sammanslagning, alla vantar.
   const { gava, h } = boot();
-  for (let i = 0; i < 20; i++) gava();
-  assert.equal(h.window.VyraGiftFireworks.koLangd(), 17);
+  for (let i = 0; i < 20; i++) gava({ username: 'u' + i });
+  assert.equal(h.window.VyraGiftFireworks.koLangd(), 19);
   assert.equal(h.window.VyraGiftFireworks.kastade(), 0);
 });
 
@@ -201,8 +217,9 @@ test('samma gava tander bara ett fyrverkeri, aven om Actions ocksa fyrar', () =>
 
 test('tva OLIKA gavor tander tva ganger', () => {
   const { h, traffar } = boot();
+  const fram = klocka(h);
   h.window.routeLiveBattleEvent({ id: 'a', type: 'gift', username: 'lisa', coins: 500 });
-  h.window.VyraGiftFireworks.nastaNu();
+  fram(10000); h.window.VyraGiftFireworks.nastaNu();
   h.window.routeLiveBattleEvent({ id: 'b', type: 'gift', username: 'omar', coins: 500 });
   assert.equal(traffar().length, 2, 'sparren slog till pa en annan gava');
 });
@@ -251,10 +268,14 @@ test('en avslutad session tommer kon', () => {
   assert.equal(h.window.VyraGiftFireworks.spelar(), false);
 });
 
-test('livekön väntar hela showen plus marginal',()=>{
+test('livekön väntar till showens topp plus marginal, inte hela showen',()=>{
   const {h,gava}=boot();const waits=[];h.window.Date.now=()=>1000;h.window.setTimeout=(fn,ms)=>{waits.push(ms);return waits.length};
   // 1000 coins, inte count:100 — showen valjs av vardet sedan 2026-09-19.
-  gava({count:100,coins:1000});assert.ok(waits.includes(9200));assert.ok(waits.includes(9400));
+  // CSS-temat (magnetic): visningstid 5 + 4,2 = 9,2 s, flygtid 0,6 s. Toppen ar dar nasta raket
+  // landar just nar det forra kortet tonar ut: 9,2 - 0,6 = 8,6 s. Renderaren vaknar dar (8600) och
+  // kon slapper nasta 100 ms senare (8700). Fore 2026-10-18 holl kon platsen i 9400.
+  gava({count:100,coins:1000});assert.ok(waits.includes(8600),String(waits));assert.ok(waits.includes(8700),String(waits));
+  assert.ok(!waits.includes(9400),'kon holl platsen hela showen');
 });
 
 test('reservtiden utan durationFor följer widgetens fwDuration', () => {
@@ -263,6 +284,9 @@ test('reservtiden utan durationFor följer widgetens fwDuration', () => {
   const { h, gava } = boot([fw('fw1', { fwDuration: 2 })]);
   assert.equal(h.window.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
   delete h.window.VyraFireworks.durationFor;
+  // Ett i taget (2026-10-18): kön startar nästa vid TOPPEN (releaseFor). Reserven, som det här
+  // provet gäller, används när toppen saknas.
+  delete h.window.VyraFireworks.releaseFor;
   const waits = []; h.window.setTimeout = (fn, ms) => { waits.push(ms); return waits.length };
   gava();
   assert.ok(waits.includes(2200), `kön väntade ${waits.join(', ')} ms i stället för widgetens 2200`);

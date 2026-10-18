@@ -20,19 +20,42 @@ const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
 const fwCanvas=w=>['festival','royal','ice','rose','comet','supernova'].includes(w.fwTheme);
 // Rörelsehastighet (stilpanelen) gör hela programmet kortare/längre; köns bokföring följer med.
 const fwFart=w=>Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1));
-// Samtidiga fyrverkerier (stilpanelen): 1–5, standard 3.
-const fwFiler=w=>Math.min(5,Math.max(1,Math.round(Number(w.fwLanes)||3)));
-function fwSequence(w,combo){const level=fwLevelOf(combo);if(fwCanvas(w))return{level,duration:window.VyraSupernova.duration(combo)/fwFart(w),impact:1.6,flight:1.4};return {level,duration:fwDurationOf(w)+level.lead,impact:fwFlightOf(w)+level.lead,flight:fwFlightOf(w)}}
+/* Samtidiga fyrverkerier (stilpanelen): 1–5, STANDARD 1 sedan 2026-10-18 (var 3).
+   Användarens beslut efter sändningen 2026-10-17, där tre gåvor med ett par sekunders mellanrum
+   spelades i tre filer samtidigt: "ett fyrverkeri i taget som standard, nästa startar efter cirka
+   3 s, och kön trycks ihop när den blir lång". Fältet skrivs bara när reglaget faktiskt flyttas
+   (gift-supernova-panel.js onchange) och infördes 2026-10-17, så ett sparat fwLanes är ett
+   uttryckligt val och respekteras; saknas fältet gäller den nya standarden. */
+const fwFiler=w=>Math.min(5,Math.max(1,Math.round(Number(w.fwLanes)||1)));
+/* Köns tillfälliga uppsnabbning (1–2), satt av gift-fireworks-session.js när fler än fem gåvor väntar.
+   Den gäller bara den gåvan, aldrig widgetens sparade fwPlaySpeed. */
+const fwTempoOf=d=>Math.min(2,Math.max(1,Number(d&&d.__tempo)||1));
+/* `release` är TOPPEN: sekunder in i fyrverkeriet då nästa i kön får starta (se fwCapacity).
+   Canvas-teman (festival, royal, ice, rose, comet, supernova) tar den från motorn som ritar —
+   VyraSupernova.toppen, dvs. sista explosionen plus en sekund: festivalens enkla sol + fyra hjärtan
+   ger 3,09 s av 7. CSS-temana har ingen sol: där är innehållet gåvo-/profilkortet mitt i bild hela
+   tiden, så nästa raket skjuts upp så att den landar just när det förra kortet tonar ut
+   (duration - flight) — överlappet blir utgången, aldrig två kort ovanpå varandra. */
+function fwSequence(w,combo,tempo=1){const t=Math.min(2,Math.max(1,Number(tempo)||1)),bas=fwLevelOf(combo),level=t===1?bas:{...bas,lead:bas.lead/t,points:bas.points.map(([x,y,d])=>[x,y,d/t])};if(fwCanvas(w)){const f=fwFart(w)*t,sn=window.VyraSupernova;return{level,duration:sn.duration(combo)/f,release:(sn.toppen?sn.toppen(combo,w.fwTheme):sn.duration(combo))/f,impact:1.6,flight:1.4}}const duration=(fwDurationOf(w)+bas.lead)/t,flight=fwFlightOf(w)/t;return {level,duration,release:Math.max(flight,duration-flight),impact:(fwFlightOf(w)+bas.lead)/t,flight}}
 const FW_THEMES=VyraWidgets.variants('giftfireworks.theme');
 // Entré per fyrverkeri (stilpanelens Entré / utgång); keyframes i gift-fireworks.css.
 const FW_ENTREER={zoom:'fw-en-zoom {t}s cubic-bezier(.2,1.4,.4,1) both',drop:'fw-en-drop {t}s cubic-bezier(.2,1.2,.4,1) both',bounce:'fw-en-bounce {t}s ease-out both',rise:'fw-en-rise {t}s ease-out both',glass:'fw-en-glass {t}s ease-out both',neon:'fw-en-neon {t}s steps(6) both'};
 const fwThemeOf=w=>Object.hasOwn(FW_THEMES,w.fwTheme)?w.fwTheme:({spiral:'comet',bloom:'ice'}[w.fwMotion]||'royal');
 const fwPending=[];
 function fwActive(e){return [...e.querySelectorAll(':scope > .fw-event')].filter(n=>Number(n.dataset.expires)>Date.now())}
-function fwCapacity(d){return state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden&&fwSlapperIgenom(w,d||{})).every(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);return !e||fwActive(e).length<fwFiler(w)})}
+/* Fyrverkerier som ännu inte nått sin topp. Det är DE som tar en fil; ett fyrverkeri som passerat
+   toppen tonar ut i sin egen takt och hindrar inte nästa från att starta. */
+function fwOtoppade(e){const nu=Date.now();return fwActive(e).filter(n=>Number(n.dataset.release||n.dataset.expires)>nu)}
+function fwCapacity(d){return state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden&&fwSlapperIgenom(w,d||{})).every(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);return !e||fwOtoppade(e).length<fwFiler(w)})}
+/* HÖGST EN UTFASNING. Ett fyrverkeri som tonar ut får göra det i sin egen takt, men startar ett
+   nytt medan två redan tonar ut kortas det äldsta av på 300 ms. Med festivalens 3,1 s mellan starter
+   och 7 s visningstid är det äldsta då i sin sista sekund (glitter och bakgrundsstjärnor). */
+const FW_KORTA_MS=300;
+function fwKorta(n){n.dataset.expires=String(Math.min(Number(n.dataset.expires),Date.now()+FW_KORTA_MS));n.dataset.kortad='1';n.style.transition='opacity '+FW_KORTA_MS+'ms ease';n.style.opacity='0'}
 function fwDrain(){while(fwPending.length&&fwCapacity(fwPending[0]))fwTrigger(fwPending.shift(),true)}
 function fwQuality(e){
- const active=fwActive(e),busy=active.length>1;e.dataset.fwQuality=busy?'busy':'full';
+ // Ett nytt fyrverkeri bredvid ETT som tonar ut är normalfallet i kön och sänker inte kvaliteten.
+ const active=fwActive(e),busy=fwOtoppade(e).length>1||active.length>2;e.dataset.fwQuality=busy?'busy':'full';
  if(busy)active.forEach(group=>group.querySelectorAll('.fw-burst').forEach(burst=>{while(burst.children.length>12)burst.lastElementChild.remove()}));
 }
 function fwSchedule(e){
@@ -40,8 +63,10 @@ function fwSchedule(e){
  e.querySelectorAll(':scope > .fw-event').forEach(n=>{if(Number(n.dataset.expires)<=Date.now()){window.VyraSupernova?.dispose(n);n.remove()}});
  fwQuality(e);
  const active=fwActive(e);if(!active.length){e.classList.remove('play');fwTimers.delete(e);fwDrain();return}
- const ends=active.map(n=>Number(n.dataset.expires));
- const id=setTimeout(()=>fwSchedule(e),Math.max(1,Math.min(...ends)-Date.now()));
+ const ends=active.map(n=>Number(n.dataset.expires)),nu=Date.now();
+ // Vakna vid nästa topp också: där blir en fil ledig och renderarens väntelista kan tömmas.
+ const vakna=active.flatMap(n=>[Number(n.dataset.expires),Number(n.dataset.release)]).filter(t=>Number.isFinite(t)&&t>nu);
+ const id=setTimeout(()=>fwSchedule(e),Math.max(1,Math.min(...vakna)-nu));
  fwTimers.set(e,{id,slutarVid:Math.max(...ends)});
  fwDrain();
 }
@@ -83,13 +108,21 @@ document.addEventListener('click',event=>{if(!event.target.closest('#testFw'))re
 const fwTimers=new Map();
 /* `gavobild` ar den gava som FAKTISKT skickades, hamtad ur eventet. Utan den visade varje raket
    panelinstallningens bild — standard 0001_Rose.png — sa tva lion gav tva rosor. */
-function fwSpela(w,e,combo,gavobild,avatarbild,namn){
- const sequence=fwSequence(w,combo),theme=fwThemeOf(w),palette=FW_THEMES[theme];
+function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
+ const sequence=fwSequence(w,combo,tempo),theme=fwThemeOf(w),palette=FW_THEMES[theme];
  const group=document.createElement('div');group.className='fw-event play';
  group.dataset.fwTheme=theme;group.dataset.fwLevel=sequence.level.name;
- group.dataset.expires=String(Date.now()+sequence.duration*1000);
+ const nu=Date.now();
+ group.dataset.expires=String(nu+sequence.duration*1000);group.dataset.release=String(nu+sequence.release*1000);
  // Each sender owns a layer and timeline; adding a gift never restarts existing rockets.
- const used=new Set(fwActive(e).map(n=>n.dataset.lane));let lane=0;while(used.has(String(lane)))lane++;
+ const otoppade=fwOtoppade(e),avtonande=fwActive(e).filter(n=>!otoppade.includes(n)).sort((a,b)=>Number(b.dataset.release)-Number(a.dataset.release));
+ avtonande.slice(1).forEach(fwKorta);
+ /* Filen: ledig bland ALLA levande om det finns en inom fwFiler, annars den första som inget
+    otoppat fyrverkeri håller. Med en fil hamnar alltså varje fyrverkeri i mitten, ovanpå det som
+    tonar ut, i stället för att flytta åt sidan för en utfasning. */
+ const upptagna=new Set(otoppade.map(n=>n.dataset.lane)),alla=new Set([...upptagna,...avtonande.slice(0,1).map(n=>n.dataset.lane)]);
+ let lane=0;while(alla.has(String(lane)))lane++;
+ if(lane>=fwFiler(w)){lane=0;while(upptagna.has(String(lane)))lane++}
  group.dataset.lane=String(lane);group.style.setProperty('--lane-x',`${[0,-100,100][lane]||0}px`);
  const primary=bk(w,w.fwColor,'highlight',palette.primary);
  const secondary=bk(w,w.fwColor2,'secondaryText',palette.secondary);
@@ -100,10 +133,13 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn){
   // FILER BREDVID VARANDRA (2026-10-17): tidigare stängdes förskjutningen av här, så samtidiga
   // fyrverkerier ritades exakt ovanpå varandra (Davids "hjärta o smail på varandra"). Nu får fil 1
   // och 2 vänster/höger i procent av widgetens bredd. Storlek skalar, Entré spelar per fyrverkeri.
+  // ETT I TAGET (2026-10-18, användarens beslut): standard är nu EN fil, så fil 1 och 2 används bara
+  // av den som uttryckligen valt fler "Samtidiga fyrverkerier". Annars startar nästa i mitten när
+  // det förra nått sin topp (sequence.release) och det förra tonar ut bakom.
   const fil=[0,-30,30,-15,15][lane]||0,skala=Math.min(1.8,Math.max(.5,Number(w.fwScale)||1));
   e.style.animation='none';group.style.translate=fil+'% 0';group.style.scale=String(skala);group.style.transformOrigin='50% 45%';
   const entre=FW_ENTREER[w.fwEnter]||'';group.style.animation=entre?entre.replace('{t}',String((.6/fwFart(w)).toFixed(2))):'none';
-  e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary},namn);fwSchedule(e);return}
+  e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary},namn,tempo);fwSchedule(e);return}
  e.style.removeProperty('animation');
  buildComboRockets(w,group,combo,gavobild,sequence,avatarbild);
  e.append(group);e.classList.add('play');fwSchedule(e);
@@ -137,7 +173,13 @@ window.VyraFireworks={
   capacityFor:fwCapacity,
   pending:()=>fwPending.length,
   // Renderaren och bada koerna anvander exakt samma langsta synliga speltid.
-  durationFor:input=>Math.max(0,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(w=>fwSequence(w,fwStyrkaOf(input,w)).duration*1000)),
+  durationFor:input=>Math.max(0,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(w=>fwSequence(w,fwStyrkaOf(input,w),fwTempoOf(input)).duration*1000)),
+  // ...och samma topp: millisekunder tills nästa i kön får starta (se fwSequence/release).
+  releaseFor:input=>Math.max(0,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(w=>fwSequence(w,fwStyrkaOf(input,w),fwTempoOf(input)).release*1000)),
+  // Flest filer bland synliga widgetar; kapaciteten per widget avgörs ändå av capacityFor.
+  lanesFor:()=>Math.max(1,...state.widgets.filter(w=>w.type==='templateGiftFireworks'&&!w.hidden).map(fwFiler)),
+  // Gåvans värde med samma regel som nivån, så kön kan slå ihop en avsändares gåvor utan att tappa nivå.
+  vardeAv:input=>fwTotalOf(input&&typeof input==='object'?input:{combo:input}),
   timers:()=>fwTimers.size,
   slutarVid:()=>Math.max(0,...[...fwTimers.values()].map(t=>t.slutarVid)),
   spelar:e=>fwTimers.has(e),
@@ -269,7 +311,7 @@ if(!traffar.length)return false;
 let nagotTandes=false;
 traffar.forEach(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;/* textContent, aldrig innerHTML: anvandarnamnet kommer fran TikTok via molnet och ar inte
    betrott innehall. */
-const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,fwStyrkaOf(d,w),d.giftImage,d.profileImage||d.profileUrl,d.username||d.name,d.giftName||d.gift);nagotTandes=true});
+const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,fwStyrkaOf(d,w),d.giftImage,d.profileImage||d.profileUrl,d.username||d.name,fwTempoOf(d));nagotTandes=true});
 if(!nagotTandes)return false;
 /* Ljudet spelas HAR, efter att bade filtren och widgetuppslaget passerat - ett ljud utan
    synligt fyrverkeri ar varre an inget ljud alls. En gang per omgang, inte en gang per widget:

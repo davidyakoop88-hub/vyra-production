@@ -251,9 +251,17 @@ function setOptions(next={}){if(!next||typeof next!=='object')return{...options}
  for(const k of ['primary','secondary'])if(validColor(next[k]))options[k]=next[k].toLowerCase();if(['classic','willow','sparkle'].includes(next.style))options.style=next.style;
  const tm=tema();let hi=0;for(const e of skal){const f=e.typ==='sol'?tm.sol:tm.hj[(hi++)%tm.hj.length];e.farg=f;for(const q of e.p)q.farg=f}return{...options}}
 if(options.customPalette)setOptions({});
-return{ready,render,renderStill,duration:()=>duration,setQuality(v){requested=Math.max(1,Math.min(128,Number(v)|0))},setOptions,getOptions:()=>({...options}),
+return{ready,render,renderStill,duration:()=>duration,toppen:()=>Math.min(duration,Math.max(...skal.map(e=>e.at))+TOPP_EFTER),setQuality(v){requested=Math.max(1,Math.min(128,Number(v)|0))},setOptions,getOptions:()=>({...options}),
  inspect:()=>({motor:'festival',theme,mode,duration,seed,variantIndex:variant,stride,skal:skal.length,partiklar:skal.reduce((n,e)=>n+e.p.length,0),typer:skal.map(e=>e.typ)}),
  maxParticles:()=>skal.reduce((n,e)=>n+e.p.length,0)};
 }
-root.VyraFestival={create,TEMAN};
+/* TOPPEN (2026-10-18): när programmet har nått sin sista explosion och den har slagit ut — solen och
+   hjärtana står färdiga och hjärtslaget (punkt(): puls t .55–1.0) är klart. Gift Fireworks-kön låter
+   NÄSTA fyrverkeri starta här, inte först när hela visningstiden har gått; det här tonas ut i sin egen
+   takt. Tiderna är programmets egna `at` ovan (sista smällen per nivå) plus TOPP_EFTER, och provet
+   gift-fireworks-en-i-taget.test.js jämför tabellen mot en riktig renderares toppen() för varje nivå,
+   så de kan inte glida isär tyst. 1: sista hjärtat 1.55+3*.18 = 2.09. 10: sista solen 6. 100: sista solen 15. */
+const TOPP_EFTER=1,SISTA_SMALL={'1':1.55+3*.18,'10':6,'100':15};
+const toppen=combo=>{const m=Number(combo)>=100?'100':Number(combo)>=10?'10':'1';return SISTA_SMALL[m]+TOPP_EFTER};
+root.VyraFestival={create,TEMAN,toppen,TOPP_EFTER};
 })(window);
