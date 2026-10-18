@@ -335,6 +335,7 @@
         "tests/action-poang-retur.test.js",
         "tests/action-talutrymme.test.js",
         "tests/action-tts-rost.test.js",
+        "tests/browser/alert-egen-placering.browser.test.js",
         "scripts/test/event-gifts.test.js"
       ],
       "matning": [],

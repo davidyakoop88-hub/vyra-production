@@ -13,6 +13,9 @@
   const fill = (text = '', p = {}) => text.replace(/\{(\w+)\}/g, (_, k) => ({username:p.username||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.diamonds||p.coins||1,likecount:p.likecount||0,totallikecount:p.totallikecount||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username)||0}[k] ?? ''));
 
   // Facit §7. Namnen till vänster är TikFinitys, nycklarna till höger är våra config-fält.
+  // Alertens tre lägen och hur scenpanelens förval mappas på dem (F01, regeln står i showAlert).
+  const ALERT_LAGEN = ['top', 'center', 'bottom'];
+  const SCEN_TILL_ALERT = { top: 'top', center: 'center', bottom: 'bottom', fullscreen: 'bottom' };
   const overlaySettingsHtml = c => `<div class="ao-global-panel" id="aoGlobalPanel" hidden>
     <h5>Overlay-inställningar</h5>
     <div class="ao-grid">
@@ -53,7 +56,10 @@
     </div>
     <h6>Placering och bakgrund</h6>
     <div class="ao-grid">
-      <label>Placering<select id="aoAlertPosition">${[['bottom','Längst ner'],['center','Mitten'],['top','Längst upp']].map(([v,l])=>`<option value="${v}"${(c.alertPosition||'bottom')===v?' selected':''}>${l}</option>`).join('')}</select></label>
+      <!-- Ingen egen Placering-väljare här (F01): scenpanelen "Overlay-scen & placering" i samma
+           dialog äger var alerten hamnar. Två väljare för samma sak gav två motstridiga sanningar.
+           Det dolda fältet bär bara vidare en GAMMAL actions alertPosition, se samlaConfig. -->
+      <input type="hidden" id="aoAlertPositionArv" value="${ALERT_LAGEN.includes(c.alertPosition) ? c.alertPosition : ''}">
       <label>Accentfärg<input id="aoAlertAccent" type="color" value="${c.alertAccent||'#ff3eaa'}"></label>
       <label>Bakgrund<input id="aoAlertBg" type="color" value="${c.alertBackground||'#16091d'}"></label>
     </div>
@@ -74,8 +80,29 @@
     const brand = (typeof state === 'object' && state && state.brandKit) ? state.brandKit : null;
     const bkColor = (own, field, fallback) => (c.inheritBrandKit && brand && brand[field]) ? brand[field] : (own || fallback);
     const effekter = [c.waveEffect&&'vaag', c.moveEffect&&'rorelse', c.effect3d&&'tredim', c.wiggleEffect&&'vick'].filter(Boolean).join(' ');
+    // VEM VINNER OM PLACERINGEN (F01). Uppmätt före lagningen: Egen placering X=100 Y=100
+    // Bredd=300 gav klassen bottom och rect left 180 / bredd 360 i en 720×1280-källa — showAlert
+    // läste bara config.alertPosition och scenen aldrig. Regeln, i den ordning den prövas:
+    //  1. scene.placement 'custom' → `.scenplacerad`: x/y/bredd/lager placeras precis som stage()
+    //     i action-runtime.js placerar bild och video (samma standardvärden, samma omräkning i
+    //     action-event.css), så alert och bild hamnar på samma ställe för samma värden.
+    //  2. config.alertPosition top/center (alltså inte standardvärdet bottom) → den vinner över
+    //     scenens FÖRVAL. Scenpanelen sparar 'bottom' för varje action där ingen rört den, så en
+    //     gammal "Längst upp"-alert hade annars flyttat ned i nästa sändning. samlaConfig bär
+    //     fältet vidare bara så länge ingen ändrat scenpanelens placering.
+    //  3. scene.placement top/center/bottom → samma klass som förr, dagens centrerade utseende.
+    //     fullscreen → bottom: före F01 blev varje alert med scen 'bottom' (alertPositions
+    //     standard), och en centrerad textruta kan inte fylla duken som en bild.
+    //  4. ingen scen alls → config.alertPosition, annars bottom.
+    const scen = action.scene && typeof action.scene === 'object' ? action.scene : null;
+    const egen = scen?.placement === 'custom';
+    const gammal = ALERT_LAGEN.includes(c.alertPosition) ? c.alertPosition : null;
+    const placering = egen ? 'scenplacerad'
+      : (gammal && gammal !== 'bottom') ? gammal
+      : scen ? (SCEN_TILL_ALERT[scen.placement] || 'bottom')
+      : (gammal || 'bottom');
     const el = document.createElement('div');
-    el.className = `vyra-action-alert ${c.alertStyle || 'premium'} ${c.alertPosition || 'bottom'} ${effekter}${payload.profileImage && c.showProfilePicture !== false ? ' has-avatar' : ''}${c.singleTextLine ? ' en-rad' : ''}`;
+    el.className = `vyra-action-alert ${c.alertStyle || 'premium'} ${placering} ${effekter}${payload.profileImage && c.showProfilePicture !== false ? ' has-avatar' : ''}${c.singleTextLine ? ' en-rad' : ''}`;
     if (payload.profileImage && c.showProfilePicture !== false) { const img = document.createElement('img'); img.className = 'vaa-avatar'; img.src = VyraSafe.src(payload.profileImage); el.append(img); }
     if (payload.giftImage && c.showGiftPicture) { const g = document.createElement('img'); g.className = 'vaa-gift'; g.src = VyraSafe.src(payload.giftImage); el.append(g); }
     if (payload.username) {
@@ -102,7 +129,9 @@
       `--alert-stroke-color:${c.borderColor || '#242424'}`,
       `--alert-user-color:${c.usernameCustomColor ? (c.usernameColor || '#ff3eaa') : 'inherit'}`,
       `--alert-user-size:${px(c.usernameSize, 50)}`,
-      `--alert-avatar:${px(c.pictureSize, 85)}`
+      `--alert-avatar:${px(c.pictureSize, 85)}`,
+      // Samma `??`-standardvärden som stage() — ändras de där ska de ändras här.
+      ...(egen ? [`--x:${scen.x ?? 160}`, `--y:${scen.y ?? 1450}`, `--w:${scen.width ?? 760}`, `--z:${scen.layer ?? 10}`] : [])
     ].join(';');
     host.append(el); requestAnimationFrame(() => el.classList.add('show'));
     const ms = Math.max(1, action.duration || 6) * 1000;
@@ -382,7 +411,13 @@
         slot.querySelector('#aoCloseGlobal').onclick = () => panel.setAttribute('hidden', '');
         slot.querySelector('#aoPreviewAlert').onclick = () => {
           const modal = slot.closest('.ae-modal');
-          showAlert({ duration: 4, config: samlaConfig(modal) }, { username: 'TestUser', giftname: 'Rose', repeatcount: 5, coins: 5, profileImage: 'assets/images/test-profile.svg' });
+          // Provet visar alerten där scenpanelen säger att den ska hamna (F01). Lagret lyfts över
+          // dialogen (z 9000): i studion hade lager 10 annars ritats bakom den och provet sett tomt
+          // ut. I overlayn finns ingen dialog, där gäller det sparade lagret.
+          const box = modal?.querySelector('.ae-scene-settings');
+          const num = id => Number(box.querySelector(`#${id}`)?.value);
+          const scene = box ? { placement: box.querySelector('#aePlacement')?.value, x: num('aePosX'), y: num('aePosY'), width: num('aePosWidth'), layer: 99999 } : undefined;
+          showAlert({ duration: 4, scene, config: samlaConfig(modal) }, { username: 'TestUser', giftname: 'Rose', repeatcount: 5, coins: 5, profileImage: 'assets/images/test-profile.svg' });
         };
       }
     },
@@ -398,6 +433,14 @@
     collect(modal) { return { config: samlaConfig(modal) } }
   });
 
+  function arvdAlertPosition(modal) {
+    const arv = varde(modal, 'aoAlertPositionArv');
+    if (!ALERT_LAGEN.includes(arv)) return undefined;
+    const val = modal.querySelector('#aePlacement');
+    const rord = val && ![...val.options].some(o => o.defaultSelected && o.value === val.value);
+    return rord ? undefined : arv;
+  }
+
   function samlaConfig(modal) {
     if (!modal) return {};
     return {
@@ -408,7 +451,11 @@
       alertColor: varde(modal, 'aoAlertColor', '#ffffff'),
       alertStyle: varde(modal, 'aoAlertStyle', 'premium'),
       inheritBrandKit: kryssad(modal, 'aoInheritBrandKit'),
-      alertPosition: varde(modal, 'aoAlertPosition', 'bottom'),
+      // alertPosition (F01): väljaren är borta. En gammal actions värde bärs vidare oförändrat så
+      // länge scenpanelens placering står kvar på det den visade när dialogen öppnades — att spara
+      // om texten ska inte flytta alerten. Ändrar användaren placeringen släpps fältet och scenen
+      // gäller. Nya actions får inget värde alls.
+      alertPosition: arvdAlertPosition(modal),
       alertSize: tal(modal, 'aoFontSize', 45),
       alertFont: varde(modal, 'aoFont', 'Noto Sans'),
       lineSpacing: tal(modal, 'aoLineSpacing', 45),
