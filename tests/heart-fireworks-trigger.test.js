@@ -137,3 +137,13 @@ test('fabriken bygger en giltig Heart Fireworks-widget', () => {
   assert.equal(w.type, 'templateHeartFireworks');
   assert.ok(w.id, 'widget saknar id');
 });
+
+test('kön håller widgetens egen visningstid, inte standardtiden', () => {
+  // visningsMs() läste root.state, som aldrig finns: state är en const i studio.js. Kön väntade
+  // därför alltid 6,4 s oavsett panelens tid (upptäckt 2026-10-18). hfDuration 3 → 3 s + 0,4 s.
+  const { h, gava } = boot([hf('hf1', { hfDuration: 3 })]);
+  assert.equal(h.window.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
+  const waits = []; h.window.setTimeout = (fn, ms) => { waits.push(ms); return waits.length };
+  gava();
+  assert.ok(waits.includes(3400), `kön väntade ${waits.join(', ')} ms i stället för widgetens 3400`);
+});

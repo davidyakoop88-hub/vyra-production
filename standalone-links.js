@@ -12,9 +12,12 @@
 
   const inFlight = new Map();   // catalog key -> promise, so a double click cannot create two
 
+  // `state` is a const in studio.js and never lands on window — `root.state` was always undefined,
+  // so every click ended in "Layouten är inte laddad än." (2026-10-18). Read the shared binding;
+  // the fallback is the same object through VyraSessionState.
   function widgets() {
-    const state = root.state;
-    return state && Array.isArray(state.widgets) ? state.widgets : null;
+    const st = typeof state !== 'undefined' ? state : root.VyraSessionState?.activeState?.();
+    return st && Array.isArray(st.widgets) ? st.widgets : null;
   }
 
   // The workspace's own limits, never a plan name. A trial and a paid plan differ only in what the
