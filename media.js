@@ -204,7 +204,13 @@ const mvpFrameVisibilitySync=bind;bind=function(){mvpFrameVisibilitySync();if(vi
    stallet for att kampa om det. Uppdelningen ar namngiven, inte tyst.
 
    ALLA hanterare delar pekarrorelsen med kanvasskalan, precis som draget (studio.js:163). Utan
-   det hade en kommande zoom aktiverat fyra tysta buggar i stallet for att lagga till en funktion. */
+   det hade en kommande zoom aktiverat fyra tysta buggar i stallet for att lagga till en funktion.
+
+   SJALVA DRAGET AGS AV widget-handles.js (2026-10-18). Agaren ovan valjer fortfarande VEM som
+   binder, men bade helskala och video lamnar over till VyraHandtag.starta(), sa att sydostra
+   hornet raknar exakt som de sju andra handtagen: likformig skala med forankring for fasta
+   kompositioner, riktig bredd/hojd med proportionslas for media. Koden efter overlamningen ar
+   reserven om handtagsmodulen inte laddats. */
 const VYRA_CUSTOM_HANDTAG=['templateCustomText','templateCustomImage','templateCustomVideo'];
 window.VyraResize={agare(w){
   if(!w)return null;
@@ -212,7 +218,7 @@ window.VyraResize={agare(w){
   if(w.type==='video')return 'video';
   return 'helskala';
 }};
-const resizeRouterBind=bind;bind=function(){resizeRouterBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w)return;let agare=window.VyraResize.agare(w);if(agare==='custom')return;let handle=document.querySelector('.resize-handle');if(!handle)return;handle.onpointerdown=e=>{e.preventDefault();e.stopPropagation();let widget=handle.closest('.widget'),skala=getEditorCanvasScale(),startX=e.clientX,startY=e.clientY;handle.setPointerCapture(e.pointerId);if(agare==='video'){let startWidth=w.width||300,startHeight=w.height||450;handle.onpointermove=ev=>{w.width=Math.max(80,Math.round(startWidth+(ev.clientX-startX)/skala));w.height=Math.max(80,Math.round(startHeight+(ev.clientY-startY)/skala));widget.style.width=w.width+'px';widget.style.height=w.height+'px'};handle.onpointerup=()=>{handle.onpointermove=null;save();render()};return}
+const resizeRouterBind=bind;bind=function(){resizeRouterBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w)return;let agare=window.VyraResize.agare(w);if(agare==='custom')return;let handle=document.querySelector('.resize-handle');if(!handle)return;handle.onpointerdown=e=>{if(window.VyraHandtag&&typeof window.VyraHandtag.starta==='function')return window.VyraHandtag.starta(handle,'se',e);e.preventDefault();e.stopPropagation();let widget=handle.closest('.widget'),skala=getEditorCanvasScale(),startX=e.clientX,startY=e.clientY;handle.setPointerCapture(e.pointerId);if(agare==='video'){let startWidth=w.width||300,startHeight=w.height||450;handle.onpointermove=ev=>{w.width=Math.max(80,Math.round(startWidth+(ev.clientX-startX)/skala));w.height=Math.max(80,Math.round(startHeight+(ev.clientY-startY)/skala));widget.style.width=w.width+'px';widget.style.height=w.height+'px'};handle.onpointerup=()=>{handle.onpointermove=null;save();render()};return}
   /* startWidth maste vara OSKALAD. Rect:en krymper med zoomen, och en krympt namnare gjorde att
      samma rorelse gav olika resultat vid olika zoom — uppmatt 1.45 vid skala 1 mot 1.56 vid 0.5. */
   let startScale=w.widgetScale||1,startWidth=widget.getBoundingClientRect().width/skala;handle.onpointermove=ev=>{let scale=Math.max(.35,Math.min(2.5,startScale+((ev.clientX-startX)/skala)/Math.max(180,startWidth)));w.widgetScale=Math.round(scale*100)/100;widget.style.zoom=w.widgetScale};handle.onpointerup=()=>{handle.onpointermove=null;save();render();toast('Hela widgeten: '+Math.round(w.widgetScale*100)+'%')}}};
@@ -1415,7 +1421,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='batt
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20261018-klocka';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261018-klocka';document.body.append(js)});
 
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20260818-panel-live';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20261018-1';document.body.append(js)});
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
@@ -1484,6 +1490,10 @@ function geGeo(steg){
   if(F&&F.STEG&&F.STEG[steg])return F.STEG[steg];
   return GE_GEO_RESERV[steg]||GE_GEO_RESERV[3];
 }
+function geCirkel(geo){
+  const c=geo.circle,a=Number(geo.aspect)>0?Number(geo.aspect):1,hB=c.height*a,d=Math.min(c.width,hB),r=v=>Math.round(v*1000)/1000;
+  return {left:r(c.left+(c.width-d)/2),top:r(c.top+(hB-d)/2/a),width:r(d),height:r(d/a)};
+}
 function geDel(namn,w,t,geo){
   switch(namn){
     /* Bilden bar sitt eget hojd-bredd-forhallande genom `padding-top` i procent. Den tekniken later
@@ -1493,7 +1503,11 @@ function geDel(namn,w,t,geo){
       +'<img src="'+GE_BILDBAS+geo.bild+'" alt="">'
       +geDel('avatar',w,t,geo)+'</div>';
     /* Avatarhalet star dar det MATTS i bilden, inte dar nagon gissat. Samma falt som mvpf-photo. */
-    case 'avatar':{let bild=String(w.guardianAvatar||'').trim(),c=geo.circle;
+    /* RUND, inte halets ellips (verifieringen 2026-10-18): halet ar uppmatt i procent av bildens
+       bredd OCH hojd, och i steg 1-4 blev det 4-7 % ovalt (steg 3: 43,52 mot 41,01 bredd-enheter, en
+       profilbild pa 165x155 px i alla storlekar). Cirkeln far halets minsta matt som diameter och
+       centreras i det; matten raknas om i samma procentenheter som halet. */
+    case 'avatar':{let bild=String(w.guardianAvatar||'').trim(),c=geCirkel(geo);
       return '<div class="ge-avatar" style="left:'+c.left+'%;top:'+c.top+'%;width:'+c.width+'%;height:'+c.height+'%">'
         +(bild?'<img src="'+VyraSafe.url(bild)+'" alt="">':'')+'</div>'}
     case 'namn':return w.guardianShowUsername===false?'':'<div class="ge-namn">'+VyraSafe.text(w.guardianUsername||'@Guardian')+'</div>';
@@ -1717,11 +1731,11 @@ const giftJarProps=props;props=function(){let w=liveWidget(selected);if(!w||w.ty
 const giftJarBind=bind;bind=function(){giftJarBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftJar')return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(el)el.onchange=e=>{w[key]=num?+e.target.value:e.target.value;save();render()}};set('#jarCapacity','jarCapacity',true);set('#jarAutoReset','jarAutoResetMs',true);set('#jarAccent','jarAccent');set('#jarLight','jarLight');document.querySelector('#jarShowCounter')?.addEventListener('change',e=>{w.jarShowCounter=e.target.checked;save();render()});document.querySelector('#jarModel')?.addEventListener('change',e=>{let m=GIFT_JAR_MODELS[e.target.value];w.jarModel=e.target.value;w.jarAccent=m.accent;w.jarLight=m.light;w.jarSymbol=m.symbol;save();render()});document.querySelector('#jarDropTest')?.addEventListener('click',()=>triggerGiftJarDrop({type:'gift',giftName:'Rose',giftImage:'assets/gifts/events/0001_Rose.png',__amount:5}));document.querySelector('#jarReset')?.addEventListener('click',()=>resetGiftJar(w));document.querySelector('#jarDefaults')?.addEventListener('click',()=>{let m=GIFT_JAR_MODELS.lion;Object.assign(w,{jarModel:'lion',jarAccent:m.accent,jarLight:m.light,jarSymbol:m.symbol,jarCapacity:50,jarShowCounter:false,jarAutoResetMs:0});resetGiftJar(w);save();render()})};
 const giftJarCatalogBind=bind;bind=function(){giftJarCatalogBind();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-gift-jar]'))return;let section=document.createElement('section');section.dataset.giftJar='1';section.className='gift-jar-template-section';let rubrik=document.createElement('h4');rubrik.textContent='GIFT JAR \u00b7 VARJE MODELL SEPARAT';section.append(rubrik);Object.entries(GIFT_JAR_MODELS).forEach(([model,m])=>{let button=document.createElement('button');button.style.setProperty('--swatch',m.accent);let ikon=document.createElement('i');ikon.textContent=m.symbol;let text=document.createElement('span'),namn=document.createElement('b'),under=document.createElement('small');namn.textContent=m.label;under.textContent='Live gifts \u00b7 transparent';text.append(namn,under);button.append(ikon,text);button.dataset.jarModel=model;button.dataset.catalogKey='catalog:giftjar:'+model;/* Nyckeln skrivs EN gang och lases tillbaka ur knappen. Att upprepa strangen i create() gor att den publicerade nyckeln och den anvanda kan sara sig — ett prov vaktar just det. */button.onclick=()=>{let created=VyraWidgets.create(button.dataset.catalogKey);state.widgets.push(created);selected=created.id;save();render();toast(m.label+' skapad')};section.append(button)});catalog.prepend(section)};
 
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebrations]')){let css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261012-1';css.dataset.mvpCelebrations='1';document.head.append(css)}let js=document.createElement('script');js.src='battle-mvp-celebrations.js?v=20261012-1';document.body.append(js)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebrations]')){let css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261018-1';css.dataset.mvpCelebrations='1';document.head.append(css)}let js=document.createElement('script');js.src='battle-mvp-celebrations.js?v=20261012-1';document.body.append(js)});
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261018-1','gift-fireworks.js?v=20261018-1','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261018-1'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261018-1','gift-fireworks.js?v=20261018-2','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261018-1'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
@@ -1729,7 +1743,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261017-podium7';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261017-katalog3'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261018-1'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });

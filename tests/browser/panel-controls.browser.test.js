@@ -129,8 +129,11 @@ const FALL = [
   // panel-inga-dubbletter-provet fallde som en dubblett.
   { namn: 'TOP LIKES', typ: 'templateTopLike', kontroll: 'vtOutline', nyckel: 'textOutlineWidth' },
   { namn: 'LikeFountain', typ: 'templateLikeFountain', kontroll: 'fountainSize', nyckel: 'fountainSize' },
-  { namn: 'TOP GIFT · Bredd', typ: 'templateTopGift', kontroll: 'propWidth', nyckel: 'width' },
-  { namn: 'TOP LIKES · Bredd', typ: 'templateTopLike', kontroll: 'propWidth', nyckel: 'width' },
+  // Sedan 2026-10-18 ar Bredd skrivskyddad for fardiga kompositioner (Top Gift, Top Likes): den visar
+  // den ritade ladan och Storlek ar den enda storlekskontrollen (vyra-proportioner.js). Live-vagen for
+  // #propWidth provas darfor pa de widgetar dar bredden ar ett riktigt matt — egen bild och egen video.
+  { namn: 'Egen bild · Bredd', typ: 'templateCustomImage', kontroll: 'propWidth', nyckel: 'width', extra: { aspectLocked: false } },
+  { namn: 'Egen video · Bredd', typ: 'templateCustomVideo', kontroll: 'propWidth', nyckel: 'width', extra: { aspectLocked: false } },
   // Femte bindaren: num() i media.js, en tredje parametervariant av samma kropp. Reglagen byggs
   // bara nar en MVP-ram ar vald, sa utan `extra` finns kontrollen inte och testet blir tyst gront.
   //

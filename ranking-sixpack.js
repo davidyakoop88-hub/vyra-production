@@ -224,7 +224,11 @@
     // skala, och handtagets dragning hoppade tillbaka vid nästa render(). En zoom, en sanning.
     const l = lasbarhet(id, antal(w), skalaFor(w));
     open = open.replace(/style="([^"]*)"/, (_, st) => {
-      const utan = st.replace(/(^|;)\s*zoom:[^;]*;?/g, '$1');
+      // --tc-scale/--tp-scale följer med från topcoins-v2/toppoints-v2 men läses inte längre av
+      // någon regel (klasserna är borta). Kvar i stilen fick de VyraTransform.satSkala att skriva
+      // variabeln i stället för zoomen: under handtagsdraget syntes ingenting och widgeten hoppade
+      // vid släppet (Royal Rose 65 px, verifieringen 2026-10-18).
+      const utan = st.replace(/(^|;)\s*(?:zoom|--tc-scale|--tp-scale):[^;]*;?/g, '$1');
       return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${l.z};--rk6-mot:${+(1 / l.z).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
     });
     if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');

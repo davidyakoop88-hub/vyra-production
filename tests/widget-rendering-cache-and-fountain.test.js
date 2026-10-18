@@ -177,7 +177,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
   // Bumpad 2026-10-17 (-2): TikTok-rutan visar e-postkravet som steg 1 och låser steg 2 (#connectModal
   // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
-  assert.match(studio, /studio\.css\?v=20261018-13/);
+  // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
+  assert.match(studio, /studio\.css\?v=20261019-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -205,10 +206,15 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
   assert.match(studio, /stage-background\.js\?v=2/);
-  assert.match(studio, /vyra-rotation\.js\?v=20260820-1/);
-  assert.match(studio, /vyra-proportioner\.js\?v=20261017-1/);
+  // Bumpad 2026-10-18: ingen strackning langre (widgetScaleY migreras), generisk zoom, ny proportionslogik.
+  // 20261019-1: Top Coins Halo/Signal Orbit — transformskalan komponeras in i rotationen (cssSkala).
+  assert.match(studio, /vyra-rotation\.js\?v=20261019-1/);
+  assert.match(studio, /vyra-proportioner\.js\?v=20261018-2/);
   // Bumpad 2026-09-20: resize-handtagen klamper bredden sa att hela widgeten ryms pa duken.
-  assert.match(studio, /widget-handles\.js\?v=20260926-fri/);
+  // Bumpad 2026-10-18: alla handtag skalar fasta kompositioner likformigt, laset galler text/media.
+  // -2 (verifieringen samma dag): forankring ur ladan, motzoomade handtag, panelens Bredd/Hojd skalar.
+  // 20261019-1: motzoomen raknar med rotens transformskala (Top Coins Halo/Signal Orbit).
+  assert.match(studio, /widget-handles\.js\?v=20261019-1/);
     // Bumpad 2026-08-20 for toppgivarraden: media.js bar laddvagen till home-premium-bunten, och
   // overview-premium.css/.js laddades HELT UTAN version pa bada stallena — en cachad kopia hade
   // fortsatt visa de fyra gamla summakorten. Nu bar de ?v=20260820-1, och media.js sjalv maste
@@ -452,13 +458,13 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
-  assert.match(media, /custom-widgets\.js\?v=20260818-panel-live/);
+  assert.match(media, /custom-widgets\.js\?v=20261018-1/);
   // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
   // Classics och panelen ar ororda och behaller sina tidigare versioner.
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
   // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
-  assert.match(media, /gift-fireworks\.js\?v=20261018-1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
+  assert.match(media, /gift-fireworks\.js\?v=20261018-2/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   // 2026-10-18: ett fyrverkeri i taget — motorerna fick toppen(), triggern release/tempo.
   assert.match(media, /gift-natural-engine\.js\?v=20261018-1/);
   assert.match(media, /gift-supernova-engine\.js\?v=20261018-1/);

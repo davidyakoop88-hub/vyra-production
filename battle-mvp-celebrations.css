@@ -6,7 +6,7 @@
 .mvp-celebration .mvc-art img{display:block;width:100%;height:100%;object-fit:contain}
 .mvp-celebration .mvc-art-left{clip-path:inset(0 50% 0 0)}
 .mvp-celebration .mvc-art-right{clip-path:inset(0 0 0 50%)}
-.mvp-celebration .mvc-portrait{position:absolute;left:calc(var(--mvc-photo-left,29%) + var(--mvc-photo-width,42%)/2);top:calc(var(--mvc-photo-top,24%) + var(--mvc-photo-height,42%)/2);width:var(--mvc-photo-width,42%);height:var(--mvc-photo-height,42%);transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;z-index:2;background:radial-gradient(circle,#292236,#0b0912)}
+.mvp-celebration .mvc-portrait{position:absolute;left:calc(var(--mvc-photo-left,29%) + var(--mvc-photo-width,42%)/2);top:calc(var(--mvc-photo-top,24%) + var(--mvc-photo-height,42%)/2);width:min(var(--mvc-photo-width,42%),var(--mvc-photo-height,42%));height:auto;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;z-index:2;background:radial-gradient(circle,#292236,#0b0912)}
 .mvp-celebration .mvc-portrait img{width:100%;height:100%;object-fit:cover;display:block}
 .mvp-celebration .mvc-copy{position:absolute;left:12%;right:12%;top:var(--mvc-copy-y,86%);z-index:5;text-align:center;color:var(--mvc-b);text-shadow:0 2px 5px #000,0 0 12px #000}
 .mvp-celebration .mvc-copy small{display:block;font:700 clamp(10px,5cqw,26px)/1.2 Georgia,serif;letter-spacing:.3em;padding-left:.3em}
@@ -352,7 +352,11 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 @keyframes mvc-wing-signature-left{0%,7%{opacity:0;left:12%;top:36%;transform:rotate(-28deg) scaleY(.4)}9.5%{opacity:.9}13.5%{opacity:.75;left:21%;top:43%;transform:rotate(-10deg) scaleY(.65)}17%,100%{opacity:0;left:24%;top:46%;transform:scaleY(.15)}}
 @keyframes mvc-wing-signature-right{0%,7%{opacity:0;left:84%;top:36%;transform:rotate(28deg) scaleY(.4)}9.5%{opacity:.9}13.5%{opacity:.75;left:75%;top:43%;transform:rotate(10deg) scaleY(.65)}17%,100%{opacity:0;left:72%;top:46%;transform:scaleY(.15)}}
 /* Two opposing rim arcs converge at the top of the portrait opening. */
-.mvc-energy-arc{left:calc(var(--mvc-photo-left) - 1.5%);top:calc(var(--mvc-photo-top) - 1.5%);width:calc(var(--mvc-photo-width) + 3%);height:calc(var(--mvc-photo-height) + 3%);border:2px solid transparent;border-radius:50%;box-sizing:border-box}
+/* PROFILBILDEN AR EN CIRKEL (verifieringen 2026-10-18). Halet i konstverken ar uppmatt som en ellips
+   (Kroningen 51,83 x 47,05 %, Lavendelmane 72,57 x 65,39 %), och portratten ritades rakt i den: 4-11 %
+   ovala i alla storlekar. .mvc-portrait (rad 9) har halets minsta matt som diameter och samma mitt —
+   scenen ar kvadratisk (aspect-ratio:1), sa bredd- och hojdprocent ar samma langd. Bagen foljer cirkeln. */
+.mvc-energy-arc{--mvc-d:calc(min(var(--mvc-photo-width),var(--mvc-photo-height)) + 3%);left:calc(var(--mvc-photo-left) + var(--mvc-photo-width)/2 - var(--mvc-d)/2);top:calc(var(--mvc-photo-top) + var(--mvc-photo-height)/2 - var(--mvc-d)/2);width:var(--mvc-d);height:var(--mvc-d);border:2px solid transparent;border-radius:50%;box-sizing:border-box}
 .mvc-energy-cyan{border-top-color:#afffff;border-left-color:#43dfee;filter:drop-shadow(0 0 3px #3de8f0)}
 .mvc-energy-coral{border-top-color:#ffe2b1;border-right-color:#ff944e;filter:drop-shadow(0 0 3px #ff9048)}
 .mvc-energy-meeting{left:50%;top:19%;width:5%;height:5%;border-radius:50%;background:radial-gradient(circle,#fff8e8,#ffe4ad66 20%,transparent 65%);transform:translate(-50%,-50%)}

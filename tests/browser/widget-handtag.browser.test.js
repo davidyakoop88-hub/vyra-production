@@ -7,9 +7,9 @@
 //
 // KONTRAKTET som det har provet later:
 //   * atta handtag pa den valda widgeten, markta `data-vyra-handle` med vaderstrecken
-//   * vanster/hoger andrar `w.width`; hoger vaxer at hoger, vanster haller hogerkanten stilla
-//   * upp/ned andrar `w.widgetScaleY` (transform:scaleY); ned haller overkanten stilla,
-//     upp haller underkanten stilla
+//   * alla handtag skalar en fast komposition LIKFORMIGT (`w.widgetScale`) sedan 2026-10-18 —
+//     aldrig `w.width` per axel och aldrig `w.widgetScaleY` (transform:scaleY)
+//   * hoger haller vansterkanten stilla, vanster hogerkanten, ned overkanten, upp underkanten
 //   * rorelsen delas med kanvasskalan — samma dragning ska ge samma resultat vid zoom 1 och 0.5
 //
 // VARFOR RIKTIG WEBBLASARE: allt harinne ar getBoundingClientRect och riktiga pekarhandelser.
@@ -187,98 +187,105 @@ test('handtagen sitter pa widgetens kanter och horn', { skip }, async () => {
   assert.equal(fel.length, 0, 'handtag pa fel plats: ' + fel.join(' | '));
 });
 
-test('hoger handtag andrar bredden och haller vansterkanten stilla', { skip }, async () => {
+// ÄNDRAT 2026-10-18 — SIDHANDTAGEN SKALAR LIKFORMIGT. Proven nedan krävde förr att höger/vänster
+// ändrade `w.width` och att upp/ned skrev `w.widgetScaleY` (transform:scaleY). Det var avsiktligt
+// då (Davids beslut 2026-08-13: sträckning hellre än riktig höjd i 30 renderare). Davids beslut
+// 2026-10-18 är det motsatta: inget innehåll får sträckas av misstag — granskningen mätte 173 av 173
+// katalogmodeller som kunde få skilda X/Y-skalor, även med låset på. Top Gift är en fast komposition,
+// så varje handtag skalar nu hela widgeten likformigt (w.widgetScale). KANTKONTRAKTET ÄR DETSAMMA:
+// höger håller vänsterkanten, vänster högerkanten, ned överkanten, upp underkanten.
+const visning = (page, i) => page.evaluate(id => {
+  const w = state.widgets.find(x => x.id === id), r = document.querySelector('.widget.selected').getBoundingClientRect();
+  return { skala: w.widgetScale || 1, bredd: w.width, sy: w.widgetScaleY, v: r.left, h: r.right, o: r.top, u: r.bottom,
+    rb: r.width, rh: r.height, transform: getComputedStyle(document.querySelector('.widget.selected')).transform };
+}, i);
+
+function likformig(fore, efter) {
+  assert.equal(efter.sy, undefined, `widgetScaleY skrevs (${efter.sy}) — sträckningen är tillbaka`);
+  assert.ok(!/matrix\((?!1, 0, 0, 1)/.test(efter.transform), `roten fick en transform: ${efter.transform}`);
+  assert.equal(efter.bredd, fore.bredd, `w.width ändrades ${fore.bredd} -> ${efter.bredd} — handtaget ska skala, inte bredda`);
+  const k0 = fore.rb / fore.rh, k1 = efter.rb / efter.rh;
+  assert.ok(Math.abs(k1 / k0 - 1) < 0.02, `formen ändrades: ${k0.toFixed(3)} -> ${k1.toFixed(3)}`);
+}
+
+test('hoger handtag skalar hela widgeten och haller vansterkanten stilla', { skip }, async () => {
   const { page, id } = await editorMedWidget();
-  const fore = await page.evaluate(i => ({ bredd: state.widgets.find(w => w.id === i).width,
-    v: document.querySelector('.widget.selected').getBoundingClientRect().left }), id);
+  const fore = await visning(page, id);
   await dra(page, 'e', 70, 0);
-  const efter = await page.evaluate(i => ({ bredd: state.widgets.find(w => w.id === i).width,
-    v: document.querySelector('.widget.selected').getBoundingClientRect().left }), id);
+  const efter = await visning(page, id);
   await page.close();
-  assert.ok(efter.bredd > fore.bredd + 40,
-    `bredden gick fran ${fore.bredd} till ${efter.bredd} — dragningen pa 70 px bet inte`);
-  // TOLERANSEN HOJD FRAN 2 TILL 5 PX 2026-08-13, och skalet ar mekanismen — inte att koden
-  // blivit samre. Draget ar en RIKTIG pekarsekvens (mouse.move i steg + pointer capture), och
-  // var den landar pa subpixelniva varierar mellan maskiner. Lokalt: gront 3 av 3. Pa CI:
-  // -3 px en gang. Kontraktet ar oforandrat — vansterkanten ska sta stilla nar man drar i
-  // hoger handtag — men 2 px matte pekarens precision lika mycket som widgetens beteende.
-  // En verklig regression har skulle flytta kanten med tiotals pixlar, inte tre.
+  assert.ok(efter.skala > fore.skala + 0.1, `skalan gick fran ${fore.skala} till ${efter.skala} — dragningen pa 70 px bet inte`);
+  likformig(fore, efter);
+  // TOLERANSEN 5 PX (2026-08-13): draget ar en RIKTIG pekarsekvens och var den landar pa
+  // subpixelniva varierar mellan maskiner. En verklig regression flyttar kanten tiotals pixlar.
   assert.ok(Math.abs(efter.v - fore.v) <= 5,
     `vansterkanten flyttade sig ${Math.round(efter.v - fore.v)} px, den ska sta stilla`);
 });
 
 // STORRE AN DUKEN AR TILLATET sedan 2026-09-26. Davids ord: "om jag vill gora den stor widget
-// och lite hamnar utanfor den ska inte vara problem". Handtaget klampade forr bredden sa att
-// hogerkanten aldrig passerade dukens.
-test('hoger handtag kan gora widgeten bredare an duken', { skip }, async () => {
-  const { page, id } = await editorMedWidget();
+// och lite hamnar utanfor den ska inte vara problem". Matt i synliga pixlar mot dukens kant.
+test('hoger handtag kan gora widgeten storre an duken', { skip }, async () => {
+  const { page } = await editorMedWidget();
   await dra(page, 'e', 700, 0);
-  const m = await page.evaluate(i => {
-    const w = state.widgets.find(x => x.id === i), el = document.querySelector('.widget.selected');
-    const d = window.VyraGrans.dukFor(el);
-    return { x: w.x, bredd: w.width, dukBredd: d.bredd };
-  }, id);
+  const m = await page.evaluate(() => ({
+    hoger: document.querySelector('.widget.selected').getBoundingClientRect().right,
+    duk: document.querySelector('.editor-shell .canvas').getBoundingClientRect().right }));
   await page.close();
-  assert.ok(m.x + m.bredd > m.dukBredd + 50,
-    `hogerkanten stannade pa ${m.x + m.bredd} i en ${Math.round(m.dukBredd)} bred duk — handtaget klampar fortfarande`);
+  assert.ok(m.hoger > m.duk + 50,
+    `hogerkanten stannade pa ${Math.round(m.hoger)} mot dukens ${Math.round(m.duk)} — handtaget klampar fortfarande`);
 });
 
-test('vanster handtag andrar bredden och haller hogerkanten stilla', { skip }, async () => {
+test('vanster handtag skalar hela widgeten och haller hogerkanten stilla', { skip }, async () => {
   const { page, id } = await editorMedWidget();
-  const fore = await page.evaluate(i => ({ bredd: state.widgets.find(w => w.id === i).width,
-    h: document.querySelector('.widget.selected').getBoundingClientRect().right }), id);
+  const fore = await visning(page, id);
   await dra(page, 'w', -70, 0);
-  const efter = await page.evaluate(i => ({ bredd: state.widgets.find(w => w.id === i).width,
-    h: document.querySelector('.widget.selected').getBoundingClientRect().right }), id);
+  const efter = await visning(page, id);
   await page.close();
-  assert.ok(efter.bredd > fore.bredd + 40,
-    `bredden gick fran ${fore.bredd} till ${efter.bredd} vid drag at vanster`);
+  assert.ok(efter.skala > fore.skala + 0.1, `skalan gick fran ${fore.skala} till ${efter.skala} vid drag at vanster`);
+  likformig(fore, efter);
   assert.ok(Math.abs(efter.h - fore.h) <= 3,
     `hogerkanten flyttade sig ${Math.round(efter.h - fore.h)} px, den ska sta stilla`);
 });
 
-test('nedre handtag strackar lodratt och haller overkanten stilla', { skip }, async () => {
+test('nedre handtag skalar likformigt — ingen widgetScaleY — och haller overkanten stilla', { skip }, async () => {
   const { page, id } = await editorMedWidget();
-  const fore = await page.evaluate(i => ({ sy: state.widgets.find(w => w.id === i).widgetScaleY || 1,
-    o: document.querySelector('.widget.selected').getBoundingClientRect().top }), id);
+  const fore = await visning(page, id);
   await dra(page, 's', 0, 60);
-  const efter = await page.evaluate(i => ({ sy: state.widgets.find(w => w.id === i).widgetScaleY || 1,
-    o: document.querySelector('.widget.selected').getBoundingClientRect().top }), id);
+  const efter = await visning(page, id);
   await page.close();
-  assert.ok(efter.sy > fore.sy + 0.1,
-    `widgetScaleY gick fran ${fore.sy} till ${efter.sy} — strackningen bet inte`);
+  assert.ok(efter.skala > fore.skala + 0.1, `skalan gick fran ${fore.skala} till ${efter.skala} — draget bet inte`);
+  likformig(fore, efter);
   assert.ok(Math.abs(efter.o - fore.o) <= 2,
     `overkanten flyttade sig ${Math.round(efter.o - fore.o)} px, den ska sta stilla`);
 });
 
-test('ovre handtag strackar lodratt och haller underkanten stilla', { skip }, async () => {
+test('ovre handtag skalar likformigt — ingen widgetScaleY — och haller underkanten stilla', { skip }, async () => {
   const { page, id } = await editorMedWidget();
-  const fore = await page.evaluate(i => ({ sy: state.widgets.find(w => w.id === i).widgetScaleY || 1,
-    u: document.querySelector('.widget.selected').getBoundingClientRect().bottom }), id);
+  const fore = await visning(page, id);
   await dra(page, 'n', 0, -60);
-  const efter = await page.evaluate(i => ({ sy: state.widgets.find(w => w.id === i).widgetScaleY || 1,
-    u: document.querySelector('.widget.selected').getBoundingClientRect().bottom }), id);
+  const efter = await visning(page, id);
   await page.close();
-  assert.ok(efter.sy > fore.sy + 0.1,
-    `widgetScaleY gick fran ${fore.sy} till ${efter.sy} vid drag uppat`);
+  assert.ok(efter.skala > fore.skala + 0.1, `skalan gick fran ${fore.skala} till ${efter.skala} vid drag uppat`);
+  likformig(fore, efter);
   assert.ok(Math.abs(efter.u - fore.u) <= 3,
     `underkanten flyttade sig ${Math.round(efter.u - fore.u)} px, den ska sta stilla`);
 });
 
 // Fallan fran PR #158–#163: en hanterare som glommer kanvasskalan ger olika resultat vid olika
-// zoom. Uppmatt da: 1.45 vid skala 1 mot 1.56 vid 0.5. Samma dragning maste ge samma widgetmatt.
-test('samma dragning ger samma bredd vid kanvasskala 1 och 0.5', { skip }, async () => {
+// zoom. Uppmatt da: 1.45 vid skala 1 mot 1.56 vid 0.5. Samma dragning maste ge samma skala.
+test('samma dragning ger samma skala vid kanvasskala 1 och 0.5', { skip }, async () => {
   const matt = [];
   for (const skala of [1, 0.5]) {
     const { page, id } = await editorMedWidget(skala);
-    const fore = await page.evaluate(i => state.widgets.find(w => w.id === i).width, id);
-    await dra(page, 'e', 80 * skala, 0);   // lika lang rorelse i WIDGETENS koordinater
-    const efter = await page.evaluate(i => state.widgets.find(w => w.id === i).width, id);
+    const fore = await page.evaluate(i => state.widgets.find(w => w.id === i).widgetScale || 1, id);
+    await dra(page, 'e', 80 * skala, 0);   // lika lang rorelse i DUKENS koordinater
+    const efter = await page.evaluate(i => state.widgets.find(w => w.id === i).widgetScale || 1, id);
     await page.close();
     matt.push({ skala, delta: efter - fore });
   }
   const [a, b] = matt;
-  assert.ok(Math.abs(a.delta - b.delta) <= 6,
-    `breddandringen blev ${a.delta} px vid skala 1 men ${b.delta} px vid 0.5 — `
+  assert.ok(a.delta > 0.1, `kontrollmatning: draget bet inte vid skala 1 (${a.delta})`);
+  assert.ok(Math.abs(a.delta - b.delta) <= 0.02,
+    `skalandringen blev ${a.delta.toFixed(3)} vid skala 1 men ${b.delta.toFixed(3)} vid 0.5 — `
     + 'hanteraren delar inte rorelsen med kanvasskalan');
 });

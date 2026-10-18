@@ -1,24 +1,21 @@
 'use strict';
 // Las proportioner + H-falt (Etapp 5, tredje punkten i minimum-trion).
 //
-// Fas A mätte varfor ett GLOBALT las var omojligt: 17 aspect-ratio-regler i studio.css och 53
-// ramar via --fa ager redan hojden for vissa widgets. Ett globalt las hade antingen ignorerats
-// av CSS eller krävt att de reglerna revs ut. Darav fyra klasser, var och en med eget beteende:
+// TRE KLASSER sedan 2026-10-18 — samma som handtagen (VyraTransform.klass):
 //
-//   css     Top Gift + varianter — .vyra-topgift har aspect-ratio. H skrivskyddat.
-//   frame   giftFrame/streakFrame/mvpFrame satt — --fa ur ramdata. H skrivskyddat.
-//   media   templateCustomImage/-Video — last som DEFAULT.
-//   content allt annat — olast som default, H vaxer med innehallet.
+//   media   templateCustomImage/-Video — last som DEFAULT, kvoten ur ladan.
+//   content egen text — olast som default, H och W fria, laset valbart.
+//   fast    allt annat (Top Like, Top Gift, Battle MVP med ram, Guardian ...). Bredd och Hojd visar
+//           den RITADE ladan och en andring blir en likformig skala; laset visas alltid last och
+//           gar inte att toggla, eftersom handtagen, Bredd, Hojd och Storlek alla haller formen.
 //
-// Kedjelaset visas bara for de tva sista: dar det ar CSS eller ramdata som ager hojden finns
-// ingenting att toggla, och en knapp som inte gor nagot ar precis den sortens UI-logn Etapp 4
-// stangde.
+// Fore 2026-10-18 hade panelen fyra klasser (css/frame skrivskyddade, content lasbar) och skrev
+// w.width/w.height pa fasta kompositioner. Verifieringen i riktig Chrome matte att laset tog kvoten
+// ur profilbilden (1:1) och att Bredd saknade verkan i 40 av 173 katalogmodeller — se
+// vyra-proportioner.js. Proven nedan galler det nya kontraktet.
 //
-// aspectRatio fangas NAR laset slas pa, ur elementets faktiska matt. mediaMeta bar bara
-// {name,id} — filens naturliga dimensioner finns inte i state (matt 2026-08-09), sa "las mot
-// filens ratio" maste lasa den renderade noden.
-//
-// ROTT NU: inget H-falt, inget kedjelas, ingen aspectLocked.
+// aspectRatio fangas NAR laset slas pa, ur ladans matt. mediaMeta bar bara {name,id} — filens
+// naturliga dimensioner finns inte i state (matt 2026-08-09).
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), http = require('http'), fs = require('fs');
 
@@ -81,7 +78,8 @@ async function panelenFor(widget) {
 // width 150, inte 300: sedan 2026-09-20 klamper widget-grans.js panelens Bredd-falt sa att hela
 // widgeten ryms pa duken (432 - x). Proven nedan dubblar bredden, och 2 x 300 = 600 pa x=40 hade
 // klamts till 392 - da hade de matt gransen i stallet for proportionslaset. 2 x 150 = 300 ryms.
-const INNEHALL = { id: 'p1', type: 'templateTopLike', x: 40, y: 40, width: 150, likeCount: 5 };
+const INNEHALL = { id: 'p1', type: 'templateCustomText', x: 40, y: 40, width: 150, height: 60, customText: 'Hej' };
+const FAST = { id: 'p5', type: 'templateTopLike', x: 40, y: 40, width: 150, likeCount: 5 };
 const MEDIA = { id: 'p2', type: 'templateCustomImage', x: 40, y: 40, width: 300,
   mediaMeta: { id: 'demo', name: 'demo.png' } };
 const CSSLAST = { id: 'p3', type: 'templateTopGift', x: 40, y: 40, width: 300 };
@@ -204,20 +202,44 @@ test('olast: W och H andras oberoende', { skip, timeout: 90000 }, async () => {
   } finally { await page.close() }
 });
 
-// ---- Prov 7 · aspektstyrda: inget las, skrivskyddat H -----------------------------------------
-test('aspektstyrda widgets har skrivskyddat H och inget kedjelas', { skip, timeout: 120000 }, async () => {
+// ---- Prov 7 · fasta kompositioner: alltid last, Bredd/Hojd visar det ritade --------------------
+test('fasta kompositioner: laset ar alltid pa, Bredd/Hojd visar ritad storlek och Storlek skalar likformigt', { skip, timeout: 160000 }, async () => {
   const fel = [];
-  for (const [namn, w, kalla] of [['css-last (Top Gift)', CSSLAST, 'css'], ['ramad (Battle MVP)', RAMAD, 'frame']]) {
+  for (const [namn, w] of [['Top Like', FAST], ['css-last (Top Gift)', CSSLAST], ['ramad (Battle MVP)', RAMAD]]) {
     const page = await panelenFor(w);
     try {
-      const m = await page.evaluate(FALT);
-      if (m.hojdSkrivskyddad !== true) fel.push(`${namn}: H-faltet ska vara disabled — ar ${m.hojdSkrivskyddad}`);
-      if (!m.hojdTitle) fel.push(`${namn}: H-faltet ska forklara varfor det ar last (title-attribut)`);
-      if (m.kedjelasSynlig) fel.push(`${namn}: kedjelaset ska vara DOLT — har finns inget att toggla`);
-      if (m.kalla !== kalla) fel.push(`${namn}: data-aspect-source ska vara "${kalla}", ar "${m.kalla}"`);
+      const m = await page.evaluate(async id => {
+        const el = () => document.querySelector(`.editor-shell .canvas [data-id="${id}"]`) || document.querySelector(`.canvas [data-id="${id}"]`);
+        const vis = () => { const z = parseFloat(getComputedStyle(el()).zoom) || 1; return { b: el().offsetWidth * z, h: el().offsetHeight * z }; };
+        const knapp = document.querySelector('[data-aspect-lock]');
+        const wf = document.querySelector('#propWidth'), hf = document.querySelector('#propHeight');
+        const fore = vis(), falt = { b: +wf.value, h: +hf.value, bDis: wf.disabled, hDis: hf.disabled };
+        const w0 = JSON.parse(JSON.stringify(state.widgets[0]));
+        if (knapp) knapp.click();
+        // ett skript som anda skickar en andring far inte skriva w.width
+        wf.disabled = false; wf.value = String(Math.round(falt.b * 2));
+        wf.dispatchEvent(new Event('input', { bubbles: true })); wf.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 300));
+        const efterFalt = JSON.parse(JSON.stringify(state.widgets[0]));
+        const s = document.querySelector('#propScale');
+        s.value = '130'; s.dispatchEvent(new Event('input', { bubbles: true })); s.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 500));
+        const efter = vis();
+        return { kalla: document.querySelector('[data-aspect-source]')?.dataset.aspectSource, disabled: knapp && knapp.disabled,
+          pressed: knapp && knapp.getAttribute('aria-pressed'), fore, falt, efter, w0, efterFalt, w1: JSON.parse(JSON.stringify(state.widgets[0])),
+          faltEfter: { b: +document.querySelector('#propWidth').value, h: +document.querySelector('#propHeight').value } };
+      }, w.id);
+      if (m.kalla !== 'fast') fel.push(`${namn}: data-aspect-source ${m.kalla}`);
+      if (m.disabled !== true || m.pressed !== 'true') fel.push(`${namn}: laset ska visas last och inte ga att toggla`);
+      if (!m.falt.bDis || !m.falt.hDis) fel.push(`${namn}: Bredd/Hojd ska vara skrivskyddade (en storleksfrihet, en kontroll: Storlek)`);
+      if (Math.abs(m.falt.b - m.fore.b) > 1 || Math.abs(m.falt.h - m.fore.h) > 1) fel.push(`${namn}: falten ${m.falt.b}x${m.falt.h} mot ritat ${m.fore.b.toFixed(0)}x${m.fore.h.toFixed(0)}`);
+      if (m.efterFalt.width !== m.w0.width || m.efterFalt.height !== m.w0.height || m.efterFalt.widgetScale !== m.w0.widgetScale) fel.push(`${namn}: en andring i Bredd-faltet slapp igenom`);
+      if (m.w1.width !== m.w0.width || m.w1.height !== m.w0.height) fel.push(`${namn}: w.width/w.height andrades`);
+      if (Math.abs(m.efter.b / m.fore.b - 1.3) > 0.02 || Math.abs(m.efter.h / m.fore.h - 1.3) > 0.03) fel.push(`${namn}: Storlek 130 %: X ${(m.efter.b / m.fore.b).toFixed(3)} Y ${(m.efter.h / m.fore.h).toFixed(3)}`);
+      if (Math.abs(m.faltEfter.b - m.efter.b) > 1 || Math.abs(m.faltEfter.h - m.efter.h) > 1) fel.push(`${namn}: falten efter Storlek ${m.faltEfter.b}x${m.faltEfter.h}, ritat ${m.efter.b.toFixed(0)}x${m.efter.h.toFixed(0)}`);
     } finally { await page.close() }
   }
-  assert.deepEqual(fel, [], 'aspektstyrda widgets:\n  ' + fel.join('\n  '));
+  assert.deepEqual(fel, [], 'fasta kompositioner:' + String.fromCharCode(10) + fel.join(String.fromCharCode(10)));
 });
 
 // ---- Prov 8 · defaultlagen -------------------------------------------------------------------
@@ -225,7 +247,7 @@ test('media ar last som default, innehallsstyrd ar olast', { skip, timeout: 1200
   const fel = [];
   for (const [namn, w, vantatLast, kalla] of [
     ['media (bild)', MEDIA, true, 'media'],
-    ['innehallsstyrd (Top Likes)', INNEHALL, false, 'content'],
+    ['egen text', INNEHALL, false, 'content'],
   ]) {
     const page = await panelenFor(w);
     try {

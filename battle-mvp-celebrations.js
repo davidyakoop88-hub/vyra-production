@@ -160,7 +160,7 @@
     });
   };
   if(!document.querySelector('link[data-mvp-celebrations]')){
-    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261012-1';css.dataset.mvpCelebrations='1';document.head.append(css);
+    const css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261018-1';css.dataset.mvpCelebrations='1';document.head.append(css);
   }
   if(!document.querySelector('script[data-mvp-particles]')){
     const js=document.createElement('script');js.src='battle-mvp-particles.js?v=20260930-signature5';

@@ -81,6 +81,10 @@ async function editorMedWidget(katalognyckel, extra) {
     Object.assign(w, extra || {});
     state.widgets.push(w);
     selected = w.id;
+    // Provet mater ramen, inte passningen for nya widgetar: sedan 2026-10-18 skalas en NY fast
+    // komposition som blir storre an duken ned likformigt (widget-grans.js flyttaIn), och Top Like
+    // pa skala 1,5 med ram ar hogre an 768. Det hade andrat skalan mellan fore- och eftermatningen.
+    if (window.VyraGrans && window.VyraGrans.slappNy) window.VyraGrans.slappNy(w.id);
     render();
     return w.id;
   }, [katalognyckel, extra || null]);

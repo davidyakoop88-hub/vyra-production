@@ -872,17 +872,24 @@ test('Markup: bildlådan bär sitt eget höjdförhållande', () => {
   }
 });
 
-test('Markup: avatarhålet står där det mättes i bilden', () => {
+test('Markup: profilbilden är en cirkel inskriven i hålet som mättes i bilden', () => {
+  // Hålet är uppmätt i procent av bildens bredd OCH höjd, och i alla fyra stegen är det 4-7 %
+  // ovalt (steg 3: 43,52 mot 41,01 bredd-enheter). Ritat rakt av blev profilbilden oval i varje
+  // storlek (verifieringen 2026-10-18). Cirkeln har hålets minsta mått som diameter och samma mitt.
   const { STEG } = require('./helpers/guardian-emblem-fas-register.js');
-  for (const steg of ['1', '3']) {
+  for (const steg of ['1', '2', '3', '4']) {
     const { lada } = boot([geWidget('geb' + steg, { guardianStep: Number(steg) })]);
     const hal = lada('geb' + steg).querySelector('.ge-bild .ge-avatar');
     assert.ok(hal, `steg ${steg}: avatarhålet ligger inte inuti bildlådan`);
-    const c = STEG[steg].circle;
-    assert.equal(hal.style.left, c.left + '%', `steg ${steg}: fel vänsterkant`);
-    assert.equal(hal.style.top, c.top + '%', `steg ${steg}: fel överkant`);
-    assert.equal(hal.style.width, c.width + '%', `steg ${steg}: fel bredd`);
-    assert.equal(hal.style.height, c.height + '%', `steg ${steg}: fel höjd`);
+    const c = STEG[steg].circle, a = STEG[steg].aspect;
+    const l = parseFloat(hal.style.left), t = parseFloat(hal.style.top), b = parseFloat(hal.style.width), h = parseFloat(hal.style.height);
+    // i bredd-enheter: bredden b, höjden h·a — lika = rund på skärmen
+    assert.ok(Math.abs(b - h * a) < 0.01, `steg ${steg}: ${b} mot ${(h * a).toFixed(3)} bredd-enheter — oval`);
+    assert.ok(Math.abs(b - Math.min(c.width, c.height * a)) < 0.01, `steg ${steg}: diametern är inte hålets minsta mått`);
+    assert.ok(Math.abs((l + b / 2) - (c.left + c.width / 2)) < 0.01, `steg ${steg}: mitten flyttade sig i sidled`);
+    assert.ok(Math.abs((t + h / 2) - (c.top + c.height / 2)) < 0.01, `steg ${steg}: mitten flyttade sig i höjdled`);
+    assert.ok(l >= c.left - 0.001 && t >= c.top - 0.001 && l + b <= c.left + c.width + 0.001 && t + h <= c.top + c.height + 0.001,
+      `steg ${steg}: cirkeln ryms inte i hålet`);
   }
 });
 
