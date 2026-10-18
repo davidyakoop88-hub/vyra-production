@@ -6,10 +6,14 @@ const { createDom, closeAll } = require('./helpers/dom-harness.js');
 
 test.afterEach(async () => { await new Promise(setImmediate); closeAll(); });
 
+/* fwLanes: 3 — ETT UTTRYCKLIGT VAL. Standard ar ett fyrverkeri i taget sedan 2026-10-18
+   (anvandarens beslut, gift-fireworks.js fwFiler). Proven har handlar om avsandarnas egna lager
+   BREDVID varandra, och det beteendet finns kvar for den som valt fler "Samtidiga fyrverkerier".
+   Standardfallet har egna prov i gift-fireworks-en-i-taget.test.js. */
 const widget = (id = 'fw1', extra = {}) => ({
   id, type: 'templateGiftFireworks', x: 10, y: 10, width: 360,
   fwMotion: 'magnetic', fwMin: 1, fwSpeed: .6, fwDuration: 5,
-  fwGiftSize: 110, fwExplosion: 100, fwDensity: 70, fwSound: false, ...extra
+  fwGiftSize: 110, fwExplosion: 100, fwDensity: 70, fwSound: false, fwLanes: 3, ...extra
 });
 function boot(widgets = [widget()]) {
   const h = createDom({ state: { widgets, projectName: 'personal-rockets' } });

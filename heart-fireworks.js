@@ -10,6 +10,21 @@
   const rnd=(a,b)=>a+Math.random()*(b-a), lerp=(a,b,t)=>a+(b-a)*t;
   const HEART_COLORS=['#4aa3ff','#49e06a','#ff4d4d','#ff7ab8','#ffd24a','#9a7bff'];
   const pick=()=>HEART_COLORS[(Math.random()*HEART_COLORS.length)|0];
+  /* TIDSLINJEN I fire(), utskriven en gång så att kön (heart-fireworks-session.js) kan räkna ut
+     TOPPEN — när nästa fyrverkeri får starta — ur samma tal som ritar (2026-10-18, användarens
+     beslut "ett fyrverkeri i taget, nästa startar efter cirka 3 s"):
+       HF_SPRIDNING_MS  hjärtraketerna skjuts upp jämnt fördelade över 1,9 s (+ upp till 60 ms)
+       HF_FLYG_MS       en raket stiger max(6, H/70) px per bildruta; högsta målet (24 % från
+                        toppen) nås efter ~54 bildrutor = 0,9 s vid 60 bilder/s
+       HF_UTSLAG_MS     hjärtat har vuxit ut och börjar falla (drag .986: 43 % av farten kvar efter 1 s)
+     Toppen = sista raketens uppskjutning + flygtid + utslag. Därefter tonar gnistorna ut i sin egen
+     takt (livslängd 66–110 bildrutor) medan nästa raket stiger. `tempo` (1–2) är köns uppsnabbning när
+     många gåvor väntar: spridningen och raketfarten skalas, utslaget inte. */
+  const HF_SPRIDNING_MS=1900,HF_SPRIDNING_SLUMP_MS=60,HF_FLYG_MS=900,HF_UTSLAG_MS=1000;
+  const hfTempo=v=>Math.min(2,Math.max(1,Number(v)||1));
+  function hfToppMs(combo,tempo){const c=Math.max(1,Math.min(100,Math.floor(Number(combo))||1)),t=hfTempo(tempo);
+    const sista=c===1?0:((Math.min(c,12)-1)/Math.min(c,12)*HF_SPRIDNING_MS+HF_SPRIDNING_SLUMP_MS)/t;
+    return Math.round(sista+HF_FLYG_MS/t+HF_UTSLAG_MS);}
   function anim(el,frames,opts){
     if(typeof el.animate==='function')return el.animate(frames,opts);
     const last=frames[frames.length-1]||{};if(last.transform!=null)el.style.transform=last.transform;if(last.opacity!=null)el.style.opacity=last.opacity;
@@ -43,13 +58,13 @@
       for(let i=0;i<66;i++){const a=rnd(0,Math.PI*2),sp=scale*rnd(0.35,0.8);spark(cx,cy,Math.cos(a)*sp,Math.sin(a)*sp*0.7,'#ffe6a6',rnd(1.6,2.4),rnd(120,175),0.06);}
       on();
     }
-    function rocket(tx,ty,onBurst){if(!ctx||typeof requestAnimationFrame!=='function'){onBurst&&onBurst();return;}rockets.push({x:tx,y:H+6,ty,onBurst});on();}
+    function rocket(tx,ty,onBurst,fart=1){if(!ctx||typeof requestAnimationFrame!=='function'){onBurst&&onBurst();return;}rockets.push({x:tx,y:H+6,ty,onBurst,fart});on();}
     function frame(){
       if(!ctx){raf=false;return;}
       ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
       for(let i=flashes.length-1;i>=0;i--){const f=flashes[i];f.life--;if(f.life<=0){flashes.splice(i,1);continue;}const a=f.life/f.max,rr=f.r*(1.7-a*0.7);const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,rr);g.addColorStop(0,f.color);g.addColorStop(0.5,f.color+'00');g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=a*0.92;ctx.fillStyle=g;ctx.beginPath();ctx.arc(f.x,f.y,rr,0,7);ctx.fill();}
       for(let i=rings.length-1;i>=0;i--){const r=rings[i];r.life--;if(r.life<=0){rings.splice(i,1);continue;}const pr=1-r.life/r.max,rad=r.r*(0.15+pr*1.0),a=r.life/r.max;ctx.globalAlpha=a*0.88;ctx.strokeStyle=r.color;ctx.lineWidth=Math.max(1,4*a);ctx.beginPath();ctx.arc(r.x,r.y,rad,0,7);ctx.stroke();}
-      for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.py=r.y;r.y-=Math.max(6,H/70);ctx.strokeStyle='#ffe9b0';ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r.x,r.py);ctx.lineTo(r.x,r.y);ctx.stroke();if(Math.random()<.6)spark(r.x+rnd(-1,1),r.y+rnd(2,8),rnd(-.3,.3),rnd(.4,1.2),'#ffd88a',rnd(1,1.8),rnd(10,20),0.02);if(r.y<=r.ty){rockets.splice(i,1);r.onBurst&&r.onBurst();}}
+      for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.py=r.y;r.y-=Math.max(6,H/70)*(r.fart||1);ctx.strokeStyle='#ffe9b0';ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r.x,r.py);ctx.lineTo(r.x,r.y);ctx.stroke();if(Math.random()<.6)spark(r.x+rnd(-1,1),r.y+rnd(2,8),rnd(-.3,.3),rnd(.4,1.2),'#ffd88a',rnd(1,1.8),rnd(10,20),0.02);if(r.y<=r.ty){rockets.splice(i,1);r.onBurst&&r.onBurst();}}
       for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.px=p.x;p.py=p.y;p.vx*=p.drag;p.vy=p.vy*p.drag+p.g;p.x+=p.vx;p.y+=p.vy;p.life--;if(p.life<=0){parts.splice(i,1);continue;}let a=Math.max(0,p.life/p.max);if(p.life<26)a*=(0.5+0.5*Math.random());ctx.strokeStyle=p.c;ctx.globalAlpha=a*0.30;ctx.lineWidth=p.s*3.6;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=a*0.7;ctx.lineWidth=p.s*1.9;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=Math.min(1,a*1.15);ctx.lineWidth=Math.max(0.8,p.s*0.8);ctx.strokeStyle='#fffbe8';ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();}
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
       if(parts.length||rockets.length||flashes.length||rings.length)requestAnimationFrame(frame);else raf=false;
@@ -59,12 +74,12 @@
       resize();if(!W||!H){W=W||320;H=H||569;}
       host.classList.add('hf-play');
       const c=Math.max(1,Math.min(100,o.combo||1));cf=(c-1)/99;
-      const S=Math.min(W,H);
-      if(c===1){rocket(W*0.5,H*0.44,()=>heartBurst(W*0.5,H*0.44,S*0.017*1.4,pick(),170));return;}
+      const S=Math.min(W,H),t=hfTempo(o.tempo);
+      if(c===1){rocket(W*0.5,H*0.44,()=>heartBurst(W*0.5,H*0.44,S*0.017*1.4,pick(),170),t);return;}
       const hearts=Math.min(c,12),perN=110;
-      if(o.gold&&c>=15)rocket(W*0.5,H*0.5,()=>chrysanthemum(W*0.5,H*0.5,S*(0.02+cf*0.006),'#ffe6a6'));
+      if(o.gold&&c>=15)rocket(W*0.5,H*0.5,()=>chrysanthemum(W*0.5,H*0.5,S*(0.02+cf*0.006),'#ffe6a6'),t);
       const spots=[[.26,.26],[.74,.24],[.16,.5],[.84,.52],[.36,.7],[.66,.7],[.5,.34],[.5,.82],[.22,.66],[.8,.66],[.4,.5],[.6,.46]];
-      for(let i=0;i<hearts;i++){const p=spots[i%spots.length];later(()=>rocket(W*p[0],H*p[1],()=>heartBurst(W*p[0],H*p[1],S*0.017*lerp(1.15,0.95,cf)*rnd(0.9,1.1),pick(),perN)),(i/hearts)*1900+rnd(0,60));}
+      for(let i=0;i<hearts;i++){const p=spots[i%spots.length];later(()=>rocket(W*p[0],H*p[1],()=>heartBurst(W*p[0],H*p[1],S*0.017*lerp(1.15,0.95,cf)*rnd(0.9,1.1),pick(),perN),t),((i/hearts)*HF_SPRIDNING_MS+rnd(0,HF_SPRIDNING_SLUMP_MS))/t);}
       if(o.showCombo&&c>1)comboBadge(W*0.5,H*0.13,c,S);
     }
     function previewStill(){ // static snapshot for catalog cards — synchronous canvas heart so it
@@ -119,7 +134,9 @@
 
   // ---------- catalog preview ----------
   function hfRenderPreview(host,w){if(!host)return;const ctrl=hostCtrl(host);ctrl.clear();host.style.setProperty('opacity','1','important');ctrl.previewStill();}
-  window.VyraHeartFireworksFx={renderPreview:hfRenderPreview};
+  // toppFor: millisekunder från start till toppen för just den här gåvan (se HF_SPRIDNING_MS ovan).
+  window.VyraHeartFireworksFx={renderPreview:hfRenderPreview,toppFor:input=>{const d=(input&&typeof input==='object')?input:{combo:input};return hfToppMs(hfComboOf(d),d.__tempo)},
+    vardeAv:input=>hfBelopp((input&&typeof input==='object')?input:{})};
 
   // ---------- live trigger ----------
   const hfAntal=d=>Math.max(1,Math.floor(Number(d.combo??d.repeatcount??d.count)||1));
@@ -134,7 +151,7 @@
     if(!hits.length)return false;
     let fired=false;
     hits.forEach(w=>{const host=document.querySelector(`[data-id="${w.id}"] .heart-fireworks-fx`);if(!host)return;
-      hostCtrl(host).fire({combo:hfComboOf(d),gold:w.hfGold!==false,showCombo:w.hfShowCombo!==false});fired=true;});
+      hostCtrl(host).fire({combo:hfComboOf(d),gold:w.hfGold!==false,showCombo:w.hfShowCombo!==false,tempo:d.__tempo});fired=true;});
     return fired;
   }
   window.triggerHeartFireworks=hfTrigger;
