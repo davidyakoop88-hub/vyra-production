@@ -1623,10 +1623,19 @@ function triggerGuardianEmblem(event={}){
     box.classList.remove('ge-active');void box.offsetWidth;box.classList.add('ge-active');
     clearTimeout(box._geTimer);
     let F=window.VyraGuardianEmblemFas;
+    // FASKLOCKAN STARTAS HAR, inte av ett omslag runt det globala namnet. Omslaget i
+    // guardian-emblem-fas.js sag bara lador vars _geTimer bytts UNDER sitt synkrona anrop. Laddades
+    // filen efter runtime-controls.js 500 ms-lindning blev kedjan ko -> fas -> ko -> triggern:
+    // alerten kom 8 s sent och utan ge-fas-*, och Bla kristall/Gron aura doldes helt. Uppmatt
+    // 2026-10-18 i en riktig overlay med fas-filen fordrojd 4 s.
+    if(F&&typeof F.spela==='function')F.spela(box);
     box._geTimer=setTimeout(()=>{box.classList.remove('ge-active')},Math.max(F&&F.total?F.total():0,6500));
   });
 }
 window.triggerGuardianEmblem=triggerGuardianEmblem;
+// Signalen till guardian-emblem-fas.js att inte linda namnet. Ett globalt varde och inte en
+// egenskap pa funktionen: nar fas-filen kor kan window.triggerGuardianEmblem redan vara kons omslag.
+window.VyraGuardianTriggerStartarFas=true;
 
 /* VYRA_PREMIUM_WIDGET_BUNDLE_20260812
    Activates the premium widget files that are already versioned in this repository.
@@ -1635,7 +1644,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261017-1';
+  const version='20261018-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

@@ -43,8 +43,10 @@
 .guardian-emblem.gem-model.ge-fas-hyllning .gem-aura{animation:gemAndas 3500ms ease-in-out both}
 .guardian-emblem.gem-model.ge-fas-upplosning .gem-rubrik{animation:geUttoning 420ms ease-in both}
 .guardian-emblem.gem-model.ge-fas-upplosning .gem-aura{animation:geUttoning 800ms ease-in both}
-/* Fasdrivrutinen städar efter 6100 ms, alerten tas ned efter 6500 ms. Hindra ett sista blink. */
-html.overlay-output .guardian-emblem.gem-model.ge-active:not([class*="ge-fas-"]){opacity:0}
+/* Fasdrivrutinen städar efter 6100 ms, alerten tas ned efter 6500 ms. Hindra ett sista blink.
+   BARA när fasklockan faktiskt gick (ge-koreografi sätts av spela()). Utan den villkoren dolde
+   regeln hela entrén så fort ge-active saknade ge-fas-* — guldet syntes, modellerna inte. */
+html.overlay-output .guardian-emblem.gem-model.ge-koreografi.ge-active:not([class*="ge-fas-"]){opacity:0}
 
 @keyframes gemIntro{0%{opacity:0;transform:translateY(6px)}30%,75%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-4px)}}
 @keyframes gemSamlas{from{opacity:0;transform:scale(.35)}to{opacity:1;transform:scale(.9)}}

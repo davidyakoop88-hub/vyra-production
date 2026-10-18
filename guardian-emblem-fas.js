@@ -183,6 +183,10 @@
   function spela(box, steg = stegAv(box)) {
     avbryt(box);
     if (!delar(steg)) return false;
+    // Markerar att klockan faktiskt gick för den här lådan. guardian-emblem-models.css döljer
+    // modellen mellan sista fasen och att ge-active tas bort BARA när markeringen finns, så en
+    // modell utan fasklocka syns ändå statiskt — som guldet. Namnet saknar `ge-fas-` med flit.
+    box.classList.add('ge-koreografi');
     box.classList.add(PREFIX + FASER[0]);
     let vid = 0;
     for (let i = 0; i < FASER.length; i += 1) {
@@ -218,9 +222,17 @@
   // returnerar. Vi måste sitta innanför den kön: en koreografi som startar när alerten KÖAS i
   // stället för när den SPELAS hamnar ur takt med sin egen widget.
   let arKopplad = false;
+  //
+  // TRIGGERN STARTAR NUMERA KLOCKAN SJÄLV (media.js, 2026-10-18). Omslaget nedan var känsligt för
+  // laddningsordning: laddades den här filen efter att runtime-controls.js redan lindat namnet blev
+  // kedjan kö -> fas -> kö -> trigger, och omslaget såg aldrig någon låda tändas under sitt eget
+  // anrop. Säger media.js att triggern startar klockan lindas ingenting — då lindar kön bara EN gång.
+  // Omslaget finns kvar för en äldre cachad media.js, och hoppar över lådor som redan spelar.
   function koppla() {
+    if (arKopplad) return false;
+    if (root.VyraGuardianTriggerStartarFas === true) { arKopplad = true; return true }
     const original = root.triggerGuardianEmblem;
-    if (arKopplad || typeof original !== 'function') return false;
+    if (typeof original !== 'function') return false;
     const kopplad = function () {
       const lador = [...root.document.querySelectorAll('.guardian-emblem')];
       const fore = new Map(lador.map(box => [box, box._geTimer]));
@@ -228,6 +240,7 @@
       for (const box of root.document.querySelectorAll('.guardian-emblem')) {
         if (!box.classList.contains('ge-active')) continue;
         if (fore.has(box) && fore.get(box) === box._geTimer) continue;   // spelade redan
+        if ([...box.classList].some(k => k.indexOf(PREFIX) === 0)) continue;   // triggern startade den
         spela(box);
       }
       return svar;
