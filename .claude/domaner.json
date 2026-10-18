@@ -220,6 +220,7 @@
         "tests/browser/nollning-missar-inte-omritning.browser.test.js",
         "tests/browser/fan-level-referens.browser.test.js",
         "tests/browser/fan-level-50-kompakt.browser.test.js",
+        "tests/browser/fan-level-50-slideshow-overlay.browser.test.js",
         "tests/browser/fan-fas-loyalty.browser.test.js",
         "tests/browser/guardian-emblem.browser.test.js",
         "tests/browser/panel-dolt.browser.test.js",
