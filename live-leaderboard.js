@@ -58,6 +58,10 @@
   // pagaende sandning atertas ingenting alls.
   const STREAM_KEY = 'vyra-leaderboard-stream-v1';
   let streamDirty = false;
+  // Senaste Top Gift i den har sandningen (namn, bilder, varde). Foljer med i samma ogonblicksbild
+  // som `totals`, sa att Top Gift overlever en omladdning utan att nagon save() kors per gava.
+  let senasteTopGift = null;
+  const aterstalldaTopGift = new Set();
 
   function aktivSession() {
     try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
@@ -68,6 +72,11 @@
     try {
       const sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
       if (!sparad || sparad.sessionId !== session || !sparad.totals) return;
+      const tg = sparad.topGift;
+      if (tg && typeof tg === 'object' && tg.name) {
+        senasteTopGift = { name: String(tg.name), profileImage: String(tg.profileImage || ''),
+          giftImage: String(tg.giftImage || ''), value: Number(tg.value) || 0 };
+      }
       Object.entries(sparad.totals).forEach(([username, t]) => {
         if (!t || typeof t !== 'object') return;
         totals[username] = {
@@ -84,7 +93,7 @@
     const session = aktivSession();
     try {
       if (!session) window.sessionStorage.removeItem(STREAM_KEY);
-      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals }));
+      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift }));
     } catch (e) {}
   }
   aterstallStream();
@@ -262,50 +271,100 @@
     el.classList.add('play');
   }
 
+  // Samma vaeljare som gift-event-images.js SHAPES.templateTopGift, lasta darifran nar modulen
+  // finns. ':scope > strong/em' ar den klassiska markupen (media.js vyraTopGift) och finns kvar for
+  // den; neon, royal och fokus har namnet i .topgift-copy och ramen i .tgf-plate. Tidigare letade
+  // den har filen BARA efter ':scope > strong', som inte traffar nagon av de tre designerna — bilden
+  // byttes men namnet stod kvar (uppmatt 2026-10-18 i Edge, Heart Me fran tva tittare).
+  function topGiftValjare(falt) {
+    const shape = window.VyraGiftImages?.shapes?.templateTopGift;
+    const reserv = falt === 'name' ? '.topgift-copy strong, .tgf-plate strong' : '.topgift-copy em, .tgf-plate em';
+    return (shape?.[falt] || reserv) + (falt === 'name' ? ', :scope > strong' : ', :scope > em');
+  }
+
+  function skrivTopGift(w, el, tg) {
+    if (!el) return;
+    const profile = el.querySelector('.vyra-profile-face img');
+    const gift = el.querySelector('.vyra-gift-face img');
+    if (profile && tg.profileImage) {
+      const url = VyraSafe.src(tg.profileImage);
+      if (profile.getAttribute('src') !== url) profile.src = url;
+    }
+    if (gift && tg.giftImage) {
+      const url = VyraSafe.src(tg.giftImage);
+      if (gift.getAttribute('src') !== url) gift.src = url;
+    }
+    el.querySelectorAll(topGiftValjare('name')).forEach(n => { if (n.textContent !== tg.name) n.textContent = tg.name; });
+    // Tecknet framfor siffran ar designens (◉ i neon, inget i royal/fokus dar CSS ritar det), sa
+    // det behalls — samma regel som patchen i gift-event-images.js, och samma tal, annars skriver
+    // de tva skrivarna olika text i samma nod.
+    el.querySelectorAll(topGiftValjare('value')).forEach(n => {
+      const text = String(n.textContent || '').match(/^\D*/)[0] + tg.value;
+      if (n.textContent !== text) n.textContent = text;
+    });
+  }
+
   function updateTopGift(e, person) {
     if (typeof state === 'undefined' || !state?.widgets) return;
     const image = e.giftImage || e.image || e.giftPicture || e.gift?.image || '';
-    // Top Gift är en topplista, inte "senaste gåvan". Den här funktionen skrev tidigare över namn,
-    // bild och värde på VARJE gåva, så en 1-coins-gåva slog ut en 30 000-coins-gåva direkt.
-    // Rekordet ägs av gift-event-images.js, som är den andra skrivaren till samma widget — två
-    // egna högvattenmärken för samma värde hade blivit två sanningar. Saknas modulen (äldre
-    // överlägg som inte laddar den) faller vi tillbaka på det gamla beteendet i stället för att
-    // sluta uppdatera helt.
+    // Top Gift är en topplista, inte "senaste gåvan": bara en STRIKT större gåva byter person.
+    //
+    // Beslutet fattas EN gång per händelse, i gift-event-images.js (records.bedom), och den här
+    // filen läser det. Tidigare hade den egen jämförelse (`value < records.giftCoins` ⇒ hoppa över),
+    // som släppte igenom en gåva LIKA stor som rekordet medan gift-event-images.js räknade strikt —
+    // två regler för samma rekord. Det gick inte att bara byta till `<=`: gift-event-images.js laddas
+    // först och har redan höjt rekordet för samma händelse, så då hade varje riktigt rekord stoppats.
+    //
+    // Saknas modulen (äldre överlägg som inte laddar den) faller vi tillbaka på det gamla
+    // beteendet — varje gåva — i stället för att sluta uppdatera helt.
     const records = window.VyraGiftRecords;
-    // Det som jämförs är GÅVANS värde, inte combons summa: elva rosor är 1, inte 11. Regeln och
-    // motiveringen bor hos records.styckvarde i gift-event-images.js. Fallbacken räknar likadant
-    // lokalt i stället för att falla tillbaka på totalen — annars kunde ett gammalt överlägg utan
-    // modulen visa ett annat tal än det som ligger i rekordet.
-    const styck = records?.styckvarde || ((coins, antal) => {
-      const summa = Number(coins);
-      if (!Number.isFinite(summa) || summa <= 0) return 0;
-      const n = Math.round(Number(antal));
-      return Math.round(summa / (Number.isFinite(n) && n >= 1 ? n : 1));
-    });
-    const summa = Number(e.diamonds || e.coins || e.diamondCount || e.value);
-    // person.diamonds är tittarens ACKUMULERADE bidrag, inte en gåva — den får aldrig delas med antalet.
-    const value = Number.isFinite(summa) && summa > 0 ? styck(summa, e.count) : person.diamonds;
-    if (records && value < records.giftCoins) return;
-    let changed = false;
+    let value;
+    if (records && typeof records.bedom === 'function') {
+      const beslut = records.bedom(e);
+      if (!beslut || !beslut.gift) return;
+      value = beslut.giftVarde;
+    } else {
+      // Det som jämförs är GÅVANS värde, inte combons summa: elva rosor är 1, inte 11.
+      const summa = Number(e.diamonds || e.coins || e.diamondCount || e.value);
+      const n = Math.round(Number(e.count));
+      // person.diamonds är tittarens ACKUMULERADE bidrag, inte en gåva — den får aldrig delas med antalet.
+      value = Number.isFinite(summa) && summa > 0
+        ? Math.round(summa / (Number.isFinite(n) && n >= 1 ? n : 1)) : person.diamonds;
+      if (records && !(value > records.giftCoins)) return;
+    }
+    const tg = { name: person.name, profileImage: person.profileImage || '', giftImage: image, value };
+    senasteTopGift = tg;
+    streamDirty = true;
+    // INGEN save() och ingen render(). save() här gav i overlayn en ny konfiguration och en hel
+    // omritning per gåva — widgetar som blinkade (uppmätt 2026-10-18). Livedata patchas i state (så
+    // att en senare render() ritar rätt) och i DOM, precis som Top Like och Top Streak.
     state.widgets.filter(w => w.type === 'templateTopGift').forEach(w => {
-      w.dataName = person.name;
-      w.profileImage = person.profileImage || w.profileImage;
+      w.dataName = tg.name;
+      w.profileImage = tg.profileImage || w.profileImage;
       if (image) w.giftImage = image;
       w.dataValue = value;
-      changed = true;
       const el = document.querySelector(`.vyra-topgift[data-id="${w.id}"]`);
       if (!el) return;
-      const profile = el.querySelector('.vyra-profile-face img');
-      const gift = el.querySelector('.vyra-gift-face img');
-      const name = el.querySelector(':scope > strong');
-      const coins = el.querySelector(':scope > em');
-      if (profile && person.profileImage) profile.src = VyraSafe.src(person.profileImage);
-      if (gift && image) gift.src = VyraSafe.src(image);
-      if (name) name.textContent = person.name;
-      if (coins) coins.textContent = '◉ ' + formatNum(value);
+      skrivTopGift(w, el, { ...tg, profileImage: w.profileImage, giftImage: w.giftImage });
       armFlip(el);
     });
-    if (changed && typeof save === 'function') save();
+  }
+
+  // Efter en omladdning: lägg tillbaka sändningens Top Gift EN gång per widget, i state och DOM.
+  // Konfigurationen bär inte längre livevärdet (ingen save() per gåva), så utan det här hade Top
+  // Gift stått på det sparade/demo-värdet tills nästa rekord.
+  function aterstallTopGift() {
+    if (!senasteTopGift || typeof state === 'undefined' || !state?.widgets) return;
+    state.widgets.forEach(w => {
+      if (w.type !== 'templateTopGift' || aterstalldaTopGift.has(w.id)) return;
+      aterstalldaTopGift.add(w.id);
+      w.dataName = senasteTopGift.name;
+      if (senasteTopGift.profileImage) w.profileImage = senasteTopGift.profileImage;
+      if (senasteTopGift.giftImage) w.giftImage = senasteTopGift.giftImage;
+      w.dataValue = senasteTopGift.value;
+      skrivTopGift(w, document.querySelector(`.vyra-topgift[data-id="${w.id}"]`),
+        { ...senasteTopGift, profileImage: w.profileImage, giftImage: w.giftImage });
+    });
   }
 
   // SKRIV TALET UTAN ATT RIVA IKONEN. Top Coins v2 (topcoins-v2.js) ritar myntet som ett stylat
@@ -336,6 +395,7 @@
 
   function updateLiveLeaderboards() {
     if (typeof state === 'undefined' || !state?.widgets) return;
+    try { aterstallTopGift() } catch (e) {}
     document.querySelectorAll('.vyra-toplike[data-id]').forEach(el => {
       const w = state.widgets.find(x => x.id === el.dataset.id);
       // A cycling widget (media.js's "CYKEL · ALLA TRE I SAMMA WIDGET") owns its own rows —
@@ -424,6 +484,7 @@
   addEventListener('vyra-stor-avatar', e => {
     const d = e.detail || {}, t = totals[d.username];
     if (t && d.stor && (t.profileImage === d.liten || !t.profileImage)) t.profileImage = d.stor;
+    if (senasteTopGift && d.stor && senasteTopGift.profileImage === d.liten) { senasteTopGift.profileImage = d.stor; streamDirty = true; }
   });
   setInterval(updateLiveLeaderboards, 1000);
   // MALA GENAST NAR NAGON RITAT OM WIDGETARNA.
@@ -448,6 +509,7 @@
     try {
       saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
       for (const key of Object.keys(totals)) delete totals[key];
+      senasteTopGift = null;
       // Ogonblicksbilden skrivs om DIREKT, inte vid nasta tick: ett OBS som river kallan i
       // samma sekund som sandningen borjar skulle annars hitta forra sandningens siffror.
       streamDirty = true;

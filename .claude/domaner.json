@@ -430,7 +430,8 @@
         "tests/live-control-testgava.test.js",
         "tests/live-control-state.test.js",
         "tests/live-tillstand.test.js",
-        "tests/servertid-klocka.test.js"
+        "tests/servertid-klocka.test.js",
+        "tests/top-gift-strikt-rekord.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"
