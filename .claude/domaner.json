@@ -220,6 +220,7 @@
         "tests/browser/nollning-missar-inte-omritning.browser.test.js",
         "tests/browser/fan-level-referens.browser.test.js",
         "tests/browser/fan-level-50-kompakt.browser.test.js",
+        "tests/browser/fan-level-50-slideshow-overlay.browser.test.js",
         "tests/browser/fan-fas-loyalty.browser.test.js",
         "tests/browser/guardian-emblem.browser.test.js",
         "tests/browser/panel-dolt.browser.test.js",
@@ -371,6 +372,7 @@
         "tests/scene-links.test.js",
         "tests/standalone-flow.test.js",
         "tests/standalone-links.test.js",
+        "tests/overlay-preview-klar-synkar.test.js",
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js"
       ],
@@ -701,6 +703,7 @@
       "tester": [
         "tests/cloud-sync-empty-layout.test.js",
         "tests/cloud-sync-steady-state.test.js",
+        "tests/cloud-sync-omladdning.test.js",
         "tests/sync-visibility.test.js",
         "tests/browser/cloud-sync-conflict.browser.test.js",
         "tests/browser/autospar-indikator.browser.test.js",

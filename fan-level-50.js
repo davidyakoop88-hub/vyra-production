@@ -111,7 +111,9 @@
       const cards = list.map((m, i) => cardHtml(w, m, i + 1)).join('');
       inner = `<div class="fl50-track">${cards}${cards}</div>`;
     } else {
-      let i = idx.get(w.id) || 0; if (i >= list.length) i = 0;
+      // Klampen skrivs tillbaka: krymper listan (remove/clear) visade ritningen kort 0 men swap()
+      // raknade vidare fran det gamla indexet och visade samma kort ett varv till.
+      let i = idx.get(w.id) || 0; if (i >= list.length) { i = 0; idx.set(w.id, 0); }
       inner = list.length ? cardHtml(w, list[i], i + 1) : '';
     }
     const interval = num(w.fanl50Interval, 6, 2, 60);
@@ -249,7 +251,11 @@
   function swap() {
     if (view !== 'editor' && view !== 'overlay') return;
     const now = Date.now();
-    const list0 = (root.state && Array.isArray(root.state.widgets)) ? root.state.widgets : [];
+    // `state` ar en const i studio.js och hamnar ALDRIG pa window — `root.state` var alltid
+    // undefined, listan tom och slideshowen bytte aldrig kort (LIVE 2026-10-17; bandet ar ren CSS
+    // och klarade sig). Las den delade bindningen; reserven ar samma objekt via VyraSessionState.
+    const st = typeof state !== 'undefined' ? state : root.VyraSessionState?.activeState?.();
+    const list0 = (st && Array.isArray(st.widgets)) ? st.widgets : [];
     list0.forEach(w => {
       if (!w || w.type !== 'templateFanLevel50' || w.fanl50Mode === 'band') return;
       const list = members(w); if (list.length < 2) return;
