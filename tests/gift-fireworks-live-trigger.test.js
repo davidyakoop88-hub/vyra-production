@@ -277,3 +277,17 @@ test('livekön väntar till showens topp plus marginal, inte hela showen',()=>{
   gava({count:100,coins:1000});assert.ok(waits.includes(8600),String(waits));assert.ok(waits.includes(8700),String(waits));
   assert.ok(!waits.includes(9400),'kon holl platsen hela showen');
 });
+
+test('reservtiden utan durationFor följer widgetens fwDuration', () => {
+  // Reserven läste root.state, som aldrig finns: state är en const i studio.js, så den gav alltid
+  // 5,2 s (upptäckt 2026-10-18). fwDuration 2 → 2 s + 0,2 s.
+  const { h, gava } = boot([fw('fw1', { fwDuration: 2 })]);
+  assert.equal(h.window.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
+  delete h.window.VyraFireworks.durationFor;
+  // Ett i taget (2026-10-18): kön startar nästa vid TOPPEN (releaseFor). Reserven, som det här
+  // provet gäller, används när toppen saknas.
+  delete h.window.VyraFireworks.releaseFor;
+  const waits = []; h.window.setTimeout = (fn, ms) => { waits.push(ms); return waits.length };
+  gava();
+  assert.ok(waits.includes(2200), `kön väntade ${waits.join(', ')} ms i stället för widgetens 2200`);
+});

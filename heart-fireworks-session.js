@@ -25,7 +25,12 @@
   const nu = () => Date.now();
   function visningsMs() {
     let w = null;
-    try { w = root.state?.widgets?.find(x => x.type === 'templateHeartFireworks') } catch (_) {}
+    // `state` ar en const i studio.js och hamnar aldrig pa window — `root.state` var alltid undefined,
+    // sa kon raknade med standardtiden i stallet for widgetens egen (2026-10-18).
+    try {
+      const st = typeof state !== 'undefined' ? state : root.VyraSessionState?.activeState?.();
+      w = Array.isArray(st?.widgets) ? st.widgets.find(x => x && x.type === 'templateHeartFireworks') : null;
+    } catch (_) {}
     return Math.max(2, Number(w?.hfDuration) || 6) * 1000 + 400;
   }
   function startavstandMs(jobb) {
