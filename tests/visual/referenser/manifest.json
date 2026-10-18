@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Nya referenser för Top Streak · Design 1–3 (#628)",
-  "nycklar": 3,
-  "filter": "topstreak:design",
-  "tid": "2026-10-17T18:42:57.097Z"
+  "motiv": "F02: katalogen skapar widgetar inom 432-duken — Last X, liggande giftcampaign och äldre socialgoal fick ny standardbredd",
+  "nycklar": 162,
+  "filter": null,
+  "tid": "2026-10-18T17:04:18.320Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -223,23 +223,23 @@
    "fyllnad": 100
   },
   "catalog:lastx:badge": {
-   "matt": "500x393",
+   "matt": "433x341",
    "fyllnad": 100
   },
   "catalog:lastx:card": {
-   "matt": "501x148",
+   "matt": "433x128",
    "fyllnad": 100
   },
   "catalog:lastx:royal": {
-   "matt": "500x542",
+   "matt": "432x468",
    "fyllnad": 100
   },
   "catalog:lastx:skew": {
-   "matt": "501x116",
+   "matt": "433x100",
    "fyllnad": 100
   },
   "catalog:lastx:stack": {
-   "matt": "501x425",
+   "matt": "432x366",
    "fyllnad": 100
   },
   "catalog:topgift:premium:neon": {
@@ -287,7 +287,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:landscape": {
-   "matt": "608x406",
+   "matt": "432x289",
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:portrait": {
@@ -295,7 +295,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:gold:landscape": {
-   "matt": "608x406",
+   "matt": "432x289",
    "fyllnad": 100
   },
   "catalog:giftcampaign:gold:portrait": {
@@ -303,7 +303,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:platinum:landscape": {
-   "matt": "608x406",
+   "matt": "432x289",
    "fyllnad": 100
   },
   "catalog:giftcampaign:platinum:portrait": {
