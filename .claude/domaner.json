@@ -161,6 +161,7 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/katalog-inom-duken.test.js",
         "tests/like-fountain-portal.test.js",
         "tests/browser/like-fountain-portal.browser.test.js",
         "tests/browser/overlay-textkontur.browser.test.js",
