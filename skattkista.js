@@ -37,7 +37,9 @@
   var iOverlay = function () { try { return document.body.classList.contains('overlay-output') || new URLSearchParams(location.search).has('overlay'); } catch (e) { return false; } };
   var saker = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sakerUrl = function (u) { u = String(u || ''); return /^(https?:\/\/|assets\/|data:image\/)/i.test(u) ? saker(u) : ''; };
-  var nu = function () { return Date.now(); };
+  // "Nu" i SERVERNS tid: `oppnasAt` och `at` kommer från TikTok/bryggan, och PC-klockan kan gå fel
+  // (LIVE 2026-10-17: +20 s — nedräkningen visade 20 s för lite). live-client.js mäter skillnaden.
+  var nu = function () { try { var n = Number(window.VyraLive && window.VyraLive.serverNu && window.VyraLive.serverNu()); if (n > 0) return n; } catch (e) {} return Date.now(); };
   var efterMs = function (w) { var s = Number(w && w.kistaEfterOppning); return (Number.isFinite(s) && s >= 0 ? Math.min(60, s) : 8) * 1000; };
 
   function tid(ms) {

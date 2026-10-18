@@ -423,7 +423,8 @@
         "tests/browser/likecount-en-kontroll.browser.test.js",
         "tests/browser/command-center-*.browser.test.js",
         "tests/live-control-testgava.test.js",
-        "tests/live-tillstand.test.js"
+        "tests/live-tillstand.test.js",
+        "tests/servertid-klocka.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"

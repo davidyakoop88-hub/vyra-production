@@ -35,10 +35,20 @@
   // (uppmatt: tre redan visade boosts spelades om vid en omladdning av OBS-kallan). Ett boost-fonster
   // ar flyktigt — har det gatt mer an 30 s ar det inte langre nu. Serverns id och timestamp ar ms.
   var MAX_ALDER_MS = 30000;
+  // "Nu" i SERVERNS tid: tidsstampeln ar serverns, PC-klockan kan ga fel (LIVE 2026-10-17: +20 s,
+  // alltsa bara 10 s marginal kvar). live-client.js mater skillnaden; saknas den blir det Date.now().
+  function serverNu() {
+    try {
+      var L = root && root.VyraLive;
+      var n = L && typeof L.serverNu === 'function' ? Number(L.serverNu()) : NaN;
+      if (n > 0) return n;
+    } catch (err) {}
+    return Date.now();
+  }
   function forGammal(event, nu) {
     var ts = Number(event && (event.timestamp || event.createdAt || event.id));
     if (!(ts > 1e12)) return false; // ingen tidsstampel att lita pa (t.ex. Stream Deck-test) — spela
-    return (nu || Date.now()) - ts > MAX_ALDER_MS;
+    return (nu || serverNu()) - ts > MAX_ALDER_MS;
   }
   var BOOST_TYPER = /glove|tap|snipe|x2|x3|boost/;
 
