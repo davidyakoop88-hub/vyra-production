@@ -16,7 +16,7 @@
 // TRE STÄLLEN bär bilden, och alla tre byts:
 //   1. DOM: <img src> och background-image som pekar på den lilla URL:en.
 //   2. state.widgets[].profileImage (Top Gift/Top Streak skriver dit — live-leaderboard.js och
-//      gift-event-images.js), så att nästa render() ritar den stora.
+//      gift-event-images.js), så att nästa render() ritar den stora. Bara i minnet, aldrig save().
 //   3. Modulernas egna register (live-leaderboard.js totals, playground-widgets.js S.users) via
 //      CustomEvent 'vyra-stor-avatar' {username, liten, stor}.
 // Dessutom byts fältet i varje SENARE event från samma person redan i ingest() (live-client.js
@@ -96,9 +96,10 @@
     }
     try {
       if (typeof state !== 'undefined' && state && Array.isArray(state.widgets)) {
-        let rord = false;
-        for (const w of state.widgets) if (w && w.profileImage === liten) { w.profileImage = stor; rord = true; }
-        if (rord && typeof save === 'function') save();
+        // INGEN save(). Bilden ar livedata: DOM ar redan patchad ovan och state andras i minnet, sa
+        // nasta render() ritar den stora. En save() har gav i overlayn en ny konfiguration och en
+        // hel omritning per bildbyte — widgetar som blinkade mitt i sandningen (uppmatt 2026-10-18).
+        for (const w of state.widgets) if (w && w.profileImage === liten) w.profileImage = stor;
       }
     } catch (_) {}
     try { dispatchEvent(new CustomEvent('vyra-stor-avatar', { detail: { username, liten, stor } })); } catch (_) {}

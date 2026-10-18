@@ -374,6 +374,7 @@
         "tests/standalone-flow.test.js",
         "tests/standalone-links.test.js",
         "tests/overlay-preview-klar-synkar.test.js",
+        "tests/overlay-access-sparrad-lank.test.js",
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
         "tests/browser/overlay-dolda-widgetar.browser.test.js"
@@ -428,7 +429,9 @@
         "tests/browser/command-center-*.browser.test.js",
         "tests/live-control-testgava.test.js",
         "tests/live-control-state.test.js",
-        "tests/live-tillstand.test.js"
+        "tests/live-tillstand.test.js",
+        "tests/servertid-klocka.test.js",
+        "tests/top-gift-strikt-rekord.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"

@@ -107,13 +107,25 @@
     return Math.min(max, Math.ceil(Math.sqrt(n) * 1.6));
   }
 
+  // "Nu" i SERVERNS tid. `at` stämplas av bryggan/servern; PC-klockan kan gå fel (LIVE 2026-10-17:
+  // +20 s, och varje like kastades som historik). live-client.js mäter skillnaden; utan den
+  // (node, eller innan första mätningen) blir det Date.now() som förut.
+  function serverNu() {
+    try {
+      var L = typeof window !== 'undefined' && window.VyraLive;
+      var n = L && typeof L.serverNu === 'function' ? Number(L.serverNu()) : NaN;
+      if (n > 0) return n;
+    } catch (err) {}
+    return Date.now();
+  }
+
   // Är det här ett like-paket som ska ge hjärtan just nu? Historik och andra eventtyper nej.
   function arFarskLike(e, nu) {
     if (!e) return false;
     var typ = String(e.type || e.event || '').toLowerCase();
     if (typ !== 'like' && typ !== 'likes') return false;
     var at = Number(e.at || e.timestamp && Date.parse(e.timestamp));
-    if (Number.isFinite(at) && at > 0 && (nu || Date.now()) - at > FARSKT_MS) return false;
+    if (Number.isFinite(at) && at > 0 && (nu || serverNu()) - at > FARSKT_MS) return false;
     return true;
   }
 

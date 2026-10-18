@@ -200,7 +200,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261017-5/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
+  assert.match(studio, /gift-event-images\.js\?v=20261018-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -375,8 +375,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261011-2: egenskapspanelen utan glapp — vyra-intro.js laddas, Guardian Emblem får position
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
-  // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
-  assert.match(media, /const version='20261018-1'/);
+  assert.match(media, /const version='20261018-klocka'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -435,7 +434,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261017-p1granskning/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261018-klocka/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
