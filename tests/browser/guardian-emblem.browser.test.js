@@ -393,3 +393,105 @@ test('Blå kristall: en Guardian-entré genom livevägen visar rätt person och 
     assert.deepEqual(fel,[],'runtimefel i den riktiga overlay-sidan');
   } finally {await page.close()}
 });
+
+// ================================================================================================
+// G-LADDORDNING — ENTRÉN SYNS OAVSETT NÄR guardian-emblem-fas.js ANLÄNDER
+//
+// Sändningen 2026-10-18: Blå kristall och Grön aura syntes INTE när en Guardian kom in, guldet gjorde
+// det. Uppmätt i den riktiga overlayn: laddades fas-filen efter runtime-controls.js 500 ms-lindning
+// blev kedjan kö -> fas -> kö -> trigger. Alerten kom 8 s sent och utan ge-fas-*, och
+// guardian-emblem-models.css dolde varje låda med ge-active men utan fasklass. Guldet syntes
+// statiskt; modellerna hade opacitet 0 hela entrén. Saknades fas-filen helt blev det samma sak.
+//
+// Proven går genom samma väg som en sändning: overlay.html?access=, state från
+// /api/overlay-access, och eventet i bryggans fältform på SSE-strömmen.
+// ================================================================================================
+const LO_TOKEN = 'provtoken-laddordning-aldrig-i-produktion';
+function serveraLaddordning(lage, state) {
+  const strommar = [];
+  const srv = http.createServer((req, res) => {
+    const u = String(req.url || '').split('?')[0];
+    if (u === '/api/overlay-access/' + LO_TOKEN) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, overlay: { id: 'OV-LO', version: 1, state } })); return;
+    }
+    if (u === '/api/overlay-access/' + LO_TOKEN + '/events/stream') {
+      res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache' });
+      res.write(': oppen\n\n'); strommar.push(res); return;
+    }
+    if (u.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return; }
+    const fil = path.join(ROOT, decodeURIComponent(u).replace(/^\/+/, ''));
+    if (!fil.startsWith(ROOT) || !fs.existsSync(fil) || fs.statSync(fil).isDirectory()) { res.writeHead(404); res.end('nej'); return; }
+    const fas = /guardian-emblem-fas\.js$/.test(u);
+    if (fas && lage === 'blockerad') { res.writeHead(404); res.end('blockerad'); return; }
+    const skicka = () => { res.writeHead(200, { 'content-type': MIME[path.extname(fil)] || 'application/octet-stream' }); fs.createReadStream(fil).pipe(res); };
+    if (fas && lage === 'sen') setTimeout(skicka, 4000); else skicka();
+  });
+  const sand = data => strommar.forEach(r => { try { r.write('event: live\ndata: ' + JSON.stringify(data) + '\n\n') } catch (_) {} });
+  const stang = () => { strommar.forEach(r => { try { r.end() } catch (_) {} }); return new Promise(r => srv.close(r)) };
+  return new Promise(r => srv.listen(0, '127.0.0.1', () => r({ bas: `http://127.0.0.1:${srv.address().port}`, sand, stang })));
+}
+
+async function entreUnderLaddordning(lage, nyckel) {
+  // Widgeten byggs av fabriken, precis som katalogens "Lägg till i Layout", och serialiseras som molnet.
+  const p0 = await browser.newPage();
+  await p0.goto(`${bas}/studio.html`, { waitUntil: 'load' });
+  await p0.waitForFunction(() => !!window.VyraWidgets, null, { timeout: 30000 });
+  const w = await p0.evaluate(k => { const w = VyraWidgets.create(k); Object.assign(w, { x: 40, y: 30, guardianLang: 'sv' }); return JSON.parse(JSON.stringify(w)) }, nyckel);
+  await p0.close();
+  const lo = await serveraLaddordning(lage, { widgets: [w] });
+  const sida = await browser.newPage({ viewport: { width: 1080, height: 1000 }, locale: 'sv-SE' });
+  const fel = []; sida.on('pageerror', e => fel.push(e.message));
+  try {
+    await sida.goto(`${lo.bas}/overlay.html?access=${LO_TOKEN}`, { waitUntil: 'load' });
+    await sida.waitForFunction(() => !!window.VyraGuardianModels && !!window.VyraGuardian && !!window.VyraAlertQueue
+      && !!document.querySelector('.guardian-emblem'), null, { timeout: 30000 });
+    await sida.waitForTimeout(2500);
+    const ordning = await sida.evaluate(() => {
+      const slut = n => (performance.getEntriesByType('resource').find(e => e.name.includes(n)) || {}).responseEnd;
+      return { kontroll: slut('runtime-controls.js'), fas: slut('guardian-emblem-fas.js'), fasFinns: !!window.VyraGuardianEmblemFas };
+    });
+    lo.sand({ type: 'guardian', userId: '7000001', username: 'livetestare', name: 'Live Testare',
+      profileImage: lo.bas + '/assets/images/test/test-profile.png', isAnonymous: false });
+    // Bästa ögonblicket under entrén, mätt var 250:e ms i 10 s. En alert som kommer 8 s sent eller
+    // aldrig syns ger noll eller ett sent `forst` här — det är just det felet.
+    const bast = { bild: 0, namn: 0, avatar: 0, forst: null };
+    for (let t = 250; t <= 10000; t += 250) {
+      await sida.waitForTimeout(250);
+      const m = await sida.evaluate(() => {
+        const b = document.querySelector('.guardian-emblem');
+        const eff = el => { if (!el) return 0; let o = 1; for (let n = el; n; n = n.parentElement) { const c = getComputedStyle(n); if (c.display === 'none' || c.visibility === 'hidden') return 0; o *= Number(c.opacity) } return o };
+        return { aktiv: b.classList.contains('ge-active'), bild: eff(b.querySelector('.ge-bild>img')), namn: eff(b.querySelector('.ge-namn')),
+          avatar: eff(b.querySelector('.ge-avatar img')), namnText: b.querySelector('.ge-namn').textContent };
+      });
+      if (m.aktiv && bast.forst == null) bast.forst = t;
+      if (m.aktiv && m.namnText === 'livetestare') {
+        bast.bild = Math.max(bast.bild, m.bild); bast.namn = Math.max(bast.namn, m.namn); bast.avatar = Math.max(bast.avatar, m.avatar);
+      }
+    }
+    return { ordning, bast, fel };
+  } finally { await sida.close(); await lo.stang() }
+}
+
+const LADDLAGEN = [['sen', 'runtime-controls.js lindar före fas-filen'], ['blockerad', 'fas-filen saknas helt']];
+const LADDMODELLER = [['sapphire', 'catalog:guardianemblem:model:sapphire'], ['emerald', 'catalog:guardianemblem:model:emerald'], ['guld', 'catalog:guardianemblem:4']];
+for (const [lage, beskrivning] of LADDLAGEN) {
+  for (const [namn, nyckel] of LADDMODELLER) {
+    test(`G-LADDORDNING (${beskrivning}): ${namn} syns med bild, namn och profilbild under entrén`, { skip }, async () => {
+      const { ordning, bast, fel } = await entreUnderLaddordning(lage, nyckel);
+      // Kontrollmätning: riggen ska verkligen ha gett den ordning provet påstår.
+      if (lage === 'sen') {
+        assert.ok(ordning.fasFinns && ordning.kontroll && ordning.fas && ordning.fas - ordning.kontroll > 1000,
+          'kontrollmätning: fas-filen kom inte efter runtime-controls lindning ' + JSON.stringify(ordning));
+      } else {
+        assert.equal(ordning.fasFinns, false, 'kontrollmätning: fas-filen laddades trots blockering');
+      }
+      assert.ok(bast.forst != null && bast.forst <= 2000,
+        `${namn}: entrén startade ${bast.forst == null ? 'aldrig' : 'först efter ' + bast.forst + ' ms'}`);
+      assert.ok(bast.bild > 0.95, `${namn}: konstverket syntes aldrig under entrén (${bast.bild})`);
+      assert.ok(bast.namn > 0.95, `${namn}: namnet syntes aldrig under entrén (${bast.namn})`);
+      assert.ok(bast.avatar > 0.95, `${namn}: profilbilden syntes aldrig under entrén (${bast.avatar})`);
+      assert.deepEqual(fel, [], 'runtimefel i overlayn');
+    });
+  }
+}
