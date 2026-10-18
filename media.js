@@ -1364,7 +1364,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
    .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
    Samma par-monster som grannarna ovan anvander. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=20260807-scene';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20261018-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=20261018-1';document.body.append(js)});
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
