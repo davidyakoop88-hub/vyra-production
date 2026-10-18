@@ -12,7 +12,7 @@ async function fixture(){
  await page.setContent('<style>'+fs.readFileSync(path.join(ROOT,'gift-fireworks.css'),'utf8')+'</style><div class="canvas"></div>');
  await page.addScriptTag({content:`var state={widgets:[]},selected=null,view='overlay';function wh(){return ''}function props(){return ''}function bind(){}function save(){}function render(){}function liveWidget(){return null}function bk(w,v,k,f){return v||f}function campaignGiftList(){return []}`});
  for(const file of ['overlay-sanitize.js','widget-factory.js','vfx-types.js','vfx-ticker.js','vfx-rng.js','gift-natural-engine.js','gift-classics-engine.js','gift-supernova-engine.js','gift-fireworks.js'])await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,file),'utf8')});
- await page.addScriptTag({content:`window.startFireworks=(theme,combo)=>{dispatchEvent(new Event('vyra-session-ended'));state.widgets=[{id:'fw',type:'templateGiftFireworks',x:0,y:0,width:540,fwTheme:theme,fwSound:false}];document.querySelector('.canvas').innerHTML=wh(state.widgets[0]);window.sendFireworks=()=>triggerGiftFireworks({username:'Anna',giftImage:'https://fireworks.test/gift.svg',profileImage:'https://fireworks.test/profile.svg',coins:100,combo});sendFireworks()};`});
+ await page.addScriptTag({content:`window.startFireworks=(theme,combo,extra={})=>{dispatchEvent(new Event('vyra-session-ended'));state.widgets=[{id:'fw',type:'templateGiftFireworks',x:0,y:0,width:540,fwTheme:theme,fwSound:false,...extra}];document.querySelector('.canvas').innerHTML=wh(state.widgets[0]);window.sendFireworks=()=>triggerGiftFireworks({username:'Anna',giftImage:'https://fireworks.test/gift.svg',profileImage:'https://fireworks.test/profile.svg',coins:100,combo});sendFireworks()};`});
  return page;
 }
 test('four approved canvas designs flip real image faces at a fixed arrival center for all tiers',{skip},async()=>{
@@ -35,8 +35,36 @@ test('four approved canvas designs flip real image faces at a fixed arrival cent
   }
  }finally{await page.close()}
 });
+// fwLanes:3 är ett UTTRYCKLIGT val; standard är ett i taget sedan 2026-10-18 (provet nedan).
 test('three sender canvases persist independently, fourth queues, and session reset stops the clock',{skip},async()=>{
- const page=await fixture();try{const r=await page.evaluate(()=>{startFireworks('royal',100);const first=document.querySelector('.fw-event');sendFireworks();sendFireworks();sendFireworks();const before={canvases:document.querySelectorAll('.fw-classics-canvas').length,pending:VyraFireworks.pending(),same:first===document.querySelector('.fw-event'),active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size};dispatchEvent(new Event('vyra-session-ended'));return{before,after:{active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size,canvases:document.querySelectorAll('canvas').length}}});assert.deepEqual(r.before,{canvases:3,pending:1,same:true,active:3,listeners:3});assert.deepEqual(r.after,{active:0,listeners:0,canvases:0})}finally{await page.close()}
+ const page=await fixture();try{const r=await page.evaluate(()=>{startFireworks('royal',100,{fwLanes:3});const first=document.querySelector('.fw-event');sendFireworks();sendFireworks();sendFireworks();const before={canvases:document.querySelectorAll('.fw-classics-canvas').length,pending:VyraFireworks.pending(),same:first===document.querySelector('.fw-event'),active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size};dispatchEvent(new Event('vyra-session-ended'));return{before,after:{active:VyraSupernova.active(),listeners:VFX.Ticker._listeners.size,canvases:document.querySelectorAll('canvas').length}}});assert.deepEqual(r.before,{canvases:3,pending:1,same:true,active:3,listeners:3});assert.deepEqual(r.after,{active:0,listeners:0,canvases:0})}finally{await page.close()}
+});
+/* ETT I TAGET (användarens beslut 2026-10-18), uppmätt i riktig tid: festivalmotorn som i produktion,
+   livekön (gift-fireworks-session.js) och tre gåvor 1,5 s isär, som i sändningen 2026-10-17. Nästa
+   får starta när det förra nått toppen (3,09 s) plus köns 100 ms; aldrig två på väg upp samtidigt. */
+test('default one firework at a time: three gifts start in turn about 3 s apart, measured in real time',{skip},async()=>{
+ const page=await fixture();try{
+  for(const file of ['gift-festival-engine.js','gift-fireworks-session.js'])await page.addScriptTag({content:fs.readFileSync(path.join(ROOT,file),'utf8')});
+  const r=await page.evaluate(async()=>{
+   dispatchEvent(new Event('vyra-session-ended'));state.widgets=[{id:'fw',type:'templateGiftFireworks',x:0,y:0,width:540,fwTheme:'festival',fwSound:false}];
+   document.querySelector('.canvas').innerHTML=wh(state.widgets[0]);
+   const t0=performance.now(),starts=[];let flestPaVagUpp=0,flestSynliga=0;
+   const org=window.triggerGiftFireworks;window.triggerGiftFireworks=p=>{const ok=org(p);if(ok!==false)starts.push({user:p.username,t:Math.round(performance.now()-t0)});return ok};
+   const prov=setInterval(()=>{const nu=Date.now(),noder=[...document.querySelectorAll('.gift-fireworks-fx > .fw-event')].filter(n=>+n.dataset.expires>nu);
+    flestPaVagUpp=Math.max(flestPaVagUpp,noder.filter(n=>+n.dataset.release>nu).length);flestSynliga=Math.max(flestSynliga,noder.filter(n=>!n.dataset.kortad).length)},50);
+   const gava=(id,user)=>routeLiveBattleEvent({id,type:'gift',username:user,coins:1,giftImage:'https://fireworks.test/gift.svg',profileImage:'https://fireworks.test/profile.svg'});
+   gava('a','anna');await new Promise(r=>setTimeout(r,1500));gava('b','bea');await new Promise(r=>setTimeout(r,1500));gava('c','cem');
+   await new Promise(r=>setTimeout(r,5000));clearInterval(prov);
+   const ut={starts,flestPaVagUpp,flestSynliga,lanes:VyraFireworks.lanesFor()};dispatchEvent(new Event('vyra-session-ended'));return ut;
+  });
+  assert.equal(r.lanes,1);
+  assert.deepEqual(r.starts.map(s=>s.user),['anna','bea','cem']);
+  const avstand=r.starts.slice(1).map((s,i)=>s.t-r.starts[i].t);
+  for(const a of avstand)assert.ok(a>=3150&&a<=3600,'avstånd '+avstand.join(', ')+' ms');
+  assert.equal(r.flestPaVagUpp,1,'två fyrverkerier på väg upp samtidigt');
+  assert.ok(r.flestSynliga<=2,r.flestSynliga+' synliga samtidigt');
+  console.log('[uppmätt] starter',JSON.stringify(r.starts),'avstånd',avstand.join(', '),'ms');
+ }finally{await page.close()}
 });
 test('reduced motion is one stationary badge and hidden widgets clear their bitmap',{skip},async()=>{
  const page=await fixture();try{await page.emulateMedia({reducedMotion:'reduce'});for(const theme of ['royal','ice','rose','comet']){await page.evaluate(theme=>startFireworks(theme,100),theme);await page.waitForTimeout(100);const r=await page.evaluate(async()=>{const c=document.querySelector('canvas'),ctx=c.getContext('2d');const pixels=()=>{const d=ctx.getImageData(0,0,c.width,c.height).data;let count=0;for(let i=3;i<d.length;i+=4)if(d[i])count++;return count};const before=pixels(),image=c.toDataURL();await new Promise(resolve=>setTimeout(resolve,50));const same=image===c.toDataURL();state.widgets[0].hidden=true;await new Promise(resolve=>setTimeout(resolve,50));return{before,same,after:pixels(),active:VyraSupernova.active()}});assert.ok(r.before>1000&&r.before<40000);assert.equal(r.same,true);assert.equal(r.after,0);assert.equal(r.active,0)}}finally{await page.close()}

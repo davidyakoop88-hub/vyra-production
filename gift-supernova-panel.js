@@ -40,7 +40,8 @@ const REGLAGE={
  fwRadius:['Rundning',0,50,1,50,v=>String(Math.round(v))],
  fwFinal:['Final vid (mynt)',100,10000,100,1000,v=>String(Math.round(v))],
  fwMin:['Minsta gåva (mynt)',1,500,1,1,v=>String(Math.round(v))],
- fwLanes:['Samtidiga fyrverkerier',1,5,1,3,v=>String(Math.round(v))]};
+ // Standard 1 sedan 2026-10-18 (användarens beslut: ett fyrverkeri i taget). Samma tal som fwFiler i gift-fireworks.js.
+ fwLanes:['Samtidiga fyrverkerier',1,5,1,1,v=>String(Math.round(v))]};
 const varde=(w,k)=>{const r=REGLAGE[k],n=Number(w[k]);return Number.isFinite(n)?Math.min(r[2],Math.max(r[1],n)):r[4]};
 const opt=(lista,val)=>lista.map(([k,l])=>`<option value="${k}" ${val===k?'selected':''}>${l}</option>`).join('');
 const reglage=(w,k)=>{const r=REGLAGE[k],v=varde(w,k);return `<label class="range-label">${r[0]} <b id="${k}Val">${r[5](v)}</b><input id="${k}" type="range" min="${r[1]}" max="${r[2]}" step="${r[3]}" value="${v}"></label>`};

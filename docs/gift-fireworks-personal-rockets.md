@@ -36,11 +36,59 @@ Tidigare profiler tonar ut före finalen; sista profilen får längre visningsti
 Designerna skiljer sig genom raka raketvågor/guldregn, korsande banor/silverstjärnor,
 solfjädrar/roséguld och spiralbanor/virvlande explosioner.
 
-Tre avsändare kan spela samtidigt i separata lager. Livelänken håller högst
-200 väntande händelser och skickar dem när en plats blir ledig. Fyrverkerier
-använder denna kö i stället för den delade alertkön; andra alerts är oförändrade.
-Direkta Action-anrop har också en begränsad väntelista i renderaren. Session-slut
-rensar lager, köer, timers och dubblettminne. Gamla köcallbacks är generationsskyddade.
+## Ett fyrverkeri i taget (gäller sedan 2026-10-18)
+
+**Användarens beslut 2026-10-18**, efter sändningen 2026-10-17 där tre gåvor med ett
+par sekunders mellanrum spelades som tre fyrverkerier bredvid varandra: *"ett
+fyrverkeri i taget som standard, nästa startar efter cirka 3 s, och kön trycks ihop
+när den blir lång."* Det ersätter det tidigare beslutet att tre avsändare spelar
+samtidigt.
+
+- **Standard är en fil.** Reglaget "Samtidiga fyrverkerier" (`fwLanes`, 1–5) har
+  standard 1. Fältet skrivs bara när reglaget faktiskt flyttas, så en widget som
+  aldrig rört det får den nya standarden utan migrering, och ett sparat val (t.ex. 3)
+  respekteras: då spelar tre avsändare i var sin fil som förut.
+- **Nästa startar vid toppen**, inte när hela visningstiden har gått. Toppen kommer
+  från motorn som ritar: festivalmotorns sista explosion plus en sekund
+  (`VyraFestival.toppen`). Kön lägger till 100 ms.
+
+  | Nivå (festival) | Visningstid | Topp | Nästa startar efter |
+  | --- | --- | --- | --- |
+  | enkel | 7 s | 3,09 s | 3,19 s |
+  | firande | 11 s | 7 s | 7,1 s |
+  | final | 20 s | 16 s | 16,1 s |
+
+  De äldre CSS-temana har ingen sol; där startar nästa raket så att den landar just
+  när förra kortet tonar ut (visningstid − flygtid, 4,4 s med standardinställningar).
+- **Högst en utfasning.** Det förra fyrverkeriet tonar ut bakom nästa i sin egen takt.
+  Startar ett nytt medan två redan tonar ut kortas det äldsta av på 300 ms.
+- **Kön trycks ihop när fler än fem väntar:** samma avsändares väntande gåvor slås
+  ihop till en, med summerat värde (värdet styr nivån, så tio rosor kan bli ett
+  firande i stället för tio tändningar); tempot för gåvan som startar höjs till
+  1 + (väntande − 5) / 5, högst 2; och en gåva som väntat mer än 60 s spelas inte
+  alls utan räknas (`VyraGiftFireworks.forsenade()`).
+- **Tidslinje, uppmätt 2026-10-18** i Chromium i riktig tid (festival, enkel nivå,
+  1 mynt per gåva), samma rigg före och efter:
+
+  | | Före (tre filer) | Efter (en fil) |
+  | --- | --- | --- |
+  | 3 gåvor 1,5 s isär | startar 0 / 1,5 / 3,0 s, tre bredvid varandra | startar 0 / 3,20 / 6,39 s |
+  | 30 gåvor, 30 avsändare | tre åt gången var 7,2 s; sista tre startar 64,8 s | 1 + 29 i tempo 2 → 1,8 → 1; sista startar 57,9 s, ingen kastad |
+  | 30 gåvor, 3 avsändare | som ovan, 30 fyrverkerier | 6 fyrverkerier med summerat värde, sista 16,0 s |
+
+  Raden med tre avsändare är mätt med provriggens klocka (`gift-fireworks-en-i-taget.test.js`
+  räknar på samma sätt). Bildintervall i samma körning, headless: 20,1 ms i snitt före
+  och 18,5 ms efter, p95 33,4 respektive 33,3 ms — en körning var, ingen garanti.
+
+Heart Fireworks följer samma princip (`heart-fireworks-session.js`): ett i taget,
+nästa vid toppen ur `fire()`-tidslinjen (en gåva 1,9 s, tolv hjärtan 3,7 s), samma
+sammanslagning, tempo och 60 s-gräns. Heart Fireworks har inget reglage för fler.
+
+Livelänken håller högst 200 väntande händelser. Fyrverkerier använder denna kö i
+stället för den delade alertkön; andra alerts är oförändrade. Direkta Action-anrop
+har också en begränsad väntelista i renderaren, och den väntar på samma topp.
+Session-slut rensar lager, köer, timers och dubblettminne. Gamla köcallbacks är
+generationsskyddade.
 
 Animationerna använder CSS, ingen ny ticker eller allokering per bildruta.
 Partikeltätheten begränsas till 12–40 per raket; vid sjuraketsshower högst 33.
