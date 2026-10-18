@@ -423,7 +423,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // darfor behalla sin, annars ar bumpen en gratis omladdning for varje anvandare.
   // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
   // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
-  for (const fil of ['action-options', 'action-runtime']) {
+  // action-options.js gick vidare till 20261018-1 nar textalerten borjade folja scenpanelens
+  // placering (F01); action-runtime.js star kvar.
+  assert.match(media, /action-options\.js\?v=20261018-1/, 'action-options.js cachebustades inte for F01');
+  for (const fil of ['action-runtime']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
@@ -440,7 +443,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
-  assert.match(media, /action-event\.css\?v=20261014-nya-gavor/, 'action-event.css cachebustades inte for NY-etiketten');
+  // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
+  assert.match(media, /action-event\.css\?v=20261018-1/, 'action-event.css cachebustades inte for F01');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
