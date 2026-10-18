@@ -1337,7 +1337,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260924-sixpack';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261011-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261018-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20260908-bildmatt';document.body.append(js)});
 // Inträdeseffekten för alla widgetar (vyra-intro.js, 2026-10-11): laddas EFTER studio.html:s
 // statiska skript, så dess renderkrok ligger utanför approved-rankings.js:s vakt och når även
@@ -1592,7 +1592,8 @@ const emblemCatalog=bind;bind=function(){emblemCatalog();if(view!=='editor'&&vie
 /* Triggern. Tander varje emblem, byter ut `_geTimer` sa guardian-emblem-fas.js kan se exakt vilka
    lador som triggades, och tar ned alerten nar visningstiden gatt ut. */
 function triggerGuardianEmblem(event={}){
-  let widgets=state.widgets.filter(w=>w.type==='templateGuardianEmblem');
+  // En dold widget tands aldrig i sandningen (overlay-dolda.js), samma regel som triggerGloveSnipe.
+  let widgets=state.widgets.filter(w=>w.type==='templateGuardianEmblem'&&!w.hidden);
   if(!widgets.length)return;
   widgets.forEach(w=>{
     let box=document.querySelector(`[data-id="${w.id}"]`);
@@ -1749,3 +1750,7 @@ Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='st
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
 Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261014-1','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
+
+// Dold betyder dold, oavsett vilken renderare som ritade widgeten. Laddas sist i svansen men beror
+// inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261018-1';document.body.append(js)});
