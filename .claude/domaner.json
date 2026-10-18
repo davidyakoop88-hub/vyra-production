@@ -47,7 +47,8 @@
         "vyra-proportioner.js",
         "vyra-panelordning.js",
         "vyra-tomma-handlingar.js",
-        "widget-handles.js"
+        "widget-handles.js",
+        "vyra-extravy-vakt.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -72,7 +73,8 @@
         "tests/browser/framsida-logo.browser.test.js",
         "tests/browser/login-slapp-in.browser.test.js",
         "tests/oversikt-en-sanning.test.js",
-        "tests/browser/verktygsrad-overlapp.browser.test.js"
+        "tests/browser/verktygsrad-overlapp.browser.test.js",
+        "tests/browser/extravy-sen-render.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -161,6 +163,7 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/katalog-inom-duken.test.js",
         "tests/like-fountain-portal.test.js",
         "tests/browser/like-fountain-portal.browser.test.js",
         "tests/browser/overlay-textkontur.browser.test.js",
@@ -336,6 +339,7 @@
         "tests/action-poang-retur.test.js",
         "tests/action-talutrymme.test.js",
         "tests/action-tts-rost.test.js",
+        "tests/browser/alert-egen-placering.browser.test.js",
         "scripts/test/event-gifts.test.js"
       ],
       "matning": [],
@@ -375,6 +379,7 @@
         "tests/standalone-flow.test.js",
         "tests/standalone-links.test.js",
         "tests/overlay-preview-klar-synkar.test.js",
+        "tests/overlay-access-sparrad-lank.test.js",
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
         "tests/browser/overlay-dolda-widgetar.browser.test.js"
@@ -429,7 +434,9 @@
         "tests/browser/command-center-*.browser.test.js",
         "tests/live-control-testgava.test.js",
         "tests/live-control-state.test.js",
-        "tests/live-tillstand.test.js"
+        "tests/live-tillstand.test.js",
+        "tests/servertid-klocka.test.js",
+        "tests/top-gift-strikt-rekord.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"
@@ -709,6 +716,7 @@
         "tests/cloud-sync-steady-state.test.js",
         "tests/cloud-sync-omladdning.test.js",
         "tests/sync-visibility.test.js",
+        "tests/state-backup-desktop.test.js",
         "tests/browser/cloud-sync-conflict.browser.test.js",
         "tests/browser/autospar-indikator.browser.test.js",
         "server/test/media-storage.test.js",

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA Studio</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20261017-3">
+  <link rel="stylesheet" href="studio.css?v=20261018-13">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="cloud-sync.css?v=20260724-1">
   <link rel="stylesheet" href="billing-client.css?v=20260910-angra">
   <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
-  <link rel="stylesheet" href="overlay-access.css?v=20260724-1">
+  <link rel="stylesheet" href="overlay-access.css?v=20261018-1">
   <script>if(new URLSearchParams(location.search).has('overlay'))document.documentElement.classList.add('overlay-output')</script>
 </head>
 <body>
@@ -140,6 +140,9 @@
   <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
   <script src="spotify-client.js?v=20260927-ko"></script>
   <script src="extras.js?v=20260724-spotify"></script>
+  <!-- Vakt: ett sent render() skriver aldrig over en aktiv extra-vy (F08). Lagger sig ytterst
+       i render-kedjan sjalv (vid load och vid klick pa en extra-knapp), sa platsen ar inte kritisk. -->
+  <script src="vyra-extravy-vakt.js?v=20261018-1"></script>
   <link rel="stylesheet" href="agency-test.css?v=20260919-2">
   <link rel="stylesheet" href="agency-test-v2.css?v=20260919-2">
   <link rel="stylesheet" href="agency-test-v3.css?v=20260919-3">
@@ -152,8 +155,8 @@
   <script src="statistics-live.js?v=20260919-1"></script>
   <link rel="stylesheet" href="social-goals-v2.css?v=20260919-9">
   <script src="assets/gifts/gifts-manifest.js?v=20260724-events"></script>
-  <script src="gift-event-images.js?v=20261014-nya-gavor"></script>
-  <script src="widget-factory.js?v=20261017-5"></script>
+  <script src="gift-event-images.js?v=20261018-1"></script>
+  <script src="widget-factory.js?v=20261018-13"></script>
   <script src="standalone-links.js?v=20261018-state"></script>
   <script src="overlay-sanitize.js?v=20260803-sanitize"></script>
   <script src="event-dedupe.js?v=20260803-dedupe"></script>
@@ -187,7 +190,7 @@
   <!-- Zoom i editorn. Monterar via MutationObserver pa #view, se filens huvudkommentar. -->
   <!-- Snapp + rutnat. Haken sitter i dragmatten (studio.js), aldrig i render eller save. -->
   <!-- Dukens grans. Samma have som snappen: haken sitter i dragmattet i studio.js. -->
-  <script src="widget-grans.js?v=6-fri-placering"></script>
+  <script src="widget-grans.js?v=20261018-13"></script>
   <script src="vyra-snapp.js?v=1"></script>
   <!-- Las widget. Fangstfas-stopp pa pointerdown for lasta widgetar; studio.js ror inte. -->
   <script src="widget-las.js?v=3-genomslapp"></script>
@@ -212,7 +215,7 @@
   <!-- FORE overlay-access.js: den ropar pa VyraLiveSession.runtime() redan i sin bootstrap, och
        en kalla som oppnas mitt i en sandning maste fa snapshotet fore forsta SSE-ramen. -->
   <script src="live-session-client.js?v=20260825-1"></script>
-  <script src="overlay-access.js?v=20261017-epost"></script>
+  <script src="overlay-access.js?v=20261018-1"></script>
   <!-- Sist: exporterar/importerar hela Studio-state som JSON mellan datorer. Ritar inget i
        overlay-läge, och rör ingen annan fil. -->
   <script src="vyra-state-sync.js?v=1"></script>

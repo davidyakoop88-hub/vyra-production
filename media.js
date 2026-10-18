@@ -1299,7 +1299,7 @@ document.addEventListener('load',e=>{
 //
 // onload racker inte som halsotecken: ett skript som KASTAR under korning utloser onload anda.
 // Darfor kontrolleras VyraLive, inte bara att filen kom fram.
-Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261017-p1granskning';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
+Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261018-klocka';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -1331,7 +1331,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261014-nya-gavor'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261018-1','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261012-diamonds','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261018-1'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261018-1','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261010-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261010-2';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1345,10 +1345,10 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-intro.js?v=20261011-1';document.body.append(js)});
 // Skarpa profilbilder (2026-10-11): laddas före live-client.js:s första event — ingest() anropar
 // window.VyraStorAvatar.forbattra om modulen finns, annars inget.
-Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261011-1');document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261012-diamonds';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261018-1';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1364,7 +1364,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
    .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
    Samma par-monster som grannarna ovan anvander. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20260806-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=20260807-scene';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='state-backup.css?v=20261018-1';document.head.append(css);let js=document.createElement('script');js.src='state-backup.js?v=20261018-1';document.body.append(js)});
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
@@ -1412,8 +1412,8 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='batt
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20260807-1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261010-paket';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20261018-klocka';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261018-klocka';document.body.append(js)});
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20260818-panel-live';document.body.append(js)});
 
@@ -1547,11 +1547,15 @@ const emblemBind=bind;bind=function(){emblemBind();if(view!=='editor')return;let
   falt('#geUsername','guardianUsername');falt('#geCustomText','guardianCustomText');
   /* Praktsteget byter BADE utseende och matt, sa det committar direkt — det finns ingen meningsfull
      mellanposition att forhandsvisa i en select. Matten laser fabrikens EGEN tabell i stallet for
-     en kopia har: tva stallen med matt blir forr eller senare tva olika matt. */
+     en kopia har: tva stallen med matt blir forr eller senare tva olika matt.
+     INOM DUKEN (F02): lag emblemet helt pa duken fore bytet och skjuter det nya mattet ut det, far
+     det samma passning som en nyskapad widget. Lag det redan delvis utanfor ar det ett val - da
+     flyttas ingenting. */
   let vaxel=(id,nyckel)=>{let el=document.querySelector(id);if(!el)return;
-    el.onchange=e=>{w[nyckel]=nyckel==='guardianStep'?Number(e.target.value):e.target.value;
+    el.onchange=e=>{let inne=nyckel==='guardianStep'&&window.VyraGrans&&VyraGrans.inneHelt(w.id);
+      w[nyckel]=nyckel==='guardianStep'?Number(e.target.value):e.target.value;
       if(nyckel==='guardianStep'){let m=VyraWidgets.variants('guardianemblem.matt')[e.target.value];if(m){w.width=m[0];w.height=m[1]}}
-      save();vyraRenderKeepingPanel()}};
+      save();vyraRenderKeepingPanel();if(inne)VyraGrans.flyttaIn([w.id])}};
   vaxel('#geStep','guardianStep');vaxel('#geLang','guardianLang');
   let visa=document.querySelector('#geShowUsername');if(visa)visa.onchange=e=>{w.guardianShowUsername=e.target.checked;save();vyraRenderKeepingPanel()};
   /* TESTKNAPPEN. Anropar det globala namnet och inget annat — ingen klass satts har, ingen
@@ -1645,7 +1649,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261018-1';
+  const version='20261018-17';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

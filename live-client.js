@@ -18,6 +18,54 @@ function oppnaVerifiering(url){
   location.href=url;return{externt:false};
 }
 function emit(name,detail){dispatchEvent(new CustomEvent(name,{detail}));listeners.forEach(fn=>fn(detail))}
+// SERVERNS KLOCKA (2026-10-18). Under LIVE 2026-10-17 gjorde Like Fountain ingenting: anvandarens
+// PC-klocka gick ~+20 s fore (36 NTP-matningar i TikTok LIVE Studios logg). `at`/`timestamp` satts
+// av bryggan/servern med SERVERNS klocka, och like-fountain-portal.js kastar allt aldre an 15 s
+// mot Date.now() — varje like sag 20 s gammal ut och kastades tyst. battle-fx-auto.js hade 10 s kvar.
+//
+// Darfor mats skillnaden har, en gang for alla konsumenter: Date-headern pa ett svar fran servern.
+// Headern har 1 s upplosning (avrundad nedat), sa ett prov sager bara att serverns tid nar svaret
+// skrevs lag i [D, D+1000) och att det hande nagon gang mellan t0 (skickat) och t1 (mottaget) i
+// PC-tid. Skillnaden (server - PC) ligger alltsa i [D - t1, D + 1000 - t0]. Varje prov ger ett
+// sadant intervall; snittet av flera prov med olika sekundfas krymper det till ungefar
+// fram-och-tillbaka-tiden. Uppskattningen ar intervallets mitt. Ett prov som inte overlappar
+// (PC-klockan stalldes om) borjar om fran det provet. Inga nya falt mot servern: headern finns redan.
+const klocka=(()=>{let lag=-Infinity,hog=Infinity,prov=0,varnad=false,omstart=false;
+  // Nollstallningen ar LAT: den gamla uppskattningen galler tills nasta prov ersatter den. Annars
+  // hade varje ateranslutning gett ett glapp dar likes raknas med PC-klockan och kastas igen.
+  function nollstall(){omstart=true}
+  let senast=0,klockUrl=null;
+  function matt(t0,t1,datum){const D=Date.parse(datum||'');
+    if(!Number.isFinite(D)||!Number.isFinite(t0)||!Number.isFinite(t1)||t1<t0)return false;
+    const l=D-t1,h=D+1000-t0;senast=t1;
+    if(omstart||(prov&&(l>hog||h<lag))){lag=l;hog=h;prov=1;omstart=false}else{lag=Math.max(lag,l);hog=Math.min(hog,h);prov+=1}
+    // En rad i konsolen per ny matomgang, sa att en riktig sandning kan lasa av hur fel PC-klockan gar.
+    if(prov===1)console.info('[VYRA live] servertid uppmatt: PC-klockan gar '+(-skillnad())+' ms fore servern (osakerhet +-'+Math.round((hog-lag)/2)+' ms)');
+    return true}
+  function skillnad(){return prov?Math.round((lag+hog)/2):null}
+  // Inga stående timers: en mätning äldre än tio minuter förnyas LATT, nästa gång någon frågar.
+  // (En evig timer hade dessutom hållit varje prov som laddar live-client.js vid liv.)
+  function serverNu(){const s=skillnad();
+    if(s===null){if(!varnad){varnad=true;console.warn('[VYRA live] ingen servertid uppmatt annu — handelsers alder raknas med PC-klockan')}return Date.now()}
+    if(klockUrl&&!skurPagar&&Math.abs(Date.now()-senast)>600000)skur();
+    return Date.now()+s}
+  // Alder i serverns tid for en tidsstampel i ms (eller ett event med at/timestamp).
+  function alder(x){const ts=typeof x==='object'&&x?Number(x.at||(x.timestamp&&(Number(x.timestamp)||Date.parse(x.timestamp)))):Number(x);
+    return Number.isFinite(ts)&&ts>0?serverNu()-ts:null}
+  function info(){return prov?{skillnadMs:skillnad(),osakerhetMs:Math.round((hog-lag)/2),prov}:null}
+  // Ett prov mot servern. Svaret behover inte vara ok — bara ha en Date-header.
+  async function prova(url){if(typeof fetch!=='function')return false;
+    try{const t0=Date.now(),r=await fetch(url,{cache:'no-store'}),t1=Date.now();
+      return matt(t0,t1,r&&r.headers&&typeof r.headers.get==='function'?r.headers.get('date'):null)}catch{return false}}
+  // Skur om sex prov 170 ms isar (plus svarstiden): fasen mot sekundgransen flyttas minst 170 ms
+  // per prov, sa sex prov tacker hela sekunden och snittet fangar gransen. Klar pa ungefar en sekund.
+  let skurTimer=null,skurGen=0,skurPagar=false;
+  function skur(url,antal=6){if(url)klockUrl=url;if(!klockUrl)return;const mine=++skurGen;if(skurTimer)clearTimeout(skurTimer);skurPagar=true;
+    const steg=i=>{if(mine!==skurGen)return;prova(klockUrl).finally(()=>{if(mine!==skurGen)return;
+      if(i+1<antal)skurTimer=setTimeout(()=>steg(i+1),170);else{skurTimer=null;skurPagar=false}})};
+    steg(0)}
+  function stoppa(){skurGen+=1;if(skurTimer)clearTimeout(skurTimer);skurTimer=null;skurPagar=false}
+  return{matt,nollstall,skillnad,serverNu,alder,info,skur,stoppa}})();
 // EN TILLSTÅNDSMODELL FÖR LIVE (F04). Toppraden sa "TikTok ansluten · @x" (grön) samtidigt som
 // LIVE-kontroll sa "SERVER Offline" och "TIKTOK Väntar på connector". Bägge hade rätt om sin egen
 // källa och fel om helheten:
@@ -393,12 +441,20 @@ if(!localRuntime){
       const e=ev||{},body={type:e.type,username:e.username||e.name,giftName:e.giftName,count:e.count,value:e.value??e.coins??e.diamonds};
       return await window.VyraAuth.api(`/api/test/event/${id}`,{method:'POST',body:JSON.stringify(body)})},
     on(fn){listeners.add(fn);return()=>listeners.delete(fn)},
-    mapEvent:liveEventTriggers,ingest,closeStream};
+    mapEvent:liveEventTriggers,ingest,closeStream,
+    // Serverns klocka (se `klocka` ovan). Konsumenter som jamfor en serverstampel med "nu" ska
+    // anvanda serverNu() i stallet for Date.now(): PC-klockan kan ga 20 s fel.
+    serverNu:klocka.serverNu,alder:klocka.alder,klocka:klocka.info};
+  // /health/live ar billigast tankbara svar (ingen databas). Pa vyralive.app nar den inte API:t
+  // (uppmatt 2026-10-18: 404 fran framsidan) — men aven 404-svaret bar en Date-header fran samma
+  // NTP-synkade kant, och prova() kraver bara headern, inte ett ok-svar.
+  const KLOCK_URL='/health/live';
+  klocka.skur(KLOCK_URL);
   // Subscribe to the workspace event stream. Without this Studio never saw a single live event in
   // web mode: the desktop build gets them from its poll() loop against the local server, and OBS
   // widgets open their own EventSource, but the Studio canvas had no source at all — so widgets
   // sat on their placeholder data and only the auto-play flip animation moved.
-  let stream = null, streamGeneration = 0, onLiveMessage = null;
+  let stream = null, streamGeneration = 0, onLiveMessage = null, tappad = false;
   // Namngiven callback med generationsvakt. Bada behovs: en anonym pil kan inte tas bort med
   // removeEventListener, och close() garanterar inte att redan kolagda meddelanden uteblir - sa
   // vakten sitter i callbacken, inte i strommen.
@@ -424,9 +480,12 @@ if(!localRuntime){
       ingest(payload, message.lastEventId);
     };
     stream.addEventListener('live', onLiveMessage);
+    // Ateranslutning efter ett tapp = mat om klockan (en sovande dator kan ha stallts om). Forsta
+    // oppningen behover ingen egen skur: den vid sidladdningen pagar redan.
+    stream.addEventListener('open', () => { if (mine !== streamGeneration || !tappad) return; tappad = false; klocka.nollstall(); klocka.skur(KLOCK_URL) });
     // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
     // login can open a fresh one rather than reusing a stream bound to the previous workspace.
-    stream.onerror = () => { if (stream && stream.readyState === EventSource.CLOSED) stream = null };
+    stream.onerror = () => { tappad = true; if (stream && stream.readyState === EventSource.CLOSED) stream = null };
   }
   window.VyraSessionState?.registerTeardown?.('live-client', closeStream);
   addEventListener('vyra-session-ended', closeStream);
@@ -435,8 +494,8 @@ if(!localRuntime){
   setTimeout(openStream, 2000);
 
   dispatchEvent(new CustomEvent('vyra-cloud-live-ready'));return}
-const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');liveLage.status=d;liveLage.online=true;if(!online){online=true;emit('vyra-server-status',d)}meddelaLiveTillstand();return d}catch(e){liveLage.online=false;if(online){online=false;emit('vyra-server-offline',{error:e.message})}meddelaLiveTillstand();throw e}}
-let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,tillstand:liveTillstand,byggTillstand:byggLiveTillstand,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
+const API='/api';let last=Number(sessionStorage.getItem('vyra-last-live-event')||0),online=false;async function json(url,options){const t0=Date.now();let r=await fetch(API+url,{cache:'no-store',headers:{'Content-Type':'application/json'},...options});klocka.matt(t0,Date.now(),r&&r.headers&&typeof r.headers.get==='function'?r.headers.get('date'):null);let d=await r.json().catch(()=>null);if(!r.ok)throw Error(d?.error||'Serverfel '+r.status);return d}async function status(){try{let d=await json('/status');liveLage.status=d;liveLage.online=true;if(!online){online=true;klocka.nollstall();emit('vyra-server-status',d)}meddelaLiveTillstand();return d}catch(e){liveLage.online=false;if(online){online=false;emit('vyra-server-offline',{error:e.message})}meddelaLiveTillstand();throw e}}
+let pollTimer=null,pollGeneration=0,pollStopped=false;async function poll(){const mine=pollGeneration;try{let d=await json('/events?after='+last);if(mine!==pollGeneration)return;for(let e of d.events||[]){last=Math.max(last,Number(e.id)||0);sessionStorage.setItem('vyra-last-live-event',last);ingest(e)}}catch{}finally{if(mine===pollGeneration&&!pollStopped)pollTimer=setTimeout(poll,650)}}function stopPolling(){pollGeneration+=1;pollStopped=true;if(pollTimer)clearTimeout(pollTimer);pollTimer=null}function startPolling(){if(!pollStopped&&pollTimer)return;pollStopped=false;pollGeneration+=1;poll()}window.VyraLive={status,tillstand:liveTillstand,byggTillstand:byggLiveTillstand,connect:username=>json('/connect',{method:'POST',body:JSON.stringify({username})}),disconnect:()=>json('/disconnect',{method:'POST',body:'{}'}),send:event=>json('/events',{method:'POST',body:JSON.stringify(event)}),on(fn){listeners.add(fn);return()=>listeners.delete(fn)},mapEvent:liveEventTriggers,ingest,serverNu:klocka.serverNu,alder:klocka.alder,klocka:klocka.info,stop:stopPolling,start:startPolling,isStopped:()=>pollStopped,
 // Aven i skrivbordslaget gar verifieringen via MOLNET: det ar molnets tiktok_connections som bar
 // handtagslaset, och den lokala servern har varken sessionen eller tabellen. Saknas inloggningen
 // sags det rakt ut i stallet for att knappen tyst inte gor nagot.
