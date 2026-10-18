@@ -321,7 +321,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
   assert.match(studio, /guardian-emblem\.css\?v=20260819-2/);
-  assert.match(studio, /guardian-emblem-fas\.js\?v=20260818-2/);
+  assert.match(studio, /guardian-emblem-fas\.js\?v=20261018-1/);
   // SAMMANSLAGNINGEN 2026-08-20 (Stigningen mot main): studio.css och media.js andrades av
   // BADA grenarna, sa bada far strangen 20260820-3. Grenen andrade dessutom
   // premium-final.css, som laddas via den injicerade version-konstanten — darfor byts

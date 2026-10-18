@@ -1368,7 +1368,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20260807-levels';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20261018-1';document.body.append(js)});
 /* Fan Level Up:s koreografi. Egen fil av samma skal som CLAUDE.md ger: media.js ar storst i repot,
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
@@ -1392,7 +1392,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    ligger darfor i studio.html, under Insikter. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261017-p1granskning';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261017-p1granskning';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20260807-levels';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
 Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261012-1';document.body.append(js)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
@@ -1419,7 +1419,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261017-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261018-1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1623,10 +1623,19 @@ function triggerGuardianEmblem(event={}){
     box.classList.remove('ge-active');void box.offsetWidth;box.classList.add('ge-active');
     clearTimeout(box._geTimer);
     let F=window.VyraGuardianEmblemFas;
+    // FASKLOCKAN STARTAS HAR, inte av ett omslag runt det globala namnet. Omslaget i
+    // guardian-emblem-fas.js sag bara lador vars _geTimer bytts UNDER sitt synkrona anrop. Laddades
+    // filen efter runtime-controls.js 500 ms-lindning blev kedjan ko -> fas -> ko -> triggern:
+    // alerten kom 8 s sent och utan ge-fas-*, och Bla kristall/Gron aura doldes helt. Uppmatt
+    // 2026-10-18 i en riktig overlay med fas-filen fordrojd 4 s.
+    if(F&&typeof F.spela==='function')F.spela(box);
     box._geTimer=setTimeout(()=>{box.classList.remove('ge-active')},Math.max(F&&F.total?F.total():0,6500));
   });
 }
 window.triggerGuardianEmblem=triggerGuardianEmblem;
+// Signalen till guardian-emblem-fas.js att inte linda namnet. Ett globalt varde och inte en
+// egenskap pa funktionen: nar fas-filen kor kan window.triggerGuardianEmblem redan vara kons omslag.
+window.VyraGuardianTriggerStartarFas=true;
 
 /* VYRA_PREMIUM_WIDGET_BUNDLE_20260812
    Activates the premium widget files that are already versioned in this repository.
@@ -1748,4 +1757,4 @@ Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='st
 
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261014-1','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261018-1','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});

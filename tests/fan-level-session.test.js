@@ -169,6 +169,17 @@ test('kön töms i ordning när varje visning är klar', () => {
   assert.equal(h.window.VyraFanLevel.koLangd(), 0);
 });
 
+test('kön följer widgetens egen visningstid, inte standardtiden', async () => {
+  // visningsMs() läste root.state, som aldrig finns (state är en const i studio.js), så kön väntade
+  // alltid 6,7 s oavsett panelens tid (2026-10-18). Med 1 s + 0 s uttoning ska nästa gå efter 1,2 s.
+  const { skicka, traffar } = boot([fanWidget('fan1', { fanDuration: 1, fanExitDuration: 0 })]);
+  for (const namn of ['a', 'b']) skicka(chatt(namn, 3));
+  for (const namn of ['a', 'b']) skicka(chatt(namn, 4));
+  assert.equal(traffar().length, 1);
+  await new Promise(r => setTimeout(r, 1800));
+  assert.deepEqual([...traffar()].map(t => t.name), ['a', 'b'], 'kön väntade på standardtiden i stället för widgetens');
+});
+
 test('en skur på tjugo tappar ingenting', () => {
   // Den delade alertkön trimmar vid tio väntande. Därför håller Fan Level Up sin egen kö och
   // släpper EN i taget dit — den delade kön ser aldrig mer än en, och kan inte trimma bort något.
