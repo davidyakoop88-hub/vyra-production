@@ -256,3 +256,14 @@ test('livekön väntar hela showen plus marginal',()=>{
   // 1000 coins, inte count:100 — showen valjs av vardet sedan 2026-09-19.
   gava({count:100,coins:1000});assert.ok(waits.includes(9200));assert.ok(waits.includes(9400));
 });
+
+test('reservtiden utan durationFor följer widgetens fwDuration', () => {
+  // Reserven läste root.state, som aldrig finns: state är en const i studio.js, så den gav alltid
+  // 5,2 s (upptäckt 2026-10-18). fwDuration 2 → 2 s + 0,2 s.
+  const { h, gava } = boot([fw('fw1', { fwDuration: 2 })]);
+  assert.equal(h.window.state, undefined, 'provet ska efterlikna studio.js: state får inte ligga på window');
+  delete h.window.VyraFireworks.durationFor;
+  const waits = []; h.window.setTimeout = (fn, ms) => { waits.push(ms); return waits.length };
+  gava();
+  assert.ok(waits.includes(2200), `kön väntade ${waits.join(', ')} ms i stället för widgetens 2200`);
+});

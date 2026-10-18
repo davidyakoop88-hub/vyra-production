@@ -713,19 +713,40 @@ function openConfigureModal(widgetId, isNew = false) {
   renderConfigureModal();
 }
 
+// Sidbytet till Layout far inte komma fore molnet. Navigeringen river cloud-syncs timrar (tickern
+// 1 s + debouncen 1,8 s), och andringen nadde aldrig overlayn i TikTok LIVE Studio (uppmatt i Edge
+// 2026-10-18: forlorad i 2 av 8 korningar, och i 2 av 3 nar en annan PUT redan var pa vag).
+// save() ar writeActive-promiset; push() svarar {reason:'busy'} medan en annan PUT ar i luften.
+// Misslyckas pushen (409, offline, e-postsparr) har den sjalv lagt andringen i kon, och nasta sida
+// tar upp den. Taket gor att ett hangande natverk aldrig laser kvar anvandaren i modalen.
+const OWG_SYNK_TAK_MS = 4000;
+async function owgSparaOchSynka(sparad) {
+  try { await sparad } catch (_) {}
+  const cs = window.VyraCloudSync, ss = window.VyraSessionState;
+  if (!cs || !cs.current?.().overlay || !ss?.canPush?.()) return;
+  const slut = Date.now() + OWG_SYNK_TAK_MS;
+  while (Date.now() < slut) {
+    let r;
+    try { r = await cs.push() } catch (_) { return }
+    if (!r || r.reason !== 'busy') return;
+    await new Promise(ok => setTimeout(ok, 100));
+  }
+}
+
 function closeConfigureModal(commit = false) {
   const widgetId = owgConfigureWidgetId;
   if (!commit && owgConfigureIsNew && widgetId) {
     state.widgets = state.widgets.filter(x => x.id !== widgetId);
     if (selected === widgetId) selected = null;
   }
-  if (commit) save();
+  const sparad = commit ? save() : null;
   owgConfigureWidgetId = null;
   owgConfigureIsNew = false;
   document.querySelector('.owg-configure-modal')?.remove();
   if (commit && widgetId) {
     selected = widgetId;
-    location.href = 'layout.html';
+    Promise.race([owgSparaOchSynka(sparad), new Promise(ok => setTimeout(ok, OWG_SYNK_TAK_MS))])
+      .finally(() => { location.href = 'layout.html'; });
   } else {
     save();
     render();
