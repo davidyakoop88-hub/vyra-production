@@ -118,6 +118,13 @@ const mounted=new Map();
 const sequences=new Map();
 const mode=combo=>Number(combo)>=100?'100':Number(combo)>=10?'10':'1';
 const duration=combo=>({1:7,10:11,100:20})[mode(combo)];
+// TOPPEN (2026-10-18): när nästa fyrverkeri i kön får starta, i sekunder från start vid fart 1. Hämtas
+// från den motor som faktiskt ritar (festival före natural, samma val som rendererFor nedan), så
+// köns tidslinje följer temats egna explosionstider i stället för ett hårdkodat tal.
+const toppen=(combo,theme)=>{
+ if(root.VyraFestival?.toppen)return root.VyraFestival.toppen(combo);
+ if(root.VyraNatural?.toppen)return root.VyraNatural.toppen(combo,theme);
+ return duration(combo)*.45};
 function dispose(group){const item=mounted.get(group);if(!item)return;item.unsubscribe?.();item.canvas.getContext('2d')?.clearRect(0,0,item.canvas.width,item.canvas.height);mounted.delete(group)}
 // FESTIVAL-MOTORN (2026-10-17) ersätter den gamla när den är laddad: hjärtfyrverkerier runt en
 // guldsol, byggd i playgrounden efter Davids referensbild. Den får också stilpanelens inställningar —
@@ -137,13 +144,14 @@ function rendererFor(w,giftImage,profileImage,palette={},playback={}){
  const customPalette=!!w.inheritBrandKit||[primary,secondary].some((color,i)=>typeof color==='string'&&color.toLowerCase()!==defaults[i]);
  return root.VyraNatural.create({theme:w.fwTheme,style:w.fwNovaStyle||'classic',primary,secondary,customPalette,giftImage:giftImage||w.fwGiftImage,profileImage,...playback});
 }
-function mount(group,w,combo,giftImage,profileImage,palette,namn){
+function mount(group,w,combo,giftImage,profileImage,palette,namn,tempo=1){
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=800;canvas.className=(w.fwTheme==='supernova'?'fw-supernova-canvas':'fw-classics-canvas')+' fw-natural-canvas';canvas.style.cssText='display:block;width:100%;height:auto;pointer-events:none';group.append(canvas);
  const ctx=canvas.getContext('2d');if(!ctx)return;
  const key=w.id||w,sequence=sequences.get(key)||{single:0,variant:0};
  const renderer=rendererFor(w,giftImage,profileImage,palette,{combo,singleIndex:sequence.single,variantIndex:++sequence.variant,name:namn?String(namn):''});
  // Rörelsehastighet (stilpanelen): tempot på hela programmet; längden kommer från motorn.
- const fart=Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1)),langd=typeof renderer.duration==='function'?renderer.duration():duration(combo);
+ // `tempo` (1–2) är köns tillfälliga uppsnabbning när många gåvor väntar (gift-fireworks-session.js).
+ const fart=Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1))*Math.min(2,Math.max(1,Number(tempo)||1)),langd=typeof renderer.duration==='function'?renderer.duration():duration(combo);
  if(mode(combo)==='1'){canvas.dataset.fwShape=['heart','smile','star'][sequence.single%3];sequence.single++}
  sequences.set(key,sequence);
  const started=performance.now(),item={renderer,canvas,unsubscribe:null};mounted.set(group,item);
@@ -164,5 +172,5 @@ function preview(e,w,palette){
  const draw=()=>renderer.render(ctx,960,800,14.5,'100');draw();renderer.ready.then(draw);
 }
 root.addEventListener('vyra-session-ended',()=>{for(const group of mounted.keys())dispose(group);sequences.clear()});
-root.VyraSupernova={create,mount,preview,dispose,duration,active:()=>mounted.size};
+root.VyraSupernova={create,mount,preview,dispose,duration,toppen,active:()=>mounted.size};
 })(window);
