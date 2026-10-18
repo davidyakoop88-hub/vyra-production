@@ -94,11 +94,98 @@ test('filen duplicerar inte triggerns filter', () => {
   }
 });
 
-test('tre avsändare startar tillsammans och den fjärde väntar', () => {
+// ---- ETT I TAGET (användarens beslut 2026-10-18) ------------------------------------------------
+// Förr startade tre gåvor samtidigt och varje plats hölls hela visningstiden (6,4 s). Alla hjärtan
+// ritas på samma duk, så det blev en hög. Nu: ett i taget, nästa vid toppen ur fire()-tidslinjen,
+// och kön trycks ihop när den blir lång — samma regler som Gift Fireworks.
+function klocka(h) {
+  let nu = 2_000_000, seq = 0;
+  const timers = new Map(), T0 = nu;
+  h.window.Date.now = () => nu;
+  h.window.setTimeout = (fn, ms) => { timers.set(++seq, { fn, at: nu + Math.max(0, Number(ms) || 0) }); return seq };
+  h.window.clearTimeout = id => { timers.delete(id) };
+  const tick = ms => {
+    const mal = nu + ms;
+    for (;;) {
+      const next = [...timers].filter(([, t]) => t.at <= mal).sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
+      if (!next) break;
+      timers.delete(next[0]); nu = next[1].at; next[1].fn();
+    }
+    nu = mal;
+  };
+  return { tick, tid: () => nu - T0 };
+}
+function bootKlocka(widgets) {
+  const b = boot(widgets), k = klocka(b.h), starter = [];
+  b.run(`{const org=window.triggerHeartFireworks;window.triggerHeartFireworks=function(p){const r=org.apply(this,arguments);if(r!==false)window.__hfStart(p);return r}}`);
+  b.h.window.__hfStart = p => starter.push({ user: p.username, t: k.tid(), tempo: p.__tempo || 1, combo: p.combo, coins: p.coins });
+  let n = 0;
+  const gava2 = (over = {}) => b.h.window.routeLiveBattleEvent(Object.assign(
+    { id: 'k' + (++n), type: 'gift', username: 'u' + n, giftName: 'Rose', coins: 1, count: 1 }, over));
+  return { ...b, ...k, starter, gava2, api: () => b.h.window.VyraHeartFireworks };
+}
+
+test('(e) standard är ett i taget: den första startar och de tre andra väntar', () => {
   const { gava, traffar, h } = boot();
   for (let i = 0; i < 4; i++) gava();
-  assert.equal(traffar().length, 3, 'tre oberoende avsändare ska starta');
-  assert.equal(h.window.VyraHeartFireworks.koLangd(), 1);
+  assert.equal(traffar().length, 1, 'fyra gåvor startade flera hjärtfyrverkerier på samma duk');
+  assert.equal(h.window.VyraHeartFireworks.koLangd(), 3);
+  assert.equal(h.window.VyraHeartFireworks.regler.SAMTIDIGA, 1);
+});
+
+test('(e) toppen kommer ur fire()-tidslinjen: en gåva 1,9 s, tolv hjärtan 3,7 s, tempo kortar', () => {
+  const { h } = boot();
+  const topp = h.window.VyraHeartFireworksFx.toppFor;
+  // Sista raketens uppskjutning + flygtid 900 ms + utslag 1000 ms.
+  assert.equal(topp({ count: 1 }), 1900);
+  assert.equal(topp({ count: 12 }), Math.round(11 / 12 * 1900 + 60 + 900 + 1000));
+  assert.equal(topp({ count: 100 }), topp({ count: 12 }), 'fler än tolv hjärtan ritas aldrig');
+  assert.equal(topp({ count: 1, __tempo: 2 }), 450 + 1000);
+  // Konstanterna är de som fire() faktiskt använder.
+  const src = las('heart-fireworks.js');
+  assert.match(src, /\(\(i\/hearts\)\*HF_SPRIDNING_MS\+rnd\(0,HF_SPRIDNING_SLUMP_MS\)\)\/t/);
+  assert.match(src, /r\.y-=Math\.max\(6,H\/70\)\*\(r\.fart\|\|1\)/);
+});
+
+test('(e) tre gåvor startar i tur och ordning vid toppen, inte samtidigt', () => {
+  const { gava2, tick, starter } = bootKlocka();
+  gava2({ username: 'anna' }); tick(1500); gava2({ username: 'bea' }); tick(1500); gava2({ username: 'cem' });
+  tick(20000);
+  assert.deepEqual(starter.map(s => s.user), ['anna', 'bea', 'cem']);
+  assert.deepEqual(starter.slice(1).map((s, i) => s.t - starter[i].t), [2000, 2000]);
+});
+
+test('(e) trettio gåvor: tempot höjs, ingen spelas mer än 60 s efteråt och inget försvinner', () => {
+  const { gava2, tick, starter, api } = bootKlocka();
+  for (let i = 0; i < 30; i++) gava2({ count: 12 });
+  tick(150000);
+  assert.equal(starter.length + api().forsenade(), 30);
+  assert.equal(api().koLangd(), 0);
+  assert.ok(Math.max(...starter.map(s => s.t)) <= api().regler.MAX_ALDER_MS);
+  assert.equal(starter[1].tempo, 2);
+  // Tolv hjärtan per gåva når toppen först efter 2,45 s även i dubbelt tempo, så de sista i en kö på
+  // trettio hinner bli äldre än 60 s. De spelas inte — de räknas.
+  assert.ok(api().forsenade() > 0 && api().forsenade() < 10, `forsenade ${api().forsenade()}`);
+});
+
+test('(e) samma avsändares gåvor slås ihop med summerat antal och värde när kön är lång', () => {
+  const { gava2, tick, starter, api } = bootKlocka();
+  for (let i = 0; i < 30; i++) gava2({ username: ['anna', 'bea', 'cem'][i % 3], coins: 50, count: 1 });
+  tick(150000);
+  assert.ok(api().ihopslagna() > 0);
+  assert.ok(starter.length < 10, `${starter.length} effekter för tre avsändare`);
+  assert.equal(starter.reduce((s, x) => s + Number(x.coins), 0), 1500);
+  assert.equal(starter.reduce((s, x) => s + Number(x.combo || 1), 0), 30, 'antalet hjärtan ska summeras');
+});
+
+test('(e) en gåva som väntat mer än 60 s spelas inte, och räknas', () => {
+  const { h, gava2, tick, starter, api } = bootKlocka();
+  const org = h.window.VyraHeartFireworksFx.toppFor;
+  h.window.VyraHeartFireworksFx.toppFor = input => input.username === 'u1' ? 70000 : org(input);
+  gava2(); gava2(); gava2();
+  tick(71000);
+  assert.equal(starter.length, 1);
+  assert.equal(api().forsenade(), 2);
 });
 
 test('samma gåva tänder bara en effekt', () => {
