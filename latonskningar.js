@@ -38,7 +38,9 @@
   var iOverlay = function () { try { return document.body.classList.contains('overlay-output') || new URLSearchParams(location.search).has('overlay'); } catch (e) { return false; } };
   var saker = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sakerUrl = function (u) { u = String(u || ''); return /^(https?:\/\/|assets\/)/i.test(u) ? saker(u) : ''; };
-  var nu = function () { return Date.now(); };
+  // "Nu" i SERVERNS tid: `at` stämplas av bryggan, och PC-klockan kan gå fel (LIVE 2026-10-17: +20 s,
+  // bara 10 s kvar av HISTORIK_MS). live-client.js mäter skillnaden; utan mätning blir det Date.now().
+  var nu = function () { try { var n = Number(window.VyraLive && window.VyraLive.serverNu && window.VyraLive.serverNu()); if (n > 0) return n; } catch (e) {} return Date.now(); };
   var kalla = function (w) { return (w && w.latKalla) === 'spotify' ? 'spotify' : 'youtube'; };
   var tal = function (v, min, max, forval) { var n = Number(v); return Number.isFinite(n) ? Math.max(min, Math.min(max, Math.round(n))) : forval; };
   var installning = function (w) {
