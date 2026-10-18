@@ -103,7 +103,7 @@
       // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
       // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
       // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
-      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);/* lastLocal maste folja med: utan det sag tickern den nyss hamtade layouten som en LOKAL andring och skickade molnets egen layout tillbaka till molnet (uppmatt 2026-10-10: PUT 200 sju sekunder efter varje Online-klick). */lastLocal=localStorage.getItem('vyra-state');saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
@@ -149,7 +149,7 @@
       // Overifierad e-post: ingen overlay kan skapas an. Sessionen projiceras anda — utan overlay-id —
       // sa att studion ar skrivbar pa den har datorn. Nasta inloggning efter verifieringen gar hit
       // igen, och create() laddar da upp det som byggts som forsta overlay (payload()).
-      if(!items.length){try{await create()}catch(e){if(!epostkrav(e))throw e;if(mine!==session)return;await apply(payload()||tomLayout());if(mine!==session)return;setStatus('verifiering');return}if(mine!==session)return;await apply(overlay.state);if(mine!==session)return;setStatus('synced');startTicker();return}
+      if(!items.length){try{await create()}catch(e){if(!epostkrav(e))throw e;if(mine!==session)return;await apply(payload()||tomLayout());if(mine!==session)return;setStatus('verifiering');return}if(mine!==session)return;await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced');startTicker();return}
       const preferred=items.find(x=>x.id===meta?.overlayId)||items[0];
       overlay=await getRemote(preferred.id);if(mine!==session)return;
 
@@ -159,6 +159,14 @@
       const parked=read(backupKey(workspace.id));
       const local=payload();
       const ownsLocal=!!meta&&meta.workspaceId===workspace.id&&meta.overlayId===overlay.id;
+      // OSYNKAT ARBETE FRAN FORRA SIDAN. meta.lastLocal ar det servern senast BEKRAFTAT. Skiljer sig
+      // vyra-state fran den ar det en andring som aldrig skickades: tickern (1 s) och debouncen
+      // (1,8 s) dog med sidan. Lases FORE apply(), som annars flyttar fram lastLocal och — via
+      // saveMeta() i sista grenen — stampla den osynkade staten som synkad for gott. Uppmatt i Edge
+      // 2026-10-18: Anpassa -> "Klar" navigerar till layout.html direkt, och andringen forlorades
+      // i 2 av 8 korningar medan statusraden sa 'synced'. Se tests/cloud-sync-omladdning.test.js.
+      const osynkat=ownsLocal&&localStorage.getItem('vyra-state')!==meta.lastLocal;
+      let skickaNu=false;
       if(parked&&parked.state){
         // Aterlamningen ar en full projektion under DETTA workspace, inte en restore inuti en redan
         // committad session - vid aterkomst finns ingen committad session an. Backupen tas bort
@@ -217,9 +225,19 @@
         // lokalt ags redan av det har workspacet, och payload() bar med sig extras som annu kan
         // sakna sin motsvarighet i molnet.
         await apply(local);if(mine!==session)return;
-        saveMeta();setStatus('synced');if(read(QUEUE()))schedule()
+        // Osynkat lokalt: apply() satte lastLocal till den nyss projicerade staten. Den far INTE bli
+        // meta.lastLocal forran servern svarat, annars ar andringen "synkad" utan att ha lamnat
+        // maskinen. Hit kommer vi bara nar meta.version >= molnets — ar molnet nyare tog grenen
+        // ovan konfliktvagen — och PUT:en bar meta-versionen, sa servern avvisar den med 409 om
+        // nagon annan hunnit skriva emellan. Den kan alltsa aldrig skriva over en nyare molnversion.
+        if(osynkat){lastLocal=meta.lastLocal??null;koadLokal=localStorage.getItem('vyra-state');
+          localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));
+          saveMeta();setStatus('saving');skickaNu=true}
+        else{saveMeta();setStatus('synced');if(read(QUEUE()))schedule()}
       }
       startTicker();
+      // Skickas direkt i stallet for efter debouncen: anvandaren har redan vantat en sidladdning.
+      if(skickaNu){const r=await push();if(r&&r.reason==='busy'&&mine===session)schedule()}
     }catch{setStatus('offline')}}
   // Ett uttryckligt {authRequired:false} - alltsa desktopappen, som inte har nagot kontosystem -
   // ger maskinens egen session. Ett misslyckat konfigsvar dispatchar inte det har eventet, sa ett
