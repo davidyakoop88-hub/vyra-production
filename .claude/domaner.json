@@ -47,7 +47,8 @@
         "vyra-proportioner.js",
         "vyra-panelordning.js",
         "vyra-tomma-handlingar.js",
-        "widget-handles.js"
+        "widget-handles.js",
+        "vyra-extravy-vakt.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -72,7 +73,8 @@
         "tests/browser/framsida-logo.browser.test.js",
         "tests/browser/login-slapp-in.browser.test.js",
         "tests/oversikt-en-sanning.test.js",
-        "tests/browser/verktygsrad-overlapp.browser.test.js"
+        "tests/browser/verktygsrad-overlapp.browser.test.js",
+        "tests/browser/extravy-sen-render.browser.test.js"
       ],
       "matning": [],
       "risker": [
