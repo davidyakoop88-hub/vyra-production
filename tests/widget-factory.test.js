@@ -36,6 +36,17 @@ const stripVolatile = w => {
   return copy;
 };
 
+// INOM DUKEN (F02, 2026-10-18). Atta kontrakt skapade sin widget delvis eller helt utanfor 432x768-
+// duken (Guardian x 100 + 400, Last-X 500 bred, giftfireworks:magnetic pa y 950 ...), och det
+// beskars tyst i sandningen. For JUST de posterna jamfors x, y och width inte mot historiken -
+// i stallet kravs att den nya platsen ryms. Allt annat i posten jamfors som forut, och en post som
+// redan rymdes far inte rora sin placering alls. Hela katalogen provas i tests/katalog-inom-duken.test.js.
+const PLACERING = ['x', 'y', 'width'];
+const utanforDuken = w => {
+  const x = Number(w.x), y = Number(w.y), b = Number(w.width), h = Number(w.height);
+  return x < 0 || y < 0 || y >= 768 || (Number.isFinite(b) && x + b > 432) || (Number.isFinite(h) && y + h > 768);
+};
+
 for (const row of CONTRACT) {
   test(`${row.name}: ${row.key} ger katalogens defaultkonfiguration`, () => {
     assert.ok(SNAPSHOT[row.key], `snapshot saknar ${row.key}`);
@@ -43,6 +54,10 @@ for (const row of CONTRACT) {
     // this comparison entirely rather than half-removed. They have their own test below.
     const expected = stripVolatile(SNAPSHOT[row.key]);
     const produced = stripVolatile(VyraWidgets.create(row.key, { values: row.values }));
+    if (utanforDuken(expected)) {
+      assert.equal(utanforDuken(produced), false, `${row.key} skapas fortfarande utanfor duken`);
+      PLACERING.forEach(k => { delete expected[k]; delete produced[k] });
+    }
     assert.deepEqual(produced, expected);
     // deepEqual ignores key order; the field set has to match exactly too, or a default could be
     // quietly dropped and replaced by an undefined read at render time.

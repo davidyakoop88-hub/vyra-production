@@ -1547,11 +1547,15 @@ const emblemBind=bind;bind=function(){emblemBind();if(view!=='editor')return;let
   falt('#geUsername','guardianUsername');falt('#geCustomText','guardianCustomText');
   /* Praktsteget byter BADE utseende och matt, sa det committar direkt — det finns ingen meningsfull
      mellanposition att forhandsvisa i en select. Matten laser fabrikens EGEN tabell i stallet for
-     en kopia har: tva stallen med matt blir forr eller senare tva olika matt. */
+     en kopia har: tva stallen med matt blir forr eller senare tva olika matt.
+     INOM DUKEN (F02): lag emblemet helt pa duken fore bytet och skjuter det nya mattet ut det, far
+     det samma passning som en nyskapad widget. Lag det redan delvis utanfor ar det ett val - da
+     flyttas ingenting. */
   let vaxel=(id,nyckel)=>{let el=document.querySelector(id);if(!el)return;
-    el.onchange=e=>{w[nyckel]=nyckel==='guardianStep'?Number(e.target.value):e.target.value;
+    el.onchange=e=>{let inne=nyckel==='guardianStep'&&window.VyraGrans&&VyraGrans.inneHelt(w.id);
+      w[nyckel]=nyckel==='guardianStep'?Number(e.target.value):e.target.value;
       if(nyckel==='guardianStep'){let m=VyraWidgets.variants('guardianemblem.matt')[e.target.value];if(m){w.width=m[0];w.height=m[1]}}
-      save();vyraRenderKeepingPanel()}};
+      save();vyraRenderKeepingPanel();if(inne)VyraGrans.flyttaIn([w.id])}};
   vaxel('#geStep','guardianStep');vaxel('#geLang','guardianLang');
   let visa=document.querySelector('#geShowUsername');if(visa)visa.onchange=e=>{w.guardianShowUsername=e.target.checked;save();vyraRenderKeepingPanel()};
   /* TESTKNAPPEN. Anropar det globala namnet och inget annat — ingen klass satts har, ingen
@@ -1645,7 +1649,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261018-1';
+  const version='20261018-13';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

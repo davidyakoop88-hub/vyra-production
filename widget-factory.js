@@ -309,20 +309,26 @@
     // varje befintlig anvandare utseende nasta gang de lagger till en design, sa det finns ett
     // test som jamfor mot den gamla formen.
     'lastx.design': v => ({
-      type: 'templateLastX', x: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 16 : 100, y: 80,
-      width: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 400 : 500,
+      // INOM DUKEN (F02, 2026-10-18): de fem aldre designerna var 500 breda pa x 100 i en 432-duk.
+      // 432 pa x 0 ar exakt vad passaInNya (widget-grans.js) redan gav dem i editorn - nu far aven
+      // forhandsbilden och den fristaende lanken samma matt.
+      type: 'templateLastX', x: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 16 : 0, y: 80,
+      width: ['crownBanner','royalAmethyst','iceKing','neonCyber','dragonFlame','angelGold'].includes(v.design) ? 400 : 432,
       title: 'Last-X Alerts',
       lastXType: 'all', lastXDesign: v.design, lastXEntrance: 'slide-left', followDuration: 5
     }),
     // Text har egen bredd och en starttext; bild och video delar allt utom hojden. Formen ar
     // hamtad falt for falt fran custom-widgets.js sa befintliga anvandare far samma sak.
     'custom.kind': v => Object.assign(
-      { type: v.type, x: 60, y: 120 },
+      // Texten ar 420 bred: x 6 centrerar den (x 60 gav hogerkant 480 i en 432-duk, F02).
+      { type: v.type, x: v.kind === 'text' ? 6 : 60, y: 120 },
       v.kind === 'text' ? { width: 420, height: 90, customText: 'Skriv din text här' }
                         : { width: 300, height: v.kind === 'video' ? 450 : 300 }
     ),
     'giftfireworks.motion': v => ({
-      type: 'templateGiftFireworks', x: 80, y: 950, width: 360, title: 'Gift Fireworks',
+      // y 950 lag helt nedanfor 768-duken och x 80 + 360 gick 8 px forbi hogerkanten (F02). Samma
+      // start som temanycklarna nedan: centrerad, 36 px pa var sida.
+      type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks',
       fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: '#ff4fa3', fwColor2: '#ffd45b', fwSound: true
     }),
@@ -450,7 +456,8 @@
       type: 'templateSocialGoal', goalKind: v.kind,
       ...(GOAL_MOTION_MATT[v.orientation] && /^(crown|heart|diamond)-(orbit|rail|tower)$/.test(v.model)
         ? GOAL_MOTION_MATT[v.orientation]
-        : { x: 70, y: 120, width: v.orientation === 'portrait' ? 220 : 440 }),
+        // Liggande 440 pa x 70 gav hogerkant 510 (F02): 432 pa x 0, som passaInNya redan gav.
+        : v.orientation === 'portrait' ? { x: 70, y: 120, width: 220 } : { x: 0, y: 120, width: 432 }),
       // Heart Tower 100 px (2026-10-11, Davids ord "smalare på bredden"): likes-tornets konst är 247 px
       // bred av 313 (följar-/diamanttornen 186/192), så vid 130 såg det bredast ut av de tre. Samma
       // tal som DESIGNS i goal-motion.js, så katalogknapp och fabrik ger samma widget.
@@ -485,7 +492,10 @@
     // per niva. Hojden ar det praktnivan betalar med, och den vaxer monotont. En widget vars hojd
     // star pa tva stallen far forr eller senare tva olika varden, sa GE_MATT ar det enda stallet.
     'guardianemblem.step': v => ({
-      type: 'templateGuardianEmblem', x: 100, y: 80,
+      // INOM DUKEN (F02, 2026-10-18): x 100 + 400 gav hogerkant 500 i en 432-duk - 68 enheter,
+      // 170 px i 1080-utgangen, beskars utan att nagon sa det. x centrerar bredden (16). Modellerna
+      // arver lage och matt harifran.
+      type: 'templateGuardianEmblem', x: (432 - GE_MATT[v.step][0]) / 2, y: 80,
       width: GE_MATT[v.step][0], height: GE_MATT[v.step][1],
       title: 'Guardian Emblem', guardianStep: Number(v.step),
       // 'auto' som default: en streamer som inte rort valet ska fa sitt eget sprak, inte vart.
@@ -542,7 +552,8 @@
       mvpDuration: 10
     }),
     'battlemvp.celebration': v => ({
-      type: 'templateBattleMvp', x: 100, y: 90, width: v.width || 400, title: 'MVP · '+v.label,
+      // Centrerad: x 100 + 400 gav hogerkant 500 (F02). Guldkrona 280 och Lion Clash 320 hamnar 76 och 56 in.
+      type: 'templateBattleMvp', x: (432 - (v.width || 400)) / 2, y: 90, width: v.width || 400, title: 'MVP · '+v.label,
       mvpStyle: v.style, mvpLabel: 'MVP', mvpName: 'TestAlpha', mvpScore: 1500,
       mvpShowLabel: true, mvpShowName: true, mvpShowCoins: false,
       mvpColor: v.accent, mvpColor2: '#ffffff', mvpDuration: v.duration || 10
@@ -584,8 +595,12 @@
     // Undertexten är temats egen röst. Alla teman utom Crystal Garden delar 'PUSH THE EVENT';
     // kristallträdgården växer i stället för att pushas, och namnger det själv.
     'giftcampaign.theme': v => ({
-      type: 'templateGiftCampaign', x: 70, y: 110,
-      width: ['gold','platinum','emerald'].includes(v.theme) ? (v.orientation === 'portrait' ? 245 : 608) : (v.orientation === 'portrait' ? 260 : 430), title: 'Gift Campaign',
+      // Liggande var 608 (guld, platina, smaragd) och 430 (ovriga) pa x 70 - hogerkant 678 och 500 i en
+      // 432-duk (F02). Guldtrion far 432 pa x 0, samma som passaInNya redan gav i editorn; de ovriga
+      // behaller 430 och centreras. Staende ar oforandrade.
+      type: 'templateGiftCampaign',
+      x: v.orientation === 'portrait' ? 70 : ['gold','platinum','emerald'].includes(v.theme) ? 0 : 1, y: 110,
+      width: ['gold','platinum','emerald'].includes(v.theme) ? (v.orientation === 'portrait' ? 245 : 432) : (v.orientation === 'portrait' ? 260 : 430), title: 'Gift Campaign',
       templateTitle: 'GIFT CAMPAIGN',
       campaignSubtitle: ['gold','platinum','emerald'].includes(v.theme) ? 'Hjälp oss nå kvällens mål' : v.theme === 'crystal-garden' ? 'GROW THE CRYSTAL GARDEN' : 'PUSH THE EVENT',
       ...(['gold','platinum','emerald'].includes(v.theme) ? { campaignMotion: 'lift', campaignDirection: -1, campaignSound: false, campaignVolume: 30 } : {}),

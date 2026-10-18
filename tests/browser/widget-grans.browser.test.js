@@ -481,3 +481,171 @@ test('en ny widget som anvandaren gjort storre an duken krymps inte tillbaka', {
     assert.equal(m.x, -40, `laget flyttades till ${m.x}`);
   } finally { await context.close() }
 });
+
+// ---- DELVIS UTANFOR: MJUK VARNING, INGEN KLAMP (F02, 2026-10-18) ------------------------
+// Guardian skapades pa x 100 med bredd 400 i 432-duken. Hogerkanten 500 beskars i sandningen och
+// editorn sa ingenting, eftersom bara FORSVUNNA widgetar markerades. Nu far en delvis utstickande
+// widget en gul streckad kant, och den valda en rad i panelen med "Anpassa inom duken". Draget
+// och falten klampas fortfarande bara till MIN_SYNLIG.
+const GUARDIAN = { id: 'd1', type: 'templateGuardianEmblem', x: 100, y: 80, width: 400, height: 570,
+  guardianStep: 4, guardianLang: 'sv', guardianShowUsername: true, guardianUsername: '@Guardian' };
+
+async function lasVarning(page) {
+  return page.evaluate(() => {
+    const el = document.querySelector('.editor-shell .canvas [data-id="d1"]');
+    const rad = document.querySelector('.properties [data-grans-varning]');
+    const w = state.widgets.find(x => x.id === 'd1');
+    const c = document.querySelector('.editor-shell .canvas');
+    return {
+      sidor: el && el.dataset.stickerUt || null,
+      forsvunnen: !!(el && el.dataset.utanforDuken),
+      kant: el ? getComputedStyle(el).outlineStyle : null,
+      text: rad ? rad.querySelector('p').textContent : null,
+      knapp: rad ? rad.querySelector('button').textContent : null,
+      synlig: rad ? rad.getBoundingClientRect().height > 0 : false,
+      banderoll: !!document.querySelector('[data-grans-raknare]'),
+      utsprangPx: el ? Math.round(Math.max(0, parseInt(el.style.left, 10) + el.offsetWidth - c.offsetWidth,
+        parseInt(el.style.top, 10) + el.offsetHeight - c.offsetHeight)) : null,
+      x: w.x, y: w.y, width: w.width
+    };
+  });
+}
+
+test('Guardian pa x 100 markeras som delvis utanfor och panelen sager hur mycket', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([GUARDIAN]);
+  try {
+    const m = await lasVarning(page);
+    assert.equal(m.sidor, 'hoger', `sidorna ${m.sidor}`);
+    assert.equal(m.forsvunnen, false, 'delvis utanfor fick den roda forsvunnen-markeringen');
+    assert.equal(m.kant, 'dashed', 'ingen streckad kant syns');
+    assert.equal(m.banderoll, false, 'banderollen ar for forsvunna widgetar, inte delvis utstickande');
+    assert.ok(m.utsprangPx >= 68, `utsprang ${m.utsprangPx}`);
+    assert.equal(m.text, `Sticker ut ${m.utsprangPx} px utanför bilden – det syns inte i sändningen`);
+    assert.equal(m.knapp, 'Anpassa inom duken');
+    assert.equal(m.synlig, true, 'raden finns men syns inte');
+    assert.equal(m.x, 100, 'markeringen FLYTTADE widgeten - den ska bara varna');
+  } finally { await context.close() }
+});
+
+test('"Anpassa inom duken" flyttar widgeten inom duken och varningen forsvinner', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([GUARDIAN]);
+  try {
+    await page.click('.properties [data-grans-anpassa]');
+    await page.waitForTimeout(400);
+    const m = await page.evaluate(() => {
+      const el = document.querySelector('.editor-shell .canvas [data-id="d1"]');
+      const d = window.VyraGrans.dukFor(el);
+      return { ut: window.VyraGrans.stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10), el.offsetWidth, el.offsetHeight, d),
+        x: state.widgets.find(x => x.id === 'd1').x };
+    });
+    assert.equal(m.ut, false, 'widgeten sticker fortfarande ut efter knappen');
+    assert.ok(m.x < 100, `x ${m.x}`);
+    const efter = await lasVarning(page);
+    assert.equal(efter.text, null, 'varningen star kvar fast widgeten ryms');
+    assert.equal(efter.sidor, null, 'markeringen star kvar fast widgeten ryms');
+  } finally { await context.close() }
+});
+
+test('delvis utanfor ar fortfarande tillatet: draget stannar dar man slapper och varnar', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn();
+  try {
+    const m = await dra(page, 320, 40);           // pa 8-rutnatet, en bit forbi hogerkanten
+    assert.ok(m.sparat.x + m.widget.bredd > m.duk.bredd, 'provet drog inte ut widgeten');
+    assert.equal(m.sparat.x, 320, `x ${m.sparat.x}: draget klamdes hardare an MIN_SYNLIG`);
+    await page.evaluate(async () => { render(); if (typeof bind === 'function') bind(); await new Promise(r => setTimeout(r, 300)) });
+    const v = await lasVarning(page);
+    assert.equal(v.sidor, 'hoger');
+    assert.ok(v.text && v.text.startsWith('Sticker ut '), `panelen sa ${JSON.stringify(v.text)}`);
+    const langt = await dra(page, 9999, 40);
+    assert.equal(langt.sparat.x, langt.duk.bredd - Math.min(langt.minSynlig, langt.widget.bredd), 'golvet ar inte langre 48 px');
+  } finally { await context.close() }
+});
+
+test('X-faltet klampas bara till MIN_SYNLIG, inte till duken', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn();
+  try {
+    const m = await page.evaluate(async () => {
+      // Faltet hamtas pa nytt varje gang: change ritar om panelen och byter ut noden.
+      let f = document.querySelector('#propX');
+      f.value = '320'; f.dispatchEvent(new Event('change', { bubbles: true }));
+      const delvis = f.value;
+      f = document.querySelector('#propX');
+      f.value = '9999'; f.dispatchEvent(new Event('change', { bubbles: true }));
+      const el = document.querySelector('.editor-shell .canvas [data-id="d1"]');
+      return { delvis, langt: Number(f.value), bredd: el.offsetWidth, duk: document.querySelector('.editor-shell .canvas').offsetWidth,
+        min: window.VyraGrans.MIN_SYNLIG };
+    });
+    assert.equal(m.delvis, '320', 'faltet klamde ett delvis utstickande lage');
+    assert.equal(m.langt, m.duk - Math.min(m.min, m.bredd));
+  } finally { await context.close() }
+});
+
+test('i overlay-utdata ritas varken kant eller panelvarning', { skip, timeout: 90000 }, async () => {
+  const context = await browser.newContext({ viewport: { width: 1080, height: 1920 } });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    await page.waitForFunction(() => typeof window.render === 'function', null, { timeout: 20000 });
+    const m = await page.evaluate(async g => {
+      state.widgets = [g]; selected = 'd1'; render(); if (typeof bind === 'function') bind();
+      await new Promise(r => setTimeout(r, 500));
+      return { overlay: document.documentElement.classList.contains('overlay-output'),
+        markerade: document.querySelectorAll('[data-sticker-ut]').length,
+        varningar: document.querySelectorAll('[data-grans-varning]').length,
+        panel: window.VyraGrans.panelvarning() };
+    }, GUARDIAN);
+    assert.equal(m.overlay, true, 'sidan kom inte i overlay-lage');
+    assert.equal(m.markerade, 0, 'markeringen hamnade i sandningen');
+    assert.equal(m.varningar, 0, 'panelvarningen hamnade i sandningen');
+    assert.equal(m.panel, null);
+  } finally { await context.close() }
+});
+
+// PRAKTSTEG OCH MODELL BYTER STORLEK. Lag emblemet helt pa duken fore bytet och skjuter det nya
+// mattet ut det, passas det in igen. Lag det redan delvis utanfor flyttas det inte - det var ett val.
+async function bytGuardian(page, start, falt, varde) {
+  return page.evaluate(async ({ start, falt, varde }) => {
+    for (let i = 0; i < 80 && !window.VyraGuardianModels; i++) await new Promise(r => setTimeout(r, 100));
+    const w = state.widgets.find(x => x.id === 'd1');
+    Object.assign(w, start); render(); bind();
+    await new Promise(r => setTimeout(r, 300));
+    const el = document.querySelector(falt);
+    if (!el) return { saknas: falt };
+    el.value = varde; el.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 400));
+    const n = document.querySelector('.editor-shell .canvas [data-id="d1"]');
+    return { x: w.x, y: w.y, width: w.width, height: w.height,
+      ut: window.VyraGrans.stickerUt(parseInt(n.style.left, 10), parseInt(n.style.top, 10), n.offsetWidth, n.offsetHeight, window.VyraGrans.dukFor(n)) };
+  }, { start, falt, varde });
+}
+
+test('praktsteg som skjuter ut ett emblem som lag inne passar in det igen', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([GUARDIAN]);
+  try {
+    const m = await bytGuardian(page, { x: 16, y: 240, guardianStep: 1, height: 450 }, '#geStep', '4');
+    assert.ok(!m.saknas, `${m.saknas} finns inte i panelen`);
+    assert.equal(m.height, 570, 'steget bytte inte matt');
+    assert.equal(m.ut, false, `steg 4 sticker ut efter bytet (y ${m.y})`);
+    assert.ok(m.y < 240, `y ${m.y}`);
+  } finally { await context.close() }
+});
+
+test('praktsteg flyttar inte ett emblem som redan lag delvis utanfor', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([GUARDIAN]);
+  try {
+    const m = await bytGuardian(page, { x: 100, y: 80, guardianStep: 1, height: 450 }, '#geStep', '4');
+    assert.ok(!m.saknas, `${m.saknas} finns inte i panelen`);
+    assert.equal(m.x, 100, 'en medveten placering utanfor flyttades');
+    assert.equal(m.y, 80);
+  } finally { await context.close() }
+});
+
+test('modellbyte som skjuter ut ett emblem som lag inne passar in det igen', { skip, timeout: 90000 }, async () => {
+  const { context, page } = await editorn([GUARDIAN]);
+  try {
+    const m = await bytGuardian(page, { x: 16, y: 300, guardianStep: 1, height: 450, guardianModel: 'classic' }, '#geModel', 'emerald');
+    assert.ok(!m.saknas, `${m.saknas} finns inte i panelen`);
+    assert.equal(m.height, 570, 'modellen bytte inte proportioner');
+    assert.equal(m.ut, false, `emblemet sticker ut efter modellbytet (y ${m.y})`);
+  } finally { await context.close() }
+});

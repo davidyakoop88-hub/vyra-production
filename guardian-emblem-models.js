@@ -54,11 +54,15 @@
     const w = liveWidget(selected), val = document.querySelector('#geModel');
     if (view === 'editor' && w && w.type === 'templateGuardianEmblem' && val) {
       val.onchange = e => {
+        // Låg emblemet helt på duken före bytet passas det in igen om de nya proportionerna
+        // skjuter ut det (F02). Låg det redan delvis utanför är det ett val och flyttas inte.
+        const inne = !!(root.VyraGrans && root.VyraGrans.inneHelt(w.id));
         w.guardianModel = modell({guardianModel:e.target.value});
         const matt = VyraWidgets.variants('guardianemblem.matt')[w.guardianModel==='classic'?geStegAv(w):'4'];
         // Behåll användarens storlek; byt bara proportionerna mellan modellerna.
         w.height = Math.round((Number(w.width)||400) * matt[1] / matt[0]);
         save(); vyraRenderKeepingPanel();
+        if (inne) root.VyraGrans.flyttaIn([w.id]);
       };
     }
     const section = document.querySelector('[data-guardian-emblem]');

@@ -135,3 +135,30 @@ test('en nedskalad widget behåller lika många SYNLIGA pixlar på duken', () =>
   assert.equal(G.forsvunnen(max, 0, 340, 260, duk, S / skala), false);
   assert.equal(G.forsvunnen(max + 10 / skala, 0, 340, 260, duk, S / skala), true, 'ett steg till och den är borta');
 });
+
+// ---- DELVIS UTANFOR SYNS, MEN KLAMPAS INTE (F02, 2026-10-18) ---------------------------
+// Guardian skapades pa x 100 med bredden 400 och hojden 570 i 432x768-duken: hogerkanten 500,
+// 68 enheter utanfor, 170 px beskaret i 1080-utgangen. Fri placering star kvar - det som tillkom
+// ar att editorn SAGER det.
+test('Guardian pa x 100, 400x570: sticker ut men har inte forsvunnit', () => {
+  assert.equal(G.stickerUt(100, 80, 400, 570, MOBIL), true);
+  assert.equal(G.forsvunnen(100, 80, 400, 570, MOBIL), false);
+  assert.equal(G.delvisUtanfor(100, 80, 400, 570, MOBIL), true);
+  assert.deepEqual(G.utsprang(100, 80, 400, 570, MOBIL), { vanster: 0, hoger: 68, uppe: 0, nere: 0, storst: 68 });
+});
+
+test('utsprang raknar varje sida for sig och storst ar den storsta', () => {
+  assert.deepEqual(G.utsprang(-20, -5, 300, 900, MOBIL), { vanster: 20, hoger: 0, uppe: 5, nere: 127, storst: 127 });
+  assert.equal(G.utsprang(16, 80, 400, 570, MOBIL).storst, 0, 'en widget inne pa duken sticker inte ut');
+});
+
+test('delvisUtanfor ar falsk bade inne pa duken och for en forsvunnen widget', () => {
+  assert.equal(G.delvisUtanfor(16, 80, 400, 570, MOBIL), false, 'helt inne');
+  assert.equal(G.delvisUtanfor(688, 200, 220, 388, MOBIL), false, 'forsvunnen har sin egen, roda markering');
+});
+
+test('klampen ar oforandrad: Guardian pa x 100 far sta kvar, och 48 px ar fortfarande golvet', () => {
+  assert.deepEqual(G.klamp(100, 80, MOBIL, { bredd: 400, hojd: 570 }), { vanster: 100, topp: 80 });
+  assert.equal(G.klampEtt(9999, 432, 400), 432 - S);
+  assert.equal(G.klampEtt(-9999, 432, 400), S - 400);
+});

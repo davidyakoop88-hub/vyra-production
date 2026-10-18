@@ -177,7 +177,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // rullningen finns kvar. En cachad studio.css hade visat listerna vidare.
   // Bumpad 2026-10-17 (-2): TikTok-rutan visar e-postkravet som steg 1 och låser steg 2 (#connectModal
   // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
-  assert.match(studio, /studio\.css\?v=20261017-3/);
+  assert.match(studio, /studio\.css\?v=20261018-13/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -198,7 +198,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261017-5/);
+  assert.match(studio, /widget-factory\.js\?v=20261018-13/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261014-nya-gavor/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
@@ -376,7 +376,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
-  assert.match(media, /const version='20261018-1'/);
+  assert.match(media, /const version='20261018-13'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

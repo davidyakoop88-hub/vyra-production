@@ -81,10 +81,23 @@ test('alla elva nycklar gar att skapa', () => {
   assert.deepEqual(fel, [], 'dessa loser inte upp:\n  ' + fel.join('\n  '));
 });
 
+// INOM DUKEN (F02, 2026-10-18): Last-X 500 bred pa x 100, egen text x 60 + 420 och fyrverkerierna
+// pa y 950 skapades delvis eller helt utanfor 432x768-duken. For just de posterna jamfors x, y och
+// width inte - i stallet kravs att den nya platsen ryms. Allt annat jamfors falt for falt som forut.
+const utanforDuken = w => {
+  const x = Number(w.x), y = Number(w.y), b = Number(w.width), h = Number(w.height);
+  return x < 0 || y < 0 || y >= 768 || (Number.isFinite(b) && x + b > 432) || (Number.isFinite(h) && y + h > 768);
+};
+
 test('varje widget ur fabriken ar identisk med den knappen byggde', () => {
   const avvikande = [];
-  for (const [nyckel, gammal] of Object.entries(GAMLA)) {
+  for (const [nyckel, forr] of Object.entries(GAMLA)) {
     let fran; try { fran = utanId(VyraWidgets.create(nyckel)) } catch (e) { avvikande.push(nyckel); continue }
+    let gammal = forr;
+    if (utanforDuken(forr)) {
+      if (utanforDuken(fran)) { avvikande.push(nyckel + ' (fortfarande utanfor duken)'); continue }
+      gammal = Object.assign({}, forr, { x: fran.x, y: fran.y, width: fran.width });
+    }
     try { assert.deepEqual(fran, gammal) } catch (e) { avvikande.push(nyckel) }
   }
   assert.deepEqual(avvikande, [],

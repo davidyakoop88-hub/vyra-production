@@ -18,6 +18,9 @@
 // Den stoppade widgetar vid kanten och krympte dem som var storre an duken, och det var just
 // det som gjorde att widgetar inte gick att placera dar man ville.
 //
+// DELVIS UTANFOR SYNS SEDAN 2026-10-18 (F02), men klampas inte: widgeten far data-sticker-ut och
+// den valda far en rad i panelen med knappen "Anpassa inom duken" (flyttaIn([id])).
+//
 // VAGARNA IN: draget (haktaDrag) och panelens X/Y-falt (klampFalt) haller kvar en synlig del.
 // Resize-handtagen (widget-handles.js) och Bredd-faltet har ingen ovre grans. "Flytta in"
 // (flyttaInAlla) flyttar bara in widgetar som forsvunnit, och katalogen (passaInNya) ger en
@@ -131,6 +134,24 @@
       vanster + (bredd || 0) > d.bredd || topp + (hojd || 0) > d.hojd;
   }
 
+  // HUR MYCKET sticker ut, per sida, i samma rum som matten ges i. Ren rakning. `storst` ar den
+  // storsta sidan - det ar den siffran panelen visar.
+  function utsprang(vanster, topp, bredd, hojd, dukMatt) {
+    var d = dukMatt || duken(), b = bredd || 0, h = hojd || 0;
+    var u = { vanster: Math.max(0, -vanster), hoger: Math.max(0, vanster + b - d.bredd),
+      uppe: Math.max(0, -topp), nere: Math.max(0, topp + h - d.hojd) };
+    u.storst = Math.max(u.vanster, u.hoger, u.uppe, u.nere);
+    return u;
+  }
+
+  // DELVIS UTANFOR, OCH INTE FORSVUNNEN (F02, 2026-10-18). Fri placering star kvar - ingenting
+  // klampas harifran - men den som bara sticker ut delvis ska ocksa FA VETA det. Guardian pa x 100
+  // med bredd 400 beskars 170 px i 1080-utgangen och editorn sa ingenting.
+  function delvisUtanfor(vanster, topp, bredd, hojd, dukMatt, synlig) {
+    return stickerUt(vanster, topp, bredd, hojd, dukMatt) &&
+      !forsvunnen(vanster, topp, bredd, hojd, dukMatt, synlig);
+  }
+
   // ---- MARKERINGEN -----------------------------------------------------------------------
   // ALDRIG I SÄNDNINGEN. overlay-output är OBS/TikTok-utdata; en markering där hade stått
   // mitt i bilden för tittarna. Samma regel som lankraden i #264 och felrutan i #470.
@@ -149,6 +170,13 @@
           el.offsetWidth, el.offsetHeight, dukFor(el, d), synligFor(el));
         if (ut) { el.dataset.utanforDuken = '1'; antal++; }
         else delete el.dataset.utanforDuken;
+        // Den mjuka markeringen: vilka sidor som sticker ut, sa CSS kan visa det. Aldrig samma
+        // attribut som den forsvunna - den har varken banderoll eller raknare.
+        var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10);
+        var dw = dukFor(el, d), u = !ut && delvisUtanfor(x, y, el.offsetWidth, el.offsetHeight, dw, synligFor(el))
+          ? utsprang(x, y, el.offsetWidth, el.offsetHeight, dw) : null;
+        var sidor = u ? ['vanster', 'hoger', 'uppe', 'nere'].filter(function (k) { return u[k] > 0 }).join(' ') : '';
+        if (sidor) el.dataset.stickerUt = sidor; else delete el.dataset.stickerUt;
       });
     } catch (e) {}
     return antal;
@@ -239,6 +267,57 @@
       (ute.length === 1 ? ' widget ligger' : ' widgetar ligger') +
       ' utanför bildrutan och syns inte i sändningen — klicka för att flytta in';
     knapp.title = 'Ångra fungerar om placeringen inte blir som du tänkt.';
+  }
+
+  // ---- VARNINGEN I PANELEN ---------------------------------------------------------------
+  // Den valda widgeten far en rad overst i egenskapspanelen nar den sticker ut delvis, med en
+  // knapp som anropar flyttaIn([id]) - samma passning som en nyskapad widget far. Ingenting
+  // flyttas utan klicket. Matten raknas om till DUKENS pixlar (widgetens egen zoom inraknad),
+  // samma pixlar som X/Y-falten. Panelen finns bara i editorn, och iEditorn() haller den borta
+  // fran overlay-utdata aven om nagot skulle rita en.
+  function panelvarning() {
+    if (!iEditorn()) return null;
+    try {
+      // Panelerna ser olika ut: studio.js grundpanel har .properties-body, syskonfilernas egna
+      // (Top Like, Guardian ...) bara rubrik + innehall direkt i .properties.
+      var panel = document.querySelector('.editor-shell .properties') || document.querySelector('.properties');
+      var kropp = panel && (panel.querySelector('.properties-body') || panel);
+      var gammal = document.querySelector('.properties [data-grans-varning]');
+      var id = typeof selected !== 'undefined' ? selected : null;
+      var el = id && document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+      var n = 0;
+      if (kropp && el) {
+        var x = parseInt(el.style.left, 10), y = parseInt(el.style.top, 10), dw = dukFor(el);
+        if (delvisUtanfor(x, y, el.offsetWidth, el.offsetHeight, dw, synligFor(el))) {
+          n = Math.max(1, Math.round(utsprang(x, y, el.offsetWidth, el.offsetHeight, dw).storst * skalanFor(el)));
+        }
+      }
+      if (!n) { if (gammal) gammal.remove(); return null; }
+      var rad = gammal;
+      if (!rad) {
+        rad = document.createElement('div');
+        rad.className = 'grans-varning';
+        rad.dataset.gransVarning = '1';
+        rad.setAttribute('role', 'status');
+        rad.innerHTML = '<p></p><button type="button" data-grans-anpassa>Anpassa inom duken</button>';
+        var efter = kropp === panel && (panel.querySelector(':scope > h3') || panel.querySelector(':scope > .panel-title'));
+        if (efter) efter.after(rad); else kropp.prepend(rad);
+      }
+      rad.dataset.id = id;
+      rad.querySelector('p').textContent = 'Sticker ut ' + n + ' px utanför bilden – det syns inte i sändningen';
+      rad.querySelector('[data-grans-anpassa]').onclick = function () { flyttaIn([id]); };
+      return n;
+    } catch (e) { return null; }
+  }
+
+  // Lag sanning for andra filer: ligger widgeten HELT pa duken just nu? Okand nod ger false, sa
+  // den som fragar fore en storleksandring inte flyttar nagot den inte kan se.
+  function inneHelt(id) {
+    try {
+      var el = id && document.querySelector('.editor-shell .canvas .widget[data-id="' + id + '"]');
+      if (!el) return false;
+      return !stickerUt(parseInt(el.style.left, 10), parseInt(el.style.top, 10), el.offsetWidth, el.offsetHeight, dukFor(el));
+    } catch (e) { return false; }
   }
 
   // ---- NYA WIDGETAR RYMS FRÅN FÖRSTA STUND ----------------------------------------------
@@ -382,6 +461,7 @@
 
   var api = {
     klamp: klamp, klampEtt: klampEtt, duken: duken, stickerUt: stickerUt, forsvunnen: forsvunnen,
+    utsprang: utsprang, delvisUtanfor: delvisUtanfor, panelvarning: panelvarning, inneHelt: inneHelt,
     dukIWidgetens: dukIWidgetens, skalanFor: skalanFor, dukFor: dukFor,
     markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, flyttaIn: flyttaIn, raknare: raknare,
     passaInNya: passaInNya, markeraNy: markeraNy, NY_FONSTER_MS: NY_FONSTER_MS,
@@ -399,7 +479,7 @@
     var forra = root.render;
     root.render = function () {
       var r = forra.apply(this, arguments);
-      passaInNya(); markera(); raknare();
+      passaInNya(); markera(); raknare(); panelvarning();
       return r;
     };
   }

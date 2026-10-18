@@ -573,6 +573,16 @@ body:has(.editor-shell) .overlay-link-bar{left:var(--meny-bredd)!important;heigh
 .editor-shell .canvas .widget[data-utanfor-duken]::before{content:"UTANFOR BILDRUTAN";position:absolute;top:-16px;left:0;z-index:9;padding:1px 5px;border-radius:4px;background:#ff5b7f;color:#1a0009;font-size:8px;font-weight:700;letter-spacing:.06em;white-space:nowrap;pointer-events:none}
 html.overlay-output .widget[data-utanfor-duken]{outline:0!important}
 html.overlay-output .widget[data-utanfor-duken]::before{display:none!important}
+/* Widget som sticker ut DELVIS (F02, 2026-10-18). Fri placering star kvar, men det som hamnar
+   utanfor duken beskars i sandningen - en streckad gul kant sager det utan att flytta nagot.
+   widget-grans.js satter attributet bara i editorn; regeln nedan ar andra forsvaret. */
+.editor-shell .canvas .widget[data-sticker-ut]{outline:2px dashed #ffb547;outline-offset:2px}
+html.overlay-output .widget[data-sticker-ut]{outline:0!important}
+.properties [data-grans-varning]{margin:0 0 12px;padding:10px 12px;border:1px solid #ffb547;border-radius:8px;background:#2a1d08;color:#ffd79a;font-size:10px;line-height:1.4}
+.properties [data-grans-varning] p{margin:0 0 8px;color:inherit;font-weight:700}
+.properties [data-grans-varning] button{width:100%;padding:7px 10px;border:1px solid #ffb547;border-radius:6px;background:#3a2709;color:#ffe2b0;font-weight:700;cursor:pointer}
+.properties [data-grans-varning] button:hover{background:#4d340c}
+html.overlay-output [data-grans-varning]{display:none!important}
 /* Raknaren i verktygsraden. Markeringen ensam racker inte: ligger widgeten HELT utanfor
    duken ligger dess markering ocksa utanfor. Verktygsraden ar redan dold i overlay-utdata
    (se regeln langre ned), sa den kan inte hamna i sandningen. */

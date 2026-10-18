@@ -108,5 +108,5 @@ test('cachebustarna höjdes i samma commit som filerna', () => {
   assert.match(media, /gift-supernova-panel\.js\?v=20261018-1/);
   assert.match(html, /vyra-textgrupp\.js\?v=20261017-podium6/);
   assert.match(html, /approved-rankings\.js\?v=20261017-1/);
-  assert.match(html, /media\.js\?v=20261018-5/);
+  assert.match(html, /media\.js\?v=20261018-13/);
 });
