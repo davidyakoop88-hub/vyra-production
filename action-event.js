@@ -175,7 +175,11 @@
   // en vit sida. Formen garanteras här i stället, en gång.
   const normalisera=o=>({...o,actions:Array.isArray(o?.actions)?o.actions:[],events:Array.isArray(o?.events)?o.events:[]});
   const read=()=>{try{const parsed=normalisera(JSON.parse(readExtra(KEY)||'{}'));const cleaned=cleanupLegacyTestState(parsed);if(cleaned.changed)window.VyraSessionState.writeActive(KEY,JSON.stringify(cleaned.state));return cleaned.state}catch(e){console.warn('[VYRA] Ogiltig action-state',e);return{actions:[],events:[]}}};
-  const write=state=>window.VyraSessionState.writeActive(KEY,JSON.stringify(state));
+  // writeActive är ASYNKRON: värdet landar först när låset är taget (session-state.js:310). Den
+  // som ritar om eller visar "sparad" efteråt måste vänta in svaret och läsa `ok` — annars ritas
+  // listan utan den nya posten och toasten ljuger om en skrivning som vägrades (F07).
+  const write=async state=>{try{return await window.VyraSessionState.writeActive(KEY,JSON.stringify(state))||{ok:false,reason:'write-failed'}}catch(error){console.warn('[VYRA] action-state kunde inte skrivas',error);return{ok:false,reason:'storage-error'}}};
+  const skrivEllerKasta=async state=>{const out=await write(state);if(!out?.ok)throw new Error(out?.reason||'write-failed');return out};
   function formatActionName(action){
     const raw=String(action?.name||'').trim();
     const widget=String(action?.config?.widget||'').trim();
@@ -385,7 +389,7 @@
     triggerSelect.addEventListener('change',refresh);
     setTimeout(refresh,0);
   }
-  function persist(state){write(state);renderPage()}
+  async function persist(state){const out=await write(state);renderPage();if(!out?.ok){window.toast?.('Ändringen kunde inte sparas');return false}return true}
   function sceneOnline(number){return Date.now()-Number(localStorage.getItem(`vyra-scene-heartbeat-${number}`)||0)<6000}
   // Huvudbrytaren bredvid "Skapa ny Action" (facit §1). Den pausar LIVE-triggade actions, inte
   // Testa-knappen: en streamer som pausat automationen ska ändå kunna prova en action i lugn och ro.
@@ -520,6 +524,8 @@
   async function saveAction(existingId){
     const modal=document.querySelector('.ae-modal');
     if(!modal)return;
+    // Ett andra klick medan första sparningen väntar på låset får inte skapa en andra post.
+    if(modal.querySelector('#saveAeAction')?.disabled)return;
     const namn=modal.querySelector('#aeActionName').value.trim();
     const funktioner=selectedActionTypes(modal);
     const laggTill=modal.querySelector('#aeAddPoints').checked,taBort=modal.querySelector('#aeRemovePoints').checked;
@@ -557,7 +563,7 @@
         if(index<0)throw new Error('Actionen finns inte längre');
         aktuell.actions[index]={...aktuell.actions[index],...bas};
       }else aktuell.actions.push({id:'a'+Date.now(),...bas});
-      write(aktuell);
+      await skrivEllerKasta(aktuell);
       document.querySelector('#aeModal').innerHTML='';
       renderPage();
       window.toast?.(existingId?'Action uppdaterad':'Action sparad');
@@ -593,6 +599,7 @@
   async function saveEvent(existingId){
     const modal=document.querySelector('.ae-modal');
     if(!modal)return;
+    if(modal.querySelector('#saveAeEvent')?.disabled)return;
     for(const provider of eventProviders){
       const fel=provider.validate?.(modal);
       if(fel)return window.toast?.(fel);
@@ -620,7 +627,7 @@
         if(index<0)throw new Error('Eventet finns inte längre');
         aktuell.events[index]={...aktuell.events[index],...delar};
       }else aktuell.events.push({id:'e'+Date.now(),enabled:true,...delar});
-      write(aktuell);
+      await skrivEllerKasta(aktuell);
       document.querySelector('#aeModal').innerHTML='';
       renderPage();
       window.toast?.(existingId?'Event uppdaterat':'Event kopplat till Action');
@@ -736,10 +743,10 @@
       // IndexedDB. Det är avsiktligt — en duplicering ska inte fördubbla en 40 MB videofil. Priset
       // är att en raderad förlaga tar med sig kopians media, och det är inte byggt än (se nedan).
       aktuell.actions.push({...original,id:'a'+Date.now(),name:`${formatActionName(original)} (kopia)`});
-      persist(aktuell);window.toast?.('Action duplicerad');
+      persist(aktuell).then(ok=>{if(ok)window.toast?.('Action duplicerad')});
     });
     const master=document.querySelector('#aeMasterEnabled');
-    if(master)master.onchange=()=>{const aktuell=read();aktuell.actionsEnabled=master.checked;write(aktuell);window.toast?.(master.checked?'Automatiken är aktiv':'Automatiken är pausad — Testa-knappen fungerar fortfarande')};
+    if(master)master.onchange=async()=>{const aktuell=read(),pa=master.checked;aktuell.actionsEnabled=pa;const out=await write(aktuell);if(!out?.ok){master.checked=!pa;return window.toast?.('Ändringen kunde inte sparas')}window.toast?.(pa?'Automatiken är aktiv':'Automatiken är pausad — Testa-knappen fungerar fortfarande')};
     document.querySelectorAll('[data-edit-event]').forEach(b=>b.onclick=()=>eventModal(b.dataset.editEvent));
     const eventSok=document.querySelector('#aeEventSearch');
     if(eventSok)eventSok.oninput=()=>{

@@ -439,7 +439,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
-  assert.match(media, /action-event\.js\?v=20260923-2/, 'action-event.js cachebustades inte');
+  assert.match(media, /action-event\.js\?v=20261018-1/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   assert.match(media, /action-event\.css\?v=20261014-nya-gavor/, 'action-event.css cachebustades inte for NY-etiketten');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
