@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `ecc372e`
+Commit: `30e917f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -42,14 +42,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|---|
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
-| FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
+| GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
@@ -61,7 +61,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-08-03 | — |
+| HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
@@ -110,15 +110,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Crown Orbit | `catalog:socialgoal:followers:crown-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
-| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| Crown Orbit | `catalog:socialgoal:followers:crown-orbit:circle` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Crown Rail | `catalog:socialgoal:followers:crown-rail:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Crown Tower | `catalog:socialgoal:followers:crown-tower:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Orbit | `catalog:socialgoal:likes:heart-orbit:circle` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Rail | `catalog:socialgoal:likes:heart-rail:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Tower | `catalog:socialgoal:likes:heart-tower:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | Goal Pro · Rak bar | `catalog:pggoal:1` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Goal Pro · Pill | `catalog:pggoal:2` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Goal Pro · Ring | `catalog:pggoal:3` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
@@ -197,12 +197,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-09-12 | — |
-| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-09-12 | — |
-| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-09-12 | — |
-| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-09-12 | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-09-12 | — |
-| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-09-12 | — |
+| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 
 ### LIKE FOUNTAIN
 
@@ -318,18 +318,18 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Heart Me Goal · Classic | `catalog:heartgoal:classic` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Dark | `catalog:heartgoal:dark` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Emerald | `catalog:heartgoal:emerald` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Galaxy | `catalog:heartgoal:galaxy` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Golden | `catalog:heartgoal:golden` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Ice | `catalog:heartgoal:ice` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Neon | `catalog:heartgoal:neon` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Ocean | `catalog:heartgoal:ocean` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Sakura | `catalog:heartgoal:sakura` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Frost | `catalog:heartgoal:frost` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Midnight | `catalog:heartgoal:midnight` | ✓ | ✓ | 2026-08-03 | — |
-| Heart Me Goal · Citrus | `catalog:heartgoal:citrus` | ✓ | ✓ | 2026-08-03 | — |
+| Heart Me Goal · Classic | `catalog:heartgoal:classic` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Dark | `catalog:heartgoal:dark` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Emerald | `catalog:heartgoal:emerald` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Galaxy | `catalog:heartgoal:galaxy` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Golden | `catalog:heartgoal:golden` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Ice | `catalog:heartgoal:ice` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Neon | `catalog:heartgoal:neon` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Ocean | `catalog:heartgoal:ocean` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Sakura | `catalog:heartgoal:sakura` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Frost | `catalog:heartgoal:frost` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Midnight | `catalog:heartgoal:midnight` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Heart Me Goal · Citrus | `catalog:heartgoal:citrus` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 
 ### TOP GIFT · DESIGNVAL
 
