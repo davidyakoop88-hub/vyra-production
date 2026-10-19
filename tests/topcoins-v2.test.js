@@ -32,7 +32,7 @@ test('both approved designs are transparent by default and animated independentl
 });
 
 test('Top Coins assets are loaded after media with a fresh shared cache version', () => {
-  assert.match(html, /topcoins-v2\.css\?v=20261012-lasbar/);
+  assert.match(html, /topcoins-v2\.css\?v=20261019-1/);
   // Laddordningen mäts över de riktiga <script src>-taggarna i dokumentordning. media.js:s
   // ?v= låses inte: den bumpas i varje PR som rör media.js, och en låst sträng som inte
   // längre fanns gav indexOf -1 och en vakt som var grön oavsett ordning.

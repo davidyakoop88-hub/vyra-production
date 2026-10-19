@@ -79,8 +79,8 @@ async function panelen(nyckel) {
 
 // Widget, fält-id, och vad etiketten börjar med.
 const GOMS = [
-  ['catalog:topgift:premium:royal', 'pfTopGiftProfile'],
-  ['catalog:topgift:premium:royal', 'pfTopGiftGift'],
+  // Top Gift har inga bildfält sedan 2026-10-19: profil- och gåvobild väljs i mediaväljaren
+  // (vyra-topgift-panel.js), som provas i mediaval- och panel-krav-proven.
   // Top Streak (Clean Flip) har inga bildfalt i en hopfalld grupp: panelen ar approved-rankings.js:s
   // sedan 2026-09-20, och premium:liquid ar avvecklad. Raden med pfStreakProfile togs bort.
   ['catalog:followeralert', 'followProfile'],

@@ -137,7 +137,7 @@
 
       // Samma grepp som gift-alert-frames.js: widgetens egen "Testa"-knapp spelar också intron
       // om, så det går att se valet utan att ladda om sidan.
-      const testBtn = [...panel.querySelectorAll('button')].find(b => b !== del && /Testa|Test\b/.test(b.textContent));
+      const testBtn = [...panel.querySelectorAll('button')].find(b => b !== del && /Testa|Test\b/.test(b.textContent) && !b.closest('[data-testspel]'));  // ▶ Testa widget spelar en klon och rör aldrig den riktiga noden
       if (testBtn && !testBtn.__vyraIntro) {
         testBtn.__vyraIntro = true;
         const original = testBtn.onclick;

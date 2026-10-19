@@ -95,20 +95,28 @@
     { nyckel: 'las', sel: '[data-aspect-lock]' },
     { nyckel: 'storlek', sel: '#propScale, #followScale' },
   ];
+  // Etiketter som skrivs om när blocket flyttas in i ramen: enheten för talfält utan <b>, och ett
+  // entydigt namn där två block annars hade haft samma etikett (Färg i bakgrunden och i modellen).
+  const STD_ETIKETT = {
+    vtShadowBlur: 'Skugga (px)', vtShadowX: 'Skugga X (px)', vtShadowY: 'Skugga Y (px)', vtOutline: 'Kontur (px)',
+    wbColor: 'Bakgrundsfärg',
+  };
   const ENTRE_EFFEKT = '#vyraEntrance, #gafEntrance, #wsEntrance, #lastXEntrance';
   const STD = {
     'std-storlek': STORLEK,
+    // Talfälten utan reglage har ingen <b> att lägga enheten i; den står då i etiketten.
     'std-position': [
-      { nyckel: 'x', sel: '#propX' },
-      { nyckel: 'y', sel: '#propY' },
-      ...STORLEK,
+      { nyckel: 'x', sel: '#propX', etikett: 'X (px)' },
+      { nyckel: 'y', sel: '#propY', etikett: 'Y (px)' },
+      ...STORLEK.map(d => d.nyckel === 'bredd' ? Object.assign({}, d, { etikett: 'Bredd (px)' })
+        : d.nyckel === 'hojd' ? Object.assign({}, d, { etikett: 'Höjd (px)' }) : d),
       { nyckel: 'rotation', sel: '#propRotation' },
       { nyckel: 'lager', sel: '#propLayer' },
     ],
     'std-text': ['vtFont', 'vtScale', 'vtShadowBlur', 'vtShadowColor', 'vtShadowX', 'vtShadowY', 'vtOutline', 'vtOutlineColor']
-      .map(id => ({ nyckel: id, sel: '#' + id })),
+      .map(id => ({ nyckel: id, sel: '#' + id, etikett: STD_ETIKETT[id] })),
     'std-bakgrund': ['wbHide', 'wbColor', 'wbStrength', 'wbRadius', 'wbPadding']
-      .map(id => ({ nyckel: id, sel: '#' + id })),
+      .map(id => ({ nyckel: id, sel: '#' + id, etikett: STD_ETIKETT[id] })),
     'std-entre': [
       { nyckel: 'effekt', sel: ENTRE_EFFEKT },
       // Varaktigheten visas bara när effekten inte är Ingen. Valet ritar om panelen vid ändring,
@@ -227,7 +235,7 @@
   function byggLiveRad(k) {
     const rad = document.createElement('div');
     rad.className = 'pr-live-rad';
-    rad.innerHTML = `<span class="pr-live">LIVE</span> <span>${esc(k.etikett || 'Namn, profilbild och värde kommer från TikTok.')}</span>`;
+    rad.innerHTML = `<span class="pr-live">LIVE</span> <span>${esc(k.etikett || 'Namn, profilbild och värde hämtas från sändningen.')}</span>`;
     return rad;
   }
 
@@ -241,12 +249,60 @@
     return knapp;
   }
 
+  // ---- Ärv färgschema (spec kapitel 4) --------------------------------------------------------
+  //
+  // Kryssrutan visas i sektion 5 bara när posten ärver något (R.arv eller kontroller med arv), och den
+  // säger exakt vad som ärvs. När arvet är på blir modellens egna kontroller för de delarna inaktiva,
+  // med texten "Från färgschemat". Fältet är det som redan finns: w.inheritBrandKit, samma som
+  // bk() i media.js läser.
+  const ARV_NAMN = { highlight: 'accentfärg', secondary: 'andra färgen', text: 'textfärg', background: 'bakgrundsfärg', fontFamily: 'typsnitt' };
+  function arvLista(w, R) {
+    const r = reg();
+    if (r && typeof r.arv === 'function') { try { return r.arv(w); } catch (_) { return []; } }
+    return [];
+  }
+  function upprakning(lista) {
+    const ord = lista.map(a => ARV_NAMN[a] || a);
+    return ord.length > 1 ? ord.slice(0, -1).join(', ') + ' och ' + ord[ord.length - 1] : (ord[0] || '');
+  }
+  function byggArv(w, lista) {
+    const rot = document.createElement('div');
+    rot.className = 'pr-arv';
+    rot.innerHTML = `<label><input id="pr-inheritBrandKit" type="checkbox"${w.inheritBrandKit ? ' checked' : ''}> Ärv färgschema</label>`
+      + `<small class="pr-arv-lista">Ärver: ${esc(upprakning(lista))}.</small>`;
+    rot.querySelector('input').onchange = e => andra(w, { falt: 'inheritBrandKit' }, !!e.target.checked);
+    return rot;
+  }
+  function markeraArv(rad, pa) {
+    if (!rad) return;
+    const har = rad.querySelector(':scope > .pr-fran-schema');
+    if (pa) {
+      rad.querySelectorAll('input, select, textarea, button').forEach(el => { if (!el.disabled) { el.disabled = true; el.dataset.prArvAv = '1'; } });
+      rad.classList.add('pr-arvd');
+      if (!har) rad.insertAdjacentHTML('beforeend', '<small class="pr-fran-schema">Från färgschemat</small>');
+    } else {
+      rad.querySelectorAll('[data-pr-arv-av]').forEach(el => { el.disabled = false; delete el.dataset.prArvAv; });
+      rad.classList.remove('pr-arvd');
+      if (har) har.remove();
+    }
+  }
+
   // ---- Etiketter på flyttade kontroller --------------------------------------------------------
   //
   // Registrets text ersätter etikettens text, och enheten läggs i <b> efter värdet — samma format
   // som vyraLivePatch förutsätter (den byter bara siffran och låter resten stå).
   function skrivEtikett(rad, etikett, enhet) {
-    if (!rad || rad.tagName !== 'LABEL') return;
+    if (!rad) return;
+    // En knapp bär sin etikett som text. En annan rad (en väljare med flera knappar) får en rubrik
+    // först, som ramen själv äger.
+    if (rad.tagName === 'BUTTON') { if (etikett && !rad.children.length && rad.textContent !== etikett) rad.textContent = etikett; return; }
+    if (rad.tagName !== 'LABEL') {
+      if (!etikett) return;
+      let rub = rad.querySelector(':scope > .pr-etikett');
+      if (!rub) { rub = document.createElement('span'); rub.className = 'pr-etikett'; rad.prepend(rub); }
+      if (rub.textContent !== etikett) rub.textContent = etikett;
+      return;
+    }
     if (etikett) {
       const span = rad.firstElementChild && rad.firstElementChild.tagName === 'SPAN' ? rad.firstElementChild : null;
       const textnod = [...rad.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
@@ -361,6 +417,7 @@
   function planera(w, R, panel) {
     const plan = new Map();
     const exempel = [];
+    const arvRader = [];
     const lagg = (nr, rad) => { if (!rad) return; if (!plan.has(nr)) plan.set(nr, []); if (!plan.get(nr).includes(rad)) plan.get(nr).push(rad); };
 
     for (const t of tillaggen) {
@@ -410,8 +467,17 @@
         if (!rad) rad = byggd(byggKontroll(w, k), nyckel);
       }
       tillampaBeror(rad, k, w);
+      if (k.arv && rad) arvRader.push([k, rad]);
       mal(rad);
     });
+
+    // Ärv färgschema: sist i sektion 5, och bara när posten faktiskt ärver något.
+    const arv = arvLista(w, R);
+    if (arv.length) {
+      const rad = befintligByggd(panel, 'arv:schema') || byggd(byggArv(w, arv), 'arv:schema');
+      lagg(5, rad);
+    }
+    for (const [k, rad] of arvRader) markeraArv(rad, !!w.inheritBrandKit && arv.includes(k.arv));
 
     if (exempel.length) {
       let grupp = befintligByggd(panel, 'exempeldata');
@@ -443,6 +509,28 @@
     return true;
   }
 
+  // ---- Stil för det ramen själv bygger ---------------------------------------------------------
+  // Knappar, LIVE-raden, exempeldatan och arvet. En gång per sida, bara när en ram faktiskt byggs.
+  function stil() {
+    if (document.getElementById('vyra-panelram-stil')) return;
+    const st = document.createElement('style');
+    st.id = 'vyra-panelram-stil';
+    st.textContent = [
+      '.properties [data-panelram-sektion] button:not(.pg-toggle):not(.vyra-emoji-knapp):not(.pro-frame-picker button){min-height:32px;padding:6px 12px;border:1px solid var(--line,#4b2b58);border-radius:8px;background:#1a0f22;color:#f3e9ff;font-weight:700;cursor:pointer}',
+      '.properties [data-panelram-sektion] button:not(.pg-toggle):not(.vyra-emoji-knapp):hover{background:#2a1838}',
+      '.properties #pr-testspel{width:100%;background:linear-gradient(120deg,#b13cff,#7c4dff);border-color:transparent}',
+      '.properties #pr-testspel[aria-pressed="true"]{background:#3a1030;border-color:#ff5c8a}',
+      '.properties .pr-tidslinje li{opacity:.55;font-size:12px}',
+      '.properties .pr-exempel{display:grid;gap:6px;margin-top:10px;padding:10px;border:1px dashed var(--line,#4b2b58);border-radius:10px}',
+      '.properties .pr-exempel h5{margin:0;font-size:12px}.properties .pr-exempel small{opacity:.75}',
+      '.properties .pr-live-rad{display:flex;gap:8px;align-items:flex-start;font-size:12px;opacity:.9;margin-top:6px}',
+      '.properties .pr-live{flex:0 0 auto;padding:1px 6px;border-radius:5px;background:#ff2d55;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em}',
+      '.properties .pr-arv{display:grid;gap:3px;margin-top:8px}.properties .pr-arv small,.properties .pr-fran-schema{opacity:.75;font-size:11px}',
+      '.properties .pr-arvd{opacity:.6}.properties .pr-etikett{display:block;margin-bottom:4px;font-size:12px}',
+    ].join('');
+    (document.head || document.documentElement).append(st);
+  }
+
   // ---- Avstämningen ----------------------------------------------------------------------------
   function stamAv() {
     if (!iEditor()) return;
@@ -451,6 +539,7 @@
     const w = vald();
     const R = postFor(w);
     if (!R) return;                                     // ingen post: dagens panel, orörd
+    stil();
     const kropp = kroppAv(panel);
 
     const fokus = panel.contains(document.activeElement) ? document.activeElement : null;
@@ -470,6 +559,10 @@
       const body = sektionsBody(sek);
       const fast = body === sek ? [sek.querySelector(':scope > h4')].filter(Boolean) : [];
       if (ordna(body, rader, fast, kropp)) flyttat = true;
+      // Top Likes flikkod (toplike-studio.js) märker varje .property-group med en flik och döljer
+      // dem som inte hör till den valda. Ramens sektioner hör inte till någon flik.
+      if (sek.dataset.wsTab) delete sek.dataset.wsTab;
+      if (sek.style.display) sek.style.removeProperty('display');
       sektioner.push(sek);
     }
     const exempelGrupp = panel.querySelector('[data-pr-kontroll="exempeldata"]');

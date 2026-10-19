@@ -1344,11 +1344,11 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260924-sixpack';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261018-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20260908-bildmatt';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20261019-1';document.body.append(js)});
 // Inträdeseffekten för alla widgetar (vyra-intro.js, 2026-10-11): laddas EFTER studio.html:s
 // statiska skript, så dess renderkrok ligger utanför approved-rankings.js:s vakt och når även
 // Clean Flips markup. Egen rad, inte en andra sträng på raden ovanför (se live-leaderboard).
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-intro.js?v=20261011-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-intro.js?v=20261019-1';document.body.append(js)});
 // Skarpa profilbilder (2026-10-11): laddas före live-client.js:s första event — ingest() anropar
 // window.VyraStorAvatar.forbattra om modulen finns, annars inget.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
@@ -1663,7 +1663,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261018-17';
+  const version='20261019-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

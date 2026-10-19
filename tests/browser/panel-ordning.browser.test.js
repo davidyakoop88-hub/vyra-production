@@ -108,7 +108,15 @@ for (const nyckel of WIDGETS) {
 
       assert.ok(rubriker.length >= 3, `${nyckel}: bara ${rubriker.length} grupper — panelen byggdes inte`);
 
-      const trappa = rubriker.map(r => ({ rubrik: r, ...kategori(r) }));
+      // En modell med registerpost (vyra-panelregister.js) har panelramens sju sektioner. Där är
+      // kontraktet sektionsnumret 1–7 (▶ Testa widget först), inte trappan nedan; panel-krav.browser.
+      // test.js provar resten av ramens krav.
+      const sektioner = await page.evaluate(() => document.querySelector('.properties')?.dataset.panelram === '1'
+        ? [...document.querySelectorAll('.properties > .property-group')].map(g => Number(g.dataset.panelramSektion) || 0) : null);
+      const trappa = sektioner
+        ? rubriker.map((r, i) => ({ rubrik: r, v: sektioner[i], namn: 'sektion ' + sektioner[i] }))
+        : rubriker.map(r => ({ rubrik: r, ...kategori(r) }));
+      if (sektioner) assert.ok(sektioner.every(n => n >= 1 && n <= 7), `${nyckel}: en grupp utanför ramens sektioner`);
       const fel = [];
       for (let i = 1; i < trappa.length; i++) {
         if (trappa[i].v < trappa[i - 1].v) {

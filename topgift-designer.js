@@ -21,6 +21,9 @@
   const BAS = { royal: 276, fokus: 236 };                 // designbredd i px, som i playgrounden
   const farg2 = w => (/^#[0-9a-f]{6}$/i.test(w.accent2 || '') ? w.accent2 : (w.theme === 'fokus' ? '#1f6bff' : '#7c4dff'));
   const glod = w => ((w.topGiftGlow ?? 55) / 55 * 0.8).toFixed(3);
+  // Ärv färgschema (vyra-topgift-panel.js): accenten och namnets färg från state.brandKit när widgeten
+  // ärver, annars widgetens egna värden som förut.
+  const arv = (w, falt, eget) => (w.inheritBrandKit && typeof state !== 'undefined' && state && state.brandKit && state.brandKit[falt]) || eget;
 
   // HD-bildramarna är desamma som podiet och fyrverkerierna använder (playground-assets.js).
   function bildram(id) {
@@ -44,7 +47,7 @@
       .filter(([k]) => w[k] === false).map(([, c]) => ' ' + c).join('');
     const typ = `font-family:${txt(w.fontFamily, 'Inter')};font-style:${w.fontStyle === 'italic' ? 'italic' : 'normal'};`;
     return `<div class="widget vyra-topgift tgd ${klass}${utan}${valt ? ' selected' : ''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width || 340}px;${typ}`
-      + `--accent:${w.accent || '#d9a441'};--a2:${farg2(w)};--g:${glod(w)};--t:${w.dataColor || '#fff'};--tgd-text:${w.dataSize || 20}px;--tgd-z:${z};`
+      + `--accent:${arv(w, 'highlight', w.accent || '#d9a441')};--a2:${farg2(w)};--g:${glod(w)};--t:${arv(w, 'text', w.dataColor || '#fff')};--tgd-text:${w.dataSize || 20}px;--tgd-z:${z};`
       + `zoom:${w.widgetScale || 1}"><div class="tgd-in" style="zoom:${k}"><div class="tgd-bild" style="zoom:${bild}">${inner.bild}</div>`
       + `<div class="topgift-copy">${inner.text}</div></div>${valt ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }

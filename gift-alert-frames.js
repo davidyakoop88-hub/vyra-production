@@ -149,7 +149,8 @@
       animGroup.querySelector('#gafEntranceDuration').onchange = e => { w.entranceDuration = +e.target.value; save(); render(); };
     }
 
-    const testBtn = [...panel.querySelectorAll('button')].find(b => b !== del && b.textContent.includes('Testa'));
+    // ▶ Testa widget (vyra-testspel.js) spelar en klon och får aldrig röra den riktiga noden — den hoppas över.
+    const testBtn = [...panel.querySelectorAll('button')].find(b => b !== del && b.textContent.includes('Testa') && !b.closest('[data-testspel]'));
     if (testBtn) {
       const original = testBtn.onclick;
       testBtn.onclick = e => {

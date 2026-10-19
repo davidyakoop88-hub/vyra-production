@@ -6,7 +6,8 @@
   // sju sektioner för de modeller som har en post. EN MODELL UTAN POST FÅR EXAKT DAGENS PANEL, och
   // därför kan varje senare PR flytta en familj i taget utan att andra påverkas.
   //
-  // REGISTRET HAR INGA POSTER ÄN. De läggs till familj för familj (spec kapitel 6). Formatet:
+  // DEN HÄR FILEN HAR INGA POSTER. Familjerna lägger sina egna, var och en i sin fil som laddas
+  // efter den här (spec kapitel 6): Top Gift · Design 1–4 i vyra-topgift-panel.js. Formatet:
   //
   //   VyraPanelregister.definiera({
   //     typ: 'templateTopCoins',
@@ -23,6 +24,7 @@
   //       { sektion: 5, typ: 'farg', falt: 'accent', etikett: 'Accentfärg', arv: 'highlight' },
   //       { sektion: 7, typ: 'std-aterstall' },
   //     ],
+  //     arv: ['highlight', 'text', 'fontFamily'],    // vad "Ärv färgschema" ärver (valfri; annars kontrollernas arv)
   //     utseendeFalt: ['accent', 'vtFont'],          // det "Återställ utseende" återställer
   //   });
   //
@@ -66,6 +68,7 @@
       if (post[f] !== undefined && !arFunktion(post[f])) fel.push(`${f} måste vara en funktion`);
     }
     if (post.ersatter !== undefined && !(Array.isArray(post.ersatter) && post.ersatter.every(arText))) fel.push('ersatter måste vara en lista med selektorer');
+    if (post.arv !== undefined && !(Array.isArray(post.arv) && post.arv.every(a => ARV.includes(a)))) fel.push('arv måste vara en lista med ' + ARV.join('/'));
     if (post.utseendeFalt !== undefined && !(Array.isArray(post.utseendeFalt) && post.utseendeFalt.every(arText))) fel.push('utseendeFalt måste vara en lista med fältnamn');
     if (!Array.isArray(post.kontroller)) { fel.push('kontroller saknas'); return fel; }
 
@@ -134,6 +137,24 @@
     return null;
   }
 
+  // Vilka delar av färgschemat modellen ärver när "Ärv färgschema" är på (spec kapitel 4): arv-värdena
+  // på postens kontroller. Tom lista = modellen erbjuder inget arv. Renderare som inte själva vet
+  // vilken modell de ritar (vyra-textgrupp.js för typsnittet) frågar här.
+  function arv(w) {
+    const p = hitta(w);
+    if (!p) return [];
+    // En uttrycklig lista på posten vinner: den kan nämna delar som saknar en egen kontroll (Top Gift
+    // ärver textfärgen utan att ha något reglage för den).
+    if (Array.isArray(p.arv)) return p.arv.slice();
+    const ut = [];
+    for (const k of p.kontroller) {
+      if (!k || !k.arv || ut.includes(k.arv)) continue;
+      if (k.om) { try { if (!k.om(w)) continue; } catch (_) { continue; } }
+      ut.push(k.arv);
+    }
+    return ut;
+  }
+
   // Tar bort en post. Provens ingång, och vägen för en familj som vill byta sin post under körning.
   function tabort(post) {
     const i = poster.indexOf(post);
@@ -143,7 +164,7 @@
 
   window.VyraPanelregister = {
     SEKTIONER, KONTROLLTYPER, STD, KALLOR, ARV, MEDIETYPER,
-    definiera, hitta, tabort, validera, modellnyckel,
+    definiera, hitta, tabort, validera, modellnyckel, arv,
     poster: () => poster.slice(),
   };
 })();
