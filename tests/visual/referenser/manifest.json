@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Last-X: svenska rubriker i panelflytten",
+  "motiv": "Follower-etiketten läsbar (12 px i accentfärg) i alertflytten",
   "nycklar": 162,
   "filter": null,
-  "tid": "2026-10-19T06:54:28.109Z"
+  "tid": "2026-10-19T10:36:24.106Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -619,15 +619,15 @@
    "fyllnad": 100
   },
   "catalog:followeralert:blush": {
-   "matt": "300x280",
+   "matt": "300x285",
    "fyllnad": 100
   },
   "catalog:followeralert:gold": {
-   "matt": "300x280",
+   "matt": "300x285",
    "fyllnad": 100
   },
   "catalog:followeralert:ocean": {
-   "matt": "300x280",
+   "matt": "300x285",
    "fyllnad": 100
   },
   "catalog:likefountain:portal:aurora": {
