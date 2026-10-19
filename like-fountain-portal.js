@@ -137,9 +137,17 @@
   var PLATS = platser(47), FORM = hjartform(72, 71);
   var arPortal = function (w) { return !!w && w.type === 'templateLikeFountain' && w.fountainDesign === 'portal'; };
   var iOverlay = function () { try { return document.documentElement.classList.contains('overlay-output') || /[?&]overlay=/.test(location.search); } catch (e) { return false; } };
+  // EGNA FÄRGER (2026-10-19, panelspec 5.15/4.2): paletten "Egna färger" har Färg 1–3 i panelen. Förut gav den
+  // fasta standardfärger som inte gick att ändra. Med Ärv färgschema tar Färg 1 accentfärgen och Färg 2 den andra
+  // färgen (bk() i media.js) — bara i "Egna färger"; de färdiga paletterna är fasta och ärver inte.
   var farger = function (w) {
-    if (w.fountainPalette === 'custom') return (w.fountainCustomPalette && w.fountainCustomPalette.length ? w.fountainCustomPalette : [w.fountainColor || '#ff3c88', w.fountainColor2 || '#b94cff', '#ff86bd']);
-    return PALETTER[w.fountainPalette] || PALETTER.portal;
+    if (w.fountainPalette !== 'custom') return PALETTER[w.fountainPalette] || PALETTER.portal;
+    var p = (w.fountainCustomPalette && w.fountainCustomPalette.length ? w.fountainCustomPalette : ['#ff3c88', '#b94cff', '#ff86bd']).slice();
+    var arv = function (eget, falt, reserv) { try { return typeof bk === 'function' ? bk(w, eget, falt, reserv) : (eget || reserv); } catch (e) { return eget || reserv; } };
+    p[0] = arv(w.fountainColor || p[0], 'highlight', p[0]);
+    p[1] = arv(w.fountainColor2 || p[1], 'secondaryText', p[1]);
+    p[2] = w.fountainColor3 || p[2] || '#ff86bd';
+    return p;
   };
   var hexRgb = function (h) { h = String(h || '#ffffff').replace('#', ''); if (h.length === 3) h = h.replace(/./g, '$&$&'); return [parseInt(h.slice(0, 2), 16) || 0, parseInt(h.slice(2, 4), 16) || 0, parseInt(h.slice(4, 6), 16) || 0]; };
   var blanda = function (h, m, t) { var a = hexRgb(h), b = hexRgb(m); return 'rgb(' + a.map(function (v, i) { return Math.round(v + (b[i] - v) * t); }).join(',') + ')'; };
@@ -190,6 +198,11 @@
   var sakerSrc = function (s) { try { return root.VyraSafe && root.VyraSafe.src ? root.VyraSafe.src(s) : (/^(https?:|data:image\/|assets\/)/.test(String(s)) ? String(s) : ''); } catch (e) { return ''; } };
 
   function widgetar() { try { return (typeof state !== 'undefined' && state && Array.isArray(state.widgets)) ? state.widgets.filter(arPortal) : []; } catch (e) { return []; } }
+  // ▶ TESTA WIDGET (2026-10-19, panelspec 2.4 adaptern 'portal'): testets KLON finns aldrig i state.widgets, så
+  // klockan ritar den bara medan den står här. Livevägen (vyra-live-event nedan) går fortfarande bara till
+  // widgetar() — en riktig like mitt i ett test når de riktiga fontänerna, aldrig klonen.
+  var PROV = {};
+  function provade() { return Object.keys(PROV).map(function (id) { return PROV[id]; }); }
 
   function tappa(w, antal, e) {
     var t = till(w.id), nu = performance.now() / 1000;
@@ -379,12 +392,17 @@
     // ETT FEL FÅR INTE FRYSA FONTÄNEN. Ett kast i steg/rita avbröt tick innan nästa
     // requestAnimationFrame, och då stod fontänen still resten av sändningen medan kön växte.
     // Varje widget ritas därför för sig, och klockan går vidare även om en bildruta kastar.
-    widgetar().forEach(function (w) {
+    widgetar().concat(provade()).forEach(function (w) {
       var t = till(w.id);
       try {
         steg(w, t, nu, dt);
         var cv = document.querySelector('.widget[data-id="' + cssId(w.id) + '"] canvas.lfp-duk');
-        if (cv && !(w.hidden && iOverlay())) rita(w, t, cv, nu);
+        // En fontän i vila rörs inte (2026-10-19): förut ritades VARJE portal i varje bildruta så fort någon
+        // levde, och en vilande grannes duk fick nya mått och förhandsbilden en omskriven stil — dess DOM
+        // ändrades av en annan fontäns likes (eller av ▶ Testa widget på en klon). Nu ritas den som lever, och
+        // en gång till när den somnat, så att duken töms och förhandsbilden kommer tillbaka.
+        var vilar = !t.aktiv && !t.ritad; t.ritad = t.aktiv;
+        if (cv && !(w.hidden && iOverlay()) && !vilar) rita(w, t, cv, nu);
       } catch (e) { if (!t.loggat) { t.loggat = true; try { console.warn('[vyra] Like Fountain Portal: bildrutan kastade', e); } catch (x) {} } }
       if (t.aktiv) nagot = true;
     });
@@ -467,7 +485,8 @@
     var spara = function () { if (typeof save === 'function') save(); if (typeof render === 'function') render(); if (typeof bind === 'function') bind(); };
     var el;
     if ((el = q('#lfpPalett'))) el.onchange = function (e) { w.fountainPalette = e.target.value; spara(); };
-    if ((el = q('#lfpPer'))) el.oninput = function (e) { w.fountainPerLike = Number(e.target.value) || 6; var b = e.target.parentElement.querySelector('b'); if (b) b.textContent = w.fountainPerLike; if (typeof save === 'function') save(); };
+    // Enheten i <b> står kvar medan reglaget dras ("6 st" i panelramen): bara siffran byts.
+    if ((el = q('#lfpPer'))) el.oninput = function (e) { w.fountainPerLike = Number(e.target.value) || 6; var b = e.target.parentElement.querySelector('b'); if (b) b.textContent = w.fountainPerLike + String(b.textContent || '').replace(/^[\d.,-]+/, ''); if (typeof save === 'function') save(); };
     if ((el = q('#lfpBubblor'))) el.onchange = function (e) { w.fountainAvatarHearts = e.target.checked; if (typeof save === 'function') save(); };
     if ((el = q('#lfpPop'))) el.onchange = function (e) { var v = Math.max(0, Math.round(Number(e.target.value) || 0)); w.fountainPopEvery = v; if (typeof save === 'function') save(); };
     if ((el = q('#lfpTest'))) el.onclick = function () { tappa(w, 15, { username: 'Testtittare', profileImage: 'assets/images/test-profile.svg' }); };
@@ -524,6 +543,25 @@
     tappa: function (id, antal, e) { var w = widgetar().filter(function (x) { return x.id === id; })[0]; if (w) tappa(w, antal, e); return !!w; },
     tillstand: function (id) { var t = TILL[id]; return t ? { hjartan: t.hj.length, bubblor: t.bubblor.length, ko: t.ko, form: !!t.form, aktiv: t.aktiv, banor: t.hj.map(function (h) { return h.bana; }).concat(t.bubblor.map(function (b) { return b.bana; })) } : null; },
     platser: function () { return PLATS.map(function (p) { return { x: p.x, y: p.y, r: p.r }; }); },
+    // ▶ Testa widget på klonen (vyra-fontan-panel.js). spelaPa ställer klonen i klockans lista, tappaPa och
+    // stortHjarta gör det knapparna ♥ Testa och ✦ Testa stora hjärtat gjorde — men på klonens id, och glom tar
+    // bort klonen och allt dess tillstånd. Inget av det skriver på widgeten eller sparar.
+    spelaPa: function (nod, k) {
+      if (!arPortal(k) || !nod || !nod.querySelector('canvas.lfp-duk')) return false;
+      PROV[k.id] = k; delete TILL[k.id];
+      return true;
+    },
+    tappaPa: function (k, antal, e) { if (!PROV[k.id]) return false; tappa(PROV[k.id], antal, e); return true; },
+    stortHjarta: function (k) {
+      if (!PROV[k.id]) return false;
+      var t = till(k.id); t.likesSedanPop = 0; t.form = { start: performance.now() / 1000, hj: [] }; t.aktiv = true; starta();
+      return true;
+    },
+    glom: function (id) { delete PROV[id]; delete TILL[id]; },
+    provade: function () { return Object.keys(PROV); },
+    // Det stora hjärtats hela förlopp i ms: hjärtana samlas (70 i sekunden), 1,2 s till poppen, 2,2 s uttoning.
+    formMs: function () { return Math.round((FORM.mal.length / 70 + 1.2 + 2.2) * 1000); },
+    stigMs: function () { return Math.round(STIG * 1.06 * 1000); },
     // Exakt det som ritas just nu (designens rum 432×768): för prov och mätning av överlapp.
     ritat: function (id) { var t = TILL[id], nu = performance.now() / 1000; if (!t) return [];
       return t.hj.map(function (h) { var L = hjartLage(t, h, nu); return { typ: 'hjarta', x: L.x, y: L.y, r: L.r, alfa: L.alfa, flyger: L.u < 1 }; })

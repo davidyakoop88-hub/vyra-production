@@ -93,15 +93,20 @@ test('i studion: katalogkortet skapar portalen hel på duken, med förhandsbild 
   } finally { await page.close(); }
 });
 
-test('panelens testknapp ger hjärtan, och stora hjärtat poppar på milstolpen', { skip, timeout: 90000 }, async () => {
+// PR 13: ♥ Testa (15 likes) och ✦ Testa stora hjärtat är borta ur panelen (▶ Testa widget spelar på en klon,
+// testspel-isolering.browser.test.js). Panelens test ska därför INTE ge den riktiga portalen hjärtan; likes gör det.
+test('▶ Testa widget ger inte den riktiga portalen hjärtan, och stora hjärtat poppar på milstolpen', { skip, timeout: 90000 }, async () => {
   const { page, fel } = await sida(false);
   try {
     const id = await page.evaluate(() => { const w = VyraWidgets.create('catalog:likefountain:portal'); w.fountainPopEvery = 30; state.widgets.push(w); selected = w.id; view = 'editor'; render(); bind(); return w.id; });
     await page.waitForTimeout(300);
-    await page.click('#lfpTest');
+    assert.equal(await page.$('.properties #lfpTest, .properties #lfpTestPop'), null, 'de gamla testknapparna är borta');
+    await page.click('#pr-testspel');
     await page.waitForTimeout(600);
-    const efterTest = await page.evaluate(id => VyraLikePortal.tillstand(id), id);
-    assert.ok(efterTest && efterTest.hjartan > 0, 'testknappen gav inga hjärtan');
+    const efterTest = await page.evaluate(id => ({ riktig: VyraLikePortal.tillstand(id), klon: VyraLikePortal.tillstand(id + '__prov') }), id);
+    assert.ok(efterTest.klon && efterTest.klon.hjartan > 0, '▶ Testa widget gav klonen inga hjärtan');
+    assert.ok(!efterTest.riktig || efterTest.riktig.hjartan + efterTest.riktig.ko === 0, 'testet gav den riktiga portalen hjärtan');
+    await page.click('#pr-testspel');
     for (let i = 0; i < 3; i++) await like(page, { count: 10, username: 'spammare' });
     await page.waitForTimeout(200);
     assert.equal((await page.evaluate(id => VyraLikePortal.tillstand(id), id)).form, true, 'stora hjärtat startade inte vid 30 likes');

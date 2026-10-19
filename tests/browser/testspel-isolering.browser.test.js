@@ -1,6 +1,7 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
-// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj', 'topstreak' och 'pg' i Chrome.
+// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj', 'topstreak', 'pg', 'fyrverkeri', 'hjartfyr',
+// 'bubblor', 'fontan', 'portal' och 'burk' i Chrome.
 // (Last-X, alertfamiljerna, Battle MVP, rankingen, målen och Top Streak har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
@@ -1445,6 +1446,183 @@ test('fyrverkeri: ett test som får gå klart passerar entré → visning → ut
     assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
     assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
     lika(fore, await fyrBild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// ---- Fontänerna och gåvoburken: Like Fountain klassisk, Portal och Gift Jar (adaptrarna 'fontan', 'portal' och 'burk', PR 13)
+//
+// De gamla testknapparna: ▶ Testa Pop Effect och ▶ Replay/⏸ Pausa/⟲ Återställ (klassisk), ♥ Testa (15 likes) och ✦ Testa
+// stora hjärtat (Portal), Släpp 5 testgåvor/Töm burken/Återställ till standard (Gift Jar). Släpp 5 testgåvor gick genom
+// triggerGiftJarDrop, som släppte i ALLA burkar och räknade testgåvorna i den riktiga räknaren (granskningen: A/B 0/0 →
+// 5/5). Testet spelar nu på klonen. Utöver bilden ovan kräver provet att
+//   * B av samma modell inte spelar: inga släppta hjärtan (.lf-live), ingen pop, ingen levande portal (lfp-live), och
+//     tecken för tecken samma DOM,
+//   * de riktiga köerna och räknarna är orörda: fontänens kö (VyraLikeFountain.koLangd), portalens tillstånd
+//     (VyraLikePortal.tillstand) och burkarnas runtime-poster (giftJarRuntime) — burkarna har RIKTIGA gåvor i sig före
+//     testet (tre var, genom livevägen), och de ska ligga kvar,
+//   * ingenting lever kvar efter ■ och efter render(): ingen portalklon i klockan och inget tillstånd för klonens id,
+//     ingen runtime-post för klonens burk och burkens bildruta död (inget rAF-varv).
+// Faserna: klassisk fem paket på 4 s plus Flygtid, Portal fem paket på 1,6 s och det stora hjärtat (formMs ur
+// portalens egen konstant), Gift Jar fem gåvor, full burk efter 3 s och finalen 2,2 + 7 s.
+const FONTAN_ISOLERING = [
+  { namn: 'Like Fountain klassisk', nyckel: 'catalog:likefountain', adapter: 'fontan', faser: () => ({ entre: 500, visning: 8800, utgang: 1000 }) },
+  { namn: 'Like Fountain Portal · Aurora', nyckel: 'catalog:likefountain:portal:aurora', adapter: 'portal',
+    faser: formMs => ({ entre: 500, visning: 1600 + 2400 + formMs - 1500, utgang: 1000 }) },
+  { namn: 'Gift Jar · Ember Dragon', nyckel: 'catalog:giftjar:dragon', adapter: 'burk', faser: () => ({ entre: 600, visning: 9600, utgang: 2000 }) },
+];
+const FONTAN_GAMLA = ['#testFountainPop', '#lfReplay', '#lfPause', '#lfReset', '#lfpTest', '#lfpTestPop', '#jarDropTest', '#jarReset', '#jarDefaults'];
+const fontanBild = page => bild(page).then(async b => Object.assign({}, b, await page.evaluate(() => ({
+  lfKo: window.VyraLikeFountain ? ['prov-a', 'prov-b'].map(id => window.VyraLikeFountain.koLangd(id)).join('/') : null,
+  portal: window.VyraLikePortal ? JSON.stringify(['prov-a', 'prov-b'].map(id => window.VyraLikePortal.tillstand(id))) : null,
+  provade: window.VyraLikePortal && window.VyraLikePortal.provade ? window.VyraLikePortal.provade().join() : null,
+  burkar: typeof giftJarRuntime !== 'undefined' ? JSON.stringify([...giftJarRuntime.entries()].map(([k, v]) => [k, v.count, v.items.length])) : null,
+  spelar: [...document.querySelectorAll('.canvas .widget:not([data-testspel-klon])')]
+    .filter(n => n.querySelector('.lf-live, .fountain-pop.play') || n.classList.contains('lfp-live')).map(n => n.dataset.id).join(),
+}))));
+const fontanKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const cv = k.querySelector('canvas');
+  if (cv && cv.__burk) window.__burkMotor = cv.__burk;
+  return { id: k.dataset.id, live: k.querySelectorAll('.lf-live').length, pop: !!k.querySelector('.fountain-pop.play'),
+    bilder: [...k.querySelectorAll('.lf-live img')].map(i => i.getAttribute('src')).join(),
+    portal: window.VyraLikePortal ? window.VyraLikePortal.tillstand(k.dataset.id) : null, portalLever: k.classList.contains('lfp-live'),
+    burk: cv && cv.__burk ? cv.__burk.inspect() : null,
+    runtime: typeof giftJarRuntime !== 'undefined' && giftJarRuntime.get(k.dataset.id) ? giftJarRuntime.get(k.dataset.id).count : null };
+});
+
+for (const m of FONTAN_ISOLERING) {
+  test(`${m.adapter}-adaptern är isolerad: ${m.namn}`, { skip, timeout: 150000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      // Riktiga gåvor i burkarna före testet, genom livevägen (samma händelse som TikTok-gåvor).
+      if (m.adapter === 'burk') {
+        await page.evaluate(() => window.dispatchEvent(new CustomEvent('vyra-live-event', { detail: { type: 'gift', giftName: 'Rose', count: 3, username: 'Riktig' } })));
+        await page.waitForTimeout(400);
+        assert.deepEqual(await page.evaluate(() => ['prov-a', 'prov-b'].map(id => giftJarState(liveWidget(id)).count)), [3, 3], 'kontrollmätning: de riktiga burkarna har tre gåvor var');
+      }
+      await installeraRaknare(page);
+      assert.deepEqual(await page.evaluate(sel => sel.flatMap(s => [...document.querySelectorAll('.properties ' + s)])
+        .filter(n => !n.closest('[data-panelram-forvaring]')).map(n => n.id), FONTAN_GAMLA), [], 'de gamla testknapparna är borta');
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'ingen typväljare');
+      const fore = await fontanBild(page);
+      assert.equal(fore.spelar, '', 'kontrollmätning: ingenting spelar före ▶');
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, m.adapter);
+      const formMs = await page.evaluate(() => window.VyraLikePortal ? window.VyraLikePortal.formMs() : 0);
+      assert.deepEqual(s1.faser, m.faser(formMs), 'faserna');
+      await page.waitForTimeout(2800);
+      const k = await fontanKlon(page);
+      assert.equal(k.id, 'prov-a__prov');
+      if (m.adapter === 'fontan') {
+        assert.ok(k.live > 0, 'like-paketen släpper hjärtan på klonen: ' + JSON.stringify(k));
+        assert.match(k.bilder, /test-profile\.svg/, 'exempeltittarens profilbild stiger med');
+      } else if (m.adapter === 'portal') {
+        assert.ok(k.portal && k.portal.hjartan + k.portal.ko > 0, 'hjärtan stiger ur klonens portal: ' + JSON.stringify(k.portal));
+        assert.equal(k.portalLever, true, 'klonens duk ritas');
+      } else {
+        assert.equal(k.runtime, 5, 'fem gåvor i KLONENS runtime-post');
+        assert.ok(k.burk && k.burk.raf && k.burk.foremal === 5, 'burkens rörelse går på klonen: ' + JSON.stringify(k.burk));
+      }
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      const mitt = await fontanBild(page);
+      // Portalklonen står i klockans lista medan den spelar; allt annat är orört.
+      if (m.adapter === 'portal') { assert.equal(mitt.provade, 'prov-a__prov'); mitt.provade = fore.provade; }
+      if (m.adapter === 'burk') {
+        // Klonens EGEN post finns under testet; de riktiga burkarnas poster är desamma.
+        const riktiga = JSON.parse(mitt.burkar).filter(([id]) => id !== 'prov-a__prov');
+        assert.deepEqual(riktiga, JSON.parse(fore.burkar), 'de riktiga burkarnas räkning');
+        mitt.burkar = fore.burkar;
+      }
+      lika(fore, mitt, 'mitt i testet (B spelar inte, riktiga köer och räknare orörda)');
+
+      // Burken: vänta in full burk och finalen på klonen.
+      if (m.adapter === 'burk') {
+        await page.waitForTimeout(3200);
+        const full = await fontanKlon(page);
+        assert.equal(full.runtime, 50, 'klonens burk är full (Full vid 50)');
+        assert.ok(full.burk.final || full.burk.ko === 1, 'finalen är på väg eller spelar: ' + JSON.stringify(full.burk));
+      }
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(150);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      const kvar = await page.evaluate(() => ({
+        lfKo: window.VyraLikeFountain.koLangd('prov-a__prov'),
+        portal: window.VyraLikePortal ? window.VyraLikePortal.tillstand('prov-a__prov') : null,
+        burkPost: typeof giftJarRuntime !== 'undefined' ? giftJarRuntime.has('prov-a__prov') : false,
+        motor: window.__burkMotor ? window.__burkMotor.inspect() : null,
+      }));
+      assert.equal(kvar.lfKo, 0, 'fontänens kö för klonen är tom');
+      assert.equal(kvar.portal, null, 'inget portaltillstånd för klonens id');
+      assert.equal(kvar.burkPost, false, 'klonens runtime-post är borta');
+      if (m.adapter === 'burk') assert.deepEqual([kvar.motor.dod, kvar.motor.raf], [true, false], 'burkens bildruta är död');
+      await page.waitForTimeout(500);
+      lika(fore, await fontanBild(page), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+      await page.waitForTimeout(600);
+      await fontanKlon(page);
+
+      // render() mitt i testet tar bort klonen och allt den startade.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(300);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      const efter = await fontanBild(page);
+      for (const f of ['lfKo', 'portal', 'provade', 'burkar', 'spelar']) assert.equal(efter[f], fore[f], `${f} efter render-stoppet`);
+      if (m.adapter === 'burk') assert.equal(await page.evaluate(() => window.__burkMotor.inspect().dod), true, 'burkens bildruta dödades av render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('portal: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:likefountain:portal:neon');
+    // Stort hjärta av (0): testet slutar när hjärtana stigit klart, utan formationen.
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.fountainPopEvery = 0; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await fontanBild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    const stig = await page.evaluate(() => window.VyraLikePortal.stigMs());
+    assert.deepEqual(s.faser, { entre: 500, visning: 1600 + 700 + stig - 1500, utgang: 1000 }, 'utan stort hjärta: bara stigningen');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await fontanBild(page), 'efter ett färdigt test');
     assert.deepEqual(fel, []);
   } finally {
     await page.close();

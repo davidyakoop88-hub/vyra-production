@@ -683,7 +683,13 @@ function lfFormatCount(n){n=+n||0;if(n>=1000000)return (n/1000000).toFixed(1).re
    nedan. En render() innan dess kom hit med paletten 'portal', som den klassiska fontänen inte har - colors blev
    undefined och HELA render() kastade, alla widgetar i overlayn. Nu blir det en tom ruta i portalens mått (det
    portalen själv visar i vila i OBS) tills skriptet tar över och ritar om, och okända paletter faller på rainbow. */
-function likeFountainHtml(w){if(w&&w.fountainDesign==='portal'){let W=w.width||360;return `<div class="widget like-fountain-portal${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x||0}px;top:${w.y||0}px;width:${W}px;height:${Math.round(W*768/432)}px;zoom:${w.widgetScale||1}"></div>`}let palettes={rainbow:['#ff2f7d','#ff9d21','#ffe52b','#3cff8d','#35d7ff','#8957ff'],neon:['#ff38ca','#8c45ff','#22e5ff','#ffffff'],fire:['#ff2d2d','#ff6b18','#ffc928','#fff1a8'],ice:['#24cfff','#82eeff','#d9fbff','#789cff'],gold:['#ff9d16','#ffc928','#fff0a3','#ffffff'],aurora:['#4fd8c4','#7fe7ff','#a78bff','#ffffff'],pastel:['#ffb3d1','#c9b3ff','#b3e0ff','#b3ffd9'],mono:['#ffffff','#d8d8e0','#a0a0ac','#e8e8f0'],custom:w.fountainCustomPalette||[w.fountainColor||'#ff3c88',w.fountainColor2||'#b94cff','#ff86bd','#ffffff']},colors=palettes[w.fountainPalette]||palettes.rainbow,count=Math.max(8,Math.min(80,w.fountainCount||18)),height=w.fountainHeight||460,portrait=w.fountainOrientation==='portrait',width=w.width||(portrait?260:620),spread=w.fountainDrift??(portrait?12:24),intensity=Math.max(.5,Math.min(2,w.fountainIntensity||1)),gold=w.fountainGoldColor||'#e8b968',avatarSize=portrait?84:100,orbitR=Math.round(avatarSize*.62+12),orbitCount=Math.max(4,Math.min(18,w.fountainOrbitCount||6)),orbitSpeed=w.fountainOrbitSpeed||50,labelTop=w.fountainLabelPosition==='top',font=w.fountainLabelFont||'Inter',labelSize=w.fountainLabelSize||12,user=w.fountainUser||'Alex',avatar=w.profileImage||'assets/images/test-profile.svg',likeCount=lfFormatCount(w.fountainLikeCount??98700),rise=Math.max(80,height-(labelTop?70:120));let likerPool=fountainLikerPool[w.id]||[],lfAvatarUrl=i=>likerPool.length?likerPool[Math.floor(i/3)%likerPool.length]:(w.profileImage||'assets/images/test-profile.svg'),hearts=Array.from({length:count},(_,i)=>{let ox=((i%7)-3)*(portrait?5:9),dur=(w.fountainSpeed||4),delay=-(i/(count+orbitCount))*dur,hasAvatar=w.fountainAvatarHearts!==false&&i%4===0,avatarImg=hasAvatar?`<img class="lf-p-heart-avatar-img" src="${lfAvatarUrl(i)}" alt="">`:'';return `<i class="lf-p lf-p-heart${hasAvatar?' lf-p-heart-avatar':''}" style="--ox:${ox}%;--delay:${delay.toFixed(2)}s;--dur:${dur.toFixed(2)}s;--c:${colors[i%colors.length]};--sz:${((w.fountainSize||24)*(.65+(i%5)*.1)).toFixed(1)}px">${avatarImg}♥</i>`}).join(''),orbitHearts=Array.from({length:orbitCount},(_,i)=>{let j=count+i,ox=((j%7)-3)*(portrait?5:9),dur=(w.fountainSpeed||4),delay=-(j/(count+orbitCount))*dur,hasAvatar=w.fountainAvatarHearts!==false&&j%4===0,avatarImg=hasAvatar?`<img class="lf-p-heart-avatar-img" src="${lfAvatarUrl(j)}" alt="">`:'';return `<i class="lf-p lf-p-heart${hasAvatar?' lf-p-heart-avatar':''}" style="--ox:${ox}%;--delay:${delay.toFixed(2)}s;--dur:${dur.toFixed(2)}s;--c:${colors[i%colors.length]};--sz:${((w.fountainSize||24)*(.65+(i%5)*.1)).toFixed(1)}px">${avatarImg}♥</i>`}).join(''),gold2=w.fountainGoldColor2||null,gradId='lfGrad'+w.id.replace(/[^a-zA-Z0-9]/g,''),ringSvg=gold2?`<svg class="lf-ring" viewBox="0 0 100 100"><defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${gold}"/><stop offset="100%" stop-color="${gold2}"/></linearGradient></defs><circle cx="50" cy="50" r="46" pathLength="100" style="stroke:url(#${gradId})"/></svg>`:`<svg class="lf-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;return `<div class="widget like-fountain lf-enter fountain-${portrait?'portrait':'landscape'} palette-${w.fountainPalette||'rainbow'}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${width}px;height:${height}px;--rise:${rise}px;--fountain-speed:${w.fountainSpeed||4}s;--heart-size:${w.fountainSize||24}px;--glow:${w.fountainGlow||14}px;--gold:${gold};--glass-opacity:${w.fountainGlassOpacity??.72};--orbit-speed:${orbitSpeed}s;--avatar-glow:${w.fountainAvatarGlow??18}px;--lf-font:${font};zoom:${w.widgetScale||1}"><div class="lf-stream">${hearts}${orbitHearts}</div><div class="fountain-pop"></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`}
+/* EGNA FÄRGER OCH ÄRV FÄRGSCHEMA (2026-10-19, panelspec 4.2). Färg 1 och Färg 2 är hjärtpalettens två första
+   färger vid "Egna färger" — också när ett färgtema (preset) lagt en hel palett, som förut gjorde Färg 1/2 döda
+   (temat skriver själv samma två färger, så ett tema ser ut som förut). Med Ärv färgschema tar Färg 1 accentfärgen
+   och Färg 2 den andra färgen, oavsett palett — paletten är då inaktiv i panelen. */
+function lfEgnaFarger(w){let p=(Array.isArray(w.fountainCustomPalette)&&w.fountainCustomPalette.length?w.fountainCustomPalette:['#ff3c88','#b94cff','#ff86bd','#ffffff']).slice();p[0]=bk(w,w.fountainColor||p[0],'highlight',p[0]);p[1]=bk(w,w.fountainColor2||p[1],'secondaryText',p[1]);return p}
+function lfArver(w){let k=w.inheritBrandKit&&typeof state!=='undefined'&&state.brandKit;return !!(k&&(k.highlight||k.secondaryText))}
+function likeFountainHtml(w){if(w&&w.fountainDesign==='portal'){let W=w.width||360;return `<div class="widget like-fountain-portal${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x||0}px;top:${w.y||0}px;width:${W}px;height:${Math.round(W*768/432)}px;zoom:${w.widgetScale||1}"></div>`}let palettes={rainbow:['#ff2f7d','#ff9d21','#ffe52b','#3cff8d','#35d7ff','#8957ff'],neon:['#ff38ca','#8c45ff','#22e5ff','#ffffff'],fire:['#ff2d2d','#ff6b18','#ffc928','#fff1a8'],ice:['#24cfff','#82eeff','#d9fbff','#789cff'],gold:['#ff9d16','#ffc928','#fff0a3','#ffffff'],aurora:['#4fd8c4','#7fe7ff','#a78bff','#ffffff'],pastel:['#ffb3d1','#c9b3ff','#b3e0ff','#b3ffd9'],mono:['#ffffff','#d8d8e0','#a0a0ac','#e8e8f0'],custom:lfEgnaFarger(w)},colors=lfArver(w)?lfEgnaFarger(w):(palettes[w.fountainPalette]||palettes.rainbow),count=Math.max(8,Math.min(80,w.fountainCount||18)),height=w.fountainHeight||460,portrait=w.fountainOrientation==='portrait',width=w.width||(portrait?260:620),spread=w.fountainDrift??(portrait?12:24),intensity=Math.max(.5,Math.min(2,w.fountainIntensity||1)),gold=w.fountainGoldColor||'#e8b968',avatarSize=portrait?84:100,orbitR=Math.round(avatarSize*.62+12),orbitCount=Math.max(4,Math.min(18,w.fountainOrbitCount||6)),orbitSpeed=w.fountainOrbitSpeed||50,labelTop=w.fountainLabelPosition==='top',font=w.fountainLabelFont||'Inter',labelSize=w.fountainLabelSize||12,user=w.fountainUser||'Alex',avatar=w.profileImage||'assets/images/test-profile.svg',likeCount=lfFormatCount(w.fountainLikeCount??98700),rise=Math.max(80,height-(labelTop?70:120));let likerPool=fountainLikerPool[w.id]||[],lfAvatarUrl=i=>likerPool.length?likerPool[Math.floor(i/3)%likerPool.length]:(w.profileImage||'assets/images/test-profile.svg'),hearts=Array.from({length:count},(_,i)=>{let ox=((i%7)-3)*(portrait?5:9),dur=(w.fountainSpeed||4),delay=-(i/(count+orbitCount))*dur,hasAvatar=w.fountainAvatarHearts!==false&&i%4===0,avatarImg=hasAvatar?`<img class="lf-p-heart-avatar-img" src="${lfAvatarUrl(i)}" alt="">`:'';return `<i class="lf-p lf-p-heart${hasAvatar?' lf-p-heart-avatar':''}" style="--ox:${ox}%;--delay:${delay.toFixed(2)}s;--dur:${dur.toFixed(2)}s;--c:${colors[i%colors.length]};--sz:${((w.fountainSize||24)*(.65+(i%5)*.1)).toFixed(1)}px">${avatarImg}♥</i>`}).join(''),orbitHearts=Array.from({length:orbitCount},(_,i)=>{let j=count+i,ox=((j%7)-3)*(portrait?5:9),dur=(w.fountainSpeed||4),delay=-(j/(count+orbitCount))*dur,hasAvatar=w.fountainAvatarHearts!==false&&j%4===0,avatarImg=hasAvatar?`<img class="lf-p-heart-avatar-img" src="${lfAvatarUrl(j)}" alt="">`:'';return `<i class="lf-p lf-p-heart${hasAvatar?' lf-p-heart-avatar':''}" style="--ox:${ox}%;--delay:${delay.toFixed(2)}s;--dur:${dur.toFixed(2)}s;--c:${colors[i%colors.length]};--sz:${((w.fountainSize||24)*(.65+(i%5)*.1)).toFixed(1)}px">${avatarImg}♥</i>`}).join(''),gold2=w.fountainGoldColor2||null,gradId='lfGrad'+w.id.replace(/[^a-zA-Z0-9]/g,''),ringSvg=gold2?`<svg class="lf-ring" viewBox="0 0 100 100"><defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${gold}"/><stop offset="100%" stop-color="${gold2}"/></linearGradient></defs><circle cx="50" cy="50" r="46" pathLength="100" style="stroke:url(#${gradId})"/></svg>`:`<svg class="lf-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`;return `<div class="widget like-fountain lf-enter fountain-${portrait?'portrait':'landscape'} palette-${w.fountainPalette||'rainbow'}${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${width}px;height:${height}px;--rise:${rise}px;--fountain-speed:${w.fountainSpeed||4}s;--heart-size:${w.fountainSize||24}px;--glow:${w.fountainGlow||14}px;--gold:${gold};--glass-opacity:${w.fountainGlassOpacity??.72};--orbit-speed:${orbitSpeed}s;--avatar-glow:${w.fountainAvatarGlow??18}px;--lf-font:${font};zoom:${w.widgetScale||1}"><div class="lf-stream">${hearts}${orbitHearts}</div><div class="fountain-pop"></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`}
 const likeFountainWh=wh;wh=function(w){return w.type==='templateLikeFountain'?likeFountainHtml(w):likeFountainWh(w)};
 function bindCollapsibleGroups(root){if(!root)return;root.querySelectorAll('.property-group.collapsible .pg-toggle').forEach(btn=>{btn.onclick=()=>btn.closest('.property-group').classList.toggle('open')})}
 function pgSection(title,body,open){if(title==='TOP LIKER')return '';return `<div class="property-group collapsible${open?' open':''}" data-property-section="${title}"><button class="pg-toggle" type="button">${title}<i class="pg-chevron">›</i></button><div class="pg-body">${body}</div></div>`}
@@ -691,7 +697,12 @@ const likeFountainProps=props;props=function(){let w=liveWidget(selected);if(!w|
 const likeFountainBind=bind;bind=function(){likeFountainBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateLikeFountain')return;bindCollapsibleGroups(document.querySelector('.properties'));let set=(id,key,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};set('#fountainMinLikes','fountainMinLikes',true);set('#fountainColor','fountainColor');set('#fountainColor2','fountainColor2');set('#fountainCount','fountainCount',true);set('#fountainSize','fountainSize',true);set('#fountainSpeed','fountainSpeed',true);set('#fountainHeight','fountainHeight',true);set('#fountainDrift','fountainDrift',true);set('#fountainGlow','fountainGlow',true);set('#fountainParticleCount','fountainParticleCount',true);set('#fountainParticleSize','fountainParticleSize',true);set('#fountainParticleSpeed','fountainParticleSpeed',true);set('#fountainPopDuration','fountainPopDuration',true);set('#fountainIntensity','fountainIntensity',true);set('#fountainMaxAvatars','fountainMaxAvatars',true);set('#fountainStarLikes','fountainStarLikes',true);set('#fountainAvatar','profileImage');let avatarHearts=document.querySelector('#fountainAvatarHearts');if(avatarHearts)avatarHearts.onchange=e=>{w.fountainAvatarHearts=e.target.checked;save();render()};set('#fountainUser','fountainUser');set('#fountainLikeCount','fountainLikeCount',true);set('#fountainGoldColor','fountainGoldColor');set('#fountainAvatarGlow','fountainAvatarGlow',true);set('#fountainOrbitCount','fountainOrbitCount',true);set('#fountainOrbitSpeed','fountainOrbitSpeed',true);set('#fountainLabelSize','fountainLabelSize',true);['fountainPopBurst','fountainPopSparkle','fountainPopMiniHearts','fountainPopStars','fountainPopConfetti','fountainPopFirework','fountainPopRing'].forEach(key=>{let el=document.querySelector('#'+key);if(el)el.onchange=e=>{w[key]=e.target.checked;save()}});let orientation=document.querySelector('#fountainOrientation');if(orientation){orientation.value=w.fountainOrientation||'landscape';orientation.onchange=e=>{w.fountainOrientation=e.target.value;w.width=w.fountainOrientation==='portrait'?260:620;save();render();toast(w.fountainOrientation==='portrait'?'Stående fontän':'Liggande fontän')}}let palette=document.querySelector('#fountainPalette');if(palette){palette.value=w.fountainPalette||'rainbow';palette.onchange=e=>{w.fountainPalette=e.target.value;save();render();toast('Färgpalett uppdaterad')}}let glassOp=document.querySelector('#fountainGlassOpacity');if(glassOp){glassOp.onchange=e=>{w.fountainGlassOpacity=+e.target.value/100;save();render()}}let labelPos=document.querySelector('#fountainLabelPosition');if(labelPos){labelPos.value=w.fountainLabelPosition||'bottom';labelPos.onchange=e=>{w.fountainLabelPosition=e.target.value;save();render()}}let labelFont=document.querySelector('#fountainLabelFont');if(labelFont){labelFont.value=w.fountainLabelFont||'Inter';labelFont.onchange=e=>{w.fountainLabelFont=e.target.value;save();render()}}let entrance=document.querySelector('#fountainPopEntrance');if(entrance){entrance.value=w.fountainPopEntrance||'pop';entrance.onchange=e=>{w.fountainPopEntrance=e.target.value;save()}}let test=document.querySelector('#testFountainPop');if(test)test.onclick=()=>triggerLikeFountainPop({count:w.fountainMinLikes||1,__test:true,__id:w.id});let replay=document.querySelector('#lfReplay');if(replay)replay.onclick=()=>{let el=document.querySelector(`[data-id="${w.id}"]`);if(!el)return;el.classList.remove('lf-enter','lf-paused');void el.offsetWidth;el.classList.add('lf-enter');let pauseBtn=document.querySelector('#lfPause');if(pauseBtn)pauseBtn.textContent='⏸ Pausa'};let pause=document.querySelector('#lfPause');if(pause)pause.onclick=()=>{let el=document.querySelector(`[data-id="${w.id}"]`);if(!el)return;let nowPaused=el.classList.toggle('lf-paused');pause.textContent=nowPaused?'▶ Fortsätt':'⏸ Pausa'};let reset=document.querySelector('#lfReset');if(reset)reset.onclick=()=>{let el=document.querySelector(`[data-id="${w.id}"]`);if(!el)return;el.classList.remove('lf-enter','lf-paused');let pauseBtn=document.querySelector('#lfPause');if(pauseBtn)pauseBtn.textContent='⏸ Pausa'};document.querySelectorAll('.lf-preset-card').forEach(card=>{card.onclick=()=>{applyLikeFountainPreset(w,card.dataset.preset);save();render();toast(LIKE_FOUNTAIN_PRESETS[card.dataset.preset].name+' tillämpat')}})};
 const fountainLikeAccum={};const fountainLikerPool={};function lfPushLiker(widgetId,avatarUrl){if(!avatarUrl)return;let pool=fountainLikerPool[widgetId]||(fountainLikerPool[widgetId]=[]);if(pool[0]===avatarUrl)return;pool.unshift(avatarUrl);if(pool.length>8)pool.length=8}
 function lfUpdateLiveLabel(w){let el=document.querySelector(`[data-id="${w.id}"]`);if(!el)return;let userEl=el.querySelector('.lf-label-user'),countEl=el.querySelector('.lf-label-count'),avatarEl=el.querySelector('.lf-avatar');if(userEl)userEl.textContent='@'+(w.fountainUser||'Alex');if(countEl)countEl.textContent=lfFormatCount(w.fountainLikeCount??98700);if(avatarEl&&w.profileImage)avatarEl.src=VyraSafe.src(w.profileImage)}
-function triggerLikeFountainPop(event={}){let amount=+(event.count||event.points||event.value||1);state.widgets.filter(w=>w.type==='templateLikeFountain').forEach(w=>{if(event.__id&&event.__id!==w.id)return;if(!event.__test&&(event.username||event.profileImage)){w.fountainUser=event.username||w.fountainUser;w.profileImage=event.profileImage||w.profileImage;w.fountainLikeCount=(+w.fountainLikeCount||0)+amount;lfPushLiker(w.id,event.profileImage);save();lfUpdateLiveLabel(w)}let min=Math.max(1,w.fountainMinLikes||1);if(!event.__test){fountainLikeAccum[w.id]=(fountainLikeAccum[w.id]||0)+amount;if(fountainLikeAccum[w.id]<min)return;fountainLikeAccum[w.id]-=min}let el=document.querySelector(`[data-id="${w.id}"] .fountain-pop`);if(!el)return;let allTypes=[['fountainPopBurst','♥','#ff3c88'],['fountainPopSparkle','✦','#ffe14d'],['fountainPopMiniHearts','♥','#ff86bd'],['fountainPopStars','★','#ffd23c'],['fountainPopConfetti','▮','#4fd8ff'],['fountainPopFirework','✺','#b94cff']],types=allTypes.filter(([key])=>w[key]!==false),showRing=w.fountainPopRing!==false,count=Math.max(4,Math.min(40,w.fountainParticleCount||10)),size=w.fountainParticleSize||18,speed=w.fountainParticleSpeed||200,parts=[];if(showRing)parts.push(`<b class="fp-ring" style="--c:#ffffff"></b>`);types.forEach(([key,glyph,color],ti)=>{for(let i=0;i<count;i++){let a=(i/count)*360+ti*11;parts.push(`<i style="--a:${a}deg;--d:${(60+i%6*10)*(speed/200)}px;--c:${color};--size:${size}px">${glyph}</i>`)}});el.innerHTML=parts.join('');el.classList.remove('play');void el.offsetWidth;el.className='fountain-pop play ws-anim-'+(w.fountainPopEntrance||'pop');clearTimeout(el._fpTimer);el._fpTimer=setTimeout(()=>el.classList.remove('play'),(w.fountainPopDuration||1.6)*1000)})}
+/* PER WIDGET (2026-10-19, panelspec 2.4 adaptern 'fontan'): kropparna i de tre lagren nedan (popen, pulsen och
+   hjartana som slapps) ar brutna ut till lfPopPa/lfPulsPa/lfSlappPa(w, …). Triggerna anropar dem for varje
+   widget i state precis som forut — livet ar oforandrat. ▶ Testa widget anropar dem for KLONEN (som aldrig
+   finns i state.widgets, sa triggern sjalv hade inte natt den) med __test, som aldrig skriver pa w eller sparar. */
+function triggerLikeFountainPop(event={}){let amount=+(event.count||event.points||event.value||1);state.widgets.filter(w=>w.type==='templateLikeFountain').forEach(w=>{if(event.__id&&event.__id!==w.id)return;lfPopPa(w,event,amount)})}
+function lfPopPa(w,event,amount){{if(!event.__test&&(event.username||event.profileImage)){w.fountainUser=event.username||w.fountainUser;w.profileImage=event.profileImage||w.profileImage;w.fountainLikeCount=(+w.fountainLikeCount||0)+amount;lfPushLiker(w.id,event.profileImage);save();lfUpdateLiveLabel(w)}let min=Math.max(1,w.fountainMinLikes||1);if(!event.__test){fountainLikeAccum[w.id]=(fountainLikeAccum[w.id]||0)+amount;if(fountainLikeAccum[w.id]<min)return;fountainLikeAccum[w.id]-=min}let el=document.querySelector(`[data-id="${w.id}"] .fountain-pop`);if(!el)return;let allTypes=[['fountainPopBurst','♥','#ff3c88'],['fountainPopSparkle','✦','#ffe14d'],['fountainPopMiniHearts','♥','#ff86bd'],['fountainPopStars','★','#ffd23c'],['fountainPopConfetti','▮','#4fd8ff'],['fountainPopFirework','✺','#b94cff']],types=allTypes.filter(([key])=>w[key]!==false),showRing=w.fountainPopRing!==false,count=Math.max(4,Math.min(40,w.fountainParticleCount||10)),size=w.fountainParticleSize||18,speed=w.fountainParticleSpeed||200,parts=[];if(showRing)parts.push(`<b class="fp-ring" style="--c:#ffffff"></b>`);types.forEach(([key,glyph,color],ti)=>{for(let i=0;i<count;i++){let a=(i/count)*360+ti*11;parts.push(`<i style="--a:${a}deg;--d:${(60+i%6*10)*(speed/200)}px;--c:${color};--size:${size}px">${glyph}</i>`)}});el.innerHTML=parts.join('');el.classList.remove('play');void el.offsetWidth;el.className='fountain-pop play ws-anim-'+(w.fountainPopEntrance||'pop');clearTimeout(el._fpTimer);el._fpTimer=setTimeout(()=>el.classList.remove('play'),(w.fountainPopDuration||1.6)*1000)}}
 const lfBaseTriggerLikeFountainPop=triggerLikeFountainPop;
 // PULSEN OCH NIVAN AR TVA OLIKA SAKER — och en enda timer skotte bada fram till 2026-09-06.
 //
@@ -714,6 +725,12 @@ triggerLikeFountainPop=function(event={}){
   let amount=Math.max(1,+(event.count||event.points||event.value||1));
   state.widgets.filter(w=>w.type==='templateLikeFountain').forEach(w=>{
     if(event.__id&&event.__id!==w.id)return;
+    lfPulsPa(w,amount);
+  });
+  return lfBaseTriggerLikeFountainPop(event);
+};
+function lfPulsPa(w,amount){
+  {
     let root=document.querySelector(`[data-id="${w.id}"]`);
     if(!root)return;
     let level=amount>=100?'high':amount>=20?'mid':'low';
@@ -732,9 +749,8 @@ triggerLikeFountainPop=function(event={}){
     }
     clearTimeout(root._lfLiveTimer);
     root._lfLiveTimer=setTimeout(()=>root.classList.remove('lf-live-low','lf-live-mid','lf-live-high'),LF_HALL_MS);
-  });
-  return lfBaseTriggerLikeFountainPop(event);
-};
+  }
+}
 // En Like Fountain ska ha en tydlig rörelse: DOM-fontänen och dess korta pop vid
 // ett like. Det tidigare canvas-lagret ritade ytterligare hjärtan ovanpå samma
 // händelse och såg ut som en andra fontän i sändning.
@@ -749,6 +765,11 @@ function lfSlappLikes(event={}){
   let amount=Math.max(1,+(event.count||event.points||event.value||1));
   state.widgets.filter(w=>w.type==='templateLikeFountain'&&w.fountainDesign!=='portal').forEach(w=>{
     if(event.__id&&event.__id!==w.id)return;
+    lfSlappPa(w,event,amount);
+  });
+}
+function lfSlappPa(w,event,amount){
+  {
     let st=LF_SLAPP[w.id]||(LF_SLAPP[w.id]={slot:0,ko:[],timer:0});
     let pic=w.fountainAvatarHearts!==false&&(event.profileImage||(event.__test?'assets/images/test-profile.svg':''));
     pic=pic?VyraSafe.src(pic):'';
@@ -759,7 +780,7 @@ function lfSlappLikes(event={}){
     if(stjarna){st.ko[st.ko.length-(hjartan>1?hjartan:1)].paus=1000;st.ko.push({bild:pic,stjarna:true,paus:1000},{bild:pic,stjarna:true})}
     if(st.ko.length>40)st.ko.splice(0,st.ko.length-40);
     lfPumpa(w,st);
-  });
+  }
 }
 function lfPumpa(w,st){
   if(st.timer)return;
@@ -789,6 +810,26 @@ function lfPumpa(w,st){
 const lfPulsTrigger=triggerLikeFountainPop;
 triggerLikeFountainPop=function(event={}){try{lfSlappLikes(event)}catch(e){}return lfPulsTrigger(event)};
 window.triggerLikeFountainPop=triggerLikeFountainPop;
+// ▶ Testa widget (vyra-fontan-panel.js): ETT like-paket pa EN klassisk fontan, i samma ordning som
+// triggern — hjartan slapps, pulsen, popen. Alltid __test: inget skrivs pa w, inget sparas, ingen
+// ackumulering mot Minsta like-värde. glom() tar bort det testet lamnat efter sig for widgetens id.
+window.VyraLikeFountain={
+  spelaPa(w,event={}){
+    if(!w||w.type!=='templateLikeFountain'||w.fountainDesign==='portal')return false;
+    let e=Object.assign({},event,{__test:true,__id:w.id}),antal=Math.max(1,+(e.count||1));
+    try{lfSlappPa(w,e,antal)}catch(_){}
+    lfPulsPa(w,antal);
+    lfPopPa(w,e,+(e.count||1));
+    return true;
+  },
+  glom(w){
+    if(!w)return;
+    let st=LF_SLAPP[w.id];if(st){clearTimeout(st.timer);st.ko.length=0;delete LF_SLAPP[w.id]}
+    let root=document.querySelector(`[data-id="${w.id}"]`);
+    if(root){clearTimeout(root._lfPulsTimer);clearTimeout(root._lfLiveTimer);let pop=root.querySelector('.fountain-pop');if(pop)clearTimeout(pop._fpTimer)}
+  },
+  koLangd(id){let st=LF_SLAPP[id];return st?st.ko.length:0}
+};
 
 // Premium organic movement layer for Like Fountain.
 // Kept additive so the existing widget, live-event routing and theme presets remain intact.
@@ -869,7 +910,9 @@ props=function(){let html=lfOrganicProps(),w=liveWidget(selected);if(!w||w.type!
 const lfOrganicBind=bind;
 bind=function(){lfOrganicBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateLikeFountain')return;document.querySelectorAll('.lf-motion-card').forEach(card=>{card.onclick=()=>{w.fountainMotion=card.dataset.motion;save();render();toast(LIKE_FOUNTAIN_MOTIONS[w.fountainMotion].name+' aktiverad')}});let scale=document.querySelector('#fountainWidgetScale');if(scale)scale.onchange=e=>{w.widgetScale=+e.target.value/100;save();render();toast('Widgetstorlek '+e.target.value+'%')}};
 
-/* Like Fountain has no Top Liker UI. Pop choices preview immediately when toggled. */
+/* Like Fountain has no Top Liker UI. Pop choices sync their classes when toggled.
+   KRYSSRUTORNA SPELAR INGET TEST LANGRE (2026-10-19, panelspec 2.5): en andring av en pop-effekt kor
+   ingen pop pa den riktiga widgeten. Effekten provas med ▶ Testa widget, som spelar pa en klon. */
 const lfVerifiedPopBind=bind;
 bind=function(){
   lfVerifiedPopBind();
@@ -883,7 +926,6 @@ bind=function(){
       w[key]=e.target.checked;
       save();
       lfSyncEffectClasses(w);
-      triggerLikeFountainPop({count:w.fountainMinLikes||1,__test:true,__id:w.id});
     };
   });
   let test=document.querySelector('#testFountainPop');
@@ -1727,7 +1769,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261019-2';
+  const version='20261019-3';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1836,7 +1878,7 @@ Promise.resolve().then(()=>{
 });
 
 // Approved animal jars share the existing live state and drop pipeline.
-Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='gift-jar-animals.css?v=20260913-1';document.head.append(css);const files=['gift-jar-textures.js?v=20260913-1','gift-jar-animals.js?v=20260913-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);document.body.append(script)};next(0)});
+Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='stylesheet';css.href='gift-jar-animals.css?v=20260913-1';document.head.append(css);const files=['gift-jar-textures.js?v=20260913-1','gift-jar-animals.js?v=20261019-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);document.body.append(script)};next(0)});
 
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
