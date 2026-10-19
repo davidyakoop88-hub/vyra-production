@@ -184,7 +184,9 @@
         "vyra-streak-panel.js",
         "vyra-playground-panel.js",
         "vyra-fyrverkeri-panel.js",
-        "vyra-fontan-panel.js"
+        "vyra-fontan-panel.js",
+        "vyra-fl50-panel.js",
+        "vyra-glove-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -199,6 +201,7 @@
         "tests/browser/mal-livevag.browser.test.js",
         "tests/browser/streak-livevag.browser.test.js",
         "tests/browser/fontan-livevag.browser.test.js",
+        "tests/browser/fl50-glove-livevag.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",

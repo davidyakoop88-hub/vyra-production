@@ -1,7 +1,7 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
 // 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj', 'topstreak', 'pg', 'fyrverkeri', 'hjartfyr',
-// 'bubblor', 'fontan', 'portal' och 'burk' i Chrome.
+// 'bubblor', 'fontan', 'portal', 'burk', 'fan50', 'glove' och 'glove-mp4' i Chrome.
 // (Last-X, alertfamiljerna, Battle MVP, rankingen, målen och Top Streak har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
@@ -1623,6 +1623,207 @@ test('portal: ett test som får gå klart passerar entré → visning → utgån
     assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
     assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
     lika(fore, await fontanBild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// ---- Fan Level 50 och Glove Snipe (PR 14, vyra-fl50-panel.js och vyra-glove-panel.js) ---------------------------
+//
+// Fan Level 50 (adaptern fan50): klonens kort byggs om med fyra exempeldeltagare (Alex, Mia, Leo, Sara). Bandet
+// rullar dem; slideshowen byter klonens kort med fan-level-50.js eget kortbyte (bytKort) och motorns timer. De riktiga
+// widgetarna har en enda deltagare i slideshowen, så deras egen motor (swap) står still och de kan jämföras tecken
+// för tecken. Hämta från TikTok (fetch('/api/tiktok-profile')) får aldrig anropas — inte ens som GET.
+//
+// Glove Snipe (adaptrarna glove och glove-mp4): typväljaren väljer klippet, och klonen spelar det med samma
+// uppspelning som triggern (VyraBattlePaket.spelaPa). Headless Chromium avkodar inte H.264, så provet läser klippets
+// källa, klasserna och autoplay — inte bildrutor. Efter ■ finns ingen timer kvar för klonen och ingen video utöver de
+// riktiga widgetarnas.
+const FL50_GLOVE_ISOLERING = [
+  { namn: 'Fan Level 50 · rullande band', nyckel: 'catalog:fanlevel50:royal', adapter: 'fan50', faser: { entre: 300, visning: 16000, utgang: 500 } },
+  { namn: 'Fan Level 50 · slideshow (2 s)', nyckel: 'catalog:fanlevel50:royal', adapter: 'fan50', slideshow: true, faser: { entre: 300, visning: 8000, utgang: 500 } },
+  { namn: 'Glove Snipe · Pink Princess (Snipe)', nyckel: 'catalog:glovesnipe:pinkPrincess:pack:2', adapter: 'glove', typ: 'snipe',
+    klipp: /pink-princess\/snipe\.webm$/, faser: { entre: 200, visning: 9300, utgang: 500 } },
+  { namn: 'Glove Snipe · Koi Pearl (X2, MP4)', nyckel: 'catalog:glovesnipe:koiPearl:pack:2', adapter: 'glove-mp4', typ: null,
+    klipp: /koi-pearl\/boost-x2\.mp4$/, faser: { entre: 200, visning: 6342, utgang: 500 } },
+];
+const GLOVE_GAMLA = ['[data-paket-test]', '.paket-testknappar'];
+const fgBild = page => bild(page).then(async b => Object.assign({}, b, await page.evaluate(() => ({
+  fl50: window.VyraFanLevel50 ? JSON.stringify(window.VyraFanLevel50.roster()) : null,
+  paket: window.VyraBattlePaket ? window.VyraBattlePaket.aktiva().join() : null,
+  videor: [...document.querySelectorAll('.canvas video')].map(v => (v.closest('[data-id]') || {}).dataset.id + ':' + v.paused + ':' + v.hasAttribute('autoplay')).join(),
+  spelar: [...document.querySelectorAll('.canvas .widget:not([data-testspel-klon])')].filter(n => n.classList.contains('pack-active')).map(n => n.dataset.id).join(),
+}))));
+const fgKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const v = k.querySelector('video');
+  return { id: k.dataset.id, klass: k.className, klipp: k.dataset.klipp || null,
+    namn: [...k.querySelectorAll('.fl50-name span')].map(n => n.textContent.trim()).join('|'),
+    rank: [...k.querySelectorAll('.fl50-rank')].map(n => n.textContent.trim()).join('|'),
+    foton: [...k.querySelectorAll('.fl50-photo img')].map(i => i.getAttribute('src')).join('|'),
+    video: v ? { src: v.getAttribute('src'), autoplay: v.hasAttribute('autoplay'), muted: v.muted } : null,
+    synlig: getComputedStyle(k).visibility, opacitet: getComputedStyle(k).opacity };
+});
+
+for (const m of FL50_GLOVE_ISOLERING) {
+  test(`${m.adapter}-adaptern är isolerad: ${m.namn}`, { skip, timeout: 150000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      if (m.slideshow) {
+        await page.evaluate(() => {
+          for (const [id, namn] of [['prov-a', 'Ensam A'], ['prov-b', 'Ensam B']]) {
+            Object.assign(liveWidget(id), { fanl50Mode: 'slideshow', fanl50Interval: 2, fanl50Source: 'manual', fanl50Manual: [{ name: namn, avatar: '' }] });
+          }
+          save(); render();
+        });
+        // Samma väntan som layout(): sparningen går till servern en stund efter save().
+        await page.waitForTimeout(3500);
+      }
+      if (m.typ) {
+        await page.selectOption('#pr-testspel-typ', m.typ);
+        await page.waitForTimeout(200);
+      }
+      assert.deepEqual(await page.evaluate(sel => sel.flatMap(s => [...document.querySelectorAll('.properties ' + s)])
+        .filter(n => !n.closest('[data-panelram-forvaring]')).length, GLOVE_GAMLA), 0, 'paketets gamla testknappar är borta');
+      await installeraRaknare(page);
+      // Hämta från TikTok är en GET — räknaren ovan släpper igenom läsningar, så den räknas för sig.
+      await page.evaluate(() => {
+        window.__profilhamtningar = [];
+        const f = window.fetch;
+        window.fetch = function (u) { if (/tiktok-profile/.test(String((u && u.url) || u))) window.__profilhamtningar.push(String(u)); return f.apply(this, arguments); };
+      });
+      const fore = await fgBild(page);
+      assert.equal(fore.spelar, '', 'kontrollmätning: inget paket spelar före ▶');
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, m.adapter);
+      assert.deepEqual(s1.faser, m.faser, 'faserna');
+      await page.waitForTimeout(m.slideshow ? 2900 : 900);
+      const k = await fgKlon(page);
+      assert.equal(k.id, 'prov-a__prov');
+      if (m.adapter === 'fan50') {
+        if (m.slideshow) {
+          assert.match(k.klass, /fl50-mode-slideshow/);
+          assert.equal(k.namn, 'Mia', 'slideshowen har bytt till klonens andra exempeldeltagare: ' + JSON.stringify(k));
+          assert.equal(k.rank, '#2');
+        } else {
+          assert.match(k.klass, /fl50-mode-band/);
+          assert.equal(k.namn, 'Alex|Mia|Leo|Sara|Alex|Mia|Leo|Sara', 'bandet rullar klonens fyra exempeldeltagare');
+        }
+        assert.match(k.foton, /test-profile\.svg/, 'exempeldeltagarnas profilbild');
+      } else {
+        assert.match(k.klass, /pack-active/, 'klonen spelar: ' + JSON.stringify(k));
+        assert.equal(k.klipp, m.typ || 'boost-x2', 'klippet ur typväljaren');
+        assert.match(k.video.src, m.klipp, 'klonens video har klippets källa');
+        assert.equal(k.video.autoplay, true, 'autoplay sätts under uppspelningen (samma startväg som triggern)');
+        assert.equal(k.video.muted, true);
+        assert.equal(k.synlig, 'visible', 'klonen syns medan klippet spelar');
+      }
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      const mitt = await fgBild(page);
+      if (m.adapter !== 'fan50') {
+        assert.equal(mitt.paket, 'prov-a__prov', 'bara klonens klipp har en timer i media.js');
+        mitt.paket = fore.paket;
+        assert.ok(/prov-a__prov:\w+:true/.test(mitt.videor), 'klonens video har autoplay: ' + mitt.videor);
+        mitt.videor = mitt.videor.split(',').filter(x => !x.startsWith('prov-a__prov:')).join();
+      }
+      lika(fore, mitt, 'mitt i testet (B spelar inte, rostern och de riktiga videorna orörda)');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(150);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      await page.waitForTimeout(1500);   // efter slideshowens kortbyte (420 + 520 ms) och paketets stillastående-reserv (1,2 s)
+      lika(fore, await fgBild(page), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.__profilhamtningar), [], 'Hämta från TikTok anropades inte');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser, samma förlopp.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+      await page.waitForTimeout(500);
+
+      // render() mitt i testet tar bort klonen och allt den startade.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(300);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      const efter = await fgBild(page);
+      for (const f of ['fl50', 'paket', 'videor', 'spelar']) assert.equal(efter[f], fore[f], `${f} efter render-stoppet`);
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('fan50: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:fanlevel50:royal');
+    // Bandet med Bytestid 2: ett varv tar 8 s.
+    await page.evaluate(() => { liveWidget('prov-a').fanl50Interval = 2; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await fgBild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 300, visning: 8000, utgang: 500 });
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + 200);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-testspel-klon]')).opacity !== '1'), true, 'utgången tonar ut klonen');
+    await page.waitForTimeout(s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await fgBild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+test('glove: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:glovesnipe:cloudFox:pack:2');
+    // Taket (gloveDuration 4 s) är kortare än klippet (10 s): testet slutar vid taket, som uppspelningen.
+    await page.evaluate(() => { liveWidget('prov-a').gloveDuration = 4; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await fgBild(page);
+    await page.selectOption('#pr-testspel-typ', 'tap');
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 200, visning: 3300, utgang: 500 });
+    assert.equal(s.typ, 'tap');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 700);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    await page.waitForTimeout(800);
+    lika(fore, await fgBild(page), 'efter ett färdigt test');
     assert.deepEqual(fel, []);
   } finally {
     await page.close();

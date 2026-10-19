@@ -8,7 +8,7 @@
 // Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js), playgroundfamiljerna Top Gifter Podium, Top
 // Streak Flip och Goal Pro (vyra-playground-panel.js) och fyrverkerierna Gift Fireworks, Heart Fireworks och Gift
 // Bubbles (vyra-fyrverkeri-panel.js) och fontänerna och gåvoburken: Like Fountain klassisk och Portal och Gift Jar
-// (vyra-fontan-panel.js) — kräver provet
+// (vyra-fontan-panel.js) och Fan Level 50 och Glove Snipe (vyra-fl50-panel.js, vyra-glove-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -237,7 +237,27 @@ const FONTAN_MODELLER = [
     effekt: m === 'dragon', minKontroller: 8, aterstall: { utseende: 'jarModel', innehall: 'jarCapacity' },
     tidsstyrt: Object.fromEntries(['jarCapacity', 'jarAutoReset', 'pr-jarTom'].map(id => [id, FONTAN_SPELAR])) })),
 ];
+// FAN LEVEL 50 OCH GLOVE SNIPE (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14). Fan Level 50 är en modell med
+// fyra kortmallar; effekten per kontroll mäts för den. Inmatningen till deltagarlistan (användarnamnet, Hämta från
+// TikTok och Lägg till namn) gör ingenting förrän ett namn skrivits — utan namn står widgeten still, vilket provet
+// kräver; med namn provas de i fl50-glove-livevag.browser.test.js (Hämta mot en uppsnappad /api/tiktok-profile).
+// Källa mäts med en deltagare i listan (FORUTS): utan någon ser "Live och deltagarlistan" och "Bara live" likadana ut
+// (båda visar editorns exempelfans).
+//
+// Glove Snipe: de fem paketen (Video FX · hela paketet), två poster (WebM med Snipe, MP4 utan). Panelkraven gäller alla
+// fem; effekten mäts för ett WebM- och ett MP4-paket. Klippen spelas bara vid en händelse och provas i
+// fl50-glove-livevag; i vila är widgeten affischbilden. Paketet har inga utseendefält (färgerna verkar inte, se
+// vyra-glove-panel.js), så det har ingen Återställ utseende — provet kräver att knappen saknas.
+const FL50_INMATNING = 'verkar först när ett namn skrivits — provas i fl50-glove-livevag.browser.test.js';
+const FL50_MODELLER = [
+  { namn: 'Fan Level 50', nyckel: 'catalog:fanlevel50:royal', effekt: true, minKontroller: 8, aterstall: { utseende: 'fanl50Design', innehall: 'fanl50Source' },
+    tidsstyrt: { fl50AddUser: FL50_INMATNING, fl50AddBtn: FL50_INMATNING, fl50AddNamn: FL50_INMATNING } },
+];
+const GLOVE_MODELLER = ['koiPearl', 'masquerade', 'pinkPrincess', 'royalRuby', 'cloudFox'].map(p => ({ namn: 'Glove Snipe · ' + p,
+  nyckel: 'catalog:glovesnipe:' + p + ':pack:2', effekt: p === 'koiPearl' || p === 'pinkPrincess', minKontroller: 4, aterstall: null }));
 const MODELLER = [
+  ...FL50_MODELLER,
+  ...GLOVE_MODELLER,
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL },
@@ -266,7 +286,8 @@ const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk
 // webbläsare är det samma text — mätningen hade då berott på maskinens språk.
-const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' } };
+const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' },
+  fl50Source: { fanl50Manual: [{ name: 'Deltagare', avatar: '' }] } };
 
 let server, browser, bas;
 const skip = hoppaOver();
@@ -540,6 +561,11 @@ for (const m of MODELLER) {
 
       // Återställ utseende: utseendet tillbaka, innehåll och placering kvar.
       await aterstall(page, orig);
+      if (m.aterstall === null) {
+        assert.equal(await page.$('#pr-aterstall-utseende'), null, 'ingen Återställ utseende utan utseendefält');
+        assert.deepEqual(fel, [], 'inga sidfel');
+        return;
+      }
       const fa = m.aterstall;
       const las7 = () => page.evaluate(f => { const w = liveWidget('krav'); return { accent: w[f.utseende], x: w.x, namn: w[f.innehall] }; }, fa);
       const fore7 = await las7();

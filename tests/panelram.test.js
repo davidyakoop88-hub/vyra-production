@@ -287,8 +287,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // 20261019-3: ramen bygger Ärv färgschema och skriver enheter i talfältens etiketter; registret har
   // arv(w). Top Gifts poster (vyra-topgift-panel.js) laddas efter registret och testmotorn.
   // 20261019-4 (registret) och 20261019-2 (mediaväljaren): medietypen gava, gåvoväljaren i Gift Campaign (PR 9).
+  // 20261019-3 (mediaväljaren): opts.status — Fan Level 50:s deltagarrader säger "Profilbild hämtad från TikTok" (PR 14).
   const reg = plats('vyra-panelregister.js', '20261019-4'), ram = plats('vyra-panelram.js', '20261019-3');
-  const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-2');
+  const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-3');
   const testspel = plats('vyra-testspel.js', '20261019-2'), topgift = plats('vyra-topgift-panel.js', '20261019-1');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
@@ -319,6 +320,10 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // Fontänernas och gåvoburkens poster (vyra-fontan-panel.js, PR 13) på samma sätt.
   const fontan = plats('vyra-fontan-panel.js', '20261019-1');
   assert.ok(fontan > reg && fontan > testspel && fontan < ordning, 'fontänernas och gåvoburkens poster laddas efter registret och testmotorn, före panelordningen');
+  // Fan Level 50:s och Glove Snipe-paketens poster (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14) på samma sätt.
+  const fl50 = plats('vyra-fl50-panel.js', '20261019-1'), glove = plats('vyra-glove-panel.js', '20261019-1');
+  assert.ok(fl50 > reg && fl50 > testspel && fl50 < ordning, 'Fan Level 50:s post laddas efter registret och testmotorn, före panelordningen');
+  assert.ok(glove > reg && glove > testspel && glove < ordning, 'Glove Snipe-paketens poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.

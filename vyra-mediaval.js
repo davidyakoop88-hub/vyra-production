@@ -46,6 +46,8 @@
   // "Välj gåva", som anropar opts.valj(w) — familjen öppnar sitt befintliga galleri, som skriver samma
   // värde som förut. Namnet ges av opts.gavonamn(w, v), annars läses det ur filnamnet (0001_Rose → Rose).
   //
+  // STATUSTEXT (valfri): opts.status(w, v) returnerar statusradens text för värdet, eller inget för standardtexten.
+  //
   // Inget här körs i overlay-utdata: noden byggs bara när panelen byggs.
 
   const VANTA_MS = 5000, VANTA_GANGER = 24;
@@ -100,6 +102,9 @@
   }
 
   function statustext(o, v) {
+    // En familj kan säga mer om ett värde än sorten gör (Fan Level 50: en profilbild hämtad från TikTok är
+    // en https-länk men inte "sparad i molnet"). opts.status(w, v) ger texten, eller inget för standardtexten.
+    if (typeof o.status === 'function') { try { const t = o.status(o.w, v); if (t) return String(t); } catch (_) {} }
     if (o.typ === 'gava') return gavonamn(o, v) || 'Ingen gåva vald';
     const vad = o.typ === 'video' ? 'Egen video' : 'Egen bild';
     switch (sort(v)) {

@@ -424,3 +424,34 @@ for (const nyckel of ['catalog:likefountain:portal:aurora', 'catalog:likefountai
     }
   });
 }
+
+// Fan Level 50 och Glove Snipe (PR 14, spec 4.2) erbjuder inget arv. Fan Level 50 har inget färgfält (kortmallarna är
+// fasta bilder); Glove Snipe-paketen är videoklipp, och Handskens färg och Glöd läses inte av paketets CSS (mätt 0 px,
+// vyra-glove-panel.js). Provet mäter det också här: ett påtvingat arv (inheritBrandKit med testschemat) ändrar ingen
+// färg och inget typsnitt i widgeten. Panelen är ramens, utan arvsruta och utan färgväljare.
+for (const nyckel of ['catalog:fanlevel50:royal', 'catalog:glovesnipe:koiPearl:pack:2', 'catalog:glovesnipe:pinkPrincess:pack:2']) {
+  test(`fargarv-sant: ${nyckel.split(':').slice(1, 3).join(' · ')} erbjuder inget arv, och ett påtvingat arv syns inte`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => ({
+        ram: document.querySelector('.properties')?.dataset.panelram || null,
+        arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+        gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
+        // Textens Skuggfärg och Konturfärg (sektion 4, Fan Level 50) är textens egna, inga modellfärger.
+        farger: [...document.querySelectorAll('.properties [data-panelram-sektion] input[type=color]:not(#vtShadowColor):not(#vtOutlineColor)')].length,
+      }));
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, farger: 0 });
+      const av = await stilar(page);
+      await page.evaluate(() => { liveWidget('arv').inheritBrandKit = true; render(); });
+      await page.waitForTimeout(900);
+      const pa = await stilar(page);
+      assert.deepEqual(pa.farger.sort(), av.farger.sort(), 'ett påtvingat arv ändrar ingen färg');
+      assert.deepEqual(pa.typsnitt.sort(), av.typsnitt.sort(), 'ett påtvingat arv ändrar inget typsnitt');
+      for (const del of Object.keys(SPAR)) assert.equal(syns(pa, del), false, `${del} ur schemat syns inte`);
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
