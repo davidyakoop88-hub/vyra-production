@@ -171,11 +171,13 @@
         "gift-jar-animals.css",
         "gift-jar-textures.js",
         "vyra-exempeldata.js",
+        "vyra-mediaval.js",
         "vyra-panelregister.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
         "tests/panelregister.test.js",
+        "tests/browser/mediaval.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",
