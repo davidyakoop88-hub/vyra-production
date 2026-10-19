@@ -2,7 +2,8 @@
 // PANELKRAVEN FÖR MODELLER MED REGISTERPOST (panelspecifikationen 6, "Löpande").
 //
 // För varje modell som har en post i vyra-panelregister.js — i dag Top Gift · Design 1–3 och
-// Signal Orbit (vyra-topgift-panel.js) — kräver provet att panelen
+// Signal Orbit (vyra-topgift-panel.js) och de elva Last-X (vyra-lastx-panel.js) — kräver provet
+// att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
 //   * inte har någon etikett två gånger,
@@ -38,11 +39,30 @@ function servera() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
+// Återställ utseende provas med ett utseendefält, ett innehållsfält och placeringen.
+const TOPGIFT_ATERSTALL = { utseende: 'accent', innehall: 'dataName' };
+// LAST-X (vyra-lastx-panel.js, PR 5). Widgeten visar bara sin FÖRSTA typ i vila; vad en kontroll för
+// en annan typ gör syns först när en händelse av den typen kommer. Sådana kontroller mäts därför
+// med en händelse: samma händelse spelas före och efter ändringen (triggerLastXAlert, livevägen),
+// och widgeten jämförs. Visningstiden ändrar bara hur länge kortet ligger kvar — inget som syns i
+// en ögonblicksbild — och provas i stället av lastx-livevag.browser.test.js.
+const LASTX_TYPER = /_(gifter|liker|sharer|subscriber|follower)$/;
+const LASTX = {
+  aterstall: { utseende: 'followColor', innehall: 'followName' },
+  handelse: c => (LASTX_TYPER.exec(c.id) || [])[1] || (c.id === 'lastXPersistent' ? 'gifter' : null),
+  tidsstyrt: { followDuration: 'visningstiden mäts i lastx-livevag.browser.test.js' },
+};
+// Panelkraven gäller alla elva Last-X-modellerna. Effekten per kontroll (den långsamma delen)
+// mäts för en modell ur varje grupp: plattorna (card), royal och banderollerna (crownBanner) har
+// olika registerposter; modellerna inom en grupp delar post.
+const LASTX_MODELLER = ['card', 'stack', 'skew', 'badge', 'royal', 'crownBanner', 'royalAmethyst', 'iceKing', 'neonCyber', 'dragonFlame', 'angelGold']
+  .map(d => Object.assign({ namn: 'Last-X · ' + d, nyckel: 'catalog:lastx:' + d, effekt: ['card', 'royal', 'crownBanner'].includes(d) }, LASTX));
 const MODELLER = [
-  { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon' },
-  { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal' },
-  { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus' },
-  { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit' },
+  { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
+  { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
+  { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL },
+  { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit', aterstall: TOPGIFT_ATERSTALL },
+  ...LASTX_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 const ENHET = /(px|%|ms|×|°|s)\s*$/;
@@ -245,6 +265,8 @@ for (const m of MODELLER) {
         else assert.ok(/\((px|%|ms|°|s)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
       }
 
+      if (m.effekt === false) { assert.deepEqual(fel, [], 'inga sidfel'); return; }
+
       // Effekt per kontroll.
       await page.addStyleTag({ content: PAUS });
       const orig = await page.evaluate(() => JSON.stringify(state.widgets.find(w => w.id === 'krav')));
@@ -258,14 +280,51 @@ for (const m of MODELLER) {
       const { kontroller, media } = await page.evaluate(sidKontroller);
       assert.ok(kontroller.length >= 15, `för få kontroller hittades (${kontroller.length})`);
       const utan = [];
+      const tidsstyrt = m.tidsstyrt || {};
+      // En händelse genom livevägen (bara Last-X): samma händelse före och efter ändringen.
+      const handelse = typ => page.evaluate(t => { window.triggerLastXAlert(t, { username: 'Händelseprov', __test: true }); }, typ)
+        .then(() => page.waitForTimeout(500));
+      const onodiga = [];
       for (const c of kontroller) {
         const v = nyttVarde(c);
+        if (tidsstyrt[c.id]) {
+          // Undantaget ska vara sant: kontrollen syns verkligen inte i en ögonblicksbild. Det visar
+          // också att mätningen kan säga "ingen verkan" för den här modellen.
+          await aterstall(page, orig);
+          const f = await page.evaluate(sidSnap, 'krav');
+          await tillampa(page, c, v);
+          await page.waitForTimeout(700);
+          if (skiljer(f, await page.evaluate(sidSnap, 'krav'), brus)) onodiga.push(c.id);
+          // Samma sak med en händelse: händelsemätningen ovan får inte se verkan där ingen finns.
+          if (m.handelse) {
+            await aterstall(page, orig);
+            await handelse('gifter');
+            const fh = await page.evaluate(sidSnap, 'krav');
+            await aterstall(page, orig);
+            await tillampa(page, c, v);
+            await page.waitForTimeout(700);
+            await handelse('gifter');
+            if (skiljer(fh, await page.evaluate(sidSnap, 'krav'), brus)) onodiga.push(c.id + ' (med händelse)');
+          }
+          continue;
+        }
         if (v === null) { utan.push(`${c.etikett}: inget annat värde att prova`); continue; }
         await aterstall(page, orig, FORUTS[c.id]);
-        const fore = await page.evaluate(sidSnap, 'krav');
-        const how = await tillampa(page, c, v);
+        let fore = await page.evaluate(sidSnap, 'krav');
+        let how = await tillampa(page, c, v);
         await page.waitForTimeout(700);
-        const efter = await page.evaluate(sidSnap, 'krav');
+        let efter = await page.evaluate(sidSnap, 'krav');
+        const typ = m.handelse && m.handelse(c);
+        if (how !== 'saknas' && !skiljer(fore, efter, brus) && typ) {
+          await aterstall(page, orig, FORUTS[c.id]);
+          await handelse(typ);
+          fore = await page.evaluate(sidSnap, 'krav');
+          await aterstall(page, orig, FORUTS[c.id]);
+          how = await tillampa(page, c, v) + ' + händelse ' + typ;
+          await page.waitForTimeout(700);
+          await handelse(typ);
+          efter = await page.evaluate(sidSnap, 'krav');
+        }
         if (how === 'saknas' || !skiljer(fore, efter, brus)) utan.push(`${c.etikett} (${c.sel}, ${how})`);
       }
       // Mediaväljaren: ett annat giltigt värde i fältet ska synas i widgeten.
@@ -278,17 +337,21 @@ for (const m of MODELLER) {
         if (!skiljer(fore, efter, brus)) utan.push(`mediaväljaren ${falt}`);
       }
       assert.deepEqual(utan, [], 'kontroller utan synlig verkan');
+      assert.deepEqual(onodiga, [], 'undantagna som tidsstyrda men syns ändå direkt — ta bort undantaget');
+      for (const id of Object.keys(tidsstyrt)) assert.ok(kontroller.some(c => c.id === id), `undantaget ${id} finns inte i panelen`);
 
       // Återställ utseende: utseendet tillbaka, innehåll och placering kvar.
       await aterstall(page, orig);
-      const fore7 = await page.evaluate(() => { const w = liveWidget('krav'); return { accent: w.accent, x: w.x, namn: w.dataName }; });
-      await page.evaluate(() => { const w = liveWidget('krav'); w.accent = '#ff00ff'; w.x = 333; w.dataName = 'Kvar'; save(); render(); });
+      const fa = m.aterstall;
+      const las7 = () => page.evaluate(f => { const w = liveWidget('krav'); return { accent: w[f.utseende], x: w.x, namn: w[f.innehall] }; }, fa);
+      const fore7 = await las7();
+      await page.evaluate(f => { const w = liveWidget('krav'); w[f.utseende] = '#ff00ff'; w.x = 333; w[f.innehall] = 'Kvar'; save(); render(); }, fa);
       await page.waitForTimeout(450);
       await page.evaluate(() => document.querySelector('.properties [data-panelram-sektion="7"]').classList.add('open'));
       await page.click('#pr-aterstall-utseende');
       await page.waitForTimeout(450);
-      const efter7 = await page.evaluate(() => { const w = liveWidget('krav'); return { accent: w.accent, x: w.x, namn: w.dataName }; });
-      assert.equal(efter7.accent, fore7.accent, 'Återställ utseende tar tillbaka accentfärgen');
+      const efter7 = await las7();
+      assert.equal(efter7.accent, fore7.accent, `Återställ utseende tar tillbaka ${fa.utseende}`);
       assert.equal(efter7.x, 333, 'placeringen rörs inte');
       assert.equal(efter7.namn, 'Kvar', 'innehållet rörs inte');
 
@@ -316,6 +379,23 @@ test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { s
       sektioner: document.querySelectorAll('[data-panelram-sektion]').length, arv: !!document.querySelector('#pr-inheritBrandKit') }));
     assert.deepEqual(lage, { ram: null, sektioner: 0, arv: false }, 'Top Gift med gåvoram har ingen post och får dagens panel');
     assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// Last-X visar inte BAKGRUND för en ny widget (spec 5.17), men en sparad widget som redan har en egen
+// bakgrund (widget-background.js ritar den bakom kortet) måste kunna ändra och ta bort den.
+test('Last-X: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna('catalog:lastx:card', fel);
+  try {
+    const sektion5 = () => page.evaluate(() => [...document.querySelectorAll('.properties [data-panelram-sektion="5"] #wbColor, .properties [data-panelram-sektion="5"] #wbHide')].map(e => e.id));
+    assert.deepEqual(await sektion5(), [], 'en ny Last-X har ingen bakgrundsgrupp');
+    await page.evaluate(() => { const w = liveWidget('krav'); w.bgColor = '#112233'; w.bgStrength = 80; save(); render(); });
+    await page.waitForTimeout(800);
+    assert.deepEqual((await sektion5()).sort(), ['wbColor', 'wbHide'], 'bakgrundsgruppen finns för widgeten med egen bakgrund');
+    assert.deepEqual(fel, [], 'inga sidfel');
   } finally {
     await page.close();
   }

@@ -5,7 +5,8 @@
 // studion två gånger — en gång med ramen och registret blockerade i nätet, en gång som vanligt — och
 // kräver att egenskapspanelens DOM är tecken för tecken densamma för en modell per familj.
 //
-// Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js). Familjens
+// Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js), och sedan
+// PR 5 alla elva Last-X (vyra-lastx-panel.js). Familjens
 // representant är därför den första katalognyckeln vars modell SAKNAR post; en typ där alla modeller
 // har post (Top Gift) provas i stället av panel-krav.browser.test.js.
 //
@@ -24,7 +25,7 @@ const vm = require('vm');
 // Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
 function registret() {
   const window = {};
-  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
   vm.runInNewContext(kod, { window });
   return window.VyraPanelregister;
 }
@@ -80,7 +81,7 @@ test.after(async () => {
 async function panelerna(lista, { utanRam }) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
   try {
-    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel)\.js/, r => r.abort());
+    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel)\.js/, r => r.abort());
     await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
     await page.waitForTimeout(2500);
@@ -102,8 +103,7 @@ async function panelerna(lista, { utanRam }) {
         selected = w.id;
         render();
       }, nyckel);
-      await page.waitForTimeout(500);
-      ut[typ] = await page.evaluate(() => {
+      const las = () => page.evaluate(() => {
         const p = document.querySelector('.properties');
         if (!p) return null;
         // Attributens ordning är ingen skillnad i panelen: den beror på i vilken ordning skript
@@ -116,6 +116,18 @@ async function panelerna(lista, { utanRam }) {
         }
         return k.outerHTML;
       });
+      // Vänta tills panelen slutat ändras. Flera skript märker grupperna efter render() (flikar,
+      // ordning), och på en långsam CI-maskin räckte inte 500 ms: textgruppen saknade ibland sin
+      // flikmärkning i den ena körningen. Två lika läsningar med 250 ms mellanrum = färdig panel.
+      await page.waitForTimeout(500);
+      let forra = await las();
+      for (let i = 0; i < 20; i++) {
+        await page.waitForTimeout(250);
+        const nu = await las();
+        if (nu === forra) break;
+        forra = nu;
+      }
+      ut[typ] = forra;
     }
     return { lage, ut };
   } finally {

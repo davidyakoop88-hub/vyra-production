@@ -39,11 +39,20 @@ const SPAR = {
   'bakgrundsfärg': { rgb: 'rgb(18, 52, 86)' },
   'typsnitt': { font: 'Impact' },
 };
+// egna: modellens egna kontroller för det som ärvs (data-pr-kontroll), som ska bli inaktiva.
+// arver: exakt vad "Ärver: …" ska säga (spec 4.2).
+const TOPGIFT = { egna: ['falt:accent', 'falt:textFont'], arver: ['accentfärg', 'textfärg', 'typsnitt'] };
 const MODELLER = [
-  { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon' },
-  { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal' },
-  { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus' },
-  { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit' },
+  Object.assign({ namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon' }, TOPGIFT),
+  Object.assign({ namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal' }, TOPGIFT),
+  Object.assign({ namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus' }, TOPGIFT),
+  Object.assign({ namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit' }, TOPGIFT),
+  // Last-X (PR 5): plattorna ärver accent, text, andra färgen och typsnitt; royal och banderollerna
+  // bara typsnittet — färgerna når där bara delar som designen döljer.
+  { namn: 'Last-X · card', nyckel: 'catalog:lastx:card', egna: ['falt:followColor', 'falt:textFont'],
+    arver: ['accentfärg', 'textfärg', 'andra färgen', 'typsnitt'] },
+  { namn: 'Last-X · royal', nyckel: 'catalog:lastx:royal', egna: ['falt:textFont'], arver: ['typsnitt'] },
+  { namn: 'Last-X · crownBanner', nyckel: 'catalog:lastx:crownBanner', egna: ['falt:textFont'], arver: ['typsnitt'] },
 ];
 
 let server, browser, bas;
@@ -119,6 +128,7 @@ for (const m of MODELLER) {
       const delar = ruta.lista.replace(/^Ärver:\s*/, '').replace(/\.$/, '').split(/,\s*|\s+och\s+/).filter(Boolean);
       assert.ok(delar.length > 0, 'listan säger vad som ärvs');
       for (const d of delar) assert.ok(SPAR[d], `okänd del i listan: ${d}`);
+      assert.deepEqual(delar, m.arver, 'Ärver: … listar modellens delar');
 
       const av = await stilar(page);
       for (const d of delar) assert.equal(syns(av, d), false, `${d} syns redan innan arvet är på — provet säger då ingenting`);
@@ -130,20 +140,20 @@ for (const m of MODELLER) {
       for (const d of delar) assert.equal(syns(pa, d), true, `${d}: arvet är på men färgschemats värde syns inte i widgeten`);
 
       // De egna kontrollerna för det som ärvs är inaktiva.
-      const inaktiva = await page.evaluate(() => ({
-        accent: [...document.querySelectorAll('.properties [data-pr-kontroll="falt:accent"] input')].every(i => i.disabled),
-        typsnitt: [...document.querySelectorAll('.properties [data-pr-kontroll="falt:textFont"] select')].every(i => i.disabled),
+      const inaktiva = await page.evaluate(egna => ({
+        egna: egna.map(n => { const el = [...document.querySelectorAll(`.properties [data-pr-kontroll="${n}"] input, .properties [data-pr-kontroll="${n}"] select`)];
+          return [n, el.length > 0 && el.every(i => i.disabled)]; }),
         text: [...document.querySelectorAll('.properties .pr-fran-schema')].map(n => n.textContent),
-      }));
-      assert.equal(inaktiva.accent, true, 'Accentfärg är inaktiv när den ärvs');
-      assert.equal(inaktiva.typsnitt, true, 'Typsnitt är inaktivt när det ärvs');
-      assert.ok(inaktiva.text.length >= 2 && inaktiva.text.every(t => t === 'Från färgschemat'), 'texten Från färgschemat');
+      }), m.egna);
+      for (const [n, av] of inaktiva.egna) assert.equal(av, true, `${n} är inaktiv när den ärvs`);
+      assert.ok(inaktiva.text.length >= m.egna.length && inaktiva.text.every(t => t === 'Från färgschemat'), 'texten Från färgschemat');
 
       await page.click('#pr-inheritBrandKit');
       await page.waitForTimeout(900);
       const avIgen = await stilar(page);
       for (const d of delar) assert.equal(syns(avIgen, d), false, `${d} ligger kvar när arvet slagits av`);
-      assert.equal(await page.evaluate(() => document.querySelector('.properties [data-pr-kontroll="falt:accent"] input').disabled), false);
+      assert.equal(await page.evaluate(n => document.querySelector(`.properties [data-pr-kontroll="${n}"] input, .properties [data-pr-kontroll="${n}"] select`).disabled, m.egna[0]), false,
+        'den egna kontrollen är aktiv igen');
       assert.deepEqual(fel, [], 'inga sidfel');
     } finally {
       await page.close();
