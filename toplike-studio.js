@@ -407,7 +407,10 @@
     if (!panel) return;
     const groups = [...panel.querySelectorAll('.property-group')];
     groups.forEach(g => {
-      const heading = (g.querySelector('h4')?.textContent || '').toUpperCase();
+      // Rubriken kan ligga i h4 eller, när gruppen redan gjorts hopfällbar, i .pg-toggle. Att bara läsa
+      // h4 gjorde att POSITION-gruppen fick fliken content eller inte beroende på vilket skript som hann
+      // först (synligt i panelram-noop i CI 2026-10-19).
+      const heading = (g.querySelector('h4, .pg-toggle')?.textContent || '').toUpperCase();
       if (heading.includes('POSITION') || g.classList.contains('ranking-cycle-editor')) { delete g.dataset.wsTab; return; }
       g.dataset.wsTab = heading.includes('ANIMATION') ? 'animation' : heading.includes('DESIGN') ? 'design' : 'content';
     });
