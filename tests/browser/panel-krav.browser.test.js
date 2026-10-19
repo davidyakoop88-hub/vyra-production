@@ -2,7 +2,8 @@
 // PANELKRAVEN FÖR MODELLER MED REGISTERPOST (panelspecifikationen 6, "Löpande").
 //
 // För varje modell som har en post i vyra-panelregister.js — i dag Top Gift · Design 1–3 och
-// Signal Orbit (vyra-topgift-panel.js) och de elva Last-X (vyra-lastx-panel.js) — kräver provet
+// Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
+// (vyra-alert-panel.js) och Battle MVP (vyra-mvp-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -88,6 +89,23 @@ const ALERT_MODELLER = [
   ...['1', '2', '3', '4', 'model:sapphire', 'model:emerald'].map(s => ALERT('Guardian Emblem · ' + s, 'catalog:guardianemblem:' + s,
     s === '1' || s === 'model:sapphire', { utseende: 'textOutlineColor', innehall: 'guardianCustomText' }, { tidsstyrt: {} })),
 ];
+// BATTLE MVP (vyra-mvp-panel.js, PR 7): sex klassiska stilar, sex ramar och åtta firanden. Panelkraven
+// gäller alla 20. Effekten per kontroll mäts för modellerna där panelen skiljer sig: en klassisk (Poäng,
+// Färg 1/2 och arvet), en ram (Rubrik- och Namnstorlek), ett firande med partikelduk (partiklarna),
+// Guldkrona (utan rubrik och skugga) och Lion Clash (utan rubrik och partiklar). Guldkrona har färre
+// kontroller än de andra — allt som inte gör något i den är borta — och mäts mot sitt eget golv.
+const MVP_KLASSISKA = ['inferno', 'royal', 'cyber', 'storm', 'aurora', 'samurai'];
+const MVP_RAMAR = ['royal-ribbon', 'laurel-star', 'dark-wings', 'dragon-fire', 'nautical-helm', 'shadow-star'];
+const MVP_FIRANDEN = ['gold-ribbon', 'lion-clash', 'coronation', 'wings', 'portal', 'rosegold', 'pearl', 'moon'];
+const MVP_MODELLER = [
+  ...MVP_KLASSISKA.map(s => ({ namn: 'Battle MVP · ' + s, nyckel: 'catalog:battlemvp:' + s, effekt: s === 'inferno',
+    aterstall: { utseende: 'mvpColor', innehall: 'mvpName' } })),
+  ...MVP_RAMAR.map(r => ({ namn: 'Battle MVP · ram ' + r, nyckel: 'catalog:battlemvp:frame:' + r, effekt: r === 'royal-ribbon',
+    aterstall: { utseende: 'mvpNameSize', innehall: 'mvpName' } })),
+  ...MVP_FIRANDEN.map(f => ({ namn: 'Battle MVP · firande ' + f, nyckel: 'catalog:battlemvp:celebration:' + f,
+    effekt: ['coronation', 'gold-ribbon', 'lion-clash'].includes(f), minKontroller: f === 'gold-ribbon' ? 12 : undefined,
+    aterstall: { utseende: f === 'coronation' ? 'mvpFxTint' : 'textOutlineColor', innehall: 'mvpName' } })),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -95,11 +113,13 @@ const MODELLER = [
   { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit', aterstall: TOPGIFT_ATERSTALL },
   ...LASTX_MODELLER,
   ...ALERT_MODELLER,
+  ...MVP_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 const ENHET = /(px|%|ms|×|°|s)\s*$/;
-// Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal.
-const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå)$/;
+// Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
+// exempelpoäng (coins).
+const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng)$/;
 const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important;caret-color:transparent!important}';
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk
@@ -313,7 +333,7 @@ for (const m of MODELLER) {
       s1.style.forEach((l, i) => { if (l !== s2.style[i]) brus.stil.add(i); });
 
       const { kontroller, media } = await page.evaluate(sidKontroller);
-      assert.ok(kontroller.length >= 15, `för få kontroller hittades (${kontroller.length})`);
+      assert.ok(kontroller.length >= (m.minKontroller || 15), `för få kontroller hittades (${kontroller.length})`);
       const utan = [];
       const tidsstyrt = m.tidsstyrt || {};
       // En händelse genom livevägen (bara Last-X): samma händelse före och efter ändringen.
@@ -415,6 +435,82 @@ test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { s
       sektioner: document.querySelectorAll('[data-panelram-sektion]').length, arv: !!document.querySelector('#pr-inheritBrandKit') }));
     assert.deepEqual(lage, { ram: null, sektioner: 0, arv: false }, 'Top Gift med gåvoram har ingen post och får dagens panel');
     assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// Battle MVP (spec 5.18): Poäng (exempeldata) och Poängsymbol hör till poängen och visas bara när Visa
+// poäng är på — i de klassiska stilarna, de enda som ritar poängen. Med poängen på gäller panelkraven
+// fortfarande (enheter, inga dubbla etiketter), och båda fälten syns i widgeten.
+test('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna('catalog:battlemvp:inferno', fel);
+  try {
+    const falt = () => page.evaluate(() => [...document.querySelectorAll('.properties [data-panelram-sektion] #mvpScore, .properties [data-panelram-sektion] #mvpCoinSymbol')]
+      .map(e => e.id + '@' + e.closest('[data-panelram-sektion]').dataset.panelramSektion).sort());
+    assert.deepEqual(await falt(), [], 'poängfälten syns inte när poängen är av');
+    await page.click('#mvpShowCoins');
+    await page.waitForTimeout(900);
+    assert.equal(await page.evaluate(() => liveWidget('krav').mvpShowCoins), true, 'Visa poäng sparar mvpShowCoins');
+    assert.deepEqual(await falt(), ['mvpCoinSymbol@2', 'mvpScore@1'], 'Poäng i exempeldatan, Poängsymbol i Innehåll');
+    const s = await page.evaluate(sidStruktur);
+    assert.deepEqual(s.etiketter.filter((e, i) => s.etiketter.indexOf(e) !== i), [], 'etiketter som står två gånger');
+    const synlig = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="krav"] .mvp-copy strong')).display);
+    assert.notEqual(synlig, 'none', 'poängen ritas i widgeten');
+    assert.deepEqual(fel, [], 'inga sidfel');
+  } finally {
+    await page.close();
+  }
+});
+
+// Battle MVP: samma bakgrundsregel som Last-X — ingen grupp för en ny widget (det finns ingen bakgrund
+// att ta bort), men en sparad widget med egen bakgrund (ritas bakom motivet) behåller den.
+test('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna('catalog:battlemvp:celebration:coronation', fel);
+  try {
+    const sektion5 = () => page.evaluate(() => [...document.querySelectorAll('.properties [data-panelram-sektion="5"] #wbColor, .properties [data-panelram-sektion="5"] #wbHide')].map(e => e.id));
+    assert.deepEqual(await sektion5(), [], 'en ny Battle MVP har ingen bakgrundsgrupp');
+    await page.evaluate(() => { const w = liveWidget('krav'); w.bgColor = '#112233'; w.bgStrength = 80; save(); render(); });
+    await page.waitForTimeout(800);
+    assert.deepEqual((await sektion5()).sort(), ['wbColor', 'wbHide'], 'bakgrundsgruppen finns för widgeten med egen bakgrund');
+    assert.deepEqual(fel, [], 'inga sidfel');
+  } finally {
+    await page.close();
+  }
+});
+
+// Battle MVP: Stil-listan har ramarna, så att en ram går att välja tillbaka (förut raderade ett stilval
+// mvpFrame och ramen fanns inte i listan). Ett ramval sätter mvpFrame och ger ramens panel; ett
+// stilval tar bort ramen igen.
+test('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillbaka', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna('catalog:battlemvp:inferno', fel);
+  try {
+    const lage = () => page.evaluate(() => {
+      const w = liveWidget('krav'), sel = document.querySelector('.properties #mvpStyle');
+      return { frame: w.mvpFrame || null, style: w.mvpStyle || null, varde: sel && sel.value,
+        marke: (document.querySelector('.properties .template-badge') || {}).textContent,
+        ramar: sel ? [...sel.querySelectorAll('optgroup[data-pr-ramar] option')].map(o => o.value) : [] };
+    });
+    const fore = await lage();
+    assert.deepEqual(fore.ramar, ['ram:royal-ribbon', 'ram:laurel-star', 'ram:dark-wings', 'ram:dragon-fire', 'ram:nautical-helm', 'ram:shadow-star']);
+    assert.equal(fore.varde, 'inferno');
+    await page.evaluate(() => document.querySelector('[data-panelram-sektion="5"]')?.classList.add('open'));
+    await page.selectOption('.properties #mvpStyle', 'ram:dark-wings');
+    await page.waitForTimeout(900);
+    const ram = await lage();
+    assert.equal(ram.frame, 'dark-wings', 'ramvalet sätter mvpFrame');
+    assert.equal(ram.varde, 'ram:dark-wings', 'listan visar ramen');
+    assert.equal(ram.marke, 'Dark Wings · ram', 'ramens panel');
+    assert.ok(await page.$('.canvas [data-id="krav"].mvp-framed'), 'widgeten ritas som ram');
+    await page.evaluate(() => document.querySelector('[data-panelram-sektion="5"]')?.classList.add('open'));
+    await page.selectOption('.properties #mvpStyle', 'cyber');
+    await page.waitForTimeout(900);
+    const tillbaka = await lage();
+    assert.deepEqual([tillbaka.frame, tillbaka.style, tillbaka.varde, tillbaka.marke], [null, 'cyber', 'cyber', 'Cyber · klassisk'], 'ett stilval tar bort ramen');
+    assert.deepEqual(fel, [], 'inga sidfel');
   } finally {
     await page.close();
   }

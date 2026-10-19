@@ -8,7 +8,7 @@
 // VILKA FÄLT, och varför inte alla. Uppmätt över fem widgets 2026-09-09 bär panelerna tre sorters
 // textfält:
 //   * text som tittarna ser        ctwText, heartTitle, followLabel, followName, followMessage
-//   * sökvägar till bilder         mvpProfile (Top Gift, Follower: mediaväljaren)
+//   * sökvägar till bilder         tcAvatar (Top Gift, Follower, Battle MVP: mediaväljaren)
 //   * interna namn                 runtimePresetName, och de dolda pt/pv
 // En emoji i en bildsökväg ger en trasig bild, och i ett presetnamn ett filnamn ingen kan söka på.
 // Knappen hör bara till den första gruppen.
@@ -88,8 +88,10 @@ const SKA_HA = [
 const SKA_INTE = [
   // Top Gift: bildfälten är mediaväljaren sedan 2026-10-19 och har ingen textruta alls.
   // Follower Spotlight: profilbilden är mediaväljaren sedan PR 6 (vyra-alert-panel.js), och
-  // #followProfile tas bort ur panelen. Battle MVP har kvar ett sökvägsfält och bär provet.
-  ['catalog:battlemvp:inferno', 'mvpProfile', 'sökväg till en bild'],
+  // #followProfile tas bort ur panelen. Battle MVP likaså sedan PR 7 (vyra-mvp-panel.js, #mvpProfile).
+  // Top Coins (voltage) har kvar ett sökvägsfält och bär provet — tills rankingfamiljen flyttas in i
+  // panelramen (PR 8); då byts raden igen.
+  ['catalog:ranking:templateTopCoins:voltage', 'tcAvatar', 'sökväg till en bild'],
   ['catalog:custom:text', 'runtimePresetName', 'internt namn'],
 ];
 

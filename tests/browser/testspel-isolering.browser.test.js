@@ -552,3 +552,132 @@ test('alertfamiljerna: ett test som får gå klart passerar entré → visning �
     await page.close();
   }
 });
+
+
+// ---- Battle MVP (adaptern 'mvp', PR 7) ----------------------------------------------------------
+//
+// Den gamla testknappen (två knappar med samma id #testBattleMvp: ▶ Testa Battle MVP och Testa
+// firandet) anropade triggerBattleMvp via VyraAlertQueue (prioritet 10): den skrev namn, poäng och
+// profilbild på ALLA MVP-widgetar, sparade, och tände dem alla. Testet spelar nu mvpSpelaPa (media.js)
+// på klonen: B av samma modell ska vara tecken för tecken densamma — också dess mvpName i state —
+// kön och sparandet orörda, och efter ■ ska ingenting av firandet ligga kvar: ingen mvp-active, inga
+// partiklar i gång och inga partikeldukar i klonen.
+const MVP_MODELLER = [
+  { namn: 'klassisk inferno', nyckel: 'catalog:battlemvp:inferno', namnSel: '.mvp-copy h2' },
+  { namn: 'ram royal-ribbon', nyckel: 'catalog:battlemvp:frame:royal-ribbon', namnSel: '.mvpf-row strong' },
+  { namn: 'firande coronation', nyckel: 'catalog:battlemvp:celebration:coronation', namnSel: '.mvc-copy h2', partiklar: true },
+  { namn: 'firande lion-clash', nyckel: 'catalog:battlemvp:celebration:lion-clash', namnSel: '.lion-name' },
+];
+const mvpKlon = (page, namnSel) => page.evaluate(sel => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  return { id: k.dataset.id, klass: k.className, namn: ((k.querySelector(sel) || {}).textContent || '').trim(),
+    dukar: k.querySelectorAll('canvas.mvc-fx').length, partiklar: window.VyraMvpParticles ? window.VyraMvpParticles.active() : null };
+}, namnSel);
+const mvpNamn = page => page.evaluate(() => state.widgets.filter(w => w.type === 'templateBattleMvp').map(w => w.id + ':' + w.mvpName + ':' + w.mvpScore));
+
+for (const m of MVP_MODELLER) {
+  test(`mvp-adaptern är isolerad: Battle MVP · ${m.namn}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      // B har ett eget namn i state: det är det fält den gamla knappen skrev över.
+      // Den sparningen går till molnsynken med fördröjning; den ska vara klar innan räknaren slås på.
+      await page.evaluate(() => { const b = liveWidget('prov-b'); b.mvpName = 'AndraWidget'; save(); render(); });
+      await page.waitForTimeout(3500);
+      await installeraRaknare(page);
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'familjen har ingen typväljare');
+      assert.equal(await page.$('#testBattleMvp'), null, 'de gamla testknapparna är borta');
+      assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), [], 'kontrollmätning: inget är tänt före ▶');
+      const namnFore = await mvpNamn(page);
+      const fore = await bild(page);
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, 'mvp');
+      assert.equal(await page.textContent('#pr-testspel'), '■ Stoppa test');
+      const faser1 = s1.faser;
+      assert.deepEqual(faser1, { entre: 1600, visning: 7600, utgang: 800 }, 'visningstiden 10 s: entré 16 %, utgång 8 %');
+      await page.waitForTimeout(1800);
+      const k = await mvpKlon(page, m.namnSel);
+      assert.ok(k, 'klonen finns i duken');
+      assert.equal(k.id, 'prov-a__prov');
+      assert.match(k.klass, /\bmvp-active\b/, 'mvpSpelaPa tände klonen');
+      assert.equal(k.namn, 'TestAlpha', 'widgetens exempelnamn står på klonen');
+      if (m.partiklar) {
+        assert.ok(k.dukar >= 2, 'firandets partikeldukar finns i klonen');
+        assert.ok(k.partiklar >= 1, 'partiklarna är i gång');
+      }
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      lika(fore, await bild(page), 'mitt i testet');
+      assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), [], 'B av samma modell och den riktiga noden tändes inte');
+      assert.deepEqual(await mvpNamn(page), namnFore, 'ingen MVP-widget fick testets namn eller poäng');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(300);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), [], 'ingenting av testet ligger kvar i duken');
+      if (m.partiklar) assert.equal(await page.evaluate(() => window.VyraMvpParticles.active()), 0, 'inga partiklar i gång efter ■');
+      await page.waitForTimeout(600);
+      lika(fore, await bild(page), 'efter ■');
+      assert.deepEqual(await mvpNamn(page), namnFore, 'grannens mvpName är orörd efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, faser1, 'omspelningen har samma faser');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), [], 'ingenting av testet ligger kvar efter render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('mvp: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    // Kortaste visningstiden (2 s), så att hela förloppet ryms i provet.
+    await layout(page, 'catalog:battlemvp:celebration:portal');
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.mvpDuration = 2; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await bild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 320, visning: 1520, utgang: 160 });
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), []);
+    assert.equal(await page.evaluate(() => window.VyraMvpParticles.active()), 0, 'inga partiklar i gång efter slutet');
+    lika(fore, await bild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});

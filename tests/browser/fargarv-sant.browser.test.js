@@ -62,6 +62,11 @@ const MODELLER = [
     arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
   { namn: 'Follower Spotlight · gold', nyckel: 'catalog:followeralert:gold', egna: ['falt:followColor', 'falt:textFont'],
     arver: ['accentfärg', 'textfärg', 'typsnitt'] },
+  // Battle MVP (PR 7, spec 4.2): de klassiska stilarna ärvde Färg 1 och Färg 2 redan; textfärgen (rubrik
+  // och namn, mvpTextfarg i media.js) och typsnittet är inkopplade. Ramar och firanden erbjuder inget
+  // arv (provet längst ner).
+  ...['inferno', 'samurai'].map(s => ({ namn: 'Battle MVP · ' + s, nyckel: 'catalog:battlemvp:' + s,
+    egna: ['falt:mvpColor', 'falt:mvpColor2', 'falt:textFont'], arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] })),
 ];
 
 let server, browser, bas;
@@ -185,6 +190,37 @@ for (const nyckel of ['catalog:guardianemblem:3', 'catalog:guardianemblem:model:
         rad: (document.querySelector('.properties [data-panelram-sektion="5"] #prFastBild') || {}).textContent || '',
       }));
       assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, rad: 'Emblemet är en fast bild; texten går att ändra.' });
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+// Battle MVP:s ramar och firanden har registerposter men erbjuder inget arv (spec 4.2: fasta bilder —
+// ett påtvingat arv gav 0–0,0004 andel px). Panelen är ramens, utan arvsruta och utan den gamla rutan,
+// och en rad i Utseende säger varför. Färg 1 och Färg 2 finns inte heller.
+for (const [nyckel, rad] of [
+  ['catalog:battlemvp:frame:royal-ribbon', 'Ramen är en fast bild och påverkas inte av färgschemat. Poängen visas inte i ramarna.'],
+  ['catalog:battlemvp:celebration:coronation', 'Motivet är en fast bild och påverkas inte av färgschemat. Poängen visas inte i firandena.'],
+  ['catalog:battlemvp:celebration:lion-clash', 'Lion Clash är en fast bild utan rubrik: bara namnet och profilbilden byts.'],
+  ['catalog:battlemvp:celebration:gold-ribbon', 'Guldbandet är en fast bild: färgerna och ordet MVP går inte att ändra.'],
+]) {
+  test(`fargarv-sant: Battle MVP (${nyckel.split(':').slice(2).join(':')}) erbjuder inget arv`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => {
+        const ute = sel => [...document.querySelectorAll('.properties ' + sel)].some(el => !el.closest('[data-panelram-forvaring]'));
+        return {
+          ram: document.querySelector('.properties')?.dataset.panelram || null,
+          arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+          gammal: ute('#bkInherit'),
+          farger: ute('#mvpColor') || ute('#mvpColor2'),
+          rad: (document.querySelector('.properties [data-panelram-sektion="5"] #prMvpFast') || {}).textContent || '',
+        };
+      });
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, farger: false, rad });
       assert.deepEqual(fel, [], 'inga sidfel');
     } finally {
       await page.close();
