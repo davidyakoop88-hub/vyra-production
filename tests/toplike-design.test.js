@@ -115,11 +115,11 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // nar videon star stilla (TikTok LIVE Studios browserkalla visade inget pa 2 h 48 min).
   // Bumpad 2026-10-11 (-1): ett kort per modell — media.js bar Follower Spotlights tre temakort,
   // laddraderna for playground-widgets.js/overlay-preview.js och premiumbuntens version.
-  assert.match(studioHtml, /media\.js\?v=20261019-8/);
+  assert.match(studioHtml, /media\.js\?v=20261019-9/);
   // Bumpad 2026-09-24 (ranking-sixpack): toplike-studio.js fick riktnings-/spegelklassen
   // (ranking-mirrored, generisk for alla RANKING_TYPES) — bada strangarna bumpas tillsammans,
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
   // toplike-studio.css bumpad 20261011-1: kryssrutor 16 px i panelen + (0,3,0) för ws-anim-*.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);
-  assert.match(media, /toplike-studio\.js\?v=20261019-1/);
+  assert.match(media, /toplike-studio\.js\?v=20261019-2/);
 });

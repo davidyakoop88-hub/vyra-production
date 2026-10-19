@@ -148,13 +148,41 @@
     return Math.max(1, Math.min(10, n));
   }
 
+  // EGEN ACCENT OCH ÄRV FÄRGSCHEMA (panelspecifikationen 4.2, PR 8). Rankingpanelen har Accentfärg och
+  // Ärv färgschema (vyra-ranking-panel.js). Båda är AV tills streamern väljer dem: utan
+  // `rankingAccent` och utan `inheritBrandKit` ritas raderna tecken för tecken som förut, och de
+  // visuella referenserna gäller oförändrade. EGET FÄLT, inte `accent`: fabriken sätter `accent` på
+  // alla tre familjerna (#ff4da6, designens guld, #9b5cff) och de sex designerna har aldrig läst det —
+  // att börja läsa det hade färgat om varje sparad lista. Samma lösning som `topPointsAccent`.
+  //   highlight → accenten (ringen, glöden, värdet), text → namn och värde, fontFamily → typsnittet
+  //   (det sista sätter vyra-textgrupp.js, som frågar registret vad modellen ärver).
+  const HEX = /^#[0-9a-f]{3,8}$/i;
+  function schema(w) {
+    const kit = w && w.inheritBrandKit && typeof state !== 'undefined' && state && state.brandKit ? state.brandKit : null;
+    const farg = v => (typeof v === 'string' && HEX.test(v.trim()) ? v.trim() : null);
+    return {
+      accent: (kit && farg(kit.highlight)) || farg(w && w.rankingAccent),
+      text: kit ? farg(kit.text) : null,
+    };
+  }
+
+  // ▶ TESTA WIDGET (vyra-ranking-panel.js) spelar en KLON av widgeten med en egen lista: `__provlista`
+  // finns bara på klonen (den ligger aldrig i state och sparas aldrig), och bara då ritas den i
+  // stället för demolistan. Varje post: { namn, varde (text, redan formaterad), bild }.
+  // `data-prov` bär personens namn så att testet kan låta raderna glida till sina nya platser.
+  function provlista(w) {
+    const l = w && w.__provlista;
+    return Array.isArray(l) && l.length ? l : null;
+  }
+
   function rader(w, id) {
     const d = DESIGNS[id];
     const demo = typeof topLikePeople !== 'undefined' && Array.isArray(topLikePeople) ? topLikePeople : [];
+    const prov = provlista(w);
     // I OVERLAY RITAS NOLLÄGET DIREKT (samma regel som topcoins-v2.js): publiken ska aldrig se
     // påhittade personer, och live-zero-state.js nollar varje rad med ett demonamn genom att skriva
     // om hela <em> med textContent — det hade tagit ikonen. Livedatan fyller raderna via skrivTal().
-    const nolla = iOverlay();
+    const nolla = iOverlay() && !prov;
     const foto = esc((typeof VyraSafe !== 'undefined' && VyraSafe.url) ? VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg') : (w.profileImage || 'assets/images/test-profile.svg'));
     const ikon = IKONER[w.type];
     const n = antal(w);
@@ -163,24 +191,33 @@
     // vyraTopLike ritar dem — en design får inte tysta ett reglage som finns i panelen.
     const dold = v => v === false ? 'display:none!important;' : '';
     const flytt = (x, y) => (x || y) ? `transform:translate(${Number(x) || 0}px,${Number(y) || 0}px);` : '';
+    const sk = schema(w);
+    const textfarg = sk.text ? `color:${sk.text}!important;` : '';
     const avStil = dold(w.showProfile);
     const namnStil = dold(w.showDataName) + flytt(w.nameOffsetX, w.nameOffsetY);
-    const vardeStil = dold(w.showDataValue) + flytt(w.valueOffsetX, w.valueOffsetY);
+    const vardeStil = dold(w.showDataValue) + flytt(w.valueOffsetX, w.valueOffsetY) + textfarg;
+    // Visa placeringar (PR 8): bara när den uttryckligen slagits av göms rangbrickan.
+    const rangStil = w.showRank === false ? ' style="display:none!important"' : '';
     let html = '';
     // "Siffror matchar ramarna" (David 2026-09-08): med en profilram vald tar rangbrickan och glöden
     // ramens accent, uppmätt ur PNG:n (toplike-studio.js vyraFrameAccent), i stället för designens.
+    // En egen accent (eller färgschemats) vinner över ramens.
     const ramAccent = ram && typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;
+    const egen = sk.accent || ramAccent;
     for (let i = 0; i < n; i++) {
-      const [c, c2] = ramAccent ? [ramAccent, ramAccent] : d.tiers[i % d.tiers.length];
+      const [c, c2] = egen ? [egen, egen] : d.tiers[i % d.tiers.length];
+      const p = prov ? prov[i] : null;
+      if (prov && !p) break;
       const person = demo[i] || ['', ''];
-      const namn = nolla ? '' : esc(person[0]);
-      const varde = nolla ? '0' : esc(person[1] || '0');
+      const namn = p ? esc(p.namn) : nolla ? '' : esc(person[0]);
+      const varde = p ? esc(p.varde) : nolla ? '0' : esc(person[1] || '0');
+      const bild = p && p.bild ? esc(p.bild) : foto;
       const krona = (id === 'voltage' && i === 0) || (id === 'prism-horizontal' && i < 3) ? `<i class="rk6-krona">${KRONA}</i>` : '';
       const ordning = d.riktning === 'podium' ? PODIUM.indexOf(i) : i;
-      html += `<div class="toplike-row rank-${i + 1}" style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning}">`
+      html += `<div class="toplike-row rank-${i + 1}"${p ? ` data-prov="${esc(p.namn)}"` : ''} style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning}">`
         + `<i class="rk6-av"${avStil ? ` style="${avStil}"` : ''}><i class="rk6-ring"></i><i class="rk6-karna"><i class="rk6-glod"></i>`
-        + `<img src="${foto}" alt="">${ram}${krona}<b class="rk6-rang"><i>${i + 1}</i></b></i></i>`
-        + `<span class="rk6-namn"${namnStil ? ` style="${namnStil}"` : ''}><strong>${namn}</strong><small></small><i class="rk6-led"></i></span>`
+        + `<img src="${bild}" alt="">${ram}${krona}<b class="rk6-rang"${rangStil}><i>${i + 1}</i></b></i></i>`
+        + `<span class="rk6-namn"${namnStil ? ` style="${namnStil}"` : ''}><strong${textfarg ? ` style="${textfarg}"` : ''}>${namn}</strong><small></small><i class="rk6-led"></i></span>`
         + `<em${vardeStil ? ` style="${vardeStil}"` : ''}><i class="rk6-ikon">${ikon}</i> ${varde}</em>`
         + '</div>';
     }
@@ -209,7 +246,14 @@
     const handtag = (/<span class="resize-handle"[\s\S]*?<\/span>/.exec(m[2]) || [''])[0];
     // Rubriken följer med från kedjan: den bär Rubrik-reglaget (display) och dra-förskjutningen
     // (transform) som media.js ritar, och vyra-dra-text.js märker den som dragbar textdel.
-    const rubrik = (/^\s*<h3\b[\s\S]*?<\/h3>/.exec(m[2]) || [''])[0];
+    let rubrik = (/^\s*<h3\b[\s\S]*?<\/h3>/.exec(m[2]) || [''])[0];
+    // Top Coins och Top Points ritar ingen rubrik i kedjan (topcoins-v2.js/toppoints-v2.js). Rubrik och
+    // Visa rubrik finns ändå i den gemensamma rankingpanelen (PR 8): rubriken ritas här, men BARA när
+    // den uttryckligen slagits på — utan showTitle ser listan ut exakt som förut.
+    if (!rubrik && w.type !== 'templateTopLike' && w.showTitle === true) {
+      const fl = (w.titleOffsetX || w.titleOffsetY) ? ` style="transform:translate(${Number(w.titleOffsetX) || 0}px,${Number(w.titleOffsetY) || 0}px)"` : '';
+      rubrik = `<h3${fl}>${esc(w.templateTitle || (w.type === 'templateTopCoins' ? 'TOP COINS' : 'TOP POINTS'))}</h3>`;
+    }
     open = open.replace(/class="([^"]*)"/, (_, cls) => {
       // Familjernas egna design-/skinnklasser bär var sin hög !important-regler
       // (toplike-studio.css ~180 st, topcoins-v2.css, toppoints-v2.css) som byggde om raderna till
@@ -400,5 +444,5 @@
   planera();
 
   window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog,
-    mynt: MYNT, geometri: GEOMETRI, lasbarhet, enkelLasbar });
+    mynt: MYNT, geometri: GEOMETRI, lasbarhet, enkelLasbar, antal, ikoner: IKONER });
 })();

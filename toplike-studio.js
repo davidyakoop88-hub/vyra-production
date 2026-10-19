@@ -262,7 +262,12 @@
     const brandVars = skin === 'brandkit' && state.brandKit
       ? `--vyra-brand-highlight:${state.brandKit.highlight};--vyra-brand-text:${state.brandKit.text};--vyra-brand-sub:${state.brandKit.secondaryText};` + (state.brandKit.fontFamily ? `--vyra-brand-font:${state.brandKit.fontFamily};` : '')
       : '';
-    html = html.replace('style="', `style="opacity:${w.opacity ?? 1};${brandVars}`);
+    // VARAKTIGHETEN FÖLJER MED ENTRÉN (PR 8). ws-anim-* läser --ws-anim-duration (toplike-studio.css),
+    // men bara vyra-intro.js satte variabeln — och den hoppar över noder där klassen redan finns.
+    // Reglaget Varaktighet gjorde därför ingenting i rankingfamiljerna (granskningen: 600→1500 ms utan
+    // verkan). Bara när en effekt är vald, så en lista utan entré ritas tecken för tecken som förut.
+    const varaktighet = anim ? `--ws-anim-duration:${+w.entranceDuration || 600}ms;` : '';
+    html = html.replace('style="', `style="opacity:${w.opacity ?? 1};${brandVars}${varaktighet}`);
     // Skip the auto crown glyph when a custom illustrated frame is chosen - several frames (e.g.
     // golden-king) already have their own crown/regal motif baked into the art, so the separate ♛
     // badge just clutters the gap between the photo and the frame instead of adding anything.
@@ -405,6 +410,13 @@
     // Content / Design / Animation tabs, built once per render cycle from the property-group headings.
     const panel = document.querySelector('.properties');
     if (!panel) return;
+    // EN MODELL MED REGISTERPOST HAR PANELRAMENS SJU SEKTIONER (vyra-ranking-panel.js, PR 8) och
+    // ingen flikrad: flikarna byggs inte, och ingen grupp märks eller döljs av flikkoden. Modeller utan
+    // post (avvecklade, t.ex. Top Coins Halo) behåller flikarna exakt som förut.
+    if (window.VyraPanelram && typeof window.VyraPanelram.ager === 'function' && window.VyraPanelram.ager(w)) {
+      panel.querySelectorAll('.ws-tabs').forEach(n => n.remove());
+      return;
+    }
     const groups = [...panel.querySelectorAll('.property-group')];
     groups.forEach(g => {
       // Rubriken kan ligga i h4 eller, när gruppen redan gjorts hopfällbar, i .pg-toggle. Att bara läsa

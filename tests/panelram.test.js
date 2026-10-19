@@ -300,6 +300,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // Battle MVP:s poster (vyra-mvp-panel.js, PR 7) på samma sätt.
   const mvp = plats('vyra-mvp-panel.js', '20261019-1');
   assert.ok(mvp > reg && mvp > testspel && mvp < ordning, 'Battle MVP:s poster laddas efter registret och testmotorn, före panelordningen');
+  // Rankingens poster (vyra-ranking-panel.js, PR 8) på samma sätt.
+  const ranking = plats('vyra-ranking-panel.js', '20261019-1');
+  assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.
