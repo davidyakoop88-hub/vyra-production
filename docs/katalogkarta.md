@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `d7a80c7`
+Commit: `5f07f81`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -43,10 +43,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
+| LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | — |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | — |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-09-11 | [#403](https://github.com/davidyakoop88-hub/vyra-production/pull/403) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
@@ -129,6 +129,22 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Goal Pro · Smal med pil | `catalog:pggoal:8` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 | Goal Pro · Stående pill | `catalog:pggoal:9` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
 
+### LAST-X ALERTS · VARJE DESIGN SEPARAT
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Last-X · Card | `catalog:lastx:card` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Stack | `catalog:lastx:stack` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Crown Banner | `catalog:lastx:crownBanner` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Royal Amethyst | `catalog:lastx:royalAmethyst` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Ice King | `catalog:lastx:iceKing` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Neon Cyber | `catalog:lastx:neonCyber` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Dragon Flame | `catalog:lastx:dragonFlame` | ✓ | ✓ | 2026-10-19 | — |
+| Last-X · Angel Gold | `catalog:lastx:angelGold` | ✓ | ✓ | 2026-10-19 | — |
+
 ### FAN LEVEL 50 · MILSTOLPE
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
@@ -155,22 +171,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Text | `catalog:custom:text` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Bild | `catalog:custom:image` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | Video | `catalog:custom:video` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-
-### LAST-X ALERTS · VARJE DESIGN SEPARAT
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Last-X · Card | `catalog:lastx:card` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Stack | `catalog:lastx:stack` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Skew | `catalog:lastx:skew` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Badge | `catalog:lastx:badge` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Royal Coronation | `catalog:lastx:royal` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Crown Banner | `catalog:lastx:crownBanner` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Royal Amethyst | `catalog:lastx:royalAmethyst` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Ice King | `catalog:lastx:iceKing` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Neon Cyber | `catalog:lastx:neonCyber` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Dragon Flame | `catalog:lastx:dragonFlame` | ✓ | ✓ | 2026-10-19 | — |
-| Last-X · Angel Gold | `catalog:lastx:angelGold` | ✓ | ✓ | 2026-10-19 | — |
 
 ### GIFT JAR · VARJE MODELL SEPARAT
 

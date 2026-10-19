@@ -57,19 +57,54 @@ const LASTX = {
 // olika registerposter; modellerna inom en grupp delar post.
 const LASTX_MODELLER = ['card', 'stack', 'skew', 'badge', 'royal', 'crownBanner', 'royalAmethyst', 'iceKing', 'neonCyber', 'dragonFlame', 'angelGold']
   .map(d => Object.assign({ namn: 'Last-X · ' + d, nyckel: 'catalog:lastx:' + d, effekt: ['card', 'royal', 'crownBanner'].includes(d) }, LASTX));
+// ALERTFAMILJERNA (vyra-alert-panel.js, PR 6): Fan Level Up (8), Gifter Level Up (9), Follower
+// Spotlight (3) och Guardian Emblem (6). Panelkraven gäller alla 26. Effekten per kontroll mäts för
+// modellerna där panelen skiljer sig: en vanlig, en där profilbilden är dold (Rising Hearts), Welcome
+// Ribbon (bandet i stället för nivåpillen) och en med låst bredd i Fan; en vanlig, Stort nivånummer
+// (profilramen saknas), Orbitnivå (Ljus färg saknas) och en med låst bredd i Gifter; ett tema i
+// Follower; Guld och Blå kristall i Guardian.
+//
+// TIDSSTYRT är det som bara verkar när en händelse spelas: när den visas (team, automatik, minsta
+// nivå), hur länge (Visningstid) och video per nivå. De provas i alert-livevag.browser.test.js; här
+// kräver provet att de verkligen inte syns i en ögonblicksbild.
+const NIVA_TIDSSTYRT = prefix => ({
+  [prefix + 'AutoTrigger']: 'automatiken provas i alert-livevag.browser.test.js',
+  [prefix + 'MinLevel']: 'minsta nivån provas i alert-livevag.browser.test.js',
+  [prefix + 'Duration']: 'visningstiden provas i alert-livevag.browser.test.js',
+  [prefix + 'LevelVideoMode']: 'videon spelas bara vid en händelse',
+  'pr-nivavideo-niva': 'nivån för nästa video — ingenting ändras förrän en video väljs',
+  ...(prefix === 'fan' ? { fanTeamOnly: 'grinden för teammedlemmar provas i alert-livevag.browser.test.js' } : {}),
+});
+const ALERT = (namn, nyckel, effekt, aterstall, extra) => Object.assign({ namn, nyckel, effekt, aterstall,
+  mediaTidsstyrt: { levelVideoNy: 'videon spelas bara vid en händelse på nivån' } }, extra || {});
+const FAN_EFFEKT = ['hero', 'heartbeat', 'hearts', 'ribbon'], GIFTER_EFFEKT = ['profile', 'number', 'orbitlevel', 'sidebadge'];
+const ALERT_MODELLER = [
+  ...['hero', 'stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'].map(l => ALERT('Fan Level Up · ' + l,
+    'catalog:fanlevel:layout:' + l, FAN_EFFEKT.includes(l), { utseende: 'fanColor', innehall: 'fanName' }, { tidsstyrt: NIVA_TIDSSTYRT('fan') })),
+  ...['profile', 'number', 'stack', 'sidebadge', 'reveal', 'orbitlevel', 'risingtier', 'flip', 'duo'].map(l => ALERT('Gifter Level Up · ' + l,
+    'catalog:gifterlevel:' + l, GIFTER_EFFEKT.includes(l), { utseende: 'gifterColor', innehall: 'gifterName' }, { tidsstyrt: NIVA_TIDSSTYRT('gifter') })),
+  ...['gold', 'ocean', 'blush'].map(t => ALERT('Follower Spotlight · ' + t, 'catalog:followeralert:' + t, t === 'gold',
+    { utseende: 'followColor', innehall: 'followName' }, { tidsstyrt: { followDuration: 'visningstiden provas i alert-livevag.browser.test.js' } })),
+  ...['1', '2', '3', '4', 'model:sapphire', 'model:emerald'].map(s => ALERT('Guardian Emblem · ' + s, 'catalog:guardianemblem:' + s,
+    s === '1' || s === 'model:sapphire', { utseende: 'textOutlineColor', innehall: 'guardianCustomText' }, { tidsstyrt: {} })),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit', aterstall: TOPGIFT_ATERSTALL },
   ...LASTX_MODELLER,
+  ...ALERT_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 const ENHET = /(px|%|ms|×|°|s)\s*$/;
-const RENA_ANTAL = /^(Lager|Coins)$/;
+// Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal.
+const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå)$/;
 const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important;caret-color:transparent!important}';
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
-const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 } };
+// Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk
+// webbläsare är det samma text — mätningen hade då berott på maskinens språk.
+const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' } };
 
 let server, browser, bas;
 const skip = hoppaOver();
@@ -330,6 +365,7 @@ for (const m of MODELLER) {
       // Mediaväljaren: ett annat giltigt värde i fältet ska synas i widgeten.
       const ANNAN = { profileImage: 'assets/gifts/events/7460_Cap.png', giftImage: 'assets/gifts/events/7578_Crown.png' };
       for (const falt of media) {
+        if (m.mediaTidsstyrt && m.mediaTidsstyrt[falt]) continue;
         await aterstall(page, orig);
         const fore = await page.evaluate(sidSnap, 'krav');
         await aterstall(page, orig, { [falt]: ANNAN[falt] || 'assets/gifts/events/7578_Crown.png' });

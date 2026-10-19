@@ -65,7 +65,11 @@ test.before(async () => {
 
   await page.evaluate(() => {
     localStorage.removeItem('vyra-panelram');
-    const typ = window.VyraWidgets.create('catalog:followeralert:gold').type;
+    const prov = window.VyraWidgets.create('catalog:followeralert:gold'), typ = prov.type;
+    // Follower Spotlight har en egen post sedan PR 6 (vyra-alert-panel.js). Provet lånar typen för sin
+    // provpost, så familjens post läggs undan under provet och tillbaka efteråt.
+    window.__mediavalUndan = window.VyraPanelregister.hitta(prov);
+    if (window.__mediavalUndan) window.VyraPanelregister.tabort(window.__mediavalUndan);
     window.__mediavalPost = window.VyraPanelregister.definiera({
       typ,
       kontroller: [
@@ -95,7 +99,12 @@ test.before(async () => {
 
 test.after(async () => {
   if (page) {
-    try { await page.evaluate(() => window.VyraPanelregister.tabort(window.__mediavalPost)); } catch (_) {}
+    try {
+      await page.evaluate(() => {
+        window.VyraPanelregister.tabort(window.__mediavalPost);
+        if (window.__mediavalUndan) window.VyraPanelregister.definiera(window.__mediavalUndan);
+      });
+    } catch (_) {}
   }
   if (browser) await browser.close();
   if (server) await new Promise(r => server.close(r));

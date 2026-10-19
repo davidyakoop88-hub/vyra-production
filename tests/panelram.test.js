@@ -294,6 +294,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
   const lastx = plats('vyra-lastx-panel.js', '20261019-1');
   assert.ok(lastx > reg && lastx > testspel && lastx < ordning, 'Last-X:s poster laddas efter registret och testmotorn, före panelordningen');
+  // Alertfamiljernas poster (vyra-alert-panel.js, PR 6) på samma sätt.
+  const alert = plats('vyra-alert-panel.js', '20261019-1');
+  assert.ok(alert > reg && alert > testspel && alert < ordning, 'alertfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.
