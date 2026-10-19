@@ -5,7 +5,8 @@
 // studion två gånger — en gång med ramen och registret blockerade i nätet, en gång som vanligt — och
 // kräver att egenskapspanelens DOM är tecken för tecken densamma för en modell per familj.
 //
-// Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js). Familjens
+// Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js), och sedan
+// PR 5 alla elva Last-X (vyra-lastx-panel.js). Familjens
 // representant är därför den första katalognyckeln vars modell SAKNAR post; en typ där alla modeller
 // har post (Top Gift) provas i stället av panel-krav.browser.test.js.
 //
@@ -24,7 +25,7 @@ const vm = require('vm');
 // Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
 function registret() {
   const window = {};
-  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
   vm.runInNewContext(kod, { window });
   return window.VyraPanelregister;
 }
@@ -80,7 +81,7 @@ test.after(async () => {
 async function panelerna(lista, { utanRam }) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
   try {
-    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel)\.js/, r => r.abort());
+    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel)\.js/, r => r.abort());
     await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
     await page.waitForTimeout(2500);

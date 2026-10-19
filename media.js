@@ -1343,7 +1343,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20260924-sixpack';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261018-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20260806-animation';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261019-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20261019-1';document.body.append(js)});
 // Inträdeseffekten för alla widgetar (vyra-intro.js, 2026-10-11): laddas EFTER studio.html:s
 // statiska skript, så dess renderkrok ligger utanför approved-rankings.js:s vakt och når även

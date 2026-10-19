@@ -1,5 +1,6 @@
 'use strict';
-// ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptern 'topgift' i Chrome.
+// ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift' och 'lastx' i Chrome.
+// (Last-X har egna prov längst ner i filen.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
 // med två widgetar av samma modell plus en Goal Pro och en Top Like. Den första testas. Provet kräver:
@@ -298,5 +299,127 @@ test('topgift: ingenting når overlayn', { skip, timeout: 120000 }, async () => 
   } finally {
     await overlay.close();
     await editor.close();
+  }
+});
+
+// ---- Last-X (adaptern 'lastx', PR 5) -------------------------------------------------------------
+//
+// Två Last-X av samma modell och med samma typer, plus Goal Pro och Top Like. Den gamla testknappen
+// (showLastX) tände ALLA Last-X med typen, skrev w.lastXLatest och sparade efter 700 ms. Testet
+// spelar nu bara på klonen: B ska vara tecken för tecken densamma, ingen widget får lastXLatest och
+// inget sparas — inte heller efter de 700 ms då den gamla vägen sparade.
+const lastxKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const t = sel => (k.querySelector(sel) || {}).textContent || '';
+  return { id: k.dataset.id, klass: k.className, rubrik: t('.last-x-label'), namn: t('.last-x-name'), meddelande: t('.last-x-message'),
+    profil: (k.querySelector('.last-x-avatar img') || {}).getAttribute?.('src') || null };
+});
+const ingenSenaste = page => page.evaluate(() => state.widgets.filter(w => w.lastXLatest || w._lastXPersistTimer).map(w => w.id));
+
+for (const design of ['card', 'royal']) {
+  test(`lastx-adaptern är isolerad: Last-X · ${design}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, 'catalog:lastx:' + design);
+      await installeraRaknare(page);
+      const typ = await page.evaluate(() => { const s = document.querySelector('#pr-testspel-typ'); return s && [...s.options].map(o => o.textContent); });
+      assert.deepEqual(typ, ['Gåva', 'Like', 'Delning', 'Prenumeration', 'Följare'], 'typväljaren i sektion 1');
+      const fore = await bild(page);
+
+      // ▶ Gåva
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, 'lastx');
+      assert.deepEqual(s1.faser, { entre: 400, visning: 5000, utgang: 0 }, 'intro, visningstid 5 s, kortet ligger kvar (Behåll senaste)');
+      await page.waitForTimeout(1200);              // förbi de 700 ms då den gamla vägen sparade
+      const k = await lastxKlon(page);
+      assert.ok(k, 'klonen finns i duken');
+      assert.equal(k.id, 'prov-a__prov');
+      assert.match(k.klass, /\blast-x-active\b/, 'fasmaskinen tände klonen');
+      assert.equal(k.rubrik, 'SENASTE GÅVOGIVARE');
+      assert.equal(k.namn, 'Alex', 'exempelnamnet för en gåva');
+      assert.equal(k.meddelande, 'SENT CROWN ×5', 'exempelgåvan');
+      assert.match(k.profil || '', /test-profile\.svg/);
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      lika(fore, await bild(page), 'mitt i testet');
+      assert.deepEqual(await ingenSenaste(page), [], 'ingen widget fick lastXLatest eller en väntande sparning');
+      assert.equal(await page.evaluate(() => !!document.querySelector('.canvas [data-id="prov-b"]').className.match(/last-x-active/)), false,
+        'Last-X B av samma typ tändes inte');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(150);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false);
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      await page.waitForTimeout(900);
+      lika(fore, await bild(page), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och inga köer under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ Like: samma faser, likens exempel.
+      await page.selectOption('#pr-testspel-typ', 'liker');
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+      assert.equal(s3.typ, 'liker');
+      await page.waitForTimeout(600);
+      const k2 = await lastxKlon(page);
+      assert.equal(k2.rubrik, 'SENASTE LIKER');
+      assert.equal(k2.namn, 'Mia');
+      assert.equal(k2.meddelande, 'SENT 50 LIKES');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('lastx: ett test som får gå klart passerar entré → visning → utgång, med widgetens egen text', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:lastx:card');
+    // Utan "Behåll senaste" glider kortet ut; egen rubrik och eget meddelande för gåvor; exempelnamn.
+    await page.evaluate(() => {
+      const w = liveWidget('prov-a');
+      w.lastXPersistent = false; w.followName = 'Provnamn';
+      w.lastXLabel = { gifter: 'TACK!' }; w.lastXMessage = { gifter: '{antal} × {gåva}' };
+      save(); render();
+    });
+    await page.waitForTimeout(800);
+    const fore = await bild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 400, visning: 5000, utgang: 360 });
+    await page.waitForTimeout(700);
+    const k = await lastxKlon(page);
+    assert.deepEqual([k.rubrik, k.namn, k.meddelande], ['TACK!', 'Provnamn', '5 × Crown'], 'rubrik, exempelnamn och eget meddelande per typ');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await bild(page), 'efter ett färdigt test');
+    assert.deepEqual(await ingenSenaste(page), []);
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
   }
 });

@@ -14,25 +14,25 @@
   const TESTAVATAR = 'assets/images/test-profile.svg'; // samma reservavatar som resten av studion
   const TYPES = {
     gifter: {
-      label: 'LAST GIFTER', catalogLabel: 'Last Gifter', events: ['gift'], multiAccent: '#ffd35d',
+      label: 'SENASTE GÅVOGIVARE', catalogLabel: 'Senaste gåvogivare', typNamn: 'Gåva', events: ['gift'], multiAccent: '#ffd35d',
       themes: { neon: '#ff58d6', gold: '#ffd35d', emerald: '#3ddc84' },
       defaultName: 'Alex', defaultMsg: 'SENT GALAXY ×5',
       message: e => e.__test ? undefined : `SENT ${giftLine(e)}`
     },
     liker: {
-      label: 'LAST LIKER', catalogLabel: 'Last Liker', events: ['like', 'likes'], multiAccent: '#ff58d6',
+      label: 'SENASTE LIKER', catalogLabel: 'Senaste liker', typNamn: 'Like', events: ['like', 'likes'], multiAccent: '#ff58d6',
       themes: { neon: '#ff58d6', blue: '#4fc3ff', lime: '#a3e635' },
       defaultName: 'Mia', defaultMsg: 'SENT 1 000 LIKES',
       message: e => e.__test ? undefined : `SENT ${Math.max(1, Math.round(Number(e.count ?? e.likes) || 1)).toLocaleString('sv-SE')} LIKES`
     },
     sharer: {
-      label: 'LAST SHARER', catalogLabel: 'Last Sharer', events: ['share'], multiAccent: '#2dd4bf',
+      label: 'SENASTE DELARE', catalogLabel: 'Senaste delare', typNamn: 'Delning', events: ['share'], multiAccent: '#2dd4bf',
       themes: { neon: '#ff58d6', teal: '#2dd4bf', orange: '#ff9d16' },
       defaultName: 'Leo', defaultMsg: 'SHARED THE LIVE',
       message: () => 'SHARED THE LIVE'
     },
     subscriber: {
-      label: 'LAST SUBSCRIBER', catalogLabel: 'Last Subscriber',
+      label: 'SENASTE PRENUMERANT', catalogLabel: 'Senaste prenumerant', typNamn: 'Prenumeration',
       // Deliberately real "subscribe" events only, NOT "member" room-joins — the old version routed
       // member here too, which fired on every viewer entering the room. Fixed to match the OBS widget.
       events: ['subscribe'], multiAccent: '#4fc3ff',
@@ -41,7 +41,7 @@
       message: () => 'JOINED THE CLUB'
     },
     follower: {
-      label: 'LAST FOLLOWER', catalogLabel: 'Last Follower', events: ['follow'], multiAccent: '#a3e635',
+      label: 'SENASTE FÖLJARE', catalogLabel: 'Senaste följare', typNamn: 'Följare', events: ['follow'], multiAccent: '#a3e635',
       themes: { neon: '#ff58d6', lime: '#a3e635', blue: '#4fc3ff' },
       defaultName: 'Zoe', defaultMsg: 'FOLLOWED THE LIVE',
       message: () => 'FOLLOWED THE LIVE'
@@ -53,6 +53,11 @@
     crownBanner: 'Crown Banner', royalAmethyst: 'Royal Amethyst', iceKing: 'Ice King',
     neonCyber: 'Neon Cyber', dragonFlame: 'Dragon Flame', angelGold: 'Angel Gold'
   };
+  // Vad designen inte visar (last-x-alerts.css: royal döljer namn och meddelande, banderollerna
+  // meddelandet). Panelen säger det i stället för att erbjuda fält som inte syns.
+  const BANNERDESIGNER = ['crownBanner', 'royalAmethyst', 'iceKing', 'neonCyber', 'dragonFlame', 'angelGold'];
+  const DOLT = Object.assign({ royal: 'Den här designen visar inte namnet eller meddelandet – bara rubriken och profilbilden.' },
+    Object.fromEntries(BANNERDESIGNER.map(d => [d, 'Den här designen visar inte meddelandet – bara rubriken, namnet och profilbilden.'])));
   const BANNER_ASSETS = {
     crownBanner: 'crown-banner.png', royalAmethyst: 'royal-amethyst.png', iceKing: 'ice-king.png',
     neonCyber: 'neon-cyber.png', dragonFlame: 'dragon-flame.png', angelGold: 'angel-gold.png'
@@ -117,9 +122,32 @@
       + (kit.secondaryText ? `;--last-x-sub:${kit.secondaryText}` : '')
       + (kit.fontFamily ? `;--last-x-font:${kit.fontFamily}` : '');
   }
+  // RUBRIK OCH MEDDELANDE PER TYP (högerpanelen, PR 5). w.lastXLabel och w.lastXMessage är objekt
+  // nycklade på typ ({gifter:'…', liker:'…'}). Rubriken faller tillbaka på exakt det som gällde
+  // förut — followLabel när bara en typ är vald, typens egen rubrik annars — så en sparad widget
+  // ser likadan ut tills någon skriver en egen rubrik för typen.
+  const perTyp = (falt, typeKey) => {
+    const o = falt && typeof falt === 'object' ? falt : null;
+    const v = o && typeof o[typeKey] === 'string' ? o[typeKey].trim() : '';
+    return v;
+  };
   function labelFor(w, typeKey) {
+    const egen = perTyp(w.lastXLabel, typeKey);
+    if (egen) return egen.slice(0, 40);
     const active = activeKeysFor(w), multi = active.length > 1;
     return (multi ? TYPES[typeKey].label : (w.followLabel || TYPES[typeKey].label)).slice(0, 40);
+  }
+  // Ett eget meddelande per typ ersätter typens standardtext i sändningen. {namn}, {gåva} och
+  // {antal} byts mot händelsens värden, så "TACK FÖR {antal} {gåva}!" fungerar för gåvor.
+  function egetMeddelande(w, typeKey, e) {
+    const mall = perTyp(w.lastXMessage, typeKey);
+    if (!mall) return '';
+    const antal = Math.max(1, Math.round(Number(e.count ?? e.repeatCount ?? e.likes) || 1));
+    return mall
+      .replace(/\{namn\}/gi, String(e.username || e.name || ''))
+      .replace(/\{gåva\}|\{gava\}/gi, String(e.giftName || e.gift || ''))
+      .replace(/\{antal\}/gi, antal.toLocaleString('sv-SE'))
+      .slice(0, 80);
   }
   function designOf(w) { return DESIGNS[w.lastXDesign] ? w.lastXDesign : 'card'; }
   function entranceOf(w) { return ENTRANCES.includes(w.lastXEntrance) ? w.lastXEntrance : 'slide-left'; }
@@ -156,7 +184,10 @@
     const accent = accentFor(w, typeKey);
     const remembered = w.lastXLatest && w.lastXLatest[typeKey];
     const name = remembered?.username || w.followName || cfg.defaultName;
-    const message = remembered?.message || w.followMessage || cfg.defaultMsg;
+    // Vilobilden (editorn): det senaste riktiga meddelandet, annars exempelmeddelandet (Testhändelse),
+    // annars typens egna meddelande med exempelnamnet, annars standardtexten.
+    const message = remembered?.message || w.followMessage
+      || egetMeddelande(w, typeKey, { username: name, giftName: 'Rose', count: 1 }) || cfg.defaultMsg;
     const label = labelFor(w, typeKey);
     // EN TESTAVATAR FÖR ALLA (David 2026-10-11): utan foto visades initialen; nu samma reservbild
     // som alla andra familjer.
@@ -192,14 +223,14 @@
     if (w.type !== 'templateLastX') {
       const legacy = LEGACY_TYPE[w.type], cfg = TYPES[legacy];
       return `<h3>${cfg.catalogLabel.toUpperCase()} (ÄLDRE VERSION)</h3>
-        <div class="template-badge">PREMIUM · AUTO HIDE</div>
+        <div class="template-badge">PREMIUM</div>
         <p style="padding:0 2px;font-size:12px;color:#b9a6dd;line-height:1.5">Den här widgeten använder den gamla designen. Ta bort den och lägg till <b>Last-X Alerts</b> från katalogen för att få de fem nya designerna (Card, Stack, Skew, Badge, Royal Coronation).</p>
         <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || 500}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div>
         <button class="delete" id="del">Ta bort</button>`;
     }
     const active = activeKeysFor(w), typeKey = active[0], multi = active.length > 1;
     const themeKeys = Object.keys(TYPES[typeKey].themes);
-    return `<h3>LAST-X ALERTS</h3><div class="template-badge">PREMIUM · AUTO HIDE</div>
+    return `<h3>LAST-X ALERTS</h3><div class="template-badge">PREMIUM</div>
       <div class="property-group"><h4>VILKA SKA VISAS</h4>
         <p class="last-x-type-hint">Kryssa av dem du inte vill ha med — widgeten cyklar bara mellan de kvarvarande, i en delad scen om fler än en är kvar.</p>
         <div class="last-x-type-checks">
@@ -221,13 +252,19 @@
       </div>
       <div class="property-group"><h4>ACCENTFÄRG</h4>
         <label class="last-x-type-check"><input type="checkbox" id="inheritBrandKit"${w.inheritBrandKit ? ' checked' : ''}><span>Ärv globalt färgschema (🎨 Färgschema-knappen ovan)</span></label>
-        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || TYPES[typeKey].themes[themeKeys[0]]}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
+        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || accentFor(Object.assign({}, w, { inheritBrandKit: false }), typeKey)}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
       </div>
       <div class="property-group"><h4>INNEHÅLL (förhandsvisning)</h4>
         <label>Rubrik<input id="followLabel" value="${w.followLabel || TYPES[typeKey].label}" ${multi ? 'disabled' : ''}></label>
         <label>Testnamn<input id="followName" value="${VyraSafe.text(w.followName, TYPES[typeKey].defaultName)}"></label>
-        <label>Testhändelse<input id="followMessage" value="${VyraSafe.text(w.followMessage, TYPES[typeKey].defaultMsg)}" ${multi ? 'disabled' : ''}></label>
+        <label>Testhändelse<input id="followMessage" value="${VyraSafe.text(w.followMessage, TYPES[typeKey].defaultMsg)}"></label>
         <label>Profilbild (URL)<input id="followProfile" value="${VyraSafe.url(w.profileImage)}"></label>
+      </div>
+      <div class="property-group last-x-per-typ"><h4>RUBRIK OCH MEDDELANDE PER TYP</h4>
+        ${active.map(k => `<label>Rubrik (${TYPES[k].typNamn.toLowerCase()})<input id="lastXLabel_${k}" data-key="${k}" maxlength="40" value="${VyraSafe.text(labelFor(w, k))}"></label>
+        <label>Meddelande (${TYPES[k].typNamn.toLowerCase()})<input id="lastXMessage_${k}" data-key="${k}" maxlength="80" placeholder="${VyraSafe.text(TYPES[k].defaultMsg)}" value="${VyraSafe.text(perTyp(w.lastXMessage, k))}"></label>`).join('')}
+        <p class="last-x-type-hint" id="lastXMeddelandeTips">Tomt meddelande ger standardtexten. {namn}, {gåva} och {antal} byts mot händelsens värden.</p>
+        ${DOLT[designOf(w)] ? `<p class="last-x-type-hint" id="lastXDoltInfo">${DOLT[designOf(w)]}</p>` : ''}
       </div>
       <div class="property-group follow-trigger-editor"><h4>VISNINGSTID</h4>
         <label>Rutan ligger kvar<select id="followDuration">
@@ -245,11 +282,27 @@
   // ---- per-widget phase machine: enter -> hold -> exit over per-type latest-event slots, exactly
   // like the OBS widget, but state lives on the widget's own DOM node (box._lx) since several
   // Last-X widgets can be on the same canvas at once, each running independently. ----
-  function stateFor(box) {
-    if (!box._lx) box._lx = { phase: 'idle', showingType: null, slots: Object.create(null), order: [], holdTimer: null, phaseTimer: null };
+  //
+  // ▶ TESTA WIDGET SPELAR PÅ EN KLON (vyra-lastx-panel.js). Samma fasmaskin, men med {prov:true}:
+  //   * widgeten är klonen k (den finns aldrig i state.widgets), inte liveWidget(box.dataset.id),
+  //   * timrarna är testmotorns (ctl.setTimeout/clearTimeout), så ■ Stoppa rensar dem och varje
+  //     återanrop körs under motorns vakter,
+  //   * applyLX skriver INTE w.lastXLatest och kör INTE save() — testet ändrar ingenting i layouten.
+  // Livevägen (showLastX → showLastXOn) går exakt som förut: utan opts är allt som det var.
+  function stateFor(box, opts) {
+    if (!box._lx) {
+      const prov = !!(opts && opts.prov === true);
+      box._lx = { phase: 'idle', showingType: null, slots: Object.create(null), order: [], holdTimer: null, phaseTimer: null,
+        prov, w: prov ? opts.w : null,
+        // Uppslaget sker vid anropet, inte nu: en stubbad window.setTimeout (proven) ska gälla.
+        satt: prov && opts.setTimeout ? opts.setTimeout : (fn, ms) => setTimeout(fn, ms),
+        rensa: prov && opts.clearTimeout ? opts.clearTimeout : id => clearTimeout(id) };
+    }
     return box._lx;
   }
+  const widgetFor = box => (box._lx && box._lx.prov ? box._lx.w : liveWidget(box.dataset.id));
   function applyLX(w, box, typeKey, data, swap) {
+    const s = stateFor(box);
     box.style.setProperty('--last-x', accentFor(w, typeKey));
     const label = box.querySelector('.last-x-label'), name = box.querySelector('.last-x-name');
     const message = box.querySelector('.last-x-message'), initial = box.querySelector('.last-x-initial');
@@ -262,10 +315,12 @@
       // EN TESTAVATAR FOR ALLA (David 2026-10-11): utan foto visas test-profile.svg, aldrig initialen.
       img.src = VyraSafe.src(data.avatar || TESTAVATAR); avatar.dataset.hasImage = '1';
     }
-    w.lastXLatest = Object.assign({}, w.lastXLatest || {}, { [typeKey]: data });
     box.classList.toggle('last-x-sticky', w.lastXPersistent !== false);
-    clearTimeout(w._lastXPersistTimer);
-    w._lastXPersistTimer = setTimeout(() => { delete w._lastXPersistTimer; save() }, 700);
+    if (!s.prov) {
+      w.lastXLatest = Object.assign({}, w.lastXLatest || {}, { [typeKey]: data });
+      clearTimeout(w._lastXPersistTimer);
+      w._lastXPersistTimer = setTimeout(() => { delete w._lastXPersistTimer; save() }, 700);
+    }
     const copy = box.querySelector('.last-x-copy');
     if (swap && copy) { copy.classList.remove('lx-swap'); void copy.offsetWidth; copy.classList.add('lx-swap') }
   }
@@ -275,26 +330,26 @@
     box.classList.remove('last-x-leaving');
     void box.offsetWidth;
     box.classList.add('last-x-active');
-    s.phaseTimer = setTimeout(() => { s.phase = 'hold'; startHoldLX(box) }, 400);
+    s.phaseTimer = s.satt(() => { s.phase = 'hold'; startHoldLX(box) }, 400);
   }
   function startHoldLX(box) {
-    const s = stateFor(box);
-    clearTimeout(s.holdTimer);
-    s.holdTimer = setTimeout(() => exitLX(box), holdMsOf(liveWidget(box.dataset.id)));
+    const s = stateFor(box), w = widgetFor(box);
+    s.rensa(s.holdTimer);
+    s.holdTimer = s.satt(() => exitLX(box), holdMsOf(w || {}));
   }
   function exitLX(box) {
     const s = stateFor(box);
     s.phase = 'exit';
-    clearTimeout(s.holdTimer);
+    s.rensa(s.holdTimer);
     box.classList.add('last-x-leaving');
-    s.phaseTimer = setTimeout(() => {
+    s.phaseTimer = s.satt(() => {
       box.classList.remove('last-x-active', 'last-x-leaving');
       s.phase = 'idle'; s.showingType = null;
       advanceLX(box);
     }, 360);
   }
   function advanceLX(box) {
-    const s = stateFor(box), w = liveWidget(box.dataset.id);
+    const s = stateFor(box), w = widgetFor(box);
     if (!w || !s.order.length) return;
     if (s.phase === 'idle') {
       const typeKey = s.order.shift(), data = s.slots[typeKey]; s.slots[typeKey] = null;
@@ -316,18 +371,55 @@
     if (!s.order.includes(typeKey)) s.order.push(typeKey);
     advanceLX(box);
   }
-  function normalizeEvent(typeKey, event) {
+  // w: widgeten händelsen visas i (för typens egna meddelande). prov: testet, där exempelmeddelandet
+  // (Testhändelse) går före typens standardtext.
+  function normalizeEvent(typeKey, event, w, prov) {
+    const egen = w ? egetMeddelande(w, typeKey, event) : '';
     return {
       username: String(event.username || event.name || event.userId || 'Anonym').slice(0, 60),
       avatar: String(event.profileImage || event.avatar || '').slice(0, 1200),
-      message: TYPES[typeKey].message(event) || (event.__test ? (event.followMessage || TYPES[typeKey].defaultMsg) : TYPES[typeKey].defaultMsg)
+      message: egen || (prov && w && w.followMessage) || TYPES[typeKey].message(event)
+        || (event.__test ? (event.followMessage || TYPES[typeKey].defaultMsg) : TYPES[typeKey].defaultMsg)
     };
   }
   function showLastXOn(w, typeKey, event = {}) {
     const box = document.querySelector(`[data-id="${w.id}"]`);
     if (!box) return;
-    queueLX(w, box, typeKey, normalizeEvent(typeKey, event));
+    queueLX(w, box, typeKey, normalizeEvent(typeKey, event, w));
   }
+  // PER-NOD-VÄGEN FÖR ▶ TESTA WIDGET. Spelar en händelse på klonens nod med klonens inställningar.
+  // Filtrerar aldrig state.widgets, skriver inte på widgeten och sparar ingenting. Returnerar
+  // faserna i ms: entrén (400, enterLX), visningstiden och utgången (0 när widgeten behåller den
+  // senaste personen synlig — då ligger kortet kvar, precis som i sändningen).
+  function lastXSpelaPa(nod, k, typeKey, event, opts) {
+    if (!opts || opts.prov !== true) throw new Error('lastXSpelaPa är testets väg och kräver {prov:true}');
+    if (!nod || !k || !TYPES[typeKey]) return null;
+    if (nod._lx && !nod._lx.prov) throw new Error('lastXSpelaPa: noden tillhör sändningen');
+    stateFor(nod, { prov: true, w: k, setTimeout: opts.setTimeout, clearTimeout: opts.clearTimeout });
+    const e = Object.assign({}, event || {});
+    if (!e.username) e.username = k.followName || TYPES[typeKey].defaultName;
+    // Klonen ritades med den senaste personen synlig (last-x-sticky). Utan den syns entrén, och
+    // stilen räknas om innan fasmaskinen tänder kortet så att övergången faktiskt spelar.
+    nod.classList.remove('last-x-sticky', 'last-x-active', 'last-x-leaving');
+    void nod.offsetWidth;
+    queueLX(k, nod, typeKey, normalizeEvent(typeKey, e, k, true));
+    return { entre: 400, visning: holdMsOf(k), utgang: k.lastXPersistent !== false ? 0 : 360 };
+  }
+  function lastXStoppaPa(nod) {
+    const s = nod && nod._lx;
+    if (!s || !s.prov) return;
+    s.rensa(s.holdTimer); s.rensa(s.phaseTimer);
+    s.order.length = 0; s.slots = Object.create(null); s.phase = 'idle'; s.showingType = null;
+    nod.classList.remove('last-x-active', 'last-x-leaving');
+  }
+  window.lastXSpelaPa = lastXSpelaPa;
+  window.lastXStoppaPa = lastXStoppaPa;
+  // Panelens per-typ-fält (vyra-lastx-panel.js) frågar här vilka typer widgeten visar.
+  window.VyraLastX = Object.freeze({
+    typer: TYPE_KEYS.slice(),
+    aktiva: w => activeKeysFor(w).slice(),
+    typNamn: k => (TYPES[k] ? TYPES[k].typNamn : ''),
+  });
   // Broadcasts a real (or test) event to every Last-X widget configured for that type — mirrors
   // the OBS widget's per-type latest-event routing, just fanned out across however many Last-X
   // widgets are on this layout.
@@ -385,6 +477,28 @@
       set('#followMessage', 'followMessage');
       set('#followProfile', 'profileImage');
       set('#followDuration', 'followDuration', { num: true });
+      // Rubrik och meddelande per typ. Ett fält som töms — eller en rubrik som står kvar på typens
+      // egen — tas bort ur objektet, så att standardtexten fortsätter att gälla.
+      const omrita = () => { save(); if (typeof vyraRenderKeepingPanel === 'function') vyraRenderKeepingPanel(); else render() };
+      TYPE_KEYS.forEach(k => {
+        const rubrik = document.querySelector(`#lastXLabel_${k}`);
+        if (rubrik) rubrik.onchange = e => {
+          const v = String(e.target.value || '').trim().slice(0, 40);
+          const o = Object.assign({}, w.lastXLabel || {});
+          delete o[k];
+          if (v && v !== labelFor(Object.assign({}, w, { lastXLabel: o }), k)) o[k] = v;
+          if (Object.keys(o).length) w.lastXLabel = o; else delete w.lastXLabel;
+          omrita();
+        };
+        const medd = document.querySelector(`#lastXMessage_${k}`);
+        if (medd) medd.onchange = e => {
+          const v = String(e.target.value || '').trim().slice(0, 80);
+          const o = Object.assign({}, w.lastXMessage || {});
+          if (v) o[k] = v; else delete o[k];
+          if (Object.keys(o).length) w.lastXMessage = o; else delete w.lastXMessage;
+          omrita();
+        };
+      });
       const persistentBox = document.querySelector('#lastXPersistent');
       if (persistentBox) persistentBox.onchange = e => { w.lastXPersistent = e.target.checked; save(); render() };
 

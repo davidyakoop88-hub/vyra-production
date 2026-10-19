@@ -171,8 +171,18 @@ async function faltFor(page, kontroll) {
     return JSON.stringify(state.widgets[0]);
   }, start);
   const a = JSON.parse(start), b = JSON.parse(efter), andrade = [];
+  // ETT FÄLT SOM ÄR ETT OBJEKT NYCKLAT PÅ TYP räknas per nyckel: Last-X rubrik och meddelande per
+  // typ (w.lastXLabel.gifter, w.lastXLabel.liker …, PR 5) är fem inställningar i samma objekt, med
+  // var sin kontroll. Två kontroller för SAMMA nyckel är fortfarande en dubblett.
+  const objekt = v => v === undefined || (v !== null && typeof v === 'object' && !Array.isArray(v));
   for (const f of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    if (JSON.stringify(a[f]) !== JSON.stringify(b[f])) andrade.push(f);
+    if (JSON.stringify(a[f]) === JSON.stringify(b[f])) continue;
+    if (objekt(a[f]) && objekt(b[f])) {
+      const x = a[f] || {}, y = b[f] || {};
+      for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) {
+        if (JSON.stringify(x[k]) !== JSON.stringify(y[k])) andrade.push(f + '.' + k);
+      }
+    } else andrade.push(f);
   }
   return andrade;
 }

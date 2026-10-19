@@ -291,6 +291,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const testspel = plats('vyra-testspel.js', '20261019-2'), topgift = plats('vyra-topgift-panel.js', '20261019-1');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
+  // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
+  const lastx = plats('vyra-lastx-panel.js', '20261019-1');
+  assert.ok(lastx > reg && lastx > testspel && lastx < ordning, 'Last-X:s poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.
