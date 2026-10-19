@@ -102,3 +102,15 @@ test('registret rör ingen DOM', () => {
   const kod = KALLA.replace(/\/\/[^\n]*/g, '');
   assert.doesNotMatch(kod, /document\.|querySelector|innerHTML/);
 });
+
+test('media: medietyp är bild eller video, lagring är url eller meta', () => {
+  const R = nyttRegister();
+  const med = k => giltig({ kontroller: [Object.assign({ sektion: 2, typ: 'media', falt: 'profileImage' }, k)] });
+  // Listorna kommer från en annan vm-kontext; jämför innehållet, inte prototypen.
+  assert.equal(R.validera(med({})).length, 0);
+  assert.equal(R.validera(med({ medietyp: 'video', lagring: 'meta' })).length, 0);
+  assert.match(R.validera(med({ medietyp: 'ljud' })).join(), /okänd medietyp "ljud"/);
+  assert.match(R.validera(med({ lagring: 'fil' })).join(), /lagring/);
+  assert.match(R.validera(med({ falt: undefined })).join(), /falt saknas/);
+  assert.equal([...R.MEDIETYPER].join(), 'bild,video');
+});

@@ -207,10 +207,14 @@
     } else if (k.typ === 'knapp') {
       html = `<button type="button" id="${id}">${etikett}</button>`;
     } else if (k.typ === 'media') {
-      // Mediaväljaren kommer i en egen PR (spec kapitel 3). Utan den visas ingen kontroll alls.
+      // Mediaväljaren (vyra-mediaval.js, spec kapitel 3). Registerkontrollens typ är 'media'; vilket
+      // slags media står i medietyp ('bild' | 'video'). Utan väljaren visas ingen kontroll alls.
+      //   { sektion: 2, typ: 'media', medietyp: 'bild', falt: 'profileImage', etikett: 'Egen profilbild',
+      //     reserv: 'assets/images/test-profile.svg', reservText: 'Automatisk – tittarens profilbild från TikTok' }
       const M = window.VyraMediaval;
       if (!M || typeof M.falt !== 'function') return null;
-      const nod = M.falt(Object.assign({ w }, k));
+      let nod = null;
+      try { nod = M.falt(Object.assign({}, k, { w, typ: k.medietyp || 'bild' })); } catch (e) { console.error('[VyraPanelram]', e); }
       return nod || null;
     } else return null;
     rad.innerHTML = html;
