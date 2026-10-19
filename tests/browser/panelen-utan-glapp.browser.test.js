@@ -88,9 +88,11 @@ test('Egen text: Typsnitt, Textstorlek och Skugga X finns EN gång var', { skip 
   assert.equal(n.storlek, 1);
 });
 
-test('Battle MVP med ram: kryssrutan Namn finns en gång, inte två', { skip }, async () => {
+// Sedan PR 7 (vyra-mvp-panel.js) heter kryssrutan "Visa namn" — textfältet Namn är exempeldata i
+// sektion 1 och har inte längre samma etikett som kryssrutan.
+test('Battle MVP med ram: kryssrutan Visa namn finns en gång, inte två', { skip }, async () => {
   await panel('catalog:battlemvp:frame:dark-wings');
-  const n = await sida.evaluate(() => [...document.querySelectorAll('.properties label')].filter(l => l.textContent.trim() === 'Namn' && l.querySelector('input[type=checkbox]')).length);
+  const n = await sida.evaluate(() => [...document.querySelectorAll('.properties label')].filter(l => l.textContent.trim() === 'Visa namn' && l.querySelector('input[type=checkbox]')).length);
   assert.equal(n, 1);
   const utanRam = await (async () => { await panel('catalog:battlemvp:aurora'); return sida.evaluate(() => !!document.querySelector('#mvpShowCoins')); })();
   assert.equal(utanRam, true, 'utan ram ska den generella raden finnas kvar');

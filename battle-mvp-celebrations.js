@@ -88,13 +88,13 @@
         '<input id="mvpFxSpeed" type="range" min="40" max="200" step="5" value="'+g('mvpFxSpeed',100)+'"></label>'+
         '<label class="range-label">Storlek <b>'+g('mvpFxSize',100)+' %</b>'+
         '<input id="mvpFxSize" type="range" min="50" max="220" step="5" value="'+g('mvpFxSize',100)+'"></label>'+
-        '<label class="range-label">Andel framfor ramen <b>'+g('mvpFxDepth',34)+' %</b>'+
+        '<label class="range-label">Andel framför ramen <b>'+g('mvpFxDepth',34)+' %</b>'+
         '<input id="mvpFxDepth" type="range" min="0" max="60" step="1" value="'+g('mvpFxDepth',34)+'"></label>'+
         '<label class="range-label">Fri yta runt profilbilden <b>'+g('mvpFxHole',118)+' %</b>'+
         '<input id="mvpFxHole" type="range" min="60" max="200" step="2" value="'+g('mvpFxHole',118)+'"></label>'+
-        '<label>Partikelfarg<select id="mvpFxTint">'+
+        '<label>Partikelfärg<select id="mvpFxTint">'+
           FX_TINTS.map(t=>'<option value="'+t+'"'+((w.mvpFxTint||'auto')===t?' selected':'')+'>'+
-            ({auto:'Foljer firandet',gold:'Guld',violet:'Violett',white:'Vitt'})[t]+'</option>').join('')+
+            ({auto:'Följer firandet',gold:'Guld',violet:'Violett',white:'Vitt'})[t]+'</option>').join('')+
         '</select></label>'+
         '<div class="property-actions"><button id="testBattleMvp">Testa firandet</button></div>'+
         '</div><div class="property-group"><h4>POSITION');
