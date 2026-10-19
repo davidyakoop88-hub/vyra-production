@@ -461,7 +461,16 @@ function skiljer(a, b, brus) {
   return (a.html !== b.html && !brus.html) || stil || a.rect !== b.rect || (a.txt !== b.txt && !brus.txt) || a.imgs !== b.imgs;
 }
 
-for (const m of MODELLER) {
+// DELAD I FYRA (2026-10-20). Med 171 modeller tog filen över 45 minuter i CI, alltså hela
+// test-client-webblasare-jobbets gräns, och en enda fil kan inte skarvas av scripts/browser-skarva.js.
+// Den här filen kör del 1; panel-krav-2/3/4.browser.test.js sätter PANEL_KRAV_DEL och läser in den.
+// Modellerna fördelas på index (var fjärde), så varje del får en blandning av tunga och lätta familjer,
+// och varje modell provas i exakt en del. Proven som inte gäller en enskild modell körs bara i del 1.
+const DEL = (process.env.PANEL_KRAV_DEL || '1/4').split('/').map(Number);
+const MINA = MODELLER.filter((m, i) => i % DEL[1] === DEL[0] - 1);
+const testOvrig = DEL[0] === 1 ? test : () => {};
+
+for (const m of MINA) {
   test(`panelkraven: ${m.namn}`, { skip, timeout: 400000 }, async () => {
     const fel = [];
     const page = await oppna(m.nyckel, fel);
@@ -596,7 +605,7 @@ for (const m of MODELLER) {
   });
 }
 
-test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { skip, timeout: 120000 }, async () => {
+testOvrig('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   try {
@@ -621,7 +630,7 @@ test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { s
 // Battle MVP (spec 5.18): Poäng (exempeldata) och Poängsymbol hör till poängen och visas bara när Visa
 // poäng är på — i de klassiska stilarna, de enda som ritar poängen. Med poängen på gäller panelkraven
 // fortfarande (enheter, inga dubbla etiketter), och båda fälten syns i widgeten.
-test('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:inferno', fel);
   try {
@@ -644,7 +653,7 @@ test('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', 
 
 // Battle MVP: samma bakgrundsregel som Last-X — ingen grupp för en ny widget (det finns ingen bakgrund
 // att ta bort), men en sparad widget med egen bakgrund (ritas bakom motivet) behåller den.
-test('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:celebration:coronation', fel);
   try {
@@ -662,7 +671,7 @@ test('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen,
 // Battle MVP: Stil-listan har ramarna, så att en ram går att välja tillbaka (förut raderade ett stilval
 // mvpFrame och ramen fanns inte i listan). Ett ramval sätter mvpFrame och ger ramens panel; ett
 // stilval tar bort ramen igen.
-test('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillbaka', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillbaka', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:inferno', fel);
   try {
@@ -696,7 +705,7 @@ test('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillb
 
 // Last-X visar inte BAKGRUND för en ny widget (spec 5.17), men en sparad widget som redan har en egen
 // bakgrund (widget-background.js ritar den bakom kortet) måste kunna ändra och ta bort den.
-test('Last-X: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+testOvrig('Last-X: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:lastx:card', fel);
   try {

@@ -86,7 +86,10 @@
         "tests/browser/panelram-noop.browser.test.js",
         "tests/testspel-motor.test.js",
         "tests/browser/testspel-isolering.browser.test.js",
-        "tests/browser/panel-krav.browser.test.js"
+        "tests/browser/panel-krav.browser.test.js",
+        "tests/browser/panel-krav-2.browser.test.js",
+        "tests/browser/panel-krav-3.browser.test.js",
+        "tests/browser/panel-krav-4.browser.test.js"
       ],
       "matning": [],
       "risker": [
