@@ -25,7 +25,8 @@
 // en av sina designer (goal-motion.js modelFor, gift-campaign-aura.js theme), så även en äldre sparad
 // widget får målpanelen, och Heart Me har bara sina tolv teman. De tre typerna provas därför av
 // panel-krav.browser.test.js, och GOLVET nedan är antalet typer som fortfarande har en modell utan post:
-// 20 till och med PR 8, 17 sedan PR 9, 16 sedan PR 10, 13 sedan PR 11. Det sjunker med varje familj som flyttar in i ramen.
+// 20 till och med PR 8, 17 sedan PR 9, 16 sedan PR 10, 13 sedan PR 11, 11 sedan PR 12. Det sjunker med varje familj som
+// flyttar in i ramen.
 //
 // TOP STREAK (PR 10) har inte heller någon modell utan post: approved-rankings.js ritar varje Top Streak, och
 // allt som inte är Design 1–3 (även en äldre sparad med avvecklat tema eller streakram) ritas som Clean Flip
@@ -33,6 +34,11 @@
 //
 // PLAYGROUND (PR 11): Top Gifter Podium, Top Streak Flip och Goal Pro har en post per typ som gäller alla
 // modeller (vyra-playground-panel.js), så de tre typerna har ingen modell utan post och provas av panel-krav.
+//
+// FYRVERKERIERNA (PR 12): Heart Fireworks och Gift Bubbles har en post var (vyra-fyrverkeri-panel.js) och provas av
+// panel-krav. Gift Fireworks har poster för de sex temana på duk, som är alla katalogens nycklar. En äldre sparad
+// Gift Fireworks med ett CSS-tema (inget fwTheme, bara fwMotion) har ingen post och ska behålla dagens panel; den
+// är en RESERV (catalog:giftfireworks:magnetic) på samma sätt som Top Coins Halo.
 //
 // FAMILJERNA RÄKNAS FRAM UR KATALOGEN, inte ur en handskriven lista: varje katalognyckel i
 // docs/katalogkarta.md byggs med fabriken, och den första nyckeln per widgettyp får representera
@@ -49,7 +55,7 @@ const vm = require('vm');
 // Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
 function registret() {
   const window = {};
-  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js', 'vyra-mal-panel.js', 'vyra-streak-panel.js', 'vyra-playground-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js', 'vyra-mal-panel.js', 'vyra-streak-panel.js', 'vyra-playground-panel.js', 'vyra-fyrverkeri-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
   vm.runInNewContext(kod, { window });
   return window.VyraPanelregister;
 }
@@ -72,7 +78,7 @@ function servera() {
 }
 
 // Reserver för typer vars alla katalognycklar har post (se huvudkommentaren).
-const RESERV = ['catalog:ranking:templateTopCoins:halo'];
+const RESERV = ['catalog:ranking:templateTopCoins:halo', 'catalog:giftfireworks:magnetic'];
 
 // En nyckel per widgettyp, i katalogens ordning — den första vars modell saknar registerpost.
 function familjer() {
@@ -108,7 +114,7 @@ test.after(async () => {
 async function panelerna(lista, { utanRam }) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
   try {
-    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel|alert-panel|mvp-panel|ranking-panel|mal-panel|streak-panel|playground-panel)\.js/, r => r.abort());
+    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel|alert-panel|mvp-panel|ranking-panel|mal-panel|streak-panel|playground-panel|fyrverkeri-panel)\.js/, r => r.abort());
     await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
     await page.waitForTimeout(2500);
@@ -164,7 +170,7 @@ async function panelerna(lista, { utanRam }) {
 
 test('panelens DOM är identisk med och utan ramen, en modell per familj', { skip, timeout: 600000 }, async () => {
   const lista = familjer();
-  assert.ok(lista.length >= 13, `bara ${lista.length} familjer räknades fram ur katalogen`);
+  assert.ok(lista.length >= 11, `bara ${lista.length} familjer räknades fram ur katalogen`);
 
   const utan = await panelerna(lista, { utanRam: true });
   const med = await panelerna(lista, { utanRam: false });

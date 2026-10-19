@@ -34,13 +34,13 @@
   function hfCtrl(host){
     const cv=document.createElement('canvas');cv.className='hf-canvas';host.appendChild(cv);
     const ctx=cv.getContext&&cv.getContext('2d');
-    let W=0,H=0,dpr=1,parts=[],rockets=[],flashes=[],rings=[],raf=false,timers=[],cf=0;
+    let W=0,H=0,dpr=1,parts=[],rockets=[],flashes=[],rings=[],raf=false,rafId=0,timers=[],cf=0,dod=false;
     function resize(){const r=host.getBoundingClientRect();W=r.width||host.clientWidth||0;H=r.height||host.clientHeight||0;if(!ctx)return;dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,W*dpr);cv.height=Math.max(1,H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
-    const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.push(t);return t;};
+    const later=(fn,ms)=>{if(dod)return 0;const t=setTimeout(fn,ms);timers.push(t);return t;};
     function spark(x,y,vx,vy,c,s,life,g){parts.push({x,y,px:x,py:y,vx,vy,c,s,life,max:life,g:g==null?.028:g,drag:.986});}
     function flash(x,y,r,color){flashes.push({x,y,r,life:18,max:18,color:color||'#ffffff'});on();}
     function ring(x,y,r,color){rings.push({x,y,r,life:26,max:26,color:color||'#ffffff'});on();}
-    function on(){if(ctx&&!raf&&typeof requestAnimationFrame==='function'){raf=true;requestAnimationFrame(frame);}}
+    function on(){if(ctx&&!dod&&!raf&&typeof requestAnimationFrame==='function'){raf=true;rafId=requestAnimationFrame(frame);}}
     function heartBurst(cx,cy,scale,color,n){
       if(!ctx)return;
       flash(cx,cy,scale*4.2,color);flash(cx,cy,scale*2.0,'#ffffff');ring(cx,cy,scale*5.5,color);
@@ -60,17 +60,18 @@
     }
     function rocket(tx,ty,onBurst,fart=1){if(!ctx||typeof requestAnimationFrame!=='function'){onBurst&&onBurst();return;}rockets.push({x:tx,y:H+6,ty,onBurst,fart});on();}
     function frame(){
-      if(!ctx){raf=false;return;}
+      if(!ctx||dod){raf=false;return;}
       ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
       for(let i=flashes.length-1;i>=0;i--){const f=flashes[i];f.life--;if(f.life<=0){flashes.splice(i,1);continue;}const a=f.life/f.max,rr=f.r*(1.7-a*0.7);const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,rr);g.addColorStop(0,f.color);g.addColorStop(0.5,f.color+'00');g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=a*0.92;ctx.fillStyle=g;ctx.beginPath();ctx.arc(f.x,f.y,rr,0,7);ctx.fill();}
       for(let i=rings.length-1;i>=0;i--){const r=rings[i];r.life--;if(r.life<=0){rings.splice(i,1);continue;}const pr=1-r.life/r.max,rad=r.r*(0.15+pr*1.0),a=r.life/r.max;ctx.globalAlpha=a*0.88;ctx.strokeStyle=r.color;ctx.lineWidth=Math.max(1,4*a);ctx.beginPath();ctx.arc(r.x,r.y,rad,0,7);ctx.stroke();}
       for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.py=r.y;r.y-=Math.max(6,H/70)*(r.fart||1);ctx.strokeStyle='#ffe9b0';ctx.globalAlpha=.9;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(r.x,r.py);ctx.lineTo(r.x,r.y);ctx.stroke();if(Math.random()<.6)spark(r.x+rnd(-1,1),r.y+rnd(2,8),rnd(-.3,.3),rnd(.4,1.2),'#ffd88a',rnd(1,1.8),rnd(10,20),0.02);if(r.y<=r.ty){rockets.splice(i,1);r.onBurst&&r.onBurst();}}
       for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.px=p.x;p.py=p.y;p.vx*=p.drag;p.vy=p.vy*p.drag+p.g;p.x+=p.vx;p.y+=p.vy;p.life--;if(p.life<=0){parts.splice(i,1);continue;}let a=Math.max(0,p.life/p.max);if(p.life<26)a*=(0.5+0.5*Math.random());ctx.strokeStyle=p.c;ctx.globalAlpha=a*0.30;ctx.lineWidth=p.s*3.6;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=a*0.7;ctx.lineWidth=p.s*1.9;ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=Math.min(1,a*1.15);ctx.lineWidth=Math.max(0.8,p.s*0.8);ctx.strokeStyle='#fffbe8';ctx.beginPath();ctx.moveTo(p.px,p.py);ctx.lineTo(p.x,p.y);ctx.stroke();}
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
-      if(parts.length||rockets.length||flashes.length||rings.length)requestAnimationFrame(frame);else raf=false;
+      if(parts.length||rockets.length||flashes.length||rings.length)rafId=requestAnimationFrame(frame);else raf=false;
     }
-    function comboBadge(cx,cy,n,S){const el=document.createElement('div');el.className='hf-combo';el.style.fontSize=Math.round(S*(0.085+cf*0.06))+'px';el.style.left=cx+'px';el.style.top=cy+'px';el.textContent='×1';host.appendChild(el);anim(el,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:440,easing:'cubic-bezier(.16,.9,.3,1)',fill:'forwards'});if(typeof requestAnimationFrame==='function'&&typeof performance!=='undefined'){const t0=performance.now(),dur=760;(function tick(){const p=Math.min(1,(performance.now()-t0)/dur);el.textContent='×'+Math.max(1,Math.round(p*n));if(p<1)requestAnimationFrame(tick);else el.textContent='×'+n;})();}else el.textContent='×'+n;later(()=>anim(el,[{opacity:1},{opacity:0}],{duration:600,easing:'ease-out',fill:'forwards'}).onfinish=()=>el.remove(),2700);}
+    function comboBadge(cx,cy,n,S){const el=document.createElement('div');el.className='hf-combo';el.style.fontSize=Math.round(S*(0.085+cf*0.06))+'px';el.style.left=cx+'px';el.style.top=cy+'px';el.textContent='×1';host.appendChild(el);anim(el,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:440,easing:'cubic-bezier(.16,.9,.3,1)',fill:'forwards'});if(typeof requestAnimationFrame==='function'&&typeof performance!=='undefined'){const t0=performance.now(),dur=760;(function tick(){if(dod)return;const p=Math.min(1,(performance.now()-t0)/dur);el.textContent='×'+Math.max(1,Math.round(p*n));if(p<1)requestAnimationFrame(tick);else el.textContent='×'+n;})();}else el.textContent='×'+n;later(()=>anim(el,[{opacity:1},{opacity:0}],{duration:600,easing:'ease-out',fill:'forwards'}).onfinish=()=>el.remove(),2700);}
     function fire(o){
+      if(dod)return;
       resize();if(!W||!H){W=W||320;H=H||569;}
       host.classList.add('hf-play');
       const c=Math.max(1,Math.min(100,o.combo||1));cf=(c-1)/99;
@@ -97,7 +98,15 @@
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
     }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];rockets=[];flashes=[];rings=[];host.classList.remove('hf-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.hf-combo').forEach(n=>n.remove());}
-    return {fire,previewStill,clear,resize};
+    // destroy (▶ Testa widget, PR 12): som clear, men motorn tar inte emot något mer — inga nya timrar,
+    // ingen ny bildruta och inga animationer som slutar efteråt. Den bildruta som redan är beställd
+    // avbryts, så inget rAF-varv lever kvar på en klon som tagits bort.
+    function destroy(){if(dod)return;dod=true;clear();if(rafId&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(rafId);raf=false;rafId=0;
+      if(typeof host.getAnimations==='function')host.getAnimations({subtree:true}).forEach(a=>{try{a.cancel()}catch(_){}});cv.remove();if(host._hf===api)host._hf=null;}
+    // inspect: läget i motorn, för proven (raketer i luften, gnistor, väntande timrar, bildruta beställd).
+    const inspect=()=>({raketer:rockets.length,gnistor:parts.length,timrar:timers.length,raf,dod});
+    const api={fire,previewStill,clear,resize,destroy,inspect};
+    return api;
   }
   function hostCtrl(host){return host._hf||(host._hf=hfCtrl(host));}
 
@@ -135,7 +144,13 @@
   // ---------- catalog preview ----------
   function hfRenderPreview(host,w){if(!host)return;const ctrl=hostCtrl(host);ctrl.clear();host.style.setProperty('opacity','1','important');ctrl.previewStill();}
   // toppFor: millisekunder från start till toppen för just den här gåvan (se HF_SPRIDNING_MS ovan).
-  window.VyraHeartFireworksFx={renderPreview:hfRenderPreview,toppFor:input=>{const d=(input&&typeof input==='object')?input:{combo:input};return hfToppMs(hfComboOf(d),d.__tempo)},
+  // tiderFor: ▶ Testa widgets faser i ms, ur samma tidslinje som fire() (se HF_SPRIDNING_MS ovan): entrén är
+  // första raketens färd, visningen varar till toppen, och utgången är gnistornas livslängd (högst 110
+  // bildrutor) — eller combo-räknarens 3,3 s om den är längre.
+  const HF_UTTONING_MS=1800,HF_RAKNARE_MS=3300;
+  function hfTider(combo,showCombo){const c=Math.max(1,Math.min(100,Math.floor(Number(combo))||1)),topp=hfToppMs(c,1),entre=HF_FLYG_MS;
+    const slut=Math.max(topp+HF_UTTONING_MS,showCombo&&c>1?HF_RAKNARE_MS:0);return{entre,visning:topp-entre,utgang:slut-topp};}
+  window.VyraHeartFireworksFx={renderPreview:hfRenderPreview,spelaPa:(...a)=>hfSpelaPa(...a),tiderFor:hfTider,toppFor:input=>{const d=(input&&typeof input==='object')?input:{combo:input};return hfToppMs(hfComboOf(d),d.__tempo)},
     vardeAv:input=>hfBelopp((input&&typeof input==='object')?input:{})};
 
   // ---------- live trigger ----------
@@ -145,13 +160,27 @@
   function hfSlapper(w,d){if(d.__test)return true;if(w.hfExcludeAnon&&d.isAnonymous)return false;const b=hfBelopp(d);return b===undefined||b>=(w.hfMin||1);}
   const hfSedda=new Map(),HF_SPARR=1500;
   function hfRedan(d){const id=d&&d.id;if(!id)return false;const nu=Date.now();for(const[k,t]of hfSedda)if(nu-t>HF_SPARR)hfSedda.delete(k);const key=String(id);if(hfSedda.has(key))return true;hfSedda.set(key,nu);return false;}
+  /* PER NOD (panelspecifikationen 2.4, PR 12). Tänder Heart Fireworks på EN nod (widgetens nod eller dess
+     .heart-fireworks-fx) med widgeten k och gåvan ev. Filtrerar inte state.widgets, skriver inte till
+     widgeten, sparar inte och rör varken kön (heart-fireworks-session.js) eller dubblettspärren.
+     Triggern nedan anropar den för varje synlig widget; ▶ Testa widget (vyra-fyrverkeri-panel.js) på
+     klonens nod, och städar med motorns destroy() vid ■. Returnerar motorn, eller null. */
+  function hfSpelaPa(nod,k,ev){
+    const host=nod&&(nod.classList&&nod.classList.contains('heart-fireworks-fx')?nod:nod.querySelector&&nod.querySelector('.heart-fireworks-fx'));
+    if(!host||!k)return null;
+    const d=(ev&&typeof ev==='object')?ev:{combo:ev};
+    const ctrl=hostCtrl(host);
+    ctrl.fire({combo:hfComboOf(d),gold:k.hfGold!==false,showCombo:k.hfShowCombo!==false,tempo:d.__tempo});
+    return ctrl;
+  }
+  window.hfSpelaPa=hfSpelaPa;
   function hfTrigger(input){const d=(input&&typeof input==='object')?input:{combo:input};
     if(hfRedan(d))return false;
     const hits=state.widgets.filter(x=>x.type==='templateHeartFireworks'&&!x.hidden&&hfSlapper(x,d));
     if(!hits.length)return false;
     let fired=false;
     hits.forEach(w=>{const host=document.querySelector(`[data-id="${w.id}"] .heart-fireworks-fx`);if(!host)return;
-      hostCtrl(host).fire({combo:hfComboOf(d),gold:w.hfGold!==false,showCombo:w.hfShowCombo!==false,tempo:d.__tempo});fired=true;});
+      if(hfSpelaPa(host,w,d))fired=true;});
     return fired;
   }
   window.triggerHeartFireworks=hfTrigger;

@@ -298,3 +298,69 @@ test('fargarv-sant: en modell som inte erbjuder arvet har ingen kryssruta', { sk
     await page.close();
   }
 });
+
+// Gift Fireworks (PR 12, spec 4.2) ritar allt på en duk, så färgerna syns inte i någon nods beräknade stil.
+// Provet läser i stället det festivalmotorn får när widgeten spelar (samma väg som livet: fwSpelaPa →
+// VyraSupernova.mount → rendererFor → VyraFestival.create): Färg 1 blir accentfärgen, Färg 2 den andra färgen
+// och namnets typsnitt färgschemats typsnitt. Att det också ändrar bilden mäts med fast frö i
+// fyrverkeri-livevag.browser.test.js.
+for (const nyckel of ['catalog:giftfireworks:festival', 'catalog:giftfireworks:supernova']) {
+  test(`fargarv-sant: Gift Fireworks (${nyckel.split(':').pop()}) ärver accentfärg, andra färgen och typsnitt på duken`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel, { fwSound: false });
+    try {
+      await page.evaluate(() => document.querySelector('[data-panelram-sektion="5"]')?.classList.add('open'));
+      const ruta = await page.evaluate(() => ({ finns: !!document.querySelector('.properties [data-panelram-sektion="5"] #pr-inheritBrandKit'),
+        lista: (document.querySelector('.properties .pr-arv-lista') || {}).textContent || '' }));
+      assert.deepEqual(ruta, { finns: true, lista: 'Ärver: accentfärg, andra färgen och typsnitt.' });
+      const motorn = () => page.evaluate(() => {
+        const orig = window.VyraFestival.create; let fangad = null;
+        window.VyraFestival.create = function (inp) { fangad = inp; return orig.apply(this, arguments); };
+        const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-2000px;top:0;width:360px';
+        const w = liveWidget('arv'); box.innerHTML = wh(w); document.body.append(box);
+        try { window.VyraFireworks.spelaPa(box.firstElementChild, w, { username: 'Alex', combo: 1 }); }
+        finally { window.VyraFestival.create = orig; box.querySelectorAll('.fw-event').forEach(g => window.VyraSupernova.dispose(g)); window.VyraSupernova.glom(w.id); box.remove(); }
+        return { primary: fangad.primary, secondary: fangad.secondary, font: fangad.nameFont };
+      });
+      const av = await motorn();
+      assert.ok(av.primary !== '#12ab34' && av.secondary !== '#a1b2c3' && !/Impact/.test(av.font), 'inget av schemat når duken innan arvet är på: ' + JSON.stringify(av));
+      await page.click('#pr-inheritBrandKit');
+      await page.waitForTimeout(900);
+      assert.equal(await page.evaluate(() => liveWidget('arv').inheritBrandKit), true, 'kryssrutan sparar w.inheritBrandKit');
+      const pa = await motorn();
+      assert.deepEqual([pa.primary, pa.secondary], ['#12ab34', '#a1b2c3'], 'accentfärgen och den andra färgen når duken');
+      assert.match(pa.font, /Impact/, 'typsnittet når namnet i duken');
+      const inaktiva = await page.evaluate(() => ['falt:fwColor', 'falt:fwColor2', 'falt:fwFont', 'id:fwPalett'].map(n => {
+        const el = [...document.querySelectorAll(`.properties [data-pr-kontroll="${n}"] input, .properties [data-pr-kontroll="${n}"] select, .properties [data-pr-kontroll="${n}"] button`)];
+        return [n, el.length > 0 && el.every(i => i.disabled)];
+      }));
+      for (const [n, ja] of inaktiva) assert.equal(ja, true, `${n} är inaktiv när den ärvs`);
+      await page.click('#pr-inheritBrandKit');
+      await page.waitForTimeout(900);
+      assert.deepEqual(await motorn(), av, 'egna värden igen när arvet slagits av');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+// Heart Fireworks och Gift Bubbles har registerposter men erbjuder inget arv (spec 4.2: inga färgreglage, och
+// motorerna läser aldrig färgschemat — ett påtvingat arv gav 0 px i granskningen). Panelen är ramens, utan arvsruta.
+for (const nyckel of ['catalog:heartfireworks', 'catalog:giftbubbles']) {
+  test(`fargarv-sant: ${nyckel.split(':').pop()} erbjuder inget arv`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => ({
+        ram: document.querySelector('.properties')?.dataset.panelram || null,
+        arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+        gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
+      }));
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false });
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}

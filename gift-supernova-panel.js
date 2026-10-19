@@ -33,15 +33,20 @@ const hojd=w=>{const el=document.querySelector('.editor-shell .canvas [data-id="
 const yFor=(w,v)=>{const H=dukH(),h=hojd(w);return v==='top'?8:v==='bottom'?Math.max(0,H-h-8):Math.max(0,Math.round((H-h)/2))};
 const posAv=w=>w.fwPos&&Math.abs((Number(w.y)||0)-yFor(w,w.fwPos))<=2?w.fwPos:'';
 // [id, fält, min, max, steg, standard, visning]
+// Enheten står i <b> efter värdet (panelspecifikationen 1.2, PR 12) och skrivs med vid varje dragning,
+// så att den inte försvinner medan reglaget rör sig.
 const REGLAGE={
- fwScale:['Storlek',.5,1.8,.05,1,v=>v.toFixed(2)],
- fwPlaySpeed:['Rörelsehastighet',.4,2.5,.1,1,v=>v.toFixed(1)],
- fwGlow:['Glöd',0,1.5,.05,.8,v=>v.toFixed(2)],
- fwRadius:['Rundning',0,50,1,50,v=>String(Math.round(v))],
- fwFinal:['Final vid (mynt)',100,10000,100,1000,v=>String(Math.round(v))],
- fwMin:['Minsta gåva (mynt)',1,500,1,1,v=>String(Math.round(v))],
+ fwScale:['Storlek',.5,1.8,.05,1,v=>v.toFixed(2)+' ×'],
+ fwPlaySpeed:['Rörelsehastighet',.4,2.5,.1,1,v=>v.toFixed(1)+' ×'],
+ fwGlow:['Glöd',0,1.5,.05,.8,v=>v.toFixed(2)+' ×'],
+ fwRadius:['Rundning',0,50,1,50,v=>Math.round(v)+' px'],
+ fwFinal:['Final vid',100,10000,100,1000,v=>Math.round(v)+' mynt'],
+ fwMin:['Minsta gåva',1,500,1,1,v=>Math.round(v)+' mynt'],
  // Standard 1 sedan 2026-10-18 (användarens beslut: ett fyrverkeri i taget). Samma tal som fwFiler i gift-fireworks.js.
- fwLanes:['Samtidiga fyrverkerier',1,5,1,1,v=>String(Math.round(v))]};
+ fwLanes:['Samtidiga fyrverkerier',1,5,1,1,v=>Math.round(v)+' st']};
+// RUNDNING 0 (PR 12): `Number(v)||standard` gjorde 0 till standardvärdet, så Rundning 0 sparades som 50
+// (granskningen). Ett ogiltigt värde ger fortfarande standard; 0 är ett giltigt värde.
+const tal=(v,reserv)=>{const n=Number(v);return v!==''&&v!=null&&Number.isFinite(n)?n:reserv};
 const varde=(w,k)=>{const r=REGLAGE[k],n=Number(w[k]);return Number.isFinite(n)?Math.min(r[2],Math.max(r[1],n)):r[4]};
 const opt=(lista,val)=>lista.map(([k,l])=>`<option value="${k}" ${val===k?'selected':''}>${l}</option>`).join('');
 const reglage=(w,k)=>{const r=REGLAGE[k],v=varde(w,k);return `<label class="range-label">${r[0]} <b id="${k}Val">${r[5](v)}</b><input id="${k}" type="range" min="${r[1]}" max="${r[2]}" step="${r[3]}" value="${v}"></label>`};
@@ -56,7 +61,7 @@ props=function(){
  <div class="property-group"><h4>STIL</h4>
   <label>Entré / utgång<select id="fwEnter">${opt(ENTRE,w.fwEnter||'zoom')}</select></label>
   <label>Namneffekt<select id="fwNameFx">${opt(NAMNFX,w.fwNameFx||'none')}</select></label>
-  <span class="pg-pal-rubrik">Färgpalett</span><div class="fw-pal" role="group" aria-label="Färgpalett">${sw}</div>
+  <div class="fw-farger" id="fwFarger"><span class="pg-pal-rubrik">Färgpalett</span><div class="fw-pal" role="group" aria-label="Färgpalett">${sw}</div></div>
   <label>Färg 1<input id="fwColor" type="color" value="${p}"></label>
   <label>Färg 2<input id="fwColor2" type="color" value="${s}"></label>
   <label>Textfärg<input id="fwTextColor" type="color" value="${color(w.fwTextColor,'#ffffff')}"></label>
@@ -78,7 +83,7 @@ bind=function(){
  for(const id of ['fwColor','fwColor2','fwTextColor'])val(id,id,v=>color(v,w[id]));
  for(const k of Object.keys(REGLAGE)){const el=$(k),r=REGLAGE[k];if(!el)continue;
   el.oninput=e=>{const b=$(k+'Val');if(b)b.textContent=r[5](Number(e.target.value))};
-  el.onchange=e=>{w[k]=Math.min(r[2],Math.max(r[1],Number(e.target.value)||r[4]));commit()}}
+  el.onchange=e=>{w[k]=Math.min(r[2],Math.max(r[1],tal(e.target.value,r[4])));commit()}}
  document.querySelectorAll('[data-fwsw]').forEach(b=>b.onclick=()=>{const [a,c]=b.dataset.fwsw.split('|');w.inheritBrandKit=false;w.fwColor=a;w.fwColor2=c;commit()});
  // Position: placerar widgeten överst/mitten/nederst på duken utifrån dess höjd.
  const pos=$('fwPos');if(pos)pos.onchange=e=>{const v=e.target.value;w.fwPos=v;if(v)w.y=yFor(w,v);commit()};

@@ -465,10 +465,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-
   // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
-  assert.match(media, /gift-fireworks\.js\?v=20261018-2/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
+  // 20261019-1: per-nod-funktionen fwSpelaPa for ▶ Testa widget (panelspecifikationen PR 12).
+  assert.match(media, /gift-fireworks\.js\?v=20261019-1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   // 2026-10-18: ett fyrverkeri i taget — motorerna fick toppen(), triggern release/tempo.
   assert.match(media, /gift-natural-engine\.js\?v=20261018-1/);
-  assert.match(media, /gift-supernova-engine\.js\?v=20261018-1/);
+  assert.match(media, /gift-supernova-engine\.js\?v=20261019-1/);  // 20261019-1: arv av färgschemat, Dölj namnet och glom (PR 12)
   assert.match(media, /vyra-masterval\.js\?v=20260817-tal/);
   assert.match(media, /action-master\.js\?v=20260817-tal/);
 
