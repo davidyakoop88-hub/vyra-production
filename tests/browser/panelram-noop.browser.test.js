@@ -103,8 +103,7 @@ async function panelerna(lista, { utanRam }) {
         selected = w.id;
         render();
       }, nyckel);
-      await page.waitForTimeout(500);
-      ut[typ] = await page.evaluate(() => {
+      const las = () => page.evaluate(() => {
         const p = document.querySelector('.properties');
         if (!p) return null;
         // Attributens ordning är ingen skillnad i panelen: den beror på i vilken ordning skript
@@ -117,6 +116,18 @@ async function panelerna(lista, { utanRam }) {
         }
         return k.outerHTML;
       });
+      // Vänta tills panelen slutat ändras. Flera skript märker grupperna efter render() (flikar,
+      // ordning), och på en långsam CI-maskin räckte inte 500 ms: textgruppen saknade ibland sin
+      // flikmärkning i den ena körningen. Två lika läsningar med 250 ms mellanrum = färdig panel.
+      await page.waitForTimeout(500);
+      let forra = await las();
+      for (let i = 0; i < 20; i++) {
+        await page.waitForTimeout(250);
+        const nu = await las();
+        if (nu === forra) break;
+        forra = nu;
+      }
+      ut[typ] = forra;
     }
     return { lage, ut };
   } finally {
