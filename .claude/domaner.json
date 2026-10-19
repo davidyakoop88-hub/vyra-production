@@ -170,8 +170,8 @@
         "gift-jar-animals.js",
         "gift-jar-animals.css",
         "gift-jar-textures.js",
-        "vyra-panelregister.js",
-        "vyra-exempeldata.js"
+        "vyra-exempeldata.js",
+        "vyra-panelregister.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
