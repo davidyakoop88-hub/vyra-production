@@ -49,7 +49,8 @@
         "vyra-tomma-handlingar.js",
         "widget-handles.js",
         "vyra-extravy-vakt.js",
-        "vyra-panelram.js"
+        "vyra-panelram.js",
+        "vyra-testspel.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -82,7 +83,8 @@
         "tests/browser/verktygsrad-overlapp.browser.test.js",
         "tests/browser/extravy-sen-render.browser.test.js",
         "tests/panelram.test.js",
-        "tests/browser/panelram-noop.browser.test.js"
+        "tests/browser/panelram-noop.browser.test.js",
+        "tests/testspel-motor.test.js"
       ],
       "matning": [],
       "risker": [
@@ -168,6 +170,7 @@
         "gift-jar-animals.js",
         "gift-jar-animals.css",
         "gift-jar-textures.js",
+        "vyra-exempeldata.js",
         "vyra-panelregister.js"
       ],
       "tester": [
