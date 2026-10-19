@@ -206,31 +206,97 @@
     if (node && url && node.src !== url) node.src = url;
   }
 
+  // EN NOD I TAGET. Skriver givare, gåva och värde i en enda widgetnod — ingen sökning i
+  // state.widgets, ingen skrivning till widgetobjektet, ingen save(). Livevägen nedan
+  // (patchProfileWidget) anropar den för varje nod som hör till widgeten, och testet
+  // (topGiftSpelaPa, ▶ Testa widget) anropar den för klonens nod. Samma kod i båda, så det testet
+  // visar är exakt det en riktig gåva skriver.
+  //
+  //   d.giftImage / d.profileImage  bildlänkar; tomt = rör inte bilden
+  //   d.name                         namnet som det ska stå
+  //   d.amount                       värdet; tecknet framför siffran behålls (se nedan)
+  function skrivProfilNod(node, shape, d) {
+    if (!node || !shape) return;
+    setImage(node.querySelector(shape.gift), d.giftImage);
+    setImage(node.querySelector(shape.profile), d.profileImage);
+    node.querySelectorAll(shape.name).forEach(function (el) { setText(el, d.name); });
+    node.querySelectorAll(shape.value).forEach(function (el) {
+      // Ett ikon-<i> först i <em> (Top Coins-familjen: myntet) står kvar; talet skrivs i textnoden
+      // efter det, samma regel som skrivTal i live-leaderboard.js.
+      var ikon = el.firstElementChild;
+      if (shape.ikon && ikon && ikon.tagName === 'I') {
+        var text = ' ' + d.amount;
+        var sista = el.lastChild;
+        if (sista && sista.nodeType === 3) { if (sista.nodeValue !== text) sista.nodeValue = text; }
+        else el.appendChild(document.createTextNode(text));
+        return;
+      }
+      // Tecknet framför siffran står bara i DOM:en och är streamerns val: Top Gift renderar
+      // '◉ 44 999', Top Streak '×18' med w.streakPrefix. Behåll det som redan står där i
+      // stället för att hårdkoda något av dem — annars byter widgeten utseende vid första gåvan.
+      setText(el, String(el.textContent || '').match(/^\D*/)[0] + d.amount);
+    });
+  }
+
   function patchProfileWidget(widget) {
     var shape = SHAPES[widget.type];
     if (!shape) return;
     var amount = widget.dataValue === undefined || widget.dataValue === null
       ? '44 999' : widget.dataValue;
-
-    nodesFor(widget, shape.root).forEach(function (node) {
-      setImage(node.querySelector(shape.gift), widget.giftImage);
-      setImage(node.querySelector(shape.profile), widget.profileImage);
-      node.querySelectorAll(shape.name).forEach(function (el) {
-        // '@StreamQueen' AR EN PLATSHALLARE, INTE EN TITTARE. Den slog till nar ett event saknade
-        // bade username och name, och skrev da in fabrikens demoperson i en LIVE sandning - exakt
-        // det live-zero-state.js finns for att forhindra ("no invented person"). I overlay blir
-        // tomt tomt; i editorn ar platshallaren fortfarande det man designar mot.
-        var overlay = new URLSearchParams(location.search).has('overlay');
-        setText(el, widget.dataName || (overlay ? '' : '@StreamQueen'));
-      });
-      node.querySelectorAll(shape.value).forEach(function (el) {
-        // Tecknet framför siffran står bara i DOM:en och är streamerns val: Top Gift renderar
-        // '◉ 44 999', Top Streak '×18' med w.streakPrefix. Behåll det som redan står där i
-        // stället för att hårdkoda något av dem — annars byter widgeten utseende vid första gåvan.
-        setText(el, String(el.textContent || '').match(/^\D*/)[0] + amount);
-      });
-    });
+    // '@StreamQueen' AR EN PLATSHALLARE, INTE EN TITTARE. Den slog till nar ett event saknade
+    // bade username och name, och skrev da in fabrikens demoperson i en LIVE sandning - exakt
+    // det live-zero-state.js finns for att forhindra ("no invented person"). I overlay blir
+    // tomt tomt; i editorn ar platshallaren fortfarande det man designar mot.
+    // Platshållaren räknas bara fram när det finns en nod att skriva i, som förut (handbyggda
+    // prov-DOM:ar utan location når aldrig hit).
+    var noder = nodesFor(widget, shape.root);
+    if (!noder.length) return;
+    var namn = widget.dataName || (new URLSearchParams(location.search).has('overlay') ? '' : '@StreamQueen');
+    var d = { giftImage: widget.giftImage, profileImage: widget.profileImage, name: namn, amount: amount };
+    noder.forEach(function (node) { skrivProfilNod(node, shape, d); });
   }
+
+  // ▶ TESTA WIDGET FÖR TOP GIFT (panelspecifikationen 2.4, adaptern 'topgift' i
+  // vyra-topgift-panel.js). Spelar en ny toppgåva på EN nod — klonens — med exempeldatan:
+  // samma skrivning som livevägen ovan (skrivProfilNod) och samma klassbyte som
+  // live-leaderboard.js armFlip gör på en riktig gåva (flippen 'play' och rekordpulsen 'record').
+  // Den går INTE via window.VyraFlip: det registret är nycklat på widget-id och hör till
+  // sändningen. Ingen state, ingen save(), ingen kö och inget nät.
+  //
+  // Signal Orbit (templateTopCoins, Top Gift · Design 4) ritar sin ledare med egna klasser;
+  // formen står i SHAPES_ORBIT.
+  var SHAPES_ORBIT = {
+    root: '.vyra-topcoins-new',
+    gift: '.tc-gift img',
+    profile: '.tc-portrait > img',
+    name: '.tc-copy strong',
+    value: '.tc-copy em',
+    ikon: true
+  };
+  function topGiftSpelaPa(nod, k, ex) {
+    if (!nod || !k || !ex) return false;
+    var orbit = k.type === 'templateTopCoins';
+    var shape = orbit ? SHAPES_ORBIT : SHAPES.templateTopGift;
+    var gava = ex.gava || {};
+    var bild = typeof ex.bild === 'function' ? ex.bild : function (v) { return v; };
+    var coins = Number(gava.coins) || 0;
+    skrivProfilNod(nod, shape, {
+      giftImage: gava.bild ? bild(gava.bild) : '',
+      profileImage: ex.profil ? bild(ex.profil) : '',
+      name: ex.namn || '',
+      // Livevägen skriver gåvans värde som det kommer (live-leaderboard.js); Signal Orbit visar
+      // det som renderaren gör, med tusentalsavgränsning och COINS.
+      amount: orbit ? Math.round(coins).toLocaleString('sv-SE') + ' COINS' : coins
+    });
+    if (nod.classList) {
+      nod.classList.remove('play', 'record');
+      void nod.offsetWidth;
+      nod.classList.add('play', 'record');
+    }
+    return true;
+  }
+  window.topGiftSpelaPa = topGiftSpelaPa;
+  window.VyraGiftImages.skrivProfilNod = skrivProfilNod;
 
   function patchCampaignWidget(widget) {
     // Aura owns its animated counters. Patching those midway through a reaction would jump.

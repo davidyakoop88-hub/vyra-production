@@ -1,10 +1,13 @@
 'use strict';
-// PANELRAMEN ÄR EN NO-OP SÅ LÄNGE REGISTRET ÄR TOMT (PR 1 i panelspecifikationen).
+// PANELRAMEN ÄR EN NO-OP FÖR MODELLER UTAN REGISTERPOST (PR 1 i panelspecifikationen).
 //
-// vyra-panelram.js och vyra-panelregister.js laddas i studio.html, men registret har inga poster.
 // Spec 0.2: "En modell som inte har någon post i registret får exakt dagens panel." Provet laddar
-// studion två gånger — en gång med de två filerna blockerade i nätet, en gång som vanligt — och
+// studion två gånger — en gång med ramen och registret blockerade i nätet, en gång som vanligt — och
 // kräver att egenskapspanelens DOM är tecken för tecken densamma för en modell per familj.
+//
+// Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js). Familjens
+// representant är därför den första katalognyckeln vars modell SAKNAR post; en typ där alla modeller
+// har post (Top Gift) provas i stället av panel-krav.browser.test.js.
 //
 // FAMILJERNA RÄKNAS FRAM UR KATALOGEN, inte ur en handskriven lista: varje katalognyckel i
 // docs/katalogkarta.md byggs med fabriken, och den första nyckeln per widgettyp får representera
@@ -16,6 +19,15 @@ const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
 const { kravNycklar } = require('../helpers/katalognycklar.js');
 const VyraWidgets = require(path.join(ROOT, 'widget-factory.js'));
+const vm = require('vm');
+
+// Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
+function registret() {
+  const window = {};
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  vm.runInNewContext(kod, { window });
+  return window.VyraPanelregister;
+}
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
   '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm',
@@ -34,13 +46,15 @@ function servera() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => r(server)));
 }
 
-// En nyckel per widgettyp, i katalogens ordning.
+// En nyckel per widgettyp, i katalogens ordning — den första vars modell saknar registerpost.
 function familjer() {
+  const R = registret();
   const per = new Map();
   for (const nyckel of kravNycklar()) {
-    let typ;
-    try { typ = VyraWidgets.create(nyckel).type; } catch (_) { continue; }
-    if (typ && !per.has(typ)) per.set(typ, nyckel);
+    let w;
+    try { w = VyraWidgets.create(nyckel); } catch (_) { continue; }
+    if (!w || !w.type || per.has(w.type) || R.hitta(w)) continue;
+    per.set(w.type, nyckel);
   }
   return [...per.entries()].map(([typ, nyckel]) => ({ typ, nyckel }));
 }
@@ -62,11 +76,11 @@ test.after(async () => {
 });
 
 // Laddar studion och fotograferar panelen för varje familj i samma sida. Med `utanRam` blockeras
-// ramens två filer i nätet, så att sidan är exakt den som fanns före PR 1.
+// ramen, registret och familjernas poster i nätet, så att sidan är exakt den som fanns före PR 1.
 async function panelerna(lista, { utanRam }) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
   try {
-    if (utanRam) await page.route(/\/vyra-panel(ram|register)\.js/, r => r.abort());
+    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel)\.js/, r => r.abort());
     await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
     await page.waitForTimeout(2500);
@@ -111,7 +125,7 @@ test('panelens DOM är identisk med och utan ramen, en modell per familj', { ski
   assert.equal(utan.lage.ram, 'undefined', 'ramen laddades trots blockeringen');
   assert.equal(med.lage.ram, 'object', 'vyra-panelram.js laddades inte i studion');
   assert.equal(med.lage.register, 'object', 'vyra-panelregister.js laddades inte i studion');
-  assert.equal(med.lage.poster, 0, 'registret ska vara tomt i PR 1');
+  assert.equal(med.lage.poster, registret().poster().length, 'studion har samma poster som registerfilerna');
 
   const olika = [], tomma = [];
   for (const { typ, nyckel } of lista) {
@@ -122,7 +136,7 @@ test('panelens DOM är identisk med och utan ramen, en modell per familj', { ski
       while (i < a.length && a[i] === b[i]) i++;
       olika.push(`${typ} (${nyckel}) skiljer vid tecken ${i}:\n      utan: …${a.slice(Math.max(0, i - 80), i + 120)}\n      med:  …${b.slice(Math.max(0, i - 80), i + 120)}`);
     }
-    assert.ok(!/data-panelram/.test(b), `${typ}: ramen satte ett attribut trots att registret är tomt`);
+    assert.ok(!/data-panelram/.test(b), `${typ}: ramen satte ett attribut trots att modellen saknar post`);
   }
   assert.deepEqual(tomma, [], 'panelen byggdes inte för dessa familjer');
   assert.deepEqual(olika, [], `ramen ändrade panelen:\n  - ${olika.join('\n  - ')}`);

@@ -14,6 +14,7 @@
   //
   //   VyraTestspel.registrera('topgift', {
   //     typer: [['rose', 'Rose'], ['lion', 'Lion']],     // valfri: EN typväljare i sektion 1
+  //     typEtikett: 'Gåva',                              // valfri: väljarens etikett (standard Typ)
   //     spela(nod, k, ex, ctl) {                        // synkron, returnerar faserna i ms
   //       nod.classList.add('play');
   //       ctl.setTimeout(() => nod.classList.add('ut'), 2600);
@@ -100,8 +101,12 @@
       && adapter.typer.every(t => Array.isArray(t) && t.length === 2 && typeof t[1] === 'string'))) {
       throw new Error('VyraTestspel: ' + id + ' typer måste vara [[värde, etikett], …]');
     }
+    if (adapter.typEtikett !== undefined && !(typeof adapter.typEtikett === 'string' && adapter.typEtikett.trim())) {
+      throw new Error('VyraTestspel: ' + id + ' typEtikett måste vara en text');
+    }
     adaptrar.set(id, Object.freeze({ spela: adapter.spela, stoppa: adapter.stoppa,
-      typer: adapter.typer ? Object.freeze(adapter.typer.map(t => Object.freeze(t.slice()))) : null }));
+      typer: adapter.typer ? Object.freeze(adapter.typer.map(t => Object.freeze(t.slice()))) : null,
+      typEtikett: adapter.typEtikett || 'Typ' }));
     return id;
   }
 
@@ -463,7 +468,7 @@
     const typer = p.a.typer;
     const valdTyp = typer ? (typval.get(w.id) || typer[0][0]) : null;
     rot.innerHTML = `<button type="button" id="pr-testspel" aria-pressed="false">▶ Testa widget</button>`
-      + (typer ? `<label>Typ<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
+      + (typer ? `<label>${esc(p.a.typEtikett)}<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
       + `<ol class="pr-tidslinje" aria-label="Testets förlopp" style="display:flex;gap:10px;list-style:none;margin:6px 0 0;padding:0">`
       + `<li data-fas="entre">Entré</li><li data-fas="visning">Visning</li><li data-fas="utgang">Utgång</li></ol>`;
     rot.querySelector('#pr-testspel').onclick = () => {

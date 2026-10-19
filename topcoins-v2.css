@@ -75,3 +75,18 @@ html body .widget.vyra-topcoins-new.rk-kompakt .tc-portrait{width:86%}
 html body .widget.vyra-topcoins-new.rk-kompakt .tc-portrait>img{inset:7%!important;width:86%!important;height:86%!important}
 html body .widget.vyra-topcoins-new.rk-kompakt .tc-ring-a{inset:4%;border:4px solid #fff;box-shadow:0 0 0 2px var(--tc-accent),0 0 14px var(--tc-accent)}
 html body .widget.vyra-topcoins-new.rk-kompakt .tc-copy strong{font-size:max(23px,calc(14px / var(--rk-z,1)))!important}
+
+/* SIGNAL ORBIT MED GÅVA (Top Gift · Design 4, w.showGift). Profilbilden och gåvan växlar som i Top Gift:
+   varje sida står stilla nästan halva varvet och vändningen ligger på slaget. Varvet är 10 s vid
+   Växlingshastighet 1× (--tc-flip sätts av renderaren). Utan showGift finns varken klassen eller
+   noden, och modellen ritas exakt som förut. */
+html body .widget.vyra-topcoins-new .tc-gift{position:absolute;inset:13%;width:74%;height:74%;border-radius:50%;overflow:hidden;z-index:2;
+  display:grid;place-items:center;background:radial-gradient(circle,#ffffff22,#0b0716 70%);box-shadow:0 0 22px #000b;opacity:0}
+html body .widget.vyra-topcoins-new .tc-gift img{width:82%;height:82%;object-fit:contain}
+html body .widget.vyra-topcoins-new.tc-med-gava .tc-portrait>img{animation:tcVisaProfil var(--tc-flip,10s) cubic-bezier(.65,0,.35,1) infinite}
+html body .widget.vyra-topcoins-new.tc-med-gava .tc-gift{animation:tcVisaGava var(--tc-flip,10s) cubic-bezier(.65,0,.35,1) infinite}
+html body .widget.vyra-topcoins-new.record .tc-gift img{animation:giftPulse 2.1s ease}
+@keyframes tcVisaProfil{0%,43%{opacity:1;transform:rotateY(0)}46.5%,96.5%{opacity:0;transform:rotateY(90deg)}100%{opacity:1;transform:rotateY(0)}}
+@keyframes tcVisaGava{0%,46.5%{opacity:0;transform:rotateY(90deg)}50%,93%{opacity:1;transform:rotateY(0)}96.5%,100%{opacity:0;transform:rotateY(90deg)}}
+/* Färgschemats textfärg (Ärv färgschema). Accenten kommer redan via --tc-accent. */
+html body .widget.vyra-topcoins-new.tc-arv-text .tc-copy strong{color:var(--tc-text)!important}

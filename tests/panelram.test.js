@@ -284,9 +284,13 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'studio.html'), 'utf8');
   const plats = (fil, v) => html.indexOf(`<script src="${fil}?v=${v}"></script>`);
   // 20261019-2: ramen bygger kontrolltypen media med vyra-mediaval.js, registret validerar medietyp.
-  const reg = plats('vyra-panelregister.js', '20261019-2'), ram = plats('vyra-panelram.js', '20261019-2');
+  // 20261019-3: ramen bygger Ärv färgschema och skriver enheter i talfältens etiketter; registret har
+  // arv(w). Top Gifts poster (vyra-topgift-panel.js) laddas efter registret och testmotorn.
+  const reg = plats('vyra-panelregister.js', '20261019-3'), ram = plats('vyra-panelram.js', '20261019-3');
   const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-1');
+  const testspel = plats('vyra-testspel.js', '20261019-2'), topgift = plats('vyra-topgift-panel.js', '20261019-1');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
+  assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.

@@ -59,7 +59,19 @@
         // sätts per design i ranking-sixpack.css via .topcoins-<design>.
         ? '<i class="tc-six-backlight"></i><i class="tc-six-ring tc-six-a"></i><i class="tc-six-ring tc-six-b"></i><i class="tc-six-art"></i>'
         : '<i class="tc-orbit tc-o1"></i><i class="tc-orbit tc-o2"></i><i class="tc-orbit tc-o3"></i><i class="tc-orbit-dot tc-d1"></i><i class="tc-orbit-dot tc-d2"></i>';
-    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${selectedClass}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${w.accent || meta.accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt=""><span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small><em><i class="tc-mynt">${mynt()}</i> ${value}</em></span></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
+    // SIGNAL ORBIT ÄR TOP GIFT · DESIGN 4 (katalogen) och har Top Gifts panel (vyra-topgift-panel.js):
+    // en gåva som växlar med profilbilden, och färgschemat. Båda är AV tills streamern slår på dem —
+    // utan showGift och inheritBrandKit ritas modellen tecken för tecken som förut, och den
+    // visuella referensen gäller oförändrad.
+    const orbit = design === 'signal-orbit';
+    const gava = orbit && w.showGift === true;
+    const kit = orbit && w.inheritBrandKit && typeof state !== 'undefined' && state && state.brandKit ? state.brandKit : null;
+    const accent = (kit && kit.highlight) || w.accent || meta.accent;
+    const arvText = kit && kit.text ? ` tc-arv-text" data-tc-arv="1` : '';
+    const extraStil = (gava ? `;--tc-flip:${(10 / Math.min(2, Math.max(0.5, Number(w.topGiftFlipSpeed) || 1))).toFixed(2)}s` : '')
+      + (kit && kit.text ? `;--tc-text:${kit.text}` : '');
+    const gavaHtml = gava ? `<span class="tc-gift"><img src="${VyraSafe.src(w.giftImage, 'assets/gifts/events/0001_Rose.png')}" alt=""></span>` : '';
+    return `<div class="widget vyra-toplike vyra-templatetopcoins vyra-topcoins-new topcoins-${design}${motion}${background}${gava ? ' tc-med-gava' : ''}${selectedClass}${arvText}" data-id="${w.id}" data-topcoins-design="${design}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;--tc-accent:${accent};--tc-scale:${w.widgetScale || 1};z-index:${w.layer || 1}${extraStil}"><div class="toplike-list"><div class="toplike-row rank-1"><div class="tc-portrait"><img src="${avatar(w)}" alt="">${gavaHtml}<span class="tc-ring tc-ring-a"></span><span class="tc-ring tc-ring-b"></span>${particles}</div><span class="tc-copy"><strong>${name}</strong><small></small><em><i class="tc-mynt">${mynt()}</i> ${value}</em></span></div></div>${selected === w.id ? '<span class="resize-handle">↘</span>' : ''}</div>`;
   }
 
   const previousWh = wh;

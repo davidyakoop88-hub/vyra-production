@@ -87,6 +87,14 @@
     if (grund) el.style.setProperty('font-size', (grund * faktor) + 'px', 'important');
   }
 
+  function kitTypsnitt(w) {
+    if (!w || !w.inheritBrandKit || typeof state === 'undefined' || !state || !state.brandKit) return '';
+    const f = state.brandKit.fontFamily;
+    const R = window.VyraPanelregister;
+    if (!f || !R || typeof R.arv !== 'function') return '';
+    try { return R.arv(w).includes('fontFamily') ? String(f) : ''; } catch (_) { return ''; }
+  }
+
   function applicera(rot, w) {
     // SNABB UTGÅNG NÄR INGET ÄR INSTÄLLT — det normala fallet för nästan varje widget. Utan den
     // gick funktionen igenom varje textelement i varje widget vid varje bind(), och bind() körs
@@ -94,13 +102,17 @@
     //
     // `data-vyra-text` minns att vi HAR rört elementet, så en widget vars inställningar nollas
     // fortfarande städas en sista gång innan snabbutgången tar över.
-    const rorNagot = w.textFont || Number(w.textOutlineWidth) > 0 || Number(w.textShadowBlur) > 0
+    // ÄRV FÄRGSCHEMA (panelspecifikationen kapitel 4). För en modell vars registerpost ärver
+    // typsnittet (vyra-panelregister.js arv(w)) och som har arvet påslaget gäller färgschemats
+    // typsnitt i stället för widgetens eget. Andra modeller rörs inte.
+    const kitFont = kitTypsnitt(w);
+    const rorNagot = kitFont || w.textFont || Number(w.textOutlineWidth) > 0 || Number(w.textShadowBlur) > 0
       || Number(w.textShadowX) || Number(w.textShadowY) || (Number(w.textScale) || 1) !== 1;
     if (!rorNagot && !rot.dataset.vyraText) return;
     if (rorNagot) rot.dataset.vyraText = '1'; else delete rot.dataset.vyraText;
 
     const blad = textblad(rot);
-    const font = w.textFont;
+    const font = kitFont || w.textFont;
     const kontur = Number(w.textOutlineWidth) || 0;
     const konturFarg = w.textOutlineColor || '#000000';
     const blur = Number(w.textShadowBlur) || 0;
