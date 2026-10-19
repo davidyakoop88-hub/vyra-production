@@ -83,15 +83,18 @@ const GOMS = [
   // (vyra-topgift-panel.js), som provas i mediaval- och panel-krav-proven.
   // Top Streak (Clean Flip) har inga bildfalt i en hopfalld grupp: panelen ar approved-rankings.js:s
   // sedan 2026-09-20, och premium:liquid ar avvecklad. Raden med pfStreakProfile togs bort.
-  ['catalog:followeralert', 'followProfile'],
-  ['catalog:fanlevel:gold', 'fanProfile'],
+  // Follower Spotlight och Fan Level Up har inga bildfält sedan PR 6 (vyra-alert-panel.js): profilbilden
+  // väljs i mediaväljaren, och #followProfile/#fanProfile tas bort ur panelen. Raderna togs bort; det
+  // provas i panel-krav-provet (ingen sökväg i panelen, mediaväljaren har verkan).
   ['catalog:battlemvp:inferno', 'mvpProfile'],
 ];
 
 // Fält som INTE får hamna i gruppen.
 const STANNAR = [
   ['catalog:custom:image', 'cwFile', 'widgetens hela innehåll, inte en reservbild'],
-  ['catalog:fanlevel:gold', 'fanLevelVideoUrl', 'en egen funktion i en egen grupp'],
+  // Video per nivå är sedan PR 6 en lista med mediaväljare i Innehåll (#prNivavideo, vyra-alert-panel.js);
+  // det gamla adressfältet #fanLevelVideoUrl ligger parkerat och kan inte nås.
+  ['catalog:fanlevel:gold', 'prNivavideo', 'en egen funktion i Innehåll'],
 ];
 
 const gruppFor = (page, id) => page.evaluate(f => {

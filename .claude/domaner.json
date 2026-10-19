@@ -176,7 +176,8 @@
         "vyra-mediaval.js",
         "vyra-panelregister.js",
         "vyra-topgift-panel.js",
-        "vyra-lastx-panel.js"
+        "vyra-lastx-panel.js",
+        "vyra-alert-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -185,6 +186,7 @@
         "tests/browser/fargarv-sant.browser.test.js",
         "tests/browser/topgift-livevag.browser.test.js",
         "tests/browser/lastx-livevag.browser.test.js",
+        "tests/browser/alert-livevag.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",

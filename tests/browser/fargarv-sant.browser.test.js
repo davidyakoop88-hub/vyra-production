@@ -53,6 +53,15 @@ const MODELLER = [
     arver: ['accentfärg', 'textfärg', 'andra färgen', 'typsnitt'] },
   { namn: 'Last-X · royal', nyckel: 'catalog:lastx:royal', egna: ['falt:textFont'], arver: ['typsnitt'] },
   { namn: 'Last-X · crownBanner', nyckel: 'catalog:lastx:crownBanner', egna: ['falt:textFont'], arver: ['typsnitt'] },
+  // Alertfamiljerna (PR 6, spec 4.2): Fan och Gifter ärvde accent och andra färgen redan; textfärgen
+  // (rubrik och namn) och typsnittet är inkopplade. Follower ärver accent, text och typsnitt — den
+  // andra färgen når ingenting där. Guardian erbjuder inget arv (provet längst ner).
+  { namn: 'Fan Level Up · hero', nyckel: 'catalog:fanlevel:layout:hero', egna: ['falt:fanColor', 'falt:fanLight', 'falt:textFont'],
+    arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
+  { namn: 'Gifter Level Up · profile', nyckel: 'catalog:gifterlevel:profile', egna: ['falt:gifterColor', 'falt:gifterLight', 'falt:textFont'],
+    arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
+  { namn: 'Follower Spotlight · gold', nyckel: 'catalog:followeralert:gold', egna: ['falt:followColor', 'falt:textFont'],
+    arver: ['accentfärg', 'textfärg', 'typsnitt'] },
 ];
 
 let server, browser, bas;
@@ -154,6 +163,28 @@ for (const m of MODELLER) {
       for (const d of delar) assert.equal(syns(avIgen, d), false, `${d} ligger kvar när arvet slagits av`);
       assert.equal(await page.evaluate(n => document.querySelector(`.properties [data-pr-kontroll="${n}"] input, .properties [data-pr-kontroll="${n}"] select`).disabled, m.egna[0]), false,
         'den egna kontrollen är aktiv igen');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+// Guardian Emblem har en registerpost men erbjuder inget arv (spec 4.2: fast bildmotiv, ett påtvingat
+// arv gav 0 px). Panelen är ramens, utan arvsruta och utan den gamla rutan, och en rad i Utseende
+// säger varför.
+for (const nyckel of ['catalog:guardianemblem:3', 'catalog:guardianemblem:model:sapphire']) {
+  test(`fargarv-sant: Guardian Emblem (${nyckel.split(':').slice(2).join(':')}) erbjuder inget arv`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => ({
+        ram: document.querySelector('.properties')?.dataset.panelram || null,
+        arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+        gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
+        rad: (document.querySelector('.properties [data-panelram-sektion="5"] #prFastBild') || {}).textContent || '',
+      }));
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, rad: 'Emblemet är en fast bild; texten går att ändra.' });
       assert.deepEqual(fel, [], 'inga sidfel');
     } finally {
       await page.close();
