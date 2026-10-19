@@ -160,19 +160,27 @@ test('dolda och borttagna widgetar lämnar inga instanser kvar', () => {
 });
 
 // ---------------------------------------------------------------- panelen
-test('panelen har färgpalett, test och position — på svenska', () => {
+test('panelen har färgpalett och position, men ingen testrad — på svenska', () => {
   const h = boot(['templatePgStreak']);
   h.run(`selected='pg0'`);
   const html = h.window.props();
   assert.ok(html.includes('TOP STREAK FLIP'));
   assert.ok((html.match(/data-pgsw=/g) || []).length === 24, 'paletten ska ha 24 färgpar');
-  assert.ok(html.includes('data-pgtest="gift"') && html.includes('id="propX"') && html.includes('id="del"'));
+  assert.ok(html.includes('id="propX"') && html.includes('id="del"'));
   assert.ok(html.includes('Flippa mellan profil och gåva'));
-  // 2026-10-17: samma ordning som playgroundens panel — RÖRELSE, STIL, widgetens egna fält, POSITION.
+  // PR 11 i panelspecifikationen (2.3/2.5): testraden Skicka gåva … Nollställ körde feed() i sändningens
+  // session och är borta. ▶ Testa widget spelar en klon i en sandlåda (provas nedan och i webbläsaren).
+  assert.ok(!/data-pgtest|Skicka gåva|Nollställ|RÖRELSE/.test(html), 'testraden ska vara borta ur panelen');
+  // Paletten och Färg 1/2 skriver samma fält och står i en rad; reglagen har enheten i <b>.
+  assert.match(html, /<div class="pg-farger" id="pgFarger"><span class="pg-pal-rubrik">Färgpalett<\/span>.*id="pgg_accent"[^>]*><\/label><\/div>/);
+  assert.ok(!html.includes('id="pgg_accent2"'), 'Färg 2 når ingenting i streaken och visas inte');
+  assert.match(html, /Glöd <b data-pgv="pgg_glow" data-pgu="×">0\.8 ×<\/b>/);
+  assert.match(html, /Flip-tid <b data-pgv="pgx_flipt" data-pgu="s">3\.5 s<\/b>/);
+  // 2026-10-17: samma ordning som playgroundens panel — STIL, widgetens egna fält, POSITION.
   const rubriker = [...html.matchAll(/<h4>([^<]+)<\/h4>/g)].map(m => m[1]);
-  assert.deepEqual(rubriker, ['RÖRELSE', 'STIL', 'TOP STREAK FLIP', 'POSITION & STORLEK']);
+  assert.deepEqual(rubriker, ['STIL', 'TOP STREAK FLIP', 'POSITION & STORLEK']);
   let pos = -1;
-  for (const ord of ['Entré / utgång', 'Ramlager på avatar', 'Namneffekt', 'Färgpalett', 'Färg 1', 'Färg 2', 'Textfärg', 'Typsnitt', 'Storlek', 'Rörelsehastighet', 'Glöd', 'Rundning', 'Position']) {
+  for (const ord of ['Entré / utgång', 'Ramlager på avatar', 'Namneffekt', 'Färgpalett', 'Färg 1', 'Textfärg', 'Typsnitt', 'Storlek', 'Rörelsehastighet', 'Glöd', 'Rundning', 'Position']) {
     const n = html.indexOf('>' + ord, pos + 1); assert.ok(n > pos, ord + ' saknas eller står fel'); pos = n;
   }
 });
@@ -233,6 +241,69 @@ test('ett färgval skrivs i widgetens pg-objekt', () => {
   h.run("window.__w=JSON.parse(JSON.stringify(state.widgets.find(x=>x.id==='pg0')))");
   const w = h.window.__w;
   assert.ok(w.pg.accent && w.pg.accent2, 'färgen skrevs inte till widgeten');
+});
+
+test('Målets enhet följer Mäter', () => {
+  const h = boot(['templatePgGoal'], { templatePgGoal: { x: { metric: 'follows', target: 50 } } });
+  h.run(`selected='pg0'`);
+  assert.match(h.window.props(), /Mål <b data-pgv="pgx_target" data-pgu="följare">50 följare<\/b>/);
+});
+
+// ---------------------------------------------------------------- sandlådan (▶ Testa widget, PR 11)
+// Sandlådan spelar en klon med egen session och egen runtime-state. Sändningens S, STATE och
+// instansregister rörs inte, och livevägen uppdaterar fortfarande alla riktiga instanser.
+const klona = (h, id) => { const w = JSON.parse(JSON.stringify(h.window.eval(`state.widgets.find(x=>x.id==='${id}')`))); w.id = id + '__prov'; return w; };
+const sandHost = h => {
+  // jsdom saknar Element.animate (Top Streak Flips ring vid ny ledare); webbläsaren har den.
+  if (!h.window.Element.prototype.animate) h.window.Element.prototype.animate = () => ({ onfinish: null, cancel() {} });
+  const el = h.document.createElement('div'); el.className = 'pgw wroot'; h.document.body.append(el); return el; };
+const tryck = h => JSON.stringify([h.window.VyraPlaygroundWidgets.session(), h.window.VyraPlaygroundWidgets.state, h.window.VyraPlaygroundWidgets.mounted()]);
+
+test('sandlådan spelar på klonen och lämnar sändningens session orörd', () => {
+  const h = boot(['templatePgPodium', 'templatePgStreak', 'templatePgGoal'], { templatePgGoal: { x: { design: '6', target: 2000 } } });
+  h.gava({ username: 'riktig', giftName: 'Rose', diamonds: 5, coins: 5 });
+  const fore = tryck(h);
+  const malFore = host(h, 'goal').querySelector('.gv6 .big').textContent;
+  const mal = h.window.VyraPlayground.sandlada(sandHost(h), klona(h, 'pg2'));
+  mal.event({ type: 'gift', user: 'Alex', avatar: '', count: 1200, gift: { id: 'rose', n: 'Rose', e: '🌹', c: 1, img: '' } });
+  const pod = sandHost(h), podium = h.window.VyraPlayground.sandlada(pod, klona(h, 'pg0'));
+  podium.event({ type: 'gift', user: 'Leo', avatar: '', count: 1, gift: { id: 'crown', n: 'Crown', e: '👑', c: 799, img: '' } });
+  const st = h.window.VyraPlayground.sandlada(sandHost(h), klona(h, 'pg1'));
+  for (let i = 0; i < 12; i++) st.event({ type: 'gift', user: 'Alex', avatar: '', count: 1, gift: { id: 'cap', n: 'Cap', e: '🧢', c: 99, img: '' } });
+  assert.equal(pod.querySelector('.pcol.r1 .nm').textContent, 'Leo', 'klonens podium visar testgivaren');
+  assert.equal(pod.dataset.pgm, '1', 'scan() får aldrig montera klonen');
+  assert.equal(tryck(h), fore, 'sändningens S, STATE och instansregister är oförändrade');
+  assert.equal(host(h, 'goal').querySelector('.gv6 .big').textContent, malFore, 'den riktiga Goal Pro står kvar');
+  assert.equal(host(h, 'podium').querySelector('.pcol.r1 .nm').textContent, 'riktig', 'det riktiga podiet visar bara den riktiga givaren');
+  mal.destroy(); podium.destroy(); st.destroy();
+  assert.equal(tryck(h), fore, 'destroy() rör inte heller sändningen');
+});
+
+test('livevägen uppdaterar fortfarande alla instanser efter en sandlåda, och live:start nollställer som förut', () => {
+  const h = boot(['templatePgPodium', 'templatePgPodium', 'templatePgGoal', 'templatePgGoal'], { templatePgGoal: { x: { metric: 'coins', target: 2000 } } });
+  const sb = h.window.VyraPlayground.sandlada(sandHost(h), klona(h, 'pg0'));
+  sb.event({ type: 'gift', user: 'Leo', avatar: '', count: 1, gift: { id: 'crown', n: 'Crown', e: '👑', c: 799, img: '' } });
+  sb.destroy();
+  h.gava({ username: 'anna', giftName: 'Crown', diamonds: 799, coins: 799 });
+  const pods = [...h.document.querySelectorAll('.pgw[data-pgkind="podium"]')].map(p => p.querySelector('.pcol.r1 .nm').textContent);
+  assert.deepEqual(pods, ['anna', 'anna'], 'båda podierna fick den riktiga gåvan, ingen fick sandlådans');
+  const pg = h.window.VyraPlaygroundWidgets;
+  assert.deepEqual([pg.state.pg2.val, pg.state.pg3.val], [799, 799], 'båda målen räknade gåvan');
+  assert.equal(JSON.stringify(Object.keys(pg.session().users)), '["anna"]');
+  h.window.dispatchEvent(new h.window.CustomEvent('vyra-live-session', { detail: { event: 'live:start' } }));
+  assert.equal(JSON.stringify(pg.session().users), '{}', 'live:start tömmer sessionen');
+  assert.ok(!pg.state.pg2 || !pg.state.pg2.val, 'live:start nollställer målen');
+});
+
+test('panelen och testadaptern anropar aldrig resetAll, pgTest eller feed', () => {
+  const panel = las('vyra-playground-panel.js').replace(/\/\/.*$/gm, '');
+  assert.ok(!/\b(resetAll|pgTest|feed|routeLiveBattleEvent)\s*\(/.test(panel), 'panelen får bara spela i sandlådan');
+  assert.match(panel, /P\.sandlada\(host, k\)/);
+  const pg = las('playground-widgets.js');
+  // pgTest ligger kvar men binds inte längre till någon knapp.
+  assert.ok(!/data-pgtest/.test(pg.replace(/\/\/.*$/gm, '')), 'testraden ska inte ritas eller bindas');
+  assert.match(pg, /function resetAll\(\)/);
+  assert.match(pg, /if \(d && d\.event === 'live:start'\) resetAll\(\);/, 'live:start nollställer som förut');
 });
 
 // ---------------------------------------------------------------- vakter
