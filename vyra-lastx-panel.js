@@ -99,7 +99,7 @@
       { sektion: 2, typ: 'kryss', falt: 'lastXPersistent', legacyId: '#lastXPersistent' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: live },
       // 3 · Storlek och placering
-      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       // 4 · Text
       { sektion: 4, typ: 'val', falt: 'textFont', etikett: 'Typsnitt', legacyId: '#vtFont', arv: 'fontFamily' },
       { sektion: 4, typ: 'std-text', utan: ['vtFont'] },

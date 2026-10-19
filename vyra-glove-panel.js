@@ -13,9 +13,9 @@
   // MÄTT INNAN REGISTRET SKREVS (spec 5.19; panel-krav-metoden: varje fält ändrat för sig, widgetens DOM, beräknade
   // stil och skärmbild jämförda före och efter, i vila med widgeten vald — då visas affischen; skript och utfall i
   // PR-texten). Koi Pearl (MP4) och Pink Princess (WebM):
-  //   * verkar: X, Y, Bredd, Storlek och Rotation,
-  //   * ingen verkan, 0 px: hela TEXT (widgeten har inget textblad — bara klippet och affischen), Lager (paketets
-  //     renderare skriver inget z-index — PR 16), Glöd/Handskens färg (--glove/--glove2 läses inte av paketets CSS),
+  //   * verkar: X, Y, Bredd, Storlek, Rotation och Lager (vyra-lager.js skriver z-index = lagret på lådan, PR 16),
+  //   * ingen verkan, 0 px: hela TEXT (widgeten har inget textblad — bara klippet och affischen),
+  //     Glöd/Handskens färg (--glove/--glove2 läses inte av paketets CSS),
   //     och ett påtvingat färgschema (inheritBrandKit med testschemat): 0 px. Färgarv erbjuds därför inte,
   //   * BAKGRUND: Färg, Styrka och Innerkant ritar en ruta bakom affischen i editorn, men klippet är en effekt
   //     ovanpå sändningen (WebM med alfa, MP4 täcker rutan) och spec 1.5 tar inte med bakgrunden för effekter och
@@ -51,7 +51,7 @@
     utanText: true,
     kontroller: [
       { sektion: 2, kalla: 'live', typ: 'text', etikett: live },
-      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       { sektion: 7, typ: 'std-aterstall' },
     ],
   });

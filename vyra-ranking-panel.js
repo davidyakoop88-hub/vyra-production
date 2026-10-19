@@ -33,8 +33,8 @@
   //   * Rörelse (tcMotion/tpMotion) och kryssrutan Bakgrund i DESIGN finns inte: ingen verkan i de sex
   //     designerna, och Bakgrund var en dubblett av bakgrundsgruppen,
   //   * DESIGN · VÄLJ TEMA och designknapparna finns inte: modellen väljs i katalogen,
-  //   * Lager finns inte i Top Like: vyraTopLike (media.js) sätter inget z-index. Top Coins och Top
-  //     Points ritar z-index från lagret och behåller det,
+  //   * Lager finns i alla tre. Top Coins och Top Points ritar z-index från lagret själva, och Top Like
+  //     får det av vyra-lager.js (vyraTopLike i media.js skriver inget, PR 16),
   //   * Rubrik X/Y och Rubrik bara när rubriken visas, Visa placeringar inte i Royal Rose (designen
   //     visar inga placeringstal),
   //   * BAKGRUND bara för en widget som redan har en egen bakgrund (listorna är genomskinliga — samma
@@ -119,7 +119,6 @@
   };
 
   function post(typ, id) {
-    const tl = typ === 'templateTopLike';
     const ids = EGNA_ID[typ];
     const kontroller = [
       // 1 · Exempeldata
@@ -139,7 +138,7 @@
       { sektion: 2, typ: 'val', falt: 'dateRange', etikett: 'Period', legacyId: '#wsDateRange' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: LIVE[typ] },
       // 3 · Storlek och placering
-      { sektion: 3, typ: 'std-position', utan: tl ? ['hojd', 'las', 'lager'] : ['hojd', 'las'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       { sektion: 3, typ: 'kryss', falt: 'rankingMirror', etikett: 'Spegla riktningen', legacyId: '#wsMirror' },
       { sektion: 3, typ: 'tal', falt: 'titleOffsetX', etikett: 'Rubrik X (px)', legacyId: '#wsTitleOffX', om: visaRubrik },
       { sektion: 3, typ: 'tal', falt: 'titleOffsetY', etikett: 'Rubrik Y (px)', legacyId: '#wsTitleOffY', om: visaRubrik },

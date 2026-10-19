@@ -8,9 +8,9 @@
 // Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js), playgroundfamiljerna Top Gifter Podium, Top
 // Streak Flip och Goal Pro (vyra-playground-panel.js) och fyrverkerierna Gift Fireworks, Heart Fireworks och Gift
 // Bubbles (vyra-fyrverkeri-panel.js) och fontänerna och gåvoburken: Like Fountain klassisk och Portal och Gift Jar
-// (vyra-fontan-panel.js) och Fan Level 50 och Glove Snipe (vyra-fl50-panel.js, vyra-glove-panel.js) — kräver provet
-// att panelen
-//   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
+// (vyra-fontan-panel.js) och Fan Level 50 och Glove Snipe (vyra-fl50-panel.js, vyra-glove-panel.js) och Egen text
+// (vyra-egen-panel.js) — kräver provet att panelen
+//   * har sektionerna i ordningen 1–7, med ▶ Testa widget först (utom där det inte finns något att spela),
 //   * inte har någon tom sektion,
 //   * inte har någon etikett två gånger,
 //   * inte visar någon text som matchar /assets\/|\.png|\.svg|URL/ (inte heller i fältvärden),
@@ -255,7 +255,13 @@ const FL50_MODELLER = [
 ];
 const GLOVE_MODELLER = ['koiPearl', 'masquerade', 'pinkPrincess', 'royalRuby', 'cloudFox'].map(p => ({ namn: 'Glove Snipe · ' + p,
   nyckel: 'catalog:glovesnipe:' + p + ':pack:2', effekt: p === 'koiPearl' || p === 'pinkPrincess', minKontroller: 4, aterstall: null }));
+// EGEN TEXT (vyra-egen-panel.js, PR 16). Widgeten har ingen händelse att spela, så posten har inget test och panelen
+// ingen sektion 1 — provet kräver det (utanTest). Skuggfärgen mäts med en skugga (FORUTS).
+const EGEN_MODELLER = [
+  { namn: 'Egen text', nyckel: 'catalog:custom:text', utanTest: true, aterstall: { utseende: 'textColor', innehall: 'customText' } },
+];
 const MODELLER = [
+  ...EGEN_MODELLER,
   ...FL50_MODELLER,
   ...GLOVE_MODELLER,
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
@@ -287,7 +293,7 @@ const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk
 // webbläsare är det samma text — mätningen hade då berott på maskinens språk.
 const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' },
-  fl50Source: { fanl50Manual: [{ name: 'Deltagare', avatar: '' }] } };
+  fl50Source: { fanl50Manual: [{ name: 'Deltagare', avatar: '' }] }, ctwShadowColor: { textShadowBlur: 10 } };
 
 let server, browser, bas;
 const skip = hoppaOver();
@@ -464,10 +470,14 @@ for (const m of MODELLER) {
 
       // Ordningen 1–7 och ▶ Testa widget först.
       const nr = s.sektioner.map(x => x.nr);
-      assert.equal(nr[0], 1, 'sektion 1 kommer först');
+      if (m.utanTest) {
+        // Inget att spela: ingen sektion 1 och ingen ▶ Testa widget.
+        assert.ok(!nr.includes(1), 'en modell utan test har ingen sektion 1');
+        assert.equal(s.forstaISektion1, undefined, 'en modell utan test har ingen ▶ Testa widget');
+      } else assert.equal(nr[0], 1, 'sektion 1 kommer först');
       assert.deepEqual(nr, [...nr].sort((a, b) => a - b), 'sektionerna står i ordningen 1–7');
       assert.equal(new Set(nr).size, nr.length, 'ingen sektion två gånger');
-      assert.equal(s.forstaISektion1, 'pr-testspel', '▶ Testa widget är det första i sektion 1');
+      if (!m.utanTest) assert.equal(s.forstaISektion1, 'pr-testspel', '▶ Testa widget är det första i sektion 1');
       // Ingen tom sektion.
       for (const x of s.sektioner) assert.ok(x.synligaRader > 0, `sektion ${x.nr} är tom`);
       // Ingen etikett två gånger.

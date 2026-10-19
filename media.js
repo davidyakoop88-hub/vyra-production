@@ -1895,3 +1895,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 // Dold betyder dold, oavsett vilken renderare som ritade widgeten. Laddas sist i svansen men beror
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261018-1';document.body.append(js)});
+
+// Lager betyder lager, oavsett vilken renderare som ritade widgeten: z-index = w.layer||1 pa den
+// yttre ladan, samma regel som styledWh. Beror inte pa ordningen, se vyra-lager.js.
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-lager.js?v=20261019-1';document.body.append(js)});

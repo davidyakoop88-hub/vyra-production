@@ -17,8 +17,8 @@
   //
   // BARA KONTROLLER SOM GÖR NÅGOT (granskningen, scratchpad panel-fynd.json, och
   // tests/browser/panel-krav.browser.test.js):
-  //   * Lager finns inte i någon av dem: ingen av renderarna sätter z-index (Heart Me går förbi styledWh,
-  //     goal-motion och kampanjen likaså; uppmätt oförändrat z-index). Rättningen hör till PR 16,
+  //   * Lager finns i alla: Heart Me, goal-motion och kampanjen går förbi styledWh, så vyra-lager.js
+  //     skriver z-index = lagret på lådan (PR 16),
   //   * Bredd i Heart Me är skrivskyddad: studio.css:169 låser widgeten till 230 px med !important, och
   //     hjärtat och pillen har fasta mått inuti. En rad säger det, och Storlek skalar hela widgeten,
   //   * Ljus i målen verkar (goal-motion.css räknade med '62%' i en skuggradie, som var ogiltig),
@@ -45,7 +45,7 @@
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const ENTREFALT = ['entranceAnimation', 'entranceDuration'];
-  const position = utan => ({ sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager', ...(utan || [])] });
+  const position = utan => ({ sektion: 3, typ: 'std-position', utan: ['hojd', 'las', ...(utan || [])] });
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
 

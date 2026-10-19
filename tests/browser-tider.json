@@ -61,6 +61,7 @@
     "guardian-emblem.browser.test.js": 130,
     "konfig-utan-omladdning.browser.test.js": 12,
     "laddningskapplopning.browser.test.js": 21,
+    "lager-tva-widgetar.browser.test.js": 95,
     "landningssida.browser.test.js": 10,
     "las-proportioner.browser.test.js": 26,
     "layout-format-status.browser.test.js": 6,
