@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `7920a19`
+Commit: `fa025de`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -47,10 +47,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
-| GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
+| GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
+| LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
@@ -176,11 +176,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Lion | `catalog:giftjar:lion` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Ember Dragon | `catalog:giftjar:dragon` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Phoenix Rise | `catalog:giftjar:phoenix` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Midnight Panther | `catalog:giftjar:panther` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
-| Sapphire Peacock | `catalog:giftjar:peacock` | ✓ | ✓ | 2026-08-31 | [#274](https://github.com/davidyakoop88-hub/vyra-production/pull/274) |
+| Royal Lion | `catalog:giftjar:lion` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Ember Dragon | `catalog:giftjar:dragon` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Phoenix Rise | `catalog:giftjar:phoenix` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Midnight Panther | `catalog:giftjar:panther` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Sapphire Peacock | `catalog:giftjar:peacock` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 
 ### GUARDIAN EMBLEM
 
@@ -208,16 +208,16 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Portal · rosa & lil | `catalog:likefountain:portal:portal` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Rainbow | `catalog:likefountain:portal:rainbow` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Neon | `catalog:likefountain:portal:neon` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Fire | `catalog:likefountain:portal:fire` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Ice | `catalog:likefountain:portal:ice` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Gold | `catalog:likefountain:portal:gold` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Aurora | `catalog:likefountain:portal:aurora` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Pastel | `catalog:likefountain:portal:pastel` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| Like Fountain · Portal · Mono | `catalog:likefountain:portal:mono` | ✓ | ✓ | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
+| Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Portal · rosa & lil | `catalog:likefountain:portal:portal` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Rainbow | `catalog:likefountain:portal:rainbow` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Neon | `catalog:likefountain:portal:neon` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Fire | `catalog:likefountain:portal:fire` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Ice | `catalog:likefountain:portal:ice` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Gold | `catalog:likefountain:portal:gold` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Aurora | `catalog:likefountain:portal:aurora` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Pastel | `catalog:likefountain:portal:pastel` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Mono | `catalog:likefountain:portal:mono` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 
 ### BATTLE MVP · 12 DESIGNER
 
