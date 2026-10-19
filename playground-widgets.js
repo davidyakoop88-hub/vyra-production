@@ -550,7 +550,12 @@ const BESKR = {
   streak: 'Profilbild som flippar till gåvan',
   goal: 'Mål med markör, bubblor och färgpalett'
 };
-const NAT = { podium: { w: 940, h: 900 }, streak: { w: 760, h: 900 }, goal: { w: 940, h: 640 } };
+// Designytan: `w` ar bredden skalan raknas mot (oforandrad, sa sparade widgetar behaller sin storlek),
+// `ut` innehallets faktiska bredd nar den ar storre och `h` hojden. UPPMATT 2026-10-18 i riktig Chrome
+// (verifieringen): podiet ritar .pod{width:980px} i en 940-yta, sa titel och kolumner stack ut 16 px
+// till hoger om markeringsramen i alla 13 podier; Streak ritar 944 hogt i en 900-lada och STREAK-
+// pillen hamnade 17 px under ramen i alla fem. Roten omsluter nu det som ritas.
+const NAT = { podium: { w: 940, ut: 980, h: 900 }, streak: { w: 760, h: 944 }, goal: { w: 940, h: 640 } };
 const GOALH = { 1: 250, 2: 320, 3: 520, 4: 470, 5: 280, 6: 360, 7: 620, 8: 660, 9: 620 };
 const STATE = {};          // per-widget runtime-state som överlever en omrendering
 const REG = new Map();     // host-element -> { id, kind, inst }
@@ -731,7 +736,7 @@ if (typeof liveLayerName === 'function') {
 const oldWh = wh;
 wh = function (w) {
   if (!KINDS[w.type]) return oldWh(w);
-  const k = KINDS[w.type], n = natOf(w), width = w.width || 300, s = width / n.w, height = Math.round(n.h * s);
+  const k = KINDS[w.type], n = natOf(w), s = (w.width || 300) / n.w, width = Math.round((n.ut || n.w) * s), height = Math.round(n.h * s);
   return `<div class="widget templatePg ${w.type}${selected === w.id ? ' selected' : ''}" data-id="${w.id}" style="left:${w.x || 0}px;top:${w.y || 0}px;width:${width}px;height:${height}px"><div class="pgw wroot" data-pgid="${w.id}" data-pgkind="${k}" style="width:${n.w}px;--pgs:${s.toFixed(4)};transform:scale(${s.toFixed(4)});transform-origin:0 0"></div><span class="resize-handle">↘</span></div>`;
 };
 

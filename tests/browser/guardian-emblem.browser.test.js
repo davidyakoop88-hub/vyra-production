@@ -243,7 +243,9 @@ test('G-STEG-HÖJD: avatarhålet är runt i renderad form', { skip }, async () =
   const m = await allaSteg();
   for (const s of STEG) {
     const kvot = m[s].halBredd / m[s].halHojd;
-    assert.ok(kvot > 0.88 && kvot < 1.14,
+    // 2 %, inte 12: med 0.88-1.14 gick ett hål på 165x155 px (6,5 % ovalt, steg 3) igenom
+    // (verifieringen 2026-10-18). Profilbilden ritas nu som en cirkel inskriven i hålet.
+    assert.ok(kvot > 0.98 && kvot < 1.02,
       `steg ${s}: hålet renderas ${m[s].halBredd}×${m[s].halHojd} px — det är ingen cirkel`);
   }
 });

@@ -9,8 +9,9 @@
 //     localStorage-påstående kan aldrig bita här; §7 säger då: bevisa sidoeffektens PAYLOAD).
 //   * vyra-historik återställer exakt vinkel vid ångra (helt i minnet — notera() läser state
 //     direkt, före writeActive).
-//   * komposörens inline-kontrakt: `rotate(θ) scaleY(sy)` med !important på roten, och
-//     FRÅNVARO när båda är neutrala (bakåtkompatibiliteten).
+//   * komposörens inline-kontrakt: `rotate(θ)` med !important på roten, och FRÅNVARO när
+//     rotationen är neutral (bakåtkompatibiliteten). Sedan 2026-10-18 ALDRIG scaleY — sparad
+//     widgetScaleY migreras till en likformig skala (tests/storlek-migrering.test.js).
 //
 // RIGGREGEL: måla canvasen INNAN fler skript laddas — varje h.load() är en childList-mutation
 // som fyrar media.js-observatörer, och utan .canvas kraschar de och fäller fel test.
@@ -61,19 +62,25 @@ test('ångra återställer exakt vinkel', () => {
     'ångra återställde inte vinkeln — rotationen ligger utanför historikens projektion');
 });
 
-test('komposören skriver båda delarna inline med !important på roten', () => {
+// ÄNDRAT 2026-10-18: provet krävde förr `scaleY(1.5)` i matrisen — sträckningen var en avsiktlig
+// funktion (Davids beslut 2026-08-13). Beslutet 2026-10-18 ersätter det: inget innehåll får
+// sträckas. Rotationen ska fortfarande skrivas inline med !important; sträckningen aldrig, och den
+// sparade widgetScaleY 1.5 ska ha blivit en likformig skala √1.5.
+test('komposören skriver rotationen inline med !important — och aldrig en sträckning', () => {
   const h = rigg(widget({ rotation: 30, widgetScaleY: 1.5 }));
   const el = h.document.querySelector('[data-id="rot1"]');
   return vanta().then(() => {
     const t = el.style.getPropertyValue('transform');
-    assert.match(t, /rotate\(30deg\)/, `rotationen saknas i inline-transform: "${t}"`);
-    assert.match(t, /scaleY\(1\.5\)/, `sträckningen saknas i inline-transform: "${t}"`);
+    assert.equal(t, 'rotate(30deg)', `inline-transform ska vara bara rotationen: "${t}"`);
     assert.equal(el.style.getPropertyPriority('transform'), 'important',
       'utan !important förlorar inline-transformen kaskaden (uppmätt i widget-handles)');
+    const w = h.window.eval('state.widgets[0]');
+    assert.equal('widgetScaleY' in w, false, 'sparad sträckning migrerades inte');
+    assert.equal(w.widgetScale, Math.round(Math.sqrt(1.5) * 1000) / 1000);
   });
 });
 
-test('neutralläget är frånvaro: rotation 0 och scaleY 1 ger ingen inline-transform', () => {
+test('neutralläget är frånvaro: rotation 0 (och ett neutralt widgetScaleY 1) ger ingen inline-transform', () => {
   const h = rigg(widget({ rotation: 0, widgetScaleY: 1 }));
   const el = h.document.querySelector('[data-id="rot1"]');
   return vanta().then(() => {
@@ -103,4 +110,35 @@ test('komposören är transformens enda skrivare — satStrackning delegerar', (
     'widget-handles.js skriver fortfarande transform själv — två skrivare klobbrar varandra tyst');
   assert.match(handles, /VyraTransform/,
     'widget-handles.js delegerar inte till komposören');
+});
+
+// TRANSFORMSKALAN KOMPONERAS IN (2026-10-19). Top Coins Halo/Signal Orbit skalar med
+// `transform: scale(var(--tc-scale))` (topcoins-v2.css). En ensam `rotate(θ) !important` ersatte den
+// regeln och widgeten föll till skala 1 när den roterades. Formen är nu translate((s−1)·50 %)
+// rotate(θ) scale(s): samma s på båda axlarna, mitten där den oroterade regeln har den.
+test('Top Coins transformskala: rotationen komponerar rotate(θ) scale(s), aldrig skala per axel', () => {
+  const h = rigg(widget());
+  const T = h.window.VyraTransform;
+  const el = h.document.createElement('div');
+  el.className = 'widget vyra-topcoins-new topcoins-halo';
+  el.setAttribute('style', 'left:10px;top:20px;width:230px;--tc-scale:1.6');
+  assert.equal(T.cssSkala(el), 1.6);
+  T.applicera({ rotation: 15 }, el);
+  assert.equal(el.style.getPropertyValue('transform'), 'translate(30%, 30%) rotate(15deg) scale(1.6)');
+  assert.equal(el.style.getPropertyPriority('transform'), 'important');
+  assert.doesNotMatch(el.style.getPropertyValue('transform'), /scale[XY]\(/);
+  // Draget skriver skalan utan render(): den roterade transformen följer med.
+  const w = { rotation: 15, widgetScale: 1.6 };
+  T.satSkala(w, el, 2);
+  assert.equal(el.style.getPropertyValue('--tc-scale'), '2');
+  assert.equal(el.style.getPropertyValue('transform'), 'translate(50%, 50%) rotate(15deg) scale(2)');
+  // Neutral rotation: ingen inline-transform alls, CSS-regeln skalar som förut.
+  T.applicera({ rotation: 0 }, el);
+  assert.equal(el.style.getPropertyValue('transform'), '');
+  // rk6 tar bort klassen och skalar med zoom — då finns ingen transformskala att komponera.
+  const rk6 = h.document.createElement('div');
+  rk6.className = 'widget rk6 rk6-voltage';
+  rk6.setAttribute('style', 'zoom:1.6');
+  T.applicera({ rotation: 15 }, rk6);
+  assert.equal(rk6.style.getPropertyValue('transform'), 'rotate(15deg)');
 });

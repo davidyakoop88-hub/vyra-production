@@ -41,9 +41,22 @@
   var MIN_KVAR = 8;               // en rutnätsruta, samma mått som snappens rutnät
   var MIN_SYNLIG = 48;            // så mycket av en widget som alltid ligger kvar på duken
 
+  // MALMATTET, INTE ETT MELLANLAGE (verifieringen 2026-10-18): duken har `transition:width .22s,
+  // height .22s` (studio.css), sa offsetWidth direkt efter ett formatbyte ar fortfarande Mobil-dukens
+  // 432x768. Variablerna som layout-format.js skriver ar slutmattet och lases forst.
+  function malmatt(c) {
+    try {
+      var cs = getComputedStyle(c);
+      var b = parseFloat(cs.getPropertyValue('--layout-width')), h = parseFloat(cs.getPropertyValue('--layout-height'));
+      return b > 0 && h > 0 ? { bredd: b, hojd: h } : null;
+    } catch (e) { return null; }
+  }
+
   function duken() {
     try {
       var c = document.querySelector('.editor-shell .canvas') || document.querySelector('.canvas');
+      var m = c && malmatt(c);
+      if (m) return m;
       if (c && c.offsetWidth > 0 && c.offsetHeight > 0) {
         return { bredd: c.offsetWidth, hojd: c.offsetHeight };
       }
@@ -73,6 +86,10 @@
   function skalanFor(el) {
     try {
       if (!el || typeof getComputedStyle !== 'function') return 1;
+      // Inline-zoomen forst: den beraknade avrundas till fem decimaler (Last X 432/340 = 1.270588...
+      // lases som 1.27059), och da stack en widget som fyller duken exakt ut 0,0005 px.
+      var iz = parseFloat(el.style && el.style.zoom);
+      if (Number.isFinite(iz) && iz > 0) return iz;
       var z = getComputedStyle(el).zoom;              // 'normal' i webblasare utan stod
       var s = parseFloat(z);
       return Number.isFinite(s) && s > 0 ? s : 1;
@@ -129,9 +146,9 @@
   // Sant när widgeten sticker ut ur duken — åt något håll. Flyttar ingenting; används av
   // markeringen så att den som redan står fel går att se utan att layouten skrivs om.
   function stickerUt(vanster, topp, bredd, hojd, dukMatt) {
-    var d = dukMatt || duken();
-    return vanster < 0 || topp < 0 ||
-      vanster + (bredd || 0) > d.bredd || topp + (hojd || 0) > d.hojd;
+    var d = dukMatt || duken(), e = 0.01;   // flyttalsbrus: 432 / (432/340) ar inte exakt 340
+    return vanster < -e || topp < -e ||
+      vanster + (bredd || 0) > d.bredd + e || topp + (hojd || 0) > d.hojd + e;
   }
 
   // HUR MYCKET sticker ut, per sida, i samma rum som matten ges i. Ren rakning. `storst` ar den
@@ -228,11 +245,23 @@
         var dw = dukFor(el, d);
         if (urval ? !stickerUt(x, y, el.offsetWidth, el.offsetHeight, dw)
                   : !forsvunnen(x, y, el.offsetWidth, el.offsetHeight, dw, synligFor(el))) return;
-        // En NY widget bredare an duken (Glove Snipe 760, Like Fountain 620 i katalogen) far
-        // dukens bredd som start. Bara `width` rors - hojden foljer innehallet.
-        if (urval && el.offsetWidth > dw.bredd && Number.isFinite(Number(w.width))) w.width = dw.bredd;
+        // En NY widget storre an duken. FARDIGA KOMPOSITIONER skalas LIKFORMIGT (w.widgetScale) tills de
+        // ryms i bada leder — samma regel som handtagen och panelen sedan 2026-10-18. Forr fick de
+        // dukens bredd, vilket andrade kompositionen (Guardians aura foljer bredden) och aldrig
+        // hjalpte pa hojden: Guardian steg 3 (400x560) stack ut 128 px under Dator-dukens 432.
+        // Egen text och media far fortfarande dukens bredd — dar ar bredden ett riktigt matt.
+        var T = root.VyraTransform, fast = T && typeof T.klass === 'function' && T.klass(w) === 'fast';
+        var z0 = skalanFor(el);
+        if (urval && fast && !el.style.getPropertyValue('--tc-scale') && !el.style.getPropertyValue('--tp-scale')) {
+          var f = Math.min(1, d.bredd / (el.offsetWidth * z0), d.hojd / (el.offsetHeight * z0));
+          if (f < 0.999) {
+            var s0 = Number(w.widgetScale) > 0 ? Number(w.widgetScale) : 1;
+            w.widgetScale = Math.floor(s0 * f * 1000) / 1000;      // nedat: avrundat uppat stack den ut 0,1 px
+            dw = dukIWidgetens(d, z0 * w.widgetScale / s0);
+          }
+        } else if (urval && el.offsetWidth > dw.bredd && Number.isFinite(Number(w.width))) w.width = dw.bredd;
         w.x = Math.min(Math.max(0, x), Math.max(0, dw.bredd - Math.min(el.offsetWidth, dw.bredd)));
-        w.y = Math.min(Math.max(0, y), Math.max(0, dw.hojd - el.offsetHeight));
+        w.y = Math.min(Math.max(0, y), Math.max(0, dw.hojd - Math.min(el.offsetHeight, dw.hojd)));
         flyttade++;
       });
       if (flyttade && typeof save === 'function') save();
@@ -464,7 +493,7 @@
     utsprang: utsprang, delvisUtanfor: delvisUtanfor, panelvarning: panelvarning, inneHelt: inneHelt,
     dukIWidgetens: dukIWidgetens, skalanFor: skalanFor, dukFor: dukFor,
     markera: markera, rakna: rakna, flyttaInAlla: flyttaInAlla, flyttaIn: flyttaIn, raknare: raknare,
-    passaInNya: passaInNya, markeraNy: markeraNy, NY_FONSTER_MS: NY_FONSTER_MS,
+    passaInNya: passaInNya, markeraNy: markeraNy, slappNy: slappNy, NY_FONSTER_MS: NY_FONSTER_MS,
     haktaDrag: haktaDrag,
     MIN_KVAR: MIN_KVAR, MIN_SYNLIG: MIN_SYNLIG, STANDARD: STANDARD
   };
@@ -475,14 +504,30 @@
 
   // Markeringen och räknaren körs efter varje render. render() byter ut noderna, så en klass
   // satt en gång hade försvunnit vid nästa ritning.
+  //
+  // EN GANG TILL, EFTER RENDERINGENS OBSERVERARE (verifieringen 2026-10-18). render() ritar en ny
+  // .canvas med standardmattet ur studio.css, och layout-format.js satter --layout-width/-height for
+  // Dator 16:9 forst i sin MutationObserver — en mikrouppgift EFTER render. Markeringen har mätte
+  // alltsa mot en Mobil-duk (432x768) och fann ingenting: 25 av 29 widgetar som stack ut under Dator-
+  // dukens underkant (Battle MVP coronation 62 px, Guardian 82 px) fick varken data-sticker-ut eller
+  // panelvarning, och de fyra som fick det bar ett inaktuellt varde fran Mobil. Observerarens
+  // mikrouppgift koas vid forsta mutationen, alltsa fore den har, sa en mikrouppgift kod efter
+  // render() ser den riktiga duken. Formatbytet sjalvt renderar inte — det far en egen krok.
+  function efterRitning() { markera(); raknare(); panelvarning(); }
+  function efterObservers() {
+    if (typeof queueMicrotask === 'function') queueMicrotask(efterRitning);
+    else Promise.resolve().then(efterRitning);
+  }
   if (typeof root.render === 'function') {
     var forra = root.render;
     root.render = function () {
       var r = forra.apply(this, arguments);
       passaInNya(); markera(); raknare(); panelvarning();
+      efterObservers();
       return r;
     };
   }
+  if (root.addEventListener) root.addEventListener('vyra:layout-format', efterObservers);
 
   // Varje katalogknapp gar genom VyraWidgets.create - det ar dar en ny widget syns.
   if (root.VyraWidgets && typeof root.VyraWidgets.create === 'function' && !root.VyraWidgets.create.__grans) {

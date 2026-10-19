@@ -249,7 +249,9 @@
 .widget.vyra-toplike.rk6-celestial .rk6-rang>i{transform:rotate(-45deg)}
 .widget.vyra-toplike.rk6-celestial .rank-1 .rk6-rang{background:linear-gradient(135deg,#fff -10%,#ffd54a 55%,#b98000 130%);box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 10px #ffd54a}
 
-.widget.vyra-toplike.rk6.rk6-royal-rose{--av:56px;--karna-px:42px;--av-h:82px;--ring-inset:-8px;--bl-inset:-6px;--bl-blur:4px;--karna:42px;--karna-h:43px;--karna-top:48%;
+/* Kärnan är kvadratisk: med --karna-h 43px blev de fem runda profilbilderna 42x43 (2,3 % ovala,
+   verifieringen 2026-10-18). Ringens mitt står kvar via --karna-top. */
+.widget.vyra-toplike.rk6.rk6-royal-rose{--av:56px;--karna-px:42px;--av-h:82px;--ring-inset:-8px;--bl-inset:-6px;--bl-blur:4px;--karna:42px;--karna-h:42px;--karna-top:48%;
   --ram:url(assets/images/ranking-sixpack/gold-crown-rose-ring.png);--ram-filter:brightness(1.35) contrast(1.2) saturate(1.15) drop-shadow(0 2px 6px rgba(0,0,0,.7))}
 .widget.vyra-toplike.rk6-royal-rose .rk6-ring::before{
   background:radial-gradient(circle,color-mix(in srgb,var(--c) 60%,transparent) 0%,color-mix(in srgb,var(--c2) 35%,transparent) 45%,transparent 70%)}

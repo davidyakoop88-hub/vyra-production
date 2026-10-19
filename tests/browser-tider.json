@@ -112,6 +112,9 @@
     "verktygsrad-overlapp.browser.test.js": 8,
     "widget-grans.browser.test.js": 160,
     "widget-handtag.browser.test.js": 66,
+    "storlek-proportioner.browser.test.js": 125,
+    "storlek-verifiering.browser.test.js": 150,
+    "storlek-matning.browser.test.js": 400,
     "widget-rotation.browser.test.js": 64,
     "widgetlank-filtrering.browser.test.js": 42,
     "zoom.browser.test.js": 23
