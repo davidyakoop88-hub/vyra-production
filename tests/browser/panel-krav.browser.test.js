@@ -5,7 +5,8 @@
 // Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
 // (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js), Top Like/Coins/Points (vyra-ranking-panel.js) och
 // målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) och
-// Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js) — kräver provet
+// Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js) och playgroundfamiljerna Top Gifter Podium, Top
+// Streak Flip och Goal Pro (vyra-playground-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -168,6 +169,30 @@ const STREAK_MODELLER = [
   { namn: 'Top Streak · Clean Flip', nyckel: 'catalog:topstreak', aterstall: { utseende: 'accent', innehall: 'dataName' } },
   ...[1, 2, 3].map(d => ({ namn: 'Top Streak · Design ' + d, nyckel: 'catalog:topstreak:design:' + d, aterstall: { utseende: 'accent', innehall: 'dataName' } })),
 ];
+// PLAYGROUND (vyra-playground-panel.js, PR 11): Top Gifter Podium (13), Top Streak Flip (5) och Goal Pro (9).
+// Panelkraven gäller alla 27. Effekten per kontroll mäts för podiet med kodad ram och med en HD-ram, en Top
+// Streak Flip och två Goal Pro-designer (Rak bar och Ring). Fälten ligger i w.pg, så Återställ utseende mäts
+// här med bakgrunden (ett fält direkt på w) och rubriken w.title; utseendet i w.pg provas i pg-livevag.
+//
+// TIDSSTYRT i Top Streak Flip är reglerna för vad som händer när gåvor kommer: Visa från streak, Streak bryts
+// efter och Flippa mellan profil och gåva med Flip-tid. I editorn står demot (streak 12) stilla. De provas med
+// riktiga händelser i pg-livevag.browser.test.js.
+const PG_ATERSTALL = { utseende: 'bgColor', innehall: 'title' };
+const PG_STREAK_TIDSSTYRT = {
+  pgx_gap: 'verkar bara mellan gåvor — provas i pg-livevag.browser.test.js',
+  pgx_minn: 'verkar bara när en combo kommer — provas i pg-livevag.browser.test.js',
+  pgx_flip: 'flippen går över tid — provas i pg-livevag.browser.test.js',
+  pgx_flipt: 'flippen går över tid — provas i pg-livevag.browser.test.js',
+};
+const PG_RAMAR = ['none', 'royal-phoenix', 'obsidian-dragon', 'gilded-lion', 'frostfire-crown', 'diamond-halo', 'midnight-butterfly',
+  'thunder-warden', 'stellar-emperor', 'ocean-oracle', 'moonlit-sakura', 'celestial-serpent', 'neon-valkyrie'];
+const PG_MODELLER = [
+  ...PG_RAMAR.map(r => ({ namn: 'Top Gifter Podium · ' + r, nyckel: 'catalog:pgpodium:' + r, effekt: r === 'none' || r === 'royal-phoenix', aterstall: PG_ATERSTALL })),
+  ...['royal-wings', 'frost-wings', 'emerald-wings', 'neon-wings', 'rose-wings'].map(s => ({ namn: 'Top Streak Flip · ' + s, nyckel: 'catalog:pgstreak:' + s,
+    effekt: s === 'royal-wings', aterstall: PG_ATERSTALL, tidsstyrt: PG_STREAK_TIDSSTYRT })),
+  ...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => ({ namn: 'Goal Pro · design ' + d, nyckel: 'catalog:pggoal:' + d,
+    effekt: d === '1' || d === '3', aterstall: PG_ATERSTALL })),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -179,6 +204,7 @@ const MODELLER = [
   ...RANKING_MODELLER,
   ...MAL_MODELLER,
   ...STREAK_MODELLER,
+  ...PG_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 // st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st").
@@ -241,7 +267,7 @@ function sidStruktur() {
   });
   // Etiketter: varje rads egen text (utan valens alternativ och värdet i <b>), mediaväljarens och
   // ramens rubriker, och fristående knappar. Knappar INUTI en sammansatt kontroll (mediaväljarens
-  // Välj bild/Använd automatisk, ramväljarens rutor) är delar av den kontrollen.
+  // Välj bild/Använd automatisk, ramväljarens rutor, playgroundens färgrutor) är delar av den kontrollen.
   const etiketter = [];
   for (const s of p.querySelectorAll('[data-panelram-sektion]')) {
     s.querySelectorAll('label').forEach(l => {
@@ -253,7 +279,7 @@ function sidStruktur() {
     });
     s.querySelectorAll('.vm-etikett, .pr-etikett').forEach(n => { if (vis(n)) etiketter.push(n.textContent.trim()); });
     s.querySelectorAll('button').forEach(b => {
-      if (!vis(b) || b.matches('.pg-toggle, .vyra-emoji-knapp') || b.closest('label, .vyra-mediaval, .pro-frame-picker')) return;
+      if (!vis(b) || b.matches('.pg-toggle, .vyra-emoji-knapp') || b.closest('label, .vyra-mediaval, .pro-frame-picker, .pg-pal')) return;
       etiketter.push(b.textContent.replace(/\s+/g, ' ').trim());
     });
   }

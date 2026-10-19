@@ -480,3 +480,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Streak i panelflytten (färgarv i renderarna)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 162
+
+## 2026-10-19 — 162 referenser skrivna
+
+- **Motiv:** Playground-sandlåda (ctx i renderaren)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 162

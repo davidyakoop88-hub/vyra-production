@@ -13,14 +13,19 @@ function grad(n){const h=hue(n);return `linear-gradient(135deg,hsl(${h} 80% 58%)
 function bump(el){el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")}
 
 
+// SESSIONEN S är sändningens: riktiga livehändelser (routeLiveBattleEvent → feed) skriver här och alla
+// monterade instanser läser här. ▶ Testa widget får aldrig röra den (panelspecifikationen 2.3) — en
+// sandlåda (sandlada() längre ner) har sin egen S och sin egen STATE och skickar dem som ctx. Utan ctx
+// gäller den här, så livevägen är oförändrad.
 const S={users:{},coins:0,likes:0,follows:0,shares:0,focus:null};
-function ensure(n){return S.users[n]||(S.users[n]={coins:0,xp:0})}
-function applyState(e){
-  const u=ensure(e.user);if(e.avatar)u.img=e.avatar;
-  if(e.type==="gift"){const c=e.gift.c*e.count;u.coins+=c;u.xp+=c;S.coins+=c;S.focus=e.user}
-  else if(e.type==="likes"){S.likes+=e.count;u.xp+=e.count}
-  else if(e.type==="follow"){S.follows++}
-  else if(e.type==="share"){S.shares++}
+const nySession=()=>({users:{},coins:0,likes:0,follows:0,shares:0,focus:null});
+function ensure(n,s=S){return s.users[n]||(s.users[n]={coins:0,xp:0})}
+function applyState(e,s=S){
+  const u=ensure(e.user,s);if(e.avatar)u.img=e.avatar;
+  if(e.type==="gift"){const c=e.gift.c*e.count;u.coins+=c;u.xp+=c;s.coins+=c;s.focus=e.user}
+  else if(e.type==="likes"){s.likes+=e.count;u.xp+=e.count}
+  else if(e.type==="follow"){s.follows++}
+  else if(e.type==="share"){s.shares++}
 }
 
 function hueNone(){}
@@ -106,7 +111,8 @@ const DEMO_PODIUM=[["Lina",{coins:1200,img:""}],["Jokero",{coins:800,img:""}],["
 const DEMO_STREAK={user:"Lina",gift:{id:"rose",n:"Rose",e:"🌹",c:1,img:""},n:12,img:""};
 W.podium={name:"Top Gifter-podium",title:true,
   defaults:{accent:"#ffd24a",accent2:"#ff4fa3",title:"TOP GIFTERS"},schema:[],
-  create(root,O){
+  create(root,O,ctx){
+    const SS=(ctx&&ctx.S)||S;   // sandlådans session i ▶ Testa widget, annars sändningens
     root.innerHTML='<div class="pod"><div class="pod-title"></div><div class="pod-cols"></div></div>';
     const cols=$(".pod-cols",root),title=$(".pod-title",root),els=[];
     [1,0,2].forEach(r=>{const c=document.createElement("div");c.className="pcol r"+(r+1);
@@ -115,7 +121,7 @@ W.podium={name:"Top Gifter-podium",title:true,
     let tomt=true;
     function refresh(){
       title.textContent=O().title;
-      const riktiga=Object.entries(S.users).filter(u=>u[1].coins>0).sort((a,b)=>b[1].coins-a[1].coins).slice(0,3);
+      const riktiga=Object.entries(SS.users).filter(u=>u[1].coins>0).sort((a,b)=>b[1].coins-a[1].coins).slice(0,3);
       tomt=!riktiga.length;
       const top=(!riktiga.length&&!PG_OVERLAY)?DEMO_PODIUM:riktiga;
       for(let r=0;r<3;r++){
@@ -142,12 +148,12 @@ const STREAK_MAP=Object.fromEntries(STREAK_MODELS.map(m=>[m.id,m]));
 W.streak={name:"Top Streak",title:false,
   defaults:{accent:"#ffc83d",accent2:"#ff8a1f"},schema:[
     {k:"model",l:"Modell",t:"select",o:STREAK_MODELS.map(m=>[m.id,m.name]),d:"royal-wings"},
-    {k:"mcol",l:"Färger från modellen",t:"select",o:[["1","Ja"],["0","Nej (använd Färg 1/2)"]],d:"1"},
-    {k:"gap",l:"Streak bryts efter (s)",t:"range",min:3,max:20,step:1,d:8},
-    {k:"minn",l:"Visa från streak",t:"range",min:1,max:10,step:1,d:2},
+    {k:"mcol",l:"Färger",t:"select",o:[["1","Från modellen"],["0","Egna (Färg 1 och 2)"]],d:"1"},
+    {k:"gap",l:"Streak bryts efter",u:"s",t:"range",min:3,max:20,step:1,d:8},
+    {k:"minn",l:"Visa från streak",u:"st",t:"range",min:1,max:10,step:1,d:2},
     {k:"showname",l:"Visa namn",t:"select",o:[["1","Ja"],["0","Nej"]],d:"1"},
     {k:"flip",l:"Flippa mellan profil och gåva",t:"select",o:[["1","Ja"],["0","Nej"]],d:"1"},
-    {k:"flipt",l:"Flip-tid (s)",t:"range",min:2,max:10,step:.5,d:3.5}],
+    {k:"flipt",l:"Flip-tid",u:"s",t:"range",min:2,max:10,step:.5,d:3.5}],
   create(root,O){
     const FL='<svg viewBox="0 0 24 24"><path d="M13.5 2s.6 3.2-1.3 5.5C10.4 9.6 8 11 8 14.500A5.500 5.500 0 0 0 13.500 20c3 0 5.500-2.300 5.500-5.600 0-2.200-1-3.800-2-5 0 0-.5 1.700-1.700 2.500.3-3-.8-6.400-1.800-9.900z"/></svg>';
     root.innerHTML='<div class="stk stk-empty"><div class="stk-stage"><div class="stk-av"><div class="fl"><div class="fa"></div><div class="fb"><span class="ge2"></span></div></div></div><div class="stk-gift"><span class="ge"></span></div><img class="stk-frame" alt=""></div><div class="stk-info"><div class="stk-nm"></div><div class="stk-pill">'+FL+'<small>STREAK</small><b>0</b></div></div></div>';
@@ -161,7 +167,8 @@ W.streak={name:"Top Streak",title:false,
       const b=m.big,s=m.small,ar=b.r*1.05;
       av.style.left=(b.cx-ar)*S+"px";av.style.top=(b.cy-ar)*S+"px";av.style.width=av.style.height=ar*2*S+"px";fa.style.fontSize=b.r*S*.6+"px";
       ge2.style.width=ge2.style.height=(ar*2*S*.64)+"px";
-      if(O().x.mcol==="1"){el.style.setProperty("--a",m.a);el.style.setProperty("--b",m.b)}else{el.style.removeProperty("--a");el.style.removeProperty("--b")}
+      // Färger från modellen gäller inte när widgeten ärver färgschemat (O().arv, se cfgOf).
+      if(O().x.mcol==="1"&&!O().arv){el.style.setProperty("--a",m.a);el.style.setProperty("--b",m.b)}else{el.style.removeProperty("--a");el.style.removeProperty("--b")}
       if(s){gf.style.display="";gf.style.left=(s.cx-s.r)*S+"px";gf.style.top=(s.cy-s.r)*S+"px";gf.style.width=gf.style.height=s.r*2*S+"px";ge.style.width=ge.style.height=(s.r*2*S*.74)+"px"}
       else gf.style.display="none";
       clearInterval(flipT);flipT=0;
@@ -211,9 +218,11 @@ const GMET={
   coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (coins)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
   gifts:{l:"GÅVOR",i:"🎁",d:50,n:"Antal gåvor",f:e=>e.type==="gift"?e.count:0},
   likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Tap / likes",f:e=>e.type==="likes"?e.count:0},
-  follows:{l:"FÖLJ-MÅL",i:"➕",d:50,n:"Följare",f:e=>e.type==="follow"?1:0},
-  shares:{l:"DELA-MÅL",i:"🔁",d:25,n:"Delningar",f:e=>e.type==="share"?1:0},
-  comments:{l:"KOMMENTAR-MÅL",i:"💬",d:50,n:"Kommentarer",f:e=>e.type==="comment"?1:0}};
+  // antal: bara sandlådans exempelhändelser bär det (många följare i en händelse, så att ▶ Testa widget
+  // når 60 % utan tusentals händelser). conv() sätter det aldrig, så en riktig händelse räknas som 1.
+  follows:{l:"FÖLJ-MÅL",i:"➕",d:50,n:"Följare",f:e=>e.type==="follow"?(e.antal||1):0},
+  shares:{l:"DELA-MÅL",i:"🔁",d:25,n:"Delningar",f:e=>e.type==="share"?(e.antal||1):0},
+  comments:{l:"KOMMENTAR-MÅL",i:"💬",d:50,n:"Kommentarer",f:e=>e.type==="comment"?(e.antal||1):0}};
 const GMETOPT=Object.keys(GMET).map(k=>[k,GMET[k].n]);
 W.goalvar={name:"Mål-varianter",
   defaults:{accent:"#3dffb0",accent2:"#2d8cff"},schema:[
@@ -478,8 +487,8 @@ Object.assign(W.goal,{name:"Mål / progress",title:true,
     {k:"cap",l:"Visa designnamn",t:"select",o:[["0","Nej"],["1","Ja"]],d:"0"},
     {k:"skin",l:"Stilskinn",t:"select",o:[["std","Standard"],["glass","Glas"],["neon","Neon"],["parallel","Parallellogram"],["pixel","Pixel"],["hud","HUD (gaming)"]],d:"std"},
     {k:"badge",l:"Procentbricka",t:"select",o:[["0","Av"],["1","På"]],d:"0"}],
-  create(root,O){
-    const inst=W.goalvar.create(root,O);
+  create(root,O,ctx){
+    const inst=W.goalvar.create(root,O,ctx);
     let lastM=O().x.metric;
     function apply(){
       const x=O().x;
@@ -523,9 +532,9 @@ const GLOBAL=[
   {k:"accent",l:"Färg 1",t:"color"},{k:"accent2",l:"Färg 2",t:"color"},{k:"text",l:"Textfärg",t:"color"},
   {k:"font",l:"Typsnitt",t:"select",o:[["'Segoe UI',system-ui,sans-serif","Segoe UI"],["Impact,'Arial Narrow Bold',sans-serif","Impact"],["Georgia,serif","Georgia (serif)"],["'Trebuchet MS',sans-serif","Trebuchet"],["'Courier New',monospace","Mono"]]},
   {k:"scale",l:"Storlek",t:"range",min:.5,max:1.8,step:.05},
-  {k:"speed",l:"Rörelsehastighet",t:"range",min:.4,max:2.5,step:.1},
-  {k:"glow",l:"Glöd",t:"range",min:0,max:1.5,step:.05},
-  {k:"radius",l:"Rundning",t:"range",min:0,max:50,step:1},
+  {k:"speed",l:"Rörelsehastighet",u:"×",t:"range",min:.4,max:2.5,step:.1},
+  {k:"glow",l:"Glöd",u:"×",t:"range",min:0,max:1.5,step:.05},
+  {k:"radius",l:"Rundning",u:"px",t:"range",min:0,max:50,step:1},
   {k:"pos",l:"Position",t:"select",o:[["top","Överst"],["mid","Mitten"],["bottom","Nederst"]]}
 ];
 const BASE={text:"#ffffff",font:"'Segoe UI',system-ui,sans-serif",scale:1,speed:1,glow:.8,radius:22,pos:"mid",enter:"zoom",frame:"halo",namefx:"none",frameImg:"none"};
@@ -559,6 +568,9 @@ const NAT = { podium: { w: 940, ut: 980, h: 900 }, streak: { w: 760, h: 944 }, g
 const GOALH = { 1: 250, 2: 320, 3: 520, 4: 470, 5: 280, 6: 360, 7: 620, 8: 660, 9: 620 };
 const STATE = {};          // per-widget runtime-state som överlever en omrendering
 const REG = new Map();     // host-element -> { id, kind, inst }
+// Sändningens ctx: sessionen S, runtime-state STATE och den riktiga sparningen. Varje instans som
+// mount() skapar får den här. En sandlåda (▶ Testa widget) får en egen, utan sparning.
+const LIVE = { S, STATE, save: () => { try { save() } catch (_) {} } };
 
 const safeUrl = u => {
   const s = String(u || '');
@@ -568,17 +580,30 @@ const safeUrl = u => {
 };
 const widgetById = id => { try { return state.widgets.find(x => x.id === id) } catch (_) { return null } };
 
-function cfgOf(w) {
+// ÄRV FÄRGSCHEMA (panelspecifikationen 4.2, vyra-playground-panel.js): Färg 1 → accent, Färg 2 → andra
+// färgen, Textfärg → text och Typsnitt → typsnitt, via bk() i media.js. Utan arv ritas allt som förut.
+// I Top Streak Flip ersätter arvet också "Färger från modellen" (o.arv, se layout()).
+const kit = (w, egen, falt) => (typeof bk === 'function' ? bk(w, egen, falt, egen) : egen);
+function cfgOf(w, ctx = LIVE) {
   const k = KINDS[w.type], o = defaultsFor(k), p = w.pg || {};
   for (const key in p) if (key !== 'x') o[key] = p[key];
   Object.assign(o.x, p.x || {});
-  o.st = STATE[w.id] || (STATE[w.id] = {});
-  o.save = () => { try { save() } catch (_) {} };
+  o.st = ctx.STATE[w.id] || (ctx.STATE[w.id] = {});
+  o.save = ctx.save;
+  let schema = null;
+  try { schema = w.inheritBrandKit && typeof state !== 'undefined' && state && state.brandKit; } catch (_) {}
+  if (schema) {
+    o.arv = true;
+    o.accent = kit(w, o.accent, 'highlight'); o.accent2 = kit(w, o.accent2, 'secondaryText');
+    o.text = kit(w, o.text, 'text'); o.font = kit(w, o.font, 'fontFamily');
+  }
   return o;
 }
 function natOf(w) {
   const k = KINDS[w.type], n = NAT[k];
-  if (k === 'goal') return { w: n.w, h: GOALH[String(cfgOf(w).x.design || '1')] || n.h };
+  // Designen läses utan cfgOf(): den skapar runtime-state för w.id, och wh() ritar även ▶ Testa widgets
+  // klon (w.id + '__prov'), som aldrig får lämna en post i sändningens STATE.
+  if (k === 'goal') { const x = Object.assign({}, defaultsFor(k).x, (w.pg && w.pg.x) || {}); return { w: n.w, h: GOALH[String(x.design || '1')] || n.h }; }
   return n;
 }
 function look(host, o, kind) {
@@ -704,7 +729,47 @@ function glom() {
 window.addEventListener('vyra-session-ended', glom);
 try { window.VyraSessionState && VyraSessionState.registerTeardown && VyraSessionState.registerTeardown('playground-widgets', glom); } catch (_) {}
 
-/* ---------- testhändelser från panelen ---------- */
+/* ---------- sandlådan: ▶ Testa widget (panelspecifikationen 2.4, adaptern 'pg') ----------
+   Spelar en KLON av widgeten på klonens egen nod, med en egen session och egen runtime-state:
+     ctx = { S: ny session, STATE: {}, save: ingenting }.
+   Instansen skapas med samma W[kind].create som mount() använder, men
+     * läggs aldrig i REG — feed() (livehändelserna), resetAll() (live:start) och syncTom() ser den inte,
+     * läser och skriver bara ctx.S och ctx.STATE — sändningens S och STATE rörs inte,
+     * kan inte spara: cfgOf(k, ctx) ger o.save = ingenting (Goal Pro sparar när Mäter byts).
+   Händelserna är redan i playgroundens format ({type:'gift', user, gift:{id,n,e,c,img}, count} …) och går
+   inte genom conv(), som har sändningens combominne (lastRC). Klonen k finns aldrig i state.widgets, så
+   mount() monterar den inte heller av misstag (widgetById(k.id) är null) — data-pgm sätts ändå.
+   Returnerar { event(e), destroy(), cfg() }. */
+function sandlada(host, k) {
+  const kind = KINDS[k && k.type];
+  if (!host || !kind || !W[kind]) throw new Error('VyraPlayground.sandlada: ingen playground-widget');
+  const ctx = { S: nySession(), STATE: {}, save: () => {} };
+  const O = () => cfgOf(k, ctx);
+  host.dataset.pgm = '1';
+  look(host, O(), kind);
+  host.classList.add('play-in');
+  const inst = W[kind].create(host, O, ctx);
+  if (kind === 'podium') applyPodiumFrames(host, O());
+  try { inst.refresh && inst.refresh(); } catch (_) {}
+  let levande = true;
+  return {
+    event(e) {
+      if (!levande || !e || typeof e !== 'object') return;
+      applyState(e, ctx.S);
+      inst.event(e);
+    },
+    destroy() {
+      if (!levande) return;
+      levande = false;
+      try { inst.destroy && inst.destroy(); } catch (_) {}
+    },
+    cfg: O,
+  };
+}
+
+/* ---------- gamla testhändelser ----------
+   pgTest() matar sändningens feed() och anropas INTE längre av panelen (testraden är borttagen,
+   panelspecifikationen 2.5). ▶ Testa widget går via sandlada(). Funktionen ligger kvar orörd. */
 const TESTNAMN = ['Lina', 'Jokero', 'Maja_88', 'Oskar', 'Nova', 'Zayn', 'Elsa', 'Kimmie'];
 const TESTGIFTS = [
   { giftId: 7578, giftName: 'Crown', diamonds: 799, giftImage: 'assets/gifts/events/7578_Crown.png' },
@@ -743,12 +808,13 @@ wh = function (w) {
 /* ---------- panel (props) ---------- */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function fieldHtml(id, f, val) {
-  if (f.t === 'range') return `<label>${esc(f.l)} <span data-pgv="${id}">${val}</span><input id="${id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}"></label>`;
+  // Värdet står i <b> med enheten efter ("0.8 ×"), samma format som panelramen och vyraLivePatch använder.
+  if (f.t === 'range') return `<label>${esc(f.l)} <b data-pgv="${id}" data-pgu="${esc(f.u || '')}">${val}${f.u ? ' ' + esc(f.u) : ''}</b><input id="${id}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}"></label>`;
   if (f.t === 'color') return `<label>${esc(f.l)}<input id="${id}" type="color" value="${esc(val)}"></label>`;
   if (f.t === 'select') return `<label>${esc(f.l)}<select id="${id}">${f.o.map(o => `<option value="${esc(o[0])}"${String(o[0]) === String(val) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label>`;
   return `<label>${esc(f.l)}<input id="${id}" type="text" value="${esc(val)}"></label>`;
 }
-const STORLEK = { k: 'storlek', l: 'Storlek', t: 'range', min: .5, max: 1.8, step: .05 };
+const STORLEK = { k: 'storlek', l: 'Storlek', u: '×', t: 'range', min: .5, max: 1.8, step: .05 };
 const PLACERING = { k: 'placering', l: 'Position', t: 'select', o: [['', 'Egen placering'], ['top', 'Överst'], ['mid', 'Mitten'], ['bottom', 'Nederst']] };
 const grundBredd = k => { try { return VyraWidgets.create(KEYS[k]).width || 300 } catch (_) { return 300 } };
 const storlekAv = (w, k) => Math.min(1.8, Math.max(.5, Math.round((Number(w.width) || grundBredd(k)) / grundBredd(k) * 20) / 20));
@@ -758,11 +824,15 @@ const hojdAv = w => { const el = document.querySelector('.editor-shell .canvas [
 const yFor = (w, v) => { const H = duk().h, h = hojdAv(w); return v === 'top' ? 8 : v === 'bottom' ? Math.max(0, H - h - 8) : Math.max(0, Math.round((H - h) / 2)); };
 // Dropdownen visar en placering bara när widgeten faktiskt står där; annars "Egen placering".
 const placeringAv = w => { const v = w.pg && w.pg.placering; return v && Math.abs((Number(w.y) || 0) - yFor(w, v)) <= 2 ? v : ''; };
-const GLOBAL_PG = k => GLOBAL.filter(f => !(f.k === 'frameImg' && k !== 'podium') && f.k !== 'pos' && f.k !== 'scale');
-function schemaOf(k) {
+// Färg 2 visas inte i Top Streak Flip: ingen stilregel för streaken läser --b (mätt utan verkan, PR 11).
+const GLOBAL_PG = k => GLOBAL.filter(f => !(f.k === 'frameImg' && k !== 'podium') && !(f.k === 'accent2' && k === 'streak') && f.k !== 'pos' && f.k !== 'scale');
+// Målets enhet följer Mäter (spec 5.5: "Mål (enhet efter Mäter: mynt/likes/följare)").
+const MALENHET = { coins: 'mynt', gifts: 'gåvor', likes: 'likes', follows: 'följare', shares: 'delningar', comments: 'kommentarer' };
+function schemaOf(k, o) {
   const sch = W[k].schema || [];
   if (k !== 'goal') return sch;
-  return sch.map(f => f.k === 'design' ? Object.assign({}, f, { o: f.o.filter(o => o[0] !== 'all') }) : f);
+  return sch.map(f => f.k === 'design' ? Object.assign({}, f, { o: f.o.filter(o => o[0] !== 'all') })
+    : f.k === 'target' && o ? Object.assign({}, f, { u: MALENHET[o.x.metric] || MALENHET.coins }) : f);
 }
 const oldProps = props;
 props = function () {
@@ -770,19 +840,24 @@ props = function () {
   if (!w || !KINDS[w.type]) return oldProps();
   const k = KINDS[w.type], o = cfgOf(w);
   const sw = PALETTE.map(([n, a, b]) => `<button type="button" class="pg-sw${(o.accent || '').toLowerCase() === a && (o.accent2 || '').toLowerCase() === b ? ' on' : ''}" data-pgsw="${a}|${b}" title="${esc(n)}" aria-label="Färgpalett ${esc(n)}" style="background:linear-gradient(135deg,${a},${b})"></button>`).join('');
-  const sch = schemaOf(k).map(f => fieldHtml('pgx_' + f.k, f, o.x[f.k])).join('');
+  const sch = schemaOf(k, o).map(f => fieldHtml('pgx_' + f.k, f, o.x[f.k])).join('');
   // STIL i playgroundens ordning (2026-10-17, Davids ord: "se till inställningar matchar widget på
   // sido panel"): Rubrik, Bildram, Entré, Ramlager, Namneffekt, Färgpalett, Färg 1/2, Textfärg,
   // Typsnitt, Storlek, Rörelsehastighet, Glöd, Rundning, Position. Storlek och Position styr
   // widgetens bredd och Y här, eftersom VYRA alltid ritar i skala 1 (--s) och placerar med X/Y.
-  const glob = GLOBAL_PG(k).map(f => (f.k === 'accent' ? `<span class="pg-pal-rubrik">Färgpalett</span><div class="pg-pal" role="group" aria-label="Färgpalett">${sw}</div>` : '')
+  // Färgpaletten och Färg 1/2 skriver samma två fält och står därför i EN rad (#pgFarger), som
+  // panelramen flyttar som en kontroll (panelspecifikationen 5.3).
+  const glob = GLOBAL_PG(k).map(f => (f.k === 'accent' ? `<div class="pg-farger" id="pgFarger"><span class="pg-pal-rubrik">Färgpalett</span><div class="pg-pal" role="group" aria-label="Färgpalett">${sw}</div>` : '')
     + (f.k === 'speed' ? fieldHtml('pgg_storlek', STORLEK, storlekAv(w, k)) : '')
-    + fieldHtml('pgg_' + f.k, f, o[f.k])).join('') + fieldHtml('pgg_placering', PLACERING, placeringAv(w));
+    + fieldHtml('pgg_' + f.k, f, o[f.k]) + (f.k === (k === 'streak' ? 'accent' : 'accent2') ? '</div>' : '')).join('') + fieldHtml('pgg_placering', PLACERING, placeringAv(w));
   const titelFalt = W[k].title ? fieldHtml('pgg_title', { t: 'text', l: 'Rubrik' }, o.title) : '';
-  const testKnappar = (k === 'goal' || k === 'podium' || k === 'streak')
-    ? ['gift:Skicka gåva', 'combo:Combo ×10', 'likes:Likes ×50', 'follow:Följ', 'share:Dela', 'comment:Kommentar', 'reset:Nollställ'].map(s => { const [a, b] = s.split(':'); return `<button type="button" data-pgtest="${a}">${b}</button>` }).join('') : '';
+  // TESTRADEN ÄR BORTA (panelspecifikationen 2.3 och 2.5). "Skicka gåva / Combo ×10 / Likes ×50 / Följ /
+  // Dela / Kommentar / Nollställ" körde pgTest() → feed() i sändningens session S, som riktiga
+  // livehändelser också går genom: en annan Goal Pro i layouten gick från 0 % till 40 %, en annan Top
+  // Streak Flip bytte namn, och Nollställ (resetAll) tömde all målprogress under sändning. ▶ Testa widget
+  // (vyra-playground-panel.js) spelar i stället en klon i en egen sandlåda (sandlada() ovan). pgTest()
+  // och resetAll() ligger kvar — resetAll() behövs för live:start — men panelen anropar dem inte.
   return `<h3>${esc(TITEL[k].toUpperCase())}</h3><div class="template-badge">LIVE · TRANSPARENT</div><div hidden><input id="pt" value="${esc(TITEL[k])}"><input id="pv" value=""></div>`
-    + `<div class="property-group fw-premium-motion"><h4>RÖRELSE</h4><div class="pg-test">${testKnappar}</div></div>`
     + `<div class="property-group"><h4>STIL</h4>${titelFalt}${glob}</div>`
     + (sch ? `<div class="property-group"><h4>${esc(TITEL[k].toUpperCase())}</h4>${sch}</div>` : '')
     + `<div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || 300}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
@@ -882,7 +957,7 @@ bind = function () {
   };
   const wire = (prefix, grp, list) => list.forEach(f => {
     const el = document.getElementById(prefix + f.k); if (!el) return;
-    el.oninput = () => { const sp = document.querySelector(`[data-pgv="${prefix + f.k}"]`); if (sp) sp.textContent = el.value; };
+    el.oninput = () => { const sp = document.querySelector(`[data-pgv="${prefix + f.k}"]`); if (sp) sp.textContent = el.value + (sp.dataset.pgu ? ' ' + sp.dataset.pgu : ''); };
     el.onchange = () => {
       put(grp, f.k, el);
       if (grp === 'x' && k === 'goal' && f.k === 'metric') { w.pg.x.target = (GMET[el.value] || GMET.coins).d; }
@@ -894,7 +969,7 @@ bind = function () {
   wire('pgg_', 'g', GLOBAL_PG(k));
   const st = document.getElementById('pgg_storlek');
   if (st) {
-    st.oninput = () => { const sp = document.querySelector('[data-pgv="pgg_storlek"]'); if (sp) sp.textContent = st.value; };
+    st.oninput = () => { const sp = document.querySelector('[data-pgv="pgg_storlek"]'); if (sp) sp.textContent = st.value + ' ×'; };
     st.onchange = () => {
       // Storleken får inte gå utanför duken: bredden stannar vid dukens bredd och X flyttas in.
       const D = duk(), var_ = placeringAv(w);
@@ -917,9 +992,11 @@ bind = function () {
     if (k === 'streak') { w.pg.x = w.pg.x || {}; w.pg.x.mcol = '0'; }
     save(); render();
   });
-  document.querySelectorAll('[data-pgtest]').forEach(b => b.onclick = ev => { ev.preventDefault(); pgTest(b.dataset.pgtest); });
 };
 
-window.VyraPlaygroundWidgets = { feed, resetAll, scan, types: TYPES, keys: KEYS, modeller: MODELLER, mounted: () => REG.size, state: STATE };
+// session(): en KOPIA av sändningens S — för prov som kräver att ▶ Testa widget lämnar den orörd.
+window.VyraPlaygroundWidgets = { feed, resetAll, scan, types: TYPES, keys: KEYS, modeller: MODELLER, mounted: () => REG.size, state: STATE,
+  session: () => JSON.parse(JSON.stringify(S)), sandlada };
+window.VyraPlayground = { sandlada };
 
 })();

@@ -88,6 +88,16 @@ const MODELLER = [
   { namn: 'Top Streak · Design 1', nyckel: 'catalog:topstreak:design:1', egna: ['falt:accent'], arver: ['accentfärg'] },
   { namn: 'Top Streak · Design 2', nyckel: 'catalog:topstreak:design:2', egna: ['falt:accent', 'falt:accent2'], arver: ['accentfärg', 'andra färgen'], pseudo: true },
   { namn: 'Top Streak · Design 3', nyckel: 'catalog:topstreak:design:3', egna: ['falt:accent', 'falt:accent2', 'falt:streakStil'], arver: ['accentfärg', 'andra färgen'] },
+  // Playground (PR 11, spec 4.2): Färg 1 → accentfärg, Färg 2 → andra färgen, Textfärg och Typsnitt, en modell
+  // per familj. playground-widgets.js cfgOf läser bk(). Paletten och Färg 1/2 är en kontroll (falt:pg.accent).
+  // I Top Streak Flip ersätter arvet Färger från modellen (falt:pg.x.mcol) — Färg 1 visas där bara med egna färger,
+  // och andra färgen ärvs inte (ingen stilregel för streaken läser den).
+  { namn: 'Top Gifter Podium · kodad ram', nyckel: 'catalog:pgpodium:none', egna: ['falt:pg.accent', 'falt:pg.text', 'falt:pg.font'],
+    arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
+  { namn: 'Top Streak Flip · Royal Amethyst', nyckel: 'catalog:pgstreak:royal-wings', egna: ['falt:pg.x.mcol', 'falt:pg.text', 'falt:pg.font'],
+    arver: ['accentfärg', 'textfärg', 'typsnitt'] },
+  { namn: 'Goal Pro · Rak bar', nyckel: 'catalog:pggoal:1', egna: ['falt:pg.accent', 'falt:pg.text', 'falt:pg.font'],
+    arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
 ];
 
 let server, browser, bas;

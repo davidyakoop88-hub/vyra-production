@@ -1,6 +1,6 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
-// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj' och 'topstreak' i Chrome.
+// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj', 'topstreak' och 'pg' i Chrome.
 // (Last-X, alertfamiljerna, Battle MVP, rankingen, målen och Top Streak har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
@@ -1138,5 +1138,154 @@ test('topstreak: ingenting når overlayn', { skip, timeout: 120000 }, async () =
   } finally {
     await overlay.close();
     await editor.close();
+  }
+});
+
+// ---- Playground: Top Gifter Podium, Top Streak Flip och Goal Pro (adaptern 'pg', PR 11) -----------
+//
+// Testet spelar en klon i VyraPlayground.sandlada (playground-widgets.js): en egen session och egen
+// runtime-state, utan REG, conv() och sparning. Den gamla testraden matade sändningens session S och
+// tog en annan Goal Pro i layouten från 0 % till 40 % (granskningen) — prov-mal i layouten ÄR en sådan
+// granne och ska stå kvar på 0 % under och efter testet. Utöver bilden ovan kräver provet att
+// sändningens S och STATE är identiska (djupjämförelse av en JSON-kopia) och att B och grannen har
+// exakt samma DOM.
+const PG_ISOLERING = [
+  { namn: 'Top Gifter Podium · Royal Phoenix', nyckel: 'catalog:pgpodium:royal-phoenix', faser: { entre: 800, visning: 4300, utgang: 600 } },
+  // Ett helt flippvarv (2 × 3,5 s) räknat från monteringen.
+  { namn: 'Top Streak Flip · Royal Amethyst', nyckel: 'catalog:pgstreak:royal-wings', faser: { entre: 800, visning: 6600, utgang: 600 } },
+  { namn: 'Goal Pro · Rak bar', nyckel: 'catalog:pggoal:1', faser: { entre: 800, visning: 4200, utgang: 600 } },
+];
+const pgBild = page => bild(page).then(async b => Object.assign({}, b, await page.evaluate(() => ({
+  pgSession: JSON.stringify(window.VyraPlaygroundWidgets.session()),
+  pgState: JSON.stringify(window.VyraPlaygroundWidgets.state),
+  pgMonterade: window.VyraPlaygroundWidgets.mounted(),
+  malProcent: [...document.querySelectorAll('.canvas [data-id="prov-mal"] .pc')].map(n => n.textContent).filter(Boolean)[0] || null,
+}))));
+const pgKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const host = k.querySelector('.pgw');
+  const synlig = [...k.querySelectorAll('.gvc')].find(c => c.style.display !== 'none');
+  return { id: k.dataset.id, pgm: host && host.dataset.pgm, klass: host && host.className,
+    podium: [1, 2, 3].map(r => { const c = k.querySelector('.pcol.r' + r); return c ? c.querySelector('.nm').textContent + ':' + c.querySelector('.cn').textContent.replace(/\s/g, '') : null; }),
+    streakNamn: (k.querySelector('.stk-nm') || {}).textContent || null, streak: (k.querySelector('.stk-pill b') || {}).textContent || null,
+    baksida: !!k.querySelector('.fl.back'),
+    mal: synlig ? (synlig.querySelector('.pc') || {}).textContent : null, malKlart: !!k.querySelector('.gv.done') };
+});
+
+for (const m of PG_ISOLERING) {
+  test(`pg-adaptern är isolerad: ${m.namn}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      await page.waitForTimeout(1500);
+      await installeraRaknare(page);
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'familjen har ingen typväljare');
+      assert.equal(await page.$('.properties [data-pgtest]'), null, 'testraden är borta ur panelen');
+      const fore = await pgBild(page);
+      assert.equal(fore.malProcent, '0%', 'Goal Pro-grannen står på 0 % före testet');
+      assert.equal(fore.pgMonterade, 3, 'A, B och Goal Pro-grannen är monterade');
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, 'pg');
+      assert.equal(await page.textContent('#pr-testspel'), '■ Stoppa test');
+      assert.deepEqual(s1.faser, m.faser, 'faserna');
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      const k0 = await pgKlon(page);
+      assert.equal(k0.id, 'prov-a__prov');
+      assert.equal(k0.pgm, '1', 'klonen är sandlådans, scan() monterar den inte');
+      assert.match(k0.klass, /\bplay-in\b/, 'entrén spelar på klonen');
+
+      if (m.nyckel.includes('pgpodium')) {
+        await page.waitForTimeout(1200 + 200);
+        assert.deepEqual((await pgKlon(page)).podium, ['Leo:1', '—:0', '—:0'], 'första givaren (Rose)');
+        lika(fore, await pgBild(page), 'efter första gåvan');
+        await page.waitForTimeout(2 * 1100);
+        assert.deepEqual((await pgKlon(page)).podium, ['Alex:799', 'Mia:99', 'Leo:1'], 'Crown tog förstaplatsen: omsorteringen');
+      } else if (m.nyckel.includes('pgstreak')) {
+        await page.waitForTimeout(1200 + 11 * 250 + 200);
+        const k = await pgKlon(page);
+        assert.equal(k.streakNamn, 'Alex', 'exempelgivaren');
+        assert.equal(k.streak, '12', 'combon räknades upp till 12 på klonen');
+        lika(fore, await pgBild(page), 'efter combon');
+        await page.waitForTimeout(3500 - (1200 + 11 * 250 + 200) + 800);
+        assert.equal((await pgKlon(page)).baksida, true, 'klonen vände till gåvan efter Flip-tid');
+      } else {
+        await page.waitForTimeout(1200 + 900);
+        assert.equal((await pgKlon(page)).mal, '60%', '60 % av målet på klonen');
+        lika(fore, await pgBild(page), 'vid 60 %');
+        await page.waitForTimeout(1800);
+        const k = await pgKlon(page);
+        assert.equal(k.mal, '100%', 'målet är nått på klonen');
+        assert.equal(k.malKlart, true, 'MÅL NÅTT spelar på klonen');
+      }
+      lika(fore, await pgBild(page), 'efter förloppet');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(200);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      await page.waitForTimeout(400);
+      const efter = await pgBild(page);
+      lika(fore, efter, 'efter ■');
+      assert.equal(efter.malProcent, '0%', 'Goal Pro-grannen står kvar på 0 % efter testet');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring, ingen kö och ingen routeLiveBattleEvent under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.equal(await page.evaluate(() => JSON.stringify(window.VyraPlaygroundWidgets.session())), fore.pgSession, 'sändningens session oförändrad');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('pg: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:pggoal:3');
+    // Rörelsehastigheten styr entré och utgång (0,8 s och 0,6 s delat med hastigheten).
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.pg = Object.assign({}, w.pg, { speed: 2 }); save(); render(); });
+    await page.waitForTimeout(1500);
+    const fore = await pgBild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 400, visning: 3150, utgang: 300 }, 'faserna följer Rörelsehastighet');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + 100);
+    assert.match(await page.evaluate(() => document.querySelector('.canvas [data-testspel-klon] .pgw').className), /\bplay-out\b/, 'widgetens egen utgång spelar på klonen');
+    await page.waitForTimeout(s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await pgBild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
   }
 });
