@@ -35,6 +35,7 @@
     "mvp-livevag.browser.test.js": 20,
     "ranking-livevag.browser.test.js": 27,
     "mal-livevag.browser.test.js": 45,
+    "streak-livevag.browser.test.js": 36,
     "panelplats.browser.test.js": 18,
     "emoji-knapp.browser.test.js": 46,
     "en-viewer-per-obs-kalla.browser.test.js": 14,

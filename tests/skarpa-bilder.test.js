@@ -107,6 +107,6 @@ test('kopplingarna finns: ingest anropar modulen, registren lyssnar, loader och 
   assert.match(media, /live-client\.js\?v=20261018-klocka/);
   assert.match(media, /live-leaderboard\.js\?v=20261018-1/);
   assert.match(media, /playground-widgets\.js\?v=20261018-1/);
-  assert.match(las('studio.html'), /media\.js\?v=20261019-10/);
+  assert.match(las('studio.html'), /media\.js\?v=20261019-11/);
   assert.ok(JSON.stringify(JSON.parse(las('.claude/domaner.json'))).includes('"vyra-stor-avatar.js"'));
 });

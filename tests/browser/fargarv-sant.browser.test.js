@@ -80,6 +80,14 @@ const MODELLER = [
     egna: ['falt:heartColor', 'falt:heartTextColor', 'falt:heartNumberColor'], arver: ['accentfärg', 'textfärg', 'andra färgen'] })),
   ...['gold:landscape', 'emerald:portrait'].map(m => ({ namn: 'Gift Campaign · ' + m, nyckel: 'catalog:giftcampaign:' + m,
     egna: ['falt:textFont'], arver: ['accentfärg', 'textfärg', 'typsnitt'] })),
+  // Top Streak (PR 10, spec 4.2): Clean Flip och Design 1 ärver accenten (Accentfärg/Färg 1 — ringen, glöden och
+  // streaktalet), Design 2 och 3 även andra färgen (Färg 2). approved-rankings.js och topstreak-designer.js läser
+  // bk(). Stilen i Design 3 fyller Färg 1 och 2 och blir därför också inaktiv. Design 2 ritar Färg 2 bara i
+  // profilringens ::before (topstreak-designer.css .tsd2.ram-farg .pw::before) och läses med pseudo.
+  { namn: 'Top Streak · Clean Flip', nyckel: 'catalog:topstreak', egna: ['falt:accent'], arver: ['accentfärg'] },
+  { namn: 'Top Streak · Design 1', nyckel: 'catalog:topstreak:design:1', egna: ['falt:accent'], arver: ['accentfärg'] },
+  { namn: 'Top Streak · Design 2', nyckel: 'catalog:topstreak:design:2', egna: ['falt:accent', 'falt:accent2'], arver: ['accentfärg', 'andra färgen'], pseudo: true },
+  { namn: 'Top Streak · Design 3', nyckel: 'catalog:topstreak:design:3', egna: ['falt:accent', 'falt:accent2', 'falt:streakStil'], arver: ['accentfärg', 'andra färgen'] },
 ];
 
 let server, browser, bas;
@@ -116,22 +124,31 @@ async function oppna(nyckel, fel, extra) {
   return page;
 }
 
-// Alla färger och typsnitt i widgetens synliga noder.
-const stilar = page => page.evaluate(() => {
+// Alla färger och typsnitt i widgetens synliga noder. pseudo: läs också ::before och ::after på de synliga
+// noderna (bara de som ritas, content ≠ none) — för modeller där en färg bara når ett pseudoelement
+// (Top Streak · Design 2: Färg 2 är profilringens ::before).
+const stilar = (page, pseudo) => page.evaluate(pseudo => {
   const rot = document.querySelector('.canvas .widget[data-id="arv"]');
   const ut = { farger: new Set(), typsnitt: new Set() };
+  const farger = c => {
+    const text = [c.color, c.backgroundColor, c.backgroundImage, c.borderTopColor, c.borderLeftColor, c.boxShadow, c.textShadow,
+      c.filter, c.webkitTextFillColor, c.outlineColor, c.fill, c.stroke].join(' ');
+    (text.match(/rgba?\([^)]*\)/g) || []).forEach(x => ut.farger.add(x.replace(/rgba\((\d+), (\d+), (\d+), 1\)/, 'rgb($1, $2, $3)')));
+  };
   for (const n of [rot, ...rot.querySelectorAll('*')]) {
     const r = n.getBoundingClientRect();
     if (!r.width || !r.height) continue;
     const c = getComputedStyle(n);
     if (c.visibility === 'hidden' || c.display === 'none') continue;
-    const text = [c.color, c.backgroundColor, c.backgroundImage, c.borderTopColor, c.borderLeftColor, c.boxShadow, c.textShadow,
-      c.filter, c.webkitTextFillColor, c.outlineColor, c.fill, c.stroke].join(' ');
-    (text.match(/rgba?\([^)]*\)/g) || []).forEach(x => ut.farger.add(x.replace(/rgba\((\d+), (\d+), (\d+), 1\)/, 'rgb($1, $2, $3)')));
+    farger(c);
+    if (pseudo) for (const p of ['::before', '::after']) {
+      const pc = getComputedStyle(n, p);
+      if (pc.content && pc.content !== 'none' && pc.content !== 'normal' && pc.display !== 'none' && pc.visibility !== 'hidden') farger(pc);
+    }
     if ((n.textContent || '').trim() && !n.children.length) ut.typsnitt.add(c.fontFamily);
   }
   return { farger: [...ut.farger], typsnitt: [...ut.typsnitt] };
-});
+}, !!pseudo);
 
 function syns(st, del) {
   const s = SPAR[del];
@@ -157,13 +174,13 @@ for (const m of MODELLER) {
       for (const d of delar) assert.ok(SPAR[d], `okänd del i listan: ${d}`);
       assert.deepEqual(delar, m.arver, 'Ärver: … listar modellens delar');
 
-      const av = await stilar(page);
+      const av = await stilar(page, m.pseudo);
       for (const d of delar) assert.equal(syns(av, d), false, `${d} syns redan innan arvet är på — provet säger då ingenting`);
 
       await page.click('#pr-inheritBrandKit');
       await page.waitForTimeout(900);
       assert.equal(await page.evaluate(() => liveWidget('arv').inheritBrandKit), true, 'kryssrutan sparar w.inheritBrandKit');
-      const pa = await stilar(page);
+      const pa = await stilar(page, m.pseudo);
       for (const d of delar) assert.equal(syns(pa, d), true, `${d}: arvet är på men färgschemats värde syns inte i widgeten`);
 
       // De egna kontrollerna för det som ärvs är inaktiva.
@@ -177,7 +194,7 @@ for (const m of MODELLER) {
 
       await page.click('#pr-inheritBrandKit');
       await page.waitForTimeout(900);
-      const avIgen = await stilar(page);
+      const avIgen = await stilar(page, m.pseudo);
       for (const d of delar) assert.equal(syns(avIgen, d), false, `${d} ligger kvar när arvet slagits av`);
       assert.equal(await page.evaluate(n => document.querySelector(`.properties [data-pr-kontroll="${n}"] input, .properties [data-pr-kontroll="${n}"] select`).disabled, m.egna[0]), false,
         'den egna kontrollen är aktiv igen');

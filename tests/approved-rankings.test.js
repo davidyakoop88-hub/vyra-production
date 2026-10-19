@@ -58,12 +58,14 @@ test('central retirement guard loads last with its own cache version', () => {
   // 20260926-direkt: installeras direkt och lägger sig ytterst igen efter varje sent skript, i
   // stället för att vänta på `load` - Clean Flip ritades som Inferno tills alla bilder laddats.
   // 20261011-1: tomDesignGrupp() — DESIGN-rubriken utan kontroller tas bort (panelen utan glapp).
-  assert.match(html, /approved-rankings\.js\?v=20261017-1/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20261017-1') > html.indexOf('vyra-state-sync.js'));
+  // 20261019-1: Ärv färgschema (accenten via bk()), streakSpelaPa för ▶ Testa widget och Clean Flips döda
+  // reglage bort (topstreak-designer.js rensa) — Top Streak i panelramen, PR 10.
+  assert.match(html, /approved-rankings\.js\?v=20261019-1/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20261019-1') > html.indexOf('vyra-state-sync.js'));
   // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
   // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
   assert.ok(html.indexOf('vyra-tom-widget.js?v=20261011-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261017-1'),
+    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261019-1'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 
