@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `ebacc43`
+Commit: `2e2efdf`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -51,8 +51,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFT CAMPAIGN · LJUS OCH RÖRELSE | 6 | 6/6 | 6/6 | 6/6 | 2026-09-12 | — |
 | LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-11 | [#587](https://github.com/davidyakoop88-hub/vyra-production/pull/587) |
-| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-09-11 | — |
+| BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
 | Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
 | Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
@@ -223,31 +223,31 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
-| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-10-01 | [#556](https://github.com/davidyakoop88-hub/vyra-production/pull/556) |
+| Inferno | `catalog:battlemvp:inferno` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Royal | `catalog:battlemvp:royal` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Cyber | `catalog:battlemvp:cyber` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Storm | `catalog:battlemvp:storm` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Royal Ribbon | `catalog:battlemvp:frame:royal-ribbon` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Laurel Star | `catalog:battlemvp:frame:laurel-star` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Dark Wings | `catalog:battlemvp:frame:dark-wings` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Dragon Fire | `catalog:battlemvp:frame:dragon-fire` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Nautical Helm | `catalog:battlemvp:frame:nautical-helm` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Shadow Star | `catalog:battlemvp:frame:shadow-star` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 
 ### BATTLE MVP · FIRANDE · 8 KOREOGRAFIER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-09-11 | — |
-| Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-09-11 | — |
-| Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-09-11 | — |
-| Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-09-11 | — |
-| Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-09-11 | — |
-| Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-09-11 | — |
-| Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-09-11 | — |
-| Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-09-11 | — |
+| Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Kröningen | `catalog:battlemvp:celebration:coronation` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Vingar | `catalog:battlemvp:celebration:wings` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Energiportalen | `catalog:battlemvp:celebration:portal` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 
 ### Koi Pearl Lagoon · VIDEO FX
 
