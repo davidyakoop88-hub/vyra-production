@@ -133,13 +133,22 @@ function dispose(group){const item=mounted.get(group);if(!item)return;item.unsub
 // INGEN BILDRAM OCH INGET RAMLAGER (2026-10-17, Davids ord: "ta bort ramarna ... kan visa bara profilbilden och
 // gåvor"). Mitten visar gåvan som vänds till profilbilden, utan ram — även för sparade widgetar
 // som valt en ram tidigare.
+// ÄRV FÄRGSCHEMA (panelspecifikationen 4.2, PR 12): Färg 1 tar färgschemats accent, Färg 2 dess andra färg
+// och namnet i duken dess typsnitt — samma bk() som resten av studion (media.js). Utan arv är det widgetens
+// egna värden, precis som förut. fwSpela skickar redan färgerna i `palette`; reserven här gäller den som
+// anropar utan palett.
+const arvt=(w,egen,falt,reserv)=>typeof root.bk==='function'?root.bk(w,egen,falt,reserv):(egen||reserv);
 function rendererFor(w,giftImage,profileImage,palette={},playback={}){
- const primary=palette.primary||w.fwColor,secondary=palette.secondary||w.fwColor2;
+ const primary=palette.primary||arvt(w,w.fwColor,'highlight'),secondary=palette.secondary||arvt(w,w.fwColor2,'secondaryText');
  if(root.VyraFestival){
+  // NAMNET EFTER playback (PR 12): förut kom playback.name sist och skrev över valet, så "Dölj namnet"
+  // visade namnet ändå (uppmätt med frö i fyrverkeri-livevag.browser.test.js). Namnet visas som förut
+  // för alla andra namneffekter, också utan något val.
   return root.VyraFestival.create({theme:w.fwTheme,primary,secondary,customPalette:true,giftImage:giftImage||w.fwGiftImage,profileImage,
    glow:Number.isFinite(+w.fwGlow)?+w.fwGlow:.8,radius:Number.isFinite(+w.fwRadius)?+w.fwRadius:50,
    badgeFrame:'',badgeFx:'none',
-   name:w.fwNameFx&&w.fwNameFx!=='hide'?playback.name:'',nameFx:w.fwNameFx||'none',nameColor:w.fwTextColor||'#ffffff',nameFont:w.fwFont||"'Segoe UI',system-ui,sans-serif",...playback})}
+   nameFx:w.fwNameFx||'none',nameColor:w.fwTextColor||'#ffffff',nameFont:arvt(w,w.fwFont,'fontFamily',"'Segoe UI',system-ui,sans-serif"),...playback,
+   name:w.fwNameFx==='hide'?'':(playback.name||'')})}
  const defaults={royal:['#ffd06b','#a764ff'],ice:['#dcecff','#49cfff'],rose:['#edb98b','#ff7cc8'],comet:['#45e1d1','#ff806c'],supernova:['#ffd06b','#a764ff']}[w.fwTheme]||[];
  const customPalette=!!w.inheritBrandKit||[primary,secondary].some((color,i)=>typeof color==='string'&&color.toLowerCase()!==defaults[i]);
  return root.VyraNatural.create({theme:w.fwTheme,style:w.fwNovaStyle||'classic',primary,secondary,customPalette,giftImage:giftImage||w.fwGiftImage,profileImage,...playback});
@@ -172,5 +181,7 @@ function preview(e,w,palette){
  const draw=()=>renderer.render(ctx,960,800,14.5,'100');draw();renderer.ready.then(draw);
 }
 root.addEventListener('vyra-session-ended',()=>{for(const group of mounted.keys())dispose(group);sequences.clear()});
-root.VyraSupernova={create,mount,preview,dispose,duration,toppen,active:()=>mounted.size};
+// glom: tar bort en widgets sekvensräknare (vilken form nästa enkla fyrverkeri får). ▶ Testa widget spelar
+// en klon med eget id och lämnar inget efter sig vid ■ (vyra-fyrverkeri-panel.js).
+root.VyraSupernova={create,mount,preview,dispose,duration,toppen,active:()=>mounted.size,glom:key=>sequences.delete(key)};
 })(window);

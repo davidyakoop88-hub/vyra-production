@@ -313,6 +313,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // Playgroundfamiljernas poster (vyra-playground-panel.js, PR 11) på samma sätt.
   const playground = plats('vyra-playground-panel.js', '20261019-1');
   assert.ok(playground > reg && playground > testspel && playground < ordning, 'playgroundfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
+  // Fyrverkeriernas poster (vyra-fyrverkeri-panel.js, PR 12) på samma sätt.
+  const fyrverkeri = plats('vyra-fyrverkeri-panel.js', '20261019-1');
+  assert.ok(fyrverkeri > reg && fyrverkeri > testspel && fyrverkeri < ordning, 'fyrverkeriernas poster laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska
   // ligga utanpå ramens så att den sorterar efter att ramen byggt sina sektioner.

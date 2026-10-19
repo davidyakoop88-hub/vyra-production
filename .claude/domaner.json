@@ -182,7 +182,8 @@
         "vyra-ranking-panel.js",
         "vyra-mal-panel.js",
         "vyra-streak-panel.js",
-        "vyra-playground-panel.js"
+        "vyra-playground-panel.js",
+        "vyra-fyrverkeri-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -552,6 +553,7 @@
         "tests/gift-bubbles-trigger.test.js",
         "tests/playground-widgets.test.js",
         "tests/browser/pg-livevag.browser.test.js",
+        "tests/browser/fyrverkeri-livevag.browser.test.js",
         "tests/heart-fireworks-trigger.test.js",
         "tests/gift-fireworks-trigger.test.js",
         "tests/gift-fireworks-live-trigger.test.js",

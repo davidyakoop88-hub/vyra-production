@@ -139,10 +139,26 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
   const fil=[0,-30,30,-15,15][lane]||0,skala=Math.min(1.8,Math.max(.5,Number(w.fwScale)||1));
   e.style.animation='none';group.style.translate=fil+'% 0';group.style.scale=String(skala);group.style.transformOrigin='50% 45%';
   const entre=FW_ENTREER[w.fwEnter]||'';group.style.animation=entre?entre.replace('{t}',String((.6/fwFart(w)).toFixed(2))):'none';
-  e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary},namn,tempo);fwSchedule(e);return}
+  e.append(group);e.classList.toggle('play',true);window.VyraSupernova.mount(group,w,combo,gavobild,avatarbild,{primary,secondary},namn,tempo);return group}
  e.style.removeProperty('animation');
  buildComboRockets(w,group,combo,gavobild,sequence,avatarbild);
- e.append(group);e.classList.add('play');fwSchedule(e);
+ e.append(group);e.classList.add('play');return group;
+}
+/* PER NOD (panelspecifikationen 2.4, PR 12). Spelar ETT fyrverkeri på en nod: widgetens nod eller
+   dess .gift-fireworks-fx, med widgeten `k` och gåvan `ev`. Den filtrerar inte state.widgets, skriver
+   inte till widgeten, sparar inte, spelar inget ljud och rör varken kön (fwPending), timrarna
+   (fwTimers) eller dubblettspärren. Livetriggern nedan anropar den för varje synlig widget och lägger
+   sedan på sin egen bokföring (fwSchedule, kön, ljudet) — precis som förut. ▶ Testa widget
+   (vyra-fyrverkeri-panel.js) anropar den på klonens nod och städar själv vid ■.
+   Returnerar fyrverkeriets grupp (.fw-event) med data-expires/data-release, eller null. */
+function fwSpelaPa(nod,k,ev){
+ const e=nod&&(nod.classList&&nod.classList.contains('gift-fireworks-fx')?nod:nod.querySelector&&nod.querySelector('.gift-fireworks-fx'));
+ if(!e||!k)return null;
+ const d=(ev&&typeof ev==='object')?ev:{combo:ev};
+ /* textContent, aldrig innerHTML: anvandarnamnet kommer fran TikTok via molnet och ar inte
+    betrott innehall. */
+ const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(k.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');
+ return fwSpela(k,e,fwStyrkaOf(d,k),d.giftImage,d.profileImage||d.profileUrl,d.username||d.name,fwTempoOf(d));
 }
 
 // Pure catalog snapshot: build the same rocket DOM without registering a live event.
@@ -168,8 +184,19 @@ function fwRenderPreview(e,w){
   });
  });
 }
+window.fwSpelaPa=fwSpelaPa;
 window.VyraFireworks={
   renderPreview:fwRenderPreview,
+  // ▶ Testa widget: samma uppspelning som livet, på en nod, utan kö, timrar och ljud (se fwSpelaPa).
+  spelaPa:fwSpelaPa,
+  /* Tidslinjen i ms för EN widget och EN gåva, med samma tal som ritar (fwSequence) — ▶ Testa widgets
+     faser. Entrén är raketens färd till första smällen (duk: 1,4 s / Rörelsehastighet; CSS: nedslaget),
+     eller widgetens Entré / utgång om den är längre. Utgången är sista sekunden, när det tonar ut. */
+  tiderFor:(w,input)=>{const d=input&&typeof input==='object'?input:{combo:input},s=fwSequence(w,fwStyrkaOf(d,w),fwTempoOf(d)),duration=s.duration*1000;
+    const entre=fwCanvas(w)?Math.max(FW_ENTREER[w.fwEnter]?600/fwFart(w):0,1400/(fwFart(w)*fwTempoOf(d))):Math.max(FW_INTRO[fwIntroOf(w)],s.impact*1000);
+    const utgang=Math.min(1000,duration/6);
+    return{duration,release:s.release*1000,entre,visning:Math.max(0,duration-entre-utgang),utgang,niva:s.level.name}},
+  ljudVolym:w=>w&&w.fwSound!==false?Math.min(1,Math.max(0,(w.fwVolume??60)/100)):0,
   capacityFor:fwCapacity,
   pending:()=>fwPending.length,
   // Renderaren och bada koerna anvander exakt samma langsta synliga speltid.
@@ -309,9 +336,9 @@ if(!traffar.length)return false;
    gava, och omritningen rev ner den animation som just spelade. Combon ar ett argument nu, aldrig
    ett falt pa widgeten; w.fwCombo tillhor editorns testknapp. Se docs/tech-debt.md punkt 3. */
 let nagotTandes=false;
-traffar.forEach(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;/* textContent, aldrig innerHTML: anvandarnamnet kommer fran TikTok via molnet och ar inte
-   betrott innehall. */
-const tx=e.querySelector('.fw-text');if(tx)tx.textContent=String(w.fwText||'{user} skickade {gift}').split('{user}').join(d.username||d.name||'').split('{gift}').join(d.giftName||d.gift||'');fwSpela(w,e,fwStyrkaOf(d,w),d.giftImage,d.profileImage||d.profileUrl,d.username||d.name,fwTempoOf(d));nagotTandes=true});
+/* Samma per-nod-funktion som ▶ Testa widget (fwSpelaPa ovan), en gång per widget. Bokföringen —
+   fwSchedule med fwTimers och köns dränering — är livets och läggs på här, efter varje nod. */
+traffar.forEach(w=>{const e=document.querySelector(`[data-id="${w.id}"] .gift-fireworks-fx`);if(!e)return;if(!fwSpelaPa(e,w,d))return;fwSchedule(e);nagotTandes=true});
 if(!nagotTandes)return false;
 /* Ljudet spelas HAR, efter att bade filtren och widgetuppslaget passerat - ett ljud utan
    synligt fyrverkeri ar varre an inget ljud alls. En gang per omgang, inte en gang per widget:

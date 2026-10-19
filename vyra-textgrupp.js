@@ -218,6 +218,11 @@
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.
       if (w.type === 'templateGiftFireworks' && w.fwTheme && document.getElementById('fwNameFx')) return ut;
+      // REGISTRET SÄGER UTAN TEXT (panelspecifikationen 1.5, PR 12): modeller som ritar allt på en duk —
+      // Gift Fireworks, Heart Fireworks och Gift Bubbles (vyra-fyrverkeri-panel.js) — har inga textblad som
+      // gruppen når (mätt: ingen effekt). Posten bär utanText: true.
+      const post = window.VyraPanelram && typeof window.VyraPanelram.postFor === 'function' ? window.VyraPanelram.postFor(w) : null;
+      if (post && post.utanText === true) return ut;
       // PLAYGROUND-WIDGETARNA (podium, streak, Goal Pro) har Textfärg och Typsnitt i sin STIL-grupp.
       // En andra TEXT-grupp gav två Typsnitt-reglage i samma panel.
       if (arPlaygroundWidget(w)) return ut;

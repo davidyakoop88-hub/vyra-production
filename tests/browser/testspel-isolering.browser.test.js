@@ -1289,3 +1289,164 @@ test('pg: ett test som får gå klart passerar entré → visning → utgång oc
     await page.close();
   }
 });
+
+// ---- Fyrverkerierna: Gift Fireworks, Heart Fireworks och Gift Bubbles (adaptrarna 'fyrverkeri', 'hjartfyr' och 'bubblor', PR 12)
+//
+// De gamla testknapparna (▶ Testa fyrverkeriet med Antal testgåvor, ▶ Testa Heart Fireworks och ▶ Testa Gift
+// Bubbles) gick genom triggerGiftFireworks/-HeartFireworks/-GiftBubbles, som tänder ALLA synliga widgetar av
+// typen — granskningen mätte att B spelade också. Testet spelar nu per-nod-funktionen (fwSpelaPa, hfSpelaPa,
+// gbSpelaPa) på klonen. Utöver bilden ovan kräver provet att
+//   * B av samma modell inte spelar: inget .fw-event, ingen hf-play/gb-play, och tecken för tecken samma DOM,
+//   * kön och bokföringen är orörda: Gift Fireworks-kön (VyraGiftFireworks), renderarens väntelista
+//     (VyraFireworks.pending) och timrar (VyraFireworks.timers), och Heart Fireworks- och Gift Bubbles-köerna,
+//   * ingenting lever kvar efter ■ och efter render(): ingen fyrverkeriduk (VyraSupernova.active), ingen
+//     prenumeration på VFX-tickern, och Heart Fireworks och Gift Bubbles motor är död (inget rAF-varv, inga
+//     timrar, inga gnistor).
+// Faserna kommer ur motorns tidslinje: Gift Fireworks 7 s (1 gåva) och 20 s (final) med raketens färd som
+// entré och sista sekunden som utgång; Heart Fireworks combo 20 till toppen och gnistornas uttoning; Gift
+// Bubbles combo 10 till sista bubblans pop och skärvornas 1,3 s.
+const FYR_ISOLERING = [
+  { namn: 'Gift Fireworks · Festival (1 gåva)', nyckel: 'catalog:giftfireworks:festival', adapter: 'fyrverkeri', typ: '1', niva: 'single',
+    faser: { entre: 1400, visning: 4600, utgang: 1000 } },
+  { namn: 'Gift Fireworks · Kometspiral (Final)', nyckel: 'catalog:giftfireworks:comet', adapter: 'fyrverkeri', typ: 'final', niva: 'show',
+    faser: { entre: 1400, visning: 17600, utgang: 1000 } },
+  { namn: 'Heart Fireworks (combo 20)', nyckel: 'catalog:heartfireworks', adapter: 'hjartfyr', typ: '20', faser: { entre: 900, visning: 2802, utgang: 1800 } },
+  { namn: 'Gift Bubbles (combo 10)', nyckel: 'catalog:giftbubbles', adapter: 'bubblor', typ: null, faser: { entre: 800, visning: 4132, utgang: 1300 } },
+];
+const fyrBild = page => bild(page).then(async b => Object.assign({}, b, await page.evaluate(() => ({
+  fwKo: window.VyraGiftFireworks ? [window.VyraGiftFireworks.koLangd(), window.VyraGiftFireworks.aktiva()].join('/') : null,
+  fwRenderare: window.VyraFireworks ? [window.VyraFireworks.pending(), window.VyraFireworks.timers()].join('/') : null,
+  hfKo: window.VyraHeartFireworks ? [window.VyraHeartFireworks.koLangd(), window.VyraHeartFireworks.aktiva()].join('/') : null,
+  gbKo: window.VyraGiftBubbles ? [window.VyraGiftBubbles.koLangd(), window.VyraGiftBubbles.aktiva()].join('/') : null,
+  dukar: window.VyraSupernova ? window.VyraSupernova.active() : null,
+  ticker: window.VFX && window.VFX.Ticker && window.VFX.Ticker._listeners ? window.VFX.Ticker._listeners.size : null,
+  spelar: [...document.querySelectorAll('.canvas .widget:not([data-testspel-klon])')]
+    .filter(n => n.querySelector('.fw-event, .hf-play, .gb-play, .gb-orb, .gb-heart, .hf-combo, .gb-combo')).map(n => n.dataset.id).join(),
+}))));
+const fyrKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const grupp = k.querySelector('.fw-event');
+  const hf = k.querySelector('.heart-fireworks-fx'), gb = k.querySelector('.gift-bubbles-fx');
+  const motor = (hf && hf._hf) || (gb && gb._gb);
+  if (motor) window.__fyrMotor = motor;
+  return { id: k.dataset.id, grupp: !!grupp, niva: grupp && grupp.dataset.fwLevel, duk: !!(grupp && grupp.querySelector('canvas')),
+    hfPlay: !!(hf && hf.classList.contains('hf-play')), gbPlay: !!(gb && gb.classList.contains('gb-play')),
+    bubblor: gb ? gb.querySelectorAll('.gb-orb, .gb-heart').length : 0, motor: motor ? motor.inspect() : null };
+});
+
+for (const m of FYR_ISOLERING) {
+  test(`${m.adapter}-adaptern är isolerad: ${m.namn}`, { skip, timeout: 150000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      await installeraRaknare(page);
+      // De gamla testknapparna är borta ur panelen.
+      assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('.properties #testFw, .properties #fwCombo, .properties #testHf, .properties #hfCombo, .properties #testGb, .properties #gbCombo')]
+        .filter(n => !n.closest('[data-panelram-forvaring]')).map(n => n.id)), [], 'de gamla testknapparna är borta');
+      if (m.typ) await page.selectOption('#pr-testspel-typ', m.typ);
+      else assert.equal(await page.$('#pr-testspel-typ'), null, 'Gift Bubbles har ingen typväljare (combo 10)');
+      const fore = await fyrBild(page);
+      assert.equal(fore.spelar, '', 'kontrollmätning: ingenting spelar före ▶');
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, m.adapter);
+      if (m.typ) assert.equal(s1.typ, m.typ, 'typväljarens val');
+      assert.deepEqual(s1.faser, m.faser, 'faserna ur motorns tidslinje');
+      await page.waitForTimeout(250);
+      const k = await fyrKlon(page);
+      assert.equal(k.id, 'prov-a__prov');
+      if (m.adapter === 'fyrverkeri') {
+        assert.equal(k.grupp, true, 'fyrverkeriet startade på klonen');
+        assert.equal(k.duk, true, 'klonen ritar på en egen duk');
+        assert.equal(k.niva, m.niva, 'typväljarens antal ger nivån');
+        const nu = await page.evaluate(() => ({ dukar: window.VyraSupernova.active(), ticker: window.VFX.Ticker._listeners.size }));
+        assert.deepEqual(nu, { dukar: fore.dukar + 1, ticker: fore.ticker + 1 }, 'klonens duk prenumererar på den enda tickern');
+      } else if (m.adapter === 'hjartfyr') {
+        assert.equal(k.hfPlay, true, 'Heart Fireworks startade på klonen');
+        assert.ok(k.motor.raketer >= 1, 'guldskottet (combo 20) är i luften: ' + JSON.stringify(k.motor));
+      } else {
+        assert.equal(k.gbPlay, true, 'Gift Bubbles startade på klonen');
+        assert.ok(k.bubblor > 0, 'bubblorna stiger på klonen');
+      }
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      await page.waitForTimeout(1200);
+      // Klonens egen duk räknas i dukar och ticker medan den spelar (provat ovan); allt annat är orört.
+      const mitt = await fyrBild(page);
+      if (m.adapter === 'fyrverkeri') Object.assign(mitt, { dukar: fore.dukar, ticker: fore.ticker });
+      lika(fore, mitt, 'mitt i testet (B spelar inte, ingen kö)');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(150);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      if (m.adapter !== 'fyrverkeri') {
+        const motor = await page.evaluate(() => window.__fyrMotor.inspect());
+        assert.deepEqual(motor, Object.assign({ raf: false, dod: true, timrar: 0, gnistor: 0 }, m.adapter === 'hjartfyr' ? { raketer: 0 } : { bubblor: 0 }),
+          'motorn är död: inget rAF-varv, inga timrar och inga gnistor');
+      }
+      await page.waitForTimeout(500);
+      lika(fore, await fyrBild(page), 'efter ■');
+      assert.equal(await page.evaluate(() => document.querySelectorAll('.canvas canvas.fw-natural-canvas').length), 0, 'ingen fyrverkeriduk ligger kvar');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+      await page.waitForTimeout(300);
+      await fyrKlon(page);
+
+      // render() mitt i testet tar bort klonen och allt den startade.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(300);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      const efter = await fyrBild(page);
+      for (const f of ['fwKo', 'fwRenderare', 'hfKo', 'gbKo', 'dukar', 'ticker', 'spelar']) assert.equal(efter[f], fore[f], `${f} efter render-stoppet`);
+      if (m.adapter !== 'fyrverkeri') assert.equal(await page.evaluate(() => window.__fyrMotor.inspect().dod), true, 'motorn dödades av render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('fyrverkeri: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:giftfireworks:rose');
+    // Rörelsehastigheten 2,5 × kortar hela programmet: 7 s / 2,5 = 2,8 s, raketen 1,4 s / 2,5.
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.fwPlaySpeed = 2.5; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await fyrBild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 560, visning: 1773, utgang: 467 }, 'faserna följer Rörelsehastighet');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await fyrBild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});

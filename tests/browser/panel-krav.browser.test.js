@@ -5,8 +5,9 @@
 // Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
 // (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js), Top Like/Coins/Points (vyra-ranking-panel.js) och
 // målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) och
-// Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js) och playgroundfamiljerna Top Gifter Podium, Top
-// Streak Flip och Goal Pro (vyra-playground-panel.js) — kräver provet
+// Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js), playgroundfamiljerna Top Gifter Podium, Top
+// Streak Flip och Goal Pro (vyra-playground-panel.js) och fyrverkerierna Gift Fireworks, Heart Fireworks och Gift
+// Bubbles (vyra-fyrverkeri-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -193,6 +194,27 @@ const PG_MODELLER = [
   ...['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(d => ({ namn: 'Goal Pro · design ' + d, nyckel: 'catalog:pggoal:' + d,
     effekt: d === '1' || d === '3', aterstall: PG_ATERSTALL })),
 ];
+// FYRVERKERIERNA (vyra-fyrverkeri-panel.js, PR 12): Gift Fireworks (sex teman på duk), Heart Fireworks och Gift
+// Bubbles. Panelkraven gäller alla åtta. Effekten per kontroll mäts för ett Gift Fireworks-tema (alla sex har samma
+// post och panel; granskningen mätte Kometspiral), Heart Fireworks och Gift Bubbles.
+//
+// TIDSSTYRT är nästan allt: effekterna är tomma i vila och ritar bara när en gåva spelar. Varje sådan kontroll
+// mäts i fyrverkeri-livevag.browser.test.js — Gift Fireworks duk med ett fast frö (samma väg som livet, festival-
+// motorn ritad med och utan ändringen), resten på det motorerna läser (gruppens stil och nivå, grindarna, filerna,
+// ljudet, guldskottet, räknaren och bubblornas innehåll). Här kräver provet att de verkligen inte syns i vila.
+// Det som syns i vila är placeringen, Storlek, Rotation, Tema (data-fw-theme) och Grundstorlek (data-gb-size).
+const FYR_SPELAR = 'syns bara när en gåva spelar — mäts i fyrverkeri-livevag.browser.test.js';
+const FYR_TIDSSTYRT = Object.fromEntries(['fwMin', 'fwFinal', 'fwLanes', 'fwExcludeAnon', 'fwScale', 'fwFont', 'fwTextColor', 'fwNameFx',
+  'fwColor', 'fwColor2', 'fwGlow', 'fwRadius', 'pr-inheritBrandKit', 'fwEnter', 'fwPlaySpeed', 'fwSound', 'fwVolume'].map(id => [id, FYR_SPELAR]));
+const FYR_MODELLER = [
+  ...['festival', 'royal', 'ice', 'rose', 'comet', 'supernova'].map(t => ({ namn: 'Gift Fireworks · ' + t, nyckel: 'catalog:giftfireworks:' + t,
+    effekt: t === 'comet', aterstall: { utseende: 'fwColor', innehall: 'fwMin' }, tidsstyrt: FYR_TIDSSTYRT })),
+  { namn: 'Heart Fireworks', nyckel: 'catalog:heartfireworks', effekt: true, minKontroller: 8, aterstall: { utseende: 'hfGold', innehall: 'hfMin' },
+    tidsstyrt: Object.fromEntries(['hfMin', 'hfExcludeAnon', 'hfGold', 'hfShowCombo'].map(id => [id, FYR_SPELAR])) },
+  { namn: 'Gift Bubbles', nyckel: 'catalog:giftbubbles', effekt: true, minKontroller: 10, aterstall: { utseende: 'gbSize', innehall: 'gbMin' },
+    tidsstyrt: Object.fromEntries(['gbMin', 'gbExcludeAnon', 'gbGiftIn', 'gbHearts', 'gbShowCombo'].map(id => [id, FYR_SPELAR])),
+    mediaTidsstyrt: { gbGiftImage: 'reservgåvan syns bara när en gåva utan bild spelar — mäts i fyrverkeri-livevag.browser.test.js' } },
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -205,10 +227,12 @@ const MODELLER = [
   ...MAL_MODELLER,
   ...STREAK_MODELLER,
   ...PG_MODELLER,
+  ...FYR_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
-// st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st").
-const ENHET = /(px|%|ms|×|°|s|st)\s*$/;
+// st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st"). mynt: Gift Fireworks Minsta gåva och
+// Final vid, och Minsta gåvovärde i Heart Fireworks och Gift Bubbles (talfält: "(mynt)" i etiketten).
+const ENHET = /(px|%|ms|×|°|s|st|mynt)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
 // exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor), och
 // Top Streaks exempelstreak (antalet gåvor i combon).
@@ -267,7 +291,7 @@ function sidStruktur() {
   });
   // Etiketter: varje rads egen text (utan valens alternativ och värdet i <b>), mediaväljarens och
   // ramens rubriker, och fristående knappar. Knappar INUTI en sammansatt kontroll (mediaväljarens
-  // Välj bild/Använd automatisk, ramväljarens rutor, playgroundens färgrutor) är delar av den kontrollen.
+  // Välj bild/Använd automatisk, ramväljarens rutor, playgroundens och Gift Fireworks färgrutor) är delar av den kontrollen.
   const etiketter = [];
   for (const s of p.querySelectorAll('[data-panelram-sektion]')) {
     s.querySelectorAll('label').forEach(l => {
@@ -279,7 +303,7 @@ function sidStruktur() {
     });
     s.querySelectorAll('.vm-etikett, .pr-etikett').forEach(n => { if (vis(n)) etiketter.push(n.textContent.trim()); });
     s.querySelectorAll('button').forEach(b => {
-      if (!vis(b) || b.matches('.pg-toggle, .vyra-emoji-knapp') || b.closest('label, .vyra-mediaval, .pro-frame-picker, .pg-pal')) return;
+      if (!vis(b) || b.matches('.pg-toggle, .vyra-emoji-knapp') || b.closest('label, .vyra-mediaval, .pro-frame-picker, .pg-pal, .fw-pal')) return;
       etiketter.push(b.textContent.replace(/\s+/g, ' ').trim());
     });
   }
@@ -410,7 +434,7 @@ for (const m of MODELLER) {
       for (const t of s.tal) {
         if (RENA_ANTAL.test(t.etikett)) continue;
         if (t.typ === 'range') assert.ok(t.b && ENHET.test(t.b), `${t.etikett || t.id}: reglaget saknar enhet i <b> (${t.b})`);
-        else assert.ok(/\((px|%|ms|°|s)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
+        else assert.ok(/\((px|%|ms|°|s|mynt)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
       }
 
       if (m.effekt === false) { assert.deepEqual(fel, [], 'inga sidfel'); return; }

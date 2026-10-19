@@ -28,22 +28,22 @@
   function gbCtrl(host){
     const cv=document.createElement('canvas');cv.className='gb-canvas';host.appendChild(cv);
     const ctx=cv.getContext&&cv.getContext('2d');
-    let W=0,H=0,dpr=1,parts=[],raf=false,timers=[],cf=0;
+    let W=0,H=0,dpr=1,parts=[],raf=false,rafId=0,timers=[],cf=0,dod=false;
     const COL=['#ffffff','#ffd9f2','#c9a9ff','#8fe3ff','#ffe9b0','#ff9ed6'];
     function resize(){const r=host.getBoundingClientRect();W=r.width||host.clientWidth||0;H=r.height||host.clientHeight||0;if(!ctx)return;dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,W*dpr);cv.height=Math.max(1,H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
-    const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.push(t);return t;};
+    const later=(fn,ms)=>{if(dod)return 0;const t=setTimeout(fn,ms);timers.push(t);return t;};
     // canvas particles (additive glow) — skipped entirely without a 2d context
     function spark(x,y,vx,vy,c,s,life,g){parts.push({x,y,vx,vy,c,s,life,max:life,g:g==null?.05:g,drag:.985});}
-    function on(){if(ctx&&!raf&&typeof requestAnimationFrame==='function'){raf=true;requestAnimationFrame(frame);}}
+    function on(){if(ctx&&!dod&&!raf&&typeof requestAnimationFrame==='function'){raf=true;rafId=requestAnimationFrame(frame);}}
     function boom(x,y,n){if(!ctx)return;for(let i=0;i<n;i++){const a=rnd(0,6.283),sp=rnd(1.2,7)*(Math.random()<.3?1.6:1);spark(x,y,Math.cos(a)*sp,Math.sin(a)*sp,COL[Math.random()*COL.length|0],rnd(1.3,3.4),rnd(46,100),.05);}for(let i=0;i<n*.22;i++){const a=rnd(0,6.283),sp=rnd(.4,2.4);spark(x,y,Math.cos(a)*sp,Math.sin(a)*sp,'#fff',rnd(1.6,3),rnd(16,32),.02);}on();}
     function converge(x,y,reach,n){if(!ctx)return;for(let i=0;i<n;i++){const a=rnd(0,6.283),R=reach*rnd(.8,1.25),px=x+Math.cos(a)*R,py=y+Math.sin(a)*R,k=1/rnd(16,26);spark(px,py,(x-px)*k,(y-py)*k,COL[Math.random()*COL.length|0],rnd(1.2,2.8),rnd(18,28),0);}on();}
-    function frame(){if(!ctx){raf=false;return;}ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.vx*=p.drag;p.vy=p.vy*p.drag+p.g;p.x+=p.vx;p.y+=p.vy;p.life--;if(p.life<=0){parts.splice(i,1);continue;}const a=Math.max(0,p.life/p.max);ctx.globalAlpha=a;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.fill();}ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';if(parts.length)requestAnimationFrame(frame);else raf=false;}
+    function frame(){if(!ctx||dod){raf=false;return;}ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='lighter';for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.vx*=p.drag;p.vy=p.vy*p.drag+p.g;p.x+=p.vx;p.y+=p.vy;p.life--;if(p.life<=0){parts.splice(i,1);continue;}const a=Math.max(0,p.life/p.max);ctx.globalAlpha=a;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.fill();}ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';if(parts.length)rafId=requestAnimationFrame(frame);else raf=false;}
     // DOM pop fx
     function ring(cx,cy,size){const r=document.createElement('div');r.className='gb-ring';const s=size*0.6;r.style.cssText=`width:${s}px;height:${s}px;left:${cx-s/2}px;top:${cy-s/2}px`;host.appendChild(r);anim(r,[{transform:'scale(.3)',opacity:.85},{transform:'scale(2.6)',opacity:0}],{duration:560,easing:'cubic-bezier(.2,.6,.2,1)'}).onfinish=()=>r.remove();}
     function flash(cx,cy,size){const f=document.createElement('div');f.className='gb-flash';const s=size*1.5;f.style.cssText=`width:${s}px;height:${s}px;left:${cx-s/2}px;top:${cy-s/2}px`;host.appendChild(f);anim(f,[{transform:'scale(.4)',opacity:.9},{transform:'scale(1.1)',opacity:0}],{duration:300,easing:'ease-out'}).onfinish=()=>f.remove();}
     function shards(cx,cy,reach,count){for(let i=0;i<count;i++){const r=Math.random(),shape=r<0.44?'gb-h':(r<0.82?'gb-s':'gb-r');const s=shape==='gb-r'?rnd(4,9):rnd(reach*0.12,reach*0.24);const el=document.createElement('div');el.className='gb-shard '+shape;el.style.cssText=`width:${s}px;height:${s}px;left:${cx-s/2}px;top:${cy-s/2}px`;host.appendChild(el);const ang=rnd(0,6.283),dist=rnd(reach*0.4,reach*1.15),dx=Math.cos(ang)*dist,dy=Math.sin(ang)*dist,rot=rnd(-160,160);anim(el,[{transform:'translate(0,0) scale(.3) rotate(0deg)',opacity:0,offset:0},{transform:`translate(${dx*.5}px,${dy*.5}px) scale(1) rotate(${rot*.5}deg)`,opacity:1,offset:.22},{transform:`translate(${dx}px,${dy+reach*0.28}px) scale(.85) rotate(${rot}deg)`,opacity:0,offset:1}],{duration:rnd(820,1300),easing:'cubic-bezier(.12,.6,.25,1)'}).onfinish=()=>el.remove();}}
-    function pop(el,cx,cy,size){ring(cx,cy,size);flash(cx,cy,size);boom(cx,cy,Math.round(34*(1+cf*1.3)));shards(cx,cy,size*0.95,Math.round(10+cf*10));const t=el._t||'';anim(el,[{transform:t+' scale(1,1)',opacity:1,offset:0},{transform:t+' scale(1.12,.9)',opacity:1,offset:.3},{transform:t+' scale(1.3)',opacity:0,offset:1}],{duration:380,easing:'cubic-bezier(.2,.5,.2,1)'}).onfinish=()=>el.remove();}
-    function comboBadge(cx,cy,n,S){const el=document.createElement('div');el.className='gb-combo';el.style.fontSize=Math.round(S*(0.14+cf*0.12))+'px';el.style.left=cx+'px';el.style.top=cy+'px';el.textContent='×1';host.appendChild(el);anim(el,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.16,.9,.3,1)',fill:'forwards'});if(typeof requestAnimationFrame==='function'&&typeof performance!=='undefined'){const t0=performance.now(),dur=700;(function tick(){const p=Math.min(1,(performance.now()-t0)/dur);el.textContent='×'+Math.max(1,Math.round(p*n));if(p<1)requestAnimationFrame(tick);else el.textContent='×'+n;})();}else el.textContent='×'+n;later(()=>anim(el,[{opacity:1},{opacity:0}],{duration:500,easing:'ease-out',fill:'forwards'}).onfinish=()=>el.remove(),2600);}
+    function pop(el,cx,cy,size){if(dod)return;ring(cx,cy,size);flash(cx,cy,size);boom(cx,cy,Math.round(34*(1+cf*1.3)));shards(cx,cy,size*0.95,Math.round(10+cf*10));const t=el._t||'';anim(el,[{transform:t+' scale(1,1)',opacity:1,offset:0},{transform:t+' scale(1.12,.9)',opacity:1,offset:.3},{transform:t+' scale(1.3)',opacity:0,offset:1}],{duration:380,easing:'cubic-bezier(.2,.5,.2,1)'}).onfinish=()=>el.remove();}
+    function comboBadge(cx,cy,n,S){const el=document.createElement('div');el.className='gb-combo';el.style.fontSize=Math.round(S*(0.14+cf*0.12))+'px';el.style.left=cx+'px';el.style.top=cy+'px';el.textContent='×1';host.appendChild(el);anim(el,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1.15)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.16,.9,.3,1)',fill:'forwards'});if(typeof requestAnimationFrame==='function'&&typeof performance!=='undefined'){const t0=performance.now(),dur=700;(function tick(){if(dod)return;const p=Math.min(1,(performance.now()-t0)/dur);el.textContent='×'+Math.max(1,Math.round(p*n));if(p<1)requestAnimationFrame(tick);else el.textContent='×'+n;})();}else el.textContent='×'+n;later(()=>anim(el,[{opacity:1},{opacity:0}],{duration:500,easing:'ease-out',fill:'forwards'}).onfinish=()=>el.remove(),2600);}
     function riseOne(delay,o){
       const d=Math.random();
       const heart=o.hearts&&Math.random()<0.3;
@@ -65,6 +65,7 @@
       ],{duration:dur,delay,easing:'cubic-bezier(.32,.5,.35,1)',fill:'forwards'}).onfinish=()=>{el._t=`translate(${x+sway*.3}px, ${topY}px) rotate(${spin}deg)`;pop(el,x+size/2,topY+size/2,size);};
     }
     function fire(o){
+      if(dod)return;
       resize(); if(!W||!H){W=W||320;H=H||569;}
       host.classList.add('gb-play');
       const c=Math.max(1,Math.min(100,o.combo||1)); cf=(c-1)/99;
@@ -87,7 +88,15 @@
       bubble(w*0.34,h*0.58,h*0.14);bubble(w*0.62,h*0.46,h*0.17);bubble(w*0.48,h*0.74,h*0.1);
     }
     function clear(){timers.forEach(clearTimeout);timers=[];parts=[];host.classList.remove('gb-play');if(ctx)ctx.clearRect(0,0,W,H);host.querySelectorAll('.gb-orb,.gb-heart,.gb-shard,.gb-ring,.gb-flash,.gb-hero,.gb-giftback,.gb-combo').forEach(n=>n.remove());}
-    return {fire,previewStill,clear,resize};
+    // destroy (▶ Testa widget, PR 12): som clear, men motorn tar inte emot något mer. Bubblornas
+    // animationer avbryts (en avbruten animation poppar inte), den beställda bildrutan avbryts och
+    // inga nya timrar startas — inget lever kvar på en klon som tagits bort.
+    function destroy(){if(dod)return;dod=true;if(typeof host.getAnimations==='function')host.getAnimations({subtree:true}).forEach(a=>{try{a.cancel()}catch(_){}});
+      clear();if(rafId&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(rafId);raf=false;rafId=0;cv.remove();if(host._gb===api)host._gb=null;}
+    // inspect: läget i motorn, för proven.
+    const inspect=()=>({gnistor:parts.length,timrar:timers.length,raf,dod,bubblor:host.querySelectorAll('.gb-orb,.gb-heart').length});
+    const api={fire,previewStill,clear,resize,destroy,inspect};
+    return api;
   }
   function hostCtrl(host){return host._gb||(host._gb=gbCtrl(host));}
 
@@ -127,7 +136,11 @@
 
   // ---------- catalog preview ----------
   function gbRenderPreview(host,w){if(!host)return;const ctrl=hostCtrl(host);ctrl.clear();host.style.setProperty('opacity','1','important');ctrl.previewStill({size:w.gbSize||'m',giftIn:w.gbGiftIn!==false,fallback:w.gbGiftImage});}
-  window.VyraGiftBubblesFx={renderPreview:gbRenderPreview};
+  // tiderFor: ▶ Testa widgets faser i ms, ur samma tal som fire(): sista bubblan släpps efter (antal-1)·gap,
+  // stiger i högst 4 s och poppar; skärvorna lever i högst 1,3 s. Entrén är den första bubblans intoning.
+  function gbTider(combo){const c=Math.max(1,Math.min(100,Math.floor(Number(combo))||1)),cf=(c-1)/99,antal=Math.min(24,Math.round(3+cf*30)),gap=200-cf*150;
+    const entre=800,pop=(antal-1)*gap+4000;return{entre,visning:Math.round(pop-entre),utgang:1300};}
+  window.VyraGiftBubblesFx={renderPreview:gbRenderPreview,spelaPa:(...a)=>gbSpelaPa(...a),tiderFor:gbTider};
 
   // ---------- live trigger ----------
   const gbAntal=d=>Math.max(1,Math.floor(Number(d.combo??d.repeatcount??d.count)||1));
@@ -136,13 +149,27 @@
   function gbSlapper(w,d){if(d.__test)return true;if(w.gbExcludeAnon&&d.isAnonymous)return false;const b=gbBelopp(d);return b===undefined||b>=(w.gbMin||1);}
   const gbSedda=new Map(),GB_SPARR=1500;
   function gbRedan(d){const id=d&&d.id;if(!id)return false;const nu=Date.now();for(const[k,t]of gbSedda)if(nu-t>GB_SPARR)gbSedda.delete(k);const key=String(id);if(gbSedda.has(key))return true;gbSedda.set(key,nu);return false;}
+  /* PER NOD (panelspecifikationen 2.4, PR 12). Släpper Gift Bubbles på EN nod (widgetens nod eller dess
+     .gift-bubbles-fx) med widgeten k och gåvan ev. Filtrerar inte state.widgets, skriver inte till
+     widgeten, sparar inte och rör varken kön (gift-bubbles-session.js) eller dubblettspärren.
+     Triggern nedan anropar den för varje synlig widget; ▶ Testa widget (vyra-fyrverkeri-panel.js) på
+     klonens nod, och städar med motorns destroy() vid ■. Returnerar motorn, eller null. */
+  function gbSpelaPa(nod,k,ev){
+    const host=nod&&(nod.classList&&nod.classList.contains('gift-bubbles-fx')?nod:nod.querySelector&&nod.querySelector('.gift-bubbles-fx'));
+    if(!host||!k)return null;
+    const d=(ev&&typeof ev==='object')?ev:{combo:ev};
+    const ctrl=hostCtrl(host);
+    ctrl.fire({combo:gbComboOf(d),gift:d.giftImage,size:k.gbSize||'m',hearts:k.gbHearts!==false,giftIn:k.gbGiftIn!==false,showCombo:k.gbShowCombo!==false,fallback:k.gbGiftImage});
+    return ctrl;
+  }
+  window.gbSpelaPa=gbSpelaPa;
   function gbTrigger(input){const d=(input&&typeof input==='object')?input:{combo:input};
     if(gbRedan(d))return false;
     const hits=state.widgets.filter(x=>x.type==='templateGiftBubbles'&&!x.hidden&&gbSlapper(x,d));
     if(!hits.length)return false;
     let fired=false;
     hits.forEach(w=>{const host=document.querySelector(`[data-id="${w.id}"] .gift-bubbles-fx`);if(!host)return;
-      hostCtrl(host).fire({combo:gbComboOf(d),gift:d.giftImage,size:w.gbSize||'m',hearts:w.gbHearts!==false,giftIn:w.gbGiftIn!==false,showCombo:w.gbShowCombo!==false,fallback:w.gbGiftImage});fired=true;});
+      if(gbSpelaPa(host,w,d))fired=true;});
     return fired;
   }
   window.triggerGiftBubbles=gbTrigger;

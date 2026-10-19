@@ -116,6 +116,10 @@ test('livevägen: routeLiveBattleEvent når alla instanser, ▶/■ rör ingenti
     // En riktig Crown (799 mynt): båda podierna, båda målen (40 %) och båda streakarna.
     await gava(page, 'anna', 'Crown', 799);
     await page.waitForTimeout(1500);
+    // Målets procent räknas upp mjukt (playground-widgets.js `shown` närmar sig värdet över tid). På en
+    // belastad maskin (domänsviten kör filerna parallellt) stod den på 38 % efter 1,5 s — vänta in den.
+    await page.waitForFunction(() => [...document.querySelectorAll('.canvas [data-id="lv-ma"] .pc, .canvas [data-id="lv-mb"] .pc')]
+      .filter(n => n.textContent).every(n => n.textContent === '40%'), null, { timeout: 6000, polling: 100 }).catch(() => {});
     const efterGava = await lage(page);
     assert.deepEqual([efterGava.podA, efterGava.podB], ['anna', 'anna'], 'båda podierna fick givaren');
     assert.deepEqual([efterGava.malA, efterGava.malB], ['40%', '40%'], 'båda målen räknade gåvan');
